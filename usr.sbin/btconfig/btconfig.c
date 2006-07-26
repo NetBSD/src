@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $ */
+/* $NetBSD: btconfig.c,v 1.2 2006/07/26 10:00:43 tron Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: btconfig.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.2 2006/07/26 10:00:43 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -125,13 +125,6 @@ uint32_t class;
 /* packet type mask (hex value) */
 int opt_ptype = 0;
 uint32_t ptype;
-#define PTYPE_FMT	"\20"		\
-			"\004DM1"	\
-			"\005DH1"	\
-			"\013DM3"	\
-			"\014DH3"	\
-			"\017DM5"	\
-			"\020DH5"
 
 /* unit name (string) */
 int opt_name = 0;
@@ -149,9 +142,13 @@ int opt_inquiry = 0;
 int opt_voice = 0;
 uint32_t voice;
 
+/* Page Timeout */
+int opt_pto = 0;
+uint32_t pto;
+
 struct parameter {
 	const char	*name;
-	enum { P_SET, P_CLR, P_STR, P_HEX } type;
+	enum { P_SET, P_CLR, P_STR, P_HEX, P_NUM } type;
 	int		*opt;
 	void		*val;
 } parameters[] = {
@@ -184,6 +181,7 @@ struct parameter {
 	{ "inquiry",	P_SET,	&opt_inquiry,	NULL	},
 	{ "reset",	P_SET,	&opt_reset,	NULL	},
 	{ "voice",	P_HEX,	&opt_voice,	&voice	},
+	{ "pto",	P_NUM,	&opt_pto,	&pto	},
 	{ NULL }
 };
 
@@ -273,6 +271,12 @@ main(int ac, char *av[])
 			case P_HEX:
 				if (--ac < 1) badarg(p->name);
 				*(uint32_t *)(p->val) = strtol(*++av, NULL, 16);
+				*(p->opt) = 1;
+				break;
+
+			case P_NUM:
+				if (--ac < 1) badarg(p->name);
+				*(uint32_t *)(p->val) = strtol(*++av, NULL, 10);
 				*(p->opt) = 1;
 				break;
 			}
@@ -562,6 +566,13 @@ config_unit(void)
 		val = htole16(voice & 0x03ff);
 		save_value(HCI_CMD_WRITE_VOICE_SETTING, &val, sizeof(val));
 	}
+
+	if (opt_pto) {
+		uint16_t val;
+
+		val = htole16(pto * 8 / 5);
+		save_value(HCI_CMD_WRITE_PAGE_TIMEOUT, &val, sizeof(val));
+	}
 }
 
 /*
@@ -571,6 +582,7 @@ void
 print_info(int level)
 {
 	uint8_t val, buf[MAX_STR_SIZE];
+	uint16_t val16;
 
 	if (lflag) {
 		tag(btr.btr_name);
@@ -644,8 +656,24 @@ print_info(int level)
 	if (level-- < 1)
 		return;
 
-	snprintb((char *)buf, MAX_STR_SIZE, PTYPE_FMT, btr.btr_packet_type);
-	printf("\tptype: %s\n", buf);
+	ptype = btr.btr_packet_type;
+	width = printf("\tptype: [0x%04x]", ptype);
+	if (ptype & HCI_PKT_DM1)		tag("DM1");
+	if (ptype & HCI_PKT_DH1)		tag("DH1");
+	if (ptype & HCI_PKT_DM3)		tag("DM3");
+	if (ptype & HCI_PKT_DH3)		tag("DH3");
+	if (ptype & HCI_PKT_DM5)		tag("DM5");
+	if (ptype & HCI_PKT_DH5)		tag("DH5");
+	if ((ptype & HCI_PKT_2MBPS_DH1) == 0)	tag("2-DH1");
+	if ((ptype & HCI_PKT_3MBPS_DH1) == 0)	tag("3-DH1");
+	if ((ptype & HCI_PKT_2MBPS_DH3) == 0)	tag("2-DH3");
+	if ((ptype & HCI_PKT_3MBPS_DH3) == 0)	tag("3-DH3");
+	if ((ptype & HCI_PKT_2MBPS_DH5) == 0)	tag("2-DH5");
+	if ((ptype & HCI_PKT_3MBPS_DH5) == 0)	tag("3-DH5");
+	tag(NULL);
+
+	load_value(HCI_CMD_READ_PAGE_TIMEOUT, &val16, sizeof(val16));
+	printf("\tpage timeout: %d ms\n", val16 * 5 / 8);
 
 	if (level-- < 1)
 		return;
