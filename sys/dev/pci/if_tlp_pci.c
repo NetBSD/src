@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.94 2006/07/21 17:20:20 gdamore Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.95 2006/07/26 14:21:20 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.94 2006/07/21 17:20:20 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.95 2006/07/26 14:21:20 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,7 +432,6 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 			break;
 
 		case 0x09851317:
-		case 0x69851317:	/* 983B */
 			sc->sc_chip = TULIP_CHIP_AN983;
 			break;
 
