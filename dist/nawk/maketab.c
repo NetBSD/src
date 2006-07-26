@@ -139,8 +139,11 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "maketab funny token %d %s ignored\n", tok, buf);
 			continue;
 		}
-		names[tok-FIRSTTOKEN] = (char *) malloc(strlen(name)+1);
-		strcpy(names[tok-FIRSTTOKEN], name);
+		names[tok-FIRSTTOKEN] = strdup(name);
+		if (names[tok-FIRSTTOKEN] == NULL) {
+			fprintf(stderr, "maketab out of space copying %s", s);
+			continue;
+		}
 		printf("\t\"%s\",\t/* %d */\n", name, tok);
 		i++;
 	}
