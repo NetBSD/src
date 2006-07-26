@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97var.h,v 1.18 2006/04/15 21:18:34 jmcneill Exp $	*/
+/*	$NetBSD: ac97var.h,v 1.19 2006/07/26 14:44:33 kent Exp $	*/
 /*	$OpenBSD: ac97.h,v 1.4 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -54,6 +54,7 @@ struct ac97_host_if {
 	int (*reset)(void *);
 
 	enum ac97_host_flags (*flags)(void *);
+	void (*spdif_event)(void *, boolean_t);
 };
 
 /*
@@ -77,6 +78,14 @@ struct ac97_codec_if_vtbl {
 	int (*set_rate)(struct ac97_codec_if *, int, u_int *);
 	void (*set_clock)(struct ac97_codec_if *, unsigned int);
 	void (*detach)(struct ac97_codec_if *);
+	/**
+	 * To enable SPDIF,
+	 *  - call unlock() just after ac97_attach()
+	 *  - call lock() in audio_hw_if::open()
+	 *  - call unlock() in audio_hw_if::close()
+	 */
+	void (*lock)(struct ac97_codec_if *);
+	void (*unlock)(struct ac97_codec_if *);
 };
 
 struct ac97_codec_if {
