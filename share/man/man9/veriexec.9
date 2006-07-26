@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.9,v 1.1 2006/07/25 21:16:16 elad Exp $
+.\" $NetBSD: veriexec.9,v 1.2 2006/07/26 16:30:37 elad Exp $
 .\"
 .\" Copyright 2006 Elad Efrat <elad@NetBSD.org>
 .\" Copyright 2006 Brett Lymn <blymn@NetBSD.org>
@@ -49,6 +49,82 @@ This manual divides the
 .Nm
 KPI to four main areas: core, fingerprint related, table management, and hook
 handlers.
+.Ss Data-structures
+.Nm
+uses several data-structures to manage its data:
+.Bl -tag -width "123456"
+.It Ft "struct veriexec_fp_ops"
+Describes a hashing algorithm, for example MD5, SHA1, RMD160.
+Contains the following members:
+.Bl -tag -width "123456"
+.It Ft "char type[VERIEXEC_TYPE_MAXLEN]"
+Name of the hashing algorithm.
+.It Ft size_t hash_len
+Length, in bytes, 
+.It Ft size_t context_size
+Size, in bytes, of the calculation context.
+.It Ft VERIEXEC_INIT_FN Ar init
+.It Ft VERIEXEC_UPDATE_FN Ar update
+.It Ft VERIEXEC_FINAL_FN Ar final
+Routines used to calculate the fingerprint.
+.El
+.Pp
+.Nm
+provides a macro,
+.Fn VERIEXEC_OPINIT ,
+to ease initialization of a
+.Ft "struct veriexec_fp_ops"
+(see below).
+.It Ft "struct veriexec_file_entry"
+Describes Veriexec data associated with a single file.
+Contains the following members:
+.Bl -tag -width "123456"
+.It Ft u_char Ar type
+The entry type, indicating what valid access types are allowed for this file.
+Can be a binary-OR'd combination of the following:
+.Bl -tag -width "123456"
+.It VERIEXEC_DIRECT
+The file can be executed directly.
+.It VERIEXEC_INDIRECT
+The file can be executed indirectly, for example, as a script interpreter.
+.It VERIEXEC_FILE
+The file can be opened, for example for reading and/or writing.
+.El
+.It Ft u_char Ar status
+The evaluation status.
+Can be one of the following:
+.Bl -tag -width "123456"
+.It FINGERPRINT_NOTEVAL
+Fingerprint hasn't been evaluated yet.
+.It FINGERPRINT_VALID
+The fingerprint was found to be valid.
+.It FINGERPRINT_NOMATCH
+There was a fingerprint mismatch.
+.El
+.It Ft u_char Ar page_fp_status
+Unused.
+.It Ft "u_char *" Ar fp
+The fingerprint for the file.
+.It Ft "void *" Ar page_fp
+.It Ft size_t Ar npages
+.It Ft size_t Ar last_page_size
+Unused.
+.It Ft "struct veriexec_fp_ops *" Ar ops
+Algorithm used to calculate the fingerprint for this file.
+.El
+.It Ft "struct veriexec_table_entry"
+Describes Veriexec data associated with a mount.
+Contains the following members:
+.Bl -tag -width "123456"
+.It Ft uint64_t Ar vte_count
+Number of Veriexec entries (monitored files) on the mount.
+.It Ft "const struct sysctlnode *" Ar vte_node
+The
+.Xr sysctl 9
+node for the mount, with information about the number of monitored files,
+file-system type, and mount point.
+.El
+.El
 .Ss Core Routines
 .Bl -tag -width "123456"
 .It Ft "struct veriexec_file_entry *vfe" Fn veriexec_lookup "struct vnode *vp"
@@ -127,6 +203,24 @@ Should be called only once during system startup.
 .It Ft Fn veriexec_add_fp_ops "struct veriexec_fp_ops *ops"
 Add fingerprinting ops
 .Ar ops .
+.Pp
+.Nm
+provides a macro to initialize
+.Ar ops ,
+called
+.Fn VERIEXEC_OPINIT .
+It takes seven parameters: a pointer to a
+.Ft "struct veriexec_fp_ops" ,
+a
+.Ft "const char *"
+describing the algorithm name (will be copied), the byte length of a binary
+representation of a fingerprint as a
+.Ft size_t ,
+the size of the fingerprint calculation context (usually the
+.Em _CTX
+types),
+and pointers to the initialization, update, and final routines, used to
+calculate the fingerprint.
 .It Ft "struct veriexec_fp_ops *" Fn veriexec_find_ops "u_char *name"
 Lookup fingerprinting ops for algorithm
 .Ar name .
