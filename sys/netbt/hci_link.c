@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.2 2006/07/26 10:10:06 tron Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.3 2006/07/26 10:20:56 tron Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.2 2006/07/26 10:10:06 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.3 2006/07/26 10:20:56 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -159,14 +159,23 @@ hci_acl_close(struct hci_link *link, int err)
 }
 
 /*
- * Incoming ACL connection. For now, we accept all connections but it
- * would be better to check the L2CAP listen list and only accept when
- * there is a listener available.
+ * Incoming ACL connection.
+ *
+ * For now, we accept all connections but it would be better to check
+ * the L2CAP listen list and only accept when there is a listener
+ * available.
+ *
+ * There should not be a link to the same bdaddr already, we check
+ * anyway though its left unhandled for now.
  */
 struct hci_link *
 hci_acl_newconn(struct hci_unit *unit, bdaddr_t *bdaddr)
 {
 	struct hci_link *link;
+
+	link = hci_link_lookup_bdaddr(unit, bdaddr, HCI_LINK_ACL);
+	if (link != NULL)
+		return NULL;
 
 	link = hci_link_alloc(unit);
 	if (link != NULL) {
@@ -565,11 +574,68 @@ hci_acl_complete(struct hci_link *link, int num)
  */
 
 /*
- * Incoming SCO Connection. Not yet implemented
+ * Incoming SCO Connection. We check the list for anybody willing
+ * to take it.
  */
 struct hci_link *
 hci_sco_newconn(struct hci_unit *unit, bdaddr_t *bdaddr)
 {
+	struct sockaddr_bt laddr, raddr;
+	struct sco_pcb *pcb, *new;
+	struct hci_link *sco, *acl;
+
+	memset(&laddr, 0, sizeof(laddr));
+	laddr.bt_len = sizeof(laddr);
+	laddr.bt_family = AF_BLUETOOTH;
+	bdaddr_copy(&laddr.bt_bdaddr, &unit->hci_bdaddr);
+
+	memset(&raddr, 0, sizeof(raddr));
+	raddr.bt_len = sizeof(raddr);
+	raddr.bt_family = AF_BLUETOOTH;
+	bdaddr_copy(&raddr.bt_bdaddr, bdaddr);
+
+	/*
+	 * There should already be an ACL link up and running before
+	 * the controller sends us SCO connection requests, but you
+	 * never know..
+	 */
+	acl = hci_link_lookup_bdaddr(unit, bdaddr, HCI_LINK_ACL);
+	if (acl == NULL || acl->hl_state != HCI_LINK_OPEN)
+		return NULL;
+
+	LIST_FOREACH(pcb, &sco_pcb, sp_next) {
+		if ((pcb->sp_flags & SP_LISTENING) == 0)
+			continue;
+
+		new = (*pcb->sp_proto->newconn)(pcb->sp_upper, &laddr, &raddr);
+		if (new == NULL)
+			continue;
+
+		/*
+		 * Ok, got new pcb so we can start a new link and fill
+		 * in all the details.
+		 */
+		bdaddr_copy(&new->sp_laddr, &unit->hci_bdaddr);
+		bdaddr_copy(&new->sp_raddr, bdaddr);
+
+		sco = hci_link_alloc(unit);
+		if (sco == NULL) {
+			sco_detach(&new);
+			return NULL;
+		}
+
+		sco->hl_type = HCI_LINK_SCO;
+		bdaddr_copy(&sco->hl_bdaddr, bdaddr);
+
+		sco->hl_link = hci_acl_open(unit, bdaddr);
+		KASSERT(sco->hl_link == acl);
+
+		sco->hl_sco = new;
+		new->sp_link = sco;
+
+		new->sp_mtu = unit->hci_max_sco_size;
+		return sco;
+	}
 
 	return NULL;
 }
