@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.2,v 1.1.2.3 2006/07/16 12:23:40 ghen Exp $
+#	$NetBSD: CHANGES-3.0.2,v 1.1.2.4 2006/07/26 20:21:18 tron Exp $
 
 A complete list of changes from the NetBSD 3.0.1 release to the NetBSD 3.0.2
 release:
@@ -19,7 +19,13 @@ sys/arch/sparc/sparc/machdep.c			patch
 sys/nfs/nfs_vnops.c				1.239-1.240 via patch
 sys/nfs/nfs_var.h				1.62 via patch
 
-	Fix race condition in NFS renaming that could cause the renamed file to be
-	deleted.
+	Fix race condition in NFS renaming that could cause the renamed file
+	to be deleted.
 	[jld, ticket #1424]
+
+lib/libm/arch/i387/s_scalbn.S			1.8
+lib/libm/arch/i387/s_scalbnf.S			1.7
+
+	Fix the ldexp() bug reported on the port-amd64 mailing list.
+	[drochner, ticket #1236]
 
