@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.64 2006/07/26 15:14:24 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.65 2006/07/26 16:34:07 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.64 2006/07/26 15:14:24 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.65 2006/07/26 16:34:07 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -570,7 +570,7 @@ veriexec_page_verify(struct veriexec_file_entry *vfe, struct vm_page *pg,
  * Veriexec remove policy code.
  */
 int
-veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
+veriexec_removechk(struct vnode *vp, const char *pathbuf, struct lwp *l)
 {
 	struct veriexec_file_entry *vfe;
 	struct veriexec_table_entry *vte;
@@ -607,35 +607,35 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
  * Veriexe rename policy.
  */
 int
-veriexec_renamechk(struct vnode *vp, struct vnode *tvp, const char *from,
-		   const char *to, struct lwp *l)
+veriexec_renamechk(struct vnode *fromvp, const char *fromname,
+    struct vnode *tovp, const char *toname, struct lwp *l)
 {
 	struct veriexec_file_entry *vfe, *tvfe;
 
 	if (veriexec_strict >= VERIEXEC_LOCKDOWN) {
 		log(LOG_ALERT, "Veriexec: Preventing rename of `%s' to "
-		    "`%s', uid=%u, pid=%u: Lockdown mode.\n", from, to,
+		    "`%s', uid=%u, pid=%u: Lockdown mode.\n", fromname, toname,
 		    kauth_cred_geteuid(l->l_cred), l->l_proc->p_pid);
 		return (EPERM);
 	}
 
-	vfe = veriexec_lookup(vp);
+	vfe = veriexec_lookup(fromvp);
 	tvfe = NULL;
-	if (tvp != NULL)
-		tvfe = veriexec_lookup(tvp);
+	if (tovp != NULL)
+		tvfe = veriexec_lookup(tovp);
 
 	if ((vfe != NULL) || (tvfe != NULL)) {
 		if (veriexec_strict >= VERIEXEC_IPS) {
 			log(LOG_ALERT, "Veriexec: Preventing rename of `%s' "
 			    "to `%s', uid=%u, pid=%u: IPS mode, file "
-			    "monitored.\n", from, to,
+			    "monitored.\n", fromname, toname,
 			    kauth_cred_geteuid(l->l_cred),
 			    l->l_proc->p_pid);
 			return (EPERM);
 		}
 
 		log(LOG_NOTICE, "Veriexec: Monitored file `%s' renamed to "
-		    "`%s', uid=%u, pid=%u.\n", from, to,
+		    "`%s', uid=%u, pid=%u.\n", fromname, toname,
 		    kauth_cred_geteuid(l->l_cred), l->l_proc->p_pid);
 	}
 
@@ -645,12 +645,6 @@ veriexec_renamechk(struct vnode *vp, struct vnode *tvp, const char *from,
 /*
  * Routine for maintaining mostly consistent message formats in Verified
  * Exec.
- *
- * 'verbose_only' - if 1, the message will be printed only if veriexec is
- * in verbose mode.
- * 'alarm' - if 1, the message is considered an alarm and will be printed
- * at all times along with pid and user credentials.
- * 'die' - if 1, the system will panic.
  */
 void
 veriexec_report(const u_char *msg, const u_char *filename, struct lwp *l, int f)
