@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.75 2006/03/28 20:58:40 pavel Exp $
+#	$NetBSD: TX3922,v 1.76 2006/07/26 07:00:24 cube Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -212,7 +212,6 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass?
 scsibus* at umass? channel ?
 
 # USB audio
