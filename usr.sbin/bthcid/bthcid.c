@@ -1,4 +1,4 @@
-/*	$NetBSD: bthcid.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: bthcid.c,v 1.2 2006/07/26 11:00:07 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "@(#) Copyright (c) 2001-2002 Maksim Yevmenkin <m_evmenkin@yahoo.com>\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: bthcid.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: bthcid.c,v 1.2 2006/07/26 11:00:07 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -49,8 +49,6 @@ __RCSID("$NetBSD: bthcid.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
 
 #include "bthcid.h"
 
-const	char	*key_file = "/var/db/bthcid.keys";
-const	char	*config_file = NULL;
 const	char	*socket_name = BTHCID_SOCKET_NAME;
 	int	 detach = 1;
 
@@ -71,12 +69,8 @@ main(int argc, char *argv[])
 	bdaddr_copy(&bdaddr, BDADDR_ANY);
 	mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP;
 
-	while ((ch = getopt(argc, argv, "c:d:fm:ns:h")) != -1) {
+	while ((ch = getopt(argc, argv, "d:fm:ns:h")) != -1) {
 		switch (ch) {
-		case 'c':
-			config_file = optarg;
-			break;
-
 		case 'd':
 			if (!bt_devaddr(optarg, &bdaddr))
 				err(EXIT_FAILURE, "%s", optarg);
