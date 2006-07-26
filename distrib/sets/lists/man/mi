@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.911 2006/07/23 12:01:25 bouyer Exp $
+# $NetBSD: mi,v 1.912 2006/07/26 10:31:00 tron Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -723,8 +723,9 @@
 ./usr/share/man/cat4/bridge.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bt3c.0			man-sys-catman		.cat
+./usr/share/man/cat4/btdev.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bthidev.0			man-sys-catman		.cat
-./usr/share/man/cat4/bthub.0			man-sys-catman		.cat
+./usr/share/man/cat4/bthub.0			man-obsolete		obsolete
 ./usr/share/man/cat4/bthset.0			man-sys-catman		.cat
 ./usr/share/man/cat4/btkbd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/btms.0			man-sys-catman		.cat
@@ -3084,8 +3085,9 @@
 ./usr/share/man/man4/bridge.4			man-sys-man		.man
 ./usr/share/man/man4/bt.4			man-sys-man		.man
 ./usr/share/man/man4/bt3c.4			man-sys-man		.man
+./usr/share/man/man4/btdev.4			man-sys-man		.man
 ./usr/share/man/man4/bthidev.4			man-sys-man		.man
-./usr/share/man/man4/bthub.4			man-sys-man		.man
+./usr/share/man/man4/bthub.4			man-obsolete		obsolete
 ./usr/share/man/man4/bthset.4			man-sys-man		.man
 ./usr/share/man/man4/btkbd.4			man-sys-man		.man
 ./usr/share/man/man4/btms.4			man-sys-man		.man

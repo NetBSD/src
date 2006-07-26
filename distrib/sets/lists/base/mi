@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.641 2006/07/23 12:01:25 bouyer Exp $
+# $NetBSD: mi,v 1.642 2006/07/26 10:30:59 tron Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -42,6 +42,7 @@
 ./bin/test					base-util-root
 ./dev						base-sys-root
 ./dev/altq					base-sys-root
+./dev/bthubctl					base-obsolete		obsolete
 ./dev/fd					base-sys-root
 ./dev/i4b					base-obsolete		obsolete
 ./dev/i4bctl					base-obsolete		obsolete

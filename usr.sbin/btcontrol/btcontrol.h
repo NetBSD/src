@@ -1,4 +1,4 @@
-/*	$NetBSD: btcontrol.h,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: btcontrol.h,v 1.2 2006/07/26 10:31:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -37,9 +37,14 @@
 extern const char *control_file;
 extern const char *config_file;
 
-int dev_attach(bdaddr_t *, bdaddr_t *, int, char **);
-int dev_detach(bdaddr_t *, bdaddr_t *, int, char **);
-int hid_parse(bdaddr_t *, bdaddr_t *, int, char **);
-int cfg_print(bdaddr_t *, bdaddr_t *, int, char **);
+int cfg_print(int, char **);
+int cfg_query(int, char **);
+int cfg_remove(int, char **);
+int dev_attach(int, char **);
+int dev_detach(int, char **);
+int hid_parse(int, char **);
+
+prop_dictionary_t read_config(void);
+int write_config(prop_dictionary_t);
 
 #endif /* __BTCONTROL_H__ */
