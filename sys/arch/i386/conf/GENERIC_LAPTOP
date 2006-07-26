@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.192 2006/07/26 10:31:00 tron Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.193 2006/07/26 10:43:02 tron Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.192 $"
+#ident 		"GENERIC-$Revision: 1.193 $"
 
 maxusers	32		# estimated number of users
 
@@ -873,7 +873,7 @@ btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
 
 # Bluetooth Audio support
-bthset* at btdev?
+btsco* at btdev?
 
 
 # Mice
