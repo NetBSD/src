@@ -1,4 +1,4 @@
-# $NetBSD: md.mmeye,v 1.22 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: md.mmeye,v 1.23 2006/07/26 20:09:17 drochner Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mmeye				comp-c-include
 ./usr/include/mmeye/_G_config.h			comp-obsolete		obsolete
@@ -14,7 +14,7 @@
 ./usr/include/mmeye/cpu.h			comp-c-include
 ./usr/include/mmeye/cpufunc.h			comp-obsolete		obsolete
 ./usr/include/mmeye/cputypes.h			comp-c-include
-./usr/include/mmeye/db_machdep.h		comp-c-include
+./usr/include/mmeye/db_machdep.h		comp-obsolete        obsolete
 ./usr/include/mmeye/disklabel.h			comp-c-include
 ./usr/include/mmeye/elf_machdep.h		comp-c-include
 ./usr/include/mmeye/endian.h			comp-c-include
