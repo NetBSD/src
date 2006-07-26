@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.80 2006/07/25 00:23:06 dogcow Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.81 2006/07/26 09:33:57 dogcow Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,12 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.80 2006/07/25 00:23:06 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81 2006/07/26 09:33:57 dogcow Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
 #include "opt_posix.h"
-#include <sys/verified_exec.h>
+#include "veriexec.h"
 #include "pty.h"
 #include "rnd.h"
 
