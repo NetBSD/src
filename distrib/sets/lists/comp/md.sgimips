@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.9 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: md.sgimips,v 1.10 2006/07/26 20:09:17 drochner Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sgimips				comp-c-include
 ./usr/include/sgimips/_G_config.h		comp-obsolete		obsolete
@@ -11,7 +11,7 @@
 ./usr/include/sgimips/cdefs.h			comp-c-include
 ./usr/include/sgimips/conf.h			comp-obsolete		obsolete
 ./usr/include/sgimips/cpu.h			comp-c-include
-./usr/include/sgimips/db_machdep.h		comp-c-include
+./usr/include/sgimips/db_machdep.h		comp-obsolete        obsolete
 ./usr/include/sgimips/disklabel.h		comp-c-include
 ./usr/include/sgimips/ecoff_machdep.h		comp-c-include
 ./usr/include/sgimips/elf_machdep.h		comp-c-include

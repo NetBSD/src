@@ -1,4 +1,4 @@
-# $NetBSD: md.pmax,v 1.54 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: md.pmax,v 1.55 2006/07/26 20:09:17 drochner Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/pmax				comp-c-include
 ./usr/include/pmax/_G_config.h			comp-obsolete		obsolete
@@ -12,7 +12,7 @@
 ./usr/include/pmax/cdefs.h			comp-c-include
 ./usr/include/pmax/conf.h			comp-obsolete		obsolete
 ./usr/include/pmax/cpu.h			comp-c-include
-./usr/include/pmax/db_machdep.h			comp-c-include
+./usr/include/pmax/db_machdep.h			comp-obsolete        obsolete
 ./usr/include/pmax/dc7085cons.h			comp-c-include
 ./usr/include/pmax/dec_boot.h			comp-obsolete		obsolete
 ./usr/include/pmax/disklabel.h			comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.sbmips,v 1.8 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: md.sbmips,v 1.9 2006/07/26 20:09:17 drochner Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sbmips				comp-c-include
 ./usr/include/sbmips/_G_config.h		comp-obsolete		obsolete
@@ -9,7 +9,7 @@
 ./usr/include/sbmips/bswap.h			comp-c-include
 ./usr/include/sbmips/cdefs.h			comp-c-include
 ./usr/include/sbmips/cpu.h			comp-c-include
-./usr/include/sbmips/db_machdep.h		comp-c-include
+./usr/include/sbmips/db_machdep.h		comp-obsolete        obsolete
 ./usr/include/sbmips/disklabel.h		comp-c-include
 ./usr/include/sbmips/ecoff_machdep.h		comp-c-include
 ./usr/include/sbmips/elf_machdep.h		comp-c-include
