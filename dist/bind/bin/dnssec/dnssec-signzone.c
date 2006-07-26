@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.1.1.4 2005/12/21 23:07:50 christos Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.2 2006/07/26 06:23:59 jnemeth Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -1293,10 +1293,6 @@ nsecify(void) {
 				dns_db_detachnode(gdb, &nextnode);
 				result = dns_dbiterator_next(dbiter);
 				continue;
-			}
-			if (result != ISC_R_SUCCESS) {
-				dns_db_detachnode(gdb, &nextnode);
-				break;
 			}
 			if (!dns_name_issubdomain(nextname, gorigin) ||
 			    (zonecut != NULL &&
