@@ -1,7 +1,7 @@
-/*	$NetBSD: fetch.c,v 1.169 2006/04/28 20:02:07 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.170 2006/07/26 14:28:11 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.169 2006/04/28 20:02:07 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.170 2006/07/26 14:28:11 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1751,11 +1751,19 @@ auto_fetch(int argc, char *argv[])
 }
 
 
+/*
+ * Upload multiple files from the command line.
+ *
+ * If an error occurs the return value will be the offset+1 in
+ * argv[] of the file that caused a problem (i.e, argv[x]
+ * returns x+1)
+ * Otherwise, 0 is returned if all files uploaded successfully.
+ */
 int
 auto_put(int argc, char **argv, const char *uploadserver)
 {
 	char	*uargv[4], *path, *pathsep;
-	int	 uargc, rval;
+	int	 uargc, rval, argpos;
 	size_t	 len;
 
 	uargc = 0;
@@ -1805,18 +1813,25 @@ auto_put(int argc, char **argv, const char *uploadserver)
 	if(rval >= 0)
 		goto cleanup_auto_put;
 
+	rval = 0;
+
+			/* target filename provided; upload 1 file */
 			/* XXX : is this the best way? */
 	if (uargc == 3) {
 		uargv[1] = argv[0];
 		put(uargc, uargv);
-		goto cleanup_auto_put;
+		if ((code / 100) != COMPLETE)
+			rval = 1;
+	} else {	/* otherwise a target dir: upload all files to it */
+		for(argpos = 0; argv[argpos] != NULL; argpos++) {
+			uargv[1] = argv[argpos];
+			mput(uargc, uargv);
+			if ((code / 100) != COMPLETE) {
+				rval = argpos + 1;
+				break;
+			}
+		}
 	}
-
-	for(; argv[0] != NULL; argv++) {
-		uargv[1] = argv[0];
-		mput(uargc, uargv);
-	}
-	rval = 0;
 
  cleanup_auto_put:
 	free(path);
