@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.63 2006/07/24 21:32:39 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.64 2006/07/26 15:14:24 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.63 2006/07/24 21:32:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.64 2006/07/26 15:14:24 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -659,11 +659,11 @@ veriexec_report(const u_char *msg, const u_char *filename, struct lwp *l, int f)
 		return;
 
 	if (((f & REPORT_LOGMASK) >> 1) <= veriexec_verbose) {
-		if ((f & REPORT_ALARM) || l == NULL)
+		if (!(f & REPORT_ALARM) || (l == NULL))
 			log(LOG_NOTICE, "Veriexec: %s [%s]\n", msg,
 			    filename);
 		else
-			log(LOG_NOTICE, "Veriexec: %s [%s, pid=%u, uid=%u, "
+			log(LOG_ALERT, "Veriexec: %s [%s, pid=%u, uid=%u, "
 			    "gid=%u]\n", msg, filename, l->l_proc->p_pid,
 			    kauth_cred_getuid(l->l_cred),
 			    kauth_cred_getgid(l->l_cred));
