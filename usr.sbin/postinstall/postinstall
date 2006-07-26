@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.21 2006/07/26 11:11:04 tron Exp $
+# $NetBSD: postinstall,v 1.22 2006/07/26 11:14:55 tron Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -737,7 +737,7 @@ do_rc()
 	compare_dir ${op} ${SRC_DIR}/etc/rc.d ${DEST_DIR}/etc/rc.d 555 \
 		DAEMON LOGIN NETWORKING SERVERS \
 		accounting altqd amd apmd \
-		bootconf.sh bootparams btconfig bthcid \
+		bootconf.sh bootparams btconfig btcontrol bthcid \
 		ccd cgd cleartmp cron \
 		dhclient dhcpd dhcrelay dmesg downinterfaces \
 		fixsb fsck ftpd \
