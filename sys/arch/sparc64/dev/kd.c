@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.39 2006/07/23 22:06:07 ad Exp $	*/
+/*	$NetBSD: kd.c,v 1.40 2006/07/26 08:09:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.39 2006/07/23 22:06:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.40 2006/07/26 08:09:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -163,7 +163,6 @@ kdopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct kd_softc *kd;
 	int error, s, unit;
 	struct tty *tp;
-	struct proc *p = l->l_proc;
 static	int firstopen = 1;
 	
 	unit = minor(dev);
