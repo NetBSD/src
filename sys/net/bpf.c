@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.119 2006/07/23 22:06:12 ad Exp $	*/
+/*	$NetBSD: bpf.c,v 1.120 2006/07/26 13:54:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.119 2006/07/23 22:06:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.120 2006/07/26 13:54:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,8 @@ static void	bpf_timed_out(void *);
 static inline void
 		bpf_wakeup(struct bpf_d *);
 static void	catchpacket(struct bpf_d *, u_char *, u_int, u_int,
-				 void *(*)(void *, const void *, size_t));
+                            void *(*)(void *, const void *, size_t),
+                            struct timeval*);
 static void	reset_d(struct bpf_d *);
 static int	bpf_getdltlist(struct bpf_d *, struct bpf_dltlist *);
 static int	bpf_setdlt(struct bpf_d *, u_int);
@@ -368,7 +369,7 @@ void
 bpfilterattach(int n)
 {
 	simple_lock_init(&bpf_slock);
-	
+
 	simple_lock(&bpf_slock);
 	LIST_INIT(&bpf_list);
 	simple_unlock(&bpf_slock);
@@ -672,7 +673,7 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr, struct lwp *l)
 	 * Refresh the PID associated with this bpf file.
 	 */
 	d->bd_pid = l->l_proc->p_pid;
-	
+
 	s = splnet();
 	if (d->bd_state == BPF_WAITING)
 		callout_stop(&d->bd_callout);
@@ -1068,7 +1069,7 @@ bpf_poll(struct file *fp, int events, struct lwp *l)
 	 * Refresh the PID associated with this bpf file.
 	 */
 	d->bd_pid = l->l_proc->p_pid;
-	
+
 	revents = events & (POLLOUT | POLLWRNORM);
 	if (events & (POLLIN | POLLRDNORM)) {
 		/*
@@ -1160,6 +1161,9 @@ bpf_tap(void *arg, u_char *pkt, u_int pktlen)
 	struct bpf_if *bp;
 	struct bpf_d *d;
 	u_int slen;
+	struct timeval tv;
+	int gottime=0;
+
 	/*
 	 * Note that the ipl does not have to be raised at this point.
 	 * The only problem that could arise here is that if two different
@@ -1170,8 +1174,13 @@ bpf_tap(void *arg, u_char *pkt, u_int pktlen)
 		++d->bd_rcount;
 		++bpf_gstats.bs_recv;
 		slen = bpf_filter(d->bd_filter, pkt, pktlen, pktlen);
-		if (slen != 0)
-			catchpacket(d, pkt, pktlen, slen, memcpy);
+		if (slen != 0) {
+			if (!gottime) {
+				microtime(&tv);
+				gottime = 1;
+			}
+		catchpacket(d, pkt, pktlen, slen, memcpy, &tv);
+		}
 	}
 }
 
@@ -1215,6 +1224,8 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 {
 	u_int slen;
 	struct bpf_d *d;
+	struct timeval tv;
+	int gottime = 0;
 
 	for (d = bp->bif_dlist; d != 0; d = d->bd_next) {
 		if (!d->bd_seesent && (rcvif == NULL))
@@ -1222,8 +1233,13 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 		++d->bd_rcount;
 		++bpf_gstats.bs_recv;
 		slen = bpf_filter(d->bd_filter, marg, pktlen, buflen);
-		if (slen != 0)
-			catchpacket(d, marg, pktlen, slen, cpfn);
+		if (slen != 0) {
+			if(!gottime) {
+				microtime(&tv);
+				gottime = 1;
+			}
+			catchpacket(d, marg, pktlen, slen, cpfn, &tv);
+		}
 	}
 }
 
@@ -1384,7 +1400,7 @@ bpf_mtap_sl_out(void *arg, u_char *chdr, struct mbuf *m)
  */
 static void
 catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
-	    void *(*cpfn)(void *, const void *, size_t))
+	    void *(*cpfn)(void *, const void *, size_t), struct timeval *tv)
 {
 	struct bpf_hdr *hp;
 	int totlen, curlen;
@@ -1430,7 +1446,7 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	 * Append the bpf header.
 	 */
 	hp = (struct bpf_hdr *)(d->bd_sbuf + curlen);
-	microtime(&hp->bh_tstamp);
+	hp->bh_tstamp = *tv;
 	hp->bh_datalen = pktlen;
 	hp->bh_hdrlen = hdrlen;
 	/*
@@ -1716,7 +1732,7 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 
 	if (elem_size < 1 || elem_count < 0)
 		return (EINVAL);
-	
+
 	simple_lock(&bpf_slock);
 	LIST_FOREACH(dp, &bpf_list, bd_list) {
 		if (len >= elem_size && elem_count > 0) {
@@ -1739,7 +1755,7 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 				    IFNAMSIZ - 1);
 			else
 				dpe.bde_ifname[0] = '\0';
-			
+
 			error = copyout(&dpe, sp, out_size);
 			if (error)
 				break;
@@ -1755,7 +1771,7 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 	simple_unlock(&bpf_slock);
 
 	*oldlenp = needed;
-	
+
 	return (error);
 }
 
@@ -1796,5 +1812,5 @@ SYSCTL_SETUP(sysctl_net_bpf_setup, "sysctl net.bpf subtree setup")
 			sysctl_net_bpf_peers, 0, NULL, 0,
 			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 	}
-		
+
 }
