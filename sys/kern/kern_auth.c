@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.14 2006/07/23 22:06:10 ad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.15 2006/07/26 17:13:26 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -685,7 +685,7 @@ kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
 	kauth_listener_t listener;
 	int error, allow, fail;
 
-#if defined(LOCKDEBUG)
+#if 0 /* defined(LOCKDEBUG) */
 	spinlock_switchcheck();
 	simple_lock_only_held(NULL, "kauth_authorize_action");
 #endif
