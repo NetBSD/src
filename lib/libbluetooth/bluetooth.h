@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.h,v 1.1 2006/06/19 15:44:36 gdamore Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.2 2006/07/26 11:11:04 tron Exp $	*/
 
 /*
  * bluetooth.h
@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: bluetooth.h,v 1.1 2006/06/19 15:44:36 gdamore Exp $
+ * $Id: bluetooth.h,v 1.2 2006/07/26 11:11:04 tron Exp $
  * $FreeBSD: src/lib/libbluetooth/bluetooth.h,v 1.2 2005/03/17 21:39:44 emax Exp $
  */
 
@@ -42,28 +42,6 @@
 #include <netbt/hci.h>
 #include <netbt/l2cap.h>
 #include <stdio.h>
-
-/*
- * Bluetooth remote device config information.
- *
- * Entries will be empty if no value was specified
- * in the configuration file.
- */
-typedef struct {
-	bdaddr_t	 bdaddr;		/* device address */
-	int		 type;			/* device type */
-	char		*name;			/* NUL terminated string */
-	uint8_t		*pin;			/* uint8_t[HCI_PIN_SIZE] */
-	uint8_t		*key;			/* uint8_t[HCI_KEY_SIZE] */
-	uint8_t		*hid_descriptor;	/* uint8_t[hid_length] */
-	int		 hid_length;
-	uint16_t	 control_psm;
-	uint8_t		 control_channel;
-	uint16_t	 interrupt_psm;
-	uint8_t		 reconnect_initiate;
-	uint8_t		 normally_connectable;
-	uint8_t		 battery_power;
-} bt_cfgentry_t;
 
 __BEGIN_DECLS
 
@@ -88,15 +66,6 @@ int               bt_aton             (char const *, bdaddr_t *);
 
 int               bt_devaddr          (const char *, bdaddr_t *);
 int               bt_devname          (char *, const bdaddr_t *);
-
-typedef struct	  bt_handle           *bt_handle_t;
-
-bt_handle_t	  bt_openconfig       (const char *);
-bt_cfgentry_t *   bt_getconfig        (bt_handle_t, const bdaddr_t *);
-int		  bt_eachconfig       (bt_handle_t, void (*func)(bt_cfgentry_t *, void *), void *);
-void		  bt_freeconfig       (bt_cfgentry_t *);
-int		  bt_closeconfig      (bt_handle_t);
-int		  bt_printconfig      (FILE *, bt_cfgentry_t *);
 
 #ifdef COMPAT_BLUEZ
 /*
