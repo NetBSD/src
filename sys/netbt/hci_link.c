@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.2 2006/07/26 10:10:06 tron Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.2 2006/07/26 10:10:06 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -43,8 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $")
 
 #include <netbt/bluetooth.h>
 #include <netbt/hci.h>
-#include <netbt/sco.h>
 #include <netbt/l2cap.h>
+#include <netbt/sco.h>
 
 /*******************************************************************************
  *
@@ -68,6 +68,7 @@ struct hci_link *
 hci_acl_open(struct hci_unit *unit, bdaddr_t *bdaddr)
 {
 	struct hci_link *link;
+	struct hci_memo *memo;
 	hci_create_con_cp cp;
 	int err;
 
@@ -92,6 +93,14 @@ hci_acl_open(struct hci_unit *unit, bdaddr_t *bdaddr)
 		memset(&cp, 0, sizeof(cp));
 		bdaddr_copy(&cp.bdaddr, bdaddr);
 		cp.pkt_type = htole16(unit->hci_packet_type);
+
+		memo = hci_memo_find(unit, bdaddr);
+		if (memo != NULL) {
+			cp.page_scan_rep_mode = memo->response.page_scan_rep_mode;
+			cp.page_scan_mode = memo->response.page_scan_mode;
+			cp.clock_offset = memo->response.clock_offset;
+		}
+
 		if (unit->hci_link_policy & HCI_LINK_POLICY_ENABLE_ROLE_SWITCH)
 			cp.accept_role_switch = 1;
 
