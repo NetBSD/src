@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.24 2006/07/23 12:01:26 bouyer Exp $
+# $NetBSD: majors,v 1.25 2006/07/26 10:31:00 tron Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -24,5 +24,5 @@ device-major	fw		char 171		ieee1394if
 device-major	ucycom		char 172		ucycom
 device-major	gpio		char 173		gpio
 device-major	utoppy		char 174		utoppy
-device-major	bthub		char 175		bthub
+device-major	btdev		char 175		btdev
 device-major	amr		char 176		amr
