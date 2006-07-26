@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsi.4,v 1.27 2005/06/20 13:25:24 peter Exp $
+.\"	$NetBSD: scsi.4,v 1.28 2006/07/26 10:59:52 cube Exp $
 .\" Copyright (c) 1996
 .\"	Julian Elischer <julian@freebsd.org>.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 8, 2003
+.Dd July 26, 2006
 .Dt SCSI 4
 .Os
 .Sh NAME
@@ -32,41 +32,8 @@
 .Nm scsibus
 .Nd Small Computer Systems Interface (SCSI) bus driver
 .Sh SYNOPSIS
-.Cd "scsibus* at adv?"
-.Cd "scsibus* at adw?"
-.Cd "scsibus* at aha?"
-.Cd "scsibus* at ahb?"
-.Cd "scsibus* at ahc?"
-.Cd "scsibus* at aic?"
-.Cd "scsibus* at asc?"
-.Cd "scsibus* at bha?"
-.Cd "scsibus* at cosc?"
-.Cd "scsibus* at dpt?"
-.Cd "scsibus* at esp?"
-.Cd "scsibus* at icpsp?"
-.Cd "scsibus* at iha?"
-.Cd "scsibus* at iopsp?"
-.Cd "scsibus* at isp?"
-.Cd "scsibus* at mesh?"
-.Cd "scsibus* at mha?"
-.Cd "scsibus* at mly?"
-.Cd "scsibus* at nca?"
-.Cd "scsibus* at oak?"
-.Cd "scsibus* at oosiop?"
-.Cd "scsibus* at osiop?"
-.Cd "scsibus* at pcscp?"
-.Cd "scsibus* at ptsc?"
-.Cd "scsibus* at sea?"
-.Cd "scsibus* at si?"
-.Cd "scsibus* at siop?"
-.Cd "scsibus* at spc?"
-.Cd "scsibus* at sw?"
-.Cd "scsibus* at trm?"
-.Cd "scsibus* at uha?"
-.Cd "scsibus* at umass?"
-.Cd "scsibus* at wds?"
-.Cd "atapibus* at atabus?"
-.Cd "atapibus* at umass?"
+.Cd "scsibus* at scsi?"
+.Cd "atapibus* at atapi?"
 .Cd options SCSIDEBUG
 .Cd options SCSIVERBOSE
 .Sh DESCRIPTION
