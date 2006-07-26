@@ -1,4 +1,4 @@
-/*	$NetBSD: sdpquery.h,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: sdpquery.h,v 1.2 2006/07/26 10:54:49 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,7 +36,6 @@
 
 extern const char *control_socket;
 
-int do_sdp_config(bdaddr_t *, bdaddr_t *, int, char const **);
 int do_sdp_browse(bdaddr_t *, bdaddr_t *, int, char const **);
 int do_sdp_search(bdaddr_t *, bdaddr_t *, int, char const **);
 
