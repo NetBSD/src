@@ -1,4 +1,4 @@
-.\"	$NetBSD: bthset.1,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+.\"	$NetBSD: bthset.1,v 1.2 2006/07/26 10:43:02 tron Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -45,8 +45,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility is used to control a
-.Xr bthset 4
+utility is used to access a Bluetooth Headset with the
+.Xr btsco 4
 audio device. It opens the mixer device and creates the control connection
 to the headset, then conducts volume settings each way. When
 .Nm
@@ -104,7 +104,7 @@ Be verbose.
 .Pa /dev/mixer
 .Sh SEE ALSO
 .Xr btcontrol 8 ,
-.Xr bthset 4
+.Xr btsco 4
 .Sh AUTHORS
 .An Iain Hibbert
 for Itronix, Inc

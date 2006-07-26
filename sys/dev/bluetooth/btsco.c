@@ -1,4 +1,4 @@
-/*	$NetBSD: bthset.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: btsco.c,v 1.1 2006/07/26 10:43:02 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthset.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.1 2006/07/26 10:43:02 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: bthset.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $");
 #include <sys/proc.h>
 #include <sys/systm.h>
 
+#include <prop/proplib.h>
+
 #include <netbt/bluetooth.h>
 #include <netbt/rfcomm.h>
 #include <netbt/sco.h>
@@ -55,20 +57,20 @@ __KERNEL_RCSID(0, "$NetBSD: bthset.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $");
 #include <dev/mulaw.h>
 
 #include <dev/bluetooth/btdev.h>
-#include <dev/bluetooth/bthset.h>
+#include <dev/bluetooth/btsco.h>
 
 #undef DPRINTF
 #undef DPRINTFN
 
-#ifdef BTHSET_DEBUG
-int bthset_debug = BTHSET_DEBUG;
+#ifdef BTSCO_DEBUG
+int btsco_debug = BTSCO_DEBUG;
 #define DPRINTF(fmt, args...)		do {		\
-	if (bthset_debug)				\
+	if (btsco_debug)				\
 		printf("%s: "fmt, __func__ , ##args);	\
 } while (/* CONSTCOND */0)
 
 #define DPRINTFN(n, fmt, args...)	do {		\
-	if (bthset_debug > (n))				\
+	if (btsco_debug > (n))				\
 		printf("%s: "fmt, __func__ , ##args);	\
 } while (/* CONSTCOND */0)
 #else
@@ -78,14 +80,12 @@ int bthset_debug = BTHSET_DEBUG;
 
 /*****************************************************************************
  *
- *	Bluetooth SCO Audio Headset device
+ *	Bluetooth SCO Audio device
  */
 
-MALLOC_DEFINE(M_BTHSET, "bthset", "Bluetooth Headset Memory");
-
-/* bthset softc */
-struct bthset_softc {
-	struct btdev		 sc_btdev;	/* device+ */
+/* btsco softc */
+struct btsco_softc {
+	struct device		 sc_dev;
 	uint16_t		 sc_flags;
 
 	struct device		*sc_audio;	/* MI audio device */
@@ -96,6 +96,7 @@ struct bthset_softc {
 	bdaddr_t		 sc_raddr;	/* remote address */
 	uint16_t		 sc_state;	/* link state */
 	struct sco_pcb		*sc_sco;	/* SCO handle */
+	struct sco_pcb		*sc_sco_l;	/* SCO listen handle */
 	int			 sc_mtu;	/* SCO mtu */
 	uint8_t			 sc_channel;	/* RFCOMM channel */
 	int			 sc_err;	/* stored error */
@@ -122,162 +123,183 @@ struct bthset_softc {
 };
 
 /* sc_state */
-#define BTHSET_CLOSED		0
-#define BTHSET_WAIT_CONNECT	1
-#define BTHSET_OPEN		2
+#define BTSCO_CLOSED		0
+#define BTSCO_WAIT_CONNECT	1
+#define BTSCO_OPEN		2
 
 /* sc_flags */
-#define BTHSET_GETMTU		(1 << 0)
+#define BTSCO_GETMTU		(1 << 0)
+#define BTSCO_LISTEN		(1 << 1)
 
 /* autoconf(9) glue */
-static int  bthset_match(struct device *, struct cfdata *, void *);
-static void bthset_attach(struct device *, struct device *, void *);
-static int  bthset_detach(struct device *, int);
+static int  btsco_match(struct device *, struct cfdata *, void *);
+static void btsco_attach(struct device *, struct device *, void *);
+static int  btsco_detach(struct device *, int);
 
-CFATTACH_DECL(bthset, sizeof(struct bthset_softc),
-    bthset_match, bthset_attach, bthset_detach, NULL);
+CFATTACH_DECL(btsco, sizeof(struct btsco_softc),
+    btsco_match, btsco_attach, btsco_detach, NULL);
 
 /* audio(9) glue */
-static int bthset_open(void *, int);
-static void bthset_close(void *);
-static int bthset_query_encoding(void *, struct audio_encoding *);
-static int bthset_set_params(void *, int, int, audio_params_t *, audio_params_t *,
+static int btsco_open(void *, int);
+static void btsco_close(void *);
+static int btsco_query_encoding(void *, struct audio_encoding *);
+static int btsco_set_params(void *, int, int, audio_params_t *, audio_params_t *,
 				stream_filter_list_t *, stream_filter_list_t *);
-static int bthset_round_blocksize(void *, int, int, const audio_params_t *);
-static int bthset_start_output(void *, void *, int, void (*)(void *), void *);
-static int bthset_start_input(void *, void *, int, void (*)(void *), void *);
-static int bthset_halt_output(void *);
-static int bthset_halt_input(void *);
-static int bthset_getdev(void *, struct audio_device *);
-static int bthset_setfd(void *, int);
-static int bthset_set_port(void *, mixer_ctrl_t *);
-static int bthset_get_port(void *, mixer_ctrl_t *);
-static int bthset_query_devinfo(void *, mixer_devinfo_t *);
-static void *bthset_allocm(void *, int, size_t, struct malloc_type *, int);
-static void bthset_freem(void *, void *, struct malloc_type *);
-static int bthset_get_props(void *);
-static int bthset_dev_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int btsco_round_blocksize(void *, int, int, const audio_params_t *);
+static int btsco_start_output(void *, void *, int, void (*)(void *), void *);
+static int btsco_start_input(void *, void *, int, void (*)(void *), void *);
+static int btsco_halt_output(void *);
+static int btsco_halt_input(void *);
+static int btsco_getdev(void *, struct audio_device *);
+static int btsco_setfd(void *, int);
+static int btsco_set_port(void *, mixer_ctrl_t *);
+static int btsco_get_port(void *, mixer_ctrl_t *);
+static int btsco_query_devinfo(void *, mixer_devinfo_t *);
+static void *btsco_allocm(void *, int, size_t, struct malloc_type *, int);
+static void btsco_freem(void *, void *, struct malloc_type *);
+static int btsco_get_props(void *);
+static int btsco_dev_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
-static const struct audio_hw_if bthset_if = {
-	bthset_open,		/* open */
-	bthset_close,		/* close */
+static const struct audio_hw_if btsco_if = {
+	btsco_open,		/* open */
+	btsco_close,		/* close */
 	NULL,			/* drain */
-	bthset_query_encoding,	/* query_encoding */
-	bthset_set_params,	/* set_params */
-	bthset_round_blocksize,	/* round_blocksize */
+	btsco_query_encoding,	/* query_encoding */
+	btsco_set_params,	/* set_params */
+	btsco_round_blocksize,	/* round_blocksize */
 	NULL,			/* commit_settings */
 	NULL,			/* init_output */
 	NULL,			/* init_input */
-	bthset_start_output,	/* start_output */
-	bthset_start_input,	/* start_input */
-	bthset_halt_output,	/* halt_output */
-	bthset_halt_input,	/* halt_input */
+	btsco_start_output,	/* start_output */
+	btsco_start_input,	/* start_input */
+	btsco_halt_output,	/* halt_output */
+	btsco_halt_input,	/* halt_input */
 	NULL,			/* speaker_ctl */
-	bthset_getdev,		/* getdev */
-	bthset_setfd,		/* setfd */
-	bthset_set_port,	/* set_port */
-	bthset_get_port,	/* get_port */
-	bthset_query_devinfo,	/* query_devinfo */
-	bthset_allocm,		/* allocm */
-	bthset_freem,		/* freem */
+	btsco_getdev,		/* getdev */
+	btsco_setfd,		/* setfd */
+	btsco_set_port,	/* set_port */
+	btsco_get_port,	/* get_port */
+	btsco_query_devinfo,	/* query_devinfo */
+	btsco_allocm,		/* allocm */
+	btsco_freem,		/* freem */
 	NULL,			/* round_buffersize */
 	NULL,			/* mappage */
-	bthset_get_props,	/* get_props */
+	btsco_get_props,	/* get_props */
 	NULL,			/* trigger_output */
 	NULL,			/* trigger_input */
-	bthset_dev_ioctl,	/* dev_ioctl */
+	btsco_dev_ioctl,	/* dev_ioctl */
 	NULL,			/* powerstate */
 };
 
-static const struct audio_device bthset_device = {
+static const struct audio_device btsco_device = {
 	"Bluetooth Audio",
 	"",
-	"bthset"
+	"btsco"
 };
 
 /* bluetooth(9) glue for SCO */
-static void  bthset_sco_connecting(void *);
-static void  bthset_sco_connected(void *);
-static void  bthset_sco_disconnected(void *, int);
-static void *bthset_sco_newconn(void *, struct sockaddr_bt *, struct sockaddr_bt *);
-static void  bthset_sco_complete(void *, int);
-static void  bthset_sco_input(void *, struct mbuf *);
+static void  btsco_sco_connecting(void *);
+static void  btsco_sco_connected(void *);
+static void  btsco_sco_disconnected(void *, int);
+static void *btsco_sco_newconn(void *, struct sockaddr_bt *, struct sockaddr_bt *);
+static void  btsco_sco_complete(void *, int);
+static void  btsco_sco_input(void *, struct mbuf *);
 
-static const struct btproto bthset_sco_proto = {
-	bthset_sco_connecting,
-	bthset_sco_connected,
-	bthset_sco_disconnected,
-	bthset_sco_newconn,
-	bthset_sco_complete,
-	bthset_sco_input,
+static const struct btproto btsco_sco_proto = {
+	btsco_sco_connecting,
+	btsco_sco_connected,
+	btsco_sco_disconnected,
+	btsco_sco_newconn,
+	btsco_sco_complete,
+	btsco_sco_input,
 };
 
 
 /*****************************************************************************
  *
- *	bthset definitions
+ *	btsco definitions
  */
 
 /*
- * bthset mixer class
+ * btsco mixer class
  */
-#define BTHSET_VGS		0
-#define BTHSET_VGM		1
-#define BTHSET_INPUT_CLASS	2
-#define BTHSET_OUTPUT_CLASS	3
+#define BTSCO_VGS		0
+#define BTSCO_VGM		1
+#define BTSCO_INPUT_CLASS	2
+#define BTSCO_OUTPUT_CLASS	3
 
 /* connect timeout */
-#define BTHSET_TIMEOUT		(30 * hz)
+#define BTSCO_TIMEOUT		(30 * hz)
 
-/* misc bthset functions */
-static void bthset_extfree(struct mbuf *, caddr_t, size_t, void *);
-static void bthset_intr(void *);
+/* misc btsco functions */
+static void btsco_extfree(struct mbuf *, caddr_t, size_t, void *);
+static void btsco_intr(void *);
 
 
 /*****************************************************************************
  *
- *	bthset autoconf(9) routines
+ *	btsco autoconf(9) routines
  */
 
 static int
-bthset_match(struct device *self, struct cfdata *cfdata, void *aux)
+btsco_match(struct device *self, struct cfdata *cfdata, void *aux)
 {
-	struct btdev_attach_args *bda = (struct btdev_attach_args *)aux;
+	prop_dictionary_t dict = aux;
+	prop_object_t obj;
 
-	if (bda->bd_type != BTDEV_HSET
-	    || bdaddr_any(&bda->bd_raddr)
-	    || bda->bd_hset.hset_channel < RFCOMM_CHANNEL_MIN
-	    || bda->bd_hset.hset_channel > RFCOMM_CHANNEL_MAX)
-		return 0;
-
-	return 1;
+	obj = prop_dictionary_get(dict, "device-type");
+	return prop_string_equals_cstring(obj, "btsco");
 }
 
 static void
-bthset_attach(struct device *parent, struct device *self, void *aux)
+btsco_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct bthset_softc *sc = (struct bthset_softc *)self;
-	struct btdev_attach_args *bda = (struct btdev_attach_args *)aux;
+	struct btsco_softc *sc = (struct btsco_softc *)self;
+	prop_dictionary_t dict = aux;
+	prop_object_t obj;
 
 	/*
 	 * Init softc
 	 */
 	sc->sc_vgs = 200;
 	sc->sc_vgm = 200;
-	sc->sc_state = BTHSET_CLOSED;
+	sc->sc_state = BTSCO_CLOSED;
 
 	/*
 	 * copy in our configuration info
 	 */
-	bdaddr_copy(&sc->sc_laddr, &bda->bd_laddr);
-	bdaddr_copy(&sc->sc_raddr, &bda->bd_raddr);
-	sc->sc_channel = bda->bd_hset.hset_channel;
-	sc->sc_mtu = bda->bd_hset.hset_mtu;
-	if (sc->sc_mtu == 0)
-		sc->sc_flags |= BTHSET_GETMTU;
-	else
-		aprint_verbose(" mtu %d", sc->sc_mtu);
+	obj = prop_dictionary_get(dict, "local-bdaddr");
+	bdaddr_copy(&sc->sc_laddr, prop_data_data_nocopy(obj));
 
+	obj = prop_dictionary_get(dict, "remote-bdaddr");
+	bdaddr_copy(&sc->sc_raddr, prop_data_data_nocopy(obj));
+
+	obj = prop_dictionary_get(dict, "mtu");
+	if (obj && prop_object_type(obj) == PROP_TYPE_NUMBER) {
+		sc->sc_mtu = prop_number_integer_value(obj);
+		aprint_verbose(", mtu %d", sc->sc_mtu);
+	} else {
+		sc->sc_flags |= BTSCO_GETMTU;
+	}
+
+	obj = prop_dictionary_get(dict, "listen");
+	if (obj && prop_object_type(obj) == PROP_TYPE_BOOL
+	    && prop_bool_true(obj)) {
+		sc->sc_flags |= BTSCO_LISTEN;
+		aprint_verbose(", listen on");
+	}
+
+	obj = prop_dictionary_get(dict, "rfcomm-channel");
+	if (obj == NULL
+	    || prop_object_type(obj) != PROP_TYPE_NUMBER
+	    || prop_number_integer_value(obj) < RFCOMM_CHANNEL_MIN
+	    || prop_number_integer_value(obj) > RFCOMM_CHANNEL_MAX) {
+		aprint_error(" invalid rfcomm-channel");
+		return;
+	}
+	sc->sc_channel = prop_number_integer_value(obj);
+
+	aprint_verbose(" channel %d", sc->sc_channel);
 	aprint_normal("\n");
 
 	DPRINTF("sc=%p\n", sc);
@@ -285,26 +307,26 @@ bthset_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * set up transmit interrupt
 	 */
-	sc->sc_intr = softintr_establish(IPL_SOFTNET, bthset_intr, sc);
+	sc->sc_intr = softintr_establish(IPL_SOFTNET, btsco_intr, sc);
 	if (sc->sc_intr == NULL) {
-		aprint_error("%s: softintr_establish failed\n", btdev_name(sc));
+		aprint_error("%s: softintr_establish failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
 	/*
 	 * attach audio device
 	 */
-	sc->sc_audio = audio_attach_mi(&bthset_if, sc, &sc->sc_btdev.sc_dev);
+	sc->sc_audio = audio_attach_mi(&btsco_if, sc, &sc->sc_dev);
 	if (sc->sc_audio == NULL) {
-		aprint_error("%s: audio_attach_mi failed\n", btdev_name(sc));
+		aprint_error("%s: audio_attach_mi failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
 }
 
 static int
-bthset_detach(struct device *self, int flags)
+btsco_detach(struct device *self, int flags)
 {
-	struct bthset_softc *sc = (struct bthset_softc *)self;
+	struct btsco_softc *sc = (struct btsco_softc *)self;
 	int s;
 
 	DPRINTF("sc=%p\n", sc);
@@ -315,6 +337,14 @@ bthset_detach(struct device *self, int flags)
 		sco_disconnect(sc->sc_sco, 0);
 		sco_detach(&sc->sc_sco);
 		sc->sc_sco = NULL;
+		splx(s);
+	}
+
+	if (sc->sc_sco_l != NULL) {
+		DPRINTF("sc_sco_l=%p\n", sc->sc_sco_l);
+		s = splsoftnet();
+		sco_detach(&sc->sc_sco_l);
+		sc->sc_sco_l = NULL;
 		splx(s);
 	}
 
@@ -336,7 +366,7 @@ bthset_detach(struct device *self, int flags)
 
 	if (sc->sc_tx_refcnt > 0) {
 		printf("%s: tx_refcnt=%d!\n",
-			btdev_name(sc), sc->sc_tx_refcnt);
+			sc->sc_dev.dv_xname, sc->sc_tx_refcnt);
 
 		if ((flags & DETACH_FORCE) == 0)
 			return EAGAIN;
@@ -355,35 +385,33 @@ bthset_detach(struct device *self, int flags)
  */
 
 static void
-bthset_sco_connecting(void *arg)
+btsco_sco_connecting(void *arg)
 {
-//	struct bthset_softc *sc = arg;
-
-	DPRINTF("%s\n", btdev_name(arg));
+/*	struct btsco_softc *sc = arg;	*/
 
 	/* dont care */
 }
 
 static void
-bthset_sco_connected(void *arg)
+btsco_sco_connected(void *arg)
 {
-	struct bthset_softc *sc = arg;
+	struct btsco_softc *sc = arg;
 
-	DPRINTF("%s\n", btdev_name(sc));
+	DPRINTF("%s\n", sc->sc_dev.dv_xname);
 
 	KASSERT(sc->sc_sco != NULL);
-	KASSERT(sc->sc_state == BTHSET_WAIT_CONNECT);
+	KASSERT(sc->sc_state == BTSCO_WAIT_CONNECT);
 
-	sc->sc_state = BTHSET_OPEN;
+	sc->sc_state = BTSCO_OPEN;
 	wakeup(sc);
 }
 
 static void
-bthset_sco_disconnected(void *arg, int err)
+btsco_sco_disconnected(void *arg, int err)
 {
-	struct bthset_softc *sc = arg;
+	struct btsco_softc *sc = arg;
 
-	DPRINTF("%s sc_state %d\n", btdev_name(sc), sc->sc_state);
+	DPRINTF("%s sc_state %d\n", sc->sc_dev.dv_xname, sc->sc_state);
 
 	KASSERT(sc->sc_sco != NULL);
 
@@ -391,40 +419,47 @@ bthset_sco_disconnected(void *arg, int err)
 	sco_detach(&sc->sc_sco);
 
 	switch (sc->sc_state) {
-	case BTHSET_CLOSED:		/* dont think this can happen */
+	case BTSCO_CLOSED:		/* dont think this can happen */
 		break;
 
-	case BTHSET_WAIT_CONNECT:	/* connect failed */
+	case BTSCO_WAIT_CONNECT:	/* connect failed */
 		wakeup(sc);
 		break;
 
-	case BTHSET_OPEN:		/* link lost, XXX */
+	case BTSCO_OPEN:		/* link lost */
+		/* XXX what to do here? */
+		/* if LISTEN is set, go back to listening? */
 		break;
 
 	default:
 		UNKNOWN(sc->sc_state);
 	}
 
-	sc->sc_state = BTHSET_CLOSED;
+	sc->sc_state = BTSCO_CLOSED;
 }
 
 static void *
-bthset_sco_newconn(void *arg, struct sockaddr_bt *laddr, struct sockaddr_bt *raddr)
+btsco_sco_newconn(void *arg, struct sockaddr_bt *laddr, struct sockaddr_bt *raddr)
 {
-//	struct bthset_softc *sc = arg;
+	struct btsco_softc *sc = arg;
 
-	DPRINTF("%s\n", btdev_name(arg));
+	DPRINTF("%s\n", sc->sc_dev.dv_xname);
+	if (bdaddr_same(&raddr->bt_bdaddr, &sc->sc_raddr) == 0
+	    || sc->sc_state != BTSCO_WAIT_CONNECT
+	    || sc->sc_sco != NULL)
+	    return NULL;
 
-	return NULL;
+	sco_attach(&sc->sc_sco, &btsco_sco_proto, sc);
+	return sc->sc_sco;
 }
 
 static void
-bthset_sco_complete(void *arg, int count)
+btsco_sco_complete(void *arg, int count)
 {
-	struct bthset_softc *sc = arg;
+	struct btsco_softc *sc = arg;
 	int s;
 
-	DPRINTFN(10, "%s count %d\n", btdev_name(sc), count);
+	DPRINTFN(10, "%s count %d\n", sc->sc_dev.dv_xname, count);
 
 	s = splaudio();
 	if (sc->sc_tx_pending > 0) {
@@ -436,12 +471,12 @@ bthset_sco_complete(void *arg, int count)
 }
 
 static void
-bthset_sco_input(void *arg, struct mbuf *m)
+btsco_sco_input(void *arg, struct mbuf *m)
 {
-	struct bthset_softc *sc = arg;
+	struct btsco_softc *sc = arg;
 	int len, s;
 
-	DPRINTFN(10, "%s len=%d\n", btdev_name(sc), m->m_pkthdr.len);
+	DPRINTFN(10, "%s len=%d\n", sc->sc_dev.dv_xname, m->m_pkthdr.len);
 
 	s = splaudio();
 	if (sc->sc_rx_want == 0) {
@@ -480,58 +515,80 @@ bthset_sco_input(void *arg, struct mbuf *m)
  */
 
 static int
-bthset_open(void *hdl, int flags)
+btsco_open(void *hdl, int flags)
 {
 	struct sockaddr_bt sa;
-	struct bthset_softc *sc = hdl;
+	struct btsco_softc *sc = hdl;
 	int err, s;
 
-	DPRINTF("%s flags 0x%x\n", btdev_name(sc), flags);
-	// flags FREAD & FWRITE?
+	DPRINTF("%s flags 0x%x\n", sc->sc_dev.dv_xname, flags);
+	/* flags FREAD & FWRITE? */
 
-	if (sc->sc_sco != NULL)
+	if (sc->sc_sco != NULL || sc->sc_sco_l != NULL)
 		return EIO;
 
 	s = splsoftnet();
-
-	err = sco_attach(&sc->sc_sco, &bthset_sco_proto, sc);
-	if (err)
-		goto done;
 
 	memset(&sa, 0, sizeof(sa));
 	sa.bt_len = sizeof(sa);
 	sa.bt_family = AF_BLUETOOTH;
 	bdaddr_copy(&sa.bt_bdaddr, &sc->sc_laddr);
 
-	err = sco_bind(sc->sc_sco, &sa);
-	if (err) {
-		sco_detach(&sc->sc_sco);
-		goto done;
+	if (sc->sc_flags & BTSCO_LISTEN) {
+		err = sco_attach(&sc->sc_sco_l, &btsco_sco_proto, sc);
+		if (err)
+			goto done;
+
+		err = sco_bind(sc->sc_sco_l, &sa);
+		if (err) {
+			sco_detach(&sc->sc_sco_l);
+			goto done;
+		}
+
+		err = sco_listen(sc->sc_sco_l);
+		if (err) {
+			sco_detach(&sc->sc_sco_l);
+			goto done;
+		}
+	} else {
+		err = sco_attach(&sc->sc_sco, &btsco_sco_proto, sc);
+		if (err)
+			goto done;
+
+		err = sco_bind(sc->sc_sco, &sa);
+		if (err) {
+			sco_detach(&sc->sc_sco);
+			goto done;
+		}
+
+		bdaddr_copy(&sa.bt_bdaddr, &sc->sc_raddr);
+		err = sco_connect(sc->sc_sco, &sa);
+		if (err) {
+			sco_detach(&sc->sc_sco);
+			goto done;
+		}
 	}
 
-	bdaddr_copy(&sa.bt_bdaddr, &sc->sc_raddr);
-	err = sco_connect(sc->sc_sco, &sa);
-	if (err) {
-		sco_detach(&sc->sc_sco);
-		goto done;
-	}
-
-	sc->sc_state = BTHSET_WAIT_CONNECT;
-	while (err == 0 && sc->sc_state == BTHSET_WAIT_CONNECT)
-		err = tsleep(sc, PWAIT | PCATCH, "bthset", BTHSET_TIMEOUT);
+	sc->sc_state = BTSCO_WAIT_CONNECT;
+	while (err == 0 && sc->sc_state == BTSCO_WAIT_CONNECT)
+		err = tsleep(sc, PWAIT | PCATCH, "btsco", BTSCO_TIMEOUT);
 
 	switch (sc->sc_state) {
-	case BTHSET_CLOSED:		/* disconnected */
-		sco_detach(&sc->sc_sco);
+	case BTSCO_CLOSED:		/* disconnected */
 		err = sc->sc_err;
+
+		/* fall through to */
+	case BTSCO_WAIT_CONNECT:	/* error */
+		if (sc->sc_sco != NULL)
+			sco_detach(&sc->sc_sco);
+
+		if (sc->sc_sco_l != NULL)
+			sco_detach(&sc->sc_sco_l);
+
 		break;
 
-	case BTHSET_WAIT_CONNECT:	/* error */
-		sco_detach(&sc->sc_sco);
-		break;
-
-	case BTHSET_OPEN:		/* hurrah */
-		if (sc->sc_flags & BTHSET_GETMTU)
+	case BTSCO_OPEN:		/* hurrah */
+		if (sc->sc_flags & BTSCO_GETMTU)
 			sco_getopt(sc->sc_sco, SO_SCO_MTU, &sc->sc_mtu);
 
 		break;
@@ -550,17 +607,23 @@ done:
 }
 
 static void
-bthset_close(void *hdl)
+btsco_close(void *hdl)
 {
-	struct bthset_softc *sc = hdl;
+	struct btsco_softc *sc = hdl;
 	int s;
 
-	DPRINTF("%s\n", btdev_name(sc));
+	DPRINTF("%s\n", sc->sc_dev.dv_xname);
 
 	if (sc->sc_sco != NULL) {
 		s = splsoftnet();
 		sco_disconnect(sc->sc_sco, 0);
 		sco_detach(&sc->sc_sco);
+		splx(s);
+	}
+
+	if (sc->sc_sco_l != NULL) {
+		s = splsoftnet();
+		sco_detach(&sc->sc_sco_l);
 		splx(s);
 	}
 
@@ -582,12 +645,10 @@ bthset_close(void *hdl)
 }
 
 static int
-bthset_query_encoding(void *hdl, struct audio_encoding *ae)
+btsco_query_encoding(void *hdl, struct audio_encoding *ae)
 {
-//	struct bthset_softc *sc = hdl;
+/*	struct btsco_softc *sc = hdl;	*/
 	int err = 0;
-
-	DPRINTF("%s index %d\n", btdev_name(hdl), ae->index);
 
 	switch (ae->index) {
 	case 0:
@@ -605,15 +666,15 @@ bthset_query_encoding(void *hdl, struct audio_encoding *ae)
 }
 
 static int
-bthset_set_params(void *hdl, int setmode, int usemode,
+btsco_set_params(void *hdl, int setmode, int usemode,
 		audio_params_t *play, audio_params_t *rec,
 		stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
-//	struct bthset_softc *sc = hdl;
+/*	struct btsco_softc *sc = hdl;	*/
 	audio_params_t hw;
 	int err = 0;
 
-	DPRINTF("%s setmode 0x%x usemode 0x%x\n", btdev_name(hdl), setmode, usemode);
+	DPRINTF("setmode 0x%x usemode 0x%x\n", setmode, usemode);
 	DPRINTF("rate %d, precision %d, channels %d encoding %d\n",
 		play->sample_rate, play->precision, play->channels, play->encoding);
 
@@ -660,15 +721,15 @@ bthset_set_params(void *hdl, int setmode, int usemode,
  * If we have an MTU value to use, round the blocksize to that.
  */
 static int
-bthset_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
+btsco_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
 {
-	struct bthset_softc *sc = hdl;
+	struct btsco_softc *sc = hdl;
 
 	if (sc->sc_mtu > 0)
 		bs = (bs / sc->sc_mtu) * sc->sc_mtu;
 	
 	DPRINTF("%s mode=0x%x, bs=%d, sc_mtu=%d\n",
-			btdev_name(sc), mode, bs, sc->sc_mtu);
+			sc->sc_dev.dv_xname, mode, bs, sc->sc_mtu);
 
 	return bs;
 }
@@ -681,12 +742,15 @@ bthset_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
  * it up and queue it.
  */
 static int
-bthset_start_output(void *hdl, void *block, int blksize,
+btsco_start_output(void *hdl, void *block, int blksize,
 		void (*intr)(void *), void *intrarg)
 {
-	struct bthset_softc *sc = hdl;
+	struct btsco_softc *sc = hdl;
 
-	DPRINTFN(5, "%s blksize %d\n", btdev_name(sc), blksize);
+	DPRINTFN(5, "%s blksize %d\n", sc->sc_dev.dv_xname, blksize);
+
+	if (sc->sc_sco == NULL)
+		return ENOTCONN;	/* connection lost */
 
 	sc->sc_tx_block = block;
 	sc->sc_tx_pending = 0;
@@ -705,17 +769,17 @@ bthset_start_output(void *hdl, void *block, int blksize,
  * is note what we want and where to put it and let the sco_input routine
  * fill in the data.
  *
- * If there was any leftover data that didnt fit in the last block, retry 
+ * If there was any leftover data that didnt fit in the last block, retry
  * it now.
  */
 static int
-bthset_start_input(void *hdl, void *block, int blksize,
+btsco_start_input(void *hdl, void *block, int blksize,
 		void (*intr)(void *), void *intrarg)
 {
-	struct bthset_softc *sc = hdl;
+	struct btsco_softc *sc = hdl;
 	struct mbuf *m;
 
-	DPRINTFN(5, "%s blksize %d\n", btdev_name(sc), blksize);
+	DPRINTFN(5, "%s blksize %d\n", sc->sc_dev.dv_xname, blksize);
 
 	if (sc->sc_sco == NULL)
 		return EINVAL;
@@ -728,7 +792,7 @@ bthset_start_input(void *hdl, void *block, int blksize,
 	if (sc->sc_rx_mbuf != NULL) {
 		m = sc->sc_rx_mbuf;
 		sc->sc_rx_mbuf = NULL;
-		bthset_sco_input(sc, m);
+		btsco_sco_input(sc, m);
 	}
 
 	return 0;
@@ -742,11 +806,11 @@ bthset_start_input(void *hdl, void *block, int blksize,
  * still be transmitted.
  */
 static int
-bthset_halt_output(void *hdl)
+btsco_halt_output(void *hdl)
 {
-	struct bthset_softc *sc = hdl;
+	struct btsco_softc *sc = hdl;
 
-	DPRINTFN(5, "%s\n", btdev_name(sc));
+	DPRINTFN(5, "%s\n", sc->sc_dev.dv_xname);
 
 	sc->sc_tx_size = 0;
 	sc->sc_tx_block = NULL;
@@ -765,11 +829,11 @@ bthset_halt_output(void *hdl)
  * discarded.
  */
 static int
-bthset_halt_input(void *hdl)
+btsco_halt_input(void *hdl)
 {
-	struct bthset_softc *sc = hdl;
+	struct btsco_softc *sc = hdl;
 
-	DPRINTFN(5, "%s\n", btdev_name(sc));
+	DPRINTFN(5, "%s\n", sc->sc_dev.dv_xname);
 
 	sc->sc_rx_want = 0;
 	sc->sc_rx_block = NULL;
@@ -785,33 +849,33 @@ bthset_halt_input(void *hdl)
 }
 
 static int
-bthset_getdev(void *hdl, struct audio_device *ret)
+btsco_getdev(void *hdl, struct audio_device *ret)
 {
 
-	*ret = bthset_device;
+	*ret = btsco_device;
 	return 0;
 }
 
 static int
-bthset_setfd(void *hdl, int fd)
+btsco_setfd(void *hdl, int fd)
 {
-//	struct bthset_softc *sc = hdl;
+/*	struct btsco_softc *sc = hdl;	*/
 
-	DPRINTF("%s set %s duplex\n", btdev_name(hdl), fd ? "full" : "half");
+	DPRINTF("set %s duplex\n", fd ? "full" : "half");
 
 	return 0;
 }
 
 static int
-bthset_set_port(void *hdl, mixer_ctrl_t *mc)
+btsco_set_port(void *hdl, mixer_ctrl_t *mc)
 {
-	struct bthset_softc *sc = hdl;
+	struct btsco_softc *sc = hdl;
 	int err = 0;
 
-	DPRINTF("%s dev %d type %d\n", btdev_name(sc), mc->dev, mc->type);
+	DPRINTF("%s dev %d type %d\n", sc->sc_dev.dv_xname, mc->dev, mc->type);
 
 	switch (mc->dev) {
-	case BTHSET_VGS:
+	case BTSCO_VGS:
 		if (mc->type != AUDIO_MIXER_VALUE ||
 		    mc->un.value.num_channels != 1) {
 			err = EINVAL;
@@ -821,7 +885,7 @@ bthset_set_port(void *hdl, mixer_ctrl_t *mc)
 		sc->sc_vgs = mc->un.value.level[AUDIO_MIXER_LEVEL_MONO];
 		break;
 
-	case BTHSET_VGM:
+	case BTSCO_VGM:
 		if (mc->type != AUDIO_MIXER_VALUE ||
 		    mc->un.value.num_channels != 1) {
 			err = EINVAL;
@@ -840,21 +904,21 @@ bthset_set_port(void *hdl, mixer_ctrl_t *mc)
 }
 
 static int
-bthset_get_port(void *hdl, mixer_ctrl_t *mc)
+btsco_get_port(void *hdl, mixer_ctrl_t *mc)
 {
-	struct bthset_softc *sc = hdl;
+	struct btsco_softc *sc = hdl;
 	int err = 0;
 
-	DPRINTF("%s dev %d\n", btdev_name(sc), mc->dev);
+	DPRINTF("%s dev %d\n", sc->sc_dev.dv_xname, mc->dev);
 
 	switch (mc->dev) {
-	case BTHSET_VGS:
+	case BTSCO_VGS:
 		mc->type = AUDIO_MIXER_VALUE;
 		mc->un.value.num_channels = 1;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_vgs;
 		break;
 
-	case BTHSET_VGM:
+	case BTSCO_VGM:
 		mc->type = AUDIO_MIXER_VALUE;
 		mc->un.value.num_channels = 1;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_vgm;
@@ -869,36 +933,34 @@ bthset_get_port(void *hdl, mixer_ctrl_t *mc)
 }
 
 static int
-bthset_query_devinfo(void *hdl, mixer_devinfo_t *di)
+btsco_query_devinfo(void *hdl, mixer_devinfo_t *di)
 {
-//	struct bthset_softc *sc = hdl;
+/*	struct btsco_softc *sc = hdl;	*/
 	int err = 0;
 
-	DPRINTF("%s index %d\n", btdev_name(hdl), di->index);
-
 	switch(di->index) {
-	case BTHSET_VGS:
-		di->mixer_class = BTHSET_INPUT_CLASS;
+	case BTSCO_VGS:
+		di->mixer_class = BTSCO_INPUT_CLASS;
 		di->next = di->prev = AUDIO_MIXER_LAST;
 		strcpy(di->label.name, AudioNspeaker);
 		di->type = AUDIO_MIXER_VALUE;
 		strcpy(di->un.v.units.name, AudioNvolume);
 		di->un.v.num_channels = 1;
-		di->un.v.delta = BTHSET_DELTA;
+		di->un.v.delta = BTSCO_DELTA;
 		break;
 
-	case BTHSET_VGM:
-		di->mixer_class = BTHSET_INPUT_CLASS;
+	case BTSCO_VGM:
+		di->mixer_class = BTSCO_INPUT_CLASS;
 		di->next = di->prev = AUDIO_MIXER_LAST;
 		strcpy(di->label.name, AudioNmicrophone);
 		di->type = AUDIO_MIXER_VALUE;
 		strcpy(di->un.v.units.name, AudioNvolume);
 		di->un.v.num_channels = 1;
-		di->un.v.delta = BTHSET_DELTA;
+		di->un.v.delta = BTSCO_DELTA;
 		break;
 
-	case BTHSET_INPUT_CLASS:
-		di->mixer_class = BTHSET_INPUT_CLASS;
+	case BTSCO_INPUT_CLASS:
+		di->mixer_class = BTSCO_INPUT_CLASS;
 		di->next = di->prev = AUDIO_MIXER_LAST;
 		strcpy(di->label.name, AudioCinputs);
 		di->type = AUDIO_MIXER_CLASS;
@@ -916,14 +978,14 @@ bthset_query_devinfo(void *hdl, mixer_devinfo_t *di)
  * Allocate Ring Buffers.
  */
 static void *
-bthset_allocm(void *hdl, int direction, size_t size,
+btsco_allocm(void *hdl, int direction, size_t size,
 		struct malloc_type *type, int flags)
 {
-	struct bthset_softc *sc = hdl;
+	struct btsco_softc *sc = hdl;
 	void *addr;
 
 	DPRINTF("%s: size %d direction %d\n",
-			btdev_name(hdl), size, direction);
+			sc->sc_dev.dv_xname, size, direction);
 
 	addr = malloc(size, type, flags);
 
@@ -945,14 +1007,14 @@ bthset_allocm(void *hdl, int direction, size_t size,
  * This would be a memory leak but at least there is a warning..
  */
 static void
-bthset_freem(void *hdl, void *addr, struct malloc_type *type)
+btsco_freem(void *hdl, void *addr, struct malloc_type *type)
 {
-	struct bthset_softc *sc = hdl;
+	struct btsco_softc *sc = hdl;
 	int count = hz / 2;
 
 	if (addr == sc->sc_tx_buf) {
 		DPRINTF("%s: tx_refcnt=%d\n",
-			btdev_name(sc), sc->sc_tx_refcnt);
+			sc->sc_dev.dv_xname, sc->sc_tx_refcnt);
 
 		sc->sc_tx_buf = NULL;
 
@@ -960,7 +1022,7 @@ bthset_freem(void *hdl, void *addr, struct malloc_type *type)
 			tsleep(sc, PWAIT, "drain", 1);
 
 		if (sc->sc_tx_refcnt > 0) {
-			printf("%s: ring buffer unreleased!\n", btdev_name(sc));
+			printf("%s: ring buffer unreleased!\n", sc->sc_dev.dv_xname);
 			return;
 		}
 	}
@@ -969,7 +1031,7 @@ bthset_freem(void *hdl, void *addr, struct malloc_type *type)
 }
 
 static int
-bthset_get_props(void *hdl)
+btsco_get_props(void *hdl)
 {
 
 	return AUDIO_PROP_FULLDUPLEX;
@@ -980,22 +1042,22 @@ bthset_get_props(void *hdl)
  * to the device and mixer.
  */
 static int
-bthset_dev_ioctl(void *hdl, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+btsco_dev_ioctl(void *hdl, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
-	struct bthset_softc *sc = hdl;
-	struct bthset_info *bi = (struct bthset_info *)addr;
+	struct btsco_softc *sc = hdl;
+	struct btsco_info *bi = (struct btsco_info *)addr;
 	int err = 0;
 
-	DPRINTF("%s cmd 0x%lx flag %d\n", btdev_name(sc), cmd, flag);
+	DPRINTF("%s cmd 0x%lx flag %d\n", sc->sc_dev.dv_xname, cmd, flag);
 
 	switch (cmd) {
-	case BTHSET_GETINFO:
+	case BTSCO_GETINFO:
 		memset(bi, 0, sizeof(*bi));
 		bdaddr_copy(&bi->laddr, &sc->sc_laddr);
 		bdaddr_copy(&bi->raddr, &sc->sc_raddr);
 		bi->channel = sc->sc_channel;
-		bi->vgs = BTHSET_VGS;
-		bi->vgm = BTHSET_VGM;
+		bi->vgs = BTSCO_VGS;
+		bi->vgm = BTSCO_VGM;
 		break;
 
 	default:
@@ -1009,7 +1071,7 @@ bthset_dev_ioctl(void *hdl, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 
 /*****************************************************************************
  *
- *	misc bthset functions
+ *	misc btsco functions
  *
  */
 
@@ -1019,15 +1081,18 @@ bthset_dev_ioctl(void *hdl, u_long cmd, caddr_t addr, int flag, struct lwp *l)
  * storage to sco_send()
  */
 static void
-bthset_intr(void *arg)
+btsco_intr(void *arg)
 {
-	struct bthset_softc *sc = arg;
+	struct btsco_softc *sc = arg;
 	struct mbuf *m;
 	uint8_t *block;
 	int mlen, size;
 
 	DPRINTFN(10, "%s block %p size %d\n",
-		btdev_name(sc), sc->sc_tx_block, sc->sc_tx_size);
+		sc->sc_dev.dv_xname, sc->sc_tx_block, sc->sc_tx_size);
+
+	if (sc->sc_sco == NULL)
+		return;		/* connection is lost */
 
 	block = sc->sc_tx_block;
 	size = sc->sc_tx_size;
@@ -1042,7 +1107,7 @@ bthset_intr(void *arg)
 		mlen = MIN(sc->sc_mtu, size);
 
 		/* I think M_DEVBUF is true but not relevant */
-		MEXTADD(m, block, mlen, M_DEVBUF, bthset_extfree, sc);
+		MEXTADD(m, block, mlen, M_DEVBUF, btsco_extfree, sc);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_free(m);
 			break;
@@ -1068,9 +1133,9 @@ bthset_intr(void *arg)
  * that we dont release it before its free.
  */
 static void
-bthset_extfree(struct mbuf *m, caddr_t addr, size_t size, void *arg)
+btsco_extfree(struct mbuf *m, caddr_t addr, size_t size, void *arg)
 {
-	struct bthset_softc *sc = arg;
+	struct btsco_softc *sc = arg;
 
 	if (m != NULL)
 		pool_cache_put(&mbpool_cache, m);
