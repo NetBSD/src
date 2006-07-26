@@ -1,4 +1,4 @@
-.\" $NetBSD: bthset.4,v 1.1 2006/06/19 15:44:36 gdamore Exp $
+.\" $NetBSD: btsco.4,v 1.1 2006/07/26 10:43:02 tron Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -29,48 +29,89 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 17, 2006
-.Dt BTHSET 4
+.Dd Jul 9, 2006
+.Dt BTSCO 4
 .Os
 .Sh NAME
-.Nm bthset
-.Nd Bluetooth headset support
+.Nm btsco
+.Nd Bluetooth SCO Audio
 .Sh SYNOPSIS
-.Cd "bthset*	at bthub?"
+.Cd "btsco*	at btdev?"
 .Cd "audio*	at audiobus?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Bluetooth Headsets, and only supports
+driver provides support for Bluetooth SCO Audio devices through the
+.Xr audio 4
+driver, and only supports
 playing and recording of 8kHz, 16-bit, 1 channel, signed linear samples.
 .Pp
 The
 .Nm
 driver must be configured at run time with the
 .Xr btcontrol 8
-program and provides system access through the
-.Xr audio 4
-driver. In order to utilise the resulting audio device, the
-user should first open a control channel to the headset with the
-.Xr bthset 1
-utility, which uses the
-.Dv BTHSET_GETINFO
-.Xr ioctl 2 ,
-to return a
-.Ar bthset_info
-structure as follows with information needed to set up the
-control channel:
+program. The following properties are used by the
+.Nm
+driver during autoconfiguration:
+.Pp
+.Bl -tag -width listenXX
+.It local-bdaddr
+Local device address.
+.It remote-bdaddr
+Remote device address.
+.It device-type
+Should be
+.Sq btsco ,
+indicating an SCO Audio device.
+.It mtu
+Packet Size to use, see Caveat section below for details.
+.It listen
+If this boolean value exists and is true, the
+.Nm
+device will, on
+.Xr open 2 ,
+listen for incoming connections from the remote device. Otherwise,
+.Nm
+will attempt to initiate a connection to the remote device.
+.It rfcomm-channel
+This integer value is not used directly, but will be stored and passed via the
+.Dv BTSCO_INFO
+ioctl as below:
+.El
+.Pp
+SCO connections require a baseband connection between the two devices before
+they can be created. The
+.Nm
+driver does not create this, but can provide information to facilitate
+an application setting up a control channel prior to use, via the
+.Dv BTSCO_INFO
+.Xr ioctl 2
+call on the mixer device, which returns a
+.Ar btsco_info
+structure as follows:
 .Bd -literal -offset
-#include <dev/bluetooth/bthset.h>
+#include <dev/bluetooth/btsco.h>
 
-struct bthset_info {
+struct btsco_info {
 	bdaddr_t	laddr;		/* controller bdaddr */
 	bdaddr_t	raddr;		/* headset bdaddr */
 	uint8_t		channel;	/* RFCOMM channel */
 	int		vgs;		/* mixer index speaker */
 	int		vgm;		/* mixer index mic */
 };
+
+#define BTSCO_INFO	_IOR('b', 16, struct btsco_info)
 .Ed
+.Pp
+The
+.Nm
+driver can be configured to act in Connect or Listen mode. In Connect mode, the
+.Nm
+driver will initate a connection to the remote device on an
+.Xr open 2
+call, whereas in Listen mode,
+.Xr open 2
+will block until the remote device initiates the connection.
 .Sh CAVEATS
 Isochronous data is seemingly not well supported over USB in the current system
 and to get a headset working, you will have to do some research and fine tuning.
@@ -90,7 +131,7 @@ for now) so am using configuration number 2, with a frame length of 17
 bytes. My USB dongle says the maximum SCO payload is 64 bytes, so I am
 using an MTU of 48 bytes (17 * 3 - 3 = 48).
 .Pp
-Specify the MTU when you attach the headset with
+Specify the MTU when you configure the SCO audio device with
 .Xr btcontrol 8 
 and all should be well.
 .Pp
@@ -100,7 +141,8 @@ up and requires removal/reinsertion to clear.
 .Xr audio 4 ,
 .Xr bluetooth 4 ,
 .Xr btcontrol 8 ,
-.Xr bthub 4 ,
+.Xr btdev 4 ,
+.Xr bthset 1 ,
 .Xr ioctl 2
 .Sh HISTORY
 The

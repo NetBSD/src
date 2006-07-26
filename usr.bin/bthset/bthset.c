@@ -1,4 +1,4 @@
-/*	$NetBSD: bthset.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: bthset.c,v 1.2 2006/07/26 10:43:02 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: bthset.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: bthset.c,v 1.2 2006/07/26 10:43:02 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -54,12 +54,11 @@ __RCSID("$NetBSD: bthset.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
 #include <unistd.h>
 
 #include <dev/bluetooth/btdev.h>
-#include <dev/bluetooth/bthset.h>
+#include <dev/bluetooth/btsco.h>
 
 #include <netbt/rfcomm.h>
 
 #define RING_INTERVAL	5	/* seconds */
-#define BTHSET_DELTA	16
 
 int  main(int, char *[]);
 void usage(void);
@@ -71,9 +70,9 @@ void do_rfcomm(int, short, void *);
 void do_server(int, short, void *);
 int send_rfcomm(const char *, ...);
 
-int init_mixer(struct bthset_info *, const char *);
-int init_rfcomm(struct bthset_info *);
-int init_server(struct bthset_info *, int);
+int init_mixer(struct btsco_info *, const char *);
+int init_rfcomm(struct btsco_info *);
+int init_server(struct btsco_info *, int);
 
 void remove_pid(void);
 int write_pid(void);
@@ -101,7 +100,7 @@ char *pidfile;		/* PID file name */
 int
 main(int ac, char *av[])
 {
-	struct bthset_info	info;
+	struct btsco_info	info;
 	const char		*mixer;
 	int			ch, channel;
 
@@ -259,7 +258,7 @@ do_mixer(int s, short ev, void *arg)
 
 	if (memcmp(&vgs, &mc, sizeof(mc))) {
 		memcpy(&vgs, &mc, sizeof(mc));
-		level = mc.un.value.level[AUDIO_MIXER_LEVEL_MONO] / BTHSET_DELTA;
+		level = mc.un.value.level[AUDIO_MIXER_LEVEL_MONO] / BTSCO_DELTA;
 
 		send_rfcomm("+VGS=%d", level);
 	}
@@ -270,7 +269,7 @@ do_mixer(int s, short ev, void *arg)
 
 	if (memcmp(&vgm, &mc, sizeof(mc))) {
 		memcpy(&vgm, &mc, sizeof(mc));
-		level = mc.un.value.level[AUDIO_MIXER_LEVEL_MONO] / BTHSET_DELTA;
+		level = mc.un.value.level[AUDIO_MIXER_LEVEL_MONO] / BTSCO_DELTA;
 
 		send_rfcomm("+VGM=%d", level);
 	}
@@ -319,7 +318,7 @@ do_rfcomm(int fd, short ev, void *arg)
 		if (level < 0 || level > 15)
 			return;
 
-		vgs.un.value.level[AUDIO_MIXER_LEVEL_MONO] = level * BTHSET_DELTA;
+		vgs.un.value.level[AUDIO_MIXER_LEVEL_MONO] = level * BTSCO_DELTA;
 		if (ioctl(mx, AUDIO_MIXER_WRITE, &vgs) < 0)
 			return;
 
@@ -332,7 +331,7 @@ do_rfcomm(int fd, short ev, void *arg)
 		if (level < 0 || level > 15)
 			return;
 
-		vgm.un.value.level[AUDIO_MIXER_LEVEL_MONO] = level * BTHSET_DELTA;
+		vgm.un.value.level[AUDIO_MIXER_LEVEL_MONO] = level * BTSCO_DELTA;
 		if (ioctl(mx, AUDIO_MIXER_WRITE, &vgm) < 0)
 			return;
 
@@ -405,14 +404,14 @@ send_rfcomm(const char *msg, ...)
  * Initialise mixer event
  */
 int
-init_mixer(struct bthset_info *info, const char *mixer)
+init_mixer(struct btsco_info *info, const char *mixer)
 {
 
 	mx = open(mixer, O_WRONLY, 0);
 	if (mx < 0)
 		return -1;
 
-	if (ioctl(mx, BTHSET_GETINFO, info) < 0)
+	if (ioctl(mx, BTSCO_GETINFO, info) < 0)
 		return -1;
 
 	/* get initial vol settings */
@@ -441,7 +440,7 @@ init_mixer(struct bthset_info *info, const char *mixer)
  * Initialise RFCOMM socket
  */
 int
-init_rfcomm(struct bthset_info *info)
+init_rfcomm(struct btsco_info *info)
 {
 	struct sockaddr_bt addr;
 
@@ -474,7 +473,7 @@ init_rfcomm(struct bthset_info *info)
  * Initialise server socket
  */
 int
-init_server(struct bthset_info *info, int channel)
+init_server(struct btsco_info *info, int channel)
 {
 	sdp_hset_profile_t hset;
 	struct sockaddr_bt addr;

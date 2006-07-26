@@ -1,4 +1,4 @@
-/*	$NetBSD: bthset.h,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: btsco.h,v 1.1 2006/07/26 10:43:02 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -31,24 +31,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_BLUETOOTH_BTHSET_H_
-#define _DEV_BLUETOOTH_BTHSET_H_
+#ifndef _DEV_BLUETOOTH_BTSCO_H_
+#define _DEV_BLUETOOTH_BTSCO_H_
 
 /*
- * We need to provide a way to get the Headset contact information
+ * We need to provide a way to get the SCO Audio contact information
  * from the audio device so that the control channel can be set up
  */
 
-struct bthset_info {
-	bdaddr_t	laddr;		/* controller */
-	bdaddr_t	raddr;		/* headset */
+struct btsco_info {
+	bdaddr_t	laddr;		/* controller addr */
+	bdaddr_t	raddr;		/* remote addr */
 	uint8_t		channel;	/* RFCOMM channel */
 	int		vgs;		/* mixer index speaker */
 	int		vgm;		/* mixer index mic */
 };
 
-#define	BTHSET_GETINFO		_IOR('b', 16, struct bthset_info)
+#define	BTSCO_GETINFO		_IOR('b', 16, struct btsco_info)
 
-#define BTHSET_DELTA		16	/* volume delta */
+#define BTSCO_DELTA		16	/* volume delta */
 
-#endif /* _DEV_BLUETOOTH_BTHSET_H_ */
+#endif /* _DEV_BLUETOOTH_BTSCO_H_ */
