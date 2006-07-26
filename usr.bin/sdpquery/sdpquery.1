@@ -1,4 +1,4 @@
-.\"	$NetBSD: sdpquery.1,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+.\"	$NetBSD: sdpquery.1,v 1.2 2006/07/26 10:54:49 tron Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -51,7 +51,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $Id: sdpquery.1,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+.\" $Id: sdpquery.1,v 1.2 2006/07/26 10:54:49 tron Exp $
 .\" $FreeBSD: src/usr.sbin/bluetooth/sdpcontrol/sdpcontrol.8,v 1.6 2005/07/09 19:04:43 markus Exp $
 .\"
 .Dd May 9, 2006
@@ -163,23 +163,6 @@ OBEX Object Push
 Serial Port
 .El
 .Pp
-.It Cm Config Ar type 
-Query the device and print a configuration entry in a format suitable for inclusion
-in the
-.Xr bluetooth.conf 5
-file for a device of the given
-.Ar type .
-The following types are recognised:
-.Pp
-.Bl -tag -width OPUSHXX -compact
-.It Dv HID
-Human Interface Device. See
-.Xr bthidev 4 .
-.It Dv HSET
-Headset. See
-.Xr bthset 4 .
-.El
-.Pp
 .El
 .Sh CAVEATS
 The
@@ -200,7 +183,6 @@ Bluetooth Profile Descriptor List
 .Ex -std
 .Sh SEE ALSO
 .Xr bluetooth 3 ,
-.Xr bluetooth.conf 5 ,
 .Xr btconfig 8 ,
 .Xr sdp 3 ,
 .Xr sdpd 8
@@ -216,6 +198,6 @@ as
 .Nm sdpcontrol .
 It was ported to
 .Nx 4.0
-under its present name and extended by
+under its present name by
 .An Iain Hibbert
 under the sponsorship of Itronix, Inc.
