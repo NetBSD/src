@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.763 2006/07/24 14:24:48 gdt Exp $
+# $NetBSD: GENERIC,v 1.764 2006/07/26 10:31:00 tron Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.763 $"
+#ident 		"GENERIC-$Revision: 1.764 $"
 
 maxusers	32		# estimated number of users
 
@@ -1242,11 +1242,11 @@ bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
 # Bluetooth USB Controllers
 ubt* at uhub? port ? configuration ? interface ?
 
-# Bluetooth remote device 'hub'
-pseudo-device bthub
+# Bluetooth Devices
+pseudo-device btdev
 
 # Bluetooth HID support
-bthidev* at bthub?
+bthidev* at btdev?
 
 # Bluetooth Mouse
 btms* at bthidev? reportid ?
@@ -1257,7 +1257,7 @@ btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
 
 # Bluetooth Audio support
-bthset* at bthub?
+bthset* at btdev?
 
 
 # Mice
