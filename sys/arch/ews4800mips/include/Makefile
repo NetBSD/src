@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2005/12/29 15:20:08 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2 2006/07/26 19:54:56 drochner Exp $
 
 INCSDIR= /usr/include/ews4800mips
 
 INCS=	ansi.h aout_machdep.h asm.h \
 	bswap.h \
 	cdefs.h cpu.h \
-	db_machdep.h disklabel.h \
+	disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
 	float.h \
 	ieee.h ieeefp.h \
