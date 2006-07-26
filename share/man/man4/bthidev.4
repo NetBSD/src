@@ -1,4 +1,4 @@
-.\" $NetBSD: bthidev.4,v 1.1 2006/06/19 15:44:36 gdamore Exp $
+.\" $NetBSD: bthidev.4,v 1.2 2006/07/26 10:40:50 tron Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Nm bthidev
 .Nd Bluetooth Human Interface Device support
 .Sh SYNOPSIS
-.Cd "bthidev* at bthub?"
+.Cd "bthidev* at btdev?"
 .Pp
 .Cd "btkbd*   at bthidev? reportid ?"
 .Cd "btms*    at bthidev? reportid ?"
@@ -48,18 +48,51 @@ device can have several components, e.g., a keyboard and a mouse.
 These components use different report identifiers to
 distinguish which component data is coming from.  The
 .Nm
-driver has other drivers attached that handle particular
-kinds of devices and
-.Nm
-only dispatches data to them based on the report id.
+driver may have several children attached that handle particular
+components and dispatches data to them based on the report id.
 .Pp
 Normally, Bluetooth HIDs will be attached using the
 .Xr btcontrol 8
-program.
+program. The following properties are used by the
+.Nm
+driver during autoconfiguration:
+.Bl -tag -width interrupt_psmXX 
+.It local-bdaddr
+Local device address.
+.It remote-bdaddr
+Remote device address.
+.It device-type
+Should be
+.Sq bthidev ,
+indicating a Human Interface Device.
+.It control-psm
+This, if set, will indicate the PSM to use for the Control channel. If not set,
+.Dv L2CAP_PSM_HID_CNTL
+will be used.
+.It interrupt-psm
+This, if set, will indicate the PSM to use for the Interrupt channel. If not set,
+.Dv L2CAP_PSM_HID_INTR
+will be used.
+.It descriptor
+This required binary blob is the HID descriptor containing information about
+reports the device will produce, and obtained via SDP.
+.It reconnect
+If this boolean value is set, and is true, then the
+.Nm
+driver will initiate reconnections to the remote device when no connection is
+present.
+.El
+.Pp
+When the
+.Nm
+driver has configured its children, it will initate a connection to the remote
+device. If this fails and the reconnect flag is not set, it will then wait for
+the device to initiate the connection.
+.Pp
 .Sh SEE ALSO
 .Xr bluetooth 4 ,
 .Xr btcontrol 8 ,
-.Xr bthub 4 ,
+.Xr btdev 4 ,
 .Xr btkbd 4 ,
 .Xr btms 4
 .Sh HISTORY
