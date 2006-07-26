@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.22 2005/12/11 12:17:13 christos Exp $
+#	$NetBSD: Makefile,v 1.23 2006/07/26 19:54:56 drochner Exp $
 
 INCSDIR= /usr/include/evbsh3
 
 INCS=	ansi.h aout_machdep.h asm.h \
 	bswap.h bus.h \
 	cdefs.h coff_machdep.h cpu.h cputypes.h \
-	db_machdep.h disklabel.h \
+	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h frame.h \
 	ieee.h ieeefp.h \
