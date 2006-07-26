@@ -1,4 +1,4 @@
-# $NetBSD: md.amigappc,v 1.2 2006/01/14 16:40:09 is Exp $
+# $NetBSD: md.amigappc,v 1.3 2006/07/26 20:09:17 drochner Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/amigappc				comp-c-include
 ./usr/include/amigappc/_G_config.h		comp-obsolete		obsolete
@@ -14,7 +14,7 @@
 ./usr/include/amigappc/cdefs.h			comp-c-include
 ./usr/include/amigappc/cpu.h			comp-c-include
 ./usr/include/amigappc/cpufunc.h			comp-c-include
-./usr/include/amigappc/db_machdep.h		comp-c-include
+./usr/include/amigappc/db_machdep.h		comp-obsolete        obsolete
 ./usr/include/amigappc/disklabel.h		comp-c-include
 ./usr/include/amigappc/elf_machdep.h		comp-c-include
 ./usr/include/amigappc/endian.h			comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.hp700,v 1.1 2004/07/01 10:19:31 skrll Exp $
+# $NetBSD: md.hp700,v 1.2 2006/07/26 20:09:17 drochner Exp $
 ./usr/include/hp700				comp-c-include
 ./usr/include/hp700/ansi.h			comp-c-include
 ./usr/include/hp700/aout_machdep.h		comp-c-include
@@ -10,7 +10,7 @@
 ./usr/include/hp700/cdefs.h			comp-c-include
 ./usr/include/hp700/cpu.h			comp-c-include
 ./usr/include/hp700/cpufunc.h			comp-c-include
-./usr/include/hp700/db_machdep.h		comp-c-include
+./usr/include/hp700/db_machdep.h		comp-obsolete        obsolete
 ./usr/include/hp700/disklabel.h			comp-c-include
 ./usr/include/hp700/eisa_machdep.h		comp-c-include
 ./usr/include/hp700/elf_machdep.h		comp-c-include

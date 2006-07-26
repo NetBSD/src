@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcsh,v 1.18 2004/07/03 12:57:18 uch Exp $
+# $NetBSD: md.hpcsh,v 1.19 2006/07/26 20:09:17 drochner Exp $
 ./usr/include/hpcsh				comp-c-include
 ./usr/include/hpcsh/_G_config.h			comp-obsolete		obsolete
 ./usr/include/hpcsh/ansi.h			comp-c-include
@@ -14,7 +14,7 @@
 ./usr/include/hpcsh/cpu.h			comp-c-include
 ./usr/include/hpcsh/cpufunc.h			comp-obsolete		obsolete
 ./usr/include/hpcsh/cputypes.h			comp-c-include
-./usr/include/hpcsh/db_machdep.h		comp-c-include
+./usr/include/hpcsh/db_machdep.h		comp-obsolete        obsolete
 ./usr/include/hpcsh/disklabel.h			comp-c-include
 ./usr/include/hpcsh/elf_machdep.h		comp-c-include
 ./usr/include/hpcsh/endian.h			comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.acorn32,v 1.18 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: md.acorn32,v 1.19 2006/07/26 20:09:17 drochner Exp $
 #./usr/include/acorn32/devmap.h		comp-c-include
 ./usr/include/acorn32				comp-c-include
 ./usr/include/acorn32/ansi.h			comp-c-include
@@ -10,7 +10,7 @@
 ./usr/include/acorn32/cdefs.h			comp-c-include
 ./usr/include/acorn32/conf.h			comp-obsolete		obsolete
 ./usr/include/acorn32/cpu.h			comp-c-include
-./usr/include/acorn32/db_machdep.h		comp-c-include
+./usr/include/acorn32/db_machdep.h		comp-obsolete        obsolete
 ./usr/include/acorn32/disklabel.h		comp-c-include
 ./usr/include/acorn32/elf_machdep.h		comp-c-include
 ./usr/include/acorn32/endian.h			comp-c-include

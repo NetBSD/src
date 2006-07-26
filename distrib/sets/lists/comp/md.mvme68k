@@ -1,4 +1,4 @@
-# $NetBSD: md.mvme68k,v 1.29 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: md.mvme68k,v 1.30 2006/07/26 20:09:17 drochner Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mvme68k				comp-c-include
 ./usr/include/mvme68k/_G_config.h		comp-obsolete		obsolete
@@ -9,7 +9,7 @@
 ./usr/include/mvme68k/bswap.h			comp-c-include
 ./usr/include/mvme68k/cdefs.h			comp-c-include
 ./usr/include/mvme68k/cpu.h			comp-c-include
-./usr/include/mvme68k/db_machdep.h		comp-c-include
+./usr/include/mvme68k/db_machdep.h		comp-obsolete        obsolete
 ./usr/include/mvme68k/disklabel.h		comp-c-include
 ./usr/include/mvme68k/elf_machdep.h		comp-c-include
 ./usr/include/mvme68k/endian.h			comp-c-include

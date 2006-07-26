@@ -1,4 +1,4 @@
-# $NetBSD: md.algor,v 1.9 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: md.algor,v 1.10 2006/07/26 20:09:17 drochner Exp $
 ./usr/include/algor				comp-c-include
 ./usr/include/algor/_G_config.h			comp-obsolete		obsolete
 ./usr/include/algor/ansi.h			comp-c-include
@@ -10,7 +10,7 @@
 ./usr/include/algor/bus.h			comp-c-include
 ./usr/include/algor/cdefs.h			comp-c-include
 ./usr/include/algor/cpu.h			comp-c-include
-./usr/include/algor/db_machdep.h		comp-c-include
+./usr/include/algor/db_machdep.h		comp-obsolete        obsolete
 ./usr/include/algor/disklabel.h			comp-c-include
 ./usr/include/algor/ecoff_machdep.h		comp-c-include
 ./usr/include/algor/elf_machdep.h		comp-c-include
