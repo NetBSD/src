@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.765 2006/07/26 10:43:02 tron Exp $
+# $NetBSD: GENERIC,v 1.766 2006/07/26 15:34:39 elad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.765 $"
+#ident 		"GENERIC-$Revision: 1.766 $"
 
 maxusers	32		# estimated number of users
 
@@ -1378,10 +1378,7 @@ pseudo-device	wsfont
 #options	FILEASSOC_NHOOKS=4	# Default number of storage slots
 
 # Veriexec
-#options VERIFIED_EXEC
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel
