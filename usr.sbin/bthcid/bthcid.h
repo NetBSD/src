@@ -1,4 +1,4 @@
-/*	$NetBSD: bthcid.h,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: bthcid.h,v 1.2 2006/07/26 11:00:07 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -61,18 +61,14 @@ typedef struct {
 
 #ifdef _BTHCID_
 
-extern	const	char	*key_file;
-extern	const	char	*config_file;
-
 /* config.c */
-uint8_t		*lookup_pin		(bdaddr_t *, bdaddr_t *);
 uint8_t		*lookup_key		(bdaddr_t *, bdaddr_t *);
 void		 save_key		(bdaddr_t *, bdaddr_t *, uint8_t *);
 
 /* client.c */
 int		 init_control		(const char *, mode_t);
 int		 send_client_request	(bdaddr_t *, bdaddr_t *, int);
-uint8_t		*lookup_item		(bdaddr_t *, bdaddr_t *);
+uint8_t		*lookup_pin		(bdaddr_t *, bdaddr_t *);
 
 /* hci.c */
 int		 init_hci		(bdaddr_t *);
