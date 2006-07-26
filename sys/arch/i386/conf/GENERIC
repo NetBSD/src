@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.764 2006/07/26 10:31:00 tron Exp $
+# $NetBSD: GENERIC,v 1.765 2006/07/26 10:43:02 tron Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.764 $"
+#ident 		"GENERIC-$Revision: 1.765 $"
 
 maxusers	32		# estimated number of users
 
@@ -1257,7 +1257,7 @@ btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
 
 # Bluetooth Audio support
-bthset* at btdev?
+btsco* at btdev?
 
 
 # Mice
