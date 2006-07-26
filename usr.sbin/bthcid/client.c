@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: client.c,v 1.2 2006/07/26 11:00:07 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: client.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: client.c,v 1.2 2006/07/26 11:00:07 tron Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/queue.h>
@@ -313,7 +313,7 @@ process_item(int fd, short ev, void *arg)
 
 /* lookup PIN in item cache */
 uint8_t *
-lookup_item(bdaddr_t *laddr, bdaddr_t *raddr)
+lookup_pin(bdaddr_t *laddr, bdaddr_t *raddr)
 {
 	struct item *item;
 

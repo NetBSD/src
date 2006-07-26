@@ -1,4 +1,4 @@
-.\" $NetBSD: bthcid.8,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+.\" $NetBSD: bthcid.8,v 1.2 2006/07/26 11:00:07 tron Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $Id: bthcid.8,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+.\" $Id: bthcid.8,v 1.2 2006/07/26 11:00:07 tron Exp $
 .\" $FreeBSD: src/usr.sbin/bluetooth/hcsecd/hcsecd.8,v 1.6 2006/02/11 15:36:37 markus Exp $
 .\"
 .Dd November 16, 2002
@@ -64,7 +64,6 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl fn
-.Op Fl c Ar config_file
 .Op Fl d Ar device
 .Op Fl m Ar mode
 .Op Fl s Ar socket_name
@@ -74,18 +73,15 @@
 The
 .Nm
 daemon manages link keys and PIN codes for Bluetooth devices.
-It opens a raw HCI socket and listens for the following HCI events at the
-.Ar device
-address given, if any.
+It opens a raw HCI socket and listens for the following HCI events.
 .Pp
 .Bl -tag -width XXXX -compact
 .It Dv Link_Key_Request
 .Nm
-scans first the
+scans the
 .Pa /var/db/bthcid.keys
 file for a cached link key matching the remote device BD_ADDR and, if
-none is found, further scans the configuration file. When a link key
-has been found, the
+found, the
 .Dv Link_Key_Request_Reply
 will be sent back to the device, otherwise the
 .Dv Link_Key_Request_Negative_Reply
@@ -100,9 +96,8 @@ link keys file, which will be created if it does not already exist.
 .It Dv PIN_Code_Request
 The
 .Nm
-daemon first checks its cached PINs, then the configuration file
-for a matching remote device entry.
-When no PIN is found, the
+daemon checks its PIN cache for a matching remote device entry.
+If no PIN is found, the
 .Nm
 daemon will send a message to any PIN clients that have
 registered, with the device details and a timeout value.
@@ -123,10 +118,6 @@ utility.
 .Pp
 The command line options are as follows:
 .Bl -tag -width XXXX
-.It Fl c Ar config_file
-Specify the name of the configuration file.
-The default is
-.Pa /etc/bluetooth/bluetooth.conf .
 .It Fl d Ar device
 Specify the local Bluetooth device address. The default is BDADDR_ANY.
 .It Fl f
@@ -144,14 +135,12 @@ Specify the socket name to listen on for PIN clients. The default path is
 .El
 .Sh FILES
 .Bl -tag -compact
-.It Pa /etc/bluetooth/bluetooth.conf
 .It Pa /var/db/bthcid.keys
 .It Pa /var/run/bthcid
 .It Pa /var/run/bthcid.pid
 .El
 .Sh SEE ALSO
 .Xr bluetooth 4 ,
-.Xr bluetooth.conf 5 ,
 .Xr btconfig 8 ,
 .Xr btpin 1
 .Sh AUTHORS
@@ -171,13 +160,13 @@ with its present name and extended to support PIN clients by
 under the sponsorship of
 .An Itronix, Inc.
 .Sh BUGS
-Currently there is no way to select the link key based on
-which local device received the request.
-.Pp
-Everything is based on the remote device BD_ADDR.
-.Pp
-Currently the only way to make the
+The only way to make the
 .Nm
 daemon forget a link key is to edit the
+.Pa /var/db/bthcid.keys
+file by hand.
+.Pp
+The only way to specify link keys (useful when multiple operating
+systems are used on the same hardware), is to edit the
 .Pa /var/db/bthcid.keys
 file by hand.
