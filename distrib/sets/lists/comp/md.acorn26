@@ -1,4 +1,4 @@
-# $NetBSD: md.acorn26,v 1.8 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: md.acorn26,v 1.9 2006/07/26 20:09:17 drochner Exp $
 ./usr/include/acorn26				comp-c-include
 ./usr/include/acorn26/ansi.h			comp-c-include
 ./usr/include/acorn26/aout_machdep.h		comp-c-include
@@ -8,7 +8,7 @@
 ./usr/include/acorn26/bus.h			comp-c-include
 ./usr/include/acorn26/cdefs.h			comp-c-include
 ./usr/include/acorn26/cpu.h			comp-c-include
-./usr/include/acorn26/db_machdep.h		comp-c-include
+./usr/include/acorn26/db_machdep.h		comp-obsolete        obsolete
 ./usr/include/acorn26/disklabel.h		comp-c-include
 ./usr/include/acorn26/elf_machdep.h		comp-c-include
 ./usr/include/acorn26/endian.h			comp-c-include

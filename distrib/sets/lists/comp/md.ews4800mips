@@ -1,4 +1,4 @@
-# $NetBSD: md.ews4800mips,v 1.1 2005/12/29 15:26:54 tsutsui Exp $
+# $NetBSD: md.ews4800mips,v 1.2 2006/07/26 20:09:17 drochner Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/ews4800mips			comp-c-include
 ./usr/include/ews4800mips/ansi.h		comp-c-include
@@ -7,7 +7,7 @@
 ./usr/include/ews4800mips/bswap.h		comp-c-include
 ./usr/include/ews4800mips/cdefs.h		comp-c-include
 ./usr/include/ews4800mips/cpu.h		comp-c-include
-./usr/include/ews4800mips/db_machdep.h		comp-c-include
+./usr/include/ews4800mips/db_machdep.h		comp-obsolete        obsolete
 ./usr/include/ews4800mips/disklabel.h		comp-c-include
 ./usr/include/ews4800mips/ecoff_machdep.h	comp-c-include
 ./usr/include/ews4800mips/elf_machdep.h	comp-c-include

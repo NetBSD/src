@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.51 2004/08/12 16:07:07 lukem Exp $
+# $NetBSD: md.alpha,v 1.52 2006/07/26 20:09:17 drochner Exp $
 ./usr/include/alpha				comp-c-include
 ./usr/include/alpha/_G_config.h			comp-obsolete		obsolete
 ./usr/include/alpha/alpha_cpu.h			comp-c-include
@@ -15,7 +15,7 @@
 ./usr/include/alpha/conf.h			comp-obsolete		obsolete
 ./usr/include/alpha/cpu.h			comp-c-include
 ./usr/include/alpha/cpuconf.h			comp-c-include
-./usr/include/alpha/db_machdep.h		comp-c-include
+./usr/include/alpha/db_machdep.h		comp-obsolete		obsolete
 ./usr/include/alpha/disklabel.h			comp-c-include
 ./usr/include/alpha/ecoff_machdep.h		comp-c-include
 ./usr/include/alpha/elf_machdep.h		comp-c-include
