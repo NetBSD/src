@@ -1,4 +1,4 @@
-.\" $NetBSD: bluetooth.3,v 1.1 2006/06/19 15:44:36 gdamore Exp $
+.\" $NetBSD: bluetooth.3,v 1.2 2006/07/26 11:11:04 tron Exp $
 .\"
 .\" Copyright (c) 2003 Maksim Yevmenkin <m_evmenkin@yahoo.com>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $Id: bluetooth.3,v 1.1 2006/06/19 15:44:36 gdamore Exp $
+.\" $Id: bluetooth.3,v 1.2 2006/07/26 11:11:04 tron Exp $
 .\" $FreeBSD: src/lib/libbluetooth/bluetooth.3,v 1.7 2005/01/21 10:26:11 ru Exp $
 .\"
 .Dd May 7, 2003
@@ -45,12 +45,6 @@
 .Nm bt_ntoa ,
 .Nm bt_devaddr ,
 .Nm bt_devname ,
-.Nm bt_openconfig ,
-.Nm bt_getconfig ,
-.Nm bt_freeconfig ,
-.Nm bt_eachconfig ,
-.Nm bt_closeconfig ,
-.Nm bt_printconfig
 .Nd Bluetooth routines
 .Sh LIBRARY
 .Lb libbluetooth
@@ -84,18 +78,6 @@
 .Fn bt_devaddr "const char *name" "bdaddr_t *addr"
 .Ft int
 .Fn bt_devname "char *name" "const bdaddr_t *addr"
-.Ft bt_handle_t
-.Fn bt_openconfig "const char *name"
-.Ft bt_cfgentry_t
-.Fn bt_getconfig "bt_handle_t handle" "const bdaddr_t *ba"
-.Ft int
-.Fn bt_eachconfig "bt_handle_t handle" "void (*func)(bt_cfgentry_t *, void *)" "void *arg"
-.Ft void
-.Fn bt_freeconfig "bt_cfgentry_t *cfg"
-.Ft int
-.Fn bt_closeconfig "bt_handle_t handle"
-.Ft int
-.Fn bt_printconfig "FILE *fp" "bt_cfgentry_t *cfg"
 .Sh DESCRIPTION
 The
 .Fn bt_gethostent ,
@@ -225,40 +207,8 @@ function takes a Bluetooth device address and copies the local device
 name associated with that address into the buffer provided, if any.
 It returns 1 when the device was found, otherwise 0.
 .Pp
-The
-.Fn bt_openconfig ,
-.Fn bt_getconfig ,
-.Fn bt_eachconfig ,
-and
-.Fn bt_closeconfig
-functions can be used to extract configuration entries from files in the
-.Xr bluetooth.conf 5
-file format. If
-.Dv NULL
-is specified as the file name to
-.Fn bt_openconfig ,
-the default file name of
-.Pa /etc/bluetooth/bluetooth.conf
-will be used.
-.Fn bt_getconfig
-will scan the config file for a matching BD_ADDR and return a
-pointer to a dynamically allocated
-.Ar bt_cfgentry_t
-structure which must be freed with
-.Fn bt_freeconfig .
-The
-.Fn bt_eachconfig
-function can be used to iterate through all entries in the config file,
-with each config entry being passed to the given function in turn, then
-freed automatically.
-.Pp
-The
-.Fn bt_printconfig
-function will print a config entry to the file pointer
-in a format compatible with reading it later.
 .Sh FILES
 .Bl -tag -width ".Pa /etc/bluetooth/hosts" -compact
-.It Pa /etc/bluetooth/bluetooth.conf
 .It Pa /etc/bluetooth/hosts
 .It Pa /etc/bluetooth/protocols
 .El
@@ -321,7 +271,6 @@ return
 .Dv NULL
 on EOF or error.
 .Sh SEE ALSO
-.Xr bluetooth.conf 5 ,
 .Xr gethostbyaddr 3 ,
 .Xr gethostbyname 3 ,
 .Xr getprotobyname 3 ,

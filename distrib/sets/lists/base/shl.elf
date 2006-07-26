@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.117 2006/07/13 11:46:37 he Exp $
+# $NetBSD: shl.elf,v 1.118 2006/07/26 11:11:04 tron Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so					base-sys-shlib
 ./lib/libc.so.12				base-sys-shlib
@@ -69,7 +69,7 @@
 ./usr/lib/libasn1.so.6				base-krb5-shlib		kerberos
 ./usr/lib/libbfd.so.8				base-sys-shlib		bfd
 ./usr/lib/libbluetooth.so			base-sys-shlib
-./usr/lib/libbluetooth.so.2			base-sys-shlib
+./usr/lib/libbluetooth.so.3			base-sys-shlib
 ./usr/lib/libbsdmalloc.so			base-sys-shlib
 ./usr/lib/libbsdmalloc.so.0			base-sys-shlib
 ./usr/lib/libbz2.so				base-sys-shlib
