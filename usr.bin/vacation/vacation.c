@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.30 2004/08/19 13:43:54 christos Exp $	*/
+/*	$NetBSD: vacation.c,v 1.31 2006/07/27 00:10:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.30 2004/08/19 13:43:54 christos Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.31 2006/07/27 00:10:42 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -386,7 +386,11 @@ readheaders(void)
 							break;
 					*++p = '\0';
 				}
-				(void)strlcpy(subject, s, sizeof(subject));
+				if (s) {
+					(void)strlcpy(subject, s, sizeof(subject));
+				} else {
+					subject[0] = '\0';
+				}
 			}
 			if ((fflag & SENDER_FROM) != 0 &&
 			    COMPARE(buf, "Sender:") == 0)
