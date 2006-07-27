@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.906 2006/07/27 11:59:54 gdt Exp $
+#	$NetBSD: mi,v 1.907 2006/07/27 12:55:45 tron Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -10408,8 +10408,8 @@
 ./usr/share/man/man9/FILE_USE.9			comp-sys-man		.man
 ./usr/share/man/man9/FREE.9			comp-sys-man		.man
 ./usr/share/man/man9/HOLDRELE.9			comp-sys-man		.man
-./usr/share/man/man9/KASSERT.0			comp-sys-man		.man
-./usr/share/man/man9/KDASSERT.0			comp-sys-man		.man
+./usr/share/man/man9/KASSERT.9			comp-sys-man		.man
+./usr/share/man/man9/KDASSERT.9			comp-sys-man		.man
 ./usr/share/man/man9/KNOTE.9			comp-sys-man		.man
 ./usr/share/man/man9/MALLOC.9			comp-sys-man		.man
 ./usr/share/man/man9/MALLOC_DECLARE.9		comp-sys-man		.man
