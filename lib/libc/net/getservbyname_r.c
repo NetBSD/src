@@ -1,4 +1,4 @@
-/*	$NetBSD: getservbyname_r.c,v 1.3 2005/04/18 19:39:45 kleink Exp $	*/
+/*	$NetBSD: getservbyname_r.c,v 1.4 2006/07/27 22:03:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,14 +34,16 @@
 #if 0
 static char sccsid[] = "@(#)getservbyname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservbyname_r.c,v 1.3 2005/04/18 19:39:45 kleink Exp $");
+__RCSID("$NetBSD: getservbyname_r.c,v 1.4 2006/07/27 22:03:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <assert.h>
 #include <netdb.h>
+#include <stdlib.h>
 #include <string.h>
+#include <db.h>
 
 #include "servent.h"
 
@@ -49,32 +51,62 @@ __RCSID("$NetBSD: getservbyname_r.c,v 1.3 2005/04/18 19:39:45 kleink Exp $");
 __weak_alias(getservbyname_r,_getservbyname_r)
 #endif
 
+static struct servent *
+_servent_getbyname(struct servent_data *sd, struct servent *sp,
+    const char *name, const char *proto)
+{
+	if (sd->flags & _SV_DB) {
+		char buf[BUFSIZ];
+		DBT key, data;
+		DB *db = sd->db;
+		key.data = buf;
+
+		if (proto == NULL)
+			key.size = snprintf(buf, sizeof(buf), "\377%s", name);
+		else
+			key.size = snprintf(buf, sizeof(buf), "\377%s/%s",
+			    name, proto);
+		key.size++;
+			
+		if ((*db->get)(db, &key, &data, 0) != 0)
+			return NULL;
+
+		if (sd->line)
+			free(sd->line);
+
+		sd->line = strdup(data.data);
+		return _servent_parseline(sd, sp);
+	} else {
+		while (_servent_getline(sd) != -1) {
+			char **cp;
+			if (_servent_parseline(sd, sp) == NULL)
+				continue;
+
+			if (strcmp(name, sp->s_name) == 0)
+				goto gotname;
+
+			for (cp = sp->s_aliases; *cp; cp++)
+				if (strcmp(name, *cp) == 0)
+					goto gotname;
+			continue;
+gotname:
+			if (proto == NULL || strcmp(sp->s_proto, proto) == 0)
+				return sp;
+		}
+		return NULL;
+	}
+}
+
 struct servent *
 getservbyname_r(const char *name, const char *proto, struct servent *sp,
     struct servent_data *sd)
 {
-	struct servent *s;
-	char **cp;
-
 	_DIAGASSERT(name != NULL);
 	/* proto may be NULL */
 
-	setservent_r(sd->stayopen, sd);
-	while ((s = getservent_r(sp, sd)) != NULL) {
-		if (strcmp(name, s->s_name) == 0)
-			goto gotname;
-		for (cp = s->s_aliases; *cp; cp++)
-			if (strcmp(name, *cp) == 0)
-				goto gotname;
-		continue;
-gotname:
-		if (proto == NULL || strcmp(s->s_proto, proto) == 0)
-			break;
-	}
-	if (!sd->stayopen)
-		if (sd->fp != NULL) {
-			(void)fclose(sd->fp);
-			sd->fp = NULL;
-		}
-	return s;
+	setservent_r(sd->flags & _SV_STAYOPEN, sd);
+	sp = _servent_getbyname(sd, sp, name, proto);
+	if (!(sd->flags & _SV_STAYOPEN))
+		_servent_close(sd);
+	return sp;
 }

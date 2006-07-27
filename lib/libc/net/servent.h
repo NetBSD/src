@@ -1,4 +1,4 @@
-/*	$NetBSD: servent.h,v 1.1 2005/04/18 19:39:45 kleink Exp $	*/
+/*	$NetBSD: servent.h,v 1.2 2006/07/27 22:03:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,11 +39,14 @@
 #include <stdio.h>
 
 struct servent_data {
-        FILE *fp;
+        void *db;
 	struct servent serv;
 	char **aliases;
 	size_t maxaliases;
-	int stayopen;
+	int flags;
+#define	_SV_STAYOPEN	1
+#define	_SV_DB		2
+#define	_SV_FIRST	4
 	char *line;
 	void *dummy;
 };
@@ -55,3 +58,8 @@ struct servent	*getservbyport_r(int, const char *,
     struct servent *, struct servent_data *);
 void setservent_r(int, struct servent_data *);
 void endservent_r(struct servent_data *);
+
+int _servent_open(struct servent_data *);
+void _servent_close(struct servent_data *);
+int _servent_getline(struct servent_data *);
+struct servent *_servent_parseline(struct servent_data *, struct servent *);

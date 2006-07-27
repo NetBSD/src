@@ -1,4 +1,4 @@
-/*	$NetBSD: getservbyport_r.c,v 1.3 2005/04/18 19:39:45 kleink Exp $	*/
+/*	$NetBSD: getservbyport_r.c,v 1.4 2006/07/27 22:03:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,13 +34,16 @@
 #if 0
 static char sccsid[] = "@(#)getservbyport.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservbyport_r.c,v 1.3 2005/04/18 19:39:45 kleink Exp $");
+__RCSID("$NetBSD: getservbyport_r.c,v 1.4 2006/07/27 22:03:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include <stdio.h>
 #include <netdb.h>
 #include <string.h>
+#include <stdlib.h>
+#include <db.h>
 
 #include "servent.h"
 
@@ -48,23 +51,52 @@ __RCSID("$NetBSD: getservbyport_r.c,v 1.3 2005/04/18 19:39:45 kleink Exp $");
 __weak_alias(getservbyport_r,_getservbyport_r)
 #endif
 
+static struct servent *
+_servent_getbyport(struct servent_data *sd, struct servent *sp, int port,
+    const char *proto)
+{
+	if (sd->flags & _SV_DB) {
+		char buf[BUFSIZ];
+		DBT key, data;
+		DB *db = sd->db;
+		key.data = buf;
+
+		port = htons(port);
+		if (proto == NULL)
+			key.size = snprintf(buf, sizeof(buf), "\376%d", port);
+		else
+			key.size = snprintf(buf, sizeof(buf), "%d/%s", port,
+			    proto);
+		key.size++;
+			
+		if ((*db->get)(db, &key, &data, 0) != 0)
+			return NULL;
+
+		if (sd->line)
+			free(sd->line);
+
+		sd->line = strdup(data.data);
+		return _servent_parseline(sd, sp);
+	} else {
+		while (_servent_getline(sd) != -1) {
+			if (_servent_parseline(sd, sp) == NULL)
+				continue;
+			if (sp->s_port != port)
+				continue;
+			if (proto == NULL || strcmp(sp->s_proto, proto) == 0)
+				return sp;
+		}
+		return NULL;
+	}
+}
+
 struct servent *
 getservbyport_r(int port, const char *proto, struct servent *sp,
     struct servent_data *sd)
 {
-	struct servent *s;
-
-	setservent_r(sd->stayopen, sd);
-	while ((s = getservent_r(sp, sd)) != NULL) {
-		if (s->s_port != port)
-			continue;
-		if (proto == NULL || strcmp(s->s_proto, proto) == 0)
-			break;
-	}
-	if (!sd->stayopen)
-		if (sd->fp != NULL) {
-			(void)fclose(sd->fp);
-			sd->fp = NULL;
-		}
-	return s;
+	setservent_r(sd->flags & _SV_STAYOPEN, sd);
+	sp = _servent_getbyport(sd, sp, port, proto);
+	if (!(sd->flags & _SV_STAYOPEN))
+		_servent_close(sd);
+	return sp;
 }
