@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup.h,v 1.7 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: netgroup.h,v 1.8 2006/07/27 18:10:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -68,6 +68,7 @@ int	innetgr		(const char *, const char *, const char *,
 char    *_ng_makekey(const char *, const char *, size_t);
 int	_ng_parse(char **, char **, struct netgroup **);
 void	_ng_print(char *, size_t, const struct netgroup *);
+void	_ng_cycle(const char *, const StringList *);
 #endif /* _NETGROUP_PRIVATE */
 
 __END_DECLS
