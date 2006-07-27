@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.53 2006/02/17 15:55:01 ginsbach Exp $	*/
+/*	$NetBSD: netdb.h,v 1.54 2006/07/27 18:29:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1983, 1988, 1993
@@ -122,6 +122,9 @@ typedef _BSD_SIZE_T_	size_t;
 #endif
 #ifndef _PATH_SERVICES
 #define	_PATH_SERVICES	"/etc/services"
+#endif
+#ifndef _PATH_SERVICES_DB
+#define	_PATH_SERVICES_DB "/etc/services.db"
 #endif
 #endif
 
