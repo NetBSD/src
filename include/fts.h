@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.h,v 1.15 2006/03/30 01:23:50 christos Exp $	*/
+/*	$NetBSD: fts.h,v 1.16 2006/07/27 15:47:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,6 +46,9 @@
 #ifndef __fts_length_t
 #define __fts_length_t	u_int
 #endif
+#ifndef __fts_number_t
+#define	__fts_number_t	int64_t
+#endif
 
 typedef struct {
 	struct _ftsent *fts_cur;	/* current node */
@@ -78,7 +81,7 @@ typedef struct _ftsent {
 	struct _ftsent *fts_cycle;	/* cycle node */
 	struct _ftsent *fts_parent;	/* parent directory */
 	struct _ftsent *fts_link;	/* next file in directory */
-	long fts_number;	        /* local numeric value */
+	__fts_number_t fts_number;      /* local numeric value */
 	void *fts_pointer;	        /* local address value */
 	char *fts_accpath;		/* access path */
 	char *fts_path;			/* root path */
@@ -130,12 +133,12 @@ typedef struct _ftsent {
 
 __BEGIN_DECLS
 #ifndef __LIBC12_SOURCE__
-FTSENT	*fts_children(FTS *, int)		__RENAME(__fts_children31);
-int	 fts_close(FTS *)			__RENAME(__fts_close31);
+FTSENT	*fts_children(FTS *, int)		__RENAME(__fts_children32);
+int	 fts_close(FTS *)			__RENAME(__fts_close32);
 FTS	*fts_open(char * const *, int,
-    int (*)(const FTSENT **, const FTSENT **))	__RENAME(__fts_open31);
-FTSENT	*fts_read(FTS *)			__RENAME(__fts_read31);
-int	 fts_set(FTS *, FTSENT *, int)		__RENAME(__fts_set31);
+    int (*)(const FTSENT **, const FTSENT **))	__RENAME(__fts_open32);
+FTSENT	*fts_read(FTS *)			__RENAME(__fts_read32);
+int	 fts_set(FTS *, FTSENT *, int)		__RENAME(__fts_set32);
 #endif
 __END_DECLS
 
