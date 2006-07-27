@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.914 2006/07/26 11:11:04 tron Exp $
+# $NetBSD: mi,v 1.915 2006/07/27 22:18:48 christos Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2241,6 +2241,7 @@
 ./usr/share/man/cat8/scsictl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/sdpd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/sendmail.0			man-obsolete		obsolete
+./usr/share/man/cat8/services_mkdb.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/sesd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/setencstat.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/setkey.0			man-netutil-catman	.cat
@@ -4604,6 +4605,7 @@
 ./usr/share/man/man8/scsictl.8			man-sysutil-man		.man
 ./usr/share/man/man8/sdpd.8			man-sysutil-man		.man
 ./usr/share/man/man8/sendmail.8			man-obsolete		obsolete
+./usr/share/man/man8/services_mkdb.8		man-sysutil-man		.man
 ./usr/share/man/man8/sesd.8			man-sysutil-man		.man
 ./usr/share/man/man8/setencstat.8		man-sysutil-man		.man
 ./usr/share/man/man8/setkey.8			man-netutil-man		.man

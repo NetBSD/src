@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.642 2006/07/26 10:30:59 tron Exp $
+# $NetBSD: mi,v 1.643 2006/07/27 22:18:46 christos Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1201,6 +1201,7 @@
 ./usr/sbin/scriptdump				base-obsolete		obsolete
 ./usr/sbin/sdpd					base-sysutil-bin
 ./usr/sbin/sendmail				base-mailwrapper-bin
+./usr/sbin/services_mkdb			base-sysutil-bin
 ./usr/sbin/sesd					base-sysutil-bin
 ./usr/sbin/setencstat				base-sysutil-bin
 ./usr/sbin/setkey				base-obsolete		obsolete

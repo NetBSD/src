@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.907 2006/07/27 12:55:45 tron Exp $
+#	$NetBSD: mi,v 1.908 2006/07/27 22:18:47 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2907,6 +2907,7 @@
 ./usr/libdata/debug/usr/sbin/sa.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/screenblank.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/sdpd.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/services_mkdb.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/sesd.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/setencstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/setobjstat.debug	comp-sysutil-debug	debug
