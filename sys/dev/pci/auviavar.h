@@ -1,4 +1,4 @@
-/*	$NetBSD: auviavar.h,v 1.9 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: auviavar.h,v 1.10 2006/07/27 15:35:01 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@ struct auvia_softc {
 
 	struct ac97_host_if host_if;
 	struct ac97_codec_if *codec_if;
+	boolean_t sc_spdif;
 
 	struct auvia_dma *sc_dmas;
 
@@ -81,6 +82,7 @@ struct auvia_softc {
 #define AUVIA_NFORMATS	8
 	struct audio_format sc_formats[AUVIA_NFORMATS];
 	struct audio_encoding_set *sc_encodings;
+	struct audio_encoding_set *sc_spdif_encodings;
 };
 
 #endif /* !_DEV_PCI_AUVIAVAR_H_ */
