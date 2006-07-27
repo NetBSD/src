@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.6 1999/11/09 15:06:30 drochner Exp $	*/
+/*	$NetBSD: util.c,v 1.7 2006/07/27 15:29:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.6 1999/11/09 15:06:30 drochner Exp $");
+__RCSID("$NetBSD: util.c,v 1.7 2006/07/27 15:29:07 christos Exp $");
 #endif
 
 #include <err.h>
@@ -83,13 +83,15 @@ getline(fp, size)
     size_t s, len = 0;
     char *buf = NULL;
     char *ptr;
+    char line[10240];
     int cnt = 1;
 
     while (cnt) {
-	if ((ptr = fgetln(fp, &s)) == NULL) {
+	if ((ptr = fgets(line, sizeof(line), fp)) == NULL) {
 	    *size = len;
 	    return buf;
 	}
+	s = strlen(line);
 	if (ptr[s - 1] == '\n')		/* the newline may be missing at EOF */
 	    s--;			/* forget newline */
 	if (!s)
