@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.57 2006/07/26 10:31:00 tron Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.58 2006/07/27 06:49:06 martti Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -960,6 +960,9 @@ ipl)
 	mkdev ipnat	c %ipl_chr% 1
 	mkdev ipstate	c %ipl_chr% 2
 	mkdev ipauth	c %ipl_chr% 3
+	mkdev ipsync	c %ipl_chr% 4
+	mkdev ipscan	c %ipl_chr% 5
+	mkdev iplookup	c %ipl_chr% 6
 	;;
 
 pf)
