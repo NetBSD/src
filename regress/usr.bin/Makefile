@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.11 2005/10/04 13:34:14 cube Exp $
+#	$NetBSD: Makefile,v 1.12 2006/07/27 00:41:07 christos Exp $
 
-SUBDIR+= basename bzip2 config dirname grep gzip m4 make rtld sort
+SUBDIR+= basename bzip2 config cut dirname grep gzip m4 make rtld sort
 
 .include <bsd.subdir.mk>
