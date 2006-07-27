@@ -1,4 +1,4 @@
-/*	$NetBSD: stringlist.h,v 1.5 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: stringlist.h,v 1.6 2006/07/27 15:37:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -51,10 +51,11 @@ typedef struct _stringlist {
 } StringList;
 
 __BEGIN_DECLS
-StringList *sl_init	(void);
-int	 sl_add		(StringList *, char *);
-void	 sl_free	(StringList *, int);
-char	*sl_find	(StringList *, char *);
+StringList 	*sl_init(void);
+int		 sl_add(StringList *, char *);
+void		 sl_free(StringList *, int);
+char 		*sl_find(StringList *, const char *);
+int		 sl_delete(StringList *, const char *, int);
 __END_DECLS
 
 #endif /* _STRINGLIST_H */
