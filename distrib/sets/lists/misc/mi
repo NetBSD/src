@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.136 2006/07/19 22:20:59 rpaulo Exp $
+# $NetBSD: mi,v 1.137 2006/07/27 23:01:27 lukem Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/american			misc-reference-share	share
@@ -688,7 +688,7 @@
 ./usr/share/examples/smbfs/dot.nsmbrc		misc-sysutil-examples	share
 ./usr/share/examples/supfiles/ftp.cs.umn.edu	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/skarven.itea.unit.no	misc-obsolete		obsolete
-./usr/share/examples/supfiles/sup.au.netbsd.org	misc-sup-examples	share
+./usr/share/examples/supfiles/sup.au.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.de.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.jp.netbsd.org	misc-sup-examples	share
 ./usr/share/examples/supfiles/sup.netbsd.org	misc-sup-examples	share
