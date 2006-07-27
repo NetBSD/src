@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.92 2006/07/19 21:11:37 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.93 2006/07/27 00:04:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.92 2006/07/19 21:11:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.93 2006/07/27 00:04:08 christos Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -1169,7 +1169,7 @@ kstack_check_magic(const struct lwp *l)
 		if (*ip != KSTACK_MAGIC)
 			break;
 
-	stackleft = (caddr_t)ip - KSTACK_LOWEST_ADDR(l);
+	stackleft = ((const char *)ip) - (const char *)KSTACK_LOWEST_ADDR(l);
 #endif /* __MACHINE_STACK_GROWS_UP */
 
 	if (kstackleftmin > stackleft) {
