@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.33 2006/07/27 18:12:50 christos Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.34 2006/07/27 19:44:06 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.33 2006/07/27 18:12:50 christos Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.34 2006/07/27 19:44:06 dogcow Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -189,7 +189,7 @@ badhost:
 	return NULL;
 }
 
-void
+static void
 _ng_cycle(const char *grp, const StringList *sl)
 {
 	size_t i;
