@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.905 2006/07/26 11:11:04 tron Exp $
+#	$NetBSD: mi,v 1.906 2006/07/27 11:59:54 gdt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -6274,6 +6274,8 @@
 ./usr/share/man/cat9/FILE_USE.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/FREE.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/HOLDRELE.0			comp-sys-catman		.cat
+./usr/share/man/cat9/KASSERT.0			comp-sys-catman		.cat
+./usr/share/man/cat9/KDASSERT.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/KNOTE.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/MALLOC.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/MALLOC_DECLARE.0		comp-sys-catman		.cat
@@ -6697,6 +6699,8 @@
 ./usr/share/man/cat9/ieee80211_rssadapt_raise_rate.0	comp-sys-catman	.cat
 ./usr/share/man/cat9/ieee80211_rssadapt_updatestats.0	comp-sys-catman	.cat
 ./usr/share/man/cat9/iic.0			comp-sys-catman		.cat
+./usr/share/man/cat9/imax.0			comp-sys-catman		.cat
+./usr/share/man/cat9/imin.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/in4_cksum.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/in6_cksum.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/in_cksum.0			comp-sys-catman		.cat
@@ -10404,6 +10408,8 @@
 ./usr/share/man/man9/FILE_USE.9			comp-sys-man		.man
 ./usr/share/man/man9/FREE.9			comp-sys-man		.man
 ./usr/share/man/man9/HOLDRELE.9			comp-sys-man		.man
+./usr/share/man/man9/KASSERT.0			comp-sys-man		.man
+./usr/share/man/man9/KDASSERT.0			comp-sys-man		.man
 ./usr/share/man/man9/KNOTE.9			comp-sys-man		.man
 ./usr/share/man/man9/MALLOC.9			comp-sys-man		.man
 ./usr/share/man/man9/MALLOC_DECLARE.9		comp-sys-man		.man
@@ -10827,6 +10833,8 @@
 ./usr/share/man/man9/ieee80211_rssadapt_raise_rate.9	comp-sys-man	.man
 ./usr/share/man/man9/ieee80211_rssadapt_updatestats.9	comp-sys-man	.man
 ./usr/share/man/man9/iic.9			comp-sys-man		.man
+./usr/share/man/man9/imax.9			comp-sys-man		.man
+./usr/share/man/man9/imin.9			comp-sys-man		.man
 ./usr/share/man/man9/in4_cksum.9		comp-sys-man		.man
 ./usr/share/man/man9/in6_cksum.9		comp-sys-man		.man
 ./usr/share/man/man9/in_cksum.9			comp-sys-man		.man
