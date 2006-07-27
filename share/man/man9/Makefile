@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.206 2006/07/25 21:16:16 elad Exp $
+#       $NetBSD: Makefile,v 1.207 2006/07/27 00:00:56 gdt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -20,7 +20,7 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	hash.9 hashinit.9 hardclock.9 humanize_number.9 hz.9 \
 	ieee80211.9 ieee80211_crypto.9 ieee80211_input.9 ieee80211_ioctl.9 \
 	ieee80211_node.9 ieee80211_output.9 ieee80211_proto.9 \
-	ieee80211_radiotap.9 iic.9 \
+	ieee80211_radiotap.9 iic.9 imax.9 \
 	in4_cksum.9 inittodr.9 intro.9 ioasic.9 ioctl.9 ipkdb.9 isa.9 \
 	isapnp.9 itimerfix.9 kauth.9 kcopy.9 kcont.9 \
 	kmem_alloc.9 kmem_free.9 kmem_zalloc.9 \
@@ -54,6 +54,9 @@ MLINKS+=dmover.9 dmover_backend_register.9 \
 	dmover.9 dmover_request_free.9 \
 	dmover.9 dmover_process.9 \
 	dmover.9 dmover_done.9
+
+MAN+=	KASSERT.9
+MLINKS+=KASSERT.9 KDASSERT.9
 
 MLINKS+=arp.9 arp_ifinit.9 arp.9 arpresolve.9 arp.9 arpintr.9
 MLINKS+=autoconf.9 config_search.9 \
@@ -221,6 +224,7 @@ MLINKS+=getiobuf.9 getiobuf_nowait.9 \
 MLINKS+=hash.9 hash32_buf.9 hash.9 hash32_str.9 hash.9 hash32_strn.9
 MLINKS+=hashinit.9 hashdone.9
 MLINKS+=humanize_number.9 format_bytes.9
+MLINKS+=imax.9 imin.9
 MLINKS+=in4_cksum.9 in_cksum.9 \
 	in4_cksum.9 in6_cksum.9
 MLINKS+=ioasic.9 ioasic_intr_establish.9 \
