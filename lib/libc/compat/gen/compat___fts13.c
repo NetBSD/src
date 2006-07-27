@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___fts13.c,v 1.3 2006/03/30 18:24:49 christos Exp $	*/
+/*	$NetBSD: compat___fts13.c,v 1.4 2006/07/27 15:46:30 christos Exp $	*/
 
 #include "namespace.h"
 #include <sys/cdefs.h>
@@ -29,6 +29,7 @@ __warn_references(__fts_set13,
 #define	__fts_nlink_t	nlink_t
 #define	__fts_ino_t	u_int32_t
 #define	__fts_length_t	u_short
+#define	__fts_number_t	long
 
 #define stat		__stat13
 #define lstat		__lstat13
