@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___fts30.c,v 1.1 2006/03/30 01:23:50 christos Exp $	*/
+/*	$NetBSD: compat___fts30.c,v 1.2 2006/07/27 15:46:30 christos Exp $	*/
 
 #include "namespace.h"
 #include <sys/cdefs.h>
@@ -23,6 +23,7 @@ __warn_references(__fts_set30,
 #include <sys/stat.h>
 
 #define	__fts_length_t	u_short
+#define	__fts_number_t	long
 
 #undef fts_children
 #define fts_children __fts_children30
