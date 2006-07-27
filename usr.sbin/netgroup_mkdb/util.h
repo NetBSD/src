@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.2 1996/10/04 05:15:32 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.3 2006/07/27 15:29:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-void *emalloc	__P((size_t));
-void *erealloc	__P((void *, size_t));
-char *getline	__P((FILE *, size_t *));
+void *emalloc(size_t);
+void *erealloc(void *, size_t);
+char *getline(FILE *, size_t *);
 __END_DECLS

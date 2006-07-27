@@ -1,4 +1,4 @@
-/*	$NetBSD: str.h,v 1.2 1996/10/04 05:15:30 christos Exp $	*/
+/*	$NetBSD: str.h,v 1.3 2006/07/27 15:29:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: str.h,v 1.2 1996/10/04 05:15:30 christos Exp $
+ * $NetBSD: str.h,v 1.3 2006/07/27 15:29:07 christos Exp $
  */
 
 #include <sys/types.h>
@@ -42,8 +42,8 @@ struct string {
 };
 
 __BEGIN_DECLS
-void str_init		__P((struct string *));
-void str_append		__P((struct string *, const char *, int));
-void str_prepend	__P((struct string *, const char *, int));
-void str_free		__P((struct string *));
+void str_init(struct string *);
+void str_append(struct string *, const char *, int);
+void str_prepend(struct string *, const char *, int);
+void str_free(struct string *);
 __END_DECLS
