@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.31 2006/03/19 01:41:43 christos Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.32 2006/07/27 16:06:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.31 2006/03/19 01:41:43 christos Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.32 2006/07/27 16:06:40 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -86,6 +86,7 @@ static int in_find(StringList *, char *, const char *, const char *,
 static char *in_lookup1(const char *, const char *, int);
 static int in_lookup(const char *, const char *, const char *, int);
 
+#ifdef NSSRC_FILES
 static const ns_src default_files_nis[] = {
 	{ NSSRC_FILES,	NS_SUCCESS | NS_NOTFOUND },
 #ifdef YP
@@ -93,6 +94,7 @@ static const ns_src default_files_nis[] = {
 #endif
 	{ 0 }
 };
+#endif
 
 /*
  * getstring(): Get a string delimited by the character, skipping leading and
@@ -187,6 +189,16 @@ badhost:
 	return NULL;
 }
 
+void
+_ng_cycle(const char *grp, const StringList *sl)
+{
+	size_t i;
+	warnx("netgroup: Cycle in group `%s'", grp);
+	(void)fprintf(stderr, "groups: ");
+	for (i = 0; i < sl->sl_cur; i++)
+		(void)fprintf(stderr, "%s ", sl->sl_str[i]);
+	(void)fprintf(stderr, "\n");
+}
 
 static int _local_lookup(void *, void *, va_list);
 
@@ -295,7 +307,7 @@ _nis_lookup(void *rv, void *cb_data, va_list ap)
 }
 #endif
 
-
+#ifdef NSSRC_FILES
 /*
  * lookup(): Find the given key in the database or yp, and return its value
  * in *line; returns 1 if key was found, 0 otherwise
@@ -317,6 +329,27 @@ lookup(char *name, char	**line, int bywhat)
 	    name, line, bywhat);
 	return (r == NS_SUCCESS) ? 1 : 0;
 }
+#else
+static int
+_local_lookupv(int *rv, void *cbdata, ...)
+{
+	int e;
+	va_list ap;
+	va_start(ap, cbdata);
+	e = _local_lookup(rv, cbdata, ap);
+	va_end(ap);
+	return e;
+}
+
+static int
+lookup(name, line, bywhat)
+	char	 *name;
+	char	**line;
+	int	  bywhat;
+{
+	return _local_lookupv(NULL, NULL, name, line, bywhat) == NS_SUCCESS;
+}
+#endif
 
 /*
  * _ng_parse(): Parse a line and return: _NG_ERROR: Syntax Error _NG_NONE:
@@ -389,10 +422,11 @@ addgroup(StringList *sl, char *grp)
 #endif
 	/* check for cycles */
 	if (sl_find(sl, grp) != NULL) {
-		warnx("netgroup: Cycle in group `%s'", grp);
+		_ng_cycle(grp, sl);
 		free(grp);
 		return 0;
 	}
+printf("%s, %d: add %s\n", __FILE__, __LINE__, grp);
 	if (sl_add(sl, grp) == -1) {
 		free(grp);
 		return 0;
@@ -401,7 +435,7 @@ addgroup(StringList *sl, char *grp)
 	/* Lookup this netgroup */
 	line = NULL;
 	if (!lookup(grp, &line, _NG_KEYBYNAME)) {
-		if (line != NULL)
+		if (line)
 			free(line);
 		return 0;
 	}
@@ -492,10 +526,11 @@ in_find(StringList *sl, char *grp, const char *host, const char *user,
 #endif
 	/* check for cycles */
 	if (sl_find(sl, grp) != NULL) {
-		warnx("netgroup: Cycle in group `%s'", grp);
+		_ng_cycle(grp, sl);
 		free(grp);
 		return 0;
 	}
+printf("%s, %d: add %s\n", __FILE__, __LINE__, grp);
 	if (sl_add(sl, grp) == -1) {
 		free(grp);
 		return 0;
