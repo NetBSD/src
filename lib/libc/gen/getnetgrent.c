@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.32 2006/07/27 16:06:40 christos Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.33 2006/07/27 18:12:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.32 2006/07/27 16:06:40 christos Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.33 2006/07/27 18:12:50 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -45,13 +45,13 @@ __RCSID("$NetBSD: getnetgrent.c,v 1.32 2006/07/27 16:06:40 christos Exp $");
 #include <err.h>
 #include <fcntl.h>
 #define _NETGROUP_PRIVATE
+#include <stringlist.h>
 #include <netgroup.h>
 #include <nsswitch.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stringlist.h>
 
 #ifdef YP
 #include <rpc/rpc.h>
