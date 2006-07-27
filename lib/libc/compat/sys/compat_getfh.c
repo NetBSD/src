@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_getfh.c,v 1.2 2006/07/13 19:09:06 martin Exp $	*/
+/*	$NetBSD: compat_getfh.c,v 1.3 2006/07/27 18:11:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_getfh.c,v 1.2 2006/07/13 19:09:06 martin Exp $");
+__RCSID("$NetBSD: compat_getfh.c,v 1.3 2006/07/27 18:11:19 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -56,9 +56,9 @@ __warn_references(getfh,
 
 /* Old, fixed size filehandle structures (used upto (including) 3.x) */
 struct compat_30_fid{
-	unsigned short	fid_len;
-	unsigned short	fid_reserved;
-	char		fid_data[16];
+	unsigned short	fid30_len;
+	unsigned short	fid30_reserved;
+	char		fid30_data[16];
 };
 struct compat_30_fhandle {
 	fsid_t	fh_fsid;
