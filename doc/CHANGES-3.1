@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.123 2006/07/17 11:24:16 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.124 2006/07/28 03:48:25 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4054,4 +4054,27 @@ share/man/man4/bce.4				1.4
 
 	Note the 1GB problem with bce(4), and a workaround.
 	[dogcow, ticket #1429]
+
+sys/lkm/dev/pcilkm/Makefile			delete
+sys/lkm/dev/pcilkm/examples/auich/Makefile	delete
+sys/lkm/dev/pcilkm/examples/auich/README	delete
+sys/lkm/dev/pcilkm/examples/auich/auich_lkm.c	delete
+sys/lkm/dev/pcilkm/examples/pcienum/Makefile	delete
+sys/lkm/dev/pcilkm/examples/pcienum/pcienum_lkm.c delete
+sys/lkm/dev/pcilkm/pcilkm.4			delete
+sys/lkm/dev/pcilkm/pcilkm.h			delete
+sys/lkm/dev/pcilkm/pcilkm_lkm.c			delete
+
+	Remove that example.  It was obsolete even before 3.0 release.
+	[cube, ticket #1428]
+
+sys/dev/pci/pdcsata.c				1.7
+
+
+	Brian Buhrow: Fix a number of problems with the pdcsata driver:
+	The driver for the family of Promise SATA controllers,
+	/usr/src/sys/dev/pci/pdcsata.c is not very robust when it comes to
+	handling transient drive errors, or interrupt hickups when the card
+	is under load.  PR#33445.
+	[simonb, ticket #1430]
 
