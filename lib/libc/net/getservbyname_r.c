@@ -1,4 +1,4 @@
-/*	$NetBSD: getservbyname_r.c,v 1.4 2006/07/27 22:03:49 christos Exp $	*/
+/*	$NetBSD: getservbyname_r.c,v 1.5 2006/07/28 15:14:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getservbyname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservbyname_r.c,v 1.4 2006/07/27 22:03:49 christos Exp $");
+__RCSID("$NetBSD: getservbyname_r.c,v 1.5 2006/07/28 15:14:45 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,19 +62,22 @@ _servent_getbyname(struct servent_data *sd, struct servent *sp,
 		key.data = buf;
 
 		if (proto == NULL)
-			key.size = snprintf(buf, sizeof(buf), "\377%s", name);
+			key.size = snprintf(buf, sizeof(buf), "\376%s", name);
 		else
-			key.size = snprintf(buf, sizeof(buf), "\377%s/%s",
+			key.size = snprintf(buf, sizeof(buf), "\376%s/%s",
 			    name, proto);
 		key.size++;
 			
 		if ((*db->get)(db, &key, &data, 0) != 0)
 			return NULL;
 
+		if ((*db->get)(db, &data, &key, 0) != 0)
+			return NULL;
+
 		if (sd->line)
 			free(sd->line);
 
-		sd->line = strdup(data.data);
+		sd->line = strdup(key.data);
 		return _servent_parseline(sd, sp);
 	} else {
 		while (_servent_getline(sd) != -1) {
