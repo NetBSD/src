@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.39 2006/07/28 17:06:59 dyoung Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.40 2006/07/28 17:34:13 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.39 2006/07/28 17:06:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.40 2006/07/28 17:34:13 dyoung Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -287,7 +287,7 @@ gre_mobile_input(struct mbuf *m, ...)
 		return;
 	}
 
-	if (m->m_len < sizeof(*mip) || M_READONLY(m)) {
+	if (M_UNWRITABLE(m, sizeof(*mip))) {
 		m = m_pullup(m, sizeof(*mip));
 		if (m == NULL)
 			return;
