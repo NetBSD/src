@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.108 2006/06/17 23:34:26 christos Exp $	*/
+/*	$NetBSD: auich.c,v 1.109 2006/07/28 07:41:39 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.108 2006/06/17 23:34:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.109 2006/07/28 07:41:39 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,6 +190,7 @@ struct auich_softc {
 	int sc_codecnum;
 	int sc_codectype;
 	enum ac97_host_flags sc_codecflags;
+	boolean_t sc_spdif;
 
 	/* DMA scatter-gather lists. */
 	bus_dmamap_t sc_cddmamap;
@@ -234,6 +235,7 @@ struct auich_softc {
 	struct audio_format sc_audio_formats[AUICH_AUDIO_NFORMATS];
 	struct audio_format sc_modem_formats[AUICH_MODEM_NFORMATS];
 	struct audio_encoding_set *sc_encodings;
+	struct audio_encoding_set *sc_spdif_encodings;
 };
 
 /* Debug */
@@ -256,6 +258,8 @@ static int	auich_intr(void *);
 CFATTACH_DECL(auich, sizeof(struct auich_softc),
     auich_match, auich_attach, auich_detach, auich_activate);
 
+static int	auich_open(void *, int);
+static void	auich_close(void *);
 static int	auich_query_encoding(void *, struct audio_encoding *);
 static int	auich_set_params(void *, int, int, audio_params_t *,
 		    audio_params_t *, stream_filter_list_t *,
@@ -299,10 +303,11 @@ static int	auich_read_codec(void *, uint8_t, uint16_t *);
 static int	auich_write_codec(void *, uint8_t, uint16_t);
 static int	auich_reset_codec(void *);
 static enum ac97_host_flags	auich_flags_codec(void *);
+static void	auich_spdif_event(void *, boolean_t);
 
 static const struct audio_hw_if auich_hw_if = {
-	NULL,		/* open */
-	NULL,		/* close */
+	auich_open,
+	auich_close,
 	NULL,			/* drain */
 	auich_query_encoding,
 	auich_set_params,
@@ -341,6 +346,12 @@ static const struct audio_format auich_audio_formats[AUICH_AUDIO_NFORMATS] = {
 	 4, AUFMT_SURROUND4, 0, {8000, 48000}},
 	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
 	 6, AUFMT_DOLBY_5_1, 0, {8000, 48000}},
+};
+
+#define AUICH_SPDIF_NFORMATS	1
+static const struct audio_format auich_spdif_formats[AUICH_SPDIF_NFORMATS] = {
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 1, {48000}},
 };
 
 static const struct audio_format auich_modem_formats[AUICH_MODEM_NFORMATS] = {
@@ -581,6 +592,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.write = auich_write_codec;
 	sc->host_if.reset = auich_reset_codec;
 	sc->host_if.flags = auich_flags_codec;
+	sc->host_if.spdif_event = auich_spdif_event;
 
 	subdev = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	switch (subdev) {
@@ -600,6 +612,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 
 	if (ac97_attach_type(&sc->host_if, self, sc->sc_codectype) != 0)
 		return;
+	sc->codec_if->vtbl->unlock(sc->codec_if);
 
 	/* setup audio_format */
 	if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO) {
@@ -616,6 +629,9 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		}
 		if (0 != auconv_create_encodings(sc->sc_audio_formats, AUICH_AUDIO_NFORMATS,
 						 &sc->sc_encodings))
+			return;
+		if (0 != auconv_create_encodings(auich_spdif_formats, AUICH_SPDIF_NFORMATS,
+						 &sc->sc_spdif_encodings))
 			return;
 	} else {
 		memcpy(sc->sc_modem_formats, auich_modem_formats, sizeof(auich_modem_formats));
@@ -704,6 +720,7 @@ auich_detach(struct device *self, int flags)
 
 	/* audio_encoding_set */
 	auconv_delete_encodings(sc->sc_encodings);
+	auconv_delete_encodings(sc->sc_spdif_encodings);
 
 	/* ac97 */
 	if (sc->codec_if != NULL)
@@ -889,13 +906,42 @@ auich_flags_codec(void *v)
 	return sc->sc_codecflags;
 }
 
+static void
+auich_spdif_event(void *addr, boolean_t flag)
+{
+	struct auich_softc *sc;
+
+	sc = addr;
+	sc->sc_spdif = flag;
+}
+
+static int
+auich_open(void *addr, int flags)
+{
+	struct auich_softc *sc;
+
+	sc = (struct auich_softc *)addr;
+	sc->codec_if->vtbl->lock(sc->codec_if);
+	return 0;
+}
+
+static void
+auich_close(void *addr)
+{
+	struct auich_softc *sc;
+
+	sc = (struct auich_softc *)addr;
+	sc->codec_if->vtbl->unlock(sc->codec_if);
+}
+
 static int
 auich_query_encoding(void *v, struct audio_encoding *aep)
 {
 	struct auich_softc *sc;
 
 	sc = (struct auich_softc *)v;
-	return auconv_query_encoding(sc->sc_encodings, aep);
+	return auconv_query_encoding(
+	    sc->sc_spdif ? sc->sc_spdif_encodings : sc->sc_encodings, aep);
 }
 
 static int
@@ -950,13 +996,17 @@ auich_set_params(void *v, int setmode, int usemode, audio_params_t *play,
 			    p->sample_rate > 48000)
 				return EINVAL;
 
-			index = auconv_set_converter(sc->sc_audio_formats, AUICH_AUDIO_NFORMATS,
-						     mode, p, TRUE, fil);
+			if (sc->sc_spdif)
+				index = auconv_set_converter(sc->sc_audio_formats,
+				    AUICH_AUDIO_NFORMATS, mode, p, TRUE, fil);
+			else
+				index = auconv_set_converter(auich_spdif_formats,
+				    AUICH_SPDIF_NFORMATS, mode, p, TRUE, fil);
 		} else {
 			if (p->sample_rate != 8000 && p->sample_rate != 16000)
 				return EINVAL;
-			index = auconv_set_converter(sc->sc_modem_formats, AUICH_MODEM_NFORMATS,
-						     mode, p, TRUE, fil);
+			index = auconv_set_converter(sc->sc_modem_formats,
+			    AUICH_MODEM_NFORMATS, mode, p, TRUE, fil);
 		}
 		if (index < 0)
 			return EINVAL;
