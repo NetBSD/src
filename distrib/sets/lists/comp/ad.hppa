@@ -1,4 +1,4 @@
-# $NetBSD: ad.hppa,v 1.1 2004/07/01 10:19:31 skrll Exp $
+# $NetBSD: ad.hppa,v 1.2 2006/07/28 22:30:21 bjh21 Exp $
 ./usr/include/hppa				comp-c-include
 ./usr/include/hppa/ansi.h			comp-c-include
 ./usr/include/hppa/aout_machdep.h		comp-c-include
@@ -7,7 +7,7 @@
 ./usr/include/hppa/byte_swap.h			comp-c-include
 ./usr/include/hppa/cdefs.h			comp-c-include
 ./usr/include/hppa/cpufunc.h			comp-c-include
-./usr/include/hppa/db_machdep.h			comp-c-include
+./usr/include/hppa/db_machdep.h			comp-obsolete		obsolete
 ./usr/include/hppa/elf_machdep.h		comp-c-include
 ./usr/include/hppa/endian_machdep.h		comp-c-include
 ./usr/include/hppa/exec.h			comp-c-include
