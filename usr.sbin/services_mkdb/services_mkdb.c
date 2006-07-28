@@ -1,11 +1,11 @@
-/*	$NetBSD: services_mkdb.c,v 1.4 2006/07/28 15:15:16 christos Exp $	*/
+/*	$NetBSD: services_mkdb.c,v 1.5 2006/07/28 16:34:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Luke Mewburn.
+ * by Luke Mewburn and Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: services_mkdb.c,v 1.4 2006/07/28 15:15:16 christos Exp $");
+__RCSID("$NetBSD: services_mkdb.c,v 1.5 2006/07/28 16:34:28 christos Exp $");
 #endif /* not lint */
 
 
@@ -60,6 +60,8 @@ static char tname[MAXPATHLEN];
 
 static void	cleanup(void);
 static void	store(const char *, size_t, DB *, DBT *, DBT *, int);
+static void	killproto(DBT *);
+static char    *getstring(const char *, size_t, char **, const char *);
 static void	usage(void) __attribute__((__noreturn__));
 
 int
@@ -70,8 +72,8 @@ main(int argc, char *argv[])
 	int	 ch;
 	size_t	 len, line, cnt;
 	char	 keyb[BUFSIZ], datab[BUFSIZ], *p;
-	const char *fname = _PATH_SERVICES;
 	DBT	 data, key;
+	const char *fname = _PATH_SERVICES;
 	const char *dbname = _PATH_SERVICES_DB;
 
 	setprogname(argv[0]);
@@ -119,35 +121,28 @@ main(int argc, char *argv[])
 		if (len == 0)
 			continue;
 		cp = p;
-		while ((name = strsep(&cp, " \t")) != NULL && *name == '\0')
+
+		if ((name = getstring(fname, line, &cp, "name")) == NULL)
 			continue;
-		if (name == NULL) {
-			warnx("%s, %zu: no name found", fname, line);
+
+		if ((port = getstring(fname, line, &cp, "port")) == NULL)
 			continue;
-		}
-		while ((port = strsep(&cp, " \t")) != NULL && *port == '\0')
-			continue;
-		if (port == NULL) {
-			warnx("%s, %zu: no port found", fname, line);
-			continue;
-		}
+
 		proto = strchr(port, '/');
 		if (proto == NULL || proto[1] == '\0') {
 			warnx("%s, %zu: no protocol found", fname, line);
 			continue;
 		}
 		*proto++ = '\0';
+
 		for (aliases = cp; cp && isspace((unsigned char)*aliases);
 		    aliases++)
 			continue;
 
-		if ((aliases = strdup(aliases ? aliases : "")) == NULL)
-			err(1, "Cannot copy string");
-
 		/* key `indirect key', data `full line' */
 		data.size = snprintf(datab, sizeof(datab), "%zu", cnt++) + 1;
 		key.size = snprintf(keyb, sizeof(keyb), "%s %s/%s %s",
-		    name, port, proto, aliases) + 1;
+		    name, port, proto, aliases ? aliases : "") + 1;
 		store(fname, line, db, &data, &key, 1);
 
 		/* key `\377port/proto', data = `indirect key' */
@@ -156,16 +151,16 @@ main(int argc, char *argv[])
 		store(fname, line, db, &key, &data, 1);
 
 		/* key `\377port', data = `indirect key' */
-		key.size = snprintf(keyb, sizeof(keyb), "\377%s", port) + 1;
+		killproto(&key);
 		store(fname, line, db, &key, &data, 0);
 
 		/* build list of aliases */
 		sl = sl_init();
-		sl_add(sl, name);
+		(void)sl_add(sl, name);
 		while ((alias = strsep(&cp, " \t")) != NULL) {
 			if (alias[0] == '\0')
 				continue;
-			sl_add(sl, alias);
+			(void)sl_add(sl, alias);
 		}
 
 		/* add references for service and all aliases */
@@ -176,16 +171,15 @@ main(int argc, char *argv[])
 			store(fname, line, db, &key, &data, 1);
 
 			/* key `\376service', data = `indirect key' */
-			key.size = snprintf(keyb, sizeof(keyb), "\376%s",
-			    sl->sl_str[i]) + 1;
+			killproto(&key);
 			store(fname, line, db, &key, &data, 0);
 		}
 		sl_free(sl, 0);
-		free(aliases);
 	}
 
 	if ((db->close)(db))
 		err(1, "Error closing temporary database `%s'", tname);
+
 	if (rename(tname, dbname) == -1)
 		err(1, "Cannot rename `%s' to `%s'", tname, dbname);
 
@@ -200,6 +194,31 @@ cleanup(void)
 {
 	if (tname[0])
 		(void)unlink(tname);
+}
+
+static char *
+getstring(const char *fname, size_t line, char **cp, const char *tag)
+{
+	char *str;
+
+	while ((str = strsep(cp, " \t")) != NULL && *str == '\0')
+		continue;
+
+	if (str == NULL)
+		warnx("%s, %zu: no %s found", fname, line, tag);
+
+	return str;
+}
+
+static void
+killproto(DBT *key)
+{
+	char *p, *d = key->data;
+
+	if ((p = strchr(d, '/')) == NULL)
+		abort();
+	*p++ = '\0';
+	key->size = p - d;
 }
 
 static void
