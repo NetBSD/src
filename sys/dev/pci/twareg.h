@@ -1,5 +1,5 @@
-/*	$NetBSD: twareg.h,v 1.4 2006/07/11 00:25:42 simonb Exp $ */
-/*	$wasabi: twareg.h,v 1.11 2006/04/27 17:12:39 wrstuden Exp $	*/
+/*	$NetBSD: twareg.h,v 1.5 2006/07/28 19:23:53 wrstuden Exp $ */
+/*	$wasabi: twareg.h,v 1.14 2006/07/28 18:29:51 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2003-04 3ware, Inc.
@@ -457,8 +457,8 @@ union twa_response_queue {
 #define TWA_AEN_SOFT_RESET		0x01
 #define TWA_AEN_SYNC_TIME_WITH_HOST	0x31
 #define TWA_AEN_SEVERITY_ERROR		0x1
-#define TWA_AEN_SEVERITY_WARNING	0x1
-#define TWA_AEN_SEVERITY_INFO		0x1
+#define TWA_AEN_SEVERITY_WARNING	0x2
+#define TWA_AEN_SEVERITY_INFO		0x3
 #define TWA_AEN_SEVERITY_DEBUG		0x4
 
 #define	TWA_PARAM_DRIVESUMMARY		0x0002
