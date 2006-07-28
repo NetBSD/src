@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.111 2006/06/29 22:01:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.112 2006/07/28 17:08:55 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.111 2006/06/29 22:01:17 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.112 2006/07/28 17:08:55 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.111 2006/06/29 22:01:17 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.112 2006/07/28 17:08:55 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1989,6 +1989,7 @@ ApplyModifiers(char *nstr, const char *tstr,
     int             cnt;	/* Used to count brace pairs when variable in
 				 * in parens or braces */
     char	delim;
+    int		modifier;	/* that we are processing */
     Var_Parse_State parsestate; /* Flags passed to helper functions */
 
     delim = '\0';
@@ -2040,7 +2041,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    printf("Applying :%c to \"%s\"\n", *tstr, nstr);
 	}
 	newStr = var_Error;
-	switch (*tstr) {
+	switch ((modifier = *tstr)) {
 	case ':':
 	    {
 		if (tstr[1] == '=' ||
@@ -2937,7 +2938,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    }
 	}
 	if (DEBUG(VAR)) {
-	    printf("Result is \"%s\"\n", newStr);
+	    printf("Result of :%c is \"%s\"\n", modifier, newStr);
 	}
 
 	if (newStr != nstr) {
