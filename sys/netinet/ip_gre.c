@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.37 2006/01/31 17:19:39 elad Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.38 2006/07/28 16:26:20 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.37 2006/01/31 17:19:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.38 2006/07/28 16:26:20 dyoung Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -240,16 +240,8 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 	m_adj(m, hlen);
 
 #if NBPFILTER > 0
-	if (sc->sc_if.if_bpf) {
-		struct mbuf m0;
-
-		m0.m_flags = 0;
-		m0.m_next = m;
-		m0.m_len = 4;
-		m0.m_data = (char *)&af;
-
-		bpf_mtap(sc->sc_if.if_bpf, &m0);
-	}
+	if (sc->sc_if.if_bpf != NULL)
+		bpf_mtap_af(sc->sc_if.if_bpf, af, m);
 #endif /*NBPFILTER > 0*/
 
 	m->m_pkthdr.rcvif = &sc->sc_if;
