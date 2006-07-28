@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.218 2006/06/19 16:44:24 gdamore Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.219 2006/07/28 08:02:39 scottr Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1070,6 +1070,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Socket Communications",
 	    "Socket Communications 10/100 Ethernet",	}
+	,
+	{
+	    PCMCIA_VENDOR_SIEMENS, PCMCIA_PRODUCT_SIEMENS_SS1021,
+	    PCMCIA_CIS_SIEMENS_SS1021,
+	    0,
+	    "Siemens",
+	    "SpeedStream SS1021 WLAN",	}
 	,
 	{
 	    PCMCIA_VENDOR_SYMBOL, PCMCIA_PRODUCT_SYMBOL_LA4100,
@@ -2145,6 +2152,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Asustek Computer",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_SIEMENS,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Siemens",
 	    NULL,
 	},
 	{
