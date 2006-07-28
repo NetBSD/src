@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.30 2006/07/23 22:06:07 ad Exp $	*/
+/*	$NetBSD: sab.c,v 1.31 2006/07/28 14:08:11 hannken Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.30 2006/07/23 22:06:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.31 2006/07/28 14:08:11 hannken Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -790,7 +790,6 @@ sabioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
 	struct tty *tp = sc->sc_tty;
-	struct proc *p = l->l_proc;
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flags, l);
