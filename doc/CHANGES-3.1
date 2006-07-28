@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.124 2006/07/28 03:48:25 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.125 2006/07/28 12:36:55 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4045,8 +4045,8 @@ usr.sbin/bind/Makefile.inc			1.21,1.23
 sys/nfs/nfs_vnops.c				1.239-1.240 via patch
 sys/nfs/nfs_var.h				1.62 via patch
 
-	Fix race condition in NFS renaming that could cause the renamed file to be
-	deleted.
+	Fix race condition in NFS renaming that could cause the renamed file
+	to be deleted.
 	[jld, ticket #1424]
 
 share/man/man4/bce.4				1.3
@@ -4077,4 +4077,10 @@ sys/dev/pci/pdcsata.c				1.7
 	handling transient drive errors, or interrupt hickups when the card
 	is under load.  PR#33445.
 	[simonb, ticket #1430]
+
+sys/uvm/uvm_bio.c				patch
+
+	Avoid a panic in page fault handling that can occur under low-memory
+	conditions.
+	[jld, ticket #1323]
 
