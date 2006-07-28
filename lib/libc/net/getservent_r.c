@@ -1,4 +1,4 @@
-/*	$NetBSD: getservent_r.c,v 1.6 2006/07/27 22:03:49 christos Exp $	*/
+/*	$NetBSD: getservent_r.c,v 1.7 2006/07/28 01:24:24 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getservent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservent_r.c,v 1.6 2006/07/27 22:03:49 christos Exp $");
+__RCSID("$NetBSD: getservent_r.c,v 1.7 2006/07/28 01:24:24 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,7 +94,7 @@ _servent_getline(struct servent_data *sd)
 	if (sd->flags & _SV_DB) {
 		DB *db = sd->db;
 		DBT key, data;
-		int flags  = (sd->flags & _SV_FIRST) ? R_FIRST : R_NEXT;
+		u_int flags  = (sd->flags & _SV_FIRST) ? R_FIRST : R_NEXT;
 
 		while ((*db->seq)(db, &key, &data, flags) == 0) {
 			flags = R_NEXT;
