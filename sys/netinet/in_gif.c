@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.49 2006/07/28 17:04:27 dyoung Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.50 2006/07/28 17:34:13 dyoung Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.49 2006/07/28 17:04:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.50 2006/07/28 17:34:13 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -157,7 +157,7 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 		M_PREPEND(m, sizeof(struct etherip_header), M_DONTWAIT);
 		if (m == NULL)
 			return ENOBUFS;
-		if (m->m_len < sizeof(struct etherip_header) || M_READONLY(m)) {
+		if (M_UNWRITABLE(m, sizeof(struct etherip_header))) {
 			m = m_pullup(m, sizeof(struct etherip_header));
 			if (m == NULL)
 				return ENOBUFS;
@@ -196,7 +196,7 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 	/* prepend new IP header */
 	M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
 	/* XXX Is m_pullup really necessary after M_PREPEND? */
-	if (m != NULL && (m->m_len < sizeof(struct ip) || M_READONLY(m)))
+	if (m != NULL && M_UNWRITABLE(m, sizeof(struct ip)))
 		m = m_pullup(m, sizeof(struct ip));
 	if (m == NULL)
 		return ENOBUFS;
@@ -277,7 +277,7 @@ in_gif_input(struct mbuf *m, ...)
 	    {
 		struct ip *xip;
 		af = AF_INET;
-		if (m->m_len < sizeof(*xip) || M_READONLY(m)) {
+		if (M_UNWRITABLE(m, sizeof(*xip))) {
 			if ((m = m_pullup(m, sizeof(*xip))) == NULL)
 				return;
 		}
@@ -295,7 +295,7 @@ in_gif_input(struct mbuf *m, ...)
 		struct ip6_hdr *ip6;
 		u_int8_t itos;
 		af = AF_INET6;
-		if (m->m_len < sizeof(*ip6) || M_READONLY(m)) {
+		if (M_UNWRITABLE(m, sizeof(*ip6))) {
 			if ((m = m_pullup(m, sizeof(*ip6))) == NULL)
 				return;
 		}
