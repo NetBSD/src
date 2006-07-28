@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_resource.c,v 1.8 2006/07/23 22:06:10 ad Exp $	 */
+/*	$NetBSD: svr4_32_resource.c,v 1.9 2006/07/28 13:02:56 hannken Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_resource.c,v 1.8 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_resource.c,v 1.9 2006/07/28 13:02:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,7 +282,7 @@ svr4_32_sys_setrlimit64(l, v, retval)
 	limp = &p->p_rlimit[rl];
 
 	if ((error = copyin((caddr_t)(u_long)SCARG(uap, rlp),
-	    slim, sizeof(slim))) != 0)
+	    &slim, sizeof(slim))) != 0)
 		return error;
 
 	/*
