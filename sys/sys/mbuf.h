@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.128 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.129 2006/07/28 17:34:13 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -690,6 +690,8 @@ do {									\
 	  (((m)->m_flags & (M_EXT_ROMAP|M_EXT_RW)) != M_EXT_RW ||	\
 	  MCLISREFERENCED(m)))
 
+#define	M_UNWRITABLE(__m, __len)					\
+	((__m)->m_len < (__len) || M_READONLY((__m)))
 /*
  * Determine if an mbuf's data area is read-only at the MMU.
  */
