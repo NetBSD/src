@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.41 2006/03/29 19:36:55 riz Exp $
+.\"	$NetBSD: mbuf.9,v 1.42 2006/07/28 17:30:53 dyoung Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -384,6 +384,14 @@ are writable.
 When it meets read-only mbufs, it allocates new mbufs, adjusts the chain as
 .Fn m_copyback_cow
 does, and copies the original content into them.
+.Fn m_makewritable
+does
+.Em not
+guarantee that all
+.Fa len
+bytes at
+.Fa off 
+are consecutive.
 The
 .Fa how
 parameter is a choice of
