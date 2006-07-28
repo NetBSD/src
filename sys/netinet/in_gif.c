@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.48 2006/07/28 16:30:55 dyoung Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.49 2006/07/28 17:04:27 dyoung Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.48 2006/07/28 16:30:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.49 2006/07/28 17:04:27 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -119,7 +119,7 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 		proto = IPPROTO_IPV4;
 		if (m->m_len < sizeof(*ip)) {
 			m = m_pullup(m, sizeof(*ip));
-			if (!m)
+			if (m == NULL)
 				return ENOBUFS;
 		}
 		ip = mtod(m, const struct ip *);
@@ -155,11 +155,15 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 		eiphdr.eip_pad = 0;
 		/* prepend Ethernet-in-IP header */
 		M_PREPEND(m, sizeof(struct etherip_header), M_DONTWAIT);
-		if (m && m->m_len < sizeof(struct etherip_header))
-			m = m_pullup(m, sizeof(struct etherip_header));
 		if (m == NULL)
 			return ENOBUFS;
-		bcopy(&eiphdr, mtod(m, struct etherip_header *), sizeof(struct etherip_header));
+		if (m->m_len < sizeof(struct etherip_header) || M_READONLY(m)) {
+			m = m_pullup(m, sizeof(struct etherip_header));
+			if (m == NULL)
+				return ENOBUFS;
+		}
+		bcopy(&eiphdr, mtod(m, struct etherip_header *),
+		    sizeof(struct etherip_header));
 		break;
 #endif
 	default:
@@ -192,7 +196,7 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 	/* prepend new IP header */
 	M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
 	/* XXX Is m_pullup really necessary after M_PREPEND? */
-	if (m && m->m_len < sizeof(struct ip))
+	if (m != NULL && (m->m_len < sizeof(struct ip) || M_READONLY(m)))
 		m = m_pullup(m, sizeof(struct ip));
 	if (m == NULL)
 		return ENOBUFS;
@@ -237,7 +241,7 @@ in_gif_input(struct mbuf *m, ...)
 {
 	int off, proto;
 	struct ifnet *gifp = NULL;
-	struct ip *ip;
+	const struct ip *ip;
 	va_list ap;
 	int af;
 	u_int8_t otos;
@@ -247,7 +251,7 @@ in_gif_input(struct mbuf *m, ...)
 	proto = va_arg(ap, int);
 	va_end(ap);
 
-	ip = mtod(m, struct ip *);
+	ip = mtod(m, const struct ip *);
 
 	gifp = (struct ifnet *)encap_getarg(m);
 
@@ -273,9 +277,8 @@ in_gif_input(struct mbuf *m, ...)
 	    {
 		struct ip *xip;
 		af = AF_INET;
-		if (m->m_len < sizeof(*xip)) {
-			m = m_pullup(m, sizeof(*xip));
-			if (!m)
+		if (m->m_len < sizeof(*xip) || M_READONLY(m)) {
+			if ((m = m_pullup(m, sizeof(*xip))) == NULL)
 				return;
 		}
 		xip = mtod(m, struct ip *);
@@ -292,9 +295,8 @@ in_gif_input(struct mbuf *m, ...)
 		struct ip6_hdr *ip6;
 		u_int8_t itos;
 		af = AF_INET6;
-		if (m->m_len < sizeof(*ip6)) {
-			m = m_pullup(m, sizeof(*ip6));
-			if (!m)
+		if (m->m_len < sizeof(*ip6) || M_READONLY(m)) {
+			if ((m = m_pullup(m, sizeof(*ip6))) == NULL)
 				return;
 		}
 		ip6 = mtod(m, struct ip6_hdr *);
