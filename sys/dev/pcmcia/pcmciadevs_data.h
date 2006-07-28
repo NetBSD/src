@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.210.2.3 2006/07/28 08:46:42 scottr Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.210.2.4 2006/07/28 09:12:56 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.217 2006/07/28 08:02:39 scottr Exp
+ *	NetBSD: pcmciadevs,v 1.208.6.4 2005/11/09 14:48:25 tron Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -1035,13 +1035,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Socket Communications",
 	    "Socket Communications 10/100 Ethernet",	}
-	,
-	{
-	    PCMCIA_VENDOR_SIEMENS, PCMCIA_PRODUCT_SIEMENS_SS1021,
-	    PCMCIA_CIS_SIEMENS_SS1021,
-	    0,
-	    "Siemens",
-	    "SpeedStream SS1021 WLAN",	}
 	,
 	{
 	    PCMCIA_VENDOR_SYMBOL, PCMCIA_PRODUCT_SYMBOL_LA4100,
@@ -2101,14 +2094,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Asustek Computer",
-	    NULL,
-	},
-	{
-	    PCMCIA_VENDOR_SIEMENS,
-	    PCMCIA_KNOWNDEV_NOPROD,
-	    PCMCIA_CIS_INVALID,
-	    0,
-	    "Siemens",
 	    NULL,
 	},
 	{
