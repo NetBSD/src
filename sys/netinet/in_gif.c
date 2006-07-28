@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.47 2006/06/07 22:34:00 kardel Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.48 2006/07/28 16:30:55 dyoung Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.47 2006/06/07 22:34:00 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.48 2006/07/28 16:30:55 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -114,7 +114,7 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 #ifdef INET
 	case AF_INET:
 	    {
-		struct ip *ip;
+		const struct ip *ip;
 
 		proto = IPPROTO_IPV4;
 		if (m->m_len < sizeof(*ip)) {
@@ -122,7 +122,7 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 			if (!m)
 				return ENOBUFS;
 		}
-		ip = mtod(m, struct ip *);
+		ip = mtod(m, const struct ip *);
 		tos = ip->ip_tos;
 		break;
 	    }
@@ -130,14 +130,14 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 #ifdef INET6
 	case AF_INET6:
 	    {
-		struct ip6_hdr *ip6;
+		const struct ip6_hdr *ip6;
 		proto = IPPROTO_IPV6;
 		if (m->m_len < sizeof(*ip6)) {
 			m = m_pullup(m, sizeof(*ip6));
 			if (!m)
 				return ENOBUFS;
 		}
-		ip6 = mtod(m, struct ip6_hdr *);
+		ip6 = mtod(m, const struct ip6_hdr *);
 		tos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		break;
 	    }
@@ -191,6 +191,7 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 
 	/* prepend new IP header */
 	M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
+	/* XXX Is m_pullup really necessary after M_PREPEND? */
 	if (m && m->m_len < sizeof(struct ip))
 		m = m_pullup(m, sizeof(struct ip));
 	if (m == NULL)
