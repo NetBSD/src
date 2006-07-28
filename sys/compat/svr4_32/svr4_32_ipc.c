@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ipc.c,v 1.10 2006/07/23 22:06:10 ad Exp $	*/
+/*	$NetBSD: svr4_32_ipc.c,v 1.11 2006/07/28 13:02:21 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.10 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.11 2006/07/28 13:02:21 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -178,7 +178,6 @@ svr4_32_semctl(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_32_sys_semctl_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct semid_ds sembuf;
 	struct svr4_32_semid_ds ssembuf;
 	int cmd, error;
