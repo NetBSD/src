@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.14 2004/12/15 15:03:14 jmc Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2006/07/29 19:10:57 ad Exp $
 #
 #	etc.pmax/Makefile.inc -- pmax-specific etc Makefile targets
 #
 
-KERNEL_SETS=		GENERIC WSCONS
+KERNEL_SETS=		GENERIC
 
 BUILD_KERNELS=		INSTALL RAMDISK
 

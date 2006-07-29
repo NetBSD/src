@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.15 2003/02/18 08:18:31 shin Exp $
+#	$NetBSD: list,v 1.16 2006/07/29 19:10:56 ad Exp $
 
 # extras in bin
 PROG	bin/csh
@@ -36,7 +36,7 @@ COPY	${DESTDIR}/boot.pmax	boot.pmax
 #COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 
 # a subset termcap file
-COPY	${ARCHDIR}/termcap.rcons usr/share/misc/termcap
+COPY	${ARCHDIR}/termcap.vt100 usr/share/misc/termcap
 
 # copy the kernel(s)
 COPY	${KERNOBJDIR}/GENERIC/netbsd		netbsd

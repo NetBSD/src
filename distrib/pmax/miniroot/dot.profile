@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1 1998/11/17 02:38:17 jonathan Exp $
+#	$NetBSD: dot.profile,v 1.2 2006/07/29 19:10:56 ad Exp $
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
 
@@ -7,7 +7,6 @@ export PATH
 	while [ "X${_loop}" = X"" ]; do
 		echo "" >& 2
 		echo "Setting terminal type. Options:" >& 2
-		echo "  rcons	for graphics console" >& 2
 		echo "  vt100	for dumb serial terminal" >& 2
 		echo "  xterm   for xterm." >& 2
 		echo "" >& 2

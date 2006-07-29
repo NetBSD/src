@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.37 2005/12/24 20:07:25 perry Exp $ */
+/* $NetBSD: dec_5100.c,v 1.38 2006/07/29 19:10:58 ad Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.37 2005/12/24 20:07:25 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.38 2006/07/29 19:10:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,11 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.37 2005/12/24 20:07:25 perry Exp $");
 
 #include <pmax/ibus/ibusvar.h>
 
-#ifdef WSCONS
 #include <pmax/pmax/cons.h>
-#else
-#include <pmax/dev/dcvar.h>
-#endif
 
 void		dec_5100_init __P((void));		/* XXX */
 static void	dec_5100_bus_reset __P((void));
@@ -121,12 +117,8 @@ dec_5100_cons_init()
 	 */
 	DELAY(160000000 / 9600);	/* XXX */
 
-#ifdef WSCONS
 	dz_ibus_cnsetup(KN230_SYS_DZ0);
 	dz_ibus_cnattach(0);
-#else
-	dc_cnattach(KN230_SYS_DZ0, 0);
-#endif
 }
 
 static void
