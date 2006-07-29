@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.21 2006/07/21 16:48:48 ad Exp $	*/
+/*	$NetBSD: dz.c,v 1.22 2006/07/29 18:48:14 ad Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.21 2006/07/21 16:48:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.22 2006/07/29 18:48:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,7 +322,6 @@ dzxint(void *arg)
 int
 dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct proc *p = l->l_proc;
 	struct tty *tp;
 	int unit, line;
 	struct	dz_softc *sc;
