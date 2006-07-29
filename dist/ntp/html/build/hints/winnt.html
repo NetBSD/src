@@ -57,13 +57,18 @@
         Note that the ntptrace executable is not supported and you should use the PERL script
         version instead.
         <h2>Accuracy</h2>
-        Greg Brackley has implemented a fantastic interpolation scheme that improves the precision of the NTP clock using a realtime thread (is that poetic or what!) which captures a tick count from the 8253 counter after each OS tick. The count is used to interpolate the time between operating system ticks.
-        <p>On a typical 200+ MHz system NTP achieves a precision of about 5 microseconds and synchronizes the clock to +/-500 microseconds using the <a href="http://www.trimble.com/products/ntp">Trimble Palisade</a> as UTC reference. This allows distributed applications to use the 10 milliseconds ticks available to them with high confidence.</p>
+        Greg Brackley has implemented a fantastic interpolation scheme that improves the precision of the NTP clock
+        using a realtime thread (is that poetic or what!) which captures a tick count from the 8253 counter after each
+        OS tick. The count is used to interpolate the time between operating system ticks.
+        <p>On a typical 200+ MHz system NTP achieves a precision of about 5 microseconds and synchronizes the clock 
+        to +/-500 microseconds using the <a href="http://www.trimble.com/products/ntp">Trimble Palisade</a> as UTC reference.
+        This allows distributed applications to use the 10 milliseconds ticks available to them with high confidence.</p>
         <h2>Binaries</h2>
         Recent InstallShield based executable versions of NTP for Windows NT (intel) are available from:
         <ul>
         <li><a href="http://www.trimble.com/oem/ntp">http://www.trimble.com/oem/ntp</a>
         <li><a href="http://www.five-ten-sg.com/">http://www.five-ten-sg.com/</a>
+        <li><a href="http://www.meinberg.de/english/sw/ntp.htm">http://www.meinberg.de/english/sw/ntp.htm</a>
         </ul>
         <a name="ToDo"><h2>ToDo</h2></a>
         These tasks are in no particular order of priority.
@@ -78,7 +83,7 @@
         <h2>Compiling Requirements</h2>
         <ul>
             <li>Windows NT 4.0 Windows 2000, Windows XP, or Windows.NET Server 2003
-            <li>Microsoft Visual C++ 6.0. <B>NOTE</B>VC++ 7.0 (aka .NET) is not yet supported
+            <li>Microsoft Visual C++ 6.0. <B>NOTE:</B> VC++ 7.0 (aka .NET) is not yet supported
             but will probably work fine.
             <li>Some way of uncompressing and untarring the gzipped tar file.
             <li>OpenSSL must be built on the box before building NTP. Additional steps would
@@ -87,11 +92,10 @@
         <a name="Compiling"><h2>Compiling Instructions</h2></a>
         <ol>
             <li>Unpack and build OpenSSL according to the OpenSSL instructions for building on
-            Windows. Currently the NTP build requires OpenSSL 0.9.7b as it looks for the path
-            to that build for the include and libeay32.lib files. If you have a different version
-            you will need to adjust both the preprocessor path and the link path to point to
-            the correct locations of the include files and the lib file respectively.
-            <li>Unpack the NTP-4.x.tar.gz using utilities such as WinZip.
+            Windows. An environment variable named OPENSSL must be set up to specify the base path 
+            of the OpenSSL directory to be used to build the NTP package
+            (e.g. <code>OPENSSL=C:\openssl-0.9.8b</code>).
+            <li>Unpack the ntp-*.tar.gz archive using utilities such as WinZip.
             <li>Open the .\ports\winnt\ntp.dsw Visual C workspace
             <li>Batch build all projects
             <li>The built binaries can be found in the port\winnt\bin\Release subdirectory
@@ -100,25 +104,38 @@
             ship this file (winnt.html) along with the binaries.
         </ol>
         <h2>Configuration File</h2>
-        The default NTP configuration file path is %SystemRoot%<tt>\system32\drivers\etc\. </tt>(%SystemRoot% is an environmental variable that can be determined by typing &quot;set&quot; at the &quot;Command Prompt&quot; or from the &quot;System&quot; icon in the &quot;Control Panel&quot;).<br>
-        Refer to your system environment and <tt>c</tt>reate your<tt> ntp.conf</tt> file in the directory corresponding to your system&nbsp; installation.<br>
-        <tt>The older &lt;WINDIR&gt;\ntp.conf </tt>is still supported but you will get a log entry reporting that the first file wasn't found.
+        The default NTP configuration file path is %SystemRoot%<tt>\system32\drivers\etc\. </tt>(%SystemRoot% 
+        is an environmental variable that can be determined by typing &quot;set&quot; at the &quot;Command Prompt&quot; 
+        or from the &quot;System&quot; icon in the &quot;Control Panel&quot;).<br>
+        Refer to your system environment and <tt>c</tt>reate your<tt> ntp.conf</tt> file in the directory 
+        corresponding to your system&nbsp; installation.<br>
+        <tt>The older &lt;WINDIR&gt;\ntp.conf </tt>is still supported but you will get a log entry reporting that 
+        the first file wasn't found.
         <h2>Installation Instructions</h2>
-        The <tt>instsrv</tt> program in the instsrv subdirectory of the distribution can be used to install 'ntpd' as a service and start automatically at boot time. Instsrv is automatically compiled with the rest of the distribution if you followed the steps above.
+        The <tt>instsrv</tt> program in the instsrv subdirectory of the distribution can be used to install 'ntpd' as 
+        a service and start automatically at boot time. Instsrv is automatically compiled with the rest of the distribution
+        if you followed the steps above.
         <ol>
             <li>Start a command prompt and enter &quot;instsrv.exe &lt;pathname_for_ntpd.exe&gt;&quot;
-            <li>Clicking on the &quot;Services&quot; icon in the &quot;Control Panel&quot; will display the list of currently installed services in a dialog box. The NetworkTimeProtocol service should show up in this list. Select it in the list and hit the &quot;Start&quot; button in the dialog box. The NTP service should start.
+            <li>Clicking on the &quot;Services&quot; icon in the &quot;Control Panel&quot; will display the list of 
+            currently installed services in a dialog box. The NetworkTimeProtocol service should show up in this list.
+            Select it in the list and hit the &quot;Start&quot; button in the dialog box. The NTP service should start.
             <li>You can also stop and start the service by typing net start|stop NetworkTimeProtocol at the DOS prompt.
-            <li>View the event log by clicking on the &quot;Event Viewer&quot; icon in the &quot;Administrative Tools&quot; group, there should be several successful startup messages from NTP. NTP will keep running and restart automatically when the machine is rebooted.
+            <li>View the event log by clicking on the &quot;Event Viewer&quot; icon in the &quot;Administrative Tools&quot; 
+            group, there should be several successful startup messages from NTP. NTP will keep running and restart 
+            automatically when the machine is rebooted.
         </ol>
-        You can change the start mode (automatic/manual) and other startup parameters corresponding to the NTP service in the &quot;Services&quot; dialog box if you wish.
+        You can change the start mode (automatic/manual) and other startup parameters corresponding to the NTP service 
+        in the &quot;Services&quot; dialog box if you wish.
         <h2>Removing NTP</h2>
         You can also use <tt>instsrv</tt> to delete the NTP service by entering: &quot;instsrv.exe remove&quot;
         <h2>Command Line Parameters and Registry Entries</h2>
         Unlike the Unix environment, there is no clean way to run 'ntpdate' and reset the clock before starting 'ntpd' at boot time.<br>
-        NTP will step the clock up to 1000 seconds by default. While there is no reason that the system clock should be that much off during bootup if 'ntpd' was running before, you may wish to override this default and/or pass other command line directives.
+        NTP will step the clock up to 1000 seconds by default. While there is no reason that the system clock should be that much off 
+        during bootup if 'ntpd' was running before, you may wish to override this default and/or pass other command line directives.
         <p>Use the registry editor to edit the value for the ntpd executable under LocalMachine\System\CurrentControlSet\Services\NTP.</p>
-        <p>Add the -g option to the ImagePath key, behind &quot;%INSTALLDIR&gt;\ntpd.exe&quot;. This will force NTP to accept large time errors (including 1.1.1980 00:00)</p>
+        <p>Add the -g option to the ImagePath key, behind &quot;%INSTALLDIR&gt;\ntpd.exe&quot;. This will force NTP to accept 
+        large time errors (including 1.1.1980 00:00)</p>
         <h2>Bug Reports</h2>
         Send questions to <a href="news://comp.protocols.time.ntp">news://comp.protocols.time.ntp</a>
         and bug reports should be entered in <a href="http://bugzilla.ntp.org/">Bugzilla</a> on the
@@ -137,14 +154,18 @@
         <b>by Sven Dietrich (sven_dietrich@trimble.com)</b>
         <p><b>Significant Changes:</b></p>
         <ul>
-            <li>Perl 5 is no longer needed to compile NTP. The configuration script which creates version.c with the current date and time was modified by Frederick Czajka [w2k@austin.rr.com] so that Perl is no longer required.
+            <li>Perl 5 is no longer needed to compile NTP. The configuration script which creates version.c 
+            with the current date and time was modified by Frederick Czajka [w2k@austin.rr.com] so that Perl
+            is no longer required.
         </ul>
         <h3>Last revision 15 November 1999&nbsp; Version 4.0.98f.</h3>
         <b>by Sven Dietrich (sven_dietrich@trimble.com)</b>
         <p><b>Significant Changes:</b></p>
         <ul>
             <li>Fixed I/O problem delaying packet responses which resulted in no-replys to NTPQ and others.
-            <li>The default configuration file path is <tt>&lt;WINDIR&gt;\system32\drivers\etc\ntp.conf. The old &lt;WINDIR&gt;\ntp.conf </tt>is still supported but you will get a log entry reporting that the first file wasn't found. The NTP 3.x legacy <tt>ntp.ini</tt> file is no longer supported.
+            <li>The default configuration file path is <tt>&lt;WINDIR&gt;\system32\drivers\etc\ntp.conf. 
+            The old &lt;WINDIR&gt;\ntp.conf </tt>is still supported but you will get a log entry reporting 
+            that the first file wasn't found. The NTP 3.x legacy <tt>ntp.ini</tt> file is no longer supported.
         </ul>
         <b>Known Problems / TODO:</b>
         <ul>
@@ -230,7 +251,8 @@
             &nbsp;</p>
         <p>Known problems:<br>
             *&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bug in ntptrace - if no Stratum 1 servers are available,<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; such as on an IntraNet, the application crashes.</p>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; such as on an 
+            IntraNet, the application crashes.</p>
         <h3>Last revision:&nbsp; 12-Apr-1995</h3>
         This NTPv3 distribution includes a sample configuration file and the project<br>
         makefiles for WindowsNT 3.5 platform using Microsoft Visual C++ 2.0 compiler.<br>
