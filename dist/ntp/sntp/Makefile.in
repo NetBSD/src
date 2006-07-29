@@ -14,13 +14,9 @@
 
 @SET_MAKE@
 
+# Makefile.am, by Harlan Stenn, from:
 # Makefile for sntp
 # N.M. Maclaren, October 2000.
-
-# Take a look at README for the various preprocessor symbols, but they are
-# extremely unlikely to be needed on newer systems.  You may prefer to change
-# LOCKNAME and SAVENAME to use /var/run (or even /tmp) rather than /etc.  Note
-# that not all of the following system settings have been tested recently.
 
 # we traditionally installed software in bindir, while it should have gone
 # in sbindir.  Now that we offer a choice, look in the "other" installation
@@ -50,8 +46,8 @@ build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = sntp$(EXEEXT)
 DIST_COMMON = README $(am__configure_deps) $(dist_man_MANS) \
-	$(srcdir)/../bincheck.mf $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.in $(top_srcdir)/configure config.guess \
+	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
+	$(srcdir)/bincheck.mf $(top_srcdir)/configure config.guess \
 	config.sub depcomp install-sh missing
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -176,23 +172,8 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 AUTOMAKE_OPTIONS = foreign
-
-# Compiling this sort of ANSI C under SunOS 4.1 is a mug's game, because Sun's
-# Unix headers make GNU C vomit even in compatibility mode, but the following
-# will compile main.c and unix.c.  At least two people have got it to work.
-# CC = gcc -ansi
-# CFLAGS = -O -DNONBLOCK_BROKEN
-# LDFLAGS =
-# LIBS = -lm
-
-# The following settings can be used under Linux.  While adjtime is present,
-# it is completely broken (i.e. it will work only if xntp is running), so it
-# is a good idea to add -DADJTIME_MISSING.
-# CC = cc -DADJTIME_MISSING
-# CFLAGS = -O
-# LDFLAGS = 
-# LIBS = -lm
 NULL = 
+EXTRA_DIST = bincheck.mf
 sntp_SOURCES = \
 	header.h \
 	internet.c \
@@ -211,7 +192,7 @@ all: all-am
 .SUFFIXES: .c .o .obj
 am--refresh:
 	@:
-$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(srcdir)/../bincheck.mf $(am__configure_deps)
+$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(srcdir)/bincheck.mf $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -392,7 +373,6 @@ distclean-tags:
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkdir_p) $(distdir)/..
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

@@ -28,4 +28,14 @@ case $releasecandidate in
     ;;
 esac
 
+case $repotype in
+ stable)
+    case $rcpoint in
+     [0-9]*)
+	NAME="${NAME}$rcpoint"
+	;;
+    esac
+    ;;
+esac
+
 echo "$NAME"

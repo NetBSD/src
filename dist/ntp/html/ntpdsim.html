@@ -13,7 +13,7 @@
 		<h3><tt>ntpdsim</tt> - Network Time Protocol (NTP) simulator</h3>
 		<img src="pic/alice47.gif" alt="gif" align="left"><a href="http://www.eecis.udel.edu/%7emills/pictures.html">from <i>Alice's Adventures in Wonderland</i>, Lewis Carroll</a>
 		<p>The mushroom knows all the command line options.</p>
-		<p>Last update: <csobj format="ShortTime" h="25" locale="00000409" region="0" t="DateTime" w="61">18:45</csobj> UTC <csobj format="LongDate" h="25" locale="00000409" region="0" t="DateTime" w="246">Thursday, July 28, 2005</csobj></p>
+		<p>Last update: <csobj format="ShortTime" h="25" locale="00000409" region="0" t="DateTime" w="61">20:07</csobj> UTC <csobj format="LongDate" h="25" locale="00000409" region="0" t="DateTime" w="223">Friday, June 16, 2006</csobj></p>
 		<br clear="left">
 		<h4>Related Links</h4>
 		<script type="text/javascript" language="javascript" src="scripts/links7.txt"></script>
@@ -28,7 +28,7 @@
 		<h4 id="synop">Synopsis</h4>
 		<tt>ntpdsim [ -B <i>bdly</i> ] [ -C <i>snse</i> ] [ -O <i>clk_time</i> ] [ -S <i>sim_time</i> ] [ -T <i>ferr</i> ] [ -W <i>fsne</i> ] [ -Y </tt><i><tt>ndly</tt></i><tt> ] [ -X </tt><i><tt>pdly</tt></i><tt> ]</tt>
 		<h4 id="descr">Description</h4>
-		<p>The <tt>ntpdsim</tt> program is an adaptation of the <tt>ntpd</tt> operating system daemon. The program operates as a discrete time simulator using specified systematic and random driving sources. It includes all the mitigation and discipline algorithms of the actual daemon, but with the packet I/O and system clock algorithms driven by simulation. Most functions of the real <tt>ntpd</tt> remain intact, including the monitoring, statistics recording, trace and host name resolution features. Further information on the simulator is on the <a href="http://www.eecis.udel.edu/~mills/ntpsim.html">NTP Discrete Event Simulator</a> page.</p>
+		<p>The <tt>ntpdsim</tt> program is an adaptation of the <tt>ntpd</tt> operating system daemon. The program operates as a discrete time simulator using specified systematic and random driving sources. It includes all the mitigation and discipline algorithms of the actual daemon, but with the packet I/O and system clock algorithms driven by simulation. Most functions of the real <tt>ntpd</tt> remain intact, including the monitoring, statistics recording, trace and host name resolution features. Further information on the simulator is on the <a href="http://www.eecis.udel.edu/%7emills/ntpsim.html">NTP Discrete Event Simulator</a> page.</p>
 		<p>The simulator is most useful to study NTP behavior in response to time and/or frequency transients under specific conditions of network jitter and oscillator wander. For this purpose the daemon can be driven by pseudorandom jitter and wander sample sequences characteristic of real networks and oscillators. The jitter generator produces samples from a Poisson distribution, while the wander generator produces samples from a Guassian distribution.</p>
 		<p>The easiest way to use this program is to create a <tt>ntpstats</tt> directory, configuration file <tt>ntp.conf</tt> and frequency file <tt>ntp.drift</tt> and test shell <tt>test.sh</tt> in the base directory. The <tt>ntp.drift</tt> file and <tt>ntpstats</tt> directory can be empty to start. The <tt>test.sh</tt> script can contain something like</p>
 		<pre>rm ./ntpstats/*
@@ -44,7 +44,7 @@ filegen peerstats type day enable
 </pre>
 		<h4 id="cmd">Command Line Options</h4>
 		<dl>
-			<dt>Most of the <tt>ntpd</tt> command line options apply also to <tt>ntpdsim</tt>. In addition, the following command line options apply to <tt>ntpdsim.</tt>
+			<dt>Note:&nbsp;The NTP&nbsp;development team is moving to the use of a syntax-directed configuration file design. When complete these options will be replaced by a <a href="ntpdsim_new.html">new one</a>. Most of the <tt>ntpd</tt> command line options apply also to <tt>ntpdsim</tt>. In addition, the following command line options apply to <tt>ntpdsim.</tt>
 			<dt><tt>-B <i>bdly</i></tt>
 			<dd>Specify beep delay (3600) s.
 			<dt><tt>-C <i>snse</i></tt>

@@ -1,4 +1,6 @@
 (4.2.2)
+* Resolve an ambiguity in the copyright notice
+-
 * SNTP
 * Many bugfixes
 * Implements the current "goal state" of NTPv4
