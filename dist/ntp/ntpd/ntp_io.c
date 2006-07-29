@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.18 2006/07/29 08:15:29 kardel Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.19 2006/07/29 14:56:57 kardel Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -2224,7 +2224,7 @@ read_refclock_packet(SOCKET fd, struct refclockio *rp, l_fp ts)
 static inline int
 read_network_packet(SOCKET fd, struct interface *itf, l_fp ts)
 {
-	size_t fromlen;
+	socklen_t fromlen;
 	int buflen;
 	register struct recvbuf *rb;
 
@@ -2510,7 +2510,7 @@ findlocalinterface(
 	SOCKET s;
 	int rtn, i, idx;
 	struct sockaddr_storage saddr;
-	size_t saddrlen = SOCKLEN(addr);
+	socklen_t saddrlen = SOCKLEN(addr);
 #ifdef DEBUG
 	if (debug>2)
 	    printf("Finding interface for addr %s in list of addresses\n",
