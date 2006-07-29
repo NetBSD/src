@@ -1,5 +1,5 @@
-/*	$NetBSD: twa.c,v 1.7 2006/07/11 00:25:42 simonb Exp $ */
-/*	$wasabi: twa.c,v 1.25 2006/05/01 15:16:59 simonb Exp $	*/
+/*	$NetBSD: twa.c,v 1.8 2006/07/29 00:13:57 wrstuden Exp $ */
+/*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.7 2006/07/11 00:25:42 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.8 2006/07/29 00:13:57 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -542,28 +542,29 @@ twa_wait_request(struct twa_request *tr, uint32_t timeout)
 {
 	time_t	end_time;
 	struct timeval	t1;
-	int	s, error;
+	int	s, rv;
 
 	tr->tr_flags |= TWA_CMD_SLEEP_ON_REQUEST;
 	tr->tr_callback = twa_request_wait_handler;
 	tr->tr_status = TWA_CMD_BUSY;
 
-	if ((error = twa_map_request(tr)))
-		return (error);
+	rv = twa_map_request(tr);
+
+	if (rv != 0)
+		return (rv);
 
 	microtime(&t1);
 	end_time = t1.tv_usec +
 		(timeout * 1000 * 100);
 
 	while (tr->tr_status != TWA_CMD_COMPLETE) {
-		if ((error = tr->tr_error))
-			return(error);
-		if ((error = tsleep(tr, PRIBIO, "twawait", timeout * hz)) == 0)
-		{
-			error = (tr->tr_status != TWA_CMD_COMPLETE);
+		rv = tr->tr_error;
+		if (rv != 0)
+			return(rv);
+		if ((rv = tsleep(tr, PRIBIO, "twawait", timeout * hz)) == 0)
 			break;
-		}
-		if (error == EWOULDBLOCK) {
+		
+		if (rv == EWOULDBLOCK) {
 			/*
 			 * We will reset the controller only if the request has
 			 * already been submitted, so as to not lose the
@@ -573,8 +574,7 @@ twa_wait_request(struct twa_request *tr, uint32_t timeout)
 			 * for that request, right here.  So, the caller is
 			 * expected to NOT cleanup when ETIMEDOUT is returned.
 			 */
-			if (tr->tr_status != TWA_CMD_PENDING &&
-			    tr->tr_status != TWA_CMD_COMPLETE)
+			if (tr->tr_status == TWA_CMD_BUSY)
 				twa_reset(tr->tr_sc);
 			else {
 				/* Request was never submitted.  Clean up. */
@@ -593,15 +593,14 @@ twa_wait_request(struct twa_request *tr, uint32_t timeout)
 		}
 		/*
 		 * Either the request got completed, or we were woken up by a
-		 * signal.  Calculate the new timeout, in case it was the
+		 * signal. Calculate the new timeout, in case it was the
 		 * latter.
 		 */
 		microtime(&t1);
 
 		timeout = (end_time - t1.tv_usec) / (1000 * 100);
 	}
-	twa_unmap_request(tr);
-	return(error);
+	return(rv);
 }
 
 /*
@@ -619,11 +618,12 @@ static int
 twa_immediate_request(struct twa_request *tr, uint32_t timeout)
 {
 	struct timeval t1;
-	int	s = 0, error = 0;
+	int	s = 0, rv = 0;
 
-	if ((error = twa_map_request(tr))) {
-		return(error);
-	}
+	rv = twa_map_request(tr);
+
+	if (rv != 0) 
+		return(rv);
 
 	timeout = (timeout * 10000 * 10);
 
@@ -632,14 +632,14 @@ twa_immediate_request(struct twa_request *tr, uint32_t timeout)
 	timeout += t1.tv_usec;
 
 	do {
-		if ((error = tr->tr_error))
-			return(error);
+		rv = tr->tr_error;
+		if (rv != 0)
+			return(rv);
+		s = splbio();
 		twa_done(tr->tr_sc);
-		if ((tr->tr_status != TWA_CMD_BUSY) &&
-			(tr->tr_status != TWA_CMD_PENDING)) {
-			twa_unmap_request(tr);
-			return(tr->tr_status != TWA_CMD_COMPLETE);
-		}
+		splx(s);
+		if (tr->tr_status == TWA_CMD_COMPLETE)
+			return(rv);
 		microtime(&t1);
 	} while (t1.tv_usec <= timeout);
 
@@ -652,7 +652,9 @@ twa_immediate_request(struct twa_request *tr, uint32_t timeout)
 	 * for that request, right here.  So, the caller is
 	 * expected to NOT cleanup when ETIMEDOUT is returned.
 	 */
-	if (tr->tr_status != TWA_CMD_PENDING)
+	rv = ETIMEDOUT;
+	
+	if (tr->tr_status == TWA_CMD_BUSY)
 		twa_reset(tr->tr_sc);
 	else {
 		/* Request was never submitted.  Clean up. */
@@ -665,7 +667,7 @@ twa_immediate_request(struct twa_request *tr, uint32_t timeout)
 
 		twa_release_request(tr);
 	}
-	return(ETIMEDOUT);
+	return (rv);
 }
 
 static int
@@ -704,6 +706,9 @@ twa_inquiry(struct twa_request *tr, int lunid)
 		SID_QUAL_LU_NOTPRESENT;
 
 	error = twa_immediate_request(tr, TWA_REQUEST_TIMEOUT_PERIOD);
+
+	if (error != 0)
+		return (error);
 
 	if (((struct scsipi_inquiry_data *)tr->tr_data)->device ==
 		SID_QUAL_LU_NOTPRESENT)
@@ -751,13 +756,16 @@ twa_read_capacity(struct twa_request *tr, int lunid)
 	tr_9k_cmd->cdb[1] = ((lunid << 5) & 0x0e) | SRC16_SERVICE_ACTION;
 
 	error = twa_immediate_request(tr, TWA_REQUEST_TIMEOUT_PERIOD);
+	
+	if (error == 0) {
 #if BYTE_ORDER == BIG_ENDIAN
-	array_size = bswap64(_8btol(((struct scsipi_read_capacity_16_data *)
-				tr->tr_data)->addr) + 1);
+		array_size = bswap64(_8btol(
+		    ((struct scsipi_read_capacity_16_data *)tr->tr_data->addr) + 1);
 #else
-	array_size = _8btol(((struct scsipi_read_capacity_16_data *)
+		array_size = _8btol(((struct scsipi_read_capacity_16_data *)
 				tr->tr_data)->addr) + 1;
 #endif
+	}
 	return (array_size);
 }
 
@@ -996,6 +1004,31 @@ twa_request_bus_scan(struct twa_softc *sc)
 	return (0);
 }
 
+
+#ifdef	DIAGNOSTIC
+static inline void
+twa_check_busy_q(struct twa_request *tr)
+{
+	struct twa_request *rq;
+	struct twa_softc *sc = tr->tr_sc;
+
+	TAILQ_FOREACH(rq, &sc->twa_busy, tr_link) {
+		if (tr->tr_request_id == rq->tr_request_id) { 
+			panic("cannot submit same request more than once");
+		} else if (tr->bp == rq->bp && tr->bp != 0) {
+			/* XXX A check for 0 for the buf ptr is needed to
+			 * guard against ioctl requests with a buf ptr of
+			 * 0 and also aen notifications. Looking for 
+			 * external cmds only.
+			 */
+			panic("cannot submit same buf more than once");
+		} else {
+			/* Empty else statement */
+		}
+	}
+}
+#endif
+
 static int
 twa_start(struct twa_request *tr)
 {
@@ -1031,6 +1064,11 @@ twa_start(struct twa_request *tr)
 
 		/* Mark the request as currently being processed. */
 		tr->tr_status = TWA_CMD_BUSY;
+
+#ifdef	DIAGNOSTIC
+		twa_check_busy_q(tr);
+#endif
+
 		/* Move the request into the busy queue. */
 		TAILQ_INSERT_TAIL(&tr->tr_sc->twa_busy, tr, tr_link);
 	}
@@ -1121,7 +1159,7 @@ twa_drain_pending_queue(struct twa_softc *sc)
 static int
 twa_drain_aen_queue(struct twa_softc *sc)
 {
-	int				error = 0;
+	int				s, error = 0;
 	struct twa_request		*tr;
 	struct twa_command_header	*cmd_hdr;
 	struct timeval	t1;
@@ -1154,7 +1192,9 @@ twa_drain_aen_queue(struct twa_softc *sc)
 		timeout += t1.tv_usec;
 
 		do {
+			s = splbio();
 			twa_done(tr->tr_sc);
+			splx(s);
 			if (tr->tr_status != TWA_CMD_BUSY)
 				break;
 			microtime(&t1);
@@ -1187,17 +1227,54 @@ out:
 	return(error);
 }
 
+
+#ifdef		DIAGNOSTIC
+static void
+twa_check_response_q(struct twa_request *tr, int clear)
+{
+	int j;
+	static int i = 0;
+	static struct twa_request	*req = 0;
+	static struct buf		*hist[255];
+
+
+	if (clear) {
+		i = 0; 
+		for (j = 0; j < 255; j++)
+			hist[j] = 0;
+		return;
+	}
+
+	if (req == 0)
+		req = tr;
+
+	if ((tr->tr_cmd_pkt_type & TWA_CMD_PKT_TYPE_EXTERNAL) != 0) {
+		if (req->tr_request_id == tr->tr_request_id) 
+			panic("req id: %d on controller queue twice",
+		    	    tr->tr_request_id);
+		
+		for (j = 0; j < i; j++) 
+			if (tr->bp == hist[j]) 
+				panic("req id: %d buf found twice",
+		    	    	    tr->tr_request_id);
+		}
+	req = tr;
+
+	hist[i++] = req->bp;
+}
+#endif
+
 static int
 twa_done(struct twa_softc *sc)
 {
 	union twa_response_queue	rq;
 	struct twa_request		*tr;
-	int				s, error = 0;
+	int				rv = 0;
 	uint32_t			status_reg;
 
 	for (;;) {
 		status_reg = twa_inl(sc, TWA_STATUS_REGISTER_OFFSET);
-		if ((error = twa_check_ctlr_state(sc, status_reg)))
+		if ((rv = twa_check_ctlr_state(sc, status_reg)))
 			break;
 		if (status_reg & TWA_STATUS_RESPONSE_QUEUE_EMPTY)
 			break;
@@ -1205,21 +1282,24 @@ twa_done(struct twa_softc *sc)
 		rq = (union twa_response_queue)twa_inl(sc,
 			TWA_RESPONSE_QUEUE_OFFSET);
 		tr = sc->sc_twa_request + rq.u.response_id;
-
+#ifdef		DIAGNOSTIC
+		twa_check_response_q(tr, 0);
+#endif
 		/* Unmap the command packet, and any associated data buffer. */
 		twa_unmap_request(tr);
-
-		s = splbio();
+	
 		tr->tr_status = TWA_CMD_COMPLETE;
 		TAILQ_REMOVE(&tr->tr_sc->twa_busy, tr, tr_link);
-		splx(s);
 
 		if (tr->tr_callback)
 			tr->tr_callback(tr);
 	}
 	(void)twa_drain_pending_queue(sc);
-
-	return(error);
+	
+#ifdef		DIAGNOSTIC	
+	twa_check_response_q(NULL, 1);
+#endif
+	return(rv);
 }
 
 /*
@@ -1938,7 +2018,7 @@ out:
 static int
 twa_intr(void *arg)
 {
-	int	caught, rv;
+	int	caught, s, rv;
 	struct twa_softc *sc;
 	uint32_t	status_reg;
 	sc = (struct twa_softc *)arg;
@@ -1975,7 +2055,9 @@ twa_intr(void *arg)
 		caught = 1;
 	}
 	if (status_reg & TWA_STATUS_RESPONSE_INTERRUPT) {
+		s = splbio();
 		twa_done(sc);
+		splx(s);
 		caught = 1;
 	}
 bail:
@@ -2746,8 +2828,10 @@ twa_fetch_aen(struct twa_softc *sc)
 
 	s = splbio();
 
-	if ((tr = twa_get_request(sc, TWA_CMD_AEN)) == NULL)
+	if ((tr = twa_get_request(sc, TWA_CMD_AEN)) == NULL) {
+		splx(s);
 		return(EIO);
+	}
 	tr->tr_cmd_pkt_type |= TWA_CMD_PKT_TYPE_INTERNAL;
 	tr->tr_callback = twa_aen_callback;
 	tr->tr_data = malloc(TWA_SECTOR_SIZE, M_DEVBUF, M_NOWAIT);
@@ -2927,6 +3011,7 @@ twa_request_init(struct twa_request *tr, int flags)
 	tr->tr_error = 0;
 	tr->tr_callback = NULL;
 	tr->tr_cmd_pkt_type = 0;
+	tr->bp = 0;
 
 	/*
 	 * Look at the status field in the command packet to see how
