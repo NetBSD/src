@@ -27,9 +27,9 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: intro.4,v 1.16 2005/06/20 13:25:25 peter Exp $
+.\"	$NetBSD: intro.4,v 1.17 2006/07/29 19:10:57 ad Exp $
 .\"
-.Dd September 12, 2001
+.Dd July 29, 2006
 .Dt INTRO 4 pmax
 .Os
 .Sh NAME
@@ -135,10 +135,10 @@ NCR 53c94-based SCSI interface, either on DECstation 5000-series
 baseboard or PMAZ-AA SCSI option card.
 .It bba
 baseboard audio on 5000/xx systems.
-.It dc
+.It dz
 serial driver for DEC custom four-port serial device (dc7085 DZ-11 clone)
 on the baseboard of DECstation 2100/31000, 5100, and 5000/200 systems.
-.It scc
+.It zsc
 serial driver for Zilog SCC asynchronous/synchronous devices on the
 baseboard of DECstation 5000-series systems (excluding 5000/200).
 .It le
@@ -148,7 +148,7 @@ Adaptor for the baseboard IO ASIC on second-generation TURBOchannel
 machines.
 An ioasic must be configured on a 5000/1xx, 5000/xx, and 5000/240
 if support for baseboard devices or the TURBOchannel bus is desired.
-.It fb
+.It wsdisplay
 Pseudo-device driver supporting glass-tty console emulation on DEC
 framebuffers, DEC mice, and LK-201 family keyboards.
 .It sii
@@ -162,23 +162,21 @@ or for the baseboard Ethernet and SCSI devices on a 5000/200.
 .It cfb
 PMAG-B TURBOchannel 1024x876 unaccelerated 2-D framebuffer.
 .It sfb
-PMAGB-BA TURBOchannel 1280x1024 unaccelerated framebuffer.
+PMAGB-BA TURBOchannel 1280x1024 accelerated framebuffer.
 .It mfb
 PMAG-AA TURBOchannel 1280x1024 mono/greyscale unaccelerated framebuffer.
+.It tfb
+PMAG-JA and PMAG-RO TURBOchannel 1280x1024 unaccelerated framebuffer.
 .It px
-PMAG-C TURBOchannel 2-D accelerated graphics board
-.It fb
-pmax frame buffer pseudo-device
+PMAG-C TURBOchannel 2-D accelerated graphics board.
+.It pxg
+PMAG-D, E and F TURBOchannel 2-D/3-D accelerated graphics boards.
 .El
 .Sh UNSUPPORTED DEVICES
 The following devices are not supported, due to unavailability of
 either documentation or sample hardware:
 .Pp
 .Bl -tag -width speaker -offset indent -compact
-.It PMAG-C	accelerated 2-D framebuffer card
-.It PMAG-D	accelerated 2-D framebuffer card
-.It PMAG-E	accelerated 2-D framebuffer card
-.It PMAG-F	accelerated 2-D framebuffer card
 .It LoFi	DEC Western Research Labs audio card
 .El
 .Pp

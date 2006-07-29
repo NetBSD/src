@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.15 2004/02/13 11:36:08 wiz Exp $
+.\"	$NetBSD: hardware,v 1.16 2006/07/29 19:10:56 ad Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -70,6 +70,10 @@ PMAG-E (PXG+) 3D 24-bit accelerated frame buffer.
 .It
 PMAG-F (PXG+ Turbo) 3D 24-bit accelerated frame buffer.
 .bullet)
+.It
+PMAG-JA (TX) 1024x1280 color frame buffer
+.It
+PMAG-RO (TX) 1024x1280 color frame buffer
 .(Note
 All supported DECstation video produces sync-on-green.
 Be sure to use either a DEC-compatible fixed-sync monitor

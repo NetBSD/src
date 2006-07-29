@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.109 2005/12/11 12:18:36 christos Exp $
+#	$NetBSD: files.pmax,v 1.110 2006/07/29 19:10:57 ad Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -54,6 +54,13 @@ file	arch/pmax/ibus/ibus.c		ibus
 file	arch/pmax/ibus/ibus_pmax.c	ibus & (dec_3100|dec_5100)
 
 #
+# Workstation console glue
+#
+include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+
+#
 # TURBOchannel devices
 #
 include	"dev/tc/files.tc"
@@ -99,9 +106,9 @@ file	arch/pmax/tc/asc_ioasic.c	asc_ioasic
 
 # sii: kn01 SCSI interface
 device	sii: scsi
-file	arch/pmax/dev/sii.c		sii needs-flag
+file	arch/pmax/ibus/sii.c		sii needs-flag
 attach	sii at ibus with sii_ds
-file	arch/pmax/dev/sii_ds.c		sii_ds
+file	arch/pmax/ibus/sii_ds.c		sii_ds
 
 # LANCE ethernet driver.
 #   device defined in sys/conf/files.
@@ -123,5 +130,42 @@ file	arch/pmax/stand/common/callvec.c
 file	dev/cons.c
 
 file arch/mips/mips/softintr.c
+
+#
+# Workstation console devices
+#
+
+# DC7085 (DZ-11 like four-port serial device) on ibus
+attach dz at ibus with dz_ibus
+file   arch/pmax/ibus/dz_ibus.c        dz_ibus
+
+attach lkkbd at dz with dzkbd
+file   dev/dec/dzkbd.c                 dzkbd needs-flag
+
+attach vsms at dz with dzms
+file   dev/dec/dzms.c                  dzms needs-flag
+
+# 3100 (pmax) onboard framebuffer
+device pm: wsemuldisplaydev, rasops1, rasops8
+attach pm at ibus
+file   arch/pmax/ibus/pm.c             pm needs-flag
+
+# The "desktop bus" on the MAXINE (5k/25).
+device dt { addr = -1 }
+attach dt at ioasic
+file   arch/pmax/tc/dt.c               dt needs-flag
+
+device dtkbd: wskbddev, lkkbdmap
+attach dtkbd at dt
+file   arch/pmax/tc/dtkbd.c            dtkbd needs-flag
+
+device dtms: wsmousedev
+attach dtms at dt 
+file   arch/pmax/tc/dtms.c             dtms needs-flag
+
+# DV MAXINE builtin
+device xcfb: wsemuldisplaydev, rasops8
+attach xcfb at tc
+file   dev/tc/xcfb.c                   xcfb needs-flag
 
 include "arch/pmax/conf/majors.pmax"

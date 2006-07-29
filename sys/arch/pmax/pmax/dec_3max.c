@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.42 2005/12/24 20:07:25 perry Exp $ */
+/* $NetBSD: dec_3max.c,v 1.43 2006/07/29 19:10:58 ad Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.42 2005/12/24 20:07:25 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.43 2006/07/29 19:10:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,16 +126,11 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.42 2005/12/24 20:07:25 perry Exp $");
 #include <pmax/pmax/kn02.h>
 #include <pmax/pmax/memc.h>
 
-#ifdef WSCONS
 #include <dev/dec/dzreg.h>
 #include <dev/dec/dzvar.h>
 #include <dev/dec/dzkbdvar.h>
 #include <pmax/pmax/cons.h>
 #include "wsdisplay.h"
-#else
-#include <pmax/dev/dcvar.h>
-#include "rasterconsole.h"
-#endif
 
 void		dec_3max_init __P((void));		/* XXX */
 static void	dec_3max_bus_reset __P((void));
@@ -221,15 +216,9 @@ dec_3max_cons_init()
 			dzkbd_cnattach(NULL);
  			return;
  		}
-#elif NRASTERCONSOLE > 0
-		if (kbd == 7 && tcfb_cnattach(crt) > 0) {
-			dckbd_cnattach(KN02_SYS_DZ);
-			return;
-		}
-#else
+#endif
 		printf("No framebuffer device configured for slot %d: ", crt);
 		printf("using serial console\n");
-#endif
 	}
 	/*
 	 * Delay to allow PROM putchars to complete.
@@ -238,12 +227,8 @@ dec_3max_cons_init()
 	 */
 	DELAY(160000000 / 9600);	/* XXX */
 
-#ifdef WSCONS
 	dz_ibus_cnsetup(KN02_SYS_DZ);
 	dz_ibus_cnattach(kbd);
-#else
-	dc_cnattach(KN02_SYS_DZ, kbd);
-#endif
 }
 
 static const struct {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.22 2005/12/11 12:18:36 christos Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.2 2006/07/29 19:10:57 ad Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.22 2005/12/11 12:18:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.2 2006/07/29 19:10:57 ad Exp $");
 
 #include "sii.h"
 
@@ -33,8 +33,8 @@ __KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.22 2005/12/11 12:18:36 christos Exp $")
 #include <dev/scsipi/scsi_message.h>
 
 #include <machine/bus.h>
-#include <pmax/dev/siireg.h>
-#include <pmax/dev/siivar.h>
+#include <pmax/ibus/siireg.h>
+#include <pmax/ibus/siivar.h>
 
 #include <pmax/ibus/ibusvar.h>		/* interrupt etablish */
 
