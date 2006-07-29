@@ -988,13 +988,13 @@
 #define PACKAGE_NAME "ntp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ntp 4.2.2"
+#define PACKAGE_STRING "ntp 4.2.2p2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ntp"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.2.2"
+#define PACKAGE_VERSION "4.2.2p2"
 
 /* Do we have the ppsclock streams module? */
 /* #undef PPS */
@@ -1105,7 +1105,7 @@
 /* #undef USE_UDP_SIGPOLL */
 
 /* Version number of package */
-#define VERSION "4.2.2"
+#define VERSION "4.2.2p2"
 
 /* ISC: Want IPv6? */
 /* #define WANT_IPV6 */
