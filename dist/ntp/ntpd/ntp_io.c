@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.17 2006/06/18 22:48:51 kardel Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.18 2006/07/29 08:15:29 kardel Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -151,13 +151,7 @@ static	void	close_socket	P((SOCKET));
 #ifdef REFCLOCK
 static	void	close_file	P((SOCKET));
 #endif
-#if !defined(SYS_WINNT) && defined(F_DUPFD)
 static int	move_fd		P((int));
-#ifndef FOPEN_MAX
-#define FOPEN_MAX	20
-#endif
-#endif
-
 static	char *	fdbits		P((int, fd_set *));
 static	void	set_reuseaddr	P((int));
 static	isc_boolean_t	socket_broadcast_enable	 P((struct interface *, SOCKET, struct sockaddr_storage *));
@@ -250,28 +244,113 @@ connection_reset_fix(SOCKET fd) {
 }
 #endif
 
-#if !defined(SYS_WINNT) && defined(F_DUPFD)
-static int move_fd(int fd)
+/*
+ * on Unix systems the stdio library typically
+ * makes use of file descriptor in the lower
+ * integer range. stdio usually will make use
+ * of the file descriptor in the range of
+ * [0..FOPEN_MAX)
+ * in order to keep this range clean for socket
+ * file descriptions to attempt to move them above
+ * FOPEM_MAX. This is not as easy as it sounds as
+ * FOPEN_MAX changes from implementation to implementation
+ * and may exceed to current file decriptor limits.
+ * We are using following strategy:
+ * - keep a current socket fd boundary initialized with
+ *   max(0, min(getdtablesize() - FD_CHUNK, FOPEN_MAX))
+ * - attempt to move the descriptor to the boundary or
+ *   above.
+ *   - if that fails and boundary > 0 set boundary
+ *     to min(0, socket_fd_boundary - FD_CHUNK)
+ *     -> retry
+ *     if failure and boundary == 0 return old fd
+ *   - on success close old fd return new fd
+ *
+ * effects:
+ *   - fds will be moved above the socket fd boundary
+ *     if at all possible.
+ *   - the socket boundary will be reduced until
+ *     allocation is possible or 0 is reached - at this
+ *     point the algrithm will be disabled
+ */
+static int move_fd(SOCKET fd)
 {
-	int newfd;
-        /*
-         * Leave a space for stdio to work in.
-         */
-        if (fd >= 0 && fd < FOPEN_MAX) {
-                newfd = fcntl(fd, F_DUPFD, FOPEN_MAX);
-
-                if (newfd == -1)
-		{
-			msyslog(LOG_ERR, "Error duplicating file descriptor: %m");
-                        return (fd);
-		}
-                (void)close(fd);
-                return (newfd);
-        }
-	else
-		return (fd);
-}
+#if !defined(SYS_WINNT) && defined(F_DUPFD)
+#ifndef FD_CHUNK
+#define FD_CHUNK	10
 #endif
+/*
+ * number of fds we would like to have for
+ * stdio FILE* available.
+ * we can pick a "low" number as our use of
+ * FILE* is limited to log files and temporarily
+ * to data and config files. Except for log files
+ * we don't keep the other FILE* open beyond the
+ * scope of the function that opened it.
+ */
+#ifndef FD_PREFERRED_SOCKBOUNDARY
+#define FD_PREFERRED_SOCKBOUNDARY 48
+#endif
+
+#ifndef HAVE_GETDTABLESIZE
+/*
+ * if we have no idea about the max fd value set up things
+ * so we will start at FOPEN_MAX
+ */
+#define getdtablesize() (FOPEN_MAX+FD_CHUNK)
+#endif
+
+#ifndef FOPEN_MAX
+#define FOPEN_MAX	20	/* assume that for the lack of anything better */
+#endif
+	static SOCKET socket_boundary = -1;
+	SOCKET newfd;
+
+	/*
+	 * check whether boundary has be set up
+	 * already
+	 */
+	if (socket_boundary == -1) {
+		socket_boundary = max(0, min(getdtablesize() - FD_CHUNK, 
+					     min(FOPEN_MAX, FD_PREFERRED_SOCKBOUNDARY)));
+#ifdef DEBUG
+		msyslog(LOG_DEBUG, "ntp_io: estimated max descriptors: %d, initial socket boundary: %d",
+			getdtablesize(), socket_boundary);
+#endif
+	}
+
+	/*
+	 * with socket_boundary == 0 we stop attempting to move fds
+	 */
+	if (socket_boundary > 0) {
+		/*
+		 * Leave a space for stdio to work in. potentially moving the
+		 * socket_boundary lower until allocation succeeds.
+		 */
+		do {
+			if (fd >= 0 && fd < socket_boundary) {
+				/* inside reserved range: attempt to move fd */
+				newfd = fcntl(fd, F_DUPFD, socket_boundary);
+				
+				if (newfd != -1) {
+					/* success: drop the old one - return the new one */
+					(void)close(fd);
+					return (newfd);
+				}
+			} else {
+				/* outside reserved range: no work - return the original one */
+				return (fd);
+			}
+			socket_boundary = max(0, socket_boundary - FD_CHUNK);
+#ifdef DEBUG
+			msyslog(LOG_DEBUG, "ntp_io: selecting new socket boundary: %d",
+				socket_boundary);
+#endif
+		} while (socket_boundary > 0);
+	}
+#endif /* !defined(SYS_WINNT) && defined(F_DUPFD) */
+	return (fd);
+}
 
 
 
@@ -860,7 +939,7 @@ static isc_boolean_t
 socket_broadcast_disable(struct interface *iface, int ind, struct sockaddr_storage *maddr)
 {
 #ifdef SO_BROADCAST
-	int off = 0;
+	int off = 0;	/* XXX: Should this be a u_char (Bug 657)? */
 
 	if (maddr->ss_family == AF_INET)
 	{
@@ -939,7 +1018,7 @@ void
 enable_multicast_if(struct interface *iface, struct sockaddr_storage *maddr)
 {
 #ifdef MCAST
-	int off = 0;
+	u_int off = 0;
 
 	switch (maddr->ss_family)
 	{
@@ -957,7 +1036,7 @@ enable_multicast_if(struct interface *iface, struct sockaddr_storage *maddr)
 		 * Don't send back to itself, but allow it to fail to set it
 		 */
 		if (setsockopt(iface->fd, IPPROTO_IP, IP_MULTICAST_LOOP,
-		       (char *)&off, sizeof(off)) == -1) {
+		       &off, sizeof(off)) == -1) {
 			netsyslog(LOG_ERR,
 			"setsockopt IP_MULTICAST_LOOP failure: %m on socket %d, addr %s for multicast address %s",
 			iface->fd, stoa(&iface->sin), stoa(maddr));
@@ -987,7 +1066,7 @@ enable_multicast_if(struct interface *iface, struct sockaddr_storage *maddr)
 		 * Don't send back to itself, but allow it to fail to set it
 		 */
 		if (setsockopt(iface->fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
-		       (char *)&off, sizeof(off)) == -1) {
+		       &off, sizeof(off)) == -1) {
 			netsyslog(LOG_ERR,
 			"setsockopt IP_MULTICAST_LOOP failure: %m on socket %d, addr %s for multicast address %s",
 			iface->fd, stoa(&iface->sin), stoa(maddr));
@@ -1501,7 +1580,7 @@ open_socket(
 {
 	int errval;
 	SOCKET fd;
-	int on = 1, off = 0;
+	int on = 1, off = 0;	/* XXX: Should these be u_char (bug 657)? */
 #if defined(IPTOS_LOWDELAY) && defined(IPPROTO_IP) && defined(IP_TOS)
 	int tos;
 #endif /* IPTOS_LOWDELAY && IPPROTO_IP && IP_TOS */
@@ -1531,6 +1610,9 @@ open_socket(
 		    errval == WSAEPFNOSUPPORT)
 #endif
 			return (INVALID_SOCKET);
+
+		msyslog(LOG_ERR, "socket for address %s could not be created - check error above - TERMINATING",
+			stoa(addr));
 		exit(1);
 		/*NOTREACHED*/
 	}
@@ -1541,13 +1623,11 @@ open_socket(
 	}
 #endif /* SYS_WINNT */
 
-#if !defined(SYS_WINNT) && defined(F_DUPFD)
 	/*
 	 * Fixup the file descriptor for some systems
 	 * See bug #530 for details of the issue.
 	 */
 	fd = move_fd(fd);
-#endif
 
 	/*
 	 * set SO_REUSEADDR since we will be binding the same port
@@ -2144,7 +2224,7 @@ read_refclock_packet(SOCKET fd, struct refclockio *rp, l_fp ts)
 static inline int
 read_network_packet(SOCKET fd, struct interface *itf, l_fp ts)
 {
-	int fromlen;
+	size_t fromlen;
 	int buflen;
 	register struct recvbuf *rb;
 
@@ -2430,7 +2510,7 @@ findlocalinterface(
 	SOCKET s;
 	int rtn, i, idx;
 	struct sockaddr_storage saddr;
-	int saddrlen = SOCKLEN(addr);
+	size_t saddrlen = SOCKLEN(addr);
 #ifdef DEBUG
 	if (debug>2)
 	    printf("Finding interface for addr %s in list of addresses\n",
