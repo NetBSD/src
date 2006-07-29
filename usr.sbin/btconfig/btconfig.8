@@ -1,4 +1,4 @@
-.\" $NetBSD: btconfig.8,v 1.2 2006/07/26 10:00:43 tron Exp $
+.\" $NetBSD: btconfig.8,v 1.3 2006/07/29 23:51:09 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 4, 2006
+.Dd July 26, 2006
 .Dt BTCONFIG 8
 .Os
 .Sh NAME
@@ -37,9 +37,7 @@
 .Nd configure bluetooth devices
 .Sh SYNOPSIS
 .Nm
-.Op Fl s
-.Op Fl v
-.Op Fl z
+.Op Fl svz
 .Oo
 .Ar device
 .Op Ar parameters
@@ -48,11 +46,13 @@
 .Op Fl l
 .Sh DESCRIPTION
 .Nm
-is used to configure Bluetooth devices. If the
+is used to configure Bluetooth devices.
+If the
 .Ar device
-is given, but no parameters then
+is given, but no parameters, then
 .Nm
-will print information about the device. If no
+will print information about the device.
+If no
 .Ar device
 is given, a basic list of devices will be printed.
 .Pp
@@ -68,47 +68,51 @@ Enable Bluetooth Device.
 .It Cm down
 Disable Bluetooth Device.
 .It Cm pscan
-Enable Page Scan. This enables incoming connections to the device.
+Enable Page Scan.
+This enables incoming connections to the device.
 .It Cm -pscan
-Disable Page Scan
+Disable Page Scan.
 .It Cm iscan
-Enable Inquiry Scan. This puts the device in Discoverable mode.
+Enable Inquiry Scan.
+This puts the device in Discoverable mode.
 .It Cm -iscan
-Disable Inquiry Scan
+Disable Inquiry Scan.
 .It Cm encrypt
-Enable encryption. This will cause the device to request encryption
-on all baseband connections, and will only work if authentication is
-also enabled.
+Enable encryption.
+This will cause the device to request encryption on all baseband
+connections, and will only work if authentication is also enabled.
 .It Cm -encrypt
-Disable encryption
+Disable encryption.
 .It Cm auth
-Enable authentication. This will cause the device to request authentication
+Enable authentication.
+This will cause the device to request authentication
 for all baseband connections.
 .It Cm -auth
-Disable authentication
+Disable authentication.
 .It Cm switch
 Enable Role Switching.
 .It Cm -switch
-Disable Role Switching
+Disable Role Switching.
 .It Cm hold
-Enable Hold Mode
+Enable Hold Mode.
 .It Cm -hold
-Disable Hold Mode
+Disable Hold Mode.
 .It Cm sniff
-Enable Sniff Mode
+Enable Sniff Mode.
 .It Cm -sniff
-Disable Sniff Mode
+Disable Sniff Mode.
 .It Cm park
-Enable Park Mode
+Enable Park Mode.
 .It Cm -park
-Disable Park Mode
+Disable Park Mode.
 .It Cm name Ar name
 Set human readable name of device.
 .It Cm ptype Ar type
 Set packet types.
 .Ar type
-is a 16 bit hex value specifying packet types that will be requested by outgoing
-ACL connections. By default, all packet types that the device supports are enabled,
+is a 16 bit hex value specifying packet types that will be requested
+by outgoing ACL connections.
+By default, all packet types that the device supports are enabled,
 see bluetooth specifications for more information if you want to change this.
 .It Cm class Ar class
 Set class of device.
@@ -117,24 +121,27 @@ is a 3 byte hex value the value of which declares the device capabilities.
 See Bluetooth Assigned Numbers documents at
 .Dv https://www.bluetooth.org/
 for details
-of constructing a "Class of Device" value. As a starter, 0x020104 means Desktop Computer,
-with Networking available.
+of constructing a "Class of Device" value.
+As a starter, 0x020104 means Desktop Computer, with Networking
+available.
 .It Cm fixed
-Set fixed pin type
+Set fixed pin type.
 .It Cm variable
-Set variable pin type
+Set variable pin type.
 .It Cm inquiry
 Peform device Discovery from the specified device and print details.
 .It Cm reset
 Perform a hard reset on the device and re-initialise system state.
 .It Cm voice
-Set Voice Setting. [This should be 0x0060 for now]
+Set Voice Setting.
+[This should be 0x0060 for now]
 .It Cm pto
-Set Page Timeout value. This is a decimal value in milliseconds.
+Set Page Timeout value.
+This is a decimal value in milliseconds.
 .El
 .Pp
-All parameters are parsed before any device operations take place. Each
-time the
+All parameters are parsed before any device operations take place.
+Each time the
 .Fl v
 flag is given, verbosity levels will be increased.
 .Pp
@@ -144,16 +151,16 @@ Messages indicating the specified device does not exist, the
 requested address is unknown, or the user is not privileged and
 tried to alter an device's configuration.
 .Sh SEE ALSO
-.Xr bt3c 4 ,
-.Xr ubt 4 ,
 .Xr bluetooth 4 ,
+.Xr bt3c 4 ,
+.Xr ubt 4
 .Sh HISTORY
 The
 .Nm
 command was written for
 .Nx 4.0
 by
-.An "Iain Hibbert"
+.An Iain Hibbert
 under the sponsorship of Itronix, Inc.
 .Sh BUGS
-The output is very messy
+The output is very messy.
