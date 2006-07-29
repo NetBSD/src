@@ -1,9 +1,9 @@
-/*	$NetBSD: mbg_gps166.h,v 1.3 2006/06/11 19:34:09 kardel Exp $	*/
+/*	$NetBSD: mbg_gps166.h,v 1.4 2006/07/29 08:15:29 kardel Exp $	*/
 
 /*
- * /src/NTP/REPOSITORY/ntp4-dev/include/mbg_gps166.h,v 4.6 2005/10/07 22:11:56 kardel RELEASE_20051008_A
+ * /src/NTP/REPOSITORY/ntp4-dev/include/mbg_gps166.h,v 4.7 2006/06/22 18:41:43 kardel RELEASE_20060622_A
  *
- * mbg_gps166.h,v 4.6 2005/10/07 22:11:56 kardel RELEASE_20051008_A
+ * mbg_gps166.h,v 4.7 2006/06/22 18:41:43 kardel RELEASE_20060622_A
  *
  * Created: Sun Jul 20 09:20:50 1997
  *
@@ -526,8 +526,8 @@ typedef struct {
 
 } IONO;
 
-void mbg_tm_str P((unsigned char **, TM *, int));
-void mbg_tgps_str P((unsigned char **, T_GPS *, int));
+void mbg_tm_str P((char **, TM *, int));
+void mbg_tgps_str P((char **, T_GPS *, int));
 void get_mbg_header P((unsigned char **, GPS_MSG_HDR *));
 void put_mbg_header P((unsigned char **, GPS_MSG_HDR *));
 void get_mbg_sw_rev P((unsigned char **, SW_REV *));
@@ -557,6 +557,9 @@ unsigned long mbg_csum P((unsigned char *, unsigned int));
  * History:
  *
  * mbg_gps166.h,v
+ * Revision 4.7  2006/06/22 18:41:43  kardel
+ * clean up signedness (gcc 4)
+ *
  * Revision 4.6  2005/10/07 22:11:56  kardel
  * bounded buffer implementation
  *
