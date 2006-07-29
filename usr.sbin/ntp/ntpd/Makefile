@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2006/06/11 19:34:28 kardel Exp $
+#	$NetBSD: Makefile,v 1.14 2006/07/29 08:18:36 kardel Exp $
 
 PROG=	ntpd
 MAN=	ntpd.8
@@ -22,10 +22,6 @@ SRCS=	cmd_args.c ntp_config.c ntp_control.c ntp_crypto.c ntp_filegen.c \
 	refclock_zyfer.c
 
 .include <bsd.own.mk>
-
-.if ${HAVE_GCC} == 4
-COPTS+=	-Wno-pointer-sign -fno-strict-aliasing
-.endif
 
 LIBPARSE!=	cd ${.CURDIR}/../libparse && ${PRINTOBJDIR}
 LDADD+=		-L${LIBPARSE} -lparse -L${LIBISC} -lisc
