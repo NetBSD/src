@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_oncore.c,v 1.8 2006/06/11 19:34:12 kardel Exp $	*/
+/*	$NetBSD: refclock_oncore.c,v 1.9 2006/07/29 19:22:25 kardel Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -3317,8 +3317,18 @@ record_clock_stats(&(instance->peer->srcadr), Msg);
 
 	/* and set time to time from Computer clock */
 
-	gettimeofday(&tv, 0);
-	tm = gmtime((const time_t *) &tv.tv_sec);
+	{
+		/*
+		 * XXX NetBSD (@20060729 all variants) defines tv_sec as a long
+		 *  -> not SUS standard and doesn't even work within the system
+		 *     without kludges like the one below
+		 */ 
+
+		time_t help;
+		gettimeofday(&tv, 0);
+		help = tv.tv_sec;  /* cope with type mismatches */
+		tm = gmtime(&help);
+	}
 #if 1
 	{
 	char Msg[160];
