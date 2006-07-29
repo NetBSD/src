@@ -1,14 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 2006/06/07 20:59:28 kardel Exp $
+#	$NetBSD: Makefile,v 1.8 2006/07/29 08:18:36 kardel Exp $
 
 PROG=	ntptime
 MAN=	ntptime.8
 SRCS=	ntptime.c
 
 .include <bsd.own.mk>
-
-.if ${HAVE_GCC} == 4
-COPTS+= -fno-strict-aliasing
-.endif
 
 NTPSRCDIR=util
 
