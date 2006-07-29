@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.6 2006/07/29 08:15:29 kardel Exp $	*/
+/*	$NetBSD: socket.c,v 1.7 2006/07/29 10:21:37 kardel Exp $	*/
 
 /*  Copyright (C) 1996, 2000 N.M. Maclaren
     Copyright (C) 1996, 2000 The University of Cambridge
@@ -9,8 +9,6 @@ that uses another mechanism.  It does not currently use socklen_t, because
 the only system that the author uses that has it is Linux. */
 
 
-
-#include "config.h"
 
 #include "header.h"
 #include "internet.h"
