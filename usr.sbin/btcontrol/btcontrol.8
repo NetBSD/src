@@ -1,4 +1,4 @@
-.\" $NetBSD: btcontrol.8,v 1.2 2006/07/26 10:31:00 tron Exp $
+.\" $NetBSD: btcontrol.8,v 1.3 2006/07/29 23:55:28 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -51,10 +51,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $Id: btcontrol.8,v 1.2 2006/07/26 10:31:00 tron Exp $
+.\" $Id: btcontrol.8,v 1.3 2006/07/29 23:55:28 wiz Exp $
 .\" $FreeBSD: src/usr.sbin/bluetooth/bthidcontrol/bthidcontrol.8,v 1.3 2005/01/18 20:02:30 ru Exp $
 .\"
-.Dd July 19, 2006
+.Dd July 26, 2006
 .Dt BTCONTROL 8
 .Os
 .Sh NAME
@@ -68,8 +68,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility is used to
-configure
+utility is used to configure
 .Xr btdev 4
 devices in the system, and manage the configuration entries stored in the
 .Pa /var/db/btdev.xml
@@ -100,26 +99,28 @@ Print configuration entry for
 .Ar btdev
 .It Cm Query Oo Fl d Ar device Oc Oo Fl m Ar mtu Oc Fl a Ar address Fl s Ar service
 Perform an SDP query to the remote Bluetooth
-.Ar address 
+.Ar address
 for the given
 .Ar service
 and create a configuration entry for
 .Ar btdev .
 .Ar address
-may be given as BDADDR or a name.  If a name was specified,
+may be given as BDADDR or a name.
+If a name was specified,
 .Nm
 attempts to resolve the name via
 .Xr bt_gethostbyname 3 .
 Communications can be limited to a specific controller by use of the
 .Fl d
-option. Known services are:
+option.
+Known services are:
 .Pp
 .Bl -tag -compact
-.It HID
+.It Dv HID
 Human Interface Device
-.It HFP
+.It Dv HFP
 Hands Free Profile
-.It HSET
+.It Dv HSET
 Headset
 .El
 .Pp
@@ -133,21 +134,17 @@ Remove config entry for
 .Ar btdev
 from configuration file.
 .El
-.Pp
+.Sh EXIT STATUS
+.Ex -std
 .Sh FILES
 .Bl -tag -compact
 .It Pa /dev/btdevN
 .It Pa /var/db/btdev.xml
 .El
-.Sh EXIT STATUS
-.Ex -std
 .Sh SEE ALSO
 .Xr btdev 4 ,
 .Xr bthidev 4 ,
 .Xr btsco 4
-.Sh AUTHORS
-.An Iain Hibbert for Itronix, Inc.
-.An Maksim Yevmenkin Aq m_evmenkin@yahoo.com
 .Sh HISTORY
 Parts of the
 .Nm
@@ -155,3 +152,7 @@ program originated in the
 .Fx
 .Nm bthidcontrol
 program.
+.Sh AUTHORS
+.An Iain Hibbert
+for Itronix, Inc.
+.An Maksim Yevmenkin Aq m_evmenkin@yahoo.com
