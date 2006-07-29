@@ -1,4 +1,4 @@
-# $NetBSD: md.pmax,v 1.55 2006/07/26 20:09:17 drochner Exp $
+# $NetBSD: md.pmax,v 1.56 2006/07/29 19:10:56 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/pmax				comp-c-include
 ./usr/include/pmax/_G_config.h			comp-obsolete		obsolete
@@ -12,8 +12,8 @@
 ./usr/include/pmax/cdefs.h			comp-c-include
 ./usr/include/pmax/conf.h			comp-obsolete		obsolete
 ./usr/include/pmax/cpu.h			comp-c-include
-./usr/include/pmax/db_machdep.h			comp-obsolete        obsolete
-./usr/include/pmax/dc7085cons.h			comp-c-include
+./usr/include/pmax/db_machdep.h			comp-obsolete		obsolete
+./usr/include/pmax/dc7085cons.h			comp-obsolete		obsolete
 ./usr/include/pmax/dec_boot.h			comp-obsolete		obsolete
 ./usr/include/pmax/disklabel.h			comp-c-include
 ./usr/include/pmax/ecoff_machdep.h		comp-c-include
@@ -22,7 +22,7 @@
 ./usr/include/pmax/endian.h			comp-c-include
 ./usr/include/pmax/endian_machdep.h		comp-c-include
 ./usr/include/pmax/fbio.h			comp-obsolete		obsolete
-./usr/include/pmax/fbvar.h			comp-c-include
+./usr/include/pmax/fbvar.h			comp-obsolete		obsolete
 ./usr/include/pmax/float.h			comp-c-include
 ./usr/include/pmax/ieee.h			comp-c-include
 ./usr/include/pmax/ieeefp.h			comp-c-include
@@ -44,7 +44,7 @@
 ./usr/include/pmax/pcb.h			comp-c-include
 ./usr/include/pmax/pmap.h			comp-c-include
 ./usr/include/pmax/pmc.h			comp-c-include
-./usr/include/pmax/pmioctl.h			comp-c-include
+./usr/include/pmax/pmioctl.h			comp-obsolete		obsolete
 ./usr/include/pmax/proc.h			comp-c-include
 ./usr/include/pmax/profile.h			comp-c-include
 ./usr/include/pmax/psl.h			comp-c-include
