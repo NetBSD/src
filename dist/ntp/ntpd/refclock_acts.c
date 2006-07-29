@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_acts.c,v 1.1.1.4 2006/06/11 15:00:40 kardel Exp $	*/
+/*	$NetBSD: refclock_acts.c,v 1.1.1.5 2006/07/29 07:14:08 kardel Exp $	*/
 
 /*
  * refclock_acts - clock driver for the NIST/USNO/PTB/NPL Computer Time
@@ -756,7 +756,7 @@ acts_timeout(
 			sprintf(lockfile, LOCKFILE, up->unit);
 			fd = open(lockfile, O_WRONLY | O_CREAT | O_EXCL,
 			    0644);
-			if (!fd) {
+			if (fd < 0) {
 				msyslog(LOG_ERR, "acts: port busy");
 				return;
 			}

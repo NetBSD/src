@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.1.1.3 2006/06/11 15:01:49 kardel Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.1.1.4 2006/07/29 07:15:19 kardel Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -2986,7 +2986,7 @@ tstflags(
 		cb += strlen(cb);
 	} else {
 		*cb++ = ' ';
-		for (i = 0; i < 14; i++) {
+		for (i = 0; i < 13; i++) {
 			if (val & 0x1) {
 				sprintf(cb, "%s%s", sep, tstflagnames[i]);
 				sep = ", ";

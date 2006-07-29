@@ -1,9 +1,9 @@
-/*	$NetBSD: clk_rawdcf.c,v 1.1.1.3 2006/06/11 15:00:08 kardel Exp $	*/
+/*	$NetBSD: clk_rawdcf.c,v 1.1.1.4 2006/07/29 07:13:37 kardel Exp $	*/
 
 /*
- * /src/NTP/ntp4-dev/libparse/clk_rawdcf.c,v 4.16 2006/01/22 15:51:22 kardel RELEASE_20060122_A
+ * /src/NTP/REPOSITORY/ntp4-dev/libparse/clk_rawdcf.c,v 4.18 2006/06/22 18:40:01 kardel RELEASE_20060622_A
  *  
- * clk_rawdcf.c,v 4.16 2006/01/22 15:51:22 kardel RELEASE_20060122_A
+ * clk_rawdcf.c,v 4.18 2006/06/22 18:40:01 kardel RELEASE_20060622_A
  *
  * Raw DCF77 pulse clock support
  *
@@ -131,8 +131,8 @@ static struct dcfparam
 	unsigned char *zerobits;
 } dcfparameter = 
 {
-	"###############RADMLS1248124P124812P1248121241248112481248P??", /* 'ONE' representation */
-	"--------------------s-------p------p----------------------p__"  /* 'ZERO' representation */
+	(unsigned char *)"###############RADMLS1248124P124812P1248121241248112481248P??", /* 'ONE' representation */
+	(unsigned char *)"--------------------s-------p------p----------------------p__"  /* 'ZERO' representation */
 };
 
 static struct rawdcfcode 
@@ -604,6 +604,12 @@ int clk_rawdcf_bs;
  * History:
  *
  * clk_rawdcf.c,v
+ * Revision 4.18  2006/06/22 18:40:01  kardel
+ * clean up signedness (gcc 4)
+ *
+ * Revision 4.17  2006/01/22 16:01:55  kardel
+ * update version information
+ *
  * Revision 4.16  2006/01/22 15:51:22  kardel
  * generate reasonable timecode output on invalid input
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_util.c,v 1.1.1.4 2006/06/11 15:00:38 kardel Exp $	*/
+/*	$NetBSD: ntp_util.c,v 1.1.1.5 2006/07/29 07:14:08 kardel Exp $	*/
 
 /*
  * ntp_util.c - stuff I didn't have any other place for
@@ -343,6 +343,7 @@ stats_config(
 			msyslog(LOG_ERR, "Frequency format error in %s", 
 			    stats_drift_file);
 			old_drift = 1e9;
+			fclose(fp);
 			break;
 		}
 		fclose(fp);
