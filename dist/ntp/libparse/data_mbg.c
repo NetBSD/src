@@ -1,9 +1,9 @@
-/*	$NetBSD: data_mbg.c,v 1.3 2006/06/11 19:34:10 kardel Exp $	*/
+/*	$NetBSD: data_mbg.c,v 1.4 2006/07/29 08:15:29 kardel Exp $	*/
 
 /*
- * /src/NTP/REPOSITORY/ntp4-dev/libparse/data_mbg.c,v 4.7 2005/10/07 22:11:10 kardel RELEASE_20051008_A
+ * /src/NTP/REPOSITORY/ntp4-dev/libparse/data_mbg.c,v 4.8 2006/06/22 18:40:01 kardel RELEASE_20060622_A
  *
- * data_mbg.c,v 4.7 2005/10/07 22:11:10 kardel RELEASE_20051008_A
+ * data_mbg.c,v 4.8 2006/06/22 18:40:01 kardel RELEASE_20060622_A
  *
  * Created: Sun Jul 20 12:08:14 1997
  *
@@ -49,7 +49,7 @@
 #include "ieee754io.h"
 
 static void get_mbg_tzname P((unsigned char **, char *));
-static void mbg_time_status_str P((unsigned char **, unsigned int, int));
+static void mbg_time_status_str P((char **, unsigned int, int));
 
 #if 0				/* no actual floats on Meinberg binary interface */
 static offsets_t mbg_float  = { 1, 0, 3, 2, 0, 0, 0, 0 }; /* byte order for meinberg floats */
@@ -210,7 +210,7 @@ get_mbg_antinfo(
 
 static void
 mbg_time_status_str(
-	unsigned char **buffpp,
+	char **buffpp,
 	unsigned int status,
 	int size
 	)
@@ -232,7 +232,7 @@ mbg_time_status_str(
 
 	if (status)
 	{
-		unsigned char *start, *p;
+		char *start, *p;
 		struct state *s;
 	
 		start = p = *buffpp;
@@ -246,8 +246,8 @@ mbg_time_status_str(
 					strncpy((char *)p, ", ", size - (p - start));
 					p += 2;
 				}
-				strncpy((char *)p, s->string, size - (p - start));
-				p += strlen((char *)p);
+				strncpy(p, s->string, size - (p - start));
+				p += strlen(p);
 			}
 		}
 		*buffpp = p;
@@ -256,35 +256,35 @@ mbg_time_status_str(
       
 void
 mbg_tm_str(
-	unsigned char **buffpp,
+	char **buffpp,
 	TM *tmp,
 	int size
 	)
 {
-	unsigned char *s = *buffpp;
+	char *s = *buffpp;
 
-	snprintf((char *)*buffpp, size, "%04d-%02d-%02d %02d:%02d:%02d.%07ld (%c%02d%02d) ",
+	snprintf(*buffpp, size, "%04d-%02d-%02d %02d:%02d:%02d.%07ld (%c%02d%02d) ",
 		 tmp->year, tmp->month, tmp->mday,
 		 tmp->hour, tmp->minute, tmp->second, tmp->frac,
 		 (tmp->offs_from_utc < 0) ? '-' : '+',
 		 abs(tmp->offs_from_utc) / 3600,
 		 (abs(tmp->offs_from_utc) / 60) % 60);
-	*buffpp += strlen((char *)*buffpp);
+	*buffpp += strlen(*buffpp);
 
 	mbg_time_status_str(buffpp, tmp->status, size - (*buffpp - s));
 }
 
 void
 mbg_tgps_str(
-	unsigned char **buffpp,
+	char **buffpp,
 	T_GPS *tgpsp,
 	int size
 	)
 {
-	snprintf((char *)*buffpp, size, "week %d + %ld days + %ld.%07ld sec",
+	snprintf(*buffpp, size, "week %d + %ld days + %ld.%07ld sec",
 		 tgpsp->wn, tgpsp->sec / 86400,
 		 tgpsp->sec % 86400, tgpsp->tick);
-	*buffpp += strlen((char *)*buffpp);
+	*buffpp += strlen(*buffpp);
 }
 
 void
@@ -510,6 +510,9 @@ get_mbg_iono(
 
 /*
  * data_mbg.c,v
+ * Revision 4.8  2006/06/22 18:40:01  kardel
+ * clean up signedness (gcc 4)
+ *
  * Revision 4.7  2005/10/07 22:11:10  kardel
  * bounded buffer implementation
  *
