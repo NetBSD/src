@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.18 2005/12/11 12:18:41 christos Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.19 2006/07/29 19:10:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.18 2005/12/11 12:18:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.19 2006/07/29 19:10:58 ad Exp $");
 
 /*
  * Which system models were configured?
@@ -177,8 +177,6 @@ tc_ds_get_dma_tag(slot)
 	return (&pmax_default_bus_dma_tag);
 }
 
-#ifdef WSCONS
-
 #include "wsdisplay.h"
 
 #if NWSDISPLAY > 0
@@ -255,68 +253,3 @@ tcfb_cnattach(slotno)
 }
 
 #endif	/* NWSDISPLAY */
-
-#else	/* WSCONS */
-
-#include "rasterconsole.h"
-
-#if NRASTERCONSOLE > 0
-
-#include "mfb.h"
-#include "cfb.h"
-#include "sfb.h"
-#include "px.h"
-
-#include <machine/pmioctl.h>	/* XXX */
-#include <dev/sun/fbio.h>	/* XXX */
-#include <machine/fbvar.h>	/* XXX */
-#include <pmax/dev/fbreg.h>	/* XXX */
-#include <pmax/dev/cfbvar.h>
-#include <pmax/dev/mfbvar.h>
-#include <pmax/dev/sfbvar.h>
-#include <pmax/dev/pxreg.h>
-#include <pmax/dev/pxvar.h>
-
-#include <machine/dec_prom.h>
-
-int
-tcfb_cnattach(slotno)
-	int slotno;
-{
-	paddr_t tcaddr;
-	char tcname[TC_ROM_LLEN];
-
-	tcaddr = (*callv->_slot_address)(slotno);
-	if (tc_badaddr(tcaddr) || tc_checkslot(tcaddr, tcname) == 0)
-		panic("TC console designated by PROM does not exist!?");
-
-#if NSFB > 0
-	if (strncmp("PMAGB-BA", tcname, TC_ROM_LLEN) == 0) {
-		return sfb_cnattach(tcaddr);
-	}
-#endif
-#if NCFB > 0
-	if (strncmp("PMAG-BA ", tcname, TC_ROM_LLEN) == 0) {
-		return cfb_cnattach(tcaddr);
-	}
-#endif
-#if NMFB > 0
-	if (strncmp("PMAG-AA ", tcname, TC_ROM_LLEN) == 0) {
-		return mfb_cnattach(tcaddr);
-	}
-#endif
-#if NPX > 0
-	if (strncmp("PMAG-CA ", tcname, TC_ROM_LLEN) == 0
-	    || strncmp("PMAG-DA ", tcname, TC_ROM_LLEN) == 0
-	    || strncmp("PMAG-FA ", tcname, TC_ROM_LLEN) == 0) {
-		int px_cnattach __P((paddr_t)); /* XXX much simpler XXX */
-
-		return px_cnattach(tcaddr);
-	}
-#endif
-	return 0;
-}
-
-#endif	/* NRASTERCONSOLE */
-
-#endif	/* WSCONS */

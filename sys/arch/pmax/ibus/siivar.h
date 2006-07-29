@@ -1,4 +1,4 @@
-/*	$NetBSD: siivar.h,v 1.8 2001/08/26 11:47:23 simonb Exp $	*/
+/*	$NetBSD: siivar.h,v 1.2 2006/07/29 19:10:57 ad Exp $	*/
 
 #ifndef _SIIVAR_H
 #define _SIIVAR_H

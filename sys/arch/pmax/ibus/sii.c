@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.52 2006/03/28 17:38:27 thorpej Exp $	*/
+/*	$NetBSD: sii.c,v 1.2 2006/07/29 19:10:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.52 2006/03/28 17:38:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.2 2006/07/29 19:10:57 ad Exp $");
 
 #include "sii.h"
 /*
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.52 2006/03/28 17:38:27 thorpej Exp $");
 #include <dev/scsipi/scsiconf.h>
 
 /* old 4.4BSD/pmax scsi drivers */
-#include <pmax/dev/siireg.h>		/* device registers */
-#include <pmax/dev/siivar.h>		/* softc and prototypes */
+#include <pmax/ibus/siireg.h>		/* device registers */
+#include <pmax/ibus/siivar.h>		/* softc and prototypes */
 
 #include <pmax/pmax/machdep.h>		/* prom_scsiid prototype */
 

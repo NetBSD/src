@@ -1,4 +1,4 @@
-/*	$NetBSD: siireg.h,v 1.6 2005/12/11 12:18:36 christos Exp $	*/
+/*	$NetBSD: siireg.h,v 1.2 2006/07/29 19:10:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
