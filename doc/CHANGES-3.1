@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.127 2006/07/30 17:30:49 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.128 2006/07/30 17:52:29 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4124,4 +4124,16 @@ sys/dev/pci/pcidevs_data.h			regen
 	- Improve volume control.
 	- Update manual page.
 	[kent, ticket #1432]
+
+etc/MAKEDEV.tmpl				1.58
+
+	Create "/dev/ipsync", "/dev/ipscan" and "/dev/iplookup".
+	This fixes PR misc/33504.
+	[martti, ticket #1434]
+
+sys/arch/xen/xen/xbd_xenbus.c			patch
+
+	Fix random panics in xen3 domU after using the virtual disk character
+	device with unaligned buffers.
+	[bouyer, ticket #1437]
 
