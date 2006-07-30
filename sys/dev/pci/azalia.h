@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.h,v 1.4.2.7 2006/07/30 17:03:02 tron Exp $	*/
+/*	$NetBSD: azalia.h,v 1.4.2.8 2006/07/30 17:03:25 tron Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -556,4 +556,4 @@ typedef struct codec_t {
 
 
 int	azalia_codec_init_vtbl(codec_t *);
-int	azalia_codec_construct_format(codec_t *);
+int	azalia_codec_construct_format(codec_t *, int, int);
