@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.73 2006/04/18 11:40:26 salo Exp $	*/
+/*	$NetBSD: init.c,v 1.74 2006/07/30 19:46:33 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.73 2006/04/18 11:40:26 salo Exp $");
+__RCSID("$NetBSD: init.c,v 1.74 2006/07/30 19:46:33 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -1665,7 +1665,7 @@ createsysctlnode()
 
 	memset(&node, 0, len);
 	node.sysctl_flags = SYSCTL_VERSION | CTLFLAG_READWRITE |
-	    CTLFLAG_PRIVATE | CTLFLAG_READONLY1 | CTLTYPE_NODE;
+	    CTLFLAG_PRIVATE | CTLTYPE_NODE;
 	node.sysctl_num = CTL_CREATE;
 	snprintf(node.sysctl_name, SYSCTL_NAMELEN, "init");
 	if (sysctl(&mib[0], 1, &node, &len, &node, len) == -1) {
