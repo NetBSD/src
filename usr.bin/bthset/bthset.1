@@ -1,4 +1,4 @@
-.\"	$NetBSD: bthset.1,v 1.2 2006/07/26 10:43:02 tron Exp $
+.\"	$NetBSD: bthset.1,v 1.3 2006/07/30 00:03:22 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -27,11 +27,11 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 15, 2006
+.Dd July 26, 2006
 .Dt BTHSET 1
 .Os
 .Sh NAME
-.Nm bthset 
+.Nm bthset
 .Nd Bluetooth Headset utility
 .Sh SYNOPSIS
 .Nm
@@ -47,15 +47,18 @@ The
 .Nm
 utility is used to access a Bluetooth Headset with the
 .Xr btsco 4
-audio device. It opens the mixer device and creates the control connection
-to the headset, then conducts volume settings each way. When
+audio device.
+It opens the mixer device and creates the control connection
+to the headset, then conducts volume settings each way.
+When
 .Nm
 receives a
 .Dv SIGUSR1
 signal, it will start sending RING codes to the headset until the headset
 button is pressed or a
 .Dv SIGUSR2
-signal is received. If the headset is ringing and
+signal is received.
+If the headset is ringing and
 .Nm
 receives a button press notification, the specified
 .Ar command
@@ -63,7 +66,7 @@ receives a button press notification, the specified
 .Pp
 When the server channel is specified with the
 .Fl s
-option, instead of opening the control connection, 
+option, instead of opening the control connection,
 .Nm
 will listen on the
 .Ar channel
@@ -74,22 +77,24 @@ The options are as follows:
 .Bl -tag -width indent
 .It Fl c Ar command
 Specify an optional command to be executed when the headset responds to
-ringing with a button press event. This defaults to the contents of the
+ringing with a button press event.
+This defaults to the contents of the
 .Dv BTHSET_COMMAND
 environment variable, if set.
 .It Fl h
-print usage message.
+Print usage message.
 .It Fl m Ar mixer
-Specify the path to the mixer device. This defaults to the contents of the
-.Dv BTHSET_MIXER 
+Specify the path to the mixer device.
+This defaults to the contents of the
+.Dv BTHSET_MIXER
 environment variable, or
 .Pa /dev/mixer
 if not set.
 .It Fl p Ar file
 Write the PID to
 .Ar file
-so that other programs can find us later. This defaults to the contents of
-the
+so that other programs can find us later.
+This defaults to the contents of the
 .Dv BTHSET_PIDFILE
 environment variable, if set.
 .It Fl s Ar channel
@@ -103,8 +108,8 @@ Be verbose.
 .Sh FILES
 .Pa /dev/mixer
 .Sh SEE ALSO
-.Xr btcontrol 8 ,
-.Xr btsco 4
+.Xr btsco 4 ,
+.Xr btcontrol 8
 .Sh AUTHORS
 .An Iain Hibbert
 for Itronix, Inc
