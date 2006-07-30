@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.102 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.103 2006/07/30 17:38:19 elad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.102 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103 2006/07/30 17:38:19 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -658,6 +658,9 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 		goto done;
 	}
 
+	if (securelevel > 1)
+		return (EPERM);
+
 	/*
 	 * no error yet and cname now has the new core name in it.
 	 * let's see if it looks acceptable.  it must be either "core"
@@ -810,7 +813,7 @@ SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
 		       CTL_PROC, PROC_CURPROC, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READONLY2|CTLFLAG_ANYWRITE,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_ANYWRITE,
 		       CTLTYPE_STRING, "corename",
 		       SYSCTL_DESCR("Core file name"),
 		       sysctl_proc_corename, 0, NULL, MAXPATHLEN,
