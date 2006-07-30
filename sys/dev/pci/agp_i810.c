@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.31 2006/06/27 10:34:25 tron Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.32 2006/07/30 04:23:44 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.31 2006/06/27 10:34:25 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.32 2006/07/30 04:23:44 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.31 2006/06/27 10:34:25 tron Exp $");
 #define CHIP_I810 0	/* i810/i815 */
 #define CHIP_I830 1	/* 830M/845G */
 #define CHIP_I855 2	/* 852GM/855GM/865G */
-#define CHIP_I915 3	/* 915G/915GM */
+#define CHIP_I915 3	/* 915G/915GM/945G/945GM */
 
 struct agp_i810_softc {
 	u_int32_t initial_aperture;	/* aperture size at startup */
@@ -139,6 +139,9 @@ agp_i810_vgamatch(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82865_IGD:
 	case PCI_PRODUCT_INTEL_82915G_IGD:
 	case PCI_PRODUCT_INTEL_82915GM_IGD:
+	case PCI_PRODUCT_INTEL_82945P_IGD:
+	case PCI_PRODUCT_INTEL_82945GM_IGD:
+	case PCI_PRODUCT_INTEL_82945GM_IGD_1:
 		return (1);
 	}
 
@@ -198,6 +201,9 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case PCI_PRODUCT_INTEL_82915G_IGD:
 	case PCI_PRODUCT_INTEL_82915GM_IGD:
+	case PCI_PRODUCT_INTEL_82945P_IGD:
+	case PCI_PRODUCT_INTEL_82945GM_IGD:
+	case PCI_PRODUCT_INTEL_82945GM_IGD_1:
 		isc->chiptype = CHIP_I915;
 		break;
 	}
