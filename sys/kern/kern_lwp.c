@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.38 2006/07/20 00:17:10 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.39 2006/07/30 21:58:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.38 2006/07/20 00:17:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.39 2006/07/30 21:58:11 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -736,25 +736,4 @@ lwp_update_creds(struct lwp *l)
 	simple_unlock(&p->p_lock);
 	if (oc != NULL)
 		kauth_cred_free(oc);
-}
-
-/*
- * Update a process' master copy of credentials from an LWP.
- *
- * Called whenever an LWP changes credentials.
- */
-void
-lwp_broadcast_creds(struct lwp *l)
-{
-	kauth_cred_t oc;
-	struct proc *p;
-
-	p = l->l_proc;
-
-	kauth_cred_hold(l->l_cred);
-	simple_lock(&p->p_lock);
-	oc = p->p_cred;
-	p->p_cred = l->l_cred;
-	simple_unlock(&p->p_lock);
-	kauth_cred_free(oc);
 }

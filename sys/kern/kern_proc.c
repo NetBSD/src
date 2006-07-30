@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.93 2006/07/27 00:04:08 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.94 2006/07/30 21:58:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.93 2006/07/27 00:04:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94 2006/07/30 21:58:11 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -461,6 +461,8 @@ pgid_in_session(struct proc *p, pid_t pg_id)
 
 /*
  * Is p an inferior of q?
+ *
+ * Call with the proclist_lock held.
  */
 int
 inferior(struct proc *p, struct proc *q)
@@ -850,7 +852,7 @@ enterpgrp(struct proc *p, pid_t pgid, int mksess)
 }
 
 /*
- * remove process from process group
+ * Remove a process from its process group.
  */
 int
 leavepgrp(struct proc *p)
@@ -862,7 +864,7 @@ leavepgrp(struct proc *p)
 	s = proclist_lock_write();
 	pgrp = p->p_pgrp;
 	LIST_REMOVE(p, p_pglist);
-	p->p_pgrp = 0;
+	p->p_pgrp = NULL;
 	pg_id = LIST_EMPTY(&pgrp->pg_members) ? pgrp->pg_id : NO_PGID;
 	proclist_unlock_write(s);
 
@@ -1242,4 +1244,41 @@ proc_vmspace_getref(struct proc *p, struct vmspace **vm)
 	*vm = p->p_vmspace;
 
 	return 0;
+}
+
+/*
+ * Acquire a write lock on the process credential.
+ */
+void 
+proc_crmod_enter(struct proc *p)
+{
+
+	/*
+	 * XXXSMP This should be a lightweight sleep lock.  'struct lock' is
+	 * too large.
+	 */
+	simple_lock(&p->p_lock);
+	while ((p->p_flag & P_CRLOCK) != 0)
+		ltsleep(&p->p_cred, PLOCK, "crlock", 0, &p->p_lock);
+	p->p_flag |= P_CRLOCK;
+	simple_unlock(&p->p_lock);
+}
+
+/*
+ * Block out readers, set in a new process credential, and drop the write
+ * lock.  The credential must have a reference already.  Optionally, free a
+ * no-longer required credential.
+ */
+void
+proc_crmod_leave(struct proc *p, kauth_cred_t scred, kauth_cred_t fcred)
+{
+
+	KDASSERT((p->p_flag & P_CRLOCK) != 0);
+	simple_lock(&p->p_lock);
+	p->p_cred = scred;
+	p->p_flag &= ~P_CRLOCK;
+	simple_unlock(&p->p_lock);
+	wakeup(&p->p_cred);
+	if (fcred != NULL)
+		kauth_cred_free(fcred);
 }
