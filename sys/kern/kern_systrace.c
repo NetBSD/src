@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.56 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.57 2006/07/30 21:58:11 ad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.56 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.57 2006/07/30 21:58:11 ad Exp $");
 
 #include "opt_systrace.h"
 
@@ -921,46 +921,64 @@ systrace_exit(struct lwp *l, register_t code, void *v, register_t retval[],
 uid_t
 systrace_seteuid(struct lwp *l, uid_t euid)
 {
-	kauth_cred_t cred = l->l_cred;
+	struct proc *p = l->l_proc;
+	kauth_cred_t cred;
 	uid_t oeuid;
 
+	proc_crmod_enter(p);
+	cred = p->p_cred;
+
 	oeuid = kauth_cred_geteuid(cred);
-	if (kauth_cred_geteuid(cred) == euid)
+	if (oeuid == euid) {
+		proc_crmod_leave(p, cred, NULL);
 		return (oeuid);
+	}
 
 	/* Copy credentials so other references do not see our changes. */
-	cred = kauth_cred_copy(cred);
+	cred = kauth_cred_dup(cred);
 	kauth_cred_seteuid(cred, euid);
-	l->l_cred = cred;
-
-	/* Broadcast our credentials to the process and other LWPs. */
-	lwp_broadcast_creds(l);
 
 	/* Mark process as having changed credentials, stops tracing etc */
-	p_sugid(l->l_proc);
+	p_sugid(p);
+
+	/* Broadcast our credentials to the process and other LWPs. */
+	proc_crmod_leave(p, cred, p->p_cred);
+
+	/* Update our copy of the credentials. */
+ 	lwp_update_creds(l);
+
 	return (oeuid);
 }
 
 gid_t
 systrace_setegid(struct lwp *l, gid_t egid)
 {
-	kauth_cred_t cred = l->l_cred;
+	struct proc *p = l->l_proc;
+	kauth_cred_t cred;
 	gid_t oegid;
 
+	proc_crmod_enter(p);
+	cred = p->p_cred;
+
 	oegid = kauth_cred_getegid(cred);
-	if (kauth_cred_getegid(cred) == egid)
+	if (oegid == egid) {
+		proc_crmod_leave(p, cred, NULL);
 		return (oegid);
+	}
 
 	/* Copy credentials so other references do not see our changes. */
-	cred = kauth_cred_copy(cred);
+	cred = kauth_cred_dup(cred);
 	kauth_cred_setegid(cred, egid);
-	l->l_cred = cred;
-
-	/* Broadcast our credentials to the process and other LWPs. */
-	lwp_broadcast_creds(l);
 
 	/* Mark process as having changed credentials, stops tracing etc */
-	p_sugid(l->l_proc);
+	p_sugid(p);
+
+	/* Broadcast our credentials to the process and other LWPs. */
+	proc_crmod_leave(p, cred, p->p_cred);
+
+	/* Update our copy of the credentials. */
+ 	lwp_update_creds(l);
+
 	return (oegid);
 }
 

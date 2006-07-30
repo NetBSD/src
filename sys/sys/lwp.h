@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.40 2006/07/20 00:17:10 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.41 2006/07/30 21:58:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -197,7 +197,6 @@ struct lwp *proc_representative_lwp(struct proc *);
 __inline int lwp_suspend(struct lwp *, struct lwp *);
 int	lwp_create1(struct lwp *, const void *, size_t, u_long, lwpid_t *);
 void	lwp_update_creds(struct lwp *);
-void	lwp_broadcast_creds(struct lwp *);
 #endif	/* _KERNEL */
 
 /* Flags for _lwp_create(), as per Solaris. */

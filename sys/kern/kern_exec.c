@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.226 2006/07/26 09:33:57 dogcow Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.227 2006/07/30 21:58:11 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.226 2006/07/26 09:33:57 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227 2006/07/30 21:58:11 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -831,8 +831,16 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	}
 
 	/* Update the master credentials. */
-	if (l->l_cred != p->p_cred)
-		lwp_broadcast_creds(l);
+	if (l->l_cred != p->p_cred) {
+		kauth_cred_t ocred;
+
+		kauth_cred_hold(l->l_cred);
+		simple_lock(&p->p_lock);
+		ocred = p->p_cred;
+		p->p_cred = l->l_cred;
+		simple_unlock(&p->p_lock);
+		kauth_cred_free(ocred);
+	}
 
 #if defined(__HAVE_RAS)
 	/*

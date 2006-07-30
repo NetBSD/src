@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.224 2006/07/21 10:07:29 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.225 2006/07/30 21:58:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -163,6 +163,7 @@ struct emul {
  * Field markings and the corresponding locks (not yet fully implemented,
  * more a statement of intent):
  *
+ * c:	P_CRLOCK - credentials write lock
  * l:	proclist_lock
  * p:	p->p_lock
  * s:	sched_lock
@@ -171,7 +172,7 @@ struct proc {
 	LIST_ENTRY(proc) p_list;	/* l: List of all processes */
 
 	/* Substructures: */
-	struct kauth_cred *p_cred;	/* p: Master copy of credentials */
+	struct kauth_cred *p_cred;	/* p, c: Master copy of credentials */
 	struct filedesc	*p_fd;		/* Ptr to open files structure */
 	struct cwdinfo	*p_cwdi;	/* cdir/rdir/cmask info */
 	struct pstats	*p_stats;	/* Accounting/statistics (PROC ONLY) */
@@ -323,7 +324,7 @@ struct proc {
 #define	P_SYSCALL	0x04000000 /* process has PT_SYSCALL enabled */
 #define	P_PAXMPROTECT  	0x08000000 /* Explicitly enable PaX MPROTECT */
 #define	P_PAXNOMPROTECT	0x10000000 /* Explicitly disable PaX MPROTECT */
-#define	P_UNUSED2	0x20000000
+#define	P_CRLOCK	0x20000000 /* p_cred write lock */
 #define	P_UNUSED1	0x40000000
 #define	P_MARKER	0x80000000 /* Is a dummy marker process */
 
@@ -510,6 +511,8 @@ void	proclist_unlock_write(int);
 void	p_sugid(struct proc *);
 
 int	proc_vmspace_getref(struct proc *, struct vmspace **);
+void	proc_crmod_leave(struct proc *, kauth_cred_t, kauth_cred_t);
+void	proc_crmod_enter(struct proc *);
 
 int	proclist_foreach_call(struct proclist *,
     int (*)(struct proc *, void *arg), void *);
