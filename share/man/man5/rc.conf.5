@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.103 2006/07/26 11:14:55 tron Exp $
+.\"	$NetBSD: rc.conf.5,v 1.104 2006/07/30 00:18:09 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 30, 2006
+.Dd July 26, 2006
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -1195,16 +1195,18 @@ are set to
 Passes
 .Sy statd_flags .
 .El
-.Ss Bluetooth configuration and daemons.
+.Ss Bluetooth configuration and daemons
 .Bl -tag -width net_interfaces
 .It Sy btconfig
 .Sq YES
 or
 .Sq NO .
-Configure bluetooth devices. If the
+Configure bluetooth devices.
+If the
 .Sy btconfig_devices
-variable below is not specified, all devices known to the system will be
-configured. For each device, configuration arguments are first looked for
+variable below is not specified, all devices known to the system
+will be configured.
+For each device, configuration arguments are first looked for
 in the
 .Sy btconfig_{dev}
 variable, otherwise the value of the
@@ -1221,7 +1223,8 @@ be configured.
 .Sq YES
 or
 .Sq NO .
-Attach Bluetooth devices. If the
+Attach Bluetooth devices.
+If the
 .Sy btcontrol_devices
 variable below is not specified, all devices known will be configured.
 .It Sy btcontrol_devices
@@ -1235,28 +1238,32 @@ or
 Runs
 .Xr bthcid 8 ,
 the Bluetooth HCI daemon, which manages link keys and PIN codes for
-Bluetooth links. Passes
+Bluetooth links.
+Passes
 .Sy bthcid_flags .
 .It Sy sdpd
 .Sq YES
 or
 .Sq NO .
-Runs the Service Discovery Profile daemon, 
+Runs the Service Discovery Profile daemon,
 .Xr sdpd 8 .
 .It Sy sdpd_control
 Optional string specifying the path to the
 .Xr sdpd 8
-control socket. Defaults to
+control socket.
+Defaults to
 .Pa /var/run/sdp .
 .It Sy sdpd_username
 Optional string specifying the username that
 .Xr sdpd 8
-will run as after initialisation. Defaults to
+will run as after initialisation.
+Defaults to
 .Sq nobody .
 .It Sy sdpd_groupname
 Optional string specifying the groupname that
 .Xr sdpd 8
-will run as after initialisation. Defaults to
+will run as after initialisation.
+Defaults to
 .Sq nobody .
 .El
 .Ss Other daemons
