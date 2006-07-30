@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.206 2006/07/26 10:43:02 tron Exp $
+#	$NetBSD: DEVNAMES,v 1.207 2006/07/30 00:39:27 wiz Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -304,7 +304,6 @@ cypide			MI
 cz			MI
 daic			MI
 dbri			sparc
-dc			pmax
 dcm			hp300
 ddc			MI
 ddc_read_edid		MI		Attribute
@@ -336,7 +335,6 @@ drsupio			amigappc
 dsrtc			cats
 dsrtc			evbppc
 dtide			MI
-dtop			pmax
 dvbox			hp300
 dwlpx			alpha
 dz			MI
@@ -1127,7 +1125,6 @@ sc			MI
 sc			newsmips
 sc			vax
 scc			alpha
-scc			pmax
 scd			MI
 sci			amiga		Attribute
 sci			amigappc	Attribute
