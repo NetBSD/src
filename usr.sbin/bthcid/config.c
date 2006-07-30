@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.2 2006/07/26 11:00:07 tron Exp $	*/
+/*	$NetBSD: config.c,v 1.3 2006/07/30 19:36:39 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: config.c,v 1.2 2006/07/26 11:00:07 tron Exp $");
+__RCSID("$NetBSD: config.c,v 1.3 2006/07/30 19:36:39 plunky Exp $");
 
 #include <sys/time.h>
 #include <prop/proplib.h>
@@ -158,6 +158,8 @@ save_key(bdaddr_t *laddr, bdaddr_t *raddr, uint8_t *key)
 			prop_object_release(cfg);
 			return;
 		}
+
+		prop_object_release(dev);
 	}
 
 	dat = prop_data_create_data_nocopy(key, HCI_KEY_SIZE);
@@ -177,6 +179,8 @@ save_key(bdaddr_t *laddr, bdaddr_t *raddr, uint8_t *key)
 		prop_object_release(cfg);
 		return;
 	}
+
+	prop_object_release(dat);
 
 	xml = prop_dictionary_externalize(cfg);
 	if (xml == NULL) {
