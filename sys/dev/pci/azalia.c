@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.7.2.28 2006/07/30 17:06:43 tron Exp $	*/
+/*	$NetBSD: azalia.c,v 1.7.2.29 2006/07/30 17:06:59 tron Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.2.28 2006/07/30 17:06:43 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.2.29 2006/07/30 17:06:59 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -505,9 +505,11 @@ azalia_attach_intr(struct device *self)
 	AZ_WRITE_4(az, DPUBASE, 0);
 
 	/* 4.4.1 Command Outbound Ring Buffer */
-	azalia_init_corb(az);
+	if (azalia_init_corb(az))
+		goto err_exit;
 	/* 4.4.2 Response Inbound Ring Buffer */
-	azalia_init_rirb(az);
+	if (azalia_init_rirb(az))
+		goto err_exit;
 
 	AZ_WRITE_4(az, INTCTL,
 	    AZ_READ_4(az, INTCTL) | HDA_INTCTL_CIE | HDA_INTCTL_GIE);
