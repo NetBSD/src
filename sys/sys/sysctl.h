@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.154 2006/04/14 13:09:07 blymn Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.155 2006/07/30 17:38:19 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -89,8 +89,8 @@ struct ctlname {
  * Flags that apply to each node, governing access and other features
  */
 #define CTLFLAG_READONLY	0x00000000
-#define CTLFLAG_READONLY1	0x00000010
-#define CTLFLAG_READONLY2	0x00000020
+/* #define CTLFLAG_UNUSED1		0x00000010 */
+/* #define CTLFLAG_UNUSED2		0x00000020 */
 /* #define CTLFLAG_READ*	0x00000040 */
 #define CTLFLAG_READWRITE	0x00000070
 #define CTLFLAG_ANYWRITE	0x00000080
