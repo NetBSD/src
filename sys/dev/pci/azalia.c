@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.7.2.30 2006/07/30 17:07:15 tron Exp $	*/
+/*	$NetBSD: azalia.c,v 1.7.2.31 2006/07/30 17:07:45 tron Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.2.30 2006/07/30 17:07:15 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.2.31 2006/07/30 17:07:45 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -131,6 +131,10 @@ typedef struct azalia_t {
 	azalia_dma_t rirb_dma;
 	int rirb_size;
 	int rirb_rp;
+#define UNSOLQ_SIZE	256
+	rirb_entry_t *unsolq;
+	int unsolq_wp;
+	int unsolq_rp;
 
 	boolean_t ok64;
 	int nistreams, nostreams, nbstreams;
@@ -161,6 +165,8 @@ static int	azalia_delete_rirb(azalia_t *);
 static int	azalia_set_command(const azalia_t *, nid_t, int, uint32_t,
 	uint32_t);
 static int	azalia_get_response(azalia_t *, uint32_t *);
+static void	azalia_rirb_kick_unsol_events(azalia_t *);
+static void	azalia_rirb_intr(azalia_t *);
 static int	azalia_alloc_dmamem(azalia_t *, size_t, size_t, azalia_dma_t *);
 static int	azalia_free_dmamem(const azalia_t *, azalia_dma_t*);
 
@@ -399,7 +405,6 @@ azalia_intr(void *v)
 
 	az = v;
 	ret = 0;
-	//printf("[i]");
 
 	intsts = AZ_READ_4(az, INTSTS);
 	if (intsts == 0)
@@ -411,14 +416,15 @@ azalia_intr(void *v)
 	rirbsts = AZ_READ_1(az, RIRBSTS);
 	if (rirbsts & (HDA_RIRBSTS_RIRBOIS | HDA_RIRBSTS_RINTFL)) {
 		if (rirbsts & HDA_RIRBSTS_RINTFL) {
-			//printf("[R]");
+			azalia_rirb_intr(az);
 		} else {
-			//printf("[O]");
+			/*printf("[Overflow!]");*/
 		}
 		AZ_WRITE_1(az, RIRBSTS,
 		    rirbsts | HDA_RIRBSTS_RIRBOIS | HDA_RIRBSTS_RINTFL);
 		ret++;
 	}
+
 	return ret;
 }
 
@@ -471,6 +477,10 @@ azalia_attach(azalia_t *az)
 		aprint_error("%s: reset-exit failure\n", XNAME(az));
 		return ETIMEDOUT;
 	}
+
+	/* enable unsolicited response */
+	gctl = AZ_READ_4(az, GCTL);
+	AZ_WRITE_4(az, GCTL, gctl | HDA_GCTL_UNSOL);
 
 	/* 4.3 Codec discovery */
 	DELAY(1000);
@@ -705,6 +715,18 @@ azalia_init_rirb(azalia_t *az)
 
 	DPRINTF(("%s: RIRB allocation succeeded.\n", __func__));
 
+	/* setup the unsolicited response queue */
+	az->unsolq_rp = 0;
+	az->unsolq_wp = 0;
+	az->unsolq = malloc(sizeof(rirb_entry_t) * UNSOLQ_SIZE,
+	    M_DEVBUF, M_ZERO | M_NOWAIT);
+	if (az->unsolq == NULL) {
+		aprint_error("%s: can't allocate unsolicited response queue.\n",
+		    XNAME(az));
+		azalia_free_dmamem(az, &az->rirb_dma);
+		return ENOMEM;
+	}
+
 	//rirbctl = AZ_READ_1(az, RIRBCTL);
 	//AZ_WRITE_1(az, RIRBCTL, rirbctl & ~HDA_RIRBCTL_RINTCTL);
 
@@ -730,6 +752,9 @@ azalia_delete_rirb(azalia_t *az)
 	int i;
 	uint8_t rirbctl;
 
+	if (az->unsolq != NULL) {
+		free(az->unsolq, M_DEVBUF);
+	}
 	if (az->rirb_dma.addr == NULL)
 		return 0;
 	/* stop the RIRB */
@@ -750,7 +775,7 @@ azalia_set_command(const azalia_t *az, int caddr, nid_t nid, uint32_t control,
 		   uint32_t param)
 {
 	corb_entry_t *corb;
-	int  wp;
+	int wp;
 	uint32_t verb;
 	uint16_t corbwp;
 
@@ -802,19 +827,23 @@ azalia_get_response(azalia_t *az, uint32_t *result)
 	for (;;) {
 		if (++az->rirb_rp >= az->rirb_size)
 			az->rirb_rp = 0;
-		if (rirb[az->rirb_rp].resp_ex & RIRB_UNSOLICITED_RESPONSE) {
-			DPRINTF(("%s: unsolicited response\n", __func__));
+		if (rirb[az->rirb_rp].resp_ex & RIRB_RESP_UNSOL) {
+			DPRINTF(("%s: unsolicited response codec#=%d tag=%d\n",
+			    __func__, RIRB_RESP_CODEC(rirb[az->rirb_rp].resp_ex),
+			    RIRB_UNSOL_TAG(rirb[az->rirb_rp].resp)));
+			az->unsolq[az->unsolq_wp].resp = rirb[az->rirb_rp].resp;
+			az->unsolq[az->unsolq_wp++].resp_ex = rirb[az->rirb_rp].resp_ex;
+			az->unsolq_wp %= UNSOLQ_SIZE;
 		} else
 			break;
 	}
 	if (result != NULL)
 		*result = rirb[az->rirb_rp].resp;
+	azalia_rirb_kick_unsol_events(az);
 #if 0
 	DPRINTF(("%s: rirbwp=%d rp=%d resp1=0x%8.8x resp2=0x%8.8x\n",
 		 __func__, wp, az->rirb_rp, rirb[az->rirb_rp].resp,
 		 rirb[az->rirb_rp].resp_ex));
-#endif
-#if 0
 	for (i = 0; i < 16 /*az->rirb_size*/; i++) {
 		DPRINTF(("rirb[%d] 0x%8.8x:0x%8.8x ", i, rirb[i].resp, rirb[i].resp_ex));
 		if ((i % 2) == 1)
@@ -822,6 +851,50 @@ azalia_get_response(azalia_t *az, uint32_t *result)
 	}
 #endif
 	return 0;
+}
+
+static void
+azalia_rirb_kick_unsol_events(azalia_t *az)
+{
+	while (az->unsolq_rp != az->unsolq_wp) {
+		int i;
+		int tag;
+		codec_t *codec;
+		i = RIRB_RESP_CODEC(az->unsolq[az->unsolq_rp].resp_ex);
+		tag = RIRB_UNSOL_TAG(az->unsolq[az->unsolq_rp].resp);
+		codec = &az->codecs[i];
+		if (codec->unsol_event != NULL)
+			codec->unsol_event(codec, tag);
+		az->unsolq_rp++;
+		az->unsolq_rp %= UNSOLQ_SIZE;
+	}
+}
+
+static void
+azalia_rirb_intr(azalia_t *az)
+{
+	const rirb_entry_t *rirb;
+	uint16_t wp;
+
+	wp = AZ_READ_2(az, RIRBWP) & HDA_RIRBWP_RIRBWP;
+	if (az->rirb_rp == wp)
+		return;		/* interrupted but no data in RIRB */
+	rirb = (rirb_entry_t*)az->rirb_dma.addr;
+	while (az->rirb_rp != wp) {
+		if (++az->rirb_rp >= az->rirb_size)
+			az->rirb_rp = 0;
+		if (rirb[az->rirb_rp].resp_ex & RIRB_RESP_UNSOL) {
+			DPRINTF(("%s: unsolicited response codec#=%d tag=%d\n",
+			    __func__, RIRB_RESP_CODEC(rirb[az->rirb_rp].resp_ex),
+			    RIRB_UNSOL_TAG(rirb[az->rirb_rp].resp)));
+			az->unsolq[az->unsolq_wp].resp = rirb[az->rirb_rp].resp;
+			az->unsolq[az->unsolq_wp++].resp_ex = rirb[az->rirb_rp].resp_ex;
+			az->unsolq_wp %= UNSOLQ_SIZE;
+		} else {
+			break;
+		}
+	}
+	azalia_rirb_kick_unsol_events(az);
 }
 
 static int
@@ -1237,12 +1310,16 @@ static int
 azalia_codec_comresp(const codec_t *codec, nid_t nid, uint32_t control,
 		     uint32_t param, uint32_t* result)
 {
-	int err;
+	int err, s;
 
+	s = splaudio();
 	err = azalia_set_command(codec->az, codec->address, nid, control, param);
 	if (err)
-		return err;
-	return azalia_get_response(codec->az, result);
+		goto EXIT;
+	err = azalia_get_response(codec->az, result);
+EXIT:
+	splx(s);
+	return err;
 }
 
 static int
