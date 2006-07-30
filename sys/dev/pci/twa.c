@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.8 2006/07/29 00:13:57 wrstuden Exp $ */
+/*	$NetBSD: twa.c,v 1.9 2006/07/30 10:49:48 bouyer Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.8 2006/07/29 00:13:57 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.9 2006/07/30 10:49:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -489,6 +489,7 @@ twa_unmap_request(struct twa_request *tr)
 {
 	struct twa_softc	*sc = tr->tr_sc;
 	uint8_t			cmd_status;
+	int s;
 
 	/* If the command involved data, unmap that too. */
 	if (tr->tr_data != NULL) {
@@ -519,8 +520,10 @@ twa_unmap_request(struct twa_request *tr)
 
 	/* Free alignment buffer if it was used. */
 	if (tr->tr_flags & TWA_CMD_DATA_COPY_NEEDED) {
+		s = splvm();
 		uvm_km_free(kmem_map, (vaddr_t)tr->tr_data,
 		    tr->tr_length, UVM_KMF_WIRED);
+		splx(s);
 		tr->tr_data = tr->tr_real_data;
 		tr->tr_length = tr->tr_real_length;
 	}
@@ -1803,8 +1806,10 @@ twa_map_request(struct twa_request *tr)
 				tr->tr_dma_map->dm_nsegs, error))) {
 
 			if (tr->tr_flags & TWA_CMD_DATA_COPY_NEEDED) {
+				s = splvm();
 				uvm_km_free(kmem_map, (vaddr_t)tr->tr_data,
 				    tr->tr_length, UVM_KMF_WIRED);
+				splx(s);
 				tr->tr_data = tr->tr_real_data;
 				tr->tr_length = tr->tr_real_length;
 			}
