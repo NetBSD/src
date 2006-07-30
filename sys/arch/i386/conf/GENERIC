@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.766 2006/07/26 15:34:39 elad Exp $
+# $NetBSD: GENERIC,v 1.767 2006/07/30 17:53:50 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.766 $"
+#ident 		"GENERIC-$Revision: 1.767 $"
 
 maxusers	32		# estimated number of users
 
@@ -706,12 +706,14 @@ icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 mlx*	at eisa? slot ?			# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
+twa*	at pci? dev ? function ?	# 3ware Escalade 95xx RAID controllers
 
 ld*	at aac? unit ?			# logical disk devices
 ld*	at amr? unit ?
 ld*	at cac? unit ?
 ld*	at icp? unit ?
 ld*	at twe? unit ?
+ld*	at twa? unit ?
 ld*	at mlx? unit ?
 
 icpsp*	at icp? unit ?			# SCSI pass-through
