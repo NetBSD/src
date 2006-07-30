@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.116 2006/07/14 21:55:19 elad Exp $ */
+/*	$NetBSD: sysctl.c,v 1.117 2006/07/30 19:53:20 elad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.116 2006/07/14 21:55:19 elad Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.117 2006/07/30 19:53:20 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -467,8 +467,6 @@ sf(u_int f)
 		(_f) &= ~(__CONCAT(CTLFLAG_,_x)); \
 	}
 	print_flag(f, s, c, READONLY,  READWRITE);
-	print_flag(f, s, c, READONLY1, READWRITE);
-	print_flag(f, s, c, READONLY2, READWRITE);
 	print_flag(f, s, c, READWRITE, READWRITE);
 	print_flag(f, s, c, ANYWRITE,  ANYWRITE);
 	print_flag(f, s, c, PRIVATE,   PRIVATE);
@@ -1130,12 +1128,6 @@ parse_create(char *l)
 
 				case 'r':
 					rw = CTLFLAG_READONLY;
-					break;
-				case '1':
-					rw = CTLFLAG_READONLY1;
-					break;
-				case '2':
-					rw = CTLFLAG_READONLY2;
 					break;
 				case 'w':
 					rw = CTLFLAG_READWRITE;
