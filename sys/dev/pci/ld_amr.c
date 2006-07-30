@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_amr.c,v 1.6 2004/10/28 07:07:41 yamt Exp $	*/
+/*	$NetBSD: ld_amr.c,v 1.6.10.1 2006/07/30 16:38:59 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.6 2004/10/28 07:07:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.6.10.1 2006/07/30 16:38:59 tron Exp $");
 
 #include "rnd.h"
 
@@ -153,7 +153,9 @@ ld_amr_dobio(struct ld_amr_softc *sc, void *data, int datasize,
 	mb->mb_blkcount = htole16(datasize / AMR_SECTOR_SIZE);
 	mb->mb_lba = htole32(blkno);
 
-	if ((rv = amr_ccb_map(amr, ac, data, datasize, dowrite)) != 0) {
+	rv = amr_ccb_map(amr, ac, data, datasize,
+	    (dowrite ? AC_XFER_OUT : AC_XFER_IN));
+	if (rv != 0) {
 		amr_ccb_free(amr, ac);
 		return (rv);
 	}
