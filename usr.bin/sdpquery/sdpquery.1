@@ -1,4 +1,4 @@
-.\"	$NetBSD: sdpquery.1,v 1.2 2006/07/26 10:54:49 tron Exp $
+.\"	$NetBSD: sdpquery.1,v 1.3 2006/07/30 00:09:09 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -51,10 +51,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $Id: sdpquery.1,v 1.2 2006/07/26 10:54:49 tron Exp $
+.\" $Id: sdpquery.1,v 1.3 2006/07/30 00:09:09 wiz Exp $
 .\" $FreeBSD: src/usr.sbin/bluetooth/sdpcontrol/sdpcontrol.8,v 1.6 2005/07/09 19:04:43 markus Exp $
 .\"
-.Dd May 9, 2006
+.Dd July 26, 2006
 .Dt SDPQUERY 1
 .Os
 .Sh NAME
@@ -76,7 +76,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility attempts to query the specified Service Discovery Protocol (SDP) server.
+utility attempts to query the specified Service Discovery Protocol
+(SDP) server.
 Remote SDP servers are identified by their address.
 Connection to the local SDP server is made via the control socket.
 The
@@ -93,7 +94,7 @@ If a name was specified, the
 .Nm
 utility attempts to resolve the name via
 .Xr bt_gethostbyname 3 .
-If no remote address is given, 
+If no remote address is given,
 .Nm
 attempts to contact a local SDP server via the control socket.
 .It Fl c Ar path
@@ -101,10 +102,12 @@ Specify path to the control socket.
 The default path is
 .Pa /var/run/sdp .
 .It Fl d Ar device
-Connect from the local device with the specifed address. The device can
-be specified by BD_ADDR or device name. See
+Connect from the local device with the specifed address.
+The device can be specified by BD_ADDR or device name.
+See
 .Xr btconfig 8
-for a list of devices available. If no device is specified, the
+for a list of devices available.
+If no device is specified, the
 .Nm
 utility will use the best available.
 .It Fl l
@@ -123,18 +126,20 @@ are:
 .Pp
 .Bl -tag -width indent -compact
 .It Cm Browse Op Ar group
-Browse for services. The
+Browse for services.
+The
 .Ar group
-parameter is a 16-bit UUID of the group to browse. If omitted,
-the Public Browse Group. is used.
+parameter is a 16-bit UUID of the group to browse.
+If omitted, the Public Browse Group. is used.
 .Pp
 .It Cm Search Ar service
 Search for the
 .Ar service .
 The
 .Ar service
-parameter is a 16-bit UUID of the service to search for. For the following
-services it is possible to use service name instead of service UUID:
+parameter is a 16-bit UUID of the service to search for.
+For the following services it is possible to use service name
+instead of service UUID:
 .Pp
 .Bl -tag -width OPUSHXX -compact
 .It Dv CIP
@@ -162,8 +167,30 @@ OBEX Object Push
 .It Dv SP
 Serial Port
 .El
-.Pp
 .El
+.Sh EXIT STATUS
+.Ex -std
+.Sh SEE ALSO
+.Xr bluetooth 3 ,
+.Xr sdp 3 ,
+.Xr btconfig 8 ,
+.Xr sdpd 8
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Fx 5.3
+as
+.Nm sdpcontrol .
+It was ported to
+.Nx 4.0
+under its present name by
+.An Iain Hibbert
+under the sponsorship of Itronix, Inc.
+.Sh AUTHORS
+.An Maksim Yevmenkin Aq m_evmenkin@yahoo.com
+.An Iain Hibbert
+for Itronix, Inc.
 .Sh CAVEATS
 The
 .Nm
@@ -179,25 +206,3 @@ Protocol Descriptor List
 .It
 Bluetooth Profile Descriptor List
 .El
-.Sh EXIT STATUS
-.Ex -std
-.Sh SEE ALSO
-.Xr bluetooth 3 ,
-.Xr btconfig 8 ,
-.Xr sdp 3 ,
-.Xr sdpd 8
-.Sh AUTHORS
-.An Maksim Yevmenkin Aq m_evmenkin@yahoo.com
-.An Iain Hibbert for Itronix, Inc.
-.Sh HISTORY
-The
-.Nm
-command first appeared in
-.Fx 5.3
-as
-.Nm sdpcontrol .
-It was ported to
-.Nx 4.0
-under its present name by
-.An Iain Hibbert
-under the sponsorship of Itronix, Inc.
