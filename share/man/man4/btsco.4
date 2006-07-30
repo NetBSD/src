@@ -1,4 +1,4 @@
-.\" $NetBSD: btsco.4,v 1.1 2006/07/26 10:43:02 tron Exp $
+.\" $NetBSD: btsco.4,v 1.2 2006/07/30 00:06:17 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd Jul 9, 2006
+.Dd July 26, 2006
 .Dt BTSCO 4
 .Os
 .Sh NAME
@@ -43,14 +43,15 @@ The
 .Nm
 driver provides support for Bluetooth SCO Audio devices through the
 .Xr audio 4
-driver, and only supports
-playing and recording of 8kHz, 16-bit, 1 channel, signed linear samples.
+driver, and only supports playing and recording of 8kHz, 16-bit,
+1 channel, signed linear samples.
 .Pp
 The
 .Nm
 driver must be configured at run time with the
 .Xr btcontrol 8
-program. The following properties are used by the
+program.
+The following properties are used by the
 .Nm
 driver during autoconfiguration:
 .Pp
@@ -64,23 +65,28 @@ Should be
 .Sq btsco ,
 indicating an SCO Audio device.
 .It mtu
-Packet Size to use, see Caveat section below for details.
+Packet Size to use, see
+.Sx CAVEATS
+section below for details.
 .It listen
 If this boolean value exists and is true, the
 .Nm
 device will, on
 .Xr open 2 ,
-listen for incoming connections from the remote device. Otherwise,
+listen for incoming connections from the remote device.
+Otherwise,
 .Nm
 will attempt to initiate a connection to the remote device.
 .It rfcomm-channel
-This integer value is not used directly, but will be stored and passed via the
+This integer value is not used directly, but will be stored and
+passed via the
 .Dv BTSCO_INFO
 ioctl as below:
 .El
 .Pp
 SCO connections require a baseband connection between the two devices before
-they can be created. The
+they can be created.
+The
 .Nm
 driver does not create this, but can provide information to facilitate
 an application setting up a control channel prior to use, via the
@@ -90,7 +96,7 @@ call on the mixer device, which returns a
 .Ar btsco_info
 structure as follows:
 .Bd -literal -offset
-#include <dev/bluetooth/btsco.h>
+#include \*[Lt]dev/bluetooth/btsco.h\*[Gt]
 
 struct btsco_info {
 	bdaddr_t	laddr;		/* controller bdaddr */
@@ -105,51 +111,57 @@ struct btsco_info {
 .Pp
 The
 .Nm
-driver can be configured to act in Connect or Listen mode. In Connect mode, the
+driver can be configured to act in Connect or Listen mode.
+In Connect mode, the
 .Nm
 driver will initate a connection to the remote device on an
 .Xr open 2
 call, whereas in Listen mode,
 .Xr open 2
 will block until the remote device initiates the connection.
+.Sh SEE ALSO
+.Xr bthset 1 ,
+.Xr ioctl 2 ,
+.Xr audio 4 ,
+.Xr bluetooth 4 ,
+.Xr btdev 4 ,
+.Xr btcontrol 8
+.Sh HISTORY
+The
+.Nm
+driver
+was written for
+.Nx 4.0
+by
+.An Iain Hibbert
+under the sponsorship of Itronix, Inc.
 .Sh CAVEATS
-Isochronous data is seemingly not well supported over USB in the current system
-and to get a headset working, you will have to do some research and fine tuning.
+Isochronous data is seemingly not well supported over USB in the
+current system and to get a headset working, you will have to do
+some research and fine tuning.
 .Pp
 Look at
 .Xr ubt 4
 with regards to the
 .Xr sysctl 8
-settings. Then, you will have to calculate the MTU that the
-driver will use. This should be less than the sco_mtu reported by the
+settings.
+Then, you will have to calculate the MTU that the
+driver will use.
+This should be less than the sco_mtu reported by the
 .Xr btconfig 8
-program, and when combined with the SCO header (3 bytes) should fit exactly into
-an integer number of frames, where the frame size is indicated by hw.ubtN.sco_txsize.
+program, and when combined with the SCO header (3 bytes) should
+fit exactly into an integer number of frames, where the frame size
+is indicated by hw.ubtN.sco_txsize.
 .Pp
-For example. I want one voice channel (which is all that is supported,
+For example: I want one voice channel (which is all that is supported,
 for now) so am using configuration number 2, with a frame length of 17
-bytes. My USB dongle says the maximum SCO payload is 64 bytes, so I am
+bytes.
+My USB dongle says the maximum SCO payload is 64 bytes, so I am
 using an MTU of 48 bytes (17 * 3 - 3 = 48).
 .Pp
 Specify the MTU when you configure the SCO audio device with
-.Xr btcontrol 8 
+.Xr btcontrol 8
 and all should be well.
 .Pp
 The failure mode is that the USB Bluetooth dongle locks
 up and requires removal/reinsertion to clear.
-.Sh SEE ALSO
-.Xr audio 4 ,
-.Xr bluetooth 4 ,
-.Xr btcontrol 8 ,
-.Xr btdev 4 ,
-.Xr bthset 1 ,
-.Xr ioctl 2
-.Sh HISTORY
-The
-.Nm
-driver
-was written for 
-.Nx 4.0
-by
-.An Iain Hibbert
-under the sponsorship of Itronix, Inc.
