@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.75 2006/07/30 19:53:20 elad Exp $	*/
+/*	$NetBSD: init.c,v 1.76 2006/07/30 20:01:26 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.75 2006/07/30 19:53:20 elad Exp $");
+__RCSID("$NetBSD: init.c,v 1.76 2006/07/30 20:01:26 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -1657,8 +1657,7 @@ createsysctlnode()
 	/*
 	 * Create top-level dynamic sysctl node.  Its child nodes will only
 	 * be readable by the superuser, since regular mortals should not
-	 * care ("Sssh, it's a secret!").  Additionally, both nodes become
-	 * read-only at securelevel 1.
+	 * care ("Sssh, it's a secret!").
 	 */
 	len = sizeof(struct sysctlnode);
 	mib[0] = CTL_CREATE;
