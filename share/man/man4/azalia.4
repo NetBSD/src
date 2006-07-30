@@ -1,4 +1,4 @@
-.\"	$NetBSD: azalia.4,v 1.2.2.2 2005/07/02 16:38:53 tron Exp $
+.\"	$NetBSD: azalia.4,v 1.2.2.3 2006/07/30 17:08:46 tron Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 22, 2005
+.Dd June 25, 2006
 .Dt AZALIA 4
 .Os
 .Sh NAME
@@ -47,8 +47,11 @@ The
 .Nm
 device driver is expected to support any PCI device which is
 compliant to the High Definition Audio Specification 1.0.
-Known supported devices are Intel 82801F (ICH6),
+Known supported controllers are Intel 82801F (ICH6),
 and Intel 82801G (ICH7).
+Known supported codecs are Realtek ALC260, ALC880, ALC882,
+Analog Devices AD1981HD, CMedia CMI9880,
+Sigmatel STAC9221, and STAC9221D.
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr pci 4
@@ -59,8 +62,6 @@ The
 device driver appeared in
 .Nx 3.0 .
 .Sh BUGS
-S/PDIF support is not implemented.
-.Pp
 Non-PCM encodings such as Float32 and AC-3 are not supported.
 .Pp
 There is no way to use 20bit or 24bit precision because of a
