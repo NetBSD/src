@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.4.2.21 2006/07/30 17:09:04 tron Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.4.2.22 2006/07/30 17:09:29 tron Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.4.2.21 2006/07/30 17:09:04 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.4.2.22 2006/07/30 17:09:29 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -924,7 +924,20 @@ generic_mixer_get(const codec_t *this, nid_t nid, int target, mixer_ctrl_t *mc)
 			return err;
 		mc->un.value.level[0] = generic_mixer_from_device_value(this,
 		    nid, target, CORB_GAGM_GAIN(result));
-		n = this->w[nid].connections[MI_TARGET_INAMP(target)];
+		if (this->w[nid].type == COP_AWTYPE_AUDIO_SELECTOR ||
+		    this->w[nid].type == COP_AWTYPE_AUDIO_MIXER) {
+			n = this->w[nid].connections[MI_TARGET_INAMP(target)];
+#ifdef AZALIA_DEBUG
+			if (!VALID_WIDGET_NID(n, this)) {
+				DPRINTF(("%s: invalid target: nid=%d nconn=%d index=%d\n",
+				   __func__, nid, this->w[nid].nconnections,
+				   MI_TARGET_INAMP(target)));
+				return EINVAL;
+			}
+#endif
+		} else {
+			n = nid;
+		}
 		mc->un.value.num_channels = WIDGET_CHANNELS(&this->w[n]);
 		if (mc->un.value.num_channels == 2) {
 			err = this->comresp(this, nid,
