@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.768.2.31 2006/07/13 22:02:30 tron Exp $
+# $NetBSD: mi,v 1.768.2.32 2006/07/30 16:38:58 tron Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1621,6 +1621,7 @@
 ./usr/share/man/cat8/amiga/installboot.0	man-sysutil-catman	.cat
 ./usr/share/man/cat8/amiga/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/amq.0			man-amd-catman		.cat
+./usr/share/man/cat8/amrctl.0			man-sysutil-man		.cat
 ./usr/share/man/cat8/anvil.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/apm.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/apmd.0			man-sysutil-catman	.cat
@@ -3858,6 +3859,7 @@
 ./usr/share/man/man8/amiga/installboot.8	man-sysutil-man		.man
 ./usr/share/man/man8/amiga/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/amq.8			man-amd-man		.man
+./usr/share/man/man8/amrctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/anvil.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/apm.8			man-sysutil-man		.man
 ./usr/share/man/man8/apmd.8			man-sysutil-man		.man

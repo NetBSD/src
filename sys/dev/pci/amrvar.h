@@ -1,4 +1,4 @@
-/*	$NetBSD: amrvar.h,v 1.4 2004/09/13 12:55:48 drochner Exp $	*/
+/*	$NetBSD: amrvar.h,v 1.4.10.1 2006/07/30 16:38:59 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ struct amr_softc {
 
 /* General flags. */
 #define	AMRF_THREAD_EXIT	0x00010000
+#define	AMRF_OPEN		0x00020000
 
 /*
  * Command control block.
