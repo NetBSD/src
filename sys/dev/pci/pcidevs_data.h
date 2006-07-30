@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.809 2006/07/30 21:09:54 oster Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.810 2006/07/30 22:41:52 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.810 2006/07/30 21:09:00 oster Exp
+ *	NetBSD: pcidevs,v 1.811 2006/07/30 22:41:38 jmcneill Exp
  */
 
 /*
@@ -11212,6 +11212,10 @@ static const struct pci_product pci_products[] = {
 	    "VT8237 Integrated SATA Controller",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3314_IG,
+	    "VT3314 CN900 UniChrome Integrated Graphics",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237R_SATA,
 	    "VT8237R Integrated SATA Controller",
 	},
@@ -11780,4 +11784,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2352;
+const int pci_nproducts = 2353;

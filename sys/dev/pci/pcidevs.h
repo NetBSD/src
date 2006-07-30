@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.810 2006/07/30 21:09:54 oster Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.811 2006/07/30 22:41:52 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.810 2006/07/30 21:09:00 oster Exp
+ *	NetBSD: pcidevs,v 1.811 2006/07/30 22:41:38 jmcneill Exp
  */
 
 /*
@@ -3319,6 +3319,7 @@
 #define	PCI_PRODUCT_VIATECH_VT8623	0x3123		/* VT8623 (Apollo CLE266) CPU-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8233A	0x3147		/* VT8233A PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8237_SATA	0x3149		/* VT8237 Integrated SATA Controller */
+#define	PCI_PRODUCT_VIATECH_VT3314_IG	0x3344		/* VT3314 CN900 UniChrome Integrated Graphics */
 #define	PCI_PRODUCT_VIATECH_VT8237R_SATA	0x3349		/* VT8237R Integrated SATA Controller */
 #define	PCI_PRODUCT_VIATECH_VT6421_RAID	0x3249		/* VT6421 Serial RAID Controller */
 #define	PCI_PRODUCT_VIATECH_KT880_3	0x3269		/* KT880 CPU to PCI bridge */
