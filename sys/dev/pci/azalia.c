@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.7.2.34 2006/07/30 17:08:21 tron Exp $	*/
+/*	$NetBSD: azalia.c,v 1.7.2.35 2006/07/30 17:08:38 tron Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,14 +42,13 @@
  *
  *
  * TO DO:
- *  - S/PDIF
  *  - power hook
  *  - multiple codecs (needed?)
  *  - multiple streams (needed?)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.2.34 2006/07/30 17:08:21 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.2.35 2006/07/30 17:08:38 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -179,6 +178,7 @@ static void	azalia_codec_add_format(codec_t *, int, int, int, uint32_t,
 static int	azalia_codec_comresp(const codec_t *, nid_t, uint32_t,
 	uint32_t, uint32_t *);
 static int	azalia_codec_connect_stream(codec_t *, int, uint16_t, int);
+static int	azalia_codec_disconnect_stream(codec_t *, int);
 
 static int	azalia_widget_init(widget_t *, const codec_t *, int);
 static int	azalia_widget_init_audio(widget_t *, const codec_t *);
@@ -537,6 +537,7 @@ azalia_attach_intr(struct device *self)
 	az->codecno = c;
 	DPRINTF(("%s: using the #%d codec\n", XNAME(az), az->codecno));
 
+	/* Use stream#1 and #2.  Don't use stream#0. */
 	if (azalia_stream_init(&az->pstream, az, az->nistreams + 0,
 	    1, AUMODE_PLAY))
 		goto err_exit;
@@ -1333,6 +1334,7 @@ static int
 azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 {
 	const convgroup_t *group;
+	uint32_t v;
 	int i, err, startchan, nchan;
 	nid_t nid;
 	boolean_t flag222;
@@ -1366,12 +1368,46 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 				    (number << 4) | startchan, NULL);
 		if (err)
 			goto exit;
+		if (this->w[nid].widgetcap & COP_AWCAP_DIGITAL) {
+			/* enable S/PDIF */
+			this->comresp(this, nid, CORB_GET_DIGITAL_CONTROL,
+			    0, &v);
+			v = (v & 0xff) | CORB_DCC_DIGEN;
+			this->comresp(this, nid, CORB_SET_DIGITAL_CONTROL_L,
+			    v, NULL);
+		}
 		startchan += WIDGET_CHANNELS(&this->w[nid]);
 	}
 
 exit:
 	DPRINTF(("%s: leave with %d\n", __func__, err));
 	return err;
+}
+
+static int
+azalia_codec_disconnect_stream(codec_t *this, int dir)
+{
+	const convgroup_t *group;
+	uint32_t v;
+	int i;
+	nid_t nid;
+
+	if (dir == AUMODE_RECORD)
+		group = &this->adcs.groups[this->adcs.cur];
+	else
+		group = &this->dacs.groups[this->dacs.cur];
+	for (i = 0; i < group->nconv; i++) {
+		nid = group->conv[i];
+		this->comresp(this, nid, CORB_SET_CONVERTER_STREAM_CHANNEL,
+		    0, NULL);	/* stream#0 */
+		if (this->w[nid].widgetcap & COP_AWCAP_DIGITAL) {
+			/* disable S/PDIF */
+			this->comresp(this, nid, CORB_GET_DIGITAL_CONTROL, 0, &v);
+			v = (v & ~CORB_DCC_DIGEN) & 0xff;
+			this->comresp(this, nid, CORB_SET_DIGITAL_CONTROL_L, v, NULL);
+		}
+	}
+	return 0;
 }
 
 /* ================================================================
@@ -1790,6 +1826,8 @@ azalia_stream_halt(stream_t *this)
 	ctl &= ~(HDA_SD_CTL_DEIE | HDA_SD_CTL_FEIE | HDA_SD_CTL_IOCE | HDA_SD_CTL_RUN);
 	STR_WRITE_2(this, CTL, ctl);
 	AZ_WRITE_1(this->az, INTCTL, AZ_READ_1(this->az, INTCTL) & ~this->intr_bit);
+	azalia_codec_disconnect_stream
+	    (&this->az->codecs[this->az->codecno], this->dir);
 	return 0;
 }
 
