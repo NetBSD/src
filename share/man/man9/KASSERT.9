@@ -1,4 +1,4 @@
-.\"     $NetBSD: KASSERT.9,v 1.1 2006/07/27 00:00:56 gdt Exp $
+.\"     $NetBSD: KASSERT.9,v 1.2 2006/07/30 00:20:06 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Igor Sobrado
 .\" All rights reserved.
@@ -52,8 +52,8 @@ evaluates to false, terminating the running system.
 .Fn KASSERT
 tests are included only in kernels compiled with the
 .Dv DIAGNOSTIC
-configuration option.  In a kernel that does not have this configuration
-option, the
+configuration option.
+In a kernel that does not have this configuration option, the
 .Fn KASSERT
 macro is defined to be a no-op.
 .Pp
@@ -75,9 +75,10 @@ is a
 .Xr printf 9
 format string whose arguments are enclosed in parentheses.
 .Sh SEE ALSO
-.Xr config 8 ,
+.Xr config 1 ,
 .Xr panic 9 ,
 .Xr printf 9
 .Sh AUTHORS
 These macros were written by
-.An "Chris G. Demetriou" Aq cgd@netbsd.org .
+.An Chris G. Demetriou
+Aq cgd@netbsd.org .
