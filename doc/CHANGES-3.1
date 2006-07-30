@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.126 2006/07/30 16:48:40 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.127 2006/07/30 17:30:49 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4102,7 +4102,6 @@ sys/dev/pci/amrio.h				new file
 sys/dev/pci/amrreg.h				patch
 sys/dev/pci/amrvar.h				patch
 sys/dev/pci/ld_amr.c				patch
-sys/uvm/uvm_bio.c				patch
 
 	Apply patch (requested by bouyer in ticket #1431):
 	- Add a /dev/amr* control file for amr(4) devices, which allows sending
@@ -4111,4 +4110,18 @@ sys/uvm/uvm_bio.c				patch
 	  from the adapter (status of adapter, logical volumes and and
 	  individual drives).
 	[bouyer, ticket #1431]
+
+sys/dev/azalia.c				1.20-1.38
+sys/dev/azalia.h				1.7-1.14
+sys/dev/azalia_codec.c				1.9-1.24
+share/man/man4/azalia.4				1.3-1.4
+sys/dev/pci/pcidevs				1.806 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	- Various bug fixes
+	- Support for more codecs
+	- Improve volume control.
+	- Update manual page.
+	[kent, ticket #1432]
 
