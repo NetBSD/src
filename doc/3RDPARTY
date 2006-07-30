@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.456 2006/07/29 08:24:41 kardel Exp $
+#	$NetBSD: 3RDPARTY,v 1.457 2006/07/30 10:08:52 jdolecek Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -620,7 +620,7 @@ Maintainer:	Michael Rendell <michael@cs.mun.ca>
 Archive Site:	ftp://ftp.cs.mun.ca/pub/pdksh/
 Home Page:	http://www.cs.mun.ca/~michael/pdksh/
 Mailing List:
-Responsible:
+Responsible:	jdolecek
 License:	Public domain
 pdksh-5.2.14-patches.1 and pdksh-5.2.14-patches.2 have been applied.
 
