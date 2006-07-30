@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.4.2.18 2006/07/30 17:07:33 tron Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.4.2.19 2006/07/30 17:08:21 tron Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.4.2.18 2006/07/30 17:07:33 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.4.2.19 2006/07/30 17:08:21 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -87,6 +87,8 @@ static int	generic_get_port(codec_t *, mixer_ctrl_t *);
 static int	alc260_init_dacgroup(codec_t *);
 static int	alc260_mixer_init(codec_t *);
 static int	alc260_set_port(codec_t *, mixer_ctrl_t *);
+static int	alc260_get_port(codec_t *, mixer_ctrl_t *);
+static int	alc260_unsol_event(codec_t *, int);
 static int	alc880_init_dacgroup(codec_t *);
 static int	alc882_init_dacgroup(codec_t *);
 static int	alc882_mixer_init(codec_t *);
@@ -102,22 +104,28 @@ static int	stac9220_mixer_init(codec_t *);
 int
 azalia_codec_init_vtbl(codec_t *this)
 {
+	size_t extra_size;
+
 	/**
 	 * We can refer this->vid and this->subid.
 	 */
 	DPRINTF(("%s: vid=%08x subid=%08x\n", __func__, this->vid, this->subid));
+	extra_size = 0;
 	this->name = NULL;
 	this->init_dacgroup = generic_codec_init_dacgroup;
 	this->mixer_init = generic_mixer_init;
 	this->mixer_delete = generic_mixer_delete;
 	this->set_port = generic_set_port;
 	this->get_port = generic_get_port;
+	this->unsol_event = NULL;
 	switch (this->vid) {
 	case 0x10ec0260:
 		this->name = "Realtek ALC260";
 		this->mixer_init = alc260_mixer_init;
 		this->init_dacgroup = alc260_init_dacgroup;
 		this->set_port = alc260_set_port;
+		this->unsol_event = alc260_unsol_event;
+		extra_size = 1;
 		break;
 	case 0x10ec0880:
 		this->name = "Realtek ALC880";
@@ -156,6 +164,14 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->name = "Sigmatel STAC9220";
 		this->mixer_init = stac9220_mixer_init;
 		break;
+	}
+	if (extra_size > 0) {
+		this->extra = malloc(sizeof(uint32_t) * extra_size,
+		    M_DEVBUF, M_ZERO | M_NOWAIT);
+		if (this->extra == NULL) {
+			aprint_error("%s: Not enough memory\n", XNAME(this));
+			return ENOMEM;
+		}
 	}
 	return 0;
 }
@@ -1349,6 +1365,8 @@ generic_get_port(codec_t *this, mixer_ctrl_t *mc)
  * ---------------------------------------------------------------- */
 
 #define ALC260_FUJITSU_ID	0x132610cf
+#define ALC260_EVENT_HP		0
+#define ALC260_EXTRA_MASTER	0
 static const mixer_item_t alc260_mixer_items[] = {
 	{{AZ_CLASS_INPUT, {AudioCinputs}, AUDIO_MIXER_CLASS, AZ_CLASS_INPUT, 0, 0}, 0},
 	{{AZ_CLASS_OUTPUT, {AudioCoutputs}, AUDIO_MIXER_CLASS, AZ_CLASS_OUTPUT, 0, 0}, 0},
@@ -1487,6 +1505,7 @@ alc260_mixer_init(codec_t *this)
 {
 	const mixer_item_t *mi;
 	mixer_ctrl_t mc;
+	uint32_t value;
 
 	switch (this->subid) {
 	case ALC260_FUJITSU_ID:
@@ -1529,6 +1548,15 @@ alc260_mixer_init(codec_t *this)
 		generic_mixer_set(this, 0x14, MI_TARGET_PINDIR, &mc); /* line1 */
 		mc.un.ord = 4;	/* connlist: cd */
 		generic_mixer_set(this, 0x05, MI_TARGET_CONNLIST, &mc);
+		/* setup a unsolicited event for the headphones */
+		this->comresp(this, 0x14, CORB_SET_UNSOLICITED_RESPONSE,
+		    CORB_UNSOL_ENABLE | ALC260_EVENT_HP, NULL);
+		this->extra[ALC260_EXTRA_MASTER] = 0; /* unmute */
+		/* If the headphone presents, mute the internal speaker */
+		this->comresp(this, 0x14, CORB_GET_PIN_SENSE, 0, &value);
+		mc.un.ord = value & CORB_PS_PRESENSE ? 1 : 0;
+		generic_mixer_set(this, 0x10, MI_TARGET_OUTAMP, &mc);
+		this->get_port = alc260_get_port;
 	}
 	return 0;
 }
@@ -1556,6 +1584,7 @@ alc260_set_port(codec_t *this, mixer_ctrl_t *mc)
 {
 	const mixer_item_t *m;
 	mixer_ctrl_t mc2;
+	uint32_t value;
 	int err;
 
 	if (mc->dev >= this->nmixers)
@@ -1595,8 +1624,69 @@ alc260_set_port(codec_t *this, mixer_ctrl_t *mc)
 		   m->devinfo.un.e.num_mem == 3) {
 		if (1 <= mc->un.ord && mc->un.ord <= 3)
 			return EINVAL;
+	} else if (this->subid == ALC260_FUJITSU_ID && m->nid == 0x10 &&
+		   m->target == MI_TARGET_OUTAMP) {
+		if (mc->un.ord != 0 && mc->un.ord != 1)
+			return EINVAL;
+		this->extra[ALC260_EXTRA_MASTER] = mc->un.ord;
+		err = this->comresp(this, 0x14, CORB_GET_PIN_SENSE, 0, &value);
+		if (err)
+			return err;
+		if (!(value & CORB_PS_PRESENSE)) {
+			return generic_mixer_set(this, m->nid, m->target, mc);
+		}
+		return 0;
 	}
 	return generic_mixer_set(this, m->nid, m->target, mc);
+}
+
+static int
+alc260_get_port(codec_t *this, mixer_ctrl_t *mc)
+{
+	const mixer_item_t *m;
+
+	if (mc->dev >= this->nmixers)
+		return ENXIO;
+	m = &this->mixers[mc->dev];
+	mc->type = m->devinfo.type;
+	if (mc->type == AUDIO_MIXER_CLASS)
+		return 0;
+	if (this->subid == ALC260_FUJITSU_ID && m->nid == 0x10 &&
+	    m->target == MI_TARGET_OUTAMP) {
+		mc->un.ord = this->extra[ALC260_EXTRA_MASTER];
+		return 0;
+	}
+	return generic_mixer_get(this, m->nid, m->target, mc);
+}
+
+static int
+alc260_unsol_event(codec_t *this, int tag)
+{
+	int err;
+	uint32_t value;
+	mixer_ctrl_t mc;
+
+	switch (tag) {
+	case ALC260_EVENT_HP:
+		err = this->comresp(this, 0x14, CORB_GET_PIN_SENSE, 0, &value);
+		if (err)
+			break;
+		mc.dev = -1;
+		mc.type = AUDIO_MIXER_ENUM;
+		if (value & CORB_PS_PRESENSE) {
+			DPRINTF(("%s: headphone has been inserted.\n", __func__));
+			mc.un.ord = 1; /* mute */
+			generic_mixer_set(this, 0x10, MI_TARGET_OUTAMP, &mc);
+		} else {
+			DPRINTF(("%s: headphone has been pulled out.\n", __func__));
+			mc.un.ord = this->extra[ALC260_EXTRA_MASTER];
+			generic_mixer_set(this, 0x10, MI_TARGET_OUTAMP, &mc);
+		}
+		break;
+	default:
+		printf("%s: unknown tag: %d\n", __func__, tag);
+	}
+	return 0;
 }
 
 /* ----------------------------------------------------------------
