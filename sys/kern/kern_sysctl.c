@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.198 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.199 2006/07/30 17:38:19 elad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.198 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.199 2006/07/30 17:38:19 elad Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -1438,18 +1438,7 @@ sysctl_lookup(SYSCTLFN_ARGS)
 	/*
 	 * is this node supposedly writable?
 	 */
-	rw = 0;
-	switch (rnode->sysctl_flags & CTLFLAG_READWRITE) {
-	    case CTLFLAG_READONLY1:
-		rw = (securelevel < 1) ? 1 : 0;
-		break;
-	    case CTLFLAG_READONLY2:
-		rw = (securelevel < 2) ? 1 : 0;
-		break;
-	    case CTLFLAG_READWRITE:
-		rw = 1;
-		break;
-	}
+	rw = (rnode->sysctl_flags & CTLFLAG_READWRITE) ? 1 : 0;
 
 	/*
 	 * it appears not to be writable at this time, so if someone
@@ -2247,8 +2236,6 @@ sf(int f)
 	}
 
 	print_flag(f, s, c, READONLY,  READWRITE);
-	print_flag(f, s, c, READONLY1, READWRITE);
-	print_flag(f, s, c, READONLY2, READWRITE);
 	print_flag(f, s, c, READWRITE, READWRITE);
 	print_flag(f, s, c, ANYWRITE,  ANYWRITE);
 	print_flag(f, s, c, PRIVATE,   PRIVATE);
