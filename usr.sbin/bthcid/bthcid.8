@@ -1,4 +1,4 @@
-.\" $NetBSD: bthcid.8,v 1.2 2006/07/26 11:00:07 tron Exp $
+.\" $NetBSD: bthcid.8,v 1.3 2006/07/30 00:11:53 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -52,10 +52,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $Id: bthcid.8,v 1.2 2006/07/26 11:00:07 tron Exp $
+.\" $Id: bthcid.8,v 1.3 2006/07/30 00:11:53 wiz Exp $
 .\" $FreeBSD: src/usr.sbin/bluetooth/hcsecd/hcsecd.8,v 1.6 2006/02/11 15:36:37 markus Exp $
 .\"
-.Dd November 16, 2002
+.Dd July 26, 2006
 .Dt BTHCID 8
 .Os
 .Sh NAME
@@ -119,18 +119,20 @@ utility.
 The command line options are as follows:
 .Bl -tag -width XXXX
 .It Fl d Ar device
-Specify the local Bluetooth device address. The default is BDADDR_ANY.
+Specify the local Bluetooth device address.
+The default is BDADDR_ANY.
 .It Fl f
 Run in foreground (do not detach).
 .It Fl h
 Display usage message and exit.
 .It Fl m
-Specify the file mode access bits for the PIN client socket. The
-default is to allow readwrite access to user and group (0660).
+Specify the file mode access bits for the PIN client socket.
+The default is to allow readwrite access to user and group (0660).
 .It Fl n
 Do not listen for PIN clients.
 .It Fl s Ar socket_name
-Specify the socket name to listen on for PIN clients. The default path is
+Specify the socket name to listen on for PIN clients.
+The default path is
 .Pa /var/run/bthcid .
 .El
 .Sh FILES
@@ -140,12 +142,9 @@ Specify the socket name to listen on for PIN clients. The default path is
 .It Pa /var/run/bthcid.pid
 .El
 .Sh SEE ALSO
+.Xr btpin 1 ,
 .Xr bluetooth 4 ,
-.Xr btconfig 8 ,
-.Xr btpin 1
-.Sh AUTHORS
-.An Maksim Yevmenkin Aq m_evmenkin@yahoo.com ,
-.An Iain Hibbert
+.Xr btconfig 8
 .Sh HISTORY
 The
 .Nm
@@ -157,8 +156,10 @@ It was ported to
 .Nx 4.0
 with its present name and extended to support PIN clients by
 .An Iain Hibbert
-under the sponsorship of
-.An Itronix, Inc.
+under the sponsorship of Itronix, Inc.
+.Sh AUTHORS
+.An Maksim Yevmenkin Aq m_evmenkin@yahoo.com
+.An Iain Hibbert
 .Sh BUGS
 The only way to make the
 .Nm
