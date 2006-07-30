@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.125 2006/07/28 12:36:55 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.126 2006/07/30 16:48:40 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4083,4 +4083,32 @@ sys/uvm/uvm_bio.c				patch
 	Avoid a panic in page fault handling that can occur under low-memory
 	conditions.
 	[jld, ticket #1323]
+
+distrib/sets/lists/base/mi			patch
+distrib/sets/lists/comp/mi			patch
+distrib/sets/lists/man/mi			patch
+etc/MAKEDEV.tmpl				patch
+etc/etc.amd64/MAKEDEV.conf			patch
+etc/etc.i386/MAKEDEV.conf			patch
+sbin/Makefile					patch
+sbin/amrctl/Makefile				new file
+sbin/amrctl/amrctl.8				new file
+sbin/amrctl/amrctl.c				new file
+share/man/man4/amr.4				patch
+sys/conf/majors					patch
+sys/dev/pci/Makefile				patch
+sys/dev/pci/amr.c				patch
+sys/dev/pci/amrio.h				new file
+sys/dev/pci/amrreg.h				patch
+sys/dev/pci/amrvar.h				patch
+sys/dev/pci/ld_amr.c				patch
+sys/uvm/uvm_bio.c				patch
+
+	Apply patch (requested by bouyer in ticket #1431):
+	- Add a /dev/amr* control file for amr(4) devices, which allows sending
+	  raw commands to the controller.
+	- Add a amrctl(8) control tool, which for now only allows to get status
+	  from the adapter (status of adapter, logical volumes and and
+	  individual drives).
+	[bouyer, ticket #1431]
 
