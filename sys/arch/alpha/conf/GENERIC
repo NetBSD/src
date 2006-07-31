@@ -22,7 +22,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.289 $"
+#ident 		"GENERIC-$Revision: 1.290 $"
 
 maxusers 32
 
@@ -458,7 +458,7 @@ uha*	at	eisa? slot ?			# UltraStor 24f SCSI (unt.)
 com*	at	pcmcia? function ?	# Modems and serial cards
 
 aic*	at	pcmcia? function ?	# Adaptec APA-1460 SCSI
-spc*	at	pcmcia? function ?	# Fujitsu MB87030 SCSI
+spc*	at	pcmcia? function ?	# Fujitsu MB87030/MB89352 SCSI
 
 wdc*	at	pcmcia? function ?	# PCMCIA IDE controllers
 

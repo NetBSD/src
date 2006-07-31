@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.193 2006/07/26 10:43:02 tron Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.194 2006/07/31 23:30:52 hubertf Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.193 $"
+#ident 		"GENERIC-$Revision: 1.194 $"
 
 maxusers	32		# estimated number of users
 
@@ -495,6 +495,7 @@ iic*	at piixpm?			# SMBus on PIIX4
 # PCMCIA SCSI controllers
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
+spc*	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 
 # CardBus SCSI cards
 ahc*	at cardbus? function ?	# Adaptec ADP-1480

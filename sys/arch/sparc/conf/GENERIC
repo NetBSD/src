@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.188 2006/06/28 15:19:29 liamjfoy Exp $
+# $NetBSD: GENERIC,v 1.189 2006/07/31 23:29:54 hubertf Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.188 $"
+#ident 		"GENERIC-$Revision: 1.189 $"
 
 maxusers	32
 
@@ -423,7 +423,9 @@ scsibus* at sw?
 
 ## PCMCIA SCSI controllers
 #aic*	at pcmcia?
+#spc*	at pcmcia?
 #scsibus* at aic?
+#scsibus* at spc?
 
 
 ## These entries find devices on all SCSI busses and assign

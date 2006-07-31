@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.100 2006/07/30 17:55:31 bouyer Exp $
+# $NetBSD: GENERIC,v 1.101 2006/07/31 23:29:54 hubertf Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.100 $"
+#ident 		"GENERIC-$Revision: 1.101 $"
 
 maxusers	32		# estimated number of users
 
@@ -399,6 +399,7 @@ trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 # PCMCIA SCSI controllers
 #aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 #esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
+#spc*	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 
 # CardBus SCSI cards
 #adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
