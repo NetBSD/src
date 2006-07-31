@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.238 2006/06/30 10:54:09 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.239 2006/07/31 23:29:54 hubertf Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.238 $"
+#ident 		"GENERIC-$Revision: 1.239 $"
 
 
 maxusers	8
@@ -445,6 +445,7 @@ ep*		at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*		at pcmcia? function ?		# MB8696x based Ethernet
 ne*		at pcmcia? function ?		# NE2000-compatible Ethernet
 sm*		at pcmcia? function ?		# Megahertz Ethernet
+spc*		at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 mhzc*		at pcmcia? function ?	# Megahertz Ethernet/Modem combo cards
 com*		at mhzc?
 sm*		at mhzc?

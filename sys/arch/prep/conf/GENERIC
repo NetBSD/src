@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.122 2006/06/28 15:19:29 liamjfoy Exp $
+# $NetBSD: GENERIC,v 1.123 2006/07/31 23:29:54 hubertf Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.122 $"
+#ident		"GENERIC-$Revision: 1.123 $"
 
 maxusers	32
 
@@ -285,6 +285,7 @@ esiop*	at pci? dev ? function ?	# Symbios 53c875 SCSI and newer
 
 # PCMCIA SCSI controllers
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
+spc* 	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 
 # SCSI bus support
 #scsibus* at adw?
@@ -293,6 +294,7 @@ scsibus* at aic?
 #scsibus* at iha?
 #scsibus* at pcscp?
 scsibus* at siop?
+scsibus* at spc?
 scsibus* at esiop?
 
 # SCSI devices
