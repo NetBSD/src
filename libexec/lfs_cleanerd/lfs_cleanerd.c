@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.9 2006/07/13 12:00:24 martin Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.10 2006/07/31 16:34:42 martin Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -233,7 +233,8 @@ init_fs(struct clfs *fs, char *fsname)
 		return -2;
 	if (fcntl(rootfd, LFCNIFILEFH, &fs->clfs_ifilefh) < 0)
 		return -3;
-	if ((fs->clfs_ifilefd = fhopen(&fs->clfs_ifilefh.fh, O_RDONLY)) < 0)
+	if ((fs->clfs_ifilefd = fhopen(&fs->clfs_ifilefh,
+	    sizeof(fs->clfs_ifilefh), O_RDONLY)) < 0)
 		return -4;
 	close(rootfd);
 

@@ -1,11 +1,11 @@
-/*	$NetBSD: statvfs.c,v 1.4 2006/07/31 16:34:42 martin Exp $	*/
+/*	$NetBSD: compat___fhstat30.c,v 1.1 2006/07/31 16:34:42 martin Exp $	*/
 
 /*-
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Martin Husemann <martin@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,38 +36,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: statvfs.c,v 1.4 2006/07/31 16:34:42 martin Exp $");
+__RCSID("$NetBSD: compat___fhstat30.c,v 1.1 2006/07/31 16:34:42 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#include "namespace.h"
-#include <sys/statvfs.h>
+#define __LIBC12_SOURCE__
 
-#ifdef __weak_alias
-__weak_alias(statvfs,_statvfs)
-__weak_alias(fstatvfs,_fstatvfs)
-__weak_alias(fhstatvfs,_fhstatvfs)
-#endif
+#include <sys/types.h>
+#include <sys/mount.h>
+#include <compat/include/fstypes.h>
 
+__warn_references(fhstat,
+    "warning: reference to compatibility fhstat(); include <sys/mount.h> to generate correct reference")
+
+int	__fhstat30(const struct compat_30_fhandle *fhp, struct stat *sb);
+int	__fhstat40(const void *fhp, size_t fh_size, struct stat *sb);
+
+/*
+ * Convert old fhstat() call to new calling convention
+ */
 int
-statvfs(const char *file, struct statvfs *st)
+__fhstat30(const struct compat_30_fhandle *fhp, struct stat *sb)
 {
-	return statvfs1(file, st, ST_WAIT);
-}
-
-int
-fstatvfs(int f, struct statvfs *st)
-{
-	return fstatvfs1(f, st, ST_WAIT);
-}
-
-int	__fhstatvfs140(const void *fhp, size_t fh_size, struct statvfs *buf,
-	int flags);
-int	__fhstatvfs40(const void *fh, size_t fh_size, struct statvfs *st);
-
-int
-__fhstatvfs40(const void *fh, size_t fh_size, struct statvfs *st)
-{
-	return __fhstatvfs140(fh, fh_size, st, ST_WAIT);
+	return __fhstat40(fhp, FHANDLE30_SIZE(fhp), sb);
 }
