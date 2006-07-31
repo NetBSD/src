@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___stat13.c,v 1.2 2006/05/04 19:00:18 christos Exp $	*/
+/*	$NetBSD: compat___stat13.c,v 1.3 2006/07/31 16:34:42 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Frank van der Linden
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat___stat13.c,v 1.2 2006/05/04 19:00:18 christos Exp $");
+__RCSID("$NetBSD: compat___stat13.c,v 1.3 2006/07/31 16:34:42 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -123,7 +123,7 @@ __lstat13(const char *file, struct stat13 *ost)
 }
 
 int
-fhstat(const fhandle_t *fh, struct stat13 *ost)
+fhstat(const struct compat_30_fhandle *fh, struct stat13 *ost)
 {
 	struct stat nst;
 	int ret;

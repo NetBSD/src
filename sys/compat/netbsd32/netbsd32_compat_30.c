@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.11 2006/07/23 22:06:09 ad Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.12 2006/07/31 16:34:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.11 2006/07/23 22:06:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.12 2006/07/31 16:34:43 martin Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -246,6 +246,57 @@ compat_30_netbsd32_fhstat(l, v, retval)
 }
 
 int
+compat_30_netbsd32_fhstatvfs1(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct compat_30_netbsd32_fhstatvfs1_args /* {
+		syscallarg(const netbsd32_fhandlep_t) fhp;
+		syscallarg(netbsd32_statvfsp_t) buf;
+		syscallarg(int) flags;
+	} */ *uap = v;
+	struct statvfs *sbuf;
+	struct netbsd32_statvfs *s32;
+	fhandle_t *fh;
+	struct vnode *vp;
+	int error;
+
+	/*
+	 * Must be super user
+	 */
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		return error;
+
+	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)), &fh))
+	   != 0)
+		goto bad;
+	if ((error = vfs_fhtovp(fh, &vp)) != 0)
+		goto bad;
+
+	sbuf = (struct statvfs *)malloc(sizeof(struct statvfs), M_TEMP,
+	    M_WAITOK);
+	error = dostatvfs(vp->v_mount, sbuf, l, SCARG(uap, flags), 1);
+	vput(vp);
+	if (error != 0)
+		goto out;
+
+	s32 = (struct netbsd32_statvfs *)
+	    malloc(sizeof(struct netbsd32_statvfs), M_TEMP, M_WAITOK);
+	netbsd32_from_statvfs(sbuf, s32);
+	error = copyout(s32, (caddr_t)NETBSD32PTR64(SCARG(uap, buf)),
+	    sizeof(struct netbsd32_statvfs));
+	free(s32, M_TEMP);
+
+out:
+	free(sbuf, M_TEMP);
+bad:
+	vfs_copyinfh_free(fh);
+	return (error);
+}
+
+int
 compat_30_netbsd32_socket(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -280,4 +331,68 @@ compat_30_netbsd32_getfh(l, v, retval)
 	NETBSD32TOP_UAP(fhp, struct compat_30_fhandle);
 	/* Lucky for us a fhandle_t doesn't change sizes */
 	return (compat_30_sys_getfh(l, &ua, retval));
+}
+
+
+int compat_30_netbsd32_sys___fhstat30(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct compat_30_netbsd32_sys___fhstat30_args /* {
+		syscallarg(const netbsd32_fhandlep_t) fhp;
+		syscallarg(netbsd32_statp_t) sb;
+	} */ *uap = v;
+	struct stat sb;
+	struct netbsd32_stat sb32;
+	int error;
+	fhandle_t *fh;
+	struct vnode *vp;
+
+	/*
+	 * Must be super user
+	 */
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)))
+		return error;
+
+	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)), &fh))
+	    != 0)
+		goto bad;
+
+	if ((error = vfs_fhtovp(fh, &vp)) != 0)
+		goto bad;
+
+	error = vn_stat(vp, &sb, l);
+	vput(vp);
+	if (error)
+		goto bad;
+	netbsd32_from___stat30(&sb, &sb32);
+	error = copyout(&sb32, NETBSD32PTR64(SCARG(uap, sb)), sizeof(sb));
+bad:
+	vfs_copyinfh_free(fh);
+	return error;
+}
+
+/*
+ * Open a file given a file handle.
+ *
+ * Check permissions, allocate an open file structure,
+ * and call the device open routine if any.
+ */
+int
+compat_30_netbsd32_fhopen(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct compat_30_netbsd32_fhopen_args /* {
+		syscallarg(const fhandle_t *) fhp;
+		syscallarg(int) flags;
+	} */ *uap = v;
+	struct compat_30_sys_fhopen_args ua;
+
+	NETBSD32TOP_UAP(fhp, struct compat_30_fhandle);
+	NETBSD32TO64_UAP(flags);
+	return (compat_30_sys_fhopen(l, &ua, retval));
 }

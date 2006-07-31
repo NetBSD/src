@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.108 2006/07/23 22:06:09 ad Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.109 2006/07/31 16:34:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.108 2006/07/23 22:06:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.109 2006/07/31 16:34:43 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2268,20 +2268,22 @@ int netbsd32_fchroot(l, v, retval)
  * and call the device open routine if any.
  */
 int
-netbsd32_fhopen(l, v, retval)
+netbsd32___fhopen40(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_fhopen_args /* {
-		syscallarg(const fhandle_t *) fhp;
+	struct netbsd32___fhopen40_args /* {
+		syscallarg(const netbsd32_pointer_t *) fhp;
+		syscallarg(netbsd32_size_t) fh_size;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct sys_fhopen_args ua;
+	struct sys___fhopen40_args ua;
 
 	NETBSD32TOP_UAP(fhp, fhandle_t);
+	NETBSD32TO64_UAP(fh_size);
 	NETBSD32TO64_UAP(flags);
-	return (sys_fhopen(l, &ua, retval));
+	return (sys___fhopen40(l, &ua, retval));
 }
 
 /* virtual memory syscalls */

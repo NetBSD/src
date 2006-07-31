@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_statfs.c,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: compat_statfs.c,v 1.2 2006/07/31 16:34:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_statfs.c,v 1.1 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: compat_statfs.c,v 1.2 2006/07/31 16:34:42 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: compat_statfs.c,v 1.1 2005/09/13 01:44:09 christos Exp $");
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <compat/sys/mount.h>
+#include <compat/include/fstypes.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -154,13 +155,16 @@ fstatfs(int f, struct statfs12 *ost)
 	return ret;
 }
 
+int __fhstatvfs140(const void *fhp, size_t fh_size, struct statvfs *buf,
+    int flags);
+
 int
-fhstatfs(const fhandle_t *fh, struct statfs12 *ost)
+fhstatfs(const struct compat_30_fhandle *fh, struct statfs12 *ost)
 {
 	struct statvfs nst;
 	int ret;
 
-	if ((ret = fhstatvfs(fh, &nst)) == -1)
+	if ((ret = __fhstatvfs140(fh, FHANDLE30_SIZE(fh), &nst, ST_WAIT)) == -1)
 		return ret;
 	vfs2fs(ost, &nst);
 	return ret;
