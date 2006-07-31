@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.702.2.32 2006/07/30 17:23:22 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.702.2.33 2006/07/31 12:36:19 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.34 2006/07/30 17:22:20 tron Exp
+ *	NetBSD: pcidevs,v 1.701.2.35 2006/07/31 12:35:22 tron Exp
  */
 
 /*
@@ -706,6 +706,8 @@
 /* 3ware products */
 #define	PCI_PRODUCT_3WARE_ESCALADE	0x1000		/* Escalade IDE RAID */
 #define	PCI_PRODUCT_3WARE_ESCALADE_ASIC	0x1001		/* Escalade IDE RAID (ASIC) */
+#define	PCI_PRODUCT_3WARE_9000	0x1002		/* 9000-series RAID */
+#define	PCI_PRODUCT_3WARE_9550	0x1003		/* 9550-series RAID */
 
 /* AboCom products */
 #define	PCI_PRODUCT_ABOCOM_FE2500	0xab02		/* FE2500 10/100 Ethernet */
