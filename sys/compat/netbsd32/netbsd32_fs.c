@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.31 2006/07/23 22:06:09 ad Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.32 2006/07/31 16:34:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.31 2006/07/23 22:06:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.32 2006/07/31 16:34:43 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -536,13 +536,14 @@ out:
 }
 
 int
-netbsd32_fhstatvfs1(l, v, retval)
+netbsd32___fhstatvfs140(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_fhstatvfs1_args /* {
-		syscallarg(const netbsd32_fhandlep_t) fhp;
+	struct netbsd32___fhstatvfs140_args /* {
+		syscallarg(const netbsd32_pointer_t) fhp;
+		syscallarg(netbsd32_size_t) fh_size;
 		syscallarg(netbsd32_statvfsp_t) buf;
 		syscallarg(int) flags;
 	} */ *uap = v;
@@ -559,8 +560,8 @@ netbsd32_fhstatvfs1(l, v, retval)
 	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 		return error;
 
-	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)), &fh))
-	   != 0)
+	if ((error = vfs_copyinfh_alloc_size(NETBSD32PTR64(SCARG(uap, fhp)),
+	    SCARG(uap, fh_size), &fh)) != 0)
 		goto bad;
 	if ((error = vfs_fhtovp(fh, &vp)) != 0)
 		goto bad;
@@ -767,13 +768,14 @@ netbsd32_sys___lstat30(l, v, retval)
 	return (error);
 }
 
-int netbsd32_sys___fhstat30(l, v, retval)
+int netbsd32___fhstat40(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_sys___fhstat30_args /* {
-		syscallarg(const netbsd32_fhandlep_t) fhp;
+	struct netbsd32___fhstat40_args /* {
+		syscallarg(const netbsd32_pointer_t) fhp;
+		syscallarg(netbsd32_size_t) fh_size;
 		syscallarg(netbsd32_statp_t) sb;
 	} */ *uap = v;
 	struct stat sb;
@@ -789,7 +791,8 @@ int netbsd32_sys___fhstat30(l, v, retval)
 	    &l->l_acflag)))
 		return error;
 
-	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)), &fh))
+	if ((error = vfs_copyinfh_alloc_size(NETBSD32PTR64(SCARG(uap, fhp)),
+	    SCARG(uap, fh_size), &fh))
 	    != 0)
 		goto bad;
 

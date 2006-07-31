@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.12 2006/07/23 22:06:08 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.13 2006/07/31 16:34:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.12 2006/07/23 22:06:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.13 2006/07/31 16:34:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -388,4 +388,227 @@ compat_30_sys_getfh(struct lwp *l, void *v, register_t *retval)
 	error = copyout(&fh, (caddr_t)SCARG(uap, fhp),
 	    sizeof(struct compat_30_fhandle));
 	return (error);
+}
+
+/*
+ * Open a file given a file handle.
+ *
+ * Check permissions, allocate an open file structure,
+ * and call the device open routine if any.
+ */
+int
+compat_30_sys_fhopen(struct lwp *l, void *v, register_t *retval)
+{
+	struct compat_30_sys_fhopen_args /* {
+		syscallarg(const fhandle_t *) fhp;
+		syscallarg(int) flags;
+	} */ *uap = v;
+	struct filedesc *fdp = l->l_proc->p_fd;
+	struct file *fp;
+	struct vnode *vp = NULL;
+	struct mount *mp;
+	kauth_cred_t cred = l->l_cred;
+	int flags;
+	struct file *nfp;
+	int type, indx, error=0;
+	struct flock lf;
+	struct vattr va;
+	fhandle_t *fh;
+
+	/*
+	 * Must be super user
+	 */
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)))
+		return (error);
+
+	flags = FFLAGS(SCARG(uap, flags));
+	if ((flags & (FREAD | FWRITE)) == 0)
+		return (EINVAL);
+	if ((flags & O_CREAT))
+		return (EINVAL);
+	/* falloc() will use the file descriptor for us */
+	if ((error = falloc(l, &nfp, &indx)) != 0)
+		return (error);
+	fp = nfp;
+	error = vfs_copyinfh_alloc(SCARG(uap, fhp), &fh);
+	if (error != 0) {
+		goto bad;
+	}
+	error = vfs_fhtovp(fh, &vp);
+	if (error != 0) {
+		goto bad;
+	}
+
+	/* Now do an effective vn_open */
+
+	if (vp->v_type == VSOCK) {
+		error = EOPNOTSUPP;
+		goto bad;
+	}
+	if (flags & FREAD) {
+		if ((error = VOP_ACCESS(vp, VREAD, cred, l)) != 0)
+			goto bad;
+	}
+	if (flags & (FWRITE | O_TRUNC)) {
+		if (vp->v_type == VDIR) {
+			error = EISDIR;
+			goto bad;
+		}
+		if ((error = vn_writechk(vp)) != 0 ||
+		    (error = VOP_ACCESS(vp, VWRITE, cred, l)) != 0)
+			goto bad;
+	}
+	if (flags & O_TRUNC) {
+		if ((error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH)) != 0)
+			goto bad;
+		VOP_UNLOCK(vp, 0);			/* XXX */
+		VOP_LEASE(vp, l, cred, LEASE_WRITE);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);   /* XXX */
+		VATTR_NULL(&va);
+		va.va_size = 0;
+		error = VOP_SETATTR(vp, &va, cred, l);
+		vn_finished_write(mp, 0);
+		if (error)
+			goto bad;
+	}
+	if ((error = VOP_OPEN(vp, flags, cred, l)) != 0)
+		goto bad;
+	if (vp->v_type == VREG &&
+	    uvn_attach(vp, flags & FWRITE ? VM_PROT_WRITE : 0) == NULL) {
+		error = EIO;
+		goto bad;
+	}
+	if (flags & FWRITE)
+		vp->v_writecount++;
+
+	/* done with modified vn_open, now finish what sys_open does. */
+
+	fp->f_flag = flags & FMASK;
+	fp->f_type = DTYPE_VNODE;
+	fp->f_ops = &vnops;
+	fp->f_data = vp;
+	if (flags & (O_EXLOCK | O_SHLOCK)) {
+		lf.l_whence = SEEK_SET;
+		lf.l_start = 0;
+		lf.l_len = 0;
+		if (flags & O_EXLOCK)
+			lf.l_type = F_WRLCK;
+		else
+			lf.l_type = F_RDLCK;
+		type = F_FLOCK;
+		if ((flags & FNONBLOCK) == 0)
+			type |= F_WAIT;
+		VOP_UNLOCK(vp, 0);
+		error = VOP_ADVLOCK(vp, fp, F_SETLK, &lf, type);
+		if (error) {
+			(void) vn_close(vp, fp->f_flag, fp->f_cred, l);
+			FILE_UNUSE(fp, l);
+			ffree(fp);
+			fdremove(fdp, indx);
+			return (error);
+		}
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		fp->f_flag |= FHASLOCK;
+	}
+	VOP_UNLOCK(vp, 0);
+	*retval = indx;
+	FILE_SET_MATURE(fp);
+	FILE_UNUSE(fp, l);
+	vfs_copyinfh_free(fh);
+	return (0);
+
+bad:
+	FILE_UNUSE(fp, l);
+	ffree(fp);
+	fdremove(fdp, indx);
+	if (vp != NULL)
+		vput(vp);
+	vfs_copyinfh_free(fh);
+	return (error);
+}
+
+/* ARGSUSED */
+int
+compat_30_sys___fhstat30(struct lwp *l, void *v, register_t *retval)
+{
+	struct compat_30_sys___fhstat30_args /* {
+		syscallarg(const fhandle_t *) fhp;
+		syscallarg(struct stat *) sb;
+	} */ *uap = v;
+	struct stat sb;
+	int error;
+	fhandle_t *fh;
+	struct vnode *vp;
+
+	/*
+	 * Must be super user
+	 */
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		return (error);
+
+	error = vfs_copyinfh_alloc(SCARG(uap, fhp), &fh);
+	if (error != 0) {
+		goto bad;
+	}
+	error = vfs_fhtovp(fh, &vp);
+	if (error != 0) {
+		goto bad;
+	}
+	error = vn_stat(vp, &sb, l);
+	vput(vp);
+	if (error) {
+		goto bad;
+	}
+	error = copyout(&sb, SCARG(uap, sb), sizeof(sb));
+bad:
+	vfs_copyinfh_free(fh);
+	return error;
+}
+
+/* ARGSUSED */
+int
+compat_30_sys_fhstatvfs1(struct lwp *l, void *v, register_t *retval)
+{
+	struct compat_30_sys_fhstatvfs1_args /* {
+		syscallarg(const fhandle_t *) fhp;
+		syscallarg(struct statvfs *) buf;
+		syscallarg(int)	flags;
+	} */ *uap = v;
+	struct statvfs *sb = NULL;
+	fhandle_t *fh;
+	struct mount *mp;
+	struct vnode *vp;
+	int error;
+
+	/*
+	 * Must be super user
+	 */
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		return error;
+
+	error = vfs_copyinfh_alloc(SCARG(uap, fhp), &fh);
+	if (error != 0) {
+		goto out;
+	}
+	error = vfs_fhtovp(fh, &vp);
+	if (error != 0) {
+		goto out;
+	}
+	mp = vp->v_mount;
+	sb = STATVFSBUF_GET();
+	if ((error = dostatvfs(mp, sb, l, SCARG(uap, flags), 1)) != 0) {
+		vput(vp);
+		goto out;
+	}
+	vput(vp);
+	error = copyout(sb, SCARG(uap, buf), sizeof(*sb));
+out:
+	if (sb != NULL) {
+		STATVFSBUF_PUT(sb);
+	}
+	vfs_copyinfh_free(fh);
+	return error;
 }

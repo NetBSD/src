@@ -1,4 +1,4 @@
-/*	$NetBSD: h_tools.c,v 1.4 2006/07/13 12:00:24 martin Exp $	*/
+/*	$NetBSD: h_tools.c,v 1.5 2006/07/31 16:34:42 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ int
 getfh_main(int argc, char **argv)
 {
 	int error;
-	fhandle_t *fh;
+	void *fh;
 	size_t fh_size;
 
 	if (argc < 2)

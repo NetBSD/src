@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.146 2006/07/14 18:29:40 yamt Exp $	*/
+/*	$NetBSD: mount.h,v 1.147 2006/07/31 16:34:44 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -310,6 +310,7 @@ void	vfs_bufstats(void);
  */
 
 int	vfs_copyinfh_alloc(const void *, fhandle_t **);
+int	vfs_copyinfh_alloc_size(const void *, size_t, fhandle_t **);
 void	vfs_copyinfh_free(fhandle_t *);
 
 LIST_HEAD(vfs_list_head, vfsops);
@@ -321,16 +322,16 @@ extern struct vfs_list_head vfs_list;
 
 __BEGIN_DECLS
 #if !defined(__LIBC12_SOURCE__) && !defined(_STANDALONE)
-int	getfh(const char *, fhandle_t *, size_t *)
+int	getfh(const char *, void *, size_t *)
 	__RENAME(__getfh30);
 #endif
 
 int	mount(const char *, const char *, int, void *);
 int	unmount(const char *, int);
 #if defined(_NETBSD_SOURCE)
-int	fhopen(const fhandle_t *, int);
 #ifndef __LIBC12_SOURCE__
-int	fhstat(const fhandle_t *, struct stat *) __RENAME(__fhstat30);
+int	fhopen(const void *, size_t, int) __RENAME(__fhopen40);
+int	fhstat(const void *, size_t, struct stat *) __RENAME(__fhstat40);
 #endif
 #endif /* _NETBSD_SOURCE */
 __END_DECLS
