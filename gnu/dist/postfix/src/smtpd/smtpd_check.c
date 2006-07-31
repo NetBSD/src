@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_check.c,v 1.16.2.1 2006/07/12 15:06:42 tron Exp $	*/
+/*	$NetBSD: smtpd_check.c,v 1.16.2.2 2006/07/31 19:16:54 tron Exp $	*/
 
 /*++
 /* NAME
@@ -228,6 +228,7 @@
 #include <is_header.h>
 #include <rewrite_clnt.h>
 #include <valid_mailhost_addr.h>
+#include <xtext.h>
 
 /* Application-specific. */
 
@@ -3044,6 +3045,15 @@ static int check_policy_service(SMTPD_STATE *state, const char *server,
     static VSTRING *action = 0;
     ATTR_CLNT *policy_clnt;
 
+#ifdef USE_TLS
+    VSTRING *subject_buf;
+    VSTRING *issuer_buf;
+    const char *subject;
+    const char *issuer;
+
+#endif
+    int     ret;
+
     /*
      * Sanity check.
      */
@@ -3057,6 +3067,22 @@ static int check_policy_service(SMTPD_STATE *state, const char *server,
      */
     if (action == 0)
 	action = vstring_alloc(10);
+
+#ifdef USE_TLS
+#define ENCODE_CN(coded_CN, coded_CN_buf, CN) do { \
+	if (state->tls_info.peer_verified == 0) { \
+	    coded_CN_buf = 0; \
+	    coded_CN = ""; \
+	} else { \
+	    coded_CN_buf = vstring_alloc(strlen(CN)); \
+	    xtext_quote(coded_CN_buf, CN, ""); \
+	    coded_CN = STR(coded_CN_buf); \
+	} \
+    } while (0);
+
+    ENCODE_CN(subject, subject_buf, state->tls_info.peer_CN);
+    ENCODE_CN(issuer, issuer_buf, state->tls_info.issuer_CN);
+#endif
 
     if (attr_clnt_request(policy_clnt,
 			  ATTR_FLAG_NONE,	/* Query attributes. */
@@ -3078,6 +3104,8 @@ static int check_policy_service(SMTPD_STATE *state, const char *server,
 			  ATTR_TYPE_LONG, MAIL_ATTR_SIZE,
 			  (unsigned long) (state->act_size > 0 ?
 					 state->act_size : state->msg_size),
+			  ATTR_TYPE_STR, MAIL_ATTR_ETRN_DOMAIN,
+			  state->etrn_name ? state->etrn_name : "",
 #ifdef USE_SASL_AUTH
 			  ATTR_TYPE_STR, MAIL_ATTR_SASL_METHOD,
 			  var_smtpd_sasl_enable && state->sasl_method ?
@@ -3090,12 +3118,8 @@ static int check_policy_service(SMTPD_STATE *state, const char *server,
 			  state->sasl_sender : "",
 #endif
 #ifdef USE_TLS
-			  ATTR_TYPE_STR, MAIL_ATTR_CCERT_SUBJECT,
-			  state->tls_info.peer_verified ?
-			  state->tls_info.peer_CN : "",
-			  ATTR_TYPE_STR, MAIL_ATTR_CCERT_ISSSUER,
-			  state->tls_info.peer_verified ?
-			  state->tls_info.issuer_CN : "",
+			  ATTR_TYPE_STR, MAIL_ATTR_CCERT_SUBJECT, subject,
+			  ATTR_TYPE_STR, MAIL_ATTR_CCERT_ISSSUER, issuer,
 			  ATTR_TYPE_STR, MAIL_ATTR_CCERT_FINGERPRINT,
 			  state->tls_info.peer_verified ?
 			  state->tls_info.peer_fingerprint : "",
@@ -3104,18 +3128,25 @@ static int check_policy_service(SMTPD_STATE *state, const char *server,
 			  ATTR_FLAG_MISSING,	/* Reply attributes. */
 			  ATTR_TYPE_STR, MAIL_ATTR_ACTION, action,
 			  ATTR_TYPE_END) != 1) {
-	return (smtpd_check_reject(state, MAIL_ERROR_POLICY,
-				   "450 Server configuration problem"));
+	ret = smtpd_check_reject(state, MAIL_ERROR_POLICY,
+				 "450 Server configuration problem");
     } else {
 
 	/*
 	 * XXX This produces bogus error messages when the reply is
 	 * malformed.
 	 */
-	return (check_table_result(state, server, STR(action),
-				   "policy query", reply_name,
-				   reply_class, def_acl));
+	ret = check_table_result(state, server, STR(action),
+				 "policy query", reply_name,
+				 reply_class, def_acl);
     }
+#ifdef USE_TLS
+    if (subject_buf)
+	vstring_free(subject_buf);
+    if (issuer_buf)
+	vstring_free(issuer_buf);
+#endif
+    return (ret);
 }
 
 /* is_map_command - restriction has form: check_xxx_access type:name */
