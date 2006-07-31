@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.701.2.34 2006/07/30 17:22:20 tron Exp $
+$NetBSD: pcidevs,v 1.701.2.35 2006/07/31 12:35:22 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -699,6 +699,8 @@ product 3DLABS PERMEDIA3	0x000a	GLINT Permedia 3
 /* 3ware products */
 product 3WARE ESCALADE		0x1000	Escalade IDE RAID
 product 3WARE ESCALADE_ASIC	0x1001	Escalade IDE RAID (ASIC)
+product 3WARE 9000		0x1002	9000-series RAID
+product 3WARE 9550		0x1003	9550-series RAID
 
 /* AboCom products */
 product ABOCOM FE2500		0xab02	FE2500 10/100 Ethernet

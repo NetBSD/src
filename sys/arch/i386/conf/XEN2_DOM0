@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.1.2.3 2006/06/15 14:07:54 tron Exp $
+# $NetBSD: XEN2_DOM0,v 1.1.2.4 2006/07/31 12:35:22 tron Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -428,12 +428,14 @@ ciss*	at pci? dev ? function ?	# HP Smart Array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
+twa*	at pci? dev ? function ?	# 3ware Escalade 9xxx RAID controllers
 
 ld*	at aac? unit ?			# logical disk devices
 ld*	at amr? unit ?
 ld*	at cac? unit ?
 ld*	at icp? unit ?
 ld*	at twe? unit ?
+ld*	at twa? unit ?
 ld*	at mlx? unit ?
 
 icpsp*	at icp? unit ?			# SCSI pass-through

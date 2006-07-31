@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.232.2.7 2006/05/04 12:12:07 tron Exp $
+#	$NetBSD: files.pci,v 1.232.2.8 2006/07/31 12:35:22 tron Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -58,6 +58,13 @@ file	dev/pci/twe.c			twe
 
 attach	ld at twe with ld_twe
 file	dev/pci/ld_twe.c		ld_twe
+
+device	twa {unit = -1} 
+attach	twa at pci	
+file	dev/pci/twa.c			twa
+
+attach	ld at twa with ld_twa
+file	dev/pci/ld_twa.c		ld_twa
 
 # AMI RAID controllers
 device	amr {unit = -1}

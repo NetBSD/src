@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.262.2.3 2006/05/04 12:12:08 tron Exp $
+#	$NetBSD: INSTALL,v 1.262.2.4 2006/07/31 12:35:22 tron Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -399,12 +399,14 @@ icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 mlx*	at eisa? slot ?			# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
+twa*	at pci? dev ? function ?	# 3ware Escalade 9xxx RAID controllers
 
 ld*	at aac? unit ?			# logical disk devices
 ld*	at amr? unit ?
 ld*	at cac? unit ?
 ld*	at icp? unit ?
 ld*	at twe? unit ?
+ld*	at twa? unit ?
 ld*	at mlx? unit ?
 
 icpsp*	at icp? unit ?			# SCSI pass-through
