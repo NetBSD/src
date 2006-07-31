@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_proto.h,v 1.1.1.6.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: mail_proto.h,v 1.1.1.6.2.2 2006/07/31 19:16:54 tron Exp $	*/
 
 #ifndef _MAIL_PROTO_H_INCLUDED_
 #define _MAIL_PROTO_H_INCLUDED_
@@ -124,6 +124,7 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_SASL_METHOD	"sasl_method"
 #define MAIL_ATTR_SASL_USERNAME	"sasl_username"
 #define MAIL_ATTR_SASL_SENDER	"sasl_sender"
+#define MAIL_ATTR_ETRN_DOMAIN	"etrn_domain"
 #define MAIL_ATTR_DUMMY		"dummy"
 #define MAIL_ATTR_RWR_CONTEXT	"rewrite_context"
 
