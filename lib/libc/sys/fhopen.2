@@ -1,4 +1,4 @@
-.\"	$NetBSD: fhopen.2,v 1.13 2006/05/19 17:57:37 tsutsui Exp $
+.\"	$NetBSD: fhopen.2,v 1.14 2006/07/31 16:34:42 martin Exp $
 .\"
 .\" Copyright (c) 1999 National Aeronautics & Space Administration
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"/
-.Dd May 19, 2006
+.Dd July 17, 2006
 .Dt FHOPEN 2
 .Os
 .Sh NAME
@@ -44,18 +44,22 @@
 .Sh SYNOPSIS
 .In sys/types.h
 .Ft int
-.Fn fhopen "const fhandle_t *fhp" "int flags"
+.Fn fhopen "const void *fhp" "size_t fh_size" "int flags"
 .In sys/stat.h
 .Ft int
-.Fn fhstat "const fhandle_t *fhp" "struct stat *sb"
+.Fn fhstat "const void *fhp" "size_t fh_size" "struct stat *sb"
 .In sys/statvfs.h
 .Ft int
-.Fn fhstatvfs "const fhandle_t *fhp" "struct statvfs *buf"
+.Fn fhstatvfs "const void *fhp" "size_t fh_size" "struct statvfs *buf"
 .Ft int
-.Fn fhstatvfs1 "const fhandle_t *fhp" "struct statvfs *buf" "int flags"
+.Fn fhstatvfs1 "const void *fhp" "size_t fh_size" "struct statvfs *buf" "int flags"
 .Sh DESCRIPTION
-These functions provide a means to access a file given the file handle
-.Fa fhp .
+These functions provide a means to access a file given the opaque file handle
+.Fa fhp 
+and the size 
+.Fa fh_size
+of the opaque object as returned by
+.Xr getfh 2 .
 As this method bypasses directory access restrictions, these calls are
 restricted to the superuser.
 .Pp
@@ -119,7 +123,8 @@ Calling
 .Fn fhopen
 with
 .Dv O_CREAT
-set.
+set or invalid
+.Fa fh_size .
 .It Bq Er ESTALE
 The file handle
 .Fa fhp

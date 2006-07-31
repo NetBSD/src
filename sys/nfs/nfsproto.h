@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsproto.h,v 1.14 2006/07/13 12:00:26 martin Exp $	*/
+/*	$NetBSD: nfsproto.h,v 1.15 2006/07/31 16:34:44 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -113,7 +113,7 @@
 #define NFSX_V2STATFS	20
 
 /* specific to NFS Version 3 */
-#define NFSX_V3FH		(sizeof(fhandle_t)+16)
+#define NFSX_V3FH		(12/*sizeof(fhandle_t)*/+16)
 #define	NFSX_V3FHMAX		64	/* max. allowed by protocol */
 #define NFSX_V3FATTR		84
 #define NFSX_V3SATTR		60	/* max. all fields filled in */
@@ -252,7 +252,9 @@ typedef enum { NFNON=0, NFREG=1, NFDIR=2, NFBLK=3, NFCHR=4, NFLNK=5,
 #define NFS_SMALLFH	64
 #endif
 union nfsfh {
+#ifdef _KERNEL
 	fhandle_t fh_generic;
+#endif
 	u_char    fh_bytes[NFS_SMALLFH];
 };
 typedef union nfsfh nfsfh_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.23 2006/07/13 12:00:26 martin Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.24 2006/07/31 16:34:45 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -55,7 +55,7 @@ struct lcklst_head lcklst_head = LIST_HEAD_INITIALIZER(lcklst_head);
 
 #define NFS_FILEHANDLE	64	/* could use <nfs/nfsproto.h> NFSX_V3FHMAX */
 typedef union {
-	fhandle_t fh;
+	/* fhandle_t fh; */
 	u_char space[NFS_FILEHANDLE];
 } nfs_fhandle_t;
 
@@ -478,7 +478,7 @@ do_lock(fl, block)
 	int lflags, error;
 	struct stat st;
 
-	fl->fd = fhopen(&fl->filehandle.fh, O_RDWR);
+	fl->fd = fhopen(&fl->filehandle, sizeof(fl->filehandle), O_RDWR);
 	if (fl->fd < 0) {
 		switch (errno) {
 		case ESTALE:

@@ -1,11 +1,11 @@
-/*	$NetBSD: statvfs.c,v 1.4 2006/07/31 16:34:42 martin Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.1 2006/07/31 16:34:42 martin Exp $	*/
 
 /*-
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Martin Husemann <martin@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,38 +36,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: statvfs.c,v 1.4 2006/07/31 16:34:42 martin Exp $");
-#endif /* LIBC_SCCS and not lint */
+#ifndef _COMPAT_FSTYPES_H_
+#define _COMPAT_FSTYPES_H_
 
-#include "namespace.h"
-#include <sys/statvfs.h>
+#include <stddef.h>
 
-#ifdef __weak_alias
-__weak_alias(statvfs,_statvfs)
-__weak_alias(fstatvfs,_fstatvfs)
-__weak_alias(fhstatvfs,_fhstatvfs)
-#endif
+/* Old, fixed size filehandle structures (used upto (including) 3.x) */
+struct compat_30_fid{
+	unsigned short	fid30_len;
+	unsigned short	fid30_reserved;
+	char		fid30_data[16];
+};
+struct compat_30_fhandle {
+	fsid_t	fh_fsid;
+	struct compat_30_fid fh_fid;
+};
 
-int
-statvfs(const char *file, struct statvfs *st)
-{
-	return statvfs1(file, st, ST_WAIT);
-}
+#define	FHANDLE30_SIZE(fh)	(offsetof(struct compat_30_fhandle, fh_fid) \
+				+ (fh)->fh_fid.fid30_len)
 
-int
-fstatvfs(int f, struct statvfs *st)
-{
-	return fstatvfs1(f, st, ST_WAIT);
-}
-
-int	__fhstatvfs140(const void *fhp, size_t fh_size, struct statvfs *buf,
-	int flags);
-int	__fhstatvfs40(const void *fh, size_t fh_size, struct statvfs *st);
-
-int
-__fhstatvfs40(const void *fh, size_t fh_size, struct statvfs *st)
-{
-	return __fhstatvfs140(fh, fh_size, st, ST_WAIT);
-}
+#endif /* _COMPAT_FSTYPES_H_ */

@@ -21,7 +21,7 @@ struct clfs {
 	/* Ifile */
 	int clfs_ifilefd;	   /* Ifile file descriptor */
 	struct uvnode *lfs_ivnode; /* Ifile vnode */
-	union lfs_fhandle clfs_ifilefh;	   /* Ifile file handle */
+	struct lfs_fhandle clfs_ifilefh;	   /* Ifile file handle */
 
 	/* Device */
 	int clfs_devfd;		   /* Device file descriptor */
