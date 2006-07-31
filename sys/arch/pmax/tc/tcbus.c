@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.19 2006/07/29 19:10:58 ad Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.20 2006/07/31 00:19:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.19 2006/07/29 19:10:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.20 2006/07/31 00:19:05 ad Exp $");
 
 /*
  * Which system models were configured?
@@ -248,7 +248,7 @@ tcfb_cnattach(slotno)
 	if (i == sizeof(cnboards) / sizeof(cnboards[0]))
 		return (0);
 
-	(cnboards[i].cb_cnattach)(tcaddr);
+	(cnboards[i].cb_cnattach)((tc_addr_t)TC_PHYS_TO_UNCACHED(tcaddr));
 	return (1);
 }
 
