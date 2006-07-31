@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.81 2006/07/01 06:00:41 mrg Exp $
+# $NetBSD: HACKS,v 1.82 2006/07/31 17:10:57 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -747,3 +747,13 @@ port	mips
 		just the first psection.
 	kcah
 
+port	i386
+
+	hack	minus-Os-broken-machdep-c
+	cdate	Mon Jul 31 13:09:01 EDT 2006
+	who	christos
+	file	src/sys/arch/machdep.c : 1.576
+	descr
+		gcc-4 miscompiles this file with -Os and the resulting
+		kernel resets as reported in PR33918
+	kcah
