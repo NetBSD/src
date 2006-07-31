@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.188 2006/07/26 07:00:24 cube Exp $
+# $NetBSD: GENERIC,v 1.189 2006/07/31 23:29:54 hubertf Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.188 $"
+#ident 		"GENERIC-$Revision: 1.189 $"
 
 maxusers	16
 
@@ -533,7 +533,7 @@ com*	at pcmcia? function ?		# Modems and serial cards
 # PCMCIA SCSI interfaces
 aic*	at pcmcia? function ?
 esp*	at pcmcia? function ?		# NCR53c406 SCSI
-spc*	at pcmcia? function ?
+spc*	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 
 # ATAPI bus support
 atapibus* at atapi?
