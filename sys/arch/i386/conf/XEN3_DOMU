@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.1.2.3 2006/06/15 14:07:54 tron Exp $
+# $NetBSD: XEN3_DOMU,v 1.1.2.4 2006/07/31 12:42:38 tron Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -206,7 +206,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss		4	# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd			# disk-like interface to files
+pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
