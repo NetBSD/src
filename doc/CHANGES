@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.659 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.660 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -380,3 +380,6 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		so that options SYMTAB_SPACE is no longer required for
 		ksyms(4) or ddb(4). [tsutsui 20060722]
 	ntp:	Import ntp 4.2.2p2 (20060709). [kardel 20060729]
+	kernel:	file handles have been made opaque to userland and
+		the arbitrary size limit on them has been removed.
+		[martin 20060731]
