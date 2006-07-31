@@ -1,4 +1,4 @@
-/*	$NetBSD: tok822_parse.c,v 1.9 2004/05/31 00:46:47 heas Exp $	*/
+/*	$NetBSD: tok822_parse.c,v 1.9.2.1 2006/07/31 19:16:54 tron Exp $	*/
 
 /*++
 /* NAME
@@ -252,6 +252,7 @@ static void strip_address(VSTRING *vp, int start, TOK822 *addr)
     /*
      * Emit plain <address>. Discard any comments or phrases.
      */
+    VSTRING_TERMINATE(vp);
     msg_warn("stripping too many comments from address: %.100s...",
 	     printable(vstring_str(vp) + start, '?'));
     vstring_truncate(vp, start);

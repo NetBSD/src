@@ -53,9 +53,10 @@ a delegated SMTPD access policy request:
     sasl_username=you
     sasl_sender=
     ccert_subject=solaris9.porcupine.org
-    ccert_issuer=Wietse Venema
+    ccert_issuer=Wietse+20Venema
     ccert_fingerprint=C2:9D:F4:87:71:73:73:D9:18:E7:C2:F3:C1:DA:6E:04
     size=12345
+    etrn_domain=
     [empty line]
 
 Notes:
@@ -90,7 +91,13 @@ Notes:
     how the client was authenticated via SASL.
 
   * The "ccert_*" attributes (Postfix 2.2 and later) specify information about
-    how the client was authenticated via TLS.
+    how the client was authenticated via TLS. As of Postfix 2.2.11 these
+    attribute values are encoded as xtext: some characters are represented by
+    +XX, where XX is the two-digit hecadecimal representation of the character
+    value.
+
+  * The "etrn_domain" attribute is defined only in the context of the ETRN
+    command, and specifies the ETRN command parameter.
 
 The following is specific to SMTPD delegated policy requests:
 

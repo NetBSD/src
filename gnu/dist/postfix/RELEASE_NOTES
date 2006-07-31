@@ -11,6 +11,20 @@ instead, a new snapshot is released.
 The mail_release_date configuration parameter (format: yyyymmdd)
 specifies the release date of a stable release or snapshot release.
 
+Incompatible changes with Postfix version 2.2.11
+------------------------------------------------
+
+The SMTPD policy client now encodes the ccert_subject and ccert_issuer
+attributes as xtext. Some characters are represented by +XX, where
+XX is the two-digit hecadecimal representation of the character
+value.
+
+The PostgreSQL client was updated after major database API changes
+in response to PostgreSQL security issues. This breaks support for
+PGSQL versions prior to 8.1.4, 8.0.8, 7.4.13, and 7.3.15. Support
+for these requires major code changes which are not possible in a
+stable release.
+
 Main changes with Postfix version 2.2
 -------------------------------------
 

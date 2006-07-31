@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.15.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.15.2.2 2006/07/31 19:16:54 tron Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -1223,7 +1223,9 @@ typedef int pid_t;
   * doubles.
   */
 #ifndef ALIGN_TYPE
-# ifdef __ia64__
+# if defined(__hpux) && defined(__ia64)
+# define ALIGN_TYPE	__float80
+# elif defined(__ia64__)
 # define ALIGN_TYPE	long double
 # else
 # define ALIGN_TYPE	double

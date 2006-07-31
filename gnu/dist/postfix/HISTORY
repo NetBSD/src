@@ -10920,3 +10920,95 @@ Apologies for any names omitted.
 	sick that you would have more serious problems than a file
 	descriptor leak.  Found by Coverity.  Files: local/maildir.c,
 	virtual/maildir.c.
+
+20060411
+
+	Bugfix: the SMTP server logged no warning when for some
+	reason the TLS engine was unavailable in wrappermode. Victor
+	Duchovni.  File: smtpd/smtpd.c.
+
+20060430
+
+	Bugfix: dangling pointer in a function that has no caller.
+	Found by Coverity. File: tls/tls_prng_exch.c.
+
+	Bugfix: the workaround for CA-2003-07 (Sendmail) did not
+	null terminate the address before logging a warning. Reported
+	by Kris Kennaway. File: global/tok822_parse.c.
+
+20060516
+
+	Portability: __float80 alignment, by Albert Chin.  File:
+	util/sys_defs.h.
+
+20060524
+
+	Cleanup: send ETRN command parameter when using check_policy
+	in the context of an ETRN command. Joshua Goodall. File:
+	smtpd/smtpd_check.c.
+
+20060604
+
+	Bugfix: the HOLD feature in access or header/body_checks
+	tables didn't properly report subdirectory create errors
+	(which don't happen because the hold queue isn't hashed by
+	default). Found with the BEAM code scanner. File:
+	global/hold_message.c.
+
+	Cleanup: minor fluff found with the BEAM source code analyzer.
+	File: util/safe_open.c.
+
+20060611
+
+	Security: the PostgreSQL client was updated after major
+	database API changes in response to PostgreSQL security
+	issues. This breaks support for PGSQL versions prior to
+	8.1.4, 8.0.8, 7.4.13, and 7.3.15. Support for these requires
+	major code changes which are not possible in the time that
+	is left for the Postfix 2.3 stable release.
+
+	Specific PostgreSQL client changes: use connection-aware
+	quoting, and more robust PQexec() result handling.  Previous
+	versions of the dict_pgsql driver didn't check the status
+	of the result pointer, and certain exceptional events can
+	be mis-interpreted as an empty result set.  Fixes by Leandro
+	Santi. File: global/dict_pgsql.c.
+
+20060626
+
+	Workaround: disable SMTP connection cache lookup by server
+	IP address when the tls_per_site policy table is enabled.
+	Different server names may resolve to the same IP address,
+	and we don't want to use the wrong TLS policy.  File:
+	smtp/smtp_reuse.c.
+
+20060706
+
+	Workaround: disable SMTP connection cache lookup by server
+	IP address when the smtp_sasl_password_maps password feature
+	is enabled.  Different server names may resolve to the same
+	IP address, and we don't want to use the wrong SASL
+	credentials. File: smtp/smtp_reuse.c.
+
+	Bugfix: don't reuse a plaintext connection when the TLS
+	policy requires encryption. This can happen because we have
+	to search the connection cache before we know the
+	server-dependent TLS policy. It does not eliminate the
+	problem that we may still be using the wrong policy because
+	the cached server name was obtained in an insecure manner.
+
+20060707
+
+	Robustness: the SMTPD policy client now encodes the
+	ccert_subject and ccert_issuer attributes as xtext.  Some
+	characters are replaced by +XX, where XX is the two-digit
+	hexadecimal code for the character value.  File:
+	smtpd/smtpd_check.c.
+
+20060716
+
+	Bugfix: the Postfix SMTP client enforced Mandatory TLS only
+	when talking to an ESMTP server; enforcement did not happen
+	if Postfix could somehow be forced to send HELO instead of
+	EHLO. Victor Duchovni.  File: src/smtp/smtp_proto.c.
+

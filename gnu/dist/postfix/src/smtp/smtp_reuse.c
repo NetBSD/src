@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_reuse.c,v 1.1.1.1.2.2 2006/07/12 15:06:42 tron Exp $	*/
+/*	$NetBSD: smtp_reuse.c,v 1.1.1.1.2.3 2006/07/31 19:16:54 tron Exp $	*/
 
 /*++
 /* NAME
@@ -37,6 +37,7 @@
 /*
 /*	smtp_reuse_addr() looks up a cached session by its server
 /*	address, and verifies that the session is still alive.
+/*	Lookup is disabled when the tls_per_site policy table is enabled.
 /*	The result is null in case of failure.
 /*
 /*	Arguments:
@@ -178,6 +179,22 @@ static SMTP_SESSION *smtp_reuse_common(SMTP_STATE *state, int fd,
     }
     state->session = session;
 
+#ifdef USE_TLS
+
+    /*
+     * Cached sessions are never TLS encrypted, so they must not be reused
+     * when TLS encryption is required.
+     */
+    if (session->tls_enforce_tls) {
+	if (msg_verbose)
+	    msg_info("%s: skipping plain-text cached session to %s",
+		     myname, label);
+	smtp_quit(state);			/* Close politely */
+	smtp_session_free(session);		/* And avoid leaks */
+	return (state->session = 0);
+    }
+#endif
+
     /*
      * Send an RSET probe to verify that the session is still good.
      */
@@ -230,6 +247,16 @@ SMTP_SESSION *smtp_reuse_addr(SMTP_STATE *state, DNS_RR *addr, unsigned port)
     MAI_HOSTADDR_STR hostaddr;
     SMTP_SESSION *session;
     int     fd;
+
+    /*
+     * XXX Disable connection cache lookup by server IP address when the
+     * tls_per_site policy or smtp_sasl_password_maps features are enabled.
+     * Different server names may resolve to the same IP address. We don't
+     * want to use the wrong SASL credentials or the wrong TLS policy.
+     */
+    if ((var_smtp_tls_per_site && *var_smtp_tls_per_site)
+	|| (var_smtp_sasl_passwd && *var_smtp_sasl_passwd))
+	return (0);
 
     /*
      * Look up the session by its IP address. This means that we have no
