@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.78 2006/07/23 22:06:08 ad Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.79 2006/07/31 20:39:34 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.78 2006/07/23 22:06:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.79 2006/07/31 20:39:34 bjh21 Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -938,8 +938,8 @@ hpux_sys_getpgrp2(lp, v, retval)
 	p = pfind(SCARG(uap, pid));
 	if (p == 0)
 		return (ESRCH);
-	if (kauth_cred_geteuid(l->l_cred) &&
-	    kauth_cred_geteuid(p->p_cred) != kauth_cred_geteuid(l->l_cred) &&
+	if (kauth_cred_geteuid(lp->l_cred) &&
+	    kauth_cred_geteuid(p->p_cred) != kauth_cred_geteuid(lp->l_cred) &&
 	    !inferior(p, cp))
 		return (EPERM);
 	*retval = p->p_pgid;
