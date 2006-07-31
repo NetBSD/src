@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.576 2006/07/08 20:30:00 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.577 2006/07/31 20:59:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.576 2006/07/08 20:30:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577 2006/07/31 20:59:07 mrg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -293,6 +293,9 @@ int	biosextmem = 0;
 int	biosextmem = REALEXTMEM;
 #endif
 
+/* Set if any boot-loader set biosbasemem/biosextmem. */
+int	biosmem_implicit;
+
 /* Representation of the bootinfo structure constructed by a NetBSD native
  * boot loader.  Only be used by native_loader(). */
 struct bootinfo_source {
@@ -376,10 +379,14 @@ native_loader(int bl_boothowto, int bl_bootdev,
 	 * Configure biosbasemem and biosextmem only if they were not
 	 * explicitly given during the kernel's build.
 	 */
-	if (*RELOC(int *, &biosbasemem) == 0)
+	if (*RELOC(int *, &biosbasemem) == 0) {
 		*RELOC(int *, &biosbasemem) = bl_biosbasemem;
-	if (*RELOC(int *, &biosextmem) == 0)
+		*RELOC(int *, &biosmem_implicit) = 1;
+	}
+	if (*RELOC(int *, &biosextmem) == 0) {
 		*RELOC(int *, &biosextmem) = bl_biosextmem;
+		*RELOC(int *, &biosmem_implicit) = 1;
+	}
 #undef RELOC
 }
 
@@ -1553,7 +1560,7 @@ init386(paddr_t first_avail)
 	 * Check to see if we have a memory map from the BIOS (passed
 	 * to us by the boot program.
 	 */
-	if (biosbasemem == 0 && biosextmem == 0 &&
+	if ((biosmem_implicit || (biosbasemem == 0 && biosextmem == 0)) &&
 	    (bim = lookup_bootinfo(BTINFO_MEMMAP)) != NULL && bim->num > 0) {
 #ifdef DEBUG_MEMLOAD
 		printf("BIOS MEMORY MAP (%d ENTRIES):\n", bim->num);
