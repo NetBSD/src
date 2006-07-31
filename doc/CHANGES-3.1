@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.130 2006/07/31 14:05:19 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.131 2006/07/31 16:35:50 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4174,4 +4174,10 @@ sys/arch/i386/conf/XEN2_DOM0			patch
 	
 	Correct entries for vnd(4) devices in Xen kernel configurations.
 	[martti, ticket #1443]
+
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/nv_driver.c 1.8
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/nv/riva_driver.c 1.3
+
+	Fix unresolved symbol in the "nv" driver.
+	[jmmv, ticket #1439]
 
