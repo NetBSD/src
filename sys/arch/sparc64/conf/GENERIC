@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.57 2006/07/26 07:00:23 cube Exp $
+# $NetBSD: GENERIC,v 1.58 2006/07/31 23:29:54 hubertf Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.57 $"
+#ident 		"GENERIC-$Revision: 1.58 $"
 
 maxusers	64
 
@@ -746,6 +746,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 # PCMCIA SCSI controllers
 #aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI UT
 #esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI UT
+#spc*	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 
 # PCMCIA IDE controllers
 #wdc*	at pcmcia? function ?

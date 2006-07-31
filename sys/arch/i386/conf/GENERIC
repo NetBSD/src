@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.768 2006/07/31 22:23:09 wiz Exp $
+# $NetBSD: GENERIC,v 1.769 2006/07/31 23:29:54 hubertf Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.768 $"
+#ident 		"GENERIC-$Revision: 1.769 $"
 
 maxusers	32		# estimated number of users
 
@@ -652,6 +652,7 @@ uha*	at eisa? slot ?			# UltraStor 24f SCSI
 # PCMCIA SCSI controllers
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
+spc* 	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 
 # ISA Plug-and-Play SCSI controllers
 aha*	at isapnp? 			# Adaptec AHA-154[02
