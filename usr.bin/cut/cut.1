@@ -1,4 +1,4 @@
-.\"	$NetBSD: cut.1,v 1.12 2003/08/07 11:13:32 agc Exp $
+.\"	$NetBSD: cut.1,v 1.13 2006/07/31 09:02:57 jnemeth Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)cut.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd July 31, 2006
 .Dt CUT 1
 .Os
 .Sh NAME
@@ -58,8 +58,15 @@ utility selects portions of each line (as specified by
 .Ar list  )
 from each
 .Ar file
-(or the standard input by default), and writes them to the
+and writes them to the
 standard output.
+If the
+.Ar file
+argument is a single dash
+.Pq Sq Fl
+or no
+.Ar file
+arguments were specified, lines are read from the standard input.
 The items specified by
 .Ar list
 can be in terms of column position or in terms of fields delimited
