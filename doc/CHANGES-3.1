@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.129 2006/07/30 20:20:54 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.130 2006/07/31 14:05:19 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4136,4 +4136,42 @@ sys/arch/xen/xen/xbd_xenbus.c			patch
 	Fix random panics in xen3 domU after using the virtual disk character
 	device with unaligned buffers.
 	[bouyer, ticket #1437]
+
+sys/dev/pcmcia/if_wi_pcmcia.c			1.69 via patch
+sys/dev/pcmcia/pcmciadevs			1.217 via patch
+sys/dev/pcmcia/pcmciadevs.h			regen
+sys/dev/pcmcia/pcmciadevs_data.h		regen
+
+	Add support for Siemens SS1021 WLAN to wi(4).
+	[scottr, ticket #1436]
+
+distrib/sets/lists/man/mi			patch
+share/man/man4/Makefile				patch
+share/man/man4/twa.4				patch
+sys/arch/amd64/conf/GENERIC			patch
+sys/arch/amd64/conf/INSTALL			patch
+sys/arch/i386/conf/GENERIC			patch
+sys/arch/i386/conf/GENERIC.MPACPI		patch
+sys/arch/i386/conf/INSTALL			patch
+sys/arch/i386/conf/XEN2_DOM0			patch
+sys/dev/pci/files.pci				patch
+sys/dev/pci/ld_twa.c				patch
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/twa.c				patch
+sys/dev/pci/twaio.h				patch
+sys/dev/pci/twareg.h				patch
+sys/dev/pci/twavar.h				patch
+
+	Add twa(4) driver for the 3ware Apache RAID controllers.
+	[bouyer, ticket #1441]
+
+sys/arch/i386/conf/INSTALL_XEN2_DOMU		patch
+sys/arch/i386/conf/XEN2_DOMU			patch
+sys/arch/i386/conf/XEN3_DOMU           		patch
+sys/arch/i386/conf/XEN2_DOM0			patch
+	
+	Correct entries for vnd(4) devices in Xen kernel configurations.
+	[martti, ticket #1443]
 
