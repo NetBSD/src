@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.5 2006/07/16 21:16:22 christos Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.6 2006/07/31 20:59:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.5 2006/07/16 21:16:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.6 2006/07/31 20:59:07 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,12 @@ __KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.5 2006/07/16 21:16:22 christos Exp $
 /*
  * External variables.  All of them, with the exception of 'end', must
  * be set at some point within this file.
+ *
+ * XXX these should be found in a header file!
  */
 extern int		biosbasemem;
 extern int		biosextmem;
+extern int		biosmem_implicit;
 extern int		boothowto;
 extern struct bootinfo	bootinfo;
 extern int		end;
@@ -688,11 +691,19 @@ setup_memmap(struct multiboot_info *mi)
 static void
 setup_memory(struct multiboot_info *mi)
 {
+
 	if (!(mi->mi_flags & MULTIBOOT_INFO_HAS_MEMORY))
 		return;
 
-	biosbasemem = mi->mi_mem_lower;
-	biosextmem = mi->mi_mem_upper;
+	/* Make sure we don't override user-set variables. */
+	if (biosbasemem == 0) {
+		biosbasemem = mi->mi_mem_lower;
+		biosmem_implicit = 1;
+	}
+	if (biosextmem == 0) {
+		biosextmem = mi->mi_mem_upper;
+		biosmem_implicit = 1;
+	}
 }
 
 /* --------------------------------------------------------------------- */
