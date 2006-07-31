@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.50 2006/07/13 23:22:40 pavel Exp $
+	$NetBSD: syscalls.master,v 1.51 2006/07/31 16:32:51 martin Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -482,7 +482,7 @@
 295	COMPAT_16	{ int netbsd32___sigreturn14(netbsd32_sigcontextp_t sigcntxp); }
 296	STD		{ int netbsd32___getcwd(netbsd32_charp bufp, netbsd32_size_t length); }
 297	STD		{ int netbsd32_fchroot(int fd); }
-298	STD		{ int netbsd32_fhopen(const netbsd32_fhandlep_t fhp, \
+298	COMPAT_30	{ int netbsd32_fhopen(const netbsd32_fhandlep_t fhp, \
 			   int flags); }
 299	COMPAT_30	{ int netbsd32_fhstat(const netbsd32_fhandlep_t fhp, \
 			    netbsd32_stat13p_t sb); }
@@ -584,7 +584,7 @@
 			    netbsd32_statvfsp_t buf, int flags); }
 358	STD		{ int netbsd32_fstatvfs1(int fd, netbsd32_statvfsp_t buf, \
 			    int flags); }
-359	STD		{ int netbsd32_fhstatvfs1(const netbsd32_fhandlep_t fhp, \
+359	COMPAT_30	{ int netbsd32_fhstatvfs1(const netbsd32_fhandlep_t fhp, \
 			    netbsd32_statvfsp_t buf, int flags); }
 360	STD		{ int netbsd32_extattrctl(const netbsd32_charp path, \
 			    int cmd, const netbsd32_charp filename, int attrnamespace, \
@@ -667,9 +667,17 @@
 			    netbsd32_charp buf, netbsd32_size_t count); }
 391	NOARGS		{ int sys_posix_fadvise(int fd, off_t offset, \
 			    off_t len, int advice); }
-392	STD		{ int netbsd32_sys___fhstat30( \
+392	COMPAT_30	{ int netbsd32_sys___fhstat30( \
 			    const netbsd32_fhandlep_t fhp, \
 			    netbsd32_statp_t sb); }
 393	STD		{ int netbsd32_ntp_gettime(netbsd32_ntptimevalp_t ntvp); }
 394	STD		{ int netbsd32_sys___socket30(int domain, int type, int protocol); }
-395	STD		{ int netbsd32___getfh30(const netbsd32_charp fname, netbsd32_fhandlep_t fhp, netbsd32_size_tp fh_size); }
+395	STD		{ int netbsd32___getfh30(const netbsd32_charp fname, netbsd32_pointer_t fhp, netbsd32_size_tp fh_size); }
+396	STD		{ int netbsd32___fhopen40(const netbsd32_pointer_t fhp, \
+			    netbsd32_size_t fh_size, int flags); }
+397	STD		{ int netbsd32___fhstatvfs140(	\
+			    netbsd32_pointer_t fhp, netbsd32_size_t fh_size,\
+			    netbsd32_statvfsp_t buf, int flags); }
+398	STD		{ int netbsd32___fhstat40(	\
+			    netbsd32_pointer_t fhp, netbsd32_size_t fh_size,\
+			    netbsd32_statp_t sb); }
