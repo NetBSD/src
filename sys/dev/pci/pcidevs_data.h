@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.32 2006/07/30 17:23:22 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.33 2006/07/31 12:36:19 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.34 2006/07/30 17:22:20 tron Exp
+ *	NetBSD: pcidevs,v 1.701.2.35 2006/07/31 12:35:22 tron Exp
  */
 
 /*
@@ -2590,6 +2590,14 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE_ASIC,
 	    "Escalade IDE RAID (ASIC)",
+	},
+	{
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_9000,
+	    "9000-series RAID",
+	},
+	{
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_9550,
+	    "9550-series RAID",
 	},
 	{
 	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500,
@@ -10868,4 +10876,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2134;
+const int pci_nproducts = 2136;
