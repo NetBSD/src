@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_rintf.c,v 1.7 2002/05/26 22:01:58 wiz Exp $");
+__RCSID("$NetBSD: s_rintf.c,v 1.8 2006/08/01 20:14:35 drochner Exp $");
 #endif
 
 #include "math.h"
@@ -32,7 +32,11 @@ rintf(float x)
 {
 	int32_t i0,j0,sx;
 	u_int32_t i,i1;
-	float w,t;
+#ifdef __i386__ /* XXX gcc4 will omit the rounding otherwise */
+	volatile
+#endif
+		float w;
+	float t;
 	GET_FLOAT_WORD(i0,x);
 	sx = (i0>>31)&1;
 	j0 = ((i0>>23)&0xff)-0x7f;
