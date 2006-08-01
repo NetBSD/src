@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.h,v 1.1.1.8 2006/07/19 01:17:45 rpaulo Exp $	*/
+/*	$NetBSD: smtpd.h,v 1.1.1.9 2006/08/01 00:04:19 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -147,6 +147,7 @@ typedef struct SMTPD_STATE {
     char   *dsn_envid;			/* temporary MAIL FROM state */
     int     dsn_ret;			/* temporary MAIL FROM state */
     VSTRING *dsn_buf;			/* scratch space for xtext expansion */
+    VSTRING *dsn_orcpt_buf;		/* scratch space for ORCPT parsing */
 
     /*
      * Pass-through proxy client.

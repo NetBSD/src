@@ -12188,17 +12188,18 @@ Apologies for any names omitted.
 20060510
 
 	Preliminary TLS_README and postconf(5) changes completed.
+	Victor Duchovni.
 
 	Added smtp_tls_policy_maps and smtp_tls_protocols features
 	to the smtp/lmtp client, changed smtp_tls_cipherlist to
-	only apply when TLS is mandatory.
+	only apply when TLS is mandatory. Victor Duchovni.
 
 20060512
 
 	Destinations that share a common server may have distinct
 	TLS protocol and cipherlist requirements, with mandatory
 	TLS add the protocol and cipherlist values to the TLS session
-	lookup key.
+	lookup key. Victor Duchovni.
 
 20060516
 
@@ -12228,14 +12229,14 @@ Apologies for any names omitted.
 
 	The smtp_tls_policy_maps table now implements parent domain
 	matching for destinations that are bare domains (without
-	enclosin [] or optional :port suffix). This allows one to
+	enclosing [] or optional :port suffix). This allows one to
 	set TLS policy for a domain and all sub-domains. Victor
 	Duchovni.
 
 20060519
 
 	The same parameter can bind to different variables in
-	different daemons, ignore the variable name when eliminating
+	different daemons. Ignore the variable name when eliminating
 	duplicates in extract.awk. Victor Duchovni.
 
 20060523
@@ -12482,7 +12483,7 @@ Apologies for any names omitted.
 	after an opportunistic TLS handshake fails. Specify
 	"smtp_sasl_auth_enforce = no" to deliver mail anyway.  File:
 	smtp/smtp_proto.c. See workaround 20060711 for sender-dependent
-	SASL passwords.
+	SASL passwords. This was undone with the 20060719 workaround.
 
 20060709
 
@@ -12523,9 +12524,10 @@ Apologies for any names omitted.
 	after the header label and ":" in an interesting manner.
 	It eats one space (not tab). File: milter/milter8.c.
 
-	Workaround: if sender-depedendent SASL passwords are enabled,
+	Workaround: if sender-dependent SASL passwords are enabled,
 	don't defer delivery when a SASL password exists but the
 	server doesn't announce SASL support. File: smtp/smtp_proto.c.
+	This was undone with the 20060719 workaround.
 
 	Cleanup: format of cleanup milter reject messages.  File:
 	cleanup_milter.c.
@@ -12533,3 +12535,105 @@ Apologies for any names omitted.
 	Bugfix: file/memory leak if a transfer of multiple milters
 	from smtpd to cleanup broke in the middle.  Found by Coverity.
 	File: milter/milter.c.
+
+20060716
+
+	Bugfix: "sendmail -bs" panic caused by a missing
+	SMTPD_STATE_ALONE() guard before a milter_abort() call.
+	File: smtpd/smtpd.c.
+
+	Bugfix (bug introduced with Postfix 2.2): the Postfix SMTP
+	client enforced Mandatory TLS only when talking to an ESMTP
+	server; enforcement did not happen if Postfix could somehow
+	be forced to send HELO instead of EHLO.  Victor Duchovni.
+	File: src/smtp/smtp_proto.c.
+
+20060718
+
+	Bugfix (bug introduced 20060711): null pointer bug when
+	rejecting SMTP mail with Milter application.  File:
+	cleanup/cleanup_milter.c.
+
+	Workaround (problem introduced in 200605/200606 TLS update):
+	the Postfix SMTP server now issues TLS session IDs even
+	when TLS session caching is turned off, otherwise MS Outlook
+	fails to deliver mail. There may also be interoperability
+	issues with other MTAs that we haven't discovered yet.
+	Specify "smtpd_tls_always_issue_session_ids = no" to disable
+	the workaround. Victor Duchovni. Files: smtpd/smtpd.c,
+	tls/tls_server.c.
+
+20060719
+
+	Cleanup: the smtp_sasl_auth_enforce feature is gone. It was
+	meant to work around a problem that was introduced with
+	plaintext fallback after a failed TLS handshake.  Unfortunately,
+	it created more problems than it solved. We now address the
+	underlying problem more directly as described next. File:
+	smtp/smtp_proto.c.
+
+	Safety: don't fall back to plaintext delivery after failed
+	TLS handshake, when the Postfix SMTP client would have
+	attempted to log in with SASL after successful TLS handshake.
+	This avoids undesirable behavior regardless of whether the
+	server does support SASL over plaintext (unexpected password
+	disclosure) and whether the server doesn't support SASL
+	over plaintext (insufficient mail relay permission).  Files:
+	smtp/smtp_connect.c, smtp/smtp_session.c, smtp/smtp_proto.c.
+
+20060720
+
+	Compatibility: replace %% in milter replies by %, and strip
+	single (i.e. invalid) % characters. File: milter/milter8.c.
+
+	Compatibility: $_ macro support for Milter applications.
+	Files: smtpd/smtpd.c, smtpd/smtpd_milter.c,
+	cleanup/cleanup_state.c, cleanup/cleanup_milter.c.
+
+20060721
+
+	Safety: disable Milter processing after "postsuper -r".  If
+	the mail has been filtered there is no need to do it again.
+	Moreover, when mail has passed through an external content
+	filter, we don't have sufficient information to reproduce
+	the exact same SMTP events and Sendmail macros that Milters
+	received when the mail originally arrived in Postfix.  This
+	change does not affect Milter applications that run behind
+	an after-queue content filter. File: pickup/pickup.c.
+
+	Bugfix: Milters received a truncated ORCPT=xxx parameter
+	due to destructive parsing of something that didn't have
+	to be preserved before Milter support was added to Postfix.
+	File: smtpd/smtpd.c.
+
+20060724
+
+	Bugfix: when updating the same header multiple times, the
+	Postfix Milter client created a queue file that caused
+	delivery agents to loop.  File: cleanup/cleanup_milter.c.
+
+20060725
+
+	Bugfix: damaged queue file record after a Milter request
+	to modify a message header when 1) it was the last header
+	in the unmodified message, and 2) the old header was less
+	than 15 characters long.  File: cleanup/cleanup_milter.c.
+
+	Bugfix: don't panic in smtp_rcpt_cleanup() after detecting
+	a damaged queue file record. File: smtp/smtp_proto.c.
+
+20060726
+
+	Bugfix: the 20051013 change to enforce the message size
+	limit in the SMTP server didn't work for size limits close
+	enough to INT_MAX. File: smtpd/smtpd.c.
+
+	Bugfix: after an SMTP client was rejected with "smtpd_delay_reject
+	= no", the SMTP server would panic as it generated spurious
+	Milter requests for unrecognized commands.  File: smtpd/smtpd.c.
+
+20060727
+
+	Cleanup: change redundant milter_abort() and milter_disc_event()
+	calls into NO-OPs.  This avoids unnecessary panic() events
+	for completely harmless conditions.  File: milter/milter8.c.
