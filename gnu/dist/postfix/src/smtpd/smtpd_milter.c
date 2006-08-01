@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_milter.c,v 1.1.1.1 2006/07/19 01:17:47 rpaulo Exp $	*/
+/*	$NetBSD: smtpd_milter.c,v 1.1.1.2 2006/08/01 00:04:21 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -80,6 +80,15 @@ const char *smtpd_milter_eval(const char *name, void *ptr)
     /*
      * Connect macros.
      */
+    if (strcmp(name, S8_MAC__) == 0) {
+	if (state->expand_buf == 0)
+	    state->expand_buf = vstring_alloc(10);
+	vstring_sprintf(state->expand_buf, "%s [%s]",
+			state->reverse_name, state->addr);
+	if (strcasecmp(state->name, state->reverse_name) != 0)
+	    vstring_strcat(state->expand_buf, " (may be forged)");
+	return (STR(state->expand_buf));
+    }
     if (strcmp(name, S8_MAC_J) == 0)
 	return (var_myhostname);
     if (strcmp(name, S8_MAC_CLIENT_ADDR) == 0)

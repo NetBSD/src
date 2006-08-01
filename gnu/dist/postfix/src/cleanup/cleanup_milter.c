@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_milter.c,v 1.1.1.1 2006/07/19 01:17:20 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_milter.c,v 1.1.1.2 2006/08/01 00:03:43 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -625,7 +625,12 @@ static const char *cleanup_patch_header(CLEANUP_STATE *state,
 	    msg_warn("%s: seek file %s: %m", myname, cleanup_path);
 	    CLEANUP_PATCH_HEADER_RETURN(cleanup_milter_error(state, errno));
 	}
-	CLEANUP_OUT_BUF(state, rec_type, buf);
+	/* The saved "append header" pointer record may still contain "0". */
+	if (saved_read_offset == state->append_hdr_pt_offset)
+	    cleanup_out_format(state, REC_TYPE_PTR, REC_TYPE_PTR_FORMAT,
+			       (long) state->append_hdr_pt_target);
+	else
+	    CLEANUP_OUT_BUF(state, rec_type, buf);
 	if (msg_verbose > 1)
 	    msg_info("%s: %ld: write %.*s", myname, (long) write_offset,
 		     LEN(buf) > 30 ? 30 : (int) LEN(buf), STR(buf));
@@ -781,6 +786,10 @@ static const char *cleanup_upd_header(void *context, ssize_t index,
      * The lookup result will never be a pointer record.
      * 
      * Index 1 is the first matching header instance.
+     * 
+     * XXX When a header is updated repeatedly we create jumps to jumps. To
+     * eliminate this, rewrite the loop below so that we can start with the
+     * pointer record that points to the header that's being edited.
      */
 #define DONT_SAVE_RECORD	0
 #define NO_PTR_BACKUP		0
@@ -823,12 +832,16 @@ static const char *cleanup_upd_header(void *context, ssize_t index,
 		CLEANUP_UPD_HEADER_RETURN(cleanup_milter_error(state, errno));
 	    }
 	    if (rec_type == REC_TYPE_PTR) {
+		/* The "append header" pointer record content must be saved. */
+		if (saved_read_offset == state->append_hdr_pt_offset)
+		    break;
 		if (jumped == 0) {
 		    /* Enough contiguous space for writing a PTR record. */
 		    avail_space += read_offset - saved_read_offset;
 		    jumped = 1;
 		}
-		if (rec_goto(state->dst, STR(rec_buf)) < 0) {
+		if (rec_goto(state->dst, STR(rec_buf)) < 0
+		    || (read_offset = vstream_ftell(state->dst)) < 0) {
 		    msg_warn("%s: read file %s: %m", myname, cleanup_path);
 		    CLEANUP_UPD_HEADER_RETURN(cleanup_milter_error(state,
 								   errno));
@@ -1217,12 +1230,21 @@ static const char *cleanup_milter_eval(const char *name, void *ptr)
     /*
      * Connect macros.
      */
+    if (strcmp(name, S8_MAC__) == 0) {
+	vstring_sprintf(state->temp1, "%s [%s]",
+			state->reverse_name, state->client_addr);
+	if (strcasecmp(state->client_name, state->reverse_name) != 0)
+	    vstring_strcat(state->temp1, " (may be forged)");
+	return (STR(state->temp1));
+    }
     if (strcmp(name, S8_MAC_J) == 0)
 	return (var_myhostname);
     if (strcmp(name, S8_MAC_CLIENT_ADDR) == 0)
-	return (nvtable_find(state->attr, MAIL_ATTR_ACT_CLIENT_ADDR));
+	return (state->client_addr);
     if (strcmp(name, S8_MAC_CLIENT_NAME) == 0)
-	return (nvtable_find(state->attr, MAIL_ATTR_ACT_CLIENT_NAME));
+	return (state->client_name);
+    if (strcmp(name, S8_MAC_CLIENT_PTR) == 0)
+	return (state->reverse_name);
 
     /*
      * MAIL FROM macros.
@@ -1278,6 +1300,12 @@ static const char *cleanup_milter_apply(CLEANUP_STATE *state, const char *event,
 
     if (msg_verbose)
 	msg_info("%s: %s", myname, resp);
+
+    /*
+     * Sanity check.
+     */
+    if (state->client_name == 0)
+	msg_panic("%s: missing client info initialization", myname);
 
     /*
      * We don't report errors that were already reported by the content
@@ -1356,6 +1384,38 @@ static const char *cleanup_milter_apply(CLEANUP_STATE *state, const char *event,
     return (ret);
 }
 
+/* cleanup_milter_client_init - initialize real or ersatz client info */
+
+static void cleanup_milter_client_init(CLEANUP_STATE *state)
+{
+    const char *proto_attr;
+
+    /*
+     * Either the cleanup client specifies a name, address and protocol, or
+     * we have a local submission and pretend localhost/127.0.0.1/AF_INET.
+     */
+#define NO_CLIENT_PORT	"0"
+
+    state->client_name = nvtable_find(state->attr, MAIL_ATTR_ACT_CLIENT_NAME);
+    state->reverse_name =
+	nvtable_find(state->attr, MAIL_ATTR_ACT_REVERSE_CLIENT_NAME);
+    state->client_addr = nvtable_find(state->attr, MAIL_ATTR_ACT_CLIENT_ADDR);
+    state->client_port = nvtable_find(state->attr, MAIL_ATTR_ACT_CLIENT_PORT);
+    proto_attr = nvtable_find(state->attr, MAIL_ATTR_ACT_CLIENT_AF);
+
+    if (state->client_name == 0 || state->client_addr == 0 || proto_attr == 0
+	|| !alldig(proto_attr)) {
+	state->client_name = "localhost";
+	state->client_addr = "127.0.0.1";
+	state->client_af = AF_INET;
+    } else
+	state->client_af = atoi(proto_attr);
+    if (state->reverse_name == 0)
+	state->reverse_name = state->client_name;
+    if (state->client_port == 0)
+	state->client_port = NO_CLIENT_PORT;
+}
+
 /* cleanup_milter_inspect - run message through mail filter */
 
 void    cleanup_milter_inspect(CLEANUP_STATE *state, MILTERS *milters)
@@ -1365,6 +1425,12 @@ void    cleanup_milter_inspect(CLEANUP_STATE *state, MILTERS *milters)
 
     if (msg_verbose)
 	msg_info("enter %s", myname);
+
+    /*
+     * Initialize, in case we're called via smtpd(8).
+     */
+    if (state->client_name == 0)
+	cleanup_milter_client_init(state);
 
     /*
      * Process mail filter replies. The reply format is verified by the mail
@@ -1384,9 +1450,6 @@ void    cleanup_milter_emul_mail(CLEANUP_STATE *state,
 				         const char *addr)
 {
     const char *resp;
-    const char *proto_attr;
-    const char *client_port;
-    int     client_af;
     const char *helo;
     const char *argv[2];
 
@@ -1399,33 +1462,14 @@ void    cleanup_milter_emul_mail(CLEANUP_STATE *state,
 			 cleanup_ins_header, cleanup_del_header,
 			 cleanup_add_rcpt, cleanup_del_rcpt,
 			 cleanup_repl_body, (void *) state);
-
-    /*
-     * Either the cleanup client specifies a name, address and protocol, or
-     * we have a local submission and pretend localhost/127.0.0.1/AF_INET.
-     */
-#define NO_CLIENT_PORT	"0"
-
-    state->client_name = nvtable_find(state->attr, MAIL_ATTR_ACT_CLIENT_NAME);
-    state->client_addr = nvtable_find(state->attr, MAIL_ATTR_ACT_CLIENT_ADDR);
-
-    client_port = nvtable_find(state->attr, MAIL_ATTR_ACT_CLIENT_PORT);
-    proto_attr = nvtable_find(state->attr, MAIL_ATTR_ACT_CLIENT_AF);
-    if (state->client_name == 0 || state->client_addr == 0 || proto_attr == 0
-	|| !alldig(proto_attr)) {
-	state->client_name = "localhost";
-	state->client_addr = "127.0.0.1";
-	client_af = AF_INET;
-    } else
-	client_af = atoi(proto_attr);
-    if (client_port == 0)
-	client_port = NO_CLIENT_PORT;
+    if (state->client_name == 0)
+	cleanup_milter_client_init(state);
 
     /*
      * Emulate SMTP events.
      */
     if ((resp = milter_conn_event(milters, state->client_name, state->client_addr,
-				  client_port, client_af)) != 0) {
+			      state->client_port, state->client_af)) != 0) {
 	cleanup_milter_apply(state, "CONNECT", resp);
 	return;
     }
@@ -1455,8 +1499,15 @@ void    cleanup_milter_emul_rcpt(CLEANUP_STATE *state,
 				         MILTERS *milters,
 				         const char *addr)
 {
+    const char *myname = "cleanup_milter_emul_rcpt";
     const char *resp;
     const char *argv[2];
+
+    /*
+     * Sanity check.
+     */
+    if (state->client_name == 0)
+	msg_panic("%s: missing client info initialization", myname);
 
     /*
      * CLEANUP_STAT_CONT and CLEANUP_STAT_DEFER both update the reason
@@ -1481,7 +1532,14 @@ void    cleanup_milter_emul_rcpt(CLEANUP_STATE *state,
 
 void    cleanup_milter_emul_data(CLEANUP_STATE *state, MILTERS *milters)
 {
+    const char *myname = "cleanup_milter_emul_data";
     const char *resp;
+
+    /*
+     * Sanity check.
+     */
+    if (state->client_name == 0)
+	msg_panic("%s: missing client info initialization", myname);
 
     if ((resp = milter_data_event(milters)) != 0)
 	cleanup_milter_apply(state, "DATA", resp);
@@ -1718,7 +1776,7 @@ int     main(int unused_argc, char **argv)
 		msg_warn("bad add_header argument count: %d", argv->argc);
 	    } else {
 		flatten_args(arg_buf, argv->argv + 2);
-		cleanup_add_header(state, argv->argv[2], STR(arg_buf));
+		cleanup_add_header(state, argv->argv[1], STR(arg_buf));
 	    }
 	} else if (strcmp(argv->argv[0], "ins_header") == 0) {
 	    if (argv->argc < 3) {

@@ -104,7 +104,7 @@ On other platforms you have two options:
     Sendmail source code instead:
 
         $ ggzzccaatt sseennddmmaaiill--xx..yy..zz..ttaarr..ggzz || ttaarr xxff --
-        $ ccdd sseennddmmaaiill--xx..yy..zz
+        $ ccdd sseennddmmaaiill--xx..yy..zz//lliibbmmiilltteerr
         $ mmaakkee
         [...lots of output omitted...]
 
@@ -316,6 +316,9 @@ workarounds section below for solutions.
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
     |j                   |Always                   |value of myhostname       |
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |_                   |Always                   |The validated client name |
+    |                    |                         |and address               |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
     |{auth_authen}       |MAIL, DATA, EOM          |SASL login name           |
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
     |{auth_author}       |MAIL, DATA, EOM          |SASL sender               |
@@ -382,9 +385,9 @@ message).
 WWoorrkkaarroouunnddss
 
 Content filters may break domain key etc. signatures. If you use an SMTP-based
-filter as described in FILTER_README, then you should add a line to master.cf
-with "disable_mime_output_conversion = yes", as described in the advanced
-content filter example.
+content filter, then you should add a line to master.cf with "-
+o disable_mime_output_conversion=yes" (note: no spaces around the "="), as
+described in the advanced content filter example.
 
 Sendmail Milter applications were originally developed for the Sendmail version
 8 MTA, which has a different architecture than Postfix. The result is that some
