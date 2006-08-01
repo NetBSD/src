@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.812 2006/08/01 17:29:18 bsh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.813 2006/08/01 20:37:43 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.812 2006/08/01 17:20:51 bsh Exp
+ *	NetBSD: pcidevs,v 1.813 2006/08/01 20:37:02 xtraeme Exp
  */
 
 /*
@@ -2590,6 +2590,7 @@
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_250_EHCI	0x00e8		/* nForce3 250 USB2 Host Controller */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_250_MCPT_AC	0x00ea		/* nForce3 250 MCP-T AC-97 */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_250_PPB	0x00ed		/* nForce3 250 PCI-PCI bridge */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA2	0x00ee		/* nForce3 250 Serial ATA Controller */
 #define	PCI_PRODUCT_NVIDIA_ALADDINTNT2	0x00a0		/* Aladdin TNT2 */
 #define	PCI_PRODUCT_NVIDIA_QUADRO4_280NVS2	0x00fd		/* Quadro4 280 NVS */
 #define	PCI_PRODUCT_NVIDIA_QUADROFX3400SLI	0x00fd		/* Quadro FX 3400 SLI */
