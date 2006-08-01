@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.15 2006/07/14 13:37:25 seanb Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.16 2006/08/01 18:11:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.15 2006/07/14 13:37:25 seanb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.16 2006/08/01 18:11:32 martin Exp $");
 #endif
 
 /*
@@ -169,6 +169,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
+	pcireg_t mem_type;
 	void *phook;
 	const char *intrstr = NULL;
 
@@ -182,7 +183,13 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Setup memory-mapping of PCI registers.
 	 */
-	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0, &psc->sc_iot,
+	mem_type = pci_mapreg_type(pc, pa->pa_tag, BS_BAR);
+	if (mem_type != PCI_MAPREG_TYPE_MEM &&
+	    mem_type != PCI_MAPREG_MEM_TYPE_64BIT) {
+		aprint_error("bad pci register type %d\n", (int)mem_type);
+		goto bad;
+	}
+	if (pci_mapreg_map(pa, BS_BAR, mem_type, 0, &psc->sc_iot,
 		&psc->sc_ioh, NULL, NULL)) {
 		aprint_error("cannot map register space\n");
 		goto bad;
