@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.31 2006/06/17 08:10:17 xtraeme Exp $	*/
+/*	$NetBSD: viaide.c,v 1.32 2006/08/01 20:38:50 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.31 2006/06/17 08:10:17 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.32 2006/08/01 20:38:50 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,11 @@ static const struct pciide_product_desc pciide_nvidia_products[] = {
 	  via_chip_map
 	},
 	{ PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA,
+	  0,
+	  "NVIDIA nForce3 250 Serial ATA Controller",
+	  via_sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA2,
 	  0,
 	  "NVIDIA nForce3 250 Serial ATA Controller",
 	  via_sata_chip_map
