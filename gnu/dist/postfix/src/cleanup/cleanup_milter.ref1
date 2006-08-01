@@ -38,8 +38,10 @@
      1353 pointer_record:            1193
      1193 deleted_text: X-Test-Header: test header value 1
      1229 pointer_record:            1370
-     1370 regular_text: X: X-replaced-header replacement header text
-     1416 pointer_record:             881
+     1370 pointer_record:            1433
+     1433 pointer_record:            1496
+     1496 regular_text: X: X-replaced-header replacement header text
+     1542 pointer_record:             881
       881 regular_text: Y: 1234567
       893 regular_text: Message-Id: <20060514010427.E0F703D1E36@tail.porcupine.org>
       954 regular_text: Date: Sat, 13 May 2006 21:04:18 -0400 (EDT)

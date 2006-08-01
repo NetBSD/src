@@ -127,7 +127,7 @@ in the Postfix top-level directory: </p>
 
 <blockquote>
 <pre>
-% make makefiles CCARGS='-DUSE_SASL_AUTH -DDEF_SASL_SERVER=\"dovecot\"'
+% make makefiles CCARGS='-DUSE_SASL_AUTH -DDEF_SASL_SERVER_TYPE=\"dovecot\"'
 </pre>
 </blockquote>
 
@@ -138,7 +138,7 @@ in the Postfix top-level directory: </p>
 
 <ul>
 
-<li> <p> The "-DDEF_SASL_SERVER" stuff is not necessary; it just
+<li> <p> The "-DDEF_SASL_SERVER_TYPE" stuff is not necessary; it just
 makes Postfix configuration a little more convenient because you
 don't have to specify the SASL plug-in type in the Postfix <a href="postconf.5.html">main.cf</a>
 file.  </p>

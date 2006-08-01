@@ -1,4 +1,4 @@
-/*	$NetBSD: postfix.c,v 1.1.1.7 2006/07/19 01:17:36 rpaulo Exp $	*/
+/*	$NetBSD: postfix.c,v 1.1.1.8 2006/08/01 00:04:08 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -240,6 +240,14 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	TLS support by:
+/*	Lutz Jaenicke
+/*	Brandenburg University of Technology
+/*	Cottbus, Germany
+/*
+/*	Victor Duchovni
+/*	Morgan Stanley
 /*
 /*	SASL support originally by:
 /*	Till Franke

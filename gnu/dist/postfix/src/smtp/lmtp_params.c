@@ -1,4 +1,4 @@
-/*	$NetBSD: lmtp_params.c,v 1.1.1.1 2006/07/19 01:17:41 rpaulo Exp $	*/
+/*	$NetBSD: lmtp_params.c,v 1.1.1.2 2006/08/01 00:04:14 rpaulo Exp $	*/
 
     static CONFIG_STR_TABLE lmtp_str_table[] = {
 	VAR_NOTIFY_CLASSES, DEF_NOTIFY_CLASSES, &var_notify_classes, 0, 0,
@@ -97,6 +97,5 @@
 #endif
 	VAR_LMTP_SENDER_AUTH, DEF_LMTP_SENDER_AUTH, &var_smtp_sender_auth,
 	VAR_LMTP_CNAME_OVERR, DEF_LMTP_CNAME_OVERR, &var_smtp_cname_overr,
-	VAR_LMTP_SASL_ENFORCE, DEF_LMTP_SASL_ENFORCE, &var_smtp_sasl_enforce,
 	0,
     };

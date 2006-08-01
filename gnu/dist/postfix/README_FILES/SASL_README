@@ -71,13 +71,14 @@ no need to link extra libraries into Postfix.
 To generate the necessary Makefiles, execute the following in the Postfix top-
 level directory:
 
-    % make makefiles CCARGS='-DUSE_SASL_AUTH -DDEF_SASL_SERVER=\"dovecot\"'
+    % make makefiles CCARGS='-DUSE_SASL_AUTH -
+    DDEF_SASL_SERVER_TYPE=\"dovecot\"'
 
 After this, proceed with "make" as described in the INSTALL document.
 
 Notes:
 
-  * The "-DDEF_SASL_SERVER" stuff is not necessary; it just makes Postfix
+  * The "-DDEF_SASL_SERVER_TYPE" stuff is not necessary; it just makes Postfix
     configuration a little more convenient because you don't have to specify
     the SASL plug-in type in the Postfix main.cf file.
 
