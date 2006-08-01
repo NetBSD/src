@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.326 2006/06/24 04:49:40 gendalia Exp $ */
+/*	$NetBSD: wd.c,v 1.327 2006/08/01 07:19:07 lukem Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.326 2006/06/24 04:49:40 gendalia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.327 2006/08/01 07:19:07 lukem Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -205,6 +205,8 @@ static void bad144intern(struct wd_softc *);
 #define	WD_QUIRK_SPLIT_MOD15_WRITE	0x0001	/* must split certain writes */
 #define	WD_QUIRK_FORCE_LBA48		0x0002	/* must use LBA48 commands */
 
+#define	WD_QUIRK_FMT "\20\1SPLIT_MOD15_WRITE\2FORCE_LBA48"
+
 /*
  * Quirk table for IDE drives.  Put more-specific matches first, since
  * a simple globbing routine is used for matching.
@@ -338,6 +340,13 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	wdq = wd_lookup_quirks(tbuf);
 	if (wdq != NULL)
 		wd->sc_quirks = wdq->wdq_quirks;
+
+	if (wd->sc_quirks != 0) {
+		char sbuf[sizeof(WD_QUIRK_FMT) + 64];
+		bitmask_snprintf(wd->sc_quirks, WD_QUIRK_FMT,
+		    sbuf, sizeof(sbuf));
+		aprint_normal("%s: quirks %s\n", wd->sc_dev.dv_xname, sbuf);
+	}
 
 	if ((wd->sc_params.atap_multi & 0xff) > 1) {
 		wd->sc_multi = wd->sc_params.atap_multi & 0xff;
