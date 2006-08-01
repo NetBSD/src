@@ -1,4 +1,4 @@
-#	$NetBSD: postfix-files,v 1.8 2006/07/19 17:43:37 rpaulo Exp $
+#	$NetBSD: postfix-files,v 1.9 2006/08/01 00:12:42 rpaulo Exp $
 #
 # Commented out entries mean files not installed under NetBSD.
 #
@@ -356,6 +356,7 @@ $html_directory/postconf.1.html:f:root:-:644
 $html_directory/postconf.5.html:f:root:-:644
 $html_directory/postdrop.1.html:f:root:-:644
 $html_directory/postfix-logo.jpg:f:root:-:644
+$html_directory/postfix-manuals.html:f:root:-:644
 $html_directory/postfix.1.html:f:root:-:644
 $html_directory/postkick.1.html:f:root:-:644
 $html_directory/postlock.1.html:f:root:-:644

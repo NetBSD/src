@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.h,v 1.11 2006/07/19 01:35:40 rpaulo Exp $	*/
+/*	$NetBSD: mail_params.h,v 1.12 2006/08/01 00:12:42 rpaulo Exp $	*/
 
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
@@ -1185,6 +1185,10 @@ extern char *var_smtpd_tls_scache_db;
 #define DEF_SMTPD_TLS_SCACHTIME	"3600s"
 extern int var_smtpd_tls_scache_timeout;
 
+#define VAR_SMTPD_TLS_SET_SESSID	"smtpd_tls_always_issue_session_ids"
+#define DEF_SMTPD_TLS_SET_SESSID	1
+extern bool var_smtpd_tls_set_sessid;
+
 #define VAR_SMTPD_DELAY_OPEN	"smtpd_delay_open_until_valid_rcpt"
 #define DEF_SMTPD_DELAY_OPEN	1
 extern bool var_smtpd_delay_open;
@@ -1394,10 +1398,6 @@ extern bool var_smtp_sasl_enable;
 #define DEF_SMTP_SASL_PASSWD	""
 extern char *var_smtp_sasl_passwd;
 
-#define VAR_SMTP_SASL_ENFORCE	"smtp_sasl_auth_enforce"
-#define DEF_SMTP_SASL_ENFORCE	1
-extern bool var_smtp_sasl_enforce;
-
 #define VAR_SMTP_SASL_OPTS	"smtp_sasl_security_options"
 #define DEF_SMTP_SASL_OPTS	"noplaintext, noanonymous"
 extern char *var_smtp_sasl_opts;
@@ -1492,9 +1492,6 @@ extern bool var_lmtp_sasl_enable;
 #define VAR_LMTP_SASL_PASSWD	"lmtp_sasl_password_maps"
 #define DEF_LMTP_SASL_PASSWD	""
 extern char *var_lmtp_sasl_passwd;
-
-#define VAR_LMTP_SASL_ENFORCE	"lmtp_sasl_auth_enforce"
-#define DEF_LMTP_SASL_ENFORCE	1
 
 #define VAR_LMTP_SASL_OPTS	"lmtp_sasl_security_options"
 #define DEF_LMTP_SASL_OPTS	"noplaintext, noanonymous"

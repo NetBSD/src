@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.5,v 1.7 2006/07/19 01:35:39 rpaulo Exp $
+.\"	$NetBSD: postconf.5,v 1.8 2006/08/01 00:12:42 rpaulo Exp $
 .\"
 .TH POSTCONF 5 
 .SH NAME
@@ -1903,11 +1903,6 @@ Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
 The default time unit is s (seconds).
 .SH lmtp_sasl_auth_enable (default: no)
 Enable SASL authentication in the Postfix LMTP client.
-.SH lmtp_sasl_auth_enforce (default: yes)
-The LMTP-specific version of the smtp_sasl_auth_enforce
-configuration parameter.  See there for details.
-.PP
-This feature is available in Postfix 2.3 and later.
 .SH lmtp_sasl_mechanism_filter (default: empty)
 The LMTP-specific version of the smtp_sasl_mechanism_filter
 configuration parameter.  See there for details.
@@ -4220,13 +4215,6 @@ smtp_sasl_auth_enable = yes
 .fi
 .ad
 .ft R
-.SH smtp_sasl_auth_enforce (default: yes)
-If sender-dependent SASL passwords are turned off, defer mail
-delivery when an SMTP server does not support SASL authentication,
-while smtp_sasl_password_maps contains SASL login/password information
-for that server.
-.PP
-This feature is available in Postfix 2.3 and later.
 .SH smtp_sasl_mechanism_filter (default: empty)
 If non-empty, a Postfix SMTP client filter for the remote SMTP
 server's list of offered SASL mechanisms.  Different client and
@@ -5833,7 +5821,7 @@ This list overrides any commands built into the Postfix SMTP server.
 The lookup key to be used in SMTP \fBaccess\fR(5) tables instead of the
 null sender address.
 .SH smtpd_peername_lookup (default: yes)
-Attempt to look up the Postfix SMTP client hostname, and verify that
+Attempt to look up the remote SMTP client hostname, and verify that
 the name matches the client IP address. A client name is set to
 "unknown" when it cannot be looked up or verified, or when name
 lookup is disabled.  Turning off name lookup reduces delays due to
@@ -6459,6 +6447,37 @@ smtpd_tls_CApath = /etc/postfix/certs
 .ft R
 .PP
 This feature is available in Postfix 2.2 and later.
+.SH smtpd_tls_always_issue_session_ids (default: yes)
+Force the Postfix SMTP server to issue a TLS session id, even
+when TLS session caching is turned off (smtpd_tls_session_cache_database
+is empty). This behavior is compatible with Postfix < 2.3.
+.PP
+With Postfix 2.3 and later the Postfix SMTP server can disable
+session id generation when TLS session caching is turned off. This
+keeps clients from caching sessions that almost certainly cannot
+be re-used.
+.PP
+By default, the Postfix SMTP server always generates TLS session
+ids. This works around a known defect in mail client applications
+such as MS Outlook, and may also prevent interoperability issues
+with other MTAs.
+.PP
+Example:
+.na
+.nf
+.in +4
+.nf
+.na
+.ft C
+    smtpd_tls_always_issue_session_ids = no
+.fi
+.ad
+.ft R
+.in -4
+.fi
+.ad
+.PP
+This feature is available in Postfix 2.3 and later.
 .SH smtpd_tls_ask_ccert (default: no)
 Ask a remote SMTP client for a client certificate. This
 information is needed for certificate based mail relaying with,

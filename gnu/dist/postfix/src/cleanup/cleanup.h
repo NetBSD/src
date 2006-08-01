@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup.h,v 1.8 2006/07/19 01:35:40 rpaulo Exp $	*/
+/*	$NetBSD: cleanup.h,v 1.9 2006/08/01 00:12:42 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -93,7 +93,10 @@ typedef struct CLEANUP_STATE {
 #endif
     MILTERS *milters;			/* mail filters */
     const char *client_name;		/* real or ersatz client */
+    const char *reverse_name;		/* real or ersatz client */
     const char *client_addr;		/* real or ersatz client */
+    int     client_af;			/* real or ersatz client */
+    const char *client_port;		/* real or ersatz client */
 } CLEANUP_STATE;
 
  /*
