@@ -3558,17 +3558,6 @@ Enable SASL authentication in the Postfix LMTP client.
 
 </DD>
 
-<DT><b><a name="lmtp_sasl_auth_enforce">lmtp_sasl_auth_enforce</a>
-(default: yes)</b></DT><DD>
-
-<p> The LMTP-specific version of the <a href="postconf.5.html#smtp_sasl_auth_enforce">smtp_sasl_auth_enforce</a>
-configuration parameter.  See there for details. </p>
-
-<p> This feature is available in Postfix 2.3 and later. </p>
-
-
-</DD>
-
 <DT><b><a name="lmtp_sasl_mechanism_filter">lmtp_sasl_mechanism_filter</a>
 (default: empty)</b></DT><DD>
 
@@ -7592,19 +7581,6 @@ Example:
 
 </DD>
 
-<DT><b><a name="smtp_sasl_auth_enforce">smtp_sasl_auth_enforce</a>
-(default: yes)</b></DT><DD>
-
-<p> If sender-dependent SASL passwords are turned off, defer mail
-delivery when an SMTP server does not support SASL authentication,
-while <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> contains SASL login/password information
-for that server.  </p>
-
-<p> This feature is available in Postfix 2.3 and later. </p>
-
-
-</DD>
-
 <DT><b><a name="smtp_sasl_mechanism_filter">smtp_sasl_mechanism_filter</a>
 (default: empty)</b></DT><DD>
 
@@ -9819,7 +9795,7 @@ null sender address.
 <DT><b><a name="smtpd_peername_lookup">smtpd_peername_lookup</a>
 (default: yes)</b></DT><DD>
 
-<p> Attempt to look up the Postfix SMTP client hostname, and verify that
+<p> Attempt to look up the remote SMTP client hostname, and verify that
 the name matches the client IP address. A client name is set to
 "unknown" when it cannot be looked up or verified, or when name
 lookup is disabled.  Turning off name lookup reduces delays due to
@@ -10778,6 +10754,36 @@ feature is therefore not recommended. </p>
 </pre>
 
 <p> This feature is available in Postfix 2.2 and later.  </p>
+
+
+</DD>
+
+<DT><b><a name="smtpd_tls_always_issue_session_ids">smtpd_tls_always_issue_session_ids</a>
+(default: yes)</b></DT><DD>
+
+<p> Force the Postfix SMTP server to issue a TLS session id, even
+when TLS session caching is turned off (<a href="postconf.5.html#smtpd_tls_session_cache_database">smtpd_tls_session_cache_database</a>
+is empty). This behavior is compatible with Postfix &lt; 2.3. </p>
+
+<p> With Postfix 2.3 and later the Postfix SMTP server can disable
+session id generation when TLS session caching is turned off. This
+keeps clients from caching sessions that almost certainly cannot
+be re-used.  </p>
+
+<p> By default, the Postfix SMTP server always generates TLS session
+ids. This works around a known defect in mail client applications
+such as MS Outlook, and may also prevent interoperability issues
+with other MTAs. </p>
+
+<p> Example: </p>
+
+<blockquote>
+<pre>
+    <a href="postconf.5.html#smtpd_tls_always_issue_session_ids">smtpd_tls_always_issue_session_ids</a> = no
+</pre>
+</blockquote>
+
+<p> This feature is available in Postfix 2.3 and later. </p>
 
 
 </DD>

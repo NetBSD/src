@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.c,v 1.1.1.10 2006/07/19 01:17:42 rpaulo Exp $	*/
+/*	$NetBSD: smtp.c,v 1.1.1.11 2006/08/01 00:04:15 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -236,11 +236,6 @@
 /*	server's list of offered SASL mechanisms.
 /* .PP
 /*	Available in Postfix version 2.3 and later:
-/* .IP "\fBsmtp_sasl_auth_enforce (yes)\fR"
-/*	If sender-dependent SASL passwords are turned off, defer mail
-/*	delivery when an SMTP server does not support SASL authentication,
-/*	while smtp_sasl_password_maps contains SASL login/password information
-/*	for that server.
 /* .IP "\fBsmtp_sender_dependent_authentication (no)\fR"
 /*	Enable sender-dependent authentication in the Postfix SMTP client; this is
 /*	available only with SASL authentication, and disables SMTP connection
@@ -299,6 +294,13 @@
 /* .IP "\fBsmtp_tls_note_starttls_offer (no)\fR"
 /*	Log the hostname of a remote SMTP server that offers STARTTLS,
 /*	when TLS is not already enabled for that server.
+/* .IP "\fBsmtp_tls_policy_maps (empty)\fR"
+/*	Optional lookup tables with the Postfix SMTP client TLS security
+/*	policy by next-hop destination; when a non-empty value is specified,
+/*	this overrides the obsolete smtp_tls_per_site parameter.
+/* .IP "\fBsmtp_tls_mandatory_protocols (SSLv3, TLSv1)\fR"
+/*	List of TLS protocols that the Postfix SMTP client will use
+/*	with mandatory TLS encryption.
 /* .IP "\fBsmtp_tls_scert_verifydepth (5)\fR"
 /*	The verification depth for remote SMTP server certificates.
 /* .IP "\fBsmtp_tls_secure_cert_match (nexthop, dot-nexthop)\fR"
@@ -699,7 +701,6 @@ bool    var_smtp_sender_auth;
 char   *var_lmtp_tcp_port;
 int     var_scache_proto_tmout;
 bool    var_smtp_cname_overr;
-bool    var_smtp_sasl_enforce;
 
  /*
   * Global variables.

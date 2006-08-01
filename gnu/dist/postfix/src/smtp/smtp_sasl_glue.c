@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_sasl_glue.c,v 1.1.1.7 2006/07/19 01:17:43 rpaulo Exp $	*/
+/*	$NetBSD: smtp_sasl_glue.c,v 1.1.1.8 2006/08/01 00:04:16 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -177,9 +177,13 @@ int     smtp_sasl_passwd_lookup(SMTP_SESSION *session)
 	 && (value = mail_addr_find(smtp_sasl_passwd_map,
 				 state->request->sender, (char **) 0)) != 0)
 	|| (value = maps_find(smtp_sasl_passwd_map, session->host, 0)) != 0
-	|| (value = maps_find(smtp_sasl_passwd_map, session->dest, 0)) != 0) {
+      || (value = maps_find(smtp_sasl_passwd_map, session->dest, 0)) != 0) {
+	if (session->sasl_username)
+	    myfree(session->sasl_username);
 	session->sasl_username = mystrdup(value);
 	passwd = split_at(session->sasl_username, ':');
+	if (session->sasl_passwd)
+	    myfree(session->sasl_passwd);
 	session->sasl_passwd = mystrdup(passwd ? passwd : "");
 	if (msg_verbose)
 	    msg_info("%s: host `%s' user `%s' pass `%s'",

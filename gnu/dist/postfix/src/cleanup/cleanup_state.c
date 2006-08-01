@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_state.c,v 1.1.1.8 2006/07/19 01:17:20 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_state.c,v 1.1.1.9 2006/08/01 00:03:44 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -111,7 +111,10 @@ CLEANUP_STATE *cleanup_state_alloc(VSTREAM *src)
     state->verp_delims = 0;
     state->milters = 0;
     state->client_name = 0;
+    state->reverse_name = 0;
     state->client_addr = 0;
+    state->client_af = 0;
+    state->client_port = 0;
     return (state);
 }
 

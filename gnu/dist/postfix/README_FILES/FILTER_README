@@ -344,12 +344,10 @@ the Postfix master.cf file:
     real client name IP address. See smtp(8) and XFORWARD_README for more
     information.
 
-  * With "-o disable_mime_output_conversion=yes", the scan delivery agent will
-    not convert 8BITMIME mail to quoted-printable form while delivering to the
-    content filter, as that would invalidate domainkeys and other digital
-    signatures. This workaround is needed because some SMTP-based content
-    filters don't announce 8BITMIME support, even though they can handle it
-    just fine.
+  * The "-o disable_mime_output_conversion=yes" is a workaround that prevents
+    the breaking of domainkeys and other digital signatures. This is needed
+    because some SMTP-based content filters don't announce 8BITMIME support,
+    even though they can handle it just fine.
 
 AAddvvaanncceedd ccoonntteenntt ffiilltteerr:: rruunnnniinngg tthhee ccoonntteenntt ffiilltteerr
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_params.c,v 1.1.1.1 2006/07/19 01:17:43 rpaulo Exp $	*/
+/*	$NetBSD: smtp_params.c,v 1.1.1.2 2006/08/01 00:04:16 rpaulo Exp $	*/
 
     static CONFIG_STR_TABLE smtp_str_table[] = {
 	VAR_NOTIFY_CLASSES, DEF_NOTIFY_CLASSES, &var_notify_classes, 0, 0,
@@ -101,6 +101,5 @@
 #endif
 	VAR_SMTP_SENDER_AUTH, DEF_SMTP_SENDER_AUTH, &var_smtp_sender_auth,
 	VAR_SMTP_CNAME_OVERR, DEF_SMTP_CNAME_OVERR, &var_smtp_cname_overr,
-	VAR_SMTP_SASL_ENFORCE, DEF_SMTP_SASL_ENFORCE, &var_smtp_sasl_enforce,
 	0,
     };

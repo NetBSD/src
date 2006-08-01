@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtpd.8,v 1.1.1.12 2006/07/19 01:16:49 rpaulo Exp $
+.\"	$NetBSD: smtpd.8,v 1.1.1.13 2006/08/01 00:03:05 rpaulo Exp $
 .\"
 .TH SMTPD 8 
 .ad
@@ -126,6 +126,12 @@ to a remote SMTP client.
 .IP "\fBsmtpd_delay_open_until_valid_rcpt (yes)\fR"
 Postpone the start of an SMTP mail transaction until a valid
 RCPT TO command is received.
+.PP
+Available in Postfix version 2.3 and later:
+.IP "\fBsmtpd_tls_always_issue_session_ids (yes)\fR"
+Force the Postfix SMTP server to issue a TLS session id, even
+when TLS session caching is turned off (smtpd_tls_session_cache_database
+is empty).
 .SH "ADDRESS REWRITING CONTROLS"
 .na
 .nf
@@ -312,6 +318,10 @@ The file with the certificate of the certification authority
 .IP "\fBsmtpd_tls_CAfile (empty)\fR"
 The file with the certificate of the certification authority
 (CA) that issued the Postfix SMTP server certificate.
+.IP "\fBsmtpd_tls_always_issue_session_ids (yes)\fR"
+Force the Postfix SMTP server to issue a TLS session id, even
+when TLS session caching is turned off (smtpd_tls_session_cache_database
+is empty).
 .IP "\fBsmtpd_tls_ask_ccert (no)\fR"
 Ask a remote SMTP client for a client certificate.
 .IP "\fBsmtpd_tls_auth_only (no)\fR"
@@ -564,7 +574,7 @@ before it is flushed upon receipt of EHLO, RSET, or end of DATA.
 .PP
 Available in Postfix version 2.3 and later:
 .IP "\fBsmtpd_peername_lookup (yes)\fR"
-Attempt to look up the Postfix SMTP client hostname, and verify that
+Attempt to look up the remote SMTP client hostname, and verify that
 the name matches the client IP address.
 .PP
 The per SMTP client connection count and request rate limits are

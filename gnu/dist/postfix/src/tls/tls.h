@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.h,v 1.1.1.2 2006/07/19 01:17:39 rpaulo Exp $	*/
+/*	$NetBSD: tls.h,v 1.1.1.3 2006/08/01 00:04:11 rpaulo Exp $	*/
 
 #ifndef _TLS_H_INCLUDED_
 #define _TLS_H_INCLUDED_
@@ -19,7 +19,7 @@
 #include <name_code.h>
 
  /*
-  * TLS enforcement levels. Non-sentinel values also be used to indicate
+  * TLS enforcement levels. Non-sentinel values may also be used to indicate
   * the actual security level of a session.
   */
 #define TLS_LEV_NOTFOUND	-1	/* sentinel */
@@ -176,6 +176,7 @@ typedef struct {
     int     verifydepth;
     const char *cache_type;
     long    scache_timeout;
+    int     set_sessid;
     const char *cert_file;
     const char *key_file;
     const char *dcert_file;

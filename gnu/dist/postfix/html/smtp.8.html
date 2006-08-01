@@ -293,13 +293,6 @@ SMTP(8)                                                                SMTP(8)
 
        Available in Postfix version 2.3 and later:
 
-       <b><a href="postconf.5.html#smtp_sasl_auth_enforce">smtp_sasl_auth_enforce</a> (yes)</b>
-              If sender-dependent SASL passwords are turned  off,
-              defer  mail  delivery  when an SMTP server does not
-              support SASL authentication, while  <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_pass</a>-
-              <a href="postconf.5.html#smtp_sasl_password_maps">word_maps</a>  contains SASL login/password information
-              for that server.
-
        <b><a href="postconf.5.html#smtp_sender_dependent_authentication">smtp_sender_dependent_authentication</a> (no)</b>
               Enable sender-dependent authentication in the Post-
               fix  SMTP  client; this is available only with SASL
@@ -386,6 +379,16 @@ SMTP(8)                                                                SMTP(8)
               Log the hostname  of  a  remote  SMTP  server  that
               offers  STARTTLS,  when  TLS is not already enabled
               for that server.
+
+       <b><a href="postconf.5.html#smtp_tls_policy_maps">smtp_tls_policy_maps</a> (empty)</b>
+              Optional lookup tables with the Postfix SMTP client
+              TLS security policy by next-hop destination; when a
+              non-empty value is specified,  this  overrides  the
+              obsolete <a href="postconf.5.html#smtp_tls_per_site">smtp_tls_per_site</a> parameter.
+
+       <b><a href="postconf.5.html#smtp_tls_mandatory_protocols">smtp_tls_mandatory_protocols</a> (SSLv3, TLSv1)</b>
+              List  of TLS protocols that the Postfix SMTP client
+              will use with mandatory TLS encryption.
 
        <b><a href="postconf.5.html#smtp_tls_scert_verifydepth">smtp_tls_scert_verifydepth</a> (5)</b>
               The verification depth for remote SMTP server  cer-

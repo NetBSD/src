@@ -253,7 +253,6 @@ while (<>) {
     s;\blmtp_rcpt_timeout\b;<a href="postconf.5.html#lmtp_rcpt_timeout">$&</a>;g;
     s;\blmtp_rset_timeout\b;<a href="postconf.5.html#lmtp_rset_timeout">$&</a>;g;
     s;\blmtp_sasl_auth_enable\b;<a href="postconf.5.html#lmtp_sasl_auth_enable">$&</a>;g;
-    s;\blmtp_sasl_auth_enforce\b;<a href="postconf.5.html#lmtp_sasl_auth_enforce">$&</a>;g;
     s;\blmtp_sasl_password_maps\b;<a href="postconf.5.html#lmtp_sasl_password_maps">$&</a>;g;
     s;\blmtp_sasl_security_options\b;<a href="postconf.5.html#lmtp_sasl_security_options">$&</a>;g;
     s;\blmtp_sasl_type\b;<a href="postconf.5.html#lmtp_sasl_type">$&</a>;g;
@@ -526,7 +525,6 @@ while (<>) {
     s;\bsmtp_[-</Bb>]*\n* *[<Bb>]*sasl_[-</Bb>]*\n* *[<Bb>]*tls_[-</Bb>]*\n* *[<Bb>]*secu[-</Bb>]*\n* *[<Bb>]*rity_options\b;<a href="postconf.5.html#smtp_sasl_tls_security_options">$&</a>;g;
     s;\bsmtp_sasl_tls_verified_secu[-</Bb>]*\n* *[<Bb>]*rity_options\b;<a href="postconf.5.html#smtp_sasl_tls_verified_security_options">$&</a>;g;
     s;\bsmtp_sasl_type\b;<a href="postconf.5.html#smtp_sasl_type">$&</a>;g;
-    s;\bsmtp_sasl_auth_enforce\b;<a href="postconf.5.html#smtp_sasl_auth_enforce">$&</a>;g;
     s;\bsmtp_starttls_timeout\b;<a href="postconf.5.html#smtp_starttls_timeout">$&</a>;g;
     s;\bsmtp_tls_CAfile\b;<a href="postconf.5.html#smtp_tls_CAfile">$&</a>;g;
     s;\bsmtp_tls_CApath\b;<a href="postconf.5.html#smtp_tls_CApath">$&</a>;g;
@@ -577,6 +575,7 @@ while (<>) {
     s;\bsmtpd_tls_req_ccert\b;<a href="postconf.5.html#smtpd_tls_req_ccert">$&</a>;g;
     s;\bsmtpd_tls_session_cache_database\b;<a href="postconf.5.html#smtpd_tls_session_cache_database">$&</a>;g;
     s;\bsmtpd_tls_session_cache_timeout\b;<a href="postconf.5.html#smtpd_tls_session_cache_timeout">$&</a>;g;
+    s;\bsmtpd_tls_always_issue_session_ids\b;<a href="postconf.5.html#smtpd_tls_always_issue_session_ids">$&</a>;g;
     s;\bsmtpd_tls_wrappermode\b;<a href="postconf.5.html#smtpd_tls_wrappermode">$&</a>;g;
     s;\bsmtpd_use_tls\b;<a href="postconf.5.html#smtpd_use_tls">$&</a>;g;
     s;\btls_daemon_random_bytes\b;<a href="postconf.5.html#tls_daemon_random_bytes">$&</a>;g;

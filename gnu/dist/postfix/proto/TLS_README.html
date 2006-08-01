@@ -490,8 +490,9 @@ and OE (5.01 Mac on all ports). </p>
 
 <p> It is strictly discouraged to use this mode from main.cf. If
 you want to support this service, enable a special port in master.cf
-and specify "-o smtpd_tls_wrappermode = yes" as an smtpd(8) command
-line option.  Port 465 (smtps) was once chosen for this feature.
+and specify "-o smtpd_tls_wrappermode=yes" (note: no space around
+the "=") as an smtpd(8) command line option.  Port 465 (smtps) was
+once chosen for this feature.
 </p>
 
 <p> Example: </p>
@@ -628,6 +629,22 @@ recommends a maximum of 24 hours.  </p>
 <pre>
 /etc/postfix/main.cf:
     smtpd_tls_session_cache_timeout = 3600s
+</pre>
+</blockquote>
+
+<p> When the Postfix SMTP server does not save TLS sessions to an
+external cache database, client-side session caching is unlikely
+to be useful.  To prevent such wastage, the Postfix SMTP server can
+be configured to not issue TLS session ids. By default the Postfix
+SMTP server always issues TLS session ids. This works around known
+interoperability issues with some MUAs, and prevents possible
+interoperability issues with other MTAs. </p>
+
+<p> Example: </p>
+
+<blockquote>
+<pre>
+    smtpd_tls_always_issue_session_ids = no
 </pre>
 </blockquote>
 
@@ -1822,10 +1839,10 @@ the following information:  </p>
 <dl>
 
 <dt> remote SMTP server hostname </dt> <dd> This is simply the DNS
-name of the server that the Postfix SMTP client connects to; this name
-may be obtained from other DNS lookups, such as MX lookups or CNAME
-lookups. Use of the hostname lookup key is discouraged; always use the
-next-hop destination instead. </dd>
+name of the server that the Postfix SMTP client connects to; this
+name may be obtained from other DNS lookups, such as MX lookups or
+CNAME lookups. Use of the hostname lookup key is discouraged; always
+use the next-hop destination instead. </dd>
 
 <dt> next-hop destination </dt> <dd> This is normally the domain portion
 of the recipient address, but it may be overridden by information from
@@ -1924,17 +1941,19 @@ steps: </p>
 
 <ol>
 
-<li> <p> Use a dedicated transport for all secure-channel deliveries. </p>
+<li> <p> Use a dedicated message delivery transport (for example,
+"securetls") as illustrated below. </p>
 
 <li> <p> Eliminate MX lookups. Specify local transport(5) table
-entries for sensitive domains with explicit smtp:[<i>mailhost</i>]
-or smtp:[<i>mailhost</i>]:<i>port</i> destinations (you can assure
-security of this table unlike DNS); in the smtp_tls_per_site
-table, specify the value "MUST" for the key [<i>mailhost</i>] or
-smtp:[<i>mailhost</i>]:<i>port</i>. This prevents false hostname
-information in DNS MX records from changing Postfix's notion of the
-server hostname that is used for TLS policy lookup and server certificate
-verification. </p>
+entries for sensitive domains with explicit securetls:[<i>mailhost</i>]
+or securetls:[<i>mailhost</i>]:<i>port</i> destinations (you can
+assure security of this table unlike DNS). This prevents false
+hostname information in DNS MX records from changing Postfix's
+notion of the server hostname that is used for TLS policy lookup
+and server certificate verification. The "securetls" transport is
+configured to enforce TLS with peername verification, and to disable
+the SMTP connection cache which could interfere with enforcement
+of smtp_tls_per_site policies. </p>
 
 <li> <p> Disallow CNAME hostname overrides. In main.cf, specify
 "smtp_cname_overrides_servername = no". This prevents false hostname
@@ -1971,8 +1990,6 @@ destinations. </p>
 
 /etc/postfix/master.cf:
     securetls unix  -       -       n       -       100     smtp
-        -o smtp_connection_cache_on_demand=no
-        -o smtp_connection_cache_destinations=
         -o smtp_enforce_tls=yes
         -o smtp_tls_enforce_peername=yes
 </pre>

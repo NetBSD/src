@@ -74,7 +74,7 @@ BBuuiillddiinngg PPoossttffiixx oonn BBSSDD ssyysstteem
 Some BSD systems ship with multiple Berkeley DB implementations. Normally,
 Postfix builds with the default DB version that ships with the system.
 
-To build Postfix on BSD systems with a specific DB version, use a variant of
+To build Postfix on BSD systems with a non-default DB version, use a variant of
 the following commands:
 
     % make tidy

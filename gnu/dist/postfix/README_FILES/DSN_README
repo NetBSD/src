@@ -11,7 +11,7 @@ delivery notifications.
 Specifically, DSN support gives an email sender the ability to specify:
 
   * What notifications are sent: success, failure, delay, or none. Normally,
-    Postfix informs the sender only mail when delivery is delayed or when
+    Postfix informs the sender only when mail delivery is delayed or when
     delivery fails.
 
   * What content is returned in case of failure: only the message headers, or
