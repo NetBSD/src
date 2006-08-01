@@ -30,7 +30,7 @@ specify: </p>
 <ul>
 
 <li> <p> What notifications are sent: success, failure, delay, or
-none. Normally, Postfix informs the sender only mail when delivery
+none. Normally, Postfix informs the sender only when mail delivery
 is delayed or when delivery fails.  </p>
 
 <li> <p> What content is returned in case of failure: only the
@@ -83,7 +83,7 @@ strangers (see below for how to turn this off for all clients):
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_discard_ehlo_keyword_address_maps">smtpd_discard_ehlo_keyword_address_maps</a> = 
         <a href="cidr_table.5.html">cidr</a>:/etc/postfix/esmtp_access
 
@@ -100,7 +100,7 @@ use the <a href="postconf.5.html#smtpd_discard_ehlo_keywords">smtpd_discard_ehlo
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_discard_ehlo_keywords">smtpd_discard_ehlo_keywords</a> = silent-discard, dsn
 </pre>
 </blockquote>

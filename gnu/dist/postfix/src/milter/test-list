@@ -1,3 +1,13 @@
+# Reject with text 
+./test-milter -C 1 -a "554 5.7.1 1% 2%% 3%%%" -c connect -p inet:9999@127.0.0.1
+./test-milter -C 1 -a "554 5.7.1 1% 2%% 3%%%" -c helo -p inet:9999@127.0.0.1
+./test-milter -C 1 -a "554 5.7.1 1% 2%% 3%%%" -c mail -p inet:9999@127.0.0.1
+./test-milter -C 1 -a "554 5.7.1 1% 2%% 3%%%" -c rcpt -p inet:9999@127.0.0.1
+./test-milter -C 1 -a "554 5.7.1 1% 2%% 3%%%" -c header -p inet:9999@127.0.0.1
+./test-milter -C 1 -a "554 5.7.1 1% 2%% 3%%%" -c eoh -p inet:9999@127.0.0.1
+./test-milter -C 1 -a "554 5.7.1 1% 2%% 3%%%" -c body -p inet:9999@127.0.0.1
+./test-milter -C 1 -a "554 5.7.1 1% 2%% 3%%%" -c eom -p inet:9999@127.0.0.1
+
 # Tempfail tests
 ./test-milter -C 1 -a tempfail -c connect -p inet:9999@127.0.0.1
 ./test-milter -C 1 -a tempfail -c helo -p inet:9999@127.0.0.1

@@ -634,12 +634,10 @@ after-filter smtpd process, so that filtered mail is logged with
 the real client name IP address. See smtp(8) and XFORWARD_README
 for more information. </p>
 
-<li> <p> With "-o disable_mime_output_conversion=yes", the scan
-delivery agent will not convert 8BITMIME mail to quoted-printable
-form while delivering to the content filter, as that would invalidate
-domainkeys and other digital signatures.  This workaround is needed
-because some SMTP-based content filters don't announce 8BITMIME
-support, even though they can handle it just fine.  </p>
+<li> <p> The "-o disable_mime_output_conversion=yes" is a workaround
+that prevents the breaking of domainkeys and other digital signatures.
+This is needed because some SMTP-based content filters don't announce
+8BITMIME support, even though they can handle it just fine.  </p>
 
 </ul>
 
