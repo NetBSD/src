@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.1 2006/06/02 22:35:22 hubertf Exp $
+#	$NetBSD: Makefile.bootcd,v 1.2 2006/08/02 21:37:41 oster Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -46,7 +46,7 @@ CLEANFILES+=	bootxx
 _INSTKERELNOBJDIR!=	cd ${.CURDIR}/../../instkernel && ${PRINTOBJDIR}
 
 
-dependall all: prepare copy-releasedir image
+dependall all: prepare .WAIT copy-releasedir .WAIT image
 
 prepare:
 	${MKDIR} cdrom
