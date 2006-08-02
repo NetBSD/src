@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.31 2006/05/11 08:35:47 mrg Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.32 2006/08/02 13:44:53 tron Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -330,7 +330,11 @@ rtmsg_input()
 {
 	int n, type, ifindex = 0, plen;
 	size_t len;
-	char msg[2048], *next, *lim;
+	union rt_msghdr_buf {
+		struct rt_msghdr	rt_msghdr;
+		char			data[2048];
+	} buffer;
+	char *msg, *next, *lim;
 	char ifname[IF_NAMESIZE];
 	struct prefix *prefix;
 	struct rainfo *rai;
@@ -338,7 +342,8 @@ rtmsg_input()
 	char addrbuf[INET6_ADDRSTRLEN];
 	int prefixchange = 0;
 
-	n = read(rtsock, msg, sizeof(msg));
+	n = read(rtsock, &buffer, sizeof(buffer));
+	msg = buffer.data;
 	if (dflag > 1) {
 		syslog(LOG_DEBUG, "<%s> received a routing message "
 		    "(type = %d, len = %d)", __func__, rtmsg_type(msg), n);
