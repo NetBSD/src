@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.769 2006/07/31 23:29:54 hubertf Exp $
+# $NetBSD: GENERIC,v 1.770 2006/08/02 16:24:29 reed Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.769 $"
+#ident 		"GENERIC-$Revision: 1.770 $"
 
 maxusers	32		# estimated number of users
 
@@ -419,7 +419,7 @@ gpio* 	at elansc?
 					# SpeedStep support
 piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 #gscpcib* at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
-#viapcib* at pci? dev ? function ?	# VT8235 PCI-ISA w/ SMBus support
+#viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
 #iic*	at viapcib?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pceb*	at pci? dev ? function ?	# PCI-EISA bridges
@@ -592,10 +592,10 @@ piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
 iic*	at piixpm?			# SMBus on PIIX4
 
 # iTE IT87xxF and compatible hardware monitors
-#it0	at isa? port 0x290		# other ports: 0xc00, 0xd00.
+#it0	at isa? port 0x290		# other ports: 0xc00, 0xd00
 
 # LM7[89] and compatible hardware monitors
-#lm0	at isa?	port 0x290		# other common: 0x280, 0x310.
+#lm0	at isa?	port 0x290		# other common: 0x280, 0x310
 
 # PC87366 hardware monitor
 #nsclpcsio*	at isa?
@@ -841,8 +841,8 @@ ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
-ral*	at pci? dev ? function ?	# ralink wifi
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
 sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
