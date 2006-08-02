@@ -1,5 +1,6 @@
-# $NetBSD: ad.powerpc,v 1.42 2005/04/25 11:38:01 wiz Exp $
+# $NetBSD: ad.powerpc,v 1.43 2006/08/02 01:35:50 lukem Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
+./usr/bin/psim					comp-debug-bin		gdb,gdb=6
 ./usr/include/altivec.h				comp-c-include		gcccmds
 ./usr/include/powerpc				comp-c-include
 ./usr/include/powerpc/ansi.h			comp-c-include
