@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.812 2006/08/01 20:37:43 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.813 2006/08/03 03:06:32 bsh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.813 2006/08/01 20:37:02 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.814 2006/08/03 03:01:39 bsh Exp
  */
 
 /*
@@ -9068,12 +9068,12 @@ static const struct pci_product pci_products[] = {
 	    "nForce430 Gigabit Ethernet Controller",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_AC1,
-	    "nForce430 AC-97",
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_AC,
+	    "nForce430 AC-97 Audio Controller",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_AC2,
-	    "nForce430 AC-97",
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_HDA,
+	    "nForce430 High Definition Audio Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_OHCI,
