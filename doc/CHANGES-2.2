@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.62 2006/08/01 14:38:48 ghen Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.63 2006/08/03 12:38:54 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -786,4 +786,9 @@ etc/MAKEDEV.tmpl				1.58
 
 	Create /dev/ipsync, /dev/ipscan and /dev/iplookup (misc/33504).
 	[martti, ticket #10665]
+
+sys/dev/sysmon/sysmon_power.c			1.12
+
+	Correct a bug in power event queue management.
+	[freza, #10642]
 
