@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.104 2006/07/19 09:54:47 tron Exp $
+#	$NetBSD: Makefile,v 1.105 2006/08/03 09:55:56 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -135,7 +135,7 @@ realall realdepend: .MAKE
 	@echo "***     !=  TOOLDIR '${TOOLDIR}'"
 	@echo "*** Cleaning mis-matched tools"
 	rm -f PREVIOUSTOOLDIR
-	(cd ${.CURDIR} && ${MAKE} PREVIOUSTOOLDIR=${TOOLDIR} cleandir)
+	(cd ${.CURDIR} && ${MAKE} PREVIOUSTOOLDIR=${TOOLDIR} TOOLDIR=${TOOLDIR} cleandir)
 .endif
 	echo ${TOOLDIR} >PREVIOUSTOOLDIR
 
