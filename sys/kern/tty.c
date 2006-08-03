@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.186 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.187 2006/08/03 22:51:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.186 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.187 2006/08/03 22:51:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2100,7 +2100,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	if (flag & IO_NDELAY) {
 		TTY_UNLOCK(tp);
 		splx(s);
-		error = (uio->uio_resid == cnt) ? EWOULDBLOCK : 0;
+		error = EWOULDBLOCK;
 		goto out;
 	}
 	SET(tp->t_state, TS_ASLEEP);
