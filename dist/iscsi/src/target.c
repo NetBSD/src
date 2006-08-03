@@ -68,6 +68,10 @@
 #include <errno.h>
 #endif
 
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif
+
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
@@ -646,7 +650,7 @@ text_command_t(target_session_t * sess, uint8_t *header)
 				PARAM_TEXT_ADD(sess->params, "SendTargets", "Reject", text_out, &len_out, 2048, 0, TC_ERROR);
 			} else {
 				for (i = 0 ; i < sess->globals->tv->c ; i++) {
-					if (sess->address_family == ISCSI_IPv6 || 
+					if (sess->address_family == ISCSI_IPv6 ||
 					    (sess->address_family == ISCSI_IPv4 && allow_netmask(sess->globals->tv->v[i].mask, sess->initiator))) {
 						(void) snprintf(buf, sizeof(buf), "%s:%s", sess->globals->targetname, sess->globals->tv->v[i].target);
 						PARAM_TEXT_ADD(sess->params, "TargetName", buf, text_out, &len_out, 2048, 0, TC_ERROR);
@@ -1494,11 +1498,10 @@ target_init(globals_t *gp, targv_t *tv, char *TargetName)
 	gp->listener_pid = -1;
 	gp->state = TARGET_INITIALIZED;
 
-	printf("TARGET: TargetName is %s, listening on %s port %d\n",
-		gp->targetname,
-		(gp->address_family == ISCSI_IPv4) ? "IPv4" :
-			(gp->address_family == ISCSI_IPv6) ? "IPv6" : "unknown",
-		gp->port);
+	printf("TARGET: TargetName is %s\n", gp->targetname);
+	for (i = 0 ; i < gp->sockc ; i++) {
+		printf("\tsocket %d listening on port %hd\n", gp->sockv[i], gp->port);
+	}
 
 	return 0;
 }
@@ -1566,41 +1569,29 @@ target_shutdown(globals_t *gp)
 int 
 target_listen(globals_t *gp)
 {
+	struct sockaddr_in6	remoteAddrStorage6;
+	struct sockaddr_in6	localAddrStorage6;
 	struct sockaddr_in	remoteAddrStorage;
 	struct sockaddr_in	localAddrStorage;
 	target_session_t	*sess;
+	iscsi_socket_t		newconn;
 	socklen_t		remoteAddrLen;
 	socklen_t		localAddrLen;
 	char			remote[1024];
 	char			local[1024];
-	int			one = 1;
+	int			i;
 
 	ISCSI_THREAD_START("listen_thread");
 	gp->listener_pid = ISCSI_GETPID;
 	gp->listener_listening++;
 	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "listener thread started\n");
 
-	/* Create/Bind/Listen */
-	if (!iscsi_sock_create(&gp->sock)) {
-		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_create() failed\n");
+	if (!iscsi_socks_establish(gp->sockv, gp->famv, &gp->sockc, gp->address_family)) {
+		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_establish() failed\n");
 		goto done;
 	}
-	if (!iscsi_sock_setsockopt(&gp->sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one))) {
-		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_setsockopt() failed\n");
-		goto done;
-	}
-	if (!iscsi_sock_setsockopt(&gp->sock, SOL_TCP, TCP_NODELAY, &one, sizeof(one))) {
-		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_setsockopt() failed\n");
-		return -1;
-	}
-	if (!iscsi_sock_bind(gp->sock, gp->port)) {
-		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_bind() failed\n");
-		goto done;
-	}
-	if (!iscsi_sock_listen(gp->sock)) {
-		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_listen() failed\n");
-		goto done;
-	}
+	gp->sock = gp->sockv[0];
+
 	iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "create, bind, listen OK\n");
 
 	/* Loop for connections: FIX ME with queue */
@@ -1616,52 +1607,75 @@ target_listen(globals_t *gp)
 
 		sess->globals = gp;
 
-		sess->address_family = gp->address_family;
-
 		/* Accept connection, spawn session thread, and */
 		/* clean up old threads */
 
-		iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "waiting for IPv4 connection on port %hd\n", gp->port);
-		if (!iscsi_sock_accept(gp->sock, &sess->sock)) {
+		i = iscsi_waitfor_connection(gp->sockv, gp->sockc, gp->config_file, &newconn);
+
+		iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "waiting for %s connection on port %hd\n",
+			iscsi_address_family(gp->famv[i]),
+			gp->port);
+
+		if (!iscsi_sock_accept(newconn, &sess->sock)) {
 			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "iscsi_sock_accept() failed\n");
 			goto done;
 		}
 
-		localAddrLen = sizeof(localAddrStorage);
-		(void) memset(&localAddrStorage, 0x0, sizeof(localAddrStorage));
-		if (!iscsi_sock_getsockname(sess->sock, (struct sockaddr *) (void *) &localAddrStorage, &localAddrLen)) {
-			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_getsockname() failed\n");
-			goto done;
-		}
+		switch (gp->famv[i]) {
+		case AF_INET:
+			sess->address_family = ISCSI_IPv4;
+			(void) memset(&localAddrStorage, 0x0, localAddrLen = sizeof(localAddrStorage));
+			if (getsockname(sess->sock, (struct sockaddr *) (void *) &localAddrStorage, &localAddrLen) < 0) {
+				iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_getsockname() failed\n");
+				goto done;
+			}
 
-		remoteAddrLen = sizeof(remoteAddrStorage);
-		(void) memset(&remoteAddrStorage, 0x0, sizeof(remoteAddrStorage));
-		if (!iscsi_sock_getpeername(sess->sock, (struct sockaddr *) (void *) &remoteAddrStorage, &remoteAddrLen)) {
-			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_getpeername() failed\n");
-			goto done;
-		}
+			(void) memset(&remoteAddrStorage, 0x0, remoteAddrLen = sizeof(remoteAddrStorage));
+			if (getpeername(sess->sock, (struct sockaddr *) (void *) &remoteAddrStorage, &remoteAddrLen) < 0) {
+				iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_getpeername() failed\n");
+				goto done;
+			}
 
-
-		switch (sess->address_family = (remoteAddrStorage.sin_family = PF_INET6) ? ISCSI_IPv6 : ISCSI_IPv4) {
-		case ISCSI_IPv4:
+#ifdef HAVE_GETNAMEINFO
+			if (getnameinfo((struct sockaddr *)(void *)&localAddrStorage,
+				sizeof(localAddrStorage), local, sizeof(local), NULL, 0, NI_NUMERICHOST) < 0) {
+				iscsi_trace_error(__FILE__, __LINE__, "getnameinfo local failed\n");
+			}
+			if (getnameinfo((struct sockaddr *)(void *)&remoteAddrStorage,
+				sizeof(remoteAddrStorage), remote, sizeof(remote), NULL, 0, NI_NUMERICHOST) < 0) {
+				iscsi_trace_error(__FILE__, __LINE__, "getnameinfo remote failed\n");
+			}
+			(void) strlcpy(sess->initiator, remote, sizeof(sess->initiator));
+#else
 			(void) strlcpy(local, inet_ntoa(localAddrStorage.sin_addr), sizeof(local));
 			(void) strlcpy(sess->initiator, inet_ntoa(remoteAddrStorage.sin_addr), sizeof(sess->initiator));
+#endif
 
 			(void) snprintf(gp->targetaddress, sizeof(gp->targetaddress), "%s:%u,1", local, gp->port);
 			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "IPv4 connection accepted on port %d (local IP %s, remote IP %s)\n",
 			      gp->port, local, sess->initiator);
 			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "TargetAddress = \"%s\"\n", gp->targetaddress);
-			if (iscsi_thread_create(&sess->worker.thread, (void *) worker_proc_t, sess) != 0) {
-				iscsi_trace_error(__FILE__, __LINE__, "iscsi_thread_create() failed\n");
+			break;
+
+		case AF_INET6:
+			sess->address_family = ISCSI_IPv6;
+			(void) memset(&localAddrStorage6, 0x0, localAddrLen = sizeof(localAddrStorage6));
+			if (getsockname(sess->sock, (struct sockaddr *) (void *) &localAddrStorage6, &localAddrLen) < 0) {
+				iscsi_trace_error(__FILE__, __LINE__, "getsockname() failed\n");
 				goto done;
 			}
-			break;
-		case ISCSI_IPv6:
-			if (inet_ntop(localAddrStorage.sin_family, (void *)&localAddrStorage.sin_addr, local, sizeof(local)) == NULL) {
-				iscsi_trace_error(__FILE__, __LINE__, "inet_ntop local failed\n");
+
+			(void) memset(&remoteAddrStorage6, 0x0, remoteAddrLen = sizeof(remoteAddrStorage6));
+			if (getpeername(sess->sock, (struct sockaddr *) (void *) &remoteAddrStorage6, &remoteAddrLen) < 0) {
+				iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_getpeername() failed\n");
+				goto done;
 			}
-			if (inet_ntop(remoteAddrStorage.sin_family, (void *)&remoteAddrStorage.sin_addr, remote, sizeof(remote)) == NULL) {
-				iscsi_trace_error(__FILE__, __LINE__, "inet_ntop remotefailed\n");
+
+			if (getnameinfo((struct sockaddr *)(void *)&localAddrStorage6, sizeof(localAddrStorage6), local, sizeof(local), NULL, 0, NI_NUMERICHOST) < 0) {
+				iscsi_trace_error(__FILE__, __LINE__, "getnameinfo local failed\n");
+			}
+			if (getnameinfo((struct sockaddr *)(void *)&remoteAddrStorage6, sizeof(remoteAddrStorage6), remote, sizeof(remote), NULL, 0, NI_NUMERICHOST) < 0) {
+				iscsi_trace_error(__FILE__, __LINE__, "getnameinfo remote failed\n");
 			}
 			(void) strlcpy(sess->initiator, remote, sizeof(sess->initiator));
 			(void) snprintf(gp->targetaddress, sizeof(gp->targetaddress), "%s:%u,1", local, gp->port);
@@ -1670,6 +1684,7 @@ target_listen(globals_t *gp)
 			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "TargetAddress = \"%s\"\n", gp->targetaddress);
 			break;
 		}
+
 		if (iscsi_thread_create(&sess->worker.thread, (void *) worker_proc_t, sess) != 0) {
 			iscsi_trace_error(__FILE__, __LINE__, "iscsi_thread_create() failed\n");
 			goto done;

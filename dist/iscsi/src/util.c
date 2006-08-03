@@ -33,6 +33,7 @@
 #include "config.h"
 
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
@@ -72,6 +73,14 @@
 
 #ifdef HAVE_STDARG_H
 #include <stdarg.h>
+#endif
+
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
+
+#ifdef HAVE_POLL_H
+#include <poll.h>
 #endif
 
 #include <stdio.h>
@@ -541,6 +550,130 @@ iscsi_sock_listen(iscsi_socket_t sock)
 		return 0;
 	}
 	return 1;
+}
+
+#ifndef MAXSOCK
+#define MAXSOCK	16
+#endif
+
+int
+iscsi_socks_establish(iscsi_socket_t *sockv, int *famv, int *sockc, int family)
+{
+	struct addrinfo		hints;
+	struct addrinfo		*res;
+	struct addrinfo		*res0;
+	const char		*cause = NULL;
+	int			one = 1;
+	int			error;
+
+	(void) memset(&hints, 0x0, sizeof(hints));
+	hints.ai_family = family;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
+	if ((error = getaddrinfo(NULL, "iscsi", &hints, &res0)) != 0) {
+		iscsi_trace_error(__FILE__, __LINE__, "getaddrinfo: %s", gai_strerror(error));
+		return 0;
+	}
+	*sockc = 0;
+	for (res = res0; res && *sockc < MAXSOCK; res = res->ai_next) {
+		if ((sockv[*sockc] = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
+			cause = "socket";
+			continue;
+		}
+		famv[*sockc] = res->ai_family;
+		if (!iscsi_sock_setsockopt(&sockv[*sockc], SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one))) {
+			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_setsockopt() failed\n");
+			continue;
+		}
+		if (!iscsi_sock_setsockopt(&sockv[*sockc], SOL_TCP, TCP_NODELAY, &one, sizeof(one))) {
+			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_setsockopt() failed\n");
+			continue;
+		}
+
+		if (bind(sockv[*sockc], res->ai_addr, res->ai_addrlen) < 0) {
+			cause = "bind";
+			close(sockv[*sockc]);
+			continue;
+		}
+		(void) listen(sockv[*sockc], 32);
+
+		*sockc += 1;
+	}
+	if (*sockc == 0) {
+		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_establish: no sockets found: %s", cause);
+		freeaddrinfo(res0);
+		return 0;
+	}
+	freeaddrinfo(res0);
+	return 1;
+}
+
+/* return the address family for the socket */
+const char *
+iscsi_address_family(int fam)
+{
+	return (fam == AF_INET) ? "IPv4" : (fam == AF_INET6) ? "IPv6" : "[unknown type]";
+}
+
+/* wait for a connection to come in on a socket */
+int
+iscsi_waitfor_connection(iscsi_socket_t *sockv, int sockc, const char *cf, iscsi_socket_t *sock)
+{
+#ifdef HAVE_POLL
+	struct pollfd	socks[MAXSOCK];
+	int		i;
+
+	for (;;) {
+		for (i = 0 ; i < sockc ; i++) {
+			socks[i].fd = sockv[i];
+			socks[i].events = POLLIN;
+			socks[i].revents = 0;
+		}
+		switch(poll(socks, sockc, INFTIM)) {
+		case -1:
+			/* interrupted system call */
+			continue;
+		case 0:
+			/* timeout */
+			continue;
+		default:
+			for (i = 0 ; i < sockc ; i++) {
+				if (socks[i].revents & POLLIN) {
+					iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "connection %d selected\n", sockv[i]);
+					*sock = sockv[i];
+					return i;
+				}
+			}
+		}
+	}
+#else
+	fd_set		infds;
+	int		i;
+
+	for (;;) {
+		FD_ZERO(&infds);
+		for (i = 0 ; i < sockc ; i++) {
+			FD_SET(sockv[i], &infds);
+		}
+		iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "waiting for connection\n");
+		switch (select(32, &infds, NULL, NULL, NULL)) {
+		case -1:
+			/* interrupted system call */
+			continue;
+		case 0:
+			/* timeout */
+			continue;
+		default:
+			for (i = 0 ; i < sockc ; i++) {
+				if (FD_ISSET(sockv[i], &infds)) {
+					iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "connection %d selected\n", sockv[i]);
+					*sock = sockv[i];
+					return i;
+				}
+			}
+		}
+	}
+#endif
 }
 
 int 
