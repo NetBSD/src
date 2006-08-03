@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.132 2006/07/31 19:22:35 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.133 2006/08/03 12:24:57 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4205,4 +4205,17 @@ gnu/dist/postfix/util/sys_defs.h		patch
 	Update Postfix to version 2.2.11.
 	[ghen, ticket #1444]
 
+sys/dev/pci/pcidevs				1.813
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/viaide.c				1.32
+
+	Add support for nForce3 250 SATA2 to viaide(4) driver.
+	[xtraeme, ticket #1446]
+
+lib/libc/arch/i386/sys/__sigtramp2.S		1.2
+
+	Fix PR port-i386/34112 where a program could mysteriously exit on
+	return from a signal handler.
+	[jld, ticket #1447]
 
