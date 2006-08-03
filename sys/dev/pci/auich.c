@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.110 2006/08/01 18:31:53 bsh Exp $	*/
+/*	$NetBSD: auich.c,v 1.111 2006/08/03 03:01:39 bsh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.110 2006/08/01 18:31:53 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.111 2006/08/03 03:01:39 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,8 +377,7 @@ static const struct audio_format auich_modem_formats[AUICH_MODEM_NFORMATS] = {
 #define PCIID_NFORCE3		PCI_ID_CODE0(NVIDIA, NFORCE3_MCPT_AC)
 #define PCIID_NFORCE3_250	PCI_ID_CODE0(NVIDIA, NFORCE3_250_MCPT_AC)
 #define PCIID_NFORCE4		PCI_ID_CODE0(NVIDIA, NFORCE4_AC)
-#define	PCIID_NFORCE430_1	PCI_ID_CODE0(NVIDIA, NFORCE430_AC1) /* nForce410? */
-#define	PCIID_NFORCE430_2	PCI_ID_CODE0(NVIDIA, NFORCE430_AC2)
+#define	PCIID_NFORCE430 	PCI_ID_CODE0(NVIDIA, NFORCE430_AC)
 #define PCIID_AMD768		PCI_ID_CODE0(AMD, PBC768_AC)
 #define PCIID_AMD8111		PCI_ID_CODE0(AMD, PBC8111_AC)
 
@@ -409,8 +408,7 @@ static const struct auich_devtype auich_audio_devices[] = {
 	{ PCIID_NFORCE3, "nForce3 MCP-T AC-97 Audio",	"nForce3" },
 	{ PCIID_NFORCE3_250, "nForce3 250 MCP-T AC-97 Audio", "nForce3" },
 	{ PCIID_NFORCE4, "nForce4 AC-97 Audio",		"nForce4" },
-	{ PCIID_NFORCE430_1, "nForce430 (MCP51) AC-97 Audio", "nForce430" },
-	{ PCIID_NFORCE430_2, "nForce430 (MCP51) AC-97 Audio", "nForce430" },
+	{ PCIID_NFORCE430, "nForce430 (MCP51) AC-97 Audio", "nForce430" },
 	{ PCIID_AMD768,	"AMD768 AC-97 Audio",		"AMD768" },
 	{ PCIID_AMD8111,"AMD8111 AC-97 Audio",		"AMD8111" },
 	{ 0,		NULL,				NULL },
