@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.92 2006/08/03 22:03:18 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.93 2006/08/03 22:06:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.92 2006/08/03 22:03:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.93 2006/08/03 22:06:55 christos Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -753,7 +753,11 @@ again:
 				TTY_LOCK(tp);
 				/* check again for safety */
 				if (!ISSET(tp->t_state, TS_ISOPEN)) {
-					uip->
+					/*
+					 * adjust for data copied in but not
+					 * written
+					 */
+					uio->uio_resid += cc;
 					error = EIO;
 					goto out;
 				}
