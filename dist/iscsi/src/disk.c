@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.20 2006/08/03 20:21:59 agc Exp $ */
+/* $NetBSD: disk.c,v 1.21 2006/08/03 20:49:11 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -982,6 +982,15 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		(void) memset(data, 0x0, (unsigned) cdb[4]);	/* Clear allocated buffer */
 		if (cdb[1] & INQUIRY_EVPD_BIT) {
 			switch(cdb[2]) {
+			case INQUIRY_UNIT_SERIAL_NUMBER_VPD:
+				data[0] = DISK_PERIPHERAL_DEVICE;
+				data[1] = INQUIRY_DEVICE_IDENTIFICATION_VPD;
+				len = 16;
+				data[3] = len;
+				/* add target device's Unit Serial Number */
+				/* section 7.6.10 of SPC-3 says that if there is no serial number, use spaces */
+				strpadcpy(&data[4], len, " ", strlen(" "), ' ');
+				break;
 			case INQUIRY_DEVICE_IDENTIFICATION_VPD:
 				data[0] = DISK_PERIPHERAL_DEVICE;
 				data[1] = INQUIRY_DEVICE_IDENTIFICATION_VPD;
