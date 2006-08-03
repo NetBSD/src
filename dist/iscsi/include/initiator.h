@@ -116,11 +116,17 @@ typedef struct iscsi_target_t {
 
 DEFINE_ARRAY(strv_t, char *);
 
+enum {
+	ISCSI_IPv4 = AF_INET,
+	ISCSI_IPv6 = AF_INET6,
+	ISCSI_UNSPEC = PF_UNSPEC
+};
+
 /**********
  * Public *
  **********/
 
-int             initiator_init(const char *, const char *, int, int, int);
+int             initiator_init(const char *, int, const char *, int, int, int);
 int             initiator_info(char *, int, int);
 int             initiator_command(initiator_cmd_t *);
 int             initiator_enqueue(initiator_cmd_t *);

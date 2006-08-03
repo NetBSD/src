@@ -72,6 +72,7 @@ main(int argc, char **argv)
 	char			hostname[1024];
 	char		       *host;
 	char		       *user;
+	int			address_family;
 	int             	tgtlo = 0;
 	int             	tgthi = CONFIG_INITIATOR_NUM_TARGETS;
 	int             	target = -1;
@@ -89,10 +90,17 @@ main(int argc, char **argv)
 	(void) gethostname(host = hostname, sizeof(hostname));
 	digest_type = DigestNone;
 	auth_type = AuthNone;
+	address_family = ISCSI_UNSPEC;
 	mutual_auth = 0;
 
-	while ((i = getopt(argc, argv, "a:d:h:l:n:t:u:V")) != -1) {
+	while ((i = getopt(argc, argv, "46a:d:h:l:n:t:u:V")) != -1) {
 		switch(i) {
+		case '4':
+			address_family = ISCSI_IPv4;
+			break;
+		case '6':
+			address_family = ISCSI_IPv6;
+			break;
 		case 'a':
 			if (strcasecmp(optarg, "chap") == 0) {
 				auth_type = AuthCHAP;
@@ -152,7 +160,7 @@ main(int argc, char **argv)
 		tgthi = target + 1;
 	}
 	if (argc == 1) {
-		(void) fprintf(stderr, "usage: %s [-V] [-a auth-type] [-d digest-type] [-h hostname] [-l lun] [-n iterations] [-t target] [-u user]\n", *argv);
+		(void) fprintf(stderr, "usage: %s [-4] [-6] [-V] [-a auth-type] [-d digest-type] [-h hostname] [-l lun] [-n iterations] [-t target] [-u user]\n", *argv);
 		exit(EXIT_FAILURE);
 	}
 	for (j = 0; j < iterations; j++) {
@@ -165,7 +173,7 @@ main(int argc, char **argv)
 		sigaction(SIGPIPE, &act, NULL);
 
 		/* Initialize Initiator */
-		if (initiator_init(host, user, auth_type, mutual_auth, digest_type) == -1) {
+		if (initiator_init(host, address_family, user, auth_type, mutual_auth, digest_type) == -1) {
 			iscsi_trace_error(__FILE__, __LINE__, "initiator_init() failed\n");
 			return -1;
 		}

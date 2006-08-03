@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.19 2006/05/31 19:53:13 agc Exp $ */
+/* $NetBSD: disk.c,v 1.20 2006/08/03 20:21:59 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -126,14 +126,6 @@
 #include "defs.h"
 #include "storage.h"
 
-/*
- * Begin disk configuration. If we're operating in filesystem mode, then the
- * file /tmp/<targetname>_<iscsi port>_iscsi_disk_lun_x is created for each
- * lun x. You can create symbolic links in /tmp to point to devices in /dev.
- * For example, "ln -s /dev/sda /tmp/mytarget_3260_iscsi_disk_lun_0." If
- * we're operating in ramdisk mode, then each lun is its own ramdisk.
- */
-
 #define CONFIG_DISK_NUM_LUNS_DFLT           1
 #define CONFIG_DISK_BLOCK_LEN_DFLT          512
 #define CONFIG_DISK_NUM_BLOCKS_DFLT         204800
@@ -146,25 +138,28 @@
  * Globals
  */
 enum {
- 	ISCSI_RAMDISK =	0x01,
+	MAX_RESERVATIONS = 32,
+
 	ISCSI_FS_MMAP = 0x02,
 	ISCSI_FS =	0x03
 };
 
 #define MB(x)	((x) * 1024 * 1024)
 
+/* this struct describes an iscsi disk */
 typedef struct iscsi_disk_t {
-	int		 type;
-	uint8_t		*ramdisk[CONFIG_DISK_MAX_LUNS];
-	char		 filename[MAXPATHLEN];
-	uint8_t		 buffer[CONFIG_DISK_MAX_LUNS][MB(1)];
-	uint64_t	 blockc;
-	uint64_t	 blocklen;
-	uint64_t	 luns;
-	uint64_t	 size;
-	uuid_t		 uuid;
-	char		*uuid_string;
-	targv_t		*tv;
+	int		 type;					/* type of disk - fs/mmap and fs */
+	char		 filename[MAXPATHLEN];			/* filename for the disk itself */
+	uint8_t		 buffer[CONFIG_DISK_MAX_LUNS][MB(1)];	/* buffer for fs and fs/mmap options */
+	uint64_t	 blockc;				/* # of blocks */
+	uint64_t	 blocklen;				/* block size */
+	uint64_t	 luns;					/* # of luns */
+	uint64_t	 size;					/* size of complete disk */
+	uuid_t		 uuid;					/* disk's uuid */
+	char		*uuid_string;				/* uuid string */
+	targv_t		*tv;					/* the component devices and extents */
+	uint32_t	 resc;					/* # of reservation keys */
+	uint64_t	 reskeys[MAX_RESERVATIONS];		/* the reservation keys */
 } iscsi_disk_t;
 
 DEFINE_ARRAY(disks_t, iscsi_disk_t);
@@ -185,8 +180,8 @@ disk/extent code
  * Private Interface
  */
 
-static int      disk_read(target_session_t * , iscsi_scsi_cmd_args_t * , uint32_t , uint16_t , uint8_t );
-static int      disk_write(target_session_t * , iscsi_scsi_cmd_args_t * , uint8_t , uint32_t , uint32_t );
+static int      disk_read(target_session_t * , iscsi_scsi_cmd_args_t * , uint32_t , uint16_t , uint8_t);
+static int      disk_write(target_session_t * , iscsi_scsi_cmd_args_t * , uint8_t , uint32_t , uint32_t);
 
 /* return the de index and offset within the device for RAID0 */
 static int
@@ -334,7 +329,7 @@ extent_fsync_range(disc_extent_t *xp, int how, off_t from, off_t len)
 #endif
 }
 
-/* (recursively) lseek on the device's devices */
+/* (recursively) fsync_range on the device's devices */
 static int
 device_fsync_range(disc_device_t *dp, int how, off_t from, off_t len)
 {
@@ -902,30 +897,19 @@ device_init(globals_t *gp, targv_t *tvp, disc_target_t *tp)
 	      disks.v[disks.c].luns,
 	      (disks.v[disks.c].luns == 1) ? "" : "s",
 	      disks.v[disks.c].blockc, disks.v[disks.c].blocklen,
-	      (disks.v[disks.c].type == ISCSI_FS) ? "iscsi fs" :
-	      (disks.v[disks.c].type == ISCSI_FS_MMAP) ? "iscsi fs mmap" : "iscsi ramdisk");
+	      (disks.v[disks.c].type == ISCSI_FS) ? "iscsi fs" : "iscsi fs mmap");
 	for (i = 0; i < disks.v[disks.c].luns; i++) {
 		printf("DISK: LUN %d: ", i);
-
-		if (disks.v[disks.c].type == ISCSI_RAMDISK) {
-			if ((disks.v[disks.c].ramdisk[i] = iscsi_malloc((unsigned)disks.v[disks.c].size)) == NULL) {
-				iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc() failed\n");
-				return -1;
-			}
-			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "allocated %" PRIu64 " bytes at %p\n", disks.v[disks.c].size, disks.v[disks.c].ramdisk[i]);
-			printf("%" PRIu64 " MB ramdisk\n", disks.v[disks.c].size / MB(1));
-		} else {
-			(void) strlcpy(disks.v[disks.c].filename, disc_get_filename(&tp->de), sizeof(disks.v[disks.c].filename));
-			if (de_open(&tp->de, O_CREAT | O_RDWR, 0666) == -1) {
-				iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\"\n", disks.v[disks.c].filename);
-				return -1;
-			}
-			if (!allocate_space(tp)) {
-				iscsi_trace_error(__FILE__, __LINE__, "error allocating space for \"%s\"", tp->target);
-				return -1;
-			}
-			printf("%" PRIu64 " MB disk storage for \"%s\"\n", (de_getsize(&tp->de) / MB(1)), tp->target);
+		(void) strlcpy(disks.v[disks.c].filename, disc_get_filename(&tp->de), sizeof(disks.v[disks.c].filename));
+		if (de_open(&tp->de, O_CREAT | O_RDWR, 0666) == -1) {
+			iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\"\n", disks.v[disks.c].filename);
+			return -1;
 		}
+		if (!allocate_space(tp)) {
+			iscsi_trace_error(__FILE__, __LINE__, "error allocating space for \"%s\"", tp->target);
+			return -1;
+		}
+		printf("%" PRIu64 " MB disk storage for \"%s\"\n", (de_getsize(&tp->de) / MB(1)), tp->target);
 	}
 	return disks.c++;
 }
@@ -1234,14 +1218,6 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 int 
 device_shutdown(target_session_t *sess)
 {
-	int             i;
-
-	if (disks.v[sess->d].type == ISCSI_RAMDISK) {
-		for (i = 0; i < disks.v[sess->d].luns; i++) {
-			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "freeing ramdisk[%d] (%p)\n", i, disks.v[sess->d].ramdisk[i]);
-			iscsi_free(disks.v[sess->d].ramdisk[i]);
-		}
-	}
 	return 1;
 }
 
@@ -1263,9 +1239,6 @@ disk_write(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint8_t lun, uin
 	/* Assign ptr for write data */
 
 	switch(disks.v[sess->d].type) {
-	case ISCSI_RAMDISK:
-		ptr = disks.v[sess->d].ramdisk[lun] + (int) byte_offset;
-		break;
 	case ISCSI_FS:
 		RETURN_GREATER("num_bytes (FIX ME)", (unsigned) num_bytes, MB(1), NO_CLEANUP, -1);
 		ptr = disks.v[sess->d].buffer[lun];
@@ -1348,9 +1321,6 @@ disk_read(target_session_t * sess, iscsi_scsi_cmd_args_t * args, uint32_t lba, u
 		return -1;
 	}
 	switch (disks.v[sess->d].type) {
-	case ISCSI_RAMDISK:
-		ptr = disks.v[sess->d].ramdisk[lun] + (int)byte_offset;
-		break;
 	case ISCSI_FS:
 		RETURN_GREATER("num_bytes (FIX ME)", (unsigned) num_bytes, MB(1), NO_CLEANUP, -1);
 		ptr = disks.v[sess->d].buffer[lun];

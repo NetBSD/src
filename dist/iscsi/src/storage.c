@@ -1,4 +1,4 @@
-/* $NetBSD: storage.c,v 1.4 2006/03/20 20:45:07 agc Exp $ */
+/* $NetBSD: storage.c,v 1.5 2006/08/03 20:21:59 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -404,4 +404,3 @@ write_pid_file(const char *f)
 		fclose(fp);
 	}
 }
-

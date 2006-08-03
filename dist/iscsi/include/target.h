@@ -51,9 +51,13 @@
 enum {
 	MAX_TGT_NAME_SIZE = 512,
 	MAX_INITIATOR_ADDRESS_SIZE = 256,
+	MAX_CONFIG_FILE_NAME = 512,
 
-	ISCSI_IPv4 = 4,
-	ISCSI_IPv6 = 6
+	ISCSI_IPv4 = AF_INET,
+	ISCSI_IPv6 = AF_INET6,
+	ISCSI_UNSPEC = PF_UNSPEC,
+
+	MAXSOCK = 8
 };
 
 /* global variables, moved from target.c */
@@ -61,15 +65,20 @@ typedef struct globals_t {
 	char		targetname[MAX_TGT_NAME_SIZE];		/* name of target */
 	uint16_t	port;					/* target port */
 	iscsi_socket_t	sock;					/* socket on which it's listening */
+	int		sockc;					/* # of live sockets on which it's listening */
+	iscsi_socket_t	sockv[MAXSOCK];				/* sockets on which it's listening */
+	int		famv[MAXSOCK];				/* address families */
 	int      	state;					/* current state of target */
 	int		listener_pid;				/* PID on which it's listening */
 	volatile int    listener_listening;			/* whether a listener is listening */
 	char     	targetaddress[MAX_TGT_NAME_SIZE];	/* iSCSI TargetAddress set after iscsi_sock_accept() */
 	targv_t		*tv;					/* array of target devices */
-	int		address_family;				/* IP address family */
+	int		address_family;				/* global default IP address family */
 	int		max_sessions;				/* maximum number of sessions */
+	char		config_file[MAX_CONFIG_FILE_NAME];	/* config file name */
 } globals_t;
 
+/* session parameters */
 typedef struct target_session_t {
 	int             id;
 	int             d;
@@ -91,7 +100,7 @@ typedef struct target_session_t {
 	iscsi_sess_param_t sess_params;
 	char		initiator[MAX_INITIATOR_ADDRESS_SIZE];
 	int		address_family;
-}               target_session_t;
+} target_session_t;
 
 typedef struct target_cmd_t {
 	iscsi_scsi_cmd_args_t *scsi_cmd;

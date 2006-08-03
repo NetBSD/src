@@ -681,7 +681,7 @@ full_feature_phase(initiator_session_t * sess)
 }
 
 int 
-initiator_init(const char *hostname, const char *user, int auth_type, int mutual_auth, int digest_type)
+initiator_init(const char *hostname, int address_family, const char *user, int auth_type, int mutual_auth, int digest_type)
 {
 	int             i;
 	initiator_session_t *sess = NULL;
@@ -1269,30 +1269,17 @@ tx_worker_proc_i(void *arg)
 			ISCSI_LOCK(&me->work_mutex, return -1);
 
 			/*
-			 * The Rx thread will receive a response for the
-			 * command and execute the
-			 */
-			/*
-			 * callback.  We need to make sure the callback
-			 * function is not executed
-			 */
-			/*
-			 * before the Tx thread has completed sending the
-			 * command.  This is what
-			 */
-			/*
-			 * tx_done is used for.  The last step is to set
-			 * tx_done and signal the
-			 */
-			/*
-			 * Rx thread, which may be block on the condition.
-			 * NOP_OUT (without ping)
-			 */
-			/*
-			 * will have no response for the Rx thread to process
-			 * - so we execute
-			 */
-			/* the callback directly. */
+			 * The Rx thread will receive a response for
+			 * the command and execute the callback.  We
+			 * need to make sure the callback function is
+			 * not executed before the Tx thread has
+			 * completed sending the command.  This is
+			 * what tx_done is used for.  The last step is
+			 * to set tx_done and signal the Rx thread,
+			 * which may be block on the condition. 
+			 * NOP_OUT (without ping) will have no
+			 * response for the Rx thread to process - so
+			 * we execute the callback directly.  */
 
 			if ((cmd->type == ISCSI_NOP_OUT) && (((iscsi_nop_out_args_t *) (cmd->ptr))->tag == 0xffffffff)) {
 				iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "executing callback() function directly for NOP_OUT (no NOP_IN)\n");
@@ -1674,20 +1661,12 @@ login_phase_i(initiator_session_t * sess, char *text, int text_len)
 	do {
 
 		/*
-		 * Build login command.  Note that the <length> and <text>
-		 * fields may get
-		 */
-		/*
-		 * updated by login_response_i.  Such is the case when we
-		 * receive offers
-		 */
-		/*
-		 * from the target.  The new <length> and <text> fields will
-		 * represent
-		 */
-		/*
-		 * the response that we need to send to the target on the
-		 * next login.
+		 * Build login command.  Note that the <length> and
+		 * <text> fields may get updated by login_response_i. 
+		 * Such is the case when we receive offers from the
+		 * target.  The new <length> and <text> fields will
+		 * represent the response that we need to send to the
+		 * target on the next login.
 		 */
 
 		login_cmd->cont = 0;
@@ -2124,14 +2103,10 @@ nop_out_i(initiator_cmd_t * cmd)
 	if (nop_out->tag != 0xffffffff) {
 
 		/*
-		 * Insert cmd into the hash table, keyed by nop_out->tag.
-		 * Upon receipt of the
-		 */
-		/*
-		 * NOP_IN_T, the Rx thread will retreive the cmd ptr using
-		 * the tag from the
-		 */
-		/* NOP_IN_T PDU. */
+		 * Insert cmd into the hash table, keyed by
+		 * nop_out->tag.  Upon receipt of the NOP_IN_T, the Rx
+		 * thread will retreive the cmd ptr using the tag from
+		 * the NOP_IN_T PDU.  */
 
 		if (hash_insert(&g_tag_hash, cmd, nop_out->tag) != 0) {
 			iscsi_trace_error(__FILE__, __LINE__, "hash_insert() failed\n");
@@ -2148,18 +2123,12 @@ nop_out_i(initiator_cmd_t * cmd)
 		return -1;
 	}
 	/*
-	 * We need to make a copy of nop_out->length and save in the variable
-	 * length.  Otherwise,
-	 */
-	/*
-	 * we may get a seg fault - as if this is a NOP_OUT without ping, the
-	 * Tx thread will
-	 */
-	/*
-	 * issue the callback function immediately after we return - thereby
-	 * unallocating the
-	 */
-	/* NOP_OUT and initiator command structures. */
+	 * We need to make a copy of nop_out->length and save in the
+	 * variable length.  Otherwise, we may get a seg fault - as if
+	 * this is a NOP_OUT without ping, the Tx thread will issue
+	 * the callback function immediately after we return - thereby
+	 * de-allocating the NOP_OUT and initiator command structures. 
+	 * */
 
 	if ((rc = iscsi_sock_send_header_and_data(sess->sock, header, ISCSI_HEADER_LEN, nop_out->data,
 				 length, 0)) != ISCSI_HEADER_LEN + length) {
@@ -2250,10 +2219,9 @@ scsi_command_i(initiator_cmd_t * cmd)
 		goto error;
 	}
 	/*
-	 * If we're sending any immediate data, we need to make a new iovec
-	 * that
-	 */
-	/* contains only the immediata data (a subset of the original iovec). */
+	 * If we're sending any immediate data, we need to make a new
+	 * iovec that contains only the immediata data (a subset of
+	 * the original iovec).  */
 	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "sending command PDU with %u bytes immediate data\n", scsi_cmd->length);
 	if (scsi_cmd->length && sess->sess_params.immediate_data) {
 		if ((sg_copy = iscsi_malloc_atomic(sg_len * sizeof(struct iovec))) == NULL) {
@@ -2304,12 +2272,9 @@ scsi_command_i(initiator_cmd_t * cmd)
 	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "command PDU sent with %u bytes immediate data (%u bytes AHS)\n", scsi_cmd->length, scsi_cmd->ahs_len);
 
 	/*
-	 * Send data PDUS if 1) we're not in R2T mode and 2) we haven't sent
-	 * everything as immediate
-	 */
-	/*
-	 * data and 3) we have not reached the first burst when sending
-	 * immediate data
+	 * Send data PDUS if 1) we're not in R2T mode and 2) we
+	 * haven't sent everything as immediate data and 3) we have
+	 * not reached the first burst when sending immediate data
 	 */
 	if (scsi_cmd->output
 	    && (!sess->sess_params.initial_r2t)
@@ -2658,12 +2623,9 @@ scsi_r2t_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *header)
 	int             sg_len, sg_len_copy, sg_len_which;
 	int             fragment_flag;
 
-	/* Make sure an initiator_cmd_t was specified, that it has a callback */
-	/*
-	 * function specified and that it also has a iscsi_scsi_cmd_args_t
-	 * associated
-	 */
-	/* with it. */
+	/* Make sure an initiator_cmd_t was specified, that it has a
+	 * callback function specified and that it also has a
+	 * iscsi_scsi_cmd_args_t associated with it.  */
 
 	if (cmd) {
 		if ((scsi_cmd = (iscsi_scsi_cmd_args_t *) cmd->ptr) == NULL) {
@@ -2799,12 +2761,9 @@ scsi_response_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *head
 	iscsi_scsi_cmd_args_t *scsi_cmd;
 	iscsi_scsi_rsp_t scsi_rsp;
 
-	/* Make sure an initiator_cmd_t was specified, that it has a callback */
-	/*
-	 * function specified and that it also has a iscsi_scsi_cmd_args_t
-	 * associated
-	 */
-	/* with it. */
+	/* Make sure an initiator_cmd_t was specified, that it has a
+	 * callback function specified and that it also has a
+	 * iscsi_scsi_cmd_args_t associated with it.  */
 
 	if (cmd) {
 		if ((scsi_cmd = (iscsi_scsi_cmd_args_t *) cmd->ptr) == NULL) {
@@ -2820,10 +2779,8 @@ scsi_response_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *head
 	}
 
 	/*
-	 * Read SCSI response and check return args. Those marked "FIX ME"
-	 * are not
-	 */
-	/* yet implemented. */
+	 * Read SCSI response and check return args.  Those marked
+	 * "FIX ME" are not yet implemented.  */
 
 	if (iscsi_scsi_rsp_decap(header, &scsi_rsp) != 0) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_scsi_rsp_decap() failed\n");
@@ -2848,9 +2805,7 @@ scsi_response_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *head
 	}
 	/*
 	 * Make sure all data was successfully transferred if command
-	 * completed successfully,
-	 */
-	/* otherwise read sense data. */
+	 * completed successfully, otherwise read sense data.  */
 
 	if (scsi_rsp.status == 0) {
 		if (scsi_cmd->output) {
@@ -2917,12 +2872,9 @@ scsi_read_data_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *hea
 
 	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "processing read data\n");
 
-	/* Make sure an initiator_cmd_t was specified, that it has a callback */
-	/*
-	 * function specified and that it also has a iscsi_scsi_cmd_args_t
-	 * associated
-	 */
-	/* with it. */
+	/* Make sure an initiator_cmd_t was specified, that it has a
+	 * callback function specified and that it also has a
+	 * iscsi_scsi_cmd_args_t associated with it.  */
 
 	if (cmd) {
 		if (cmd->type != ISCSI_SCSI_CMD) {
