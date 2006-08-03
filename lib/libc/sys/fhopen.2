@@ -1,4 +1,4 @@
-.\"	$NetBSD: fhopen.2,v 1.14 2006/07/31 16:34:42 martin Exp $
+.\"	$NetBSD: fhopen.2,v 1.15 2006/08/03 19:17:49 wiz Exp $
 .\"
 .\" Copyright (c) 1999 National Aeronautics & Space Administration
 .\" All rights reserved.
@@ -55,8 +55,8 @@
 .Fn fhstatvfs1 "const void *fhp" "size_t fh_size" "struct statvfs *buf" "int flags"
 .Sh DESCRIPTION
 These functions provide a means to access a file given the opaque file handle
-.Fa fhp 
-and the size 
+.Fa fhp
+and the size
 .Fa fh_size
 of the opaque object as returned by
 .Xr getfh 2 .
