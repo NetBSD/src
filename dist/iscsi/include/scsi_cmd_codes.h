@@ -1,4 +1,4 @@
-/* $NetBSD: scsi_cmd_codes.h,v 1.8 2006/05/31 19:53:13 agc Exp $ */
+/* $NetBSD: scsi_cmd_codes.h,v 1.9 2006/08/03 20:49:11 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -70,6 +70,7 @@ enum {
 
 	INQUIRY_EVPD_BIT = 0x01,
 
+	INQUIRY_UNIT_SERIAL_NUMBER_VPD = 0x80,
 	INQUIRY_DEVICE_IDENTIFICATION_VPD = 0x83,
 	INQUIRY_SUPPORTED_VPD_PAGES = 0x0,
 		INQUIRY_DEVICE_PIV = 0x1,
