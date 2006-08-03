@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.35 2006/07/27 20:54:42 dogcow Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.36 2006/08/03 17:38:26 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.35 2006/07/27 20:54:42 dogcow Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.36 2006/08/03 17:38:26 tron Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -426,7 +426,6 @@ addgroup(StringList *sl, char *grp)
 		free(grp);
 		return 0;
 	}
-printf("%s, %d: add %s\n", __FILE__, __LINE__, grp);
 	if (sl_add(sl, grp) == -1) {
 		free(grp);
 		return 0;
@@ -530,7 +529,6 @@ in_find(StringList *sl, char *grp, const char *host, const char *user,
 		free(grp);
 		return 0;
 	}
-printf("%s, %d: add %s\n", __FILE__, __LINE__, grp);
 	if (sl_add(sl, grp) == -1) {
 		free(grp);
 		return 0;
