@@ -1,4 +1,4 @@
-/* $NetBSD: iscsi-target.c,v 1.10 2006/05/27 21:21:04 agc Exp $ */
+/* $NetBSD: iscsi-target.c,v 1.11 2006/08/03 20:21:59 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -64,7 +64,6 @@ static globals_t	g;
 int
 main(int argc, char **argv)
 {
-	const char	*cf;
 	targv_t		tv;
 	devv_t		dv;
 	extv_t		ev;
@@ -81,10 +80,10 @@ main(int argc, char **argv)
 	(void) strlcpy(TargetName, DEFAULT_TARGET_NAME, sizeof(TargetName));
 	detach_me_harder = 1;
 	g.port = ISCSI_PORT;
-	g.address_family = ISCSI_IPv4;
+	g.address_family = ISCSI_UNSPEC;
 	g.max_sessions = DEFAULT_TARGET_MAX_SESSIONS;
 
-	cf = _PATH_ISCSI_TARGETS;
+	(void) strlcpy(g.config_file, _PATH_ISCSI_TARGETS, sizeof(g.config_file));
 
 	while ((i = getopt(argc, argv, "46b:Df:p:s:t:Vv:")) != -1) {
 		switch (i) {
@@ -101,7 +100,7 @@ main(int argc, char **argv)
 			detach_me_harder = 0;
 			break;
 		case 'f':
-			cf = optarg;
+			(void) strlcpy(g.config_file, optarg, sizeof(g.config_file));
 			break;
 		case 'p':
 			g.port = (uint16_t) atoi(optarg);
@@ -132,8 +131,8 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (!read_conf_file(cf, &tv, &dv, &ev)) {
-		(void) fprintf(stderr, "Error: can't open `%s'\n", cf);
+	if (!read_conf_file(g.config_file, &tv, &dv, &ev)) {
+		(void) fprintf(stderr, "Error: can't open `%s'\n", g.config_file);
 		return EXIT_FAILURE;
 	}
 

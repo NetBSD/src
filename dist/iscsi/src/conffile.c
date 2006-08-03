@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.c,v 1.3 2006/05/13 22:50:24 christos Exp $ */
+/* $NetBSD: conffile.c,v 1.4 2006/08/03 20:21:59 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -29,6 +29,7 @@
  */
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/stat.h>
 
 #include <ctype.h>
 #include <errno.h>

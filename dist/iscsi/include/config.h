@@ -34,6 +34,12 @@
 /* Define to 1 if you have the `fsync_range' function. */
 #define HAVE_FSYNC_RANGE 1
 
+/* Define to 1 if you have the `getaddrinfo' function. */
+#define HAVE_GETADDRINFO 1
+
+/* Define to 1 if you have the `getnameinfo' function. */
+#define HAVE_GETNAMEINFO 1
+
 /* Define to 1 if you have the `htobe64' function. */
 /* #undef HAVE_HTOBE64 */
 
@@ -69,6 +75,12 @@
 
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 #define HAVE_NETINET_TCP_H 1
+
+/* Define to 1 if you have the `poll' function. */
+#define HAVE_POLL 1
+
+/* Define to 1 if you have the <poll.h> header file. */
+#define HAVE_POLL_H 1
 
 /* Define to 1 if you have the <pthread.h> header file. */
 #define HAVE_PTHREAD_H 1
@@ -123,6 +135,9 @@
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #define HAVE_SYS_PARAM_H 1
+
+/* Define to 1 if you have the <sys/select.h> header file. */
+#define HAVE_SYS_SELECT_H 1
 
 /* Define to 1 if you have the <sys/socket.h> header file. */
 #define HAVE_SYS_SOCKET_H 1
@@ -179,13 +194,13 @@
 #define PACKAGE_NAME "netbsd-iscsi"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "netbsd-iscsi 20060529"
+#define PACKAGE_STRING "netbsd-iscsi 20060727"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "netbsd-iscsi"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "20060529"
+#define PACKAGE_VERSION "20060727"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
