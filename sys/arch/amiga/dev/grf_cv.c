@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.40 2005/12/24 20:06:47 perry Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.41 2006/08/03 20:24:57 mhitch Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.40 2005/12/24 20:06:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.41 2006/08/03 20:24:57 mhitch Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0
@@ -1852,7 +1852,7 @@ cv_setup_hwc(struct grf_softc *gp)
 #else
 	/* do it in assembler, the above does't seem to work */
 	__asm volatile ("moveb #0x45, %1@(0x3d4); \
-		moveb %1@(0x3d5),%0" : "=r" (test) : "a" (ba));
+		moveb %1@(0x3d5),%0" : "=d" (test) : "a" (ba));
 #endif
 
 	WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
@@ -1867,7 +1867,7 @@ cv_setup_hwc(struct grf_softc *gp)
 #else
 	/* do it in assembler, the above does't seem to work */
 	__asm volatile ("moveb #0x45, %1@(0x3d4); \
-		moveb %1@(0x3d5),%0" : "=r" (test) : "a" (ba));
+		moveb %1@(0x3d5),%0" : "=d" (test) : "a" (ba));
 #endif
 	switch (gp->g_display.gd_planes) {
 	    case 8:
