@@ -32,7 +32,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.16 2005/08/11 17:13:21 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.17 2006/08/03 20:17:43 christos Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -77,6 +77,7 @@ int quiet=0;
 int nowait=0;
 
 static void usage PROTO ((void));
+static void limit_interval PROTO((struct client_state *));
 
 void do_release(struct client_state *);
 
@@ -1373,6 +1374,18 @@ void dhcpnak (packet)
 	state_init (client);
 }
 
+static void limit_interval (client)
+	struct client_state *client;
+{
+	if (client -> interval <= client -> config -> backoff_cutoff)
+		return;
+
+	client -> interval = client -> config -> backoff_cutoff / 2;
+	if (client -> config -> backoff_cutoff)
+		client -> interval += (random () >> 2) %
+		    client -> config -> backoff_cutoff;
+}
+
 /* Send out a DHCPDISCOVER packet, and set a timeout to send out another
    one after the right interval has expired.  If we don't get an offer by
    the time we reach the panic interval, call the panic function. */
@@ -1439,12 +1452,7 @@ void send_discover (cpp)
 					       (2 * client -> interval));
 
 		/* Don't backoff past cutoff. */
-		if (client -> interval >
-		    client -> config -> backoff_cutoff)
-			client -> interval =
-				((client -> config -> backoff_cutoff / 2)
-				 + ((random () >> 2) %
-				    client -> config -> backoff_cutoff));
+		limit_interval (client);
 	} else if (!client -> interval)
 		client -> interval = client -> config -> initial_interval;
 		
@@ -1669,12 +1677,7 @@ void send_request (cpp)
 	}
 	
 	/* Don't backoff past cutoff. */
-	if (client -> interval >
-	    client -> config -> backoff_cutoff)
-		client -> interval =
-			((client -> config -> backoff_cutoff / 2)
-			 + ((random () >> 2) %
-					client -> config -> backoff_cutoff));
+	limit_interval (client);
 
 	/* If the backoff would take us to the expiry time, just set the
 	   timeout to the expiry time. */
