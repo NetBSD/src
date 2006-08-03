@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.h,v 1.2 2006/03/20 20:25:42 agc Exp $ */
+/* $NetBSD: conffile.h,v 1.3 2006/08/03 20:21:59 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -33,6 +33,9 @@
 /* split routines */
 
 #include <sys/param.h>
+
+#include <stdio.h>
+#include <time.h>
 
 #include "defs.h"
 
