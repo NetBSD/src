@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.33 2006/07/31 12:36:19 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.34 2006/08/03 12:17:28 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.35 2006/07/31 12:35:22 tron Exp
+ *	NetBSD: pcidevs,v 1.701.2.36 2006/08/03 12:10:22 tron Exp
  */
 
 /*
@@ -8048,6 +8048,10 @@ const struct pci_product pci_products[] = {
 	    "nForce3 250 PCI-PCI bridge",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA2,
+	    "nForce3 250 Serial ATA Controller",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_ALADDINTNT2,
 	    "Aladdin TNT2",
 	},
@@ -10876,4 +10880,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2136;
+const int pci_nproducts = 2137;
