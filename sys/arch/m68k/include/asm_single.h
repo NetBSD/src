@@ -1,4 +1,4 @@
-/*	$NetBSD: asm_single.h,v 1.7 2006/06/27 09:22:30 tsutsui Exp $	*/
+/*	$NetBSD: asm_single.h,v 1.8 2006/08/03 20:32:07 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -42,34 +42,34 @@
 
 #define single_inst_bset_b(var, bit)	\
 	__asm volatile ("orb %1,%0"	\
-		: "=m" (var)		\
-		: "di" ((u_char)bit), "0" (var))
+		: "+m" (var)		\
+		: "di" ((u_char)bit))
 
 #define single_inst_bclr_b(var, bit)	\
 	__asm volatile ("andb %1,%0"	\
-		: "=m" (var)		\
-		: "di" ((u_char)~(bit)), "0" (var))
+		: "+m" (var)		\
+		: "di" ((u_char)~(bit)))
 
 
 #define single_inst_bset_w(var, bit)	\
 	__asm volatile ("orw %1,%0"	\
-		: "=m" (var)		\
-		: "di" ((u_short)bit), "0" (var))
+		: "+m" (var)		\
+		: "di" ((u_short)bit))
 
 #define single_inst_bclr_w(var, bit)	\
 	__asm volatile ("andw %1,%0"	\
-		: "=m" (var)		\
-		: "di" ((u_short)~(bit)), "0" (var))
+		: "+m" (var)		\
+		: "di" ((u_short)~(bit)))
 
 
 #define single_inst_bset_l(var, bit)	\
 	__asm volatile ("orl %1,%0"	\
-		: "=m" (var)		\
-		: "di" ((u_long)bit), "0" (var))
+		: "+m" (var)		\
+		: "di" ((u_long)bit))
 
 #define single_inst_bclr_l(var, bit)	\
 	__asm volatile ("andl %1,%0"	\
-		: "=m" (var)		\
-		: "di" ((u_long)~(bit)), "0" (var))
+		: "+m" (var)		\
+		: "di" ((u_long)~(bit)))
 
 #endif /* _M68K_ASM_SINGLE_H */
