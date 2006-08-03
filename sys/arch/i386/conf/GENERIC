@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.770 2006/08/02 16:24:29 reed Exp $
+# $NetBSD: GENERIC,v 1.771 2006/08/03 00:19:21 hubertf Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.770 $"
+#ident 		"GENERIC-$Revision: 1.771 $"
 
 maxusers	32		# estimated number of users
 
@@ -1290,6 +1290,7 @@ joy*	at isapnp?			# Game ports (usually on audio cards)
 
 # PCI joysticks
 joy*	at pci?				# Game ports (usually on audio cards)
+#joy*	at eap?				# See CAVEATS in eap(4) before enabling
 joy*	at eso?				# ESS Solo-1 on-board joystick
 
 # ISA joysticks. Probe is a little strange; add only if you have one.
