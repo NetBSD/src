@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.813 2006/08/01 20:37:43 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.814 2006/08/03 03:06:32 bsh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.813 2006/08/01 20:37:02 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.814 2006/08/03 03:01:39 bsh Exp
  */
 
 /*
@@ -2648,8 +2648,8 @@
 #define	PCI_PRODUCT_NVIDIA_NFORCE430_SATA2	0x0267		/* nForce430 Serial SATA Controller */
 #define	PCI_PRODUCT_NVIDIA_NFORCE430_LAN1	0x0268		/* nForce430 Gigabit Ethernet Controller */
 #define	PCI_PRODUCT_NVIDIA_NFORCE430_LAN2	0x0269		/* nForce430 Gigabit Ethernet Controller */
-#define	PCI_PRODUCT_NVIDIA_NFORCE430_AC1	0x026b		/* nForce430 AC-97 */
-#define	PCI_PRODUCT_NVIDIA_NFORCE430_AC2	0x026c		/* nForce430 AC-97 */
+#define	PCI_PRODUCT_NVIDIA_NFORCE430_AC	0x026b		/* nForce430 AC-97 Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_NFORCE430_HDA	0x026c		/* nForce430 High Definition Audio Controller */
 #define	PCI_PRODUCT_NVIDIA_NFORCE430_OHCI	0x026d		/* nForce430 USB Controller */
 #define	PCI_PRODUCT_NVIDIA_NFORCE430_EHCI	0x026e		/* nForce430 USB2 Controller */
 #define	PCI_PRODUCT_NVIDIA_GF4_TI_4800	0x0280		/* GeForce4 Ti 4800 */
