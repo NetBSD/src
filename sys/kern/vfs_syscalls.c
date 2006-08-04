@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.265 2006/08/04 16:29:51 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.266 2006/08/04 17:07:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.265 2006/08/04 16:29:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.266 2006/08/04 17:07:32 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1701,7 +1701,7 @@ int
 sys___fhstatvfs140(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___fhstatvfs140_args /* {
-		syscallarg(const fhandle_t *) fhp;
+		syscallarg(const void *) fhp;
 		syscallarg(size_t) fh_size;
 		syscallarg(struct statvfs *) buf;
 		syscallarg(int)	flags;
