@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.31 2006/08/04 10:10:49 martin Exp $
+.\"	$NetBSD: pppoe.4,v 1.32 2006/08/04 17:08:52 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -298,7 +298,7 @@ interfaces to be created and configured for incoming connections by
 setting the
 .Dq Li link0
 flag with
-.Xr ifconfnig 8 .
+.Xr ifconfig 8 .
 .Sh SEE ALSO
 .Xr ifwatchd 8 ,
 .Xr pppoectl 8
@@ -334,6 +334,6 @@ it is important to specify the proper
 to
 .Xr ifconfig 8 ,
 in most setups
-.Dq Li  0xffffffff .
+.Dq Li 0xffffffff .
 If the netmask is unspecified, it will be set to 8 when 0.0.0.0 is
 configured to the interface, and it will persist after negotiation.
