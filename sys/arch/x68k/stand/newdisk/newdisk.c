@@ -55,10 +55,10 @@ const char copyright[] = "NetBSD/x68k SCSI Primary Boot. ";
 
 int verbose = 0, dry_run = 0, force = 0, check_only = 0, mark_only = 0;
 
-volatile void usage __P((void));
+void usage __P((void)) __attribute__((__noreturn__));
 int main __P((int, char *[]));
 
-volatile void
+void
 usage(void)
 {
     fprintf(stderr,
