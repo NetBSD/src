@@ -1,4 +1,4 @@
-.\"	$NetBSD: hostapd.conf.5,v 1.2 2006/08/04 20:32:47 rpaulo Exp $
+.\"	$NetBSD: hostapd.conf.5,v 1.3 2006/08/04 20:38:52 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Rui Paulo
 .\" Copyright (c) 2005 Sam Leffler <sam@errno.com>
@@ -44,7 +44,7 @@ is an authenticator for IEEE 802.11 networks.
 It provides full support for WPA/IEEE 802.11i and
 can also act as an IEEE 802.1X Authenticator with a suitable
 backend Authentication Server (typically
-.Tn FreeRADIUS ).
+.Tn FreeRADIUS ) .
 .Pp
 The configuration file consists of global parameters and domain
 specific configuration:
@@ -109,7 +109,8 @@ Rekeying period in seconds.
 .It Va eapol_key_index_workaround
 EAPOL-Key index workaround (set bit7) for WinXP Supplicant.
 .It Va eap_reauth_period
-EAP reauthentication period in seconds. To disable reauthentication,
+EAP reauthentication period in seconds.
+To disable reauthentication,
 use
 .Dq 0 .
 .\" XXX not yet
@@ -129,11 +130,11 @@ The following parameters are recognized:
 The own IP address of the access point (used as NAS-IP-Address).
 .It Va nas_identifier
 Optional NAS-Identifier string for RADIUS messages.
-.It Va auth_server_addr, auth_server_port, auth_server_shared_secret
+.It Va auth_server_addr , auth_server_port , auth_server_shared_secret
 RADIUS authentication server parameters.
 Can be defined twice for secondary servers to be used if primary one
 does not reply to RADIUS packets.
-.It Va acct_server_addr, acct_server_port, acct_server_shared_secret
+.It Va acct_server_addr , acct_server_port , acct_server_shared_secret
 RADIUS accounting server parameters.
 Can be defined twice for secondary servers to be used if primary one
 does not reply to RADIUS packets.
@@ -164,21 +165,22 @@ The following parameters are recognized:
 Enable WPA.
 Setting this variable configures the AP to require WPA (either
 WPA-PSK or WPA-RADIUS/EAP based on other configuration).
-.It Va wpa_psk, wpa_passphrase
+.It Va wpa_psk , wpa_passphrase
 WPA pre-shared keys for WPA-PSK.
-This can be either entered as a 256-bit  secret in hex format (64 hex
+This can be either entered as a 256-bit secret in hex format (64 hex
 digits), wpa_psk, or as an ASCII passphrase (8..63 characters) that
 will be converted to PSK.
 This conversion uses SSID so the PSK changes when ASCII passphrase is
 used and the SSID is changed.
 .It Va wpa_psk_file
-Optionally, WPA PSKs can be read from a separate text file (containing
+Optionally, WPA PSKs can be read from a separate text file (containing a
 list of (PSK,MAC address) pairs.
 .It Va wpa_key_mgmt
 Set of accepted key management algorithms (WPA-PSK, WPA-EAP, or both).
 .It Va wpa_pairwise
 Set of accepted cipher suites (encryption algorithms) for pairwise keys
-(unicast packets). See the example file for more information.
+(unicast packets).
+See the example file for more information.
 .It Va wpa_group_rekey
 Time interval for rekeying GTK (broadcast/multicast encryption keys) in
 seconds.
