@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.30 2006/04/28 22:13:08 wiz Exp $
+.\"	$NetBSD: pppoe.4,v 1.31 2006/08/04 10:10:49 martin Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 28, 2006
+.Dd July 4, 2006
 .Dt PPPOE 4
 .Os
 .Sh NAME
@@ -285,6 +285,20 @@ driver with this option set will send a PADT packet (request to
 terminate the session).
 The peer will immediately disconnect
 the orphaned session and allow a new one to be established.
+.Pp
+To enable
+.Nm
+server support in the kernel, use
+.Pp
+.Dl options PPPOE_SERVER
+.Pp
+As described above, this allows
+.Nm
+interfaces to be created and configured for incoming connections by
+setting the
+.Dq Li link0
+flag with
+.Xr ifconfnig 8 .
 .Sh SEE ALSO
 .Xr ifwatchd 8 ,
 .Xr pppoectl 8
@@ -314,9 +328,12 @@ the problems described above.
 This implementation allows MTU values as large as possible with the actual
 MTU of the used Ethernet interface.
 .Sh BUGS
-It is important to specify
-.Dq Li netmask 0xffffffff
+When using the wildcard address 0.0.0.0 (as described above)
+it is important to specify the proper
+.Dq Li netmask
 to
-.Xr ifconfig 8 .
+.Xr ifconfig 8 ,
+in most setups
+.Dq Li  0xffffffff .
 If the netmask is unspecified, it will be set to 8 when 0.0.0.0 is
 configured to the interface, and it will persist after negotiation.
