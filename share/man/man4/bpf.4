@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.37 2006/02/04 02:20:32 rpaulo Exp $
+.\"	$NetBSD: bpf.4,v 1.38 2006/08/04 23:22:30 martin Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -118,7 +118,7 @@ with
 .Dv BIOCSETIF .
 If the requested buffer size cannot be accommodated, the closest
 allowable size will be set and returned in the argument.
-A read call will result in EIO if it is passed a buffer that is not this size.
+A read call will result in EINVAL if it is passed a buffer that is not this size.
 .It Dv BIOCGDLT (u_int)
 Returns the type of the data link layer underlying the attached interface.
 .Er EINVAL
