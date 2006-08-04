@@ -1,4 +1,4 @@
-/*	$NetBSD: binpatch.c,v 1.3 1999/04/06 19:34:31 pk Exp $	*/
+/*	$NetBSD: binpatch.c,v 1.4 2006/08/04 01:48:02 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,11 +33,12 @@
 #include <sys/types.h>
 #include <a.out.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 extern char *optarg;
 extern int optind;
 
-volatile void error ();
+void error (char *) __attribute__((__noreturn__));
 
 int test = 1;
 int testbss;
@@ -233,7 +234,7 @@ main(argc, argv)
 
 
 
-volatile void error (str)
+void error (str)
      char *str;
 {
   fprintf (stderr, "%s\n", str);
