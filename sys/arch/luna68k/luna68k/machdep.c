@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.44 2005/12/24 22:45:35 perry Exp $ */
+/* $NetBSD: machdep.c,v 1.45 2006/08/04 02:26:49 mhitch Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2005/12/24 22:45:35 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2006/08/04 02:26:49 mhitch Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -226,7 +226,7 @@ consinit()
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 	{
-		extern int end;
+		extern char end[];
 		extern int *esym;
 
 		ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
