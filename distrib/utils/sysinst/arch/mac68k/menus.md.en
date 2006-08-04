@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.19 2003/06/11 21:35:43 dsl Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.20 2006/08/04 05:30:13 mhitch Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -95,13 +95,13 @@ menu editparttable, title  "Choose your partition", exit, y=15;
 			memcpy (&map.blk[k], &map.blk[j],
 			    sizeof(struct apple_part_map_entry));
 			free_size = map.blk[j].pmPartBlkCnt - size;
-			strcpy (map.blk[j].pmPartType, "Apple_Scratch");
+			strcpy ((char *)map.blk[j].pmPartType, "Apple_Scratch");
 			map.blk[j].pmPartBlkCnt = size;
 			map.blk[j].pmDataCnt = size;
 			bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
 			bzb->magic = 0;
 			bzb->mount_point[0] = '\0';
-			strcpy (map.blk[k].pmPartType, "Apple_Free");
+			strcpy ((char *)map.blk[k].pmPartType, "Apple_Free");
 			map.blk[k].pmPyPartStart += size;
 			if ((map.blk[k].pmPyPartStart + free_size) > dlsize)
 			    map.blk[k].pmPartBlkCnt = 
@@ -168,8 +168,8 @@ menu chooseid, title  "Partition Type?";
 		reset_part_flags(&map.blk[j]);
 		bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
 		bzb->magic = APPLE_BZB_MAGIC;
-		strcpy (map.blk[j].pmPartName, "NetBSD Root");
-		strcpy (map.blk[j].pmPartType, "Apple_Unix_SVR2");
+		strcpy ((char *)map.blk[j].pmPartName, "NetBSD Root");
+		strcpy ((char *)map.blk[j].pmPartType, "Apple_Unix_SVR2");
 		bzb->type = APPLE_BZB_TYPEFS;
 		bzb->flags.root = 1;
 		/*
@@ -185,9 +185,9 @@ menu chooseid, title  "Partition Type?";
 			bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
 			if (bzb->type == APPLE_BZB_TYPEFS && bzb->flags.root) {
 			   if (map.root_cnt++ == 0) 
-				strcpy (bzb->mount_point, "/");
+				strcpy ((char *)bzb->mount_point, "/");
 			   else
-				strcpy (bzb->mount_point, "/altroot");
+				strcpy ((char *)bzb->mount_point, "/altroot");
 			}
 		    }
 		} };
@@ -199,8 +199,8 @@ menu chooseid, title  "Partition Type?";
 		reset_part_flags(&map.blk[j]);
 		bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
 		bzb->magic = APPLE_BZB_MAGIC;
-		strcpy (map.blk[j].pmPartName, "NetBSD SWAP");
-		strcpy (map.blk[j].pmPartType, "Apple_Unix_SVR2");
+		strcpy ((char *)map.blk[j].pmPartName, "NetBSD SWAP");
+		strcpy ((char *)map.blk[j].pmPartType, "Apple_Unix_SVR2");
 		bzb->type = APPLE_BZB_TYPESWAP; };
 	option "NetBSD Usr", exit, action {
 		int j;
@@ -210,12 +210,12 @@ menu chooseid, title  "Partition Type?";
 		reset_part_flags(&map.blk[j]);
 		bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
 		bzb->magic = APPLE_BZB_MAGIC;
-		strcpy (map.blk[j].pmPartName, "NetBSD Usr");
-		strcpy (map.blk[j].pmPartType, "Apple_Unix_SVR2");
+		strcpy ((char *)map.blk[j].pmPartName, "NetBSD Usr");
+		strcpy ((char *)map.blk[j].pmPartType, "Apple_Unix_SVR2");
 		bzb->type = APPLE_BZB_TYPEFS;
 		bzb->flags.usr = 1;
 		if (map.usr_cnt++ == 0)
-		    strcpy (bzb->mount_point, "/usr");
+		    strcpy ((char *)bzb->mount_point, "/usr");
 		};
 	option "NetBSD Root&Usr", exit, action {
 		int j;
@@ -225,16 +225,16 @@ menu chooseid, title  "Partition Type?";
 		reset_part_flags(&map.blk[j]);
 		bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
 		bzb->magic = APPLE_BZB_MAGIC;
-		strcpy (map.blk[j].pmPartName, "NetBSD Root & Usr");
-		strcpy (map.blk[j].pmPartType, "Apple_Unix_SVR2");
+		strcpy ((char *)map.blk[j].pmPartName, "NetBSD Root & Usr");
+		strcpy ((char *)map.blk[j].pmPartType, "Apple_Unix_SVR2");
 		bzb->type = APPLE_BZB_TYPEFS;
 		bzb->flags.root = 1;
 		bzb->flags.usr = 1;
 		if (map.root_cnt++ == 0)
-		    strcpy (bzb->mount_point, "/");
+		    strcpy ((char *)bzb->mount_point, "/");
 		else {
                     if (map.usr_cnt++ == 0)
-		        strcpy (bzb->mount_point, "/usr");
+		        strcpy ((char *)bzb->mount_point, "/usr");
 		} };
 	option "MacOS HFS", exit, action {
 		int j;
@@ -245,8 +245,8 @@ menu chooseid, title  "Partition Type?";
 		bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
 		bzb->magic = 0;
 		bzb->mount_point[0] = '\0';
-		strcpy (map.blk[j].pmPartName, "untitled (HFS)");
-		strcpy (map.blk[j].pmPartType, "Apple_HFS"); };
+		strcpy ((char *)map.blk[j].pmPartName, "untitled (HFS)");
+		strcpy ((char *)map.blk[j].pmPartType, "Apple_HFS"); };
 	option "Scratch", exit, action {
 		int j;
 		EBZB *bzb;
@@ -256,8 +256,8 @@ menu chooseid, title  "Partition Type?";
 		bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
 		bzb->magic = 0;
 		bzb->mount_point[0] = '\0';
-		strcpy (map.blk[j].pmPartName, "untitled (Scratch)");
-		strcpy (map.blk[j].pmPartType, "Apple_Scratch"); };
+		strcpy ((char *)map.blk[j].pmPartName, "untitled (Scratch)");
+		strcpy ((char *)map.blk[j].pmPartType, "Apple_Scratch"); };
 	option "Free", exit, action {
 		int j;
 		EBZB *bzb;
@@ -267,8 +267,8 @@ menu chooseid, title  "Partition Type?";
 		bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
 		bzb->magic = 0;
 		bzb->mount_point[0] = '\0';
-		strcpy (map.blk[j].pmPartName, "untitled (Free)");
-		strcpy (map.blk[j].pmPartType, "Apple_Free"); };
+		strcpy ((char *)map.blk[j].pmPartName, "untitled (Free)");
+		strcpy ((char *)map.blk[j].pmPartType, "Apple_Free"); };
 
 menu mount_point, title  "Mount Point?";
 	option "/usr", exit, action {
@@ -277,28 +277,28 @@ menu mount_point, title  "Mount Point?";
 
 		j = map.mblk[map.selected];
 		bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-		strcpy (bzb->mount_point, "/usr"); };
+		strcpy ((char *)bzb->mount_point, "/usr"); };
 	option "/home", exit, action {
 		int j;
 		EBZB *bzb;
 
 		j = map.mblk[map.selected];
 		bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-		strcpy (bzb->mount_point, "/home"); };
+		strcpy ((char *)bzb->mount_point, "/home"); };
 	option "/var", exit, action {
 		int j;
 		EBZB *bzb;
 
 		j = map.mblk[map.selected];
 		bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-		strcpy (bzb->mount_point, "/var"); };
+		strcpy ((char *)bzb->mount_point, "/var"); };
 	option "/tmp", exit, action {
 		int j;
 		EBZB *bzb;
 
 		j = map.mblk[map.selected];
 		bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-		strcpy (bzb->mount_point, "/tmp"); };
+		strcpy ((char *)bzb->mount_point, "/tmp"); };
 	option "None", exit, action {
 		int j;
 		EBZB *bzb;
@@ -318,8 +318,8 @@ menu mount_point, title  "Mount Point?";
 		if (buf[0] != '\0') {
 		    bzb->mount_point[0] = '\0';
 		    if (buf[0] != '/')
-			strcpy (bzb->mount_point, "/");
-		    strcat(bzb->mount_point, buf);
+			strcpy ((char *)bzb->mount_point, "/");
+		    strcat((char *)bzb->mount_point, buf);
 		} };
 
 menu sanity, title "Choose an option";
