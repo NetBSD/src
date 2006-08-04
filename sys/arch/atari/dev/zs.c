@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.48 2006/07/23 22:06:04 ad Exp $	*/
+/*	$NetBSD: zs.c,v 1.49 2006/08/04 01:45:05 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.48 2006/07/23 22:06:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.49 2006/08/04 01:45:05 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1110,7 +1110,10 @@ register struct termios	*t;
 		 int			unit = ZS_UNIT(tp->t_dev);
 		 struct zs_softc	*zi = zs_cd.cd_devs[unit >> 1];
 	register struct zs_chanstate	*cs = &zi->zi_cs[unit & 1];
-		 int			cdiv, clkm, brgm, tcon;
+		 int			cdiv = 0,	/* XXX gcc4 -Wuninitialized */
+					clkm = 0,	/* XXX gcc4 -Wuninitialized */
+					brgm = 0,	/* XXX gcc4 -Wuninitialized */
+					tcon = 0;	/* XXX gcc4 -Wuninitialized */
 	register int			tmp, tmp5, cflag, s;
 
 	tmp  = t->c_ospeed;
