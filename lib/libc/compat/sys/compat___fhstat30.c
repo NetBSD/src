@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___fhstat30.c,v 1.1 2006/07/31 16:34:42 martin Exp $	*/
+/*	$NetBSD: compat___fhstat30.c,v 1.2 2006/08/04 16:30:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat___fhstat30.c,v 1.1 2006/07/31 16:34:42 martin Exp $");
+__RCSID("$NetBSD: compat___fhstat30.c,v 1.2 2006/08/04 16:30:22 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -60,5 +60,5 @@ int	__fhstat40(const void *fhp, size_t fh_size, struct stat *sb);
 int
 __fhstat30(const struct compat_30_fhandle *fhp, struct stat *sb)
 {
-	return __fhstat40(fhp, FHANDLE30_SIZE(fhp), sb);
+	return __fhstat40(fhp, FHANDLE30_SIZE, sb);
 }

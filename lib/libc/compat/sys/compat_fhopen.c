@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_fhopen.c,v 1.1 2006/07/31 16:34:42 martin Exp $	*/
+/*	$NetBSD: compat_fhopen.c,v 1.2 2006/08/04 16:30:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_fhopen.c,v 1.1 2006/07/31 16:34:42 martin Exp $");
+__RCSID("$NetBSD: compat_fhopen.c,v 1.2 2006/08/04 16:30:22 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -61,5 +61,5 @@ int	fhopen(struct compat_30_fhandle *, int);
 int
 fhopen(struct compat_30_fhandle *fhp, int flags)
 {
-	return __fhopen40(fhp, FHANDLE30_SIZE(fhp), flags);
+	return __fhopen40(fhp, FHANDLE30_SIZE, flags);
 }
