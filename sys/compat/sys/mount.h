@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.5 2006/07/31 16:34:44 martin Exp $	*/
+/*	$NetBSD: mount.h,v 1.6 2006/08/04 16:37:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -80,7 +80,7 @@ struct vfsconf {
 };
 
 /* Old, fixed size filehandle structures (used upto (including) 3.x) */
-struct compat_30_fid{
+struct compat_30_fid {
 	unsigned short	fid_len;
 	unsigned short	fid_reserved;
 	char		fid_data[16];

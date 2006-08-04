@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.2 2006/08/04 16:30:22 yamt Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.3 2006/08/04 16:36:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <stddef.h>
 
 /* Old, fixed size filehandle structures (used upto (including) 3.x) */
-struct compat_30_fid{
+struct compat_30_fid {
 	unsigned short	fid30_len;
 	unsigned short	fid30_reserved;
 	char		fid30_data[16];
