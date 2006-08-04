@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_statfs.c,v 1.2 2006/07/31 16:34:42 martin Exp $	*/
+/*	$NetBSD: compat_statfs.c,v 1.3 2006/08/04 16:30:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_statfs.c,v 1.2 2006/07/31 16:34:42 martin Exp $");
+__RCSID("$NetBSD: compat_statfs.c,v 1.3 2006/08/04 16:30:22 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -164,7 +164,7 @@ fhstatfs(const struct compat_30_fhandle *fh, struct statfs12 *ost)
 	struct statvfs nst;
 	int ret;
 
-	if ((ret = __fhstatvfs140(fh, FHANDLE30_SIZE(fh), &nst, ST_WAIT)) == -1)
+	if ((ret = __fhstatvfs140(fh, FHANDLE30_SIZE, &nst, ST_WAIT)) == -1)
 		return ret;
 	vfs2fs(ost, &nst);
 	return ret;
