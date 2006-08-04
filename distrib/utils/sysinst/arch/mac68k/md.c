@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.47 2006/04/05 16:55:06 garbled Exp $ */
+/*	$NetBSD: md.c,v 1.48 2006/08/04 05:30:13 mhitch Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -150,7 +150,7 @@ whichType(part)
 	maxsiz = sizeof(part->pmPartType);
 	if (maxsiz > sizeof(partyp))
 	    maxsiz = sizeof(partyp);
-	strncpy(partyp, part->pmPartType, maxsiz);
+	strncpy(partyp, (char *)part->pmPartType, maxsiz);
 	partyp[maxsiz-1] = '\0';
 
 	/*
@@ -242,7 +242,7 @@ getUse(part, len_use, use)
 		strncpy(use, "MacOS", len_use);
 		break;
 	    case SCRATCH_PART:
-		strncpy(partyp, part->pmPartType, sizeof(partyp));
+		strncpy(partyp, (char *)part->pmPartType, sizeof(partyp));
 		partyp[sizeof(partyp)-1] = '\0';
 		if (stricmp("Apple_Free", partyp) == 0)
 		    strncpy(use, "Free", len_use);
@@ -277,7 +277,7 @@ getName(part, len_name, name)
 	    case SCRATCH_PART:
 	    case ROOT_PART:
 	    case UFS_PART:
-		strncpy(name, bzb->mount_point, len_name);
+		strncpy(name, (char *)bzb->mount_point, len_name);
 		break;
 	    case SWAP_PART:
 		break;
@@ -295,7 +295,7 @@ getName(part, len_name, name)
 		    lseek(fd, seek, SEEK_SET);
 		    read(fd, &macosblk, sizeof(macosblk));
 		    macosblk[37+32] = '\0';
-		    strncpy(name, bzb->mount_point, len_name);
+		    strncpy(name, (char *)bzb->mount_point, len_name);
 		    strncat(name, " (", len_name-strlen(name));
 		    strncat(name, &macosblk[37], len_name-strlen(name));
 		    strncat(name, ")", len_name-strlen(name));
@@ -330,14 +330,14 @@ findStdType(num_parts, in_use, type, count, alt)
 			if (alt >= 0 && alt != bzb->cluster)
 				continue;
 			setpartition(&map.blk[i], in_use, 0);
-			strcpy (bzb->mount_point, "/");
+			strcpy ((char *)bzb->mount_point, "/");
 			*count += 1;
 		} else if (type == UFS_PART) {
 			if (alt >= 0 && alt != bzb->cluster)
 				continue;
 			setpartition(&map.blk[i], in_use, 6);
 			if (bzb->mount_point[0] == '\0')
-				strcpy (bzb->mount_point, "/usr");
+				strcpy ((char *)bzb->mount_point, "/usr");
 			*count += 1;
 		} else if (type == SWAP_PART) {
 			setpartition(&map.blk[i], in_use, 1);
@@ -461,8 +461,8 @@ sortmerge(void)
      * Step 3, merge adjacent free space
      */
     for (i=0;i<map.in_use_cnt-1;i++) {
-        if (stricmp("Apple_Free", map.blk[i].pmPartType) == 0 &&
-	    stricmp("Apple_Free", map.blk[i+1].pmPartType) == 0) {
+        if (stricmp("Apple_Free", (char *)map.blk[i].pmPartType) == 0 &&
+	    stricmp("Apple_Free", (char *)map.blk[i+1].pmPartType) == 0) {
 	    map.blk[i].pmPartBlkCnt += map.blk[i+1].pmPartBlkCnt;
 	    map.blk[i].pmDataCnt += map.blk[i+1].pmDataCnt;
 	    map.blk[i+1].pmSig = 0;
@@ -672,7 +672,7 @@ edit_diskmap(void)
 	     */
 	    for (i=0;i<map.size;i++)
 		if (whichType(&map.blk[i]))
-		    strcpy (map.blk[i].pmPartType, "Apple_Free");
+		    strcpy ((char *)map.blk[i].pmPartType, "Apple_Free");
 	    sortmerge();
 	}
 	process_menu (MENU_editparttable, NULL);
@@ -757,7 +757,7 @@ md_get_info()
 	   for (i=0;i<MAXMAXPARTITIONS;i++) {
 		lseek(fd, (off_t)(i+1) * blk_size, SEEK_SET);
 		read(fd, &block, sizeof(block));
-		if (stricmp("Apple_partition_map", block.pmPartType) == 0) {
+		if (stricmp("Apple_partition_map", (char *)block.pmPartType) == 0) {
 		    map.size = block.pmPartBlkCnt;
 		    map.in_use_cnt = block.pmMapBlkCnt;
 		    map.blk = (struct apple_part_map_entry *)malloc(map.size * blk_size);
@@ -1024,19 +1024,19 @@ md_make_bsd_partitions(void)
 		switch (whichType(&map.blk[j])) {
 		    case HFS_PART:
 			bsdlabel[pl].pi_fstype = FS_HFS; 
-			strcpy (bsdlabel[pl].pi_mount, bzb->mount_point);
+			strcpy (bsdlabel[pl].pi_mount, (char *)bzb->mount_point);
 			break;
 		    case ROOT_PART:
 		    case UFS_PART:
 			bsdlabel[pl].pi_fstype = FS_BSDFFS;
-			strcpy (bsdlabel[pl].pi_mount, bzb->mount_point);
+			strcpy (bsdlabel[pl].pi_mount, (char *)bzb->mount_point);
 			break;
 		    case SWAP_PART:
 			bsdlabel[pl].pi_fstype = FS_SWAP;
 			break;
 		    case SCRATCH_PART:
 			bsdlabel[pl].pi_fstype = FS_OTHER;
-			strcpy (bsdlabel[pl].pi_mount, bzb->mount_point);
+			strcpy (bsdlabel[pl].pi_mount, (char *)bzb->mount_point);
 		    default:
 			break;
 		}
