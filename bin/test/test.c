@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.27 2006/08/04 14:38:58 christos Exp $ */
+/* $NetBSD: test.c,v 1.28 2006/08/04 19:07:55 christos Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.27 2006/08/04 14:38:58 christos Exp $");
+__RCSID("$NetBSD: test.c,v 1.28 2006/08/04 19:07:55 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -188,9 +188,15 @@ main(int argc, char *argv[])
 #endif
 {
 	int res;
+	const char *argv0;
 
+#ifdef SHELL
+	argv0 = argv[0];
+#else
 	setprogname(argv[0]);
-	if (strcmp(getprogname(), "[") == 0) {
+	argv0 = getprogname();
+#endif
+	if (strcmp(argv0, "[") == 0) {
 		if (strcmp(argv[--argc], "]"))
 			error("missing ]");
 		argv[argc] = NULL;
