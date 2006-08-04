@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 2005/12/11 12:18:29 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.10 2006/08/04 02:07:59 mhitch Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2005/12/11 12:18:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2006/08/04 02:07:59 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/tty.h>
+#include <sys/device.h>
 
 #include <machine/psl.h>
 #include <machine/bus.h>
