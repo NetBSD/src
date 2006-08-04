@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.147 2006/07/31 16:34:44 martin Exp $	*/
+/*	$NetBSD: mount.h,v 1.148 2006/08/04 16:29:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -309,9 +309,14 @@ void	vfs_bufstats(void);
  * syscall helpers
  */
 
-int	vfs_copyinfh_alloc(const void *, fhandle_t **);
-int	vfs_copyinfh_alloc_size(const void *, size_t, fhandle_t **);
+int	vfs_copyinfh_alloc(const void *, size_t, fhandle_t **);
 void	vfs_copyinfh_free(fhandle_t *);
+
+struct stat;
+int dofhopen(struct lwp *, const void *, size_t, int, register_t *);
+int dofhstat(struct lwp *, const void *, size_t, struct stat *, register_t *);
+int dofhstatvfs(struct lwp *, const void *, size_t, struct statvfs *, int,
+    register_t *);
 
 LIST_HEAD(vfs_list_head, vfsops);
 extern struct vfs_list_head vfs_list;
