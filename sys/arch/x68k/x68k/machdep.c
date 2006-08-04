@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.131 2005/12/24 22:45:40 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.132 2006/08/04 02:17:34 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.131 2005/12/24 22:45:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.132 2006/08/04 02:17:34 mhitch Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1124,12 +1124,12 @@ mem_exists(caddr_t mem, u_long basemax)
 	 */
 	baseismem = base < (caddr_t)basemax;
 
+__asm("begin_check_mem:");
 	/* save original value (base must be saved first) */
 	if (baseismem)
 		save_b = *b;
 	save_m = *m;
 
-__asm("begin_check_mem:");
 	/*
 	 * stack and other data segment variables are unusable
 	 * til end_check_mem, because they may be clobbered.
