@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.13 2006/07/31 16:34:44 martin Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.14 2006/08/04 16:29:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -62,8 +62,9 @@ typedef struct fhandle	fhandle_t;
  * FHANDLE_SIZE_MIN: chosen for compatibility.  smaller handles are zero-padded.
  */
 
+#define	FHANDLE_SIZE_COMPAT	28
 #define	FHANDLE_SIZE_MAX	1024
-#define	FHANDLE_SIZE_MIN	28
+#define	FHANDLE_SIZE_MIN	FHANDLE_SIZE_COMPAT
 
 #define	FHANDLE_FSID(fh)	(&(fh)->fh_fsid)
 #define	FHANDLE_FILEID(fh)	(&(fh)->fh_fid)

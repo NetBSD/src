@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.32 2006/07/31 16:34:43 martin Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.33 2006/08/04 16:29:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.32 2006/07/31 16:34:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.33 2006/08/04 16:29:51 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -560,7 +560,7 @@ netbsd32___fhstatvfs140(l, v, retval)
 	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 		return error;
 
-	if ((error = vfs_copyinfh_alloc_size(NETBSD32PTR64(SCARG(uap, fhp)),
+	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)),
 	    SCARG(uap, fh_size), &fh)) != 0)
 		goto bad;
 	if ((error = vfs_fhtovp(fh, &vp)) != 0)
@@ -791,9 +791,8 @@ int netbsd32___fhstat40(l, v, retval)
 	    &l->l_acflag)))
 		return error;
 
-	if ((error = vfs_copyinfh_alloc_size(NETBSD32PTR64(SCARG(uap, fhp)),
-	    SCARG(uap, fh_size), &fh))
-	    != 0)
+	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)),
+	    SCARG(uap, fh_size), &fh)) != 0)
 		goto bad;
 
 	if ((error = vfs_fhtovp(fh, &vp)) != 0)
