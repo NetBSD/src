@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.120 2006/07/26 13:54:13 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.121 2006/08/04 23:18:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.120 2006/07/26 13:54:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.121 2006/08/04 23:18:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,7 +466,7 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 
 	/*
 	 * Restrict application to use a buffer the same size as
-	 * as kernel buffers.
+	 * the kernel buffers.
 	 */
 	if (uio->uio_resid != d->bd_bufsize)
 		return (EINVAL);
