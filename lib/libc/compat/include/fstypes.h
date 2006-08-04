@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.1 2006/07/31 16:34:42 martin Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.2 2006/08/04 16:30:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -52,7 +52,6 @@ struct compat_30_fhandle {
 	struct compat_30_fid fh_fid;
 };
 
-#define	FHANDLE30_SIZE(fh)	(offsetof(struct compat_30_fhandle, fh_fid) \
-				+ (fh)->fh_fid.fid30_len)
+#define	FHANDLE30_SIZE	sizeof(struct compat_30_fhandle) /* 28 */
 
 #endif /* _COMPAT_FSTYPES_H_ */

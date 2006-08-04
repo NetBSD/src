@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_getfh.c,v 1.4 2006/07/31 16:34:42 martin Exp $	*/
+/*	$NetBSD: compat_getfh.c,v 1.5 2006/08/04 16:30:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_getfh.c,v 1.4 2006/07/31 16:34:42 martin Exp $");
+__RCSID("$NetBSD: compat_getfh.c,v 1.5 2006/08/04 16:30:22 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -47,6 +47,8 @@ __RCSID("$NetBSD: compat_getfh.c,v 1.4 2006/07/31 16:34:42 martin Exp $");
 #include <sys/types.h>
 #include <sys/mount.h>
 #include <compat/include/fstypes.h>
+
+#include <errno.h>
 
 __warn_references(getfh,
     "warning: reference to compatibility getfh(); include <sys/mount.h> to generate correct reference")
@@ -62,6 +64,15 @@ int
 getfh(const char *path, struct compat_30_fhandle *fhp)
 {
 	size_t fh_size = sizeof(*fhp);
+	int ret;
 
-	return __getfh30(path, (void*)fhp, &fh_size);
+	ret = __getfh30(path, (void*)fhp, &fh_size);
+	if (ret != 0) {
+		return ret;
+	}
+	if (fh_size != FHANDLE30_SIZE) {
+		errno = EINVAL;
+		return -1;
+	}
+	return 0;
 }
