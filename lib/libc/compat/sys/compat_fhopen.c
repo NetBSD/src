@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_fhopen.c,v 1.2 2006/08/04 16:30:22 yamt Exp $	*/
+/*	$NetBSD: compat_fhopen.c,v 1.3 2006/08/04 17:06:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_fhopen.c,v 1.2 2006/08/04 16:30:22 yamt Exp $");
+__RCSID("$NetBSD: compat_fhopen.c,v 1.3 2006/08/04 17:06:56 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -52,14 +52,14 @@ __warn_references(fhopen,
     "warning: reference to compatibility fhopen(); include <sys/mount.h> to generate correct reference")
 
 
-int     __fhopen40(void*, size_t, int);
-int	fhopen(struct compat_30_fhandle *, int);
+int     __fhopen40(const void *, size_t, int);
+int	fhopen(const struct compat_30_fhandle *, int);
 
 /*
  * Convert old fhopen() call to new calling convention
  */
 int
-fhopen(struct compat_30_fhandle *fhp, int flags)
+fhopen(const struct compat_30_fhandle *fhp, int flags)
 {
 	return __fhopen40(fhp, FHANDLE30_SIZE, flags);
 }
