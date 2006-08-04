@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.263 2006/07/31 16:34:44 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.264 2006/08/04 13:31:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.263 2006/07/31 16:34:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.264 2006/08/04 13:31:51 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1399,9 +1399,9 @@ vfs_copyinfh_alloc_size(const void *ufhp, size_t fhsize, fhandle_t **fhpp)
 		    || FHANDLE_SIZE(fhp) <= fhsize) {
 			*fhpp = fhp;
 			return 0;
-		    } else {
+		} else {
 		    	error = EINVAL;
-		    }
+		}
 	}
 	kmem_free(fhp, fhsize);
 	return error;
