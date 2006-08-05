@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.8 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.9 2006/08/05 21:26:49 sanjayl Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,7 +45,8 @@ struct pmap {
 	struct steg *pm_steg_table;		/* segment table pointer */
 	/* XXX need way to track exec pages */
 #endif
-#ifdef PPC_OEA
+
+#if defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	register_t pm_sr[16];			/* segments used in this pmap */
 	int pm_exec[16];			/* counts of exec mappings */
 #endif
@@ -53,6 +54,7 @@ struct pmap {
 	int pm_refs;				/* ref count */
 	struct pmap_statistics pm_stats;	/* pmap statistics */
 	unsigned int pm_evictions;		/* pvo's not in page table */
+
 #ifdef PPC_OEA64
 	unsigned int pm_ste_evictions;
 #endif
@@ -64,7 +66,7 @@ typedef	struct pmap *pmap_t;
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#ifdef PPC_OEA
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 extern register_t iosrtable[];
 #endif
 extern int pmap_use_altivec;
@@ -118,7 +120,7 @@ static inline paddr_t vtophys (vaddr_t);
  * VA==PA all at once.  But pmap_copy_page() and pmap_zero_page() will have
  * this problem, too.
  */
-#ifndef PPC_OEA64
+#if !defined(PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
 #define	PMAP_MAP_POOLPAGE(pa)	(pa)
 #define	PMAP_UNMAP_POOLPAGE(pa)	(pa)
 #define POOL_VTOPHYS(va)	vtophys((vaddr_t) va)

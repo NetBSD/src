@@ -1,14 +1,13 @@
-#	$NetBSD: std.macppc,v 1.21 2006/08/05 21:26:48 sanjayl Exp $
-#
-# Standard/required options for NetBSD/macppc.
+# Standard/required options for NetBSD on the G5.
+# Author: Sanjay Lal <sanjayl@kymasys.com>
 
 machine	macppc powerpc
 include		"conf/std"	# MI standard options
 
 # standard ("mandatory") kernel options.
-options 	PPC_OEA		# OEA class PowerPC chips
-makeoptions	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use
-makeoptions     PPC_ARCH_MODE="ppc32"
+options 	PPC_OEA64_BRIDGE	# G5/970 chips support bridge mode
+makeoptions	PPCDIR="oea"		# Tell Makefile.powerpc what dir to use
+makeoptions	PPC_ARCH_MODE="ppc64bridge"
 
 # Executable support:
 options 	EXEC_ELF32	# (native) ELF32 binary support

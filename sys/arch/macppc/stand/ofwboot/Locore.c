@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.21 2006/01/27 03:07:31 uwe Exp $	*/
+/*	$NetBSD: Locore.c,v 1.22 2006/08/05 21:26:48 sanjayl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -70,6 +70,7 @@ __asm(
 "	mtmsr	%r0		\n"
 "	isync			\n"
 "				\n"
+#if 0
 "	mtibatu	0,%r0		\n"
 "	mtibatu	1,%r0		\n"
 "	mtibatu	2,%r0		\n"
@@ -86,6 +87,7 @@ __asm(
 "	mtibatu	0,%r9		\n"
 "	mtdbatu	0,%r9		\n"
 "	isync			\n"
+#endif /* 0 */
 "				\n"
 "	mtmsr	%r8		\n"
 "	isync			\n"
