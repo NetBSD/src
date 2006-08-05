@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.20 2006/01/16 20:30:19 bouyer Exp $	*/
+/*	$NetBSD: hptide.c,v 1.21 2006/08/05 22:31:13 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.20 2006/01/16 20:30:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.21 2006/08/05 22:31:13 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +141,8 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			aprint_normal("HPT370 IDE Controller\n");
 		else if (revision == HPT370A_REV)
 			aprint_normal("HPT370A IDE Controller\n");
+		else if (revision == HPT368_REV)
+			aprint_normal("HPT368 IDE Controller\n");
 		else if (revision == HPT366_REV)
 			aprint_normal("HPT366 IDE Controller\n");
 		else
@@ -162,7 +164,7 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
 		    PCIIDE_INTERFACE_PCI(0);
 		if ((sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
-		    (revision == HPT370_REV || revision == HPT370A_REV ||
+		    (revision == HPT368_REV || revision == HPT370_REV || revision == HPT370A_REV ||
 		     revision == HPT372_REV)) ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT302 ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT371 ||
@@ -186,7 +188,7 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_set_modes = hpt_setup_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
-	    revision == HPT366_REV) {
+	    (revision == HPT366_REV || revision == HPT368_REV)) {
 		sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
 		sc->sc_wdcdev.sc_atac.atac_udma_cap = 4;
 	} else {
@@ -247,7 +249,7 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		wdcattach(&cp->ata_channel);
 	}
 	if ((sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
-	    (revision == HPT370_REV || revision == HPT370A_REV ||
+	    (revision == HPT368_REV || revision == HPT370_REV || revision == HPT370A_REV ||
 	     revision == HPT372_REV)) ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT302 ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT371 ||
@@ -323,6 +325,7 @@ hpt_setup_channel(struct ata_channel *chp)
 			tim_dma = hpt370_dma;
 			tim_pio = hpt370_pio;
 			break;
+		case HPT368_REV:
 		case HPT366_REV:
 		default:
 			tim_udma = hpt366_udma;
