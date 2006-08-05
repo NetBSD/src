@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.46 2006/08/05 22:33:44 bjh21 Exp $
+#	$NetBSD: NC_WSCONS,v 1.47 2006/08/05 23:11:11 bjh21 Exp $
 #
 #	NC - with wscons
 #
@@ -25,7 +25,6 @@ options 	CPU_ARM7	# Support the ARM7 core
 
 # Architecture options
 #options 	RC7500		# We are a RC7500
-options 	NC
 
 # FPA options
 
