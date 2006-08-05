@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.21 2006/05/26 11:52:08 blymn Exp $	*/
+/*	$NetBSD: hydra.c,v 1.22 2006/08/05 23:03:21 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -31,9 +31,11 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.21 2006/05/26 11:52:08 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.22 2006/08/05 23:03:21 bjh21 Exp $");
 
+#include <sys/callout.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
@@ -54,6 +56,7 @@ struct hydra_softc {
 	paddr_t			sc_bootpage_pa;
 	vaddr_t			sc_bootpage_va;
 	void			*sc_shutdownhook;
+	struct callout		sc_prod;
 };
 
 struct hydra_attach_args {
@@ -74,10 +77,15 @@ static int hydra_submatch(struct device *, struct cfdata *,
 static void hydra_shutdown(void *);
 
 static void hydra_reset(struct hydra_softc *);
+static void hydra_regdump(struct hydra_softc *);
 
 static int cpu_hydra_match(struct device *, struct cfdata *, void *);
 static void cpu_hydra_attach(struct device *, struct device *, void *);
 static void cpu_hydra_hatch(void);
+
+#if 0
+static void hydra_prod(void *);
+#endif
 
 CFATTACH_DECL(hydra, sizeof(struct hydra_softc),
     hydra_match, hydra_attach, NULL, NULL);
@@ -201,6 +209,9 @@ hydra_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
+	hydra_regdump(sc);
+	hydra_ipi_unicast(4);
+	hydra_regdump(sc);
 	for (i = 0; i < HYDRA_NSLAVES; i++) {
 		if (hydra_probe_slave(sc, i)) {
 			ha.ha_slave = i;
@@ -296,6 +307,35 @@ hydra_reset(struct hydra_softc *sc)
 	bus_space_write_1(iot, ioh, HYDRA_MMU_CLR, 0xf);
 }
 
+static void
+hydra_regdump(struct hydra_softc *sc)
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	struct cpu_info *ci = curcpu();
+
+#define PRINTREG(name, offset)						\
+	printf("%s: " name " = %x\n", ci->ci_dev->dv_xname,		\
+	    bus_space_read_1(iot, ioh, (offset)) & 0xf)
+
+	PRINTREG("FIQ_status  ", HYDRA_FIQ_STATUS);
+	PRINTREG("FIQ_readback", HYDRA_FIQ_READBACK);
+	PRINTREG("HardwareVer ", HYDRA_HARDWAREVER);
+	PRINTREG("register 3  ", 3);
+	PRINTREG("register 4  ", 4);
+	PRINTREG("register 5  ", 5);
+	PRINTREG("MMU_status  ", HYDRA_MMU_STATUS);
+	PRINTREG("ID_status   ", HYDRA_ID_STATUS);
+	PRINTREG("IRQ_status  ", HYDRA_IRQ_STATUS);
+	PRINTREG("IRQ_readback", HYDRA_IRQ_READBACK);
+	PRINTREG("register 10 ", 10);
+	PRINTREG("register 11 ", 11);
+	PRINTREG("RST_status  ", HYDRA_RST_STATUS);
+	PRINTREG("register 13 ", 13);
+	PRINTREG("Halt_status ", HYDRA_HALT_STATUS);
+	PRINTREG("register 15 ", 15);
+}
+
 static int
 cpu_hydra_match(struct device *parent, struct cfdata *cf, void *aux)
 {
@@ -367,22 +407,88 @@ cpu_hydra_hatch(void)
 
 	cpu_setup(boot_args);
 	cpu_attach(curcpu()->ci_dev);
-	for (;;) {
-		bus_space_write_1(iot, ioh,
-		    HYDRA_HALT_SET, 1 << (cpunum & 3));
-		printf("%s: I am needed?\n", curcpu()->ci_dev->dv_xname);
-	}
+	bus_space_write_1(iot, ioh,
+	    HYDRA_HALT_SET, 1 << (cpunum & 3));
+	cpu_tlb_flushID();
+	IRQenable
+	printf("%s: I am needed?\n", curcpu()->ci_dev->dv_xname);
+	for (;;)
+		continue;
+	SCHED_LOCK(s);
+	cpu_switch(NULL, NULL);
 }
 
+int
+hydra_intr(void)
+{
+	struct hydra_softc *sc = the_hydra;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	int status;
+
+	if (cpu_number() == 0) /* XXX */
+	    return 0;
+	if (sc == NULL)
+		return 0;
+
+	cpu_tlb_flushID();
+/*	hydra_regdump(sc); */
+
+	iot = sc->sc_iot;
+	ioh = sc->sc_ioh;
+	status = bus_space_read_1(iot, ioh, HYDRA_IRQ_STATUS) & 0xf;
+	if (status == 0)
+		return 0;
+
+	bus_space_write_1(iot, ioh, HYDRA_IRQ_CLR, status);
+	printf("%s: Ow! (status = %x)\n", curcpu()->ci_dev->dv_xname, status);
+	return 1;
+}
+
+void
+hydra_ipi_unicast(cpuid_t target)
+{
+	cpuid_t me = cpu_number();
+	struct hydra_softc *sc = the_hydra;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+
+	KASSERT(target != me);
+	KASSERT(sc != NULL);
+	iot = sc->sc_iot;
+	ioh = sc->sc_ioh;
+	if (target & HYDRA_ID_ISSLAVE)
+		target &= HYDRA_ID_SLAVE_MASK;
+	else
+		target = me & HYDRA_ID_SLAVE_MASK;
+	bus_space_write_1(iot, ioh, HYDRA_IRQ_SET, 1 << target);
+}
+
+
 #ifdef MULTIPROCESSOR
+static void
+hydra_prod(void *cookie)
+{
+	struct hydra_softc *sc = cookie;
+
+	hydra_ipi_unicast((random() & HYDRA_ID_SLAVE_MASK) | HYDRA_ID_ISSLAVE);
+	callout_reset(&sc->sc_prod, hz * 5, hydra_prod, sc);
+}
+
 void
 cpu_boot_secondary_processors(void)
 {
 	struct hydra_softc *sc = the_hydra;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 
+	if (sc == NULL)
+		return;
+	iot = sc->sc_iot;
+	ioh = sc->sc_ioh;
 	bus_space_write_1(iot, ioh, HYDRA_HALT_CLR, 0xf);
+	callout_init(&sc->sc_prod);
+	hydra_prod(sc);
 }
 
 cpuid_t
