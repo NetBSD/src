@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.40 2006/02/05 05:01:48 cube Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.41 2006/08/05 22:33:44 bjh21 Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -183,15 +183,15 @@ wsdisplay*	at vidcvideo? console ? # display itself
 
 iomdkbc*	at iomd?		# IOMD keyboard/mouse interface
 
-#pckbd*		at iomdkbc? slot ?	# PS/2 keyboard
-#options 	PCKBD_LAYOUT=KB_UK
-#wskbd*		at pckbd?
+pckbd*		at iomdkbc? slot ?	# PS/2 keyboard
+options 	PCKBD_LAYOUT=KB_UK
+wskbd*		at pckbd?
 
 pms*		at iomdkbc? slot ?	# PS/2 mouse
 wsmouse*	at pms?
 
-rpckbd*		at iomd?		# based on old `kbd' driver
-wskbd*		at rpckbd?		# wskbd on RiscPC keyboard
+#rpckbd* 	at iomd?		# based on old `kbd' driver
+#wskbd*		at rpckbd?		# wskbd on RiscPC keyboard
 
 qms*		at iomd?		# ws quadmouse driver
 wsmouse*	at qms?			# wsmouse on ws quadmouse
