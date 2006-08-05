@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.25 2006/08/05 18:22:57 bjh21 Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.26 2006/08/05 21:25:39 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.25 2006/08/05 18:22:57 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.26 2006/08/05 21:25:39 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -918,7 +918,7 @@ static void vv_copyrows(void *id, int srcrow, int dstrow, int nrows)
 	src = ri->ri_bits + srcrow * ri->ri_font->fontheight * ri->ri_stride;
 	dst = ri->ri_bits + dstrow * ri->ri_font->fontheight * ri->ri_stride;
 
-	bcopy(src, dst, size);
+	memcpy(dst, src, size);
 }
 
 
@@ -933,7 +933,7 @@ static void vv_eraserows(void *id, int startrow, int nrows, long attr)
 
 	src = ri->ri_bits + startrow * ri->ri_font->fontheight * ri->ri_stride;
 
-	bzero(src, height);
+	memset(src, 0, height);
 }
 
 
