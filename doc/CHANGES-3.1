@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.133 2006/08/03 12:24:57 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.134 2006/08/05 16:01:00 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4218,4 +4218,32 @@ lib/libc/arch/i386/sys/__sigtramp2.S		1.2
 	Fix PR port-i386/34112 where a program could mysteriously exit on
 	return from a signal handler.
 	[jld, ticket #1447]
+
+sys/arch/xen/xen/if_xennet_xenbus.c		1.8
+
+	Add a missing break in a switch clause, causing the frontend to go to Closed
+	state when it should not.
+	[bouyer, ticket #1451]
+
+sys/arch/xen/xen/if_xennet.c			1.48
+sys/arch/xen/xen/if_xennet_xenbus.c		1.10
+
+	The receive buffer, once mapped back in the domU, is read/write and not
+	shared so there;s no problems marking the mbuf M_EXT_RW.
+	[bouyer, ticket #1452]
+
+sys/arch/xen/conf/kern.ldscript			delete
+
+	Remove unused file.  Probably unused since kernel config files were
+	moved to i386/conf.
+	[bouyer, ticket #1453]
+
+sys/arch/xen/xen/if_xennet_xenbus.c		1.11
+
+	m_copyback() doesn't adjust m->m_len if the data to copy is smaller than
+	the mbuf's size. Set it to a proper value before calling m_copyback().
+	This should fix panics in m_makewritable() reported by several peoples.
+	While there, add MCLAIM() calls where appropriate, a few more #ifdef DEBUG
+	checks, and various minor fixes.
+	[bouyer, ticket #1454]
 
