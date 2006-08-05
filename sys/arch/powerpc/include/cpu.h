@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.50 2006/06/30 17:54:51 freza Exp $	*/
+/*	$NetBSD: cpu.h,v 1.51 2006/08/05 21:26:48 sanjayl Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -316,7 +316,7 @@ void *mapiodev(paddr_t, psize_t);
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, curcpu()->ci_astpending = 1)
 #define	signotify(p)		(curcpu()->ci_astpending = 1)
 
-#ifdef PPC_OEA
+#if defined(PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 void oea_init(void (*)(void));
 void oea_startup(const char *);
 void oea_dumpsys(void);
@@ -335,7 +335,11 @@ extern int cpu_altivec;
 #ifdef PPC_IBM403
 #define	CACHELINESIZE	16
 #else
+#if defined (PPC_OEA64_BRIDGE)
+#define	CACHELINESIZE	128
+#else
 #define	CACHELINESIZE	32
+#endif /* PPC_OEA64_BRIDGE */
 #endif
 #endif
 #endif

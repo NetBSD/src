@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.50 2006/07/23 22:06:06 ad Exp $	*/
+/*	$NetBSD: ofb.c,v 1.51 2006/08/05 21:26:48 sanjayl Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.50 2006/07/23 22:06:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.51 2006/08/05 21:26:48 sanjayl Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -64,11 +64,15 @@ __KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.50 2006/07/23 22:06:06 ad Exp $");
 #include <dev/wscons/wsdisplay_vconsvar.h>
 #include <macppc/dev/ofbvar.h>
 
+#if defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+int ofb_enable_cache = 0;
+#else
 #if OFB_ENABLE_CACHE
 int ofb_enable_cache = 1;
 #else
 int ofb_enable_cache = 0;
 #endif
+#endif /* PPC_OEA64 */
 
 static int	ofbmatch(struct device *, struct cfdata *, void *);
 static void	ofbattach(struct device *, struct device *, void *);
@@ -269,6 +273,7 @@ ofb_init_rasops(int node, struct rasops_info *ri)
 		return FALSE;
 
 	/* Enable write-through cache. */
+#if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
 	if (ofb_enable_cache) {
 		vaddr_t va;
 		/*
@@ -288,6 +293,7 @@ ofb_init_rasops(int node, struct rasops_info *ri)
 			}
 		}
 	}
+#endif /* PPC_OEA64 */
 
 	/* initialize rasops */
 	ri->ri_width = width;
