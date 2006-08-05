@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.8 2005/12/11 12:16:47 christos Exp $	*/
+/*	$NetBSD: qms.c,v 1.9 2006/08/05 18:22:57 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.8 2005/12/11 12:16:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.9 2006/08/05 18:22:57 bjh21 Exp $");
 
 #include <sys/callout.h>
 #include <sys/device.h>
@@ -106,9 +106,9 @@ qms_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct qms_attach_args *qa = aux;
 
 	if (strcmp(qa->qa_name, "qms") == 0)
-		return(1);
+		return 1;
 
-	return(0);
+	return 0;
 }
 
 
@@ -206,7 +206,7 @@ qms_intr(void *arg)
 		sc->lastx = x;
 		sc->lasty = y;
 		sc->lastb = b;
-	};
+	}
 	callout_reset(&sc->sc_callout, hz / 100, qms_intr, sc);
 }
 

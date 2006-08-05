@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.10 2006/05/11 12:05:37 yamt Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.11 2006/08/05 18:22:57 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.10 2006/05/11 12:05:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.11 2006/08/05 18:22:57 bjh21 Exp $");
 
 #include "opt_irqstats.h"
 
@@ -72,7 +72,7 @@ extern char *_intrnames;
 
 /* Prototypes */
 
-extern void set_spl_masks	__P((void));
+extern void set_spl_masks(void);
 
 /*
  * void irq_init(void)
@@ -81,14 +81,13 @@ extern void set_spl_masks	__P((void));
  */
 
 void
-irq_init()
+irq_init(void)
 {
 	int loop;
 
 	/* Clear all the IRQ handlers and the irq block masks */
-	for (loop = 0; loop < NIRQS; ++loop) {
+	for (loop = 0; loop < NIRQS; ++loop)
 		irqhandlers[loop] = NULL;
-	}
 
 	/* Clear the IRQ/FIQ masks in the IOMD */
 	IOMD_WRITE_BYTE(IOMD_IRQMSKA, 0x00);
@@ -104,7 +103,7 @@ irq_init()
 		break;
 	default:
 		printf("Unknown IOMD id (%d) found in irq_init()\n", IOMD_ID);
-	};
+	}
 
 	IOMD_WRITE_BYTE(IOMD_FIQMSK, 0x00);
 	IOMD_WRITE_BYTE(IOMD_DMAMSK, 0x00);
@@ -138,9 +137,7 @@ irq_init()
  */
 
 int
-irq_claim(irq, handler)
-	int irq;
-	irqhandler_t *handler;
+irq_claim(int irq, irqhandler_t *handler)
 {
 	int level;
 	u_int oldirqstate;
@@ -162,11 +159,11 @@ irq_claim(irq, handler)
     
 	/* Make sure the irq number is valid */
 	if (irq < 0 || irq >= NIRQS)
-		return(-1);
+		return -1;
 
 	/* Make sure the level is valid */
 	if (handler->ih_level < 0 || handler->ih_level >= IPL_LEVELS)
-    	        return(-1);
+    	        return -1;
 
 	oldirqstate = disable_interrupts(I32_bit);
 
@@ -250,7 +247,7 @@ irq_claim(irq, handler)
 	set_spl_masks();
 	restore_interrupts(oldirqstate);
 
-	return(0);
+	return 0;
 }
 
 
@@ -261,9 +258,7 @@ irq_claim(irq, handler)
  */
 
 int
-irq_release(irq, handler)
-	int irq;
-	irqhandler_t *handler;
+irq_release(int irq, irqhandler_t *handler)
 {
 	int level;
 	irqhandler_t *irqhand;
@@ -296,7 +291,7 @@ irq_release(irq, handler)
 	if (irqhand)
 		*prehand = irqhand->ih_next;
 	else
-		return(-1);
+		return -1;
 
 	/* Now the handler has been removed from the chain mark is as inactive */
 	irqhand->ih_flags &= ~IRQ_FLAG_ACTIVE;
@@ -358,17 +353,13 @@ irq_release(irq, handler)
 
 	set_spl_masks();
       
-	return(0);
+	return 0;
 }
 
 
 void *
-intr_claim(irq, level, name, ih_func, ih_arg)
-	int irq;
-	int level;
-	const char *name;
-	int (*ih_func) __P((void *));
-	void *ih_arg;
+intr_claim(int irq, int level, const char *name, int (*ih_func)(void *),
+    void *ih_arg)
 {
 	irqhandler_t *ih;
 
@@ -383,50 +374,48 @@ intr_claim(irq, level, name, ih_func, ih_arg)
 	ih->ih_flags = 0;
 
 	if (irq_claim(irq, ih) != 0)
-		return(NULL);
-	return(ih);
+		return NULL;
+	return ih;
 }
 
 
 int
-intr_release(arg)
-	void *arg;
+intr_release(void *arg)
 {
 	irqhandler_t *ih = (irqhandler_t *)arg;
 
 	if (irq_release(ih->ih_num, ih) == 0) {
 		free(ih, M_DEVBUF);
-		return(0);
+		return 0 ;
 	}
-	return(1);
+	return 1;
 }
 
 #if 0
 u_int
-disable_interrupts(mask)
-	u_int mask;
+disable_interrupts(u_int mask)
 {
 	u_int cpsr;
 
 	cpsr = SetCPSR(mask, mask);
-	return(cpsr);
+	return cpsr;
 }
 
 
 u_int
-restore_interrupts(old_cpsr)
-	u_int old_cpsr;
+restore_interrupts(u_int old_cpsr)
 {
 	int mask = I32_bit | F32_bit;
-	return(SetCPSR(mask, old_cpsr & mask));
+
+	return SetCPSR(mask, old_cpsr & mask);
 }
 
 
 u_int
-enable_interrupts(mask)
-	u_int mask;
+enable_interrupts(u_int mask)
 {
-	return(SetCPSR(mask, 0));
+
+	return SetCPSR(mask, 0);
 }
 #endif
 
@@ -437,8 +426,7 @@ enable_interrupts(mask)
  */
 
 void
-disable_irq(irq)
-	int irq;
+disable_irq(int irq)
 {
 	u_int oldirqstate; 
 
@@ -458,8 +446,7 @@ disable_irq(irq)
  */
 
 void
-enable_irq(irq)
-	int irq;
+enable_irq(int irq)
 {
 	u_int oldirqstate; 
 
@@ -478,8 +465,7 @@ enable_irq(irq)
  */
 
 void
-stray_irqhandler(mask)
-	u_int mask;
+stray_irqhandler(u_int mask)
 {
 	static u_int stray_irqs = 0;
 

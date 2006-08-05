@@ -1,4 +1,4 @@
-/* 	$NetBSD: iomd_dma.c,v 1.9 2005/12/11 12:16:47 christos Exp $	*/
+/* 	$NetBSD: iomd_dma.c,v 1.10 2006/08/05 18:22:57 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd_dma.c,v 1.9 2005/12/11 12:16:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_dma.c,v 1.10 2006/08/05 18:22:57 bjh21 Exp $");
 
 #define DMA_DEBUG
 #include <sys/param.h>
@@ -54,32 +54,32 @@ __KERNEL_RCSID(0, "$NetBSD: iomd_dma.c,v 1.9 2005/12/11 12:16:47 christos Exp $"
 
 
 /*
- * Only for non ARM7500 machines but the kernel could be booted on a different machine
+ * Only for non ARM7500 machines but the kernel could be booted on a
+ * different machine
  */
 
 static struct dma_ctrl ctrl[6];
 
-void dma_dumpdc __P((struct dma_ctrl *));
+void dma_dumpdc(struct dma_ctrl *);
 
 void
-dma_go(dp)
-	struct dma_ctrl *dp;
+dma_go(struct dma_ctrl *dp)
 {
+
 #ifdef DMA_DEBUG
 	printf("dma_go()\n");
 #endif
-	if(dp->dc_flags & DMA_FL_READY) {
+	if (dp->dc_flags & DMA_FL_READY) {
 		dp->dc_flags = DMA_FL_ACTIVE;
 		enable_irq(IRQ_DMACH0 + dp->dc_channel);
-	}
-	else
+	} else
 		panic("dma not ready");
 }
 
 int
-dma_reset(dp)
-	struct dma_ctrl *dp;
+dma_reset(struct dma_ctrl *dp)
 {
+
 #ifdef DMA_DEBUG
 	printf("dma_reset()\n");
 	dma_dumpdc(dp);
@@ -87,63 +87,61 @@ dma_reset(dp)
 	*dp->dc_cr = DMA_CR_CLEAR;
 	dp->dc_flags = 0;
 	disable_irq(IRQ_DMACH0 + dp->dc_channel);
-	return(0);
+	return 0;
 }
 
 /*
  * Setup dma transfer, prior to the dma_go call
  */
 int
-dma_setup(dp, start, len, readp)
-	struct dma_ctrl *dp;
-	int readp;
-	u_char *start;
-	int len;
+dma_setup(struct dma_ctrl *dp, u_char *start, int len, int readp)
 {
+
 #ifdef DMA_DEBUG
-	printf("dma_setup(start = %p, len = 0x%08x, readp = %d\n", start, len, readp);
+	printf("dma_setup(start = %p, len = 0x%08x, readp = %d\n",
+	    start, len, readp);
 #endif
-	if(((u_int)start & (dp->dc_dmasize - 1)) ||
+	if (((u_int)start & (dp->dc_dmasize - 1)) ||
 	   (len & (dp->dc_dmasize - 1))) {
 		printf("dma_setup: unaligned DMA, %p (0x%08x)\n",
 			start, len);
 	}
-	*dp->dc_cr = DMA_CR_CLEAR | DMA_CR_ENABLE | (readp?DMA_CR_DIR:0) | dp->dc_dmasize;
+	*dp->dc_cr = DMA_CR_CLEAR | DMA_CR_ENABLE | (readp?DMA_CR_DIR:0) |
+	    dp->dc_dmasize;
 	*dp->dc_cr = DMA_CR_ENABLE | (readp?DMA_CR_DIR:0) | dp->dc_dmasize;
 
 	dp->dc_nextaddr = start;
 	dp->dc_len = len;
 
 	dp->dc_flags = DMA_FL_READY;
-	return(0);
+	return 0;
 }
 
 /*
  * return true if DMA is active
  */
 int
-dma_isactive(dp)
-	struct dma_ctrl *dp;
+dma_isactive(struct dma_ctrl *dp)
 {
-	return(dp->dc_flags & DMA_FL_ACTIVE);
+
+	return dp->dc_flags & DMA_FL_ACTIVE;
 }
 
 /*
  * return true if interrupt pending
  */
 int
-dma_isintr(dp)
-	struct dma_ctrl *dp;
+dma_isintr(struct dma_ctrl *dp)
 {
+
 #ifdef DMA_DEBUG
 /*	printf("dma_isintr() returning %d\n", *dp->dc_st & DMA_ST_INT);*/
 #endif
-	return(*dp->dc_st & DMA_ST_INT);
+	return *dp->dc_st & DMA_ST_INT;
 }
 
 int
-dma_intr(cookie)
-	void *cookie;
+dma_intr(void *cookie)
 {
 	struct dma_ctrl *dp = cookie;
 	u_char status = (*dp->dc_st) & DMA_ST_MASK;
@@ -155,18 +153,18 @@ dma_intr(cookie)
 	printf("dma_intr() status = 0x%02x\n", status);
 #endif
 	
-	if(!(dp->dc_flags & DMA_FL_ACTIVE)) {
+	if (!(dp->dc_flags & DMA_FL_ACTIVE)) {
 		/* interrupt whilst not active */
 		/* ie. last buffer programmed */
 		dma_reset(dp);
-		return(0);
+		return 0;
 	}
 
-	switch(status) {
+	switch (status) {
 	case DMA_ST_OVER | DMA_ST_INT:
 	case DMA_ST_OVER | DMA_ST_INT | DMA_ST_CHAN:
 		/* idle, either first buffer or finished */
-		if(status & DMA_ST_CHAN) {
+		if (status & DMA_ST_CHAN) {
 			/* fill buffer B */
 			bufap = 0;
 			goto fill;
@@ -180,7 +178,7 @@ dma_intr(cookie)
 	case DMA_ST_INT:
 	case DMA_ST_INT | DMA_ST_CHAN:
 		/* buffer ready */
-		if(status & DMA_ST_CHAN) {
+		if (status & DMA_ST_CHAN) {
 			/* fill buffer A */
 			bufap = 1;
 			goto fill;
@@ -227,7 +225,7 @@ fill:
 	dp->dc_nextaddr += len;
 	dp->dc_len -= len;
 
-	if(bufap) {
+	if (bufap) {
 		*dp->dc_cura = (u_int)cur;
 		*dp->dc_enda = ((u_int)cur + len - dp->dc_dmasize) |
 				(dp->dc_len == 0 ? DMA_END_STOP : 0);
@@ -235,8 +233,7 @@ fill:
 			/* Last buffer, fill other buffer with garbage */
 			*dp->dc_endb = (u_int)cur;
 		}
-	}
-	else {
+	} else {
 		*dp->dc_curb = (u_int)cur;
 		*dp->dc_endb = ((u_int)cur + len - dp->dc_dmasize) |
 				(dp->dc_len == 0 ? DMA_END_STOP : 0);
@@ -250,7 +247,7 @@ fill:
 /*	ptsc_dump_mem(dp->dc_nextaddr - len, len);*/
 	printf("about to return\n");
 #endif
-	return(1);
+	return 1;
 done:
 #ifdef DMA_DEBUG
 	printf("done:\n");
@@ -261,13 +258,13 @@ done:
 #ifdef DMA_DEBUG
 	printf("about to return\n");
 #endif
-	return(1);
+	return 1;
 }
 
 void
-dma_dumpdc(dc)
-	struct dma_ctrl *dc;
+dma_dumpdc(struct dma_ctrl *dc)
 {
+
 	printf("\ndc:\t%p\n"
 		"dc_channel:\t%p=0x%08x\tdc_flags:\t%p=0x%08x\n"
 		"dc_cura:\t%p=0x%08x\tdc_enda:\t%p=0x%08x\n"
@@ -288,11 +285,7 @@ dma_dumpdc(dc)
 }
 
 struct dma_ctrl *
-dma_init(ch, extp, dmasize, ipl)
-	int ch;
-	int extp;
-	int dmasize;
-	int ipl;
+dma_init(int ch, int extp, int dmasize, int ipl)
 {
 	struct dma_ctrl *dp = &ctrl[ch];
 	int offset = ch * 0x20;
@@ -325,6 +318,6 @@ dma_init(ch, extp, dmasize, ipl)
 	if (irq_claim(IRQ_DMACH0 + ch, &dp->dc_ih))
 		panic("Cannot install DMA IRQ handler");
 
-	return(dp);
+	return dp;
 }
 
