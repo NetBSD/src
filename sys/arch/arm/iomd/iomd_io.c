@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_io.c,v 1.4 2005/12/11 12:16:47 christos Exp $	*/
+/*	$NetBSD: iomd_io.c,v 1.5 2006/08/05 18:22:57 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd_io.c,v 1.4 2005/12/11 12:16:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_io.c,v 1.5 2006/08/05 18:22:57 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,52 +131,40 @@ struct bus_space iomd_bs_tag = {
 /* bus space functions */
 
 int
-iomd_bs_map(t, bpa, size, cacheable, bshp)
-	void *t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-	bus_space_handle_t *bshp;
+iomd_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable,
+    bus_space_handle_t *bshp)
 {
+
 	/*
 	 * Temporary implementation as all I/O is already mapped etc.
 	 *
 	 * Eventually this function will do the mapping check for multiple maps
 	 */
 	*bshp = bpa;
-	return(0);
-	}
+	return 0;
+}
 
 int
-iomd_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
-    bpap, bshp)
-	void *t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int cacheable;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+iomd_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
+    bus_size_t alignment, bus_size_t boundary, int cacheable, bus_addr_t *bpap,
+    bus_space_handle_t *bshp)
 {
+
 	panic("iomd_alloc(): Help!");
 }
 
 
 void
-iomd_bs_unmap(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+iomd_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
+
 	/*
 	 * Temporary implementation
 	 */
 }
 
 void    
-iomd_bs_free(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+iomd_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
 	panic("iomd_free(): Help!");
@@ -185,24 +173,19 @@ iomd_bs_free(t, bsh, size)
 }
 
 int
-iomd_bs_subregion(t, bsh, offset, size, nbshp)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+iomd_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset,
+    bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + (offset << 2);
-	return (0);
+	return 0;
 }
 
 void
-iomd_bs_barrier(t, bsh, offset, len, flags)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, len;
-	int flags;
+iomd_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
+    bus_size_t len, int flags)
 {
+
 }	
 
 /* End of iomd_io.c */
