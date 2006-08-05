@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.39 2006/07/06 15:09:54 scw Exp $	*/
+/*	$NetBSD: spr.h,v 1.40 2006/08/05 21:26:49 sanjayl Exp $	*/
 
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
@@ -97,6 +97,8 @@
 #define	  MPC7410		  0x800c
 #define	  MPC5200		  0x8011
 #define	  MPC8245		  0x8081
+#define	  IBM970		  0x0039
+#define   IBM970FX		  0x003c
 
 #define	SPR_IBAT0U		0x210	/* .68 Instruction BAT Reg 0 Upper */
 #define	SPR_IBAT0L		0x211	/* .6. Instruction BAT Reg 0 Lower */
@@ -491,5 +493,9 @@
 #define	PMCN_ICOMP		 2 /* Instructions completed */
 #define	PMCN_TBLTRANS		 3 /* TBL bit transitions */
 #define	PCMN_IDISPATCH		 4 /* Instructions dispatched */
+
+/* SPRs specific to the IBM 970 series processors */
+#define SPR_HID4       0x3F4   /* 970 HID4 */
+#define SPR_HID5       0x3F6   /* 970 HID5 */
 
 #endif /* !_POWERPC_SPR_H_ */

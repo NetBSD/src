@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.13 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: psl.h,v 1.14 2006/08/05 21:26:49 sanjayl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -63,6 +63,9 @@
 
 #define	PSL_601_MASK	~(PSL_VEC|PSL_POW|PSL_ILE|PSL_BE|PSL_RI|PSL_LE)
 
+/* The IBM 970 series does not implemnt LE mode */
+#define PSL_970_MASK	~(PSL_ILE|PSL_LE)
+
 /*
  * Floating-point exception modes:
  */
@@ -89,7 +92,7 @@
 #include "opt_ppcarch.h"
 #endif /* _KERNEL_OPT */
 
-#if defined(PPC_OEA)
+#if defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 extern int cpu_psluserset, cpu_pslusermod;
 
 #define	PSL_USERSET		cpu_psluserset
