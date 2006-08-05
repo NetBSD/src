@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.114 2006/07/23 22:06:06 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.115 2006/08/05 21:26:49 sanjayl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.114 2006/07/23 22:06:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.115 2006/08/05 21:26:49 sanjayl Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -157,7 +157,7 @@ trap(struct trapframe *frame)
 					l->l_savp->savp_faultaddr = va;
 					l->l_flag |= L_SA_PAGEFAULT;
 				}
-#if defined(DIAGNOSTIC) && defined(PPC_OEA)
+#if defined(DIAGNOSTIC) && (defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE))
 			} else if ((va >> ADDR_SR_SHFT) == USER_SR) {
 				printf("trap: kernel %s DSI trap @ %#lx by %#lx"
 				    " (DSISR %#x): USER_SR unset\n",
@@ -212,8 +212,8 @@ trap(struct trapframe *frame)
 			return;
 		}
 		printf("trap: kernel %s DSI trap @ %#lx by %#lx (DSISR %#x, err"
-		    "=%d)\n", (frame->dsisr & DSISR_STORE) ? "write" : "read",
-		    va, frame->srr0, frame->dsisr, rv);
+		    "=%d), lr %#lx\n", (frame->dsisr & DSISR_STORE) ? "write" : "read",
+		    va, frame->srr0, frame->dsisr, rv, frame->lr);
 		goto brain_damage2;
 	}
 	case EXC_DSI|EXC_USER:
@@ -292,8 +292,8 @@ trap(struct trapframe *frame)
 	case EXC_ISI:
 		ci->ci_ev_kisi.ev_count++;
 
-		printf("trap: kernel ISI by %#lx (SRR1 %#lx)\n",
-		    frame->srr0, frame->srr1);
+		printf("trap: kernel ISI by %#lx (SRR1 %#lx), lr: %#lx\n",
+		    frame->srr0, frame->srr1, frame->lr);
 		goto brain_damage2;
 
 	case EXC_ISI|EXC_USER:

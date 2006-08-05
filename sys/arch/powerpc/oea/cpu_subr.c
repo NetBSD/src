@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.26 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.27 2006/08/05 21:26:49 sanjayl Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.26 2005/12/24 20:07:28 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.27 2006/08/05 21:26:49 sanjayl Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -202,6 +202,8 @@ static const struct cputab models[] = {
 	{ "7447A",	MPC7447A,	REVFMT_MAJMIN },
 	{ "7448",	MPC7448,	REVFMT_MAJMIN },
 	{ "8240",	MPC8240,	REVFMT_MAJMIN },
+	{ "970",	IBM970,		REVFMT_MAJMIN },
+	{ "970FX",	IBM970FX,	REVFMT_MAJMIN },
 	{ "",		0,		REVFMT_HEX }
 };
 
@@ -252,6 +254,12 @@ cpu_probe_cache(void)
 	pvr = mfpvr();
 	vers = pvr >> 16;
 
+
+	/* Presently common across almost all implementations. */
+	curcpu()->ci_ci.dcache_line_size = CACHELINESIZE;
+	curcpu()->ci_ci.icache_line_size = CACHELINESIZE;
+
+
 	switch (vers) {
 #define	K	*1024
 	case IBM750FX:
@@ -286,16 +294,21 @@ cpu_probe_cache(void)
 		curcpu()->ci_ci.icache_size = 32 K;
 		assoc = 4;
 		break;
+	case IBM970:
+	case IBM970FX:
+		curcpu()->ci_ci.dcache_size = 32 K;
+		curcpu()->ci_ci.icache_size = 64 K;
+		curcpu()->ci_ci.dcache_line_size = 128;
+		curcpu()->ci_ci.icache_line_size = 128;
+		assoc = 2;
+		break;
+
 	default:
 		curcpu()->ci_ci.dcache_size = PAGE_SIZE;
 		curcpu()->ci_ci.icache_size = PAGE_SIZE;
 		assoc = 1;
 #undef	K
 	}
-
-	/* Presently common across all implementations. */
-	curcpu()->ci_ci.dcache_line_size = CACHELINESIZE;
-	curcpu()->ci_ci.icache_line_size = CACHELINESIZE;
 
 	/*
 	 * Possibly recolor.
@@ -381,7 +394,12 @@ cpu_setup(self, ci)
 	aprint_normal(": %s, ID %d%s\n", model,  cpu_number(),
 	    cpu_number() == 0 ? " (primary)" : "");
 
+#if defined (PPC_OEA) || defined (PPC_OEA64)
 	hid0 = mfspr(SPR_HID0);
+#elif defined (PPC_OEA64_BRIDGE)
+	hid0 = mfspr(SPR_HID0);
+#endif
+
 	cpu_probe_cache();
 
 	/*
@@ -430,6 +448,8 @@ cpu_setup(self, ci)
 		powersave = 1;
 		break;
 
+	case IBM970:
+	case IBM970FX:
 	default:
 		/* No power-saving mode is available. */ ;
 	}
@@ -461,8 +481,10 @@ cpu_setup(self, ci)
 		break;
 	}
 
+#if defined (PPC_OEA)
 	mtspr(SPR_HID0, hid0);
 	__asm volatile("sync;isync");
+#endif
 
 	switch (vers) {
 	case MPC601:
@@ -473,12 +495,16 @@ cpu_setup(self, ci)
 	case MPC7457:
 		bitmask = HID0_7450_BITMASK;
 		break;
+	case IBM970:
+	case IBM970FX:
+		bitmask = 0;
+		break;
 	default:
 		bitmask = HID0_BITMASK;
 		break;
 	}
 	bitmask_snprintf(hid0, bitmask, hidbuf, sizeof hidbuf);
-	aprint_normal("%s: HID0 %s\n", self->dv_xname, hidbuf);
+	aprint_normal("%s: HID0 %s, powersave: %d\n", self->dv_xname, hidbuf, powersave);
 
 	ci->ci_khz = 0;
 
@@ -584,6 +610,7 @@ cpu_identify(char *str, size_t len)
 	pvr = mfpvr();
 	vers = pvr >> 16;
 	rev = pvr;
+
 	switch (vers) {
 	case MPC7410:
 		minor = (pvr >> 0) & 0xff;

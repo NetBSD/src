@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.46 2006/05/26 12:52:45 blymn Exp $ */
+/*	$NetBSD: gem.c,v 1.47 2006/08/05 21:26:49 sanjayl Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.46 2006/05/26 12:52:45 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.47 2006/08/05 21:26:49 sanjayl Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -299,8 +299,13 @@ gem_attach(sc, enaddr)
 
 	gem_mifinit(sc);
 
+#if defined (PMAC_G5)
+	mii_attach(&sc->sc_dev, mii, 0xffffffff,
+			1, MII_OFFSET_ANY, MIIF_FORCEANEG);
+#else
 	mii_attach(&sc->sc_dev, mii, 0xffffffff,
 			MII_PHY_ANY, MII_OFFSET_ANY, MIIF_FORCEANEG);
+#endif
 
 	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL) {

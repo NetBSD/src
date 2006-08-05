@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.13 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.14 2006/08/05 21:26:49 sanjayl Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.13 2005/12/24 20:07:28 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.14 2006/08/05 21:26:49 sanjayl Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.13 2005/12/24 20:07:28 perry Exp $")
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
-#ifdef PPC_OEA
+#if defined(PPC_OEA) || (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #include <powerpc/oea/vmparam.h>
 #ifdef ALTIVEC
 #include <powerpc/altivec.h>
@@ -70,7 +70,7 @@ struct evcnt pmap_evcnt_copied_pages =
 struct evcnt pmap_evcnt_idlezeroed_pages =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap",
 	"pages idle zeroed");
-#ifdef PPC_OEA
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 extern struct evcnt pmap_evcnt_exec_uncached_zero_page;
 extern struct evcnt pmap_evcnt_exec_uncached_copy_page;
 #endif
@@ -107,7 +107,7 @@ pmap_zero_page(paddr_t pa)
 	size_t linewidth;
 	register_t msr = 0; /* XXX: gcc */
 
-#if defined(PPC_OEA)
+#if defined(PPC_OEA) || defined (PPC_OEA64_BIRDGE)
 	{
 		/*
 		 * If we are zeroing this page, we must clear the EXEC-ness
@@ -137,12 +137,12 @@ pmap_zero_page(paddr_t pa)
 	/*
 	 * Turn off data relocation (DMMU off).
 	 */
-#ifdef PPC_OEA
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	if (pa >= SEGMENT_LENGTH) {
 #endif
 		msr = MFMSR();
 		MTMSR(msr & ~PSL_DR);
-#ifdef PPC_OEA
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	}
 #endif
 
@@ -169,7 +169,7 @@ pmap_zero_page(paddr_t pa)
 	/*
 	 * Restore data relocation (DMMU on).
 	 */
-#ifdef PPC_OEA
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	if (pa >= SEGMENT_LENGTH)
 #endif
 		MTMSR(msr);
@@ -186,7 +186,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	register_t msr;
 	size_t i;
 
-#if defined(PPC_OEA)
+#if defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	{
 		/*
 		 * If we are copying to the destination page, we must clear
@@ -214,7 +214,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	}
 #endif
 
-#ifdef PPC_OEA
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	if (src < SEGMENT_LENGTH && dst < SEGMENT_LENGTH) {
 		/*
 		 * Copy the page (memcpy is optimized, right? :)
@@ -257,7 +257,7 @@ pmap_syncicache(paddr_t pa, psize_t len)
 	register_t msr;
 	size_t i;
 
-#ifdef PPC_OEA
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	if (pa + len <= SEGMENT_LENGTH) {
 		__syncicache((void *)pa, len);
 		return;
@@ -313,7 +313,7 @@ pmap_pageidlezero(paddr_t pa)
 	boolean_t rv = TRUE;
 	int i;
 
-#ifdef PPC_OEA
+#if defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	if (pa < SEGMENT_LENGTH) {
 		for (i = 0; i < PAGE_SIZE / sizeof(dp[0]); i++) {
 			if (sched_whichqs != 0)

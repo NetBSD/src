@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.15 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.16 2006/08/05 21:26:49 sanjayl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.15 2005/12/24 22:45:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.16 2006/08/05 21:26:49 sanjayl Exp $");
 
 #include "opt_ddb.h"
 
@@ -74,6 +74,7 @@ kgdb_acc(vaddr_t va, size_t len)
 		return 1;
 	}
 
+#if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
 	/* Now check battable registers */
 	if ((mfpvr() >> 16) == MPC601) {
 		__asm volatile ("mfibatl %0,0" : "=r"(batl));
@@ -122,6 +123,7 @@ kgdb_acc(vaddr_t va, size_t len)
 			return 1;
 		}
 	}
+#endif /* (PPC_OEA) && !(PPC_OEA64) && !(PPC_OEA64_BRIDGE) */
 
 	last_va = va + len;
 	va  &= ~PGOFSET;
@@ -164,7 +166,7 @@ kgdb_signal(int type)
 		return SIGSEGV;
 #endif
 
-#ifdef PPC_OEA
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	case EXC_PERF:		/* 604/750/7400 - Performance monitoring */
 	case EXC_BPT:		/* 604/750/7400 - Instruction breakpoint */
 	case EXC_SMI:		/* 604/750/7400 - System management interrupt */

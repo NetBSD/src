@@ -1,10 +1,13 @@
-/*	$NetBSD: pmap.c,v 1.37 2006/05/13 04:04:45 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.38 2006/08/05 21:26:49 sanjayl Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Matt Thomas <matt@3am-software.com> of Allegro Networks, Inc.
+ *
+ * Support for PPC64 Bridge mode added by Sanjay Lal <sanjayl@kymasys.com>
+ * of Kyma Systems LLC.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -67,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 2006/05/13 04:04:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2006/08/05 21:26:49 sanjayl Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -94,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 2006/05/13 04:04:45 matt Exp $");
 #include <powerpc/spr.h>
 #include <powerpc/oea/sr_601.h>
 #include <powerpc/bat.h>
+#include <powerpc/stdarg.h>
 
 #if defined(DEBUG) || defined(PMAPCHECK)
 #define	STATIC
@@ -140,7 +144,7 @@ struct pmap_physseg pmap_physseg;
 #endif
 
 /*
- * The following structure is exactly 32 bytes long (one cacheline).
+ * The following structure is aligned to 32 bytes 
  */
 struct pvo_entry {
 	LIST_ENTRY(pvo_entry) pvo_vlink;	/* Link to common virt page */
@@ -162,7 +166,7 @@ struct pvo_entry {
 #define	PVO_REMOVE		6		/* PVO has been removed */
 #define	PVO_WHERE_MASK		15
 #define	PVO_WHERE_SHFT		8
-};
+} __attribute__ ((aligned (32)));
 #define	PVO_VADDR(pvo)		((pvo)->pvo_vaddr & ~ADDR_POFF)
 #define	PVO_ISEXECUTABLE(pvo)	((pvo)->pvo_vaddr & PVO_EXECUTABLE)
 #define	PVO_PTEGIDX_GET(pvo)	((pvo)->pvo_vaddr & PVO_PTEGIDX_MASK)
@@ -215,9 +219,6 @@ static struct pool_allocator pmap_pool_uallocator = {
 
 #if defined(DEBUG) || defined(PMAPCHECK) || defined(DDB)
 void pmap_pte_print(volatile struct pte *);
-#endif
-
-#ifdef DDB
 void pmap_pteg_check(void);
 void pmap_pteg_dist(void);
 void pmap_print_pte(pmap_t, vaddr_t);
@@ -279,7 +280,9 @@ static int pmap_initialized;
 #define	PMAPDEBUG_KENTER	0x2000
 #define	PMAPDEBUG_KREMOVE	0x4000
 #define	PMAPDEBUG_REMOVE	0x8000
+
 unsigned int pmapdebug = 0;
+
 # define DPRINTF(x)		printf x
 # define DPRINTFN(n, x)		if (pmapdebug & PMAPDEBUG_ ## n) printf x
 #else
@@ -479,6 +482,10 @@ EVCNT_ATTACH_STATIC(pmap_evcnt_pvos_failed);
 #endif
 
 #define	TLBIE(va)	__asm volatile("tlbie %0" :: "r"(va))
+
+/* XXXSL: this needs to be moved to assembler */
+#define	TLBIEL(va)	__asm __volatile("tlbie %0" :: "r"(va))
+
 #define	TLBSYNC()	__asm volatile("tlbsync")
 #define	SYNC()		__asm volatile("sync")
 #define	EIEIO()		__asm volatile("eieio")
@@ -488,7 +495,7 @@ EVCNT_ATTACH_STATIC(pmap_evcnt_pvos_failed);
 #define	MFSRIN(va)	mfsrin(va)
 #define	MFTB()		mfrtcltbl()
 
-#ifndef PPC_OEA64
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 static inline register_t
 mfsrin(vaddr_t va)
 {
@@ -496,7 +503,12 @@ mfsrin(vaddr_t va)
 	__asm volatile ("mfsrin %0,%1" : "=r"(sr) : "r"(va));
 	return sr;
 }
-#endif	/* PPC_OEA64 */
+#endif	/* PPC_OEA*/
+
+#if defined (PPC_OEA64_BRIDGE)
+extern void mfmsr64 (register64_t *result);
+#endif /* PPC_OEA64_BRIDGE */
+
 
 static inline register_t
 pmap_interrupts_off(void)
@@ -535,6 +547,7 @@ tlbia(void)
 	caddr_t i;
 	
 	SYNC();
+#if defined(PPC_OEA)
 	/*
 	 * Why not use "tlbia"?  Because not all processors implement it.
 	 *
@@ -546,6 +559,15 @@ tlbia(void)
 		EIEIO();
 		SYNC();
 	}
+#elif defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+	printf("Invalidating ALL TLB entries......\n");
+	/* This is specifically for the 970, 970UM v1.6 pp. 140. */
+	for (i = 0; i <= (caddr_t)0xFF000; i += 0x00001000) {
+		TLBIEL(i);
+		EIEIO();
+		SYNC();
+	}
+#endif
 	TLBSYNC();
 	SYNC();
 }
@@ -553,7 +575,9 @@ tlbia(void)
 static inline register_t
 va_to_vsid(const struct pmap *pm, vaddr_t addr)
 {
-#ifdef PPC_OEA64
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
+	return (pm->pm_sr[addr >> ADDR_SR_SHFT] & SR_VSID) >> SR_VSID_SHFT;
+#else /* PPC_OEA64 */
 #if 0
 	const struct ste *ste;
 	register_t hash;
@@ -589,9 +613,7 @@ va_to_vsid(const struct pmap *pm, vaddr_t addr)
 	 */
 	return VSID_MAKE(addr >> ADDR_SR_SHFT, pm->pm_vsid) >> SR_VSID_SHFT;
 #endif
-#else
-	return (pm->pm_sr[addr >> ADDR_SR_SHFT] & SR_VSID) >> SR_VSID_SHFT;
-#endif
+#endif /* PPC_OEA */
 }
 
 static inline register_t
@@ -620,17 +642,20 @@ pmap_pte_to_va(volatile const struct pte *pt)
 		ptaddr ^= (pmap_pteg_mask * sizeof(struct pteg));
 
 	/* PPC Bits 10-19  PPC64 Bits 42-51 */
+#if defined(PPC_OEA)
 	va = ((pt->pte_hi >> PTE_VSID_SHFT) ^ (ptaddr / sizeof(struct pteg))) & 0x3ff;
+#elif defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+	va = ((pt->pte_hi >> PTE_VSID_SHFT) ^ (ptaddr / sizeof(struct pteg))) & 0x7ff;
+#endif
 	va <<= ADDR_PIDX_SHFT;
 
 	/* PPC Bits 4-9  PPC64 Bits 36-41 */
 	va |= (pt->pte_hi & PTE_API) << ADDR_API_SHFT;
 
-#ifdef PPC_OEA64
+#if defined(PPC_OEA64)
 	/* PPC63 Bits 0-35 */
 	/* va |= VSID_TO_SR(pt->pte_hi >> PTE_VSID_SHFT) << ADDR_SR_SHFT; */
-#endif
-#ifdef PPC_OEA
+#elif defined(PPC_OEA) || defined(PPC_OEA64_BRIDGE)
 	/* PPC Bits 0-3 */
 	va |= VSID_TO_SR(pt->pte_hi >> PTE_VSID_SHFT) << ADDR_SR_SHFT;
 #endif
@@ -744,9 +769,17 @@ pmap_pte_create(struct pte *pt, const struct pmap *pm, vaddr_t va, register_t pt
 	 *
 	 * Note: Don't set the valid bit for correct operation of tlb update.
 	 */
+#if defined(PPC_OEA)
 	pt->pte_hi = (va_to_vsid(pm, va) << PTE_VSID_SHFT)
 	    | (((va & ADDR_PIDX) >> (ADDR_API_SHFT - PTE_API_SHFT)) & PTE_API);
 	pt->pte_lo = pte_lo;
+#elif defined (PPC_OEA64_BRIDGE)
+	pt->pte_hi = ((u_int64_t)va_to_vsid(pm, va) << PTE_VSID_SHFT)
+	    | (((va & ADDR_PIDX) >> (ADDR_API_SHFT - PTE_API_SHFT)) & PTE_API);
+	pt->pte_lo = (u_int64_t) pte_lo;
+#elif defined (PPC_OEA64)
+#error PPC_OEA64 not supported
+#endif /* PPC_OEA */
 }
 
 static inline void
@@ -777,6 +810,7 @@ pmap_pte_set(volatile struct pte *pt, struct pte *pvo_pt)
 		panic("pte_set: setting an already valid pte %p", pvo_pt);
 #endif
 	pvo_pt->pte_hi |= PTE_VALID;
+
 	/*
 	 * Update the PTE as defined in section 7.6.3.1
 	 * Note that the REF/CHG bits are from pvo_pt and thus should
@@ -785,6 +819,7 @@ pmap_pte_set(volatile struct pte *pt, struct pte *pvo_pt)
 	pt->pte_lo = pvo_pt->pte_lo;
 	EIEIO();
 	pt->pte_hi = pvo_pt->pte_hi;
+	TLBSYNC();
 	SYNC();
 	pmap_pte_valid++;
 }
@@ -845,8 +880,15 @@ pmap_pte_insert(int ptegidx, struct pte *pvo_pt)
 	int i;
 	
 #if defined(DEBUG)
+#if defined (PPC_OEA)
 	DPRINTFN(PTE, ("pmap_pte_insert: idx 0x%x, pte 0x%x 0x%x\n",
 		ptegidx, (unsigned int) pvo_pt->pte_hi, (unsigned int) pvo_pt->pte_lo));
+#elif defined (PPC_OEA64_BRIDGE)
+	DPRINTFN(PTE, ("pmap_pte_insert: idx 0x%x, pte 0x%016llx 0x%016llx\n",
+		ptegidx, (unsigned long long) pvo_pt->pte_hi, 
+		(unsigned long long) pvo_pt->pte_lo));
+
+#endif
 #endif
 	/*
 	 * First try primary hash.
@@ -1147,7 +1189,7 @@ pmap_t
 pmap_create(void)
 {
 	pmap_t pm;
-	
+
 	pm = pool_get(&pmap_pool, PR_WAITOK);
 	memset((caddr_t)pm, 0, sizeof *pm);
 	pmap_pinit(pm);
@@ -1214,7 +1256,7 @@ pmap_pinit(pmap_t pm)
 		hash &= PTE_VSID >> PTE_VSID_SHFT;
 		pmap_vsid_bitmap[n] |= mask;
 		pm->pm_vsid = hash;
-#ifndef PPC_OEA64
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 		for (i = 0; i < 16; i++)
 			pm->pm_sr[i] = VSID_MAKE(i, hash) | SR_PRKEY |
 			    SR_NOEXEC;
@@ -1405,6 +1447,9 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *pteidx_p)
 			return pvo;
 		}
 	}
+	if ((pm == pmap_kernel()) && (va < SEGMENT_LENGTH))
+		panic("%s: returning NULL for %s pmap, va: 0x%08lx\n", __FUNCTION__,
+		(pm == pmap_kernel() ? "kernel" : "user"), va);
 	return NULL;
 }
 
@@ -1661,7 +1706,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 		pvo->pvo_pmap->pm_stats.wired_count++;
 	pvo->pvo_pmap->pm_stats.resident_count++;
 #if defined(DEBUG)
-	if (pm != pmap_kernel() && va < VM_MIN_KERNEL_ADDRESS)
+/*	if (pm != pmap_kernel() && va < VM_MIN_KERNEL_ADDRESS) */
 		DPRINTFN(PVOENTER,
 		    ("pmap_pvo_enter: pvo %p: pm %p va %#lx pa %#lx\n",
 		    pvo, pm, va, pa));
@@ -1678,6 +1723,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 		PMAPCOUNT2(((pvo->pvo_pte.pte_hi & PTE_HID)
 		    ? pmap_evcnt_ptes_secondary : pmap_evcnt_ptes_primary)[i]);
 		TAILQ_INSERT_TAIL(pvoh, pvo, pvo_olink);
+
 	} else {
 		/*
 		 * Since we didn't have room for this entry (which makes it
@@ -1839,7 +1885,7 @@ pvo_set_exec(struct pvo_entry *pvo)
 		return;
 	}
 	pvo->pvo_vaddr |= PVO_EXECUTABLE;
-#ifdef PPC_OEA
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	{
 		int sr = PVO_VADDR(pvo) >> ADDR_SR_SHFT;
 		if (pm->pm_exec[sr]++ == 0) {
@@ -1863,7 +1909,7 @@ pvo_clear_exec(struct pvo_entry *pvo)
 		return;
 	}
 	pvo->pvo_vaddr &= ~PVO_EXECUTABLE;
-#ifdef PPC_OEA
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	{
 		int sr = PVO_VADDR(pvo) >> ADDR_SR_SHFT;
 		if (--pm->pm_exec[sr] == 0) {
@@ -1991,9 +2037,11 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	register_t pte_lo;
 	int error;
 
+#if defined (PPC_OEA64_BRIDGE)
 	if (va < VM_MIN_KERNEL_ADDRESS)
 		panic("pmap_kenter_pa: attempt to enter "
 		    "non-kernel address %#lx!", va);
+#endif
 
 	DPRINTFN(KENTER,
 	    ("pmap_kenter_pa(%#lx,%#lx,%#x)\n", va, pa, prot));
@@ -2072,6 +2120,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	struct pvo_entry *pvo;
 	register_t msr;
 
+
 	/*
 	 * If this is a kernel pmap lookup, also check the battable
 	 * and if we get a hit, translate the VA to a PA using the
@@ -2082,6 +2131,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	    (va < VM_MIN_KERNEL_ADDRESS ||
 	     (KERNEL2_SR < 15 && VM_MAX_KERNEL_ADDRESS <= va))) {
 		KASSERT((va >> ADDR_SR_SHFT) != USER_SR);
+#if defined (PPC_OEA)
 		if ((MFPVR() >> 16) != MPC601) {
 			register_t batu = battable[va >> ADDR_SR_SHFT].batu;
 			if (BAT_VALID_P(batu,0) && BAT_VA_MATCH_P(batu,va)) {
@@ -2112,6 +2162,12 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 			}
 		}
 		return FALSE;
+#elif defined (PPC_OEA64_BRIDGE)
+	panic("%s: pm: %s, va: 0x%08lx\n", __FUNCTION__, 
+		(pm == pmap_kernel() ? "kernel" : "user"), va);
+#elif defined (PPC_OEA64)
+#error PPC_OEA64 not supported
+#endif /* PPC_OEA */
 	}
 	
 	msr = pmap_interrupts_off();
@@ -2492,17 +2548,48 @@ void
 pmap_pte_print(volatile struct pte *pt)
 {
 	printf("PTE %p: ", pt);
+
+#if defined(PPC_OEA)
 	/* High word: */
 	printf("0x%08lx: [", pt->pte_hi);
+#elif defined (PPC_OEA64_BRIDGE)
+	printf("0x%016llx: [", pt->pte_hi);
+#else /* PPC_OEA64 */
+	printf("0x%016lx: [", pt->pte_hi);
+#endif /* PPC_OEA */
+
 	printf("%c ", (pt->pte_hi & PTE_VALID) ? 'v' : 'i');
 	printf("%c ", (pt->pte_hi & PTE_HID) ? 'h' : '-');
+
+#if defined (PPC_OEA)
 	printf("0x%06lx 0x%02lx",
 	    (pt->pte_hi &~ PTE_VALID)>>PTE_VSID_SHFT,
 	    pt->pte_hi & PTE_API);
 	printf(" (va 0x%08lx)] ", pmap_pte_to_va(pt));
+#elif defined (PPC_OEA64)
+	printf("0x%06lx 0x%02lx",
+	    (pt->pte_hi &~ PTE_VALID)>>PTE_VSID_SHFT,
+	    pt->pte_hi & PTE_API);
+	printf(" (va 0x%016lx)] ", pmap_pte_to_va(pt));
+#else
+	/* PPC_OEA64_BRIDGE */
+	printf("0x%06llx 0x%02llx",
+	    (pt->pte_hi &~ PTE_VALID)>>PTE_VSID_SHFT,
+	    pt->pte_hi & PTE_API);
+	printf(" (va 0x%08lx)] ", pmap_pte_to_va(pt));
+#endif /* PPC_OEA */
+
 	/* Low word: */
+#if defined (PPC_OEA)
 	printf(" 0x%08lx: [", pt->pte_lo);
 	printf("0x%05lx... ", pt->pte_lo >> 12);
+#elif defined (PPC_OEA64)
+	printf(" 0x%016lx: [", pt->pte_lo);
+	printf("0x%012lx... ", pt->pte_lo >> 12);
+#else	/* PPC_OEA64_BRIDGE */
+	printf(" 0x%016llx: [", pt->pte_lo);
+	printf("0x%012llx... ", pt->pte_lo >> 12);
+#endif
 	printf("%c ", (pt->pte_lo & PTE_REF) ? 'r' : 'u');
 	printf("%c ", (pt->pte_lo & PTE_CHG) ? 'c' : 'n');
 	printf("%c", (pt->pte_lo & PTE_W) ? 'w' : '.');
@@ -2528,14 +2615,16 @@ pmap_pteg_check(void)
 	u_int p_valid = 0;
 	u_int s_valid = 0;
 	u_int invalid = 0;
-	
+
 	for (ptegidx = 0; ptegidx < pmap_pteg_cnt; ptegidx++) {
 		for (pt = pmap_pteg_table[ptegidx].pt, i = 8; --i >= 0; pt++) {
 			if (pt->pte_hi & PTE_VALID) {
 				if (pt->pte_hi & PTE_HID)
 					s_valid++;
 				else
+				{
 					p_valid++;
+				}
 			} else
 				invalid++;
 		}
@@ -2554,8 +2643,10 @@ pmap_print_mmuregs(void)
 	vaddr_t addr;
 	register_t soft_sr[16];
 #endif
+#if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
 	struct bat soft_ibat[4];
 	struct bat soft_dbat[4];
+#endif
 	register_t sdr1;
 	
 	cpuvers = MFPVR() >> 16;
@@ -2568,6 +2659,7 @@ pmap_print_mmuregs(void)
 	}
 #endif
 
+#if defined(PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
 	/* read iBAT (601: uBAT) registers */
 	__asm volatile ("mfibatu %0,0" : "=r"(soft_ibat[0].batu));
 	__asm volatile ("mfibatl %0,0" : "=r"(soft_ibat[0].batl));
@@ -2590,24 +2682,26 @@ pmap_print_mmuregs(void)
 		__asm volatile ("mfdbatu %0,3" : "=r"(soft_dbat[3].batu));
 		__asm volatile ("mfdbatl %0,3" : "=r"(soft_dbat[3].batl));
 	}
+#endif
 
 	printf("SDR1:\t0x%lx\n", (long) sdr1);
 #ifndef PPC_OEA64
 	printf("SR[]:\t");
 	for (i = 0; i < 4; i++)
-		printf("0x%08lx,   ", soft_sr[i]);
+		printf("0x%08lx,   ", (long) soft_sr[i]);
 	printf("\n\t");
 	for ( ; i < 8; i++)
-		printf("0x%08lx,   ", soft_sr[i]);
+		printf("0x%08lx,   ", (long) soft_sr[i]);
 	printf("\n\t");
 	for ( ; i < 12; i++)
-		printf("0x%08lx,   ", soft_sr[i]);
+		printf("0x%08lx,   ", (long) soft_sr[i]);
 	printf("\n\t");
 	for ( ; i < 16; i++)
-		printf("0x%08lx,   ", soft_sr[i]);
+		printf("0x%08lx,   ", (long) soft_sr[i]);
 	printf("\n");
 #endif
 
+#if defined(PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
 	printf("%cBAT[]:\t", cpuvers == MPC601 ? 'u' : 'i');
 	for (i = 0; i < 4; i++) {
 		printf("0x%08lx 0x%08lx, ",
@@ -2625,6 +2719,7 @@ pmap_print_mmuregs(void)
 		}
 	}
 	printf("\n");
+#endif /* PPC_OEA... */
 }
 
 void
@@ -2638,10 +2733,17 @@ pmap_print_pte(pmap_t pm, vaddr_t va)
 	if (pvo != NULL) {
 		pt = pmap_pvo_to_pte(pvo, pteidx);
 		if (pt != NULL) {
+#if defined (PPC_OEA) || defined (PPC_OEA64)
 			printf("VA %#lx -> %p -> %s %#lx, %#lx\n",
 				va, pt,
 				pt->pte_hi & PTE_HID ? "(sec)" : "(pri)",
 				pt->pte_hi, pt->pte_lo);
+#else	/* PPC_OEA64_BRIDGE */
+			printf("VA %#lx -> %p -> %s %#llx, %#llx\n",
+				va, pt,
+				pt->pte_hi & PTE_HID ? "(sec)" : "(pri)",
+				pt->pte_hi, pt->pte_lo);
+#endif
 		} else {
 			printf("No valid PTE found\n");
 		}
@@ -2965,6 +3067,60 @@ pmap_boot_find_memory(psize_t size, psize_t alignment, int at_end)
 	    "%lx/%lx allocation?", size, alignment);
 }
 
+/* XXXSL: we dont have any BATs to do this, map in Segment 0 1:1 using page tables */
+#if defined (PPC_OEA64_BRIDGE)
+int
+pmap_setup_segment0_map(int use_large_pages, ...)
+{
+    vaddr_t va;
+
+    register_t pte_lo = 0x0;
+    int ptegidx = 0, i = 0;
+    struct pte pte;
+    va_list ap;
+
+    /* Coherent + Supervisor RW, no user access */
+    pte_lo = PTE_M;
+
+    /* XXXSL
+     * Map in 1st segment 1:1, we'll be careful not to spill kernel entries later,
+     * these have to take priority.
+     */
+    for (va = 0x0; va < SEGMENT_LENGTH; va += 0x1000) {
+        ptegidx = va_to_pteg(pmap_kernel(), va);
+        pmap_pte_create(&pte, pmap_kernel(), va, va | pte_lo);
+        i = pmap_pte_insert(ptegidx, &pte);
+    }
+
+    va_start(ap, use_large_pages);
+    while (1) {
+        paddr_t pa;
+        size_t size;
+
+        va = va_arg(ap, vaddr_t);
+
+        if (va == 0)
+            break;
+
+        pa = va_arg(ap, paddr_t);
+        size = va_arg(ap, size_t);
+
+        for (; va < (va + size); va += 0x1000, pa += 0x1000) {
+#if 0
+	    printf("%s: Inserting: va: 0x%08lx, pa: 0x%08lx\n", __FUNCTION__,  va, pa);
+#endif
+            ptegidx = va_to_pteg(pmap_kernel(), va);
+            pmap_pte_create(&pte, pmap_kernel(), va, pa | pte_lo);
+            i = pmap_pte_insert(ptegidx, &pte);
+        }
+    }
+
+    TLBSYNC();
+    SYNC();
+    return (0);
+}
+#endif /* PPC_OEA64_BRIDGE */
+
 /*
  * This is not part of the defined PMAP interface and is specific to the
  * PowerPC architecture.  This is called during initppc, before the system
@@ -3133,6 +3289,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 #ifdef	PTEGCOUNT
 	pmap_pteg_cnt = PTEGCOUNT;
 #else /* PTEGCOUNT */
+
 	pmap_pteg_cnt = 0x1000;
 	
 	while (pmap_pteg_cnt < physmem)
@@ -3141,11 +3298,23 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	pmap_pteg_cnt >>= 1;
 #endif /* PTEGCOUNT */
 
+#ifdef DEBUG
+	DPRINTFN(BOOT,
+		("pmap_pteg_cnt: 0x%x\n", pmap_pteg_cnt));
+#endif
+
 	/*
 	 * Find suitably aligned memory for PTEG hash table.
 	 */
 	size = pmap_pteg_cnt * sizeof(struct pteg);
 	pmap_pteg_table = pmap_boot_find_memory(size, size, 0);
+
+#ifdef DEBUG
+	DPRINTFN(BOOT,
+		("PTEG cnt: 0x%x HTAB size: 0x%08x bytes, address: %p\n", pmap_pteg_cnt, (unsigned int)size, pmap_pteg_table));
+#endif
+
+
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	if ( (uintptr_t) pmap_pteg_table + size > SEGMENT_LENGTH)
 		panic("pmap_bootstrap: pmap_pteg_table end (%p + %lx) > 256MB",
@@ -3195,6 +3364,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	}
 #endif
 
+
 	for (mp = avail, i = 0; i < avail_cnt; mp++, i++) {
 		paddr_t pfstart = atop(mp->start);
 		paddr_t pfend = atop(mp->start + mp->size);
@@ -3216,6 +3386,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 				VM_FREELIST_DEFAULT);
 		}
 	}
+	printf("Done calling uvm_page_physload()\n");
 
 	/*
 	 * Make sure kernel vsid is allocated as well as VSID 0.
@@ -3227,11 +3398,13 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	/*
 	 * Initialize kernel pmap and hardware.
 	 */
-#ifndef PPC_OEA64
+
+/* PPC_OEA64_BRIDGE does support these instructions */
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	for (i = 0; i < 16; i++) {
-		pmap_kernel()->pm_sr[i] = EMPTY_SEGMENT;
+ 		pmap_kernel()->pm_sr[i] = KERNELN_SEGMENT(i)|SR_PRKEY;
 		__asm volatile ("mtsrin %0,%1"
-			      :: "r"(EMPTY_SEGMENT), "r"(i << ADDR_SR_SHFT));
+ 			      :: "r"(KERNELN_SEGMENT(i)|SR_PRKEY), "r"(i << ADDR_SR_SHFT));
 	}
 
 	pmap_kernel()->pm_sr[KERNEL_SR] = KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY;
@@ -3249,10 +3422,14 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 			    :: "r"(iosrtable[i]), "r"(i << ADDR_SR_SHFT));
 		}
 	}
-#endif /* !PPC_OEA64 */
-
+#endif /* PPC_OEA || PPC_OEA64_BRIDGE */
+#if defined (PPC_OEA)
 	__asm volatile ("sync; mtsdr1 %0; isync"
 		      :: "r"((uintptr_t)pmap_pteg_table | (pmap_pteg_mask >> 10)));
+#elif defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+ 	__asm __volatile ("sync; mtsdr1 %0; isync"
+ 		      :: "r"((uintptr_t)pmap_pteg_table | (32 - cntlzw(pmap_pteg_mask >> 11))));
+#endif
 	tlbia();
 
 #ifdef ALTIVEC

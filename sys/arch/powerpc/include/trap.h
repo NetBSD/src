@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.9 2003/04/26 22:08:30 wiz Exp $	*/
+/*	$NetBSD: trap.h,v 1.10 2006/08/05 21:26:49 sanjayl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -75,6 +75,13 @@
 #define	EXC_DTMISS	0x1100		/* Data TLB Miss */
 #define	EXC_ITMISS	0x1200		/* Instruction TLB Miss */
 #define	EXC_DEBUG	0x2000		/* Debug trap */
+
+/* The following are only present on 64 bit PPC implementations */
+#define EXC_DSEG	0x380
+#define EXC_ISEG	0x480
+
+/* The IBM 970x define the VMX assist exection to be 0x1700 */
+#define EXC_970_VECAST	0x1700
 
 #define	EXC_LAST	0x2f00		/* Last possible exception vector */
 

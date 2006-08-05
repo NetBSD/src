@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.15 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.16 2006/08/05 21:26:49 sanjayl Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.15 2005/12/11 12:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.16 2006/08/05 21:26:49 sanjayl Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -64,6 +64,10 @@ void
 mem_regions(struct mem_region **memp, struct mem_region **availp)
 {
 	int phandle, i, cnt;
+	struct mem_region_avail {
+		paddr_t start;
+		paddr_t size;
+	} OFavail_G5[OFMEM_REGIONS + 3] __attribute((unused));
 
 	/*
 	 * Get memory.
@@ -87,27 +91,68 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 		} else
 			i++;
 
+#if defined (PMAC_G5)
+	/* XXXSL: the G5 implementation of OFW is defines the /memory reg/available
+	 * properties differently. Try to fix it up here with minimal damage to the
+	 * rest of the code
+ 	 */
+	{
+		int count;
+		memset(OFavail_G5, 0, sizeof OFavail_G5);
+		count = OF_getprop(phandle, "available",
+			OFavail_G5, sizeof OFavail_G5[0] * OFMEM_REGIONS);
+
+		if (count <= 0)
+			goto error;
+
+		count /= sizeof OFavail_G5[0];
+		cnt = count * sizeof(OFavail[0]);
+
+		for (i = 0; i < count; i++ )
+		{
+			OFavail[i].start_hi = 0;
+			OFavail[i].start = OFavail_G5[i].start;
+			OFavail[i].size = OFavail_G5[i].size;
+		}
+	}
+#else
 	memset(OFavail, 0, sizeof OFavail);
 	cnt = OF_getprop(phandle, "available",
 		OFavail, sizeof OFavail[0] * OFMEM_REGIONS);
+#endif
 	if (cnt <= 0)
 		goto error;
 
 	cnt /= sizeof OFavail[0];
-	for (i = 0; i < cnt; )
+	for (i = 0; i < cnt; ) {
 		if (OFavail[i].size == 0) {
 			memmove(&OFavail[i], &OFavail[i + 1],
 				(cnt - i) * sizeof OFavail[0]);
 			cnt--;
 		} else
 			i++;
+	}
 
 	*memp = OFmem;
 	*availp = OFavail;
 	return;
 
 error:
+#if defined (MAMBO)
+	printf("no memory, assuming 512MB\n");
+
+	OFmem[0].start = 0x0;
+	OFmem[0].size = 0x20000000;
+	
+	OFavail[0].start = 0x3000;
+	OFavail[0].size = 0x20000000 - 0x3000;
+
+	*memp = OFmem;
+	*availp = OFavail;
+#else
 	panic("no memory?");
+#endif
+	return;
 }
 
 void

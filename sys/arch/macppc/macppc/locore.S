@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.54 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.55 2006/08/05 21:26:48 sanjayl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -128,6 +128,37 @@ ENTRY(cpu_spinup_trampoline)
 	bl      _C_LABEL(sched_lock_idle)
 	li      30,0
 	b       _ASM_LABEL(Idle)
+#endif
+
+#if defined (PPC_OEA64_BRIDGE)
+/* Return all 64 bits of HID4 */
+	.text
+	.globl _C_LABEL(mfhid4)
+_C_LABEL(mfhid4):
+	mfspr	4, SPR_HID4 
+	std	4, 0(3)
+	blr
+
+/* Set all 64 bits of HID4 */
+	.text
+	.globl _C_LABEL(mthid4)
+_C_LABEL(mthid4):
+	ld 4, 0(3)
+	sync
+	mtspr SPR_HID4, 4 
+	isync 
+	isync
+	blr
+
+	.text
+	.globl _C_LABEL(change_hid4)
+_C_LABEL(change_hid4):
+	mfspr 6, SPR_HID4
+	rldicl 5, 6, 32, 0 
+	ori 5, 5, 0x100
+	rldicl 5, 5, 32, 0 
+	std 5, 0(3)
+	blr
 #endif
 
 /*
