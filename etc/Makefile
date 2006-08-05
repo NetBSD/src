@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.333 2006/07/23 11:44:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.334 2006/08/05 13:07:30 jmmv Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -112,7 +112,18 @@ BIN1+=	etc.${MACHINE}/ttyaction
 .endif
 
 # -rw-rw-r--
+.if !empty(DISTRIBVER:M*.99.*)
+BIN2+=	motd.current
+FILESNAME_motd.current=	motd
+.elif !empty(DISTRIBVER:M*BETA*)
+BIN2+=	motd.beta
+FILESNAME_motd.beta=	motd
+.elif !empty(DISTRIBVER:M*RC*)
+BIN2+=	motd.rc
+FILESNAME_motd.rc=	motd
+.else
 BIN2+=	motd
+.endif
 
 # -rw-------
 BIN3+=	hosts.equiv
