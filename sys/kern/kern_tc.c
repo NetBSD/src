@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.5 2006/07/23 22:06:11 ad Exp $ */
+/* $NetBSD: kern_tc.c,v 1.6 2006/08/05 21:59:40 bjh21 Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.5 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.6 2006/08/05 21:59:40 bjh21 Exp $");
 
 #include "opt_ntp.h"
 
@@ -435,7 +435,10 @@ void
 tc_init(struct timecounter *tc)
 {
 	u_int u;
+	char freqstr[9];
 
+	humanize_number(freqstr, sizeof(freqstr), tc->tc_frequency,
+	    "Hz", 1000);
 	u = tc->tc_frequency / tc->tc_counter_mask;
 	/* XXX: We need some margin here, 10% is a guess */
 	u *= 11;
@@ -443,14 +446,13 @@ tc_init(struct timecounter *tc)
 	if (u > hz && tc->tc_quality >= 0) {
 		tc->tc_quality = -2000;
 		if (bootverbose) {
-			printf("timecounter: Timecounter \"%s\" frequency %ju Hz",
-			    tc->tc_name, (uintmax_t)tc->tc_frequency);
+			printf("timecounter: Timecounter \"%s\" frequency %s",
+			    tc->tc_name, freqstr);
 			printf(" -- Insufficient hz, needs at least %u\n", u);
 		}
 	} else if (tc->tc_quality >= 0 || bootverbose) {
-		printf("timecounter: Timecounter \"%s\" frequency %ju Hz quality %d\n",
-		    tc->tc_name, (uintmax_t)tc->tc_frequency,
-		    tc->tc_quality);
+		printf("timecounter: Timecounter \"%s\" frequency %s "
+		    "quality %d\n", tc->tc_name, freqstr, tc->tc_quality);
 	}
 
 	/* XXX locking */
@@ -591,12 +593,15 @@ tc_windup(void)
 
 	/* Now is a good time to change timecounters. */
 	if (th->th_counter != timecounter) {
+		char freqstr[9];
 		th->th_counter = timecounter;
 		th->th_offset_count = ncount;
 
-		printf("timecounter: selected timecounter \"%s\" frequency %ju Hz quality %d\n",
-		    timecounter->tc_name, (uintmax_t)timecounter->tc_frequency,
-		    timecounter->tc_quality);
+		humanize_number(freqstr, sizeof(freqstr),
+		    timecounter->tc_frequency, "Hz", 1000);
+		printf("timecounter: selected timecounter \"%s\" "
+		    "frequency %s quality %d\n",
+		    timecounter->tc_name, freqstr, timecounter->tc_quality);
 	}
 
 	/*-
