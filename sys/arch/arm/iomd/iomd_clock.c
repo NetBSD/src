@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.19 2006/08/03 23:19:06 bjh21 Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.20 2006/08/05 16:38:57 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.19 2006/08/03 23:19:06 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.20 2006/08/05 16:38:57 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -80,10 +80,10 @@ static struct clock_softc *clock_sc;
 static int timer0_count;
 static int timeset;
 
-static int clockmatch	__P((struct device *parent, struct cfdata *cf, void *aux));
-static void clockattach	__P((struct device *parent, struct device *self, void *aux));
+static int clockmatch(struct device *parent, struct cfdata *cf, void *aux);
+static void clockattach(struct device *parent, struct device *self, void *aux);
 #ifdef DIAGNOSTIC
-static void checkdelay	__P((void));
+static void checkdelay(void);
 #endif
 
 static u_int iomd_timecounter0_get(struct timecounter *tc);
@@ -106,8 +106,8 @@ static struct timecounter iomd_timecounter = {
 	100 
 };
 
-int clockhandler	__P((void *));
-int statclockhandler	__P((void *));
+int clockhandler(void *);
+int statclockhandler(void *);
 
 CFATTACH_DECL(clock, sizeof(struct clock_softc),
     clockmatch, clockattach, NULL, NULL);
@@ -119,10 +119,7 @@ CFATTACH_DECL(clock, sizeof(struct clock_softc),
  */ 
  
 static int
-clockmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+clockmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct clk_attach_args *ca = aux;
 
@@ -140,10 +137,7 @@ clockmatch(parent, cf, aux)
  */
   
 static void
-clockattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+clockattach(struct device *parent, struct device *self,	void *aux)
 {
 	struct clock_softc *sc = (struct clock_softc *)self;
 	struct clk_attach_args *ca = aux;
@@ -186,14 +180,13 @@ tickle_tc(void)
  */
  
 int
-clockhandler(cookie)
-	void *cookie;
+clockhandler(void *cookie)
 {
 	struct clockframe *frame = cookie;
 	tickle_tc();
 
 	hardclock(frame);
-	return(0);	/* Pass the interrupt on down the chain */
+	return 0;	/* Pass the interrupt on down the chain */
 }
 
 
@@ -206,13 +199,12 @@ clockhandler(cookie)
  */
  
 int
-statclockhandler(cookie)
-	void *cookie;
+statclockhandler(void *cookie)
 {
 	struct clockframe *frame = cookie;
 
 	statclock(frame);
-	return(0);	/* Pass the interrupt on down the chain */
+	return 0;	/* Pass the interrupt on down the chain */
 }
 
 
@@ -245,7 +237,7 @@ setstatclockrate(int newhz)
 
 #ifdef DIAGNOSTIC
 static void
-checkdelay()
+checkdelay(void)
 {
 	struct timeval start, end, diff;
 
@@ -271,7 +263,7 @@ checkdelay()
  */
  
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	/*
 	 * Load timer 0 with count down value
@@ -364,8 +356,7 @@ static u_int iomd_timecounter0_get(struct timecounter *tc)
 int delaycount = 100;
 
 void
-delay(n)
-	u_int n;
+delay(u_int n)
 {
 	volatile u_int n2;
 	volatile u_int i;
