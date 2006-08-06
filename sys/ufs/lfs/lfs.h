@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.112 2006/07/31 16:34:44 martin Exp $	*/
+/*	$NetBSD: lfs.h,v 1.113 2006/08/06 12:34:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -1083,10 +1083,7 @@ struct lfs_fcntl_markv {
 #define LFCNRECLAIM	 _FCNO_FSPRIV('L', 4)
 
 struct lfs_fhandle {
-	char space[32];
-};
-struct lfs_compat_30_fhandle {
-	char space[24];
+	char space[28];	/* FHANDLE_SIZE_COMPAT (but used from userland too) */
 };
 #define LFCNREWIND       _FCNR_FSPRIV('L', 6, int)
 #define LFCNINVAL        _FCNR_FSPRIV('L', 7, int)
@@ -1097,7 +1094,8 @@ struct lfs_compat_30_fhandle {
 /* Compat */
 #define LFCNSEGWAITALL_COMPAT	 _FCNW_FSPRIV('L', 0, struct timeval)
 #define LFCNSEGWAIT_COMPAT	 _FCNW_FSPRIV('L', 1, struct timeval)
-#define LFCNIFILEFH_COMPAT	 _FCNW_FSPRIV('L', 5, struct lfs_compat_30_fhandle)
+#define LFCNIFILEFH_COMPAT	 _FCNW_FSPRIV('L', 5, struct lfs_fhandle)
+#define LFCNIFILEFH_COMPAT2	 _FCN_FSPRIV(F_FSOUT, 'L', 11, 32)
 #define LFCNWRAPSTOP_COMPAT	 _FCNO_FSPRIV('L', 9)
 #define LFCNWRAPGO_COMPAT	 _FCNO_FSPRIV('L', 10)
 
