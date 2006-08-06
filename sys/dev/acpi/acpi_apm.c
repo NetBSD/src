@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_apm.c,v 1.3 2006/07/12 13:16:36 hira Exp $	*/
+/*	$NetBSD: acpi_apm.c,v 1.4 2006/08/06 15:47:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.3 2006/07/12 13:16:36 hira Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.4 2006/08/06 15:47:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.3 2006/07/12 13:16:36 hira Exp $");
 #include <sys/envsys.h>
 #include <dev/sysmon/sysmonvar.h>
 
-#include <dev/acpi/acpica.h> 
+#include <dev/acpi/acpica.h>
 #include <dev/apm/apmvar.h>
 
 static void	acpiapm_disconnect(void *);
@@ -84,21 +84,43 @@ struct apm_accessops acpiapm_accessops = {
 #define DPRINTF(a)
 #endif
 
+#ifndef ACPI_APM_DEFAULT_STANDBY_STATE
+#define ACPI_APM_DEFAULT_STANDBY_STATE	(1)
+#endif
+#ifndef ACPI_APM_DEFAULT_SUSPEND_STATE
+#define ACPI_APM_DEFAULT_SUSPEND_STATE	(3)
+#endif
+#define ACPI_APM_DEFAULT_CAP						      \
+	((ACPI_APM_DEFAULT_STANDBY_STATE!=0 ? APM_GLOBAL_STANDBY : 0) |	      \
+	 (ACPI_APM_DEFAULT_SUSPEND_STATE!=0 ? APM_GLOBAL_SUSPEND : 0))
+#define ACPI_APM_STATE_MIN		(0)
+#define ACPI_APM_STATE_MAX		(4)
+
+/* It is assumed that there is only acpiapm instance. */
+static int resumed = 0, capability_changed = 0;
+static int standby_state = ACPI_APM_DEFAULT_STANDBY_STATE;
+static int suspend_state = ACPI_APM_DEFAULT_SUSPEND_STATE;
+static int capabilities = ACPI_APM_DEFAULT_CAP;
+static int acpiapm_node = CTL_EOL, standby_node = CTL_EOL;
+
 struct acpi_softc;
 extern ACPI_STATUS acpi_enter_sleep_state(struct acpi_softc *, int);
 static int acpiapm_match(struct device *, struct cfdata *, void *);
 static void acpiapm_attach(struct device *, struct device *, void *);
+static int sysctl_state(SYSCTLFN_PROTO);
 
 CFATTACH_DECL(acpiapm, sizeof(struct apm_softc),
     acpiapm_match, acpiapm_attach, NULL, NULL);
 
 static int
+/*ARGSUSED*/
 acpiapm_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	return apm_match();
 }
 
 static void
+/*ARGSUSED*/
 acpiapm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct apm_softc *sc = (struct apm_softc *)self;
@@ -111,17 +133,103 @@ acpiapm_attach(struct device *parent, struct device *self, void *aux)
 	apm_attach(sc);
 }
 
+static int
+get_state_value(int id)
+{
+	const int states[] = {
+		ACPI_STATE_S0,
+		ACPI_STATE_S1,
+		ACPI_STATE_S2,
+		ACPI_STATE_S3,
+		ACPI_STATE_S4
+	};
+
+	if (id < ACPI_APM_STATE_MIN || id > ACPI_APM_STATE_MAX)
+		return ACPI_STATE_S0;
+
+	return states[id];
+}
+
+static int
+sysctl_state(SYSCTLFN_ARGS)
+{
+	int newstate, error, *ref, cap, oldcap;
+	struct sysctlnode node;
+
+	if (rnode->sysctl_num == standby_node) {
+		ref = &standby_state;
+		cap = APM_GLOBAL_STANDBY;
+	} else {
+		ref = &suspend_state;
+		cap = APM_GLOBAL_SUSPEND;
+	}
+
+	newstate = *ref;
+	node = *rnode;
+	node.sysctl_data = &newstate;
+        error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (newstate < ACPI_APM_STATE_MIN || newstate > ACPI_APM_STATE_MAX)
+		return EINVAL;
+
+	*ref = newstate;
+	oldcap = capabilities;
+	capabilities = newstate != 0 ? oldcap | cap : oldcap & ~cap;
+	if ((capabilities ^ oldcap) != 0)
+		capability_changed = 1;
+
+	return 0;
+}
+
+SYSCTL_SETUP(sysctl_acpiapm_setup, "sysctl machdep.acpiapm subtree setup")
+{
+	const struct sysctlnode *node;
+
+	if (sysctl_createv(clog, 0, NULL, NULL,
+			   CTLFLAG_PERMANENT,
+			   CTLTYPE_NODE, "machdep", NULL,
+			   NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL))
+		return;
+
+	if (sysctl_createv(clog, 0, NULL, &node,
+			   CTLFLAG_PERMANENT,
+			   CTLTYPE_NODE, "acpiapm", NULL,
+			   NULL, 0, NULL, 0,
+			   CTL_MACHDEP, CTL_CREATE, CTL_EOL))
+		return;
+	acpiapm_node = node->sysctl_num;
+
+	if (sysctl_createv(clog, 0, NULL, &node,
+			   CTLFLAG_READWRITE,
+			   CTLTYPE_INT, "standby", NULL,
+			   &sysctl_state, 0, NULL, 0,
+			   CTL_MACHDEP, acpiapm_node, CTL_CREATE, CTL_EOL))
+		return;
+	standby_node = node->sysctl_num;
+
+	if (sysctl_createv(clog, 0, NULL, NULL,
+			   CTLFLAG_READWRITE,
+			   CTLTYPE_INT, "suspend", NULL,
+			   &sysctl_state, 0, NULL, 0,
+			   CTL_MACHDEP, acpiapm_node, CTL_CREATE, CTL_EOL))
+		return;
+}
+
 /*****************************************************************************
  * Minimalistic ACPI /dev/apm emulation support, for ACPI suspend
  *****************************************************************************/
 
 static void
+/*ARGSUSED*/
 acpiapm_disconnect(void *opaque)
 {
 	return;
 }
 
 static void
+/*ARGSUSED*/
 acpiapm_enable(void *opaque, int onoff)
 {
 	return;
@@ -139,10 +247,12 @@ acpiapm_set_powstate(void *opaque, u_int devid, u_int powstat)
 	case APM_SYS_READY:
 		break;
 	case APM_SYS_STANDBY:
-		acpi_enter_sleep_state(sc, ACPI_STATE_S1);
+		acpi_enter_sleep_state(sc, get_state_value(standby_state));
+		resumed = 1;
 		break;
 	case APM_SYS_SUSPEND:
-		acpi_enter_sleep_state(sc, ACPI_STATE_S3);
+		acpi_enter_sleep_state(sc, get_state_value(suspend_state));
+		resumed = 1;
 		break;
 	case APM_SYS_OFF:
 		break;
@@ -156,8 +266,12 @@ acpiapm_set_powstate(void *opaque, u_int devid, u_int powstat)
 }
 
 static int
+/*ARGSUSED*/
 acpiapm_get_powstat(void *opaque, u_int batteryid, struct apm_power_info *pinfo)
 {
+#define APM_BATT_FLAG_WATERMARK_MASK (APM_BATT_FLAG_CRITICAL |		      \
+				      APM_BATT_FLAG_LOW |		      \
+				      APM_BATT_FLAG_HIGH)
 	int i, curcap, lowcap, warncap, cap, descap, lastcap, discharge;
 	envsys_tre_data_t etds;
 	envsys_basic_info_t ebis;
@@ -167,11 +281,11 @@ acpiapm_get_powstat(void *opaque, u_int batteryid, struct apm_power_info *pinfo)
 	(void)memset(pinfo, 0, sizeof(*pinfo));
 	pinfo->ac_state = APM_AC_UNKNOWN;
 	pinfo->minutes_valid = 0;
-	pinfo->minutes_left = 0xffff;
+	pinfo->minutes_left = 0xffff; /* unknown */
 	pinfo->batteryid = 0;
 	pinfo->nbattery = 1;
 	pinfo->battery_flags = 0;
-	pinfo->battery_state = APM_BATT_UNKNOWN;
+	pinfo->battery_state = APM_BATT_UNKNOWN; /* ignored */
 	pinfo->battery_life = APM_BATT_LIFE_UNKNOWN;
 
 	for (i = 0;; i++) {
@@ -196,14 +310,11 @@ acpiapm_get_powstat(void *opaque, u_int batteryid, struct apm_power_info *pinfo)
 			continue;
 		if (strstr(desc, " disconnected")) {
 			pinfo->ac_state = data ? APM_AC_OFF : APM_AC_ON;
-			break;
-		} else if (strstr(desc, " present") && data == 0) {
+		} else if (strstr(desc, " present") && data == 0)
 			pinfo->battery_flags |= APM_BATT_FLAG_NO_SYSTEM_BATTERY;
-			pinfo->battery_state = APM_BATT_ABSENT;
-		} else if (strstr(desc, " charging") && data) {
+		else if (strstr(desc, " charging") && data)
 			pinfo->battery_flags |= APM_BATT_FLAG_CHARGING;
-			pinfo->battery_state = APM_BATT_CHARGING;
-		} else if (strstr(desc, " discharging") && data)
+		else if (strstr(desc, " discharging") && data)
 			pinfo->battery_flags &= ~APM_BATT_FLAG_CHARGING;
 		else if (strstr(desc, " warn cap"))
 			warncap = data / 1000;
@@ -221,12 +332,13 @@ acpiapm_get_powstat(void *opaque, u_int batteryid, struct apm_power_info *pinfo)
 	}
 
 	if (cap != -1)  {
-		if (warncap != -1 && cap < warncap) {
+		if (warncap != -1 && cap < warncap)
 			pinfo->battery_flags |= APM_BATT_FLAG_CRITICAL;
-			pinfo->battery_state = APM_BATT_CRITICAL;
-		} else if (lowcap != -1 && cap < lowcap) {
-			pinfo->battery_flags |= APM_BATT_FLAG_LOW;
-			pinfo->battery_state = APM_BATT_LOW;
+		else if (lowcap != -1) {
+			if (cap < lowcap)
+				pinfo->battery_flags |= APM_BATT_FLAG_LOW;
+			else
+				pinfo->battery_flags |= APM_BATT_FLAG_HIGH;
 		}
 		if (lastcap != -1 && lastcap != 0)
 			pinfo->battery_life = 100 * cap / lastcap;
@@ -235,44 +347,64 @@ acpiapm_get_powstat(void *opaque, u_int batteryid, struct apm_power_info *pinfo)
 	}
 
 	if ((pinfo->battery_flags & APM_BATT_FLAG_CHARGING) == 0) {
+		/* discharging */
 		if (discharge != -1 && cap != -1 && discharge != 0)
 			pinfo->minutes_left = 60 * cap / discharge;
-		if (pinfo->battery_state == APM_BATT_UNKNOWN)
-			pinfo->battery_state = pinfo->ac_state == APM_AC_ON ? 
-			    APM_BATT_HIGH : APM_BATT_LOW;
-	} else {
-		if (pinfo->battery_state == APM_BATT_UNKNOWN)
-			pinfo->battery_state = APM_BATT_HIGH;
 	}
+	if ((pinfo->battery_flags & APM_BATT_FLAG_WATERMARK_MASK) == 0 &&
+	    (pinfo->battery_flags & APM_BATT_FLAG_NO_SYSTEM_BATTERY) == 0) {
+		if (pinfo->ac_state == APM_AC_ON)
+			pinfo->battery_flags |= APM_BATT_FLAG_HIGH;
+		else
+			pinfo->battery_flags |= APM_BATT_FLAG_LOW;
+	}
+
 	DPRINTF(("%d %d %d %d %d %d\n", cap, warncap, lowcap, lastcap, descap,
 	    discharge));
-	DPRINTF(("pinfo %d %d %d %d\n", pinfo->battery_flags,
-	    pinfo->battery_state, pinfo->battery_life, pinfo->battery_life));
+	DPRINTF(("pinfo %d %d %d\n", pinfo->battery_flags,
+	    pinfo->battery_life, pinfo->battery_life));
 	return 0;
 }
 
 static int
+/*ARGSUSED*/
 acpiapm_get_event(void *opaque, u_int *event_type, u_int *event_info)
 {
+	if (capability_changed) {
+		capability_changed = 0;
+		*event_type = APM_CAP_CHANGE;
+		*event_info = 0;
+		return 0;
+	}
+	if (resumed) {
+		resumed = 0;
+		*event_type = APM_NORMAL_RESUME;
+		*event_info = 0;
+		return 0;
+	}
+
 	return APM_ERR_NOEVENTS;
 }
 
 static void
+/*ARGSUSED*/
 acpiapm_cpu_busy(void *opaque)
 {
 	return;
 }
 
 static void
+/*ARGSUSED*/
 acpiapm_cpu_idle(void *opaque)
 {
 	return;
 }
 
 static void
+/*ARGSUSED*/
 acpiapm_get_capabilities(void *opaque, u_int *numbatts, u_int *capflags)
 {
 	*numbatts = 1;
-	*capflags = APM_GLOBAL_STANDBY | APM_GLOBAL_SUSPEND;
+	*capflags = capabilities;
 	return;
 }
