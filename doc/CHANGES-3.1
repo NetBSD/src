@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.135 2006/08/06 08:45:19 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.136 2006/08/06 12:54:38 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4240,11 +4240,7 @@ sys/arch/xen/conf/kern.ldscript			delete
 
 sys/arch/xen/xen/if_xennet_xenbus.c		1.11
 
-	m_copyback() doesn't adjust m->m_len if the data to copy is smaller than
-	the mbuf's size. Set it to a proper value before calling m_copyback().
-	This should fix panics in m_makewritable() reported by several peoples.
-	While there, add MCLAIM() calls where appropriate, a few more #ifdef DEBUG
-	checks, and various minor fixes.
+	Fix panics in m_makewritable() reported by several people.
 	[bouyer, ticket #1454]
 
 sys/dev/pci/hptide.c				1.21
@@ -4252,4 +4248,21 @@ sys/dev/pci/pciide_hpt_reg.h			1.14
 
 	HPT368 support.
 	[xtraeme, ticket #1455]
+
+usr.bin/column/column.c				1.13-1.14
+
+	- PR bin/32322: Division by zero in column(1) with certain column
+	  widths.
+	- Plug memory leak.
+	[daniel, ticket #1449]
+
+etc/Makefile					1.334
+etc/motd.beta					1.1
+etc/motd.current				1.1
+etc/motd.rc					1.1
+
+	When using a development version of the system (be it current, a beta
+	or a release candidate), tell the user that he might expect problems
+	and how to effectively report them to the developers.
+	[jmmv, ticket #1450]
 
