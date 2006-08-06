@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.327 2006/07/30 22:16:29 elad Exp $
+.\"	$NetBSD: options.4,v 1.328 2006/08/06 15:37:21 xtraeme Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd July 30, 2006
+.Dd August 6, 2006
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -2314,6 +2314,13 @@ on a Shark.
 Include translation for French keyboards when using
 .Em pccons
 on a Shark.
+.El
+.Ss amd64-specific Options
+.Bl -ohang
+.It Cd options POWERNOW_K8
+Include support for AMD Athlon 64 PowerNow! and Cool`n'Quiet
+Technology, used to change the cpu and voltage frequency
+on the fly.
 .El
 .Ss atari-specific Options
 .Bl -ohang
