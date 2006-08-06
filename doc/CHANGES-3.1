@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.134 2006/08/05 16:01:00 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.135 2006/08/06 08:45:19 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4246,4 +4246,10 @@ sys/arch/xen/xen/if_xennet_xenbus.c		1.11
 	While there, add MCLAIM() calls where appropriate, a few more #ifdef DEBUG
 	checks, and various minor fixes.
 	[bouyer, ticket #1454]
+
+sys/dev/pci/hptide.c				1.21
+sys/dev/pci/pciide_hpt_reg.h			1.14
+
+	HPT368 support.
+	[xtraeme, ticket #1455]
 
