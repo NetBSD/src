@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.63 2006/08/03 12:38:54 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.64 2006/08/06 11:59:17 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -791,4 +791,11 @@ sys/dev/sysmon/sysmon_power.c			1.12
 
 	Correct a bug in power event queue management.
 	[freza, #10642]
+
+share/man/man4/puc.4				1.19 via patch
+sys/dev/pci/pucdata.c				1.43-1.45 via patch
+
+	Add support for Moxa SmartIO CP104 and CP104-V2/PCI and
+	EXAR XR17D15x.
+	[bouyer, ticket #10643]
 
