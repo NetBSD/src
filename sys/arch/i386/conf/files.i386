@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.290 2006/07/08 20:28:06 christos Exp $
+#	$NetBSD: files.i386,v 1.291 2006/08/06 15:46:54 christos Exp $
 #
 # new style config file for i386 architecture
 #
@@ -479,20 +479,20 @@ file	arch/i386/acpi/acpi_wakeup.c	acpi
 
 # Toshiba VALD 
 device	vald
-attach	vald at acpi with vald_acpi
+attach	vald at acpinodebus with vald_acpi
 file	arch/i386/acpi/vald_acpi.c		vald_acpi
 
 # Sony SPIC (jog dial etc.)
-attach	spic at acpi with spic_acpi
+attach	spic at acpinodebus with spic_acpi
 file	arch/i386/acpi/spic_acpi.c		spic_acpi
 
 # Sony Misc (brightness etc.)
 device	sony
-attach	sony at acpi with sony_acpi
+attach	sony at acpinodebus with sony_acpi
 file	arch/i386/acpi/sony_acpi.c		sony_acpi
 
 # Numeric Processing Extension; Math Co-processor
-attach	npx at acpi with npx_acpi
+attach	npx at acpinodebus with npx_acpi
 file	arch/i386/acpi/npx_acpi.c		npx_acpi
 
 device	vesabios {}
