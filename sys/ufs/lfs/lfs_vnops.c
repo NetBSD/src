@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.186 2006/07/31 16:34:45 martin Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.187 2006/08/06 12:34:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.186 2006/07/31 16:34:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.187 2006/08/06 12:34:12 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1507,6 +1507,7 @@ lfs_fcntl(void *v)
 		return lfs_vptofh(fs->lfs_ivnode, &(fhp->fh_fid), &fh_size);
 #endif
 
+	    case LFCNIFILEFH_COMPAT2:
 	    case LFCNIFILEFH:
 		/* Return the filehandle of the Ifile */
 		fhp = (struct fhandle *)ap->a_data;
