@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/01/06 17:40:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2006/08/06 17:21:58 dyoung Exp $
 
 # Makefile for evbmips tags file and boot blocks
 
@@ -6,10 +6,11 @@
 .include <../mips/Makefile.inc>
 
 # XXX !  fix this
-TEVBMIPS= ../evbmips/tags
-SEVBMIPS= ../evbmips/evbmips/*.[ch] ../evbmips/include/*.h ../evbmips/isa/*.[ch] \
-	../evbmips/pci/*.[ch]
-AEVBMIPS= ../evbmips/evbmips/*.S
+TEVBMIPS=	${SYSDIR}/arch/evbmips/tags
+SEVBMIPS=	${SYSDIR}/arch/evbmips/evbmips/*.[ch] \
+		${SYSDIR}/arch/evbmips/include/*.h \
+		${SYSDIR}/arch/evbmips/isa/*.[ch]
+AEVBMIPS=	${SYSDIR}/arch/evbmips/evbmips/*.S
 
 # Directories in which to place tags links
 DEVBMIPS= evbmips include isa pci
@@ -17,10 +18,10 @@ DEVBMIPS= evbmips include isa pci
 .include "../../kern/Make.tags.inc"
 
 tags:
-	-ctags -wdtf ${TEVBMIPS} ${SEVBMIPS} ${SMIPS} ${COMM}
+	-echo ${SEVBMIPS} ${SMIPS} ${COMM} | xargs ctags -wadtf ${TEVBMIPS}
 	egrep "^LEAF(.*)|^[AN]LEAF(.*)|^NON_LEAF(.*)" ${AEVBMIPS} ${AMIPS} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
-	    >> ${TARC}
+	    >> ${TEVBMIPS}
 	sort -o ${TEVBMIPS} ${TEVBMIPS}
 
 links:
