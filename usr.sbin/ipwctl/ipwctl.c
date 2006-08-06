@@ -1,4 +1,4 @@
-/*	$NetBSD: ipwctl.c,v 1.7 2006/04/17 20:55:28 rpaulo Exp $	*/
+/*	$NetBSD: ipwctl.c,v 1.8 2006/08/06 07:31:32 skrll Exp $	*/
 /*	Id: ipwctl.c,v 1.1.2.1 2004/08/19 16:24:50 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ipwctl.c,v 1.7 2006/04/17 20:55:28 rpaulo Exp $");
+__RCSID("$NetBSD: ipwctl.c,v 1.8 2006/08/06 07:31:32 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -48,7 +48,6 @@ __RCSID("$NetBSD: ipwctl.c,v 1.7 2006/04/17 20:55:28 rpaulo Exp $");
 #include <sysexits.h>
 #include <unistd.h>
 
-#define SIOCSKILLFW	 _IOW('i', 138, struct ifreq)
 #define SIOCGRADIO	_IOWR('i', 139, struct ifreq)
 #define SIOCGTABLE1	_IOWR('i', 140, struct ifreq)
 
