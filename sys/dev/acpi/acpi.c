@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.93 2006/07/04 00:30:23 christos Exp $	*/
+/*	$NetBSD: acpi.c,v 1.94 2006/08/06 15:46:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.93 2006/07/04 00:30:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.94 2006/08/06 15:46:54 christos Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -519,10 +519,11 @@ acpi_build_tree(struct acpi_softc *sc)
 					continue;
 			}
 
-			ad->ad_device = config_found(&sc->sc_dev,
-			    &aa, acpi_print);
+			ad->ad_device = config_found_ia(&sc->sc_dev,
+			    "acpinodebus", &aa, acpi_print);
 		}
 	}
+	config_found_ia(&sc->sc_dev, "acpiapmbus", NULL, NULL);
 }
 
 #ifdef ACPI_ACTIVATE_DEV
@@ -649,7 +650,7 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 /*
  * acpi_print:
  *
- *	Autoconfiguration print routine.
+ *	Autoconfiguration print routine for ACPI node bus.
  */
 static int
 acpi_print(void *aux, const char *pnp)
