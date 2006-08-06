@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.2,v 1.1.2.7 2006/08/03 12:24:10 tron Exp $
+#	$NetBSD: CHANGES-3.0.2,v 1.1.2.8 2006/08/06 11:48:42 tron Exp $
 
 A complete list of changes from the NetBSD 3.0.1 release to the NetBSD 3.0.2
 release:
@@ -46,4 +46,11 @@ lib/libc/arch/i386/sys/__sigtramp2.S		1.2
 	Fix PR port-i386/34112 where a program could mysteriously exit on
 	return from a signal handler.
 	[jld, ticket #1447]
+
+usr.bin/column/column.c				1.13-1.14
+
+	- PR bin/32322: Division by zero in column(1) with certain column
+	  widths.
+	- Plug memory leak.
+	[daniel, ticket #1449]
 
