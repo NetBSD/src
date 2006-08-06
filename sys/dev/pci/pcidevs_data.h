@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.813 2006/08/03 03:06:32 bsh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.814 2006/08/06 15:48:34 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.814 2006/08/03 03:01:39 bsh Exp
+ *	NetBSD: pcidevs,v 1.815 2006/08/06 15:48:12 jmcneill Exp
  */
 
 /*
@@ -6064,6 +6064,10 @@ static const struct pci_product pci_products[] = {
 	    "GXT-800P",
 	},
 	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_TPAUDIO,
+	    "ThinkPad 600X/A20/T20/T22 Audio",
+	},
+	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_405GP,
 	    "PPC 405GP PCI Bridge",
 	},
@@ -11792,4 +11796,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2355;
+const int pci_nproducts = 2356;
