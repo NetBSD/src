@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.101 2006/07/31 23:29:54 hubertf Exp $
+# $NetBSD: GENERIC,v 1.102 2006/08/06 15:37:21 xtraeme Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.101 $"
+#ident 		"GENERIC-$Revision: 1.102 $"
 
 maxusers	32		# estimated number of users
 
@@ -69,6 +69,9 @@ options 	LKM		# loadable kernel modules
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# AMD PowerNow! and Cool`n'Quiet technology
+options 	POWERNOW_K8
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.

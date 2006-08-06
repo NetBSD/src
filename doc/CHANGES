@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.661 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.662 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -385,3 +385,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		[martin 20060731]
 	postfix(1): Updated to 2.3.2 to fix a security vuln in Postfix
 		SMTP client. [rpaulo 20060801]
+	amd64:	PowerNow/Cool`n'Quiet driver for AMD Athlon64 cpus,
+		adapted from OpenBSD. [xtraeme 20060806]
