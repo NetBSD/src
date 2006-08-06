@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.17 2006/07/04 00:30:22 christos Exp $
+#	$NetBSD: files.x86,v 1.18 2006/08/06 15:37:21 xtraeme Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -47,3 +47,6 @@ file	arch/x86/pci/pci_intr_machdep.c	pci
 file	arch/x86/isa/isa_machdep.c	isa
 
 file	arch/x86/pci/pciide_machdep.c	pciide_common
+
+# Powernow common functions
+file	arch/x86/x86/powernow_common.c	powernow_k8 | powernow_k7
