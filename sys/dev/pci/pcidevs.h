@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.814 2006/08/03 03:06:32 bsh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.815 2006/08/06 15:48:34 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.814 2006/08/03 03:01:39 bsh Exp
+ *	NetBSD: pcidevs,v 1.815 2006/08/06 15:48:12 jmcneill Exp
  */
 
 /*
@@ -1781,6 +1781,7 @@
 #define	PCI_PRODUCT_IBM_MPIC	0x0046		/* MPIC */
 #define	PCI_PRODUCT_IBM_TURBOWAYS25	0x0053		/* Turboways 25 ATM */
 #define	PCI_PRODUCT_IBM_GXT800P	0x005e		/* GXT-800P */
+#define	PCI_PRODUCT_IBM_TPAUDIO	0x0153		/* ThinkPad 600X/A20/T20/T22 Audio */
 #define	PCI_PRODUCT_IBM_405GP	0x0156		/* PPC 405GP PCI Bridge */
 #define	PCI_PRODUCT_IBM_133PCIX	0x01a7		/* 133 PCI-X Bridge */
 #define	PCI_PRODUCT_IBM_SERVERAID4	0x01bd		/* ServeRAID 4/5 */
