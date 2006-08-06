@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.98 2006/08/06 17:44:56 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.99 2006/08/06 17:47:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.98 2006/08/06 17:44:56 dyoung Exp $");
+__RCSID("$NetBSD: route.c,v 1.99 2006/08/06 17:47:17 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -198,7 +198,7 @@ main(int argc, char **argv)
 	else
 		sock = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (sock < 0)
-		err(1, "socket");
+		err(EXIT_FAILURE, "socket");
 
 	if (*argv == NULL) {
 		if (doflush)
@@ -257,8 +257,8 @@ flushroutes(int argc, char *argv[], int doall)
 	shutdown(sock, SHUT_RD); /* Don't want to read back our messages */
 	if (argc > 1) {
 		argv++;
-		if (argc == 2 && **argv == '-')
-		    switch (keyword(*argv + 1)) {
+		if (argc == 2 && **argv == '-') {
+			switch (keyword(*argv + 1)) {
 			case K_INET:
 				af = AF_INET;
 				break;
@@ -288,6 +288,7 @@ flushroutes(int argc, char *argv[], int doall)
 #endif /* SMALL */
 			default:
 				goto bad;
+			}
 		} else
 bad:			usage(*argv);
 	}
@@ -298,13 +299,13 @@ bad:			usage(*argv);
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;		/* no flags */
 	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
-		err(1, "route-sysctl-estimate");
+		err(EXIT_FAILURE, "route-sysctl-estimate");
 	buf = lim = NULL;
 	if (needed) {
 		if ((buf = malloc(needed)) == NULL)
-			err(1, "malloc");
+			err(EXIT_FAILURE, "malloc");
 		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
-			err(1, "actual retrieval of routing table");
+			err(EXIT_FAILURE, "actual retrieval of routing table");
 		lim = buf + needed;
 	}
 	if (verbose) {
@@ -1023,7 +1024,7 @@ newroute(int argc, char **argv)
 		}
 	}
 	if (forcehost && forcenet)
-		errx(1, "-host and -net conflict");
+		errx(EXIT_FAILURE, "-host and -net conflict");
 	else if (forcehost)
 		ishost = 1;
 	else if (forcenet)
@@ -1235,14 +1236,16 @@ getaddr(int which, char *s, struct hostent **hpp)
 				slash = 0;
 			}
 			if (getaddrinfo(s, "0", &hints, &res) != 0)
-				errx(1, "%s: bad value", s);
+				errx(EXIT_FAILURE, "%s: bad value", s);
 		}
 		if (slash)
 			*slash = '/';
 		if (sizeof(su->sin6) != res->ai_addrlen)
-			errx(1, "%s: bad value", s);
-		if (res->ai_next)
-			errx(1, "%s: address resolved to multiple values", s);
+			errx(EXIT_FAILURE, "%s: bad value", s);
+		if (res->ai_next) {
+			errx(EXIT_FAILURE,
+			    "%s: address resolved to multiple values", s);
+		}
 		memcpy(&su->sin6, res->ai_addr, sizeof(su->sin6));
 		freeaddrinfo(res);
 #ifdef __KAME__
@@ -1303,7 +1306,7 @@ getaddr(int which, char *s, struct hostent **hpp)
 		t = strchr (s, '.');
 		if (!t) {
 badataddr:
-			errx(1, "bad address: %s", s);
+			errx(EXIT_FAILURE, "bad address: %s", s);
 		}
 		val = atoi (s);
 		if (val > 65535)
@@ -1369,7 +1372,7 @@ netdone:
 		memmove(&su->sin.sin_addr, hp->h_addr, hp->h_length);
 		return (1);
 	}
-	errx(1, "%s: bad value", s);
+	errx(EXIT_FAILURE, "%s: bad value", s);
 	/*NOTREACHED*/
 }
 
@@ -1389,13 +1392,13 @@ prefixlen(const char *s)
 		break;
 #endif
 	default:
-		errx(1, "prefixlen is not supported with af %d", af);
+		errx(EXIT_FAILURE, "prefixlen is not supported with af %d", af);
 		/*NOTREACHED*/
 	}
 
 	rtm_addrs |= RTA_NETMASK;	
 	if (len < -1 || len > max)
-		errx(1, "%s: bad value", s);
+		errx(EXIT_FAILURE, "%s: bad value", s);
 	
 	q = len >> 3;
 	r = len & 7;
@@ -1499,12 +1502,14 @@ interfaces(void)
 	mib[4] = NET_RT_IFLIST;
 	mib[5] = 0;		/* no flags */
 	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
-		err(1, "route-sysctl-estimate");
+		err(EXIT_FAILURE, "route-sysctl-estimate");
 	if (needed) {
 		if ((buf = malloc(needed)) == NULL)
-			err(1, "malloc");
-		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
-			err(1, "actual retrieval of interface table");
+			err(EXIT_FAILURE, "malloc");
+		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0) {
+			err(EXIT_FAILURE,
+			    "actual retrieval of interface table");
+		}
 		lim = buf + needed;
 		for (next = buf; next < lim; next += rtm->rtm_msglen) {
 			rtm = (struct rt_msghdr *)next;
@@ -1614,7 +1619,7 @@ rtmsg(int cmd, int flags)
 			l = read(sock, (char *)&m_rtmsg, sizeof(m_rtmsg));
 		} while (l > 0 && (rtm.rtm_seq != seq || rtm.rtm_pid != pid));
 		if (l < 0)
-			err(1, "read from routing socket");
+			err(EXIT_FAILURE, "read from routing socket");
 		else
 			return print_getmsg(&rtm, l);
 	}
