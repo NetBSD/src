@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.814 2006/08/03 03:01:39 bsh Exp $
+$NetBSD: pcidevs,v 1.815 2006/08/06 15:48:12 jmcneill Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1774,6 +1774,7 @@ product IBM 82660	0x0037	82660 PowerPC to PCI Bridge and Memory Controller
 product IBM MPIC	0x0046	MPIC
 product IBM TURBOWAYS25	0x0053	Turboways 25 ATM
 product IBM GXT800P	0x005e	GXT-800P
+product IBM TPAUDIO	0x0153	ThinkPad 600X/A20/T20/T22 Audio
 product IBM 405GP	0x0156	PPC 405GP PCI Bridge
 product IBM 133PCIX	0x01a7	133 PCI-X Bridge
 product IBM SERVERAID4	0x01bd	ServeRAID 4/5
