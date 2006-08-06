@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_powernow.c,v 1.3 2006/02/03 02:37:57 xtraeme Exp $	*/
+/*	$NetBSD: lkminit_powernow.c,v 1.4 2006/08/06 16:05:07 xtraeme Exp $	*/
 
 /*
  * Derived from:
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.3 2006/02/03 02:37:57 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.4 2006/08/06 16:05:07 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/lkm.h>
 #include <sys/errno.h>
 #include <machine/cpu.h>
+#include <x86/include/powernow.h>
 
 int powernow_lkmentry(struct lkm_table *, int, int);
 static int powernow_mod_handle(struct lkm_table *, int);
@@ -64,6 +65,8 @@ MOD_MISC("powernow");
 static int
 powernow_mod_handle(struct lkm_table *lkmtp, int cmd)
 {
+	uint32_t rval;
+	int featflags;
 	struct cpu_info *ci;
 	int err = 0;	/* default = success */
 
@@ -76,9 +79,14 @@ powernow_mod_handle(struct lkm_table *lkmtp, int cmd)
 			return EEXIST;
 	
 		ci = curcpu();
-		pnowk7_probe(ci);
-		pnowk7_init(ci);
 
+		rval = powernow_probe(ci, 0x600);
+
+		if (rval) {
+			featflags = powernow_extflags(ci, rval);
+			if (featflags)
+				k7_powernow_init();
+		}
 		break;		/* Success */
 
 	case LKM_E_UNLOAD:
