@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.54 2006/03/04 01:13:35 uwe Exp $	*/
+/*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.54 2006/03/04 01:13:35 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	struct vm_page *pg;
 	struct vm_page_md *pvh;
-	pt_entry_t entry;
+	pt_entry_t entry, *pte;
 	boolean_t kva = (pmap == pmap_kernel());
 
 	/* "flags" never exceed "prot" */
@@ -368,7 +368,18 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	}
 
 	/* Register to page table */
-	*__pmap_pte_alloc(pmap, va) = entry;
+	if (kva)
+		pte = __pmap_kpte_lookup(va);
+	else {
+		pte = __pmap_pte_alloc(pmap, va);
+		if (pte == NULL) {
+			if (flags & PMAP_CANFAIL)
+				return ENOMEM;
+			panic("pmap_enter: cannot allocate pte");
+		}
+	}
+
+	*pte = entry;
 
 	if (pmap->pm_asid != -1)
 		sh_tlb_update(pmap->pm_asid, va, entry);
@@ -892,6 +903,8 @@ __pmap_pte_alloc(pmap_t pmap, vaddr_t va)
 
 	/* Allocate page table (not managed page) */
 	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE | UVM_PGA_ZERO);
+	if (pg == NULL)
+		return NULL;
 
 	ptp = (pt_entry_t *)SH3_PHYS_TO_P1SEG(VM_PAGE_TO_PHYS(pg));
 	pmap->pm_ptp[__PMAP_PTP_INDEX(va)] = ptp;
