@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.2 2006/08/06 18:21:32 xtraeme Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.3 2006/08/07 11:39:30 cube Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -89,7 +89,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.2 2006/08/06 18:21:32 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.3 2006/08/07 11:39:30 cube Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -420,7 +420,8 @@ k8_powernow_init(void)
 
 	if (k8pnow_current_state == NULL) {
 		free(cstate, M_DEVBUF);
-		free(freq_names, M_SYSCTLDATA);
+		if (freq_names)
+			free(freq_names, M_SYSCTLDATA);
 		return;
 	}
 
@@ -476,6 +477,6 @@ k8_powernow_init(void)
 	return;
 
   err:
-	if (freq_names)
-		free(freq_names, M_SYSCTLDATA);
+	free(cstate, M_DEVBUF);
+	free(freq_names, M_SYSCTLDATA);
 }
