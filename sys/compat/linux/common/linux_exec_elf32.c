@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.73 2006/07/23 22:06:09 ad Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.74 2006/08/07 14:19:57 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.73 2006/07/23 22:06:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.74 2006/08/07 14:19:57 manu Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -222,6 +222,75 @@ out:
 }
 #endif
 
+#ifdef LINUX_DEBUGLINK_SIGNATURE
+/*
+ * Look for a .gnu_debuglink, specific to x86_64 interpeter
+ */
+int
+ELFNAME2(linux,debuglink_signature)(l, epp, eh)
+	struct lwp *l;
+	struct exec_package *epp;
+	Elf_Ehdr *eh;
+{
+	size_t shsize;
+	int strndx;
+	size_t i;
+	static const char signature[] = ".gnu_debuglink";
+	char *strtable = NULL;
+	Elf_Shdr *sh;
+
+	int error;
+
+	/*
+	 * load the section header table
+	 */
+	shsize = eh->e_shnum * sizeof(Elf_Shdr);
+	sh = (Elf_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
+	error = exec_read_from(l, epp->ep_vp, eh->e_shoff, sh, shsize);
+	if (error)
+		goto out;
+
+	/*
+	 * Now let's find the string table. If it does not exists, give up.
+	 */
+	strndx = (int)(eh->e_shstrndx);
+	if (strndx == SHN_UNDEF) {
+		error = ENOEXEC;
+		goto out;
+	}
+
+	/*
+	 * strndx is the index in section header table of the string table
+	 * section get the whole string table in strtable, and then we get access to the names
+	 * s->sh_name is the offset of the section name in strtable.
+	 */
+	strtable = malloc(sh[strndx].sh_size, M_TEMP, M_WAITOK);
+	error = exec_read_from(l, epp->ep_vp, sh[strndx].sh_offset, strtable,
+	    sh[strndx].sh_size);
+	if (error)
+		goto out;
+
+	for (i = 0; i < eh->e_shnum; i++) {
+		Elf_Shdr *s = &sh[i];
+
+		if (!memcmp((void*)(&(strtable[s->sh_name])), signature,
+				sizeof(signature))) {
+			DPRINTF(("linux_debuglink_sig=%s\n",
+			    &(strtable[s->sh_name])));
+			error = 0;
+			goto out;
+		}
+	}
+	error = ENOEXEC;
+
+out:
+	free(sh, M_TEMP);
+	if (strtable)
+		free(strtable, M_TEMP);
+	return (error);
+}
+#endif
+
 int
 ELFNAME2(linux,signature)(l, epp, eh, itp)
 	struct lwp *l;
@@ -319,8 +388,13 @@ ELFNAME2(linux,probe)(l, epp, eh, itp, pos)
 #ifdef LINUX_ATEXIT_SIGNATURE
 	    ((error = ELFNAME2(linux,atexit_signature)(l, epp, eh)) != 0) &&
 #endif
-	    1)
+#ifdef LINUX_DEBUGLINK_SIGNATURE
+	    ((error = ELFNAME2(linux,debuglink_signature)(l, epp, eh)) != 0) &&
+#endif
+	    1) {
+			DPRINTF(("linux_probe: returning %d\n", error));
 			return error;
+	}
 
 	if (itp) {
 		if ((error = emul_find_interp(l, epp->ep_esch->es_emul->e_path,
