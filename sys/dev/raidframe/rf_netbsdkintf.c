@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.210 2006/07/21 16:48:52 ad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.211 2006/08/07 17:08:18 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.210 2006/07/21 16:48:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.211 2006/08/07 17:08:18 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2055,7 +2055,7 @@ raidgetdisklabel(dev_t dev)
 		 *
 		 * This is necessary since total size of the raid device
 		 * may vary when an interleave is changed even though exactly
-		 * same componets are used, and old disklabel may used
+		 * same components are used, and old disklabel may used
 		 * if that is found.
 		 */
 		if (lp->d_secperunit != rs->sc_size)
