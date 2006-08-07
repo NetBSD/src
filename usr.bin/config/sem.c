@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.22 2006/03/29 09:16:36 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.23 2006/08/07 12:03:32 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1367,6 +1367,12 @@ deldev(const char *name)
 
 		if (d == NULL) {
 			error("unknown device %s", name);
+			return;
+		}
+		if (d->d_ispseudo) {
+			error("%s is a pseudo-device; "
+			    "use \"no pseudo-device %s\" instead", name,
+			    name);
 			return;
 		}
 
