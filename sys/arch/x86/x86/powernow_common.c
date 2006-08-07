@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_common.c,v 1.1 2006/08/06 15:37:21 xtraeme Exp $	*/
+/*	$NetBSD: powernow_common.c,v 1.2 2006/08/07 20:58:23 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_common.c,v 1.1 2006/08/06 15:37:21 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_common.c,v 1.2 2006/08/07 20:58:23 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,9 +93,12 @@ powernow_probe(struct cpu_info *ci, uint32_t val)
 int
 powernow_extflags(struct cpu_info *ci, uint32_t feature_flag)
 {
-	int j;
+	int family, j, rval;
 	char *cpuname;
 
+	rval = 0;
+
+	family = (ci->ci_signature >> 8) & 15;
 	cpuname = ci->ci_dev->dv_xname;
 
 	/* Print out available cpuid extended features. */
@@ -111,8 +114,19 @@ powernow_extflags(struct cpu_info *ci, uint32_t feature_flag)
 	 * are available, it's ok to continue enabling powernow.
 	 */
 	if ((feature_flag & pnow_extflag[1].mask) &&
-	    (feature_flag & pnow_extflag[2].mask))
-		return 1;
+	    (feature_flag & pnow_extflag[2].mask)) {
+		switch (family) {
+		case 6:
+			rval = 6;
+			break;
+		case 15:
+			rval = 15;
+			break;
+		default:
+			rval = 0;
+			break;
+		}
+	}
 
-	return 0;
+	return rval;
 }
