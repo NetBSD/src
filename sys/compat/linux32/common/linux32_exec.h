@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.h,v 1.1 2006/02/09 19:18:57 manu Exp $ */
+/*	$NetBSD: linux32_exec.h,v 1.2 2006/08/07 14:19:57 manu Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -49,6 +49,21 @@ int linux32_elf32_probe __P((struct lwp *, struct exec_package *, void *,
     char *, vaddr_t *)); 
 int linux32_elf32_copyargs __P((struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *));
+int linux_elf32_signature __P((struct lwp *, struct exec_package *,
+        Elf32_Ehdr *, char *));
+#ifdef LINUX32_GCC_SIGNATURE
+int linux_elf32_gcc_signature __P((struct lwp *l,
+        struct exec_package *, Elf32_Ehdr *));
+#endif
+#ifdef LINUX32_DEBUGLINK_SIGNATURE
+int linux_elf32_debuglink_signature __P((struct lwp *l,
+        struct exec_package *, Elf32_Ehdr *));
+#endif
+#ifdef LINUX32_ATEXIT_SIGNATURE
+int linux_elf32_atexit_signature __P((struct lwp *l,
+        struct exec_package *, Elf32_Ehdr *));
+#endif
+
 #endif /* EXEC_ELF32 */
 
 void linux32_setregs (struct lwp *, struct exec_package *, u_long stack);
