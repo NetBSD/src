@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k7.c,v 1.12 2006/08/07 11:39:30 cube Exp $ */
+/*	$NetBSD: powernow_k7.c,v 1.13 2006/08/07 21:16:03 xtraeme Exp $ */
 /*	$OpenBSD: powernow-k7.c,v 1.24 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -89,7 +89,7 @@
 /* AMD POWERNOW K7 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.12 2006/08/07 11:39:30 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.13 2006/08/07 21:16:03 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -129,6 +129,7 @@ static unsigned int cur_freq;
 static int powernow_node_target, powernow_node_current;
 static char *freq_names;
 static size_t freq_names_len;
+static uint8_t k7pnow_flag;
 
 /* Prototypes */
 void k7_powernow_destroy(void);
@@ -210,7 +211,7 @@ k7_powernow_setperf(unsigned int freq)
 	ctl |= PN7_CTR_VID(vid);
 	ctl |= PN7_CTR_SGTC(cstate->sgtc);
 
-	if (cstate->flags & PN7_FLAG_ERRATA_A0)
+	if (k7pnow_flag & PN7_FLAG_ERRATA_A0)
 		disable_intr();
 
 	if (k7pnow_fid_to_mult[fid] < k7pnow_fid_to_mult[cfid]) {
@@ -223,7 +224,7 @@ k7_powernow_setperf(unsigned int freq)
 			wrmsr(MSR_AMDK7_FIDVID_CTL, ctl | PN7_CTR_FIDC);
 	}
 
-	if (cstate->flags & PN7_FLAG_ERRATA_A0)
+	if (k7pnow_flag & PN7_FLAG_ERRATA_A0)
 		enable_intr();
 
 	status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
@@ -249,7 +250,7 @@ k7pnow_decode_pst(struct powernow_cpu_state *cstate, uint8_t *p, int npst)
 		state.fid = *p++;
 		state.vid = *p++;
 		state.freq = k7pnow_fid_to_mult[state.fid]/10 * cstate->fsb;
-		if ((cstate->flags & PN7_FLAG_ERRATA_A0) &&
+		if ((k7pnow_flag & PN7_FLAG_ERRATA_A0) &&
 		    (k7pnow_fid_to_mult[state.fid] % 10) == 5)
 			continue;
 
@@ -297,7 +298,7 @@ k7pnow_states(struct powernow_cpu_state *cstate, uint32_t cpusig,
 			if (cstate->sgtc < 100 * cstate->fsb)
 				cstate->sgtc = 100 * cstate->fsb;
 			if (psb->flags & 1)
-				cstate->flags |= PN7_FLAG_DESKTOP_VRM;
+				k7pnow_flag |= PN7_FLAG_DESKTOP_VRM;
 			p += sizeof(struct powernow_psb_s);
 
 			for (maxpst = 0; maxpst < psb->n_pst; maxpst++) {
@@ -306,7 +307,7 @@ k7pnow_states(struct powernow_cpu_state *cstate, uint32_t cpusig,
 				if (cpusig == pst->signature && fid == pst->fid
 				    && vid == pst->vid) {
 					
-					if (abs(cstate->fsb - pst->fsb) > 5)
+					if (abs(cstate->fsb - pst->pll) > 5)
 						continue;
 					cstate->n_states = pst->n_states;
 					return (k7pnow_decode_pst(cstate,
@@ -327,7 +328,7 @@ k7_powernow_init(void)
 {
 	uint64_t status;
 	uint32_t maxfid, startvid, currentfid;
-	const struct sysctlnode *node, *pnownode;
+	const struct sysctlnode *freqnode, *node, *pnownode;
 	struct powernow_cpu_state *cstate;
 	struct cpu_info *ci;
 	char *cpuname;
@@ -346,9 +347,9 @@ k7_powernow_init(void)
 		return;
 	}
 
-	cstate->flags = 0;
+	k7pnow_flag = 0;
 	if (ci->ci_signature == AMD_ERRATA_A0_CPUSIG)
-		cstate->flags |= PN7_FLAG_ERRATA_A0;
+		k7pnow_flag |= PN7_FLAG_ERRATA_A0;
 
 	status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
 	maxfid = PN7_STA_MFID(status);
@@ -388,40 +389,47 @@ k7_powernow_init(void)
 		return;
 	}
 
-	if (cstate->flags & PN7_FLAG_DESKTOP_VRM)
+	if (k7pnow_flag & PN7_FLAG_DESKTOP_VRM)
 		techname = "Cool`n'Quiet K7";
 	else
 		techname = "Powernow! K7";
 
 	/* Create sysctl machdep.powernow.frequency. */
-	if ((sysctl_createv(SYSCTLLOG, 0, NULL, &node,
+	if (sysctl_createv(SYSCTLLOG, 0, NULL, &node,
 	    CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE, "machdep", NULL,
 	    NULL, 0, NULL, 0,
-	    CTL_MACHDEP, CTL_EOL)) != 0)
+	    CTL_MACHDEP, CTL_EOL) != 0)
 		goto err;
 
-	if ((sysctl_createv(SYSCTLLOG, 0, &node, &pnownode,
+	if (sysctl_createv(SYSCTLLOG, 0, &node, &pnownode,
 	    0,
 	    CTLTYPE_NODE, "powernow", NULL,
 	    NULL, 0, NULL, 0,
-	    CTL_CREATE, CTL_EOL)) != 0)
+	    CTL_CREATE, CTL_EOL) != 0)
 		goto err;
 
-	if ((sysctl_createv(SYSCTLLOG, 0, &pnownode, &node,
+	if (sysctl_createv(SYSCTLLOG, 0, &pnownode, &freqnode,
+	    0,
+	    CTLTYPE_NODE, "frequency", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL) != 0)
+		goto err;
+
+	if (sysctl_createv(SYSCTLLOG, 0, &freqnode, &node,
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "target", NULL,
 	    k7pnow_sysctl_helper, 0, NULL, 0,
-	    CTL_CREATE, CTL_EOL)) != 0)
+	    CTL_CREATE, CTL_EOL) != 0)
 		goto err;
 
 	powernow_node_target = node->sysctl_num;
 
-	if ((sysctl_createv(SYSCTLLOG, 0, &pnownode, &node,
+	if (sysctl_createv(SYSCTLLOG, 0, &freqnode, &node,
 	    0,
 	    CTLTYPE_INT, "current", NULL,
 	    k7pnow_sysctl_helper, 0, NULL, 0,
-	    CTL_CREATE, CTL_EOL)) != 0)
+	    CTL_CREATE, CTL_EOL) != 0)
 		goto err;
 
 	powernow_node_current = node->sysctl_num;
