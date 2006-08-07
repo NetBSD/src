@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.3 2006/08/07 11:39:30 cube Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.1 2006/08/07 20:58:23 xtraeme Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -89,7 +89,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.3 2006/08/07 11:39:30 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.1 2006/08/07 20:58:23 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.3 2006/08/07 11:39:30 cube Exp $")
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
 
+#include <x86/include/cpuvar.h>
 #include <x86/include/powernow.h>
 
 #include <dev/isa/isareg.h>
@@ -318,9 +319,12 @@ k8pnow_states(struct powernow_cpu_state *cstate, uint32_t cpusig,
 	uint8_t *p;
 	int i;
 
+	DPRINTF(("%s: before the for loop\n", __func__));
+
 	for (p = (uint8_t *)ISA_HOLE_VADDR(BIOS_START);
 	    p < (uint8_t *)ISA_HOLE_VADDR(BIOS_START + BIOS_LEN); p += 16) {
 		if (memcmp(p, "AMDK7PNOW!", 10) == 0) {
+			DPRINTF(("%s: inside the for loop\n", __func__));
 			psb = (struct powernow_psb_s *)p;
 			if (psb->version != 0x14) {
 				DPRINTF(("%s: psb->version != 0x14\n",
@@ -342,15 +346,18 @@ k8pnow_states(struct powernow_cpu_state *cstate, uint32_t cpusig,
 				cstate->n_states = pst->n_states;
 				if (cpusig == pst->signature &&
 				    pst->fid == fid && pst->vid == vid) {
+					DPRINTF(("%s: cpusig = signature\n",
+					    __func__));
 					return (k8pnow_decode_pst(cstate,
 					    p+= sizeof(struct powernow_pst_s)));
 				}
-				p += sizeof(struct powernow_pst_s) + 2 *
-				    cstate->n_states;
+				p += sizeof(struct powernow_pst_s) +
+				    2 * cstate->n_states;
 			}
 		}
 	}
 
+	DPRINTF(("%s: returns 0!\n", __func__));
 	return 0;
 
 }
@@ -360,7 +367,7 @@ k8_powernow_init(void)
 {
 	uint64_t status;
 	uint32_t maxfid, maxvid, i;
-	const struct sysctlnode *node, *pnownode;
+	const struct sysctlnode *freqnode, *node, *pnownode;
 	struct powernow_cpu_state *cstate;
 	struct cpu_info *ci;
 	char *cpuname;
@@ -416,9 +423,11 @@ k8_powernow_init(void)
 			k8pnow_current_state = cstate;
 			DPRINTF(("%s: freq_names=%s\n", __func__, freq_names));
 		}
-	}
+	} else
+		DPRINTF(("%s: returned 0!\n", __func__));
 
 	if (k8pnow_current_state == NULL) {
+		DPRINTF(("%s: k8pnow_current_state is NULL!\n", __func__));
 		free(cstate, M_DEVBUF);
 		if (freq_names)
 			free(freq_names, M_SYSCTLDATA);
@@ -426,43 +435,50 @@ k8_powernow_init(void)
 	}
 
 	/* Create sysctl machdep.powernow.frequency. */
-	if ((sysctl_createv(NULL, 0, NULL, &node,
+	if (sysctl_createv(NULL, 0, NULL, &node,
 	    CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE, "machdep", NULL,
 	    NULL, 0, NULL, 0,
-	    CTL_MACHDEP, CTL_EOL)) != 0)
+	    CTL_MACHDEP, CTL_EOL) != 0)
 		goto err;
 
-	if ((sysctl_createv(NULL, 0, &node, &pnownode,
+	if (sysctl_createv(NULL, 0, &node, &pnownode,
 	    0,
 	    CTLTYPE_NODE, "powernow", NULL,
 	    NULL, 0, NULL, 0,
-	    CTL_CREATE, CTL_EOL)) != 0)
+	    CTL_CREATE, CTL_EOL) != 0)
 		goto err;
 
-	if ((sysctl_createv(NULL, 0, &pnownode, &node,
+	if (sysctl_createv(NULL, 0, &pnownode, &freqnode,
+	    0,
+	    CTLTYPE_NODE, "frequency", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL) != 0)
+		goto err;
+
+	if (sysctl_createv(NULL, 0, &freqnode, &node,
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "target", NULL,
 	    k8pnow_sysctl_helper, 0, NULL, 0,
-	    CTL_CREATE, CTL_EOL)) != 0)
+	    CTL_CREATE, CTL_EOL) != 0)
 		goto err;
 
 	powernow_node_target = node->sysctl_num;
 
-	if ((sysctl_createv(NULL, 0, &pnownode, &node,
+	if (sysctl_createv(NULL, 0, &freqnode, &node,
 	    0,
 	    CTLTYPE_INT, "current", NULL,
 	    k8pnow_sysctl_helper, 0, NULL, 0,
-	    CTL_CREATE, CTL_EOL)) != 0)
+	    CTL_CREATE, CTL_EOL) != 0)
 		goto err;
 
 	powernow_node_current = node->sysctl_num;
 
-	if ((sysctl_createv(NULL, 0, &pnownode, &node,
+	if (sysctl_createv(NULL, 0, &pnownode, &node,
 	    0,
 	    CTLTYPE_STRING, "available", NULL,
 	    NULL, 0, freq_names, freq_names_len,
-	    CTL_CREATE, CTL_EOL)) != 0)
+	    CTL_CREATE, CTL_EOL) != 0)
 		goto err;
 
 	cur_freq = cstate->state_table[cstate->n_states-1].freq;

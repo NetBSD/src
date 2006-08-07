@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow.h,v 1.1 2006/08/06 15:37:21 xtraeme Exp $	*/
+/*	$NetBSD: powernow.h,v 1.2 2006/08/07 20:58:23 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2004 Martin Végiard.
@@ -140,22 +140,21 @@
 #define POWERNOW_MAX_STATES		16
 
 struct powernow_state {
-	unsigned int freq;
+	int freq;
 	uint8_t fid;
 	uint8_t vid;
 };
 
 struct powernow_cpu_state {
 	struct powernow_state state_table[POWERNOW_MAX_STATES];
-	unsigned int flags;
 	unsigned int fsb;
-	unsigned int irt;
-	unsigned int mvs;
 	unsigned int n_states;
-	unsigned int pll;
-	unsigned int rvo;
 	unsigned int sgtc;
 	unsigned int vst;
+	unsigned int mvs;
+	unsigned int pll;
+	unsigned int rvo;
+	unsigned int irt;
 	int low;
 };
 
@@ -170,7 +169,6 @@ struct powernow_psb_s {
 
 struct powernow_pst_s {
 	uint32_t signature;
-	uint8_t fsb;
 	uint8_t pll;
 	uint8_t fid;
 	uint8_t vid;
