@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.59 2006/08/05 17:26:14 dyoung Exp $
+# $NetBSD: Makefile,v 1.60 2006/08/07 02:08:47 dyoung Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ CONFIGFILES=\
 		dhclient dhcpd dhcrelay dmesg downinterfaces \
 		fixsb fsck ftpd \
 		hostapd \
-		identd ifwatchd inetd ipsec \
+		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
 		irdaattach iscsi_target isdnd \
 		kdc \
 		ldconfig lkm1 lkm2 lkm3 local lpd \
@@ -32,9 +32,6 @@ CONFIGFILES=\
 		veriexec virecover wdogctl wscons wsmoused \
 		xdm xfs \
 		ypbind yppasswdd ypserv
-.if (${MKIPFILTER:Uno} != "no") 
-CONFIGFILES+=ipfilter ipfs ipmon ipnat
-.endif
 FILESDIR=	/etc/rc.d
 FILESMODE=	${BINMODE}
 
