@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.35 2006/08/07 17:41:54 oster Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.36 2006/08/07 20:58:23 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.35 2006/08/07 17:41:54 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.36 2006/08/07 20:58:23 xtraeme Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
 #include "opt_powernow_k7.h"
+#include "opt_powernow_k8.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.35 2006/08/07 17:41:54 oster Exp $");
 #include <machine/pio.h>
 #include <machine/cpu.h>
 #include <x86/cacheinfo.h>
+#include <x86/include/cpuvar.h>
+#include <x86/include/powernow.h>
 
 static const struct x86_cache_info
 intel_cpuid_cache_info[] = {
@@ -1446,17 +1449,26 @@ identifycpu(struct cpu_info *ci)
 	}
 #endif /* ENHANCED_SPEEDSTEP */
 
-#ifdef POWERNOW_K7
-#include <x86/include/powernow.h>
-	uint32_t rval;
-	int featflag;
+#if defined(POWERNOW_K7) || defined(POWERNOW_K8)
+	if (vendor == CPUVENDOR_AMD) {
+		uint32_t rval;
+		uint8_t featflag;
 
-	rval = powernow_probe(ci, 0x600);
-	if (rval) {
-		featflag = powernow_extflags(ci, rval);
-		if (featflag)
-			k7_powernow_init();
+		rval = powernow_probe(ci, 0x600);
+		if (rval) {
+			featflag = powernow_extflags(ci, rval);
+			switch (featflag) {
+			case 6:
+				k7_powernow_init();
+				break;
+			case 15:
+				k8_powernow_init();
+				break;
+			default:
+				break;
+			}
+		}
 	}
-#endif /* POWERNOW_K7 */
+#endif /* POWERNOW_K7 || POWERNOW_K8 */
 
 }

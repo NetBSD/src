@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.18 2006/08/06 15:37:21 xtraeme Exp $
+#	$NetBSD: files.x86,v 1.19 2006/08/07 20:58:23 xtraeme Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -9,6 +9,9 @@ defflag                 MTRR
 # PCI fixup options
 defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
 			PCI_INTR_FIXUP PCI_INTR_FIXUP_FORCE
+
+# AMD Powernow/Cool`n'Quiet Technology
+defflag opt_powernow_k8.h	POWERNOW_K8
 
 define  cpubus { [apid = -1] }
 
@@ -49,4 +52,5 @@ file	arch/x86/isa/isa_machdep.c	isa
 file	arch/x86/pci/pciide_machdep.c	pciide_common
 
 # Powernow common functions
+file	arch/x86/x86/powernow_k8.c	powernow_k8
 file	arch/x86/x86/powernow_common.c	powernow_k8 | powernow_k7

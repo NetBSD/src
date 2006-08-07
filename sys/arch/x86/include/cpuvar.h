@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.3 2003/10/27 13:43:48 junyoung Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.4 2006/08/07 20:58:23 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -106,5 +106,11 @@ int x86_ipi_init(int);
 void identifycpu(struct cpu_info *);
 void cpu_init(struct cpu_info *);
 void cpu_init_first(void);
+
+#include "opt_powernow_k8.h"
+
+#ifdef POWERNOW_K8
+void k8_powernow_init(void);
+#endif
 
 #endif
