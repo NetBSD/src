@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec_elf32.c,v 1.4 2006/07/23 22:06:09 ad Exp $ */
+/*	$NetBSD: linux32_exec_elf32.c,v 1.5 2006/08/07 14:19:57 manu Exp $ */
 
 /*-                     
  * Copyright (c) 1995, 1998, 2000, 2001,2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.4 2006/07/23 22:06:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.5 2006/08/07 14:19:57 manu Exp $");
 
 #define	ELFSIZE		32
 
@@ -68,18 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.4 2006/07/23 22:06:09 ad Ex
 #define DPRINTF(a)
 #endif
 
-#if 0
-static int ELFNAME2(linux32,signature) __P((struct lwp *, struct exec_package *,
-	Elf_Ehdr *, char *));
-#ifdef LINUX_GCC_SIGNATURE
-static int ELFNAME2(linux32,gcc_signature) __P((struct lwp *l,
-	struct exec_package *, Elf_Ehdr *));
-#endif
-#ifdef LINUX_ATEXIT_SIGNATURE
-static int ELFNAME2(linux32,atexit_signature) __P((struct lwp *l,
-	struct exec_package *, Elf_Ehdr *));
-#endif
-#endif
 int linux32_copyinargs(struct exec_package *, struct ps_strings *,
 			void *, size_t, const void *, const void *);
 
@@ -94,11 +82,14 @@ ELFNAME2(linux32,probe)(l, epp, eh, itp, pos)
 	int error;
 
 	if (((error = ELFNAME2(linux,signature)(l, epp, eh, itp)) != 0) &&
-#ifdef LINUX_GCC_SIGNATURE
+#ifdef LINUX32_GCC_SIGNATURE
 	    ((error = ELFNAME2(linux,gcc_signature)(l, epp, eh)) != 0) &&
 #endif
-#ifdef LINUX_ATEXIT_SIGNATURE
+#ifdef LINUX32_ATEXIT_SIGNATURE
 	    ((error = ELFNAME2(linux,atexit_signature)(l, epp, eh)) != 0) &&
+#endif
+#ifdef LINUX32_DEBUGLINK_SIGNATURE
+	    ((error = ELFNAME2(linux,debuglink_signature)(l, epp, eh)) != 0) &&
 #endif
 	    1)
 			return error;

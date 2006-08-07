@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.3 2005/12/16 14:16:14 christos Exp $ */
+/*	$NetBSD: linux_exec.h,v 1.4 2006/08/07 14:19:57 manu Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -62,6 +62,8 @@ struct linux_extra_stack_data64 {
 
 /* we have special powerpc ELF copyargs */
 #define LINUX_MACHDEP_ELF_COPYARGS
+
+#define LINUX_DEBUGLINK_SIGNATURE
 
 int linux_exec_setup_stack(struct lwp *, struct exec_package *);
 
