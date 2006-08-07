@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.211 2006/08/07 17:08:18 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.212 2006/08/07 20:02:22 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.211 2006/08/07 17:08:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.212 2006/08/07 20:02:22 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -241,7 +241,7 @@ const struct cdevsw raid_cdevsw = {
 struct raid_softc {
 	int     sc_flags;	/* flags */
 	int     sc_cflags;	/* configuration flags */
-	size_t  sc_size;	/* size of the raid device */
+	uint64_t sc_size;	/* size of the raid device */
 	char    sc_xname[20];	/* XXX external name */
 	struct disk sc_dkdev;	/* generic disk device info */
 	struct bufq_state *buf_queue;	/* used for the device queue */
