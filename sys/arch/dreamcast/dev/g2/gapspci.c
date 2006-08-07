@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci.c,v 1.14 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: gapspci.c,v 1.15 2006/08/07 17:36:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci.c,v 1.14 2005/12/11 12:17:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci.c,v 1.15 2006/08/07 17:36:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,19 +63,18 @@ CFATTACH_DECL(gapspci, sizeof(struct gaps_softc),
 int
 gaps_match(struct device *parent, struct cfdata *match, void *aux)
 {
-  	struct g2bus_attach_args *ga = aux;
+	struct g2bus_attach_args *ga = aux;
 	char idbuf[16];
 	bus_space_handle_t tmp_memh;
 
 	if (bus_space_map(ga->ga_memt, 0x01001400, 0x100, 0, &tmp_memh) != 0)
 		return 0;
 
-	bus_space_read_region_1(ga->ga_memt, tmp_memh, 0,
-				idbuf, sizeof(idbuf));
+	bus_space_read_region_1(ga->ga_memt, tmp_memh, 0, idbuf, sizeof(idbuf));
 
 	bus_space_unmap(ga->ga_memt, tmp_memh, 0x100);
 
-	if(strncmp(idbuf, "GAPSPCI_BRIDGE_2", 16))
+	if (strncmp(idbuf, "GAPSPCI_BRIDGE_2", 16))
 		return 0;
 
 	return 1;
@@ -97,22 +96,22 @@ gaps_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmasize = 32768;
 
 	if (bus_space_map(sc->sc_memt, 0x01001400, 0x100,
-			  0, &sc->sc_gaps_memh) != 0)
+	    0, &sc->sc_gaps_memh) != 0)
 		panic("gaps_attach: can't map GAPS register space");
 
 	bus_space_write_4(sc->sc_memt, sc->sc_gaps_memh, 0x18, 0x5a14a501);
 
-	for(i=0; i<1000000; i++)
-	  ;
-	
-	if(bus_space_read_4(sc->sc_memt, sc->sc_gaps_memh, 0x18) != 1)
+	for (i = 0; i < 1000000; i++)
+		;
+
+	if (bus_space_read_4(sc->sc_memt, sc->sc_gaps_memh, 0x18) != 1)
 		panic("gaps_attach: GAPS PCI bridge not responding");
 
 	bus_space_write_4(sc->sc_memt, sc->sc_gaps_memh, 0x20, 0x1000000);
 	bus_space_write_4(sc->sc_memt, sc->sc_gaps_memh, 0x24, 0x1000000);
 	bus_space_write_4(sc->sc_memt, sc->sc_gaps_memh, 0x28, sc->sc_dmabase);
 	bus_space_write_4(sc->sc_memt, sc->sc_gaps_memh, 0x2c,
-			  sc->sc_dmabase + sc->sc_dmasize);
+	    sc->sc_dmabase + sc->sc_dmasize);
 	bus_space_write_4(sc->sc_memt, sc->sc_gaps_memh, 0x14, 1);
 	bus_space_write_4(sc->sc_memt, sc->sc_gaps_memh, 0x34, 1);
 
@@ -129,5 +128,5 @@ gaps_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_flags = PCI_FLAGS_MEM_ENABLED;
 	pba.pba_pc = &sc->sc_pc;
 
-	(void) config_found_ia(self, "pcibus", &pba, pcibusprint);
+	(void)config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
