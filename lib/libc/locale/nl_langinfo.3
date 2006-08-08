@@ -1,4 +1,4 @@
-.\"	$NetBSD: nl_langinfo.3,v 1.15 2005/10/03 19:20:53 wiz Exp $
+.\"	$NetBSD: nl_langinfo.3,v 1.16 2006/08/08 17:31:35 wiz Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@NetBSD.org>.
 .\" Public domain.
@@ -101,9 +101,9 @@ The following example uses
 to obtain the date and time format for the current locale:
 .Pp
 .Bd -literal -offset indent
-#include <time.h>
-#include <langinfo.h>
-#include <locale.h>
+#include \*[Lt]time.h\*[Gt]
+#include \*[Lt]langinfo.h\*[Gt]
+#include \*[Lt]locale.h\*[Gt]
 
 int main(void)
 {
@@ -113,7 +113,7 @@ int main(void)
 	char *ptr;
 
 	t = time(NULL);
-	tm = localtime(&t);
+	tm = localtime(\*[Am]t);
 	(void)setlocale(LC_ALL, "");
 	ptr = nl_langinfo(D_T_FMT);
 	strftime(datestring, sizeof(datestring), ptr, tm);
@@ -127,8 +127,8 @@ int main(void)
 .\" to obtain the setting of the currency symbol for the current locale:
 .\" .Pp
 .\" .Bd
-.\" 	#include <langinfo.h>
-.\" 	#include <locale.h>
+.\" 	#include \*[Lt]langinfo.h\*[Gt]
+.\" 	#include \*[Lt]locale.h\*[Gt]
 .\" 	int main(void)
 .\" 	{
 .\" 		char *ptr;

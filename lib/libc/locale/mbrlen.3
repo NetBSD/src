@@ -1,4 +1,4 @@
-.\" $NetBSD: mbrlen.3,v 1.6 2004/01/24 16:58:54 wiz Exp $
+.\" $NetBSD: mbrlen.3,v 1.7 2006/08/08 17:31:35 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -55,7 +55,7 @@ is equivalent to the following call (except
 .Fa ps
 is evaluated only once):
 .Bd -literal -offset indent
-mbrtowc(NULL, s, n, (ps != NULL) ? ps : &internal);
+mbrtowc(NULL, s, n, (ps != NULL) ? ps : \*[Am]internal);
 .Ed
 .Pp
 Here,
