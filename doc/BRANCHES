@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.87 2006/06/30 23:05:28 chap Exp $
+#	$NetBSD: BRANCHES,v 1.88 2006/08/08 05:19:20 riz Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -144,6 +144,17 @@ Scope:		Entire tree.
 Notes:
 		Commits restricted to Release Engineering.
 
+Branch:		netbsd-2
+Description:    The NetBSD 2 release branch
+Status:		Active
+Start Date:	23 Dec 2004
+End Date:
+Base Tag:	netbsd-2-base
+Maintainer:	2 Release Engineering <releng-2@NetBSD.org>
+Scope:		Entire tree. (src + xsrc)
+Notes:
+		Commits restricted to Release Engineering.
+
 Branch:		netbsd-2-0
 Description:	Originally the NetBSD 2.0 release branch and now the branch 
 		tracking security/critical fixes for the NetBSD 2.0 series
@@ -159,15 +170,16 @@ Notes:		Branch was re-purposed to security/critical change function
 		NetBSD 2 tree.
 		Commits restricted to Release Engineering.
 
-Branch:		netbsd-2
-Description:    The NetBSD 2 release branch
+Branch:		netbsd-2-1
+Description:	Tracking security/critical fixes for NetBSD 2.1
 Status:		Active
-Start Date:	23 Dec 2004
+Start Date:     26 Oct 2005 
 End Date:
-Base Tag:	netbsd-2-base
+Base Tag:	netbsd-2-1-RELEASE
 Maintainer:	2 Release Engineering <releng-2@NetBSD.org>
 Scope:		Entire tree. (src + xsrc)
-Notes:
+Notes:		Branch contains only security/critical fixes to
+		NetBSD 2.1.  For new features, use netbsd-2 branch.
 		Commits restricted to Release Engineering.
 
 Branch:		netbsd-3
@@ -181,16 +193,15 @@ Scope:		Entire tree. (src + xsrc)
 Notes:
 		Commits restricted to Release Engineering.
 
-Branch:		netbsd-2-1
-Description:	Tracking security/critical fixes for NetBSD 2.1
+Branch:		netbsd-4
+Description:	The NetBSD 4 release branch
 Status:		Active
-Start Date:     26 Oct 2005 
+Start Date:	8 Aug 2006
 End Date:
-Base Tag:	netbsd-2-1-RELEASE
-Maintainer:	2 Release Engineering <releng-2@NetBSD.org>
+Base Tag:	netbsd-4-base
+Maintainer:	4 Release Engineering <releng-4@NetBSD.org>
 Scope:		Entire tree. (src + xsrc)
-Notes:		Branch contains only security/critical fixes to
-		NetBSD 2.1.  For new features, use netbsd-2 branch.
+Notes:
 		Commits restricted to Release Engineering.
 
 ########################################################################
