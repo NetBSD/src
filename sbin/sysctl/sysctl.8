@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.149 2006/07/14 21:55:19 elad Exp $
+.\"	$NetBSD: sysctl.8,v 1.150 2006/08/08 19:47:44 kardel Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -367,6 +367,9 @@ privilege can change the value.
 .It kern.sysvmsg	integer	no
 .It kern.sysvsem	integer	no
 .It kern.sysvshm	integer	no
+.It kern.timecounter.choice	string	no
+.It kern.timecounter.hardware	string	yes
+.It kern.timecounter.timestepwarnings	integer	yes
 .It kern.timex	struct	no
 .It kern.tkstat.cancc	quad	no
 .It kern.tkstat.nin	quad	no
