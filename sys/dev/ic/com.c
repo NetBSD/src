@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.250 2006/07/22 09:59:24 elad Exp $	*/
+/*	$NetBSD: com.c,v 1.251 2006/08/08 10:32:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.250 2006/07/22 09:59:24 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.251 2006/08/08 10:32:09 mrg Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -2458,6 +2458,7 @@ comcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency,
 {
 	struct com_regs	regs;
 
+	memset(&regs, 0, sizeof regs);
 	regs.cr_iot = iot;
 	regs.cr_iobase = iobase;
 	regs.cr_nports = COM_NPORTS;
