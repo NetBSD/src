@@ -1,4 +1,4 @@
-.\" $NetBSD: wcsrtombs.3,v 1.8 2004/01/24 16:58:54 wiz Exp $
+.\" $NetBSD: wcsrtombs.3,v 1.9 2006/08/08 17:14:05 tnozaki Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -37,9 +37,9 @@
 .Lb libc
 .\" ----------------------------------------------------------------------
 .Sh SYNOPSIS
-.In stdlib.h
+.In wchar.h
 .Ft size_t
-.Fn wcsrtombs "const char * restrict s" "const wchar_t ** restrict pwcs" \
+.Fn wcsrtombs "char * restrict s" "const wchar_t ** restrict pwcs" \
 "size_t n" "mbstate_t * restrict ps"
 .\" ----------------------------------------------------------------------
 .Sh DESCRIPTION
