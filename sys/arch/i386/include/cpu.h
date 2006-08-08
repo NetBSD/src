@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.125 2006/08/06 16:05:07 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.126 2006/08/08 21:04:30 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -425,6 +425,7 @@ void	est_init(struct cpu_info *);
 
 /* powernow_k7.c */
 void	k7_powernow_init(void);
+void	k7_powernow_destroy(void);
 
 #endif /* _KERNEL */
 
