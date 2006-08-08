@@ -1,4 +1,4 @@
-.\" $NetBSD: wcstombs.3,v 1.7 2004/01/24 16:58:54 wiz Exp $
+.\" $NetBSD: wcstombs.3,v 1.8 2006/08/08 17:14:05 tnozaki Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .In stdlib.h
 .Ft size_t
-.Fn wcstombs "const char * restrict s" "wchar_t * restrict pwcs" "size_t n"
+.Fn wcstombs "char * restrict s" "const wchar_t * restrict pwcs" "size_t n"
 .\" ----------------------------------------------------------------------
 .Sh DESCRIPTION
 .Fn wcstombs
