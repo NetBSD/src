@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.814 2006/08/06 15:48:34 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.815 2006/08/08 19:37:35 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.815 2006/08/06 15:48:12 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.816 2006/08/08 19:37:00 cube Exp
  */
 
 /*
@@ -7136,6 +7136,10 @@ static const struct pci_product pci_products[] = {
 	    "6300ESB SATA RAID Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000X_MCH,
+	    "5000X Memory Controller Hub",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LPC,
 	    "82801FB LPC Interface Bridge",
 	},
@@ -7206,6 +7210,66 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_IDE,
 	    "82801FB/FR IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_LPC,
+	    "63xxESB LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_SATA,
+	    "63xxESB Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_SATA_AHCI,
+	    "63xxESB AHCI Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_USB_0,
+	    "63xxESB USB UHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_USB_1,
+	    "63xxESB USB UHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_USB_2,
+	    "63xxESB USB UHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_USB_3,
+	    "63xxESB USB UHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EHCI,
+	    "63xxESB USB EHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_1,
+	    "63xxESB PCI Express Port #1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_2,
+	    "63xxESB PCI Express Port #2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_3,
+	    "63xxESB PCI Express Port #3",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_4,
+	    "63xxESB PCI Express Port #4",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_HDA,
+	    "63xxESB High Definition Audio Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_SMB,
+	    "63xxESB SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_IDE,
+	    "63xxESB IDE Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945P_MCH,
@@ -7446,6 +7510,26 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PM_PM,
 	    "82855PM Power Management Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_UP,
+	    "63xxESB PCI Express Upstream Port",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_PCIX,
+	    "63xxESB PCI Express to PCI-X Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_DN_1,
+	    "63xxESB PCI Express Downstream Port #1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_DN_2,
+	    "63xxESB PCI Express Downstream Port #2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_DN_3,
+	    "63xxESB PCI Express Downstream Port #3",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
@@ -11796,4 +11880,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2356;
+const int pci_nproducts = 2377;
