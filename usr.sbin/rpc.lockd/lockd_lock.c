@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.24 2006/07/31 16:34:45 martin Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.25 2006/08/08 13:10:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -53,11 +53,50 @@
 LIST_HEAD(lcklst_head, file_lock);
 struct lcklst_head lcklst_head = LIST_HEAD_INITIALIZER(lcklst_head);
 
-#define NFS_FILEHANDLE	64	/* could use <nfs/nfsproto.h> NFSX_V3FHMAX */
-typedef union {
-	/* fhandle_t fh; */
-	u_char space[NFS_FILEHANDLE];
+#define	FHANDLE_SIZE_MAX	1024	/* arbitrary big enough value */
+typedef struct {
+	size_t fhsize;
+	char *fhdata;
 } nfs_fhandle_t;
+
+static int
+fhcmp(const nfs_fhandle_t *fh1, const nfs_fhandle_t *fh2)
+{
+
+	if (fh1->fhsize != fh2->fhsize) {
+		return 1;
+	}
+	return memcmp(fh1->fhdata, fh2->fhdata, fh1->fhsize);
+}
+
+static int
+fhconv(nfs_fhandle_t *fh, const netobj *rfh)
+{
+	size_t sz;
+
+	sz = rfh->n_len;
+	if (sz > FHANDLE_SIZE_MAX) {
+		syslog(LOG_DEBUG,
+		    "received fhandle size %d, max supported size %zd",
+		    sz, FHANDLE_SIZE_MAX);
+		errno = EINVAL;
+		return -1;
+	}
+	fh->fhdata = malloc(sz);
+	if (fh->fhdata == NULL) {
+		return -1;
+	}
+	fh->fhsize = sz;
+	memcpy(fh->fhdata, rfh->n_bytes, sz);
+	return 0;
+}
+
+static void
+fhfree(nfs_fhandle_t *fh)
+{
+
+	free(fh->fhdata);
+}
 
 /* struct describing a lock */
 struct file_lock {
@@ -80,6 +119,7 @@ struct file_lock {
 #define LKST_PROCESSING	3 /* child is trying to acquire the lock */
 #define LKST_DYING	4 /* must dies when we get news from the child */
 
+static struct file_lock *lalloc(void);
 void lfree __P((struct file_lock *));
 enum nlm_stats do_lock __P((struct file_lock *, int));
 enum nlm_stats do_unlock __P((struct file_lock *));
@@ -125,8 +165,7 @@ lock_lookup(newfl, flags)
 		    strcmp(newfl->client_name, fl->client_name) != 0)
 			continue;
 		if ((flags & LL_FH) != 0 &&
-		    memcmp(&newfl->filehandle, &fl->filehandle,
-		    sizeof(newfl->filehandle)) != 0)
+		    fhcmp(&newfl->filehandle, &fl->filehandle) != 0)
 			continue;
 		/* found */
 		break;
@@ -150,23 +189,28 @@ testlock(lock, flags)
 	nfs_fhandle_t filehandle;
 
 	/* convert lock to a local filehandle */
-	memcpy(&filehandle, lock->fh.n_bytes, sizeof(filehandle));
+	if (fhconv(&filehandle, &lock->fh)) {
+		syslog(LOG_NOTICE, "fhconv failed: %s", strerror(errno));
+		return NULL; /* XXX */
+	}
 
 	siglock();
 	/* search through the list for lock holder */
 	LIST_FOREACH(fl, &lcklst_head, lcklst) {
 		if (fl->status != LKST_LOCKED)
 			continue;
-		if (memcmp(&fl->filehandle, &filehandle, sizeof(filehandle)))
+		if (fhcmp(&fl->filehandle, &filehandle) != 0)
 			continue;
 		/* got it ! */
 		syslog(LOG_DEBUG, "test for %s: found lock held by %s",
 		    lock->caller_name, fl->client_name);
 		sigunlock();
+		fhfree(&filehandle);
 		return (&fl->client);
 	}
 	/* not found */
 	sigunlock();
+	fhfree(&filehandle);
 	syslog(LOG_DEBUG, "test for %s: no lock found", lock->caller_name);
 	return NULL;
 }
@@ -187,32 +231,31 @@ getlock(lckarg, rqstp, flags)
 	struct file_lock *fl, *newfl;
 	enum nlm_stats retval;
 	struct sockaddr *addr;
-	size_t newsize;
 
 	if (grace_expired == 0 && lckarg->reclaim == 0)
 		return (flags & LOCK_V4) ?
 		    nlm4_denied_grace_period : nlm_denied_grace_period;
 			
 	/* allocate new file_lock for this request */
-	newfl = malloc(sizeof(struct file_lock));
+	newfl = lalloc();
 	if (newfl == NULL) {
 		syslog(LOG_NOTICE, "malloc failed: %s", strerror(errno));
 		/* failed */
 		return (flags & LOCK_V4) ?
 		    nlm4_denied_nolock : nlm_denied_nolocks;
 	}
-	newsize = lckarg->alock.fh.n_len;
-	if (lckarg->alock.fh.n_len > sizeof(nfs_fhandle_t)) {
-		syslog(LOG_DEBUG, "received fhandle size %d, max supported size %d",
-		    lckarg->alock.fh.n_len, (int)sizeof(nfs_fhandle_t));
-		newsize = sizeof(nfs_fhandle_t);
+	if (fhconv(&newfl->filehandle, &lckarg->alock.fh)) {
+		syslog(LOG_NOTICE, "fhconv failed: %s", strerror(errno));
+		lfree(newfl);
+		/* failed */
+		return (flags & LOCK_V4) ?
+		    nlm4_denied_nolock : nlm_denied_nolocks;
 	}
-	memcpy(&newfl->filehandle, lckarg->alock.fh.n_bytes, newsize);
 	addr = (struct sockaddr *)svc_getrpccaller(rqstp->rq_xprt)->buf;
 	newfl->addr = malloc(addr->sa_len);
 	if (newfl->addr == NULL) {
 		syslog(LOG_NOTICE, "malloc failed: %s", strerror(errno));
-		free(newfl);
+		lfree(newfl);
 		/* failed */
 		return (flags & LOCK_V4) ?
 		    nlm4_denied_nolock : nlm_denied_nolocks;
@@ -223,8 +266,7 @@ getlock(lckarg, rqstp, flags)
 	newfl->client.oh.n_bytes = malloc(lckarg->alock.oh.n_len);
 	if (newfl->client.oh.n_bytes == NULL) {
 		syslog(LOG_NOTICE, "malloc failed: %s", strerror(errno));
-		free(newfl->addr);
-		free(newfl);
+		lfree(newfl);
 		return (flags & LOCK_V4) ?
 		    nlm4_denied_nolock : nlm_denied_nolocks;
 	}
@@ -237,9 +279,7 @@ getlock(lckarg, rqstp, flags)
 	newfl->client_cookie.n_bytes = malloc(lckarg->cookie.n_len);
 	if (newfl->client_cookie.n_bytes == NULL) {
 		syslog(LOG_NOTICE, "malloc failed: %s", strerror(errno));
-		free(newfl->addr);
-		free(newfl->client.oh.n_bytes);
-		free(newfl);
+		lfree(newfl);
 		return (flags & LOCK_V4) ? 
 		    nlm4_denied_nolock : nlm_denied_nolocks;
 	}
@@ -338,11 +378,14 @@ unlock(lck, flags)
 	nfs_fhandle_t filehandle;
 	int err = (flags & LOCK_V4) ? nlm4_granted : nlm_granted;
 
-	memcpy(&filehandle, lck->fh.n_bytes, sizeof(filehandle));
+	if (fhconv(&filehandle, &lck->fh)) {
+		syslog(LOG_NOTICE, "fhconv failed: %s", strerror(errno));
+		return (flags & LOCK_V4) ? nlm4_denied : nlm_denied;
+	}
 	siglock();
 	LIST_FOREACH(fl, &lcklst_head, lcklst) {
 		if (strcmp(fl->client_name, lck->caller_name) ||
-		    memcmp(&filehandle, &fl->filehandle, sizeof(filehandle)) ||
+		    fhcmp(&filehandle, &fl->filehandle) != 0 ||
 		    fl->client.oh.n_len != lck->oh.n_len ||
 		    memcmp(fl->client.oh.n_bytes, lck->oh.n_bytes,
 			fl->client.oh.n_len) != 0 ||
@@ -375,13 +418,30 @@ unlock(lck, flags)
 			    fl->status, fl->client_name);
 		}
 		sigunlock();
+		fhfree(&filehandle);
 		return err;
 	}
 	sigunlock();
 	/* didn't find a matching entry; log anyway */
 	syslog(LOG_NOTICE, "no matching entry for %s",
 	    lck->caller_name);
+	fhfree(&filehandle);
 	return (flags & LOCK_V4) ? nlm4_granted : nlm_granted;
+}
+
+static struct file_lock *
+lalloc(void)
+{
+	struct file_lock *fl;
+
+	fl = malloc(sizeof(*fl));
+	if (fl != NULL) {
+		fl->addr = NULL;
+		fl->client.oh.n_bytes = NULL;
+		fl->client_cookie.n_bytes = NULL;
+		fl->filehandle.fhdata = NULL;
+	}
+	return fl;
 }
 
 void
@@ -391,6 +451,7 @@ lfree(fl)
 	free(fl->addr);
 	free(fl->client.oh.n_bytes);
 	free(fl->client_cookie.n_bytes);
+	fhfree(&fl->filehandle);
 	free(fl);
 }
 
@@ -478,7 +539,7 @@ do_lock(fl, block)
 	int lflags, error;
 	struct stat st;
 
-	fl->fd = fhopen(&fl->filehandle, sizeof(fl->filehandle), O_RDWR);
+	fl->fd = fhopen(fl->filehandle.fhdata, fl->filehandle.fhsize, O_RDWR);
 	if (fl->fd < 0) {
 		switch (errno) {
 		case ESTALE:
@@ -606,8 +667,8 @@ send_granted(fl, opcode)
 		res.cookie = fl->client_cookie;
 		res.exclusive = fl->client.exclusive;
 		res.alock.caller_name = fl->client_name;
-		res.alock.fh.n_len = sizeof(nfs_fhandle_t);
-		res.alock.fh.n_bytes = (char*)&fl->filehandle;
+		res.alock.fh.n_len = fl->filehandle.fhsize;
+		res.alock.fh.n_bytes = fl->filehandle.fhdata;
 		res.alock.oh = fl->client.oh;
 		res.alock.svid = fl->client.svid;
 		res.alock.l_offset = fl->client.l_offset;
@@ -628,8 +689,8 @@ send_granted(fl, opcode)
 		res.cookie = fl->client_cookie;
 		res.exclusive = fl->client.exclusive;
 		res.alock.caller_name = fl->client_name;
-		res.alock.fh.n_len = sizeof(nfs_fhandle_t);
-		res.alock.fh.n_bytes = (char*)&fl->filehandle;
+		res.alock.fh.n_len = fl->filehandle.fhsize;
+		res.alock.fh.n_bytes = fl->filehandle.fhdata;
 		res.alock.oh = fl->client.oh;
 		res.alock.svid = fl->client.svid;
 		res.alock.l_offset = fl->client.l_offset;
@@ -679,8 +740,7 @@ do_unlock(rfl)
 	/* process the next LKST_WAITING lock request for this fh */
 	LIST_FOREACH(fl, &lcklst_head, lcklst) {
 		if (fl->status != LKST_WAITING ||
-		    memcmp(&rfl->filehandle, &fl->filehandle,
-		    sizeof(rfl->filehandle)) != 0)
+		    fhcmp(&rfl->filehandle, &fl->filehandle) != 0)
 			continue;
 
 		lockst = do_lock(fl, 1); /* If it's LKST_WAITING we can block */
