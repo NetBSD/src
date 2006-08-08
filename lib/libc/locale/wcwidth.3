@@ -1,4 +1,4 @@
-.\" $NetBSD: wcwidth.3,v 1.1 2006/06/03 04:36:45 tnozaki Exp $
+.\" $NetBSD: wcwidth.3,v 1.2 2006/08/08 17:31:35 wiz Exp $
 .\" FreeBSD: src/lib/libc/locale/wcwidth.3,v 1.6 2004/08/17 04:56:03 trhodes Exp
 .\"
 .\" Copyright (c) 2002 Tim J. Robbins
@@ -68,14 +68,14 @@ int column, w;
 column = 0;
 while ((ch = getwchar()) != WEOF) {
 	w = wcwidth(ch);
-	if (w > 0 && column + w >= 20) {
+	if (w \*[Gt] 0 \*[Am]\*[Am] column + w \*[Gt]= 20) {
 		putwchar(L'\en');
 		column = 0;
 	}
 	putwchar(ch);
 	if (ch == L'\en')
 		column = 0;
-	else if (w > 0)
+	else if (w \*[Gt] 0)
 		column += w;
 }
 .Ed
