@@ -1,4 +1,4 @@
-/*	$NetBSD: mach.c,v 1.15 2005/07/01 16:38:24 jmc Exp $	*/
+/*	$NetBSD: mach.c,v 1.16 2006/08/09 14:29:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: mach.c,v 1.15 2005/07/01 16:38:24 jmc Exp $");
+__RCSID("$NetBSD: mach.c,v 1.16 2006/08/09 14:29:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -178,11 +178,11 @@ getline(char *q)
 		case ' ':
 			done = 1;
 			break;
-		case '\033':
+		case '\e':
 			findword();
 			break;
 		case '\177':			/* <del> */
-		case '\010':			/* <bs> */
+		case CTRL('h'):			/* <bs> */
 			if (p == q)
 				break;
 			p--;
@@ -191,8 +191,8 @@ getline(char *q)
 			clrtoeol();
 			refresh();
 			break;
-		case '\025':			/* <^u> */
-		case '\027':			/* <^w> */
+		case CTRL('u'):			/* <^u> */
+		case CTRL('w'):			/* <^w> */
 			if (p == q)
 				break;
 			getyx(stdscr, row, col);
@@ -202,11 +202,11 @@ getline(char *q)
 			refresh();
 			break;
 #ifdef SIGTSTP
-		case '\032':			/* <^z> */
+		case CTRL('z'):			/* <^z> */
 			stop_catcher(0);
 			break;
 #endif
-		case '\023':			/* <^s> */
+		case CTRL('s'):			/* <^s> */
 			stoptime();
 			printw("<PAUSE>");
 			refresh();
@@ -217,22 +217,23 @@ getline(char *q)
 			refresh();
 			starttime();
 			break;
-		case '\003':			/* <^c> */
+		case CTRL('c'):			/* <^c> */
 			cleanup();
 			exit(0);
 			/*NOTREACHED*/
-		case '\004':			/* <^d> */
+		case CTRL('d'):			/* <^d> */
 			done = 1;
 			ch = EOF;
 			break;
-		case '\014':			/* <^l> */
-		case '\022':			/* <^r> */
+		case CTRL('r'):			/* <^l> */
+		case CTRL('l'):			/* <^r> */
 			redraw();
 			break;
 		case '?':
 			stoptime();
 			if (help() < 0)
 				showstr("Can't open help file", 1);
+			touchwin(stdscr);
 			starttime();
 			break;
 		default:
