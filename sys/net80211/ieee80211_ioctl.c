@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.38 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.39 2006/08/09 20:37:16 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.38 2006/07/23 22:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.39 2006/08/09 20:37:16 christos Exp $");
 #endif
 
 /*
@@ -2864,7 +2864,7 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
 				chan = ic->ic_ibss_chan;
 			break;
 		default:
-			chan = ic->ic_bss->ni_chan;
+			chan = ic->ic_curchan;
 			break;
 		}
 		chanreq->i_channel = ieee80211_chan2ieee(ic, chan);
