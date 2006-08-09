@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.815 2006/08/08 19:37:35 cube Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.816 2006/08/09 05:51:01 jnemeth Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.816 2006/08/08 19:37:00 cube Exp
+ *	NetBSD: pcidevs,v 1.817 2006/08/09 05:47:08 jnemeth Exp
  */
 
 /*
@@ -2388,8 +2388,12 @@ static const struct pci_product pci_products[] = {
 	    "3c940 Gigabit Ethernet",
 	},
 	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C339,
+	    "3c339 TokenLink Velocity",
+	},
+	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C359,
-	    "3c359 TokenLink XL",
+	    "3c359 TokenLink Velocity XL",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C450TX,
@@ -2474,6 +2478,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C804,
 	    "3c804 FDDILink SAS",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_TOKEN,
+	    "Token Ring",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900TPO,
@@ -6041,7 +6049,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_OLYMPIC,
-	    "Token Ring",
+	    "16/4 Token Ring",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MIAMI,
@@ -6062,6 +6070,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT800P,
 	    "GXT-800P",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_OLYMPIC2,
+	    "Olympic 2 Token Ring",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_TPAUDIO,
@@ -9300,16 +9312,64 @@ static const struct pci_product pci_products[] = {
 	    "OTI107",
 	},
 	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3136,
+	    "OC-3136/3137 Token-Ring 16/4",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3139,
+	    "OC-3139f Fastload 16/4 Token Ring",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3140,
+	    "OC-3139/3140 RapidFire Token Ring 16/4",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3250,
+	    "OC-3250 GoCard Token Ring 16/4",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3530,
+	    "OC-3530 RapidFire Token Ring 100",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3141,
+	    "OC-3141 RapidFire Token Ring 16/4",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3540,
+	    "OC-3540 RapidFire HSTR 100/16/4",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3150,
+	    "OC-3150 RapidFire Token-Ring 16/4",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2805,
+	    "OC-2805 Ethernet",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2325,
+	    "OC-2325 Ethernet 10/100",
+	},
+	{
 	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2183,
 	    "OC-2183/2185 Ethernet",
 	},
 	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2325,
-	    "OC-2325 Ethernet",
-	},
-	{
 	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2326,
 	    "OC-2326 10/100-TX Ethernet",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2327,
+	    "OC-2327/2350 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC6151,
+	    "OC-6151/6152 155 Mbit ATM",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OCATM,
+	    "ATM",
 	},
 	{
 	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C557,
@@ -11880,4 +11940,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2377;
+const int pci_nproducts = 2392;

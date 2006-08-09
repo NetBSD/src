@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.816 2006/08/08 19:37:35 cube Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.817 2006/08/09 05:51:01 jnemeth Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.816 2006/08/08 19:37:00 cube Exp
+ *	NetBSD: pcidevs,v 1.817 2006/08/09 05:47:08 jnemeth Exp
  */
 
 /*
@@ -649,7 +649,8 @@
 #define	PCI_PRODUCT_3COM_3C996	0x0003		/* 3c996 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_3COM_3C556MODEM	0x1007		/* 3c556 V.90 Mini-PCI Modem */
 #define	PCI_PRODUCT_3COM_3C940	0x1700		/* 3c940 Gigabit Ethernet */
-#define	PCI_PRODUCT_3COM_3C359	0x3590		/* 3c359 TokenLink XL */
+#define	PCI_PRODUCT_3COM_3C339	0x3390		/* 3c339 TokenLink Velocity */
+#define	PCI_PRODUCT_3COM_3C359	0x3590		/* 3c359 TokenLink Velocity XL */
 #define	PCI_PRODUCT_3COM_3C450TX	0x4500		/* 3c450-TX 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C575TX	0x5057		/* 3c575-TX 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C575BTX	0x5157		/* 3CCFE575BT 10/100 Ethernet */
@@ -671,6 +672,7 @@
 #define	PCI_PRODUCT_3COM_3CSOHO100TX	0x7646		/* 3cSOHO100-TX 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3CRWE777A	0x7770		/* 3crwe777a AirConnect */
 #define	PCI_PRODUCT_3COM_3C804	0x7980		/* 3c804 FDDILink SAS */
+#define	PCI_PRODUCT_3COM_TOKEN	0x8811		/* Token Ring */
 #define	PCI_PRODUCT_3COM_3C900TPO	0x9000		/* 3c900-TPO Ethernet */
 #define	PCI_PRODUCT_3COM_3C900COMBO	0x9001		/* 3c900-COMBO Ethernet */
 #define	PCI_PRODUCT_3COM_3C905TX	0x9050		/* 3c905-TX 10/100 Ethernet */
@@ -1775,12 +1777,13 @@
 #define	PCI_PRODUCT_IBM_MCABRIDGE2	0x0020		/* MCA Bridge */
 #define	PCI_PRODUCT_IBM_82351	0x0022		/* 82351 PCI-PCI Bridge */
 #define	PCI_PRODUCT_IBM_SERVERAID	0x002e		/* ServeRAID */
-#define	PCI_PRODUCT_IBM_OLYMPIC	0x003e		/* Token Ring */
+#define	PCI_PRODUCT_IBM_OLYMPIC	0x003e		/* 16/4 Token Ring */
 #define	PCI_PRODUCT_IBM_MIAMI	0x0036		/* Miami/PCI */
 #define	PCI_PRODUCT_IBM_82660	0x0037		/* 82660 PowerPC to PCI Bridge and Memory Controller */
 #define	PCI_PRODUCT_IBM_MPIC	0x0046		/* MPIC */
 #define	PCI_PRODUCT_IBM_TURBOWAYS25	0x0053		/* Turboways 25 ATM */
 #define	PCI_PRODUCT_IBM_GXT800P	0x005e		/* GXT-800P */
+#define	PCI_PRODUCT_IBM_OLYMPIC2	0x00ce		/* Olympic 2 Token Ring */
 #define	PCI_PRODUCT_IBM_TPAUDIO	0x0153		/* ThinkPad 600X/A20/T20/T22 Audio */
 #define	PCI_PRODUCT_IBM_405GP	0x0156		/* PPC 405GP PCI Bridge */
 #define	PCI_PRODUCT_IBM_133PCIX	0x01a7		/* 133 PCI-X Bridge */
@@ -2712,9 +2715,21 @@
 #define	PCI_PRODUCT_OAKTECH_OTI1007	0x0107		/* OTI107 */
 
 /* Olicom products */
+#define	PCI_PRODUCT_OLICOM_OC3136	0x0001		/* OC-3136/3137 Token-Ring 16/4 */
+#define	PCI_PRODUCT_OLICOM_OC3139	0x0002		/* OC-3139f Fastload 16/4 Token Ring */
+#define	PCI_PRODUCT_OLICOM_OC3140	0x0004		/* OC-3139/3140 RapidFire Token Ring 16/4 */
+#define	PCI_PRODUCT_OLICOM_OC3250	0x0005		/* OC-3250 GoCard Token Ring 16/4 */
+#define	PCI_PRODUCT_OLICOM_OC3530	0x0006		/* OC-3530 RapidFire Token Ring 100 */
+#define	PCI_PRODUCT_OLICOM_OC3141	0x0007		/* OC-3141 RapidFire Token Ring 16/4 */
+#define	PCI_PRODUCT_OLICOM_OC3540	0x0008		/* OC-3540 RapidFire HSTR 100/16/4 */
+#define	PCI_PRODUCT_OLICOM_OC3150	0x000a		/* OC-3150 RapidFire Token-Ring 16/4 */
+#define	PCI_PRODUCT_OLICOM_OC2805	0x0011		/* OC-2805 Ethernet */
+#define	PCI_PRODUCT_OLICOM_OC2325	0x0012		/* OC-2325 Ethernet 10/100 */
 #define	PCI_PRODUCT_OLICOM_OC2183	0x0013		/* OC-2183/2185 Ethernet */
-#define	PCI_PRODUCT_OLICOM_OC2325	0x0012		/* OC-2325 Ethernet */
 #define	PCI_PRODUCT_OLICOM_OC2326	0x0014		/* OC-2326 10/100-TX Ethernet */
+#define	PCI_PRODUCT_OLICOM_OC2327	0x0019		/* OC-2327/2350 10/100 Ethernet */
+#define	PCI_PRODUCT_OLICOM_OC6151	0x0021		/* OC-6151/6152 155 Mbit ATM */
+#define	PCI_PRODUCT_OLICOM_OCATM	0x0022		/* ATM */
 
 /* Opti products */
 #define	PCI_PRODUCT_OPTI_82C557	0xc557		/* 82C557 */
