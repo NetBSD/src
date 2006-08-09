@@ -1,4 +1,4 @@
-/*	$NetBSD: iwictl.c,v 1.6 2006/08/09 11:35:59 skrll Exp $	*/
+/*	$NetBSD: iwictl.c,v 1.7 2006/08/09 11:57:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iwictl.c,v 1.6 2006/08/09 11:35:59 skrll Exp $");
+__RCSID("$NetBSD: iwictl.c,v 1.7 2006/08/09 11:57:51 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -101,8 +101,8 @@ main(int argc, char **argv)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage:  %s iface\n"
-	    "\t%s iface -r\n", getprogname(), getprogname());
+	(void)fprintf(stderr, "Usage:  %s [-i] iface\n"
+	    "\t%s [-i] iface -r\n", getprogname(), getprogname());
 
 	exit(EX_USAGE);
 }
