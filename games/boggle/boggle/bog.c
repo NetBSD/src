@@ -1,4 +1,4 @@
-/*	$NetBSD: bog.c,v 1.20 2005/07/01 16:38:24 jmc Exp $	*/
+/*	$NetBSD: bog.c,v 1.21 2006/08/09 14:29:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)bog.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: bog.c,v 1.20 2005/07/01 16:38:24 jmc Exp $");
+__RCSID("$NetBSD: bog.c,v 1.21 2006/08/09 14:29:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: bog.c,v 1.20 2005/07/01 16:38:24 jmc Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/tty.h>
 
 #include "bog.h"
 #include "extern.h"
@@ -242,9 +243,9 @@ main(int argc, char *argv[])
 		for (;;) {
 			ch = inputch();
 #ifdef NEW_STYLE
-			if (ch == '\033')
+			if (ch == '\e')
 				findword();
-			else if (ch == '\014' || ch == '\022')	/* ^l or ^r */
+			else if (ch == CTRL('l') || ch == CTRL('r'))
 				redraw();
 			else {
 				if (ch == 'q') {
@@ -255,9 +256,9 @@ main(int argc, char *argv[])
 				}
 			}
 #else
-			if (ch == '\033')
+			if (ch == '\e')
 				findword();
-			else if (ch == '\014' || ch == '\022')	/* ^l or ^r */
+			else if (ch == CTRL('l') || ch == CTRL('r'))
 				redraw();
 			else {
 				if (isupper(ch)) {
