@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.52 2006/08/09 11:35:59 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.53 2006/08/09 11:49:41 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.52 2006/08/09 11:35:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.53 2006/08/09 11:49:41 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -464,7 +464,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 	sc->sc_powerhook = powerhook_establish(iwi_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
+		aprint_error("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
 
 	ieee80211_announce(ic);
