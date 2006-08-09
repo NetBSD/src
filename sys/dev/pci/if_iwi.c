@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.51 2006/07/21 16:48:51 ad Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.52 2006/08/09 11:35:59 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.51 2006/07/21 16:48:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.52 2006/08/09 11:35:59 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.51 2006/07/21 16:48:51 ad Exp $");
 #include <machine/bus.h>
 #include <machine/endian.h>
 #include <machine/intr.h>
+
+#include <dev/firmload.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -146,7 +148,7 @@ static void	iwi_stop_master(struct iwi_softc *);
 static int	iwi_reset(struct iwi_softc *);
 static int	iwi_load_ucode(struct iwi_softc *, void *, int);
 static int	iwi_load_firmware(struct iwi_softc *, void *, int);
-static int	iwi_cache_firmware(struct iwi_softc *, void *);
+static int	iwi_cache_firmware(struct iwi_softc *);
 static void	iwi_free_firmware(struct iwi_softc *);
 static int	iwi_config(struct iwi_softc *);
 static int	iwi_set_chan(struct iwi_softc *, struct ieee80211_channel *);
@@ -355,6 +357,9 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_phytype = IEEE80211_T_OFDM; /* not only, but not used */
 	ic->ic_opmode = IEEE80211_M_STA; /* default to BSS mode */
 	ic->ic_state = IEEE80211_S_INIT;
+
+	sc->sc_fwname = "iwi-bss.fw";
+	sc->sc_ucname = "iwi-ucode-bss.fw";
 
 	/* set device capabilities */
 	ic->ic_caps =
@@ -1949,25 +1954,21 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = iwi_get_radio(sc, (int *)ifr->ifr_data);
 		break;
 
-	case SIOCSLOADFW:
-		/* only super-user can do that! */
-		if ((error = kauth_authorize_generic(curlwp->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &curlwp->l_acflag)) != 0)
-			break;
-
-		error = iwi_cache_firmware(sc, ifr->ifr_data);
-		break;
-
-	case SIOCSKILLFW:
-		/* only super-user can do that! */
-		if ((error = kauth_authorize_generic(curlwp->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &curlwp->l_acflag)) != 0)
-			break;
-
-		ifp->if_flags &= ~IFF_UP;
-		iwi_stop(ifp, 1);
-		iwi_free_firmware(sc);
-		break;
+	case SIOCSIFMEDIA:
+		if (ifr->ifr_media & IFM_IEEE80211_ADHOC) {
+			sc->sc_fwname = "iwi-ibss.fw";
+			sc->sc_ucname = "iwi-ucode-ibss.fw";
+		} else if (ifr->ifr_media & IFM_IEEE80211_MONITOR) {
+			sc->sc_fwname = "iwi-sniffer.fw";
+			sc->sc_ucname = "iwi-ucode-sniffer.fw";
+		} else {
+			sc->sc_fwname = "iwi-bss.fw";
+			sc->sc_ucname = "iwi-ucode-bss.fw";
+		}
+		error = iwi_cache_firmware(sc);
+		if (error)
+ 			break;
+ 		/* FALLTRHOUGH */
 
 	default:
 		error = ieee80211_ioctl(&sc->sc_ic, cmd, data);
@@ -2254,46 +2255,64 @@ fail1:
  * e.g when the adapter wakes up from suspend mode.
  */
 static int
-iwi_cache_firmware(struct iwi_softc *sc, void *data)
+iwi_cache_firmware(struct iwi_softc *sc)
 {
 	struct iwi_firmware *kfw = &sc->fw;
-	struct iwi_firmware ufw;
+	firmware_handle_t fwh;
 	int error;
 
 	iwi_free_firmware(sc);
-
-	if ((error = copyin(data, &ufw, sizeof ufw)) != 0)
+	error = firmware_open("if_iwi", "iwi-boot.fw", &fwh);
+	if (error != 0)
 		goto fail1;
 
-	kfw->boot_size  = ufw.boot_size;
-	kfw->ucode_size = ufw.ucode_size;
-	kfw->main_size  = ufw.main_size;
-
-	kfw->boot = malloc(kfw->boot_size, M_DEVBUF, M_NOWAIT);
+	kfw->boot_size = firmware_get_size(fwh);
+	kfw->boot = firmware_malloc(kfw->boot_size);
 	if (kfw->boot == NULL) {
 		error = ENOMEM;
+		firmware_close(fwh);
 		goto fail1;
 	}
 
-	kfw->ucode = malloc(kfw->ucode_size, M_DEVBUF, M_NOWAIT);
+	error = firmware_read(fwh, sizeof(struct iwi_firmware_hdr),
+	    kfw->boot, kfw->boot_size - sizeof(struct iwi_firmware_hdr));
+	firmware_close(fwh);
+	if (error != 0)
+		goto fail2;
+
+	error = firmware_open("if_iwi", sc->sc_ucname, &fwh);
+	if (error != 0)
+		goto fail2;
+
+	kfw->ucode_size = firmware_get_size(fwh);
+	kfw->ucode = firmware_malloc(kfw->ucode_size);
 	if (kfw->ucode == NULL) {
 		error = ENOMEM;
+		firmware_close(fwh);
 		goto fail2;
 	}
 
-	kfw->main = malloc(kfw->main_size, M_DEVBUF, M_NOWAIT);
+	error = firmware_read(fwh, sizeof(struct iwi_firmware_hdr),
+	    kfw->ucode, kfw->ucode_size - sizeof(struct iwi_firmware_hdr));
+	firmware_close(fwh);
+	if (error != 0)
+		goto fail3;
+
+	error = firmware_open("if_iwi", sc->sc_fwname, &fwh);
+	if (error != 0)
+		goto fail3;
+
+	kfw->main_size = firmware_get_size(fwh);
+	kfw->main = firmware_malloc(kfw->main_size);
 	if (kfw->main == NULL) {
 		error = ENOMEM;
 		goto fail3;
 	}
 
-	if ((error = copyin(ufw.boot, kfw->boot, kfw->boot_size)) != 0)
-		goto fail4;
-
-	if ((error = copyin(ufw.ucode, kfw->ucode, kfw->ucode_size)) != 0)
-		goto fail4;
-
-	if ((error = copyin(ufw.main, kfw->main, kfw->main_size)) != 0)
+	error = firmware_read(fwh, sizeof(struct iwi_firmware_hdr),
+	     kfw->main, kfw->main_size - sizeof(struct iwi_firmware_hdr));
+	firmware_close(fwh);
+	if (error != 0)
 		goto fail4;
 
 	DPRINTF(("Firmware cached: boot %u, ucode %u, main %u\n",
@@ -2303,9 +2322,9 @@ iwi_cache_firmware(struct iwi_softc *sc, void *data)
 
 	return 0;
 
-fail4:	free(kfw->boot, M_DEVBUF);
-fail3:	free(kfw->ucode, M_DEVBUF);
-fail2:	free(kfw->main, M_DEVBUF);
+fail4:	firmware_free(kfw->main, 0);
+fail3:	firmware_free(kfw->ucode, 0);
+fail2:	firmware_free(kfw->boot, 0);
 fail1:
 	return error;
 }
@@ -2313,12 +2332,14 @@ fail1:
 static void
 iwi_free_firmware(struct iwi_softc *sc)
 {
+	struct iwi_firmware *kfw = &sc->fw;
+
 	if (!(sc->flags & IWI_FLAG_FW_CACHED))
 		return;
 
-	free(sc->fw.boot, M_DEVBUF);
-	free(sc->fw.ucode, M_DEVBUF);
-	free(sc->fw.main, M_DEVBUF);
+	firmware_free(kfw->main, 0);
+	firmware_free(kfw->ucode, 0);
+	firmware_free(kfw->boot, 0);
 
 	sc->flags &= ~IWI_FLAG_FW_CACHED;
 }
@@ -2670,12 +2691,11 @@ iwi_init(struct ifnet *ifp)
 
 	/* exit immediately if firmware has not been ioctl'd */
 	if (!(sc->flags & IWI_FLAG_FW_CACHED)) {
-		if (!(sc->flags & IWI_FLAG_FW_WARNED))
-			aprint_error("%s: Firmware not loaded\n",
+		if ((error = iwi_cache_firmware(sc)) != 0) {
+			aprint_error("%s: could not cache the firmware\n",
 			    sc->sc_dev.dv_xname);
-		sc->flags |= IWI_FLAG_FW_WARNED;
-		ifp->if_flags &= ~IFF_UP;
-		return EIO;
+			goto fail;
+		}
 	}
 
 	iwi_stop(ifp, 0);
