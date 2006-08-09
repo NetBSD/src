@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.148 2006/06/22 20:00:18 mrg Exp $
+#	$NetBSD: build.sh,v 1.149 2006/08/09 22:13:12 jnemeth Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -863,7 +863,7 @@ createmakewrapper()
 	fi
 
 	case "${KSH_VERSION:-${SH_VERSION}}" in
-	*PD\ KSH*)
+	*PD\ KSH*|*MIRBSD\ KSH*)
 		set +o braceexpand
 		;;
 	esac
@@ -871,7 +871,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.148 2006/06/22 20:00:18 mrg Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.149 2006/08/09 22:13:12 jnemeth Exp $
 # with these arguments: ${_args}
 #
 EOF
