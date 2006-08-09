@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.39 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.40 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8175,6 +8175,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	wsdisplay(4): Add WSDISPLAYIO_SSPLASH and WSDISPLAYIO_SPROGRESS
 		ioctls [jmcneill 20060218]
 	prep: Add support for IBM 7024-E20 and 7025-F30. [garbled 20060223]
+	vinum: Removed from base. [christos 20060225]
 	postfix(1): Updated to 2.2.9. [rpaulo 20060225]
 	evbmips: Add support for 4G Systems MTX-1 board (MeshCube/AccessCube).
 		[gdamore 20060225]
