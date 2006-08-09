@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.5 2005/10/01 23:30:37 cube Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.6 2006/08/09 18:03:23 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -177,6 +177,9 @@ cf_locators_print(const char *name, void *value, void *arg)
 	FILE *fp = arg;
 
 	a = value;
+	if (!a->a_iattr)
+		return (0);
+
 	if (a->a_locs) {
 		if (fprintf(fp,
 		    "static const struct cfiattrdata %scf_iattrdata = {\n",
