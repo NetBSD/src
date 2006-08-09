@@ -1,4 +1,4 @@
-/*	$NetBSD: iwictl.c,v 1.5 2005/10/29 08:14:27 scw Exp $	*/
+/*	$NetBSD: iwictl.c,v 1.6 2006/08/09 11:35:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iwictl.c,v 1.5 2005/10/29 08:14:27 scw Exp $");
+__RCSID("$NetBSD: iwictl.c,v 1.6 2006/08/09 11:35:59 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -47,30 +47,11 @@ __RCSID("$NetBSD: iwictl.c,v 1.5 2005/10/29 08:14:27 scw Exp $");
 #include <sysexits.h>
 #include <unistd.h>
 
-#define SIOCSLOADFW	 _IOW('i', 137, struct ifreq)
-#define SIOCSKILLFW	 _IOW('i', 138, struct ifreq)
 #define SIOCGRADIO	_IOWR('i', 139, struct ifreq)
 #define SIOCGTABLE0	_IOWR('i', 140, struct ifreq)
 
-struct firmware {
-	void	*boot;
-	size_t	boot_size;
-	void	*ucode;
-	size_t	ucode_size;
-	void	*main;
-	size_t	main_size;
-};
-
-struct header {
-	u_int32_t	version;
-	u_int32_t	mode;
-} __attribute__((__packed__));
-
 static void usage(void) __attribute__((__noreturn__));
 static int do_req(const char *, unsigned long, void *);
-static void mmap_file(const char *, void **, size_t *);
-static void load_firmware(const char *, const char *, const char *);
-static void kill_firmware(const char *);
 static void get_radio_state(const char *);
 static void get_statistics(const char *);
 
@@ -78,9 +59,8 @@ int
 main(int argc, char **argv)
 {
 	int ch;
-	char *iface = NULL, *path = NULL;
-	const char *mode = "bss";
-	int noflag = 1, kflag = 0, rflag = 0;
+	char *iface = NULL;
+	int noflag = 1, rflag = 0;
 
 	setprogname(argv[0]);
 	if (argc > 1 && argv[1][0] != '-') {
@@ -88,25 +68,13 @@ main(int argc, char **argv)
 		optind++;
 	}
 
-	while ((ch = getopt(argc, argv, "d:i:km:r")) != -1) {
+	while ((ch = getopt(argc, argv, "i:r")) != -1) {
 		if (ch != 'i')
 			noflag = 0;
 
 		switch (ch) {
-		case 'd':
-			path = optarg;
-			break;
-
 		case 'i':
 			iface = optarg;
-			break;
-
-		case 'k':
-			kflag = 1;
-			break;
-
-		case 'm':
-			mode = optarg;
 			break;
 
 		case 'r':
@@ -121,15 +89,6 @@ main(int argc, char **argv)
 	if (iface == NULL)
 		usage();
 
-	if (kflag && (path != NULL || rflag))
-		usage();
-
-	if (kflag)
-		kill_firmware(iface);
-
-	if (path != NULL)
-		load_firmware(iface, path, mode);
-
 	if (rflag)
 		get_radio_state(iface);
 
@@ -143,10 +102,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr, "Usage:  %s iface\n"
-	    "\t%s iface -d path [-m bss|ibss|monitor]\n"
-	    "\t%s iface -k\n"
-	    "\t%s iface -r\n", getprogname(), getprogname(), getprogname(),
-	    getprogname());
+	    "\t%s iface -r\n", getprogname(), getprogname());
 
 	exit(EX_USAGE);
 }
@@ -170,57 +126,6 @@ do_req(const char *iface, unsigned long req, void *data)
 	errno = serrno;
 
 	return error;
-}
-
-static void
-mmap_file(const char *filename, void **addr, size_t *len)
-{
-	int fd;
-	struct stat st;
-
-	if ((fd = open(filename, O_RDONLY)) == -1)
-		err(EX_OSERR, "%s", filename);
-
-	if (fstat(fd, &st) == -1)
-		err(EX_OSERR, "Unable to stat %s", filename);
-
-	*len = (size_t)st.st_size;
-
-	*addr = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, (off_t)0);
-	if (*addr == MAP_FAILED)
-		err(EX_OSERR, "Can't map %s into memory", filename);
-
-	*(char **)addr += sizeof(struct header);
-	*len -= sizeof(struct header);
-
-	(void)close(fd);
-}
-
-static void
-load_firmware(const char *iface, const char *path, const char *mode)
-{
-	char filename[FILENAME_MAX];
-	struct firmware fw;
-
-	(void)snprintf(filename, sizeof(filename), "%s/iwi-boot.fw", path);
-	mmap_file(filename, &fw.boot, &fw.boot_size);
-
-	(void)snprintf(filename, sizeof(filename), "%s/iwi-ucode-%s.fw", path,
-	    mode);
-	mmap_file(filename, &fw.ucode, &fw.ucode_size);
-
-	(void)snprintf(filename, sizeof(filename), "%s/iwi-%s.fw", path, mode);
-	mmap_file(filename, &fw.main, &fw.main_size);
-
-	if (do_req(iface, SIOCSLOADFW, &fw) == -1)
-		err(EX_OSERR, "Can't load firmware to driver");
-}
-
-static void
-kill_firmware(const char *iface)
-{
-	if (do_req(iface, SIOCSKILLFW, NULL) == -1)
-		err(EX_OSERR, "Can't kill firmware");
 }
 
 static void

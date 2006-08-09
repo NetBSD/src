@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwireg.h,v 1.15 2005/11/29 13:57:00 rpaulo Exp $ */
+/*	$NetBSD: if_iwireg.h,v 1.16 2006/08/09 11:35:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -140,6 +140,12 @@ struct iwi_error {
 #define IWI_RATE_OFDM36	11
 #define IWI_RATE_OFDM48	1
 #define IWI_RATE_OFDM54	3
+
+/* firmware binary image header */
+struct iwi_firmware_hdr {
+	uint32_t	version;
+	uint32_t	mode;
+} __attribute__((__packed__));
 
 struct iwi_hdr {
 	uint8_t	type;
