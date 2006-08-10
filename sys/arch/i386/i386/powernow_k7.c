@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k7.c,v 1.15 2006/08/10 17:24:10 xtraeme Exp $ */
+/*	$NetBSD: powernow_k7.c,v 1.16 2006/08/10 19:45:09 xtraeme Exp $ */
 /*	$OpenBSD: powernow-k7.c,v 1.24 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K7 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.15 2006/08/10 17:24:10 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.16 2006/08/10 19:45:09 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -102,7 +102,7 @@ static int k7pnow_fid_to_mult[32] = {
 };
 
 static struct powernow_cpu_state *k7pnow_current_state;
-static unsigned int cur_freq;
+static unsigned int cur_freq, cpu_mhz;
 static int powernow_node_target, powernow_node_current;
 static char *freq_names;
 static size_t freq_names_len;
@@ -333,7 +333,8 @@ k7_powernow_init(void)
 	startvid = PN7_STA_SVID(status);
 	currentfid = PN7_STA_CFID(status);
 
-	cstate->fsb = cur_freq / (k7pnow_fid_to_mult[currentfid]/10);
+	cpu_mhz = ci->ci_tsc_freq / 1000000;
+	cstate->fsb = cpu_mhz / (k7pnow_fid_to_mult[currentfid]/10);
 	if (k7pnow_states(cstate, ci->ci_signature, maxfid, startvid)) {
 		freq_names_len = cstate->n_states * (sizeof("9999 ")-1) + 1;
 		freq_names = malloc(freq_names_len, M_SYSCTLDATA, M_WAITOK);
@@ -342,6 +343,11 @@ k7_powernow_init(void)
 
 		if (cstate->n_states) {
 			for (i = 0; i < cstate->n_states; i++) {
+				/* skip duplicated matches... */
+				if (cstate->state_table[i].freq ==
+				    cstate->state_table[i-1].freq)
+					continue;
+
 				DPRINTF(("%s: cstate->state_table.freq=%d\n",
 				    __func__, cstate->state_table[i].freq));
 				DPRINTF(("%s: fid=%d vid=%d\n", __func__,
