@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.8 2006/07/23 22:06:10 ad Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.9 2006/08/10 12:39:56 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.8 2006/07/23 22:06:10 ad Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.9 2006/08/10 12:39:56 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -482,8 +482,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	int    num_anchors, error, lst;
 
 	/* flush out any old buffers remaining from a previous use. */
-	error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0);
-	if (error)
+	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)))
 		return error;
 
 	/* allocate udf part of mount structure; malloc allways succeeds */
@@ -506,9 +505,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	/* set up arguments and device */
 	ump->mount_args = *args;
 	ump->devvp      = devvp;
-	error = udf_update_discinfo(ump);
-
-	if (error) { 
+	if ((error = udf_update_discinfo(ump))) {
 		printf("UDF mount: error inspecting fs node\n");
 		return error;
 	}
@@ -533,15 +530,15 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	    num_anchors, args->sessionnr));
 
 	/* read in volume descriptor sequence */
-	error = udf_read_vds_space(ump);
-	if (error)
+	if ((error = udf_read_vds_space(ump))) {
 		printf("UDF mount: error reading volume space\n");
+		return error;
+	}
 
 	/* check consistency and completeness */
-	if (!error) {
-		error = udf_process_vds(ump, args);
-		if (error)
-			printf("UDF mount: disc not properly formatted\n");
+	if ((error = udf_process_vds(ump, args))) {
+		printf("UDF mount: disc not properly formatted\n");
+		return error;
 	}
 
 	/*
@@ -553,19 +550,16 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	pool_init(&ump->desc_pool, lb_size, 0, 0, 0, "udf_desc_pool", NULL);
 
 	/* read vds support tables like VAT, sparable etc. */
-	if (!error) {
-		error = udf_read_vds_tables(ump, args);
-		if (error)
-			printf("UDF mount: error in format or damaged disc\n");
-	}
-	if (!error) {
-		error = udf_read_rootdirs(ump, args);
-		if (error)
-			printf("UDF mount: "
-			       "disc not properly formatted or damaged disc\n");
-	}
-	if (error)
+	if ((error = udf_read_vds_tables(ump, args))) {
+		printf("UDF mount: error in format or damaged disc\n");
 		return error;
+	}
+
+	if ((error = udf_read_rootdirs(ump, args))) {
+		printf("UDF mount: "
+		       "disc not properly formatted or damaged disc\n");
+		return error;
+	}
 
 	/* setup rest of mount information */
 	mp->mnt_data = ump;
