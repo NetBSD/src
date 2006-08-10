@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.2,v 1.1.2.8 2006/08/06 11:48:42 tron Exp $
+#	$NetBSD: CHANGES-3.0.2,v 1.1.2.9 2006/08/10 12:31:43 tron Exp $
 
 A complete list of changes from the NetBSD 3.0.1 release to the NetBSD 3.0.2
 release:
@@ -53,4 +53,10 @@ usr.bin/column/column.c				1.13-1.14
 	  widths.
 	- Plug memory leak.
 	[daniel, ticket #1449]
+
+usr.bin/whereis/whereis.c			1.18
+
+	PR bin/34114: which(1) doesn't handle commands given as absolute
+	pathnames.
+	[cube, ticket #1456]
 
