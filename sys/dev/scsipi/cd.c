@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.242 2006/03/30 16:09:28 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.243 2006/08/10 14:45:51 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.242 2006/03/30 16:09:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.243 2006/08/10 14:45:51 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -1523,11 +1523,9 @@ bad:
 		 * GET_CONFIGURATION, READ_DISCINFO, READ_TRACKINFO,
 		 * (READ_TOCf2, READ_CD_CAPACITY and GET_CONFIGURATION) commands
 		 */
-
 		return mmc_getdiscinfo(periph, (struct mmc_discinfo *) addr);
 	case MMCGETTRACKINFO:
 		/* READ TOCf2, READ_CD_CAPACITY and READ_TRACKINFO commands */
-
 		return mmc_gettrackinfo(periph, (struct mmc_trackinfo *) addr);
 	default:
 		if (part != RAW_PART)
@@ -2585,7 +2583,11 @@ mmc_profile2class(uint16_t mmc_profile)
 	case 0x14 : /* DVD-RW sequential */
 	case 0x1a : /* DVD+RW  */
 	case 0x1b : /* DVD+R   */
+	case 0x2a : /* DVD+RW Dual layer */
 	case 0x2b : /* DVD+R Dual layer */
+	case 0x50 : /* HD DVD-ROM */
+	case 0x51 : /* HD DVD-R   */
+	case 0x52 : /* HD DVD-RW; DVD-RAM like */
 		return MMC_CLASS_DVD;
 	case 0x40 : /* BD-ROM  */
 	case 0x41 : /* BD-R Sequential recording (SRM) */
@@ -2854,7 +2856,7 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 	if (error)
 		return error;
 
-	mmc_discinfo->last_possible_lba = (uint32_t) last_lba;
+	mmc_discinfo->last_possible_lba = (uint32_t) last_lba - 1;
 
 	/* Read in all features to determine device capabilities */
 	last_feature = feature = 0;
