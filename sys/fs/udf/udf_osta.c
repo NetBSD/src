@@ -1,4 +1,4 @@
-/* $NetBSD: udf_osta.c,v 1.2 2006/06/12 00:20:21 christos Exp $ */
+/* $NetBSD: udf_osta.c,v 1.3 2006/08/10 12:26:44 reinoud Exp $ */
 
 /*
  * Various routines from the OSTA 2.01 specs.  Copyrights are included with
@@ -294,7 +294,7 @@ int UDFTransName(
 	unicode_t *udfName,	/* (Input) Name from UDF volume.*/
 	int udfLen)		/* (Input) Length of UDF Name. */
 {
-	int index, newIndex = 0, needsCRC = FALSE;
+	int Index, newIndex = 0, needsCRC = FALSE;	/* index is shadowed */
 	int extIndex = 0, newExtIndex = 0, hasExt = FALSE;
 #if defined OS2 || defined WIN_95 || defined WIN_NT
 	int trailIndex = 0;
@@ -303,8 +303,8 @@ int UDFTransName(
 	unicode_t current;
 	const char hexChar[] = "0123456789ABCDEF";
 
-	for (index = 0; index < udfLen; index++) {
-		current = udfName[index];
+	for (Index = 0; Index < udfLen; Index++) {
+		current = udfName[Index];
 
 		if (IsIllegal(current) || !UnicodeIsPrint(current)) {
 			needsCRC = TRUE;
@@ -315,20 +315,20 @@ int UDFTransName(
 			/* Skip any other illegal or non-displayable
 			 * characters.
 			 */
-			while(index+1 < udfLen && (IsIllegal(udfName[index+1])
-			    || !UnicodeIsPrint(udfName[index+1]))) {
-				index++;
+			while(Index+1 < udfLen && (IsIllegal(udfName[Index+1])
+			    || !UnicodeIsPrint(udfName[Index+1]))) {
+				Index++;
 			}
 		}
 
 		/* Record position of extension, if one is found. */
-		if (current == PERIOD && (udfLen - index -1) <= EXT_SIZE) {
-			if (udfLen == index + 1) {
+		if (current == PERIOD && (udfLen - Index -1) <= EXT_SIZE) {
+			if (udfLen == Index + 1) {
 				/* A trailing period is NOT an extension. */
 				hasExt = FALSE;
 			} else {
 				hasExt = TRUE;
-				extIndex = index;
+				extIndex = Index;
 				newExtIndex = newIndex;
 			}
 		}
@@ -363,9 +363,9 @@ int UDFTransName(
 		if (hasExt) {
 			int maxFilenameLen;
 			/* Translate extension, and store it in ext. */
-			for(index = 0; index<EXT_SIZE &&
-			    extIndex + index +1 < udfLen; index++ ) {
-				current = udfName[extIndex + index + 1];
+			for(Index = 0; Index<EXT_SIZE &&
+			    extIndex + Index +1 < udfLen; Index++ ) {
+				current = udfName[extIndex + Index + 1];
 				if (IsIllegal(current) ||
 				    !UnicodeIsPrint(current)) {
 					needsCRC = 1;
@@ -376,12 +376,12 @@ int UDFTransName(
 					/* Skip any other illegal or
 					 * non-displayable characters.
 					 */
-					while(index + 1 < EXT_SIZE
+					while(Index + 1 < EXT_SIZE
 					    && (IsIllegal(udfName[extIndex +
-					    index + 2]) ||
+					    Index + 2]) ||
 					    !isprint(udfName[extIndex +
-					    index + 2]))) {
-						index++;
+					    Index + 2]))) {
+						Index++;
 					}
 				}
 				ext[localExtIndex++] = current;
@@ -413,8 +413,8 @@ int UDFTransName(
 		/* Place a translated extension at end, if found. */
 		if (hasExt) {
 			newName[newIndex++] = PERIOD;
-			for (index = 0;index < localExtIndex ;index++ ) {
-				newName[newIndex++] = ext[index];
+			for (Index = 0;Index < localExtIndex ;Index++ ) {
+				newName[newIndex++] = ext[Index];
 			}
 		}
 	}
