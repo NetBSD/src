@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.41.2.1 2005/05/07 11:21:29 tron Exp $	*/
+/*	$NetBSD: library.c,v 1.41.2.2 2006/08/10 12:36:31 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.41.2.1 2005/05/07 11:21:29 tron Exp $");
+__RCSID("$NetBSD: library.c,v 1.41.2.2 2006/08/10 12:36:31 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -267,7 +267,6 @@ get_ifile(FS_INFO *fsp, int use_mmap)
 	struct fhandle fh;
 	struct stat file_stat;
 	caddr_t ifp;
-	char *ifile_name;
 	int count;
 	int rfd; /* Root file descriptor */
 	static int oldnseg;
@@ -296,7 +295,6 @@ get_ifile(FS_INFO *fsp, int use_mmap)
 
 	if (use_mmap && file_stat.st_size == fsp->fi_ifile_length) {
 		/* (void) close(fid); */
-                free(ifile_name);
 		return;
 	}
 
@@ -347,8 +345,6 @@ redo_read:
 	fsp->fi_ifile_count = ((fsp->fi_ifile_length >> fsp->fi_lfs.lfs_bshift)
 	    - fsp->fi_lfs.lfs_cleansz - fsp->fi_lfs.lfs_segtabsz) *
 	    fsp->fi_lfs.lfs_ifpb;
-
-	free(ifile_name);
 }
 
 
