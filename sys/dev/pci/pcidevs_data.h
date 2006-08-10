@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.816 2006/08/09 05:51:01 jnemeth Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.817 2006/08/10 13:22:54 simonb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.817 2006/08/09 05:47:08 jnemeth Exp
+ *	NetBSD: pcidevs,v 1.818 2006/08/10 13:22:12 simonb Exp
  */
 
 /*
@@ -7617,7 +7617,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_3945ABG_2,
-	    "PRO/Wireless LAN 2915ABG Mini-PCI Adapter",
+	    "PRO/Wireless LAN 3945ABG Mini-PCI Adapter",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312_ATU,
