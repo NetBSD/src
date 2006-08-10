@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.136 2006/08/06 12:54:38 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.137 2006/08/10 12:37:06 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4265,4 +4265,28 @@ etc/motd.rc					1.1
 	or a release candidate), tell the user that he might expect problems
 	and how to effectively report them to the developers.
 	[jmmv, ticket #1450]
+
+usr.bin/whereis/whereis.c			1.18
+
+	PR bin/34114: which(1) doesn't handle commands given as absolute
+	pathnames.
+	[cube, ticket #1456]
+
+sys/ufs/lfs/lfs.h				1.108,1.111 via patch
+sys/ufs/lfs/lfs_extern.				1.83,1.84 via patch
+sys/ufs/lfs/lfs_alloc.c				1.95 via patch
+sys/ufs/lfs/lfs_bio.c				1.94 via patch
+sys/ufs/lfs/lfs_segment.c			1.180-1.181,1.184-1.188 via patch
+sys/ufs/lfs/lfs_subr.c				1.60 via patch
+sys/ufs/lfs/lfs_vfsops.c			1.211-1.215 via patch
+sys/ufs/lfs/lfs_vnops.c				1.177-1.180 via patch
+
+	Synchronize LFS with NetBSD-current. This fixes the inode free list
+	errors caused by ticket #1327.
+	[perseant, ticket #1457]
+
+libexec/lfs_cleanerd/library.c			1.43
+
+	Remove bogus frees on uninitialized variable.
+	[perseant, ticket #1458]
 
