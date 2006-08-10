@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.167.2.21 2006/05/20 22:43:42 riz Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.167.2.22 2006/08/10 12:16:46 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.21 2006/05/20 22:43:42 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.22 2006/08/10 12:16:46 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1378,8 +1378,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
 
 	/* wake up the cleaner so it can die */
-	wakeup(&fs->lfs_nextseg);
-	wakeup(&lfs_allclean_wakeup);
+	lfs_wakeup_cleaner(fs);
 	simple_lock(&fs->lfs_interlock);
 	while (fs->lfs_sleepers)
 		ltsleep(&fs->lfs_sleepers, PRIBIO + 1, "lfs_sleepers", 0,
@@ -2076,29 +2075,17 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	if ((kva = uvm_pagermapin(pgs, npages, UVMPAGER_MAPIN_WRITE |
 				      (((SEGSUM *)(sp->segsum))->ss_nfinfo < 1 ?
 				       UVMPAGER_MAPIN_WAITOK : 0))) == 0x0) {
-		int vers;
-
 		DLOG((DLOG_PAGE, "lfs_gop_write: forcing write\n"));
 #if 0
 		      " with nfinfo=%d at offset 0x%x\n",
 		      (int)((SEGSUM *)(sp->segsum))->ss_nfinfo,
 		      (unsigned)fs->lfs_offset));
 #endif
-		if (sp->fip->fi_nblocks == 0) {
-			/* Don't write zero-length finfos */
-			--((SEGSUM *)(sp->segsum))->ss_nfinfo;
-			sp->sum_bytes_left += FINFOSIZE;
-		} else
-			lfs_updatemeta(sp);
-
-		vers = sp->fip->fi_version;
+		lfs_updatemeta(sp);
+		lfs_release_finfo(fs);
 		(void) lfs_writeseg(fs, sp);
 
-		sp->fip->fi_version = vers;
-		sp->fip->fi_ino = ip->i_number;
-		/* Add the current file to the segment summary. */
-		++((SEGSUM *)(sp->segsum))->ss_nfinfo;
-		sp->sum_bytes_left -= FINFOSIZE;
+		lfs_acquire_finfo(fs, ip->i_number, ip->i_gen);
 
 		/*
 		 * Having given up all of the pager_map we were holding,
@@ -2158,15 +2145,11 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 			int vers;
 
 			lfs_updatemeta(sp);
-
 			vers = sp->fip->fi_version;
+			lfs_release_finfo(fs);
 			(void) lfs_writeseg(fs, sp);
 
-			sp->fip->fi_version = vers;
-			sp->fip->fi_ino = ip->i_number;
-			/* Add the current file to the segment summary. */
-			++((SEGSUM *)(sp->segsum))->ss_nfinfo;
-			sp->sum_bytes_left -= FINFOSIZE;
+			lfs_acquire_finfo(fs, ip->i_number, vers);
 		}
 		/* Check both for space in segment and space in segsum */
 		iobytes = MIN(iobytes, (sp->seg_bytes_left >> fs_bshift)
@@ -2533,7 +2516,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	fs->lfs_suflags[0] = (u_int32_t *)realloc(fs->lfs_suflags[0],
 						  fs->lfs_nseg * sizeof(u_int32_t),
 						  M_SEGMENT, M_WAITOK);
-	fs->lfs_suflags[1] = (u_int32_t *)realloc(fs->lfs_suflags[0],
+	fs->lfs_suflags[1] = (u_int32_t *)realloc(fs->lfs_suflags[1],
 						  fs->lfs_nseg * sizeof(u_int32_t),
 						  M_SEGMENT, M_WAITOK);
 	for (i = oldnsegs; i < newnsegs; i++)
