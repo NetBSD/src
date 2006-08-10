@@ -1,4 +1,4 @@
-/*	$NetBSD: whereis.c,v 1.17 2004/05/23 02:24:06 christos Exp $	*/
+/*	$NetBSD: whereis.c,v 1.17.4.1 2006/08/10 12:11:59 tron Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)whereis.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: whereis.c,v 1.17 2004/05/23 02:24:06 christos Exp $");
+__RCSID("$NetBSD: whereis.c,v 1.17.4.1 2006/08/10 12:11:59 tron Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -112,7 +112,18 @@ main(int argc, char *argv[])
 
 	/* For each path, for each program... */
 	for (; *argv; ++argv)
-		for (p = std; p; p && (*p++ = ':')) {
+		if (**argv == '/') {
+			if (stat(*argv, &sb) == -1)
+				continue;
+			if (!S_ISREG(sb.st_mode))
+				continue;
+			if (access(*argv, X_OK) == -1)
+				continue;
+			(void)printf("%s\n", *argv);
+			found++;
+			if (which)
+				break;
+		} else for (p = std; p; p && (*p++ = ':')) {
 			t = p;
 			if ((p = strchr(p, ':')) != NULL) {
 				*p = '\0';
