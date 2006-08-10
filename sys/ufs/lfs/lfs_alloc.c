@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.76.2.11 2006/05/20 22:43:42 riz Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.76.2.12 2006/08/10 12:16:46 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.76.2.11 2006/05/20 22:43:42 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.76.2.12 2006/08/10 12:16:46 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -744,6 +744,9 @@ lfs_order_freelist(struct lfs *fs)
 	struct buf *bp;
 	ino_t ino, firstino, lastino, maxino;
 	
+	ASSERT_NO_SEGLOCK(fs);
+	lfs_seglock(fs, SEGM_PROT);
+
 	maxino = ((fs->lfs_ivnode->v_size >> fs->lfs_bshift) -
 		  fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb;
 	fs->lfs_ino_bitmap = (lfs_bm_t *)
@@ -785,4 +788,6 @@ lfs_order_freelist(struct lfs *fs)
 
 	LFS_PUT_HEADFREE(fs, cip, bp, firstino);
 	LFS_PUT_TAILFREE(fs, cip, bp, lastino);
+
+	lfs_segunlock(fs);
 }

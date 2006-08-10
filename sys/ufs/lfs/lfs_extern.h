@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.64.2.8 2006/05/20 22:41:31 riz Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.64.2.9 2006/08/10 12:16:46 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -200,6 +200,8 @@ void lfs_callback(struct buf *);
 int lfs_vref(struct vnode *);
 void lfs_vunref(struct vnode *);
 void lfs_vunref_head(struct vnode *);
+void lfs_acquire_finfo(struct lfs *fs, ino_t, int);
+void lfs_release_finfo(struct lfs *fs);
 
 /* lfs_subr.c */
 void lfs_setup_resblks(struct lfs *);
@@ -212,6 +214,7 @@ void lfs_segunlock(struct lfs *);
 void lfs_segunlock_relock(struct lfs *);
 int lfs_writer_enter(struct lfs *, const char *);
 void lfs_writer_leave(struct lfs *);
+void lfs_wakeup_cleaner(struct lfs *);
 
 /* lfs_syscalls.c */
 int lfs_fastvget(struct mount *, ino_t, daddr_t, struct vnode **, struct ufs1_dinode *);
