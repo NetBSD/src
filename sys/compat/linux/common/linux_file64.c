@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.32.2.2 2006/08/11 15:43:29 yamt Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.32.2.3 2006/08/11 15:57:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,9 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.32.2.2 2006/08/11 15:43:29 yamt Exp $");
-
-#include "opt_ktrace.h"
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.32.2.3 2006/08/11 15:57:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,9 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.32.2.2 2006/08/11 15:43:29 yamt E
 #include <sys/vnode.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
-#if defined(KTRACE)
-#include <sys/ktrace.h>
-#endif /* defined(KTRACE) */
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
@@ -455,7 +450,6 @@ linux_sys_getdents64(l, v, retval)
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;
-	outp = (caddr_t)SCARG(uap, dent);
 again:
 	aiov.iov_base = tbuf;
 	aiov.iov_len = buflen;
@@ -475,6 +469,7 @@ again:
 		goto out;
 
 	inp = tbuf;
+	outp = (caddr_t)SCARG(uap, dent);
 	resid = nbytes;
 	if ((len = buflen - auio.uio_resid) == 0)
 		goto eof;
@@ -533,17 +528,6 @@ out:
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);
-#if defined(KTRACE)
-	if (!error && outp > (const char *)SCARG(uap, dent) &&
-	    KTRPOINT(p, KTR_GENIO)) {
-		struct iovec iov;
-		size_t done = outp - (const char *)SCARG(uap, dent);
-
-		iov.iov_base = SCARG(uap, dent);
-		iov.iov_len = done;
-		ktrgenio(l, SCARG(uap, fd), UIO_READ, &iov, done, 0);
-	}
-#endif /* defined(KTRACE) */
 out1:
 	FILE_UNUSE(fp, l);
 	return error;
