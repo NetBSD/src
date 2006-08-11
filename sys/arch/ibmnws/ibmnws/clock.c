@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 2006/05/09 18:02:32 rjs Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 2006/08/11 15:19:59 rjs Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/timetc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -46,6 +47,8 @@
 #define	MINYEAR	1990
 
 void decr_intr(struct clockframe *);
+void init_ibmnws_tc(void);
+static u_int get_ibmnws_timecount(struct timecounter *);
 
 /*
  * Initially we assume a processor with a bus frequency of 12.5 MHz.
@@ -66,6 +69,15 @@ const struct clockfns ns1000_clockfns = {
 	ns1000_clock_init,
 	ns1000_clock_get,
 	ns1000_clock_set
+};
+
+static struct timecounter ibmnws_timecounter = {
+	get_ibmnws_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	0x7fffffff,		/* counter_mask */
+	0,			/* frequency */
+	"ibmnws_mftb",		/* name */
+	0			/* quality */
 };
 
 void
@@ -116,6 +128,7 @@ cpu_initclocks(void)
 	__asm volatile ("mftb %0" : "=r"(ci->ci_lasttb));
 	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 
+	init_ibmnws_tc();
 	/*
 	 * The NS 1000 has no RTC hardware, so fake the clock functions
 	 * to prevent odd failures...
@@ -135,7 +148,13 @@ inittodr(time_t base)
 	int year;
 	struct clock_ymdhms dt;
 	time_t deltat;
-	int badbase = 0;
+	struct timespec ts;
+	struct timeval time;
+	int badbase;
+
+	badbase = 0;
+	time.tv_sec = 0;
+	time.tv_usec = 0;
 
 	if (base < (MINYEAR - 1970) * SECYR) {
 		printf("WARNING: preposterous time in file system");
@@ -163,7 +182,10 @@ inittodr(time_t base)
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the TODR.
 		 */
-		time.tv_sec = base;
+		ts.tv_sec = base;
+		ts.tv_nsec = 0;
+		tc_setclock(&ts);
+
 		if (!badbase) {
 			printf("WARNING: preposterous clock chip time\n");
 			resettodr();
@@ -212,10 +234,12 @@ resettodr(void)
 {
 	struct clock_ymdhms dt;
 	struct clocktime ct;
+	struct timeval time;
 
 	if (!clockinitted)
 		return;
 
+	getmicrotime(&time);
 	clock_secs_to_ymdhms(time.tv_sec, &dt);
 
 	/* rt clock wants 2 digits */
@@ -308,30 +332,6 @@ decr_intr(struct clockframe *frame)
 }
 
 /*
- * Fill in *tvp with current time with microsecond resolution.
- */
-void
-microtime(struct timeval *tvp)
-{
-	u_long tb;
-	u_long ticks;
-	int msr, scratch;
-	
-	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
-		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
-	__asm ("mftb %0" : "=r"(tb));
-	ticks = (tb - curcpu()->ci_lasttb) * ns_per_tick;
-	*tvp = time;
-	mtmsr(msr);
-	ticks /= 1000;
-	tvp->tv_usec += ticks;
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
-}
-
-/*
  * Wait for about n microseconds (at least!).
  */
 void
@@ -347,4 +347,26 @@ delay(unsigned int n)
 	__asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
 		      "mftb %0; cmplw %0,%2; blt 1b; 2:"
 		      : "=r"(scratch) : "r"(tbh), "r"(tbl));
+}
+
+static u_int
+get_ibmnws_timecount(struct timecounter *tc)
+{
+	u_long tb;
+	int msr, scratch;
+	
+	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
+		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
+	__asm volatile ("mftb %0" : "=r"(tb));
+	mtmsr(msr);
+
+	return tb;
+}
+
+void
+init_ibmnws_tc()
+{
+	/* from machdep initialization */
+	ibmnws_timecounter.tc_frequency = ticks_per_sec;
+	tc_init(&ibmnws_timecounter);
 }
