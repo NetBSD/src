@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.41 2006/08/06 20:16:12 tron Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.42 2006/08/11 04:58:18 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
@@ -401,4 +401,12 @@ sys/dev/ata/wd.c				1.325 via patch
 	Improve recognition of Seagate drives which need the LBA48 work
 	arround. This fixes PR kern/33637.
 	[bouyer, ticket #10644]
+
+lib/libc/arch/i386/sys/__sigtramp2.S		1.2
+
+	Fix PR 34112, where a program could mysteriously exit on return from a
+	signal handler, by deriving the context pointer from the stack pointer
+	instead of trying to read it from where the sigaction function may have
+	overwritten it with arbitrary bits.
+	[jld, ticket #10667]
 
