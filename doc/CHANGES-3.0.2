@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.2,v 1.1.2.9 2006/08/10 12:31:43 tron Exp $
+#	$NetBSD: CHANGES-3.0.2,v 1.1.2.10 2006/08/11 04:59:55 riz Exp $
 
 A complete list of changes from the NetBSD 3.0.1 release to the NetBSD 3.0.2
 release:
@@ -59,4 +59,13 @@ usr.bin/whereis/whereis.c			1.18
 	PR bin/34114: which(1) doesn't handle commands given as absolute
 	pathnames.
 	[cube, ticket #1456]
+
+sys/dev/usb/ehci.c				1.96
+sys/dev/usb/ohci.c				1.159
+sys/dev/usb/uhci.c				1.188
+sys/dev/usb/usbdivar.h				1.74
+
+	Fix a race condition in xfer abort.  Derived from a FreeBSD patch.
+	Fixes occasional crashes while printing.  PR#33250
+	[abs, ticket #1459]
 
