@@ -415,6 +415,10 @@
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
 
+/* The default remote shell to use, if one does not specify the CVS_RSH
+   environment variable. */
+#define RSH_DFLT "ssh"
+
 /* If you are working with a large remote repository and a 'cvs checkout' is
    swamping your network and memory, define these to enable flow control. You
    will end up with even less probability of a consistent checkout (see
