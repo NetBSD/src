@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.65 2006/07/26 16:34:07 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.66 2006/08/11 19:17:47 christos Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.65 2006/07/26 16:34:07 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.66 2006/08/11 19:17:47 christos Exp $");
 
 #include "opt_veriexec.h"
 
@@ -686,4 +686,45 @@ veriexec_clear(void *data, int file_specific)
 		if (vte != NULL)
 			free(vte, M_TEMP);
 	}
+}
+
+/*
+ * Invalidate a Veriexec file entry.
+ * XXX: This should be updated when per-page fingerprints are added.
+ */
+void
+veriexec_purge(struct veriexec_file_entry *vfe)
+{
+	vfe->status = FINGERPRINT_NOTEVAL;
+}
+
+/*
+ * Enforce raw disk access policy.
+ *
+ * IDS mode: Invalidate fingerprints on a mount if it's opened for writing.
+ * IPS mode: Don't allow raw writing to disks we monitor.
+ * Lockdown mode: Don't allow raw writing to all disks.
+ */
+int
+veriexec_rawchk(struct vnode *vp)
+{
+	int monitored;
+
+	monitored = (vp && veriexec_tblfind(vp));
+
+	switch (veriexec_strict) {
+	case VERIEXEC_IDS:
+		if (monitored)
+			fileassoc_table_run(vp->v_mount, veriexec_hook,
+			    (fileassoc_cb_t)veriexec_purge);
+		break;
+	case VERIEXEC_IPS:
+		if (monitored)
+			return (EPERM);
+		break;
+	case VERIEXEC_LOCKDOWN:
+		return (EPERM);
+	}
+
+	return (0);
 }

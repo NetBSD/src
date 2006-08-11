@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.87 2006/05/14 21:32:21 elad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.88 2006/08/11 19:17:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -31,8 +31,12 @@
  *	@(#)spec_vnops.c	8.15 (Berkeley) 7/14/95
  */
 
+#if defined(_KERNEL_OPT)
+#include "veriexec.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.87 2006/05/14 21:32:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.88 2006/08/11 19:17:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -55,6 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.87 2006/05/14 21:32:21 elad Exp $")
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
+
+#if NVERIEXEC > 0
+#include <sys/verified_exec.h>
+#endif /* NVERIEXEC > 0 */
 
 /* symbolic sleep message strings for devices */
 const char	devopn[] = "devopn";
@@ -204,6 +212,7 @@ spec_open(v)
 			 * devices whose corresponding block devices are
 			 * currently mounted.
 			 */
+			bvp = NULL;
 			if (securelevel >= 1) {
 				blkdev = devsw_chr2blk(dev);
 				if (blkdev != (dev_t)NODEV &&
@@ -213,6 +222,14 @@ spec_open(v)
 				if (iskmemdev(dev))
 					return (EPERM);
 			}
+
+#if NVERIEXEC > 0
+			if (veriexec_strict >= VERIEXEC_IPS && iskmemdev(dev))
+				return (error);
+			error = veriexec_rawchk(bvp);
+			if (error)
+				return (error);
+#endif /* NVERIEXEC > 0 */
 		}
 		if (cdev->d_type == D_TTY)
 			vp->v_flag |= VISTTY;
@@ -241,6 +258,13 @@ spec_open(v)
 		 */
 		if ((error = vfs_mountedon(vp)) != 0)
 			return (error);
+
+#if NVERIEXEC > 0
+		error = veriexec_rawchk(vp);
+		if (error)
+			return (error);
+#endif /* NVERIEXEC > 0 */
+
 		error = (*bdev->d_open)(dev, ap->a_mode, S_IFBLK, l);
 		d_ioctl = bdev->d_ioctl;
 		break;

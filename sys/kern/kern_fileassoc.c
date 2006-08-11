@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.5 2006/07/23 22:06:11 ad Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.6 2006/08/11 19:17:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -266,6 +266,33 @@ fileassoc_table_delete(struct mount *mp)
 	/* Remove hash table and sysctl node */
 	hashdone(tbl->hash_tbl, M_TEMP);
 	LIST_REMOVE(tbl, hash_list);
+
+	return (0);
+}
+
+/*
+ * Run a callback for each hook entry in a table.
+ */
+int
+fileassoc_table_run(struct mount *mp, fileassoc_t id, fileassoc_cb_t cb)
+{
+	struct fileassoc_table *tbl;
+	struct fileassoc_hashhead *hh;
+	u_long i;
+
+	tbl = fileassoc_table_lookup(mp);
+	if (tbl == NULL)
+		return (EEXIST);
+
+	hh = tbl->hash_tbl;
+	for (i = 0; i < tbl->hash_size; i++) {
+		struct fileassoc_hash_entry *mhe;
+
+		LIST_FOREACH(mhe, &hh[i], entries) {
+			if (mhe->hooks[id] != NULL)
+				cb(mhe->hooks[id]);
+		}
+	}
 
 	return (0);
 }
