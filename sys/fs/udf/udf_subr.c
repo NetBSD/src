@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.11 2006/07/09 13:58:47 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.12 2006/08/11 23:15:30 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.11 2006/07/09 13:58:47 reinoud Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.12 2006/08/11 23:15:30 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -2593,7 +2593,7 @@ udf_read_file_extent(struct udf_node *node,
  */
 
 
-/* mininum of 128 translations (!) (64 kb in 512 byte sectors) */
+/* maximum of 128 translations (!) (64 kb in 512 byte sectors) */
 #define FILEBUFSECT 128
 
 void
