@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.13 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.14 2006/08/11 19:01:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-nfs.c,v 1.99.2.2 2003/11/16 08:51:35 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-nfs.c,v 1.13 2004/09/27 23:04:24 dyoung Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.14 2006/08/11 19:01:18 christos Exp $");
 #endif
 #endif
 
@@ -59,6 +59,7 @@ static void nfs_printfh(const u_int32_t *, const u_int);
 static void xid_map_enter(const struct rpc_msg *, const u_char *);
 static int32_t xid_map_find(const struct rpc_msg *, const u_char *,
 			    u_int32_t *, u_int32_t *);
+static void parserejrep(const struct rpc_msg *, u_int);
 static void interp_reply(const struct rpc_msg *, u_int32_t, u_int32_t, int);
 static const u_int32_t *parse_post_op_attr(const u_int32_t *, int);
 static void print_sattr3(const struct nfsv3_sattr *sa3, int verbose);
@@ -348,7 +349,7 @@ nfsreply_print(register const u_char *bp, u_int length,
 	       register const u_char *bp2)
 {
 	register const struct rpc_msg *rp;
-	u_int32_t proc, vers;
+	u_int32_t proc, vers, reply;
 	char srcid[20], dstid[20];	/*fits 32bit*/
 
 	nfserr = 0;		/* assume no error */
@@ -364,10 +365,12 @@ nfsreply_print(register const u_char *bp, u_int length,
 		    EXTRACT_32BITS(&rp->rm_xid));
 	}
 	print_nfsaddr(bp2, srcid, dstid);
-	(void)printf("reply %s %d",
-		     EXTRACT_32BITS(&rp->rm_reply.rp_stat) == MSG_ACCEPTED?
-			     "ok":"ERR",
-			     length);
+	reply = EXTRACT_32BITS(&rp->rm_reply.rp_stat);
+	(void)printf("reply %s %d", reply == MSG_ACCEPTED ? "ok" : "ERR",
+	     length);
+
+	if (reply != MSG_ACCEPTED)
+		parserejrep(rp, length);
 
 	if (xid_map_find(rp, bp2, &proc, &vers) >= 0)
 		interp_reply(rp, proc, vers, length);
@@ -975,6 +978,75 @@ xid_map_find(const struct rpc_msg *rp, const u_char *bp, u_int32_t *proc,
 /*
  * Routines for parsing reply packets
  */
+
+static void
+parserejrep(register const struct rpc_msg *rp, register u_int length)
+{
+	enum reject_stat rstat;
+	rpcvers_t rlow;
+	rpcvers_t rhigh;
+	enum auth_stat rwhy;
+	int reply;
+
+	switch (reply = EXTRACT_32BITS(&rp->rm_reply.rp_stat)) {
+	case MSG_ACCEPTED:
+		printf("Internal logic error\n");
+		break;
+	case MSG_DENIED:
+		rstat = rp->rm_reply.rp_rjct.rj_stat;
+		switch (rstat) {
+		case RPC_MISMATCH:
+			rlow = rp->rm_reply.rp_rjct.rj_vers.low;
+			rhigh = rp->rm_reply.rp_rjct.rj_vers.high;
+			printf("RPC Version mismatch (%d-%d)\n",
+			    (int)rlow, (int)rhigh);
+			break;
+		case AUTH_ERROR:
+			rwhy = rp->rm_reply.rp_rjct.rj_why;
+			printf("Auth ");
+			switch (rwhy) {
+			case AUTH_OK:
+				printf("OK\n");
+				break;
+			case AUTH_BADCRED:
+				printf("Bogus Credentials (seal broken)\n");
+				break;
+			case AUTH_REJECTEDCRED:
+				printf("Rejected Credentials (client should "
+				    "begin new session)\n");
+				break;
+			case AUTH_BADVERF:
+				printf("Bogus Verifier (seal broken)\n");
+				break;
+			case AUTH_REJECTEDVERF:
+				printf("Verifier expired or was replayed\n");
+				break;
+			case AUTH_TOOWEAK:
+				printf("Credentials are too weak\n");
+				break;
+			case AUTH_INVALIDRESP:
+				printf("Bogus response verifier\n");
+				break;
+			case AUTH_FAILED:
+				printf("Unknown failure\n");
+				break;
+			default:
+				printf("Invalid failure code %d\n",
+				    (int)rwhy);
+				break;
+			}
+			break;
+		default:
+			printf("Unknown reason for rejecting rpc message %d\n",
+			    (int)rstat);
+			break;
+		}
+		break;
+	default:
+		printf("Unknown rpc response code %d\n", reply);
+		break;
+	}
+}
 
 /*
  * Return a pointer to the beginning of the actual results.
