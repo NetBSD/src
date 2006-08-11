@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.9 2006/02/23 05:37:47 thorpej Exp $	*/
+/*	$NetBSD: snapper.c,v 1.10 2006/08/11 20:37:43 macallan Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 
 /*-
@@ -68,6 +68,7 @@ struct snapper_softc {
 
 	void (*sc_iintr)(void *);	/* dma completion intr handler */
 	void *sc_iarg;			/* arg for sc_iintr() */
+	int sc_ipages;			/* # of input pages */
 
 	u_int sc_record_source;		/* recording source mask */
 	u_int sc_output_mask;		/* output source mask */
@@ -207,6 +208,187 @@ const uint8_t snapper_basstab[] = {
 	0x01,	/* 18dB */
 };
 
+const uint8_t snapper_mixer_gain[178][3] = {
+	{ 0x7f, 0x17, 0xaf }, /* 18.0 dB */
+	{ 0x77, 0xfb, 0xaa }, /* 17.5 dB */
+	{ 0x71, 0x45, 0x75 }, /* 17.0 dB */
+	{ 0x6a, 0xef, 0x5d }, /* 16.5 dB */
+	{ 0x64, 0xf4, 0x03 }, /* 16.0 dB */
+	{ 0x5f, 0x4e, 0x52 }, /* 15.5 dB */
+	{ 0x59, 0xf9, 0x80 }, /* 15.0 dB */
+	{ 0x54, 0xf1, 0x06 }, /* 14.5 dB */
+	{ 0x50, 0x30, 0xa1 }, /* 14.0 dB */
+	{ 0x4b, 0xb4, 0x46 }, /* 13.5 dB */
+	{ 0x47, 0x78, 0x28 }, /* 13.0 dB */
+	{ 0x43, 0x78, 0xb0 }, /* 12.5 dB */
+	{ 0x3f, 0xb2, 0x78 }, /* 12.0 dB */
+	{ 0x3c, 0x22, 0x4c }, /* 11.5 dB */
+	{ 0x38, 0xc5, 0x28 }, /* 11.0 dB */
+	{ 0x35, 0x98, 0x2f }, /* 10.5 dB */
+	{ 0x32, 0x98, 0xb0 }, /* 10.0 dB */
+	{ 0x2f, 0xc4, 0x20 }, /* 9.5 dB */
+	{ 0x2d, 0x18, 0x18 }, /* 9.0 dB */
+	{ 0x2a, 0x92, 0x54 }, /* 8.5 dB */
+	{ 0x28, 0x30, 0xaf }, /* 8.0 dB */
+	{ 0x25, 0xf1, 0x25 }, /* 7.5 dB */
+	{ 0x23, 0xd1, 0xcd }, /* 7.0 dB */
+	{ 0x21, 0xd0, 0xd9 }, /* 6.5 dB */
+	{ 0x1f, 0xec, 0x98 }, /* 6.0 dB */
+	{ 0x1e, 0x23, 0x6d }, /* 5.5 dB */
+	{ 0x1c, 0x73, 0xd5 }, /* 5.0 dB */
+	{ 0x1a, 0xdc, 0x61 }, /* 4.5 dB */
+	{ 0x19, 0x5b, 0xb8 }, /* 4.0 dB */
+	{ 0x17, 0xf0, 0x94 }, /* 3.5 dB */
+	{ 0x16, 0x99, 0xc0 }, /* 3.0 dB */
+	{ 0x15, 0x56, 0x1a }, /* 2.5 dB */
+	{ 0x14, 0x24, 0x8e }, /* 2.0 dB */
+	{ 0x13, 0x04, 0x1a }, /* 1.5 dB */
+	{ 0x11, 0xf3, 0xc9 }, /* 1.0 dB */
+	{ 0x10, 0xf2, 0xb4 }, /* 0.5 dB */
+	{ 0x10, 0x00, 0x00 }, /* 0.0 dB */
+	{ 0x0f, 0x1a, 0xdf }, /* -0.5 dB */
+	{ 0x0e, 0x42, 0x90 }, /* -1.0 dB */
+	{ 0x0d, 0x76, 0x5a }, /* -1.5 dB */
+	{ 0x0c, 0xb5, 0x91 }, /* -2.0 dB */
+	{ 0x0b, 0xff, 0x91 }, /* -2.5 dB */
+	{ 0x0b, 0x53, 0xbe }, /* -3.0 dB */
+	{ 0x0a, 0xb1, 0x89 }, /* -3.5 dB */
+	{ 0x0a, 0x18, 0x66 }, /* -4.0 dB */
+	{ 0x09, 0x87, 0xd5 }, /* -4.5 dB */
+	{ 0x08, 0xff, 0x59 }, /* -5.0 dB */
+	{ 0x08, 0x7e, 0x80 }, /* -5.5 dB */
+	{ 0x08, 0x04, 0xdc }, /* -6.0 dB */
+	{ 0x07, 0x92, 0x07 }, /* -6.5 dB */
+	{ 0x07, 0x25, 0x9d }, /* -7.0 dB */
+	{ 0x06, 0xbf, 0x44 }, /* -7.5 dB */
+	{ 0x06, 0x5e, 0xa5 }, /* -8.0 dB */
+	{ 0x06, 0x03, 0x6e }, /* -8.5 dB */
+	{ 0x05, 0xad, 0x50 }, /* -9.0 dB */
+	{ 0x05, 0x5c, 0x04 }, /* -9.5 dB */
+	{ 0x05, 0x0f, 0x44 }, /* -10.0 dB */
+	{ 0x04, 0xc6, 0xd0 }, /* -10.5 dB */
+	{ 0x04, 0x82, 0x68 }, /* -11.0 dB */
+	{ 0x04, 0x41, 0xd5 }, /* -11.5 dB */
+	{ 0x04, 0x04, 0xde }, /* -12.0 dB */
+	{ 0x03, 0xcb, 0x50 }, /* -12.5 dB */
+	{ 0x03, 0x94, 0xfa }, /* -13.0 dB */
+	{ 0x03, 0x61, 0xaf }, /* -13.5 dB */
+	{ 0x03, 0x31, 0x42 }, /* -14.0 dB */
+	{ 0x03, 0x03, 0x8a }, /* -14.5 dB */
+	{ 0x02, 0xd8, 0x62 }, /* -15.0 dB */
+	{ 0x02, 0xaf, 0xa3 }, /* -15.5 dB */
+	{ 0x02, 0x89, 0x2c }, /* -16.0 dB */
+	{ 0x02, 0x64, 0xdb }, /* -16.5 dB */
+	{ 0x02, 0x42, 0x93 }, /* -17.0 dB */
+	{ 0x02, 0x22, 0x35 }, /* -17.5 dB */
+	{ 0x02, 0x03, 0xa7 }, /* -18.0 dB */
+	{ 0x01, 0xe6, 0xcf }, /* -18.5 dB */
+	{ 0x01, 0xcb, 0x94 }, /* -19.0 dB */
+	{ 0x01, 0xb1, 0xde }, /* -19.5 dB */
+	{ 0x01, 0x99, 0x99 }, /* -20.0 dB */
+	{ 0x01, 0x82, 0xaf }, /* -20.5 dB */
+	{ 0x01, 0x6d, 0x0e }, /* -21.0 dB */
+	{ 0x01, 0x58, 0xa2 }, /* -21.5 dB */
+	{ 0x01, 0x45, 0x5b }, /* -22.0 dB */
+	{ 0x01, 0x33, 0x28 }, /* -22.5 dB */
+	{ 0x01, 0x21, 0xf9 }, /* -23.0 dB */
+	{ 0x01, 0x11, 0xc0 }, /* -23.5 dB */
+	{ 0x01, 0x02, 0x70 }, /* -24.0 dB */
+	{ 0x00, 0xf3, 0xfb }, /* -24.5 dB */
+	{ 0x00, 0xe6, 0x55 }, /* -25.0 dB */
+	{ 0x00, 0xd9, 0x73 }, /* -25.5 dB */
+	{ 0x00, 0xcd, 0x49 }, /* -26.0 dB */
+	{ 0x00, 0xc1, 0xcd }, /* -26.5 dB */
+	{ 0x00, 0xb6, 0xf6 }, /* -27.0 dB */
+	{ 0x00, 0xac, 0xba }, /* -27.5 dB */
+	{ 0x00, 0xa3, 0x10 }, /* -28.0 dB */
+	{ 0x00, 0x99, 0xf1 }, /* -28.5 dB */
+	{ 0x00, 0x91, 0x54 }, /* -29.0 dB */
+	{ 0x00, 0x89, 0x33 }, /* -29.5 dB */
+	{ 0x00, 0x81, 0x86 }, /* -30.0 dB */
+	{ 0x00, 0x7a, 0x48 }, /* -30.5 dB */
+	{ 0x00, 0x73, 0x70 }, /* -31.0 dB */
+	{ 0x00, 0x6c, 0xfb }, /* -31.5 dB */
+	{ 0x00, 0x66, 0xe3 }, /* -32.0 dB */
+	{ 0x00, 0x61, 0x21 }, /* -32.5 dB */
+	{ 0x00, 0x5b, 0xb2 }, /* -33.0 dB */
+	{ 0x00, 0x56, 0x91 }, /* -33.5 dB */
+	{ 0x00, 0x51, 0xb9 }, /* -34.0 dB */
+	{ 0x00, 0x4d, 0x27 }, /* -34.5 dB */
+	{ 0x00, 0x48, 0xd6 }, /* -35.0 dB */
+	{ 0x00, 0x44, 0xc3 }, /* -35.5 dB */
+	{ 0x00, 0x40, 0xea }, /* -36.0 dB */
+	{ 0x00, 0x3d, 0x49 }, /* -36.5 dB */
+	{ 0x00, 0x39, 0xdb }, /* -37.0 dB */
+	{ 0x00, 0x36, 0x9e }, /* -37.5 dB */
+	{ 0x00, 0x33, 0x90 }, /* -38.0 dB */
+	{ 0x00, 0x30, 0xae }, /* -38.5 dB */
+	{ 0x00, 0x2d, 0xf5 }, /* -39.0 dB */
+	{ 0x00, 0x2b, 0x63 }, /* -39.5 dB */
+	{ 0x00, 0x28, 0xf5 }, /* -40.0 dB */
+	{ 0x00, 0x26, 0xab }, /* -40.5 dB */
+	{ 0x00, 0x24, 0x81 }, /* -41.0 dB */
+	{ 0x00, 0x22, 0x76 }, /* -41.5 dB */
+	{ 0x00, 0x20, 0x89 }, /* -42.0 dB */
+	{ 0x00, 0x1e, 0xb7 }, /* -42.5 dB */
+	{ 0x00, 0x1c, 0xff }, /* -43.0 dB */
+	{ 0x00, 0x1b, 0x60 }, /* -43.5 dB */
+	{ 0x00, 0x19, 0xd8 }, /* -44.0 dB */
+	{ 0x00, 0x18, 0x65 }, /* -44.5 dB */
+	{ 0x00, 0x17, 0x08 }, /* -45.0 dB */
+	{ 0x00, 0x15, 0xbe }, /* -45.5 dB */
+	{ 0x00, 0x14, 0x87 }, /* -46.0 dB */
+	{ 0x00, 0x13, 0x61 }, /* -46.5 dB */
+	{ 0x00, 0x12, 0x4b }, /* -47.0 dB */
+	{ 0x00, 0x11, 0x45 }, /* -47.5 dB */
+	{ 0x00, 0x10, 0x4e }, /* -48.0 dB */
+	{ 0x00, 0x0f, 0x64 }, /* -48.5 dB */
+	{ 0x00, 0x0e, 0x88 }, /* -49.0 dB */
+	{ 0x00, 0x0d, 0xb8 }, /* -49.5 dB */
+	{ 0x00, 0x0c, 0xf3 }, /* -50.0 dB */
+	{ 0x00, 0x0c, 0x3a }, /* -50.5 dB */
+	{ 0x00, 0x0b, 0x8b }, /* -51.0 dB */
+	{ 0x00, 0x0a, 0xe5 }, /* -51.5 dB */
+	{ 0x00, 0x0a, 0x49 }, /* -52.0 dB */
+	{ 0x00, 0x09, 0xb6 }, /* -52.5 dB */
+	{ 0x00, 0x09, 0x2b }, /* -53.0 dB */
+	{ 0x00, 0x08, 0xa8 }, /* -53.5 dB */
+	{ 0x00, 0x08, 0x2c }, /* -54.0 dB */
+	{ 0x00, 0x07, 0xb7 }, /* -54.5 dB */
+	{ 0x00, 0x07, 0x48 }, /* -55.0 dB */
+	{ 0x00, 0x06, 0xe0 }, /* -55.5 dB */
+	{ 0x00, 0x06, 0x7d }, /* -56.0 dB */
+	{ 0x00, 0x06, 0x20 }, /* -56.5 dB */
+	{ 0x00, 0x05, 0xc9 }, /* -57.0 dB */
+	{ 0x00, 0x05, 0x76 }, /* -57.5 dB */
+	{ 0x00, 0x05, 0x28 }, /* -58.0 dB */
+	{ 0x00, 0x04, 0xde }, /* -58.5 dB */
+	{ 0x00, 0x04, 0x98 }, /* -59.0 dB */
+	{ 0x00, 0x04, 0x56 }, /* -59.5 dB */
+	{ 0x00, 0x04, 0x18 }, /* -60.0 dB */
+	{ 0x00, 0x03, 0xdd }, /* -60.5 dB */
+	{ 0x00, 0x03, 0xa6 }, /* -61.0 dB */
+	{ 0x00, 0x03, 0x72 }, /* -61.5 dB */
+	{ 0x00, 0x03, 0x40 }, /* -62.0 dB */
+	{ 0x00, 0x03, 0x12 }, /* -62.5 dB */
+	{ 0x00, 0x02, 0xe6 }, /* -63.0 dB */
+	{ 0x00, 0x02, 0xbc }, /* -63.5 dB */
+	{ 0x00, 0x02, 0x95 }, /* -64.0 dB */
+	{ 0x00, 0x02, 0x70 }, /* -64.5 dB */
+	{ 0x00, 0x02, 0x4d }, /* -65.0 dB */
+	{ 0x00, 0x02, 0x2c }, /* -65.5 dB */
+	{ 0x00, 0x02, 0x0d }, /* -66.0 dB */
+	{ 0x00, 0x01, 0xf0 }, /* -66.5 dB */
+	{ 0x00, 0x01, 0xd4 }, /* -67.0 dB */
+	{ 0x00, 0x01, 0xba }, /* -67.5 dB */
+	{ 0x00, 0x01, 0xa1 }, /* -68.0 dB */
+	{ 0x00, 0x01, 0x8a }, /* -68.5 dB */
+	{ 0x00, 0x01, 0x74 }, /* -69.0 dB */
+	{ 0x00, 0x01, 0x5f }, /* -69.5 dB */
+	{ 0x00, 0x01, 0x4b }, /* -70.0 dB */
+	{ 0x00, 0x00, 0x00 }  /* Mute */
+};
+
 #define SNAPPER_NFORMATS	1
 static const struct audio_format snapper_formats[SNAPPER_NFORMATS] = {
 	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
@@ -335,7 +517,7 @@ int
 snapper_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct confargs *ca;
-	int soundbus, soundchip;
+	int soundbus, soundchip, soundcodec;
 	char compat[32];
 
 	ca = aux;
@@ -349,10 +531,14 @@ snapper_match(struct device *parent, struct cfdata *match, void *aux)
 	bzero(compat, sizeof compat);
 	OF_getprop(soundchip, "compatible", compat, sizeof compat);
 
-	if (strcmp(compat, "snapper") != 0)
-		return 0;
+	if (strcmp(compat, "snapper") == 0)
+		return 1;
+		
+	if (OF_getprop(soundchip,"platform-tas-codec-ref",
+	    &soundcodec, sizeof soundcodec) == sizeof soundcodec)
+		return 1;
 
-	return 1;
+	return 0;
 }
 
 void
@@ -398,7 +584,7 @@ snapper_attach(struct device *parent, struct device *self, void *aux)
 
 	/* intr_establish(cirq, cirq_type, IPL_AUDIO, snapper_intr, sc); */
 	intr_establish(oirq, oirq_type, IPL_AUDIO, snapper_intr, sc);
-	/* intr_establish(iirq, iirq_type, IPL_AUDIO, snapper_intr, sc); */
+	intr_establish(iirq, iirq_type, IPL_AUDIO, snapper_intr, sc);
 
 	printf(": irq %d,%d,%d\n", cirq, oirq, iirq);
 
@@ -463,6 +649,20 @@ snapper_intr(void *v)
 		cmd++;
 	}
 
+	cmd = sc->sc_idmacmd;
+	count = sc->sc_ipages;
+	while (count-- > 0) {
+		if ((dbdma_ld16(&cmd->d_command) & 0x30) == 0x30) {
+			status = dbdma_ld16(&cmd->d_status);
+			cmd->d_status = 0;
+			if (status)	/* status == 0x8400 */
+				if (sc->sc_iintr)
+					(*sc->sc_iintr)(sc->sc_iarg);
+		}
+		cmd++;
+	}
+	    
+
 	return 1;
 }
 
@@ -526,6 +726,7 @@ snapper_query_encoding(void *h, struct audio_encoding *ae)
 		ae->precision = 8;
 		return 0;
 	default:
+		DPRINTF("snapper_query_encoding: invalid encoding %d\n", ae->index);
 		return EINVAL;
 	}
 }
@@ -564,13 +765,17 @@ snapper_set_params(void *h, int setmode, int usemode,
 			continue;
 
 		p = mode == AUMODE_PLAY ? play : rec;
-		if (p->sample_rate < 4000 || p->sample_rate > 50000)
+		if (p->sample_rate < 4000 || p->sample_rate > 50000) {
+			DPRINTF("snapper_set_params: invalid rate %d\n", p->sample_rate);
 			return EINVAL;
+		}
 
 		fil = mode == AUMODE_PLAY ? pfil : rfil;
 		if (auconv_set_converter(snapper_formats, SNAPPER_NFORMATS,
-					 mode, p, TRUE, fil) < 0)
+					 mode, p, TRUE, fil) < 0) {
+			DPRINTF("snapper_set_params: auconv_set_converter failed\n");
 			return EINVAL;
+		}
 		if (fil->req_size > 0)
 			p = &fil->filters[0].param;
 	}
@@ -643,6 +848,7 @@ snapper_set_port(void *h, mixer_ctrl_t *mc)
 {
 	struct snapper_softc *sc;
 	int l, r;
+	u_char data;
 
 	DPRINTF("snapper_set_port dev = %d, type = %d\n", mc->dev, mc->type);
 	sc = h;
@@ -674,10 +880,15 @@ snapper_set_port(void *h, mixer_ctrl_t *mc)
 		if (mc->un.mask == sc->sc_record_source)
 			return 0;
 		switch (mc->un.mask) {
-		case 1 << 0: /* CD */
-		case 1 << 1: /* microphone */
-		case 1 << 2: /* line in */
-			/* XXX TO BE DONE */
+		case 1 << 0: /* microphone */
+			/* Select right channel of B input */
+			data = DEQ_ACR_ADM | DEQ_ACR_LRB | DEQ_ACR_INP_B;
+			tas3004_write(sc, DEQ_ACR, &data);
+			break;
+		case 1 << 1: /* line in */
+			/* Select both channels of A input */
+			data = 0;
+			tas3004_write(sc, DEQ_ACR, &data);
 			break;
 		default: /* invalid argument */
 			return EINVAL;
@@ -796,13 +1007,11 @@ snapper_query_devinfo(void *h, mixer_devinfo_t *dip)
 		strcpy(dip->label.name, AudioNsource);
 		dip->type = AUDIO_MIXER_SET;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		dip->un.s.num_mem = 3;
-		strcpy(dip->un.s.member[0].label.name, AudioNcd);
+		dip->un.s.num_mem = 2;
+		strcpy(dip->un.s.member[0].label.name, AudioNmicrophone);
 		dip->un.s.member[0].mask = 1 << 0;
-		strcpy(dip->un.s.member[1].label.name, AudioNmicrophone);
+		strcpy(dip->un.s.member[1].label.name, AudioNline);
 		dip->un.s.member[1].mask = 1 << 1;
-		strcpy(dip->un.s.member[2].label.name, AudioNline);
-		dip->un.s.member[2].mask = 1 << 2;
 		return 0;
 
 	case SNAPPER_VOL_INPUT:
@@ -860,14 +1069,14 @@ snapper_query_devinfo(void *h, mixer_devinfo_t *dip)
 		return 0;
 	case SNAPPER_DIGI2:
 		dip->mixer_class = SNAPPER_MONITOR_CLASS;
-		strcpy(dip->label.name, "Digi2");
+		strcpy(dip->label.name, AudioNline);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		dip->un.v.num_channels = 2;
 		return 0;
 	case SNAPPER_ANALOG:
 		dip->mixer_class = SNAPPER_MONITOR_CLASS;
-		strcpy(dip->label.name, "Analog");
+		strcpy(dip->label.name, AudioNmicrophone);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		dip->un.v.num_channels = 2;
@@ -956,9 +1165,49 @@ snapper_trigger_input(void *h, void *start, void *end, int bsize,
 		      void (*intr)(void *), void *arg,
 		      const audio_params_t *param)
 {
+	struct snapper_softc *sc;
+	struct dbdma_command *cmd;
+	vaddr_t va;
+	int i, len, intmode;
 
-	printf("snapper_trigger_input called\n");
-	return 1;
+	DPRINTF("trigger_input %p %p 0x%x\n", start, end, bsize);
+	sc = h;
+	cmd = sc->sc_idmacmd;
+	sc->sc_iintr = intr;
+	sc->sc_iarg = arg;
+	sc->sc_ipages = ((char *)end - (char *)start) / NBPG;
+
+#ifdef DIAGNOSTIC
+	if (sc->sc_ipages > 16)
+		panic("snapper_trigger_input");
+#endif
+
+	va = (vaddr_t)start;
+	len = 0;
+	for (i = sc->sc_ipages; i > 0; i--) {
+		len += NBPG;
+		if (len < bsize)
+			intmode = 0;
+		else {
+			len = 0;
+			intmode = DBDMA_INT_ALWAYS;
+		}
+
+		DBDMA_BUILD(cmd, DBDMA_CMD_IN_MORE, 0, NBPG, vtophys(va),
+		    intmode, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+		cmd++;
+		va += NBPG;
+	}
+
+	DBDMA_BUILD(cmd, DBDMA_CMD_NOP, 0, 0,
+	    0/*vtophys((vaddr_t)sc->sc_odmacmd)*/, 0, DBDMA_WAIT_NEVER,
+	    DBDMA_BRANCH_ALWAYS);
+
+	dbdma_st32(&cmd->d_cmddep, vtophys((vaddr_t)sc->sc_idmacmd));
+
+	dbdma_start(sc->sc_idma, sc->sc_idmacmd);
+
+	return 0;
 }
 
 void
@@ -1014,19 +1263,46 @@ void snapper_set_bass(struct snapper_softc *sc, int stuff)
 void snapper_write_mixers(struct snapper_softc *sc)
 {
 	uint8_t regs[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-	regs[0] = (sc->mixer[0] >> 4) & 0xff;
-	regs[1] = (sc->mixer[0] << 4) & 0xff;
-	regs[3] = (sc->mixer[1] >> 4) & 0xff;
-	regs[4] = (sc->mixer[1] << 4) & 0xff;
-	regs[5] = (sc->mixer[2] >> 4) & 0xff;
-	regs[7] = (sc->mixer[2] << 4) & 0xff;
+	int i;
+
+	/* Left channel of SDIN1 */
+	i = 177 - (sc->mixer[0] * 177 / 255);
+	regs[0] = snapper_mixer_gain[i][0];
+	regs[1] = snapper_mixer_gain[i][1];
+	regs[2] = snapper_mixer_gain[i][2];
+
+	/* Left channel of SDIN2 */
+	i = 177 - (sc->mixer[1] * 177 / 255);
+	regs[3] = snapper_mixer_gain[i][0];
+	regs[4] = snapper_mixer_gain[i][1];
+	regs[5] = snapper_mixer_gain[i][2];
+
+	/* Left channel of analog input */
+	i = 177 - (sc->mixer[2] * 177 / 255);
+	regs[6] = snapper_mixer_gain[i][0];
+	regs[7] = snapper_mixer_gain[i][1];
+	regs[8] = snapper_mixer_gain[i][2];
+
 	tas3004_write(sc, DEQ_MIXER_L, regs);
-	regs[0] = (sc->mixer[3] >> 4) & 0xff;
-	regs[1] = (sc->mixer[3] << 4) & 0xff;
-	regs[3] = (sc->mixer[4] >> 4) & 0xff;
-	regs[4] = (sc->mixer[4] << 4) & 0xff;
-	regs[5] = (sc->mixer[5] >> 4) & 0xff;
-	regs[7] = (sc->mixer[5] << 4) & 0xff;
+
+	/* Right channel of SDIN1 */
+	i = 177 - (sc->mixer[3] * 177 / 255);
+	regs[0] = snapper_mixer_gain[i][0];
+	regs[1] = snapper_mixer_gain[i][1];
+	regs[2] = snapper_mixer_gain[i][2];
+
+	/* Right channel of SDIN2 */
+	i = 177 - (sc->mixer[4] * 177 / 255);
+	regs[3] = snapper_mixer_gain[i][0];
+	regs[4] = snapper_mixer_gain[i][1];
+	regs[5] = snapper_mixer_gain[i][2];
+
+	/* Right channel of analog input */
+	i = 177 - (sc->mixer[5] * 177 / 255);
+	regs[6] = snapper_mixer_gain[i][0];
+	regs[7] = snapper_mixer_gain[i][1];
+	regs[8] = snapper_mixer_gain[i][2];
+
 	tas3004_write(sc, DEQ_MIXER_R, regs);
 }
 
@@ -1086,6 +1362,7 @@ snapper_set_rate(struct snapper_softc *sc, u_int rate)
 		break;
 
 	default:
+		DPRINTF("snapper_set_rate: invalid rate %u\n", rate);
 		return EINVAL;
 	}
 
@@ -1164,7 +1441,7 @@ const struct tas3004_reg tas3004_initdata = {
 	{ 0x10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },	/* BIQUAD */
 	{ 0, 0, 0 },						/* LLB_GAIN */
 	{ 0, 0, 0 },						/* RLB_GAIN */
-	{ 0xc0 },							/* ACR - right channel of input B is the microphone */
+	{ DEQ_ACR_ADM | DEQ_ACR_LRB | DEQ_ACR_INP_B },		/* ACR - right channel of input B is the microphone */
 	{ 2 }							/* MCR2 - AllPass mode since we don't use the equalizer anyway */
 };
 
@@ -1214,13 +1491,13 @@ tas3004_write(struct snapper_softc *sc, u_int reg, const void *data)
 {
 	int size;
 	static char regblock[sizeof(struct tas3004_reg)+1];
-	
+		
 	KASSERT(reg < sizeof tas3004_regsize);
 	size = tas3004_regsize[reg];
 	KASSERT(size > 0);
 
-#ifdef DEBUG_SNAPPER
-	printf("reg: %x, %d %d\n",reg,size,((char*)data)[0]);
+#ifdef SNAPPER_DEBUG
+	printf("reg: %x, %d %d\n",reg,size,((const char*)data)[0]);
 #endif
 #if 0
 	ki2c_setmode(sc->sc_i2c, 8); /* std+sub mode */
@@ -1232,7 +1509,7 @@ tas3004_write(struct snapper_softc *sc, u_int reg, const void *data)
 	regblock[0] = reg;
 	memcpy(&regblock[1], data, size);
 	iic_acquire_bus(sc->sc_i2c, 0);
-	iic_exec(sc->sc_i2c, I2C_OP_WRITE, sc->sc_deqaddr, &regblock, size + 1,
+	iic_exec(sc->sc_i2c, I2C_OP_WRITE, sc->sc_deqaddr, regblock, size + 1,
 	    NULL, 0, 0);
 	iic_release_bus(sc->sc_i2c, 0);
 	
@@ -1415,7 +1692,7 @@ snapper_init(struct snapper_softc *sc, int node)
 		OF_getprop(gpio, "name", name, sizeof name);
 		OF_getprop(gpio, "audio-gpio", audio_gpio, sizeof audio_gpio);
 		OF_getprop(gpio, "AAPL,address", &addr, sizeof addr);
-		/* printf("0x%x %s %s\n", gpio, name, audio_gpio); */
+		DPRINTF(" 0x%x %s %s\n", gpio, name, audio_gpio);
 
 		/* gpio5 */
 		if (strcmp(audio_gpio, "headphone-mute") == 0)
@@ -1476,6 +1753,11 @@ snapper_init(struct snapper_softc *sc, int node)
 	
 	sc->sc_bass = 128;
 	sc->sc_treble = 128;
+
+	/* Record source defaults to microphone.  This reflects the
+	 * default value for the ACR (see tas3004_initdata).
+	 */
+	sc->sc_record_source = 1 << 0;
 	
 	/* We mute the analog input for now */
 	sc->mixer[0] = 80;
