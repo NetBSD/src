@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.5 2003/06/12 11:20:13 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.6 2006/08/11 13:35:54 hubertf Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.6 2002/02/03 22:21:56 skrll Exp */
 
@@ -63,4 +63,6 @@ message set_kernel_2
 {Kernel (GENERIC_SCSI3)}
 message set_kernel_3
 {Kernel (GENERIC_SUN4U)}
+message set_kernel_4
+{Kernel (GENERIC.MP)}
 

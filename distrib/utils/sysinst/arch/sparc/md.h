@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.22 2006/02/26 10:25:54 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.23 2006/08/11 13:35:54 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,6 +63,7 @@
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
 #define SET_KERNEL_2_NAME	"kern-GENERIC_SCSI3"
 #define SET_KERNEL_3_NAME	"kern-GENERIC_SUN4U"
+#define SET_KERNEL_4_NAME	"kern-GENERIC.MP"
 
 /*
  * Disk names accepted as valid targets for a from-scratch installation.
