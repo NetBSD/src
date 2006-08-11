@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_powernow.c,v 1.4 2006/08/06 16:05:07 xtraeme Exp $	*/
+/*	$NetBSD: lkminit_powernow.c,v 1.4.2.1 2006/08/11 05:09:17 riz Exp $	*/
 
 /*
  * Derived from:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.4 2006/08/06 16:05:07 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.4.2.1 2006/08/11 05:09:17 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.4 2006/08/06 16:05:07 xtraeme
 
 int powernow_lkmentry(struct lkm_table *, int, int);
 static int powernow_mod_handle(struct lkm_table *, int);
-void pnowk7_destroy(void);
 
 MOD_MISC("powernow");
 
@@ -90,7 +89,7 @@ powernow_mod_handle(struct lkm_table *lkmtp, int cmd)
 		break;		/* Success */
 
 	case LKM_E_UNLOAD:
-		pnowk7_destroy();
+		k7_powernow_destroy();
 		break;		/* Success */
 
 	default:	/* we only understand load/unload */
