@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.21 2006/04/05 16:55:07 garbled Exp $	*/
+/*	$NetBSD: md.c,v 1.22 2006/08/11 13:39:44 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -182,6 +182,7 @@ md_cleanup_install(void)
 	run_program(0, "rm -f %s", target_expand("/sysinst"));
 	run_program(0, "rm -f %s", target_expand("/.termcap"));
 	run_program(0, "rm -f %s", target_expand("/.profile"));
+	
 	if (strstr(instsys.version, "(GENERIC32_IP12)"))
 		run_program(0, "/usr/mdec/sgivol -f -w netbsd %s %s",
 			    target_expand("/netbsd.ecoff"), diskdev);
