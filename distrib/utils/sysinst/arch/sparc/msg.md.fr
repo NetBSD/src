@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.8 2003/06/12 11:20:13 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.9 2006/08/11 13:35:54 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,4 +62,6 @@ message set_kernel_2
 {Kernel (GENERIC_SCSI3)}
 message set_kernel_3
 {Kernel (GENERIC_SUN4U)}
+message set_kernel_4
+{Kernel (GENERIC.MP)}
 
