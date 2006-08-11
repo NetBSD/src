@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.45 2006/07/12 15:02:15 yamt Exp $
+#	$NetBSD: files.xen,v 1.46 2006/08/11 13:22:43 yamt Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -125,6 +125,7 @@ file	arch/xen/i386/mainbus.c		mainbus
 device	hypervisor { }: isabus, pcibus, sysmon_power, xendevbus, acpibus
 attach hypervisor at hypervisorbus
 file	arch/xen/xen/hypervisor.c	hypervisor needs-flag
+file	arch/xen/xen/shutdown_xenbus.c	hypervisor & xen3
 
 # Xenbus (xen3 only)
 device xenbus {[id = -1]}

@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.25 2006/07/07 18:15:53 yamt Exp $ */
+/* $NetBSD: hypervisor.c,v 1.26 2006/08/11 13:22:43 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,13 +63,16 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.25 2006/07/07 18:15:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.26 2006/08/11 13:22:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+
+#ifndef XEN3
 #include <dev/sysmon/sysmonvar.h>
+#endif
 
 #include "xenbus.h"
 #include "xencons.h"
@@ -191,7 +194,6 @@ struct  x86_isa_chipset x86_isa_chipset;
 /* shutdown/reboot message stuff */
 #ifndef XEN3
 static void hypervisor_shutdown_handler(ctrl_msg_t *, unsigned long);
-#endif
 static struct sysmon_pswitch hysw_shutdown = {
 	.smpsw_type = PSWITCH_TYPE_POWER,
 	.smpsw_name = "hypervisor",
@@ -200,6 +202,7 @@ static struct sysmon_pswitch hysw_reboot = {
 	.smpsw_type = PSWITCH_TYPE_RESET,
 	.smpsw_name = "hypervisor",
 };
+#endif
 
 /*
  * Probe for the hypervisor; always succeeds.
@@ -361,12 +364,12 @@ hypervisor_attach(parent, self, aux)
 #endif
 	}
 #endif
+#ifndef XEN3
 	if (sysmon_pswitch_register(&hysw_reboot) != 0 ||
 	    sysmon_pswitch_register(&hysw_shutdown) != 0)
 		printf("%s: unable to register with sysmon\n",
 		    self->dv_xname);
-#ifndef XEN3
-	else 
+	else
 		ctrl_if_register_receiver(CMSG_SHUTDOWN,
 		    hypervisor_shutdown_handler, CALLBACK_IN_BLOCKING_CONTEXT);
 #endif
