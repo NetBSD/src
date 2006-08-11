@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcalarm.c,v 1.4 2005/12/24 20:07:41 perry Exp $	*/
+/*	$NetBSD: rtcalarm.c,v 1.4.8.1 2006/08/11 15:43:16 yamt Exp $	*/
 /*
  * Copyright (c) 1995 MINOURA Makoto.
  * All rights reserved.
@@ -46,8 +46,8 @@
 
 char           *prog;
 
-static volatile void usage __P((void));
-static volatile void myperror __P((const char *, int));
+static void usage __P((void)) __attribute__((__noreturn__));
+static void myperror __P((const char *, int)) __attribute__((__noreturn__));
 
 static void showinfo __P((void));
 static char    *numstr __P((unsigned int));
@@ -75,7 +75,7 @@ main(argc, argv)
 	return 0;
 }
 
-static volatile void
+static void
 usage(void)
 {
 	fprintf(stderr, "Usage: %s [[-w day-of-the-week] [-d day-of-the-month]\n", prog);
@@ -84,7 +84,7 @@ usage(void)
 	exit(1);
 }
 
-static volatile void
+static void
 myperror(str, fd)
 	const char     *str;
 	int             fd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd6446x_subr.S,v 1.5 2006/01/22 05:16:58 uwe Exp $	*/
+/*	$NetBSD: hd6446x_subr.S,v 1.5.6.1 2006/08/11 15:41:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -55,9 +55,8 @@ NENTRY(hd6446x_intr_raise)
 	bt/s	1f
 	 not	r1,	r1	/* r1 = 0xffffff0f */
 	and	r1,	r2	/* r2 = SR & ~0xf0 */
-	mov	r4,	r1
-	or	r2,	r1	/* r1 = (SR & ~0xf0) | s */
-	ldc	r1,	sr	/* SR = r1 */
+	or	r4,	r2	/* r2 = (SR & ~0xf0) | s */
+	ldc	r2,	sr	/* SR = r2 */
 	shlr2	r4
 	shlr	r4
 	mov.l	2f,	r1

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.2.2.2 2006/06/26 12:52:57 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.2.2.3 2006/08/11 15:45:46 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.2.2.2 2006/06/26 12:52:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.2.2.3 2006/08/11 15:45:46 yamt Exp $");
 
 #define	VMEM_DEBUG
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.2.2.2 2006/06/26 12:52:57 yamt Exp $
 #include <sys/malloc.h>
 #include <sys/once.h>
 #include <sys/pool.h>
+#include <sys/proc.h>
 #include <sys/vmem.h>
 #else /* defined(_KERNEL) */
 #include "../sys/vmem.h"
@@ -70,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.2.2.2 2006/06/26 12:52:57 yamt Exp $
 #define	simple_lock_init(a)	/* nothing */
 #define	simple_lock(a)		/* nothing */
 #define	simple_unlock(a)	/* nothing */
+#define	ASSERT_SLEEPABLE(lk, msg) /* nothing */
 #endif /* defined(_KERNEL) */
 
 struct vmem;
@@ -595,6 +597,9 @@ vmem_alloc(vmem_t *vm, vmem_size_t size0, vm_flag_t flags)
 	KASSERT(size0 > 0);
 	KASSERT(size > 0);
 	KASSERT(strat == VM_BESTFIT || strat == VM_INSTANTFIT);
+	if ((flags & VM_SLEEP) != 0) {
+		ASSERT_SLEEPABLE(NULL, "vmem_alloc");
+	}
 
 	btnew = bt_alloc(vm, flags);
 	if (btnew == NULL) {

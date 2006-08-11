@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.47.2.1 2006/05/24 10:56:58 yamt Exp $	*/
+/*	$NetBSD: ofb.c,v 1.47.2.2 2006/08/11 15:42:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.47.2.1 2006/05/24 10:56:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.47.2.2 2006/08/11 15:42:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -64,11 +64,15 @@ __KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.47.2.1 2006/05/24 10:56:58 yamt Exp $");
 #include <dev/wscons/wsdisplay_vconsvar.h>
 #include <macppc/dev/ofbvar.h>
 
+#if defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+int ofb_enable_cache = 0;
+#else
 #if OFB_ENABLE_CACHE
 int ofb_enable_cache = 1;
 #else
 int ofb_enable_cache = 0;
 #endif
+#endif /* PPC_OEA64 */
 
 static int	ofbmatch(struct device *, struct cfdata *, void *);
 static void	ofbattach(struct device *, struct device *, void *);
@@ -269,6 +273,7 @@ ofb_init_rasops(int node, struct rasops_info *ri)
 		return FALSE;
 
 	/* Enable write-through cache. */
+#if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
 	if (ofb_enable_cache) {
 		vaddr_t va;
 		/*
@@ -288,6 +293,7 @@ ofb_init_rasops(int node, struct rasops_info *ri)
 			}
 		}
 	}
+#endif /* PPC_OEA64 */
 
 	/* initialize rasops */
 	ri->ri_width = width;
@@ -415,7 +421,7 @@ ofb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct ofb_softc *sc = vd->cookie;
 	struct rasops_info *ri;
 	u_int32_t *ap = sc->sc_addrs;
-	struct proc *me;
+	struct lwp *me;
 	int i;
 
 	if (vd->active == NULL) {
@@ -433,9 +439,10 @@ ofb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	me = __curproc();
+	me = curlwp;
 	if (me != NULL) {
-		if (kauth_authorize_generic(me->p_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
+		if (kauth_authorize_generic(me->l_cred, KAUTH_GENERIC_ISSUSER,
+		    NULL) != 0) {
 			printf("%s: mmap() rejected.\n", sc->sc_dev.dv_xname);
 			return -1;
 		}

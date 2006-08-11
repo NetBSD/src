@@ -1,4 +1,4 @@
-/*	$NetBSD: btkbd.c,v 1.1.6.2 2006/06/26 12:50:37 yamt Exp $	*/
+/*	$NetBSD: btkbd.c,v 1.1.6.3 2006/08/11 15:43:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.1.6.2 2006/06/26 12:50:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.1.6.3 2006/08/11 15:43:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -150,7 +150,7 @@ const struct wskbd_mapdata btkbd_keymapdata = {
 static void btkbd_input(struct bthidev *, uint8_t *, int);
 
 /* internal prototypes */
-static const char *btkbd_parse_desc(struct btkbd_softc *, int, void *, int);
+static const char *btkbd_parse_desc(struct btkbd_softc *, int, const void *, int);
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 #ifdef BTKBD_REPEAT
@@ -224,7 +224,7 @@ btkbd_detach(struct device *self, int flags)
 }
 
 static const char *
-btkbd_parse_desc(struct btkbd_softc *sc, int id, void *desc, int dlen)
+btkbd_parse_desc(struct btkbd_softc *sc, int id, const void *desc, int dlen)
 {
 	struct hid_data *d;
 	struct hid_item h;

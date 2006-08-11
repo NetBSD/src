@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.32.8.1 2006/05/24 10:58:13 yamt Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.32.8.2 2006/08/11 15:45:08 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.32.8.1 2006/05/24 10:58:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.32.8.2 2006/08/11 15:45:08 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -154,12 +154,10 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 		/* Ok, so we can at least do a lookup... How about actually
 		 * getting a vp for it? */
 
-		if ((retcode = VOP_GETATTR(vp, &va,
-		    l->l_proc->p_cred, l)) != 0) {
+		if ((retcode = VOP_GETATTR(vp, &va, l->l_cred, l)) != 0)
 			return;
-		}
 		retcode = VOP_IOCTL(vp, DIOCGPART, &dpart,
-		    FREAD, l->l_proc->p_cred, l);
+		    FREAD, l->l_cred, l);
 		if (retcode) {
 			return;
 		}

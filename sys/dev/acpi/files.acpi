@@ -1,84 +1,93 @@
-#	$NetBSD: files.acpi,v 1.35.6.1 2006/06/26 12:50:37 yamt Exp $
+#	$NetBSD: files.acpi,v 1.35.6.2 2006/08/11 15:43:59 yamt Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
-defflag	opt_acpi.h	ACPIVERBOSE ACPI_DEBUG ACPI_ACTIVATE_DEV ACPI_DSDT_OVERRIDE
+defflag	opt_acpi.h	ACPIVERBOSE ACPI_DEBUG ACPI_ACTIVATE_DEV
+			ACPI_DSDT_OVERRIDE ACPI_SCANPCI
 defparam opt_acpi.h	ACPI_DSDT_FILE
 
-device	acpi { }: sysmon_power, sysmon_taskq
+define	acpiapmbus { }
+define	acpinodebus { }
+
+device	acpi: acpiapmbus, acpinodebus, sysmon_power, sysmon_taskq
 attach	acpi at acpibus
 file	dev/acpi/acpi.c			acpi		needs-flag
 file	dev/acpi/acpi_resource.c	acpi
 file	dev/acpi/acpi_powerres.c	acpi
-file	dev/acpi/acpi_madt.c		acpi & mpacpi
+file	dev/acpi/acpi_madt.c		acpi
+file	dev/acpi/acpi_pci_link.c	acpi
 file	dev/acpi/acpi_quirks.c		acpi
 file	dev/acpi/acpi_timer.c		acpi
 
+# ACPI/apm emulation.
+attach  apm at acpiapmbus with acpiapm
+file	dev/acpi/acpi_apm.c		acpiapm
+
 # ACPI Embedded Controller
 device	acpiec
-attach	acpiec at acpi
+attach	acpiec at acpinodebus
 file	dev/acpi/acpi_ec.c		acpiec		needs-flag
 
 # ACPI Lid Switch
 device	acpilid: sysmon_power
-attach	acpilid at acpi
+attach	acpilid at acpinodebus
 file	dev/acpi/acpi_lid.c		acpilid
 
 # ACPI Button
 device	acpibut: sysmon_power
-attach	acpibut at acpi
+attach	acpibut at acpinodebus
 file	dev/acpi/acpi_button.c		acpibut
 
 # ACPI AC Adapter
 device	acpiacad: sysmon_envsys, sysmon_power
-attach	acpiacad at acpi
+attach	acpiacad at acpinodebus
 file	dev/acpi/acpi_acad.c		acpiacad
 
 # ACPI Control Method Battery
 device	acpibat: sysmon_envsys
-attach	acpibat at acpi
+attach	acpibat at acpinodebus
 file	dev/acpi/acpi_bat.c		acpibat
 
 # ACPI Thermal Zone
 device	acpitz: sysmon_envsys
-attach	acpitz at acpi
+attach	acpitz at acpinodebus
 file	dev/acpi/acpi_tz.c		acpitz
 
 # Serial interface
-attach	com at acpi with com_acpi
+attach	com at acpinodebus with com_acpi
 file	dev/acpi/com_acpi.c		com_acpi
 
 # Floppy disk controller
-attach	fdc at acpi with fdc_acpi
+attach	fdc at acpinodebus with fdc_acpi
 file	dev/acpi/fdc_acpi.c		fdc_acpi
 
 # Parallel interface
-attach	lpt at acpi with lpt_acpi
+attach	lpt at acpinodebus with lpt_acpi
 file	dev/acpi/lpt_acpi.c		lpt_acpi & !ppbus
 
-attach	atppc at acpi with atppc_acpi: isadma
+attach	atppc at acpinodebus with atppc_acpi: isadma
 file	dev/acpi/atppc_acpi.c		atppc_acpi
 
 # Keyboard controller
-attach	pckbc at acpi with pckbc_acpi
+attach	pckbc at acpinodebus with pckbc_acpi
 file	dev/acpi/pckbc_acpi.c		pckbc_acpi
 
 # NeoMagic 256AV audio with CS4232 codec
-attach	wss at acpi with wss_acpi
+attach	wss at acpinodebus with wss_acpi
 file	dev/acpi/wss_acpi.c		wss_acpi
 
 # Roland MPU401 (compatible) MIDI UART
-attach	mpu at acpi with mpu_acpi
+attach	mpu at acpinodebus with mpu_acpi
 file	dev/acpi/mpu_acpi.c		mpu_acpi
 
 # Joystick/Game port
-attach	joy at acpi with joy_acpi
+attach	joy at acpinodebus with joy_acpi
 file	dev/acpi/joy_acpi.c		joy_acpi
 
 # AT-style speaker sound
-attach	pcppi at acpi with pcppi_acpi
+attach	pcppi at acpinodebus with pcppi_acpi
 file	dev/acpi/pcppi_acpi.c		pcppi_acpi
 
 # AT Timer
-attach	attimer at acpi with attimer_acpi
+attach	attimer at acpinodebus with attimer_acpi
 file	dev/acpi/attimer_acpi.c		attimer_acpi

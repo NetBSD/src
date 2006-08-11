@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.18.2.2 2006/06/26 12:52:55 yamt Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.18.2.3 2006/08/11 15:45:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.18.2.2 2006/06/26 12:52:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.18.2.3 2006/08/11 15:45:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -955,7 +955,7 @@ tmpfs_mem_info(boolean_t total)
  * The vnode must be locked on entry and remain locked on exit.
  */
 int
-tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct proc *p)
+tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
 {
 	int error;
 	struct tmpfs_node *node;
@@ -973,7 +973,7 @@ tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct proc *p)
 	 * somewhere? */
 	if (kauth_cred_geteuid(cred) != node->tn_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)))
+	    &l->l_acflag)))
 		return error;
 	if (kauth_cred_geteuid(cred) == 0) {
 		/* The super-user is only allowed to change flags if the file
@@ -1011,7 +1011,7 @@ tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct proc *p)
  * The vnode must be locked on entry and remain locked on exit.
  */
 int
-tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct proc *p)
+tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 {
 	int error, ismember = 0;
 	struct tmpfs_node *node;
@@ -1033,7 +1033,7 @@ tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct proc *p)
 	 * somewhere? */
 	if (kauth_cred_geteuid(cred) != node->tn_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)))
+	    &l->l_acflag)))
 		return error;
 	if (kauth_cred_geteuid(cred) != 0) {
 		if (vp->v_type != VDIR && (mode & S_ISTXT))
@@ -1065,7 +1065,7 @@ tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct proc *p)
  */
 int
 tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
-    struct proc *p)
+    struct lwp *l)
 {
 	int error, ismember = 0;
 	struct tmpfs_node *node;
@@ -1095,9 +1095,9 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	 * somewhere? */
 	if ((kauth_cred_geteuid(cred) != node->tn_uid || uid != node->tn_uid ||
 	    (gid != node->tn_gid && !(kauth_cred_getegid(cred) == node->tn_gid ||
-	     (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
+	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
 	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-					&p->p_acflag)) != 0))
+	    &l->l_acflag)) != 0))
 		return error;
 
 	node->tn_uid = uid;
@@ -1120,7 +1120,7 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
  */
 int
 tmpfs_chsize(struct vnode *vp, u_quad_t size, kauth_cred_t cred,
-    struct proc *p)
+    struct lwp *l)
 {
 	int error;
 	struct tmpfs_node *node;
@@ -1199,8 +1199,7 @@ tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
 	 * somewhere? */
 	if (kauth_cred_geteuid(cred) != node->tn_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-				       &l->l_proc->p_acflag)) &&
-	    ((vaflags & VA_UTIMES_NULL) == 0 ||
+	    &l->l_acflag)) && ((vaflags & VA_UTIMES_NULL) == 0 ||
 	    (error = VOP_ACCESS(vp, VWRITE, cred, l))))
 		return error;
 

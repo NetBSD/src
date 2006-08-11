@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.184.2.1 2006/04/01 12:06:15 yamt Exp $
+# $NetBSD: GENERIC,v 1.184.2.2 2006/08/11 15:41:43 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.184.2.1 $"
+#ident 		"GENERIC-$Revision: 1.184.2.2 $"
 
 maxusers	16
 
@@ -533,7 +533,7 @@ com*	at pcmcia? function ?		# Modems and serial cards
 # PCMCIA SCSI interfaces
 aic*	at pcmcia? function ?
 esp*	at pcmcia? function ?		# NCR53c406 SCSI
-spc*	at pcmcia? function ?
+spc*	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 
 # ATAPI bus support
 atapibus* at atapi?
@@ -578,7 +578,6 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass?
 scsibus* at umass? channel ?
 
 # USB audio
@@ -649,6 +648,7 @@ pseudo-device	ppp			# serial-line IP ports
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter		# packet filter ports
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter, NAT
 
 pseudo-device	vnd			# virtual disk ick

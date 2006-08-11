@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.42.2.2 2006/05/24 10:59:09 yamt Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.42.2.3 2006/08/11 15:46:48 yamt Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -626,7 +626,7 @@ struct in6_multi_mship *in6_joingroup __P((struct ifnet *, struct in6_addr *,
 int	in6_leavegroup __P((struct in6_multi_mship *));
 int	in6_mask2len __P((struct in6_addr *, u_char *));
 int	in6_control __P((struct socket *, u_long, caddr_t, struct ifnet *,
-	struct proc *));
+	struct lwp *));
 int	in6_update_ifa __P((struct ifnet *, struct in6_aliasreq *,
 	struct in6_ifaddr *, int));
 void	in6_purgeaddr __P((struct ifaddr *));

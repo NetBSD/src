@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.55.2.3 2006/05/24 10:58:54 yamt Exp $	*/
+/*	$NetBSD: libkern.h,v 1.55.2.4 2006/08/11 15:46:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -263,9 +263,11 @@ void	 bzero __P((void *, size_t));
 void	*memcpy __P((void *, const void *, size_t));
 int	 memcmp __P((const void *, const void *, size_t));
 void	*memset __P((void *, int, size_t));
-#if __GNUC_PREREQ__(2, 95) && !defined(__vax__)
+#if __GNUC_PREREQ__(2, 95) && (__GNUC_PREREQ__(4, 0) || !defined(__vax__))
 #define	memcpy(d, s, l)		__builtin_memcpy(d, s, l)
 #define	memcmp(a, b, l)		__builtin_memcmp(a, b, l)
+#endif
+#if __GNUC_PREREQ__(2, 95) && !defined(__vax__)
 #define	memset(d, v, l)		__builtin_memset(d, v, l)
 #endif
 
@@ -298,7 +300,7 @@ char	*strstr __P((const char *, const char *));
  */
 int	 ffs __P((int));
 #if __GNUC_PREREQ__(2, 95) && !defined(__vax__)
-#define	ffs(x)			__builtin_ffs(x)
+#define	ffs(x)		__builtin_ffs(x)
 #endif
 
 void	 __assert __P((const char *, const char *, int, const char *))

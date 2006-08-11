@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.242.2.4 2006/06/26 12:51:21 yamt Exp $
+#	$NetBSD: files.pci,v 1.242.2.5 2006/08/11 15:44:25 yamt Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -658,14 +658,13 @@ attach	viaenv at viapm
 file	dev/pci/viaenv.c		viaenv			needs-flag
 
 # Intel PIIX4 power management controller
-device	piixpm: i2cbus
+device	piixpm: i2cbus, acpipmtimer
 attach	piixpm at pci
 file	dev/pci/piixpm.c		piixpm
 
 # AMD 768MPX power management controller
 defflag	opt_amdpm.h			AMDPM_RND_COUNTERS
-define	amdpm {}
-device	amdpm: i2cbus, amdpm
+device	amdpm: i2cbus, acpipmtimer
 attach	amdpm at pci
 file	dev/pci/amdpm.c			amdpm
 file	dev/pci/amdpm_smbus.c		amdpm
@@ -752,6 +751,11 @@ device	voodoofb: wsemuldisplaydev, rasops8, vcons, videomode
 attach	voodoofb at pci
 file	dev/pci/voodoofb.c		voodoofb
 
+# VIA UniChrome framebuffer console driver
+device	unichromefb: wsemuldisplaydev, rasops32, vcons
+attach	unichromefb at pci
+file	dev/pci/unichromefb.c		unichromefb needs-flag
+
 # 3Com 3c990
 device	txp: ether, ifnet, arp
 attach	txp at pci
@@ -800,7 +804,7 @@ attach  xge  at pci
 file    dev/pci/if_xge.c		xge
 
 # Intel PRO/Wireless 2200BG/2915ABG
-device	iwi: ifnet, arp, wlan
+device	iwi: ifnet, arp, wlan, firmload
 attach	iwi at pci
 file	dev/pci/if_iwi.c		iwi
 
@@ -817,3 +821,8 @@ file	dev/pci/if_ath_pci.c		ath_pci
 device  nfe: ether, ifnet, arp, mii, mii_phy
 attach  nfe at pci
 file    dev/pci/if_nfe.c                nfe
+
+# MICREL Etherent
+device	kse: ether, ifnet, arp
+attach	kse at pci
+file	dev/pci/if_kse.c		kse

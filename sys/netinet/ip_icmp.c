@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.97.10.1 2006/04/01 12:07:48 yamt Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.97.10.2 2006/08/11 15:46:33 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.97.10.1 2006/04/01 12:07:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.97.10.2 2006/08/11 15:46:33 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -232,12 +232,12 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	unsigned oiplen = oip->ip_hl << 2;
 	struct icmp *icp;
 	struct mbuf *m;
+	struct m_tag *mtag;
 	unsigned icmplen, mblen;
 
 #ifdef ICMPPRINTFS
 	if (icmpprintfs)
-		printf("icmp_error(%p, type:%d, code:%d)\n", oip, type,
-			code);
+		printf("icmp_error(%p, type:%d, code:%d)\n", oip, type, code);
 #endif
 	if (type != ICMP_REDIRECT)
 		icmpstat.icps_error++;
@@ -355,6 +355,12 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	nip->ip_p = IPPROTO_ICMP;
 	nip->ip_src = oip->ip_src;
 	nip->ip_dst = oip->ip_dst;
+	/* move PF_GENERATED m_tag to new packet, if it exists */
+	mtag = m_tag_find(n, PACKET_TAG_PF_GENERATED, NULL);
+	if (mtag != NULL) {
+		m_tag_unlink(n, mtag);
+		m_tag_prepend(m, mtag);
+	}
 	icmp_reflect(m);
 
 freeit:
@@ -580,8 +586,9 @@ reflect:
 		icmpdst.sin_addr = icp->icmp_gwaddr;
 #ifdef	ICMPPRINTFS
 		if (icmpprintfs) {
-			printf("redirect dst `%s' to ", inet_ntoa(icp->icmp_ip.ip_dst));
-			printf("`%s'\n", inet_ntoa(icp->icmp_gwaddr));
+			printf("redirect dst `%s' to `%s'\n",
+			    inet_ntoa(icp->icmp_ip.ip_dst),
+			    inet_ntoa(icp->icmp_gwaddr));
 		}
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
@@ -865,8 +872,8 @@ icmp_send(struct mbuf *m, struct mbuf *opts)
 	m->m_len += hlen;
 #ifdef ICMPPRINTFS
 	if (icmpprintfs) {
-		printf("icmp_send to destination `%s' from ", inet_ntoa(ip->ip_dst));
-		printf("`%s'\n", inet_ntoa(ip->ip_src));
+		printf("icmp_send to destination `%s' from `%s'\n",
+		    inet_ntoa(ip->ip_dst), inet_ntoa(ip->ip_src));
 	}
 #endif
 	(void) ip_output(m, opts, NULL, 0,

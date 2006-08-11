@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.97.2.1 2006/05/24 10:58:42 yamt Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.97.2.2 2006/08/11 15:45:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.97.2.1 2006/05/24 10:58:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.97.2.2 2006/08/11 15:45:47 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -69,24 +69,22 @@ static void adjust_rights(struct mbuf *m, int len, struct lwp *l);
 extern const struct fileops socketops;
 
 int
-sys_socket(struct lwp *l, void *v, register_t *retval)
+sys___socket30(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys_socket_args /* {
+	struct sys___socket30_args /* {
 		syscallarg(int)	domain;
 		syscallarg(int)	type;
 		syscallarg(int)	protocol;
 	} */ *uap = v;
 
-	struct proc	*p;
 	struct filedesc	*fdp;
 	struct socket	*so;
 	struct file	*fp;
 	int		fd, error;
 
-	p = l->l_proc;
-	fdp = p->p_fd;
+	fdp = l->l_proc->p_fd;
 	/* falloc() will use the desciptor for us */
-	if ((error = falloc(p, &fp, &fd)) != 0)
+	if ((error = falloc(l, &fp, &fd)) != 0)
 		return (error);
 	fp->f_flag = FREAD|FWRITE;
 	fp->f_type = DTYPE_SOCKET;
@@ -166,7 +164,6 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 		syscallarg(struct sockaddr *)	name;
 		syscallarg(unsigned int *)	anamelen;
 	} */ *uap = v;
-	struct proc	*p;
 	struct filedesc	*fdp;
 	struct file	*fp;
 	struct mbuf	*nam;
@@ -175,8 +172,7 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 	struct socket	*so;
 	int		fflag;
 
-	p = l->l_proc;
-	fdp = p->p_fd;
+	fdp = l->l_proc->p_fd;
 	if (SCARG(uap, name) && (error = copyin(SCARG(uap, anamelen),
 	    &namelen, sizeof(namelen))))
 		return (error);
@@ -205,7 +201,7 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 			break;
 		}
 		error = tsleep((caddr_t)&so->so_timeo, PSOCK | PCATCH,
-			       netcon, 0);
+		    netcon, 0);
 		if (error) {
 			splx(s);
 			return (error);
@@ -219,7 +215,7 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 	}
 	fflag = fp->f_flag;
 	/* falloc() will use the descriptor for us */
-	if ((error = falloc(p, &fp, &fd)) != 0) {
+	if ((error = falloc(l, &fp, &fd)) != 0) {
 		splx(s);
 		return (error);
 	}
@@ -334,31 +330,29 @@ sys_socketpair(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int)		protocol;
 		syscallarg(int *)	rsv;
 	} */ *uap = v;
-	struct proc *p;
 	struct filedesc	*fdp;
 	struct file	*fp1, *fp2;
 	struct socket	*so1, *so2;
 	int		fd, error, sv[2];
 
-	p = l->l_proc;
-	fdp = p->p_fd;
+	fdp = l->l_proc->p_fd;
 	error = socreate(SCARG(uap, domain), &so1, SCARG(uap, type),
-			 SCARG(uap, protocol), l);
+	    SCARG(uap, protocol), l);
 	if (error)
 		return (error);
 	error = socreate(SCARG(uap, domain), &so2, SCARG(uap, type),
-			 SCARG(uap, protocol), l);
+	    SCARG(uap, protocol), l);
 	if (error)
 		goto free1;
 	/* falloc() will use the descriptor for us */
-	if ((error = falloc(p, &fp1, &fd)) != 0)
+	if ((error = falloc(l, &fp1, &fd)) != 0)
 		goto free2;
 	sv[0] = fd;
 	fp1->f_flag = FREAD|FWRITE;
 	fp1->f_type = DTYPE_SOCKET;
 	fp1->f_ops = &socketops;
 	fp1->f_data = (caddr_t)so1;
-	if ((error = falloc(p, &fp2, &fd)) != 0)
+	if ((error = falloc(l, &fp2, &fd)) != 0)
 		goto free3;
 	fp2->f_flag = FREAD|FWRITE;
 	fp2->f_type = DTYPE_SOCKET;
@@ -885,16 +879,14 @@ sys_getsockopt(struct lwp *l, void *v, register_t *retval)
 		syscallarg(void *)		val;
 		syscallarg(unsigned int *)	avalsize;
 	} */ *uap = v;
-	struct proc	*p;
 	struct file	*fp;
 	struct mbuf	*m;
 	unsigned int	op, i, valsize;
 	int		error;
 
-	p = l->l_proc;
 	m = NULL;
 	/* getsock() will use the descriptor for us */
-	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
+	if ((error = getsock(l->l_proc->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	if (SCARG(uap, val)) {
 		error = copyin((caddr_t)SCARG(uap, avalsize),
@@ -931,14 +923,12 @@ sys_getsockopt(struct lwp *l, void *v, register_t *retval)
 int
 sys_pipe(struct lwp *l, void *v, register_t *retval)
 {
-	struct proc	*p;
 	struct filedesc	*fdp;
 	struct file	*rf, *wf;
 	struct socket	*rso, *wso;
 	int		fd, error;
 
-	p = l->l_proc;
-	fdp = p->p_fd;
+	fdp = l->l_proc->p_fd;
 	if ((error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0, l)) != 0)
 		return (error);
 	if ((error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0, l)) != 0)
@@ -947,14 +937,14 @@ sys_pipe(struct lwp *l, void *v, register_t *retval)
 	wso->so_state |= SS_ISAPIPE;
 	rso->so_state |= SS_ISAPIPE;
 	/* falloc() will use the descriptor for us */
-	if ((error = falloc(p, &rf, &fd)) != 0)
+	if ((error = falloc(l, &rf, &fd)) != 0)
 		goto free2;
 	retval[0] = fd;
 	rf->f_flag = FREAD;
 	rf->f_type = DTYPE_SOCKET;
 	rf->f_ops = &socketops;
 	rf->f_data = (caddr_t)rso;
-	if ((error = falloc(p, &wf, &fd)) != 0)
+	if ((error = falloc(l, &wf, &fd)) != 0)
 		goto free3;
 	wf->f_flag = FWRITE;
 	wf->f_type = DTYPE_SOCKET;

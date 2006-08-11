@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.28.6.1 2006/04/01 12:07:18 yamt Exp $	*/
+/*	$NetBSD: satalink.c,v 1.28.6.2 2006/08/11 15:44:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.28.6.2 2006/08/11 15:44:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

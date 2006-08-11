@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.1.2.2 2006/04/11 11:53:35 yamt Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.1.2.3 2006/08/11 15:42:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -31,6 +31,6 @@
  *	@(#)exec.h	8.1 (Berkeley) 6/10/93
  */
 
-#define	AOUT_LDPGSZ	4096
+#define	AOUT_LDPGSZ	16384
 
 

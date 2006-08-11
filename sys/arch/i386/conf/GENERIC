@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.731.2.5 2006/06/26 12:44:38 yamt Exp $
+# $NetBSD: GENERIC,v 1.731.2.6 2006/08/11 15:41:53 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.731.2.5 $"
+#ident 		"GENERIC-$Revision: 1.731.2.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -44,7 +44,10 @@ options 	ENHANCED_SPEEDSTEP
 #options 	EST_FREQ_USERWRITE	# any user can set frequency
 
 # AMD PowerNow! K7
-#options 	POWERNOW_K7
+options 	POWERNOW_K7
+
+# AMD PowerNow! and Cool`n'Quiet technology
+options         POWERNOW_K8
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
@@ -177,6 +180,8 @@ file-system	PTYFS		# /dev/ptm support
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
+# Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
+# It is not recommended for general use.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -319,9 +324,7 @@ cpu* at mainbus?
 # To use the I/O APIC(s), enable the ioapic line above.
 #options 	MPBIOS		# configure CPUs and APICs using MPBIOS
 #options 	MPBIOS_SCANPCI	# find PCI roots using MPBIOS
-#options 	MPACPI		# configure CPUs and APICs using ACPI
-				# (acpi at mainbus must also be enabled)
-#options 	MPACPI_SCANPCI	# find PCI roots using MPACPI
+#options 	ACPI_SCANPCI	# find PCI roots using ACPI
 
 #acpi0 		at mainbus0
 
@@ -419,7 +422,7 @@ gpio* 	at elansc?
 					# SpeedStep support
 piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 #gscpcib* at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
-#viapcib* at pci? dev ? function ?	# VT8235 PCI-ISA w/ SMBus support
+#viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
 #iic*	at viapcib?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pceb*	at pci? dev ? function ?	# PCI-EISA bridges
@@ -592,10 +595,10 @@ piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
 iic*	at piixpm?			# SMBus on PIIX4
 
 # iTE IT87xxF and compatible hardware monitors
-#it0	at isa? port 0x290		# other ports: 0xc00, 0xd00.
+#it0	at isa? port 0x290		# other ports: 0xc00, 0xd00
 
 # LM7[89] and compatible hardware monitors
-#lm0	at isa?	port 0x290		# other common: 0x280, 0x310.
+#lm0	at isa?	port 0x290		# other common: 0x280, 0x310
 
 # PC87366 hardware monitor
 #nsclpcsio*	at isa?
@@ -652,6 +655,7 @@ uha*	at eisa? slot ?			# UltraStor 24f SCSI
 # PCMCIA SCSI controllers
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
+spc* 	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 
 # ISA Plug-and-Play SCSI controllers
 aha*	at isapnp? 			# Adaptec AHA-154[02
@@ -705,12 +709,14 @@ ciss*	at pci? dev ? function ?	# HP Smart Array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 mlx*	at eisa? slot ?			# Mylex DAC960 & DEC SWXCR family
+twa*	at pci? dev ? function ?	# 3ware Escalade 95xx RAID controllers
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
 
 ld*	at aac? unit ?			# logical disk devices
 ld*	at amr? unit ?
 ld*	at cac? unit ?
 ld*	at icp? unit ?
+ld*	at twa? unit ?
 ld*	at twe? unit ?
 ld*	at mlx? unit ?
 
@@ -838,8 +844,8 @@ ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
-ral*	at pci? dev ? function ?	# ralink wifi
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
 sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
@@ -1105,6 +1111,8 @@ radio*	at udsbr?
 
 # USB Generic driver
 ugen*	at uhub? port ?
+# On ugen bulk endpoints, perform read-ahead and write-behind.
+options	UGEN_BULK_RA_WB
 
 
 # IrDA and Consumer Ir devices
@@ -1240,11 +1248,11 @@ bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
 # Bluetooth USB Controllers
 ubt* at uhub? port ? configuration ? interface ?
 
-# Bluetooth remote device 'hub'
-pseudo-device bthub
+# Bluetooth Devices
+pseudo-device btdev
 
 # Bluetooth HID support
-bthidev* at bthub?
+bthidev* at btdev?
 
 # Bluetooth Mouse
 btms* at bthidev? reportid ?
@@ -1255,7 +1263,7 @@ btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
 
 # Bluetooth Audio support
-bthset* at bthub?
+btsco* at btdev?
 
 
 # Mice
@@ -1285,6 +1293,7 @@ joy*	at isapnp?			# Game ports (usually on audio cards)
 
 # PCI joysticks
 joy*	at pci?				# Game ports (usually on audio cards)
+#joy*	at eap?				# See CAVEATS in eap(4) before enabling
 joy*	at eso?				# ESS Solo-1 on-board joystick
 
 # ISA joysticks. Probe is a little strange; add only if you have one.
@@ -1333,6 +1342,7 @@ options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
@@ -1371,11 +1381,11 @@ pseudo-device	nsmb			# experimental - SMB requester
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
+#options	FILEASSOC		# fileassoc(9) - required for Veriexec 
+#options	FILEASSOC_NHOOKS=4	# Default number of storage slots
+
 # Veriexec
-#options VERIFIED_EXEC
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

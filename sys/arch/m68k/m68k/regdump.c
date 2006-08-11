@@ -1,4 +1,4 @@
-/*	$NetBSD: regdump.c,v 1.11 2005/12/11 12:17:59 christos Exp $	*/
+/*	$NetBSD: regdump.c,v 1.11.8.1 2006/08/11 15:42:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: regdump.c,v 1.11 2005/12/11 12:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: regdump.c,v 1.11.8.1 2006/08/11 15:42:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ void
 regdump(struct trapframe *tf, int sbytes)
 {
 	static int doingdump = 0;
-	register int i;
+	int i;
 	int s;
 
 	if (doingdump)
@@ -107,8 +107,8 @@ regdump(struct trapframe *tf, int sbytes)
 	s = splhigh();
 	doingdump = 1;
 	printf("pid = %d, lid = %d, pc = %s, ",
-	       curproc ? curproc->p_pid : -1,
-	       curlwp ? curlwp->l_lid : -1, hexstr(tf->tf_pc, 8));
+	    curproc ? curproc->p_pid : -1,
+	    curlwp ? curlwp->l_lid : -1, hexstr(tf->tf_pc, 8));
 	printf("ps = %s, ", hexstr(tf->tf_sr, 4));
 	printf("sfc = %d, ", getsfc() & 7);
 	printf("dfc = %d\n", getdfc() & 7);
@@ -124,10 +124,11 @@ regdump(struct trapframe *tf, int sbytes)
 	if (sbytes > 0) {
 		if (tf->tf_sr & PSL_S) {
 			printf("\n\nKernel stack (%s):",
-			       hexstr((int)(((int *)(void *)&tf)-1), 8));
+			    hexstr((int)(((int *)(void *)&tf)-1), 8));
 			dumpmem(((int *)(void *)&tf)-1, sbytes, 0);
 		} else {
-			printf("\n\nUser stack (%s):", hexstr(tf->tf_regs[SP], 8));
+			printf("\n\nUser stack (%s):",
+			    hexstr(tf->tf_regs[SP], 8));
 			dumpmem((int *)tf->tf_regs[SP], sbytes, 1);
 		}
 	}
@@ -138,11 +139,11 @@ regdump(struct trapframe *tf, int sbytes)
 static void
 dumpmem(int *ptr, int sz, int ustack)
 {
-	register int i, val;
-	register int limit;
+	int i, val;
+	int limit;
 
 	/* Stay in the same page */
-	limit = ((int)ptr) | (PAGE_SIZE-3);
+	limit = ((int)ptr) | (PAGE_SIZE - 3);
 
 	for (i = 0; i < sz; i++) {
 		if ((i & 7) == 0)
@@ -166,7 +167,7 @@ static char *
 hexstr(int val, int len)
 {
 	static char nbuf[9];
-	register int x, i;
+	int x, i;
 
 	if (len > 8) {
 		nbuf[0] = '\0';
@@ -179,5 +180,5 @@ hexstr(int val, int len)
 		nbuf[i] = HEXDIGITS[x];
 		val >>= 4;
 	}
-	return(nbuf);
+	return nbuf;
 }

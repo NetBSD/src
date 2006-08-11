@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.50.8.1 2006/05/24 10:57:27 yamt Exp $
+	$NetBSD: syscalls.master,v 1.50.8.2 2006/08/11 15:43:19 yamt Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -206,7 +206,7 @@
 94	UNIMPL		setdopt
 95	NOARGS		{ int sys_fsync(int fd); }
 96	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
-97	NOARGS		{ int sys_socket(int domain, int type, int protocol); }
+97	NOARGS		{ int compat_30_sys_socket(int domain, int type, int protocol); }
 98	NOARGS		{ int sys_connect(int s, caddr_t name, int namelen); }
 99	NOARGS		{ int compat_43_sys_accept(int s, caddr_t name, \
 			    int *anamelen); } oaccept
@@ -317,7 +317,7 @@
 160	UNIMPL
 #ifdef NFS
 161	STD		{ int freebsd_sys_getfh(const char *fname, \
-			    fhandle_t *fhp); }
+			    struct compat_30_fhandle *fhp); }
 #else
 161	UNIMPL		getfh
 #endif
@@ -557,10 +557,13 @@
 294	UNIMPL
 295	UNIMPL
 296	UNIMPL
-297	NOARGS		{ int compat_20_sys_fhstatfs(const fhandle_t *fhp, \
+297	NOARGS		{ int compat_20_sys_fhstatfs(const struct	\
+			    compat_30_fhandle *fhp, \
 			    struct statfs12 *buf); }
-298	NOARGS		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
-299	NOARGS		{ int compat_30_sys_fhstat(const fhandle_t *fhp, \
+298	NOARGS		{ int compat_30_sys_fhopen(const	\
+			    struct compat_30_fhandle *fhp, int flags); }
+299	NOARGS		{ int compat_30_sys_fhstat(const 	\
+			    struct cocmpat_30_fhandlez *fhp, 	\
 			    struct stat13 *sb); }
 ; syscall numbers for FreeBSD
 300	UNIMPL		modnext

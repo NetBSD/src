@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.23 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: obio.c,v 1.23.8.1 2006/08/11 15:42:14 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.23 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.23.8.1 2006/08/11 15:42:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,7 @@ obio_match(parent, cf, aux)
 		case PCI_PRODUCT_APPLE_KEYLARGO:
 		case PCI_PRODUCT_APPLE_PANGEA_MACIO:
 		case PCI_PRODUCT_APPLE_INTREPID:
+		case PCI_PRODUCT_APPLE_K2:
 			return 1;
 		}
 
@@ -114,6 +115,11 @@ obio_attach(parent, self, aux)
 			if (node == -1)
 				node = OF_finddevice("/pci/mac-io");
 		break;
+	case PCI_PRODUCT_APPLE_K2:
+		node = OF_finddevice("mac-io");
+		if (node == -1)
+			panic("macio not found");
+		break;
 
 	default:
 		printf("obio_attach: unknown obio controller\n");
@@ -122,8 +128,16 @@ obio_attach(parent, self, aux)
 
 	sc->sc_node = node;
 
+#if defined (PMAC_G5)
+	if (OF_getprop(node, "assigned-addresses", reg, sizeof(reg)) < 20)
+	{
+		return;
+	}
+#else
 	if (OF_getprop(node, "assigned-addresses", reg, sizeof(reg)) < 12)
 		return;
+#endif /* PMAC_G5 */
+
 	ca.ca_baseaddr = reg[2];
 
 	printf(": addr 0x%x\n", ca.ca_baseaddr);
@@ -191,7 +205,9 @@ static const char *skiplist[] = {
 	"escc-legacy",
 	"timer",
 	"i2c",
-	"power-mgt"
+	"power-mgt",
+	"escc"
+	
 };
 
 #define N_LIST (sizeof(skiplist) / sizeof(skiplist[0]))

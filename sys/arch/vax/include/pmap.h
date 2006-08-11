@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.65.2.2 2006/05/24 10:57:18 yamt Exp $	   */
+/*	$NetBSD: pmap.h,v 1.65.2.3 2006/08/11 15:43:12 yamt Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -179,11 +179,11 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	sva = PG_PFNUM(va);
 	if (va < 0x40000000) {
 		if (sva > (pmap->pm_p0lr & ~AST_MASK))
-			return FALSE;
+			goto fail;
 		pte = (int *)pmap->pm_p0br;
 	} else {
 		if (sva < pmap->pm_p1lr)
-			return FALSE;
+			goto fail;
 		pte = (int *)pmap->pm_p1br;
 	}
 	if (kvtopte(&pte[sva])->pg_pfn) {
@@ -191,6 +191,9 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 			*pap = (pte[sva] & PG_FRAME) << VAX_PGSHIFT;
 		return (TRUE);
 	}
+  fail:
+	if (pap)
+		*pap = 0;
 	return (FALSE);
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.46.2.2 2006/05/24 10:57:10 yamt Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.46.2.3 2006/08/11 15:42:46 yamt Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.46.2.2 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.46.2.3 $"
 
 maxusers	32
 
@@ -234,7 +234,7 @@ sq* 		at hpc0 offset ?
 wdsc* 		at hpc0 offset ?
 dpclock*	at hpc0 offset ?	# IP12 / IP20
 dsclock*	at hpc0 offset ?	# IP22 / 24
-haltwo*         at hpc0 offset ?	# IP22 / 24
+#haltwo*         at hpc0 offset ?	# IP22 / 24
 pckbc*		at hpc0 offset ?
 
 pckbd*  	at pckbc?
@@ -265,7 +265,7 @@ zskbd0		at zsc1 channel 0
 zsms0		at zsc1 channel 1
 
 scsibus*	at scsi?		# HPC SCSI
-audio*          at audiobus?
+#audio*  	at audiobus?
 
 # Pseudo-Devices
 
@@ -281,6 +281,7 @@ pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol

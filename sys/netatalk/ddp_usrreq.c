@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.14.8.1 2006/05/24 10:59:02 yamt Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.14.8.2 2006/08/11 15:46:32 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.14.8.1 2006/05/24 10:59:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.14.8.2 2006/08/11 15:46:32 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -54,8 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.14.8.1 2006/05/24 10:59:02 yamt Exp
 
 static void at_pcbdisconnect __P((struct ddpcb *));
 static void at_sockaddr __P((struct ddpcb *, struct mbuf *));
-static int at_pcbsetaddr __P((struct ddpcb *, struct mbuf *, struct proc *));
-static int at_pcbconnect __P((struct ddpcb *, struct mbuf *, struct proc *));
+static int at_pcbsetaddr __P((struct ddpcb *, struct mbuf *, struct lwp *));
+static int at_pcbconnect __P((struct ddpcb *, struct mbuf *, struct lwp *));
 static void at_pcbdetach __P((struct socket *, struct ddpcb *));
 static int at_pcballoc __P((struct socket *));
 
@@ -82,16 +82,14 @@ ddp_usrreq(so, req, m, addr, rights, l)
 	struct mbuf    *rights;
 	struct lwp *l;
 {
-	struct proc    *p;
 	struct ddpcb   *ddp;
 	int             error = 0;
 
-	p = l ? l->l_proc : NULL;
 	ddp = sotoddpcb(so);
 
 	if (req == PRU_CONTROL) {
 		return (at_control((long) m, (caddr_t) addr,
-		    (struct ifnet *) rights, (struct proc *) p));
+		    (struct ifnet *) rights, l));
 	}
 	if (req == PRU_PURGEIF) {
 		at_purgeif((struct ifnet *) rights);
@@ -122,7 +120,7 @@ ddp_usrreq(so, req, m, addr, rights, l)
 		break;
 
 	case PRU_BIND:
-		error = at_pcbsetaddr(ddp, addr, p);
+		error = at_pcbsetaddr(ddp, addr, l);
 		break;
 
 	case PRU_SOCKADDR:
@@ -134,7 +132,7 @@ ddp_usrreq(so, req, m, addr, rights, l)
 			error = EISCONN;
 			break;
 		}
-		error = at_pcbconnect(ddp, addr, p);
+		error = at_pcbconnect(ddp, addr, l);
 		if (error == 0)
 			soisconnected(so);
 		break;
@@ -161,7 +159,7 @@ ddp_usrreq(so, req, m, addr, rights, l)
 					break;
 				}
 				s = splnet();
-				error = at_pcbconnect(ddp, addr, p);
+				error = at_pcbconnect(ddp, addr, l);
 				if (error) {
 					splx(s);
 					break;
@@ -236,10 +234,10 @@ at_sockaddr(ddp, addr)
 }
 
 static int
-at_pcbsetaddr(ddp, addr, p)
+at_pcbsetaddr(ddp, addr, l)
 	struct ddpcb   *ddp;
 	struct mbuf    *addr;
-	struct proc    *p;
+	struct lwp	*l;
 {
 	struct sockaddr_at lsat, *sat;
 	struct at_ifaddr *aa;
@@ -274,9 +272,10 @@ at_pcbsetaddr(ddp, addr, p)
 			    sat->sat_port >= ATPORT_LAST)
 				return (EINVAL);
 
-			if (sat->sat_port < ATPORT_RESERVED && p &&
-			    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-					      &p->p_acflag))
+			if (sat->sat_port < ATPORT_RESERVED && l &&
+			    kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER,
+			    &l->l_acflag))
 				return (EACCES);
 		}
 	} else {
@@ -332,10 +331,10 @@ at_pcbsetaddr(ddp, addr, p)
 }
 
 static int
-at_pcbconnect(ddp, addr, p)
+at_pcbconnect(ddp, addr, l)
 	struct ddpcb   *ddp;
 	struct mbuf    *addr;
-	struct proc    *p;
+	struct lwp     *l;
 {
 	struct sockaddr_at *sat = mtod(addr, struct sockaddr_at *);
 	struct route   *ro;
@@ -424,7 +423,7 @@ at_pcbconnect(ddp, addr, p)
 	}
 	ddp->ddp_fsat = *sat;
 	if (ddp->ddp_lsat.sat_port == ATADDR_ANYPORT) {
-		return (at_pcbsetaddr(ddp, (struct mbuf *) 0, p));
+		return (at_pcbsetaddr(ddp, (struct mbuf *) 0, l));
 	}
 	return (0);
 }

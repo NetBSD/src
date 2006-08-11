@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.34.8.2 2006/06/26 12:54:14 yamt Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.34.8.3 2006/08/11 15:46:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.34.8.2 2006/06/26 12:54:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.34.8.3 2006/08/11 15:46:49 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -516,9 +516,7 @@ snpac_ioctl(
 	struct lwp *l)
 {
 	struct systype_req *rq = (struct systype_req *) data;
-	struct proc *p;
 
-	p = l ? l->l_proc : NULL;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_IOCTL]) {
 		if (cmd == SIOCSSTYPE)
@@ -530,7 +528,8 @@ snpac_ioctl(
 #endif
 
 	if (cmd == SIOCSSTYPE) {
-		if (p == 0 || kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
+		if (l == NULL || kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
 			return (EPERM);
 		if ((rq->sr_type & (SNPA_ES | SNPA_IS)) == (SNPA_ES | SNPA_IS))
 			return (EINVAL);

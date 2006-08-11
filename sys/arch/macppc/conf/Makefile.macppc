@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.macppc,v 1.25.2.1 2006/04/11 11:53:43 yamt Exp $
+#	$NetBSD: Makefile.macppc,v 1.25.2.2 2006/08/11 15:42:13 yamt Exp $
 #
 # Makefile for NetBSD
 #
@@ -42,6 +42,11 @@ CWARNFLAGS+=	-Wreturn-type
 .if ${PPCDIR} == "oea"
 CFLAGS+=	-mno-strict-align
 .endif
+
+.if ${PPC_ARCH_MODE} == "ppc64bridge"
+AOPTS+=	-Wa,-mppc64bridge
+.endif
+
 CFLAGS+=	-msoft-float ${CCPUOPTS} -Wa,-maltivec
 AFLAGS+=	${AOPTS}
 

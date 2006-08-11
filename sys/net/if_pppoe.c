@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.64.6.2 2006/06/26 12:53:39 yamt Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.64.6.3 2006/08/11 15:46:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.64.6.2 2006/06/26 12:53:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.64.6.3 2006/08/11 15:46:14 yamt Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
 #include "opt_pfil_hooks.h"
+#include "opt_pppoe.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -851,7 +852,7 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 static int
 pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 {
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;	/* XXX */
 	struct pppoe_softc *sc = (struct pppoe_softc*)ifp;
 	int error = 0;
 
@@ -859,7 +860,8 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 	case PPPOESETPARMS:
 	{
 		struct pppoediscparms *parms = (struct pppoediscparms*)data;
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return error;
 		if (parms->eth_ifname[0] != 0) {
 			struct ifnet	*eth_if;

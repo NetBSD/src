@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.142.8.2 2006/06/26 12:44:39 yamt Exp $
+#	$NetBSD: Makefile.i386,v 1.142.8.3 2006/08/11 15:41:53 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -83,11 +83,14 @@ freebsd_sigcode.o ibcs2_sigcode.o linux_sigcode.o: assym.h
 svr4_sigcode.o mach_sigcode.o: assym.h
 apmcall.o in_cksum.o pnpbioscall.o bioscall.o: assym.h
 mptramp.o: assym.h
+kvm86call.o: assym.h
 clock.o: config_time.h
 
 ##
 ## (7) misc settings
 ##
+# PR/33725: Misoptimization of machdep.c with -Os under gcc4
+COPTS.machdep.c+=     -O2
 
 ##
 ## (8) config(8) generated machinery

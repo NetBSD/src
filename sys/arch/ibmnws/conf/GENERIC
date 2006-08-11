@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.22.2.1 2006/05/24 10:56:57 yamt Exp $
+#	$NetBSD: GENERIC,v 1.22.2.2 2006/08/11 15:42:01 yamt Exp $
 #
 #
 
@@ -164,11 +164,12 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 # adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
 # ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 # iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
-# pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
+# pcscp* 	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 # siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 
 # PCMCIA SCSI controllers
 # aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
+# spc* 	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 
 # SCSI bus support
 # scsibus* at adw?
@@ -177,6 +178,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 # scsibus* at iha?
 # scsibus* at pcscp?
 # scsibus* at siop?
+# scsibus* at spc?
 
 # SCSI devices
 # sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -269,6 +271,7 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 
 # network pseudo-devices
 pseudo-device	bpfilter		# network tap
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.6.6.1 2006/06/26 12:51:23 yamt Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.6.6.2 2006/08/11 15:44:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.6.6.2 2006/08/11 15:44:26 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -110,6 +113,11 @@ static const struct pciide_product_desc pciide_pdcsata_products[] =  {
 	  "Promise PDC20379 SATA150 controller",
 	  pdcsata_chip_map,
 	},
+	{ PCI_PRODUCT_PROMISE_PDC40518,
+	  0,
+	  "Promise PDC40518 SATA 150 controller",
+	  pdcsata_chip_map,
+	},
 	{ PCI_PRODUCT_PROMISE_PDC40718,
 	  0,
 	  "Promise PDC40718 SATA300 controller",
@@ -133,6 +141,11 @@ static const struct pciide_product_desc pciide_pdcsata_products[] =  {
 	{ PCI_PRODUCT_PROMISE_PDC20579,
 	  0,
 	  "Promise PDC20579 SATA150 controller",
+	  pdcsata_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC20775,
+	  0,
+	  "Promise PDC20775 SATA300 controller",
 	  pdcsata_chip_map,
 	},
 	{ 0,
@@ -257,6 +270,7 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 		break;
 
+	case PCI_PRODUCT_PROMISE_PDC40518:
 	case PCI_PRODUCT_PROMISE_PDC40718:
 	case PCI_PRODUCT_PROMISE_PDC40719:
 	case PCI_PRODUCT_PROMISE_PDC20571:
@@ -268,6 +282,7 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		break;
 	case PCI_PRODUCT_PROMISE_PDC20575:
 	case PCI_PRODUCT_PROMISE_PDC20579:
+	case PCI_PRODUCT_PROMISE_PDC20775:
 		bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x60, 0x00ff00ff);
 		sc->sc_wdcdev.sc_atac.atac_nchannels = PDC20575_NCHANNELS;
 

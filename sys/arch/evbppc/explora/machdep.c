@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10.6.1 2006/05/24 10:56:47 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10.6.2 2006/08/11 15:41:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10.6.1 2006/05/24 10:56:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10.6.2 2006/08/11 15:41:26 yamt Exp $");
 
 #include "opt_explora.h"
 #include "ksyms.h"
@@ -398,36 +398,6 @@ int
 lcsplx(int ipl)
 {
 	return spllower(ipl);	/*XXX*/
-}
-
-void
-softnet(void)
-{
-	int isr;
-
-	isr = netisr;
-	netisr = 0;
-
-#define DONETISR(bit, fn)		\
-	do {				\
-		if (isr & (1 << bit))	\
-		fn();			\
-	} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-}
-
-#include "com.h"
-void
-softserial(void)
-{
-#if NCOM > 0
-	void comsoft(void);	/* XXX from dev/ic/com.c */
-
-	comsoft();
-#endif
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.115.2.1 2006/06/26 12:51:01 yamt Exp $	*/
+/*	$NetBSD: elink3.c,v 1.115.2.2 2006/08/11 15:44:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.115.2.1 2006/06/26 12:51:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.115.2.2 2006/08/11 15:44:11 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -2188,4 +2188,30 @@ ep_statchg(self)
 		mctl &= ~MAC_CONTROL_FDX;
 	bus_space_write_2(iot, ioh, ELINK_W3_MAC_CONTROL, mctl);
 	GO_WINDOW(1);	/* back to operating window */
+}
+
+void
+ep_power(int why, void *arg)
+{
+	struct ep_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	int s;
+
+	s = splnet();
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		epstop(ifp, 1);
+		break;
+	case PWR_RESUME:
+		if (ifp->if_flags & IFF_UP) {
+			(void)epinit(ifp);
+		}
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+	splx(s);
 }

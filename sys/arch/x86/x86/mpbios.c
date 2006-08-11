@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.27 2005/12/11 12:19:47 christos Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.27.8.1 2006/08/11 15:43:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,9 +103,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.27 2005/12/11 12:19:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.27.8.1 2006/08/11 15:43:16 yamt Exp $");
 
-#include "opt_mpacpi.h"
+#include "acpi.h"
+#include "opt_acpi.h"
 #include "opt_mpbios.h"
 
 #include <sys/param.h>
@@ -132,10 +133,13 @@ __KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.27 2005/12/11 12:19:47 christos Exp $")
 #include <dev/eisa/eisavar.h>	/* for ELCR* def'ns */
 #endif
 
-#ifdef MPACPI
+#if NACPI > 0
 extern int mpacpi_ncpu;
 extern int mpacpi_nioapic;
 #endif
+
+int mpbios_ncpu;
+int mpbios_nioapic;
 
 #include "pci.h"
 
@@ -500,8 +504,7 @@ static struct mp_bus nmi_bus = {
  *	nintrs
  */
 void
-mpbios_scan(self)
-	struct device *self;
+mpbios_scan(struct device *self, int *ncpu, int *napic)
 {
 	const uint8_t 	*position, *end;
 	int		count;
@@ -531,7 +534,7 @@ mpbios_scan(self)
 	 * XXX is this the right place??
 	 */
 
-#ifdef MPACPI
+#if NACPI > 0
 	if (mpacpi_ncpu == 0) {
 #endif
 		lapic_base = LAPIC_BASE;
@@ -539,7 +542,7 @@ mpbios_scan(self)
 			lapic_base = (paddr_t)mp_cth->apic_address;
 
 		lapic_boot_init(lapic_base);
-#ifdef MPACPI
+#if NACPI > 0
 	}
 #endif
 
@@ -549,12 +552,12 @@ mpbios_scan(self)
 		printf("\n%s: MP default configuration %d\n",
 		    self->dv_xname, mp_fps->mpfb1);
 
-#ifdef MPACPI
+#if NACPI > 0
 		if (mpacpi_ncpu == 0)
 #endif
 			mpbios_cpus(self);
 
-#ifdef MPACPI
+#if NACPI > 0
 		if (mpacpi_nioapic == 0)
 #endif
 			mpbios_ioapic((uint8_t *)&default_ioapic, self);
@@ -631,7 +634,7 @@ mpbios_scan(self)
 		while ((count--) && (position < end)) {
 			switch (type = *position) {
 			case MPS_MCT_CPU:
-#ifdef MPACPI
+#if NACPI > 0
 				/* ACPI has done this for us */
 				if (mpacpi_ncpu)
 					break;
@@ -642,7 +645,7 @@ mpbios_scan(self)
 				mpbios_bus(position, self);
 				break;
 			case MPS_MCT_IOAPIC:
-#ifdef MPACPI
+#if NACPI > 0
 				/* ACPI has done this for us */
 				if (mpacpi_nioapic)
 					break;
@@ -690,6 +693,9 @@ mpbios_scan(self)
 		mpbios_unmap (&mp_cfg_table_map);
 	}
 	mpbios_scanned = 1;
+
+	*ncpu = mpbios_ncpu;
+	*napic = mpbios_nioapic;
 }
 
 static void
@@ -704,6 +710,8 @@ mpbios_cpu(ent, self)
 	/* check for usability */
 	if (!(entry->cpu_flags & PROCENTRY_FLAG_EN))
 		return;
+
+	mpbios_ncpu++;
 
 	/* check for BSP flag */
 	if (entry->cpu_flags & PROCENTRY_FLAG_BP)
@@ -1016,6 +1024,8 @@ mpbios_ioapic(ent, self)
 	if (!(entry->apic_flags & IOAPICENTRY_FLAG_EN))
 		return;
 
+	mpbios_nioapic++;
+
 	aaa.aaa_name   = "ioapic";
 	aaa.apic_id = entry->apic_id;
 	aaa.apic_version = entry->apic_version;
@@ -1099,7 +1109,7 @@ mpbios_int(ent, enttype, mpi)
 		 * number.
 		 */
 		if (pin >= sc->sc_apic_sz) {
-			sc2 = ioapic_find_bybase(pin);
+			sc2 = (struct ioapic_softc *)intr_findpic(pin);
 			if (sc2 != sc) {
 				printf("mpbios: bad pin %d for apic %d\n",
 				    pin, id);
@@ -1110,7 +1120,7 @@ mpbios_int(ent, enttype, mpi)
 			pin -= sc->sc_apic_vecbase;
 		}
 
-		mpi->ioapic = sc;
+		mpi->ioapic = (struct pic *)sc;
 		mpi->ioapic_pin = pin;
 
 		altmpi = sc->sc_pins[pin].ip_map;
@@ -1167,7 +1177,7 @@ mpbios_pci_attach_hook(struct device *parent, struct device *self,
 	if (mpbios_scanned == 0)
 		return ENOENT;
 
-	if (pba->pba_bus >= mp_nbus) {
+	if (pba->pba_bus >= mp_isa_bus) {
 		intr_add_pcibus(pba);
 		return 0;
 	}
@@ -1178,6 +1188,10 @@ mpbios_pci_attach_hook(struct device *parent, struct device *self,
 			return EINVAL;
 	} else
 		mpb->mb_name = "pci";
+
+	if (mp_verbose)
+		printf("%s: added to list as bus %d\n", parent->dv_xname,
+		    pba->pba_bus);
 
 	mpb->mb_configured = 1;
 	mpb->mb_pci_bridge_tag = pba->pba_bridgetag;

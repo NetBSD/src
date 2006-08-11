@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_dma.c,v 1.12 2005/11/24 13:08:33 yamt Exp $	*/
+/*	$NetBSD: gapspci_dma.c,v 1.12.8.1 2006/08/11 15:41:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,16 +46,16 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.12 2005/11/24 13:08:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.12.8.1 2006/08/11 15:41:25 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h> 
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/mbuf.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
-#include <machine/cpu.h> 
+#include <machine/cpu.h>
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
@@ -189,7 +189,7 @@ gaps_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 
 		map->dm_segs[0].ds_addr = res;
 		map->dm_segs[0].ds_len = size;
-		
+
 		map->dm_mapsize = size;
 		map->dm_nsegs = 1;
 	} else {
@@ -617,7 +617,7 @@ gaps_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 	if ((u_long) kva & PAGE_MASK)
 		panic("gaps_dmamem_unmap");
 #endif
-	
+
 	/*
 	 * Nothing to do if we mapped it with P2SEG.
 	 */

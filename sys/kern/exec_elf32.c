@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.109.2.2 2006/05/24 10:58:40 yamt Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.109.2.3 2006/08/11 15:45:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.109.2.2 2006/05/24 10:58:40 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.109.2.3 2006/08/11 15:45:45 yamt Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -131,14 +131,12 @@ elf_copyargs(struct lwp *l, struct exec_package *pack,
 	size_t len;
 	AuxInfo ai[ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
-	struct proc *p;
 	int error;
 
 	if ((error = copyargs(l, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
 	a = ai;
-	p = l->l_proc;
 
 	/*
 	 * Push extra arguments on the stack needed by dynamically
@@ -179,22 +177,22 @@ elf_copyargs(struct lwp *l, struct exec_package *pack,
 		if (vap->va_mode & S_ISUID)
 			a->a_v = vap->va_uid;
 		else
-			a->a_v = kauth_cred_geteuid(p->p_cred);
+			a->a_v = kauth_cred_geteuid(l->l_cred);
 		a++;
 
 		a->a_type = AT_RUID;
-		a->a_v = kauth_cred_getuid(p->p_cred);
+		a->a_v = kauth_cred_getuid(l->l_cred);
 		a++;
 
 		a->a_type = AT_EGID;
 		if (vap->va_mode & S_ISGID)
 			a->a_v = vap->va_gid;
 		else
-			a->a_v = kauth_cred_getegid(p->p_cred);
+			a->a_v = kauth_cred_getegid(l->l_cred);
 		a++;
 
 		a->a_type = AT_RGID;
-		a->a_v = kauth_cred_getgid(p->p_cred);
+		a->a_v = kauth_cred_getgid(l->l_cred);
 		a++;
 
 		free(ap, M_TEMP);
@@ -375,11 +373,11 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 		error = EACCES;
 		goto badunlock;
 	}
-	if ((error = VOP_ACCESS(vp, VEXEC, l->l_proc->p_cred, l)) != 0)
+	if ((error = VOP_ACCESS(vp, VEXEC, l->l_cred, l)) != 0)
 		goto badunlock;
 
 	/* get attributes */
-	if ((error = VOP_GETATTR(vp, &attr, l->l_proc->p_cred, l)) != 0)
+	if ((error = VOP_GETATTR(vp, &attr, l->l_cred, l)) != 0)
 		goto badunlock;
 
 	/*

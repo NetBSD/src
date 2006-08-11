@@ -1,9 +1,8 @@
-# $NetBSD: INSTALL_ACPI,v 1.30 2005/12/11 12:16:21 christos Exp $
+# $NetBSD: INSTALL_ACPI,v 1.30.8.1 2006/08/11 15:41:00 yamt Exp $
 #
 # INSTALL_ACPI machine description file
 
 include "arch/amd64/conf/INSTALL"
 
 no options MPBIOS_SCANPCI
-options MPACPI
 acpi0	at mainbus0

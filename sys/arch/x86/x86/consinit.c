@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.9.4.1 2006/05/24 10:57:19 yamt Exp $	*/
+/*	$NetBSD: consinit.c,v 1.9.4.2 2006/08/11 15:43:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.9.4.1 2006/05/24 10:57:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.9.4.2 2006/08/11 15:43:16 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -75,6 +75,10 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.9.4.1 2006/05/24 10:57:19 yamt Exp $"
 #include "vesafb.h"
 #if (NVESAFB > 0)
 #include <arch/i386/bios/vesafbvar.h>
+#endif
+#include "unichromefb.h"
+#if (NUNICHROMEFB > 0)
+extern int unichromefb_cnattach(void);
 #endif
 #endif
 
@@ -166,6 +170,10 @@ consinit()
 	if (!strcmp(consinfo->devname, "pc")) {
 		int error;
 
+#if (NUNICHROMEFB > 0)
+		if (!unichromefb_cnattach())
+			goto dokbd;
+#endif
 #if (NVESAFB > 0)
 		if (!vesafb_cnattach())
 			goto dokbd;

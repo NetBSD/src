@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.h,v 1.1 2006/02/09 19:18:57 manu Exp $ */
+/*	$NetBSD: linux32_exec.h,v 1.1.4.1 2006/08/11 15:43:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -39,7 +39,7 @@
 #define LINUX32_MID_MACHINE	LINUX_M_I386
 #define LINUX32_USRSTACK	0xC0000000
 
-#define LINUX32_GCC_SIGNATURE	1
+#define LINUX32_DEBUGLINK_SIGNATURE	1
 
 #define LINUX32_ELF_AUX_ENTRIES 18
 

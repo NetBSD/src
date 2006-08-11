@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.98.8.3 2006/05/24 10:57:18 yamt Exp $     */
+/*	$NetBSD: trap.c,v 1.98.8.4 2006/08/11 15:43:12 yamt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98.8.3 2006/05/24 10:57:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98.8.4 2006/08/11 15:43:12 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -130,6 +130,7 @@ trap(struct trapframe *frame)
 		type |= T_USER;
 		oticks = p->p_sticks;
 		l->l_addr->u_pcb.framep = frame; 
+		LWP_CACHE_CREDS(l, p);
 	}
 
 	type&=~(T_WRITE|T_PTEFETCH);
@@ -236,8 +237,8 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 				printf("UVM: pid %d (%s), uid %d killed: "
 				       "out of swap\n",
 				       p->p_pid, p->p_comm,
-				       p->p_cred ?
-				       kauth_cred_geteuid(p->p_cred) : -1);
+				       l->l_cred ?
+				       kauth_cred_geteuid(l->l_cred) : -1);
 				sig = SIGKILL;
 			} else {
 				sig = SIGSEGV;

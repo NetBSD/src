@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.6 2005/12/11 12:17:59 christos Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.6.8.1 2006/08/11 15:42:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -190,14 +190,14 @@ cachectl1(u_long req, vaddr_t addr, size_t len, struct proc *p)
 		error = EINVAL;
 		break;
 	}
-	return (error);
+	return error;
 }
 
 int
 sys_sysarch(struct lwp *l, void *v, register_t *retval)
 {
 
-	return (ENOSYS);
+	return ENOSYS;
 }
 
 #if defined(amiga) || defined(x68k)
@@ -216,7 +216,7 @@ dma_cachectl(caddr_t addr, int len)
 	caddr_t end;
 
 	if (mmutype != MMU_68040) {
-		return (0);
+		return 0;
 	}
 
 	end = addr + len;
@@ -245,6 +245,6 @@ dma_cachectl(caddr_t addr, int len)
 		addr += inc;
 	} while (addr < end);
 #endif	/* defined(M68040) || defined(M68060) */
-	return (0);
+	return 0;
 }
 #endif	/* defined(amiga) || defined(x68k) */

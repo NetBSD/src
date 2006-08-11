@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.202.2.3 2006/06/26 12:52:27 yamt Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.202.2.4 2006/08/11 15:45:08 yamt Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.202.2.3 2006/06/26 12:52:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.202.2.4 2006/08/11 15:45:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -241,7 +241,7 @@ const struct cdevsw raid_cdevsw = {
 struct raid_softc {
 	int     sc_flags;	/* flags */
 	int     sc_cflags;	/* configuration flags */
-	size_t  sc_size;	/* size of the raid device */
+	uint64_t sc_size;	/* size of the raid device */
 	char    sc_xname[20];	/* XXX external name */
 	struct disk sc_dkdev;	/* generic disk device info */
 	struct bufq_state *buf_queue;	/* used for the device queue */
@@ -2055,7 +2055,7 @@ raidgetdisklabel(dev_t dev)
 		 *
 		 * This is necessary since total size of the raid device
 		 * may vary when an interleave is changed even though exactly
-		 * same componets are used, and old disklabel may used
+		 * same components are used, and old disklabel may used
 		 * if that is found.
 		 */
 		if (lp->d_secperunit != rs->sc_size)
@@ -2105,13 +2105,11 @@ raidlookup(char *path, struct lwp *l, struct vnode **vpp)
 {
 	struct nameidata nd;
 	struct vnode *vp;
-	struct proc *p;
 	struct vattr va;
 	int     error;
 
 	if (l == NULL)
 		return(ESRCH);	/* Is ESRCH the best choice? */
-	p = l->l_proc;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, l);
 	if ((error = vn_open(&nd, FREAD | FWRITE, 0)) != 0) {
@@ -2120,18 +2118,18 @@ raidlookup(char *path, struct lwp *l, struct vnode **vpp)
 	vp = nd.ni_vp;
 	if (vp->v_usecount > 1) {
 		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, p->p_cred, l);
+		(void) vn_close(vp, FREAD | FWRITE, l->l_cred, l);
 		return (EBUSY);
 	}
-	if ((error = VOP_GETATTR(vp, &va, p->p_cred, l)) != 0) {
+	if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)) != 0) {
 		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, p->p_cred, l);
+		(void) vn_close(vp, FREAD | FWRITE, l->l_cred, l);
 		return (error);
 	}
 	/* XXX: eventually we should handle VREG, too. */
 	if (va.va_type != VBLK) {
 		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, p->p_cred, l);
+		(void) vn_close(vp, FREAD | FWRITE, l->l_cred, l);
 		return (ENOTBLK);
 	}
 	VOP_UNLOCK(vp, 0);

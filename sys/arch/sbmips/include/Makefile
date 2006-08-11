@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2005/12/11 12:18:51 christos Exp $
+# $NetBSD: Makefile,v 1.7.8.1 2006/08/11 15:42:46 yamt Exp $
 
 INCSDIR= /usr/include/sbmips
 
@@ -8,7 +8,7 @@ INCSDIR= /usr/include/sbmips
 INCS=	ansi.h aout_machdep.h asm.h \
 	bsd-aout.h bswap.h \
 	cdefs.h cpu.h \
-	db_machdep.h disklabel.h \
+	disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
 	float.h \
 	ieee.h ieeefp.h \

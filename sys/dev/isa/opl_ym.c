@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_ym.c,v 1.9.8.1 2006/06/26 12:51:20 yamt Exp $	*/
+/*	$NetBSD: opl_ym.c,v 1.9.8.2 2006/08/11 15:44:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_ym.c,v 1.9.8.1 2006/06/26 12:51:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_ym.c,v 1.9.8.2 2006/08/11 15:44:24 yamt Exp $");
 
 #include "mpu_ym.h"
 
@@ -84,7 +84,7 @@ opl_ym_match(parent, match, aux)
 
 	if (aa->type != AUDIODEV_TYPE_OPL || ssc->sc_opl_ioh == 0)
 		return (0);
-	return opl_match(ssc->sc_iot, ssc->sc_ioh, 0);
+	return opl_match(ssc->sc_iot, ssc->sc_opl_ioh, 0);
 }
 
 void

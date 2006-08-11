@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.136 2005/12/11 12:17:18 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.136.8.1 2006/08/11 15:41:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -223,7 +223,7 @@ Lhaveihpib:
 	movl	#0x80,%a1@(MMUCMD)	| set magic cookie
 	movl	%a1@(MMUCMD),%d0	| read it back
 	btst	#7,%d0			| cookie still on?
-	jeq	Lnot370			| no, 360 or 375
+	jeq	Lnot370			| no, 360, 362 or 375
 	movl	#0,%a1@(MMUCMD)		| clear magic cookie
 	movl	%a1@(MMUCMD),%d0	| read it back
 	btst	#7,%d0			| still on?
@@ -235,7 +235,7 @@ Lnot370:
 	movl	#0,%a1@(MMUCMD)		| clear magic cookie2
 	movl	%a1@(MMUCMD),%d0	| read it back
 	btst	#16,%d0			| still on?
-	jeq	Lstart1			| no, must be a 360
+	jeq	Lisa36x			| no, must be a 360 or a 362
 	RELOC(mmuid, %a0)		| save MMU ID
 	lsrl	#MMUID_SHIFT,%d0
 	andl	#MMUID_MASK,%d0
@@ -247,6 +247,20 @@ Lnot370:
 	beq	Lisa375
 	movl	#HP_400,%a0@		| must be a 400
 	jra	Lhaspac
+Lisa36x:
+	/*
+	 * If we found a 360, we need to check for a 362 (neither the 360
+	 * nor the 362 have a nonzero mmuid). Since the 362 has a frodo
+	 * utility chip in the DIO hole, check for it.
+	 */
+	movl	#(INTIOBASE + FRODO_BASE),%a0
+	ASRELOC(phys_badaddr,%a3)
+	jbsr	%a3@
+	tstl	%d0			| found a frodo?
+	jne	Lstart1			| no, really a 360
+	RELOC(machineid,%a0)
+	movl	#HP_362,%a0@
+	jra	Lstart1
 Lisa345:
 	movl	#HP_345,%a0@
 	jra	Lhaspac
@@ -303,6 +317,8 @@ Lnot68030:
 	jeq	Lisa433
 	cmpb	#MMUID_385,%d0		| or a 385?
 	jeq	Lisa385
+	cmpb	#MMUID_382,%d0		| or a 382?
+	jeq	Lisa382
 	movl	#HP_380,%a0@		| guess we're a 380
 	jra	Lstart1
 Lisa425:
@@ -313,6 +329,9 @@ Lisa433:
 	jra	Lstart1
 Lisa385:
 	movl	#HP_385,%a0@
+	jra	Lstart1
+Lisa382:
+	movl	#HP_382,%a0@
 	jra	Lstart1
 
 	/*
@@ -1419,6 +1438,42 @@ ENTRY(m68881_restore)
 Lm68881rdone:
 	frestore %a0@			| restore state
 	rts
+
+/*
+ * Probe a memory address, and see if it causes a bus error.
+ * This function is only to be used in physical mode, and before our
+ * trap vectors are initialized.
+ * Invoke with address to probe in %a0.
+ * Alters: %a3 %d0
+ */
+#define BUSERR  0xfffffffc
+ASLOCAL(phys_badaddr)
+	ASRELOC(_bsave,%a3)
+	movl	BUSERR,%a3@		| save ROM bus errror handler
+	ASRELOC(_ssave,%a3)
+	movl	%sp,%a3@		| and current stack pointer
+	ASRELOC(catchbad,%a3)
+	movl	%a3,BUSERR		| plug in our handler
+	movb	%a0@,%d0		| access address
+	ASRELOC(_bsave,%a3)		| no fault!
+	movl	%a3@,BUSERR
+	clrl	%d0			| return success
+	rts
+ASLOCAL(catchbad)
+	ASRELOC(_bsave,%a3)		| got a bus error, so restore handler
+	movl	%a3@,BUSERR
+	ASRELOC(_ssave,%a3)
+	movl	%a3@,%sp		| and stack
+	moveq	#1,%d0			| return fault
+	rts
+#undef	BUSERR
+
+	.data
+ASLOCAL(_bsave)
+	.long   0
+ASLOCAL(_ssave)
+	.long   0
+	.text
 
 /*
  * Handle the nitty-gritty of rebooting the machine.

@@ -1,7 +1,7 @@
-/*	$NetBSD: verified_exec.h,v 1.28 2005/12/12 21:47:58 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.28.8.1 2006/08/11 15:47:26 yamt Exp $	*/
 
 /*-
- * Copyright 2005 Elad Efrat <elad@bsd.org.il>
+ * Copyright 2005 Elad Efrat <elad@NetBSD.org>
  * Copyright 2005 Brett Lymn <blymn@netbsd.org>
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -51,19 +51,17 @@ struct veriexec_params  {
 };
 
 struct veriexec_sizing_params {
-	dev_t dev;
 	size_t hash_size;
+	u_char file[MAXPATHLEN];
 };
 
 struct veriexec_delete_params {
-	dev_t dev;
-	ino_t ino;
+	u_char file[MAXPATHLEN];
 };
 
 struct veriexec_query_params {
+	u_char file[MAXPATHLEN];
 	unsigned char fp_type[VERIEXEC_TYPE_MAXLEN];
-	dev_t dev;
-	ino_t ino;
 	unsigned char type;
 	unsigned char status;
 	unsigned char *fp;
@@ -114,6 +112,7 @@ extern int veriexec_strict;
 #ifdef VERIEXEC_NEED_NODE
 extern const struct sysctlnode *veriexec_count_node;
 #endif /* VERIEXEC_NEED_NODE */
+extern int veriexec_hook;
 
 /*
  * Operations vector for verified exec, this defines the characteristics
@@ -134,53 +133,37 @@ struct veriexec_fp_ops {
 	LIST_ENTRY(veriexec_fp_ops) entries;
 };
 
-/* An entry in the per-device hash table. */
-struct veriexec_hash_entry {
-	ino_t inode;				    /* Inode number. */
-	unsigned char type;			    /* Entry type. */
-	unsigned char status;			    /* Evaluation status. */
-	unsigned char page_fp_status;		    /* Per-page FP status. */
-	unsigned char *fp;			    /* Fingerprint. */
-	void *page_fp;				    /* Per-page fingerprints */
-	size_t npages;			    	    /* Number of pages. */
-	size_t last_page_size;			    /* To support < PAGE_SIZE */
-	struct veriexec_fp_ops *ops;		    /* Fingerprint ops vector*/
-	LIST_ENTRY(veriexec_hash_entry) entries;    /* List pointer. */
+/* Veriexec per-file entry data. */
+struct veriexec_file_entry {
+	u_char type;				/* Entry type. */
+	u_char status;				/* Evaluation status. */
+	u_char page_fp_status;			/* Per-page FP status. */
+	u_char *fp;				/* Fingerprint. */
+	void *page_fp;				/* Per-page fingerprints */
+	size_t npages;			    	/* Number of pages. */
+	size_t last_page_size;			/* To support < PAGE_SIZE */
+	struct veriexec_fp_ops *ops;		/* Fingerprint ops vector*/
 };
 
-LIST_HEAD(veriexec_hashhead, veriexec_hash_entry);
-
-/* Veriexec hash table information. */
-struct veriexec_hashtbl {
-	struct veriexec_hashhead *hash_tbl;
-	size_t hash_size;	/* Number of slots in the table. */
-	dev_t hash_dev;		/* Device ID the hash table refers to. */
-	uint64_t hash_count;	/* # of fingerprinted files in table. */
-	LIST_ENTRY(veriexec_hashtbl) hash_list;
+/* Veriexec per-table data. */
+struct veriexec_table_entry {
+	uint64_t vte_count;			/* Number of Veriexec entries. */
+	const struct sysctlnode *vte_node;
 };
 
-/* Global list of hash tables, one per device. */
-LIST_HEAD(, veriexec_hashtbl) veriexec_tables;
-
-/* Mask to ensure bounded access to elements in the hash table. */
-#define VERIEXEC_HASH_MASK(tbl)		((tbl)->hash_size - 1)
+/* Veriexec modes (strict levels). */
+#define	VERIEXEC_LEARNING	0	/* Learning mode. */
+#define	VERIEXEC_IDS		1	/* Intrusion detection mode. */
+#define	VERIEXEC_IPS		2	/* Intrusion prevention mode. */
+#define	VERIEXEC_LOCKDOWN	3	/* Lockdown mode. */
 
 /* Readable values for veriexec_report(). */
-#define	REPORT_NOVERBOSE	0	/* Always print */
-#define	REPORT_VERBOSE		1	/* Print when verbose >= 1 */
-#define	REPORT_VERBOSE_HIGH	2	/* Print when verbose >= 2 (debug) */
-#define	REPORT_NOPANIC		0	/* Normal report */
-#define	REPORT_PANIC		1	/* Use panic() */
-#define	REPORT_NOALARM		0	/* Normal report */
-#define	REPORT_ALARM		1	/* Alarm - also print pid/uid/.. */
-
-/*
- * Hashing function: Takes an inode number modulus the mask to give back
- * an index into the hash table.
- */
-#define VERIEXEC_HASH(tbl, inode)	\
-	(hash32_buf(&(inode), sizeof((inode)), HASH32_BUF_INIT) \
-	 & VERIEXEC_HASH_MASK(tbl))
+#define	REPORT_ALWAYS		0x01	/* Always print */
+#define	REPORT_VERBOSE		0x02	/* Print when verbose >= 1 */
+#define	REPORT_DEBUG		0x04	/* Print when verbose >= 2 (debug) */
+#define	REPORT_PANIC		0x08	/* Call panic() */
+#define	REPORT_ALARM		0x10	/* Alarm - also print pid/uid/.. */
+#define	REPORT_LOGMASK		(REPORT_ALWAYS|REPORT_VERBOSE|REPORT_DEBUG)
 
 /* Initialize a fingerprint ops struct. */
 #define	VERIEXEC_OPINIT(ops, fp_type, hashlen, ctx_size, init_fn, \
@@ -197,26 +180,25 @@ LIST_HEAD(, veriexec_hashtbl) veriexec_tables;
 int veriexec_add_fp_ops(struct veriexec_fp_ops *);
 void veriexec_init_fp_ops(void);
 struct veriexec_fp_ops *veriexec_find_ops(u_char *name);
-int veriexec_fp_calc(struct lwp *, struct vnode *,
-		     struct veriexec_hash_entry *, uint64_t, u_char *);
+int veriexec_fp_calc(struct lwp *, struct vnode *, struct veriexec_file_entry *,
+    u_char *);
 int veriexec_fp_cmp(struct veriexec_fp_ops *, u_char *, u_char *);
-struct veriexec_hashtbl *veriexec_tblfind(dev_t);
-struct veriexec_hash_entry *veriexec_lookup(dev_t, ino_t);
-int veriexec_hashadd(struct veriexec_hashtbl *, struct veriexec_hash_entry *);
-int veriexec_verify(struct lwp *, struct vnode *, struct vattr *,
-		    const u_char *, int, struct veriexec_hash_entry **);
-int veriexec_page_verify(struct veriexec_hash_entry *, struct vattr *,
-			 struct vm_page *, size_t, struct lwp *);
-int veriexec_removechk(struct lwp *, struct vnode *, const char *);
-int veriexec_renamechk(struct vnode *, const char *, const char *,
-		       struct lwp *);
-void veriexec_init_fp_ops(void);
-void veriexec_report(const u_char *, const u_char *, struct vattr *,
-		     struct lwp *, int, int, int);
-int veriexec_newtable(struct veriexec_sizing_params *);
+struct veriexec_table_entry *veriexec_tblfind(struct vnode *);
+struct veriexec_file_entry *veriexec_lookup(struct vnode *);
+int veriexec_hashadd(struct vnode *, struct veriexec_file_entry *);
+int veriexec_verify(struct lwp *, struct vnode *,
+    const u_char *, int, struct veriexec_file_entry **);
+int veriexec_page_verify(struct veriexec_file_entry *, struct vm_page *, size_t,
+    struct lwp *);
+int veriexec_removechk(struct vnode *, const char *, struct lwp *l);
+int veriexec_renamechk(struct vnode *, const char *, struct vnode *,
+    const char *, struct lwp *);
+void veriexec_report(const u_char *, const u_char *, struct lwp *, int);
+int veriexec_newtable(struct veriexec_sizing_params *, struct lwp *);
 int veriexec_load(struct veriexec_params *, struct lwp *);
-int veriexec_delete(struct veriexec_delete_params *);
-int veriexec_query(struct veriexec_query_params *);
+int veriexec_delete(struct veriexec_delete_params *, struct lwp *);
+int veriexec_query(struct veriexec_query_params *, struct lwp *);
+void veriexec_clear(void *, int);
 
 #endif /* _KERNEL */
 

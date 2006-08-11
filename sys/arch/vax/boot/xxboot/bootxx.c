@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.23.6.2 2006/06/26 12:45:40 yamt Exp $ */
+/* $NetBSD: bootxx.c,v 1.23.6.3 2006/08/11 15:43:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -298,7 +298,7 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 			if (rpb->devtyp == BDEV_HP)
 				hpread(block);
 			else
-				read750(block, bootregs);
+				read750(block, (int *)bootregs);
 			bcopy(0, cbuf, 512);
 			size -= 512;
 			cbuf += 512;

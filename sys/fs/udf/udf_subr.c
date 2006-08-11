@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.5.2.2 2006/06/26 12:52:56 yamt Exp $ */
+/* $NetBSD: udf_subr.c,v 1.5.2.3 2006/08/11 15:45:34 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.5.2.2 2006/06/26 12:52:56 yamt Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.5.2.3 2006/08/11 15:45:34 yamt Exp $");
 #endif /* not lint */
 
 
@@ -2100,8 +2100,8 @@ udf_to_unix_name(char *result, char *id, int len, struct charspec *chsp)
 	uint8_t	 *outchp;
 	int       ucode_chars, nice_uchars;
 
-	raw_name = malloc(2048, M_UDFTEMP, M_WAITOK);
-	unix_name = raw_name + 1024;
+	raw_name = malloc(2048 * sizeof(uint16_t), M_UDFTEMP, M_WAITOK);
+	unix_name = raw_name + 1024;			/* split space in half */
 	assert(sizeof(char) == sizeof(uint8_t));
 	outchp = (uint8_t *) result;
 	if ((chsp->type == 0) && (strcmp((char*) chsp->inf, "OSTA Compressed Unicode") == 0)) {

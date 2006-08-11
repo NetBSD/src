@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.175.8.2 2006/05/24 10:56:52 yamt Exp $	*/
+/*	$NetBSD: pccons.c,v 1.175.8.3 2006/08/11 15:42:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.175.8.2 2006/05/24 10:56:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.175.8.3 2006/08/11 15:42:00 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -848,7 +848,8 @@ pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 		pcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if (tp->t_state&TS_XCLUDE &&
-		   kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
+		   kauth_authorize_generic(l->l_cred,
+		   KAUTH_GENERIC_ISSUSER, &l->l_acflag) != 0)
 		return (EBUSY);
 	tp->t_state |= TS_CARR_ON;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.59.2.2 2006/05/24 10:57:28 yamt Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.59.2.3 2006/08/11 15:43:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.59.2.2 2006/05/24 10:57:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.59.2.3 2006/08/11 15:43:29 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -306,7 +306,7 @@ linux_sys_socket(l, v, retval)
 		syscallarg(int)	type;
 		syscallarg(int) protocol;
 	} */ *uap = v;
-	struct sys_socket_args bsa;
+	struct compat_30_sys_socket_args bsa;
 	int error;
 
 	SCARG(&bsa, protocol) = SCARG(uap, protocol);
@@ -314,7 +314,7 @@ linux_sys_socket(l, v, retval)
 	SCARG(&bsa, domain) = linux_to_bsd_domain(SCARG(uap, domain));
 	if (SCARG(&bsa, domain) == -1)
 		return EINVAL;
-	error = sys_socket(l, &bsa, retval);
+	error = sys___socket30(l, &bsa, retval);
 
 #ifdef INET6
 	/*
@@ -1530,7 +1530,7 @@ linux_sa_get(l, s, sgp, sap, osa, osalen)
 		     !IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))) {
 			sin6->sin6_scope_id = 0;
 		} else {
-			int uid = p->p_cred ? kauth_cred_geteuid(p->p_cred) : -1;
+			int uid = l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1;
 
 			log(LOG_DEBUG,
 			    "pid %d (%s), uid %d: obsolete pre-RFC2553 "

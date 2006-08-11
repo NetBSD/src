@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.19.8.1 2006/05/24 10:57:13 yamt Exp $	*/
+/*	$NetBSD: mem.c,v 1.19.8.2 2006/08/11 15:42:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.19.8.1 2006/05/24 10:57:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.19.8.2 2006/08/11 15:42:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,13 +188,13 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 paddr_t
 mmmmap(dev_t dev, off_t off, int prot)
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
 
 	if (minor(dev) != DEV_MEM)
 		return (-1);
 
-	if (!__mm_mem_addr(off) &&
-	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
+	if (!__mm_mem_addr(off) && kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag) != 0)
 		return (-1);
 	return (sh3_btop((paddr_t)off));
 }

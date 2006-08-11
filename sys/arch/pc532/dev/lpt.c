@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.42.8.2 2006/05/24 10:57:00 yamt Exp $	*/
+/*	$NetBSD: lpt.c,v 1.42.8.3 2006/08/11 15:42:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.42.8.2 2006/05/24 10:57:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.42.8.3 2006/08/11 15:42:24 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -538,7 +538,7 @@ plipattach(struct lpt_softc *sc, int unit)
 static int
 plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct proc *p = curproc;	/* XXX ktrace-lwp */
+	struct lwp *l = curlwp;	/* XXX ktrace-lwp */
 	struct lpt_softc *sc = (struct lpt_softc *)(ifp->if_softc);
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -612,7 +612,8 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSIFMTU:
-        	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
+        	if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
             		return(error);
 		if (ifp->if_mtu != ifr->ifr_mtu) {
 		        ifp->if_mtu = ifr->ifr_mtu;

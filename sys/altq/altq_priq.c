@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.9.8.1 2006/05/24 10:56:32 yamt Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.9.8.2 2006/08/11 15:40:58 yamt Exp $	*/
 /*	$KAME: altq_priq.c,v 1.2 2001/10/26 04:56:11 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.9.8.1 2006/05/24 10:56:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.9.8.2 2006/08/11 15:40:58 yamt Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -538,7 +538,6 @@ priqioctl(dev, cmd, addr, flag, l)
 {
 	struct priq_if *pif;
 	struct priq_interface *ifacep;
-	struct proc *p = l->l_proc;
 	int	error = 0;
 
 	/* check super-user privilege */
@@ -550,9 +549,8 @@ priqioctl(dev, cmd, addr, flag, l)
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = kauth_authorize_generic(p->p_cred,
-					       KAUTH_GENERIC_ISSUSER,
-					       &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (error);
 #endif
 		break;

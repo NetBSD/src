@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.12 2005/12/24 20:07:42 perry Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.12.8.1 2006/08/11 15:43:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.12 2005/12/24 20:07:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.12.8.1 2006/08/11 15:43:16 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -95,11 +95,12 @@ __KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.12 2005/12/24 20:07:42 perry Exp $");
 
 #include <machine/mpbiosvar.h>
 
+#include "acpi.h"
 #include "opt_mpbios.h"
-#include "opt_mpacpi.h"
+#include "opt_acpi.h"
 
-#if !defined(MPBIOS) && !defined(MPACPI)
-#error "ioapic needs at least one of the MPBIOS or MPACPI options"
+#if !defined(MPBIOS) && NACPI == 0
+#error "ioapic needs at least one of the MPBIOS or ACPI options"
 #endif
 
 /*
@@ -208,7 +209,7 @@ ioapic_find(int apicid)
 	}
 
 	for (sc = ioapics; sc != NULL; sc = sc->sc_next)
-		if (sc->sc_apicid == apicid)
+		if (sc->sc_pic.pic_apicid == apicid)
 			return sc;
 
 	return NULL;
@@ -224,8 +225,8 @@ ioapic_find_bybase(int vec)
 	struct ioapic_softc *sc;
 
 	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
-		if (vec >= sc->sc_apic_vecbase &&
-		    vec < (sc->sc_apic_vecbase + sc->sc_apic_sz))
+		if (vec >= sc->sc_pic.pic_vecbase &&
+		    vec < (sc->sc_pic.pic_vecbase + sc->sc_apic_sz))
 			return sc;
 	}
 
@@ -282,7 +283,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	int i;
 	
 	sc->sc_flags = aaa->flags;
-	sc->sc_apicid = aaa->apic_id;
+	sc->sc_pic.pic_apicid = aaa->apic_id;
 
 	printf(" apid %d (I/O APIC)\n", aaa->apic_id);
 
@@ -320,13 +321,13 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_apic_sz++;
 
 	if (aaa->apic_vecbase != -1)
-		sc->sc_apic_vecbase = aaa->apic_vecbase;
+		sc->sc_pic.pic_vecbase = aaa->apic_vecbase;
 	else {
 		/*
 		 * XXX this assumes ordering of ioapics in the table.
 		 * Only needed for broken BIOS workaround (see mpbios.c)
 		 */
-		sc->sc_apic_vecbase = ioapic_vecbase;
+		sc->sc_pic.pic_vecbase = ioapic_vecbase;
 		ioapic_vecbase += sc->sc_apic_sz;
 	}
 
@@ -353,23 +354,23 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	 * Maybe we should record the original ID for interrupt
 	 * mapping later ...
 	 */
-	if (apic_id != sc->sc_apicid) {
+	if (apic_id != sc->sc_pic.pic_apicid) {
 		printf("%s: misconfigured as apic %d\n", sc->sc_pic.pic_dev.dv_xname, apic_id);
 
 		ioapic_write(sc,IOAPIC_ID,
 		    (ioapic_read(sc,IOAPIC_ID)&~IOAPIC_ID_MASK)
-		    |(sc->sc_apicid<<IOAPIC_ID_SHIFT));
+		    |(sc->sc_pic.pic_apicid<<IOAPIC_ID_SHIFT));
 		
 		apic_id = (ioapic_read(sc,IOAPIC_ID)&IOAPIC_ID_MASK)>>IOAPIC_ID_SHIFT;
 		
-		if (apic_id != sc->sc_apicid) {
+		if (apic_id != sc->sc_pic.pic_apicid) {
 			printf("%s: can't remap to apid %d\n",
 			    sc->sc_pic.pic_dev.dv_xname,
-			    sc->sc_apicid);
+			    sc->sc_pic.pic_apicid);
 		} else {
 			printf("%s: remapped to apic %d\n",
 			    sc->sc_pic.pic_dev.dv_xname,
-			    sc->sc_apicid);
+			    sc->sc_pic.pic_apicid);
 		}
 	}
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg_14.c,v 1.9 2005/11/11 17:10:42 christos Exp $	*/
+/*	$NetBSD: sysv_msg_14.c,v 1.9.10.1 2006/08/11 15:43:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg_14.c,v 1.9 2005/11/11 17:10:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg_14.c,v 1.9.10.1 2006/08/11 15:43:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,6 @@ compat_14_sys_msgctl(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) cmd;
 		syscallarg(struct msqid_ds14 *) buf;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct msqid_ds msqbuf;
 	struct msqid_ds14 omsqbuf;
 	int cmd, error;
@@ -124,7 +123,7 @@ compat_14_sys_msgctl(struct lwp *l, void *v, register_t *retval)
 		msqid_ds14_to_native(&omsqbuf, &msqbuf);
 	}
 
-	error = msgctl1(p, SCARG(uap, msqid), cmd,
+	error = msgctl1(l, SCARG(uap, msqid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &msqbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {

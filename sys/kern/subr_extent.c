@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.54.8.3 2006/05/24 10:58:41 yamt Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.54.8.4 2006/08/11 15:45:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.54.8.3 2006/05/24 10:58:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.54.8.4 2006/08/11 15:45:46 yamt Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -513,8 +513,7 @@ extent_alloc_region(struct extent *ex, u_long start, u_long size, int flags)
 #endif
 #ifdef LOCKDEBUG
 	if (flags & EX_WAITSPACE)
-		simple_lock_only_held(NULL,
-		    "extent_alloc_region(EX_WAITSPACE)");
+		ASSERT_SLEEPABLE(NULL, "extent_alloc_region(EX_WAITSPACE)");
 #endif
 
 	/*
@@ -682,8 +681,7 @@ extent_alloc_subregion1(struct extent *ex, u_long substart, u_long subend,
 #endif
 #ifdef LOCKDEBUG
 	if (flags & EX_WAITSPACE)
-		simple_lock_only_held(NULL,
-		    "extent_alloc_subregion1(EX_WAITSPACE)");
+		ASSERT_SLEEPABLE(NULL, "extent_alloc_subregion1(EX_WAITSPACE)");
 #endif
 
 	/*

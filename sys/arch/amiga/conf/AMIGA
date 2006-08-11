@@ -1,9 +1,9 @@
-# $NetBSD: AMIGA,v 1.95.2.1 2006/04/01 12:06:07 yamt Exp $
+# $NetBSD: AMIGA,v 1.95.2.2 2006/08/11 15:41:09 yamt Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.52 2006/03/28 20:58:39 pavel Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.53 2006/06/29 14:00:55 liamjfoy Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.95.2.1 $"
+#ident 		"GENERIC-$Revision: 1.95.2.2 $"
 
 
 maxusers	8
@@ -463,6 +463,7 @@ pseudo-device	tun			# network tunnel line discipline
 pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP Filter package
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f

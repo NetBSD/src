@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.25.8.1 2006/05/24 10:57:27 yamt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.25.8.2 2006/08/11 15:43:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.25.8.1 2006/05/24 10:57:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.25.8.2 2006/08/11 15:43:29 yamt Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -406,7 +406,7 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, l)
 	kf.sf_info.lsi_signo = sig;
 	kf.sf_info.lsi_code = LINUX_SI_USER;
 	kf.sf_info.lsi_pid = p->p_pid;
-	kf.sf_info.lsi_uid = kauth_cred_geteuid(p->p_cred);	/* Use real uid here? */
+	kf.sf_info.lsi_uid = kauth_cred_geteuid(l->l_cred);	/* Use real uid here? */
 
 	/* Build the signal context to be used by sigreturn. */
 	native_to_linux_sigset(&kf.sf_uc.uc_sigmask, mask);
@@ -848,7 +848,8 @@ linux_sys_cacheflush(l, v, retval)
 	 * LINUX_FLUSH_SCOPE_ALL (flush whole cache) is limited to super users.
 	 */
 	if (scope == LINUX_FLUSH_SCOPE_ALL) {
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return error;
 #if defined(M68040) || defined(M68060)
 		/* entire cache */

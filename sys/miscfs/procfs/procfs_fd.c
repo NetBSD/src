@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_fd.c,v 1.6.8.1 2006/05/24 10:58:55 yamt Exp $	*/
+/*	$NetBSD: procfs_fd.c,v 1.6.8.2 2006/08/11 15:46:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.6.8.1 2006/05/24 10:58:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.6.8.2 2006/08/11 15:46:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,6 @@ procfs_dofd(curl, p, pfs, uio)
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
-	struct proc *curp = curl->l_proc;
 	int error;
 	struct file *fp;
 	struct proc *pown;
@@ -70,10 +69,10 @@ procfs_dofd(curl, p, pfs, uio)
 
 	switch (uio->uio_rw) {
 	case UIO_READ:
-		error = (*fp->f_ops->fo_read)(fp, &offs, uio, curp->p_cred, 0);
+		error = (*fp->f_ops->fo_read)(fp, &offs, uio, curl->l_cred, 0);
 		break;
 	case UIO_WRITE:
-		error = (*fp->f_ops->fo_write)(fp, &offs, uio, curp->p_cred,0);
+		error = (*fp->f_ops->fo_write)(fp, &offs, uio, curl->l_cred,0);
 		break;
 	default:
 		panic("bad uio op");

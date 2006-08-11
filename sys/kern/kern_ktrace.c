@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.101.2.2 2006/06/26 12:52:56 yamt Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.101.2.3 2006/08/11 15:45:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.101.2.2 2006/06/26 12:52:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.101.2.3 2006/08/11 15:45:46 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -106,12 +106,12 @@ struct ktr_desc {
 
 static void	ktrinitheader(struct ktr_header *, struct lwp *, int);
 static void	ktrwrite(struct ktr_desc *, struct ktrace_entry *);
-static int	ktrace_common(struct proc *, int, int, int, struct file *);
-static int	ktrops(struct proc *, struct proc *, int, int,
+static int	ktrace_common(struct lwp *, int, int, int, struct file *);
+static int	ktrops(struct lwp *, struct proc *, int, int,
 		    struct ktr_desc *);
-static int	ktrsetchildren(struct proc *, struct proc *, int, int,
+static int	ktrsetchildren(struct lwp *, struct proc *, int, int,
 		    struct ktr_desc *);
-static int	ktrcanset(struct proc *, struct proc *);
+static int	ktrcanset(struct lwp *, struct proc *);
 static int	ktrsamefile(struct file *, struct file *);
 
 static struct ktr_desc *
@@ -771,8 +771,9 @@ ktrsaupcall(struct lwp *l, int type, int nevent, int nint, void *sas,
 /* Interface and common routines */
 
 int
-ktrace_common(struct proc *curp, int ops, int facs, int pid, struct file *fp)
+ktrace_common(struct lwp *curl, int ops, int facs, int pid, struct file *fp)
 {
+	struct proc *curp;
 	struct proc *p;
 	struct pgrp *pg;
 	struct ktr_desc *ktd = NULL;
@@ -780,6 +781,7 @@ ktrace_common(struct proc *curp, int ops, int facs, int pid, struct file *fp)
 	int error = 0;
 	int descend;
 
+	curp = curl->l_proc;
 	curp->p_traceflag |= KTRFAC_ACTIVE;
 	descend = ops & KTRFLAG_DESCEND;
 	facs = facs & ~((unsigned) KTRFAC_ROOT);
@@ -798,7 +800,7 @@ ktrace_common(struct proc *curp, int ops, int facs, int pid, struct file *fp)
 		proclist_lock_read();
 		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_tracep == ktd) {
-				if (ktrcanset(curp, p))
+				if (ktrcanset(curl, p))
 					ktrderef(p);
 				else
 					error = EPERM;
@@ -872,9 +874,9 @@ ktrace_common(struct proc *curp, int ops, int facs, int pid, struct file *fp)
 		}
 		LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 			if (descend)
-				ret |= ktrsetchildren(curp, p, ops, facs, ktd);
+				ret |= ktrsetchildren(curl, p, ops, facs, ktd);
 			else
-				ret |= ktrops(curp, p, ops, facs, ktd);
+				ret |= ktrops(curl, p, ops, facs, ktd);
 		}
 
 	} else {
@@ -887,9 +889,9 @@ ktrace_common(struct proc *curp, int ops, int facs, int pid, struct file *fp)
 			goto done;
 		}
 		if (descend)
-			ret |= ktrsetchildren(curp, p, ops, facs, ktd);
+			ret |= ktrsetchildren(curl, p, ops, facs, ktd);
 		else
-			ret |= ktrops(curp, p, ops, facs, ktd);
+			ret |= ktrops(curl, p, ops, facs, ktd);
 	}
 	proclist_unlock_read();	/* taken by p{g}_find */
 	if (!ret)
@@ -925,13 +927,11 @@ sys_fktrace(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) facs;
 		syscallarg(int) pid;
 	} */ *uap = v;
-	struct proc *curp;
 	struct file *fp = NULL;
 	struct filedesc *fdp = l->l_proc->p_fd;
 	int error;
 
-	curp = l->l_proc;
-	fdp = curp->p_fd;
+	fdp = l->l_proc->p_fd;
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
@@ -940,7 +940,7 @@ sys_fktrace(struct lwp *l, void *v, register_t *retval)
 	if ((fp->f_flag & FWRITE) == 0)
 		error = EBADF;
 	else
-		error = ktrace_common(curp, SCARG(uap, ops),
+		error = ktrace_common(l, SCARG(uap, ops),
 		    SCARG(uap, facs), SCARG(uap, pid), fp);
 
 	FILE_UNUSE(fp, l);
@@ -982,7 +982,7 @@ sys_ktrace(struct lwp *l, void *v, register_t *retval)
 		vp = nd.ni_vp;
 		VOP_UNLOCK(vp, 0);
 		if (vp->v_type != VREG) {
-			(void) vn_close(vp, FREAD|FWRITE, curp->p_cred, l);
+			(void) vn_close(vp, FREAD|FWRITE, l->l_cred, l);
 			curp->p_traceflag &= ~KTRFAC_ACTIVE;
 			return (EACCES);
 		}
@@ -997,7 +997,7 @@ sys_ktrace(struct lwp *l, void *v, register_t *retval)
 		 * This will FILE_USE the fp it returns, if any.
 		 * Keep it in use until we return.
 		 */
-		if ((error = falloc(curp, &fp, &fd)) != 0)
+		if ((error = falloc(l, &fp, &fd)) != 0)
 			goto done;
 
 		fp->f_flag = FWRITE;
@@ -1007,11 +1007,11 @@ sys_ktrace(struct lwp *l, void *v, register_t *retval)
 		FILE_SET_MATURE(fp);
 		vp = NULL;
 	}
-	error = ktrace_common(curp, SCARG(uap, ops), SCARG(uap, facs),
+	error = ktrace_common(l, SCARG(uap, ops), SCARG(uap, facs),
 	    SCARG(uap, pid), fp);
 done:
 	if (vp != NULL)
-		(void) vn_close(vp, FWRITE, curp->p_cred, l);
+		(void) vn_close(vp, FWRITE, l->l_cred, l);
 	if (fp != NULL) {
 		FILE_UNUSE(fp, l);	/* release file */
 		fdrelease(l, fd); 	/* release fd table slot */
@@ -1020,13 +1020,12 @@ done:
 }
 
 int
-ktrops(struct proc *curp, struct proc *p, int ops, int facs,
+ktrops(struct lwp *curl, struct proc *p, int ops, int facs,
     struct ktr_desc *ktd)
 {
-
 	int vers = ops & KTRFAC_VER_MASK;
 
-	if (!ktrcanset(curp, p))
+	if (!ktrcanset(curl, p))
 		return (0);
 
 	switch (vers) {
@@ -1047,7 +1046,7 @@ ktrops(struct proc *curp, struct proc *p, int ops, int facs,
 			ktradref(p);
 		}
 		p->p_traceflag |= facs;
-		if (kauth_cred_geteuid(curp->p_cred) == 0)
+		if (kauth_cred_geteuid(curl->l_cred) == 0)
 			p->p_traceflag |= KTRFAC_ROOT;
 	} else {
 		/* KTROP_CLEAR */
@@ -1073,7 +1072,7 @@ ktrops(struct proc *curp, struct proc *p, int ops, int facs,
 }
 
 int
-ktrsetchildren(struct proc *curp, struct proc *top, int ops, int facs,
+ktrsetchildren(struct lwp *curl, struct proc *top, int ops, int facs,
     struct ktr_desc *ktd)
 {
 	struct proc *p;
@@ -1081,7 +1080,7 @@ ktrsetchildren(struct proc *curp, struct proc *top, int ops, int facs,
 
 	p = top;
 	for (;;) {
-		ret |= ktrops(curp, p, ops, facs, ktd);
+		ret |= ktrops(curl, p, ops, facs, ktd);
 		/*
 		 * If this process has children, descend to them next,
 		 * otherwise do any siblings, and if done with this level,
@@ -1258,9 +1257,9 @@ ktrace_thread(void *arg)
  * TODO: check groups.  use caller effective gid.
  */
 int
-ktrcanset(struct proc *callp, struct proc *targetp)
+ktrcanset(struct lwp *calll, struct proc *targetp)
 {
-	kauth_cred_t caller = callp->p_cred;
+	kauth_cred_t caller = calll->l_cred;
 	kauth_cred_t target = targetp->p_cred;
 
 	if ((kauth_cred_geteuid(caller) == kauth_cred_getuid(target) &&

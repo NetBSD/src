@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.29.2.2 2006/06/26 12:44:39 yamt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.29.2.3 2006/08/11 15:41:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.29.2.2 2006/06/26 12:44:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.29.2.3 2006/08/11 15:41:54 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
 #include "opt_powernow_k7.h"
+#include "opt_powernow_k8.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.29.2.2 2006/06/26 12:44:39 yamt Exp $
 #include <machine/pio.h>
 #include <machine/cpu.h>
 #include <x86/cacheinfo.h>
+#include <x86/include/cpuvar.h>
+#include <x86/include/powernow.h>
 
 static const struct x86_cache_info
 intel_cpuid_cache_info[] = {
@@ -248,7 +251,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Pentium M (Banias)", 
 				"Pentium III Xeon (Cascades)",
 				"Pentium III (Tualatin)", 0,
-				"Pentium M (Dothan)", 0, 0,
+				"Pentium M (Dothan)", 
+				"Pentium M (Yonah)", 0,
 				"Pentium Pro, II or III"	/* Default */
 			},
 			NULL,
@@ -882,10 +886,6 @@ amd_family6_probe(struct cpu_info *ci)
 		ci->ci_feature_flags |= descs[3];
 	}
 
-#ifdef POWERNOW_K7
-	pnowk7_probe(ci);
-#endif
-
 	if (*cpu_brand_string == '\0')
 		return;
 	
@@ -1449,8 +1449,26 @@ identifycpu(struct cpu_info *ci)
 	}
 #endif /* ENHANCED_SPEEDSTEP */
 
-#ifdef POWERNOW_K7
-	pnowk7_init(ci);
-#endif /* POWERNOW_k7 */
+#if defined(POWERNOW_K7) || defined(POWERNOW_K8)
+	if (vendor == CPUVENDOR_AMD) {
+		uint32_t rval;
+		uint8_t featflag;
+
+		rval = powernow_probe(ci, 0x600);
+		if (rval) {
+			featflag = powernow_extflags(ci, rval);
+			switch (featflag) {
+			case 6:
+				k7_powernow_init();
+				break;
+			case 15:
+				k8_powernow_init();
+				break;
+			default:
+				break;
+			}
+		}
+	}
+#endif /* POWERNOW_K7 || POWERNOW_K8 */
 
 }

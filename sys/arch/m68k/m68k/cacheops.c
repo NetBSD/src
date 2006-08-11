@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.c,v 1.10 2005/12/11 12:17:59 christos Exp $	*/
+/*	$NetBSD: cacheops.c,v 1.10.8.1 2006/08/11 15:42:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cacheops.c,v 1.10 2005/12/11 12:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cacheops.c,v 1.10.8.1 2006/08/11 15:42:01 yamt Exp $");
 
 #include <sys/types.h>
 #include <machine/cpu.h>
@@ -47,8 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: cacheops.c,v 1.10 2005/12/11 12:17:59 christos Exp $
 #endif
 
 void
-_TBIA()
+_TBIA(void)
 {
+
 #ifdef M68K_CACHEOPS_MACHDEP_TBIA
 	if (TBIA_md())
 		return;
@@ -80,8 +81,9 @@ _TBIA()
 }
 
 void
-_TBIAS()
+_TBIAS(void)
 {
+
 #ifdef M68K_CACHEOPS_MACHDEP_TBIAS
 	if (TBIAS_md())
 		return;
@@ -113,8 +115,9 @@ _TBIAS()
 }
 
 void
-_TBIAU()
+_TBIAU(void)
 {
+
 #ifdef M68K_CACHEOPS_MACHDEP_TBIAU
 	if (TBIAU_md())
 		return;
@@ -146,8 +149,9 @@ _TBIAU()
 }
 
 void
-_ICIA()
+_ICIA(void)
 {
+
 	switch (cputype) {
 	default:
 #ifdef M68020
@@ -174,8 +178,9 @@ _ICIA()
 }
 
 void
-_ICPA()
+_ICPA(void)
 {
+
 	switch (cputype) {
 	default:
 #ifdef M68020
@@ -202,8 +207,9 @@ _ICPA()
 }
 
 void
-_DCIA()
+_DCIA(void)
 {
+
 #ifdef M68K_CACHEOPS_MACHDEP_DCIA
 	if (DCIA_md())
 		return;
@@ -235,8 +241,9 @@ _DCIA()
 }
 
 void
-_DCIS()
+_DCIS(void)
 {
+
 #ifdef M68K_CACHEOPS_MACHDEP_DCIS
 	if (DCIS_md())
 		return;
@@ -268,8 +275,9 @@ _DCIS()
 }
 
 void
-_DCIU()
+_DCIU(void)
 {
+
 #ifdef M68K_CACHEOPS_MACHDEP_DCIU
 	if (DCIU_md())
 		return;
@@ -301,8 +309,9 @@ _DCIU()
 }
 
 void
-_PCIA()
+_PCIA(void)
 {
+
 #ifdef M68K_CACHEOPS_MACHDEP_PCIA
 	if (PCIA_md())
 		return;
@@ -334,9 +343,9 @@ _PCIA()
 }
 
 void
-_TBIS(va)
-	vaddr_t	va;
+_TBIS(vaddr_t va)
 {
+
 #ifdef M68K_CACHEOPS_MACHDEP_TBIS
 	if (TBIS_md(va))
 		return;
@@ -368,9 +377,9 @@ _TBIS(va)
 }
 
 void
-_DCIAS(pa)
-	paddr_t	pa;
+_DCIAS(paddr_t pa)
 {
+
 	switch (cputype) {
 	default:
 #ifdef M68020
@@ -398,8 +407,9 @@ _DCIAS(pa)
 
 #if defined(M68040) || defined(M68060)
 void
-_DCFA()
+_DCFA(void)
 {
+
 	switch (cputype) {
 #ifdef M68040
 	case CPU_68040:
@@ -415,8 +425,9 @@ _DCFA()
 }
 
 void
-_DCPA()
+_DCPA(void)
 {
+
 	switch (cputype) {
 	default:
 #ifdef M68040
@@ -433,9 +444,9 @@ _DCPA()
 }
 
 void
-_ICPL(pa)
-	paddr_t	pa;
+_ICPL(paddr_t pa)
 {
+
 	switch (cputype) {
 	default:
 #ifdef M68040
@@ -452,9 +463,9 @@ _ICPL(pa)
 }
 
 void
-_ICPP(pa)
-	paddr_t	pa;
+_ICPP(paddr_t pa)
 {
+
 	switch (cputype) {
 	default:
 #ifdef M68040
@@ -471,9 +482,9 @@ _ICPP(pa)
 }
 
 void
-_DCPL(pa)
-	paddr_t	pa;
+_DCPL(paddr_t pa)
 {
+
 	switch (cputype) {
 	default:
 #ifdef M68040
@@ -490,9 +501,9 @@ _DCPL(pa)
 }
 
 void
-_DCPP(pa)
-	paddr_t	pa;
+_DCPP(paddr_t pa)
 {
+
 	switch (cputype) {
 	default:
 #ifdef M68040
@@ -509,9 +520,9 @@ _DCPP(pa)
 }
 
 void
-_DCFL(pa)
-	paddr_t	pa;
+_DCFL(paddr_t pa)
 {
+
 	switch (cputype) {
 	default:
 #ifdef M68040
@@ -528,9 +539,9 @@ _DCFL(pa)
 }
 
 void
-_DCFP(pa)
-	paddr_t	pa;
+_DCFP(paddr_t pa)
 {
+
 	switch (cputype) {
 	default:
 #ifdef M68040

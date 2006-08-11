@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.39.2.3 2006/04/11 11:55:13 yamt Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.39.2.4 2006/08/11 15:43:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -777,7 +777,7 @@ const int persona_hpw200ec_special_keymap[] = {
 /* Japanese */
 const uint8_t jornada7xx_jp_keytrans[] = {
 /* 00 */ UNK,  1 , 59 , 60 , 61 , 62 , 63 , 64 ,
-/* 08 */ 65 , 66 , 67 , 112, 41 , UNK, UNK, UNK,
+/* 08 */ 65 , 66 , 67 , 112, 41 , IGN, IGN, IGN,
 /* 10 */ UNK,  2 ,  3 ,  4 ,  5 ,  6 ,  7 ,  8 ,
 /* 18 */  9 , 10 , 11 , 12 , 13 , UNK, UNK, UNK,
 /* 20 */ UNK, 16 , 17 , 18 , 19 , 20 , 21 , 22 ,
@@ -797,7 +797,7 @@ const uint8_t jornada7xx_jp_keytrans[] = {
 /* US/UK - Fn to the left of the space bar and missing few keys */
 const uint8_t jornada7xx_us_keytrans[] = {
 /* 00 */ UNK,  1 , 59 , 60 , 61 , 62 , 63 , 64 ,
-/* 08 */ 65 , 66 , 67 , 68 , 87 , UNK, UNK, UNK,
+/* 08 */ 65 , 66 , 67 , 68 , 87 , IGN, IGN, IGN,
 /* 10 */ UNK,  2 ,  3 ,  4 ,  5 ,  6 ,  7 ,  8 ,
 /* 18 */  9 , 10 , 11 , 12 , 13 , UNK, UNK, UNK,
 /* 20 */ UNK, 16 , 17 , 18 , 19 , 20 , 21 , 22 ,
@@ -817,7 +817,7 @@ const uint8_t jornada7xx_us_keytrans[] = {
 /* International - AltGr to the right and extra keys in three middle rows */
 const uint8_t jornada7xx_intl_keytrans[] = {
 /* 00 */ UNK,  1 , 59 , 60 , 61 , 62 , 63 , 64 ,
-/* 08 */ 65 , 66 , 67 , 68 , 87 , UNK, UNK, UNK,
+/* 08 */ 65 , 66 , 67 , 68 , 87 , IGN, IGN, IGN,
 /* 10 */ UNK,  2 ,  3 ,  4 ,  5 ,  6 ,  7 ,  8 ,
 /* 18 */  9 , 10 , 11 , 12 , 13 , UNK, UNK, UNK,
 /* 20 */ UNK, 16 , 17 , 18 , 19 , 20 , 21 , 22 ,

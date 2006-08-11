@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.75.6.1 2006/05/24 10:59:09 yamt Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.75.6.2 2006/08/11 15:46:48 yamt Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.75.6.1 2006/05/24 10:59:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.75.6.2 2006/08/11 15:46:48 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -400,9 +400,8 @@ rip6_output(m, va_alist)
 	in6p = sotoin6pcb(so);
 
 	priv = 0;
-	if (curproc && !kauth_authorize_generic(curproc->p_cred,
-					  KAUTH_GENERIC_ISSUSER,
-					  &curproc->p_acflag))
+	if (curlwp && !kauth_authorize_generic(curlwp->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &curlwp->l_acflag))
 		priv = 1;
 
 	dst = &dstsock->sin6_addr;
@@ -609,19 +608,18 @@ rip6_usrreq(so, req, m, nam, control, l)
 	struct lwp *l;
 {
 	struct in6pcb *in6p = sotoin6pcb(so);
-	struct proc *p;
 	int s;
 	int error = 0;
 	int priv;
 
 	priv = 0;
-	p = l ? l->l_proc : NULL;
-	if (p && !kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
+	if (l && !kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
 		priv++;
 
 	if (req == PRU_CONTROL)
 		return (in6_control(so, (u_long)m, (caddr_t)nam,
-		    (struct ifnet *)control, p));
+		    (struct ifnet *)control, l));
 
 	if (req == PRU_PURGEIF) {
 		in6_pcbpurgeif0(&raw6cbtable, (struct ifnet *)control);

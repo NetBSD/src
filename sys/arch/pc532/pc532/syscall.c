@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.1.2.3 2006/05/24 10:57:01 yamt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.1.2.4 2006/08/11 15:42:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.2.3 2006/05/24 10:57:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.2.4 2006/08/11 15:42:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -133,6 +133,7 @@ syscall_plain(struct syscframe frame)
 		panic("syscall");
 	l = curlwp;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 	l->l_md.md_regs = &frame.sf_regs;
 	opc = frame.sf_regs.r_pc++;
@@ -235,6 +236,7 @@ syscall_fancy(struct syscframe frame)
 		panic("syscall");
 	l = curlwp;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 	l->l_md.md_regs = &frame.sf_regs;
 	opc = frame.sf_regs.r_pc++;

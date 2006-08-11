@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.64.8.2 2006/06/26 12:54:49 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.64.8.3 2006/08/11 15:47:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.64.8.2 2006/06/26 12:54:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.64.8.3 2006/08/11 15:47:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,9 +103,9 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.64.8.2 2006/06/26 12:54:49 yamt E
 
 extern int prtactive;
 
-static int ext2fs_chmod(struct vnode *, int, kauth_cred_t, struct proc *);
+static int ext2fs_chmod(struct vnode *, int, kauth_cred_t, struct lwp *);
 static int ext2fs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,
-				struct proc *);
+				struct lwp *);
 
 union _qcvt {
 	int64_t	qcvt;
@@ -349,8 +349,8 @@ ext2fs_setattr(void *v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (kauth_cred_geteuid(cred) != ip->i_e2fs_uid &&
-			(error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-						   &l->l_proc->p_acflag)))
+		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    &l->l_acflag)))
 			return (error);
 #ifdef EXT2FS_SYSTEM_FLAGS
 		if (kauth_cred_geteuid(cred) == 0) {
@@ -381,7 +381,7 @@ ext2fs_setattr(void *v)
 	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		error = ext2fs_chown(vp, vap->va_uid, vap->va_gid, cred, l->l_proc);
+		error = ext2fs_chown(vp, vap->va_uid, vap->va_gid, cred, l);
 		if (error)
 			return (error);
 	}
@@ -411,7 +411,7 @@ ext2fs_setattr(void *v)
 			return (EROFS);
 		if (kauth_cred_geteuid(cred) != ip->i_e2fs_uid &&
 			(error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, 
-						   &l->l_proc->p_acflag)) &&
+			&l->l_acflag)) &&
 			((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 			(error = VOP_ACCESS(vp, VWRITE, cred, l))))
 			return (error);
@@ -429,7 +429,7 @@ ext2fs_setattr(void *v)
 	if (vap->va_mode != (mode_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		error = ext2fs_chmod(vp, (int)vap->va_mode, cred, l->l_proc);
+		error = ext2fs_chmod(vp, (int)vap->va_mode, cred, l);
 	}
 	VN_KNOTE(vp, NOTE_ATTRIB);
 	return (error);
@@ -440,14 +440,14 @@ ext2fs_setattr(void *v)
  * Inode must be locked before calling.
  */
 static int
-ext2fs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct proc *p)
+ext2fs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 {
 	struct inode *ip = VTOI(vp);
 	int error, ismember = 0;
 
 	if (kauth_cred_geteuid(cred) != ip->i_e2fs_uid &&
-		(error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-					   &p->p_acflag)))
+	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)))
 		return (error);
 	if (kauth_cred_geteuid(cred)) {
 		if (vp->v_type != VDIR && (mode & S_ISTXT))
@@ -468,7 +468,7 @@ ext2fs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct proc *p)
  */
 static int
 ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
-		struct proc *p)
+		struct lwp *l)
 {
 	struct inode *ip = VTOI(vp);
 	uid_t ouid;
@@ -485,11 +485,11 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	 * the caller must be superuser or the call fails.
 	 */
 	if ((kauth_cred_geteuid(cred) != ip->i_e2fs_uid || uid != ip->i_e2fs_uid ||
-		(gid != ip->i_e2fs_gid &&
-		 !(kauth_cred_getegid(cred) == gid ||
-		  (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
-		(error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-					   &p->p_acflag)))
+ 	    (gid != ip->i_e2fs_gid &&
+	    !(kauth_cred_getegid(cred) == gid ||
+	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
+	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)))
 		return (error);
 	ogid = ip->i_e2fs_gid;
 	ouid = ip->i_e2fs_uid;
@@ -1333,7 +1333,7 @@ ext2fs_fsync(void *v)
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int l = 0;
 		error = VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &l, FWRITE,
-		    ap->a_l->l_proc->p_cred, ap->a_l);
+		    ap->a_l->l_cred, ap->a_l);
 	}
 
 	return error;

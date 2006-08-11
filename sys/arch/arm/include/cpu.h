@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38.8.1 2006/04/11 11:53:26 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.38.8.2 2006/08/11 15:41:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -172,6 +172,23 @@ extern int current_intr_depth;
 #else
 #define LWP_PC(l)	((l)->l_addr->u_pcb.pcb_tf->tf_r15 & R15_PC)
 #endif
+
+/*
+ * Validate a PC or PSR for a user process.  Used by various system calls
+ * that take a context passed by the user and restore it.
+ */
+
+#ifdef __PROG32
+#define VALID_R15_PSR(r15,psr)						\
+	(((psr) & PSR_MODE) == PSR_USR32_MODE &&			\
+		((psr) & (I32_bit | F32_bit)) == 0)
+#else
+#define VALID_R15_PSR(r15,psr)						\
+	(((r15) & R15_MODE) == R15_MODE_USR &&				\
+		((r15) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) == 0)
+#endif
+
+
 
 /* The address of the vector page. */
 extern vaddr_t vector_page;

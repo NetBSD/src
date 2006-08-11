@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_socket.c,v 1.13 2005/12/11 12:20:23 christos Exp $ */
+/* $NetBSD: osf1_socket.c,v 1.13.8.1 2006/08/11 15:43:40 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.13 2005/12/11 12:20:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.13.8.1 2006/08/11 15:43:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ osf1_sys_socket(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_socket_args *uap = v;
-	struct sys_socket_args a;
+	struct compat_30_sys_socket_args a;
 
 	/* XXX TRANSLATE */
 
@@ -208,7 +208,7 @@ osf1_sys_socket(l, v, retval)
 	SCARG(&a, type) = SCARG(uap, type);
 	SCARG(&a, protocol) = SCARG(uap, protocol);
 
-	return sys_socket(l, &a, retval);
+	return compat_30_sys_socket(l, &a, retval);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmheader.S,v 1.1.2.2 2006/04/11 11:53:25 yamt Exp $	*/
+/*	$NetBSD: rmheader.S,v 1.1.2.3 2006/08/11 15:40:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 Ben Harris
@@ -34,14 +34,16 @@
 #include <arm/armreg.h>
 #include <riscoscalls.h>
 
+#include "nbfs.h"
+
 rmbase:
 	.word	0			/* Start code */
 	.word	rminit - rmbase		/* Initialisation code */
 	.word	rmfinal - rmbase	/* Finalisation code */
-	.word	0			/* Service call handler */
+	.word	rmservice - rmbase	/* Service call handler */
 	.word	rmtitle - rmbase	/* Title string */
 	.word	rmhelp - rmbase		/* Help string */
-	.word	0			/* Help and command keyword table */
+	.word	rmcmdtbl - rmbase	/* Help and command keyword table */
 	.word	0			/* SWI chunk base number */
 	.word	0			/* SWI handler code offset */
 	.word	0			/* SWI decoding table offset */
@@ -58,8 +60,7 @@ fsib:	/* Filing system information block */
 	.word	fsentry_args - rmbase
 	.word	fsentry_close - rmbase
 	.word	fsentry_file - rmbase
-	.word	fileswitch_SUPPORTS_SPECIAL | fileswitch_READ_ONLY | \
-		0xf0 /* borrow UnixFS's number for now */
+	.word	fileswitch_SUPPORTS_SPECIAL | fileswitch_READ_ONLY | NBFS_FSNUM
 	.word	fsentry_func - rmbase
 	.word	0			/* FSEntry_GBPB */
 	.word	0			/* Extra information word */
@@ -89,6 +90,11 @@ rminit:
 	bl	relocate_self		/* Call the relocation code */
 	cmp	r0, #0
 	bne	Lerror
+	bl	Laddfs
+	ldmfd	r13!, {pc}
+
+Laddfs:
+	stmfd	r13!, {r14}
 	mov	r0, #OSFSControl_AddFS
 	adr	r1, rmbase
 	mov	r2, #(fsib - rmbase)
@@ -104,6 +110,13 @@ rmfinal:
 	cmp	r0, r0			/* Clear V flag */
 	ldmfd	r13!, {pc}
 
+rmservice:
+	cmp	r1, #Service_FSRedeclare
+	movne	pc, r14
+	stmfd	r13!, {r0-r3, r14}
+	bl	Laddfs
+	ldmfd	r13!, {r0-r3, pc}
+	
 Lerror:
 	teq	pc, pc			/* In 26-bit mode? */
 	ldmneia	r13!, {r14}		/* If so, load up return address */
@@ -167,3 +180,30 @@ fsentry_ret:
 	add	r13, r13, #4
 	ldmfd	r13!, {r1-r7}
 	b	Lerror
+
+rmcmdtbl:
+	.asciz	"NBFS"			/* Command text */
+	.align
+	.word	rmcmd_nbfs - rmbase	/* Command code */
+	.byte	0x00			/* Min 0 parameters */
+	.byte	0x00			/* No GSTransed parameters */
+	.byte	0x00			/* Max 0 parameters */
+	.byte	0x00			/* Normal command */
+	.word	rmcmd_nbfs_syntax - rmbase /* Syntax message */
+	.word	rmcmd_nbfs_help - rmbase /* Help message */
+
+	.byte	0			/* end of list */
+
+rmcmd_nbfs_syntax:
+	.asciz	"Syntax: NBFS"
+rmcmd_nbfs_help:
+	.asciz	"*NBFS selects NBFS as the current filing system."
+	.align
+
+rmcmd_nbfs:
+	/* We're called with r0 -> command tail. */
+	stmfd	r13!, {r14}
+	mov	r0, #OSFSControl_SelectFS
+	adr	r1, rmtitle
+	swi	XOS_FSControl
+	ldmfd	r13!, {pc}

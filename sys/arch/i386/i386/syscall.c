@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.34.2.3 2006/03/13 09:06:54 yamt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.34.2.4 2006/08/11 15:41:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.34.2.3 2006/03/13 09:06:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.34.2.4 2006/08/11 15:41:54 yamt Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ktrace.h"
@@ -97,6 +97,7 @@ syscall_plain(frame)
 	uvmexp.syscalls++;
 	l = curlwp;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_eax;
 	callp = p->p_emul->e_sysent;
@@ -192,6 +193,7 @@ syscall_fancy(frame)
 	uvmexp.syscalls++;
 	l = curlwp;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_eax;
 	callp = p->p_emul->e_sysent;

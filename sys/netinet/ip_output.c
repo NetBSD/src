@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.160.2.1 2006/05/24 10:59:03 yamt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.160.2.2 2006/08/11 15:46:33 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.160.2.1 2006/05/24 10:59:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.160.2.2 2006/08/11 15:46:33 yamt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -265,7 +265,18 @@ ip_output(struct mbuf *m0, ...)
 
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
-		panic("ip_output no HDR");
+		panic("ip_output: no HDR");
+
+	if ((m->m_pkthdr.csum_flags & (M_CSUM_TCPv6|M_CSUM_UDPv6)) != 0) {
+		panic("ip_output: IPv6 checksum offload flags: %d",
+		    m->m_pkthdr.csum_flags);
+	}
+
+	if ((m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) ==
+	    (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+		panic("ip_output: conflicting checksum offload flags: %d",
+		    m->m_pkthdr.csum_flags);
+	}
 #endif
 	if (opt) {
 		m = ip_insertoptions(m, opt, &len);
@@ -1269,7 +1280,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 	int optval = 0;
 	int error = 0;
 #if defined(IPSEC) || defined(FAST_IPSEC)
-	struct proc *p = curproc;	/*XXX*/
+	struct lwp *l = curlwp;	/*XXX*/
 #endif
 
 	if (level != IPPROTO_IP) {
@@ -1373,8 +1384,8 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			int priv = 0;
 
 #ifdef __NetBSD__
-			if (p == 0 || kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-							&p->p_acflag))
+			if (l == 0 || kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
 				priv = 0;
 			else
 				priv = 1;

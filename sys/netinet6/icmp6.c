@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.114.2.3 2006/06/26 12:54:13 yamt Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.114.2.4 2006/08/11 15:46:48 yamt Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.114.2.3 2006/06/26 12:54:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.114.2.4 2006/08/11 15:46:48 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2128,6 +2128,7 @@ icmp6_reflect(m, off)
 	} else
 		ip6->ip6_hlim = ip6_defhlim;
 
+	m->m_pkthdr.csum_flags = 0;
 	icmp6->icmp6_cksum = 0;
 	icmp6->icmp6_cksum = in6_cksum(m, IPPROTO_ICMPV6,
 					sizeof(struct ip6_hdr), plen);

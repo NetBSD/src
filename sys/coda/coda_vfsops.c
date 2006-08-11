@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.47.8.1 2006/05/24 10:57:23 yamt Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.47.8.2 2006/08/11 15:43:16 yamt Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.47.8.1 2006/05/24 10:57:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.47.8.2 2006/08/11 15:43:16 yamt Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -335,7 +335,7 @@ coda_root(struct mount *vfsp, struct vnode **vpp)
 {
     struct coda_mntinfo *mi = vftomi(vfsp);
     int error;
-    struct proc *p = curproc;    /* XXX - bnoble */
+    struct lwp *l = curlwp;    /* XXX - bnoble */
     CodaFid VFid;
     static const CodaFid invalfid = INVAL_FID;
 
@@ -354,7 +354,7 @@ coda_root(struct mount *vfsp, struct vnode **vpp)
 	    }
     }
 
-    error = venus_root(vftomi(vfsp), p->p_cred, p, &VFid);
+    error = venus_root(vftomi(vfsp), l->l_cred, l->l_proc, &VFid);
 
     if (!error) {
 	/*
@@ -411,7 +411,6 @@ int
 coda_nb_statvfs(struct mount *vfsp, struct statvfs *sbp, struct lwp *l)
 {
     struct coda_statfs fsstat;
-    struct proc *p = l->l_proc;
     int error;
 
     ENTRY;
@@ -427,7 +426,7 @@ coda_nb_statvfs(struct mount *vfsp, struct statvfs *sbp, struct lwp *l)
      */
     /* Note: Normal fs's have a bsize of 0x400 == 1024 */
 
-    error = venus_statfs(vftomi(vfsp), p->p_cred, l, &fsstat);
+    error = venus_statfs(vftomi(vfsp), l->l_cred, l, &fsstat);
 
     if (!error) {
 	sbp->f_bsize = 8192; /* XXX */
@@ -479,7 +478,7 @@ coda_fhtovp(struct mount *vfsp, struct fid *fhp, struct mbuf *nam,
     struct cfid *cfid = (struct cfid *)fhp;
     struct cnode *cp = 0;
     int error;
-    struct proc *p = curproc; /* XXX -mach */
+    struct lwp *l = curlwp; /* XXX -mach */
     CodaFid VFid;
     int vtype;
 
@@ -494,7 +493,7 @@ coda_fhtovp(struct mount *vfsp, struct fid *fhp, struct mbuf *nam,
 	return(0);
     }
 
-    error = venus_fhtovp(vftomi(vfsp), &cfid->cfid_fid, p->p_cred, p, &VFid, &vtype);
+    error = venus_fhtovp(vftomi(vfsp), &cfid->cfid_fid, l->l_cred, l->l_proc, &VFid, &vtype);
 
     if (error) {
 	CODADEBUG(CODA_VGET, myprintf(("vget error %d\n",error));)

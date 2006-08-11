@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.169.6.4 2006/06/26 12:54:49 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.169.6.5 2006/08/11 15:47:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.169.6.4 2006/06/26 12:54:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.169.6.5 2006/08/11 15:47:37 yamt Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -137,9 +137,10 @@ static void lfs_cluster_callback(struct buf *);
  * an ordinary write.
  */
 #define LFS_SHOULD_CHECKPOINT(fs, flags) \
-	(fs->lfs_nactive > LFS_MAX_ACTIVE ||				\
-	 (flags & SEGM_CKP) ||						\
-	 fs->lfs_nclean < LFS_MAX_ACTIVE)
+        ((flags & SEGM_CLEAN) == 0 &&					\
+	  ((fs->lfs_nactive > LFS_MAX_ACTIVE ||				\
+	    (flags & SEGM_CKP) ||					\
+	    fs->lfs_nclean < LFS_MAX_ACTIVE)))
 
 int	 lfs_match_fake(struct lfs *, struct buf *);
 void	 lfs_newseg(struct lfs *);
@@ -1605,8 +1606,7 @@ lfs_initseg(struct lfs *fs)
 		fs->lfs_avail -= fs->lfs_fsbpseg - (fs->lfs_offset -
 						   fs->lfs_curseg);
 		/* Wake up any cleaning procs waiting on this file system. */
-		wakeup(&lfs_allclean_wakeup);
-		wakeup(&fs->lfs_nextseg);
+		lfs_wakeup_cleaner(fs);
 		lfs_newseg(fs);
 		repeat = 1;
 		fs->lfs_offset = fs->lfs_curseg;
@@ -1727,7 +1727,7 @@ lfs_newseg(struct lfs *fs)
 
 	/* Honor LFCNWRAPSTOP */
 	simple_lock(&fs->lfs_interlock);
-	if (fs->lfs_nowrap && fs->lfs_nextseg < fs->lfs_curseg) {
+	while (fs->lfs_nowrap && fs->lfs_nextseg < fs->lfs_curseg) {
 		log(LOG_NOTICE, "%s: waiting on log wrap\n", fs->lfs_fsmnt);
 		wakeup(&fs->lfs_nowrap);
 		ltsleep(&fs->lfs_nowrap, PVFS, "newseg", 0,
@@ -1841,6 +1841,11 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 #endif
 
 	ASSERT_SEGLOCK(fs);
+
+	/* Note if partial segment is being written by the cleaner */
+	if (sp->seg_flags & SEGM_CLEAN)
+		((SEGSUM *)(sp->segsum))->ss_flags |= SS_CLEAN;
+
 	/*
 	 * If there are no buffers other than the segment summary to write
 	 * and it is not a checkpoint, don't do anything.  On a checkpoint,

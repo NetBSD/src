@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec_elf32.c,v 1.1.4.2 2006/06/26 12:46:18 yamt Exp $ */
+/*	$NetBSD: linux32_exec_elf32.c,v 1.1.4.3 2006/08/11 15:43:29 yamt Exp $ */
 
 /*-                     
  * Copyright (c) 1995, 1998, 2000, 2001,2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.1.4.2 2006/06/26 12:46:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.1.4.3 2006/08/11 15:43:29 yamt Exp $");
 
 #define	ELFSIZE		32
 
@@ -68,18 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.1.4.2 2006/06/26 12:46:18 y
 #define DPRINTF(a)
 #endif
 
-#if 0
-static int ELFNAME2(linux32,signature) __P((struct lwp *, struct exec_package *,
-	Elf_Ehdr *, char *));
-#ifdef LINUX_GCC_SIGNATURE
-static int ELFNAME2(linux32,gcc_signature) __P((struct lwp *l,
-	struct exec_package *, Elf_Ehdr *));
-#endif
-#ifdef LINUX_ATEXIT_SIGNATURE
-static int ELFNAME2(linux32,atexit_signature) __P((struct lwp *l,
-	struct exec_package *, Elf_Ehdr *));
-#endif
-#endif
 int linux32_copyinargs(struct exec_package *, struct ps_strings *,
 			void *, size_t, const void *, const void *);
 
@@ -94,11 +82,14 @@ ELFNAME2(linux32,probe)(l, epp, eh, itp, pos)
 	int error;
 
 	if (((error = ELFNAME2(linux,signature)(l, epp, eh, itp)) != 0) &&
-#ifdef LINUX_GCC_SIGNATURE
+#ifdef LINUX32_GCC_SIGNATURE
 	    ((error = ELFNAME2(linux,gcc_signature)(l, epp, eh)) != 0) &&
 #endif
-#ifdef LINUX_ATEXIT_SIGNATURE
+#ifdef LINUX32_ATEXIT_SIGNATURE
 	    ((error = ELFNAME2(linux,atexit_signature)(l, epp, eh)) != 0) &&
+#endif
+#ifdef LINUX32_DEBUGLINK_SIGNATURE
+	    ((error = ELFNAME2(linux,debuglink_signature)(l, epp, eh)) != 0) &&
 #endif
 	    1)
 			return error;
@@ -134,15 +125,12 @@ linux32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
 	struct linux32_extra_stack_data *esdp, esd;
 	struct elf_args *ap;
 	struct vattr *vap;
-	struct proc *p;
 	Elf_Ehdr *eh;
 	Elf_Phdr *ph;
 	Elf_Addr phdr = 0;
 	u_long phsize;
 	int error;
 	int i;
-
-	p = l->l_proc;
 
 	if ((error = netbsd32_copyargs(l, pack, arginfo, stackp, argp)) != 0)
 		return error;
@@ -180,7 +168,8 @@ linux32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
 	 * The exec_package doesn't have a proc pointer and it's not
 	 * exactly trivial to add one since the credentials are
 	 * changing. XXX Linux uses curlwp's credentials.
-	 * Why can't we use them too?
+	 * Why can't we use them too? XXXad we do now; what's different
+	 * about Linux's LWP creds?
 	 */
 
 	i = 0;
@@ -218,18 +207,18 @@ linux32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
 	esd.ai[i++].a_v = (ap ? ap->arg_entry : eh->e_entry);
 
 	esd.ai[i].a_type = LINUX_AT_EGID;
-	esd.ai[i++].a_v =
-	    ((vap->va_mode & S_ISGID) ? vap->va_gid : kauth_cred_getegid(p->p_cred));
+	esd.ai[i++].a_v = ((vap->va_mode & S_ISGID) ?
+	    vap->va_gid : kauth_cred_getegid(l->l_cred));
 
 	esd.ai[i].a_type = LINUX_AT_GID;
-	esd.ai[i++].a_v = kauth_cred_getgid(p->p_cred);
+	esd.ai[i++].a_v = kauth_cred_getgid(l->l_cred);
 
 	esd.ai[i].a_type = LINUX_AT_EUID;
-	esd.ai[i++].a_v = 
-	    ((vap->va_mode & S_ISUID) ? vap->va_uid : kauth_cred_geteuid(p->p_cred));
+	esd.ai[i++].a_v = ((vap->va_mode & S_ISUID) ?
+	    vap->va_uid : kauth_cred_geteuid(l->l_cred));
 
 	esd.ai[i].a_type = LINUX_AT_UID;
-	esd.ai[i++].a_v = kauth_cred_getuid(p->p_cred);
+	esd.ai[i++].a_v = kauth_cred_getuid(l->l_cred);
 
 	esd.ai[i].a_type = LINUX_AT_SECURE;
 	esd.ai[i++].a_v = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.28 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.28.8.1 2006/08/11 15:42:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -258,7 +258,7 @@ ENTRY_NOPROFILE(cpu_switch)
 	cmpwi	%r30,0			/* old lwp was exiting? */
 	beq	1f
 
-#if defined(PPC_OEA) && !defined(PPC_OEA64)
+#if defined(PPC_OEA) || defined(PPC_OEA64_BRIDGE)
 	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */
 #else
 	li	%r10,0			/* no USER_SR needed */
@@ -364,7 +364,7 @@ switch_common:
 	stptru	%r3,CI_CURPM(%r7)
 #if 0
 	li	%r3,CI_CURPCB
-#ifdef PPC_OEA64
+#if defined(PPC_OEA64) || defined(PPC_OEA64_BRIDGE)
 	stdcx.	%r4,%r3,%r7		/* clear possible reservation */
 #else
 	stwcx.	%r4,%r3,%r7		/* clear possible reservation */
@@ -381,7 +381,7 @@ switch_common:
 	or.	%r30,%r30,%r30		/* old lwp was exiting? */
 	beq	switch_exited
 
-#if defined(PPC_OEA) && !defined(PPC_OEA64)
+#if defined(PPC_OEA)  || defined (PPC_OEA64_BRIDGE)
 	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */
 #else /* PPC_OEA */
 	li	%r10,0			/* no SR needed */
@@ -404,7 +404,7 @@ switch_exited:
 	mr	%r2,%r12		/* get saved r2 */
 	mtcr	%r11			/* get saved cr */
 	isync
-#if defined(PPC_OEA) && !defined(PPC_OEA64)
+#if defined(PPC_OEA)  || defined (PPC_OEA64_BRIDGE)
 	mtsr	USER_SR,%r10		/* get saved USER_SR */
 	isync
 #endif
@@ -492,7 +492,7 @@ ENTRY(cpu_switchto)
 	cmpwi	%r30,0			/* old lwp was exiting? */
 	beq	1f
 
-#if defined(PPC_OEA) && !defined(PPC_OEA64)
+#if defined(PPC_OEA)  || defined (PPC_OEA64_BRIDGE)
 	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */
 #else
 	li	%r10,0			/* USER_SR not needed */

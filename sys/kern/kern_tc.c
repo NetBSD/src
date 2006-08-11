@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.1.1.1.6.1 2006/06/26 12:52:56 yamt Exp $ */
+/* $NetBSD: kern_tc.c,v 1.1.1.1.6.2 2006/08/11 15:45:46 yamt Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.6.1 2006/06/26 12:52:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.6.2 2006/08/11 15:45:46 yamt Exp $");
 
 #include "opt_ntp.h"
 
@@ -102,15 +102,7 @@ static struct timecounter *timecounters = &dummy_timecounter;
 time_t time_second = 1;
 time_t time_uptime = 1;
 
-static struct bintime boottimebin;
-struct timeval boottime;
-#ifdef __FreeBSD__
-static int sysctl_kern_boottime(SYSCTL_HANDLER_ARGS);
-SYSCTL_PROC(_kern, KERN_BOOTTIME, boottime, CTLTYPE_STRUCT|CTLFLAG_RD,
-    NULL, 0, sysctl_kern_boottime, "S,timeval", "System boottime");
-
-SYSCTL_NODE(_kern, OID_AUTO, timecounter, CTLFLAG_RW, 0, "");
-#endif /* __FreeBSD__ */
+static struct bintime timebasebin;
 
 static int timestepwarnings;
 
@@ -145,8 +137,8 @@ sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
 	    strncmp(newname, tc->tc_name, sizeof(newname)) == 0)
 		return error;
 
-	if (l && (error = kauth_authorize_generic(l->l_proc->p_cred, 
-                    KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag)) != 0)
+	if (l != NULL && (error = kauth_authorize_generic(l->l_cred, 
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 		return (error);
 
 	/* XXX locking */
@@ -267,23 +259,6 @@ TC_STATS(setclock);
 
 static void tc_windup(void);
 
-#ifdef __FreeBSD__
-static int
-sysctl_kern_boottime(SYSCTL_HANDLER_ARGS)
-{
-#ifdef SCTL_MASK32
-	int tv[2];
-
-	if (req->flags & SCTL_MASK32) {
-		tv[0] = boottime.tv_sec;
-		tv[1] = boottime.tv_usec;
-		return SYSCTL_OUT(req, tv, sizeof(tv));
-	} else
-#endif
-		return SYSCTL_OUT(req, &boottime, sizeof(boottime));
-}
-#endif /* __FreeBSD__ */
-
 /*
  * Return the difference between the timehands' counter value now and what
  * was when we copied it to the timehands' offset_count.
@@ -345,7 +320,7 @@ bintime(struct bintime *bt)
 
 	nbintime.ev_count++;
 	binuptime(bt);
-	bintime_add(bt, &boottimebin);
+	bintime_add(bt, &timebasebin);
 }
 
 void
@@ -422,7 +397,7 @@ getbintime(struct bintime *bt)
 		gen = th->th_generation;
 		*bt = th->th_offset;
 	} while (gen == 0 || gen != th->th_generation);
-	bintime_add(bt, &boottimebin);
+	bintime_add(bt, &timebasebin);
 }
 
 void
@@ -522,9 +497,8 @@ tc_setclock(struct timespec *ts)
 	binuptime(&bt2);
 	timespec2bintime(ts, &bt);
 	bintime_sub(&bt, &bt2);
-	bintime_add(&bt2, &boottimebin);
-	boottimebin = bt;
-	bintime2timeval(&bt, &boottime);
+	bintime_add(&bt2, &timebasebin);
+	timebasebin = bt;
 
 	/* XXX fiddle all the little crinkly bits around the fiords... */
 	tc_windup();
@@ -599,7 +573,7 @@ tc_windup(void)
 	 * the adjustment resulting from adjtime() calls.
 	 */
 	bt = th->th_offset;
-	bintime_add(&bt, &boottimebin);
+	bintime_add(&bt, &timebasebin);
 	i = bt.sec - tho->th_microtime.tv_sec;
 	if (i > LARGE_STEP)
 		i = 2;
@@ -607,7 +581,7 @@ tc_windup(void)
 		t = bt.sec;
 		ntp_update_second(&th->th_adjustment, &bt.sec);
 		if (bt.sec != t)
-			boottimebin.sec += bt.sec - t;
+			timebasebin.sec += bt.sec - t;
 	}
 
 	/* Update the UTC timestamps used by the get*() functions. */
@@ -850,7 +824,7 @@ pps_event(struct pps_state *pps, int event)
 	tcount &= pps->capth->th_counter->tc_counter_mask;
 	bt = pps->capth->th_offset;
 	bintime_addx(&bt, pps->capth->th_scale * tcount);
-	bintime_add(&bt, &boottimebin);
+	bintime_add(&bt, &timebasebin);
 	bintime2timespec(&bt, &ts);
 
 	/* If the timecounter was wound up underneath us, bail out. */

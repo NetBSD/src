@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe_init.c,v 1.9 2005/12/11 12:16:46 christos Exp $	*/
+/*	$NetBSD: armfpe_init.c,v 1.9.8.1 2006/08/11 15:41:10 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.9 2005/12/11 12:16:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.9.8.1 2006/08/11 15:41:10 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -228,15 +228,20 @@ arm_fpe_exception(exception, fpframe, frame)
 	u_int fpframe;
 	struct trapframe *frame;
 {
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+
 	if (exception >= 0 && exception < 6)
 		printf("fpe exception: %s (%d)\n",
 		    exception_errors[exception], exception);
 	else
 		printf("fpe exception: unknown (%d)\n", exception);
 
-	trapsignal(curproc, SIGFPE, exception << 8);
+	LWP_CACHE_CREDS(l, p);
 
-	userret(curproc);
+	trapsignal(p, SIGFPE, exception << 8);
+
+	userret(p);
 }
 
 

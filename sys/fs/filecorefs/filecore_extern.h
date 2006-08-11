@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.12.8.1 2006/05/24 10:58:35 yamt Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.12.8.2 2006/08/11 15:45:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -119,7 +119,7 @@ int filecore_vget __P((struct mount *, ino_t, struct vnode **));
 int filecore_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int filecore_checkexp __P((struct mount *, struct mbuf *, int *,
 	    kauth_cred_t *));
-int filecore_vptofh __P((struct vnode *, struct fid *));
+int filecore_vptofh __P((struct vnode *, struct fid *, size_t *));
 void filecore_init __P((void));
 void filecore_reinit __P((void));
 void filecore_done __P((void));

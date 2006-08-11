@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.20 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.20.8.1 2006/08/11 15:47:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -71,6 +71,8 @@
 #include "opt_uvm.h"
 #endif
 #ifdef _KERNEL
+#include <sys/types.h>
+#include <sys/lock.h>
 #include <machine/vmparam.h>
 #include <sys/resourcevar.h>
 #endif

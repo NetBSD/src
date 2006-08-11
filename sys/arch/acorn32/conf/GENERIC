@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.68.2.1 2006/04/01 12:06:06 yamt Exp $
+# 	$NetBSD: GENERIC,v 1.68.2.2 2006/08/11 15:40:59 yamt Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.68.2.1 $"
+#ident		"GENERIC-$Revision: 1.68.2.2 $"
 
 # estimated number of users
 maxusers	32
@@ -338,6 +338,7 @@ ne*	at podulebus?			# NE2000 clone cards
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter		# packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	sl			# CSLIP
 pseudo-device	ppp			# PPP
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)

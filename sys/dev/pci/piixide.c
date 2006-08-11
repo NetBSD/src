@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.25.8.2 2006/06/26 12:51:23 yamt Exp $	*/
+/*	$NetBSD: piixide.c,v 1.25.8.3 2006/08/11 15:44:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.25.8.2 2006/06/26 12:51:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.25.8.3 2006/08/11 15:44:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,6 +182,16 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 	{ PCI_PRODUCT_INTEL_82801GBM_SATA,
 	  0,
 	  "Intel 82801GBM/GHM Serial ATA Controller (ICH7)",
+	  piixsata_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_63XXESB_IDE,
+	  0,
+	  "Intel 631xESB/632xESB IDE Controller",
+	  piix_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_63XXESB_SATA,
+	  0,
+	  "Intel 631xESB/632xESB Serial ATA Controller",
 	  piixsata_chip_map,
 	},
 	{ 0,

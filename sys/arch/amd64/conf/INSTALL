@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.47.2.3 2006/05/24 10:56:33 yamt Exp $
+# $NetBSD: INSTALL,v 1.47.2.4 2006/08/11 15:41:00 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.47.2.3 $"
+#ident 		"INSTALL-$Revision: 1.47.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -318,11 +318,13 @@ ciss*	at pci? dev ? function ?	# HP Smart Array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
+twa*	at pci? dev ? function ?	# 3ware Escalade 9xxx RAID controllers
 
 ld*	at amr? unit ?
 ld*	at cac? unit ?
 ld*	at icp? unit ?
 ld*	at twe? unit ?
+ld*	at twa? unit ?
 ld*	at mlx? unit ?
 
 icpsp*	at icp? unit ?			# SCSI pass-through

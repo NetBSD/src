@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.57.8.1 2006/05/24 10:58:41 yamt Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.57.8.2 2006/08/11 15:45:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.57.8.1 2006/05/24 10:58:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.57.8.2 2006/08/11 15:45:46 yamt Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -56,12 +56,11 @@ sys_reboot(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) opt;
 		syscallarg(char *) bootstr;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int error;
 	char *bootstr, bs[128];
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return (error);
 
 	/*

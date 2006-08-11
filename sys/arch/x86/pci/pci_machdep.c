@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.14.2.1 2006/06/26 12:45:40 yamt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.14.2.2 2006/08/11 15:43:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.14.2.1 2006/06/26 12:45:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.14.2.2 2006/08/11 15:43:16 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,16 +103,19 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.14.2.1 2006/06/26 12:45:40 yamt Ex
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
+#include "acpi.h"
 #include "opt_mpbios.h"
-#include "opt_mpacpi.h"
+#include "opt_acpi.h"
 
 #ifdef MPBIOS
 #include <machine/mpbiosvar.h>
 #endif
 
-#ifdef MPACPI
+#if NACPI > 0
 #include <machine/mpacpi.h>
 #endif
+
+#include <machine/mpconfig.h>
 
 #include "opt_pci_conf_mode.h"
 
@@ -240,7 +243,7 @@ pci_attach_hook(parent, self, pba)
 #ifdef MPBIOS
 	mpbios_pci_attach_hook(parent, self, pba);
 #endif
-#ifdef MPACPI
+#if NACPI > 0
 	mpacpi_pci_attach_hook(parent, self, pba);
 #endif
 }

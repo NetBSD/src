@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.8.6.2 2006/05/24 10:57:19 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.8.6.3 2006/08/11 15:43:16 yamt Exp $	*/
 /*	NetBSD: trap.c,v 1.200 2004/03/14 01:08:48 cl Exp 	*/
 
 /*-
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.8.6.2 2006/05/24 10:57:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.8.6.3 2006/08/11 15:43:16 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -248,6 +248,7 @@ trap(frame)
 		type |= T_USER;
 		l->l_md.md_regs = frame;
 		pcb->pcb_cr2 = 0;		
+		LWP_CACHE_CREDS(l, p);
 	}
 
 	switch (type) {
@@ -650,8 +651,8 @@ copyfault:
 			ksi.ksi_signo = SIGKILL;
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred ?
-			       kauth_cred_geteuid(p->p_cred) : -1);
+			       l->l_cred ?
+			       kauth_cred_geteuid(l->l_cred) : -1);
 		} else {
 			ksi.ksi_signo = SIGSEGV;
 		}

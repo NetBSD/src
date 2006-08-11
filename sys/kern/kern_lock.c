@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.92.8.1 2006/04/01 12:07:39 yamt Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.92.8.2 2006/08/11 15:45:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.92.8.1 2006/04/01 12:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.92.8.2 2006/08/11 15:45:46 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1404,6 +1404,17 @@ _simple_lock_assert_unlocked(volatile struct simplelock *alp,
 		if (slock_assert_will_panic)
 			panic("%s: locked", lockname);
 	}
+}
+
+void
+assert_sleepable(struct simplelock *interlock, const char *msg)
+{
+
+	if (curlwp == NULL) {
+		panic("assert_sleepable: NULL curlwp");
+	}
+	spinlock_switchcheck();
+	simple_lock_only_held(interlock, msg);
 }
 
 #endif /* LOCKDEBUG */ /* } */

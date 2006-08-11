@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.12.8.1 2006/05/24 10:56:32 yamt Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.12.8.2 2006/08/11 15:40:58 yamt Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.11 2002/10/04 14:24:09 kjc Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.12.8.1 2006/05/24 10:56:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.12.8.2 2006/08/11 15:40:58 yamt Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -849,7 +849,6 @@ cbqioctl(dev, cmd, addr, flag, l)
 	int flag;
 	struct lwp *l;
 {
-	struct proc *p = l->l_proc;
 	int	error = 0;
 
 	/* check cmd for superuser only */
@@ -861,8 +860,8 @@ cbqioctl(dev, cmd, addr, flag, l)
 #if (__FreeBSD_version > 400000)
 		error = suser(p);
 #else
-		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-					  &p->p_acflag);
+		error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+		    &l->l_acflag);
 #endif
 		if (error)
 			return (error);

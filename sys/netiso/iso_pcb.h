@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.h,v 1.13 2005/12/11 00:01:36 elad Exp $	*/
+/*	$NetBSD: iso_pcb.h,v 1.13.8.1 2006/08/11 15:46:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -118,8 +118,8 @@ struct mbuf;
 struct sockaddr_iso;
 
 int iso_pcballoc (struct socket *, void *);
-int iso_pcbbind (void *, struct mbuf *, struct proc *);
-int iso_pcbconnect (void *, struct mbuf *, struct proc *);
+int iso_pcbbind (void *, struct mbuf *, struct lwp *);
+int iso_pcbconnect (void *, struct mbuf *, struct lwp *);
 void iso_pcbdisconnect (void *);
 void iso_pcbdetach (void *);
 void iso_pcbnotify (struct isopcb *, struct sockaddr_iso *, int,

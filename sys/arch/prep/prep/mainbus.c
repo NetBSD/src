@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.19.8.3 2006/06/26 12:45:14 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.19.8.4 2006/08/11 15:42:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.19.8.3 2006/06/26 12:45:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.19.8.4 2006/08/11 15:42:41 yamt Exp $");
 
 #include "opt_pci.h"
 #include "opt_residual.h"
@@ -178,6 +178,10 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	config_found_ia(self, "pcibus", &mba.mba_pba, pcibusprint);
 #endif /* NPCI */
 
+#ifdef RESIDUAL_DATA_DUMP
+	SIMPLEQ_FOREACH(pbi, &prep_pct->pc_pbi, next)
+		printf("%s\n", prop_dictionary_externalize(pbi->pbi_properties));
+#endif
 }
 
 int

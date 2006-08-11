@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.11 2005/12/11 12:17:18 christos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.11.8.1 2006/08/11 15:41:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.11 2005/12/11 12:17:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.11.8.1 2006/08/11 15:41:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 		 * do the translation.
 		 */
 		*bshp = (bus_space_handle_t)IIOV(INTIOBASE + bpa);
-		return (0);
+		return 0;
 	}
 
 	if (t->bustype != HP300_BUS_SPACE_DIO)
@@ -85,7 +85,7 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	    EX_FAST | EX_NOWAIT | (extio_ex_malloc_safe ? EX_MALLOCOK : 0),
 	    &kva);
 	if (error)
-		return (error);
+		return error;
 
 	/*
 	 * Map the range.  The range is always cache-inhibited on the hp300.
@@ -96,7 +96,7 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	 * All done.
 	 */
 	*bshp = (bus_space_handle_t)(kva + offset);
-	return (0);
+	return 0;
 }
 
 /* ARGSUSED */
@@ -109,7 +109,7 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	/*
 	 * Not meaningful on any currently-supported hp300 bus.
 	 */
-	return (EINVAL);
+	return EINVAL;
 }
 
 /* ARGSUSED */
@@ -171,7 +171,7 @@ bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
 {
 
 	*nbshp = bsh + offset;
-	return (0);
+	return 0;
 }
 
 /* ARGSUSED */
@@ -185,7 +185,7 @@ hp300_bus_space_probe(bus_space_tag_t t, bus_space_handle_t bsh,
 	nofault = (int *)&faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = NULL;
-		return (0);
+		return 0;
 	}
 
 	switch (sz) {
@@ -207,5 +207,5 @@ hp300_bus_space_probe(bus_space_tag_t t, bus_space_handle_t bsh,
 	}
 
 	nofault = NULL;
-	return (1);
+	return 1;
 }

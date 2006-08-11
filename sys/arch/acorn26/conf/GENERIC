@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.42.2.1 2006/04/01 12:06:06 yamt Exp $
+# $NetBSD: GENERIC,v 1.42.2.2 2006/08/11 15:40:59 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -228,6 +228,7 @@ arcvideo0	at root			# On-board video
 wsdisplay0	at arcvideo0
 
 pseudo-device	bpfilter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ccd		4
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver

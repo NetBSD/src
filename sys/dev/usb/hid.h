@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.10 2005/12/11 12:24:00 christos Exp $	*/
+/*	$NetBSD: hid.h,v 1.10.8.1 2006/08/11 15:45:20 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.h,v 1.7 1999/11/17 22:33:40 n_hibma Exp $ */
 
 /*
@@ -85,11 +85,11 @@ struct hid_item {
 	struct hid_item *next;
 };
 
-struct hid_data *hid_start_parse(void *, int, enum hid_kind);
+struct hid_data *hid_start_parse(const void *, int, enum hid_kind);
 void hid_end_parse(struct hid_data *);
 int hid_get_item(struct hid_data *, struct hid_item *);
-int hid_report_size(void *, int, enum hid_kind, u_int8_t);
-int hid_locate(void *, int, u_int32_t, u_int8_t, enum hid_kind,
+int hid_report_size(const void *, int, enum hid_kind, u_int8_t);
+int hid_locate(const void *, int, u_int32_t, u_int8_t, enum hid_kind,
     struct hid_location *, u_int32_t *);
 u_long hid_get_data(u_char *, struct hid_location *);
-int hid_is_collection(void *, int, u_int8_t, u_int32_t);
+int hid_is_collection(const void *, int, u_int8_t, u_int32_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.45.8.2 2006/05/24 10:56:39 yamt Exp $	*/
+/*	$NetBSD: zs.c,v 1.45.8.3 2006/08/11 15:41:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.45.8.2 2006/05/24 10:56:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.45.8.3 2006/08/11 15:41:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -403,7 +403,8 @@ struct lwp	*l;
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return (EBUSY);
 
 	s  = spltty();
@@ -908,7 +909,8 @@ struct lwp	*l;
 	case TIOCSFLAGS: {
 		int userbits = 0;
 
-		error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag);
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if(error != 0)
 			return (EPERM);
 
@@ -1108,7 +1110,10 @@ register struct termios	*t;
 		 int			unit = ZS_UNIT(tp->t_dev);
 		 struct zs_softc	*zi = zs_cd.cd_devs[unit >> 1];
 	register struct zs_chanstate	*cs = &zi->zi_cs[unit & 1];
-		 int			cdiv, clkm, brgm, tcon;
+		 int			cdiv = 0,	/* XXX gcc4 -Wuninitialized */
+					clkm = 0,	/* XXX gcc4 -Wuninitialized */
+					brgm = 0,	/* XXX gcc4 -Wuninitialized */
+					tcon = 0;	/* XXX gcc4 -Wuninitialized */
 	register int			tmp, tmp5, cflag, s;
 
 	tmp  = t->c_ospeed;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.86.8.2 2006/05/24 10:59:25 yamt Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.86.8.3 2006/08/11 15:47:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.86.8.2 2006/05/24 10:59:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.86.8.3 2006/08/11 15:47:36 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -97,10 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.86.8.2 2006/05/24 10:59:25 yamt Exp 
 
 extern struct lock ufs_hashlock;
 
-static int extend_ifile(struct lfs *, kauth_cred_t);
-static int lfs_ialloc(struct lfs *, struct vnode *, ino_t, int,
-    struct vnode **);
-
 /* Constants for inode free bitmap */
 #define BMSHIFT 5	/* 2 ** 5 = 32 */
 #define BMMASK  ((1 << BMSHIFT) - 1)
@@ -119,131 +115,11 @@ static int lfs_ialloc(struct lfs *, struct vnode *, ino_t, int,
 	((F)->lfs_ino_bitmap[(I) >> BMSHIFT] & (1 << ((I) & BMMASK)))
 
 /*
- * Allocate a particular inode with a particular version number, freeing
- * any previous versions of this inode that may have gone before.
- * Used by the roll-forward code.
- *
- * XXX this function does not have appropriate locking to be used on a live fs;
- * XXX but something similar could probably be used for an "undelete" call.
- *
- * Called with the Ifile inode locked.
- */
-int
-lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
-	      struct vnode **vpp)
-{
-	IFILE *ifp;
-	struct buf *bp, *cbp;
-	struct vnode *vp;
-	struct inode *ip;
-	ino_t tino, oldnext;
-	int error;
-	CLEANERINFO *cip;
-
-	ASSERT_SEGLOCK(fs); /* XXX it doesn't, really */
-
-	/*
-	 * First, just try a vget. If the version number is the one we want,
-	 * we don't have to do anything else.  If the version number is wrong,
-	 * take appropriate action.
-	 */
-	error = VFS_VGET(fs->lfs_ivnode->v_mount, ino, &vp);
-	if (error == 0) {
-		DLOG((DLOG_RF, "lfs_rf_valloc[1]: ino %d vp %p\n", ino, vp));
-
-		*vpp = vp;
-		ip = VTOI(vp);
-		if (ip->i_gen == vers)
-			return 0;
-		else if (ip->i_gen < vers) {
-			lfs_truncate(vp, (off_t)0, 0, NOCRED, l);
-			ip->i_gen = ip->i_ffs1_gen = vers;
-			LFS_SET_UINO(ip, IN_CHANGE | IN_UPDATE);
-			return 0;
-		} else {
-			DLOG((DLOG_RF, "ino %d: sought version %d, got %d\n",
-			       ino, vers, ip->i_ffs1_gen));
-			vput(vp);
-			*vpp = NULLVP;
-			return EEXIST;
-		}
-	}
-
-	/*
-	 * The inode is not in use.  Find it on the free list.
-	 */
-	/* If the Ifile is too short to contain this inum, extend it */
-	while (VTOI(fs->lfs_ivnode)->i_size <= (ino /
-		fs->lfs_ifpb + fs->lfs_cleansz + fs->lfs_segtabsz)
-		<< fs->lfs_bshift) {
-		extend_ifile(fs, NOCRED);
-	}
-
-	LFS_IENTRY(ifp, fs, ino, bp);
-	oldnext = ifp->if_nextfree;
-	ifp->if_version = vers;
-	brelse(bp);
-
-	LFS_GET_HEADFREE(fs, cip, cbp, &ino);
-	if (ino) {
-		LFS_PUT_HEADFREE(fs, cip, cbp, oldnext);
-	} else {
-		tino = ino;
-		while (1) {
-			LFS_IENTRY(ifp, fs, tino, bp);
-			if (ifp->if_nextfree == ino ||
-			    ifp->if_nextfree == LFS_UNUSED_INUM)
-				break;
-			tino = ifp->if_nextfree;
-			brelse(bp);
-		}
-		if (ifp->if_nextfree == LFS_UNUSED_INUM) {
-			brelse(bp);
-			return ENOENT;
-		}
-		ifp->if_nextfree = oldnext;
-		LFS_BWRITE_LOG(bp);
-	}
-
-	error = lfs_ialloc(fs, fs->lfs_ivnode, ino, vers, &vp);
-	if (error == 0) {
-		/*
-		 * Make it VREG so we can put blocks on it.  We will change
-		 * this later if it turns out to be some other kind of file.
-		 */
-		ip = VTOI(vp);
-		ip->i_mode = ip->i_ffs1_mode = IFREG;
-		ip->i_nlink = ip->i_ffs1_nlink = 1;
-		ip->i_ffs_effnlink = 1;
-		ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
-		ip = VTOI(vp);
-
-		DLOG((DLOG_RF, "lfs_rf_valloc: ino %d vp %p\n", ino, vp));
-
-		/* The dirop-nature of this vnode is past */
-		lfs_unmark_vnode(vp);
-		(void)lfs_vunref(vp);
-		vp->v_flag &= ~VDIROP;
-		simple_lock(&fs->lfs_interlock);
-		simple_lock(&lfs_subsys_lock);
-		--lfs_dirvcount;
-		simple_unlock(&lfs_subsys_lock);
-		--fs->lfs_dirvcount;
-		TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
-		wakeup(&lfs_dirvcount);
-		wakeup(&fs->lfs_dirvcount);
-		simple_unlock(&fs->lfs_interlock);
-	}
-	*vpp = vp;
-	return error;
-}
-
-/*
  * Add a new block to the Ifile, to accommodate future file creations.
  * Called with the segment lock held.
  */
-static int
-extend_ifile(struct lfs *fs, kauth_cred_t cred)
+int
+lfs_extend_ifile(struct lfs *fs, kauth_cred_t cred)
 {
 	struct vnode *vp;
 	struct inode *ip;
@@ -366,7 +242,7 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred, struct vnode **vpp)
 
 	/* Extend IFILE so that the next lfs_valloc will succeed. */
 	if (fs->lfs_freehd == LFS_UNUSED_INUM) {
-		if ((error = extend_ifile(fs, cred)) != 0) {
+		if ((error = lfs_extend_ifile(fs, cred)) != 0) {
 			LFS_PUT_HEADFREE(fs, cip, cbp, new_ino);
 			VOP_UNLOCK(fs->lfs_ivnode, 0);
 			lfs_segunlock(fs);
@@ -393,7 +269,7 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred, struct vnode **vpp)
 /*
  * Finish allocating a new inode, given an inode and generation number.
  */
-static int
+int
 lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	   struct vnode **vpp)
 {
@@ -732,6 +608,9 @@ lfs_order_freelist(struct lfs *fs)
 	struct buf *bp;
 	ino_t ino, firstino, lastino, maxino;
 	
+	ASSERT_NO_SEGLOCK(fs);
+	lfs_seglock(fs, SEGM_PROT);
+
 	maxino = ((fs->lfs_ivnode->v_size >> fs->lfs_bshift) -
 		  fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb;
 	fs->lfs_ino_bitmap = (lfs_bm_t *)
@@ -773,4 +652,6 @@ lfs_order_freelist(struct lfs *fs)
 
 	LFS_PUT_HEADFREE(fs, cip, bp, firstino);
 	LFS_PUT_TAILFREE(fs, cip, bp, lastino);
+
+	lfs_segunlock(fs);
 }

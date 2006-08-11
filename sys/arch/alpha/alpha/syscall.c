@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.19.2.2 2006/03/13 09:06:51 yamt Exp $ */
+/* $NetBSD: syscall.c,v 1.19.2.3 2006/08/11 15:40:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19.2.2 2006/03/13 09:06:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19.2.3 2006/08/11 15:40:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,6 +155,8 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	u_int hidden, nargs;
 	struct proc *p = l->l_proc;
 	boolean_t needlock;
+
+	LWP_CACHE_CREDS(l, p);
 
 	uvmexp.syscalls++;
 	l->l_md.md_tf = framep;
@@ -248,6 +250,8 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	u_int64_t *args, copyargs[10];
 	u_int hidden, nargs;
 	struct proc *p = l->l_proc;
+
+	LWP_CACHE_CREDS(l, p);
 
 	KERNEL_PROC_LOCK(l);
 

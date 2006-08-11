@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.7 2002/10/02 03:36:20 thorpej Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.7.40.1 2006/08/11 15:40:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.7 2002/10/02 03:36:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.7.40.1 2006/08/11 15:40:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,17 +96,14 @@ com_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	struct com_mainbus_softc *msc = (void *)self;
 	struct com_softc *sc = &msc->sc_com;
 	struct mainbus_attach_args *ma = aux;
+	bus_space_handle_t ioh;
 
-	sc->sc_iot = ma->ma_st;
-	sc->sc_iobase = ma->ma_addr;
-
-	if (com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) == 0 &&
-	    bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS, 0,
-			  &sc->sc_ioh) != 0) {
+	if (com_is_console(ma->ma_st, ma->ma_addr, &ioh) == 0 &&
+	    bus_space_map(ma->ma_st, ma->ma_addr, COM_NPORTS, 0, &ioh) != 0) {
 		printf(": can't map i/o space\n");
 		return;
 	}
-
+	COM_INIT_REGS(sc->sc_regs, ma->ma_st, ioh, ma->ma_addr);
 	sc->sc_frequency = COM_FREQ;
 
 	com_attach_subr(sc);
@@ -122,15 +119,6 @@ com_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	 * Shutdown hook for buggy BIOSs that don't recognize the UART
 	 * without a disabled FIFO.
 	 */
-	if (shutdownhook_establish(com_mainbus_cleanup, sc) == NULL)
+	if (shutdownhook_establish(com_cleanup, sc) == NULL)
 		panic("com_mainbus_attach: could not establish shutdown hook");
-}
-
-void
-com_mainbus_cleanup(void *arg)
-{
-	struct com_softc *sc = arg;
-
-	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_fifo, 0);
 }

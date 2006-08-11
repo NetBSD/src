@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.14.8.1 2006/05/24 10:57:28 yamt Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.14.8.2 2006/08/11 15:43:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.14.8.1 2006/05/24 10:57:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.14.8.2 2006/08/11 15:43:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,6 @@ linux_sys_uselib(l, v, retval)
 	struct linux_sys_uselib_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	caddr_t sg;
 	long bsize, dsize, tsize, taddr, baddr, daddr;
 	struct nameidata ni;
@@ -107,7 +106,7 @@ linux_sys_uselib(l, v, retval)
 	int i, magic, error;
 	size_t rem;
 
-	sg = stackgap_init(p, 0);
+	sg = stackgap_init(l->l_proc, 0);
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	NDINIT(&ni, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
@@ -118,7 +117,7 @@ linux_sys_uselib(l, v, retval)
 	vp = ni.ni_vp;
 
 	if ((error = vn_rdwr(UIO_READ, vp, (caddr_t) &hdr, LINUX_AOUT_HDR_SIZE,
-			     0, UIO_SYSSPACE, IO_NODELOCKED, p->p_cred,
+			     0, UIO_SYSSPACE, IO_NODELOCKED, l->l_cred,
 			     &rem, NULL))) {
 		vrele(vp);
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.94.6.2 2006/05/24 10:59:09 yamt Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.94.6.3 2006/08/11 15:46:48 yamt Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.94.6.2 2006/05/24 10:59:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.94.6.3 2006/08/11 15:46:48 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -187,6 +187,23 @@ ip6_output(m0, opt, ro, flags, im6o, so, ifpp)
 
 	ip6 = mtod(m, struct ip6_hdr *);
 #endif /* IPSEC */
+
+#ifdef  DIAGNOSTIC
+	if ((m->m_flags & M_PKTHDR) == 0)
+		panic("ip6_output: no HDR");
+
+	if ((m->m_pkthdr.csum_flags &
+	    (M_CSUM_TCPv4|M_CSUM_UDPv4|M_CSUM_TSOv4)) != 0) {
+		panic("ip6_output: IPv4 checksum offload flags: %d",
+		    m->m_pkthdr.csum_flags);
+	}
+
+	if ((m->m_pkthdr.csum_flags & (M_CSUM_TCPv6|M_CSUM_UDPv6)) ==
+	    (M_CSUM_TCPv6|M_CSUM_UDPv6)) {
+		panic("ip6_output: conflicting checksum offload flags: %d",
+		    m->m_pkthdr.csum_flags);
+	}
+#endif
 
 	M_CSUM_DATA_IPv6_HL_SET(m->m_pkthdr.csum_data, sizeof(struct ip6_hdr));
 
@@ -946,8 +963,10 @@ skip_ipsec2:;
 		struct ip6_frag *ip6f;
 		u_int32_t id = htonl(ip6_randomid());
 		u_char nextproto;
+#if 0				/* see below */
 		struct ip6ctlparam ip6cp;
 		u_int32_t mtu32;
+#endif
 
 		/*
 		 * Too large for the destination or interface;
@@ -958,12 +977,24 @@ skip_ipsec2:;
 		if (mtu > IPV6_MAXPACKET)
 			mtu = IPV6_MAXPACKET;
 
+#if 0
+		/*
+		 * It is believed this code is a leftover from the
+		 * development of the IPV6_RECVPATHMTU sockopt and
+		 * associated work to implement RFC3542.
+		 * It's not entirely clear what the intent of the API
+		 * is at this point, so disable this code for now.
+		 * The IPV6_RECVPATHMTU sockopt and/or IPV6_DONTFRAG
+		 * will send notifications if the application requests.
+		 */
+
 		/* Notify a proper path MTU to applications. */
 		mtu32 = (u_int32_t)mtu;
 		bzero(&ip6cp, sizeof(ip6cp));
 		ip6cp.ip6c_cmdarg = (void *)&mtu32;
 		pfctlinput2(PRC_MSGSIZE, (struct sockaddr *)&ro_pmtu->ro_dst,
 		    (void *)&ip6cp);
+#endif
 
 		len = (mtu - hlen - sizeof(struct ip6_frag)) & ~7;
 		if (len < 8) {
@@ -1407,11 +1438,12 @@ ip6_ctloutput(op, so, level, optname, mp)
 	struct mbuf *m = *mp;
 	int error, optval;
 	int optlen;
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;	/* XXX */
 
 	optlen = m ? m->m_len : 0;
 	error = optval = 0;
-	privileged = (p == 0 || kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) ? 0 : 1;
+	privileged = (l == 0 || kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) ? 0 : 1;
 	uproto = (int)so->so_proto->pr_protocol;
 
 	if (level == IPPROTO_IPV6) {
@@ -2102,7 +2134,7 @@ ip6_pcbopts(pktopt, m, so)
 {
 	struct ip6_pktopts *opt = *pktopt;
 	int error = 0;
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;	/* XXX */
 	int priv = 0;
 
 	/* turn off any old options. */
@@ -2128,7 +2160,8 @@ ip6_pcbopts(pktopt, m, so)
 	}
 
 	/*  set options specified by user. */
-	if (p && !kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
+	if (l && !kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag))
 		priv = 1;
 	if ((error = ip6_setpktopts(m, opt, NULL, priv,
 	    so->so_proto->pr_protocol)) != 0) {
@@ -2416,7 +2449,7 @@ ip6_setmoptions(optname, im6op, m)
 	struct ip6_moptions *im6o = *im6op;
 	struct route_in6 ro;
 	struct in6_multi_mship *imm;
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;	/* XXX */
 
 	if (im6o == NULL) {
 		/*
@@ -2515,7 +2548,8 @@ ip6_setmoptions(optname, im6op, m)
 			 * all multicast addresses. Only super user is allowed
 			 * to do this.
 			 */
-			if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
+			if (kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
 			{
 				error = EACCES;
 				break;

@@ -1,5 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.5.8.1 2006/06/26 12:44:38 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.5.8.2 2006/08/11 15:41:43 yamt Exp $
 
 BINDIR=		/usr/mdec
 
-COPTS+=		-Wno-pointer-sign -fno-strict-aliasing
+.include <bsd.own.mk>
+
+.if ${HAVE_GCC} > 3
+COPTS+=		-Wno-pointer-sign
+.endif
+COPTS+=		-fno-strict-aliasing

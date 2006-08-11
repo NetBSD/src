@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_misc.c,v 1.13.2.1 2006/03/13 09:07:08 yamt Exp $	*/
+/*	$NetBSD: pecoff_misc.c,v 1.13.2.2 2006/08/11 15:43:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.13.2.1 2006/03/13 09:07:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.13.2.2 2006/08/11 15:43:41 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -415,19 +415,36 @@ pecoff_sys_statfs(l, v, retval)
 }
 
 
+#ifdef COMPAT_30
 int
-pecoff_sys_getfh(l, v, retval)
+pecoff_compat_30_sys_getfh(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct proc *p = l->l_proc;
-	struct pecoff_sys_getfh_args *uap = v;
+	struct pecoff_compat_30_sys_getfh_args *uap = v;
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, fname));
 
-	return sys_getfh(l, v, retval);
+	return compat_30_sys_getfh(l, v, retval);
+}
+#endif
+
+int
+pecoff_sys___getfh30(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct proc *p = l->l_proc;
+	struct pecoff_sys___getfh30_args *uap = v;
+	caddr_t sg = stackgap_init(p, 0);
+
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, fname));
+
+	return sys___getfh30(l, v, retval);
 }
 
 

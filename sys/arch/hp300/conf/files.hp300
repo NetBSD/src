@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.74 2005/12/11 12:17:13 christos Exp $
+#	$NetBSD: files.hp300,v 1.74.8.1 2006/08/11 15:41:33 yamt Exp $
 #
 # hp300-specific configuration info
 
@@ -8,8 +8,8 @@ maxpartitions 8
 maxusers 2 8 64
 
 # SPU configuration options.
-defflag	opt_spuconf.h	HP320 HP330 HP340 HP345 HP350 HP360 HP370
-			HP375 HP380 HP385 HP400 HP425 HP433
+defflag	opt_spuconf.h	HP320 HP330 HP340 HP345 HP350 HP360 HP362 HP370
+			HP375 HP380 HP382 HP385 HP400 HP425 HP433
 
 # Misc. options.
 defflag			USELEDS		# make the lights twinkle

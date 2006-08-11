@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.78.6.2 2006/06/26 12:54:29 yamt Exp $	*/
+/*	$NetBSD: socket.h,v 1.78.6.3 2006/08/11 15:47:26 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -558,7 +558,11 @@ ssize_t	sendmsg(int, const struct msghdr *, int);
 int	setsockopt(int, int, int, const void *, socklen_t);
 int	shutdown(int, int);
 int	sockatmark(int);
-int	socket(int, int, int);
+int	socket(int, int, int)
+#if !defined(__LIBC12_SOURCE__) && !defined(_STANDALONE)
+__RENAME(__socket30)
+#endif
+			     ;
 int	socketpair(int, int, int, int *);
 __END_DECLS
 #endif /* !_KERNEL */

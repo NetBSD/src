@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_pnpbus.c,v 1.2.2.2 2006/06/26 12:45:14 yamt Exp $ */
+/* $NetBSD: mcclock_pnpbus.c,v 1.2.2.3 2006/08/11 15:42:41 yamt Exp $ */
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_pnpbus.c,v 1.2.2.2 2006/06/26 12:45:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_pnpbus.c,v 1.2.2.3 2006/08/11 15:42:41 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,10 +59,13 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_pnpbus.c,v 1.2.2.2 2006/06/26 12:45:14 yamt 
 #include <machine/isa_machdep.h>
 #include <machine/residual.h>
 #include <machine/chpidpnp.h>
+/* XXX */
+#include <machine/pio.h>
 
 #include <dev/clock_subr.h>
 #include <dev/ic/mc146818reg.h>
 #include <dev/ic/mc146818var.h>
+#include <dev/ic/ds1687reg.h>
 
 #include <dev/isa/isavar.h>
 
@@ -71,11 +74,17 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_pnpbus.c,v 1.2.2.2 2006/06/26 12:45:14 yamt 
 static int	mcclock_pnpbus_probe(struct device *, struct cfdata *, void *);
 static void	mcclock_pnpbus_attach(struct device *, struct device *, void *);
 
+extern struct cfdriver mcclock_cd;
+
 CFATTACH_DECL(mcclock_pnpbus, sizeof (struct mc146818_softc),
     mcclock_pnpbus_probe, mcclock_pnpbus_attach, NULL, NULL);
 
 void	mcclock_pnpbus_write(struct mc146818_softc *, u_int, u_int);
 u_int	mcclock_pnpbus_read(struct mc146818_softc *, u_int);
+void	ds1585_reboot(void);
+
+int have_ds1585 = 0;
+#define MCCLOCK_STD_DEV		0
 
 static int
 mcclock_pnpbus_probe(struct device *parent, struct cfdata *match, void *aux)
@@ -109,6 +118,8 @@ mcclock_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	if (pna->chipid == Dallas1585)
+		have_ds1585 = 1;
 	sc->sc_year0 = 1900;
 	sc->sc_mcread = mcclock_pnpbus_read;
 	sc->sc_mcwrite = mcclock_pnpbus_write;
@@ -119,6 +130,55 @@ mcclock_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 
 	(*sc->sc_mcwrite)(sc, MC_REGB, MC_REGB_24HR);
 	todr_attach(&sc->sc_handle);
+}
+
+void
+ds1585_reboot(void)
+{
+	struct mc146818_softc *sc = mcclock_cd.cd_devs[MCCLOCK_STD_DEV];
+	int i, j;
+
+	if (!have_ds1585)
+		return;
+
+	/* monitors b0: 05,03,01  b1: 49, WIE=1 */
+
+	(*sc->sc_mcwrite)(sc, DS1687_ASEC, 0);
+
+	/* If we are nearing 59 minutes on the hour, the math is too complex
+	 * to compute out when to reboot, so we just wait for the clock to
+	 * flip back over to zero, then set the alarm time.
+	 */
+	i = (*sc->sc_mcread)(sc, DS1687_MIN);
+	if (i == 0x58) {
+		(*sc->sc_mcwrite)(sc, DS1687_AMIN, 0x59);
+		(*sc->sc_mcwrite)(sc, DS1687_ASEC, 0x59);
+		i = 0x59;
+	} else {
+		while (i == 0x59) {
+			delay(100);
+			i = (*sc->sc_mcread)(sc, DS1687_MIN);
+		}
+		i += 2;
+		if ((i & 0x0f) > 8) 
+			i = (i & 0xf0) + 0x10;
+		(*sc->sc_mcwrite)(sc, DS1687_AMIN, i);
+	}
+	i = (*sc->sc_mcread)(sc, DS1687_HOUR);
+	(*sc->sc_mcwrite)(sc, DS1687_AHOUR, i);
+	j = (*sc->sc_mcread)(sc, DS1687_DOM); /* get date */
+	i = (*sc->sc_mcread)(sc, DS1687_CONTROLA);
+	i |= DS1687_BANK1; /* set DV0 on */
+	(*sc->sc_mcwrite)(sc, DS1687_CONTROLA, i);
+	/* write today into wakeup */
+	(*sc->sc_mcwrite)(sc, DS1687_BANK1_ADATE, j);
+	i = (*sc->sc_mcread)(sc, 0x4b); /* bank1 reg B */
+	i |= 0x82; /* WIE + ABE */
+	(*sc->sc_mcwrite)(sc, 0x4b, i);
+	i = (*sc->sc_mcread)(sc, 0x4b);
+	/* XXX power control bit on 7024/7025 */
+	outb(PREP_BUS_SPACE_IO + 0x856, 1);
+	for (;;);
 }
 
 void

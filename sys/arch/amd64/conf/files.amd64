@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.21.2.2 2006/06/26 12:44:22 yamt Exp $
+#	$NetBSD: files.amd64,v 1.21.2.3 2006/08/11 15:41:00 yamt Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -17,7 +17,6 @@ defflag			LARGEPAGES
 # The REAL{BASE,EXT}MEM options
 defparam opt_realmem.h	REALBASEMEM REALEXTMEM
 
-
 #
 # XXX these are just here at the moment so that we can share files
 # with the i386 (they include the opt_*.h for these)
@@ -32,9 +31,9 @@ file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c	ddb
 file	arch/amd64/amd64/db_memrw.c		ddb | kgdb
 file	arch/amd64/amd64/db_trace.c		ddb
+file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 file	kern/subr_disk_mbr.c			disk
 file	arch/amd64/amd64/gdt.c
-
 #
 # XXXfvdl write the optimized versions for these.
 #
@@ -196,7 +195,7 @@ include	"dev/pcmcia/files.pcmcia"
 include	"dev/usb/files.usb"
 
 include	"dev/ieee1394/files.ieee1394"
-
+include "dev/apm/files.apm"
 include "dev/acpi/files.acpi"
 file	arch/amd64/acpi/acpi_wakeup.c	acpi
 

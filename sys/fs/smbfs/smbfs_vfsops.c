@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.51.8.1 2006/05/24 10:58:40 yamt Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.51.8.2 2006/08/11 15:45:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.51.8.1 2006/05/24 10:58:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.51.8.2 2006/08/11 15:45:34 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -174,7 +174,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 		    SMBFS_VERSION, args.version);
 		return EINVAL;
 	}
-	smb_makescred(&scred, l, l->l_proc->p_cred);
+	smb_makescred(&scred, l, l->l_cred);
 	error = smb_dev2share(args.dev_fd, SMBM_EXEC, &scred, &ssp);
 	if (error)
 		return error;
@@ -254,7 +254,7 @@ smbfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	if ((error = vflush(mp, NULLVP, flags)) != 0)
 		return error;
 
-	smb_makescred(&scred, l, l->l_proc->p_cred);
+	smb_makescred(&scred, l, l->l_cred);
 	smb_share_lock(smp->sm_share, 0);
 	smb_share_put(smp->sm_share, &scred);
 	mp->mnt_data = NULL;
@@ -279,7 +279,7 @@ smbfs_setroot(struct mount *mp)
 	struct vnode *vp;
 	struct smbfattr fattr;
 	struct lwp *l = curlwp;
-	kauth_cred_t cred = l->l_proc->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	struct smb_cred scred;
 	int error;
 
@@ -409,7 +409,7 @@ smbfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 	int error = 0;
 
 	sbp->f_iosize = SSTOVC(ssp)->vc_txmax;		/* optimal transfer block size */
-	smb_makescred(&scred, l, l->l_proc->p_cred);
+	smb_makescred(&scred, l, l->l_cred);
 
 	error = smbfs_smb_statvfs(ssp, sbp, &scred);
 	if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: obs405_machdep.c,v 1.2 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: obs405_machdep.c,v 1.2.8.1 2006/08/11 15:41:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs405_machdep.c,v 1.2 2005/12/11 12:17:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs405_machdep.c,v 1.2.8.1 2006/08/11 15:41:26 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -54,43 +54,3 @@ struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-
-/*
- * TODO: XXX these functions are machine-dependent ??
- */
-
-/*
- * softnet:
- * Soft networking interrupts.
- */
-void
-softnet(void)
-{
-	int isr;
-
-	isr = netisr;
-	netisr = 0;
-
-#define DONETISR(bit, fn) do {		\
-	if (isr & (1 << bit))		\
-		fn();			\
-} while (0)
-
-#include <net/netisr_dispatch.h>
-#undef DONETISR
-}
-
-/*
- * softserial:
- * Soft tty interrupts.
- */
-#include "com.h"
-void
-softserial(void)
-{
-#if NCOM > 0
-	void comsoft(void);	/* XXX from dev/ic/com.c */
-
-	comsoft();
-#endif
-}
