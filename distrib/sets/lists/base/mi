@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.532.2.29 2006/07/30 16:38:58 tron Exp $
+# $NetBSD: mi,v 1.532.2.30 2006/08/11 04:41:24 riz Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -191,6 +191,8 @@
 ./sbin/rrestore					base-netutil-root
 ./sbin/rtsol					base-netutil-root	inet6
 ./sbin/savecore					base-sysutil-root
+./sbin/scan_ffs					base-sysutil-root
+./sbin/scan_lfs					base-sysutil-root
 ./sbin/scsictl					base-sysutil-root
 ./sbin/setkey					base-netutil-root
 ./sbin/shutdown					base-sysutil-root
