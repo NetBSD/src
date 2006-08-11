@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.25.8.1 2006/04/01 12:07:21 yamt Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.25.8.2 2006/08/11 15:45:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.25.8.1 2006/04/01 12:07:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.25.8.2 2006/08/11 15:45:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,12 +361,9 @@ com_pcmcom_attach(parent, self, aux)
 	struct com_softc *sc = (struct com_softc *)self;
 	struct pcmcom_attach_args *pca = aux;
 
-	sc->sc_iot = pca->pca_iot;
-	sc->sc_ioh = pca->pca_ioh;
-
+	COM_INIT_REGS(sc->sc_regs, pca->pca_iot, pca->pca_ioh, -1);
 	sc->enabled = 1;
 
-	sc->sc_iobase = -1;
 	sc->sc_frequency = COM_FREQ;
 
 	sc->enable = com_pcmcom_enable;

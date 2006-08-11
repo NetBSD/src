@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.82.6.2 2006/05/24 10:59:15 yamt Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.82.6.3 2006/08/11 15:47:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.82.6.2 2006/05/24 10:59:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.82.6.3 2006/08/11 15:47:05 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -207,9 +207,9 @@ loop:
 	 * Initalize read/write creds to useful values. VOP_OPEN will
 	 * overwrite these.
 	 */
-	np->n_rcred = curproc->p_cred;
+	np->n_rcred = curlwp->l_cred;
 	kauth_cred_hold(np->n_rcred);
-	np->n_wcred = curproc->p_cred;
+	np->n_wcred = curlwp->l_cred;
 	kauth_cred_hold(np->n_wcred);
 	lockmgr(&vp->v_lock, LK_EXCLUSIVE, NULL);
 	lockmgr(&nfs_hashlock, LK_RELEASE, NULL);

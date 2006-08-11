@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.38.2.2 2006/06/26 12:54:50 yamt Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.38.2.3 2006/08/11 15:47:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.38.2.2 2006/06/26 12:54:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.38.2.3 2006/08/11 15:47:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -344,11 +344,9 @@ quotaon(struct lwp *l, struct mount *mp, int type, caddr_t fname)
 	struct vnode *vp, **vpp;
 	struct vnode *nextvp;
 	struct dquot *dq;
-	struct proc *p;
 	int error;
 	struct nameidata nd;
 
-	p = l->l_proc;
 	vpp = &ump->um_quotas[type];
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fname, l);
 	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
@@ -356,7 +354,7 @@ quotaon(struct lwp *l, struct mount *mp, int type, caddr_t fname)
 	vp = nd.ni_vp;
 	VOP_UNLOCK(vp, 0);
 	if (vp->v_type != VREG) {
-		(void) vn_close(vp, FREAD|FWRITE, p->p_cred, l);
+		(void) vn_close(vp, FREAD|FWRITE, l->l_cred, l);
 		return (EACCES);
 	}
 	if (*vpp != vp)
@@ -369,8 +367,8 @@ quotaon(struct lwp *l, struct mount *mp, int type, caddr_t fname)
 	 * Save the credential of the process that turned on quotas.
 	 * Set up the time limits for this quota.
 	 */
-	kauth_cred_hold(p->p_cred);
-	ump->um_cred[type] = p->p_cred;
+	kauth_cred_hold(l->l_cred);
+	ump->um_cred[type] = l->l_cred;
 	ump->um_btime[type] = MAX_DQ_TIME;
 	ump->um_itime[type] = MAX_IQ_TIME;
 	if (dqget(NULLVP, 0, ump, type, &dq) == 0) {
@@ -443,7 +441,7 @@ again:
 	}
 	dqflush(qvp);
 	qvp->v_flag &= ~VSYSTEM;
-	error = vn_close(qvp, FREAD|FWRITE, l->l_proc->p_cred, l);
+	error = vn_close(qvp, FREAD|FWRITE, l->l_cred, l);
 	ump->um_quotas[type] = NULLVP;
 	kauth_cred_free(ump->um_cred[type]);
 	ump->um_cred[type] = NOCRED;

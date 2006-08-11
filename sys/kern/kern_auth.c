@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.3.2.3 2006/06/26 12:52:56 yamt Exp $ */
+/* $NetBSD: kern_auth.c,v 1.3.2.4 2006/08/11 15:45:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -50,15 +50,15 @@
  * Credentials.
  */
 struct kauth_cred {
-	struct simplelock cr_lock;	/* lock */
-	uint32_t cr_refcnt;		/* reference count */
+	struct simplelock cr_lock;	/* lock on cr_refcnt */
+	u_int cr_refcnt;		/* reference count */
 	uid_t cr_uid;			/* user id */
 	uid_t cr_euid;			/* effective user id */
 	uid_t cr_svuid;			/* saved effective user id */
 	gid_t cr_gid;			/* group id */
 	gid_t cr_egid;			/* effective group id */
 	gid_t cr_svgid;			/* saved effective group id */
-	uint16_t cr_ngroups;		/* number of groups */
+	u_int cr_ngroups;		/* number of groups */
 	gid_t cr_groups[NGROUPS];	/* group memberships */
 };
 
@@ -68,7 +68,7 @@ struct kauth_cred {
 struct kauth_listener {
 	kauth_scope_callback_t		func;		/* callback */
 	kauth_scope_t			scope;		/* scope backpointer */
-	uint32_t			refcnt;		/* reference count */
+	u_int				refcnt;		/* reference count */
 	SIMPLEQ_ENTRY(kauth_listener)	listener_next;	/* listener list */
 };
 
@@ -78,7 +78,7 @@ struct kauth_listener {
 struct kauth_scope {
 	const char		       *id;		/* scope name */
 	void			       *cookie;		/* user cookie */
-	uint32_t			nlisteners;	/* # of listeners */
+	u_int				nlisteners;	/* # of listeners */
 	SIMPLEQ_HEAD(, kauth_listener)	listenq;	/* listener list */
 	SIMPLEQ_ENTRY(kauth_scope)	next_scope;	/* scope list */
 };
@@ -117,6 +117,7 @@ void
 kauth_cred_hold(kauth_cred_t cred)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred->cr_refcnt > 0);
 
         simple_lock(&cred->cr_lock);
         cred->cr_refcnt++;
@@ -127,13 +128,16 @@ kauth_cred_hold(kauth_cred_t cred)
 void
 kauth_cred_free(kauth_cred_t cred)
 {
+	u_int refcnt;
+
 	KASSERT(cred != NULL);
+	KASSERT(cred->cr_refcnt > 0);
 
 	simple_lock(&cred->cr_lock);
-	cred->cr_refcnt--;
+	refcnt = --cred->cr_refcnt;
 	simple_unlock(&cred->cr_lock);
 
-	if (cred->cr_refcnt == 0)
+	if (refcnt == 0)
 		pool_put(&kauth_cred_pool, cred);
 }
 
@@ -142,6 +146,7 @@ kauth_cred_clone(kauth_cred_t from, kauth_cred_t to)
 {
 	KASSERT(from != NULL);
 	KASSERT(to != NULL);
+	KASSERT(from->cr_refcnt > 0);
 
 	to->cr_uid = from->cr_uid;
 	to->cr_euid = from->cr_euid;
@@ -150,8 +155,7 @@ kauth_cred_clone(kauth_cred_t from, kauth_cred_t to)
 	to->cr_egid = from->cr_egid;
 	to->cr_svgid = from->cr_svgid;
 	to->cr_ngroups = from->cr_ngroups;
-	memcpy(to->cr_groups, from->cr_groups,
-	       sizeof(to->cr_groups));
+	memcpy(to->cr_groups, from->cr_groups, sizeof(to->cr_groups));
 }
 
 /*
@@ -163,6 +167,7 @@ kauth_cred_dup(kauth_cred_t cred)
 	kauth_cred_t new_cred;
 
 	KASSERT(cred != NULL);
+	KASSERT(cred->cr_refcnt > 0);
 
 	new_cred = kauth_cred_alloc();
 
@@ -181,6 +186,7 @@ kauth_cred_copy(kauth_cred_t cred)
 	kauth_cred_t new_cred;
 
 	KASSERT(cred != NULL);
+	KASSERT(cred->cr_refcnt > 0);
 
 	/* If the provided credentials already have one reference, use them. */
 	if (cred->cr_refcnt == 1)
@@ -247,6 +253,7 @@ void
 kauth_cred_setuid(kauth_cred_t cred, uid_t uid)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred->cr_refcnt == 1);
 
 	cred->cr_uid = uid;
 }
@@ -255,6 +262,7 @@ void
 kauth_cred_seteuid(kauth_cred_t cred, uid_t uid)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred->cr_refcnt == 1);
 
 	cred->cr_euid = uid;
 }
@@ -263,6 +271,7 @@ void
 kauth_cred_setsvuid(kauth_cred_t cred, uid_t uid)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred->cr_refcnt == 1);
 
 	cred->cr_svuid = uid;
 }
@@ -271,6 +280,7 @@ void
 kauth_cred_setgid(kauth_cred_t cred, gid_t gid)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred->cr_refcnt == 1);
 
 	cred->cr_gid = gid;
 }
@@ -279,6 +289,7 @@ void
 kauth_cred_setegid(kauth_cred_t cred, gid_t gid)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred->cr_refcnt == 1);
 
 	cred->cr_egid = gid;
 }
@@ -287,6 +298,7 @@ void
 kauth_cred_setsvgid(kauth_cred_t cred, gid_t gid)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred->cr_refcnt == 1);
 
 	cred->cr_svgid = gid;
 }
@@ -311,7 +323,7 @@ kauth_cred_ismember_gid(kauth_cred_t cred, gid_t gid, int *resultp)
 	return (0);
 }
 
-uint16_t
+u_int
 kauth_cred_ngroups(kauth_cred_t cred)
 {
 	KASSERT(cred != NULL);
@@ -323,7 +335,7 @@ kauth_cred_ngroups(kauth_cred_t cred)
  * Return the group at index idx from the groups in cred.
  */
 gid_t
-kauth_cred_group(kauth_cred_t cred, uint16_t idx)
+kauth_cred_group(kauth_cred_t cred, u_int idx)
 {
 	KASSERT(cred != NULL);
 	KASSERT(idx < cred->cr_ngroups);
@@ -336,9 +348,8 @@ int
 kauth_cred_setgroups(kauth_cred_t cred, gid_t *grbuf, size_t len, uid_t gmuid)
 {
 	KASSERT(cred != NULL);
-	KASSERT(len < sizeof(cred->cr_groups) / sizeof(cred->cr_groups[0]));
-
-	simple_lock(&cred->cr_lock);
+	KASSERT(cred->cr_refcnt == 1);
+	KASSERT(len <= sizeof(cred->cr_groups) / sizeof(cred->cr_groups[0]));
 
 	if (len)
 		memcpy(cred->cr_groups, grbuf, len * sizeof(cred->cr_groups[0]));
@@ -346,8 +357,6 @@ kauth_cred_setgroups(kauth_cred_t cred, gid_t *grbuf, size_t len, uid_t gmuid)
 	    sizeof(cred->cr_groups) - (len * sizeof(cred->cr_groups[0])));
 
 	cred->cr_ngroups = len;
-
-	simple_unlock(&cred->cr_lock);
 
 	return (0);
 }
@@ -359,9 +368,7 @@ kauth_cred_getgroups(kauth_cred_t cred, gid_t *grbuf, size_t len)
 	KASSERT(len <= cred->cr_ngroups);
 
 	memset(grbuf, 0xff, sizeof(*grbuf) * len);
-	simple_lock(&cred->cr_lock);
 	memcpy(grbuf, cred->cr_groups, sizeof(*grbuf) * len);
-	simple_unlock(&cred->cr_lock);
 
 	return (0);
 }
@@ -390,7 +397,7 @@ kauth_cred_uidmatch(kauth_cred_t cred1, kauth_cred_t cred2)
 	return (0);
 }
 
-uint32_t
+u_int
 kauth_cred_getrefcnt(kauth_cred_t cred)
 {
 	KASSERT(cred != NULL);
@@ -452,8 +459,7 @@ kauth_cred_uucmp(kauth_cred_t cred, const struct uucred *uuc)
 }
 
 /*
- * Make a struct ucred out of a kauth_cred_t.
- * XXX: For sysctl.
+ * Make a struct ucred out of a kauth_cred_t.  For compatibility.
  */
 void
 kauth_cred_toucred(kauth_cred_t cred, struct ucred *uc)
@@ -461,6 +467,7 @@ kauth_cred_toucred(kauth_cred_t cred, struct ucred *uc)
 	KASSERT(cred != NULL);
 	KASSERT(uc != NULL);
 
+	uc->cr_ref = cred->cr_refcnt;
 	uc->cr_uid = cred->cr_euid;
 	uc->cr_gid = cred->cr_egid;
 	uc->cr_ngroups = min(cred->cr_ngroups,
@@ -470,8 +477,7 @@ kauth_cred_toucred(kauth_cred_t cred, struct ucred *uc)
 }
 
 /*
- * Make a struct pcred out of a kauth_cred_t.
- * XXX: For sysctl.
+ * Make a struct pcred out of a kauth_cred_t.  For compatibility.
  */
 void
 kauth_cred_topcred(kauth_cred_t cred, struct pcred *pc)
@@ -479,7 +485,7 @@ kauth_cred_topcred(kauth_cred_t cred, struct pcred *pc)
 	KASSERT(cred != NULL);
 	KASSERT(pc != NULL);
 
-	pc->pc_ucred = (struct ucred *)cred; /* XXX this is just wrong */
+	pc->pc_ucred = NULL;
 	pc->p_ruid = cred->cr_uid;
 	pc->p_svuid = cred->cr_svuid;
 	pc->p_rgid = cred->cr_gid;
@@ -488,12 +494,12 @@ kauth_cred_topcred(kauth_cred_t cred, struct pcred *pc)
 }
 
 /*
- * Return kauth_cred_t for the current process.
+ * Return kauth_cred_t for the current LWP.
  */
 kauth_cred_t
 kauth_cred_get(void)
 {
-	return (curproc->p_cred);
+	return (curlwp->l_cred);
 }
 
 /*
@@ -679,6 +685,11 @@ kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
 	kauth_listener_t listener;
 	int error, allow, fail;
 
+#if 0 /* defined(LOCKDEBUG) */
+	spinlock_switchcheck();
+	simple_lock_only_held(NULL, "kauth_authorize_action");
+#endif
+
 	/* Sanitize input */
 	if (scope == NULL || cred == NULL)
 		return (EFAULT);
@@ -730,6 +741,19 @@ kauth_authorize_cb_generic(kauth_cred_t cred, kauth_action_t action,
 		} else
 			error = KAUTH_RESULT_DENY;
 		break;
+
+	case KAUTH_GENERIC_CANSEE:
+		if (!security_curtain) {
+			error = KAUTH_RESULT_ALLOW;
+		} else {
+			kauth_cred_t cred2 = arg0;
+
+			if (kauth_cred_uidmatch(cred, cred2))
+				error = KAUTH_RESULT_ALLOW;
+			else
+				error = KAUTH_RESULT_DENY;
+		}
+		break;
 	}
 
 	return (error);
@@ -771,7 +795,6 @@ kauth_authorize_cb_process(kauth_cred_t cred, kauth_action_t action,
 			error = KAUTH_RESULT_ALLOW;
 		else
 			error = KAUTH_RESULT_DEFER;
-
 		break;
 		}
 

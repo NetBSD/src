@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.112.2.4 2006/06/26 12:52:57 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.112.2.5 2006/08/11 15:45:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.112.2.4 2006/06/26 12:52:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.112.2.5 2006/08/11 15:45:46 yamt Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -903,7 +903,7 @@ pool_get(struct pool *pp, int flags)
 #endif /* DIAGNOSTIC */
 #ifdef LOCKDEBUG
 	if (flags & PR_WAITOK)
-		simple_lock_only_held(NULL, "pool_get(PR_WAITOK)");
+		ASSERT_SLEEPABLE(NULL, "pool_get(PR_WAITOK)");
 	SCHED_ASSERT_UNLOCKED();
 #endif
 
@@ -2011,7 +2011,7 @@ pool_cache_get_paddr(struct pool_cache *pc, int flags, paddr_t *pap)
 
 #ifdef LOCKDEBUG
 	if (flags & PR_WAITOK)
-		simple_lock_only_held(NULL, "pool_cache_get(PR_WAITOK)");
+		ASSERT_SLEEPABLE(NULL, "pool_cache_get(PR_WAITOK)");
 #endif
 
 	simple_lock(&pc->pc_slock);

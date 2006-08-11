@@ -1,4 +1,4 @@
-/*	$NetBSD: hp300spu.h,v 1.11 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: hp300spu.h,v 1.11.8.1 2006/08/11 15:41:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -58,10 +58,13 @@
 #define	HP_425		10	/* 25MHz 68040 */
 #define	HP_433		11	/* 33MHz 68040 */
 #define	HP_385		12	/* 33MHz 68040 */
+#define	HP_362		13	/* 25MHz 68030 */
+#define	HP_382		14	/* 25MHz 68040 */
 
 /* values for mmuid - used to differentiate similar CPU/cache combos */
 #define	MMUID_345	1	/* 345 */
 #define	MMUID_375	3	/* 375 */
+#define	MMUID_382	11	/* 382 */
 #define	MMUID_385	2	/* 385 */
 #define	MMUID_425_T	5	/* 425t - 25MHz Trailways */
 #define	MMUID_425_S	7	/* 425s - 25MHz Strider */
@@ -99,12 +102,13 @@ extern	int mmuid;		/* MMU id */
 #define M68020
 #endif
 
-#if defined(HP340) || defined(HP345) || defined(HP360) || defined(HP370) || \
-    defined(HP375) || defined(HP400)
+#if defined(HP340) || defined(HP345) || defined(HP360) || defined(HP362) || \
+    defined(HP370) || defined(HP375) || defined(HP400)
 #define M68030
 #endif
 
-#if defined(HP380) || defined(HP385) || defined(HP425) || defined(HP433)
+#if defined(HP380) || defined(HP382) || defined(HP385) || defined(HP425) || \
+    defined(HP433)
 #define M68040
 #endif
 

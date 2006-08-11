@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.58 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: grf.c,v 1.58.8.1 2006/08/11 15:41:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.58 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.58.8.1 2006/08/11 15:41:33 yamt Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.58 2005/12/11 12:17:13 christos Exp $");
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
+#include <hp300/dev/intioreg.h>
 #include <hp300/dev/grfioctl.h>
 #include <hp300/dev/grfvar.h>
 #include <hp300/dev/grfreg.h>
@@ -161,7 +162,7 @@ static int
 grfmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 
-	return (1);
+	return 1;
 }
 
 static void
@@ -187,7 +188,7 @@ grfprint(void *aux, const char *pnp)
 	if (pnp)
 		aprint_normal("ite at %s", pnp);
 
-	return (UNCONF);
+	return UNCONF;
 }
 
 /*ARGSUSED*/
@@ -201,27 +202,27 @@ grfopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	if (unit >= grf_cd.cd_ndevs ||
 	    (sc = grf_cd.cd_devs[unit]) == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	gp = sc->sc_data;
 
 	if ((gp->g_flags & GF_ALIVE) == 0)
-		return (ENXIO);
+		return ENXIO;
 
 	if ((gp->g_flags & (GF_OPEN|GF_EXCLUDE)) == (GF_OPEN|GF_EXCLUDE))
-		return(EBUSY);
+		return EBUSY;
 #ifdef COMPAT_HPUX
 	/*
 	 * XXX: cannot handle both HPUX and BSD processes at the same time
 	 */
 	if (l->l_proc->p_emul == &emul_hpux)
 		if (gp->g_flags & GF_BSDOPEN)
-			return(EBUSY);
+			return EBUSY;
 		else
 			gp->g_flags |= GF_HPUXOPEN;
 	else
 		if (gp->g_flags & GF_HPUXOPEN)
-			return(EBUSY);
+			return EBUSY;
 		else
 			gp->g_flags |= GF_BSDOPEN;
 #endif
@@ -234,7 +235,7 @@ grfopen(dev_t dev, int flags, int mode, struct lwp *l)
 		gp->g_flags |= GF_OPEN;
 		error = grfon(dev);
 	}
-	return(error);
+	return error;
 }
 
 /*ARGSUSED*/
@@ -250,14 +251,14 @@ grfclose(dev_t dev, int flags, int mode, struct lwp *l)
 	gp = sc->sc_data;
 
 	if ((gp->g_flags & GF_ALIVE) == 0)
-		return (ENXIO);
+		return ENXIO;
 
 	(void) grfoff(dev);
 #ifdef COMPAT_HPUX
 	(void) grfunlock(gp);
 #endif
 	gp->g_flags &= GF_ALIVE;
-	return(0);
+	return 0;
 }
 
 /*ARGSUSED*/
@@ -273,11 +274,11 @@ grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	gp = sc->sc_data;
 
 	if ((gp->g_flags & GF_ALIVE) == 0)
-		return (ENXIO);
+		return ENXIO;
 
 #ifdef COMPAT_HPUX
 	if (l->l_proc->p_emul == &emul_hpux)
-		return(hpuxgrfioctl(dev, cmd, data, flag, l->l_proc));
+		return hpuxgrfioctl(dev, cmd, data, flag, l->l_proc);
 #endif
 	error = 0;
 	switch (cmd) {
@@ -307,7 +308,7 @@ grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	}
-	return(error);
+	return error;
 }
 
 /*ARGSUSED*/
@@ -316,7 +317,7 @@ grfmmap(dev_t dev, off_t off, int prot)
 {
 	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
 
-	return (grfaddr(sc, off));
+	return grfaddr(sc, off);
 }
 
 int
@@ -335,9 +336,8 @@ grfon(dev_t dev/*XXX*/)
 	 * of the dev arg.
 	 */
 	iteoff(sc->sc_ite->sc_data, 3);
-	return((*gp->g_sw->gd_mode)(gp,
-				    (dev&GRFOVDEV) ? GM_GRFOVON : GM_GRFON,
-				    (caddr_t)0));
+	return (*gp->g_sw->gd_mode)(gp,
+	    (dev & GRFOVDEV) ? GM_GRFOVON : GM_GRFON, (caddr_t)0);
 }
 
 int
@@ -357,7 +357,7 @@ grfoff(dev_t dev/*XXX*/)
 				     (caddr_t)0);
 	/* XXX: see comment for iteoff above */
 	(void) iteon(sc->sc_ite->sc_data, 2);
-	return(error);
+	return error;
 }
 
 paddr_t
@@ -368,15 +368,15 @@ grfaddr(struct grf_softc *sc, off_t off)
 
 	/* control registers */
 	if (off >= 0 && off < gi->gd_regsize)
-		return(((paddr_t)gi->gd_regaddr + off) >> PGSHIFT);
+		return ((paddr_t)gi->gd_regaddr + off) >> PGSHIFT;
 
 	/* frame buffer */
 	if (off >= gi->gd_regsize && off < gi->gd_regsize+gi->gd_fbsize) {
 		off -= gi->gd_regsize;
-		return(((paddr_t)gi->gd_fbaddr + off) >> PGSHIFT);
+		return ((paddr_t)gi->gd_fbaddr + off) >> PGSHIFT;
 	}
 	/* bogus */
-	return(-1);
+	return -1;
 }
 
 /*
@@ -483,7 +483,7 @@ hpuxgrfioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 		error = EINVAL;
 		break;
 	}
-	return(error);
+	return error;
 }
 
 int
@@ -513,14 +513,14 @@ grflock(struct grf_data *gp, int block)
 	}
 	if (gp->g_lockp) {
 		if (gp->g_lockp == p)
-			return(EBUSY);
+			return EBUSY;
 		if (!block)
-			return(OEAGAIN);
+			return OEAGAIN;
 		do {
 			gp->g_flags |= GF_WANTED;
 			if ((error = tsleep((caddr_t)&gp->g_flags,
 					   (PZERO+1) | PCATCH, devioc, 0)))
-				return (error);
+				return error;
 		} while (gp->g_lockp);
 	}
 	gp->g_lockp = p;
@@ -534,7 +534,7 @@ grflock(struct grf_data *gp, int block)
 		gp->g_lockpslot = gp->g_lock->gl_lockslot = slot;
 		gp->g_lock->gl_locks[slot] = 1;
 	}
-	return(0);
+	return 0;
 }
 
 int
@@ -547,7 +547,7 @@ grfunlock(struct grf_data *gp)
 		       gp->g_lockp ? gp->g_lockp->p_pid : -1);
 #endif
 	if (gp->g_lockp != curproc)
-		return(EBUSY);
+		return EBUSY;
 	if (gp->g_pid) {
 #ifdef DEBUG
 		if (grfdebug & GDB_LOCK)
@@ -563,7 +563,7 @@ grfunlock(struct grf_data *gp)
 		gp->g_flags &= ~GF_WANTED;
 	}
 	gp->g_lockp = NULL;
-	return(0);
+	return 0;
 }
 
 /*
@@ -583,16 +583,16 @@ grfdevno(dev_t dev)
 
 	if (unit >= grf_cd.cd_ndevs ||
 	    (sc = grf_cd.cd_devs[unit]) == NULL)
-		return (bsdtohpuxdev(dev));
+		return bsdtohpuxdev(dev);
 
 	gp = sc->sc_data;
 	if ((gp->g_flags & GF_ALIVE) == 0)
-		return (bsdtohpuxdev(dev));
+		return bsdtohpuxdev(dev);
 
 	/* magic major number */
 	newdev = 12 << 24;
 	/* now construct minor number */
-	if (gp->g_display.gd_regaddr != (caddr_t)GRFIADDR)
+	if (gp->g_display.gd_regaddr != (caddr_t)(INTIOBASE + FB_BASE))
 		newdev |= (sc->sc_scode << 16) | 0x200;
 	if (dev & GRFIMDEV)
 		newdev |= 0x02;
@@ -602,7 +602,7 @@ grfdevno(dev_t dev)
 	if (grfdebug & GDB_DEVNO)
 		printf("grfdevno: dev %x newdev %x\n", dev, newdev);
 #endif
-	return(newdev);
+	return newdev;
 }
 
 #endif	/* COMPAT_HPUX */
@@ -638,7 +638,7 @@ grfmap(dev_t dev, caddr_t *addrp, struct proc *p)
 			 p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 	if (error == 0)
 		(void) (*gp->g_sw->gd_mode)(gp, GM_MAP, *addrp);
-	return(error);
+	return error;
 }
 
 int
@@ -653,7 +653,7 @@ grfunmap(dev_t dev, caddr_t addr, struct proc *p)
 		printf("grfunmap(%d): dev %x addr %p\n", p->p_pid, dev, addr);
 #endif
 	if (addr == 0)
-		return(EINVAL);		/* XXX: how do we deal with this? */
+		return EINVAL;		/* XXX: how do we deal with this? */
 	(void) (*gp->g_sw->gd_mode)(gp, GM_UNMAP, 0);
 	size = round_page(gp->g_display.gd_regsize + gp->g_display.gd_fbsize);
 	uvm_unmap(&p->p_vmspace->vm_map, (vaddr_t)addr, (vaddr_t)addr + size);
@@ -669,7 +669,7 @@ iommap(dev_t dev, caddr_t *addrp)
 	if (grfdebug & (GDB_MMAP|GDB_IOMAP))
 		printf("iommap(%d): addr %p\n", curproc->p_pid, *addrp);
 #endif
-	return(EINVAL);
+	return EINVAL;
 }
 
 int
@@ -682,7 +682,7 @@ iounmmap(dev_t dev, caddr_t addr)
 		printf("iounmmap(%d): id %d addr %p\n",
 		       curproc->p_pid, unit, addr);
 #endif
-	return(0);
+	return 0;
 }
 
 /*
@@ -716,7 +716,7 @@ grffindpid(struct grf_data *gp)
 		goto done;
 	}
 	if (++i == GRFMAXLCK)
-		return(0);
+		return 0;
 	gp->g_pid[0] = i;
 	gp->g_pid[i] = pid;
 done:
@@ -725,7 +725,7 @@ done:
 		printf("grffindpid(%d): slot %d of %d\n",
 		       pid, i, gp->g_pid[0]);
 #endif
-	return(i);
+	return i;
 }
 
 void
@@ -766,7 +766,7 @@ grflckmmap(dev_t dev, caddr_t *addrp)
 		printf("grflckmmap(%d): addr %p\n",
 		       p->p_pid, *addrp);
 #endif
-	return(EINVAL);
+	return EINVAL;
 }
 
 int
@@ -779,6 +779,6 @@ grflckunmmap(dev_t dev, caddr_t addr)
 		printf("grflckunmmap(%d): id %d addr %p\n",
 		       curproc->p_pid, unit, addr);
 #endif
-	return(EINVAL);
+	return EINVAL;
 }
 #endif	/* COMPAT_HPUX */

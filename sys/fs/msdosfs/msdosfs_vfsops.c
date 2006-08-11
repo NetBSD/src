@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.30.2.1 2006/05/24 10:58:36 yamt Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.30.2.2 2006/08/11 15:45:34 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.30.2.1 2006/05/24 10:58:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.30.2.2 2006/08/11 15:45:34 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -96,7 +96,7 @@ int msdosfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 int msdosfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int msdosfs_vget(struct mount *, ino_t, struct vnode **);
 int msdosfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int msdosfs_vptofh(struct vnode *, struct fid *);
+int msdosfs_vptofh(struct vnode *, struct fid *, size_t *fh_size);
 
 int msdosfs_mountfs(struct vnode *, struct mount *, struct lwp *,
     struct msdosfs_args *);
@@ -247,11 +247,9 @@ msdosfs_mount(mp, path, data, ndp, l)
 	struct msdosfs_args args; /* will hold data from mount request */
 	/* msdosfs specific mount control block */
 	struct msdosfsmount *pmp = NULL;
-	struct proc *p;
 	int error, flags;
 	mode_t accessmode;
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		pmp = VFSTOMSDOSFS(mp);
 		if (pmp == NULL)
@@ -308,11 +306,12 @@ msdosfs_mount(mp, path, data, ndp, l)
 			 * If upgrade to read-write by non-root, then verify
 			 * that user has necessary permissions on the device.
 			 */
-			if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
+			if (kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 				devvp = pmp->pm_devvp;
 				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 				error = VOP_ACCESS(devvp, VREAD | VWRITE,
-						   l->l_proc->p_cred, l);
+						   l->l_cred, l);
 				VOP_UNLOCK(devvp, 0);
 				if (error)
 					return (error);
@@ -343,12 +342,12 @@ msdosfs_mount(mp, path, data, ndp, l)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
+	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_proc->p_cred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_cred, l);
 		VOP_UNLOCK(devvp, 0);
 		if (error) {
 			vrele(devvp);
@@ -429,7 +428,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	int	bsize = 0, dtype = 0, tmp;
 
 	/* Flush out any old buffers remaining from a previous use. */
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_cred, l, 0, 0)) != 0)
+	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)) != 0)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
@@ -965,11 +964,15 @@ msdosfs_fhtovp(mp, fhp, vpp)
 	struct vnode **vpp;
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
-	struct defid *defhp = (struct defid *) fhp;
+	struct defid defh;
 	struct denode *dep;
 	int error;
 
-	error = deget(pmp, defhp->defid_dirclust, defhp->defid_dirofs, &dep);
+	if (fhp->fid_len != sizeof(struct defid))
+		return EINVAL;
+
+	memcpy(&defh, fhp, sizeof(defh));
+	error = deget(pmp, defh.defid_dirclust, defh.defid_dirofs, &dep);
 	if (error) {
 		*vpp = NULLVP;
 		return (error);
@@ -979,19 +982,26 @@ msdosfs_fhtovp(mp, fhp, vpp)
 }
 
 int
-msdosfs_vptofh(vp, fhp)
+msdosfs_vptofh(vp, fhp, fh_size)
 	struct vnode *vp;
 	struct fid *fhp;
+	size_t *fh_size;
 {
 	struct denode *dep;
-	struct defid *defhp;
+	struct defid defh;
 
+	if (*fh_size < sizeof(struct defid)) {
+		*fh_size = sizeof(struct defid);
+		return E2BIG;
+	}
+	*fh_size = sizeof(struct defid);
 	dep = VTODE(vp);
-	defhp = (struct defid *)fhp;
-	defhp->defid_len = sizeof(struct defid);
-	defhp->defid_dirclust = dep->de_dirclust;
-	defhp->defid_dirofs = dep->de_diroffset;
-	/* defhp->defid_gen = dep->de_gen; */
+	memset(&defh, 0, sizeof(defh));
+	defh.defid_len = sizeof(struct defid);
+	defh.defid_dirclust = dep->de_dirclust;
+	defh.defid_dirofs = dep->de_diroffset;
+	/* defh.defid_gen = dep->de_gen; */
+	memcpy(fhp, &defh, sizeof(defh));
 	return (0);
 }
 

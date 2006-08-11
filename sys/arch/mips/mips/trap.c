@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.198.8.2 2006/05/24 10:56:59 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.198.8.3 2006/08/11 15:42:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.198.8.2 2006/05/24 10:56:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.198.8.3 2006/08/11 15:42:22 yamt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -219,8 +219,10 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 
 	uvmexp.traps++;
 	type = TRAPTYPE(cause);
-	if (USERMODE(status))
+	if (USERMODE(status)) {
 		type |= T_USER;
+		LWP_CACHE_CREDS(l, p);
+	}
 
 	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV)) {
 		if (type != T_BREAK) {
@@ -413,8 +415,8 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred ?
-			       kauth_cred_geteuid(p->p_cred) : (uid_t) -1);
+			       l->l_cred ?
+			       kauth_cred_geteuid(l->l_cred) : (uid_t) -1);
 			ksi.ksi_signo = SIGKILL;
 			ksi.ksi_code = 0;
 		} else {

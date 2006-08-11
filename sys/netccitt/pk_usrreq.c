@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.27.8.1 2006/05/24 10:59:03 yamt Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.27.8.2 2006/08/11 15:46:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.27.8.1 2006/05/24 10:59:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.27.8.2 2006/08/11 15:46:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,15 +147,13 @@ pk_usrreq(so, req, m, nam, control, l)
 	struct mbuf *m, *nam, *control;
 	struct lwp *l;
 {
-	struct proc *p;
 	struct pklcd *lcp;
 	int s;
 	int error = 0;
 
-	p = l ? l->l_proc : NULL;
 	if (req == PRU_CONTROL)
 		return (pk_control(so, (long)m, (caddr_t)nam,
-		    (struct ifnet *)control, p));
+		    (struct ifnet *)control, l));
 
 	s = splsoftnet();
 	lcp = (struct pklcd *)so->so_pcb;
@@ -385,12 +383,12 @@ struct sockaddr_x25 pk_sockmask = {
 
 /* ARGSUSED */
 int
-pk_control(so, cmd, data, ifp, p)
+pk_control(so, cmd, data, ifp, l)
 	struct socket *so;
 	u_long cmd;
 	caddr_t data;
 	struct ifnet *ifp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ifreq_x25 *ifr = (struct ifreq_x25 *) data;
 	struct ifaddr *ifa = 0;
@@ -415,9 +413,8 @@ pk_control(so, cmd, data, ifp, p)
 		return (0);
 
 	case SIOCSIFCONF_X25:
-		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
-							 KAUTH_GENERIC_ISSUSER,
-							 &p->p_acflag)))
+		if (l == 0 || kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag) != 0)
 			return (EPERM);
 		if (ifp == 0)
 			panic("pk_control");
@@ -479,7 +476,7 @@ pk_ctloutput(cmd, so, level, optname, mp)
 	struct mbuf   **mp;
 	int             cmd, level, optname;
 {
-	struct proc *p = curproc;		/* XXX */
+	struct lwp *l = curlwp;		/* XXX */
 	struct mbuf *m = *mp;
 	struct pklcd *lcp = (struct pklcd *) so->so_pcb;
 	int             error = EOPNOTSUPP;
@@ -496,8 +493,8 @@ pk_ctloutput(cmd, so, level, optname, mp)
 			return (0);
 
 		case PK_ACCTFILE:
-			if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
-						KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
+			if (l == NULL || (error = kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
 				error = EPERM;
 			else if (m->m_len)
 				error = pk_accton(mtod(m, char *));

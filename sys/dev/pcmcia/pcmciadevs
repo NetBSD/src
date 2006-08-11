@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.214.8.2 2006/06/26 12:52:27 yamt Exp $
+$NetBSD: pcmciadevs,v 1.214.8.3 2006/08/11 15:45:08 yamt Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -95,6 +95,7 @@ vendor BUFFALO			0x026f	BUFFALO (Melco Corporation)
 vendor LINKSYS2			0x0274  The Linksys Group
 vendor IODATA2			0x028a	I-O DATA
 vendor ASUSTEK			0x02aa	Asustek Computer
+vendor SIEMENS			0x02ac	Siemens
 vendor MICROSOFT		0x02d2	Microsoft Corporation
 vendor BREEZECOM		0x0a02	BreezeCOM
 vendor NEWMEDIA2		0x10cd	NewMedia
@@ -387,6 +388,9 @@ product SOCKET DUAL_RS232	0x0006 Socket Communications Dual RS232
 product SOCKET LP_ETHER		0x000d Socket Communications LP-E
 product SOCKET LP_ETHER_CF	0x0075 Socket Communications LP-E CF
 product SOCKET LP_ETH_10_100_CF	0x0145 Socket Communications 10/100 Ethernet
+
+/* SpeedStream */
+product	SIEMENS	SS1021		0x0002	SpeedStream SS1021 WLAN
 
 /* Symbol */
 product	SYMBOL LA4100		0x0001	Symbol Spectrum24 LA4100 Series WLAN

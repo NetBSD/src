@@ -1,4 +1,4 @@
-/* $NetBSD: if_ath_arbus.c,v 1.3.2.3 2006/06/26 12:44:55 yamt Exp $ */
+/* $NetBSD: if_ath_arbus.c,v 1.3.2.4 2006/08/11 15:42:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.3.2.3 2006/06/26 12:44:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.3.2.4 2006/08/11 15:42:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,7 @@ struct ath_arbus_softc {
 	bus_space_handle_t	sc_ioh;
 	void			*sc_ih;
 	struct ar531x_config	sc_config;
+	void			*sc_sdhook;
 };
 
 static int	ath_arbus_match(struct device *, struct cfdata *, void *);
@@ -101,7 +102,6 @@ ath_arbus_attach(struct device *parent, struct device *self, void *opaque)
 	struct ath_softc *sc;
 	struct arbus_attach_args *aa;
 	const char *name;
-	void *hook;
 	int rv;
 
 	asc = (struct ath_arbus_softc *)self;
@@ -136,15 +136,10 @@ ath_arbus_attach(struct device *parent, struct device *self, void *opaque)
 	asc->sc_config.unit = sc->sc_dev.dv_unit;	/* XXX? */
 	asc->sc_config.tag = asc->sc_iot;
 
-<<<<<<< if_ath_arbus.c
-	sc->sc_st = asc->sc_iot;
-	sc->sc_sh = asc->sc_ioh;
-=======
 	/* NB: the HAL expects the config state passed as the tag */
 	sc->sc_st = (HAL_BUS_TAG) &asc->sc_config;
 	sc->sc_sh = (HAL_BUS_HANDLE) asc->sc_ioh;
 	sc->sc_dmat = aa->aa_dmat;
->>>>>>> 1.4
 
 	sc->sc_invalid = 1;
 
@@ -155,8 +150,13 @@ ath_arbus_attach(struct device *parent, struct device *self, void *opaque)
 		return;
 	}
 
-	hook = shutdownhook_establish(ath_arbus_shutdown, asc);
-	if (hook == NULL) {
+	if (ath_attach(devid, sc) != 0) {
+		aprint_error("%s: ath_attach failed\n", sc->sc_dev.dv_xname);
+		goto err;
+	}
+
+	asc->sc_sdhook = shutdownhook_establish(ath_arbus_shutdown, asc);
+	if (asc->sc_sdhook == NULL) {
 		aprint_error("%s: couldn't establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
 		goto err;
@@ -175,6 +175,7 @@ ath_arbus_detach(struct device *self, int flags)
 {
 	struct ath_arbus_softc *asc = (struct ath_arbus_softc *)self;
 
+	shutdownhook_disestablish(asc->sc_sdhook);
 	ath_detach(&asc->sc_ath);
 	arbus_intr_disestablish(asc->sc_ih);
 

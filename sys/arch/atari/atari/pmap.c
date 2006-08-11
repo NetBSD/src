@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.92 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.92.8.1 2006/08/11 15:41:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92.8.1 2006/08/11 15:41:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,7 @@ u_int	*CMAP1, *CMAP2, *vmpte, *msgbufmap;
 
 #define	pa_to_pvh(pa)							\
 ({									\
-	int bank_, pg_;							\
+	int bank_, pg_ = 0;	/* XXX gcc4 -Wuninitialized */		\
 									\
 	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
 	&vm_physmem[bank_].pmseg.pvent[pg_];				\
@@ -334,7 +334,7 @@ u_int	*CMAP1, *CMAP2, *vmpte, *msgbufmap;
 
 #define	pa_to_attribute(pa)						\
 ({									\
-	int bank_, pg_;							\
+	int bank_, pg_ = 0;	/* XXX gcc4 -Wuninitialized */		\
 									\
 	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
 	&vm_physmem[bank_].pmseg.attrs[pg_];				\

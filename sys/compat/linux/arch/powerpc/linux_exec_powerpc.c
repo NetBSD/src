@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.17.8.1 2006/05/24 10:57:28 yamt Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.17.8.2 2006/08/11 15:43:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.17.8.1 2006/05/24 10:57:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.17.8.2 2006/08/11 15:43:29 yamt Exp $");
 
 #if defined (__alpha__)
 #define ELFSIZE 64
@@ -86,10 +86,8 @@ ELFNAME2(linux,copyargs)(l, pack, arginfo, stackp, argp)
 	size_t len;
 	AuxInfo ai[LINUX_ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
-	struct proc *p;
 	int error;
 
-	p = l->l_proc;
 #ifdef LINUX_SHIFT
 	/*
 	 * Seems that PowerPC Linux binaries expect argc to start on a 16 bytes
@@ -126,22 +124,22 @@ ELFNAME2(linux,copyargs)(l, pack, arginfo, stackp, argp)
 		 * The exec_package doesn't have a proc pointer and it's not
 		 * exactly trivial to add one since the credentials are
 		 * changing. XXX Linux uses curlwp's credentials.
-		 * Why can't we use them too?
+		 * Why can't we use them too? XXXad we do, what's different?
 		 */
 		a->a_type = LINUX_AT_EGID;
-		a->a_v = kauth_cred_getegid(p->p_cred);
+		a->a_v = kauth_cred_getegid(l->l_cred);
 		a++;
 
 		a->a_type = LINUX_AT_GID;
-		a->a_v = kauth_cred_getgid(p->p_cred);
+		a->a_v = kauth_cred_getgid(l->l_cred);
 		a++;
 
 		a->a_type = LINUX_AT_EUID;
-		a->a_v = kauth_cred_geteuid(p->p_cred);
+		a->a_v = kauth_cred_geteuid(l->l_cred);
 		a++;
 
 		a->a_type = LINUX_AT_UID;
-		a->a_v = kauth_cred_getuid(p->p_cred);
+		a->a_v = kauth_cred_getuid(l->l_cred);
 		a++;
 #endif
 

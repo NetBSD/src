@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_socket.c,v 1.6 2005/12/11 12:20:26 christos Exp $	*/
+/*	$NetBSD: svr4_32_socket.c,v 1.6.8.1 2006/08/11 15:43:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_socket.c,v 1.6 2005/12/11 12:20:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_socket.c,v 1.6.8.1 2006/08/11 15:43:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -194,7 +194,7 @@ svr4_32_sys_socket(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_32_sys_socket_args *uap = v;
-	struct sys_socket_args uap0;
+	struct compat_30_sys_socket_args uap0;
 
 	/*
 	 * We need to use a separate args since native has a different
@@ -225,5 +225,5 @@ svr4_32_sys_socket(l, v, retval)
 	default:
 		return EINVAL;
 	}
-	return sys_socket(l, &uap0, retval);
+	return sys___socket30(l, &uap0, retval);
 }

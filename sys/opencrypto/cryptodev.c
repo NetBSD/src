@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.17.2.4 2006/05/24 10:59:21 yamt Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.17.2.5 2006/08/11 15:47:26 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.17.2.4 2006/05/24 10:59:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.17.2.5 2006/08/11 15:47:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -736,7 +736,7 @@ cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		TAILQ_INIT(&fcr->csessions);
 		fcr->sesn = 0;
 
-		error = falloc(l->l_proc, &f, &fd);
+		error = falloc(l, &f, &fd);
 		if (error) {
 			FREE(fcr, M_XDATA);
 			return (error);

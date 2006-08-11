@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.9 2006/02/16 09:22:16 kochi Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.9.2.1 2006/08/11 15:43:16 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.9 2006/02/16 09:22:16 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.9.2.1 2006/08/11 15:43:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.9 2006/02/16 09:22:16 kochi Exp $
 
 #include "ioapic.h"
 
-#include "opt_mpacpi.h"
+#include "acpi.h"
 #include "opt_mpbios.h"
+#include "opt_acpi.h"
 
 static int acpi_intrcold = 1;
 
@@ -117,12 +118,12 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 	int irq, pin, trigger;
 	struct acpi_intr_defer *aip;
 #if NIOAPIC > 0
-#ifdef MPACPI
+#if NACPI > 0
 	int i, h;
 #endif
 	struct ioapic_softc *sc;
 #endif
-#if defined(MPACPI) || NIOAPIC > 0
+#if NACPI > 0 || NIOAPIC > 0
 	struct mp_intr_map *mip = NULL;
 #endif
 
@@ -141,10 +142,10 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 
 	trigger = IST_LEVEL;
 
-#if defined(MPACPI) && NIOAPIC > 0
+#if NACPI > 0 && NIOAPIC > 0
 	/*
 	 * Can only match on ACPI global interrupt numbers if the ACPI
-	 * interrupt info was extracted, which is in the MPACPI case.
+	 * interrupt info was extracted, which is in the ACPI case.
 	 */
 	if (mp_busses == NULL)
 		goto nomap;
@@ -197,11 +198,11 @@ nomap:
 		irq = pin = (int)InterruptNumber;
 	}
 
-#if defined(MPACPI) && NIOAPIC > 0
+#if NACPI > 0 && NIOAPIC > 0
 found:
 #endif
 
-#if defined(MPACPI) || NIOAPIC > 0
+#if NACPI > 0 || NIOAPIC > 0
 	/*
 	 * If there was no ACPI interrupt source override,
 	 * mark the SCI interrupt as active low in the
@@ -334,7 +335,7 @@ acpi_md_callback(struct device *acpi)
 {
 	struct acpi_intr_defer *aip;
 
-#ifdef MPACPI
+#if NACPI > 0
 #ifdef MPBIOS
 	if (!mpbios_scanned)
 #endif

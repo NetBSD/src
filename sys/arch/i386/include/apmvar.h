@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.23 2005/12/11 12:17:43 christos Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.23.8.1 2006/08/11 15:41:54 yamt Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,10 +70,8 @@ extern struct apm_connect_info apminfo;	/* in locore */
 extern int apmpresent;
 int apmcall(int function, struct bioscallregs *regs);
 void bioscall(int function, struct bioscallregs *regs);
-void apm_cpu_busy(void);
-void apm_cpu_idle(void);
+int apm_set_powstate(void *, u_int, u_int);
 void apminit(void);
-int apm_set_powstate(u_int devid, u_int powstate);
 int apm_busprobe(void);
 #endif /* _KERNEL */
 #endif /* _LOCORE */

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.39 2006/02/05 05:01:48 cube Exp $
+#	$NetBSD: INSTALL,v 1.39.2.1 2006/08/11 15:40:59 yamt Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.39 $"
+#ident		"INSTALL-$Revision: 1.39.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -204,15 +204,15 @@ wsdisplay*	at vidcvideo? console ?	# display itself
 
 iomdkbc*	at iomd?		# IOMD keyboard/mouse interface
 
-#pckbd*		at iomdkbc? slot ?	# PS/2 keyboard
-#options 	PCKBD_LAYOUT=KB_UK
-#wskbd*		at pckbd?
+pckbd*		at iomdkbc? slot ?	# PS/2 keyboard
+options 	PCKBD_LAYOUT=KB_UK
+wskbd*		at pckbd?
 
 pms*		at iomdkbc? slot ?	# PS/2 mouse
 wsmouse*	at pms?
 
-rpckbd*		at iomd?		# based on old `kbd' driver
-wskbd*		at rpckbd?		# wskbd on RiscPC keyboard
+#rpckbd* 	at iomd?		# based on old `kbd' driver
+#wskbd*		at rpckbd?		# wskbd on RiscPC keyboard
 
 qms*		at iomd?		# ws quadmouse driver
 wsmouse*	at qms?			# wsmouse on ws quadmouse

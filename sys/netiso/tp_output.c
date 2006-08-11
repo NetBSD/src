@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.27.8.1 2006/05/24 10:59:14 yamt Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.27.8.2 2006/08/11 15:46:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.27.8.1 2006/05/24 10:59:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.27.8.2 2006/08/11 15:46:49 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -389,7 +389,7 @@ int
 tp_ctloutput(int cmd, struct socket  *so, int level, int optname,
 	struct mbuf **mp)
 {
-	struct proc *p = curproc;		/* XXX */
+	struct lwp *l = curlwp;		/* XXX */
 	struct tp_pcb  *tpcb = sototpcb(so);
 	int             s = splsoftnet();
 	caddr_t         value;
@@ -501,8 +501,8 @@ tp_ctloutput(int cmd, struct socket  *so, int level, int optname,
 #define INA(t) (((struct inpcb *)(t->tp_npcb))->inp_laddr.s_addr)
 #define ISOA(t) (((struct isopcb *)(t->tp_npcb))->isop_laddr->siso_addr)
 
-		if (p == 0 || (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-							 &p->p_acflag))) {
+		if (l == 0 || (error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag))) {
 			error = EPERM;
 		} else if (cmd != PRCO_SETOPT || tpcb->tp_state != TP_CLOSED ||
 			   (tpcb->tp_flags & TPF_GENERAL_ADDR) ||

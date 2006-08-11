@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.179.8.3 2006/06/26 12:52:57 yamt Exp $	*/
+/*	$NetBSD: tty.c,v 1.179.8.4 2006/08/11 15:45:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.179.8.3 2006/06/26 12:52:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.179.8.4 2006/08/11 15:45:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -923,7 +923,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			    "/dev/console", l);
 			if ((error = namei(&nd)) != 0)
 				return error;
-			error = VOP_ACCESS(nd.ni_vp, VREAD, p->p_cred, l);
+			error = VOP_ACCESS(nd.ni_vp, VREAD, l->l_cred, l);
 			vput(nd.ni_vp);
 			if (error)
 				return error;
@@ -1112,9 +1112,9 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		splx(s);
 		break;
 	case TIOCSTI:			/* simulate terminal input */
-		if (kauth_cred_geteuid(p->p_cred) && (flag & FREAD) == 0)
+		if (kauth_cred_geteuid(l->l_cred) && (flag & FREAD) == 0)
 			return (EPERM);
-		if (kauth_cred_geteuid(p->p_cred) && !isctty(p, tp))
+		if (kauth_cred_geteuid(l->l_cred) && !isctty(p, tp))
 			return (EACCES);
 		(*tp->t_linesw->l_rint)(*(u_char *)data, tp);
 		break;
@@ -2100,7 +2100,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	if (flag & IO_NDELAY) {
 		TTY_UNLOCK(tp);
 		splx(s);
-		error = (uio->uio_resid == cnt) ? EWOULDBLOCK : 0;
+		error = EWOULDBLOCK;
 		goto out;
 	}
 	SET(tp->t_state, TS_ASLEEP);

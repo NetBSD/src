@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.4 2006/02/04 11:28:54 jmmv Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.4.4.1 2006/08/11 15:41:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.4 2006/02/04 11:28:54 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.4.4.1 2006/08/11 15:41:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,12 @@ __KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.4 2006/02/04 11:28:54 jmmv Exp $");
 /*
  * External variables.  All of them, with the exception of 'end', must
  * be set at some point within this file.
+ *
+ * XXX these should be found in a header file!
  */
 extern int		biosbasemem;
 extern int		biosextmem;
+extern int		biosmem_implicit;
 extern int		boothowto;
 extern struct bootinfo	bootinfo;
 extern int		end;
@@ -279,6 +282,7 @@ copy_syms(struct multiboot_info *mi)
 	int i;
 	Elf32_Shdr *symtabp, *strtabp;
 	struct symbols_image *si;
+	extern void start(void);
 
 	/*
 	 * Check if the Multiboot information header has symbols or not.
@@ -340,8 +344,12 @@ copy_syms(struct multiboot_info *mi)
 	 */
 	memcpy(si->i_ehdr.e_ident, ELFMAG, SELFMAG);
 	si->i_ehdr.e_ident[EI_CLASS] = ELFCLASS32;
+	si->i_ehdr.e_ident[EI_DATA] = ELFDATA2LSB;
+	si->i_ehdr.e_ident[EI_VERSION] = EV_CURRENT;
 	si->i_ehdr.e_type = ET_EXEC;
+	si->i_ehdr.e_machine = EM_386;
 	si->i_ehdr.e_version = 1;
+	si->i_ehdr.e_entry = (Elf32_Addr)start;
 	si->i_ehdr.e_shoff = offsetof(struct symbols_image, i_shdr);
 	si->i_ehdr.e_ehsize = sizeof(si->i_ehdr);
 	si->i_ehdr.e_shentsize = sizeof(si->i_shdr[0]);
@@ -683,11 +691,19 @@ setup_memmap(struct multiboot_info *mi)
 static void
 setup_memory(struct multiboot_info *mi)
 {
+
 	if (!(mi->mi_flags & MULTIBOOT_INFO_HAS_MEMORY))
 		return;
 
-	biosbasemem = mi->mi_mem_lower;
-	biosextmem = mi->mi_mem_upper;
+	/* Make sure we don't override user-set variables. */
+	if (biosbasemem == 0) {
+		biosbasemem = mi->mi_mem_lower;
+		biosmem_implicit = 1;
+	}
+	if (biosextmem == 0) {
+		biosextmem = mi->mi_mem_upper;
+		biosmem_implicit = 1;
+	}
 }
 
 /* --------------------------------------------------------------------- */

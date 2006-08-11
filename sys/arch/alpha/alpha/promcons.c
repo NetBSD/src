@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.26.8.1 2006/05/24 10:56:33 yamt Exp $ */
+/* $NetBSD: promcons.c,v 1.26.8.2 2006/08/11 15:40:59 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.26.8.1 2006/05/24 10:56:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.26.8.2 2006/08/11 15:40:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,8 +113,8 @@ promopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 		setuptimeout = 1;
 	} else if (tp->t_state&TS_XCLUDE &&
-		   kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
-				     &l->l_proc->p_acflag) != 0) {
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0) {
 		splx(s);
 		return EBUSY;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uralreg.h,v 1.2 2005/12/11 12:24:01 christos Exp $ */
+/*	$NetBSD: if_uralreg.h,v 1.2.8.1 2006/08/11 15:45:20 yamt Exp $ */
 /*	$OpenBSD: if_ralreg.h,v 1.5 2005/04/01 13:13:43 damien Exp $  */
 
 /*-
@@ -24,6 +24,7 @@
 #define RAL_CONFIG_NO	1
 #define RAL_IFACE_INDEX 0
 
+#define RAL_VENDOR_REQUEST	0x01
 #define RAL_WRITE_MAC		0x02
 #define RAL_READ_MAC		0x03
 #define RAL_WRITE_MULTI_MAC	0x06
@@ -43,6 +44,7 @@
 #define RAL_MAC_CSR7	0x040e	/* BSSID2 */
 #define RAL_MAC_CSR8	0x0410	/* Max frame length */
 #define RAL_MAC_CSR9	0x0412	/* Timer control */
+#define RAL_MAC_CSR10	0x0414	/* Slot time */
 #define RAL_MAC_CSR11	0x0416	/* IFS */
 #define RAL_MAC_CSR12	0x0418	/* EIFS */
 #define RAL_MAC_CSR13	0x041a	/* Power mode0 */
@@ -64,6 +66,7 @@
 #define RAL_TXRX_CSR6	0x044c	/* CCK Tx BBP ID1 */
 #define RAL_TXRX_CSR7	0x044e	/* OFDM Tx BBP ID0 */
 #define RAL_TXRX_CSR8	0x0450	/* OFDM Tx BBP ID1 */
+#define RAL_TXRX_CSR10	0x0454	/* Auto responder control */
 #define RAL_TXRX_CSR11	0x0456	/* Auto responder basic rate */
 #define RAL_TXRX_CSR18	0x0464	/* Beacon interval */
 #define RAL_TXRX_CSR19	0x0466	/* Beacon/sync control */
@@ -102,6 +105,8 @@
 #define RAL_DROP_VERSION_ERROR	(1 << 6)
 #define RAL_DROP_MULTICAST	(1 << 9)
 #define RAL_DROP_BROADCAST	(1 << 10)
+
+#define RAL_SHORT_PREAMBLE	(1 << 2)
 
 #define RAL_HOST_READY	(1 << 2)
 #define RAL_RESET_ASIC	(1 << 0)
@@ -168,7 +173,8 @@ struct ural_tx_desc {
 	uint8_t		plcp_service;
 #define RAL_PLCP_LENGEXT	0x80
 
-	uint16_t	plcp_length;
+	uint8_t		plcp_length_lo;
+	uint8_t		plcp_length_hi;
 	uint32_t	iv;
 	uint32_t	eiv;
 } __packed;
@@ -176,6 +182,7 @@ struct ural_tx_desc {
 struct ural_rx_desc {
 	uint32_t	flags;
 #define RAL_RX_CRC_ERROR	(1 << 5)
+#define RAL_RX_OFDM		(1 << 6)
 #define RAL_RX_PHY_ERROR	(1 << 7)
 
 	uint8_t		rate;

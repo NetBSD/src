@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.141.2.2 2006/05/24 10:57:36 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.141.2.3 2006/08/11 15:43:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.141.2.2 2006/05/24 10:57:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.141.2.3 2006/08/11 15:43:52 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -784,7 +784,7 @@ vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 	if ((vnd->sc_flags & VNF_INITED) == 0)
 		return -1;
 
-	return VOP_GETATTR(vnd->sc_vp, va, l->l_proc->p_cred, l);
+	return VOP_GETATTR(vnd->sc_vp, va, l->l_cred, l);
 }
 
 /* ARGSUSED */
@@ -798,7 +798,6 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	struct nameidata nd;
 	int error, part, pmask;
 	size_t geomsize;
-	struct proc *p =  (l != NULL) ? l->l_proc : NULL;
 	int fflags;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
@@ -807,7 +806,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndioctl(0x%x, 0x%lx, %p, 0x%x, %p): unit %d\n",
-		    dev, cmd, data, flag, p, unit);
+		    dev, cmd, data, flag, l->l_proc, unit);
 #endif
 	vnd = device_lookup(&vnd_cd, unit);
 	if (vnd == NULL &&
@@ -869,7 +868,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		if ((error = vn_open(&nd, fflags, 0)) != 0)
 			goto unlock_and_exit;
 		KASSERT(l);
-		error = VOP_GETATTR(nd.ni_vp, &vattr, l->l_proc->p_cred, l);
+		error = VOP_GETATTR(nd.ni_vp, &vattr, l->l_cred, l);
 		if (!error && nd.ni_vp->v_type != VREG)
 			error = EOPNOTSUPP;
 		if (error) {
@@ -893,7 +892,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			/* read compressed file header */
 			error = vn_rdwr(UIO_READ, nd.ni_vp, (caddr_t)ch,
 			  sizeof(struct vnd_comp_header), 0, UIO_SYSSPACE,
-			  IO_UNIT|IO_NODELOCKED, p->p_cred, NULL, NULL);
+			  IO_UNIT|IO_NODELOCKED, l->l_cred, NULL, NULL);
 			if(error) {
 				free(ch, M_TEMP);
 				VOP_UNLOCK(nd.ni_vp, 0);
@@ -932,7 +931,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			  (caddr_t)vnd->sc_comp_offsets,
 			  sizeof(u_int64_t) * vnd->sc_comp_numoffs,
 			  sizeof(struct vnd_comp_header), UIO_SYSSPACE,
-			  IO_UNIT|IO_NODELOCKED, p->p_cred, NULL, NULL);
+			  IO_UNIT|IO_NODELOCKED, l->l_cred, NULL, NULL);
 			if(error) {
 				VOP_UNLOCK(nd.ni_vp, 0);
 				goto close_and_exit;
@@ -1048,7 +1047,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			vnd->sc_flags |= VNF_READONLY;
 		}
 
-		if ((error = vndsetcred(vnd, p->p_cred)) != 0)
+		if ((error = vndsetcred(vnd, l->l_cred)) != 0)
 			goto close_and_exit;
 
 		vndthrottle(vnd, vnd->sc_vp);
@@ -1089,7 +1088,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 close_and_exit:
-		(void) vn_close(nd.ni_vp, fflags, p->p_cred, l);
+		(void) vn_close(nd.ni_vp, fflags, l->l_cred, l);
 unlock_and_exit:
 #ifdef VND_COMPRESSION
 		/* free any allocated memory (for compressed file) */

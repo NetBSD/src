@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.60.8.1 2006/04/11 11:53:43 yamt Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.60.8.2 2006/08/11 15:42:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.60.8.1 2006/04/11 11:53:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.60.8.2 2006/08/11 15:42:23 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -536,7 +536,7 @@ initarm(void *arg)
 	memset((char *)(var), 0, ((np) * PAGE_SIZE));
 
 	loop1 = 0;
-	kernel_l1pt.pv_pa = 0;
+	kernel_l1pt.pv_pa = kernel_l1pt.pv_va = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if ((physical_freestart & (L1_TABLE_SIZE - 1)) == 0

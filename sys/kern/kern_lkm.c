@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.89 2006/01/16 21:45:38 yamt Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.89.6.1 2006/08/11 15:45:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.89 2006/01/16 21:45:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.89.6.1 2006/08/11 15:45:46 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -76,8 +76,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.89 2006/01/16 21:45:38 yamt Exp $");
 
 struct vm_map *lkm_map;
 
-#define	LKM_SPACE_ALLOC(size) \
-	uvm_km_alloc(lkm_map, (size), 0, UVM_KMF_WIRED)
+#define	LKM_SPACE_ALLOC(size, exec) \
+	uvm_km_alloc(lkm_map, (size), 0, \
+		UVM_KMF_WIRED | ((exec) ? UVM_KMF_EXEC : 0))
 #define	LKM_SPACE_FREE(addr, size) \
 	uvm_km_free(lkm_map, (addr), (size), UVM_KMF_WIRED)
 
@@ -361,7 +362,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		 * Get memory for module
 		 */
 		curp->size = resrvp->size;
-		curp->area = LKM_SPACE_ALLOC(curp->size);
+		curp->area = LKM_SPACE_ALLOC(curp->size, 1);
 		curp->offset = 0;		/* load offset */
 
 		resrvp->addr = curp->area;	/* ret kernel addr */
@@ -369,7 +370,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		if (resrvp->sym_size) {
 			curp->sym_size = resrvp->sym_size;
 			curp->sym_symsize = resrvp->sym_symsize;
-			curp->syms = (u_long) LKM_SPACE_ALLOC(curp->sym_size);
+			curp->syms = (u_long)LKM_SPACE_ALLOC(curp->sym_size, 0);
 			curp->sym_offset = 0;
 			resrvp->sym_addr = curp->syms; /* ret symbol addr */
 		} else {

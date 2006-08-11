@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ostreg.h,v 1.1 2001/07/08 23:37:53 rjs Exp $	*/
+/*	$NetBSD: sa11x0_ostreg.h,v 1.1.60.1 2006/08/11 15:41:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -76,5 +76,3 @@
 
 /* RTC Status Register */
 #define SARTC_SR	0x0C
-
-/* end of sa11x0_ostreg.h */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2003/01/03 15:34:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.11.36.1 2006/08/11 15:43:15 yamt Exp $
 
 BASE=	loadbsd
 PROG=	${BASE}.x	# Human68k ".x" executable
@@ -28,12 +28,14 @@ DPADD+=		${AOUT2HUX}
 CLEANFILES+=	${BASE}1 ${BASE}2
 
 ${PROG}: ${BASE}1 ${BASE}2
+	${_MKTARGET_LINK}
 	${AOUT2HUX} -o ${.TARGET} ${BASE}1 11000 ${BASE}2 22000
 
 .include <bsd.prog.mk>
 
 .for i in 1 2
 ${BASE}${i}:	${OBJS} ${LIBDOS}/libdos.a ${LIBIOCS}/libiocs.a
+	${_MKTARGET_LINK}
 	${CC} -o ${.TARGET} ${LDFLAGS} -Wl,-Ttext,${i}${i}000 ${OBJS} ${LDLIBS}
 .endfor
 

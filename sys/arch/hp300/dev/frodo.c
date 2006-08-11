@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.23 2005/12/24 20:07:03 perry Exp $	*/
+/*	$NetBSD: frodo.c,v 1.23.8.1 2006/08/11 15:41:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -63,11 +63,12 @@
 
 /*
  * Support for the "Frodo" (a.k.a. "Apollo Utility") chip found
- * in HP Apollo 9000/4xx workstations.
+ * in HP Apollo 9000/4xx workstations, as well as
+ * HP 9000/362 and 9000/382 controllers.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.23 2005/12/24 20:07:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.23.8.1 2006/08/11 15:41:33 yamt Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -124,7 +125,7 @@ static const struct frodo_device frodo_subdevs[] = {
 	{ "com",	FRODO_APCI_OFFSET(1),	FRODO_INTR_APCI1 },
 	{ "com",	FRODO_APCI_OFFSET(2),	FRODO_INTR_APCI2 },
 	{ "com",	FRODO_APCI_OFFSET(3),	FRODO_INTR_APCI3 },
-	{ NULL,		0,			0 },
+	{ NULL,		0,			0 }
 };
 
 static int
@@ -135,16 +136,16 @@ frodomatch(struct device *parent, struct cfdata *match, void *aux)
 
 	/* only allow one instance */
 	if (frodo_matched)
-		return (0);
+		return 0;
 
 	if (strcmp(ia->ia_modname, "frodo") != 0)
-		return (0);
+		return 0;
 
 	if (badaddr((caddr_t)ia->ia_addr))
-		return (0);
+		return 0;
 
 	frodo_matched = 1;
-	return (1);
+	return 1;
 }
 
 static void
@@ -204,11 +205,11 @@ frodoattach(struct device *parent, struct device *self, void *aux)
 			continue;
 		fa.fa_name = fd->fd_name;
 		fa.fa_bst = bst;
-		fa.fa_base = FRODO_BASE;
+		fa.fa_base = ia->ia_iobase;
 		fa.fa_offset = fd->fd_offset;
 		fa.fa_line = fd->fd_line;
 		config_found_sm_loc(self, "frodo", NULL, &fa, frodoprint,
-				    frodosubmatch);
+		    frodosubmatch);
 	}
 }
 
@@ -220,9 +221,9 @@ frodosubmatch(struct device *parent, struct cfdata *cf,
 
 	if (cf->frodocf_offset != FRODO_UNKNOWN_OFFSET &&
 	    cf->frodocf_offset != fa->fa_offset)
-		return (0);
+		return 0;
 
-	return (config_match(parent, cf, aux));
+	return config_match(parent, cf, aux);
 }
 
 static int
@@ -233,7 +234,7 @@ frodoprint(void *aux, const char *pnp)
 	if (pnp)
 		aprint_normal("%s at %s", fa->fa_name, pnp);
 	aprint_normal(" offset 0x%x", fa->fa_offset);
-	return (UNCONF);
+	return UNCONF;
 }
 
 void
@@ -322,7 +323,7 @@ frodointr(void *arg)
 
 	/* Any interrupts pending? */
 	if (FRODO_GETPEND(sc) == 0)
-		return (0);
+		return 0;
 
 	do {
 		/*
@@ -338,7 +339,7 @@ frodointr(void *arg)
 			panic("frodointr: looping!");
 	} while (FRODO_GETPEND(sc) != 0);
 
-	return (1);
+	return 1;
 }
 
 static void

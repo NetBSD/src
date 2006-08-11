@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.20.8.2 2006/06/26 12:53:38 yamt Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.20.8.3 2006/08/11 15:46:14 yamt Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.20.8.2 2006/06/26 12:53:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.20.8.3 2006/08/11 15:46:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ sched_sync(v)
 			if (vn_start_write(vp, &mp, V_NOWAIT) == 0) {
 				if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT)
 				    == 0) {
-					(void) VOP_FSYNC(vp, curproc->p_cred,
+					(void) VOP_FSYNC(vp, curlwp->l_cred,
 					    FSYNC_LAZY, 0, 0, curlwp);
 					VOP_UNLOCK(vp, 0);
 				}

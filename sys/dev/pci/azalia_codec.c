@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.7.6.2 2006/06/26 12:51:21 yamt Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.7.6.3 2006/08/11 15:44:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.7.6.2 2006/06/26 12:51:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.7.6.3 2006/08/11 15:44:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -116,6 +116,7 @@ static int	alc882_mixer_init(codec_t *);
 static int	alc882_set_port(codec_t *, mixer_ctrl_t *);
 static int	alc882_get_port(codec_t *, mixer_ctrl_t *);
 static int	ad1981hd_init_widget(const codec_t *, widget_t *, nid_t);
+static int	ad1981hd_mixer_init(codec_t *);
 static int	cmi9880_init_dacgroup(codec_t *);
 static int	cmi9880_mixer_init(codec_t *);
 static int	stac9221_init_dacgroup(codec_t *);
@@ -164,6 +165,7 @@ azalia_codec_init_vtbl(codec_t *this)
 		/* http://www.analog.com/en/prod/0,2877,AD1981HD,00.html */
 		this->name = "Analog Devices AD1981HD";
 		this->init_widget = ad1981hd_init_widget;
+		this->mixer_init = ad1981hd_mixer_init;
 		break;
 	case 0x11d41983:
 		/* http://www.analog.com/en/prod/0,2877,AD1983,00.html */
@@ -694,6 +696,72 @@ generic_mixer_init(codec_t *this)
 			this->nmixers++;
 		}
 
+		if (w->type == COP_AWTYPE_PIN_COMPLEX &&
+		    w->d.pin.cap & COP_PINCAP_EAPD) {
+			MIXER_REG_PROLOG;
+			DPRINTF(("%s: eapd %s\n", __func__, w->name));
+			snprintf(d->label.name, sizeof(d->label.name),
+			    "%s.eapd", w->name);
+			d->type = AUDIO_MIXER_ENUM;
+			d->mixer_class = AZ_CLASS_OUTPUT;
+			m->target = MI_TARGET_EAPD;
+			d->un.e.num_mem = 2;
+			d->un.e.member[0].ord = 0;
+			strlcpy(d->un.e.member[0].label.name, AudioNoff,
+			    MAX_AUDIO_DEV_LEN);
+			d->un.e.member[1].ord = 1;
+			strlcpy(d->un.e.member[1].label.name, AudioNon,
+			    MAX_AUDIO_DEV_LEN);
+			this->nmixers++;
+		}
+
+		if (w->type == COP_AWTYPE_PIN_COMPLEX &&
+		    w->d.pin.cap & COP_PINCAP_BALANCE) {
+			MIXER_REG_PROLOG;
+			DPRINTF(("%s: balance %s\n", __func__, w->name));
+			snprintf(d->label.name, sizeof(d->label.name),
+			    "%s.balance", w->name);
+			d->type = AUDIO_MIXER_ENUM;
+			if (w->type == COP_AWTYPE_PIN_COMPLEX)
+				d->mixer_class = AZ_CLASS_OUTPUT;
+			else if (w->type == COP_AWTYPE_AUDIO_INPUT)
+				d->mixer_class = AZ_CLASS_RECORD;
+			else
+				d->mixer_class = AZ_CLASS_INPUT;
+			m->target = MI_TARGET_BALANCE;
+			d->un.e.num_mem = 2;
+			d->un.e.member[0].ord = 0;
+			strlcpy(d->un.e.member[0].label.name, AudioNoff,
+			    MAX_AUDIO_DEV_LEN);
+			d->un.e.member[1].ord = 1;
+			strlcpy(d->un.e.member[1].label.name, AudioNon,
+			    MAX_AUDIO_DEV_LEN);
+			this->nmixers++;
+		}
+
+		if (w->widgetcap & COP_AWCAP_LRSWAP) {
+			MIXER_REG_PROLOG;
+			DPRINTF(("%s: lrswap %s\n", __func__, w->name));
+			snprintf(d->label.name, sizeof(d->label.name),
+			    "%s.lrswap", w->name);
+			d->type = AUDIO_MIXER_ENUM;
+			if (w->type == COP_AWTYPE_PIN_COMPLEX)
+				d->mixer_class = AZ_CLASS_OUTPUT;
+			else if (w->type == COP_AWTYPE_AUDIO_INPUT)
+				d->mixer_class = AZ_CLASS_RECORD;
+			else
+				d->mixer_class = AZ_CLASS_INPUT;
+			m->target = MI_TARGET_LRSWAP;
+			d->un.e.num_mem = 2;
+			d->un.e.member[0].ord = 0;
+			strlcpy(d->un.e.member[0].label.name, AudioNoff,
+			    MAX_AUDIO_DEV_LEN);
+			d->un.e.member[1].ord = 1;
+			strlcpy(d->un.e.member[1].label.name, AudioNon,
+			    MAX_AUDIO_DEV_LEN);
+			this->nmixers++;
+		}
+
 		/* volume knob */
 		if (w->type == COP_AWTYPE_VOLUME_KNOB &&
 		    w->d.volume.cap & COP_VKCAP_DELTA) {
@@ -924,7 +992,20 @@ generic_mixer_get(const codec_t *this, nid_t nid, int target, mixer_ctrl_t *mc)
 			return err;
 		mc->un.value.level[0] = generic_mixer_from_device_value(this,
 		    nid, target, CORB_GAGM_GAIN(result));
-		n = this->w[nid].connections[MI_TARGET_INAMP(target)];
+		if (this->w[nid].type == COP_AWTYPE_AUDIO_SELECTOR ||
+		    this->w[nid].type == COP_AWTYPE_AUDIO_MIXER) {
+			n = this->w[nid].connections[MI_TARGET_INAMP(target)];
+#ifdef AZALIA_DEBUG
+			if (!VALID_WIDGET_NID(n, this)) {
+				DPRINTF(("%s: invalid target: nid=%d nconn=%d index=%d\n",
+				   __func__, nid, this->w[nid].nconnections,
+				   MI_TARGET_INAMP(target)));
+				return EINVAL;
+			}
+#endif
+		} else {
+			n = nid;
+		}
 		mc->un.value.num_channels = WIDGET_CHANNELS(&this->w[n]);
 		if (mc->un.value.num_channels == 2) {
 			err = this->comresp(this, nid,
@@ -1033,6 +1114,33 @@ generic_mixer_get(const codec_t *this, nid_t nid, int target, mixer_ctrl_t *mc)
 			return err;
 		mc->un.value.num_channels = 1;
 		mc->un.value.level[0] = CORB_DCC_CC(result);
+	}
+
+	/* EAPD */
+	else if (target == MI_TARGET_EAPD) {
+		err = this->comresp(this, nid,
+		    CORB_GET_EAPD_BTL_ENABLE, 0, &result);
+		if (err)
+			return err;
+		mc->un.ord = result & CORB_EAPD_EAPD ? 1 : 0;
+	}
+
+	/* Balanced I/O */
+	else if (target == MI_TARGET_BALANCE) {
+		err = this->comresp(this, nid,
+		    CORB_GET_EAPD_BTL_ENABLE, 0, &result);
+		if (err)
+			return err;
+		mc->un.ord = result & CORB_EAPD_BTL ? 1 : 0;
+	}
+
+	/* LR-Swap */
+	else if (target == MI_TARGET_LRSWAP) {
+		err = this->comresp(this, nid,
+		    CORB_GET_EAPD_BTL_ENABLE, 0, &result);
+		if (err)
+			return err;
+		mc->un.ord = result & CORB_EAPD_LRSWAP ? 1 : 0;
 	}
 
 	else {
@@ -1307,6 +1415,66 @@ generic_mixer_set(codec_t *this, nid_t nid, int target, const mixer_ctrl_t *mc)
 			return EINVAL;
 		err = this->comresp(this, nid, CORB_SET_DIGITAL_CONTROL_H,
 		    mc->un.value.level[0], NULL);
+		if (err)
+			return err;
+	}
+
+	/* EAPD */
+	else if (target == MI_TARGET_EAPD) {
+		if (mc->un.ord >= 2)
+			return EINVAL;
+		err = this->comresp(this, nid,
+		    CORB_GET_EAPD_BTL_ENABLE, 0, &result);
+		if (err)
+			return err;
+		result &= 0xff;
+		if (mc->un.ord == 0) {
+			result &= ~CORB_EAPD_EAPD;
+		} else {
+			result |= CORB_EAPD_EAPD;
+		}
+		err = this->comresp(this, nid,
+		    CORB_SET_EAPD_BTL_ENABLE, result, &result);
+		if (err)
+			return err;
+	}
+
+	/* Balanced I/O */
+	else if (target == MI_TARGET_BALANCE) {
+		if (mc->un.ord >= 2)
+			return EINVAL;
+		err = this->comresp(this, nid,
+		    CORB_GET_EAPD_BTL_ENABLE, 0, &result);
+		if (err)
+			return err;
+		result &= 0xff;
+		if (mc->un.ord == 0) {
+			result &= ~CORB_EAPD_BTL;
+		} else {
+			result |= CORB_EAPD_BTL;
+		}
+		err = this->comresp(this, nid,
+		    CORB_SET_EAPD_BTL_ENABLE, result, &result);
+		if (err)
+			return err;
+	}
+
+	/* LR-Swap */
+	else if (target == MI_TARGET_LRSWAP) {
+		if (mc->un.ord >= 2)
+			return EINVAL;
+		err = this->comresp(this, nid,
+		    CORB_GET_EAPD_BTL_ENABLE, 0, &result);
+		if (err)
+			return err;
+		result &= 0xff;
+		if (mc->un.ord == 0) {
+			result &= ~CORB_EAPD_LRSWAP;
+		} else {
+			result |= CORB_EAPD_LRSWAP;
+		}
+		err = this->comresp(this, nid,
+		    CORB_SET_EAPD_BTL_ENABLE, result, &result);
 		if (err)
 			return err;
 	}
@@ -2193,6 +2361,8 @@ alc882_get_port(codec_t *this, mixer_ctrl_t *mc)
  * Analog Devices AD1981HD
  * ---------------------------------------------------------------- */
 
+#define AD1981HD_THINKPAD	0x201017aa
+
 static int
 ad1981hd_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 {
@@ -2227,6 +2397,24 @@ ad1981hd_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 	case 0x1d:
 		strlcpy(w->name, AudioNspeaker, sizeof(w->name));
 		break;
+	}
+	return 0;
+}
+
+static int
+ad1981hd_mixer_init(codec_t *this)
+{
+	mixer_ctrl_t mc;
+	int err;
+
+	err = generic_mixer_init(this);
+	if (err)
+		return err;
+	if (this->subid == AD1981HD_THINKPAD) {
+		mc.dev = -1;
+		mc.type = AUDIO_MIXER_ENUM;
+		mc.un.ord = 1;
+		generic_mixer_set(this, 0x09, MI_TARGET_PINDIR, &mc);
 	}
 	return 0;
 }

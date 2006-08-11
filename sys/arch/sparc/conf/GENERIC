@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.185.2.2 2006/04/01 12:06:29 yamt Exp $
+# $NetBSD: GENERIC,v 1.185.2.3 2006/08/11 15:42:47 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.185.2.2 $"
+#ident 		"GENERIC-$Revision: 1.185.2.3 $"
 
 maxusers	32
 
@@ -423,7 +423,9 @@ scsibus* at sw?
 
 ## PCMCIA SCSI controllers
 #aic*	at pcmcia?
+#spc*	at pcmcia?
 #scsibus* at aic?
+#scsibus* at spc?
 
 
 ## These entries find devices on all SCSI busses and assign
@@ -587,6 +589,8 @@ pseudo-device	tap			# virtual Ethernet
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
 pseudo-device	bpfilter
+
+#pseudo-device	carp			# Common Address Redundancy Protocol
 
 ## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
 ## one example of the use of the IP Filter.

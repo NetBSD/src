@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.4 2005/12/11 12:16:25 christos Exp $	*/
+/*	$NetBSD: reg.h,v 1.4.8.1 2006/08/11 15:41:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,30 +45,6 @@
  * The #defines aren't used in the kernel, but some user-level code still
  * expects them.
  */
-
-/* When referenced during a trap/exception, registers are at these offsets */
-
-#define tR15	0
-#define tR14	1
-#define tR13	2
-#define tR12	3
-#define tR11	4
-#define tR10	5
-#define tR9	6
-#define tR8	7
-#define	tRDI	8
-#define	tRSI	9
-#define	tRBP	10
-#define	tRBX	11
-#define	tRDX	12
-#define	tRCX	13
-#define	tRAX	14
-
-#define	tRIP	17
-#define	tCS	18
-#define	tRFLAGS	19
-#define	tRSP	20
-#define	tSS	21
 
 /*
  * Registers accessible to ptrace(2) syscall for debugger use.

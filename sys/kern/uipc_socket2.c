@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.70.8.2 2006/06/26 12:52:57 yamt Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.70.8.3 2006/08/11 15:45:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.70.8.2 2006/06/26 12:52:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.70.8.3 2006/08/11 15:45:47 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -377,7 +377,20 @@ sb_max_set(u_long new_sbmax)
 int
 soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 {
+	/*
+	 * there's at least one application (a configure script of screen)
+	 * which expects a fifo is writable even if it has "some" bytes
+	 * in its buffer.
+	 * so we want to make sure (hiwat - lowat) >= (some bytes).
+	 *
+	 * PIPE_BUF here is an arbitrary value chosen as (some bytes) above.
+	 * we expect it's large enough for such applications.
+	 */
+	u_long  lowat = MAX(sock_loan_thresh, MCLBYTES);
+	u_long  hiwat = lowat + PIPE_BUF;
 
+	if (sndcc < hiwat)
+		sndcc = hiwat;
 	if (sbreserve(&so->so_snd, sndcc, so) == 0)
 		goto bad;
 	if (sbreserve(&so->so_rcv, rcvcc, so) == 0)
@@ -385,7 +398,7 @@ soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 	if (so->so_rcv.sb_lowat == 0)
 		so->so_rcv.sb_lowat = 1;
 	if (so->so_snd.sb_lowat == 0)
-		so->so_snd.sb_lowat = MAX((int)MCLBYTES, sock_loan_thresh);
+		so->so_snd.sb_lowat = lowat;
 	if (so->so_snd.sb_lowat > so->so_snd.sb_hiwat)
 		so->so_snd.sb_lowat = so->so_snd.sb_hiwat;
 	return (0);
@@ -403,7 +416,7 @@ soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 int
 sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 {
-	struct proc *p = curproc; /* XXX */
+	struct lwp *l = curlwp; /* XXX */
 	rlim_t maxcc;
 	struct uidinfo *uidinfo;
 
@@ -411,8 +424,8 @@ sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 	if (cc == 0 || cc > sb_max_adj)
 		return (0);
 	if (so) {
-		if (p && kauth_cred_geteuid(p->p_cred) == so->so_uidinfo->ui_uid)
-			maxcc = p->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
+		if (l && kauth_cred_geteuid(l->l_cred) == so->so_uidinfo->ui_uid)
+			maxcc = l->l_proc->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
 		else
 			maxcc = RLIM_INFINITY;
 		uidinfo = so->so_uidinfo;

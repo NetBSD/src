@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.19.8.2 2006/05/24 10:58:24 yamt Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.19.8.3 2006/08/11 15:45:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.19.8.2 2006/05/24 10:58:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.19.8.3 2006/08/11 15:45:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,14 +362,13 @@ pxg_ioctl(struct stic_info *si, u_long cmd, caddr_t data, int flag,
 {
 	struct stic_xinfo *sxi;
 	volatile u_int32_t *ptr = NULL;
-	struct proc *p = l->l_proc;
 	int rv, s;
 
 	switch (cmd) {
 	case STICIO_START860:
 	case STICIO_RESET860:
-		if ((rv = kauth_authorize_generic(p->p_cred,
-		    KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((rv = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (rv);
 		if (si->si_dispmode != WSDISPLAYIO_MODE_MAPPED)
 			return (EBUSY);

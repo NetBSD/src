@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm_14.c,v 1.7 2005/11/10 18:39:30 christos Exp $	*/
+/*	$NetBSD: sysv_shm_14.c,v 1.7.10.1 2006/08/11 15:43:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm_14.c,v 1.7 2005/11/10 18:39:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm_14.c,v 1.7.10.1 2006/08/11 15:43:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,6 @@ compat_14_sys_shmctl(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) cmd;
 		syscallarg(struct shmid_ds14 *) buf;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct shmid_ds shmbuf;
 	struct shmid_ds14 oshmbuf;
 	int cmd, error;
@@ -119,7 +118,7 @@ compat_14_sys_shmctl(struct lwp *l, void *v, register_t *retval)
 		shmid_ds14_to_native(&oshmbuf, &shmbuf);
 	}
 
-	error = shmctl1(p, SCARG(uap, shmid), cmd,
+	error = shmctl1(l, SCARG(uap, shmid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &shmbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.5 2005/11/23 16:14:57 manu Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.5.8.1 2006/08/11 15:43:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.5 2005/11/23 16:14:57 manu Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.5.8.1 2006/08/11 15:43:29 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -127,6 +127,18 @@ linux_sys_futex(l, v, retval)
 		timeout_hz =
 		    mstohz(timeout.tv_sec * 1000 + timeout.tv_nsec / 1000000);
 
+		/*
+		 * If the user process requests a non null timeout, 
+		 * make sure we do not turn it into an infinite 
+		 * timeout because timeout_hz gets null.
+		 * 
+		 * We use a minimal timeout of 1/hz. Mayve it would
+		 * make sense to just return ETIMEDOUT without sleeping.
+		 */
+		if (((timeout.tv_sec != 0) || (timeout.tv_nsec != 0)) &&
+		    (timeout_hz == 0)) 
+			timeout_hz = 1;
+
 		f = futex_get(SCARG(uap, uaddr));
 		ret = futex_sleep(f, l, timeout_hz);
 		futex_put(f);
@@ -200,7 +212,7 @@ linux_sys_futex(l, v, retval)
 		    SCARG(uap, op));
 		break;
 	default:
-		printf("linux_sys_futex: unkonwn op %d\n", 
+		printf("linux_sys_futex: unknown op %d\n", 
 		    SCARG(uap, op));
 		break;
 	}
@@ -271,6 +283,10 @@ futex_sleep(f, l, timeout)
 	    l->l_lid, timeout);
 #endif
 	ret = tsleep(wp, PCATCH|PZERO, "linuxfutex", timeout);
+#ifdef DEBUG_LINUX_FUTEX
+	printf("FUTEX -> %d.%d tsleep returns %d\n", 
+	    l->l_proc->p_pid, l->l_lid, ret);
+#endif
 
 	FUTEX_LOCK;
 	TAILQ_REMOVE(&f->f_waiting_proc, wp, wp_list);

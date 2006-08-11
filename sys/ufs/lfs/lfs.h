@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.95.8.5 2006/06/26 12:54:49 yamt Exp $	*/
+/*	$NetBSD: lfs.h,v 1.95.8.6 2006/08/11 15:47:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -598,6 +598,7 @@ struct segsum_v1 {
 
 #define	SS_DIROP	0x01		/* segment begins a dirop */
 #define	SS_CONT		0x02		/* more partials to finish this write*/
+#define	SS_CLEAN	0x04		/* written by the cleaner */
 	u_int16_t ss_flags;		/* 24: used for directory operations */
 	u_int16_t ss_pad;		/* 26: extra space */
 	/* FINFO's and inode daddr's... */
@@ -1086,15 +1087,21 @@ struct lfs_fcntl_markv {
 #define LFCNBMAPV	_FCNRW_FSPRIV('L', 2, struct lfs_fcntl_markv)
 #define LFCNMARKV	_FCNRW_FSPRIV('L', 3, struct lfs_fcntl_markv)
 #define LFCNRECLAIM	 _FCNO_FSPRIV('L', 4)
-#define LFCNIFILEFH	 _FCNW_FSPRIV('L', 5, struct fhandle)
+
+struct lfs_fhandle {
+	char space[28];	/* FHANDLE_SIZE_COMPAT (but used from userland too) */
+};
 #define LFCNREWIND       _FCNR_FSPRIV('L', 6, int)
 #define LFCNINVAL        _FCNR_FSPRIV('L', 7, int)
 #define LFCNRESIZE       _FCNR_FSPRIV('L', 8, int)
 #define LFCNWRAPSTOP	 _FCNR_FSPRIV('L', 9, int)
 #define LFCNWRAPGO	 _FCNR_FSPRIV('L', 10, int)
+#define LFCNIFILEFH	 _FCNW_FSPRIV('L', 11, struct lfs_fhandle)
 /* Compat */
 #define LFCNSEGWAITALL_COMPAT	 _FCNW_FSPRIV('L', 0, struct timeval)
 #define LFCNSEGWAIT_COMPAT	 _FCNW_FSPRIV('L', 1, struct timeval)
+#define LFCNIFILEFH_COMPAT	 _FCNW_FSPRIV('L', 5, struct lfs_fhandle)
+#define LFCNIFILEFH_COMPAT2	 _FCN_FSPRIV(F_FSOUT, 'L', 11, 32)
 #define LFCNWRAPSTOP_COMPAT	 _FCNO_FSPRIV('L', 9)
 #define LFCNWRAPGO_COMPAT	 _FCNO_FSPRIV('L', 10)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iociic.c,v 1.3 2006/02/23 05:37:46 thorpej Exp $	*/
+/*	$NetBSD: iociic.c,v 1.3.2.1 2006/08/11 15:40:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -139,9 +139,8 @@ iociic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c.ic_read_byte = iociic_read_byte;
 	sc->sc_i2c.ic_write_byte = iociic_write_byte;
 
-	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c;
-	(void) config_found(&sc->sc_dev, &iba, iicbus_print);
+	(void) config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
 }
 
 CFATTACH_DECL(iociic, sizeof(struct iociic_softc),

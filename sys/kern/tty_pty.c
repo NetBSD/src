@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.86.8.3 2006/06/26 12:52:57 yamt Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.86.8.4 2006/08/11 15:45:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.86.8.3 2006/06/26 12:52:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.86.8.4 2006/08/11 15:45:47 yamt Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -312,7 +312,6 @@ ptsopen(dev, flag, devtype, l)
 	int flag, devtype;
 	struct lwp *l;
 {
-	struct proc *p = l->l_proc;
 	struct pt_softc *pti;
 	struct tty *tp;
 	int error;
@@ -333,7 +332,8 @@ ptsopen(dev, flag, devtype, l)
 		tp->t_cflag = TTYDEF_CFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		ttsetwater(tp);		/* would be done in xxparam() */
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && kauth_cred_geteuid(p->p_cred) != 0)
+	} else if (ISSET(tp->t_state, TS_XCLUDE) &&
+	    kauth_cred_geteuid(l->l_cred) != 0)
 		return (EBUSY);
 	if (tp->t_oproc)			/* Ctrlr still around. */
 		SET(tp->t_state, TS_CARR_ON);
@@ -753,6 +753,11 @@ again:
 				TTY_LOCK(tp);
 				/* check again for safety */
 				if (!ISSET(tp->t_state, TS_ISOPEN)) {
+					/*
+					 * adjust for data copied in but not
+					 * written
+					 */
+					uio->uio_resid += cc;
 					error = EIO;
 					goto out;
 				}
@@ -780,6 +785,8 @@ again:
 			TTY_LOCK(tp);
 			/* check again for safety */
 			if (!ISSET(tp->t_state, TS_ISOPEN)) {
+				/* adjust for data copied in but not written */
+				uio->uio_resid += cc;
 				error = EIO;
 				goto out;
 			}
@@ -812,6 +819,8 @@ block:
 	 * in outq, or space in rawq.
 	 */
 	if (!ISSET(tp->t_state, TS_CARR_ON)) {
+		/* adjust for data copied in but not written */
+		uio->uio_resid += cc;
 		error = EIO;
 		goto out;
 	}

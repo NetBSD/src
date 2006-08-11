@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.102.8.4 2006/06/26 12:51:02 yamt Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.102.8.5 2006/08/11 15:44:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.102.8.4 2006/06/26 12:51:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.102.8.5 2006/08/11 15:44:11 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -573,7 +573,6 @@ zsopen(dev, flags, mode, l)
 	struct zstty_softc *zst;
 	struct zs_chanstate *cs;
 	struct tty *tp;
-	struct proc *p;
 	int s, s2;
 	int error;
 
@@ -583,7 +582,6 @@ zsopen(dev, flags, mode, l)
 
 	tp = zst->zst_tty;
 	cs = zst->zst_cs;
-	p = l->l_proc;
 
 	/* If KGDB took the line, then tp==NULL */
 	if (tp == NULL)
@@ -591,8 +589,8 @@ zsopen(dev, flags, mode, l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-			      &p->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -805,7 +803,6 @@ zsioctl(dev, cmd, data, flag, l)
 	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
 	struct zs_chanstate *cs = zst->zst_cs;
 	struct tty *tp = zst->zst_tty;
-	struct proc *p = l->l_proc;
 	int error;
 	int s;
 
@@ -842,8 +839,8 @@ zsioctl(dev, cmd, data, flag, l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-					  &p->p_acflag);
+		error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+		    &l->l_acflag);
 		if (error)
 			break;
 		zst->zst_swflags = *(int *)data;

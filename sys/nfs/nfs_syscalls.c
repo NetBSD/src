@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.88.6.2 2006/06/26 12:54:28 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.88.6.3 2006/08/11 15:47:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.88.6.2 2006/06/26 12:54:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.88.6.3 2006/08/11 15:47:05 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -156,7 +156,6 @@ sys_nfssvc(l, v, retval)
 		syscallarg(int) flag;
 		syscallarg(caddr_t) argp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int error;
 #ifdef NFS
 	struct nameidata nd;
@@ -177,8 +176,8 @@ sys_nfssvc(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				  &p->p_acflag);
+	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag);
 	if (error)
 		return (error);
 
@@ -224,7 +223,7 @@ sys_nfssvc(l, v, retval)
 			(SCARG(uap, flag) & NFSSVC_GOTAUTH) == 0)
 			return (0);
 		nmp->nm_iflag |= NFSMNT_MNTD;
-		error = nqnfs_clientd(nmp, p->p_cred, &ncd, SCARG(uap, flag),
+		error = nqnfs_clientd(nmp, l->l_cred, &ncd, SCARG(uap, flag),
 			SCARG(uap, argp), l);
 #endif /* NFS */
 	} else if (SCARG(uap, flag) & NFSSVC_ADDSOCK) {
@@ -236,7 +235,7 @@ sys_nfssvc(l, v, retval)
 		if (error)
 			return (error);
 		/* getsock() will use the descriptor for us */
-		error = getsock(p->p_fd, nfsdarg.sock, &fp);
+		error = getsock(l->l_proc->p_fd, nfsdarg.sock, &fp);
 		if (error)
 			return (error);
 		/*

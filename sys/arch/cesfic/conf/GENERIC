@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.42 2006/02/05 05:01:49 cube Exp $
+# $NetBSD: GENERIC,v 1.42.2.1 2006/08/11 15:41:19 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -136,6 +136,7 @@ pseudo-device	pty		64	# pseudo ptys
 #pseudo-device	ppp			# PPP network interfaces
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	vnd			# vnode pseudo-disks

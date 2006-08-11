@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.16.8.2 2006/06/26 12:51:21 yamt Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.16.8.3 2006/08/11 15:44:25 yamt Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.16.8.2 2006/06/26 12:51:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.16.8.3 2006/08/11 15:44:25 yamt Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -2012,9 +2012,6 @@ ipw_cache_firmware(struct ipw_softc *sc)
 	}
 
 	p = sizeof(hdr);
-	if ((error = firmware_read(fwh, p, fw->main, fw->main_size)) != 0)
-		goto fail3;
-
 	if ((error = firmware_read(fwh, p, fw->main, fw->main_size)) != 0)
 		goto fail3;
 

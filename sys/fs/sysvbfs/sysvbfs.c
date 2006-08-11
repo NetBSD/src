@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs.c,v 1.1 2005/12/29 14:53:45 tsutsui Exp $	*/
+/*	$NetBSD: sysvbfs.c,v 1.1.8.1 2006/08/11 15:45:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.1 2005/12/29 14:53:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.1.8.1 2006/08/11 15:45:34 yamt Exp $");
 
 #include <sys/resource.h>
+#include <sys/param.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <miscfs/genfs/genfs.h>

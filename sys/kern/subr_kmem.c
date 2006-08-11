@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.2.2.2 2006/06/26 12:52:57 yamt Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.2.2.3 2006/08/11 15:45:46 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.2.2.2 2006/06/26 12:52:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.2.2.3 2006/08/11 15:45:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -42,9 +42,17 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.2.2.2 2006/06/26 12:52:57 yamt Exp $
 
 #include <lib/libkern/libkern.h>
 
-#define	KMEM_QUANTUM_SIZE	sizeof(void *)	/* XXX */
+#define	KMEM_QUANTUM_SIZE	(ALIGNBYTES + 1)
 
 static vmem_t *kmem_arena;
+
+#if defined(DEBUG)
+static void kmem_poison_fill(void *, size_t);
+static void kmem_poison_check(void *, size_t);
+#else /* defined(DEBUG) */
+#define	kmem_poison_fill(p, sz)		/* nothing */
+#define	kmem_poison_check(p, sz)	/* nothing */
+#endif /* defined(DEBUG) */
 
 static vmem_addr_t kmem_backend_alloc(vmem_t *, vmem_size_t, vmem_size_t *,
     vm_flag_t);
@@ -80,9 +88,12 @@ kmf_to_vmf(km_flag_t kmflags)
 void *
 kmem_alloc(size_t size, km_flag_t kmflags)
 {
+	void *p;
 
-	return (void *)vmem_alloc(kmem_arena, size,
+	p = (void *)vmem_alloc(kmem_arena, size,
 	    kmf_to_vmf(kmflags) | VM_INSTANTFIT);
+	kmem_poison_check(p, size);
+	return p;
 }
 
 /*
@@ -113,6 +124,7 @@ void
 kmem_free(void *p, size_t size)
 {
 
+	kmem_poison_fill(p, size);
 	vmem_free(kmem_arena, (vmem_addr_t)p, size);
 }
 
@@ -140,6 +152,7 @@ kmem_backend_alloc(vmem_t *dummy, vmem_size_t size, vmem_size_t *resultsize,
     vm_flag_t vmflags)
 {
 	uvm_flag_t uflags;
+	vaddr_t va;
 
 	KASSERT(dummy == NULL);
 	KASSERT(size != 0);
@@ -152,8 +165,10 @@ kmem_backend_alloc(vmem_t *dummy, vmem_size_t size, vmem_size_t *resultsize,
 		uflags = UVM_KMF_WAITVA;
 	}
 	*resultsize = size = round_page(size);
-	return (vmem_addr_t)uvm_km_alloc(kernel_map, size, 0,
+	va = uvm_km_alloc(kernel_map, size, 0,
 	    uflags | UVM_KMF_WIRED | UVM_KMF_CANFAIL);
+	kmem_poison_fill((void *)va, size);
+	return (vmem_addr_t)va;
 }
 
 static void
@@ -165,5 +180,59 @@ kmem_backend_free(vmem_t *dummy, vmem_addr_t addr, vmem_size_t size)
 	KASSERT(size != 0);
 	KASSERT(size == round_page(size));
 
+	kmem_poison_check((void *)addr, size);
 	uvm_km_free(kernel_map, (vaddr_t)addr, size, UVM_KMF_WIRED);
 }
+
+/* ---- debug */
+
+#if defined(DEBUG)
+
+#if defined(_LP64)
+#define	PRIME	0x9e37fffffffc0001UL
+#else /* defined(_LP64) */
+#define	PRIME	0x9e3779b1
+#endif /* defined(_LP64) */
+
+static inline uint8_t
+kmem_poison_pattern(const void *p)
+{
+
+	return (uint8_t)((((uintptr_t)p) * PRIME)
+	    >> ((sizeof(uintptr_t) - sizeof(uint8_t))) * CHAR_BIT);
+}
+
+static void
+kmem_poison_fill(void *p, size_t sz)
+{
+	uint8_t *cp;
+	const uint8_t *ep;
+
+	cp = p;
+	ep = cp + sz;
+	while (cp < ep) {
+		*cp = kmem_poison_pattern(cp);
+		cp++;
+	}
+}
+
+static void
+kmem_poison_check(void *p, size_t sz)
+{
+	uint8_t *cp;
+	const uint8_t *ep;
+
+	cp = p;
+	ep = cp + sz;
+	while (cp < ep) {
+		const uint8_t expected = kmem_poison_pattern(cp);
+
+		if (*cp != expected) {
+			panic("%s: %p: 0x%02x != 0x%02x\n",
+			    __func__, cp, *cp, expected);
+		}
+		cp++;
+	}
+}
+
+#endif /* defined(DEBUG) */

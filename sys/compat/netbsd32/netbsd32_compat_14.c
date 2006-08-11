@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14.c,v 1.12 2005/12/24 20:45:08 perry Exp $	*/
+/*	$NetBSD: netbsd32_compat_14.c,v 1.12.8.1 2006/08/11 15:43:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.12 2005/12/24 20:45:08 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.12.8.1 2006/08/11 15:43:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ipc.h>
@@ -249,7 +249,7 @@ compat_14_netbsd32_msgctl(l, v, retval)
 		netbsd32_msqid_ds14_to_native(&omsqbuf, &msqbuf);
 	}
 
-	error = msgctl1(l->l_proc, SCARG(uap, msqid), cmd,
+	error = msgctl1(l, SCARG(uap, msqid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &msqbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {
@@ -307,7 +307,7 @@ compat_14_netbsd32___semctl(l, v, retval)
 		}
 	}
 
-	error = semctl1(l->l_proc, SCARG(uap, semid), SCARG(uap, semnum), cmd,
+	error = semctl1(l, SCARG(uap, semid), SCARG(uap, semnum), cmd,
 	    pass_arg, retval);
 
 	if (error == 0 && cmd == IPC_STAT) {
@@ -343,7 +343,7 @@ compat_14_netbsd32_shmctl(l, v, retval)
 		netbsd32_shmid_ds14_to_native(&oshmbuf, &shmbuf);
 	}
 
-	error = shmctl1(l->l_proc, SCARG(uap, shmid), cmd,
+	error = shmctl1(l, SCARG(uap, shmid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &shmbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {

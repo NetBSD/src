@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.29.8.2 2006/06/26 12:46:18 yamt Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.29.8.3 2006/08/11 15:43:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.29.8.2 2006/06/26 12:46:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.29.8.3 2006/08/11 15:43:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -182,7 +182,6 @@ linux_sys_sched_setparam(cl, v, retval)
 		syscallarg(linux_pid_t) pid;
 		syscallarg(const struct linux_sched_param *) sp;
 	} */ *uap = v;
-	struct proc *cp = cl->l_proc;
 	int error;
 	struct linux_sched_param lp;
 	struct proc *p;
@@ -199,11 +198,11 @@ linux_sys_sched_setparam(cl, v, retval)
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = cp->p_cred;
+		kauth_cred_t pc = cl->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cp == p ||
+		if (!(cl->l_proc == p ||
 		      kauth_cred_geteuid(pc) == 0 ||
 		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
@@ -225,7 +224,6 @@ linux_sys_sched_getparam(cl, v, retval)
 		syscallarg(linux_pid_t) pid;
 		syscallarg(struct linux_sched_param *) sp;
 	} */ *uap = v;
-	struct proc *cp = cl->l_proc;
 	struct proc *p;
 	struct linux_sched_param lp;
 
@@ -236,11 +234,11 @@ linux_sys_sched_getparam(cl, v, retval)
 		return EINVAL;
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = cp->p_cred;
+		kauth_cred_t pc = cl->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cp == p ||
+		if (!(cl->l_proc == p ||
 		      kauth_cred_geteuid(pc) == 0 ||
 		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
@@ -264,7 +262,6 @@ linux_sys_sched_setscheduler(cl, v, retval)
 		syscallarg(int) policy;
 		syscallarg(cont struct linux_sched_scheduler *) sp;
 	} */ *uap = v;
-	struct proc *cp = cl->l_proc;
 	int error;
 	struct linux_sched_param lp;
 	struct proc *p;
@@ -281,11 +278,11 @@ linux_sys_sched_setscheduler(cl, v, retval)
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = cp->p_cred;
+		kauth_cred_t pc = cl->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cp == p ||
+		if (!(cl->l_proc == p ||
 		      kauth_cred_geteuid(pc) == 0 ||
 		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
@@ -312,7 +309,6 @@ linux_sys_sched_getscheduler(cl, v, retval)
 	struct linux_sys_sched_getscheduler_args /* {
 		syscallarg(linux_pid_t) pid;
 	} */ *uap = v;
-	struct proc *cp = cl->l_proc;
 	struct proc *p;
 
 	*retval = -1;
@@ -321,11 +317,11 @@ linux_sys_sched_getscheduler(cl, v, retval)
  */
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = cp->p_cred;
+		kauth_cred_t pc = cl->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cp == p ||
+		if (!(cl->l_proc == p ||
 		      kauth_cred_geteuid(pc) == 0 ||
 		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||

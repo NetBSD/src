@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.28.6.1 2006/05/24 10:58:00 yamt Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.28.6.2 2006/08/11 15:44:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.28.6.1 2006/05/24 10:58:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.28.6.2 2006/08/11 15:44:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.28.6.1 2006/05/24 10:58:00 yamt Exp $
 #define CHIP_I810 0	/* i810/i815 */
 #define CHIP_I830 1	/* 830M/845G */
 #define CHIP_I855 2	/* 852GM/855GM/865G */
-#define CHIP_I915 3	/* 915G/915GM */
+#define CHIP_I915 3	/* 915G/915GM/945G/945GM */
 
 struct agp_i810_softc {
 	u_int32_t initial_aperture;	/* aperture size at startup */
@@ -139,6 +139,9 @@ agp_i810_vgamatch(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82865_IGD:
 	case PCI_PRODUCT_INTEL_82915G_IGD:
 	case PCI_PRODUCT_INTEL_82915GM_IGD:
+	case PCI_PRODUCT_INTEL_82945P_IGD:
+	case PCI_PRODUCT_INTEL_82945GM_IGD:
+	case PCI_PRODUCT_INTEL_82945GM_IGD_1:
 		return (1);
 	}
 
@@ -198,6 +201,9 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case PCI_PRODUCT_INTEL_82915G_IGD:
 	case PCI_PRODUCT_INTEL_82915GM_IGD:
+	case PCI_PRODUCT_INTEL_82945P_IGD:
+	case PCI_PRODUCT_INTEL_82945GM_IGD:
+	case PCI_PRODUCT_INTEL_82945GM_IGD_1:
 		isc->chiptype = CHIP_I915;
 		break;
 	}
@@ -249,7 +255,9 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	gatt->ag_entries = AGP_GET_APERTURE(sc) >> AGP_PAGE_SHIFT;
 
 	if (isc->chiptype == CHIP_I810) {
+		caddr_t virtual;
 		int dummyseg;
+
 		/* Some i810s have on-chip memory called dcache */
 		if (READ1(AGP_I810_DRT) & AGP_I810_DRT_POPULATED)
 			isc->dcache_size = 4 * 1024 * 1024;
@@ -258,12 +266,13 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 
 		/* According to the specs the gatt on the i810 must be 64k */
 		if (agp_alloc_dmamem(sc->as_dmat, 64 * 1024,
-		    0, &gatt->ag_dmamap, (caddr_t *)&gatt->ag_virtual,
-		    &gatt->ag_physical, &gatt->ag_dmaseg, 1, &dummyseg) != 0) {
+		    0, &gatt->ag_dmamap, &virtual, &gatt->ag_physical,
+		    &gatt->ag_dmaseg, 1, &dummyseg) != 0) {
 			free(gatt, M_AGP);
 			agp_generic_detach(sc);
 			return ENOMEM;
 		}
+		gatt->ag_virtual = (uint32_t *)virtual;
 
 		gatt->ag_size = gatt->ag_entries * sizeof(u_int32_t);
 		memset(gatt->ag_virtual, 0, gatt->ag_size);

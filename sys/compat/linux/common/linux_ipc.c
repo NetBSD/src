@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.34 2006/02/09 23:27:08 dogcow Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.34.2.1 2006/08/11 15:43:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.34 2006/02/09 23:27:08 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.34.2.1 2006/08/11 15:43:29 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -205,7 +205,6 @@ linux_sys_semctl(l, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(union linux_semun) arg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct semid_ds sembuf;
 	struct linux_semid_ds lsembuf;
 	union __semun semun;
@@ -275,7 +274,7 @@ linux_sys_semctl(l, v, retval)
 		linux_to_bsd_semid_ds(&lsembuf, &sembuf);
 	}
 
-	error = semctl1(p, SCARG(uap, semid), SCARG(uap, semnum), cmd,
+	error = semctl1(l, SCARG(uap, semid), SCARG(uap, semnum), cmd,
 	    pass_arg, retval);
 
 	if (error == 0 && cmd == IPC_STAT) {

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2005/12/11 12:19:45 christos Exp $
+#	$NetBSD: Makefile,v 1.12.8.1 2006/08/11 15:43:15 yamt Exp $
 
 BOOT=		mboot
 VERSION=	0.1
@@ -25,13 +25,14 @@ CPPFLAGS+=	-DTEXTADDR="0x${TEXT}"
 CPPFLAGS+=	-DBOOT=\"${BOOT}\" -DBOOT_VERS=\"${VERSION}\"
 CFLAGS=		-Wno-main -Os -m68000
 
-LDFLAGS=	-N -static -Ttext ${TEXT}
+LINKFLAGS=	-N -static -Ttext ${TEXT}
 
 .include "../Makefile.booters"
 
 realall: machine-links ${PROG}
 ${BOOT}:	${OBJS}
-	${LD} ${LDFLAGS} -o ${BOOT}.x ${OBJS} ${LDLIBS}
+	${_MKTARGET_LINK}
+	${LD} ${LINKFLAGS} -o ${BOOT}.x ${OBJS} ${LDLIBS}
 #	${STRIP} ${BOOT}.x
 #	dd bs=32 skip=1 count=32 if=${BOOT}.x of=${BOOT}
 	${OBJCOPY} -O binary ${BOOT}.x ${BOOT}

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.77.2.2 2006/06/26 12:46:18 yamt Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.77.2.3 2006/08/11 15:43:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.77.2.2 2006/06/26 12:46:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.77.2.3 2006/08/11 15:43:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,8 +363,7 @@ linux_sys_getresgid(l, v, retval)
 		syscallarg(gid_t *) egid;
 		syscallarg(gid_t *) sgid;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	kauth_cred_t pc = p->p_cred;
+	kauth_cred_t pc = l->l_cred;
 	int error;
 	gid_t gid;
 
@@ -402,12 +401,12 @@ linux_sys_stime(l, v, retval)
 	struct linux_sys_time_args /* {
 		linux_time_t *t;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct timespec ats;
 	linux_time_t tt;
 	int error;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 		return (error);
 
 	if ((error = copyin(&tt, SCARG(uap, t), sizeof tt)) != 0)
@@ -416,7 +415,7 @@ linux_sys_stime(l, v, retval)
 	ats.tv_sec = tt;
 	ats.tv_nsec = 0;
 
-	if ((error = settime(p, &ats)))
+	if ((error = settime(l->l_proc, &ats)))
 		return (error);
 
 	return 0;

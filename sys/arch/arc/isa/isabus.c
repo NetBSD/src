@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.30.8.1 2006/06/26 12:44:23 yamt Exp $	*/
+/*	$NetBSD: isabus.c,v 1.30.8.2 2006/08/11 15:41:10 yamt Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.30.8.1 2006/06/26 12:44:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.30.8.2 2006/08/11 15:41:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -143,6 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.30.8.1 2006/06/26 12:44:23 yamt Exp $")
 #include <mips/locore.h>
 
 #include <dev/ic/i8253reg.h>
+#include <dev/ic/i8259reg.h>
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <arc/isa/isabrvar.h>
@@ -308,8 +309,8 @@ intr_calculatemasks(void)
 		if (irqs >= 0x100) /* any IRQs >= 8 in use */
 			irqs |= 1 << IRQ_SLAVE;
 		imen = ~irqs;
-		isa_outb(IO_ICU1 + 1, imen);
-		isa_outb(IO_ICU2 + 1, imen >> 8);
+		isa_outb(IO_ICU1 + PIC_OCW1, imen);
+		isa_outb(IO_ICU2 + PIC_OCW1, imen >> 8);
 	}
 }
 
@@ -421,14 +422,18 @@ isabr_iointr(uint32_t mask, struct clockframe *cf)
 	o_imen = imen;
 	imen |= 1 << (isa_vector & (ICU_LEN - 1));
 	if (isa_vector & 0x08) {
-		isa_inb(IO_ICU2 + 1);
-		isa_outb(IO_ICU2 + 1, imen >> 8);
-		isa_outb(IO_ICU2, 0x60 + (isa_vector & 7));
-		isa_outb(IO_ICU1, 0x60 + IRQ_SLAVE);
+		isa_inb(IO_ICU2 + PIC_OCW1);
+		isa_outb(IO_ICU2 + PIC_OCW1, imen >> 8);
+		isa_outb(IO_ICU2 + PIC_OCW2,
+		    OCW2_SELECT | OCW2_EOI | OCW2_SL |
+		    OCW2_ILS((isa_vector & 7)));
+		isa_outb(IO_ICU1,
+		    OCW2_SELECT | OCW2_EOI | OCW2_SL | IRQ_SLAVE);
 	} else {
-		isa_inb(IO_ICU1 + 1);
-		isa_outb(IO_ICU1 + 1, imen);
-		isa_outb(IO_ICU1, 0x60 + isa_vector);
+		isa_inb(IO_ICU1 + PIC_OCW1);
+		isa_outb(IO_ICU1 + PIC_OCW1, imen);
+		isa_outb(IO_ICU1 + PIC_OCW2,
+		    OCW2_SELECT | OCW2_EOI | OCW2_SL | OCW2_ILS(isa_vector));
 	}
 	ih = isa_intrhand[isa_vector];
 	if (isa_vector == 0 && ih) {	/* Clock */	/*XXX*/
@@ -445,10 +450,10 @@ isabr_iointr(uint32_t mask, struct clockframe *cf)
 		ih = ih->ih_next;
 	}
 	imen = o_imen;
-	isa_inb(IO_ICU1 + 1);
-	isa_inb(IO_ICU2 + 1);
-	isa_outb(IO_ICU1 + 1, imen);
-	isa_outb(IO_ICU2 + 1, imen >> 8);
+	isa_inb(IO_ICU1 + PIC_OCW1);
+	isa_inb(IO_ICU2 + PIC_OCW1);
+	isa_outb(IO_ICU1 + PIC_OCW1, imen);
+	isa_outb(IO_ICU2 + PIC_OCW1, imen >> 8);
 
 	return ~MIPS_INT_MASK_2;
 }
@@ -475,24 +480,44 @@ isabr_initicu(void)
 		}
 	}
 
-	isa_outb(IO_ICU1, 0x11);		/* reset; program device, four bytes */
-	isa_outb(IO_ICU1+1, 0);			/* starting at this vector index */
-	isa_outb(IO_ICU1+1, 1 << IRQ_SLAVE);	/* slave on line 2 */
-	isa_outb(IO_ICU1+1, 1);			/* 8086 mode */
-	isa_outb(IO_ICU1+1, 0xff);		/* leave interrupts masked */
-	isa_outb(IO_ICU1, 0x68);		/* special mask mode (if available) */
-	isa_outb(IO_ICU1, 0x0a);		/* Read IRR by default. */
+	/* reset; program device, four bytes */
+	isa_outb(IO_ICU1 + PIC_ICW1, ICW1_SELECT | ICW1_IC4);
+	/* starting at this vector index */
+	isa_outb(IO_ICU1 + PIC_ICW2, 0);
+	/* slave on line 2 */
+	isa_outb(IO_ICU1 + PIC_ICW3, ICW3_CASCADE(IRQ_SLAVE));
+	/* 8086 mode */
+	isa_outb(IO_ICU1 + PIC_ICW4, ICW4_8086);
+
+	/* leave interrupts masked */
+	isa_outb(IO_ICU1 + PIC_OCW1, 0xff);
+
+	/* special mask mode (if available) */
+	isa_outb(IO_ICU1 + PIC_OCW3, OCW3_SELECT | OCW3_SSMM | OCW3_SMM);
+	/* Read IRR by default. */
+	isa_outb(IO_ICU1 + PIC_OCW3, OCW3_SELECT | OCW3_RR);
 #ifdef REORDER_IRQ
-	isa_outb(IO_ICU1, 0xc0 | (3 - 1));	/* pri order 3-7, 0-2 (com2 first) */
+	/* pri order 3-7, 0-2 (com2 first) */
+	isa_outb(IO_ICU1 + PIC_OCW2,
+	    OCW2_SELECT | OCW2_R | OCW2_SL OCW2_ILS(3 - 1));
 #endif
 
-	isa_outb(IO_ICU2, 0x11);		/* reset; program device, four bytes */
-	isa_outb(IO_ICU2+1, 8);			/* staring at this vector index */
-	isa_outb(IO_ICU2+1, IRQ_SLAVE);
-	isa_outb(IO_ICU2+1, 1);			/* 8086 mode */
-	isa_outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
-	isa_outb(IO_ICU2, 0x68);		/* special mask mode (if available) */
-	isa_outb(IO_ICU2, 0x0a);		/* Read IRR by default. */
+	/* reset; program device, four bytes */
+	isa_outb(IO_ICU2 + PIC_ICW1, ICW1_SELECT | ICW1_IC4);
+	/* staring at this vector index */
+	isa_outb(IO_ICU2 + PIC_ICW2, 8);
+	/* slave connected to line 2 of master */
+	isa_outb(IO_ICU2 + PIC_ICW3, ICW3_SIC(IRQ_SLAVE));
+	/* 8086 mode */
+	isa_outb(IO_ICU2 + PIC_ICW4, ICW4_8086);	
+
+	/* leave interrupts masked */
+	isa_outb(IO_ICU2 + PIC_OCW1, 0xff);
+
+	/* special mask mode (if available) */
+	isa_outb(IO_ICU2 + PIC_OCW3, OCW3_SELECT | OCW3_SSMM | OCW3_SMM);
+	/* Read IRR by default. */
+	isa_outb(IO_ICU2 + PIC_OCW3, OCW3_SELECT | OCW3_RR);
 }
 
 

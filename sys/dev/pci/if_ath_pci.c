@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.11.8.2 2006/06/26 12:51:21 yamt Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.11.8.3 2006/08/11 15:44:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.11.8.2 2006/06/26 12:51:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.11.8.3 2006/08/11 15:44:25 yamt Exp $");
 #endif
 
 /*
@@ -96,6 +96,7 @@ struct ath_pci_softc {
 	void			*sc_ih;		/* interrupt handler */
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	void			*sc_sdhook;
 };
 
 #define	BS_BAR	0x10
@@ -168,7 +169,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
-	void *shook;
+	pcireg_t mem_type;
 	void *phook;
 	const char *intrstr = NULL;
 
@@ -182,7 +183,13 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Setup memory-mapping of PCI registers.
 	 */
-	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0, &psc->sc_iot,
+	mem_type = pci_mapreg_type(pc, pa->pa_tag, BS_BAR);
+	if (mem_type != PCI_MAPREG_TYPE_MEM &&
+	    mem_type != PCI_MAPREG_MEM_TYPE_64BIT) {
+		aprint_error("bad pci register type %d\n", (int)mem_type);
+		goto bad;
+	}
+	if (pci_mapreg_map(pa, BS_BAR, mem_type, 0, &psc->sc_iot,
 		&psc->sc_ioh, NULL, NULL)) {
 		aprint_error("cannot map register space\n");
 		goto bad;
@@ -213,8 +220,8 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	shook = shutdownhook_establish(ath_pci_shutdown, psc);
-	if (shook == NULL) {
+	psc->sc_sdhook = shutdownhook_establish(ath_pci_shutdown, psc);
+	if (psc->sc_sdhook == NULL) {
 		aprint_error("couldn't make shutdown hook\n");
 		goto bad3;
 	}
@@ -228,7 +235,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (ath_attach(PCI_PRODUCT(pa->pa_id), sc) == 0)
 		return;
 
-	shutdownhook_disestablish(shook);
+	shutdownhook_disestablish(psc->sc_sdhook);
 	powerhook_disestablish(phook);
 
 bad3:	pci_intr_disestablish(pc, psc->sc_ih);
@@ -243,6 +250,7 @@ ath_pci_detach(struct device *self, int flags)
 {
 	struct ath_pci_softc *psc = (struct ath_pci_softc *)self;
 
+	shutdownhook_disestablish(psc->sc_sdhook);
 	ath_detach(&psc->sc_sc);
 	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
 

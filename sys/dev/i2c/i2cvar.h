@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.2.8.1 2006/04/01 12:06:56 yamt Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.2.8.2 2006/08/11 15:44:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -95,7 +95,6 @@ typedef struct i2c_controller {
 
 /* Used to attach the i2c framework to the controller. */
 struct i2cbus_attach_args {
-	const char *iba_name;		/* bus name ("iic") */
 	i2c_tag_t iba_tag;		/* the controller */
 	int iba_type;			/* bus type */
 };

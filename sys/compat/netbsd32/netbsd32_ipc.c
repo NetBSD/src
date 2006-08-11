@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ipc.c,v 1.7.8.1 2006/03/13 09:07:08 yamt Exp $	*/
+/*	$NetBSD: netbsd32_ipc.c,v 1.7.8.2 2006/08/11 15:43:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.7.8.1 2006/03/13 09:07:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.7.8.2 2006/08/11 15:43:29 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -65,7 +65,6 @@ netbsd32___semctl14(l, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(netbsd32_semunp_t) arg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct semid_ds sembuf;
 	struct netbsd32_semid_ds sembuf32;
 	int cmd, error;
@@ -116,7 +115,7 @@ netbsd32___semctl14(l, v, retval)
 		}
 	}
 
-	error = semctl1(p, SCARG(uap, semid), SCARG(uap, semnum), cmd,
+	error = semctl1(l, SCARG(uap, semid), SCARG(uap, semnum), cmd,
 	    pass_arg, retval);
 
 	if (error == 0 && cmd == IPC_STAT) {
@@ -208,7 +207,7 @@ netbsd32___msgctl13(l, v, retval)
 		netbsd32_to_msqid_ds(&ds32, &ds);
 	}
 
-	error = msgctl1(l->l_proc, SCARG(uap, msqid), cmd,
+	error = msgctl1(l, SCARG(uap, msqid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &ds : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {
@@ -265,7 +264,7 @@ netbsd32_msgsnd(l, v, retval)
 		syscallarg(int) msgflg;
 	} */ *uap = v;
 
-	return msgsnd1(l->l_proc, SCARG(uap, msqid),
+	return msgsnd1(l, SCARG(uap, msqid),
 	    NETBSD32PTR64(SCARG(uap, msgp)), SCARG(uap, msgsz),
 	    SCARG(uap, msgflg), sizeof(netbsd32_long),
 	    netbsd32_msgsnd_fetch_type);
@@ -297,7 +296,7 @@ netbsd32_msgrcv(l, v, retval)
 		syscallarg(int) msgflg;
 	} */ *uap = v;
 
-	return msgrcv1(l->l_proc, SCARG(uap, msqid),
+	return msgrcv1(l, SCARG(uap, msqid),
 	    NETBSD32PTR64(SCARG(uap, msgp)), SCARG(uap, msgsz),
 	    SCARG(uap, msgtyp), SCARG(uap, msgflg), sizeof(netbsd32_long),
 	    netbsd32_msgrcv_put_type, retval);
@@ -349,7 +348,7 @@ netbsd32___shmctl13(l, v, retval)
 		netbsd32_to_shmid_ds(&ds32, &ds);
 	}
 
-	error = shmctl1(l->l_proc, SCARG(uap, shmid), cmd,
+	error = shmctl1(l, SCARG(uap, shmid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &ds : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {

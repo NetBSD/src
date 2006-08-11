@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.56.8.2 2006/05/24 10:56:35 yamt Exp $	*/
+/*	$NetBSD: fault.c,v 1.56.8.3 2006/08/11 15:41:10 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.56.8.2 2006/05/24 10:56:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.56.8.3 2006/08/11 15:41:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,8 @@ data_abort_handler(trapframe_t *tf)
 	    tf->tf_pc, l, far, fsr);
 
 	/* Data abort came from user mode? */
-	user = TRAP_USERMODE(tf);
+	if ((user = TRAP_USERMODE(tf)) != 0)
+		LWP_CACHE_CREDS(l, l->l_proc);
 
 	/* Grab the current pcb */
 	pcb = &l->l_addr->u_pcb;
@@ -492,7 +493,7 @@ data_abort_handler(trapframe_t *tf)
 	if (error == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "
 		    "out of swap\n", l->l_proc->p_pid, l->l_proc->p_comm,
-		    l->l_proc->p_cred ? kauth_cred_geteuid(l->l_proc->p_cred) : -1);
+		    l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1);
 		ksi.ksi_signo = SIGKILL;
 	} else
 		ksi.ksi_signo = SIGSEGV;
@@ -769,12 +770,17 @@ prefetch_abort_handler(trapframe_t *tf)
 	struct vm_map *map;
 	vaddr_t fault_pc, va;
 	ksiginfo_t ksi;
-	int error;
+	int error, user;
 
 	UVMHIST_FUNC("prefetch_abort_handler"); UVMHIST_CALLED(maphist);
 
 	/* Update vmmeter statistics */
 	uvmexp.traps++;
+
+	l = curlwp;
+
+	if ((user = TRAP_USERMODE(tf)) != 0)
+		LWP_CACHE_CREDS(l, l->l_proc);
 
 	/*
 	 * Enable IRQ's (disabled by the abort) This always comes
@@ -794,7 +800,6 @@ prefetch_abort_handler(trapframe_t *tf)
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = ILL_ILLOPC;
 		ksi.ksi_addr = (u_int32_t *)(intptr_t) tf->tf_pc;
-		l = curlwp;
 		l->l_addr->u_pcb.pcb_tf = tf;
 		goto do_trapsignal;
 	default:
@@ -802,7 +807,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	}
 
 	/* Prefetch aborts cannot happen in kernel mode */
-	if (__predict_false(!TRAP_USERMODE(tf)))
+	if (__predict_false(!user))
 		dab_fatal(tf, 0, tf->tf_pc, NULL, NULL);
 
 	/* Get fault address */
@@ -863,7 +868,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	if (error == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "
 		    "out of swap\n", l->l_proc->p_pid, l->l_proc->p_comm,
-		    l->l_proc->p_cred ? kauth_cred_geteuid(l->l_proc->p_cred) : -1);
+		    l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1);
 		ksi.ksi_signo = SIGKILL;
 	} else
 		ksi.ksi_signo = SIGSEGV;

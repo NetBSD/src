@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_a4x_space.c,v 1.3 2005/12/11 12:16:51 christos Exp $ */
+/*	$NetBSD: pxa2x0_a4x_space.c,v 1.3.8.1 2006/08/11 15:41:19 yamt Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_a4x_space.c,v 1.3 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_a4x_space.c,v 1.3.8.1 2006/08/11 15:41:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,6 +131,3 @@ struct bus_space pxa2x0_a4x_bs_tag = {
 	bs_notimpl_bs_c_4,
 	bs_notimpl_bs_c_8,
 };
-
-
-

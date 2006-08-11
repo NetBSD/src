@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.10.8.2 2006/05/24 10:56:59 yamt Exp $ */
+/* $NetBSD: sbjcn.c,v 1.10.8.3 2006/08/11 15:42:22 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.10.8.2 2006/05/24 10:56:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.10.8.3 2006/08/11 15:42:22 yamt Exp $");
 
 #define	SBJCN_DEBUG
 
@@ -490,7 +490,7 @@ sbjcn_shutdown(struct sbjcn_channel *ch)
 }
 
 int
-sbjcnopen(dev_t dev, int flag, int mode, struct proc *p)
+sbjcnopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = SBJCN_UNIT(dev);
 	int chan = SBJCN_CHAN(dev);
@@ -521,7 +521,8 @@ sbjcnopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -678,7 +679,7 @@ sbjcntty(dev_t dev)
 }
 
 int
-sbjcnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+sbjcnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct sbjcn_softc *sc = sbjcn_cd.cd_devs[SBJCN_UNIT(dev)];
 	struct sbjcn_channel *ch = &sc->sc_channels[SBJCN_CHAN(dev)];
@@ -720,7 +721,8 @@ sbjcnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (error)
 			break;
 		ch->ch_swflags = *(int *)data;

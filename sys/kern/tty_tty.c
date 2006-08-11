@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.27.2.1 2006/05/24 10:58:42 yamt Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.27.2.2 2006/08/11 15:45:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.27.2.1 2006/05/24 10:58:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.27.2.2 2006/08/11 15:45:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ cttyopen(dev_t dev, int flag, int mode, struct lwp *l)
 	 * to delete this test. (mckusick 5/93)
 	 */
 	error = VOP_ACCESS(ttyvp,
-	  (flag&FREAD ? VREAD : 0) | (flag&FWRITE ? VWRITE : 0), p->p_cred, p);
+	  (flag&FREAD ? VREAD : 0) | (flag&FWRITE ? VWRITE : 0), l->l_cred, l);
 	if (!error)
 #endif /* PARANOID */
 		error = VOP_OPEN(ttyvp, flag, NOCRED, l);

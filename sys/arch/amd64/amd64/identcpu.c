@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.3.8.1 2006/06/26 12:44:22 yamt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.3.8.2 2006/08/11 15:41:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,12 +36,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.3.8.1 2006/06/26 12:44:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.3.8.2 2006/08/11 15:41:00 yamt Exp $");
+
+#include "opt_powernow_k8.h"
 
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
+
+#include <x86/include/cpuvar.h>
+#include <x86/include/powernow.h>
 
 /* sysctl wants this. */
 char cpu_model[48];
@@ -96,6 +101,20 @@ identifycpu(struct cpu_info *ci)
 	}
 
 	x86_print_cacheinfo(ci);
+
+#ifdef POWERNOW_K8
+	if (cpu_model[0] == 'A' || cpu_model[0] == 'O') {
+		uint32_t rval;
+		uint8_t featflag;
+		
+		rval = powernow_probe(ci, 0xf00);
+		if (rval) {
+			featflag = powernow_extflags(ci, rval);
+			if (featflag)
+				k8_powernow_init();
+		}
+	}
+#endif
 }
 
 void

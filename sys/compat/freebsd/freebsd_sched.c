@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.2.36.1 2006/05/24 10:57:27 yamt Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.2.36.2 2006/08/11 15:43:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.2.36.1 2006/05/24 10:57:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.2.36.2 2006/08/11 15:43:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -92,7 +92,7 @@ freebsd_sys_sched_setparam(l, v, retval)
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = l->l_proc->p_cred;
+		kauth_cred_t pc = l->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
@@ -129,7 +129,7 @@ freebsd_sys_sched_getparam(l, v, retval)
 		return EINVAL;
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = l->l_proc->p_cred;
+		kauth_cred_t pc = l->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
@@ -172,7 +172,7 @@ freebsd_sys_sched_setscheduler(l, v, retval)
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = l->l_proc->p_cred;
+		kauth_cred_t pc = l->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
@@ -211,7 +211,7 @@ freebsd_sys_sched_getscheduler(l, v, retval)
 	 * We only check for valid parameters and return afterwards.
 	 */
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = l->l_proc->p_cred;
+		kauth_cred_t pc = l->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;

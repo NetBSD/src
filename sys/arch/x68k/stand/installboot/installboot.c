@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.3 2001/11/25 00:42:11 minoura Exp $	*/
+/*	$NetBSD: installboot.c,v 1.3.52.1 2006/08/11 15:43:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -136,7 +136,7 @@ checkparttype(const char *name, int force)
 	if (read(fd, bootblock, blocksize) != blocksize)
 		errx(1, "%s: reading the mark", name);
 	close(fd);
-	if (strncmp(bootblock, "X68SCSI1", 8) != 0)
+	if (strncmp((const char *)bootblock, "X68SCSI1", 8) != 0)
 		floppy = 1;	/* XXX: or unformated */
 
 	if (!force && !floppy) {

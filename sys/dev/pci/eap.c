@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.81.8.1 2006/06/26 12:51:21 yamt Exp $	*/
+/*	$NetBSD: eap.c,v 1.81.8.2 2006/08/11 15:44:25 yamt Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -51,13 +51,14 @@
  *
  * Documentation links:
  *
- * ftp://ftp.alsa-project.org/pub/manuals/ensoniq/
+ * ftp://ftp.alsa-project.org/pub/manuals/ensoniq/ (ES1370 and 1371 datasheets)
+ * http://web.archive.org/web/20040622012936/http://www.corbac.com/Data/Misc/es1373.ps.gz
  * ftp://ftp.alsa-project.org/pub/manuals/asahi_kasei/4531.pdf
  * ftp://download.intel.com/ial/scalableplatforms/audio/ac97r21.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.81.8.1 2006/06/26 12:51:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.81.8.2 2006/08/11 15:44:25 yamt Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -234,6 +235,7 @@ static void	eap_midi_getinfo(void *, struct midi_info *);
 static int	eap_midi_open(void *, int, void (*)(void *, int),
 			      void (*)(void *), void *);
 static int	eap_midi_output(void *, int);
+static void	eap_uart_txrdy(struct eap_softc *);
 #endif
 
 static const struct audio_hw_if eap1370_hw_if = {
@@ -945,15 +947,21 @@ eap_intr(void *p)
 	if (intr & EAP_I_MCCB)
 		panic("eap_intr: unexpected MCCB interrupt");
 #if NMIDI > 0
-	if ((intr & EAP_I_UART) && sc->sc_iintr != NULL) {
+	if (intr & EAP_I_UART) {
+		uint8_t ustat;
 		uint32_t data;
+		
+		ustat = EREAD1(sc, EAP_UART_STATUS);
 
-		if (EREAD1(sc, EAP_UART_STATUS) & EAP_US_RXINT) {
+		if (ustat & EAP_US_RXINT) {
 			while (EREAD1(sc, EAP_UART_STATUS) & EAP_US_RXRDY) {
 				data = EREAD1(sc, EAP_UART_DATA);
 				sc->sc_iintr(sc->sc_arg, data);
 			}
 		}
+		
+		if (ustat & EAP_US_TXINT)
+			eap_uart_txrdy(sc);
 	}
 #endif
 	return 1;
@@ -1868,22 +1876,19 @@ eap_midi_open(void *addr, int flags,
 	      void *arg)
 {
 	struct eap_softc *sc;
-	uint32_t uctrl;
+	uint8_t uctrl;
 
 	sc = addr;
-	sc->sc_iintr = iintr;
-	sc->sc_ointr = ointr;
 	sc->sc_arg = arg;
 
 	EWRITE4(sc, EAP_ICSC, EREAD4(sc, EAP_ICSC) | EAP_UART_EN);
 	uctrl = 0;
-	if (flags & FREAD)
+	if (flags & FREAD) {
 		uctrl |= EAP_UC_RXINTEN;
-#if 0
-	/* I don't understand ../midi.c well enough to use output interrupts */
+		sc->sc_iintr = iintr;
+	}
 	if (flags & FWRITE)
-		uctrl |= EAP_UC_TXINTEN; */
-#endif
+		sc->sc_ointr = ointr;
 	EWRITE1(sc, EAP_UART_CONTROL, uctrl);
 
 	return 0;
@@ -1907,24 +1912,42 @@ static int
 eap_midi_output(void *addr, int d)
 {
 	struct eap_softc *sc;
-	int x;
+	uint8_t uctrl;
 
 	sc = addr;
-	for (x = 0; x != MIDI_BUSY_WAIT; x++) {
-		if (EREAD1(sc, EAP_UART_STATUS) & EAP_US_TXRDY) {
-			EWRITE1(sc, EAP_UART_DATA, d);
-			return 0;
-		}
-		delay(MIDI_BUSY_DELAY);
-	}
-	return EIO;
+	EWRITE1(sc, EAP_UART_DATA, d);
+	
+	uctrl = EAP_UC_TXINTEN;
+	if (sc->sc_iintr)
+		uctrl |= EAP_UC_RXINTEN;
+	/*
+	 * This is a write-only register, so we have to remember the right
+	 * value of RXINTEN as well as setting TXINTEN. But if we are open
+	 * for reading, it will always be correct to set RXINTEN here; only
+	 * during service of a receive interrupt could it be momentarily
+	 * toggled off, and whether we got here from the top half or from
+	 * an interrupt, that won't be the current state.
+	 */
+	EWRITE1(sc, EAP_UART_CONTROL, uctrl);
+	return 0;
 }
 
 static void
 eap_midi_getinfo(void *addr, struct midi_info *mi)
 {
 	mi->name = "AudioPCI MIDI UART";
-	mi->props = MIDI_PROP_CAN_INPUT;
+	mi->props = MIDI_PROP_CAN_INPUT | MIDI_PROP_OUT_INTR;
+}
+
+static void
+eap_uart_txrdy(struct eap_softc *sc)
+{
+	uint8_t uctrl;
+	uctrl = 0;
+	if (sc->sc_iintr)
+		uctrl = EAP_UC_RXINTEN;
+	EWRITE1(sc, EAP_UART_CONTROL, uctrl);
+	sc->sc_ointr(sc->sc_arg);
 }
 
 #endif

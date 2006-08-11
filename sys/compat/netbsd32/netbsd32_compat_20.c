@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.4.8.1 2006/03/13 09:07:08 yamt Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.4.8.2 2006/08/11 15:43:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.4.8.1 2006/03/13 09:07:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.4.8.2 2006/08/11 15:43:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,12 +223,12 @@ compat_20_netbsd32_fhstatfs(l, v, retval)
 		syscallarg(const netbsd32_fhandlep_t) fhp;
 		syscallarg(struct statvfs *) buf;
 	} */ *uap = v;
-	struct sys_fhstatvfs1_args ua;
+	struct compat_30_sys_fhstatvfs1_args ua;
 
-	NETBSD32TOP_UAP(fhp, const fhandle_t);
+	NETBSD32TOP_UAP(fhp, const struct compat_30_fhandle);
 	NETBSD32TOP_UAP(buf, struct statvfs);
 #ifdef notyet
 	NETBSD32TOP_UAP(flags, int);
 #endif
-	return (sys_fhstatvfs1(l, &ua, retval));
+	return (compat_30_sys_fhstatvfs1(l, &ua, retval));
 }

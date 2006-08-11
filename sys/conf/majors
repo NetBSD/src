@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.20.2.1 2006/04/11 11:53:50 yamt Exp $
+# $NetBSD: majors,v 1.20.2.2 2006/08/11 15:43:51 yamt Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -24,3 +24,5 @@ device-major	fw		char 171		ieee1394if
 device-major	ucycom		char 172		ucycom
 device-major	gpio		char 173		gpio
 device-major	utoppy		char 174		utoppy
+device-major	btdev		char 175		btdev
+device-major	amr		char 176		amr

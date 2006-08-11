@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_unit.c,v 1.1.6.2 2006/06/26 12:53:57 yamt Exp $	*/
+/*	$NetBSD: hci_unit.c,v 1.1.6.3 2006/08/11 15:46:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.1.6.2 2006/06/26 12:53:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.1.6.3 2006/08/11 15:46:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -144,7 +144,7 @@ hci_enable(struct hci_unit *unit)
 		goto bad2;
 
 	while (unit->hci_flags & BTF_INIT) {
-		err = tsleep(unit, PWAIT | PCATCH, __func__, hz);
+		err = tsleep(unit, PWAIT | PCATCH, __func__, 5 * hz);
 		if (err)
 			goto bad2;
 

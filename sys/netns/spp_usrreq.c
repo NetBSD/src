@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.43.8.1 2006/05/24 10:59:15 yamt Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.43.8.2 2006/08/11 15:47:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.43.8.1 2006/05/24 10:59:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.43.8.2 2006/08/11 15:47:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1316,15 +1316,13 @@ spp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 {
 	struct nspcb *nsp;
 	struct sppcb *cb = NULL;
-	struct proc *p;
 	int s;
 	int error = 0;
 	int ostate;
 
-	p = l ? l->l_proc : NULL;
 	if (req == PRU_CONTROL)
                 return (ns_control(so, (u_long)m, (caddr_t)nam,
-		    (struct ifnet *)control, p));
+		    (struct ifnet *)control, l));
 
 	if (req == PRU_PURGEIF) {
 		ns_purgeif((struct ifnet *)control);
@@ -1393,13 +1391,13 @@ spp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_BIND:
-		error = ns_pcbbind(nsp, nam, p);
+		error = ns_pcbbind(nsp, nam, l);
 		break;
 
 	case PRU_LISTEN:
 		if (nsp->nsp_lport == 0)
 			error = ns_pcbbind(nsp, (struct mbuf *)0,
-			    (struct proc *)0);
+			    (struct lwp *)0);
 		if (error == 0)
 			cb->s_state = TCPS_LISTEN;
 		break;
@@ -1413,7 +1411,7 @@ spp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	case PRU_CONNECT:
 		if (nsp->nsp_lport == 0) {
 			error = ns_pcbbind(nsp, (struct mbuf *)0,
-			    (struct proc *)0);
+			    (struct lwp *)0);
 			if (error)
 				break;
 		}

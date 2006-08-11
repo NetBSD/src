@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.33.10.2 2006/05/24 10:58:41 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.33.10.3 2006/08/11 15:45:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.33.10.2 2006/05/24 10:58:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.33.10.3 2006/08/11 15:45:46 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.33.10.2 2006/05/24 10:58:41 yamt Exp 
 #include <sys/resourcevar.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -502,6 +503,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	l2->l_flag = inmem ? L_INMEM : 0;
 	l2->l_flag |= (flags & LWP_DETACHED) ? L_DETACHED : 0;
 
+	lwp_update_creds(l2);
 	callout_init(&l2->l_tsleep_ch);
 
 	if (rnewlwpp != NULL)
@@ -563,6 +565,14 @@ lwp_exit(struct lwp *l)
 	s = proclist_lock_write();
 	LIST_REMOVE(l, l_list);
 	proclist_unlock_write(s);
+
+	/*
+	 * Release our cached credentials, and collate accounting flags.
+	 */
+	kauth_cred_free(l->l_cred);
+	simple_lock(&p->p_lock);
+	p->p_acflag |= l->l_acflag;
+	simple_unlock(&p->p_lock);
 
 	/* Free MD LWP resources */
 #ifndef __NO_CPU_LWP_FREE
@@ -701,4 +711,29 @@ proc_representative_lwp(struct proc *p)
 		" %d (%s)", p->p_pid, p->p_comm);
 	/* NOTREACHED */
 	return NULL;
+}
+
+/*
+ * Update an LWP's cached credentials to mirror the process' master copy.
+ *
+ * This happens early in the syscall path, on user trap, and on LWP
+ * creation.  A long-running LWP can also voluntarily choose to update
+ * it's credentials by calling this routine.  This may be called from
+ * LWP_CACHE_CREDS(), which checks l->l_cred != p->p_cred beforehand.
+ */
+void
+lwp_update_creds(struct lwp *l)
+{
+	kauth_cred_t oc;
+	struct proc *p;
+
+	p = l->l_proc;
+	oc = l->l_cred;
+
+	simple_lock(&p->p_lock);
+	kauth_cred_hold(p->p_cred);
+	l->l_cred = p->p_cred;
+	simple_unlock(&p->p_lock);
+	if (oc != NULL)
+		kauth_cred_free(oc);
 }

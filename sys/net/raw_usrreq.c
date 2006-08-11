@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.25.8.1 2006/05/24 10:58:56 yamt Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.25.8.2 2006/08/11 15:46:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.25.8.1 2006/05/24 10:58:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.25.8.2 2006/08/11 15:46:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -168,14 +168,12 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct lwp *l)
 {
 	struct rawcb *rp;
-	struct proc *p;
 	int s;
 	int error = 0;
 
 	if (req == PRU_CONTROL)
 		return (EOPNOTSUPP);
 
-	p = l ? l->l_proc : NULL;
 	s = splsoftnet();
 	rp = sotorawcb(so);
 #ifdef DIAGNOSTIC
@@ -195,7 +193,8 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 * the appropriate raw interface routine.
 	 */
 	case PRU_ATTACH:
-		if (p == 0 || (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))) {
+		if (l == 0 || (error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag))) {
 			error = EACCES;
 			break;
 		}

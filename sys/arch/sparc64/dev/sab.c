@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.25.2.2 2006/05/24 10:57:14 yamt Exp $	*/
+/*	$NetBSD: sab.c,v 1.25.2.3 2006/08/11 15:43:00 yamt Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.25.2.2 2006/05/24 10:57:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.25.2.3 2006/08/11 15:43:00 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -685,7 +685,8 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 		else
 			tp->t_state &= ~TS_CARR_ON;
 	} else if ((tp->t_state & TS_XCLUDE) &&
-	    (!kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))) {
+	    (!kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag))) {
 		return (EBUSY);
 	} else {
 		s = spltty();
@@ -789,7 +790,6 @@ sabioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
 	struct tty *tp = sc->sc_tty;
-	struct proc *p = l->l_proc;
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flags, l);
@@ -833,7 +833,8 @@ sabioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 		*((int *)data) = sc->sc_openflags;
 		break;
 	case TIOCSFLAGS:
-		if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
+		if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+		    &l->l_acflag))
 			error = EPERM;
 		else
 			sc->sc_openflags = *((int *)data) &

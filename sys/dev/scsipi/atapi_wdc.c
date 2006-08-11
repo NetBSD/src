@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.98.2.1 2006/05/24 10:58:24 yamt Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.98.2.2 2006/08/11 15:45:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.98.2.1 2006/05/24 10:58:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.98.2.2 2006/08/11 15:45:08 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -300,9 +300,11 @@ wdc_atapi_probe_device(struct atapibus_softc *sc, int target)
 		sa.sa_inqbuf.type =  ATAPI_CFG_TYPE(id->atap_config);
 		sa.sa_inqbuf.removable = id->atap_config & ATAPI_CFG_REMOV ?
 		    T_REMOV : T_FIXED;
-		scsipi_strvis(model, 40, id->atap_model, 40);
-		scsipi_strvis(serial_number, 20, id->atap_serial, 20);
-		scsipi_strvis(firmware_revision, 8, id->atap_revision, 8);
+		scsipi_strvis((u_char *)model, 40, id->atap_model, 40);
+		scsipi_strvis((u_char *)serial_number, 20, id->atap_serial,
+		    20);
+		scsipi_strvis((u_char *)firmware_revision, 8,
+		    id->atap_revision, 8);
 		sa.sa_inqbuf.vendor = model;
 		sa.sa_inqbuf.product = serial_number;
 		sa.sa_inqbuf.revision = firmware_revision;

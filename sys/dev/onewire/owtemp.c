@@ -1,4 +1,4 @@
-/*	$NetBSD: owtemp.c,v 1.2.2.3 2006/05/24 10:58:00 yamt Exp $ */
+/*	$NetBSD: owtemp.c,v 1.2.2.4 2006/08/11 15:44:25 yamt Exp $ */
 /*	$OpenBSD: owtemp.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.2.2.3 2006/05/24 10:58:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.2.2.4 2006/08/11 15:44:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ owtemp_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_sensor[0].units = sc->sc_info[0].units = ENVSYS_STEMP;
 	desc = prop_dictionary_get(device_properties(&sc->sc_dev),
-				   "description");
+				   "envsys-description");
 	if (desc != NULL &&
 	    prop_object_type(desc) == PROP_TYPE_STRING &&
 	    prop_string_size(desc) > 0)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.9 2005/12/11 12:17:24 christos Exp $
+#	$NetBSD: Makefile.buildboot,v 1.9.8.1 2006/08/11 15:41:43 yamt Exp $
 
 RELOC=	120000
 HEAP_LIMIT=0x1c0000
@@ -62,11 +62,11 @@ SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-LDFLAGS+=	-Bstatic -nostartfiles -nostdlib -N -Ttext $(RELOC)
-LDFLAGS+=	-T ${.CURDIR}/ld.script -Map ${PROG}.map
+LDFLAGS+=	-static -nostdlib -Wl,-N -Wl,-Ttext,$(RELOC)
+LDFLAGS+=	-Wl,-T,${.CURDIR}/ld.script -Wl,-Map,${PROG}.map
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${CC} ${LDFLAGS} -o ${PROG} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	@${SIZE} ${PROG}
 	@echo ${PROG} total size should not exceed XXXX bytes
 

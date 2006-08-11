@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.9.8.1 2006/05/24 10:59:15 yamt Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.9.8.2 2006/08/11 15:47:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.9.8.1 2006/05/24 10:59:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.9.8.2 2006/08/11 15:47:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,8 +102,7 @@ nfs_kqpoll(void *arg)
 {
 	struct kevq *ke;
 	struct vattr attr;
-	struct proc *p = pnfskq;
-	struct lwp *l = proc_representative_lwp(p);
+	struct lwp *l = curlwp;
 	u_quad_t osize;
 
 	for(;;) {
@@ -123,7 +122,7 @@ nfs_kqpoll(void *arg)
 			/* save v_size, nfs_getattr() updates it */
 			osize = ke->vp->v_size;
 
-			(void) VOP_GETATTR(ke->vp, &attr, p->p_cred, l);
+			(void) VOP_GETATTR(ke->vp, &attr, l->l_cred, l);
 
 			/* following is a bit fragile, but about best
 			 * we can get */
@@ -282,7 +281,7 @@ nfs_kqfilter(void *v)
 	 * held. This is likely cheap due to attrcache, so do it now.
 	 */
 	memset(&attr, 0, sizeof(attr));
-	(void) VOP_GETATTR(vp, &attr, l->l_proc->p_cred, l);
+	(void) VOP_GETATTR(vp, &attr, l->l_cred, l);
 
 	lockmgr(&nfskevq_lock, LK_EXCLUSIVE, NULL);
 

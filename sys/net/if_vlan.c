@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.47.8.1 2006/05/24 10:58:56 yamt Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.47.8.2 2006/08/11 15:46:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.47.8.1 2006/05/24 10:58:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.47.8.2 2006/08/11 15:46:16 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -466,7 +466,7 @@ vlan_set_promisc(struct ifnet *ifp)
 static int
 vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;	/* XXX */
 	struct ifvlan *ifv = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;
@@ -515,7 +515,8 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSETVLAN:
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			break;
 		if ((error = copyin(ifr->ifr_data, &vlr, sizeof(vlr))) != 0)
 			break;

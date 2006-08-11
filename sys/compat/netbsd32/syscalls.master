@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.42.2.5 2006/06/26 12:46:19 yamt Exp $
+	$NetBSD: syscalls.master,v 1.42.2.6 2006/08/11 15:43:30 yamt Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -169,7 +169,7 @@
 94	UNIMPL		setdopt
 95	STD		{ int netbsd32_fsync(int fd); }
 96	STD		{ int netbsd32_setpriority(int which, int who, int prio); }
-97	STD		{ int netbsd32_socket(int domain, int type, int protocol); }
+97	COMPAT_30	{ int netbsd32_socket(int domain, int type, int protocol); }
 98	STD		{ int netbsd32_connect(int s, const netbsd32_sockaddrp_t name, int namelen); }
 99	COMPAT_43	{ int netbsd32_oaccept(int s, netbsd32_caddr_t name, netbsd32_intp anamelen); }
 100	STD		{ int netbsd32_getpriority(int which, int who); }
@@ -255,11 +255,7 @@
 158	COMPAT_20	{ int netbsd32_fstatfs(int fd, netbsd32_statfsp_t buf); }
 159	UNIMPL
 160	UNIMPL
-#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
-161	STD		{ int netbsd32_getfh(const netbsd32_charp fname, netbsd32_fhandlep_t fhp); }
-#else
-161	EXCL		netbsd32_getfh
-#endif
+161	COMPAT_30		{ int netbsd32_getfh(const netbsd32_charp fname, netbsd32_compat_30_fhandlep_t fhp); }
 162	COMPAT_09	{ int netbsd32_ogetdomainname(netbsd32_charp domainname, int len); }
 163	COMPAT_09	{ int netbsd32_osetdomainname(netbsd32_charp domainname, int len); }
 164	COMPAT_09	{ int netbsd32_uname(netbsd32_outsnamep_t name); }
@@ -486,7 +482,7 @@
 295	COMPAT_16	{ int netbsd32___sigreturn14(netbsd32_sigcontextp_t sigcntxp); }
 296	STD		{ int netbsd32___getcwd(netbsd32_charp bufp, netbsd32_size_t length); }
 297	STD		{ int netbsd32_fchroot(int fd); }
-298	STD		{ int netbsd32_fhopen(const netbsd32_fhandlep_t fhp, \
+298	COMPAT_30	{ int netbsd32_fhopen(const netbsd32_fhandlep_t fhp, \
 			   int flags); }
 299	COMPAT_30	{ int netbsd32_fhstat(const netbsd32_fhandlep_t fhp, \
 			    netbsd32_stat13p_t sb); }
@@ -588,7 +584,7 @@
 			    netbsd32_statvfsp_t buf, int flags); }
 358	STD		{ int netbsd32_fstatvfs1(int fd, netbsd32_statvfsp_t buf, \
 			    int flags); }
-359	STD		{ int netbsd32_fhstatvfs1(const netbsd32_fhandlep_t fhp, \
+359	COMPAT_30	{ int netbsd32_fhstatvfs1(const netbsd32_fhandlep_t fhp, \
 			    netbsd32_statvfsp_t buf, int flags); }
 360	STD		{ int netbsd32_extattrctl(const netbsd32_charp path, \
 			    int cmd, const netbsd32_charp filename, int attrnamespace, \
@@ -671,7 +667,17 @@
 			    netbsd32_charp buf, netbsd32_size_t count); }
 391	NOARGS		{ int sys_posix_fadvise(int fd, off_t offset, \
 			    off_t len, int advice); }
-392	STD		{ int netbsd32_sys___fhstat30( \
+392	COMPAT_30	{ int netbsd32_sys___fhstat30( \
 			    const netbsd32_fhandlep_t fhp, \
 			    netbsd32_statp_t sb); }
 393	STD		{ int netbsd32_ntp_gettime(netbsd32_ntptimevalp_t ntvp); }
+394	STD		{ int netbsd32_sys___socket30(int domain, int type, int protocol); }
+395	STD		{ int netbsd32___getfh30(const netbsd32_charp fname, netbsd32_pointer_t fhp, netbsd32_size_tp fh_size); }
+396	STD		{ int netbsd32___fhopen40(const netbsd32_pointer_t fhp, \
+			    netbsd32_size_t fh_size, int flags); }
+397	STD		{ int netbsd32___fhstatvfs140(	\
+			    netbsd32_pointer_t fhp, netbsd32_size_t fh_size,\
+			    netbsd32_statvfsp_t buf, int flags); }
+398	STD		{ int netbsd32___fhstat40(	\
+			    netbsd32_pointer_t fhp, netbsd32_size_t fh_size,\
+			    netbsd32_statp_t sb); }

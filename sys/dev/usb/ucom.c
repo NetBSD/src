@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.61.2.2 2006/05/24 10:58:24 yamt Exp $	*/
+/*	$NetBSD: ucom.c,v 1.61.2.3 2006/08/11 15:45:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.61.2.2 2006/05/24 10:58:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.61.2.3 2006/08/11 15:45:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,7 +305,6 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = UCOMUNIT(dev);
 	usbd_status err;
-	struct proc *p = l->l_proc;
 	struct ucom_softc *sc;
 	struct tty *tp;
 	int s;
@@ -329,7 +328,8 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -392,9 +392,10 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		 * present, because otherwise we'd have to use TIOCSDTR
 		 * immediately after setting CLOCAL, which applications do not
 		 * expect.  We always assert DTR while the device is open
-		 * unless explicitly requested to deassert it.
+		 * unless explicitly requested to deassert it.  Ditto RTS.
 		 */
 		ucom_dtr(sc, 1);
+		ucom_rts(sc, 1);		
 
 		/* XXX CLR(sc->sc_rx_flags, RX_ANY_BLOCK);*/
 		ucom_hwiflow(sc);
@@ -607,7 +608,6 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 	      int flag, struct lwp *l)
 {
 	struct tty *tp = sc->sc_tty;
-	struct proc *p = l->l_proc;
 	int error;
 	int s;
 
@@ -658,7 +658,8 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.7.8.1 2006/05/24 10:57:23 yamt Exp $      */
+/*      $NetBSD: xenevt.c,v 1.7.8.2 2006/08/11 15:43:16 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -242,7 +242,7 @@ xenevtopen(dev_t dev, int flags, int mode, struct lwp *l)
 	switch(minor(dev)) {
 	case DEV_EVT:
 		/* falloc() will use the descriptor for us. */
-		if ((error = falloc(l->l_proc, &fp, &fd)) != 0)
+		if ((error = falloc(l, &fp, &fd)) != 0)
 			return error;
 
 		d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK | M_ZERO);

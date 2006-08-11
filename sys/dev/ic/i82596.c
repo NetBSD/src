@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.11 2005/12/11 12:21:26 christos Exp $ */
+/* $NetBSD: i82596.c,v 1.11.8.1 2006/08/11 15:44:11 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -30,16 +30,20 @@
  */
 
 /*
- * Driver for the Intel i82596 10MBit/s Ethernet chip.
+ * Driver for the Intel i82596CA and i82596DX/SX 10MBit/s Ethernet chips.
+ *
  * It operates the i82596 in 32-Bit Linear Mode, opposed to the old i82586
  * ie(4) driver (src/sys/dev/ic/i82586.c), that degrades the i82596 to
  * i82586 compatibility mode.
- * Documentation about this chip can be found on http://www.openpa.net/
- * file names 29021806.pdf and 29021906.pdf
+ *
+ * Documentation about these chips can be found at
+ *
+ *	http://developer.intel.com/design/network/datashts/290218.htm
+ *	http://developer.intel.com/design/network/datashts/290219.htm
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.11 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.11.8.1 2006/08/11 15:44:11 yamt Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -77,12 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.11 2005/12/11 12:21:26 christos Exp $")
 #include <dev/ic/i82596reg.h>
 #include <dev/ic/i82596var.h>
 
-
-
 /* Supported chip variants */
 const char *i82596_typenames[] = { "unknown", "DX/SX", "CA" };
-
-
 
 /* media change and status callback */
 static int iee_mediachange(struct ifnet *);
@@ -100,82 +100,82 @@ static void iee_drain(struct ifnet *);			/* release resources */
 static void iee_cb_setup(struct iee_softc *, uint32_t);
 
 /*
-Things a MD frontend has to provide:
-
-The functions via function pointers in the softc:
-        int (*sc_iee_cmd)(struct iee_softc *sc, uint32_t cmd);
-        int (*sc_iee_reset)(struct iee_softc *sc);
-        void (*sc_mediastatus)(struct ifnet *, struct ifmediareq *);
-        int (*sc_mediachange)(struct ifnet *);
-
-sc_iee_cmd(): send a command to the i82596 by writing the cmd parameter
-	to the SCP cmd word and issuing a Channel Attention.
-sc_iee_reset(): initiate a reset, supply the address of the SCP to the
-	chip, wait for the chip to initialize and ACK interrupts that
-	this may have caused by caling (sc->sc_iee_cmd)(sc, IEE_SCB_ACK);
-This functions must carefully bus_dmamap_sync() all data they have touched!
-
-sc_mediastatus() and  sc_mediachange() are just MD hooks to the according
-MI functions. The MD frontend may set this pointers to NULL when they
-are not needed.
-
-sc->sc_type has to be set to I82596_UNKNOWN or I82596_DX or I82596_CA.
-This is for printing out the correct chip type at attach time only. The
-MI backend doesn't distinguish different chip types when programming
-the chip.
-
-sc->sc_flags has to be set to 0 on litle endian hardware and to
-IEE_NEED_SWAP on big endian hardware, when endianes conversion is not
-done by the bus attachment. Usually you need to set IEE_NEED_SWAP
-when IEE_SYSBUS_BE is set in the sysbus byte.
-
-sc->sc_cl_align bust be set to 1 or to the cache line size. When set to
-1 no special alignment of DMA descriptors is done. If sc->sc_cl_align != 1
-it forces alignment of the data structres in the shared memory to a multiple
-of sc->sc_cl_align. This is needed on archs like hp700 that have non DMA
-I/O coherent caches and are unable to map the shared memory uncachable.
-(At least pre PA7100LC CPUs are unable to map memory uncachable.)
-
-sc->sc_cl_align MUST BE INITIALIZED BEFORE THE FOLOWING MACROS ARE USED:
-SC_* IEE_*_SZ IEE_*_OFF IEE_SHMEM_MAX (shell style glob(3) pattern)
-
-The MD frontend has to allocate a piece of DMA memory at least of
-IEE_SHMEM_MAX bytes size. All communication with the chip is done via
-this shared memory. If possible map this memory non-cachable on
-archs with non DMA I/O coherent caches. The base of the memory needs
-to be aligend to an even address if sc->sc_cl_align == 1 and aligend
-to a cache line if sc->sc_cl_align != 1.
-
-An interrupt with iee_intr() as handler must be established.
-
-Call void iee_attach(struct iee_softc *sc, uint8_t *ether_address,
-int *media, int nmedia, int defmedia); when everything is set up. First
-parameter is a pointer to the MI softc, ether_address is an array that
-contains the ethernet address. media is an array of the media types
-provided by the hardware. The members of this array are supplied to
-ifmedia_add() in sequence. nmedia is the count of elements in media.
-defmedia is the default media that is set via ifmedia_set().
-nmedia and defmedia are ignored when media == NULL.
-
-The MD backend may call iee_detach() to detach the device.
-
-See sys/arch/hp700/gsc/if_iee.c for an example.
-*/
+ * Things a MD frontend has to provide:
+ *
+ * The functions via function pointers in the softc:
+ *	int (*sc_iee_cmd)(struct iee_softc *sc, uint32_t cmd);
+ *	int (*sc_iee_reset)(struct iee_softc *sc);
+ *	void (*sc_mediastatus)(struct ifnet *, struct ifmediareq *);
+ *	int (*sc_mediachange)(struct ifnet *);
+ *
+ * sc_iee_cmd(): send a command to the i82596 by writing the cmd parameter
+ *	to the SCP cmd word and issuing a Channel Attention.
+ * sc_iee_reset(): initiate a reset, supply the address of the SCP to the
+ *	chip, wait for the chip to initialize and ACK interrupts that
+ *	this may have caused by calling (sc->sc_iee_cmd)(sc, IEE_SCB_ACK);
+ * This functions must carefully bus_dmamap_sync() all data they have touched!
+ *
+ * sc_mediastatus() and sc_mediachange() are just MD hooks to the according
+ * MI functions. The MD frontend may set this pointers to NULL when they
+ * are not needed.
+ * 
+ * sc->sc_type has to be set to I82596_UNKNOWN or I82596_DX or I82596_CA.
+ * This is for printing out the correct chip type at attach time only. The
+ * MI backend doesn't distinguish different chip types when programming
+ * the chip.
+ * 
+ * sc->sc_flags has to be set to 0 on little endian hardware and to
+ * IEE_NEED_SWAP on big endian hardware, when endianess conversion is not
+ * done by the bus attachment. Usually you need to set IEE_NEED_SWAP
+ * when IEE_SYSBUS_BE is set in the sysbus byte.
+ * 
+ * sc->sc_cl_align must be set to 1 or to the cache line size. When set to
+ * 1 no special alignment of DMA descriptors is done. If sc->sc_cl_align != 1
+ * it forces alignment of the data structures in the shared memory to a multiple
+ * of sc->sc_cl_align. This is needed on archs like hp700 that have non DMA
+ * I/O coherent caches and are unable to map the shared memory uncachable.
+ * (At least pre PA7100LC CPUs are unable to map memory uncachable.)
+ * 
+ * sc->sc_cl_align MUST BE INITIALIZED BEFORE THE FOLLOWING MACROS ARE USED:
+ * SC_* IEE_*_SZ IEE_*_OFF IEE_SHMEM_MAX (shell style glob(3) pattern)
+ * 
+ * The MD frontend has to allocate a piece of DMA memory at least of
+ * IEE_SHMEM_MAX bytes size. All communication with the chip is done via
+ * this shared memory. If possible map this memory non-cachable on
+ * archs with non DMA I/O coherent caches. The base of the memory needs
+ * to be aligned to an even address if sc->sc_cl_align == 1 and aligned
+ * to a cache line if sc->sc_cl_align != 1.
+ * 
+ * An interrupt with iee_intr() as handler must be established.
+ * 
+ * Call void iee_attach(struct iee_softc *sc, uint8_t *ether_address,
+ * int *media, int nmedia, int defmedia); when everything is set up. First
+ * parameter is a pointer to the MI softc, ether_address is an array that
+ * contains the ethernet address. media is an array of the media types
+ * provided by the hardware. The members of this array are supplied to
+ * ifmedia_add() in sequence. nmedia is the count of elements in media.
+ * defmedia is the default media that is set via ifmedia_set().
+ * nmedia and defmedia are ignored when media == NULL.
+ * 
+ * The MD backend may call iee_detach() to detach the device.
+ * 
+ * See sys/arch/hp700/gsc/if_iee_gsc.c for an example.
+ */
 
 
 /*
-How frame reception is done:
-Each Recieve Frame Descriptor has one associated Recieve Buffer Descriptor.
-Each RBD points to the data area of a mbuf cluster. The RFDs are linked
-together in a circular list. sc->sc_rx_done is the count of RFDs in the
-list already processed / the number of the RFD that has to be checked for
-a new frame first at the next RX interrupt. Upon successful reception of
-a frame the mbuf cluster is handled to upper protocol layers, a new mbuf
-cluster is allocated and the RFD / RBD are reinitialized accordingly.
-
-When a RFD list overrun occured the whole RFD and RBD lists are reinitialized
-and frame reception is started again.
-*/
+ * How frame reception is done:
+ * Each Receive Frame Descriptor has one associated Receive Buffer Descriptor.
+ * Each RBD points to the data area of an mbuf cluster. The RFDs are linked
+ * together in a circular list. sc->sc_rx_done is the count of RFDs in the
+ * list already processed / the number of the RFD that has to be checked for
+ * a new frame first at the next RX interrupt. Upon successful reception of
+ * a frame the mbuf cluster is handled to upper protocol layers, a new mbuf
+ * cluster is allocated and the RFD / RBD are reinitialized accordingly.
+ * 
+ * When a RFD list overrun occurred the whole RFD and RBD lists are reinitialized
+ * and frame reception is started again.
+ */
 int
 iee_intr(void *intarg)
 {
@@ -289,7 +289,7 @@ iee_intr(void *intarg)
 		/* CMD list finished */
 		ifp->if_timer = 0;
 		if (sc->sc_next_tbd != 0) {
-			/* A TX CMD list finished, clenup */
+			/* A TX CMD list finished, cleanup */
 			for (n = 0 ; n < sc->sc_next_cb ; n++) {
 				m_freem(sc->sc_tx_mbuf[n]);
 				sc->sc_tx_mbuf[n] = NULL;
@@ -326,7 +326,7 @@ iee_intr(void *intarg)
 			    | IEE_CB_I);
 			(sc->sc_iee_cmd)(sc, IEE_SCB_CUC_EXE);
 		} else
-			/* Try to get defered packets going. */
+			/* Try to get deferred packets going. */
 			iee_start(ifp);
 	}
 	if (IEE_SWAP(SC_SCB->scb_crc_err) != sc->sc_crc_err) {
@@ -368,45 +368,45 @@ iee_intr(void *intarg)
 
 
 /*
-How Command Block List Processing is done.
-
-A runing CBL is never manipulated. If there is a CBL already runing,
-further CMDs are deferd until the current list is done. A new list is
-setup when the old has finished.
-This eases programming. To manipulate a runing CBL it is neccesary to
-suspend the Command Unit to avoid race conditions. After a suspend
-is sent we have to wait for an interrupt that ACKs the suspend. Then
-we can manipulate the CBL and resume operation. I am not sure that this
-is more effective then the current, much simpler approach. => KISS
-See i82596CA data sheet page 26.
-
-A CBL is runing or on the way to be set up when (sc->sc_next_cb != 0).
-
-A CBL may consist of TX CMDs, and _only_ TX CMDs.
-A TX CBL is runing or on the way to be set up when
-((sc->sc_next_cb != 0) && (sc->sc_next_tbd != 0)).
-
-A CBL may consist of other non-TX CMDs like IAS or CONF, and _only_
-non-TX CMDs.
-
-This comes mostly through the way how an Ethernet driver works and
-because runing CBLs are not manipulated when they are on the way. If
-if_start() is called there will be TX CMDs enqueued so we have a runing
-CBL and other CMDs from e.g. if_ioctl() will be deferd and vice versa.
-
-The Multicast Setup Command is special. A MCS needs more space then
-a single CB has. Actual space requiement depends on the length of the
-multicast list. So we allways defer MCS until other CBLs are finished,
-then we setup a CONF CMD in the first CB. The CONF CMD is needed to
-turn ALLMULTI on the hardware on or off. The MCS is the 2nd CB and may
-use all the remaining space in the CBL and the Transmit Buffer Descriptor
-List. (Therefore CBL and TBDL must be continious in pysical and virtual
-memory. This is guaranteed through the definitions of the list offsets
-in i82596reg.h and because it is only a single DMA segment used for all
-lists.) When ALLMULTI is enabled via the CONF CMD, the MCS is run with
-a multicast list length of 0, thus disabling the multicast filter.
-A defered MCS is signaled via ((sc->sc_flags & IEE_WANT_MCAST) != 0)
-*/
+ * How Command Block List Processing is done.
+ * 
+ * A running CBL is never manipulated. If there is a CBL already running,
+ * further CMDs are deferred until the current list is done. A new list is
+ * setup when the old one has finished.
+ * This eases programming. To manipulate a running CBL it is necessary to
+ * suspend the Command Unit to avoid race conditions. After a suspend
+ * is sent we have to wait for an interrupt that ACKs the suspend. Then
+ * we can manipulate the CBL and resume operation. I am not sure that this
+ * is more effective then the current, much simpler approach. => KISS
+ * See i82596CA data sheet page 26.
+ * 
+ * A CBL is running or on the way to be set up when (sc->sc_next_cb != 0).
+ * 
+ * A CBL may consist of TX CMDs, and _only_ TX CMDs.
+ * A TX CBL is running or on the way to be set up when
+ * ((sc->sc_next_cb != 0) && (sc->sc_next_tbd != 0)).
+ * 
+ * A CBL may consist of other non-TX CMDs like IAS or CONF, and _only_
+ * non-TX CMDs.
+ * 
+ * This comes mostly through the way how an Ethernet driver works and
+ * because running CBLs are not manipulated when they are on the way. If
+ * if_start() is called there will be TX CMDs enqueued so we have a running
+ * CBL and other CMDs from e.g. if_ioctl() will be deferred and vice versa.
+ * 
+ * The Multicast Setup Command is special. A MCS needs more space than
+ * a single CB has. Actual space requirement depends on the length of the
+ * multicast list. So we always defer MCS until other CBLs are finished,
+ * then we setup a CONF CMD in the first CB. The CONF CMD is needed to
+ * turn ALLMULTI on the hardware on or off. The MCS is the 2nd CB and may
+ * use all the remaining space in the CBL and the Transmit Buffer Descriptor
+ * List. (Therefore CBL and TBDL must be continuous in physical and virtual
+ * memory. This is guaranteed through the definitions of the list offsets
+ * in i82596reg.h and because it is only a single DMA segment used for all
+ * lists.) When ALLMULTI is enabled via the CONF CMD, the MCS is run with
+ * a multicast list length of 0, thus disabling the multicast filter.
+ * A deferred MCS is signaled via ((sc->sc_flags & IEE_WANT_MCAST) != 0)
+ */
 void
 iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 {
@@ -477,7 +477,7 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 	case IEE_CB_CMD_TR:	/* Transmit */
 		cb->cb_transmit.tx_tbd_addr = IEE_PHYS_SHMEM(IEE_TBD_OFF
 		    + IEE_TBD_SZ * sc->sc_next_tbd);
-		cb->cb_cmd |= IEE_CB_SF; /* Allways use Flexible Mode. */
+		cb->cb_cmd |= IEE_CB_SF; /* Always use Flexible Mode. */
 		break;
 	case IEE_CB_CMD_TDR:	/* Time Domain Reflectometry */
 		break;
@@ -610,7 +610,7 @@ iee_start(struct ifnet *ifp)
 	int n;
 
 	if (sc->sc_next_cb != 0)
-		/* There is already a CMD runing. Defer packet enqueueing. */
+		/* There is already a CMD running. Defer packet enqueuing. */
 		return;
 	for (t = 0 ; t < IEE_NCB ; t++) {
 		IFQ_DEQUEUE(&ifp->if_snd, sc->sc_tx_mbuf[t]);
@@ -893,7 +893,7 @@ iee_stop(struct ifnet *ifp, int disable)
 	(sc->sc_iee_reset)(ifp->if_softc);
 	/* Issue a Channel Attention to ACK interrupts we may have caused. */
 	(sc->sc_iee_cmd)(ifp->if_softc, IEE_SCB_ACK);
-	/* Release any dynamically allocated ressources. */
+	/* Release any dynamically allocated resources. */
 	for (n = 0 ; n < IEE_NCB ; n++) {
 		if (sc->sc_tx_map[n] != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, sc->sc_tx_map[n]);
@@ -940,6 +940,3 @@ iee_drain(struct ifnet *ifp)
 	iee_stop(ifp, 0);
 	return;
 }
-
-
-

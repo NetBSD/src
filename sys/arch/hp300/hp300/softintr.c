@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.7.8.1 2006/04/01 12:06:14 yamt Exp $	*/
+/*	$NetBSD: softintr.c,v 1.7.8.2 2006/08/11 15:41:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.7.8.1 2006/04/01 12:06:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.7.8.2 2006/08/11 15:41:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 		LIST_INSERT_HEAD(&hsi->hsi_q, sih, sih_q);
 		splx(s);
 	}
-	return (sih);
+	return sih;
 }
 
 /*

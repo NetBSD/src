@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.26.8.2 2006/05/24 10:57:41 yamt Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.26.8.3 2006/08/11 15:44:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.26.8.2 2006/05/24 10:57:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.26.8.3 2006/08/11 15:44:10 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -525,9 +525,8 @@ clmpccopen(dev, flag, mode, l)
 
 	if ( ISSET(tp->t_state, TS_ISOPEN) &&
 	     ISSET(tp->t_state, TS_XCLUDE) &&
-	     kauth_authorize_generic(l->l_proc->p_cred,
-			       KAUTH_GENERIC_ISSUSER,
-			       &l->l_proc->p_acflag) != 0 )
+	     kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	     &l->l_acflag) != 0 )
 		return EBUSY;
 
 	/*
@@ -754,9 +753,8 @@ clmpccioctl(dev, cmd, data, flag, l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_proc->p_cred,
-					  KAUTH_GENERIC_ISSUSER,
-					  &l->l_proc->p_acflag);
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if ( error )
 			break;
 		ch->ch_openflags = *((int *)data) &

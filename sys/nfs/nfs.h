@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.55.6.2 2006/06/26 12:54:28 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.55.6.3 2006/08/11 15:47:05 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -512,7 +512,7 @@ struct nfsrv_descript {
 	u_int32_t		nd_retxid;	/* Reply xid */
 	u_int32_t		nd_duration;	/* Lease duration */
 	struct timeval		nd_starttime;	/* Time RPC initiated */
-	fhandle_t		nd_fh;		/* File handle */
+	nfsfh_t			nd_fh;		/* File handle */
 	kauth_cred_t	 	nd_cr;		/* Credentials */
 };
 
@@ -574,7 +574,7 @@ extern int nfs_numasync;
  */
 struct nfs_public {
 	int		np_valid;	/* Do we hold valid information */
-	fhandle_t	np_handle;	/* Filehandle for pub fs (internal) */
+	fhandle_t	*np_handle;	/* Filehandle for pub fs (internal) */
 	struct mount	*np_mount;	/* Mountpoint of exported fs */
 	char		*np_index;	/* Index file */
 };

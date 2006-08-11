@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.45.2.1 2006/04/01 12:06:06 yamt Exp $
+#	$NetBSD: RPC_WSCONS,v 1.45.2.2 2006/08/11 15:40:59 yamt Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.45.2.1 $"
+#ident		"GENERIC-$Revision: 1.45.2.2 $"
 
 # estimated number of users
 maxusers	32
@@ -202,15 +202,15 @@ wsdisplay*	at vidcvideo? console ?	# display itself
 
 iomdkbc*	at iomd?		# IOMD keyboard/mouse interface
 
-#pckbd*		at iomdkbc? slot ?	# PS/2 keyboard
-#options 	PCKBD_LAYOUT=KB_UK
-#wskbd*		at pckbd?
+pckbd*		at iomdkbc? slot ?	# PS/2 keyboard
+options 	PCKBD_LAYOUT=KB_UK
+wskbd*		at pckbd?
 
 #pms*		at iomdkbc? slot ?	# PS/2 mouse
 #wsmouse*	at pms?
 
-rpckbd* 	at iomd?
-wskbd*		at rpckbd?
+#rpckbd* 	at iomd?
+#wskbd*		at rpckbd?
 
 qms*		at iomd?		# ws quadmouse driver
 wsmouse*	at qms?			# wsmouse on ws quadmouse

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_resource.c,v 1.7 2005/12/24 20:45:09 perry Exp $	 */
+/*	$NetBSD: svr4_32_resource.c,v 1.7.8.1 2006/08/11 15:43:41 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_resource.c,v 1.7 2005/12/24 20:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_resource.c,v 1.7.8.1 2006/08/11 15:43:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,8 +179,8 @@ svr4_32_sys_setrlimit(l, v, retval)
 
 	limp = &p->p_rlimit[rl];
 
-	if ((error = copyin((caddr_t)(u_long)SCARG(uap, rlp),
-			     &slim, sizeof(slim))) != 0)
+	if ((error = copyin((caddr_t)(u_long)SCARG(uap, rlp), &slim,
+	    sizeof(slim))) != 0)
 		return error;
 
 	/*
@@ -210,7 +210,7 @@ svr4_32_sys_setrlimit(l, v, retval)
 	else if (slim.rlim_cur == SVR4_RLIM_SAVED_CUR)
 		blim.rlim_cur = limp->rlim_cur;
 
-	return dosetrlimit(p, p->p_cred, rl, &blim);
+	return dosetrlimit(l, p, rl, &blim);
 }
 
 
@@ -282,7 +282,7 @@ svr4_32_sys_setrlimit64(l, v, retval)
 	limp = &p->p_rlimit[rl];
 
 	if ((error = copyin((caddr_t)(u_long)SCARG(uap, rlp),
-			    &slim, sizeof(slim))) != 0)
+	    &slim, sizeof(slim))) != 0)
 		return error;
 
 	/*
@@ -312,5 +312,5 @@ svr4_32_sys_setrlimit64(l, v, retval)
 	else if (slim.rlim_cur == SVR4_RLIM64_SAVED_CUR)
 		blim.rlim_cur = limp->rlim_cur;
 
-	return dosetrlimit(p, p->p_cred, rl, &blim);
+	return dosetrlimit(l, p, rl, &blim);
 }

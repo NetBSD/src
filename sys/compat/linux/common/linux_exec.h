@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.37 2006/02/09 19:18:56 manu Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.37.2.1 2006/08/11 15:43:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -149,6 +149,10 @@ int linux_elf32_signature __P((struct lwp *, struct exec_package *,
 int linux_elf32_gcc_signature __P((struct lwp *l,
         struct exec_package *, Elf32_Ehdr *));
 #endif
+#ifdef LINUX_DEBUGLINK_SIGNATURE
+int linux_elf32_debuglink_signature __P((struct lwp *l,
+        struct exec_package *, Elf32_Ehdr *));
+#endif
 #ifdef LINUX_ATEXIT_SIGNATURE
 int linux_elf32_atexit_signature __P((struct lwp *l,
         struct exec_package *, Elf32_Ehdr *));
@@ -163,6 +167,10 @@ int linux_elf64_signature __P((struct lwp *, struct exec_package *,
         Elf64_Ehdr *, char *));
 #ifdef LINUX_GCC_SIGNATURE
 int linux_elf64_gcc_signature __P((struct lwp *l,
+        struct exec_package *, Elf64_Ehdr *));
+#endif
+#ifdef LINUX_DEBUGLINK_SIGNATURE
+int linux_elf64_debuglink_signature __P((struct lwp *l,
         struct exec_package *, Elf64_Ehdr *));
 #endif
 #ifdef LINUX_ATEXIT_SIGNATURE

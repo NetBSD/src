@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.47 2005/12/11 12:16:26 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.47.8.1 2006/08/11 15:41:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.47 2005/12/11 12:16:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.47.8.1 2006/08/11 15:41:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -349,6 +349,7 @@ readdisklabel(dev, strat, lp, clp)
 		case ADT_AMIGADOS:
 		case ADT_AMIX:
 		case ADT_EXT2:
+		case ADT_RAID:
 		case ADT_UNKNOWN:
 			pp = &lp->d_partitions[lp->d_npartitions];
 			break;
@@ -670,6 +671,11 @@ getadostype(dostype)
 	case DOST_EXT2:
 		adt.archtype = ADT_EXT2;
 		adt.fstype = FS_EX2FS;
+		return(adt);
+
+	case DOST_RAID:
+		adt.archtype = ADT_RAID;
+		adt.fstype = FS_RAID;
 		return(adt);
 
 	default:

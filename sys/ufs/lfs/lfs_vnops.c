@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.157.8.4 2006/06/26 12:54:50 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.157.8.5 2006/08/11 15:47:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.157.8.4 2006/06/26 12:54:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.157.8.5 2006/08/11 15:47:37 yamt Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +317,7 @@ lfs_fsync(void *v)
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int l = 0;
 		error = VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &l, FWRITE,
-				  ap->a_l->l_proc->p_cred, ap->a_l);
+				  ap->a_l->l_cred, ap->a_l);
 	}
 	if (wait && !VPISEMPTY(vp))
 		LFS_SET_UINO(VTOI(vp), IN_MODIFIED);
@@ -938,7 +942,6 @@ lfs_wrapgo(struct lfs *fs, struct inode *ip, int waitfor)
 	if ((ip->i_lfs_iflags & LFSI_WRAPBLOCK) == 0)
 		return EBUSY;
 
-	simple_lock(&fs->lfs_interlock);
 	ip->i_lfs_iflags &= ~LFSI_WRAPBLOCK;
 
 	KASSERT(fs->lfs_nowrap > 0);
@@ -950,12 +953,12 @@ lfs_wrapgo(struct lfs *fs, struct inode *ip, int waitfor)
 	if (--fs->lfs_nowrap == 0) {
 		log(LOG_NOTICE, "%s: re-enabled log wrap\n", fs->lfs_fsmnt);
 		wakeup(&fs->lfs_nowrap);
+		lfs_wakeup_cleaner(fs);
 	}
 	if (waitfor) {
 		ltsleep(&fs->lfs_nextseg, PCATCH | PUSER,
 			"segment", 0, &fs->lfs_interlock);
 	}
-	simple_unlock(&fs->lfs_interlock);
 
 	return 0;
 }
@@ -975,9 +978,12 @@ lfs_close(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
+	struct lfs *fs = ip->i_lfs;
 
 	if (ip->i_lfs_iflags & LFSI_WRAPBLOCK) {
-		lfs_wrapgo(ip->i_lfs, ip, 0);
+		simple_lock(&fs->lfs_interlock);
+		lfs_wrapgo(fs, ip, 0);
+		simple_unlock(&fs->lfs_interlock);
 	}
 
 	if (vp == ip->i_lfs->lfs_ivnode &&
@@ -1380,8 +1386,9 @@ lfs_fcntl(void *v)
 	CLEANERINFO *cip;
 	SEGUSE *sup;
 	int blkcnt, error, oclean;
+	size_t fh_size;
 	struct lfs_fcntl_markv blkvp;
-	struct proc *p;
+	struct lwp *l;
 	fsid_t *fsidp;
 	struct lfs *fs;
 	struct buf *bp;
@@ -1399,7 +1406,13 @@ lfs_fcntl(void *v)
 		return ESHUTDOWN;
 	}
 
-	p = ap->a_l->l_proc;
+	/* LFS control and monitoring fcntls are available only to root */
+	l = ap->a_l;
+	if (((ap->a_command & 0xff00) >> 8) == 'L' &&
+	    (error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
+		return (error);
+
 	fs = VTOI(ap->a_vp)->i_lfs;
 	fsidp = &ap->a_vp->v_mount->mnt_stat.f_fsidx;
 
@@ -1425,9 +1438,6 @@ lfs_fcntl(void *v)
 
 	    case LFCNBMAPV:
 	    case LFCNMARKV:
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-					       &p->p_acflag)) != 0)
-			return (error);
 		blkvp = *(struct lfs_fcntl_markv *)ap->a_data;
 
 		blkcnt = blkvp.blkcnt;
@@ -1444,9 +1454,9 @@ lfs_fcntl(void *v)
 		++fs->lfs_sleepers;
 		simple_unlock(&fs->lfs_interlock);
 		if (ap->a_command == LFCNBMAPV)
-			error = lfs_bmapv(p, fsidp, blkiov, blkcnt);
+			error = lfs_bmapv(l->l_proc, fsidp, blkiov, blkcnt);
 		else /* LFCNMARKV */
-			error = lfs_markv(p, fsidp, blkiov, blkcnt);
+			error = lfs_markv(l->l_proc, fsidp, blkiov, blkcnt);
 		if (error == 0)
 			error = copyout(blkiov, blkvp.blkiov,
 					blkcnt * sizeof(BLOCK_INFO));
@@ -1485,15 +1495,26 @@ lfs_fcntl(void *v)
 
 		return 0;
 
-	    case LFCNIFILEFH:
+#ifdef COMPAT_30
+	    case LFCNIFILEFH_COMPAT:
 		/* Return the filehandle of the Ifile */
-		if ((error = kauth_authorize_generic(ap->a_l->l_proc->p_cred,
-					       KAUTH_GENERIC_ISSUSER,
-					       &ap->a_l->l_proc->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (error);
 		fhp = (struct fhandle *)ap->a_data;
 		fhp->fh_fsid = *fsidp;
-		return lfs_vptofh(fs->lfs_ivnode, &(fhp->fh_fid));
+		fh_size = 16;	/* former VFS_MAXFIDSIZ */
+		return lfs_vptofh(fs->lfs_ivnode, &(fhp->fh_fid), &fh_size);
+#endif
+
+	    case LFCNIFILEFH_COMPAT2:
+	    case LFCNIFILEFH:
+		/* Return the filehandle of the Ifile */
+		fhp = (struct fhandle *)ap->a_data;
+		fhp->fh_fsid = *fsidp;
+		fh_size = sizeof(struct lfs_fhandle) -
+		    offsetof(fhandle_t, fh_fid);
+		return lfs_vptofh(fs->lfs_ivnode, &(fhp->fh_fid), &fh_size);
 
 	    case LFCNREWIND:
 		/* Move lfs_offset to the lowest-numbered segment */
@@ -1532,12 +1553,12 @@ lfs_fcntl(void *v)
 		if (fs->lfs_nowrap == 0)
 			log(LOG_NOTICE, "%s: disabled log wrap\n", fs->lfs_fsmnt);
 		++fs->lfs_nowrap;
-		if (ap->a_data == NULL || *(int *)ap->a_data == 1) {
+		if (*(int *)ap->a_data == 1 ||
+		    ap->a_command == LFCNWRAPSTOP_COMPAT) {
 			error = ltsleep(&fs->lfs_nowrap, PCATCH | PUSER,
 				"segwrap", 0, &fs->lfs_interlock);
 			if (error) {
-				if (--fs->lfs_nowrap == 0)
-					wakeup(&fs->lfs_nowrap);
+				lfs_wrapgo(fs, VTOI(ap->a_vp), 0);
 			}
 		}
 		simple_unlock(&fs->lfs_interlock);
@@ -1550,8 +1571,12 @@ lfs_fcntl(void *v)
 		 * If the argument is 1, it sleeps until a new segment
 		 * is selected.
 		 */
-		return lfs_wrapgo(fs, VTOI(ap->a_vp), (ap->a_data == NULL ? 1 :
-						       *((int *)ap->a_data)));
+		simple_lock(&fs->lfs_interlock);
+		error = lfs_wrapgo(fs, VTOI(ap->a_vp),
+				   (ap->a_command == LFCNWRAPGO_COMPAT ? 1 :
+				    *((int *)ap->a_data)));
+		simple_unlock(&fs->lfs_interlock);
+		return error;
 
 	    default:
 		return ufs_fcntl(v);
@@ -2089,6 +2114,7 @@ again:
 		if (sp->cbpp - sp->bpp > 1) {
 			/* Write gathered pages */
 			lfs_updatemeta(sp);
+			lfs_release_finfo(fs);
 			(void) lfs_writeseg(fs, sp);
 
 			/*

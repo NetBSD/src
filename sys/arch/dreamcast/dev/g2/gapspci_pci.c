@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_pci.c,v 1.8 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: gapspci_pci.c,v 1.8.8.1 2006/08/11 15:41:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -38,13 +38,13 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_pci.c,v 1.8 2005/12/11 12:17:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_pci.c,v 1.8.8.1 2006/08/11 15:41:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/device.h> 
- 
+#include <sys/device.h>
+
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/sysasicvar.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: gapspci_pci.c,v 1.8 2005/12/11 12:17:06 christos Exp
 #include <dev/pci/pcireg.h>
 
 #include <dreamcast/dev/g2/gapspcivar.h>
-   
+
 void		gaps_attach_hook(struct device *, struct device *,
 		    struct pcibus_attach_args *);
 int		gaps_bus_maxdevs(void *, int);
@@ -99,7 +99,7 @@ void
 gaps_attach_hook(struct device *bus, struct device *pci,
     struct pcibus_attach_args *pba)
 {
-	struct gaps_softc *sc = (void *) bus;
+	struct gaps_softc *sc = (void *)bus;
 
 	/*
 	 * Now that we know there's a bus configured, go ahead and

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.180.2.2 2006/06/26 12:54:49 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.180.2.3 2006/08/11 15:47:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.180.2.2 2006/06/26 12:54:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.180.2.3 2006/08/11 15:47:36 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -189,12 +189,10 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	struct vnode *devvp = NULL;
 	struct ufs_args args;
 	struct ufsmount *ump = NULL;
-	struct proc *p;
 	struct fs *fs;
 	int error, flags, update;
 	mode_t accessmode;
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		ump = VFSTOUFS(mp);
 		if (ump == NULL)
@@ -255,14 +253,14 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (error == 0 && kauth_cred_geteuid(p->p_cred) != 0) {
+	if (error == 0 && kauth_cred_geteuid(l->l_cred) != 0) {
 		accessmode = VREAD;
 		if (update ?
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, p->p_cred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_cred, l);
 		VOP_UNLOCK(devvp, 0);
 	}
 
@@ -402,7 +400,7 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 		}
 
 		if (mp->mnt_flag & MNT_RELOAD) {
-			error = ffs_reload(mp, p->p_cred, l);
+			error = ffs_reload(mp, l->l_cred, l);
 			if (error)
 				return (error);
 		}
@@ -416,7 +414,7 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 			fs->fs_fmod = 1;
 			if ((fs->fs_flags & FS_DOSOFTDEP)) {
 				error = softdep_mount(devvp, mp, fs,
-				    p->p_cred);
+				    l->l_cred);
 				if (error)
 					return (error);
 			}
@@ -701,7 +699,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	dev_t dev;
 	struct partinfo dpart;
 	void *space;
-	struct proc *p;
 	daddr_t sblockloc, fsblockloc;
 	int blks, fstype;
 	int error, i, size, ronly;
@@ -713,8 +710,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	u_int32_t sbsize = 8192;	/* keep gcc happy*/
 
 	dev = devvp->v_rdev;
-	p = l ? l->l_proc : NULL;
-	cred = p ? p->p_cred : NOCRED;
+	cred = l ? l->l_cred : NOCRED;
 
 	/* Flush out any old buffers remaining from a previous use. */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
@@ -1247,7 +1243,7 @@ ffs_flushfiles(struct mount *mp, int flags, struct lwp *l)
 	 * Flush filesystem metadata.
 	 */
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_FSYNC(ump->um_devvp, l->l_proc->p_cred, FSYNC_WAIT, 0, 0, l);
+	error = VOP_FSYNC(ump->um_devvp, l->l_cred, FSYNC_WAIT, 0, 0, l);
 	VOP_UNLOCK(ump->um_devvp, 0);
 	return (error);
 }
@@ -1532,15 +1528,18 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 int
 ffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
-	struct ufid *ufhp;
+	struct ufid ufh;
 	struct fs *fs;
 
-	ufhp = (struct ufid *)fhp;
+	if (fhp->fid_len != sizeof(struct ufid))
+		return EINVAL;
+
+	memcpy(&ufh, fhp, sizeof(ufh));
 	fs = VFSTOUFS(mp)->um_fs;
-	if (ufhp->ufid_ino < ROOTINO ||
-	    ufhp->ufid_ino >= fs->fs_ncg * fs->fs_ipg)
+	if (ufh.ufid_ino < ROOTINO ||
+	    ufh.ufid_ino >= fs->fs_ncg * fs->fs_ipg)
 		return (ESTALE);
-	return (ufs_fhtovp(mp, ufhp, vpp));
+	return (ufs_fhtovp(mp, &ufh, vpp));
 }
 
 /*
@@ -1548,16 +1547,22 @@ ffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
  */
 /* ARGSUSED */
 int
-ffs_vptofh(struct vnode *vp, struct fid *fhp)
+ffs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 {
 	struct inode *ip;
-	struct ufid *ufhp;
+	struct ufid ufh;
 
+	if (*fh_size < sizeof(struct ufid)) {
+		*fh_size = sizeof(struct ufid);
+		return E2BIG;
+	}
 	ip = VTOI(vp);
-	ufhp = (struct ufid *)fhp;
-	ufhp->ufid_len = sizeof(struct ufid);
-	ufhp->ufid_ino = ip->i_number;
-	ufhp->ufid_gen = ip->i_gen;
+	*fh_size = sizeof(struct ufid);
+	memset(&ufh, 0, sizeof(ufh));
+	ufh.ufid_len = sizeof(struct ufid);
+	ufh.ufid_ino = ip->i_number;
+	ufh.ufid_gen = ip->i_gen;
+	memcpy(fhp, &ufh, sizeof(ufh));
 	return (0);
 }
 

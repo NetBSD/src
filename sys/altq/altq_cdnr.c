@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.10.8.1 2006/05/24 10:56:32 yamt Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.10.8.2 2006/08/11 15:40:58 yamt Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.8 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.10.8.1 2006/05/24 10:56:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.10.8.2 2006/08/11 15:40:58 yamt Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -1249,7 +1249,6 @@ cdnrioctl(dev, cmd, addr, flag, l)
 {
 	struct top_cdnr *top;
 	struct cdnr_interface *ifacep;
-	struct proc *p = l->l_proc;
 	int	s, error = 0;
 
 	/* check super-user privilege */
@@ -1260,9 +1259,8 @@ cdnrioctl(dev, cmd, addr, flag, l)
 #if (__FreeBSD_version > 400000)
 		if ((error = suser(p)) != 0)
 #else
-		if ((error = kauth_authorize_generic(p->p_cred,
-					       KAUTH_GENERIC_ISSUSER,
-					       &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 #endif
 			return (error);
 		break;

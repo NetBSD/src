@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.27.2.1 2006/04/11 11:53:26 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.27.2.2 2006/08/11 15:41:26 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.2.1 2006/04/11 11:53:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.2.2 2006/08/11 15:41:26 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -152,9 +152,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.2.1 2006/04/11 11:53:26 yamt Exp $"
 #include <mips/alchemy/include/auvar.h>
 #include <mips/alchemy/include/aubusvar.h>
 
-#include "aucom.h"
-#if NAUCOM > 0
-#include <mips/alchemy/dev/aucomvar.h>
+#include "com.h"
+#if NCOM > 0
 
 int	aucomcnrate = 0;
 #endif /* NAUCOM > 0 */
@@ -255,7 +254,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	/*
 	 * Bring up the console.
 	 */
-#if NAUCOM > 0
+#if NCOM > 0
 #ifdef CONSPEED
 	if (aucomcnrate == 0)
 		aucomcnrate = CONSPEED;
@@ -283,11 +282,10 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 * character time = (1000000 / (defaultrate / 10))
 	 */
 	delay(160000000 / aucomcnrate);
-	if (aucomcnattach(aubus_st, UART0_BASE, aucomcnrate,
-	    curcpu()->ci_cpu_freq / 4, COM_TYPE_AU1x00,
-	    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8) != 0)
+	if (com_aubus_cnattach(UART0_BASE, aucomcnrate) != 0)
 		panic("mach_init: unable to initialize serial console");
-#else
+
+#else /* NCOM > 0 */
 	panic("mach_init: not configured to use serial console");
 #endif /* NAUCOM > 0 */
 

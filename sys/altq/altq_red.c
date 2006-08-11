@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.13.8.2 2006/06/26 12:44:22 yamt Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.13.8.3 2006/08/11 15:40:58 yamt Exp $	*/
 /*	$KAME: altq_red.c,v 1.9 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.13.8.2 2006/06/26 12:44:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.13.8.3 2006/08/11 15:40:58 yamt Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -261,7 +261,6 @@ redioctl(dev, cmd, addr, flag, l)
 	red_queue_t *rqp;
 	struct red_interface *ifacep;
 	struct ifnet *ifp;
-	struct proc *p = l->l_proc;
 	int	error = 0;
 
 	/* check super-user privilege */
@@ -272,9 +271,8 @@ redioctl(dev, cmd, addr, flag, l)
 #if (__FreeBSD_version > 400000)
 		if ((error = suser(p)) != 0)
 #else
-		if ((error = kauth_authorize_generic(p->p_cred,
-					       KAUTH_GENERIC_ISSUSER,
-					       &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 #endif
 			return (error);
 		break;

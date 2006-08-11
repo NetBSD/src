@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.54 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.54.8.1 2006/08/11 15:45:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.54 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.54.8.1 2006/08/11 15:45:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,8 @@ struct ep_pcmcia_softc {
 	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
 	int sc_io_window;			/* our i/o window */
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
+
+	void *sc_powerhook;			/* power management hook */
 };
 
 CFATTACH_DECL(ep_pcmcia, sizeof(struct ep_pcmcia_softc),
@@ -337,6 +339,11 @@ ep_pcmcia_attach(parent, self, aux)
 		aprint_error("%s: couldn't configure controller\n",
 		    self->dv_xname);
 
+	psc->sc_powerhook = powerhook_establish(ep_power, sc);
+	if (psc->sc_powerhook == NULL)
+		aprint_error("%s: WARNING: unable to establish power hook\n",
+		    self->dv_xname);
+
 	sc->enabled = 0;
 	ep_pcmcia_disable(sc);
 	return;
@@ -360,6 +367,9 @@ ep_pcmcia_detach(self, flags)
 	if (psc->sc_io_window == -1)
 		/* Nothing to detach. */
 		return (0);
+
+	if (psc->sc_powerhook != NULL)
+		powerhook_disestablish(psc->sc_powerhook);
 
 	rv = ep_detach(self, flags);
 	if (rv != 0)

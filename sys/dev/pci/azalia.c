@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.19.6.2 2006/06/26 12:51:21 yamt Exp $	*/
+/*	$NetBSD: azalia.c,v 1.19.6.3 2006/08/11 15:44:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.19.6.2 2006/06/26 12:51:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.19.6.3 2006/08/11 15:44:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -119,6 +119,7 @@ typedef struct azalia_t {
 	bus_space_handle_t ioh;
 	bus_size_t map_size;
 	bus_dma_tag_t dmat;
+	pcireg_t pciid;
 	uint32_t subid;
 
 	codec_t codecs[15];
@@ -269,6 +270,10 @@ static const char *pin_devices[16] = {
  * PCI functions
  * ================================================================ */
 
+#define PCI_ID_CODE0(v, p)	PCI_ID_CODE(PCI_VENDOR_##v, PCI_PRODUCT_##v##_##p)
+#define PCIID_MCP55		PCI_ID_CODE0(NVIDIA, MCP55_HDA)
+#define PCIID_VT8237A		PCI_ID_CODE0(VIATECH, VT8237A_HDA)
+
 static int
 azalia_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
@@ -290,6 +295,7 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrrupt_str;
 	const char *name;
+	const char *vendor;
 
 	sc = (azalia_t*)self;
 	pa = aux;
@@ -327,10 +333,12 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	aprint_normal("%s: interrupting at %s\n", XNAME(sc), intrrupt_str);
 
+	sc->pciid = pa->pa_id;
+	vendor = pci_findvendor(pa->pa_id);
 	name = pci_findproduct(pa->pa_id);
-	if (name != NULL) {
-		aprint_normal("%s: host: %s (rev. %d)\n",
-		    XNAME(sc), name, PCI_REVISION(pa->pa_class));
+	if (vendor != NULL && name != NULL) {
+		aprint_normal("%s: host: %s %s (rev. %d)\n",
+		    XNAME(sc), vendor, name, PCI_REVISION(pa->pa_class));
 	} else {
 		aprint_normal("%s: host: 0x%4.4x/0x%4.4x (rev. %d)\n",
 		    XNAME(sc), PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id),
@@ -372,19 +380,28 @@ azalia_pci_detach(struct device *self, int flags)
 	azalia_t *az;
 	int i;
 
+	DPRINTF(("%s\n", __func__));
 	az = (azalia_t*)self;
 	if (az->audiodev != NULL) {
 		config_detach(az->audiodev, flags);
 		az->audiodev = NULL;
 	}
+
+	DPRINTF(("%s: delete streams\n", __func__));
 	azalia_stream_delete(&az->rstream, az);
 	azalia_stream_delete(&az->pstream, az);
+
+	DPRINTF(("%s: delete codecs\n", __func__));
 	for (i = 0; i < az->ncodecs; i++) {
 		azalia_codec_delete(&az->codecs[i]);
 	}
 	az->ncodecs = 0;
+
+	DPRINTF(("%s: delete CORB and RIRB\n", __func__));
 	azalia_delete_corb(az);
 	azalia_delete_rirb(az);
+
+	DPRINTF(("%s: delete PCI resources\n", __func__));
 	if (az->ih != NULL) {
 		pci_intr_disestablish(az->pc, az->ih);
 		az->ih = NULL;
@@ -608,16 +625,6 @@ azalia_init_corb(azalia_t *az)
 	/* reset CORBRP */
 	corbrp = AZ_READ_2(az, CORBRP);
 	AZ_WRITE_2(az, CORBRP, corbrp | HDA_CORBRP_CORBRPRST);
-	for (i = 5000; i >= 0; i--) {
-		DELAY(10);
-		corbrp = AZ_READ_2(az, CORBRP);
-		if (corbrp & HDA_CORBRP_CORBRPRST)
-			break;
-	}
-	if (i <= 0) {
-		aprint_error("%s: CORBRP reset failure\n", XNAME(az));
-		return -1;
-	}
 	AZ_WRITE_2(az, CORBRP, corbrp & ~HDA_CORBRP_CORBRPRST);
 	for (i = 5000; i >= 0; i--) {
 		DELAY(10);
@@ -626,7 +633,7 @@ azalia_init_corb(azalia_t *az)
 			break;
 	}
 	if (i <= 0) {
-		aprint_error("%s: CORBRP reset failure 2\n", XNAME(az));
+		aprint_error("%s: CORBRP reset failure\n", XNAME(az));
 		return -1;
 	}
 	DPRINTF(("%s: CORBWP=%d; size=%d\n", __func__,
@@ -757,6 +764,7 @@ azalia_delete_rirb(azalia_t *az)
 
 	if (az->unsolq != NULL) {
 		free(az->unsolq, M_DEVBUF);
+		az->unsolq = NULL;
 	}
 	if (az->rirb_dma.addr == NULL)
 		return 0;
@@ -1115,7 +1123,8 @@ azalia_codec_init(codec_t *this)
 static int
 azalia_codec_delete(codec_t *this)
 {
-	this->mixer_delete(this);
+	if (this->mixer_delete != NULL)
+		this->mixer_delete(this);
 	if (this->formats != NULL) {
 		free(this->formats, M_DEVBUF);
 		this->formats = NULL;

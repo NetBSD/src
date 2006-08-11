@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.26 2005/11/10 11:18:55 scw Exp $	*/
+/*	$NetBSD: undefined.c,v 1.26.10.1 2006/08/11 15:41:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.26 2005/11/10 11:18:55 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.26.10.1 2006/08/11 15:41:10 yamt Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -199,6 +199,7 @@ undefinedinstruction(trapframe_t *frame)
 	int fault_instruction;
 	int fault_code;
 	int coprocessor;
+	int user;
 	struct undefined_handler *uh;
 #ifdef VERBOSE_ARM32
 	int s;
@@ -232,6 +233,17 @@ undefinedinstruction(trapframe_t *frame)
 
 	/* Get the current lwp/proc structure or lwp0/proc0 if there is none. */
 	l = curlwp == NULL ? &lwp0 : curlwp;
+
+#ifdef __PROG26
+	if ((frame->tf_r15 & R15_MODE) == R15_MODE_USR) {
+#else
+	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
+#endif
+		user = 1;
+		LWP_CACHE_CREDS(l, l->l_proc);
+	} else
+		user = 0;
+
 
 #ifdef THUMB_CODE
 	if (frame->tf_spsr & PSR_T_bit) {
@@ -298,11 +310,7 @@ undefinedinstruction(trapframe_t *frame)
 			coprocessor = CORE_UNKNOWN_HANDLER;
 	}
 
-#ifdef __PROG26
-	if ((frame->tf_r15 & R15_MODE) == R15_MODE_USR) {
-#else
-	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
-#endif
+	if (user) {
 		/*
 		 * Modify the fault_code to reflect the USR/SVC state at
 		 * time of fault.
