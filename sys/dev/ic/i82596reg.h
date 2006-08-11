@@ -1,4 +1,4 @@
-/* $NetBSD: i82596reg.h,v 1.2 2005/12/11 12:21:26 christos Exp $ */
+/* $NetBSD: i82596reg.h,v 1.2.8.1 2006/08/11 15:44:11 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -33,8 +33,8 @@
 
 #define IEE_SYSBUS_BE	0x80	/* == 1 32 bit pointers are big endian */
 #define IEE_SYSBUS_INT	0x20	/* == 1 interrupt pin is active low */
-#define IEE_SYSBUS_LOCK	0x10	/* == 1 lock funtion disabled */
-#define IEE_SYSBUS_TRG	0x08	/* == 1 external triggering of bus throtle */
+#define IEE_SYSBUS_LOCK	0x10	/* == 1 lock function disabled */
+#define IEE_SYSBUS_TRG	0x08	/* == 1 external triggering of bus throttle */
 #define IEE_SYSBUS_M1	0x04	/* M1 == 0 && M0 == 0 82586 mode */
 #define IEE_SYSBUS_M0	0x02	/* M1 == 0 && M0 == 1 32 bit segmented mode */
 				/* M1 == 1 && M0 == 0 linear mode */
@@ -62,8 +62,8 @@
 #define IEE_SCB_CUC_RES	0x0200	/* Resume operat. of CU after suspend */
 #define IEE_SCB_CUC_SUS	0x0300	/* Suspend exec. of cmds on CBL */
 #define IEE_SCB_CUC_ABR	0x0400	/* Abort current command */
-#define IEE_SCB_CUC_BT	0x0500	/* Load Bus Throtle */
-#define IEE_SCB_CUC_BTI	0x0600	/* Load Bus Throtle immediately */
+#define IEE_SCB_CUC_BT	0x0500	/* Load Bus Throttle */
+#define IEE_SCB_CUC_BTI	0x0600	/* Load Bus Throttle immediately */
 #define IEE_SCB_CUC	0x0700	/* Command mask */
 
 #define IEE_SCB_RESET	0x0080	/* Reset the Chip */
@@ -95,16 +95,16 @@
 #define IEE_SCB_RUS_NR3	0x00c0	/* No more RBDs */
 #define IEE_SCB_RUS	0x00f0	/* RU status bit mask */
 
-#define IEE_SCB_T	0x0008	/* Bus Throtle timers loaded */
+#define IEE_SCB_T	0x0008	/* Bus Throttle timers loaded */
 
-#define IEE_SCB_TON	0x0000ffff	/* Bus Throtle TON mask */
-#define IEE_SCB_TOFF	0xffff0000	/* Bus Throtle TOFF mask */
+#define IEE_SCB_TON	0x0000ffff	/* Bus Throttle TON mask */
+#define IEE_SCB_TOFF	0xffff0000	/* Bus Throttle TOFF mask */
 
 /* Bits in the Command Block Command word. */
 #define IEE_CB_EL	0x8000	/* End of List, cmd is last on CBL */
 #define IEE_CB_S	0x4000	/* Suspend after exec of this CB */
 #define IEE_CB_I	0x2000	/* generate Interrupt after exec */
-#define IEE_CB_NC	0x0010	/* No CRC insertaton disable */
+#define IEE_CB_NC	0x0010	/* No CRC insertion disable */
 #define IEE_CB_SF	0x0008	/* Flexible Mode, data in TCB and TBD */
 
 /* Bits in the Command Block Status word. */
@@ -112,7 +112,7 @@
 #define IEE_CB_B	0x4000	/* Command running or fetching CB */
 #define IEE_CB_OK	0x2000	/* Command finished without error */
 #define IEE_CB_A	0x1000	/* CU Abort control cmd was issued */
-#define IEE_CB_F	0x0800	/* self test faild */
+#define IEE_CB_F	0x0800	/* self test failed */
 #define IEE_CB_EOF	0x8000	/* End Of Frame */
 #define IEE_CB_STAT	0xf800	/* Status bit mask */
 #define IEE_CB_COL	0x0020	/* TX stopped because of to much collisions */
@@ -133,10 +133,10 @@
 #define IEE_RFD_S	0x4000	/* Suspend after this RFD is filled */
 #define IEE_RFD_SF	0x0008	/* Flexible Mode, data in RFD and RBD */
 #define IEE_RFD_C	0x8000	/* Frame reception has completed */
-#define IEE_RFD_B	0x4000	/* i82596 is bussy on this RFD */
+#define IEE_RFD_B	0x4000	/* i82596 is busy on this RFD */
 #define IEE_RFD_OK	0x2000	/* Frame received without error */
 #define IEE_RFD_STAT	0x1fff	/* Status bits */
-#define IEE_RFD_STAT_LEN	0x1000	/* Lenghth error */
+#define IEE_RFD_STAT_LEN	0x1000	/* Length error */
 #define IEE_RFD_STAT_CRC	0x0800	/* CRC error */
 #define IEE_RFD_STAT_ALIGN	0x0400	/* Alignment error */
 #define IEE_RFD_STAT_NORES	0x0200	/* Ran out of buffer space */
@@ -177,7 +177,7 @@
 
 #define IEE_CF_3_ADDRLEN(x)	((x) & 0x07)	/* Address Length */
 #define IEE_CF_3_ADDRLEN_DEF	0x06	/* Address Length Default */
-#define IEE_CF_3_NSAI		0x08	/* No Source Address Insertation */
+#define IEE_CF_3_NSAI		0x08	/* No Source Address Insertion */
 #define IEE_CF_3_ALLOC		0x08	/* == AL_LOC */
 #define IEE_CF_3_PREAMLEN(x)	(((x) & 0x3) << 4)	/* Preamble Length */
 #define IEE_CF_3_PREAMLEN_DEF	0x20	/*  */

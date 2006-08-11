@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.45.8.2 2006/05/24 10:58:40 yamt Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.45.8.3 2006/08/11 15:45:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,13 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.45.8.2 2006/05/24 10:58:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.45.8.3 2006/08/11 15:45:46 yamt Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
 #endif
 
-#include "opt_verified_exec.h"
+#include "veriexec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,9 +56,9 @@ __KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.45.8.2 2006/05/24 10:58:40 yamt Ex
 #include <sys/exec_script.h>
 #include <sys/exec_elf.h>
 
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 #include <sys/verified_exec.h>
-#endif /* VERIFIED_EXEC */
+#endif /* NVERIEXEC > 0 */
 
 #ifdef SYSTRACE
 #include <sys/systrace.h>
@@ -84,7 +84,6 @@ exec_script_makecmds(struct lwp *l, struct exec_package *epp)
 	char *cp, *shellname, *shellarg, *oldpnbuf;
 	char **shellargp, **tmpsap;
 	struct vnode *scriptvp;
-	struct proc *p = l->l_proc;
 #ifdef SETUIDSCRIPTS
 	/* Gcc needs those initialized for spurious uninitialized warning */
 	uid_t script_uid = (uid_t) -1;
@@ -184,7 +183,7 @@ check_shell:
 	 * method of implementing "safe" set-id and x-only scripts.
 	 */
 	vn_lock(epp->ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_ACCESS(epp->ep_vp, VREAD, l->l_proc->p_cred, l);
+	error = VOP_ACCESS(epp->ep_vp, VREAD, l->l_cred, l);
 	VOP_UNLOCK(epp->ep_vp, 0);
 	if (error == EACCES
 #ifdef SETUIDSCRIPTS
@@ -199,7 +198,7 @@ check_shell:
 #endif
 
 		/* falloc() will use the descriptor for us */
-		if ((error = falloc(p, &fp, &epp->ep_fd)) != 0) {
+		if ((error = falloc(l, &fp, &epp->ep_fd)) != 0) {
 			scriptvp = NULL;
 			shellargp = NULL;
 			goto fail;
@@ -236,7 +235,7 @@ check_shell:
 		/* normally can't fail, but check for it if diagnostic */
 #ifdef SYSTRACE
 		error = 1;
-		if (ISSET(p->p_flag, P_SYSTRACE)) {
+		if (ISSET(l->l_proc->p_flag, P_SYSTRACE)) {
 			error = systrace_scriptname(p, *tmpsap);
 			if (error == 0)
 				tmpsap++;
@@ -277,11 +276,11 @@ check_shell:
 	scriptvp = epp->ep_vp;
 	oldpnbuf = epp->ep_ndp->ni_cnd.cn_pnbuf;
 
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 	if ((error = check_exec(l, epp, VERIEXEC_INDIRECT)) == 0) {
 #else
 	if ((error = check_exec(l, epp, 0)) == 0) {
-#endif
+#endif /* NVERIEXEC > 0 */
 		/* note that we've clobbered the header */
 		epp->ep_flags |= EXEC_DESTR|EXEC_HASES;
 
@@ -293,7 +292,7 @@ check_shell:
 		 */
 		if ((epp->ep_flags & EXEC_HASFD) == 0) {
 			vn_lock(scriptvp, LK_EXCLUSIVE | LK_RETRY);
-			VOP_CLOSE(scriptvp, FREAD, p->p_cred, l);
+			VOP_CLOSE(scriptvp, FREAD, l->l_cred, l);
 			vput(scriptvp);
 		}
 
@@ -332,7 +331,7 @@ fail:
                 (void) fdrelease(l, epp->ep_fd);
         } else if (scriptvp) {
 		vn_lock(scriptvp, LK_EXCLUSIVE | LK_RETRY);
-		VOP_CLOSE(scriptvp, FREAD, p->p_cred, l);
+		VOP_CLOSE(scriptvp, FREAD, l->l_cred, l);
 		vput(scriptvp);
 	}
 

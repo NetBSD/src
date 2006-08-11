@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.32 2003/02/05 01:27:34 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.32.36.1 2006/08/11 15:42:40 yamt Exp $	*/
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -6,7 +6,7 @@
 
 #ifdef PPC_IBM4XX
 #include <powerpc/ibm4xx/pmap.h>
-#elif defined(PPC_OEA)
+#elif defined(PPC_OEA) || defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #include <powerpc/oea/pmap.h>
 #else
 #ifndef _LOCORE

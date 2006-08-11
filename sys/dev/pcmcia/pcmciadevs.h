@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.216.8.2 2006/06/26 12:52:27 yamt Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.216.8.3 2006/08/11 15:45:08 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.216 2006/06/19 15:44:45 gdamore Exp
+ *	NetBSD: pcmciadevs,v 1.217 2006/07/28 08:02:39 scottr Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -102,6 +102,7 @@
 #define	PCMCIA_VENDOR_LINKSYS2	0x0274	/* The Linksys Group */
 #define	PCMCIA_VENDOR_IODATA2	0x028a	/* I-O DATA */
 #define	PCMCIA_VENDOR_ASUSTEK	0x02aa	/* Asustek Computer */
+#define	PCMCIA_VENDOR_SIEMENS	0x02ac	/* Siemens */
 #define	PCMCIA_VENDOR_MICROSOFT	0x02d2	/* Microsoft Corporation */
 #define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
 #define	PCMCIA_VENDOR_NEWMEDIA2	0x10cd	/* NewMedia */
@@ -538,6 +539,10 @@
 #define	PCMCIA_PRODUCT_SOCKET_LP_ETHER_CF	0x0075
 #define	PCMCIA_CIS_SOCKET_LP_ETH_10_100_CF	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SOCKET_LP_ETH_10_100_CF	0x0145
+
+/* SpeedStream */
+#define	PCMCIA_CIS_SIEMENS_SS1021	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SIEMENS_SS1021	0x0002
 
 /* Symbol */
 #define	PCMCIA_CIS_SYMBOL_LA4100	{ NULL, NULL, NULL, NULL }

@@ -1,12 +1,5 @@
-/*	$NetBSD: twaio.h,v 1.2.10.2 2006/06/26 12:51:23 yamt Exp $ */
+/*	$NetBSD: twaio.h,v 1.2.10.3 2006/08/11 15:44:26 yamt Exp $ */
 /*	$wasabi: twaio.h,v 1.8 2006/04/27 17:12:39 wrstuden Exp $ */
-/*
- * Copyright (c) 2005-2006 Wasabi Systems, Inc.
- * All rights reserved.
- *
- * Your Wasabi Systems License Agreement specifies the terms and
- * conditions for use and redistribution.
- */
 
 /*-
  * Copyright (c) 2003-04 3ware, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.35.8.1 2006/05/24 10:59:14 yamt Exp $	*/
+/*	$NetBSD: esis.c,v 1.35.8.2 2006/08/11 15:46:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.35.8.1 2006/05/24 10:59:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.35.8.2 2006/08/11 15:46:49 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -171,13 +171,11 @@ esis_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct lwp *l)
 {
 	struct rawcb *rp;
-	struct proc *p;
 	int error = 0;
 
 	if (req == PRU_CONTROL)
 		return (EOPNOTSUPP);
 
-	p = l ? l->l_proc : NULL;
 	rp = sotorawcb(so);
 #ifdef DIAGNOSTIC
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)
@@ -195,9 +193,8 @@ esis_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = EISCONN;
 			break;
 		}
-		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
-							 KAUTH_GENERIC_ISSUSER,
-							 &p->p_acflag))) {
+		if (l == 0 || (error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag))) {
 			error = EACCES;
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.32.2.1 2006/04/01 12:06:13 yamt Exp $	*/
+/*	$NetBSD: mt.c,v 1.32.2.2 2006/08/11 15:41:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.32.2.1 2006/04/01 12:06:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.32.2.2 2006/08/11 15:41:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ mtmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct hpibbus_attach_args *ha = aux;
 
-	return (mtident(NULL, ha));
+	return mtident(NULL, ha);
 }
 
 static void
@@ -220,10 +220,10 @@ mtident(struct mt_softc *sc, struct hpibbus_attach_args *ha)
 				sc->sc_type = mtinfo[i].hwid;
 				printf(": %s tape\n", mtinfo[i].desc);
 			}
-			return (1);
+			return 1;
 		}
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -249,10 +249,10 @@ mtreaddsj(struct mt_softc *sc, int ecmd)
 		if (sc->sc_recvtimeo == 0)
 			sc->sc_recvtimeo = hz;
 		if (--sc->sc_recvtimeo == 0)
-			return (-1);
+			return -1;
 		if (retval == 0)
 			sc->sc_flags |= MTF_DSJTIMEO;
-		return (-2);
+		return -2;
 	}
 	sc->sc_recvtimeo = 0;
 	sc->sc_statindex = 0;
@@ -263,7 +263,7 @@ mtreaddsj(struct mt_softc *sc, int ecmd)
 	    case 0:
 		if (ecmd & MTE_DSJ_FORCE)
 			break;
-		return (0);
+		return 0;
 
 	    case 2:
 		sc->sc_lastecmd = MTE_COMPLETE;
@@ -273,7 +273,7 @@ mtreaddsj(struct mt_softc *sc, int ecmd)
 	    default:
 		log(LOG_ERR, "%s readdsj: DSJ 0x%x\n", sc->sc_dev.dv_xname,
 		    sc->sc_lastdsj);
-		return (-1);
+		return -1;
 	}
  getstats:
 	retval = hpibrecv(sc->sc_hpibno,
@@ -290,11 +290,11 @@ mtreaddsj(struct mt_softc *sc, int ecmd)
 				sc->sc_flags |= MTF_STATCONT;
 			}
 			sc->sc_flags |= MTF_STATTIMEO;
-			return (-2);
+			return -2;
 		}
 		log(LOG_ERR, "%s readdsj: can't read status",
 		    sc->sc_dev.dv_xname);
-		return (-1);
+		return -1;
 	}
 	sc->sc_recvtimeo = 0;
 	sc->sc_statindex = 0;
@@ -305,7 +305,7 @@ mtreaddsj(struct mt_softc *sc, int ecmd)
 	if (sc->sc_lastecmd)
 		(void) hpibsend(sc->sc_hpibno, sc->sc_slave,
 		    MTL_ECMD, &(sc->sc_lastecmd), 1);
-	return ((int) sc->sc_lastdsj);
+	return (int)sc->sc_lastdsj;
 }
 
 static int
@@ -319,12 +319,12 @@ mtopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (unit >= mt_cd.cd_ndevs ||
 	    (sc = mt_cd.cd_devs[unit]) == NULL ||
 	    (sc->sc_flags & MTF_EXISTS) == 0)
-		return (ENXIO);
+		return ENXIO;
 
 	dlog(LOG_DEBUG, "%s open: flags 0x%x", sc->sc_dev.dv_xname,
 	    sc->sc_flags);
 	if (sc->sc_flags & MTF_OPEN)
-		return (EBUSY);
+		return EBUSY;
 	sc->sc_flags |= MTF_OPEN;
 	sc->sc_ttyp = tprintf_open(l->l_proc);
 	if ((sc->sc_flags & MTF_ALIVE) == 0) {
@@ -405,10 +405,10 @@ mtopen(dev_t dev, int flag, int mode, struct lwp *l)
 				sc->sc_density = req_den;
 		}
 	}
-	return (0);
+	return 0;
 errout:
 	sc->sc_flags &= ~MTF_OPEN;
-	return (error);
+	return error;
 }
 
 static int
@@ -424,7 +424,7 @@ mtclose(dev_t dev, int flag, int fmt, struct lwp *l)
 		(void) mtcommand(dev, MTREW, 0);
 	sc->sc_flags &= ~MTF_OPEN;
 	tprintf_close(sc->sc_ttyp);
-	return (0);
+	return 0;
 }
 
 static int
@@ -436,7 +436,7 @@ mtcommand(dev_t dev, int cmd, int cnt)
 
 #if 1
 	if (bp->b_flags & B_BUSY)
-		return (EBUSY);
+		return EBUSY;
 #endif
 	bp->b_cmd = cmd;
 	bp->b_dev = dev;
@@ -454,7 +454,7 @@ mtcommand(dev_t dev, int cmd, int cnt)
 #else
 	bp->b_flags &= ~B_BUSY;
 #endif
-	return (error);
+	return error;
 }
 
 /*
@@ -932,8 +932,8 @@ mtread(dev_t dev, struct uio *uio, int flags)
 {
 	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
 
-	return(physio(mtstrategy, &sc->sc_bufstore,
-	    dev, B_READ, minphys, uio));
+	return physio(mtstrategy, &sc->sc_bufstore,
+	    dev, B_READ, minphys, uio);
 }
 
 static int
@@ -941,8 +941,8 @@ mtwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
 
-	return(physio(mtstrategy, &sc->sc_bufstore,
-	    dev, B_WRITE, minphys, uio));
+	return physio(mtstrategy, &sc->sc_bufstore,
+	    dev, B_WRITE, minphys, uio);
 }
 
 static int
@@ -970,15 +970,15 @@ mtioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			break;
 
 		    default:
-			return (EINVAL);
+			return EINVAL;
 		}
-		return (mtcommand(dev, op->mt_op, cnt));
+		return mtcommand(dev, op->mt_op, cnt);
 
 	    case MTIOCGET:
 		break;
 
 	    default:
-		return (EINVAL);
+		return EINVAL;
 	}
-	return (0);
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.185.8.1 2006/04/01 12:06:13 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.185.8.2 2006/08/11 15:41:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185.8.1 2006/04/01 12:06:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185.8.2 2006/08/11 15:41:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -433,9 +433,11 @@ static const struct hp300_model hp300_models[] = {
 	{ HP_345,	-1,		"345",		"50"	},
 	{ HP_350,	-1,		"350",		"25"	},
 	{ HP_360,	-1,		"360",		"25"	},
+	{ HP_362,	-1,		"362",		"25"	},
 	{ HP_370,	-1,		"370",		"33.33"	},
 	{ HP_375,	-1,		"375",		"50"	},
 	{ HP_380,	-1,		"380",		"25"	},
+	{ HP_382,	-1,		"382",		"25"	},
 	{ HP_385,	-1,		"385",		"33"	},
 	{ HP_400,	-1,		"400",		"50"	},
 	{ HP_425,	MMUID_425_T,	"425t",		"25"	},
@@ -584,6 +586,9 @@ identifycpu(void)
 #if !defined(HP360)
 	case HP_360:
 #endif
+#if !defined(HP362)
+	case HP_362:
+#endif
 #if !defined(HP370)
 	case HP_370:
 #endif
@@ -592,6 +597,9 @@ identifycpu(void)
 #endif
 #if !defined(HP380)
 	case HP_380:
+#endif
+#if !defined(HP382)
+	case HP_382:
 #endif
 #if !defined(HP385)
 	case HP_385:
@@ -793,7 +801,7 @@ cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
 	memcpy(chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
 	error = (*dump)(dumpdev, *blknop, (caddr_t)buf, sizeof(buf));
 	*blknop += btodb(sizeof(buf));
-	return (error);
+	return error;
 }
 
 /*
@@ -979,11 +987,11 @@ badaddr(caddr_t addr)
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
-		return(1);
+		return 1;
 	}
 	i = *(volatile short *)addr;
 	nofault = (int *) 0;
-	return(0);
+	return 0;
 }
 
 int
@@ -995,11 +1003,11 @@ badbaddr(caddr_t addr)
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
-		return(1);
+		return 1;
 	}
 	i = *(volatile char *)addr;
 	nofault = (int *) 0;
-	return(0);
+	return 0;
 }
 
 /*
@@ -1015,17 +1023,17 @@ lookup_bootinfo(int type)
 
 	/* Check for a bootinfo record first. */
 	if (help == NULL)
-		return (NULL);
+		return NULL;
 
 	do {
 		bt = (struct btinfo_common *)help;
 		if (bt->type == type)
-			return (help);
+			return help;
 		help += bt->next;
 	} while (bt->next != 0 &&
 		 (size_t)help < (size_t)bootinfo_va + BOOTINFO_SIZE);
 
-	return (NULL);
+	return NULL;
 }
 
 #if defined(PANICBUTTON) && !defined(DDB)
@@ -1150,13 +1158,13 @@ static int
 parityerror(struct frame *fp)
 {
 	if (!gotparmem)
-		return(0);
+		return 0;
 	*PARREG = 0;
 	DELAY(10);
 	*PARREG = 1;
 	if (panicstr) {
 		printf("parity error after panic ignored\n");
-		return(1);
+		return 1;
 	}
 	if (!parityerrorfind())
 		printf("WARNING: transient parity error ignored\n");
@@ -1173,7 +1181,7 @@ parityerror(struct frame *fp)
 		regdump((struct trapframe *)fp, 128);
 		panic("kernel parity error");
 	}
-	return(1);
+	return 1;
 }
 
 /*
@@ -1191,7 +1199,9 @@ parityerrorfind(void)
 	int found;
 
 #ifdef lint
-	i = o = pg = 0; if (i) return(0);
+	i = o = pg = 0;
+	if (i)
+		return 0;
 #endif
 	/*
 	 * If looking is true we are searching for a known parity error
@@ -1238,7 +1248,7 @@ done:
 	pmap_update(pmap_kernel());
 	ecacheon();
 	splx(s);
-	return(found);
+	return found;
 }
 
 /*
@@ -1272,12 +1282,12 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 #ifdef COMPAT_NOMID
 	case (MID_ZERO << 16) | ZMAGIC:
 		error = exec_aout_prep_oldzmagic(l, epp);
-		return(error);
+		return error;
 #endif
 #ifdef COMPAT_44
 	case (MID_HP300 << 16) | ZMAGIC:
 		error = exec_aout_prep_oldzmagic(l, epp);
-		return(error);
+		return error;
 #endif
 	}
 #endif /* !(defined(COMPAT_NOMID) || defined(COMPAT_44)) */

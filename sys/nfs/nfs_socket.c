@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.126.2.2 2006/06/26 12:54:28 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.126.2.3 2006/08/11 15:47:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.2.2 2006/06/26 12:54:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.2.3 2006/08/11 15:47:05 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1389,10 +1389,6 @@ tryagain:
 				nfs_renewxid(rep);
 				goto tryagain;
 
-			case NFSERR_STALEWRITEVERF:
-				error = EINVAL;
-				break;
-
 			default:
 #ifdef DIAGNOSTIC
 				printf("Invalid rpc error code %d\n", error);
@@ -2036,10 +2032,10 @@ nfs_getreq(nd, nfsd, has_header)
 		uid = fxdr_unsigned(uid_t, *tl++);
 		gid = fxdr_unsigned(gid_t, *tl++);
 		kauth_cred_setuid(nd->nd_cr, uid);
-		kauth_cred_setgid(nd->nd_cr, gid);
 		kauth_cred_seteuid(nd->nd_cr, uid);
-		kauth_cred_setsvuid(nd->nd_cr, gid);
-		kauth_cred_setegid(nd->nd_cr, uid);
+		kauth_cred_setsvuid(nd->nd_cr, uid);
+		kauth_cred_setgid(nd->nd_cr, gid);
+		kauth_cred_setegid(nd->nd_cr, gid);
 		kauth_cred_setsvgid(nd->nd_cr, gid);
 
 		len = fxdr_unsigned(int, *tl);

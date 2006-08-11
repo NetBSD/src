@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.41.8.2 2006/05/24 10:58:13 yamt Exp $	*/
+/*	$NetBSD: dhu.c,v 1.41.8.3 2006/08/11 15:45:08 yamt Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.41.8.2 2006/05/24 10:58:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.41.8.3 2006/08/11 15:45:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -468,8 +468,8 @@ dhuopen(dev, flag, mode, l)
 		(void) dhuparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if ((tp->t_state & TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_proc->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return (EBUSY);
 	/* Use DMBIS and *not* DMSET or else we clobber incoming bits */
 	if (dhumctl(sc, line, DML_DTR|DML_RTS, DMBIS) & DML_DCD)

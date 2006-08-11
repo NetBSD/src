@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.75.6.3 2006/05/24 10:59:25 yamt Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.75.6.4 2006/08/11 15:47:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,11 +125,12 @@ extern int lfs_debug_log_subsys[];
 
 __BEGIN_DECLS
 /* lfs_alloc.c */
-int lfs_rf_valloc(struct lfs *, ino_t, int, struct lwp *, struct vnode **);
 void lfs_vcreate(struct mount *, ino_t, struct vnode *);
 int lfs_valloc(struct vnode *, int, kauth_cred_t, struct vnode **);
 int lfs_vfree(struct vnode *, ino_t, int);
 void lfs_order_freelist(struct lfs *);
+int lfs_extend_ifile(struct lfs *, kauth_cred_t);
+int lfs_ialloc(struct lfs *, struct vnode *, ino_t, int, struct vnode **);
 
 /* lfs_balloc.c */
 int lfs_balloc(struct vnode *, off_t, int, kauth_cred_t, int, struct buf **);
@@ -167,6 +168,10 @@ int lfs_truncate(struct vnode *, off_t, int, kauth_cred_t, struct lwp *);
 struct ufs1_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
 void lfs_finalize_ino_seguse(struct lfs *, struct inode *);
 void lfs_finalize_fs_seguse(struct lfs *);
+
+/* lfs_rfw.c */
+int lfs_rf_valloc(struct lfs *, ino_t, int, struct lwp *, struct vnode **);
+void lfs_roll_forward(struct lfs *, struct mount *, struct lwp *);
 
 /* lfs_segment.c */
 void lfs_imtime(struct lfs *);
@@ -206,6 +211,7 @@ void lfs_segunlock(struct lfs *);
 void lfs_segunlock_relock(struct lfs *);
 int lfs_writer_enter(struct lfs *, const char *);
 void lfs_writer_leave(struct lfs *);
+void lfs_wakeup_cleaner(struct lfs *);
 
 /* lfs_syscalls.c */
 int lfs_fastvget(struct mount *, ino_t, daddr_t, struct vnode **, struct ufs1_dinode *);
@@ -226,7 +232,7 @@ int lfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 int lfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int lfs_vget(struct mount *, ino_t, struct vnode **);
 int lfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int lfs_vptofh(struct vnode *, struct fid *);
+int lfs_vptofh(struct vnode *, struct fid *, size_t *);
 void lfs_vinit(struct mount *, struct vnode **);
 int lfs_resize_fs(struct lfs *, int);
 

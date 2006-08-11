@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.69.2.1 2006/05/24 10:58:42 yamt Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.69.2.2 2006/08/11 15:45:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.69.2.1 2006/05/24 10:58:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.69.2.2 2006/08/11 15:45:47 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -606,7 +606,7 @@ dirloop:
 				    log(LOG_WARNING,
 					"chrooted pid %d uid %d (%s) "
 					"detected outside of its chroot\n",
-					p->p_pid, kauth_cred_geteuid(p->p_cred),
+					p->p_pid, kauth_cred_geteuid(l->l_cred),
 					p->p_comm);
 				    /* Put us at the jail root. */
 				    vput(dp);

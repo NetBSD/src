@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_var.h,v 1.19 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: udp6_var.h,v 1.19.8.1 2006/08/11 15:46:49 yamt Exp $	*/
 /*	$KAME: udp6_var.h,v 1.11 2000/06/05 00:14:31 itojun Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ void	udp6_ctlinput __P((int, struct sockaddr *, void *));
 void	udp6_init __P((void));
 int	udp6_input __P((struct mbuf **, int *, int));
 int	udp6_output __P((struct in6pcb *, struct mbuf *, struct mbuf *,
-	struct mbuf *, struct proc *));
+	struct mbuf *, struct lwp *));
 int	udp6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 int	udp6_usrreq __P((struct socket *,
 			 int, struct mbuf *, struct mbuf *, struct mbuf *,

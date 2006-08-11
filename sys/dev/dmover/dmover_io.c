@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.21.2.1 2006/05/24 10:57:37 yamt Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.21.2.2 2006/08/11 15:43:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.21.2.1 2006/05/24 10:57:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.21.2.2 2006/08/11 15:43:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -747,10 +747,9 @@ dmoverioopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct dmio_state *ds;
 	struct file *fp;
 	int error, fd, s;
-	struct proc *p = l->l_proc;
 
 	/* falloc() will use the descriptor for us. */
-	if ((error = falloc(p, &fp, &fd)) != 0)
+	if ((error = falloc(l, &fp, &fd)) != 0)
 		return (error);
 
 	s = splsoftclock();

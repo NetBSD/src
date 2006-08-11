@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.135.8.2 2006/04/01 12:06:33 yamt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.135.8.3 2006/08/11 15:43:12 yamt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135.8.2 2006/04/01 12:06:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135.8.3 2006/08/11 15:43:12 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -345,7 +345,7 @@ pmap_bootstrap()
 
 	/* Init SCB and set up stray vectors. */
 	avail_start = scb_init(avail_start);
-	bcopy((caddr_t)proc0paddr + REDZONEADDR, 0, sizeof(struct rpb));
+	*(struct rpb *) 0 = *(struct rpb *) ((caddr_t)proc0paddr + REDZONEADDR);
 
 	if (dep_call->cpu_steal_pages)
 		(*dep_call->cpu_steal_pages)();

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.155.2.2 2006/05/24 10:58:41 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.155.2.3 2006/08/11 15:45:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.155.2.2 2006/05/24 10:58:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.155.2.3 2006/08/11 15:45:46 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -315,16 +315,24 @@ exit1(struct lwp *l, int rv)
 		sp->s_leader = NULL;
 	}
 	fixjobc(p, p->p_pgrp, 0);
+
+	/*
+	 * Collect accounting flags from the last remaining LWP (this one),
+	 * and write out accounting data.
+	 */
+	p->p_acflag |= l->l_acflag;
 	(void)acct_process(l);
+
 #ifdef KTRACE
 	/*
-	 * release trace file
+	 * Release trace file.
 	 */
 	ktrderef(p);
 #endif
 #ifdef SYSTRACE
 	systrace_sys_exit(p);
 #endif
+
 	/*
 	 * If emulation has process exit hook, call it now.
 	 */
@@ -524,6 +532,9 @@ exit1(struct lwp *l, int rv)
 	sigactsfree(ps);
 	limfree(plim);
 	pstatsfree(pstats);
+
+	/* Release cached credentials. */
+	kauth_cred_free(l->l_cred);
 
 #ifdef DEBUG
 	/* Nothing should use the process link anymore */

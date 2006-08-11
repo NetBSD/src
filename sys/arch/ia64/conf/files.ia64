@@ -1,4 +1,4 @@
-#	$NetBSD: files.ia64,v 1.1.2.2 2006/04/11 11:53:27 yamt Exp $
+#	$NetBSD: files.ia64,v 1.1.2.3 2006/08/11 15:42:00 yamt Exp $
 #
 # new style config file for ia64 architecture
 #
@@ -59,6 +59,9 @@ file	arch/ia64/ia64/mainbus.c	mainbus
 device cpu
 attach cpu at cpubus
 file	arch/ia64/ia64/cpu.c		cpu
+
+# Memory Disk
+file	dev/md_root.c			memory_disk_hooks
 
 # console: XXX: Figure out how to make this conditional.
 defpseudo ssccons

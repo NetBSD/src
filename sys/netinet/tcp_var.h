@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.134 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.134.2.1 2006/08/11 15:46:33 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -226,7 +226,7 @@ struct tcpcb {
 	struct	callout t_delack_ch;	/* delayed ACK callout */
 /*
  * The following fields are used as in the protocol specification.
- * See RFC783, Dec. 1981, page 21.
+ * See RFC793, Dec. 1981, page 21.
  */
 /* send sequence variables */
 	tcp_seq	snd_una;		/* send unacknowledged */

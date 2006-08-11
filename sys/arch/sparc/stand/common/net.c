@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.7 2003/02/25 08:06:29 pk Exp $	*/
+/*	$NetBSD: net.c,v 1.7.36.1 2006/08/11 15:43:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -70,16 +70,15 @@ char		rootpath[FNAME_SIZE];
 int	netdev_sock = -1;
 static	int open_count;
 
-static int net_mountroot_bootparams __P((void));
-static int net_mountroot_bootp __P((void));
+static int net_mountroot_bootparams(void);
+static int net_mountroot_bootp(void);
 
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.
  * This opens the low-level device and sets f->f_devdata.
  */
 int
-net_open(pd)
-	struct promdata *pd;
+net_open(struct promdata *pd)
 {
 	int error = 0;
 
@@ -99,8 +98,7 @@ bad:
 }
 
 int
-net_close(pd)
-	struct promdata *pd;
+net_close(struct promdata *pd)
 {
 	/* On last close, do netif close, etc. */
 	if (open_count <= 0)
@@ -113,7 +111,7 @@ net_close(pd)
 }
 
 int
-net_mountroot_bootparams()
+net_mountroot_bootparams(void)
 {
 	printf("Trying BOOTPARAMS protocol... ");
 
@@ -137,7 +135,7 @@ net_mountroot_bootparams()
 }
 
 int
-net_mountroot_bootp()
+net_mountroot_bootp(void)
 {
 	printf("Trying BOOTP protocol... ");
 
@@ -160,7 +158,7 @@ net_mountroot_bootp()
 }
 
 int
-net_mountroot()
+net_mountroot(void)
 {
 	int error;
 

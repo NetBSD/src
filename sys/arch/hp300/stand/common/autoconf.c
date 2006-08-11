@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6.8.1 2006/08/11 15:41:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -86,7 +86,9 @@
 #include <hp300/stand/common/scsireg.h>
 #include <hp300/stand/common/scsivar.h>
 
+#include <hp300/dev/dioreg.h>
 #include <hp300/dev/grfreg.h>
+#include <hp300/dev/intioreg.h>
 
 /*
  * Mapping of ROM MSUS types to BSD major device numbers
@@ -134,15 +136,19 @@ configure(void)
 		break;
 	case HP_350:
 	case HP_360:
+	case HP_362:
 		cpuspeed = MHZ_25;
 		break;
 	case HP_370:
 		cpuspeed = MHZ_33;
 		break;
 	case HP_375:
+	case HP_400:
 		cpuspeed = MHZ_50;
 		break;
 	case HP_380:
+	case HP_382:
+	case HP_425:
 		cpuspeed = MHZ_25 * 2;	/* XXX */
 		break;
 	case HP_385:
@@ -204,13 +210,13 @@ sctoaddr(int sc)
 {
 
 	if (sc == -1)
-		return GRFIADDR ;
+		return INTIOBASE + FB_BASE;
 	if (sc == 7 && internalhpib)
 		return internalhpib ;
 	if (sc < 32)
 		return DIOBASE + sc * DIOCSIZE ;
-	if (sc >= 132)
-		return DIOIIBASE + (sc - 132) * DIOIICSIZE ;
+	if (sc >= DIOII_SCBASE)
+		return DIOIIBASE + (sc - DIOII_SCBASE) * DIOIICSIZE ;
 	return sc;
 }
 
@@ -229,22 +235,22 @@ find_devs(void)
 	struct hp_hw *hw;
 
 	hw = sc_table;
-	sctop = machineid == HP_320 ? 32 : 256;
+	sctop = DIO_SCMAX(machineid);
 	for (sc = -1; sc < sctop; sc++) {
-		if (sc >= 32 && sc < 132)
+		if (DIO_INHOLE(sc))
 			continue;
-		addr = (caddr_t) sctoaddr(sc);
+		addr = (caddr_t)sctoaddr(sc);
 		if (badaddr(addr))
 			continue;
 
-		id_reg = (u_char *) addr;
+		id_reg = (u_char *)addr;
 		hw->hw_pa = 0;	/* XXX used to pass back LUN from driver */
-		if (sc >= 132)
-			hw->hw_size = (id_reg[0x101] + 1) * 0x100000;
+		if (sc >= DIOII_SCBASE)
+			hw->hw_size = DIOII_SIZE(id_reg);
 		else
 			hw->hw_size = DIOCSIZE;
 		hw->hw_kva = addr;
-		hw->hw_id = id_reg[1];
+		hw->hw_id = DIO_ID(id_reg);
 		hw->hw_sc = sc;
 
 		/*

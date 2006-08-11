@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.45.2.1 2006/04/01 12:06:13 yamt Exp $	*/
+/*	$NetBSD: ct.c,v 1.45.2.2 2006/08/11 15:41:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.45.2.1 2006/04/01 12:06:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.45.2.2 2006/08/11 15:41:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ ctmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct hpibbus_attach_args *ha = aux;
 
-	return (ctident(parent, NULL, ha));
+	return ctident(parent, NULL, ha);
 }
 
 static void
@@ -257,14 +257,14 @@ ctident(struct device *parent, struct ct_softc *sc,
 
 	/* Verify that we have a CS80 device. */
 	if ((ha->ha_id & 0x200) == 0)
-		return (0);
+		return 0;
 
 	/* Is it one of the tapes we support? */
 	for (id = 0; id < nctinfo; id++)
 		if (ha->ha_id == ctinfo[id].hwid)
 			break;
 	if (id == nctinfo)
-		return (0);
+		return 0;
 
 	ha->ha_punit = ctinfo[id].punit;
 
@@ -292,7 +292,7 @@ ctident(struct device *parent, struct ct_softc *sc,
 	switch (ha->ha_id) {
 	case CT7946ID:
 		if (memcmp(name, "079450", 6) == 0)
-			return (0);		/* not really a 7946 */
+			return 0;		/* not really a 7946 */
 		/* fall into... */
 	case CT9144ID:
 	case CT9145ID:
@@ -314,7 +314,7 @@ ctident(struct device *parent, struct ct_softc *sc,
 		    canstream ? "streaming " : "");
 	}
 
-	return (1);
+	return 1;
 }
 
 static void
@@ -370,10 +370,10 @@ ctopen(dev_t dev, int flag, int type, struct lwp *l)
 	if (UNIT(dev) >= ct_cd.cd_ndevs ||
 	    (sc = ct_cd.cd_devs[UNIT(dev)]) == NULL ||
 	    (sc->sc_flags & CTF_ALIVE) == 0)
-		return (ENXIO);
+		return ENXIO;
 
 	if (sc->sc_flags & CTF_OPEN)
-		return (EBUSY);
+		return EBUSY;
 
 	ctlr = device_unit(device_parent(&sc->sc_dev));
 	slave = sc->sc_slave;
@@ -393,16 +393,16 @@ ctopen(dev_t dev, int flag, int type, struct lwp *l)
 	 */
 	cc = hpibsend(ctlr, slave, C_CMD, &sc->sc_soptc, sizeof(sc->sc_soptc));
 	if (cc != sizeof(sc->sc_soptc))
-		return (EBUSY);
+		return EBUSY;
 
 	hpibswait(ctlr, slave);
 	cc = hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
 	if (cc != sizeof(stat))
-		return(EBUSY);
+		return EBUSY;
 
 	sc->sc_tpr = tprintf_open(l->l_proc);
 	sc->sc_flags |= CTF_OPEN;
-	return(0);
+	return 0;
 }
 
 /*ARGSUSED*/
@@ -434,7 +434,7 @@ ctclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	if (ctdebug & CDB_FILES)
 		printf("ctclose: flags %x\n", sc->sc_flags);
 #endif
-	return(0);	/* XXX */
+	return 0;	/* XXX */
 }
 
 static void
@@ -879,14 +879,16 @@ ctdone(struct ct_softc *sc, struct buf *bp)
 static int
 ctread(dev_t dev, struct uio *uio, int flags)
 {
-	return (physio(ctstrategy, NULL, dev, B_READ, minphys, uio));
+
+	return physio(ctstrategy, NULL, dev, B_READ, minphys, uio);
 }
 
 static int
 ctwrite(dev_t dev, struct uio *uio, int flags)
 {
+
 	/* XXX: check for hardware write-protect? */
-	return (physio(ctstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return physio(ctstrategy, NULL, dev, B_WRITE, minphys, uio);
 }
 
 /*ARGSUSED*/
@@ -916,7 +918,7 @@ ctioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			break;
 
 		default:
-			return(EINVAL);
+			return EINVAL;
 		}
 		ctcommand(dev, op->mt_op, cnt);
 		break;
@@ -925,9 +927,9 @@ ctioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	default:
-		return(EINVAL);
+		return EINVAL;
 	}
-	return(0);
+	return 0;
 }
 
 static void

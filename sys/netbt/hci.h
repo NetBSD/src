@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.1.6.2 2006/06/26 12:53:57 yamt Exp $	*/
+/*	$NetBSD: hci.h,v 1.1.6.3 2006/08/11 15:46:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.1.6.2 2006/06/26 12:53:57 yamt Exp $
+ * $Id: hci.h,v 1.1.6.3 2006/08/11 15:46:32 yamt Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -95,6 +95,7 @@
 #define HCI_SPEC_V10			0x00 /* v1.0 */
 #define HCI_SPEC_V11			0x01 /* v1.1 */
 #define HCI_SPEC_V12			0x02 /* v1.2 */
+#define HCI_SPEC_V20			0x03 /* v2.0 */
 /* 0x02 - 0xFF - reserved for future use */
 
 /* LMP features (and page 0 of extended features) */
@@ -168,7 +169,7 @@
  * packet type, except for 2MBPS and 3MBPS when they
  * are unset to enable the packet type.
  */
-/* ACL Packet types */
+/* ACL Packet types for "Create Connection" */
 #define HCI_PKT_2MBPS_DH1	0x0002
 #define HCI_PKT_3MBPS_DH1	0x0004
 #define HCI_PKT_DM1		0x0008
@@ -182,7 +183,7 @@
 #define HCI_PKT_DM5		0x4000
 #define HCI_PKT_DH5		0x8000
 
-/* SCO Packet types */
+/* SCO Packet types for "Setup Synchronous Connection" */
 #define HCI_PKT_HV1		0x0001
 #define HCI_PKT_HV2		0x0002
 #define HCI_PKT_HV3		0x0004
@@ -202,7 +203,7 @@
  * hold (but i could be wrong :)
  */
 
-/* Page scan modes */
+/* Page scan modes (are deprecated) */
 #define HCI_MANDATORY_PAGE_SCAN_MODE		0x00
 #define HCI_OPTIONAL_PAGE_SCAN_MODE1		0x01
 #define HCI_OPTIONAL_PAGE_SCAN_MODE2		0x02
@@ -489,6 +490,7 @@ typedef struct {
 } __attribute__ ((__packed__)) hci_discon_cp;
 /* No return parameter(s) */
 
+/* Add SCO Connection is deprecated */
 #define HCI_OCF_ADD_SCO_CON				0x0007
 #define HCI_CMD_ADD_SCO_CON				0x0407
 typedef struct {
@@ -1292,6 +1294,7 @@ typedef struct {
 
 typedef hci_status_rp	hci_write_page_scan_period_rp;
 
+/* Read Page Scan Mode is deprecated */
 #define HCI_OCF_READ_PAGE_SCAN				0x003d
 #define HCI_CMD_READ_PAGE_SCAN				0x0C3D
 /* No command parameter(s) */
@@ -1300,6 +1303,7 @@ typedef struct {
 	uint8_t		page_scan_mode; /* Page scan mode */
 } __attribute__ ((__packed__)) hci_read_page_scan_rp;
 
+/* Write Page Scan Mode is deprecated */
 #define HCI_OCF_WRITE_PAGE_SCAN				0x003e
 #define HCI_CMD_WRITE_PAGE_SCAN				0x0C3E
 typedef struct {
@@ -1444,6 +1448,7 @@ typedef struct {
 	uint16_t	num_sco_pkts;  /* Max. number of SCO packets */
 } __attribute__ ((__packed__)) hci_read_buffer_size_rp;
 
+/* Read Country Code is deprecated */
 #define HCI_OCF_READ_COUNTRY_CODE			0x0007
 #define HCI_CMD_READ_COUNTRY_CODE			0x1007
 /* No command parameter(s) */
@@ -1802,6 +1807,7 @@ typedef struct {
 	uint16_t	con_handle; /* connection handle */
 } __attribute__ ((__packed__)) hci_qos_violation_ep;
 
+/* Page Scan Mode Change Event is deprecated */
 #define HCI_EVENT_PAGE_SCAN_MODE_CHANGE		0x1f
 typedef struct {
 	bdaddr_t	bdaddr;         /* destination address */
@@ -2147,7 +2153,7 @@ extern SIMPLEQ_HEAD(hci_unit_list, hci_unit) hci_unit_list;
 void hci_event(struct mbuf *, struct hci_unit *);
 
 /* hci_ioctl.c */
-int hci_ioctl(unsigned long, void *, struct proc *);
+int hci_ioctl(unsigned long, void *, struct lwp *);
 
 /* hci_link.c */
 struct hci_link *hci_acl_open(struct hci_unit *, bdaddr_t *);

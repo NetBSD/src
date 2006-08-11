@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.27.2.1 2006/05/24 10:59:21 yamt Exp $	*/
+/*	$NetBSD: ucred.h,v 1.27.2.2 2006/08/11 15:47:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #ifndef _SYS_UCRED_H_
 #define	_SYS_UCRED_H_
 
-#include <sys/lock.h>
+#include <sys/param.h>
 
 /*
  * Credentials.
@@ -50,7 +50,6 @@ struct uucred {
 };
 
 struct ucred {
-	struct simplelock cr_lock;		/* mutex for ref count */
 	uint32_t	cr_ref;			/* reference count */
 #define cr_startcopy	cr_uid			/* for dup & copy */
 	uid_t		cr_uid;			/* effective user id */
@@ -60,14 +59,15 @@ struct ucred {
 };
 
 #ifdef _KERNEL
-static __inline void crhold(struct ucred *cr)
-{
-	simple_lock(&cr->cr_lock);
-	cr->cr_ref++;
-	simple_unlock(&cr->cr_lock);
-}
 
-/* flags that control when do_setres{u,g}id will do anything */
+/*
+ * flags that control when do_setres{u,g}id will do anything
+ *
+ * ID_XXX_EQ_YYY means
+ * "allow modifying XXX uid to the given value if the new value of
+ * XXX uid (or gid) equals the current value of YYY uid (or gid)."
+ */
+
 #define	ID_E_EQ_E	0x001		/* effective equals effective */
 #define	ID_E_EQ_R	0x002		/* effective equals real */
 #define	ID_E_EQ_S	0x004		/* effective equals saved */
@@ -81,13 +81,6 @@ static __inline void crhold(struct ucred *cr)
 int		do_setresuid(struct lwp *, uid_t, uid_t, uid_t, u_int);
 int		do_setresgid(struct lwp *, gid_t, gid_t, gid_t, u_int);
 
-/*
- * Check if we need to curtain information when a user requests information
- * about an object.
- */
-#define	CURTAIN(user_id, object_id)	(security_curtain && 		\
-					 (user_id) != 0 &&		\
-					 (user_id) != (object_id))
 #endif /* _KERNEL */
 
 #endif /* !_SYS_UCRED_H_ */

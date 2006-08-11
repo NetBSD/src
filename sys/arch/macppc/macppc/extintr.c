@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.55.8.1 2006/06/26 12:44:54 yamt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.55.8.2 2006/08/11 15:42:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.55.8.1 2006/06/26 12:44:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.55.8.2 2006/08/11 15:42:14 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1037,7 +1037,7 @@ legacy_int_init()
 void
 init_interrupt()
 {
-	int chosen;
+	int chosen __attribute__((unused));
 	int mac_io, reg[5];
 	int32_t ictlr;
 	char type[32];
@@ -1046,7 +1046,12 @@ init_interrupt()
 	if (mac_io == -1)
 		mac_io = OF_finddevice("/pci/mac-io");
 
+	if (mac_io == -1)
+		mac_io = OF_finddevice("/ht/pci/mac-io");
+
+#if !defined (MAMBO)
 	if (mac_io == -1) {
+		panic("/ht/pci/mac-io not found");
 		/*
 		 * No mac-io.  Assume Grand-Central or OHare.
 		 */
@@ -1059,7 +1064,11 @@ init_interrupt()
 		goto failed;
 
 	obio_base = (void *)reg[2];
+	printf("obio_base: %p\n", obio_base);
+
 	heathrow_FCR = (void *)(obio_base + HEATHROW_FCR_OFFSET);
+
+#endif /* MAMBO */
 
 	memset(type, 0, sizeof(type));
 	ictlr = -1;
@@ -1070,10 +1079,18 @@ init_interrupt()
 	 * but this is not true anymore on newer machines (e.g.: iBook G4)
 	 * Device "mpic" is the interrupt controller on theses machines.
 	 */
+#if defined(MAMBO)
+	if ((ictlr = OF_finddevice("/interrupt-controller")) == -1)
+		goto failed;
+#elif defined (PMAC_G5)
+	if ((ictlr = OF_finddevice("macio-mpic")) == -1)
+		goto failed;
+#else
 	if (((chosen = OF_finddevice("/chosen")) == -1)  ||
-	    (OF_getprop(chosen, "interrupt-controller", &ictlr, 4) != 4))
-		ictlr = OF_finddevice("mpic");
-
+	 	(OF_getprop(chosen, "interrupt-controller", &ictlr, 4) != 4)) {
+			ictlr = OF_finddevice("mpic");
+	}
+#endif
 	OF_getprop(ictlr, "device_type", type, sizeof(type));
 
 	if (strcmp(type, "open-pic") != 0) {
@@ -1086,14 +1103,25 @@ init_interrupt()
 		/*
 		 * We have an Open PIC.
 		 */
-		if (OF_getprop(ictlr, "reg", reg, sizeof(reg)) < 8)
+		if (OF_getprop(ictlr, "reg", reg, sizeof(reg)) < 8) {
+#ifdef MAMBO
+			reg[0] = 0xF8040000;
+#else
 			goto failed;
-
+#endif
+		}
+#if defined (PPC_OEA)
 		openpic_base = (void *)(obio_base + reg[0]);
+#elif defined (PPC_OEA64_BRIDGE)
+		/* There is no BAT mapping the OBIO region, use PTEs */
+		openpic_base = (void *)mapiodev((u_int32_t)obio_base + (u_int32_t)reg[0],
+							0x40000);
+#endif
+		printf("%s: found OpenPIC @ pa 0x%08x, %p\n", __FUNCTION__, 
+				(u_int32_t)obio_base + (u_int32_t)reg[0], openpic_base);
 		openpic_init();
 		return;
 	}
-
 	printf("unknown interrupt controller\n");
 failed:
 	panic("init_interrupt: failed to initialize interrupt controller");

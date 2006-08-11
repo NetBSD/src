@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.c,v 1.24.8.1 2006/05/24 10:59:14 yamt Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.24.8.2 2006/08/11 15:47:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_pcb.c,v 1.24.8.1 2006/05/24 10:59:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_pcb.c,v 1.24.8.2 2006/08/11 15:47:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ ns_pcballoc(struct socket *so, struct nspcb *head)
 }
 
 int
-ns_pcbbind(struct nspcb *nsp, struct mbuf *nam, struct proc *p)
+ns_pcbbind(struct nspcb *nsp, struct mbuf *nam, struct lwp *l)
 {
 	struct sockaddr_ns *sns;
 	u_int16_t lport = 0;
@@ -93,9 +93,8 @@ ns_pcbbind(struct nspcb *nsp, struct mbuf *nam, struct proc *p)
 	if (lport) {
 
 		if (ntohs(lport) < NSPORT_RESERVED &&
-		    (p == 0 || kauth_authorize_generic(p->p_cred,
-						 KAUTH_GENERIC_ISSUSER,
-						 &p->p_acflag)))
+		    (l == 0 || kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
 			return (EACCES);
 		if (ns_pcblookup(&zerons_addr, lport, 0))
 			return (EADDRINUSE);
@@ -212,7 +211,7 @@ ns_pcbconnect(struct nspcb *nsp, struct mbuf *nam)
 	if (ns_nullhost(nsp->nsp_laddr)) {
 		if (nsp->nsp_lport == 0)
 			(void) ns_pcbbind(nsp, (struct mbuf *)0,
-			    (struct proc *)0);
+			    (struct lwp *)0);
 		nsp->nsp_laddr.x_host = ns_thishost;
 	}
 	nsp->nsp_faddr = sns->sns_addr;

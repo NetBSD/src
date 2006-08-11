@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1997/10/11 16:12:55 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.2.86.1 2006/08/11 15:42:14 yamt Exp $
 
-SMIPS=	../mips/mips/*.[ch] ../mips/include/*.h
-AMIPS=	../mips/mips/*.S
+SMIPS=	${SYSDIR}/arch/mips/mips/*.[ch] ${SYSDIR}/arch/mips/include/*.h
+AMIPS=	${SYSDIR}/arch/mips/mips/*.S

@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS200,v 1.11.2.1 2006/04/01 12:06:12 yamt Exp $
+#	$NetBSD: OPENBLOCKS200,v 1.11.2.2 2006/08/11 15:41:26 yamt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -232,4 +232,5 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	wsmux			# ick
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	kttcp			# kernel ttcp

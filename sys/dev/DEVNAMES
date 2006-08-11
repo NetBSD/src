@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.192.2.5 2006/06/26 12:50:37 yamt Exp $
+#	$NetBSD: DEVNAMES,v 1.192.2.6 2006/08/11 15:43:51 yamt Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -123,7 +123,6 @@ auacer			MI
 aubus			evbmips
 aucc			amiga
 aucc			amigappc
-aucom			evbmips
 auconv			MI		Attribute
 audio			MI
 audio			MI		Attribute
@@ -172,13 +171,13 @@ brgphy			MI
 bt3c			MI
 bt_dac			sparc		Attribute
 bt_dac			sparc64		Attribute
+btdev			MI
 bthidev			MI
-bthub			MI
-bthset			MI
 btkbd			MI
 btl			arc
 btms			MI
 btnmgr			hpcmips
+btsco			MI
 btvmei			MI
 btvmeii			MI
 button			hpcmips
@@ -305,7 +304,6 @@ cypide			MI
 cz			MI
 daic			MI
 dbri			sparc
-dc			pmax
 dcm			hp300
 ddc			MI
 ddc_read_edid		MI		Attribute
@@ -337,7 +335,6 @@ drsupio			amigappc
 dsrtc			cats
 dsrtc			evbppc
 dtide			MI
-dtop			pmax
 dvbox			hp300
 dwlpx			alpha
 dz			MI
@@ -643,6 +640,7 @@ isdntel			MI
 isdntrc			MI
 isic			MI
 isp			MI
+it			MI
 it8368e			hpcmips
 ite			amiga
 ite			amigappc
@@ -684,6 +682,7 @@ kbd			sun3
 kbd			x68k
 kdb			MI
 kft			alpha
+kse			MI
 kue			MI
 latches			acorn26
 lc			MI
@@ -1036,6 +1035,7 @@ pps			MI
 ps			vax
 psh3lcd			hpcsh
 psh3tp			hpcsh
+psm			sparc64
 psycho			sparc64
 ptsc			acorn32
 puc			MI
@@ -1124,8 +1124,6 @@ sbus			playstation2
 sc			MI
 sc			newsmips
 sc			vax
-scc			alpha
-scc			pmax
 scd			MI
 sci			amiga		Attribute
 sci			amigappc	Attribute

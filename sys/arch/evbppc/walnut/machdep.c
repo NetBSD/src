@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26.2.1 2006/05/24 10:56:47 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26.2.2 2006/08/11 15:41:26 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26.2.1 2006/05/24 10:56:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26.2.2 2006/08/11 15:41:26 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -267,6 +267,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 
 	__syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
 	mtspr(SPR_EVPR, 0);		/* Set Exception vector base */
+
 	consinit();
 
 	/* Handle trap instruction as PGM exception */
@@ -456,42 +457,6 @@ dumpsys(void)
 {
 
 	printf("dumpsys: TBD\n");
-}
-
-/*
- * Soft networking interrupts.
- */
-void
-softnet(void)
-{
-	int isr;
-
-	isr = netisr;
-	netisr = 0;
-
-#define DONETISR(bit, fn) do {		\
-	if (isr & (1 << bit))		\
-		fn();			\
-} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-
-}
-
-/*
- * Soft tty interrupts.
- */
-#include "com.h"
-void
-softserial(void)
-{
-#if NCOM > 0
-	void comsoft(void);	/* XXX from dev/ic/com.c */
-
-	comsoft();
-#endif
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.99.6.2 2006/06/26 12:55:09 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.99.6.3 2006/08/11 15:47:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.99.6.2 2006/06/26 12:55:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.99.6.3 2006/08/11 15:47:46 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -434,7 +434,6 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 		syscallarg(void *) arg;
 		syscallarg(int) misc;
 	} */ *uap = (struct sys_swapctl_args *)v;
-	struct proc *p = l->l_proc;
 	struct vnode *vp;
 	struct nameidata nd;
 	struct swappri *spp;
@@ -509,8 +508,8 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * all other requests require superuser privs.   verify.
 	 */
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)))
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)))
 		goto out;
 
 	/*
@@ -756,7 +755,6 @@ static int
 swap_on(struct lwp *l, struct swapdev *sdp)
 {
 	struct vnode *vp;
-	struct proc *p = l->l_proc;
 	int error, npages, nblocks, size;
 	long addr;
 	u_long result;
@@ -785,7 +783,7 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	 * has already been opened when root was mounted (mountroot).
 	 */
 	if (vp != rootvp) {
-		if ((error = VOP_OPEN(vp, FREAD|FWRITE, p->p_cred, l)))
+		if ((error = VOP_OPEN(vp, FREAD|FWRITE, l->l_cred, l)))
 			return (error);
 	}
 
@@ -812,7 +810,7 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 		break;
 
 	case VREG:
-		if ((error = VOP_GETATTR(vp, &va, p->p_cred, l)))
+		if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)))
 			goto bad;
 		nblocks = (int)btodb(va.va_size);
 		if ((error =
@@ -955,7 +953,7 @@ bad:
 		blist_destroy(sdp->swd_blist);
 	}
 	if (vp != rootvp) {
-		(void)VOP_CLOSE(vp, FREAD|FWRITE, p->p_cred, l);
+		(void)VOP_CLOSE(vp, FREAD|FWRITE, l->l_cred, l);
 	}
 	return (error);
 }
@@ -968,7 +966,6 @@ bad:
 static int
 swap_off(struct lwp *l, struct swapdev *sdp)
 {
-	struct proc *p = l->l_proc;
 	int npages = sdp->swd_npages;
 	int error = 0;
 
@@ -1012,7 +1009,7 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 	 */
 	vrele(sdp->swd_vp);
 	if (sdp->swd_vp != rootvp) {
-		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_cred, l);
+		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, l->l_cred, l);
 	}
 
 	simple_lock(&uvm.swap_data_lock);

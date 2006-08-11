@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.65.8.2 2006/06/26 12:52:28 yamt Exp $
+#	$NetBSD: files.usb,v 1.65.8.3 2006/08/11 15:45:20 yamt Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -48,6 +48,7 @@ file	dev/usb/ucom.c			ucom | ucombus		needs-flag
 
 
 # Generic devices
+defflag UGEN_BULK_RA_WB
 device	ugen
 attach	ugen at uhub
 file	dev/usb/ugen.c			ugen			needs-flag

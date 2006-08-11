@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.59.8.1 2006/05/24 10:58:56 yamt Exp $ */
+/*	$NetBSD: if_gre.c,v 1.59.8.2 2006/08/11 15:46:14 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.59.8.1 2006/05/24 10:58:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.59.8.2 2006/08/11 15:46:14 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -345,7 +345,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 static int
 gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;	/* XXX */
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct if_laddrreq *lifr = (struct if_laddrreq *)data;
 	struct gre_softc *sc = ifp->if_softc;
@@ -354,7 +354,22 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct sockaddr *sa = NULL;
 	int error;
 
-	error = 0;
+	switch (cmd) {
+	case SIOCSIFFLAGS:
+	case SIOCSIFMTU:
+	case GRESPROTO:
+	case GRESADDRD:
+	case GRESADDRS:
+	case SIOCSLIFPHYADDR:
+	case SIOCDIFPHYADDR:
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+			return (error);
+		break;
+	default:
+		error = 0;
+		break;
+	}
 
 	s = splnet();
 	switch (cmd) {
@@ -364,16 +379,12 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFDSTADDR:
 		break;
 	case SIOCSIFFLAGS:
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
-			break;
 		if ((ifr->ifr_flags & IFF_LINK0) != 0)
 			sc->g_proto = IPPROTO_GRE;
 		else
 			sc->g_proto = IPPROTO_MOBILE;
 		break;
 	case SIOCSIFMTU:
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
-			break;
 		if (ifr->ifr_mtu < 576) {
 			error = EINVAL;
 			break;
@@ -404,8 +415,6 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case GRESPROTO:
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
-			break;
 		sc->g_proto = ifr->ifr_flags;
 		switch (sc->g_proto) {
 		case IPPROTO_GRE:
@@ -424,8 +433,6 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case GRESADDRS:
 	case GRESADDRD:
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
-			break;
 		/*
 		 * set tunnel endpoints, compute a less specific route
 		 * to the remote end and mark if as up
@@ -463,8 +470,6 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifr->ifr_addr = *sa;
 		break;
 	case SIOCSLIFPHYADDR:
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
-			break;
 		if (lifr->addr.ss_family != AF_INET ||
 		    lifr->dstaddr.ss_family != AF_INET) {
 			error = EAFNOSUPPORT;
@@ -480,8 +485,6 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    (satosin((struct sockadrr *)&lifr->dstaddr))->sin_addr;
 		goto recompute;
 	case SIOCDIFPHYADDR:
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
-			break;
 		sc->g_src.s_addr = INADDR_ANY;
 		sc->g_dst.s_addr = INADDR_ANY;
 		break;

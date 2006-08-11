@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.38.8.2 2006/05/24 10:56:34 yamt Exp $ */
+/*	$NetBSD: mfc.c,v 1.38.8.3 2006/08/11 15:41:09 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.38.8.2 2006/05/24 10:56:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.38.8.3 2006/08/11 15:41:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -536,9 +536,8 @@ mfcsopen(dev_t dev, int flag, int mode, struct lwp *l)
 		else
 			tp->t_state &= ~TS_CARR_ON;
 	} else if (tp->t_state & TS_XCLUDE &&
-		   kauth_authorize_generic(l->l_proc->p_cred,
-				     KAUTH_GENERIC_ISSUSER,
-				     &l->l_proc->p_acflag) != 0) {
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0) {
 		splx(s);
 		return(EBUSY);
 	}
@@ -715,9 +714,8 @@ mfcsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		*(int *)data = SWFLAGS(dev);
 		break;
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_proc->p_cred,
-					  KAUTH_GENERIC_ISSUSER,
-					  &l->l_proc->p_acflag);
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (error != 0)
 			return(EPERM);
 

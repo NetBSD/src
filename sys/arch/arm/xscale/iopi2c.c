@@ -1,4 +1,4 @@
-/*	$NetBSD: iopi2c.c,v 1.3 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: iopi2c.c,v 1.3.8.1 2006/08/11 15:41:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopi2c.c,v 1.3 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopi2c.c,v 1.3.8.1 2006/08/11 15:41:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -79,9 +79,8 @@ iopiic_attach(struct iopiic_softc *sc)
 	sc->sc_i2c.ic_read_byte = iopiic_read_byte;
 	sc->sc_i2c.ic_write_byte = iopiic_write_byte;
 
-	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c;
-	(void) config_found(&sc->sc_dev, &iba, iicbus_print);
+	(void) config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
 }
 
 static int

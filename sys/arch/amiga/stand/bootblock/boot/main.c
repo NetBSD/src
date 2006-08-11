@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.21 2006/01/25 18:28:25 christos Exp $
+ * $NetBSD: main.c,v 1.21.6.1 2006/08/11 15:41:10 yamt Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -430,7 +430,7 @@ printf("Supressing %ld kernel symbols\n", marks[MARK_NSYM]);
 		++kcd;
 	}
 
-	nkcd = (u_int32_t *)kcd;
+	nkcd = (int32_t *)kcd;
 	*nkcd = nseg;
 
 	kmemseg = (struct boot_memseg *)(nkcd + 1);
@@ -450,7 +450,7 @@ printf("Supressing %ld kernel symbols\n", marks[MARK_NSYM]);
 	memcpy(kp + ksize + 256, (char *)startit,
 	    (char *)startit_end - (char *)startit);
 	CacheClearU();
-	(caddr_t)start_it = kp + ksize + 256;
+	start_it = (void *)(kp + ksize + 256);
 #endif
 	printf("*** Loading from %08lx to Fastmem %08lx ***\n",
 	    (u_long)kp, (u_long)fmem);

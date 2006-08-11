@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.63.2.2 2006/05/24 10:59:21 yamt Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.63.2.3 2006/08/11 15:47:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -165,7 +165,7 @@ void	trapsignal(struct lwp *, const struct ksiginfo *);
 void	sigexit(struct lwp *, int);
 void	killproc(struct proc *, const char *);
 void	setsigvec(struct proc *, int, struct sigaction *);
-int	killpg1(struct proc *, struct ksiginfo *, int, int);
+int	killpg1(struct lwp *, struct ksiginfo *, int, int);
 struct lwp *proc_unstop(struct proc *p);
 
 int	sigaction1(struct proc *, int, const struct sigaction *,

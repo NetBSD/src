@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.29.8.3 2006/05/24 10:57:09 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.29.8.4 2006/08/11 15:42:40 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.29.8.3 2006/05/24 10:57:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.29.8.4 2006/08/11 15:42:40 yamt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -133,8 +133,10 @@ trap(struct trapframe *frame)
 
 	KASSERT(l == 0 || (l->l_stat == LSONPROC));
 
-	if (frame->srr1 & PSL_PR)
+	if (frame->srr1 & PSL_PR) {
+		LWP_CACHE_CREDS(l, p);
 		type |= EXC_USER;
+	}
 
 	ftype = VM_PROT_READ;
 
@@ -251,8 +253,8 @@ trap(struct trapframe *frame)
 			printf("UVM: pid %d (%s) lid %d, uid %d killed: "
 			    "out of swap\n",
 			    p->p_pid, p->p_comm, l->l_lid,
-			    p->p_cred ?
-			    kauth_cred_geteuid(p->p_cred) : -1);
+			    l->l_cred ?
+			    kauth_cred_geteuid(l->l_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 		}
 		trapsignal(l, &ksi);

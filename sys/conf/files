@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.763.2.4 2006/06/26 12:46:37 yamt Exp $
+#	$NetBSD: files,v 1.763.2.5 2006/08/11 15:43:51 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -69,8 +69,7 @@ defflag	opt_dkwedge.h		DKWEDGE_AUTODISCOVER
 				DKWEDGE_METHOD_GPT
 				DKWEDGE_METHOD_MBR
 
-defflag	opt_verified_exec.h 	VERIFIED_EXEC
-				VERIFIED_EXEC_FP_SHA1
+defflag	opt_veriexec.h		VERIFIED_EXEC_FP_SHA1
 				VERIFIED_EXEC_FP_SHA256
 				VERIFIED_EXEC_FP_SHA384
 				VERIFIED_EXEC_FP_SHA512
@@ -79,27 +78,11 @@ defflag	opt_verified_exec.h 	VERIFIED_EXEC
 
 defparam opt_pax.h		PAX_MPROTECT
 
+defflag	opt_fileassoc.h		FILEASSOC
+defparam opt_fileassoc.h	FILEASSOC_NHOOKS
+
 # compatibility options
 #
-defflag				COMPAT_OSSAUDIO
-defflag				COMPAT_FREEBSD
-defflag				COMPAT_HPUX
-defflag				COMPAT_IBCS2
-defflag				COMPAT_IRIX
-defflag				COMPAT_LINUX
-defflag				COMPAT_LINUX32
-defflag				COMPAT_OSF1
-defflag				COMPAT_SUNOS
-defflag	opt_compat_svr4.h	COMPAT_SVR4 COMPAT_SVR4_32 SVR4_COMPAT_SOLARIS2
-defflag				COMPAT_ULTRIX
-defflag				COMPAT_NETBSD32
-defflag				COMPAT_AOUT_M68K
-defflag				COMPAT_M68K4K
-defflag				COMPAT_MACH
-defflag				COMPAT_DARWIN
-defflag				COMPAT_VAX1K
-defflag				COMPAT_43
-defflag				COMPAT_PECOFF
 defflag	opt_compat_netbsd.h	COMPAT_30
 defflag	opt_compat_netbsd.h	COMPAT_20: COMPAT_30
 defflag	opt_compat_netbsd.h	COMPAT_16: COMPAT_20
@@ -110,6 +93,25 @@ defflag	opt_compat_netbsd.h	COMPAT_12: COMPAT_13
 defflag	opt_compat_netbsd.h	COMPAT_11: COMPAT_12
 defflag	opt_compat_netbsd.h	COMPAT_10: COMPAT_11
 defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10
+defflag				COMPAT_OSSAUDIO
+defflag				COMPAT_FREEBSD: COMPAT_30
+defflag				COMPAT_HPUX
+defflag				COMPAT_IBCS2
+defflag				COMPAT_IRIX
+defflag				COMPAT_LINUX
+defflag				COMPAT_LINUX32
+defflag				COMPAT_OSF1
+defflag				COMPAT_SUNOS: COMPAT_30
+defflag	opt_compat_svr4.h	COMPAT_SVR4 COMPAT_SVR4_32 SVR4_COMPAT_SOLARIS2
+defflag				COMPAT_ULTRIX
+defflag				COMPAT_NETBSD32
+defflag				COMPAT_AOUT_M68K
+defflag				COMPAT_M68K4K
+defflag				COMPAT_MACH
+defflag				COMPAT_DARWIN
+defflag				COMPAT_VAX1K
+defflag				COMPAT_43
+defflag				COMPAT_PECOFF
 defflag	opt_compat_netbsd.h	COMPAT_NOMID
 
 #
@@ -159,6 +161,7 @@ defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
 						# Include deflate or bsd
 						# compression, enable pppd
 						# packet filtering support
+defflag opt_pppoe.h		PPPOE_SERVER PPPOE_TERM_UNKNOWN_SESSIONS
 
 # networking options
 #
@@ -727,7 +730,8 @@ file	dev/ic/ne2000.c			ne | ipkdb_ne
 #
 defflag	opt_com.h		COM_DEBUG
 # XXX In a perfect world, this would be done with attributes
-defflag	opt_com.h		COM_16650 COM_HAYESP COM_PXA2X0
+defflag	opt_com.h		COM_16650 COM_HAYESP COM_PXA2X0 COM_AU1X00
+				COM_REGMAP
 device	com { } : tty
 file	dev/ic/com.c			com			needs-flag
 
@@ -912,6 +916,11 @@ define	tea5757
 file	dev/ic/tea5757.c		tea5757
 define	lm700x
 file	dev/ic/lm700x.c			lm700x
+
+# ACPI power management timer (hardware access, independent of ACPI)
+#
+define acpipmtimer
+file	dev/ic/acpipmtimer.c	acpipmtimer
 
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
@@ -1125,10 +1134,10 @@ defpseudo ippp:		isdndev, sppp, ifnet
 defpseudo kttcp
 file	dev/kttcp.c			kttcp		needs-flag
 
-# Verified exec fingerprint loader pseudo-device
+# Veriexec
 defpseudo veriexec
-file	kern/kern_verifiedexec.c	veriexec		needs-flag
-file	dev/verified_exec.c		veriexec		needs-flag
+file	kern/kern_verifiedexec.c	veriexec
+file	dev/verified_exec.c		veriexec	needs-flag
 
 # isochronous pseudo device for IEEE 1394, i.LINK or FireWire
 defpseudo fwiso:	ieee1394
@@ -1188,6 +1197,7 @@ file	dev/firmload.c			firmload
 file	dev/fss.c			fss			needs-count
 file	dev/md.c			md			needs-count
 file	dev/midi.c			midi | midibus		needs-flag
+file	dev/midictl.c			midisyn
 file	dev/midisyn.c			midisyn
 file	dev/mm.c
 file	dev/mulaw.c			mulaw			needs-flag
@@ -1234,6 +1244,7 @@ file	kern/kern_lock.c
 file	kern/kern_lwp.c
 file	kern/kern_malloc.c
 file	kern/kern_malloc_debug.c	malloc_debug
+file	kern/kern_fileassoc.c		fileassoc
 file	kern/kern_ntptime.c
 file	kern/kern_pax.c			pax_mprotect
 file	kern/kern_physio.c

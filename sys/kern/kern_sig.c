@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.216.2.4 2006/06/26 12:52:56 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.216.2.5 2006/08/11 15:45:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.216.2.4 2006/06/26 12:52:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.216.2.5 2006/08/11 15:45:46 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
@@ -768,27 +768,25 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int)	pid;
 		syscallarg(int)	signum;
 	} */ *uap = v;
-	struct proc	*cp, *p;
-	kauth_cred_t	pc;
+	struct proc	*p;
 	ksiginfo_t	ksi;
 	int signum = SCARG(uap, signum);
 	int error;
 
-	cp = l->l_proc;
-	pc = cp->p_cred;
 	if ((u_int)signum >= NSIG)
 		return (EINVAL);
 	KSI_INIT(&ksi);
 	ksi.ksi_signo = signum;
 	ksi.ksi_code = SI_USER;
-	ksi.ksi_pid = cp->p_pid;
-	ksi.ksi_uid = kauth_cred_geteuid(cp->p_cred);
+	ksi.ksi_pid = l->l_proc->p_pid;
+	ksi.ksi_uid = kauth_cred_geteuid(l->l_cred);
 	if (SCARG(uap, pid) > 0) {
 		/* kill single process */
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return (ESRCH);
-		error = kauth_authorize_process(pc, KAUTH_PROCESS_CANSIGNAL, p,
-		    (void *)(uintptr_t)signum, NULL, NULL);
+		error = kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_CANSIGNAL, p, (void *)(uintptr_t)signum,
+		    NULL, NULL);
 		if (error)
 			return error;
 		if (signum)
@@ -797,11 +795,11 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
 	}
 	switch (SCARG(uap, pid)) {
 	case -1:		/* broadcast signal */
-		return (killpg1(cp, &ksi, 0, 1));
+		return (killpg1(l, &ksi, 0, 1));
 	case 0:			/* signal own process group */
-		return (killpg1(cp, &ksi, 0, 0));
+		return (killpg1(l, &ksi, 0, 0));
 	default:		/* negative explicit process group */
-		return (killpg1(cp, &ksi, -SCARG(uap, pid), 0));
+		return (killpg1(l, &ksi, -SCARG(uap, pid), 0));
 	}
 	/* NOTREACHED */
 }
@@ -811,15 +809,16 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
  * cp is calling process.
  */
 int
-killpg1(struct proc *cp, ksiginfo_t *ksi, int pgid, int all)
+killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 {
-	struct proc	*p;
+	struct proc	*p, *cp;
 	kauth_cred_t	pc;
 	struct pgrp	*pgrp;
 	int		nfound;
 	int		signum = ksi->ksi_signo;
 
-	pc = cp->p_cred;
+	cp = l->l_proc;
+	pc = l->l_cred;
 	nfound = 0;
 	if (all) {
 		/*
@@ -2034,8 +2033,8 @@ sigexit(struct lwp *l, int signum)
 
 		if (kern_logsigexit) {
 			/* XXX What if we ever have really large UIDs? */
-			int uid = p->p_cred && p->p_cred ?
-				(int) kauth_cred_geteuid(p->p_cred) : -1;
+			int uid = l->l_cred ?
+			    (int)kauth_cred_geteuid(l->l_cred) : -1;
 
 			if (error)
 				log(LOG_INFO, lognocoredump, p->p_pid,
@@ -2100,7 +2099,7 @@ coredump(struct lwp *l, const char *pattern)
 
 	p = l->l_proc;
 	vm = p->p_vmspace;
-	cred = p->p_cred;
+	cred = l->l_cred;
 
 	/*
 	 * Make sure the process has not set-id, to prevent data leaks,

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.28.8.2 2006/05/24 10:57:27 yamt Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.28.8.3 2006/08/11 15:43:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.28.8.2 2006/05/24 10:57:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.28.8.3 2006/08/11 15:43:29 yamt Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -184,7 +184,7 @@ irix_sys_prctl(l, v, retval)
 		if (irix_check_exec(target) == 0)
 			return 0;
 
-		pc = p->p_cred;
+		pc = l->l_cred;
 		if (!(kauth_cred_geteuid(pc) == 0 || \
 		    kauth_cred_getuid(pc) == kauth_cred_getuid(target->p_cred) || \
 		    kauth_cred_geteuid(pc) == kauth_cred_getuid(target->p_cred) || \
@@ -563,8 +563,6 @@ irix_sys_procblk(l, v, retval)
 		syscallarg(pid_t) pid;
 		syscallarg(int) count;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-
 	int cmd = SCARG(uap, cmd);
 	struct irix_emuldata *ied;
 	struct irix_emuldata *iedp;
@@ -581,7 +579,7 @@ irix_sys_procblk(l, v, retval)
 		return ESRCH;
 
 	/* May we stop it? */
-	pc = p->p_cred;
+	pc = l->l_cred;
 	if (!(kauth_cred_geteuid(pc) == 0 || \
 	    kauth_cred_getuid(pc) == kauth_cred_getuid(target->p_cred) || \
 	    kauth_cred_geteuid(pc) == kauth_cred_getuid(target->p_cred) || \

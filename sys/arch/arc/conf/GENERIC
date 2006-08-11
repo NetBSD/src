@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.134.2.2 2006/05/24 10:56:34 yamt Exp $
+# $NetBSD: GENERIC,v 1.134.2.3 2006/08/11 15:41:10 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.134.2.2 $"
+#ident		"GENERIC-$Revision: 1.134.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -78,7 +78,6 @@ options 	DDB			# in-kernel debugger
 #options 	KGDB_DEVRATE=19200	# kernel gdb port rate (default 9600)
 #options 	KGDB_DEV="17*256+0"	# device for kernel gdb
 #makeoptions	DEBUG="-g"		# compile full symbol table
-options 	SYMTAB_SPACE=262144
 
 # Compatibility options
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -427,6 +426,7 @@ pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop		1	# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol

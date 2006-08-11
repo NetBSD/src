@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.13.8.1 2006/06/26 12:51:23 yamt Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.13.8.2 2006/08/11 15:44:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -35,7 +35,7 @@
 /* driver for the hardware monitoring part of the VIA VT82C686A */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.13.8.1 2006/06/26 12:51:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.13.8.2 2006/08/11 15:44:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ struct viaenv_softc {
 static const struct envsys_range viaenv_ranges[] = {
 	{ 0, 2,		ENVSYS_STEMP },
 	{ 3, 4,		ENVSYS_SFANRPM },
-	{ 0, 1,		ENVSYS_SVOLTS_AC },	/* none */
+	{ 1, 0,		ENVSYS_SVOLTS_AC },	/* none */
 	{ 5, 11,	ENVSYS_SVOLTS_DC },
 	{ 1, 0,		ENVSYS_SOHMS },		/* none */
 	{ 1, 0,		ENVSYS_SWATTS },	/* none */

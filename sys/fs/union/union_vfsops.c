@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.32.6.2 2006/05/24 10:58:40 yamt Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.32.6.3 2006/08/11 15:45:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.32.6.2 2006/05/24 10:58:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.32.6.3 2006/08/11 15:45:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,7 @@ union_mount(mp, path, data, ndp, l)
 			goto bad;
 	}
 
-	um->um_cred = l->l_proc->p_cred;
+	um->um_cred = l->l_cred;
 	kauth_cred_hold(um->um_cred);
 	um->um_cmode = UN_DIRMODE &~ l->l_proc->p_cwdi->cwdi_cmask;
 

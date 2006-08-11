@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.2 2003/02/13 15:02:49 matt Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.2.36.1 2006/08/11 15:42:41 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 
 	.local	firmstk
-	.local	openfirmware_entry
+	.globl	openfirmware_entry
 	.local	ofwsrsave
 	.local	OF_buffer
 
@@ -104,10 +104,12 @@ ENTRY(openfirmware)
 	mtlr	4
 
 	li	0,0			/* clear battable translations */
+#if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
 	mtdbatu	2,0
 	mtdbatu	3,0
 	mtibatu	2,0
 	mtibatu	3,0
+#endif /* PPC_OEA */
 
 	lis	4,ofwsrsave@ha		/* save current SRs */
 	addi	4,4,ofwsrsave@l

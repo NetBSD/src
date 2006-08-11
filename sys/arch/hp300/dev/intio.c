@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.20 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: intio.c,v 1.20.8.1 2006/08/11 15:41:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.20 2005/12/11 12:17:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.20.8.1 2006/08/11 15:41:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,26 +68,35 @@ CFATTACH_DECL(intio, sizeof(struct intio_softc),
     defined(HP350) || defined(HP360) || defined(HP370) || defined(HP375) || \
     defined(HP380) || defined(HP385)
 static const struct intio_builtins intio_3xx_builtins[] = {
-	{ "rtc",	0x020000,	-1},
-	{ "hil",	0x028000,	1},
-	{ "hpib",	0x078000,	3},
-	{ "dma",	0x100000,	1},
-	{ "fb",		0x160000,	-1},
+	{ "rtc",	RTC_BASE,	-1},
+	{ "hil",	HIL_BASE,	1},
+	{ "hpib",	HPIB_BASE,	3},
+	{ "dma",	DMA_BASE,	1},
+	{ "fb",		FB_BASE,	-1},
 };
-#define nintio_3xx_builtins \
-	(sizeof(intio_3xx_builtins) / sizeof(intio_3xx_builtins[0]))
+#define nintio_3xx_builtins	__arraycount(intio_3xx_builtins)
+#endif
+
+#if defined(HP362) || defined(HP382)
+static const struct intio_builtins intio_3x2_builtins[] = {
+	{ "rtc",	RTC_BASE,	-1},
+	{ "frodo",	FRODO_BASE,	5},
+	{ "hil",	HIL_BASE,	1},
+	{ "hpib",	HPIB_BASE,	3},
+	{ "dma",	DMA_BASE,	1},
+};
+#define nintio_3x2_builtins	__arraycount(intio_3x2_builtins)
 #endif
 
 #if defined(HP400) || defined(HP425) || defined(HP433)
 static const struct intio_builtins intio_4xx_builtins[] = {
-	{ "rtc",	0x020000,	-1},
-	{ "frodo",	0x01c000,	5},
-	{ "hil",	0x028000,	1},
-	{ "hpib",	0x078000,	3},
-	{ "dma",	0x100000,	1},
+	{ "rtc",	RTC_BASE,	-1},
+	{ "frodo",	FRODO_BASE,	5},
+	{ "hil",	HIL_BASE,	1},
+	{ "hpib",	HPIB_BASE,	3},
+	{ "dma",	DMA_BASE,	1},
 };
-#define nintio_4xx_builtins \
-	(sizeof(intio_4xx_builtins) / sizeof(intio_4xx_builtins[0]))
+#define nintio_4xx_builtins	__arraycount(intio_4xx_builtins)
 #endif
 
 static int intio_matched = 0;
@@ -98,10 +107,10 @@ intiomatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	/* Allow only one instance. */
 	if (intio_matched)
-		return (0);
+		return 0;
 
 	intio_matched = 1;
-	return (1);
+	return 1;
 }
 
 static void
@@ -137,6 +146,13 @@ intioattach(struct device *parent, struct device *self, void *aux)
 		ndevs = nintio_3xx_builtins;
 		break;
 #endif
+#if defined(HP362) || defined(HP382)
+	case HP_362:
+	case HP_382:
+		ib = intio_3x2_builtins;
+		ndevs = nintio_3x2_builtins;
+		break;
+#endif
 #if defined(HP400) || defined(HP425) || defined(HP433)
 	case HP_400:
 	case HP_425:
@@ -157,11 +173,11 @@ intioattach(struct device *parent, struct device *self, void *aux)
 		 * Internal HP-IB doesn't always return a device ID,
 		 * so we rely on the sysflags.
 		 */
-		if (ib[i].ib_offset == 0x078000 && !internalhpib)
+		if (ib[i].ib_offset == HPIB_BASE && !internalhpib)
 			continue;
 
-		strncpy(ia.ia_modname, ib[i].ib_modname, INTIO_MOD_LEN);
-		ia.ia_modname[INTIO_MOD_LEN] = '\0';
+		strlcpy(ia.ia_modname, ib[i].ib_modname,
+		    sizeof(ia.ia_modname));
 		ia.ia_bst = bst;
 		ia.ia_iobase = ib[i].ib_offset;
 		ia.ia_addr = (bus_addr_t)(intiobase + ib[i].ib_offset);
@@ -182,5 +198,5 @@ intioprint(void *aux, const char *pnp)
 		if (ia->ia_ipl != -1)
 			aprint_normal(" ipl %d", ia->ia_ipl);
 	}
-	return (UNCONF);
+	return UNCONF;
 }

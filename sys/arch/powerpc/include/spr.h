@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.38 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: spr.h,v 1.38.8.1 2006/08/11 15:42:40 yamt Exp $	*/
 
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
@@ -97,6 +97,8 @@
 #define	  MPC7410		  0x800c
 #define	  MPC5200		  0x8011
 #define	  MPC8245		  0x8081
+#define	  IBM970		  0x0039
+#define   IBM970FX		  0x003c
 
 #define	SPR_IBAT0U		0x210	/* .68 Instruction BAT Reg 0 Upper */
 #define	SPR_IBAT0L		0x211	/* .6. Instruction BAT Reg 0 Lower */
@@ -154,9 +156,9 @@
 #define  DC_CST_CCER2		0x00100000 /* D cache error type 2 (RO) */
 #define  DC_CST_CCER3		0x00080000 /* D cache error type 3 (RO) */
 #define	SPR_DBAT4U		0x238	/* .6. Data BAT Reg 4 Upper */
-#define SPR_DC_ADR		0x231	/* ..8 Data Cache Address */
+#define SPR_DC_ADR		0x239	/* ..8 Data Cache Address */
 #define	SPR_DBAT4L		0x239	/* .6. Data BAT Reg 4 Lower */
-#define SPR_DC_DAT		0x232	/* ..8 Data Cache Data */
+#define SPR_DC_DAT		0x23a	/* ..8 Data Cache Data */
 #define	SPR_DBAT5U		0x23a	/* .6. Data BAT Reg 5 Upper */
 #define	SPR_DBAT5L		0x23b	/* .6. Data BAT Reg 5 Lower */
 #define	SPR_DBAT6U		0x23c	/* .6. Data BAT Reg 6 Upper */
@@ -491,5 +493,9 @@
 #define	PMCN_ICOMP		 2 /* Instructions completed */
 #define	PMCN_TBLTRANS		 3 /* TBL bit transitions */
 #define	PCMN_IDISPATCH		 4 /* Instructions dispatched */
+
+/* SPRs specific to the IBM 970 series processors */
+#define SPR_HID4       0x3F4   /* 970 HID4 */
+#define SPR_HID5       0x3F6   /* 970 HID5 */
 
 #endif /* !_POWERPC_SPR_H_ */

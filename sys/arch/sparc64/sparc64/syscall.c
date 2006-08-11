@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.12.2.2 2006/03/13 09:07:03 yamt Exp $ */
+/*	$NetBSD: syscall.c,v 1.12.2.3 2006/08/11 15:43:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.12.2.2 2006/03/13 09:07:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.12.2.3 2006/08/11 15:43:00 yamt Exp $");
 
 #define NEW_FPSTATE
 
@@ -300,6 +300,7 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 	vaddr_t opc, onpc;
 	int s64;
 
+	LWP_CACHE_CREDS(l, p);
 	uvmexp.syscalls++;
 	sticks = p->p_sticks;
 	l->l_md.md_tf = tf;
@@ -383,6 +384,7 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 	vaddr_t opc, onpc;
 	int s64;
 
+	LWP_CACHE_CREDS(l, p);
 	uvmexp.syscalls++;
 	sticks = p->p_sticks;
 	l->l_md.md_tf = tf;

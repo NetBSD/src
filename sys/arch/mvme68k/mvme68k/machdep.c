@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.114 2005/12/11 12:18:17 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.114.8.1 2006/08/11 15:42:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2005/12/11 12:18:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114.8.1 2006/08/11 15:42:23 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -448,7 +448,7 @@ consinit()
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 	{
-		extern int end;
+		extern char end[];
 		extern int *esym;
 
 		ksyms_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),

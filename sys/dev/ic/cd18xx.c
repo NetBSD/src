@@ -1,4 +1,6 @@
-/*	$NetBSD: cd18xx.c,v 1.13.8.2 2006/06/26 12:51:01 yamt Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.13.8.3 2006/08/11 15:44:10 yamt Exp $	*/
+
+/* XXXad does this even compile? */
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -101,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.13.8.2 2006/06/26 12:51:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.13.8.3 2006/08/11 15:44:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -432,9 +434,9 @@ cdttyopen(dev, flag, mode, p)
 	/* enforce exclude */
 	if (tp == NULL ||
 	    (ISSET(tp->t_state, TS_ISOPEN) &&
-	     ISSET(tp->t_state, TS_XCLUDE) &&
-	     kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-			       &p->p_acflag) != 0))
+	    ISSET(tp->t_state, TS_XCLUDE) &&
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0))
 		return (EBUSY);
 
 	s = spltty();
@@ -655,8 +657,8 @@ cdttyioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-					  &p->p_acflag);
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (error)
 			return (error);
 		port->p_swflags = *(int *)data;

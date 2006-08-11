@@ -1,4 +1,4 @@
-/*	$NetBSD: adosglue.h,v 1.6 2001/02/26 16:07:19 is Exp $	*/
+/*	$NetBSD: adosglue.h,v 1.6.58.1 2006/08/11 15:41:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -46,6 +46,7 @@
 #define DOST_MUFS	0x6d754600	/* 'muFx' AmigaDos partition (muFS) */
 #define DOST_EXT2	0x4c4e5800	/* 'LNX0' Linux fs partition (ext2fs) */
 #define DOST_LNXSWP	0x53575000	/* 'SWP0' Linux swap partition */
+#define DOST_RAID	0x52414900	/* 'RAID' Raidframe partition */
 
 struct adostype {
 	u_char archtype;	/* see ADT_xxx below */
@@ -60,6 +61,7 @@ struct adostype {
 #define ADT_NETBSDUSER	4
 #define ADT_AMIX	5
 #define ADT_EXT2	6
+#define ADT_RAID	7
 
 #define ISFSARCH_NETBSD(adt) \
 	((adt).archtype >= ADT_NETBSDROOT && (adt).archtype <= ADT_NETBSDUSER)

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.10.8.2 2006/05/24 10:56:39 yamt Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.10.8.3 2006/08/11 15:41:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.10.8.2 2006/05/24 10:56:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.10.8.3 2006/08/11 15:41:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,16 +80,14 @@ com_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	struct com_mainbus_softc *msc = (void *)self;
 	struct com_softc *sc = &msc->sc_com;
 	struct mainbus_attach_args *maa = aux;
+	bus_space_handle_t	ioh;
 
-	sc->sc_iot = maa->ma_iot;
-	sc->sc_iobase = maa->ma_addr;
-
-	if (!com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) &&
-	    bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS, 0,
-	    &sc->sc_ioh)) {
+	if (!com_is_console(maa->ma_iot, maa->ma_addr, &ioh) &&
+	    bus_space_map(maa->ma_iot, maa->ma_addr, COM_NPORTS, 0, &ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
+	COM_INIT_REGS(sc->sc_regs, maa->ma_iot, ioh, maa->ma_addr);
 
 	sc->sc_frequency = COM_MAINBUS_FREQ;
 

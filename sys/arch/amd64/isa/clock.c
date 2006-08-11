@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7.8.2 2006/06/26 12:44:22 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.7.8.3 2006/08/11 15:41:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7.8.2 2006/06/26 12:44:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7.8.3 2006/08/11 15:41:00 yamt Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -171,7 +171,6 @@ int clock_debug = 0;
 
 int sysbeepmatch __P((struct device *, struct cfdata *, void *));
 void sysbeepattach __P((struct device *, struct device *, void *));
-static void     tickle_tc(void);
 
 CFATTACH_DECL(sysbeep, sizeof(struct device),
     sysbeepmatch, sysbeepattach, NULL, NULL);
@@ -189,6 +188,7 @@ int	rtcget __P((mc_todregs *));
 void	rtcput __P((mc_todregs *));
 
 static inline int gettick_broken_latch __P((void));
+static void       tickle_tc(void);
 
 static volatile uint32_t i8254_lastcount;
 static volatile uint32_t i8254_offset;

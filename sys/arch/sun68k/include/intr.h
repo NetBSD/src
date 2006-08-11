@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6.2.1 2006/04/01 12:06:33 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.6.2.2 2006/08/11 15:43:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -48,11 +48,14 @@
 #define _IPL_SOFT_LEVEL_MAX	3
 
 #define	IPL_NONE	0
-#define	IPL_SOFTCLOCK	(PSL_S|PSL_IPL1)
-#define	IPL_SOFTNET	(PSL_S|PSL_IPL1)
+#define	IPL_SOFT_LEVEL1	(PSL_S|PSL_IPL1)
+#define	IPL_SOFT_LEVEL2	(PSL_S|PSL_IPL2)
+#define	IPL_SOFT_LEVEL3	(PSL_S|PSL_IPL3)
+#define	IPL_SOFTCLOCK	IPL_SOFT_LEVEL1
+#define	IPL_SOFTNET	IPL_SOFT_LEVEL1
 #define	IPL_BIO		(PSL_S|PSL_IPL2)
 #define	IPL_NET		(PSL_S|PSL_IPL3)
-#define	IPL_SOFTSERIAL	(PSL_S|PSL_IPL3)
+#define	IPL_SOFTSERIAL	IPL_SOFT_LEVEL3
 #define	IPL_TTY		(PSL_S|PSL_IPL4)
 #define	IPL_VM		(PSL_S|PSL_IPL4)
 /* Intersil or Am9513 clock hardware interrupts (hard-wired at 5) */

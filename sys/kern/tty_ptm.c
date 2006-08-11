@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.7.8.1 2006/05/24 10:58:42 yamt Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.7.8.2 2006/08/11 15:45:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.7.8.1 2006/05/24 10:58:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.7.8.2 2006/08/11 15:45:47 yamt Exp $");
 
 #include "opt_ptm.h"
 
@@ -113,7 +113,6 @@ pty_getfree(void)
 int
 pty_vn_open(struct vnode *vp, struct lwp *l)
 {
-	kauth_cred_t cred;
 	int error;
 
 	if (vp->v_type != VCHR) {
@@ -121,12 +120,7 @@ pty_vn_open(struct vnode *vp, struct lwp *l)
 		return EINVAL;
 	}
 
-	/*
-	 * Get us a fresh cred with root privileges.
-	 */
-	cred = kauth_cred_alloc();
-	error = VOP_OPEN(vp, FREAD|FWRITE, cred, l);
-	kauth_cred_free(cred);
+	error = VOP_OPEN(vp, FREAD|FWRITE, lwp0.l_cred, l);
 
 	if (error) {
 		vput(vp);
@@ -144,10 +138,9 @@ pty_alloc_master(struct lwp *l, int *fd, dev_t *dev)
 	int error;
 	struct file *fp;
 	struct vnode *vp;
-	struct proc *p = l->l_proc;
 	int md;
 
-	if ((error = falloc(p, &fp, fd)) != 0) {
+	if ((error = falloc(l, &fp, fd)) != 0) {
 		DPRINTF(("falloc %d\n", error));
 		return error;
 	}
@@ -189,7 +182,7 @@ retry:
 	return 0;
 bad:
 	FILE_UNUSE(fp, l);
-	fdremove(p->p_fd, *fd);
+	fdremove(l->l_proc->p_fd, *fd);
 	ffree(fp);
 	return error;
 }
@@ -217,12 +210,9 @@ pty_grant_slave(struct lwp *l, dev_t dev)
 
 	if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		struct vattr vattr;
-		kauth_cred_t cred;
-		(*ptm->getvattr)(ptm, l->l_proc, &vattr);
-		/* Get a fake cred to pretend we're root. */
-		cred = kauth_cred_alloc();
-		error = VOP_SETATTR(vp, &vattr, cred, l);
-		kauth_cred_free(cred);
+		(*ptm->getvattr)(ptm, l, &vattr);
+		/* Do the VOP_SETATTR() as root. */
+		error = VOP_SETATTR(vp, &vattr, lwp0.l_cred, l);
 		if (error) {
 			DPRINTF(("setattr %d\n", error));
 			VOP_UNLOCK(vp, 0);
@@ -248,10 +238,9 @@ pty_alloc_slave(struct lwp *l, int *fd, dev_t dev)
 	int error;
 	struct file *fp;
 	struct vnode *vp;
-	struct proc *p = l->l_proc;
 
 	/* Grab a filedescriptor for the slave */
-	if ((error = falloc(p, &fp, fd)) != 0) {
+	if ((error = falloc(l, &fp, fd)) != 0) {
 		DPRINTF(("falloc %d\n", error));
 		return error;
 	}
@@ -276,7 +265,7 @@ pty_alloc_slave(struct lwp *l, int *fd, dev_t dev)
 	return 0;
 bad:
 	FILE_UNUSE(fp, l);
-	fdremove(p->p_fd, *fd);
+	fdremove(l->l_proc->p_fd, *fd);
 	ffree(fp);
 	return error;
 }

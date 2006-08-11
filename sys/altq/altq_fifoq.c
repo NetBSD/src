@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_fifoq.c,v 1.7.8.1 2006/05/24 10:56:32 yamt Exp $	*/
+/*	$NetBSD: altq_fifoq.c,v 1.7.8.2 2006/08/11 15:40:58 yamt Exp $	*/
 /*	$KAME: altq_fifoq.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.7.8.1 2006/05/24 10:56:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.7.8.2 2006/08/11 15:40:58 yamt Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -128,7 +128,6 @@ fifoqioctl(dev, cmd, addr, flag, l)
 	fifoq_state_t *q;
 	struct fifoq_interface *ifacep;
 	struct ifnet *ifp;
-	struct proc *p = l->l_proc;
 	int	error = 0;
 
 	/* check super-user privilege */
@@ -140,9 +139,8 @@ fifoqioctl(dev, cmd, addr, flag, l)
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = kauth_authorize_generic(p->p_cred,
-					       KAUTH_GENERIC_ISSUSER,
-					       &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (error);
 #endif
 		break;

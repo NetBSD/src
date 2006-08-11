@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.87.2.3 2006/05/24 10:56:33 yamt Exp $
+# $NetBSD: GENERIC,v 1.87.2.4 2006/08/11 15:41:00 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.87.2.3 $"
+#ident 		"GENERIC-$Revision: 1.87.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -69,6 +69,9 @@ options 	LKM		# loadable kernel modules
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# AMD PowerNow! and Cool`n'Quiet technology
+options 	POWERNOW_K8
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
@@ -228,9 +231,7 @@ config		netbsd	root on ? type ?
 mainbus0 at root
 
 #acpi0 		at mainbus0
-#options 	MPACPI			# configure CPUs and APICs using ACPI
-					# (acpi at mainbus must also be enabled)
-#options 	MPACPI_SCANPCI		# find PCI roots using MPACPI
+#options 	ACPI_SCANPCI		# find PCI roots using ACPI
 options 	MPBIOS			# configure CPUs and APICs using MPBIOS 
 options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options 	PCI_INTR_FIXUP		# PCI interrupt routing via ACPI
@@ -368,6 +369,9 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #adt7463c* at iic? addr 0x2D		# Tyan S2881
 #adt7463c* at iic? addr 0x2E            # Tyan S2882-D
 
+# iTE IT87xxF and compatible hardware monitors
+#it0 	at isa? port 0x290 		# other ports: 0xc00, 0xd00.
+
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor
 iopsp*	at iop? tid ?			# SCSI/FC-AL ports
@@ -398,6 +402,7 @@ trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 # PCMCIA SCSI controllers
 #aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 #esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
+#spc*	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 
 # CardBus SCSI cards
 #adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
@@ -424,11 +429,13 @@ ciss*	at pci? dev ? function ?	# HP Smart Array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
+twa*	at pci? dev ? function ?	# 3ware Escalade 9xxx RAID controllers
 
 ld*	at amr? unit ?
 ld*	at cac? unit ?
 ld*	at icp? unit ?
 ld*	at twe? unit ?
+ld*	at twa? unit ?
 ld*	at mlx? unit ?
 
 icpsp*	at icp? unit ?			# SCSI pass-through
@@ -727,6 +734,8 @@ radio*	at udsbr?
 
 # USB Generic driver
 ugen*	at uhub? port ?
+# On ugen bulk endpoints, perform read-ahead and write-behind.
+options	UGEN_BULK_RA_WB
 
 
 # IrDA and Consumer Ir devices
@@ -844,6 +853,7 @@ pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
@@ -878,6 +888,9 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+#options	FILEASSOC		# fileassoc(9) - required for Veriexec
+#options	FILEASSOC_NHOOKS=4	# Default number of storage slots
 
 # Veriexec
 #options VERIFIED_EXEC

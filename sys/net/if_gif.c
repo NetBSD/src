@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.57.8.2 2006/05/24 10:58:56 yamt Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.57.8.3 2006/08/11 15:46:14 yamt Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.57.8.2 2006/05/24 10:58:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.57.8.3 2006/08/11 15:46:14 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -564,7 +564,7 @@ gif_input(struct mbuf *m, int af, struct ifnet *ifp)
 int
 gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;	/* XXX */
 	struct gif_softc *sc  = (struct gif_softc*)ifp;
 	struct ifreq     *ifr = (struct ifreq*)data;
 	int error = 0, size;
@@ -572,6 +572,20 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #ifdef SIOCSIFMTU
 	u_long mtu;
 #endif
+
+	switch (cmd) {
+	case SIOCSIFMTU:
+	case SIOCSLIFPHYADDR:
+#ifdef SIOCDIFPHYADDR
+	case SIOCDIFPHYADDR:
+#endif
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+			return (error);
+		/* FALLTHROUGH */
+	default:
+		break;
+	}
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -603,10 +617,6 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSIFMTU:
-		if ((error = kauth_authorize_generic(p->p_cred,
-					       KAUTH_GENERIC_ISSUSER,
-					        &p->p_acflag)) != 0)
-			break;
 		mtu = ifr->ifr_mtu;
 		if (mtu < GIF_MTU_MIN || mtu > GIF_MTU_MAX)
 			return (EINVAL);
@@ -621,8 +631,6 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFPHYADDR_IN6:
 #endif /* INET6 */
 	case SIOCSLIFPHYADDR:
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
-			break;
 		switch (cmd) {
 #ifdef INET
 		case SIOCSIFPHYADDR:
@@ -710,8 +718,6 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 #ifdef SIOCDIFPHYADDR
 	case SIOCDIFPHYADDR:
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
-			break;
 		gif_delete_tunnel(&sc->gif_if);
 		break;
 #endif

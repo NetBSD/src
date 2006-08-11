@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.11.2.2 2006/06/26 12:45:14 yamt Exp $	*/
+/*	$NetBSD: platform.h,v 1.11.2.3 2006/08/11 15:42:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ struct platform_quirkdata {
 	int		quirk;
 	void		(*pci_intr_fixup)(void);
 	void		(*reset)(void);
+	int		isa_intr_handler;
 };
 
 struct plattab {
@@ -63,10 +64,15 @@ struct pciroutinginfo {
 
 #define PLAT_QUIRK_INTRFIXUP	(1 << 1)
 #define PLAT_QUIRK_RESET	(1 << 2)
+#define PLAT_QUIRK_ISA_HANDLER	(1 << 3)
+
+#define EXT_INTR_I8259		1
+#define EXT_INTR_IVR		2
 
 extern struct platform *platform;
 extern struct pciroutinginfo *pciroutinginfo;
 
+int find_platform_quirk(const char *model);
 void cpu_setup_unknown(struct device *);
 void reset_prep(void);
 void setup_pciroutinginfo(void);

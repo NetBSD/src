@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.13.2.3 2006/06/26 12:45:14 yamt Exp $	*/
+/*	$NetBSD: platform.c,v 1.13.2.4 2006/08/11 15:42:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.13.2.3 2006/06/26 12:45:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.13.2.4 2006/08/11 15:42:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,16 +60,19 @@ struct pciroutinginfo *pciroutinginfo;
 extern struct prep_pci_chipset *prep_pct;
 
 extern void pci_intr_fixup_ibm_6015(void);
+/* from mcclock_pnpbus.c */
+extern void ds1585_reboot(void);
 
 struct platform_quirkdata platform_quirks[] = {
-	{ "IBM PPS Model 6015",  PLAT_QUIRK_INTRFIXUP,
-	   pci_intr_fixup_ibm_6015, NULL },
-	{ NULL, 0, NULL, NULL }
+	{ "IBM PPS Model 6015", PLAT_QUIRK_INTRFIXUP,
+	   pci_intr_fixup_ibm_6015, NULL, 0 },
+	{ "(e1)", PLAT_QUIRK_ISA_HANDLER, NULL, NULL, EXT_INTR_I8259 },
+	{ NULL, 0, NULL, NULL, 0 }
 };
 
 /* find the platform quirk entry for this model, -1 if none */
 
-static int
+int
 find_platform_quirk(const char *model)
 {
 	int i;
@@ -103,6 +106,12 @@ reset_prep_generic(void)
 
 	mtmsr(mfmsr() | PSL_IP);
 
+	/* XXX This is a special hack for 7024 and 7025 models, which have
+	 * no obvious method of rebooting. We call this, because it will
+	 * return if we do not have a 1585.
+	 */
+	ds1585_reboot();
+
 	reg = inb(PREP_BUS_SPACE_IO + 0x92);
 	reg &= ~1UL;
 	outb(PREP_BUS_SPACE_IO + 0x92, reg);
@@ -121,8 +130,8 @@ reset_prep(void)
 		if (platform_quirks[i].quirk & PLAT_QUIRK_RESET &&
 		    platform_quirks[i].reset != NULL)
 			(*platform_quirks[i].reset)();
-	} else
-		reset_prep_generic();
+	}
+	reset_prep_generic();
 }
 
 /*

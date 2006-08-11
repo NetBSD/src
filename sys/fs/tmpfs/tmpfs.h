@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.16.2.3 2006/06/26 12:52:55 yamt Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.16.2.4 2006/08/11 15:45:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -323,10 +323,10 @@ struct tmpfs_dirent *	tmpfs_dir_lookupbycookie(struct tmpfs_node *, off_t);
 int	tmpfs_dir_getdents(struct tmpfs_node *, struct uio *, off_t *);
 int	tmpfs_reg_resize(struct vnode *, off_t);
 size_t	tmpfs_mem_info(boolean_t);
-int	tmpfs_chflags(struct vnode *, int, kauth_cred_t, struct proc *);
-int	tmpfs_chmod(struct vnode *, mode_t, kauth_cred_t, struct proc *);
-int	tmpfs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t, struct proc *);
-int	tmpfs_chsize(struct vnode *, u_quad_t, kauth_cred_t, struct proc *);
+int	tmpfs_chflags(struct vnode *, int, kauth_cred_t, struct lwp *);
+int	tmpfs_chmod(struct vnode *, mode_t, kauth_cred_t, struct lwp *);
+int	tmpfs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t, struct lwp *);
+int	tmpfs_chsize(struct vnode *, u_quad_t, kauth_cred_t, struct lwp *);
 int	tmpfs_chtimes(struct vnode *, struct timespec *, struct timespec *,
 	    int, kauth_cred_t, struct lwp *);
 void	tmpfs_itimes(struct vnode *, const struct timespec *,

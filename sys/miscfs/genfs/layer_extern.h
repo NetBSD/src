@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_extern.h,v 1.20.8.1 2006/05/24 10:58:55 yamt Exp $	*/
+/*	$NetBSD: layer_extern.h,v 1.20.8.2 2006/08/11 15:46:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -90,7 +90,7 @@ int	layerfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 int	layerfs_sync(struct mount *, int, struct kauth_cred *, struct lwp *);
 int	layerfs_vget(struct mount *, ino_t, struct vnode **);
 int	layerfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int	layerfs_vptofh(struct vnode *, struct fid *);
+int	layerfs_vptofh(struct vnode *, struct fid *, size_t *);
 int	layerfs_snapshot(struct mount *, struct vnode *,
 			    struct timespec *);
 

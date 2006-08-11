@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.130.2.1 2006/04/01 12:06:30 yamt Exp $
+# $NetBSD: GENERIC,v 1.130.2.2 2006/08/11 15:43:11 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.130.2.1 $"
+#ident		"GENERIC-$Revision: 1.130.2.2 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -261,6 +261,7 @@ pseudo-device	md		2
 # Misc.
 pseudo-device	loop		1	# network loopback
 pseudo-device	bpfilter		# packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	sl			# CSLIP
 pseudo-device	ppp			# PPP
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.30 2005/12/11 12:17:59 christos Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.30.8.1 2006/08/11 15:42:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.30 2005/12/11 12:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.30.8.1 2006/08/11 15:42:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,13 +124,13 @@ struct sunos_sigframe {
 	int	sf_code;		/* additional info for handler */
 	struct sunos_sigcontext *sf_scp;/* context pointer for handler */
 	u_int	sf_addr;		/* even more info for handler */
-	struct sunos_sigcontext sf_sc;	/* I don't know if that's what 
+	struct sunos_sigcontext sf_sc;	/* I don't know if that's what
 					   comes here */
 };
 /*
  * much simpler sendsig() for SunOS processes, as SunOS does the whole
  * context-saving in usermode. For now, no hardware information (ie.
- * frames for buserror etc) is saved. This could be fatal, so I take 
+ * frames for buserror etc) is saved. This could be fatal, so I take
  * SIG_DFL for "dangerous" signals.
  */
 void
@@ -149,7 +149,7 @@ sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * if this is a hardware fault (ft >= FMT9), sunos_sendsig
 	 * can't currently handle it. Reset signal actions and
-	 * have the process die unconditionally. 
+	 * have the process die unconditionally.
 	 */
 	if (ft >= FMT9) {
 		SIGACTION(p, sig).sa_handler = SIG_DFL;
@@ -196,7 +196,7 @@ sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		 * instruction to halt it in its tracks.
 		 */
 		sigexit(l, SIGILL);
-		/* NOTREACHED */ 
+		/* NOTREACHED */
 	}
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
@@ -233,8 +233,8 @@ sunos_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	struct sunos_sys_sigreturn_args *uap = v;
-	register struct sunos_sigcontext *scp;
-	register struct frame *frame;
+	struct sunos_sigcontext *scp;
+	struct frame *frame;
 	struct sunos_sigcontext tsigc;
 	sigset_t mask;
 
@@ -244,14 +244,14 @@ sunos_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 		printf("sunos_sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 	if ((int)scp & 1)
-		return (EINVAL);
+		return EINVAL;
 	if (copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof(tsigc)) != 0)
-		return (EFAULT);
+		return EFAULT;
 	scp = &tsigc;
 
 	/* Make sure the user isn't pulling a fast one on us! */
 	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
-		return (EINVAL);
+		return EINVAL;
 
 	/*
 	 * Restore the user supplied information
@@ -270,7 +270,7 @@ sunos_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 
 	/* Restore signal mask. */
 	native_sigset13_to_sigset(&scp->sc_mask, &mask);
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void)sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return EJUSTRETURN;
 }

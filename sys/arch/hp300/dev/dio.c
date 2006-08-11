@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.32 2005/12/24 20:07:03 perry Exp $	*/
+/*	$NetBSD: dio.c,v 1.32.8.1 2006/08/11 15:41:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.32 2005/12/24 20:07:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.32.8.1 2006/08/11 15:41:33 yamt Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -92,10 +92,10 @@ diomatch(struct device *parent, struct cfdata *match, void *aux)
 
 	/* Allow only one instance. */
 	if (dio_matched)
-		return (0);
+		return 0;
 
 	dio_matched = 1;
-	return (1);
+	return 1;
 }
 
 static void
@@ -103,8 +103,10 @@ dioattach(struct device *parent, struct device *self, void *aux)
 {
 	struct dio_softc *sc = (struct dio_softc *)self;
 	struct dio_attach_args da;
-	caddr_t pa, va;
+	bus_addr_t pa;
+	caddr_t va;
 	bus_space_tag_t bst = &sc->sc_tag;
+	bus_space_handle_t bsh;
 	int scode, scmax, scodesize;
 
 	printf("\n");
@@ -124,18 +126,18 @@ dioattach(struct device *parent, struct device *self, void *aux)
 		 * Temporarily map the space corresponding to
 		 * the current select code unless:
 		 */
-		pa = dio_scodetopa(scode);
-		va = iomap(pa, PAGE_SIZE);
-		if (va == NULL) {
+		pa = (bus_addr_t)dio_scodetopa(scode);
+		if (bus_space_map(bst, pa, PAGE_SIZE, 0, &bsh)) {
 			printf("%s: can't map scode %d\n",
 			    self->dv_xname, scode);
 			scode++;
 			continue;
 		}
+		va = bus_space_vaddr(bst, bsh);
 
 		/* Check for hardware. */
 		if (badaddr(va)) {
-			iounmap(va, PAGE_SIZE);
+			bus_space_unmap(bst, bsh, PAGE_SIZE);
 			scode++;
 			continue;
 		}
@@ -148,7 +150,7 @@ dioattach(struct device *parent, struct device *self, void *aux)
 		da.da_id = DIO_ID(va);
 		if (DIO_ISFRAMEBUFFER(da.da_id))
 			da.da_secid = DIO_SECID(va);
-		da.da_addr = (bus_addr_t)dio_scodetopa(scode);
+		da.da_addr = pa;
 		da.da_size = DIO_SIZE(scode, va);
 		scodesize = dio_scodesize(&da);
 		if (DIO_ISDIO(scode))
@@ -156,7 +158,7 @@ dioattach(struct device *parent, struct device *self, void *aux)
 		da.da_ipl = DIO_IPL(va);
 
 		/* No longer need the device to be mapped. */
-		iounmap(va, PAGE_SIZE);
+		bus_space_unmap(bst, bsh, PAGE_SIZE);
 
 		/* Attach matching device. */
 		config_found_sm_loc(self, "dio", NULL, &da, dioprint,
@@ -173,9 +175,9 @@ diosubmatch(struct device *parent, struct cfdata *cf,
 
 	if (cf->diocf_scode != DIOCF_SCODE_DEFAULT &&
 	    cf->diocf_scode != da->da_scode)
-		return (0);
+		return 0;
 
-	return (config_match(parent, cf, aux));
+	return config_match(parent, cf, aux);
 }
 
 static int
@@ -188,7 +190,7 @@ dioprint(void *aux, const char *pnp)
 		aprint_normal("%s at %s",
 		    dio_devinfo(da, buf, sizeof(buf)), pnp);
 	aprint_normal(" scode %d ipl %d", da->da_scode, da->da_ipl);
-	return (UNCONF);
+	return UNCONF;
 }
 
 /*
@@ -206,7 +208,7 @@ dio_scodetopa(int scode)
 	else
 		rval = 0;
 
-	return ((void *)rval);
+	return (void *)rval;
 }
 
 /*
@@ -230,7 +232,7 @@ dio_scodesize(struct dio_attach_args *da)
 				}
 			} else {
 			foundit:
-				return (dio_devdatas[i].dd_nscode);
+				return dio_devdatas[i].dd_nscode;
 			}
 		}
 	}
@@ -240,7 +242,7 @@ dio_scodesize(struct dio_attach_args *da)
 	 */
 	printf("WARNING: select code size unknown for id = 0x%x secid = 0x%x\n",
 	    da->da_id, da->da_secid);
-	return (1);
+	return 1;
 }
 
 /*
@@ -269,7 +271,7 @@ dio_devinfo(struct dio_attach_args *da, char *buf, size_t buflen)
 			} else {
 			foundit:
 				sprintf(buf, "%s", dio_devdescs[i].dd_desc);
-				return (buf);
+				return buf;
 			}
 		}
 	}
@@ -280,7 +282,7 @@ dio_devinfo(struct dio_attach_args *da, char *buf, size_t buflen)
 	 */
 	sprintf(buf, "device id = 0x%x secid = 0x%x",
 	    da->da_id, da->da_secid);
-	return (buf);
+	return buf;
 }
 
 /*
@@ -296,7 +298,7 @@ dio_intr_establish(int (*func)(void *), void *arg, int ipl, int priority)
 	if (priority == IPL_BIO)
 		dmacomputeipl();
 
-	return (ih);
+	return ih;
 }
 
 /*

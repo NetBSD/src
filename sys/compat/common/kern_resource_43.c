@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource_43.c,v 1.14 2005/12/11 12:19:56 christos Exp $	*/
+/*	$NetBSD: kern_resource_43.c,v 1.14.8.1 2006/08/11 15:43:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.14 2005/12/11 12:19:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.14.8.1 2006/08/11 15:43:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,6 @@ compat_43_sys_setrlimit(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) which;
 		syscallarg(const struct orlimit *) rlp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int which = SCARG(uap, which);
 	struct orlimit olim;
 	struct rlimit lim;
@@ -93,5 +92,5 @@ compat_43_sys_setrlimit(struct lwp *l, void *v, register_t *retval)
 		return (error);
 	lim.rlim_cur = olim.rlim_cur;
 	lim.rlim_max = olim.rlim_max;
-	return (dosetrlimit(p, p->p_cred, which, &lim));
+	return (dosetrlimit(l, l->l_proc, which, &lim));
 }

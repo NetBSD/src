@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.9 2005/12/11 12:16:08 christos Exp $
+#	$NetBSD: Makefile,v 1.9.8.1 2006/08/11 15:40:59 yamt Exp $
 
 INCSDIR=/usr/include/algor
 
 INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	bswap.h bsd-aout.h bus.h \
 	cdefs.h cpu.h \
-	db_machdep.h disklabel.h \
+	disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
 	float.h \
 	ieee.h ieeefp.h \

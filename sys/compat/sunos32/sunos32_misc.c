@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.36.2.1 2006/05/24 10:57:32 yamt Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.36.2.2 2006/08/11 15:43:41 yamt Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.36.2.1 2006/05/24 10:57:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.36.2.2 2006/08/11 15:43:41 yamt Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -1016,7 +1016,7 @@ sunos32_sys_socket(l, v, retval)
 	} */ *uap = v;
 	int error;
 
-	error = netbsd32_socket(l, v, retval);
+	error = netbsd32_sys___socket30(l, v, retval);
 	if (error)
 		return (error);
 	return sunos32_sys_socket_common(l, retval, SCARG(uap, type));
@@ -1557,13 +1557,13 @@ sunos32_sys_reboot(l, v, retval)
 		syscallarg(int) howto;
 		syscallarg(netbsd32_charp) bootstr;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_reboot_args ua;
 	struct sunos_howto_conv *convp;
 	int error, bsd_howto, sun_howto;
 	char *bootstr;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 		return (error);
 
 	/*

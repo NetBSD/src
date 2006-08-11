@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.9.8.1 2006/04/01 12:07:28 yamt Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.9.8.2 2006/08/11 15:45:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.9.8.1 2006/04/01 12:07:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.9.8.2 2006/08/11 15:45:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -74,8 +74,6 @@ struct simplelock sysmon_envsys_initialized_slock = SIMPLELOCK_INITIALIZER;
 
 #define SYSMON_ENVSYS_UNLOCK()		\
 	lockmgr(&sysmon_envsys_lock, LK_RELEASE, NULL)
-
-int	sysmonioctl_envsys(dev_t, u_long, caddr_t, int, struct lwp *);
 
 struct sysmon_envsys *sysmon_envsys_find(u_int);
 void	sysmon_envsys_release(struct sysmon_envsys *);

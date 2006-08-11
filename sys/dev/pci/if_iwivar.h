@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwivar.h,v 1.9.8.1 2006/03/13 09:07:26 yamt Exp $ */
+/*	$NetBSD: if_iwivar.h,v 1.9.8.2 2006/08/11 15:44:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -121,10 +121,12 @@ struct iwi_softc {
 	uint32_t		sc_unr;
 
 	struct iwi_firmware	fw;
+	const char		*sc_fwname;
+	const char		*sc_ucname;
+
 	uint32_t		flags;
 #define IWI_FLAG_FW_CACHED	(1 << 0)
 #define IWI_FLAG_FW_INITED	(1 << 1)
-#define IWI_FLAG_FW_WARNED	(1 << 2)
 #define IWI_FLAG_SCANNING	(1 << 3)
 
 	bus_dma_tag_t		sc_dmat;
@@ -174,7 +176,5 @@ struct iwi_softc {
 
 #define	sc_if	sc_ec.ec_if
 
-#define SIOCSLOADFW	 _IOW('i', 137, struct ifreq)
-#define SIOCSKILLFW	 _IOW('i', 138, struct ifreq)
 #define SIOCGRADIO	_IOWR('i', 139, struct ifreq)
 #define SIOCGTABLE0	_IOWR('i', 140, struct ifreq)

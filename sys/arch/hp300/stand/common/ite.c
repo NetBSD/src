@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.5 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: ite.c,v 1.5.8.1 2006/08/11 15:41:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -86,6 +86,7 @@
 #include <dev/cons.h>
 
 #include <hp300/dev/grfreg.h>
+#include <hp300/dev/intioreg.h>
 
 #include <hp300/stand/common/device.h>
 #include <hp300/stand/common/itevar.h>
@@ -144,7 +145,6 @@ int	ite_scode[NITE] = { 0 };
 static void
 iteconfig(void)
 {
-	extern struct hp_hw sc_table[];
 	int dtype, fboff, i;
 	struct hp_hw *hw;
 	struct grfreg *gr;
@@ -228,7 +228,7 @@ iteprobe(struct consdev *cp)
 		if ((ip->flags & (ITE_ALIVE|ITE_CONSOLE))
 		    != (ITE_ALIVE|ITE_CONSOLE))
 			continue;
-		if ((int)ip->regbase == GRFIADDR) {
+		if ((int)ip->regbase == INTIOBASE + FB_BASE) {
 			pri = CN_INTERNAL;
 			unit = ite;
 		} else if (unit < 0) {

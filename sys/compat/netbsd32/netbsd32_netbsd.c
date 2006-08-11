@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.100.2.2 2006/05/24 10:57:31 yamt Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.100.2.3 2006/08/11 15:43:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100.2.2 2006/05/24 10:57:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100.2.3 2006/08/11 15:43:29 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -968,7 +968,7 @@ netbsd32_getgroups(l, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(netbsd32_gid_tp) gidset;
 	} */ *uap = v;
-	kauth_cred_t pc = l->l_proc->p_cred;
+	kauth_cred_t pc = l->l_cred;
 	int ngrp;
 	int error;
 	gid_t *grbuf;
@@ -1099,22 +1099,22 @@ netbsd32_setpriority(l, v, retval)
 }
 
 int
-netbsd32_socket(l, v, retval)
+netbsd32_sys___socket30(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_socket_args /* {
+	struct netbsd32_sys___socket30_args /* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
 	} */ *uap = v;
-	struct sys_socket_args ua;
+	struct sys___socket30_args ua;
 
 	NETBSD32TO64_UAP(domain);
 	NETBSD32TO64_UAP(type);
 	NETBSD32TO64_UAP(protocol);
-	return (sys_socket(l, &ua, retval));
+	return (sys___socket30(l, &ua, retval));	
 }
 
 int
@@ -1475,25 +1475,60 @@ netbsd32_nfssvc(l, v, retval)
 }
 #endif
 
-#if defined(NFS) || defined(NFSSERVER)
 int
-netbsd32_getfh(l, v, retval)
+netbsd32___getfh30(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_getfh_args /* {
+	struct netbsd32___getfh30_args /* {
 		syscallarg(const netbsd32_charp) fname;
 		syscallarg(netbsd32_fhandlep_t) fhp;
+		syscallarg(netbsd32_size_tp) fh_size;
 	} */ *uap = v;
-	struct sys_getfh_args ua;
+	struct vnode *vp;
+	fhandle_t *fh;
+	int error;
+	struct nameidata nd;
+	netbsd32_size_t sz32;
+	size_t sz;
 
-	NETBSD32TOP_UAP(fname, const char);
-	NETBSD32TOP_UAP(fhp, struct fhandle);
-	/* Lucky for us a fhandlep_t doesn't change sizes */
-	return (sys_getfh(l, &ua, retval));
+	/*
+	 * Must be super user
+	 */
+	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag);
+	if (error)
+		return (error);
+	fh = NULL;
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	    (char *)NETBSD32PTR64(SCARG(uap, fname)), l);
+	error = namei(&nd);
+	if (error)
+		return (error);
+	vp = nd.ni_vp;
+	error = copyin(NETBSD32PTR64(SCARG(uap, fh_size)), &sz32,
+	    sizeof(netbsd32_size_t));
+	if (!error) {
+		fh = malloc(sz32, M_TEMP, M_WAITOK);
+		if (fh == NULL) 
+			return EINVAL;
+		sz = sz32;
+		error = vfs_composefh(vp, fh, &sz);
+		sz32 = sz;
+	}
+	vput(vp);
+	if (error == E2BIG)
+		copyout(&sz, NETBSD32PTR64(SCARG(uap, fh_size)), sizeof(size_t));
+	if (error == 0) {
+		error = copyout(&sz32, NETBSD32PTR64(SCARG(uap, fh_size)),
+		    sizeof(netbsd32_size_t));
+		if (!error)
+			error = copyout(fh, NETBSD32PTR64(SCARG(uap, fhp)), sz);
+	}
+	free(fh, M_TEMP);
+	return (error);
 }
-#endif
 
 int
 netbsd32_pread(l, v, retval)
@@ -1709,7 +1744,6 @@ netbsd32_setrlimit(l, v, retval)
 		int which = SCARG(uap, which);
 	struct rlimit alim;
 	int error;
-	struct proc *p = l->l_proc;
 
 	error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, rlp)), &alim,
 	    sizeof(struct rlimit));
@@ -1733,7 +1767,7 @@ netbsd32_setrlimit(l, v, retval)
 		break;
 	}
 
-	return (dosetrlimit(p, p->p_cred, which, &alim));
+	return (dosetrlimit(l, l->l_proc, which, &alim));
 }
 
 int
@@ -2234,20 +2268,22 @@ int netbsd32_fchroot(l, v, retval)
  * and call the device open routine if any.
  */
 int
-netbsd32_fhopen(l, v, retval)
+netbsd32___fhopen40(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_fhopen_args /* {
-		syscallarg(const fhandle_t *) fhp;
+	struct netbsd32___fhopen40_args /* {
+		syscallarg(const netbsd32_pointer_t *) fhp;
+		syscallarg(netbsd32_size_t) fh_size;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct sys_fhopen_args ua;
+	struct sys___fhopen40_args ua;
 
 	NETBSD32TOP_UAP(fhp, fhandle_t);
+	NETBSD32TO64_UAP(fh_size);
 	NETBSD32TO64_UAP(flags);
-	return (sys_fhopen(l, &ua, retval));
+	return (sys___fhopen40(l, &ua, retval));
 }
 
 /* virtual memory syscalls */

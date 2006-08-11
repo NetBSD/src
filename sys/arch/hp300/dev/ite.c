@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.69.8.2 2006/05/24 10:56:47 yamt Exp $	*/
+/*	$NetBSD: ite.c,v 1.69.8.3 2006/08/11 15:41:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.69.8.2 2006/05/24 10:56:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.69.8.3 2006/08/11 15:41:33 yamt Exp $");
 
 #include "hil.h"
 
@@ -241,7 +241,7 @@ static int
 itematch(struct device *parent, struct cfdata *match, void *aux)
 {
 
-	return (1);
+	return 1;
 }
 
 static void
@@ -285,6 +285,7 @@ iteattach(struct device *parent, struct device *self, void *aux)
 void
 iteinstallkeymap(void *v)
 {
+
 	ite_km = (struct kbdmap *)v;
 }
 
@@ -296,7 +297,7 @@ iteon(struct ite_data *ip, int flag)
 {
 
 	if ((ip->flags & ITE_ALIVE) == 0)
-		return(ENXIO);
+		return ENXIO;
 
 	/* force ite active, overriding graphics mode */
 	if (flag & 1) {
@@ -308,18 +309,18 @@ iteon(struct ite_data *ip, int flag)
 	if (flag & 2) {
 		ip->flags &= ~ITE_INGRF;
 		if ((ip->flags & ITE_ACTIVE) == 0)
-			return(0);
+			return 0;
 	}
 
 	ip->flags |= ITE_ACTIVE;
 	if (ip->flags & ITE_INGRF)
-		return(0);
+		return 0;
 
 	if (console_kbdops != NULL)
 		(*console_kbdops->enable)(console_kbdops->arg);
 
 	iteinit(ip);
-	return(0);
+	return 0;
 }
 
 static void
@@ -391,7 +392,7 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 
 	if (unit >= ite_cd.cd_ndevs ||
 	    (sc = ite_cd.cd_devs[unit]) == NULL)
-		return (ENXIO);
+		return ENXIO;
 	ip = sc->sc_data;
 
 	if (ip->tty == NULL) {
@@ -400,12 +401,13 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 	} else
 		tp = ip->tty;
 	if ((tp->t_state&(TS_ISOPEN|TS_XCLUDE)) == (TS_ISOPEN|TS_XCLUDE)
-	    && kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
-		return (EBUSY);
+	    && kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag) != 0)
+		return EBUSY;
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		error = iteon(ip, 0);
 		if (error)
-			return (error);
+			return error;
 		first = 1;
 	}
 	tp->t_oproc = itestart;
@@ -427,7 +429,7 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 		tp->t_winsize.ws_col = ip->cols;
 	} else if (first)
 		iteoff(ip, 0);
-	return (error);
+	return error;
 }
 
 /*ARGSUSED*/
@@ -446,7 +448,7 @@ iteclose(dev_t dev, int flag, int mode, struct lwp *l)
 	ttyfree(tp);
 	ip->tty = (struct tty *)0;
 #endif
-	return(0);
+	return 0;
 }
 
 static int
@@ -455,7 +457,7 @@ iteread(dev_t dev, struct uio *uio, int flag)
 	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
 	struct tty *tp = sc->sc_data->tty;
 
-	return ((*tp->t_linesw->l_read)(tp, uio, flag));
+	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
 
 int
@@ -464,7 +466,7 @@ itewrite(dev_t dev, struct uio *uio, int flag)
 	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
 	struct tty *tp = sc->sc_data->tty;
 
-	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
 int
@@ -473,7 +475,7 @@ itepoll(dev_t dev, int events, struct lwp *l)
 	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
 	struct tty *tp = sc->sc_data->tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, l));
+	return (*tp->t_linesw->l_poll)(tp, events, l);
 }
 
 struct tty *
@@ -481,7 +483,7 @@ itetty(dev_t dev)
 {
 	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
 
-	return (sc->sc_data->tty);
+	return sc->sc_data->tty;
 }
 
 int
@@ -494,7 +496,7 @@ iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH)
-		return (error);
+		return error;
 	return ttioctl(tp, cmd, addr, flag, l);
 }
 
@@ -1031,7 +1033,7 @@ itecngetc(dev_t dev)
 	int stat;
 
 	if (console_kbdops == NULL)
-		return (-1);
+		return -1;
 
 	c = (*console_kbdops->getc)(&stat);
 	switch ((stat >> KBD_SSHIFT) & KBD_SMASK) {
@@ -1048,7 +1050,7 @@ itecngetc(dev_t dev)
 		c = 0;
 		break;
 	}
-	return(c);
+	return c;
 }
 
 /* ARGSUSED */

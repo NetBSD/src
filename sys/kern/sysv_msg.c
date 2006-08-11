@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.40.8.3 2006/06/26 12:52:57 yamt Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.40.8.4 2006/08/11 15:45:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.40.8.3 2006/06/26 12:52:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.40.8.4 2006/08/11 15:45:47 yamt Exp $");
 
 #define SYSVMSG
 
@@ -188,7 +188,6 @@ sys___msgctl13(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) cmd;
 		syscallarg(struct msqid_ds *) buf;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct msqid_ds msqbuf;
 	int cmd, error;
 
@@ -200,7 +199,7 @@ sys___msgctl13(struct lwp *l, void *v, register_t *retval)
 			return (error);
 	}
 
-	error = msgctl1(p, SCARG(uap, msqid), cmd,
+	error = msgctl1(l, SCARG(uap, msqid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &msqbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT)
@@ -210,9 +209,9 @@ sys___msgctl13(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-msgctl1(struct proc *p, int msqid, int cmd, struct msqid_ds *msqbuf)
+msgctl1(struct lwp *l, int msqid, int cmd, struct msqid_ds *msqbuf)
 {
-	kauth_cred_t cred = p->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	struct msqid_ds *msqptr;
 	int error = 0, ix;
 
@@ -270,7 +269,8 @@ msgctl1(struct proc *p, int msqid, int cmd, struct msqid_ds *msqbuf)
 	case IPC_SET:
 		if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_M)))
 			return (error);
-		if (msqbuf->msg_qbytes > msqptr->msg_qbytes && kauth_cred_geteuid(cred) != 0)
+		if (msqbuf->msg_qbytes > msqptr->msg_qbytes &&
+		    kauth_cred_geteuid(cred) != 0)
 			return (EPERM);
 		if (msqbuf->msg_qbytes > msginfo.msgmnb) {
 			MSG_PRINTF(("can't increase msg_qbytes beyond %d "
@@ -313,11 +313,10 @@ sys_msgget(struct lwp *l, void *v, register_t *retval)
 		syscallarg(key_t) key;
 		syscallarg(int) msgflg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int msqid, error;
 	int key = SCARG(uap, key);
 	int msgflg = SCARG(uap, msgflg);
-	kauth_cred_t cred = p->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	struct msqid_ds *msqptr = NULL;
 
 	MSG_PRINTF(("msgget(0x%x, 0%o)\n", key, msgflg));
@@ -403,16 +402,16 @@ sys_msgsnd(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) msgflg;
 	} */ *uap = v;
 
-	return msgsnd1(l->l_proc, SCARG(uap, msqid), SCARG(uap, msgp),
+	return msgsnd1(l, SCARG(uap, msqid), SCARG(uap, msgp),
 	    SCARG(uap, msgsz), SCARG(uap, msgflg), sizeof(long), copyin);
 }
 
 int
-msgsnd1(struct proc *p, int msqidr, const char *user_msgp, size_t msgsz,
+msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
     int msgflg, size_t typesz, copyin_t fetch_type)
 {
 	int segs_needed, error, msqid;
-	kauth_cred_t cred = p->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	struct msqid_ds *msqptr;
 	struct __msg *msghdr;
 	short next;
@@ -663,7 +662,7 @@ msgsnd1(struct proc *p, int msqidr, const char *user_msgp, size_t msgsz,
 
 	msqptr->_msg_cbytes += msghdr->msg_ts;
 	msqptr->msg_qnum++;
-	msqptr->msg_lspid = p->p_pid;
+	msqptr->msg_lspid = l->l_proc->p_pid;
 	msqptr->msg_stime = time_second;
 
 	wakeup(msqptr);
@@ -681,17 +680,17 @@ sys_msgrcv(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) msgflg;
 	} */ *uap = v;
 
-	return msgrcv1(l->l_proc, SCARG(uap, msqid), SCARG(uap, msgp),
+	return msgrcv1(l, SCARG(uap, msqid), SCARG(uap, msgp),
 	    SCARG(uap, msgsz), SCARG(uap, msgtyp), SCARG(uap, msgflg),
 	    sizeof(long), copyout, retval);
 }
 
 int
-msgrcv1(struct proc *p, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
+msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
     int msgflg, size_t typesz, copyout_t put_type, register_t *retval)
 {
 	size_t len;
-	kauth_cred_t cred = p->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	struct msqid_ds *msqptr;
 	struct __msg *msghdr;
 	int error, msqid;
@@ -865,7 +864,7 @@ msgrcv1(struct proc *p, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 
 	msqptr->_msg_cbytes -= msghdr->msg_ts;
 	msqptr->msg_qnum--;
-	msqptr->msg_lrpid = p->p_pid;
+	msqptr->msg_lrpid = l->l_proc->p_pid;
 	msqptr->msg_rtime = time_second;
 
 	/*

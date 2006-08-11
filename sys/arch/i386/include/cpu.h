@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.123.2.1 2006/06/26 12:44:53 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.123.2.2 2006/08/11 15:41:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -424,8 +424,8 @@ void x86_bus_space_mallocok(void);
 void	est_init(struct cpu_info *);
 
 /* powernow_k7.c */
-void	pnowk7_probe(struct cpu_info *);
-void	pnowk7_init(struct cpu_info *);
+void	k7_powernow_init(void);
+void	k7_powernow_destroy(void);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.33 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.33.8.1 2006/08/11 15:44:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -124,3 +124,5 @@ void	epdisable(struct ep_softc *);
 
 int	ep_activate(struct device *, enum devact);
 int	ep_detach(struct device *, int);
+
+void	ep_power(int, void *);

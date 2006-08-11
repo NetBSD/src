@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.18.8.1 2006/05/24 10:56:58 yamt Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.18.8.2 2006/08/11 15:42:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.18.8.1 2006/05/24 10:56:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.18.8.2 2006/08/11 15:42:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ svr4_getmcontext(struct lwp *l, svr4_mcontext_t *mc, u_long *flags)
 		mc->mc_pad.frame.vector = frame->f_vector;
 		(void)memcpy(&mc->mc_pad.frame.exframe, &frame->F_u,
 		    (size_t)exframesize[format]);
-		
+
 		frame->f_stackadj += exframesize[format];
 		frame->f_format = frame->f_vector = 0;
 	}
@@ -148,14 +148,14 @@ svr4_setmcontext(struct lwp *l, svr4_mcontext_t *mc, u_long flags)
 	unsigned int format = mc->mc_pad.frame.format;
 	svr4_greg_t *r = mc->gregs;
 	int sz;
-	
-	if ((flags & SVR4_UC_CPU) != 0) {	
+
+	if ((flags & SVR4_UC_CPU) != 0) {
 		/* Validate general register context. */
 		if ((r[SVR4_M68K_PS] & (PSL_MBZ|PSL_IPL|PSL_S)) != 0 ||
 		    format > 0xf || (sz = exframesize[format]) < 0) {
 			return (EINVAL);
 		}
-		
+
 		/* Restore exception frame information. */
 		if (format >= FMT4) {
 			if (frame->f_stackadj == 0) {
@@ -211,7 +211,7 @@ svr4_setmcontext(struct lwp *l, svr4_mcontext_t *mc, u_long flags)
 		m68881_restore(&fpf);
 	}
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -262,7 +262,7 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 #ifdef DEBUG_SVR4
 	printf("sig = %d, sip %p, ucp = %p, handler = %p\n",
 	    sf.sf_signum, sf.sf_sip, sf.sf_ucp, sf.sf_handler);
-#endif  
+#endif
 
 	if(copyout(&sf, sfp, sizeof (sf)) != 0) {
 		/*
@@ -289,26 +289,26 @@ svr4_sys_sysarch(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) op;
 		syscallarg(void *) a1;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	char tmp[MAXHOSTNAMELEN];
 	size_t len;
 	int error, name[2];
 
 	switch (SCARG(uap, op)) {
 	case SVR4_SYSARCH_SETNAME:
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (error);
 		if ((error = copyinstr(SCARG(uap, a1), tmp, sizeof (tmp), &len))
 		    != 0)
-			return (error);
+			return error;
 		name[0] = CTL_KERN;
 		name[1] = KERN_HOSTNAME;
-		return (old_sysctl(&name[0], 2, NULL, NULL, tmp, len, NULL));
+		return old_sysctl(&name[0], 2, NULL, NULL, tmp, len, NULL);
 	default:
 		printf("uninplemented svr4_sysarch(%d), a1 %p\n",
 		    SCARG(uap, op), SCARG(uap, a1));
 		error = EINVAL;
 	}
 
-	return (error);
+	return error;
 }

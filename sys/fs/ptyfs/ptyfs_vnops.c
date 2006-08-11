@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.12.8.2 2006/06/26 12:52:55 yamt Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.12.8.3 2006/08/11 15:45:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.12.8.2 2006/06/26 12:52:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.12.8.3 2006/08/11 15:45:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,8 +153,8 @@ int	ptyfs_pathconf	(void *);
 static int ptyfs_update(struct vnode *, const struct timespec *,
     const struct timespec *, int);
 static int ptyfs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,
-    struct proc *);
-static int ptyfs_chmod(struct vnode *, mode_t, kauth_cred_t, struct proc *);
+    struct lwp *);
+static int ptyfs_chmod(struct vnode *, mode_t, kauth_cred_t, struct lwp *);
 static int atoi(const char *, size_t);
 
 extern const struct cdevsw pts_cdevsw, ptc_cdevsw;
@@ -362,7 +362,6 @@ ptyfs_setattr(void *v)
 	struct vattr *vap = ap->a_vap;
 	kauth_cred_t cred = ap->a_cred;
 	struct lwp *l = ap->a_l;
-	struct proc *p = l->l_proc;
 	int error;
 
 	if (vap->va_size != VNOVAL) {
@@ -382,7 +381,7 @@ ptyfs_setattr(void *v)
 			return EROFS;
 		if (kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid &&
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-					       &p->p_acflag)) != 0)
+		    &l->l_acflag)) != 0)
 			return error;
 		if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0) {
 			if ((ptyfs->ptyfs_flags & (SF_IMMUTABLE | SF_APPEND)) &&
@@ -417,7 +416,7 @@ ptyfs_setattr(void *v)
 			return EROFS;
 		if (ptyfs->ptyfs_type == PTYFSroot)
 			return EPERM;
-		error = ptyfs_chown(vp, vap->va_uid, vap->va_gid, cred, p);
+		error = ptyfs_chown(vp, vap->va_uid, vap->va_gid, cred, l);
 		if (error)
 			return error;
 	}
@@ -430,7 +429,7 @@ ptyfs_setattr(void *v)
 			return EPERM;
 		if (kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid &&
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-					       &p->p_acflag)) &&
+		    &l->l_acflag)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 		    (error = VOP_ACCESS(vp, VWRITE, cred, l)) != 0))
 			return (error);
@@ -455,7 +454,7 @@ ptyfs_setattr(void *v)
 		    (vap->va_mode &
 		    (S_IXUSR|S_IWUSR|S_IXGRP|S_IWGRP|S_IXOTH|S_IWOTH)))
 			return EPERM;
-		error = ptyfs_chmod(vp, vap->va_mode, cred, p);
+		error = ptyfs_chmod(vp, vap->va_mode, cred, l);
 		if (error)
 			return error;
 	}
@@ -468,14 +467,14 @@ ptyfs_setattr(void *v)
  * Inode must be locked before calling.
  */
 static int
-ptyfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct proc *p)
+ptyfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 {
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 	int error;
 
 	if (kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)) != 0)
+	    &l->l_acflag)) != 0)
 		return error;
 	ptyfs->ptyfs_mode &= ~ALLPERMS;
 	ptyfs->ptyfs_mode |= (mode & ALLPERMS);
@@ -488,7 +487,7 @@ ptyfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct proc *p)
  */
 static int
 ptyfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
-    struct proc *p)
+    struct lwp *l)
 {
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 	int		error, ismember = 0;
@@ -505,10 +504,10 @@ ptyfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	 */
 	if ((kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid || uid != ptyfs->ptyfs_uid ||
 	    (gid != ptyfs->ptyfs_gid &&
-	     !(kauth_cred_getegid(cred) == gid ||
-	      (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
+	    !(kauth_cred_getegid(cred) == gid ||
+	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
 	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-				        &p->p_acflag)) != 0))
+	    &l->l_acflag)) != 0))
 		return error;
 
 	ptyfs->ptyfs_gid = gid;

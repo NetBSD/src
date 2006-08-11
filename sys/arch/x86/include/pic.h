@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
+/*	$NetBSD: pic.h,v 1.1.36.1 2006/08/11 15:43:16 yamt Exp $	*/
 
 #ifndef _X86_PIC_H
 #define _X86_PIC_H
@@ -14,6 +14,8 @@ struct cpu_info;
 struct pic {
 	struct device pic_dev;
         int pic_type;
+	int pic_vecbase;
+	int pic_apicid;
 	__cpu_simple_lock_t pic_lock;
         void (*pic_hwmask)(struct pic *, int);
         void (*pic_hwunmask)(struct pic *, int);

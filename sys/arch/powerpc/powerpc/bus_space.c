@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.6 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.6.8.1 2006/08/11 15:42:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.6 2005/12/11 12:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.6.8.1 2006/08/11 15:42:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.6 2005/12/11 12:18:46 christos Exp $
 #define _POWERPC_BUS_SPACE_PRIVATE
 #include <machine/bus.h>
 
-#ifdef PPC_OEA
+#if defined (PPC_OEA) || defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #include <powerpc/oea/bat.h>
 #include <powerpc/oea/pte.h>
 #include <powerpc/oea/sr_601.h>
@@ -617,7 +617,7 @@ memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 
 	size = _BUS_SPACE_STRIDE(t, size);
 
-#ifdef PPC_OEA
+#if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
 	if ((mfpvr() >> 16) != MPC601) {
 		register_t batu = battable[va >> ADDR_SR_SHFT].batu;
 		if (BAT_VALID_P(batu, 0) && BAT_VA_MATCH_P(batu, va) &&
@@ -680,7 +680,7 @@ memio_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 
 	*bpap = bpa;
 	pa = t->pbs_offset + bpa;
-#ifdef PPC_OEA
+#if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
 	if ((mfpvr() >> 16) != MPC601) {
 		register_t batu = battable[pa >> ADDR_SR_SHFT].batu;
 		if (BAT_VALID_P(batu, 0) && BAT_VA_MATCH_P(batu, pa) &&

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.4.2 2006/06/26 12:44:54 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.4.3 2006/08/11 15:42:00 yamt Exp $
 
 INCSDIR= /usr/include/ia64
 
 INCS=	_regset.h acpi_func.h acpi_machdep.h acpica_machdep.h ansi.h \
 	aout_machdep.h asm.h atomic.h bootinfo.h bswap.h cdefs.h \
-	cpu.h cpufunc.h db_machdep.h dig64.h disklabel.h efi.h \
+	cpu.h cpufunc.h dig64.h disklabel.h efi.h \
 	elf_machdep.h endian.h endian_machdep.h float.h fpu.h frame.h \
 	ia64_cpu.h int_const.h int_fmtio.h int_limits.h \
 	int_mwgwtypes.h int_types.h intr.h intrcnt.h limits.h \

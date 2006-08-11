@@ -1,4 +1,4 @@
-/*	$NetBSD: genprom.c,v 1.5 2003/05/08 13:42:17 christos Exp $	 */
+/*	$NetBSD: genprom.c,v 1.5.36.1 2006/08/11 15:42:00 yamt Exp $	 */
 
 /*
  * mainly from netbsd:sys/arch/i386/netboot/genprom.c
@@ -14,6 +14,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define PROM_SIZE 0x10000	/* max */
 

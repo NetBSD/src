@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.57.8.1 2006/05/24 10:57:36 yamt Exp $	*/
+/*	$NetBSD: cons.c,v 1.57.8.2 2006/08/11 15:43:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.57.8.1 2006/05/24 10:57:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.57.8.2 2006/08/11 15:43:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -237,7 +237,8 @@ cnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	 * output from the "virtual" console.
 	 */
 	if (cmd == TIOCCONS && constty != NULL) {
-		error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, (u_short *) NULL);
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, NULL);
 		if (error)
 			return (error);
 		constty = NULL;

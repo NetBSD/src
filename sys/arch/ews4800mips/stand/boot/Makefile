@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2006/01/26 16:52:53 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4.6.1 2006/08/11 15:41:33 yamt Exp $
 
 WARNS		?= 1
 NOMAN		=
@@ -45,13 +45,14 @@ SRCS		+= pdinfo.c vtoc.c
 
 .PHONY: vers.c
 vers.c: version
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE}
 
 SRCS+=	vers.c
 CLEANFILES+= vers.c
 
 TEXTADDR	= 0xa0a00000
-LDFLAGS		= -T ${S}/arch/mips/conf/stand.ldscript -Ttext ${TEXTADDR} \
+LINKFLAGS	= -T ${S}/arch/mips/conf/stand.ldscript -Ttext ${TEXTADDR} \
 		  -e start -N
 COFFLDFLAGS	= -T ${COMMON}/coffboot.ldscript -N
 
@@ -107,16 +108,20 @@ cleanlibdir:
 	-rm -rf lib
 
 ${BINKERNEL_DUMMY_O}: ${BINKERNEL_C}
+	${_MKTARGET_COMPILE}
 	${COMPILE.c} -DKERNEL_SIZE=0 ${BINKERNEL_C} -o ${.TARGET}
 
 ${BINKERNEL_O}: ${BINKERNEL_C}
+	${_MKTARGET_COMPILE}
 	${COMPILE.c} -DKERNEL_SIZE=${BINKERNEL_SIZE} ${BINKERNEL_C} \
 	    -o ${.TARGET}
 
 all realall: ${PROG}.coff ${BOOT_KERNEL}.gz
 
 ${PROG}: ${BINKERNEL_DUMMY_O} ${OBJS} ${LIBS}
-	${LD} ${LDFLAGS} -S -o ${PROG}.elf ${OBJS} ${LIBS} ${BINKERNEL_DUMMY_O}
+	${_MKTARGET_LINK}
+	${LD} ${LINKFLAGS} -S -o ${PROG}.elf ${OBJS} ${LIBS} \
+	    ${BINKERNEL_DUMMY_O}
 	${OBJDUMP} -h ${PROG}.elf
 #	${OBJDUMP} -m mips:4000 -d ${PROG}.elf > ${PROG}.dis
 	mv ${PROG}.elf ${PROG}
@@ -125,11 +130,13 @@ ${PROG}: ${BINKERNEL_DUMMY_O} ${OBJS} ${LIBS}
 .include <bsd.prog.mk>
 
 ${PROG}.coff:	${PROG}
+	${_MKTARGET_CREATE}
 	${ELF2ECOFF} ${PROG} ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
 	
 ${BOOT_KERNEL}.gz: ${BINKERNEL_O} ${OBJS} ${LIBS}
-	${LD} ${LDFLAGS} -o ${BOOT_KERNEL}.elf ${OBJS} ${LIBS} \
+	${_MKTARGET_LINK}
+	${LD} ${LINKFLAGS} -o ${BOOT_KERNEL}.elf ${OBJS} ${LIBS} \
 	    ${BINKERNEL_O}
 	mv ${BOOT_KERNEL}.elf ${BOOT_KERNEL}
 	${OBJDUMP} -h ${BOOT_KERNEL}

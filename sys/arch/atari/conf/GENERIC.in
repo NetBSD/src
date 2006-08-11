@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.60.2.1 2006/04/01 12:06:10 yamt Exp $
+#	$NetBSD: GENERIC.in,v 1.60.2.2 2006/08/11 15:41:19 yamt Exp $
 #
 # Generic atari
 #
@@ -251,6 +251,7 @@ pseudo-device	md		3	# Boot memory disk
 
 #ifndef INSTALL_KERNEL
 pseudo-device	bpfilter		# berkeley packet filters
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	tun			# network tunnel
 pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel

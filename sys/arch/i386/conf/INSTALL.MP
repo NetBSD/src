@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL.MP,v 1.5 2005/12/27 00:46:38 chs Exp $
+#	$NetBSD: INSTALL.MP,v 1.5.8.1 2006/08/11 15:41:53 yamt Exp $
 #
 #	INSTALL.MP -- Install, plus enable Multiprocessor support.
 #	Mostly to let people test-boot MP systems.
@@ -14,7 +14,5 @@ options 	MPDEBUG
 options 	MPVERBOSE
 options 	DEBUG
 options 	MPBIOS		# configure CPUs and APICs using MPBIOS
-#options 	MPACPI		# configure CPUs and APICs using ACPI
-				# (acpi at mainbus must also be enabled)
 
 ioapic*		at mainbus? apid ?

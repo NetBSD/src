@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.37 2006/01/31 17:19:39 elad Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.37.6.1 2006/08/11 15:46:33 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.37 2006/01/31 17:19:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.37.6.1 2006/08/11 15:46:33 yamt Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -146,7 +146,7 @@ gre_input(struct mbuf *m, ...)
 int
 gre_input2(struct mbuf *m, int hlen, u_char proto)
 {
-	struct greip *gip;
+	const struct greip *gip;
 	int s, isr;
 	struct ifqueue *ifq;
 	struct gre_softc *sc;
@@ -165,7 +165,7 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 		if (m == NULL)
 			return (ENOBUFS);
 	}
-	gip = mtod(m, struct greip *);
+	gip = mtod(m, const struct greip *);
 
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
@@ -240,16 +240,8 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 	m_adj(m, hlen);
 
 #if NBPFILTER > 0
-	if (sc->sc_if.if_bpf) {
-		struct mbuf m0;
-
-		m0.m_flags = 0;
-		m0.m_next = m;
-		m0.m_len = 4;
-		m0.m_data = (char *)&af;
-
-		bpf_mtap(sc->sc_if.if_bpf, &m0);
-	}
+	if (sc->sc_if.if_bpf != NULL)
+		bpf_mtap_af(sc->sc_if.if_bpf, af, m);
 #endif /*NBPFILTER > 0*/
 
 	m->m_pkthdr.rcvif = &sc->sc_if;
@@ -295,7 +287,7 @@ gre_mobile_input(struct mbuf *m, ...)
 		return;
 	}
 
-	if (m->m_len < sizeof(*mip)) {
+	if (M_UNWRITABLE(m, sizeof(*mip))) {
 		m = m_pullup(m, sizeof(*mip));
 		if (m == NULL)
 			return;
@@ -338,16 +330,8 @@ gre_mobile_input(struct mbuf *m, ...)
 	ip->ip_sum = in_cksum(m, (ip->ip_hl << 2));
 
 #if NBPFILTER > 0
-	if (sc->sc_if.if_bpf) {
-		struct mbuf m0;
-		u_int af = AF_INET;
-
-		m0.m_next = m;
-		m0.m_len = 4;
-		m0.m_data = (char *)&af;
-
-		bpf_mtap(sc->sc_if.if_bpf, &m0);
-	}
+	if (sc->sc_if.if_bpf != NULL)
+		bpf_mtap_af(sc->sc_if.if_bpf, AF_INET, m);
 #endif /*NBPFILTER > 0*/
 
 	ifq = &ipintrq;
@@ -367,7 +351,7 @@ gre_mobile_input(struct mbuf *m, ...)
 struct gre_softc *
 gre_lookup(struct mbuf *m, u_int8_t proto)
 {
-	struct ip *ip = mtod(m, struct ip *);
+	const struct ip *ip = mtod(m, const struct ip *);
 	struct gre_softc *sc;
 
 	for (sc = LIST_FIRST(&gre_softc_list); sc != NULL;

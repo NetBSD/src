@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.1.36.1 2006/08/11 15:41:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -200,6 +200,15 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 	movl	_C_LABEL(local_apic)+LAPIC_ID,%ecx
 	shrl	$LAPIC_ID_SHIFT,%ecx
 	movq	_C_LABEL(cpu_info)(,%rcx,8),%rdi
+
+	movl	_C_LABEL(cpu_feature),%eax
+	andl	$CPUID_NOX,%eax
+	jz	1f
+	movl	$MSR_EFER,%ecx
+	rdmsr
+	orl	$EFER_NXE,%eax
+	wrmsr
+1:
 
 	movq	CPU_INFO_IDLE_PCB(%rdi),%rsi
 	

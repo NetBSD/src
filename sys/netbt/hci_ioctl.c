@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_ioctl.c,v 1.1.6.2 2006/06/26 12:53:57 yamt Exp $	*/
+/*	$NetBSD: hci_ioctl.c,v 1.1.6.3 2006/08/11 15:46:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.1.6.2 2006/06/26 12:53:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.1.6.3 2006/08/11 15:46:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -132,7 +132,7 @@ hci_dump(void)
 #endif
 
 int
-hci_ioctl(unsigned long cmd, void *data, struct proc *p)
+hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 {
 	struct btreq *btr = data;
 	struct hci_unit *unit;
@@ -221,7 +221,8 @@ hci_ioctl(unsigned long cmd, void *data, struct proc *p)
 		break;
 
 	case SIOCSBTFLAGS:	/* set unit flags (privileged) */
-		err = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		err = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (err)
 			break;
 
@@ -250,7 +251,8 @@ hci_ioctl(unsigned long cmd, void *data, struct proc *p)
 		break;
 
 	case SIOCSBTPOLICY:	/* set unit link policy (privileged) */
-		err = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		err = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (err)
 			break;
 
@@ -260,7 +262,8 @@ hci_ioctl(unsigned long cmd, void *data, struct proc *p)
 		break;
 
 	case SIOCSBTPTYPE:	/* set unit packet types (privileged) */
-		err = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		err = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (err)
 			break;
 
@@ -277,7 +280,8 @@ hci_ioctl(unsigned long cmd, void *data, struct proc *p)
 		break;
 
 	case SIOCZBTSTATS:	/* get & reset unit statistics */
-		err = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		err = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (err)
 			break;
 

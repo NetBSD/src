@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.13.8.2 2006/06/26 12:45:41 yamt Exp $
+	$NetBSD: syscalls.master,v 1.13.8.3 2006/08/11 15:43:19 yamt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -273,7 +273,7 @@
 94	UNIMPL		setdopt
 95	NOARGS		{ int sys_fsync(int fd); }
 96	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
-97	NOARGS		{ int sys_socket(int domain, int type, int protocol); }
+97	NOARGS		{ int compat_30_sys_socket(int domain, int type, int protocol); }
 98	NOARGS		{ int sys_connect(int s, const struct sockaddr *name, \
 			    int namelen); }
 #if defined(COMPAT_43) || !defined(_KERNEL)
@@ -445,11 +445,8 @@
 #endif
 159	UNIMPL
 160	UNIMPL
-#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
-161	NOARGS		{ int sys_getfh(const char *fname, fhandle_t *fhp); }
-#else
-161	EXCL		getfh
-#endif
+161	NOARGS		{ int compat_30_sys_getfh(const char *fname, \
+			    struct compat_30_fhandle *fhp); }
 #if defined(COMPAT_09) || !defined(_KERNEL)
 162	NOARGS		{ int compat_09_sys_getdomainname(char *domainname, \
 			    int len); } ogetdomainname
@@ -756,11 +753,14 @@
 #endif
 296	NOARGS		{ int sys___getcwd(char *bufp, size_t length); }
 297	NOARGS		{ int sys_fchroot(int fd); }
-298	NOARGS		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
-299	STD		{ int aoutm68k_sys_fhstat(const fhandle_t *fhp, \
+298	NOARGS		{ int compat_30_sys_fhopen(const \
+			    struct compat_30_fhandle *fhp, int flags); }
+299	STD		{ int aoutm68k_sys_fhstat(const struct \
+			    compat_30_fhandle *fhp, \
 			    struct aoutm68k_stat *sb); }
 #if defined(COMPAT_20) || !defined(_KERNEL)
-300	NOARGS		{ int compat_20_sys_fhstatfs(const fhandle_t *fhp, \
+300	NOARGS		{ int compat_20_sys_fhstatfs(const struct \
+			    compat_30-fhandle *fhp, \
 			    struct statfs12 *buf); }
 #else
 300	EXCL		compat_20_sys_fhstatfs

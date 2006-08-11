@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.16.2.1 2006/05/24 10:58:40 yamt Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.16.2.2 2006/08/11 15:45:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.16.2.1 2006/05/24 10:58:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.16.2.2 2006/08/11 15:45:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -930,7 +930,7 @@ union_mkwhiteout(um, dvp, cnp, path)
 	}
 
 	/* VOP_LEASE: dvp is locked */
-	VOP_LEASE(dvp, l, l->l_proc->p_cred, LEASE_WRITE);
+	VOP_LEASE(dvp, l, l->l_cred, LEASE_WRITE);
 
 	error = VOP_WHITEOUT(dvp, &cn, CREATE);
 	if (error)
@@ -957,7 +957,7 @@ union_vn_create(vpp, un, l)
 	struct lwp *l;
 {
 	struct vnode *vp;
-	kauth_cred_t cred = l->l_proc->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	struct vattr vat;
 	struct vattr *vap = &vat;
 	int fmode = FFLAGS(O_WRONLY|O_CREAT|O_TRUNC|O_EXCL);
@@ -984,7 +984,7 @@ union_vn_create(vpp, un, l)
 	cn.cn_nameiop = CREATE;
 	cn.cn_flags = (LOCKPARENT|HASBUF|SAVENAME|SAVESTART|ISLASTCN);
 	cn.cn_lwp = l;
-	cn.cn_cred = l->l_proc->p_cred;
+	cn.cn_cred = l->l_cred;
 	cn.cn_nameptr = cn.cn_pnbuf;
 	cn.cn_hash = un->un_hash;
 	cn.cn_consume = 0;

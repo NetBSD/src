@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.22.8.1 2006/05/24 10:57:09 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.22.8.2 2006/08/11 15:42:40 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,11 +36,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22.8.1 2006/05/24 10:57:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22.8.2 2006/08/11 15:42:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/evcnt.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -75,7 +76,21 @@ CFATTACH_DECL(cpu, sizeof(struct device),
 
 int ncpus;
 
-struct cpu_info cpu_info[1];
+struct cpu_info cpu_info[1] = {
+	{
+		/* XXX add more ci_ev_* as we teach 4xx about them */
+		.ci_ev_clock = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,
+		    NULL, "cpu0", "clock"),
+		.ci_ev_statclock = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,
+		    NULL, "cpu0", "stat clock"),
+		.ci_ev_softclock = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,
+		    NULL, "cpu0", "soft clock"),
+		.ci_ev_softnet = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,
+		    NULL, "cpu0", "soft net"),
+		.ci_ev_softserial = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,
+		    NULL, "cpu0", "soft serial"),
+	}
+};
 
 char cpu_model[80];
 

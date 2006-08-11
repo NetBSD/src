@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.30.2.1 2006/04/01 12:06:12 yamt Exp $
+# $NetBSD: INSTALL,v 1.30.2.2 2006/08/11 15:41:33 yamt Exp $
 #
 # INSTALL machine description file
 #
@@ -29,9 +29,11 @@ options 	HP340
 options 	HP345
 options 	HP350
 options 	HP360
+options 	HP362
 options 	HP370
 options 	HP375
 options 	HP380
+options 	HP382
 options 	HP385
 options 	HP400
 options 	HP425

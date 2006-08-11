@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_syscall.c,v 1.10.2.2 2006/03/13 09:06:57 yamt Exp $	*/
+/*	$NetBSD: sunos_syscall.c,v 1.10.2.3 2006/08/11 15:42:01 yamt Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.10.2.2 2006/03/13 09:06:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.10.2.3 2006/08/11 15:42:01 yamt Exp $");
 
 #include "opt_execfmt.h"
 
@@ -177,7 +177,7 @@ sunos_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 	if (code != SUNOS_SYS_sigreturn) {
 		frame->f_regs[SP] += sizeof (int);
 		/*
-		 * remember that we adjusted the SP, 
+		 * remember that we adjusted the SP,
 		 * might have to undo this if the system call
 		 * returns ERESTART.
 		 */
@@ -282,7 +282,7 @@ sunos_syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 	if (code != SUNOS_SYS_sigreturn) {
 		frame->f_regs[SP] += sizeof (int);
 		/*
-		 * remember that we adjusted the SP, 
+		 * remember that we adjusted the SP,
 		 * might have to undo this if the system call
 		 * returns ERESTART.
 		 */

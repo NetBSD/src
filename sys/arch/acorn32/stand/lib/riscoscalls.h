@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.h,v 1.4.8.1 2006/04/11 11:53:25 yamt Exp $	*/
+/*	$NetBSD: riscoscalls.h,v 1.4.8.2 2006/08/11 15:40:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -248,7 +248,9 @@ struct page_info {
 };
 
 extern void osmemory_read_arrangement_table_size(int *size, int *nbpp);
+extern os_error *xosmemory_read_arrangement_table_size(int *size, int *nbpp);
 extern void osmemory_read_arrangement_table(unsigned char *block);
+extern os_error *xosmemory_read_arrangement_table(unsigned char *block);
 extern void osmemory_page_op(int fromto, struct page_info *block, int num_pages);
 #endif
 
@@ -275,6 +277,7 @@ extern os_error *xosmodule_lookup(char const *, int *, int *, void **, void **,
 #endif
 
 #define OSFSControl_AddFS		12
+#define OSFSControl_SelectFS		14
 #define OSFSControl_RemoveFS		16
 #define OSFSControl_Shutdown		23
 
@@ -312,9 +315,19 @@ extern os_error *xosmodule_lookup(char const *, int *, int *, void **, void **,
 #define fileswitch_ATTR_WORLD_LOCKED	(1 << 7)
 
 #ifndef __ASSEMBLER__
+struct fileswitch_dirent {
+	uint32_t	loadaddr;
+	uint32_t	execaddr;
+	uint32_t	length;
+	uint32_t	attr;
+	uint32_t	objtype;
+	char		name[1];	/* Actually variable length */
+};
+
 extern os_error *xosfscontrol_shutdown(void);
 #endif
 
+#define Service_FSRedeclare	0x40
 #define Service_PreReset	0x45
 
 #ifndef __ASSEMBLER__

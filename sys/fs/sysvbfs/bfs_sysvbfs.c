@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs_sysvbfs.c,v 1.1.8.1 2006/05/24 10:58:40 yamt Exp $	*/
+/*	$NetBSD: bfs_sysvbfs.c,v 1.1.8.2 2006/08/11 15:45:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs_sysvbfs.c,v 1.1.8.1 2006/05/24 10:58:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs_sysvbfs.c,v 1.1.8.2 2006/08/11 15:45:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -117,7 +117,8 @@ bc_read(void *self, uint8_t *buf, daddr_t block)
 
 	return TRUE;
  error_exit:
-	printf("%s: block %lld read failed.\n", __FUNCTION__, block);
+	printf("%s: block %lld read failed.\n", __FUNCTION__, 
+	    (long long int)block);
 
 	if (bp != NULL)
 		brelse(bp);

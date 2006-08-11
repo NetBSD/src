@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.106.2.4 2006/06/26 12:52:57 yamt Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.106.2.5 2006/08/11 15:45:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,11 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.106.2.4 2006/06/26 12:52:57 yamt Exp $");
-
-#include "opt_verified_exec.h"
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.106.2.5 2006/08/11 15:45:47 yamt Exp $");
 
 #include "fs_union.h"
+#include "veriexec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,9 +71,9 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.106.2.4 2006/06/26 12:52:57 yamt Exp
 int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct lwp *);
 #endif
 
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 #include <sys/verified_exec.h>
-#endif
+#endif /* NVERIEXEC > 0 */
 
 static int vn_read(struct file *fp, off_t *offset, struct uio *uio,
 	    kauth_cred_t cred, int flags);
@@ -101,18 +100,18 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	struct vnode *vp;
 	struct mount *mp = NULL;	/* XXX: GCC */
 	struct lwp *l = ndp->ni_cnd.cn_lwp;
-	kauth_cred_t cred = l->l_proc->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	struct vattr va;
 	int error;
-#ifdef VERIFIED_EXEC
-	struct veriexec_hash_entry *vhe = NULL;
+#if NVERIEXEC > 0
+	struct veriexec_file_entry *vfe = NULL;
 	char pathbuf[MAXPATHLEN];
 	size_t pathlen;
 	int (*copyfun)(const void *, void *, size_t, size_t *) =
 	    ndp->ni_segflg == UIO_SYSSPACE ? copystr : copyinstr;
-#endif /* VERIFIED_EXEC */
+#endif /* NVERIEXEC > 0 */
 
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 	error = (*copyfun)(ndp->ni_dirp, pathbuf, sizeof(pathbuf), &pathlen);
 	if (error) {
 		if (veriexec_verbose >= 1)
@@ -121,7 +120,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 
 		return (error);
 	}
-#endif /* VERIFIED_EXEC */
+#endif /* NVERIEXEC > 0 */
 
 restart:
 	if (fmode & O_CREAT) {
@@ -133,9 +132,9 @@ restart:
 		if ((error = namei(ndp)) != 0)
 			return (error);
 		if (ndp->ni_vp == NULL) {
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 			/* Lockdown mode: Prevent creation of new files. */
-			if (veriexec_strict >= 3) {
+			if (veriexec_strict >= VERIEXEC_LOCKDOWN) {
 				VOP_ABORTOP(ndp->ni_dvp, &ndp->ni_cnd);
 
 				printf("Veriexec: vn_open: Preventing "
@@ -146,7 +145,7 @@ restart:
 				error = EPERM;
 				goto bad;
 			}
-#endif /* VERIFIED_EXEC */
+#endif /* NVERIEXEC > 0 */
 
 			VATTR_NULL(&va);
 			va.va_type = VREG;
@@ -201,17 +200,12 @@ restart:
 		goto bad;
 	}
 
-#ifdef VERIFIED_EXEC
-	if ((error = VOP_GETATTR(vp, &va, cred, l)) != 0)
-		goto bad;
-#endif
-
 	if ((fmode & O_CREAT) == 0) {
-#ifdef VERIFIED_EXEC
-		if ((error = veriexec_verify(l, vp, &va, pathbuf,
-					     VERIEXEC_FILE, &vhe)) != 0)
+#if NVERIEXEC > 0
+		if ((error = veriexec_verify(l, vp, pathbuf, VERIEXEC_FILE,
+		    &vfe)) != 0)
 			goto bad;
-#endif
+#endif /* NVERIEXEC > 0 */
 
 		if (fmode & FREAD) {
 			if ((error = VOP_ACCESS(vp, VREAD, cred, l)) != 0)
@@ -226,23 +220,20 @@ restart:
 			if ((error = vn_writechk(vp)) != 0 ||
 			    (error = VOP_ACCESS(vp, VWRITE, cred, l)) != 0)
 				goto bad;
-#ifdef VERIFIED_EXEC
-			if (vhe != NULL) {
+#if NVERIEXEC > 0
+			if (vfe != NULL) {
 				veriexec_report("Write access request.",
-						pathbuf, &va, l,
-						REPORT_NOVERBOSE,
-						REPORT_ALARM,
-						REPORT_NOPANIC);
+				    pathbuf, l, REPORT_ALWAYS|REPORT_ALARM); 
 
 				/* IPS mode: Deny writing to monitored files. */
-				if (veriexec_strict >= 2) {
+				if (veriexec_strict >= VERIEXEC_IPS) {
 					error = EPERM;
 					goto bad;
 				} else {
-					vhe->status = FINGERPRINT_NOTEVAL;
+					vfe->status = FINGERPRINT_NOTEVAL;
 				}
 			}
-#endif
+#endif /* NVERIEXEC > 0 */
 		}
 	}
 
@@ -548,7 +539,7 @@ vn_stat(struct vnode *vp, struct stat *sb, struct lwp *l)
 	int error;
 	mode_t mode;
 
-	error = VOP_GETATTR(vp, &va, l->l_proc->p_cred, l);
+	error = VOP_GETATTR(vp, &va, l->l_cred, l);
 	if (error)
 		return (error);
 	/*
@@ -608,7 +599,7 @@ vn_fcntl(struct file *fp, u_int com, void *data, struct lwp *l)
 	struct vnode *vp = ((struct vnode *)fp->f_data);
 	int error;
 
-	error = VOP_FCNTL(vp, com, data, fp->f_flag, l->l_proc->p_cred, l);
+	error = VOP_FCNTL(vp, com, data, fp->f_flag, l->l_cred, l);
 	return (error);
 }
 
@@ -628,7 +619,7 @@ vn_ioctl(struct file *fp, u_long com, void *data, struct lwp *l)
 	case VREG:
 	case VDIR:
 		if (com == FIONREAD) {
-			error = VOP_GETATTR(vp, &vattr, l->l_proc->p_cred, l);
+			error = VOP_GETATTR(vp, &vattr, l->l_cred, l);
 			if (error)
 				return (error);
 			*(int *)data = vattr.va_size - fp->f_offset;
@@ -668,7 +659,7 @@ vn_ioctl(struct file *fp, u_long com, void *data, struct lwp *l)
 	case VCHR:
 	case VBLK:
 		error = VOP_IOCTL(vp, com, data, fp->f_flag,
-		    l->l_proc->p_cred, l);
+		    l->l_cred, l);
 		if (error == 0 && com == TIOCSCTTY) {
 			if (p->p_session->s_ttyvp)
 				vrele(p->p_session->s_ttyvp);

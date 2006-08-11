@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.79.8.1 2006/05/24 10:57:40 yamt Exp $ */
+/*      $NetBSD: ac97.c,v 1.79.8.2 2006/08/11 15:44:10 yamt Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.79.8.1 2006/05/24 10:57:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.79.8.2 2006/08/11 15:44:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,8 @@ struct ac97_source_info;
 static int	ac97_mixer_get_port(struct ac97_codec_if *, mixer_ctrl_t *);
 static int	ac97_mixer_set_port(struct ac97_codec_if *, mixer_ctrl_t *);
 static void	ac97_detach(struct ac97_codec_if *);
+static void	ac97_lock(struct ac97_codec_if *);
+static void	ac97_unlock(struct ac97_codec_if *);
 static int	ac97_query_devinfo(struct ac97_codec_if *, mixer_devinfo_t *);
 static int	ac97_get_portnum_by_name(struct ac97_codec_if *, const char *,
 					 const char *, const char *);
@@ -156,7 +158,7 @@ struct ac97_source_info {
 	int  info_size;
 
 	uint8_t  reg;
-	uint16_t default_value;
+	int32_t	 default_value;
 	uint8_t  bits:3;
 	uint8_t  ofs:4;
 	uint8_t  mute:1;
@@ -173,7 +175,8 @@ struct ac97_source_info {
 		CHECK_3D,
 		CHECK_LINE1,
 		CHECK_LINE2,
-		CHECK_HANDSET
+		CHECK_HANDSET,
+		CHECK_SPDIF
 	} req_feature;
 
 	int  prev;
@@ -322,6 +325,14 @@ static const struct ac97_source_info audio_source_info[] = {
 	  AC97_REG_3D_CONTROL, 0x0000, 4, 0, 0, 1, CHECK_3D
 	},
 
+	/* SPDIF */
+	{ "spdif", NULL, NULL,
+	  AUDIO_MIXER_CLASS, NULL, 0,
+	  0, 0, 0, 0, 0, 0, CHECK_SPDIF},
+	{ "spdif", "enable", NULL,
+	  AUDIO_MIXER_ENUM, WRAP(ac97_on_off),
+	  AC97_REG_EXT_AUDIO_CTRL, -1, 1, 2, 0, 0, CHECK_SPDIF},
+
 	/* Missing features: Simulated Stereo, POP, Loopback mode */
 };
 
@@ -331,7 +342,7 @@ static const struct ac97_source_info modem_source_info[] = {
 	  AUDIO_MIXER_CLASS, },
 	{ AudioCoutputs,	NULL,		NULL,
 	  AUDIO_MIXER_CLASS, },
-	{ AudioCinputs, 	Ac97Nline1,	NULL,
+	{ AudioCinputs,		Ac97Nline1,	NULL,
 	  AUDIO_MIXER_VALUE, WRAP(ac97_volume_mono),
 	  AC97_REG_LINE1_LEVEL, 0x8080, 4, 0, 0, 1, CHECK_LINE1
 	},
@@ -354,7 +365,7 @@ static const struct ac97_source_info modem_source_info[] = {
 #define MODEM_SOURCE_INFO_SIZE \
 		(sizeof(modem_source_info)/sizeof(modem_source_info[0]))
 #define SOURCE_INFO_SIZE(as) ((as)->type == AC97_CODEC_TYPE_MODEM ? \
-	        MODEM_SOURCE_INFO_SIZE : AUDIO_SOURCE_INFO_SIZE)
+		MODEM_SOURCE_INFO_SIZE : AUDIO_SOURCE_INFO_SIZE)
 
 /*
  * Check out http://developer.intel.com/pc-supp/platform/ac97/ for
@@ -384,6 +395,7 @@ struct ac97_softc {
 	uint16_t ext_mid;	/* -> AC97_REG_EXT_MODEM_ID */
 	uint16_t shadow_reg[128];
 
+	int lock_counter;
 	int type;
 
 	/* sysctl */
@@ -404,6 +416,8 @@ static struct ac97_codec_if_vtbl ac97civ = {
 	ac97_set_rate,
 	ac97_set_clock,
 	ac97_detach,
+	ac97_lock,
+	ac97_unlock,
 };
 
 static const struct ac97_codecid {
@@ -836,11 +850,13 @@ ac97_setup_defaults(struct ac97_softc *as)
 
 	for (idx = 0; idx < AUDIO_SOURCE_INFO_SIZE; idx++) {
 		si = &audio_source_info[idx];
-		ac97_write(as, si->reg, si->default_value);
+		if (si->default_value >= 0)
+			ac97_write(as, si->reg, si->default_value);
 	}
 	for (idx = 0; idx < MODEM_SOURCE_INFO_SIZE; idx++) {
 		si = &modem_source_info[idx];
-		ac97_write(as, si->reg, si->default_value);
+		if (si->default_value >= 0)
+			ac97_write(as, si->reg, si->default_value);
 	}
 }
 
@@ -922,6 +938,8 @@ ac97_check_capability(struct ac97_softc *as, int check)
 		return as->ext_id & AC97_EXT_AUDIO_CDAC;
 	case CHECK_LFE:
 		return as->ext_id & AC97_EXT_AUDIO_LDAC;
+	case CHECK_SPDIF:
+		return as->ext_id & AC97_EXT_AUDIO_SPDIF;
 	case CHECK_HEADPHONES:
 		return as->caps & AC97_CAPS_HEADPHONES;
 	case CHECK_TONE:
@@ -1226,6 +1244,10 @@ ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
 				/* Output the same data as DAC to SPDIF output */
 				extstat &= ~AC97_EXT_AUDIO_SPSA_MASK;
 				extstat |= AC97_EXT_AUDIO_SPSA34;
+				ac97_read(as, AC97_REG_SPDIF_CTRL, &val);
+				val = (val & ~AC97_SPDIF_SPSR_MASK)
+				    | AC97_SPDIF_SPSR_48K;
+				ac97_write(as, AC97_REG_SPDIF_CTRL, val);
 			}
 			if (as->ext_id & AC97_EXT_AUDIO_VRA)
 				extstat |= AC97_EXT_AUDIO_VRA;
@@ -1447,6 +1469,24 @@ ac97_detach(struct ac97_codec_if *codec_if)
 	free(as, M_DEVBUF);
 }
 
+static void
+ac97_lock(struct ac97_codec_if *codec_if)
+{
+	struct ac97_softc *as;
+
+	as = (struct ac97_softc *)codec_if;
+	as->lock_counter++;
+}
+
+static void
+ac97_unlock(struct ac97_codec_if *codec_if)
+{
+	struct ac97_softc *as;
+
+	as = (struct ac97_softc *)codec_if;
+	as->lock_counter--;
+}
+
 static int
 ac97_query_devinfo(struct ac97_codec_if *codec_if, mixer_devinfo_t *dip)
 {
@@ -1494,14 +1534,21 @@ ac97_mixer_set_port(struct ac97_codec_if *codec_if, mixer_ctrl_t *cp)
 	uint16_t mask;
 	uint16_t val, newval;
 	int error;
+	boolean_t spdif;
 
 	as = (struct ac97_softc *)codec_if;
-	si = &as->source_info[cp->dev];
 	if (cp->dev < 0 || cp->dev >= as->num_source_info)
 		return EINVAL;
+	si = &as->source_info[cp->dev];
 
-	if (cp->type != si->type)
+	if (cp->type == AUDIO_MIXER_CLASS || cp->type != si->type)
 		return EINVAL;
+	spdif = si->req_feature == CHECK_SPDIF && si->reg == AC97_REG_EXT_AUDIO_CTRL;
+	if (spdif && as->lock_counter >= 0) {
+		/* When the value of lock_counter is the default 0,
+		 * it is not allowed to change the SPDIF mode. */
+		return EBUSY;
+	}
 
 	ac97_read(as, si->reg, &val);
 
@@ -1583,6 +1630,10 @@ ac97_mixer_set_port(struct ac97_codec_if *codec_if, mixer_ctrl_t *cp)
 	if (error)
 		return error;
 
+	if (spdif && as->host_if->spdif_event != NULL) {
+		DPRINTF(("%s: call spdif_event(%d)\n", __func__, cp->un.ord));
+		as->host_if->spdif_event(as->host_if->arg, cp->un.ord);
+	}
 	return 0;
 }
 

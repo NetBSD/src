@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13.2.1 2006/05/24 10:56:47 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13.2.2 2006/08/11 15:41:26 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.2.1 2006/05/24 10:56:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.2.2 2006/08/11 15:41:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -101,8 +101,8 @@ device_register(struct device *dev, void *aux)
 		KASSERT(pn != NULL);
 
 		if (prop_dictionary_set(device_properties(dev),
-					"frequency", pn) == FALSE) {
-			printf("WARNING: unable to set frequency "
+					"clock-frequency", pn) == FALSE) {
+			printf("WARNING: unable to set clock-frequency "
 			    "property for %s\n", dev->dv_xname);
 		}
 		prop_object_release(pn);

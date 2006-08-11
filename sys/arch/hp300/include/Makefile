@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.21 2005/12/11 12:17:19 christos Exp $
+#	$NetBSD: Makefile,v 1.21.8.1 2006/08/11 15:41:43 yamt Exp $
 
 INCSDIR= /usr/include/hp300
 
-INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
+INCS=	ansi.h aout_machdep.h asm.h \
 	bswap.h bus.h \
 	cdefs.h cpu.h \
-	db_machdep.h disklabel.h \
+	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h frame.h \
 	hp300spu.h hpux_machdep.h \

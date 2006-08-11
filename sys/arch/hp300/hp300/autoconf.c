@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.77.2.1 2006/04/01 12:06:13 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.77.2.2 2006/08/11 15:41:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77.2.1 2006/04/01 12:06:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77.2.2 2006/08/11 15:41:33 yamt Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -190,7 +190,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77.2.1 2006/04/01 12:06:13 yamt Exp $
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 
+#include <hp300/dev/intioreg.h>
 #include <hp300/dev/dmavar.h>
+#include <hp300/dev/frodoreg.h>
 #include <hp300/dev/grfreg.h>
 #include <hp300/dev/hilreg.h>
 #include <hp300/dev/hilioctl.h>
@@ -301,10 +303,10 @@ mainbusmatch(struct device *parent, struct cfdata *match, void *aux)
 
 	/* Allow only one instance. */
 	if (mainbus_matched)
-		return (0);
+		return 0;
 
 	mainbus_matched = 1;
-	return (1);
+	return 1;
 }
 
 static void
@@ -324,7 +326,7 @@ mainbussearch(struct device *parent, struct cfdata *cf,
 
 	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, NULL);
-	return (0);
+	return 0;
 }
 
 /*
@@ -751,7 +753,7 @@ dev_data_lookup(struct device *dev)
 
 	for (dd = dev_data_list.lh_first; dd != NULL; dd = dd->dd_list.le_next)
 		if (dd->dd_dev == dev)
-			return (dd);
+			return dd;
 
 	panic("dev_data_lookup");
 }
@@ -818,7 +820,7 @@ hp300_cninit(void)
 	 * Look for serial consoles first.
 	 */
 #if NCOM_FRODO > 0
-	if (!com_frodo_cnattach(bst, 0x1c020, -1))
+	if (!com_frodo_cnattach(bst, FRODO_BASE + FRODO_APCI_OFFSET(1), -1))
 		return;
 #endif
 #if NCOM_DIO > 0
@@ -836,19 +838,19 @@ hp300_cninit(void)
 	 * Look for internal framebuffers.
 	 */
 #if NDVBOX > 0
-	if (!dvboxcnattach(bst, 0x160000,-1))
+	if (!dvboxcnattach(bst, FB_BASE,-1))
 		goto find_kbd;
 #endif
 #if NGBOX > 0
-	if (!gboxcnattach(bst, 0x160000,-1))
+	if (!gboxcnattach(bst, FB_BASE,-1))
 		goto find_kbd;
 #endif
 #if NRBOX > 0
-	if (!rboxcnattach(bst, 0x160000,-1))
+	if (!rboxcnattach(bst, FB_BASE,-1))
 		goto find_kbd;
 #endif
 #if NTOPCAT > 0
-	if (!topcatcnattach(bst, 0x160000,-1))
+	if (!topcatcnattach(bst, FB_BASE,-1))
 		goto find_kbd;
 #endif
 #endif	/* CONSCODE */
@@ -880,11 +882,11 @@ hp300_cninit(void)
 find_kbd:
 
 #if NDNKBD > 0
-	dnkbdcnattach(bst, 0x1c000)
+	dnkbdcnattach(bst, FRODO_BASE + FRODO_APCI_OFFSET(0))
 #endif
 
 #if NHIL > 0
-	hilkbdcnattach(bst, 0x28000);
+	hilkbdcnattach(bst, HIL_BASE);
 #endif
 #endif	/* NITE */
 }
@@ -900,14 +902,14 @@ dio_scan(int (*func)(bus_space_tag_t, bus_addr_t, int))
 		if (DIO_INHOLE(scode) || ((scode == 7) && internalhpib))
 			continue;
 		if (!dio_scode_probe(scode, func))
-			return (0);
+			return 0;
 	}
 #else
 		if (!dio_scode_probe(CONSCODE, func))
-			return (0);
+			return 0;
 #endif
 
-	return (1);
+	return 1;
 }
 
 static int
@@ -924,14 +926,14 @@ dio_scode_probe(int scode,
 	pa = dio_scodetopa(scode);
 	va = iomap(pa, PAGE_SIZE);
 	if (va == 0)
-		return (1);
+		return 1;
 	if (badaddr(va)) {
 		iounmap(va, PAGE_SIZE);
-		return (1);
+		return 1;
 	}
 	iounmap(va, PAGE_SIZE);
 
-	return ((*func)(bst, (bus_addr_t)pa, scode));
+	return (*func)(bst, (bus_addr_t)pa, scode);
 }
 
 
@@ -972,10 +974,10 @@ iomap(caddr_t pa, int size)
 	    EX_FAST | EX_NOWAIT | (extio_ex_malloc_safe ? EX_MALLOCOK : 0),
 	    &kva);
 	if (error)
-		return (0);
+		return 0;
 
 	physaccess((caddr_t) kva, pa, size, PG_RW|PG_CI);
-	return ((caddr_t) kva);
+	return (caddr_t)kva;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_bitbang.c,v 1.2.8.1 2006/03/13 09:07:20 yamt Exp $	*/
+/*	$NetBSD: i2c_bitbang.c,v 1.2.8.2 2006/08/11 15:44:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -88,16 +88,39 @@ int
 i2c_bitbang_initiate_xfer(void *v, i2c_addr_t addr, int flags,
     i2c_bitbang_ops_t ops)
 {
-	int i2caddr;
 
-	/* XXX Only support 7-bit addressing for now. */
-	if ((addr & 0x78) == 0x78)
-		return (EINVAL);
+	if (addr < 0x80) {
+		uint8_t i2caddr;
 
-	i2caddr = (addr << 1) | ((flags & I2C_F_READ) ? 1 : 0);
+		/* disallow the 10-bit address prefix */
+		if ((addr & 0x78) == 0x78)
+			return EINVAL;
+		i2caddr = (addr << 1) | ((flags & I2C_F_READ) ? 1 : 0);
+		(void) i2c_bitbang_send_start(v, flags, ops);
 
-	(void) i2c_bitbang_send_start(v, flags, ops);
-	return (i2c_bitbang_write_byte(v, i2caddr, flags & ~I2C_F_STOP, ops));
+		return (i2c_bitbang_write_byte(v, i2caddr,
+			    flags & ~I2C_F_STOP, ops));
+
+	} else if (addr < 0x400) {
+		uint16_t	i2caddr;
+		int		rv;
+
+		i2caddr = (addr << 1) | ((flags & I2C_F_READ) ? 1 : 0) |
+		    0xf000;
+
+		(void) i2c_bitbang_send_start(v, flags, ops);
+		rv = i2c_bitbang_write_byte(v, i2caddr >> 8,
+		    flags & ~I2C_F_STOP, ops);
+		/* did a slave ack the 10-bit prefix? */
+		if (rv != 0)
+			return rv;
+
+		/* send the lower 7-bits (+ read/write mode) */
+		return (i2c_bitbang_write_byte(v, i2caddr & 0xff,
+			    flags & ~I2C_F_STOP, ops));
+
+	} else
+		return EINVAL;
 }
 
 int

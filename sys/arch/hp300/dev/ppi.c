@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.32.2.1 2006/04/01 12:06:13 yamt Exp $	*/
+/*	$NetBSD: ppi.c,v 1.32.2.2 2006/08/11 15:41:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.32.2.1 2006/04/01 12:06:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.32.2.2 2006/08/11 15:41:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ ppimatch(struct device *parent, struct cfdata *match, void *aux)
 	 * device by mistake.
 	 */
 	if (ha->ha_id & 0x200)
-		return (0);
+		return 0;
 
 	/*
 	 * To prevent matching all unused slots on the bus, we
@@ -164,9 +164,9 @@ ppimatch(struct device *parent, struct cfdata *match, void *aux)
 	 */
 	if (match->hpibbuscf_slave == HPIBBUSCF_SLAVE_DEFAULT ||
 	    match->hpibbuscf_punit == HPIBBUSCF_PUNIT_DEFAULT)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 static void
@@ -207,7 +207,7 @@ ppiopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (unit >= ppi_cd.cd_ndevs ||
 	    (sc = ppi_cd.cd_devs[unit]) == NULL ||
 	    (sc->sc_flags & PPIF_ALIVE) == 0)
-		return (ENXIO);
+		return ENXIO;
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
@@ -215,13 +215,13 @@ ppiopen(dev_t dev, int flags, int fmt, struct lwp *l)
 		       dev, flags, sc->sc_flags);
 #endif
 	if (sc->sc_flags & PPIF_OPEN)
-		return (EBUSY);
+		return EBUSY;
 	sc->sc_flags |= PPIF_OPEN;
 	sc->sc_burst = PPI_BURST;
 	sc->sc_timo = ppimstohz(PPI_TIMO);
 	sc->sc_delay = ppimstohz(PPI_DELAY);
 	sc->sc_sec = -1;
-	return(0);
+	return 0;
 }
 
 static int
@@ -236,7 +236,7 @@ ppiclose(dev_t dev, int flags, int fmt, struct lwp *l)
 		       dev, flags, sc->sc_flags);
 #endif
 	sc->sc_flags &= ~PPIF_OPEN;
-	return(0);
+	return 0;
 }
 
 static void
@@ -273,7 +273,7 @@ ppiread(dev_t dev, struct uio *uio, int flags)
 	if (ppidebug & PDB_FOLLOW)
 		printf("ppiread(%x, %p)\n", dev, uio);
 #endif
-	return (ppirw(dev, uio));
+	return ppirw(dev, uio);
 }
 
 static int
@@ -284,7 +284,7 @@ ppiwrite(dev_t dev, struct uio *uio, int flags)
 	if (ppidebug & PDB_FOLLOW)
 		printf("ppiwrite(%x, %p)\n", dev, uio);
 #endif
-	return (ppirw(dev, uio));
+	return ppirw(dev, uio);
 }
 
 static int
@@ -299,7 +299,7 @@ ppirw(dev_t dev, struct uio *uio)
 	char *buf;
 
 	if (uio->uio_resid == 0)
-		return(0);
+		return 0;
 
 	ctlr = device_unit(device_parent(&sc->sc_dev));
 	slave = sc->sc_slave;
@@ -442,7 +442,7 @@ again:
 	if (ppidebug & (PDB_FOLLOW|PDB_IO))
 		printf("ppirw: return %d, resid %d\n", error, uio->uio_resid);
 #endif
-	return (error);
+	return error;
 }
 
 static int
@@ -465,7 +465,7 @@ ppiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		upp = (struct ppiparam *)data;
 		if (upp->burst < PPI_BURST_MIN || upp->burst > PPI_BURST_MAX ||
 		    upp->delay < PPI_DELAY_MIN || upp->delay > PPI_DELAY_MAX)
-			return(EINVAL);
+			return EINVAL;
 		pp->burst = upp->burst;
 		pp->timo = ppimstohz(upp->timo);
 		pp->delay = ppimstohz(upp->delay);
@@ -474,9 +474,9 @@ ppiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		sc->sc_sec = *(int *)data;
 		break;
 	default:
-		return(EINVAL);
+		return EINVAL;
 	}
-	return (error);
+	return error;
 }
 
 static int
@@ -487,7 +487,7 @@ ppihztoms(int h)
 
 	if (m > 0)
 		m = m * 1000 / hz;
-	return(m);
+	return m;
 }
 
 static int
@@ -501,5 +501,5 @@ ppimstohz(int m)
 		if (h == 0)
 			h = 1000 / hz;
 	}
-	return(h);
+	return h;
 }

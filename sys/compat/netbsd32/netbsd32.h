@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.49.2.5 2006/06/26 12:46:18 yamt Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.49.2.6 2006/08/11 15:43:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -165,6 +165,7 @@ struct netbsd32_itimerspec {
 typedef netbsd32_pointer_t netbsd32_fidp_t;
 
 typedef netbsd32_pointer_t netbsd32_fhandlep_t;
+typedef netbsd32_pointer_t netbsd32_compat_30_fhandlep_t;
 
 typedef netbsd32_pointer_t netbsd32_statfsp_t;
 struct netbsd32_statfs {

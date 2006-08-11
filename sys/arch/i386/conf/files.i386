@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.282.2.4 2006/06/26 12:44:39 yamt Exp $
+#	$NetBSD: files.i386,v 1.282.2.5 2006/08/11 15:41:53 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -9,13 +9,6 @@ maxpartitions 8
 maxusers 2 16 128
 
 defparam opt_kernbase.h	KERNBASE
-
-# APM options
-defflag	opt_apm.h	APM_DISABLE APM_FORCE_64K_SEGMENTS APM_NO_IDLE
-			APM_NO_STANDBY APM_V10_ONLY APM_NO_V12 APMDEBUG
-			APM_POWER_PRINT APM_ALLOW_BOGUS_SEGMENTS
-			APM_USE_KVM86
-defparam opt_apm.h	APMDEBUG_VALUE APM_DISABLE_INTERRUPTS
 
 # Processor type options.
 defflag	opt_cputype.h	I386_CPU I486_CPU I586_CPU I686_CPU
@@ -335,11 +328,12 @@ include "dev/gpib/files.gpib"
 # Other mainbus-attached devices
 #
 
+include "dev/apm/files.apm"
+
 # Advanced Power Management support (APM)
-device	apm: bioscall
-attach	apm at apmbus
-file	arch/i386/i386/apm.c		apm needs-count
-file	arch/i386/i386/apmcall.S	apm
+attach	apm at apmbus with apmbios: bioscall
+file	arch/i386/i386/apmbios.c	apmbios	needs-flag
+file	arch/i386/i386/apmcall.S	apmbios
 
 # CPUS
 
@@ -485,20 +479,20 @@ file	arch/i386/acpi/acpi_wakeup.c	acpi
 
 # Toshiba VALD 
 device	vald
-attach	vald at acpi with vald_acpi
+attach	vald at acpinodebus with vald_acpi
 file	arch/i386/acpi/vald_acpi.c		vald_acpi
 
 # Sony SPIC (jog dial etc.)
-attach	spic at acpi with spic_acpi
+attach	spic at acpinodebus with spic_acpi
 file	arch/i386/acpi/spic_acpi.c		spic_acpi
 
 # Sony Misc (brightness etc.)
 device	sony
-attach	sony at acpi with sony_acpi
+attach	sony at acpinodebus with sony_acpi
 file	arch/i386/acpi/sony_acpi.c		sony_acpi
 
 # Numeric Processing Extension; Math Co-processor
-attach	npx at acpi with npx_acpi
+attach	npx at acpinodebus with npx_acpi
 file	arch/i386/acpi/npx_acpi.c		npx_acpi
 
 device	vesabios {}
@@ -508,7 +502,7 @@ defflag	opt_vesabios.h	VESABIOSVERBOSE
 
 include	"dev/rasops/files.rasops"
 
-device vesafb: wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash
+device vesafb: wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash, bioscall
 attach vesafb at vesabios
 file	arch/i386/bios/vesafb.c		vesafb needs-flag
 defparam opt_vesafb.h	VESAFB_WIDTH VESAFB_HEIGHT VESAFB_DEPTH

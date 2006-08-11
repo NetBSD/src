@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.140.6.2 2006/05/24 10:58:40 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.140.6.3 2006/08/11 15:45:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.140.6.2 2006/05/24 10:58:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.140.6.3 2006/08/11 15:45:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -951,10 +951,13 @@ restart:
  * a file descriptor for the process that refers to it.
  */
 int
-falloc(struct proc *p, struct file **resultfp, int *resultfd)
+falloc(struct lwp *l, struct file **resultfp, int *resultfd)
 {
 	struct file	*fp, *fq;
+	struct proc	*p;
 	int		error, i;
+
+	p = l->l_proc;
 
  restart:
 	if ((error = fdalloc(p, 0, &i)) != 0) {
@@ -995,7 +998,7 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 	p->p_fd->fd_ofiles[i] = fp;
 	simple_lock_init(&fp->f_slock);
 	fp->f_count = 1;
-	fp->f_cred = p->p_cred;
+	fp->f_cred = l->l_cred;
 	kauth_cred_hold(fp->f_cred);
 	if (resultfp) {
 		fp->f_usecount = 1;
@@ -1776,7 +1779,7 @@ fdcheckstd(l)
 		snprintf(which, sizeof(which), ",%d", i);
 		strlcat(closed, which, sizeof(closed));
 		if (devnullfp == NULL) {
-			if ((error = falloc(p, &fp, &fd)) != 0)
+			if ((error = falloc(l, &fp, &fd)) != 0)
 				return (error);
 			NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/null",
 			    l);

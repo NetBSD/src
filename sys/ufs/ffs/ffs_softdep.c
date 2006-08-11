@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.73.8.2 2006/06/26 12:54:49 yamt Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.73.8.3 2006/08/11 15:47:36 yamt Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.73.8.2 2006/06/26 12:54:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.73.8.3 2006/08/11 15:47:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -923,7 +923,7 @@ softdep_flushworklist(oldmnt, countp, l)
 	while ((count = softdep_process_worklist(oldmnt)) > 0) {
 		*countp += count;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_FSYNC(devvp, p->p_cred, FSYNC_WAIT, 0, 0, l);
+		error = VOP_FSYNC(devvp, l->l_cred, FSYNC_WAIT, 0, 0, l);
 		VOP_UNLOCK(devvp, 0);
 		if (error)
 			break;
@@ -3314,7 +3314,7 @@ handle_workitem_remove(dirrem)
 		panic("handle_workitem_remove: bad dir delta");
 	inodedep->id_nlinkdelta = ip->i_nlink - ip->i_ffs_effnlink;
 	FREE_LOCK(&lk);
-	if ((error = ffs_truncate(vp, (off_t)0, 0, l->l_proc->p_cred, l)) != 0)
+	if ((error = ffs_truncate(vp, (off_t)0, 0, l->l_cred, l)) != 0)
 		softdep_error("handle_workitem_remove: truncate", error);
 	/*
 	 * Rename a directory to a new parent. Since, we are both deleting
@@ -4763,7 +4763,7 @@ softdep_fsync(vp, f)
 				return (error);
 			}
 			if ((pagedep->pd_state & NEWBLOCK) &&
-			    (error = VOP_FSYNC(pvp, lp->l_proc->p_cred,
+			    (error = VOP_FSYNC(pvp, lp->l_cred,
 			    FSYNC_WAIT, 0, 0, lp))) {
 				vput(pvp);
 				return (error);
@@ -4773,7 +4773,7 @@ softdep_fsync(vp, f)
 		 * Flush directory page containing the inode's name.
 		 */
 		error = bread(pvp, lbn, blksize(fs, VTOI(pvp), lbn),
-		    lp->l_proc->p_cred, &bp);
+		    lp->l_cred, &bp);
 		if (error == 0)
 			error = VOP_BWRITE(bp);
 		vput(pvp);
@@ -4791,7 +4791,7 @@ softdep_fsync(vp, f)
 		 */
 		l = 0;
 		VOP_IOCTL(ip->i_devvp, DIOCCACHESYNC, &l, FWRITE,
-		    lp->l_proc->p_cred, lp);
+		    lp->l_cred, lp);
 	}
 	return (0);
 }
@@ -5317,9 +5317,9 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 			ipflag = vn_setrecurse(pvp);	/* XXX */
 			if ((error = VFS_VGET(mp, inum, &vp)) != 0)
 				break;
-			if ((error = VOP_FSYNC(vp, l->l_proc->p_cred,
+			if ((error = VOP_FSYNC(vp, l->l_cred,
 					       0, 0, 0, l)) ||
-			    (error = VOP_FSYNC(vp, l->l_proc->p_cred,
+			    (error = VOP_FSYNC(vp, l->l_cred,
 					       0, 0, 0, l))) {
 				vput(vp);
 				break;
@@ -5512,7 +5512,7 @@ clear_remove(l)
 				vn_finished_write(mp, 0);
 				return;
 			}
-			if ((error = VOP_FSYNC(vp, l->l_proc->p_cred, 0, 0, 0, l)))
+			if ((error = VOP_FSYNC(vp, l->l_cred, 0, 0, 0, l)))
 				softdep_error("clear_remove: fsync", error);
 			drain_output(vp, 0);
 			vput(vp);
@@ -5586,11 +5586,11 @@ clear_inodedeps(l)
 			return;
 		}
 		if (ino == lastino) {
-			if ((error = VOP_FSYNC(vp, l->l_proc->p_cred, FSYNC_WAIT,
+			if ((error = VOP_FSYNC(vp, l->l_cred, FSYNC_WAIT,
 				    0, 0, l)))
 				softdep_error("clear_inodedeps: fsync1", error);
 		} else {
-			if ((error = VOP_FSYNC(vp, l->l_proc->p_cred, 0, 0, 0, l)))
+			if ((error = VOP_FSYNC(vp, l->l_cred, 0, 0, 0, l)))
 				softdep_error("clear_inodedeps: fsync2", error);
 			drain_output(vp, 0);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.68.8.2 2006/05/24 10:57:00 yamt Exp $ */
+/*	$NetBSD: scn.c,v 1.68.8.3 2006/08/11 15:42:24 yamt Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.68.8.2 2006/05/24 10:57:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.68.8.3 2006/08/11 15:42:24 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1119,8 +1119,8 @@ scnopen(dev_t dev, int flag, int mode, struct lwp *l)
 			tp->t_state &= ~TS_CARR_ON;
 	} else {
 		if (tp->t_state & TS_XCLUDE &&
-		    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
-				      &l->l_proc->p_acflag) != 0) {
+		    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+		    &l->l_acflag) != 0) {
 			splx(s);
 			return (EBUSY);
 		} else {
@@ -1736,9 +1736,8 @@ scnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case TIOCSFLAGS:{
 			int     userbits, driverbits = 0;
 
-			error = kauth_authorize_generic(l->l_proc->p_cred,
-						  KAUTH_GENERIC_ISSUSER,
-						  &l->l_proc->p_acflag);
+			error = kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 			if (error != 0)
 				return (EPERM);
 

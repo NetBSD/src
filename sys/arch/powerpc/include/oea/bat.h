@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.7 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: bat.h,v 1.7.8.1 2006/08/11 15:42:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -200,7 +200,10 @@ struct bat {
 void oea_batinit(paddr_t, ...);
 void oea_iobat_add(paddr_t, register_t);
 void oea_iobat_remove(paddr_t);
+
+#if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
 extern struct bat battable[];
+#endif /* PPC_OEA */
 #endif
 #endif
 

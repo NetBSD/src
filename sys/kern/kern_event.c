@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.25.8.2 2006/06/26 12:52:56 yamt Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.25.8.3 2006/08/11 15:45:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.25.8.2 2006/06/26 12:52:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.25.8.3 2006/08/11 15:45:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -359,7 +359,11 @@ filt_kqueue(struct knote *kn, long hint)
 static int
 filt_procattach(struct knote *kn)
 {
-	struct proc *p;
+	struct proc *p, *curp;
+	struct lwp *curl;
+
+	curl = curlwp;
+	curp = curl->l_proc;
 
 	p = pfind(kn->kn_id);
 	if (p == NULL)
@@ -369,10 +373,9 @@ filt_procattach(struct knote *kn)
 	 * Fail if it's not owned by you, or the last exec gave us
 	 * setuid/setgid privs (unless you're root).
 	 */
-	if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curproc->p_cred) ||
-		(p->p_flag & P_SUGID))
-	    && kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
-				 &curproc->p_acflag) != 0)
+	if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curl->l_cred) ||
+	    (p->p_flag & P_SUGID)) && kauth_authorize_generic(curl->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &curl->l_acflag) != 0)
 		return (EACCES);
 
 	kn->kn_ptr.p_proc = p;
@@ -604,12 +607,10 @@ sys_kqueue(struct lwp *l, void *v, register_t *retval)
 	struct filedesc	*fdp;
 	struct kqueue	*kq;
 	struct file	*fp;
-	struct proc	*p;
 	int		fd, error;
 
-	p = l->l_proc;
-	fdp = p->p_fd;
-	error = falloc(p, &fp, &fd);	/* setup a new file descriptor */
+	fdp = l->l_proc->p_fd;
+	error = falloc(l, &fp, &fd);	/* setup a new file descriptor */
 	if (error)
 		return (error);
 	fp->f_flag = FREAD | FWRITE;
@@ -907,7 +908,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 	struct proc	*p = l->l_proc;
 	struct kqueue	*kq;
 	struct kevent	*kevp;
-	struct timeval	atv;
+	struct timeval	atv, sleeptv;
 	struct knote	*kn, *marker=NULL;
 	size_t		count, nkev, nevents;
 	int		s, timeout, error;
@@ -920,13 +921,13 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 
 	if (tsp) {				/* timeout supplied */
 		TIMESPEC_TO_TIMEVAL(&atv, tsp);
-		if (itimerfix(&atv)) {
+		if (inittimeleft(&atv, &sleeptv) == -1) {
 			error = EINVAL;
 			goto done;
 		}
 		timeout = tvtohz(&atv);
 		if (timeout <= 0)
-			timeout = -1;		/* do poll */
+			timeout = -1;           /* do poll */
 	} else {
 		/* no timeout, wait forever */
 		timeout = 0;
@@ -938,13 +939,8 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 	goto start;
 
  retry:
-	if (tsp) {
-		/*
-		 * We have to recalculate the timeout on every retry.
-		 */
-		timeout = hzto(&atv);
-		if (timeout <= 0)
-			goto done;
+	if (tsp && (timeout = gettimeleft(&atv, &sleeptv)) <= 0) {
+		goto done;
 	}
 
  start:

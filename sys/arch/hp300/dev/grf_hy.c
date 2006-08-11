@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.26.8.2 2006/06/26 12:44:23 yamt Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.26.8.3 2006/08/11 15:41:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.26.8.2 2006/06/26 12:44:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.26.8.3 2006/08/11 15:41:33 yamt Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -200,9 +200,9 @@ hyper_dio_match(struct device *parent, struct cfdata *match, void *aux)
 
 	if (da->da_id == DIO_DEVICE_ID_FRAMEBUFFER &&
 	    da->da_secid == DIO_DEVICE_SECID_HYPERION)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -210,18 +210,20 @@ hyper_dio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct grfdev_softc *sc = (struct grfdev_softc *)self;
 	struct dio_attach_args *da = aux;
+	bus_space_handle_t bsh;
 	caddr_t grf;
 
 	sc->sc_scode = da->da_scode;
 	if (sc->sc_scode == hyperconscode)
 		grf = hyperconaddr;
 	else {
-		grf = iomap(dio_scodetopa(sc->sc_scode), da->da_size);
-		if (grf == 0) {
+		if (bus_space_map(da->da_bst, da->da_addr, da->da_size,
+		    0, &bsh)) {
 			printf("%s: can't map framebuffer\n",
 			    sc->sc_dev.dv_xname);
 			return;
 		}
+		grf = bus_space_vaddr(da->da_bst, bsh);
 	}
 
 	sc->sc_isconsole = (sc->sc_scode == hyperconscode);
@@ -279,7 +281,7 @@ hy_init(struct grf_data *gp, int scode, caddr_t addr)
 		gi->gd_planes = hy->num_planes;
 		gi->gd_colors = 1 << gi->gd_planes;
 	}
-	return(1);
+	return 1;
 }
 
 /*
@@ -351,7 +353,7 @@ hy_mode(struct grf_data *gp, int cmd, caddr_t data)
 		error = EINVAL;
 		break;
 	}
-	return(error);
+	return error;
 }
 
 #if NITE > 0
@@ -761,24 +763,21 @@ hypercnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	int size;
 
 	if (bus_space_map(bst, addr, PAGE_SIZE, 0, &bsh))
-		return (1);
+		return 1;
 	va = bus_space_vaddr(bst, bsh);
 	grf = (struct grfreg *)va;
 
 	if (badaddr(va) ||
 	    (grf->gr_id != GRFHWID) || (grf->gr_id2 != GID_HYPERION)) {
 		bus_space_unmap(bst, bsh, PAGE_SIZE);
-		return (1);
+		return 1;
 	}
 
-	if (DIO_ISDIOII(scode))
-		size = DIOII_SIZE(va);
-	else
-		size = DIOCSIZE;
+	size = DIO_SIZE(scode, va);
 
 	bus_space_unmap(bst, bsh, PAGE_SIZE);
 	if (bus_space_map(bst, addr, size, 0, &bsh))
-		return (1);
+		return 1;
 	va = bus_space_vaddr(bst, bsh);
 
 	/*
@@ -799,7 +798,7 @@ hypercnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	 * Initialize the terminal emulator.
 	 */
 	itedisplaycnattach(gp, &hyper_itesw);
-	return (0);
+	return 0;
 }
 
 #endif /* NITE > 0 */

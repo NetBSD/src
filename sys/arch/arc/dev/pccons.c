@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.42.8.1 2006/05/24 10:56:34 yamt Exp $	*/
+/*	$NetBSD: pccons.c,v 1.42.8.2 2006/08/11 15:41:10 yamt Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.42.8.1 2006/05/24 10:56:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.42.8.2 2006/08/11 15:41:10 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.42.8.1 2006/05/24 10:56:34 yamt Exp $")
 
 #include <machine/bus.h>
 
-#include <machine/display.h>
+#include <dev/ic/pcdisplay.h>
 #include <machine/pccons.h>
 #include <machine/kbdreg.h>
 
@@ -621,7 +621,8 @@ pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 		pcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if (tp->t_state&TS_XCLUDE &&
-		   kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
+		   kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+		   &l->l_acflag) != 0)
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 

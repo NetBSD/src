@@ -22,7 +22,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.285.2.2 $"
+#ident 		"GENERIC-$Revision: 1.285.2.3 $"
 
 maxusers 32
 
@@ -458,7 +458,7 @@ uha*	at	eisa? slot ?			# UltraStor 24f SCSI (unt.)
 com*	at	pcmcia? function ?	# Modems and serial cards
 
 aic*	at	pcmcia? function ?	# Adaptec APA-1460 SCSI
-spc*	at	pcmcia? function ?	# Fujitsu MB87030 SCSI
+spc*	at	pcmcia? function ?	# Fujitsu MB87030/MB89352 SCSI
 
 wdc*	at	pcmcia? function ?	# PCMCIA IDE controllers
 
@@ -539,8 +539,6 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass?
-scsibus* at umass? channel ?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?  
@@ -618,6 +616,7 @@ pseudo-device 	crypto			# /dev/crypto device
 pseudo-device	swcrypto		# software crypto implementation
 
 pseudo-device	bpfilter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ccd		4
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver

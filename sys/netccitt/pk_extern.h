@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_extern.h,v 1.15 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: pk_extern.h,v 1.15.8.1 2006/08/11 15:46:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ int pk_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
 		   struct mbuf *, struct lwp *));
 int pk_start __P((struct pklcd *));
 int pk_control __P((struct socket *, u_long, caddr_t, struct ifnet *,
-		    struct proc *));
+		    struct lwp *));
 int pk_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 int pk_checksockaddr __P((struct mbuf *));
 int pk_send __P((struct mbuf *, void *));

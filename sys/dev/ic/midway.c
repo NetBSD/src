@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.68.8.2 2006/05/24 10:57:41 yamt Exp $	*/
+/*	$NetBSD: midway.c,v 1.68.8.3 2006/08/11 15:44:11 yamt Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.68.8.2 2006/05/24 10:57:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.68.8.3 2006/08/11 15:44:11 yamt Exp $");
 
 #include "opt_natm.h"
 
@@ -1308,9 +1308,8 @@ caddr_t data;
 		if (ifp == &sc->enif) {
 		  struct ifnet *sifp;
 
-		  if ((error = kauth_authorize_generic(curproc->p_cred,
-						 KAUTH_GENERIC_ISSUSER,
-						 &curproc->p_acflag)) != 0)
+		  if ((error = kauth_authorize_generic(curlwp->l_cred,
+		     KAUTH_GENERIC_ISSUSER, &curlwp->l_acflag)) != 0)
 		    break;
 
 		  if ((sifp = en_pvcattach(ifp)) != NULL) {
@@ -1338,9 +1337,8 @@ caddr_t data;
 		break;
 
 	case SIOCSPVCTX:
-		if ((error = kauth_authorize_generic(curproc->p_cred,
-					       KAUTH_GENERIC_ISSUSER,
-					       &curproc->p_acflag)) == 0)
+		if ((error = kauth_authorize_generic(curlwp->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &curlwp->l_acflag)) == 0)
 			error = en_pvctx(sc, (struct pvctxreq *)data);
 		break;
 

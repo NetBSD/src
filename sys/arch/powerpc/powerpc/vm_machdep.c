@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.65 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.65.8.1 2006/08/11 15:42:41 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.65 2005/12/11 12:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.65.8.1 2006/08/11 15:42:41 yamt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -182,7 +182,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	sf = (struct switchframe *) ((uintptr_t) cf - SFRAMELEN);
 	memset((void *)sf, 0, sizeof *sf);		/* just in case */
 	sf->sp = (register_t) cf;
-#ifdef PPC_OEA
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	sf->user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
 #endif
 	pcb->pcb_sp = (register_t)sf;

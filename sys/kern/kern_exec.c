@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.214.2.3 2006/05/24 10:58:40 yamt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.214.2.4 2006/08/11 15:45:46 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,12 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.214.2.3 2006/05/24 10:58:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.214.2.4 2006/08/11 15:45:46 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
 #include "opt_compat_netbsd.h"
-#include "opt_verified_exec.h"
+#include "veriexec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.214.2.3 2006/05/24 10:58:40 yamt Exp
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/syscallargs.h>
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 #include <sys/verified_exec.h>
-#endif
+#endif /* NVERIEXEC > 0 */
 
 #ifdef SYSTRACE
 #include <sys/systrace.h>
@@ -246,9 +246,7 @@ check_exec(struct lwp *l, struct exec_package *epp, int flag)
 	struct vnode	*vp;
 	struct nameidata *ndp;
 	size_t		resid;
-	struct proc	*p;
 
-	p = l->l_proc;
 	ndp = epp->ep_ndp;
 	ndp->ni_cnd.cn_nameiop = LOOKUP;
 	ndp->ni_cnd.cn_flags = FOLLOW | LOCKLEAF | SAVENAME;
@@ -262,11 +260,11 @@ check_exec(struct lwp *l, struct exec_package *epp, int flag)
 		error = EACCES;
 		goto bad1;
 	}
-	if ((error = VOP_ACCESS(vp, VEXEC, p->p_cred, l)) != 0)
+	if ((error = VOP_ACCESS(vp, VEXEC, l->l_cred, l)) != 0)
 		goto bad1;
 
 	/* get attributes */
-	if ((error = VOP_GETATTR(vp, epp->ep_vap, p->p_cred, l)) != 0)
+	if ((error = VOP_GETATTR(vp, epp->ep_vap, l->l_cred, l)) != 0)
 		goto bad1;
 
 	/* Check mount point */
@@ -278,23 +276,23 @@ check_exec(struct lwp *l, struct exec_package *epp, int flag)
 		epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
 
 	/* try to open it */
-	if ((error = VOP_OPEN(vp, FREAD, p->p_cred, l)) != 0)
+	if ((error = VOP_OPEN(vp, FREAD, l->l_cred, l)) != 0)
 		goto bad1;
 
 	/* unlock vp, since we need it unlocked from here on out. */
 	VOP_UNLOCK(vp, 0);
 
 
-#ifdef VERIFIED_EXEC
-        if ((error = veriexec_verify(l, vp, epp->ep_vap, epp->ep_ndp->ni_dirp,
-				     flag, NULL)) != 0)
+#if NVERIEXEC > 0
+        if ((error = veriexec_verify(l, vp, epp->ep_ndp->ni_dirp, flag,
+	    NULL)) != 0)
                 goto bad2;
-#endif
+#endif /* NVERIEXEC > 0 */
 
 	/* now we have the file, get the exec header */
 	uvn_attach(vp, VM_PROT_READ);
 	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,
-			UIO_SYSSPACE, 0, p->p_cred, &resid, NULL);
+			UIO_SYSSPACE, 0, l->l_cred, &resid, NULL);
 	if (error)
 		goto bad2;
 	epp->ep_hdrvalid = epp->ep_hdrlen - resid;
@@ -336,7 +334,7 @@ check_exec(struct lwp *l, struct exec_package *epp, int flag)
 		/* check limits */
 		if ((epp->ep_tsize > MAXTSIZ) ||
 		    (epp->ep_dsize >
-		     (u_quad_t)p->p_rlimit[RLIMIT_DATA].rlim_cur))
+		     (u_quad_t)l->l_proc->p_rlimit[RLIMIT_DATA].rlim_cur))
 			error = ENOMEM;
 
 		if (!error)
@@ -355,7 +353,7 @@ bad2:
 	 * pathname buf, and punt.
 	 */
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(vp, FREAD, p->p_cred, l);
+	VOP_CLOSE(vp, FREAD, l->l_cred, l);
 	vput(vp);
 	PNBUF_PUT(ndp->ni_cnd.cn_pnbuf);
 	return error;
@@ -409,7 +407,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	struct nameidata	nid;
 	struct vattr		attr;
 	struct proc		*p;
-	kauth_cred_t		cred;
 	char			*argp;
 	char			*dp, *sp;
 	long			argc, envc;
@@ -443,7 +440,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 */
 	p->p_flag |= P_INEXEC;
 
-	cred = p->p_cred;
 	base_vcp = NULL;
 	/*
 	 * Init the namei data to point the file user's program name.
@@ -489,11 +485,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #endif
 
 	/* see if we can run it. */
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
         if ((error = check_exec(l, &pack, VERIEXEC_DIRECT)) != 0)
 #else
         if ((error = check_exec(l, &pack, 0)) != 0)
-#endif
+#endif /* NVERIEXEC > 0 */
 		goto freehdr;
 
 	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
@@ -687,7 +683,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	kill_vmcmds(&pack.ep_vmcmds);
 
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(pack.ep_vp, FREAD, cred, l);
+	VOP_CLOSE(pack.ep_vp, FREAD, l->l_cred, l);
 	vput(pack.ep_vp);
 
 	/* if an error happened, deallocate and punt */
@@ -781,10 +777,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	if ((p->p_flag & P_TRACED) == 0 &&
 
 	    (((attr.va_mode & S_ISUID) != 0 &&
-	      kauth_cred_geteuid(p->p_cred) != attr.va_uid) ||
+	      kauth_cred_geteuid(l->l_cred) != attr.va_uid) ||
 
 	     ((attr.va_mode & S_ISGID) != 0 &&
-	      kauth_cred_getegid(p->p_cred) != attr.va_gid))) {
+	      kauth_cred_getegid(l->l_cred) != attr.va_gid))) {
 		/*
 		 * Mark the process as SUGID before we do
 		 * anything that might block.
@@ -797,8 +793,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 			goto exec_abort;
 		}
 
-		p->p_cred = kauth_cred_copy(cred);
-		cred = p->p_cred;
+		/*
+		 * Copy the credential so other references don't see our
+		 * changes.
+		 */
+		l->l_cred = kauth_cred_copy(l->l_cred);
 #ifdef KTRACE
 		/*
 		 * If process is being ktraced, turn off - unless
@@ -808,16 +807,40 @@ execve1(struct lwp *l, const char *path, char * const *args,
 			ktrderef(p);
 #endif
 		if (attr.va_mode & S_ISUID)
-			kauth_cred_seteuid(p->p_cred, attr.va_uid);
+			kauth_cred_seteuid(l->l_cred, attr.va_uid);
 		if (attr.va_mode & S_ISGID)
-			kauth_cred_setegid(p->p_cred, attr.va_gid);
+			kauth_cred_setegid(l->l_cred, attr.va_gid);
 	} else {
-		if (kauth_cred_geteuid(p->p_cred) == kauth_cred_getuid(p->p_cred) &&
-		    kauth_cred_getegid(p->p_cred) == kauth_cred_getgid(p->p_cred))
+		if (kauth_cred_geteuid(l->l_cred) ==
+		    kauth_cred_getuid(l->l_cred) &&
+		    kauth_cred_getegid(l->l_cred) ==
+		    kauth_cred_getgid(l->l_cred))
 			p->p_flag &= ~P_SUGID;
 	}
-	kauth_cred_setsvuid(p->p_cred, kauth_cred_geteuid(p->p_cred));
-	kauth_cred_setsvgid(p->p_cred, kauth_cred_getegid(p->p_cred));
+
+	/*
+	 * Copy the credential so other references don't see our changes.
+	 * Test to see if this is necessary first, since in the common case
+	 * we won't need a private reference.
+	 */
+	if (kauth_cred_geteuid(l->l_cred) != kauth_cred_getsvuid(l->l_cred) ||
+	    kauth_cred_getegid(l->l_cred) != kauth_cred_getsvgid(l->l_cred)) {
+		l->l_cred = kauth_cred_copy(l->l_cred);
+		kauth_cred_setsvuid(l->l_cred, kauth_cred_geteuid(l->l_cred));
+		kauth_cred_setsvgid(l->l_cred, kauth_cred_getegid(l->l_cred));
+	}
+
+	/* Update the master credentials. */
+	if (l->l_cred != p->p_cred) {
+		kauth_cred_t ocred;
+
+		kauth_cred_hold(l->l_cred);
+		simple_lock(&p->p_lock);
+		ocred = p->p_cred;
+		p->p_cred = l->l_cred;
+		simple_unlock(&p->p_lock);
+		kauth_cred_free(ocred);
+	}
 
 #if defined(__HAVE_RAS)
 	/*
@@ -924,7 +947,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	}
 	/* close and put the exec'd file */
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(pack.ep_vp, FREAD, cred, l);
+	VOP_CLOSE(pack.ep_vp, FREAD, l->l_cred, l);
 	vput(pack.ep_vp);
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);

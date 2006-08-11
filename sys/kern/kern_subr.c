@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.128.2.4 2006/06/26 12:52:56 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.128.2.5 2006/08/11 15:45:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,14 +86,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.128.2.4 2006/06/26 12:52:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.128.2.5 2006/08/11 15:45:46 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
-#include "opt_lockdebug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,10 +151,7 @@ uiomove(void *buf, size_t n, struct uio *uio)
 
 	hold_count = KERNEL_LOCK_RELEASE_ALL();
 
-#ifdef LOCKDEBUG
-	spinlock_switchcheck();
-	simple_lock_only_held(NULL, "uiomove");
-#endif
+	ASSERT_SLEEPABLE(NULL, "uiomove");
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
@@ -1372,7 +1368,7 @@ trace_enter(struct lwp *l, register_t code,
 
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE))
-		return systrace_enter(p, code, args);
+		return systrace_enter(l, code, args);
 #endif
 	return 0;
 }
@@ -1408,7 +1404,7 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
 		KERNEL_PROC_LOCK(l);
-		systrace_exit(p, code, args, rval, error);
+		systrace_exit(l, code, args, rval, error);
 		KERNEL_PROC_UNLOCK(l);
 	}
 #endif

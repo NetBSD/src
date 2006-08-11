@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.18.2.1 2006/06/26 12:44:38 yamt Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.18.2.2 2006/08/11 15:41:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -20,10 +20,10 @@
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -31,11 +31,10 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.18.2.1 2006/06/26 12:44:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.18.2.2 2006/08/11 15:41:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.18.2.1 2006/06/26 12:44:38 yamt Exp $
 #include <hpcarm/dev/sed1356var.h>
 
 #ifdef SED_DEBUG
-#define VPRINTF(arg)	do { if (bootverbose) printf arg; } while (0);
+#define VPRINTF(arg)	do { if (bootverbose) printf arg; } while (0)
 #else
 #define VPRINTF(arg)	/* nothing */
 #endif
@@ -471,12 +470,10 @@ sed1356_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			    sc->sc_max_contrast < dispparam->curval)
 				return EINVAL;
 			if (sc->sc_max_contrast > 0) {
-#ifdef SED_DEBUG
-				int org = sc->sc_contrast;
-#endif
+				VPRINTF(("sed1356_ioctl: SET:CONTRAST org=%d",
+				    sc->sc_contrast));
 				sed1356_set_contrast(sc, dispparam->curval);
-				VPRINTF(("sed1356_ioctl: SET:CONTRAST org=%d,"
-				    " current=%d\n", org, sc->sc_contrast));
+				VPRINTF((", current=%d\n", sc->sc_contrast));
 				return 0;
 			}
 			VPRINTF(("sed1356_ioctl: SET:CONTRAST EINVAL\n"));
@@ -489,12 +486,10 @@ sed1356_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			    sc->sc_max_brightness < dispparam->curval)
 				return EINVAL;
 			if (sc->sc_max_brightness > 0) {
-#ifdef SED_DEBUG
-				int org = sc->sc_brightness;
-#endif
+				VPRINTF(("sed1356_ioctl: SET:BRIGHTNESS org=%d",
+				    sc->sc_brightness));
 				sed1356_set_brightness(sc, dispparam->curval);
-				VPRINTF(("sed1356_ioctl: SET:BRIGHTNESS org=%d,"
-				    " current=%d\n", org, sc->sc_brightness));
+				VPRINTF((", current=%d\n", sc->sc_brightness));
 				return 0;
 			}
 			VPRINTF(("sed1356_ioctl: SET:BRIGHTNESS EINVAL\n"));

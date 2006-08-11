@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.136 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.136.8.1 2006/08/11 15:42:14 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 2005/12/11 12:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136.8.1 2006/08/11 15:42:14 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 2005/12/11 12:18:06 christos Exp $
 #include <sys/user.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
+#include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -98,6 +99,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 2005/12/11 12:18:06 christos Exp $
 
 #include <macppc/dev/adbvar.h>
 
+#include <sys/tty.h>
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
+
 #if NZSC > 0
 #include <machine/z8530var.h>
 #endif
@@ -105,6 +110,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 2005/12/11 12:18:06 christos Exp $
 #include "ksyms.h"
 
 extern int ofmsr;
+extern struct consdev consdev_ofcons;
+extern struct consdev comcons;
+extern struct consdev consdev_zs;
 
 char bootpath[256];
 static int chosen;
@@ -118,9 +126,15 @@ void *startsym, *endsym;
 struct ofw_translations {
 	vaddr_t va;
 	int len;
-	paddr_t pa;
+#if defined (PMAC_G5)
+	register64_t pa;
+#else
+	register_t pa;
+#endif
 	int mode;
-};
+}__attribute__((packed));
+
+struct ofw_translations ofmap[32];
 
 int ofkbd_cngetc(dev_t);
 void cninit_kd(void);
@@ -134,19 +148,39 @@ initppc(startkernel, endkernel, args)
 	u_int startkernel, endkernel;
 	char *args;
 {
-	struct ofw_translations *ofmap;
 	int ofmaplen;
+	extern int enable_RMCI(void);
+#if defined (PPC_OEA64_BRIDGE)
+	register_t scratch;
+#endif
 
+#if defined (PPC_OEA)
 	oea_batinit(0x80000000, BAT_BL_256M, 0xf0000000, BAT_BL_256M,
 	    0x90000000, BAT_BL_256M, 0xa0000000, BAT_BL_256M,
 	    0xb0000000, BAT_BL_256M, 0);
-	oea_init(ext_intr);
+#elif defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+#endif /* PPC_OEA */
 
 	chosen = OF_finddevice("/chosen");
+	
+	if (chosen == -1)
+		printf("/chosen not found\n");
+
+	/*
+	 * i386 port says, that this shouldn't be here,
+	 * but I really think the console should be initialized
+	 * as early as possible.
+	 */
+	consinit();
+
+	oea_init(ext_intr);
 
 	ofmaplen = save_ofmap(NULL, 0);
-	ofmap = alloca(ofmaplen);
-	save_ofmap(ofmap, ofmaplen);
+
+	if (ofmaplen > 0)
+	{
+		save_ofmap(ofmap, ofmaplen);
+	}
 
 #ifdef	__notyet__		/* Needs some rethinking regarding real/virtual OFW */
 	OF_set_callback(callback);
@@ -163,22 +197,17 @@ initppc(startkernel, endkernel, args)
 	if (startsym == NULL || endsym == NULL)
 		startsym = endsym = NULL;
 #endif
-
+	
+	if (args) {
 	strcpy(bootpath, args);
-	args = bootpath;
-	while (*++args && *args != ' ');
-	if (*args) {
-		*args++ = 0;
-		while (*args)
-			BOOT_FLAG(*args++, boothowto);
+		args = bootpath;
+		while (*++args && *args != ' ');
+		if (*args) {
+			*args++ = 0;
+			while (*args)
+				BOOT_FLAG(*args++, boothowto);
+		}
 	}
-
-	/*
-	 * i386 port says, that this shouldn't be here,
-	 * but I really think the console should be initialized
-	 * as early as possible.
-	 */
-	consinit();
 
 	/*
 	 * Set the page size.
@@ -190,31 +219,52 @@ initppc(startkernel, endkernel, args)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
+#if defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+
+#if defined (PMAC_G5)
+	/* Mapin 1st 256MB segment 1:1, also map in mem needed to access OFW*/
+	pmap_setup_segment0_map(0, 0xff800000, 0x3fc00000, 0x400000, 0x0);
+#elif defined (MAMBO)
+	/* Mapin 1st 256MB segment 1:1, also map in mem needed to access OFW*/
+	pmap_setup_segment0_map(0, 0xf4000000, 0xf4000000, 0x1000, 0x0);
+#endif /* PMAC_G5 */
+	/*
+	 * Now enable translation (and machine checks/recoverable interrupts).
+	 */
+	__asm __volatile ("sync; mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
+	    : "=r"(scratch)
+	    : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
+#endif /* PPC_OEA64 || PPC_OEA64_BRIDGE */
+
 	restore_ofmap(ofmap, ofmaplen);
 }
 
 int
-save_ofmap(ofmap, maxlen)
-	struct ofw_translations *ofmap;
+save_ofmap(map, maxlen)
+	struct ofw_translations *map;
 	int maxlen;
 {
 	int mmui, mmu, len;
 
 	OF_getprop(chosen, "mmu", &mmui, sizeof mmui);
+
 	mmu = OF_instance_to_package(mmui);
 
-	if (ofmap) {
-		memset(ofmap, 0, maxlen);	/* to be safe */
-		len = OF_getprop(mmu, "translations", ofmap, maxlen);
+	if (map) {
+		memset(map, 0, maxlen);	/* to be safe */
+		len = OF_getprop(mmu, "translations", map, maxlen);
 	} else
 		len = OF_getproplen(mmu, "translations");
+
+	if (len < 0)
+		len = 0;
 
 	return len;
 }
 
 void
-restore_ofmap(ofmap, len)
-	struct ofw_translations *ofmap;
+restore_ofmap(map, len)
+	struct ofw_translations *map;
 	int len;
 {
 	int n = len / sizeof(struct ofw_translations);
@@ -222,21 +272,29 @@ restore_ofmap(ofmap, len)
 
 	pmap_pinit(&ofw_pmap);
 
+#if defined(PPC_OEA64_BRIDGE)
+	ofw_pmap.pm_sr[0x0] = KERNELN_SEGMENT(0);
+#endif
 	ofw_pmap.pm_sr[KERNEL_SR] = KERNEL_SEGMENT;
+
 #ifdef KERNEL2_SR
 	ofw_pmap.pm_sr[KERNEL2_SR] = KERNEL2_SEGMENT;
 #endif
 
 	for (i = 0; i < n; i++) {
-		paddr_t pa = ofmap[i].pa;
-		vaddr_t va = ofmap[i].va;
-		size_t length = ofmap[i].len;
+#if defined (PMAC_G5)
+		register64_t pa = map[i].pa;
+#else
+		register_t pa = map[i].pa;
+#endif
+		vaddr_t va = map[i].va;
+		size_t length = map[i].len;
 
 		if (va < 0xf0000000)			/* XXX */
 			continue;
 
 		while (length > 0) {
-			pmap_enter(&ofw_pmap, va, pa, VM_PROT_ALL,
+			pmap_enter(&ofw_pmap, va, (paddr_t)pa, VM_PROT_ALL,
 			    VM_PROT_ALL|PMAP_WIRED);
 			pa += PAGE_SIZE;
 			va += PAGE_SIZE;
@@ -448,12 +506,12 @@ lcsplx(ipl)
 void
 cninit()
 {
-#if (NZSTTY > 0)
 	struct consdev *cp;
-#endif /* (NZSTTY > 0) */
 	int stdout, node;
 	char type[16];
-
+#if defined (PMAC_G5)
+	extern struct consdev failsafe_cons;
+#endif
 	if (OF_getprop(chosen, "stdout", &stdout, sizeof(stdout))
 	    != sizeof(stdout))
 		goto nocons;
@@ -472,13 +530,25 @@ cninit()
 
 #if NZSTTY > 0
 	if (strcmp(type, "serial") == 0) {
-		extern struct consdev consdev_zs;
-
+#if defined (PMAC_G5)
+		/* The MMU hasn't been initialized yet, use failsafe for now */
+		cp = &failsafe_cons;
+		cn_tab = cp;
+		(*cp->cn_probe)(cp);
+		(*cp->cn_init)(cp);
+		printf("Early G5 console initialized\n");
+#elif defined(MAMBO)
+		cp = &consdev_ofcons;
+		cn_tab = cp;
+		(*cp->cn_probe)(cp);
+		(*cp->cn_init)(cp);
+		printf("Mambo console initialized\n");
+#else
 		cp = &consdev_zs;
 		(*cp->cn_probe)(cp);
 		(*cp->cn_init)(cp);
 		cn_tab = cp;
-
+#endif
 		return;
 	}
 #endif
@@ -675,6 +745,8 @@ ofkbd_cngetc(dev)
 
 	return c;
 }
+
+
 
 #ifdef MULTIPROCESSOR
 /*

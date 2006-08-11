@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.48 2006/02/25 02:28:57 wiz Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.48.2.1 2006/08/11 15:42:32 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.48 2006/02/25 02:28:57 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.48.2.1 2006/08/11 15:42:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,18 +124,10 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.48 2006/02/25 02:28:57 wiz Exp $");
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/memc.h>
 
-#ifdef WSCONS
 #include <dev/ic/z8530sc.h>
 #include <dev/tc/zs_ioasicvar.h>
 #include <pmax/pmax/cons.h>
 #include "wsdisplay.h"
-#else
-#include <pmax/dev/xcfbvar.h>
-#include <pmax/dev/dtopvar.h>
-#include <pmax/tc/sccvar.h>
-#include "rasterconsole.h"
-#endif
-
 #include "xcfb.h"
 
 void		dec_maxine_init __P((void));		/* XXX */
@@ -245,19 +237,6 @@ dec_maxine_cons_init()
 			dtkbd_cnattach();
 			return;
 		}
-#elif NRASTERCONSOLE > 0
-		extern int tcfb_cnattach __P((int));		/* XXX */
-		if (crt == 3) {
-#if NXCFB > 0
-			xcfb_cnattach();
-			dtikbd_cnattach();
-			return;
-#endif
-		}
-		else if (tcfb_cnattach(crt) > 0) {
-			dtikbd_cnattach();
-			return;
-		}
 #endif
 		printf("No framebuffer device configured for slot %d: ", crt);
 		printf("using serial console\n");
@@ -269,11 +248,7 @@ dec_maxine_cons_init()
 	 */
 	DELAY(160000000 / 9600);        /* XXX */
 
-#ifdef WSCONS
 	zs_ioasic_cnattach(ioasic_base, 0x100000, 1);
-#else
-	scc_cnattach(ioasic_base, 0x100000);
-#endif
 }
 
 static void

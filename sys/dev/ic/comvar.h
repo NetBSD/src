@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.50.8.2 2006/06/26 12:51:01 yamt Exp $	*/
+/*	$NetBSD: comvar.h,v 1.50.8.3 2006/08/11 15:44:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -44,10 +44,16 @@
 #include <sys/timepps.h>
 #include <sys/lock.h>
 
+#include <dev/ic/comreg.h>	/* for COM_NPORTS */
+
+struct com_regs;
+
 int comcnattach(bus_space_tag_t, bus_addr_t, int, int, int, tcflag_t);
+int comcnattach1(struct com_regs *, int, int, int, tcflag_t);
 
 #ifdef KGDB
 int com_kgdb_attach(bus_space_tag_t, bus_addr_t, int, int, int, tcflag_t);
+int com_kgdb_attach1(struct com_regs *, int, int, int, tcflag_t);
 #endif
 
 int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
@@ -66,6 +72,70 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 /* Buffer size for character buffer */
 #define	COM_RING_SIZE	2048
 
+#ifdef	COM_REGMAP
+#define	COM_REG_RXDATA		0
+#define	COM_REG_TXDATA		1
+#define	COM_REG_DLBL		2
+#define	COM_REG_DLBH		3
+#define	COM_REG_IER		4
+#define	COM_REG_IIR		5
+#define	COM_REG_FIFO		6
+#define	COM_REG_EFR		7
+#define	COM_REG_LCR		8
+#define	COM_REG_MCR		9
+#define	COM_REG_LSR		10
+#define	COM_REG_MSR		11
+
+struct com_regs {
+	bus_space_tag_t		cr_iot;
+	bus_space_handle_t	cr_ioh;
+	bus_addr_t		cr_iobase;
+	bus_size_t		cr_nports;
+	bus_size_t		cr_map[16];
+};
+
+extern const bus_size_t com_std_map[16];
+
+#define	COM_INIT_REGS(regs, tag, hdl, addr)				\
+	do {								\
+		regs.cr_iot = tag;					\
+		regs.cr_ioh = hdl;					\
+		regs.cr_iobase = addr;					\
+		regs.cr_nports = COM_NPORTS;				\
+		memcpy(regs.cr_map, com_std_map, sizeof (regs.cr_map));	\
+	} while (0)
+
+#else
+#define	COM_REG_RXDATA		com_data
+#define	COM_REG_TXDATA		com_data
+#define	COM_REG_DLBL		com_dlbl
+#define	COM_REG_DLBH		com_dlbh
+#define	COM_REG_IER		com_ier
+#define	COM_REG_IIR		com_iir
+#define	COM_REG_FIFO		com_fifo
+#define	COM_REG_EFR		com_efr
+#define	COM_REG_LCR		com_lctl
+#define	COM_REG_MCR		com_mcr
+#define	COM_REG_LSR		com_lsr
+#define	COM_REG_MSR		com_msr
+
+struct com_regs {
+	bus_space_tag_t		cr_iot;
+	bus_space_handle_t	cr_ioh;
+	bus_addr_t		cr_iobase;
+	bus_size_t		cr_nports;
+};
+
+#define	COM_INIT_REGS(regs, tag, hdl, addr)		\
+	do {						\
+		regs.cr_iot = tag;			\
+		regs.cr_ioh = hdl;			\
+		regs.cr_iobase = addr;			\
+		regs.cr_nports = COM_NPORTS;		\
+	} while (0)
+
+#endif
+
 struct com_softc {
 	struct device sc_dev;
 	void *sc_si;
@@ -73,12 +143,11 @@ struct com_softc {
 
 	struct callout sc_diag_callout;
 
-	bus_addr_t sc_iobase;			/* XXX ISA-centric name */
 	int sc_frequency;
 
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
+	struct com_regs sc_regs;
 	bus_space_handle_t sc_hayespioh;
+
 
 	u_int sc_overflows,
 	      sc_floods,
@@ -158,8 +227,10 @@ struct com_softc {
 int comprobe1(bus_space_tag_t, bus_space_handle_t);
 int comintr(void *);
 void com_attach_subr(struct com_softc *);
+int com_probe_subr(struct com_regs *);
 int com_detach(struct device *, int);
 int com_activate(struct device *, enum devact);
+void com_cleanup(void *);
 
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 #ifdef __NO_SOFT_SERIAL_INTERRUPT

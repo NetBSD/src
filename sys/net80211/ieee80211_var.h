@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.23.2.1 2006/04/01 12:07:44 yamt Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.23.2.2 2006/08/11 15:46:32 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -256,6 +256,7 @@ extern struct ieee80211com_head ieee80211com_head;
 #define	IEEE80211_FEXT_WDS	0x00000001	/* CONF: 4 addr allowed */
 /* 0x00000006 reserved */
 #define	IEEE80211_FEXT_BGSCAN	0x00000008	/* STATUS: enable full bgscan completion */
+#define	IEEE80211_FEXT_PROBECHAN 0x00020000	/* CONF: probe passive channel*/
 
 /* ic_caps */
 #define	IEEE80211_C_WEP		0x00000001	/* CAPABILITY: WEP available */

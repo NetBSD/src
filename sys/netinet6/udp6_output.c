@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.23.6.1 2006/05/24 10:59:09 yamt Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.23.6.2 2006/08/11 15:46:49 yamt Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.23.6.1 2006/05/24 10:59:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.23.6.2 2006/08/11 15:46:49 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -109,11 +109,11 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.23.6.1 2006/05/24 10:59:09 yamt Ex
  */
 
 int
-udp6_output(in6p, m, addr6, control, p)
+udp6_output(in6p, m, addr6, control, l)
 	struct in6pcb *in6p;
 	struct mbuf *m;
 	struct mbuf *addr6, *control;
-	struct proc *p;
+	struct lwp *l;
 {
 	u_int32_t ulen = m->m_pkthdr.len;
 	u_int32_t plen = sizeof(struct udphdr) + ulen;
@@ -137,7 +137,8 @@ udp6_output(in6p, m, addr6, control, p)
 	struct sockaddr_in6 tmp;
 
 	priv = 0;
-	if (p && !kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
+	if (l && !kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag))
 		priv = 1;
 
 	if (addr6) {
@@ -285,7 +286,7 @@ udp6_output(in6p, m, addr6, control, p)
 			goto release;
 		}
 		if (in6p->in6p_lport == 0 &&
-		    (error = in6_pcbsetport(laddr, in6p, p)) != 0)
+		    (error = in6_pcbsetport(laddr, in6p, l)) != 0)
 			goto release;
 	} else {
 		if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {

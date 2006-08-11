@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.18.8.1 2006/03/13 09:07:43 yamt Exp $	*/
+/*	$NetBSD: systrace.h,v 1.18.8.2 2006/08/11 15:47:26 yamt Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -218,9 +218,9 @@ struct fsystrace {
 
 /* Internal prototypes */
 
-int systrace_enter(struct proc *, register_t, void *);
+int systrace_enter(struct lwp *, register_t, void *);
 void systrace_namei(struct nameidata *);
-void systrace_exit(struct proc *, register_t, void *, register_t [], int);
+void systrace_exit(struct lwp *, register_t, void *, register_t [], int);
 void systrace_sys_exit(struct proc *);
 void systrace_sys_fork(struct proc *, struct proc *);
 #ifndef __NetBSD__

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.41 2005/12/24 20:07:25 perry Exp $ */
+/* $NetBSD: dec_3100.c,v 1.41.8.1 2006/08/11 15:42:32 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.41 2005/12/24 20:07:25 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.41.8.1 2006/08/11 15:42:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,16 +124,10 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.41 2005/12/24 20:07:25 perry Exp $");
 
 #include <pmax/ibus/ibusvar.h>
 
-#ifdef WSCONS
 #include <dev/dec/dzreg.h>
 #include <dev/dec/dzvar.h>
 #include <dev/dec/dzkbdvar.h>
 #include <pmax/pmax/cons.h>
-#else
-#include <pmax/dev/pmvar.h>
-#include <pmax/dev/dcvar.h>
-#include "rasterconsole.h"
-#endif
 
 #include "pm.h"
 
@@ -197,21 +191,15 @@ dec_3100_cons_init()
 	prom_findcons(&kbd, &crt, &screen);
 
 	if (screen > 0) {
-#if defined(WSCONS) && NPM > 0
+#if NPM > 0
  		if (pm_cnattach() > 0) {
 			dz_ibus_cnsetup(KN01_SYS_DZ);
 			dzkbd_cnattach(NULL);
  			return;
  		}
-#elif NRASTERCONSOLE > 0 && NPM > 0
-		if (pm_cnattach() > 0) {
-			dckbd_cnattach(KN01_SYS_DZ);
-			return;
-		}
-#else
+#endif
 		printf("No framebuffer device configured: ");
 		printf("using serial console\n");
-#endif
 	}
 	/*
 	 * Delay to allow PROM putchars to complete.
@@ -220,12 +208,8 @@ dec_3100_cons_init()
 	 */
 	DELAY(160000000 / 9600);	/* XXX */
 
-#ifdef WSCONS
 	dz_ibus_cnsetup(KN01_SYS_DZ);
 	dz_ibus_cnattach(kbd);
-#else
-	dc_cnattach(KN01_SYS_DZ, kbd);
-#endif
 }
 
 #define CALLINTR(vvv, cp0)					\

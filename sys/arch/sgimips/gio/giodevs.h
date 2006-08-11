@@ -1,4 +1,4 @@
-/*	$NetBSD: giodevs.h,v 1.5 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: giodevs.h,v 1.5.8.1 2006/08/11 15:42:47 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -14,7 +14,10 @@
 #define XPI_M1	0x0b	/* XPI mez. FDDI device 1 */
 #define EP	0x0e	/* E-Plex 8-port Ethernet */
 #define IVAS	0x30	/* Lyon Lamb IVAS */
+#define PHOBOS_G160	0x35	/* Phobos G160 10/100 Ethernet */
 #define PHOBOS_G130	0x36	/* Phobos G130 10/100 Ethernet */
+#define PHOBOS_G100	0x37	/* Phobos G100 10/100 Ethernet */
+#define SETENG_GFE	0x38	/* Set Engineering GIO 100BaseTX Fast Ethernet */
 #define ATM	0x85	/* ATM board */
 #define SCSI	0x87	/* 16 bit SCSI Card */
 #define SMPTE	0x8c	/* SMPTE 259M Video */

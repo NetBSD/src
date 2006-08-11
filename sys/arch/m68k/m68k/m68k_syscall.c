@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.18.2.2 2006/03/13 09:06:57 yamt Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.18.2.3 2006/08/11 15:42:01 yamt Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.18.2.2 2006/03/13 09:06:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.18.2.3 2006/08/11 15:42:01 yamt Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
@@ -169,6 +169,7 @@ syscall(register_t code, struct frame frame)
 	p = l->l_proc;
 	sticks = p->p_sticks;
 	l->l_md.md_regs = frame.f_regs;
+	LWP_CACHE_CREDS(l, p);
 
 	(p->p_md.md_syscall)(code, l, &frame);
 
@@ -455,7 +456,7 @@ child_return(void *arg)
 #endif
 }
 
-/* 
+/*
  * Start a new LWP
  */
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.49.6.1 2006/05/24 10:56:58 yamt Exp $	*/
+/*	$NetBSD: sbc.c,v 1.49.6.2 2006/08/11 15:42:13 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.49.6.1 2006/05/24 10:56:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.49.6.2 2006/08/11 15:42:13 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -426,13 +426,10 @@ sbc_drq_intr(void *p)
 	label_t faultbuf;
 	volatile u_int32_t *long_drq;
 	u_int32_t *long_data;
-	volatile u_int8_t *drq;
+	volatile u_int8_t *drq = 0;	/* XXX gcc4 -Wuninitialized */
 	u_int8_t *data;
 	int count, dcount, resid;
 	u_int8_t tmp;
-
-	/* Work around lame gcc initialization bug */
-	(void)&drq;
 
 	/*
 	 * If we're not ready to xfer data, or have no more, just return.

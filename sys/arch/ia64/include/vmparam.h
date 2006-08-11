@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1.2.2 2006/04/11 11:53:35 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.1.2.3 2006/08/11 15:42:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -85,6 +85,8 @@
 #define	IA64_ID_PAGE_SHIFT	28		/* 256M */
 #define	IA64_ID_PAGE_SIZE	(1 << IA64_ID_PAGE_SHIFT)
 #define	IA64_ID_PAGE_MASK	(IA64_ID_PAGE_SIZE-1)
+
+#define	IA64_BACKINGSTORE	IA64_RR_BASE(4)
 
 #define	PAGE_SHIFT	14		/* 16K pages by default. */
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)

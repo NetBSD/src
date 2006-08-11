@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.262.2.5 2006/06/26 12:52:56 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.262.2.6 2006/08/11 15:45:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.262.2.5 2006/06/26 12:52:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.262.2.6 2006/08/11 15:45:46 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -81,9 +81,10 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.262.2.5 2006/06/26 12:52:56 yamt Exp
 #include "opt_posix.h"
 #include "opt_syscall_debug.h"
 #include "opt_sysv.h"
-#include "opt_verified_exec.h"
+#include "opt_fileassoc.h"
 
 #include "rnd.h"
+#include "veriexec.h"
 
 #include <sys/param.h>
 #include <sys/acct.h>
@@ -140,15 +141,19 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.262.2.5 2006/06/26 12:52:56 yamt Exp
 #ifdef LKM
 #include <sys/lkm.h>
 #endif
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 #include <sys/verified_exec.h>
-#endif
+#endif /* NVERIEXEC > 0 */
 #include <sys/kauth.h>
 #include <net80211/ieee80211_netbsd.h>
 
 #include <sys/syscall.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#ifdef FILEASSOC
+#include <sys/fileassoc.h>
+#endif /* FILEASSOC */
 
 #include <ufs/ufs/quota.h>
 
@@ -176,9 +181,7 @@ struct	proc *initproc;
 struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 int	cold = 1;			/* still working on startup */
-#ifndef __HAVE_TIMECOUNTER
-struct timeval boottime;
-#endif
+struct timeval boottime;	        /* time at system startup - will only follow settime deltas */
 time_t	rootfstime;			/* recorded root fs time, if known */
 
 volatile int start_init_exec;		/* semaphore for start_init() */
@@ -296,9 +299,7 @@ main(void)
 
 #ifdef __HAVE_TIMECOUNTER
 	inittimecounter();
-#ifdef NTP
 	ntp_init();
-#endif
 #endif /* __HAVE_TIMECOUNTER */
 
 	/* Configure the system hardware.  This will enable interrupts. */
@@ -332,13 +333,17 @@ main(void)
 	/* Initialize kauth. */
 	kauth_init();
 
-#ifdef VERIFIED_EXEC
+#ifdef FILEASSOC
+	fileassoc_init();
+#endif /* FILEASSOC */
+
+#if NVERIEXEC > 0
 	  /*
 	   * Initialise the fingerprint operations vectors before
 	   * fingerprints can be loaded.
 	   */
 	veriexec_init_fp_ops();
-#endif
+#endif /* NVERIEXEC > 0 */
 
 	/* Attach pseudo-devices. */
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)

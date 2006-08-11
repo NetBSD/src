@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.98.8.2 2006/06/26 12:52:56 yamt Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.98.8.3 2006/08/11 15:45:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.98.8.2 2006/06/26 12:52:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.98.8.3 2006/08/11 15:45:46 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -177,16 +177,18 @@ settime(struct proc *p, struct timespec *ts)
 		return (EPERM);
 	}
 #endif
+
 #ifdef __HAVE_TIMECOUNTER
-	ts1.tv_sec = tv.tv_sec;
-	ts1.tv_nsec = tv.tv_usec * 1000;
+	TIMEVAL_TO_TIMESPEC(&tv, &ts1);
 	tc_setclock(&ts1);
-	(void) spllowersoftclock();
 #else /* !__HAVE_TIMECOUNTER */
 	time = tv;
-	(void) spllowersoftclock();
-	timeradd(&boottime, &delta, &boottime);
 #endif /* !__HAVE_TIMECOUNTER */
+
+	(void) spllowersoftclock();
+
+	timeradd(&boottime, &delta, &boottime);
+
 	/*
 	 * XXXSMP
 	 * This is wrong.  We should traverse a list of all
@@ -249,14 +251,13 @@ sys_clock_settime(struct lwp *l, void *v, register_t *retval)
 		syscallarg(clockid_t) clock_id;
 		syscallarg(const struct timespec *) tp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int error;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return (error);
 
-	return (clock_settime1(p, SCARG(uap, clock_id), SCARG(uap, tp)));
+	return clock_settime1(l->l_proc, SCARG(uap, clock_id), SCARG(uap, tp));
 }
 
 
@@ -299,7 +300,14 @@ sys_clock_getres(struct lwp *l, void *v, register_t *retval)
 	case CLOCK_REALTIME:
 	case CLOCK_MONOTONIC:
 		ts.tv_sec = 0;
+#ifdef __HAVE_TIMECOUNTER
+		if (tc_getfrequency() > 1000000000)
+			ts.tv_nsec = 1;
+		else
+			ts.tv_nsec = 1000000000 / tc_getfrequency();
+#else /* !__HAVE_TIMECOUNTER */
 		ts.tv_nsec = 1000000000 / hz;
+#endif /* !__HAVE_TIMECOUNTER */
 		break;
 	default:
 		return (EINVAL);
@@ -338,6 +346,8 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 	if (timo == 0)
 		timo = 1;
 
+	getnanouptime(&rmt);
+
 	error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep", timo);
 	if (error == ERESTART)
 		error = EINTR;
@@ -346,9 +356,11 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 
 	if (SCARG(uap, rmtp)) {
 		int error1;
+		struct timespec rmtend;
 
-		getnanotime(&rmt);
+		getnanouptime(&rmtend);
 
+		timespecsub(&rmtend, &rmt, &rmt);
 		timespecsub(&rqt, &rmt, &rmt);
 		if (rmt.tv_sec < 0)
 			timespecclear(&rmt);
@@ -455,14 +467,13 @@ sys_settimeofday(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const struct timeval *) tv;
 		syscallarg(const void *) tzp;	really "const struct timezone *"
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int error;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return (error);
 
-	return settimeofday1(SCARG(uap, tv), SCARG(uap, tzp), p);
+	return settimeofday1(SCARG(uap, tv), SCARG(uap, tzp), l->l_proc);
 }
 
 int
@@ -507,14 +518,13 @@ sys_adjtime(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const struct timeval *) delta;
 		syscallarg(struct timeval *) olddelta;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int error;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return (error);
 
-	return adjtime1(SCARG(uap, delta), SCARG(uap, olddelta), p);
+	return adjtime1(SCARG(uap, delta), SCARG(uap, olddelta), l->l_proc);
 }
 
 int
@@ -635,16 +645,19 @@ sys_timer_create(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 
 	return timer_create1(SCARG(uap, timerid), SCARG(uap, clock_id),
-	    SCARG(uap, evp), copyin, l->l_proc);
+	    SCARG(uap, evp), copyin, l);
 }
 
 int
 timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
-    copyin_t fetch_event, struct proc *p)
+    copyin_t fetch_event, struct lwp *l)
 {
 	int error;
 	timer_t timerid;
 	struct ptimer *pt;
+	struct proc *p;
+
+	p = l->l_proc;
 
 	if (id < CLOCK_REALTIME ||
 	    id > CLOCK_PROF)
@@ -689,7 +702,7 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 	pt->pt_info.ksi_errno = 0;
 	pt->pt_info.ksi_code = 0;
 	pt->pt_info.ksi_pid = p->p_pid;
-	pt->pt_info.ksi_uid = kauth_cred_getuid(p->p_cred);
+	pt->pt_info.ksi_uid = kauth_cred_getuid(l->l_cred);
 	pt->pt_info.ksi_sigval = pt->pt_ev.sigev_value;
 
 	pt->pt_type = id;

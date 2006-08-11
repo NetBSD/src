@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.245.2.2 2006/06/26 12:52:27 yamt Exp $	*/
+/*	$NetBSD: sd.c,v 1.245.2.3 2006/08/11 15:45:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.245.2.2 2006/06/26 12:52:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.245.2.3 2006/08/11 15:45:08 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -498,7 +498,8 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 			/* Lock the pack in. */
 			error = scsipi_prevent(periph, SPAMR_PREVENT_DT,
 			    XS_CTL_IGNORE_ILLEGAL_REQUEST |
-			    XS_CTL_IGNORE_MEDIA_CHANGE);
+			    XS_CTL_IGNORE_MEDIA_CHANGE |
+			    XS_CTL_SILENT);
 			if (error)
 				goto bad3;
 		}
@@ -525,7 +526,7 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 
 			/* Load the partition info if not already loaded. */
 			if (param_error == 0) {
-				if (sdgetdisklabel(sd) != 0) {
+				if ((sdgetdisklabel(sd) != 0) && (part != RAW_PART)) {
 					error = EIO;
 					goto bad3;
 				}
@@ -564,7 +565,8 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		if (periph->periph_flags & PERIPH_REMOVABLE)
 			scsipi_prevent(periph, SPAMR_ALLOW,
 			    XS_CTL_IGNORE_ILLEGAL_REQUEST |
-			    XS_CTL_IGNORE_MEDIA_CHANGE);
+			    XS_CTL_IGNORE_MEDIA_CHANGE |
+			    XS_CTL_SILENT);
 		periph->periph_flags &= ~PERIPH_OPEN;
 	}
 
@@ -618,15 +620,13 @@ sdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 				sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
 		}
 
-		if (! (periph->periph_flags & PERIPH_KEEP_LABEL))
-			periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
-
 		scsipi_wait_drain(periph);
 
 		if (periph->periph_flags & PERIPH_REMOVABLE)
 			scsipi_prevent(periph, SPAMR_ALLOW,
 			    XS_CTL_IGNORE_ILLEGAL_REQUEST |
-			    XS_CTL_IGNORE_NOT_READY);
+			    XS_CTL_IGNORE_NOT_READY |
+			    XS_CTL_SILENT);
 		periph->periph_flags &= ~PERIPH_OPEN;
 
 		scsipi_wait_drain(periph);
@@ -1369,10 +1369,12 @@ sd_interpret_sense(struct scsipi_xfer *xs)
 	    SSD_SENSE_KEY(sense->flags) == SKEY_ILLEGAL_REQUEST &&
 	    sense->asc == 0x24 &&
 	    sense->ascq == 0x00) { /* Illegal field in CDB */
-		scsipi_printaddr(periph);
-		printf("no door lock\n");
-		periph->periph_flags &= ~PERIPH_REMOVABLE;
-		return 0;
+		if (!(xs->xs_control & XS_CTL_SILENT)) {
+			scsipi_printaddr(periph);
+			printf("no door lock\n");
+		}
+		xs->xs_control |= XS_CTL_IGNORE_ILLEGAL_REQUEST;
+		return (retval);
 	}
 
 

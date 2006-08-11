@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.63.2.3 2006/06/26 12:52:56 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.63.2.4 2006/08/11 15:45:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,12 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.63.2.3 2006/06/26 12:52:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.63.2.4 2006/08/11 15:45:46 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
 #include "opt_posix.h"
-#include "opt_verified_exec.h"
+#include "veriexec.h"
 #include "pty.h"
 #include "rnd.h"
 
@@ -70,10 +70,10 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.63.2.3 2006/06/26 12:52:56 yamt Ex
 #include <sys/exec.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 #define	VERIEXEC_NEED_NODE
 #include <sys/verified_exec.h>
-#endif /* VERIFIED_EXEC */
+#endif /* NVERIEXEC > 0 */
 #include <sys/stat.h>
 #include <sys/kauth.h>
 
@@ -153,9 +153,9 @@ static int sysctl_kern_forkfsleep(SYSCTLFN_PROTO);
 static int sysctl_kern_root_partition(SYSCTLFN_PROTO);
 static int sysctl_kern_drivers(SYSCTLFN_PROTO);
 static int sysctl_kern_file2(SYSCTLFN_PROTO);
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 static int sysctl_kern_veriexec(SYSCTLFN_PROTO);
-#endif
+#endif /* NVERIEXEC > 0 */
 static int sysctl_security_setidcore(SYSCTLFN_PROTO);
 static int sysctl_security_setidcorename(SYSCTLFN_PROTO);
 static int sysctl_kern_cpid(SYSCTLFN_PROTO);
@@ -277,6 +277,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 	extern int kern_logsigexit;	/* defined in kern/kern_sig.c */
 	extern fixpt_t ccpu;		/* defined in kern/kern_synch.c */
 	extern int dumponpanic;		/* defined in kern/subr_prf.c */
+	const struct sysctlnode *rnode;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -764,7 +765,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("System open file table"),
 		       sysctl_kern_file2, 0, NULL, 0,
 		       CTL_KERN, KERN_FILE2, CTL_EOL);
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "veriexec",
@@ -797,13 +798,62 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Number of fingerprints on device(s)"),
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, KERN_VERIEXEC, VERIEXEC_COUNT, CTL_EOL);
-#endif /* VERIFIED_EXEC */
+#endif /* NVERIEXEC > 0 */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "cp_id",
 		       SYSCTL_DESCR("Mapping of CPU number to CPU id"),
 		       sysctl_kern_cpid, 0, NULL, 0,
 		       CTL_KERN, KERN_CP_ID, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "coredump",
+		       SYSCTL_DESCR("Coredump settings."),
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "setid",
+		       SYSCTL_DESCR("Set-id processes' coredump settings."),
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "dump",
+		       SYSCTL_DESCR("Allow set-id processes to dump core."),
+		       sysctl_security_setidcore, 0, &security_setidcore_dump,
+		       sizeof(security_setidcore_dump),
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRING, "path",
+		       SYSCTL_DESCR("Path pattern for set-id coredumps."),
+		       sysctl_security_setidcorename, 0,
+		       &security_setidcore_path,
+		       sizeof(security_setidcore_path),
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "owner",
+		       SYSCTL_DESCR("Owner id for set-id processes' cores."),
+		       sysctl_security_setidcore, 0, &security_setidcore_owner,
+		       0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "group",
+		       SYSCTL_DESCR("Group id for set-id processes' cores."),
+		       sysctl_security_setidcore, 0, &security_setidcore_group,
+		       0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "mode",
+		       SYSCTL_DESCR("Mode for set-id processes' cores."),
+		       sysctl_security_setidcore, 0, &security_setidcore_mode,
+		       0,
+		       CTL_CREATE, CTL_EOL);
 }
 
 SYSCTL_SETUP(sysctl_kern_proc_setup,
@@ -1037,49 +1087,6 @@ SYSCTL_SETUP(sysctl_security_setup, "sysctl security subtree setup")
 				    " to users not owning them."),
 		       NULL, 0, &security_curtain, 0,
 		       CTL_CREATE, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, &rnode,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "setid_core",
-		       SYSCTL_DESCR("Set-id processes' coredump settings."),
-		       NULL, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &rnode, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "dump",
-		       SYSCTL_DESCR("Allow set-id processes to dump core."),
-		       sysctl_security_setidcore, 0, &security_setidcore_dump,
-		       sizeof(security_setidcore_dump),
-		       CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &rnode, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "path",
-		       SYSCTL_DESCR("Path pattern for set-id coredumps."),
-		       sysctl_security_setidcorename, 0,
-		       &security_setidcore_path,
-		       sizeof(security_setidcore_path),
-		       CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &rnode, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "owner",
-		       SYSCTL_DESCR("Owner id for set-id processes' cores."),
-		       sysctl_security_setidcore, 0, &security_setidcore_owner,
-		       0,
-		       CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &rnode, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "group",
-		       SYSCTL_DESCR("Group id for set-id processes' cores."),
-		       sysctl_security_setidcore, 0, &security_setidcore_group,
-		       0,
-		       CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &rnode, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "mode",
-		       SYSCTL_DESCR("Mode for set-id processes' cores."),
-		       sysctl_security_setidcore, 0, &security_setidcore_mode,
-		       0,
-		       CTL_CREATE, CTL_EOL);
 }
 
 /*
@@ -1311,8 +1318,8 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 	 * followed by an array of file structures
 	 */
 	LIST_FOREACH(fp, &filehead, f_list) {
-		if (CURTAIN(kauth_cred_geteuid(l->l_proc->p_cred),
-		    kauth_cred_geteuid(fp->f_cred)))
+		if (kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_CANSEE, fp->f_cred) != 0)
 			continue;
 		if (buflen < sizeof(struct file)) {
 			*oldlenp = where - start;
@@ -2030,8 +2037,8 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 		if (arg != 0)
 			return (EINVAL);
 		LIST_FOREACH(fp, &filehead, f_list) {
-			if (CURTAIN(kauth_cred_geteuid(l->l_proc->p_cred),
-			    kauth_cred_geteuid(fp->f_cred)))
+			if (kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_CANSEE, fp->f_cred) != 0)
 				continue;
 			if (len >= elem_size && elem_count > 0) {
 				fill_file(&kf, fp, NULL, 0);
@@ -2057,7 +2064,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			if (p->p_stat == SIDL)
 				/* skip embryonic processes */
 				continue;
-			if (kauth_authorize_process(l->l_proc->p_cred,
+			if (kauth_authorize_process(l->l_cred,
 			    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL) != 0)
 				continue;
 			if (arg > 0 && p->p_pid != arg)
@@ -2197,7 +2204,7 @@ again:
 		if (p->p_stat == SIDL)
 			continue;
 
-		if (kauth_authorize_process(l->l_proc->p_cred,
+		if (kauth_authorize_process(l->l_cred,
 		    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL) != 0)
 			continue;
 
@@ -2339,7 +2346,7 @@ static int
 sysctl_kern_proc_args(SYSCTLFN_ARGS)
 {
 	struct ps_strings pss;
-	struct proc *p, *up = l->l_proc;
+	struct proc *p;
 	size_t len, upper_bound, xlen, i;
 	struct uio auio;
 	struct iovec aiov;
@@ -2380,7 +2387,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		goto out_locked;
 	}
 
-	error = kauth_authorize_process(l->l_proc->p_cred,
+	error = kauth_authorize_process(l->l_cred,
 	    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL);
 	if (error) {
 		goto out_locked;
@@ -2388,9 +2395,11 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 
 	/* only root or same user change look at the environment */
 	if (type == KERN_PROC_ENV || type == KERN_PROC_NENV) {
-		if (kauth_cred_geteuid(up->p_cred) != 0) {
-			if (kauth_cred_getuid(up->p_cred) != kauth_cred_getuid(p->p_cred) ||
-			    kauth_cred_getuid(up->p_cred) != kauth_cred_getsvuid(p->p_cred)) {
+		if (kauth_cred_geteuid(l->l_cred) != 0) {
+			if (kauth_cred_getuid(l->l_cred) !=
+			    kauth_cred_getuid(p->p_cred) ||
+			    kauth_cred_getuid(l->l_cred) !=
+			    kauth_cred_getsvuid(p->p_cred)) {
 				error = EPERM;
 				goto out_locked;
 			}
@@ -2546,7 +2555,7 @@ out_locked:
 /*
  * Sysctl helper routine for Verified Exec.
  */
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0
 static int
 sysctl_kern_veriexec(SYSCTLFN_ARGS)
 {
@@ -2584,7 +2593,7 @@ sysctl_kern_veriexec(SYSCTLFN_ARGS)
 
 	return (error);
 }
-#endif /* VERIFIED_EXEC */
+#endif /* NVERIEXEC > 0 */
 
 static int
 sysctl_security_setidcore(SYSCTLFN_ARGS)
@@ -3067,15 +3076,11 @@ fill_eproc(struct proc *p, struct eproc *ep)
 {
 	struct tty *tp;
 	struct lwp *l;
-	struct pcred pc;
-	struct ucred uc;
 
 	ep->e_paddr = p;
 	ep->e_sess = p->p_session;
-	kauth_cred_topcred(p->p_cred, &pc);
-	kauth_cred_toucred(p->p_cred, &uc);
-	ep->e_pcred = pc;
-	ep->e_ucred = uc;
+	kauth_cred_topcred(p->p_cred, &ep->e_pcred);
+	kauth_cred_toucred(p->p_cred, &ep->e_ucred);
 	if (p->p_stat == SIDL || P_ZOMBIE(p)) {
 		ep->e_vm.vm_rssize = 0;
 		ep->e_vm.vm_tsize = 0;

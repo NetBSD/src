@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.71 2006/02/05 05:01:56 cube Exp $
+# $NetBSD: GENERIC,v 1.71.2.1 2006/08/11 15:42:01 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.71 $"
+#ident 		"GENERIC-$Revision: 1.71.2.1 $"
 
 maxusers	8
 
@@ -181,6 +181,7 @@ st* at scsibus? target ? lun ?		# SCSI tapes
 #uk* at scsibus? target ? lun ?		# unknown SCSI devices
 
 pseudo-device	bpfilter		# Berkeley Packet Filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	ccd		2	# concatenated and striped disks
 #pseudo-device	cgd		2	# cryptographic disks
 #pseudo-device	gre			# generic L3 over IP tunnel

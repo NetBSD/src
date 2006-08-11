@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.26 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: types.h,v 1.26.8.1 2006/08/11 15:42:40 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -51,7 +51,8 @@ typedef	unsigned long	psize_t, vsize_t;
 typedef unsigned long	register_t;
 typedef unsigned int	register32_t;
 #else
-typedef long	register_t;
+typedef unsigned long long	register64_t;
+typedef unsigned long	register_t;
 #endif
 
 #if defined(_KERNEL)

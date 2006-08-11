@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.69.2.1 2006/05/24 10:56:39 yamt Exp $
+# $NetBSD: GENERIC,v 1.69.2.2 2006/08/11 15:41:20 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -206,6 +206,7 @@ pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol

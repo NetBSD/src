@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.89.2.4 2006/05/24 10:58:31 yamt Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.89.2.5 2006/08/11 15:45:33 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.89.2.4 2006/05/24 10:58:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.89.2.5 2006/08/11 15:45:33 yamt Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -757,8 +757,8 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct lwp *l)
 			wsdisplayparam(tp, &tp->t_termios);
 			ttsetwater(tp);
 		} else if ((tp->t_state & TS_XCLUDE) != 0 &&
-			   kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
-					     &l->l_proc->p_acflag) != 0)
+		    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+		    &l->l_acflag) != 0)
 			return EBUSY;
 		tp->t_state |= TS_CARR_ON;
 
@@ -1534,8 +1534,10 @@ wsdisplay_update_rawkbd(struct wsdisplay_softc *sc, struct wsscreen *scr)
 
 	data = raw ? WSKBD_RAW : WSKBD_TRANSLATED;
 	inp = sc->sc_input;
-	if (inp == NULL)
+	if (inp == NULL) {
+		splx(s);
 		return (ENXIO);
+	}
 	error = wsevsrc_display_ioctl(inp, WSKBDIO_SETMODE, &data, 0, 0);
 	if (!error)
 		sc->sc_rawkbd = raw;

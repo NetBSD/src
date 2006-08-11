@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.18 2005/12/11 12:17:33 christos Exp $
+#	$NetBSD: Makefile,v 1.18.8.1 2006/08/11 15:41:43 yamt Exp $
 
 INCSDIR= /usr/include/hpcmips
 
 INCS=	ansi.h aout_machdep.h apmvar.h asm.h autoconf.h \
 	bootinfo.h bsd-aout.h bswap.h bus.h \
 	cdefs.h cpu.h \
-	db_machdep.h disklabel.h \
+	disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
 	float.h \
 	ieee.h ieeefp.h \

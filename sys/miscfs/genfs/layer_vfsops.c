@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.22.8.1 2006/05/24 10:58:55 yamt Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.22.8.2 2006/08/11 15:46:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.22.8.1 2006/05/24 10:58:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.22.8.2 2006/08/11 15:46:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -248,12 +248,13 @@ layerfs_fhtovp(mp, fidp, vpp)
 }
 
 int
-layerfs_vptofh(vp, fhp)
+layerfs_vptofh(vp, fhp, fh_size)
 	struct vnode *vp;
 	struct fid *fhp;
+	size_t *fh_size;
 {
 
-	return (VFS_VPTOFH(LAYERVPTOLOWERVP(vp), fhp));
+	return (VFS_VPTOFH(LAYERVPTOLOWERVP(vp), fhp, fh_size));
 }
 
 /*

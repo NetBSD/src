@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.14 2005/12/11 12:16:47 christos Exp $	*/
+/*	$NetBSD: iomd.c,v 1.14.8.1 2006/08/11 15:41:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.14 2005/12/11 12:16:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.14.8.1 2006/08/11 15:41:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,11 +80,11 @@ struct iomd_softc {
 	int			sc_id;	/* IOMD id */
 };
 
-static int iomdmatch	__P((struct device *parent, struct cfdata *cf,
-                             void *aux));
-static void iomdattach	__P((struct device *parent, struct device *self,
-                             void *aux));
-static int iomdprint	__P((void *aux, const char *iomdbus));
+static int iomdmatch(struct device *parent, struct cfdata *cf,
+                             void *aux);
+static void iomdattach(struct device *parent, struct device *self,
+                             void *aux);
+static int iomdprint(void *aux, const char *iomdbus);
 
 CFATTACH_DECL(iomd, sizeof(struct iomd_softc),
     iomdmatch, iomdattach, NULL, NULL);
@@ -107,13 +107,11 @@ u_int32_t arm7500_ioc_found = 0;
  */
 
 static int
-iomdprint(aux, name)
-	void *aux;
-	const char *name;
+iomdprint(void *aux, const char *name)
 {
 /*	union iomd_attach_args *ia = aux;*/
 
-	return(QUIET);
+	return QUIET;
 }
 
 /*
@@ -123,11 +121,9 @@ iomdprint(aux, name)
  */ 
  
 static int
-iomdmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+iomdmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
+
 	if (iomd_found)
 		return 0;
 	return 1;
@@ -142,10 +138,7 @@ iomdmatch(parent, cf, aux)
  */
   
 static void
-iomdattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+iomdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct iomd_softc *sc = (struct iomd_softc *)self;
 /*	struct mainbus_attach_args *mb = aux;*/

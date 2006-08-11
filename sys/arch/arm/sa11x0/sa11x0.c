@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.19.2.1 2006/05/24 10:56:35 yamt Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.19.2.2 2006/08/11 15:41:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -54,10 +54,10 @@
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.19.2.1 2006/05/24 10:56:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.19.2.2 2006/08/11 15:41:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,12 +124,13 @@ sa11x0_print(void *aux, const char *name)
 	if (sa->sa_gpio != -1)
 		aprint_normal(" gpio %d", sa->sa_gpio);
 
-        return (UNCONF);
+        return UNCONF;
 }
 
 int
 sa11x0_match(struct device *parent, struct cfdata *match, void *aux)
 {
+
 	return 1;
 }
 

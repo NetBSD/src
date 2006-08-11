@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.85.2.1 2006/06/26 12:52:57 yamt Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.85.2.2 2006/08/11 15:45:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.85.2.1 2006/06/26 12:52:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.85.2.2 2006/08/11 15:45:46 yamt Exp $");
 
 #include "opt_ktrace.h"
 
@@ -718,6 +718,33 @@ sys_pselect(struct lwp *l, void *v, register_t *retval)
 }
 
 int
+inittimeleft(struct timeval *tv, struct timeval *sleeptv)
+{
+	if (itimerfix(tv))
+		return -1;
+	getmicrouptime(sleeptv);
+	return 0;
+}
+
+int
+gettimeleft(struct timeval *tv, struct timeval *sleeptv)
+{
+	/*
+	 * We have to recalculate the timeout on every retry.
+	 */
+	struct timeval slepttv;
+	/*
+	 * reduce tv by elapsed time
+	 * based on monotonic time scale
+	 */
+	getmicrouptime(&slepttv);
+	timeradd(tv, sleeptv, tv);
+	timersub(tv, &slepttv, tv);
+	*sleeptv = slepttv;
+	return tvtohz(tv);
+}
+
+int
 sys_select(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_select_args /* {
@@ -753,6 +780,7 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 	int		s, ncoll, error, timo;
 	size_t		ni;
 	sigset_t	oldmask;
+	struct timeval  sleeptv;
 
 	error = 0;
 	if (nd < 0)
@@ -780,10 +808,11 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 #undef	getbits
 
 	timo = 0;
-	if (tv && itimerfix(tv)) {
+	if (tv && inittimeleft(tv, &sleeptv) == -1) {
 		error = EINVAL;
 		goto done;
 	}
+
 	if (mask)
 		(void)sigprocmask1(p, SIG_SETMASK, mask, &oldmask);
 
@@ -794,14 +823,8 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 			   (fd_mask *)(bits + ni * 3), nd, retval);
 	if (error || *retval)
 		goto done;
-	if (tv) {
-		/*
-		 * We have to recalculate the timeout on every retry.
-		 */
-		timo = tvtohz(tv);
-		if (timo <= 0)
-			goto done;
-	}
+	if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
+		goto done;
 	s = splsched();
 	if ((l->l_flag & L_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
@@ -947,6 +970,7 @@ pollcommon(struct lwp *l, register_t *retval,
 	sigset_t	oldmask;
 	int		s, ncoll, error, timo;
 	size_t		ni;
+	struct timeval	sleeptv;
 
 	if (nfds > p->p_fd->fd_nfiles) {
 		/* forgiving; slightly wrong */
@@ -963,10 +987,11 @@ pollcommon(struct lwp *l, register_t *retval,
 		goto done;
 
 	timo = 0;
-	if (tv && itimerfix(tv)) {
+	if (tv && inittimeleft(tv, &sleeptv) == -1) {
 		error = EINVAL;
 		goto done;
 	}
+
 	if (mask != NULL)
 		(void)sigprocmask1(p, SIG_SETMASK, mask, &oldmask);
 
@@ -976,14 +1001,8 @@ pollcommon(struct lwp *l, register_t *retval,
 	error = pollscan(l, (struct pollfd *)bits, nfds, retval);
 	if (error || *retval)
 		goto done;
-	if (tv) {
-		/*
-		 * We have to recalculate the timeout on every retry.
-		 */
-		timo = tvtohz(tv);
-		if (timo <= 0)
-			goto done;
-	}
+	if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
+		goto done;
 	s = splsched();
 	if ((l->l_flag & L_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);

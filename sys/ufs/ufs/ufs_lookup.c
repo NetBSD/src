@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.73.6.3 2006/06/26 12:54:50 yamt Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.73.6.4 2006/08/11 15:47:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.73.6.3 2006/06/26 12:54:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.73.6.4 2006/08/11 15:47:37 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -859,7 +859,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 				return (error);
 			if (tvp != NULL)
 				VOP_UNLOCK(tvp, 0);
-			error = VOP_FSYNC(dvp, l->l_proc->p_cred, FSYNC_WAIT, 0, 0, l);
+			error = VOP_FSYNC(dvp, l->l_cred, FSYNC_WAIT, 0, 0, l);
 			if (tvp != 0)
 				vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
 			return (error);

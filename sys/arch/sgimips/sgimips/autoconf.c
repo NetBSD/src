@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27.2.2 2006/05/24 10:57:11 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27.2.3 2006/08/11 15:42:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27.2.2 2006/05/24 10:57:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27.2.3 2006/08/11 15:42:47 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -191,11 +191,11 @@ device_register(struct device *dev, void *aux)
 			KASSERT(usetd != NULL);
 
 			if (prop_dictionary_set(device_properties(dev),
-						"use-target-defaults",
+						"aic7xxx-use-target-defaults",
 						usetd) == FALSE) {
-				printf("WARNING: unable to set"
-				    "use-target-defaults property for %s\n",
-				    dev->dv_xname);
+				printf("WARNING: unable to set "
+				    "aic7xxx-use-target-defaults property "
+				    "for %s\n", dev->dv_xname);
 			}
 			prop_object_release(usetd);
 		}

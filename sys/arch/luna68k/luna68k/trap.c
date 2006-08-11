@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.34.2.2 2006/05/24 10:56:58 yamt Exp $ */
+/* $NetBSD: trap.c,v 1.34.2.3 2006/08/11 15:42:01 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34.2.2 2006/05/24 10:56:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34.2.3 2006/08/11 15:42:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -301,6 +301,7 @@ trap(type, code, v, frame)
 		type |= T_USER;
 		sticks = p->p_sticks;
 		l->l_md.md_regs = frame.f_regs;
+		LWP_CACHE_CREDS(l, p);
 	}
 	switch (type) {
 
@@ -641,8 +642,8 @@ trap(type, code, v, frame)
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			    p->p_pid, p->p_comm,
-			    p->p_cred ?
-			    kauth_cred_geteuid(p->p_cred) : -1);
+			    l->l_cred ?
+			    kauth_cred_geteuid(l->l_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 		} else {
 			ksi.ksi_signo = SIGSEGV;
@@ -737,7 +738,7 @@ writeback(fp, docachepush)
 			pmap_update(pmap_kernel());
 		} else
 			printf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",
-			       p->p_pid, p->p_comm, kauth_cred_geteuid(p->p_cred));
+			       p->p_pid, p->p_comm, kauth_cred_geteuid(l->l_cred));
 	} else if ((f->f_ssw & (SSW4_RW|SSW4_TTMASK)) == SSW4_TTM16) {
 		/*
 		 * MOVE16 fault.

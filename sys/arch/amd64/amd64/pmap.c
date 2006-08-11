@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.24.8.1 2006/05/24 10:56:33 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24.8.2 2006/08/11 15:41:00 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24.8.1 2006/05/24 10:56:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24.8.2 2006/08/11 15:41:00 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -735,8 +735,7 @@ pmap_kenter_pa(va, pa, prot)
 	else
 		pte = kvtopte(va);
 
-	npte = pa | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) |
-	     PG_V | pmap_pg_g;
+	npte = pa | protection_codes[prot] | PG_V | pmap_pg_g;
 	opte = pmap_pte_set(pte, npte); /* zap! */
 #ifdef LARGEPAGES
 	/* XXX For now... */

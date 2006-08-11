@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.7 2005/12/27 02:19:27 ross Exp $	*/
+/*	$NetBSD: pte.h,v 1.7.8.1 2006/08/11 15:42:41 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2003 Matt Thomas
@@ -41,10 +41,17 @@
  * Page Table Entries
  */
 #ifndef	_LOCORE
+#if defined (PPC_OEA64_BRIDGE)
+struct pte {
+	register64_t pte_hi;
+	register64_t pte_lo;
+};
+#else	/* PPC_OEA || PPC_OEA64 */
 struct pte {
 	register_t pte_hi;
 	register_t pte_lo;
 };
+#endif
 
 struct pteg {
 	struct pte pt[8];
@@ -52,13 +59,20 @@ struct pteg {
 #endif	/* _LOCORE */
 
 /* High word: */
-#ifdef PPC_OEA64
+#if defined (PPC_OEA64)
 #define	PTE_VALID	0x00000001
 #define	PTE_HID		0x00000002
 #define	PTE_API		0x00000f80
 #define	PTE_API_SHFT	7
 #define	PTE_VSID_SHFT	12
 #define	PTE_VSID	(~0xfffL)
+#elif defined (PPC_OEA64_BRIDGE)
+#define	PTE_VALID	0x00000001
+#define	PTE_HID		0x00000002
+#define	PTE_API		0x00000f80
+#define	PTE_API_SHFT	7
+#define	PTE_VSID_SHFT	12
+#define	PTE_VSID	(~0xfffULL)
 #else
 #define	PTE_VALID	0x80000000
 #define	PTE_VSID	0x7fffff80
@@ -71,7 +85,11 @@ struct pteg {
 
 
 /* Low word: */
-#define	PTE_RPGN	(~0xfffL)
+#if defined (PPC_OEA) || defined (PPC_OEA64)
+#define	PTE_RPGN	(~0xfffUL)
+#else
+#define	PTE_RPGN	(~0xfffULL)
+#endif
 #define	PTE_RPGN_SHFT	12
 #define	PTE_REF		0x00000100
 #define	PTE_CHG		0x00000080
@@ -98,7 +116,7 @@ struct pteg {
 #define	ADDR_SR_SHFT	28
 #define	ADDR_PIDX	0x0ffff000
 #define	ADDR_PIDX_SHFT	12
-#ifdef PPC_OEA64
+#if defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #define	ADDR_API_SHFT	23	/* API is 5 bits */
 #else
 #define	ADDR_API_SHFT	22	/* API is 6 bits */

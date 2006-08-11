@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.77.8.3 2006/05/24 10:59:25 yamt Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.77.8.4 2006/08/11 15:47:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.77.8.3 2006/05/24 10:59:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.77.8.4 2006/08/11 15:47:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,7 +323,7 @@ ffs_fsync(void *v)
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int l = 0;
 		VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &l, FWRITE,
-			ap->a_l->l_proc->p_cred, ap->a_l);
+			ap->a_l->l_cred, ap->a_l);
 	}
 
 	return error;
@@ -462,7 +462,7 @@ loop:
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int i = 0;
 		VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &i, FWRITE,
-			ap->a_l->l_proc->p_cred, ap->a_l);
+			ap->a_l->l_cred, ap->a_l);
 	}
 
 	return error;

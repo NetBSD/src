@@ -1,4 +1,4 @@
-/*	$NetBSD: j720kbd.c,v 1.1.2.1 2006/06/26 12:44:38 yamt Exp $	*/
+/*	$NetBSD: j720kbd.c,v 1.1.2.2 2006/08/11 15:41:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* Jornada 720 keyboard driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720kbd.c,v 1.1.2.1 2006/06/26 12:44:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720kbd.c,v 1.1.2.2 2006/08/11 15:41:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,23 +220,21 @@ j720kbd_read(struct j720kbd_chip *scc, char *buf)
 	bus_space_write_4(ssp->sc_iot, ssp->sc_gpioh, SAGPIO_PCR, 0x2000000);
 
 	/* Send scan keycode command. */
-	if (j720ssp_readwrite(ssp, 1, 0x900, &data, 500) < 0 || data != 0x88) {
+	if (j720ssp_readwrite(ssp, 1, 0x90, &data, 500) < 0 || data != 0x11) {
 		DPRINTF(("j720kbd_read: no dummy received\n"));
 		goto out;
 	}
 
 	/* Read number of scancodes available. */
-	if (j720ssp_readwrite(ssp, 0, 0x8800, &data, 500) < 0) {
+	if (j720ssp_readwrite(ssp, 0, 0x11, &data, 500) < 0) {
 		DPRINTF(("j720kbd_read: unable to read number of scancodes\n"));
 		goto out;
 	}
-	J720SSP_INVERT(data);
 	count = data;
 
 	for (; count; count--) {
-		if (j720ssp_readwrite(ssp, 0, 0x8800, &data, 100) < 0)
+		if (j720ssp_readwrite(ssp, 0, 0x11, &data, 100) < 0)
 			goto out;
-		J720SSP_INVERT(data);
 		*buf++ = data;
 	}
 	*buf = 0;

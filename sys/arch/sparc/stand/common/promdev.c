@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.17.8.2 2006/06/26 12:45:29 yamt Exp $ */
+/*	$NetBSD: promdev.c,v 1.17.8.3 2006/08/11 15:43:00 yamt Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -57,25 +57,25 @@
 /* OBP V0-3 PROM vector */
 #define obpvec	((struct promvec *)romp)
 
-int	obp_close __P((struct open_file *));
-int	obp_strategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int	obp_v0_strategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-ssize_t	obp_v0_xmit __P((struct promdata *, void *, size_t));
-ssize_t	obp_v0_recv __P((struct promdata *, void *, size_t));
-int	obp_v2_strategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-ssize_t	obp_v2_xmit __P((struct promdata *, void *, size_t));
-ssize_t	obp_v2_recv __P((struct promdata *, void *, size_t));
-int	oldmon_close __P((struct open_file *));
-int	oldmon_strategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-void	oldmon_iclose __P((struct saioreq *));
-int	oldmon_iopen __P((struct promdata *));
-ssize_t	oldmon_xmit __P((struct promdata *, void *, size_t));
-ssize_t	oldmon_recv __P((struct promdata *, void *, size_t));
+int	obp_close(struct open_file *);
+int	obp_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	obp_v0_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+ssize_t	obp_v0_xmit(struct promdata *, void *, size_t);
+ssize_t	obp_v0_recv(struct promdata *, void *, size_t);
+int	obp_v2_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+ssize_t	obp_v2_xmit(struct promdata *, void *, size_t);
+ssize_t	obp_v2_recv(struct promdata *, void *, size_t);
+int	oldmon_close(struct open_file *);
+int	oldmon_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+void	oldmon_iclose(struct saioreq *);
+int	oldmon_iopen(struct promdata *);
+ssize_t	oldmon_xmit(struct promdata *, void *, size_t);
+ssize_t	oldmon_recv(struct promdata *, void *, size_t);
 
-static char	*oldmon_mapin __P((u_long, int, int));
+static char	*oldmon_mapin(u_long, int, int);
 #ifndef BOOTXX
-static char	*mygetpropstring __P((int, char *));
-static int	getdevtype __P((int, char *));
+static char	*mygetpropstring(int, char *);
+static int	getdevtype(int, char *);
 #endif
 
 extern struct fs_ops file_system_nfs[];
@@ -106,8 +106,7 @@ static daddr_t doffset = 0;
 
 
 void
-putchar(c)
-	int c;
+putchar(int c)
 {
  
 	if (c == '\n')
@@ -116,16 +115,14 @@ putchar(c)
 }
 
 void
-_rtt()
+_rtt(void)
 {
+
 	prom_halt();
 }
 
 int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;
+devopen(struct open_file *f, const char *fname, char **file)
 {
 	int	error = 0, fd = 0;
 	struct	promdata *pd;
@@ -285,13 +282,8 @@ devopen(f, fname, file)
 
 
 int
-obp_v0_strategy(devdata, flag, dblk, size, buf, rsize)
-	void	*devdata;
-	int	flag;
-	daddr_t	dblk;
-	size_t	size;
-	void	*buf;
-	size_t	*rsize;
+obp_v0_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
+		void *buf, size_t *rsize)
 {
 	int	n, error = 0;
 	struct	promdata *pd = (struct promdata *)devdata;
@@ -329,13 +321,8 @@ obp_v0_strategy(devdata, flag, dblk, size, buf, rsize)
 }
 
 int
-obp_v2_strategy(devdata, flag, dblk, size, buf, rsize)
-	void	*devdata;
-	int	flag;
-	daddr_t	dblk;
-	size_t	size;
-	void	*buf;
-	size_t	*rsize;
+obp_v2_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
+		void *buf, size_t *rsize)
 {
 	int	error = 0;
 	struct	promdata *pd = (struct promdata *)devdata;
@@ -367,13 +354,8 @@ obp_v2_strategy(devdata, flag, dblk, size, buf, rsize)
  * On old-monitor machines, things work differently.
  */
 int
-oldmon_strategy(devdata, flag, dblk, size, buf, rsize)
-	void	*devdata;
-	int	flag;
-	daddr_t	dblk;
-	size_t	size;
-	void	*buf;
-	size_t	*rsize;
+oldmon_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
+		void *buf, size_t *rsize)
 {
 	struct promdata	*pd = devdata;
 	struct saioreq	*si;
@@ -414,8 +396,7 @@ oldmon_strategy(devdata, flag, dblk, size, buf, rsize)
 }
 
 int
-obp_close(f)
-	struct open_file *f;
+obp_close(struct open_file *f)
 {
 	struct promdata *pd = f->f_devdata;
 	register int fd = pd->fd;
@@ -429,8 +410,7 @@ obp_close(f)
 }
 
 int
-oldmon_close(f)
-	struct open_file *f;
+oldmon_close(struct open_file *f)
 {
 	struct promdata *pd = f->f_devdata;
 
@@ -446,40 +426,28 @@ oldmon_close(f)
 
 #ifndef BOOTXX
 ssize_t
-obp_v0_xmit(pd, buf, len)
-	struct	promdata *pd;
-	void	*buf;
-	size_t	len;
+obp_v0_xmit(struct promdata *pd, void *buf, size_t len)
 {
 
 	return ((*obpvec->pv_v0devops.v0_wnet)(pd->fd, len, buf));
 }
 
 ssize_t
-obp_v2_xmit(pd, buf, len)
-	struct	promdata *pd;
-	void	*buf;
-	size_t	len;
+obp_v2_xmit(struct promdata *pd, void *buf, size_t len)
 {
 
 	return (prom_write(pd->fd, buf, len));
 }
 
 ssize_t
-obp_v0_recv(pd, buf, len)
-	struct	promdata *pd;
-	void	*buf;
-	size_t	len;
+obp_v0_recv(struct promdata *pd, void *buf, size_t len)
 {
 
 	return ((*obpvec->pv_v0devops.v0_rnet)(pd->fd, len, buf));
 }
 
 ssize_t
-obp_v2_recv(pd, buf, len)
-	struct	promdata *pd;
-	void	*buf;
-	size_t	len;
+obp_v2_recv(struct promdata *pd, void *buf, size_t len)
 {
 	int	n;
 
@@ -490,10 +458,7 @@ obp_v2_recv(pd, buf, len)
 }
 
 ssize_t
-oldmon_xmit(pd, buf, len)
-	struct	promdata *pd;
-	void	*buf;
-	size_t	len;
+oldmon_xmit(struct promdata *pd, void *buf, size_t len)
 {
 	struct saioreq	*si;
 	struct saif	*sif;
@@ -514,10 +479,7 @@ oldmon_xmit(pd, buf, len)
 }
 
 ssize_t
-oldmon_recv(pd, buf, len)
-	struct	promdata *pd;
-	void	*buf;
-	size_t	len;
+oldmon_recv(struct promdata *pd, void *buf, size_t len)
 {
 	struct saioreq	*si;
 	struct saif	*sif;
@@ -534,14 +496,16 @@ oldmon_recv(pd, buf, len)
 }
 
 int
-getchar()
+getchar(void)
 {
+
 	return (prom_getchar());
 }
 
 time_t
-getsecs()
+getsecs(void)
 {
+
 	(void)prom_peekchar();
 	return (prom_ticks() / 1000);
 }
@@ -564,9 +528,7 @@ static struct dtab {
 };
 
 int
-getdevtype(fd, name)
-	int	fd;
-	char	*name;
+getdevtype(int fd, char *name)
 {
 	struct dtab *dp;
 	int node;
@@ -604,9 +566,7 @@ getdevtype(fd, name)
  * subsequent calls.
  */
 char *
-mygetpropstring(node, name)
-	int node;
-	char *name;
+mygetpropstring(int node, char *name)
 {
 	int len;
 static	char buf[64];
@@ -630,8 +590,7 @@ struct saioreq prom_si;
 static int promdev_inuse;
 
 int
-oldmon_iopen(pd)
-	struct promdata	*pd;
+oldmon_iopen(struct promdata *pd)
 {
 	struct om_bootparam *bp;
 	struct om_boottable *ops;
@@ -709,8 +668,7 @@ oldmon_iopen(pd)
 }
 
 void
-oldmon_iclose(si)
-	struct saioreq *si;
+oldmon_iclose(struct saioreq *si)
 {
 	struct om_boottable *ops;
 	struct devinfo *dip;
@@ -755,9 +713,7 @@ static int oldmon_mapinfo_cnt =
 static u_long prom_devmap = MONSHORTSEG;
 
 static char *
-oldmon_mapin(physaddr, length, maptype)
-	u_long physaddr;
-	int length, maptype;
+oldmon_mapin(u_long physaddr, int length, int maptype)
 {
 	int i, pa, pte, va;
 

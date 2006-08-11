@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.87.2.1 2006/05/24 10:58:42 yamt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.87.2.2 2006/08/11 15:45:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.87.2.1 2006/05/24 10:58:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.87.2.2 2006/08/11 15:45:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,11 +133,11 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.87.2.1 2006/05/24 10:58:42 yamt Ex
 const struct	sockaddr_un sun_noname = { sizeof(sun_noname), AF_LOCAL };
 ino_t	unp_ino;			/* prototype for fake inode numbers */
 
-struct mbuf *unp_addsockcred(struct proc *, struct mbuf *);
+struct mbuf *unp_addsockcred(struct lwp *, struct mbuf *);
 
 int
 unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp,
-	struct proc *p)
+	struct lwp *l)
 {
 	struct socket *so2;
 	const struct sockaddr_un *sun;
@@ -148,7 +148,7 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp,
 	else
 		sun = &sun_noname;
 	if (unp->unp_conn->unp_flags & UNP_WANTCRED)
-		control = unp_addsockcred(p, control);
+		control = unp_addsockcred(l, control);
 	if (sbappendaddr(&so2->so_rcv, (const struct sockaddr *)sun, m,
 	    control) == 0) {
 		m_freem(control);
@@ -337,7 +337,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				}
 			}
 			KASSERT(p != NULL);
-			error = unp_output(m, control, unp, p);
+			error = unp_output(m, control, unp, l);
 			if (nam)
 				unp_disconnect(unp);
 			break;
@@ -357,7 +357,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				 * SOCK_STREAM.
 				 */
 				unp->unp_conn->unp_flags &= ~UNP_WANTCRED;
-				control = unp_addsockcred(p, control);
+				control = unp_addsockcred(l, control);
 			}
 			/*
 			 * Send to paired receive port, and then reduce
@@ -651,7 +651,7 @@ restart:
 	VATTR_NULL(&vattr);
 	vattr.va_type = VSOCK;
 	vattr.va_mode = ACCESSPERMS & ~(p->p_cwdi->cwdi_cmask);
-	VOP_LEASE(nd.ni_dvp, l, p->p_cred, LEASE_WRITE);
+	VOP_LEASE(nd.ni_dvp, l, l->l_cred, LEASE_WRITE);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	vn_finished_write(mp, 0);
 	if (error)
@@ -700,7 +700,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 		error = ENOTSOCK;
 		goto bad;
 	}
-	if ((error = VOP_ACCESS(vp, VWRITE, l->l_proc->p_cred, l)) != 0)
+	if ((error = VOP_ACCESS(vp, VWRITE, l->l_cred, l)) != 0)
 		goto bad;
 	so2 = vp->v_socket;
 	if (so2 == 0) {
@@ -1042,15 +1042,15 @@ unp_internalize(struct mbuf *control, struct lwp *l)
 }
 
 struct mbuf *
-unp_addsockcred(struct proc *p, struct mbuf *control)
+unp_addsockcred(struct lwp *l, struct mbuf *control)
 {
 	struct cmsghdr *cmp;
 	struct sockcred *sc;
 	struct mbuf *m, *n;
 	int len, space, i;
 
-	len = CMSG_LEN(SOCKCREDSIZE(kauth_cred_ngroups(p->p_cred)));
-	space = CMSG_SPACE(SOCKCREDSIZE(kauth_cred_ngroups(p->p_cred)));
+	len = CMSG_LEN(SOCKCREDSIZE(kauth_cred_ngroups(l->l_cred)));
+	space = CMSG_SPACE(SOCKCREDSIZE(kauth_cred_ngroups(l->l_cred)));
 
 	m = m_get(M_WAIT, MT_CONTROL);
 	if (space > MLEN) {
@@ -1071,13 +1071,13 @@ unp_addsockcred(struct proc *p, struct mbuf *control)
 	cmp->cmsg_len = len;
 	cmp->cmsg_level = SOL_SOCKET;
 	cmp->cmsg_type = SCM_CREDS;
-	sc->sc_uid = kauth_cred_getuid(p->p_cred);
-	sc->sc_euid = kauth_cred_geteuid(p->p_cred);
-	sc->sc_gid = kauth_cred_getgid(p->p_cred);
-	sc->sc_egid = kauth_cred_getegid(p->p_cred);
-	sc->sc_ngroups = kauth_cred_ngroups(p->p_cred);
+	sc->sc_uid = kauth_cred_getuid(l->l_cred);
+	sc->sc_euid = kauth_cred_geteuid(l->l_cred);
+	sc->sc_gid = kauth_cred_getgid(l->l_cred);
+	sc->sc_egid = kauth_cred_getegid(l->l_cred);
+	sc->sc_ngroups = kauth_cred_ngroups(l->l_cred);
 	for (i = 0; i < sc->sc_ngroups; i++)
-		sc->sc_groups[i] = kauth_cred_group(p->p_cred, i);
+		sc->sc_groups[i] = kauth_cred_group(l->l_cred, i);
 
 	/*
 	 * If a control message already exists, append us to the end.

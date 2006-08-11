@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.224.2.2 2006/06/26 12:53:58 yamt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.224.2.3 2006/08/11 15:46:33 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.224.2.2 2006/06/26 12:53:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.224.2.3 2006/08/11 15:46:33 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -2093,6 +2093,30 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 }
 
 /*
+ * sysctl helper routine for net.inet.ip.forwsrcrt.
+ */
+static int
+sysctl_net_inet_ip_forwsrcrt(SYSCTLFN_ARGS)
+{
+	int error, tmp;
+	struct sysctlnode node;
+
+	node = *rnode;
+	tmp = ip_forwsrcrt;
+	node.sysctl_data = &tmp;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (securelevel > 0)
+		return (EPERM);
+
+	ip_forwsrcrt = tmp;
+
+	return (0);
+}
+
+/*
  * sysctl helper routine for net.inet.ip.mtudisctimeout.  checks the
  * range of the new value and tweaks timers if it changes.
  */
@@ -2193,11 +2217,11 @@ SYSCTL_SETUP(sysctl_net_inet_ip_setup, "sysctl net.inet.ip subtree setup")
 		       IPCTL_DEFMTU, CTL_EOL);
 #endif /* IPCTL_DEFMTU */
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READONLY1,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "forwsrcrt",
 		       SYSCTL_DESCR("Enable forwarding of source-routed "
 				    "datagrams"),
-		       NULL, 0, &ip_forwsrcrt, 0,
+		       sysctl_net_inet_ip_forwsrcrt, 0, &ip_forwsrcrt, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_FORWSRCRT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,

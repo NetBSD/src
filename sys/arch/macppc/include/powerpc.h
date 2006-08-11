@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc.h,v 1.5 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: powerpc.h,v 1.5.8.1 2006/08/11 15:42:14 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,9 +34,12 @@
 #define	_MACHINE_POWERPC_H_
 
 struct mem_region {
+#if defined (PMAC_G5)
+	paddr_t start_hi;
+#endif
 	paddr_t start;
 	psize_t size;
-};
+}__attribute__((packed));
 
 void mem_regions __P((struct mem_region **, struct mem_region **));
 

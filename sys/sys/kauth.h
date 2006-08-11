@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.2.4.3 2006/06/26 12:54:29 yamt Exp $ */
+/* $NetBSD: kauth.h,v 1.2.4.4 2006/08/11 15:47:26 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -74,6 +74,7 @@ typedef int (*kauth_scope_callback_t)(kauth_cred_t, kauth_action_t,
  * Generic scope - actions.
  */
 #define	KAUTH_GENERIC_ISSUSER	1	/* check for super-user */
+#define	KAUTH_GENERIC_CANSEE	2	/* check if can see other cred */
 
 #define NOCRED ((kauth_cred_t)-1)	/* no credential available */
 #define FSCRED ((kauth_cred_t)-2)	/* filesystem credential */
@@ -114,8 +115,8 @@ gid_t kauth_cred_getgid(kauth_cred_t);
 gid_t kauth_cred_getegid(kauth_cred_t);
 gid_t kauth_cred_getsvgid(kauth_cred_t);
 int kauth_cred_ismember_gid(kauth_cred_t, gid_t, int *);
-uint16_t kauth_cred_ngroups(kauth_cred_t);
-gid_t kauth_cred_group(kauth_cred_t, uint16_t);
+u_int kauth_cred_ngroups(kauth_cred_t);
+gid_t kauth_cred_group(kauth_cred_t, u_int);
 
 void kauth_cred_setuid(kauth_cred_t, uid_t);
 void kauth_cred_seteuid(kauth_cred_t, uid_t);
@@ -125,7 +126,7 @@ void kauth_cred_setegid(kauth_cred_t, gid_t);
 void kauth_cred_setsvgid(kauth_cred_t, gid_t);
 
 void kauth_cred_hold(kauth_cred_t);
-uint32_t kauth_cred_getrefcnt(kauth_cred_t);
+u_int kauth_cred_getrefcnt(kauth_cred_t);
 
 int kauth_cred_setgroups(kauth_cred_t, gid_t *, size_t, uid_t);
 int kauth_cred_getgroups(kauth_cred_t, gid_t *, size_t);

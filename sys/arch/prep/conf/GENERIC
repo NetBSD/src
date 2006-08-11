@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113.2.4 2006/06/26 12:45:13 yamt Exp $
+# $NetBSD: GENERIC,v 1.113.2.5 2006/08/11 15:42:41 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.113.2.4 $"
+#ident		"GENERIC-$Revision: 1.113.2.5 $"
 
 maxusers	32
 
@@ -285,6 +285,7 @@ esiop*	at pci? dev ? function ?	# Symbios 53c875 SCSI and newer
 
 # PCMCIA SCSI controllers
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
+spc* 	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 
 # SCSI bus support
 #scsibus* at adw?
@@ -293,6 +294,7 @@ scsibus* at aic?
 #scsibus* at iha?
 #scsibus* at pcscp?
 scsibus* at siop?
+scsibus* at spc?
 scsibus* at esiop?
 
 # SCSI devices
@@ -540,6 +542,7 @@ pseudo-device	vnd			# disk-like interface to files
 # network pseudo-devices
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)

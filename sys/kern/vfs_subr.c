@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.265.2.2 2006/06/26 12:52:57 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.265.2.3 2006/08/11 15:45:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.265.2.2 2006/06/26 12:52:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.265.2.3 2006/08/11 15:45:47 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2459,7 +2459,7 @@ vfs_write_suspend(struct mount *mp, int slpflag, int slptimeo)
 			0, &mp->mnt_slock);
 	simple_unlock(&mp->mnt_slock);
 
-	error = VFS_SYNC(mp, MNT_WAIT, l->l_proc->p_cred, l);
+	error = VFS_SYNC(mp, MNT_WAIT, l->l_cred, l);
 	if (error) {
 		vfs_write_resume(mp);
 		return error;

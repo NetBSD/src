@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.214.2.3 2006/05/24 10:59:21 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.214.2.4 2006/08/11 15:47:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -42,6 +42,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_kstack.h"
+#include "opt_lockdebug.h"
 #endif
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct */
@@ -159,15 +160,19 @@ struct emul {
  * which might be addressible only on a processor on which the process
  * is running.
  *
- * Fields marked 'p:' are protected by the process's own p_lock.
- * Fields marked 'l:' are protected by the proclist_lock
- * Fields marked 's:' are protected by the SCHED_LOCK.
+ * Field markings and the corresponding locks (not yet fully implemented,
+ * more a statement of intent):
+ *
+ * c:	P_CRLOCK - credentials write lock
+ * l:	proclist_lock
+ * p:	p->p_lock
+ * s:	sched_lock
  */
 struct proc {
-	LIST_ENTRY(proc) p_list;	/* List of all processes */
+	LIST_ENTRY(proc) p_list;	/* l: List of all processes */
 
 	/* Substructures: */
-	struct kauth_cred *p_cred;	/* Credentials */
+	struct kauth_cred *p_cred;	/* p, c: Master copy of credentials */
 	struct filedesc	*p_fd;		/* Ptr to open files structure */
 	struct cwdinfo	*p_cwdi;	/* cdir/rdir/cmask info */
 	struct pstats	*p_stats;	/* Accounting/statistics (PROC ONLY) */
@@ -269,7 +274,7 @@ struct proc {
 #define	p_endcopy	p_xstat
 
 	u_short		p_xstat;	/* Exit status for wait; also stop signal */
-	u_short		p_acflag;	/* Accounting flags */
+	u_short		p_acflag;	/* p: Acc. flags; see struct lwp also */
 	struct rusage 	*p_ru;		/* Exit information. XXX */
 
 	struct mdproc	p_md;		/* Any machine-dependent fields */
@@ -319,7 +324,7 @@ struct proc {
 #define	P_SYSCALL	0x04000000 /* process has PT_SYSCALL enabled */
 #define	P_PAXMPROTECT  	0x08000000 /* Explicitly enable PaX MPROTECT */
 #define	P_PAXNOMPROTECT	0x10000000 /* Explicitly disable PaX MPROTECT */
-#define	P_UNUSED2	0x20000000
+#define	P_CRLOCK	0x20000000 /* p_cred write lock */
 #define	P_UNUSED1	0x40000000
 #define	P_MARKER	0x80000000 /* Is a dummy marker process */
 
@@ -506,6 +511,8 @@ void	proclist_unlock_write(int);
 void	p_sugid(struct proc *);
 
 int	proc_vmspace_getref(struct proc *, struct vmspace **);
+void	proc_crmod_leave(struct proc *, kauth_cred_t, kauth_cred_t);
+void	proc_crmod_enter(struct proc *);
 
 int	proclist_foreach_call(struct proclist *,
     int (*)(struct proc *, void *arg), void *);
@@ -525,6 +532,13 @@ _proclist_skipmarker(struct proc *p0)
 	for ((var) = LIST_FIRST(head);					\
 		((var) = _proclist_skipmarker(var)) != NULL;		\
 		(var) = LIST_NEXT(var, p_list))
+
+#if defined(LOCKDEBUG)
+void assert_sleepable(struct simplelock *, const char *);
+#define	ASSERT_SLEEPABLE(lk, msg)	assert_sleepable((lk), (msg))
+#else /* defined(LOCKDEBUG) */
+#define	ASSERT_SLEEPABLE(lk, msg)	/* nothing */
+#endif /* defined(LOCKDEBUG) */
 
 /* Compatibility with old, non-interlocked tsleep call */
 #define	tsleep(chan, pri, wmesg, timo)					\

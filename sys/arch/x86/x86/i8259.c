@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.6.8.1 2006/05/24 10:57:19 yamt Exp $	*/
+/*	$NetBSD: i8259.c,v 1.6.8.2 2006/08/11 15:43:16 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.6.8.1 2006/05/24 10:57:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.6.8.2 2006/08/11 15:43:16 yamt Exp $");
 
 #include <sys/param.h> 
 #include <sys/systm.h>
@@ -112,6 +112,8 @@ struct pic i8259_pic = {
 		.dv_xname = "pic0",
 	},
 	.pic_type = PIC_I8259,
+	.pic_vecbase = 0,
+	.pic_apicid = 0,
 	.pic_lock = __SIMPLELOCK_UNLOCKED,
 	.pic_hwmask = i8259_hwmask,
 	.pic_hwunmask = i8259_hwunmask,

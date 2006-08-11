@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.23.2.1 2006/05/24 10:57:10 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.23.2.2 2006/08/11 15:42:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@ void do_pending_int(void);
 void init_intr(void);
 void init_intr_ivr(void);
 void init_intr_openpic(void);
+void openpic_init(unsigned char *);
 
 void enable_intr(void);
 void disable_intr(void);
@@ -115,6 +116,7 @@ extern int imen;
 extern int imask[];
 extern struct intrhand *intrhand[];
 extern vaddr_t prep_intr_reg;
+extern uint32_t prep_intr_reg_off;
 
 #define	ICU_LEN			32
 extern struct intrsource intrsources[ICU_LEN];

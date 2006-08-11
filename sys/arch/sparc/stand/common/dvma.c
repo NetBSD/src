@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.13 2006/01/25 22:42:16 uwe Exp $	*/
+/*	$NetBSD: dvma.c,v 1.13.6.1 2006/08/11 15:43:00 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Gordon W. Ross
  * All rights reserved.
@@ -57,7 +57,7 @@ static int base_va;
 #define	setsegmap(va, pmeg)	do stha(va, ASI_SEGMAP, pmeg); while(0)
 
 void
-dvma_init()
+dvma_init(void)
 {
 	u_int segva, dmava;
 	int nseg;
@@ -84,9 +84,7 @@ dvma_init()
  * Convert a local address to a DVMA address.
  */
 char *
-dvma_mapin(addr, len)
-	char *addr;
-	size_t len;
+dvma_mapin(char *addr, size_t len)
 {
 	int va = (int)addr;
 
@@ -107,9 +105,7 @@ dvma_mapin(addr, len)
  * Convert a DVMA address to a local address.
  */
 char *
-dvma_mapout(addr, len)
-	char *addr;
-	size_t len;
+dvma_mapout(char *addr, size_t len)
 {
 	int va = (int)addr;
 
@@ -127,8 +123,7 @@ dvma_mapout(addr, len)
 }
 
 char *
-dvma_alloc(len)
-	int len;
+dvma_alloc(int len)
 {
 	char *mem;
 
@@ -139,9 +134,7 @@ dvma_alloc(len)
 }
 
 void
-dvma_free(dvma, len)
-	char *dvma;
-	int len;
+dvma_free(char *dvma, int len)
 {
 	char *mem;
 

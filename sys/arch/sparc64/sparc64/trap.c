@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.127.2.3 2006/05/24 10:57:15 yamt Exp $ */
+/*	$NetBSD: trap.c,v 1.127.2.4 2006/08/11 15:43:00 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.127.2.3 2006/05/24 10:57:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.127.2.4 2006/08/11 15:43:00 yamt Exp $");
 
 #define NEW_FPSTATE
 
@@ -553,6 +553,7 @@ extern void db_printf(const char * , ...);
 	if ((l = curlwp) == NULL)
 		l = &lwp0;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 	pcb = &l->l_addr->u_pcb;
 	l->l_md.md_tf = tf;	/* for ptrace/signals */
@@ -1043,6 +1044,7 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	if ((l = curlwp) == NULL)	/* safety check */
 		l = &lwp0;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 	tstate = tf->tf_tstate;
 
@@ -1212,8 +1214,8 @@ kfault:
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred ?
-			       kauth_cred_geteuid(p->p_cred) : -1);
+			       l->l_cred ?
+			       kauth_cred_geteuid(l->l_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 			ksi.ksi_code = SI_NOINFO;
 		} else {
@@ -1308,6 +1310,7 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 	uvmexp.traps++;
 	if ((l = curlwp) == NULL)	/* safety check */
 		l = &lwp0;
+	LWP_CACHE_CREDS(l, l->l_proc);
 	sticks = l->l_proc->p_sticks;
 
 	pc = tf->tf_pc;
@@ -1453,6 +1456,7 @@ text_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	if ((l = curlwp) == NULL)	/* safety check */
 		l = &lwp0;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 	tstate = tf->tf_tstate;
 	va = trunc_page(pc);
@@ -1597,6 +1601,7 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	if ((l = curlwp) == NULL)	/* safety check */
 		l = &lwp0;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 
 	tstate = tf->tf_tstate;

@@ -1,4 +1,4 @@
-;	$NetBSD: syscalls.master,v 1.12 2005/12/11 12:20:23 christos Exp $
+;	$NetBSD: syscalls.master,v 1.12.8.1 2006/08/11 15:43:41 yamt Exp $
 
 ;	from :NetBSD: syscalls.master,v 1.57 2000/12/09 07:10:36 mycroft Exp
 
@@ -264,7 +264,7 @@
 159	STD		{ int sunos32_sys_unmount(netbsd32_charp path); }
 #ifdef NFS
 160	NOARGS		{ int async_daemon(void); }
-161	NOARGS		{ int sys_getfh(netbsd32_charp fname, netbsd32_fhandlep_t fhp); }
+161	NOARGS		{ int compat_30_sys_getfh(netbsd32_charp fname, netbsd32_fhandlep_t fhp); }
 #else
 160	UNIMPL
 161	UNIMPL

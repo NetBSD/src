@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.26.8.2 2006/06/26 12:52:55 yamt Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.26.8.3 2006/08/11 15:45:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.26.8.2 2006/06/26 12:52:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.26.8.3 2006/08/11 15:45:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,7 +274,7 @@ smbfs_inactive(v)
 		struct thread *a_td;
 	} */ *ap = v;
 	struct lwp *l = ap->a_l;
-	kauth_cred_t cred = l->l_proc->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	struct vnode *vp = ap->a_vp;
 	struct smbnode *np = VTOSMB(vp);
 	struct smb_cred scred;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.28.8.2 2006/06/26 12:54:14 yamt Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.28.8.3 2006/08/11 15:46:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.28.8.2 2006/06/26 12:54:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.28.8.3 2006/08/11 15:46:49 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -926,7 +926,7 @@ tp_tselinuse(int tlen, caddr_t tsel, struct sockaddr_iso *siso, int reuseaddr)
 
 
 int
-tp_pcbbind(void *v, struct mbuf *nam, struct proc *p)
+tp_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 {
 	struct tp_pcb *tpcb = v;
 	struct sockaddr_iso *siso = 0;
@@ -1000,5 +1000,5 @@ tp_pcbbind(void *v, struct mbuf *nam, struct proc *p)
 		tpcb->tp_flags |= TPF_GENERAL_ADDR;
 		return (0);
 	}
-	return (*tpcb->tp_nlproto->nlp_pcbbind)(tpcb->tp_npcb, nam, p);
+	return (*tpcb->tp_nlproto->nlp_pcbbind)(tpcb->tp_npcb, nam, l);
 }

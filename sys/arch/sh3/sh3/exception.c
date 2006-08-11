@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.23.8.2 2006/04/01 12:06:28 yamt Exp $	*/
+/*	$NetBSD: exception.c,v 1.23.8.3 2006/08/11 15:42:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.23.8.2 2006/04/01 12:06:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.23.8.3 2006/08/11 15:42:47 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -113,7 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.23.8.2 2006/04/01 12:06:28 yamt Exp 
 #include <sh3/exception.h>
 #include <sh3/userret.h>
 
-const char *exp_type[] = {
+const char * const exp_type[] = {
 	"--",					/* 0x000 (reset vector) */
 	"--",					/* 0x020 (reset vector) */
 	"TLB miss/invalid (load)",		/* 0x040 EXPEVT_TLB_MISS_LD */
@@ -158,6 +158,7 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	if (usermode) {
 		KDASSERT(l->l_md.md_regs == tf); /* check exception depth */
 		expevt |= EXP_USER;
+		LWP_CACHE_CREDS(l, l->l_proc);
 	}
 
 	switch (expevt) {
@@ -171,13 +172,13 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 			ksi.ksi_addr = (void *)tf->tf_spc;
 			goto trapsignal;
 		} else {
+			/* XXX: we shouldn't treat *any* TRAPA as a syscall */
 			(*l->l_proc->p_md.md_syscall)(l, tf);
 			return;
 		}
 		break;
 
-	case EXPEVT_ADDR_ERR_LD:
-		/*FALLTHROUGH*/
+	case EXPEVT_ADDR_ERR_LD: /* FALLTHROUGH */
 	case EXPEVT_ADDR_ERR_ST:
 		KDASSERT(l->l_md.md_pcb->pcb_onfault != NULL);
 		tf->tf_spc = (int)l->l_md.md_pcb->pcb_onfault;
@@ -185,8 +186,7 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 			goto do_panic;
 		break;
 
-	case EXPEVT_ADDR_ERR_LD | EXP_USER:
-		/*FALLTHROUGH*/
+	case EXPEVT_ADDR_ERR_LD | EXP_USER: /* FALLTHROUGH */
 	case EXPEVT_ADDR_ERR_ST | EXP_USER:
 		KSI_INIT_TRAP(&ksi);
 		if (((int)va) < 0) {
@@ -199,8 +199,7 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 		ksi.ksi_addr = (void *)va;
 		goto trapsignal;
 
-	case EXPEVT_RES_INST | EXP_USER:
-		/*FALLTHROUGH*/
+	case EXPEVT_RES_INST | EXP_USER: /* FALLTHROUGH */
 	case EXPEVT_SLOT_INST | EXP_USER:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
@@ -211,7 +210,7 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	case EXPEVT_BREAK | EXP_USER:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGTRAP;
-		ksi.ksi_code = TRAP_BRKPT; /* XXX: ??? */
+		ksi.ksi_code = TRAP_TRACE;
 		ksi.ksi_addr = (void *)tf->tf_spc;
 		goto trapsignal;
 
@@ -248,9 +247,10 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	printf(" spc %x ssr %x \n", tf->tf_spc, tf->tf_ssr);
 
 	panic("general_exception");
-	while (/*CONSTCOND*/1)
-			;
-	/*NOTREACHED*/
+
+	for (;;)
+		continue;
+	/* NOTREACHED */
 }
 
 
@@ -263,13 +263,6 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 void
 tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 {
-#define	TLB_ASSERT(assert, msg)						\
-do {									\
-	if (!(assert)) {						\
-		panic_msg =  msg;					\
-		goto tlb_panic;						\
-	}								\
-} while(/*CONSTCOND*/0)
 	struct vm_map *map;
 	pmap_t pmap;
 	ksiginfo_t ksi;
@@ -277,9 +270,19 @@ do {									\
 	int err, track, ftype;
 	const char *panic_msg;
 
+#define TLB_ASSERT(assert, msg)				\
+		do {					\
+			if (!(assert)) {		\
+				panic_msg =  msg;	\
+				goto tlb_panic;		\
+			}				\
+		} while(/*CONSTCOND*/0)
+
+
 	usermode = !KERNELMODE(tf->tf_ssr);
 	if (usermode) {
 		KDASSERT(l->l_md.md_regs == tf);
+		LWP_CACHE_CREDS(l, l->l_proc);
 	} else {
 		KDASSERT(l == NULL ||		/* idle */
 		    l == &lwp0 ||		/* kthread */
@@ -422,11 +425,13 @@ do {									\
 	return;
 
  tlb_panic:
-	panic("tlb_handler: %s va=0x%08x, ssr=0x%08x, spc=0x%08x"
-	    "  lwp=%p onfault=%p", panic_msg, va, tf->tf_ssr, tf->tf_spc,
-	    l, l ? l->l_md.md_pcb->pcb_onfault : 0);
+	panic("tlb_exception: %s\n"
+	      "expevt=%x va=%08x ssr=%08x spc=%08x lwp=%p onfault=%p",
+	      panic_msg, tf->tf_expevt, va, tf->tf_ssr, tf->tf_spc,
+	      l, l ? l->l_md.md_pcb->pcb_onfault : NULL);
 #undef	TLB_ASSERT
 }
+
 
 /*
  * void ast(struct lwp *l, struct trapframe *tf):

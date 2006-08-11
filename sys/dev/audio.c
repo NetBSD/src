@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.200.2.4 2006/06/26 12:50:37 yamt Exp $	*/
+/*	$NetBSD: audio.c,v 1.200.2.5 2006/08/11 15:43:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.200.2.4 2006/06/26 12:50:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.200.2.5 2006/08/11 15:43:52 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3738,6 +3738,7 @@ audioprint(void *aux, const char *pnp)
 
 #endif /* NAUDIO > 0 || (NMIDI > 0 || NMIDIBUS > 0) */
 
+#if NAUDIO > 0
 void
 audio_powerhook(int why, void *aux)
 {
@@ -3764,3 +3765,4 @@ audio_powerhook(int why, void *aux)
 
 	return;
 }
+#endif /* NAUDIO > 0 */

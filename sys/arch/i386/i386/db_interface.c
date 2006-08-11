@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.45 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.45.8.1 2006/08/11 15:41:54 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.45 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.45.8.1 2006/08/11 15:41:54 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -187,7 +187,7 @@ kdb_trap(type, code, regs)
 	case -1:	/* keyboard interrupt */
 		break;
 	default:
-		if (!db_onpanic && db_recover==0)
+		if (!db_onpanic && db_recover == 0)
 			return (0);
 
 		kdbprinttrap(type, code);
