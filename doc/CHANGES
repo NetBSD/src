@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.662 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.662.2.1 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -105,7 +105,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		watchdog timer. [dyoung 20050922]
 	kernel: Add the VFS hooks interface so that kernel subsystems
 		other than VFS can execute code upon VFS operations.
-		[jmmv 20050923]
+		See vfs_hooks(9) for more information.  [jmmv 20050923]
 	kernel: Re-factor NFS exports list code handling, making it simpler
 		by abstracting all the details into the NFS generic code,
 		using the previously mentioned VFS hooks interface to make
