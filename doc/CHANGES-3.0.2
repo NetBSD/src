@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.2,v 1.1.2.10 2006/08/11 04:59:55 riz Exp $
+#	$NetBSD: CHANGES-3.0.2,v 1.1.2.11 2006/08/12 19:22:40 riz Exp $
 
 A complete list of changes from the NetBSD 3.0.1 release to the NetBSD 3.0.2
 release:
@@ -68,4 +68,20 @@ sys/dev/usb/usbdivar.h				1.74
 	Fix a race condition in xfer abort.  Derived from a FreeBSD patch.
 	Fixes occasional crashes while printing.  PR#33250
 	[abs, ticket #1459]
+
+distrib/utils/sysinst/label.c			1.48
+
+	pointer signedness comparison fixes (needed for following pullup).
+	[dsl, ticket #1462]
+
+distrib/utils/sysinst/defs.h			1.130
+distrib/utils/sysinst/label.c			1.49
+distrib/utils/sysinst/mbr.c			1.75
+
+	When we read 'last mounted' from an FFSv2 superblock set the flag to
+	default the partition to FFSv2 (instead of FFSv1).
+	This makes update installs add the correct bootstrap code.
+	Fixes PR/33682 and PR/32636 (and 33228 which has alrady been closed
+	as a duplicate of 32636).
+	[dsl, ticket #1463]
 
