@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.138 2006/07/21 10:08:41 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.139 2006/08/12 19:58:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.138 2006/07/21 10:08:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.139 2006/08/12 19:58:55 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1034,12 +1034,10 @@ setroot(struct device *bootdv, int bootpartition)
 
 	switch (device_class(rootdv)) {
 	case DV_IFNET:
-		aprint_normal("root on %s", rootdv->dv_xname);
-		break;
-
 	case DV_DISK:
-		aprint_normal("root on %s%c", rootdv->dv_xname,
-		    DISKPART(rootdev) + 'a');
+		aprint_normal("root on %s", rootdv->dv_xname);
+		if (DEV_USES_PARTITIONS(bootdv))
+			aprint_normal("%c", DISKPART(rootdev) + 'a');
 		break;
 
 	default:
