@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.66 2006/08/11 04:54:55 riz Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.67 2006/08/12 16:23:38 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -812,4 +812,10 @@ lib/libc/arch/i386/sys/__sigtramp2.S		1.2
 	instead of trying to read it from where the sigaction function may have
 	overwritten it with arbitrary bits.
 	[jld, ticket #10667]
+
+usr.bin/cut/cut.1				1.13-1.14
+usr.bin/cut/cut.c				1.21
+
+	PR/33995: Aleksey Cheusov: support use "-" to indicate stdin from SUS
+	[jnemeth, ticket #10672]
 
