@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.17 2005/02/17 17:35:47 xtraeme Exp $	*/
+/*	$NetBSD: cut.c,v 1.17.2.1 2006/08/12 19:13:02 riz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: cut.c,v 1.17 2005/02/17 17:35:47 xtraeme Exp $");
+__RCSID("$NetBSD: cut.c,v 1.17.2.1 2006/08/12 19:13:02 riz Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -117,10 +117,14 @@ main(int argc, char *argv[])
 
 	if (*argv)
 		for (; *argv; ++argv) {
-			if (!(fp = fopen(*argv, "r")))
-				err(1, "%s", *argv);
-			fcn(fp, *argv);
-			(void)fclose(fp);
+			if (strcmp(*argv, "-") == 0)
+				fcn(stdin, "stdin");
+			else {
+				if ((fp = fopen(*argv, "r")) == NULL)
+					err(1, "%s", *argv);
+				fcn(fp, *argv);
+				(void)fclose(fp);
+			}
 		}
 	else
 		fcn(stdin, "stdin");
