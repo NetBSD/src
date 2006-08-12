@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.11 2006/08/12 16:20:58 fvdl Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.12 2006/08/12 19:15:19 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.11 2006/08/12 16:20:58 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.12 2006/08/12 19:15:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,7 @@ found:
 	 * mark the SCI interrupt as level-triggered, active low
 	 * in the table.
 	 */
-	if (mip == NULL || ((mip->sflags & MPI_OVR) == 0)) {
+	if (mip != NULL && ((mip->sflags & MPI_OVR) == 0)) {
 		trigger = IST_LEVEL;
 		mip->flags &= ~3;
 		mip->flags |= MPS_INTPO_ACTLO;
