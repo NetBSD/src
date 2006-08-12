@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.47 2005/03/14 21:37:43 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.47.4.1 2006/08/12 19:17:42 riz Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.47 2005/03/14 21:37:43 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.47.4.1 2006/08/12 19:17:42 riz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -724,7 +724,7 @@ get_last_mounted(int fd, int partstart)
 		case FS_UFS1_MAGIC_SWAPPED:
 			if (!(SB->fs_old_flags & FS_FLAGS_UPDATED)) {
 				if (*sbp == SBLOCK_UFS1)
-					mnt = SB->fs_fsmnt;
+					mnt = (const char *) SB->fs_fsmnt;
 				continue;
 			}
 			/* FALLTHROUGH */
@@ -732,7 +732,7 @@ get_last_mounted(int fd, int partstart)
 		case FS_UFS2_MAGIC_SWAPPED:
 			/* Check we have the main superblock */
 			if (SB->fs_sblockloc == *sbp)
-				mnt = SB->fs_fsmnt;
+				mnt = (const char *) SB->fs_fsmnt;
 			continue;
 		}
 
