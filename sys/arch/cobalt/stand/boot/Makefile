@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2005/12/11 12:17:06 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2006/08/12 11:38:11 uwe Exp $
 
 NOMAN= # defined
 
@@ -85,7 +85,7 @@ SA_AS=		library
 SAMISCMAKEFLAGS+=SA_USE_LOADFILE=yes SA_USE_CREAD=yes
 .include "${S}/lib/libsa/Makefile.inc"
 
-LIBS=		${KERNLIB} ${SALIB} ${ZLIB}
+LIBS=		${SALIB} ${ZLIB} ${KERNLIB}
 
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
