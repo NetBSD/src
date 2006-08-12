@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.68.2.3 2005/11/21 20:42:02 tron Exp $ */
+/*	$NetBSD: mbr.c,v 1.68.2.3.2.1 2006/08/12 19:20:41 riz Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1444,7 +1444,7 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 					ext_size = mbrp->mbrp_size;
 			} else {
 				mbri->last_mounted[i] = strdup(get_last_mounted(
-					fd, mbri->sector + mbrp->mbrp_start));
+					fd, mbri->sector + mbrp->mbrp_start, NULL));
 #if BOOTSEL
 				if (ombri->install == 0 &&
 				    strcmp(mbri->last_mounted[i], "/") == 0)
