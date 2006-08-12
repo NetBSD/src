@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.c,v 1.27 2005/12/24 21:11:16 perry Exp $	*/
+/*	$NetBSD: fstab.c,v 1.28 2006/08/12 23:49:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fstab.c,v 1.27 2005/12/24 21:11:16 perry Exp $");
+__RCSID("$NetBSD: fstab.c,v 1.28 2006/08/12 23:49:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,27 +65,26 @@ static struct fstab _fs_fstab;
 
 static int fstabscan __P((void));
 
-static inline char *nextfld __P((char **, const char *));
+static char *nextfld(char **, const char *);
+static int fstabscan(void);
 
 
-static inline char *
-nextfld(str, sep)
-	char **str;
-	const char *sep;
+static char *
+nextfld(char **str, const char *sep)
 {
 	char *ret;
 
 	_DIAGASSERT(str != NULL);
 	_DIAGASSERT(sep != NULL);
 
-	while ((ret = strsep(str, sep)) != NULL && *ret == '\0')
+	while ((ret = stresep(str, sep, '\\')) != NULL && *ret == '\0')
 		continue;
 	return ret;
 }
 
 
 static int
-fstabscan()
+fstabscan(void)
 {
 	char *cp, *lp, *sp;
 #define	MAXLINELENGTH	1024
@@ -176,7 +175,7 @@ bad:
 }
 
 struct fstab *
-getfsent()
+getfsent(void)
 {
 	if ((!_fs_fp && !setfsent()) || !fstabscan())
 		return NULL;
@@ -184,8 +183,7 @@ getfsent()
 }
 
 struct fstab *
-getfsspec(name)
-	const char *name;
+getfsspec(const char *name)
 {
 
 	_DIAGASSERT(name != NULL);
@@ -198,8 +196,7 @@ getfsspec(name)
 }
 
 struct fstab *
-getfsfile(name)
-	const char *name;
+getfsfile(const char *name)
 {
 
 	_DIAGASSERT(name != NULL);
@@ -212,7 +209,7 @@ getfsfile(name)
 }
 
 int
-setfsent()
+setfsent(void)
 {
 	_fs_lineno = 0;
 	if (_fs_fp) {
@@ -227,7 +224,7 @@ setfsent()
 }
 
 void
-endfsent()
+endfsent(void)
 {
 	if (_fs_fp) {
 		(void)fclose(_fs_fp);
