@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.132 2006/06/28 15:19:29 liamjfoy Exp $
+# $NetBSD: GENERIC,v 1.133 2006/08/12 15:29:54 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.132 $"
+#ident		"GENERIC-$Revision: 1.133 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -36,7 +36,7 @@ maxusers	4
 
 # Standard system options
 options 	KTRACE		# system call tracing
-options 	SYSTRACE	# system call vetting via systrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 #options 	SEMMNI=10	# number of semaphore identifiers

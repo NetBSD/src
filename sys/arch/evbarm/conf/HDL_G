@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.2 2006/07/26 07:00:23 cube Exp $
+# $NetBSD: HDL_G,v 1.3 2006/08/12 15:29:52 christos Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -120,7 +120,7 @@ options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing via ktrace(1)
-options 	SYSTRACE	# system call vetting via systrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.62 2006/06/29 14:00:55 liamjfoy Exp $
+#	$NetBSD: GENERIC.in,v 1.63 2006/08/12 15:29:52 christos Exp $
 #
 # Generic atari
 #
@@ -184,7 +184,7 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 # Support for various kernel options
 #
 options 	KTRACE			# Add kernel tracing system call
-options 	SYSTRACE		# system call vetting via systrace(1)
+#options 	SYSTRACE		# system call vetting via systrace(1)
 #options 	DIAGNOSTIC		# Add additional error checking code
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

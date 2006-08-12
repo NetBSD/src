@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOMU,v 1.1 2006/06/08 22:17:07 hubertf Exp $
+# $NetBSD: XEN2_DOMU,v 1.2 2006/08/12 15:29:53 christos Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -31,7 +31,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
-options 	SYSTRACE	# system call vetting via systrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores

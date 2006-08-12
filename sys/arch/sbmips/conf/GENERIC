@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.53 2006/06/28 15:19:29 liamjfoy Exp $
+# $NetBSD: GENERIC,v 1.54 2006/08/12 15:29:54 christos Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.53 $"
+#ident 		"GENERIC-$Revision: 1.54 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -18,7 +18,7 @@ maxusers	32
 
 # Standard system options
 options 	KTRACE		# system call tracing support
-options 	SYSTRACE	# system call vetting via systrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.59 2006/06/28 15:19:28 liamjfoy Exp $
+# $NetBSD: GENERIC,v 1.60 2006/08/12 15:29:53 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ options 	MIPS1			# R2000/R3000 support
 
 # Standard system options
 options 	KTRACE			# system call tracing support
-options 	SYSTRACE		# system call vetting via systrace(1)
+#options 	SYSTRACE		# system call vetting via systrace(1)
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 #options 	SEMMNI=10		# number of semaphore identifiers
