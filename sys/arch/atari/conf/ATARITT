@@ -1,5 +1,5 @@
 #
-# $NetBSD: ATARITT,v 1.80 2006/03/28 22:03:47 pavel Exp $
+# $NetBSD: ATARITT,v 1.81 2006/08/12 15:29:52 christos Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -90,7 +90,7 @@ options SYSVSEM # System V semaphores
 options P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 options KTRACE # Add kernel tracing system call
-options SYSTRACE # system call vetting via systrace(1)
+#options SYSTRACE # system call vetting via systrace(1)
 
 options USERCONF # userconf(4) support
 
