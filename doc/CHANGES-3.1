@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.138 2006/08/11 05:00:39 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.139 2006/08/12 19:22:16 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4310,4 +4310,26 @@ sbin/scan_ffs/scan_ffs.c                        1.1-1.9
 	LFS (scan_lfs(8)).  Utility to find FFSv1, FFSv2 and LFS partitions on
 	disks, useful to recover lost disklabels.
 	[ghen, ticket #1460]
+
+usr.bin/cut/cut.1				1.13-1.14
+usr.bin/cut/cut.c				1.21
+
+	PR/33995: Aleksey Cheusov: support use "-" to indicate stdin from SUS
+	[jnemeth, ticket #1461]
+
+distrib/utils/sysinst/label.c			1.48
+
+	pointer signedness comparison fixes (needed for following pullup).
+	[dsl, ticket #1462]
+
+distrib/utils/sysinst/defs.h			1.130
+distrib/utils/sysinst/label.c			1.49
+distrib/utils/sysinst/mbr.c			1.75
+
+	When we read 'last mounted' from an FFSv2 superblock set the flag to
+	default the partition to FFSv2 (instead of FFSv1).
+	This makes update installs add the correct bootstrap code.
+	Fixes PR/33682 and PR/32636 (and 33228 which has alrady been closed
+	as a duplicate of 32636).
+	[dsl, ticket #1463]
 
