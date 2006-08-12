@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.26 2006/06/30 13:56:25 chap Exp $	*/
+/*	$NetBSD: opl.c,v 1.27 2006/08/12 00:34:39 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.26 2006/06/30 13:56:25 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.27 2006/08/12 00:34:39 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,7 +524,7 @@ oplsyn_setv(midisyn *ms,
 		     mp, level_cB));
 
 #ifdef DIAGNOSTIC
-	if (voice < 0 || voice >= sc->syn.nvoice) {
+	if (voice >= sc->syn.nvoice) {
 		printf("%s: bad voice %d\n", __func__, voice);
 		return;
 	}
@@ -621,7 +621,7 @@ oplsyn_releasev(midisyn *ms, uint_fast16_t voice, uint_fast8_t vel)
 		     MIDISYN_FREQ_TO_HZ(note)));
 
 #ifdef DIAGNOSTIC
-	if (voice < 0 || voice >= sc->syn.nvoice) {
+	if (voice >= sc->syn.nvoice) {
 		printf("oplsyn_noteoff: bad voice %d\n", voice);
 		return;
 	}
