@@ -29,13 +29,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strsep.3	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: strsep.3,v 1.16 2004/04/13 23:03:22 wiz Exp $
+.\"	$NetBSD: strsep.3,v 1.17 2006/08/12 23:49:54 christos Exp $
 .\"
 .Dd August 11, 2002
 .Dt STRSEP 3
 .Os
 .Sh NAME
-.Nm strsep
+.Nm strsep ,
+.Nm stresep
 .Nd separate strings
 .Sh LIBRARY
 .Lb libc
@@ -43,6 +44,8 @@
 .In string.h
 .Ft char *
 .Fn strsep "char **stringp" "const char *delim"
+.Ft char *
+.Fn stresep "char **stringp" "const char *delim" "int escape"
 .Sh DESCRIPTION
 The
 .Fn strsep
@@ -79,6 +82,10 @@ is initially
 .Fn strsep
 returns
 .Dv NULL .
+The
+.Fn strnsep
+function also takes an escape character that allows quoting the the delimiter
+character so that it can be part of the source string.
 .Sh EXAMPLES
 The following uses
 .Fn strsep

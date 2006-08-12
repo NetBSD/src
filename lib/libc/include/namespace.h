@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.117 2006/06/23 17:15:18 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.118 2006/08/12 23:49:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -534,6 +534,8 @@
 #define statvfs(a, b)		_statvfs(a, b)
 #define strcasecmp		_strcasecmp
 #define strdup			_strdup
+#define stresep			_stresep
+#define strndup			_strndup
 #define strncasecmp		_strncasecmp
 #define strptime		_strptime
 #define strsep			_strsep
