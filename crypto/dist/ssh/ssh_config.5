@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssh_config.5,v 1.11 2006/02/04 22:32:14 christos Exp $
+.\"	$NetBSD: ssh_config.5,v 1.11.2.1 2006/08/12 16:07:44 riz Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -485,8 +485,9 @@ but they do not reveal identifying information should the file's contents
 be disclosed.
 The default is
 .Dq no .
-Note that hashing of names and addresses will not be retrospectively applied
-to existing known hosts files, but these may be manually hashed using
+Note that existing names and addresses in known hosts files
+will not be converted automatically,
+but may be manually hashed using
 .Xr ssh-keygen 1 .
 .It Cm HostbasedAuthentication
 Specifies whether to try rhosts based authentication with public key
