@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.58 2006/07/27 06:49:06 martti Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.59 2006/08/12 19:47:28 christos Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -372,7 +372,7 @@ umask 077
 
 # Check if we have fdesc mounted
 if [ -d fd ]; then
-        case "`df fd`" in
+        case "$(df fd)" in
         *fdesc*)	nofdesc=false;;
         *)		nofdesc=true;;
         esac
@@ -742,6 +742,17 @@ xbd*)
 	%MKDISK% $name $unit $blk $chr
 	;;
 
+dk*)
+	name=dk; unit=${i#xbd}; blk=%dk_blk%; chr=%dk_chr%
+	minor=0 
+	while [ $minor -lt ${i#dk} ]
+	do
+		mkdev r$name$minor c $chr $minor 0640 $g_operator
+		mkdev $name$minor b $blk  $minor 0640 $g_operator
+		minor=$(($minor + 1))
+	done
+	;;
+	
 ttyCY*)
 	name=tyCY; chr=%cy_chr%; off=32
 	unit=${i#t${name}}
