@@ -1,4 +1,4 @@
-/* $NetBSD: unichromeconfig.h,v 1.1 2006/08/02 01:44:09 jmcneill Exp $ */
+/* $NetBSD: unichromeconfig.h,v 1.2 2006/08/13 20:25:47 jmcneill Exp $ */
 
 /*
  * Copyright 1998-2006 VIA Technologies, Inc. All Rights Reserved.
@@ -217,6 +217,7 @@ static struct _lcd_scaling_factor lcd_scaling_factor_CLE = {
     /* LCD Vertical Scaling Factor Register */
     {LCD_VER_SCALING_FACTOR_REG_NUM_CLE, {{CR78,0,7}, {CR79,6,7}}}
 };
+#endif
 
 static struct rgbLUT palLUT_table[]= {
     // {R,G,B}
@@ -350,6 +351,7 @@ static struct rgbLUT palLUT_table[]= {
     {0x00, 0x00, 0x00}, {0x00, 0x00, 0x00}, {0x00, 0x00, 0x00}, {0x00, 0x00, 0x00}
 };
 
+#if notyet
 static uint16_t red256[] = {
 0x0   ,0x0   ,0x0   ,0x0   ,0xa800,0xa800,0xa800,0xa800,0x5400,0x5400,0x5400,0x5400,0xfc00,0xfc00,0xfc00,0xfc00,
 0x0   ,0x1400,0x2000,0x2c00,0x3800,0x4400,0x5000,0x6000,0x7000,0x8000,0x9000,0xa000,0xb400,0xc800,0xe000,0xfc00,
