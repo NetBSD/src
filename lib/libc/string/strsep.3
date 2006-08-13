@@ -29,9 +29,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strsep.3	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: strsep.3,v 1.17 2006/08/12 23:49:54 christos Exp $
+.\"	$NetBSD: strsep.3,v 1.18 2006/08/13 23:20:52 wiz Exp $
 .\"
-.Dd August 11, 2002
+.Dd August 12, 2006
 .Dt STRSEP 3
 .Os
 .Sh NAME
@@ -83,8 +83,8 @@ is initially
 returns
 .Dv NULL .
 The
-.Fn strnsep
-function also takes an escape character that allows quoting the the delimiter
+.Fn stresep
+function also takes an escape character that allows quoting the delimiter
 character so that it can be part of the source string.
 .Sh EXAMPLES
 The following uses
@@ -94,7 +94,7 @@ argument vector:
 .Bd -literal -offset indent
 char **ap, *argv[10], *inputstring;
 
-for (ap = argv; ap < \*[Am]argv[9] \*[Am]\*[Am]
+for (ap = argv; ap \*[Lt] \*[Am]argv[9] \*[Am]\*[Am]
     (*ap = strsep(\*[Am]inputstring, " \et")) != NULL;) {
 	if (**ap != '\e0')
 		ap++;
