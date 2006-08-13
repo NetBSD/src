@@ -1,4 +1,4 @@
-.\" $NetBSD: bthidev.4,v 1.3 2006/07/30 00:01:24 wiz Exp $
+.\" $NetBSD: bthidev.4,v 1.4 2006/08/13 09:03:23 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 26, 2006
+.Dd August 12, 2006
 .Dt BTHIDEV 4
 .Os
 .Sh NAME
@@ -54,7 +54,7 @@ driver may have several children attached that handle particular
 components and dispatches data to them based on the report id.
 .Pp
 Normally, Bluetooth HIDs will be attached using the
-.Xr btcontrol 8
+.Xr btdevctl 8
 program.
 The following properties are used by the
 .Nm
@@ -99,7 +99,7 @@ the device to initiate the connection.
 .Xr btdev 4 ,
 .Xr btkbd 4 ,
 .Xr btms 4 ,
-.Xr btcontrol 8
+.Xr btdevctl 8
 .Sh HISTORY
 The
 .Nm

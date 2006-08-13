@@ -1,4 +1,4 @@
-/*	$NetBSD: dev.c,v 1.2 2006/07/26 10:31:00 tron Exp $	*/
+/*	$NetBSD: dev.c,v 1.1 2006/08/13 09:03:23 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dev.c,v 1.2 2006/07/26 10:31:00 tron Exp $");
+__RCSID("$NetBSD: dev.c,v 1.1 2006/08/13 09:03:23 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: dev.c,v 1.2 2006/07/26 10:31:00 tron Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "btcontrol.h"
+#include "btdevctl.h"
 
 int
 dev_attach(int ac, char **av)

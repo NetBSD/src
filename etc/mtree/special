@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.99 2006/07/26 11:14:55 tron Exp $
+#	$NetBSD: special,v 1.100 2006/08/13 09:03:23 plunky Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -165,7 +165,7 @@
 ./etc/rc.d/bootconf.sh		type=file mode=0555
 ./etc/rc.d/bootparams		type=file mode=0555
 ./etc/rc.d/btconfig		type=file mode=0555
-./etc/rc.d/btcontrol		type=file mode=0555
+./etc/rc.d/btdevctl		type=file mode=0555
 ./etc/rc.d/bthcid		type=file mode=0555
 ./etc/rc.d/ccd			type=file mode=0555
 ./etc/rc.d/cleartmp		type=file mode=0555
