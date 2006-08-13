@@ -1,4 +1,4 @@
-/*	$NetBSD: kgmon.c,v 1.19 2006/08/13 00:19:30 dyoung Exp $	*/
+/*	$NetBSD: kgmon.c,v 1.20 2006/08/13 00:20:25 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: kgmon.c,v 1.19 2006/08/13 00:19:30 dyoung Exp $");
+__RCSID("$NetBSD: kgmon.c,v 1.20 2006/08/13 00:20:25 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,7 +180,7 @@ openfiles(char *system, char *kmemf, struct kvmvars *kvp)
 		mib[2] = GPROF_STATE;
 		size = sizeof state;
 		if (sysctl(mib, 3, &state, &size, NULL, 0) < 0)
-			err(1, "profiling not defined in kernel");
+			err(EXIT_FAILURE, "profiling not defined in kernel");
 		if (!(bflag || hflag || rflag ||
 		    (pflag && state == GMON_PROF_ON)))
 			return (O_RDONLY);
@@ -200,13 +200,13 @@ openfiles(char *system, char *kmemf, struct kvmvars *kvp)
 			    errbuf);
 		}
 		if (kvp->kd == NULL)
-			errx(1, "kvm_openfiles: %s", errbuf);
+			errx(EXIT_FAILURE, "kvm_openfiles: %s", errbuf);
 		kern_readonly(GMON_PROF_ON);
 	}
 	if (kvm_nlist(kvp->kd, nl) < 0)
-		errx(1, "%s: no namelist", system);
+		errx(EXIT_FAILURE, "%s: no namelist", system);
 	if (!nl[N_GMONPARAM].n_value)
-		errx(1, "profiling not defined in kernel");
+		errx(EXIT_FAILURE, "profiling not defined in kernel");
 	return (openmode);
 }
 
@@ -250,7 +250,7 @@ getprof(struct kvmvars *kvp)
 			size = 0;
 	}
 	if (size != sizeof kvp->gpm)
-		errx(1, "cannot get gmonparam: %s",
+		errx(EXIT_FAILURE, "cannot get gmonparam: %s",
 		    kflag ? kvm_geterr(kvp->kd) : strerror(errno));
 	return (kvp->gpm.state);
 }
@@ -306,7 +306,7 @@ dumpstate(struct kvmvars *kvp)
 
 	setprof(kvp, GMON_PROF_OFF);
 	fp = fopen("gmon.out", "w");
-	if (fp == 0) {
+	if (fp == NULL) {
 		warn("cannot open `gmon.out'");
 		return;
 	}
@@ -329,7 +329,7 @@ dumpstate(struct kvmvars *kvp)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_PROF;
 	if ((tickbuf = malloc(kvp->gpm.kcountsize)) == NULL)
-		err(1, "cannot allocate kcount space");
+		err(EXIT_FAILURE, "cannot allocate kcount space");
 	if (kflag) {
 		i = kvm_read(kvp->kd, (u_long)kvp->gpm.kcount, (void *)tickbuf,
 		    kvp->gpm.kcountsize);
@@ -340,18 +340,18 @@ dumpstate(struct kvmvars *kvp)
 			i = 0;
 	}
 	if (i != kvp->gpm.kcountsize)
-		errx(1, "read ticks: read %lu, got %lu: %s",
+		errx(EXIT_FAILURE, "read ticks: read %lu, got %lu: %s",
 		    kvp->gpm.kcountsize, (u_long)i,
 		    kflag ? kvm_geterr(kvp->kd) : strerror(errno));
 	if ((fwrite(tickbuf, kvp->gpm.kcountsize, 1, fp)) != 1)
-		err(1, "writing tocks to gmon.out");
+		err(EXIT_FAILURE, "writing tocks to gmon.out");
 	free(tickbuf);
 
 	/*
 	 * Write out the arc info.
 	 */
 	if ((froms = malloc(kvp->gpm.fromssize)) == NULL)
-		err(1, "cannot allocate froms space");
+		err(EXIT_FAILURE, "cannot allocate froms space");
 	if (kflag) {
 		i = kvm_read(kvp->kd, (u_long)kvp->gpm.froms, (void *)froms,
 		    kvp->gpm.fromssize);
@@ -362,11 +362,11 @@ dumpstate(struct kvmvars *kvp)
 			i = 0;
 	}
 	if (i != kvp->gpm.fromssize)
-		errx(1, "read froms: read %lu, got %lu: %s",
+		errx(EXIT_FAILURE, "read froms: read %lu, got %lu: %s",
 		    kvp->gpm.fromssize, (u_long)i,
 		    kflag ? kvm_geterr(kvp->kd) : strerror(errno));
 	if ((tos = malloc(kvp->gpm.tossize)) == NULL)
-		err(1, "cannot allocate tos space");
+		err(EXIT_FAILURE, "cannot allocate tos space");
 	if (kflag) {
 		i = kvm_read(kvp->kd, (u_long)kvp->gpm.tos, (void *)tos,
 		    kvp->gpm.tossize);
@@ -377,7 +377,7 @@ dumpstate(struct kvmvars *kvp)
 			i = 0;
 	}
 	if (i != kvp->gpm.tossize)
-		errx(1, "read tos: read %lu, got %lu: %s",
+		errx(EXIT_FAILURE, "read tos: read %lu, got %lu: %s",
 		    kvp->gpm.tossize, (u_long)i,
 		    kflag ? kvm_geterr(kvp->kd) : strerror(errno));
 	if (debug)
@@ -453,18 +453,20 @@ reset(struct kvmvars *kvp)
 	if (kvp->gpm.tossize > biggest)
 		biggest = kvp->gpm.tossize;
 	if ((zbuf = malloc(biggest)) == NULL)
-		err(1, "cannot allocate zbuf space");
+		err(EXIT_FAILURE, "cannot allocate zbuf space");
 	bzero(zbuf, biggest);
 	if (kflag) {
 		if (kvm_write(kvp->kd, (u_long)kvp->gpm.kcount, zbuf,
 		    kvp->gpm.kcountsize) != kvp->gpm.kcountsize)
-			errx(1, "tickbuf zero: %s", kvm_geterr(kvp->kd));
+			errx(EXIT_FAILURE, "tickbuf zero: %s",
+			     kvm_geterr(kvp->kd));
 		if (kvm_write(kvp->kd, (u_long)kvp->gpm.froms, zbuf,
 		    kvp->gpm.fromssize) != kvp->gpm.fromssize)
-			errx(1, "froms zero: %s", kvm_geterr(kvp->kd));
+			errx(EXIT_FAILURE, "froms zero: %s",
+			     kvm_geterr(kvp->kd));
 		if (kvm_write(kvp->kd, (u_long)kvp->gpm.tos, zbuf,
 		    kvp->gpm.tossize) != kvp->gpm.tossize)
-			errx(1, "tos zero: %s", kvm_geterr(kvp->kd));
+			errx(EXIT_FAILURE, "tos zero: %s", kvm_geterr(kvp->kd));
 		free(zbuf);
 		return;
 	}
@@ -473,13 +475,13 @@ reset(struct kvmvars *kvp)
 	mib[1] = KERN_PROF;
 	mib[2] = GPROF_COUNT;
 	if (sysctl(mib, 3, NULL, NULL, zbuf, kvp->gpm.kcountsize) < 0)
-		err(1, "tickbuf zero");
+		err(EXIT_FAILURE, "tickbuf zero");
 	mib[2] = GPROF_FROMS;
 	if (sysctl(mib, 3, NULL, NULL, zbuf, kvp->gpm.fromssize) < 0)
-		err(1, "froms zero");
+		err(EXIT_FAILURE, "froms zero");
 	mib[2] = GPROF_TOS;
 	if (sysctl(mib, 3, NULL, NULL, zbuf, kvp->gpm.tossize) < 0)
-		err(1, "tos zero");
+		err(EXIT_FAILURE, "tos zero");
 	(void)seteuid(getuid());
 	free(zbuf);
 }
