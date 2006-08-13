@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.24 2006/02/16 20:17:16 perry Exp $ */
+/* $NetBSD: vgavar.h,v 1.25 2006/08/13 20:24:51 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -190,6 +190,7 @@ void	vga_common_attach(struct vga_softc *, bus_space_tag_t,
 int	vga_is_console(bus_space_tag_t, int);
 
 int	vga_cnattach(bus_space_tag_t, bus_space_tag_t, int, int);
+int	vga_cndetach(void);
 
 #ifndef VGA_RASTERCONSOLE
 struct wsscreen_descr;
