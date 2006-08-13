@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.19 2006/07/18 23:37:13 perseant Exp $	 */
+/* $NetBSD: pass5.c,v 1.20 2006/08/13 22:18:09 bjh21 Exp $	 */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@ pass5(void)
 		}
 	}
 	if (avail != fs->lfs_avail) {
-		pwarn("AVAIL GIVEN AS %d, SHOULE BE %ld\n", fs->lfs_avail,
+		pwarn("AVAIL GIVEN AS %d, SHOULD BE %ld\n", fs->lfs_avail,
 		    avail);
 		if (preen || reply("FIX")) {
 			fs->lfs_avail = avail;
@@ -169,7 +169,7 @@ pass5(void)
 		}
 	}
 	if (nclean != fs->lfs_nclean) {
-		pwarn("NCLEAN GIVEN AS %d, SHOULE BE %d\n", fs->lfs_nclean,
+		pwarn("NCLEAN GIVEN AS %d, SHOULD BE %d\n", fs->lfs_nclean,
 		    nclean);
 		if (preen || reply("FIX")) {
 			fs->lfs_nclean = nclean;
