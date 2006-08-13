@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdogctl.8,v 1.12 2005/01/21 10:40:01 wiz Exp $
+.\"	$NetBSD: wdogctl.8,v 1.13 2006/08/13 01:11:01 dyoung Exp $
 .\"
 .\" Copyright (c) 2000 Zembu Labs, Inc.
 .\" All rights reserved.
@@ -58,6 +58,11 @@
 .Op Fl A
 .Op Fl p Ar seconds
 .Ar timer
+.Nm
+.Fl x
+.Op Fl A
+.Op Fl p Ar seconds
+.Ar timer
 .Sh DESCRIPTION
 .Nm
 is used to manipulate watchdog timers.
@@ -87,7 +92,10 @@ Note that user tickle mode must be used with caution;
 on a heavily loaded system, the timer may
 expire accidentally, even though user programs may be making
 (very slow) progress.
-A user-mode timer is disarmed (if possible) when the device is closed.
+A user-mode timer is disarmed (if possible) when the device is closed,
+unless the timer is activated with the
+.Fl x
+option.
 .Pp
 External-mode watchdogs are similar to user-mode watchdogs, except
 that the tickle must be done explicitly by a separate invocation of
@@ -144,6 +152,11 @@ This flag tickles an external mode timer.
 Arm
 .Ar timer
 in user tickle mode.
+.It Fl x
+Arm
+.Ar timer
+in a modified user tickle mode: closing the device will not disarm
+the timer.
 .El
 .Sh FILES
 .Pa /dev/watchdog

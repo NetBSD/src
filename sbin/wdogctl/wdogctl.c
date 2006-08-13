@@ -1,4 +1,4 @@
-/*	$NetBSD: wdogctl.c,v 1.15 2005/08/31 18:28:58 dyoung Exp $	*/
+/*	$NetBSD: wdogctl.c,v 1.16 2006/08/13 01:11:01 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wdogctl.c,v 1.15 2005/08/31 18:28:58 dyoung Exp $");
+__RCSID("$NetBSD: wdogctl.c,v 1.16 2006/08/13 01:11:01 dyoung Exp $");
 #endif
 
 
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: wdogctl.c,v 1.15 2005/08/31 18:28:58 dyoung Exp $");
 
 int	main(int, char *[]);
 void	enable_kernel(const char *, u_int);
-void	enable_user(const char *, u_int);
+void	enable_user(const char *, u_int, int);
 void	enable_ext(const char *, u_int);
 void	tickle_ext(void);
 void	disable(void);
@@ -75,6 +75,7 @@ enum	cmd {
 	CMD_DOTICKLE,
 	CMD_EXT_TICKLE,
 	CMD_KERN_TICKLE,
+	CMD_NOCANCEL_TICKLE,
 	CMD_USER_TICKLE
 };
 
@@ -86,7 +87,7 @@ main(int argc, char *argv[])
 	int ch;
 	u_int period = WDOG_PERIOD_DEFAULT;
 
-	while ((ch = getopt(argc, argv, "Adekp:ut")) != -1) {
+	while ((ch = getopt(argc, argv, "Adekp:utx")) != -1) {
 		switch (ch) {
 		case 'A':
 			Aflag = 1;
@@ -123,10 +124,12 @@ main(int argc, char *argv[])
 				usage();
 			break;
 
+		case 'x':
 		case 'u':
 			if (command != CMD_NONE)
 				usage();
-			command = CMD_USER_TICKLE;
+			command =
+			    (ch == 'u') ? CMD_USER_TICKLE : CMD_NOCANCEL_TICKLE;
 			break;
 
 		default:
@@ -161,8 +164,9 @@ main(int argc, char *argv[])
 	case CMD_KERN_TICKLE:
 		enable_kernel(argv[0], period);
 		break;
+	case CMD_NOCANCEL_TICKLE:
 	case CMD_USER_TICKLE:
-		enable_user(argv[0], period);
+		enable_user(argv[0], period, command == CMD_USER_TICKLE);
 		break;
 	}
 	exit(EXIT_SUCCESS);
@@ -218,14 +222,16 @@ enable_ext(const char *name, u_int period)
 }
 
 void
-enable_user(const char *name, u_int period)
+enable_user(const char *name, u_int period, int cancel_on_close)
 {
 	struct wdog_mode wm;  
 	struct timespec ts;
 	pid_t tickler;
 	int fd, rv;
 
-	prep_wmode(&wm, WDOG_MODE_UTICKLE, name, period);
+	prep_wmode(&wm,
+	    (cancel_on_close) ? WDOG_MODE_UTICKLE : WDOG_MODE_ETICKLE, name,
+	    period);
 
 	fd = open(_PATH_WATCHDOG, O_RDWR, 0644);
 	if (fd == -1)
