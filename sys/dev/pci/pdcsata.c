@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.9 2006/06/26 17:54:06 xtraeme Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.10 2006/08/13 09:39:25 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.9 2006/06/26 17:54:06 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.10 2006/08/13 09:39:25 dsainty Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -141,6 +141,11 @@ static const struct pciide_product_desc pciide_pdcsata_products[] =  {
 	{ PCI_PRODUCT_PROMISE_PDC20579,
 	  0,
 	  "Promise PDC20579 SATA150 controller",
+	  pdcsata_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC20771,
+	  0,
+	  "Promise PDC20771 SATA300 controller",
 	  pdcsata_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20775,
@@ -282,6 +287,7 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		break;
 	case PCI_PRODUCT_PROMISE_PDC20575:
 	case PCI_PRODUCT_PROMISE_PDC20579:
+	case PCI_PRODUCT_PROMISE_PDC20771:
 	case PCI_PRODUCT_PROMISE_PDC20775:
 		bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x60, 0x00ff00ff);
 		sc->sc_wdcdev.sc_atac.atac_nchannels = PDC20575_NCHANNELS;
