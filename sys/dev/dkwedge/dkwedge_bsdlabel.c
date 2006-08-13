@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_bsdlabel.c,v 1.6 2006/08/13 18:45:08 martin Exp $	*/
+/*	$NetBSD: dkwedge_bsdlabel.c,v 1.7 2006/08/13 19:17:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -86,10 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.6 2006/08/13 18:45:08 martin Exp $");
-
-#include "opt_dkwedge.h"
-#ifdef DKWEDGE_METHOD_BSDLABEL
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.7 2006/08/13 19:17:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -480,5 +477,3 @@ dkwedge_discover_bsdlabel(struct disk *pdk, struct vnode *vp)
 }
 
 DKWEDGE_DISCOVERY_METHOD_DECL(BSD44, 5, dkwedge_discover_bsdlabel);
-
-#endif
