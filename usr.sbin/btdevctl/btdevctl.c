@@ -1,4 +1,4 @@
-/*	$NetBSD: btcontrol.c,v 1.2 2006/07/26 10:31:00 tron Exp $	*/
+/*	$NetBSD: btdevctl.c,v 1.1 2006/08/13 09:03:23 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: btcontrol.c,v 1.2 2006/07/26 10:31:00 tron Exp $");
+__RCSID("$NetBSD: btdevctl.c,v 1.1 2006/08/13 09:03:23 plunky Exp $");
 
 #include <prop/proplib.h>
 
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: btcontrol.c,v 1.2 2006/07/26 10:31:00 tron Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include "btcontrol.h"
+#include "btdevctl.h"
 
 const char *config_file = "/var/db/btdev.xml";
 const char *control_file = NULL;

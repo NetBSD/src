@@ -1,4 +1,4 @@
-/*	$NetBSD: btcontrol.h,v 1.2 2006/07/26 10:31:00 tron Exp $	*/
+/*	$NetBSD: btdevctl.h,v 1.1 2006/08/13 09:03:23 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -31,8 +31,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __BTCONTROL_H__
-#define __BTCONTROL_H__
+#ifndef __BTDEVCTL_H__
+#define __BTDEVCTL_H__
 
 extern const char *control_file;
 extern const char *config_file;
@@ -47,4 +47,4 @@ int hid_parse(int, char **);
 prop_dictionary_t read_config(void);
 int write_config(prop_dictionary_t);
 
-#endif /* __BTCONTROL_H__ */
+#endif /* __BTDEVCTL_H__ */

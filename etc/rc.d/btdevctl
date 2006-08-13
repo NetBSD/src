@@ -1,40 +1,40 @@
 #!/bin/sh
 #
-# $NetBSD: btcontrol,v 1.1 2006/07/26 11:14:55 tron Exp $
+# $NetBSD: btdevctl,v 1.1 2006/08/13 09:03:23 plunky Exp $
 #
 
-# PROVIDE: btcontrol
+# PROVIDE: btdevctl
 # REQUIRE: bluetooth
 # BEFORE:  LOGIN
 
 $_rc_subr_loaded . /etc/rc.subr
 
-name="btcontrol"
+name="btdevctl"
 rcvar=${name}
 command="/usr/sbin/${name}"
-start_cmd="btcontrol_start"
-stop_cmd="btcontrol_stop"
+start_cmd="btdevctl_start"
+stop_cmd="btdevctl_stop"
 
-btcontrol_start()
+btdevctl_start()
 {
 	echo 'Attaching Bluetooth devices:'
 
 	#
-	# If ${btcontrol_devices} is set, it should be a list of devices to
+	# If ${btdevctl_devices} is set, it should be a list of devices to
 	# attach. Otherwise, all available devices will be attached.
 	#
 
-	devs="${btcontrol_devices:-$(cd /dev/ && echo btdev*)}"
+	devs="${btdev_devices:-$(cd /dev/ && echo btdev*)}"
 	for dev in ${devs}; do
 		${command} ${dev} attach -q
 	done
 }
 
-btcontrol_stop()
+btdevctl_stop()
 {
 	echo 'Detach Bluetooth devices:'
 
-	devs="${btcontrol_devices:-$(cd /dev/ && echo btdev*)}"
+	devs="${btdevctl_devices:-$(cd /dev/ && echo btdev*)}"
 	for dev in ${devs}; do
 		${command} ${dev} detach -q
 	done

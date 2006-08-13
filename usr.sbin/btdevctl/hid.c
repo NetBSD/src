@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.2 2006/07/26 10:31:00 tron Exp $	*/
+/*	$NetBSD: hid.c,v 1.1 2006/08/13 09:03:23 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,12 +55,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hid.c,v 1.2 2006/07/26 10:31:00 tron Exp $
+ * $Id: hid.c,v 1.1 2006/08/13 09:03:23 plunky Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/bthidcontrol/hid.c,v 1.1 2004/04/10 00:18:00 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hid.c,v 1.2 2006/07/26 10:31:00 tron Exp $");
+__RCSID("$NetBSD: hid.c,v 1.1 2006/08/13 09:03:23 plunky Exp $");
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: hid.c,v 1.2 2006/07/26 10:31:00 tron Exp $");
 #include <stdlib.h>
 #include <usbhid.h>
 
-#include "btcontrol.h"
+#include "btdevctl.h"
 
 static void hid_dump_item	(char const *, struct hid_item *);
 
