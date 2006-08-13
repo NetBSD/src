@@ -1,4 +1,4 @@
-.\" $NetBSD: btdev.4,v 1.2 2006/07/29 23:57:03 wiz Exp $
+.\" $NetBSD: btdev.4,v 1.3 2006/08/13 09:03:23 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 26, 2006
+.Dd August 12, 2006
 .Dt BTDEV 4
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@ pseudo-device is used to attach remote Bluetooth devices to the system. If
 no count is specified, the default value of 4 will be used.
 .Sh CONFIGURATION
 Normally, Bluetooth Remote Devices will be configured using the
-.Xr btcontrol 8
+.Xr btdevctl 8
 program, which passes a
 .Xr proplib 3
 dictionary to the appropriate control file
@@ -99,7 +99,7 @@ Detach Bluetooth Device. Currently no properties are used.
 .Xr bluetooth 4 ,
 .Xr bthidev 4 ,
 .Xr btsco 4 ,
-.Xr btcontrol 8
+.Xr btdevctl 8
 .Sh HISTORY
 The
 .Nm

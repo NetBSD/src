@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.643 2006/07/27 22:18:46 christos Exp $
+# $NetBSD: mi,v 1.644 2006/08/13 09:03:21 plunky Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -989,7 +989,8 @@
 ./usr/sbin/bootptest				base-bootserver-bin
 ./usr/sbin/bpm					base-pkgutil-bin
 ./usr/sbin/btconfig				base-sysutil-bin
-./usr/sbin/btcontrol				base-sysutil-bin
+./usr/sbin/btcontrol				base-obsolete		obsolete
+./usr/sbin/btdevctl				base-sysutil-bin
 ./usr/sbin/bthcid				base-sysutil-bin
 ./usr/sbin/catman				base-man-bin
 ./usr/sbin/chat					base-ppp-bin

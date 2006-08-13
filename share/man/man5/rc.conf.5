@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.104 2006/07/30 00:18:09 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.105 2006/08/13 09:03:23 plunky Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -1219,15 +1219,15 @@ boot time.
 .It Sy btconfig_args
 An optional string, containing default arguments for bluetooth devices to
 be configured.
-.It Sy btcontrol
+.It Sy btdevctl
 .Sq YES
 or
 .Sq NO .
 Attach Bluetooth devices.
 If the
-.Sy btcontrol_devices
+.Sy btdevctl_devices
 variable below is not specified, all devices known will be configured.
-.It Sy btcontrol_devices
+.It Sy btdevctl_devices
 An optional space separated list of
 .Xr btdev 4
 devices to be attached.
