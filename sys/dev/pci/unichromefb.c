@@ -1,4 +1,4 @@
-/* $NetBSD: unichromefb.c,v 1.2 2006/08/13 03:37:02 jmcneill Exp $ */
+/* $NetBSD: unichromefb.c,v 1.3 2006/08/13 14:16:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.2 2006/08/13 03:37:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.3 2006/08/13 14:16:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,17 +171,24 @@ static void	uni_set_accel_depth(struct unichromefb_softc *);
 static void	uni_wait_idle(struct unichromefb_softc *);
 static void	uni_fillrect(struct unichromefb_softc *,
 			     int, int, int, int, int);
-static void	uni_bitblit(struct unichromefb_softc *, int, int, int, int, int, int);
+static void	uni_rectinvert(struct unichromefb_softc *,
+			       int, int, int, int);
+static void	uni_bitblit(struct unichromefb_softc *, int, int, int, int,
+			    int, int);
+static void	uni_setup_mono(struct unichromefb_softc *, int, int, int,
+			       int, uint32_t, uint32_t);
+#if notyet
+static void	uni_cursor_show(struct unichromefb_softc *);
+static void	uni_cursor_hide(struct unichromefb_softc *);
+#endif
 
 /* rasops glue */
 static void	uni_copycols(void *, int, int, int, int);
 static void	uni_copyrows(void *, int, int, int);
 static void	uni_erasecols(void *, int, int, int, long);
 static void	uni_eraserows(void *, int, int, long);
-#if notyet
 static void	uni_cursor(void *, int, int, int);
 static void	uni_putchar(void *, int, int, u_int, long);
-#endif
 
 struct wsdisplay_accessops unichromefb_accessops = {
 	unichromefb_ioctl,
@@ -433,10 +440,8 @@ unichromefb_init_screen(void *c, struct vcons_screen *scr, int existing,
 		ri->ri_ops.copycols = uni_copycols;
 		ri->ri_ops.eraserows = uni_eraserows;
 		ri->ri_ops.erasecols = uni_erasecols;
-#if notyet
 		ri->ri_ops.cursor = uni_cursor;
 		ri->ri_ops.putchar = uni_putchar;
-#endif
 	}
 
 	return;
@@ -1168,6 +1173,8 @@ uni_fillrect(struct unichromefb_softc *sc, int x, int y, int width,
     int height, int colour)
 {
 
+	uni_wait_idle(sc);
+
 	MMIO_OUT32(VIA_REG_SRCPOS, 0);
 	MMIO_OUT32(VIA_REG_SRCBASE, 0);
 	MMIO_OUT32(VIA_REG_DSTBASE, 0);
@@ -1180,8 +1187,26 @@ uni_fillrect(struct unichromefb_softc *sc, int x, int y, int width,
 	MMIO_OUT32(VIA_REG_FGCOLOR, colour);
 	MMIO_OUT32(VIA_REG_GECMD, (0x01 | 0x2000 | 0xf0 << 24));
 
-	/* XXX */
+	return;
+}
+
+static void
+uni_rectinvert(struct unichromefb_softc *sc, int x, int y, int width,
+    int height)
+{
+
 	uni_wait_idle(sc);
+
+	MMIO_OUT32(VIA_REG_SRCPOS, 0);
+	MMIO_OUT32(VIA_REG_SRCBASE, 0);
+	MMIO_OUT32(VIA_REG_DSTBASE, 0);
+	MMIO_OUT32(VIA_REG_PITCH, VIA_PITCH_ENABLE |
+	    (((sc->sc_width * sc->sc_depth >> 3) >> 3) |
+	    (((sc->sc_width * sc->sc_depth >> 3) >> 3) << 16)));
+	MMIO_OUT32(VIA_REG_DSTPOS, ((y << 16) | x));
+	MMIO_OUT32(VIA_REG_DIMENSION,
+	    (((height - 1) << 16) | (width - 1)));
+	MMIO_OUT32(VIA_REG_GECMD, (0x01 | 0x2000 | 0x55 << 24));
 
 	return;
 }
@@ -1196,14 +1221,16 @@ uni_bitblit(struct unichromefb_softc *sc, int xs, int ys, int xd, int yd, int wi
 	if (ys < yd) {
 		yd += height - 1;
 		ys += height - 1;
-		dir |= 0x8000;
+		dir |= 0x4000;
 	}
 
 	if (xs < xd) {
 		xd += width - 1;
 		xs += width - 1;
-		dir |= 0x4000;
+		dir |= 0x8000;
 	}
+
+	uni_wait_idle(sc);
 
 	MMIO_OUT32(VIA_REG_SRCBASE, 0);
 	MMIO_OUT32(VIA_REG_DSTBASE, 0);
@@ -1215,11 +1242,56 @@ uni_bitblit(struct unichromefb_softc *sc, int xs, int ys, int xd, int yd, int wi
 	MMIO_OUT32(VIA_REG_DIMENSION, ((height - 1) << 16) | (width - 1));
 	MMIO_OUT32(VIA_REG_GECMD, (0x01 | dir | (0xcc << 24)));
 
-	/* XXX */
+	return;
+}
+
+static void
+uni_setup_mono(struct unichromefb_softc *sc, int xd, int yd, int width, int height,
+    uint32_t fg, uint32_t bg)
+{
+
 	uni_wait_idle(sc);
+
+	MMIO_OUT32(VIA_REG_SRCBASE, 0);
+	MMIO_OUT32(VIA_REG_DSTBASE, 0);
+	MMIO_OUT32(VIA_REG_PITCH, VIA_PITCH_ENABLE |
+	    (((sc->sc_width * sc->sc_depth >> 3) >> 3) |
+	    (((sc->sc_width * sc->sc_depth >> 3) >> 3) << 16)));
+	MMIO_OUT32(VIA_REG_SRCPOS, 0);
+	MMIO_OUT32(VIA_REG_DSTPOS, (yd << 16) | xd);
+	MMIO_OUT32(VIA_REG_DIMENSION, ((height - 1) << 16) | (width - 1));
+	MMIO_OUT32(VIA_REG_FGCOLOR, fg);
+	MMIO_OUT32(VIA_REG_BGCOLOR, bg);
+	MMIO_OUT32(VIA_REG_GECMD, 0xcc020142);
 
 	return;
 }
+
+#if notyet
+static void
+uni_cursor_show(struct unichromefb_softc *sc)
+{
+	uint32_t val;
+
+	val = MMIO_IN32(VIA_REG_CURSOR_MODE);
+	val |= 1;
+	MMIO_OUT32(VIA_REG_CURSOR_MODE, val);
+
+	return;
+}
+
+static void
+uni_cursor_hide(struct unichromefb_softc *sc)
+{
+	uint32_t val;
+
+	val = MMIO_IN32(VIA_REG_CURSOR_MODE);
+	val &= 0xfffffffe;
+	MMIO_OUT32(VIA_REG_CURSOR_MODE, val);
+
+	return;
+}
+#endif
 
 /*
  * rasops glue
@@ -1327,13 +1399,13 @@ uni_eraserows(void *opaque, int row, int nrows, long fillattr)
 	return;
 }
 
-#if notyet
 static void
 uni_cursor(void *opaque, int on, int row, int col)
 {
 	struct rasops_info *ri;
 	struct vcons_screen *scr;
 	struct unichromefb_softc *sc;
+	int x, y, wi, he;
 
 	ri = (struct rasops_info *)opaque;
 	scr = (struct vcons_screen *)ri->ri_hw;
@@ -1341,14 +1413,35 @@ uni_cursor(void *opaque, int on, int row, int col)
 
 	uni_wait_idle(sc);
 
-	if (sc->sc_cursor)
-		sc->sc_cursor(opaque, on, row, col);
+	wi = ri->ri_font->fontwidth;
+	he = ri->ri_font->fontheight;
+
+	if (sc->sc_wsmode == WSDISPLAYIO_MODE_EMUL) {
+		x = ri->ri_ccol * wi + ri->ri_xorigin;
+		y = ri->ri_crow * he + ri->ri_yorigin;
+		if (ri->ri_flg & RI_CURSOR) {
+			uni_rectinvert(sc, x, y, wi, he);
+			ri->ri_flg &= ~RI_CURSOR;
+		}
+		ri->ri_crow = row;
+		ri->ri_ccol = col;
+		if (on) {
+			x = ri->ri_ccol * wi + ri->ri_xorigin;
+			y = ri->ri_crow * he + ri->ri_yorigin;
+			uni_rectinvert(sc, x, y, wi, he);
+			ri->ri_flg |= RI_CURSOR;
+		}
+	} else {
+		ri->ri_flg &= ~RI_CURSOR;
+		ri->ri_crow = row;
+		ri->ri_ccol = col;
+	}
 
 	return;
 }
 
 static void
-uni_putchar(void *opaque, int row, int col, u_int c, long fillattr)
+uni_putchar(void *opaque, int row, int col, u_int c, long attr)
 {
 	struct rasops_info *ri;
 	struct vcons_screen *scr;
@@ -1358,14 +1451,37 @@ uni_putchar(void *opaque, int row, int col, u_int c, long fillattr)
 	scr = (struct vcons_screen *)ri->ri_hw;
 	sc = (struct unichromefb_softc *)scr->scr_cookie;
 
-	uni_wait_idle(sc);
+	if (sc->sc_wsmode == WSDISPLAYIO_MODE_EMUL) {
+		uint32_t *data;
+		int fg, bg, ul, uc, i;
+		int x, y, wi, he;
 
-	if (sc->sc_putchar)
-		sc->sc_putchar(opaque, row, col, c, fillattr);
+		wi = ri->ri_font->fontwidth;
+		he = ri->ri_font->fontheight;
+
+		if (!CHAR_IN_FONT(c, ri->ri_font))
+			return;
+
+		rasops_unpack_attr(attr, &fg, &bg, &ul);
+		x = ri->ri_xorigin + col * wi;
+		y = ri->ri_yorigin + row * he;
+		if (c == 0x20)
+			uni_fillrect(sc, x, y, wi, he, ri->ri_devcmap[bg]);
+		else {
+			uc = c - ri->ri_font->firstchar;
+			data = (uint32_t *)((uint8_t *)ri->ri_font->data +
+			    uc * ri->ri_fontscale);
+			uni_setup_mono(sc, x, y, wi, he,
+			    ri->ri_devcmap[fg], ri->ri_devcmap[bg]);
+			for (i = 0; i < (wi * he) / 4; i++) {
+				MMIO_OUT32(VIA_MMIO_BLTBASE, *data);
+				data++;
+			}
+		}
+	}
 
 	return;
 }
-#endif
 
 /* XXX TODO */
 int
