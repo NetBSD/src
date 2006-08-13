@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.18 2006/08/12 21:45:22 christos Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.19 2006/08/13 00:56:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -316,6 +316,9 @@ match_bootwedge(struct device *dv, struct btinfo_bootwedge *biw)
 	 */
 	if (biw->matchblk == -1)
 		return (0);
+
+	if ((tmpvn = opendisk(dv)) == NULL)
+		return 0;
 
 	MD5Init(&ctx);
 	for (blk = biw->matchblk, nblks = biw->matchnblks;
