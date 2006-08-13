@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.263 2006/08/10 12:22:25 cube Exp $
+#	$NetBSD: files.pci,v 1.264 2006/08/13 02:21:45 simonb Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -793,6 +793,16 @@ device	ipw: ifnet, arp, wlan, firmload
 attach	ipw at pci
 file	dev/pci/if_ipw.c		ipw
 
+# Intel PRO/Wireless 2200BG/2915ABG
+device	iwi: ifnet, arp, wlan, firmload
+attach	iwi at pci
+file	dev/pci/if_iwi.c		iwi
+
+# Intel PRO/Wireless 3945ABG
+device	wpi: ifnet, arp, wlan, firmload
+attach	wpi at pci
+file	dev/pci/if_wpi.c		wpi
+
 # Workbit NinjaSCSI-32 controllers
 # device declaration in sys/conf/files
 attach	njs at pci with njs_pci
@@ -802,11 +812,6 @@ file	dev/pci/njs_pci.c		njs_pci
 device  xge: ether, ifnet, arp
 attach  xge  at pci 
 file    dev/pci/if_xge.c		xge
-
-# Intel PRO/Wireless 2200BG/2915ABG
-device	iwi: ifnet, arp, wlan, firmload
-attach	iwi at pci
-file	dev/pci/if_iwi.c		iwi
 
 # Via Velocity 612x 10/100/1000 Ethernet
 device	vge: ether, ifnet, arp, mii
