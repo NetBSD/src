@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_gpt.c,v 1.3 2006/08/13 18:45:08 martin Exp $	*/
+/*	$NetBSD: dkwedge_gpt.c,v 1.4 2006/08/13 19:17:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -41,10 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.3 2006/08/13 18:45:08 martin Exp $");
-
-#include "opt_dkwedge.h"
-#ifdef DKWEDGE_METHOD_GPT
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.4 2006/08/13 19:17:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,6 +309,3 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 }
 
 DKWEDGE_DISCOVERY_METHOD_DECL(GPT, 0, dkwedge_discover_gpt);
-
-#endif
-
