@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.198 2006/08/12 22:28:07 agc Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.199 2006/08/13 02:27:33 simonb Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.198 $"
+#ident 		"GENERIC-$Revision: 1.199 $"
 
 maxusers	32		# estimated number of users
 
@@ -608,6 +608,7 @@ sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
+wpi*	at pci? dev ? function ?	# Intel PRO/Wireless 3945ABG
 
 # PCMCIA network interfaces
 an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
