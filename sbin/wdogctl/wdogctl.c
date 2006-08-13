@@ -1,4 +1,4 @@
-/*	$NetBSD: wdogctl.c,v 1.16 2006/08/13 01:11:01 dyoung Exp $	*/
+/*	$NetBSD: wdogctl.c,v 1.17 2006/08/13 23:24:53 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wdogctl.c,v 1.16 2006/08/13 01:11:01 dyoung Exp $");
+__RCSID("$NetBSD: wdogctl.c,v 1.17 2006/08/13 23:24:53 wiz Exp $");
 #endif
 
 
@@ -443,6 +443,8 @@ usage(void)
 	    getprogname());
 	fprintf(stderr, "       %s -t\n", getprogname());
 	fprintf(stderr, "       %s -u [-A] [-p seconds] timer\n",
+	    getprogname());
+	fprintf(stderr, "       %s -x [-A] [-p seconds] timer\n",
 	    getprogname());
 
 	exit(1);
