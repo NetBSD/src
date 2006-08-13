@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_mbr.c,v 1.3 2005/12/11 12:21:20 christos Exp $	*/
+/*	$NetBSD: dkwedge_mbr.c,v 1.4 2006/08/13 18:45:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.3 2005/12/11 12:21:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.4 2006/08/13 18:45:08 martin Exp $");
+
+#include "opt_dkwedge.h"
+
+#ifdef DKWEDGE_METHOD_MBR
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,3 +193,6 @@ dkwedge_discover_mbr(struct disk *pdk, struct vnode *vp)
 }
 
 DKWEDGE_DISCOVERY_METHOD_DECL(MBR, 10, dkwedge_discover_mbr);
+
+#endif
+
