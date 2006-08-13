@@ -1,4 +1,4 @@
-/*	$NetBSD: kgmon.c,v 1.18 2006/05/25 00:07:59 christos Exp $	*/
+/*	$NetBSD: kgmon.c,v 1.19 2006/08/13 00:19:30 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: kgmon.c,v 1.18 2006/05/25 00:07:59 christos Exp $");
+__RCSID("$NetBSD: kgmon.c,v 1.19 2006/08/13 00:19:30 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -320,7 +320,8 @@ dumpstate(struct kvmvars *kvp)
 	h.ncnt = kvp->gpm.kcountsize + sizeof(h);
 	h.version = GMONVERSION;
 	h.profrate = getprofhz(kvp);
-	fwrite((char *)&h, sizeof(h), 1, fp);
+	if (fwrite((char *)&h, sizeof(h), 1, fp) != 1)
+		err(EXIT_FAILURE, "writing header to gmon.out");
 
 	/*
 	 * Write out the tick buffer.
@@ -398,7 +399,10 @@ dumpstate(struct kvmvars *kvp)
 			rawarc.raw_frompc = frompc;
 			rawarc.raw_selfpc = (u_long)tos[toindex].selfpc;
 			rawarc.raw_count = tos[toindex].count;
-			fwrite((char *)&rawarc, sizeof(rawarc), 1, fp);
+			if (fwrite((char *)&rawarc, sizeof(rawarc), 1,fp) != 1){
+				err(EXIT_FAILURE,
+				    "writing raw arc to gmon.out");
+			}
 		}
 	}
 	free(tos);
