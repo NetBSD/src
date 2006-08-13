@@ -1,0 +1,17 @@
+NetBSD ?.? (UNKNOWN)
+
+Welcome to NetBSD!
+
+This system is running a development snapshot of one of the stable branches of
+the NetBSD operating system.  This branch will eventually lead to a new formal
+release, but it cannot be considered release quality at the moment.  Meanwhile,
+it is possible for it to contain bugs or any other kind of problem.  Please
+bear this in mind and use the system with care.
+
+You are encouraged to test this version as thoroughly as possible.  Should you
+encounter any problem, please report it back to the development team using the
+send-pr(1) utility (requires a working MTA).  If yours is not properly set up,
+use the web interface at: http://www.NetBSD.org/Misc/send-pr.html
+
+Thank you for testing this NetBSD release and helping us improve it.
+

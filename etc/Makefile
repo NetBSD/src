@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.334 2006/08/05 13:07:30 jmmv Exp $
+#	$NetBSD: Makefile,v 1.335 2006/08/13 14:11:36 jmmv Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -121,6 +121,9 @@ FILESNAME_motd.beta=	motd
 .elif !empty(DISTRIBVER:M*RC*)
 BIN2+=	motd.rc
 FILESNAME_motd.rc=	motd
+.elif !empty(DISTRIBVER:M*STABLE*)
+BIN2+=	motd.stable
+FILESNAME_motd.stable=	motd
 .else
 BIN2+=	motd
 .endif
