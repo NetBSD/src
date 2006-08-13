@@ -1,4 +1,4 @@
-/* $NetBSD: unichromefb.c,v 1.3 2006/08/13 14:16:44 jmcneill Exp $ */
+/* $NetBSD: unichromefb.c,v 1.4 2006/08/13 20:27:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.3 2006/08/13 14:16:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.4 2006/08/13 20:27:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,15 @@ __KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.3 2006/08/13 14:16:44 jmcneill Exp
 #include <dev/pci/unichromehw.h>
 #include <dev/pci/unichromeconfig.h>
 #include <dev/pci/unichromeaccel.h>
+
+#include "vga.h"
+
+#if NVGA > 0
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
+#include <dev/ic/vgareg.h>
+#include <dev/ic/vgavar.h>
+#endif
 
 /* XXX */
 #define UNICHROMEFB_DEPTH	16
@@ -113,9 +122,6 @@ struct unichromefb_softc {
 
 static int unichromefb_match(struct device *, struct cfdata *, void *);
 static void unichromefb_attach(struct device *, struct device *, void *);
-
-/* XXX */
-int unichromefb_cnattach(void);
 
 struct wsscreen_descr unichromefb_stdscreen = {
 	"fb",
@@ -259,18 +265,26 @@ unichromefb_attach(struct device *parent, struct device *self, void *opaque)
 	sc->sc_wsmode = WSDISPLAYIO_MODE_EMUL;
 
 	sc->sc_iot = pa->pa_iot;
+
+#if NVGA > 0
+	/* XXX vga_cnattach claims the I/O registers that we need;
+	 *     we need to nuke it here so we can take over.
+	 */
+	vga_cndetach();
+#endif
+
 	if (bus_space_map(sc->sc_iot, VIA_REGBASE, 0x20, 0, &sc->sc_ioh)) {
 		aprint_error(": failed to map I/O registers\n");
 		return;
 	}
 
+	sc->sc_memt = pa->pa_memt;
 	val = uni_rd(sc, VIASR, SR30);
 	sc->sc_fbaddr = val << 24;
 	val = uni_rd(sc, VIASR, SR39);
 	sc->sc_fbsize = val * (4*1024*1024);
 	if (sc->sc_fbsize < 16*1024*1024 || sc->sc_fbsize > 64*1024*1024)
 		sc->sc_fbsize = 16*1024*1024;
-	sc->sc_memt = pa->pa_memt;
 	if (bus_space_map(sc->sc_memt, sc->sc_fbaddr, sc->sc_fbsize,
 	    BUS_SPACE_MAP_LINEAR, &ap_memh)) {
 		aprint_error(": failed to map aperture at 0x%08x/0x%x\n",
@@ -292,7 +306,8 @@ unichromefb_attach(struct device *parent, struct device *self, void *opaque)
 
 	if (sc->sc_accel)
 		aprint_normal("%s: MMIO @0x%08x/0x%x\n",
-		    sc->sc_dev.dv_xname, (uint32_t)mmiobase, (uint32_t)mmiosize);
+		    sc->sc_dev.dv_xname, (uint32_t)mmiobase,
+		    (uint32_t)mmiosize);
 
 	ri = &unichromefb_console_screen.scr_ri;
 	memset(ri, 0, sizeof(struct rasops_info));
@@ -1481,11 +1496,4 @@ uni_putchar(void *opaque, int row, int col, u_int c, long attr)
 	}
 
 	return;
-}
-
-/* XXX TODO */
-int
-unichromefb_cnattach(void)
-{
-	return 0;
 }
