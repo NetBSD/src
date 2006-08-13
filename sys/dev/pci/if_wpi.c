@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.1 2006/08/13 02:21:45 simonb Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.2 2006/08/13 03:52:33 oster Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.1 2006/08/13 02:21:45 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.2 2006/08/13 03:52:33 oster Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -1267,17 +1267,17 @@ wpi_tx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 		amrr->retrycnt++;
 	}
 
-	bus_dmamap_unload(sc->sc_dmat, txdata->map);
+	if ((le32toh(stat->status) & 0xff) != 1)
+		ifp->if_oerrors++;
+	else
+		ifp->if_opackets++;
 
+	bus_dmamap_unload(sc->sc_dmat, txdata->map);
 	m_freem(txdata->m);
 	txdata->m = NULL;
 	ieee80211_free_node(txdata->ni);
 	txdata->ni = NULL;
 
-	if ((le32toh(stat->status) & 0xff) != 1)
-		ifp->if_oerrors++;
-	else
-		ifp->if_opackets++;
 	ring->queued--;
 
 	sc->sc_tx_timer = 0;
