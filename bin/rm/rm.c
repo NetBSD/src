@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.43 2006/03/17 23:55:42 peter Exp $ */
+/* $NetBSD: rm.c,v 1.44 2006/08/14 20:38:13 tls Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.43 2006/03/17 23:55:42 peter Exp $");
+__RCSID("$NetBSD: rm.c,v 1.44 2006/08/14 20:38:13 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -343,7 +343,9 @@ rm_file(char **argv)
  * the matrix if one is overwriting a file, not an entire disk, because
  * the procedure requires examination and comparison of the disk's defect
  * lists.  Any program that claims to securely erase *files* while 
- * conforming to the standard, then, is not correct.  We do everything
+ * conforming to the standard, then, is not correct.  We do as much of
+ * what the standard requires as can actually be done when erasing a
+ * file, rather than an entire disk; but that does not make us conformant.
  *
  * Furthermore, the presence of track caches, disk and controller write
  * caches, and so forth make it extremely difficult to ensure that data
