@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.26 2006/08/12 15:29:52 christos Exp $
+#	$NetBSD: EB7500ATX,v 1.27 2006/08/14 22:04:30 bjh21 Exp $
 #
 #	EB7500ATX --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.26 $"
+#ident		"EB7500ATX-$Revision: 1.27 $"
 
 # estimated number of users
 maxusers	32
@@ -199,7 +199,7 @@ vidc0		at mainbus?
 # ws console uses DUMB, SUN or VT100 terminal emulation
 #options 	WSEMUL_NODUMB
 #options 	WSEMUL_SUN
-#options 	WSEMUL_VT100
+options 	WSEMUL_VT100
 
 #options 	WSDISPLAY_COMPAT_RAWKBD
 
@@ -208,46 +208,29 @@ vidc0		at mainbus?
 #options 	FONT_LUCIDA16x29
 #options 	FONT_OMRON12x20		# looks funny
 #options 	FONT_QVSS8x15		# broken ?
-#options 	FONT_SONY12x25		# looks like VT220 font
-#options 	FONT_SONY8x16		# not tested
+options 	FONT_SONY12x25		# looks like VT220 font
+options 	FONT_SONY8x16		# not tested
 #options 	FONT_VT220L8x8		# 8x8 font as in Arch. cons
 #options 	FONT_VT220L8x16		# 8x(2x8) font as in Arch. cons
 #options 	FONT_VT220L8x10		# not tested
 #options 	FONT_VT220L8x20		# not tested
 
-#vidcvideo0	at vidc?		# wscons driver for VIDC
-#wsdisplay*	at vidcvideo? console ?	# display itself
+vidcvideo0	at vidc?		# wscons driver for VIDC
+wsdisplay*	at vidcvideo? console ?	# display itself
 
 iomdkbc*	at iomd?		# IOMD keyboard/mouse interface
 
-#pckbd*		at iomdkbc? slot ?	# PS/2 keyboard
-#options 	PCKBD_LAYOUT=KB_UK
-#wskbd*		at pckbd?
+pckbd*		at iomdkbc? slot ?	# PS/2 keyboard
+options 	PCKBD_LAYOUT=KB_UK
+wskbd*		at pckbd?
 
 pms*		at iomdkbc? slot ?	# PS/2 mouse
 wsmouse*	at pms?
-
-#rpckbd*		at iomd?		# based on old `kbd' driver
-#wskbd*		at rpckbd?		# wskbd on RiscPC keyboard
 
 #qms*		at iomd?		# ws quadmouse driver
 #wsmouse*	at qms?			# wsmouse on ws quadmouse
 
 pseudo-device	wsmux
-
-# The origional vidcconsole :
-# vidcconsole kbd at IOMD
-# vidcconsole PS2 mouse at IOMD
-vidcconsole0	at vidc?		# display + vt100 emulation
-kbd*		at iomd?		# PS/2 keyboard for vidcconsole
-
-# generic VT console device
-vt0	at vidc?
-vt1	at vidc?
-vt2	at vidc?
-vt3	at vidc?
-vt4	at vidc?
-vt5	at vidc?
 
 # Audio device
 vidcaudio0	at vidc?

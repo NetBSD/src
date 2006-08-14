@@ -1,4 +1,4 @@
-#	$NetBSD: majors.acorn32,v 1.20 2005/12/11 12:16:05 christos Exp $
+#	$NetBSD: majors.acorn32,v 1.21 2006/08/14 22:04:30 bjh21 Exp $
 #
 # Device majors for acorn32
 #
@@ -7,13 +7,12 @@ device-major	mem		char 0
 device-major	swap		char 1   block 1	vmswap
 device-major	cons		char 2
 device-major	ctty		char 3
-device-major	physcon		char 4			vt & vidcconsole
+
 device-major	log		char 5
 device-major	ptc		char 6			pty
 device-major	pts		char 7			pty
 device-major	lpt		char 8			lpt
 
-device-major	kbd		char 11			kbd
 device-major	com		char 12			com
 
 device-major	wd		char 16  block 16	wd
@@ -36,7 +35,6 @@ device-major	tun		char 33			tun
 device-major	filedesc	char 34
 device-major	lkm		char 35			lkm
 device-major	audio		char 36			audio
-device-major	vidcconsole	char 37			vidcconsole
 
 device-major	ipl		char 46			ipfilter
 

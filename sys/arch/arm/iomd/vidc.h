@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.h,v 1.8 2005/12/11 12:16:47 christos Exp $	*/
+/*	$NetBSD: vidc.h,v 1.9 2006/08/14 22:04:30 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -202,66 +202,11 @@ struct vidc_mode {
     int frame_rate;
 };
 
-typedef struct
-  {
-    int chars;                 /* Number of characters defined in font */
-    int width;                 /* Defined width of characters in bytes */
-    int height;                /* Defined height of characters in lines */
-    int pixel_width;           /* Width of characters in pixels */
-    int pixel_height;          /* Height of characters in pixels */
-    int x_spacing;             /* Spacing in pixels between chars */
-    int y_spacing;             /* Spacing in pixels between lines */
-    int data_size;             /* Allocated data size */
-    unsigned char *data;       /* Font data */
-  } font_struct;
-
 #define XRES mode.hder
 #define YRES mode.vder
 #define NUMCOLOURS (1 << mode.log2_bpp)
 
-struct vidc_info
-  {
-    struct vidc_mode mode;
-    struct vidc_state vidc;
-    font_struct *font;         /* pointer to current font_struct */
-    font_struct *normalfont;   /* pointer to normal font struct */
-    font_struct *italicfont;   /* pointer to italic font struct */
-    font_struct *boldfont;     /* pointer to bold font struct */
-    int xfontsize, yfontsize;
-    int text_width, text_height;
-    int bytes_per_line;
-    int bytes_per_scroll;
-    int pixelsperbyte;
-    int screensize;
-    int fast_render;
-    int forecolour, forefillcolour;
-    int backcolour, backfillcolour;
-    int text_colours;
-    int frontporch;
-    int topporch;	/* ;) */
-    int bold;
-    int reverse;
-    int n_forecolour;
-    int n_backcolour;
-    int blanked;
-    int scrollback_end;
-    int flash;
-    int cursor_flash;
-  };
-
 #endif	/* !_LOCORE */
-
-#define COLOUR_BLACK_1 0x00
-#define COLOUR_WHITE_1 0x01
-
-#define COLOUR_BLACK_2 0x00
-#define COLOUR_WHITE_2 0x03
-
-#define COLOUR_BLACK_4 0x00
-#define COLOUR_WHITE_4 0x07
-
-#define COLOUR_BLACK_8 0x00
-#define COLOUR_WHITE_8 0x07
 
 #endif	/* !_ARM32_VIDC_H */
 
