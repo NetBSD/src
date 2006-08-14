@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.65 2006/08/12 15:29:53 christos Exp $
+#	$NetBSD: LAMB,v 1.66 2006/08/14 09:38:33 itohy Exp $
 #
 #	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
@@ -232,7 +232,7 @@ cpu0	at mainbus0
 #ess*		at pnpbios? index ?	# ESS AudioDrive
 #sb*		at pnpbios? index ?	# NeoMagic 256AV in sb mode
 #wss*		at pnpbios? index ?	# NeoMagic 256AV in wss mode
-#ym*		at pnpbios? index ?	# OPL3-SA3
+#ym*		at pnpbios? index ?	# Yamaha OPL3-SA[23] audio
 
 # com port
 # If enabled, consider changing "com0", "com1", and "com2" under "ISA Serial

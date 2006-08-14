@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.75 2006/08/14 06:22:34 skrll Exp $
+#	$NetBSD: IOPENER,v 1.76 2006/08/14 09:38:33 itohy Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.75 $"
+#ident 		"IOPENER-$Revision: 1.76 $"
 
 maxusers	32		# estimated number of users
 
@@ -393,7 +393,7 @@ ugen*	at uhub? port ?
 # Audio Devices
 
 # ISA Plug-and-Play audio devices
-ym*	at isapnp?			# Yamaha OPL3-SA3 audio
+ym*	at isapnp?			# Yamaha OPL3-SA[23] audio
 
 # OPL[23] FM synthesizers
 opl*	at ym?
