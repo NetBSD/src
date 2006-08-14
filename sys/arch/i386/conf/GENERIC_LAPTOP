@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.200 2006/08/14 06:22:34 skrll Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.201 2006/08/14 09:34:43 itohy Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.200 $"
+#ident 		"GENERIC-$Revision: 1.201 $"
 
 maxusers	32		# estimated number of users
 
@@ -291,6 +291,7 @@ acpi0 		at mainbus0
 #pckbc*  	at acpi?		# PC keyboard controller
 #pcppi*		at acpi?                # AT-style speaker sound
 #wss* 		at acpi?		# NeoMagic 256AV in wss mode
+#ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
 
 # Sony Vaio jog dial
 #spic* 		at acpi?		# Sony Programmable I/O Controller
@@ -307,7 +308,7 @@ acpi0 		at mainbus0
 #ess*		at pnpbios? index ?	# ESS AudioDrive
 #sb*		at pnpbios? index ?	# NeoMagic 256AV in sb mode
 #wss*		at pnpbios? index ?	# NeoMagic 256AV in wss mode
-#ym*		at pnpbios? index ?	# OPL3-SA3
+#ym*		at pnpbios? index ?	# Yamaha OPL3-SA[23] audio
 
 # com port
 # If enabled, consider changing "com0", "com1", and "com2" under "ISA Serial
@@ -805,7 +806,7 @@ ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
 guspnp* at isapnp?			# Gravis Ultra Sound PnP audio
 sb*	at isapnp?			# SoundBlaster-compatible audio
 wss*	at isapnp?			# Windows Sound System
-ym*	at isapnp?			# Yamaha OPL3-SA3 audio
+ym*	at isapnp?			# Yamaha OPL3-SA[23] audio
 
 # ISA audio devices
 # the "aria" probe might give false hits
