@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.13 2006/02/18 19:35:11 jmcneill Exp $ */
+/*	$NetBSD: display.c,v 1.13.2.1 2006/08/14 06:59:54 ghen Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -75,8 +75,8 @@ struct field display_field_tab[] = {
     { "msg.kernel.attrs",	&msg_kernel_attrs, FMT_ATTRS,	0 },
     { "msg.kernel.bg",		&msg_kernel_bg, FMT_COLOR,	0 },
     { "msg.kernel.fg",		&msg_kernel_fg, FMT_COLOR,	0 },
-    { "splash.enable",		&splash_enable, FMT_UINT,	0 },
-    { "splash.progress",	&splash_progress, FMT_UINT,	0 },
+    { "splash.enable",		&splash_enable, FMT_UINT,	FLG_WRONLY },
+    { "splash.progress",	&splash_progress, FMT_UINT,	FLG_WRONLY },
 };
 
 int display_field_tab_len = sizeof(display_field_tab) /
