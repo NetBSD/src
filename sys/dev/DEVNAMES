@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.208 2006/07/30 03:02:07 tsutsui Exp $
+#	$NetBSD: DEVNAMES,v 1.209 2006/08/14 22:05:45 bjh21 Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -671,7 +671,6 @@ joy			shark
 kb			news68k
 kb			newsmips
 kbc			news68k
-kbd			acorn32
 kbd			amiga
 kbd			amigappc
 kbd			atari
@@ -1078,7 +1077,6 @@ rfc			MI
 rk			vax
 rl			vax
 rlc			vax
-rpckbd			acorn32
 rt			MI
 rtc			acorn26
 rtc			acorn32
@@ -1357,7 +1355,6 @@ viaide			MI
 viapm			MI
 vidc			acorn32
 vidcaudio		acorn32
-vidcconsole		acorn32
 vidcvideo		acorn32
 videomode		MI		Attribute
 vme			MI
@@ -1385,7 +1382,6 @@ vs			vax
 vs			x68k
 vsbus			vax
 vsms			alpha
-vt			acorn32
 vt			i386
 vtpbc			algor
 vz			vax
