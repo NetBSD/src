@@ -1,4 +1,4 @@
-/*	$NetBSD: bootsect.h,v 1.3 2005/12/03 17:34:43 christos Exp $	*/
+/*	$NetBSD: bootsect.h,v 1.4 2006/08/14 14:06:26 gdt Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -62,15 +62,11 @@ struct bootsector710 {
 	int8_t		bsOEMName[8];		/* OEM name and version */
 	int8_t		bsBPB[53];		/* BIOS parameter block */
 	int8_t		bsExt[26];		/* Bootsector Extension */
-	int8_t		bsBootCode[418];	/* pad so structure is 512b */
-	u_int8_t	bsBootSectSig2;		/* 2 & 3 are only defined for FAT32? */
-	u_int8_t	bsBootSectSig3;
+	int8_t		bsBootCode[420];	/* pad so structure is 512b */
 	u_int8_t	bsBootSectSig0;
 	u_int8_t	bsBootSectSig1;
 #define	BOOTSIG0	0x55
 #define	BOOTSIG1	0xaa
-#define	BOOTSIG2	0
-#define	BOOTSIG3	0
 };
 #ifdef	atari
 /*

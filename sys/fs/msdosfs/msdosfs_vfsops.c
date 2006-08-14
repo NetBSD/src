@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.33 2006/07/23 22:06:10 ad Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.34 2006/08/14 14:06:26 gdt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.33 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.34 2006/08/14 14:06:26 gdt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -517,9 +517,12 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	}
 
 	if (pmp->pm_RootDirEnts == 0) {
-		if (bsp->bs710.bsBootSectSig2 != BOOTSIG2
-		    || bsp->bs710.bsBootSectSig3 != BOOTSIG3
-		    || pmp->pm_Sectors
+		/*
+		 * Some say that bsBootSectSig[23] must be zero, but
+		 * Windows does not require this and some digital cameras
+		 * do not set these to zero.  Therefore, do not insist.
+		 */
+		if (pmp->pm_Sectors
 		    || pmp->pm_FATsecs
 		    || getushort(b710->bpbFSVers)) {
 			error = EINVAL;
