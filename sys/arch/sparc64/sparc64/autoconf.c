@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.115 2006/03/29 04:16:48 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.116 2006/08/14 12:11:26 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.115 2006/03/29 04:16:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.116 2006/08/14 12:11:26 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -64,10 +64,13 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.115 2006/03/29 04:16:48 thorpej Exp $
 #include <sys/reboot.h>
 #include <sys/socket.h>
 #include <sys/malloc.h>
+#include <sys/vnode.h>
+#include <sys/fcntl.h>
 #include <sys/queue.h>
 #include <sys/msgbuf.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 
@@ -578,12 +581,56 @@ cpu_configure()
 	(void)spl0();
 }
 
+static struct vnode *
+opendisk(struct device *dv)
+{
+	int bmajor;
+	struct vnode *tmpvn;
+	int error;
+	
+	/*
+	 * Lookup major number for disk block device.
+	 */
+	bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
+	if (bmajor == -1)
+		return NULL;
+	
+	/*
+	 * Fake a temporary vnode for the disk, open it, and read
+	 * and hash the sectors.
+	 */
+	if (bdevvp(MAKEDISKDEV(bmajor, device_unit(dv), RAW_PART), &tmpvn))
+		panic("%s: can't alloc vnode for %s", __func__, dv->dv_xname);
+	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
+	if (error) {
+#ifndef DEBUG
+		/*
+		 * Ignore errors caused by missing device, partition,
+		 * or medium.
+		 */
+		if (error != ENXIO && error != ENODEV)
+#endif
+			printf("%s: can't open dev %s (%d)\n",
+			    __func__, dv->dv_xname, error);
+		vput(tmpvn);
+		return NULL;
+	}
+
+	return tmpvn;
+}
 
 void
 cpu_rootconf()
 {
 	struct bootpath *bp;
 	int bootpartition;
+	struct dkwedge_list wl;
+	struct dkwedge_info *wi;
+	struct vnode *vn;
+	char diskname[16];
+	int i, error;
+
+	KASSERT(booted_device != NULL);
 
 	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
 	if (bp == NULL)
@@ -593,6 +640,34 @@ cpu_rootconf()
 	else
 		bootpartition = bp->val[2];
 
+	if ((vn = opendisk(booted_device)) == NULL)
+		goto nowedge;
+
+	wl.dkwl_bufsize = sizeof(*wi) * 16;
+	wl.dkwl_buf = wi = malloc(wl.dkwl_bufsize, M_TEMP, M_WAITOK);
+	error = VOP_IOCTL(vn, DIOCLWEDGES, &wl, FREAD, NOCRED, 0);
+	vput(vn);
+	if (error)
+		goto nowedge2;
+
+	snprintf(diskname, sizeof(diskname), "%s%c", booted_device->dv_xname, 
+	    bootpartition + 'a');
+
+	for (i = 0; i < wl.dkwl_ncopied; i++) {
+		if (strcmp(wi[i].dkw_wname, diskname) == 0)
+			break;
+	}
+	if (i == wl.dkwl_ncopied)
+		goto nowedge2;
+
+	dkwedge_set_bootwedge(booted_device, wi[i].dkw_offset, wi[i].dkw_size);
+	free(wi, M_TEMP);
+	setroot(booted_wedge, 0);
+	return;
+
+nowedge2:
+	free(wi, M_TEMP);
+nowedge:
 	setroot(booted_device, bootpartition);
 }
 
