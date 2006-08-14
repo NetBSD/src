@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.231 2006/08/12 15:29:53 christos Exp $
+# $NetBSD: GENERIC,v 1.232 2006/08/14 06:22:34 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.231 $"
+#ident 		"GENERIC-$Revision: 1.232 $"
 
 maxusers	32
 
@@ -427,7 +427,7 @@ wsmouse* at ums?
 ukbd*	at uhidev? reportid ?				# USB Keyboards
 wskbd*	at ukbd? console ?
 
-ucycom*	at uhidev? reportid ?				# USB serial adpater
+ucycom*	at uhidev? reportid ?				# USB serial adapter
 
 uhid*	at uhidev? reportid ?				# USB Generic HID
 

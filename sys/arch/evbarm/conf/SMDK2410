@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.28 2006/02/05 05:01:49 cube Exp $
+#	$NetBSD: SMDK2410,v 1.29 2006/08/14 06:22:33 skrll Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -249,7 +249,7 @@ wsmouse* at ums? mux 0
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices

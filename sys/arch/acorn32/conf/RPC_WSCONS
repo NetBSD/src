@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.47 2006/08/05 22:33:44 bjh21 Exp $
+#	$NetBSD: RPC_WSCONS,v 1.48 2006/08/14 06:22:33 skrll Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.47 $"
+#ident		"GENERIC-$Revision: 1.48 $"
 
 # estimated number of users
 maxusers	32
@@ -281,7 +281,7 @@ scsibus* at csc?
 oak*	at podulebus?			# Oak SCSI I card
 scsibus* at oak?
 
-csa*	at podulebus?			# Cumana SCSI I adpater
+csa*	at podulebus?			# Cumana SCSI I adapter
 scsibus* at csa?
 
 hcsc*	at podulebus0 slot ?		# HCCS 8-bit SCSI interface
