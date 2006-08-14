@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.40 2006/08/05 23:11:11 bjh21 Exp $
+#	$NetBSD: NC,v 1.41 2006/08/14 06:22:33 skrll Exp $
 #
 #	NC - with vidcconsole
 #
@@ -227,7 +227,7 @@ podulebus0	at root
 #oak*	at podulebus?			# Oak SCSI I card
 #scsibus* at oak?
 
-#csa*	at podulebus?			# Cumana SCSI I adpater
+#csa*	at podulebus?			# Cumana SCSI I adapter
 #scsibus* at csa?
 
 #hcsc*	at podulebus0 slot ?	# HCCS 8-bit SCSI interface

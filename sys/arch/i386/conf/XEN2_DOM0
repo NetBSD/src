@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.4 2006/08/12 15:29:53 christos Exp $
+# $NetBSD: XEN2_DOM0,v 1.5 2006/08/14 06:22:34 skrll Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -492,7 +492,7 @@ wsmouse* at uep? mux 0
 ukbd*   at uhidev? reportid ?
 wskbd*  at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.58 2006/02/05 05:01:49 cube Exp $
+#	$NetBSD: INSTALL,v 1.59 2006/08/14 06:22:33 skrll Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -317,7 +317,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #ukbd*	at uhidev? reportid ?
 #wskbd*	at ukbd? console ?
 
-# USB serial adpater
+# USB serial adapter
 #ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices

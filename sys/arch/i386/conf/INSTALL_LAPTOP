@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.100 2006/04/28 16:24:15 tron Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.101 2006/08/14 06:22:34 skrll Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -519,7 +519,7 @@ uhidev*	at uhub? port ? configuration ? interface ?
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
 
-# USB serial adpater
+# USB serial adapter
 ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
