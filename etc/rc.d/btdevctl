@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: btdevctl,v 1.1 2006/08/13 09:03:23 plunky Exp $
+# $NetBSD: btdevctl,v 1.2 2006/08/14 18:55:18 plunky Exp $
 #
 
 # PROVIDE: btdevctl
@@ -24,7 +24,7 @@ btdevctl_start()
 	# attach. Otherwise, all available devices will be attached.
 	#
 
-	devs="${btdev_devices:-$(cd /dev/ && echo btdev*)}"
+	devs="${btdevctl_devices:-$(cd /dev/ && echo btdev*)}"
 	for dev in ${devs}; do
 		${command} ${dev} attach -q
 	done
