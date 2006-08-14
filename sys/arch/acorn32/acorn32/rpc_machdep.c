@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.62 2006/06/25 21:32:40 christos Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.63 2006/08/14 22:04:30 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -50,13 +50,11 @@
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
 #include "vidcvideo.h"
-#include "rpckbd.h"
-#include "pckbc.h"
 #include "podulebus.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.62 2006/06/25 21:32:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.63 2006/08/14 22:04:30 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -83,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.62 2006/06/25 21:32:40 christos Ex
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 #include <arm/arm32/machdep.h>
-#include <machine/vconsole.h>
 #include <arm/undefined.h>
 #include <machine/rtc.h>
 #include <machine/bus.h>
@@ -95,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.62 2006/06/25 21:32:40 christos Ex
 #include <arm/iomd/vidcvideo.h>
 
 #include <sys/device.h>
-#include <arm/iomd/rpckbdvar.h>
 #include <dev/ic/pckbcvar.h>
 
 #include <dev/i2c/i2cvar.h>
@@ -853,11 +849,6 @@ initarm(void *cookie)
 	};
 	vidc_base = (int *) VIDC_BASE;
 	iomd_base =         IOMD_BASE;
-
-#if NVIDCVIDEO == 0
-	physcon_display_base(VMEM_VBASE);
-	vidcrender_reinit();
-#endif
 
 #ifdef VERBOSE_INIT_ARM
 	printf("running on the new L1 page table!\n");

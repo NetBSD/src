@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.12 2006/08/14 22:04:30 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,12 +45,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.11 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.12 2006/08/14 22:04:30 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 
-#include "vt.h"
 #include "com.h"
 
 /*
@@ -70,13 +69,6 @@ cons_decl(pc);
 struct consdev constab[] = {
 #if (NCOM > 0)
 	cons_init(com),
-#endif
-#if (NVT + NRPC > 0)
-	cons_init(rpcconsole),
-#elif (NPC > 0)
-	cons_init(pc),
-#elif (NOFCONS > 0)			/* XXX should work together */
-	cons_init(ofcons_),
 #endif
 	{ 0 },
 };
