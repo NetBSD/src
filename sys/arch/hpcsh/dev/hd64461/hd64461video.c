@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.35 2006/01/03 01:15:47 uwe Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.36 2006/08/14 02:34:04 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.35 2006/01/03 01:15:47 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.36 2006/08/14 02:34:04 uwe Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -1160,10 +1160,10 @@ hd64461video_power(void *ctx, int type, long id, void *msg)
 
 	switch ((int)msg) {
 	case PWR_RESUME:
-		if (!hvc->console)
-			break; /* serial console */
-		DPRINTF("%s: ON\n", sc->sc_dev.dv_xname);
-		hd64461video_on(hvc);
+		DPRINTF("%s: ON%s\n", sc->sc_dev.dv_xname,
+			sc->sc_vc->blanked ? " (blanked)" : "");
+		if (!sc->sc_vc->blanked)
+			hd64461video_on(hvc);
 		break;
 	case PWR_SUSPEND:
 		/* FALLTHROUGH */
