@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.124 2006/08/12 15:29:54 christos Exp $
+# $NetBSD: GENERIC,v 1.125 2006/08/14 06:22:34 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.124 $"
+#ident		"GENERIC-$Revision: 1.125 $"
 
 maxusers	32
 
@@ -422,7 +422,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #ukbd*	at uhidev? reportid ?
 #wskbd*	at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 #ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices

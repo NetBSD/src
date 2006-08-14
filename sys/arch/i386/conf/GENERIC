@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.774 2006/08/13 02:27:32 simonb Exp $
+# $NetBSD: GENERIC,v 1.775 2006/08/14 06:22:34 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.774 $"
+#ident 		"GENERIC-$Revision: 1.775 $"
 
 maxusers	32		# estimated number of users
 
@@ -1016,7 +1016,7 @@ wsmouse* at uep? mux 0
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices

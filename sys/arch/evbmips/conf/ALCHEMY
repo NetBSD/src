@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.12 2006/07/13 22:56:01 gdamore Exp $
+#	$NetBSD: ALCHEMY,v 1.13 2006/08/14 06:22:33 skrll Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.12 $"
+#ident 		"ALCHEMY-$Revision: 1.13 $"
 
 maxusers	32
 
@@ -181,7 +181,7 @@ wsmouse* at ums? mux 0
 ukbd*   at uhidev? reportid ? 
 wskbd*  at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
