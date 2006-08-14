@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.53 2006/06/29 14:00:55 liamjfoy Exp $
+# $NetBSD: GENERIC.in,v 1.53.2.1 2006/08/14 13:41:26 tron Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.53 $"
+#ident 		"GENERIC-$Revision: 1.53.2.1 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -228,9 +228,9 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 options 	KTRACE		# system call tracing support
-options 	SYSTRACE	# system call vetting via systrace(1)
 options 	LKM		# Loadable kernel modules
 ')m4_dnl
+#options 	SYSTRACE	# system call vetting via systrace(1)
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USERCONF	# userconf(4) support

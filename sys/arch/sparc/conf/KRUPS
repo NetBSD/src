@@ -1,4 +1,4 @@
-# $NetBSD: KRUPS,v 1.37 2006/04/19 10:31:45 drochner Exp $
+# $NetBSD: KRUPS,v 1.37.6.1 2006/08/14 13:41:25 tron Exp $
 # From: NetBSD: GENERIC,v 1.180 2005/09/10 19:20:50 jmmv Exp
 #
 # Krups (JavaStation-NC) machine description file
@@ -8,7 +8,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.37 $"
+#ident 		"KRUPS-$Revision: 1.37.6.1 $"
 
 maxusers	32
 
@@ -46,7 +46,7 @@ config		netbsd	root on ? type ?
 
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
-options 	SYSTRACE	# system call vetting via systrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
 
 ## Collect statistics on kernel malloc's and free's.  This does have a
 ## significant performance hit on slower machines, so it is intended for

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.123 2006/07/31 23:29:54 hubertf Exp $
+# $NetBSD: GENERIC,v 1.123.2.1 2006/08/14 13:41:28 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.123 $"
+#ident		"GENERIC-$Revision: 1.123.2.1 $"
 
 maxusers	32
 
@@ -38,7 +38,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
-options 	SYSTRACE	# system call vetting via systrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores

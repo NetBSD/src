@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.217 2006/07/26 07:00:23 cube Exp $
+# $NetBSD: ALPHA,v 1.217.2.1 2006/08/14 13:41:28 tron Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.217 $"
+ident		"ALPHA-$Revision: 1.217.2.1 $"
 
 maxusers 32
 
@@ -33,7 +33,7 @@ options 	API_UP1000	# EV6:		Alpha Processor, Inc. UP1000
 
 # Standard system options
 options 	KTRACE			# System call tracing support
-options 	SYSTRACE		# System call vetting via systrace(1)
+#options 	SYSTRACE		# System call vetting via systrace(1)
 options 	NTP			# kernel PLL for NTP
 
 # Enable experimental buffer queue strategy for better responsiveness under
