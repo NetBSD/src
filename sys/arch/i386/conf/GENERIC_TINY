@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.97 2006/04/19 10:31:44 drochner Exp $
+#	$NetBSD: GENERIC_TINY,v 1.98 2006/08/14 09:38:33 itohy Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -524,7 +524,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 # ISA Plug-and-Play audio devices
 #guspnp*	at isapnp?			# Gravis Ultra Sound PnP audio
 #sb*	at isapnp?			# SoundBlaster-compatible audio
-#ym*	at isapnp?			# Yamaha OPL3-SA3 audio
+#ym*	at isapnp?			# Yamaha OPL3-SA[23] audio
 
 # ISA audio devices
 #aria0	at isa? port 0x290 irq 10 		# Aria
