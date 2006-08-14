@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.664 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.665 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -10,3 +10,6 @@ containing just the word `help' to `majordomo@NetBSD.org'.]
 Changes from NetBSD 4.0 to NetBSD 5.0:
 	iwi(4): Use firmload(9) to load firmware images. You no longer need to
 		use iwictl(8) to load the firmware. [skrll 20060809]
+	acorn32: Remove the old, pre-wscons, console code.  Kernel
+		configurations using the old console (kbd, vt, and vidcconsole)
+		will need to be updated to use wscons. [bjh21 20060814]
