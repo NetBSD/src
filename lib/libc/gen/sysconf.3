@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysconf.3,v 1.31 2004/11/10 04:21:25 lukem Exp $
+.\"	$NetBSD: sysconf.3,v 1.32 2006/08/14 18:14:19 rpaulo Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysconf.3	8.3 (Berkeley) 4/19/94
 .\"
-.Dd November 10, 2004
+.Dd August 14, 2006
 .Dt SYSCONF 3
 .Os
 .Sh NAME
@@ -74,6 +74,12 @@ and its
 Barriers
 option to which the system attempts to conform,
 otherwise \-1.
+.It Li _SC_CLOCK_SELECTION
+Return the
+.Tn POSIX
+version the implementation of the Clock Selection Option
+on this system conforms to,
+or \-1 if unavailable.
 .It Li _SC_CHILD_MAX
 The maximum number of simultaneous processes per user id.
 .It Li _SC_CLK_TCK
