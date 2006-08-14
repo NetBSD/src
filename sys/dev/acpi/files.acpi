@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.39 2006/08/06 15:46:54 christos Exp $
+#	$NetBSD: files.acpi,v 1.40 2006/08/14 09:34:43 itohy Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -91,3 +91,7 @@ file	dev/acpi/pcppi_acpi.c		pcppi_acpi
 # AT Timer
 attach	attimer at acpinodebus with attimer_acpi
 file	dev/acpi/attimer_acpi.c		attimer_acpi
+
+# Yamaha OPL3-SAx
+attach	ym at acpinodebus with ym_acpi
+file	dev/acpi/ym_acpi.c		ym_acpi
