@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.34 2006/08/14 18:14:19 rpaulo Exp $	*/
+/*	$NetBSD: unistd.h,v 1.35 2006/08/14 18:17:48 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -64,7 +64,7 @@
 				/* chown requires appropriate privileges */
 #define	_POSIX_CHOWN_RESTRICTED	1
 				/* clock selection */
-#define _POSIX_CLOCK_SELECTION	200112L
+#define _POSIX_CLOCK_SELECTION	-1
 				/* too-long path components generate errors */
 #define	_POSIX_NO_TRUNC		1
 				/* may disable terminal special characters */
