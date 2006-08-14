@@ -1,5 +1,5 @@
 #
-# $NetBSD: FALCON,v 1.78 2006/03/28 22:03:47 pavel Exp $
+# $NetBSD: FALCON,v 1.78.6.1 2006/08/14 13:41:27 tron Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -88,7 +88,7 @@ options SYSVSEM # System V semaphores
 options P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 options KTRACE # Add kernel tracing system call
-options SYSTRACE # system call vetting via systrace(1)
+#options SYSTRACE # system call vetting via systrace(1)
 
 options USERCONF # userconf(4) support
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.71 2006/06/28 15:19:27 liamjfoy Exp $
+# $NetBSD: GENERIC,v 1.71.2.1 2006/08/14 13:41:28 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -32,7 +32,7 @@ options 	HZ=100		# clock interrupt generates every 1/HZ sec
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
-options 	SYSTRACE	# system call vetting via sistrace(1)
+#options 	SYSTRACE	# system call vetting via sistrace(1)
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
