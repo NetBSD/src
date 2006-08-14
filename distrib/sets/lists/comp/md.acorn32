@@ -1,4 +1,4 @@
-# $NetBSD: md.acorn32,v 1.19 2006/07/26 20:09:17 drochner Exp $
+# $NetBSD: md.acorn32,v 1.20 2006/08/14 22:07:11 bjh21 Exp $
 #./usr/include/acorn32/devmap.h		comp-c-include
 ./usr/include/acorn32				comp-c-include
 ./usr/include/acorn32/ansi.h			comp-c-include
@@ -28,7 +28,7 @@
 ./usr/include/acorn32/intr.h			comp-c-include
 ./usr/include/acorn32/ipkdb.h			comp-c-include
 ./usr/include/acorn32/joystick.h		comp-c-include
-./usr/include/acorn32/kbd.h			comp-c-include
+./usr/include/acorn32/kbd.h			comp-obsolete		obsolete
 ./usr/include/acorn32/limits.h			comp-c-include
 ./usr/include/acorn32/lock.h			comp-c-include
 ./usr/include/acorn32/math.h			comp-c-include
@@ -49,7 +49,7 @@
 ./usr/include/acorn32/trap.h			comp-c-include
 ./usr/include/acorn32/types.h			comp-c-include
 ./usr/include/acorn32/varargs.h			comp-c-include
-./usr/include/acorn32/vconsole.h		comp-c-include
+./usr/include/acorn32/vconsole.h		comp-obsolete		obsolete
 ./usr/include/acorn32/vmparam.h			comp-c-include
 ./usr/include/acorn32/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
