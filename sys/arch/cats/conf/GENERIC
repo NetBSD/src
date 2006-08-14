@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.107 2006/08/12 15:29:52 christos Exp $
+# $NetBSD: GENERIC,v 1.108 2006/08/14 06:22:33 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -382,7 +382,7 @@ wsmouse*	at ums?
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
 
-# USB serial adpater
+# USB serial adapter
 ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices

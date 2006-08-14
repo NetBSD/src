@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.76 2006/07/26 07:00:24 cube Exp $
+#	$NetBSD: TX3922,v 1.77 2006/08/14 06:22:33 skrll Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -194,7 +194,7 @@ wsmouse*	at ums? mux 0
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices

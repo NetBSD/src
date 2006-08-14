@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.39 2006/07/26 07:00:24 cube Exp $
+# $NetBSD: VR41XX,v 1.40 2006/08/14 06:22:33 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.39 $"
+#ident 		"GENERIC-$Revision: 1.40 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -431,7 +431,7 @@ wsmouse*	at ums? mux 0
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
