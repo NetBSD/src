@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.177 2006/07/24 21:48:13 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.177.2.1 2006/08/14 13:29:54 tron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd July 24, 2006
+.Dd August 10, 2006
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -960,26 +960,38 @@ Under each node there will be three variables, indicating the mount
 point, the file-system type, and the number of entries.
 .It Li VERIEXEC_STRICT
 Controls the strict level of Veriexec.
-The strict level defines how
-Veriexec will treat various situations.
+The strict level defines how Veriexec will treat various situations.
+.Pp
 In strict level 0, the system is in learning mode and will only warn about
-fingerprint mismatches, aswell as allow removal of fingerprinted files.
+fingerprint mismatches, as well as allow removal of fingerprinted files.
 It is the only level where fingerprints can be loaded.
+.Pp
 In strict level 1, the system is in IDS mode.
 It will deny access to files with mismatched fingerprints.
 Write access to monitored files will be permitted, but once modified, further
 access to them will be denied.
 Monitored files cannot be removed.
+If a disk will be opened for raw writing, Veriexec will invalidate all
+fingerprints on that disk, if it is monitored.
+.Pp
 In strict level 2, the system is in IPS mode.
 It has all effects of
 strict level 1, plus it will deny write access to monitored files and enforce
 access type (direct, indirect, file).
 Execution of non-monitored files is denied.
+Opening of raw disks for writing will be denied if the disk is monitored.
+Attempts to write to kernel memory, either via
+.Pa /dev/mem
+or
+.Pa /dev/kmem ,
+will be denied to protect Veriexec's internal data-structures.
+.Pp
 Strict level 3 operates as lockdown mode.
 It will have all effects of
 strict level 2, but it will also prevent access to non-monitored files.
 Furthermore, it will prevent addition of new files to the system, and
 allow writing only to files opened before the strict level was raised.
+All attempts to open a disk for raw writing will be denied.
 .It Li VERIEXEC_VERBOSE
 Controls the verbosity level of Veriexec.
 If 0, only the minimal
