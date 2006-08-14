@@ -1,4 +1,4 @@
-#	$NetBSD: files.iomd,v 1.16 2006/08/14 22:04:30 bjh21 Exp $
+#	$NetBSD: files.iomd,v 1.17 2006/08/14 22:33:37 bjh21 Exp $
 #
 # IOMD-specific configuration data
 #
@@ -41,8 +41,8 @@ file	arch/arm/iomd/iomdkbc.c			iomdkbc		needs-flag
 # parent to vidcvideo, vidcaudio
 device	vidc { }
 attach	vidc at mainbus
-file	arch/arm/iomd/vidc20.c			vidc		needs-count
-file	arch/arm/iomd/console/consinit.c	vidc		needs-count
+file	arch/arm/iomd/vidc20.c			vidc
+file	arch/arm/iomd/console/consinit.c	vidc
 
 # VIDC video wscons device
 device	vidcvideo: rasops4, rasops8, rasops16, rasops32, wsemuldisplaydev
@@ -53,4 +53,4 @@ file	arch/arm/iomd/vidcvideo.c		vidcvideo	needs-flag
 # Audio device
 device	vidcaudio: audiobus, auconv, mulaw, aurateconv, audiobell
 attach	vidcaudio at vidc
-file	arch/arm/iomd/vidcaudio.c		vidcaudio	needs-flag
+file	arch/arm/iomd/vidcaudio.c		vidcaudio
