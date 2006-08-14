@@ -1,4 +1,4 @@
-#	$NetBSD: files.iomd,v 1.15 2005/12/11 12:16:47 christos Exp $
+#	$NetBSD: files.iomd,v 1.16 2006/08/14 22:04:30 bjh21 Exp $
 #
 # IOMD-specific configuration data
 #
@@ -37,19 +37,12 @@ device	iomdkbc: pckbport
 attach	iomdkbc at iomd
 file	arch/arm/iomd/iomdkbc.c			iomdkbc		needs-flag
 
-# RPC wscons keyboard driver
-device	rpckbd : wskbddev
-file	arch/arm/iomd/rpckbd.c			rpckbd		needs-flag
-file	arch/acorn32/dev/wskbdmap_mfii_rpc.c	rpckbd
-
-attach rpckbd at iomd with rpckbd_iomd
-file	arch/arm/iomd/rpckbd_iomd.c		rpckbd_iomd
-
 # VIDC device
-# parent to vidcconsole, vidcaudio
+# parent to vidcvideo, vidcaudio
 device	vidc { }
 attach	vidc at mainbus
 file	arch/arm/iomd/vidc20.c			vidc		needs-count
+file	arch/arm/iomd/console/consinit.c	vidc		needs-count
 
 # VIDC video wscons device
 device	vidcvideo: rasops4, rasops8, rasops16, rasops32, wsemuldisplaydev
@@ -61,30 +54,3 @@ file	arch/arm/iomd/vidcvideo.c		vidcvideo	needs-flag
 device	vidcaudio: audiobus, auconv, mulaw, aurateconv, audiobell
 attach	vidcaudio at vidc
 file	arch/arm/iomd/vidcaudio.c		vidcaudio	needs-flag
-
-#
-# Old console devices.
-#
-
-# Standard keyboard driver (obsolete ... old vidc console)
-device	kbd
-file	arch/arm/iomd/kbd.c			kbd		needs-flag
-
-attach	kbd at iomd with kbd_iomd
-file	arch/arm/iomd/kbd_iomd.c		kbd_iomd
-
-device	vidcconsole
-attach	vidcconsole at vidc
-file	arch/arm/iomd/console/vidcconsole.c	vidcconsole	needs-count
-file	arch/arm/iomd/console/consinit.c	vidc		needs-count
-device	vt: tty
-attach	vt at vidc
-
-file	dev/cninit.c				vt
-file	arch/arm/iomd/console/console.c		vt		needs-count
-file	arch/arm/iomd/console/vidcrender.c	vt
-file	arch/arm/iomd/console/vidc_mc.S		vt
-file	arch/arm/iomd/console/vidc.c		vt
-file	arch/arm/iomd/console/vt220.c		vt
-file	arch/arm/iomd/console/debugconsole.c 	vt
-file	arch/arm/iomd/console/dumb.c 		vt
