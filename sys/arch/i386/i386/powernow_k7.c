@@ -1,9 +1,12 @@
-/*	$NetBSD: powernow_k7.c,v 1.13.2.1 2006/08/11 05:07:08 riz Exp $ */
+/*	$NetBSD: powernow_k7.c,v 1.13.2.2 2006/08/14 06:53:06 ghen Exp $ */
 /*	$OpenBSD: powernow-k7.c,v 1.24 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Martin Vegiard.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,35 +38,9 @@
  */
 
 /*-
- * Copyright (c) 2004 Martin Végiard.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*-
  * Copyright (c) 2004-2005 Bruno Ducrot
  * Copyright (c) 2004 FUKUDA Nobuhiko <nfukuda@spa.is.uec.ac.jp>
+ * Copyright (c) 2004 Martin Vegiard
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -89,7 +66,7 @@
 /* AMD POWERNOW K7 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.13.2.1 2006/08/11 05:07:08 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.13.2.2 2006/08/14 06:53:06 ghen Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -125,7 +102,7 @@ static int k7pnow_fid_to_mult[32] = {
 };
 
 static struct powernow_cpu_state *k7pnow_current_state;
-static unsigned int cur_freq;
+static unsigned int cur_freq, cpu_mhz;
 static int powernow_node_target, powernow_node_current;
 static char *freq_names;
 static size_t freq_names_len;
@@ -356,7 +333,8 @@ k7_powernow_init(void)
 	startvid = PN7_STA_SVID(status);
 	currentfid = PN7_STA_CFID(status);
 
-	cstate->fsb = cur_freq / (k7pnow_fid_to_mult[currentfid]/10);
+	cpu_mhz = ci->ci_tsc_freq / 1000000;
+	cstate->fsb = cpu_mhz / (k7pnow_fid_to_mult[currentfid]/10);
 	if (k7pnow_states(cstate, ci->ci_signature, maxfid, startvid)) {
 		freq_names_len = cstate->n_states * (sizeof("9999 ")-1) + 1;
 		freq_names = malloc(freq_names_len, M_SYSCTLDATA, M_WAITOK);
@@ -365,6 +343,11 @@ k7_powernow_init(void)
 
 		if (cstate->n_states) {
 			for (i = 0; i < cstate->n_states; i++) {
+				/* skip duplicated matches... */
+				if (cstate->state_table[i].freq ==
+				    cstate->state_table[i-1].freq)
+					continue;
+
 				DPRINTF(("%s: cstate->state_table.freq=%d\n",
 				    __func__, cstate->state_table[i].freq));
 				DPRINTF(("%s: fid=%d vid=%d\n", __func__,
