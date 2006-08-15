@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.148 2006/07/21 05:26:53 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.149 2006/08/15 07:09:12 kardel Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.148 2006/07/21 05:26:53 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.149 2006/08/15 07:09:12 kardel Exp $");
 #endif
 #endif /* not lint */
 
@@ -541,11 +541,16 @@ getuptime(void)
 {
 	static struct timeval boottime;
 	struct timeval now;
-	time_t uptime;
+	time_t uptime, nowsec;
 
 	if (boottime.tv_sec == 0)
 		kread(namelist, X_BOOTTIME, &boottime, sizeof(boottime));
-	if (kreadc(namelist, X_TIME_SECOND, &now.tv_sec, sizeof(now))) {
+	if (kreadc(namelist, X_TIME_SECOND, &nowsec, sizeof(nowsec))) {
+		/*
+		 * XXX this assignment dance can be removed once timeval tv_sec
+		 * is SUS mandated time_t
+		 */
+		now.tv_sec = nowsec;
 		now.tv_usec = 0;
 	} else {
 		kread(namelist, X_TIME, &now, sizeof(now));
