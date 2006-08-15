@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.137 2006/07/27 23:01:27 lukem Exp $
+# $NetBSD: mi,v 1.137.2.1 2006/08/15 09:36:37 ghen Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/american			misc-reference-share	share
@@ -222,6 +222,7 @@
 ./usr/share/doc/html/postfix/postconf.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postdrop.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postfix-logo.jpg	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/postfix-manuals.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postfix.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postkick.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postlock.1.html	misc-postfix-htmldoc	postfix,doc
