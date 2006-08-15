@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.31 2006/07/27 00:10:42 christos Exp $	*/
+/*	$NetBSD: vacation.c,v 1.32 2006/08/15 16:21:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.31 2006/07/27 00:10:42 christos Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.32 2006/08/15 16:21:59 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -627,6 +627,7 @@ sendmessage(const char *myname)
 		}
 	} 
 	(void)fprintf(sfp, "To: %s\n", from);
+	(void)fputs("Auto-Submitted: auto-replied\n", sfp);
 	while (fgets(buf, sizeof buf, mfp) != NULL) {
 		char *p;
 		if ((p = strstr(buf, "$SUBJECT")) != NULL) {
