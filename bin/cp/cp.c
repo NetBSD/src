@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.45 2006/08/15 13:06:02 tron Exp $ */
+/* $NetBSD: cp.c,v 1.46 2006/08/15 23:03:51 jschauma Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.45 2006/08/15 13:06:02 tron Exp $");
+__RCSID("$NetBSD: cp.c,v 1.46 2006/08/15 23:03:51 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -290,13 +290,13 @@ copy(char *argv[], enum op type, int fts_options)
 	size_t nlen;
 	char *p, *target_mid;
 
+	dne = 0;
 	base = 0;	/* XXX gcc -Wuninitialized (see comment below) */
 
 	if ((ftsp = fts_open(argv, fts_options, mastercmp)) == NULL)
 		err(EXIT_FAILURE, "%s", argv[0]);
 		/* NOTREACHED */
 	for (rval = 0; (curr = fts_read(ftsp)) != NULL;) {
-		dne = 0;
 		switch (curr->fts_info) {
 		case FTS_NS:
 		case FTS_DNR:
@@ -463,6 +463,13 @@ copy(char *argv[], enum op type, int fts_options)
 				else if (dne)
 					(void)chmod(to.p_path, 
 					    curr->fts_statp->st_mode);
+
+				/*
+				 * Since this is the second pass, we already
+				 * noted (and acted on) the existence of the
+				 * directory.
+				 */
+				dne = 0;
 			}
 			else
                         {
