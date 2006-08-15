@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.h,v 1.2 2002/03/23 21:27:41 reinoud Exp $ */
+/* $NetBSD: vidcvideo.h,v 1.3 2006/08/15 23:32:09 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,5 +44,5 @@
 
 
 /* Definitions for wscons attachment on the VIDC wscons driver */
-extern int    vidcvideo_cnattach  __P((vaddr_t));
+extern int    vidcvideo_cnattach(vaddr_t);
 
