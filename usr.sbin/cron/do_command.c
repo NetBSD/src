@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.22 2006/06/05 16:41:34 reed Exp $	*/
+/*	$NetBSD: do_command.c,v 1.23 2006/08/15 16:18:52 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 2.12 1994/01/15 20:43:43 vixie Exp ";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.22 2006/06/05 16:41:34 reed Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.23 2006/08/15 16:18:52 christos Exp $");
 #endif
 #endif
 
@@ -431,6 +431,7 @@ child_process(entry *e, user *u)
 				fprintf(mail, "Subject: Cron <%s@%s> %s\n",
 					usernm, first_word(hostname, "."),
 					e->cmd);
+				fprintf(mail, "Auto-Submitted: auto-generated\n");
 # if defined(MAIL_DATE)
 				fprintf(mail, "Date: %s\n",
 					arpadate(&TargetTime));
