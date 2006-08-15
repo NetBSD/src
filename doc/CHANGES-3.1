@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.139 2006/08/12 19:22:16 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.140 2006/08/15 11:00:07 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4333,3 +4333,8 @@ distrib/utils/sysinst/mbr.c			1.75
 	as a duplicate of 32636).
 	[dsl, ticket #1463]
 
+sys/dev/pci/pcidevs				1.798, 1.819
+sys/dev/pci/pdcsata.c				1.8, 1.10
+
+	Add support for the Promise PDC20771, PDC20775 and PDC40518.
+	[xtraeme, ticket #1466]
