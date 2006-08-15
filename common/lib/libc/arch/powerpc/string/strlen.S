@@ -1,4 +1,4 @@
-/*	$NetBSD: strlen.S,v 1.4 2006/07/07 07:31:03 ross Exp $ */
+/*	$NetBSD: strlen.S,v 1.5 2006/08/15 02:23:54 ross Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@NetBSD.org>
@@ -73,7 +73,11 @@ ENTRY(strlen)
 
 		/* Mask out leading bytes on non aligned strings */
 		rlwinm.	%r8, %r3, 3, 27, 28	/* leading bits to mask */
+#ifdef _LP64
+		clrrdi	%r5, %r3, 2		/*  clear low 2 addr bits */
+#else
 		clrrwi	%r5, %r3, 2		/*  clear low 2 addr bits */
+#endif
 		li	%r0, -1
 		beq+	3f			/* skip alignment if already */
 						/* aligned */
