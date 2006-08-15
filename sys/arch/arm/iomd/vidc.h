@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.h,v 1.9 2006/08/14 22:04:30 bjh21 Exp $	*/
+/*	$NetBSD: vidc.h,v 1.10 2006/08/15 22:44:19 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -184,12 +184,6 @@ struct vidc_state {
 extern int vidc_fref;		/* reference frequency of detected VIDC */
 
 #ifdef _KERNEL
-extern int  vidc_write		__P((u_int /*reg*/, int /*value*/));
-extern void vidc_setstate	__P((struct vidc_state * /*vidc*/));
-extern void vidc_getstate	__P((struct vidc_state * /*vidc*/));
-extern void vidc_setpalette	__P((struct vidc_state * /*vidc*/));
-extern void vidc_stdpalette	__P((void));
-extern int  vidc_col		__P((int /*red*/, int /*green*/, int /*blue*/));
 extern struct vidc_state vidc_current[];
 #endif	/* _KERNEL */
 
@@ -201,10 +195,6 @@ struct vidc_mode {
     int sync_pol;
     int frame_rate;
 };
-
-#define XRES mode.hder
-#define YRES mode.vder
-#define NUMCOLOURS (1 << mode.log2_bpp)
 
 #endif	/* !_LOCORE */
 
