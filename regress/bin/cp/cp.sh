@@ -1,10 +1,10 @@
 # /bin/sh
 #
-# $Id: cp.sh,v 1.1 2006/07/16 16:26:10 jschauma Exp $
+# $Id: cp.sh,v 1.2 2006/08/15 14:42:52 jschauma Exp $
 #
 # Test cp(1)
 
-FILES="file file2 file3 link dir dir2 dirlink"
+FILES="file file2 file3 link dir dir2 dirlink target"
 
 cleanup() {
         rm -fr ${FILES}
@@ -198,6 +198,17 @@ dir_to_dir_L() {
 		error dir_to_dir_L "-R -L copied a link as a link"
 }
 
+dir_to_dir_subdir_exists() {
+	# recursively copy a dir into another dir, with some subdirs already
+	# existing
+	cleanup
+
+	mkdir -p dir/1 dir/2 dir/3 target/2
+	echo "file" > dir/2/file
+	cp -R dir/* target || error dir_to_dir "in dir_to_dir_subdir_exists"
+	cp_compare dir_to_dir "dir/2/file" "target/2/file"
+}
+
 dir_to_dir() {
 	reset
 	umask 077
@@ -207,6 +218,7 @@ dir_to_dir() {
 	dir_to_dne
 	dir_to_dir_H
 	dir_to_dir_L
+	dir_to_dir_subdir_exists
 }
 
 
