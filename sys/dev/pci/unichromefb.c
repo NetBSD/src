@@ -1,4 +1,4 @@
-/* $NetBSD: unichromefb.c,v 1.1 2006/08/02 01:44:09 jmcneill Exp $ */
+/* $NetBSD: unichromefb.c,v 1.1.2.1 2006/08/15 09:03:03 ghen Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.1 2006/08/02 01:44:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.1.2.1 2006/08/15 09:03:03 ghen Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,9 +80,13 @@ __KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.1 2006/08/02 01:44:09 jmcneill Exp
 #include <dev/pci/unichromemode.h>
 #include <dev/pci/unichromehw.h>
 #include <dev/pci/unichromeconfig.h>
+#include <dev/pci/unichromeaccel.h>
 
 /* XXX */
-#define UNICHROMEFB_DEPTH	32
+#define UNICHROMEFB_DEPTH	16
+#define UNICHROMEFB_MODE	VIA_RES_1280X1024
+#define UNICHROMEFB_WIDTH	1280
+#define UNICHROMEFB_HEIGHT	1024
 
 struct unichromefb_softc {
 	struct device		sc_dev;
@@ -103,6 +107,8 @@ struct unichromefb_softc {
 	int			sc_stride;
 
 	int			sc_wsmode;
+
+	int			sc_accel;
 };
 
 static int unichromefb_match(struct device *, struct cfdata *, void *);
@@ -131,10 +137,8 @@ static void	uni_wr(struct unichromefb_softc *, int, uint8_t, uint8_t);
 static void	uni_wr_mask(struct unichromefb_softc *, int, uint8_t,
 			    uint8_t, uint8_t);
 static void	uni_wr_x(struct unichromefb_softc *, struct io_reg *, int);
-#if notyet
 static void	uni_wr_dac(struct unichromefb_softc *, uint8_t, uint8_t,
 			   uint8_t, uint8_t);
-#endif
 
 /* helpers */
 static struct VideoModeTable *	uni_getmode(int);
@@ -142,7 +146,9 @@ static void	uni_setmode(struct unichromefb_softc *, int, int);
 static void	uni_crt_lock(struct unichromefb_softc *);
 static void	uni_crt_unlock(struct unichromefb_softc *);
 static void	uni_crt_enable(struct unichromefb_softc *);
+static void	uni_crt_disable(struct unichromefb_softc *);
 static void	uni_screen_enable(struct unichromefb_softc *);
+static void	uni_screen_disable(struct unichromefb_softc *);
 static void	uni_set_start(struct unichromefb_softc *);
 static void	uni_set_crtc(struct unichromefb_softc *,
 			     struct crt_mode_table *, int, int, int);
@@ -157,6 +163,25 @@ static void	uni_load_fifo(struct unichromefb_softc *, int, int, int);
 static void	uni_set_depth(struct unichromefb_softc *, int, int);
 static uint32_t	uni_get_clkval(struct unichromefb_softc *, int);
 static void	uni_set_vclk(struct unichromefb_softc *, uint32_t, int);
+static void	uni_init_dac(struct unichromefb_softc *, int);
+static void	uni_init_accel(struct unichromefb_softc *);
+static void	uni_set_accel_depth(struct unichromefb_softc *);
+
+/* graphics ops */
+static void	uni_wait_idle(struct unichromefb_softc *);
+static void	uni_fillrect(struct unichromefb_softc *,
+			     int, int, int, int, int);
+static void	uni_bitblit(struct unichromefb_softc *, int, int, int, int, int, int);
+
+/* rasops glue */
+static void	uni_copycols(void *, int, int, int, int);
+static void	uni_copyrows(void *, int, int, int);
+static void	uni_erasecols(void *, int, int, int, long);
+static void	uni_eraserows(void *, int, int, long);
+#if notyet
+static void	uni_cursor(void *, int, int, int);
+static void	uni_putchar(void *, int, int, u_int, long);
+#endif
 
 struct wsdisplay_accessops unichromefb_accessops = {
 	unichromefb_ioctl,
@@ -210,15 +235,17 @@ unichromefb_attach(struct device *parent, struct device *self, void *opaque)
 	struct pci_attach_args *pa;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args aa;
+	bus_space_handle_t ap_memh;
 	uint8_t val;
+	bus_addr_t mmiobase;
+	bus_size_t mmiosize;
 	long defattr;
 
 	sc = (struct unichromefb_softc *)self;
 	pa = (struct pci_attach_args *)opaque;
 
-	/* XXX */
-	sc->sc_width = 640;
-	sc->sc_height = 480;
+	sc->sc_width = UNICHROMEFB_WIDTH;
+	sc->sc_height = UNICHROMEFB_HEIGHT;
 	sc->sc_depth = UNICHROMEFB_DEPTH;
 	sc->sc_stride = sc->sc_width * (sc->sc_depth / 8);
 
@@ -232,19 +259,33 @@ unichromefb_attach(struct device *parent, struct device *self, void *opaque)
 
 	val = uni_rd(sc, VIASR, SR30);
 	sc->sc_fbaddr = val << 24;
-	sc->sc_fbsize = sc->sc_width * sc->sc_height * (sc->sc_depth / 8);
+	val = uni_rd(sc, VIASR, SR39);
+	sc->sc_fbsize = val * (4*1024*1024);
+	if (sc->sc_fbsize < 16*1024*1024 || sc->sc_fbsize > 64*1024*1024)
+		sc->sc_fbsize = 16*1024*1024;
 	sc->sc_memt = pa->pa_memt;
 	if (bus_space_map(sc->sc_memt, sc->sc_fbaddr, sc->sc_fbsize,
-	    BUS_SPACE_MAP_LINEAR, &sc->sc_memh)) {
+	    BUS_SPACE_MAP_LINEAR, &ap_memh)) {
 		aprint_error(": failed to map aperture at 0x%08x/0x%x\n",
 		    sc->sc_fbaddr, sc->sc_fbsize);
 		return;
 	}
-	sc->sc_fbbase = (caddr_t)bus_space_vaddr(sc->sc_memt, sc->sc_memh);
-	/*memset(sc->sc_fbbase, 0, sc->sc_fbsize);*/
+	sc->sc_fbbase = (caddr_t)bus_space_vaddr(sc->sc_memt, ap_memh);
+
+	if (pci_mapreg_map(pa, 0x14, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->sc_memt, &sc->sc_memh, &mmiobase, &mmiosize)) {
+		sc->sc_accel = 0;
+		aprint_error(": failed to map MMIO registers\n");
+	} else {
+		sc->sc_accel = 1;
+	}
 
 	aprint_naive("\n");
 	aprint_normal(": VIA UniChrome frame buffer\n");
+
+	if (sc->sc_accel)
+		aprint_normal("%s: MMIO @0x%08x/0x%x\n",
+		    sc->sc_dev.dv_xname, (uint32_t)mmiobase, (uint32_t)mmiosize);
 
 	ri = &unichromefb_console_screen.scr_ri;
 	memset(ri, 0, sizeof(struct rasops_info));
@@ -253,11 +294,16 @@ unichromefb_attach(struct device *parent, struct device *self, void *opaque)
 	    &unichromefb_accessops);
 	sc->sc_vd.init_screen = unichromefb_init_screen;
 
-	uni_setmode(sc, VIA_RES_640X480, sc->sc_depth);
+	uni_setmode(sc, UNICHROMEFB_MODE, sc->sc_depth);
 
-	aprint_normal("%s: fb %dx%dx%d @%p\n", sc->sc_dev.dv_xname,
-	       sc->sc_width, sc->sc_height, sc->sc_depth, sc->sc_fbbase);
-	delay(5*1000*1000);
+	uni_init_dac(sc, IGA1);
+	if (sc->sc_accel) {
+		uni_init_accel(sc);
+		uni_fillrect(sc, 0, 0, sc->sc_width, sc->sc_height, 0);
+	}
+
+	aprint_normal("%s: FB @0x%08x (%dx%dx%d)\n", sc->sc_dev.dv_xname,
+	       sc->sc_fbaddr, sc->sc_width, sc->sc_height, sc->sc_depth);
 
 	unichromefb_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 	vcons_init_screen(&sc->sc_vd, &unichromefb_console_screen, 1, &defattr);
@@ -356,16 +402,42 @@ unichromefb_init_screen(void *c, struct vcons_screen *scr, int existing,
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
 	ri->ri_bits = sc->sc_fbbase;
+	if (existing)
+		ri->ri_flg |= RI_CLEAR;
 
-	ri->ri_rnum = ri->ri_gnum = ri->ri_bnum = 8;
-	ri->ri_rpos = 16;
-	ri->ri_gpos = 8;
-	ri->ri_bpos = 0;
+	switch (ri->ri_depth) {
+	case 32:
+		ri->ri_rnum = ri->ri_gnum = ri->ri_bnum = 8;
+		ri->ri_rpos = 16;
+		ri->ri_gpos = 8;
+		ri->ri_bpos = 0;
+		break;
+	case 16:
+		ri->ri_rnum = 5;
+		ri->ri_gnum = 6;
+		ri->ri_bnum = 5;
+		ri->ri_rpos = 11;
+		ri->ri_gpos = 5;
+		ri->ri_bpos = 0;
+		break;
+	}
 
 	rasops_init(ri, sc->sc_height / 16, sc->sc_width / 8);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 	    sc->sc_width / ri->ri_font->fontwidth);
+
+	ri->ri_hw = scr;
+	if (sc->sc_accel) {
+		ri->ri_ops.copyrows = uni_copyrows;
+		ri->ri_ops.copycols = uni_copycols;
+		ri->ri_ops.eraserows = uni_eraserows;
+		ri->ri_ops.erasecols = uni_erasecols;
+#if notyet
+		ri->ri_ops.cursor = uni_cursor;
+		ri->ri_ops.putchar = uni_putchar;
+#endif
+	}
 
 	return;
 }
@@ -399,7 +471,6 @@ uni_wr_mask(struct unichromefb_softc *sc, int off, uint8_t idx,
 	    ((val & mask) | (tmp & ~mask)));
 }
 
-#if notyet
 static void
 uni_wr_dac(struct unichromefb_softc *sc, uint8_t idx,
     uint8_t r, uint8_t g, uint8_t b)
@@ -409,7 +480,6 @@ uni_wr_dac(struct unichromefb_softc *sc, uint8_t idx,
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LUT_DATA, g);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LUT_DATA, b);
 }
-#endif
 
 static void
 uni_wr_x(struct unichromefb_softc *sc, struct io_reg *tbl, int num)
@@ -457,11 +527,15 @@ uni_setmode(struct unichromefb_softc *sc, int idx, int bpp)
 
 	crt = vtbl->crtc;
 
+	uni_screen_disable(sc);
+
 	(void)bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAStatus);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, VIAAR, 0);
 
 	/* XXX assume CN900 for now */
 	uni_wr_x(sc, CN900_ModeXregs, NUM_TOTAL_CN900_ModeXregs);
+
+	uni_crt_disable(sc);
 
 	/* Fill VPIT params */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, VIAWMisc, VPIT.Misc);
@@ -486,7 +560,7 @@ uni_setmode(struct unichromefb_softc *sc, int idx, int bpp)
 	for (i = 0; i < StdAR; i++) {
 		(void)bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAStatus);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, VIAAR, i);
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, VIAAR + 1,
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, VIAAR,
 		    VPIT.AR[i]);
 	}
 
@@ -523,9 +597,21 @@ uni_crt_enable(struct unichromefb_softc *sc)
 }
 
 static void
+uni_crt_disable(struct unichromefb_softc *sc)
+{
+	uni_wr_mask(sc, VIACR, CR36, BIT5+BIT4, BIT5+BIT4);
+}
+
+static void
 uni_screen_enable(struct unichromefb_softc *sc)
 {
 	uni_wr_mask(sc, VIASR, SR01, 0, BIT5);
+}
+
+static void
+uni_screen_disable(struct unichromefb_softc *sc)
+{
+	uni_wr_mask(sc, VIASR, SR01, 0x20, BIT5);
 }
 
 static void
@@ -702,6 +788,10 @@ uni_load_crtc(struct unichromefb_softc *sc,
 				    device_timing.ver_sync_end);
 				regnum = iga1_crtc_reg.ver_sync_end.reg_num;
 				reg = iga1_crtc_reg.ver_sync_end.reg;
+				break;
+			default:
+				printf("%s: unknown index %d while setting up CRTC\n",
+				    sc->sc_dev.dv_xname, i);
 				break;
 			}
 			break;
@@ -956,7 +1046,328 @@ uni_set_vclk(struct unichromefb_softc *sc, uint32_t clk, int iga)
 	return;
 }
 
-/* XXX */
+static void
+uni_init_dac(struct unichromefb_softc *sc, int iga)
+{
+	int i;
+
+	/* XXX only IGA1 for now */
+	uni_wr_mask(sc, VIASR, SR1A, 0x00, BIT0);
+	uni_wr_mask(sc, VIASR, SR18, 0x00, BIT7+BIT6);
+	for (i = 0; i < 256; i++)
+		uni_wr_dac(sc, i,
+		    palLUT_table[i].red, palLUT_table[i].green, palLUT_table[i].blue);
+
+	uni_wr_mask(sc, VIASR, SR18, 0xc0, BIT7+BIT6);
+
+	return;
+}
+
+static void
+uni_init_accel(struct unichromefb_softc *sc)
+{
+
+	/* init 2D engine regs to reset 2D engine */
+	MMIO_OUT32(VIA_REG_GEMODE, 0);
+	MMIO_OUT32(VIA_REG_SRCPOS, 0);
+	MMIO_OUT32(VIA_REG_DSTPOS, 0);
+	MMIO_OUT32(VIA_REG_DIMENSION, 0);
+	MMIO_OUT32(VIA_REG_PATADDR, 0);
+	MMIO_OUT32(VIA_REG_FGCOLOR, 0);
+	MMIO_OUT32(VIA_REG_BGCOLOR, 0);
+	MMIO_OUT32(VIA_REG_CLIPTL, 0);
+	MMIO_OUT32(VIA_REG_CLIPBR, 0);
+	MMIO_OUT32(VIA_REG_OFFSET, 0);
+	MMIO_OUT32(VIA_REG_KEYCONTROL, 0);
+	MMIO_OUT32(VIA_REG_SRCBASE, 0);
+	MMIO_OUT32(VIA_REG_DSTBASE, 0);
+	MMIO_OUT32(VIA_REG_PITCH, 0);
+	MMIO_OUT32(VIA_REG_MONOPAT1, 0);
+
+	/* init AGP and VQ registers */
+	MMIO_OUT32(VIA_REG_TRANSET, 0x00100000);
+	MMIO_OUT32(VIA_REG_TRANSPACE, 0x00000000);
+	MMIO_OUT32(VIA_REG_TRANSPACE, 0x00333004);
+	MMIO_OUT32(VIA_REG_TRANSPACE, 0x60000000);
+	MMIO_OUT32(VIA_REG_TRANSPACE, 0x61000000);
+	MMIO_OUT32(VIA_REG_TRANSPACE, 0x62000000);
+	MMIO_OUT32(VIA_REG_TRANSPACE, 0x63000000);
+	MMIO_OUT32(VIA_REG_TRANSPACE, 0x64000000);
+	MMIO_OUT32(VIA_REG_TRANSPACE, 0x7d000000);
+
+	MMIO_OUT32(VIA_REG_TRANSET, 0xfe020000);
+	MMIO_OUT32(VIA_REG_TRANSPACE, 0x00000000);
+
+	/* disable VQ */
+	MMIO_OUT32(VIA_REG_TRANSET, 0x00fe0000);
+	MMIO_OUT32(VIA_REG_TRANSPACE, 0x00000004);
+	MMIO_OUT32(VIA_REG_TRANSPACE, 0x40008c0f);
+	MMIO_OUT32(VIA_REG_TRANSPACE, 0x44000000);
+	MMIO_OUT32(VIA_REG_TRANSPACE, 0x45080c04);
+	MMIO_OUT32(VIA_REG_TRANSPACE, 0x46800408);
+
+	uni_set_accel_depth(sc);
+
+	MMIO_OUT32(VIA_REG_SRCBASE, 0);
+	MMIO_OUT32(VIA_REG_DSTBASE, 0);
+
+	MMIO_OUT32(VIA_REG_PITCH, VIA_PITCH_ENABLE |
+	    (((sc->sc_width * sc->sc_depth >> 3) >> 3) |
+	    (((sc->sc_width * sc->sc_depth >> 3) >> 3) << 16)));
+
+	return;
+}
+
+static void
+uni_set_accel_depth(struct unichromefb_softc *sc)
+{
+	uint32_t gemode;
+
+	gemode = MMIO_IN32(0x04) & 0xfffffcff;
+
+	switch (sc->sc_depth) {
+	case 32:
+		gemode |= VIA_GEM_32bpp;
+		break;
+	case 16:
+		gemode |= VIA_GEM_16bpp;
+		break;
+	default:
+		gemode |= VIA_GEM_8bpp;
+		break;
+	}
+
+	/* set colour depth and pitch */
+	MMIO_OUT32(VIA_REG_GEMODE, gemode);
+
+	return;
+}
+
+static void
+uni_wait_idle(struct unichromefb_softc *sc)
+{
+	int loop = 0;
+
+	while (!(MMIO_IN32(VIA_REG_STATUS) & VIA_VR_QUEUE_BUSY) &&
+	    (loop++ < MAXLOOP))
+		;
+
+	while ((MMIO_IN32(VIA_REG_STATUS) &
+	    (VIA_CMD_RGTR_BUSY | VIA_2D_ENG_BUSY | VIA_3D_ENG_BUSY)) &&
+	    (loop++ < MAXLOOP))
+		;
+
+	if (loop >= MAXLOOP)
+		aprint_error("%s: engine stall\n", sc->sc_dev.dv_xname);
+
+	return;
+}
+
+static void
+uni_fillrect(struct unichromefb_softc *sc, int x, int y, int width,
+    int height, int colour)
+{
+
+	MMIO_OUT32(VIA_REG_SRCPOS, 0);
+	MMIO_OUT32(VIA_REG_SRCBASE, 0);
+	MMIO_OUT32(VIA_REG_DSTBASE, 0);
+	MMIO_OUT32(VIA_REG_PITCH, VIA_PITCH_ENABLE |
+	    (((sc->sc_width * sc->sc_depth >> 3) >> 3) |
+	    (((sc->sc_width * sc->sc_depth >> 3) >> 3) << 16)));
+	MMIO_OUT32(VIA_REG_DSTPOS, ((y << 16) | x));
+	MMIO_OUT32(VIA_REG_DIMENSION,
+	    (((height - 1) << 16) | (width - 1)));
+	MMIO_OUT32(VIA_REG_FGCOLOR, colour);
+	MMIO_OUT32(VIA_REG_GECMD, (0x01 | 0x2000 | 0xf0 << 24));
+
+	/* XXX */
+	uni_wait_idle(sc);
+
+	return;
+}
+
+static void
+uni_bitblit(struct unichromefb_softc *sc, int xs, int ys, int xd, int yd, int width, int height)
+{
+	uint32_t dir;
+
+	dir = 0;
+
+	if (ys < yd) {
+		yd += height - 1;
+		ys += height - 1;
+		dir |= 0x8000;
+	}
+
+	if (xs < xd) {
+		xd += width - 1;
+		xs += width - 1;
+		dir |= 0x4000;
+	}
+
+	MMIO_OUT32(VIA_REG_SRCBASE, 0);
+	MMIO_OUT32(VIA_REG_DSTBASE, 0);
+	MMIO_OUT32(VIA_REG_PITCH, VIA_PITCH_ENABLE |
+	    (((sc->sc_width * sc->sc_depth >> 3) >> 3) |
+	    (((sc->sc_width * sc->sc_depth >> 3) >> 3) << 16)));
+	MMIO_OUT32(VIA_REG_SRCPOS, ys << 16 | xs);
+	MMIO_OUT32(VIA_REG_DSTPOS, yd << 16 | xd);
+	MMIO_OUT32(VIA_REG_DIMENSION, ((height - 1) << 16) | (width - 1));
+	MMIO_OUT32(VIA_REG_GECMD, (0x01 | dir | (0xcc << 24)));
+
+	/* XXX */
+	uni_wait_idle(sc);
+
+	return;
+}
+
+/*
+ * rasops glue
+ */
+static void
+uni_copycols(void *opaque, int row, int srccol, int dstcol, int ncols)
+{
+	struct rasops_info *ri;
+	struct vcons_screen *scr;
+	struct unichromefb_softc *sc;
+	int xs, xd, y, width, height;
+
+	ri = (struct rasops_info *)opaque;
+	scr = (struct vcons_screen *)ri->ri_hw;
+	sc = (struct unichromefb_softc *)scr->scr_cookie;
+
+	if (sc->sc_wsmode == WSDISPLAYIO_MODE_EMUL) {
+		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
+		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_font->fontwidth * ncols;
+		height = ri->ri_font->fontheight;
+		uni_bitblit(sc, xs, y, xd, y, width, height);
+	}
+
+	return;
+}
+
+static void
+uni_copyrows(void *opaque, int srcrow, int dstrow, int nrows)
+{
+	struct rasops_info *ri;
+	struct vcons_screen *scr;
+	struct unichromefb_softc *sc;
+	int x, ys, yd, width, height;
+
+	ri = (struct rasops_info *)opaque;
+	scr = (struct vcons_screen *)ri->ri_hw;
+	sc = (struct unichromefb_softc *)scr->scr_cookie;
+
+	if (sc->sc_wsmode == WSDISPLAYIO_MODE_EMUL) {
+		x = ri->ri_xorigin;
+		ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
+		yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
+		width = ri->ri_emuwidth;
+		height = ri->ri_font->fontheight * nrows;
+		uni_bitblit(sc, x, ys, x, yd, width, height);
+	}
+
+	return;
+}
+
+static void
+uni_erasecols(void *opaque, int row, int startcol, int ncols, long fillattr)
+{
+	struct rasops_info *ri;
+	struct vcons_screen *scr;
+	struct unichromefb_softc *sc;
+	int x, y, width, height, fg, bg, ul;
+
+	ri = (struct rasops_info *)opaque;
+	scr = (struct vcons_screen *)ri->ri_hw;
+	sc = (struct unichromefb_softc *)scr->scr_cookie;
+
+	if (sc->sc_wsmode == WSDISPLAYIO_MODE_EMUL) {
+		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_font->fontwidth * ncols;
+		height = ri->ri_font->fontheight;
+		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
+		uni_fillrect(sc, x, y, width, height, ri->ri_devcmap[bg]);
+	}
+
+	return;
+}
+
+static void
+uni_eraserows(void *opaque, int row, int nrows, long fillattr)
+{
+	struct rasops_info *ri;
+	struct vcons_screen *scr;
+	struct unichromefb_softc *sc;
+	int x, y, width, height, fg, bg, ul;
+
+	ri = (struct rasops_info *)opaque;
+	scr = (struct vcons_screen *)ri->ri_hw;
+	sc = (struct unichromefb_softc *)scr->scr_cookie;
+
+	if (sc->sc_wsmode == WSDISPLAYIO_MODE_EMUL) {
+		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
+		if ((row == 0) && (nrows == ri->ri_rows)) {
+			/* clear the whole screen */
+			uni_fillrect(sc, 0, 0, ri->ri_width,
+			    ri->ri_height, ri->ri_devcmap[bg]);
+		} else {
+			x = ri->ri_xorigin;
+			y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+			width = ri->ri_emuwidth;
+			height = ri->ri_font->fontheight * nrows;
+			uni_fillrect(sc, x, y, width, height,
+			    ri->ri_devcmap[bg]);
+		}
+	}
+
+	return;
+}
+
+#if notyet
+static void
+uni_cursor(void *opaque, int on, int row, int col)
+{
+	struct rasops_info *ri;
+	struct vcons_screen *scr;
+	struct unichromefb_softc *sc;
+
+	ri = (struct rasops_info *)opaque;
+	scr = (struct vcons_screen *)ri->ri_hw;
+	sc = (struct unichromefb_softc *)scr->scr_cookie;
+
+	uni_wait_idle(sc);
+
+	if (sc->sc_cursor)
+		sc->sc_cursor(opaque, on, row, col);
+
+	return;
+}
+
+static void
+uni_putchar(void *opaque, int row, int col, u_int c, long fillattr)
+{
+	struct rasops_info *ri;
+	struct vcons_screen *scr;
+	struct unichromefb_softc *sc;
+
+	ri = (struct rasops_info *)opaque;
+	scr = (struct vcons_screen *)ri->ri_hw;
+	sc = (struct unichromefb_softc *)scr->scr_cookie;
+
+	uni_wait_idle(sc);
+
+	if (sc->sc_putchar)
+		sc->sc_putchar(opaque, row, col, c, fillattr);
+
+	return;
+}
+#endif
+
+/* XXX TODO */
 int
 unichromefb_cnattach(void)
 {
