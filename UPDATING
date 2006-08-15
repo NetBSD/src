@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.149 2006/07/04 00:40:43 christos Exp $
+$NetBSD: UPDATING,v 1.150 2006/08/15 20:48:01 bjh21 Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20060814:
+	The vt, vidcconsole, kbd, and rpckbd drivers on acorn32 have been
+	withdrawn.  Use vidcvideo and pckbd instead.  See the GENERIC
+	kernel configuration for an example.  X servers from the last
+	few years should cope.
 
 20060703:
 	MPACPI is no more. We always configure PCI interrupts using ACPI
