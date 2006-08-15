@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.36 2006/08/05 21:26:48 sanjayl Exp $	*/
+/*	$NetBSD: zs.c,v 1.37 2006/08/15 01:53:26 macallan Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.36 2006/08/05 21:26:48 sanjayl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.37 2006/08/15 01:53:26 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -218,7 +218,6 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 	u_int regs[6];
 
 	zsc_attached = 1;
-	zs_conschannel = 0;
 
 	chip = 0;
 	ca->ca_reg[0] += ca->ca_baseaddr;
@@ -1084,7 +1083,7 @@ zscninit(struct consdev *cp)
 	if (OF_getprop(escc_ch, "name", name, sizeof(name)) == -1)
 		return;
 
-	zs_conschannel = (strcmp(name, "ch-b") == 0) ? 0 : 1;
+	zs_conschannel = strcmp(name, "ch-b") == 0;
 
 	if (OF_getprop(escc_ch, "reg", reg, sizeof(reg)) < 4)
 		return;
