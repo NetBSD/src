@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.21 2006/08/05 18:22:57 bjh21 Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.22 2006/08/15 23:02:47 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.21 2006/08/05 18:22:57 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.22 2006/08/15 23:02:47 bjh21 Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -124,7 +124,6 @@ struct vidc_state vidc_current[1];
 static int cold_init = 0;		/* flags initialisation */
 extern videomemory_t videomemory;
 
-static struct vidc_mode  vidc_initialmode;
 static struct vidc_mode *vidc_currentmode;
 
 unsigned int dispstart;
@@ -304,11 +303,6 @@ vidcvideo_coldinit(void)
 	vidcvideo_write(VIDC_CP1, 0x0);
 	vidcvideo_write(VIDC_CP2, 0x0);
 	vidcvideo_write(VIDC_CP3, 0x0);
-
-	/* Try to determine the current mode */
-	vidc_initialmode.hder     = bootconfig.width+1;
-	vidc_initialmode.vder     = bootconfig.height+1;
-	vidc_initialmode.log2_bpp = bootconfig.log2_bpp;
 
 	dispbase = vmem_base = dispstart = videomemory.vidm_vbase;
 	phys_base = videomemory.vidm_pbase;
