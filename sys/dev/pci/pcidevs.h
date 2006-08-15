@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.815.2.1 2006/08/11 05:03:42 riz Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.815.2.2 2006/08/15 09:58:55 ghen Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.815.2.1 2006/08/11 05:03:12 riz Exp
  */
 
 /*
@@ -2788,6 +2788,7 @@
 #define	PCI_PRODUCT_PROMISE_PDC20571	0x3571		/* PDC20571 SATA/150 IDE controller */
 #define	PCI_PRODUCT_PROMISE_PDC20575	0x3d75		/* PDC20575 SATA/150 IDE controller */
 #define	PCI_PRODUCT_PROMISE_PDC20579	0x3574		/* PDC20579 SATA/150 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20771	0x3570		/* PDC20771 SATA/300 IDE controller */
 
 /* QLogic products */
 #define	PCI_PRODUCT_QLOGIC_ISP1020	0x1020		/* ISP1020 */
