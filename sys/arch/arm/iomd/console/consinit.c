@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.6 2006/08/14 22:04:30 bjh21 Exp $ */
+/*	$NetBSD: consinit.c,v 1.7 2006/08/16 07:59:44 he Exp $ */
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.6 2006/08/14 22:04:30 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.7 2006/08/16 07:59:44 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.6 2006/08/14 22:04:30 bjh21 Exp $");
 #include <arm/iomd/vidc.h>
 #include <arm/iomd/iomdreg.h>
 #include <arm/iomd/iomdvar.h>
-#include <arm/iomd/rpckbdvar.h>
 #include <arm/iomd/iomdkbcvar.h>
 #include <arm/iomd/vidcvideo.h>
 
