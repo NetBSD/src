@@ -1,4 +1,4 @@
-/*	$NetBSD: com_cpcbus.c,v 1.6.16.3 2006/06/17 03:39:12 gdamore Exp $	*/
+/*	$NetBSD: com_cpcbus.c,v 1.6.16.4 2006/08/16 18:07:11 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cpcbus.c,v 1.6.16.3 2006/06/17 03:39:12 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cpcbus.c,v 1.6.16.4 2006/08/16 18:07:11 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -80,14 +80,12 @@ com_cpc_attach(struct device *parent, struct device *self, void *aux)
 	int irq = caa->cpca_irq;
 	bus_space_handle_t ioh;
 
-	sc->sc_com.sc_iobase = iobase;
-
 	if (!com_is_console(caa->cpca_tag, iobase, &ioh) &&
 	    bus_space_map(caa->cpca_tag, iobase, COM_NPORTS, 0, &ioh)) {
 		printf("%s: can't map i/o space\n", self->dv_xname);
 		return;
 	}
-	COM_INIT_REGS(sc->sc_regs, caa->cpca_tag, ioh, iobase);
+	COM_INIT_REGS(sc->sc_com.sc_regs, caa->cpca_tag, ioh, iobase);
 
 	sc->sc_com.sc_frequency = CPC_COM_SPEED(caa->cpca_freq);
 
