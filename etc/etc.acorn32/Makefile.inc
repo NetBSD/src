@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.10 2003/08/02 18:02:36 bjh21 Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2006/08/16 19:33:52 he Exp $
 #
 #	etc.acorn32/Makefile.inc -- acorn32-specific etc Makefile targets
 #
 
-KERNEL_SETS=		GENERIC NC NC_WSCONS RPC_WSCONS
+KERNEL_SETS=		GENERIC NC
 
 BUILD_KERNELS=		INSTALL
 
