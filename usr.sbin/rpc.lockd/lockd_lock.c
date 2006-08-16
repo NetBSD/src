@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.24.2.1 2006/08/16 12:17:24 tron Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.24.2.2 2006/08/16 12:17:54 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -77,7 +77,7 @@ fhconv(nfs_fhandle_t *fh, const netobj *rfh)
 	sz = rfh->n_len;
 	if (sz > FHANDLE_SIZE_MAX) {
 		syslog(LOG_DEBUG,
-		    "received fhandle size %d, max supported size %zd",
+		    "received fhandle size %zd, max supported size %d",
 		    sz, FHANDLE_SIZE_MAX);
 		errno = EINVAL;
 		return -1;
