@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.76 2006/08/16 18:17:23 plunky Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.77 2006/08/16 18:31:54 plunky Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.76 2006/08/16 18:17:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.77 2006/08/16 18:31:54 plunky Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -149,7 +149,7 @@ soisdisconnected(struct socket *so)
  * connection is possible (subject to space constraints, etc.)
  * then we allocate a new structure, propoerly linked into the
  * data structure of the original socket, and return this.
- * Connstatus may be 0, or SO_ISCONFIRMING, or SO_ISCONNECTED.
+ * Connstatus may be 0, SS_ISCONFIRMING, or SS_ISCONNECTED.
  */
 struct socket *
 sonewconn(struct socket *head, int connstatus)
