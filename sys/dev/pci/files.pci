@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.265 2006/08/13 03:34:11 jmcneill Exp $
+#	$NetBSD: files.pci,v 1.266 2006/08/16 22:46:44 gdamore Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -755,6 +755,14 @@ file	dev/pci/voodoofb.c		voodoofb
 device	unichromefb: wsemuldisplaydev, rasops16, rasops32, vcons
 attach	unichromefb at pci
 file	dev/pci/unichromefb.c		unichromefb needs-flag
+
+# ATI Radeon framebuffer console driver
+# (Note: to enable the BIOS parser, add options RADEON_BIOS_INIT to the config)
+device	radeonfb: wsemuldisplaydev, videomode, rasops32, vcons, splash, iic, i2c_bitbang, ddc_read_edid, edid
+attach	radeonfb at pci
+file	dev/pci/radeonfb.c	radeonfb
+file	dev/pci/radeonfb_i2c.c	radeonfb
+file	dev/pci/radeonfb_bios.c	radeonfb
 
 # 3Com 3c990
 device	txp: ether, ifnet, arp
