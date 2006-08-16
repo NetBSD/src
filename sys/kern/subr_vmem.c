@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.3 2006/07/21 10:08:41 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.4 2006/08/16 13:19:03 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.3 2006/07/21 10:08:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.4 2006/08/16 13:19:03 yamt Exp $");
 
 #define	VMEM_DEBUG
 
@@ -81,7 +81,7 @@ struct vmem_btag;
 void vmem_dump(const vmem_t *);
 #endif /* defined(VMEM_DEBUG) */
 
-#define	VMEM_MAXORDER		20
+#define	VMEM_MAXORDER		(sizeof(vmem_size_t) * CHAR_BIT)
 #define	VMEM_HASHSIZE_INIT	4096	/* XXX */
 
 #define	VM_FITMASK	(VM_BESTFIT | VM_INSTANTFIT)
@@ -143,20 +143,24 @@ typedef struct vmem_btag bt_t;
 
 /* ---- misc */
 
+#define	ORDER2SIZE(order)	((vmem_size_t)1 << (order))
+
 static int
 calc_order(vmem_size_t size)
 {
+	vmem_size_t target;
 	int i;
 
 	KASSERT(size != 0);
 
 	i = 0;
-	while (1 << (i + 1) <= size) {
+	target = size >> 1;
+	while (ORDER2SIZE(i) <= target) {
 		i++;
 	}
 
-	KASSERT(1 << i <= size);
-	KASSERT(size < 1 << (i + 1));
+	KASSERT(ORDER2SIZE(i) <= size);
+	KASSERT(size < ORDER2SIZE(i + 1) || ORDER2SIZE(i + 1) < ORDER2SIZE(i));
 
 	return i;
 }
@@ -259,7 +263,7 @@ bt_freehead_toalloc(vmem_t *vm, vmem_size_t size, vm_flag_t strat)
 	KASSERT(size != 0);
 
 	idx = calc_order(qsize);
-	if (strat == VM_INSTANTFIT && 1 << idx != qsize) {
+	if (strat == VM_INSTANTFIT && ORDER2SIZE(idx) != qsize) {
 		idx++;
 		/* check too large request? */
 	}
@@ -516,7 +520,7 @@ vmem_create(const char *name, vmem_addr_t base, vmem_size_t size,
 	vm->vm_name = name;
 	vm->vm_quantum_mask = quantum - 1;
 	vm->vm_quantum_shift = calc_order(quantum);
-	KASSERT((1 << vm->vm_quantum_shift) == quantum);
+	KASSERT(ORDER2SIZE(vm->vm_quantum_shift) == quantum);
 	vm->vm_allocfn = allocfn;
 	vm->vm_freefn = freefn;
 	vm->vm_source = source;
