@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.266 2006/08/04 17:07:32 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.266.2.1 2006/08/16 12:16:57 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.266 2006/08/04 17:07:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.266.2.1 2006/08/16 12:16:57 tron Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -80,7 +80,9 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.266 2006/08/04 17:07:32 yamt Exp 
 #ifdef COMPAT_30
 #include "opt_nfsserver.h"
 #include <nfs/rpcv2.h>
+#endif
 #include <nfs/nfsproto.h>
+#ifdef COMPAT_30
 #include <nfs/nfs.h>
 #include <nfs/nfs_var.h>
 #endif
@@ -1373,6 +1375,7 @@ vfs_copyinfh_alloc(const void *ufhp, size_t fhsize, fhandle_t **fhpp)
 	if (fhsize < FHANDLE_SIZE_MIN) {
 		return EINVAL;
 	}
+again:
 	fhp = kmem_alloc(fhsize, KM_SLEEP);
 	if (fhp == NULL) {
 		return ENOMEM;
@@ -1383,6 +1386,16 @@ vfs_copyinfh_alloc(const void *ufhp, size_t fhsize, fhandle_t **fhpp)
 		if (FHANDLE_SIZE(fhp) == fhsize) {
 			*fhpp = fhp;
 			return 0;
+		} else if (fhsize == NFSX_V2FH && FHANDLE_SIZE(fhp) < fhsize) {
+			/*
+			 * a kludge for nfsv2 padded handles.
+			 */
+			size_t sz;
+
+			sz = FHANDLE_SIZE(fhp);
+			kmem_free(fhp, fhsize);
+			fhsize = sz;
+			goto again;
 		} else {
 			/*
 			 * userland told us wrong size.
