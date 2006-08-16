@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.45 2006/06/07 22:34:18 kardel Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.45.4.1 2006/08/16 12:16:20 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -126,7 +126,8 @@
 			memcpy((caddr_t)tl, (caddr_t)(f), NFSX_V3FH); \
 		} else { \
 			nfsm_build(cp, caddr_t, NFSX_V2FH); \
-			memcpy(cp, (caddr_t)(f), NFSX_V2FH); \
+			memcpy(cp, (caddr_t)(f), NFSX_V3FH); \
+			memset(cp + NFSX_V3FH, 0, NFSX_V2FH - NFSX_V3FH); \
 		} }
 
 #define nfsm_srvpostop_fh(f) \
