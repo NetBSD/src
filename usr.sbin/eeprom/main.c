@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2001/02/19 23:22:42 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2006/08/16 03:24:57 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #ifndef lint
 __COPYRIGHT(
 "@(#) Copyright (c) 1996 The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.15 2001/02/19 23:22:42 cgd Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2006/08/16 03:24:57 macallan Exp $");
 #endif
 
 #include <sys/param.h>
@@ -50,7 +50,9 @@ __RCSID("$NetBSD: main.c,v 1.15 2001/02/19 23:22:42 cgd Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
+#ifdef __sun__
 #include <machine/eeprom.h>
+#endif
 
 #include "defs.h"
 #include "pathnames.h"
@@ -72,6 +74,7 @@ static	void usage (void);
 
 char	*path_eeprom = _PATH_EEPROM;
 char	*path_openprom = _PATH_OPENPROM;
+char	*path_openfirm = _PATH_OPENFIRM;
 int	fix_checksum = 0;
 int	ignore_checksum = 0;
 int	update_checksums = 0;
@@ -82,6 +85,9 @@ int	eval = 0;
 int	verbose = 0;
 int	use_openprom;
 #endif
+#ifdef USE_OPENFIRM
+int	verbose=0;
+#endif
 
 int
 main(argc, argv)
@@ -90,7 +96,7 @@ main(argc, argv)
 {
 	int ch, do_stdin = 0;
 	char *cp, line[BUFSIZE];
-#ifdef USE_OPENPROM
+#if defined(USE_OPENPROM) || defined(USE_OPENFIRM)
 	char *optstring = "-cf:iv";
 #else
 	char *optstring = "-cf:i";
@@ -114,7 +120,7 @@ main(argc, argv)
 			ignore_checksum = 1;
 			break;
 
-#ifdef USE_OPENPROM
+#if defined(USE_OPENPROM) || defined(USE_OPENFIRM)
 		case 'v':
 			verbose = 1;
 			break;
@@ -132,9 +138,11 @@ main(argc, argv)
 
 	if (use_openprom == 0) {
 #endif /* USE_OPENPROM */
+#ifndef USE_OPENFIRM
 		ee_verifychecksums();
 		if (fix_checksum || cksumfail)
 			exit(cksumfail);
+#endif
 #ifdef USE_OPENPROM
 	}
 #endif /* USE_OPENPROM */
@@ -165,12 +173,15 @@ main(argc, argv)
 #ifdef USE_OPENPROM
 	if (use_openprom == 0)
 #endif /* USE_OPENPROM */
+#ifndef USE_OPENFIRM
 		if (update_checksums) {
 			++writecount;
 			ee_updatechecksums();
 		}
 
 	exit(eval + cksumfail);
+#endif
+	return 0;
 }
 
 /*
@@ -187,12 +198,16 @@ action(line)
 	if ((arg = strrchr(keyword, '=')) != NULL)
 		*arg++ = '\0';
 
+#ifdef USE_OPENFIRM
+	of_action(keyword, arg);
+#else
 #ifdef USE_OPENPROM
 	if (use_openprom)
 		op_action(keyword, arg);
 	else
 #endif /* USE_OPENPROM */
 		ee_action(keyword, arg);
+#endif /* USE_OPENFIRM */
 }
 
 /*
@@ -202,6 +217,9 @@ static void
 dump_prom()
 {
 
+#ifdef USE_OPENFIRM
+	of_dump();
+#else
 #ifdef USE_OPENPROM
 	if (use_openprom)
 		/*
@@ -211,13 +229,14 @@ dump_prom()
 	else
 #endif /* USE_OPENPROM */
 		ee_dump();
+#endif /* USE_OPENFIRM */
 }
 
 static void
 usage()
 {
 
-#ifdef USE_OPENPROM
+#if defined(USE_OPENPROM) || defined(USE_OPENFIRM)
 	fprintf(stderr, "usage: %s %s\n", getprogname(),
 	    "[-] [-c] [-f device] [-i] [-v] [field[=value] ...]");
 #else
