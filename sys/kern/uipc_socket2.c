@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.75 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.76 2006/08/16 18:17:23 plunky Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.75 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.76 2006/08/16 18:17:23 plunky Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -150,12 +150,9 @@ soisdisconnected(struct socket *so)
  * then we allocate a new structure, propoerly linked into the
  * data structure of the original socket, and return this.
  * Connstatus may be 0, or SO_ISCONFIRMING, or SO_ISCONNECTED.
- *
- * Currently, sonewconn() is defined as sonewconn1() in socketvar.h
- * to catch calls that are missing the (new) second parameter.
  */
 struct socket *
-sonewconn1(struct socket *head, int connstatus)
+sonewconn(struct socket *head, int connstatus)
 {
 	struct socket	*so;
 	int		soqueue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.88 2006/06/21 12:55:12 yamt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.89 2006/08/16 18:17:23 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -256,8 +256,6 @@ do {									\
 extern u_long		sb_max;
 extern int		somaxkva;
 extern int		sock_loan_thresh;
-/* to catch callers missing new second argument to sonewconn: */
-#define	sonewconn(head, connstatus)	sonewconn1((head), (connstatus))
 
 /* strings for sleep message: */
 extern const char	netio[], netcon[], netcls[];
@@ -323,7 +321,7 @@ void	soisdisconnected(struct socket *);
 void	soisdisconnecting(struct socket *);
 int	solisten(struct socket *, int);
 struct socket *
-	sonewconn1(struct socket *, int);
+	sonewconn(struct socket *, int);
 void	soqinsque(struct socket *, struct socket *, int);
 int	soqremque(struct socket *, int);
 int	soreceive(struct socket *, struct mbuf **, struct uio *,
