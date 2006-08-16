@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.63 2006/08/14 22:04:30 bjh21 Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.64 2006/08/16 09:47:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -54,7 +54,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.63 2006/08/14 22:04:30 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.64 2006/08/16 09:47:26 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -206,8 +206,6 @@ static void canonicalise_bootconfig(struct bootconfig *, struct bootconfig *);
 static void process_kernel_args(void);
 
 extern void dump_spl_masks(void);
-extern void vidcrender_reinit(void);
-extern int vidcrender_blank(struct vconsole *, int);
 
 void rpc_sa110_cc_setup(void);
 
@@ -217,11 +215,7 @@ void parse_rpc_bootargs(char *args);
 extern void dumpsys(void);
 
 
-#if NVIDCVIDEO > 0
 #	define console_flush()		/* empty */
-#else
-	extern void console_flush(void);
-#endif
 
 
 #define panic2(a) do {							\
