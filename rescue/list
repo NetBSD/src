@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.24 2006/08/15 14:14:35 ghen Exp $
+#	$NetBSD: list,v 1.25 2006/08/16 16:50:59 ghen Exp $
 
 SRCDIRS	bin
 
@@ -84,6 +84,7 @@ PROG	mount_overlay
 PROG	mount_portal
 PROG	mount_procfs
 PROG	mount_smbfs
+PROG	mount_tmpfs
 PROG	mount_umap
 PROG	mount_union
 PROG	newfs		mount_mfs
