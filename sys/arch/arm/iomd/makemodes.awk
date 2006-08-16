@@ -1,4 +1,4 @@
-#	$NetBSD: makemodes.awk,v 1.2 2006/06/20 15:35:03 gdamore Exp $
+#	$NetBSD: makemodes.awk,v 1.3 2006/08/16 22:09:12 bjh21 Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -238,7 +238,7 @@ END {
 			    htimings[3] + htimings[4] + htimings[5] + \
 			    htimings[6]) / ( vtimings[1] + vtimings[2] + \
 			    vtimings[3] + vtimings[4] + vtimings[5] + \
-			    vtimgings[6]);
+			    vtimings[6]);
 			fr = fr * 1000;
 
 			# Remember the frame rate
