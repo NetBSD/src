@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.46 2006/04/05 11:11:07 rtr Exp $
+.\"     $NetBSD: vnodeops.9,v 1.47 2006/08/17 04:38:27 jld Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -746,7 +746,7 @@ appropriate error code is returned.
 Test if a poll event has occurred.
 The argument
 .Fa vp
-is the locked vnode of the file to poll and
+is the vnode of the file to poll and
 .Fa l
 is the calling process.
 It returns any events of interest as specified by
