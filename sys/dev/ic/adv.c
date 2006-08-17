@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.37 2005/12/11 12:21:25 christos Exp $	*/
+/*	$NetBSD: adv.c,v 1.38 2006/08/17 17:11:27 christos Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.37 2005/12/11 12:21:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.38 2006/08/17 17:11:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -708,7 +708,7 @@ out_bad:
  		}
 
 #ifdef ASC_DEBUG
- 		printf("id = 0, lun = 0, cmd = 0, ccb = 0x0 \n",
+ 		printf("id = %d, lun = %d, cmd = %d, ccb = 0x%lX\n",
  		    periph->periph_target,
  		    periph->periph_lun, xs->cmd->opcode,
  		    (unsigned long)ccb);

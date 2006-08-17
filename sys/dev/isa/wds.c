@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.62 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: wds.c,v 1.63 2006/08/17 17:11:28 christos Exp $	*/
 
 /*
  * XXX
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.62 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.63 2006/08/17 17:11:28 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -211,6 +211,10 @@ void	wdsattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(wds, sizeof(struct wds_softc),
     wdsprobe, wdsattach, NULL, NULL);
+
+#ifdef WDSDEBUG
+int wds_debug = 0;
+#endif
 
 #define	WDS_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
 
@@ -462,12 +466,12 @@ AGAIN:
 
 #ifdef WDSDEBUG
 		if (wds_debug) {
-			u_char *cp = &scb->scsipi_cmd;
+			u_char *cp = scb->cmd.xx;
 			printf("op=%x %x %x %x %x %x\n",
 			    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
-			printf("stat %x for mbi addr = 0x%08x, ",
+			printf("stat %x for mbi addr = %p, ",
 			    wmbi->stat, wmbi);
-			printf("scb addr = 0x%x\n", scb);
+			printf("scb addr = %p\n", scb);
 		}
 #endif /* WDSDEBUG */
 

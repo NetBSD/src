@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_debug.c,v 1.16 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: spp_debug.c,v 1.17 2006/08/17 17:11:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_debug.c,v 1.16 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_debug.c,v 1.17 2006/08/17 17:11:28 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: spp_debug.c,v 1.16 2005/12/11 12:25:16 christos Exp 
 
 #include <netns/ns.h>
 #include <netns/ns_pcb.h>
+#include <netns/ns_var.h>
 #include <netns/idp.h>
 #include <netns/idp_var.h>
 #include <netns/sp.h>
@@ -77,13 +78,15 @@ spp_trace(int act, u_int ostate, struct sppcb *sp, struct spidp *si, int req)
 #ifdef INET
 #ifdef SPPDEBUG
 	u_short seq, ack, len, alo;
-	unsigned long iptime();
+	u_long iptime;
 	int flags;
 	struct spp_debug *sd = &spp_debug[spp_debx++];
 
+	iptime = 0;
+
 	if (spp_debx == SPP_NDEBUG)
 		spp_debx = 0;
-	sd->sd_time = iptime();
+	sd->sd_time = iptime;
 	sd->sd_act = (short) act;
 	sd->sd_ostate = ostate;
 	sd->sd_cb = (caddr_t)sp;
@@ -101,7 +104,7 @@ spp_trace(int act, u_int ostate, struct sppcb *sp, struct spidp *si, int req)
 	if (ostate >= TCP_NSTATES) ostate = 0;
 	if (act >= SA_DROP) act = SA_DROP;
 	if (sp)
-		printf("%x %s:", sp, tcpstates[ostate]);
+		printf("%p %s:", sp, tcpstates[ostate]);
 	else
 		printf("???????? ");
 	printf("%s ", sanames[act]);
@@ -124,22 +127,20 @@ spp_trace(int act, u_int ostate, struct sppcb *sp, struct spidp *si, int req)
 			len = ntohs(len);
 		}
 #ifndef lint
-#define p1(f)  { printf("%s = %x, ", "f", f); }
+#define p1(f) { printf("%s = %x, ", __STRING(f), f); }
 		p1(seq); p1(ack); p1(alo); p1(len);
 #endif
 		flags = si->si_cc;
 		if (flags) {
-			char *cp = "<";
+			printf("<");
 #ifndef lint
-#define pf(f) { if (flags&SP_/**/f) { printf("%s%s", cp, "f"); cp = ","; } }
+#define pf(f) { if (flags & __CONCAT(SP_,f)) { printf(" %s",__STRING(f)); } }
 			pf(SP); pf(SA); pf(OB); pf(EM);
-#else
-			cp = cp;
 #endif
-			printf(">");
+			printf(" >");
 		}
 #ifndef lint
-#define p2(f)  { printf("%s = %x, ", "f", si->si_/**/f); }
+#define p2(f) { printf("%s = %x, ", __STRING(f), __CONCAT(si->si_,f)); }
 		p2(sid);p2(did);p2(dt);p2(pt);
 #endif
 		ns_printhost(&si->si_sna);
@@ -164,7 +165,7 @@ spp_trace(int act, u_int ostate, struct sppcb *sp, struct spidp *si, int req)
 	if (sp == 0)
 		return;
 #ifndef lint
-#define p3(f)  { printf("%s = %x, ", "f", sp->s_/**/f); }
+#define p3(f)  { printf("%s = %x, ", __STRING(f), __CONCAT(sp->s_, f)); }
 	printf("\t"); p3(rack);p3(ralo);p3(smax);p3(flags); printf("\n");
 #endif
 #endif

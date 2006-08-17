@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.78 2006/06/07 22:37:58 kardel Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.79 2006/08/17 17:11:27 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.78 2006/06/07 22:37:58 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.79 2006/08/17 17:11:27 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -208,7 +208,7 @@ svr4_setmcontext(l, mc, flags)
 #endif
 
 #ifdef DEBUG_SVR4
-	svr4_printcontext("setmcontext", mc);
+	svr4_printmcontext("setmcontext", mc);
 #endif  
 	/*
 	 * XXX: What to do with floating point stuff?

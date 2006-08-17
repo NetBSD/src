@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.9 2006/02/25 00:58:35 wiz Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.10 2006/08/17 17:11:28 christos Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.9 2006/02/25 00:58:35 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.10 2006/08/17 17:11:28 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1150,7 +1150,8 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	/* first byte in received data */
 	pktstat = mtod(m, u_int8_t *);
 	m_adj(m, sizeof(u_int8_t));
-	DPRINTF(("%s: RX Status: 0x%02x\n", *pktstat));
+	DPRINTF(("%s: RX Status: 0x%02x\n", USBDEVNAME(sc->sc_dev),
+				*pktstat));
 
 	total_len = UGETW(mtod(m, u_int8_t *));
 	m_adj(m, sizeof(u_int16_t));
