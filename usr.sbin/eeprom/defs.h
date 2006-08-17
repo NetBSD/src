@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.7 2006/08/16 03:24:57 macallan Exp $	*/
+/*	$NetBSD: defs.h,v 1.8 2006/08/17 03:50:21 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifdef USE_OPENFIRM
+#include <dev/ofw/openfirmio.h>
+#endif
 
 #undef BUFSIZE
 #define BUFSIZE		1024
