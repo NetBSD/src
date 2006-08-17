@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.142 2006/08/15 21:36:19 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.143 2006/08/17 21:27:36 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4340,3 +4340,17 @@ sys/dev/pci/pdcsata.c				1.8, 1.10
 
 	Add support for the Promise PDC20771, PDC20775 and PDC40518.
 	[xtraeme, ticket #1466]
+
+distrib/sets/lists/base/rescue.mi		1.18
+rescue/list					1.24
+
+	Add ex(1) to "/rescue". This won't add more than a few bytes to the
+	crunchgen binary since "ex" is just "vi -e" and vi(1) is already there.
+	[ghen, ticket #1467]
+
+distrib/notes/common/main			patch
+
+	Update list of developers.
+	[ghen, ticket #1468]
+
+
