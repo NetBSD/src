@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp.h,v 1.1 2006/06/19 15:44:36 gdamore Exp $	*/
+/*	$NetBSD: sdp.h,v 1.2 2006/08/17 20:13:31 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -57,7 +57,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: sdp.h,v 1.1 2006/06/19 15:44:36 gdamore Exp $
+ * $Id: sdp.h,v 1.2 2006/08/17 20:13:31 plunky Exp $
  * $FreeBSD: src/lib/libsdp/sdp.h,v 1.5 2005/05/27 19:11:33 emax Exp $
  */
 
@@ -533,6 +533,14 @@ struct sdp_hset_profile
 };
 typedef struct sdp_hset_profile		sdp_hset_profile_t;
 typedef struct sdp_hset_profile *	sdp_hset_profile_p;
+
+struct sdp_hf_profile
+{
+	uint8_t server_channel;
+	uint16_t supported_features;
+};
+typedef struct sdp_hf_profile		sdp_hf_profile_t;
+typedef struct sdp_hf_profile *		sdp_hf_profile_p;
 
 /* Keep this in sync with sdp_opush_profile */
 struct sdp_irmc_profile
