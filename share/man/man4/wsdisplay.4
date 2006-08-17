@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.29 2006/04/15 17:51:24 jmmv Exp $
+.\" $NetBSD: wsdisplay.4,v 1.30 2006/08/17 02:00:09 reed Exp $
 .\"
 .\" Copyright (c) 1999 Matthias Drochner.
 .\" Copyright (c) 2002 Ben Harris.
@@ -39,6 +39,8 @@
 (VGA display on ISA or PCI)
 .Cd "wsdisplay* at pcdisplay? console ?"
 (generic PC (ISA) display)
+.Cd "wsdisplay* at vesafb? console ?"
+(VESA frame buffer display, i386 only)
 .Cd "wsdisplay* at tga? console ?"
 (DEC TGA display, alpha only)
 .Cd "wsdisplay* at pfb? console ?"
@@ -526,6 +528,19 @@ Puts a character on the screen.
 The structure has the same meaning as described in
 .Dv WSDISPLAY_GETWSCHAR ,
 although all of its fields are treated as input.
+.\" Splash screen control
+.It Dv WSDISPLAYIO_SSPLASH Pq Li u_int
+Toggle the splash screen.
+This call is only available with the
+.Va SPLASHSCREEN
+kernel option.
+.It Dv WSDISPLAYIO_SPROGRESS Pq Li u_int
+Update the splash animation.
+This call is only available with the
+.Va SPLASHSCREEN
+and
+.Va SPLASHSCREEN_PROGRESS
+kernel options.
 .El
 .Sh FILES
 .Bl -item
@@ -546,6 +561,7 @@ Status device.
 .\" .Xr ega 4 ,
 .Xr pcdisplay 4 ,
 .Xr tty 4 ,
+.Xr \&i386/vesafb 4 ,
 .Xr vga 4 ,
 .Xr wscons 4 ,
 .Xr wsconscfg 8 ,
