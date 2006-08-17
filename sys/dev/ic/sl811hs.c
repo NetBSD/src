@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.8 2006/07/17 19:29:31 christos Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.9 2006/08/17 17:11:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.8 2006/07/17 19:29:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.9 2006/08/17 17:11:28 christos Exp $");
 
 #include "opt_slhci.h"
 
@@ -1535,7 +1535,7 @@ slhci_device_clear_toggle(usbd_pipe_handle pipe)
 void
 print_req(usb_device_request_t *r)
 {
-	char *xmes[]={
+	const char *xmes[]={
 		"GETSTAT",
 		"CLRFEAT",
 		"res",
@@ -1568,7 +1568,7 @@ print_req_hub(usb_device_request_t *r)
 	struct {
 		int req;
 		int type;
-		char *str;
+		const char *str;
 	} conf[] = {
 		{ 1, 0x20, "ClrHubFeat"  },
 		{ 1, 0x23, "ClrPortFeat" },

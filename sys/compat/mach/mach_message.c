@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.47 2005/12/11 12:20:20 christos Exp $ */
+/*	$NetBSD: mach_message.c,v 1.48 2006/08/17 17:11:27 christos Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.47 2005/12/11 12:20:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.48 2006/08/17 17:11:27 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -435,6 +435,7 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 	int ret;
 	int error = 0;
 
+	mp = NULL;
 
 	if (option & MACH_RCV_TIMEOUT)
 		timeout = timeout * hz / 1000;

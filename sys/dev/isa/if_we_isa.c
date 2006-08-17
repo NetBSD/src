@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_isa.c,v 1.14 2006/01/29 21:42:41 dsl Exp $	*/
+/*	$NetBSD: if_we_isa.c,v 1.15 2006/08/17 17:11:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.14 2006/01/29 21:42:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.15 2006/08/17 17:11:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -522,7 +522,7 @@ we_params(asict, asich, typep, memsizep, flagp, is790p)
 		int i;
 
 		printf("we_params: type = 0x%x, typestr = %s, is16bit = %d, "
-		    "memsize = %d\n", type, typestr, is16bit, memsize);
+		    "memsize = %ld\n", type, typestr, is16bit, (u_long)memsize);
 		for (i = 0; i < 8; i++)
 			printf("     %d -> 0x%x\n", i,
 			    bus_space_read_1(asict, asich, i));

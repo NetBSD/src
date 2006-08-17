@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.9 2006/07/30 10:49:48 bouyer Exp $ */
+/*	$NetBSD: twa.c,v 1.10 2006/08/17 17:11:28 christos Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.9 2006/07/30 10:49:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.10 2006/08/17 17:11:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -928,7 +928,7 @@ twa_recompute_openings(struct twa_softc *sc)
 
 #ifdef TWA_DEBUG
 	printf("%s: %d array%s, %d openings per array\n",
-	    sc->sc_twa.dv_xname, sc->sc_nunits,
+	    sc->twa_dv.dv_xname, sc->sc_nunits,
 	    sc->sc_nunits == 1 ? "" : "s", sc->sc_openings);
 #endif
 	for (unit = 0; unit < TWA_MAX_UNITS; unit++) {

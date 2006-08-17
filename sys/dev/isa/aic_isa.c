@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isa.c,v 1.16 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: aic_isa.c,v 1.17 2006/08/17 17:11:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.16 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.17 2006/08/17 17:11:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,6 @@ aic_isa_probe(parent, match, aux)
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, AIC_ISA_IOSIZE, 0, &ioh))
 		return (0);
 
-	AIC_TRACE(("aic_isa_probe: port 0x%x\n", ia->ia_iobase));
 	rv = aic_find(iot, ioh);
 
 	bus_space_unmap(iot, ioh, AIC_ISA_IOSIZE);
@@ -165,7 +164,6 @@ aic_isa_attach(parent, self, aux)
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
-	AIC_TRACE(("aic_isa_attach: port 0x%x\n", ia->ia_iobase));
 	if (!aic_find(iot, ioh)) {
 		printf("%s: aic_find failed", sc->sc_dev.dv_xname);
 		return;

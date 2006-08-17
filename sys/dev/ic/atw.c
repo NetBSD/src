@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.117 2006/04/06 06:08:26 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.118 2006/08/17 17:11:27 christos Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.117 2006/04/06 06:08:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.118 2006/08/17 17:11:27 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -1531,6 +1531,8 @@ atw_si4126_print(struct atw_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	u_int addr, val;
+
+	val = 0;
 
 	if (atw_debug < 3 || (ifp->if_flags & IFF_DEBUG) == 0)
 		return;

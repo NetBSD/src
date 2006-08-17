@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.27 2006/08/12 00:34:39 nakayama Exp $	*/
+/*	$NetBSD: opl.c,v 1.28 2006/08/17 17:11:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.27 2006/08/12 00:34:39 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.28 2006/08/17 17:11:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -617,8 +617,7 @@ oplsyn_releasev(midisyn *ms, uint_fast16_t voice, uint_fast8_t vel)
 	struct opl_softc *sc = ms->data;
 	struct opl_voice *v;
 
-	DPRINTFN(3, ("%s: %p %d %d\n", __func__, sc, voice,
-		     MIDISYN_FREQ_TO_HZ(note)));
+	DPRINTFN(1, ("%s: %p %d\n", __func__, sc, voice));
 
 #ifdef DIAGNOSTIC
 	if (voice >= sc->syn.nvoice) {
@@ -635,7 +634,7 @@ oplsyn_ctlnotice(midisyn *ms,
 		 midictl_evt evt, uint_fast8_t chan, uint_fast16_t key)
 {
 
-	DPRINTFN(1, ("%s: %p %d\n", __func__, sc, chan));
+	DPRINTFN(1, ("%s: %p %d\n", __func__, ms->data, chan));
 	
 	switch (evt) {
 	case MIDICTL_RESET:

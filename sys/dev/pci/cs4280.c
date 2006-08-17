@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.40 2006/08/06 16:21:11 jmcneill Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.41 2006/08/17 17:11:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.40 2006/08/06 16:21:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.41 2006/08/17 17:11:28 christos Exp $");
 
 #include "midi.h"
 
@@ -622,7 +622,7 @@ cs4280_set_params(void *addr, int setmode, int usemode,
 		p = mode == AUMODE_PLAY ? play : rec;
 
 		if (p == play) {
-			DPRINTFN(5,("play: sample=%ld precision=%d channels=%d\n",
+			DPRINTFN(5,("play: sample=%d precision=%d channels=%d\n",
 				p->sample_rate, p->precision, p->channels));
 			/* play back data format may be 8- or 16-bit and
 			 * either stereo or mono.
@@ -634,7 +634,7 @@ cs4280_set_params(void *addr, int setmode, int usemode,
 				return EINVAL;
 			}
 		} else {
-			DPRINTFN(5,("rec: sample=%ld precision=%d channels=%d\n",
+			DPRINTFN(5,("rec: sample=%d precision=%d channels=%d\n",
 				p->sample_rate, p->precision, p->channels));
 			/* capture data format must be 16bit stereo
 			 * and sample rate range from 11025Hz to 48000Hz.

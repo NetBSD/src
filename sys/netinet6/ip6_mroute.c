@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.72 2006/06/07 22:34:03 kardel Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.73 2006/08/17 17:11:28 christos Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.72 2006/06/07 22:34:03 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.73 2006/08/17 17:11:28 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -717,9 +717,8 @@ add_m6if(mifcp)
 #ifdef MRT6DEBUG
 	if (mrt6debug)
 		log(LOG_DEBUG,
-		    "add_mif #%d, phyint %s%d\n",
-		    mifcp->mif6c_mifi,
-		    ifp->if_name, ifp->if_unit);
+		    "add_mif #%d, phyint %s\n",
+		    mifcp->mif6c_mifi, ifp->if_xname);
 #endif
 
 	return 0;
@@ -841,7 +840,7 @@ add_m6fc(mfccp)
 #ifdef MRT6DEBUG
 			if (mrt6debug & DEBUG_MFC)
 				log(LOG_DEBUG,
-				    "add_m6fc o %s g %s p %x dbg %x\n",
+				    "add_m6fc o %s g %s p %x dbg %p\n",
 				    ip6_sprintf(&mfccp->mf6cc_origin.sin6_addr),
 				    ip6_sprintf(&mfccp->mf6cc_mcastgrp.sin6_addr),
 				    mfccp->mf6cc_parent, rt->mf6c_stall);
@@ -883,7 +882,7 @@ add_m6fc(mfccp)
 #ifdef MRT6DEBUG
 		if (mrt6debug & DEBUG_MFC)
 			log(LOG_DEBUG,
-			    "add_mfc no upcall h %d o %s g %s p %x\n",
+			    "add_mfc no upcall h %ld o %s g %s p %x\n",
 			    hash,
 			    ip6_sprintf(&mfccp->mf6cc_origin.sin6_addr),
 			    ip6_sprintf(&mfccp->mf6cc_mcastgrp.sin6_addr),

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.155 2006/07/30 17:38:19 elad Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.156 2006/08/17 17:11:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1045,9 +1045,6 @@ void	sysctl_unlock(struct lwp *);
 int	sysctl_locate(struct lwp *, const int *, u_int,
 		      const struct sysctlnode **, int *);
 int	sysctl_query(SYSCTLFN_PROTO);
-#ifdef SYSCTL_DEBUG_CREATE
-#define sysctl_create _sysctl_create
-#endif /* SYSCTL_DEBUG_CREATE */
 int	sysctl_create(SYSCTLFN_PROTO);
 int	sysctl_destroy(SYSCTLFN_PROTO);
 int	sysctl_lookup(SYSCTLFN_PROTO);

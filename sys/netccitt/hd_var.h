@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_var.h,v 1.13 2005/12/10 23:31:41 elad Exp $	*/
+/*	$NetBSD: hd_var.h,v 1.14 2006/08/17 17:11:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -150,7 +150,7 @@ extern int	hd_n2;			/* frame retransmission limit */
 
 /* hd_debug.c */
 void hd_trace __P((struct hdcb *, int , struct mbuf *));
-int hd_dumptrace __P((struct hdcb *));
+void hd_dumptrace __P((struct hdcb *));
 
 /* hd_input.c */
 void hdintr __P((void));
@@ -176,7 +176,7 @@ void hd_writeinternal __P((struct hdcb *, int, int ));
 void hd_append __P((struct hdtxq *, struct mbuf *));
 void hd_flush __P((struct ifnet *));
 void hd_message __P((struct hdcb *, const char *));
-int hd_status __P((struct hdcb *));
+void hd_status __P((struct hdcb *));
 struct mbuf *hd_remove __P((struct hdtxq *));
 
 /* hd_timer.c */

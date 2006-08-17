@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.2 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.3 2006/08/17 17:11:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,11 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.2 2006/07/23 22:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.3 2006/08/17 17:11:28 christos Exp $");
 
 #include "opt_bluetooth.h"
 #ifdef BLUETOOTH_DEBUG
-#define PRUREQUESTS
 #define PRCOREQUESTS
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.20 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: oboe.c,v 1.21 2006/08/17 17:11:28 christos Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.20 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.21 2006/08/17 17:11:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,9 +271,8 @@ oboe_activate(struct device *self, enum devact act)
 static int
 oboe_detach(struct device *self, int flags)
 {
-#if 0
 	struct oboe_softc *sc = (struct oboe_softc *)self;
-#endif
+
 	/* XXX needs reference counting for proper detach. */
 	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
 	return (0);
@@ -446,14 +445,14 @@ oboe_get_speeds(void *h, int *speeds)
 }
 
 static int
-oboe_get_turnarounds(void *h, int *turnarounds)
+oboe_get_turnarounds(void * h, int *turnarounds)
 {
-#if 0
 	struct oboe_softc *sc = h;
-#endif
 	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
+
 	/* XXX Linux driver sets all bits */
 	*turnarounds = IRDA_TURNT_10000; /* 10ms */
+
 	return (0);
 }
 

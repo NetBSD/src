@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.14 2006/06/17 23:34:26 christos Exp $ */
+/* $NetBSD: auixp.c,v 1.15 2006/08/17 17:11:28 christos Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.14 2006/06/17 23:34:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.15 2006/08/17 17:11:28 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -206,7 +206,7 @@ static void	auixp_update_busbusy(struct auixp_softc *);
 
 #ifdef DEBUG_AUIXP
 static struct auixp_softc *static_sc;
-sdtatic void auixp_dumpreg(void);
+static void auixp_dumpreg(void);
 #	define DPRINTF(x) printf x;
 #else
 #	define DPRINTF(x)

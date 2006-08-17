@@ -1,4 +1,4 @@
-/*	$NetBSD: twavar.h,v 1.5 2006/07/11 00:25:42 simonb Exp $ */
+/*	$NetBSD: twavar.h,v 1.6 2006/08/17 17:11:28 christos Exp $ */
 /*	$wasabi: twavar.h,v 1.12 2006/05/01 15:16:59 simonb Exp $	*/
 
 /*-
@@ -90,9 +90,6 @@ struct twa_softc {
 	/* Controller state. */
 	uint32_t		twa_state;
 	uint32_t		twa_sc_flags;
-#ifdef TWA_DEBUG
-	struct twa_q_statistics	twa_qstats[TWAQ_COUNT];	/* queue statistics */
-#endif /* TWA_DEBUG */
 
 	struct _twa_ioctl_lock{
 		uint32_t	lock;		/* lock state */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.66 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.67 2006/08/17 17:11:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.66 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.67 2006/08/17 17:11:28 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -304,7 +304,6 @@ egreadPCB(iot, ioh, pcb)
 	if (egreadPCBstat(iot, ioh, EG_PCB_DONE))
 		return 1;
 	if (bus_space_read_1(iot, ioh, EG_COMMAND) != pcb[1] + 2) {
-		DPRINTF(("%d != %d\n", b, pcb[1] + 2));
 		return 1;
 	}
 

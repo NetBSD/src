@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_debug.c,v 1.14 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: hd_debug.c,v 1.15 2006/08/17 17:11:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd_debug.c,v 1.14 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd_debug.c,v 1.15 2006/08/17 17:11:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,9 +100,11 @@ struct hdlctrace {
 	short           ht_dir;
 	struct mbuf    *ht_frame;
 	struct timeval  ht_time;
-}               hdtrace[NTRACE];
+} hdtrace[NTRACE];
 
-int             lasttracelogged, freezetrace;
+static void hd_savetrace(struct hdcb*, int, struct mbuf*);
+
+int lasttracelogged, freezetrace;
 #endif
 
 void
@@ -207,18 +209,17 @@ hd_savetrace(hdp, dir, m)
 	struct mbuf *m;
 {
 	struct hdlctrace *htp;
-	struct Hdlc_frame *frame = mtod(m, struct Hdlc_frame *);
 
 	if (freezetrace)
 		return;
 	htp = &hdtrace[lasttracelogged];
 	lasttracelogged = (lasttracelogged + 1) % NTRACE;
-	if (m = htp->ht_frame)
+	if (m == htp->ht_frame) /* XXX not sure about it */
 		m_freem(m);
 	htp->ht_frame = m_copy(m, 0, m->m_len);
 	htp->ht_hdp = hdp;
 	htp->ht_dir = dir;
-	htp->ht_time = time;
+	getmicrotime(&(htp->ht_time));
 }
 
 void
@@ -232,7 +233,7 @@ hd_dumptrace(hdp)
 	hd_status(hdp);
 	printf("retransmit queue:");
 	for (i = 0; i < 8; i++)
-		printf(" %x", hdp->hd_retxq[i]);
+		printf(" %p", hdp->hd_retxq[i]);
 	printf("\n");
 	ltrace = hdp->hd_xcp->xc_ltrace;
 	hdp->hd_xcp->xc_ltrace = 1;
@@ -240,7 +241,7 @@ hd_dumptrace(hdp)
 		htp = &hdtrace[(lasttracelogged + i) % NTRACE];
 		if (htp->ht_hdp != hdp || htp->ht_frame == 0)
 			continue;
-		printf("%d/%d	", htp->ht_time.tv_sec & 0xff,
+		printf("%ld/%ld	", htp->ht_time.tv_sec & 0xff,
 		       htp->ht_time.tv_usec / 10000);
 		hd_trace(htp->ht_hdp, htp->ht_dir, htp->ht_frame);
 		m_freem(htp->ht_frame);

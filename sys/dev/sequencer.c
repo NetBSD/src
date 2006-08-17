@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.32 2006/06/30 13:56:25 chap Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.33 2006/08/17 17:11:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.32 2006/06/30 13:56:25 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.33 2006/08/17 17:11:27 christos Exp $");
 
 #include "sequencer.h"
 
@@ -740,7 +740,7 @@ seq_do_command(struct sequencer_softc *sc, seq_event_t *b)
 {
 	int dev;
 
-	DPRINTFN(4, ("seq_do_command: %p cmd=0x%02x\n", sc, SEQ_CMD(b)));
+	DPRINTFN(4, ("seq_do_command: %p cmd=0x%02x\n", sc, b->timing.op));
 
 	switch(b->tag) {
 	case SEQ_LOCAL:
@@ -964,7 +964,7 @@ seq_do_timing(struct sequencer_softc *sc, seq_event_t *b)
 		error = EINVAL; /* not quite accurate... */
 		break;
 	default:
-		DPRINTF(("seq_timer: unknown %02x\n", cmd));
+		DPRINTF(("seq_timer: unknown %02x\n", b->timing.op));
 		error = EINVAL;
 		break;
 	}

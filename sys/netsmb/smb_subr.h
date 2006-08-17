@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.15 2006/05/14 21:20:13 elad Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.16 2006/08/17 17:11:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -58,6 +58,7 @@ MALLOC_DECLARE(M_SMBTEMP);
 #endif
 
 #ifdef SMB_SOCKETDATA_DEBUG
+struct mbuf;
 void m_dumpm(struct mbuf *m);
 #else
 #define m_dumpm(m)
