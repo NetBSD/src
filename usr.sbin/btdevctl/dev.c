@@ -1,4 +1,4 @@
-/*	$NetBSD: dev.c,v 1.1 2006/08/13 09:03:23 plunky Exp $	*/
+/*	$NetBSD: dev.c,v 1.2 2006/08/17 20:18:23 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dev.c,v 1.1 2006/08/13 09:03:23 plunky Exp $");
+__RCSID("$NetBSD: dev.c,v 1.2 2006/08/17 20:18:23 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -87,7 +87,7 @@ dev_attach(int ac, char **av)
 		if (quiet && errno == ENXIO)
 			exit(EXIT_FAILURE);
 
-		errx(EXIT_FAILURE, "%s", path);
+		err(EXIT_FAILURE, "%s", path);
 	}
 
 	close(fd);
