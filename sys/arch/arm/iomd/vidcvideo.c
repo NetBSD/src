@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.26 2006/08/05 21:25:39 bjh21 Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.27 2006/08/17 22:33:59 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.26 2006/08/05 21:25:39 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.27 2006/08/17 22:33:59 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,8 +229,8 @@ vidcvideo_getdevconfig(vaddr_t dense_addr, struct fb_devconfig *dc)
 
 	vidcvideo_getmode(&dc->mode_info);
 
-	dc->dc_wid = dc->mode_info.hder;
-	dc->dc_ht = dc->mode_info.vder;
+	dc->dc_wid = dc->mode_info.timings.hdisplay;
+	dc->dc_ht = dc->mode_info.timings.vdisplay;
 	dc->dc_log2_depth = dc->mode_info.log2_bpp;
 	dc->dc_depth = 1 << dc->dc_log2_depth;
 	dc->dc_videobase = dc->dc_vaddr;
@@ -262,7 +262,7 @@ vidcvideo_getdevconfig(vaddr_t dense_addr, struct fb_devconfig *dc)
 	}
 
 	/* euhm... correct ? i.e. not complete VIDC memory */
-	dc->dc_size = dc->mode_info.vder * dc->dc_rowbytes;
+	dc->dc_size = dc->mode_info.timings.vdisplay * dc->dc_rowbytes;
 
 	/* initialize colormap and cursor resource */
 	vidcvideo_colourmap_and_cursor_init(dc);
