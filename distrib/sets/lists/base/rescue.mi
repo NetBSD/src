@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.9 2005/01/10 10:47:36 lukem Exp $
+# $NetBSD: rescue.mi,v 1.9.2.1 2006/08/17 21:20:29 tron Exp $
 ./rescue/[					base-rescue-root
 ./rescue/atactl					base-rescue-root
 ./rescue/badsect				base-rescue-root
@@ -28,6 +28,7 @@
 ./rescue/dump_lfs				base-rescue-root
 ./rescue/echo					base-rescue-root
 ./rescue/ed					base-rescue-root
+./rescue/ex					base-rescue-root
 ./rescue/expr					base-rescue-root
 ./rescue/fsck					base-rescue-root
 ./rescue/fsck_ext2fs				base-rescue-root
