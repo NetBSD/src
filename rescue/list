@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.16 2005/01/13 03:50:08 lukem Exp $
+#	$NetBSD: list,v 1.16.2.1 2006/08/17 21:20:29 tron Exp $
 
 SRCDIRS	bin
 
@@ -125,7 +125,7 @@ SPECIAL ldd		srcdir	usr.bin/ldd/${LDD_CMD}
 PROG	less		more
 SPECIAL	less		srcdir	usr.bin/less/less
 
-PROG	vi
+PROG	vi		ex
 SPECIAL vi        	srcdir  usr.bin/vi/build
 
 SRCDIRS	usr.sbin
