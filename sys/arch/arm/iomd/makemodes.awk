@@ -1,4 +1,4 @@
-#	$NetBSD: makemodes.awk,v 1.3 2006/08/16 22:09:12 bjh21 Exp $
+#	$NetBSD: makemodes.awk,v 1.4 2006/08/17 22:33:59 bjh21 Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,12 @@ BEGIN {
 	# argument is used as a filename.
 	realargc = ARGC;
 	ARGC=2;
+
+	# Translation of sync_pol to videomode.flags
+	pol[0] = "HP|VP";
+	pol[1] = "HN|VP";
+	pol[2] = "HP|VN";
+	pol[3] = "HN|VN";
 }
 
 # MDF File format
@@ -182,6 +188,10 @@ END {
 	printf("#include <arm/iomd/vidc.h>\n\n");
 	printf("const char *monitor = \"%s\";\n", monitor);
 	printf("const int dpms = %d;\n", dpms);
+	printf("#define HP VID_PHSYNC\n");
+	printf("#define HN VID_NHSYNC\n");
+	printf("#define VP VID_PVSYNC\n");
+	printf("#define VN VID_NVSYNC\n");
 	printf("\n");
 
 	# Now define the modes array
@@ -244,6 +254,24 @@ END {
 			# Remember the frame rate
 			modes[loop, 7] = int(fr + 0.5);
 
+			# Create the internal version of the timings
+			modes[loop, "timings"] = \
+			    sprintf( \
+			    "{ %d, %d,%d,%d,%d, %d,%d,%d,%d, %s, \"%s\" }",\
+			    modes[loop, 3], htimings[4], \
+			    htimings[4] + htimings[5] + htimings[6], \
+			    htimings[4] + htimings[5] + htimings[6] + \
+			    htimings[1], \
+			    htimings[4] + htimings[5] + htimings[6] + \
+			    htimings[1] + htimings[2] + htimings[3], \
+			    vtimings[4], \
+			    vtimings[4] + vtimings[5] + vtimings[6], \
+			    vtimings[4] + vtimings[5] + vtimings[6] + \
+			    vtimings[1], \
+			    vtimings[4] + vtimings[5] + vtimings[6] + \
+			    vtimings[1] + vtimings[2] + vtimings[3], \
+			    pol[modes[loop, 6]], modes[loop, 0]);
+
 			# Report the frame rate
 			printf("%d ", modes[loop, 7]) | "cat 1>&2";
 
@@ -272,15 +300,15 @@ END {
 		printf("- %d", modes[found, 7]) | "cat 1>&2";
 
 		# Output the mode as part of the mode definition array
-		printf("\t{ %6d, %22s, %22s, %d, %d, %d },\n",
-		    modes[found, 3], modes[found, 4], modes[found, 5],
-		    cdepth(modespec[3]), modes[found, 6], modes[found, 7]);
+		printf("\t{ %s,\n\t  %d, %d },\n",
+		    modes[found, "timings"], cdepth(modespec[3]),
+		    modes[found, 7]);
 
 		printf("\n") | "cat 1>&2";
 	}
 
 	# Add a terminating entry and close the array.
-	printf("\t{ 0 }\n");
+	printf("\t{ { 0 } }\n");
 	printf("};\n");
 }
 
