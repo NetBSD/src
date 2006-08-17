@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: search.c,v 1.2 2006/08/17 20:13:31 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,12 +55,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: search.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+ * $Id: search.c,v 1.2 2006/08/17 20:13:31 plunky Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpcontrol/search.c,v 1.4 2005/05/27 19:11:33 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: search.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: search.c,v 1.2 2006/08/17 20:13:31 plunky Exp $");
 
 #include <netinet/in.h>
 #include <bluetooth.h>
@@ -543,6 +543,8 @@ struct service {
 	  "GN"				},
 	{ "HID",	SDP_SERVICE_CLASS_HUMAN_INTERFACE_DEVICE,
 	  "Human Interface Device"	},
+	{ "HF",		SDP_SERVICE_CLASS_HANDSFREE,
+	  "Handsfree"			},
 	{ "HSET",	SDP_SERVICE_CLASS_HEADSET,
 	  "Headset"			},
 	{ "LAN",	SDP_SERVICE_CLASS_LAN_ACCESS_USING_PPP,
