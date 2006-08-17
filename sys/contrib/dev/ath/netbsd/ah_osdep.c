@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: ah_osdep.c,v 1.6 2006/07/21 16:48:47 ad Exp $
+ * $Id: ah_osdep.c,v 1.7 2006/08/17 17:11:27 christos Exp $
  */
 #include "opt_athhal.h"
 #include "athhal_options.h"
@@ -178,7 +178,7 @@ void
 HALDEBUG(struct ath_hal *ah, const char* fmt, ...)
 {
 	if (ath_hal_debug) {
-		__va_list ap;
+		va_list ap;
 		va_start(ap, fmt);
 		ath_hal_vprintf(ah, fmt, ap);
 		va_end(ap);
@@ -189,7 +189,7 @@ void
 HALDEBUGn(struct ath_hal *ah, u_int level, const char* fmt, ...)
 {
 	if (ath_hal_debug >= level) {
-		__va_list ap;
+		va_list ap;
 		va_start(ap, fmt);
 		ath_hal_vprintf(ah, fmt, ap);
 		va_end(ap);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.29 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.30 2006/08/17 17:11:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -237,7 +237,7 @@ void	ncr5380_init(struct ncr5380_softc *);
 
 #ifdef	NCR5380_DEBUG
 struct ncr5380_softc *ncr5380_debug_sc;
-void ncr5380_trace(char *msg, long val);
+void ncr5380_trace(const char *msg, long val);
 #define	NCR_TRACE(msg, val) ncr5380_trace(msg, val)
 #else	/* NCR5380_DEBUG */
 #define	NCR_TRACE(msg, val)	/* nada */
