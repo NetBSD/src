@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.2 2006/08/17 19:46:57 plunky Exp $	*/
+/*	$NetBSD: profile.c,v 1.3 2006/08/17 20:13:31 plunky Exp $	*/
 
 /*
  * profile.c
@@ -27,12 +27,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: profile.c,v 1.2 2006/08/17 19:46:57 plunky Exp $
+ * $Id: profile.c,v 1.3 2006/08/17 20:13:31 plunky Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/profile.c,v 1.2 2004/07/28 07:15:44 kan Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: profile.c,v 1.2 2006/08/17 19:46:57 plunky Exp $");
+__RCSID("$NetBSD: profile.c,v 1.3 2006/08/17 20:13:31 plunky Exp $");
 
 #include <sys/queue.h>
 #include <sys/utsname.h>
@@ -51,6 +51,7 @@ profile_get_descriptor(uint16_t uuid)
 {
 	extern	profile_t	dun_profile_descriptor;
 	extern	profile_t	ftrn_profile_descriptor;
+	extern  profile_t	hf_profile_descriptor;
 	extern  profile_t	hset_profile_descriptor;
 	extern	profile_t	irmc_profile_descriptor;
 	extern	profile_t	irmc_command_profile_descriptor;
@@ -61,6 +62,7 @@ profile_get_descriptor(uint16_t uuid)
 	static const profile_p	profiles[] = {
 		&dun_profile_descriptor,
 		&ftrn_profile_descriptor,
+		&hf_profile_descriptor,
 		&hset_profile_descriptor,
 		&irmc_profile_descriptor,
 		&irmc_command_profile_descriptor,
