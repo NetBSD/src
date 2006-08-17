@@ -1,4 +1,4 @@
-/*	$NetBSD: settimeofday.c,v 1.8 2006/03/09 23:44:43 christos Exp $ */
+/*	$NetBSD: settimeofday.c,v 1.9 2006/08/17 09:59:55 jnemeth Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: settimeofday.c,v 1.8 2006/03/09 23:44:43 christos Exp $");
+__RCSID("$NetBSD: settimeofday.c,v 1.9 2006/08/17 09:59:55 jnemeth Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -84,9 +84,12 @@ try_syscall:
 		 * If credentials changed from root to an unprivilegied 
 		 * user, and we already had __clockctl_fd = -1, then we 
 		 * tried the system call as a non root user, it failed 
-		 * with EPERM, and we will try clockctl.
+		 * with EPERM, and we will try clockctl unless the user
+ 		 * is root which means they probably tried to set the
+		 * clock backwards and are not allowed to do so because
+		 * of the securelevel.
 		 */
-		if (rv != -1 || errno != EPERM)
+		if (rv != -1 || errno != EPERM || geteuid() == 0)
 			return rv;
 		__clockctl_fd = -2;
 	}
