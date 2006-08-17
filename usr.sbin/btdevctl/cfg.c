@@ -1,4 +1,4 @@
-/*	$NetBSD: cfg.c,v 1.1 2006/08/13 09:03:23 plunky Exp $	*/
+/*	$NetBSD: cfg.c,v 1.2 2006/08/17 20:16:54 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -53,12 +53,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: cfg.c,v 1.1 2006/08/13 09:03:23 plunky Exp $
+ * $Id: cfg.c,v 1.2 2006/08/17 20:16:54 plunky Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/bthidcontrol/sdp.c,v 1.2 2006/02/10 19:54:17 markus Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cfg.c,v 1.1 2006/08/13 09:03:23 plunky Exp $");
+__RCSID("$NetBSD: cfg.c,v 1.2 2006/08/17 20:16:54 plunky Exp $");
 
 #include <dev/bluetooth/btdev.h>
 #include <dev/usb/usb.h>
@@ -239,11 +239,9 @@ cfg_query(int ac, char **av)
 	if (dev == NULL)
 		err(EXIT_FAILURE, "prop_dictinary_create");
 
-	if (!bdaddr_any(&laddr)) {
-		obj = prop_data_create_data_nocopy(&laddr, sizeof(laddr));
-		if (obj == NULL || !prop_dictionary_set(dev, "local-bdaddr", obj))
-			err(EXIT_FAILURE, "proplib");;
-	}
+	obj = prop_data_create_data_nocopy(&laddr, sizeof(laddr));
+	if (obj == NULL || !prop_dictionary_set(dev, "local-bdaddr", obj))
+		err(EXIT_FAILURE, "proplib");;
 
 	obj = prop_data_create_data_nocopy(&raddr, sizeof(raddr));
 	if (obj == NULL || !prop_dictionary_set(dev, "remote-bdaddr", obj))
