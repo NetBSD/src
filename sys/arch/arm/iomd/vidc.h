@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.h,v 1.11 2006/08/17 22:33:59 bjh21 Exp $	*/
+/*	$NetBSD: vidc.h,v 1.12 2006/08/17 22:47:33 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -55,12 +55,8 @@
 #ifndef	_ARM32_VIDC_H_
 #define	_ARM32_VIDC_H_
 
-
-#ifdef _KERNEL
 #include <dev/videomode/videomode.h>
 #include <machine/vidc_machdep.h>
-#endif
-
 
 /*
  * Current VIDC base set in initarm()
@@ -184,7 +180,6 @@ struct vidc_state {
 
 extern int vidc_fref;		/* reference frequency of detected VIDC */
 
-#ifdef _KERNEL
 extern struct vidc_state vidc_current[];
 
 struct vidc_mode {
@@ -193,7 +188,6 @@ struct vidc_mode {
 	int	frame_rate;
 };
 
-#endif	/* _KERNEL */
 #endif	/* !_LOCORE */
 
 #endif	/* !_ARM32_VIDC_H */
