@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.h,v 1.10 2006/08/15 22:44:19 bjh21 Exp $	*/
+/*	$NetBSD: vidc.h,v 1.11 2006/08/17 22:33:59 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -57,6 +57,7 @@
 
 
 #ifdef _KERNEL
+#include <dev/videomode/videomode.h>
 #include <machine/vidc_machdep.h>
 #endif
 
@@ -185,17 +186,14 @@ extern int vidc_fref;		/* reference frequency of detected VIDC */
 
 #ifdef _KERNEL
 extern struct vidc_state vidc_current[];
-#endif	/* _KERNEL */
 
 struct vidc_mode {
-    int pixel_rate;
-    int hswr, hbsr, hdsr, hder, hber, hcr;
-    int vswr, vbsr, vdsr, vder, vber, vcr;
-    int log2_bpp;
-    int sync_pol;
-    int frame_rate;
+	struct	videomode timings;
+	int	log2_bpp;
+	int	frame_rate;
 };
 
+#endif	/* _KERNEL */
 #endif	/* !_LOCORE */
 
 #endif	/* !_ARM32_VIDC_H */

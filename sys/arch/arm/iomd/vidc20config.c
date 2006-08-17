@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.22 2006/08/15 23:02:47 bjh21 Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.23 2006/08/17 22:33:59 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.22 2006/08/15 23:02:47 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.23 2006/08/17 22:33:59 bjh21 Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -296,7 +296,7 @@ static int
 vidcvideo_coldinit(void)
 {
 	int found;
-	int loop;
+	int i;
 
 	/* Blank out the cursor */
 
@@ -322,31 +322,26 @@ vidcvideo_coldinit(void)
 
 	/* try to find the current mode from the bootloader in my table */ 
 	vidc_currentmode = &vidcmodes[0];
-	loop = 0;
 	found = 0;
-	while (vidcmodes[loop].pixel_rate != 0) {
-  		if (vidcmodes[loop].hder == (bootconfig.width + 1)
-  		    && vidcmodes[loop].vder == (bootconfig.height + 1)
-		    && vidcmodes[loop].frame_rate == bootconfig.framerate) {
-			vidc_currentmode = &vidcmodes[loop];
+	for (i = 0; vidcmodes[i].timings.dot_clock != 0; i++) {
+  		if (vidcmodes[i].timings.hdisplay == bootconfig.width + 1
+  		    && vidcmodes[i].timings.vdisplay == bootconfig.height + 1
+		    && vidcmodes[i].frame_rate == bootconfig.framerate) {
+			vidc_currentmode = &vidcmodes[i];
 			found = 1;
 		}
-		++loop;
 	}
 
 	/* if not found choose first mode but dont be picky on the framerate */
 	if (!found) {
-		vidc_currentmode = &vidcmodes[0];
-		loop = 0;
-		found = 0;
-
-		while (vidcmodes[loop].pixel_rate != 0) {
-			if (vidcmodes[loop].hder == (bootconfig.width + 1)
- 			    && vidcmodes[loop].vder == (bootconfig.height + 1)) {
- 				vidc_currentmode = &vidcmodes[loop];
+		for (i = 0; vidcmodes[i].timings.dot_clock != 0; i++) {
+			if (vidcmodes[i].timings.hdisplay ==
+			    bootconfig.width + 1
+ 			    && vidcmodes[i].timings.vdisplay ==
+			    bootconfig.height + 1) {
+ 				vidc_currentmode = &vidcmodes[i];
  				found = 1;
  			}
- 			++loop;
  		}
 	}
 
@@ -428,7 +423,7 @@ static const int bpp_mask_table[] = {
 void
 vidcvideo_setmode(struct vidc_mode *mode)
 {    
-	register int acc;
+	struct videomode *vm;
 	int bpp_mask;
         int ereg;
 	int best_r, best_v;
@@ -446,6 +441,7 @@ vidcvideo_setmode(struct vidc_mode *mode)
 
 	newmode = *mode;
 	vidc_currentmode = &newmode;
+	vm = &vidc_currentmode->timings;
 
 	least_error = INT_MAX;
 	best_r = 0; best_v = 0;
@@ -453,10 +449,8 @@ vidcvideo_setmode(struct vidc_mode *mode)
 	for (v = 63; v > 0; v--) {
 		for (r = 63; r > 0; r--) {
 			f = ((v * vidc_fref) /1000) / r;
-			if (least_error >=
-			    abs(f - vidc_currentmode->pixel_rate)) {
-				least_error = 
-				    abs(f - vidc_currentmode->pixel_rate);
+			if (least_error >= abs(f - vm->dot_clock)) {
+				least_error =  abs(f - vm->dot_clock);
 				best_r = r;
 				best_v = v;
 			}
@@ -470,40 +464,45 @@ vidcvideo_setmode(struct vidc_mode *mode)
 
 	vidcvideo_write(VIDC_FSYNREG, (best_v-1)<<8 | (best_r-1)<<0);
 
-	acc=0;
-	acc+=vidc_currentmode->hswr;	vidcvideo_write(VIDC_HSWR, (acc - 8 ) & (~1));
-	acc+=vidc_currentmode->hbsr;	vidcvideo_write(VIDC_HBSR, (acc - 12) & (~1));
-	acc+=vidc_currentmode->hdsr;	vidcvideo_write(VIDC_HDSR, (acc - 18) & (~1));
-	acc+=vidc_currentmode->hder;	vidcvideo_write(VIDC_HDER, (acc - 18) & (~1));
-	acc+=vidc_currentmode->hber;	vidcvideo_write(VIDC_HBER, (acc - 12) & (~1));
-	acc+=vidc_currentmode->hcr;	vidcvideo_write(VIDC_HCR,  (acc - 8 ) & (~3));
+	/*
+	 * The translation from struct videomode to VIDC timings is made
+	 * fun by the fact that the VIDC counts from the start of the sync
+	 * pulse while struct videomode counts from the start of the display.
+	 */
+	vidcvideo_write(VIDC_HSWR, (vm->hsync_end - vm->hsync_start - 8) & ~1);
+	vidcvideo_write(VIDC_HBSR, (vm->htotal - vm->hsync_start - 12) & ~1);
+	vidcvideo_write(VIDC_HDSR, (vm->htotal - vm->hsync_start - 18) & ~1);
+	vidcvideo_write(VIDC_HDER,
+	    (vm->htotal - vm->hsync_start + vm->hdisplay - 18) & ~1);
+	vidcvideo_write(VIDC_HBER,
+	    (vm->htotal - vm->hsync_start + vm->hdisplay - 12) & ~1);
+	vidcvideo_write(VIDC_HCR, (vm->htotal - 8) & ~3);
 
-	acc=0;
-	acc+=vidc_currentmode->vswr;	vidcvideo_write(VIDC_VSWR, (acc - 1));
-	acc+=vidc_currentmode->vbsr;	vidcvideo_write(VIDC_VBSR, (acc - 1));
-	acc+=vidc_currentmode->vdsr;	vidcvideo_write(VIDC_VDSR, (acc - 1));
-	acc+=vidc_currentmode->vder;	vidcvideo_write(VIDC_VDER, (acc - 1));
-	acc+=vidc_currentmode->vber;	vidcvideo_write(VIDC_VBER, (acc - 1));
-	acc+=vidc_currentmode->vcr;	vidcvideo_write(VIDC_VCR,  (acc - 1));
+	vidcvideo_write(VIDC_VSWR, vm->vsync_end - vm->vsync_start - 1);
+	vidcvideo_write(VIDC_VBSR, vm->vtotal - vm->vsync_start - 1);
+	vidcvideo_write(VIDC_VDSR, vm->vtotal - vm->vsync_start - 1);
+	vidcvideo_write(VIDC_VDER,
+	    vm->vtotal - vm->vsync_start + vm->vdisplay - 1);
+	vidcvideo_write(VIDC_VBER,
+	    vm->vtotal - vm->vsync_start + vm->vdisplay - 1);
+	/* XXX VIDC20 data sheet say to subtract 2 */
+	vidcvideo_write(VIDC_VCR, vm->vtotal - 1);
 
-	IOMD_WRITE_WORD(IOMD_FSIZE, vidc_currentmode->vcr
-	    + vidc_currentmode->vswr
-	    + vidc_currentmode->vber
-	    + vidc_currentmode->vbsr - 1);
+	IOMD_WRITE_WORD(IOMD_FSIZE, vm->vdisplay - 1);
 
 	if (dispsize <= 1024*1024)
-		vidcvideo_write(VIDC_DCTL, vidc_currentmode->hder>>2 | 1<<16 | 1<<12);
+		vidcvideo_write(VIDC_DCTL, vm->hdisplay>>2 | 1<<16 | 1<<12);
 	else
-		vidcvideo_write(VIDC_DCTL, vidc_currentmode->hder>>2 | 3<<16 | 1<<12);
+		vidcvideo_write(VIDC_DCTL, vm->hdisplay>>2 | 3<<16 | 1<<12);
 
 	ereg = 1<<12;
-	if (vidc_currentmode->sync_pol & 0x01)
+	if (vm->flags & VID_NHSYNC)
 		ereg |= 1<<16;
-	if (vidc_currentmode->sync_pol & 0x02)
+	if (vm->flags & VID_NVSYNC)
 		ereg |= 1<<18;
 	vidcvideo_write(VIDC_EREG, ereg);
 	if (dispsize > 1024*1024) {
-		if (vidc_currentmode->hder >= 800)
+		if (vm->hdisplay >= 800)
  			vidcvideo_write(VIDC_CONREG, 7<<8 | bpp_mask<<5);
 		else
 			vidcvideo_write(VIDC_CONREG, 6<<8 | bpp_mask<<5);
@@ -634,10 +633,10 @@ vidcvideo_cursor_init(int width, int height)
 void
 vidcvideo_updatecursor(int xcur, int ycur)
 {
-	int frontporch = vidc_currentmode->hswr + vidc_currentmode->hbsr +
-	    vidc_currentmode->hdsr;
-	int topporch   = vidc_currentmode->vswr + vidc_currentmode->vbsr +
-	    vidc_currentmode->vdsr;
+	int frontporch = vidc_currentmode->timings.htotal -
+	    vidc_currentmode->timings.hsync_start;
+	int topporch   =  vidc_currentmode->timings.vtotal -
+	    vidc_currentmode->timings.vsync_start;
 
 	vidcvideo_write(VIDC_HCSR, frontporch -17 + xcur);
 	vidcvideo_write(VIDC_VCSR, topporch   -2  + (ycur+1)-2 + 3 -
@@ -727,9 +726,9 @@ vidcvideo_blank(int video_off)
         int ereg;
 
 	ereg = 1<<12;
-	if (vidc_currentmode->sync_pol & 0x01)
+	if (vidc_currentmode->timings.flags & VID_NHSYNC)
 		ereg |= 1<<16;
-	if (vidc_currentmode->sync_pol & 0x02)
+	if (vidc_currentmode->timings.flags & VID_NVSYNC)
 		ereg |= 1<<18;
 
 	if (!video_off)
