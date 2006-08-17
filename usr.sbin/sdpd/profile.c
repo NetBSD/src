@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: profile.c,v 1.2 2006/08/17 19:46:57 plunky Exp $	*/
 
 /*
  * profile.c
@@ -27,14 +27,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: profile.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+ * $Id: profile.c,v 1.2 2006/08/17 19:46:57 plunky Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/profile.c,v 1.2 2004/07/28 07:15:44 kan Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: profile.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: profile.c,v 1.2 2006/08/17 19:46:57 plunky Exp $");
 
 #include <sys/queue.h>
+#include <sys/utsname.h>
 #include <bluetooth.h>
 #include <sdp.h>
 #include <string.h>
@@ -220,7 +221,7 @@ common_profile_create_language_base_attribute_id_list(
 }
 
 /*
- * Common provider name is "FreeBSD"
+ * Use Operating System name as provider name
  */
 
 int32_t
@@ -228,11 +229,16 @@ common_profile_create_service_provider_name(
 		uint8_t *buf, uint8_t const * const eob,
 		uint8_t const *data, uint32_t datalen)
 {
-	char	provider_name[] = "FreeBSD";
+	struct utsname u;
+	char const *name;
+
+	if (uname(&u) < 0)
+		name = "Unknown";
+	else
+		name = u.sysname;
 
 	return (common_profile_create_string8(buf, eob,
-			(uint8_t const *) provider_name,
-			strlen(provider_name)));
+			(uint8_t const *)name, strlen(name)));
 }
 
 /*
