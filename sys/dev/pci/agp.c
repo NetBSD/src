@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.39 2006/07/30 04:23:44 simonb Exp $	*/
+/*	$NetBSD: agp.c,v 1.40 2006/08/17 17:11:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.39 2006/07/30 04:23:44 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.40 2006/08/17 17:11:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -577,9 +577,9 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		for (j = 0; j < seg->ds_len && (done + j) < mem->am_size;
 		     j += AGP_PAGE_SIZE) {
 			pa = seg->ds_addr + j;
-			AGP_DPF("binding offset %#lx to pa %#lx\n",
+			AGP_DPF(("binding offset %#lx to pa %#lx\n",
 				(unsigned long)(offset + done + j),
-				(unsigned long)pa);
+				(unsigned long)pa));
 			error = AGP_BIND_PAGE(sc, offset + done + j, pa);
 			if (error) {
 				/*
@@ -703,9 +703,9 @@ agp_find_memory(struct agp_softc *sc, int id)
 {
 	struct agp_memory *mem;
 
-	AGP_DPF("searching for memory block %d\n", id);
+	AGP_DPF(("searching for memory block %d\n", id));
 	TAILQ_FOREACH(mem, &sc->as_memory, am_link) {
-		AGP_DPF("considering memory block %d\n", mem->am_id);
+		AGP_DPF(("considering memory block %d\n", mem->am_id));
 		if (mem->am_id == id)
 			return mem;
 	}

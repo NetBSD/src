@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_subr.c,v 1.24 2006/05/14 21:19:34 elad Exp $	*/
+/*	$NetBSD: llc_subr.c,v 1.25 2006/08/17 17:11:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llc_subr.c,v 1.24 2006/05/14 21:19:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llc_subr.c,v 1.25 2006/08/17 17:11:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2181,7 +2181,7 @@ once_more_and_again:
 		LLC_TRACE(linkp, LLCTR_URGENT, "FRMR SENT");
 		break;
 	case LLC_FRMR_RECEIVED:
-		LLC_TRACE(linkp, LLCTR_URGEN, "FRMR RECEIVED");
+		LLC_TRACE(linkp, LLCTR_URGENT, "FRMR RECEIVED");
 		action = (*linkp->llcl_statehandler) (linkp, frame,
 						    NL_RESET_REQUEST, 0, 0);
 

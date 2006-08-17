@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.236 2006/03/18 10:59:58 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.237 2006/08/17 17:11:28 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.236 2006/03/18 10:59:58 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.237 2006/08/17 17:11:28 christos Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1151,7 +1151,7 @@ __wdcwait(struct ata_channel *chp, int mask, int bits, int timeout)
 		else
 			printf("%s:%d:%d: warning: busy-wait took %dus\n",
 			    atac->atac_dev.dv_xname, chp->ch_channel,
-			    xfer->drive,
+			    xfer->c_drive,
 			    WDCDELAY * xtime);
 	}
 #endif

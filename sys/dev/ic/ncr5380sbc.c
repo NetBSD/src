@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.58 2005/12/24 20:27:30 perry Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.59 2006/08/17 17:11:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.58 2005/12/24 20:27:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.59 2006/08/17 17:11:28 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -2440,13 +2440,13 @@ int ncr5380_traceidx = 0;
 
 #define	TRACE_MAX	1024
 struct trace_ent {
-	char *msg;
+	const char *msg;
 	long  val;
 } ncr5380_tracebuf[TRACE_MAX];
 
 void
 ncr5380_trace(msg, val)
-	char *msg;
+	const char *msg;
 	long  val;
 {
 	struct trace_ent *tr;
