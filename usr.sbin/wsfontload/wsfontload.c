@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.11 2006/04/24 19:00:31 snj Exp $ */
+/* $NetBSD: wsfontload.c,v 1.12 2006/08/17 23:42:37 uwe Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -154,7 +154,7 @@ main(int argc, char **argv)
 	f.bitorder = DEFBITORDER;
 	f.byteorder = DEFBYTEORDER;
 
-	while ((c = getopt(argc, argv, "f:w:h:e:N:bB:v")) != -1) {
+	while ((c = getopt(argc, argv, "f:w:h:e:N:bBv")) != -1) {
 		switch (c) {
 		case 'f':
 			wsdev = optarg;
