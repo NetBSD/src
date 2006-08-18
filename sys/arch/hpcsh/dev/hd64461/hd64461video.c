@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.36 2006/08/14 02:34:04 uwe Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.37 2006/08/18 00:41:57 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.36 2006/08/14 02:34:04 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.37 2006/08/18 00:41:57 uwe Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -862,7 +862,7 @@ hd64461video_font_set_attr(struct hd64461video_softc *sc,
     struct wsdisplay_font *f)
 {
 	struct hd64461video_chip *hvc = sc->sc_vc;
-	struct wsdisplay_font *font = (struct wsdisplay_font *)&sc->sc_font;
+	struct wsdisplay_font *font = &sc->sc_font.wsfont;
 	int w, h, bpp;
 
 	w	= f->fontwidth;
@@ -897,7 +897,7 @@ STATIC void
 hd64461video_font_load(struct hd64461video_softc *sc)
 {
 	struct hd64461video_chip *hvc = sc->sc_vc;
-	struct wsdisplay_font *font = (struct wsdisplay_font *)&sc->sc_font;
+	struct wsdisplay_font *font = &sc->sc_font.wsfont;
 	uint8_t *q;
 	int w, h, step, i, n;
 
