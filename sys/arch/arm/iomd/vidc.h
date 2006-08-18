@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.h,v 1.12 2006/08/17 22:47:33 bjh21 Exp $	*/
+/*	$NetBSD: vidc.h,v 1.13 2006/08/18 23:25:10 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -185,7 +185,6 @@ extern struct vidc_state vidc_current[];
 struct vidc_mode {
 	struct	videomode timings;
 	int	log2_bpp;
-	int	frame_rate;
 };
 
 #endif	/* !_LOCORE */
