@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.665 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.666 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -13,3 +13,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	acorn32: Remove the old, pre-wscons, console code.  Kernel
 		configurations using the old console (kbd, vt, and vidcconsole)
 		will need to be updated to use wscons. [bjh21 20060814]
+	wpi(4): Driver for Intel PRO/Wireless 3945ABG.  OpenBSD wpi driver
+		ported by Jean-Baptiste Campesato.
