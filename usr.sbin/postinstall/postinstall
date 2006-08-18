@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.23 2006/08/13 09:03:23 plunky Exp $
+# $NetBSD: postinstall,v 1.24 2006/08/18 12:01:53 hubertf Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1254,7 +1254,7 @@ DEST_DIR="/"
 : ${MACHINE_ARCH:=$( uname -p )}# assume native build if not set
 
 DIFF_STYLE=
-NOT_FIXED=" [NOT FIXED]"
+NOT_FIXED=" (FIX MANUALLY)"
 SCRATCHDIR=$( mkdtemp ) || err 1 "Can't create scratch directory"
 trap "/bin/rm -rf ${SCRATCHDIR} ; exit 0" 0 1 2 3 15	# EXIT HUP INT QUIT TERM
 
