@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.23 2006/08/17 22:33:59 bjh21 Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.24 2006/08/18 23:25:10 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.23 2006/08/17 22:33:59 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.24 2006/08/18 23:25:10 bjh21 Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -297,6 +297,7 @@ vidcvideo_coldinit(void)
 {
 	int found;
 	int i;
+	unsigned framerate;
 
 	/* Blank out the cursor */
 
@@ -324,9 +325,17 @@ vidcvideo_coldinit(void)
 	vidc_currentmode = &vidcmodes[0];
 	found = 0;
 	for (i = 0; vidcmodes[i].timings.dot_clock != 0; i++) {
+		/*
+		 * We jump through a few hoops here to ensure that we
+		 * round roughly to the nearest integer without too
+		 * much danger of overflow.
+		 */
+		framerate = (vidcmodes[i].timings.dot_clock * 1000 /
+		    vidcmodes[i].timings.htotal * 2 /
+		    vidcmodes[i].timings.vtotal + 1) / 2;
   		if (vidcmodes[i].timings.hdisplay == bootconfig.width + 1
   		    && vidcmodes[i].timings.vdisplay == bootconfig.height + 1
-		    && vidcmodes[i].frame_rate == bootconfig.framerate) {
+		    && framerate == bootconfig.framerate) {
 			vidc_currentmode = &vidcmodes[i];
 			found = 1;
 		}

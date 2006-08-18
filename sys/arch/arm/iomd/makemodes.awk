@@ -1,4 +1,4 @@
-#	$NetBSD: makemodes.awk,v 1.4 2006/08/17 22:33:59 bjh21 Exp $
+#	$NetBSD: makemodes.awk,v 1.5 2006/08/18 23:25:10 bjh21 Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -300,9 +300,8 @@ END {
 		printf("- %d", modes[found, 7]) | "cat 1>&2";
 
 		# Output the mode as part of the mode definition array
-		printf("\t{ %s,\n\t  %d, %d },\n",
-		    modes[found, "timings"], cdepth(modespec[3]),
-		    modes[found, 7]);
+		printf("\t{ %s,\n\t  %d },\n",
+		    modes[found, "timings"], cdepth(modespec[3]));
 
 		printf("\n") | "cat 1>&2";
 	}
