@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.645 2006/08/19 10:58:40 tnozaki Exp $
+# $NetBSD: mi,v 1.646 2006/08/19 19:13:59 dsl Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1978,6 +1978,7 @@
 ./usr/share/i18n/esdb/MISC/Big5.esdb		base-obsolete		obsolete
 ./usr/share/i18n/esdb/MISC/CTEXT.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/GB18030.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/MISC/GBK.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/KOI8-R.esdb		base-obsolete		obsolete
 ./usr/share/i18n/esdb/MISC/KOI8-U.esdb		base-obsolete		obsolete
 ./usr/share/i18n/esdb/MISC/PTCP154.esdb		base-sysutil-share	nls
