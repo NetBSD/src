@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.73 2006/08/14 22:04:30 bjh21 Exp $
+# 	$NetBSD: GENERIC,v 1.74 2006/08/19 23:01:23 bjh21 Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.73 $"
+#ident		"GENERIC-$Revision: 1.74 $"
 
 # estimated number of users
 maxusers	32
@@ -355,10 +355,6 @@ pseudo-device	fss	4		# file system snapshot device
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
-
-makeoptions	MONITOR="Taxan875+LR"
-#makeoptions	MONITOR="AKF60"
-makeoptions	MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,900"
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
@@ -379,3 +375,10 @@ pseudo-device	ksyms			# /dev/ksyms
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
+
+# If the standard modes don't work for your monitor, you can specify
+# a RISC-OS-format monitor definition file and a list of modes here.
+
+#makeoptions	MONITOR="Taxan875+LR"
+#makeoptions	MONITOR="AKF60"
+#makeoptions	MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,900"
