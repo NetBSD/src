@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwivar.h,v 1.11 2006/08/09 11:35:59 skrll Exp $ */
+/*	$NetBSD: if_iwivar.h,v 1.12 2006/08/19 06:32:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -147,6 +147,8 @@ struct iwi_softc {
 	void			*sc_sdhook;	/* shutdown hook */
 	void			*sc_powerhook;	/* power management hook */
 	struct pci_conf_state	sc_pciconf;
+
+	struct sysctllog	*sc_sysctllog;
 
 	int			antenna;
 	int			dwelltime;
