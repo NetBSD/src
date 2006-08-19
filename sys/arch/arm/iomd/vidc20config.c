@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.26 2006/08/19 13:34:15 bjh21 Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.27 2006/08/19 16:57:06 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.26 2006/08/19 13:34:15 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.27 2006/08/19 16:57:06 bjh21 Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -297,8 +297,8 @@ static int
 vidcvideo_coldinit(void)
 {
 	struct videomode const *modes;
+	unsigned besterror;
 	int count;
-	int found;
 	int i;
 	unsigned framerate;
 
@@ -334,7 +334,7 @@ vidcvideo_coldinit(void)
 
 	/* try to find the current mode from the bootloader in my table */ 
 	vidc_currentmode.timings = modes[0];
-	found = 0;
+	besterror = 1000000;
 	for (i = 0; i < count; i++) {
 		/*
 		 * We jump through a few hoops here to ensure that we
@@ -345,21 +345,10 @@ vidcvideo_coldinit(void)
 		    modes[i].htotal * 2 / modes[i].vtotal + 1) / 2;
   		if (modes[i].hdisplay == bootconfig.width + 1
   		    && modes[i].vdisplay == bootconfig.height + 1
-		    && framerate == bootconfig.framerate) {
+		    && abs(framerate - bootconfig.framerate) < besterror) {
 			vidc_currentmode.timings = modes[i];
-			found = 1;
+			besterror = abs(framerate - bootconfig.framerate);
 		}
-	}
-
-	/* if not found choose first mode but dont be picky on the framerate */
-	if (!found) {
-		for (i = 0; i < count; i++) {
-			if (modes[i].hdisplay == bootconfig.width + 1
- 			    && modes[i].vdisplay == bootconfig.height + 1) {
- 				vidc_currentmode.timings = modes[i];
- 				found = 1;
- 			}
- 		}
 	}
 
 	vidc_currentmode.log2_bpp = bootconfig.log2_bpp;
