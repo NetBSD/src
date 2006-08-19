@@ -1,8 +1,9 @@
-# $NetBSD: esdb.alias.MISC.src,v 1.7 2006/06/19 17:28:25 tnozaki Exp $
+# $NetBSD: esdb.alias.MISC.src,v 1.8 2006/08/19 10:58:41 tnozaki Exp $
 
 shift_jis			Shift_JIS
 sjis				Shift_JIS
 gb18030				GB18030
+gbk				GBK
 ctext				CTEXT
 csPTCP154			PTCP154
 PT154				PTCP154
