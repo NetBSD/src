@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.2 2006/08/19 04:00:15 macallan Exp $ */
+/* $NetBSD: radeonfb.c,v 1.3 2006/08/19 04:39:32 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.2 2006/08/19 04:00:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.3 2006/08/19 04:39:32 macallan Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -787,7 +787,6 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 #endif
 		if (dp->rd_console) {
 
-			    ri->ri_height, ri->ri_cols, ri->ri_rows);
 			wsdisplay_cnattach(dp->rd_wsscreens, ri, 0, 0,
 			    defattr);
 #ifdef SPLASHSCREEN
@@ -984,6 +983,20 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 		    prot, BUS_SPACE_MAP_LINEAR);
 		return pa;
 	}
+
+#ifdef RADEONFB_MMAP_BARS
+	if ((offset >= sc->sc_regaddr) && 
+	    (offset < sc->sc_regaddr + sc->sc_regsz)) {
+		return bus_space_mmap(sc->sc_regt, offset, 0, prot, 
+		    BUS_SPACE_MAP_LINEAR);
+	}
+
+	if ((offset >= sc->sc_memaddr) && 
+	    (offset < sc->sc_memaddr + sc->sc_memsz)) {
+		return bus_space_mmap(sc->sc_memt, offset, 0, prot, 
+		    BUS_SPACE_MAP_LINEAR);
+	}
+#endif /* RADEONFB_MMAP_BARS */
 
 	return -1;
 }
