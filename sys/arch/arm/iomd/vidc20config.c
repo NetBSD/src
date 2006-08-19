@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.27 2006/08/19 16:57:06 bjh21 Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.28 2006/08/19 22:38:42 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.27 2006/08/19 16:57:06 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.28 2006/08/19 22:38:42 bjh21 Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -336,6 +336,9 @@ vidcvideo_coldinit(void)
 	vidc_currentmode.timings = modes[0];
 	besterror = 1000000;
 	for (i = 0; i < count; i++) {
+		/* We don't support interlace or doublescan */
+		if (modes[i].flags & (VID_INTERLACE | VID_DBLSCAN))
+			continue;
 		/*
 		 * We jump through a few hoops here to ensure that we
 		 * round roughly to the nearest integer without too
