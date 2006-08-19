@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.143 2006/08/17 21:27:36 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.144 2006/08/19 09:07:56 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4353,4 +4353,15 @@ distrib/notes/common/main			patch
 	Update list of developers.
 	[ghen, ticket #1468]
 
+lib/libc/locale/wcsrtombs.3			1.9, 1.10
+lib/libc/locale/wcstombs.3			1.8, 1.9
+
+	- wcstombs.3
+	    correct wrong prototype,
+	    reported by OpenBSD's PR 5171/library.
+	- wcsrtombs.3
+	    correct wrong prototype and misusage of the header file.
+	
+	Bump date for previous.
+	[tnozaki, ticket #1469]
 
