@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.119 2006/07/21 10:08:41 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.120 2006/08/19 14:01:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.119 2006/07/21 10:08:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.120 2006/08/19 14:01:15 yamt Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -611,7 +611,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	if (align == 0)
 		align = ALIGN(1);
 
-	if (size < sizeof(struct pool_item))
+	if ((flags & PR_NOTOUCH) == 0 && size < sizeof(struct pool_item))
 		size = sizeof(struct pool_item);
 
 	size = roundup(size, align);
