@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.7 2005/12/28 19:09:29 perry Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.8 2006/08/19 16:04:41 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
+#include <machine/segments.h>
 #include <machine/specialreg.h>
 
 static __inline void
@@ -77,9 +78,9 @@ invlpg(u_int64_t addr)
 }  
 
 static __inline void
-lidt(void *p)
+lidt(struct region_descriptor *region)
 {
-	__asm volatile("lidt (%0)" : : "r" (p));
+	__asm volatile("lidt %0" : : "m" (*region));
 }
 
 static __inline void
