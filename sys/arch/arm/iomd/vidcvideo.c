@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.27 2006/08/17 22:33:59 bjh21 Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.28 2006/08/19 13:34:15 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.27 2006/08/17 22:33:59 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.28 2006/08/19 13:34:15 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,7 +370,7 @@ vidcvideo_attach(struct device *parent, struct device *self, void *aux)
 	dc = sc->sc_dc;
 
 	vidcvideo_printdetails();
-	printf(": using %d x %d, %dbpp\n", dc->dc_wid, dc->dc_ht,
+	printf(": mode %s, %dbpp\n", dc->mode_info.timings.name,
 	    dc->dc_depth);
 
 	/* initialise rasops */
