@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.148 2006/07/31 18:40:41 christos Exp $
+#	$NetBSD: Makefile.i386,v 1.149 2006/08/19 17:50:56 dsl Exp $
 
 # Makefile for NetBSD
 #
@@ -89,8 +89,6 @@ clock.o: config_time.h
 ##
 ## (7) misc settings
 ##
-# PR/33725: Misoptimization of machdep.c with -Os under gcc4
-COPTS.machdep.c+=     -O2
 
 ##
 ## (8) config(8) generated machinery
