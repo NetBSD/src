@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.10 2005/12/11 12:16:08 christos Exp $
+$NetBSD: version,v 1.11 2006/08/19 22:44:57 bjh21 Exp $
 
 0.90:	Experimental C version
 0.91:	General cleanup
@@ -25,3 +25,4 @@ $NetBSD: version,v 1.10 2005/12/11 12:16:08 christos Exp $
 3.20:	Redone videomem mapping and top memory search; esp. for smaller machines
 3.30:	Use qsort to significantly speed memory sort
 3.40:	Adjust reserved heap space based on memory size
+3.41:	Measure vsync frequency rather than using a constant 56 Hz
