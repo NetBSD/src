@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.25 2006/08/19 11:01:56 bjh21 Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.26 2006/08/19 13:34:15 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.25 2006/08/19 11:01:56 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.26 2006/08/19 13:34:15 bjh21 Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -296,6 +296,8 @@ vidcvideo_getmode(struct vidc_mode *mode)
 static int
 vidcvideo_coldinit(void)
 {
+	struct videomode const *modes;
+	int count;
 	int found;
 	int i;
 	unsigned framerate;
@@ -322,35 +324,39 @@ vidcvideo_coldinit(void)
 
 	dispend = dispstart+dispsize;
 
+	if (vidc_videomode_count > 0) {
+		modes = vidc_videomode_list;
+		count = vidc_videomode_count;
+	} else {
+		modes = videomode_list;
+		count = videomode_count;
+	}
+
 	/* try to find the current mode from the bootloader in my table */ 
-	vidc_currentmode.timings = vidc_videomode_list[0];
+	vidc_currentmode.timings = modes[0];
 	found = 0;
-	for (i = 0; i < vidc_videomode_count; i++) {
+	for (i = 0; i < count; i++) {
 		/*
 		 * We jump through a few hoops here to ensure that we
 		 * round roughly to the nearest integer without too
 		 * much danger of overflow.
 		 */
-		framerate = (vidc_videomode_list[i].dot_clock * 1000 /
-		    vidc_videomode_list[i].htotal * 2 /
-		    vidc_videomode_list[i].vtotal + 1) / 2;
-  		if (vidc_videomode_list[i].hdisplay == bootconfig.width + 1
-  		    && vidc_videomode_list[i].vdisplay == bootconfig.height + 1
+		framerate = (modes[i].dot_clock * 1000 /
+		    modes[i].htotal * 2 / modes[i].vtotal + 1) / 2;
+  		if (modes[i].hdisplay == bootconfig.width + 1
+  		    && modes[i].vdisplay == bootconfig.height + 1
 		    && framerate == bootconfig.framerate) {
-			vidc_currentmode.timings = vidc_videomode_list[i];
+			vidc_currentmode.timings = modes[i];
 			found = 1;
 		}
 	}
 
 	/* if not found choose first mode but dont be picky on the framerate */
 	if (!found) {
-		for (i = 0; i < vidc_videomode_count; i++) {
-			if (vidc_videomode_list[i].hdisplay ==
-			    bootconfig.width + 1
- 			    && vidc_videomode_list[i].vdisplay ==
-			    bootconfig.height + 1) {
- 				vidc_currentmode.timings =
-				    vidc_videomode_list[i];
+		for (i = 0; i < count; i++) {
+			if (modes[i].hdisplay == bootconfig.width + 1
+ 			    && modes[i].vdisplay == bootconfig.height + 1) {
+ 				vidc_currentmode.timings = modes[i];
  				found = 1;
  			}
  		}
