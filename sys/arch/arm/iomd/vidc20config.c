@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.24 2006/08/18 23:25:10 bjh21 Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.25 2006/08/19 11:01:56 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.24 2006/08/18 23:25:10 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.25 2006/08/19 11:01:56 bjh21 Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -124,7 +124,7 @@ struct vidc_state vidc_current[1];
 static int cold_init = 0;		/* flags initialisation */
 extern videomemory_t videomemory;
 
-static struct vidc_mode *vidc_currentmode;
+static struct vidc_mode vidc_currentmode;
 
 unsigned int dispstart;
 unsigned int dispsize;
@@ -149,7 +149,8 @@ int   cursor_height;
  * VIDC mode definitions
  * generated from RISC OS mode definition file by an `awk' script
  */
-extern struct vidc_mode vidcmodes[];
+extern const struct videomode vidc_videomode_list[];
+extern const int vidc_videomode_count;
 
 
 /*
@@ -288,7 +289,7 @@ void
 vidcvideo_getmode(struct vidc_mode *mode)
 {
 
-	*mode = *vidc_currentmode;
+	*mode = vidc_currentmode;
 }
 
 
@@ -322,39 +323,40 @@ vidcvideo_coldinit(void)
 	dispend = dispstart+dispsize;
 
 	/* try to find the current mode from the bootloader in my table */ 
-	vidc_currentmode = &vidcmodes[0];
+	vidc_currentmode.timings = vidc_videomode_list[0];
 	found = 0;
-	for (i = 0; vidcmodes[i].timings.dot_clock != 0; i++) {
+	for (i = 0; i < vidc_videomode_count; i++) {
 		/*
 		 * We jump through a few hoops here to ensure that we
 		 * round roughly to the nearest integer without too
 		 * much danger of overflow.
 		 */
-		framerate = (vidcmodes[i].timings.dot_clock * 1000 /
-		    vidcmodes[i].timings.htotal * 2 /
-		    vidcmodes[i].timings.vtotal + 1) / 2;
-  		if (vidcmodes[i].timings.hdisplay == bootconfig.width + 1
-  		    && vidcmodes[i].timings.vdisplay == bootconfig.height + 1
+		framerate = (vidc_videomode_list[i].dot_clock * 1000 /
+		    vidc_videomode_list[i].htotal * 2 /
+		    vidc_videomode_list[i].vtotal + 1) / 2;
+  		if (vidc_videomode_list[i].hdisplay == bootconfig.width + 1
+  		    && vidc_videomode_list[i].vdisplay == bootconfig.height + 1
 		    && framerate == bootconfig.framerate) {
-			vidc_currentmode = &vidcmodes[i];
+			vidc_currentmode.timings = vidc_videomode_list[i];
 			found = 1;
 		}
 	}
 
 	/* if not found choose first mode but dont be picky on the framerate */
 	if (!found) {
-		for (i = 0; vidcmodes[i].timings.dot_clock != 0; i++) {
-			if (vidcmodes[i].timings.hdisplay ==
+		for (i = 0; i < vidc_videomode_count; i++) {
+			if (vidc_videomode_list[i].hdisplay ==
 			    bootconfig.width + 1
- 			    && vidcmodes[i].timings.vdisplay ==
+ 			    && vidc_videomode_list[i].vdisplay ==
 			    bootconfig.height + 1) {
- 				vidc_currentmode = &vidcmodes[i];
+ 				vidc_currentmode.timings =
+				    vidc_videomode_list[i];
  				found = 1;
  			}
  		}
 	}
 
-	vidc_currentmode->log2_bpp = bootconfig.log2_bpp;
+	vidc_currentmode.log2_bpp = bootconfig.log2_bpp;
 
 	dispstart = dispbase;
 	dispend = dispstart+dispsize;
@@ -448,9 +450,8 @@ vidcvideo_setmode(struct vidc_mode *mode)
 
 	bpp_mask = bpp_mask_table[mode->log2_bpp];
 
-	newmode = *mode;
-	vidc_currentmode = &newmode;
-	vm = &vidc_currentmode->timings;
+	vidc_currentmode = *mode;
+	vm = &vidc_currentmode.timings;
 
 	least_error = INT_MAX;
 	best_r = 0; best_v = 0;
@@ -549,7 +550,7 @@ vidcvideo_init(void)
 		/*	vidcvideo_flash_go() */;
 
 	/* setting a mode goes wrong in 32 bpp ... 8 and 16 seem OK */
-	vidcvideo_setmode(vidc_currentmode);
+	vidcvideo_setmode(&vidc_currentmode);
 	vidcvideo_blank(0);			/* display on */
 
 	vidcvideo_stdpalette();
@@ -572,7 +573,7 @@ vidcvideo_reinit()
 {
 
 	vidcvideo_coldinit();
-	vidcvideo_setmode(vidc_currentmode);
+	vidcvideo_setmode(&vidc_currentmode);
 }
 
 
@@ -642,10 +643,10 @@ vidcvideo_cursor_init(int width, int height)
 void
 vidcvideo_updatecursor(int xcur, int ycur)
 {
-	int frontporch = vidc_currentmode->timings.htotal -
-	    vidc_currentmode->timings.hsync_start;
-	int topporch   =  vidc_currentmode->timings.vtotal -
-	    vidc_currentmode->timings.vsync_start;
+	int frontporch = vidc_currentmode.timings.htotal -
+	    vidc_currentmode.timings.hsync_start;
+	int topporch   =  vidc_currentmode.timings.vtotal -
+	    vidc_currentmode.timings.vsync_start;
 
 	vidcvideo_write(VIDC_HCSR, frontporch -17 + xcur);
 	vidcvideo_write(VIDC_VCSR, topporch   -2  + (ycur+1)-2 + 3 -
@@ -671,7 +672,7 @@ vidcvideo_stdpalette()
 {
 	int i;
 
-	switch (vidc_currentmode->log2_bpp) {
+	switch (vidc_currentmode.log2_bpp) {
 	case 0: /* 1 bpp */
 	case 1: /* 2 bpp */
 	case 2: /* 4 bpp */
@@ -735,9 +736,9 @@ vidcvideo_blank(int video_off)
         int ereg;
 
 	ereg = 1<<12;
-	if (vidc_currentmode->timings.flags & VID_NHSYNC)
+	if (vidc_currentmode.timings.flags & VID_NHSYNC)
 		ereg |= 1<<16;
-	if (vidc_currentmode->timings.flags & VID_NVSYNC)
+	if (vidc_currentmode.timings.flags & VID_NVSYNC)
 		ereg |= 1<<18;
 
 	if (!video_off)

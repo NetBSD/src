@@ -1,4 +1,4 @@
-#	$NetBSD: makemodes.awk,v 1.5 2006/08/18 23:25:10 bjh21 Exp $
+#	$NetBSD: makemodes.awk,v 1.6 2006/08/19 11:01:56 bjh21 Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -186,7 +186,7 @@ END {
 	printf(" */\n\n");
 	printf("#include <sys/types.h>\n");
 	printf("#include <arm/iomd/vidc.h>\n\n");
-	printf("const char *monitor = \"%s\";\n", monitor);
+	printf("const char * const monitor = \"%s\";\n", monitor);
 	printf("const int dpms = %d;\n", dpms);
 	printf("#define HP VID_PHSYNC\n");
 	printf("#define HN VID_NHSYNC\n");
@@ -195,7 +195,8 @@ END {
 	printf("\n");
 
 	# Now define the modes array
-	printf("struct vidc_mode vidcmodes[] = {\n");
+	printf("const struct videomode vidc_videomode_list[] = {\n");
+	nmodes = 0
 
 	# Loop round all the modespecs on the command line
 	for (res = 2; res < realargc; res = res + 1) {
@@ -300,32 +301,15 @@ END {
 		printf("- %d", modes[found, 7]) | "cat 1>&2";
 
 		# Output the mode as part of the mode definition array
-		printf("\t{ %s,\n\t  %d },\n",
-		    modes[found, "timings"], cdepth(modespec[3]));
+		printf("\t%s,\n", modes[found, "timings"]);
 
 		printf("\n") | "cat 1>&2";
+		nmodes++;
 	}
 
-	# Add a terminating entry and close the array.
-	printf("\t{ { 0 } }\n");
-	printf("};\n");
-}
-
-#
-# cdepth() function
-#
-# This returns the colour depth as a power of 2 + 1
-#
-function cdepth(depth) {
-	if (depth == 16)
-		return 5;
-	if (depth == 256)
-		return 9;
-	if (depth == 32768)
-		return 16;
-	if (depth == 65536)
-		return 17;
-	return 9;
+	# Close the array.
+	printf("};\n\n");
+	printf("const int vidc_videomode_count = %d;\n", nmodes);
 }
 
 #
