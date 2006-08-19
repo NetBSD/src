@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.3 2006/08/19 04:39:32 macallan Exp $ */
+/* $NetBSD: radeonfb.c,v 1.4 2006/08/19 17:57:13 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.3 2006/08/19 04:39:32 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.4 2006/08/19 17:57:13 macallan Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -2555,7 +2555,7 @@ radeonfb_unclip(struct radeonfb_softc *sc)
 {
 
 	radeonfb_wait_fifo(sc, 2);
-	PUT32(sc, RADEON_SC_TOP_LEFT, 0x3fff3fff);
+	PUT32(sc, RADEON_SC_TOP_LEFT, 0);
 	PUT32(sc, RADEON_SC_BOTTOM_RIGHT, 0x3fff3fff);
 }
 
