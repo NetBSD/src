@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.acorn32,v 1.18 2005/12/11 12:16:05 christos Exp $
+#	$NetBSD: Makefile.acorn32,v 1.19 2006/08/19 13:34:15 bjh21 Exp $
 
 # Makefile for NetBSD
 #
@@ -51,16 +51,22 @@ MD_SFILES=	${ARM}/arm32/locore.S
 locore.o: ${ARM}/arm32/locore.S assym.h
 	${NORMAL_S}
 
-.ifdef MONITOR
 MD_OBJS+=	modedefs.o
 MD_CFILES+=	modedefs.c
 
+.ifdef MONITOR
 modedefs.c: ${ARM}/iomd/makemodes.awk ${ACORN32}/conf/monitors/${MONITOR} Makefile
+	${_MKTARGET_CREATE}
 	awk -f ${ARM}/iomd/makemodes.awk ${ACORN32}/conf/monitors/${MONITOR} ${MODES} >modedefs.c
+.else
+modedefs.c: ${ARM}/iomd/makemodes.awk Makefile
+	${_MKTARGET_CREATE}
+	awk -f ${ARM}/iomd/makemodes.awk >modedefs.c
+.endif
 
 modedefs.o: modedefs.c
 	${NORMAL_C}
-.endif
+
 
 ##
 ## (5) link settings
