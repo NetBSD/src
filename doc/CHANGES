@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.667 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.668 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -14,7 +14,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		configurations using the old console (kbd, vt, and vidcconsole)
 		will need to be updated to use wscons. [bjh21 20060814]
 	wpi(4): Driver for Intel PRO/Wireless 3945ABG.  OpenBSD wpi driver
-		ported by Jean-Baptiste Campesato.
+		ported by Jean-Baptiste Campesato. [simonb 20060818]
 	acorn32: Correctly detect the display refresh rate being used under
 		RISC OS and look for a matching mode in a list of standard
 		video modes.  This removes the requirement for compiling
