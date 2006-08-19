@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.53 2006/08/09 11:49:41 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.54 2006/08/19 06:32:52 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.53 2006/08/09 11:49:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.54 2006/08/19 06:32:52 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -141,7 +141,6 @@ static int	iwi_alloc_unr(struct iwi_softc *);
 static void	iwi_free_unr(struct iwi_softc *, int);
 
 static int	iwi_get_table0(struct iwi_softc *, uint32_t *);
-static int	iwi_get_radio(struct iwi_softc *, int *);
 
 static int	iwi_ioctl(struct ifnet *, u_long, caddr_t);
 static void	iwi_stop_master(struct iwi_softc *);
@@ -156,7 +155,9 @@ static int	iwi_scan(struct iwi_softc *);
 static int	iwi_auth_and_assoc(struct iwi_softc *);
 static int	iwi_init(struct ifnet *);
 static void	iwi_stop(struct ifnet *, int);
+static int	iwi_getrfkill(struct iwi_softc *);
 static void	iwi_led_set(struct iwi_softc *, uint32_t, int);
+static void	iwi_sysctlattach(struct iwi_softc *);
 static void	iwi_error_log(struct iwi_softc *);
 
 /*
@@ -455,6 +456,8 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(IWI_TX_RADIOTAP_PRESENT);
 #endif
 
+	iwi_sysctlattach(sc);	
+
 	/*
 	 * Make sure the interface is shutdown during reboot.
 	 */
@@ -468,13 +471,6 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 
 	ieee80211_announce(ic);
-	/*
-	 * Add a few sysctl knobs.
-	 * XXX: Not yet.
-	 */
-	sc->dwelltime = 100;
-	sc->bluetooth = 1;
-	sc->antenna = 0;
 
 	return;
 
@@ -1903,15 +1899,6 @@ iwi_get_table0(struct iwi_softc *sc, uint32_t *tbl)
 }
 
 static int
-iwi_get_radio(struct iwi_softc *sc, int *ret)
-{
-	int val;
-
-	val = (CSR_READ_4(sc, IWI_CSR_IO) & IWI_IO_RADIO_ENABLED) ? 1 : 0;
-	return copyout(&val, ret, sizeof val);
-}
-
-static int
 iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 #define	IS_RUNNING(ifp) \
@@ -1921,6 +1908,7 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
+	int val;
 
 	s = splnet();
 
@@ -1951,7 +1939,8 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCGRADIO:
-		error = iwi_get_radio(sc, (int *)ifr->ifr_data);
+		val = !iwi_getrfkill(sc);
+		error = copyout(&val, (int *)ifr->ifr_data, sizeof val);
 		break;
 
 	case SIOCSIFMEDIA:
@@ -2777,6 +2766,125 @@ fail:	ifp->if_flags &= ~IFF_UP;
 	iwi_stop(ifp, 0);
 
 	return error;
+}
+
+
+/*
+ * Return whether or not the radio is enabled in hardware
+ * (i.e. the rfkill switch is "off").
+ */
+static int
+iwi_getrfkill(struct iwi_softc *sc)
+{
+	return (CSR_READ_4(sc, IWI_CSR_IO) & IWI_IO_RADIO_ENABLED) == 0;
+}
+
+static int
+iwi_sysctl_radio(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct iwi_softc *sc;
+	int val, error;
+
+	node = *rnode;
+	sc = (struct iwi_softc *)node.sysctl_data;
+
+	val = !iwi_getrfkill(sc);
+
+	node.sysctl_data = &val;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return error;
+
+	return 0;
+}
+
+#ifdef IWI_DEBUG
+SYSCTL_SETUP(sysctl_iwi, "sysctl iwi(4) subtree setup")
+{
+	int rc;
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "iwi",
+	    SYSCTL_DESCR("iwi global controls"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	/* control debugging printfs */
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Enable debugging output"),
+	    NULL, 0, &iwi_debug, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	return;
+err:
+	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
+}
+
+#endif /* IWI_DEBUG */
+
+/*
+ * Add sysctl knobs.
+ */
+static void
+iwi_sysctlattach(struct iwi_softc *sc)
+{
+	int rc;
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
+
+	struct sysctllog **clog = &sc->sc_sysctllog;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, sc->sc_dev.dv_xname,
+	    SYSCTL_DESCR("iwi controls and statistics"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_INT, "radio",
+	    SYSCTL_DESCR("radio transmitter switch state (0=off, 1=on)"),
+	    iwi_sysctl_radio, 0, sc, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	sc->dwelltime = 100;
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "dwell", SYSCTL_DESCR("channel dwell time (ms) for AP/station scanning"),
+	    NULL, 0, &sc->dwelltime, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	sc->bluetooth = 1;
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "bluetooth", SYSCTL_DESCR("bluetooth coexistence"),
+	    NULL, 0, &sc->bluetooth, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	sc->antenna = 0;
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "antenna", SYSCTL_DESCR("antenna (0=auto)"),
+	    NULL, 0, &sc->antenna, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	return;
+err:
+	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
 
 static void
