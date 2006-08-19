@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.h,v 1.8 2006/07/13 16:03:23 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.h,v 1.9 2006/08/19 22:44:58 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -70,6 +70,8 @@
 #define XOS_ReadVduVariables	0x020031
 #define OS_SWINumberFromString	0x000039
 #define XOS_SWINumberFromString	0x020039
+#define OS_ReadMonotonicTime	0x000042
+#define XOS_ReadMonotonicTime	0x020042
 #define OS_ReadMemMapInfo	0x000051
 #define XOS_ReadMemMapInfo	0x020051
 #define OS_ReadMemMapEntries	0x000052
@@ -118,9 +120,11 @@ extern os_error *xos_cli(char *);
 /* OS_Byte */
 
 #define osbyte_OUTPUT_CURSOR_POSITION	165
+#define osbyte_VAR_VSYNC_TIMER		176
 
 #ifndef __ASSEMBLER__
 extern void os_byte(int, int, int, int *, int *);
+extern int osbyte_read(int);
 #endif
 
 /* OS_Word */
@@ -345,6 +349,8 @@ extern void service_pre_reset(void);
 extern void os_read_vdu_variables(const int *, int *);
 
 extern os_error *xos_swi_number_from_string(char const *, int *);
+
+extern unsigned int os_read_monotonic_time(void);
 
 extern void os_read_mem_map_info(int *, int *);
 

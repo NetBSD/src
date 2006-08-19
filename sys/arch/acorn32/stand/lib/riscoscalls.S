@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.S,v 1.9 2006/07/20 23:35:20 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.10 2006/08/19 22:44:58 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -78,6 +78,16 @@ ENTRY(os_byte)
 	teq	r3, #0
 	strne	r2, [r3]
 	ldmdb	fp, {fp, sp, pc}
+
+ENTRY(osbyte_read)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r1, #0
+	mov	r2, #255
+	swi	OS_Byte	
+	mov	r0, r1
+	ldmdb	fp, {fp, sp, pc}	
 
 ENTRY(os_word)
 	mov	ip, sp
@@ -278,6 +288,13 @@ ENTRY(xos_swi_number_from_string)
 	ldmvsdb	fp, {fp, sp, pc}
 	str	r0, [r2]
 	mov	r0, #0
+	ldmdb	fp, {fp, sp, pc}
+
+ENTRY(os_read_monotonic_time)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	swi	OS_ReadMonotonicTime
 	ldmdb	fp, {fp, sp, pc}
 	
 ENTRY(os_read_mem_map_info)
