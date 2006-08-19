@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.42 2006/08/14 22:04:30 bjh21 Exp $
+#	$NetBSD: NC,v 1.43 2006/08/19 23:01:23 bjh21 Exp $
 #
 #	NC - with wscons
 #
@@ -285,7 +285,9 @@ pseudo-device	clockctl		# user control of clock subsystem
 # a pseudo device needed for SMBFS
 #pseudo-device	nsmb			# experimental - SMB requester
 
+# If the standard modes don't work for your monitor, you can specify
+# a RISC-OS-format monitor definition file and a list of modes here.
 
-makeoptions	MONITOR="Taxan875+LR"
+#makeoptions	MONITOR="Taxan875+LR"
 #makeoptions	MONITOR="AKF60"
-makeoptions	MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,900"
+#makeoptions	MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,900"
