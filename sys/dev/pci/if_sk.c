@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.26 2006/05/31 21:46:32 riz Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.27 2006/08/20 16:03:30 riz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1527,7 +1527,9 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct skc_attach_args skca;
 	pci_chipset_tag_t pc = pa->pa_pc;
+#ifndef SK_USEIOSPACE
 	pcireg_t memtype;
+#endif
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	bus_addr_t iobase;
@@ -1590,7 +1592,8 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	 * Map control/status registers.
 	 */
 	if (pci_mapreg_map(pa, SK_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-			   &iobase, &iosize)) {
+			&sc->sk_btag, &sc->sk_bhandle,
+			&iobase, &iosize)) {
 		aprint_error(": can't find i/o space\n");
 		goto fail;
 	}
