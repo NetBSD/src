@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.3 2006/07/10 09:18:36 fvdl Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.4 2006/08/20 15:10:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.3 2006/07/10 09:18:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.4 2006/08/20 15:10:59 christos Exp $");
 
 #include "opt_acpi.h"
 #include <sys/param.h>
@@ -298,10 +298,25 @@ link_add_prs(ACPI_RESOURCE *res, void *context)
 		req->res_index++;
 
 		/*
-		 * Stash a copy of the resource for later use when doing
-		 * _SRS.
+		 * Stash a copy of the resource for later use when
+		 * doing _SRS.
+		 *
+		 * Note that in theory res->Length may exceed the size
+		 * of ACPI_RESOURCE, due to variable length lists in
+		 * subtypes.  However, all uses of l_prs_template only
+		 * rely on lists lengths of zero or one, for which
+		 * sizeof(ACPI_RESOURCE) is sufficient space anyway.
+		 * We cannot read longer than Length bytes, in case we
+		 * read off the end of mapped memory.  So we read
+		 * whichever length is shortest, Length or
+		 * sizeof(ACPI_RESOURCE).
 		 */
-		memcpy(&link->l_prs_template, res, sizeof(ACPI_RESOURCE));
+		KASSERT(res->Length >= ACPI_RS_SIZE_MIN);
+
+		memset(&link->l_prs_template, 0, sizeof(link->l_prs_template));
+		memcpy(&link->l_prs_template, res,
+		       MIN(res->Length, sizeof(link->l_prs_template)));
+
 		if (is_ext_irq) {
 			link->l_num_irqs =
 			    res->Data.ExtendedIrq.InterruptCount;
