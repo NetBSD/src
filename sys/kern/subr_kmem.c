@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.6 2006/08/20 09:45:59 yamt Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.7 2006/08/20 13:08:11 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.6 2006/08/20 09:45:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.7 2006/08/20 13:08:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -193,6 +193,15 @@ kmem_backend_free(vmem_t *dummy, vmem_addr_t addr, vmem_size_t size)
 	uvm_km_free(kernel_map, (vaddr_t)addr, size, UVM_KMF_WIRED);
 }
 
+static int
+kmem_kva_reclaim_callback(struct callback_entry *ce, void *obj, void *arg)
+{
+	vmem_t *vm = obj;
+
+	vmem_reap(vm);
+	return CALLBACK_CHAIN_CONTINUE;
+}
+
 /* ---- debug */
 
 #if defined(DEBUG)
@@ -242,15 +251,6 @@ kmem_poison_check(void *p, size_t sz)
 		}
 		cp++;
 	}
-}
-
-static int
-kmem_kva_reclaim_callback(struct callback_entry *ce, void *obj, void *arg)
-{
-	vmem_t *vm = obj;
-
-	vmem_reap(vm);
-	return CALLBACK_CHAIN_CONTINUE;
 }
 
 #endif /* defined(DEBUG) */
