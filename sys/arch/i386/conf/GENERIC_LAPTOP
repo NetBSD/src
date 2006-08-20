@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.201 2006/08/14 09:34:43 itohy Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.202 2006/08/20 07:06:58 plunky Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.201 $"
+#ident 		"GENERIC-$Revision: 1.202 $"
 
 maxusers	32		# estimated number of users
 
@@ -864,7 +864,7 @@ bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
 ubt* at uhub? port ? configuration ? interface ?
 
 # Bluetooth Devices
-pseudo-device btdev
+pseudo-device btdev	4
 
 # Bluetooth HID support
 bthidev* at btdev?
