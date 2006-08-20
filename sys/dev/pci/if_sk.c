@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.27 2006/08/20 16:03:30 riz Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.28 2006/08/20 18:04:53 riz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1534,14 +1534,12 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr = NULL;
 	bus_addr_t iobase;
 	bus_size_t iosize;
-	int s, rc, sk_nodenum;
+	int rc, sk_nodenum;
 	u_int32_t command;
 	const char *revstr;
 	const struct sysctlnode *node;
 
 	DPRINTFN(2, ("begin skc_attach\n"));
-
-	s = splnet();
 
 	/*
 	 * Handle power management nonsense.
@@ -1586,7 +1584,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 #ifdef SK_USEIOSPACE
 	if (!(command & PCI_COMMAND_IO_ENABLE)) {
 		aprint_error(": failed to enable I/O ports!\n");
-		goto fail;
+		return;
 	}
 	/*
 	 * Map control/status registers.
@@ -1595,12 +1593,12 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 			&sc->sk_btag, &sc->sk_bhandle,
 			&iobase, &iosize)) {
 		aprint_error(": can't find i/o space\n");
-		goto fail;
+		return;
 	}
 #else
 	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
 		aprint_error(": failed to enable memory mapping!\n");
-		goto fail;
+		return;
 	}
 	memtype = pci_mapreg_type(pc, pa->pa_tag, SK_PCI_LOMEM);
 	switch (memtype) {
@@ -1675,7 +1673,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		default:
 			aprint_error("%s: unknown ram size: %d\n",
 			       sc->sk_dev.dv_xname, val);
-			goto fail;
+			goto fail_1;
 			break;
 		}
 
@@ -1710,7 +1708,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	default:
 		aprint_error("%s: unknown media type: 0x%x\n",
 		    sc->sk_dev.dv_xname, sk_win_read_1(sc, SK_PMDTYPE));
-		goto fail;
+		goto fail_1;
 	}
 
 	/* determine whether to name it with vpd or just make it up */
@@ -1829,7 +1827,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	    CTL_EOL)) != 0) {
 		aprint_normal("%s: couldn't create sysctl node\n",
 		    sc->sk_dev.dv_xname);
-		goto fail;
+		goto fail_1;
 	}
 
 	sk_nodenum = node->sysctl_num;
@@ -1844,11 +1842,15 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	    CTL_EOL)) != 0) {
 		aprint_normal("%s: couldn't create int_mod sysctl node\n",
 		    sc->sk_dev.dv_xname);
-		goto fail;
+		goto fail_1;
 	}
 
+	return;
+
+fail_1:
+	pci_intr_disestablish(pc, sc->sk_intrhand);
 fail:
-	splx(s);
+	bus_space_unmap(sc->sk_btag, sc->sk_bhandle, iosize);
 }
 
 int
