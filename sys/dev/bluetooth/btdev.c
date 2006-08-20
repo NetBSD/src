@@ -1,4 +1,4 @@
-/*	$NetBSD: btdev.c,v 1.1 2006/07/26 10:38:51 tron Exp $	*/
+/*	$NetBSD: btdev.c,v 1.2 2006/08/20 07:06:58 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btdev.c,v 1.1 2006/07/26 10:38:51 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btdev.c,v 1.2 2006/08/20 07:06:58 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -57,8 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: btdev.c,v 1.1 2006/07/26 10:38:51 tron Exp $");
  *
  *	Each device corresponds to a character device /dev/btdevN
  */
-
-#define BTDEV_DEFAULT_COUNT	4	/* default number of btdevs */
 
 struct btdev_softc {
 	struct device	 sc_dev;
@@ -108,9 +106,6 @@ void
 btdevattach(int num)
 {
 	int err, i;
-
-	if (num < 1)
-		num = BTDEV_DEFAULT_COUNT;
 
 	err = config_cfattach_attach(btdev_cd.cd_name, &btdev_ca);
 	if (err) {
