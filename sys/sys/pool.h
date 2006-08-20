@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.53 2006/07/05 15:19:38 itohy Exp $	*/
+/*	$NetBSD: pool.h,v 1.54 2006/08/20 09:35:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -166,6 +166,7 @@ struct pool {
 #define PR_LIMITFAIL	0x100	/* even if waiting, fail if we hit limit */
 #define PR_RECURSIVE	0x200	/* pool contains pools, for vmstat(8) */
 #define PR_NOTOUCH	0x400	/* don't use free items to keep internal state*/
+#define PR_NOALIGN	0x800	/* don't assume backend alignment */
 
 	/*
 	 * `pr_slock' protects the pool's data structures when removing
