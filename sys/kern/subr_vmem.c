@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.5 2006/08/20 09:43:08 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.6 2006/08/20 09:45:59 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.5 2006/08/20 09:43:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.6 2006/08/20 09:45:59 yamt Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -487,6 +487,25 @@ qc_init(vmem_t *vm, size_t qcache_max)
 		pool_cache_init(&qc->qc_cache, &qc->qc_pool, NULL, NULL, NULL);
 	}
 }
+
+static boolean_t
+qc_reap(vmem_t *vm)
+{
+	int i;
+	int qcache_idx_max;
+	boolean_t didsomething = FALSE;
+
+	qcache_idx_max = vm->vm_qcache_max >> vm->vm_quantum_shift;
+	for (i = 1; i <= qcache_idx_max; i++) {
+		qcache_t *qc = &vm->vm_qcache[i - 1];
+
+		if (pool_reclaim(&qc->qc_pool) != 0) {
+			didsomething = TRUE;
+		}
+	}
+
+	return didsomething;
+}
 #endif /* defined(QCACHE) */
 
 #if defined(_KERNEL)
@@ -899,6 +918,25 @@ vmem_add(vmem_t *vm, vmem_addr_t addr, vmem_size_t size, vm_flag_t flags)
 {
 
 	return vmem_add1(vm, addr, size, flags, BT_TYPE_SPAN_STATIC);
+}
+
+/*
+ * vmem_reap: reap unused resources.
+ *
+ * => return TRUE if we successfully reaped something.
+ */
+
+boolean_t
+vmem_reap(vmem_t *vm)
+{
+	boolean_t didsomething = FALSE;
+
+	VMEM_ASSERT_UNLOCKED(vm);
+
+#if defined(QCACHE)
+	didsomething = qc_reap(vm);
+#endif /* defined(QCACHE) */
+	return didsomething;
 }
 
 /* ---- debug */
