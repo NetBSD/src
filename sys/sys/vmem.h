@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem.h,v 1.1 2006/06/25 08:00:01 yamt Exp $	*/
+/*	$NetBSD: vmem.h,v 1.2 2006/08/20 09:45:59 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -48,6 +48,7 @@ vmem_addr_t vmem_alloc(vmem_t *, vmem_size_t, vm_flag_t);
 void vmem_free(vmem_t *, vmem_addr_t, vmem_size_t);
 vmem_addr_t vmem_add(vmem_t *, vmem_addr_t, vmem_size_t, vm_flag_t);
 vmem_size_t vmem_roundup_size(vmem_t *, vmem_size_t);
+boolean_t vmem_reap(vmem_t *);
 
 /* vm_flag_t */
 #define	VM_SLEEP	0x00000001
