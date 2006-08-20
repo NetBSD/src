@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.52 2006/02/14 04:59:33 dyoung Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.53 2006/08/20 18:52:05 thorpej Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -198,6 +198,8 @@ char *dirname(char *);
 #if !HAVE_DIRFD
 #if HAVE_DIR_DD_FD
 #define dirfd(dirp) ((dirp)->dd_fd)
+#elif HAVE_DIR___DD_FD
+#define dirfd(dirp) ((dirp)->__dd_fd)
 #else
 /*XXX: Very hacky but no other way to bring this into scope w/o defining
   _NETBSD_SOURCE which we're avoiding. */

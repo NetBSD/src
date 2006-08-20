@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.57 2006/02/22 00:14:05 dogcow Exp $
+#	$NetBSD: configure.ac,v 1.58 2006/08/20 18:52:05 thorpej Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -8,7 +8,7 @@ AC_CONFIG_HEADERS(nbtool_config.h)
 AC_CONFIG_FILES(defs.mk)
 
 # Autoheader header and footer
-AH_TOP([/*      $NetBSD: configure.ac,v 1.57 2006/02/22 00:14:05 dogcow Exp $    */
+AH_TOP([/*      $NetBSD: configure.ac,v 1.58 2006/08/20 18:52:05 thorpej Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__])
@@ -108,7 +108,7 @@ NB_CHECK_INTTYPE(32)
 NB_CHECK_INTTYPE(64)
 
 # Struct members.
-AC_CHECK_MEMBERS([DIR.dd_fd, struct dirent.d_namlen],,,
+AC_CHECK_MEMBERS([DIR.dd_fd, DIR.__dd_fd, struct dirent.d_namlen],,,
 [#include <sys/types.h>
 #include <dirent.h>])
 AC_CHECK_MEMBERS([struct stat.st_flags, struct stat.st_gen,
