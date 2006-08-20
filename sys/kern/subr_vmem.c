@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.6 2006/08/20 09:45:59 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.7 2006/08/20 13:14:03 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.6 2006/08/20 09:45:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.7 2006/08/20 13:14:03 yamt Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -409,19 +409,10 @@ vmf_to_prf(vm_flag_t vmflags)
 {
 	int prflags;
 
-	switch ((vmflags & (VM_SLEEP | VM_NOSLEEP))) {
-	case VM_SLEEP:
+	if ((vmflags & VM_SLEEP) != 0) {
 		prflags = PR_WAITOK;
-		break;
-
-	case VM_NOSLEEP:
+	} else {
 		prflags = PR_NOWAIT;
-		break;
-
-#if defined(DIAGNOSTIC)
-	default:
-		panic("vmf_to_prf: unknown flag 0x%x\n", vmflags);
-#endif /* defined(DIAGNOSTIC) */
 	}
 	return prflags;
 }
