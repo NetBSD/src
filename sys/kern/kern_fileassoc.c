@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.7 2006/08/13 06:21:10 xtraeme Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.8 2006/08/20 10:38:23 blymn Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.7 2006/08/13 06:21:10 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.8 2006/08/20 10:38:23 blymn Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -72,13 +72,13 @@ struct fileassoc_table {
 	void *tables[FILEASSOC_NHOOKS];
 	LIST_ENTRY(fileassoc_table) hash_list;		/* List pointer. */
 };
- 
+
 struct fileassoc_hook fileassoc_hooks[FILEASSOC_NHOOKS];
 int fileassoc_nhooks;
 
 /* Global list of hash tables, one per device. */
 LIST_HEAD(, fileassoc_table) fileassoc_tables;
- 
+
 /*
  * Hashing function: Takes a number modulus the mask to give back
  * an index into the hash table.
@@ -154,21 +154,28 @@ fileassoc_table_lookup(struct mount *mp)
 }
 
 /*
- * Perform a lookup on a hash table.
+ * Perform a lookup on a hash table.  If hint is non-zero then use the value
+ * of the hint as the identifier instead of performing a lookup for the
+ * fileid.
  */
 static struct fileassoc_hash_entry *
-fileassoc_file_lookup(struct vnode *vp)
+fileassoc_file_lookup(struct vnode *vp, uint64_t hint)
 {
 	struct fileassoc_table *tbl;
 	struct fileassoc_hashhead *tble;
 	struct fileassoc_hash_entry *e;
 	struct vattr va;
 	size_t indx;
+	uint64_t th;
 	int error;
 
-	error = VOP_GETATTR(vp, &va, curlwp->l_cred, curlwp);
-	if (error)
-		return (NULL);
+	if (hint == 0) {
+		error = VOP_GETATTR(vp, &va, curlwp->l_cred, curlwp);
+		if (error)
+			return (NULL);
+		th = va.va_fileid;
+	} else
+		th = hint;
 
 	tbl = fileassoc_table_lookup(vp->v_mount);
 	if (tbl == NULL)
@@ -177,11 +184,11 @@ fileassoc_file_lookup(struct vnode *vp)
 	/*
 	 * XXX: We should NOT rely on fileid here!
 	 */
-	indx = FILEASSOC_HASH(tbl, va.va_fileid);
+	indx = FILEASSOC_HASH(tbl, th);
 	tble = &(tbl->hash_tbl[indx & ((tbl)->hash_mask)]);
 
 	LIST_FOREACH(e, tble, entries) {
-		if ((e != NULL) && (e->fileid == va.va_fileid))
+		if ((e != NULL) && (e->fileid == th))
 			return (e);
 	}
 
@@ -194,9 +201,20 @@ fileassoc_file_lookup(struct vnode *vp)
 void *
 fileassoc_lookup(struct vnode *vp, fileassoc_t id)
 {
+	return fileassoc_lookup_hint(vp, id, 0);
+}
+
+/*
+ * Return hook data associated with a vnode, use hint to look for file
+ * instead of performing an implicit VOP_GETATTR() on the vnode.
+ */
+void *
+fileassoc_lookup_hint(struct vnode *vp, fileassoc_t id, uint64_t hint)
+{
 	struct fileassoc_hash_entry *mhe;
 
-	mhe = fileassoc_file_lookup(vp);
+	mhe = fileassoc_file_lookup(vp, hint);
+
 	if (mhe == NULL)
 		return (NULL);
 
@@ -391,20 +409,28 @@ fileassoc_tabledata_lookup(struct mount *mp, fileassoc_t id)
  * Add a file entry to a table.
  */
 static struct fileassoc_hash_entry *
-fileassoc_file_add(struct vnode *vp)
+fileassoc_file_add(struct vnode *vp, uint64_t hint)
 {
 	struct fileassoc_table *tbl;
 	struct fileassoc_hashhead *vhh;
 	struct fileassoc_hash_entry *e;
 	struct vattr va;
 	size_t indx;
+	uint64_t id;
 	int error;
 
-	error = VOP_GETATTR(vp, &va, curlwp->l_cred, curlwp);
-	if (error)
-		return (NULL);
+	if (hint == 0) {
+		error = VOP_GETATTR(vp, &va, curlwp->l_cred, curlwp);
+		if (error)
+			return (NULL);
+		/*
+		 * XXX: We should NOT rely on fileid here!
+		 */
+		id = va.va_fileid;
+	} else
+		id = hint;
 
-	e = fileassoc_file_lookup(vp);
+	e = fileassoc_file_lookup(vp, id);
 	if (e != NULL)
 		return (e);
 
@@ -412,14 +438,11 @@ fileassoc_file_add(struct vnode *vp)
 	if (tbl == NULL)
 		return (NULL);
 
-	/*
-	 * XXX: We should NOT rely on fileid here!
-	 */
-	indx = FILEASSOC_HASH(tbl, va.va_fileid);
+	indx = FILEASSOC_HASH(tbl, id);
 	vhh = &(tbl->hash_tbl[indx & ((tbl)->hash_mask)]);
 
 	e = malloc(sizeof(*e), M_TEMP, M_WAITOK | M_ZERO);
-	e->fileid = va.va_fileid;
+	e->fileid = id;
 	LIST_INSERT_HEAD(vhh, e, entries);
 
 	return (e);
@@ -434,7 +457,7 @@ fileassoc_file_delete(struct vnode *vp)
 	struct fileassoc_hash_entry *mhe;
 	int i;
 
-	mhe = fileassoc_file_lookup(vp);
+	mhe = fileassoc_file_lookup(vp, 0);
 	if (mhe == NULL)
 		return (ENOENT);
 
@@ -451,16 +474,16 @@ fileassoc_file_delete(struct vnode *vp)
 }
 
 /*
- * Add a hook to a vnode.
+ * Add a hook to a vnode using the given hint.
  */
 int
-fileassoc_add(struct vnode *vp, fileassoc_t id, void *data)
+fileassoc_add_hint(struct vnode *vp, fileassoc_t id, void *data, uint64_t hint)
 {
 	struct fileassoc_hash_entry *e;
 
-	e = fileassoc_file_lookup(vp);
+	e = fileassoc_file_lookup(vp, hint);
 	if (e == NULL) {
-		e = fileassoc_file_add(vp);
+		e = fileassoc_file_add(vp, hint);
 		if (e == NULL)
 			return (ENOTDIR);
 	}
@@ -474,6 +497,15 @@ fileassoc_add(struct vnode *vp, fileassoc_t id, void *data)
 }
 
 /*
+ * Add a hook to a vnode.
+ */
+int
+fileassoc_add(struct vnode *vp, fileassoc_t id, void *data)
+{
+	return fileassoc_add_hint(vp, id, data, 0);
+}
+
+/*
  * Clear a hook from a vnode.
  */
 int
@@ -482,7 +514,7 @@ fileassoc_clear(struct vnode *vp, fileassoc_t id)
 	struct fileassoc_hash_entry *mhe;
 	fileassoc_cleanup_cb_t cleanup_cb;
 
-	mhe = fileassoc_file_lookup(vp);
+	mhe = fileassoc_file_lookup(vp, 0);
 	if (mhe == NULL)
 		return (ENOENT);
 
