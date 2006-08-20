@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.9 2005/10/17 18:34:47 christos Exp $	*/
+/*	$NetBSD: readelf.c,v 1.10 2006/08/20 19:49:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -42,7 +42,7 @@
 #if 0
 FILE_RCSID("@(#)Id: readelf.c,v 1.51 2005/10/16 07:37:13 christos Exp")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.9 2005/10/17 18:34:47 christos Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.10 2006/08/20 19:49:31 thorpej Exp $");
 #endif
 #endif
 
@@ -401,10 +401,10 @@ donote(struct magic_set *ms, unsigned char *nbuf, size_t offset, size_t size,
 		 * p = patchlevel
 		 */
 		if (desc > 100000000U) {
-			u_int ver_patch = (desc / 100) % 100;
-			u_int ver_rel = (desc / 10000) % 100;
-			u_int ver_min = (desc / 1000000) % 100;
-			u_int ver_maj = desc / 100000000;
+			unsigned int ver_patch = (desc / 100) % 100;
+			unsigned int ver_rel = (desc / 10000) % 100;
+			unsigned int ver_min = (desc / 1000000) % 100;
+			unsigned int ver_maj = desc / 100000000;
 
 			if (file_printf(ms, " %u.%u", ver_maj, ver_min) == -1)
 				return size;
