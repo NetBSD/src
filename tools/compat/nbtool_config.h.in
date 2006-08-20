@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.12 2006/02/11 10:35:29 wiz Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.13 2006/08/20 18:52:05 thorpej Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -142,6 +142,9 @@
 /* Define to 1 if `dd_fd' is member of `DIR'. */
 #undef HAVE_DIR_DD_FD
 
+/* Define to 1 if `__dd_fd' is member of `DIR'. */
+#undef HAVE_DIR___DD_FD
+
 /* Define to 1 if you have the <errno.h> header file. */
 #undef HAVE_ERRNO_H
 
@@ -228,6 +231,9 @@
 
 /* Define to 1 if you have the <machine/bswap.h> header file. */
 #undef HAVE_MACHINE_BSWAP_H
+
+/* Define to 1 if you have the <machine/endian.h> header file. */
+#undef HAVE_MACHINE_ENDIAN_H
 
 /* Define to 1 if you have the <malloc.h> header file. */
 #undef HAVE_MALLOC_H
@@ -367,9 +373,6 @@
 /* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
    */
 #undef HAVE_SYS_DIR_H
-
-/* Define to 1 if you have the <sys/endian.h> header file. */
-#undef HAVE_SYS_ENDIAN_H
 
 /* Define to 1 if you have the <sys/featuretest.h> header file. */
 #undef HAVE_SYS_FEATURETEST_H
