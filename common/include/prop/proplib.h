@@ -1,4 +1,4 @@
-/*	$NetBSD: proplib.h,v 1.2 2006/07/05 21:46:10 thorpej Exp $	*/
+/*	$NetBSD: proplib.h,v 1.3 2006/08/21 04:13:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
 #include <prop/prop_dictionary.h>
 #include <prop/prop_number.h>
 #include <prop/prop_string.h>
+
+#include <prop/prop_ingest.h>
 
 /*
  * Property List Reference --
