@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.60 2006/03/28 23:22:08 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.60.6.1 2006/08/21 12:32:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.60 2006/03/28 23:22:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.60.6.1 2006/08/21 12:32:00 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -799,7 +799,7 @@ zs_console_flags(int promunit, int node, int channel)
 	/* Default to channel 0 if there are no explicit prom args */
 	cookie = 0;
 	if (node == prom_instance_to_package(prom_stdin())) {
-		if (prom_getoption("input-device", buf, sizeof buf) != 0 &&
+		if (prom_getoption("input-device", buf, sizeof buf) == 0 &&
 		    strcmp("ttyb", buf) == 0)
 			cookie = 1;
 
@@ -808,7 +808,7 @@ zs_console_flags(int promunit, int node, int channel)
 	}
 
 	if (node == prom_instance_to_package(prom_stdout())) { 
-		if (prom_getoption("output-device", buf, sizeof buf) != 0 &&
+		if (prom_getoption("output-device", buf, sizeof buf) == 0 &&
 		    strcmp("ttyb", buf) == 0)
 			cookie = 1;
 
