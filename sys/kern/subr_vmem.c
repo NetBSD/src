@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.7 2006/08/20 13:14:03 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.8 2006/08/21 09:05:22 martin Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.7 2006/08/20 13:14:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.8 2006/08/21 09:05:22 martin Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -471,7 +471,7 @@ qc_init(vmem_t *vm, size_t qcache_max)
 		size_t size = i << vm->vm_quantum_shift;
 
 		qc->qc_vmem = vm;
-		snprintf(qc->qc_name, sizeof(qc->qc_name), "%s-%d",
+		snprintf(qc->qc_name, sizeof(qc->qc_name), "%s-%zu",
 		    vm->vm_name, size);
 		pool_init(&qc->qc_pool, size, 0, 0,
 		    PR_NOALIGN | PR_NOTOUCH /* XXX */, qc->qc_name, pa);
