@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.27 2006/07/04 18:14:44 martin Exp $	*/
+/*	$NetBSD: ffb.c,v 1.27.2.1 2006/08/21 12:32:00 tron Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.27 2006/07/04 18:14:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.27.2.1 2006/08/21 12:32:00 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -178,7 +178,7 @@ ffb_attach(struct ffb_softc *sc)
 		? strtoul(buf, NULL, 10)
 		: 80;
 
-	maxrow = (prom_getoption("screen-#rows", buf, sizeof buf) != 0)
+	maxrow = (prom_getoption("screen-#rows", buf, sizeof buf) == 0)
 		? strtoul(buf, NULL, 10)
 		: 34;
 
