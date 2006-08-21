@@ -1,4 +1,4 @@
-/*	$NetBSD: stddef.h,v 1.11 2006/08/21 14:09:43 skd Exp $	*/
+/*	$NetBSD: stddef.h,v 1.12 2006/08/21 15:02:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,6 +50,13 @@ typedef	_BSD_WCHAR_T_	wchar_t;
 
 #include <sys/null.h>
 
-#define	offsetof(type, member)	__builtin_offsetof(type,member)
-
+#if __GNUC__ >= 4
+#define	offsetof(type, member)	__builtin_offsetof(type, member)
+#elif !defined(__cplusplus)
+#define	offsetof(type, member)	((size_t)(unsigned long)(&((type *)0)->member))
+#else
+#define	offsetof(type, member) (reinterpret_cast<size_t> \
+    (&reinterpret_cast<const volatile char &>(static_cast<type *>(0)->member)))
+#endif  
+ 
 #endif /* _STDDEF_H_ */
