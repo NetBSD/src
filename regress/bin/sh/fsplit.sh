@@ -70,7 +70,9 @@ check 't=axb; IFS="x"; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '2 a:b'
 check 't="a x b"; IFS="x"; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '2 a : b'
 check 't="a xx b"; IFS="x"; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '3 a :: b'
 check 't="a xx b"; IFS="x "; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '3 a::b'
-check 't="xax"; IFS="x"; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '3 :a:'
+# A recent 'clarification' means that a single trailing IFS non-whitespace
+# doesn't generate an empty parameter
+check 't="xax"; IFS="x"; set $t; IFS=":"; r="$*"; IFS=; echo $# $r' '2 :a'
 check 'IFS="x"; set axb; IFS=":"; r="$*"; IFS=; echo $# $r' '1 axb'
 
 # Check that we apply IFS to ${#var}
