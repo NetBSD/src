@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_db_factory.h,v 1.1 2003/06/25 09:51:30 tshiozak Exp $	*/
+/*	$NetBSD: citrus_db_factory.h,v 1.2 2006/08/21 20:30:52 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -30,7 +30,7 @@
 #define _CITRUS_DB_FACTORY_H_
 
 struct _citrus_db_factory;
-typedef u_int32_t (*_citrus_db_hash_func_t)(void *, struct _citrus_region *);;
+typedef u_int32_t (*_citrus_db_hash_func_t)(void *, struct _citrus_region *);
 
 __BEGIN_DECLS
 int	_citrus_db_factory_create(struct _citrus_db_factory **,
