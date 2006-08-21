@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.h,v 1.4 2006/08/21 04:13:28 thorpej Exp $	*/
+/*	$NetBSD: prop_ingest.h,v 1.1 2006/08/21 04:13:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,47 +36,63 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PROPLIB_PROP_OBJECT_H_
-#define	_PROPLIB_PROP_OBJECT_H_
+#ifndef _PROPLIB_PROP_INGEST_H_
+#define	_PROPLIB_PROP_INGEST_H_
 
-#include <sys/types.h>
-
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-
-typedef	int	boolean_t;
-#undef TRUE
-#define	TRUE	1
-#undef FALSE
-#define	FALSE	0
-
-#endif /* ! _KERNEL && ! _STANDALONE */
-
-typedef void *prop_object_t;
+#include <prop/prop_dictionary.h>
 
 typedef enum {
-	PROP_TYPE_UNKNOWN	=	0x00000000,
-	PROP_TYPE_BOOL		=	0x626f6f6c,	/* 'bool' */
-	PROP_TYPE_NUMBER	=	0x6e6d6272,	/* 'nmbr' */
-	PROP_TYPE_STRING	=	0x73746e67,	/* 'stng' */
-	PROP_TYPE_DATA		=	0x64617461,	/* 'data' */
-	PROP_TYPE_ARRAY		=	0x61726179,	/* 'aray' */
-	PROP_TYPE_DICTIONARY	=	0x64696374,	/* 'dict' */
-	PROP_TYPE_DICT_KEYSYM	=	0x646b6579	/* 'dkey' */
-} prop_type_t;
+	PROP_INGEST_ERROR_NO_ERROR		= 0,
+	PROP_INGEST_ERROR_NO_KEY		= 1,
+	PROP_INGEST_ERROR_WRONG_TYPE		= 2,
+	PROP_INGEST_ERROR_HANDLER_FAILED	= 3
+} prop_ingest_error_t;
+
+typedef enum {
+	PROP_INGEST_FLAG_OPTIONAL		= 0x01
+} prop_ingest_flag_t;
+
+typedef struct _prop_ingest_context *prop_ingest_context_t;
+
+typedef boolean_t (*prop_ingest_handler_t)(prop_ingest_context_t,
+					   prop_object_t);
+
+typedef struct {
+	const char *pite_key;
+	prop_type_t pite_type;
+	unsigned int pite_flags;
+	prop_ingest_handler_t pite_handler;
+} prop_ingest_table_entry;
+
+#define	PROP_INGEST(key_, type_, handler_)				\
+	{ .pite_key = key_ ,						\
+	  .pite_type = type_ ,						\
+	  .pite_flags = 0 ,						\
+	  .pite_handler = handler_ }
+
+#define	PROP_INGEST_OPTIONAL(key_, type_, handler_)			\
+	{ .pite_key = key_ ,						\
+	  .pite_type = type_ ,						\
+	  .pite_flags = PROP_INGEST_FLAG_OPTIONAL ,			\
+	  .pite_handler = handler_ }
+
+#define	PROP_INGEST_END							\
+	{ .pite_key = NULL }
 
 __BEGIN_DECLS
-void		prop_object_retain(prop_object_t);
-void		prop_object_release(prop_object_t);
+prop_ingest_context_t
+		prop_ingest_context_alloc(void *);
+void		prop_ingest_context_free(prop_ingest_context_t);
 
-prop_type_t	prop_object_type(prop_object_t);
+prop_ingest_error_t
+		prop_ingest_context_error(prop_ingest_context_t);
+prop_type_t	prop_ingest_context_type(prop_ingest_context_t);
+const char *	prop_ingest_context_key(prop_ingest_context_t);
+void *		prop_ingest_context_private(prop_ingest_context_t);
 
-boolean_t	prop_object_equals(prop_object_t, prop_object_t);
-
-typedef struct _prop_object_iterator *prop_object_iterator_t;
-
-prop_object_t	prop_object_iterator_next(prop_object_iterator_t);
-void		prop_object_iterator_reset(prop_object_iterator_t);
-void		prop_object_iterator_release(prop_object_iterator_t);
+boolean_t	prop_dictionary_ingest(prop_dictionary_t,
+				       const prop_ingest_table_entry[],
+				       prop_ingest_context_t);
 __END_DECLS
 
-#endif /* _PROPLIB_PROP_OBJECT_H_ */
+#endif /* _PROPLIB_PROP_INGEST_H_ */
