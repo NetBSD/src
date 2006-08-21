@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.44 2006/07/16 16:22:24 jschauma Exp $ */
+/* $NetBSD: cp.c,v 1.44.2.1 2006/08/21 10:59:53 ghen Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.44 2006/07/16 16:22:24 jschauma Exp $");
+__RCSID("$NetBSD: cp.c,v 1.44.2.1 2006/08/21 10:59:53 ghen Exp $");
 #endif
 #endif /* not lint */
 
@@ -463,6 +463,13 @@ copy(char *argv[], enum op type, int fts_options)
 				else if (dne)
 					(void)chmod(to.p_path, 
 					    curr->fts_statp->st_mode);
+
+				/*
+				 * Since this is the second pass, we already
+				 * noted (and acted on) the existence of the
+				 * directory.
+				 */
+				dne = 0;
 			}
 			else
                         {
