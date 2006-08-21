@@ -1,10 +1,10 @@
 # /bin/sh
 #
-# $Id: cp.sh,v 1.1 2006/07/16 16:26:10 jschauma Exp $
+# $Id: cp.sh,v 1.1.2.1 2006/08/21 10:59:53 ghen Exp $
 #
 # Test cp(1)
 
-FILES="file file2 file3 link dir dir2 dirlink"
+FILES="file file2 file3 link dir dir2 dirlink target"
 
 cleanup() {
         rm -fr ${FILES}
@@ -160,24 +160,27 @@ linkdir_to_file() {
 
 dir_to_dne_no_R() {
 	cp dir dir2 2>/dev/null &&	\
-		error dir_to_dir "dir_to_dne_no_R should have failed, but didn't"
+		error dir_to_dne_no_R "should have failed, but didn't"
 }
 
 dir_to_dne() {
-	cp -R dir dir2 || error dir_do_dir "in dir_to_dne"
-	cp_compare dir_to_dir "dir/file" "dir2/file"
+	cp -R dir dir2 || error dir_do_dne "in dir_to_dne"
+	cp_compare dir_to_dne "dir/file" "dir2/file"
 	readlink dir2/link >/dev/null
 	if [ $? -gt 0 ]; then
-		error dir_to_dir "-R didn't copy a link as a link"
+		error dir_to_dne "-R didn't copy a link as a link"
 	fi
 }
 
 dir_to_dir_H() {
+	dir_to_dir_setup
+	cp -R dir dir2
+
 	chmod 777 dir
 
 	# copy a dir into a dir, only command-line links are followed
 	cp -R -H dirlink dir2 || error dir_do_dir "in dir_to_dir_H"
-	cp_compare dir_to_dir "dir/file" "dir2/dirlink/file"
+	cp_compare dir_to_dir_H "dir/file" "dir2/dirlink/file"
 	readlink dir2/dirlink/link >/dev/null
 	if [ $? -gt 0 ]; then
 		error dir_to_dir_H "didn't copy a link as a link"
@@ -191,22 +194,41 @@ dir_to_dir_H() {
 }
 
 dir_to_dir_L() {
+	dir_to_dir_setup
+	cp -R dir dir2
+	cp -R -H dirlink dir2
+
 	# copy a dir into a dir, following all links
 	cp -R -H -L dirlink dir2/dirlink || error dir_do_dir "in dir_to_dir_L"
-	cp_compare dir_to_dir "dir/file" "dir2/dirlink/dirlink/file"
+	cp_compare dir_to_dir_L "dir/file" "dir2/dirlink/dirlink/file"
 	readlink dir2/dirlink/dirlink/link >/dev/null &&	\
 		error dir_to_dir_L "-R -L copied a link as a link"
 }
 
-dir_to_dir() {
+dir_to_dir_subdir_exists() {
+	# recursively copy a dir into another dir, with some subdirs already
+	# existing
+	cleanup
+
+	mkdir -p dir/1 dir/2 dir/3 target/2
+	echo "file" > dir/2/file
+	cp -R dir/* target || error dir_to_dir "in dir_to_dir_subdir_exists"
+	cp_compare dir_to_dir_subdir_exists "dir/2/file" "target/2/file"
+}
+
+dir_to_dir_setup() {
 	reset
 	umask 077
 	cp -P file file2 file3 link dir
+}
 
+dir_to_dir() {
+	dir_to_dir_setup
 	dir_to_dne_no_R
 	dir_to_dne
 	dir_to_dir_H
 	dir_to_dir_L
+	dir_to_dir_subdir_exists
 }
 
 
