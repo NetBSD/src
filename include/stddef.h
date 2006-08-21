@@ -1,4 +1,4 @@
-/*	$NetBSD: stddef.h,v 1.14 2006/08/21 15:31:18 christos Exp $	*/
+/*	$NetBSD: stddef.h,v 1.15 2006/08/21 16:58:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -52,7 +52,7 @@ typedef	_BSD_WCHAR_T_	wchar_t;
 
 #include <sys/null.h>
 
-#if __GNUC__ >= 4
+#if __GNUC_PREREQ__(4, 0)
 #define	offsetof(type, member)	__builtin_offsetof(type, member)
 #elif !defined(__cplusplus)
 #define	offsetof(type, member)	((size_t)(unsigned long)(&((type *)0)->member))
