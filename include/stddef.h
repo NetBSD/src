@@ -1,4 +1,4 @@
-/*	$NetBSD: stddef.h,v 1.12 2006/08/21 15:02:23 christos Exp $	*/
+/*	$NetBSD: stddef.h,v 1.13 2006/08/21 15:26:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -55,8 +55,11 @@ typedef	_BSD_WCHAR_T_	wchar_t;
 #elif !defined(__cplusplus)
 #define	offsetof(type, member)	((size_t)(unsigned long)(&((type *)0)->member))
 #else
-#define	offsetof(type, member) (reinterpret_cast<size_t> \
-    (&reinterpret_cast<const volatile char &>(static_cast<type *>(0)->member)))
+#ifndef __offsetof__
+#define __offsetof__(a) a
+#endif
+#define	offsetof(type, member) __offsetof__((reinterpret_cast<size_t> \
+    (&reinterpret_cast<const volatile char &>(static_cast<type *>(0)->member))))
 #endif  
  
 #endif /* _STDDEF_H_ */
