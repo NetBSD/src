@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.59 2006/03/22 16:20:34 christos Exp $	*/
+/*	$NetBSD: ls.c,v 1.60 2006/08/21 19:08:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.59 2006/03/22 16:20:34 christos Exp $");
+__RCSID("$NetBSD: ls.c,v 1.60 2006/08/21 19:08:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -222,10 +222,12 @@ ls_main(int argc, char *argv[])
 		case 'k':
 			blocksize = 1024;
 			kflag = 1;
+			f_humanize = 0;
 			break;
 		/* The -h option forces all sizes to be measured in bytes. */
 		case 'h':
 			f_humanize = 1;
+			kflag = 0;
 			break;
 		case 'n':
 			f_numericonly = 1;
