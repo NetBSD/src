@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.17.4.1 2006/08/21 12:23:25 tron Exp $
+# $NetBSD: rescue.mi,v 1.17.4.2 2006/08/21 12:25:29 tron Exp $
 ./rescue/[					base-rescue-root
 ./rescue/atactl					base-rescue-root
 ./rescue/badsect				base-rescue-root
@@ -84,6 +84,7 @@
 ./rescue/mount_portal				base-rescue-root
 ./rescue/mount_procfs				base-rescue-root
 ./rescue/mount_smbfs				base-rescue-root
+./rescue/mount_tmpfs				base-rescue-root
 ./rescue/mount_ufs				base-rescue-root
 ./rescue/mount_umap				base-rescue-root
 ./rescue/mount_union				base-rescue-root
