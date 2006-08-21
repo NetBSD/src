@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.c,v 1.4 2006/08/21 04:13:28 thorpej Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.5 2006/08/21 15:39:02 he Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -696,7 +696,7 @@ prop_array_externalize_to_file(prop_array_t array, const char *fname)
 {
 	char *xml;
 	boolean_t rv;
-	int save_errno;
+	int save_errno = 0;	/* XXXGCC -Wuninitialized [mips, ...] */
 
 	xml = prop_array_externalize(array);
 	if (xml == NULL)
