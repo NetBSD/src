@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.103 2006/07/21 16:48:54 ad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.104 2006/08/22 14:07:07 martin Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.103 2006/07/21 16:48:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.104 2006/08/22 14:07:07 martin Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -511,6 +511,13 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
 	    &l->l_acflag)))
 		goto out;
+
+	if (SCARG(uap, cmd) == SWAP_DUMPOFF) {
+		/* drop the current dump device */
+		dumpdev = NODEV;
+		cpu_dumpconf();
+		goto out;
+	}
 
 	/*
 	 * at this point we expect a path name in arg.   we will
