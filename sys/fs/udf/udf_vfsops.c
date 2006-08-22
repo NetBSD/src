@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.10 2006/08/21 22:23:09 reinoud Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.11 2006/08/22 16:52:41 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.10 2006/08/21 22:23:09 reinoud Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.11 2006/08/22 16:52:41 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -214,7 +214,8 @@ free_udf_mountinfo(struct mount *mp)
 	ump = VFSTOUDF(mp);
 	if (ump) {
 		/* dispose of our descriptor pool */
-		pool_destroy(&ump->desc_pool);
+		if (ump->desc_pool)
+			pool_destroy(ump->desc_pool);
 
 		/* clear our data */
 		mp->mnt_data = NULL;
@@ -543,7 +544,9 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	 * sector_size.
 	 */
 	lb_size = udf_rw32(ump->logical_vol->lb_size);
-	pool_init(&ump->desc_pool, lb_size, 0, 0, 0, "udf_desc_pool", NULL);
+	ump->desc_pool = malloc(sizeof(struct pool), M_UDFMNT, M_WAITOK);
+	memset(ump->desc_pool, 0, sizeof(struct pool));
+	pool_init(ump->desc_pool, lb_size, 0, 0, 0, "udf_desc_pool", NULL);
 
 	/* read vds support tables like VAT, sparable etc. */
 	if ((error = udf_read_vds_tables(ump, args))) {
