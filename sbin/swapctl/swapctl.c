@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.29 2005/06/12 16:24:20 christos Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.30 2006/08/22 14:08:36 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -32,7 +32,7 @@
  * swapctl command:
  *	-A		add all devices listed as `sw' in /etc/fstab (also
  *			(sets the dump device, if listed in fstab)
- *	-D <dev>	set dumpdev to <dev>
+ *	-D [<dev>|none]	set dumpdev to <dev> or disable dumps
  *	-z		show dumpdev
  *	-U		remove all devices listed as `sw' in /etc/fstab.
  *	-t [blk|noblk]	if -A or -U , add (remove) either all block device
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swapctl.c,v 1.29 2005/06/12 16:24:20 christos Exp $");
+__RCSID("$NetBSD: swapctl.c,v 1.30 2006/08/22 14:08:36 martin Exp $");
 #endif
 
 
@@ -128,7 +128,7 @@ static	void change_priority(char *);
 static	int  add_swap(char *, int);
 static	int  delete_swap(char *);
 static	void set_dumpdev(char *);
-static	void get_dumpdev(void);
+static	int get_dumpdev(void);
 static	void do_fstab(int);
 static	void usage(void);
 static	void swapon_command(int, char **);
@@ -263,7 +263,8 @@ main(int argc, char *argv[])
 	/* Dispatch the command. */
 	switch (command) {
 	case CMD_l:
-		list_swap(pri, kflag, pflag, 0, 1, hflag);
+		if (!list_swap(pri, kflag, pflag, 0, 1, hflag))
+			exit(1);
 		break;
 
 	case CMD_s:
@@ -293,7 +294,8 @@ main(int argc, char *argv[])
 		break;
 
 	case CMD_z:
-		get_dumpdev();
+		if (!get_dumpdev())
+			exit(1);
 		break;
 
 	case CMD_U:
@@ -366,7 +368,7 @@ change_priority(char *path)
 {
 
 	if (swapctl(SWAP_CTL, path, pri) < 0)
-		warn("%s", path);
+		err(1, "%s", path);
 }
 
 /*
@@ -387,8 +389,7 @@ add_swap(char *path, int priority)
 
 	if (swapctl(SWAP_ON, path, priority) < 0) {
 oops:
-		warn("%s", path);
-		return (0);
+		err(1, "%s", path);
 	}
 	return (1);
 }
@@ -400,34 +401,40 @@ static int
 delete_swap(char *path)
 {
 
-	if (swapctl(SWAP_OFF, path, pri) < 0) {
-		warn("%s", path);
-		return (0);
-	}
+	if (swapctl(SWAP_OFF, path, pri) < 0) 
+		err(1, "%s", path);
 	return (1);
 }
 
 static void
 set_dumpdev(char *path)
 {
+	int rv;
 
-	if (swapctl(SWAP_DUMPDEV, path, 0) == -1)
-		warn("could not set dump device to %s", path);
+	if (strcmp(path, "none") == 0) 
+		rv = swapctl(SWAP_DUMPOFF, NULL, 0);
+	else
+		rv = swapctl(SWAP_DUMPDEV, path, 0);
+
+	if (rv == -1)
+		err(1, "could not set dump device to %s", path);
 	else
 		printf("%s: setting dump device to %s\n", getprogname(), path);
 }
 
-static void
+static int
 get_dumpdev(void)
 {
 	dev_t	dev;
 	char 	*name;
 
-	if (swapctl(SWAP_GETDUMPDEV, &dev, 0) == -1)
+	if (swapctl(SWAP_GETDUMPDEV, &dev, 0) == -1) {
 		warn("could not get dump device");
-	else if (dev == NODEV)
+		return 0;
+	} else if (dev == NODEV) {
 		printf("no dump device set\n");
-	else {
+		return 0;
+	} else {
 		name = devname(dev, S_IFBLK);
 		printf("dump device is ");
 		if (name)
@@ -435,6 +442,7 @@ get_dumpdev(void)
 		else
 			printf("major %d minor %d\n", major(dev), minor(dev));
 	}
+	return 1;
 }
 
 static void
