@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.57 2006/08/21 18:31:24 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.58 2006/08/22 20:06:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.57 2006/08/21 18:31:24 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.58 2006/08/22 20:06:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -522,19 +522,19 @@ main(argc, argv)
 	 * from kernel memory, otherwise switch back to kmem for the
 	 * duration of the kvm_openfiles() call.
 	 */
-	if (nlistf != NULL || memf != NULL || Pflag)
+	use_sysctl = (nlistf == NULL && memf == NULL);
+	if (!use_sysctl || Pflag)
 		(void)setgid(getgid());
 	else
 		(void)setegid(egid);
 
-	use_sysctl = (nlistf == NULL && memf == NULL);
 
-	if (!use_sysctl && (kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY,
-	    buf)) == NULL)
+	if ((kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY,
+	    buf)) == NULL && !use_sysctl)
 		errx(1, "%s", buf);
 
 	/* do this now anyway */
-	if (nlistf == NULL && memf == NULL)
+	if (use_sysctl)
 		(void)setgid(getgid());
 
 #ifndef SMALL
@@ -547,7 +547,7 @@ main(argc, argv)
 	}
 #endif
 
-	if (!use_sysctl && (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0)) {
+	if ((kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0) && !use_sysctl) {
 		if (nlistf)
 			errx(1, "%s: no namelist", nlistf);
 		else
