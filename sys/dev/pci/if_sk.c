@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.28 2006/08/20 18:04:53 riz Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.29 2006/08/22 06:24:10 riz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*	$OpenBSD: if_sk.c,v 1.33 2003/08/12 05:23:06 nate Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.116 2006/06/22 23:06:03 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -135,6 +135,7 @@
 #include <sys/queue.h>
 #include <sys/callout.h>
 #include <sys/sysctl.h>
+#include <sys/endian.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -730,10 +731,12 @@ sk_init_rx_ring(struct sk_if_softc *sc_if)
 		cd->sk_rx_chain[i].sk_desc = &rd->sk_rx_ring[i];
 		if (i == (SK_RX_RING_CNT - 1)) {
 			cd->sk_rx_chain[i].sk_next = &cd->sk_rx_chain[0];
-			rd->sk_rx_ring[i].sk_next = SK_RX_RING_ADDR(sc_if, 0);
+			rd->sk_rx_ring[i].sk_next =
+				htole32(SK_RX_RING_ADDR(sc_if, 0));
 		} else {
 			cd->sk_rx_chain[i].sk_next = &cd->sk_rx_chain[i + 1];
-			rd->sk_rx_ring[i].sk_next = SK_RX_RING_ADDR(sc_if,i+1);
+			rd->sk_rx_ring[i].sk_next =
+				htole32(SK_RX_RING_ADDR(sc_if,i+1));
 		}
 	}
 
@@ -765,10 +768,12 @@ sk_init_tx_ring(struct sk_if_softc *sc_if)
 		cd->sk_tx_chain[i].sk_desc = &rd->sk_tx_ring[i];
 		if (i == (SK_TX_RING_CNT - 1)) {
 			cd->sk_tx_chain[i].sk_next = &cd->sk_tx_chain[0];
-			rd->sk_tx_ring[i].sk_next = SK_TX_RING_ADDR(sc_if, 0);
+			rd->sk_tx_ring[i].sk_next =
+				htole32(SK_TX_RING_ADDR(sc_if, 0));
 		} else {
 			cd->sk_tx_chain[i].sk_next = &cd->sk_tx_chain[i + 1];
-			rd->sk_tx_ring[i].sk_next = SK_TX_RING_ADDR(sc_if,i+1);
+			rd->sk_tx_ring[i].sk_next =
+				htole32(SK_TX_RING_ADDR(sc_if,i+1));
 		}
 	}
 
@@ -828,10 +833,10 @@ sk_newbuf(struct sk_if_softc *sc_if, int i, struct mbuf *m,
 	c = &sc_if->sk_cdata.sk_rx_chain[i];
 	r = c->sk_desc;
 	c->sk_mbuf = m_new;
-	r->sk_data_lo = dmamap->dm_segs[0].ds_addr +
+	r->sk_data_lo = htole32(dmamap->dm_segs[0].ds_addr +
 	    (((vaddr_t)m_new->m_data
-		- (vaddr_t)sc_if->sk_cdata.sk_jumbo_buf));
-	r->sk_ctl = SK_JLEN | SK_RXSTAT;
+		- (vaddr_t)sc_if->sk_cdata.sk_jumbo_buf)));
+	r->sk_ctl = htole32(SK_JLEN | SK_RXSTAT);
 
 	SK_CDRXSYNC(sc_if, i, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
@@ -1858,7 +1863,7 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 {
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct sk_tx_desc	*f = NULL;
-	u_int32_t		frag, cur, cnt = 0;
+	u_int32_t		frag, cur, cnt = 0, sk_ctl;
 	int			i;
 	struct sk_txmap_entry	*entry;
 	bus_dmamap_t		txmap;
@@ -1902,13 +1907,13 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 			return(ENOBUFS);
 		}
 		f = &sc_if->sk_rdata->sk_tx_ring[frag];
-		f->sk_data_lo = txmap->dm_segs[i].ds_addr;
-		f->sk_ctl = txmap->dm_segs[i].ds_len | SK_OPCODE_DEFAULT;
+		f->sk_data_lo = htole32(txmap->dm_segs[i].ds_addr);
+		sk_ctl = txmap->dm_segs[i].ds_len | SK_OPCODE_DEFAULT;
 		if (cnt == 0)
-			f->sk_ctl |= SK_TXCTL_FIRSTFRAG;
+			sk_ctl |= SK_TXCTL_FIRSTFRAG;
 		else
-			f->sk_ctl |= SK_TXCTL_OWN;
-
+			sk_ctl |= SK_TXCTL_OWN;
+		f->sk_ctl = htole32(sk_ctl);
 		cur = frag;
 		SK_INC(frag, SK_TX_RING_CNT);
 		cnt++;
@@ -1919,13 +1924,14 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 
 	sc_if->sk_cdata.sk_tx_map[cur] = entry;
 	sc_if->sk_rdata->sk_tx_ring[cur].sk_ctl |=
-		SK_TXCTL_LASTFRAG|SK_TXCTL_EOF_INTR;
+		htole32(SK_TXCTL_LASTFRAG|SK_TXCTL_EOF_INTR);
 
 	/* Sync descriptors before handing to chip */
 	SK_CDTXSYNC(sc_if, *txidx, txmap->dm_nsegs,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-	sc_if->sk_rdata->sk_tx_ring[*txidx].sk_ctl |= SK_TXCTL_OWN;
+	sc_if->sk_rdata->sk_tx_ring[*txidx].sk_ctl |=
+		htole32(SK_TXCTL_OWN);
 
 	/* Sync first descriptor to hand it off */
 	SK_CDTXSYNC(sc_if, *txidx, 1, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -2042,7 +2048,7 @@ sk_rxeof(struct sk_if_softc *sc_if)
 	struct sk_chain		*cur_rx;
 	struct sk_rx_desc	*cur_desc;
 	int			i, cur, total_len = 0;
-	u_int32_t		rxstat;
+	u_int32_t		rxstat, sk_ctl;
 	bus_dmamap_t		dmamap;
 
 	i = sc_if->sk_cdata.sk_rx_prod;
@@ -2056,7 +2062,8 @@ sk_rxeof(struct sk_if_softc *sc_if)
 		SK_CDRXSYNC(sc_if, cur,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		if (sc_if->sk_rdata->sk_rx_ring[cur].sk_ctl & SK_RXCTL_OWN) {
+		sk_ctl = le32toh(sc_if->sk_rdata->sk_rx_ring[cur].sk_ctl);
+		if (sk_ctl & SK_RXCTL_OWN) {
 			/* Invalidate the descriptor -- it's not ready yet */
 			SK_CDRXSYNC(sc_if, cur, BUS_DMASYNC_PREREAD);
 			sc_if->sk_cdata.sk_rx_prod = i;
@@ -2070,10 +2077,10 @@ sk_rxeof(struct sk_if_softc *sc_if)
 		bus_dmamap_sync(sc_if->sk_softc->sc_dmatag, dmamap, 0,
 		    dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
-		rxstat = cur_desc->sk_xmac_rxstat;
+		rxstat = le32toh(cur_desc->sk_xmac_rxstat);
 		m = cur_rx->sk_mbuf;
 		cur_rx->sk_mbuf = NULL;
-		total_len = SK_RXBYTES(cur_desc->sk_ctl);
+		total_len = SK_RXBYTES(le32toh(cur_desc->sk_ctl));
 
 		sc_if->sk_cdata.sk_rx_map[cur] = 0;
 
@@ -2128,7 +2135,7 @@ sk_txeof(struct sk_if_softc *sc_if)
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct sk_tx_desc	*cur_tx;
 	struct ifnet		*ifp = &sc_if->sk_ethercom.ec_if;
-	u_int32_t		idx;
+	u_int32_t		idx, sk_ctl;
 	struct sk_txmap_entry	*entry;
 
 	DPRINTFN(3, ("sk_txeof\n"));
@@ -2143,15 +2150,16 @@ sk_txeof(struct sk_if_softc *sc_if)
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		cur_tx = &sc_if->sk_rdata->sk_tx_ring[idx];
+		sk_ctl = le32toh(cur_tx->sk_ctl);
 #ifdef SK_DEBUG
 		if (skdebug >= 3)
 			sk_dump_txdesc(cur_tx, idx);
 #endif
-		if (cur_tx->sk_ctl & SK_TXCTL_OWN) {
+		if (sk_ctl & SK_TXCTL_OWN) {
 			SK_CDTXSYNC(sc_if, idx, 1, BUS_DMASYNC_PREREAD);
 			break;
 		}
-		if (cur_tx->sk_ctl & SK_TXCTL_LASTFRAG)
+		if (sk_ctl & SK_TXCTL_LASTFRAG)
 			ifp->if_opackets++;
 		if (sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf != NULL) {
 			entry = sc_if->sk_cdata.sk_tx_map[idx];
@@ -2977,20 +2985,20 @@ void
 sk_dump_txdesc(struct sk_tx_desc *desc, int idx)
 {
 #define DESC_PRINT(X)					\
-	if (desc->X)					\
+	if (X)					\
 		printf("txdesc[%d]." #X "=%#x\n",	\
-		       idx, desc->X);
+		       idx, X);
 
-	DESC_PRINT(sk_ctl);
-	DESC_PRINT(sk_next);
-	DESC_PRINT(sk_data_lo);
-	DESC_PRINT(sk_data_hi);
-	DESC_PRINT(sk_xmac_txstat);
-	DESC_PRINT(sk_rsvd0);
-	DESC_PRINT(sk_csum_startval);
-	DESC_PRINT(sk_csum_startpos);
-	DESC_PRINT(sk_csum_writepos);
-	DESC_PRINT(sk_rsvd1);
+	DESC_PRINT(le32toh(desc->sk_ctl));
+	DESC_PRINT(le32toh(desc->sk_next));
+	DESC_PRINT(le32toh(desc->sk_data_lo));
+	DESC_PRINT(le32toh(desc->sk_data_hi));
+	DESC_PRINT(le32toh(desc->sk_xmac_txstat));
+	DESC_PRINT(le16toh(desc->sk_rsvd0));
+	DESC_PRINT(le16toh(desc->sk_csum_startval));
+	DESC_PRINT(le16toh(desc->sk_csum_startpos));
+	DESC_PRINT(le16toh(desc->sk_csum_writepos));
+	DESC_PRINT(le16toh(desc->sk_rsvd1));
 #undef PRINT
 }
 
