@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.h,v 1.4 2005/02/09 05:51:38 xtraeme Exp $	*/
+/*	$NetBSD: swapctl.h,v 1.5 2006/08/22 14:08:36 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -29,4 +29,4 @@
  */
 
 /* pri, kflag, pflag, tflag, dolong (1 for long, 0 for short) */
-void list_swap(int, int, int, int, int, int);
+int list_swap(int, int, int, int, int, int);

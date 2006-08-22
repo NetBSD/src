@@ -1,4 +1,4 @@
-/*	$NetBSD: swaplist.c,v 1.13 2005/02/09 05:51:38 xtraeme Exp $	*/
+/*	$NetBSD: swaplist.c,v 1.14 2006/08/22 14:08:36 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swaplist.c,v 1.13 2005/02/09 05:51:38 xtraeme Exp $");
+__RCSID("$NetBSD: swaplist.c,v 1.14 2006/08/22 14:08:36 martin Exp $");
 #endif
 
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: swaplist.c,v 1.13 2005/02/09 05:51:38 xtraeme Exp $");
 
 #include "swapctl.h"
 
-void
+int
 list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 {
 	struct	swapent *sep, *fsep;
@@ -68,7 +68,7 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 
 	if (nswap < 1) {
 		puts("no swap devices configured");
-		exit(0);
+		return 0;
 	}
 
 	fsep = sep = (struct swapent *)malloc(nswap * sizeof(*sep));
@@ -220,4 +220,6 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 	}
 	if (fsep)
 		(void)free(fsep);
+
+	return 1;
 }
