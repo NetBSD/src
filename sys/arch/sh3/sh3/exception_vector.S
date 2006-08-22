@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.18 2006/02/08 02:19:57 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.19 2006/08/22 21:47:57 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.18 2006/02/08 02:19:57 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.19 2006/08/22 21:47:57 uwe Exp $")
 
 
 /*
@@ -215,8 +215,6 @@ NENTRY(sh4_vector_tlbmiss)
 	__EXCEPTION_ENTRY
 	mov.l	_L.TEA4, r0
 	mov.l	@r0,	r6
-	mov.l	___L.VPN_MASK, r1
-	and	r1,	r6	/* va = trunc_page(va) */
 	mov.l	_L.EXPEVT4, r0
 	mov.l	@r0,	r0
 	mov.l	r0,	@(TF_EXPEVT, r14) /* trapframe->tf_expevt = EXPEVT */
@@ -233,7 +231,6 @@ NENTRY(sh4_vector_tlbmiss)
 2:		.long	_C_LABEL(curlwp)
 _L.EXPEVT4:	.long	SH4_EXPEVT
 _L.TEA4:	.long	SH4_TEA
-___L.VPN_MASK:	.long	0xfffff000
 
 /* LINTSTUB: Var: char sh4_vector_tlbmiss_end[1]; */
 VECTOR_END_MARKER(sh4_vector_tlbmiss_end)
