@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.819 2006/08/13 08:00:14 dsainty Exp $
+$NetBSD: pcidevs,v 1.820 2006/08/22 21:40:17 riz Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -456,7 +456,7 @@ vendor PUREDATA		0x11a6 	Pure Data
 vendor POWERCC		0x11a7	Power Computing
 vendor INNOSYS		0x11a9	InnoSys
 vendor ACTEL		0x11aa	Actel
-vendor GALILEO		0x11ab	Galileo (Marvell) Technology
+vendor MARVELL		0x11ab	Marvell
 vendor CANNON		0x11ac	Cannon IS
 vendor LITEON		0x11ad	Lite-On Communications
 vendor SCITEX		0x11ae	Scitex
@@ -1680,16 +1680,16 @@ product EFFICIENTNETS ENI155PA	0x0002	155P-MF1 ATM (ASIC)
 product EFFICIENTNETS ENI25P	0x0003	SpeedStream ENI-25p
 product EFFICIENTNETS SS3000	0x0005	SpeedStream 3000
 
-/* Galileo Technology products */
-product GALILEO GT64010A	0x0146	GT-64010A System Controller
-product GALILEO	GT64115		0x4111	GT-64115 System Controller
-product GALILEO	GT64011		0x4146	GT-64011 System Controller
-product GALILEO	SKNET		0x4320	SK-NET Gigabit Ethernet
-product GALILEO	GT64120		0x4620	GT-64120 System Controller
-product GALILEO	BELKIN		0x5005	Belkin Gigabit Ethernet
-product GALILEO	GT64130		0x6320	GT-64130 System Controller
-product GALILEO	GT64260		0x6430	GT-64260 System Controller
-product GALILEO	GT64360		0x6460	MV6436x System Controller
+/* Marvell products */
+product MARVELL GT64010A	0x0146	GT-64010A System Controller
+product MARVELL	GT64115		0x4111	GT-64115 System Controller
+product MARVELL	GT64011		0x4146	GT-64011 System Controller
+product MARVELL	SKNET		0x4320	SK-NET Gigabit Ethernet
+product MARVELL	GT64120		0x4620	GT-64120 System Controller
+product MARVELL	BELKIN		0x5005	Belkin Gigabit Ethernet
+product MARVELL	GT64130		0x6320	GT-64130 System Controller
+product MARVELL	GT64260		0x6430	GT-64260 System Controller
+product MARVELL	GT64360		0x6460	MV6436x System Controller
 
 /* Global Sun Tech products */
 product GLOBALSUN GL24110P	0x1101	GL24110P PCI IEEE 802.11b
