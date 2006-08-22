@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.4 2006/08/21 04:13:28 thorpej Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.5 2006/08/22 21:21:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ static const struct _prop_object_type _prop_object_type_number = {
 };
 
 #define	prop_object_is_number(x)	\
-	((x)->pn_obj.po_type == &_prop_object_type_number)
+	((x) != NULL && (x)->pn_obj.po_type == &_prop_object_type_number)
 
 static void
 _prop_number_free(void *v)
