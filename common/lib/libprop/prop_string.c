@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_string.c,v 1.3 2006/08/21 04:13:28 thorpej Exp $	*/
+/*	$NetBSD: prop_string.c,v 1.4 2006/08/22 21:21:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ static const struct _prop_object_type _prop_object_type_string = {
 };
 
 #define	prop_object_is_string(x)	\
-	((x)->ps_obj.po_type == &_prop_object_type_string)
+	((x) != NULL && (x)->ps_obj.po_type == &_prop_object_type_string)
 #define	prop_string_contents(x)  ((x)->ps_immutable ? (x)->ps_immutable : "")
 
 static void

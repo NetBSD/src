@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_bool.c,v 1.4 2006/08/21 04:13:28 thorpej Exp $	*/
+/*	$NetBSD: prop_bool.c,v 1.5 2006/08/22 21:21:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ static const struct _prop_object_type _prop_object_type_bool = {
 };
 
 #define	prop_object_is_bool(x)		\
-	((x)->pb_obj.po_type == &_prop_object_type_bool)
+	((x) != NULL && (x)->pb_obj.po_type == &_prop_object_type_bool)
 
 static void
 _prop_bool_free(void *v)
