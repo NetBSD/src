@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.818 2006/08/13 08:02:07 dsainty Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.819 2006/08/22 21:41:13 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.819 2006/08/13 08:00:14 dsainty Exp
+ *	NetBSD: pcidevs,v 1.820 2006/08/22 21:40:17 riz Exp
  */
 
 /*
@@ -1664,8 +1664,8 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Actel",
 	},
 	{
-	    PCI_VENDOR_GALILEO,
-	    "Galileo (Marvell) Technology",
+	    PCI_VENDOR_MARVELL,
+	    "Marvell",
 	},
 	{
 	    PCI_VENDOR_CANNON,
@@ -5768,39 +5768,39 @@ static const struct pci_product pci_products[] = {
 	    "SpeedStream 3000",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64010A,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64010A,
 	    "GT-64010A System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64115,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64115,
 	    "GT-64115 System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64011,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64011,
 	    "GT-64011 System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_SKNET,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_SKNET,
 	    "SK-NET Gigabit Ethernet",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64120,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64120,
 	    "GT-64120 System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_BELKIN,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_BELKIN,
 	    "Belkin Gigabit Ethernet",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64130,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64130,
 	    "GT-64130 System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64260,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64260,
 	    "GT-64260 System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64360,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64360,
 	    "MV6436x System Controller",
 	},
 	{

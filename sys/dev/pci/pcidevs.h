@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.819 2006/08/13 08:02:07 dsainty Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.820 2006/08/22 21:41:12 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.819 2006/08/13 08:00:14 dsainty Exp
+ *	NetBSD: pcidevs,v 1.820 2006/08/22 21:40:17 riz Exp
  */
 
 /*
@@ -463,7 +463,7 @@
 #define	PCI_VENDOR_POWERCC	0x11a7		/* Power Computing */
 #define	PCI_VENDOR_INNOSYS	0x11a9		/* InnoSys */
 #define	PCI_VENDOR_ACTEL	0x11aa		/* Actel */
-#define	PCI_VENDOR_GALILEO	0x11ab		/* Galileo (Marvell) Technology */
+#define	PCI_VENDOR_MARVELL	0x11ab		/* Marvell */
 #define	PCI_VENDOR_CANNON	0x11ac		/* Cannon IS */
 #define	PCI_VENDOR_LITEON	0x11ad		/* Lite-On Communications */
 #define	PCI_VENDOR_SCITEX	0x11ae		/* Scitex */
@@ -1687,16 +1687,16 @@
 #define	PCI_PRODUCT_EFFICIENTNETS_ENI25P	0x0003		/* SpeedStream ENI-25p */
 #define	PCI_PRODUCT_EFFICIENTNETS_SS3000	0x0005		/* SpeedStream 3000 */
 
-/* Galileo Technology products */
-#define	PCI_PRODUCT_GALILEO_GT64010A	0x0146		/* GT-64010A System Controller */
-#define	PCI_PRODUCT_GALILEO_GT64115	0x4111		/* GT-64115 System Controller */
-#define	PCI_PRODUCT_GALILEO_GT64011	0x4146		/* GT-64011 System Controller */
-#define	PCI_PRODUCT_GALILEO_SKNET	0x4320		/* SK-NET Gigabit Ethernet */
-#define	PCI_PRODUCT_GALILEO_GT64120	0x4620		/* GT-64120 System Controller */
-#define	PCI_PRODUCT_GALILEO_BELKIN	0x5005		/* Belkin Gigabit Ethernet */
-#define	PCI_PRODUCT_GALILEO_GT64130	0x6320		/* GT-64130 System Controller */
-#define	PCI_PRODUCT_GALILEO_GT64260	0x6430		/* GT-64260 System Controller */
-#define	PCI_PRODUCT_GALILEO_GT64360	0x6460		/* MV6436x System Controller */
+/* Marvell products */
+#define	PCI_PRODUCT_MARVELL_GT64010A	0x0146		/* GT-64010A System Controller */
+#define	PCI_PRODUCT_MARVELL_GT64115	0x4111		/* GT-64115 System Controller */
+#define	PCI_PRODUCT_MARVELL_GT64011	0x4146		/* GT-64011 System Controller */
+#define	PCI_PRODUCT_MARVELL_SKNET	0x4320		/* SK-NET Gigabit Ethernet */
+#define	PCI_PRODUCT_MARVELL_GT64120	0x4620		/* GT-64120 System Controller */
+#define	PCI_PRODUCT_MARVELL_BELKIN	0x5005		/* Belkin Gigabit Ethernet */
+#define	PCI_PRODUCT_MARVELL_GT64130	0x6320		/* GT-64130 System Controller */
+#define	PCI_PRODUCT_MARVELL_GT64260	0x6430		/* GT-64260 System Controller */
+#define	PCI_PRODUCT_MARVELL_GT64360	0x6460		/* MV6436x System Controller */
 
 /* Global Sun Tech products */
 #define	PCI_PRODUCT_GLOBALSUN_GL24110P	0x1101		/* GL24110P PCI IEEE 802.11b */
