@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.h,v 1.3 2006/05/18 03:05:19 thorpej Exp $	*/
+/*	$NetBSD: prop_object.h,v 1.3.2.1 2006/08/23 21:21:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@ typedef	int	boolean_t;
 typedef void *prop_object_t;
 
 typedef enum {
+	PROP_TYPE_UNKNOWN	=	0x00000000,
 	PROP_TYPE_BOOL		=	0x626f6f6c,	/* 'bool' */
 	PROP_TYPE_NUMBER	=	0x6e6d6272,	/* 'nmbr' */
 	PROP_TYPE_STRING	=	0x73746e67,	/* 'stng' */

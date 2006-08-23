@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_array.3,v 1.3 2006/07/09 19:04:02 wiz Exp $
+.\"	$NetBSD: prop_array.3,v 1.3.2.1 2006/08/23 21:21:14 tron Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 22, 2006
+.Dd August 19, 2006
 .Dt PROP_ARRAY 3
 .Os
 .Sh NAME
@@ -53,6 +53,10 @@
 .Nm prop_array_set ,
 .Nm prop_array_add ,
 .Nm prop_array_remove ,
+.Nm prop_array_externalize ,
+.Nm prop_array_internalize ,
+.Nm prop_array_externalize_to_file ,
+.Nm prop_array_internalize_from_file ,
 .Nm prop_array_equals
 .Nd array property collection object
 .Sh LIBRARY
@@ -93,6 +97,16 @@
 .Fn prop_array_add "prop_array_t array" "prop_object_t obj"
 .Ft void
 .Fn prop_array_remove "prop_array_t array" "unsigned int index"
+.\"
+.Ft char *
+.Fn prop_array_externalize "prop_array_t array"
+.Ft prop_array_t
+.Fn prop_array_internalize "const char *xml"
+.\"
+.Ft boolean_t
+.Fn prop_array_externalize_to_file "prop_array_t array" "const char *path"
+.Ft prop_array_t
+.Fn prop_array_internalize_from_file "const char *path"
 .\"
 .Ft boolean_t
 .Fn prop_array_equals "prop_array_t array1" "prop_array_t array2"
@@ -194,6 +208,43 @@ Returns
 .Dv TRUE
 if the two arrays are equivalent.
 Note: Objects contained in the array are compared by value, not by reference.
+.It Fn prop_array_externalize "prop_array_t array"
+Externalizes an array, returning a NUL-terminated buffer containing
+the XML representation of the array.
+The caller is responsible for freeing the returned buffer.
+If converting to the external representation fails for any reason,
+.Dv NULL
+is returned.
+.Pp
+In user space, the buffer is allocated using
+.Xr malloc 3 .
+In the kernel, the buffer is allocated using
+.Xr malloc 9
+using the malloc type
+.Dv M_TEMP .
+.It Fn prop_array_internalize "const char *xml"
+Parse the XML representation of a property list in the NUL-terminated
+buffer
+.Fa xml
+and return the corresponding array.
+Returns
+.Dv NULL
+if parsing fails for any reason.
+.It Fn prop_array_externalize_to_file "prop_array_t array" "const char *path"
+Externalizes an array and writes it to the file specified by
+.Fa path .
+The file is saved with the mode
+.Dv 0666
+as modified by the process's file creation mask
+.Pq see Xr umask 3
+and is written atomically.
+Returns
+.Dv FALSE
+if externalizing or writing the array fails for any reason.
+.It Fn prop_array_internalize_from_file "const char *path"
+Reads the XML property list contained in the file specified by
+.Fa path ,
+internalizes it, and returns the corresponding array.
 .El
 .Sh SEE ALSO
 .Xr prop_bool 3 ,

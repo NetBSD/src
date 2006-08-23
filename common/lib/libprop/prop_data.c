@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_data.c,v 1.2 2006/05/18 03:05:19 thorpej Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.2.2.1 2006/08/23 21:21:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -180,8 +180,10 @@ _prop_data_equals(void *v1, void *v2)
 	prop_data_t pd1 = v1;
 	prop_data_t pd2 = v2;
 
-	_PROP_ASSERT(prop_object_is_data(pd1));
-	_PROP_ASSERT(prop_object_is_data(pd2));
+	if (! (prop_object_is_data(pd1) &&
+	       prop_object_is_data(pd2)))
+		return (FALSE);
+
 	if (pd1 == pd2)
 		return (TRUE);
 	if (pd1->pd_size != pd2->pd_size)
@@ -265,7 +267,8 @@ prop_data_copy(prop_data_t opd)
 {
 	prop_data_t pd;
 
-	_PROP_ASSERT(prop_object_is_data(opd));
+	if (! prop_object_is_data(opd))
+		return (NULL);
 
 	pd = _prop_data_alloc();
 	if (pd != NULL) {
@@ -294,7 +297,9 @@ size_t
 prop_data_size(prop_data_t pd)
 {
 
-	_PROP_ASSERT(prop_object_is_data(pd));
+	if (! prop_object_is_data(pd))
+		return (0);
+
 	return (pd->pd_size);
 }
 
@@ -309,7 +314,8 @@ prop_data_data(prop_data_t pd)
 {
 	void *v;
 
-	_PROP_ASSERT(prop_object_is_data(pd));
+	if (! prop_object_is_data(pd))
+		return (NULL);
 
 	if (pd->pd_size == 0) {
 		_PROP_ASSERT(pd->pd_immutable == NULL);
@@ -334,7 +340,9 @@ const void *
 prop_data_data_nocopy(prop_data_t pd)
 {
 
-	_PROP_ASSERT(prop_object_is_data(pd));
+	if (! prop_object_is_data(pd))
+		return (NULL);
+
 	_PROP_ASSERT((pd->pd_size == 0 && pd->pd_immutable == NULL) ||
 		     (pd->pd_size != 0 && pd->pd_immutable != NULL));
 
@@ -361,7 +369,9 @@ boolean_t
 prop_data_equals_data(prop_data_t pd, const void *v, size_t size)
 {
 
-	_PROP_ASSERT(prop_object_is_data(pd));
+	if (! prop_object_is_data(pd))
+		return (FALSE);
+
 	if (pd->pd_size != size)
 		return (FALSE);
 	return (memcmp(pd->pd_immutable, v, size) == 0);

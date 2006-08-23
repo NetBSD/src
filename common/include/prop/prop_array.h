@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.h,v 1.2 2006/05/18 03:05:19 thorpej Exp $	*/
+/*	$NetBSD: prop_array.h,v 1.2.2.1 2006/08/23 21:21:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -65,6 +65,12 @@ boolean_t	prop_array_add(prop_array_t, prop_object_t);
 void		prop_array_remove(prop_array_t, unsigned int);
 
 boolean_t	prop_array_equals(prop_array_t, prop_array_t);
+
+char *		prop_array_externalize(prop_array_t);
+prop_array_t	prop_array_internalize(const char *);
+
+boolean_t	prop_array_externalize_to_file(prop_array_t, const char *);
+prop_array_t	prop_array_internalize_from_file(const char *);
 __END_DECLS
 
 #endif /* _PROPLIB_PROP_ARRAY_H_ */

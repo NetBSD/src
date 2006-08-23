@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.3 2006/07/07 22:29:55 thorpej Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.3.2.1 2006/08/23 21:21:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -104,8 +104,10 @@ _prop_number_equals(void *v1, void *v2)
 	prop_number_t num1 = v1;
 	prop_number_t num2 = v2;
 
-	_PROP_ASSERT(prop_object_is_number(num1));
-	_PROP_ASSERT(prop_object_is_number(num2));
+	if (! (prop_object_is_number(num1) &&
+	       prop_object_is_number(num2)))
+		return (FALSE);
+
 	return (num1->pn_number == num2->pn_number);
 }
 
@@ -144,7 +146,8 @@ prop_number_t
 prop_number_copy(prop_number_t opn)
 {
 
-	_PROP_ASSERT(prop_object_is_number(opn));
+	if (! prop_object_is_number(opn))
+		return (NULL);
 
 	return (_prop_number_alloc(opn->pn_number));
 }
@@ -158,7 +161,9 @@ int
 prop_number_size(prop_number_t pn)
 {
 
-	_PROP_ASSERT(prop_object_is_number(pn));
+	if (! prop_object_is_number(pn))
+		return (0);
+
 	if (pn->pn_number > UINT32_MAX)
 		return (64);
 	if (pn->pn_number > UINT16_MAX)
@@ -176,7 +181,13 @@ uint64_t
 prop_number_integer_value(prop_number_t pn)
 {
 
-	_PROP_ASSERT(prop_object_is_number(pn));
+	/*
+	 * XXX Impossible to distinguish between "not a prop_number_t"
+	 * XXX and "prop_number_t has a value of 0".
+	 */
+	if (! prop_object_is_number(pn))
+		return (0);
+
 	return (pn->pn_number);
 }
 
@@ -199,7 +210,9 @@ boolean_t
 prop_number_equals_integer(prop_number_t pn, uint64_t val)
 {
 
-	_PROP_ASSERT(prop_object_is_number(pn));
+	if (! prop_object_is_number(pn))
+		return (FALSE);
+
 	return (pn->pn_number == val);
 }
 
