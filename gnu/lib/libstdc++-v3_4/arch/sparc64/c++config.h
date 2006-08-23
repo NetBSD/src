@@ -272,7 +272,7 @@ namespace std
 /* #undef _GLIBCXX_HAVE_ISNANL */
 
 /* Defined if iswblank exists. */
-/* #undef _GLIBCXX_HAVE_ISWBLANK */
+#define _GLIBCXX_HAVE_ISWBLANK 1
 
 /* Define if LC_MESSAGES is available in <locale.h>. */
 #define _GLIBCXX_HAVE_LC_MESSAGES 1
@@ -473,19 +473,19 @@ namespace std
 #define _GLIBCXX_HAVE_UNISTD_H 1
 
 /* Defined if vfwscanf exists. */
-/* #undef _GLIBCXX_HAVE_VFWSCANF */
+#define _GLIBCXX_HAVE_VFWSCANF 1
 
 /* Defined if vswscanf exists. */
-/* #undef _GLIBCXX_HAVE_VSWSCANF */
+#define _GLIBCXX_HAVE_VSWSCANF 1
 
 /* Defined if vwscanf exists. */
-/* #undef _GLIBCXX_HAVE_VWSCANF */
+#define _GLIBCXX_HAVE_VWSCANF 1
 
 /* Define to 1 if you have the <wchar.h> header file. */
 #define _GLIBCXX_HAVE_WCHAR_H 1
 
 /* Defined if wcstof exists. */
-/* #undef _GLIBCXX_HAVE_WCSTOF */
+#define _GLIBCXX_HAVE_WCSTOF 1
 
 /* Define to 1 if you have the <wctype.h> header file. */
 #define _GLIBCXX_HAVE_WCTYPE_H 1
@@ -798,7 +798,7 @@ namespace std
 /* #undef _GLIBCXX_USE_C99_MATH */
 
 /* Define if iconv and related functions exist and are usable. */
-/* #undef _GLIBCXX_USE_ICONV */
+#define _GLIBCXX_USE_ICONV 1
 
 /* Define if LFS support is available. */
 /* #undef _GLIBCXX_USE_LFS */
