@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.42 2006/08/11 04:58:18 riz Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.43 2006/08/23 20:19:35 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
@@ -409,4 +409,10 @@ lib/libc/arch/i386/sys/__sigtramp2.S		1.2
 	instead of trying to read it from where the sigaction function may have
 	overwritten it with arbitrary bits.
 	[jld, ticket #10667]
+
+sys/net/if_spppsubr.c				1.96
+
+	Avoid buffer overflow in the in-kernel PPP code shared by ISDN PPP
+	interfaces ippp(4) and pppoe(4). This fixes SA2006-019 (CVE-2006-4304).
+	[adrianp, ticket #10677]
 
