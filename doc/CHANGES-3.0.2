@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.2,v 1.1.2.11 2006/08/12 19:22:40 riz Exp $
+#	$NetBSD: CHANGES-3.0.2,v 1.1.2.12 2006/08/23 20:14:55 tron Exp $
 
 A complete list of changes from the NetBSD 3.0.1 release to the NetBSD 3.0.2
 release:
@@ -84,4 +84,10 @@ distrib/utils/sysinst/mbr.c			1.75
 	Fixes PR/33682 and PR/32636 (and 33228 which has alrady been closed
 	as a duplicate of 32636).
 	[dsl, ticket #1463]
+
+sys/net/if_spppsubr.c				1.96
+
+	Avoid buffer overflow in the in-kernel PPP code shared by ISDN PPP
+	interfaces ippp(4) and pppoe(4). This fixes SA2006-019 (CVE-2006-4304).
+	[adrianp, ticket #1476]
 
