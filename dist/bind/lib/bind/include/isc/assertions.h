@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.h,v 1.2 2006/03/29 16:40:50 christos Exp $	*/
+/*	$NetBSD: assertions.h,v 1.3 2006/08/23 04:10:51 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -37,14 +37,14 @@ extern assertion_failure_callback __assertion_failed;
 void set_assertion_failure_callback(assertion_failure_callback f);
 const char *assertion_type_to_text(assertion_type type);
 
-#ifdef CHECK_ALL
+#if defined(CHECK_ALL) || defined(__COVERITY__)
 #define CHECK_REQUIRE		1
 #define CHECK_ENSURE		1
 #define CHECK_INSIST		1
 #define CHECK_INVARIANT		1
 #endif
 
-#ifdef CHECK_NONE
+#if defined(CHECK_NONE) && !defined(__COVERITY__)
 #define CHECK_REQUIRE		0
 #define CHECK_ENSURE		0
 #define CHECK_INSIST		0
