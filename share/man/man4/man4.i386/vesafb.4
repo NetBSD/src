@@ -1,4 +1,4 @@
-.\" $NetBSD: vesafb.4,v 1.3 2006/08/17 01:58:26 reed Exp $
+.\" $NetBSD: vesafb.4,v 1.4 2006/08/23 20:36:36 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -78,7 +78,10 @@ Sets the bits per pixel, such as 8 or 16.
 Default is 8.
 .It Cd options VESAFB_PM
 Enables the power management support by enabling the
-WSDISPLAYIO_SVIDEO and WSDISPLAYIO_GVIDEO ioctl implementations.
+.Dv WSDISPLAYIO_SVIDEO
+and
+.Dv WSDISPLAYIO_GVIDEO
+ioctl implementations.
 .\" which
 .\" .Xr wsfb 4
 .\" should use when it decides to blank the display.
