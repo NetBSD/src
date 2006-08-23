@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8583.c,v 1.4 2006/03/29 06:41:24 thorpej Exp $	*/
+/*	$NetBSD: pcf8583.c,v 1.5 2006/08/23 21:21:34 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -269,10 +269,11 @@ pcfrtc_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 {
 	struct pcfrtc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt;
+	int err;
 	uint8_t centi;
 
-	if (pcfrtc_clock_read(sc, &dt, &centi) == 0)
-		return (-1);
+	if ((err = pcfrtc_clock_read(sc, &dt, &centi)))
+		return err;
 
 	tv->tv_sec = clock_ymdhms_to_secs(&dt);
 	tv->tv_usec = centi * 10000;
@@ -285,11 +286,12 @@ pcfrtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 {
 	struct pcfrtc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt;
+	int err;
 
 	clock_secs_to_ymdhms(tv->tv_sec, &dt);
 
-	if (pcfrtc_clock_write(sc, &dt, tv->tv_usec / 10000) == 0)
-		return (-1);
+	if ((err = pcfrtc_clock_write(sc, &dt, tv->tv_usec / 10000) == 0))
+		return err;
 
 	return (0);
 }
@@ -326,26 +328,26 @@ pcfrtc_clock_read(struct pcfrtc_softc *sc, struct clock_ymdhms *dt,
     uint8_t *centi)
 {
 	u_int8_t bcd[10], cmdbuf[1];
-	int i;
+	int i, err;
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if ((err = iic_acquire_bus(sc->sc_tag, I2C_F_POLL))) {
 		printf("%s: pcfrtc_clock_read: failed to acquire I2C bus\n",
 		    sc->sc_dev.dv_xname);
-		return (0);
+		return err;
 	}
 
 	/* Read each timekeeping register in order. */
 	for (i = 0; i < 10; i++) {
 		cmdbuf[0] = pcf8583_rtc_offset[i];
 
-		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+		if ((err = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 			     sc->sc_address, cmdbuf, 1,
-			     &bcd[i], 1, I2C_F_POLL)) {
+			     &bcd[i], 1, I2C_F_POLL))) {
 			iic_release_bus(sc->sc_tag, I2C_F_POLL);
 			printf("%s: pcfrtc_clock_read: failed to read rtc "
 			    "at 0x%x\n", sc->sc_dev.dv_xname,
 			    pcf8583_rtc_offset[i]);
-			return (0);
+			return err;
 		}
 	}
 
@@ -380,7 +382,7 @@ pcfrtc_clock_read(struct pcfrtc_softc *sc, struct clock_ymdhms *dt,
 			dt->dt_year++;
 	}
 
-	return (1);
+	return 0;
 }
 
 static int
@@ -388,7 +390,7 @@ pcfrtc_clock_write(struct pcfrtc_softc *sc, struct clock_ymdhms *dt,
     uint8_t centi)
 {
 	uint8_t bcd[10], cmdbuf[2];
-	int i;
+	int i, err;
 
 	/*
 	 * Convert our time representation into something the PCF8583
@@ -405,29 +407,29 @@ pcfrtc_clock_write(struct pcfrtc_softc *sc, struct clock_ymdhms *dt,
 	bcd[8]                    = dt->dt_year % 100;
 	bcd[9]                    = dt->dt_year / 100;
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if ((err = iic_acquire_bus(sc->sc_tag, I2C_F_POLL))) {
 		printf("%s: pcfrtc_clock_write: failed to acquire I2C bus\n",
 		    sc->sc_dev.dv_xname);
-		return (0);
+		return err;
 	}
 
 	for (i = 1; i < 10; i++) {
 		cmdbuf[0] = pcf8583_rtc_offset[i];
-		if (iic_exec(sc->sc_tag,
+		if ((err = iic_exec(sc->sc_tag,
 			     i != 9 ? I2C_OP_WRITE : I2C_OP_WRITE_WITH_STOP,
 			     sc->sc_address, cmdbuf, 1,
-			     &bcd[i], 1, I2C_F_POLL)) {
+			     &bcd[i], 1, I2C_F_POLL))) {
 			iic_release_bus(sc->sc_tag, I2C_F_POLL);
 			printf("%s: pcfrtc_clock_write: failed to write rtc "
 			    " at 0x%x\n", sc->sc_dev.dv_xname,
 			    pcf8583_rtc_offset[i]);
-			return (0);
+			return err;
 		}
 	}
 
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
-	return (1);
+	return 0;
 }
 
 int
