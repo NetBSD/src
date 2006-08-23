@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.157 2006/07/19 21:11:37 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.158 2006/08/23 19:49:09 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.157 2006/07/19 21:11:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158 2006/08/23 19:49:09 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -335,7 +335,11 @@ exit1(struct lwp *l, int rv)
 
 	/*
 	 * If emulation has process exit hook, call it now.
+	 * Set the exit status now so that the exit hook has
+	 * an opportunity to tweak it (COMPAT_LINUX requires
+	 * this for thread group emulation)
 	 */
+	p->p_xstat = rv;
 	if (p->p_emul->e_proc_exit)
 		(*p->p_emul->e_proc_exit)(p);
 
@@ -367,12 +371,10 @@ exit1(struct lwp *l, int rv)
 	 */
 
 	/*
-	 * Save exit status and final rusage info, adding in child rusage
-	 * info and self times.
+	 * Save final rusage info, adding in child rusage info and self times.
 	 * In order to pick up the time for the current execution, we must
 	 * do this before unlinking the lwp from l_list.
 	 */
-	p->p_xstat = rv;
 	*p->p_ru = p->p_stats->p_ru;
 	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL);
 	ruadd(p->p_ru, &p->p_stats->p_cru);
