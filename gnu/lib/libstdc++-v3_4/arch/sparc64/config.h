@@ -166,7 +166,7 @@
 /* #undef HAVE_ISNANL */
 
 /* Defined if iswblank exists. */
-/* #undef HAVE_ISWBLANK */
+#define HAVE_ISWBLANK 1
 
 /* Define if LC_MESSAGES is available in <locale.h>. */
 #define HAVE_LC_MESSAGES 1
@@ -367,19 +367,19 @@
 #define HAVE_UNISTD_H 1
 
 /* Defined if vfwscanf exists. */
-/* #undef HAVE_VFWSCANF */
+#define HAVE_VFWSCANF 1
 
 /* Defined if vswscanf exists. */
-/* #undef HAVE_VSWSCANF */
+#define HAVE_VSWSCANF 1
 
 /* Defined if vwscanf exists. */
-/* #undef HAVE_VWSCANF */
+#define HAVE_VWSCANF 1
 
 /* Define to 1 if you have the <wchar.h> header file. */
 #define HAVE_WCHAR_H 1
 
 /* Defined if wcstof exists. */
-/* #undef HAVE_WCSTOF */
+#define HAVE_WCSTOF 1
 
 /* Define to 1 if you have the <wctype.h> header file. */
 #define HAVE_WCTYPE_H 1
@@ -692,7 +692,7 @@
 /* #undef _GLIBCXX_USE_C99_MATH */
 
 /* Define if iconv and related functions exist and are usable. */
-/* #undef _GLIBCXX_USE_ICONV */
+#define _GLIBCXX_USE_ICONV 1
 
 /* Define if LFS support is available. */
 /* #undef _GLIBCXX_USE_LFS */
