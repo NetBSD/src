@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.h,v 1.3 2006/07/05 21:46:10 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.h,v 1.3.2.1 2006/08/23 21:21:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -78,6 +78,10 @@ boolean_t	prop_dictionary_equals(prop_dictionary_t, prop_dictionary_t);
 
 char *		prop_dictionary_externalize(prop_dictionary_t);
 prop_dictionary_t prop_dictionary_internalize(const char *);
+
+boolean_t	prop_dictionary_externalize_to_file(prop_dictionary_t,
+						    const char *);
+prop_dictionary_t prop_dictionary_internalize_from_file(const char *);
 
 const char *	prop_dictionary_keysym_cstring_nocopy(prop_dictionary_keysym_t);
 

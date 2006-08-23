@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.c,v 1.3 2006/05/28 03:53:51 thorpej Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.3.2.1 2006/08/23 21:21:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,6 +38,10 @@
 
 #include <prop/prop_array.h>
 #include "prop_object_impl.h"
+
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <errno.h>
+#endif
 
 struct _prop_array {
 	struct _prop_object	pa_obj;
@@ -154,8 +158,9 @@ _prop_array_equals(void *v1, void *v2)
 	prop_array_t array2 = v2;
 	unsigned int idx;
 
-	_PROP_ASSERT(prop_object_is_array(array1));
-	_PROP_ASSERT(prop_object_is_array(array2));
+	if (! (prop_object_is_array(array1) &&
+	       prop_object_is_array(array2)))
+		return (FALSE);
 
 	if (array1 == array2)
 		return (TRUE);
@@ -295,7 +300,8 @@ prop_array_copy(prop_array_t opa)
 	prop_object_t po;
 	unsigned int idx;
 
-	_PROP_ASSERT(prop_object_is_array(opa));
+	if (! prop_object_is_array(opa))
+		return (NULL);
 
 	pa = _prop_array_alloc(opa->pa_count);
 	if (pa != NULL) {
@@ -334,7 +340,9 @@ unsigned int
 prop_array_capacity(prop_array_t pa)
 {
 
-	_PROP_ASSERT(prop_object_is_array(pa));
+	if (! prop_object_is_array(pa))
+		return (0);
+
 	return (pa->pa_capacity);
 }
 
@@ -346,7 +354,9 @@ unsigned int
 prop_array_count(prop_array_t pa)
 {
 
-	_PROP_ASSERT(prop_object_is_array(pa));
+	if (! prop_object_is_array(pa))
+		return (0);
+
 	return (pa->pa_count);
 }
 
@@ -360,7 +370,9 @@ boolean_t
 prop_array_ensure_capacity(prop_array_t pa, unsigned int capacity)
 {
 
-	_PROP_ASSERT(prop_object_is_array(pa));
+	if (! prop_object_is_array(pa))
+		return (FALSE);
+
 	if (capacity > pa->pa_capacity)
 		return (_prop_array_expand(pa, capacity));
 	return (TRUE);
@@ -376,7 +388,8 @@ prop_array_iterator(prop_array_t pa)
 {
 	struct _prop_array_iterator *pai;
 
-	_PROP_ASSERT(prop_object_is_array(pa));
+	if (! prop_object_is_array(pa))
+		return (NULL);
 
 	pai = _PROP_CALLOC(sizeof(*pai), M_TEMP);
 	if (pai == NULL)
@@ -424,7 +437,9 @@ prop_array_get(prop_array_t pa, unsigned int idx)
 {
 	prop_object_t po;
 
-	_PROP_ASSERT(prop_object_is_array(pa));
+	if (! prop_object_is_array(pa))
+		return (NULL);
+
 	if (idx >= pa->pa_count)
 		return (NULL);
 	po = pa->pa_array[idx];
@@ -444,7 +459,8 @@ prop_array_set(prop_array_t pa, unsigned int idx, prop_object_t po)
 {
 	prop_object_t opo;
 
-	_PROP_ASSERT(prop_object_is_array(pa));
+	if (! prop_object_is_array(pa))
+		return (FALSE);
 
 	if (prop_array_is_immutable(pa))
 		return (FALSE);
@@ -475,7 +491,9 @@ boolean_t
 prop_array_add(prop_array_t pa, prop_object_t po)
 {
 
-	_PROP_ASSERT(prop_object_is_array(pa));
+	if (! prop_object_is_array(pa))
+		return (FALSE);
+
 	_PROP_ASSERT(pa->pa_count <= pa->pa_capacity);
 
 	if (prop_array_is_immutable(pa) ||
@@ -500,7 +518,9 @@ prop_array_remove(prop_array_t pa, unsigned int idx)
 {
 	prop_object_t po;
 
-	_PROP_ASSERT(prop_object_is_array(pa));
+	if (! prop_object_is_array(pa))
+		return;
+
 	_PROP_ASSERT(idx < pa->pa_count);
 
 	/* XXX Should this be a _PROP_ASSERT()? */
@@ -528,6 +548,37 @@ prop_array_equals(prop_array_t array1, prop_array_t array2)
 {
 
 	return (_prop_array_equals(array1, array2));
+}
+
+/*
+ * prop_array_externalize --
+ *	Externalize an array, return a NUL-terminated buffer
+ *	containing the XML-style representation.  The buffer is allocated
+ * 	with the M_TEMP memory type.
+ */
+char *
+prop_array_externalize(prop_array_t pa)
+{
+	struct _prop_object_externalize_context *ctx;
+	char *cp;
+
+	ctx = _prop_object_externalize_context_alloc();
+	if (ctx == NULL)
+		return (NULL);
+	
+	if (_prop_object_externalize_header(ctx) == FALSE ||
+	    (*pa->pa_obj.po_type->pot_extern)(ctx, pa) == FALSE ||
+	    _prop_object_externalize_footer(ctx) == FALSE) {
+		/* We are responsible for releasing the buffer. */
+		_PROP_FREE(ctx->poec_buf, M_TEMP);
+		_prop_object_externalize_context_free(ctx);
+		return (NULL);
+	}
+
+	cp = ctx->poec_buf;
+	_prop_object_externalize_context_free(ctx);
+
+	return (cp);
 }
 
 /*
@@ -581,3 +632,101 @@ _prop_array_internalize(struct _prop_object_internalize_context *ctx)
 	prop_object_release(array);
 	return (NULL);
 }
+
+/*
+ * prop_array_internalize --
+ *	Create an array by parsing the XML-style representation.
+ */
+prop_array_t
+prop_array_internalize(const char *xml)
+{
+	prop_array_t array = NULL;
+	struct _prop_object_internalize_context *ctx;
+
+	ctx = _prop_object_internalize_context_alloc(xml);
+	if (ctx == NULL)
+		return (NULL);
+	
+	/* We start with a <plist> tag. */
+	if (_prop_object_internalize_find_tag(ctx, "plist",
+					      _PROP_TAG_TYPE_START) == FALSE)
+		goto out;
+	
+	/* Plist elements cannot be empty. */
+	if (ctx->poic_is_empty_element)
+		goto out;
+	
+	/*
+	 * We don't understand any plist attributes, but Apple XML
+	 * property lists often have a "version" attribute.  If we
+	 * see that one, we simply ignore it.
+	 */
+	if (ctx->poic_tagattr != NULL &&
+	    !_PROP_TAGATTR_MATCH(ctx, "version"))
+	    	goto out;
+	
+	/* Next we expect to see <array>. */
+	if (_prop_object_internalize_find_tag(ctx, "array",
+					      _PROP_TAG_TYPE_START) == FALSE)
+		goto out;
+	
+	array = _prop_array_internalize(ctx);
+	if (array == NULL)
+		goto out;
+	
+	/* We've advanced past </array>.  Now we want </plist>. */
+	if (_prop_object_internalize_find_tag(ctx, "plist",
+					      _PROP_TAG_TYPE_END) == FALSE) {
+		prop_object_release(array);
+		array = NULL;
+	}
+
+ out:
+	_prop_object_internalize_context_free(ctx);
+	return (array);
+}
+
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+/*
+ * prop_array_externalize_to_file --
+ *	Externalize an array to the specified file.
+ */
+boolean_t
+prop_array_externalize_to_file(prop_array_t array, const char *fname)
+{
+	char *xml;
+	boolean_t rv;
+	int save_errno;
+
+	xml = prop_array_externalize(array);
+	if (xml == NULL)
+		return (FALSE);
+	rv = _prop_object_externalize_write_file(fname, xml, strlen(xml));
+	if (rv == FALSE)
+		save_errno = errno;
+	_PROP_FREE(xml, M_TEMP);
+	if (rv == FALSE)
+		errno = save_errno;
+
+	return (rv);
+}
+
+/*
+ * prop_array_internalize_from_file --
+ *	Internalize an array from a file.
+ */
+prop_array_t
+prop_array_internalize_from_file(const char *fname)
+{
+	struct _prop_object_internalize_mapped_file *mf;
+	prop_array_t array;
+
+	mf = _prop_object_internalize_map_file(fname);
+	if (mf == NULL)
+		return (NULL);
+	array = prop_array_internalize(mf->poimf_xml);
+	_prop_object_internalize_unmap_file(mf);
+
+	return (array);
+}
+#endif /* _KERNEL && !_STANDALONE */

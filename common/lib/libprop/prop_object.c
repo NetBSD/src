@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.3 2006/05/18 16:23:55 thorpej Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.3.2.1 2006/08/23 21:21:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,6 +38,15 @@
 
 #include <prop/prop_object.h>
 #include "prop_object_impl.h"
+
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <unistd.h>
+#endif
 
 #ifdef _STANDALONE
 void *
@@ -85,6 +94,7 @@ _prop_object_init(struct _prop_object *po, const struct _prop_object_type *pot)
  *	Finalize an object.  Called when sub-classes destroy
  *	an instance.
  */
+/*ARGSUSED*/
 void
 _prop_object_fini(struct _prop_object *po)
 {
@@ -240,6 +250,43 @@ _prop_object_externalize_append_char(
 	}
 
 	ctx->poec_buf[ctx->poec_len++] = c;
+
+	return (TRUE);
+}
+
+/*
+ * _prop_object_externalize_header --
+ *	Append the standard XML header to the externalize buffer.
+ */
+boolean_t
+_prop_object_externalize_header(struct _prop_object_externalize_context *ctx)
+{
+	static const char _plist_xml_header[] =
+"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+"<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n";
+
+	if (_prop_object_externalize_append_cstring(ctx,
+						 _plist_xml_header) == FALSE ||
+	    _prop_object_externalize_start_tag(ctx,
+				       "plist version=\"1.0\"") == FALSE ||
+	    _prop_object_externalize_append_char(ctx, '\n') == FALSE)
+		return (FALSE);
+
+	return (TRUE);
+}
+
+/*
+ * _prop_object_externalize_footer --
+ *	Append the standard XML footer to the externalize buffer.  This
+ *	also NUL-terminates the buffer.
+ */
+boolean_t
+_prop_object_externalize_footer(struct _prop_object_externalize_context *ctx)
+{
+
+	if (_prop_object_externalize_end_tag(ctx, "plist") == FALSE ||
+	    _prop_object_externalize_append_char(ctx, '\0') == FALSE)
+		return (FALSE);
 
 	return (TRUE);
 }
@@ -662,6 +709,200 @@ _prop_object_internalize_context_free(
 	_PROP_FREE(ctx, M_TEMP);
 }
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+/*
+ * _prop_object_externalize_file_dirname --
+ *	dirname(3), basically.  We have to roll our own because the
+ *	system dirname(3) isn't reentrant.
+ */
+static void
+_prop_object_externalize_file_dirname(const char *path, char *result)
+{
+	const char *lastp;
+	size_t len;
+
+	/*
+	 * If `path' is a NULL pointer or points to an empty string,
+	 * return ".".
+	 */
+	if (path == NULL || *path == '\0')
+		goto singledot;
+	
+	/* String trailing slashes, if any. */
+	lastp = path + strlen(path) - 1;
+	while (lastp != path && *lastp == '/')
+		lastp--;
+	
+	/* Terminate path at the last occurrence of '/'. */
+	do {
+		if (*lastp == '/') {
+			/* Strip trailing slashes, if any. */
+			while (lastp != path && *lastp == '/')
+				lastp--;
+
+			/* ...and copy the result into the result buffer. */
+			len = (lastp - path) + 1 /* last char */;
+			if (len > (PATH_MAX - 1))
+				len = PATH_MAX - 1;
+
+			memcpy(result, path, len);
+			result[len] = '\0';
+			return;
+		}
+	} while (--lastp >= path);
+
+ 	/* No /'s found, return ".". */
+ singledot:
+	strcpy(result, ".");
+}
+
+/*
+ * _prop_object_externalize_write_file --
+ *	Write an externalized dictionary to the specified file.
+ *	The file is written atomically from the caller's perspective,
+ *	and the mode set to 0666 modified by the caller's umask.
+ */
+boolean_t
+_prop_object_externalize_write_file(const char *fname, const char *xml,
+    size_t len)
+{
+	char tname[PATH_MAX];
+	int fd;
+	int save_errno;
+
+	if (len > SSIZE_MAX) {
+		errno = EFBIG;
+		return (FALSE);
+	}
+
+	/*
+	 * Get the directory name where the file is to be written
+	 * and create the temporary file.
+	 *
+	 * We don't use mkstemp() because mkstemp() always creates the
+	 * file with mode 0600.  We do, however, use mktemp() safely.
+	 */
+ again:
+	_prop_object_externalize_file_dirname(fname, tname);
+	if (strlcat(tname, "/.plistXXXXXX", sizeof(tname)) >= sizeof(tname)) {
+		errno = ENAMETOOLONG;
+		return (FALSE);
+	}
+	if (mktemp(tname) == NULL)
+		return (FALSE);
+	if ((fd = open(tname, O_CREAT|O_RDWR|O_EXCL, 0666)) == -1) {
+		if (errno == EEXIST)
+			goto again;
+		return (FALSE);
+	}
+
+	if (write(fd, xml, len) != (ssize_t)len)
+		goto bad;
+
+	if (fsync(fd) == -1)
+		goto bad;
+
+	(void) close(fd);
+	fd = -1;
+
+	if (rename(tname, fname) == -1)
+		goto bad;
+
+	return (TRUE);
+
+ bad:
+	save_errno = errno;
+	if (fd != -1)
+		(void) close(fd);
+	(void) unlink(tname);
+	errno = save_errno;
+	return (FALSE);
+}
+
+/*
+ * _prop_object_internalize_map_file --
+ *	Map a file for the purpose of internalizing it.
+ */
+struct _prop_object_internalize_mapped_file *
+_prop_object_internalize_map_file(const char *fname)
+{
+	struct stat sb;
+	struct _prop_object_internalize_mapped_file *mf;
+	size_t pgsize = sysconf(_SC_PAGESIZE);
+	size_t pgmask = pgsize - 1;
+	boolean_t need_guard = FALSE;
+	int fd;
+
+	mf = _PROP_MALLOC(sizeof(*mf), M_TEMP);
+	if (mf == NULL)
+		return (NULL);
+	
+	fd = open(fname, O_RDONLY, 0400);
+	if (fd == -1) {
+		_PROP_FREE(mf, M_TEMP);
+		return (NULL);
+	}
+
+	if (fstat(fd, &sb) == -1) {
+		(void) close(fd);
+		_PROP_FREE(mf, M_TEMP);
+		return (NULL);
+	}
+	mf->poimf_mapsize = ((size_t)sb.st_size + pgmask) & ~pgmask;
+	if (mf->poimf_mapsize < sb.st_size) {
+		(void) close(fd);
+		_PROP_FREE(mf, M_TEMP);
+		return (NULL);
+	}
+
+	/*
+	 * If the file length is an integral number of pages, then we
+	 * need to map a guard page at the end in order to provide the
+	 * necessary NUL-termination of the buffer.
+	 */
+	if ((sb.st_size & pgmask) == 0)
+		need_guard = TRUE;
+
+	mf->poimf_xml = mmap(NULL, need_guard ? mf->poimf_mapsize + pgsize
+			    		      : mf->poimf_mapsize,
+			    PROT_READ, MAP_FILE|MAP_SHARED, fd, (off_t)0);
+	(void) close(fd);
+	if (mf->poimf_xml == MAP_FAILED) {
+		_PROP_FREE(mf, M_TEMP);
+		return (NULL);
+	}
+	(void) madvise(mf->poimf_xml, mf->poimf_mapsize, MADV_SEQUENTIAL);
+
+	if (need_guard) {
+		if (mmap(mf->poimf_xml + mf->poimf_mapsize,
+			 pgsize, PROT_READ,
+			 MAP_ANON|MAP_PRIVATE|MAP_FIXED, -1,
+			 (off_t)0) == MAP_FAILED) {
+			(void) munmap(mf->poimf_xml, mf->poimf_mapsize);
+			_PROP_FREE(mf, M_TEMP);
+			return (NULL);
+		}
+		mf->poimf_mapsize += pgsize;
+	}
+
+	return (mf);
+}
+
+/*
+ * _prop_object_internalize_unmap_file --
+ *	Unmap a file previously mapped for internalizing.
+ */
+void
+_prop_object_internalize_unmap_file(
+    struct _prop_object_internalize_mapped_file *mf)
+{
+
+	(void) madvise(mf->poimf_xml, mf->poimf_mapsize, MADV_DONTNEED);
+	(void) munmap(mf->poimf_xml, mf->poimf_mapsize);
+	_PROP_FREE(mf, M_TEMP);
+}
+#endif /* !_KERNEL && !_STANDALONE */
+
 /*
  * Retain / release serialization --
  *
@@ -727,6 +968,9 @@ prop_type_t
 prop_object_type(prop_object_t obj)
 {
 	struct _prop_object *po = obj;
+
+	if (obj == NULL)
+		return (PROP_TYPE_UNKNOWN);
 
 	return (po->po_type->pot_type);
 }
