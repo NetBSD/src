@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.75 2006/04/11 14:17:09 rpaulo Exp $	*/
+/*	$NetBSD: twe.c,v 1.76 2006/08/23 15:44:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.75 2006/04/11 14:17:09 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.76 2006/08/23 15:44:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1762,9 +1762,6 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	int s, error = 0;
 	u_int8_t cmdid;
 
-	if (securelevel >= 2)
-		return (EPERM);
-
 	twe = device_lookup(&twe_cd, minor(dev));
 	tu = (struct twe_usercommand *)data;
 	tp = (struct twe_paramcommand *)data;
@@ -1773,6 +1770,9 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	/* This is intended to be compatible with the FreeBSD interface. */
 	switch (cmd) {
 	case TWEIO_COMMAND:
+		if (securelevel >= 2)
+			return (EPERM);
+
 		/* XXX mutex */
 		if (tu->tu_size > 0) {
 			/*
