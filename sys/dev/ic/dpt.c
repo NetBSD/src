@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.48 2006/05/21 23:56:09 christos Exp $	*/
+/*	$NetBSD: dpt.c,v 1.49 2006/08/23 15:44:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.48 2006/05/21 23:56:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.49 2006/08/23 15:44:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1117,8 +1117,6 @@ int
 dptopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
-	if (securelevel > 1)
-		return (EPERM);
 	if (device_lookup(&dpt_cd, minor(dev)) == NULL)
 		return (ENXIO);
 
@@ -1156,6 +1154,9 @@ dptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case DPT_EATAUSRCMD:
+		if (securelevel > 1)
+			return (EPERM);
+
 		if (IOCPARM_LEN(cmd) < sizeof(struct eata_ucp)) {
 			DPRINTF(("%s: ucp %lu vs %lu bytes\n",
 			    sc->sc_dv.dv_xname, IOCPARM_LEN(cmd),
