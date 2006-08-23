@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.56 2006/08/15 03:29:55 sanjayl Exp $	*/
+/*	$NetBSD: locore.S,v 1.57 2006/08/23 05:58:39 sanjayl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -103,7 +103,7 @@ __start:
 1:
 #endif
 
-#if defined (PMAC_G5)
+#if defined (PMAC_G5) || defined (MAMBO)
 	 /* and clear HID5 DCBZ bits (56/57), need to do this early */
 	mfspr	11,SPR_HID5
 	rldimi	11,0,6,56
