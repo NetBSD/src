@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.34 2006/08/23 19:49:09 manu Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.35 2006/08/23 21:17:48 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.34 2006/08/23 19:49:09 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.35 2006/08/23 21:17:48 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -372,10 +372,10 @@ linux_sys_exit_group(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+#ifdef LINUX_NPTL
 	struct linux_sys_exit_group_args /* {
 		syscallarg(int) error_code;
 	} */ *uap = v;
-#ifdef LINUX_NPTL
 	struct proc *p = l->l_proc;
 	struct linux_emuldata *led = p->p_emuldata;
 	struct linux_emuldata *e;
