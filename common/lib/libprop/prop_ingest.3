@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_ingest.3,v 1.1 2006/08/21 04:13:28 thorpej Exp $
+.\"	$NetBSD: prop_ingest.3,v 1.2 2006/08/23 20:50:37 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,7 +70,7 @@
 .Sh DESCRIPTION
 The
 .Nm prop_dictionary_ingest
-function provides a convenient way to convert a property list into an
+function provides a convenient way to convert a property list into
 an arbitrary binary format or to extract values from dictionaries in a
 way that is convenient to an application
 .Pq for configuration files, for example .
@@ -83,7 +83,9 @@ Each rule consists of three items:
 A C string containing a key to be looked up in the dictionary.
 .It
 The expected property type of the object associated with the key
-.Pq or Dv PROP_TYPE_UNKNOWN to specify that any type is allowed .
+(or
+.Dv PROP_TYPE_UNKNOWN
+to specify that any type is allowed).
 .It
 A callback function of type
 .Dv prop_ingest_handler_t
@@ -123,7 +125,9 @@ If the object does not exist and the rule is not marked as optional, then
 an error is returned.
 Otherwise, the handler specified in the rule is invoked with the ingest
 context and the object
-.Pq or Dv NULL if the key does not exist in the dictionary .
+(or
+.Dv NULL
+if the key does not exist in the dictionary).
 The handler should return
 .Dv FALSE
 if the value of the object is invalid to indicate failure and
