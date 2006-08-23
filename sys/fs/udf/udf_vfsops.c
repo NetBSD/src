@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.8.2.1 2006/08/12 16:05:28 riz Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.8.2.2 2006/08/23 21:27:35 tron Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.8.2.1 2006/08/12 16:05:28 riz Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.8.2.2 2006/08/23 21:27:35 tron Exp $");
 #endif /* not lint */
 
 
@@ -213,6 +213,10 @@ free_udf_mountinfo(struct mount *mp)
 
 	ump = VFSTOUDF(mp);
 	if (ump) {
+		/* dispose of our descriptor pool */
+		pool_destroy(&ump->desc_pool);
+
+		/* clear our data */
 		mp->mnt_data = NULL;
 		for (i = 0; i < UDF_ANCHORS; i++)
 			MPFREE(ump->anchors[i], M_UDFVOLD);
@@ -226,11 +230,6 @@ free_udf_mountinfo(struct mount *mp)
 		MPFREE(ump->fileset_desc,     M_UDFVOLD);
 		MPFREE(ump->vat_table,        M_UDFVOLD);
 		MPFREE(ump->sparing_table,    M_UDFVOLD);
-
-		/*
-		 * Note that the node related (e)fe descriptors pool is
-		 * destroyed already if it was used.
-		 */
 
 		free(ump, M_UDFMNT);
 	}
@@ -432,9 +431,6 @@ udf_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	 * XXX no system nodes defined yet.  Code to reclaim them is calling
 	 * VOP_RECLAIM on the nodes themselves.
 	 */
-
-	/* dispose of our descriptor pool */
-	pool_destroy(&ump->desc_pool);
 
 	/* close device */
 	DPRINTF(VOLUMES, ("closing device\n"));
