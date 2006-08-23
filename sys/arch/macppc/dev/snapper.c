@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.10 2006/08/11 20:37:43 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.11 2006/08/23 02:56:32 macallan Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 
 /*-
@@ -766,7 +766,8 @@ snapper_set_params(void *h, int setmode, int usemode,
 
 		p = mode == AUMODE_PLAY ? play : rec;
 		if (p->sample_rate < 4000 || p->sample_rate > 50000) {
-			DPRINTF("snapper_set_params: invalid rate %d\n", p->sample_rate);
+			DPRINTF("snapper_set_params: invalid rate %d\n", 
+			    p->sample_rate);
 			return EINVAL;
 		}
 
@@ -952,10 +953,10 @@ snapper_get_port(void *h, mixer_ctrl_t *mc)
 		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = 0;
 		return 0;
 	case SNAPPER_TREBLE:
-		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO]=sc->sc_treble;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_treble;
 		return 0;
 	case SNAPPER_BASS:
-		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO]=sc->sc_bass;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_bass;
 		return 0;
 	case SNAPPER_DIGI1:
 		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = sc->mixer[0];
@@ -1230,12 +1231,12 @@ snapper_set_volume(struct snapper_softc *sc, int left, int right)
 	vol[5] = right;
 #else
 	/* 0x07ffff is LOUD, 0x000000 is mute */
-	vol[0]=0/*(left>>5)&0xff*/;		/* upper 3 bits */
-	vol[1]=(left/*<<3*/)&0xff;	/* lower 5 bits */
-	vol[2]=0;
-	vol[3]=0/*(right>>5)&0xff*/;		/* upper 3 bits */
-	vol[4]=(right/*<<3*/)&0xff;	/* lower 5 bits */
-	vol[5]=0;
+	vol[0] = 0 /*(left >> 5) & 0xff*/;             /* upper 3 bits */
+	vol[1] = (left /*<< 3*/) & 0xff;      /* lower 5 bits */
+	vol[2] = 0;
+	vol[3] = 0 /*(right >> 5) & 0xff*/;            /* upper 3 bits */
+	vol[4] = (right /*<< 3*/) & 0xff;     /* lower 5 bits */
+	vol[5] = 0;
 #endif
 	tas3004_write(sc, DEQ_VOLUME, vol);
 }
@@ -1243,20 +1244,20 @@ snapper_set_volume(struct snapper_softc *sc, int left, int right)
 void snapper_set_treble(struct snapper_softc *sc, int stuff)
 {
 	uint8_t reg;
-	if((stuff>=0) && (stuff<=255) && (sc->sc_treble!=stuff)) {
-		reg=snapper_basstab[(stuff>>3)+2];
-		sc->sc_treble=stuff;
-		tas3004_write(sc, DEQ_TREBLE,&reg);
+	if ((stuff >= 0) && (stuff <= 255) && (sc->sc_treble != stuff)) {
+		reg = snapper_basstab[(stuff >> 3) + 2];
+		sc->sc_treble = stuff;
+		tas3004_write(sc, DEQ_TREBLE, &reg);
 	}
 }
 
 void snapper_set_bass(struct snapper_softc *sc, int stuff)
 {
 	uint8_t reg;
-	if((stuff>=0) && (stuff<=255) && (stuff!=sc->sc_bass)) {
-		reg=snapper_basstab[(stuff>>3)+2];
-		sc->sc_bass=stuff;
-		tas3004_write(sc, DEQ_BASS,&reg);
+	if ((stuff >= 0) && (stuff <= 255) && (stuff != sc->sc_bass)) {
+		reg = snapper_basstab[(stuff >> 3) + 2];
+		sc->sc_bass = stuff;
+		tas3004_write(sc, DEQ_BASS, &reg);
 	}
 }
 
@@ -1497,7 +1498,7 @@ tas3004_write(struct snapper_softc *sc, u_int reg, const void *data)
 	KASSERT(size > 0);
 
 #ifdef SNAPPER_DEBUG
-	printf("reg: %x, %d %d\n",reg,size,((const char*)data)[0]);
+	printf("reg: %x, %d %d\n", reg, size, ((const char*)data)[0]);
 #endif
 #if 0
 	ki2c_setmode(sc->sc_i2c, 8); /* std+sub mode */
