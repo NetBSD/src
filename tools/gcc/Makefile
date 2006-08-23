@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2006/07/01 05:59:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.22 2006/08/23 20:45:24 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -113,6 +113,7 @@ native-gcc: .native/.configure_done
 			ALL_GCC_C= ALL_GCC_CXX= \
 			CC_FOR_TARGET=${CC:Q}' '${CCADDFLAGS:Q} \
 			CXX_FOR_TARGET=${CXX:Q}' '${CCADDFLAGS:Q}' '${CXXADDFLAGS:Q} \
+			RAW_CXX_FOR_TARGET=${CXX:Q}' '${CCADDFLAGS:Q}' '${CXXADDFLAGS:Q} \
 			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include \
 			ac_cv_prog_cc_cross=yes) && \
 	true
