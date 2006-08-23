@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.2 2006/07/12 15:03:24 gdamore Exp $ */
+/* $NetBSD: psm.c,v 1.3 2006/08/23 03:53:32 jnemeth Exp $ */
 /*
  * Copyright (c) 2006 Itronix Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  * time with APM at this point, and some of sysmon seems "lacking".
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.2 2006/07/12 15:03:24 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.3 2006/08/23 03:53:32 jnemeth Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ CFATTACH_DECL(psm, sizeof(struct psm_softc),
     psm_match, psm_attach, NULL, NULL);
 
 
-static int
+int
 psm_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
@@ -138,7 +138,7 @@ psm_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (1);
 }
 
-static void
+void
 psm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct psm_softc	*sc = (struct psm_softc *)self;
