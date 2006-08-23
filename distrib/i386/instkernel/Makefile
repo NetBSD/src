@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2006/06/08 22:17:07 hubertf Exp $
+#	$NetBSD: Makefile,v 1.3 2006/08/23 19:02:37 bouyer Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -25,6 +25,11 @@ MDSETTARGETS=		INSTALL			${RAMDISK_B}	-	\
 			INSTALL_TINY		${RESCUE_T}	netbsd-RESCUE_TINY
 
 MDSET_RELEASEDIR=	binary/kernel
+# do not strip Xen kernels, there's no space constraints here.
+MDSET_NOSTRIP.netbsd-INSTALL_XEN2_DOMU=
+MDSET_NOSTRIP.netbsd-INSTALL_XEN3_DOMU=
+MDSET_NOSYMBOLS.netbsd-INSTALL_XEN2_DOMU=
+MDSET_NOSYMBOLS.netbsd-INSTALL_XEN3_DOMU=
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
 
