@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.30 2006/08/22 14:08:36 martin Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.31 2006/08/23 20:59:09 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swapctl.c,v 1.30 2006/08/22 14:08:36 martin Exp $");
+__RCSID("$NetBSD: swapctl.c,v 1.31 2006/08/23 20:59:09 wiz Exp $");
 #endif
 
 
@@ -587,12 +587,12 @@ usage(void)
 
 	fprintf(stderr, "usage: %s -A [-p priority] [-t blk|noblk]\n",
 	    progname);
-	fprintf(stderr, "       %s -D dumppath\n", progname);
-	fprintf(stderr, "       %s -U [-t blk|noblk]\n", progname);
 	fprintf(stderr, "       %s -a [-p priority] path\n", progname);
 	fprintf(stderr, "       %s -c -p priority path\n", progname);
+	fprintf(stderr, "       %s -D dumpdev|none\n", progname);
 	fprintf(stderr, "       %s -d path\n", progname);
 	fprintf(stderr, "       %s -l | -s [-k|-m|-g|-h]\n", progname);
+	fprintf(stderr, "       %s -U [-t blk|noblk]\n", progname);
 	fprintf(stderr, "       %s -z\n", progname);
 	exit(1);
 }
