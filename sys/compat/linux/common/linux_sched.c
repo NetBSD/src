@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.33 2006/07/23 22:06:09 ad Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.34 2006/08/23 19:49:09 manu Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.33 2006/07/23 22:06:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.34 2006/08/23 19:49:09 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.33 2006/07/23 22:06:09 ad Exp $");
 #include <sys/syscallargs.h>
 #include <sys/wait.h>
 #include <sys/kauth.h>
+#include <sys/ptrace.h>
 
 #include <machine/cpu.h>
 
@@ -116,49 +117,19 @@ linux_sys_clone(l, v, retval)
 	if (SCARG(uap, flags) & LINUX_CLONE_VFORK)
 		flags |= FORK_PPWAIT;
 
-	/* Thread should not issue a SIGCHLD on termination */
-	if (SCARG(uap, flags) & LINUX_CLONE_THREAD) {
-		sig = 0;
-	} else {
-		sig = SCARG(uap, flags) & LINUX_CLONE_CSIGNAL;
-		if (sig < 0 || sig >= LINUX__NSIG)
-			return (EINVAL);
-		sig = linux_to_native_signo[sig];
-	}
+	sig = SCARG(uap, flags) & LINUX_CLONE_CSIGNAL;
+	if (sig < 0 || sig >= LINUX__NSIG)
+		return (EINVAL);
+	sig = linux_to_native_signo[sig];
 
 #ifdef LINUX_NPTL
 	led = (struct linux_emuldata *)l->l_proc->p_emuldata;
 
-	if (SCARG(uap, flags) & LINUX_CLONE_PARENT_SETTID) {
-		if (SCARG(uap, parent_tidptr) == NULL) {
-			printf("linux_sys_clone: NULL parent_tidptr\n");
-			return EINVAL;
-		}
-
-		if ((error = copyout(&l->l_proc->p_pid,
-		    SCARG(uap, parent_tidptr), 
-		    sizeof(l->l_proc->p_pid))) != 0)
-			return error;
-	}
-
-	/* CLONE_CHILD_CLEARTID: TID clear in the child on exit() */
-	if (SCARG(uap, flags) & LINUX_CLONE_CHILD_CLEARTID)
-		led->child_clear_tid = SCARG(uap, child_tidptr);
-	else	
-		led->child_clear_tid = NULL;
-
-	/* CLONE_CHILD_SETTID: TID set in the child on clone() */
-	if (SCARG(uap, flags) & LINUX_CLONE_CHILD_SETTID)
-		led->child_set_tid = SCARG(uap, child_tidptr);
-	else
-		led->child_set_tid = NULL;
-
-	/* CLONE_SETTLS: new Thread Local Storage in the child */
-	if (SCARG(uap, flags) & LINUX_CLONE_SETTLS)
-		led->set_tls = linux_get_newtls(l);
-	else
-		led->set_tls = 0;
+	led->parent_tidptr = SCARG(uap, parent_tidptr);
+	led->child_tidptr = SCARG(uap, child_tidptr);
+	led->clone_flags = SCARG(uap, flags);
 #endif /* LINUX_NPTL */
+
 	/*
 	 * Note that Linux does not provide a portable way of specifying
 	 * the stack area; the caller must know if the stack grows up
@@ -291,6 +262,7 @@ linux_sys_sched_setscheduler(cl, v, retval)
 			return EPERM;
 	}
 
+	return 0;
 /*
  * We can't emulate anything put the default scheduling policy.
  */
@@ -407,76 +379,47 @@ linux_sys_exit_group(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct linux_emuldata *led = p->p_emuldata;
 	struct linux_emuldata *e;
-	struct lwp *sl;
-	struct proc *sp;
-	int s;
 
-	SCHED_LOCK(s);
+#ifdef DEBUG_LINUX
+	printf("%s:%d, led->s->refs = %d\n", __func__, __LINE__, led->s->refs);
+#endif
 	/*
 	 * The calling thread is supposed to kill all threads
 	 * in the same thread group (i.e. all threads created
 	 * via clone(2) with CLONE_THREAD flag set).
+	 *
+	 * If there is only one thread, things are quite simple
 	 */
-        LIST_FOREACH(e, &led->s->threads, threads) {
-		sp = e->proc;
+	if (led->s->refs == 1)
+		return sys_exit(l, v, retval);
 
-		if (sp == p)
-			continue;
 #ifdef DEBUG_LINUX
-		printf("linux_sys_exit_group: kill PID %d\n", sp->p_pid);
+	printf("%s:%d\n", __func__, __LINE__);
 #endif
-		/* wakeup any waiter */
-		if (sp->p_sigctx.ps_sigwaited &&
-		    sigismember(sp->p_sigctx.ps_sigwait, SIGKILL) &&
-		    sp->p_stat != SSTOP) {
-			sched_wakeup(&sp->p_sigctx.ps_sigwait);
-		}
 
-		/* post SIGKILL */
-		sigaddset(&sp->p_sigctx.ps_siglist, SIGKILL);
-		sp->p_sigctx.ps_sigcheck = 1;
+	led->s->flags |= LINUX_LES_INEXITGROUP;
+	led->s->xstat = W_EXITCODE(SCARG(uap, error_code), 0);
 
-		/* Unblock the process if sleeping or stopped */
-		switch(sp->p_stat) {
-		case SSTOP:
-			sl = proc_unstop(sp);
-			break;
-		case SACTIVE:
-			sl = proc_representative_lwp(sp);
-			break;
-		default:
-			sl = NULL;
-			break;
-		}
-
-		if (sl == NULL) {
-			printf("linux_sys_exit_group: no lwp for process %d\n", 
-			    sp->p_pid);
+	/*
+	 * Kill all threads in the group. The emulation exit hook takes
+	 * care of hiding the zombies and reporting the exit code properly
+	 */
+      	LIST_FOREACH(e, &led->s->threads, threads) {
+		if (e->proc == p)
 			continue;
-		}
 
-		if (sl->l_priority > PUSER)
-			sl->l_priority = PUSER;
-
-		switch(sl->l_stat) {
-		case LSSUSPENDED:
-			lwp_continue(sl);
-			/* FALLTHROUGH */
-		case LSSTOP:
-		case LSSLEEP:
-		case LSIDL:
-			setrunnable(sl);
-			/* FALLTHROUGH */
-		default:
-			break;
-		}
+#ifdef DEBUG_LINUX
+		printf("%s: kill PID %d\n", __func__, e->proc->p_pid);
+#endif
+		psignal(e->proc, SIGKILL);
 	}
-	SCHED_UNLOCK(s);
-#endif /* LINUX_NPTL */
 
-	exit1(l, W_EXITCODE(SCARG(uap, error_code), 0));
-	/* NOTREACHED */
+	/* Now, kill ourselves */
+	psignal(p, SIGKILL);
 	return 0;
+#else /* LINUX_NPTL */
+	return sys_exit(l, v, retval);
+#endif /* LINUX_NPTL */
 }
 #endif /* !__m68k__ */
 
