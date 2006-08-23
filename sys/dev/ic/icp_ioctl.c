@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_ioctl.c,v 1.8 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: icp_ioctl.c,v 1.9 2006/08/23 15:44:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.8 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.9 2006/08/23 15:44:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,8 +112,6 @@ static int
 icpopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
-	if (securelevel > 1)
-		return (EPERM);
 	if (device_lookup(&icp_cd, minor(dev)) == NULL)
 		return (ENXIO);
 
@@ -133,6 +131,9 @@ icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	    {
 		struct icp_softc *icp;
 		gdt_ucmd_t *ucmd = (void *) data;
+
+		if (securelevel > 1)
+			return (EPERM);
 
 		icp = device_lookup(&icp_cd, ucmd->io_node);
 		if (icp == NULL) {

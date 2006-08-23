@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.55 2006/04/14 20:16:02 christos Exp $	*/
+/*	$NetBSD: iop.c,v 1.56 2006/08/23 15:44:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.55 2006/04/14 20:16:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.56 2006/08/23 15:44:29 christos Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -2519,13 +2519,13 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	struct iovec *iov;
 	int rv, i;
 
-	if (securelevel >= 2)
-		return (EPERM);
-
 	sc = device_lookup(&iop_cd, minor(dev));
 
 	switch (cmd) {
 	case IOPIOCPT:
+		if (securelevel >= 2)
+			return (EPERM);
+
 		return (iop_passthrough(sc, (struct ioppt *)data, l->l_proc));
 
 	case IOPIOCGSTATUS:
