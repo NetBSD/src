@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.67 2006/08/12 16:23:38 riz Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.68 2006/08/23 20:19:06 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -818,4 +818,10 @@ usr.bin/cut/cut.c				1.21
 
 	PR/33995: Aleksey Cheusov: support use "-" to indicate stdin from SUS
 	[jnemeth, ticket #10672]
+
+sys/net/if_spppsubr.c				1.96
+
+	Avoid buffer overflow in the in-kernel PPP code shared by ISDN PPP
+	interfaces ippp(4) and pppoe(4). This fixes SA2006-019 (CVE-2006-4304).
+	[adrianp, ticket #10677]
 
