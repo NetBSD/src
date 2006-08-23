@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.37 2006/07/25 21:45:00 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.38 2006/08/23 19:23:55 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.37 2006/07/25 21:45:00 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.38 2006/08/23 19:23:55 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -563,6 +563,9 @@ __startwin(SCREEN *screen)
 int
 endwin(void)
 {
+#ifdef DEBUG
+	__CTRACE("endwin\n");
+#endif
 	return __stopwin();
 }
 
