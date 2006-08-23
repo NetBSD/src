@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.8,v 1.33 2006/08/22 21:38:39 martin Exp $
+.\"	$NetBSD: swapctl.8,v 1.34 2006/08/23 20:53:53 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -261,23 +261,24 @@ For example:
 server:/export/swap/client none swap sw,nfsmntpt=/swap
 .Ed
 .El
-.Sh SEE ALSO
-.Xr swapctl 2 ,
-.Xr fstab 5 ,
-.Xr mount_nfs 8
 .Sh EXIT STATUS
-If the requested operation was sucessfull, the
+If the requested operation was sucessful, the
 .Nm
 utility exits with status 0.
-If an error occured, the exit status is 1.
+If an error occurred, the exit status is 1.
 .Pp
 For easy scriptability, the
 .Fl z
 operation (query dump device) and
 .Fl l
 (list swap partitions) return an exit status of 1 if no dump device or
-swap partition has been confiugred. If any swap partition is available or
+swap partition has been configured.
+If any swap partition is available or
 a dump device is set, the respective query returns 0.
+.Sh SEE ALSO
+.Xr swapctl 2 ,
+.Xr fstab 5 ,
+.Xr mount_nfs 8
 .Sh HISTORY
 The
 .Nm
