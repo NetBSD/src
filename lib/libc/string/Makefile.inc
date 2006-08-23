@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.62 2006/08/22 20:50:46 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.63 2006/08/23 01:51:51 christos Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
@@ -11,7 +11,7 @@ SRCS+=	bm.c strcasecmp.c strncasecmp.c strcasestr.c strcoll.c strdup.c \
 
 # wide char
 SRCS+=	wcscat.c wcschr.c wcscmp.c wcscpy.c wcscspn.c wcslcat.c wcslcpy.c \
-	wcslen.c wcsncat.c wcscasecmp.c wcsdup.c \
+	wcslen.c wcsncat.c wcscasecmp.c wcsdup.c wcsncasecmp.c \
 	wcsncmp.c wcsncpy.c wcspbrk.c wcsrchr.c wcsspn.c wcsstr.c wcstok.c \
 	wcswcs.c wcswidth.c \
 	wmemchr.c wmemcmp.c wmemcpy.c wmemmove.c wmemset.c 
