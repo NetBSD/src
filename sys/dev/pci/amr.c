@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.36 2006/07/23 12:01:26 bouyer Exp $	*/
+/*	$NetBSD: amr.c,v 1.37 2006/08/23 15:44:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.36 2006/07/23 12:01:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.37 2006/08/23 15:44:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1365,9 +1365,6 @@ amrioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	int error;
 	void *dp = NULL, *au_buffer;
 
-	if (securelevel >= 2)
-		return (EPERM);
-
 	amr = device_lookup(&amr_cd, minor(dev));
 
 	/* This should be compatible with the FreeBSD interface */
@@ -1377,6 +1374,9 @@ amrioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		*(int *)data = AMR_IO_VERSION_NUMBER;
 		return 0;
 	case AMR_IO_COMMAND:
+		if (securelevel >= 2)
+			return (EPERM);
+
 		au = (struct amr_user_ioctl *)data;
 		au_cmd = au->au_cmd;
 		au_buffer = au->au_buffer;

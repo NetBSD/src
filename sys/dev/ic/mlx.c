@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.43 2006/06/07 22:33:36 kardel Exp $	*/
+/*	$NetBSD: mlx.c,v 1.44 2006/08/23 15:44:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.43 2006/06/07 22:33:36 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.44 2006/08/23 15:44:29 christos Exp $");
 
 #include "ld.h"
 
@@ -733,9 +733,6 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	struct mlx_sysdrive *ms;
 	int i, rv, *arg, result;
 
-	if (securelevel >= 2)
-		return (EPERM);
-
 	mlx = device_lookup(&mlx_cd, minor(dev));
 
 	rb = (struct mlx_rebuild_request *)data;
@@ -798,6 +795,9 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		return (0);
 
 	case MLX_COMMAND:
+		if (securelevel >= 2)
+			return (EPERM);
+
 		/*
 		 * Accept a command passthrough-style.
 		 */

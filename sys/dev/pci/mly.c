@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.27 2006/05/14 21:45:00 elad Exp $	*/
+/*	$NetBSD: mly.c,v 1.28 2006/08/23 15:44:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.27 2006/05/14 21:45:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.28 2006/08/23 15:44:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2310,14 +2310,14 @@ mlyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	struct mly_softc *mly;
 	int rv;
 
-	if (securelevel >= 2)
-		return (EPERM);
-
 	mly = device_lookup(&mly_cd, minor(dev));
 
 	switch (cmd) {
 	case MLYIO_COMMAND:
-		rv = mly_user_command(mly, (void *)data);
+		if (securelevel >= 2)
+			rv = EPERM;
+		else
+			rv = mly_user_command(mly, (void *)data);
 		break;
 	case MLYIO_HEALTH:
 		rv = mly_user_health(mly, (void *)data);
