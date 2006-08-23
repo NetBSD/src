@@ -1,4 +1,4 @@
-$NetBSD: README.mknative,v 1.5 2006/02/17 17:34:30 tv Exp $
+$NetBSD: README.mknative,v 1.6 2006/08/23 20:52:15 mrg Exp $
 
 This file describes how to bootstrap the native toolchain on a new NetBSD
 platform (and how to update the new toolchain files, if needed).  These
@@ -25,7 +25,7 @@ work.
 
 3. In src/tools/gcc, do "nbmake-MACHINE bootstrap-libgcc".
 
-   This will create just enough glue in src/gnu/lib/libgcc3/arch to make it
+   This will create just enough glue in src/gnu/lib/libgcc4/arch to make it
    possible to build, based on the toolchain built in ${.OBJDIR}/build.
    Because the files generated in this step contain things like
    -DCROSS_COMPILE, they are not suitable for committing.  Step 8 below
@@ -34,11 +34,11 @@ work.
 4. At top level, do
    "nbmake-MACHINE do-distrib-dirs obj includes MKGCC=no MKBFD=no".
 
-5. In src/gnu/lib/libgcc3, do "nbmake-MACHINE obj includes".
+5. In src/gnu/lib/libgcc4, do "nbmake-MACHINE obj includes".
 
-6. In src/gnu/lib/crtstuff3 do "nbmake-MACHINE depend all install"
+6. In src/gnu/lib/crtstuff4 do "nbmake-MACHINE depend all install"
 
-7. In each of src/lib/csu, src/gnu/lib/libgcc3, src/lib/libdes, and src/lib,
+7. In each of src/lib/csu, src/gnu/lib/libgcc4, src/lib/libdes, and src/lib,
    do "nbmake-MACHINE all install".
 
    Optionally, all of the following may be set in the environment to reduce
