@@ -16,10 +16,10 @@
  * 4. The name of Kyma Systems may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY TOOLS GMBH ``AS IS'' AND ANY EXPRESS OR
+ * THIS SOFTWARE IS PROVIDED BY KYMA SYSTEMS ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * IN NO EVENT SHALL KYMA BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
@@ -128,8 +128,7 @@ static int
 failsafe_getc(dev_t dev)
 {
     char ch = '\0';
-    if ((RMCI_readb(sccc) & SCC_RXRDY) == 0)
-        return -1;
+    while ((RMCI_readb(sccc) & SCC_RXRDY) == 0);
 
     ch = RMCI_readb(sccd);
     return ch;
@@ -139,8 +138,7 @@ failsafe_getc(dev_t dev)
 static void
 failsafe_probe(struct consdev *cd)
 {
-    cd->cn_dev = makedev(70, 0);
-    cd->cn_pri = CN_INTERNAL;
+    cd->cn_pri = CN_REMOTE;
 }
 
 static void
@@ -148,12 +146,18 @@ failsafe_init(struct consdev *cd)
 {
 }
 
+static void
+failsafe_pollc(dev_t dev, int on)
+{
+}
+
+
 struct consdev failsafe_cons = {
     failsafe_probe,
     failsafe_init,
     failsafe_getc,
     failsafe_putc,
-    NULL,
+    failsafe_pollc,
     NULL,
 };
 
