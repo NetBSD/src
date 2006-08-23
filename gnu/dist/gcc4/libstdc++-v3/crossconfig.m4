@@ -241,19 +241,37 @@ case "${host}" in
     GLIBCXX_CHECK_ICONV_SUPPORT
     ;;
   *-netbsd*)
-    AC_CHECK_HEADERS([nan.h ieeefp.h endian.h sys/isa_defs.h \
+    AC_CHECK_HEADERS([nan.h ieeefp.h endian.h sys/param.h \
       machine/endian.h machine/param.h sys/machine.h sys/types.h \
       fp.h locale.h float.h inttypes.h sys/resource.h sys/stat.h \
-      sys/time.h unistd.h])
+      sys/time.h unistd.h sys/sem.h sys/ipc.h])
     SECTION_FLAGS='-ffunction-sections -fdata-sections'
     AC_SUBST(SECTION_FLAGS) 
     GLIBCXX_CHECK_LINKER_FEATURES
     GLIBCXX_CHECK_COMPLEX_MATH_SUPPORT
     GLIBCXX_CHECK_ICONV_SUPPORT
+    AC_DEFINE(_GLIBCXX_USE_WCHAR_T) 
+    AC_DEFINE(HAVE_NL_LANGINFO)
+
+    # For showmanyc_helper().
+    AC_CHECK_HEADERS(sys/ioctl.h sys/filio.h)
+    GLIBCXX_CHECK_POLL
+    GLIBCXX_CHECK_S_ISREG_OR_S_IFREG
+
+    # For xsputn_2().
+    AC_CHECK_HEADERS(sys/uio.h)
+    GLIBCXX_CHECK_WRITEV
+
+    AC_DEFINE(HAVE_ICONV)
+    AC_DEFINE(HAVE_ICONV_CLOSE)
+    AC_DEFINE(HAVE_ICONV_OPEN)
     AC_DEFINE(HAVE_LC_MESSAGES)
+
+    AC_DEFINE(HAVE_MMAP)
     AC_DEFINE(HAVE_GETPAGESIZE)
     AC_DEFINE(HAVE_SETENV)
     AC_DEFINE(HAVE_SIGSETJMP)
+
     AC_DEFINE(HAVE_COPYSIGN)
     AC_DEFINE(HAVE_COPYSIGNF)
     AC_DEFINE(HAVE_FINITEF)
@@ -265,7 +283,6 @@ case "${host}" in
     AC_DEFINE(HAVE_ISINFF)
     AC_DEFINE(HAVE_ISNAN)
     AC_DEFINE(HAVE_ISNANF)
-    AC_DEFINE(HAVE_MMAP)
     AC_DEFINE(HAVE_ACOSF)
     AC_DEFINE(HAVE_ASINF)
     AC_DEFINE(HAVE_ATAN2F)
@@ -281,11 +298,14 @@ case "${host}" in
     AC_DEFINE(HAVE_LDEXPF)
     AC_DEFINE(HAVE_LOG10F)
     AC_DEFINE(HAVE_LOGF)
+    AC_DEFINE(HAVE_MODF)
     AC_DEFINE(HAVE_MODFF)
     AC_DEFINE(HAVE_POWF)
     AC_DEFINE(HAVE_SINF)
     AC_DEFINE(HAVE_SINHF)
     AC_DEFINE(HAVE_SQRTF)
+    AC_DEFINE(HAVE_STRTOF)
+    AC_DEFINE(HAVE_STRTOLD)
     AC_DEFINE(HAVE_TANF)
     AC_DEFINE(HAVE_TANHF)
     if test x"long_double_math_on_this_cpu" = x"yes"; then
