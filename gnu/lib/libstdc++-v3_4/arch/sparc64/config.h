@@ -130,13 +130,13 @@
 /* #undef HAVE_HYPOTL */
 
 /* Define to 1 if you have the `iconv' function. */
-/* #undef HAVE_ICONV */
+#define HAVE_ICONV 1
 
 /* Define to 1 if you have the `iconv_close' function. */
-/* #undef HAVE_ICONV_CLOSE */
+#define HAVE_ICONV_CLOSE 1
 
 /* Define to 1 if you have the `iconv_open' function. */
-/* #undef HAVE_ICONV_OPEN */
+#define HAVE_ICONV_OPEN 1
 
 /* Define to 1 if you have the <ieeefp.h> header file. */
 #define HAVE_IEEEFP_H 1
@@ -229,7 +229,7 @@
 #define HAVE_MMAP 1
 
 /* Define to 1 if you have the `modf' function. */
-/* #undef HAVE_MODF */
+#define HAVE_MODF 1
 
 /* Define to 1 if you have the `modff' function. */
 #define HAVE_MODFF 1
@@ -241,10 +241,10 @@
 /* #undef HAVE_NAN_H */
 
 /* Define to 1 if you have the `nl_langinfo' function. */
-/* #undef HAVE_NL_LANGINFO */
+#define HAVE_NL_LANGINFO 1
 
 /* Define if poll is available in <poll.h>. */
-/* #undef HAVE_POLL */
+#define HAVE_POLL 1
 
 /* Define to 1 if you have the `powf' function. */
 #define HAVE_POWF 1
@@ -301,19 +301,19 @@
 #define HAVE_STRING_H 1
 
 /* Define to 1 if you have the `strtof' function. */
-/* #undef HAVE_STRTOF */
+#define HAVE_STRTOF 1
 
 /* Define to 1 if you have the `strtold' function. */
-/* #undef HAVE_STRTOLD */
+#define HAVE_STRTOLD 1
 
 /* Define to 1 if you have the <sys/filio.h> header file. */
-/* #undef HAVE_SYS_FILIO_H */
+#define HAVE_SYS_FILIO_H 1
 
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
-/* #undef HAVE_SYS_IOCTL_H */
+#define HAVE_SYS_IOCTL_H 1
 
 /* Define to 1 if you have the <sys/ipc.h> header file. */
-/* #undef HAVE_SYS_IPC_H */
+#define HAVE_SYS_IPC_H 1
 
 /* Define to 1 if you have the <sys/isa_defs.h> header file. */
 /* #undef HAVE_SYS_ISA_DEFS_H */
@@ -322,13 +322,13 @@
 /* #undef HAVE_SYS_MACHINE_H */
 
 /* Define to 1 if you have the <sys/param.h> header file. */
-/* #undef HAVE_SYS_PARAM_H */
+#define HAVE_SYS_PARAM_H 1
 
 /* Define to 1 if you have the <sys/resource.h> header file. */
 #define HAVE_SYS_RESOURCE_H 1
 
 /* Define to 1 if you have the <sys/sem.h> header file. */
-/* #undef HAVE_SYS_SEM_H */
+#define HAVE_SYS_SEM_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -340,13 +340,13 @@
 #define HAVE_SYS_TYPES_H 1
 
 /* Define to 1 if you have the <sys/uio.h> header file. */
-/* #undef HAVE_SYS_UIO_H */
+#define HAVE_SYS_UIO_H 1
 
 /* Define if S_IFREG is available in <sys/stat.h>. */
 /* #undef HAVE_S_IFREG */
 
 /* Define if S_IFREG is available in <sys/stat.h>. */
-/* #undef HAVE_S_ISREG */
+#define HAVE_S_ISREG 1
 
 /* Define to 1 if you have the `tanf' function. */
 #define HAVE_TANF 1
@@ -385,7 +385,7 @@
 #define HAVE_WCTYPE_H 1
 
 /* Define if writev is available in <sys/uio.h>. */
-/* #undef HAVE_WRITEV */
+#define HAVE_WRITEV 1
 
 /* Define to 1 if you have the `_acosf' function. */
 /* #undef HAVE__ACOSF */
@@ -704,7 +704,7 @@
 /* #undef _GLIBCXX_USE_NLS */
 
 /* Define if code specialized for wchar_t should be used. */
-/* #undef _GLIBCXX_USE_WCHAR_T */
+#define _GLIBCXX_USE_WCHAR_T 1
 
 #if defined (HAVE__ACOSF) && ! defined (HAVE_ACOSF)
 # define HAVE_ACOSF 1
