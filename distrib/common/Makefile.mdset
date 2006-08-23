@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.27 2005/05/31 16:23:37 lukem Exp $
+#	$NetBSD: Makefile.mdset,v 1.28 2006/08/23 19:01:26 bouyer Exp $
 #
 # Makefile snippet to ${TOOL_MDSETIMAGE} file system images into kernels
 #
@@ -78,6 +78,7 @@ _KERNNAME.${_K}.${_F}:=	${KERNOBJDIR}/${_K}/netbsd
 _FILENAME:=${_F}		# (work around obscure issue in make(1))
 .if ${_FILENAME} == "-"
 _KERNEL.${_K}.${_F}:=	netbsd-${_K}
+_FILENAME:=		${_KERNEL.${_K}.${_F}}
 .else
 _KERNEL.${_K}.${_F}:=	${_F}
 .endif
