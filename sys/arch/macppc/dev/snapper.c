@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.11 2006/08/23 02:56:32 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.12 2006/08/23 03:25:31 macallan Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 
 /*-
@@ -1214,31 +1214,37 @@ snapper_trigger_input(void *h, void *start, void *end, int bsize,
 void
 snapper_set_volume(struct snapper_softc *sc, int left, int right)
 {
-	u_char vol[6];
+	u_char regs[6];
+	int l, r;
+	
+	/*
+	 * for some insane reason the gain table for master volume and the
+	 * mixer channels is almost identical - just shifted by 4 bits
+	 * so we use the mixer_gain table and bit-twiddle it... 
+	 */
+	if ((left >= 0) && (left < 256) && (right >= 0) && (right < 256)) {
+		l = 177 - (left * 177 / 255);
+		regs[0] =  (snapper_mixer_gain[l][0] >> 4);
+		regs[1] = ((snapper_mixer_gain[l][0] & 0x0f) << 4) | 
+			   (snapper_mixer_gain[l][1] >> 4);
+		regs[2] = ((snapper_mixer_gain[l][1] & 0x0f) << 4) | 
+			   (snapper_mixer_gain[l][2] >> 4);
 
-	sc->sc_vol_l = left;
-	sc->sc_vol_r = right;
+		r = 177 - (right * 177 / 255);
+		regs[3] =  (snapper_mixer_gain[r][0] >> 4);
+		regs[4] = ((snapper_mixer_gain[r][0] & 0x0f) << 4) | 
+			   (snapper_mixer_gain[r][1] >> 4);
+		regs[5] = ((snapper_mixer_gain[r][1] & 0x0f) << 4) | 
+			   (snapper_mixer_gain[r][2] >> 4);
 
-#if 0
-	left <<= 8;	/* XXX for now */
-	right <<= 8;
+		tas3004_write(sc, DEQ_VOLUME, regs);
+		
+		sc->sc_vol_l = left;
+		sc->sc_vol_r = right;
 
-	vol[0] = left >> 16;
-	vol[1] = left >> 8;
-	vol[2] = left;
-	vol[3] = right >> 16;
-	vol[4] = right >> 8;
-	vol[5] = right;
-#else
-	/* 0x07ffff is LOUD, 0x000000 is mute */
-	vol[0] = 0 /*(left >> 5) & 0xff*/;             /* upper 3 bits */
-	vol[1] = (left /*<< 3*/) & 0xff;      /* lower 5 bits */
-	vol[2] = 0;
-	vol[3] = 0 /*(right >> 5) & 0xff*/;            /* upper 3 bits */
-	vol[4] = (right /*<< 3*/) & 0xff;     /* lower 5 bits */
-	vol[5] = 0;
-#endif
-	tas3004_write(sc, DEQ_VOLUME, vol);
+		DPRINTF("%d %02x %02x %02x : %d %02x %02x %02x\n", l, regs[0], 	
+		    regs[1], regs[2], r, regs[3], regs[4], regs[5]);
+	}
 }
 
 void snapper_set_treble(struct snapper_softc *sc, int stuff)
