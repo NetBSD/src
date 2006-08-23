@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.146 2006/08/21 20:24:24 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.147 2006/08/23 20:14:00 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4374,4 +4374,10 @@ sbin/scan_ffs/Makefile				patch
 
 	Fix build of NetBSD-vax.
 	[ghen, ticket #1470]
+
+sys/net/if_spppsubr.c				1.96
+
+	Avoid buffer overflow in the in-kernel PPP code shared by ISDN PPP
+	interfaces ippp(4) and pppoe(4). This fixes SA2006-019 (CVE-2006-4304).
+	[adrianp, ticket #1476]
 
