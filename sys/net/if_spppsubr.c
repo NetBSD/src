@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.95 2006/07/23 22:06:12 ad Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.95.2.1 2006/08/23 20:07:37 tron Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.95 2006/07/23 22:06:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.95.2.1 2006/08/23 20:07:37 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1370,7 +1370,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 {
 	STDDCL;
 	struct lcp_header *h;
-	int len = m->m_pkthdr.len;
+	int printlen, len = m->m_pkthdr.len;
 	int rv;
 	u_char *p;
 	u_int32_t u32;
@@ -1384,13 +1384,16 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 	}
 	h = mtod(m, struct lcp_header *);
 	if (debug) {
+		printlen = ntohs(h->len);
 		log(LOG_DEBUG,
 		    "%s: %s input(%s): <%s id=0x%x len=%d",
 		    ifp->if_xname, cp->name,
 		    sppp_state_name(sp->state[cp->protoidx]),
-		    sppp_cp_type_name(h->type), h->ident, ntohs(h->len));
-		if (len > 4)
-			sppp_print_bytes((u_char *)(h + 1), len - 4);
+		    sppp_cp_type_name(h->type), h->ident, printlen);
+		if (len < printlen)
+			printlen = len;
+		if (printlen > 4)
+			sppp_print_bytes((u_char *)(h + 1), printlen - 4);
 		addlog(">\n");
 	}
 	if (len > ntohs(h->len))
@@ -1417,6 +1420,12 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			return;
 		}
 		rv = (cp->RCR)(sp, h, len);
+		if (rv < 0) {
+			/* fatal error, shut down */
+			(cp->tld)(sp);
+			sppp_lcp_tlf(sp);
+			return;
+		}
 		switch (sp->state[cp->protoidx]) {
 		case STATE_OPENED:
 			(cp->tld)(sp);
@@ -2149,6 +2158,17 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	/* pass 1: check for things that need to be rejected */
 	p = (void *)(h + 1);
 	for (rlen=0; len>1 && p[1]; len-=p[1], p+=p[1]) {
+		/* Sanity check option length */
+		if (p[1] > len) {
+			/*
+			 * Malicious option - drop imediately.
+			 * XXX Maybe we should just RXJ it?
+			 */
+			addlog("%s: received malicious LCP option 0x%02x, "
+			    "length 0x%02x, (len: 0x%02x) dropping.\n", ifp->if_xname,
+			    p[0], p[1], len);
+			goto drop;
+		}
 		if (debug)
 			addlog(" %s", sppp_lcp_opt_name(*p));
 		switch (*p) {
@@ -2342,6 +2362,10 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
  end:
 	free(buf, M_TEMP);
 	return (rlen == 0);
+
+ drop:
+	free(buf, M_TEMP);
+	return -1;
 }
 
 /*
@@ -2365,6 +2389,16 @@ sppp_lcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
 
 	p = (void *)(h + 1);
 	for (; len > 1 && p[1]; len -= p[1], p += p[1]) {
+		/* Sanity check option length */
+		if (p[1] > len) {
+			/*
+			 * Malicious option - drop imediately.
+			 * XXX Maybe we should just RXJ it?
+			 */
+			addlog("%s: received malicious LCP option, "
+			    "dropping.\n", ifp->if_xname);
+			goto drop;
+		}
 		if (debug)
 			addlog(" %s", sppp_lcp_opt_name(*p));
 		switch (*p) {
@@ -2403,6 +2437,7 @@ sppp_lcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
 	}
 	if (debug)
 		addlog("\n");
+drop:
 	free(buf, M_TEMP);
 	return;
 }
@@ -2429,6 +2464,16 @@ sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 
 	p = (void *)(h + 1);
 	for (; len > 1 && p[1]; len -= p[1], p += p[1]) {
+		/* Sanity check option length */
+		if (p[1] > len) {
+			/*
+			 * Malicious option - drop imediately.
+			 * XXX Maybe we should just RXJ it?
+			 */
+			addlog("%s: received malicious LCP option, "
+			    "dropping.\n", ifp->if_xname);
+			goto drop;
+		}
 		if (debug)
 			addlog(" %s", sppp_lcp_opt_name(*p));
 		switch (*p) {
@@ -2483,6 +2528,7 @@ sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 	}
 	if (debug)
 		addlog("\n");
+drop:
 	free(buf, M_TEMP);
 	return;
 }
@@ -2832,6 +2878,13 @@ sppp_ipcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 		    ifp->if_xname);
 	p = (void *)(h + 1);
 	for (rlen=0; len>1 && p[1]; len-=p[1], p+=p[1]) {
+		/* Sanity check option length */
+		if (p[1] > len) {
+			/* XXX should we just RXJ? */
+			addlog("%s: malicious IPCP option received, dropping\n",
+			    ifp->if_xname);
+			goto drop;
+		}
 		if (debug)
 			addlog(" %s", sppp_ipcp_opt_name(*p));
 		switch (*p) {
@@ -2975,6 +3028,10 @@ sppp_ipcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
  end:
 	free(buf, M_TEMP);
 	return (rlen == 0);
+
+ drop:
+	free(buf, M_TEMP);
+	return -1;
 }
 
 /*
@@ -2999,6 +3056,13 @@ sppp_ipcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
 
 	p = (void *)(h + 1);
 	for (; len > 1 && p[1]; len -= p[1], p += p[1]) {
+		/* Sanity check option length */
+		if (p[1] > len) {
+			/* XXX should we just RXJ? */
+			addlog("%s: malicious IPCP option received, dropping\n",
+			    ifp->if_xname);
+			goto drop;
+		}
 		if (debug)
 			addlog(" %s", sppp_ipcp_opt_name(*p));
 		switch (*p) {
@@ -3018,6 +3082,7 @@ sppp_ipcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
 	}
 	if (debug)
 		addlog("\n");
+drop:
 	free(buf, M_TEMP);
 	return;
 }
@@ -3042,6 +3107,13 @@ sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 
 	p = (void *)(h + 1);
 	for (; len > 1 && p[1]; len -= p[1], p += p[1]) {
+		/* Sanity check option length */
+		if (p[1] > len) {
+			/* XXX should we just RXJ? */
+			addlog("%s: malicious IPCP option received, dropping\n",
+			    ifp->if_xname);
+			return;
+		}
 		if (debug)
 			addlog(" %s", sppp_ipcp_opt_name(*p));
 		switch (*p) {
@@ -3097,7 +3169,6 @@ sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 	}
 	if (debug)
 		addlog("\n");
-	return;
 }
 
 static void
@@ -3316,6 +3387,13 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	p = (void *)(h + 1);
 	ifidcount = 0;
 	for (rlen=0; len>1 && p[1]; len-=p[1], p+=p[1]) {
+		/* Sanity check option length */
+		if (p[1] > len) {
+			/* XXX just RXJ? */
+			addlog("%s: received malicious IPCPv6 option, "
+			    "dropping\n", ifp->if_xname);
+			goto drop;
+		}
 		if (debug)
 			addlog(" %s", sppp_ipv6cp_opt_name(*p));
 		switch (*p) {
@@ -3441,6 +3519,10 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
  end:
 	free(buf, M_TEMP);
 	return (rlen == 0);
+
+ drop:
+	free(buf, M_TEMP);
+	return -1;
 }
 
 /*
@@ -3465,6 +3547,12 @@ sppp_ipv6cp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
 
 	p = (void *)(h + 1);
 	for (; len > 1 && p[1]; len -= p[1], p += p[1]) {
+		if (p[1] > len) {
+			/* XXX just RXJ? */
+			addlog("%s: received malicious IPCPv6 option, "
+			    "dropping\n", ifp->if_xname);
+			goto drop;
+		}
 		if (debug)
 			addlog(" %s", sppp_ipv6cp_opt_name(*p));
 		switch (*p) {
@@ -3484,6 +3572,7 @@ sppp_ipv6cp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
 	}
 	if (debug)
 		addlog("\n");
+drop:
 	free(buf, M_TEMP);
 	return;
 }
@@ -3511,6 +3600,12 @@ sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 
 	p = (void *)(h + 1);
 	for (; len > 1 && p[1]; len -= p[1], p += p[1]) {
+		if (p[1] > len) {
+			/* XXX just RXJ? */
+			addlog("%s: received malicious IPCPv6 option, "
+			    "dropping\n", ifp->if_xname);
+			goto drop;
+		}
 		if (debug)
 			addlog(" %s", sppp_ipv6cp_opt_name(*p));
 		switch (*p) {
@@ -3581,6 +3676,7 @@ sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 	}
 	if (debug)
 		addlog("\n");
+drop:
 	free(buf, M_TEMP);
 	return;
 }
@@ -4237,6 +4333,12 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 	char *name, *secret;
 	int name_len, secret_len;
 
+	/*
+	 * Malicious input might leave this uninitialized, so
+	 * init to an impossible value.
+	 */
+	secret_len = -1;
+
 	len = m->m_pkthdr.len;
 	if (len < 5) {
 		if (debug)
@@ -4322,10 +4424,11 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 		if (debug) {
 			log(LOG_DEBUG, "%s: pap success",
 			    ifp->if_xname);
-			name_len = *(char *)h;
-			if (len > 5 && name_len) {
+			name = 1 + (u_char *)(h + 1);
+			name_len = name[-1];
+			if (len > 5 && name_len < len+4) {
 				addlog(": ");
-				sppp_print_string((char *)(h + 1), name_len);
+				sppp_print_string(name, name_len);
 			}
 			addlog("\n");
 		}
@@ -4353,10 +4456,11 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 		if (debug) {
 			log(LOG_INFO, "%s: pap failure",
 			    ifp->if_xname);
-			name_len = *(char *)h;
-			if (len > 5 && name_len) {
+			name = 1 + (u_char *)(h + 1);
+			name_len = name[-1];
+			if (len > 5 && name_len < len+4) {
 				addlog(": ");
-				sppp_print_string((char *)(h + 1), name_len);
+				sppp_print_string(name, name_len);
 			}
 			addlog("\n");
 		} else
