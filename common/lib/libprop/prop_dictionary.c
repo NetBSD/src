@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.8 2006/07/07 17:09:36 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.8.2.1 2006/08/23 21:21:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -44,6 +44,10 @@
 #include <sys/tree.h>
 #else
 #error Need to find a NetBSD sys/tree.h
+#endif
+
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <errno.h>
 #endif
 
 /*
@@ -219,8 +223,9 @@ _prop_dict_keysym_equals(void *v1, void *v2)
 	prop_dictionary_keysym_t pdk1 = v1;
 	prop_dictionary_keysym_t pdk2 = v2;
 
-	_PROP_ASSERT(prop_object_is_dictionary_keysym(pdk1));
-	_PROP_ASSERT(prop_object_is_dictionary_keysym(pdk2));
+	if (! (prop_object_is_dictionary_keysym(pdk1) &&
+	       prop_object_is_dictionary_keysym(pdk2)))
+		return (FALSE);
 
 	/*
 	 * There is only ever one copy of a keysym at any given time,
@@ -362,8 +367,10 @@ _prop_dictionary_equals(void *v1, void *v2)
 	const struct _prop_dict_entry *pde1, *pde2;
 	unsigned int idx;
 
-	_PROP_ASSERT(prop_object_is_dictionary(dict1));
-	_PROP_ASSERT(prop_object_is_dictionary(dict2));
+	if (! (prop_object_is_dictionary(dict1) &&
+	       prop_object_is_dictionary(dict2)))
+		return (FALSE);
+
 	if (dict1 == dict2)
 		return (TRUE);
 	if (dict1->pd_count != dict2->pd_count)
@@ -506,7 +513,8 @@ prop_dictionary_copy(prop_dictionary_t opd)
 	prop_object_t po;
 	unsigned int idx;
 
-	_PROP_ASSERT(prop_object_is_dictionary(opd));
+	if (! prop_object_is_dictionary(opd))
+		return (NULL);
 
 	pd = _prop_dictionary_alloc(opd->pd_count);
 	if (pd != NULL) {
@@ -536,7 +544,9 @@ prop_dictionary_copy_mutable(prop_dictionary_t opd)
 {
 	prop_dictionary_t pd;
 
-	_PROP_ASSERT(prop_object_is_dictionary(opd));
+	if (! prop_object_is_dictionary(opd))
+		return (NULL);
+
 	pd = prop_dictionary_copy(opd);
 	if (pd != NULL)
 		pd->pd_flags &= ~PD_F_IMMUTABLE;
@@ -552,7 +562,9 @@ unsigned int
 prop_dictionary_count(prop_dictionary_t pd)
 {
 
-	_PROP_ASSERT(prop_object_is_dictionary(pd));
+	if (! prop_object_is_dictionary(pd))
+		return (0);
+
 	return (pd->pd_count);
 }
 
@@ -566,7 +578,9 @@ boolean_t
 prop_dictionary_ensure_capacity(prop_dictionary_t pd, unsigned int capacity)
 {
 
-	_PROP_ASSERT(prop_object_is_dictionary(pd));
+	if (! prop_object_is_dictionary(pd))
+		return (FALSE);
+
 	if (capacity > pd->pd_capacity)
 		return (_prop_dictionary_expand(pd, capacity));
 	return (TRUE);
@@ -582,7 +596,8 @@ prop_dictionary_iterator(prop_dictionary_t pd)
 {
 	struct _prop_dictionary_iterator *pdi;
 
-	_PROP_ASSERT(prop_object_is_dictionary(pd));
+	if (! prop_object_is_dictionary(pd))
+		return (NULL);
 
 	pdi = _PROP_CALLOC(sizeof(*pdi), M_TEMP);
 	if (pdi == NULL)
@@ -638,7 +653,8 @@ prop_dictionary_get(prop_dictionary_t pd, const char *key)
 {
 	const struct _prop_dict_entry *pde;
 
-	_PROP_ASSERT(prop_object_is_dictionary(pd));
+	if (! prop_object_is_dictionary(pd))
+		return (NULL);
 
 	pde = _prop_dict_lookup(pd, key, NULL);
 	if (pde != NULL) {
@@ -656,8 +672,9 @@ prop_object_t
 prop_dictionary_get_keysym(prop_dictionary_t pd, prop_dictionary_keysym_t pdk)
 {
 
-	_PROP_ASSERT(prop_object_is_dictionary(pd));
-	_PROP_ASSERT(prop_object_is_dictionary_keysym(pdk));
+	if (! (prop_object_is_dictionary(pd) &&
+	       prop_object_is_dictionary_keysym(pdk)))
+		return (NULL);
 
 	return (prop_dictionary_get(pd, pdk->pdk_key));
 }
@@ -674,7 +691,9 @@ prop_dictionary_set(prop_dictionary_t pd, const char *key, prop_object_t po)
 	prop_dictionary_keysym_t pdk;
 	unsigned int idx;
 
-	_PROP_ASSERT(prop_object_is_dictionary(pd));
+	if (! prop_object_is_dictionary(pd))
+		return (FALSE);
+
 	_PROP_ASSERT(pd->pd_count <= pd->pd_capacity);
 
 	if (prop_dictionary_is_immutable(pd))
@@ -756,16 +775,13 @@ prop_dictionary_set_keysym(prop_dictionary_t pd, prop_dictionary_keysym_t pdk,
 			   prop_object_t po)
 {
 
-	_PROP_ASSERT(prop_object_is_dictionary(pd));
-	_PROP_ASSERT(prop_object_is_dictionary_keysym(pdk));
+	if (! (prop_object_is_dictionary(pd) &&
+	       prop_object_is_dictionary_keysym(pdk)))
+		return (FALSE);
 
 	if (prop_dictionary_is_immutable(pd))
 		return (FALSE);
 
-	/*
-	 * XXX We could optimize out the _prop_dict_keysym_alloc() call
-	 * XXX if we re-factor the code a little.
-	 */
 	return (prop_dictionary_set(pd, pdk->pdk_key, po));
 }
 
@@ -801,7 +817,8 @@ prop_dictionary_remove(prop_dictionary_t pd, const char *key)
 	struct _prop_dict_entry *pde;
 	unsigned int idx;
 
-	_PROP_ASSERT(prop_object_is_dictionary(pd));
+	if (! prop_object_is_dictionary(pd))
+		return;
 
 	/* XXX Should this be a _PROP_ASSERT()? */
 	if (prop_dictionary_is_immutable(pd))
@@ -825,8 +842,9 @@ prop_dictionary_remove_keysym(prop_dictionary_t pd,
 			      prop_dictionary_keysym_t pdk)
 {
 
-	_PROP_ASSERT(prop_object_is_dictionary(pd));
-	_PROP_ASSERT(prop_object_is_dictionary_keysym(pdk));
+	if (! (prop_object_is_dictionary(pd) &&
+	       prop_object_is_dictionary_keysym(pdk)))
+		return;
 
 	/* XXX Should this be a _PROP_ASSERT()? */
 	if (prop_dictionary_is_immutable(pd))
@@ -855,7 +873,9 @@ const char *
 prop_dictionary_keysym_cstring_nocopy(prop_dictionary_keysym_t pdk)
 {
 
-	_PROP_ASSERT(prop_object_is_dictionary_keysym(pdk));
+	if (! prop_object_is_dictionary_keysym(pdk))
+		return (NULL);
+
 	return (pdk->pdk_key);
 }
 
@@ -888,12 +908,9 @@ prop_dictionary_externalize(prop_dictionary_t pd)
 	if (ctx == NULL)
 		return (NULL);
 
-	if (_prop_object_externalize_start_tag(ctx,
-					"plist version=\"1.0\"") == FALSE ||
-	    _prop_object_externalize_append_char(ctx, '\n') == FALSE ||
+	if (_prop_object_externalize_header(ctx) == FALSE ||
 	    (*pd->pd_obj.po_type->pot_extern)(ctx, pd) == FALSE ||
-	    _prop_object_externalize_end_tag(ctx, "plist") == FALSE ||
-	    _prop_object_externalize_append_char(ctx, '\0') == FALSE) {
+	    _prop_object_externalize_footer(ctx) == FALSE) {
 		/* We are responsible for releasing the buffer. */
 		_PROP_FREE(ctx->poec_buf, M_TEMP);
 		_prop_object_externalize_context_free(ctx);
@@ -1015,7 +1032,7 @@ prop_dictionary_internalize(const char *xml)
 
 	/*
 	 * We don't understand any plist attributes, but Apple XML
-	 * property lists often have a "version" attibute.  If we
+	 * property lists often have a "version" attribute.  If we
 	 * see that one, we simply ignore it.
 	 */
 	if (ctx->poic_tagattr != NULL &&
@@ -1042,3 +1059,48 @@ prop_dictionary_internalize(const char *xml)
  	_prop_object_internalize_context_free(ctx);
 	return (dict);
 }
+
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+/*
+ * prop_dictionary_externalize_to_file --
+ *	Externalize a dictionary to the specified file.
+ */
+boolean_t
+prop_dictionary_externalize_to_file(prop_dictionary_t dict, const char *fname)
+{
+	char *xml;
+	boolean_t rv;
+	int save_errno;
+
+	xml = prop_dictionary_externalize(dict);
+	if (xml == NULL)
+		return (FALSE);
+	rv = _prop_object_externalize_write_file(fname, xml, strlen(xml));
+	if (rv == FALSE)
+		save_errno = errno;
+	_PROP_FREE(xml, M_TEMP);
+	if (rv == FALSE)
+		errno = save_errno;
+
+	return (rv);
+}
+
+/*
+ * prop_dictionary_internalize_from_file --
+ *	Internalize a dictionary from a file.
+ */
+prop_dictionary_t
+prop_dictionary_internalize_from_file(const char *fname)
+{
+	struct _prop_object_internalize_mapped_file *mf;
+	prop_dictionary_t dict;
+
+	mf = _prop_object_internalize_map_file(fname);
+	if (mf == NULL)
+		return (NULL);
+	dict = prop_dictionary_internalize(mf->poimf_xml);
+	_prop_object_internalize_unmap_file(mf);
+
+	return (dict);
+}
+#endif /* !_KERNEL && !_STANDALONE */

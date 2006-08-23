@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_string.c,v 1.2 2006/05/18 03:05:19 thorpej Exp $	*/
+/*	$NetBSD: prop_string.c,v 1.2.2.1 2006/08/23 21:21:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -109,8 +109,10 @@ _prop_string_equals(void *v1, void *v2)
 	prop_string_t str1 = v1;
 	prop_string_t str2 = v2;
 
-	_PROP_ASSERT(prop_object_is_string(str1));
-	_PROP_ASSERT(prop_object_is_string(str2));
+	if (! (prop_object_is_string(str1) &&
+	       prop_object_is_string(str2)))
+		return (FALSE);
+
 	if (str1 == str2)
 		return (TRUE);
 	if (str1->ps_size != str2->ps_size)
@@ -202,7 +204,8 @@ prop_string_copy(prop_string_t ops)
 {
 	prop_string_t ps;
 
-	_PROP_ASSERT(prop_object_is_string(ops));
+	if (! prop_object_is_string(ops))
+		return (NULL);
 
 	ps = _prop_string_alloc();
 	if (ps != NULL) {
@@ -233,7 +236,8 @@ prop_string_copy_mutable(prop_string_t ops)
 	prop_string_t ps;
 	char *cp;
 
-	_PROP_ASSERT(prop_object_is_string(ops));
+	if (! prop_object_is_string(ops))
+		return (NULL);
 
 	ps = _prop_string_alloc();
 	if (ps != NULL) {
@@ -251,13 +255,15 @@ prop_string_copy_mutable(prop_string_t ops)
 
 /*
  * prop_string_size --
- *	Return the size of the string, no including the terminating NUL.
+ *	Return the size of the string, not including the terminating NUL.
  */
 size_t
 prop_string_size(prop_string_t ps)
 {
 
-	_PROP_ASSERT(prop_object_is_string(ps));
+	if (! prop_object_is_string(ps))
+		return (0);
+
 	return (ps->ps_size);
 }
 
@@ -269,7 +275,9 @@ boolean_t
 prop_string_mutable(prop_string_t ps)
 {
 
-	_PROP_ASSERT(prop_object_is_string(ps));
+	if (! prop_object_is_string(ps))
+		return (FALSE);
+
 	return ((ps->ps_flags & PS_F_NOCOPY) == 0);
 }
 
@@ -283,7 +291,9 @@ prop_string_cstring(prop_string_t ps)
 {
 	char *cp;
 
-	_PROP_ASSERT(prop_object_is_string(ps));
+	if (! prop_object_is_string(ps))
+		return (NULL);
+
 	cp = _PROP_MALLOC(ps->ps_size + 1, M_TEMP);
 	if (cp != NULL)
 		strcpy(cp, prop_string_contents(ps));
@@ -300,7 +310,9 @@ const char *
 prop_string_cstring_nocopy(prop_string_t ps)
 {
 
-	_PROP_ASSERT(prop_object_is_string(ps));
+	if (! prop_object_is_string(ps))
+		return (NULL);
+
 	return (prop_string_contents(ps));
 }
 
@@ -315,8 +327,9 @@ prop_string_append(prop_string_t dst, prop_string_t src)
 	char *ocp, *cp;
 	size_t len;
 
-	_PROP_ASSERT(prop_object_is_string(dst));
-	_PROP_ASSERT(prop_object_is_string(src));
+	if (! (prop_object_is_string(dst) &&
+	       prop_object_is_string(src)))
+		return (FALSE);
 
 	if (dst->ps_flags & PS_F_NOCOPY)
 		return (FALSE);
@@ -347,8 +360,10 @@ prop_string_append_cstring(prop_string_t dst, const char *src)
 	char *ocp, *cp;
 	size_t len;
 
+	if (! prop_object_is_string(dst))
+		return (FALSE);
+
 	_PROP_ASSERT(src != NULL);
-	_PROP_ASSERT(prop_object_is_string(dst));
 
 	if (dst->ps_flags & PS_F_NOCOPY)
 		return (FALSE);
@@ -387,7 +402,9 @@ boolean_t
 prop_string_equals_cstring(prop_string_t ps, const char *cp)
 {
 
-	_PROP_ASSERT(prop_object_is_string(ps));
+	if (! prop_object_is_string(ps))
+		return (FALSE);
+
 	return (strcmp(prop_string_contents(ps), cp) == 0);
 }
 

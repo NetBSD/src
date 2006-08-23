@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2006/07/05 21:46:11 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2006/08/23 21:21:14 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,7 @@ CPPFLAGS+=-D_REENTRANT -I${NETBSDSRCDIR}/lib/libc/include
 LIB=	prop
 
 MAN=	prop_array.3 prop_bool.3 prop_data.3 prop_dictionary.3 \
-	prop_number.3 prop_object.3 prop_string.3 proplib.3
+	prop_ingest.3 prop_number.3 prop_object.3 prop_string.3 proplib.3
 
 MAN+=	prop_dictionary_copyin_ioctl.9
 MLINKS+= prop_dictionary_copyin_ioctl.9 prop_dictionary_copyout_ioctl.9
@@ -31,7 +31,11 @@ MLINKS+= prop_array.3 prop_array_create.3
 MLINKS+= prop_array.3 prop_array_create_with_capacity.3
 MLINKS+= prop_array.3 prop_array_ensure_capacity.3
 MLINKS+= prop_array.3 prop_array_equals.3
+MLINKS+= prop_array.3 prop_array_externalize.3
+MLINKS+= prop_array.3 prop_array_externalize_to_file.3
 MLINKS+= prop_array.3 prop_array_get.3
+MLINKS+= prop_array.3 prop_array_internalize.3
+MLINKS+= prop_array.3 prop_array_internalize_from_file.3
 MLINKS+= prop_array.3 prop_array_iterator.3
 MLINKS+= prop_array.3 prop_array_make_immutable.3
 MLINKS+= prop_array.3 prop_array_mutable.3
@@ -60,9 +64,11 @@ MLINKS+= prop_dictionary.3 prop_dictionary_create_with_capacity.3
 MLINKS+= prop_dictionary.3 prop_dictionary_ensure_capacity.3
 MLINKS+= prop_dictionary.3 prop_dictionary_equals.3
 MLINKS+= prop_dictionary.3 prop_dictionary_externalize.3
+MLINKS+= prop_dictionary.3 prop_dictionary_externalize_to_file.3
 MLINKS+= prop_dictionary.3 prop_dictionary_get.3
 MLINKS+= prop_dictionary.3 prop_dictionary_get_keysym.3
 MLINKS+= prop_dictionary.3 prop_dictionary_internalize.3
+MLINKS+= prop_dictionary.3 prop_dictionary_internalize_from_file.3
 MLINKS+= prop_dictionary.3 prop_dictionary_iterator.3
 MLINKS+= prop_dictionary.3 prop_dictionary_keysym_cstring_nocopy.3
 MLINKS+= prop_dictionary.3 prop_dictionary_keysym_equals.3
@@ -72,6 +78,14 @@ MLINKS+= prop_dictionary.3 prop_dictionary_remove.3
 MLINKS+= prop_dictionary.3 prop_dictionary_remove_keysym.3
 MLINKS+= prop_dictionary.3 prop_dictionary_set.3
 MLINKS+= prop_dictionary.3 prop_dictionary_set_keysym.3
+
+MLINKS+= prop_ingest.3 prop_ingest_context_alloc.3
+MLINKS+= prop_ingest.3 prop_ingest_context_error.3
+MLINKS+= prop_ingest.3 prop_ingest_context_free.3
+MLINKS+= prop_ingest.3 prop_ingest_context_key.3
+MLINKS+= prop_ingest.3 prop_ingest_context_private.3
+MLINKS+= prop_ingest.3 prop_ingest_context_type.3
+MLINKS+= prop_ingest.3 prop_dictionary_ingest.3
 
 MLINKS+= prop_number.3 prop_number_copy.3
 MLINKS+= prop_number.3 prop_number_create_integer.3

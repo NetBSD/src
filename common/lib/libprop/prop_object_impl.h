@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.3 2006/05/18 16:23:55 thorpej Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.3.2.1 2006/08/23 21:21:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -64,6 +64,10 @@ boolean_t	_prop_object_externalize_append_encoded_cstring(
 boolean_t	_prop_object_externalize_append_char(
 				struct _prop_object_externalize_context *,
 				unsigned char);
+boolean_t	_prop_object_externalize_header(
+				struct _prop_object_externalize_context *);
+boolean_t	_prop_object_externalize_footer(
+				struct _prop_object_externalize_context *);
 
 struct _prop_object_externalize_context *
 		_prop_object_externalize_context_alloc(void);
@@ -127,6 +131,21 @@ struct _prop_object_internalize_context *
 		_prop_object_internalize_context_alloc(const char *);
 void		_prop_object_internalize_context_free(
 				struct _prop_object_internalize_context *);
+
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+boolean_t	_prop_object_externalize_write_file(const char *,
+						    const char *, size_t);
+
+struct _prop_object_internalize_mapped_file {
+	char *	poimf_xml;
+	size_t	poimf_mapsize;
+};
+
+struct _prop_object_internalize_mapped_file *
+		_prop_object_internalize_map_file(const char *);
+void		_prop_object_internalize_unmap_file(
+				struct _prop_object_internalize_mapped_file *);
+#endif /* !_KERNEL && !_STANDALONE */
 
 	/* These are here because they're required by shared code. */
 prop_object_t	_prop_array_internalize(
