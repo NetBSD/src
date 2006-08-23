@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.10 2006/06/07 22:33:40 kardel Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.11 2006/08/23 17:19:32 christos Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.10 2006/06/07 22:33:40 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.11 2006/08/23 17:19:32 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -130,7 +130,7 @@ iostat_find(const char *name)
  * Allocate and initialise memory for the i/o statistics.
  */
 struct io_stats *
-iostat_alloc(int32_t type)
+iostat_alloc(int32_t type, void *parent, const char *name)
 {
 	struct io_stats *stats;
 
@@ -139,6 +139,8 @@ iostat_alloc(int32_t type)
 		panic("iostat_alloc: cannot allocate memory for stats buffer");
 
 	stats->io_type = type;
+	stats->io_parent = parent;
+	(void)strlcpy(stats->io_name, name, sizeof(stats->io_name));
 
 	/*
 	 * Set the attached timestamp.

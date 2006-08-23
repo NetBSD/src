@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.159 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.160 2006/08/23 17:19:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.159 2006/07/23 22:06:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.160 2006/08/23 17:19:32 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -706,6 +706,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	int error;
 	struct vattr *attrs;
 	kauth_cred_t cr;
+	char iosname[IOSTATNAMELEN];
 
 	/*
 	 * If the number of nfs iothreads to use has never
@@ -825,14 +826,8 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	nmp->nm_vnode = *vpp;
 	VOP_UNLOCK(*vpp, 0);
 
-	nmp->nm_stats = iostat_alloc(IOSTAT_NFS);
-	nmp->nm_stats->io_parent = nmp;
-	  /* generate a ficticious drive name for the nfs mount */
-	MALLOC(nmp->nm_stats->io_name, char *, IOSTATNAMELEN, M_NFSMNT,
-	       M_WAITOK);
-	snprintf(nmp->nm_stats->io_name, IOSTATNAMELEN, "nfs%u",
-		 nfs_mount_count);
-	nfs_mount_count++;
+	snprintf(iosname, sizeof(iosname), "nfs%u", nfs_mount_count++);
+	nmp->nm_stats = iostat_alloc(IOSTAT_NFS, nmp, iosname);
 
 	return (0);
 bad:
