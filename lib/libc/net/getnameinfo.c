@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.43 2006/02/17 15:58:26 ginsbach Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.44 2006/08/24 15:39:11 christos Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.43 2006/02/17 15:58:26 ginsbach Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.44 2006/08/24 15:39:11 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -66,6 +66,8 @@ __RCSID("$NetBSD: getnameinfo.c,v 1.43 2006/02/17 15:58:26 ginsbach Exp $");
 #include <resolv.h>
 #include <stddef.h>
 #include <string.h>
+
+#include "servent.h"
 
 #ifdef __weak_alias
 __weak_alias(getnameinfo,_getnameinfo)
@@ -194,8 +196,13 @@ getnameinfo_inet(sa, salen, host, hostlen, serv, servlen, flags)
 		if (flags & NI_NUMERICSERV)
 			sp = NULL;
 		else {
-			sp = getservbyport(port,
-				(flags & NI_DGRAM) ? "udp" : "tcp");
+			struct servent_data svd;
+			struct servent sv;
+
+			(void)memset(&svd, 0, sizeof(svd));
+			sp = getservbyport_r(port,
+				(flags & NI_DGRAM) ? "udp" : "tcp", &sv, &svd);
+			endservent_r(&svd);
 		}
 		if (sp) {
 			if (strlen(sp->s_name) + 1 > servlen)
