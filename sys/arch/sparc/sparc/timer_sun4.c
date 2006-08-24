@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4.c,v 1.14 2006/06/07 22:38:50 kardel Exp $	*/
+/*	$NetBSD: timer_sun4.c,v 1.15 2006/08/24 09:52:46 kardel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4.c,v 1.14 2006/06/07 22:38:50 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4.c,v 1.15 2006/08/24 09:52:46 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -169,7 +169,7 @@ timerattach_obio_4(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	timerattach(&timerreg4->t_c14.t_counter, &timerreg4->t_c14.t_limit);
+	timerattach(&timerreg4->t_c10.t_counter, &timerreg4->t_c10.t_limit);
 }
 #endif /* SUN4 */
 
@@ -194,6 +194,6 @@ timerattach_mainbus_4c(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	timerattach(&timerreg4->t_c14.t_counter, &timerreg4->t_c14.t_limit);
+	timerattach(&timerreg4->t_c10.t_counter, &timerreg4->t_c10.t_limit);
 }
 #endif /* SUN4C */
