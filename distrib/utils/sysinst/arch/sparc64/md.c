@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20 2006/04/05 16:55:07 garbled Exp $	*/
+/*	$NetBSD: md.c,v 1.20.2.1 2006/08/24 01:04:38 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -121,12 +121,24 @@ md_post_disklabel(void)
 	return 0;
 }
 
+/* install/update bootblocks */
+static void
+install_bootblocks(void)
+{
+
+	/* Install boot blocks now that we have a full system ... */
+	msg_display(MSG_dobootblks, diskdev);
+	run_program(RUN_DISPLAY, "/sbin/disklabel -W %s", diskdev);
+	run_program(RUN_DISPLAY, "/usr/mdec/binstall ffs %s", targetroot_mnt);
+}
+
 /*
  * hook called after running newfs.
  */
 int
 md_post_newfs(void)
 {
+	install_bootblocks();
 	return 0;
 }
 
@@ -157,17 +169,6 @@ md_check_partitions(void)
 	return check_partitions();
 }
 
-/* install/update bootblocks */
-static void
-install_bootblocks(void)
-{
-
-	/* Install boot blocks now that we have a full system ... */
-	msg_display(MSG_dobootblks, diskdev);
-	run_program(RUN_DISPLAY, "/sbin/disklabel -W %s", diskdev);
-	run_program(RUN_DISPLAY, "/usr/mdec/binstall ffs %s", targetroot_mnt);
-}
-
 /* Upgrade support */
 int
 md_update(void)
@@ -175,7 +176,6 @@ md_update(void)
 	/* endwin(); */
 	md_copy_filesystem();
 	md_post_newfs();
-	install_bootblocks();
 	wrefresh(curscr);
 	wmove(stdscr, 0, 0);
 	wclear(stdscr);
@@ -186,7 +186,6 @@ md_update(void)
 void
 md_cleanup_install(void)
 {
-	install_bootblocks();
 
 	enable_rc_conf();
 
