@@ -1,4 +1,4 @@
-/*	$NetBSD: pcictl.c,v 1.8 2004/04/24 13:41:51 kleink Exp $	*/
+/*	$NetBSD: pcictl.c,v 1.9 2006/08/24 07:30:16 bsh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -264,7 +264,10 @@ scan_pci(int busarg, int devarg, int funcarg, void (*cb)(u_int, u_int, u_int))
 
 	if (devarg == -1) {
 		devmin = 0;
-		devmax = pci_businfo.maxdevs - 1;
+		if (pci_businfo.maxdevs <= 0)
+			devmax = 0;
+		else
+			devmax = pci_businfo.maxdevs - 1;
 	} else
 		devmin = devmax = devarg;
 
