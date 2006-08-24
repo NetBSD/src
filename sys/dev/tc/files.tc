@@ -1,4 +1,4 @@
-#	$NetBSD: files.tc,v 1.30 2006/07/29 19:10:56 ad Exp $
+#	$NetBSD: files.tc,v 1.30.2.1 2006/08/24 00:59:42 riz Exp $
 #
 # Config file and device description for machine-independent
 # TURBOchannel code.  Included by ports that need it.
@@ -97,6 +97,6 @@ attach pxg at tc
 file   dev/tc/pxg.c                    pxg needs-flag
 
 # HX+ PMAGD
-#device	sfbp: wsemuldisplaydev, rasops32, rasops8
-#attach	sfbp at tc
-#file	dev/tc/sfbplus.c		sfbp needs-flag
+device	sfbp: wsemuldisplaydev, rasops32, rasops8
+attach	sfbp at tc
+file	dev/tc/sfbplus.c		sfbp needs-flag
