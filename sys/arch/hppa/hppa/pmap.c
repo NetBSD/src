@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 2005/12/24 20:07:04 perry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 2006/08/24 06:50:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2005/12/24 20:07:04 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19 2006/08/24 06:50:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,7 @@ pmap_pv_add(vaddr_t pv_start, vaddr_t pv_end)
 	}
 	splx(s);
 	
-	PMAP_PRINTF(PDB_INIT, (": %d pv_entries @ %x allocated\n",
+	PMAP_PRINTF(PDB_INIT, (": %ld pv_entries @ %x allocated\n",
 		    (pv - (struct pv_entry *) pv_start), (u_int)pv_start));
 }
 
@@ -1945,16 +1945,22 @@ pmap_hptdump(void)
 	db_printf("HPT dump %p-%p:\n", hpt, ehpt);
 	for (; hpt < ehpt; hpt++)
 		if (hpt->hpt_valid || hpt->hpt_entry) {
-			db_printf("hpt@%p: %x{%sv=%x:%x},%b,%x\n",
+			char buf[128];
+
+			bitmask_snprintf(hpt->hpt_tlbprot, TLB_BITS, buf,
+			    sizeof(buf));
+			db_printf("hpt@%p: %x{%sv=%x:%x},%s,%x\n",
 			    hpt, *(int *)hpt, (hpt->hpt_valid?"ok,":""),
 			    hpt->hpt_space, hpt->hpt_vpn << 9,
-			    hpt->hpt_tlbprot, TLB_BITS,
-			    tlbptob(hpt->hpt_tlbpage));
-			for (pv = hpt->hpt_entry; pv; pv = pv->pv_hash)
-				db_printf("    pv={%p,%x:%x,%b,%x}->%p\n",
+			    buf, tlbptob(hpt->hpt_tlbpage));
+
+			for (pv = hpt->hpt_entry; pv; pv = pv->pv_hash) {
+				bitmask_snprintf(hpt->hpt_tlbprot, TLB_BITS, buf,
+				    sizeof(buf));
+				db_printf("    pv={%p,%x:%x,%s,%x}->%p\n",
 				    pv->pv_pmap, pv->pv_space, pv->pv_va,
-				    pv->pv_tlbprot, TLB_BITS,
-				    tlbptob(pv->pv_tlbpage), pv->pv_hash);
+				    buf, tlbptob(pv->pv_tlbpage), pv->pv_hash);
+			}
 		}
 }
 #endif
