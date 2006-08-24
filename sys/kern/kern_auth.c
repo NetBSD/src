@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.15.2.1 2006/08/21 12:28:28 tron Exp $ */
+/* $NetBSD: kern_auth.c,v 1.15.2.2 2006/08/24 12:39:52 tron Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -696,6 +696,10 @@ kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
 		return (EFAULT);
 	if (!action)
 		return (EINVAL);
+
+	/* Short-circuit requests coming from the kernel. */
+	if (cred == NOCRED || cred == FSCRED)
+		return (0);
 
 	/*
 	 * Each scope is associated with at least one listener. We need to
