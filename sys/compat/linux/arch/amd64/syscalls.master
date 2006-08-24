@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.12 2006/06/25 16:15:39 manu Exp $
+	$NetBSD: syscalls.master,v 1.13 2006/08/24 16:36:59 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -111,9 +111,9 @@
 27	NOARGS		{ int sys_mincore(void *addr, size_t len, char *vec); }
 28	NOARGS		{ int sys_madvise(void *addr, size_t len, int behav); }
 #ifdef SYSVSHM
-29	STD		{ int linux_sys_shmget(key_t key, size_t size, int shmflg); }
-30	STD		{ int linux_sys_shmat(int shmid, void *shmaddr, \
-			    int shmflg, u_long *raddr); }
+29	STD		{ int linux_sys_shmget(key_t key, size_t size, \
+			    int shmflg); }
+30	NOARGS		{ int sys_shmat(int shmid, void *shmaddr, int shmflg); }
 31	STD		{ int linux_sys_shmctl(int shmid, int cmd, \
 			    struct linux_shmid_ds *buf); }
 #else
