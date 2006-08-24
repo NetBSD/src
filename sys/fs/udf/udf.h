@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.4 2006/02/02 21:58:40 christos Exp $ */
+/* $NetBSD: udf.h,v 1.4.18.1 2006/08/24 12:44:26 tron Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -153,15 +153,19 @@ struct udf_mount {
 	int 			 vtop[UDF_PMAPS+1];	/* vpartnr trans     */
 	int			 vtop_tp[UDF_PMAPS+1];	/* type of trans     */
 
-	uint32_t		 possible_vat_location;	/* predicted         */
+	/* VAT */
+	uint32_t		 first_possible_vat_location;
+	uint32_t		 last_possible_vat_location;
 	uint32_t		 vat_table_alloc_length;
 	uint32_t		 vat_entries;
 	uint32_t		 vat_offset;		/* offset in table   */
 	uint8_t			*vat_table;		/* read in data      */
 
+	/* sparable */
 	uint32_t		 sparable_packet_len;
 	struct udf_sparing_table*sparing_table;
 
+	/* meta */
 	struct udf_node 	*metafile;
 	struct udf_node 	*metabitmapfile;
 	struct udf_node 	*metacopyfile;
