@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19 2006/08/24 06:50:48 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.20 2006/08/24 06:54:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19 2006/08/24 06:50:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.20 2006/08/24 06:54:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -859,8 +859,10 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	if (pmapdebug & PDB_INIT)
 		printf("hpt_table: 0x%lx @ %p\n", size + 1, (caddr_t)addr);
 #endif
-	/* load cr25 with the address of the HPT table
-	   NB: It sez CR_VTOP, but we (and the TLB handlers) know better ... */
+	/*
+	 * load cr25 with the address of the HPT table
+	 * NB: It sez CR_VTOP, but we (and the TLB handlers) know better ...
+	 */
 	mtctl(addr, CR_VTOP);
 	hpt_base = addr;
 	hpt_mask = size;
