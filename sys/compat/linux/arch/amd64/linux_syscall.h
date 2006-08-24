@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.13 2006/06/25 16:16:52 manu Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.14 2006/08/24 16:36:59 manu Exp $ */
 
 /*
  * System call numbers.
@@ -101,7 +101,7 @@
 /* syscall: "shmget" ret: "int" args: "key_t" "size_t" "int" */
 #define	LINUX_SYS_shmget	29
 
-/* syscall: "shmat" ret: "int" args: "int" "void *" "int" "u_long *" */
+/* syscall: "shmat" ret: "int" args: "int" "void *" "int" */
 #define	LINUX_SYS_shmat	30
 
 /* syscall: "shmctl" ret: "int" args: "int" "int" "struct linux_shmid_ds *" */

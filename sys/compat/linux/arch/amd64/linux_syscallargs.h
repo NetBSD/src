@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.13 2006/06/25 16:16:52 manu Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.14 2006/08/24 16:36:59 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -127,13 +127,6 @@ struct linux_sys_shmget_args {
 	syscallarg(key_t) key;
 	syscallarg(size_t) size;
 	syscallarg(int) shmflg;
-};
-
-struct linux_sys_shmat_args {
-	syscallarg(int) shmid;
-	syscallarg(void *) shmaddr;
-	syscallarg(int) shmflg;
-	syscallarg(u_long *) raddr;
 };
 
 struct linux_sys_shmctl_args {
@@ -789,7 +782,7 @@ int	sys_madvise(struct lwp *, void *, register_t *);
 #ifdef SYSVSHM
 int	linux_sys_shmget(struct lwp *, void *, register_t *);
 
-int	linux_sys_shmat(struct lwp *, void *, register_t *);
+int	sys_shmat(struct lwp *, void *, register_t *);
 
 int	linux_sys_shmctl(struct lwp *, void *, register_t *);
 
