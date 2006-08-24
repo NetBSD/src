@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.268 2006/07/23 22:06:12 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.269 2006/08/24 01:08:00 jld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.268 2006/07/23 22:06:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.269 2006/08/24 01:08:00 jld Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2698,15 +2698,15 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	(*pr)("\tfrsize = %lu\n",mp->mnt_stat.f_frsize);
 	(*pr)("\tiosize = %lu\n",mp->mnt_stat.f_iosize);
 
-	(*pr)("\tblocks = "PRIu64"\n",mp->mnt_stat.f_blocks);
-	(*pr)("\tbfree = "PRIu64"\n",mp->mnt_stat.f_bfree);
-	(*pr)("\tbavail = "PRIu64"\n",mp->mnt_stat.f_bavail);
-	(*pr)("\tbresvd = "PRIu64"\n",mp->mnt_stat.f_bresvd);
+	(*pr)("\tblocks = %"PRIu64"\n",mp->mnt_stat.f_blocks);
+	(*pr)("\tbfree = %"PRIu64"\n",mp->mnt_stat.f_bfree);
+	(*pr)("\tbavail = %"PRIu64"\n",mp->mnt_stat.f_bavail);
+	(*pr)("\tbresvd = %"PRIu64"\n",mp->mnt_stat.f_bresvd);
 
-	(*pr)("\tfiles = "PRIu64"\n",mp->mnt_stat.f_files);
-	(*pr)("\tffree = "PRIu64"\n",mp->mnt_stat.f_ffree);
-	(*pr)("\tfavail = "PRIu64"\n",mp->mnt_stat.f_favail);
-	(*pr)("\tfresvd = "PRIu64"\n",mp->mnt_stat.f_fresvd);
+	(*pr)("\tfiles = %"PRIu64"\n",mp->mnt_stat.f_files);
+	(*pr)("\tffree = %"PRIu64"\n",mp->mnt_stat.f_ffree);
+	(*pr)("\tfavail = %"PRIu64"\n",mp->mnt_stat.f_favail);
+	(*pr)("\tfresvd = %"PRIu64"\n",mp->mnt_stat.f_fresvd);
 
 	(*pr)("\tf_fsidx = { 0x%"PRIx32", 0x%"PRIx32" }\n",
 			mp->mnt_stat.f_fsidx.__fsid_val[0],
@@ -2718,10 +2718,10 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	bitmask_snprintf(mp->mnt_stat.f_flag, __MNT_FLAG_BITS, sbuf,
 	    sizeof(sbuf));
 	(*pr)("\tflag = %s\n",sbuf);
-	(*pr)("\tsyncwrites = " PRIu64 "\n",mp->mnt_stat.f_syncwrites);
-	(*pr)("\tasyncwrites = " PRIu64 "\n",mp->mnt_stat.f_asyncwrites);
-	(*pr)("\tsyncreads = " PRIu64 "\n",mp->mnt_stat.f_syncreads);
-	(*pr)("\tasyncreads = " PRIu64 "\n",mp->mnt_stat.f_asyncreads);
+	(*pr)("\tsyncwrites = %" PRIu64 "\n",mp->mnt_stat.f_syncwrites);
+	(*pr)("\tasyncwrites = %" PRIu64 "\n",mp->mnt_stat.f_asyncwrites);
+	(*pr)("\tsyncreads = %" PRIu64 "\n",mp->mnt_stat.f_syncreads);
+	(*pr)("\tasyncreads = %" PRIu64 "\n",mp->mnt_stat.f_asyncreads);
 	(*pr)("\tfstypename = %s\n",mp->mnt_stat.f_fstypename);
 	(*pr)("\tmntonname = %s\n",mp->mnt_stat.f_mntonname);
 	(*pr)("\tmntfromname = %s\n",mp->mnt_stat.f_mntfromname);
