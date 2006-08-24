@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.11 2006/07/09 13:58:47 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.11.2.1 2006/08/24 12:44:26 tron Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.11 2006/07/09 13:58:47 reinoud Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.11.2.1 2006/08/24 12:44:26 tron Exp $");
 #endif /* not lint */
 
 
@@ -680,8 +680,6 @@ udf_read_anchors(struct udf_mount *ump, struct udf_args *args)
 			track_end = last_track.next_writable
 				    - ump->discinfo.link_block_penalty;
 	}
-	/* VATs are only recorded on sequential media, but initialise */
-	ump->possible_vat_location = track_end;
 
 	/* its no use reading a blank track */
 	first_anchor = 0;
@@ -706,6 +704,10 @@ udf_read_anchors(struct udf_mount *ump, struct udf_args *args)
 			ok++;
 		}
 	}
+
+	/* VATs are only recorded on sequential media, but initialise */
+	ump->first_possible_vat_location = track_start + 256 + 1;
+	ump->last_possible_vat_location  = track_end;
 
 	return ok;
 }
@@ -1254,8 +1256,9 @@ udf_search_vat(struct udf_mount *ump, union udf_pmap *mapping)
 	/* mapping info not needed */
 	mapping = mapping;
 
-	vat_loc = ump->possible_vat_location;
-	early_vat_loc = vat_loc - 20;
+	vat_loc = ump->last_possible_vat_location;
+	early_vat_loc = vat_loc - ump->discinfo.blockingnr;
+	early_vat_loc = MAX(early_vat_loc, ump->first_possible_vat_location);
 	late_vat_loc  = vat_loc + 1024;
 
 	/* TODO first search last sector? */
