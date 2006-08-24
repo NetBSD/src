@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.16 2006/07/21 16:48:48 ad Exp $	*/
+/*	$NetBSD: dk.c,v 1.17 2006/08/24 21:57:11 dbj Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.16 2006/07/21 16:48:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.17 2006/08/24 21:57:11 dbj Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -921,13 +921,13 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 			VOP_UNLOCK(vp, 0);
 			sc->sc_parent->dk_rawvp = vp;
 		}
-		if (fmt == S_IFCHR)
-			sc->sc_dk.dk_copenmask |= 1;
-		else
-			sc->sc_dk.dk_bopenmask |= 1;
-		sc->sc_dk.dk_openmask =
-		    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 	}
+	if (fmt == S_IFCHR)
+		sc->sc_dk.dk_copenmask |= 1;
+	else
+		sc->sc_dk.dk_bopenmask |= 1;
+	sc->sc_dk.dk_openmask =
+	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
  popen_fail:
 	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_RELEASE, NULL);
