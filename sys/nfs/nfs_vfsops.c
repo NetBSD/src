@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.160 2006/08/23 17:19:32 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.161 2006/08/24 12:40:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.160 2006/08/23 17:19:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.161 2006/08/24 12:40:39 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -902,7 +902,6 @@ nfs_unmount(mp, mntflags, l)
 	 * nfs_mount_count here for good reason - we may not be unmounting
 	 * the last thing mounted.
 	 */
-	FREE(nmp->nm_stats->io_name, M_NFSMNT);
 	iostat_free(nmp->nm_stats);
 
 	/*
