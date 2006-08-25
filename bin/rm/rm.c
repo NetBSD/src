@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.44 2006/08/14 20:38:13 tls Exp $ */
+/* $NetBSD: rm.c,v 1.45 2006/08/25 11:00:40 liamjfoy Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.44 2006/08/14 20:38:13 tls Exp $");
+__RCSID("$NetBSD: rm.c,v 1.45 2006/08/25 11:00:40 liamjfoy Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ int dflag, eval, fflag, iflag, Pflag, stdin_ok, vflag, Wflag;
 int	check(char *, char *, struct stat *);
 void	checkdot(char **);
 void	rm_file(char **);
-void	rm_overwrite(char *, struct stat *);
+int	rm_overwrite(char *, struct stat *);
 void	rm_tree(char **);
 void	usage(void);
 int	main(int, char *[]);
@@ -239,8 +239,10 @@ rm_tree(char **argv)
 			break;
 
 		default:
-			if (Pflag)
-				rm_overwrite(p->fts_accpath, NULL);
+			if (Pflag) {
+				if (rm_overwrite(p->fts_accpath, NULL))
+					continue;
+			}
 			rval = unlink(p->fts_accpath);
 			if (rval != 0 && fflag && NONEXISTENT(errno))
 				continue;
@@ -298,8 +300,10 @@ rm_file(char **argv)
 		else if (S_ISDIR(sb.st_mode))
 			rval = rmdir(f);
 		else {
-			if (Pflag)
-				rm_overwrite(f, &sb);
+			if (Pflag) {
+				if (rm_overwrite(f, &sb))
+					continue;
+			}
 			rval = unlink(f);
 		}
 		if (rval && (!fflag || !NONEXISTENT(errno))) {
@@ -361,9 +365,11 @@ rm_file(char **argv)
  * rather than any technique of the sort attempted here, for secret data.
  *
  * Caveat Emptor.
+ *
+ * rm_overwrite will return 0 on success.
  */
 
-void
+int
 rm_overwrite(char *file, struct stat *sbp)
 {
 	struct stat sb;
@@ -377,7 +383,7 @@ rm_overwrite(char *file, struct stat *sbp)
 		sbp = &sb;
 	}
 	if (!S_ISREG(sbp->st_mode))
-		return;
+		return 0;
 
 	/* flags to try to defeat hidden caching by forcing seeks */
 	if ((fd = open(file, O_RDWR|O_SYNC|O_RSYNC, 0)) == -1)
@@ -470,11 +476,18 @@ rm_overwrite(char *file, struct stat *sbp)
 	 * write; the "or" in the standard allows this.
 	 */
 
-	if (!close(fd))
-		return;
+	if (close(fd) == -1) {
+		fd = -1;
+		goto err;
+	}
+
+	return 0;
 
 err:	eval = 1;
 	warn("%s", file);
+	if (fd != -1)
+		close(fd);
+	return 1;
 }
 
 int
@@ -497,6 +510,12 @@ check(char *path, char *name, struct stat *sp)
 		    !(access(name, W_OK) && (errno != ETXTBSY)))
 			return (1);
 		strmode(sp->st_mode, modep);
+		if (Pflag) {
+			warnx(
+			    "%s: -P was specified but file could not"
+			    " be overwritten", path);
+			return 0;
+		}
 		(void)fprintf(stderr, "override %s%s%s/%s for '%s'? ",
 		    modep + 1, modep[9] == ' ' ? "" : " ",
 		    user_from_uid(sp->st_uid, 0),
