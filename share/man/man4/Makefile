@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.397 2006/07/29 08:54:52 wiz Exp $
+#	$NetBSD: Makefile,v 1.397.2.1 2006/08/25 12:33:57 tron Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adc.4 adt7467c.4 adv.4 \
@@ -49,7 +49,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adc.4 adt7467c.4 adv.4 \
 	wsmouse.4 wsmux.4 xbox.4 xge.4 yds.4 ym.4 zero.4 zstty.4 
 
 # USB devices
-MAN+=	uaudio.4 ubsa.4 ubt.4 ubtbcmfw.4 ucom.4 ucycom.4 \
+MAN+=	uaudio.4 ubsa.4 ubt.4 ucom.4 ucycom.4 \
 	udsbr.4 uftdi.4 ugen.4 ugensa.4 uhid.4 \
 	uhidev.4 uipaq.4 uirda.4 ukbd.4 ukyopon.4 ulpt.4 \
 	umass.4 umct.4 umidi.4 umodem.4 ums.4 uplcom.4 urio.4 usb.4 \

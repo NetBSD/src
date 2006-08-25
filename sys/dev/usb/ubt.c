@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.14 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: ubt.c,v 1.14.2.1 2006/08/25 12:33:57 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.14 2006/06/19 15:44:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.14.2.1 2006/08/25 12:33:57 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -280,6 +280,18 @@ static int ubt_set_isoc_config(struct ubt_softc *);
 static int ubt_sysctl_config(SYSCTLFN_PROTO);
 static void ubt_abortdealloc(struct ubt_softc *);
 
+/*
+ * If a device should be ignored then add
+ *
+ *	{ VendorID, ProductID }
+ *
+ * to this list.
+ */
+static const struct usb_devno ubt_ignore[] = {
+	{ USB_VENDOR_BROADCOM, USB_PRODUCT_BROADCOM_BCM2033NF },
+	{ 0, 0 }	/* end of list */
+};
+
 USB_MATCH(ubt)
 {
 	USB_MATCH_START(ubt, uaa);
@@ -288,6 +300,9 @@ USB_MATCH(ubt)
 	DPRINTFN(50, "ubt_match\n");
 
 	if (uaa->iface == NULL)
+		return UMATCH_NONE;
+
+	if (usb_lookup(ubt_ignore, uaa->vendor, uaa->product))
 		return UMATCH_NONE;
 
 	id = usbd_get_interface_descriptor(uaa->iface);
