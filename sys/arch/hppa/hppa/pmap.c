@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 2006/08/24 07:00:46 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22 2006/08/25 06:23:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2006/08/24 07:00:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2006/08/25 06:23:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -765,13 +765,13 @@ pmap_pv_remove(struct pv_entry *pv)
 }
 
 /*
- *	Bootstrap the system enough to run with virtual memory.
- *	Map the kernel's code and data, and allocate the system page table.
- *	Called with mapping OFF.
+ * Bootstrap the system enough to run with virtual memory.
+ * Map the kernel's code and data, and allocate the system page table.
+ * Called with mapping OFF.
  *
- *	Parameters:
- *	vstart	PA of first available physical page
- *	vend	PA of last available physical page
+ * Parameters:
+ * vstart	PA of first available physical page
+ * vend		PA of last available physical page
  */
 void
 pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
