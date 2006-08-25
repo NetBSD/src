@@ -1,4 +1,4 @@
-/*	$NetBSD: at_proto.c,v 1.7 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: at_proto.c,v 1.8 2006/08/25 19:33:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.7 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.8 2006/08/25 19:33:51 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,5 +75,7 @@ struct domain		atalkdomain = {
     atalksw, &atalksw[sizeof(atalksw)/sizeof(atalksw[0])],
     rn_inithead,
     32,
-    sizeof(struct sockaddr_at)
+    sizeof(struct sockaddr_at),
+    0, 0,
+    { &atintrq1, &atintrq2 },
 };
