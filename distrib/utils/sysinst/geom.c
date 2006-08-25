@@ -1,4 +1,4 @@
-/*	$NetBSD: geom.c,v 1.8 2003/07/07 12:30:20 dsl Exp $	*/
+/*	$NetBSD: geom.c,v 1.8.12.1 2006/08/25 05:28:12 riz Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jason R. Thorpe.
@@ -45,7 +45,7 @@
 #include "defs.h"
 
 static int
-get_label(const char *disk, struct disklabel *l, int cmd)
+get_label(const char *disk, struct disklabel *l, unsigned long cmd)
 {
 	char diskpath[MAXPATHLEN];
 	int fd;
