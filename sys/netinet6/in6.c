@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.109 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: in6.c,v 1.110 2006/08/25 18:29:17 matt Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.109 2006/07/23 22:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.110 2006/08/25 18:29:17 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -99,8 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.109 2006/07/23 22:06:13 ad Exp $");
 #include <netinet6/scope6_var.h>
 
 #include <net/net_osdep.h>
-
-#include <netccitt/x25.h>
 
 #ifdef PFIL_HOOKS
 #include <net/pfil.h>
@@ -348,7 +346,9 @@ in6_control(so, cmd, data, ifp, l)
 	 */
 	case SIOCSIFADDR:
 	case SIOCSIFDSTADDR:
+#ifdef SIOCSIFCONF_X26
 	case SIOCSIFCONF_X25:
+#endif
 		return EOPNOTSUPP;
 	case SIOCGETSGCNT_IN6:
 	case SIOCGETMIFCNT_IN6:
