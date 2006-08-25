@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.36 2006/07/19 21:11:41 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.37 2006/08/25 07:21:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.36 2006/07/19 21:11:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.37 2006/08/25 07:21:07 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -810,7 +810,7 @@ do_onfault:
 
 		if (map->pmap->pmap_space != space) {
 #ifdef TRAPDEBUG
-			printf("trap: space missmatch %d != %d\n",
+			printf("trap: space mismatch %d != %d\n",
 			    space, map->pmap->pmap_space);
 #endif
 			/* actually dump the user, crap the kernel */
