@@ -1,4 +1,4 @@
-.\"	$NetBSD: rm.1,v 1.22 2004/03/24 11:37:07 wiz Exp $
+.\"	$NetBSD: rm.1,v 1.23 2006/08/25 11:08:50 liamjfoy Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994, 2003
 .\"	The Regents of the University of California.  All rights reserved.
@@ -82,7 +82,8 @@ then 0x00, and then with random data, before they are deleted.  Some
 care is taken to ensure that the data are actually written to disk,
 but this cannot be guaranteed, even on traditional filesystems; on
 log-structured filesystems or if any block-journaling scheme is in
-use, this option is completely useless.
+use, this option is completely useless. If the file cannot be
+overwritten, it will not be removed.
 .It Fl R
 Attempt to remove the file hierarchy rooted in each file argument.
 The
