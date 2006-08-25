@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.90.2.4 2005/09/09 14:17:44 tron Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.90.2.5 2006/08/25 11:32:42 ghen Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.90.2.4 2005/09/09 14:17:44 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.90.2.5 2006/08/25 11:32:42 ghen Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -244,10 +244,12 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 			namelen = nam->m_len;
 		/* SHOULD COPY OUT A CHAIN HERE */
 		if ((error = copyout(mtod(nam, caddr_t),
-		    (caddr_t)SCARG(uap, name), namelen)) == 0)
-			error = copyout((caddr_t)&namelen,
-			    (caddr_t)SCARG(uap, anamelen),
-			    sizeof(*SCARG(uap, anamelen)));
+		    (caddr_t)SCARG(uap, name), namelen)) != 0 ||
+		    (error = copyout((caddr_t)&namelen,
+		    (caddr_t)SCARG(uap, anamelen),
+		    sizeof(*SCARG(uap, anamelen)))) != 0) {
+			soclose(so);
+		}
 	}
 	/* if an error occurred, free the file descriptor */
 	if (error) {
