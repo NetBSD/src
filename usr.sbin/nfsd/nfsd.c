@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.47 2006/05/09 20:18:09 mrg Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.48 2006/08/25 11:59:30 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.47 2006/05/09 20:18:09 mrg Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.48 2006/08/25 11:59:30 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -263,7 +263,7 @@ main(argc, argv)
 
 		ecode = getaddrinfo(NULL, "nfs", &hints, &ai_tcp);
 		if (ecode != 0) {
-			syslog(LOG_ERR, "getaddrinfo udp: %s",
+			syslog(LOG_ERR, "getaddrinfo tcp: %s",
 			    gai_strerror(ecode));
 			exit(1);
 		}
@@ -315,7 +315,7 @@ main(argc, argv)
 
 		ecode = getaddrinfo(NULL, "nfs", &hints, &ai_tcp6);
 		if (ecode != 0) {
-			syslog(LOG_ERR, "getaddrinfo udp: %s",
+			syslog(LOG_ERR, "getaddrinfo tcp: %s",
 			    gai_strerror(ecode));
 			exit(1);
 		}
