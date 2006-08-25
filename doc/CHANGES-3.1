@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.147 2006/08/23 20:14:00 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.148 2006/08/25 11:54:48 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4380,4 +4380,59 @@ sys/net/if_spppsubr.c				1.96
 	Avoid buffer overflow in the in-kernel PPP code shared by ISDN PPP
 	interfaces ippp(4) and pppoe(4). This fixes SA2006-019 (CVE-2006-4304).
 	[adrianp, ticket #1476]
+
+etc/Makefile					1.335
+etc/motd.stable					1.1
+
+	Add a "how to report bugs" message for STABLE branches too, as they
+	really are development snapshots (although not as "bleeding edge" as
+	current).  Per tron@'s suggestion.
+
+	This way we get consistent messages along the development process.
+	Otherwise, STABLE could carry no message while a RC could, disappearing
+	again after the real formal release.  With this change only formal
+	releases do not carry any special message in motd.
+	[jmmv, ticket #1464]
+
+sys/kern/uipc_syscalls.c			1.102
+
+	Don't leave a dangling socket (no associated struct file) if
+	user supplied a bad name or anamelen parameter to accept(2).
+	If bad paramaters were suplied and a copyout() failed, the
+	struct file was cleaned up but not the associated socket.  This
+	could leave sockets in CLOSE_WAIT that could never be closed.
+	[seanb, ticket #1472]
+
+lib/libpthread/pthread_mutex.c			1.22
+
+	Close a window in which we can not notice a recently-slept-on-our
+	mutex thread, thus leaving a thread sleeping on an unlocked mutex.
+	
+	Reviewed by myself and Christos.
+	
+	Problem reported by Arne H. Juul, arnej at pvv dot ntnu dot no,
+	in PR 26208. This fix represents option 1 presented in the PR.
+	[wrstuden, ticket #1474]
+
+lib/libcurses/color.c				1.31
+lib/libcurses/delwin.c				1.14
+lib/libcurses/screen.c				1.18
+
+	Make sure we update the correct window when changing colour pairs.
+	When deleting windows and screens, also set to NULL the standard names
+	that refer to the window or screen just deleted.
+	Add some more debugging information.
+	[jdc, ticket #1475]
+
+share/man/man4/re.4				1.10
+
+	describe that hw VLAN tagging is not supported ATM.
+	(see sys/dev/ic/rtl8169.c rev. 1.23 .)
+	[pavel, ticket #1477]
+
+sys/arch/cobalt/conf/GENERIC			1.102
+sys/arch/cobalt/conf/INSTALL			1.24
+
+	Add option SOSEND_NO_LOAN to fix a panic on cobalt.
+	[tsutsui, ticket #1478]
 
