@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.31 2006/08/25 02:34:30 riz Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.32 2006/08/25 20:16:57 riz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1998,8 +1998,18 @@ sk_watchdog(struct ifnet *ifp)
 {
 	struct sk_if_softc *sc_if = ifp->if_softc;
 
-	aprint_error("%s: watchdog timeout\n", sc_if->sk_dev.dv_xname);
-	(void) sk_init(ifp);
+	/*
+	 * Reclaim first as there is a possibility of losing Tx completion
+	 * interrupts.
+	 */
+	sk_txeof(sc_if);
+	if (sc_if->sk_cdata.sk_tx_cnt != 0) {
+		aprint_error("%s: watchdog timeout\n", sc_if->sk_dev.dv_xname);
+
+		ifp->if_oerrors++;
+
+		sk_init(ifp);
+	}
 }
 
 void
