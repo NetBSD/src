@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.911 2006/08/21 04:13:28 thorpej Exp $
+#	$NetBSD: mi,v 1.912 2006/08/25 17:41:09 matt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1339,16 +1339,16 @@
 ./usr/include/netbt/l2cap.h			comp-c-include
 ./usr/include/netbt/rfcomm.h			comp-c-include
 ./usr/include/netbt/sco.h			comp-c-include
-./usr/include/netccitt/dll.h			comp-c-include
-./usr/include/netccitt/hd_var.h			comp-c-include
-./usr/include/netccitt/hdlc.h			comp-c-include
-./usr/include/netccitt/llc_var.h		comp-c-include
-./usr/include/netccitt/pk.h			comp-c-include
-./usr/include/netccitt/pk_extern.h		comp-c-include
-./usr/include/netccitt/pk_var.h			comp-c-include
-./usr/include/netccitt/x25.h			comp-c-include
-./usr/include/netccitt/x25acct.h		comp-c-include
-./usr/include/netccitt/x25err.h			comp-c-include
+./usr/include/netccitt/dll.h			comp-obsolete		obsolete
+./usr/include/netccitt/hd_var.h			comp-obsolete		obsolete
+./usr/include/netccitt/hdlc.h			comp-obsolete		obsolete
+./usr/include/netccitt/llc_var.h		comp-obsolete		obsolete
+./usr/include/netccitt/pk.h			comp-obsolete		obsolete
+./usr/include/netccitt/pk_extern.h		comp-obsolete		obsolete
+./usr/include/netccitt/pk_var.h			comp-obsolete		obsolete
+./usr/include/netccitt/x25.h			comp-obsolete		obsolete
+./usr/include/netccitt/x25acct.h		comp-obsolete		obsolete
+./usr/include/netccitt/x25err.h			comp-obsolete		obsolete
 ./usr/include/netconfig.h			comp-c-include
 ./usr/include/netdb.h				comp-c-include
 ./usr/include/netgroup.h			comp-c-include
@@ -1470,18 +1470,18 @@
 ./usr/include/netkey/keysock.h			comp-c-include
 ./usr/include/netkey/keyv2.h			comp-obsolete		obsolete
 ./usr/include/netnatm/natm.h			comp-c-include
-./usr/include/netns/idp.h			comp-c-include
-./usr/include/netns/idp_var.h			comp-c-include
-./usr/include/netns/ns.h			comp-c-include
-./usr/include/netns/ns_error.h			comp-c-include
-./usr/include/netns/ns_if.h			comp-c-include
-./usr/include/netns/ns_pcb.h			comp-c-include
-./usr/include/netns/ns_var.h			comp-c-include
-./usr/include/netns/sp.h			comp-c-include
-./usr/include/netns/spidp.h			comp-c-include
-./usr/include/netns/spp_debug.h			comp-c-include
-./usr/include/netns/spp_timer.h			comp-c-include
-./usr/include/netns/spp_var.h			comp-c-include
+./usr/include/netns/idp.h			comp-obsolete		obsolete
+./usr/include/netns/idp_var.h			comp-obsolete		obsolete
+./usr/include/netns/ns.h			comp-obsolete		obsolete
+./usr/include/netns/ns_error.h			comp-obsolete		obsolete
+./usr/include/netns/ns_if.h			comp-obsolete		obsolete
+./usr/include/netns/ns_pcb.h			comp-obsolete		obsolete
+./usr/include/netns/ns_var.h			comp-obsolete		obsolete
+./usr/include/netns/sp.h			comp-obsolete		obsolete
+./usr/include/netns/spidp.h			comp-obsolete		obsolete
+./usr/include/netns/spp_debug.h			comp-obsolete		obsolete
+./usr/include/netns/spp_timer.h			comp-obsolete		obsolete
+./usr/include/netns/spp_var.h			comp-obsolete		obsolete
 ./usr/include/nfs/krpc.h			comp-c-include
 ./usr/include/nfs/nfs.h				comp-c-include
 ./usr/include/nfs/nfs_var.h			comp-obsolete		obsolete
