@@ -1,4 +1,4 @@
-/*	$NetBSD: delwin.c,v 1.13 2003/08/07 16:44:21 agc Exp $	*/
+/*	$NetBSD: delwin.c,v 1.13.12.1 2006/08/25 16:15:33 ghen Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)delwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: delwin.c,v 1.13 2003/08/07 16:44:21 agc Exp $");
+__RCSID("$NetBSD: delwin.c,v 1.13.12.1 2006/08/25 16:15:33 ghen Exp $");
 #endif
 #endif				/* not lint */
 
@@ -54,6 +54,9 @@ delwin(WINDOW *win)
 	struct __winlist *wl, *pwl;
 	SCREEN *screen;
 
+#ifdef DEBUG
+	__CTRACE("delwin(%p)\n", win);
+#endif
 	if (win->orig == NULL) {
 		/*
 		 * If we are the original window, delete the space for all
@@ -92,6 +95,12 @@ delwin(WINDOW *win)
 	}
 	free(win->lspace);
 	free(win->lines);
+	if (win == _cursesi_screen->curscr)
+		_cursesi_screen->curscr = NULL;
+	if (win == _cursesi_screen->stdscr)
+		_cursesi_screen->stdscr = NULL;
+	if (win == _cursesi_screen->__virtscr)
+		_cursesi_screen->__virtscr = NULL;
 	free(win);
 	return (OK);
 }

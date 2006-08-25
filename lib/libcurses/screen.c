@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.17 2004/03/23 21:17:20 jdc Exp $	*/
+/*	$NetBSD: screen.c,v 1.17.12.1 2006/08/25 16:15:33 ghen Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.17 2004/03/23 21:17:20 jdc Exp $");
+__RCSID("$NetBSD: screen.c,v 1.17.12.1 2006/08/25 16:15:33 ghen Exp $");
 #endif
 #endif					/* not lint */
 
@@ -201,6 +201,9 @@ delscreen(SCREEN *screen)
 {
         struct __winlist *list;
 
+#ifdef DEBUG
+	__CTRACE("delscreen(%p)\n", screen);
+#endif
 	  /* free up the termcap entry stuff */
 	t_freent(screen->cursesi_genbuf);
 
@@ -216,5 +219,8 @@ delscreen(SCREEN *screen)
 	_cursesi_free_keymap(screen->base_keymap);
 
 	free(screen->stdbuf);
+	screen->stdbuf = NULL;
+	if (_cursesi_screen == screen)
+		_cursesi_screen = NULL;
 	free(screen);
 }
