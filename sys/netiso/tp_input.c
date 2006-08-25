@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.24 2006/06/07 22:34:04 kardel Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.25 2006/08/25 19:46:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,9 +79,10 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.24 2006/06/07 22:34:04 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.25 2006/08/25 19:46:04 matt Exp $");
 
 #include "opt_iso.h"
+#include "opt_ccitt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.24 2006/06/07 22:34:04 kardel Exp $")
 #include <netiso/tp_tpdu.h>
 #include <netiso/iso_var.h>
 
+#ifdef CCITT
 #ifdef TRUE
 #undef FALSE
 #undef TRUE
@@ -116,6 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.24 2006/06/07 22:34:04 kardel Exp $")
 #include <netccitt/x25.h>
 #include <netccitt/pk.h>
 #include <netccitt/pk_var.h>
+#endif
 
 #include <machine/stdarg.h>
 

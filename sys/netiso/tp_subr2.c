@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.29 2005/12/28 09:18:46 christos Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.30 2006/08/25 19:46:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.29 2005/12/28 09:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.30 2006/08/25 19:46:04 matt Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
@@ -111,10 +111,12 @@ __KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.29 2005/12/28 09:18:46 christos Exp $
 #include <netiso/cons.h>
 #include <netiso/clnp.h>
 
+#ifdef CCITT
 #include <netccitt/x25.h>
 #include <netccitt/pk.h>
 #include <netccitt/pk_var.h>
 #include <netccitt/pk_extern.h>
+#endif
 
 #if 0
 static void copyQOSparms (struct tp_conn_param *, struct tp_conn_param *);
@@ -736,13 +738,6 @@ done:
 	return error;
 }
 
-#ifndef CCITT
-void
-pk_flowcontrol(struct pklcd *lcp, int foo, int bar)
-{
-}
-#endif
-
 /* class zero version */
 void
 tp0_stash(struct tp_pcb *tpcb, struct tp_event *e)
@@ -750,7 +745,6 @@ tp0_stash(struct tp_pcb *tpcb, struct tp_event *e)
 #define E e->TPDU_ATTR(DT)
 
 	struct sockbuf *sb = &tpcb->tp_sock->so_rcv;
-	struct isopcb *isop = (struct isopcb *) tpcb->tp_npcb;
 
 #ifdef TP_PERF_MEAS
 	if (DOPERF(tpcb)) {
@@ -787,23 +781,28 @@ tp0_stash(struct tp_pcb *tpcb, struct tp_event *e)
 #endif
 	if (tpcb->tp_netservice != ISO_CONS)
 		printf("tp0_stash: tp running over something weird\n");
+#ifdef CCITT
 	else {
+		struct isopcb *isop = (struct isopcb *) tpcb->tp_npcb;
 		struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
 		pk_flowcontrol(lcp, sbspace(sb) <= 0, 1);
 	}
+#endif
 }
 
 void
 tp0_openflow(struct tp_pcb *tpcb)
 {
-	struct isopcb *isop = (struct isopcb *) tpcb->tp_npcb;
 	if (tpcb->tp_netservice != ISO_CONS)
 		printf("tp0_openflow: tp running over something weird\n");
+#ifdef CCITT
 	else {
+		struct isopcb *isop = (struct isopcb *) tpcb->tp_npcb;
 		struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
 		if (lcp->lcd_rxrnr_condition)
 			pk_flowcontrol(lcp, 0, 0);
 	}
+#endif
 }
 
 #ifdef TP_PERF_MEAS
