@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.63 2006/07/08 00:24:26 matt Exp $	*/
+/*	$NetBSD: libkern.h,v 1.64 2006/08/25 19:07:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -177,6 +177,7 @@ tolower(int ch)
  * __x.
  */
 #define	__arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
+#define	__NULL_STMT		do { } while (/* CONSTCOND */ 0)
 
 /* __BIT(n): nth bit, where __BIT(0) == 0x1. */
 #define	__BIT(__n) (((__n) == 32) ? 0 : ((uint32_t)1 << (__n)))
