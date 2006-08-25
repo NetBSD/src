@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.58 2006/06/19 15:44:44 gdamore Exp $
+#	$NetBSD: Makefile,v 1.59 2006/08/25 17:40:21 matt Exp $
 
 SUBDIR=	altq arch compat crypto dev fs miscfs \
-	net net80211 netatalk netbt netccitt netipsec netinet netinet6 \
-        netisdn netiso netkey netnatm netns netsmb \
+	net net80211 netatalk netbt netipsec netinet netinet6 \
+        netisdn netiso netkey netnatm netsmb \
 	nfs opencrypto sys ufs uvm
 
 .if (${MACHINE} != "evbppc")
