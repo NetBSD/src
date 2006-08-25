@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.794 2006/08/24 21:23:40 dsl Exp $
+#	$NetBSD: files,v 1.795 2006/08/25 17:32:27 matt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -149,7 +149,6 @@ include "dev/sysmon/files.sysmon"
 include "net80211/files.net80211"
 include "netatalk/files.netatalk"
 include "netbt/files.netbt"
-include "netccitt/files.netccitt"
 include "netinet/files.netinet"
 include "netinet/files.ipfilter"
 include "netinet6/files.netinet6"
@@ -157,11 +156,14 @@ include "netinet6/files.ipsec"
 include "netipsec/files.netipsec"
 include "netiso/files.netiso"
 include "netnatm/files.netnatm"
-include "netns/files.netns"
 include "netsmb/files.netsmb"
 include "net/files.pf"
 
-defflag				IPX		# IPX network stack
+obsolete defflag		CCITT		# obsolete
+obsolete defflag		HDLC		# obsolete
+obsolete defflag		LLC		# obsolete
+obsolete defflag opt_ns.h	NS NSIP		# obsolete
+obsolete defflag		IPX		# obsolete
 defflag				PFIL_HOOKS	# pfil(9)
 defflag	opt_bridge_ipf.h	BRIDGE_IPF	# bridge(4) use inet_pfil_hooks
 defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
