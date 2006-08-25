@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_ioctl.c,v 1.2 2006/02/15 09:31:17 manu Exp $ */
+/*	$NetBSD: linux32_ioctl.c,v 1.3 2006/08/25 08:25:03 manu Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.2 2006/02/15 09:31:17 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.3 2006/08/25 08:25:03 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,6 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.2 2006/02/15 09:31:17 manu Exp $
 #include <compat/linux32/common/linux32_termios.h>
 #include <compat/linux32/common/linux32_sysctl.h>
 #include <compat/linux32/linux32_syscallargs.h>
+
+extern int linux_ioctl_socket(struct lwp *, 
+    struct linux_sys_ioctl_args *, register_t *);
 
 int
 linux32_sys_ioctl(l, v, retval)
@@ -76,6 +79,15 @@ linux32_sys_ioctl(l, v, retval)
 	case 'T':
 		error = linux32_ioctl_termios(l, uap, retval);
 		break;
+	case 0x89: {
+		struct linux_sys_ioctl_args cup;
+
+		SCARG(&cup, fd) = SCARG(uap, fd);
+		SCARG(&cup, com) = (u_long)SCARG(uap, com);
+		SCARG(&cup, data) = (caddr_t)(u_long)SCARG(uap, data);
+		error = linux_ioctl_socket(l, &cup, retval);
+		break;
+	}
 	default:
 		printf("Not yet implemented ioctl group \'%c\'\n", group);
 		error = EINVAL;
