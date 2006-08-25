@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.70.2.5 2005/11/05 00:39:47 tron Exp $
+# $NetBSD: GENERIC,v 1.70.2.6 2006/08/25 11:45:30 ghen Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.70.2.5 $"
+#ident 		"GENERIC-$Revision: 1.70.2.6 $"
 
 maxusers	32
 
@@ -144,6 +144,13 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	MIIVERBOSE	# verbose PHY autoconfig messages
 
 options 	NFS_BOOT_DHCP
+
+# XXX Disable zero-copy page loaning in sosend() temporarily:
+#     PV mappings created by sosend_loan() in sys/kern/uipc_socket.c may
+#     produce virtual cache aliases and it seems to cause TLB MISS panic
+#     in cache flush code called from bus_dmamap_sync(9) PREWRITE ops
+#     during heavy TX packet traffic on tlp(4).
+options 	SOSEND_NO_LOAN
 
 config		netbsd	root on ? type ?
 
