@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.30 2006/01/15 11:43:54 jdc Exp $	*/
+/*	$NetBSD: color.c,v 1.30.2.1 2006/08/25 16:15:33 ghen Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.30 2006/01/15 11:43:54 jdc Exp $");
+__RCSID("$NetBSD: color.c,v 1.30.2.1 2006/08/25 16:15:33 ghen Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -648,7 +648,7 @@ __change_pair(short pair)
 		} else {
 			/* Mark dirty those positions with colour pair "pair" */
 			for (y = 0; y < win->maxy; y++) {
-				lp = curscr->lines[y];
+				lp = win->lines[y];
 				for (x = 0; x < win->maxx; x++)
 					if ((lp->line[x].attr &
 					    __COLOR) == cl) {
