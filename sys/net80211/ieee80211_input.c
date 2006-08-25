@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.60 2006/06/30 06:17:10 tacha Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.61 2006/08/25 21:04:07 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.60 2006/06/30 06:17:10 tacha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.61 2006/08/25 21:04:07 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -2613,6 +2613,11 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		ic->ic_stats.is_rx_deauth++;
 		IEEE80211_NODE_STAT(ni, rx_deauth);
 
+		if (!IEEE80211_ADDR_EQ(wh->i_addr1, ic->ic_myaddr)) {
+			/* Not intended for this station. */
+			ic->ic_stats.is_rx_mgtdiscard++;
+			break;
+		}
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
 		    "[%s] recv deauthenticate (reason %d)\n",
 		    ether_sprintf(ni->ni_macaddr), reason);
@@ -2652,6 +2657,11 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		ic->ic_stats.is_rx_disassoc++;
 		IEEE80211_NODE_STAT(ni, rx_disassoc);
 
+		if (!IEEE80211_ADDR_EQ(wh->i_addr1, ic->ic_myaddr)) {
+			/* Not intended for this station. */
+			ic->ic_stats.is_rx_mgtdiscard++;
+			break;
+		}
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
 		    "[%s] recv disassociate (reason %d)\n",
 		    ether_sprintf(ni->ni_macaddr), reason);
