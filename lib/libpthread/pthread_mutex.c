@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.18.6.1 2005/11/01 20:01:33 jmc Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.18.6.2 2006/08/25 11:36:36 ghen Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.18.6.1 2005/11/01 20:01:33 jmc Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.18.6.2 2006/08/25 11:36:36 ghen Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -337,12 +337,13 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 
 	GET_MUTEX_PRIVATE(mutex, mp);
 
+	self = pthread_self();
 	/*
 	 * These tests can be performed without holding the
 	 * interlock because these fields are only modified
 	 * if we know we own the mutex.
 	 */
-	weown = (pthread__id(mutex->ptm_owner) == pthread__self());
+	weown = (pthread__id(mutex->ptm_owner) == self);
 	switch (mp->type) {
 	case PTHREAD_MUTEX_RECURSIVE:
 		if (!weown)
@@ -378,9 +379,8 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 	 * examination of the queue; if so, no harm is done, as the
 	 * waiter will loop and see that the mutex is still locked.
 	 */
+	pthread_spinlock(self, &mutex->ptm_interlock);
 	if (!PTQ_EMPTY(&mutex->ptm_blocked)) {
-		self = pthread__self();
-		pthread_spinlock(self, &mutex->ptm_interlock);
 		blocked = PTQ_FIRST(&mutex->ptm_blocked);
 		if (blocked) {
 			PTQ_REMOVE(&mutex->ptm_blocked, blocked, pt_sleep);
@@ -388,8 +388,8 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 			/* Give the head of the blocked queue another try. */
 			pthread__sched(self, blocked);
 		}
-		pthread_spinunlock(self, &mutex->ptm_interlock);
 	}
+	pthread_spinunlock(self, &mutex->ptm_interlock);
 	return 0;
 }
 
