@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.467 2006/07/24 23:54:15 uwe Exp $
+#	$NetBSD: bsd.own.mk,v 1.468 2006/08/25 23:35:04 matt Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -9,7 +9,7 @@ MAKECONF?=	/etc/mk.conf
 #
 # CPU model, derived from MACHINE_ARCH
 #
-MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/sh3e[bl]/sh3/:C/sh5e[bl]/sh5/:S/m68000/m68k/:S/armeb/arm/}
+MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips64/:C/sh3e[bl]/sh3/:C/sh5e[bl]/sh5/:S/m68000/m68k/:S/armeb/arm/}
 
 #
 # Subdirectory used below ${RELEASEDIR} when building a release
@@ -52,6 +52,8 @@ TOOLCHAIN_MISSING?=	no
     ${MACHINE_ARCH} == "armeb" || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "m68000" || \
+    ${MACHINE_ARCH} == "mips64el" || \
+    ${MACHINE_ARCH} == "mips64eb" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "powerpc64" || \
     ${MACHINE_ARCH} == "sh3eb" || \
@@ -134,8 +136,8 @@ USETOOLS?=	yes
 USETOOLS?=	no
 
 
-.if ${MACHINE_ARCH} == "mips" || ${MACHINE_ARCH} == "sh3" || \
-    ${MACHINE_ARCH} == "sh5"
+.if ${MACHINE_ARCH} == "mips" || ${MACHINE_ARCH} == "mips64" || \
+    ${MACHINE_ARCH} == "sh3" || ${MACHINE_ARCH} == "sh5"
 .BEGIN:
 	@echo "Must set MACHINE_ARCH to one of ${MACHINE_ARCH}eb or ${MACHINE_ARCH}el"
 	@false
@@ -513,6 +515,7 @@ GNU_ARCH.sh3eb=sh
 GNU_ARCH.sh3el=shle
 GNU_ARCH.sh5eb=sh5
 GNU_ARCH.sh5el=sh5le
+GNU_ARCH.mips64eb=mips64
 MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 
 #
