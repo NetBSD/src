@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 2006/08/25 06:23:54 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23 2006/08/25 06:49:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2006/08/25 06:23:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 2006/08/25 06:49:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -786,7 +786,9 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	int btlb_entry_vm_prot[BTLB_SET_SIZE];
 	int btlb_i, btlb_j;
 	vsize_t btlb_entry_min, btlb_entry_max, btlb_entry_got;
-	extern int kernel_text, etext;
+	extern int kernel_text;
+	extern int __data_start;
+	extern int __rodata_end;
 	vaddr_t kernel_data;
 	paddr_t phys_start, phys_end;
 
@@ -964,10 +966,6 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 * is to allow (smaller) kernels (linked lower) to work fine.
 	 */
 	btlb_entry_min = (vaddr_t) &kernel_text;
-	__asm volatile (
-		"	ldil L%%$global$, %0	\n"
-		"	ldo R%%$global$(%0), %0	\n"
-		: "=r" (kernel_data)); 
 
 	/*
 	 * Now make BTLB entries to direct-map the kernel text
@@ -976,9 +974,11 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 * BTLB entry for the kernel text may also cover some of
 	 * the data segment, meaning it will have to allow writing.
 	 */
+	kernel_data = (vaddr_t) &__data_start;
 	addr = (vaddr_t) &kernel_text;
+
 	btlb_j = 0;
-	while (addr < (vaddr_t) &etext) {
+	while (addr < (vaddr_t) &__rodata_end) {
 
 		/* Set up the next BTLB entry. */
 		KASSERT(btlb_j < BTLB_SET_SIZE);
@@ -1065,7 +1065,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 
 	/* The first segment runs from [resvmem..kernel_text). */
 	phys_start = resvmem;
-	phys_end = atop(hppa_trunc_page(&kernel_text));
+	phys_end = atop(hppa_trunc_page(&kernel_text)) - 1;
 
         PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
 	    (u_int)phys_start, (u_int)phys_end));
@@ -1075,9 +1075,9 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 		physmem += phys_end - phys_start;
 	}
 
-	/* The second segment runs from [etext..kernel_data). */
-	phys_start = atop(hppa_round_page((vaddr_t) &etext));
-	phys_end = atop(hppa_trunc_page(kernel_data));
+	/* The second segment runs from [__rodata_end..__data_start). */
+	phys_start = atop(&__rodata_end);
+	phys_end = atop(&__data_start) - 1;
 
         PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
 	    (u_int)phys_start, (u_int)phys_end));
@@ -1089,7 +1089,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 
 	/* The third segment runs from [virtual_steal..totalphysmem). */
 	phys_start = atop(virtual_steal);
-	phys_end = totalphysmem;
+	phys_end = totalphysmem - 1;
 
         PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
 	    (u_int)phys_start, (u_int)phys_end));
