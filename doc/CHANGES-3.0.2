@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.2,v 1.1.2.12 2006/08/23 20:14:55 tron Exp $
+#	$NetBSD: CHANGES-3.0.2,v 1.1.2.13 2006/08/25 11:51:57 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0.1 release to the NetBSD 3.0.2
 release:
@@ -90,4 +90,24 @@ sys/net/if_spppsubr.c				1.96
 	Avoid buffer overflow in the in-kernel PPP code shared by ISDN PPP
 	interfaces ippp(4) and pppoe(4). This fixes SA2006-019 (CVE-2006-4304).
 	[adrianp, ticket #1476]
+
+sys/kern/uipc_syscalls.c			1.102
+
+	Don't leave a dangling socket (no associated struct file) if
+	user supplied a bad name or anamelen parameter to accept(2).
+	If bad paramaters were suplied and a copyout() failed, the
+	struct file was cleaned up but not the associated socket.  This
+	could leave sockets in CLOSE_WAIT that could never be closed.
+	[seanb, ticket #1472]
+
+lib/libpthread/pthread_mutex.c			1.22
+
+	Close a window in which we can not notice a recently-slept-on-our
+	mutex thread, thus leaving a thread sleeping on an unlocked mutex.
+
+	Reviewed by myself and Christos.
+
+	Problem reported by Arne H. Juul, arnej at pvv dot ntnu dot no,
+	in PR 26208. This fix represents option 1 presented in the PR.
+	[wrstuden, ticket #1474]
 
