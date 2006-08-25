@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.167 2006/07/23 22:06:12 ad Exp $	*/
+/*	$NetBSD: if.c,v 1.168 2006/08/25 19:33:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.167 2006/07/23 22:06:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.168 2006/08/25 19:33:50 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -106,7 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.167 2006/07/23 22:06:12 ad Exp $");
 #include "opt_compat_ultrix.h"
 #include "opt_compat_43.h"
 #include "opt_atalk.h"
-#include "opt_ccitt.h"
 #include "opt_natm.h"
 #include "opt_pfil_hooks.h"
 
@@ -177,10 +176,7 @@ static int if_cloners_count;
 struct pfil_head if_pfil;	/* packet filtering hook for interfaces */
 #endif
 
-#if defined(INET) || defined(INET6) || defined(NETATALK) || defined(NS) || \
-    defined(ISO) || defined(CCITT) || defined(NATM)
 static void if_detach_queues(struct ifnet *, struct ifqueue *);
-#endif
 
 /*
  * Network interface utility routines.
@@ -692,51 +688,19 @@ if_detach(struct ifnet *ifp)
 	TAILQ_REMOVE(&ifnet, ifp, if_list);
 
 	/*
-	 * remove packets came from ifp, from software interrupt queues.
-	 * net/netisr_dispatch.h is not usable, as some of them use
-	 * strange queue names.
+	 * remove packets that came from ifp, from software interrupt queues.
 	 */
-#define IF_DETACH_QUEUES(x) \
-do { \
-	extern struct ifqueue x; \
-	if_detach_queues(ifp, & x); \
-} while (/*CONSTCOND*/ 0)
-#ifdef INET
-#if NARP > 0
-	IF_DETACH_QUEUES(arpintrq);
-#endif
-	IF_DETACH_QUEUES(ipintrq);
-#endif
-#ifdef INET6
-	IF_DETACH_QUEUES(ip6intrq);
-#endif
-#ifdef NETATALK
-	IF_DETACH_QUEUES(atintrq1);
-	IF_DETACH_QUEUES(atintrq2);
-#endif
-#ifdef NS
-	IF_DETACH_QUEUES(nsintrq);
-#endif
-#ifdef ISO
-	IF_DETACH_QUEUES(clnlintrq);
-#endif
-#ifdef CCITT
-	IF_DETACH_QUEUES(llcintrq);
-	IF_DETACH_QUEUES(hdintrq);
-#endif
-#ifdef NATM
-	IF_DETACH_QUEUES(natmintrq);
-#endif
-#ifdef DECNET
-	IF_DETACH_QUEUES(decnetintrq);
-#endif
-#undef IF_DETACH_QUEUES
+	DOMAIN_FOREACH(dp) {
+		for (i = 0; i < __arraycount(dp->dom_ifqueues); i++) {
+			if (dp->dom_ifqueues[i] == NULL)
+				break;
+			if_detach_queues(ifp, dp->dom_ifqueues[i]);
+		}
+	}
 
 	splx(s);
 }
 
-#if defined(INET) || defined(INET6) || defined(NETATALK) || defined(NS) || \
-    defined(ISO) || defined(CCITT) || defined(NATM) || defined(DECNET)
 static void
 if_detach_queues(struct ifnet *ifp, struct ifqueue *q)
 {
@@ -769,7 +733,6 @@ if_detach_queues(struct ifnet *ifp, struct ifqueue *q)
 		IF_DROP(q);
 	}
 }
-#endif /* defined(INET) || ... */
 
 /*
  * Callback for a radix tree walk to delete all references to an

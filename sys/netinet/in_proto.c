@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.72 2006/05/18 09:05:51 liamjfoy Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.73 2006/08/25 19:33:50 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.72 2006/05/18 09:05:51 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.73 2006/08/25 19:33:50 matt Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -308,10 +308,14 @@ const struct protosw inetsw[] = {
 },
 };
 
-struct domain inetdomain =
-    { PF_INET, "internet", 0, 0, 0,
-      inetsw, &inetsw[sizeof(inetsw)/sizeof(inetsw[0])],
-      rn_inithead, 32, sizeof(struct sockaddr_in) };
+extern struct ifqueue ipintrq;
+
+struct domain inetdomain = {
+    PF_INET, "internet", 0, 0, 0,
+    inetsw, &inetsw[sizeof(inetsw)/sizeof(inetsw[0])],
+    rn_inithead, 32, sizeof(struct sockaddr_in), 0, 0,
+    { &ipintrq }
+};
 
 u_char	ip_protox[IPPROTO_MAX];
 

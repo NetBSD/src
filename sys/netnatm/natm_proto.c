@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_proto.c,v 1.8 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: natm_proto.c,v 1.9 2006/08/25 19:33:51 matt Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm_proto.c,v 1.8 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm_proto.c,v 1.9 2006/08/25 19:33:51 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,8 @@ const struct protosw natmsw[] = {
 
 struct domain natmdomain =
     { PF_NATM, "natm", natm_init, 0, 0,
-      natmsw, &natmsw[sizeof(natmsw)/sizeof(natmsw[0])] };
+      natmsw, &natmsw[sizeof(natmsw)/sizeof(natmsw[0])], 0, 0,
+      { &natmitnrq } };
 
 struct npcblist natm_pcbs = LIST_HEAD_INITIALIZER(natm_pcbs);
 struct	ifqueue natmintrq;       	/* natm packet input queue */
