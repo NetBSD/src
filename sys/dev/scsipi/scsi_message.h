@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_message.h,v 1.16 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: scsi_message.h,v 1.17 2006/08/26 23:32:55 bjh21 Exp $	*/
 
 /* Messages (1 byte) */		     /* I/T (M)andatory or (O)ptional */
 #define MSG_CMDCOMPLETE		0x00 /* M/M */
@@ -84,6 +84,7 @@
 #define MSG_ISEXTENDED(m)	((m) == MSG_EXTENDED)
 
 /* message length */
-#define MSG_IS1BYTE(m)	\
-	((!MSG_ISEXTENDED(m) && (m) < 0x20) || MSG_ISIDENTIFY(m))
+#define MSG_IS1BYTE(m)							\
+	((!MSG_ISEXTENDED(m) && (m) < 0x20) ||				\
+	    (m) == MSG_QAS_REQUEST || MSG_ISIDENTIFY(m))
 #define MSG_IS2BYTE(m)		(((m) & 0xf0) == 0x20)
