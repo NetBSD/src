@@ -1,4 +1,4 @@
-/* $NetBSD: utils.h,v 1.5 2005/03/30 17:10:18 christos Exp $ */
+/* $NetBSD: utils.h,v 1.6 2006/08/26 18:14:28 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -50,9 +50,6 @@ struct bits;
 typedef struct bits bits_t;
 
 __BEGIN_DECLS
-void		 *emalloc(size_t);
-void		 *ecalloc(size_t, size_t);
-char		 *estrdup(const char *);
 char		**words(const char *, int *);
 void	  	  words_free(char **, int);
 

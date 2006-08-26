@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.175 2006/08/26 16:59:27 matt Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.176 2006/08/26 18:14:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.175 2006/08/26 16:59:27 matt Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.176 2006/08/26 18:14:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1567,13 +1567,4 @@ usage(void)
 		"       %s interface destroy\n",
 		progname, progname, progname, progname, progname, progname);
 	exit(1);
-}
-
-void
-estrlcpy(char *dst, char *src, size_t len)
-{
-	if (strlcpy(dst, src, len) >= len) { 
-		errno = ENAMETOOLONG; 
-		err(1, "Cannot copy `%s'", src);
-	}
 }

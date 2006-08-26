@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.15 2006/03/17 13:58:27 elad Exp $ */
+/* $NetBSD: params.c,v 1.16 2006/08/26 18:14:28 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.15 2006/03/17 13:58:27 elad Exp $");
+__RCSID("$NetBSD: params.c,v 1.16 2006/08/26 18:14:28 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: params.c,v 1.15 2006/03/17 13:58:27 elad Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <err.h>
+#include <util.h>
 
 #include "params.h"
 #include "pkcs5_pbkdf2.h"
