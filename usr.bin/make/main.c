@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.128 2006/07/28 17:06:14 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.129 2006/08/26 18:17:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.128 2006/07/28 17:06:14 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.129 2006/08/26 18:17:42 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.128 2006/07/28 17:06:14 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.129 2006/08/26 18:17:42 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1341,13 +1341,13 @@ Check_Cwd(const char **argv)
  *
  * Results:
  *	A string containing the output of the command, or the empty string
- *	If err is not NULL, it contains the reason for the command failure
+ *	If errnum is not NULL, it contains the reason for the command failure
  *
  * Side Effects:
  *	The string must be freed by the caller.
  */
 char *
-Cmd_Exec(const char *cmd, const char **err)
+Cmd_Exec(const char *cmd, const char **errnum)
 {
     const char	*args[4];   	/* Args for invoking the shell */
     int 	fds[2];	    	/* Pipe streams */
@@ -1360,7 +1360,7 @@ Cmd_Exec(const char *cmd, const char **err)
     int		cc;
 
 
-    *err = NULL;
+    *errnum = NULL;
 
     if (!shellName)
 	Shell_Init();
@@ -1376,7 +1376,7 @@ Cmd_Exec(const char *cmd, const char **err)
      * Open a pipe for fetching its output
      */
     if (pipe(fds) == -1) {
-	*err = "Couldn't create pipe for \"%s\"";
+	*errnum = "Couldn't create pipe for \"%s\"";
 	goto bad;
     }
 
@@ -1403,7 +1403,7 @@ Cmd_Exec(const char *cmd, const char **err)
 	/*NOTREACHED*/
 
     case -1:
-	*err = "Couldn't exec \"%s\"";
+	*errnum = "Couldn't exec \"%s\"";
 	goto bad;
 
     default:
@@ -1437,10 +1437,10 @@ Cmd_Exec(const char *cmd, const char **err)
 	Buf_Destroy(buf, FALSE);
 
 	if (cc == 0)
-	    *err = "Couldn't read shell's output for \"%s\"";
+	    *errnum = "Couldn't read shell's output for \"%s\"";
 
 	if (status)
-	    *err = "\"%s\" returned non-zero status";
+	    *errnum = "\"%s\" returned non-zero status";
 
 	/*
 	 * Null-terminate the result, convert newlines to spaces and
@@ -1596,6 +1596,7 @@ Finish(int errors)
 	Fatal("%d error%s", errors, errors == 1 ? "" : "s");
 }
 
+#ifndef __NetBSD__
 /*
  * emalloc --
  *	malloc, but die on error.
@@ -1646,6 +1647,7 @@ enomem(void)
 	(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
 	exit(2);
 }
+#endif
 
 /*
  * enunlink --

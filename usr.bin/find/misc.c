@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.12 2003/08/07 11:13:42 agc Exp $	*/
+/*	$NetBSD: misc.c,v 1.13 2006/08/26 18:17:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)misc.c	8.2 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.12 2003/08/07 11:13:42 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.13 2006/08/26 18:17:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,21 +127,6 @@ queryuser(argv)
         return (first == 'y');
 }
  
-/*
- * emalloc --
- *	malloc with error checking.
- */
-void *
-emalloc(len)
-	u_int len;
-{
-	void *p;
-
-	if ((p = malloc(len)) == NULL)
-		err(1, "malloc");
-	return (p);
-}
-
 /*
  * show_path --
  *	called on SIGINFO
