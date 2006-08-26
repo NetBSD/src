@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.99 2006/08/06 17:47:17 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.100 2006/08/26 15:26:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.99 2006/08/06 17:47:17 dyoung Exp $");
+__RCSID("$NetBSD: route.c,v 1.100 2006/08/26 15:26:02 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,9 +56,7 @@ __RCSID("$NetBSD: route.c,v 1.99 2006/08/06 17:47:17 dyoung Exp $");
 #include <net80211/ieee80211_netbsd.h>
 #include <netinet/in.h>
 #include <netatalk/at.h>
-#include <netns/ns.h>
 #include <netiso/iso.h>
-#include <netccitt/x25.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 
@@ -89,7 +87,6 @@ static int getaddr(int, char *, struct hostent **);
 static int flushroutes(int, char *[], int);
 static int prefixlen(const char *);
 #ifndef SMALL
-static int x25_makemask(void);
 static void interfaces(void);
 static void monitor(void);
 static int print_getmsg(struct rt_msghdr *, int);
@@ -113,9 +110,7 @@ union	sockunion {
 	struct	sockaddr_at sat;
 	struct	sockaddr_dl sdl;
 #ifndef SMALL
-	struct	sockaddr_ns sns;
 	struct	sockaddr_iso siso;
-	struct	sockaddr_x25 sx25;
 #endif /* SMALL */
 } so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp;
 
@@ -271,9 +266,6 @@ flushroutes(int argc, char *argv[], int doall)
 			case K_ATALK:
 				af = AF_APPLETALK;
 				break;
-			case K_XNS:
-				af = AF_NS;
-				break;
 #endif /* SMALL */
 			case K_LINK:
 				af = AF_LINK;
@@ -283,8 +275,6 @@ flushroutes(int argc, char *argv[], int doall)
 			case K_OSI:
 				af = AF_ISO;
 				break;
-			case K_X25:
-				af = AF_CCITT;
 #endif /* SMALL */
 			default:
 				goto bad;
@@ -600,9 +590,6 @@ routename(struct sockaddr *sa, struct sockaddr *nm, int flags)
 #endif
 
 #ifndef SMALL
-	case AF_NS:
-		return (ns_print((struct sockaddr_ns *)sa));
-
 	case AF_ISO:
 		(void)snprintf(line, sizeof line, "iso %s",
 		    iso_ntoa(&((struct sockaddr_iso *)sa)->siso_addr));
@@ -759,9 +746,6 @@ netname(struct sockaddr *sa, struct sockaddr *nm)
 #endif
 
 #ifndef SMALL
-	case AF_NS:
-		return (ns_print((struct sockaddr_ns *)sa));
-
 	case AF_ISO:
 		(void)snprintf(line, sizeof line, "iso %s",
 		    iso_ntoa(&((struct sockaddr_iso *)sa)->siso_addr));
@@ -873,16 +857,6 @@ newroute(int argc, char **argv)
 			case K_ISO:
 				af = AF_ISO;
 				aflen = sizeof(struct sockaddr_iso);
-				break;
-
-			case K_X25:
-				af = AF_CCITT;
-				aflen = sizeof(struct sockaddr_x25);
-				break;
-
-			case K_XNS:
-				af = AF_NS;
-				aflen = sizeof(struct sockaddr_ns);
 				break;
 #endif /* SMALL */
 
@@ -1269,18 +1243,6 @@ getaddr(int which, char *s, struct hostent **hpp)
 #endif
 
 #ifndef SMALL
-	case AF_NS:
-		if (which == RTA_DST) {
-			struct sockaddr_ns *sms = &(so_mask.sns);
-			memset(sms, 0, sizeof(*sms));
-			sms->sns_family = 0;
-			sms->sns_len = 6;
-			sms->sns_addr.x_net = *(union ns_net *)ns_bh;
-			rtm_addrs |= RTA_NETMASK;
-		}
-		su->sns.sns_addr = ns_addr(s);
-		return (!ns_nullhost(su->sns.sns_addr));
-
 	case AF_OSI:
 		su->siso.siso_addr = *iso_addr(s);
 		if (which == RTA_NETMASK || which == RTA_GENMASK) {
@@ -1290,10 +1252,6 @@ getaddr(int which, char *s, struct hostent **hpp)
 			su->siso.siso_len = 1 + cp - (char *)su;
 		}
 		return (1);
-
-	case AF_CCITT:
-		ccitt_addr(s, &su->sx25);
-		return (which == RTA_DST ? x25_makemask() : 1);
 #endif /* SMALL */
 
 	case PF_ROUTE:
@@ -1427,66 +1385,6 @@ prefixlen(const char *s)
 }
 
 #ifndef SMALL
-int
-x25_makemask(void)
-{
-	char *cp;
-
-	if ((rtm_addrs & RTA_NETMASK) == 0) {
-		rtm_addrs |= RTA_NETMASK;
-		for (cp = (char *)&so_mask.sx25.x25_net;
-		     cp < &so_mask.sx25.x25_opts.op_flags; cp++)
-			*cp = -1;
-		so_mask.sx25.x25_len = (u_char)&(((sup)0)->sx25.x25_opts);
-	}
-	return 0;
-}
-
-
-const char *
-ns_print(struct sockaddr_ns *sns)
-{
-	struct ns_addr work;
-	union { union ns_net net_e; u_int32_t int32_t_e; } net;
-	u_short port;
-	static char mybuf[50], cport[10], chost[25];
-	const char *host = "";
-	char *p;
-	u_char *q;
-
-	work = sns->sns_addr;
-	port = ntohs(work.x_port);
-	work.x_port = 0;
-	net.net_e  = work.x_net;
-	if (ns_nullhost(work) && net.int32_t_e == 0) {
-		if (!port)
-			return ("*.*");
-		(void)snprintf(mybuf, sizeof mybuf, "*.%XH", port);
-		return (mybuf);
-	}
-
-	if (memcmp(ns_bh, work.x_host.c_host, 6) == 0)
-		host = "any";
-	else if (memcmp(ns_nullh, work.x_host.c_host, 6) == 0)
-		host = "*";
-	else {
-		q = work.x_host.c_host;
-		(void)snprintf(chost, sizeof chost, "%02X%02X%02X%02X%02X%02XH",
-			q[0], q[1], q[2], q[3], q[4], q[5]);
-		for (p = chost; *p == '0' && p < chost + 12; p++)
-			/* void */;
-		host = p;
-	}
-	if (port)
-		(void)snprintf(cport, sizeof cport, ".%XH", htons(port));
-	else
-		*cport = 0;
-
-	(void)snprintf(mybuf, sizeof mybuf, "%XH.%s%s",
-	    (u_int32_t)ntohl(net.int32_t_e), host, cport);
-	return (mybuf);
-}
-
 static void
 interfaces(void)
 {
@@ -1648,8 +1546,6 @@ mask_addr(void)
 #endif
 #ifndef SMALL
 	case AF_APPLETALK:
-	case AF_NS:
-	case AF_CCITT:
 #endif /* SMALL */
 	case 0:
 		return;
@@ -2105,10 +2001,6 @@ sodump(sup su, const char *which)
 	case AF_ISO:
 		(void)printf("%s: iso %s; ",
 		    which, iso_ntoa(&su->siso.siso_addr));
-		break;
-	case AF_NS:
-		(void)printf("%s: xns %s; ",
-		    which, ns_ntoa(su->sns.sns_addr));
 		break;
 #endif /* SMALL */
 	default:

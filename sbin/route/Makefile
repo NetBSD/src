@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.22 2005/01/10 02:58:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.23 2006/08/26 15:26:02 matt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
 
 PROG=	route
 MAN=	route.8
-SRCS=	route.c show.c keywords.c ccitt_addr.c
+SRCS=	route.c show.c keywords.c
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
