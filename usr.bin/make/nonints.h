@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.37 2006/08/26 18:17:42 christos Exp $	*/
+/*	$NetBSD: nonints.h,v 1.38 2006/08/26 22:13:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@ void *emalloc(size_t);
 void *erealloc(void *, size_t);
 void enomem(void);
 #else
-#include <err.h>
+#include <util.h>
 #endif
 int eunlink(const char *);
 void execError(const char *, const char *);
