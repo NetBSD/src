@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.69 2006/05/05 00:03:21 rpaulo Exp $
+#	$NetBSD: Makefile.inc,v 1.70 2006/08/26 16:07:01 matt Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -11,7 +11,7 @@ SRCS+=	__cmsg_alignbytes.c base64.c ethers.c gethnamaddr.c getifaddrs.c \
 	getservbyname.c getservbyport.c getservent.c \
 	getservbyname_r.c getservbyport_r.c getservent_r.c \
 	iso_addr.c linkaddr.c \
-	nsdispatch.c nslexer.l nsparser.y ns_addr.c ns_ntoa.c nsap_addr.c \
+	nsdispatch.c nslexer.l nsparser.y nsap_addr.c \
 	rcmd.c recv.c send.c sethostent.c \
 	sockatmark.c
 

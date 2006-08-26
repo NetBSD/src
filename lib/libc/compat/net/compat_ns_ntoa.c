@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ntoa.c,v 1.12 2003/09/23 03:19:28 itojun Exp $	*/
+/*	$NetBSD: compat_ns_ntoa.c,v 1.1 2006/08/26 16:07:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -34,12 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)ns_ntoa.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ns_ntoa.c,v 1.12 2003/09/23 03:19:28 itojun Exp $");
+__RCSID("$NetBSD: compat_ns_ntoa.c,v 1.1 2006/08/26 16:07:01 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
-#include <netns/ns.h>
+#include <compat/include/ns.h>
 
 #include <assert.h>
 #include <stdio.h>
