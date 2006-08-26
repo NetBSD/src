@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2006/05/20 00:23:39 christos Exp $
+#	$NetBSD: Makefile,v 1.44 2006/08/26 18:26:14 christos Exp $
 
 HOSTLIB=	nbcompat
 
@@ -12,7 +12,7 @@ SRCS=		atoll.c basename.c dirname.c fgetln.c flock.c fparseln.c \
 		sha256hl.c sha384hl.c sha512hl.c snprintf.c \
 		strlcat.c strlcpy.c strmode.c strsep.c strsuftoll.c \
 		strtoll.c unvis.c vis.c err.c errx.c verr.c verrx.c \
-		vwarn.c vwarnx.c warn.c warnx.c fts.c glob.c
+		vwarn.c vwarnx.c warn.c warnx.c fts.c glob.c efun.c
 
 BUILD_OSTYPE!=  uname -s
 
@@ -38,10 +38,11 @@ CPPFLAGS+=	-I. -I./include -I${.CURDIR} -DHAVE_NBTOOL_CONFIG_H=1 \
 		${.CURDIR}/../../lib/libc/stdio \
 		${.CURDIR}/../../lib/libc/stdlib \
 		${.CURDIR}/../../lib/libc/string \
+		${.CURDIR}/../../lib/libutil \
 		${.CURDIR}/../../common/lib/libc/string \
 		${.CURDIR}/../../common/lib/libc/hash/sha1 \
 		${.CURDIR}/../../common/lib/libc/md \
-		${.CURDIR}/../../usr.bin/lex \
+		${.CURDIR}/../../usr.bin/lex
 
 DPSRCS+=	defs.mk
 CLEANFILES+=	config.log config.status configure.lineno *.stamp
