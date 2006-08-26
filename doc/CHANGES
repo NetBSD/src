@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.668 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.669 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -19,3 +19,9 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		RISC OS and look for a matching mode in a list of standard
 		video modes.  This removes the requirement for compiling
 		RISC OS monitor definitions into the kernel. [bjh21 20060820]
+	netns: Support for XNS in the kernel and userspace has been
+		removed. [matt 20060825]
+	netccit: Support for CCITT/X.26 in the kernel and userspace has
+		been removed. [matt 20060825]
+	mips64: Preliminary support for a MIPS64 toolchain using the N64
+		ABI. [matt 20060825]
