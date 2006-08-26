@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.60 2006/08/26 18:17:42 christos Exp $	*/
+/*	$NetBSD: make.h,v 1.61 2006/08/26 22:13:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -88,7 +88,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <util.h>
 
 #ifdef BSD4_4
 # include <sys/cdefs.h>
