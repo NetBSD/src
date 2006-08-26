@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.14 2006/05/11 00:42:08 mrg Exp $ */
+/* $NetBSD: utils.c,v 1.15 2006/08/26 18:14:28 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.14 2006/05/11 00:42:08 mrg Exp $");
+__RCSID("$NetBSD: utils.c,v 1.15 2006/08/26 18:14:28 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: utils.c,v 1.14 2006/05/11 00:42:08 mrg Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <err.h>
+#include <util.h>
 
 /* include the resolver gunk in order that we can use b64 routines */
 #include <netinet/in.h>
@@ -54,33 +55,6 @@ __RCSID("$NetBSD: utils.c,v 1.14 2006/05/11 00:42:08 mrg Exp $");
 
 #include "utils.h"
 
-
-void *
-emalloc(size_t len)
-{
-	void *ptr = malloc(len);
-	if (ptr == NULL)
-		err(1, NULL);
-	return ptr;
-}
-
-void *
-ecalloc(size_t nel, size_t len)
-{
-	void *ptr = calloc(nel, len);
-	if (ptr == NULL)
-		err(1, NULL);
-	return ptr;
-}
-
-char *
-estrdup(const char *str)
-{
-	char *ptr = strdup(str);
-	if (ptr == NULL)
-		err(1, NULL);
-	return ptr;
-}
 
 /* just strsep(3), but skips empty fields. */
 

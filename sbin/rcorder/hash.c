@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.3 2003/08/07 10:04:37 agc Exp $	*/
+/*	$NetBSD: hash.c,v 1.4 2006/08/26 18:14:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: hash.c,v 1.3 2003/08/07 10:04:37 agc Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.4 2006/08/26 18:14:29 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hash.c,v 1.3 2003/08/07 10:04:37 agc Exp $");
+__RCSID("$NetBSD: hash.c,v 1.4 2006/08/26 18:14:29 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -87,6 +87,8 @@ __RCSID("$NetBSD: hash.c,v 1.3 2003/08/07 10:04:37 agc Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
+#include <util.h>
 
 /* hash.c --
  *
@@ -96,7 +98,6 @@ __RCSID("$NetBSD: hash.c,v 1.3 2003/08/07 10:04:37 agc Exp $");
  * 	information increases.
  */
 #include "hash.h"
-#include "ealloc.h"
 
 /*
  * Forward references to local procedures that are used before they're

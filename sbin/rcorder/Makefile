@@ -1,7 +1,10 @@
-#       $NetBSD: Makefile,v 1.5 2005/06/27 01:00:06 christos Exp $
+#       $NetBSD: Makefile,v 1.6 2006/08/26 18:14:29 christos Exp $
 
 PROG=   rcorder
-SRCS=   ealloc.c hash.c rcorder.c
+SRCS=   hash.c rcorder.c
 MAN=	rcorder.8
+
+LDADD+=-lutil
+DPADD+=${LIBUTIL}
 
 .include <bsd.prog.mk>

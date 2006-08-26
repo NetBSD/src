@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.15 2006/06/05 16:52:05 christos Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.16 2006/08/26 18:14:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.15 2006/06/05 16:52:05 christos Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.16 2006/08/26 18:14:28 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -241,40 +241,4 @@ retry:
 	 * let the user decide whether to use it.
 	 */
 	return (origname);
-}
-
-
-void *
-emalloc(size_t s)
-{
-	void *p;
-
-	p = malloc(s);
-	if (p == NULL)
-		err(1, "malloc failed");
-	return (p);
-}
-
-
-void *
-erealloc(void *p, size_t s)
-{
-	void *q;
-
-	q = realloc(p, s);
-	if (q == NULL)
-		err(1, "realloc failed");
-	return (q);
-}
-
-
-char *
-estrdup(const char *s)
-{
-	char *p;
-
-	p = strdup(s);
-	if (p == NULL)
-		err(1, "strdup failed");
-	return (p);
 }

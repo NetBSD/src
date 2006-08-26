@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 2006/06/16 23:48:35 elad Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 2006/08/26 18:14:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -70,4 +70,3 @@ const struct afswtch *lookup_af_bynum(int);
 const char *get_string(const char *, const char *, u_int8_t *, int *);
 void	print_string(const u_int8_t *, int);
 void    getsock(int);
-void estrlcpy(char *, char *, size_t);
