@@ -1,11 +1,10 @@
-# $NetBSD: GENERIC,v 1.35 2005/12/09 23:34:03 elad Exp $
+# $NetBSD: GENERIC,v 1.36 2006/08/26 07:59:23 tsutsui Exp $
 
 include		"arch/sandpoint/conf/GENERIC.sandpoint"
 options 	OPENPIC_SERIAL_MODE
 options 	ALTIVEC
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1
@@ -20,4 +19,3 @@ options 	ALTIVEC
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
-
