@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.66 2006/03/28 20:58:40 pavel Exp $
+#	$NetBSD: TX3912,v 1.67 2006/08/26 20:26:45 christos Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -90,7 +90,6 @@ options 	INET6		# IPV6
 #options 	ISO		# OSI networking
 #options 	TPIP		# TPIP
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.

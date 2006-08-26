@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.58 2006/08/26 07:59:23 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.59 2006/08/26 20:27:08 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun2/conf/std.sun2"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.58 $"
+#ident 		"GENERIC-$Revision: 1.59 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -116,7 +116,6 @@ options 	INET		# IP protocol stack support
 #options 	GATEWAY		# IP packet forwarding
 #options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 

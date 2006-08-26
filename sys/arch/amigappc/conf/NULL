@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.23 2006/02/05 05:01:49 cube Exp $
+# $NetBSD: NULL,v 1.24 2006/08/26 20:26:44 christos Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -43,17 +43,15 @@ options 	PPC603E
 #options 	DIRECTED_BROADCAST	# Broadcast across subnets
 #options 	MROUTING	# Multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 file-system 	FFS		# Berkeley fast file system

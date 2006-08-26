@@ -1,5 +1,5 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.47 2006/08/12 15:29:52 christos Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.48 2006/08/26 20:26:44 christos Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -25,11 +25,7 @@ options INET # IP + ICMP + TCP + UDP
 
 options INET6 # IPV6
 
-options NS # XNS
-
 options ISO,TPIP # OSI
-
-options CCITT,LLC,HDLC # X.25
 
 options NETATALK # AppleTalk networking protocols
 
@@ -39,6 +35,7 @@ options PPP_FILTER # Active filter support for PPP (requires bpf)
 
 options PFIL_HOOKS # pfil(9) packet filter hooks
 options IPFILTER_LOG # ipmon(8) log support
+options IPFILTER_LOOKUP	# ippool(8) support
 file-system FFS # Berkeley fast file system
 file-system MFS # Memory based filesystem
 file-system KERNFS # Kernel parameter filesystem
