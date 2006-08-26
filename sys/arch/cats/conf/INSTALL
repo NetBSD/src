@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.59 2006/08/14 06:22:33 skrll Exp $
+#	$NetBSD: INSTALL,v 1.60 2006/08/26 20:26:44 christos Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -67,11 +67,8 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

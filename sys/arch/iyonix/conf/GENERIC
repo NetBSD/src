@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.32 2006/08/26 07:59:22 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.33 2006/08/26 20:26:55 christos Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -73,11 +73,8 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

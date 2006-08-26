@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.26 2006/02/05 05:02:02 cube Exp $
+#	$NetBSD: OFWGENCFG,v 1.27 2006/08/26 20:26:56 christos Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -66,11 +66,8 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks (Required
 				# if you enable the pseudo-device ipl).
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG

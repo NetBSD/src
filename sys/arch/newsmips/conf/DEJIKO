@@ -1,4 +1,4 @@
-# 	$NetBSD: DEJIKO,v 1.22 2006/02/05 05:01:56 cube Exp $
+# 	$NetBSD: DEJIKO,v 1.23 2006/08/26 20:26:55 christos Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
@@ -32,6 +32,7 @@ options 	FFS_NO_SNAPSHOT		# No FFS snapshot support
 # Networking options
 options 	INET			# Internet protocols
 options 	IPFILTER_LOG		# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	NFS_BOOT_BOOTPARAM
 options 	NFS_BOOTPARAM_NOGATEWAY
 
