@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup_mkdb.c,v 1.14 2006/07/27 15:29:07 christos Exp $	*/
+/*	$NetBSD: netgroup_mkdb.c,v 1.15 2006/08/26 18:15:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: netgroup_mkdb.c,v 1.14 2006/07/27 15:29:07 christos Exp $");
+__RCSID("$NetBSD: netgroup_mkdb.c,v 1.15 2006/08/26 18:15:37 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -222,7 +222,7 @@ ng_load(const char *fname)
 	if (db == NULL)
 		err(1, "dbopen");
 
-	while ((buf = getline(fp, &size)) != NULL) {
+	while ((buf = fparseln(fp, &size, NULL, NULL, 0)) != NULL) {
 		tail = head = NULL;
 		p = buf;
 

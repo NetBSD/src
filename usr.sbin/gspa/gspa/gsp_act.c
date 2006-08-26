@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_act.c,v 1.4 2001/06/13 10:46:06 wiz Exp $	*/
+/*	$NetBSD: gsp_act.c,v 1.5 2006/08/26 18:15:37 christos Exp $	*/
 /*
  * GSP assembler - semantic actions
  *
@@ -33,11 +33,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_act.c,v 1.4 2001/06/13 10:46:06 wiz Exp $");
+__RCSID("$NetBSD: gsp_act.c,v 1.5 2006/08/26 18:15:37 christos Exp $");
 #endif
 
 #include <stdlib.h>
 #include <string.h>
+#include <util.h>
 #include "gsp_ass.h"
 
 void
