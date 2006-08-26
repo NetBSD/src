@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.19 2006/03/30 19:53:58 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.20 2006/08/26 18:17:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.19 2006/03/30 19:53:58 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.20 2006/08/26 18:17:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: parse.c,v 1.19 2006/03/30 19:53:58 dsl Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <util.h>
 
 #include "hexdump.h"
 
@@ -145,8 +146,7 @@ add(const char *fmt)
 		for (savep = ++p; *p != '"';)
 			if (*p++ == 0)
 				badfmt(fmt);
-		if (!(tfu->fmt = malloc(p - savep + 1)))
-			nomem();
+		tfu->fmt = emalloc(p - savep + 1);
 		(void) strncpy(tfu->fmt, savep, p - savep);
 		tfu->fmt[p - savep] = '\0';
 		escape(tfu->fmt);

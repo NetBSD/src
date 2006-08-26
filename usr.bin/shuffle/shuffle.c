@@ -1,4 +1,4 @@
-/*	$NetBSD: shuffle.c,v 1.18 2004/12/01 00:03:45 perry Exp $	*/
+/*	$NetBSD: shuffle.c,v 1.19 2006/08/26 18:17:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shuffle.c,v 1.18 2004/12/01 00:03:45 perry Exp $");
+__RCSID("$NetBSD: shuffle.c,v 1.19 2006/08/26 18:17:43 christos Exp $");
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -45,10 +45,7 @@ __RCSID("$NetBSD: shuffle.c,v 1.18 2004/12/01 00:03:45 perry Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-static void enomem(void);
-static void *emalloc(size_t);
-static void *erealloc(void *, size_t);
+#include <util.h>
 
 static size_t *get_shuffle(size_t);
 static void usage(void);
@@ -56,42 +53,6 @@ static void get_lines(const char *, char ***, size_t *);
 static size_t get_number(const char *, int);
 
 int main(int, char *[]);
-
-/*
- * enomem --
- *	die when out of memory.
- */
-static void
-enomem(void)
-{
-	errx(2, "Cannot allocate memory.");
-}
-
-/*
- * emalloc --
- *	malloc, but die on error.
- */
-static void *
-emalloc(size_t len)
-{
-	void *p;
-
-	if ((p = malloc(len)) == NULL)
-		enomem();
-	return p;
-}
-
-/*
- * erealloc --
- *	realloc, but die on error.
- */
-void *
-erealloc(void *ptr, size_t size)
-{
-	if ((ptr = realloc(ptr, size)) == NULL)
-		enomem();
-	return ptr;
-}
 
 /*
  * get_shuffle --

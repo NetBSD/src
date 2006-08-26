@@ -1,4 +1,4 @@
-/*	$NetBSD: column.c,v 1.14 2006/04/09 19:51:23 christos Exp $	*/
+/*	$NetBSD: column.c,v 1.15 2006/08/26 18:17:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: column.c,v 1.14 2006/04/09 19:51:23 christos Exp $");
+__RCSID("$NetBSD: column.c,v 1.15 2006/08/26 18:17:41 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,13 +53,11 @@ __RCSID("$NetBSD: column.c,v 1.14 2006/04/09 19:51:23 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #define	TAB	8
 
 static void  c_columnate(void);
-static void *emalloc(size_t);
-static void *erealloc(void *, size_t);
-static char *estrdup(const char *);
 static void  input(FILE *);
 static void  maketbl(void);
 static void  print(void);
@@ -289,37 +287,6 @@ input(FILE *fp)
 		}
 		list[entries++] = estrdup(buf);
 	}
-}
-
-static void *
-emalloc(size_t size)
-{
-	void *p;
-
-	if ((p = malloc(size)) == NULL)
-		err(1, "malloc");
-	(void)memset(p, 0, size);
-	return (p);
-}
-
-static void *
-erealloc(void *op, size_t size)
-{
-	void *p;
-
-	if ((p = realloc(op, size)) == NULL)
-		err(1, "realloc");
-	return p;
-}
-
-static char *
-estrdup(const char *str)
-{
-	char *p;
-
-	if ((p = strdup(str)) == NULL)
-		err(1, "strdup");
-	return p;
 }
 
 static void

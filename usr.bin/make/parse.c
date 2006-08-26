@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.114 2006/03/31 21:58:08 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.115 2006/08/26 18:17:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.114 2006/03/31 21:58:08 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.115 2006/08/26 18:17:42 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.114 2006/03/31 21:58:08 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.115 2006/08/26 18:17:42 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1206,17 +1206,17 @@ ParseDoDependency(char *line)
 	 * allow on this line...
 	 */
 	if (specType != Not && specType != ExPath) {
-	    Boolean warn = FALSE;
+	    Boolean warning = FALSE;
 
 	    while (*cp && (ParseIsEscaped(lstart, cp) ||
 		((*cp != '!') && (*cp != ':')))) {
 		if (ParseIsEscaped(lstart, cp) ||
 		    (*cp != ' ' && *cp != '\t')) {
-		    warn = TRUE;
+		    warning = TRUE;
 		}
 		cp++;
 	    }
-	    if (warn) {
+	    if (warning) {
 		Parse_Error(PARSE_WARNING, "Extra target ignored");
 	    }
 	} else {
@@ -1734,7 +1734,7 @@ Parse_DoVar(char *line, GNode *ctxt)
 	Var_Set(line, cp, ctxt, 0);
     } else if (type == VAR_SHELL) {
 	char *res;
-	const char *err;
+	const char *error;
 
 	if (strchr(cp, '$') != NULL) {
 	    /*
@@ -1746,12 +1746,12 @@ Parse_DoVar(char *line, GNode *ctxt)
 	    freeCp = TRUE;
 	}
 
-	res = Cmd_Exec(cp, &err);
+	res = Cmd_Exec(cp, &error);
 	Var_Set(line, res, ctxt, 0);
 	free(res);
 
-	if (err)
-	    Parse_Error(PARSE_WARNING, err, cp);
+	if (error)
+	    Parse_Error(PARSE_WARNING, error, cp);
     } else {
 	/*
 	 * Normal assignment -- just do it.

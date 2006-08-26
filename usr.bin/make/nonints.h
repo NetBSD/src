@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.36 2006/03/31 21:58:08 christos Exp $	*/
+/*	$NetBSD: nonints.h,v 1.37 2006/08/26 18:17:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,10 +115,14 @@ void Punt(const char *, ...)
 void DieHorribly(void) __attribute__((__noreturn__));
 int PrintAddr(ClientData, ClientData);
 void Finish(int);
+#ifndef __NetBSD__
 char *estrdup(const char *);
 void *emalloc(size_t);
 void *erealloc(void *, size_t);
 void enomem(void);
+#else
+#include <err.h>
+#endif
 int eunlink(const char *);
 void execError(const char *, const char *);
 

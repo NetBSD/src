@@ -1,4 +1,4 @@
-/*	$NetBSD: spellprog.c,v 1.4 2005/07/17 17:08:25 christos Exp $	*/
+/*	$NetBSD: spellprog.c,v 1.5 2006/08/26 18:17:43 christos Exp $	*/
 
 /* derived from OpenBSD: spellprog.c,v 1.4 2003/06/03 02:56:16 millert Exp */
 
@@ -94,6 +94,7 @@ static const char rcsid[] = "$OpenBSD: spellprog.c,v 1.4 2003/06/03 02:56:16 mil
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "extern.h"
 
@@ -106,7 +107,6 @@ static int	 suffix(char *, size_t);
 static int	 vowel(int);
 static const char *lookuppref(char **, char *);
 static char	*skipv(char *);
-static char	*estrdup(const char *);
 static void	 ise(void);
 static void	 print_word(FILE *);
 static void	 ztos(char *);
@@ -787,16 +787,6 @@ ztos(char *st)
 	for (; *st; st++)
 		if (*st == 'z')
 			*st = 's';
-}
-
-static char *
-estrdup(const char *st)
-{
-	char *d;
-
-	if ((d = strdup(st)) == NULL)
-		err(1, "strdup");
-	return d;
 }
 
 /*

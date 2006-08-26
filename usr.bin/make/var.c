@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.112 2006/07/28 17:08:55 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.113 2006/08/26 18:17:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.112 2006/07/28 17:08:55 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.113 2006/08/26 18:17:42 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.112 2006/07/28 17:08:55 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.113 2006/08/26 18:17:42 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -144,7 +144,7 @@ __RCSID("$NetBSD: var.c,v 1.112 2006/07/28 17:08:55 sjg Exp $");
 char 	var_Error[] = "";
 
 /*
- * Similar to var_Error, but returned when the 'err' flag for Var_Parse is
+ * Similar to var_Error, but returned when the 'errnum' flag for Var_Parse is
  * set false. Why not just use a constant? Well, gcc likes to condense
  * identical string instances...
  */
@@ -232,7 +232,7 @@ typedef struct {
     int		tvarLen;	
     char	*str;		/* string to expand */
     int		strLen;		
-    int		err;		/* err for not defined */
+    int		errnum;		/* errnum for not defined */
 } VarLoop_t;
 
 #ifndef NO_REGEX
@@ -1219,14 +1219,14 @@ VarSubstitute(GNode *ctx __unused, Var_Parse_State *vpstate,
  *-----------------------------------------------------------------------
  */
 static void
-VarREError(int err, regex_t *pat, const char *str)
+VarREError(int errnum, regex_t *pat, const char *str)
 {
     char *errbuf;
     int errlen;
 
-    errlen = regerror(err, pat, 0, 0);
+    errlen = regerror(errnum, pat, 0, 0);
     errbuf = emalloc(errlen);
-    regerror(err, pat, errbuf, errlen);
+    regerror(errnum, pat, errbuf, errlen);
     Error("%s: %s", str, errbuf);
     free(errbuf);
 }
@@ -1397,7 +1397,7 @@ VarLoopExpand(GNode *ctx __unused, Var_Parse_State *vpstate __unused,
 
     if (word && *word) {
         Var_Set(loop->tvar, word, loop->ctxt, VAR_NO_EXPORT);
-        s = Var_Subst(NULL, loop->str, loop->ctxt, loop->err);
+        s = Var_Subst(NULL, loop->str, loop->ctxt, loop->errnum);
         if (s != NULL && *s != '\0') {
             if (addSpace && *s != '\n')
                 Buf_AddByte(buf, ' ');
@@ -1716,7 +1716,7 @@ VarUniq(const char *str)
  */
 static char *
 VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate __unused,
-	      int err, const char **tstr, int delim, int *flags,
+	      int errnum, const char **tstr, int delim, int *flags,
 	      int *length, VarPattern *pattern)
 {
     const char *cp;
@@ -1760,7 +1760,7 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate __unused,
 		     * delimiter, assume it's a variable
 		     * substitution and recurse.
 		     */
-		    cp2 = Var_Parse(cp, ctxt, err, &len, &freeIt);
+		    cp2 = Var_Parse(cp, ctxt, errnum, &len, &freeIt);
 		    Buf_AddBytes(buf, strlen(cp2), (Byte *)cp2);
 		    if (freeIt)
 			free(freeIt);
@@ -1978,7 +1978,7 @@ VarChangeCase(char *str, int upper)
 static char *
 ApplyModifiers(char *nstr, const char *tstr,
 	       int startc, int endc,
-	       Var *v, GNode *ctxt, Boolean err,
+	       Var *v, GNode *ctxt, Boolean errnum,
 	       int *lengthPtr, void **freePtr)
 {
     const char 	   *start;
@@ -2008,7 +2008,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    char *rval;
 	    int rlen;
 
-	    rval = Var_Parse(tstr, ctxt, err, &rlen, &freeIt);
+	    rval = Var_Parse(tstr, ctxt, errnum, &rlen, &freeIt);
 
 	    if (DEBUG(VAR)) {
 		printf("Got '%s' from '%.*s'%.*s\n",
@@ -2022,9 +2022,9 @@ ApplyModifiers(char *nstr, const char *tstr,
 
 		nstr = ApplyModifiers(nstr, rval,
 				      0, 0,
-				      v, ctxt, err, &used, freePtr);
+				      v, ctxt, errnum, &used, freePtr);
 		if (nstr == var_Error
-		    || (nstr == varNoError && err == 0)
+		    || (nstr == varNoError && errnum == 0)
 		    || strlen(rval) != (size_t) used) {
 		    if (freeIt)
 			free(freeIt);
@@ -2087,7 +2087,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 		    delim = BRCLOSE;
 		    pattern.flags = 0;
 
-		    pattern.rhs = VarGetPattern(ctxt, &parsestate, err,
+		    pattern.rhs = VarGetPattern(ctxt, &parsestate, errnum,
 						&cp, delim, NULL,
 						&pattern.rightLen,
 						NULL);
@@ -2136,13 +2136,13 @@ ApplyModifiers(char *nstr, const char *tstr,
 
 		cp = ++tstr;
 		delim = '@';
-		if ((loop.tvar = VarGetPattern(ctxt, &parsestate, err,
+		if ((loop.tvar = VarGetPattern(ctxt, &parsestate, errnum,
 					       &cp, delim,
 					       &flags, &loop.tvarLen,
 					       NULL)) == NULL)
 		    goto cleanup;
 
-		if ((loop.str = VarGetPattern(ctxt, &parsestate, err,
+		if ((loop.str = VarGetPattern(ctxt, &parsestate, errnum,
 					      &cp, delim,
 					      &flags, &loop.strLen,
 					      NULL)) == NULL)
@@ -2151,7 +2151,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 		termc = *cp;
 		delim = '\0';
 
-		loop.err = err;
+		loop.errnum = errnum;
 		loop.ctxt = ctxt;
 		newStr = VarModify(ctxt, &parsestate, nstr, VarLoopExpand,
 				   (ClientData)&loop);
@@ -2193,7 +2193,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 			    int	    len;
 			    void    *freeIt;
 
-			    cp2 = Var_Parse(cp, ctxt, err, &len, &freeIt);
+			    cp2 = Var_Parse(cp, ctxt, errnum, &len, &freeIt);
 			    Buf_AddBytes(buf, strlen(cp2), (Byte *)cp2);
 			    if (freeIt)
 				free(freeIt);
@@ -2260,7 +2260,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 		delim = '!';
 
 		cp = ++tstr;
-		if ((pattern.rhs = VarGetPattern(ctxt, &parsestate, err,
+		if ((pattern.rhs = VarGetPattern(ctxt, &parsestate, errnum,
 						 &cp, delim,
 						 NULL, &pattern.rightLen,
 						 NULL)) == NULL)
@@ -2290,7 +2290,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 		cp = tstr+1; /* point to char after '[' */
 		delim = ']'; /* look for closing ']' */
 		estr = VarGetPattern(ctxt, &parsestate,
-				     err, &cp, delim,
+				     errnum, &cp, delim,
 				     NULL, NULL, NULL);
 		if (estr == NULL)
 		    goto cleanup; /* report missing ']' */
@@ -2581,7 +2581,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 		}
 		if ((cp2 = strchr(pattern, '$'))) {
 		    cp2 = pattern;
-		    pattern = Var_Subst(NULL, cp2, ctxt, err);
+		    pattern = Var_Subst(NULL, cp2, ctxt, errnum);
 		    if (copy)
 			free(cp2);
 		    copy = TRUE;
@@ -2618,14 +2618,14 @@ ApplyModifiers(char *nstr, const char *tstr,
 		}
 
 		cp = tstr;
-		if ((pattern.lhs = VarGetPattern(ctxt, &parsestate, err,
+		if ((pattern.lhs = VarGetPattern(ctxt, &parsestate, errnum,
 						 &cp, delim,
 						 &pattern.flags,
 						 &pattern.leftLen,
 						 NULL)) == NULL)
 		    goto cleanup;
 
-		if ((pattern.rhs = VarGetPattern(ctxt, &parsestate, err,
+		if ((pattern.rhs = VarGetPattern(ctxt, &parsestate, errnum,
 						 &cp, delim, NULL,
 						 &pattern.rightLen,
 						 &pattern)) == NULL)
@@ -2675,7 +2675,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 
 		cp = ++tstr;
 		delim = ':';
-		if ((pattern.lhs = VarGetPattern(ctxt, &parsestate, err,
+		if ((pattern.lhs = VarGetPattern(ctxt, &parsestate, errnum,
 						 &cp, delim, NULL,
 						 &pattern.leftLen,
 						 NULL)) == NULL)
@@ -2683,7 +2683,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 
 		/* BROPEN or PROPEN */
 		delim = endc;
-		if ((pattern.rhs = VarGetPattern(ctxt, &parsestate, err,
+		if ((pattern.rhs = VarGetPattern(ctxt, &parsestate, errnum,
 						 &cp, delim, NULL,
 						 &pattern.rightLen,
 						 NULL)) == NULL)
@@ -2725,12 +2725,12 @@ ApplyModifiers(char *nstr, const char *tstr,
 
 		cp = tstr;
 
-		if ((re = VarGetPattern(ctxt, &parsestate, err, &cp, delim,
+		if ((re = VarGetPattern(ctxt, &parsestate, errnum, &cp, delim,
 					NULL, NULL, NULL)) == NULL)
 		    goto cleanup;
 
 		if ((pattern.replace = VarGetPattern(ctxt, &parsestate,
-						     err, &cp, delim, NULL,
+						     errnum, &cp, delim, NULL,
 						     NULL, NULL)) == NULL){
 		    free(re);
 		    goto cleanup;
@@ -2904,12 +2904,12 @@ ApplyModifiers(char *nstr, const char *tstr,
 		delim='=';
 		cp = tstr;
 		if ((pattern.lhs = VarGetPattern(ctxt, &parsestate, 
-						 err, &cp, delim, &pattern.flags,
+						 errnum, &cp, delim, &pattern.flags,
 						 &pattern.leftLen, NULL)) == NULL)
 		    goto cleanup;
 		delim = endc;
 		if ((pattern.rhs = VarGetPattern(ctxt, &parsestate,
-						 err, &cp, delim, NULL, &pattern.rightLen,
+						 errnum, &cp, delim, NULL, &pattern.rightLen,
 						 &pattern)) == NULL)
 		    goto cleanup;
 
@@ -2992,7 +2992,7 @@ ApplyModifiers(char *nstr, const char *tstr,
  * Input:
  *	str		The string to parse
  *	ctxt		The context for the variable
- *	err		TRUE if undefined variables are an error
+ *	errnum		TRUE if undefined variables are an error
  *	lengthPtr	OUT: The length of the specification
  *	freePtr		OUT: TRUE if caller should free result
  *
@@ -3011,7 +3011,7 @@ ApplyModifiers(char *nstr, const char *tstr,
  */
 /* coverity[+alloc : arg-*4] */
 char *
-Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
+Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 	  void **freePtr)
 {
     const char	   *tstr;    	/* Pointer into str */
@@ -3075,7 +3075,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	    /*
 	     * Error
 	     */
-	    return (err ? var_Error : varNoError);
+	    return (errnum ? var_Error : varNoError);
 	} else {
 	    haveModifier = FALSE;
 	    tstr = &str[1];
@@ -3083,7 +3083,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	}
     } else if (str[1] == '\0') {
 	*lengthPtr = 1;
-	return (err ? var_Error : varNoError);
+	return (errnum ? var_Error : varNoError);
     } else { 
 	Buffer buf;	/* Holds the variable name */
 
@@ -3104,7 +3104,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	    if (*tstr == '$') {
 		int rlen;
 		void *freeIt;
-		char *rval = Var_Parse(tstr, ctxt, err, &rlen, &freeIt);
+		char *rval = Var_Parse(tstr, ctxt, errnum, &rlen, &freeIt);
 		if (rval != NULL) {
 		    Buf_AddBytes(buf, strlen(rval), (Byte *)rval);
 		}
@@ -3246,7 +3246,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 		    return(pstr);
 		} else {
 		    Buf_Destroy(buf, TRUE);
-		    return (err ? var_Error : varNoError);
+		    return (errnum ? var_Error : varNoError);
 		}
 	    } else {
 		/*
@@ -3281,7 +3281,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
      */
     nstr = (char *)Buf_GetAll(v->val, NULL);
     if (strchr(nstr, '$') != NULL) {
-	nstr = Var_Subst(NULL, nstr, ctxt, err);
+	nstr = Var_Subst(NULL, nstr, ctxt, errnum);
 	*freePtr = nstr;
     }
 
@@ -3296,7 +3296,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	tstr++;
 
 	nstr = ApplyModifiers(nstr, tstr, startc, endc,
-			      v, ctxt, err, &used, freePtr);
+			      v, ctxt, errnum, &used, freePtr);
 	tstr += used;
 	*lengthPtr = tstr - start + 1;
     } else {
