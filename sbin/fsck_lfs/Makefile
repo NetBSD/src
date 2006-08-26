@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2006/07/18 23:37:13 perseant Exp $
+#	$NetBSD: Makefile,v 1.14 2006/08/26 18:14:28 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -11,5 +11,8 @@ SRCS+=	segwrite.c setup.c utilities.c vars.c vnode.c
 FSCK=	${NETBSDSRCDIR}/sbin/fsck
 .PATH:	${NETBSDSRCDIR}/sys/ufs/lfs ${FSCK}
 CPPFLAGS+=-I${.CURDIR} -I${FSCK} -DIN_FSCK_LFS # -DVERBOSE_BLOCKMAP 
+
+LDADD+=-lutil
+DPADD+=${LIBUTIL}
 
 .include <bsd.prog.mk>
