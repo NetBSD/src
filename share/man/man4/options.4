@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.328 2006/08/06 15:37:21 xtraeme Exp $
+.\"	$NetBSD: options.4,v 1.329 2006/08/26 18:34:28 pavel Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd August 6, 2006
+.Dd August 26, 2006
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -335,14 +335,11 @@ system calls.
 .It Cd options COMPAT_30
 Enable binary compatibility with
 .Nx 3.0 .
-This allows the use of old syscalls for
-.Fn getdents ,
-.Fn stat ,
-.Fn fstat ,
-.Fn lstat
-and
-.Fn fhstat .
-The syscall numbers were changed post 3.0 to introduce 64 bit inode.
+See
+.Xr compat_30 8
+for details about the changes made after the
+.Nx 3.0
+release.
 .It Cd options COMPAT_43
 Enables compatibility with
 .Bx 4.3 .
