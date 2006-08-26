@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2005/01/10 03:11:17 lukem Exp $
+# $NetBSD: Makefile,v 1.14 2006/08/26 18:12:50 christos Exp $
 
 NOLINT=		# defined
 
@@ -11,16 +11,19 @@ WARNS?=		1
 
 LIB=		roken
 
+.if ${OBJECT_FMT} == "ELF"
+LIBDPLIBS= util ${.CURDIR}/../libutil
+.else
+.PATH: ${NETBSDSRCDIR}/lib/libutil
+SRCS+=	efun.c
+.endif
+
 SRCS=						\
 	base64.c				\
 	concat.c				\
-	ecalloc.c				\
-	emalloc.c				\
 	environment.c				\
 	eread.c					\
-	erealloc.c				\
 	esetenv.c				\
-	estrdup.c				\
 	ewrite.c				\
 	get_default_username.c			\
 	get_window_size.c			\
