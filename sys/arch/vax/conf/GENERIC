@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.153 2006/08/12 15:29:54 christos Exp $
+# $NetBSD: GENERIC,v 1.154 2006/08/26 07:59:23 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.153 $"
+#ident 		"GENERIC-$Revision: 1.154 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -335,7 +335,6 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	pflog			# PF log if
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1
@@ -350,4 +349,3 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
-
