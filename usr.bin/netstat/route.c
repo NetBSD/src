@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.67 2006/05/28 16:51:40 elad Exp $	*/
+/*	$NetBSD: route.c,v 1.68 2006/08/26 15:33:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.67 2006/05/28 16:51:40 elad Exp $");
+__RCSID("$NetBSD: route.c,v 1.68 2006/08/26 15:33:20 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,9 @@ __RCSID("$NetBSD: route.c,v 1.67 2006/05/28 16:51:40 elad Exp $");
 #include <netatalk/at.h>
 #include <netiso/iso.h>
 
+#ifdef NS
 #include <netns/ns.h>
+#endif
 
 #include <sys/sysctl.h>
 
@@ -88,7 +90,9 @@ static union sockaddr_union {
 	struct	sockaddr_iso u_iso;
 	struct	sockaddr_at u_at;
 	struct	sockaddr_dl u_dl;
+#ifdef NS
 	struct	sockaddr_ns u_ns;
+#endif
 	u_short	u_data[128];
 	int u_dummy;		/* force word-alignment */
 } pt_u;
@@ -350,6 +354,7 @@ rt_stats(off)
 		plural(rtstat.rts_wildcard));
 }
 
+#ifdef NS
 short ns_nullh[] = {0,0,0};
 short ns_bh[] = {-1,-1,-1};
 
@@ -423,6 +428,7 @@ ns_phost(sa)
 		p += 3;
 	return (p);
 }
+#endif
 
 void
 upHex(p0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.60 2006/05/28 16:51:40 elad Exp $	*/
+/*	$NetBSD: if.c,v 1.61 2006/08/26 15:33:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.60 2006/05/28 16:51:40 elad Exp $");
+__RCSID("$NetBSD: if.c,v 1.61 2006/08/26 15:33:20 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,8 +48,10 @@ __RCSID("$NetBSD: if.c,v 1.60 2006/05/28 16:51:40 elad Exp $");
 #include <net/if_types.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
+#ifdef NS
 #include <netns/ns.h>
 #include <netns/ns_if.h>
+#endif
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>
 #include <arpa/inet.h>
@@ -88,7 +90,9 @@ intpr(interval, ifnetaddr, pfunc)
 #ifdef INET6
 		struct in6_ifaddr in6;
 #endif /* INET6 */
+#ifdef NS
 		struct ns_ifaddr ns;
+#endif /* NS */
 		struct iso_ifaddr iso;
 	} ifaddr;
 	u_long ifaddraddr;
@@ -317,6 +321,7 @@ intpr(interval, ifnetaddr, pfunc)
 				       atalk_print(sa,0x10));
 				printf("%-17.17s ", atalk_print(sa,0x0b));
 				break;
+#ifdef NS
 			case AF_NS:
 				{
 				struct sockaddr_ns *sns =
@@ -333,6 +338,7 @@ intpr(interval, ifnetaddr, pfunc)
 				    ns_phost((struct sockaddr *)sns));
 				}
 				break;
+#endif
 #endif
 			case AF_LINK:
 				printf("%-13.13s ", "<Link>");

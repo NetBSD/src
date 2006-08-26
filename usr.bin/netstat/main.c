@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.58 2006/08/22 20:06:17 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.59 2006/08/26 15:33:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.58 2006/08/22 20:06:17 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.59 2006/08/26 15:33:20 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -297,6 +297,7 @@ struct protox atalkprotox[] = {
 	  0,		NULL,		0 }
 };
 
+#ifdef NS
 struct protox nsprotox[] = {
 	{ N_IDP,	N_IDPSTAT,	1,	nsprotopr,
 	  idp_stats,	NULL,		0,	"idp" },
@@ -307,6 +308,7 @@ struct protox nsprotox[] = {
 	{ -1,		-1,		0,	0,
 	  0,		NULL,		0 }
 };
+#endif
 
 struct protox isoprotox[] = {
 	{ ISO_TP,	N_TPSTAT,	1,	iso_protopr,
@@ -331,7 +333,11 @@ struct protox *protoprotox[] = { protox,
 				 pfkeyprotox,
 #endif
 #ifndef SMALL
-				 atalkprotox, nsprotox, isoprotox,
+				 atalkprotox,
+#ifdef NS
+				 nsprotox,
+#endif
+				 isoprotox,
 #endif
 				 NULL };
 
@@ -344,7 +350,9 @@ const struct softintrq {
 	{ "ip6intrq", N_IP6INTRQ },
 	{ "atintrq1", N_ATINTRQ1 },
 	{ "atintrq2", N_ATINTRQ2 },
+#ifdef NS
 	{ "nsintrq", N_NSINTRQ },
+#endif
 	{ "clnlintrq", N_CLNLINTRQ },
 	{ "llcintrq", N_LLCINTRQ },
 	{ "hdintrq", N_HDINTRQ },
@@ -401,9 +409,13 @@ main(argc, argv)
 			dflag = 1;
 			break;
 		case 'f':
-			if (strcmp(optarg, "ns") == 0)
+#ifdef NS
+			if (strcmp(optarg, "ns") == 0) {
 				af = AF_NS;
-			else if (strcmp(optarg, "inet") == 0)
+				break;
+			}
+#endif
+			if (strcmp(optarg, "inet") == 0)
 				af = AF_INET;
 			else if (strcmp(optarg, "inet6") == 0)
 				af = AF_INET6;
@@ -672,9 +684,11 @@ main(argc, argv)
 	if (af == AF_APPLETALK || af == AF_UNSPEC)
 		for (tp = atalkprotox; tp->pr_name; tp++)
 			printproto(tp, tp->pr_name);
+#ifdef NS
 	if (af == AF_NS || af == AF_UNSPEC)
 		for (tp = nsprotox; tp->pr_name; tp++)
 			printproto(tp, tp->pr_name);
+#endif
 	if (af == AF_ISO || af == AF_UNSPEC)
 		for (tp = isoprotox; tp->pr_name; tp++)
 			printproto(tp, tp->pr_name);
