@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.129 2006/08/26 18:17:42 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.130 2006/08/26 22:19:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.129 2006/08/26 18:17:42 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.130 2006/08/26 22:19:03 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.129 2006/08/26 18:17:42 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.130 2006/08/26 22:19:03 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1596,7 +1596,7 @@ Finish(int errors)
 	Fatal("%d error%s", errors, errors == 1 ? "" : "s");
 }
 
-#ifndef __NetBSD__
+#ifndef MAKE_NATIVE
 /*
  * emalloc --
  *	malloc, but die on error.
