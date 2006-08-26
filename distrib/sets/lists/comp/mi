@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.913 2006/08/26 16:17:18 matt Exp $
+#	$NetBSD: mi,v 1.914 2006/08/26 18:25:36 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4251,10 +4251,12 @@
 ./usr/share/man/cat3/dup_field.0		comp-c-catman		.cat
 ./usr/share/man/cat3/dupwin.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dynamic_field_info.0	comp-c-catman		.cat
+./usr/share/man/cat3/easprintf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/echo.0			comp-c-catman		.cat
 ./usr/share/man/cat3/echochar.0			comp-c-catman		.cat
 ./usr/share/man/cat3/edata.0			comp-c-catman		.cat
 ./usr/share/man/cat3/editline.0			comp-c-catman		.cat
+./usr/share/man/cat3/efopen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/el_deletestr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/el_end.0			comp-c-catman		.cat
 ./usr/share/man/cat3/el_get.0			comp-c-catman		.cat
@@ -4269,6 +4271,7 @@
 ./usr/share/man/cat3/el_resize.0		comp-c-catman		.cat
 ./usr/share/man/cat3/el_set.0			comp-c-catman		.cat
 ./usr/share/man/cat3/el_source.0		comp-c-catman		.cat
+./usr/share/man/cat3/emalloc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/encrypt.0			comp-c-catman		.cat
 ./usr/share/man/cat3/end.0			comp-c-catman		.cat
 ./usr/share/man/cat3/endfsent.0			comp-c-catman		.cat
@@ -4289,6 +4292,7 @@
 ./usr/share/man/cat3/erand48.0			comp-c-catman		.cat
 ./usr/share/man/cat3/erase.0			comp-c-catman		.cat
 ./usr/share/man/cat3/erasechar.0		comp-c-catman		.cat
+./usr/share/man/cat3/erealloc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/erf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/erfc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/erfcf.0			comp-c-catman		.cat
@@ -4297,6 +4301,10 @@
 ./usr/share/man/cat3/error_message.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/error_table_name.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/errx.0			comp-c-catman		.cat
+./usr/share/man/cat3/esetfunc.0			comp-c-catman		.cat
+./usr/share/man/cat3/estrdup.0			comp-c-catman		.cat
+./usr/share/man/cat3/estrlcat.0			comp-c-catman		.cat
+./usr/share/man/cat3/estrlcpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/etext.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ether_aton.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ether_hostton.0		comp-c-catman		.cat
@@ -4304,6 +4312,7 @@
 ./usr/share/man/cat3/ether_ntoa.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ether_ntohost.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ethers.0			comp-c-catman		.cat
+./usr/share/man/cat3/evasprintf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event.0			comp-c-catman		.cat
 ./usr/share/man/cat3/event_add.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_del.0		comp-c-catman		.cat
@@ -8408,10 +8417,12 @@
 ./usr/share/man/man3/dup_field.3		comp-c-man		.man
 ./usr/share/man/man3/dupwin.3			comp-c-man		.man
 ./usr/share/man/man3/dynamic_field_info.3	comp-c-man		.man
+./usr/share/man/man3/easprintf.3		comp-c-man		.man
 ./usr/share/man/man3/echo.3			comp-c-man		.man
 ./usr/share/man/man3/echochar.3			comp-c-man		.man
 ./usr/share/man/man3/edata.3			comp-c-man		.man
 ./usr/share/man/man3/editline.3			comp-c-man		.man
+./usr/share/man/man3/efopen.3			comp-c-man		.man
 ./usr/share/man/man3/el_deletestr.3		comp-c-man		.man
 ./usr/share/man/man3/el_end.3			comp-c-man		.man
 ./usr/share/man/man3/el_get.3			comp-c-man		.man
@@ -8426,6 +8437,7 @@
 ./usr/share/man/man3/el_resize.3		comp-c-man		.man
 ./usr/share/man/man3/el_set.3			comp-c-man		.man
 ./usr/share/man/man3/el_source.3		comp-c-man		.man
+./usr/share/man/man3/emalloc.3			comp-c-man		.man
 ./usr/share/man/man3/encrypt.3			comp-c-man		.man
 ./usr/share/man/man3/end.3			comp-c-man		.man
 ./usr/share/man/man3/endfsent.3			comp-c-man		.man
@@ -8446,6 +8458,7 @@
 ./usr/share/man/man3/erand48.3			comp-c-man		.man
 ./usr/share/man/man3/erase.3			comp-c-man		.man
 ./usr/share/man/man3/erasechar.3		comp-c-man		.man
+./usr/share/man/man3/erealloc.3			comp-c-man		.man
 ./usr/share/man/man3/erf.3			comp-c-man		.man
 ./usr/share/man/man3/erfc.3			comp-c-man		.man
 ./usr/share/man/man3/erfcf.3			comp-c-man		.man
@@ -8454,6 +8467,10 @@
 ./usr/share/man/man3/error_message.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/error_table_name.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/errx.3			comp-c-man		.man
+./usr/share/man/man3/esetfunc.3			comp-c-man		.man
+./usr/share/man/man3/estrdup.3			comp-c-man		.man
+./usr/share/man/man3/estrlcat.3			comp-c-man		.man
+./usr/share/man/man3/estrlcpy.3			comp-c-man		.man
 ./usr/share/man/man3/etext.3			comp-c-man		.man
 ./usr/share/man/man3/ether_aton.3		comp-c-man		.man
 ./usr/share/man/man3/ether_hostton.3		comp-c-man		.man
@@ -8461,6 +8478,7 @@
 ./usr/share/man/man3/ether_ntoa.3		comp-c-man		.man
 ./usr/share/man/man3/ether_ntohost.3		comp-c-man		.man
 ./usr/share/man/man3/ethers.3			comp-c-man		.man
+./usr/share/man/man3/evasprintf.3		comp-c-man		.man
 ./usr/share/man/man3/event.3			comp-c-man		.man
 ./usr/share/man/man3/event_add.3		comp-c-man		.man
 ./usr/share/man/man3/event_del.3		comp-c-man		.man
