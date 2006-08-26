@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.915 2006/08/26 19:31:54 matt Exp $
+#	$NetBSD: mi,v 1.916 2006/08/26 22:38:42 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4256,6 +4256,7 @@
 ./usr/share/man/cat3/edata.0			comp-c-catman		.cat
 ./usr/share/man/cat3/editline.0			comp-c-catman		.cat
 ./usr/share/man/cat3/efopen.0			comp-c-catman		.cat
+./usr/share/man/cat3/efun.0			comp-c-catman		.cat
 ./usr/share/man/cat3/el_deletestr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/el_end.0			comp-c-catman		.cat
 ./usr/share/man/cat3/el_get.0			comp-c-catman		.cat
@@ -8422,6 +8423,7 @@
 ./usr/share/man/man3/edata.3			comp-c-man		.man
 ./usr/share/man/man3/editline.3			comp-c-man		.man
 ./usr/share/man/man3/efopen.3			comp-c-man		.man
+./usr/share/man/man3/efun.3			comp-c-man		.man
 ./usr/share/man/man3/el_deletestr.3		comp-c-man		.man
 ./usr/share/man/man3/el_end.3			comp-c-man		.man
 ./usr/share/man/man3/el_get.3			comp-c-man		.man
