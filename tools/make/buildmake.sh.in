@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: buildmake.sh.in,v 1.6 2006/06/30 19:47:46 ross Exp $
+#	$NetBSD: buildmake.sh.in,v 1.7 2006/08/26 22:15:14 christos Exp $
 #
 # buildmake.sh.in - Autoconf-processed shell script for building make(1).
 #
@@ -14,9 +14,10 @@ docmd () {
 	$1 || exit 1
 }
 
-SRCDIR=@srcdir@/../../usr.bin/make
+MKSRCDIR=@srcdir@/../../usr.bin/make
+UTSRCDIR=@srcdir@/../../lib/libutil
 
-for f in $SRCDIR/*.c $SRCDIR/lst.lib/*.c; do
+for f in $MKSRCDIR/*.c $MKSRCDIR/lst.lib/*.c $UTSRCDIR/efun.c; do
 	docmd "${HOST_CC} ${HOST_CFLAGS} @DEFS@ -c $f"
 done
 
