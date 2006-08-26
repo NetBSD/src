@@ -1901,12 +1901,6 @@ mips*-*-netbsd*)			# NetBSD/mips, either endian.
 	target_cpu_default="MASK_GAS|MASK_ABICALLS"
 	tm_file="elfos.h ${tm_file} mips/netbsd.h"
 	tmake_file="${tmake_file} mips/t-netbsd"
-	case $machine in
-        mips64*-*)
-                target_cpu_default="MASK_GAS|MASK_64BIT|MASK_FLOAT64"
-		tm_defines="MIPS_ISA_DEFAULT=64 MIPS_ABI_DEFAULT=ABI_N64"
-                ;;
-        esac
 	;;
 mips*-*-linux*)				# Linux MIPS, either endian.
         tm_file="dbxelf.h elfos.h svr4.h linux.h ${tm_file} mips/linux.h"
