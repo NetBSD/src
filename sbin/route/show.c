@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.29 2006/01/25 16:29:10 christos Exp $	*/
+/*	$NetBSD: show.c,v 1.30 2006/08/26 15:26:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.29 2006/01/25 16:29:10 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.30 2006/08/26 15:26:02 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,9 @@ __RCSID("$NetBSD: show.c,v 1.29 2006/01/25 16:29:10 christos Exp $");
 #include <net/if_types.h>
 #include <net/route.h>
 #include <netinet/in.h>
+#ifdef NS
 #include <netns/ns.h>
+#endif
 
 #include <sys/sysctl.h>
 
@@ -128,9 +130,11 @@ show(int argc, char **argv)
 			case K_ATALK:
 				af = AF_APPLETALK;
 				break;
+#ifdef NS
 			case K_XNS:
 				af = AF_NS;
 				break;
+#endif
 #endif /* SMALL */
 #if 0
 			/* XXX Links are never destinations */
@@ -143,8 +147,10 @@ show(int argc, char **argv)
 			case K_OSI:
 				af = AF_ISO;
 				break;
+#ifdef CCITT
 			case K_X25:
 				af = AF_CCITT;
+#endif
 #endif /* SMALL */
 			default:
 				goto bad;
@@ -288,15 +294,19 @@ pr_family(int af)
 		break;
 #endif /* INET6 */
 #ifndef SMALL
+#ifdef NS
 	case AF_NS:
 		afname = "XNS";
 		break;
+#endif
 	case AF_ISO:
 		afname = "ISO";
 		break;
+#ifdef CCITT
 	case AF_CCITT:
 		afname = "X.25";
 		break;
+#endif
 #endif /* SMALL */
 	case AF_APPLETALK:
 		afname = "AppleTalk";
@@ -341,9 +351,11 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *nm, int flags, int width)
 #endif /* INET6 */
 
 #ifndef SMALL
+#ifdef NS
 	case AF_NS:
 		cp = ns_print((struct sockaddr_ns *)sa);
 		break;
+#endif
 #endif /* SMALL */
 
 	default:
