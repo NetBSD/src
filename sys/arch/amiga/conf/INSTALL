@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.70 2006/06/30 10:54:09 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.71 2006/08/26 08:04:32 tsutsui Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.53 2006/06/29 14:00:55 liamjfoy Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.55 2006/08/26 07:59:21 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.70 $"
+#ident 		"GENERIC-$Revision: 1.71 $"
 
 makeoptions	COPTS="-Os"
 
@@ -126,6 +126,7 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 # Support for various kernel options
 #
 
+#options 	SYSTRACE	# system call vetting via systrace(1)
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USERCONF	# userconf(4) support
@@ -447,7 +448,6 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1
