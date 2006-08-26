@@ -1,4 +1,4 @@
-/*	$NetBSD: gspa.c,v 1.11 2006/05/13 22:34:50 christos Exp $	*/
+/*	$NetBSD: gspa.c,v 1.12 2006/08/26 18:15:37 christos Exp $	*/
 /*
  * GSP assembler main program
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gspa.c,v 1.11 2006/05/13 22:34:50 christos Exp $");
+__RCSID("$NetBSD: gspa.c,v 1.12 2006/08/26 18:15:37 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: gspa.c,v 1.11 2006/05/13 22:34:50 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "gsp_ass.h"
 #include "gsp_gram.h"
@@ -288,18 +289,6 @@ yyerror(char *err)
 
 	perr("%s", err);
 	longjmp(synerrjmp, 1);
-}
-
-void *
-emalloc(size_t nbytes)
-{
-	void *p;
-
-	if( (p = malloc(nbytes)) == NULL ){
-		fprintf(stderr, "Insufficient memory at line %d\n", lineno);
-		exit(1);
-	}
-	return p;
 }
 
 void
