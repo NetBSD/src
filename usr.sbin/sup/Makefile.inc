@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2003/04/03 17:56:52 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2006/08/26 18:15:39 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,8 @@ CPPFLAGS+=-DEE_XXX
 LIBSUPDIR != cd ${.CURDIR}/../lib && ${PRINTOBJDIR}
 LIBSUP=	${LIBSUPDIR}/libsup.a
 SUPLIB=	-L${LIBSUPDIR} -lsup
+LDADD+=-lutil
+DPADD+=${LIBUTIL}
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
