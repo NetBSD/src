@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.3 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.4 2006/08/26 20:25:23 christos Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed.
@@ -496,7 +496,7 @@ caddr_t data;
 
 	if (err == 0) {
 		flush.iplf_count = num;
-		err = COPYOUT(&flush, data, sizeof(flush));
+		BCOPYOUT(&flush, data, sizeof(flush));
 	}
 	return err;
 }
