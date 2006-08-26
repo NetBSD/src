@@ -1,4 +1,4 @@
-/*	$NetBSD: odsyntax.c,v 1.23 2006/01/04 01:30:21 perry Exp $	*/
+/*	$NetBSD: odsyntax.c,v 1.24 2006/08/26 18:17:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)odsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: odsyntax.c,v 1.23 2006/01/04 01:30:21 perry Exp $");
+__RCSID("$NetBSD: odsyntax.c,v 1.24 2006/08/26 18:17:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: odsyntax.c,v 1.23 2006/01/04 01:30:21 perry Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "hexdump.h"
 
@@ -284,10 +285,9 @@ posixtypes(char const *type_string)
 				break;
 		if (odf->type == 0)
 			errx(1, "%c%d: format not supported", type, nbytes);
-		asprintf(&fmt, "%d/%d  \"%*s%s \" \"\\n\"",
+		(void)easprintf(&fmt, "%d/%d  \"%*s%s \" \"\\n\"",
 		    16 / nbytes, nbytes,
 		    4 * nbytes - odf->minwidth, "", odf->format);
-		if (fmt == NULL) nomem();
 		add(fmt);
 	}
 }
