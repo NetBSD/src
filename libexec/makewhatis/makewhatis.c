@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.39 2006/04/10 14:39:06 chuck Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.40 2006/08/26 18:18:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: makewhatis.c,v 1.39 2006/04/10 14:39:06 chuck Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.40 2006/08/26 18:18:16 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -67,6 +67,7 @@ __RCSID("$NetBSD: makewhatis.c,v 1.39 2006/04/10 14:39:06 chuck Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <zlib.h>
+#include <util.h>
 
 #include <man/manconf.h>
 #include <man/pathnames.h>
@@ -110,8 +111,6 @@ static char	*parsemanpage(const char *, gzFile *, int);
 static char	*getwhatisdata(char *);
 static void	processmanpages(manpage **,whatis **);
 static void	dumpwhatis(FILE *, whatis *);
-static void	*emalloc(size_t);
-static char	*estrdup(const char *);
 static int	makewhatis(char * const *manpath);
 
 static char * const default_manpath[] = {
@@ -1090,22 +1089,4 @@ dumpwhatis(FILE *out, whatis *tree)
 
 		tree = tree->wi_right;
 	}
-}
-
-static void *
-emalloc(size_t len)
-{
-	void *ptr;
-	if ((ptr = malloc(len)) == NULL)
-		err(EXIT_FAILURE, "malloc %lu failed", (unsigned long)len);
-	return ptr;
-}
-
-static char *
-estrdup(const char *str)
-{
-	char *ptr;
-	if ((ptr = strdup(str)) == NULL)
-		err(EXIT_FAILURE, "strdup failed");
-	return ptr;
 }
