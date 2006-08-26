@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pool.c,v 1.5 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ip_pool.c,v 1.6 2006/08/26 20:37:50 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -372,14 +372,14 @@ addrfamily_t *addr, *mask;
 /* Function:    ip_pool_search                                              */
 /* Returns:     int     - 0 == +ve match, -1 == error, 1 == -ve/no match    */
 /* Parameters:  tptr(I)    - pointer to the pool to search                  */
-/*              version(I) - IP protocol version (4 or 6)                   */
+/*              ipversion(I) - IP protocol version (4 or 6)                   */
 /*              dptr(I)    - pointer to address information                 */
 /*                                                                          */
 /* Search the pool for a given address and return a search result.          */
 /* ------------------------------------------------------------------------ */
-int ip_pool_search(tptr, version, dptr)
+int ip_pool_search(tptr, ipversion, dptr)
 void *tptr;
-int version;
+int ipversion;
 void *dptr;
 {
 	struct radix_node *rn;
@@ -399,11 +399,11 @@ void *dptr;
 	bzero(&v, sizeof(v));
 	v.adf_len = offsetof(addrfamily_t, adf_addr);
 
-	if (version == 4) {
+	if (ipversion == 4) {
 		v.adf_len += sizeof(addr->in4);
 		v.adf_addr.in4 = addr->in4;
 #ifdef USE_INET6
-	} else if (version == 6) {
+	} else if (ipversion == 6) {
 		v.adf_len += sizeof(addr->in6);
 		v.adf_addr.in6 = addr->in6;
 #endif
