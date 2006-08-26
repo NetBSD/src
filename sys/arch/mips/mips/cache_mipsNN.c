@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_mipsNN.c,v 1.10 2005/12/24 20:07:19 perry Exp $	*/
+/*	$NetBSD: cache_mipsNN.c,v 1.11 2006/08/26 20:13:02 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.10 2005/12/24 20:07:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.11 2006/08/26 20:13:02 matt Exp $");
 
 #include <sys/param.h>
 
@@ -60,7 +60,11 @@ __KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.10 2005/12/24 20:07:19 perry Exp 
 #define	SYNC	__asm volatile("sync")
 #endif
 
+#ifdef _LP64
+__asm(".set mips64");
+#else
 __asm(".set mips32");
+#endif
 
 static int picache_stride;
 static int picache_loopcount;
