@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.912 2006/08/25 17:41:09 matt Exp $
+#	$NetBSD: mi,v 1.913 2006/08/26 16:17:18 matt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5233,9 +5233,9 @@
 ./usr/share/man/cat3/noraw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/notimeout.0		comp-c-catman		.cat
 ./usr/share/man/cat3/nrand48.0			comp-c-catman		.cat
-./usr/share/man/cat3/ns.0			comp-c-catman		.cat
-./usr/share/man/cat3/ns_addr.0			comp-c-catman		.cat
-./usr/share/man/cat3/ns_ntoa.0			comp-c-catman		.cat
+./usr/share/man/cat3/ns.0			comp-obsolete		obsolete
+./usr/share/man/cat3/ns_addr.0			comp-obsolete		obsolete
+./usr/share/man/cat3/ns_ntoa.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/nsdispatch.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ntoa.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ntohl.0			comp-c-catman		.cat
@@ -9390,9 +9390,9 @@
 ./usr/share/man/man3/noraw.3			comp-c-man		.man
 ./usr/share/man/man3/notimeout.3		comp-c-man		.man
 ./usr/share/man/man3/nrand48.3			comp-c-man		.man
-./usr/share/man/man3/ns.3			comp-c-man		.man
-./usr/share/man/man3/ns_addr.3			comp-c-man		.man
-./usr/share/man/man3/ns_ntoa.3			comp-c-man		.man
+./usr/share/man/man3/ns.3			comp-obsolete		obsolete
+./usr/share/man/man3/ns_addr.3			comp-obsolete		obsolete
+./usr/share/man/man3/ns_ntoa.3			comp-obsolete		obsolete
 ./usr/share/man/man3/nsdispatch.3		comp-c-man		.man
 ./usr/share/man/man3/ntoa.3			comp-c-man		.man
 ./usr/share/man/man3/ntohl.3			comp-c-man		.man
