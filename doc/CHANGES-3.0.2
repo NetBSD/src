@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.2,v 1.1.2.13 2006/08/25 11:51:57 ghen Exp $
+#	$NetBSD: CHANGES-3.0.2,v 1.1.2.14 2006/08/26 14:41:05 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0.1 release to the NetBSD 3.0.2
 release:
@@ -110,4 +110,10 @@ lib/libpthread/pthread_mutex.c			1.22
 	Problem reported by Arne H. Juul, arnej at pvv dot ntnu dot no,
 	in PR 26208. This fix represents option 1 presented in the PR.
 	[wrstuden, ticket #1474]
+
+sys/arch/cobalt/conf/GENERIC			1.102
+sys/arch/cobalt/conf/INSTALL			1.24
+
+	Add option SOSEND_NO_LOAN to fix a panic on cobalt.
+	[tsutsui, ticket #1478]
 
