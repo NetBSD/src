@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_ass.h,v 1.9 2006/05/13 22:34:50 christos Exp $	*/
+/*	$NetBSD: gsp_ass.h,v 1.10 2006/08/26 18:15:37 christos Exp $	*/
 /*
  * GSP assembler - definitions
  *
@@ -33,7 +33,7 @@
 
 #include <stddef.h>
 #include <sys/types.h>
-/*#include <alloca.h>*/
+#include <err.h>
 
 #define MAXLINE		133
 
@@ -119,15 +119,14 @@ typedef struct operand {
 #define M_ABSOLUTE	6	/* @adr */
 
 /* Register names */
-#define A0	0x20
-#define B0	0x50
-#define SP	0x6F		/* (r1 & r2 & REGFILE) != 0 iff */
-#define REGFILE	0x60		/* r1 and r2 are in the same file */
+#define GSPA_A0	0x20
+#define GSPA_B0	0x50
+#define GSPA_SP	0x6F		/* (r1 & r2 & REGFILE) != 0 iff */
+#define GSPA_REGFILE	0x60	/* r1 and r2 are in the same file */
 
 /* Prototypes */
 operand abs_adr(expr);
 operand add_operand(operand, operand);
-void *emalloc(size_t nbytes);
 expr bexpr(int, expr, expr);
 void do_asg(char *, expr, int flags);
 void do_list_pc(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_sym.c,v 1.7 2006/05/13 22:34:50 christos Exp $	*/
+/*	$NetBSD: gsp_sym.c,v 1.8 2006/08/26 18:15:37 christos Exp $	*/
 /*
  * GSP assembler - symbol table
  *
@@ -33,11 +33,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_sym.c,v 1.7 2006/05/13 22:34:50 christos Exp $");
+__RCSID("$NetBSD: gsp_sym.c,v 1.8 2006/08/26 18:15:37 christos Exp $");
 #endif
 
 #include <stdio.h>
 #include <string.h>
+#include <util.h>
 #include "gsp_ass.h"
 
 #define NHASH	64		/* must be power of 2 */

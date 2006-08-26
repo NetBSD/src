@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2006/07/29 08:18:36 kardel Exp $
+#	$NetBSD: Makefile,v 1.6 2006/08/26 18:15:39 christos Exp $
 
 PROG=	ntpdate
 MAN=	ntpdate.8
@@ -9,7 +9,7 @@ SRCS=	ntpdate.c
 LDADD+=		-L${LIBISC} -lisc
 DPADD+=		${LIBISC}/libisc.a
 
-LDADD+=	-lm
-DPADD+=	${LIBM}
+LDADD+=	-lutil -lm
+DPADD+=	${LIBUTIL} ${LIBM}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_lex.c,v 1.7 2005/02/07 06:50:42 jmc Exp $	*/
+/*	$NetBSD: gsp_lex.c,v 1.8 2006/08/26 18:15:37 christos Exp $	*/
 /*
  * Lexical analyser for GSP assembler
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_lex.c,v 1.7 2005/02/07 06:50:42 jmc Exp $");
+__RCSID("$NetBSD: gsp_lex.c,v 1.8 2006/08/26 18:15:37 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -62,10 +62,14 @@ char *regnames[] = {
 };
 
 short regnumbers[] = {
-	A0+0,	A0+1,	A0+2,	A0+3,	A0+4,	A0+5,	A0+6,	A0+7,
-	A0+8,	A0+9,	A0+10,	A0+11,	A0+12,	A0+13,	A0+14,	SP,
-	B0+0,	B0+1,	B0+2,	B0+3,	B0+4,	B0+5,	B0+6,	B0+7,
-	B0+8,	B0+9,	B0+10,	B0+11,	B0+12,	B0+13,	B0+14,	B0+15,
+	GSPA_A0+0,  GSPA_A0+1,  GSPA_A0+2,  GSPA_A0+3,
+	GSPA_A0+4,  GSPA_A0+5,  GSPA_A0+6,  GSPA_A0+7,
+	GSPA_A0+8,  GSPA_A0+9,  GSPA_A0+10, GSPA_A0+11,
+	GSPA_A0+12, GSPA_A0+13, GSPA_A0+14, GSPA_SP,
+	GSPA_B0+0,  GSPA_B0+1,  GSPA_B0+2,  GSPA_B0+3,
+	GSPA_B0+4,  GSPA_B0+5,	GSPA_B0+6,  GSPA_B0+7,
+	GSPA_B0+8,  GSPA_B0+9,  GSPA_B0+10, GSPA_B0+11,
+	GSPA_B0+12, GSPA_B0+13, GSPA_B0+14, GSPA_B0+15,
 };
 
 void

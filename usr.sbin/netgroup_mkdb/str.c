@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.5 2006/07/27 15:29:07 christos Exp $	*/
+/*	$NetBSD: str.c,v 1.6 2006/08/26 18:15:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: str.c,v 1.5 2006/07/27 15:29:07 christos Exp $");
+__RCSID("$NetBSD: str.c,v 1.6 2006/08/26 18:15:37 christos Exp $");
 #endif
 
 /*
@@ -41,8 +41,9 @@ __RCSID("$NetBSD: str.c,v 1.5 2006/07/27 15:29:07 christos Exp $");
  */
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
+#include <util.h>
 
-#include "util.h"
 #include "str.h"
 
 /*

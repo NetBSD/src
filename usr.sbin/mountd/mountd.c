@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.109 2006/07/31 16:34:45 martin Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.110 2006/08/26 18:15:37 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.109 2006/07/31 16:34:45 martin Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.110 2006/08/26 18:15:37 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -217,8 +217,6 @@ static int xdr_dir __P((XDR *, char *));
 static int xdr_explist __P((XDR *, caddr_t));
 static int xdr_fhs __P((XDR *, caddr_t));
 static int xdr_mlist __P((XDR *, caddr_t));
-static void *emalloc __P((size_t));
-static char *estrdup __P((const char *));
 static int bitcmp __P((void *, void *, int));
 static int netpartcmp __P((struct sockaddr *, struct sockaddr *, int));
 static int sacmp __P((struct sockaddr *, struct sockaddr *));
@@ -1942,35 +1940,6 @@ get_isoaddr(line, lineno, cp, grp)
 	return (0);
 }
 #endif				/* ISO */
-
-/*
- * error checked malloc and strdup
- */
-static void *
-emalloc(n)
-	size_t n;
-{
-	void *ptr = malloc(n);
-
-	if (ptr == NULL) {
-		syslog(LOG_ERR, "%m");
-		exit(2);
-	}
-	return ptr;
-}
-
-static char *
-estrdup(s)
-	const char *s;
-{
-	char *n = strdup(s);
-
-	if (n == NULL) {
-		syslog(LOG_ERR, "%m");
-		exit(2);
-	}
-	return n;
-}
 
 /*
  * Do the nfssvc syscall to push the export info into the kernel.

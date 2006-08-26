@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2006/07/29 08:18:36 kardel Exp $
+#	$NetBSD: Makefile,v 1.15 2006/08/26 18:15:39 christos Exp $
 
 PROG=	ntpd
 MAN=	ntpd.8
@@ -27,7 +27,7 @@ LIBPARSE!=	cd ${.CURDIR}/../libparse && ${PRINTOBJDIR}
 LDADD+=		-L${LIBPARSE} -lparse -L${LIBISC} -lisc
 DPADD+=		${LIBPARSE}/libparse.a ${LIBISC}/libisc.a
 
-LDADD+=	-lm
-DPADD+=	${LIBM}
+LDADD+=	-lutil -lm
+DPADD+=	${LIBUTIL} ${LIBM}
 
 .include <bsd.prog.mk>
