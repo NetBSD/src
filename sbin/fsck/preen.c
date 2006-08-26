@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.27 2005/01/13 22:56:09 christos Exp $	*/
+/*	$NetBSD: preen.c,v 1.28 2006/08/26 18:14:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: preen.c,v 1.27 2005/01/13 22:56:09 christos Exp $");
+__RCSID("$NetBSD: preen.c,v 1.28 2006/08/26 18:14:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: preen.c,v 1.27 2005/01/13 22:56:09 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "fsutil.h"
 

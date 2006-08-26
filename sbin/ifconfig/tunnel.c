@@ -1,4 +1,4 @@
-/*	$NetBSD: tunnel.c,v 1.6 2006/06/16 23:48:35 elad Exp $	*/
+/*	$NetBSD: tunnel.c,v 1.7 2006/08/26 18:14:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tunnel.c,v 1.6 2006/06/16 23:48:35 elad Exp $");
+__RCSID("$NetBSD: tunnel.c,v 1.7 2006/08/26 18:14:28 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: tunnel.c,v 1.6 2006/06/16 23:48:35 elad Exp $");
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <util.h>
 
 #include "extern.h"
 #include "tunnel.h"
