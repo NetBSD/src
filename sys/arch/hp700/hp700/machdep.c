@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2005/12/24 20:07:04 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 2006/08/26 06:17:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2005/12/24 20:07:04 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2006/08/26 06:17:48 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1692,6 +1692,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	struct trapframe *tf = l->l_md.md_regs;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 
+	tf->tf_flags = TFF_SYS|TFF_LAST;
 	tf->tf_iioq_tail = 4 +
 	    (tf->tf_iioq_head = pack->ep_entry | HPPA_PC_PRIV_USER);
 	tf->tf_rp = 0;
@@ -1708,6 +1709,8 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	/* setup terminal stack frame */
 	stack = (u_long)STACK_ALIGN(stack, 63);
+	tf->tf_r3 = stack;
+	suword((caddr_t)(stack), 0);
 	stack += HPPA_FRAME_SIZE;
 	suword((caddr_t)(stack + HPPA_FRAME_PSP), 0);
 	tf->tf_sp = stack;
