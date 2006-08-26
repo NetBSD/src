@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.21 2000/12/11 15:38:43 tsutsui Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.22 2006/08/26 20:04:59 matt Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -31,8 +31,8 @@
  *
  */
 #define	ALIGNBYTES	7
-#define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
+#define	ALIGN(p)	(((uintptr_t)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#define ALIGNED_POINTER(p,t)	((((uintptr_t)(p)) & (sizeof(t)-1)) == 0)
 
 #define	NBPG		4096		/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
@@ -73,7 +73,7 @@
 /*
  * Mach derived conversion macros
  */
-#define mips_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
-#define mips_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
+#define mips_round_page(x)	((((uintptr_t)(x)) + NBPG - 1) & ~(NBPG-1))
+#define mips_trunc_page(x)	((uintptr_t)(x) & ~(NBPG-1))
 #define mips_btop(x)		((paddr_t)(x) >> PGSHIFT)
 #define mips_ptob(x)		((paddr_t)(x) << PGSHIFT)
