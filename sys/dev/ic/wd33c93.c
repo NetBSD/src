@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.3 2006/08/26 22:37:07 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.4 2006/08/26 23:55:22 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.3 2006/08/26 22:37:07 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.4 2006/08/26 23:55:22 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -1421,6 +1421,9 @@ wd33c93_msgin_phase(struct wd33c93_softc *dev, int reselect)
 		SBIC_WAIT(dev, SBIC_ASR_INT, 0);
 		GET_SBIC_csr(dev, csr);
 
+		if (__verify_msg_format(dev->sc_imsg, len))
+			break; /* Complete message recieved */
+
 		/*
 		 * Clear ACK, and wait for the interrupt
 		 * for the next byte or phase change
@@ -1428,14 +1431,24 @@ wd33c93_msgin_phase(struct wd33c93_softc *dev, int reselect)
 		SET_SBIC_cmd(dev, SBIC_CMD_CLR_ACK);
 		SBIC_WAIT(dev, SBIC_ASR_INT, 0);
 
-		if (__verify_msg_format(dev->sc_imsg, len))
-			break; /* Complete message recieved */
-
 		GET_SBIC_csr(dev, csr);
 	} while (len < SBIC_MAX_MSGLEN);
 
+	/*
+	 * Handle the message before deasserting ACK, since if we need to
+	 * reply we have to assert ATN first.
+	 */
 	if (__verify_msg_format(dev->sc_imsg, len))
 		wd33c93_msgin(dev, dev->sc_imsg, len);
+
+	/*
+	 * Clear ACK, and wait for the interrupt
+	 * for the phase change
+	 */
+	SET_SBIC_cmd(dev, SBIC_CMD_CLR_ACK);
+	SBIC_WAIT(dev, SBIC_ASR_INT, 0);
+
+	GET_SBIC_csr(dev, csr);
 
 	/* Should still have one CSR to read */
 	return SBIC_STATE_RUNNING;
