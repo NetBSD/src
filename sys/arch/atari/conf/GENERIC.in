@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.63 2006/08/12 15:29:52 christos Exp $
+#	$NetBSD: GENERIC.in,v 1.64 2006/08/26 20:26:44 christos Exp $
 #
 # Generic atari
 #
@@ -62,11 +62,8 @@ options 	INET6		# IPV6
 #options 	GATEWAY		# packet forwarding
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-options 	CCITT,LLC,HDLC	# X.25
 #ifndef NO_PHYS_NETWORK
 options 	NETATALK	# AppleTalk networking protocols
 #endif
@@ -79,6 +76,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #ifndef INSTALL_KERNEL
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
 #options  	IPFILTER_DEFAULT_BLOCK	# block packages by default
 
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG

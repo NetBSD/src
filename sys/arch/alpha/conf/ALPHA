@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.219 2006/08/14 06:22:33 skrll Exp $
+# $NetBSD: ALPHA,v 1.220 2006/08/26 20:26:44 christos Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.219 $"
+ident		"ALPHA-$Revision: 1.220 $"
 
 maxusers 32
 
@@ -90,9 +90,7 @@ options 	IPSEC		# IP security
 options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
-options 	NS		# Xerox NS protocol suite
 options 	ISO,TPIP,EON	# ISO protocol suite
-options 	CCITT,LLC,HDLC	# CCITT protocol suite
 options 	NETATALK	# AppleTalk networking protocols
 #options 	GATEWAY		# packet forwarding and more mbuf space
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -100,6 +98,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
