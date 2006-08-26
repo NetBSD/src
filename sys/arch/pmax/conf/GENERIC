@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.147 2006/08/12 15:29:54 christos Exp $
+# $NetBSD: GENERIC,v 1.148 2006/08/26 07:59:23 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.147 $"
+#ident		"GENERIC-$Revision: 1.148 $"
 
 maxusers	64
 
@@ -317,7 +317,6 @@ pseudo-device	wsfont			# wsfont control device
 pseudo-device	wsmux			# wsmux control device
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1
@@ -332,4 +331,3 @@ pseudo-device	wsmux			# wsmux control device
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
-

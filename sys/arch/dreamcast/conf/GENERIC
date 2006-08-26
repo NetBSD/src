@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.72 2006/08/12 15:29:52 christos Exp $
+# $NetBSD: GENERIC,v 1.73 2006/08/26 07:59:21 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -232,7 +232,6 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

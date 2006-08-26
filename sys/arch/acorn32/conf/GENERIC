@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.74 2006/08/19 23:01:23 bjh21 Exp $
+# 	$NetBSD: GENERIC,v 1.75 2006/08/26 07:59:21 tsutsui Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.74 $"
+#ident		"GENERIC-$Revision: 1.75 $"
 
 # estimated number of users
 maxusers	32
@@ -360,7 +360,6 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

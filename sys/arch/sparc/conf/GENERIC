@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.190 2006/08/12 15:29:54 christos Exp $
+# $NetBSD: GENERIC,v 1.191 2006/08/26 07:59:23 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.190 $"
+#ident 		"GENERIC-$Revision: 1.191 $"
 
 maxusers	32
 
@@ -695,7 +695,6 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	fss		4	# file system snapshot device
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1
@@ -710,4 +709,3 @@ pseudo-device	fss		4	# file system snapshot device
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
-
