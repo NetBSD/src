@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.6 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.7 2006/08/26 20:18:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.6 2005/12/11 12:18:09 christos Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.7 2006/08/26 20:18:36 matt Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -172,20 +172,20 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	 */
 	f->f_regs[_R_A0] = sig;
 	f->f_regs[_R_A1] = ksi->ksi_trap;
-	f->f_regs[_R_A2] = (int)scp;
-	f->f_regs[_R_A3] = (int)catcher;		/* XXX ??? */
+	f->f_regs[_R_A2] = (intptr_t)scp;
+	f->f_regs[_R_A3] = (intptr_t)catcher;		/* XXX ??? */
 
-	f->f_regs[_R_PC] = (int)catcher;
-	f->f_regs[_R_T9] = (int)catcher;
-	f->f_regs[_R_SP] = (int)scp;
+	f->f_regs[_R_PC] = (intptr_t)catcher;
+	f->f_regs[_R_T9] = (intptr_t)catcher;
+	f->f_regs[_R_SP] = (intptr_t)scp;
 
 	switch (ps->sa_sigdesc[sig].sd_vers) {
 	case 0:		/* legacy on-stack sigtramp */
-		f->f_regs[_R_RA] = (int)p->p_sigctx.ps_sigcode;
+		f->f_regs[_R_RA] = (intptr_t)p->p_sigctx.ps_sigcode;
 		break;
 #ifdef COMPAT_16
 	case 1:
-		f->f_regs[_R_RA] = (int)ps->sa_sigdesc[sig].sd_tramp;
+		f->f_regs[_R_RA] = (intptr_t)ps->sa_sigdesc[sig].sd_tramp;
 		break;
 #endif
 	default:
