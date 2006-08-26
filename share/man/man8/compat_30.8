@@ -1,4 +1,4 @@
-.\" $NetBSD: compat_30.8,v 1.2 2006/06/04 15:46:08 chap Exp $
+.\" $NetBSD: compat_30.8,v 1.3 2006/08/26 18:15:37 pavel Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -114,6 +114,24 @@ argument structures were changed after the 3.0 release to accommodate
 .Xr getdents 2 ,
 .Xr lstat 2 ,
 .Xr stat 2 .
+.Pp
+The filehandle structure (formerly 
+.Vt fhandle_t )
+was made opaque to userland and variable-sized.
+A
+.Fa fh_size
+argument was added to related syscalls:
+.Xr fhstat 2 ,
+.Xr fhstatvfs 2 ,
+.Xr fhstatvfs1 2 ,
+.Xr fhopen 2 ,
+.Xr getfh 2 .
+This changes the API and ABI of those syscalls,
+.Dv COMPAT_30
+enables binary compatibility with the old ABI.
+Source compatibility is not provided, as use of those syscalls is
+supposed to be rare.
+.Pp
 The
 .Vt struct ntptimeval
 used by
