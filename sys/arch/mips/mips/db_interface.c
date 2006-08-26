@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.57 2006/05/10 06:24:03 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.58 2006/08/26 20:14:51 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.57 2006/05/10 06:24:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.58 2006/08/26 20:14:51 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -429,7 +429,7 @@ do {									\
 		"dsrl %M0,$1,32			\n\t"			\
 		".set pop"						\
 	    : "=r"(__val));						\
-	printf("  %s:%*s %#llx\n", name, FLDWIDTH - (int) strlen(name),	\
+	printf("  %s:%*s %#"PRIx64"x\n", name, FLDWIDTH - (int) strlen(name), \
 	    "", __val);							\
 } while (0)
 
