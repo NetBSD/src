@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.7 2006/06/04 13:07:24 cube Exp $	*/
+/*	$NetBSD: gram.y,v 1.8 2006/08/26 18:17:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -117,7 +117,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %token	VERSION
 %token	WITH
 %token	<num> NUMBER
-%token	<str> PATHNAME QSTRING WORD EMPTY
+%token	<str> PATHNAME QSTRING WORD EMPTYSTRING
 %token	ENDDEFS
 
 %left '|'
@@ -389,7 +389,7 @@ filename:
 value:
 	QSTRING				{ $$ = $1; } |
 	WORD				{ $$ = $1; } |
-	EMPTY				{ $$ = $1; } |
+	EMPTYSTRING			{ $$ = $1; } |
 	signed_number			{ char bf[40];
 					  (void)snprintf(bf, sizeof(bf),
 					      FORMAT($1), (long long)$1.val);
