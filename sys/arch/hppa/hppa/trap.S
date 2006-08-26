@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.12 2005/12/11 12:17:37 christos Exp $	*/
+/*	$NetBSD: trap.S,v 1.13 2006/08/26 06:00:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -318,7 +318,7 @@ $syscall:
 	stw	%r28, TF_CR8-TRAPFRAME_SIZEOF(%sr1, %t3)	/* pidr1 */
 
 	copy	%r0, %arg0
-	ldil	TFF_LAST|TFF_SYS, %arg1
+	ldil	L%(TFF_LAST|TFF_SYS), %arg1
 	stw	%arg0, TF_CR19-TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%arg1, TF_FLAGS-TRAPFRAME_SIZEOF(%sr1, %t3)
 
