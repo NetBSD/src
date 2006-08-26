@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.3 2006/08/10 17:24:10 xtraeme Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.4 2006/08/26 10:10:00 xtraeme Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.3 2006/08/10 17:24:10 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.4 2006/08/26 10:10:00 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -135,7 +135,7 @@ int k8pnow_sysctl_helper(SYSCTLFN_ARGS)
 int
 k8pnow_read_pending_wait(uint64_t *status)
 {
-	unsigned int i = 1000;
+	unsigned int i = 100000;
 
 	while (i--) {
 		*status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
