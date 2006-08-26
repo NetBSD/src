@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.26 2006/06/28 15:19:28 liamjfoy Exp $
+# $NetBSD: GENERIC,v 1.27 2006/08/26 07:59:22 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pdp10/conf/std.pdp10"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.26 $"
+#ident 		"GENERIC-$Revision: 1.27 $"
 
 # Here are all different supported CPU types listed.
 options 	KL10
@@ -176,7 +176,6 @@ hp*		at rh? drive?		# RM/RP disk drives
 #pseudo-device	leds			# control the leds on vaxstations.
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1
@@ -191,4 +190,3 @@ hp*		at rh? drive?		# RM/RP disk drives
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
-

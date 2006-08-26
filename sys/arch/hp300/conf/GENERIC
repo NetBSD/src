@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.133 2006/08/12 15:29:53 christos Exp $
+# $NetBSD: GENERIC,v 1.134 2006/08/26 07:59:21 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.133 $"
+#ident 		"GENERIC-$Revision: 1.134 $"
 
 maxusers	32		# estimated number of users
 
@@ -307,7 +307,6 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1
@@ -322,4 +321,3 @@ pseudo-device	ksyms			# /dev/ksyms
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
-

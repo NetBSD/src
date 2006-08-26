@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.54 2006/08/12 15:29:54 christos Exp $
+# $NetBSD: GENERIC,v 1.55 2006/08/26 07:59:23 tsutsui Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.54 $"
+#ident 		"GENERIC-$Revision: 1.55 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -202,7 +202,6 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1
@@ -217,4 +216,3 @@ pseudo-device	ksyms			# /dev/ksyms
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
-

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.82 2006/08/12 15:29:53 christos Exp $
+# $NetBSD: GENERIC,v 1.83 2006/08/26 07:59:22 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.82 $"
+#ident 		"GENERIC-$Revision: 1.83 $"
 
 maxusers	16		# estimated number of users
 
@@ -241,7 +241,6 @@ pseudo-device	ksyms			# /dev/ksyms
 #options 	MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

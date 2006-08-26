@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.233 2006/08/22 06:49:55 riz Exp $
+# $NetBSD: GENERIC,v 1.234 2006/08/26 07:59:22 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.233 $"
+#ident 		"GENERIC-$Revision: 1.234 $"
 
 maxusers	32
 
@@ -555,7 +555,6 @@ pseudo-device	nsmb			# SMB requester
 #pseudo-device	pflog			# PF log if
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

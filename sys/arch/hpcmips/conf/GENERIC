@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.191 2006/08/14 06:22:33 skrll Exp $
+# $NetBSD: GENERIC,v 1.192 2006/08/26 07:59:22 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.191 $"
+#ident 		"GENERIC-$Revision: 1.192 $"
 
 maxusers	16
 
@@ -690,7 +690,6 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.125 2006/08/14 06:22:34 skrll Exp $
+# $NetBSD: GENERIC,v 1.126 2006/08/26 07:59:23 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.125 $"
+#ident		"GENERIC-$Revision: 1.126 $"
 
 maxusers	32
 
@@ -576,7 +576,6 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

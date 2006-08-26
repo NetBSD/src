@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.31 2006/08/14 06:22:34 skrll Exp $
+#	$NetBSD: GENERIC,v 1.32 2006/08/26 07:59:22 tsutsui Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -515,7 +515,6 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1
