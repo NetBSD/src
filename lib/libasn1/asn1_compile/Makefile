@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2005/01/10 03:11:17 lukem Exp $
+# $NetBSD: Makefile,v 1.20 2006/08/26 18:12:50 christos Exp $
 
 NOLINT=		# defined
 NOMAN=		# defined
@@ -31,8 +31,7 @@ roken_SRCS =					\
 	print_version.c				\
 	warnerr.c				\
 	strupr.c				\
-	get_window_size.c			\
-	emalloc.c
+	get_window_size.c
 
 SRCS=	$(asn1_compile_SRCS)			\
 	$(roken_SRCS)
