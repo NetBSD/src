@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.32 2006/08/19 15:21:23 dsl Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.33 2006/08/26 20:08:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,13 +55,29 @@ x86_pause(void)
 	__asm volatile("pause");
 }
 
+/*
+ * XXX it's better to use real lfence insn if available.
+ *
+ * memory clobber to avoid compiler reordering.
+ */
 static __inline void
 x86_lfence(void)
 {
 
-	/*
-	 * XXX it's better to use real lfence insn if available.
-	 */
+	__asm volatile("lock; addl $0, 0(%%esp)" : : : "memory");
+}
+
+static __inline void
+x86_sfence(void)
+{
+
+	__asm volatile("lock; addl $0, 0(%%esp)" : : : "memory");
+}
+
+static __inline void
+x86_mfence(void)
+{
+
 	__asm volatile("lock; addl $0, 0(%%esp)" : : : "memory");
 }
 
