@@ -1,4 +1,4 @@
-/*	$NetBSD: efun.c,v 1.1 2006/08/26 18:11:45 christos Exp $	*/
+/*	$NetBSD: efun.c,v 1.2 2006/08/26 23:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: efun.c,v 1.1 2006/08/26 18:11:45 christos Exp $");
+#ifdef __RCSID
+__RCSID("$NetBSD: efun.c,v 1.2 2006/08/26 23:17:43 christos Exp $");
+#endif
 
 #include <err.h>
 #include <errno.h>
