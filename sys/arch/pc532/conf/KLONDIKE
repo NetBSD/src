@@ -1,5 +1,5 @@
 
-#	$NetBSD: KLONDIKE,v 1.38 2006/02/05 05:02:01 cube Exp $
+#	$NetBSD: KLONDIKE,v 1.39 2006/08/26 20:26:56 christos Exp $
 #
 # KLONDIKE: Matthias Pfaller's pc532
 #
@@ -62,10 +62,8 @@ options 	FFS_NO_SNAPSHOT		# No FFS snapshot support
 # networking options
 #options 	GATEWAY			# packet forwarding
 options 	INET			# IP + ICMP + TCP + UDP
-#options 	NS			# XNS
 #options 	ISO,TPIP		# OSI
 #options 	EON			# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC		# X.25
 options 	PPP_BSDCOMP,PPP_DEFLATE	# compression for PPP
 
 # pc532 specific options

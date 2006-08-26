@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.40 2006/08/14 06:22:33 skrll Exp $
+# $NetBSD: VR41XX,v 1.41 2006/08/26 20:26:45 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.40 $"
+#ident 		"GENERIC-$Revision: 1.41 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -103,7 +103,6 @@ options 	INET6		# IPV6
 #options 	ISO		# OSI networking
 #options 	TPIP		# TPIP
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 
 # NetBSD backwards compatibility
 options 	COMPAT_43

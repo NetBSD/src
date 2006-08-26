@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.36 2006/02/05 05:01:56 cube Exp $
+# 	$NetBSD: INSTALL,v 1.37 2006/08/26 20:26:55 christos Exp $
 
 #	config for bootable floppy kernel
 #
@@ -76,6 +76,7 @@ options 	INET		# Internet protocols
 #options 	GATEWAY		# IP packet forwarding
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 #options 	NFS_BOOT_BOOTPARAM
 

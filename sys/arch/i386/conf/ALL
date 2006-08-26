@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.58 2006/08/17 19:56:14 christos Exp $
+# $NetBSD: ALL,v 1.59 2006/08/26 20:26:45 christos Exp $
 # From: NetBSD: GENERIC,v 1.776 2006/08/14 09:34:43 itohy Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.58 $"
+#ident 		"ALL-$Revision: 1.59 $"
 
 maxusers	32		# estimated number of users
 
@@ -193,17 +193,15 @@ options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	MROUTING	# IP multicast routing
 options 	PIM		# Protocol Independent Multicast
-options 	NS		# XNS
-options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
 options 	EON		# OSI tunneling over IP
-options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 

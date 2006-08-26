@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: RC3230,v 1.31 2006/03/28 20:58:40 pavel Exp $
+# 	$NetBSD: RC3230,v 1.32 2006/08/26 20:26:55 christos Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -79,17 +79,15 @@ options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# Xerox NS networking
-#options 	NSIP		# Xerox NS tunneling over IP
 #options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 config		netbsd	root on ? type ?

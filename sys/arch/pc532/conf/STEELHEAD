@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.46 2006/02/05 05:02:01 cube Exp $
+#	$NetBSD: STEELHEAD,v 1.47 2006/08/26 20:26:56 christos Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -53,8 +53,6 @@ options 	FFS_NO_SNAPSHOT		# No FFS snapshot support
 # networking options
 options 	GATEWAY			# packet forwarding
 options 	INET			# IP
-#options 	NS			# XNS
-#options 	CCITT			# X.25
 #options 	ISO			# OSI
 #options 	TPIP			# ?
 #options 	EON			# ?

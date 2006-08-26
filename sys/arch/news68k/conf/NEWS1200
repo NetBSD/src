@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.38 2006/08/26 08:08:30 tsutsui Exp $
+# 	$NetBSD: NEWS1200,v 1.39 2006/08/26 20:26:55 christos Exp $
 
 #	news1200 config file
 #
@@ -95,6 +95,7 @@ options 	INET6		# IPV6
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	NFS_BOOT_BOOTPARAM

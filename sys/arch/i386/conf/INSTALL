@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.287 2006/08/14 06:22:34 skrll Exp $
+#	$NetBSD: INSTALL,v 1.288 2006/08/26 20:26:45 christos Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -137,11 +137,8 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

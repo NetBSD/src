@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.35 2006/02/05 05:01:56 cube Exp $
+#	$NetBSD: MMTAROMNEW,v 1.36 2006/08/26 20:26:55 christos Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -100,11 +100,8 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
