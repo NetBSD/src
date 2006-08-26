@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.28 2006/08/26 18:14:28 christos Exp $	*/
+/*	$NetBSD: preen.c,v 1.29 2006/08/26 21:54:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: preen.c,v 1.28 2006/08/26 18:14:28 christos Exp $");
+__RCSID("$NetBSD: preen.c,v 1.29 2006/08/26 21:54:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,10 +42,13 @@ __RCSID("$NetBSD: preen.c,v 1.28 2006/08/26 18:14:28 christos Exp $");
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/queue.h>
+#include <sys/disk.h>
+#include <sys/ioctl.h>
 
 #include <err.h>
 #include <ctype.h>
 #include <fstab.h>
+#include <fcntl.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,7 +74,7 @@ struct diskentry {
 	int			    d_pid;	/* 0 or pid of fsck proc */
 };
 
-TAILQ_HEAD(disk, diskentry) diskh;
+TAILQ_HEAD(diskinfo, diskentry) diskh;
 
 static int nrun = 0, ndisks = 0;
 
@@ -265,16 +268,25 @@ static struct diskentry *
 finddisk(const char *name)
 {
 	const char *p;
-	size_t len = 0;
+	size_t len, dlen;
 	struct diskentry *d;
+	char buf[MAXPATHLEN];
+	struct dkwedge_info dkw;
+	int fd;
 
-	for (len = strlen(name), p = name + len - 1; p >= name; --p)
+	if ((fd = opendisk(name, O_RDONLY, buf, sizeof(buf), 0)) != -1) {
+		if (ioctl(fd, DIOCGWEDGEINFO, &dkw) != -1)
+			name = dkw.dkw_parent;
+		(void)close(fd);
+	}
+
+	for (dlen = len = strlen(name), p = name + len - 1; p >= name; --p)
 		if (isdigit((unsigned char)*p)) {
 			len = p - name + 1;
 			break;
 		}
 	if (p < name)
-		len = strlen(name);
+		len = dlen;
 
 	TAILQ_FOREACH(d, &diskh, d_entries)
 		if (strncmp(d->d_name, name, len) == 0 && d->d_name[len] == 0)
@@ -300,9 +312,9 @@ printpart(void)
 	struct partentry *p;
 
 	TAILQ_FOREACH(d, &diskh, d_entries) {
-		(void) printf("disk %s: ", d->d_name);
+		(void) printf("disk %s:", d->d_name);
 		TAILQ_FOREACH(p, &d->d_part, p_entries)
-			(void) printf("%s ", p->p_devname);
+			(void) printf(" %s", p->p_devname);
 		(void) printf("\n");
 	}
 }
