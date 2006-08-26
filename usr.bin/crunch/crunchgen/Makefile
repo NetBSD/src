@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2004/01/03 14:04:27 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2006/08/26 18:17:42 christos Exp $
 
 PROG=		crunchgen
 SRCS=		crunchgen.c crunched_skel.c
@@ -7,6 +7,10 @@ CLEANFILES+=	crunched_skel.c
 crunched_skel.c: mkskel.sh crunched_main.c
 	${_MKTARGET_CREATE}
 	${HOST_SH} ${.ALLSRC} >${.TARGET}
+
+
+LDADD+=-lutil
+DPADD+=${LIBUTIL}
 
 .include <bsd.prog.mk>
 

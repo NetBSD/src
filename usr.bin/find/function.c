@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.54 2006/05/10 21:53:20 mrg Exp $	*/
+/*	$NetBSD: function.c,v 1.55 2006/08/26 18:17:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.54 2006/05/10 21:53:20 mrg Exp $");
+__RCSID("$NetBSD: function.c,v 1.55 2006/08/26 18:17:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: function.c,v 1.54 2006/05/10 21:53:20 mrg Exp $");
 #include <string.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "find.h"
 #include "stat_flags.h"

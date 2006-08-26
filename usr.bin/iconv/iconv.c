@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.9 2005/04/25 13:57:34 tshiozak Exp $	*/
+/*	$NetBSD: iconv.c,v 1.10 2006/08/26 18:17:42 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.9 2005/04/25 13:57:34 tshiozak Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.10 2006/08/26 18:17:42 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -38,9 +38,9 @@ __RCSID("$NetBSD: iconv.c,v 1.9 2005/04/25 13:57:34 tshiozak Exp $");
 #include <iconv.h>
 #include <unistd.h>
 #include <err.h>
+#include <util.h>
 
 static void usage(void) __attribute__((__unused__));
-static char *estrdup(const char *);
 static int scmp(const void *, const void *);
 static void show_codesets(void);
 static void do_conv(const char *, FILE *, const char *, const char *, int, int);
@@ -51,15 +51,6 @@ usage(void)
 	(void)fprintf(stderr, "Usage: %s [-cs] -f <from> -t <to> [file ...]\n"
 	    "\t%s -l\n", getprogname(), getprogname());
 	exit(1);
-}
-
-static char *
-estrdup(const char *str)
-{
-	char *ptr = strdup(str);
-	if (ptr == NULL)
-		err(EXIT_FAILURE, "Cannot copy string");
-	return ptr;
 }
 
 /*

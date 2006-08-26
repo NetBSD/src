@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.19 2006/01/04 01:30:21 perry Exp $	*/
+/*	$NetBSD: display.c,v 1.20 2006/08/26 18:17:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: display.c,v 1.19 2006/01/04 01:30:21 perry Exp $");
+__RCSID("$NetBSD: display.c,v 1.20 2006/08/26 18:17:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: display.c,v 1.19 2006/01/04 01:30:21 perry Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "hexdump.h"
 
@@ -238,8 +239,8 @@ get(void)
 	u_char *tmpp;
 
 	if (!curp) {
-		curp = emalloc(blocksize);
-		savp = emalloc(blocksize);
+		curp = ecalloc(blocksize, 1);
+		savp = ecalloc(blocksize, 1);
 	} else {
 		tmpp = curp;
 		curp = savp;
@@ -356,21 +357,4 @@ doskip(const char *fname, int statok)
 		address += cnt;
 		skip -= cnt;
 	}
-}
-
-void *
-emalloc(int allocsize)
-{
-	void *p;
-
-	if ((p = malloc((u_int)allocsize)) == NULL)
-		nomem();
-	memset(p, 0, allocsize);
-	return(p);
-}
-
-void
-nomem(void)
-{
-	err(1, NULL);
 }
