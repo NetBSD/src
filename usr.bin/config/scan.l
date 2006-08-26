@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.4 2006/05/25 22:28:38 cube Exp $	*/
+/*	$NetBSD: scan.l,v 1.5 2006/08/26 18:17:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,6 +50,8 @@
 #include <unistd.h>
 #include <stddef.h>
 #include <ctype.h>
+#include <util.h>
+#undef ECHO
 #include "defs.h"
 #include "gram.h"
 
@@ -169,7 +171,7 @@ package[ \t]+{FILENAME}	{
 
 \"\" {
 		yylval.str = intern("");
-		return EMPTY;
+		return EMPTYSTRING;
 	}
 
 \"{QCHARS}	{
