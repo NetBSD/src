@@ -1,8 +1,19 @@
-/*	$NetBSD: wcscasecmp.c,v 1.1 2006/08/22 20:50:46 christos Exp $	*/
+/*	$NetBSD: wcscasecmp.c,v 1.2 2006/08/26 22:45:52 christos Exp $	*/
+
+/*
+ * Copyright (C) 2006 Aleksey Cheusov
+ *
+ * This material is provided "as is", with absolutely no warranty expressed
+ * or implied. Any use is at your own risk.
+ *
+ * Permission to use or copy this software for any purpose is hereby granted 
+ * without fee. Permission to modify the code and to distribute modified
+ * code is also granted without any restrictions.
+ */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint) 
-__RCSID("$NetBSD: wcscasecmp.c,v 1.1 2006/08/22 20:50:46 christos Exp $"); 
+__RCSID("$NetBSD: wcscasecmp.c,v 1.2 2006/08/26 22:45:52 christos Exp $"); 
 #endif /* LIBC_SCCS and not lint */ 
 
 #include "namespace.h"
