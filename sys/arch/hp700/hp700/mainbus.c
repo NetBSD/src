@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.32 2006/03/01 12:38:11 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.33 2006/08/26 06:07:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.32 2006/03/01 12:38:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.33 2006/08/26 06:07:28 skrll Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -1455,16 +1455,6 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (buflen != 0)
 		return (EFBIG);		/* XXX better return value here? */
 	return (0);
-}
-
-int
-dma_cachectl(p, size)
-	caddr_t p;
-	int size;
-{
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)p, size);
-	sync_caches();
-	return 0;
 }
 
 const struct hppa_bus_dma_tag hppa_dmatag = {
