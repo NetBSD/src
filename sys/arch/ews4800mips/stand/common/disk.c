@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: disk.c,v 1.2 2006/08/26 14:13:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -226,7 +226,8 @@ __hd_rw(uint8_t *buf, int block, int flag, int count)
 int
 __fd_2d_rw(uint8_t *buf, int block, int flag, int count)
 {
-	int pos, cnt, i, err;
+	int cnt, i, err;
+	uint32_t pos;
 
 	if (!blk_to_2d_position(block, &pos, &cnt)) {
 		printf("%s: invalid block #%d.\n", __FUNCTION__, block);
@@ -245,7 +246,8 @@ __fd_2d_rw(uint8_t *buf, int block, int flag, int count)
 int
 __fd_2hd_rw(uint8_t *buf, int block, int flag, int count)
 {
-	int pos, cnt, i, err;
+	int cnt, i, err;
+	uint32_t pos;
 
 	if (!blk_to_2hd_position(block, &pos, &cnt)) {
 		printf("%s: invalid block #%d.\n", __FUNCTION__, block);

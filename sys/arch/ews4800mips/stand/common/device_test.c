@@ -1,4 +1,4 @@
-/*	$NetBSD: device_test.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: device_test.c,v 1.2 2006/08/26 14:13:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -209,8 +209,8 @@ fdd_test(void)
 
 	/* ROM_FDRDWR test */
 	uint8_t buf[512];
-	int i, err;
-	int pos, cnt;
+	int i, err, cnt;
+	uint32_t pos;
 
 	for (i = 0; i < 1989; i++) {
 		memset(buf, 0, 512);
