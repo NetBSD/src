@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.10 2006/08/17 17:11:28 christos Exp $ */
+/*	$NetBSD: twa.c,v 1.11 2006/08/26 19:35:51 christos Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.10 2006/08/17 17:11:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.11 2006/08/26 19:35:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3141,7 +3141,7 @@ twa_describe_controller(struct twa_softc *sc)
 		if ((*((char *)(p[7]->data + i)) & TWA_DRIVE_DETECTED) == 0)
 			continue;
 
-		rv = twa_get_param(sc, TWA_PARAM_DRIVE_TABLE,
+		rv = twa_get_param(sc, TWA_PARAM_DRIVE_TABLE + i,
 			TWA_PARAM_DRIVEMODELINDEX,
 			TWA_PARAM_DRIVEMODEL_LENGTH, NULL, &p[8]);
 
@@ -3151,7 +3151,7 @@ twa_describe_controller(struct twa_softc *sc)
 			continue;
 		}
 
-		rv = twa_get_param(sc, TWA_PARAM_DRIVE_TABLE,
+		rv = twa_get_param(sc, TWA_PARAM_DRIVE_TABLE + i,
 			TWA_PARAM_DRIVESIZEINDEX,
 			TWA_PARAM_DRIVESIZE_LENGTH, NULL, &p[9]);
 
