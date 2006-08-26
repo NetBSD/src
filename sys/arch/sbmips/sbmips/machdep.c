@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.29 2006/04/09 01:18:14 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.30 2006/08/26 20:19:19 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2006/04/09 01:18:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2006/08/26 20:19:19 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -233,7 +233,7 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 		mem_cluster_cnt = 0;
 		while (cfe_enummem(idx, 0, &start, &len, &type) == 0) {
 			added = 0;
-			printf("Memory Block #%d start %08llX len %08llX: %s: ",
+			printf("Memory Block #%d start %08"PRIx64"X len %08"PRIx64"X: %s: ",
 			    idx, start, len, (type == CFE_MI_AVAILABLE) ?
 			    "Available" : "Reserved");
 			if ((type == CFE_MI_AVAILABLE) &&
