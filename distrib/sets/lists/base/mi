@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.646 2006/08/19 19:13:59 dsl Exp $
+# $NetBSD: mi,v 1.647 2006/08/26 19:31:53 matt Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -793,7 +793,8 @@
 ./usr/include/net				base-c-usr
 ./usr/include/net80211				base-c-usr
 ./usr/include/netatalk				base-c-usr
-./usr/include/netccitt				base-c-usr
+./usr/include/netbt				base-c-usr
+./usr/include/netccitt				base-obsolete		obsolete
 ./usr/include/netinet				base-c-usr
 ./usr/include/netinet6				base-c-usr
 ./usr/include/netipsec				base-c-usr
@@ -801,7 +802,7 @@
 ./usr/include/netiso				base-c-usr
 ./usr/include/netkey				base-c-usr
 ./usr/include/netnatm				base-c-usr
-./usr/include/netns				base-c-usr
+./usr/include/netns				base-obsolete		obsolete
 ./usr/include/netsmb				base-c-usr
 ./usr/include/nfs				base-c-usr
 ./usr/include/ntfs				base-c-usr
@@ -1237,7 +1238,7 @@
 ./usr/sbin/traceroute				base-netutil-bin
 ./usr/sbin/traceroute6				base-netutil-bin	use_inet6
 ./usr/sbin/trpt					base-netutil-bin
-./usr/sbin/trsp					base-netutil-bin
+./usr/sbin/trsp					base-obsolete		obsolete
 ./usr/sbin/unlink				base-sysutil-bin
 ./usr/sbin/update				base-obsolete		obsolete
 ./usr/sbin/usbdevs				base-sysutil-bin

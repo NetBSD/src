@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.924 2006/08/26 16:17:19 matt Exp $
+# $NetBSD: mi,v 1.925 2006/08/26 19:31:54 matt Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2329,7 +2329,7 @@
 ./usr/share/man/cat8/traceroute6.0		man-netutil-catman	use_inet6,.cat
 ./usr/share/man/cat8/trivial-rewrite.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/trpt.0			man-netutil-catman	.cat
-./usr/share/man/cat8/trsp.0			man-netutil-catman	.cat
+./usr/share/man/cat8/trsp.0			man-obsolete		obsolete
 ./usr/share/man/cat8/ttyflags.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/tunefs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/umount.0			man-sysutil-catman	.cat
@@ -4698,7 +4698,7 @@
 ./usr/share/man/man8/traceroute6.8		man-netutil-man		use_inet6,.man
 ./usr/share/man/man8/trivial-rewrite.8		man-postfix-man		postfix,.man
 ./usr/share/man/man8/trpt.8			man-netutil-man		.man
-./usr/share/man/man8/trsp.8			man-netutil-man		.man
+./usr/share/man/man8/trsp.8			man-obsolete		obsolete
 ./usr/share/man/man8/ttyflags.8			man-sysutil-man		.man
 ./usr/share/man/man8/tunefs.8			man-sysutil-man		.man
 ./usr/share/man/man8/umount.8			man-sysutil-man		.man
