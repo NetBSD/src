@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.15 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.16 2006/08/26 22:06:37 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.15 2005/12/11 12:18:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.16 2006/08/26 22:06:37 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.15 2005/12/11 12:18:53 christos Exp $");
 #include <sgimips/hpc/hpcreg.h>
 #include <sgimips/hpc/hpcdma.h>
 
-#include <sgimips/hpc/sbicreg.h>
-#include <sgimips/hpc/sbicvar.h>
+#include <dev/ic/wd33c93reg.h>
+#include <dev/ic/wd33c93var.h>
 
 #include <opt_kgdb.h>
 #include <sys/kgdb.h>

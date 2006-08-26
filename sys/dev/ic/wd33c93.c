@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.21 2006/03/29 04:16:47 thorpej Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.1 2006/08/26 22:06:37 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.21 2006/03/29 04:16:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.1 2006/08/26 22:06:37 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -99,8 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.21 2006/03/29 04:16:47 thorpej Exp $");
 
 #include <machine/bus.h>
 
-#include <sgimips/hpc/sbicreg.h>
-#include <sgimips/hpc/sbicvar.h>
+#include <dev/ic/wd33c93reg.h>
+#include <dev/ic/wd33c93var.h>
 
 /*
  * SCSI delays

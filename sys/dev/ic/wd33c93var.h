@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.11 2006/03/08 23:46:24 lukem Exp $	*/
+/*	$NetBSD: wd33c93var.h,v 1.1 2006/08/26 22:06:37 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
