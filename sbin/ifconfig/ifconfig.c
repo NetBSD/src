@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.174 2006/08/26 16:20:20 matt Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.175 2006/08/26 16:59:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.174 2006/08/26 16:20:20 matt Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.175 2006/08/26 16:59:27 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,6 @@ __RCSID("$NetBSD: ifconfig.c,v 1.174 2006/08/26 16:20:20 matt Exp $");
 #ifndef INET_ONLY
 #include "af_atalk.h"
 #include "af_iso.h"
-#include "af_ns.h"
 #endif /* ! INET_ONLY */
 #include "af_inet.h"
 #ifdef INET6
@@ -609,9 +608,6 @@ main(int argc, char *argv[])
 
 	if (af == AF_APPLETALK)
 		checkatrange(&addreq.ifra_addr);
-
-	if (setipdst && af == AF_NS)
-		xns_set_nsip_route(&addreq.ifra_addr, &addreq.ifra_dstaddr);
 #endif	/* INET_ONLY */
 
 	if (clearaddr) {
