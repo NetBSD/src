@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2005/09/14 18:45:40 elad Exp $
+#	$NetBSD: Makefile,v 1.50 2006/08/26 18:11:12 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -8,7 +8,7 @@ USE_SHLIBDIR=	yes
 WARNS=3
 LIB=	util
 CPPFLAGS+=-DLIBC_SCCS
-SRCS=	getbootfile.c getlabelsector.c getmaxpartitions.c \
+SRCS=	efun.c getbootfile.c getlabelsector.c getmaxpartitions.c \
 	getmntopts.c getrawpartition.c \
 	disklabel_dkcksum.c disklabel_scan.c \
 	if_media.c \
@@ -17,7 +17,7 @@ SRCS=	getbootfile.c getlabelsector.c getmaxpartitions.c \
 	passwd.c pw_scan.c pw_policy.c pidfile.c pidlock.c pty.c \
 	secure_path.c snprintb.c sockaddr_snprintf.c ttyaction.c ttymsg.c
 
-MAN=	getbootfile.3 getlabelsector.3 getmaxpartitions.3 \
+MAN=	efun.3 getbootfile.3 getlabelsector.3 getmaxpartitions.3 \
 	getmntopts.3 \
 	getrawpartition.3 \
 	login.3 login_cap.3 loginx.3 \
@@ -55,5 +55,14 @@ MLINKS+=pw_lock.3 pw_getprefix.3
 MLINKS+=pw_lock.3 pw_setprefix.3
 MLINKS+=pidlock.3 ttylock.3
 MLINKS+=pidlock.3 ttyunlock.3
+MLINKS+=efun.3 esetfunc.3
+MLINKS+=efun.3 easprintf.3
+MLINKS+=efun.3 estrlcpy.3
+MLINKS+=efun.3 estrlcat.3
+MLINKS+=efun.3 estrdup.3
+MLINKS+=efun.3 emalloc.3
+MLINKS+=efun.3 erealloc.3
+MLINKS+=efun.3 efopen.3
+MLINKS+=efun.3 evasprintf.3
 
 .include <bsd.lib.mk>

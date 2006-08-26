@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.40 2006/02/18 16:32:45 elad Exp $	*/
+/*	$NetBSD: util.h,v 1.41 2006/08/26 18:11:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -116,6 +116,23 @@ int		ttyunlock(const char *);
 
 uint16_t	disklabel_dkcksum(struct disklabel *);
 int		disklabel_scan(struct disklabel *, char *, size_t);
+
+/* Error checked functions */
+void		(*esetfunc(void (*)(int, const char *, ...)))
+    (int, const char *, ...);
+size_t 		estrlcpy(char *, const char *, size_t);
+size_t 		estrlcat(char *, const char *, size_t);
+char 		*estrdup(const char *);
+void 		*ecalloc(size_t, size_t);
+void 		*emalloc(size_t);
+void 		*erealloc(void *, size_t);
+struct __sFILE	*efopen(const char *, const char *);
+int	 	easprintf(char ** __restrict, const char * __restrict, ...)
+    __attribute__((__format__(__printf__, 2, 3)));
+int		evasprintf(char ** __restrict, const char * __restrict,
+    _BSD_VA_LIST_)
+    __attribute__((__format__(__printf__, 2, 0)));
+
 __END_DECLS
 
 #endif /* !_UTIL_H_ */
