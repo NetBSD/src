@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_htable.c,v 1.4 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ip_htable.c,v 1.5 2006/08/26 20:36:17 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -385,16 +385,16 @@ void *tptr, *aptr;
 /*                                                                          */
 /* Search the hash table for a given address and return a search result.    */
 /* ------------------------------------------------------------------------ */
-int fr_iphmfindip(tptr, version, aptr)
+int fr_iphmfindip(tptr, ipversion, aptr)
 void *tptr, *aptr;
-int version;
+int ipversion;
 {
 	struct in_addr *addr;
 	iphtable_t *iph;
 	iphtent_t *ipe;
 	int rval;
 
-	if (version != 4)
+	if (ipversion != 4)
 		return -1;
 
 	if (tptr == NULL || aptr == NULL)
