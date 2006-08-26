@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.91 2006/05/04 19:46:10 christos Exp $	*/
+/*	$NetBSD: newfs.c,v 1.92 2006/08/26 22:03:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.91 2006/05/04 19:46:10 christos Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.92 2006/08/26 22:03:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,7 @@ __RCSID("$NetBSD: newfs.c,v 1.91 2006/05/04 19:46:10 christos Exp $");
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <sys/file.h>
 #include <sys/mount.h>
 #include <sys/sysctl.h>
@@ -118,6 +119,7 @@ __RCSID("$NetBSD: newfs.c,v 1.91 2006/05/04 19:46:10 christos Exp $");
 #include "mntopts.h"
 #include "dkcksum.h"
 #include "extern.h"
+#include "partutil.h"
 
 struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -128,15 +130,18 @@ struct mntopt mopts[] = {
 	{ NULL },
 };
 
-static struct disklabel *getdisklabel(char *, int);
-static void rewritelabel(char *, int, struct disklabel *);
 static gid_t mfs_group(const char *);
 static uid_t mfs_user(const char *);
 static int64_t strsuftoi64(const char *, const char *, int64_t, int64_t, int *);
-static void usage(void);
-int main(int, char *[]);
+static void usage(void) __attribute__((__noreturn__));
 
 #define	COMPAT			/* allow non-labeled disks */
+
+#ifdef COMPAT
+const char lmsg[] = "%s: can't read disk label; disk type must be specified";
+#else
+const char lmsg[] = "%s: can't read disk label";
+#endif
 
 /*
  * The following two constants set the default block and fragment sizes.
@@ -206,10 +211,8 @@ int	mntflags = 0;		/* flags to be passed to mount */
 u_long	memleft;		/* virtual memory available */
 caddr_t	membase;		/* start address of memory based filesystem */
 int	needswap;		/* Filesystem not in native byte order */
-#ifdef COMPAT
-char	*disktype;
+char	*disktype = NULL;
 int	unlabeled;
-#endif
 char *appleufs_volname = 0; /* Apple UFS volume name */
 int isappleufs = 0;
 
@@ -218,13 +221,11 @@ char	device[MAXPATHLEN];
 int
 main(int argc, char *argv[])
 {
-	struct partition *pp = NULL;
-	struct disklabel *lp = NULL;
-	struct partition oldpartition;
+	struct disk_geom geo;
+	struct dkwedge_info dkw;
 	struct statvfs *mp;
 	struct stat sb;
 	int ch, fsi, fso, len, n, Fflag, Iflag, Zflag;
-	uint ptn = 0;	/* gcc -Wuninitialised */
 	char *cp, *s1, *s2, *special;
 	const char *opstring;
 	int byte_sized = 0;
@@ -417,7 +418,6 @@ main(int argc, char *argv[])
 	if (argc != 2 && (mfs || argc != 1))
 		usage();
 
-	memset(&oldpartition, 0, sizeof oldpartition);
 	memset(&sb, 0, sizeof sb);
 	special = argv[0];
 	if (Fflag || mfs) {
@@ -490,34 +490,39 @@ main(int argc, char *argv[])
 		if (disktype == NULL)
 			disktype = argv[1];
 #endif
-		lp = getdisklabel(special, fsi);
+		if (getdiskinfo(special, fsi, disktype, &geo, &dkw) == -1)
+			errx(1, lmsg, special);
+		unlabeled = disktype != NULL;
+
 		if (sectorsize == 0) {
-			sectorsize = lp->d_secsize;
+			sectorsize = geo.dg_secsize;
 			if (sectorsize <= 0)
 				errx(1, "no default sector size");
 		}
 
-		ptn = strchr(special, '\0')[-1] - 'a';
-		if (ptn < lp->d_npartitions && ptn == DISKPART(sb.st_rdev)) {
-			/* Assume partition really does match the label */
-			pp = &lp->d_partitions[ptn];
-			oldpartition = *pp;
-			if (pp->p_size == 0)
-				errx(1, "`%c' partition is unavailable",
-					'a' + ptn);
-			if (pp->p_fstype == FS_APPLEUFS)
+		if (dkw.dkw_parent[0]) {
+			if (dkw.dkw_size == 0)
+				errx(1, "%s partition is unavailable", special);
+
+			if (strcmp(dkw.dkw_ptype, DKW_PTYPE_APPLEUFS) == 0)
 				isappleufs = 1;
+				
 			if (!Iflag) {
+				static const char m[] =
+				    "%s partition type is not `%s'";
 				if (isappleufs) {
-					if (pp->p_fstype != FS_APPLEUFS)
-						errx(1, "`%c' partition type is not `Apple UFS'", 'a' + ptn);
+					if (strcmp(dkw.dkw_ptype,
+					    DKW_PTYPE_APPLEUFS))
+						errx(1, m,
+						    special, "Apple UFS");
 				} else {
-					if (pp->p_fstype != FS_BSDFFS)
-						errx(1, "`%c' partition type is not `4.2BSD'", 'a' + ptn);
+					if (strcmp(dkw.dkw_ptype,
+					    DKW_PTYPE_FFS))
+						errx(1, m, special, "4.2BSD");
 				}
 			}
-		}
-	}	/* !Fflag && !mfs */
+		}	/* !Fflag && !mfs */
+	}
 
 	if (byte_sized)
 		fssize /= sectorsize;
@@ -525,15 +530,15 @@ main(int argc, char *argv[])
 		if (sb.st_size != 0)
 			fssize += sb.st_size / sectorsize;
 		else
-			fssize += oldpartition.p_size;
+			fssize += dkw.dkw_size;
 		if (fssize <= 0)
 			errx(1, "Unable to determine file system size");
 	}
 
-	if (pp != NULL && fssize > pp->p_size)
+	if (dkw.dkw_parent[0] && fssize > dkw.dkw_size)
 		errx(1, "size %" PRIu64 " exceeds maximum file system size on "
-		    "`%s' of %u sectors",
-		    fssize, special, pp->p_size);
+		    "`%s' of %" PRIu64 " sectors",
+		    fssize, special, dkw.dkw_size);
 
 	/* XXXLUKEM: only ftruncate() regular files ? (dsl: or at all?) */
 	if (Fflag && fso != -1
@@ -572,8 +577,6 @@ main(int argc, char *argv[])
 	/* Sort out fragment and block sizes */
 	if (fsize == 0) {
 		fsize = bsize / DFL_FRAG_BLK;
-		if (fsize == 0)
-			fsize = oldpartition.p_fsize;
 		if (fsize <= 0) {
 			if (isappleufs) {
 				fsize = APPLEUFS_DFL_FRAGSIZE;
@@ -589,14 +592,11 @@ main(int argc, char *argv[])
 			}
 		}
 	}
-	if (bsize == 0) {
-		bsize = oldpartition.p_frag * oldpartition.p_fsize;
-		if (bsize <= 0) {
-			if (isappleufs)
-				bsize = APPLEUFS_DFL_BLKSIZE;
-			else
-				bsize = DFL_FRAG_BLK * fsize;
-		}
+	if (bsize <= 0) {
+		if (isappleufs)
+			bsize = APPLEUFS_DFL_BLKSIZE;
+		else
+			bsize = DFL_FRAG_BLK * fsize;
 	}
 
 	if (isappleufs && (fsize < APPLEUFS_DFL_FRAGSIZE)) {
@@ -629,10 +629,7 @@ main(int argc, char *argv[])
 		else
 			maxbpg = MAXBLKPG_UFS2(bsize);
 	}
-	mkfs(pp, special, fsi, fso, mfsmode, mfsuid, mfsgid);
-	if (!Nflag && pp != NULL
-	    && memcmp(pp, &oldpartition, sizeof(oldpartition)))
-		rewritelabel(special, fso, lp);
+	mkfs(special, fsi, fso, mfsmode, mfsuid, mfsgid);
 	if (fsi != -1 && fsi != fso)
 		close(fsi);
 	if (fso != -1)
@@ -700,90 +697,6 @@ main(int argc, char *argv[])
 	}
 #endif
 	exit(0);
-}
-
-#ifdef COMPAT
-const char lmsg[] = "%s: can't read disk label; disk type must be specified";
-#else
-const char lmsg[] = "%s: can't read disk label";
-#endif
-
-static struct disklabel *
-getdisklabel(char *s, int fd)
-{
-	static struct disklabel lab;
-
-#ifdef COMPAT
-	if (disktype) {
-		struct disklabel *lp;
-
-		unlabeled++;
-		lp = getdiskbyname(disktype);
-		if (lp == NULL)
-			errx(1, "%s: unknown disk type", disktype);
-		return (lp);
-	}
-#endif
-	if (ioctl(fd, DIOCGDINFO, &lab) < 0) {
-		warn("ioctl (GDINFO)");
-		errx(1, lmsg, s);
-	}
-	return (&lab);
-}
-
-static void
-rewritelabel(char *s, int fd, struct disklabel *lp)
-{
-#ifdef COMPAT
-	if (unlabeled)
-		return;
-#endif
-	lp->d_checksum = 0;
-	lp->d_checksum = dkcksum(lp);
-	if (ioctl(fd, DIOCWDINFO, (char *)lp) < 0) {
-		if (errno == ESRCH)
-			return;
-		warn("ioctl (WDINFO)");
-		errx(1, "%s: can't rewrite disk label", s);
-	}
-#if __vax__
-	if (lp->d_type == DTYPE_SMD && lp->d_flags & D_BADSECT) {
-		int i;
-		int cfd;
-		daddr_t alt;
-		off_t loff;
-		char specname[64];
-		char blk[1024];
-		char *cp;
-
-		/*
-		 * Make name for 'c' partition.
-		 */
-		strlcpy(specname, s, sizeof(specname));
-		cp = specname + strlen(specname) - 1;
-		if (!isdigit((unsigned char)*cp))
-			*cp = 'c';
-		cfd = open(specname, O_WRONLY);
-		if (cfd < 0)
-			err(1, "%s: open", specname);
-		if ((loff = getlabeloffset()) < 0)
-			err(1, "getlabeloffset()");
-		memset(blk, 0, sizeof(blk));
-		*(struct disklabel *)(blk + loff) = *lp;
-		alt = lp->d_ncylinders * lp->d_secpercyl - lp->d_nsectors;
-		for (i = 1; i < 11 && i < lp->d_nsectors; i += 2) {
-			off_t offset;
-
-			offset = alt + i;
-			offset *= lp->d_secsize;
-			if (lseek(cfd, offset, SEEK_SET) == -1)
-				err(1, "lseek to badsector area: ");
-			if (write(cfd, blk, lp->d_secsize) < lp->d_secsize)
-				warn("alternate label %d write", i/2);
-		}
-		close(cfd);
-	}
-#endif
 }
 
 static gid_t

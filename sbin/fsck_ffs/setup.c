@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.79 2006/03/17 15:53:46 rumble Exp $	*/
+/*	$NetBSD: setup.c,v 1.80 2006/08/26 22:03:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.79 2006/03/17 15:53:46 rumble Exp $");
+__RCSID("$NetBSD: setup.c,v 1.80 2006/08/26 22:03:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,9 +42,8 @@ __RCSID("$NetBSD: setup.c,v 1.79 2006/03/17 15:53:46 rumble Exp $");
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#define FSTYPENAMES
-#include <sys/disklabel.h>
 #include <sys/file.h>
+#include <sys/disk.h>
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
@@ -62,13 +61,12 @@ __RCSID("$NetBSD: setup.c,v 1.79 2006/03/17 15:53:46 rumble Exp $");
 #include "fsck.h"
 #include "extern.h"
 #include "fsutil.h"
+#include "partutil.h"
 
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
 static void badsb(int, const char *);
 static int calcsb(const char *, int, struct fs *);
-static struct disklabel *getdisklabel(const char *, int);
-static struct partition *getdisklabelpart(const char *, struct disklabel *);
 static int readsb(int);
 static int readappleufs(void);
 
@@ -84,7 +82,8 @@ setup(const char *dev)
 {
 	long cg, size, asked, i, j;
 	long bmapsize;
-	struct disklabel *lp = NULL;
+	struct disk_geom geo;
+	struct dkwedge_info dkw;
 	off_t sizepb;
 	struct stat statb;
 	struct fs proto;
@@ -128,8 +127,8 @@ setup(const char *dev)
 	if (sblk.b_un.b_buf == NULL || asblk.b_un.b_buf == NULL ||
 		sblock == NULL || altsblock == NULL)
 		errx(EEXIT, "cannot allocate space for superblock");
-	if (!forceimage && (lp = getdisklabel(NULL, fsreadfd)) != NULL)
-		dev_bsize = secsize = lp->d_secsize;
+	if (!forceimage && getdiskinfo(dev, fsreadfd, NULL, &geo, &dkw) != -1)
+		dev_bsize = secsize = geo.dg_secsize;
 	else
 		dev_bsize = secsize = DEV_BSIZE;
 	/*
@@ -471,17 +470,12 @@ setup(const char *dev)
 	else
 		usedsoftdep = 0;
 
-	{
-		struct partition *pp = 0;
-		if (!forceimage && lp) 
-			pp = getdisklabelpart(dev,lp);
-		if (pp && (pp->p_fstype == FS_APPLEUFS)) {
+	if (!forceimage && dkw.dkw_parent[0]) 
+		if (strcmp(dkw.dkw_ptype, DKW_PTYPE_APPLEUFS) == 0)
 			isappleufs = 1;
-		}
-	}
-	if (readappleufs()) {
+
+	if (readappleufs())
 		isappleufs = 1;
-	}
 
 	dirblksiz = DIRBLKSIZ;
 	if (isappleufs)
@@ -750,7 +744,9 @@ readsb(int listerr)
 		}
 		badsb(listerr,
 		"VALUES IN SUPER BLOCK DISAGREE WITH THOSE IN FIRST ALTERNATE");
+/*
 		return (0);
+*/
 	}
 out:
 
@@ -929,90 +925,41 @@ badsb(int listerr, const char *s)
 static int
 calcsb(const char *dev, int devfd, struct fs *fs)
 {
-	struct disklabel *lp;
-	struct partition *pp;
+	struct dkwedge_info dkw;
+	struct disk_geom geo;
 	int i, nspf;
 
-	lp = getdisklabel(dev, devfd);
-	pp = getdisklabelpart(dev,lp);
-	if (pp == 0) {
+	if (getdiskinfo(dev, fsreadfd, NULL, &geo, &dkw) == -1)
+		pfatal("%s: CANNOT FIGURE OUT FILE SYSTEM PARTITION\n", dev);
+	if (dkw.dkw_parent[0] == '\0') {
 		pfatal("%s: CANNOT FIGURE OUT FILE SYSTEM PARTITION\n", dev);
 		return (0);
 	}
-	if ((pp->p_fstype != FS_BSDFFS) && (pp->p_fstype != FS_APPLEUFS)) {
+	if (strcmp(dkw.dkw_ptype, DKW_PTYPE_FFS) &&
+	    strcmp(dkw.dkw_ptype, DKW_PTYPE_APPLEUFS)) {
 		pfatal("%s: NOT LABELED AS A BSD FILE SYSTEM (%s)\n",
-			dev, pp->p_fstype < FSMAXTYPES ?
-			fstypenames[pp->p_fstype] : "unknown");
+		    dev, dkw.dkw_ptype);
 		return (0);
 	}
-	/* avoid divide by 0 */
-	if (pp->p_fsize == 0 || pp->p_frag == 0 || pp->p_cpg == 0) {
-		pfatal("%s: LABEL DOES NOT CONTAIN FILE SYSTEM PARAMETERS\n", dev);
-		return (0);
-	}
-	memset(fs, 0, sizeof(struct fs));
-	fs->fs_fsize = pp->p_fsize;
-	fs->fs_frag = pp->p_frag;
-	fs->fs_size = pp->p_size;
-	fs->fs_sblkno = roundup(
-		howmany(lp->d_bbsize + lp->d_sbsize, fs->fs_fsize),
-		fs->fs_frag);
-	nspf = fs->fs_fsize / lp->d_secsize;
+	memcpy(fs, &sblk.b_un.b_fs, sizeof(struct fs));
+	nspf = fs->fs_fsize / geo.dg_secsize;
 	fs->fs_old_nspf = nspf;
 	for (fs->fs_fsbtodb = 0, i = nspf; i > 1; i >>= 1)
 		fs->fs_fsbtodb++;
-	dev_bsize = lp->d_secsize;
+	dev_bsize = geo.dg_secsize;
 	if (fs->fs_magic == FS_UFS2_MAGIC) {
-		fs->fs_fpg = pp->p_cpg;
 		fs->fs_ncg = howmany(fs->fs_size, fs->fs_fpg);
 	} else /* if (fs->fs_magic == FS_UFS1_MAGIC) */ {
-		fs->fs_old_cpg = pp->p_cpg;
 		fs->fs_old_cgmask = 0xffffffff;
-		for (i = lp->d_ntracks; i > 1; i >>= 1)
+		for (i = geo.dg_ntracks; i > 1; i >>= 1)
 			fs->fs_old_cgmask <<= 1;
-		if (!POWEROF2(lp->d_ntracks))
+		if (!POWEROF2(geo.dg_ntracks))
 			fs->fs_old_cgmask <<= 1;
 		fs->fs_old_cgoffset = roundup(
-			howmany(lp->d_nsectors, nspf), fs->fs_frag);
-		fs->fs_fpg = (fs->fs_old_cpg * lp->d_secpercyl) / nspf;
-		fs->fs_ncg = howmany(fs->fs_size / lp->d_secpercyl,
+			howmany(geo.dg_nsectors, nspf), fs->fs_frag);
+		fs->fs_fpg = (fs->fs_old_cpg * geo.dg_secpercyl) / nspf;
+		fs->fs_ncg = howmany(fs->fs_size / geo.dg_secpercyl,
 		    fs->fs_old_cpg);
 	}
 	return (1);
 }
-
-static struct disklabel *
-getdisklabel(const char *s, int fd)
-{
-	static struct disklabel lab;
-
-	if (ioctl(fd, DIOCGDINFO, (char *)&lab) < 0) {
-		if (s == NULL)
-			return ((struct disklabel *)NULL);
-		pwarn("ioctl (GCINFO): %s\n", strerror(errno));
-		errx(EEXIT, "%s: can't read disk label", s);
-	}
-	return (&lab);
-}
-
-static struct partition *
-getdisklabelpart(const char *dev, struct disklabel *lp)
-{
-	char *cp;
-	int c;
-
-	cp = strchr(dev, '\0');
-	if (cp == dev)
-		return NULL;
-
-	c = (unsigned char)cp[-1];
-	if (isdigit(c))
-		/* eg "wd0", return info for first partition */
-		return &lp->d_partitions[0];
-
-	if (c >= 'a' && c <= 'p')
-		/* eg "wd0f", return info for specified partition */
-		return &lp->d_partitions[c - 'a'];
-	return NULL;
-}
-

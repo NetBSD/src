@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.100 2006/01/21 12:32:14 simonb Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.101 2006/08/26 22:03:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.100 2006/01/21 12:32:14 simonb Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.101 2006/08/26 22:03:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -159,7 +159,7 @@ int iobuf_memsize;		/* Actual buffer size */
 int	fsi, fso;
 
 void
-mkfs(struct partition *pp, const char *fsys, int fi, int fo,
+mkfs(const char *fsys, int fi, int fo,
     mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 {
 	uint fragsperinodeblk, ncg;
@@ -726,20 +726,6 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	/* mfs doesn't need these permanently allocated */
 	munmap(iobuf, iobuf_memsize);
 	munmap(fscs_0, 2 * sblock.fs_fsize);
-
-	/*
-	 * Update information about this partion in pack
-	 * label, to that it may be updated on disk.
-	 */
-	if (pp == NULL)
-		return;
-	if (isappleufs)
-		pp->p_fstype = FS_APPLEUFS;
-	else
-		pp->p_fstype = FS_BSDFFS;
-	pp->p_fsize = sblock.fs_fsize;
-	pp->p_frag = sblock.fs_frag;
-	pp->p_cpg = sblock.fs_fpg;
 }
 
 /*
