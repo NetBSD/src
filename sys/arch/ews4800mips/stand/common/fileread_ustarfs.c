@@ -1,4 +1,4 @@
-/*	$NetBSD: fileread_ustarfs.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: fileread_ustarfs.c,v 1.2 2006/08/26 14:13:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ fileread(const char *fname, size_t *size)
 	if (((*(uint32_t *)(p + 256)) & 0xffffff) != 0x757374)
 		return BERR_TARMAGIC;
 
-	*size = ustar_size(p + 124);
+	*size = ustar_size((const char *)(p + 124));
 	if (dk_read(17, ROUND_SECTOR(*size) >> DEV_BSHIFT,
 	    (void *)SDBOOT_SCRATCHADDR) != 0)
 		return BERR_RDFILE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.2 2006/08/26 14:13:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ const char *boottab[] = {
 	0		/* terminate */
 };
 
-uint32_t __dk_unit, __dk_type;
+int __dk_unit, __dk_type;
 boolean_t (*fd_position)(uint32_t, uint32_t *, int *);
 
 int
@@ -246,7 +246,8 @@ int
 dk_read(int sector, int count, void *buf)
 {
 #ifdef _STANDALONE
-	int i, pos, cnt;
+	int i, cnt;
+	uint32_t pos;
 	uint8_t *p = buf;
 
 	if (__dk_type == NVSRAM_BOOTDEV_HARDDISK) {	/* DISK */
