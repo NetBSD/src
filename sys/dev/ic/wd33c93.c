@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.1 2006/08/26 22:06:37 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.2 2006/08/26 22:33:18 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.1 2006/08/26 22:06:37 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.2 2006/08/26 22:33:18 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -455,7 +455,7 @@ wd33c93_dma_stop(struct wd33c93_softc *dev)
 		count = dev->sc_tcnt - count;
 
 		if (dev->sc_dleft < count)
-			printf("xfer too large: dleft=%u resid=%u\n",
+			printf("xfer too large: dleft=%zu resid=%zu\n",
 			    dev->sc_dleft, count);
 
 		/* Fixup partial xfers */
@@ -1251,7 +1251,7 @@ wd33c93_go(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 	if (dmaok == 0)
 		dev->sc_flags |= SBICF_NODMA;
 
-	SBIC_DEBUG(DMA, ("wd33c93_go dmago:%d(tcnt=%x) dmaok=%dx\n",
+	SBIC_DEBUG(DMA, ("wd33c93_go dmago:%d(tcnt=%zx) dmaok=%dx\n",
 		       dev->target, dev->sc_tcnt, dmaok));
 
 	/* select the SCSI bus (it's an error if bus isn't free) */
@@ -1848,7 +1848,7 @@ wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr
 		 * Verify that we expected to transfer data...
 		 */
 		if (acb->dleft <= 0) {
-			printf("next: DATA phase with xfer count == %d, asr:0x%02x csr:0x%02x\n",
+			printf("next: DATA phase with xfer count == %zd, asr:0x%02x csr:0x%02x\n",
 			    acb->dleft, asr, csr);
 			goto abort;
 		}
@@ -1861,7 +1861,7 @@ wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr
 			/* Perfrom transfer using PIO */
 			int resid;
 
-			SBIC_DEBUG(DMA, ("PIO xfer: %d(%p:%x)\n", dev->target,
+			SBIC_DEBUG(DMA, ("PIO xfer: %d(%p:%zx)\n", dev->target,
 				       dev->sc_daddr, dev->sc_dleft));
 
 			if (SBIC_PHASE(csr) == DATA_IN_PHASE)
@@ -1883,7 +1883,7 @@ wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr
 			SET_SBIC_control(dev, SBIC_CTL_EDI | SBIC_CTL_IDI |
 			    SBIC_CTL_DMA);
 
-			SBIC_DEBUG(DMA, ("DMA xfer: %d(%p:%x)\n", dev->target,
+			SBIC_DEBUG(DMA, ("DMA xfer: %d(%p:%zx)\n", dev->target,
 				       dev->sc_daddr, dev->sc_dleft));
 
 			/* Setup byte count for transfer */
@@ -2231,7 +2231,7 @@ wd33c93_timeout(void *arg)
 	GET_SBIC_asr(dev, asr);
 
 	scsipi_printaddr(periph);
-	printf("%s: timed out; asr=0x%02x [acb %p (flags 0x%x, dleft %x)], "
+	printf("%s: timed out; asr=0x%02x [acb %p (flags 0x%x, dleft %zx)], "
 	    "<state %d, nexus %p, resid %lx, msg(q %x,o %x)>",
 	    dev->sc_dev.dv_xname, asr, acb, acb->flags, acb->dleft,
 	    dev->sc_state, dev->sc_nexus, (long)dev->sc_dleft,
