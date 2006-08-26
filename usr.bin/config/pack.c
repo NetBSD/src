@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.3 2005/10/01 23:30:37 cube Exp $	*/
+/*	$NetBSD: pack.c,v 1.4 2006/08/26 18:17:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,7 @@
 #include <sys/param.h>
 #include <stdlib.h>
 #include <string.h>
+#include <util.h>
 #include "defs.h"
 
 /*

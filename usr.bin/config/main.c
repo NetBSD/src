@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2006/05/25 22:28:38 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2006/08/26 18:17:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,9 +68,11 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
+#include <util.h>
+
 #include "defs.h"
 #include "sem.h"
-#include <vis.h>
 
 #ifndef LINE_MAX
 #define LINE_MAX 1024

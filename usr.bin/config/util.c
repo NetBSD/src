@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.2 2005/10/04 12:35:00 cube Exp $	*/
+/*	$NetBSD: util.c,v 1.3 2006/08/26 18:17:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,12 +44,13 @@
 #include "nbtool_config.h"
 #endif
 
+#include <sys/types.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include <sys/types.h>
+#include <util.h>
 #include "defs.h"
 
 static void nomem(void);
