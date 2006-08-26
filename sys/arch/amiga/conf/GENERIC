@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.240 2006/08/12 15:29:52 christos Exp $
+# $NetBSD: GENERIC,v 1.241 2006/08/26 08:04:32 tsutsui Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.53 2006/06/29 14:00:55 liamjfoy Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.55 2006/08/26 07:59:21 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.240 $"
+#ident 		"GENERIC-$Revision: 1.241 $"
 
 
 maxusers	8
@@ -178,8 +178,8 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 #
 
 options 	KTRACE		# system call tracing support
-#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	LKM		# Loadable kernel modules
+#options 	SYSTRACE	# system call vetting via systrace(1)
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USERCONF	# userconf(4) support
@@ -445,7 +445,6 @@ ep*		at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*		at pcmcia? function ?		# MB8696x based Ethernet
 ne*		at pcmcia? function ?		# NE2000-compatible Ethernet
 sm*		at pcmcia? function ?		# Megahertz Ethernet
-spc*		at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 mhzc*		at pcmcia? function ?	# Megahertz Ethernet/Modem combo cards
 com*		at mhzc?
 sm*		at mhzc?
@@ -513,7 +512,6 @@ pseudo-device	ksyms			# /dev/ksyms (kernel symbols)
 pseudo-device	nsmb			# experimental - SMB requester
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1
