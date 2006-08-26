@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.41 2006/04/04 04:30:28 gdamore Exp $
+#	$NetBSD: Makefile.mips,v 1.42 2006/08/26 20:03:49 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -46,15 +46,6 @@ DEFGP?=		-G 0
 GP?=		${DEFGP}
 CFLAGS+=	${GP} -mno-abicalls -msoft-float
 AFLAGS+=	-mno-abicalls -x assembler-with-cpp -traditional-cpp ${AOPTS}
-
-LP64?=no
-.if ${LP64} == "yes"
-# 64-bit kernels
-CPPFLAGS+=	-D_LP64 -mabi=64
-AFLAGS+=	-mabi=64
-RANLIB=		true
-LD+=		-m elf64bmip
-.endif
 
 ##
 ## (3) libkern and compat
