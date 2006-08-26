@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
+/*	$NetBSD: hash.c,v 1.2 2006/08/26 18:17:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,7 @@
 #include <sys/param.h>
 #include <stdlib.h>
 #include <string.h>
+#include <util.h>
 #include "defs.h"
 
 /*

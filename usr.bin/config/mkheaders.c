@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.5 2006/05/25 22:28:38 cube Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.6 2006/08/26 18:17:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,6 +51,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <util.h>
 #include "defs.h"
 
 static int emitcnt(struct nvlist *);
