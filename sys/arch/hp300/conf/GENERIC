@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.135 2006/08/26 08:09:35 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.136 2006/08/26 08:13:46 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.135 $"
+#ident 		"GENERIC-$Revision: 1.136 $"
 
 maxusers	32		# estimated number of users
 
@@ -312,9 +312,9 @@ pseudo-device	ksyms			# /dev/ksyms
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
+#options 	VERIFIED_EXEC_FP_RMD160
+#options 	VERIFIED_EXEC_FP_SHA256
+#options 	VERIFIED_EXEC_FP_SHA384
+#options 	VERIFIED_EXEC_FP_SHA512
+#options 	VERIFIED_EXEC_FP_SHA1
+#options 	VERIFIED_EXEC_FP_MD5
