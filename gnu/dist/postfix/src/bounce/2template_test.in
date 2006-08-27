@@ -4,7 +4,7 @@ From: MAILER-DAEMON (Mail Delivery System)
 Subject: Undelivered Mail Returned to Sender
 Postmaster-Subject: Postmaster Copy: Undelivered Mail
 
-This is the $mail_name program at host $myhostname.
+This is the mail system at host $myhostname.
 
 I'm sorry to have to inform you that your message could not
 be delivered to one or more recipients. It's attached below.
@@ -14,7 +14,7 @@ For further assistance, please send mail to <postmaster>
 If you do so, please include this problem report. You can
 delete your own text from the attached returned message.
 
-                   The $mail_name program
+                   The mail system
 EOF
 
 delay_template = <<EOF
@@ -23,7 +23,7 @@ From: MAILER-DAEMON (Mail Delivery System)
 Subject: Delayed Mail (still being retried)
 Postmaster-Subject: Postmaster Warning: Delayed Mail
 
-This is the $mail_name program at host $myhostname.
+This is the mail system at host $myhostname.
 
 ####################################################################
 # THIS IS A WARNING ONLY.  YOU DO NOT NEED TO RESEND YOUR MESSAGE. #
@@ -37,7 +37,7 @@ For further assistance, please send mail to <postmaster>
 If you do so, please include this problem report. You can
 delete your own text from the attached returned message.
 
-                   The $mail_name program
+                   The mail system
 EOF
 
 success_template = <<EOF
@@ -45,14 +45,14 @@ Charset: us-ascii
 From: MAILER-DAEMON (Mail Delivery System)
 Subject: Successful Mail Delivery Report
 
-This is the $mail_name program at host $myhostname.
+This is the mail system at host $myhostname.
 
 Your message was successfully delivered to the destination(s)
 listed below. If the message was delivered to mailbox you will
 receive no further notifications. Otherwise you may still receive
 notifications of mail delivery errors from other systems.
 
-                   The $mail_name program
+                   The mail system
 EOF
 
 verify_template = <<EOF
@@ -60,11 +60,11 @@ Charset: us-ascii
 From: MAILER-DAEMON (Mail Delivery System)
 Subject: Mail Delivery Status Report
 
-This is the $mail_name program at host $myhostname.
+This is the mail system at host $myhostname.
 
 Enclosed is the mail delivery report that you requested.
 
-                   The $mail_name program
+                   The mail system
 EOF
 failure_template = <<EOF
 Charset: us-ascii
@@ -72,7 +72,7 @@ From: MAILER-DAEMON (Mail Delivery System)
 Subject: Undelivered Mail Returned to Sender
 Postmaster-Subject: Postmaster Copy: Undelivered Mail
 
-This is the $mail_name program at host $myhostname.
+This is the mail system at host $myhostname.
 
 I'm sorry to have to inform you that your message could not
 be delivered to one or more recipients. It's attached below.
@@ -82,7 +82,7 @@ For further assistance, please send mail to <postmaster>
 If you do so, please include this problem report. You can
 delete your own text from the attached returned message.
 
-                   The $mail_name program
+                   The mail system
 EOF
 
 delay_template = <<EOF
@@ -91,7 +91,7 @@ From: MAILER-DAEMON (Mail Delivery System)
 Subject: Delayed Mail (still being retried)
 Postmaster-Subject: Postmaster Warning: Delayed Mail
 
-This is the $mail_name program at host $myhostname.
+This is the mail system at host $myhostname.
 
 ####################################################################
 # THIS IS A WARNING ONLY.  YOU DO NOT NEED TO RESEND YOUR MESSAGE. #
@@ -105,7 +105,7 @@ For further assistance, please send mail to <postmaster>
 If you do so, please include this problem report. You can
 delete your own text from the attached returned message.
 
-                   The $mail_name program
+                   The mail system
 EOF
 
 success_template = <<EOF
@@ -113,14 +113,14 @@ Charset: us-ascii
 From: MAILER-DAEMON (Mail Delivery System)
 Subject: Successful Mail Delivery Report
 
-This is the $mail_name program at host $myhostname.
+This is the mail system at host $myhostname.
 
 Your message was successfully delivered to the destination(s)
 listed below. If the message was delivered to mailbox you will
 receive no further notifications. Otherwise you may still receive
 notifications of mail delivery errors from other systems.
 
-                   The $mail_name program
+                   The mail system
 EOF
 
 verify_template = <<EOF
@@ -128,9 +128,9 @@ Charset: us-ascii
 From: MAILER-DAEMON (Mail Delivery System)
 Subject: Mail Delivery Status Report
 
-This is the $mail_name program at host $myhostname.
+This is the mail system at host $myhostname.
 
 Enclosed is the mail delivery report that you requested.
 
-                   The $mail_name program
+                   The mail system
 EOF

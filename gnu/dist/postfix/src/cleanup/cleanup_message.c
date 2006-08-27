@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_message.c,v 1.1.1.11 2006/07/19 01:17:19 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_message.c,v 1.1.1.12 2006/08/27 00:39:32 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -799,10 +799,10 @@ static void cleanup_message_headerbody(CLEANUP_STATE *state, int type,
      * current file position so we can compute the message size lateron.
      */
     else if (type == REC_TYPE_XTRA) {
+	state->mime_errs = mime_state_update(state->mime_state, type, buf, len);
 	if (state->milters || cleanup_milters)
 	    /* Make room for body modification. */
 	    cleanup_out_format(state, REC_TYPE_PTR, REC_TYPE_PTR_FORMAT, 0L);
-	state->mime_errs = mime_state_update(state->mime_state, type, buf, len);
 	/* Ignore header truncation after primary message headers. */
 	state->mime_errs &= ~MIME_ERR_TRUNC_HEADER;
 	if (state->mime_errs && state->reason == 0) {

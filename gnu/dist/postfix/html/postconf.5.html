@@ -5508,6 +5508,11 @@ may wish to turn on the policy (UCE and mail relaying) and protocol
 error (broken mail software) reports.
 </p>
 
+<p> NOTE: postmaster notifications may contain confidential information
+such as SASL passwords or message content.  It is the system
+administrator's responsibility to treat such information with care.
+</p>
+
 <p>
 The error classes are:
 </p>
@@ -11823,7 +11828,8 @@ message contains no To: or Cc: message header.  </p>
 <p>
 The numerical Postfix SMTP server response code when a sender or
 recipient address is rejected by the <a href="postconf.5.html#reject_unknown_sender_domain">reject_unknown_sender_domain</a>
-or <a href="postconf.5.html#reject_unknown_recipient_domain">reject_unknown_recipient_domain</a> restriction.
+or <a href="postconf.5.html#reject_unknown_recipient_domain">reject_unknown_recipient_domain</a> restriction.  The response is
+always 450 in case of a temporary DNS error.
 </p>
 
 <p>
