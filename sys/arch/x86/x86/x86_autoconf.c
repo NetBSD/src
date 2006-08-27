@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.21 2006/08/27 04:16:33 christos Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.22 2006/08/27 04:31:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,9 +68,10 @@ int x86_ndisks;
 static struct vnode *
 opendisk(struct device *dv)
 {
-	int bmajor;
+	int bmajor, bminor;
 	struct vnode *tmpvn;
-	int error, raw_part;
+	int error;
+	dev_t dev;
 	
 	/*
 	 * Lookup major number for disk block device.
@@ -79,12 +80,14 @@ opendisk(struct device *dv)
 	if (bmajor == -1)
 		return NULL;
 	
+	bminor = minor(device_unit(dv));
 	/*
 	 * Fake a temporary vnode for the disk, open it, and read
 	 * and hash the sectors.
 	 */
-	raw_part = device_is_a(dv, "dk") ? 0 : RAW_PART;
-	if (bdevvp(MAKEDISKDEV(bmajor, device_unit(dv), raw_part), &tmpvn))
+	dev = device_is_a(dv, "dk") ? makedev(bmajor, bminor) :
+	    MAKEDISKDEV(bmajor, bminor, RAW_PART);
+	if (bdevvp(dev, &tmpvn))
 		panic("%s: can't alloc vnode for %s", __func__, dv->dv_xname);
 	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
 	if (error) {
