@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2006/06/24 05:21:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.20 2006/08/27 01:37:28 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -9,16 +9,16 @@ SRCS=	fsdb.c fsdbutil.c
 SRCS+=	dir.c inode.c pass1.c pass1b.c pass2.c pass3.c pass4.c \
 	pass5.c setup.c utilities.c
 SRCS+=	ffs_bswap.c ffs_subr.c ffs_tables.c ffs_appleufs.c
-SRCS+=	fsutil.c 
+SRCS+=	fsutil.c partutil.c
 
 FSCK=	${NETBSDSRCDIR}/sbin/fsck
 FSCK_FFS=${NETBSDSRCDIR}/sbin/fsck_ffs
 CPPFLAGS+= -I${FSCK} -I${FSCK_FFS}
 .PATH:	${FSCK} ${FSCK_FFS} ${NETBSDSRCDIR}/sys/ufs/ffs
 
-LDADD+= -ledit -ltermcap
+LDADD+= -lutil -ledit -ltermcap
 .ifndef HOSTPROG
-DPADD+= ${LIBEDIT} ${LIBTERMCAP}
+DPADD+= ${LIBUTIL} ${LIBEDIT} ${LIBTERMCAP}
 .endif
 
 .if ${HAVE_GCC} == 4
