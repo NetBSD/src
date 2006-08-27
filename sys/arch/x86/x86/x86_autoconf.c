@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.20 2006/08/27 04:11:45 christos Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.21 2006/08/27 04:16:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@ opendisk(struct device *dv)
 	 * Fake a temporary vnode for the disk, open it, and read
 	 * and hash the sectors.
 	 */
-	raw_part = device_is_a(dv, "dk") * RAW_PART;
+	raw_part = device_is_a(dv, "dk") ? 0 : RAW_PART;
 	if (bdevvp(MAKEDISKDEV(bmajor, device_unit(dv), raw_part), &tmpvn))
 		panic("%s: can't alloc vnode for %s", __func__, dv->dv_xname);
 	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
