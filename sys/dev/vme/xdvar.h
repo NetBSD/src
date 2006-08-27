@@ -1,4 +1,4 @@
-/*	$NetBSD: xdvar.h,v 1.10 2005/12/11 12:24:07 christos Exp $	*/
+/*	$NetBSD: xdvar.h,v 1.11 2006/08/27 19:18:08 christos Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@ struct xd_iorq {
 	int ttl;			/* time to live */
 	int mode;			/* current mode (state+other data) */
 	int tries;			/* number of times we have tried it */
-	int errno;			/* error number if we fail */
+	int errnum;			/* error number if we fail */
 	int lasterror;			/* last error we got */
 	int blockno;			/* starting block no for this xfer */
 	int sectcnt;			/* number of sectors in xfer */

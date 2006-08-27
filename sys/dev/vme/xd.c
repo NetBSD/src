@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.63 2006/07/21 16:48:53 ad Exp $	*/
+/*	$NetBSD: xd.c,v 1.64 2006/08/27 19:18:08 christos Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.63 2006/07/21 16:48:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.64 2006/08/27 19:18:08 christos Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -179,7 +179,7 @@ __KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.63 2006/07/21 16:48:53 ad Exp $");
 	} else { \
 		if ((SC)->ndone-- == XDC_SUBWAITLIM) \
 		wakeup(&(SC)->ndone); \
-		(ER) = (SC)->reqs[RQ].errno; \
+		(ER) = (SC)->reqs[RQ].errnum; \
 		XDC_FREE((SC), (RQ)); \
 	} \
 }
@@ -653,8 +653,8 @@ xdcattach(parent, self, aux)
 	}
 	ctl = (struct xd_iopb_ctrl *) &xdc->iopbase[rqno];
 	if (ctl->ctype != XDCT_753) {
-		if (xdc->reqs[rqno].errno)
-			printf(": %s: ", xdc_e2str(xdc->reqs[rqno].errno));
+		if (xdc->reqs[rqno].errnum)
+			printf(": %s: ", xdc_e2str(xdc->reqs[rqno].errnum));
 		printf(": doesn't identify as a 753/7053\n");
 		XDC_DONE(xdc, rqno, error);
 		return;
@@ -1399,7 +1399,7 @@ xdc_rqinit(rq, xdc, xd, md, blk, cnt, db, bp)
 	rq->xd = xd;
 	rq->ttl = XDC_MAXTTL + 10;
 	rq->mode = md;
-	rq->tries = rq->errno = rq->lasterror = 0;
+	rq->tries = rq->errnum = rq->lasterror = 0;
 	rq->blockno = blk;
 	rq->sectcnt = cnt;
 	rq->dbuf = db;
@@ -1422,7 +1422,7 @@ xdc_rqtopb(iorq, iopb, cmd, subfun)
 
 	iopb->errs = iopb->done = 0;
 	iopb->comm = cmd;
-	iopb->errno = iopb->status = 0;
+	iopb->errnum = iopb->status = 0;
 	iopb->subfun = subfun;
 	if (iorq->xd)
 		iopb->unit = iorq->xd->xd_drive;
@@ -1724,7 +1724,7 @@ xdc_submit_iorq(xdcsc, iorqno, type)
 			while (iorq->iopb->done == 0) {
 				(void) tsleep(iorq, PRIBIO, "xdciorq", 0);
 			}
-			return (iorq->errno);
+			return (iorq->errnum);
 		case XD_SUB_POLL:
 			return (xdc_piodriver(xdcsc, iorqno, 0));
 		default:
@@ -1756,7 +1756,7 @@ xdc_submit_iorq(xdcsc, iorqno, type)
 		while (iorq->iopb->done == 0) {
 			(void) tsleep(iorq, PRIBIO, "xdciorq", 0);
 		}
-		return (iorq->errno);
+		return (iorq->errnum);
 	case XD_SUB_POLL:
 		return (xdc_piodriver(xdcsc, iorqno, 0));
 	default:
@@ -1832,11 +1832,11 @@ xdc_piodriver(xdcsc, iorqno, freeone)
 
 	/* get return value */
 
-	retval = xdcsc->reqs[iorqno].errno;
+	retval = xdcsc->reqs[iorqno].errnum;
 
 #ifdef XDC_DEBUG
 	printf("xdc_piodriver: done, retval = 0x%x (%s)\n",
-	    xdcsc->reqs[iorqno].errno, xdc_e2str(xdcsc->reqs[iorqno].errno));
+	    xdcsc->reqs[iorqno].errnum, xdc_e2str(xdcsc->reqs[iorqno].errnum));
 #endif
 
 	/* now that we've drained everything, start up any bufs that have
@@ -1871,7 +1871,7 @@ xdc_xdreset(xdcsc, xdsc)
 	XDC_WAIT(xdcsc->xdc, del, XDC_RESETUSEC, XDC_REMIOPB);
 	if (del <= 0 || xdcsc->iopbase->errs) {
 		printf("%s: off-line: %s\n", xdcsc->sc_dev.dv_xname,
-		    xdc_e2str(xdcsc->iopbase->errno));
+		    xdc_e2str(xdcsc->iopbase->errnum));
 		xdcsc->xdc->xdc_csr = XDC_RESET;
 		XDC_WAIT(xdcsc->xdc, del, XDC_RESETUSEC, XDC_RESET);
 		if (del <= 0)
@@ -1924,7 +1924,7 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
 		xdcsc->nrun--;	/* it isn't running any more */
 		if (blastmode == XD_RSET_ALL || blastmode != lcv) {
 			/* failed */
-			iorq->errno = error;
+			iorq->errnum = error;
 			xdcsc->iopbase[lcv].done = xdcsc->iopbase[lcv].errs = 1;
 			switch (XD_STATE(xdcsc->reqs[lcv].mode)) {
 			case XD_SUB_NORM:
@@ -2016,7 +2016,7 @@ xdc_remove_iorq(xdcsc)
 	struct xdc_softc *xdcsc;
 
 {
-	int     errno, rqno, comm, errs;
+	int     errnum, rqno, comm, errs;
 	struct xdc *xdc = xdcsc->xdc;
 	struct xd_iopb *iopb;
 	struct xd_iorq *iorq;
@@ -2028,10 +2028,10 @@ xdc_remove_iorq(xdcsc)
 		 * error is so bad, you can't even tell which IOPB is bad, so
 		 * we dump them all.
 		 */
-		errno = xdc->xdc_f_err;
+		errnum = xdc->xdc_f_err;
 		printf("%s: fatal error 0x%02x: %s\n", xdcsc->sc_dev.dv_xname,
-		    errno, xdc_e2str(errno));
-		if (xdc_reset(xdcsc, 0, XD_RSET_ALL, errno, 0) != XD_ERR_AOK) {
+		    errnum, xdc_e2str(errnum));
+		if (xdc_reset(xdcsc, 0, XD_RSET_ALL, errnum, 0) != XD_ERR_AOK) {
 			printf("%s: soft reset failed!\n",
 				xdcsc->sc_dev.dv_xname);
 			panic("xdc_remove_iorq: controller DEAD");
@@ -2081,9 +2081,9 @@ xdc_remove_iorq(xdcsc)
 		errs = iopb->errs;
 
 		if (errs)
-			iorq->errno = iopb->errno;
+			iorq->errnum = iopb->errnum;
 		else
-			iorq->errno = 0;
+			iorq->errnum = 0;
 
 		/* handle non-fatal errors */
 
@@ -2117,7 +2117,7 @@ xdc_remove_iorq(xdcsc)
 			iorq->mode = iorq->mode & (~XD_MODE_B144);
 
 			if (iorq->sectcnt) {	/* more to go! */
-				iorq->lasterror = iorq->errno = iopb->errno = 0;
+				iorq->lasterror = iorq->errnum = iopb->errnum = 0;
 				iopb->errs = iopb->done = 0;
 				iorq->tries = 0;
 				iopb->sectcnt = iorq->sectcnt;
@@ -2177,10 +2177,10 @@ xdc_remove_iorq(xdcsc)
  * xdc_perror: print error.
  * - if still_trying is true: we got an error, retried and got a
  *   different error.  in that case lasterror is the old error,
- *   and errno is the new one.
+ *   and errnum is the new one.
  * - if still_trying is not true, then if we ever had an error it
- *   is in lasterror. also, if iorq->errno == 0, then we recovered
- *   from that error (otherwise iorq->errno == iorq->lasterror).
+ *   is in lasterror. also, if iorq->errnum == 0, then we recovered
+ *   from that error (otherwise iorq->errnum == iorq->lasterror).
  */
 void
 xdc_perror(iorq, iopb, still_trying)
@@ -2203,9 +2203,9 @@ xdc_perror(iorq, iopb, still_trying)
 	printf("%s", xdc_e2str(error));
 
 	if (still_trying)
-		printf(" [still trying, new error=%s]", xdc_e2str(iorq->errno));
+		printf(" [still trying, new error=%s]", xdc_e2str(iorq->errnum));
 	else
-		if (iorq->errno == 0)
+		if (iorq->errnum == 0)
 			printf(" [recovered in %d tries]", iorq->tries);
 
 	printf("\n");
@@ -2223,8 +2223,8 @@ xdc_error(xdcsc, iorq, iopb, rqno, comm)
 	int     rqno, comm;
 
 {
-	int     errno = iorq->errno;
-	int     erract = errno & XD_ERA_MASK;
+	int     errnum = iorq->errnum;
+	int     erract = errnum & XD_ERA_MASK;
 	int     oldmode, advance;
 #ifdef __sparc__
 	int i;
@@ -2235,7 +2235,7 @@ xdc_error(xdcsc, iorq, iopb, rqno, comm)
 		iorq->mode = XD_SUB_DONE | (~XD_SUB_MASK & oldmode);
 		xdcsc->ndone++;
 		/* make xdc_start ignore us */
-		xdc_reset(xdcsc, 1, XD_RSET_NONE, errno, iorq->xd);
+		xdc_reset(xdcsc, 1, XD_RSET_NONE, errnum, iorq->xd);
 		iorq->mode = oldmode;
 		xdcsc->ndone--;
 	}
@@ -2252,7 +2252,7 @@ xdc_error(xdcsc, iorq, iopb, rqno, comm)
 			    iorq->blockno % iorq->xd->nsect)) != -1) {
 			iorq->mode |= XD_MODE_B144;	/* enter bad144 mode &
 							 * redirect */
-			iopb->errno = iopb->done = iopb->errs = 0;
+			iopb->errnum = iopb->done = iopb->errs = 0;
 			iopb->sectcnt = 1;
 			iopb->cylno = (iorq->xd->ncyl + iorq->xd->acyl) - 2;
 			/* second to last acyl */
@@ -2274,12 +2274,12 @@ xdc_error(xdcsc, iorq, iopb, rqno, comm)
 	if ((iorq->mode & XD_MODE_VERBO) && iorq->lasterror)
 		xdc_perror(iorq, iopb, 1);	/* inform of error state
 						 * change */
-	iorq->lasterror = errno;
+	iorq->lasterror = errnum;
 
 	if ((erract == XD_ERA_RSET || erract == XD_ERA_HARD)
 	    && iorq->tries < XDC_MAXTRIES) {	/* retry? */
 		iorq->tries++;
-		iorq->errno = iopb->errno = iopb->done = iopb->errs = 0;
+		iorq->errnum = iopb->errnum = iopb->done = iopb->errs = 0;
 		XDC_HWAIT(xdcsc, rqno);
 		xdc_start(xdcsc, 1);	/* restart */
 		return (XD_ERR_AOK);	/* recovered! */
@@ -2331,11 +2331,11 @@ xdc_tick(arg)
 		printf("\n");
 		for (lcv = 0; lcv < XDC_MAXIOPB; lcv++) {
 			if (mark[lcv] == 0)
-				printf("MARK: running %d: mode %d done %d errs %d errno 0x%x ttl %d buf %p\n",
+				printf("MARK: running %d: mode %d done %d errs %d errnum 0x%x ttl %d buf %p\n",
 				lcv, xdcsc->reqs[lcv].mode,
 				xdcsc->iopbase[lcv].done,
 				xdcsc->iopbase[lcv].errs,
-				xdcsc->iopbase[lcv].errno,
+				xdcsc->iopbase[lcv].errnum,
 				xdcsc->reqs[lcv].ttl, xdcsc->reqs[lcv].buf);
 		}
 	} else
@@ -2351,10 +2351,10 @@ xdc_tick(arg)
 		xdcsc->ndone);
 	for (lcv = 0; lcv < XDC_MAXIOPB; lcv++) {
 		if (xdcsc->reqs[lcv].mode)
-		  printf("running %d: mode %d done %d errs %d errno 0x%x\n",
+		  printf("running %d: mode %d done %d errs %d errnum 0x%x\n",
 			 lcv,
 			 xdcsc->reqs[lcv].mode, xdcsc->iopbase[lcv].done,
-			 xdcsc->iopbase[lcv].errs, xdcsc->iopbase[lcv].errno);
+			 xdcsc->iopbase[lcv].errs, xdcsc->iopbase[lcv].errnum);
 	}
 #endif
 
@@ -2509,7 +2509,7 @@ xdc_ioctlcmd(xd, dev, xio)
 		error = EIO;
 		goto done;
 	}
-	xio->errno = xdcsc->reqs[rqno].errno;
+	xio->errnum = xdcsc->reqs[rqno].errnum;
 	xio->tries = xdcsc->reqs[rqno].tries;
 	XDC_DONE(xdcsc, rqno, dummy);
 
