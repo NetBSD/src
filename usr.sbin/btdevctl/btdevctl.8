@@ -1,4 +1,4 @@
-.\" $NetBSD: btdevctl.8,v 1.1 2006/08/13 09:03:23 plunky Exp $
+.\" $NetBSD: btdevctl.8,v 1.2 2006/08/27 11:41:58 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -51,10 +51,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $Id: btdevctl.8,v 1.1 2006/08/13 09:03:23 plunky Exp $
+.\" $Id: btdevctl.8,v 1.2 2006/08/27 11:41:58 plunky Exp $
 .\" $FreeBSD: src/usr.sbin/bluetooth/bthidcontrol/bthidcontrol.8,v 1.3 2005/01/18 20:02:30 ru Exp $
 .\"
-.Dd August 12, 2006
+.Dd August 27, 2006
 .Dt BTDEVCTL 8
 .Os
 .Sh NAME
@@ -97,7 +97,7 @@ and print in legible format.
 .It Cm Print
 Print configuration entry for
 .Ar btdev
-.It Cm Query Oo Fl d Ar device Oc Oo Fl m Ar mtu Oc Fl a Ar address Fl s Ar service
+.It Cm Query Oo Fl d Ar device Oc Fl a Ar address Fl s Ar service
 Perform an SDP query to the remote Bluetooth
 .Ar address
 for the given
@@ -124,11 +124,6 @@ Hands Free Profile
 Headset
 .El
 .Pp
-When configuring SCO Audio devices, the
-.Fl m
-option allows the MTU to be set, see
-.Xr btsco 4
-for details.
 .It Cm Remove
 Remove config entry for
 .Ar btdev
