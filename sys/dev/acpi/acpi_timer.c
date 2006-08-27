@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_timer.c,v 1.5 2006/07/02 18:53:33 bouyer Exp $ */
+/* $NetBSD: acpi_timer.c,v 1.6 2006/08/27 23:13:47 christos Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.5 2006/07/02 18:53:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.6 2006/08/27 23:13:47 christos Exp $");
 
 #include <sys/types.h>
 #include <dev/acpi/acpi_timer.h>
@@ -24,7 +24,9 @@ static struct timecounter acpi_timecounter = {
 	0x00ffffff,
 	PM_TIMER_FREQUENCY,
 	"ACPI-Safe",
-	900
+	900,
+	NULL,
+	NULL,
 };
 
 int
