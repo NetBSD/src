@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.23 2006/06/03 03:15:24 christos Exp $
+#	$NetBSD: mkioctls,v 1.24 2006/08/27 20:31:26 christos Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -38,8 +38,11 @@ echo "/* Automatically generated file, do not edit! */"
 #echo "#define const" 	# XXX: timepps lossage
 echo "#define COMPAT_43"
 echo "struct lwp;"
-echo "struct videomemory_t { int _xxx; };" # XXX arm video lossage
-echo "typedef struct videomemory_t videomemory_t;" # XXX arm video lossage
+echo "struct crap { int _xxx; };" # XXX arm video lossage
+echo "typedef struct crap videomemory_t;" # XXX arm video lossage
+echo "typedef struct crap RF_AccTotals_t;" # XXX Raidframe lossage
+echo "struct rf_test_acc { int _xxx; };" # XXX Raidframe lossage
+echo "#include <stdio.h>"
 echo "#include <sys/types.h>"
 echo "#include <sys/param.h>"
 echo "#include <sys/disk.h>"
@@ -48,6 +51,7 @@ echo "#include <sys/mount.h>"
 echo "#include <sys/termios.h>"
 echo "#include <sys/disklabel.h>"
 echo "#include <net/if.h>"
+echo "#include <net/if_ether.h>"
 echo "#include <net/route.h>"
 echo "#include <net/ppp_defs.h>"
 echo "#include <netinet/in.h>"
@@ -56,7 +60,13 @@ echo "#include <netinet/ip.h>"
 echo "#include <netinet/ip_mroute.h>"
 echo "#include <netinet/ip_compat.h>"
 echo "#include <net80211/ieee80211.h>"
+echo "#include <net80211/ieee80211_radiotap.h>"
+echo "#include <netinet6/in6_var.h>"
+echo "#include <netinet6/nd6.h>"
 echo "#include <netiso/iso.h>"
+echo "#include <dev/ic/hd44780reg.h>"
+echo "#include <dev/pci/mlyreg.h>"
+echo "#include <prop/proplib.h>"
 for i
 do
 	echo "#include <$i>"
@@ -72,6 +82,50 @@ BEGIN {
 	keep["SIOCPROXY"] = 1; # Same as SIOCLOOKUPSTAT
 	keep["CHIOGPICKER"] = 1; # Same as CDIOREADTOCHEADER
 	keep["KBDSTPMAT"] = 1;	# Same as LMREADY, pcvt is gone so ok.
+	keep["SIOCSLOWAT"] = 1;	# Same as SATIOSBUFSIZE
+	keep["UTOPPYIOTURBO"] = 1; # Same as OTIOCSETD
+	keep["TIOCHPCL"] = 1; # Same as UTOPPYIOCANCEL
+	keep["TIOCCBRK"] = 1; # Same as CONSOLE_X_MODE_OFF
+	keep["TIOCSDTR"] = 1; # Same as CONSOLE_X_MODE_ON
+	keep["APM_IOC_SUSPEND"] = 1; # Same as AGPIOC_RELEASE
+	keep["APM_IOC_STANDBY"] = 1; # Same as AGPIOC_ACQUIRE
+	keep["BTDEV_GETINFO"] = 1; # Same as BTSCO_GETINFO
+	keep["BTHSET_GETINFO"] = 1; # Same as BTSCO_GETINFO
+	keep["JOY_GET_X_OFFSET"] = 1; # Same as GDT_IOCTL_CTRCNT
+	keep["JOY_GET_X_OFFSET"] = 1; # Same as GDT_IOCTL_CTRCNT
+	keep["SCIOC_USE_ADF"] = 1; # Same as STICIO_STARTQ
+	keep["SCBUSIOLLSCAN"] = 1; # Same as USB_DISCOVER
+
+	i = 1;
+	altqt[i++] = "RED";
+	altqt[i++] = "BLUE";
+	altqt[i++] = "RIO";
+	altqt[i++] = "FIFOQ";
+	altqt[i++] = "HFSC";
+	altqt[i++] = "PRIQ";
+	altqt[i++] = "WFQ";
+	altqt[i++] = "CBQ";
+	altqt[i++] = "CNDR";
+
+	i = 1;
+	altqf[i++] = "IF_ATTACH";
+	altqf[i++] = "DISABLE";
+	altqf[i++] = "ENABLE";
+	altqf[i++] = "CONFIG";
+	altqf[i++] = "GETSTATS";
+	altqf[i++] = "IF_DETACH";
+	altqf[i++] = "ADD_CLASS";
+	altqf[i++] = "DEL_CLASS";
+	altqf[i++] = "MOD_CLASS";
+	altqf[i++] = "ADD_FILTER";
+	altqf[i++] = "DEL_FILTER";
+	altqf[i++] = "CLEAR_HIERARCHY";
+
+	for (t in altqt) {
+		for (f in altqf) {
+			keep[altqt[t] "_" altqf[f]] = 1;
+		}
+	}
 
 	print ""
 	print "#include \"ktrace.h\""
@@ -83,7 +137,7 @@ BEGIN {
 	print "\tswitch (val) {\n"
 }
 
-/^#[ 	]*define[ 	]*[A-Z]*[ 	]*_IO/ {
+/^#[ 	]*define[ 	]*[A-Z_]*[ 	]*_IO[W]*[R]*[ 	]*\(/ {
 	
 	# find where the name starts
 	for (i = 1; i <= NF; i++)
