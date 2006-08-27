@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.c,v 1.16 2006/08/01 00:12:42 rpaulo Exp $	*/
+/*	$NetBSD: smtpd.c,v 1.17 2006/08/27 00:47:09 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -2645,9 +2645,11 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 	    && (state->proxy == 0 ? (++start, --len) == 0 : len == 1))
 	    break;
 	if (state->err == CLEANUP_STAT_OK) {
-	    if (var_message_limit > 0 && var_message_limit - state->act_size < len + 2)
+	    if (var_message_limit > 0 && var_message_limit - state->act_size < len + 2) {
 		state->err = CLEANUP_STAT_SIZE;
-	    else {
+		msg_warn("%s: queue file size limit exceeded",
+			 state->queue_id ? state->queue_id : "NOQUEUE");
+	    } else {
 		state->act_size += len + 2;
 		if (out_record(out_stream, curr_rec_type, start, len) < 0)
 		    state->err = out_error;
