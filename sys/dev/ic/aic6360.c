@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.88 2006/08/27 23:23:02 christos Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.89 2006/08/27 23:23:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.88 2006/08/27 23:23:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.89 2006/08/27 23:23:48 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -1081,7 +1081,7 @@ nextbyte:
 
 		switch (sc->sc_imess[0]) {
 		case MSG_CMDCOMPLETE:
-#ifdef 0
+#if 0
 			/* impossible dleft is unsigned */
 			if (sc->sc_dleft < 0) {
 				periph = acb->xs->xs_periph;
