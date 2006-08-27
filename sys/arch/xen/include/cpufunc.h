@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.11 2006/03/06 19:54:14 bouyer Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.11.10.1 2006/08/27 06:29:50 riz Exp $	*/
 /*	NetBSD: cpufunc.h,v 1.28 2004/01/14 11:31:55 yamt Exp 	*/
 
 /*-
@@ -47,6 +47,7 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
+#include <machine/segments.h>
 #include <machine/specialreg.h>
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
@@ -90,9 +91,9 @@ invlpg(u_int addr)
 #endif
 
 static __inline void
-lidt(void *p)
+lidt(struct region_descriptor *region)
 {
-	__asm volatile("lidt (%0)" : : "r" (p));
+	__asm volatile("lidt %0" : : "m" (*region));
 }
 
 #if 0
