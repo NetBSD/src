@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream.c,v 1.1.1.7 2006/07/19 01:17:56 rpaulo Exp $	*/
+/*	$NetBSD: vstream.c,v 1.1.1.8 2006/08/27 00:41:19 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -1051,8 +1051,9 @@ int     vstream_fclose(VSTREAM *stream)
      */
     if (stream->pid != 0)
 	msg_panic("vstream_fclose: stream has process");
-    if ((stream->buf.flags & VSTREAM_FLAG_WRITE_DOUBLE) != 0)
+    if ((stream->buf.flags & VSTREAM_FLAG_WRITE_DOUBLE) != 0 && stream->fd >= 0)
 	vstream_fflush(stream);
+    /* Do not remove: vstream_fdclose() depends on this error test. */
     err = vstream_ferror(stream);
     if (stream->buf.flags & VSTREAM_FLAG_DOUBLE) {
 	if (stream->read_fd >= 0)
@@ -1081,8 +1082,22 @@ int     vstream_fclose(VSTREAM *stream)
 
 int     vstream_fdclose(VSTREAM *stream)
 {
+
+    /*
+     * Flush unwritten output, just like vstream_fclose(). Errors are
+     * reported by vstream_fclose().
+     */
+    if ((stream->buf.flags & VSTREAM_FLAG_WRITE_DOUBLE) != 0)
+	(void) vstream_fflush(stream);
+
+    /*
+     * NOTE: Negative file descriptors are not part of the external
+     * interface. They are for internal use only, in order to support
+     * vstream_fdclose() without a lot of code duplication. Applications that
+     * rely on negative VSTREAM file descriptors will break without warning.
+     */
     if (stream->buf.flags & VSTREAM_FLAG_DOUBLE) {
-	stream->read_fd = stream->write_fd = -1;
+	stream->fd = stream->read_fd = stream->write_fd = -1;
     } else {
 	stream->fd = -1;
     }
