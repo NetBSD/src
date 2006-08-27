@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k7.c,v 1.13.2.2 2006/08/14 06:53:06 ghen Exp $ */
+/*	$NetBSD: powernow_k7.c,v 1.13.2.3 2006/08/27 22:28:18 tron Exp $ */
 /*	$OpenBSD: powernow-k7.c,v 1.24 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K7 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.13.2.2 2006/08/14 06:53:06 ghen Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.13.2.3 2006/08/27 22:28:18 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,7 +109,6 @@ static size_t freq_names_len;
 static uint8_t k7pnow_flag;
 
 /* Prototypes */
-void k7_powernow_destroy(void);
 int k7_powernow_setperf(unsigned int);
 int k7pnow_sysctl_helper(SYSCTLFN_PROTO);
 int k7pnow_decode_pst(struct powernow_cpu_state *, uint8_t *, int);
