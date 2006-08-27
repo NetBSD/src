@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.8.2.1 2006/08/23 21:21:14 tron Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.8.2.2 2006/08/27 01:20:56 riz Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -137,9 +137,9 @@ static const struct _prop_object_type _prop_object_type_dict_keysym = {
 };
 
 #define	prop_object_is_dictionary(x)		\
-		((x)->pd_obj.po_type == &_prop_object_type_dictionary)
+	((x) != NULL && (x)->pd_obj.po_type == &_prop_object_type_dictionary)
 #define	prop_object_is_dictionary_keysym(x)	\
-		((x)->pdk_obj.po_type == &_prop_object_type_dict_keysym)
+	((x) != NULL && (x)->pdk_obj.po_type == &_prop_object_type_dict_keysym)
 
 #define	prop_dictionary_is_immutable(x)		\
 				(((x)->pd_flags & PD_F_IMMUTABLE) != 0)
