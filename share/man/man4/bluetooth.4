@@ -1,4 +1,4 @@
-.\"	$NetBSD: bluetooth.4,v 1.1 2006/06/19 15:44:36 gdamore Exp $
+.\"	$NetBSD: bluetooth.4,v 1.2 2006/08/27 11:41:58 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd March 6, 2006
+.Dd August 27, 2006
 .Dt BLUETOOTH 4
 .Os
 .Sh NAME
@@ -192,19 +192,21 @@ Acknowledgement Timer (T1)
 Response Timer for Multiplexer Control Channel (T2)
 .El
 .It Cm BTPROTO_SCO
-SCO sockets provide packetised access to time sensitive data channels over
-Bluetooth connections, typically used for audio data. Note that SCO socket
-support is currently experimental and needs to be explicitly configured in
-your kernel configuration file with the BLUETOOTH_SCO option.
+SCO sockets provide sequential packet access to time sensitive data
+channels over Bluetooth connections, typically used for audio data.
 .Pp
 SCO socket options:
 .Bl -tag -width XXX
 .It Dv SO_SCO_MTU Op Ar uint16_t
-Maximun packet size for use on this link. This is read only and will be set
-by the socket code when a connection is made.
+Maxiumum packet size for use on this link.
+This is read only and will be set by the protocol code when a connection is made.
+Currently, due to limitations in the
+.Xr ubt 4
+driver, the SCO protocol code will only accept packets with
+exactly this size.
 .It Dv SO_SCO_HANDLE Op Ar uint16_t
-Connection handle for this link. This is read only and provided for
-informational purposes only.
+Connection handle for this link.
+This is read only and provided for informational purposes only.
 .El
 .Pp
 SCO

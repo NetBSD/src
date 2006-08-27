@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_proto.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: bt_proto.c,v 1.2 2006/08/27 11:41:58 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.2 2006/08/27 11:41:58 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -58,15 +58,13 @@ const struct protosw btsw[] = {
 	hci_usrreq,	NULL,		NULL,		NULL,
 	hci_drain,
     },
-#ifdef BLUETOOTH_SCO
     {	/* HCI SCO data (audio) */
 	SOCK_SEQPACKET,	&btdomain,
-	BTPROTO_SCO,	PR_CONNREQUIRED | PR_ATOMIC,
+	BTPROTO_SCO,	PR_CONNREQUIRED | PR_ATOMIC | PR_LISTEN,
 	NULL,		NULL,		NULL,		sco_ctloutput,
 	sco_usrreq,	NULL,		NULL,		NULL,
 	NULL,
     },
-#endif
     {	/* L2CAP Connection Oriented */
 	SOCK_SEQPACKET,	&btdomain,
 	BTPROTO_L2CAP,	PR_CONNREQUIRED | PR_ATOMIC | PR_LISTEN,

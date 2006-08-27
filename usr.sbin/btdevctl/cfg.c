@@ -1,4 +1,4 @@
-/*	$NetBSD: cfg.c,v 1.2 2006/08/17 20:16:54 plunky Exp $	*/
+/*	$NetBSD: cfg.c,v 1.3 2006/08/27 11:41:58 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -53,12 +53,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: cfg.c,v 1.2 2006/08/17 20:16:54 plunky Exp $
+ * $Id: cfg.c,v 1.3 2006/08/27 11:41:58 plunky Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/bthidcontrol/sdp.c,v 1.2 2006/02/10 19:54:17 markus Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cfg.c,v 1.2 2006/08/17 20:16:54 plunky Exp $");
+__RCSID("$NetBSD: cfg.c,v 1.3 2006/08/27 11:41:58 plunky Exp $");
 
 #include <dev/bluetooth/btdev.h>
 #include <dev/usb/usb.h>
@@ -151,7 +151,6 @@ static struct {
 
 static sdp_attr_t	values[8];
 static uint8_t		buffer[NUM(values)][512];
-static int		mtu;
 
 int
 cfg_print(int ac, char **av)
@@ -194,9 +193,8 @@ cfg_query(int ac, char **av)
 	bdaddr_copy(&laddr, BDADDR_ANY);
 	bdaddr_copy(&raddr, BDADDR_ANY);
 	service = NULL;
-	mtu = 0;
 
-	while ((ch = getopt(ac, av, "a:d:m:s:")) != -1) {
+	while ((ch = getopt(ac, av, "a:d:s:")) != -1) {
 		switch (ch) {
 		case 'a': /* remote address */
 			if (!bt_aton(optarg, &raddr)) {
@@ -214,10 +212,6 @@ cfg_query(int ac, char **av)
 			if (!bt_devaddr(optarg, &laddr))
 				err(EXIT_FAILURE, "%s", optarg);
 
-			break;
-
-		case 'm': /* mtu for SCO Audio */
-			mtu = atoi(optarg);
 			break;
 
 		case 's': /* service */
@@ -444,12 +438,6 @@ config_hset(prop_dictionary_t dict)
 	if (obj == NULL || !prop_dictionary_set(dict, "rfcomm-channel", obj))
 		return errno;
 
-	if (mtu != 0) {
-		obj = prop_number_create_integer(mtu);
-		if (obj == NULL || !prop_dictionary_set(dict, "mtu", obj))
-			return errno;
-	}
-
 	return 0;
 }
 
@@ -490,12 +478,6 @@ config_hfp(prop_dictionary_t dict)
 	obj = prop_number_create_integer(channel);
 	if (obj == NULL || !prop_dictionary_set(dict, "rfcomm-channel", obj))
 		return errno;
-
-	if (mtu != 0) {
-		obj = prop_number_create_integer(mtu);
-		if (obj == NULL || !prop_dictionary_set(dict, "mtu", obj))
-			return errno;
-	}
 
 	return 0;
 }

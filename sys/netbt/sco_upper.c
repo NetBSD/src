@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_upper.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: sco_upper.c,v 1.2 2006/08/27 11:41:58 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.2 2006/08/27 11:41:58 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -286,6 +286,16 @@ sco_send(struct sco_pcb *pcb, struct mbuf *m)
 
 	plen = m->m_pkthdr.len;
 	DPRINTFN(10, "%d bytes\n", plen);
+
+	/*
+	 * This is a temporary limitation, as USB devices cannot
+	 * handle SCO packet sizes that are not an integer number
+	 * of Isochronous frames. See ubt(4)
+	 */
+	if (plen != pcb->sp_mtu) {
+		m_freem(m);
+		return EMSGSIZE;
+	}
 
 	M_PREPEND(m, sizeof(hci_scodata_hdr_t), M_DONTWAIT);
 	if (m == NULL)

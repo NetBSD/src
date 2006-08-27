@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.1 2006/07/26 10:43:02 tron Exp $	*/
+/*	$NetBSD: btsco.c,v 1.2 2006/08/27 11:41:58 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.1 2006/07/26 10:43:02 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.2 2006/08/27 11:41:58 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -128,7 +128,6 @@ struct btsco_softc {
 #define BTSCO_OPEN		2
 
 /* sc_flags */
-#define BTSCO_GETMTU		(1 << 0)
 #define BTSCO_LISTEN		(1 << 1)
 
 /* autoconf(9) glue */
@@ -274,19 +273,11 @@ btsco_attach(struct device *parent, struct device *self, void *aux)
 	obj = prop_dictionary_get(dict, "remote-bdaddr");
 	bdaddr_copy(&sc->sc_raddr, prop_data_data_nocopy(obj));
 
-	obj = prop_dictionary_get(dict, "mtu");
-	if (obj && prop_object_type(obj) == PROP_TYPE_NUMBER) {
-		sc->sc_mtu = prop_number_integer_value(obj);
-		aprint_verbose(", mtu %d", sc->sc_mtu);
-	} else {
-		sc->sc_flags |= BTSCO_GETMTU;
-	}
-
 	obj = prop_dictionary_get(dict, "listen");
 	if (obj && prop_object_type(obj) == PROP_TYPE_BOOL
 	    && prop_bool_true(obj)) {
 		sc->sc_flags |= BTSCO_LISTEN;
-		aprint_verbose(", listen on");
+		aprint_verbose(" listen mode");
 	}
 
 	obj = prop_dictionary_get(dict, "rfcomm-channel");
@@ -402,6 +393,12 @@ btsco_sco_connected(void *arg)
 	KASSERT(sc->sc_sco != NULL);
 	KASSERT(sc->sc_state == BTSCO_WAIT_CONNECT);
 
+	/*
+	 * If we are listening, no more need
+	 */
+	if (sc->sc_sco_l != NULL)
+		sco_detach(&sc->sc_sco_l);
+
 	sc->sc_state = BTSCO_OPEN;
 	wakeup(sc);
 }
@@ -410,6 +407,7 @@ static void
 btsco_sco_disconnected(void *arg, int err)
 {
 	struct btsco_softc *sc = arg;
+	int s;
 
 	DPRINTF("%s sc_state %d\n", sc->sc_dev.dv_xname, sc->sc_state);
 
@@ -427,8 +425,21 @@ btsco_sco_disconnected(void *arg, int err)
 		break;
 
 	case BTSCO_OPEN:		/* link lost */
-		/* XXX what to do here? */
-		/* if LISTEN is set, go back to listening? */
+		/*
+		 * If IO is in progress, tell the audio driver that it
+		 * has completed so that when it tries to send more, we
+		 * can indicate an error.
+		 */
+		s = splaudio();
+		if (sc->sc_tx_pending > 0) {
+			sc->sc_tx_pending = 0;
+			(*sc->sc_tx_intr)(sc->sc_tx_intrarg);
+		}
+		if (sc->sc_rx_want > 0) {
+			sc->sc_rx_want = 0;
+			(*sc->sc_rx_intr)(sc->sc_rx_intrarg);
+		}
+		splx(s);
 		break;
 
 	default:
@@ -519,7 +530,7 @@ btsco_open(void *hdl, int flags)
 {
 	struct sockaddr_bt sa;
 	struct btsco_softc *sc = hdl;
-	int err, s;
+	int err, s, timo;
 
 	DPRINTF("%s flags 0x%x\n", sc->sc_dev.dv_xname, flags);
 	/* flags FREAD & FWRITE? */
@@ -550,6 +561,8 @@ btsco_open(void *hdl, int flags)
 			sco_detach(&sc->sc_sco_l);
 			goto done;
 		}
+
+		timo = 0;	/* no timeout */
 	} else {
 		err = sco_attach(&sc->sc_sco, &btsco_sco_proto, sc);
 		if (err)
@@ -567,11 +580,13 @@ btsco_open(void *hdl, int flags)
 			sco_detach(&sc->sc_sco);
 			goto done;
 		}
+
+		timo = BTSCO_TIMEOUT;
 	}
 
 	sc->sc_state = BTSCO_WAIT_CONNECT;
 	while (err == 0 && sc->sc_state == BTSCO_WAIT_CONNECT)
-		err = tsleep(sc, PWAIT | PCATCH, "btsco", BTSCO_TIMEOUT);
+		err = tsleep(sc, PWAIT | PCATCH, "btsco", timo);
 
 	switch (sc->sc_state) {
 	case BTSCO_CLOSED:		/* disconnected */
@@ -588,9 +603,7 @@ btsco_open(void *hdl, int flags)
 		break;
 
 	case BTSCO_OPEN:		/* hurrah */
-		if (sc->sc_flags & BTSCO_GETMTU)
-			sco_getopt(sc->sc_sco, SO_SCO_MTU, &sc->sc_mtu);
-
+		sco_getopt(sc->sc_sco, SO_SCO_MTU, &sc->sc_mtu);
 		break;
 
 	default:
@@ -1119,7 +1132,6 @@ btsco_intr(void *arg)
 
 		if (sco_send(sc->sc_sco, m) > 0) {
 			sc->sc_tx_pending--;
-			m_free(m);
 			break;
 		}
 
