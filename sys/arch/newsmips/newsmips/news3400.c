@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.16 2005/12/11 12:18:25 christos Exp $	*/
+/*	$NetBSD: news3400.c,v 1.17 2006/08/27 05:25:47 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.16 2005/12/11 12:18:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.17 2006/08/27 05:25:47 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,7 +55,7 @@ static void news3400_disable_intr(void);
 static void news3400_enable_timer(void);
 static void news3400_readidrom(uint8_t *);
 
-static int badaddr_flag;
+static volatile int badaddr_flag;
 
 #define INT_MASK_FPU MIPS_INT_MASK_3
 
