@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.8,v 1.36 2006/08/27 21:07:39 martin Exp $
+.\"	$NetBSD: swapctl.8,v 1.37 2006/08/27 22:00:33 martin Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -337,6 +337,19 @@ operation (query dump device) and
 swap partition has been configured.
 If any swap partition is available or
 a dump device is set, the respective query returns 0.
+.Sh CAVEATS
+Using the automatic swap partition detection done by the
+.Fl A Fl t Ar auto
+option may be dangereous.
+Depending on the on-disk partitioning scheme used, the type of a partition
+may not be accurately recognizable as a swap partition.
+The autodetection might recognize and use partitions on
+removable media like USB sticks.
+An easy way to test the autoconfiguration is to use
+.Nm
+with the
+.Fl n
+option.
 .Sh SEE ALSO
 .Xr swapctl 2 ,
 .Xr fstab 5 ,
