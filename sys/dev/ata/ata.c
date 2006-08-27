@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.74 2006/03/29 04:16:48 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.75 2006/08/27 23:50:53 christos Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.74 2006/03/29 04:16:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.75 2006/08/27 23:50:53 christos Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -100,7 +100,7 @@ dev_type_ioctl(atabusioctl);
 
 const struct cdevsw atabus_cdevsw = {
 	atabusopen, atabusclose, noread, nowrite, atabusioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 extern struct cfdriver atabus_cd;

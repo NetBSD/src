@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.327 2006/08/01 07:19:07 lukem Exp $ */
+/*	$NetBSD: wd.c,v 1.328 2006/08/27 23:50:53 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.327 2006/08/01 07:19:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.328 2006/08/27 23:50:53 christos Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1161,6 +1161,14 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct lwp *l)
 		return EIO;
 
 	switch (xfer) {
+        case DIOCGMEDIASIZE:
+		*(off_t *)addr = (off_t)wd->sc_capacity * DEV_BSIZE;
+		return 0;
+
+	case DIOCGSECTORSIZE:
+		*(u_int *)addr = DEV_BSIZE;
+		return 0;
+
 #ifdef HAS_BAD144_HANDLING
 	case DIOCSBAD:
 		if ((flag & FWRITE) == 0)
