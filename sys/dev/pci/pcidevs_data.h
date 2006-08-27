@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.821 2006/08/24 22:40:59 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.822 2006/08/27 08:16:44 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.822 2006/08/24 22:40:20 riz Exp
+ *	NetBSD: pcidevs,v 1.823 2006/08/27 08:16:16 christos Exp
  */
 
 /*
@@ -4280,8 +4280,20 @@ static const struct pci_product pci_products[] = {
 	    "RS480 Host Bridge",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS482M,
+	    "Radeon Xpress Series (RS482M)",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_XRP,
 	    "RS480 PCI Express Root Port",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PPB_5A36,
+	    "RS480 PCI Express Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PPB_5A3F,
+	    "RS480 PCI Express Bridge",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B60,
@@ -4650,6 +4662,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5901A2,
 	    "BCM5901A 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4318,
+	    "BCM4318 AirForce One 54g",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401,
@@ -5676,6 +5692,10 @@ static const struct pci_product pci_products[] = {
 	    "WL11000P PCI WaveLAN/IEEE 802.11",
 	},
 	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_00F7,
+	    "Integrated OHCI IEEE 1394 Host Controller",
+	},
+	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6729,
 	    "OZ6729 PCI-PCMCIA Bridge",
 	},
@@ -5706,6 +5726,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6972,
 	    "OZ6912/OZ6972 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_7120,
+	    "Integrated MMC/SD Controller",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_7130,
+	    "Integrated MS/xD/SM Controller",
 	},
 	{
 	    PCI_VENDOR_ES, PCI_PRODUCT_ES_FREEDOM,
@@ -12064,4 +12092,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2423;
+const int pci_nproducts = 2430;

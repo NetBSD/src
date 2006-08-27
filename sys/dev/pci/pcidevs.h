@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.822 2006/08/24 22:40:59 riz Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.823 2006/08/27 08:16:44 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.822 2006/08/24 22:40:20 riz Exp
+ *	NetBSD: pcidevs,v 1.823 2006/08/27 08:16:16 christos Exp
  */
 
 /*
@@ -1178,7 +1178,10 @@
 #define	PCI_PRODUCT_ATI_RADEON_RV280_5963	0x5963		/* Radeon 9200 5963 */
 #define	PCI_PRODUCT_ATI_RADEON_RV280_5964	0x5964		/* Radeon 9200SE 5964 */
 #define	PCI_PRODUCT_ATI_RS480_HB	0x5950		/* RS480 Host Bridge */
+#define	PCI_PRODUCT_ATI_RS482M	0x5975		/* Radeon Xpress Series (RS482M) */
 #define	PCI_PRODUCT_ATI_RS480_XRP	0x5a34		/* RS480 PCI Express Root Port */
+#define	PCI_PRODUCT_ATI_RS480_PPB_5A36	0x5a36		/* RS480 PCI Express Bridge */
+#define	PCI_PRODUCT_ATI_RS480_PPB_5A3F	0x5a3f		/* RS480 PCI Express Bridge */
 #define	PCI_PRODUCT_ATI_RADEON_RV370_5B60	0x5b60		/* Radeon X300 (RV370) 5B60 */
 #define	PCI_PRODUCT_ATI_RADEON_RV370_5B64	0x5b64		/* FireGL V3100 (RV370) 5B64 */
 #define	PCI_PRODUCT_ATI_RADEON_RV370_5B65	0x5b64		/* FireGL D1100 (RV370) 5B65 */
@@ -1299,6 +1302,7 @@
 #define	PCI_PRODUCT_BROADCOM_BCM4401_B0	0x170c		/* BCM4401-B0 10/100 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5901	0x170d		/* BCM5901 10/100 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5901A2	0x170e		/* BCM5901A 10/100 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM4318	0x4318		/* BCM4318 AirForce One 54g */
 #define	PCI_PRODUCT_BROADCOM_BCM4401	0x4401		/* BCM4401 10/100 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_5801	0x5801		/* 5801 Security processor */
 #define	PCI_PRODUCT_BROADCOM_5802	0x5802		/* 5802 Security processor */
@@ -1649,6 +1653,7 @@
 #define	PCI_PRODUCT_EUMITCOM_WL11000P	0x1100		/* WL11000P PCI WaveLAN/IEEE 802.11 */
 
 /* O2 Micro */
+#define	PCI_PRODUCT_O2MICRO_00F7	0x00f7		/* Integrated OHCI IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_O2MICRO_OZ6729	0x6729		/* OZ6729 PCI-PCMCIA Bridge */
 #define	PCI_PRODUCT_O2MICRO_OZ6730	0x673A		/* OZ6730 PCI-PCMCIA Bridge */
 #define	PCI_PRODUCT_O2MICRO_OZ6832	0x6832		/* OZ6832/OZ6833 PCI-CardBus Bridge */
@@ -1657,6 +1662,8 @@
 #define	PCI_PRODUCT_O2MICRO_OZ6922	0x6925		/* OZ6922 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_O2MICRO_OZ6933	0x6933		/* OZ6933 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_O2MICRO_OZ6972	0x6972		/* OZ6912/OZ6972 PCI-CardBus Bridge */
+#define	PCI_PRODUCT_O2MICRO_7120	0x7120		/* Integrated MMC/SD Controller */
+#define	PCI_PRODUCT_O2MICRO_7130	0x7130		/* Integrated MS/xD/SM Controller */
 
 /* Evans & Sutherland products */
 #define	PCI_PRODUCT_ES_FREEDOM	0x0001		/* Freedom PCI-GBus Interface */
