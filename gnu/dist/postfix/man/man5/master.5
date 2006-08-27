@@ -1,4 +1,4 @@
-.\"	$NetBSD: master.5,v 1.1.1.2 2006/07/19 01:16:45 rpaulo Exp $
+.\"	$NetBSD: master.5,v 1.1.1.3 2006/08/27 00:38:03 rpaulo Exp $
 .\"
 .TH MASTER 5 
 .ad
@@ -136,7 +136,7 @@ Automatically wake up the named service after the specified
 number of seconds. The wake up is implemented by connecting
 to the service and sending a wake up request.  A ? at the
 end of the wake-up time field requests that no wake up
-events be sent before the service is used.
+events be sent before the first time a service is used.
 Specify 0 for no automatic wake up.
 .sp
 The \fBpickup\fR(8), \fBqmgr\fR(8) and \fBflush\fR(8)

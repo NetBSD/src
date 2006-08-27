@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_templates.c,v 1.1.1.1 2006/07/19 01:17:18 rpaulo Exp $	*/
+/*	$NetBSD: bounce_templates.c,v 1.1.1.2 2006/08/27 00:39:27 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -95,7 +95,7 @@
   * The fail template is for permanent failure.
   */
 static const char *def_bounce_failure_body[] = {
-    "This is the $mail_name program at host $myhostname.",
+    "This is the mail system at host $myhostname.",
     "",
     "I'm sorry to have to inform you that your message could not",
     "be delivered to one or more recipients. It's attached below.",
@@ -105,7 +105,7 @@ static const char *def_bounce_failure_body[] = {
     "If you do so, please include this problem report. You can",
     "delete your own text from the attached returned message.",
     "",
-    "                   The $mail_name program",
+    "                   The mail system",
     0,
 };
 
@@ -126,7 +126,7 @@ static const BOUNCE_TEMPLATE def_bounce_failure_template = {
   * The delay template is for delayed mail notifications.
   */
 static const char *def_bounce_delay_body[] = {
-    "This is the $mail_name program at host $myhostname.",
+    "This is the mail system at host $myhostname.",
     "",
     "####################################################################",
     "# THIS IS A WARNING ONLY.  YOU DO NOT NEED TO RESEND YOUR MESSAGE. #",
@@ -141,7 +141,7 @@ static const char *def_bounce_delay_body[] = {
     "If you do so, please include this problem report. You can",
     "delete your own text from the attached returned message.",
     "",
-    "                   The $mail_name program",
+    "                   The mail system",
     0,
 };
 
@@ -163,14 +163,14 @@ static const BOUNCE_TEMPLATE def_bounce_delay_template = {
   * notifications.
   */
 static const char *def_bounce_success_body[] = {
-    "This is the $mail_name program at host $myhostname.",
+    "This is the mail system at host $myhostname.",
     "",
     "Your message was successfully delivered to the destination(s)",
     "listed below. If the message was delivered to mailbox you will",
     "receive no further notifications. Otherwise you may still receive",
     "notifications of mail delivery errors from other systems.",
     "",
-    "                   The $mail_name program",
+    "                   The mail system",
     0,
 };
 
@@ -192,11 +192,11 @@ static const BOUNCE_TEMPLATE def_bounce_success_template = {
   * address verification (sendmail -bv).
   */
 static const char *def_bounce_verify_body[] = {
-    "This is the $mail_name program at host $myhostname.",
+    "This is the mail system at host $myhostname.",
     "",
     "Enclosed is the mail delivery report that you requested.",
     "",
-    "                   The $mail_name program",
+    "                   The mail system",
     0,
 };
 

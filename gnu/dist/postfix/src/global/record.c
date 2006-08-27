@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.1.1.4 2006/07/19 01:17:28 rpaulo Exp $	*/
+/*	$NetBSD: record.c,v 1.1.1.5 2006/08/27 00:39:56 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -295,18 +295,42 @@ int     rec_get_raw(VSTREAM *stream, VSTRING *buf, ssize_t maxsize, int flags)
 int     rec_goto(VSTREAM *stream, const char *buf)
 {
     off_t   offset;
+    static const char *saved_path;
+    static off_t saved_offset;
+    static int reverse_count;
 
+    /*
+     * Crude workaround for queue file loops. VSTREAMs currently have no
+     * option to attach application-specific data, so we use global state and
+     * simple logic to detect if an application switches streams. We trigger
+     * on reverse jumps only. There's one reverse jump for every inserted
+     * header, but only one reverse jump for all appended recipients. No-one
+     * is likely to insert 10000 message headers, but someone might append
+     * 10000 recipients.
+     */
+#define STREQ(x,y) ((x) == (y) && strcmp((x), (y)) == 0)
+#define REVERSE_JUMP_LIMIT	10000
+
+    if (!STREQ(saved_path, VSTREAM_PATH(stream))) {
+	saved_path = VSTREAM_PATH(stream);
+	reverse_count = 0;
+	saved_offset = 0;
+    }
     while (ISSPACE(*buf))
 	buf++;
     if ((offset = off_cvt_string(buf)) < 0) {
 	msg_warn("%s: malformed pointer record value: %s",
 		 VSTREAM_PATH(stream), buf);
 	return (REC_TYPE_ERROR);
+    } else if (offset < saved_offset && ++reverse_count > REVERSE_JUMP_LIMIT) {
+	msg_warn("%s: too many reverse jump records", VSTREAM_PATH(stream));
+	return (REC_TYPE_ERROR);
     } else if (offset > 0 && vstream_fseek(stream, offset, SEEK_SET) < 0) {
 	msg_warn("%s: seek error after pointer record: %m",
 		 VSTREAM_PATH(stream));
 	return (REC_TYPE_ERROR);
     } else {
+	saved_offset = offset;
 	return (0);
     }
 }
