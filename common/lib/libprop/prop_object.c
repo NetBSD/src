@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.4 2006/08/21 04:13:28 thorpej Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.5 2006/08/27 22:31:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -604,7 +604,7 @@ static const struct _prop_object_internalizer {
 
 	INTERNALIZER("string", _prop_string_internalize),
 
-	{ 0 }
+	{ 0, 0, NULL }
 };
 
 #undef INTERNALIZER
