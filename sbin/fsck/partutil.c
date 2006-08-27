@@ -1,4 +1,4 @@
-/*	$NetBSD: partutil.c,v 1.1 2006/08/26 21:54:05 christos Exp $	*/
+/*	$NetBSD: partutil.c,v 1.2 2006/08/27 09:20:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: partutil.c,v 1.1 2006/08/26 21:54:05 christos Exp $");
+__RCSID("$NetBSD: partutil.c,v 1.2 2006/08/27 09:20:53 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
@@ -74,7 +74,7 @@ static void
 part2wedge(struct dkwedge_info *dkw, const struct disklabel *lp, const char *s)
 {
 	struct stat sb;
-	struct partition *pp;
+	const struct partition *pp;
 	int ptn;
 
 	(void)memset(dkw, 0, sizeof(*dkw));
