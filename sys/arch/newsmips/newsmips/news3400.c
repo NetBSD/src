@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.17 2006/08/27 05:25:47 tsutsui Exp $	*/
+/*	$NetBSD: news3400.c,v 1.18 2006/08/27 06:04:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.17 2006/08/27 05:25:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.18 2006/08/27 06:04:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -183,19 +183,19 @@ news3400_level1_intr(void)
 int
 news3400_badaddr(void *addr, u_int size)
 {
-	volatile int x;
+	volatile u_int x;
 
 	badaddr_flag = 0;
 
 	switch (size) {
 	case 1:
-		x = *(volatile int8_t *)addr;
+		x = *(volatile uint8_t *)addr;
 		break;
 	case 2:
-		x = *(volatile int16_t *)addr;
+		x = *(volatile uint16_t *)addr;
 		break;
 	case 4:
-		x = *(volatile int32_t *)addr;
+		x = *(volatile uint32_t *)addr;
 		break;
 	}
 
