@@ -12637,3 +12637,57 @@ Apologies for any names omitted.
 	Cleanup: change redundant milter_abort() and milter_disc_event()
 	calls into NO-OPs.  This avoids unnecessary panic() events
 	for completely harmless conditions.  File: milter/milter8.c.
+
+20060805
+
+	Bugfix  (introduced Postfix 2.3): #ifdef damage caused
+	smtp_sasl_start() to be invoked twice. Reported by C-J
+	Lofstedt. File: smtp/smtp_sasl_proto.c.
+
+20060806
+
+	Postfix no longer announces its name in delivery status
+	notifications.  Users believe that Wietse provides a free
+	helpdesk service that solves all their email problems.
+	Credits to Jonathan Balester.  File: bounce/bounce_templates.c.
+
+20060807
+
+	Bugfix (introduced Postfix 2.2): when upgrading from Postfix
+	< 2.2 with the third-party TLS patch, the post-install
+	upgrade procedure didn't put a "?" in the existing tlsmgr
+	entry, causing tlsmgr to repeatedly start and exit when TLS
+	support was not compiled in.  File: conf/post-install.
+
+20060812
+
+	Bugfix (introduced Postfix < alpha): safety mechanism in
+	mail_date() didn't work.  Found in code review.  File:
+	global/mail_date.c.
+
+20060822
+
+	Added missing logging for "message to large" etc.  Files:
+	smtpd/smtpd.c, cleanup/cleanup_milter.c.
+
+20060823
+
+	Bugfix (introduced Postfix 2.2): segfault when vstream_fclose()
+	attempted to flush unwritten output, after vstream_fdclose()
+	had already disconnected the stream from its file descriptor.
+	File: util/vstream.c.
+
+	Bugfix (introduced Postfix 2.2): vstream_fdclose() did not
+	flush unwritten output before disconnecting a stream from
+	its file descriptor(s).  File: util/vstream.c.
+
+20060825
+
+	Bugfix (introduced Postfix 2.3): with headers-only mail, a
+	Milter "header insert" action corrupted the queue file. The
+	cleanup server executed some end-of-body action before the
+	end-of-header actions. File: cleanup/cleanup_message.c.
+
+	Robustness: mail delivery agents now detect loops in queue
+	files. Files with too many backward jumps are saved to the
+	"corrupt" directory.  File: global/record.c.

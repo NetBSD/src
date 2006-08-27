@@ -11,6 +11,13 @@ instead, a new snapshot is released.
 The mail_release_date configuration parameter (format: yyyymmdd)
 specifies the release date of a stable release or snapshot release.
 
+Incompatible changes with Postfix 2.3.3
+---------------------------------------
+
+Postfix no longer announces its name in delivery status notifications.
+Users believe that Wietse provides a free help desk service that
+solves all their email problems.
+
 Critical notes
 --------------
 

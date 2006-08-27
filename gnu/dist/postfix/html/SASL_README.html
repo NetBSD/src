@@ -113,9 +113,8 @@ Postfix versions. </p>
 <h2><a name="build_dovecot">Building Postfix with Dovecot SASL
 support</a></h2>
 
-<p> Dovecot SASL support is available in Postfix 2.3 and later. The
-Dovecot source code is available via <a href="http://www.dovecot.org/">http://www.dovecot.org/</a>. At
-the time
+<p> Support for the Dovecot version 1 SASL protocol is available
+in Postfix 2.3 and later.  At the time
 of writing, only server-side SASL support is available, so you can't
 use it to authenticate to your network provider's server. Dovecot
 uses its own daemon process for authentication. This keeps the
@@ -127,7 +126,7 @@ in the Postfix top-level directory: </p>
 
 <blockquote>
 <pre>
-% make makefiles CCARGS='-DUSE_SASL_AUTH -DDEF_SASL_SERVER_TYPE=\"dovecot\"'
+% make makefiles CCARGS='-DUSE_SASL_AUTH -DDEF_SERVER_SASL_TYPE=\"dovecot\"'
 </pre>
 </blockquote>
 
@@ -138,7 +137,7 @@ in the Postfix top-level directory: </p>
 
 <ul>
 
-<li> <p> The "-DDEF_SASL_SERVER_TYPE" stuff is not necessary; it just
+<li> <p> The "-DDEF_SERVER_SASL_TYPE" stuff is not necessary; it just
 makes Postfix configuration a little more convenient because you
 don't have to specify the SASL plug-in type in the Postfix <a href="postconf.5.html">main.cf</a>
 file.  </p>

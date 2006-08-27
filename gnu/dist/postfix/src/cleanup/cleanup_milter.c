@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_milter.c,v 1.1.1.2 2006/08/01 00:03:43 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_milter.c,v 1.1.1.3 2006/08/27 00:39:34 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -215,10 +215,13 @@
 
 static void cleanup_milter_set_error(CLEANUP_STATE *state, int err)
 {
-    if (err == EFBIG)
+    if (err == EFBIG) {
+	msg_warn("%s: queue file size limit exceeded", state->queue_id);
 	state->errs |= CLEANUP_STAT_SIZE;
-    else
+    } else {
+	msg_warn("%s: write queue file: %m", state->queue_id);
 	state->errs |= CLEANUP_STAT_WRITE;
+    }
 }
 
 /* cleanup_milter_error - return dummy error description */

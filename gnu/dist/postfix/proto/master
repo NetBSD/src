@@ -128,7 +128,7 @@
 #	number of seconds. The wake up is implemented by connecting
 #	to the service and sending a wake up request.  A ? at the
 #	end of the wake-up time field requests that no wake up
-#	events be sent before the service is used.
+#	events be sent before the first time a service is used.
 #	Specify 0 for no automatic wake up.
 # .sp
 #	The \fBpickup\fR(8), \fBqmgr\fR(8) and \fBflush\fR(8)
