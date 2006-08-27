@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.148 2006/08/25 11:54:48 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.149 2006/08/27 09:40:00 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4435,4 +4435,12 @@ sys/arch/cobalt/conf/INSTALL			1.24
 
 	Add option SOSEND_NO_LOAN to fix a panic on cobalt.
 	[tsutsui, ticket #1478]
+
+sys/dev/pci/if_fxp_pci.c			1.44,1.47
+sys/dev/pci/pcidevs				1.756,1.810
+
+	- PR/32494: Add ID 0x1068 for Intel PRO/100 VE (LOM) found on Sony Vaio
+	          S4HRP laptops.
+	- Recognize another Intel PRO/100 VM Network Controller.
+	[oster, ticket #1479]
 
