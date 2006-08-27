@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.8 2006/05/04 23:22:21 lukem Exp $	*/
+/*	$NetBSD: getent.c,v 1.9 2006/08/27 06:58:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.8 2006/05/04 23:22:21 lukem Exp $");
+__RCSID("$NetBSD: getent.c,v 1.9 2006/08/27 06:58:55 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -254,7 +254,7 @@ group(int argc, char *argv[])
 	} else {
 		for (i = 2; i < argc; i++) {
 			if (parsenum(argv[i], &id))
-				gr = getgrgid((gid_t)id);
+				gr = getgrgid(id);
 			else
 				gr = getgrnam(argv[i]);
 			if (gr != NULL)
@@ -399,7 +399,7 @@ passwd(int argc, char *argv[])
 	} else {
 		for (i = 2; i < argc; i++) {
 			if (parsenum(argv[i], &id))
-				pw = getpwuid((uid_t)id);
+				pw = getpwuid(id);
 			else
 				pw = getpwnam(argv[i]);
 			if (pw != NULL)
@@ -440,7 +440,7 @@ protocols(int argc, char *argv[])
 	} else {
 		for (i = 2; i < argc; i++) {
 			if (parsenum(argv[i], &id))
-				pe = getprotobynumber((int)id);
+				pe = getprotobynumber(id);
 			else
 				pe = getprotobyname(argv[i]);
 			if (pe != NULL)
@@ -481,7 +481,7 @@ rpc(int argc, char *argv[])
 	} else {
 		for (i = 2; i < argc; i++) {
 			if (parsenum(argv[i], &id))
-				re = getrpcbynumber((int)id);
+				re = getrpcbynumber(id);
 			else
 				re = getrpcbyname(argv[i]);
 			if (re != NULL)
@@ -526,7 +526,7 @@ services(int argc, char *argv[])
 			if (proto != NULL)
 				*proto++ = '\0';
 			if (parsenum(argv[i], &id))
-				se = getservbyport((int)htons(id), proto);
+				se = getservbyport(htons(id), proto);
 			else
 				se = getservbyname(argv[i], proto);
 			if (se != NULL)
