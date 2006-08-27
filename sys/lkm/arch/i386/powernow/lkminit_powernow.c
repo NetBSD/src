@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_powernow.c,v 1.5 2006/08/08 21:04:29 xtraeme Exp $	*/
+/*	$NetBSD: lkminit_powernow.c,v 1.6 2006/08/27 10:10:55 xtraeme Exp $	*/
 
 /*
  * Derived from:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.5 2006/08/08 21:04:29 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.6 2006/08/27 10:10:55 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,8 @@ powernow_mod_handle(struct lkm_table *lkmtp, int cmd)
 	struct cpu_info *ci;
 	int err = 0;	/* default = success */
 
+	rval = 0;
+
 	switch (cmd) {
 	case LKM_E_LOAD:
 		/*
@@ -79,17 +81,31 @@ powernow_mod_handle(struct lkm_table *lkmtp, int cmd)
 	
 		ci = curcpu();
 
+		/* Test for Athlon M first... */
 		rval = powernow_probe(ci, 0x600);
+		if (!rval)
+			/* not found... try Athlon 64 now */
+			rval = powernow_probe(ci, 0xf00);
 
-		if (rval) {
+		DPRINTF(("%s: rval=%d\n", __func__, rval));
+
+		if (rval != 0) {
 			featflags = powernow_extflags(ci, rval);
-			if (featflags)
-				k7_powernow_init();
+			if (featflags) {
+				if (rval == 6) /* Athlon M */
+					k7_powernow_init();
+				else if (rval == 15) /* Athlon 64 */
+					k8_powernow_init();
+			}
 		}
 		break;		/* Success */
 
 	case LKM_E_UNLOAD:
-		k7_powernow_destroy();
+		if (rval == 6)
+			k7_powernow_destroy();
+		else if (rval == 15)
+			k8_powernow_destroy();
+
 		break;		/* Success */
 
 	default:	/* we only understand load/unload */
