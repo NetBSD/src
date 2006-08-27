@@ -1,4 +1,4 @@
-/*	$NetBSD: mallocvar.h,v 1.4 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: mallocvar.h,v 1.5 2006/08/27 22:20:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -69,7 +69,9 @@ struct malloc_type type[1] = {						\
 	  0, /* ks_limblocks */						\
 	  0, /* ks_mapblocks */						\
 	  0, /* ks_maxused */						\
-	  limit }							\
+	  limit, /* ks_limit */						\
+	  0, /* ks_size */						\
+	  0, /* ks_spare */ }						\
 };									\
 __link_set_add_data(malloc_types, type)
 
