@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.76 2006/08/23 15:44:30 christos Exp $	*/
+/*	$NetBSD: twe.c,v 1.77 2006/08/27 17:05:39 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.76 2006/08/23 15:44:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.77 2006/08/27 17:05:39 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1924,6 +1924,8 @@ twe_describe_controller(struct twe_softc *sc)
 	int i, rv = 0;
 	uint32_t dsize;
 	uint8_t ports;
+
+	ports = 0;
 
 	/* get the port count */
 	rv |= twe_param_get_1(sc, TWE_PARAM_CONTROLLER,
