@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_data.c,v 1.2.2.1 2006/08/23 21:21:14 tron Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.2.2.2 2006/08/27 01:20:56 riz Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ static const struct _prop_object_type _prop_object_type_data = {
 };
 
 #define	prop_object_is_data(x)		\
-	((x)->pd_obj.po_type == &_prop_object_type_data)
+	((x) != NULL && (x)->pd_obj.po_type == &_prop_object_type_data)
 
 static void
 _prop_data_free(void *v)

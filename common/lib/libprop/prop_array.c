@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.c,v 1.3.2.1 2006/08/23 21:21:14 tron Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.3.2.2 2006/08/27 01:20:56 riz Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ static const struct _prop_object_type _prop_object_type_array = {
 };
 
 #define	prop_object_is_array(x) 	\
-	((x)->pa_obj.po_type == &_prop_object_type_array)
+	((x) != NULL && (x)->pa_obj.po_type == &_prop_object_type_array)
 
 #define	prop_array_is_immutable(x) (((x)->pa_flags & PA_F_IMMUTABLE) != 0)
 
