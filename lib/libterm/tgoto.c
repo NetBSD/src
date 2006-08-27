@@ -1,4 +1,4 @@
-/*	$NetBSD: tgoto.c,v 1.23 2005/02/04 15:52:08 perry Exp $	*/
+/*	$NetBSD: tgoto.c,v 1.24 2006/08/27 08:28:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tgoto.c,v 1.23 2005/02/04 15:52:08 perry Exp $");
+__RCSID("$NetBSD: tgoto.c,v 1.24 2006/08/27 08:28:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -43,10 +43,12 @@ __RCSID("$NetBSD: tgoto.c,v 1.23 2005/02/04 15:52:08 perry Exp $");
 #include <termcap.h>
 #include <termcap_private.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 #define	CTRL(c)	((c) & 037)
 
-#define MAXRETURNSIZE 64
+#define MAXRETURNSIZE 128
 
 char	*UP;
 char	*BC;
@@ -80,10 +82,10 @@ tgoto(const char *CM, int destcol, int destline)
 {
 	static char result[MAXRETURNSIZE];
 
-	if (t_goto(NULL, CM, destcol, destline, result, MAXRETURNSIZE) >= 0)
-		return result;
-	else
-		return ("OOPS");
+	if (t_goto(NULL, CM, destcol, destline, result, sizeof(result)) == -1)
+		(void)snprintf(result, sizeof(result), "OOPS (%s)",
+		    strerror(errno));
+	return result;
 }
 
 /*
@@ -103,7 +105,7 @@ t_goto(struct tinfo *info, const char *CM, int destcol, int destline,
 	int oncol = 0;
 	int which = destline;
 	char *buf_lim = buffer + limit;
-	char dig_buf[3 * sizeof(which)];
+	char dig_buf[64];
 	char *ap = added;
 	char *eap = &added[sizeof(added) / sizeof(added[0])];
 	int k;
@@ -155,7 +157,7 @@ t_goto(struct tinfo *info, const char *CM, int destcol, int destline,
 			if (c != 'd') {
 				c -= '0';
 				if (k > c) {
-					errno = E2BIG;
+					errno = EINVAL;
 					return -1;
 				}
 				while (k < c)
