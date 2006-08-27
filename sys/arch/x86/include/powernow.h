@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow.h,v 1.2.2.1 2006/08/08 16:51:28 tron Exp $	*/
+/*	$NetBSD: powernow.h,v 1.2.2.2 2006/08/27 22:27:42 tron Exp $	*/
 
 /*-
  * Copyright (c) 2004 Martin Végiard.
@@ -178,6 +178,11 @@ struct powernow_pst_s {
 uint32_t	powernow_probe(struct cpu_info *, uint32_t);
 int		powernow_extflags(struct cpu_info *, uint32_t);
 
+/* i386/i386/powernow_k7.c */
+void k7_powernow_init(void);
+void k7_powernow_destroy(void);
+
+/* x86/x86/powernow_k8.c */
 void k8_powernow_init(void);
 
 #endif
