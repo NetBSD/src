@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.21 2006/08/18 21:37:31 martin Exp $
+# 	$NetBSD: INSTALL,v 1.22 2006/08/27 09:48:26 sekiya Exp $
 #
 #	NOTE: this file only needs *additional* things for the install
 #	kernel, that are not already included in GENERIC32!
@@ -6,7 +6,7 @@
 
 include "arch/sparc64/conf/GENERIC"
 
-#ident 		"INSTALL-$Revision: 1.21 $"
+#ident 		"INSTALL-$Revision: 1.22 $"
 
 makeoptions	COPTS="-Os"
 
@@ -25,4 +25,4 @@ options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=10240	# size of memory disk, in blocks
 
 # remove ISO networking
-no options NS, ISO, TPIP, EON
+no options ISO, TPIP, EON
