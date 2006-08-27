@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.34 2006/07/21 16:48:52 ad Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.35 2006/08/27 05:07:12 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.34 2006/07/21 16:48:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.35 2006/08/27 05:07:12 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -94,7 +94,6 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 	RF_RaidDisk_t *badDisk;
 	char   *databuf;
 
-	struct partinfo dpart;
 	struct vnode *vp;
 	struct vattr va;
 	struct lwp *l;
@@ -138,10 +137,10 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 	printf("About to (re-)open the device: %s\n",
 	    raidPtr->Disks[fcol].devname);
 
-	retcode = raidlookup(raidPtr->Disks[fcol].devname, l, &vp);
+	retcode = dk_lookup(raidPtr->Disks[fcol].devname, l, &vp);
 
 	if (retcode) {
-		printf("raid%d: copyback: raidlookup on device: %s failed: %d!\n",
+		printf("raid%d: copyback: dk_lookup on device: %s failed: %d!\n",
 		       raidPtr->raidid, raidPtr->Disks[fcol].devname,
 		       retcode);
 
@@ -156,15 +155,10 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 
 		if ((retcode = VOP_GETATTR(vp, &va, l->l_cred, l)) != 0)
 			return;
-		retcode = VOP_IOCTL(vp, DIOCGPART, &dpart,
-		    FREAD, l->l_cred, l);
+		retcode = rf_getdisksize(vp, l, &raidPtr->Disks[fcol]);
 		if (retcode) {
 			return;
 		}
-		raidPtr->Disks[fcol].blockSize = dpart.disklab->d_secsize;
-
-		raidPtr->Disks[fcol].numBlocks = dpart.part->p_size -
-		    rf_protectedSectors;
 
 		raidPtr->raid_cinfo[fcol].ci_vp = vp;
 		raidPtr->raid_cinfo[fcol].ci_dev = va.va_rdev;

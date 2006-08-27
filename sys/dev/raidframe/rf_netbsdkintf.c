@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.212 2006/08/07 20:02:22 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.213 2006/08/27 05:07:13 christos Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.212 2006/08/07 20:02:22 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.213 2006/08/27 05:07:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -396,6 +396,8 @@ raidattach(int num)
 		raidrootdev[raidID].dv_cfdriver = &raid_cd;
 		snprintf(raidrootdev[raidID].dv_xname,
 		    sizeof(raidrootdev[raidID].dv_xname), "raid%d", raidID);
+		raid_softc[raidID].sc_dkdev.dk_name = 
+		    raidrootdev[raidID].dv_xname;
 
 		RF_Malloc(raidPtrs[raidID], sizeof(RF_Raid_t),
 			  (RF_Raid_t *));
@@ -423,6 +425,7 @@ rf_autoconfig(struct device *self)
 {
 	RF_AutoConfig_t *ac_list;
 	RF_ConfigSet_t *config_sets;
+	int i;
 
 	if (raidautoconfig == 0)
 		return (0);
@@ -445,7 +448,11 @@ rf_autoconfig(struct device *self)
 	 */
 	rf_buildroothack(config_sets);
 
-	return (1);
+	for (i = 0; i < numraid; i++)
+		if (raidPtrs[i] != NULL && raidPtrs[i]->valid)
+			dkwedge_discover(&raid_softc[i].sc_dkdev);
+
+	return 1;
 }
 
 void
@@ -467,6 +474,9 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 		    cset->ac->clabel->autoconfigure==1) {
 			retcode = rf_auto_config_set(cset,&raidID);
 			if (!retcode) {
+#ifdef DEBUG
+				printf("raid%d: configured ok\n", raidID);
+#endif
 				if (cset->rootable) {
 					rootID = raidID;
 					num_root++;
@@ -479,6 +489,9 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 				rf_release_all_vps(cset);
 			}
 		} else {
+#ifdef DEBUG
+			printf("raid%d: not enough components\n", raidID);
+#endif
 			/* we're not autoconfiguring this set...
 			   release the associated resources */
 			rf_release_all_vps(cset);
@@ -559,6 +572,15 @@ raidopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	lp = rs->sc_dkdev.dk_label;
 
 	part = DISKPART(dev);
+
+	/*
+	 * If there are wedges, and this is not RAW_PART, then we
+	 * need to fail.
+	 */
+	if (rs->sc_dkdev.dk_nwedges != 0 && part != RAW_PART) {
+		error = EBUSY;
+		goto bad;
+	}
 	pmask = (1 << part);
 
 	if ((rs->sc_flags & RAIDF_INITED) &&
@@ -572,8 +594,7 @@ raidopen(dev_t dev, int flags, int fmt, struct lwp *l)
 		    ((part >= lp->d_npartitions) ||
 			(lp->d_partitions[part].p_fstype == FS_UNUSED))) {
 			error = ENXIO;
-			raidunlock(rs);
-			return (error);
+			goto bad;
 		}
 	}
 	/* Prevent this unit from being unconfigured while open. */
@@ -604,6 +625,7 @@ raidopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	rs->sc_dkdev.dk_openmask =
 	    rs->sc_dkdev.dk_copenmask | rs->sc_dkdev.dk_bopenmask;
 
+bad:
 	raidunlock(rs);
 
 	return (error);
@@ -804,6 +826,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
+	struct dkwedge_info *dkw;
 
 	if (unit >= numraid)
 		return (ENXIO);
@@ -815,6 +838,15 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 	/* Must be open for writes for these commands... */
 	switch (cmd) {
+#ifdef DIOCGSECTORSIZE
+	case DIOCGSECTORSIZE:
+		*(u_int *)data = raidPtr->bytesPerSector;
+		return 0;
+	case DIOCGMEDIASIZE:
+		*(off_t *)data =
+		    (off_t)raidPtr->totalSectors * raidPtr->bytesPerSector;
+		return 0;
+#endif
 	case DIOCSDINFO:
 	case DIOCWDINFO:
 #ifdef __HAVE_OLD_DISKLABEL
@@ -822,6 +854,8 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case ODIOCSDINFO:
 #endif
 	case DIOCWLABEL:
+	case DIOCAWEDGE:
+	case DIOCDWEDGE:
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 	}
@@ -840,6 +874,9 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case DIOCGPART:
 	case DIOCWLABEL:
 	case DIOCGDEFLABEL:
+	case DIOCAWEDGE:
+	case DIOCDWEDGE:
+	case DIOCLWEDGES:
 	case RAIDFRAME_SHUTDOWN:
 	case RAIDFRAME_REWRITEPARITY:
 	case RAIDFRAME_GET_INFO:
@@ -1591,6 +1628,18 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 #endif
 
+	case DIOCAWEDGE:
+	case DIOCDWEDGE:
+	    	dkw = (void *)data;
+
+		/* If the ioctl happens here, the parent is us. */
+		(void)strcpy(dkw->dkw_parent, rs->sc_xname);
+		return cmd == DIOCAWEDGE ? dkwedge_add(dkw) : dkwedge_del(dkw);
+
+	case DIOCLWEDGES:
+		return dkwedge_list(&rs->sc_dkdev,
+		    (struct dkwedge_list *)data, l);
+
 	default:
 		retcode = ENOTTY;
 	}
@@ -2095,48 +2144,6 @@ raidmakedisklabel(struct raid_softc *rs)
 	lp->d_checksum = dkcksum(lp);
 }
 /*
- * Lookup the provided name in the filesystem.  If the file exists,
- * is a valid block device, and isn't being used by anyone else,
- * set *vpp to the file's vnode.
- * You'll find the original of this in ccd.c
- */
-int
-raidlookup(char *path, struct lwp *l, struct vnode **vpp)
-{
-	struct nameidata nd;
-	struct vnode *vp;
-	struct vattr va;
-	int     error;
-
-	if (l == NULL)
-		return(ESRCH);	/* Is ESRCH the best choice? */
-
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, l);
-	if ((error = vn_open(&nd, FREAD | FWRITE, 0)) != 0) {
-		return (error);
-	}
-	vp = nd.ni_vp;
-	if (vp->v_usecount > 1) {
-		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, l->l_cred, l);
-		return (EBUSY);
-	}
-	if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)) != 0) {
-		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, l->l_cred, l);
-		return (error);
-	}
-	/* XXX: eventually we should handle VREG, too. */
-	if (va.va_type != VBLK) {
-		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, l->l_cred, l);
-		return (ENOTBLK);
-	}
-	VOP_UNLOCK(vp, 0);
-	*vpp = vp;
-	return (0);
-}
-/*
  * Wait interruptibly for an exclusive lock.
  *
  * XXX
@@ -2580,6 +2587,63 @@ rf_ReconstructInPlaceThread(struct rf_recon_req *req)
 	kthread_exit(0);	/* does not return */
 }
 
+static RF_AutoConfig_t *
+rf_get_component(RF_AutoConfig_t *ac_list, dev_t dev, struct vnode *vp,
+    const char *cname, RF_SectorCount_t size)
+{
+	int good_one = 0;
+	RF_ComponentLabel_t *clabel; 
+	RF_AutoConfig_t *ac;
+
+	clabel = malloc(sizeof(RF_ComponentLabel_t), M_RAIDFRAME, M_NOWAIT);
+	if (clabel == NULL) {
+oomem:
+		    while(ac_list) {
+			    ac = ac_list;
+			    if (ac->clabel)
+				    free(ac->clabel, M_RAIDFRAME);
+			    ac_list = ac_list->next;
+			    free(ac, M_RAIDFRAME);
+		    }
+		    printf("RAID auto config: out of memory!\n");
+		    return NULL; /* XXX probably should panic? */
+	}
+
+	if (!raidread_component_label(dev, vp, clabel)) {
+		    /* Got the label.  Does it look reasonable? */
+		    if (rf_reasonable_label(clabel) && 
+			(clabel->partitionSize <= size)) {
+#if DEBUG
+			    printf("Component on: %s: %llu\n",
+				cname, (unsigned long long)size);
+			    rf_print_component_label(clabel);
+#endif
+			    /* if it's reasonable, add it, else ignore it. */
+			    ac = malloc(sizeof(RF_AutoConfig_t), M_RAIDFRAME,
+				M_NOWAIT);
+			    if (ac == NULL) {
+				    free(clabel, M_RAIDFRAME);
+				    goto oomem;
+			    }
+			    strlcpy(ac->devname, cname, sizeof(ac->devname));
+			    ac->dev = dev;
+			    ac->vp = vp;
+			    ac->clabel = clabel;
+			    ac->next = ac_list;
+			    ac_list = ac;
+			    good_one = 1;
+		    }
+	}
+	if (!good_one) {
+		/* cleanup */
+		free(clabel, M_RAIDFRAME);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
+		vput(vp);
+	}
+	return ac_list;
+}
+
 RF_AutoConfig_t *
 rf_find_raid_components()
 {
@@ -2587,13 +2651,10 @@ rf_find_raid_components()
 	struct disklabel label;
 	struct device *dv;
 	dev_t dev;
-	int bmajor;
+	int bmajor, bminor, wedge;
 	int error;
 	int i;
-	int good_one;
-	RF_ComponentLabel_t *clabel;
 	RF_AutoConfig_t *ac_list;
-	RF_AutoConfig_t *ac;
 
 
 	/* initialize the AutoConfig list */
@@ -2633,7 +2694,10 @@ rf_find_raid_components()
 
 		/* get a vnode for the raw partition of this disk */
 
-		dev = MAKEDISKDEV(bmajor, device_unit(dv), RAW_PART);
+		wedge = device_is_a(dv, "dk");
+		bminor = minor(device_unit(dv));
+		dev = wedge ? makedev(bmajor, bminor) :
+		    MAKEDISKDEV(bmajor, bminor, RAW_PART);
 		if (bdevvp(dev, &vp))
 			panic("RAID can't alloc vnode");
 
@@ -2643,6 +2707,28 @@ rf_find_raid_components()
 			/* "Who cares."  Continue looking
 			   for something that exists*/
 			vput(vp);
+			continue;
+		}
+
+		if (wedge) {
+			struct dkwedge_info dkw;
+			error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD,
+			    NOCRED, 0);
+			if (error) {
+				printf("RAIDframe: can't get wedge info for "
+				    "dev %s (%d)\n", dv->dv_xname, error);
+out:
+				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+				VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
+				vput(vp);
+				continue;
+			}
+
+			if (strcmp(dkw.dkw_ptype, DKW_PTYPE_RAIDFRAME) != 0)
+				goto out;
+				
+			ac_list = rf_get_component(ac_list, dev, vp,
+			    dv->dv_xname, dkw.dkw_size);
 			continue;
 		}
 
@@ -2667,7 +2753,9 @@ rf_find_raid_components()
 		if (error)
 			continue;
 
-		for (i=0; i < label.d_npartitions; i++) {
+		for (i = 0; i < label.d_npartitions; i++) {
+			char cname[sizeof(ac_list->devname)];
+
 			/* We only support partitions marked as RAID */
 			if (label.d_partitions[i].p_fstype != FS_RAID)
 				continue;
@@ -2682,77 +2770,15 @@ rf_find_raid_components()
 				vput(vp);
 				continue;
 			}
-
-			good_one = 0;
-
-			clabel = (RF_ComponentLabel_t *)
-				malloc(sizeof(RF_ComponentLabel_t),
-				       M_RAIDFRAME, M_NOWAIT);
-			if (clabel == NULL) {
-				while(ac_list) {
-					ac = ac_list;
-					if (ac->clabel)
-						free(ac->clabel, M_RAIDFRAME);
-					ac_list = ac_list->next;
-					free(ac, M_RAIDFRAME);
-				};
-				printf("RAID auto config: out of memory!\n");
-				return(NULL); /* XXX probably should panic? */
-			}
-
-			if (!raidread_component_label(dev, vp, clabel)) {
-				/* Got the label.  Does it look reasonable? */
-				if (rf_reasonable_label(clabel) &&
-				    (clabel->partitionSize <=
-				     label.d_partitions[i].p_size)) {
-#if DEBUG
-					printf("Component on: %s%c: %d\n",
-					       dv->dv_xname, 'a'+i,
-					       label.d_partitions[i].p_size);
-					rf_print_component_label(clabel);
-#endif
-					/* if it's reasonable, add it,
-					   else ignore it. */
-					ac = (RF_AutoConfig_t *)
-						malloc(sizeof(RF_AutoConfig_t),
-						       M_RAIDFRAME,
-						       M_NOWAIT);
-					if (ac == NULL) {
-						/* XXX should panic?? */
-						while(ac_list) {
-							ac = ac_list;
-							if (ac->clabel)
-								free(ac->clabel,
-								    M_RAIDFRAME);
-							ac_list = ac_list->next;
-							free(ac, M_RAIDFRAME);
-						}
-						free(clabel, M_RAIDFRAME);
-						return(NULL);
-					}
-
-					snprintf(ac->devname,
-					    sizeof(ac->devname), "%s%c",
-					    dv->dv_xname, 'a'+i);
-					ac->dev = dev;
-					ac->vp = vp;
-					ac->clabel = clabel;
-					ac->next = ac_list;
-					ac_list = ac;
-					good_one = 1;
-				}
-			}
-			if (!good_one) {
-				/* cleanup */
-				free(clabel, M_RAIDFRAME);
-				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-				VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
-				vput(vp);
-			}
+			snprintf(cname, sizeof(cname), "%s%c",
+			    dv->dv_xname, 'a' + i);
+			ac_list = rf_get_component(ac_list, dev, vp, cname,
+				label.d_partitions[i].p_size);
 		}
 	}
-	return(ac_list);
+	return ac_list;
 }
+
 
 static int
 rf_reasonable_label(RF_ComponentLabel_t *clabel)
@@ -3338,4 +3364,29 @@ rf_buf_queue_check(int raidid)
 	} 
 	/* default is nothing to do */
 	return 1;
+}
+
+int
+rf_getdisksize(struct vnode *vp, struct lwp *l, RF_RaidDisk_t *diskPtr)
+{
+	struct partinfo dpart;
+	struct dkwedge_info dkw;
+	int error;
+
+	error = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, l->l_cred, l);
+	if (error == 0) {
+		diskPtr->blockSize = dpart.disklab->d_secsize;
+		diskPtr->numBlocks = dpart.part->p_size - rf_protectedSectors;
+		diskPtr->partitionSize = dpart.part->p_size;
+		return 0;
+	}
+
+	error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, l->l_cred, l);
+	if (error == 0) {
+		diskPtr->blockSize = 512;	/* XXX */
+		diskPtr->numBlocks = dkw.dkw_size - rf_protectedSectors;
+		diskPtr->partitionSize = dkw.dkw_size;
+		return 0;
+	}
+	return error;
 }
