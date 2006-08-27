@@ -1,4 +1,4 @@
-/*	$NetBSD: at_proto.c,v 1.8 2006/08/25 19:33:51 matt Exp $	*/
+/*	$NetBSD: at_proto.c,v 1.9 2006/08/27 23:49:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.8 2006/08/25 19:33:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.9 2006/08/27 23:49:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,11 +71,13 @@ const struct protosw atalksw[] = {
 };
 
 struct domain		atalkdomain = {
-    PF_APPLETALK,	"appletalk",	0,	0,	0,
+    PF_APPLETALK,	"appletalk",	NULL,	NULL,	NULL,
     atalksw, &atalksw[sizeof(atalksw)/sizeof(atalksw[0])],
     rn_inithead,
     32,
     sizeof(struct sockaddr_at),
-    0, 0,
+    NULL, NULL,
     { &atintrq1, &atintrq2 },
+    { NULL },
+    MOWNER_INIT
 };
