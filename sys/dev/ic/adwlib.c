@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.36 2006/05/21 23:56:09 christos Exp $        */
+/* $NetBSD: adwlib.c,v 1.37 2006/08/27 23:19:03 christos Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.36 2006/05/21 23:56:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.37 2006/08/27 23:19:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ static void AdwDelayMicroSecond(u_int32_t);
  * Additional structure information can be found in adwlib.h where
  * the structure is defined.
  */
-const static ADW_EEPROM adw_3550_Default_EEPROM = {
+static const ADW_EEPROM adw_3550_Default_EEPROM = {
 	ADW_EEPROM_BIOS_ENABLE,	/* 00 cfg_lsw */
 	0x0000,			/* 01 cfg_msw */
 	0xFFFF,			/* 02 disc_enable */
@@ -140,10 +140,19 @@ const static ADW_EEPROM adw_3550_Default_EEPROM = {
 	0,			/* 32 adv_err_addr */
 	0,			/* 33 saved_dvc_err_code */
 	0,			/* 34 saved_adv_err_code */
-	0			/* 35 saved_adv_err_addr */
+	0,			/* 35 saved_adv_err_addr */
+	{			/* 36-55 reserved1[16] */
+	  0,0,0,0,0,0,0,0,0,0,
+	  0,0,0,0,0,0,0,0,0,0
+	},
+	0,			/* 56 cisptr_lsw */
+	0,			/* 57 cisprt_msw */
+	0,			/* 58 subsysvid */
+	0,			/* 59 subsysid */
+	{ 0,0,0,0 }		/* 60-63 reserved2[4] */
 };
 
-const static ADW_EEPROM adw_38C0800_Default_EEPROM = {
+static const ADW_EEPROM adw_38C0800_Default_EEPROM = {
 	ADW_EEPROM_BIOS_ENABLE,	/* 00 cfg_lsw */
 	0x0000,			/* 01 cfg_msw */
 	0xFFFF,			/* 02 disc_enable */
@@ -189,7 +198,7 @@ const static ADW_EEPROM adw_38C0800_Default_EEPROM = {
 	{ 0,0,0,0 }		/* 60-63 reserved2[4] */
 };
 
-const static ADW_EEPROM adw_38C1600_Default_EEPROM = {
+static const ADW_EEPROM adw_38C1600_Default_EEPROM = {
 	ADW_EEPROM_BIOS_ENABLE,	/* 00 cfg_lsw */
 	0x0000,			/* 01 cfg_msw */
 	0xFFFF,			/* 02 disc_enable */
