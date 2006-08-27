@@ -1,4 +1,4 @@
-/*	$NetBSD: tgoto.c,v 1.24 2006/08/27 08:28:38 christos Exp $	*/
+/*	$NetBSD: tgoto.c,v 1.25 2006/08/27 08:47:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tgoto.c,v 1.24 2006/08/27 08:28:38 christos Exp $");
+__RCSID("$NetBSD: tgoto.c,v 1.25 2006/08/27 08:47:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,9 +82,7 @@ tgoto(const char *CM, int destcol, int destline)
 {
 	static char result[MAXRETURNSIZE];
 
-	if (t_goto(NULL, CM, destcol, destline, result, sizeof(result)) == -1)
-		(void)snprintf(result, sizeof(result), "OOPS (%s)",
-		    strerror(errno));
+	(void)t_goto(NULL, CM, destcol, destline, result, sizeof(result));
 	return result;
 }
 
@@ -92,13 +90,14 @@ tgoto(const char *CM, int destcol, int destline)
  * New interface.  Functionally the same as tgoto but uses the tinfo struct
  * to set UP and BC.  The arg buffer is filled with the result string, limit
  * defines the maximum number of chars allowed in buffer.  The function
- * returns 0 on success, -1 otherwise.
+ * returns 0 on success, -1 otherwise, the result string contains an error
+ * string on failure.
  */
 int
 t_goto(struct tinfo *info, const char *CM, int destcol, int destline,
     char *buffer, size_t limit)
 {
-	char added[10];
+	char added[32];
 	const char *cp = CM;
 	char *dp = buffer;
 	int c;
@@ -121,6 +120,7 @@ t_goto(struct tinfo *info, const char *CM, int destcol, int destline,
 	}
 
 	if (cp == 0) {
+		(void)strlcpy(buffer, "no fmt", limit);
 		errno = EINVAL;
 		return -1;
 	}
@@ -129,6 +129,8 @@ t_goto(struct tinfo *info, const char *CM, int destcol, int destline,
 		if (c != '%' || ((c = *cp++) == '%')) {
 			*dp++ = c;
 			if (dp >= buf_lim) {
+				(void)strlcpy(buffer, "no space copying %",
+				    limit);
 				errno = E2BIG;
 				return -1;
 			}
@@ -157,6 +159,9 @@ t_goto(struct tinfo *info, const char *CM, int destcol, int destline,
 			if (c != 'd') {
 				c -= '0';
 				if (k > c) {
+					(void)snprintf(buffer, limit,
+					    "digit buf overflow %d %d",
+					    k, c);
 					errno = EINVAL;
 					return -1;
 				}
@@ -165,6 +170,7 @@ t_goto(struct tinfo *info, const char *CM, int destcol, int destline,
 			}
 
 			if (dp + k >= buf_lim) {
+				(void)strlcpy(buffer, "digit buf copy", limit);
 				errno = E2BIG;
 				return -1;
 			}
@@ -221,6 +227,10 @@ t_goto(struct tinfo *info, const char *CM, int destcol, int destline,
 
 						while ((*ap++ = *as++) != '\0')
 							if (ap >= eap) {
+								(void)strlcpy(
+								    buffer,
+								    "add ovfl",
+								    limit);
 								errno = E2BIG;
 								return -1;
 							}
@@ -230,6 +240,7 @@ t_goto(struct tinfo *info, const char *CM, int destcol, int destline,
 			}
 			*dp++ = which;
 			if (dp >= buf_lim) {
+				(void)strlcpy(buffer, "dot copy", limit);
 				errno = E2BIG;
 				return -1;
 			}
@@ -258,6 +269,7 @@ t_goto(struct tinfo *info, const char *CM, int destcol, int destline,
 #endif
 
 		default:
+			(void)snprintf(buffer, limit, "bad format `%c'", c);
 			errno = EINVAL;
 			return -1;
 		}
@@ -267,13 +279,14 @@ t_goto(struct tinfo *info, const char *CM, int destcol, int destline,
 		which = oncol ? destcol : destline;
 	}
 	if (dp + (ap - added) >= buf_lim) {
+		(void)strlcpy(buffer, "big added", limit);
 		errno = E2BIG;
 		return -1;
 	}
 
 	*ap = '\0';
-	while ((*dp++ = *ap++) != '\0')
-	    continue;
+	for (ap = added; (*dp++ = *ap++) != '\0';)
+		continue;
 
 	return 0;
 }
