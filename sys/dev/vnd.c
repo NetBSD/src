@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.148 2006/07/21 16:48:48 ad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.149 2006/08/27 18:45:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.148 2006/07/21 16:48:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.149 2006/08/27 18:45:20 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -507,6 +507,9 @@ vndstrategy(struct buf *bp)
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndstrategy(%p): unit %d\n", bp, unit);
 #endif
+	while (vnd->sc_maxactive > 0 && vnd->sc_active >= vnd->sc_maxactive) {
+		tsleep(&vnd->sc_tab, PRIBIO, "vndac", 0);
+	}
 	BUFQ_PUT(vnd->sc_tab, bp);
 	wakeup(&vnd->sc_tab);
 	splx(s);
