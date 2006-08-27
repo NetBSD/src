@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.14 2006/08/26 20:26:44 christos Exp $
+# $NetBSD: GENERIC,v 1.15 2006/08/27 14:09:40 tsutsui Exp $
 #
 # GENERIC machine description file
 # This machine description file is used to generate the default NetBSD
@@ -25,7 +25,7 @@ include 	"arch/ews4800mips/conf/std.ews4800mips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.14 $"
+#ident		"GENERIC-$Revision: 1.15 $"
 
 maxusers	16
 
@@ -189,10 +189,15 @@ sbdio0	at mainbus?
 
 mkclock0 at sbdio?
 
-#kbms*	at sbdo?
+zsc0	at sbdio?
+zstty0	at zsc? channel 0	# SIO ch-A
+zstty1	at zsc? channel 1	# SIO ch-B
+
+#kbms*	at sbdio?
 #wskbd0		at kbms? console ?
 #wsmouse0	at kbms?
 
+zsc1	at sbdio?
 ewskbd0 at zsc?
 wskbd* at ewskbd?
 ewsms0 at zsc?
@@ -200,10 +205,6 @@ wsmouse* at ewsms?
 
 fb*	at sbdio?
 wsdisplay*	at fb? console ?
-
-zsc0	at sbdio?
-zstty0	at zsc0 channel 0	# SIO ch-A
-zstty1	at zsc0 channel 1	# SIO ch-B
 
 # Disk
 osiop*	at sbdio? flags 0x0000
