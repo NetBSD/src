@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.26 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.27 2006/08/27 19:02:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,12 +37,6 @@
 #include <machine/ansi.h>
 #include <sys/featuretest.h>
 
-#if defined(_MIPS_BSD_API) && \
-    !((_MIPS_BSD_API == _MIPS_BSD_API_LP32) || \
-      (_MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN))
-#error stdargs.h does not work with 64 bit ABIs
-#endif
-
 typedef _BSD_VA_LIST_	va_list;
 
 #ifdef __lint__
@@ -60,6 +54,12 @@ typedef _BSD_VA_LIST_	va_list;
 #define __va_copy(dest, src)	__builtin_va_copy((dest), (src))
 
 #else
+
+#if defined(_MIPS_BSD_API) && \
+    !((_MIPS_BSD_API == _MIPS_BSD_API_LP32) || \
+      (_MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN))
+#error stdargs.h does not work with 64 bit ABIs
+#endif
 
 #define	va_start(ap, last) \
 	((ap) = (va_list)__builtin_next_arg(last))
