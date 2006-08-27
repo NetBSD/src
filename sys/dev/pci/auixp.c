@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.15 2006/08/17 17:11:28 christos Exp $ */
+/* $NetBSD: auixp.c,v 1.16 2006/08/27 23:59:40 christos Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.15 2006/08/17 17:11:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.16 2006/08/27 23:59:40 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -239,7 +239,9 @@ static const struct audio_hw_if auixp_hw_if = {
 	auixp_mappage,
 	auixp_get_props,
 	auixp_trigger_output,
-	auixp_trigger_input
+	auixp_trigger_input,
+	NULL,			/* dev_ioctl */
+	NULL,			/* powerstate */
 };
 
 
