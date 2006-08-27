@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.87 2006/02/20 16:50:37 thorpej Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.88 2006/08/27 23:23:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.87 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.88 2006/08/27 23:23:02 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -1081,6 +1081,8 @@ nextbyte:
 
 		switch (sc->sc_imess[0]) {
 		case MSG_CMDCOMPLETE:
+#ifdef 0
+			/* impossible dleft is unsigned */
 			if (sc->sc_dleft < 0) {
 				periph = acb->xs->xs_periph;
 				printf("%s: %ld extra bytes from %d:%d\n",
@@ -1088,6 +1090,7 @@ nextbyte:
 				    periph->periph_target, periph->periph_lun);
 				sc->sc_dleft = 0;
 			}
+#endif
 			acb->xs->resid = acb->data_length = sc->sc_dleft;
 			sc->sc_state = AIC_CMDCOMPLETE;
 			break;
