@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: if_lmc.h,v 1.5 2006/07/21 16:48:51 ad Exp $
+ * $NetBSD: if_lmc.h,v 1.6 2006/08/27 19:19:47 christos Exp $
  *
  * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
@@ -961,16 +961,6 @@ const char *ssi_cables[] =
 /*    Declarations above here are shared with the user lmcconfig program.  */
 /*    Declarations below here are private to the kernel device driver.     */
 /***************************************************************************/
-
-#ifndef KERNEL
-# define KERNEL 0
-#endif
-#ifndef _KERNEL
-# define _KERNEL 0
-#endif
-#ifndef __KERNEL__
-# define __KERNEL__ 0
-#endif
 
 #if KERNEL || _KERNEL || __KERNEL__
 
