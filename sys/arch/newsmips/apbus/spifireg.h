@@ -1,4 +1,4 @@
-/*	$NetBSD: spifireg.h,v 1.1 2000/10/30 10:07:35 tsubai Exp $	*/
+/*	$NetBSD: spifireg.h,v 1.2 2006/08/27 08:56:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,53 +27,53 @@
  */
 
 struct spifi_reg {
-	volatile int spstat;		/* RO: SPIFI state		*/
-	volatile int cmlen;		/* RW: Command/message length	*/
-	volatile int cmdpage;		/* RW: Command page		*/
-	volatile int count_hi;		/* RW: Data count (high)	*/
-	volatile int count_mid;		/* RW:            (mid)		*/
-	volatile int count_low;		/* RW:            (low)		*/
-	volatile int svptr_hi;		/* RO: Saved data pointer (high)*/
-	volatile int svptr_mid;		/* RO:                    (mid)	*/
-	volatile int svptr_low;		/* RO:                    (low) */
-	volatile int intr;		/* RW: Processor interrupt	*/
-	volatile int imask;		/* RW: Processor interrupt mask	*/
-	volatile int prctrl;		/* RW: Processor control	*/
-	volatile int prstat;		/* RO: Processor status		*/
-	volatile int init_status;	/* RO: Initiator status		*/
-	volatile int fifoctrl;		/* RW: FIFO control		*/
-	volatile int fifodata;		/* RW: FIFO data		*/
-	volatile int config;		/* RW: Configuration		*/
-	volatile int data_xfer;		/* RW: Data transfer		*/
-	volatile int autocmd;		/* RW: Auto command control	*/
-	volatile int autostat;		/* RW: Auto status control	*/
-	volatile int resel;		/* RW: Reselection		*/
-	volatile int select;		/* RW: Selection		*/
-	volatile int prcmd;		/* WO: Processor command	*/
-	volatile int auxctrl;		/* RW: Aux control		*/
-	volatile int autodata;		/* RW: Auto data control	*/
-	volatile int loopctrl;		/* RW: Loopback control		*/
-	volatile int loopdata;		/* RW: Loopback data		*/
-	volatile int identify;		/* WO: Identify (?)		*/
-	volatile int complete;		/* WO: Command complete (?)	*/
-	volatile int scsi_status;	/* WO: SCSI status (?)		*/
-	volatile int data;		/* RW: Data register (?)	*/
-	volatile int icond;		/* RO: Interrupt condition	*/
-	volatile int fastwide;		/* RW: Fast/wide enable		*/
-	volatile int exctrl;		/* RW: Extended control		*/
-	volatile int exstat;		/* RW: Extended status		*/
-	volatile int test;		/* RW: SPIFI test register	*/
-	volatile int quematch;		/* RW: Queue match		*/
-	volatile int quecode;		/* RW: Queue code		*/
-	volatile int quetag;		/* RW: Queue tag		*/
-	volatile int quepage;		/* RW: Queue page		*/
-	int image[88];			/* (image of the above)		*/
+	volatile uint32_t spstat;	/* RO: SPIFI state		*/
+	volatile uint32_t cmlen;	/* RW: Command/message length	*/
+	volatile uint32_t cmdpage;	/* RW: Command page		*/
+	volatile uint32_t count_hi;	/* RW: Data count (high)	*/
+	volatile uint32_t count_mid;	/* RW:            (mid)		*/
+	volatile uint32_t count_low;	/* RW:            (low)		*/
+	volatile uint32_t svptr_hi;	/* RO: Saved data pointer (high)*/
+	volatile uint32_t svptr_mid;	/* RO:                    (mid)	*/
+	volatile uint32_t svptr_low;	/* RO:                    (low) */
+	volatile uint32_t intr;		/* RW: Processor interrupt	*/
+	volatile uint32_t imask;	/* RW: Processor interrupt mask	*/
+	volatile uint32_t prctrl;	/* RW: Processor control	*/
+	volatile uint32_t prstat;	/* RO: Processor status		*/
+	volatile uint32_t init_status;	/* RO: Initiator status		*/
+	volatile uint32_t fifoctrl;	/* RW: FIFO control		*/
+	volatile uint32_t fifodata;	/* RW: FIFO data		*/
+	volatile uint32_t config;	/* RW: Configuration		*/
+	volatile uint32_t data_xfer;	/* RW: Data transfer		*/
+	volatile uint32_t autocmd;	/* RW: Auto command control	*/
+	volatile uint32_t autostat;	/* RW: Auto status control	*/
+	volatile uint32_t resel;	/* RW: Reselection		*/
+	volatile uint32_t select;	/* RW: Selection		*/
+	volatile uint32_t prcmd;	/* WO: Processor command	*/
+	volatile uint32_t auxctrl;	/* RW: Aux control		*/
+	volatile uint32_t autodata;	/* RW: Auto data control	*/
+	volatile uint32_t loopctrl;	/* RW: Loopback control		*/
+	volatile uint32_t loopdata;	/* RW: Loopback data		*/
+	volatile uint32_t identify;	/* WO: Identify (?)		*/
+	volatile uint32_t complete;	/* WO: Command complete (?)	*/
+	volatile uint32_t scsi_status;	/* WO: SCSI status (?)		*/
+	volatile uint32_t data;		/* RW: Data register (?)	*/
+	volatile uint32_t icond;	/* RO: Interrupt condition	*/
+	volatile uint32_t fastwide;	/* RW: Fast/wide enable		*/
+	volatile uint32_t exctrl;	/* RW: Extended control		*/
+	volatile uint32_t exstat;	/* RW: Extended status		*/
+	volatile uint32_t test;		/* RW: SPIFI test register	*/
+	volatile uint32_t quematch;	/* RW: Queue match		*/
+	volatile uint32_t quecode;	/* RW: Queue code		*/
+	volatile uint32_t quetag;	/* RW: Queue tag		*/
+	volatile uint32_t quepage;	/* RW: Queue page		*/
+	uint32_t image[88];		/* (image of the above)		*/
 	struct {
-		volatile int cdb[12];	/* RW: Command descriptor block */
-		volatile int quecode;	/* RW: Queue code		*/
-		volatile int quetag;	/* RW: Queue tag		*/
-		volatile int idmsg;	/* RW: Identify message		*/
-		volatile int status;	/* RW: SCSI status		*/
+		volatile uint32_t cdb[12]; /* RW: Command descriptor block */
+		volatile uint32_t quecode; /* RW: Queue code		*/
+		volatile uint32_t quetag;  /* RW: Queue tag		*/
+		volatile uint32_t idmsg;   /* RW: Identify message     	*/
+		volatile uint32_t status;  /* RW: SCSI status		*/
 	} cmbuf[8];
 };
 
