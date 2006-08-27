@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.4.18.1 2006/08/24 12:44:26 tron Exp $ */
+/* $NetBSD: udf.h,v 1.4.18.2 2006/08/27 01:15:35 riz Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -183,7 +183,7 @@ struct udf_mount {
 	LIST_HEAD(, udf_node) udf_nodes[UDF_INODE_HASHSIZE];
 
 	/* allocation pool for udf_node's descriptors */
-	struct pool desc_pool;
+	struct pool *desc_pool;
 
 	/* locks */
 	struct simplelock ihash_slock;

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.11.2.1 2006/08/24 12:44:26 tron Exp $ */
+/* $NetBSD: udf_subr.c,v 1.11.2.2 2006/08/27 01:15:35 riz Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.11.2.1 2006/08/24 12:44:26 tron Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.11.2.2 2006/08/27 01:15:35 riz Exp $");
 #endif /* not lint */
 
 
@@ -707,7 +707,8 @@ udf_read_anchors(struct udf_mount *ump, struct udf_args *args)
 
 	/* VATs are only recorded on sequential media, but initialise */
 	ump->first_possible_vat_location = track_start + 256 + 1;
-	ump->last_possible_vat_location  = track_end;
+	ump->last_possible_vat_location  = track_end
+		+ ump->discinfo.blockingnr;
 
 	return ok;
 }
@@ -1257,7 +1258,7 @@ udf_search_vat(struct udf_mount *ump, union udf_pmap *mapping)
 	mapping = mapping;
 
 	vat_loc = ump->last_possible_vat_location;
-	early_vat_loc = vat_loc - ump->discinfo.blockingnr;
+	early_vat_loc = vat_loc - 2 * ump->discinfo.blockingnr;
 	early_vat_loc = MAX(early_vat_loc, ump->first_possible_vat_location);
 	late_vat_loc  = vat_loc + 1024;
 
@@ -1698,9 +1699,9 @@ udf_dispose_node(struct udf_node *node)
 
 	/* free associated memory and the node itself */
 	if (node->fe)
-		pool_put(&node->ump->desc_pool, node->fe);
+		pool_put(node->ump->desc_pool, node->fe);
 	if (node->efe)
-		pool_put(&node->ump->desc_pool, node->efe);
+		pool_put(node->ump->desc_pool, node->efe);
 	pool_put(&udf_node_pool, node);
 
 	return 0;
@@ -1901,21 +1902,21 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 		/* get descriptor space from our pool */
 		KASSERT(udf_tagsize(tmpdscr, lb_size) == lb_size);
 
-		dscr = pool_get(&ump->desc_pool, PR_WAITOK);
+		dscr = pool_get(ump->desc_pool, PR_WAITOK);
 		memcpy(dscr, tmpdscr, lb_size);
 		free(tmpdscr, M_UDFTEMP);
 
 		/* record and process/update (ext)fentry */
 		if (dscr_type == TAGID_FENTRY) {
 			if (node->fe)
-				pool_put(&ump->desc_pool, node->fe);
+				pool_put(ump->desc_pool, node->fe);
 			node->fe  = &dscr->fe;
 			strat = udf_rw16(node->fe->icbtag.strat_type);
 			udf_file_type = node->fe->icbtag.file_type;
 			file_size = udf_rw64(node->fe->inf_len);
 		} else {
 			if (node->efe)
-				pool_put(&ump->desc_pool, node->efe);
+				pool_put(ump->desc_pool, node->efe);
 			node->efe = &dscr->efe;
 			strat = udf_rw16(node->efe->icbtag.strat_type);
 			udf_file_type = node->efe->icbtag.file_type;
