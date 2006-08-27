@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.4 2006/08/26 23:55:22 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.5 2006/08/27 13:13:36 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.4 2006/08/26 23:55:22 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.5 2006/08/27 13:13:36 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -319,10 +319,10 @@ wd33c93_reset(struct wd33c93_softc *dev)
 	GET_SBIC_cdb1(dev, dev->sc_rev);
 
 	switch (csr) {
-	case 0x0:
+	case SBIC_CSR_RESET:
 		dev->sc_chip = SBIC_CHIP_WD33C93;
 		break;
-	case 0x1:
+	case SBIC_CSR_RESET_AM:
 		SET_SBIC_queue_tag(dev, 0x55);
 		GET_SBIC_queue_tag(dev, reg);
 		dev->sc_chip = (reg == 0x55) ?
