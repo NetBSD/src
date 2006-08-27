@@ -1,4 +1,4 @@
-/*	$NetBSD: iopio.h,v 1.2 2001/09/27 18:43:38 ad Exp $	*/
+/*	$NetBSD: iopio.h,v 1.3 2006/08/27 20:32:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -47,12 +47,14 @@
 #define	IOP_MAX_MSG_SIZE	160	/* Maximum message frame size */
 #define	IOP_MIN_MSG_SIZE	128	/* Minumum size supported by IOP */
 
+#ifdef _KERNEL
 struct iop_tidmap {
 	u_short	it_tid;
 	u_short	it_flags;
 	char	it_dvname[sizeof(((struct device *)NULL)->dv_xname)];
 };
 #define	IT_CONFIGURED	0x02	/* target configured */
+#endif
 
 struct ioppt_buf {
 	void	*ptb_data;	/* pointer to buffer */
