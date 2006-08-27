@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.208 2006/06/27 02:07:08 jmcneill Exp $	*/
+/*	$NetBSD: audio.c,v 1.209 2006/08/27 23:54:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.208 2006/06/27 02:07:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.209 2006/08/27 23:54:50 christos Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -182,13 +182,13 @@ static const struct portname itable[] = {
 	{ AudioNmicrophone,	AUDIO_MICROPHONE },
 	{ AudioNline,		AUDIO_LINE_IN },
 	{ AudioNcd,		AUDIO_CD },
-	{ 0 }
+	{ 0, 0 }
 };
 static const struct portname otable[] = {
 	{ AudioNspeaker,	AUDIO_SPEAKER },
 	{ AudioNheadphone,	AUDIO_HEADPHONE },
 	{ AudioNline,		AUDIO_LINE_OUT },
-	{ 0 }
+	{ 0, 0 }
 };
 void	au_setup_ports(struct audio_softc *, struct au_mixer_ports *,
 			mixer_devinfo_t *, const struct portname *);
@@ -229,7 +229,7 @@ dev_type_kqfilter(audiokqfilter);
 
 const struct cdevsw audio_cdevsw = {
 	audioopen, audioclose, audioread, audiowrite, audioioctl,
-	nostop, notty, audiopoll, audiommap, audiokqfilter,
+	nostop, notty, audiopoll, audiommap, audiokqfilter, D_OTHER
 };
 
 /* The default audio mode: 8 kHz mono mu-law */
