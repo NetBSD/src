@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.19 2006/07/19 01:35:40 rpaulo Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.20 2006/08/27 00:47:09 rpaulo Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -28,7 +28,7 @@
 #if defined(FREEBSD2) || defined(FREEBSD3) || defined(FREEBSD4) \
     || defined(FREEBSD5) || defined(FREEBSD6) \
     || defined(BSDI2) || defined(BSDI3) || defined(BSDI4) \
-    || defined(OPENBSD2) || defined(OPENBSD3) \
+    || defined(OPENBSD2) || defined(OPENBSD3) || defined(OPENBSD4) \
     || defined(NETBSD1) || defined(NETBSD2) || defined(NETBSD3) \
     || defined(EKKOBSD1)
 #define SUPPORTED
