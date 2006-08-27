@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.211 2006/08/26 22:06:36 bjh21 Exp $
+#	$NetBSD: DEVNAMES,v 1.212 2006/08/27 10:14:20 bjh21 Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -1106,7 +1106,6 @@ sb			MI
 sbc			mac68k
 sbdsp			MI		Attribute
 sbi			vax
-sbic			acorn26		Attribute
 sbic			acorn32		Attribute
 sbic			amiga		Attribute
 sbic			amigappc	Attribute
