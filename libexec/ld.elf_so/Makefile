@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.74 2006/06/29 19:30:59 skrll Exp $
+#	$NetBSD: Makefile,v 1.75 2006/08/27 07:22:02 simonb Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 .include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
@@ -7,14 +7,14 @@ ARCHSUBDIR=	${MACHINE_CPU}
 M=		${.CURDIR}/arch/${ARCHSUBDIR}
 
 .if ((${MACHINE_ARCH} == "alpha") ||					\
-     (${MACHINE_ARCH} == "arm") || (${MACHINE_ARCH} == "armeb") ||	\
+     (${MACHINE_CPU} == "arm") ||					\
      (${MACHINE_ARCH} == "hppa") ||					\
      (${MACHINE_ARCH} == "i386") ||					\
      (${MACHINE_ARCH} == "m68k") ||					\
-     (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb") ||	\
+     (${MACHINE_CPU} == "mips") ||					\
      (${MACHINE_ARCH} == "powerpc") ||					\
-     (${MACHINE_ARCH} == "sh3eb") || (${MACHINE_ARCH} == "sh3el") ||	\
-     (${MACHINE_ARCH} == "sh5eb") || (${MACHINE_ARCH} == "sh5el") ||	\
+     (${MACHINE_CPU} == "sh3") ||					\
+     (${MACHINE_CPU} == "sh5") ||					\
      (${MACHINE_ARCH} == "sparc") ||					\
      (${MACHINE_ARCH} == "sparc64") ||					\
      (${MACHINE_ARCH} == "x86_64") ||					\
