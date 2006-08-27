@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.4 2006/08/26 10:10:00 xtraeme Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.5 2006/08/27 10:10:55 xtraeme Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.4 2006/08/26 10:10:00 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.5 2006/08/27 10:10:55 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,7 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.4 2006/08/26 10:10:00 xtraeme Exp 
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
 
-#include <x86/include/cpuvar.h>
 #include <x86/include/powernow.h>
 
 #include <dev/isa/isareg.h>
@@ -83,6 +82,13 @@ __KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.4 2006/08/26 10:10:00 xtraeme Exp 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/bus.h>
+
+#ifdef _LKM
+static struct sysctllog *sysctllog;
+#define SYSCTLLOG	&sysctllog
+#else
+#define SYSCTLLOG	NULL
+#endif
 
 /* Global variables */
 struct powernow_cpu_state	*k8pnow_current_state;
@@ -412,28 +418,28 @@ k8_powernow_init(void)
 	}
 
 	/* Create sysctl machdep.powernow.frequency. */
-	if (sysctl_createv(NULL, 0, NULL, &node,
+	if (sysctl_createv(SYSCTLLOG, 0, NULL, &node,
 	    CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE, "machdep", NULL,
 	    NULL, 0, NULL, 0,
 	    CTL_MACHDEP, CTL_EOL) != 0)
 		goto err;
 
-	if (sysctl_createv(NULL, 0, &node, &pnownode,
+	if (sysctl_createv(SYSCTLLOG, 0, &node, &pnownode,
 	    0,
 	    CTLTYPE_NODE, "powernow", NULL,
 	    NULL, 0, NULL, 0,
 	    CTL_CREATE, CTL_EOL) != 0)
 		goto err;
 
-	if (sysctl_createv(NULL, 0, &pnownode, &freqnode,
+	if (sysctl_createv(SYSCTLLOG, 0, &pnownode, &freqnode,
 	    0,
 	    CTLTYPE_NODE, "frequency", NULL,
 	    NULL, 0, NULL, 0,
 	    CTL_CREATE, CTL_EOL) != 0)
 		goto err;
 
-	if (sysctl_createv(NULL, 0, &freqnode, &node,
+	if (sysctl_createv(SYSCTLLOG, 0, &freqnode, &node,
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "target", NULL,
 	    k8pnow_sysctl_helper, 0, NULL, 0,
@@ -442,7 +448,7 @@ k8_powernow_init(void)
 
 	powernow_node_target = node->sysctl_num;
 
-	if (sysctl_createv(NULL, 0, &freqnode, &node,
+	if (sysctl_createv(SYSCTLLOG, 0, &freqnode, &node,
 	    0,
 	    CTLTYPE_INT, "current", NULL,
 	    k8pnow_sysctl_helper, 0, NULL, 0,
@@ -451,7 +457,7 @@ k8_powernow_init(void)
 
 	powernow_node_current = node->sysctl_num;
 
-	if (sysctl_createv(NULL, 0, &freqnode, &node,
+	if (sysctl_createv(SYSCTLLOG, 0, &freqnode, &node,
 	    0,
 	    CTLTYPE_STRING, "available", NULL,
 	    NULL, 0, freq_names, freq_names_len,
@@ -472,4 +478,15 @@ k8_powernow_init(void)
   err:
 	free(cstate, M_DEVBUF);
 	free(freq_names, M_SYSCTLDATA);
+}
+
+void
+k8_powernow_destroy(void)
+{
+#ifdef _LKM
+	sysctl_teardown(SYSCTLLOG);
+
+	if (freq_names)
+		free(freq_names, M_SYSCTLDATA);
+#endif
 }
