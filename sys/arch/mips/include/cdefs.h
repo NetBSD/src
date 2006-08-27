@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.11 1999/04/24 08:10:34 simonb Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.12 2006/08/27 19:04:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -40,5 +40,15 @@
 #define	_MIPS_BSD_API_LP32_64CLEAN	_MIPS_SIM_ABIX32
 #define	_MIPS_BSD_API_N32	_MIPS_SIM_NABI32
 #define	_MIPS_BSD_API_LP64	_MIPS_SIM_ABI64
+
+#if __mips_n64
+#define	_MIPS_BSD_API		_MIPS_BSD_API_LP64
+#elif __mips_n32
+#define	_MIPS_BSD_API		_MIPS_BSD_API_N32
+#elif __mips_o64
+#define	_MIPS_BSD_API		_MIPS_BSD_API_LP32_64CLEAN
+#else
+#define	_MIPS_BSD_API		_MIPS_BSD_API_LP32
+#endif
 
 #endif /* !_MIPS_CDEFS_H_ */
