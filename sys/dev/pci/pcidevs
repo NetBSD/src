@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.822 2006/08/24 22:40:20 riz Exp $
+$NetBSD: pcidevs,v 1.823 2006/08/27 08:16:16 christos Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1171,7 +1171,10 @@ product ATI RADEON_RV280_5962	0x5962	Radeon 9200 5962
 product ATI RADEON_RV280_5963	0x5963	Radeon 9200 5963
 product ATI RADEON_RV280_5964	0x5964	Radeon 9200SE 5964
 product ATI RS480_HB		0x5950	RS480 Host Bridge
+product ATI RS482M		0x5975	Radeon Xpress Series (RS482M)
 product ATI RS480_XRP		0x5a34	RS480 PCI Express Root Port
+product ATI RS480_PPB_5A36	0x5a36	RS480 PCI Express Bridge
+product ATI RS480_PPB_5A3F	0x5a3f	RS480 PCI Express Bridge
 product ATI RADEON_RV370_5B60	0x5b60	Radeon X300 (RV370) 5B60
 product ATI RADEON_RV370_5B64	0x5b64	FireGL V3100 (RV370) 5B64
 product ATI RADEON_RV370_5B65	0x5b64	FireGL D1100 (RV370) 5B65
@@ -1292,6 +1295,7 @@ product BROADCOM BCM5789	0x169d	BCM5789 10/100/1000 Ethernet
 product BROADCOM BCM4401_B0	0x170c	BCM4401-B0 10/100 Ethernet
 product BROADCOM BCM5901	0x170d	BCM5901 10/100 Ethernet
 product BROADCOM BCM5901A2	0x170e	BCM5901A 10/100 Ethernet
+product BROADCOM BCM4318	0x4318	BCM4318 AirForce One 54g
 product BROADCOM BCM4401	0x4401	BCM4401 10/100 Ethernet
 product BROADCOM 5801		0x5801	5801 Security processor
 product BROADCOM 5802		0x5802	5802 Security processor
@@ -1642,6 +1646,7 @@ product ESSTECH2 MAESTRO1	0x0100	Maestro 1 PCI Audio Accelerator
 product EUMITCOM WL11000P	0x1100	WL11000P PCI WaveLAN/IEEE 802.11
 
 /* O2 Micro */
+product O2MICRO 00F7		0x00f7	Integrated OHCI IEEE 1394 Host Controller
 product O2MICRO OZ6729		0x6729	OZ6729 PCI-PCMCIA Bridge
 product O2MICRO OZ6730		0x673A	OZ6730 PCI-PCMCIA Bridge
 product O2MICRO OZ6832		0x6832	OZ6832/OZ6833 PCI-CardBus Bridge
@@ -1650,6 +1655,8 @@ product O2MICRO OZ6872		0x6872	OZ6812/OZ6872 PCI-CardBus Bridge
 product O2MICRO OZ6922		0x6925	OZ6922 PCI-CardBus Bridge
 product O2MICRO OZ6933		0x6933	OZ6933 PCI-CardBus Bridge
 product O2MICRO OZ6972		0x6972	OZ6912/OZ6972 PCI-CardBus Bridge
+product O2MICRO 7120		0x7120	Integrated MMC/SD Controller
+product O2MICRO 7130		0x7130	Integrated MS/xD/SM Controller
 
 /* Evans & Sutherland products */
 product ES FREEDOM	0x0001	Freedom PCI-GBus Interface
