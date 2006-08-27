@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdInterrupt.c,v 1.1 2006/03/23 13:41:13 kochi Exp $	*/
+/*	$NetBSD: OsdInterrupt.c,v 1.2 2006/08/27 22:33:49 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.1 2006/03/23 13:41:13 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.2 2006/08/27 22:33:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -103,7 +103,7 @@ AcpiOsInstallInterruptHandler(UINT32 InterruptNumber,
 
 	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
-	if (InterruptNumber < 0 || InterruptNumber > 255)
+	if (InterruptNumber > 255)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
 	if (ServiceRoutine == NULL)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
@@ -141,7 +141,7 @@ AcpiOsRemoveInterruptHandler(UINT32 InterruptNumber,
 
 	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
-	if (InterruptNumber < 0 || InterruptNumber > 255)
+	if (InterruptNumber > 255)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
 	if (ServiceRoutine == NULL)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
