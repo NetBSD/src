@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.42 2006/08/26 20:03:49 matt Exp $
+#	$NetBSD: Makefile.mips,v 1.43 2006/08/27 18:40:33 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -70,7 +70,11 @@ locore_machdep.o: ${THISMIPS}/${MACHINE}/locore_machdep.S assym.h
 ##
 ## (5) link settings
 ##
+.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+TEXTADDR?=              ${DEFTEXTADDR:C/0x8/0xFFFFFFFF8/}
+.else   
 TEXTADDR?=		${DEFTEXTADDR}
+.endif
 KERNLDSCRIPT?=		${MIPS}/conf/kern.ldscript
 # some mips ports specify a "magic" format
 LINKFORMAT+=		-T ${KERNLDSCRIPT}
