@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.43 2006/08/27 18:40:33 matt Exp $
+#	$NetBSD: Makefile.mips,v 1.44 2006/08/27 21:44:15 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -45,6 +45,9 @@ CPPFLAGS+=	-D${MACHINE}
 DEFGP?=		-G 0
 GP?=		${DEFGP}
 CFLAGS+=	${GP} -mno-abicalls -msoft-float
+.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+CFLAGS+=	-msym32
+.endif
 AFLAGS+=	-mno-abicalls -x assembler-with-cpp -traditional-cpp ${AOPTS}
 
 ##
