@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.18 2006/07/11 17:37:14 drochner Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.19 2006/08/27 23:27:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.18 2006/07/11 17:37:14 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.19 2006/08/27 23:27:44 christos Exp $");
 
 #include "opt_amdpm.h"
 
@@ -67,8 +67,6 @@ static void	amdpm_rnd_callout(void *);
 
 #ifdef AMDPM_RND_COUNTERS
 #define	AMDPM_RNDCNT_INCR(ev)	(ev)->ev_count++
-#else
-#define	AMDPM_RNDCNT_INCR(ev)	/* nothing */
 #endif
 
 static int
@@ -217,7 +215,10 @@ amdpm_rnd_callout(void *v)
 		for (i = 0; i < sizeof(rngreg); i++, rngreg >>= NBBY)
 			AMDPM_RNDCNT_INCR(&sc->sc_rnd_data[rngreg & 0xff]);
 #endif
-	} else
+	}
+#ifdef AMDPM_RND_COUNTERS
+	else
 		AMDPM_RNDCNT_INCR(&sc->sc_rnd_miss);
+#endif
 	callout_reset(&sc->sc_rnd_ch, 1, amdpm_rnd_callout, sc);
 }
