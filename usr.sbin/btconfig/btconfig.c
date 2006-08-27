@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.2 2006/07/26 10:00:43 tron Exp $ */
+/* $NetBSD: btconfig.c,v 1.3 2006/08/27 11:41:58 plunky Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: btconfig.c,v 1.2 2006/07/26 10:00:43 tron Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.3 2006/08/27 11:41:58 plunky Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -146,6 +146,10 @@ uint32_t voice;
 int opt_pto = 0;
 uint32_t pto;
 
+/* set SCO mtu */
+int opt_scomtu;
+uint32_t scomtu;
+
 struct parameter {
 	const char	*name;
 	enum { P_SET, P_CLR, P_STR, P_HEX, P_NUM } type;
@@ -182,6 +186,7 @@ struct parameter {
 	{ "reset",	P_SET,	&opt_reset,	NULL	},
 	{ "voice",	P_HEX,	&opt_voice,	&voice	},
 	{ "pto",	P_NUM,	&opt_pto,	&pto	},
+	{ "scomtu",	P_NUM,	&opt_scomtu,	&scomtu	},
 	{ NULL }
 };
 
@@ -572,6 +577,17 @@ config_unit(void)
 
 		val = htole16(pto * 8 / 5);
 		save_value(HCI_CMD_WRITE_PAGE_TIMEOUT, &val, sizeof(val));
+	}
+
+	if (opt_scomtu) {
+		if (scomtu < 0 || scomtu > 0xff) {
+			warnx("Invalid SCO mtu %d", scomtu);
+		} else {
+			btr.btr_sco_mtu = scomtu;
+
+			if (ioctl(hci, SIOCSBTSCOMTU, &btr) < 0)
+				warn("SIOCSBTSCOMTU");
+		}
 	}
 }
 
