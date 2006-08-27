@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.92 2006/07/21 16:48:52 ad Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.93 2006/08/27 05:07:13 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.92 2006/07/21 16:48:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.93 2006/08/27 05:07:13 christos Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -438,10 +438,10 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	       raidPtr->Disks[col].devname);
 #endif
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
-	retcode = raidlookup(raidPtr->Disks[col].devname, lwp, &vp);
+	retcode = dk_lookup(raidPtr->Disks[col].devname, lwp, &vp);
 
 	if (retcode) {
-		printf("raid%d: rebuilding: raidlookup on device: %s failed: %d!\n",raidPtr->raidid,
+		printf("raid%d: rebuilding: dk_lookup on device: %s failed: %d!\n",raidPtr->raidid,
 		       raidPtr->Disks[col].devname, retcode);
 
 		/* the component isn't responding properly...
