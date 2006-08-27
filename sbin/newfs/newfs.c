@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.93 2006/08/27 18:27:49 christos Exp $	*/
+/*	$NetBSD: newfs.c,v 1.94 2006/08/27 18:49:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.93 2006/08/27 18:27:49 christos Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.94 2006/08/27 18:49:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ int	mfs;			/* run as the memory based filesystem */
 int	Nflag;			/* run without writing file system */
 int	Oflag = 1;		/* format as an 4.3BSD file system */
 int	verbosity;		/* amount of printf() output */
-#define DEFAULT_VERBOSITY 3	/* traditional behavior */
+#define DEFAULT_VERBOSITY 3	/* 4 is traditional behavior */
 int64_t	fssize;			/* file system size */
 int	sectorsize;		/* bytes/sector */
 int	fsize = 0;		/* fragment size */
