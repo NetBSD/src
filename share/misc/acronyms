@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.159 2006/07/18 09:33:50 jnemeth Exp $
+$NetBSD: acronyms,v 1.160 2006/08/27 15:00:12 elad Exp $
 
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
@@ -224,6 +224,7 @@ THX	thanks
 TIA	thanks in advance
 TINC	there is no cabal
 TLA	three letter acronym
+TLDR	too long, didn't read
 TMA	too many abbreviations
 TMI	too much information
 TMTOWTDI	there's more than one way to do it
