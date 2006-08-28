@@ -1,4 +1,4 @@
-/* $NetBSD: copyinoutstr.S,v 1.3 2006/08/28 14:31:18 bjh21 Exp $ */
+/* $NetBSD: copyinoutstr.S,v 1.4 2006/08/28 15:15:50 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copyinoutstr.S,v 1.3 2006/08/28 14:31:18 bjh21 Exp $")
+RCSID("$NetBSD: copyinoutstr.S,v 1.4 2006/08/28 15:15:50 bjh21 Exp $")
 
 #include <sys/errno.h>
 #include "assym.h"
@@ -143,8 +143,8 @@ ENTRY(fubyte)
 	ldr	r2, [r2]
 	ldr	r2, [r2, #P_ADDR]
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
-/* XXX Warning: Rn and Rd must be different in LDRT */
-	ldrbt	r0, [r0]
+	ldrbt	r1, [r0]
+	mov	r0, r1
 	mov	r1, #0
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
 	mov	pc, ip
@@ -157,8 +157,8 @@ ENTRY(fuword)
 	ldr	r2, [r2]
 	ldr	r2, [r2, #P_ADDR]
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
-/* XXX Warning: Rn and Rd must be different in LDRT */
-	ldrt	r0, [r0]
+	ldrt	r1, [r0]
+	mov	r0, r1
 	mov	r1, #0
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
 	mov	pc, ip
