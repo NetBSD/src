@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.2 2006/07/26 10:20:56 tron Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.3 2006/08/28 08:19:53 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.2 2006/07/26 10:20:56 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.3 2006/08/28 08:19:53 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -319,7 +319,7 @@ sco_newconn(void *arg, struct sockaddr_bt *laddr, struct sockaddr_bt *raddr)
 {
 	struct socket *so = arg;
 
-	DPRINTF("New Connection");
+	DPRINTF("New Connection\n");
 	so = sonewconn(so, 0);
 	if (so == NULL)
 		return NULL;
