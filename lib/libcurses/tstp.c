@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.32 2004/03/25 07:35:40 jdc Exp $	*/
+/*	$NetBSD: tstp.c,v 1.32.12.1 2006/08/28 15:06:24 tron Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.32 2004/03/25 07:35:40 jdc Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.32.12.1 2006/08/28 15:06:24 tron Exp $");
 #endif
 #endif				/* not lint */
 
@@ -168,6 +168,10 @@ __set_winchhandler(void)
 		sigemptyset(&sa.sa_mask);
 		sigaction(SIGWINCH, &sa, &owsa);
 		winch_set = 1;
+#ifdef DEBUG
+		__CTRACE("__set_winchhandler: owsa.sa_handler=%p\n",
+		    owsa.sa_handler);
+#endif
 	}
 }
 
@@ -192,6 +196,9 @@ __restore_winchhandler(void)
 int
 __stopwin(void)
 {
+#ifdef DEBUG
+	__CTRACE("__stopwin\n");
+#endif
 	if (_cursesi_screen->endwin)
 		return OK;
 
@@ -204,7 +211,8 @@ __stopwin(void)
 
 	if (curscr != NULL) {
 		__unsetattr(0);
-		__mvcur((int) curscr->cury, (int) curscr->curx, (int) curscr->maxy - 1, 0, 0);
+		__mvcur((int) curscr->cury, (int) curscr->curx,
+		    (int) curscr->maxy - 1, 0, 0);
 	}
 
 	if (__tc_mo != NULL)
@@ -230,6 +238,9 @@ __restartwin(void)
 {
 	struct winsize win;
 
+#ifdef DEBUG
+	__CTRACE("__restartwin\n");
+#endif
 	if (!_cursesi_screen->endwin)
 		return;
 
