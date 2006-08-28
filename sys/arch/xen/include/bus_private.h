@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_private.h,v 1.6 2006/02/16 20:17:15 perry Exp $	*/
+/*	$NetBSD: bus_private.h,v 1.7 2006/08/28 19:58:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -29,7 +29,11 @@
 #include <uvm/uvm_extern.h>
 
 #define	_BUS_PHYS_TO_BUS(pa)	((bus_addr_t)xpmap_ptom(pa))
+#define	_BUS_BUS_TO_PHYS(ba)	((paddr_t)xpmap_mtop(ba))
 #define	_BUS_VIRT_TO_BUS(pm, va) _bus_virt_to_bus((pm), (va))
+#define _BUS_BUS_TO_VM_PAGE(ba) (PHYS_TO_VM_PAGE(xpmap_mtop(ba)))
+#define _BUS_PMAP_ENTER(pmap, va, ba, prot, flags) \
+    pmap_enter(pmap, va, xpmap_mtop(ba), prot, flags)
 
 static __inline bus_addr_t _bus_virt_to_bus(struct pmap *, vaddr_t);
 
