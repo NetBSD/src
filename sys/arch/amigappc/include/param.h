@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9 2005/12/11 12:16:37 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.10 2006/08/28 13:43:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -144,23 +144,6 @@
  */
 #define	NKMEMPAGES_MIN_DEFAULT  ((128 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT  ((128 * 1024 * 1024) >> PAGE_SHIFT)
-
-/*
- * pages ("clicks") to disk blocks
- */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
-/*
- * bytes to pages
- */
-#define	ctob(x)		((x) << PGSHIFT)
-#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
-
-/*
- * bytes to disk blocks
- */
-#define	dbtob(x)	((x) << DEV_BSHIFT)
-#define	btodb(x)	((x) >> DEV_BSHIFT)
 
 /*
  * Some system constants
