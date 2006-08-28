@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.20 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.21 2006/08/28 00:18:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.20 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.21 2006/08/28 00:18:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,12 +74,12 @@ static const struct cac_linkage cac_pci_l0 = {
 
 #define CT_STARTFW	0x01	/* Need to start controller firmware */
 
-struct cac_pci_type {
+static struct cac_pci_type {
 	int	ct_subsysid;
 	int	ct_flags;
 	const struct	cac_linkage *ct_linkage;
 	const char	*ct_typestr;
-} static const cac_pci_type[] = {
+} const cac_pci_type[] = {
 	{ 0x40300e11,	0, 		&cac_l0,	"SMART-2/P" },
 	{ 0x40310e11,	0, 		&cac_l0, 	"SMART-2SL" },
 	{ 0x40320e11,	0, 		&cac_l0,	"Smart Array 3200" },
@@ -92,10 +92,10 @@ struct cac_pci_type {
 	{ 0x40580e11,	0,		&cac_pci_l0,	"Smart Array 431" },
 };
 
-struct cac_pci_product {
+static struct cac_pci_product {
 	u_short	cp_vendor;
 	u_short	cp_product;
-} static const cac_pci_product[] = {
+} const cac_pci_product[] = {
 	{ PCI_VENDOR_COMPAQ,	PCI_PRODUCT_COMPAQ_SMART2P },
 	{ PCI_VENDOR_DEC,	PCI_PRODUCT_DEC_21554 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_1510 },
