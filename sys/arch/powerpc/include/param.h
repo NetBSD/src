@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.19 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.20 2006/08/28 13:43:35 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -121,22 +121,5 @@
 #ifndef NKMEMPAGES_MAX_DEFAULT
 #define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 #endif
-
-/*
- * pages ("clicks") to disk blocks
- */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
-/*
- * bytes to pages
- */
-#define	ctob(x)		((x) << PGSHIFT)
-#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
-
-/*
- * bytes to disk blocks
- */
-#define	dbtob(x)	((x) << DEV_BSHIFT)
-#define	btodb(x)	((x) >> DEV_BSHIFT)
 
 #endif /* _POWERPC_PARAM_H_ */
