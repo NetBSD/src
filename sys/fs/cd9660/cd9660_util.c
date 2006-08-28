@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.6 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.7 2006/08/28 00:28:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.6 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.7 2006/08/28 00:28:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ isofncmp(fn, fnlen, isofn, isolen, joliet_level)
 				break;
 			}
 			fn++;
-			for (i = 0; --fnlen >= 0; i = i * 10 + *fn++ - '0') {
+			for (i = 0; fnlen-- != 0; i = i * 10 + *fn++ - '0') {
 				if (*fn < '0' || *fn > '9') {
 					return -1;
 				}
