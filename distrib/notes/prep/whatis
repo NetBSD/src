@@ -1,7 +1,0 @@
-.\"	$NetBSD: whatis,v 1.1 2006/04/05 18:37:00 garbled Exp $
-.
-This is the fifth major release of
-.Nx*M .
-This is the first release which brings a fully functional installation
-system to the prep platform, as well as support for fully automatic root-device
-detection at boot for most machines.

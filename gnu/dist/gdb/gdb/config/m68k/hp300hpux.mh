@@ -1,8 +1,0 @@
-# OBSOLETE # Host: Hewlett-Packard 9000 series 300, running HPUX
-# OBSOLETE # The following is true because gcc uses a different .o file format
-# OBSOLETE # than the native HPUX compiler
-# OBSOLETE 
-# OBSOLETE XM_FILE= xm-hp300hpux.h
-# OBSOLETE 
-# OBSOLETE NAT_FILE= nm-hp300hpux.h
-# OBSOLETE NATDEPFILES= infptrace.o inftarg.o fork-child.o hp300ux-nat.o corelow.o core-aout.o
