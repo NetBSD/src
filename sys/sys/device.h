@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.91 2006/08/27 22:36:10 christos Exp $ */
+/* $NetBSD: device.h,v 1.92 2006/08/28 01:46:10 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -254,7 +254,7 @@ LIST_HEAD(cfdriverlist, cfdriver);
 
 #define	CFDRIVER_DECL(name, class, attrs)				\
 struct cfdriver __CONCAT(name,_cd) = {					\
-	{ 0 }, { 0 }, NULL, ___STRING(name), class, 0, attrs		\
+    { NULL, NULL }, { NULL }, NULL, ___STRING(name), class, 0, attrs	\
 }
 
 /*
