@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.6 2006/08/09 18:03:23 drochner Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.7 2006/08/28 01:45:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -196,8 +196,8 @@ cf_locators_print(const char *name, void *value, void *arg)
 		if (fprintf(fp, "\t}\n};\n") < 0)
 			return (1);
 	} else if (fprintf(fp,
-		"static const struct cfiattrdata %scf_iattrdata = {\n"
-		"\t\"%s\", 0, {\n\t\t{ NULL },\n\t}\n};\n", name, name) < 0)
+	    "static const struct cfiattrdata %scf_iattrdata = {\n"
+	    "\t\"%s\", 0, {\n\t\t{ NULL, NULL, 0 },\n\t}\n};\n", name, name) < 0)
 		return (1);
 	return 0;
 }
@@ -481,7 +481,10 @@ struct cfdata cfdata[] = {\n\
 		} else if (fputs("NULL},\n", fp) < 0)
 			return (1);
 	}
-	return (fputs("    {0}\n};\n", fp) < 0);
+	if (fprintf(fp, "    {%s,%s%s,%s%2d, %s, %7s, %#6x, %s}\n};\n",
+	    "NULL", "\t\t", "NULL", "\t\t", 0, "0", "NULL", 0, "NULL") < 0)
+	    return (1);
+	return (0);
 }
 
 /*
