@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.13.2.1 2006/03/09 16:57:25 tron Exp $
+.\"	$NetBSD: afterboot.8,v 1.13.2.2 2006/08/28 21:06:11 tron Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -479,18 +479,6 @@ file is modified by
 whenever the system is booted.
 To keep any custom message intact, ensure that you leave two blank lines
 at the top, or your message will be overwritten.
-.Ss Sushi
-Since
-.Nx 1.6 ,
-a new tool for configuring the system has been
-included, called
-.Xr sushi 8 .
-It will allow you to set up many aspects of the
-system from interactive menus.
-You can launch it typing:
-.Bd -literal -offset indent
-.Ic sushi
-.Ed
 .Ss Add new users
 There are
 .Xr useradd 8
@@ -884,7 +872,6 @@ and issuing
 .Xr rc 8 ,
 .Xr rmt 8 ,
 .Xr route 8 ,
-.Xr sushi 8 ,
 .Xr umount 8 ,
 .Xr vipw 8 ,
 .Xr ypbind 8
