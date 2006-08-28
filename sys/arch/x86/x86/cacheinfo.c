@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.c,v 1.9 2006/02/21 04:26:32 thorpej Exp $	*/
+/*	$NetBSD: cacheinfo.c,v 1.10 2006/08/28 00:20:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.9 2006/02/21 04:26:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.10 2006/08/28 00:20:47 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -146,13 +146,13 @@ cache_info_lookup(const struct x86_cache_info *cai, u_int8_t desc)
 
 
 static const struct x86_cache_info amd_cpuid_l2cache_assoc_info[] = {
-	{ 0, 0x01,    1 },
-	{ 0, 0x02,    2 },
-	{ 0, 0x04,    4 },
-	{ 0, 0x06,    8 },
-	{ 0, 0x08,   16 },
-	{ 0, 0x0f, 0xff },
-	{ 0, 0x00,    0 },
+	{ 0, 0x01,    1, 0, 0, NULL },
+	{ 0, 0x02,    2, 0, 0, NULL },
+	{ 0, 0x04,    4, 0, 0, NULL },
+	{ 0, 0x06,    8, 0, 0, NULL },
+	{ 0, 0x08,   16, 0, 0, NULL },
+	{ 0, 0x0f, 0xff, 0, 0, NULL },
+	{ 0, 0x00,    0, 0, 0, NULL },
 };
 
 void
