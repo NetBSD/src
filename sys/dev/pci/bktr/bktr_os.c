@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.40 2006/03/28 17:38:34 thorpej Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.41 2006/08/28 00:07:35 christos Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.40 2006/03/28 17:38:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.41 2006/08/28 00:07:35 christos Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -181,7 +181,7 @@ dev_type_mmap(bktr_mmap);
 
 const struct cdevsw bktr_cdevsw = {
 	bktr_open, bktr_close, bktr_read, bktr_write, bktr_ioctl,
-	nostop, notty, nopoll, bktr_mmap, nokqfilter,
+	nostop, notty, nopoll, bktr_mmap, nokqfilter, D_OTHER
 };
 #endif /* __NetBSD __ */
 
@@ -1782,6 +1782,7 @@ bktr_mmap(dev_t dev, off_t offset, int nprot)
 
 	bktr = bktr_cd.cd_devs[unit];
 
+/*###1785 [cc] warning: comparison of unsigned expression < 0 is always false%%%*/
 	if ((vaddr_t)offset < 0)
 		return(-1);
 
