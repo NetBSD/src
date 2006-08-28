@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.6.2.1 2006/08/28 18:20:08 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.6.2.2 2006/08/28 21:57:53 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.6.2.1 2006/08/28 18:20:08 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.6.2.2 2006/08/28 21:57:53 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -208,7 +208,6 @@ wd33c93_attach(struct wd33c93_softc *dev)
 
 	callout_init(&dev->sc_watchdog);
 
-	dev->sc_minsync = 200/4; /* Min SCSI sync rate in 4ns units */
 	dev->sc_maxoffset = SBIC_SYN_MAX_OFFSET; /* Max Sync Offset */
 
 	/*
@@ -269,11 +268,11 @@ wd33c93_init(struct wd33c93_softc *dev)
 		 *   SS = Bitmask to diable Sync negotiation
 		 */
 		ti->flags = T_NEED_RESET;
-		if (dev->sc_minsync == 0 || (dev->sc_cfflags & (1<<(i+8))))
+		if (dev->sc_cfflags & (1<<(i+8)))
 			ti->flags |= T_NOSYNC;
 		if (dev->sc_cfflags & (1<<i) || wd33c93_nodisc)
 			ti->flags |= T_NODISC;
-		ti->period = dev->sc_minsync;
+		ti->period = dev->sc_syncperiods[0];
 		ti->offset = 0;
 	}
 }
@@ -281,7 +280,7 @@ wd33c93_init(struct wd33c93_softc *dev)
 void
 wd33c93_reset(struct wd33c93_softc *dev)
 {
-	u_int	my_id, s;
+	u_int	my_id, s, div, i;
 	u_char	csr, reg;
 
 	SET_SBIC_cmd(dev, SBIC_CMD_ABORT);
@@ -293,12 +292,29 @@ wd33c93_reset(struct wd33c93_softc *dev)
 		(*dev->sc_reset)(dev);
 
 	my_id = dev->sc_channel.chan_id & SBIC_ID_MASK;
-	if (dev->sc_clkfreq < 110)
+	/*
+	 * Choose a suitable clock divisor and work out the resulting
+	 * sync transfer periods in 4ns units.
+	 */
+	if (dev->sc_clkfreq < 110) {
 		my_id |= SBIC_ID_FS_8_10;
-	else if (dev->sc_clkfreq < 160)
+		div = 2;
+	} else if (dev->sc_clkfreq < 160) {
 		my_id |= SBIC_ID_FS_12_15;
-	else if (dev->sc_clkfreq < 210)
+		div = 3;
+	} else if (dev->sc_clkfreq < 210) {
 		my_id |= SBIC_ID_FS_16_20;
+		div = 4;
+	} else
+		panic("wd33c93: invalid clock speed %d", dev->sc_clkfreq);
+	for (i = 0; i < 7; i++)
+		dev->sc_syncperiods[i] =
+		    (i + 2) * div * 1250 / dev->sc_clkfreq;
+	SBIC_DEBUG(SYNC, ("available sync periods: %d %d %d %d %d %d %d\n",
+	    dev->sc_syncperiods[0], dev->sc_syncperiods[1],
+	    dev->sc_syncperiods[2], dev->sc_syncperiods[3],
+	    dev->sc_syncperiods[4], dev->sc_syncperiods[5],
+	    dev->sc_syncperiods[6]));
 
 	/* Enable advanced features */
 #if 1
@@ -568,11 +584,11 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 			ti->flags &= ~T_TAG;
 
 		if ((xm->xm_mode & PERIPH_CAP_SYNC) != 0 &&
-		    (ti->flags & T_NOSYNC) == 0 && dev->sc_minsync != 0) {
+		    (ti->flags & T_NOSYNC) == 0) {
 			SBIC_DEBUG(SYNC, ("target %d: sync negotiation\n",
 				       xm->xm_target));
 			ti->flags |= T_NEGOTIATE;
-			ti->period = dev->sc_minsync;
+			ti->period = dev->sc_syncperiods[0];
 		}
 		/*
 		 * If we're not going to negotiate, send the notification
@@ -1021,7 +1037,7 @@ wd33c93_selectbus(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 		if (ti->flags & T_NEGOTIATE) {
 			/* Inititae a SDTR message */
 			SBIC_DEBUG(SYNC, ("Sending SDTR to target %d\n", id));
-			ti->period = dev->sc_minsync;
+			ti->period = dev->sc_syncperiods[0];
 			ti->offset = dev->sc_maxoffset;
 
 			/* Send Sync negotiation message */
@@ -1029,7 +1045,7 @@ wd33c93_selectbus(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 			dev->sc_omsg[1] = MSG_EXTENDED;
 			dev->sc_omsg[2] = MSG_EXT_SDTR_LEN;
 			dev->sc_omsg[3] = MSG_EXT_SDTR;
-			dev->sc_omsg[4] = dev->sc_minsync;
+			dev->sc_omsg[4] = dev->sc_syncperiods[0];
 			dev->sc_omsg[5] = dev->sc_maxoffset;
 			wd33c93_xfout(dev, 6, dev->sc_omsg);
 			dev->sc_msgout |= SEND_SDTR; /* may be rejected */
@@ -1584,10 +1600,11 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 				if (msgaddr[1] != 3)
 					goto reject;
 
-				ti->period = MAX(msgaddr[3], dev->sc_minsync);
+				ti->period =
+				    MAX(msgaddr[3], dev->sc_syncperiods[0]);
 				ti->offset = MIN(msgaddr[4], dev->sc_maxoffset);
 				ti->flags &= ~T_NEGOTIATE;
-				if (dev->sc_minsync == 0 || ti->period > 124)
+				if (ti->period > 124)
 					ti->offset = ti->period = 0;
 
 				if (ti->offset == 0)
@@ -2171,8 +2188,8 @@ wd33c93_update_xfer_mode(struct wd33c93_softc *sc, int target)
 
 
 /*
- * Convert SCSI Transfer Period Factor (in 4ns units) to the divisor
- * value used by the WD33c93 controller.
+ * Calculate SCSI Tranfser Period Factor (4ns units each) from the
+ * WD33c93 divisor value
  *
  * cycle = DIV / (2 * CLK)
  * DIV = FS + 2
@@ -2181,39 +2198,25 @@ wd33c93_update_xfer_mode(struct wd33c93_softc *sc, int target)
 int
 wd33c93_div2stp(struct wd33c93_softc *dev, int div)
 {
-	unsigned int fs;
 
-	GET_SBIC_myid(dev, fs);
-	fs = (fs >> 6) + 2;		/* DIV */
-	fs = (fs * 10000) / (dev->sc_clkfreq << 1); /* Cycle, in ns */
 	if (div < 2)
 		div = 8;		/* map to Cycles */
-	return ((fs * div) >> 2);	/* in 4 ns units */
+	return dev->sc_syncperiods[div - 2];
 }
 
 /*
- * Calculate SCSI Tranfser Period Factor (4ns units each) from the
- * WD33c93 divisor value
+ * Convert SCSI Transfer Period Factor (in 4ns units) to the divisor
+ * value used by the WD33c93 controller.
  */
 int
 wd33c93_stp2div(struct wd33c93_softc *dev, int stp)
 {
-	unsigned fs, div;
+	unsigned i;
 
-	/* Just the inverse of the above */
-	GET_SBIC_myid(dev, fs);
-	fs = (fs >> 6) + 2;	/* DIV */
-	fs = (fs * 10000) / (dev->sc_clkfreq << 1); /* Cycle, in ns */
-	div = stp << 2;			/* in ns units */
-	div = div / fs;			/* in Cycles */
-	if (div < 2)
-		return(2);
-
-	/* verify rounding */
-	if (wd33c93_div2stp(dev, div) < stp)
-		div++;
-
-	return((div >= 8) ? 0 : div);
+	for (i = 0; i < 7; i++)
+		if (dev->sc_syncperiods[i] >= stp)
+			return (i == 6 ? 0 : i + 2);
+	return 0; /* XXX we can't slow down far enough */
 }
 
 void
