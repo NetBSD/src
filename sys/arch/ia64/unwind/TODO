@@ -1,7 +1,0 @@
-This is a list of TODO's without which the unwind code is *buggy*.
-
-- The Mem-stack
-- All Preserved Registers (ar.unat, ar.rnat, ar.lc, ar.fpsr, ar.bsp, ar.bspstore)
-- Implicit register saves via _when descriptor records.
-- Multiple unwind label_states ( How do we do this without malloc ? )
-- Floating Point registers.

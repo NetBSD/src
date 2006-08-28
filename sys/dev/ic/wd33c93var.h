@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93var.h,v 1.1 2006/08/26 22:06:37 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93var.h,v 1.1.2.1 2006/08/28 15:58:25 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -88,7 +88,6 @@ struct wd33c93_linfo {
 	time_t	last_used;
 	int	lun;
 	int	used;			/* # slots in use */
-	int	avail;			/* where to start scanning */
 	u_char	state;
 #define L_STATE_IDLE	0
 #define L_STATE_BUSY	1
@@ -111,7 +110,6 @@ struct wd33c93_tinfo {
 #define T_TAG		0x40		/* Turn on TAG QUEUEs */
 	u_char	period;			/* Period suggestion */
 	u_char	offset;			/* Offset suggestion */
-	u_char	nextag;			/* Next available tag */
 	struct wd33c93_linfo *lun[SBIC_NLUN]; /* LUN list for this target */
 } tinfo_t;
 
