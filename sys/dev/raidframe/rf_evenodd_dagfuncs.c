@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.16 2006/04/26 17:08:48 oster Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.17 2006/08/28 02:58:16 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.16 2006/04/26 17:08:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.17 2006/08/28 02:58:16 christos Exp $");
 
 #include "rf_archs.h"
 #include "opt_raid_diagnostic.h"
@@ -673,7 +673,8 @@ rf_EvenOddDoubleRecoveryFunc(node)
 	        npda;
 	RF_RowCol_t fcol[2], fsuoff[2], fsuend[2], numDataCol = layoutPtr->numDataCol;
 	char  **buf, *ebuf, *pbuf, *dest[2];
-	long   *suoff = NULL, *suend = NULL, *prmToCol = NULL, psuoff, esuoff;
+	long   *suoff = NULL, *suend = NULL, *prmToCol = NULL,
+	    psuoff = 0, esuoff = 0;
 	RF_SectorNum_t startSector, endSector;
 	RF_Etimer_t timer;
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
@@ -722,6 +723,8 @@ rf_EvenOddDoubleRecoveryFunc(node)
 		memset(pda->bufPtr, 0, bytesPerSector * pda->numSector);
 		fsuoff[0] = rf_StripeUnitOffset(layoutPtr, pda->startSector);
 		fsuend[0] = fsuoff[0] + pda->numSector;
+		fsuoff[1] = 0;
+		fsuend[1] = 0;
 		startSector = fsuoff[0];
 		endSector = fsuend[0];
 
