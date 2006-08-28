@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.3 2006/01/09 09:57:42 tsutsui Exp $
+# 	$NetBSD: RAMDISK,v 1.4 2006/08/28 13:53:04 tsutsui Exp $
 #
 # kernel config file with memory disk for installation
 #
@@ -23,7 +23,6 @@ options 	NO_DEV_PTM
 no options 	INCLUDE_CONFIG_FILE
 no options 	NTP
 no options 	KTRACE
-no options 	SYSTRACE
 no options 	SYSVMSG
 no options 	SYSVSEM
 no options 	SYSVSHM
