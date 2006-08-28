@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.43 2006/03/28 17:38:38 thorpej Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.44 2006/08/28 21:33:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.43 2006/03/28 17:38:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.44 2006/08/28 21:33:16 christos Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -129,7 +129,7 @@ dev_type_kqfilter(wsmuxkqfilter);
 
 const struct cdevsw wsmux_cdevsw = {
 	wsmuxopen, wsmuxclose, wsmuxread, nowrite, wsmuxioctl,
-	nostop, notty, wsmuxpoll, nommap, wsmuxkqfilter,
+	nostop, notty, wsmuxpoll, nommap, wsmuxkqfilter, D_OTHER
 };
 
 struct wssrcops wsmux_srcops = {
