@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.64 2006/08/25 19:33:51 matt Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.65 2006/08/28 02:51:12 christos Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.64 2006/08/25 19:33:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.65 2006/08/28 02:51:12 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -139,13 +139,11 @@ const struct ip6protosw inet6sw[] = {
   0,		0,		0,		0,
   0,
   ip6_init,	0,		frag6_slowtimo,	frag6_drain,
-  NULL,
 },
 { SOCK_DGRAM,	&inet6domain,	IPPROTO_UDP,	PR_ATOMIC|PR_ADDR|PR_PURGEIF,
   udp6_input,	0,		udp6_ctlinput,	ip6_ctloutput,
   udp6_usrreq,	udp6_init,
   0,		0,		0,
-  NULL,
 },
 { SOCK_STREAM,	&inet6domain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS|PR_PURGEIF,
   tcp6_input,	0,		tcp6_ctlinput,	tcp_ctloutput,
@@ -155,7 +153,6 @@ const struct ip6protosw inet6sw[] = {
 #else
   tcp_init,	0,		tcp_slowtimo,	tcp_drain,
 #endif
-  NULL,
 },
 { SOCK_RAW,	&inet6domain,	IPPROTO_RAW,	PR_ATOMIC|PR_ADDR|PR_PURGEIF,
   rip6_input,	rip6_output,	rip6_ctlinput,	rip6_ctloutput,
@@ -187,21 +184,18 @@ const struct ip6protosw inet6sw[] = {
   ah6_input,	0,	 	ah6_ctlinput,	0,
   0,
   0,		0,		0,		0,
-  NULL,
 },
 #ifdef IPSEC_ESP
 { SOCK_RAW,	&inet6domain,	IPPROTO_ESP,	PR_ATOMIC|PR_ADDR,
   esp6_input,	0,	 	esp6_ctlinput,	0,
   0,
   0,		0,		0,		0,
-  NULL,
 },
 #endif
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPCOMP,	PR_ATOMIC|PR_ADDR,
   ipcomp6_input, 0,	 	0,		0,
   0,
   0,		0,		0,		0,
-  NULL,
 },
 #endif /* IPSEC */
 #ifdef INET
@@ -220,7 +214,7 @@ const struct ip6protosw inet6sw[] = {
 { SOCK_RAW,	&inet6domain,	IPPROTO_CARP,	PR_ATOMIC|PR_ADDR,
   carp6_proto_input,	rip6_output,	0,		rip6_ctloutput,
   rip6_usrreq,
-  0,		0,		0,		0,		NULL /* carp_sysctl */
+  0,		0,		0,		0,
 },
 #endif /* NCARP */
 #ifdef ISO
