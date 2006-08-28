@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.2 2006/08/28 00:10:20 christos Exp $ */
+/* $NetBSD: bt3c.c,v 1.3 2006/08/28 10:34:33 plunky Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.2 2006/08/28 00:10:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.3 2006/08/28 10:34:33 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -946,17 +946,28 @@ bt3c_power(int why, void *arg)
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
 		if (sc->sc_unit.hci_flags & BTF_RUNNING) {
-			printf_nolog("%s: sleeping\n", sc->sc_dev.dv_xname);
-			bt3c_disable(&sc->sc_unit);
+			hci_detach(&sc->sc_unit);
+
 			sc->sc_flags |= BT3C_SLEEPING;
+			printf_nolog("%s: sleeping\n", sc->sc_dev.dv_xname);
 		}
 		break;
 
 	case PWR_RESUME:
 		if (sc->sc_flags & BT3C_SLEEPING) {
 			printf_nolog("%s: waking up\n", sc->sc_dev.dv_xname);
-			bt3c_enable(&sc->sc_unit);
 			sc->sc_flags &= ~BT3C_SLEEPING;
+
+			memset(&sc->sc_unit, 0, sizeof(sc->sc_unit));
+			sc->sc_unit.hci_softc = sc;
+			sc->sc_unit.hci_devname = sc->sc_dev.dv_xname;
+			sc->sc_unit.hci_enable = bt3c_enable;
+			sc->sc_unit.hci_disable = bt3c_disable;
+			sc->sc_unit.hci_start_cmd = bt3c_start;
+			sc->sc_unit.hci_start_acl = bt3c_start;
+			sc->sc_unit.hci_start_sco = bt3c_start;
+			sc->sc_unit.hci_ipl = IPL_TTY;
+			hci_attach(&sc->sc_unit);
 		}
 		break;
 
