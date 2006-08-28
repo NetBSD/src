@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_proto.c,v 1.2 2006/08/27 11:41:58 plunky Exp $	*/
+/*	$NetBSD: bt_proto.c,v 1.3 2006/08/28 00:13:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.2 2006/08/27 11:41:58 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.3 2006/08/28 00:13:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -108,4 +108,9 @@ struct domain btdomain = {
 	NULL,				/* attach to routing table */
 	32,				/* rtoffset */
 	sizeof(struct sockaddr_bt),	/* maxrtkey */
+	NULL,				/* attach af-data */
+	NULL,				/* detach af-data */
+	{ NULL, NULL },			/* queues */
+	{ NULL },			/* link */
+	MOWNER_INIT			/* owner */
 };
