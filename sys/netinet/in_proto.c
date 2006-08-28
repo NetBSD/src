@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.73 2006/08/25 19:33:50 matt Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.74 2006/08/28 02:53:03 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.73 2006/08/25 19:33:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.74 2006/08/28 02:53:03 christos Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -160,17 +160,17 @@ const struct protosw inetsw[] = {
 { 0,		&inetdomain,	0,		0,
   0,		ip_output,	0,		0,
   0,
-  ip_init,	0,		ip_slowtimo,	ip_drain,	NULL
+  ip_init,	0,		ip_slowtimo,	ip_drain,
 },
 { SOCK_DGRAM,	&inetdomain,	IPPROTO_UDP,	PR_ATOMIC|PR_ADDR|PR_PURGEIF,
   udp_input,	0,		udp_ctlinput,	udp_ctloutput,
   udp_usrreq,
-  udp_init,	0,		0,		0,		NULL
+  udp_init,	0,		0,		0,
 },
 { SOCK_STREAM,	&inetdomain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS|PR_PURGEIF,
   tcp_input,	0,		tcp_ctlinput,	tcp_ctloutput,
   tcp_usrreq,
-  tcp_init,	0,		tcp_slowtimo,	tcp_drain,	NULL
+  tcp_init,	0,		tcp_slowtimo,	tcp_drain,
 },
 { SOCK_RAW,	&inetdomain,	IPPROTO_RAW,	PR_ATOMIC|PR_ADDR|PR_PURGEIF,
   rip_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
@@ -180,44 +180,43 @@ const struct protosw inetsw[] = {
 { SOCK_RAW,	&inetdomain,	IPPROTO_ICMP,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   icmp_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,
-  icmp_init,	0,		0,		0,		NULL
+  icmp_init,	0,		0,		0,
 },
 #ifdef IPSEC
 { SOCK_RAW,	&inetdomain,	IPPROTO_AH,	PR_ATOMIC|PR_ADDR,
   ah4_input,	0,	 	ah4_ctlinput,	0,
   0,
-  0,		0,		0,		0,		NULL
+  0,		0,		0,		0,
 },
 #ifdef IPSEC_ESP
 { SOCK_RAW,	&inetdomain,	IPPROTO_ESP,	PR_ATOMIC|PR_ADDR,
   esp4_input,
-	0,	 	esp4_ctlinput,	0,
+  0,	 	esp4_ctlinput,	0,
   0,
-  0,		0,		0,		0,		NULL
+  0,		0,		0,		0,
 },
 #endif
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPCOMP,	PR_ATOMIC|PR_ADDR,
   ipcomp4_input,
- 0,	 	0,		0,
+  0,	 	0,		0,
   0,
-  0,		0,		0,		0,		NULL
+  0,		0,		0,		0,
 },
 #endif /* IPSEC */
 #ifdef FAST_IPSEC
 { SOCK_RAW,	&inetdomain,	IPPROTO_AH,	PR_ATOMIC|PR_ADDR,
   ipsec4_common_input,	0,	 	ah4_ctlinput,	0,
-  0,
-  0,		0,		0,		0,		NULL
+  0, 0,		0,		0,		0,
 },
 { SOCK_RAW,	&inetdomain,	IPPROTO_ESP,	PR_ATOMIC|PR_ADDR,
   ipsec4_common_input,    0,	 	esp4_ctlinput,	0,
   0,
-  0,		0,		0,		0,		NULL
+  0,		0,		0,		0,
 },
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPCOMP,	PR_ATOMIC|PR_ADDR,
   ipsec4_common_input,    0,	 	0,		0,
   0,
-  0,		0,		0,		0,		NULL
+  0,		0,		0,		0,
 },
 #endif /* FAST_IPSEC */
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
@@ -243,7 +242,7 @@ const struct protosw inetsw[] = {
 { SOCK_RAW,	&inetdomain,	IPPROTO_CARP,	PR_ATOMIC|PR_ADDR,
   carp_proto_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,
-  0,		0,		0,		0,		NULL,
+  0,		0,		0,		0,
 },
 #endif
 #if NGRE > 0
