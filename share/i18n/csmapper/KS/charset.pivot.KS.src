@@ -1,4 +1,0 @@
-# $NetBSD: charset.pivot.KS.src,v 1.1 2003/06/27 08:40:48 tshiozak Exp $
-
-KSC5601			UCS			1
-UCS			KSC5601			1
