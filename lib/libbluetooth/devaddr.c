@@ -1,4 +1,4 @@
-/*	$NetBSD: devaddr.c,v 1.1 2006/06/19 15:44:36 gdamore Exp $	*/
+/*	$NetBSD: devaddr.c,v 1.2 2006/08/28 08:24:39 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: devaddr.c,v 1.1 2006/06/19 15:44:36 gdamore Exp $");
+__RCSID("$NetBSD: devaddr.c,v 1.2 2006/08/28 08:24:39 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <bluetooth.h>
@@ -47,7 +47,7 @@ bt_devaddr(const char *name, bdaddr_t *addr)
 {
 	struct btreq btr;
 	bdaddr_t bdaddr;
-	int s;
+	int s, rv;
 
 	if (name == NULL) {
 		errno = EINVAL;
@@ -67,10 +67,16 @@ bt_devaddr(const char *name, bdaddr_t *addr)
 	if (s == -1)
 		return 0;
 
-	if (ioctl(s, SIOCGBTINFO, &btr) < 0)
+	rv = ioctl(s, SIOCGBTINFO, &btr);
+	close(s);
+
+	if (rv == -1)
 		return 0;
 
-	close(s);
+	if ((btr.btr_flags & BTF_UP) == 0) {
+		errno = ENXIO;
+		return 0;
+	}
 
 	bdaddr_copy(addr, &btr.btr_bdaddr);
 	return 1;
@@ -80,7 +86,7 @@ int
 bt_devname(char *name, const bdaddr_t *addr)
 {
 	struct btreq btr;
-	int s;
+	int s, rv;
 
 	if (addr == NULL) {
 		errno = EINVAL;
@@ -94,10 +100,16 @@ bt_devname(char *name, const bdaddr_t *addr)
 	if (s == -1)
 		return 0;
 
-	if (ioctl(s, SIOCGBTINFOA, &btr) < 0)
+	rv = ioctl(s, SIOCGBTINFOA, &btr);
+	close(s);
+
+	if (rv == -1)
 		return 0;
 
-	close(s);
+	if ((btr.btr_flags & BTF_UP) == 0) {
+		errno = ENXIO;
+		return 0;
+	}
 
 	if (name != NULL)
 		strlcpy(name, btr.btr_name, HCI_DEVNAME_SIZE);
