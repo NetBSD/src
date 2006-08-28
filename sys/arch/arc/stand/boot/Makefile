@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2006/07/22 14:11:35 tsutsui Exp $
+# $NetBSD: Makefile,v 1.6 2006/08/28 13:42:39 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>	# for ${HOST_SH}
@@ -26,7 +26,7 @@ AFLAGS+=   -D_LOCORE -D_KERNEL
 CFLAGS=    -Os -mmemcpy -G 1024
 CFLAGS+=   -ffreestanding -mno-abicalls -msoft-float -mips2
 CFLAGS+=   -Werror -Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
-CPPFLAGS+= -nostdinc -I. -I${S} -I${S}/../common/include
+CPPFLAGS+= -nostdinc -I. -I${S}
 CPPFLAGS+= -D_STANDALONE -DNO_ABICALLS -D${MACHINE}
 CPPFLAGS+= -DLIBSA_USE_MEMSET -DLIBSA_USE_MEMCPY
 CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
