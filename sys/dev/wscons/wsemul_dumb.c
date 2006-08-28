@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_dumb.c,v 1.11 2005/12/11 12:24:12 christos Exp $ */
+/* $NetBSD: wsemul_dumb.c,v 1.12 2006/08/28 21:37:37 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_dumb.c,v 1.11 2005/12/11 12:24:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_dumb.c,v 1.12 2006/08/28 21:37:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,9 @@ const struct wsemul_ops wsemul_dumb_ops = {
 	wsemul_dumb_output,
 	wsemul_dumb_translate,
 	wsemul_dumb_detach,
-	wsemul_dumb_resetop
+	wsemul_dumb_resetop,
+	NULL,	/* getmsgattrs */
+	NULL,	/* setmsgattrs */
 };
 
 struct wsemul_dumb_emuldata {
