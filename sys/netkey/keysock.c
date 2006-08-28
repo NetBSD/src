@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.41 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: keysock.c,v 1.42 2006/08/28 02:54:11 christos Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.41 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.42 2006/08/28 02:54:11 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -454,7 +454,6 @@ const struct protosw keysw[] = {
   0,		key_output,	raw_ctlinput,	0,
   key_usrreq,
   raw_init,	0,		0,		0,
-  NULL,
 }
 };
 
