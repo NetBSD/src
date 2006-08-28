@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23 2006/06/25 03:02:19 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.24 2006/08/28 15:37:05 jdc Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -12,7 +12,12 @@ WFORMAT?=2
 NAMED_USE_OPENSSL?=no
 .endif
 
+.if (${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64")
+NAMED_USE_PTHREADS?=no
+.else
 NAMED_USE_PTHREADS?=yes
+.endif
+
 NAMED_USE_OPENSSL?=yes
 
 IDIST=		${NETBSDSRCDIR}/dist/bind
