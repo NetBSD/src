@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.243 2006/08/10 14:45:51 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.244 2006/08/28 00:22:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.243 2006/08/10 14:45:51 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.244 2006/08/28 00:22:15 christos Exp $");
 
 #include "rnd.h"
 
@@ -203,7 +203,7 @@ const struct cdevsw cd_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-static struct dkdriver cddkdriver = { cdstrategy };
+static struct dkdriver cddkdriver = { cdstrategy, NULL };
 
 static const struct scsipi_periphsw cd_switch = {
 	cd_interpret_sense,	/* use our error handler first */
