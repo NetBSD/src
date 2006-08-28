@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.42 2006/07/16 06:32:42 rillig Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.43 2006/08/28 21:35:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.42 2006/07/16 06:32:42 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.43 2006/08/28 21:35:12 christos Exp $");
 
 #include "opt_wsfont.h"
 
@@ -148,51 +148,51 @@ struct font {
 /* Our list of built-in fonts */
 static struct font builtin_fonts[] = {
 #ifdef FONT_BOLD8x16
-	{ { NULL }, &bold8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN  },
+	{ { NULL, NULL }, &bold8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN  },
 #endif
 #ifdef FONT_ISO8x16
-	{ { NULL }, &iso8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+	{ { NULL, NULL }, &iso8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_COURIER11x18
-	{ { NULL }, &courier11x18, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+	{ { NULL, NULL }, &courier11x18, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_GALLANT12x22
-	{ { NULL }, &gallant12x22, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+	{ { NULL, NULL }, &gallant12x22, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_LUCIDA16x29
-	{ { NULL }, &lucida16x29, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+	{ { NULL, NULL }, &lucida16x29, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_QVSS8x15
-	{ { NULL }, &qvss8x15, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+	{ { NULL, NULL }, &qvss8x15, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_VT220L8x8
-	{ { NULL }, &vt220l8x8, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+	{ { NULL, NULL }, &vt220l8x8, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_VT220L8x10
-	{ { NULL }, &vt220l8x10, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+	{ { NULL, NULL }, &vt220l8x10, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_VT220L8x16
-	{ { NULL }, &vt220l8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+	{ { NULL, NULL }, &vt220l8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_VT220ISO8x16
-	{ { NULL }, &vt220iso8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+	{ { NULL, NULL }, &vt220iso8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_VT220KOI8x10_KOI8_R
-	{ { NULL }, &vt220kr8x10, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+	{ { NULL, NULL }, &vt220kr8x10, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_VT220KOI8x10_KOI8_U
-	{ { NULL }, &vt220ku8x10, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+	{ { NULL, NULL }, &vt220ku8x10, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_SONY8x16
-	{ { NULL }, &sony8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+	{ { NULL, NULL }, &sony8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_SONY12x24
-	{ { NULL }, &sony12x24, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+	{ { NULL, NULL }, &sony12x24, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_OMRON12x20
-	{ { NULL }, &omron12x20, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+	{ { NULL, NULL }, &omron12x20, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
-	{ { NULL }, NULL, 0, 0, 0 },
+	{ { NULL, NULL }, NULL, 0, 0, 0 },
 };
 
 static TAILQ_HEAD(,font)	list;
