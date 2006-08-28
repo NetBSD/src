@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_eisa.c,v 1.12 2006/03/29 06:32:36 thorpej Exp $	*/
+/*	$NetBSD: cac_eisa.c,v 1.13 2006/08/28 00:18:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.12 2006/03/29 06:32:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.13 2006/08/28 00:18:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,11 +107,11 @@ static const struct cac_linkage cac_eisa_l0 = {
 	cac_eisa_l0_submit
 };
 
-struct cac_eisa_type {
+static struct cac_eisa_type {
 	const char	*ct_prodstr;
 	const char	*ct_typestr;
 	const struct	cac_linkage *ct_linkage;
-} static cac_eisa_type[] = {
+} cac_eisa_type[] = {
 	{ "CPQ4001",	"IDA",		&cac_eisa_l0 },
 	{ "CPQ4002",	"IDA-2",	&cac_eisa_l0 },
 	{ "CPQ4010",	"IEAS",		&cac_eisa_l0 },
