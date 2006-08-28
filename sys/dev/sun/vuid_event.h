@@ -1,4 +1,4 @@
-/*	$NetBSD: vuid_event.h,v 1.3 2005/12/11 12:23:56 christos Exp $ */
+/*	$NetBSD: vuid_event.h,v 1.4 2006/08/28 16:41:04 he Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)vuid_event.h	8.1 (Berkeley) 6/11/93
  */
+
+#ifndef _SUN_VUID_EVENT_H_
+#define _SUN_VUID_EVENT_H_
 
 /*
  * The following is a minimal emulation of Sun's `Firm_event' structures
@@ -81,3 +84,5 @@ typedef struct firm_event {
 #define	VUIDSFORMAT	_IOW('v', 1, int)
 #define	VUIDGFORMAT	_IOR('v', 2, int)
 #define	VUID_FIRM_EVENT	1	/* the only format we support */
+
+#endif /* _SUN_VUID_EVENT_H_ */
