@@ -1,4 +1,4 @@
-/*	$NetBSD: efun.c,v 1.2 2006/08/26 23:17:43 christos Exp $	*/
+/*	$NetBSD: efun.c,v 1.3 2006/08/28 20:46:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,9 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: efun.c,v 1.2 2006/08/26 23:17:43 christos Exp $");
+__RCSID("$NetBSD: efun.c,v 1.3 2006/08/28 20:46:26 christos Exp $");
 #endif
 
 #include <err.h>
