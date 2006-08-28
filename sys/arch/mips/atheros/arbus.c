@@ -1,4 +1,4 @@
-/* $Id: arbus.c,v 1.8 2006/07/13 21:38:24 gdamore Exp $ */
+/* $Id: arbus.c,v 1.9 2006/08/28 07:21:15 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.8 2006/07/13 21:38:24 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.9 2006/08/28 07:21:15 gdamore Exp $");
 
 #include "locators.h"
 #include <sys/param.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.8 2006/07/13 21:38:24 gdamore Exp $");
 
 #define	_MIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
-#include <mips/atheros/include/ar531xreg.h>
+#include <mips/atheros/include/ar5312reg.h>
 #include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
 
@@ -96,59 +96,59 @@ static struct {
 } arbus_devices[] = {
     {
 	    "ae",
-	    AR531X_ENET0_BASE,
+	    AR5312_ENET0_BASE,
 	    ARBUS_IRQ_ENET0,
-	    AR531X_BOARD_CONFIG_ENET0,
-	    AR531X_RESET_ENET0 | AR531X_RESET_PHY0,
-	    AR531X_ENABLE_ENET0
+	    AR5312_BOARD_CONFIG_ENET0,
+	    AR5312_RESET_ENET0 | AR5312_RESET_PHY0,
+	    AR5312_ENABLE_ENET0
     },
     {
 	    "ae",
-	    AR531X_ENET1_BASE,
+	    AR5312_ENET1_BASE,
 	    ARBUS_IRQ_ENET1,
-	    AR531X_BOARD_CONFIG_ENET1,
-	    AR531X_RESET_ENET1 | AR531X_RESET_PHY1,
-	    AR531X_ENABLE_ENET1
+	    AR5312_BOARD_CONFIG_ENET1,
+	    AR5312_RESET_ENET1 | AR5312_RESET_PHY1,
+	    AR5312_ENABLE_ENET1
     },
     {
 	    "com",
-	    AR531X_UART0_BASE,
+	    AR5312_UART0_BASE,
 	    ARBUS_IRQ_UART0,
-	    AR531X_BOARD_CONFIG_UART0,
+	    AR5312_BOARD_CONFIG_UART0,
 	    0,
 	    0,
     },
     {
 	    "com",
-	    AR531X_UART1_BASE,
+	    AR5312_UART1_BASE,
 	    -1,
-	    AR531X_BOARD_CONFIG_UART1,
+	    AR5312_BOARD_CONFIG_UART1,
 	    0,
 	    0,
     },
     {
 	    "ath",
-	    AR531X_WLAN0_BASE,
+	    AR5312_WLAN0_BASE,
 	    ARBUS_IRQ_WLAN0,
-	    AR531X_BOARD_CONFIG_WLAN0,
-	    AR531X_RESET_WLAN0 |
-	    	AR531X_RESET_WARM_WLAN0_MAC |
-	    	AR531X_RESET_WARM_WLAN0_BB,
-	    AR531X_ENABLE_WLAN0
+	    AR5312_BOARD_CONFIG_WLAN0,
+	    AR5312_RESET_WLAN0 |
+	    	AR5312_RESET_WARM_WLAN0_MAC |
+	    	AR5312_RESET_WARM_WLAN0_BB,
+	    AR5312_ENABLE_WLAN0
     },
     {
 	    "ath",
-	    AR531X_WLAN1_BASE,
+	    AR5312_WLAN1_BASE,
 	    ARBUS_IRQ_WLAN1,
-	    AR531X_BOARD_CONFIG_WLAN1,
-	    AR531X_RESET_WLAN1 |
-	    	AR531X_RESET_WARM_WLAN1_MAC |
-	    	AR531X_RESET_WARM_WLAN1_BB,
-	    AR531X_ENABLE_WLAN1
+	    AR5312_BOARD_CONFIG_WLAN1,
+	    AR5312_RESET_WLAN1 |
+	    	AR5312_RESET_WARM_WLAN1_MAC |
+	    	AR5312_RESET_WARM_WLAN1_BB,
+	    AR5312_ENABLE_WLAN1
     },
     {
 	    "athflash",
-	    AR531X_FLASH_BASE,
+	    AR5312_FLASH_BASE,
 	    -1,
 	    0,
 	    0,
@@ -156,7 +156,7 @@ static struct {
     },
     {
 	    "argpio",
-	    AR531X_GPIO_BASE,
+	    AR5312_GPIO_BASE,
 	    ARBUS_IRQ_GPIO,
 	    0,
 	    0,
@@ -211,25 +211,25 @@ arbus_attach(struct device *parent, struct device *self, void *aux)
 		aa.aa_irq = arbus_devices[i].irq;
 		aa.aa_addr = arbus_devices[i].addr;
 
-		if (aa.aa_addr < AR531X_UART0_BASE)
+		if (aa.aa_addr < AR5312_UART0_BASE)
 			aa.aa_size = 0x00100000;
-		else if (aa.aa_addr < AR531X_FLASH_BASE)
+		else if (aa.aa_addr < AR5312_FLASH_BASE)
 			aa.aa_size = 0x1000;
 
 		locs[ARBUSCF_ADDR] = aa.aa_addr;
 
 		if (arbus_devices[i].reset) {
 			/* put device into reset */
-			PUTSYSREG(AR531X_SYSREG_RESETCTL,
-			    GETSYSREG(AR531X_SYSREG_RESETCTL) |
+			PUTSYSREG(AR5312_SYSREG_RESETCTL,
+			    GETSYSREG(AR5312_SYSREG_RESETCTL) |
 			    arbus_devices[i].reset);
 
 			/* this could probably be a tsleep */
 			delay(15000);
 
 			/* take it out of reset */
-			PUTSYSREG(AR531X_SYSREG_RESETCTL,
-			    GETSYSREG(AR531X_SYSREG_RESETCTL) &
+			PUTSYSREG(AR5312_SYSREG_RESETCTL,
+			    GETSYSREG(AR5312_SYSREG_RESETCTL) &
 			    ~arbus_devices[i].reset);
 
 			delay(25);
@@ -237,8 +237,8 @@ arbus_attach(struct device *parent, struct device *self, void *aux)
 
 		if (arbus_devices[i].enable) {
 			/* enable it */
-			PUTSYSREG(AR531X_SYSREG_ENABLE,
-			    GETSYSREG(AR531X_SYSREG_ENABLE) |
+			PUTSYSREG(AR5312_SYSREG_ENABLE,
+			    GETSYSREG(AR5312_SYSREG_ENABLE) |
 			    arbus_devices[i].enable);
 		}
 

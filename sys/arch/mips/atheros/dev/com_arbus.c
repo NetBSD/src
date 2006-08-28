@@ -1,4 +1,4 @@
-/* $Id: com_arbus.c,v 1.2 2006/07/13 22:56:01 gdamore Exp $ */
+/* $Id: com_arbus.c,v 1.3 2006/08/28 07:21:15 gdamore Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.2 2006/07/13 22:56:01 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.3 2006/08/28 07:21:15 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.2 2006/07/13 22:56:01 gdamore Exp $"
 
 #include <mips/cpuregs.h>
 #include <mips/atheros/include/arbusvar.h>
-#include <mips/atheros/include/ar531xreg.h>
+#include <mips/atheros/include/ar531xvar.h>
 
 struct com_arbus_softc {
 	struct com_softc sc_com;
@@ -193,7 +193,7 @@ com_arbus_attach(struct device *parent, struct device *self, void *aux)
 	struct arbus_attach_args *aa = aux;
 	bus_space_handle_t ioh;
 
-	sc->sc_frequency = curcpu()->ci_cpu_freq / 4;
+	sc->sc_frequency = ar531x_sys_freq();
 
 	if (!com_is_console(aa->aa_bst, aa->aa_addr, &ioh) &&
 	    bus_space_map(aa->aa_bst, aa->aa_addr, aa->aa_size, 0,
@@ -229,7 +229,6 @@ void
 com_arbus_cnattach(bus_addr_t addr)
 {
 	struct com_regs		regs;
-	uint32_t		sysfreq;
 
 	regs.cr_iot = arbus_get_bus_space_tag();
 	regs.cr_iobase = addr;
@@ -240,8 +239,7 @@ com_arbus_cnattach(bus_addr_t addr)
 		&regs.cr_ioh))
 		return;
 
-	sysfreq = curcpu()->ci_cpu_freq / 4;
-
-	comcnattach1(&regs, com_arbus_baud, sysfreq, COM_TYPE_NORMAL, CONMODE);
+	comcnattach1(&regs, com_arbus_baud, ar531x_sys_freq(),
+	    COM_TYPE_NORMAL, CONMODE);
 }
 

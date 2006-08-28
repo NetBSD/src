@@ -1,4 +1,4 @@
-/* $Id: ar531xvar.h,v 1.2 2006/06/05 05:14:38 gdamore Exp $ */
+/* $Id: ar531xvar.h,v 1.3 2006/08/28 07:21:15 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -53,8 +53,20 @@ void ar531x_misc_intr_disestablish(void *);
 
 void ar531x_cpuintr(uint32_t, uint32_t, uint32_t, uint32_t);
 
-void ar531x_cal_timer(void);
+/*
+ * CPU specific routines.
+ */
+size_t ar531x_memsize(void);
+void ar531x_consinit(void);
+void ar531x_wdog(uint32_t);
+void ar531x_businit(void);
+const char *ar531x_cpuname(void);
+uint32_t ar531x_cpu_freq(void);
+uint32_t ar531x_sys_freq(void);
 
+/*
+ * Board specific things.
+ */
 struct ar531x_boarddata;
 const struct ar531x_boarddata *ar531x_board_info(void);
 const void *ar531x_radio_info(void);

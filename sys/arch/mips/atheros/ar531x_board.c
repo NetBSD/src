@@ -1,4 +1,4 @@
-/* $Id: ar531x_board.c,v 1.3 2006/06/05 05:14:38 gdamore Exp $ */
+/* $Id: ar531x_board.c,v 1.4 2006/08/28 07:21:15 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -40,14 +40,14 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar531x_board.c,v 1.3 2006/06/05 05:14:38 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar531x_board.c,v 1.4 2006/08/28 07:21:15 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/bus.h>
-#include <mips/atheros/include/ar531xreg.h>
+#include <mips/atheros/include/ar5312reg.h>
 #include <mips/atheros/include/ar531xvar.h>
 
 #include <contrib/dev/ath/ah_soc.h>
@@ -67,31 +67,31 @@ ar531x_board_info(void)
 
 	if (board == NULL) {
 		/* configure flash bank 0 */
-		fctl = REGVAL(AR531X_FLASHCTL_BASE + AR531X_FLASHCTL_0) & 
-		    AR531X_FLASHCTL_MW_MASK;
+		fctl = REGVAL(AR5312_FLASHCTL_BASE + AR5312_FLASHCTL_0) & 
+		    AR5312_FLASHCTL_MW_MASK;
 
 		fctl |=
-		    AR531X_FLASHCTL_E |
-		    AR531X_FLASHCTL_RBLE |
-		    AR531X_FLASHCTL_AC_8M |
-		    (1 << AR531X_FLASHCTL_IDCY_SHIFT) |
-		    (7 << AR531X_FLASHCTL_WST1_SHIFT) |
-		    (7 << AR531X_FLASHCTL_WST2_SHIFT);
+		    AR5312_FLASHCTL_E |
+		    AR5312_FLASHCTL_RBLE |
+		    AR5312_FLASHCTL_AC_8M |
+		    (1 << AR5312_FLASHCTL_IDCY_SHIFT) |
+		    (7 << AR5312_FLASHCTL_WST1_SHIFT) |
+		    (7 << AR5312_FLASHCTL_WST2_SHIFT);
 
-		REGVAL(AR531X_FLASHCTL_BASE + AR531X_FLASHCTL_0) = fctl;
+		REGVAL(AR5312_FLASHCTL_BASE + AR5312_FLASHCTL_0) = fctl;
 
-		REGVAL(AR531X_FLASHCTL_BASE + AR531X_FLASHCTL_1) &=
-		    ~(AR531X_FLASHCTL_E | AR531X_FLASHCTL_AC_MASK);
+		REGVAL(AR5312_FLASHCTL_BASE + AR5312_FLASHCTL_1) &=
+		    ~(AR5312_FLASHCTL_E | AR5312_FLASHCTL_AC_MASK);
 
-		REGVAL(AR531X_FLASHCTL_BASE + AR531X_FLASHCTL_2) &=
-		    ~(AR531X_FLASHCTL_E | AR531X_FLASHCTL_AC_MASK);
+		REGVAL(AR5312_FLASHCTL_BASE + AR5312_FLASHCTL_2) &=
+		    ~(AR5312_FLASHCTL_E | AR5312_FLASHCTL_AC_MASK);
 
 		/* search backward in the flash looking for the signature */
-		ptr = (const uint8_t *) MIPS_PHYS_TO_KSEG1(AR531X_FLASH_END - 0x1000);
+		ptr = (const uint8_t *) MIPS_PHYS_TO_KSEG1(AR5312_FLASH_END - 0x1000);
 		end = ptr - (500 * 1024);	/* NB: max 500KB window */
 		/* XXX validate end */
 		for (; ptr > end; ptr -= 0x1000)
-			if (*(const uint32_t *)ptr == AR531X_BOARD_MAGIC) {
+			if (*(const uint32_t *)ptr == AR531X_BD_MAGIC) {
 				board = (const struct ar531x_boarddata *) ptr;
 				break;
 			}
@@ -117,7 +117,7 @@ ar531x_radio_info(void)
 		baddr = (const uint8_t *) board;
 		ptr = baddr + 0x1000;
 		end = (const uint8_t *)
-		    MIPS_PHYS_TO_KSEG1(AR531X_FLASH_END-0x1000);
+		    MIPS_PHYS_TO_KSEG1(AR5312_FLASH_END-0x1000);
 	again:
 		for (; ptr < end; ptr += 0x1000)
 			if (*(const uint32_t *)ptr != 0xffffffff) {
@@ -125,11 +125,11 @@ ar531x_radio_info(void)
 				goto done;
 			}
 		/* sort of an Algol-style for loop ... */
-		if (end == (uint8_t *) MIPS_PHYS_TO_KSEG1(AR531X_FLASH_END)) {
+		if (end == (uint8_t *) MIPS_PHYS_TO_KSEG1(AR5312_FLASH_END)) {
 			/* NB: AR2316 has radio data in a different location */
 			ptr = baddr + 0xf8;
 			end = (const uint8_t *)
-			    MIPS_PHYS_TO_KSEG1(AR531X_FLASH_END-0x1000 + 0xf8);
+			    MIPS_PHYS_TO_KSEG1(AR5312_FLASH_END-0x1000 + 0xf8);
 			goto again;
 		}
 	}

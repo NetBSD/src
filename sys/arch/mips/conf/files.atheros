@@ -1,7 +1,7 @@
-#	$NetBSD: files.atheros,v 1.4 2006/07/07 22:03:19 gdamore Exp $
+#	$NetBSD: files.atheros,v 1.5 2006/08/28 07:21:15 gdamore Exp $
 
-file	arch/mips/atheros/ar531x_intr.c
-file	arch/mips/atheros/ar531x_timer.c
+file	arch/mips/atheros/ar5312.c
+file	arch/mips/atheros/ar5312_intr.c
 file	arch/mips/atheros/ar531x_board.c
 
 # Atheros system bus
