@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.3 2006/06/05 05:14:37 gdamore Exp $ */
+/* $NetBSD: machdep.c,v 1.4 2006/08/28 07:21:15 gdamore Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,13 +147,10 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2006/06/05 05:14:37 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2006/08/28 07:21:15 gdamore Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-
-#include "opt_memsize.h"
-#include "opt_ethaddr.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,9 +163,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2006/06/05 05:14:37 gdamore Exp $");
 #include <sys/boot_flag.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
-
-#include <net/if.h>
-#include <net/if_ether.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -185,10 +179,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2006/06/05 05:14:37 gdamore Exp $");
 #include <mips/locore.h>
 #include <mips/cpuregs.h>
 
-#include <mips/atheros/include/ar531xreg.h>
 #include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
-#include "com.h"
 
 struct	user *proc0paddr;
 
@@ -208,12 +200,23 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 
 void	mach_init(void); /* XXX */
 
-void mdputc(char);
-void mdputs(const char *);
-void mdputx(int n);
-void mdputn(int n);
+static void
+cal_timer(void)
+{
+	uint32_t	cntfreq;
 
-extern struct consdev com_arbus_consdev;
+	cntfreq = curcpu()->ci_cpu_freq = ar531x_cpu_freq();
+	
+	/* MIPS 4Kc CP0 counts every other clock */
+	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
+		cntfreq /= 2;
+
+	curcpu()->ci_cycles_per_hz = (cntfreq + hz / 2) / hz;
+
+	/* XXX: i don't understand this logic, it was borrowed from Malta */
+	curcpu()->ci_divisor_delay = ((cntfreq + 500000) / 1000000);
+	MIPS_SET_CI_RECIPRICAL(curcpu());
+}
 
 void
 mach_init(void)
@@ -221,9 +224,7 @@ mach_init(void)
 	caddr_t kernend;
 	u_long first, last;
 	caddr_t				v;
-	uint32_t			memcfg, bank0, bank1;
 	uint32_t			memsize;
-	const struct ar531x_boarddata	*infop;
 
 	extern char edata[], end[];	/* XXX */
 
@@ -232,12 +233,8 @@ mach_init(void)
 
 	memset(edata, 0, kernend - (caddr_t)edata);
 
-	infop = ar531x_board_info();
-	if (infop == NULL)
-		panic("No board info!");
-
 	/* set CPU model info for sysctl_hw */
-	snprintf(cpu_model, 64, "%s", infop->boardName);
+	snprintf(cpu_model, 64, "%s", ar531x_cpuname());
 
 	/*
 	 * Set up the exception vectors and CPU-specific function
@@ -253,7 +250,7 @@ mach_init(void)
 	/*
 	 * Calibrate timers.
 	 */
-	ar531x_cal_timer();
+	cal_timer();
 
 	/*
 	 * Set the VM page size.
@@ -275,26 +272,12 @@ mach_init(void)
 	 */
 
 	/*
-	 * Determine the memory size.  Use the `memsize' PMON
-	 * variable.  If that's not available, panic.
+	 * Determine the memory size.
 	 *
 	 * Note: Reserve the first page!  That's where the trap
 	 * vectors are located.
 	 */
-	memcfg = GETSDRAMREG(AR531X_SDRAMCTL_MEM_CFG1);
-	bank0 = (memcfg & AR531X_MEM_CFG1_BANK0_MASK) >>
-	    AR531X_MEM_CFG1_BANK0_SHIFT;
-	bank1 = (memcfg & AR531X_MEM_CFG1_BANK1_MASK) >>
-	    AR531X_MEM_CFG1_BANK1_SHIFT;
-
-	memsize = (bank0 ? (1 << (bank0 + 1)) : 0) +
-	    (bank1 ? (1 << (bank1 + 1)) : 0);
-	memsize <<= 20;
-
-	/* allow compile time override */
-#if defined(MEMSIZE)
-	memsize = MEMSIZE;
-#endif
+	memsize = ar531x_memsize();
 
 	printf("Memory size: 0x%08x\n", memsize);
 	physmem = btoc(memsize);
@@ -332,16 +315,15 @@ mach_init(void)
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
-	 * Clear previous AHB errors
+	 * Initialize busses.
 	 */
-	GETSYSREG(AR531X_SYSREG_AHBPERR);
-	GETSYSREG(AR531X_SYSREG_AHBDMAE);
+	ar531x_businit();
 
 	/*
 	 * Turn off (ignore) the hardware watchdog.  If we got this
 	 * far, then we shouldn't need it anymore.
 	 */
-	PUTSYSREG(AR531X_SYSREG_WDOG_CTL, AR531X_WDOG_CTL_IGNORE);
+	ar531x_wdog(0);
 
 	/*
 	 * Turn off watchpoint that may have been enabled by the
@@ -373,14 +355,7 @@ consinit(void)
 	 * Everything related to console initialization is done
 	 * in mach_init().
 	 */
-#if NCOM > 0
-	/* Setup polled serial for early console I/O */
-	/* XXX: pass in CONSPEED? */
-	com_arbus_cnattach(AR531X_UART0_BASE);
-#else
-	panic("Not configured to use serial console!\n");
-	/* not going to see that message now, are we? */
-#endif
+	ar531x_consinit();
 }
 
 void
