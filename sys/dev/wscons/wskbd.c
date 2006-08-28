@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.93 2006/07/21 16:48:53 ad Exp $ */
+/* $NetBSD: wskbd.c,v 1.94 2006/08/28 21:33:16 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.93 2006/07/21 16:48:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.94 2006/08/28 21:33:16 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -265,7 +265,7 @@ dev_type_kqfilter(wskbdkqfilter);
 
 const struct cdevsw wskbd_cdevsw = {
 	wskbdopen, wskbdclose, wskbdread, nowrite, wskbdioctl,
-	nostop, notty, wskbdpoll, nommap, wskbdkqfilter,
+	nostop, notty, wskbdpoll, nommap, wskbdkqfilter, D_OTHER
 };
 
 #ifndef WSKBD_DEFAULT_BELL_PITCH
