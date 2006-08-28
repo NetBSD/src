@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.70 2006/04/14 20:33:57 christos Exp $	*/
+/*	$NetBSD: awi.c,v 1.71 2006/08/28 00:03:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.70 2006/04/14 20:33:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.71 2006/08/28 00:03:15 christos Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $");
@@ -214,7 +214,7 @@ struct awi_chanset awi_chanset[] = {
     { AWI_PHY_TYPE_DS, AWI_REG_DOMAIN_US,  1, 11,  3 },
     { AWI_PHY_TYPE_DS, AWI_REG_DOMAIN_CA,  1, 11,  3 },
     { AWI_PHY_TYPE_DS, AWI_REG_DOMAIN_EU,  1, 13,  3 },
-    { 0, 0 }
+    { 0, 0, 0, 0, 0 }
 };
 
 #ifdef __FreeBSD__
