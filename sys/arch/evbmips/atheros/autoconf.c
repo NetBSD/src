@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.4 2006/06/05 05:14:37 gdamore Exp $ */
+/* $NetBSD: autoconf.c,v 1.5 2006/08/28 07:21:15 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2006/06/05 05:14:37 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2006/08/28 07:21:15 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2006/06/05 05:14:37 gdamore Exp $")
 
 #include <machine/bus.h>
 
-#include <mips/atheros/include/ar531xreg.h>
+#include <mips/atheros/include/ar5312reg.h>
 #include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
 
@@ -98,9 +98,9 @@ device_register(struct device *dev, void *aux)
 		prop_data_t pd;
 		const uint8_t *enet;
 
-		if (aa->aa_addr == AR531X_ENET0_BASE)
+		if (aa->aa_addr == AR5312_ENET0_BASE)
 			enet = info->enet0Mac;
-		else if (aa->aa_addr == AR531X_ENET1_BASE)
+		else if (aa->aa_addr == AR5312_ENET1_BASE)
 			enet = info->enet1Mac;
 		else
 			return;
@@ -119,9 +119,9 @@ device_register(struct device *dev, void *aux)
 		prop_data_t pd;
 		const uint8_t *enet;
 
-		if (aa->aa_addr == AR531X_WLAN0_BASE)
+		if (aa->aa_addr == AR5312_WLAN0_BASE)
 			enet = info->wlan0Mac;
-		else if (aa->aa_addr == AR531X_WLAN1_BASE)
+		else if (aa->aa_addr == AR5312_WLAN1_BASE)
 			enet = info->wlan1Mac;
 		else
 			return;

@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.1 2006/06/08 06:15:59 gdamore Exp $ */
+/* $NetBSD: wdog.c,v 1.2 2006/08/28 07:21:15 gdamore Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.1 2006/06/08 06:15:59 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.2 2006/08/28 07:21:15 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.1 2006/06/08 06:15:59 gdamore Exp $");
 
 #include <machine/cpu.h>
 
-#include <mips/atheros/include/ar531xreg.h>
 #include <mips/atheros/include/ar531xvar.h>
 
 #include <dev/sysmon/sysmonvar.h>
@@ -126,7 +125,7 @@ wdog_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdog_softc *sc = (void *)self;
 
-	sc->sc_mult = curcpu()->ci_cpu_freq / 4;
+	sc->sc_mult = ar531x_sys_freq();
 	sc->sc_wdog_period = WDOG_DEFAULT_PERIOD;
 	sc->sc_wdog_max = 0xffffffffU / sc->sc_mult;
 	sc->sc_wdog_reload = sc->sc_wdog_period * sc->sc_mult;
@@ -149,7 +148,7 @@ wdog_tickle(struct sysmon_wdog *smw)
 {
 	struct wdog_softc *sc = smw->smw_cookie;
 
-	PUTSYSREG(AR531X_SYSREG_WDOG_TIMER, sc->sc_wdog_reload);
+	ar531x_wdog(sc->sc_wdog_reload);
 	return (0);
 }
 
@@ -159,8 +158,7 @@ wdog_setmode(struct sysmon_wdog *smw)
 	struct wdog_softc *sc = smw->smw_cookie;
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
-		PUTSYSREG(AR531X_SYSREG_WDOG_CTL, AR531X_WDOG_CTL_IGNORE);
-		PUTSYSREG(AR531X_SYSREG_WDOG_TIMER, 0);
+		ar531x_wdog(0);
 	} else {
 
 		if (smw->smw_period == WDOG_PERIOD_DEFAULT)
@@ -177,8 +175,7 @@ wdog_setmode(struct sysmon_wdog *smw)
 			sc->sc_wdog_reload = sc->sc_wdog_period * sc->sc_mult;
 		}
 
-		PUTSYSREG(AR531X_SYSREG_WDOG_TIMER, sc->sc_wdog_reload);
-		PUTSYSREG(AR531X_SYSREG_WDOG_CTL, AR531X_WDOG_CTL_RESET);
+		ar531x_wdog(sc->sc_wdog_reload);
 	}
 	
 	return (0);
