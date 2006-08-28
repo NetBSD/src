@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.36 2005/12/11 12:23:22 christos Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.37 2006/08/28 00:06:14 christos Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.36 2005/12/11 12:23:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.37 2006/08/28 00:06:14 christos Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -1939,10 +1939,6 @@ tuner_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct lwp*
 	case TVTUNER_SETCHNL:
 		temp_mute(bktr, TRUE);
 		temp = tv_channel(bktr, (int)*(unsigned long *)arg);
-		if (temp < 0) {
-			temp_mute(bktr, FALSE);
-			return(EINVAL);
-		}
 		*(unsigned long *)arg = temp;
 
 		/* after every channel change, we must restart the MSP34xx */
@@ -1981,10 +1977,6 @@ tuner_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct lwp*
 		temp_mute(bktr, TRUE);
 		temp = tv_freq(bktr, (int)*(unsigned long *)arg, TV_FREQUENCY);
 		temp_mute(bktr, FALSE);
-		if (temp < 0) {
-			temp_mute(bktr, FALSE);
-			return(EINVAL);
-		}
 		*(unsigned long *)arg = temp;
 
 		/* after every channel change, we must restart the MSP34xx */
@@ -2265,8 +2257,6 @@ tuner_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct lwp*
   if(temp)
     printf("%s: tv_freq returned: %d\n", bktr_name(bktr), temp);
 #endif
-	    if (temp < 0)
-		    return(EINVAL);
 	    *(unsigned long *)arg = temp;
 	    break;
 
