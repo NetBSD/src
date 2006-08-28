@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.89 2006/08/27 23:23:48 christos Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.90 2006/08/28 11:45:38 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.89 2006/08/27 23:23:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.90 2006/08/28 11:45:38 xtraeme Exp $");
 
 #include "opt_ddb.h"
 
@@ -1071,7 +1071,6 @@ nextbyte:
 	/* We now have a complete message.  Parse it. */
 	switch (sc->sc_state) {
 		struct aic_acb *acb;
-		struct scsipi_periph *periph;
 		struct aic_tinfo *ti;
 
 	case AIC_CONNECTED:
