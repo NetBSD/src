@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.6.2.2 2006/08/28 21:57:53 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.6.2.3 2006/08/28 22:05:37 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.6.2.2 2006/08/28 21:57:53 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.6.2.3 2006/08/28 22:05:37 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -1631,8 +1631,8 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 				break;
 
 			case MSG_EXT_WDTR:
-				SBIC_DEBUG(MSGS, ("msgin: EXT_WDTR ignored"));
-				break;
+				SBIC_DEBUG(MSGS, ("msgin: EXT_WDTR rejected"));
+				goto reject;
 
 			default:
 				scsipi_printaddr(acb->xs->xs_periph);
