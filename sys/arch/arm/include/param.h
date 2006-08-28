@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.10 2005/12/11 12:16:47 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.11 2006/08/28 13:43:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -104,29 +104,6 @@
 #ifndef MAXPHYS
 #define	MAXPHYS		65536		/* max I/O transfer size */
 #endif
-
-/* pages ("clicks") to disk blocks */
-#define	ctod(x)	((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)	((x) >> (PGSHIFT - DEV_BSHIFT))
-/*#define	dtob(x)	((x) << DEV_BSHIFT)*/
-
-#define	ctob(x)	((x) << PGSHIFT)
-
-/* bytes to pages */
-#define	btoc(x)	(((x) + PGOFSET) >> PGSHIFT)
-
-#define	btodb(bytes)	 		/* calculates (bytes / DEV_BSIZE) */ \
-	((bytes) >> DEV_BSHIFT)
-#define	dbtob(db)			/* calculates (db * DEV_BSIZE) */ \
-	((db) << DEV_BSHIFT)
-
-/*
- * Map a ``block device block'' to a file system block.
- * This should be device dependent, and should use the bsize
- * field from the disk label.
- * For now though just use DEV_BSIZE.
- */
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
 
 /*
  * Constants related to network buffer management.
