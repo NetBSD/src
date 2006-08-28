@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.149 2006/08/27 09:40:00 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.150 2006/08/28 21:07:47 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4443,4 +4443,10 @@ sys/dev/pci/pcidevs				1.756,1.810
 	          S4HRP laptops.
 	- Recognize another Intel PRO/100 VM Network Controller.
 	[oster, ticket #1479]
+
+share/man/man8/afterboot.8			patch
+
+	Remove reference to sushi(8) from afterboot(8) because "sushi" will
+	be removed in NetBSD 4.0.
+	[ghen, ticket #1485]
 
