@@ -1,4 +1,4 @@
-/* $NetBSD: copyinout.S,v 1.5 2003/01/17 21:55:23 thorpej Exp $ */
+/* $NetBSD: copyinout.S,v 1.6 2006/08/28 14:26:34 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copyinout.S,v 1.5 2003/01/17 21:55:23 thorpej Exp $")
+RCSID("$NetBSD: copyinout.S,v 1.6 2006/08/28 14:26:34 bjh21 Exp $")
 
 #include <sys/errno.h>
 #include "assym.h"
@@ -49,11 +49,7 @@ ENTRY(fubyte)
 	ldrbt	r0, [r0]
 	mov	r1, #0
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
-#ifdef __APCS_26__
-	movs	pc, ip
-#else
 	mov	pc, ip
-#endif
 
 /* LINTSTUB: Func: int fuword(void *base) */
 ENTRY(fuword)
@@ -67,11 +63,7 @@ ENTRY(fuword)
 	ldrt	r0, [r0]
 	mov	r1, #0
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
-#ifdef __APCS_26__
-	movs	pc, ip
-#else
 	mov	pc, ip
-#endif
 
 /* LINTSTUB: Func: int subyte(void *base, int c) */
 ENTRY(subyte)
@@ -84,11 +76,7 @@ ENTRY(subyte)
 	strbt	r1, [r0]
 	mov	r0, #0
 	str	r0, [r2, #(U_PCB + PCB_ONFAULT)]
-#ifdef __APCS_26__
-	movs	pc, ip
-#else
 	mov	pc, ip
-#endif
 
 /* LINTSTUB: Func: int suword(void *base, long c) */
 ENTRY(suword)
@@ -101,21 +89,13 @@ ENTRY(suword)
 	strt	r1, [r0]
 	mov	r0, #0
 	str	r0, [r2, #(U_PCB + PCB_ONFAULT)]
-#ifdef __APCS_26__
-	movs	pc, ip
-#else
 	mov	pc, ip
-#endif
 
 Lfusufault:
 	mov	r0, #0
 	str	r0, [r2, #(U_PCB + PCB_ONFAULT)]
 	mvn	r0, #0
-#ifdef __APCS_26__
-	movs	pc, ip
-#else
 	mov	pc, ip
-#endif
 
 Lcurlwp:
 	.word	_C_LABEL(curlwp)
