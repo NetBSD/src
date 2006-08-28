@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.89 2006/08/13 22:48:55 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.90 2006/08/28 12:32:35 bjh21 Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -210,16 +210,15 @@ Notes:
 
 Branch:		bjh21-hydra
 Description:	Simtec Hydra support and ARM SMP in general
-Status:		Active
+Status:		Dormant
 Start Date:	18 Oct 2002
 End Date:
 Base Tag:	bjh21-hydra-base
 Maintainer:	Ben Harris <bjh21@NetBSD.org>
 Scope:		sys/arch/arm sys/arch/acorn32
-Notes:		This code is on a branch because it involves changes to
+Notes:		This code was on a branch because it involves changes to
 		cpuswitch.S which would otherwise make merging the
-		nathanw_sa branch difficult.  This branch is expected
-		to be merged to the trunk shortly after nathanw_sa.
+		nathanw_sa branch difficult.
 
 Branch:		gdamore-uart
 Description:	Add register table support to com driver.
