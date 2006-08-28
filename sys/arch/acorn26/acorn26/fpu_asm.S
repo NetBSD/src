@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_asm.S,v 1.2 2002/03/24 23:37:42 bjh21 Exp $	*/
+/*	$NetBSD: fpu_asm.S,v 1.3 2006/08/28 14:31:18 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: fpu_asm.S,v 1.2 2002/03/24 23:37:42 bjh21 Exp $")
+RCSID("$NetBSD: fpu_asm.S,v 1.3 2006/08/28 14:31:18 bjh21 Exp $")
 
 #include <machine/fpureg.h>
 
@@ -47,11 +47,7 @@ ENTRY(fpctx_save_fpa)
 	str	r1, [r0]
 	sfm	f0, 4, [r0, #(4 + 12 * 0)]
 	sfm	f4, 4, [r0, #(4 + 12 * 4)]
-#ifdef __APCS_26__
-	movs	pc, lr
-#else
 	mov	pc, lr
-#endif
 
 /*
  * void fpctx_load_fpa(struct fpframe *);
@@ -61,11 +57,7 @@ ENTRY(fpctx_load_fpa)
 	lfm	f4, 4, [r0, #(4 + 12 * 4)]
 	ldr	r1, [r0]
 	wfs	r1
-#ifdef __APCS_26__
-	movs	pc, lr
-#else
 	mov	pc, lr
-#endif
 
 /*
  * void fpu_enable_fpa(void);
@@ -73,11 +65,7 @@ ENTRY(fpctx_load_fpa)
 ENTRY(fpu_enable_fpa)
 	mov	r0, #FPA_FPCR_EN
 	wfc	r0
-#ifdef __APCS_26__
-	movs	pc, lr
-#else
 	mov	pc, lr
-#endif
 #endif
 
 /*
@@ -86,11 +74,7 @@ ENTRY(fpu_enable_fpa)
 ENTRY(fpu_disable_fpa)
 	mov	r0, #0
 	wfc	r0
-#ifdef __APCS_26__
-	movs	pc, lr
-#else
 	mov	pc, lr
-#endif
 
 #ifdef FPU_FPPC
 /*
@@ -107,11 +91,7 @@ ENTRY(fpctx_save_fppc)
 	stfe	f5, [r0, #(4 + 12 * 5)]
 	stfe	f6, [r0, #(4 + 12 * 6)]
 	stfe	f7, [r0, #(4 + 12 * 7)]
-#ifdef __APCS_26__
-	movs	pc, lr
-#else
 	mov	pc, lr
-#endif
 
 /*
  * void fpctx_load_fppc(struct fpframe *);
@@ -127,11 +107,7 @@ ENTRY(fpctx_load_fppc)
 	ldfe	f7, [r0, #(4 + 12 * 7)]
 	ldr	r1, [r0]
 	wfs	r1
-#ifdef __APCS_26__
-	movs	pc, lr
-#else
 	mov	pc, lr
-#endif
 
 /*
  * void fpu_enable_fppc(void);
@@ -140,11 +116,7 @@ ENTRY(fpu_enable_fppc)
 	rfc	r0
 	orr	r0, r0, #FPPC_FPCR_DA
 	wfc	r0
-#ifdef __APCS_26__
-	movs	pc, lr
-#else
 	mov	pc, lr
-#endif
 #endif
 
 /*
@@ -154,8 +126,4 @@ ENTRY(fpu_disable_fppc)
 	rfc	r0
 	bic	r0, r0, #FPPC_FPCR_DA
 	wfc	r0
-#ifdef __APCS_26__
-	movs	pc, lr
-#else
 	mov	pc, lr
-#endif
