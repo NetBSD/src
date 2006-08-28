@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.4,v 1.11 2006/04/06 00:19:06 simonb Exp $
+.\" $NetBSD: veriexec.4,v 1.12 2006/08/28 20:55:16 hubertf Exp $
 .\"
 .\" Copyright 2005 Elad Efrat <elad@bsd.org.il>
 .\" Copyright 2005 Brett Lymn <blymn@netbsd.org>
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 12, 2005
+.Dd August 28, 2006
 .Dt VERIEXEC 4
 .Sh NAME
 .Nm veriexec
@@ -34,6 +34,13 @@
 .Sh SYNOPSIS
 .Cd pseudo-device veriexec
 .Sh DESCRIPTION
+.Dq Veriexec
+verifies the integrity of specified executables and files before they are
+run or read.
+This makes it much more difficult to insert a trojan horse into the system
+and also makes it more difficult to run binaries that are not supposed to
+be running, for example, packet sniffers, DDoS clients and so on.
+.Pp
 The
 .Nm
 pseudo-device is used to interface the kernel's Veriexec data-structures.
