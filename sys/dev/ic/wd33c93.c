@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.6.2.3 2006/08/28 22:05:37 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.6.2.4 2006/08/28 22:27:36 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.6.2.3 2006/08/28 22:05:37 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.6.2.4 2006/08/28 22:27:36 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -223,6 +223,11 @@ wd33c93_attach(struct wd33c93_softc *dev)
 	dev->sc_cfflags = device_cfdata(&dev->sc_dev)->cf_flags;
 	wd33c93_init(dev);
 
+	printf(": %s revision %d, %d.%d MHz, SCSI ID %d\n",
+	    wd33c93_chip_names[dev->sc_chip], dev->sc_rev,
+	    dev->sc_clkfreq / 10, dev->sc_clkfreq % 10,
+	    dev->sc_channel.chan_id);
+
 	dev->sc_child = config_found(&dev->sc_dev, &dev->sc_channel,
 				     scsiprint);
 	scsipi_adapter_delref(&dev->sc_adapter);
@@ -362,10 +367,6 @@ wd33c93_reset(struct wd33c93_softc *dev)
 	dev->sc_state = SBIC_IDLE;
 
 	splx(s);
-
-	printf(": %s SCSI, rev=%d, target %d\n",
-	    wd33c93_chip_names[dev->sc_chip], dev->sc_rev,
-	    dev->sc_channel.chan_id);
 }
 
 void
