@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_private.h,v 1.5 2006/02/16 20:17:15 perry Exp $	*/
+/*	$NetBSD: bus_private.h,v 1.6 2006/08/28 19:58:56 bouyer Exp $	*/
 /*	NetBSD: bus.h,v 1.8 2005/03/09 19:04:46 matt Exp	*/
 
 /*-
@@ -150,9 +150,22 @@ struct x86_bus_dma_cookie {
 #define _BUS_PHYS_TO_BUS(pa)	((bus_addr_t)(pa))
 #endif /* !defined(_BUS_PHYS_TO_BUS) */
 
+#if !defined(_BUS_BUS_TO_PHYS)
+#define _BUS_BUS_TO_PHYS(ba)	((paddr_t)(ba))
+#endif /* !defined(_BUS_BUS_TO_PHYS) */
+
 #if !defined(_BUS_VM_PAGE_TO_BUS)
 #define	_BUS_VM_PAGE_TO_BUS(pg)	_BUS_PHYS_TO_BUS(VM_PAGE_TO_PHYS(pg))
 #endif /* !defined(_BUS_VM_PAGE_TO_BUS) */
+
+#if !defined(_BUS_BUS_TO_VM_PAGE)
+#define	_BUS_BUS_TO_VM_PAGE(ba)	PHYS_TO_VM_PAGE(ba)
+#endif /* !defined(_BUS_BUS_TO_VM_PAGE) */
+
+#if !defined(_BUS_PMAP_ENTER)
+#define _BUS_PMAP_ENTER(pmap, va, ba, prot, flags) \
+    pmap_enter(pmap, va, ba, prot, flags)
+#endif /* _BUS_PMAP_ENTER */
 
 #if !defined(_BUS_VIRT_TO_BUS)
 #include <uvm/uvm_extern.h>
