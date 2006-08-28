@@ -1,11 +1,12 @@
-/* $Id: ar531x_timer.c,v 1.1 2006/03/21 08:15:19 gdamore Exp $ */
+/* $NetBSD: ar5312.c,v 1.1 2006/08/28 07:21:15 gdamore Exp $ */
+
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
  * All rights reserved.
  *
- * This code was written by Garrett D'Amore for the Champaign-Urbana
- * Community Wireless Network Project.
+ * Portions of this code were written by Garrett D'Amore for the
+ * Champaign-Urbana Community Wireless Network Project.
  *
  * Redistribution and use in source and binary forms, with or
  * without modification, are permitted provided that the following
@@ -40,22 +41,124 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar531x_timer.c,v 1.1 2006/03/21 08:15:19 gdamore Exp $");
+/*
+ * This file includes a bunch of implementation specific bits for
+ * AR5312, which differents these from other members of the AR5315
+ * family.
+ */
+#include "opt_ddb.h"
+#include "opt_kgdb.h"
 
+#include "opt_memsize.h"
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/buf.h>
 
+#include <mips/cache.h>
 #include <mips/locore.h>
+#include <mips/cpuregs.h>
 
-#include <mips/atheros/include/ar531xreg.h>
+#include <mips/atheros/include/ar5312reg.h>
 #include <mips/atheros/include/ar531xvar.h>
+#include <mips/atheros/include/arbusvar.h>
+#include "com.h"
+
+uint32_t
+ar531x_memsize(void)
+{
+	uint32_t memsize;
+	uint32_t memcfg, bank0, bank1;
+
+	/*
+	 * Determine the memory size.  Use the `memsize' PMON
+	 * variable.  If that's not available, panic.
+	 *
+	 * NB: we allow compile time override
+	 */
+#if defined(MEMSIZE)
+	memsize = MEMSIZE;
+#else
+	memcfg = GETSDRAMREG(AR5312_SDRAMCTL_MEM_CFG1);
+	bank0 = (memcfg & AR5312_MEM_CFG1_BANK0_MASK) >>
+	    AR5312_MEM_CFG1_BANK0_SHIFT;
+	bank1 = (memcfg & AR5312_MEM_CFG1_BANK1_MASK) >>
+	    AR5312_MEM_CFG1_BANK1_SHIFT;
+
+	memsize = (bank0 ? (1 << (bank0 + 1)) : 0) +
+	    (bank1 ? (1 << (bank1 + 1)) : 0);
+	memsize <<= 20;
+#endif
+
+	return (memsize);
+}
 
 void
-ar531x_cal_timer(void)
+ar531x_wdog(uint32_t period)
 {
-	uint32_t	wisoc = GETSYSREG(AR531X_SYSREG_REVISION);
+
+	if (period == 0) {
+		PUTSYSREG(AR5312_SYSREG_WDOG_CTL, AR5312_WDOG_CTL_IGNORE);
+		PUTSYSREG(AR5312_SYSREG_WDOG_TIMER, 0);
+	} else {
+		PUTSYSREG(AR5312_SYSREG_WDOG_TIMER, period);
+		PUTSYSREG(AR5312_SYSREG_WDOG_CTL, AR5312_WDOG_CTL_RESET);
+	}
+}
+
+const char *
+ar531x_cpuname(void)
+{
+	uint32_t	revision;
+
+	revision = GETSYSREG(AR5312_SYSREG_REVISION);
+	switch (AR5312_REVISION_MAJOR(revision)) {
+	case AR5312_REVISION_MAJ_AR5311:
+		return ("Atheros AR5311");
+	case AR5312_REVISION_MAJ_AR5312:
+		return ("Atheros AR5312");
+	case AR5312_REVISION_MAJ_AR2313:
+		return ("Atheros AR2313");
+	case AR5312_REVISION_MAJ_AR5315:
+		return ("Atheros AR5315");
+	default:
+		return ("Atheros AR531X");
+	}
+}
+
+void
+ar531x_consinit(void)
+{
+	/*
+	 * Everything related to console initialization is done
+	 * in mach_init().
+	 */
+#if NCOM > 0
+	/* Setup polled serial for early console I/O */
+	/* XXX: pass in CONSPEED? */
+	com_arbus_cnattach(AR5312_UART0_BASE);
+#else
+	panic("Not configured to use serial console!\n");
+	/* not going to see that message now, are we? */
+#endif
+}
+
+void
+ar531x_businit(void)
+
+{
+	/*
+	 * Clear previous AHB errors
+	 */
+	GETSYSREG(AR5312_SYSREG_AHBPERR);
+	GETSYSREG(AR5312_SYSREG_AHBDMAE);
+}
+
+uint32_t
+ar531x_cpu_freq(void)
+{
+	static uint32_t	cpufreq;
+	uint32_t	wisoc = GETSYSREG(AR5312_SYSREG_REVISION);
 
 	uint32_t	predivmask;
 	uint32_t	predivshift;
@@ -64,7 +167,6 @@ ar531x_cal_timer(void)
 	uint32_t	doublermask;
 	uint32_t	divisor;
 	uint32_t	multiplier;
-	uint32_t	cpufreq;
 	uint32_t	clockctl;
 
 	const int	predivide_table[4] = { 1, 2, 4, 5 };
@@ -78,7 +180,11 @@ ar531x_cal_timer(void)
 	 * be very accurate -- WiFi requires usec resolution timers.
 	 */
 
-	if (AR531X_REVISION_MAJOR(wisoc) == AR531X_REVISION_MAJ_AR2313) {
+	if (cpufreq) {
+		return cpufreq;
+	}
+
+	if (AR5312_REVISION_MAJOR(wisoc) == AR5312_REVISION_MAJ_AR2313) {
 		predivmask = AR2313_CLOCKCTL_PREDIVIDE_MASK;
 		predivshift = AR2313_CLOCKCTL_PREDIVIDE_SHIFT;
 		multmask = AR2313_CLOCKCTL_MULTIPLIER_MASK;
@@ -92,7 +198,11 @@ ar531x_cal_timer(void)
 		doublermask = AR5312_CLOCKCTL_DOUBLER_MASK;
 	}
 
-	clockctl = GETSYSREG(AR531X_SYSREG_CLOCKCTL);
+	/*
+	 * Note that the source clock involved here is a 40MHz.
+	 */
+
+	clockctl = GETSYSREG(AR5312_SYSREG_CLOCKCTL);
 	divisor = predivide_table[(clockctl & predivmask) >> predivshift];
 	multiplier = (clockctl & multmask) >> multshift;
 
@@ -101,21 +211,11 @@ ar531x_cal_timer(void)
 
 	cpufreq = (40000000 / divisor) * multiplier;
 
-	/* MIPS 4Kc CP0 counts every other clock */
-	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
-		cpufreq /= 2;
+	return (cpufreq);
+}
 
-	curcpu()->ci_cycles_per_hz = (cpufreq + hz / 2) / hz;
-
-	/* XXX: i don't understand this logic, it was borrowed from Malta */
-	curcpu()->ci_divisor_delay = ((cpufreq + 500000) / 1000000);
-	MIPS_SET_CI_RECIPRICAL(curcpu());
-
-	/*
-	 * Get correct cpu frequency if the CPU runs at twice the
-	 * external/cp0-count frequency.
-	 */
-	curcpu()->ci_cpu_freq = cpufreq;
-	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
-		curcpu()->ci_cpu_freq *= 2;
+uint32_t
+ar531x_sys_freq(void)
+{
+	return (ar531x_cpu_freq() / 4);
 }

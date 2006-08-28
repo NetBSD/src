@@ -1,4 +1,4 @@
-/* $Id: ar531x_intr.c,v 1.2 2006/03/28 03:43:58 gdamore Exp $ */
+/* $Id: ar5312_intr.c,v 1.1 2006/08/28 07:21:15 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar531x_intr.c,v 1.2 2006/03/28 03:43:58 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5312_intr.c,v 1.1 2006/08/28 07:21:15 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ar531x_intr.c,v 1.2 2006/03/28 03:43:58 gdamore Exp 
 #include <machine/intr.h>
 
 #include <mips/locore.h>
-#include <mips/atheros/include/ar531xreg.h>
+#include <mips/atheros/include/ar5312reg.h>
 #include <mips/atheros/include/ar531xvar.h>
 
 /*
@@ -72,8 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: ar531x_intr.c,v 1.2 2006/03/28 03:43:58 gdamore Exp 
  */
 
 #define	REGVAL(x)	*((volatile uint32_t *)(MIPS_PHYS_TO_KSEG1((x))))
-#define	GETREG(x)	REGVAL((x) + AR531X_SYSREG_BASE)
-#define	PUTREG(x,v)	(REGVAL((x) + AR531X_SYSREG_BASE)) = (v)
+#define	GETREG(x)	REGVAL((x) + AR5312_SYSREG_BASE)
+#define	PUTREG(x,v)	(REGVAL((x) + AR5312_SYSREG_BASE)) = (v)
 
 #define	NINTRS	5	/* MIPS INT0-INT6 (7 is clock interrupt) */
 #define	NIRQS	7	/* bits in Miscellaneous Interrupt Status Register */
@@ -133,7 +133,7 @@ const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
 	MIPS_SOFT_INT_MASK_0,		/* IPL_SOFTSERIAL */
 };
  
-static const char *ar531x_cpuintrnames[NINTRS] = {
+static const char *ar5312_cpuintrnames[NINTRS] = {
 	"int 2 (wlan0)",
 	"int 3 (enet0)",
 	"int 4 (enet1)",
@@ -141,7 +141,7 @@ static const char *ar531x_cpuintrnames[NINTRS] = {
 	"int 6 (misc)",
 };
 
-static const char *ar531x_miscintrnames[NIRQS] = {
+static const char *ar5312_miscintrnames[NIRQS] = {
 	"misc 0 (timer)",
 	"misc 1 (AHBproc error)",
 	"misc 2 (AHBdma error)",
@@ -151,8 +151,8 @@ static const char *ar531x_miscintrnames[NIRQS] = {
 	"misc 6 (watchdog)"
 };
 
-static struct ar531x_intr ar531x_cpuintrs[NINTRS];
-static struct ar531x_intr ar531x_miscintrs[NIRQS];
+static struct ar531x_intr ar5312_cpuintrs[NINTRS];
+static struct ar531x_intr ar5312_miscintrs[NIRQS];
 
 static int ar531x_miscintr(void *);
 
@@ -162,20 +162,20 @@ ar531x_intr_init(void)
 	int	i;
 
 	for (i = 0; i < NINTRS; i++) {
-		LIST_INIT(&ar531x_cpuintrs[i].intr_l);
-		evcnt_attach_dynamic(&ar531x_cpuintrs[i].intr_count,
-		    EVCNT_TYPE_INTR, NULL, "mips", ar531x_cpuintrnames[i]);
+		LIST_INIT(&ar5312_cpuintrs[i].intr_l);
+		evcnt_attach_dynamic(&ar5312_cpuintrs[i].intr_count,
+		    EVCNT_TYPE_INTR, NULL, "mips", ar5312_cpuintrnames[i]);
 	}
 
 	for (i = 0; i < NIRQS; i++) {
-		LIST_INIT(&ar531x_miscintrs[i].intr_l);
-		evcnt_attach_dynamic(&ar531x_miscintrs[i].intr_count,
-		    EVCNT_TYPE_INTR, NULL, "ar531x", ar531x_miscintrnames[i]);
+		LIST_INIT(&ar5312_miscintrs[i].intr_l);
+		evcnt_attach_dynamic(&ar5312_miscintrs[i].intr_count,
+		    EVCNT_TYPE_INTR, NULL, "ar5312", ar5312_miscintrnames[i]);
 	}
 
 	/* make sure we start without any misc interrupts enabled */
-	GETREG(AR531X_SYSREG_MISC_INTSTAT);
-	PUTREG(AR531X_SYSREG_MISC_INTMASK, 0);
+	GETREG(AR5312_SYSREG_MISC_INTSTAT);
+	PUTREG(AR5312_SYSREG_MISC_INTMASK, 0);
 
 	/* make sure we register the MISC interrupt handler */
 	ar531x_intr_establish(NINTRS - 1, ar531x_miscintr, NULL);
@@ -200,7 +200,7 @@ ar531x_intr_establish(int intr, int (*func)(void *), void *arg)
 
 	s = splhigh();
 
-	LIST_INSERT_HEAD(&ar531x_cpuintrs[intr].intr_l, ih, ih_q);
+	LIST_INSERT_HEAD(&ar5312_cpuintrs[intr].intr_l, ih, ih_q);
 
 	/*
 	 * The MIPS CPU interrupts are enabled at boot time, so they
@@ -244,16 +244,16 @@ ar531x_misc_intr_establish(int irq, int (*func)(void *), void *arg)
 
 	s = splhigh();
 
-	first = LIST_EMPTY(&ar531x_miscintrs[irq].intr_l);
+	first = LIST_EMPTY(&ar5312_miscintrs[irq].intr_l);
 
-	LIST_INSERT_HEAD(&ar531x_miscintrs[irq].intr_l, ih, ih_q);
+	LIST_INSERT_HEAD(&ar5312_miscintrs[irq].intr_l, ih, ih_q);
 
 	if (first) {
 		uint32_t mask;
-		mask = GETREG(AR531X_SYSREG_MISC_INTMASK);
+		mask = GETREG(AR5312_SYSREG_MISC_INTMASK);
 		mask |= (1 << irq);
-		PUTREG(AR531X_SYSREG_MISC_INTMASK, mask);
-		GETREG(AR531X_SYSREG_MISC_INTMASK);	/* flush wbuffer */
+		PUTREG(AR5312_SYSREG_MISC_INTMASK, mask);
+		GETREG(AR5312_SYSREG_MISC_INTMASK);	/* flush wbuffer */
 	}
 
 	splx(s);
@@ -270,12 +270,12 @@ ar531x_misc_intr_disestablish(void *arg)
 	s = splhigh();
 
 	LIST_REMOVE(ih, ih_q);
-	if (LIST_EMPTY(&ar531x_miscintrs[ih->ih_irq].intr_l)) {
+	if (LIST_EMPTY(&ar5312_miscintrs[ih->ih_irq].intr_l)) {
 		uint32_t	mask;
-		mask = GETREG(AR531X_SYSREG_MISC_INTMASK);
+		mask = GETREG(AR5312_SYSREG_MISC_INTMASK);
 		mask &= ~(1 << ih->ih_irq);
-		PUTREG(AR531X_SYSREG_MISC_INTMASK, mask);
-		GETREG(AR531X_SYSREG_MISC_INTMASK);	/* flush wbuffer */
+		PUTREG(AR5312_SYSREG_MISC_INTMASK, mask);
+		GETREG(AR5312_SYSREG_MISC_INTMASK);	/* flush wbuffer */
 	}
 
 	splx(s);
@@ -292,14 +292,14 @@ ar531x_miscintr(void *arg)
 	int			rv = 0;
 	struct ar531x_intrhand	*ih;
 
-	isr = GETREG(AR531X_SYSREG_MISC_INTSTAT);
-	mask = GETREG(AR531X_SYSREG_MISC_INTMASK);
+	isr = GETREG(AR5312_SYSREG_MISC_INTSTAT);
+	mask = GETREG(AR5312_SYSREG_MISC_INTMASK);
 
 	for (index = 0; index < NIRQS; index++) {
 
 		if (isr & mask & (1 << index)) {
-			ar531x_miscintrs[index].intr_count.ev_count++;
-			LIST_FOREACH(ih, &ar531x_miscintrs[index].intr_l, ih_q)
+			ar5312_miscintrs[index].intr_count.ev_count++;
+			LIST_FOREACH(ih, &ar5312_miscintrs[index].intr_l, ih_q)
 			    rv |= (*ih->ih_func)(ih->ih_arg);
 		}
 	}
@@ -319,8 +319,8 @@ ar531x_cpuintr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		mask = MIPS_INT_MASK_0 << index;
 
 		if (ipending & mask) {
-			ar531x_cpuintrs[index].intr_count.ev_count++;
-			LIST_FOREACH(ih, &ar531x_cpuintrs[index].intr_l, ih_q)
+			ar5312_cpuintrs[index].intr_count.ev_count++;
+			LIST_FOREACH(ih, &ar5312_cpuintrs[index].intr_l, ih_q)
 			    (*ih->ih_func)(ih->ih_arg);
 			cause &= ~mask;
 		}
