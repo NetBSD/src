@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.65 2006/03/04 03:39:02 uwe Exp $ */
+/*	$NetBSD: param.h,v 1.66 2006/08/28 13:43:35 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -143,26 +143,6 @@ extern int nbpg, pgofset, pgshift;
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((32 * 1024 * 1024) >> PAGE_SHIFT)
-
-/* pages ("clicks") to disk blocks */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
-
-/* pages to bytes */
-#define	ctob(x)		((x) << PGSHIFT)
-#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
-
-/* bytes to disk blocks */
-#define	btodb(x)	((x) >> DEV_BSHIFT)
-#define	dbtob(x)	((x) << DEV_BSHIFT)
-
-/*
- * Map a ``block device block'' to a file system block.
- * This should be device dependent, and should use the bsize
- * field from the disk label.
- * For now though just use DEV_BSIZE.
- */
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #ifndef _LOCORE
