@@ -1,4 +1,4 @@
-/*	$NetBSD: btdev.c,v 1.2 2006/08/20 07:06:58 plunky Exp $	*/
+/*	$NetBSD: btdev.c,v 1.3 2006/08/28 00:14:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btdev.c,v 1.2 2006/08/20 07:06:58 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btdev.c,v 1.3 2006/08/28 00:14:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -81,7 +81,7 @@ dev_type_ioctl(btdevioctl);
 
 const struct cdevsw btdev_cdevsw = {
 	btdevopen, btdevclose, noread, nowrite, btdevioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 /* print attach args */
