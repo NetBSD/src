@@ -1,4 +1,4 @@
-/* $NetBSD: copyinoutstr.S,v 1.2 2002/03/24 23:37:42 bjh21 Exp $ */
+/* $NetBSD: copyinoutstr.S,v 1.3 2006/08/28 14:31:18 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copyinoutstr.S,v 1.2 2002/03/24 23:37:42 bjh21 Exp $")
+RCSID("$NetBSD: copyinoutstr.S,v 1.3 2006/08/28 14:31:18 bjh21 Exp $")
 
 #include <sys/errno.h>
 #include "assym.h"
@@ -72,11 +72,7 @@ Lcopyinstrloop:
 	str	r0, [r5, #(U_PCB + PCB_ONFAULT)]
 	teq	r4, #0
 	movne	r0, #ENAMETOOLONG
-#ifdef __APCS_26__
-	ldmdb	fp, {r4, r5, r6, fp, sp, pc}^
-#else
 	ldmdb	fp, {r4, r5, r6, fp, sp, pc}
-#endif
 
 /* LINTSTUB: Func: int copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done) */
 ENTRY(copyoutstr)
@@ -102,11 +98,7 @@ Lcopyoutstrloop:
 	str	r0, [r5, #(U_PCB + PCB_ONFAULT)]
 	teq	r4, #0
 	movne	r0, #ENAMETOOLONG
-#ifdef __APCS_26__
-	ldmdb	fp, {r4, r5, r6, fp, sp, pc}^
-#else
 	ldmdb	fp, {r4, r5, r6, fp, sp, pc}
-#endif
 
 /* LINTSTUB: Func: int copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done) */
 ENTRY(copystr)
@@ -141,11 +133,7 @@ Lcopystrfault:
 	mov	r1, #0
 	str	r1, [r5, #(U_PCB + PCB_ONFAULT)]
 	/* Return value is provided by fault handler. */
-#ifdef __APCS_26__
-	ldmdb	fp, {r4, r5, r6, fp, sp, pc}^
-#else
 	ldmdb	fp, {r4, r5, r6, fp, sp, pc}
-#endif
 
 /* LINTSTUB: Func: int fubyte(void *base) */
 ENTRY(fubyte)
@@ -159,11 +147,7 @@ ENTRY(fubyte)
 	ldrbt	r0, [r0]
 	mov	r1, #0
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
-#ifdef __APCS_26__
-	movs	pc, ip
-#else
 	mov	pc, ip
-#endif
 
 /* LINTSTUB: Func: int fuword(void *base) */
 ENTRY(fuword)
@@ -177,11 +161,7 @@ ENTRY(fuword)
 	ldrt	r0, [r0]
 	mov	r1, #0
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
-#ifdef __APCS_26__
-	movs	pc, ip
-#else
 	mov	pc, ip
-#endif
 
 /* LINTSTUB: Func: int subyte(void *base, int c) */
 ENTRY(subyte)
@@ -194,11 +174,7 @@ ENTRY(subyte)
 	strbt	r1, [r0]
 	mov	r0, #0
 	str	r0, [r2, #(U_PCB + PCB_ONFAULT)]
-#ifdef __APCS_26__
-	movs	pc, ip
-#else
 	mov	pc, ip
-#endif
 
 /* LINTSTUB: Func: int suword(void *base, long c) */
 ENTRY(suword)
@@ -211,21 +187,13 @@ ENTRY(suword)
 	strt	r1, [r0]
 	mov	r0, #0
 	str	r0, [r2, #(U_PCB + PCB_ONFAULT)]
-#ifdef __APCS_26__
-	movs	pc, ip
-#else
 	mov	pc, ip
-#endif
 
 Lfusufault:
 	mov	r0, #0
 	str	r0, [r2, #(U_PCB + PCB_ONFAULT)]
 	mvn	r0, #0
-#ifdef __APCS_26__
-	movs	pc, ip
-#else
 	mov	pc, ip
-#endif
 
 Lcurproc:
 	.word	_C_LABEL(curproc)
