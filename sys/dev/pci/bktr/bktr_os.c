@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.41 2006/08/28 00:07:35 christos Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.42 2006/08/28 00:08:38 christos Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.41 2006/08/28 00:07:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.42 2006/08/28 00:08:38 christos Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -1781,10 +1781,6 @@ bktr_mmap(dev_t dev, off_t offset, int nprot)
 		return(-1);
 
 	bktr = bktr_cd.cd_devs[unit];
-
-/*###1785 [cc] warning: comparison of unsigned expression < 0 is always false%%%*/
-	if ((vaddr_t)offset < 0)
-		return(-1);
 
 	if ((vaddr_t)offset >= bktr->alloc_pages * PAGE_SIZE)
 		return(-1);
