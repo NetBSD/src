@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.43 2006/08/23 20:19:35 tron Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.44 2006/08/28 14:54:13 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
@@ -415,4 +415,10 @@ sys/net/if_spppsubr.c				1.96
 	Avoid buffer overflow in the in-kernel PPP code shared by ISDN PPP
 	interfaces ippp(4) and pppoe(4). This fixes SA2006-019 (CVE-2006-4304).
 	[adrianp, ticket #10677]
+
+sys/kern/uipc_syscalls.c			1.102
+
+	Don't leave a dangling socket in CLOSE_WAIT state if the user
+	supplies a bad name or namelen parameter to accept(2).
+	[seanb, ticket #10675]
 
