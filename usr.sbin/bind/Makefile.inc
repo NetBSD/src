@@ -1,11 +1,15 @@
-#	$NetBSD: Makefile.inc,v 1.19.2.1 2005/10/15 16:45:21 riz Exp $
+#	$NetBSD: Makefile.inc,v 1.19.2.1.2.1 2006/08/29 09:38:44 ghen Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
 
 WARNS?=	1
 WFORMAT?=2
+.if (${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64")
+NAMED_USE_PTHREADS?=no
+.else
 NAMED_USE_PTHREADS?=yes
+.endif
 
 .include <bsd.own.mk>
 
