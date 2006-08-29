@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.6.2.6 2006/08/29 20:08:09 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.6.2.7 2006/08/29 20:38:58 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.6.2.6 2006/08/29 20:08:09 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.6.2.7 2006/08/29 20:38:58 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -574,9 +574,7 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 		struct scsipi_xfer_mode *xm = arg;
 
 		ti = &dev->sc_tinfo[xm->xm_target];
-		ti->flags &= ~(T_NEGOTIATE|T_SYNCMODE);
-		ti->period = 0;
-		ti->offset = 0;
+		ti->flags &= ~T_WANTSYNC;
 
 		if ((dev->sc_cfflags & (1<<(xm->xm_target+16))) == 0 &&
 		    (xm->xm_mode & PERIPH_CAP_TQING) && !wd33c93_notags)
@@ -589,18 +587,16 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 		    (xm->xm_mode & PERIPH_CAP_SYNC) ? "sync" : "async"));
 
 		if ((xm->xm_mode & PERIPH_CAP_SYNC) != 0 &&
-		    (ti->flags & T_NOSYNC) == 0) {
-			SBIC_DEBUG(SYNC, ("target %d: sync negotiation\n",
-				       xm->xm_target));
-			ti->flags |= T_NEGOTIATE;
-			ti->period = dev->sc_syncperiods[0];
-		}
+		    (ti->flags & T_NOSYNC) == 0)
+			ti->flags |= T_WANTSYNC;
 		/*
 		 * If we're not going to negotiate, send the notification
 		 * now, since it won't happen later.
 		 */
-		if ((ti->flags & T_NEGOTIATE) == 0)
+		if (!(ti->flags & T_WANTSYNC) == !(ti->flags & T_SYNCMODE))
 			wd33c93_update_xfer_mode(dev, xm->xm_target);
+		else
+			ti->flags |= T_NEGOTIATE;
 		return;
 	    }
 
@@ -1042,16 +1038,25 @@ wd33c93_selectbus(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 		if (ti->flags & T_NEGOTIATE) {
 			/* Inititae a SDTR message */
 			SBIC_DEBUG(SYNC, ("Sending SDTR to target %d\n", id));
-			ti->period = dev->sc_syncperiods[0];
-			ti->offset = dev->sc_maxoffset;
-
+			if (ti->flags & T_WANTSYNC) {
+				ti->period = dev->sc_syncperiods[0];
+				ti->offset = dev->sc_maxoffset;
+			} else {
+				ti->period = 0;
+				ti->offset = 0;
+			}
 			/* Send Sync negotiation message */
 			dev->sc_omsg[0] = MSG_IDENTIFY(lun, 0); /* No Disc */
 			dev->sc_omsg[1] = MSG_EXTENDED;
 			dev->sc_omsg[2] = MSG_EXT_SDTR_LEN;
 			dev->sc_omsg[3] = MSG_EXT_SDTR;
-			dev->sc_omsg[4] = dev->sc_syncperiods[0];
-			dev->sc_omsg[5] = dev->sc_maxoffset;
+			if (ti->flags & T_WANTSYNC) {
+				dev->sc_omsg[4] = dev->sc_syncperiods[0];
+				dev->sc_omsg[5] = dev->sc_maxoffset;
+			} else {
+				dev->sc_omsg[4] = 0;
+				dev->sc_omsg[5] = 0;
+			}
 			wd33c93_xfout(dev, 6, dev->sc_omsg);
 			dev->sc_msgout |= SEND_SDTR; /* may be rejected */
 			dev->sc_flags  |= SBICF_SYNCNEGO;
@@ -1608,6 +1613,9 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 				ti->period =
 				    MAX(msgaddr[3], dev->sc_syncperiods[0]);
 				ti->offset = MIN(msgaddr[4], dev->sc_maxoffset);
+				if (!(ti->flags & T_WANTSYNC))
+				    ti->period = ti->offset = 0;
+
 				ti->flags &= ~T_NEGOTIATE;
 
 				if (ti->offset == 0)
@@ -1741,11 +1749,19 @@ wd33c93_msgout(struct wd33c93_softc *dev)
 			dev->sc_omsg[0] = MSG_EXTENDED;
 			dev->sc_omsg[1] = MSG_EXT_SDTR_LEN;
 			dev->sc_omsg[2] = MSG_EXT_SDTR;
-			dev->sc_omsg[3] = ti->period;
-			dev->sc_omsg[4] = ti->offset;
+			if (ti->flags & T_WANTSYNC) {
+				dev->sc_omsg[3] = ti->period;
+				dev->sc_omsg[4] = ti->offset;
+			} else {
+				dev->sc_omsg[3] = 0;
+				dev->sc_omsg[4] = 0;
+			}
 			dev->sc_omsglen = 5;
 			if ((dev->sc_flags & SBICF_SYNCNEGO) == 0) {
-				ti->flags |= T_SYNCMODE;
+				if (ti->flags & T_WANTSYNC)
+					ti->flags |= T_SYNCMODE;
+				else
+					ti->flags &= ~T_SYNCMODE;
 				wd33c93_setsync(dev, ti);
 			}
 			break;
