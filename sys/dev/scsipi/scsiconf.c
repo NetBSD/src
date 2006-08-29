@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.236 2006/03/30 16:09:28 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.237 2006/08/29 20:40:23 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.236 2006/03/30 16:09:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.237 2006/08/29 20:40:23 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -637,6 +637,8 @@ static const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "MICROP  ", "1924",          ""},     PQUIRK_CAP_SYNC},
 	{{T_DIRECT, T_FIXED,
 	 "FUJITSU ", "M2266",         ""},     PQUIRK_CAP_SYNC},
+	{{T_DIRECT, T_FIXED,
+	 "FUJITSU ", "M2624S-512      ", ""},     PQUIRK_CAP_SYNC},
 
 	{{T_DIRECT, T_REMOV,
 	 "IOMEGA", "ZIP 100",		 "J.03"}, PQUIRK_NOLUNS},
