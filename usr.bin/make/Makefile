@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2006/08/26 18:17:42 christos Exp $
+#	$NetBSD: Makefile,v 1.38 2006/08/29 16:54:03 christos Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -31,8 +31,10 @@ CPPFLAGS+= ${CPPFLAGS_${.TARGET}} -DMAKE_NATIVE
 main.o:	${OBJS:Nmain.o} ${MAKEFILE}
 COPTS.var.c+= -Wno-cast-qual
 
+.ifndef HOSTPROG
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
+.endif
 
 # A simple unit-test driver to help catch regressions
 accept test:
