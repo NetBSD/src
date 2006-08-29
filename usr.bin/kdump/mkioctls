@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.25 2006/08/27 21:41:18 christos Exp $
+#	$NetBSD: mkioctls,v 1.26 2006/08/29 14:53:57 christos Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -96,6 +96,13 @@ BEGIN {
 	keep["JOY_GET_X_OFFSET"] = 1; # Same as GDT_IOCTL_CTRCNT
 	keep["SCIOC_USE_ADF"] = 1; # Same as STICIO_STARTQ
 	keep["SCBUSIOLLSCAN"] = 1; # Same as USB_DISCOVER
+	keep["OPIOCGETNEXT"] = 1; # Same as OFIOCGETNEXT
+	keep["OPIOCGET"] = 1; # Same as OFIOCGET
+	keep["OPIOCGETCHILD"] = 1; # Same as OFIOCGETCHILD
+	keep["OPIOCFINDDEVICE"] = 1; # Same as OFIOCFINDDEVICE
+	keep["OPIOCGETOPTNODE"] = 1; # Same as OFIOCGETOPTNODE
+	keep["OPIOCNEXTPROP"] = 1; # Same as OFIOCNEXTPROP
+	keep["OPIOCSET"] = 1; # Same as OFIOCSET
 
 	i = 1;
 	altqt[i++] = "RED";
