@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.104 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.105 2006/08/29 23:34:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -88,8 +88,10 @@
  * in this file.
  */
 
+#include "opt_coredump.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.104 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.105 2006/08/29 23:34:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +213,9 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	case  PT_DETACH:
 	case  PT_LWPINFO:
 	case  PT_SYSCALL:
+#ifdef COREDUMP
 	case  PT_DUMPCORE:
+#endif
 #ifdef PT_STEP
 	case  PT_STEP:
 #endif
@@ -358,6 +362,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		uvmspace_free(vm);
 		return (error);
 
+#ifdef COREDUMP
 	case  PT_DUMPCORE:
 		if ((path = SCARG(uap, addr)) != NULL) {
 			char *dst;
@@ -376,6 +381,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		if (path)
 			free(path, M_TEMP);
 		return error;
+#endif
 
 #ifdef PT_STEP
 	case  PT_STEP:
