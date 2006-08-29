@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.6.2.4 2006/08/28 22:27:36 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.6.2.5 2006/08/29 19:58:29 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.6.2.4 2006/08/28 22:27:36 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.6.2.5 2006/08/29 19:58:29 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -583,6 +583,10 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 			ti->flags |= T_TAG;
 		else
 			ti->flags &= ~T_TAG;
+
+		SBIC_DEBUG(SYNC, ("wd33c93_scsi_request: "
+		    "target %d: scsipi requested %s\n", xm->xm_target,
+		    (xm->xm_mode & PERIPH_CAP_SYNC) ? "sync" : "async"));
 
 		if ((xm->xm_mode & PERIPH_CAP_SYNC) != 0 &&
 		    (ti->flags & T_NOSYNC) == 0) {
@@ -2183,6 +2187,10 @@ wd33c93_update_xfer_mode(struct wd33c93_softc *sc, int target)
 
 	if ((ti->flags & (T_NODISC|T_TAG)) == T_TAG)
 		xm.xm_mode |= PERIPH_CAP_TQING;
+
+	SBIC_DEBUG(SYNC, ("wd33c93_update_xfer_mode: reporting target %d %s\n",
+		       xm.xm_target,
+		       (xm.xm_mode & PERIPH_CAP_SYNC) ? "sync" : "async"));
 
 	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_XFER_MODE, &xm);
 }
