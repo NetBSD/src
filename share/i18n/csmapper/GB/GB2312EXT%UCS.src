@@ -1,4 +1,4 @@
-# $NetBSD: GB2312EXT%UCS.src,v 1.1 2006/08/19 10:58:41 tnozaki Exp $
+# $NetBSD: GB2312EXT%UCS.src,v 1.2 2006/08/29 18:52:29 tnozaki Exp $
 
 TYPE		ROWCOL
 NAME		"GB2312EXT/UCS"
@@ -64,7 +64,7 @@ BEGIN_MAP
 
 # part of GB 6345.1-86
 # http://www.ibiblio.org/pub/packages/ccic/software/fonts/gb/misc/gb6345.txt
-0x283B = 0x0251 
+0x283B = 0x0251
 0x283C = 0xE7C7
 0x283D = 0x0144
 0x283E = 0x0148
