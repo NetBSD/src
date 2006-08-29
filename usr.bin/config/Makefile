@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2006/08/26 18:17:13 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2006/08/29 16:54:44 christos Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/19/94
 
 PROG=	config
@@ -9,8 +9,10 @@ MAN+=	config.5 config.samples.5
 YHEADER=1
 CPPFLAGS+=-I${.CURDIR} -I.
 
+.ifndef HOSTPROG
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
+.endif
 
 CWARNFLAGS+=-Wno-format-y2k
 
