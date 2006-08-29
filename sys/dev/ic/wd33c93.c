@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.6.2.5 2006/08/29 19:58:29 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.6.2.6 2006/08/29 20:08:09 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.6.2.5 2006/08/29 19:58:29 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.6.2.6 2006/08/29 20:08:09 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -1609,18 +1609,11 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 				    MAX(msgaddr[3], dev->sc_syncperiods[0]);
 				ti->offset = MIN(msgaddr[4], dev->sc_maxoffset);
 				ti->flags &= ~T_NEGOTIATE;
-				if (ti->period > 124)
-					ti->offset = ti->period = 0;
 
 				if (ti->offset == 0)
 					ti->flags &= ~T_SYNCMODE; /* Async */
-				else {
-					int p;
-
-					p = wd33c93_stp2div(dev, ti->period);
-					ti->period = wd33c93_div2stp(dev, p);
+				else
 					ti->flags |= T_SYNCMODE; /* Sync */
-				}
 
 				if ((dev->sc_flags&SBICF_SYNCNEGO) == 0)
 					/* target initiated negotiation */
