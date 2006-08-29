@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.4 2006/08/19 17:57:13 macallan Exp $ */
+/* $NetBSD: radeonfb.c,v 1.5 2006/08/29 00:50:29 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.4 2006/08/19 17:57:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.5 2006/08/29 00:50:29 macallan Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -79,6 +79,9 @@ __KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.4 2006/08/19 17:57:13 macallan Exp $"
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <machine/bus.h>
+#include <sys/kernel.h>
+#include <sys/lwp.h>
+#include <sys/kauth.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
@@ -168,7 +171,7 @@ static const struct videomode *radeonfb_port_mode(struct radeonfb_port *,
     int, int);
 
 
-//#define	RADEON_DEBUG
+#define	RADEON_DEBUG
 #ifdef	RADEON_DEBUG
 int	radeon_debug = 1;
 #define	DPRINTF(x)	\
@@ -415,6 +418,7 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 	struct radeonfb_softc	*sc = (struct radeonfb_softc *)dev;
 	struct pci_attach_args	*pa = aux;
 	bus_size_t		bsz;
+	pcireg_t		screg;
 	int			i, j;
 	uint32_t		v;
 
@@ -435,6 +439,11 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_family = radeonfb_devices[i].family;
 	sc->sc_flags = radeonfb_devices[i].flags;
+
+	/* enable memory and IO access */
+	screg = pci_conf_read(sc->sc_pc, sc->sc_pt, PCI_COMMAND_STATUS_REG);
+	screg |= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pci_conf_write(sc->sc_pc, sc->sc_pt, PCI_COMMAND_STATUS_REG, screg);
 
 	/*
 	 * Some flags are general to entire chip families, and rather
@@ -487,6 +496,12 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 		&sc->sc_regsz) != 0) {
 		aprint_error("%s: unable to map registers!\n", XNAME(sc));
 		goto error;
+	}
+
+	if (pci_mapreg_map(pa, RADEON_MAPREG_IO, PCI_MAPREG_TYPE_IO,	0,
+		&sc->sc_iot, &sc->sc_ioh, &sc->sc_ioaddr,
+		&sc->sc_iosz) != 0) {
+		aprint_error("%s: unable to map IO registers!\n", XNAME(sc));
 	}
 
 	/* scratch register test... */
@@ -968,6 +983,9 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct vcons_data	*vd;
 	struct radeonfb_display	*dp;
 	struct radeonfb_softc	*sc;
+#ifdef RADEONFB_MMAP_BARS
+	struct lwp *me;
+#endif
 	paddr_t			pa;
 
 	vd = (struct vcons_data *)v;
@@ -985,6 +1003,19 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 	}
 
 #ifdef RADEONFB_MMAP_BARS
+	/*
+	 * restrict all other mappings to processes with superuser privileges
+	 * or the kernel itself
+	 */
+	me = curlwp;
+	if (me != NULL) {
+		if (kauth_authorize_generic(me->l_cred, KAUTH_GENERIC_ISSUSER,
+		    NULL) != 0) {
+			printf("%s: mmap() rejected.\n", sc->sc_dev.dv_xname);
+			return -1;
+		}
+	}
+
 	if ((offset >= sc->sc_regaddr) && 
 	    (offset < sc->sc_regaddr + sc->sc_regsz)) {
 		return bus_space_mmap(sc->sc_regt, offset, 0, prot, 
@@ -996,6 +1027,16 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 		return bus_space_mmap(sc->sc_memt, offset, 0, prot, 
 		    BUS_SPACE_MAP_LINEAR);
 	}
+
+#ifdef macppc
+	/* allow mapping of IO space */
+	if ((offset >= 0xf2000000) && (offset < 0xf2800000)) {
+		pa = bus_space_mmap(sc->sc_iot, offset-0xf2000000, 0, prot, 
+		    BUS_SPACE_MAP_LINEAR);	
+		return pa;
+	}	
+#endif /* macppc */
+
 #endif /* RADEONFB_MMAP_BARS */
 
 	return -1;
@@ -2364,10 +2405,10 @@ radeonfb_setup_mono(struct radeonfb_display *dp, int xd, int yd, int width,
 
 	if (width != padded_width) {
 
-		radeonfb_wait_fifo(sc, 5);
-		topleft = ((yd << 16) & 0x3fff0000) | (xd & 0x3fff);
-		bottomright = (((yd + height) << 16) & 0x3fff0000) | 
-		    ((xd + width) & 0x3fff);
+		radeonfb_wait_fifo(sc, 2);
+		topleft = ((yd << 16) & 0x1fff0000) | (xd & 0x1fff);
+		bottomright = (((yd + height) << 16) & 0x1fff0000) | 
+		    ((xd + width) & 0x1fff);
 		PUT32(sc, RADEON_SC_TOP_LEFT, topleft);
 		PUT32(sc, RADEON_SC_BOTTOM_RIGHT, bottomright);
 	}
@@ -2427,7 +2468,6 @@ radeonfb_rectfill(struct radeonfb_display *dp, int dstx, int dsty,
 
 	gmc = dp->rd_format << RADEON_GMC_DST_DATATYPE_SHIFT;
 
-	radeonfb_unclip(sc);
 	radeonfb_wait_fifo(sc, 6);
 
 	PUT32(sc, RADEON_DP_GUI_MASTER_CNTL,
@@ -2475,8 +2515,6 @@ radeonfb_bitblt(struct radeonfb_display *dp, int srcx, int srcy,
 	}
 
 	gmc = dp->rd_format << RADEON_GMC_DST_DATATYPE_SHIFT;
-
-	radeonfb_unclip(sc);
 	
 	radeonfb_wait_fifo(sc, 6);
 
@@ -2556,7 +2594,7 @@ radeonfb_unclip(struct radeonfb_softc *sc)
 
 	radeonfb_wait_fifo(sc, 2);
 	PUT32(sc, RADEON_SC_TOP_LEFT, 0);
-	PUT32(sc, RADEON_SC_BOTTOM_RIGHT, 0x3fff3fff);
+	PUT32(sc, RADEON_SC_BOTTOM_RIGHT, 0x1fff1fff);
 }
 
 static void
@@ -3051,7 +3089,7 @@ radeonfb_port_mode(struct radeonfb_port *rp, int x, int y)
 
 	if (!rp->rp_edid_valid) {
 		/* fallback to safe mode */
-		return radeonfb_modelookup("640x480x60");
+		return radeonfb_modelookup(RADEON_DEFAULT_MODE);
 	}
 	
 	/* always choose the preferred mode first! */
@@ -3107,7 +3145,7 @@ radeonfb_port_mode(struct radeonfb_port *rp, int x, int y)
 		vmp = radeonfb_best_refresh(vmp, &ep->edid_modes[i]);
 	}
 
-	return (vmp ? vmp : radeonfb_modelookup("640x480x60"));
+	return (vmp ? vmp : radeonfb_modelookup(RADEON_DEFAULT_MODE));
 }
 
 static int
