@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.150 2006/08/28 21:07:47 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.151 2006/08/29 08:47:33 jdc Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4449,4 +4449,12 @@ share/man/man8/afterboot.8			patch
 	Remove reference to sushi(8) from afterboot(8) because "sushi" will
 	be removed in NetBSD 4.0.
 	[ghen, ticket #1485]
+
+xsrc/xfree/xc/lib/font/bitmap/pcfread.c		1.2
+
+	Fix for CVE-2006-3467 via the X.Org foundation.
+	"Integer overflow in FreeType before 2.2 allows remote attackers to
+	cause a denial of service (crash) and possibly execute arbitrary code
+	via unknown vectors."
+	[adrianp, ticket #1486]
 
