@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.41 2006/08/17 17:11:28 christos Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.42 2006/08/29 23:53:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.41 2006/08/17 17:11:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.42 2006/08/29 23:53:06 christos Exp $");
 
 #include "midi.h"
 
@@ -186,6 +186,7 @@ static const struct audio_hw_if cs4280_hw_if = {
 	cs428x_get_props,
 	cs4280_trigger_output,
 	cs4280_trigger_input,
+	NULL,
 	NULL,
 };
 
