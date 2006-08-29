@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.173 2006/08/29 23:36:56 matt Exp $ */
+/* $NetBSD: syscalls.c,v 1.174 2006/08/29 23:37:30 matt Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.173 2006/08/29 23:36:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.174 2006/08/29 23:37:30 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -66,7 +66,7 @@ const char *const syscallnames[] = {
 #ifdef PTRACE
 	"ptrace",			/* 26 = ptrace */
 #else
-	"#26 (excluded ptrace)",		/* 26 = excluded ptrace */
+	"#26 (excluded ktrace)",		/* 26 = excluded ktrace */
 #endif
 	"recvmsg",			/* 27 = recvmsg */
 	"sendmsg",			/* 28 = sendmsg */
