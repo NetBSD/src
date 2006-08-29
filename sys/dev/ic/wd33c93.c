@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.6.2.7 2006/08/29 20:38:58 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.6.2.8 2006/08/29 21:25:49 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.6.2.7 2006/08/29 20:38:58 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.6.2.8 2006/08/29 21:25:49 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -462,6 +462,7 @@ wd33c93_dma_stop(struct wd33c93_softc *dev)
 	if (dev->sc_flags & SBICF_INDMA) {
 		int s = splbio();
 
+		printf("wd33c93: stopping DMA\n");
 		/* Shut down DMA and flush FIFO's */
 		dev->sc_dmastop(dev);
 
@@ -2157,6 +2158,9 @@ wd33c93_reselect(struct wd33c93_softc *dev, int target, int lun, int tag_type, i
 	dev->lun       = lun;
 	dev->sc_nexus  = acb;
 	dev->sc_state  = SBIC_CONNECTED;
+
+	if (!wd33c93_dmaok(dev, acb->xs))
+		dev->sc_flags |= SBICF_NODMA;
 
 	/* Do an implicit RESTORE POINTERS. */
 	dev->sc_daddr = acb->daddr;
