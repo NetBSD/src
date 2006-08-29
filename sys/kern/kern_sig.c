@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.224 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.225 2006/08/29 23:34:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,8 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.224 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.225 2006/08/29 23:34:48 matt Exp $");
 
+#include "opt_coredump.h"
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_compat_sunos.h"
@@ -2028,8 +2029,10 @@ sigexit(struct lwp *l, int signum)
 	p->p_acflag |= AXSIG;
 	if (sigprop[signum] & SA_CORE) {
 		p->p_sigctx.ps_signo = signum;
+#ifdef COREDUMP
 		if ((error = coredump(l, NULL)) == 0)
 			exitsig |= WCOREFLAG;
+#endif
 
 		if (kern_logsigexit) {
 			/* XXX What if we ever have really large UIDs? */
@@ -2050,6 +2053,7 @@ sigexit(struct lwp *l, int signum)
 	/* NOTREACHED */
 }
 
+#ifdef COREDUMP
 struct coredump_iostate {
 	struct lwp *io_lwp;
 	struct vnode *io_vp;
@@ -2193,6 +2197,7 @@ done:
 		PNBUF_PUT(name);
 	return error;
 }
+#endif /* COREDUMP */
 
 /*
  * Nonexistent system call-- signal process (may want to handle it).
@@ -2209,6 +2214,7 @@ sys_nosys(struct lwp *l, void *v, register_t *retval)
 	return (ENOSYS);
 }
 
+#ifdef COREDUMP
 static int
 build_corename(struct proc *p, char *dst, const char *src, size_t len)
 {
@@ -2249,6 +2255,7 @@ build_corename(struct proc *p, char *dst, const char *src, size_t len)
 	*d = '\0';
 	return 0;
 }
+#endif /* COREDUMP */
 
 void
 getucontext(struct lwp *l, ucontext_t *ucp)
