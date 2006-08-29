@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.31 2006/05/11 23:54:39 mrg Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.32 2006/08/29 23:42:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.31 2006/05/11 23:54:39 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.32 2006/08/29 23:42:18 christos Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -178,6 +178,7 @@ static const struct audio_hw_if cmpci_hw_if = {
 	cmpci_trigger_output,	/* trigger_output */
 	cmpci_trigger_input,	/* trigger_input */
 	NULL,			/* dev_ioctl */
+	NULL,			/* powerstate */
 };
 
 #define CMPCI_NFORMATS	4
