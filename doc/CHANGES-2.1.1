@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.44 2006/08/28 14:54:13 tron Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.45 2006/08/29 06:45:08 jdc Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
@@ -421,4 +421,12 @@ sys/kern/uipc_syscalls.c			1.102
 	Don't leave a dangling socket in CLOSE_WAIT state if the user
 	supplies a bad name or namelen parameter to accept(2).
 	[seanb, ticket #10675]
+
+xsrc/xfree/xc/lib/font/bitmap/pcfread.c		1.2
+
+	Fix for CVE-2006-3467 via the X.Org foundation.
+	"Integer overflow in FreeType before 2.2 allows remote attackers to 
+	cause a denial of service (crash) and possibly execute arbitrary code 
+	via unknown vectors."
+	[adrianp, ticket #10683]
 
