@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.17 2006/06/07 22:33:34 kardel Exp $ */
+/*      $NetBSD: clockctl.c,v 1.18 2006/08/29 23:41:12 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.17 2006/06/07 22:33:34 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.18 2006/08/29 23:41:12 christos Exp $");
 
 #include "opt_ntp.h"
 
@@ -57,7 +57,7 @@ dev_type_ioctl(clockctlioctl);
 
 const struct cdevsw clockctl_cdevsw = {
 	nullopen, nullclose, noread, nowrite, clockctlioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 /*ARGSUSED*/
