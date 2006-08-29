@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.2,v 1.1.2.14 2006/08/26 14:41:05 ghen Exp $
+#	$NetBSD: CHANGES-3.0.2,v 1.1.2.15 2006/08/29 08:46:06 jdc Exp $
 
 A complete list of changes from the NetBSD 3.0.1 release to the NetBSD 3.0.2
 release:
@@ -116,4 +116,12 @@ sys/arch/cobalt/conf/INSTALL			1.24
 
 	Add option SOSEND_NO_LOAN to fix a panic on cobalt.
 	[tsutsui, ticket #1478]
+
+xsrc/xfree/xc/lib/font/bitmap/pcfread.c		1.2
+
+	Fix for CVE-2006-3467 via the X.Org foundation.
+	"Integer overflow in FreeType before 2.2 allows remote attackers to
+	cause a denial of service (crash) and possibly execute arbitrary code
+	via unknown vectors."
+	[adrianp, ticket #1486]
 
