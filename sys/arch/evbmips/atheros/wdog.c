@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.2 2006/08/28 07:21:15 gdamore Exp $ */
+/* $NetBSD: wdog.c,v 1.3 2006/08/29 02:35:44 gdamore Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -75,11 +75,11 @@
  */
 
 /*
- * Watchdog timer support for the AR5312.
+ * Watchdog timer support for the AR531x.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.2 2006/08/28 07:21:15 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.3 2006/08/29 02:35:44 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,6 @@ wdog_attach(struct device *parent, struct device *self, void *aux)
 	if (sysmon_wdog_register(&sc->sc_smw) != 0)
 		printf("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
-
 }
 
 static int
