@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfbreg.h,v 1.1 2006/08/16 22:46:45 gdamore Exp $	*/
+/*	$NetBSD: radeonfbreg.h,v 1.2 2006/08/29 17:09:33 macallan Exp $	*/
 
 /* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_reg.h,v 1.31 2003/11/10 18:41:23 tsi Exp $ */
 /*
@@ -65,6 +65,7 @@
 
 /* PCI configuration space */
 #define	RADEON_MAPREG_MMIO		0x18
+#define	RADEON_MAPREG_IO		0x14
 #define	RADEON_MAPREG_VRAM		0x10
 
 				/* Registers for 2D/Video/Overlay */
