@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_er.c,v 1.17 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: clnp_er.c,v 1.18 2006/08/29 23:40:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.17 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.18 2006/08/29 23:40:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -89,8 +89,10 @@ static const struct clnp_fixed er_template = {
 	ISO8473_V1,		/* version */
 	CLNP_TTL,		/* ttl */
 	CLNP_ER,		/* type */
-	0,			/* segment length */
-	0			/* checksum */
+	0,			/* segment length msb */
+	0,			/* segment length lsb */
+	0,			/* checksum msb */
+	0,			/* checksum lmsb */
 };
 
 /*

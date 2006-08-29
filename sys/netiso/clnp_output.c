@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_output.c,v 1.16 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: clnp_output.c,v 1.17 2006/08/29 23:40:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.16 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.17 2006/08/29 23:40:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -89,8 +89,10 @@ static struct clnp_fixed dt_template = {
 	ISO8473_V1,		/* version */
 	CLNP_TTL,		/* ttl */
 	CLNP_DT | CNF_SEG_OK | CNF_ERR_OK,	/* type */
-	0,			/* segment length */
-	0			/* checksum */
+	0,			/* segment length msb */
+	0,			/* segment length lsb */
+	0,			/* checksum msb */
+	0,			/* checksum lmsb */
 };
 
 static struct clnp_fixed raw_template = {
@@ -99,8 +101,10 @@ static struct clnp_fixed raw_template = {
 	ISO8473_V1,		/* version */
 	CLNP_TTL,		/* ttl */
 	CLNP_RAW | CNF_SEG_OK | CNF_ERR_OK,	/* type */
-	0,			/* segment length */
-	0			/* checksum */
+	0,			/* segment length msb */
+	0,			/* segment length lsb */
+	0,			/* checksum msb */
+	0,			/* checksum lmsb */
 };
 
 static struct clnp_fixed echo_template = {
@@ -109,8 +113,10 @@ static struct clnp_fixed echo_template = {
 	ISO8473_V1,		/* version */
 	CLNP_TTL,		/* ttl */
 	CLNP_EC | CNF_SEG_OK | CNF_ERR_OK,	/* type */
-	0,			/* segment length */
-	0			/* checksum */
+	0,			/* segment length msb */
+	0,			/* segment length lsb */
+	0,			/* checksum msb */
+	0,			/* checksum lmsb */
 };
 
 static struct clnp_fixed echor_template = {
@@ -119,8 +125,10 @@ static struct clnp_fixed echor_template = {
 	ISO8473_V1,		/* version */
 	CLNP_TTL,		/* ttl */
 	CLNP_ECR | CNF_SEG_OK | CNF_ERR_OK,	/* type */
-	0,			/* segment length */
-	0			/* checksum */
+	0,			/* segment length msb */
+	0,			/* segment length lsb */
+	0,			/* checksum msb */
+	0,			/* checksum lmsb */
 };
 
 #ifdef	DECBIT
