@@ -1,6 +1,6 @@
-# $NetBSD: NetBSD-2.0.mk,v 1.2 2004/12/06 08:29:25 jmc Exp $
+# $NetBSD: NetBSD-2.0.mk,v 1.3 2006/08/29 21:34:45 rpaulo Exp $
 #
-# Configuration file for the NetBSD 1.6 binary release.
+# Configuration file for the NetBSD 2.0 binary release.
 
 # sysinst expects the architectures at top level
 RELEASE_SUBDIR=		# empty
