@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 7/1/91
-#	$NetBSD: Makefile,v 1.14 2005/10/22 06:04:57 hubertf Exp $
+#	$NetBSD: Makefile,v 1.15 2006/08/29 14:32:45 hubertf Exp $
 
 NOOBJ=		# defined
 
@@ -26,10 +26,12 @@ OPTIMIZE_PDF?=	\
 			-e '/^\/level0 save/d' 			\
 			-e '/^level0 restore/d' 		
 
-man:
+all: man man.ps man.pdf
+
+man: 
 	${HOST_SH} mkman
 
-man.ps:
+man.ps: 
 	for i in ${SECTIONS} ; 					\
 	do							\
 		for f in `grep "$${i}\$$" intros` `cat man$${i}` ; \
@@ -40,17 +42,19 @@ man.ps:
 			if grep -q ^\\.TS back ;		\
 			then					\
 				echo >&2 $${f} ; 			\
-				cat $${f} | tbl | troff -msafer -man -Tps $${f} ; \
+				cat $${f} | tbl | troff -msafer -man -Tps ; \
 			else 					\
 				echo >&2 $${f} "(tbl)" ;	\
-				cat $${f} | troff -msafer -man -Tps $${f} ; \
+				cat $${f} | troff -msafer -man -Tps ; \
 			fi ; 					\
 		done >man$${i}pages.tmp ;			\
-		grops <man$${i}pages.tmp >man$${i}pages.ps ;	\
+		cat man$${i}pages.tmp				\
+		| grep -v '^x stop' 				\
+		| grops >man$${i}pages.ps ;			\
 		rm man$${i}pages.tmp ; 		\
 	done
 
-man.pdf:
+man.pdf: 
 	for i in ${SECTIONS} ; 					\
 	do							\
 		echo Chewing on man$${i}pages.pdf ;		\
