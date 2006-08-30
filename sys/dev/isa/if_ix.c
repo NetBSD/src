@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.23 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.24 2006/08/30 16:45:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.23 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.24 2006/08/30 16:45:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1012,9 +1012,10 @@ ix_attach(parent, self, aux)
 
 	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_NET, i82586_intr, sc);
-	if (isc->sc_ih == NULL)
+	if (isc->sc_ih == NULL) {
 		DPRINTF(("\n%s: can't establish interrupt\n",
 			sc->sc_dev.dv_xname));
+	}
 }
 
 CFATTACH_DECL(ix, sizeof(struct ix_softc),
