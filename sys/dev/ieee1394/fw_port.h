@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.15 2006/04/30 14:14:06 kiyohara Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.16 2006/08/30 01:59:06 christos Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -1140,7 +1140,7 @@ typedef void
     _fw_bus_dma_tag_create((p), (a), (b), (la), (ha),	\
 	(ffunc), (farg), (maxsz), (nseg), (maxsegsz), (f), (dmat))
 
-static int __inline
+static __inline int
 _fw_bus_dma_tag_create(bus_dma_tag_t parent,
     bus_size_t alignment, bus_size_t boundary,
     bus_addr_t lowaddr, bus_addr_t highaddr,
