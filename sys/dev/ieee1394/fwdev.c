@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.3 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.4 2006/08/30 02:08:20 christos Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -143,12 +143,12 @@ dev_type_mmap(fw_mmap);
 dev_type_strategy(fw_strategy);
 
 const struct bdevsw fw_bdevsw = {
-	fw_open, fw_close, fw_strategy, fw_ioctl, nodump, nosize,
+	fw_open, fw_close, fw_strategy, fw_ioctl, nodump, nosize, D_OTHER,
 };
 
 const struct cdevsw fw_cdevsw = {
 	fw_open, fw_close, fw_read, fw_write, fw_ioctl,
-	nostop, notty, fw_poll, fw_mmap, nokqfilter,
+	nostop, notty, fw_poll, fw_mmap, nokqfilter, D_OTHER,
 };
 #endif
 
@@ -464,7 +464,7 @@ fw_write_async(struct fw_drv1 *d, struct uio *uio, int ioflag)
 	xfer->send.pay_len = uio->uio_resid;
 	if (uio->uio_resid > 0) {
 		if ((err = uiomove((caddr_t)&xfer->send.payload[0],
-		    uio->uio_resid, uio)));
+		    uio->uio_resid, uio)))
 			goto out;
 	}
 
