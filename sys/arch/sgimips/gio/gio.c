@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.21 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: gio.c,v 1.22 2006/08/30 23:48:55 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.21 2005/12/11 12:18:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.22 2006/08/30 23:48:55 rumble Exp $");
 
 #include "opt_ddb.h"
 
@@ -41,7 +41,9 @@ __KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.21 2005/12/11 12:18:53 christos Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#define _SGIMIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
+#include <machine/machtype.h>
 
 #include <sgimips/gio/gioreg.h>
 #include <sgimips/gio/giovar.h>
@@ -50,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.21 2005/12/11 12:18:53 christos Exp $");
 #include "locators.h"
 #include "newport.h"
 #include "grtwo.h"
+#include "imc.h"
+#include "pic.h"
 
 #if (NNEWPORT > 0)
 #include <sgimips/gio/newportvar.h>
@@ -58,6 +62,15 @@ __KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.21 2005/12/11 12:18:53 christos Exp $");
 #if (NGRTWO > 0)
 #include <sgimips/gio/grtwovar.h>
 #endif
+
+#if (NIMC > 0)
+extern int imc_gio64_arb_config(int, uint32_t);
+#endif
+
+#if (NPIC > 0)
+extern int pic_gio32_arb_config(int, uint32_t);
+#endif
+
 
 struct gio_softc {
 	struct	device sc_dev;
@@ -97,10 +110,13 @@ gio_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	for (i=0; gio_slot_addr[i] != 0; i++) {
-		ga.ga_slot = i;
+		ga.ga_slot = (gio_slot_addr[i] == 0x1f000000) ? GIO_SLOT_GFX :
+		             (gio_slot_addr[i] == 0x1f400000) ? GIO_SLOT_EXP0 :
+								GIO_SLOT_EXP1;
 		ga.ga_addr = gio_slot_addr[i];
 		ga.ga_iot = 0;
 		ga.ga_ioh = MIPS_PHYS_TO_KSEG1(gio_slot_addr[i]);
+		ga.ga_dmat = &sgimips_default_bus_dma_tag;
 		
 #if 0
 		/* XXX */
@@ -239,4 +255,85 @@ gio_cnattach()
 	}
 
 	return ENXIO;
+}
+
+/*
+ * Devices living in the expansion slots must enable or disable some
+ * GIO arbiter settings. This is accomplished via imc(4) or pic(4)
+ * registers, depending on the machine in question.
+ */
+int
+gio_arb_config(int slot, uint32_t flags) 
+{
+
+	if (flags == 0)
+		return (EINVAL);
+
+	if (flags & ~(GIO_ARB_RT | GIO_ARB_LB | GIO_ARB_MST | GIO_ARB_SLV |
+	    GIO_ARB_PIPE | GIO_ARB_NOPIPE))
+		return (EINVAL);
+
+	if (((flags & GIO_ARB_RT)   && (flags & GIO_ARB_LB))  ||
+	    ((flags & GIO_ARB_MST)  && (flags & GIO_ARB_SLV)) ||
+	    ((flags & GIO_ARB_PIPE) && (flags & GIO_ARB_NOPIPE)))
+		return (EINVAL);
+
+#if (NPIC > 0)
+	if (mach_type == MACH_SGI_IP12)
+		return (pic_gio32_arb_config(slot, flags));
+#endif
+
+#if (NIMC > 0)
+	if (mach_type == MACH_SGI_IP20 || mach_type == MACH_SGI_IP22)
+		return (imc_gio64_arb_config(slot, flags));
+#endif
+
+	return (EINVAL);
+}
+
+/*
+ * Establish an interrupt handler for the specified slot.
+ */
+void *
+gio_intr_establish(int slot, int level, int (*func)(void *), void *arg)
+{
+	int intr;
+
+	switch (mach_type) {
+	case MACH_SGI_IP12:
+	case MACH_SGI_IP20:
+		if (slot == GIO_SLOT_GFX)
+			panic("gio_intr_establish: slot %d", slot);
+		intr = (slot == GIO_SLOT_EXP0) ? 0 : 6;
+		break;
+
+	case MACH_SGI_IP22:
+		if (mach_subtype == MACH_SGI_IP22_FULLHOUSE) {
+			if (slot == GIO_SLOT_EXP1)
+				panic("gio_intr_establish: slot %d", slot);
+			intr = (slot == GIO_SLOT_EXP0) ? 0 : 6;
+		} else {
+			if (slot == GIO_SLOT_GFX)
+				panic("gio_intr_establish: slot %d", slot);
+			intr = (slot == GIO_SLOT_EXP0) ? 22 : 23;
+		}
+		break;
+
+	default:
+		panic("gio_intr_establish: mach_type");
+	}
+
+	return (cpu_intr_establish(intr, level, func, arg));
+}
+
+const char *
+gio_product_string(int prid)
+{
+	int i;
+
+	for (i = 0; gio_knowndevs[i].product != NULL; i++)
+		if (gio_knowndevs[i].productid == prid)
+			return (gio_knowndevs[i].product);
+
+	return (NULL);
 }
