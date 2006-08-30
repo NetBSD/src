@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.18 2005/12/11 12:24:57 christos Exp $       */
+/*      $NetBSD: if_atm.c,v 1.19 2006/08/30 16:40:03 christos Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.18 2005/12/11 12:24:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.19 2006/08/30 16:40:03 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_natm.h"
@@ -91,7 +91,10 @@ atm_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 	struct natmpcb *npcb = NULL;
 	struct atm_pseudohdr *aph;
 #endif
-	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
+	static const struct sockaddr_dl null_sdl = {
+		.sdl_len = sizeof(null_sdl),
+		.sdl_family = AF_LINK,
+	};
 
 	if (rt->rt_flags & RTF_GATEWAY)   /* link level requests only */
 		return;
@@ -112,7 +115,8 @@ atm_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		 */
 
 		if ((rt->rt_flags & RTF_HOST) == 0) {
-			rt_setgate(rt,rt_key(rt),(struct sockaddr *)&null_sdl);
+			rt_setgate(rt, rt_key(rt),
+			    (const struct sockaddr *)&null_sdl);
 			gate = rt->rt_gateway;
 			SDL(gate)->sdl_type = rt->rt_ifp->if_type;
 			SDL(gate)->sdl_index = rt->rt_ifp->if_index;
