@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.225 2006/08/29 23:34:48 matt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.226 2006/08/30 13:55:03 cube Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.225 2006/08/29 23:34:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.226 2006/08/30 13:55:03 cube Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ktrace.h"
@@ -85,7 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.225 2006/08/29 23:34:48 matt Exp $");
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
+#ifdef COREDUMP
 static int	build_corename(struct proc *, char *, const char *, size_t);
+#endif
 static void	ksiginfo_exithook(struct proc *, void *);
 static void	ksiginfo_put(struct proc *, const ksiginfo_t *);
 static ksiginfo_t *ksiginfo_get(struct proc *, int);
@@ -1998,7 +2000,10 @@ sigexit(struct lwp *l, int signum)
 #if 0
 	struct lwp	*l2;
 #endif
-	int		error, exitsig;
+	int		exitsig;
+#ifdef COREDUMP
+	int		error;
+#endif
 
 	p = l->l_proc;
 
@@ -2039,10 +2044,12 @@ sigexit(struct lwp *l, int signum)
 			int uid = l->l_cred ?
 			    (int)kauth_cred_geteuid(l->l_cred) : -1;
 
+#ifdef COREDUMP
 			if (error)
 				log(LOG_INFO, lognocoredump, p->p_pid,
 				    p->p_comm, uid, signum, error);
 			else
+#endif
 				log(LOG_INFO, logcoredump, p->p_pid,
 				    p->p_comm, uid, signum);
 		}

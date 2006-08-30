@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.107 2006/08/30 11:08:15 matt Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.108 2006/08/30 13:55:03 cube Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.107 2006/08/30 11:08:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.108 2006/08/30 13:55:03 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,9 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	struct ptrace_lwpinfo pl;
 	struct vmspace *vm;
 	int s, error, write, tmp, size;
+#ifdef COREDUMP
 	char *path;
+#endif
 
 	/* "A foolish consistency..." XXX */
 	if (SCARG(uap, req) == PT_TRACE_ME)
