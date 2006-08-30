@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.72 2005/12/24 20:27:42 perry Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.73 2006/08/30 23:29:01 rumble Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.72 2005/12/24 20:27:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.73 2006/08/30 23:29:01 rumble Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -910,7 +910,7 @@ tl_statchg(self)
 	u_int32_t reg;
 
 #ifdef TLDEBUG
-	printf("tl_statchg, media %x\n", sc->tl_ifmedia.ifm_media);
+	printf("tl_statchg, media %x\n", sc->tl_mii.mii_media.ifm_media);
 #endif
 
 	/*
