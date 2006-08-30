@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.158 2006/07/23 22:06:09 ad Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.159 2006/08/30 11:14:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.158 2006/07/23 22:06:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.159 2006/08/30 11:14:39 matt Exp $");
+
+#include "opt_ptrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1431,6 +1433,7 @@ linux_sys_getresuid(l, v, retval)
 	return (copyout(&uid, SCARG(uap, suid), sizeof(uid_t)));
 }
 
+#ifdef PTRACE
 int
 linux_sys_ptrace(l, v, retval)
 	struct lwp *l;
@@ -1490,6 +1493,7 @@ linux_sys_ptrace(l, v, retval)
 
 	return LINUX_SYS_PTRACE_ARCH(l, uap, retval);
 }
+#endif
 
 int
 linux_sys_reboot(struct lwp *l, void *v, register_t *retval)
