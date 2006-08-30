@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.11 2006/06/04 13:52:27 cube Exp $	*/
+/*	$NetBSD: defs.h,v 1.12 2006/08/30 10:12:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -482,7 +482,7 @@ void	addfsoption(const char *);
 void	addmkoption(const char *, const char *);
 void	appendmkoption(const char *, const char *);
 void	appendcondmkoption(const char *, const char *, const char *);
-void	deffilesystem(const char *, struct nvlist *);
+void	deffilesystem(const char *, struct nvlist *, struct nvlist *);
 void	defoption(const char *, struct nvlist *, struct nvlist *);
 void	defflag(const char *, struct nvlist *, struct nvlist *, int);
 void	defparam(const char *, struct nvlist *, struct nvlist *, int);

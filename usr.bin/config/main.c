@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2006/08/26 18:17:13 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2006/08/30 10:12:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -448,6 +448,15 @@ dependopts(void)
 			}
 		}
 	}
+
+	for (nv = fsoptions; nv != NULL; nv = nv->nv_next) {
+		if ((opt = find_declared_option(nv->nv_name)) != NULL) {
+			for (opt = opt->nv_ptr; opt != NULL;
+			    opt = opt->nv_next) {
+				do_depend(opt);
+			}
+		}
+	}
 }
 
 static void
@@ -544,6 +553,36 @@ stop(void)
 	exit(1);
 }
 
+static void
+add_dependencies(struct nvlist *nv, struct nvlist *deps)
+{
+	struct nvlist *dep;
+	struct attr *a;
+
+	/* Use nv_ptr to link any other options that are implied. */
+	nv->nv_ptr = deps;
+	for (dep = deps; dep != NULL; dep = dep->nv_next) {
+		/*
+		 * If the dependency is an attribute, it must not
+		 * be an interface attribute.  Otherwise, it must
+		 * be a previously declared option.
+		 */
+		if ((a = ht_lookup(attrtab, dep->nv_name)) != NULL) {
+			if (a->a_iattr)
+				error("option `%s' dependency `%s' "
+				    "is an interface attribute",
+				    nv->nv_name, a->a_name);
+		} else if (OPT_OBSOLETE(dep->nv_name)) {
+			error("option `%s' dependency `%s' "
+			    "is obsolete", nv->nv_name, dep->nv_name);
+		} else if (find_declared_option(dep->nv_name) == NULL) {
+			error("option `%s' dependency `%s' "
+			    "is an unknown option",
+			    nv->nv_name, dep->nv_name);
+		}
+	}
+}
+
 /*
  * Define one or more file systems.  If file system options file name is
  * specified, a preprocessor #define for that file system will be placed
@@ -551,7 +590,7 @@ stop(void)
  * Otherwise, no preprocessor #defines will be generated.
  */
 void
-deffilesystem(const char *fname, struct nvlist *fses)
+deffilesystem(const char *fname, struct nvlist *fses, struct nvlist *deps)
 {
 	struct nvlist *nv;
 
@@ -590,6 +629,8 @@ deffilesystem(const char *fname, struct nvlist *fses)
 				return;
 			}
 		}
+
+		add_dependencies(nv, deps);
 	}
 }
 
@@ -647,7 +688,7 @@ void
 defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
        struct nvlist *deps, int obs)
 {
-	struct nvlist *nv, *nextnv, *oldnv, *dep;
+	struct nvlist *nv, *nextnv, *oldnv;
 	struct attr *a;
 	const char *name;
 	char buf[500];
@@ -689,28 +730,7 @@ defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
 			name = fname;
 		}
 
-		/* Use nv_ptr to link any other options that are implied. */
-		nv->nv_ptr = deps;
-		for (dep = deps; dep != NULL; dep = dep->nv_next) {
-			/*
-			 * If the dependency is an attribute, it must not
-			 * be an interface attribute.  Otherwise, it must
-			 * be a previously declared option.
-			 */
-			if ((a = ht_lookup(attrtab, dep->nv_name)) != NULL) {
-				if (a->a_iattr)
-					error("option `%s' dependency `%s' "
-					    "is an interface attribute",
-					    nv->nv_name, a->a_name);
-			} else if (OPT_OBSOLETE(dep->nv_name)) {
-				error("option `%s' dependency `%s' "
-				    "is obsolete", nv->nv_name, dep->nv_name);
-			} else if (find_declared_option(dep->nv_name) == NULL) {
-				error("option `%s' dependency `%s' "
-				    "is an unknown option",
-				    nv->nv_name, dep->nv_name);
-			}
-		}
+		add_dependencies(nv, deps);
 
 		/*
 		 * Remove this option from the parameter list before adding
