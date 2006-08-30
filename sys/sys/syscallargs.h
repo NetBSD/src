@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.153 2006/08/29 23:38:54 matt Exp $ */
+/* $NetBSD: syscallargs.h,v 1.154 2006/08/30 11:35:21 matt Exp $ */
 
 /*
  * System call argument lists.
@@ -136,7 +136,7 @@ struct sys_setuid_args {
 #ifdef COMPAT_43
 #else
 #endif
-#ifdef PTRACE
+#if defined(KTRACE) || !defined(_KERNEL)
 
 struct sys_ptrace_args {
 	syscallarg(int) req;
@@ -1799,7 +1799,7 @@ int	sys_getuid(struct lwp *, void *, register_t *);
 #endif
 int	sys_geteuid(struct lwp *, void *, register_t *);
 
-#ifdef PTRACE
+#if defined(KTRACE) || !defined(_KERNEL)
 int	sys_ptrace(struct lwp *, void *, register_t *);
 
 #else
