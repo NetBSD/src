@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.29 2006/05/14 21:45:00 elad Exp $ */
+/* $NetBSD: if_lmc.c,v 1.30 2006/08/30 16:49:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -7199,7 +7199,7 @@ CFATTACH_DECL(lmc, sizeof(softc_t),		/* lmc_ca */
 
 static struct cfattach *cfattach[] = { &lmc_ca, NULL };
 static const struct cfattachlkminit cfattachs[] =
-  { { DEVICE_NAME, cfattach }, { NULL } };
+  { { DEVICE_NAME, cfattach }, { NULL, NULL } };
 
 static CFDRIVER_DECL(lmc, DV_IFNET, NULL);	/* lmc_cd */
 static struct cfdriver *cfdrivers[] = { &lmc_cd, NULL };
@@ -7208,7 +7208,8 @@ static int pci_locators[] = { -1, 0 }; /* device, function */
 static const struct cfparent pci_parent = { "pci", "pci", DVUNIT_ANY };
 static struct cfdata cfdatas[] =
   { { DEVICE_NAME, DEVICE_NAME, 0, FSTATE_STAR,
-      pci_locators, 0, &pci_parent }, { 0 } };
+      pci_locators, 0, &pci_parent },
+    { NULL, NULL, 0, 0, NULL, 0, NULL } };
 
 MOD_DRV("if_"DEVICE_NAME, cfdrivers, cfattachs, cfdatas);
 
