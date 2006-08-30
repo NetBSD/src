@@ -1,4 +1,4 @@
-/*	$NetBSD: idrp_usrreq.c,v 1.16 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: idrp_usrreq.c,v 1.17 2006/08/30 15:32:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.16 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.17 2006/08/30 15:32:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -61,7 +61,16 @@ __KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.16 2005/12/11 12:25:12 christos Ex
 LIST_HEAD(, rawcb) idrp_pcb;
 struct isopcb idrp_isop;
 static struct sockaddr_iso idrp_addrs[2] =
-{{sizeof(idrp_addrs), AF_ISO,}, {sizeof(idrp_addrs[1]), AF_ISO,}};
+{
+    {
+	.siso_len = sizeof(idrp_addrs[0]),
+	.siso_family = AF_ISO,
+    },
+    {
+	.siso_len = sizeof(idrp_addrs[1]),
+    	.siso_family = AF_ISO,
+    },
+};
 
 /*
  * IDRP initialization
