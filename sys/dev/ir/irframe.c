@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.33 2006/03/29 06:47:06 thorpej Exp $	*/
+/*	$NetBSD: irframe.c,v 1.34 2006/08/30 19:16:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.33 2006/03/29 06:47:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.34 2006/08/30 19:16:03 christos Exp $");
 
 #include "irframe.h"
 
@@ -75,7 +75,7 @@ dev_type_kqfilter(irframekqfilter);
 
 const struct cdevsw irframe_cdevsw = {
 	irframeopen, irframeclose, irframeread, irframewrite, irframeioctl,
-	nostop, notty, irframepoll, nommap, irframekqfilter,
+	nostop, notty, irframepoll, nommap, irframekqfilter, D_OTHER,
 };
 
 int irframe_match(struct device *parent, struct cfdata *match, void *aux);
