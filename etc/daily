@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.66 2006/05/27 08:56:47 jdolecek Exp $
+#	$NetBSD: daily,v 1.67 2006/08/30 18:06:09 christos Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -203,7 +203,7 @@ fi
 
 rm -f $TMP
 
-if checkyesno check_uucp && [ -d /var/spool/uucp ]; then
+if checkyesno check_uucp && [ -d /var/spool/uucp -a -x /usr/bin/uustat ]; then
 	(cd /tmp; su -m uucp -c "uustat -a") > $TMP
 	if [ -s $TMP ]; then
 		echo ""
