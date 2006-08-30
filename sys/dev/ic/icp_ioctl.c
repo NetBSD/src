@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_ioctl.c,v 1.9 2006/08/23 15:44:29 christos Exp $	*/
+/*	$NetBSD: icp_ioctl.c,v 1.10 2006/08/30 15:25:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.9 2006/08/23 15:44:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.10 2006/08/30 15:25:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ static dev_type_ioctl(icpioctl);
 
 const struct cdevsw icp_cdevsw = {
 	icpopen, nullclose, noread, nowrite, icpioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 extern struct cfdriver icp_cd;
