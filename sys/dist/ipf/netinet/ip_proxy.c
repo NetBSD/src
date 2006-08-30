@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.10 2006/08/30 19:04:26 christos Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.11 2006/08/30 19:12:56 christos Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -125,7 +125,7 @@ aproxy_t	*ap_proxylist = NULL;
 aproxy_t	ap_proxies[] = {
 #ifdef	IPF_FTP_PROXY
 	{ NULL, "ftp", (char)IPPROTO_TCP, 0, 0, ippr_ftp_init, ippr_ftp_fini,
-	  ippr_ftp_new, NULL, ippr_ftp_in, ippr_ftp_out, NULL, NULL, NULL },
+	  ippr_ftp_new, NULL, ippr_ftp_in, ippr_ftp_out, NULL, NULL },
 #endif
 #ifdef	IPF_IRC_PROXY
 	{ NULL, "irc", (char)IPPROTO_TCP, 0, 0, ippr_irc_init, ippr_irc_fini,
