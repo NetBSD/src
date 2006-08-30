@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.123 2006/05/22 13:44:53 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.124 2006/08/30 15:34:31 cube Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,13 +80,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.123 2006/05/22 13:44:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.124 2006/08/30 15:34:31 cube Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
 #include "opt_mtrr.h"
 #include "opt_noredzone.h"
 #include "opt_execfmt.h"
+#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,8 +267,8 @@ cpu_lwp_free(struct lwp *l, int proc)
 #endif
 }
 
-#if defined(EXEC_AOUT) || defined(EXEC_COFF) || defined(EXEC_ECOFF) || \
-    defined(EXEC_MACHO) || defined(LKM)
+#if (defined(EXEC_AOUT) || defined(EXEC_COFF) || defined(EXEC_ECOFF) || \
+    defined(EXEC_MACHO) || defined(LKM)) && defined(COREDUMP)
 /*
  * Dump the machine specific segment at the start of a core dump.
  */
