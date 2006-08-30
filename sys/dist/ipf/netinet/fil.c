@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.24 2006/05/11 07:37:09 martti Exp $	*/
+/*	$NetBSD: fil.c,v 1.25 2006/08/30 01:58:00 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -140,7 +140,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.24 2006/05/11 07:37:09 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.25 2006/08/30 01:58:00 christos Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.78 2006/03/29 11:19:54 darrenr Exp";
@@ -156,7 +156,7 @@ extern	int	opts;
 
 
 fr_info_t	frcache[2][8];
-struct	filterstats frstats[2] = { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 } };
+struct	filterstats frstats[2] = { { .fr_pass = 0 }, { .fr_pass = 0 } };
 struct	frentry	*ipfilter[2][2] = { { NULL, NULL }, { NULL, NULL } },
 		*ipfilter6[2][2] = { { NULL, NULL }, { NULL, NULL } },
 		*ipacct6[2][2] = { { NULL, NULL }, { NULL, NULL } },
@@ -321,7 +321,7 @@ static ipfunc_resolve_t fr_availfuncs[] = {
 	{ "fr_srcgrpmap", fr_srcgrpmap, fr_grpmapinit },
 	{ "fr_dstgrpmap", fr_dstgrpmap, fr_grpmapinit },
 #endif
-	{ "", NULL }
+	{ "", NULL, NULL }
 };
 
 
@@ -5781,100 +5781,101 @@ fr_info_t *fin;
 ipftuneable_t ipf_tuneables[] = {
 	/* filtering */
 	{ { &fr_flags },	"fr_flags",		0,	0xffffffff,
-			sizeof(fr_flags),		0 },
+			sizeof(fr_flags),		0, NULL },
 	{ { &fr_active },	"fr_active",		0,	0,
-			sizeof(fr_active),		IPFT_RDONLY },
+			sizeof(fr_active),		IPFT_RDONLY, NULL },
 	{ { &fr_control_forwarding },	"fr_control_forwarding",	0, 1,
-			sizeof(fr_control_forwarding),	0 },
+			sizeof(fr_control_forwarding),	0, NULL },
 	{ { &fr_update_ipid },	"fr_update_ipid",	0,	1,
-			sizeof(fr_update_ipid),		0 },
+			sizeof(fr_update_ipid),		0, NULL },
 	{ { &fr_chksrc },	"fr_chksrc",		0,	1,
-			sizeof(fr_chksrc),		0 },
+			sizeof(fr_chksrc),		0, NULL },
 	{ { &fr_minttl },	"fr_minttl",		0,	1,
-			sizeof(fr_minttl),		0 },
+			sizeof(fr_minttl),		0, NULL },
 	{ { &fr_icmpminfragmtu }, "fr_icmpminfragmtu",	0,	1,
-			sizeof(fr_icmpminfragmtu),	0 },
+			sizeof(fr_icmpminfragmtu),	0, NULL },
 	{ { &fr_pass },		"fr_pass",		0,	0xffffffff,
-			sizeof(fr_pass),		0 },
+			sizeof(fr_pass),		0, NULL },
 	/* state */
 	{ { &fr_tcpidletimeout }, "fr_tcpidletimeout",	1,	0x7fffffff,
-			sizeof(fr_tcpidletimeout),	IPFT_WRDISABLED },
+			sizeof(fr_tcpidletimeout),	IPFT_WRDISABLED, NULL },
 	{ { &fr_tcpclosewait },	"fr_tcpclosewait",	1,	0x7fffffff,
-			sizeof(fr_tcpclosewait),	IPFT_WRDISABLED },
+			sizeof(fr_tcpclosewait),	IPFT_WRDISABLED, NULL },
 	{ { &fr_tcplastack },	"fr_tcplastack",	1,	0x7fffffff,
-			sizeof(fr_tcplastack),		IPFT_WRDISABLED },
+			sizeof(fr_tcplastack),		IPFT_WRDISABLED, NULL },
 	{ { &fr_tcptimeout },	"fr_tcptimeout",	1,	0x7fffffff,
-			sizeof(fr_tcptimeout),		IPFT_WRDISABLED },
+			sizeof(fr_tcptimeout),		IPFT_WRDISABLED, NULL },
 	{ { &fr_tcpclosed },	"fr_tcpclosed",		1,	0x7fffffff,
-			sizeof(fr_tcpclosed),		IPFT_WRDISABLED },
+			sizeof(fr_tcpclosed),		IPFT_WRDISABLED, NULL },
 	{ { &fr_tcphalfclosed }, "fr_tcphalfclosed",	1,	0x7fffffff,
-			sizeof(fr_tcphalfclosed),	IPFT_WRDISABLED },
+			sizeof(fr_tcphalfclosed),	IPFT_WRDISABLED, NULL },
 	{ { &fr_udptimeout },	"fr_udptimeout",	1,	0x7fffffff,
-			sizeof(fr_udptimeout),		IPFT_WRDISABLED },
+			sizeof(fr_udptimeout),		IPFT_WRDISABLED, NULL },
 	{ { &fr_udpacktimeout }, "fr_udpacktimeout",	1,	0x7fffffff,
-			sizeof(fr_udpacktimeout),	IPFT_WRDISABLED },
+			sizeof(fr_udpacktimeout),	IPFT_WRDISABLED, NULL },
 	{ { &fr_icmptimeout },	"fr_icmptimeout",	1,	0x7fffffff,
-			sizeof(fr_icmptimeout),		IPFT_WRDISABLED },
+			sizeof(fr_icmptimeout),		IPFT_WRDISABLED, NULL },
 	{ { &fr_icmpacktimeout }, "fr_icmpacktimeout",	1,	0x7fffffff,
-			sizeof(fr_icmpacktimeout),	IPFT_WRDISABLED },
+			sizeof(fr_icmpacktimeout),	IPFT_WRDISABLED, NULL },
 	{ { &fr_iptimeout }, "fr_iptimeout",		1,	0x7fffffff,
-			sizeof(fr_iptimeout),		IPFT_WRDISABLED },
+			sizeof(fr_iptimeout),		IPFT_WRDISABLED, NULL },
 	{ { &fr_statemax },	"fr_statemax",		1,	0x7fffffff,
-			sizeof(fr_statemax),		0 },
+			sizeof(fr_statemax),		0,	NULL },
 	{ { &fr_statesize },	"fr_statesize",		1,	0x7fffffff,
-			sizeof(fr_statesize),		IPFT_WRDISABLED },
+			sizeof(fr_statesize),		IPFT_WRDISABLED, NULL },
 	{ { &fr_state_lock },	"fr_state_lock",	0,	1,
-			sizeof(fr_state_lock),		IPFT_RDONLY },
+			sizeof(fr_state_lock),		IPFT_RDONLY, NULL },
 	{ { &fr_state_maxbucket }, "fr_state_maxbucket", 1,	0x7fffffff,
-			sizeof(fr_state_maxbucket),	IPFT_WRDISABLED },
+			sizeof(fr_state_maxbucket),	IPFT_WRDISABLED, NULL },
 	{ { &fr_state_maxbucket_reset }, "fr_state_maxbucket_reset",	0, 1,
-			sizeof(fr_state_maxbucket_reset), IPFT_WRDISABLED },
+			sizeof(fr_state_maxbucket_reset), IPFT_WRDISABLED, NULL },
 	{ { &ipstate_logging },	"ipstate_logging",	0,	1,
-			sizeof(ipstate_logging),	0 },
+			sizeof(ipstate_logging),	0, NULL },
 	/* nat */
 	{ { &fr_nat_lock },		"fr_nat_lock",		0,	1,
-			sizeof(fr_nat_lock),		IPFT_RDONLY },
+			sizeof(fr_nat_lock),		IPFT_RDONLY, NULL },
 	{ { &ipf_nattable_sz },	"ipf_nattable_sz",	1,	0x7fffffff,
-			sizeof(ipf_nattable_sz),	IPFT_WRDISABLED },
+			sizeof(ipf_nattable_sz),	IPFT_WRDISABLED, NULL },
 	{ { &ipf_nattable_max }, "ipf_nattable_max",	1,	0x7fffffff,
-			sizeof(ipf_nattable_max),	0 },
+			sizeof(ipf_nattable_max),	0, NULL },
 	{ { &ipf_natrules_sz },	"ipf_natrules_sz",	1,	0x7fffffff,
-			sizeof(ipf_natrules_sz),	IPFT_WRDISABLED },
+			sizeof(ipf_natrules_sz),	IPFT_WRDISABLED, NULL },
 	{ { &ipf_rdrrules_sz },	"ipf_rdrrules_sz",	1,	0x7fffffff,
-			sizeof(ipf_rdrrules_sz),	IPFT_WRDISABLED },
+			sizeof(ipf_rdrrules_sz),	IPFT_WRDISABLED, NULL },
 	{ { &ipf_hostmap_sz },	"ipf_hostmap_sz",	1,	0x7fffffff,
-			sizeof(ipf_hostmap_sz),		IPFT_WRDISABLED },
+			sizeof(ipf_hostmap_sz),		IPFT_WRDISABLED, NULL },
 	{ { &fr_nat_maxbucket }, "fr_nat_maxbucket",	1,	0x7fffffff,
-			sizeof(fr_nat_maxbucket),	IPFT_WRDISABLED },
+			sizeof(fr_nat_maxbucket),	IPFT_WRDISABLED, NULL },
 	{ { &fr_nat_maxbucket_reset },	"fr_nat_maxbucket_reset",	0, 1,
-			sizeof(fr_nat_maxbucket_reset),	IPFT_WRDISABLED },
+			sizeof(fr_nat_maxbucket_reset),	IPFT_WRDISABLED, NULL },
 	{ { &nat_logging },		"nat_logging",		0,	1,
-			sizeof(nat_logging),		0 },
+			sizeof(nat_logging),		0, NULL },
 	{ { &fr_defnatage },	"fr_defnatage",		1,	0x7fffffff,
-			sizeof(fr_defnatage),		IPFT_WRDISABLED },
+			sizeof(fr_defnatage),		IPFT_WRDISABLED, NULL },
 	{ { &fr_defnatipage },	"fr_defnatipage",	1,	0x7fffffff,
-			sizeof(fr_defnatipage),		IPFT_WRDISABLED },
+			sizeof(fr_defnatipage),		IPFT_WRDISABLED, NULL },
 	{ { &fr_defnaticmpage }, "fr_defnaticmpage",	1,	0x7fffffff,
-			sizeof(fr_defnaticmpage),	IPFT_WRDISABLED },
+			sizeof(fr_defnaticmpage),	IPFT_WRDISABLED, NULL },
 	/* frag */
 	{ { &ipfr_size },	"ipfr_size",		1,	0x7fffffff,
-			sizeof(ipfr_size),		IPFT_WRDISABLED },
+			sizeof(ipfr_size),		IPFT_WRDISABLED, NULL },
 	{ { &fr_ipfrttl },	"fr_ipfrttl",		1,	0x7fffffff,
-			sizeof(fr_ipfrttl),		IPFT_WRDISABLED },
+			sizeof(fr_ipfrttl),		IPFT_WRDISABLED, NULL },
 #ifdef IPFILTER_LOG
 	/* log */
 	{ { &ipl_suppress },	"ipl_suppress",		0,	1,
-			sizeof(ipl_suppress),		0 },
+			sizeof(ipl_suppress),		0, NULL },
 	{ { &ipl_buffer_sz },	"ipl_buffer_sz",	0,	0,
-			sizeof(ipl_buffer_sz),		IPFT_RDONLY },
+			sizeof(ipl_buffer_sz),		IPFT_RDONLY, NULL },
 	{ { &ipl_logmax },	"ipl_logmax",		0,	0x7fffffff,
-			sizeof(ipl_logmax),		IPFT_WRDISABLED },
+			sizeof(ipl_logmax),		IPFT_WRDISABLED, NULL },
 	{ { &ipl_logall },	"ipl_logall",		0,	1,
-			sizeof(ipl_logall),		0 },
+			sizeof(ipl_logall),		0, NULL },
 	{ { &ipl_logsize },	"ipl_logsize",		0,	0x80000,
-			sizeof(ipl_logsize),		0 },
+			sizeof(ipl_logsize),		0, NULL },
 #endif
-	{ { NULL },		NULL,			0,	0 }
+	{ { NULL },		"",			0, 0,
+			0,				0, NULL }
 };
 
 static ipftuneable_t *ipf_tunelist = NULL;
