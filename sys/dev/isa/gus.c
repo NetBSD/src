@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.93 2006/04/14 22:52:00 christos Exp $	*/
+/*	$NetBSD: gus.c,v 1.94 2006/08/30 02:10:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.93 2006/04/14 22:52:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.94 2006/08/30 02:10:38 christos Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -612,6 +612,7 @@ const struct audio_hw_if gus_hw_if = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 };
 
 static const struct audio_hw_if gusmax_hw_if = {
@@ -639,6 +640,7 @@ static const struct audio_hw_if gusmax_hw_if = {
 	ad1848_isa_round_buffersize,
 	ad1848_isa_mappage,
 	gusmax_get_props,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
