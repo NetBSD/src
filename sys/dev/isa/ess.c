@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.69 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: ess.c,v 1.70 2006/08/30 01:24:40 christos Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.69 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.70 2006/08/30 01:24:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,6 +240,7 @@ const struct audio_hw_if ess_1788_hw_if = {
 	ess_audio1_trigger_output,
 	ess_audio1_trigger_input,
 	NULL,
+	NULL,
 };
 
 const struct audio_hw_if ess_1888_hw_if = {
@@ -269,6 +270,7 @@ const struct audio_hw_if ess_1888_hw_if = {
 	ess_1888_get_props,
 	ess_audio2_trigger_output,
 	ess_audio1_trigger_input,
+	NULL,
 	NULL,
 };
 
