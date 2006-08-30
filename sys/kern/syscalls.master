@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.157 2006/08/29 23:34:48 matt Exp $
+	$NetBSD: syscalls.master,v 1.158 2006/08/30 11:34:26 matt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -105,7 +105,7 @@
 24	STD		{ uid_t sys_getuid(void); }
 #endif
 25	STD		{ uid_t sys_geteuid(void); }
-#ifdef PTRACE
+#if defined(PTRACE) || !defined(_KERNEL)
 26	STD		{ int sys_ptrace(int req, pid_t pid, caddr_t addr, \
 			    int data); }
 #else
