@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.32 2006/06/17 23:34:26 christos Exp $ */
+/* $NetBSD: esa.c,v 1.33 2006/08/30 00:53:47 christos Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.32 2006/06/17 23:34:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.33 2006/08/30 00:53:47 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -222,6 +222,8 @@ static const struct audio_hw_if esa_hw_if = {
 	esa_get_props,
 	esa_trigger_output,
 	esa_trigger_input
+	NULL,	/* dev_ioctl */
+	NULL,	/* powerstate */
 };
 
 CFATTACH_DECL(esa, sizeof(struct esa_softc), esa_match, esa_attach,
