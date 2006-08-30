@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.64 2006/03/26 20:19:52 erh Exp $	*/
+/*	$NetBSD: lock.h,v 1.65 2006/08/30 00:39:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -172,16 +172,35 @@ struct lock {
 #endif
 };
 
+#ifndef LOCKDEBUG
 #define	LOCK_INITIALIZER(prio, wmesg, timo, flags)			\
-	{ SIMPLELOCK_INITIALIZER,					\
-	  (flags),							\
-	  0,								\
-	  0,								\
-	  0,								\
-	  0,								\
-	  (wmesg),							\
-	  { .lk_un_sleep = { 0, 0, (prio), (timo) } }			\
+	{ SIMPLELOCK_INITIALIZER,	/* interlock */			\
+	  (flags),			/* flags */			\
+	  0,				/* sharecount */		\
+	  0,				/* exclusivecount */		\
+	  0,				/* recurselevel */		\
+	  0,				/* waitcount */			\
+	  (wmesg),			/* waitmesg */			\
+	  { .lk_un_sleep = { 0, 0, (prio), (timo), NULL } },		\
 	}
+#else
+#define	LOCK_INITIALIZER(prio, wmesg, timo, flags)			\
+	{ SIMPLELOCK_INITIALIZER,	/* interlock */			\
+	  (flags),			/* flags */			\
+	  0,				/* sharecount */		\
+	  0,				/* exclusivecount */		\
+	  0,				/* recurselevel */		\
+	  0,				/* waitcount */			\
+	  (wmesg),			/* waitmesg */			\
+	  { .lk_un_sleep = { 0, 0, (prio), (timo), NULL } },		\
+	  NULL,				/* lk_lock_file */		\
+	  NULL,				/* lk_unlock_file */		\
+	  0,				/* lk_lock_line */		\
+	  0,				/* lk_unlock_line */		\
+	}
+#endif
+
+
 
 /*
  * Lock request types:
