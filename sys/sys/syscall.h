@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.171 2006/08/29 23:38:54 matt Exp $ */
+/* $NetBSD: syscall.h,v 1.172 2006/08/30 11:35:21 matt Exp $ */
 
 /*
  * System call numbers.
@@ -98,7 +98,7 @@
 /* syscall: "geteuid" ret: "uid_t" args: */
 #define	SYS_geteuid	25
 
-#ifdef PTRACE
+#if defined(KTRACE) || !defined(_KERNEL)
 /* syscall: "ptrace" ret: "int" args: "int" "pid_t" "caddr_t" "int" */
 #define	SYS_ptrace	26
 

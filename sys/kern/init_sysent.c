@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.178 2006/08/29 23:37:30 matt Exp $ */
+/* $NetBSD: init_sysent.c,v 1.179 2006/08/30 11:35:21 matt Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.178 2006/08/29 23:37:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.179 2006/08/30 11:35:21 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -157,7 +157,7 @@ struct sysent sysent[] = {
 #endif
 	{ 0, 0, 0,
 	    sys_geteuid },			/* 25 = geteuid */
-#ifdef PTRACE
+#if defined(KTRACE) || !defined(_KERNEL)
 	{ 4, s(struct sys_ptrace_args), 0,
 	    sys_ptrace },			/* 26 = ptrace */
 #else
