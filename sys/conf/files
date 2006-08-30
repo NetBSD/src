@@ -1,8 +1,8 @@
-#	$NetBSD: files,v 1.800 2006/08/30 11:08:15 matt Exp $
+#	$NetBSD: files,v 1.801 2006/08/30 13:49:27 cube Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
-version 	20060604
+version 	20060830
 
 #
 # device classes
