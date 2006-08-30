@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.88 2006/05/10 06:24:02 skrll Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.89 2006/08/30 21:25:22 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,8 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.88 2006/05/10 06:24:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.89 2006/08/30 21:25:22 matt Exp $");
+#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.88 2006/05/10 06:24:02 skrll Exp $"
 #include <machine/pmap.h>
 #include <machine/reg.h>
 
+#ifdef COREDUMP
 /*
  * Dump the machine specific header information at the start of a core dump.
  */
@@ -88,6 +90,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	return coredump_write(iocookie, UIO_SYSSPACE, &cpustate,
 	    sizeof(cpustate));
 }
+#endif
 
 void
 cpu_lwp_free(struct lwp *l, int proc)
