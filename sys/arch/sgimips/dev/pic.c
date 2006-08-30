@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.10 2005/12/11 12:18:52 christos Exp $	 */
+/*	$NetBSD: pic.c,v 1.11 2006/08/30 23:44:52 rumble Exp $	 */
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.10 2005/12/11 12:18:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.11 2006/08/30 23:44:52 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.10 2005/12/11 12:18:52 christos Exp $");
 #include <machine/sysconf.h>
 
 #include <sgimips/dev/picreg.h>
+
+#include <sgimips/gio/giovar.h>
 
 #include "locators.h"
 
@@ -70,6 +72,8 @@ struct pic_attach_args {
 	bus_space_tag_t		iaa_st;
 	bus_space_handle_t	iaa_sh;
 };
+
+int pic_gio32_arb_config(int, uint32_t);
 
 static struct pic_softc psc;
 
@@ -229,4 +233,40 @@ pic_watchdog_tickle(void)
 
 	pic_watchdog_disable();
 	pic_watchdog_enable();
+}
+
+/* intended to be called from gio/gio.c only */
+int
+pic_gio32_arb_config(int slot, uint32_t flags)
+{
+	uint32_t reg;
+
+	/* only Indigo machines have GIO expansion slots (XXX HPLC?) */
+	if (mach_subtype != MACH_SGI_IP12_HP1 &&
+	    mach_subtype != MACH_SGI_IP12_HPLC)
+		return (EINVAL);
+
+	/* graphics slot is not valid on IP12 */
+	if (slot != GIO_SLOT_EXP0 && slot != GIO_SLOT_EXP1)
+		return (EINVAL);
+
+	reg = bus_space_read_4(psc.iot, psc.ioh, (slot == GIO_SLOT_EXP0) ?
+	    PIC_GIO32ARB_SLOT0 : PIC_GIO32ARB_SLOT1);
+
+	if (flags & GIO_ARB_RT)
+		reg &= ~PIC_GIO32ARB_SLOT_LONG;
+
+	if (flags & GIO_ARB_LB)
+		reg |= PIC_GIO32ARB_SLOT_LONG;
+
+	if (flags & GIO_ARB_MST)
+		reg &= ~PIC_GIO32ARB_SLOT_SLAVE;
+
+	if (flags & GIO_ARB_SLV)
+		reg |= PIC_GIO32ARB_SLOT_SLAVE;
+
+	bus_space_write_4(psc.iot, psc.ioh, (slot == GIO_SLOT_EXP0) ?
+	    PIC_GIO32ARB_SLOT0 : PIC_GIO32ARB_SLOT1, reg);
+
+	return (0);
 }
