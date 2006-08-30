@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.19 2006/08/25 19:33:51 matt Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.20 2006/08/30 19:20:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.19 2006/08/25 19:33:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.20 2006/08/30 19:20:48 christos Exp $");
 
 
 #include <sys/param.h>
@@ -186,5 +186,7 @@ struct domain   isodomain = {
 	sizeof(struct sockaddr_iso),	/* maxkeylen */
 	0,
 	0,
-	{ &clnlintrq },		/* ifqueues */
+	{ &clnlintrq, NULL },		/* ifqueues */
+	{ NULL },
+	MOWNER_INIT,
 };
