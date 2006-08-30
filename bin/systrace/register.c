@@ -1,4 +1,4 @@
-/*	$NetBSD: register.c,v 1.18 2006/04/16 05:19:02 provos Exp $	*/
+/*	$NetBSD: register.c,v 1.18.2.1 2006/08/30 12:05:41 tron Exp $	*/
 /*	$OpenBSD: register.c,v 1.11 2002/08/05 14:49:27 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -113,7 +113,8 @@ systrace_initcb(void)
 	/* 57: symlink */
 	X(intercept_register_sccb("netbsd", "symlink", trans_cb, NULL));
 	intercept_register_transstring("netbsd", "symlink", 0);
-	intercept_register_transfn("netbsd", "symlink", 1);
+	intercept_register_translation("netbsd", "symlink", 1,
+	    &ic_translate_unlinkname);
 
 	/* 58: readlink [fsread] */
 	X(intercept_register_sccb("netbsd", "readlink", trans_cb, NULL));
@@ -143,10 +144,10 @@ systrace_initcb(void)
  	X(intercept_register_sccb("netbsd", "fcntl", trans_cb, NULL));
  	intercept_register_translation("netbsd", "fcntl", 1, &ic_fcntlcmd);
 
-	/* 97: socket */
- 	X(intercept_register_sccb("netbsd", "socket", trans_cb, NULL));
- 	intercept_register_translation("netbsd", "socket", 0, &ic_sockdom);
- 	intercept_register_translation("netbsd", "socket", 1, &ic_socktype);
+	/* 97: compat_30_socket*/
+ 	X(intercept_register_sccb("netbsd", "compat_30_socket", trans_cb, NULL));
+ 	intercept_register_translation("netbsd", "compat_30_socket", 0, &ic_sockdom);
+ 	intercept_register_translation("netbsd", "compat_30_socket", 1, &ic_socktype);
 
 	/* 98: connect */
 	X(intercept_register_sccb("netbsd", "connect", trans_cb, NULL));
@@ -236,18 +237,24 @@ systrace_initcb(void)
 	intercept_register_translation("netbsd", "__posix_fchown", 0, &ic_fdt);
 	intercept_register_translation("netbsd", "__posix_fchown", 1, &ic_uidt);
 	intercept_register_translation("netbsd", "__posix_fchown", 2, &ic_gidt);
-	/* __stat30 [fsread] */
+
+	/* 387: __stat30 [fsread] */
 	X(intercept_register_sccb("netbsd", "__stat30", trans_cb, NULL));
 	tl = intercept_register_transfn("netbsd", "__stat30", 0);
 	alias = systrace_new_alias("netbsd", "__stat30", "netbsd", "fsread");
 	systrace_alias_add_trans(alias, tl);
 
-	/* __lstat30 [fsread] */
+	/* 389: __lstat30 [fsread] */
 	X(intercept_register_sccb("netbsd", "__lstat30", trans_cb, NULL));
 	tl = intercept_register_translation("netbsd", "__lstat30", 0,
 	    &ic_translate_unlinkname);
 	alias = systrace_new_alias("netbsd", "__lstat30", "netbsd", "fsread");
 	systrace_alias_add_trans(alias, tl);
+
+	/* 394: __socket30 */
+	X(intercept_register_sccb("netbsd", "__socket30", trans_cb, NULL));
+	intercept_register_translation("netbsd", "__socket30", 0, &ic_sockdom);
+	intercept_register_translation("netbsd", "__socket30", 1, &ic_socktype);
 
 #else
 	X(intercept_register_gencb(gen_cb, NULL));
@@ -318,7 +325,8 @@ systrace_initcb(void)
 	/* symlink */
 	X(intercept_register_sccb("native", "symlink", trans_cb, NULL));
 	intercept_register_transstring("native", "symlink", 0);
-	intercept_register_transfn("native", "symlink", 1);
+	intercept_register_translation("native", "symlink", 1,
+	    &ic_translate_unlinkname);
 
 	/* readlink [fsread] */
 	X(intercept_register_sccb("native", "readlink", trans_cb, NULL));
