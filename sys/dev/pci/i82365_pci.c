@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.21 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.22 2006/08/30 15:14:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.21 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.22 2006/08/30 15:14:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,8 @@ static struct pcmcia_chip_functions pcic_pci_functions = {
 	pcic_chip_socket_enable,
 	pcic_chip_socket_disable,
 	pcic_chip_socket_settype,
+
+	NULL,				/* card_detect */
 };
 
 static void pcic_pci_callback(struct device *);
