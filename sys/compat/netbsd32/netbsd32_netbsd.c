@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.109 2006/07/31 16:34:43 martin Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.110 2006/08/30 13:56:48 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.109 2006/07/31 16:34:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.110 2006/08/30 13:56:48 cube Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.109 2006/07/31 16:34:43 martin
 #include "opt_sysv.h"
 #include "opt_nfsserver.h"
 #include "opt_syscall_debug.h"
+#include "opt_ptrace.h"
 
 #include "fs_lfs.h"
 #include "fs_nfs.h"
@@ -465,6 +466,7 @@ netbsd32_setuid(l, v, retval)
 	return (sys_setuid(l, &ua, retval));
 }
 
+#ifdef PTRACE
 int
 netbsd32_ptrace(l, v, retval)
 	struct lwp *l;
@@ -485,6 +487,7 @@ netbsd32_ptrace(l, v, retval)
 	NETBSD32TO64_UAP(data);
 	return (sys_ptrace(l, &ua, retval));
 }
+#endif
 
 int
 netbsd32_accept(l, v, retval)
