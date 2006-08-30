@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.25 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: fms.c,v 1.26 2006/08/30 02:00:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.25 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.26 2006/08/30 02:00:26 christos Exp $");
 
 #include "mpu.h"
 
@@ -144,6 +144,7 @@ static const struct audio_hw_if fms_hw_if = {
 	fms_get_props,
 	fms_trigger_output,
 	fms_trigger_input,
+	NULL,
 	NULL,
 };
 
@@ -529,10 +530,10 @@ fms_query_encoding(void *addr, struct audio_encoding *fp)
  * What a pity FM801 does not have 24000
  * 24000 -> 22050 sounds rather poor
  */
-struct {
+static struct {
 	int limit;
 	int rate;
-} static const fms_rates[11] = {
+} const fms_rates[11] = {
 	{  6600,  5500 },
 	{  8750,  8000 },
 	{ 10250,  9600 },
