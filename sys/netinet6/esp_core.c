@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.35 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.36 2006/08/30 01:17:09 christos Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.35 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.36 2006/08/30 01:17:09 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -123,9 +123,11 @@ static const struct esp_algorithm esp_algorithms[] = {
 		esp_common_ivlen, esp_cbc_decrypt,
 		esp_cbc_encrypt, esp_3des_schedule,
 		esp_3des_blockdecrypt, esp_3des_blockencrypt, },
-	{ 1, 0, esp_null_mature, 0, 2048, NULL, "null",
+	{ 1, 0, esp_null_mature, 0, 2048, NULL,
+		"null",
 		esp_common_ivlen, esp_null_decrypt,
-		esp_null_encrypt, NULL, },
+		esp_null_encrypt, NULL,
+		NULL, NULL },
 	{ 8, 8, esp_cbc_mature, 40, 448, esp_blowfish_schedlen, "blowfish-cbc",
 		esp_common_ivlen, esp_cbc_decrypt,
 		esp_cbc_encrypt, esp_blowfish_schedule,
@@ -140,9 +142,11 @@ static const struct esp_algorithm esp_algorithms[] = {
 		esp_common_ivlen, esp_cbc_decrypt,
 		esp_cbc_encrypt, esp_rijndael_schedule,
 		esp_rijndael_blockdecrypt, esp_rijndael_blockencrypt },
-	{ 16, 8, esp_aesctr_mature, 160, 288, esp_aesctr_schedlen, "aes-ctr",
+	{ 16, 8, esp_aesctr_mature, 160, 288, esp_aesctr_schedlen,
+		"aes-ctr",
 		esp_common_ivlen, esp_aesctr_decrypt,
-		esp_aesctr_encrypt, esp_aesctr_schedule },
+		esp_aesctr_encrypt, esp_aesctr_schedule,
+		NULL, NULL },
 };
 
 const struct esp_algorithm *
