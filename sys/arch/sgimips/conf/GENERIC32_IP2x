@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.55 2006/08/26 20:26:56 christos Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.56 2006/08/30 23:59:50 rumble Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.55 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.56 $"
 
 maxusers	32
 
@@ -226,6 +226,17 @@ wsdisplay* 	at newport? console ?
 
 grtwo*		at gio? slot ?
 wsdisplay*	at grtwo? console ?
+
+# PCI Fast Ethernet cards glued to the GIO bus
+giopci*		at gio? slot?
+pci*		at giopci? bus?
+options		PCI_NETBSD_CONFIGURE
+
+tlp*		at pci? dev ? function ? # Phobos G100/130/160 Fast Ethernet
+lxtphy*		at mii? phy ?		 # Level One LXT-970 PHYs 
+
+tl*		at pci? dev ? function ? # Set Engineering GIO Fast Ethernet
+nsphy*		at mii? phy ?		 # NS83840 PHYs
 
 # HPC devices
 sq* 		at hpc0 offset ?
