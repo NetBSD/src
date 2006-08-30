@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.c,v 1.13 2005/12/11 12:24:54 christos Exp $ */
+/* $NetBSD: ieee80211_rssadapt.c,v 1.14 2006/08/30 15:40:41 christos Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_rssadapt.c,v 1.13 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_rssadapt.c,v 1.14 2006/08/30 15:40:41 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -122,15 +122,15 @@ sysctl_ieee80211_rssadapt_expavgctl(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
-	if (rc.rc_decay_old < 0 ||
+	if (/* rc.rc_decay_old < 0 || */
 	    rc.rc_decay_denom < rc.rc_decay_old)
 		return (EINVAL);
 
-	if (rc.rc_thresh_old < 0 ||
+	if (/* rc.rc_thresh_old < 0 || */
 	    rc.rc_thresh_denom < rc.rc_thresh_old)
 		return (EINVAL);
 
-	if (rc.rc_avgrssi_old < 0 ||
+	if (/* rc.rc_avgrssi_old < 0 || */
 	    rc.rc_avgrssi_denom < rc.rc_avgrssi_old)
 		return (EINVAL);
 
