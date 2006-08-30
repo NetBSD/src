@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: efi.c,v 1.2 2006/08/30 11:12:04 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -28,10 +28,10 @@
  */
 
 #include <sys/cdefs.h>
-
-
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lock.h>
+
 #include <machine/bootinfo.h>
 #include <machine/efi.h>
 #include <machine/sal.h>
