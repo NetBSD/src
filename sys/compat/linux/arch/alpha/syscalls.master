@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.53 2006/06/10 21:15:33 christos Exp $
+	$NetBSD: syscalls.master,v 1.54 2006/08/30 11:14:39 matt Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -61,6 +61,7 @@
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
 #include "opt_compat_osf1.h"
+#include "opt_ptrace.h"
 #endif
 
 #include <sys/param.h>
@@ -116,8 +117,12 @@
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid_with_euid(void); }
 25	UNIMPL
+#ifdef PTRACE
 26	STD		{ int linux_sys_ptrace(long request, long pid, \
 			  long addr, long data); }
+#else
+26	EXCL		ptrace
+#endif
 27	UNIMPL
 28	UNIMPL
 29	UNIMPL
