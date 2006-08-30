@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.106 2006/08/30 10:17:49 matt Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.107 2006/08/30 11:08:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -90,9 +90,10 @@
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
+#include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.106 2006/08/30 10:17:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.107 2006/08/30 11:08:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.106 2006/08/30 10:17:49 matt Exp $
 
 #include <machine/reg.h>
 
+#ifdef PTRACE
 /*
  * Process debugging system call.
  */
@@ -791,7 +793,9 @@ process_domem(struct lwp *curl /*tracer*/,
 #endif
 	return (error);
 }
+#endif /* PTRACE */
 
+#if defined(KTRACE) || defined(PTRACE)
 /*
  * Ensure that a process has permission to perform I/O on another.
  * Arguments:
@@ -838,7 +842,9 @@ process_checkioperm(struct lwp *l, struct proc *t)
 
 	return (0);
 }
+#endif /* KTRACE || PTRACE */
 
+#ifdef KTRACE
 void
 process_stoptrace(struct lwp *l)
 {
@@ -864,3 +870,4 @@ process_stoptrace(struct lwp *l)
 	if (dolock)
 		splx(s);
 }
+#endif /* KTRACE */
