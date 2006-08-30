@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.118 2006/06/25 07:50:00 yamt Exp $	*/
+/*	$NetBSD: if.h,v 1.119 2006/08/30 16:41:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ struct if_clone {
 };
 
 #define	IF_CLONE_INITIALIZER(name, create, destroy)			\
-	{ { 0 }, name, sizeof(name) - 1, create, destroy }
+	{ { NULL, NULL }, name, sizeof(name) - 1, create, destroy }
 
 /*
  * Structure used to query names of interface cloners.
