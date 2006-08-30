@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_mace.c,v 1.7 2006/04/17 14:01:08 tsutsui Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.8 2006/08/30 23:35:10 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.7 2006/04/17 14:01:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.8 2006/08/30 23:35:10 rumble Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -91,9 +91,13 @@ struct macepci_softc {
 
 static int	macepci_match(struct device *, struct cfdata *, void *);
 static void	macepci_attach(struct device *, struct device *, void *);
-pcireg_t	macepci_conf_read(pci_chipset_tag_t, pcitag_t, int);
-void		macepci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-int		macepci_intr(void *);
+static int	macepci_bus_maxdevs(pci_chipset_tag_t, int);
+static pcireg_t	macepci_conf_read(pci_chipset_tag_t, pcitag_t, int);
+static void	macepci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
+static int	macepci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+static const char *
+		macepci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
+static int	macepci_intr(void *);
 
 #ifndef PCI_NETBSD_CONFIGURE
 struct pciaddr pciaddr;
@@ -137,8 +141,11 @@ macepci_attach(struct device *parent, struct device *self, void *aux)
 	rev = bus_space_read_4(pc->iot, pc->ioh, MACEPCI_REVISION);
 	printf(": rev %d\n", rev);
 
+	pc->pc_bus_maxdevs = macepci_bus_maxdevs;
 	pc->pc_conf_read = macepci_conf_read;
 	pc->pc_conf_write = macepci_conf_write;
+	pc->pc_intr_map = macepci_intr_map;
+	pc->pc_intr_string = macepci_intr_string;
 	pc->intr_establish = mace_intr_establish;
 	pc->intr_disestablish = mace_intr_disestablish;
 
@@ -241,6 +248,16 @@ macepci_attach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
+int
+macepci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
+{
+
+	if (busno == 0)
+		return 5;	/* 2 on-board SCSI chips, slots 0, 1 and 2 */
+	else
+		return 0;	/* XXX */
+}
+
 pcireg_t
 macepci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
@@ -263,6 +280,57 @@ macepci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 	bus_space_write_4(pc->iot, pc->ioh, MACE_PCI_CONFIG_ADDR, (tag | reg));
 	bus_space_write_4(pc->iot, pc->ioh, MACE_PCI_CONFIG_DATA, data);
 	bus_space_write_4(pc->iot, pc->ioh, MACE_PCI_CONFIG_ADDR, 0);
+}
+
+int
+macepci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t intrtag = pa->pa_intrtag;
+	int pin = pa->pa_intrpin;
+	int bus, dev, func, start;
+
+	pci_decompose_tag(pc, intrtag, &bus, &dev, &func);
+
+	if (dev < 3 && pin != PCI_INTERRUPT_PIN_A)
+		panic("SCSI0 and SCSI1 must be hardwired!");
+
+	switch (pin) {
+	default:
+	case PCI_INTERRUPT_PIN_NONE:
+		return -1;
+
+	case PCI_INTERRUPT_PIN_A:
+		/*
+		 * Each of SCSI{0,1}, & slots 0 - 2 has dedicated interrupt
+		 * for pin A?
+		 */
+		*ihp = dev + 7;
+		return 0;
+
+	case PCI_INTERRUPT_PIN_B:
+		start = 0;
+		break;
+	case PCI_INTERRUPT_PIN_C:
+		start = 1;
+		break;
+	case PCI_INTERRUPT_PIN_D:
+		start = 2;
+		break;
+	}
+
+	/* Pins B,C,D are mapped to PCI_SHARED0 - PCI_SHARED2 interrupts */
+	*ihp = 13 /* PCI_SHARED0 */ + (start + dev - 3) % 3;
+	return 0;
+}
+
+const char *
+macepci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+{
+	static char irqstr[32];
+
+	sprintf(irqstr, "crime interrupt %d", ih);
+	return irqstr;
 }
 
 

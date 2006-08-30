@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.8 2006/04/17 14:01:08 tsutsui Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.9 2006/08/30 23:35:10 rumble Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,6 +34,8 @@
  * Machine-specific definitions for PCI autoconfiguration.
  */
 
+#define __HAVE_PCI_CONF_HOOK
+
 /*
  * Forward declarations.
  */
@@ -52,14 +54,23 @@ typedef int 		pci_intr_handle_t;
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
 struct sgimips_pci_chipset {
+	int		(*pc_bus_maxdevs)(pci_chipset_tag_t, int);
 	pcireg_t	(*pc_conf_read)(pci_chipset_tag_t, pcitag_t, int);
 	void		(*pc_conf_write)(pci_chipset_tag_t, pcitag_t, int,
 				pcireg_t);
+	int		(*pc_conf_hook)(pci_chipset_tag_t, int, int, int,
+				pcireg_t);
+	int		(*pc_intr_map)(struct pci_attach_args *,
+				pci_intr_handle_t *);
+	const char *	(*pc_intr_string)(pci_chipset_tag_t pc,
+				pci_intr_handle_t);
 	void		*(*intr_establish)(int , int, int (*)(void *), void *); 
 	void		(*intr_disestablish)(void *ih);
 
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+
+	void *cookie;
 
 	struct extent *pc_memext;	/* PCI memory space extent */
 	struct extent *pc_ioext;	/* PCI I/O space extent */
@@ -79,6 +90,7 @@ void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t,
 pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
 			pcireg_t);
+int		pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
 int		pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
