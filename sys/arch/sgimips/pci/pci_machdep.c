@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.18 2006/05/14 21:56:33 elad Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.19 2006/08/30 23:35:10 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.18 2006/05/14 21:56:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.19 2006/08/30 23:35:10 rumble Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -55,30 +55,20 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.18 2006/05/14 21:56:33 elad Exp $"
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/pciconf.h>
 
-/*
- * PCI doesn't have any special needs; just use
- * the generic versions of these functions.
- */
-struct sgimips_bus_dma_tag pci_bus_dma_tag = {
-	_bus_dmamap_create,
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	_bus_dmamap_sync_mips3,
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap,
-};
+struct sgimips_bus_dma_tag pci_bus_dma_tag;
 
 void
 pci_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
 {
+	/*
+	 * PCI doesn't have any special needs; just use
+	 * the generic versions of these functions as
+	 * established in sgimips_bus_dma_init().
+	 */
+	pci_bus_dma_tag = sgimips_default_bus_dma_tag;	/* struct copy */
+
 	/* XXX */
 
 	return;
@@ -88,10 +78,7 @@ int
 pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
 
-	if (busno == 0)
-		return 5;	/* 2 on-board SCSI chips, slots 0, 1 and 2 */
-	else
-		return 32;	/* XXX */
+	return (*pc->pc_bus_maxdevs)(pc, busno);
 }
 
 pcitag_t
@@ -130,52 +117,13 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 int
 pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pcitag_t intrtag = pa->pa_intrtag;
-	int pin = pa->pa_intrpin;
-	int bus, dev, func, start;
-
-	pci_decompose_tag(pc, intrtag, &bus, &dev, &func);
-
-	if (dev < 3 && pin != PCI_INTERRUPT_PIN_A)
-		panic("SCSI0 and SCSI1 must be hardwired!");
-
-	switch (pin) {
-	default:
-	case PCI_INTERRUPT_PIN_NONE:
-		return -1;
-
-	case PCI_INTERRUPT_PIN_A:
-		/*
-		 * Each of SCSI{0,1}, & slots 0 - 2 has dedicated interrupt
-		 * for pin A?
-		 */
-		*ihp = dev + 7;
-		return 0;
-
-	case PCI_INTERRUPT_PIN_B:
-		start = 0;
-		break;
-	case PCI_INTERRUPT_PIN_C:
-		start = 1;
-		break;
-	case PCI_INTERRUPT_PIN_D:
-		start = 2;
-		break;
-	}
-
-	/* Pins B,C,D are mapped to PCI_SHARED0 - PCI_SHARED2 interrupts */
-	*ihp = 13 /* PCI_SHARED0 */ + (start + dev - 3) % 3;
-	return 0;
+	return (*pa->pa_pc->pc_intr_map)(pa, ihp);
 }
 
 const char *
 pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
-	static char irqstr[32];
-
-	sprintf(irqstr, "crime interrupt %d", ih);
-	return irqstr;
+	return (*pc->pc_intr_string)(pc, ih);
 }
 
 const struct evcnt *
@@ -191,17 +139,28 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 	int (*func)(void *), void *arg)
 {
 
-	return (void *)(pc->intr_establish)(ih, 0, func, arg);
+	return (void *)(*pc->intr_establish)(ih, 0, func, arg);
 }
 
 void
 pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
 
-	(pc->intr_disestablish)(cookie);
+	(*pc->intr_disestablish)(cookie);
 }
 
 #ifdef PCI_NETBSD_CONFIGURE
+int
+pci_conf_hook(pci_chipset_tag_t pc, int bus, int device, int function,
+    pcireg_t id)
+{
+
+	if (pc->pc_conf_hook)
+		return (*pc->pc_conf_hook)(pc, bus, device, function, id);
+	else
+		return (PCI_CONF_DEFAULT);
+}
+
 void
 pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin, int swiz,
     int *iline)
