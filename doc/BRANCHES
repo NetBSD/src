@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.90 2006/08/28 12:32:35 bjh21 Exp $
+#	$NetBSD: BRANCHES,v 1.91 2006/08/30 20:40:36 wiz Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -135,7 +135,7 @@ Notes:
 
 Branch:		netbsd-1-6
 Description:	The NetBSD 1.6 release branch
-Status:		Active
+Status:		Terminated
 Start Date:	22 May 2002
 End Date:
 Base Tag:	netbsd-1-6-base
