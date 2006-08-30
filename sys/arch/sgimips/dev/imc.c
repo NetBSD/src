@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.25 2005/12/11 12:18:52 christos Exp $	*/
+/*	$NetBSD: imc.c,v 1.26 2006/08/30 23:44:52 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.25 2005/12/11 12:18:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.26 2006/08/30 23:44:52 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -42,6 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.25 2005/12/11 12:18:52 christos Exp $");
 #include <machine/sysconf.h>
 
 #include <sgimips/dev/imcreg.h>
+#include <sgimips/dev/imcvar.h>
+
+#include <sgimips/gio/giovar.h>
 
 #include "locators.h"
 
@@ -79,6 +82,8 @@ struct imc_attach_args {
 	int	iaa_stride;
 #endif
 };
+
+int imc_gio64_arb_config(int, uint32_t);
 
 struct imc_softc isc;
 
@@ -294,4 +299,129 @@ imc_watchdog_enable(void)
 	reg |= IMC_CPUCTRL0_WDOG;
 	bus_space_write_4(isc.iot, isc.ioh, IMC_CPUCTRL0, reg);
 	imc_watchdog_reset();
+}
+
+/* intended to be called from gio/gio.c only */
+int
+imc_gio64_arb_config(int slot, uint32_t flags)
+{
+	uint32_t reg;
+
+	/* GIO_SLOT_EXP1 is unusable on Fullhouse */
+	if (slot == GIO_SLOT_EXP1 && mach_subtype == MACH_SGI_IP22_FULLHOUSE)
+		return (EINVAL);
+
+	/* GIO_SLOT_GFX is only usable on Fullhouse */
+	if (slot == GIO_SLOT_GFX && mach_subtype != MACH_SGI_IP22_FULLHOUSE)
+		return (EINVAL);
+
+	/* GIO_SLOT_GFX is always pipelined */
+	if (slot == GIO_SLOT_GFX && (flags & GIO_ARB_NOPIPE))
+		return (EINVAL);
+
+	/* IP20 does not support pipelining (XXX what about Indy?) */
+	if (((flags & GIO_ARB_PIPE) || (flags & GIO_ARB_NOPIPE)) &&
+	    mach_type == MACH_SGI_IP20)
+		return (EINVAL);
+
+	reg = bus_space_read_4(isc.iot, isc.ioh, IMC_GIO64ARB);
+
+	if (flags & GIO_ARB_RT) {
+		if (slot == GIO_SLOT_EXP0)
+			reg |= IMC_GIO64ARB_EXP0RT;
+		else if (slot == GIO_SLOT_EXP1)
+			reg |= IMC_GIO64ARB_EXP1RT;
+		else if (slot == GIO_SLOT_GFX)
+			reg |= IMC_GIO64ARB_GRXRT;
+	}
+
+	if (flags & GIO_ARB_MST) {
+		if (slot == GIO_SLOT_EXP0)
+			reg |= IMC_GIO64ARB_EXP0MST;
+		else if (slot == GIO_SLOT_EXP1)
+			reg |= IMC_GIO64ARB_EXP1MST;
+		else if (slot == GIO_SLOT_GFX)
+			reg |= IMC_GIO64ARB_GRXMST;
+	}
+
+	if (flags & GIO_ARB_PIPE) {
+		if (slot == GIO_SLOT_EXP0)
+			reg |= IMC_GIO64ARB_EXP0PIPE;
+		else if (slot == GIO_SLOT_EXP1)
+			reg |= IMC_GIO64ARB_EXP1PIPE;
+	}
+
+	if (flags & GIO_ARB_LB) {
+		if (slot == GIO_SLOT_EXP0)
+			reg &= ~IMC_GIO64ARB_EXP0RT;
+		else if (slot == GIO_SLOT_EXP1)
+			reg &= ~IMC_GIO64ARB_EXP1RT;
+		else if (slot == GIO_SLOT_GFX)
+			reg &= ~IMC_GIO64ARB_GRXRT;
+	}
+
+	if (flags & GIO_ARB_SLV) {
+		if (slot == GIO_SLOT_EXP0)
+			reg &= ~IMC_GIO64ARB_EXP0MST;
+		else if (slot == GIO_SLOT_EXP1)
+			reg &= ~IMC_GIO64ARB_EXP1MST;
+		else if (slot == GIO_SLOT_GFX)
+			reg &= ~IMC_GIO64ARB_GRXMST;
+	}
+
+	if (flags & GIO_ARB_NOPIPE) {
+		if (slot == GIO_SLOT_EXP0)
+			reg &= ~IMC_GIO64ARB_EXP0PIPE;
+		else if (slot == GIO_SLOT_EXP1)
+			reg &= ~IMC_GIO64ARB_EXP1PIPE;
+	}
+
+	bus_space_write_4(isc.iot, isc.ioh, IMC_GIO64ARB, reg);
+
+	return (0);
+}
+
+/*
+ * According to chapter 19 of the "IRIX Device Driver Programmer's Guide",
+ * some GIO devices, which do not drive all data lines, may cause false
+ * memory read parity errors on the SysAD bus. The workaround is to disable
+ * parity checking.
+ */
+void
+imc_disable_sysad_parity()
+{
+	uint32_t reg;
+
+	if (mach_type != MACH_SGI_IP20 && mach_type != MACH_SGI_IP22)
+		return;
+
+	reg = bus_space_read_4(isc.iot, isc.ioh, IMC_CPUCTRL0);
+	reg |= IMC_CPUCTRL0_NCHKMEMPAR;
+	bus_space_write_4(isc.iot, isc.ioh, IMC_CPUCTRL0, reg);
+}
+
+void
+imc_enable_sysad_parity()
+{
+	uint32_t reg;
+
+	if (mach_type != MACH_SGI_IP20 && mach_type != MACH_SGI_IP22)
+		return;
+
+	reg = bus_space_read_4(isc.iot, isc.ioh, IMC_CPUCTRL0);
+	reg &= ~IMC_CPUCTRL0_NCHKMEMPAR;
+	bus_space_write_4(isc.iot, isc.ioh, IMC_CPUCTRL0, reg);
+}
+
+int
+imc_is_sysad_parity_enabled()
+{
+	uint32_t reg;
+
+	if (mach_type != MACH_SGI_IP20 && mach_type != MACH_SGI_IP22)
+		return (0);
+
+	reg = bus_space_read_4(isc.iot, isc.ioh, IMC_CPUCTRL0);
+
+	return (reg & IMC_CPUCTRL0_NCHKMEMPAR);
 }
