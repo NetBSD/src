@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.37 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.38 2006/08/30 19:20:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.37 2006/07/23 22:06:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.38 2006/08/30 19:20:48 christos Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -100,15 +100,32 @@ LIST_HEAD(, llinfo_llc) llinfo_llc;
 
 struct callout snpac_age_ch;
 
-struct sockaddr_iso blank_siso = {sizeof(blank_siso), AF_ISO};
+struct sockaddr_iso blank_siso = {
+	.siso_len = sizeof(blank_siso),
+	.siso_family = AF_ISO,
+};
 static struct sockaddr_iso
-	dst = {sizeof(dst), AF_ISO},
-	gte = {sizeof(gte), AF_ISO},
+	dst = {
+		.siso_len = sizeof(dst),
+		.siso_family = AF_ISO,
+	},
+	gte = {
+		.siso_len = sizeof(gte),
+		.siso_family = AF_ISO,
+	},
 #if 0
-	src = {sizeof(src), AF_ISO},
+	src = {
+		.siso_len = sizeof(src),
+		.siso_family = AF_ISO,
+	},
 #endif
-	msk = {sizeof(msk), AF_ISO},
-	zmk = {0, 0};
+	msk = {
+		.siso_len = sizeof(msk),
+		.siso_family = AF_ISO,
+	},
+	zmk = {
+		.siso_len = 0,
+	};
 
 #define zsi blank_siso
 #define zero_isoa	zsi.siso_addr
@@ -116,7 +133,10 @@ static struct sockaddr_iso
 	   Bcopy(r, &a.siso_addr, 1 + (r)->isoa_len);}
 #define S(x) ((struct sockaddr *)&(x))
 
-static struct sockaddr_dl blank_dl = {sizeof(blank_dl), AF_LINK};
+static struct sockaddr_dl blank_dl = {
+	.sdl_len = sizeof(blank_dl),
+	.sdl_family = AF_LINK,
+};
 static struct sockaddr_dl gte_dl;
 #define zap_linkaddr(a, b, c, i) \
 	(*a = blank_dl, memcpy(a->sdl_data, b, a->sdl_alen = c), a->sdl_index = i)
