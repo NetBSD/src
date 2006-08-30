@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.73 2006/08/17 17:11:28 christos Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.74 2006/08/30 17:13:45 christos Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.73 2006/08/17 17:11:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.74 2006/08/30 17:13:45 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -1830,7 +1830,10 @@ pim6_input(mp, offp, proto)
 		 * headers ip6+pim+u_int32_t+encap_ip6, to be passed up to the
 		 * routing daemon.
 		 */
-		static struct sockaddr_in6 dst = { sizeof(dst), AF_INET6 };
+		static const struct sockaddr_in6 dst = {
+			.sin6_len = sizeof(dst),
+			.sin6_family = AF_INET6,
+		};
 
 		struct mbuf *mcp;
 		struct ip6_hdr *eip6;
@@ -1937,7 +1940,7 @@ pim6_input(mp, offp, proto)
 #endif
 
 		looutput(mif6table[reg_mif_num].m6_ifp, m,
-			      (struct sockaddr *) &dst,
+			      (struct sockaddr *)__UNCONST(&dst),
 			      (struct rtentry *) NULL);
 
 		/* prepare the register head to send to the mrouting daemon */
