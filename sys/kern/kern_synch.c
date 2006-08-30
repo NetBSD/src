@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.164 2006/08/17 17:11:28 christos Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.165 2006/08/30 17:28:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.164 2006/08/17 17:11:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.165 2006/08/30 17:28:32 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -560,7 +560,13 @@ ltsleep(volatile const void *ident, int priority, const char *wmesg, int timo,
 	else
 		mi_switch(l, NULL);
 
-#if	defined(DDB) && !defined(GPROF) && !defined(sun2) && !defined(__vax__)
+#if	defined(DDB) && !defined(GPROF) && \
+	!defined(__m68k__) && !defined(__vax__)
+	/*
+	 * XXX
+	 * gcc4 optimizer will duplicate this asm statement on some arch
+	 * and it will cause a multiple symbol definition error in gas.
+	 */
 	/* handy breakpoint location after process "wakes" */
 	__asm(".globl bpendtsleep\nbpendtsleep:");
 #endif
