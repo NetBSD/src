@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2006/08/30 10:12:25 matt Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2006/08/30 15:03:56 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -689,7 +689,6 @@ defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
        struct nvlist *deps, int obs)
 {
 	struct nvlist *nv, *nextnv, *oldnv;
-	struct attr *a;
 	const char *name;
 	char buf[500];
 
