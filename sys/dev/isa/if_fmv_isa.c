@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv_isa.c,v 1.6 2005/12/24 23:41:33 perry Exp $	*/
+/*	$NetBSD: if_fmv_isa.c,v 1.7 2006/08/30 16:42:04 christos Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.6 2005/12/24 23:41:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.7 2006/08/30 16:42:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ fmv_find(bus_space_tag_t iot, bus_space_handle_t ioh, int *iobase, int *irq)
 	 */
 		{ FE_FMV4, 0x03, 0x00 },
 #endif
-		{ 0 }
+		{ 0,	   0x00, 0x00 },
 	};
 
 	/* Simple probe. */
