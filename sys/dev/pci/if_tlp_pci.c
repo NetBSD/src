@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.95 2006/07/26 14:21:20 itohy Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.96 2006/08/30 23:32:07 rumble Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.95 2006/07/26 14:21:20 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.96 2006/08/30 23:32:07 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,6 +207,8 @@ static void	tlp_pci_algor_21142_quirks(struct tulip_pci_softc *,
 		    const u_int8_t *);
 static void	tlp_pci_netwinder_21142_quirks(struct tulip_pci_softc *,
 		    const u_int8_t *);
+static void	tlp_pci_phobos_21142_quirks(struct tulip_pci_softc *,
+		    const u_int8_t *);
 static void	tlp_pci_znyx_21142_quirks(struct tulip_pci_softc *,
 		    const u_int8_t *);
 
@@ -229,6 +231,8 @@ static const struct tlp_pci_quirks tlp_pci_21041_quirks[] = {
 
 static void	tlp_pci_asante_21140_quirks(struct tulip_pci_softc *,
 		    const u_int8_t *);
+static void	tlp_pci_phobos_21140_quirks(struct tulip_pci_softc *,
+		    const u_int8_t *);
 static void	tlp_pci_smc_21140_quirks(struct tulip_pci_softc *,
 		    const u_int8_t *);
 static void	tlp_pci_vpc_21140_quirks(struct tulip_pci_softc *,
@@ -240,6 +244,7 @@ static const struct tlp_pci_quirks tlp_pci_21140_quirks[] = {
 	{ tlp_pci_asante_21140_quirks,	{ 0x00, 0x00, 0x94 } },
 	{ tlp_pci_adaptec_quirks,	{ 0x00, 0x00, 0x92 } },
 	{ tlp_pci_adaptec_quirks,	{ 0x00, 0x00, 0xd1 } },
+	{ tlp_pci_phobos_21140_quirks,	{ 0x00, 0x60, 0xf5 } },
 	{ tlp_pci_smc_21140_quirks,	{ 0x00, 0x00, 0xc0 } },
 	{ tlp_pci_vpc_21140_quirks,	{ 0x00, 0x03, 0xff } },
 	{ NULL,				{ 0, 0, 0 } }
@@ -252,6 +257,7 @@ static const struct tlp_pci_quirks tlp_pci_21142_quirks[] = {
 	{ tlp_pci_algor_21142_quirks,	{ 0x00, 0x40, 0xbc } },
 	{ tlp_pci_adaptec_quirks,	{ 0x00, 0x00, 0xd1 } },
 	{ tlp_pci_netwinder_21142_quirks,{ 0x00, 0x10, 0x57 } },
+	{ tlp_pci_phobos_21142_quirks,	{ 0x00, 0x60, 0xf5 } },
 	{ tlp_pci_znyx_21142_quirks,	{ 0x00, 0xc0, 0x95 } },
 	{ NULL,				{ 0, 0, 0 } }
 };
@@ -1268,6 +1274,37 @@ tlp_pci_asante_21140_reset(struct tulip_softc *sc)
 	TULIP_WRITE(sc, CSR_GPP, 0);
 }
 
+static void	tlp_pci_phobos_21140_reset(struct tulip_softc *);
+
+static void
+tlp_pci_phobos_21140_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
+{
+	struct tulip_softc *sc = &psc->sc_tulip;
+
+	/*
+	 * Phobo boards just use MII-on_SIO.
+	 */
+	sc->sc_mediasw = &tlp_sio_mii_mediasw;
+	sc->sc_reset = tlp_pci_phobos_21140_reset;
+
+	/*
+	 * These boards appear solely on sgimips machines behind a special
+	 * GIO<->PCI ASIC and require the DBO and BLE bits to be set in CSR0.
+	 */
+	sc->sc_flags |= (TULIPF_BLE | TULIPF_DBO);
+}
+
+static void
+tlp_pci_phobos_21140_reset(struct tulip_softc *sc)
+{
+
+	TULIP_WRITE(sc, CSR_GPP, 0x1fd);
+	delay(10);
+	TULIP_WRITE(sc, CSR_GPP, 0xfd);
+	delay(10);
+	TULIP_WRITE(sc, CSR_GPP, 0);
+}
+
 /*
  * SMC 9332DST media switch.
  */
@@ -1577,5 +1614,37 @@ tlp_pci_netwinder_21142_reset(struct tulip_softc *sc)
 	TULIP_WRITE(sc, CSR_SIAGEN, 0x0000 << 16);
 	delay(10);
 	TULIP_WRITE(sc, CSR_SIAGEN, 0x0001 << 16);
+	delay(10);
+}
+
+static void	tlp_pci_phobos_21142_reset(struct tulip_softc *);
+
+static void
+tlp_pci_phobos_21142_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
+{
+	struct tulip_softc *sc = &psc->sc_tulip;
+
+	/*
+	 * Phobo boards just use MII-on_SIO.
+	 */
+	sc->sc_mediasw = &tlp_sio_mii_mediasw;
+	sc->sc_reset = tlp_pci_phobos_21142_reset;
+
+	/*
+	 * These boards appear solely on sgimips machines behind a special
+	 * GIO<->PCI ASIC and require the DBO and BLE bits to be set in CSR0.
+	 */
+	sc->sc_flags |= (TULIPF_BLE | TULIPF_DBO);
+}
+
+static void
+tlp_pci_phobos_21142_reset(struct tulip_softc *sc)
+{
+	/*
+	 * Reset PHY.
+	 */
+	TULIP_WRITE(sc, CSR_SIAGEN, (0x880f << 16));
+	delay(10);
+	TULIP_WRITE(sc, CSR_SIAGEN, (0x800f << 16));
 	delay(10);
 }
