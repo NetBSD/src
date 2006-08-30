@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.24 2006/07/23 22:06:04 ad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.25 2006/08/30 14:01:57 cube Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,9 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.24 2006/07/23 22:06:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.25 2006/08/30 14:01:57 cube Exp $");
 
 #include "opt_compat_netbsd.h"
+#include "opt_coredump.h"
 #include "opt_execfmt.h"
 #include "opt_user_ldt.h"
 
@@ -410,6 +411,7 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, void *v, register_t *retval)
 }
 
 
+#ifdef COREDUMP
 /*
  * Dump the machine specific segment at the start of a core dump.
  */     
@@ -456,6 +458,7 @@ cpu_coredump32(struct lwp *l, void *iocookie, struct core32 *chdr)
 	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
 	    sizeof(md_core));
 }
+#endif
 
 int
 netbsd32_process_read_regs(struct lwp *l, struct reg32 *regs)

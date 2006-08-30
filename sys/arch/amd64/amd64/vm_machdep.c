@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.14 2006/05/10 06:24:02 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.15 2006/08/30 14:01:57 cube Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,8 +80,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.14 2006/05/10 06:24:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.15 2006/08/30 14:01:57 cube Exp $");
 
+#include "opt_coredump.h"
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
 
@@ -279,6 +280,7 @@ cpu_exit(struct lwp *l)
 	switch_exit(l, lwp_exit2);
 }
 
+#ifdef COREDUMP
 /*
  * Dump the machine specific segment at the start of a core dump.
  */     
@@ -325,6 +327,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	return coredump_write(iocookie, UIO_USERSPACE, &md_core,
 	    sizeof(md_core));
 }
+#endif
 
 /*
  * Set a red zone in the kernel stack after the u. area.
