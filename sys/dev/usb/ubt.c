@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.15 2006/08/19 16:35:03 plunky Exp $	*/
+/*	$NetBSD: ubt.c,v 1.16 2006/08/30 19:42:37 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.15 2006/08/19 16:35:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.16 2006/08/30 19:42:37 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1341,6 +1341,12 @@ ubt_recv_event(usbd_xfer_handle xfer, usbd_private_handle h, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, &buf, &count, NULL);
 
+	if (count < sizeof(hci_event_hdr_t) - 1) {
+		DPRINTF("dumped undersized event (count = %d)\n", count);
+		sc->sc_unit.hci_stats.err_rx++;
+		return;
+	}
+
 	sc->sc_unit.hci_stats.evt_rx++;
 	sc->sc_unit.hci_stats.byte_rx += count;
 
@@ -1429,14 +1435,19 @@ ubt_recv_acl_complete(usbd_xfer_handle xfer,
 	} else {
 		usbd_get_xfer_status(xfer, NULL, &buf, &count, NULL);
 
-		sc->sc_unit.hci_stats.acl_rx++;
-		sc->sc_unit.hci_stats.byte_rx += count;
-
-		m = ubt_mbufload(buf, count, HCI_ACL_DATA_PKT);
-		if (m != NULL)
-			hci_input_acl(&sc->sc_unit, m);
-		else
+		if (count < sizeof(hci_acldata_hdr_t) - 1) {
+			DPRINTF("dumped undersized packet (%d)\n", count);
 			sc->sc_unit.hci_stats.err_rx++;
+		} else {
+			sc->sc_unit.hci_stats.acl_rx++;
+			sc->sc_unit.hci_stats.byte_rx += count;
+
+			m = ubt_mbufload(buf, count, HCI_ACL_DATA_PKT);
+			if (m != NULL)
+				hci_input_acl(&sc->sc_unit, m);
+			else
+				sc->sc_unit.hci_stats.err_rx++;
+		}
 	}
 
 	/* and restart */
