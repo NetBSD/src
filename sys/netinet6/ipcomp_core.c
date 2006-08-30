@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_core.c,v 1.20 2002/11/02 07:30:59 perry Exp $	*/
+/*	$NetBSD: ipcomp_core.c,v 1.21 2006/08/30 19:15:05 christos Exp $	*/
 /*	$KAME: ipcomp_core.c,v 1.25 2001/07/26 06:53:17 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_core.c,v 1.20 2002/11/02 07:30:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_core.c,v 1.21 2006/08/30 19:15:05 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -219,8 +219,6 @@ do { \
 			/* inflate: Z_OK can indicate the end of decode */
 			if (mode && !p && zs.avail_out != 0)
 				goto terminate;
-			else
-				; /* once more. */
 		} else {
 			if (zs.msg) {
 				ipseclog((LOG_ERR, "ipcomp_%scompress: "
@@ -257,8 +255,6 @@ do { \
 		else if (zerror == Z_OK) {
 			if (mode && zs.avail_out != 0)
 				goto terminate;
-			else
-				; /* once more. */
 		} else {
 			if (zs.msg) {
 				ipseclog((LOG_ERR, "ipcomp_%scompress: "
