@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.54 2006/08/19 06:32:52 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.55 2006/08/30 16:43:56 christos Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.54 2006/08/19 06:32:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.55 2006/08/30 16:43:56 christos Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1056,17 +1056,17 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
  * be reused here.
  */
 static const struct wmeParams iwi_wme_cck_params[WME_NUM_AC] = {
-	{ 0, 3, 5,  7,   0 },	/* WME_AC_BE */
-	{ 0, 3, 5, 10,   0 },	/* WME_AC_BK */
-	{ 0, 2, 4,  5, 188 },	/* WME_AC_VI */
-	{ 0, 2, 3,  4, 102 }	/* WME_AC_VO */
+	{ 0, 3, 5,  7,   0, 0, },	/* WME_AC_BE */
+	{ 0, 3, 5, 10,   0, 0, },	/* WME_AC_BK */
+	{ 0, 2, 4,  5, 188, 0, },	/* WME_AC_VI */
+	{ 0, 2, 3,  4, 102, 0, },	/* WME_AC_VO */
 };
 
 static const struct wmeParams iwi_wme_ofdm_params[WME_NUM_AC] = {
-	{ 0, 3, 4,  6,   0 },	/* WME_AC_BE */
-	{ 0, 3, 4, 10,   0 },	/* WME_AC_BK */
-	{ 0, 2, 3,  4,  94 },	/* WME_AC_VI */
-	{ 0, 2, 2,  3,  47 }	/* WME_AC_VO */
+	{ 0, 3, 4,  6,   0, 0, },	/* WME_AC_BE */
+	{ 0, 3, 4, 10,   0, 0, },	/* WME_AC_BK */
+	{ 0, 2, 3,  4,  94, 0, },	/* WME_AC_VI */
+	{ 0, 2, 2,  3,  47, 0, },	/* WME_AC_VO */
 };
 
 static int
