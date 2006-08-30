@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.61 2006/08/25 21:04:07 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.62 2006/08/30 15:34:58 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.61 2006/08/25 21:04:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.62 2006/08/30 15:34:58 christos Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1368,33 +1368,33 @@ ieee80211_ssid_mismatch(struct ieee80211com *ic, const char *tag,
 	  (((const u_int8_t *)(p))[2] << 16) |		\
 	  (((const u_int8_t *)(p))[3] << 24)))
 
-static int __inline
+static __inline int
 iswpaoui(const u_int8_t *frm)
 {
 	return frm[1] > 3 && LE_READ_4(frm+2) == ((WPA_OUI_TYPE<<24)|WPA_OUI);
 }
 
-static int __inline
+static __inline int
 iswmeoui(const u_int8_t *frm)
 {
 	return frm[1] > 3 && LE_READ_4(frm+2) == ((WME_OUI_TYPE<<24)|WME_OUI);
 }
 
-static int __inline
+static __inline int
 iswmeparam(const u_int8_t *frm)
 {
 	return frm[1] > 5 && LE_READ_4(frm+2) == ((WME_OUI_TYPE<<24)|WME_OUI) &&
 		frm[6] == WME_PARAM_OUI_SUBTYPE;
 }
 
-static int __inline
+static __inline int
 iswmeinfo(const u_int8_t *frm)
 {
 	return frm[1] > 5 && LE_READ_4(frm+2) == ((WME_OUI_TYPE<<24)|WME_OUI) &&
 		frm[6] == WME_INFO_OUI_SUBTYPE;
 }
 
-static int __inline
+static __inline int
 isatherosoui(const u_int8_t *frm)
 {
 	return frm[1] > 3 && LE_READ_4(frm+2) == ((ATH_OUI_TYPE<<24)|ATH_OUI);
