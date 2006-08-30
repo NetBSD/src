@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.140 2006/07/23 22:06:09 ad Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.141 2006/08/30 23:00:06 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,10 +50,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.140 2006/07/23 22:06:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.141 2006/08/30 23:00:06 he Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
+#include "opt_ptrace.h"
 #include "fs_nfs.h"
 #endif
 
@@ -1194,6 +1195,7 @@ static const int sreq2breq[] = {
 };
 static const int nreqs = sizeof(sreq2breq) / sizeof(sreq2breq[0]);
 
+#if defined(PTRACE)
 int
 sunos_sys_ptrace(l, v, retval)
 	struct lwp *l;
@@ -1220,6 +1222,7 @@ sunos_sys_ptrace(l, v, retval)
 
 	return sys_ptrace(l, &pa, retval);
 }
+#endif /* PTRACE */
 
 /*
  * SunOS reboot system call (for compatibility).

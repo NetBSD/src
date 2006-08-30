@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.63 2006/07/13 23:38:57 pavel Exp $
+	$NetBSD: syscalls.master,v 1.64 2006/08/30 23:00:06 he Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -80,8 +80,12 @@
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid_with_euid(void); }
 25	STD		{ int sunos_sys_stime(time_t *tp); }
+#if defined(PTRACE) || !defined(_KERNEL)
 26	STD		{ long sunos_sys_ptrace(int req, pid_t pid, \
 			    caddr_t addr, int data, char *addr2); }
+#else
+26	EXCL		ptrace
+#endif
 27	UNIMPL		old_sunos_alarm
 28	UNIMPL		old_sunos_fstat
 29	UNIMPL		old_sunos_pause
