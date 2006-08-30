@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.68 2006/05/07 17:31:48 jdc Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.69 2006/08/30 19:25:46 christos Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.68 2006/05/07 17:31:48 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.69 2006/08/30 19:25:46 christos Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -319,7 +319,7 @@ ispioctl(struct scsipi_channel *chan, u_long cmd, caddr_t addr, int flag,
 		struct isp_fc_device *ifc = (struct isp_fc_device *) addr;
 		struct lportdb *lp;
 
-		if (ifc->loopid < 0 || ifc->loopid >= MAX_FC_TARG) {
+		if (/* ifc->loopid < 0 || */ ifc->loopid >= MAX_FC_TARG) {
 			retval = EINVAL;
 			break;
 		}
@@ -941,7 +941,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 	if (IS_FC(isp) && isp->isp_dblev) {
 		static const char fmt[] = "Target %d (Loop 0x%x) Port ID 0x%x "
 		    "(role %s) %s\n Port WWN 0x%08x%08x\n Node WWN 0x%08x%08x";
-		const static char *const roles[4] = {
+		static const char *const roles[4] = {
 		    "None", "Target", "Initiator", "Target/Initiator"
 		};
 		fcparam *fcp = isp->isp_param;
