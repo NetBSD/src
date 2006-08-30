@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.92 2006/02/09 19:18:57 manu Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.93 2006/08/30 14:41:06 cube Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.92 2006/02/09 19:18:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.93 2006/08/30 14:41:06 cube Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.92 2006/02/09 19:18:57 manu Exp $");
 #include "opt_compat_osf1.h"
 #include "opt_compat_ultrix.h"
 #include "opt_compat_netbsd.h"
+#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/exec.h>
@@ -212,7 +213,11 @@ const struct execsw execsw_builtin[] = {
 	  0,
 	  netbsd32_copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_netbsd32,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #else /* !COMPAT_NETBSD32 */
 
@@ -229,7 +234,11 @@ const struct execsw execsw_builtin[] = {
 	  0,
 	  copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_netbsd,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #endif /* !COMPAT_NETBSD32 */
 #endif /* EXEC_AOUT */
@@ -244,7 +253,11 @@ const struct execsw execsw_builtin[] = {
 	  0,
 	  copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_netbsd,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #endif /* EXEC_COFF */
 
@@ -260,7 +273,11 @@ const struct execsw execsw_builtin[] = {
 	    2 * (MAXPATHLEN + 1), sizeof (char *)), /* exec & loader names */
 	  osf1_copyargs,
 	  cpu_exec_ecoff_setregs,
+#ifdef COREDUMP
 	  coredump_netbsd,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #endif
 
@@ -273,7 +290,11 @@ const struct execsw execsw_builtin[] = {
 	  0,
 	  copyargs,
 	  cpu_exec_ecoff_setregs,
+#ifdef COREDUMP
 	  coredump_netbsd,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 
 #ifdef COMPAT_ULTRIX
@@ -286,7 +307,11 @@ const struct execsw execsw_builtin[] = {
   	  0,
   	  copyargs,
   	  cpu_exec_ecoff_setregs,
+#ifdef COREDUMP
 	  coredump_netbsd,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #endif
 #endif /* EXEC_ECOFF */
@@ -302,7 +327,11 @@ const struct execsw execsw_builtin[] = {
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
 	  netbsd32_elf32_copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_elf32,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },		/* XXX XXX XXX */
 	  /* This one should go first so it matches instead of native */
 
@@ -316,7 +345,11 @@ const struct execsw execsw_builtin[] = {
 	  LINUX32_ELF_AUX_ARGSIZ,
           linux32_elf32_copyargs,
           NULL,
+#ifdef COREDUMP
           coredump_elf32,
+#else
+	  NULL,
+#endif
           exec_setup_stack },           /* XXX XXX XXX */
           /* This one should go first so it matches instead of native */
 #endif 
@@ -331,7 +364,11 @@ const struct execsw execsw_builtin[] = {
 	  SVR4_32_AUX_ARGSIZ,
 	  svr4_32_copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_elf32,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },	/* XXX XXX XXX */
 	  /* This one should go first so it matches instead of native */
 #endif
@@ -362,7 +399,11 @@ const struct execsw execsw_builtin[] = {
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
 	  elf32_copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_elf32,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 
 #ifdef COMPAT_FREEBSD
@@ -375,7 +416,11 @@ const struct execsw execsw_builtin[] = {
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr)),
 	  elf32_copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_elf32,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #endif
 
@@ -389,7 +434,11 @@ const struct execsw execsw_builtin[] = {
 	  LINUX_ELF_AUX_ARGSIZ,
 	  linux_elf32_copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_elf32,
+#else
+	  NULL,
+#endif
 	  linux_exec_setup_stack },
 #endif
 
@@ -403,7 +452,11 @@ const struct execsw execsw_builtin[] = {
 	  IRIX_AUX_ARGSIZ,
 	  irix_elf32_copyargs,
 	  irix_n32_setregs,
+#ifdef COREDUMP
 	  coredump_elf32,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 
 	/* IRIX Elf32 o32 ABI */
@@ -415,7 +468,11 @@ const struct execsw execsw_builtin[] = {
 	  IRIX_AUX_ARGSIZ,
 	  irix_elf32_copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_elf32,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #endif
 
@@ -429,7 +486,11 @@ const struct execsw execsw_builtin[] = {
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
 	  elf32_copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_elf32,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #endif
 
@@ -443,7 +504,11 @@ const struct execsw execsw_builtin[] = {
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
 	  elf32_copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_elf32,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #endif
 
@@ -457,7 +522,11 @@ const struct execsw execsw_builtin[] = {
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
 	  elf32_copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_elf32,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #endif
 #endif /* !COMPAT_NETBSD32 */
@@ -473,7 +542,11 @@ const struct execsw execsw_builtin[] = {
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux64Info), sizeof (Elf64_Addr)),
 	  elf64_copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_elf64,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 
 #ifdef COMPAT_LINUX
@@ -486,7 +559,11 @@ const struct execsw execsw_builtin[] = {
 	  LINUX_ELF_AUX_ARGSIZ,
 	  linux_elf64_copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_elf64,
+#else
+	  NULL,
+#endif
 	  linux_exec_setup_stack },
 #endif
 
@@ -500,7 +577,11 @@ const struct execsw execsw_builtin[] = {
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux64Info), sizeof (Elf64_Addr)),
 	  elf64_copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_elf64,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #endif
 
@@ -514,7 +595,11 @@ const struct execsw execsw_builtin[] = {
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux64Info), sizeof (Elf64_Addr)),
 	  elf64_copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_elf64,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #endif
 #endif /* EXEC_ELF64 */
@@ -530,7 +615,11 @@ const struct execsw execsw_builtin[] = {
 	  MAXPATHLEN + 1,
 	  exec_darwin_copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_netbsd,
+#else
+	  NULL,
+#endif
 	  darwin_exec_setup_stack },
 #endif
 
@@ -544,7 +633,11 @@ const struct execsw execsw_builtin[] = {
 	  MAXPATHLEN + 1,
 	  exec_mach_copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_netbsd,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #endif
 #endif /* EXEC_MACHO */
@@ -560,7 +653,11 @@ const struct execsw execsw_builtin[] = {
 	  0,
 	  netbsd32_copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_netbsd,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #else
 	/* SunOS a.out (native word size) */
@@ -572,7 +669,11 @@ const struct execsw execsw_builtin[] = {
 	  0,
 	  copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_netbsd,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #endif
 #endif /* COMPAT_SUNOS */
@@ -587,7 +688,11 @@ const struct execsw execsw_builtin[] = {
 	  LINUX_AOUT_AUX_ARGSIZ,
 	  linux_aout_copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_netbsd,
+#else
+	  NULL,
+#endif
 	  linux_exec_setup_stack },
 #endif
 
@@ -601,7 +706,11 @@ const struct execsw execsw_builtin[] = {
 	  0,
 	  copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_netbsd,
+#else
+	  NULL,
+#endif
 	  ibcs2_exec_setup_stack },
 
 	/* iBCS2 x.out (native word size) */
@@ -613,7 +722,11 @@ const struct execsw execsw_builtin[] = {
 	  0,
 	  copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_netbsd,
+#else
+	  NULL,
+#endif
 	  ibcs2_exec_setup_stack },
 #endif
 
@@ -627,7 +740,11 @@ const struct execsw execsw_builtin[] = {
 	  0,
 	  copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_netbsd,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #endif
 
@@ -641,7 +758,11 @@ const struct execsw execsw_builtin[] = {
 	  0,
 	  copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_netbsd,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #endif
 
@@ -655,7 +776,11 @@ const struct execsw execsw_builtin[] = {
 	  0,
 	  copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_netbsd,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #endif
 
@@ -669,7 +794,11 @@ const struct execsw execsw_builtin[] = {
 	  0,
 	  copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_netbsd,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #endif
 
@@ -683,7 +812,11 @@ const struct execsw execsw_builtin[] = {
 	  howmany(sizeof(struct pecoff_args), sizeof(char *)),
 	  pecoff_copyargs,
 	  NULL,
+#ifdef COREDUMP
 	  coredump_netbsd,
+#else
+	  NULL,
+#endif
 	  exec_setup_stack },
 #endif
 };
