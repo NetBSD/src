@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.90 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.91 2006/08/30 17:00:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.90 2006/07/23 22:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.91 2006/08/30 17:00:15 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -103,7 +103,7 @@ static dev_type_kqfilter(tunkqfilter);
 
 const struct cdevsw tun_cdevsw = {
 	tunopen, tunclose, tunread, tunwrite, tunioctl,
-	nostop, notty, tunpoll, nommap, tunkqfilter,
+	nostop, notty, tunpoll, nommap, tunkqfilter, D_OTHER,
 };
 
 void
