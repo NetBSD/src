@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2006/08/26 18:18:16 christos Exp $
+#	$NetBSD: Makefile,v 1.19 2006/08/30 12:11:40 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -10,10 +10,8 @@ CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin
 MAN=	${PROG}.8
 
 .ifndef HOSTPROG
-DPADD+=	${LIBZ}
-LDADD+=	-lz
+DPADD+=	${LIBUTIL} ${LIBZ}
+LDADD+=	-lutil -lz
 .endif
-DPADD+= ${LIBUTIL}
-LDADD+=	-lutil
 
 .include <bsd.prog.mk>
