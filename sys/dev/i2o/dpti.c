@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.25 2006/08/23 15:44:29 christos Exp $	*/
+/*	$NetBSD: dpti.c,v 1.26 2006/08/30 00:41:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.25 2006/08/23 15:44:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.26 2006/08/30 00:41:46 christos Exp $");
 
 #include "opt_i2o.h"
 
@@ -147,7 +147,7 @@ dev_type_ioctl(dptiioctl);
 
 const struct cdevsw dpti_cdevsw = {
 	dptiopen, nullclose, noread, nowrite, dptiioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 extern struct cfdriver dpti_cd;
