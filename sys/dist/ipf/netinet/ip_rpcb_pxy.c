@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_rpcb_pxy.c,v 1.8 2006/05/10 21:53:17 mrg Exp $	*/
+/*	$NetBSD: ip_rpcb_pxy.c,v 1.9 2006/08/30 19:04:52 christos Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Ryan Beasley <ryanb@goddamnbastard.org>
@@ -1195,8 +1195,9 @@ ippr_rpcb_getnat(fin, nat, proto, port)
 	 * no use for this lock, so simply unlock it if necessary.
 	 */
 	is = fr_stlookup(&fi, &tcp, NULL);
-	if (is != NULL)
+	if (is != NULL) {
 		RWLOCK_EXIT(&ipf_state);
+	}
 
 	RWLOCK_EXIT(&ipf_nat);
 
