@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.44 2005/12/24 23:41:33 perry Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.45 2006/08/30 15:46:58 christos Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.44 2005/12/24 23:41:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.45 2006/08/30 15:46:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ ate_find(bus_space_tag_t iot, bus_space_handle_t ioh, int *iobase, int *irq)
 		{ FE_BMPR16, 0x1B, 0x00 },
 		{ FE_BMPR17, 0x7F, 0x00 },
 #endif
-		{ 0 }
+		{ 0,	     0x00, 0x00 },
 	};
 
 #if ATE_DEBUG >= 4
