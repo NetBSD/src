@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.74 2006/08/28 02:53:03 christos Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.75 2006/08/30 17:05:30 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.74 2006/08/28 02:53:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.75 2006/08/30 17:05:30 christos Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -313,7 +313,9 @@ struct domain inetdomain = {
     PF_INET, "internet", 0, 0, 0,
     inetsw, &inetsw[sizeof(inetsw)/sizeof(inetsw[0])],
     rn_inithead, 32, sizeof(struct sockaddr_in), 0, 0,
-    { &ipintrq }
+    { &ipintrq, NULL },
+    { NULL },
+    MOWNER_INIT,
 };
 
 u_char	ip_protox[IPPROTO_MAX];
