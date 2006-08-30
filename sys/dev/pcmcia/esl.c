@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.18 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: esl.c,v 1.19 2006/08/30 01:09:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.18 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.19 2006/08/30 01:09:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,6 +134,7 @@ const struct audio_hw_if esl_hw_if = {
 	NULL,
 	esl_get_props,
 	esl_trigger_output,
+	NULL,
 	NULL,
 	NULL,
 };
