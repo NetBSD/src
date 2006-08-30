@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.97 2006/04/25 08:29:08 liamjfoy Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.98 2006/08/30 19:00:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.97 2006/04/25 08:29:08 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.98 2006/08/30 19:00:22 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -289,17 +289,11 @@ struct ifnet multicast_decap_if[MAXVIFS];
 
 /* prototype IP hdr for encapsulated packets */
 struct ip multicast_encap_iphdr = {
-#if BYTE_ORDER == LITTLE_ENDIAN
-	sizeof(struct ip) >> 2, IPVERSION,
-#else
-	IPVERSION, sizeof(struct ip) >> 2,
-#endif
-	0,				/* tos */
-	sizeof(struct ip),		/* total length */
-	0,				/* id */
-	0,				/* frag offset */
-	ENCAP_TTL, ENCAP_PROTO,
-	0,				/* checksum */
+	.ip_hl = sizeof(struct ip) >> 2,
+	.ip_v = IPVERSION,
+	.ip_len = sizeof(struct ip),
+	.ip_ttl = ENCAP_TTL,
+	.ip_p = ENCAP_PROTO,
 };
 
 /*
@@ -344,20 +338,11 @@ struct pim_encap_pimhdr {
 };
 
 static struct ip pim_encap_iphdr = {
-#if BYTE_ORDER == LITTLE_ENDIAN
-	sizeof(struct ip) >> 2,
-	IPVERSION,
-#else
-	IPVERSION,
-	sizeof(struct ip) >> 2,
-#endif
-	0,			/* tos */
-	sizeof(struct ip),	/* total length */
-	0,			/* id */
-	0,			/* frag offset */
-	ENCAP_TTL,
-	IPPROTO_PIM,
-	0,			/* checksum */
+	.ip_v = IPVERSION,
+	.ip_hl = sizeof(struct ip) >> 2,
+	.ip_len = sizeof(struct ip),
+	.ip_ttl = ENCAP_TTL,
+	.ip_p = IPPROTO_PIM,
 };
 
 static struct pim_encap_pimhdr pim_encap_pimhdr = {
@@ -865,7 +850,10 @@ get_api_config(struct mbuf *m)
 	return (0);
 }
 
-static struct sockaddr_in sin = { sizeof(sin), AF_INET };
+static struct sockaddr_in sin = {
+	.sin_len = sizeof(sin),
+	.sin_family = AF_INET
+};
 
 /*
  * Add a vif to the vif table
@@ -2873,7 +2861,10 @@ bw_upcalls_send(void)
 {
     struct mbuf *m;
     int len = bw_upcalls_n * sizeof(bw_upcalls[0]);
-    struct sockaddr_in k_igmpsrc = { sizeof k_igmpsrc, AF_INET };
+    struct sockaddr_in k_igmpsrc = { 
+	    .sin_len = sizeof(k_igmpsrc),
+	    .sin_family = AF_INET,
+    };
     static struct igmpmsg igmpmsg = { 0,		/* unused1 */
 				      0,		/* unused2 */
 				      IGMPMSG_BW_UPCALL,/* im_msgtype */
@@ -3221,7 +3212,10 @@ pim_register_send_upcall(struct ip *ip, struct vif *vifp,
     struct mbuf *mb_first;
     int len = ntohs(ip->ip_len);
     struct igmpmsg *im;
-    struct sockaddr_in k_igmpsrc = { sizeof k_igmpsrc, AF_INET };
+    struct sockaddr_in k_igmpsrc = {
+	    .sin_len = sizeof(k_igmpsrc),
+	    .sin_family = AF_INET,
+    };
 
     /*
      * Add a new mbuf with an upcall header
@@ -3441,7 +3435,10 @@ pim_input(struct mbuf *m, ...)
 	 * routing daemon.
 	 */
 	int s;
-	struct sockaddr_in dst = { sizeof(dst), AF_INET };
+	struct sockaddr_in dst = {
+		.sin_len = sizeof(dst),
+		.sin_family = AF_INET,
+	};
 	struct mbuf *mcp;
 	struct ip *encap_ip;
 	u_int32_t *reghdr;
