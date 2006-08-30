@@ -1,4 +1,4 @@
-/* $NetBSD: ics2101.c,v 1.12 2005/12/11 12:22:02 christos Exp $ */
+/* $NetBSD: ics2101.c,v 1.13 2006/08/30 15:27:18 christos Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ics2101.c,v 1.12 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ics2101.c,v 1.13 2006/08/30 15:27:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ ics2101_mix_doit(sc, chan, side, value, flags)
 	unsigned char normal;
 	int s;
 
-	if (chan < ICSMIX_CHAN_0 || chan > ICSMIX_CHAN_5)
+	if (/* chan < ICSMIX_CHAN_0 || */ chan > ICSMIX_CHAN_5)
 		return;
 	if (side != ICSMIX_LEFT && side != ICSMIX_RIGHT)
 		return;
