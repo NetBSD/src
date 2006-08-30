@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.102 2006/08/28 13:46:35 yamt Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.103 2006/08/30 18:53:04 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.102 2006/08/28 13:46:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.103 2006/08/30 18:53:04 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -367,10 +367,22 @@ freeit:
 	m_freem(n);
 }
 
-struct sockaddr_in icmpsrc = { sizeof (struct sockaddr_in), AF_INET };
-static struct sockaddr_in icmpdst = { sizeof (struct sockaddr_in), AF_INET };
-static struct sockaddr_in icmpgw = { sizeof (struct sockaddr_in), AF_INET };
-struct sockaddr_in icmpmask = { 8, 0 };
+struct sockaddr_in icmpsrc = {
+	.sin_len = sizeof (struct sockaddr_in),
+	.sin_family = AF_INET,
+};
+static struct sockaddr_in icmpdst = {
+	.sin_len = sizeof (struct sockaddr_in),
+	.sin_family = AF_INET,
+};
+static struct sockaddr_in icmpgw = {
+	.sin_len = sizeof (struct sockaddr_in),
+	.sin_family = AF_INET,
+};
+struct sockaddr_in icmpmask = { 
+	.sin_len = 8,
+	.sin_family = 0,
+};
 
 /*
  * Process a received ICMP message.
