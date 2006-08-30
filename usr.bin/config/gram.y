@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.8 2006/08/26 18:17:13 christos Exp $	*/
+/*	$NetBSD: gram.y,v 1.9 2006/08/30 10:12:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -275,7 +275,8 @@ one_def:
 	device_major			{ do_devsw = 1; } |
 	prefix |
 	DEVCLASS WORD			{ (void)defattr($2, NULL, NULL, 1); } |
-	DEFFS fsoptfile_opt deffses	{ deffilesystem($2, $3); } |
+	DEFFS fsoptfile_opt deffses defoptdeps
+					{ deffilesystem($2, $3, $4); } |
 	DEFINE WORD interface_opt attrs_opt
 					{ (void)defattr($2, $3, $4, 0); } |
 	DEFOPT optfile_opt defopts defoptdeps
