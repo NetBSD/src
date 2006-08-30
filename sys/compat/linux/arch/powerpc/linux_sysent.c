@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.33 2006/06/10 21:16:50 christos Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.34 2006/08/30 11:19:24 matt Exp $ */
 
 /*
  * System call switch table.
@@ -8,11 +8,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.33 2006/06/10 21:16:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.34 2006/08/30 11:19:24 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
+#include "opt_ptrace.h"
 #endif
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -83,8 +84,13 @@ struct sysent linux_sysent[] = {
 	    sys_getuid },			/* 24 = getuid */
 	{ 1, s(struct linux_sys_stime_args), 0,
 	    linux_sys_stime },			/* 25 = stime */
+#ifdef PTRACE
 	{ 4, s(struct linux_sys_ptrace_args), 0,
 	    linux_sys_ptrace },			/* 26 = ptrace */
+#else
+	{ 0, 0, 0,
+	    linux_sys_nosys },			/* 26 = excluded ptrace */
+#endif
 	{ 1, s(struct linux_sys_alarm_args), 0,
 	    linux_sys_alarm },			/* 27 = alarm */
 	{ 0, 0, 0,
