@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.110 2006/05/28 13:20:02 blymn Exp $ */
+/*	$NetBSD: ehci.c,v 1.111 2006/08/30 00:49:56 christos Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.110 2006/05/28 13:20:02 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.111 2006/08/30 00:49:56 christos Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1635,7 +1635,8 @@ Static usb_hub_descriptor_t ehci_hubd = {
 	{0,0},
 	0,
 	0,
-	{0},
+	{""},
+	{""},
 };
 
 Static int
