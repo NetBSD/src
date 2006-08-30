@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.118 2006/07/11 22:13:56 tron Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.119 2006/08/30 15:25:08 christos Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.118 2006/07/11 22:13:56 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.119 2006/08/30 15:25:08 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -908,7 +908,7 @@ icmp6_input(mp, offp, proto)
 static int
 icmp6_notify_error(m, off, icmp6len, code)
 	struct mbuf *m;
-	int off, icmp6len;
+	int off, icmp6len, code;
 {
 	struct icmp6_hdr *icmp6;
 	struct ip6_hdr *eip6;
