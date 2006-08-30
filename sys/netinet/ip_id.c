@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_id.c,v 1.10 2006/06/07 22:34:01 kardel Exp $	*/
+/*	$NetBSD: ip_id.c,v 1.11 2006/08/30 18:54:19 christos Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.10 2006/06/07 22:34:01 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.11 2006/08/30 18:54:19 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.10 2006/06/07 22:34:01 kardel Exp $");
 #define RU_M	31104		/* RU_M = 2^7*3^5 - don't change */
 
 #define PFAC_N 3
-const static u_int16_t pfacts[PFAC_N] = {
+static const u_int16_t pfacts[PFAC_N] = {
 	2,
 	3,
 	2729
