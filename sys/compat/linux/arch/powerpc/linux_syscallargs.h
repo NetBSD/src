@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.32 2006/06/10 21:16:50 christos Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.33 2006/08/30 11:19:24 matt Exp $ */
 
 /*
  * System call argument lists.
@@ -87,6 +87,7 @@ struct linux_sys_lchown_args {
 struct linux_sys_stime_args {
 	syscallarg(linux_time_t *) t;
 };
+#ifdef PTRACE
 
 struct linux_sys_ptrace_args {
 	syscallarg(int) request;
@@ -94,6 +95,8 @@ struct linux_sys_ptrace_args {
 	syscallarg(int) addr;
 	syscallarg(int) data;
 };
+#else
+#endif
 
 struct linux_sys_alarm_args {
 	syscallarg(unsigned int) secs;
@@ -723,8 +726,11 @@ int	sys_getuid(struct lwp *, void *, register_t *);
 
 int	linux_sys_stime(struct lwp *, void *, register_t *);
 
+#ifdef PTRACE
 int	linux_sys_ptrace(struct lwp *, void *, register_t *);
 
+#else
+#endif
 int	linux_sys_alarm(struct lwp *, void *, register_t *);
 
 int	linux_sys_pause(struct lwp *, void *, register_t *);

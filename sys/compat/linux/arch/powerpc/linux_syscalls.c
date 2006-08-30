@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.32 2006/06/10 21:16:50 christos Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.33 2006/08/30 11:19:24 matt Exp $ */
 
 /*
  * System call names.
@@ -8,12 +8,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.32 2006/06/10 21:16:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.33 2006/08/30 11:19:24 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
+#include "opt_ptrace.h"
 #endif
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -57,7 +58,11 @@ const char *const linux_syscallnames[] = {
 	"setuid",			/* 23 = setuid */
 	"getuid",			/* 24 = getuid */
 	"stime",			/* 25 = stime */
+#ifdef PTRACE
 	"ptrace",			/* 26 = ptrace */
+#else
+	"#26 (excluded ptrace)",		/* 26 = excluded ptrace */
+#endif
 	"alarm",			/* 27 = alarm */
 	"#28 (obsolete ofstat)",		/* 28 = obsolete ofstat */
 	"pause",			/* 29 = pause */

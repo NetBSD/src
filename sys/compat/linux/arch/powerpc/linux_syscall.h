@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.33 2006/06/10 21:16:50 christos Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.34 2006/08/30 11:19:24 matt Exp $ */
 
 /*
  * System call numbers.
@@ -79,9 +79,13 @@
 /* syscall: "stime" ret: "int" args: "linux_time_t *" */
 #define	LINUX_SYS_stime	25
 
+#ifdef PTRACE
 /* syscall: "ptrace" ret: "int" args: "int" "int" "int" "int" */
 #define	LINUX_SYS_ptrace	26
 
+#else
+				/* 26 is excluded ptrace */
+#endif
 /* syscall: "alarm" ret: "int" args: "unsigned int" */
 #define	LINUX_SYS_alarm	27
 
