@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.112 2006/06/07 22:34:00 kardel Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.113 2006/08/30 15:45:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.112 2006/06/07 22:34:00 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.113 2006/08/30 15:45:54 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -154,7 +154,13 @@ static	struct llinfo_arp *arplookup(struct mbuf *, struct in_addr *,
 static	void in_arpinput(struct mbuf *);
 
 LIST_HEAD(, llinfo_arp) llinfo_arp;
-struct	ifqueue arpintrq = {0, 0, 0, 50};
+struct	ifqueue arpintrq = {
+	.ifq_head = NULL,
+	.ifq_tail = NULL,
+	.ifq_len = 0,
+	.ifq_maxlen = 50,
+	.ifq_drops = 0,
+};
 int	arp_inuse, arp_allocated, arp_intimer;
 int	arp_maxtries = 5;
 int	useloopback = 1;	/* use loopback interface for local traffic */
@@ -222,9 +228,11 @@ const struct protosw arpsw[] = {
 };
 
 
-struct domain arpdomain =
-{ 	PF_ARP,  "arp", 0, 0, 0,
-	arpsw, &arpsw[sizeof(arpsw)/sizeof(arpsw[0])]
+struct domain arpdomain = {
+	.dom_family = PF_ARP,
+	.dom_name = "arp",
+	.dom_protosw = arpsw,
+	.dom_protoswNPROTOSW = &arpsw[sizeof(arpsw)/sizeof(arpsw[0])],
 };
 
 /*
@@ -381,7 +389,10 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
-	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
+	static const struct sockaddr_dl null_sdl = {
+		.sdl_len = sizeof(null_sdl),
+		.sdl_family = AF_LINK,
+	};
 	size_t allocsize;
 	struct mbuf *mold;
 	int s;
@@ -458,7 +469,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			 * Case 1: This route should come from a route to iface.
 			 */
 			rt_setgate(rt, rt_key(rt),
-					(struct sockaddr *)&null_sdl);
+			    (const struct sockaddr *)&null_sdl);
 			gate = rt->rt_gateway;
 			SDL(gate)->sdl_type = rt->rt_ifp->if_type;
 			SDL(gate)->sdl_index = rt->rt_ifp->if_index;
