@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.9 2005/12/11 12:25:06 christos Exp $	*/
+/*	$NetBSD: keysock.c,v 1.10 2006/08/31 23:21:54 matt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.9 2005/12/11 12:25:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.10 2006/08/31 23:21:54 matt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -715,17 +715,25 @@ DOMAIN_SET(key);
 
 DOMAIN_DEFINE(keydomain);
 
-struct protosw keysw[] = {
-{ SOCK_RAW,	&keydomain,	PF_KEY_V2,	PR_ATOMIC|PR_ADDR,
-  0,		key_output,	raw_ctlinput,	0,
-  key_usrreq,
-  raw_init,	0,		0,		0,
-  NULL,
-}
+const struct protosw keysw[] = {
+    {
+	.pr_type = SOCK_RAW,
+	.pr_domain = &keydomain,
+	.pr_protocol = PF_KEY_V2,
+	.pr_flags = PR_ATOMIC|PR_ADDR,
+	.pr_output = key_output,
+	.pr_ctlinput = raw_ctlinput,
+	.pr_usrreq = key_usrreq,
+	.pr_init = raw_init,
+    }
 };
 
-struct domain keydomain =
-    { PF_KEY, "key", key_init, 0, 0,
-      keysw, &keysw[sizeof(keysw)/sizeof(keysw[0])] };
+struct domain keydomain = {
+    .dom_family = PF_KEY,
+    .dom_name = "key",
+    .dom_init = key_init,
+    .dom_protosw = keysw,
+    .dom_protoswNPROTOSW = &keysw[__arraycount(keysw)],
+};
 
 #endif
