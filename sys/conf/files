@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.803 2006/08/31 17:46:16 dyoung Exp $
+#	$NetBSD: files,v 1.804 2006/08/31 17:49:12 dyoung Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1385,7 +1385,6 @@ file	net/pfil.c			pfil_hooks | ipfilter | pf
 file	net/ppp-deflate.c		ppp & ppp_deflate
 file	net/ppp_tty.c			ppp
 file	net/radix.c
-file	net/radix_mpath.c
 file	net/raw_cb.c
 file	net/raw_usrreq.c
 file	net/route.c
