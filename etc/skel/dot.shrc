@@ -1,0 +1,9 @@
+#	$NetBSD: dot.shrc,v 1.1 2006/08/31 22:49:55 hubertf Exp $
+
+ll(){ ls -l ${1+"$@"}; }
+
+case "$-" in *i*)
+	PS1="${HOST%%.*}$PS1"
+	set -o emacs
+	;;
+esac
