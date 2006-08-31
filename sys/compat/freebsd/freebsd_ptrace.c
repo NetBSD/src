@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ptrace.c,v 1.10 2006/08/30 11:04:37 matt Exp $	*/
+/*	$NetBSD: freebsd_ptrace.c,v 1.11 2006/08/31 15:01:56 he Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,9 +71,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.10 2006/08/30 11:04:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.11 2006/08/31 15:01:56 he Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
