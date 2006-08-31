@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.51 2006/08/05 21:26:48 sanjayl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52 2006/08/31 18:18:17 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -309,6 +309,7 @@ void icache_flush_page(vaddr_t);
 void dcache_flush(vaddr_t, vsize_t);
 void icache_flush(vaddr_t, vsize_t);
 void *mapiodev(paddr_t, psize_t);
+void unmapiodev(vaddr_t, vsize_t);
 
 #define	DELAY(n)		delay(n)
 
