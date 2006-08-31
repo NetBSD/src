@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.66 2006/08/05 21:26:49 sanjayl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.67 2006/08/31 16:49:21 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,11 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.66 2006/08/05 21:26:49 sanjayl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.67 2006/08/31 16:49:21 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
+#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/core.h>
@@ -234,6 +235,7 @@ cpu_exit(struct lwp *l)
 	switch_exit(l, lwp_exit2);
 }
 
+#ifdef COREDUMP
 /*
  * Write the machine-dependent part of a core dump.
  */
@@ -285,6 +287,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
 	    sizeof(md_core));
 }
+#endif
 
 #ifdef PPC_IBM4XX
 /*
