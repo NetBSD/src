@@ -1,4 +1,4 @@
-/*	$NetBSD: tlb.h,v 1.2 2006/07/12 06:22:17 simonb Exp $	*/
+/*	$NetBSD: tlb.h,v 1.3 2006/08/31 22:13:51 freza Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -58,14 +58,14 @@
 #define TLB_SIZE_4M	6
 #define TLB_SIZE_16M	7
 
-#define	TLB_PG_1K	(TLB_SIZE_1K<<TLB_SIZE_SHFT)
-#define	TLB_PG_4K	(TLB_SIZE_4K<<TLB_SIZE_SHFT)
-#define	TLB_PG_16K	(TLB_SIZE_16K<<TLB_SIZE_SHFT)
-#define	TLB_PG_64K	(TLB_SIZE_64K<<TLB_SIZE_SHFT)
-#define	TLB_PG_256K	(TLB_SIZE_256K<<TLB_SIZE_SHFT)
-#define	TLB_PG_1M	(TLB_SIZE_1M<<TLB_SIZE_SHFT)
-#define	TLB_PG_4M	(TLB_SIZE_4M<<TLB_SIZE_SHFT)
-#define	TLB_PG_16M	(TLB_SIZE_16M<<TLB_SIZE_SHFT)
+#define	TLB_PG_1K	(TLB_SIZE_1K << TLB_SIZE_SHFT)
+#define	TLB_PG_4K	(TLB_SIZE_4K << TLB_SIZE_SHFT)
+#define	TLB_PG_16K	(TLB_SIZE_16K << TLB_SIZE_SHFT)
+#define	TLB_PG_64K	(TLB_SIZE_64K << TLB_SIZE_SHFT)
+#define	TLB_PG_256K	(TLB_SIZE_256K << TLB_SIZE_SHFT)
+#define	TLB_PG_1M	(TLB_SIZE_1M << TLB_SIZE_SHFT)
+#define	TLB_PG_4M	(TLB_SIZE_4M << TLB_SIZE_SHFT)
+#define	TLB_PG_16M	(TLB_SIZE_16M << TLB_SIZE_SHFT)
 
 /* TLBLO entries */
 #define TLB_RPN_MASK	0xfffffc00	/* Real Page Number mask */
@@ -102,11 +102,13 @@ void	ppc4xx_tlb_flush(vaddr_t, int);
 void	ppc4xx_tlb_flush_all(void);
 void	ppc4xx_tlb_init(void);
 int	ppc4xx_tlb_new_pid(struct pmap *);
+void	ppc4xx_tlb_reserve(paddr_t, vaddr_t, size_t, int);
+void 	*ppc4xx_tlb_mapiodev(paddr_t, psize_t);
 
 #endif
 
 #define TLB_PID_INVALID 0xFFFF
 
-#define TLB_NRESERVED	4	/* Reserve 4 TLB entries for kernel */
+#define TLB_NRESERVED	4	/* XXXfreza: kill. */
 
 #endif	/* _IBM4XX_TLB_H_ */
