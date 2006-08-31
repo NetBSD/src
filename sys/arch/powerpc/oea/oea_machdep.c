@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.27 2006/08/31 18:23:40 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.28 2006/08/31 23:14:38 freza Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.27 2006/08/31 18:23:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.28 2006/08/31 23:14:38 freza Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -833,6 +833,9 @@ void
 unmapiodev(vaddr_t va, vsize_t len)
 {
 	paddr_t faddr;
+
+	if (! va)
+		return;
 
 	faddr = trunc_page(va);
 	len = round_page(va - faddr + len);
