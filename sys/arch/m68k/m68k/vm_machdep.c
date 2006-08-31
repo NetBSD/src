@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.15 2006/07/22 06:58:17 tsutsui Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16 2006/08/31 16:49:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.15 2006/07/22 06:58:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.16 2006/08/31 16:49:21 matt Exp $");
+
+#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,6 +201,7 @@ cpu_exit(struct lwp *l)
 	/* NOTREACHED */
 }
 
+#ifdef COREDUMP
 /*
  * Dump the machine specific header information at the start of a core dump.
  */
@@ -250,6 +253,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
 	    sizeof(md_core));
 }
+#endif
 
 /*
  * Map a user I/O request into kernel virtual address space.

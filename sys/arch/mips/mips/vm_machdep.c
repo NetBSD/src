@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.111 2006/08/26 20:18:36 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.112 2006/08/31 16:49:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,9 +77,10 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.111 2006/08/26 20:18:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.112 2006/08/31 16:49:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,6 +251,7 @@ cpu_exit(struct lwp *l)
 	/* NOTREACHED */
 }
 
+#ifdef COREDUMP
 /*
  * Dump the machine specific segment at the start of a core dump.
  */
@@ -289,6 +291,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	return coredump_write(iocookie, UIO_SYSSPACE, &cpustate,
 	    chdr->c_cpusize);
 }
+#endif
 
 /*
  * Map a user I/O request into kernel virtual address space.
