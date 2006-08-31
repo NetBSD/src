@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.56 2006/03/16 18:59:17 drochner Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.57 2006/08/31 16:39:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,9 +59,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.56 2006/03/16 18:59:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.57 2006/08/31 16:39:13 matt Exp $");
 
 #include "opt_vm86.h"
+#include "opt_ptrace.h"
 #include "npx.h"
 
 #include <sys/param.h>
@@ -83,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.56 2006/03/16 18:59:17 drochne
 #include <machine/vm86.h>
 #endif
 
+#ifdef PTRACE
 static inline struct trapframe *
 process_frame(struct lwp *l)
 {
@@ -96,6 +98,7 @@ process_fpframe(struct lwp *l)
 
 	return (&l->l_addr->u_pcb.pcb_savefpu);
 }
+#endif /* PTRACE */
 
 static int
 xmm_to_s87_tag(const uint8_t *fpac, int regno, uint8_t tw)
@@ -211,6 +214,7 @@ process_s87_to_xmm(const struct save87 *s87, struct savexmm *sxmm)
 #endif
 }
 
+#ifdef PTRACE
 int
 process_read_regs(struct lwp *l, struct reg *regs)
 {
@@ -562,3 +566,4 @@ process_machdep_validxmmregs(p)
 	return (i386_use_fxsave);
 }
 #endif /* __HAVE_PTRACE_MACHDEP */
+#endif /* PTRACE */
