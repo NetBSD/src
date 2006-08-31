@@ -1,4 +1,4 @@
-/* $NetBSD: ecma167-udf.h,v 1.3 2006/08/25 17:43:51 reinoud Exp $ */
+/* $NetBSD: ecma167-udf.h,v 1.4 2006/08/31 21:38:14 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004, 2005, 2006 Reinoud Zandijk <reinoud@netbsd.org>
@@ -180,6 +180,7 @@ struct long_ad {
 		struct UDF_ADImp_use im_used;
 	} __packed impl;
 } __packed;
+#define longad_uniqueid impl.im_used.unique_id
 
 
 /* Extended Allocation Descriptor [4/14.14.3] ; identifies an extent of allocation descriptors ; also in UDF ? */
