@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.244 2006/08/28 00:22:15 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.245 2006/08/31 19:46:54 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.244 2006/08/28 00:22:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.245 2006/08/31 19:46:54 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -1744,7 +1744,7 @@ cd_size(struct cd_softc *cd, int flags)
 			blksize = 2048;
 	}
 	cd->params.blksize     = blksize;
-	cd->params.disksize    = size-1;   /* disklabel is exclusive */
+	cd->params.disksize    = size;
 	cd->params.disksize512 = ((u_int64_t)cd->params.disksize * blksize) / DEV_BSIZE;
 
 	SC_DEBUG(cd->sc_periph, SCSIPI_DB2,
