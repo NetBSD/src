@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.31 2005/03/30 18:53:33 wiz Exp $
+.\" $NetBSD: gre.4,v 1.32 2006/08/31 17:46:16 dyoung Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 30, 2005
+.Dd August 30, 2006
 .Dt GRE 4
 .Os
 .Sh NAME
@@ -72,6 +72,21 @@ GRE mode is also the default tunnel mode on Cisco routers.
 This is also the default mode of operation of the
 .Sy gre Ns Ar X
 interfaces.
+.It GRE in UDP encapsulation
+Encapsulated datagrams are prepended a GRE header, and then they
+are sent over a UDP socket.
+Userland may create the socket and
+.Dq delegate
+it to the kernel using the
+.Dv GRESSOCK
+.Xr ioctl 2 .
+If userland does not supply a socket, then the kernel will create
+one using the addresses and ports supplied by
+.Xr ioctl 2 Ns s 
+.Dv SIOCSLIFPHYADDR ,
+.Dv GRESADDRD ,
+and/or
+.Dv GRESADDRS .
 .It MOBILE encapsulation (IP protocol number 55)
 Datagrams are
 encapsulated into IP, but with a shorter encapsulation.
@@ -111,9 +126,11 @@ Set the operation mode to the specified IP protocol value.
 The protocol is passed to the interface in (struct ifreq)-\*[Gt]ifr_flags.
 The operation mode can also be given as
 .Bl -tag -width link0xxx
-.It link0
+.It link0 link2
+IPPROTO_UDP
+.It link0 -link2
 IPPROTO_GRE
-.It -link0
+.It -link0 -link2
 IPPROTO_MOBILE
 .El
 .Pp
@@ -126,6 +143,11 @@ internal route search for the remote tunnel endpoint, see the
 section below.
 .It GREGPROTO :
 Query operation mode.
+.It GRESSOCK :
+Delegate a socket from userland to a tunnel interface in UDP
+encapsulation mode.
+The file descriptor for the socket is passed in
+(struct ifreq)-\*[Gt]ifr_value.
 .El
 .Pp
 Note that the IP addresses of the tunnel endpoints may be the same as the
@@ -214,6 +236,30 @@ Note that this is a safe situation where the link1 flag (as discussed in the
 .Sx BUGS
 section below) may (and probably should) be set.
 .Pp
+To setup the same tunnel as above, but using GRE in UDP encapsulation
+instead of GRE encapsulation, set flags
+.Ar link0
+and
+.Ar link2 ,
+and specify source and destination UDP ports.
+.Pp
+On router A:
+.Bd -literal
+   # ifconfig greN create
+   # ifconfig greN link0 link2
+   # ifconfig greN 192.168.1.1 192.168.2.1
+   # ifconfig greN tunnel A,port-A B,port-B
+   # route add -net 192.168.2 -netmask 255.255.255.0 192.168.2.1
+.Ed
+.Pp
+On router B:
+.Bd -literal
+   # ifconfig greN create
+   # ifconfig greN link0 link2
+   # ifconfig greN 192.168.2.1 192.168.1.1
+   # ifconfig greN tunnel B,port-B A,port-A
+   # route add -net 192.168.1 -netmask 255.255.255.0 192.168.1.1
+.Pp
 Along these lines, you can use GRE tunnels to interconnect two IPv6
 networks over an IPv4 infrastructure, or to hook up to the IPv6 internet
 via an IPv4 tunnel to a Cisco router.
@@ -260,7 +306,8 @@ On router B (Cisco):
 .Pp
 Note that this is a safe situation where the link1 flag (as discussed in the
 .Sx BUGS
-section below) may (and probably should) be set.
+section below) may be set.
+.Ed
 .Sh NOTES
 The MTU of
 .Sy gre Ns Ar X
@@ -312,6 +359,8 @@ A description of GRE encapsulation can be found in RFC 1701 and RFC 1702.
 A description of MOBILE encapsulation can be found in RFC 2004.
 .Sh AUTHORS
 .An Heiko W.Rupp Aq hwr@pilhuhn.de
+.An David Young Aq dyoung@NetBSD.org
+.Pq GRE in UDP encapsulation, bug fixes
 .Sh BUGS
 The compute_route() code in if_gre.c toggles the last bit of the
 IP-address to provoke the search for a less specific route than the
@@ -329,3 +378,19 @@ over the
 interface itself.
 .Pp
 The GRE RFCs are not yet fully implemented (no GRE options).
+.Pp
+The MOBILE encapsulation appears to have been broken since
+it was first added to
+.Nx ,
+until August 2006.
+It is known to interoperate with another
+.Xr gre 4 
+in MOBILE mode, however, it has not been tested for interoperability
+with any other implementation of RFC 2004.
+.Pp
+The
+.Nx
+base system does not
+.Pq yet
+contain a daemon for automatically establishing a UDP tunnel between
+a host behind a NAT router and a host on the Internet.
