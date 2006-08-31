@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.84 2006/06/30 15:51:36 drochner Exp $
+.\"	$NetBSD: ifconfig.8,v 1.85 2006/08/31 17:46:16 dyoung Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -459,7 +459,10 @@ to be used for IEEE 802.11-based wireless network interfaces.
 Unset the desired channel to be used
 for IEEE 802.11-based wireless network interfaces.
 It doesn't effect the channel to be created for IBSS or hostap mode.
-.It Cm tunnel Ar src_addr Ar dest_addr
+.It Bk -words
+.Cm tunnel Ar src_addr Ns Op Ar ,src_port
+.Ar dest_addr Ns Op Ar ,dest_port
+.Ek
 .Pq IP tunnel devices only
 Configure the physical source and destination address for IP tunnel
 interfaces, including
@@ -470,6 +473,15 @@ and
 .Ar dest_addr
 are interpreted as the outer source/destination for the encapsulating
 IPv4/IPv6 header.
+.Pp
+On a
+.Xr gre 4
+interface in UDP mode, the arguments
+.Ar src_port
+and
+.Ar dest_port
+are interpreted as the outer source/destination port for the encapsulating
+UDP header.
 .It Cm deletetunnel
 Unconfigure the physical source and destination address for IP tunnel
 interfaces previously configured with
