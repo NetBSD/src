@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.118 2006/08/17 17:11:27 christos Exp $  */
+/*	$NetBSD: atw.c,v 1.119 2006/08/31 19:24:37 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.118 2006/08/17 17:11:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.119 2006/08/31 19:24:37 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -414,8 +414,9 @@ atw_read_srom(struct atw_softc *sc)
 		sd.sd_chip = C46;
 		break;
 	default:
-		printf("%s: unknown SROM type %d\n", sc->sc_dev.dv_xname,
-		    SHIFTOUT(test0, ATW_TEST0_EPTYP_MASK));
+		printf("%s: unknown SROM type %d\n",
+		    sc->sc_dev.dv_xname,
+		    __SHIFTOUT(test0, ATW_TEST0_EPTYP_MASK));
 		return -1;
 	}
 
@@ -657,10 +658,10 @@ atw_attach(struct atw_softc *sc)
 	if (atw_read_srom(sc) == -1)
 		return;
 
-	sc->sc_rftype = SHIFTOUT(sc->sc_srom[ATW_SR_CSR20],
+	sc->sc_rftype = __SHIFTOUT(sc->sc_srom[ATW_SR_CSR20],
 	    ATW_SR_RFTYPE_MASK);
 
-	sc->sc_bbptype = SHIFTOUT(sc->sc_srom[ATW_SR_CSR20],
+	sc->sc_bbptype = __SHIFTOUT(sc->sc_srom[ATW_SR_CSR20],
 	    ATW_SR_BBPTYPE_MASK);
 
 	if (sc->sc_rftype >= __arraycount(type_strings)) {
@@ -679,7 +680,7 @@ atw_attach(struct atw_softc *sc)
 	 * MARVEL. My bug, or theirs?
 	 */
 
-	reg = SHIFTIN(sc->sc_rftype, ATW_SYNCTL_RFTYPE_MASK);
+	reg = __SHIFTIN(sc->sc_rftype, ATW_SYNCTL_RFTYPE_MASK);
 
 	switch (sc->sc_rftype) {
 	case ATW_RFTYPE_INTERSIL:
@@ -695,7 +696,7 @@ atw_attach(struct atw_softc *sc)
 	sc->sc_synctl_rd = reg | ATW_SYNCTL_RD;
 	sc->sc_synctl_wr = reg | ATW_SYNCTL_WR;
 
-	reg = SHIFTIN(sc->sc_bbptype, ATW_BBPCTL_TYPE_MASK);
+	reg = __SHIFTIN(sc->sc_bbptype, ATW_BBPCTL_TYPE_MASK);
 
 	switch (sc->sc_bbptype) {
 	case ATW_BBPTYPE_INTERSIL:
@@ -728,22 +729,22 @@ atw_attach(struct atw_softc *sc)
 	    htole16(sc->sc_srom[ATW_SR_MAC01]),
 	    htole16(sc->sc_srom[ATW_SR_MAC10])));
 
-	srom_major = SHIFTOUT(sc->sc_srom[ATW_SR_FORMAT_VERSION],
+	srom_major = __SHIFTOUT(sc->sc_srom[ATW_SR_FORMAT_VERSION],
 	    ATW_SR_MAJOR_MASK);
 
 	if (srom_major < 2)
 		sc->sc_rf3000_options1 = 0;
 	else if (sc->sc_rev == ATW_REVISION_BA) {
 		sc->sc_rf3000_options1 =
-		    SHIFTOUT(sc->sc_srom[ATW_SR_CR28_CR03],
+		    __SHIFTOUT(sc->sc_srom[ATW_SR_CR28_CR03],
 		    ATW_SR_CR28_MASK);
 	} else
 		sc->sc_rf3000_options1 = 0;
 
-	sc->sc_rf3000_options2 = SHIFTOUT(sc->sc_srom[ATW_SR_CTRY_CR29],
+	sc->sc_rf3000_options2 = __SHIFTOUT(sc->sc_srom[ATW_SR_CTRY_CR29],
 	    ATW_SR_CR29_MASK);
 
-	country_code = SHIFTOUT(sc->sc_srom[ATW_SR_CTRY_CR29],
+	country_code = __SHIFTOUT(sc->sc_srom[ATW_SR_CTRY_CR29],
 	    ATW_SR_CTRY_MASK);
 
 #define ADD_CHANNEL(_ic, _chan) do {					\
@@ -782,13 +783,13 @@ atw_attach(struct atw_softc *sc)
 
 	/* Read the MAC address. */
 	reg = ATW_READ(sc, ATW_PAR0);
-	ic->ic_myaddr[0] = SHIFTOUT(reg, ATW_PAR0_PAB0_MASK);
-	ic->ic_myaddr[1] = SHIFTOUT(reg, ATW_PAR0_PAB1_MASK);
-	ic->ic_myaddr[2] = SHIFTOUT(reg, ATW_PAR0_PAB2_MASK);
-	ic->ic_myaddr[3] = SHIFTOUT(reg, ATW_PAR0_PAB3_MASK);
+	ic->ic_myaddr[0] = __SHIFTOUT(reg, ATW_PAR0_PAB0_MASK);
+	ic->ic_myaddr[1] = __SHIFTOUT(reg, ATW_PAR0_PAB1_MASK);
+	ic->ic_myaddr[2] = __SHIFTOUT(reg, ATW_PAR0_PAB2_MASK);
+	ic->ic_myaddr[3] = __SHIFTOUT(reg, ATW_PAR0_PAB3_MASK);
 	reg = ATW_READ(sc, ATW_PAR1);
-	ic->ic_myaddr[4] = SHIFTOUT(reg, ATW_PAR1_PAB4_MASK);
-	ic->ic_myaddr[5] = SHIFTOUT(reg, ATW_PAR1_PAB5_MASK);
+	ic->ic_myaddr[4] = __SHIFTOUT(reg, ATW_PAR1_PAB4_MASK);
+	ic->ic_myaddr[5] = __SHIFTOUT(reg, ATW_PAR1_PAB5_MASK);
 
 	if (IEEE80211_ADDR_EQ(ic->ic_myaddr, empty_macaddr)) {
 		printf(" could not get mac address, attach failed\n");
@@ -1048,7 +1049,7 @@ atw_wcsr_init(struct atw_softc *sc)
 
 	wcsr = ATW_READ(sc, ATW_WCSR);
 	wcsr &= ~(ATW_WCSR_BLN_MASK|ATW_WCSR_LSOE|ATW_WCSR_MPRE|ATW_WCSR_LSOE);
-	wcsr |= SHIFTIN(7, ATW_WCSR_BLN_MASK);
+	wcsr |= __SHIFTIN(7, ATW_WCSR_BLN_MASK);
 	ATW_WRITE(sc, ATW_WCSR, wcsr);	/* XXX resets wake-up status bits */
 
 	DPRINTF(sc, ("%s: %s reg[WCSR] = %08x\n",
@@ -1075,24 +1076,24 @@ atw_tofs2_init(struct atw_softc *sc)
 	uint32_t tofs2;
 	/* XXX this magic can probably be figured out from the RFMD docs */
 #ifndef ATW_REFSLAVE
-	tofs2 = SHIFTIN(4, ATW_TOFS2_PWR1UP_MASK)    | /* 8 ms = 4 * 2 ms */
-	      SHIFTIN(13, ATW_TOFS2_PWR0PAPE_MASK) | /* 13 us */
-	      SHIFTIN(8, ATW_TOFS2_PWR1PAPE_MASK)  | /* 8 us */
-	      SHIFTIN(5, ATW_TOFS2_PWR0TRSW_MASK)  | /* 5 us */
-	      SHIFTIN(12, ATW_TOFS2_PWR1TRSW_MASK) | /* 12 us */
-	      SHIFTIN(13, ATW_TOFS2_PWR0PE2_MASK)  | /* 13 us */
-	      SHIFTIN(4, ATW_TOFS2_PWR1PE2_MASK)   | /* 4 us */
-	      SHIFTIN(5, ATW_TOFS2_PWR0TXPE_MASK);  /* 5 us */
+	tofs2 = __SHIFTIN(4, ATW_TOFS2_PWR1UP_MASK)    | /* 8 ms = 4 * 2 ms */
+	      __SHIFTIN(13, ATW_TOFS2_PWR0PAPE_MASK) | /* 13 us */
+	      __SHIFTIN(8, ATW_TOFS2_PWR1PAPE_MASK)  | /* 8 us */
+	      __SHIFTIN(5, ATW_TOFS2_PWR0TRSW_MASK)  | /* 5 us */
+	      __SHIFTIN(12, ATW_TOFS2_PWR1TRSW_MASK) | /* 12 us */
+	      __SHIFTIN(13, ATW_TOFS2_PWR0PE2_MASK)  | /* 13 us */
+	      __SHIFTIN(4, ATW_TOFS2_PWR1PE2_MASK)   | /* 4 us */
+	      __SHIFTIN(5, ATW_TOFS2_PWR0TXPE_MASK);  /* 5 us */
 #else
 	/* XXX new magic from reference driver source */
-	tofs2 = SHIFTIN(8, ATW_TOFS2_PWR1UP_MASK)    | /* 8 ms = 4 * 2 ms */
-	      SHIFTIN(8, ATW_TOFS2_PWR0PAPE_MASK) | /* 8 us */
-	      SHIFTIN(1, ATW_TOFS2_PWR1PAPE_MASK)  | /* 1 us */
-	      SHIFTIN(5, ATW_TOFS2_PWR0TRSW_MASK)  | /* 5 us */
-	      SHIFTIN(12, ATW_TOFS2_PWR1TRSW_MASK) | /* 12 us */
-	      SHIFTIN(13, ATW_TOFS2_PWR0PE2_MASK)  | /* 13 us */
-	      SHIFTIN(1, ATW_TOFS2_PWR1PE2_MASK)   | /* 1 us */
-	      SHIFTIN(8, ATW_TOFS2_PWR0TXPE_MASK);  /* 8 us */
+	tofs2 = __SHIFTIN(8, ATW_TOFS2_PWR1UP_MASK)    | /* 8 ms = 4 * 2 ms */
+	      __SHIFTIN(8, ATW_TOFS2_PWR0PAPE_MASK) | /* 8 us */
+	      __SHIFTIN(1, ATW_TOFS2_PWR1PAPE_MASK)  | /* 1 us */
+	      __SHIFTIN(5, ATW_TOFS2_PWR0TRSW_MASK)  | /* 5 us */
+	      __SHIFTIN(12, ATW_TOFS2_PWR1TRSW_MASK) | /* 12 us */
+	      __SHIFTIN(13, ATW_TOFS2_PWR0PE2_MASK)  | /* 13 us */
+	      __SHIFTIN(1, ATW_TOFS2_PWR1PE2_MASK)   | /* 1 us */
+	      __SHIFTIN(8, ATW_TOFS2_PWR0TXPE_MASK);  /* 8 us */
 #endif
 	ATW_WRITE(sc, ATW_TOFS2, tofs2);
 }
@@ -1106,8 +1107,8 @@ atw_nar_init(struct atw_softc *sc)
 static void
 atw_txlmt_init(struct atw_softc *sc)
 {
-	ATW_WRITE(sc, ATW_TXLMT, SHIFTIN(512, ATW_TXLMT_MTMLT_MASK) |
-	                         SHIFTIN(1, ATW_TXLMT_SRTYLIM_MASK));
+	ATW_WRITE(sc, ATW_TXLMT, __SHIFTIN(512, ATW_TXLMT_MTMLT_MASK) |
+	                         __SHIFTIN(1, ATW_TXLMT_SRTYLIM_MASK));
 }
 
 static void
@@ -1118,7 +1119,7 @@ atw_test1_init(struct atw_softc *sc)
 	test1 = ATW_READ(sc, ATW_TEST1);
 	test1 &= ~(ATW_TEST1_DBGREAD_MASK|ATW_TEST1_CONTROL);
 	/* XXX magic 0x1 */
-	test1 |= SHIFTIN(0x1, ATW_TEST1_DBGREAD_MASK) | ATW_TEST1_CONTROL;
+	test1 |= __SHIFTIN(0x1, ATW_TEST1_DBGREAD_MASK) | ATW_TEST1_CONTROL;
 	ATW_WRITE(sc, ATW_TEST1, test1);
 }
 
@@ -1141,7 +1142,7 @@ atw_cfp_init(struct atw_softc *sc)
 
 	cfpp = ATW_READ(sc, ATW_CFPP);
 	cfpp &= ~ATW_CFPP_CFPMD;
-	cfpp |= SHIFTIN(16, ATW_CFPP_CFPMD);
+	cfpp |= __SHIFTIN(16, ATW_CFPP_CFPMD);
 	ATW_WRITE(sc, ATW_CFPP, cfpp);
 }
 
@@ -1157,7 +1158,7 @@ atw_tofs0_init(struct atw_softc *sc)
 	 * these values. These values are also the power-on default.
 	 */
 	ATW_WRITE(sc, ATW_TOFS0,
-	    SHIFTIN(22, ATW_TOFS0_USCNT_MASK) |
+	    __SHIFTIN(22, ATW_TOFS0_USCNT_MASK) |
 	    ATW_TOFS0_TUCNT_MASK /* set all bits in TUCNT */);
 }
 
@@ -1169,11 +1170,11 @@ atw_ifs_init(struct atw_softc *sc)
 	/* XXX EIFS=0x64, SIFS=110 are used by the reference driver.
 	 * Go figure.
 	 */
-	ifst = SHIFTIN(IEEE80211_DUR_DS_SLOT, ATW_IFST_SLOT_MASK) |
-	      SHIFTIN(22 * 5 /* IEEE80211_DUR_DS_SIFS */ /* # of 22 MHz cycles */,
+	ifst = __SHIFTIN(IEEE80211_DUR_DS_SLOT, ATW_IFST_SLOT_MASK) |
+	      __SHIFTIN(22 * 5 /* IEEE80211_DUR_DS_SIFS */ /* # of 22 MHz cycles */,
 	             ATW_IFST_SIFS_MASK) |
-	      SHIFTIN(IEEE80211_DUR_DS_DIFS, ATW_IFST_DIFS_MASK) |
-	      SHIFTIN(0x64 /* IEEE80211_DUR_DS_EIFS */, ATW_IFST_EIFS_MASK);
+	      __SHIFTIN(IEEE80211_DUR_DS_DIFS, ATW_IFST_DIFS_MASK) |
+	      __SHIFTIN(0x64 /* IEEE80211_DUR_DS_EIFS */, ATW_IFST_EIFS_MASK);
 
 	ATW_WRITE(sc, ATW_IFST, ifst);
 }
@@ -1187,8 +1188,8 @@ atw_response_times_init(struct atw_softc *sc)
 	 * it waits at most SIFS + MART microseconds for the response.
 	 * Surely this is not the ACK timeout?
 	 */
-	ATW_WRITE(sc, ATW_RSPT, SHIFTIN(0xffff, ATW_RSPT_MART_MASK) |
-	    SHIFTIN(0xff, ATW_RSPT_MIRT_MASK));
+	ATW_WRITE(sc, ATW_RSPT, __SHIFTIN(0xffff, ATW_RSPT_MART_MASK) |
+	    __SHIFTIN(0xff, ATW_RSPT_MIRT_MASK));
 }
 
 /* Set up the MMI read/write addresses for the baseband. The Tx/Rx
@@ -1269,8 +1270,8 @@ atw_init(struct ifnet *ifp)
 	 *
 	 * XXX Set transmit power for ATIM, RTS, Beacon.
 	 */
-	ATW_WRITE(sc, ATW_PLCPHD, SHIFTIN(10, ATW_PLCPHD_SIGNAL_MASK) |
-	    SHIFTIN(0xb0, ATW_PLCPHD_SERVICE_MASK));
+	ATW_WRITE(sc, ATW_PLCPHD, __SHIFTIN(10, ATW_PLCPHD_SIGNAL_MASK) |
+	    __SHIFTIN(0xb0, ATW_PLCPHD_SERVICE_MASK));
 
 	atw_tofs2_init(sc);
 
@@ -1292,7 +1293,7 @@ atw_init(struct ifnet *ifp)
 	 * XXX A frame may only dribble in for 65536us.
 	 */
 	ATW_WRITE(sc, ATW_RMD,
-	    SHIFTIN(1, ATW_RMD_PCNT) | SHIFTIN(0xffff, ATW_RMD_RMRD_MASK));
+	    __SHIFTIN(1, ATW_RMD_PCNT) | __SHIFTIN(0xffff, ATW_RMD_RMRD_MASK));
 
 	atw_response_times_init(sc);
 
@@ -1610,7 +1611,7 @@ atw_si4126_tune(struct atw_softc *sc, u_int chan)
 	 * REFDIF This is different from the reference driver, which
 	 * always sets SI4126_GAIN to 0.
 	 */
-	gain = SHIFTIN(((mhz - 374) > 2047) ? 1 : 0, SI4126_GAIN_KP2_MASK);
+	gain = __SHIFTIN(((mhz - 374) > 2047) ? 1 : 0, SI4126_GAIN_KP2_MASK);
 
 	atw_si4126_write(sc, SI4126_GAIN, gain);
 
@@ -1649,7 +1650,7 @@ atw_si4126_tune(struct atw_softc *sc, u_int chan)
 
 	gpio = ATW_READ(sc, ATW_GPIO);
 	gpio &= ~(ATW_GPIO_EN_MASK|ATW_GPIO_O_MASK|ATW_GPIO_I_MASK);
-	gpio |= SHIFTIN(1, ATW_GPIO_EN_MASK);
+	gpio |= __SHIFTIN(1, ATW_GPIO_EN_MASK);
 
 	if ((sc->sc_if.if_flags & IFF_LINK1) != 0 && chan != 14) {
 		/* Set a Prism RF front-end to a special mode for channel 14?
@@ -1657,7 +1658,7 @@ atw_si4126_tune(struct atw_softc *sc, u_int chan)
 		 * Apparently the SMC2635W needs this, although I don't think
 		 * it has a Prism RF.
 		 */
-		gpio |= SHIFTIN(1, ATW_GPIO_O_MASK);
+		gpio |= __SHIFTIN(1, ATW_GPIO_O_MASK);
 	}
 	ATW_WRITE(sc, ATW_GPIO, gpio);
 
@@ -1682,7 +1683,7 @@ atw_rf3000_init(struct atw_softc *sc)
 
 	/* CCA is acquisition sensitive */
 	rc = atw_rf3000_write(sc, RF3000_CCACTL,
-	    SHIFTIN(RF3000_CCACTL_MODE_BOTH, RF3000_CCACTL_MODE_MASK));
+	    __SHIFTIN(RF3000_CCACTL_MODE_BOTH, RF3000_CCACTL_MODE_MASK));
 
 	if (rc != 0)
 		goto out;
@@ -1695,14 +1696,14 @@ atw_rf3000_init(struct atw_softc *sc)
 
 	/* sensible setting from a binary-only driver */
 	rc = atw_rf3000_write(sc, RF3000_GAINCTL,
-	    SHIFTIN(0x1d, RF3000_GAINCTL_TXVGC_MASK));
+	    __SHIFTIN(0x1d, RF3000_GAINCTL_TXVGC_MASK));
 
 	if (rc != 0)
 		goto out;
 
 	/* magic from a binary-only driver */
 	rc = atw_rf3000_write(sc, RF3000_LOGAINCAL,
-	    SHIFTIN(0x38, RF3000_LOGAINCAL_CAL_MASK));
+	    __SHIFTIN(0x38, RF3000_LOGAINCAL_CAL_MASK));
 
 	if (rc != 0)
 		goto out;
@@ -1786,7 +1787,7 @@ atw_rf3000_tune(struct atw_softc *sc, u_int chan)
 	atw_bbp_io_enable(sc, 1);
 
 	if ((rc = atw_rf3000_write(sc, RF3000_GAINCTL,
-	    SHIFTIN(txpower, RF3000_GAINCTL_TXVGC_MASK))) != 0)
+	    __SHIFTIN(txpower, RF3000_GAINCTL_TXVGC_MASK))) != 0)
 		goto out;
 
 	if ((rc = atw_rf3000_write(sc, RF3000_LOGAINCAL, lpf_cutoff)) != 0)
@@ -1815,7 +1816,7 @@ out:
 	/* set beacon, rts, atim transmit power */
 	reg = ATW_READ(sc, ATW_PLCPHD);
 	reg &= ~ATW_PLCPHD_SERVICE_MASK;
-	reg |= SHIFTIN(SHIFTIN(txpower, RF3000_GAINCTL_TXVGC_MASK),
+	reg |= __SHIFTIN(__SHIFTIN(txpower, RF3000_GAINCTL_TXVGC_MASK),
 	    ATW_PLCPHD_SERVICE_MASK);
 	ATW_WRITE(sc, ATW_PLCPHD, reg);
 	DELAY(atw_plcphd_delay);
@@ -1835,8 +1836,8 @@ atw_rf3000_write(struct atw_softc *sc, u_int addr, u_int val)
 	int i;
 
 	reg = sc->sc_bbpctl_wr |
-	     SHIFTIN(val & 0xff, ATW_BBPCTL_DATA_MASK) |
-	     SHIFTIN(addr & 0x7f, ATW_BBPCTL_ADDR_MASK);
+	     __SHIFTIN(val & 0xff, ATW_BBPCTL_DATA_MASK) |
+	     __SHIFTIN(addr & 0x7f, ATW_BBPCTL_ADDR_MASK);
 
 	for (i = 20000 / atw_pseudo_milli; --i >= 0; ) {
 		ATW_WRITE(sc, ATW_BBPCTL, reg);
@@ -1884,7 +1885,7 @@ atw_rf3000_read(struct atw_softc *sc, u_int addr, u_int *val)
 		return ETIMEDOUT;
 	}
 
-	reg = sc->sc_bbpctl_rd | SHIFTIN(addr & 0x7f, ATW_BBPCTL_ADDR_MASK);
+	reg = sc->sc_bbpctl_rd | __SHIFTIN(addr & 0x7f, ATW_BBPCTL_ADDR_MASK);
 
 	ATW_WRITE(sc, ATW_BBPCTL, reg);
 
@@ -1902,7 +1903,7 @@ atw_rf3000_read(struct atw_softc *sc, u_int addr, u_int *val)
 		return ETIMEDOUT;
 	}
 	if (val != NULL)
-		*val = SHIFTOUT(reg, ATW_BBPCTL_DATA_MASK);
+		*val = __SHIFTOUT(reg, ATW_BBPCTL_DATA_MASK);
 	return 0;
 }
 #endif /* ATW_BBPDEBUG */
@@ -1920,11 +1921,11 @@ atw_si4126_write(struct atw_softc *sc, u_int addr, u_int val)
 	uint32_t bits, mask, reg;
 	const int nbits = 22;
 
-	KASSERT((addr & ~SHIFTOUT_MASK(SI4126_TWI_ADDR_MASK)) == 0);
-	KASSERT((val & ~SHIFTOUT_MASK(SI4126_TWI_DATA_MASK)) == 0);
+	KASSERT((addr & ~__SHIFTOUT_MASK(SI4126_TWI_ADDR_MASK)) == 0);
+	KASSERT((val & ~__SHIFTOUT_MASK(SI4126_TWI_DATA_MASK)) == 0);
 
-	bits = SHIFTIN(val, SI4126_TWI_DATA_MASK) |
-	       SHIFTIN(addr, SI4126_TWI_ADDR_MASK);
+	bits = __SHIFTIN(val, SI4126_TWI_DATA_MASK) |
+	       __SHIFTIN(addr, SI4126_TWI_ADDR_MASK);
 
 	reg = ATW_SYNRF_SELSYN;
 	/* reference driver: reset Si4126 serial bus to initial
@@ -1959,7 +1960,7 @@ atw_si4126_read(struct atw_softc *sc, u_int addr, u_int *val)
 	u_int32_t reg;
 	int i;
 
-	KASSERT((addr & ~SHIFTOUT_MASK(SI4126_TWI_ADDR_MASK)) == 0);
+	KASSERT((addr & ~__SHIFTOUT_MASK(SI4126_TWI_ADDR_MASK)) == 0);
 
 	for (i = 1000; --i >= 0; ) {
 		if (ATW_ISSET(sc, ATW_SYNCTL, ATW_SYNCTL_RD|ATW_SYNCTL_WR) == 0)
@@ -1973,7 +1974,7 @@ atw_si4126_read(struct atw_softc *sc, u_int addr, u_int *val)
 		return ETIMEDOUT;
 	}
 
-	reg = sc->sc_synctl_rd | SHIFTIN(addr, ATW_SYNCTL_DATA_MASK);
+	reg = sc->sc_synctl_rd | __SHIFTIN(addr, ATW_SYNCTL_DATA_MASK);
 
 	ATW_WRITE(sc, ATW_SYNCTL, reg);
 
@@ -1991,7 +1992,7 @@ atw_si4126_read(struct atw_softc *sc, u_int addr, u_int *val)
 		return ETIMEDOUT;
 	}
 	if (val != NULL)
-		*val = SHIFTOUT(ATW_READ(sc, ATW_SYNCTL),
+		*val = __SHIFTOUT(ATW_READ(sc, ATW_SYNCTL),
 		                       ATW_SYNCTL_DATA_MASK);
 	return 0;
 }
@@ -2087,16 +2088,16 @@ atw_write_bssid(struct atw_softc *sc)
 	bssid = ic->ic_bss->ni_bssid;
 
 	ATW_WRITE(sc, ATW_BSSID0,
-	    SHIFTIN(bssid[0], ATW_BSSID0_BSSIDB0_MASK) |
-	    SHIFTIN(bssid[1], ATW_BSSID0_BSSIDB1_MASK) |
-	    SHIFTIN(bssid[2], ATW_BSSID0_BSSIDB2_MASK) |
-	    SHIFTIN(bssid[3], ATW_BSSID0_BSSIDB3_MASK));
+	    __SHIFTIN(bssid[0], ATW_BSSID0_BSSIDB0_MASK) |
+	    __SHIFTIN(bssid[1], ATW_BSSID0_BSSIDB1_MASK) |
+	    __SHIFTIN(bssid[2], ATW_BSSID0_BSSIDB2_MASK) |
+	    __SHIFTIN(bssid[3], ATW_BSSID0_BSSIDB3_MASK));
 
 	ATW_WRITE(sc, ATW_ABDA1,
 	    (ATW_READ(sc, ATW_ABDA1) &
 	    ~(ATW_ABDA1_BSSIDB4_MASK|ATW_ABDA1_BSSIDB5_MASK)) |
-	    SHIFTIN(bssid[4], ATW_ABDA1_BSSIDB4_MASK) |
-	    SHIFTIN(bssid[5], ATW_ABDA1_BSSIDB5_MASK));
+	    __SHIFTIN(bssid[4], ATW_ABDA1_BSSIDB4_MASK) |
+	    __SHIFTIN(bssid[5], ATW_ABDA1_BSSIDB5_MASK));
 
 	DPRINTF(sc, ("%s: BSSID %s -> ", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_bssid)));
@@ -2124,11 +2125,11 @@ atw_write_sram(struct atw_softc *sc, u_int ofs, u_int8_t *buf, u_int buflen)
 
 	for (i = 0; i < buflen; i += 2) {
 		ATW_WRITE(sc, ATW_WEPCTL, ATW_WEPCTL_WR |
-		    SHIFTIN((ofs + i) / 2, ATW_WEPCTL_TBLADD_MASK));
+		    __SHIFTIN((ofs + i) / 2, ATW_WEPCTL_TBLADD_MASK));
 		DELAY(atw_writewep_delay);
 
 		ATW_WRITE(sc, ATW_WESK,
-		    SHIFTIN((ptr[i + 1] << 8) | ptr[i], ATW_WESK_DATA_MASK));
+		    __SHIFTIN((ptr[i + 1] << 8) | ptr[i], ATW_WESK_DATA_MASK));
 		DELAY(atw_writewep_delay);
 	}
 	ATW_WRITE(sc, ATW_WEPCTL, sc->sc_wepctl); /* restore WEP condition */
@@ -2245,7 +2246,7 @@ atw_write_wep(struct atw_softc *sc)
 	reg = ATW_READ(sc, ATW_MACTEST);
 	reg |= ATW_MACTEST_MMI_USETXCLK | ATW_MACTEST_FORCE_KEYID;
 	reg &= ~ATW_MACTEST_KEYID_MASK;
-	reg |= SHIFTIN(ic->ic_def_txkey, ATW_MACTEST_KEYID_MASK);
+	reg |= __SHIFTIN(ic->ic_def_txkey, ATW_MACTEST_KEYID_MASK);
 	ATW_WRITE(sc, ATW_MACTEST, reg);
 
 	if ((ic->ic_flags & IEEE80211_F_PRIVACY) != 0)
@@ -2397,14 +2398,14 @@ atw_start_beacon(struct atw_softc *sc, int start)
 	/* set listen interval
 	 * XXX do software units agree w/ hardware?
 	 */
-	bpli = SHIFTIN(ic->ic_bss->ni_intval, ATW_BPLI_BP_MASK) |
-	    SHIFTIN(ic->ic_lintval / ic->ic_bss->ni_intval, ATW_BPLI_LI_MASK);
+	bpli = __SHIFTIN(ic->ic_bss->ni_intval, ATW_BPLI_BP_MASK) |
+	    __SHIFTIN(ic->ic_lintval / ic->ic_bss->ni_intval, ATW_BPLI_LI_MASK);
 
 	chan = ieee80211_chan2ieee(ic, ic->ic_curchan);
 
-	bcnt |= SHIFTIN(len, ATW_BCNT_BCNT_MASK);
-	cap0 |= SHIFTIN(chan, ATW_CAP0_CHN_MASK);
-	cap1 |= SHIFTIN(capinfo, ATW_CAP1_CAPI_MASK);
+	bcnt |= __SHIFTIN(len, ATW_BCNT_BCNT_MASK);
+	cap0 |= __SHIFTIN(chan, ATW_CAP0_CHN_MASK);
+	cap1 |= __SHIFTIN(capinfo, ATW_CAP1_CAPI_MASK);
 
 	ATW_WRITE(sc, ATW_BCNT, bcnt);
 	ATW_WRITE(sc, ATW_BPLI, bpli);
@@ -2497,9 +2498,9 @@ atw_predict_beacon(struct atw_softc *sc)
 	tbtt = past_even + ival * 10;
 
 	ATW_WRITE(sc, ATW_TOFS1,
-	    SHIFTIN(1, ATW_TOFS1_TSFTOFSR_MASK) |
-	    SHIFTIN(TBTTOFS, ATW_TOFS1_TBTTOFS_MASK) |
-	    SHIFTIN(SHIFTOUT(tbtt - TBTTOFS * IEEE80211_DUR_TU,
+	    __SHIFTIN(1, ATW_TOFS1_TSFTOFSR_MASK) |
+	    __SHIFTIN(TBTTOFS, ATW_TOFS1_TBTTOFS_MASK) |
+	    __SHIFTIN(__SHIFTOUT(tbtt - TBTTOFS * IEEE80211_DUR_TU,
 	        ATW_TBTTPRE_MASK), ATW_TOFS1_TBTTPRE_MASK));
 #undef TBTTOFS
 }
@@ -2560,8 +2561,8 @@ atw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		 * XXX do software units agree w/ hardware?
 		 */
 		ATW_WRITE(sc, ATW_BPLI,
-		    SHIFTIN(ic->ic_bss->ni_intval, ATW_BPLI_BP_MASK) |
-		    SHIFTIN(ic->ic_lintval / ic->ic_bss->ni_intval,
+		    __SHIFTIN(ic->ic_bss->ni_intval, ATW_BPLI_BP_MASK) |
+		    __SHIFTIN(ic->ic_lintval / ic->ic_bss->ni_intval,
 			   ATW_BPLI_LI_MASK));
 
 		DPRINTF(sc, ("%s: reg[ATW_BPLI] = %08x\n", sc->sc_dev.dv_xname,
@@ -3004,7 +3005,7 @@ atw_idle(struct atw_softc *sc, u_int32_t bits)
 	    (test0 & ATW_TEST0_TS_MASK) != ATW_TEST0_TS_STOPPED) {
 		printf("%s: transmit process not idle [%s]\n",
 		    sc->sc_dev.dv_xname,
-		    atw_tx_state[SHIFTOUT(test0, ATW_TEST0_TS_MASK)]);
+		    atw_tx_state[__SHIFTOUT(test0, ATW_TEST0_TS_MASK)]);
 		printf("%s: bits %08x test0 %08x stsr %08x\n",
 		    sc->sc_dev.dv_xname, bits, test0, stsr);
 	}
@@ -3013,7 +3014,7 @@ atw_idle(struct atw_softc *sc, u_int32_t bits)
 	    (test0 & ATW_TEST0_RS_MASK) != ATW_TEST0_RS_STOPPED) {
 		DPRINTF2(sc, ("%s: receive process not idle [%s]\n",
 		    sc->sc_dev.dv_xname,
-		    atw_rx_state[SHIFTOUT(test0, ATW_TEST0_RS_MASK)]));
+		    atw_rx_state[__SHIFTOUT(test0, ATW_TEST0_RS_MASK)]));
 		DPRINTF2(sc, ("%s: bits %08x test0 %08x stsr %08x\n",
 		    sc->sc_dev.dv_xname, bits, test0, stsr));
 	}
@@ -3085,7 +3086,7 @@ atw_rxintr(struct atw_softc *sc)
 
 		rxstat = le32toh(sc->sc_rxdescs[i].ar_stat);
 		rssi0 = le32toh(sc->sc_rxdescs[i].ar_rssi);
-		rate0 = SHIFTOUT(rxstat, ATW_RXSTAT_RXDR_MASK);
+		rate0 = __SHIFTOUT(rxstat, ATW_RXSTAT_RXDR_MASK);
 
 		if (rxstat & ATW_RXSTAT_OWN)
 			break; /* We have processed all receive buffers. */
@@ -3147,7 +3148,7 @@ atw_rxintr(struct atw_softc *sc)
 		 * No errors; receive the packet.  Note the ADM8211
 		 * includes the CRC in promiscuous mode.
 		 */
-		len = SHIFTOUT(rxstat, ATW_RXSTAT_FL_MASK);
+		len = __SHIFTOUT(rxstat, ATW_RXSTAT_FL_MASK);
 
 		/*
 		 * Allocate a new mbuf cluster.  If that fails, we are
@@ -3299,7 +3300,7 @@ atw_txintr(struct atw_softc *sc)
 			    txstat_buf, sizeof(txstat_buf));
 			printf("%s: txstat %s %d\n", sc->sc_dev.dv_xname,
 			    txstat_buf,
-			    SHIFTOUT(txstat, ATW_TXSTAT_ARC_MASK));
+			    __SHIFTOUT(txstat, ATW_TXSTAT_ARC_MASK));
 		}
 
 		/*
@@ -3319,7 +3320,7 @@ atw_txintr(struct atw_softc *sc)
 
 		if ((txstat & ATW_TXSTAT_ES) == 0)
 			ifp->if_collisions +=
-			    SHIFTOUT(txstat, ATW_TXSTAT_ARC_MASK);
+			    __SHIFTOUT(txstat, ATW_TXSTAT_ARC_MASK);
 		else
 			ifp->if_oerrors++;
 
@@ -3689,11 +3690,11 @@ atw_start(struct ifnet *ifp)
 		/* XXX arbitrary retry limit; 8 because I have seen it in
 		 * use already and maybe 0 means "no tries" !
 		 */
-		ctl = htole32(SHIFTIN(8, ATW_TXCTL_TL_MASK));
+		ctl = htole32(__SHIFTIN(8, ATW_TXCTL_TL_MASK));
 
 		DPRINTF2(sc, ("%s: TXDR <- max(10, %d)\n",
 		    sc->sc_dev.dv_xname, rate * 5));
-		ctl |= htole32(SHIFTIN(MAX(10, rate * 5), ATW_TXCTL_TXDR_MASK));
+		ctl |= htole32(__SHIFTIN(MAX(10, rate * 5), ATW_TXCTL_TXDR_MASK));
 
 		/*
 		 * Initialize the transmit descriptors.
@@ -3713,7 +3714,7 @@ atw_start(struct ifnet *ifp)
 
 			txd->at_buf1 = htole32(dmamap->dm_segs[seg].ds_addr);
 			txd->at_flags =
-			    htole32(SHIFTIN(dmamap->dm_segs[seg].ds_len,
+			    htole32(__SHIFTIN(dmamap->dm_segs[seg].ds_len,
 			                   ATW_TXFLAG_TBS1_MASK)) |
 			    ((nexttx == (ATW_NTXDESC - 1))
 			        ? htole32(ATW_TXFLAG_TER) : 0);

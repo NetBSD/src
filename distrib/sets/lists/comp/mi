@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.917 2006/08/26 22:51:41 christos Exp $
+#	$NetBSD: mi,v 1.918 2006/08/31 19:24:37 dyoung Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3885,6 +3885,11 @@
 ./usr/share/man/cat3/X509_NAME_print_ex.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/X509_new.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/_DIAGASSERT.0		comp-c-catman		.cat
+./usr/share/man/cat3/__BIT.0			comp-c-catman		.cat
+./usr/share/man/cat3/__BITS.0			comp-c-catman		.cat
+./usr/share/man/cat3/__SHIFTIN.0		comp-c-catman		.cat
+./usr/share/man/cat3/__SHIFTOUT.0		comp-c-catman		.cat
+./usr/share/man/cat3/__SHIFTOUT_MASK.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__svc_getcallercreds.0	comp-c-catman		.cat
 ./usr/share/man/cat3/_longjmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/_lwp_makecontext.0		comp-c-catman		.cat
@@ -3947,6 +3952,7 @@
 ./usr/share/man/cat3/bindresvport.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bindresvport_sa.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bindtextdomain.0		comp-c-catman		.cat
+./usr/share/man/cat3/bits.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bitstring.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bkgd.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bkgdset.0			comp-c-catman		.cat
@@ -8055,6 +8061,11 @@
 ./usr/share/man/man3/X509_NAME_print_ex.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/X509_new.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/_DIAGASSERT.3		comp-c-man		.man
+./usr/share/man/man3/__BIT.3			comp-c-man		.man
+./usr/share/man/man3/__BITS.3			comp-c-man		.man
+./usr/share/man/man3/__SHIFTIN.3		comp-c-man		.man
+./usr/share/man/man3/__SHIFTOUT.3		comp-c-man		.man
+./usr/share/man/man3/__SHIFTOUT_MASK.3		comp-c-man		.man
 ./usr/share/man/man3/__svc_getcallercreds.3	comp-c-man		.man
 ./usr/share/man/man3/_longjmp.3			comp-c-man		.man
 ./usr/share/man/man3/_lwp_makecontext.3		comp-c-man		.man
@@ -8117,6 +8128,7 @@
 ./usr/share/man/man3/bindresvport.3		comp-c-man		.man
 ./usr/share/man/man3/bindresvport_sa.3		comp-c-man		.man
 ./usr/share/man/man3/bindtextdomain.3		comp-c-man		.man
+./usr/share/man/man3/bits.3			comp-c-man		.man
 ./usr/share/man/man3/bitstring.3		comp-c-man		.man
 ./usr/share/man/man3/bkgd.3			comp-c-man		.man
 ./usr/share/man/man3/bkgdset.3			comp-c-man		.man

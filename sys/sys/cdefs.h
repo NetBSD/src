@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.60 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.61 2006/08/31 19:24:38 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -353,5 +353,30 @@
 	for (pvar = __link_set_start(set); pvar < __link_set_end(set); pvar++)
 
 #define	__link_set_entry(set, idx)	(__link_set_begin(set)[idx])
+
+/*
+ * Return the number of elements in a statically-allocated array,
+ * __x.
+ */
+#define	__arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
+
+/* __BIT(n): nth bit, where __BIT(0) == 0x1. */
+#define	__BIT(__n)	\
+	(((__n) >= NBBY * sizeof(uintmax_t)) ? 0 : ((uintmax_t)1 << (__n)))
+
+/* __BITS(m, n): bits m through n, m < n. */
+#define	__BITS(__m, __n)	\
+	((__BIT(MAX((__m), (__n)) + 1) - 1) ^ (__BIT(MIN((__m), (__n))) - 1))
+
+/* find least significant bit that is set */
+#define	__LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))
+
+#define	__PRIxBIT	PRIxMAX
+#define	__PRIxBITS	__PRIxBIT
+
+#define	__SHIFTOUT(__x, __mask)	\
+	((typeof(__x))(((__x) & (__mask)) / __LOWEST_SET_BIT(__mask)))
+#define	__SHIFTIN(__x, __mask) ((typeof(__x))((__x) * __LOWEST_SET_BIT(__mask)))
+#define	__SHIFTOUT_MASK(__mask) __SHIFTOUT((__mask), (__mask))
 
 #endif /* !_SYS_CDEFS_H_ */

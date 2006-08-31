@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.21 2006/03/08 08:26:50 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.22 2006/08/31 19:24:37 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -412,7 +412,7 @@ do {									\
 	__rxd->ar_buf2 =	/* for descriptor chaining */		\
 	    htole32(ATW_CDRXADDR((sc), ATW_NEXTRX((x))));		\
 	__rxd->ar_ctl =							\
-	    htole32(SHIFTIN(((__m->m_ext.ext_size - 1) & ~0x3U),	\
+	    htole32(__SHIFTIN(((__m->m_ext.ext_size - 1) & ~0x3U),	\
 	                   ATW_RXCTL_RBS1_MASK) |			\
 		    0 /* ATW_RXCTL_RCH */ |				\
 	    ((x) == (ATW_NRXDESC - 1) ? ATW_RXCTL_RER : 0));		\
