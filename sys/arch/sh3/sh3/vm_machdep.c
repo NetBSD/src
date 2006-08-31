@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.52 2006/05/10 06:24:03 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.53 2006/08/31 16:49:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,9 +81,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.52 2006/05/10 06:24:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.53 2006/08/31 16:49:21 matt Exp $");
 
 #include "opt_kstack_debug.h"
+#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,6 +312,7 @@ cpu_lwp_free(struct lwp *l, int proc)
 	/* Nothing to do */
 }
 
+#ifdef COREDUMP
 /*
  * Dump the machine specific segment at the start of a core dump.
  */
@@ -351,6 +353,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
 	    sizeof(md_core));
 }
+#endif /* COREDUMP */
 
 /*
  * Map an IO request into kernel virtual address space.  Requests fall into

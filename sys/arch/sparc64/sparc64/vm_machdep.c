@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.63 2006/02/11 17:57:32 cdi Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.64 2006/08/31 16:49:21 matt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.63 2006/02/11 17:57:32 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.64 2006/08/31 16:49:21 matt Exp $");
+
+#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,6 +332,7 @@ cpu_lwp_free(l, proc)
 	}
 }
 
+#ifdef COREDUMP
 /*
  * cpu_coredump is called to write a core dump header.
  * (should this be defined elsewhere?  machdep.c?)
@@ -418,3 +421,4 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
 	    sizeof(md_core));
 }
+#endif
