@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.245 2006/08/31 19:46:54 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.246 2006/08/31 20:22:34 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.245 2006/08/31 19:46:54 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.246 2006/08/31 20:22:34 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -1058,14 +1058,12 @@ cdminphys(struct buf *bp)
 static int
 cdread(dev_t dev, struct uio *uio, int ioflag)
 {
-
 	return (physio(cdstrategy, NULL, dev, B_READ, cdminphys, uio));
 }
 
 static int
 cdwrite(dev_t dev, struct uio *uio, int ioflag)
 {
-
 	return (physio(cdstrategy, NULL, dev, B_WRITE, cdminphys, uio));
 }
 
