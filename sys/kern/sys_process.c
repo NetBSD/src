@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.108 2006/08/30 13:55:03 cube Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.109 2006/08/31 18:05:21 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.108 2006/08/30 13:55:03 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.109 2006/08/31 18:05:21 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -844,9 +844,7 @@ process_checkioperm(struct lwp *l, struct proc *t)
 
 	return (0);
 }
-#endif /* KTRACE || PTRACE */
 
-#ifdef KTRACE
 void
 process_stoptrace(struct lwp *l)
 {
@@ -872,4 +870,4 @@ process_stoptrace(struct lwp *l)
 	if (dolock)
 		splx(s);
 }
-#endif /* KTRACE */
+#endif /* KTRACE || PTRACE */
