@@ -1,5 +1,5 @@
 REM > bb_NetBSD
-REM $NetBSD: bb_netbsd,v 1.3 2002/07/10 15:42:15 reinoud Exp $
+REM $NetBSD: bb_netbsd,v 1.4 2006/08/31 20:59:24 bjh21 Exp $
 REM
 REM Copyright (c) 1995 Mark Brinicombe
 REM All rights reserved
@@ -87,6 +87,12 @@ size = (size + clsize - 1) / clsize
 size = INT(size+0.5)
 
 PRINT "Filecore partition size = ";size; " cylinders (0-";size-1;")"
+
+REM Check for a RISC iX partition table (e.g. put there by scsidm).
+
+IF buf%?&1fc = 1 OR buf%?&1fc = 2 THEN
+  PRINT "RISC iX partition starts at cylinder "; buf%?&1fd + (buf%?&1fe<<8)
+ENDIF
 
 REM We should be clever about here and read the real geometry
 REM of the disc so that we know the maximum cylinder number
