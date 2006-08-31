@@ -1,4 +1,4 @@
-/*	$NetBSD: bicons.c,v 1.10 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: bicons.c,v 1.11 2006/08/31 18:31:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bicons.c,v 1.10 2005/12/11 12:21:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bicons.c,v 1.11 2006/08/31 18:31:59 matt Exp $");
 
 #define HALF_FONT
 
@@ -213,6 +213,7 @@ biconscngetc(dev_t dev)
 	while (1)
 		;
 	/* NOTREACHED */
+	return 0;
 }
 
 void
