@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.24 2006/06/30 17:54:51 freza Exp $	*/
+/*	$NetBSD: cpu.c,v 1.25 2006/08/31 21:32:27 freza Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 2006/06/30 17:54:51 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.25 2006/08/31 21:32:27 freza Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,21 +51,24 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 2006/06/30 17:54:51 freza Exp $");
 #include <powerpc/ibm4xx/dev/plbvar.h>
 
 struct cputab {
-	int version;
+	u_int version;
+	u_int mask;
 	const char *name;
 };
 static struct cputab models[] = {
-	{ PVR_401A1  >> 16,	"401A1" },
-	{ PVR_401B2  >> 16,	"401B21" },
-	{ PVR_401C2  >> 16,	"401C2" },
-	{ PVR_401D2  >> 16,	"401D2" },
-	{ PVR_401E2  >> 16,	"401E2" },
-	{ PVR_401F2  >> 16,	"401F2" },
-	{ PVR_401G2  >> 16,	"401G2" },
-	{ PVR_403    >> 16,	"403" },
-	{ PVR_405GP  >> 16,	"405GP" },
-	{ PVR_405GPR >> 16,	"405GPr" },
-	{ 0,			NULL }
+	{ PVR_401A1, 	0xffff0000,	"401A1" 	},
+	{ PVR_401B2, 	0xffff0000,	"401B21" 	},
+	{ PVR_401C2, 	0xffff0000,	"401C2" 	},
+	{ PVR_401D2, 	0xffff0000,	"401D2" 	},
+	{ PVR_401E2, 	0xffff0000,	"401E2" 	},
+	{ PVR_401F2, 	0xffff0000,	"401F2" 	},
+	{ PVR_401G2, 	0xffff0000,	"401G2" 	},
+	{ PVR_403, 	0xffff0000,	"403" 		},
+	{ PVR_405GP, 	0xffff0000,	"405GP" 	},
+	{ PVR_405GPR, 	0xffff0000,	"405GPr" 	},
+	{ PVR_405D5X1, 	0xfffff000, 	"Xilinx Virtex II Pro" 	},
+	{ PVR_405D5X2, 	0xfffff000, 	"Xilinx Virtex 4 FX" 	},
+	{ 0, 		0,		NULL 		}
 };
 
 static int	cpumatch(struct device *, struct cfdata *, void *);
@@ -111,10 +114,9 @@ cpumatch(struct device *parent, struct cfdata *cf, void *aux)
 static void
 cpuattach(struct device *parent, struct device *self, void *aux)
 {
-	int pvr, cpu;
-	int own, pcf, cas, pcl, aid;
 	struct cputab *cp = models;
-	unsigned int processor_freq;
+	u_int pvr;
+	u_int processor_freq;
 	prop_number_t freq;
 
 	freq = prop_dictionary_get(board_properties, "processor-frequency");
@@ -124,45 +126,33 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	cpufound++;
 	ncpus++;
 
-	__asm ("mfpvr %0" : "=r"(pvr));
-	cpu = pvr >> 16;
-
-	/* Break PVR up into separate fields and print them out. */
-	own = (pvr >> 20) & 0xfff;
-	pcf = (pvr >> 16) & 0xf;
-	cas = (pvr >> 10) & 0x3f;
-	pcl = (pvr >> 6) & 0xf;
-	aid = pvr & 0x3f;
-
+	pvr = mfpvr();
 	while (cp->name) {
-		if (cp->version == cpu)
+		if ((pvr & cp->mask) == cp->version)
 			break;
 		cp++;
 	}
 	if (cp->name)
 		strcpy(cpu_model, cp->name);
 	else
-		sprintf(cpu_model, "Version 0x%x", cpu);
-	sprintf(cpu_model + strlen(cpu_model), " (Revision %d.%d)",
-		(pvr >> 8) & 0xff, pvr & 0xff);
+		sprintf(cpu_model, "Version 0x%x", pvr);
 
-#if 1
-	printf(": %dMHz %s\n", processor_freq / 1000 / 1000,
-	    cpu_model);
-#endif
+	printf(": %dMHz %s (PVR 0x%x)\n", processor_freq / 1000 / 1000,
+	    cp->name ? cp->name : "unknown model", pvr);
 
 	cpu_probe_cache();
 
-	printf("Instruction cache size %d line size %d\n",
-		curcpu()->ci_ci.icache_size, curcpu()->ci_ci.icache_line_size);
-	printf("Data cache size %d line size %d\n",
-		curcpu()->ci_ci.dcache_size, curcpu()->ci_ci.dcache_line_size);
+	/* We would crash later on anyway so just make the reason obvious */
+	if (curcpu()->ci_ci.icache_size == 0 &&
+	    curcpu()->ci_ci.dcache_size == 0)
+		panic("%s could not detect cache size", device_xname(self));
 
-#ifdef DEBUG
-	/* It sux that the cache info here is useless. */
-	printf("PVR: owner %x core family %x cache %x version %x asic %x\n",
-		own, pcf, cas, pcl, aid);
-#endif
+	printf("%s: Instruction cache size %d line size %d\n",
+	    device_xname(self),
+	    curcpu()->ci_ci.icache_size, curcpu()->ci_ci.icache_line_size);
+	printf("%s: Data cache size %d line size %d\n",
+	    device_xname(self),
+	    curcpu()->ci_ci.dcache_size, curcpu()->ci_ci.dcache_line_size);
 }
 
 /*
@@ -173,15 +163,12 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 void
 cpu_probe_cache()
 {
-	int pvr;
-
 	/*
 	 * First we need to identify the CPU and determine the
 	 * cache line size, or things like memset/memcpy may lose
 	 * badly.
 	 */
-	__asm volatile("mfpvr %0" : "=r" (pvr));
-	switch (pvr & 0xffff0000) {
+	switch (mfpvr() & 0xffff0000) {
 	case PVR_401A1:
 		curcpu()->ci_ci.dcache_size = 1024;
 		curcpu()->ci_ci.dcache_line_size = 16;
@@ -237,6 +224,8 @@ cpu_probe_cache()
 		curcpu()->ci_ci.icache_line_size = 32;
 		break;
 	case PVR_405GPR:
+	case PVR_405D5X1:
+	case PVR_405D5X2:
 		curcpu()->ci_ci.dcache_size = 16384;
 		curcpu()->ci_ci.dcache_line_size = 32;
 		curcpu()->ci_ci.icache_size = 16384;
