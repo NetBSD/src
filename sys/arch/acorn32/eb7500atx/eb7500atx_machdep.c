@@ -1,4 +1,4 @@
-/*	$NetBSD: eb7500atx_machdep.c,v 1.4 2006/08/16 09:47:26 bjh21 Exp $	*/
+/*	$NetBSD: eb7500atx_machdep.c,v 1.5 2006/08/31 05:11:07 matt Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -54,7 +54,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.4 2006/08/16 09:47:26 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.5 2006/08/31 05:11:07 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.4 2006/08/16 09:47:26 bjh21 
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 #include <arm/arm32/machdep.h>
-#include <machine/vconsole.h>
 #include <arm/undefined.h>
 #include <machine/rtc.h>
 #include <machine/bus.h>
@@ -93,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.4 2006/08/16 09:47:26 bjh21 
 #include <arm/iomd/vidcvideo.h>
 
 #include <sys/device.h>
-#include <arm/iomd/rpckbdvar.h>
 #include <dev/ic/pckbcvar.h>
 
 #include <dev/i2c/i2cvar.h>
@@ -397,7 +395,7 @@ initarm(void *cookie)
 	u_int kerneldatasize;
 	u_int l1pagetable;
 	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
-	pv_addr_t kernel_l1pt;
+	pv_addr_t kernel_l1pt = { {0} };
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
