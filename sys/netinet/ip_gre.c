@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.40 2006/07/28 17:34:13 dyoung Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.41 2006/08/31 17:46:17 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.40 2006/07/28 17:34:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.41 2006/08/31 17:46:17 dyoung Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -147,13 +147,7 @@ int
 gre_input2(struct mbuf *m, int hlen, u_char proto)
 {
 	const struct greip *gip;
-	int s, isr;
-	struct ifqueue *ifq;
 	struct gre_softc *sc;
-	u_int16_t flags;
-#if NBPFILTER > 0
-	u_int32_t af = AF_INET;		/* af passed to BPF tap */
-#endif
 
 	if ((sc = gre_lookup(m, proto)) == NULL) {
 		/* No matching tunnel or tunnel is down. */
@@ -167,97 +161,7 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 	}
 	gip = mtod(m, const struct greip *);
 
-	sc->sc_if.if_ipackets++;
-	sc->sc_if.if_ibytes += m->m_pkthdr.len;
-
-	switch (proto) {
-	case IPPROTO_GRE:
-		hlen += sizeof(struct gre_h);
-
-		/* process GRE flags as packet can be of variable len */
-		flags = ntohs(gip->gi_flags);
-
-		/* Checksum & Offset are present */
-		if ((flags & GRE_CP) | (flags & GRE_RP))
-			hlen += 4;
-		/* We don't support routing fields (variable length) */
-		if (flags & GRE_RP)
-			return (0);
-		if (flags & GRE_KP)
-			hlen += 4;
-		if (flags & GRE_SP)
-			hlen += 4;
-
-		switch (ntohs(gip->gi_ptype)) { /* ethertypes */
-		case ETHERTYPE_IP: /* shouldn't need a schednetisr(), as */
-			ifq = &ipintrq;          /* we are in ip_input */
-			isr = NETISR_IP;
-			break;
-#ifdef NS
-		case ETHERTYPE_NS:
-			ifq = &nsintrq;
-			isr = NETISR_NS;
-#if NBPFILTER > 0
-			af = AF_NS;
-#endif
-			break;
-#endif
-#ifdef NETATALK
-		case ETHERTYPE_ATALK:
-			ifq = &atintrq1;
-			isr = NETISR_ATALK;
-#if NBPFILTER > 0
-			af = AF_APPLETALK;
-#endif
-			break;
-#endif
-#ifdef INET6
-		case ETHERTYPE_IPV6:
-#ifdef GRE_DEBUG
-			printf( "ip_gre.c/gre_input2: IPv6 packet\n" );
-#endif
-			ifq = &ip6intrq;
-			isr = NETISR_IPV6;
-#if NBPFILTER > 0
-			af = AF_INET6;
-#endif
-			break;
-#endif
-		default:	   /* others not yet supported */
-			printf( "ip_gre.c/gre_input2: unhandled ethertype 0x%04x\n", (int) ntohs(gip->gi_ptype) );
-			return (0);
-		}
-		break;
-	default:
-		/* others not yet supported */
-		return (0);
-	}
-
-	if (hlen > m->m_pkthdr.len) {
-		m_freem(m);
-		return (EINVAL);
-	}
-	m_adj(m, hlen);
-
-#if NBPFILTER > 0
-	if (sc->sc_if.if_bpf != NULL)
-		bpf_mtap_af(sc->sc_if.if_bpf, af, m);
-#endif /*NBPFILTER > 0*/
-
-	m->m_pkthdr.rcvif = &sc->sc_if;
-
-	s = splnet();		/* possible */
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);
-		m_freem(m);
-	} else {
-		IF_ENQUEUE(ifq, m);
-	}
-	/* we need schednetisr since the address family may change */
-	schednetisr(isr);
-	splx(s);
-
-	return (1);	/* packet is done, no further processing needed */
+	return gre_input3(sc, m, hlen, proto, &gip->gi_g);
 }
 
 /*
@@ -273,6 +177,7 @@ gre_mobile_input(struct mbuf *m, ...)
 	struct mobip_h *mip;
 	struct ifqueue *ifq;
 	struct gre_softc *sc;
+	uint8_t *hdr;
 	int hlen, s;
 	va_list ap;
 	int msiz;
@@ -293,6 +198,7 @@ gre_mobile_input(struct mbuf *m, ...)
 			return;
 	}
 	ip = mtod(m, struct ip *);
+	/* XXX what if there are IP options? */
 	mip = mtod(m, struct mobip_h *);
 
 	sc->sc_if.if_ipackets++;
@@ -304,8 +210,8 @@ gre_mobile_input(struct mbuf *m, ...)
 	} else
 		msiz = MOB_H_SIZ_S;
 
-	if (m->m_len < (ip->ip_hl << 2) + msiz) {
-		m = m_pullup(m, (ip->ip_hl << 2) + msiz);
+	if (M_UNWRITABLE(m, hlen + msiz)) {
+		m = m_pullup(m, hlen + msiz);
 		if (m == NULL)
 			return;
 		ip = mtod(m, struct ip *);
@@ -320,14 +226,14 @@ gre_mobile_input(struct mbuf *m, ...)
 		return;
 	}
 
-	memmove(ip + (ip->ip_hl << 2), ip + (ip->ip_hl << 2) + msiz,
-		m->m_len - msiz - (ip->ip_hl << 2));
+	hdr = mtod(m, uint8_t *);
+	memmove(hdr + hlen, hdr + hlen + msiz, m->m_len - msiz - hlen);
 	m->m_len -= msiz;
 	ip->ip_len = htons(ntohs(ip->ip_len) - msiz);
 	m->m_pkthdr.len -= msiz;
 
 	ip->ip_sum = 0;
-	ip->ip_sum = in_cksum(m, (ip->ip_hl << 2));
+	ip->ip_sum = in_cksum(m, hlen);
 
 #if NBPFILTER > 0
 	if (sc->sc_if.if_bpf != NULL)
