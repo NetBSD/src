@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat.c,v 1.22 2004/06/03 16:48:53 wiz Exp $ */
+/*	$NetBSD: envstat.c,v 1.23 2006/08/31 10:25:04 gson Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.22 2004/06/03 16:48:53 wiz Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.23 2006/08/31 10:25:04 gson Exp $");
 #endif
 
 #include <fcntl.h>
@@ -196,6 +196,7 @@ main(int argc, char **argv)
 			headcnt = 0;
 			header(width, celsius, ebis, cetds, ns);
 		}
+		fflush(stdout);
 
 		sleep(interval);
 
