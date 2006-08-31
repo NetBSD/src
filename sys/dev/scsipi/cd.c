@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.246 2006/08/31 20:22:34 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.247 2006/08/31 21:32:42 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.246 2006/08/31 20:22:34 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.247 2006/08/31 21:32:42 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -889,10 +889,14 @@ cddone(struct scsipi_xfer *xs, int error)
 	struct buf *bp = xs->bp;
 
 	if (bp) {
+		/* note, bp->b_resid is NOT initialised */
 		bp->b_error = error;
 		bp->b_resid = xs->resid;
-		if (error)
+		if (error) {
+			/* on a read/write error bp->b_resid is zero, so fix */
+			bp->b_resid = bp->b_bcount;
 			bp->b_flags |= B_ERROR;
+		}
 
 		disk_unbusy(&cd->sc_dk, bp->b_bcount - bp->b_resid,
 		    (bp->b_flags & B_READ));
