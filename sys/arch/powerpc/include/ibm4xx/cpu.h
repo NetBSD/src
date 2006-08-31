@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12 2006/05/05 18:04:42 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13 2006/08/31 21:32:27 freza Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -56,6 +56,9 @@
 #define PVR_405GP_PASS3 	0x401100c4	/* RevD */ 
 #define PVR_405GPR     		0x50910000
 #define PVR_405GPR_REVB		0x50910951
+
+#define	PVR_405D5X1 		0x20010000 	/* Virtex II Pro */
+#define	PVR_405D5X2 		0x20011000 	/* Virtex 4 FX */
 
 #if defined(_KERNEL)
 extern char bootpath[];
