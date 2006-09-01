@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.78 2005/12/24 13:22:13 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.79 2006/09/01 20:39:05 cherry Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.78 2005/12/24 13:22:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.79 2006/09/01 20:39:05 cherry Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -155,7 +155,7 @@ POOL_INIT(uao_swhash_elt_pool, sizeof(struct uao_swhash_elt), 0, 0, 0,
 
 struct uvm_aobj {
 	struct uvm_object u_obj; /* has: lock, pgops, memq, #pages, #refs */
-	int u_pages;		 /* number of pages in entire object */
+	pgoff_t u_pages;	 /* number of pages in entire object */
 	int u_flags;		 /* the flags (see uvm_aobj.h) */
 	int *u_swslots;		 /* array of offset->swapslot mappings */
 				 /*
@@ -460,7 +460,7 @@ uao_create(vsize_t size, int flags)
 {
 	static struct uvm_aobj kernel_object_store;
 	static int kobj_alloced = 0;
-	int pages = round_page(size) >> PAGE_SHIFT;
+	pgoff_t pages = round_page(size) >> PAGE_SHIFT;
 	struct uvm_aobj *aobj;
 	int refs;
 
