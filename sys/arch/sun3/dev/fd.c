@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.48 2006/04/19 06:16:00 he Exp $	*/
+/*	$NetBSD: fd.c,v 1.49 2006/09/01 03:22:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.48 2006/04/19 06:16:00 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.49 2006/09/01 03:22:26 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -1726,15 +1726,15 @@ fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 #ifdef DEBUG
 	case _IO('f', 100):
 		{
-		int i;
+		int k;
 		struct fdc_softc *fdc = (struct fdc_softc *)
 					device_parent(&fd->sc_dv);
 
 		out_fdc(fdc, NE7CMD_DUMPREG);
 		fdcresult(fdc);
 		printf("dumpreg(%d regs): <", fdc->sc_nstat);
-		for (i = 0; i < fdc->sc_nstat; i++)
-			printf(" %x", fdc->sc_status[i]);
+		for (k = 0; k < fdc->sc_nstat; k++)
+			printf(" %x", fdc->sc_status[k]);
 		printf(">\n");
 		}
 
@@ -1748,14 +1748,14 @@ fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		return (0);
 	case _IO('f', 102):
 		{
-		int i;
+		int k;
 		struct fdc_softc *fdc = (struct fdc_softc *)
 					device_parent(&fd->sc_dv);
 		out_fdc(fdc, NE7CMD_SENSEI);
 		fdcresult(fdc);
 		printf("sensei(%d regs): <", fdc->sc_nstat);
-		for (i=0; i< fdc->sc_nstat; i++)
-			printf(" 0x%x", fdc->sc_status[i]);
+		for (k=0; k < fdc->sc_nstat; k++)
+			printf(" 0x%x", fdc->sc_status[k]);
 		}
 		printf(">\n");
 		return (0);
