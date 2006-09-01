@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.36 2006/03/29 04:16:47 thorpej Exp $	*/
+/*	$NetBSD: hpc.c,v 1.37 2006/09/01 04:47:44 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.36 2006/03/29 04:16:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.37 2006/09/01 04:47:44 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,7 +258,7 @@ static struct hpc_values hpc1_values = {
 };
 
 static struct hpc_values hpc3_values = {
-	.revision		3,
+	.revision =		3,
 	.scsi0_regs =		HPC3_SCSI0_REGS,
 	.scsi0_regs_size =	HPC3_SCSI0_REGS_SIZE,
 	.scsi0_cbp =		HPC3_SCSI0_CBP,
