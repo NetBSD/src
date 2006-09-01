@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.247 2006/08/31 21:32:42 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.248 2006/09/01 03:29:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.247 2006/08/31 21:32:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.248 2006/09/01 03:29:32 matt Exp $");
 
 #include "rnd.h"
 
@@ -1645,7 +1645,7 @@ cdgetdisklabel(struct cd_softc *cd)
  * we count.
  */
 static int
-read_cd_capacity(struct scsipi_periph *periph, int *blksize, u_long *size)
+read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *size)
 {
 	struct scsipi_read_cd_capacity    cap_cmd;
 	struct scsipi_read_cd_cap_data    cap;
@@ -1728,7 +1728,7 @@ read_cd_capacity(struct scsipi_periph *periph, int *blksize, u_long *size)
 static u_long
 cd_size(struct cd_softc *cd, int flags)
 {
-	int blksize;
+	u_int blksize;
 	u_long size;
 	int error;
 
