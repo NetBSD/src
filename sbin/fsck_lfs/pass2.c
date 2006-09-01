@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.15 2005/09/13 04:14:17 christos Exp $	 */
+/* $NetBSD: pass2.c,v 1.16 2006/09/01 19:52:48 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -100,7 +100,7 @@ pass2(void)
 			break;
 		}
 		if (reply("FIX") == 0)
-			err(8, "%s", "");
+			errx(8, "%s", "");
 		vp = vget(fs, ROOTINO);
 		dp = VTOD(vp);
 		dp->di_mode &= ~IFMT;
@@ -112,7 +112,7 @@ pass2(void)
 		break;
 
 	default:
-		err(8, "BAD STATE %d FOR ROOT INODE\n", statemap[ROOTINO]);
+		errx(8, "BAD STATE %d FOR ROOT INODE\n", statemap[ROOTINO]);
 	}
 	statemap[WINO] = FSTATE;
 	typemap[WINO] = DT_WHT;
@@ -421,7 +421,7 @@ again:
 			break;
 
 		default:
-			err(8, "BAD STATE %d FOR INODE I=%d",
+			errx(8, "BAD STATE %d FOR INODE I=%d",
 			    statemap[dirp->d_ino], dirp->d_ino);
 		}
 	}

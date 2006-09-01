@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.13 2006/07/18 23:37:13 perseant Exp $ */
+/* $NetBSD: segwrite.c,v 1.14 2006/09/01 19:52:48 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -770,6 +770,7 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 	}
 
 	ssp = (SEGSUM *) sp->segsum;
+	ssp->ss_flags |= SS_RFW;
 
 	ninos = (ssp->ss_ninos + INOPB(fs) - 1) / INOPB(fs);
 	sup->su_nbytes += ssp->ss_ninos * DINODE1_SIZE;

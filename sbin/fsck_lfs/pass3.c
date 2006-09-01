@@ -1,4 +1,4 @@
-/* $NetBSD: pass3.c,v 1.8 2005/02/26 05:45:54 perseant Exp $	 */
+/* $NetBSD: pass3.c,v 1.9 2006/09/01 19:52:48 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -50,6 +50,8 @@ pass3(void)
 		    !(inp->i_parent == 0 || statemap[inp->i_number] == DSTATE))
 			continue;
 		if (statemap[inp->i_number] == DCLEAR)
+			continue;
+		if (statemap[inp->i_number] == FCLEAR)
 			continue;
 		for (loopcnt = 0;; loopcnt++) {
 			orphan = inp->i_number;
