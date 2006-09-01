@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.76 2005/12/11 12:16:16 christos Exp $
+#	$NetBSD: Makefile.alpha,v 1.77 2006/09/01 04:58:17 dyoung Exp $
 
 # Makefile for NetBSD
 #
@@ -90,6 +90,9 @@ MKDEP_AFLAGS=	-x assembler-with-cpp ${AFLAGS}
 %LOAD
 
 %RULES
+
+## Include rules for Atheros WLAN
+.include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
 
 ##
 ## (9) port independent kernel machinery
