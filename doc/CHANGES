@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.672 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.673 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -26,4 +26,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	mips64: Preliminary support for a MIPS64 toolchain using the N64
 		ABI. [matt 20060825]
 	postfix: Updated to 2.3.3 [rpaulo 20060827]
-
+	landisk: Initial import of landisk port for SuperH based
+		network storage appliances by I-O DATA.  The port was
+		done by NONAKA Kimihiro <nonaka@NetBSD.org>.
+		[uwe 20060901]
