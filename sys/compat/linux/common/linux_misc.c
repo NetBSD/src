@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.160 2006/08/30 17:14:34 he Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.161 2006/09/01 21:20:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.160 2006/08/30 17:14:34 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.161 2006/09/01 21:20:47 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.160 2006/08/30 17:14:34 he Exp $");
 #include <machine/ptrace.h>
 
 #include <sys/sa.h>
+#include <sys/syscall.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_machdep.h>
@@ -1435,13 +1436,13 @@ linux_sys_getresuid(l, v, retval)
 	return (copyout(&uid, SCARG(uap, suid), sizeof(uid_t)));
 }
 
-#ifdef PTRACE
 int
 linux_sys_ptrace(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
+#if defined(PTRACE) || defined(_LKM)
 	struct linux_sys_ptrace_args /* {
 		i386, m68k, powerpc: T=int
 		alpha, amd64: T=long
@@ -1453,6 +1454,9 @@ linux_sys_ptrace(l, v, retval)
 	const int *ptr;
 	int request;
 	int error;
+#ifdef _LKM
+#define sys_ptrace (*sysent[SYS_ptrace].sy_call)
+#endif
 
 	ptr = linux_ptrace_request_map;
 	request = SCARG(uap, request);
@@ -1494,8 +1498,10 @@ linux_sys_ptrace(l, v, retval)
 			ptr++;
 
 	return LINUX_SYS_PTRACE_ARCH(l, uap, retval);
+#else
+	return ENOSYS;
+#endif /* PTRACE || _LKM */
 }
-#endif
 
 int
 linux_sys_reboot(struct lwp *l, void *v, register_t *retval)
