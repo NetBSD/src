@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.31 2006/06/20 05:37:24 jdc Exp $	*/
+/*	$NetBSD: installboot.h,v 1.32 2006/09/01 21:47:21 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -170,6 +170,7 @@ extern struct ib_mach ib_mach_ews4800mips;
 extern struct ib_mach ib_mach_hp300;
 extern struct ib_mach ib_mach_hp700;
 extern struct ib_mach ib_mach_i386;
+extern struct ib_mach ib_mach_landisk;
 extern struct ib_mach ib_mach_macppc;
 extern struct ib_mach ib_mach_news68k;
 extern struct ib_mach ib_mach_newsmips;
