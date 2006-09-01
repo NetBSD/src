@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtw_pci.c,v 1.6 2006/06/17 23:34:27 christos Exp $	*/
+/*	$NetBSD: if_rtw_pci.c,v 1.7 2006/09/01 03:24:58 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.6 2006/06/17 23:34:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.7 2006/09/01 03:24:58 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,6 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t ioh, memh;
 	int ioh_valid, memh_valid;
 	const struct rtw_pci_product *app;
-	pcireg_t reg;
 	int error;
 
 	psc->psc_pc = pa->pa_pc;
