@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.33 2006/07/21 00:20:29 perseant Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.34 2006/09/01 19:57:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.33 2006/07/21 00:20:29 perseant Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.34 2006/09/01 19:57:41 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,8 +122,9 @@ print_ientry(int i, IFILE *ip)
 		printf("%d\tFREE\t%d\t \t\t%llu\n", i, ip->if_version,
 		    (unsigned long long)ip->if_nextfree);
 	else
-		printf("%d\tINUSE\t%d\t%8X    \n",
-		    i, ip->if_version, ip->if_daddr);
+		printf("%d\tINUSE\t%d\t%8X\t%s\n",
+		    i, ip->if_version, ip->if_daddr,
+		    (ip->if_nextfree == LFS_ORPHAN_NEXTFREE ? "FFFFFFFF" : "-"));
 }
 
 #define fsbtobyte(fs, b)	fsbtob((fs), (off_t)((b)))
@@ -495,23 +496,24 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 			(void)printf("dumplfs: %s %d address 0x%llx\n",
 		                     "corrupt summary block; segment", segnum,
 				     (long long)addr);
-		return (0);
+		return -1;
 	}
 	if (lfsp->lfs_version > 1 && sp->ss_ident != lfsp->lfs_ident) {
 		(void)printf("dumplfs: %s %d address 0x%llx\n",
 	                     "summary from a former life; segment", segnum,
 			     (long long)addr);
-		return (0);
+		return -1;
 	}
 
 	(void)printf("Segment Summary Info at 0x%llx\n", (long long)addr);
-	(void)printf("    %s0x%x\t%s%d\t%s%d\t%s%c%c%c\n    %s0x%x\t%s0x%x",
+	(void)printf("    %s0x%x\t%s%d\t%s%d\t%s%c%c%c%c\n    %s0x%x\t%s0x%x",
 		"next     ", sp->ss_next,
 		"nfinfo   ", sp->ss_nfinfo,
 		"ninos    ", sp->ss_ninos,
 		"flags    ", (sp->ss_flags & SS_DIROP) ? 'D' : '-',
 			     (sp->ss_flags & SS_CONT)  ? 'C' : '-',
 			     (sp->ss_flags & SS_CLEAN)  ? 'L' : '-',
+			     (sp->ss_flags & SS_RFW)  ? 'R' : '-',
 		"sumsum   ", sp->ss_sumsum,
 		"datasum  ", sp->ss_datasum );
 	if (lfsp->lfs_version == 1) {
@@ -692,7 +694,7 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 		} else {
 			nbytes = dump_sum(fd, lfsp, sump, segnum, 
 				btofsb(lfsp, sum_offset));
-			if (nbytes)
+			if (nbytes >= 0)
 				sum_offset += lfsp->lfs_sumsize + nbytes;
 			else
 				sum_offset = 0;
