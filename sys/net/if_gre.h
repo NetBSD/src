@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.17 2006/08/31 17:46:16 dyoung Exp $ */
+/*	$NetBSD: if_gre.h,v 1.18 2006/09/01 01:34:05 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,20 +41,13 @@
 
 #include <sys/queue.h>
 
-#if 1
-#define GRESSOCK	_IOW('i' , 107, struct ifreq)
-#define GREDSOCK	_IOW('i' , 108, struct ifreq)
-#endif
-
 #ifdef _KERNEL
 struct gre_soparm {
 	struct in_addr	sp_src;		/* source address of gre packets */
 	struct in_addr	sp_dst;		/* destination address of gre packets */
 	in_port_t	sp_srcport;	/* source port of gre packets */
 	in_port_t	sp_dstport;	/* destination port of gre packets */
-#ifdef GRESSOCK
 	struct file	*sp_fp;
-#endif /* GRESSOCK */
 };
 
 struct gre_softc {
@@ -62,17 +55,17 @@ struct gre_softc {
 	int			sc_waitchan;
 	int			sc_thread;
 	struct ifqueue		sc_snd;
-	struct gre_soparm	sc_sp;
+	struct gre_soparm	sc_soparm;
 	LIST_ENTRY(gre_softc)	sc_list;
 	struct route route;	/* routing entry that determines, where a
 				   encapsulated packet should go */
 	u_char g_proto;		/* protocol of encapsulator */
 };
-#define	g_src		sc_sp.sp_src
-#define	g_srcport	sc_sp.sp_srcport
-#define	g_dst		sc_sp.sp_dst
-#define	g_dstport	sc_sp.sp_dstport
-#define	sc_fp		sc_sp.sp_fp
+#define	g_src		sc_soparm.sp_src
+#define	g_srcport	sc_soparm.sp_srcport
+#define	g_dst		sc_soparm.sp_dst
+#define	g_dstport	sc_soparm.sp_dstport
+#define	sc_fp		sc_soparm.sp_fp
 
 struct gre_h {
 	u_int16_t flags;	/* GRE flags */
@@ -162,6 +155,8 @@ extern int ip_gre_ttl;
 #define GREGADDRD	_IOWR('i', 104, struct ifreq)
 #define GRESPROTO	_IOW('i' , 105, struct ifreq)
 #define GREGPROTO	_IOWR('i', 106, struct ifreq)
+#define GRESSOCK	_IOW('i' , 107, struct ifreq)
+#define GREDSOCK	_IOW('i' , 108, struct ifreq)
 
 #ifdef _KERNEL
 LIST_HEAD(gre_softc_head, gre_softc);

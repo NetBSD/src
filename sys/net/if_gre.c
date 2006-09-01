@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.62 2006/08/31 17:46:16 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.63 2006/09/01 01:34:05 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.62 2006/08/31 17:46:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.63 2006/09/01 01:34:05 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -349,7 +349,7 @@ out:
 	if (rc != 0)
 		gre_sodestroy(sop);
 	else
-		*sp = sc->sc_sp;
+		*sp = sc->sc_soparm;
 
 	return rc;
 }
@@ -394,7 +394,7 @@ gre_thread1(struct gre_softc *sc, struct lwp *l)
 			break;
 		}
 		/* XXX optimize */ 
-		if (memcmp(&sp, &sc->sc_sp, sizeof(sp)) != 0) {
+		if (memcmp(&sp, &sc->sc_soparm, sizeof(sp)) != 0) {
 			GRE_DPRINTF(sc, "%s: parameters changed\n", __func__);
 
 			if (sp.sp_fp != NULL) {
@@ -407,7 +407,7 @@ gre_thread1(struct gre_softc *sc, struct lwp *l)
 			if (sc->sc_fp != NULL) {
 				so = (struct socket *)sc->sc_fp->f_data;
 				gre_upcall_add(so, (caddr_t)sc);
-				sp = sc->sc_sp;
+				sp = sc->sc_soparm;
 				FILE_USE(sp.sp_fp);
 			} else if (gre_socreate1(sc, l, &sp, &so) != 0)
 				goto out;
@@ -1060,9 +1060,11 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case GREDSOCK:
 		if (sc->g_proto != IPPROTO_UDP)
 			return EINVAL;
-		closef(sc->sc_fp, l);
-		sc->sc_fp = NULL;
-		error = gre_kick(sc);
+		if (sc->sc_fp != NULL) {
+			closef(sc->sc_fp, l);
+			sc->sc_fp = NULL;
+			error = gre_kick(sc);
+		}
 		break;
 	case GRESSOCK:
 		if (sc->g_proto != IPPROTO_UDP)
