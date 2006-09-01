@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.60 2006/06/29 19:28:21 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.61 2006/09/01 19:41:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.60 2006/06/29 19:28:21 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.61 2006/09/01 19:41:28 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.60 2006/06/29 19:28:21 perseant Exp $
 #include <sys/mount.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/lfs/lfs.h>
@@ -376,7 +377,7 @@ lfs_unmark_dirop(struct lfs *fs)
 			simple_unlock(&vp->v_interlock);
 			continue;
 		}
-		if ((VTOI(vp)->i_flag & IN_ADIROP) == 0) {
+		if ((VTOI(vp)->i_flag & (IN_ADIROP | IN_ALLMOD)) == 0) {
 			simple_lock(&fs->lfs_interlock);
 			simple_lock(&lfs_subsys_lock);
 			--lfs_dirvcount;
@@ -625,12 +626,19 @@ lfs_segunlock_relock(struct lfs *fs)
 {
 	int n = fs->lfs_seglock;
 	u_int16_t seg_flags;
+	CLEANERINFO *cip;
+	struct buf *bp;
 
 	if (n == 0)
 		return;
 
 	/* Write anything we've already gathered to disk */
 	lfs_writeseg(fs, fs->lfs_sp);
+
+	/* Tell cleaner */
+	LFS_CLEANERINFO(cip, fs, bp);
+	cip->flags |= LFS_CLEANER_MUST_CLEAN;
+	LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 
 	/* Save segment flags for later */
 	seg_flags = fs->lfs_sp->seg_flags;
@@ -650,6 +658,11 @@ lfs_segunlock_relock(struct lfs *fs)
 	/* Put the segment lock back the way it was. */
 	while(n--)
 		lfs_seglock(fs, seg_flags);
+
+	/* Cleaner can relax now */
+	LFS_CLEANERINFO(cip, fs, bp);
+	cip->flags &= ~LFS_CLEANER_MUST_CLEAN;
+	LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 
 	return;
 }
