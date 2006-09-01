@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.8.2.2 2006/08/27 01:20:56 riz Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.8.2.3 2006/09/01 21:22:02 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -1070,7 +1070,7 @@ prop_dictionary_externalize_to_file(prop_dictionary_t dict, const char *fname)
 {
 	char *xml;
 	boolean_t rv;
-	int save_errno;
+	int save_errno = 0;	/* XXXGCC -Wuninitialized [mips, ...] */
 
 	xml = prop_dictionary_externalize(dict);
 	if (xml == NULL)
