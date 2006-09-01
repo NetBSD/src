@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.115 2006/07/23 22:06:15 ad Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.116 2006/09/01 19:41:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.115 2006/07/23 22:06:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.116 2006/09/01 19:41:28 perseant Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -366,6 +366,13 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		}
 
 		/* Past this point we are guaranteed that vp, ip are valid. */
+
+		/* Can't clean VDIROP directories in case of truncation */
+		/* XXX - maybe we should mark removed dirs specially? */
+		if (vp->v_type == VDIR && (vp->v_flag & VDIROP)) {
+			do_again++;
+			continue;
+		}
 
 		/* If this BLOCK_INFO didn't contain a block, keep going. */
 		if (blkp->bi_lbn == LFS_UNUSED_LBN) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.113 2006/08/06 12:34:12 martin Exp $	*/
+/*	$NetBSD: lfs.h,v 1.114 2006/09/01 19:41:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -451,6 +451,7 @@ struct ifile {
 	u_int32_t if_version;		/* inode version number */
 #define	LFS_UNUSED_DADDR	0	/* out-of-band daddr */
 	int32_t	  if_daddr;		/* inode disk address */
+#define LFS_ORPHAN_NEXTFREE	(~(u_int32_t)0) /* indicate orphaned file */
 	u_int32_t if_nextfree;		/* next-unallocated inode */
 	u_int32_t if_atime_sec;		/* Last access time, seconds */
 	u_int32_t if_atime_nsec;	/* and nanoseconds */
@@ -498,6 +499,8 @@ typedef struct _cleanerinfo {
 	int32_t	  avail;		/* disk blocks available */
 	u_int32_t free_head;		/* head of the inode free list */
 	u_int32_t free_tail;		/* tail of the inode free list */
+#define LFS_CLEANER_MUST_CLEAN	0x01
+	u_int32_t flags;		/* status word from the kernel */
 } CLEANERINFO;
 
 #define	CLEANSIZE_SU(fs)						\
@@ -593,6 +596,7 @@ struct segsum_v1 {
 #define	SS_DIROP	0x01		/* segment begins a dirop */
 #define	SS_CONT		0x02		/* more partials to finish this write*/
 #define	SS_CLEAN	0x04		/* written by the cleaner */
+#define	SS_RFW		0x08		/* written by the roll-forward agent */
 	u_int16_t ss_flags;		/* 24: used for directory operations */
 	u_int16_t ss_pad;		/* 26: extra space */
 	/* FINFO's and inode daddr's... */
@@ -838,6 +842,8 @@ struct lfs {
 	int lfs_pages;			/* dirty pages blaming this fs */
 	lfs_bm_t *lfs_ino_bitmap;	/* Inuse inodes bitmap */
 	int lfs_nowrap;			/* Suspend log wrap */
+	int lfs_wrappass;		/* Allow first log wrap requester to pass */
+	int lfs_wrapstatus;		/* Wrap status */
 	LIST_HEAD(, segdelta) lfs_segdhd;	/* List of pending trunc accounting events */
 };
 
@@ -990,6 +996,7 @@ struct lfs_inode_ext {
 #define LFSI_NO_GOP_WRITE 0x01
 #define LFSI_DELETED      0x02
 #define LFSI_WRAPBLOCK    0x04
+#define LFSI_WRAPWAIT     0x08
 	u_int32_t lfs_iflags;           /* Inode flags */
 	daddr_t   lfs_hiblk;		/* Highest lbn held by inode */
 #ifdef _KERNEL
@@ -997,6 +1004,7 @@ struct lfs_inode_ext {
 	int	  lfs_nbtree;		/* Size of tree */
 	LIST_HEAD(, segdelta) lfs_segdhd;
 #endif
+	int16_t	  lfs_odnlink;		/* on-disk nlink count for cleaner */
 };
 #define i_lfs_osize		inode_ext.lfs->lfs_osize
 #define i_lfs_effnblks		inode_ext.lfs->lfs_effnblocks
@@ -1008,6 +1016,7 @@ struct lfs_inode_ext {
 #define i_lfs_lbtree		inode_ext.lfs->lfs_lbtree
 #define i_lfs_nbtree		inode_ext.lfs->lfs_nbtree
 #define i_lfs_segdhd		inode_ext.lfs->lfs_segdhd
+#define i_lfs_odnlink		inode_ext.lfs->lfs_odnlink
 
 /*
  * Macros for determining free space on the disk, with the variable metadata
@@ -1091,6 +1100,10 @@ struct lfs_fhandle {
 #define LFCNWRAPSTOP	 _FCNR_FSPRIV('L', 9, int)
 #define LFCNWRAPGO	 _FCNR_FSPRIV('L', 10, int)
 #define LFCNIFILEFH	 _FCNW_FSPRIV('L', 11, struct lfs_fhandle)
+#define LFCNWRAPPASS	 _FCNR_FSPRIV('L', 12, int)
+# define LFS_WRAP_GOING   0x0
+# define LFS_WRAP_WAITING 0x1
+#define LFCNWRAPSTATUS	 _FCNW_FSPRIV('L', 13, int)
 /* Compat */
 #define LFCNSEGWAITALL_COMPAT	 _FCNW_FSPRIV('L', 0, struct timeval)
 #define LFCNSEGWAIT_COMPAT	 _FCNW_FSPRIV('L', 1, struct timeval)
