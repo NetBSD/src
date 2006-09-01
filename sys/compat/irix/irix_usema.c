@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.15 2006/05/14 21:24:49 elad Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.16 2006/09/01 04:54:45 sekiya Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.15 2006/05/14 21:24:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.16 2006/09/01 04:54:45 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ irix_usema_ioctl(v)
 		if ((iur = iur_lookup_by_vn(vp)) == NULL)
 			return EBADF;
 
-		(void *)iur_proc_queue(iur, ap->a_l->l_proc);
+		iwpr = iur_proc_queue(iur, ap->a_l->l_proc);
 		break;
 
 	case IRIX_UIOCAUNBLOCKQ: /* semaphore has been unblocked */
