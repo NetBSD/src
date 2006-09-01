@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.141 2006/08/12 21:46:03 christos Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.142 2006/09/01 21:24:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,12 +86,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.141 2006/08/12 21:46:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.142 2006/09/01 21:24:50 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
+#include "opt_ptrace.h"
 #include "opt_systrace.h"
 
 #include <sys/param.h>
@@ -1335,8 +1336,10 @@ trace_is_enabled(struct proc *p)
 	if (ISSET(p->p_flag, P_SYSTRACE))
 		return (TRUE);
 #endif
+#ifdef PTRACE
 	if (ISSET(p->p_flag, P_SYSCALL))
 		return (TRUE);
+#endif
 
 	return (FALSE);
 }
@@ -1352,6 +1355,7 @@ int
 trace_enter(struct lwp *l, register_t code,
     register_t realcode, const struct sysent *callp, void *args)
 {
+#if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
 	struct proc *p = l->l_proc;
 
 #ifdef SYSCALL_DEBUG
@@ -1363,13 +1367,16 @@ trace_enter(struct lwp *l, register_t code,
 		ktrsyscall(l, code, realcode, callp, args);
 #endif /* KTRACE */
 
+#ifdef PTRACE
 	if ((p->p_flag & (P_SYSCALL|P_TRACED)) == (P_SYSCALL|P_TRACED))
 		process_stoptrace(l);
+#endif
 
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE))
 		return systrace_enter(l, code, args);
 #endif
+#endif /* SYSCALL_DEBUG || {K,P,SYS}TRACE */
 	return 0;
 }
 
@@ -1384,6 +1391,7 @@ void
 trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
     int error)
 {
+#if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
 	struct proc *p = l->l_proc;
 
 #ifdef SYSCALL_DEBUG
@@ -1398,8 +1406,10 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 	}
 #endif /* KTRACE */
 	
+#ifdef PTRACE
 	if ((p->p_flag & (P_SYSCALL|P_TRACED)) == (P_SYSCALL|P_TRACED))
 		process_stoptrace(l);
+#endif
 
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
@@ -1408,4 +1418,5 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 		KERNEL_PROC_UNLOCK(l);
 	}
 #endif
+#endif /* SYSCALL_DEBUG || {K,P,SYS}TRACE */
 }
