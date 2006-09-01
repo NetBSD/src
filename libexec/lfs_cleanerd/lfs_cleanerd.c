@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.10 2006/07/31 16:34:42 martin Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.11 2006/09/01 19:43:51 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -1224,7 +1224,8 @@ needs_cleaning(struct clfs *fs, CLEANERINFO *cip)
 	     fs->lfs_fsmnt, cip->bfree, cip->avail, cip->clean, fs->lfs_nseg);
 
 	/* If the writer is waiting on us, clean it */
-	if (cip->clean <= fs->lfs_minfreeseg)
+	if (cip->clean <= fs->lfs_minfreeseg ||
+	    (cip->flags & LFS_CLEANER_MUST_CLEAN))
 		return 1;
 
 	/* If there are enough segments, don't clean it */
