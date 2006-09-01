@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.58 2005/10/19 21:22:21 dsl Exp $
+#	$NetBSD: Makefile,v 1.59 2006/09/01 21:44:02 uwe Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -27,6 +27,7 @@ CPPFLAGS+= -DSTRICT_CYLINDER_ALIGNMENT
 	|| ${MACHINE} == "hpcmips" \
 	|| ${MACHINE} == "i386" \
 	|| ${MACHINE} == "iyonix" \
+	|| ${MACHINE} == "landisk" \
 	|| ${MACHINE} == "macppc" \
 	|| ${MACHINE} == "netwinder" \
 	|| ${MACHINE} == "playstation2" \
