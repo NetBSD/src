@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.95 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.96 2006/09/01 19:11:56 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -1438,6 +1438,7 @@ ASLOCAL(zero)
 Ldorebootend:
 
 	.data
+	.p2align 2
 	.space	PAGE_SIZE
 ASLOCAL(tmpstk)
 GLOBAL(protorp)
