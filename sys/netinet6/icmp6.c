@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.119 2006/08/30 15:25:08 christos Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.120 2006/09/01 02:44:46 dyoung Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.119 2006/08/30 15:25:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.120 2006/09/01 02:44:46 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -593,19 +593,16 @@ icmp6_input(mp, offp, proto)
 		 * Copy mbuf to send to two data paths: userland socket(s),
 		 * and to the querier (echo reply).
 		 * m: a copy for socket, n: a copy for querier
+		 *
+		 * If the first mbuf is shared, or the first mbuf is too short,
+		 * copy the first part of the data into a fresh mbuf.
+		 * Otherwise, we will wrongly overwrite both copies.
 		 */
 		if ((n = m_copym(m, 0, M_COPYALL, M_DONTWAIT)) == NULL) {
 			/* Give up local */
 			n = m;
 			m = NULL;
-			goto deliverecho;
-		}
-		/*
-		 * If the first mbuf is shared, or the first mbuf is too short,
-		 * copy the first part of the data into a fresh mbuf.
-		 * Otherwise, we will wrongly overwrite both copies.
-		 */
-		if ((n->m_flags & M_EXT) != 0 ||
+		} else if (M_READONLY(n) ||
 		    n->m_len < off + sizeof(struct icmp6_hdr)) {
 			struct mbuf *n0 = n;
 
@@ -623,42 +620,23 @@ icmp6_input(mp, offp, proto)
 			}
 			if (n == NULL) {
 				/* Give up local */
-				m_freem(n0);
 				n = m;
 				m = NULL;
-				goto deliverecho;
+			} else {
+				M_MOVE_PKTHDR(n, n0);
+				m_copydata(n0, 0, M_COPYALL, mtod(n, caddr_t));
+				n->m_len = n->m_pkthdr.len = n0->m_pkthdr.len;
 			}
-			M_MOVE_PKTHDR(n, n0);
-			/*
-			 * Copy IPv6 and ICMPv6 only.
-			 */
-			nip6 = mtod(n, struct ip6_hdr *);
-			bcopy(ip6, nip6, sizeof(struct ip6_hdr));
-			nicmp6 = (struct icmp6_hdr *)(nip6 + 1);
-			bcopy(icmp6, nicmp6, sizeof(struct icmp6_hdr));
-			noff = sizeof(struct ip6_hdr);
-			n->m_len = noff + sizeof(struct icmp6_hdr);
-			/*
-			 * Adjust mbuf.  ip6_plen will be adjusted in
-			 * ip6_output().
-			 * n->m_pkthdr.len == n0->m_pkthdr.len at this point.
-			 */
-			n->m_pkthdr.len += noff + sizeof(struct icmp6_hdr);
-			n->m_pkthdr.len -= (off + sizeof(struct icmp6_hdr));
-			m_adj(n0, off + sizeof(struct icmp6_hdr));
-			n->m_next = n0;
-		} else {
-	 deliverecho:
-			nip6 = mtod(n, struct ip6_hdr *);
-			nicmp6 = (struct icmp6_hdr *)((caddr_t)nip6 + off);
-			noff = off;
+			m_freem(n0);
 		}
+		nip6 = mtod(n, struct ip6_hdr *);
+		nicmp6 = (struct icmp6_hdr *)((caddr_t)nip6 + off);
 		nicmp6->icmp6_type = ICMP6_ECHO_REPLY;
 		nicmp6->icmp6_code = 0;
 		if (n) {
 			icmp6stat.icp6s_reflect++;
 			icmp6stat.icp6s_outhist[ICMP6_ECHO_REPLY]++;
-			icmp6_reflect(n, noff);
+			icmp6_reflect(n, off);
 		}
 		if (!m)
 			goto freeit;
