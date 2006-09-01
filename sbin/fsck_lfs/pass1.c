@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.25 2006/07/18 23:37:13 perseant Exp $	 */
+/* $NetBSD: pass1.c,v 1.26 2006/09/01 19:52:48 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -176,6 +176,8 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 	struct ufs1_dinode *dp;
 	struct uvnode  *vp;
 	struct zlncnt *zlnp;
+	struct ubuf *bp;
+	IFILE *ifp;
 	int ndb, j;
 	mode_t mode;
 
@@ -287,6 +289,31 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 		cacheino(dp, inumber);
 	} else
 		statemap[inumber] = FSTATE;
+
+	/*
+	 * Check for an orphaned file.  These happen when the cleaner has
+	 * to rewrite blocks from a file whose directory operation (removal)
+	 * is in progress.
+	 */
+	if (dp->di_nlink <= 0) {
+		LFS_IENTRY(ifp, fs, inumber, bp);
+		if (ifp->if_nextfree == LFS_ORPHAN_NEXTFREE) {
+			statemap[inumber] = (mode == IFDIR ? DCLEAR : FCLEAR);
+			/* Add this to our list of orphans */
+			zlnp = (struct zlncnt *) malloc(sizeof *zlnp);
+			if (zlnp == NULL) {
+				pfatal("LINK COUNT TABLE OVERFLOW");
+				if (reply("CONTINUE") == 0)
+					err(8, "%s", "");
+			} else {
+				zlnp->zlncnt = inumber;
+				zlnp->next = orphead;
+				orphead = zlnp;
+			}
+		}
+		brelse(bp);
+	}
+
 	typemap[inumber] = IFTODT(mode);
 	badblk = dupblk = 0;
 	idesc->id_number = inumber;
@@ -350,8 +377,9 @@ pass1check(struct inodesc *idesc)
 		} else {
 			blkerror(idesc->id_number, "DUP", blkno);
 #ifdef VERBOSE_BLOCKMAP
-			pwarn("(lbn %d: Holder is %d)\n", idesc->id_lblkno,
-			    testbmap(blkno));
+			pwarn("(lbn %lld: Holder is %lld)\n",
+				(long long)idesc->id_lblkno,
+				(long long)testbmap(blkno));
 #endif
 			if (dupblk++ >= MAXDUP) {
 				pwarn("EXCESSIVE DUP BLKS I=%llu",

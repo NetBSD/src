@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.29 2006/07/18 23:37:13 perseant Exp $ */
+/* $NetBSD: setup.c,v 1.30 2006/09/01 19:52:48 perseant Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -256,6 +256,8 @@ setup(const char *dev)
 				(unsigned long)idaddr);
 		tdaddr = sntod(fs, dtosn(fs, idaddr));
 		if (sntod(fs, dtosn(fs, tdaddr)) == tdaddr) {
+			if (tdaddr == fs->lfs_start)
+				tdaddr += btofsb(fs, LFS_LABELPAD);
 			for (i = 0; i < LFS_MAXNUMSB; i++) {
 				if (fs->lfs_sboffs[i] == tdaddr)
 					tdaddr += btofsb(fs, LFS_SBPAD);
@@ -276,6 +278,9 @@ setup(const char *dev)
 						   fs->lfs_sumsize -
 						   sizeof(sp->ss_sumsum))) {
 				brelse(bp);
+				if (debug)
+					printf("bad cksum at %x\n",
+					       (unsigned)tdaddr);
 				break;
 			}
 			fp = (FINFO *)(sp + 1);

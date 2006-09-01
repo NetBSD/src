@@ -1,4 +1,4 @@
-/* $NetBSD: pass4.c,v 1.14 2006/07/18 23:37:13 perseant Exp $	 */
+/* $NetBSD: pass4.c,v 1.15 2006/09/01 19:52:48 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -53,6 +53,29 @@
 
 extern SEGUSE *seg_table;
 
+static int check_orphan(struct inodesc *idp);
+
+static int
+check_orphan(struct inodesc *idp)
+{
+	struct zlncnt *zlnp;
+	ino_t inumber = idp->id_number;
+
+	for (zlnp = orphead; zlnp; zlnp = zlnp->next) {
+		if (zlnp->zlncnt == inumber) {
+			/* Swap this with head */
+			zlnp->zlncnt = orphead->zlncnt;
+			zlnp = orphead;
+			orphead = orphead->next;
+			/* Free old head */
+			free((char *) zlnp);
+			clri(idp, "PROPERLY ORPHANED", 1);
+			return 1;
+		}
+	}
+	return 0;
+}
+
 void
 pass4(void)
 {
@@ -92,13 +115,21 @@ pass4(void)
 			break;
 
 		case DCLEAR:
+			if (check_orphan(&idesc))
+				break;
 			dp = ginode(inumber);
 			if (dp->di_size == 0) {
-				clri(&idesc, "ZERO LENGTH", 1);
+				const char * msg = (lncntp[inumber] ?
+					"ZERO LENGTH" : "UNREF ZERO LENGTH");
+				clri(&idesc, msg, 1);
 				break;
 			}
-			/* fall through */
+			clri(&idesc, "BAD/DUP", 1);
+			break;
+
 		case FCLEAR:
+			if (check_orphan(&idesc))
+				break;
 			clri(&idesc, "BAD/DUP", 1);
 			break;
 

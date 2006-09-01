@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.29 2006/07/18 23:37:13 perseant Exp $	 */
+/* $NetBSD: main.c,v 1.30 2006/09/01 19:52:48 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -251,6 +251,7 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 		pass6();
 	}
 	zlnhead = (struct zlncnt *) 0;
+	orphead = (struct zlncnt *) 0;
 	duplist = (struct dups *) 0;
 	muldup = (struct dups *) 0;
 	inocleanup();

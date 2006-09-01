@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.24 2006/07/18 23:37:13 perseant Exp $ */
+/* $NetBSD: lfs.c,v 1.25 2006/09/01 19:52:48 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -602,12 +602,13 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ufs_daddr_t goal, int debug)
 {
 	ufs_daddr_t daddr, odaddr;
 	SEGSUM *sp;
-	int i, bc, dc;
+	int i, bc, hitclean;
 	struct ubuf *bp;
 	ufs_daddr_t nodirop_daddr;
 	u_int64_t serial;
 
-	bc = dc = 0;
+	bc = 0;
+	hitclean = 0;
 	odaddr = -1;
 	daddr = osb->lfs_offset;
 	nodirop_daddr = daddr;
@@ -617,6 +618,8 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ufs_daddr_t goal, int debug)
 		 * Don't mistakenly read a superblock, if there is one here.
 		 */
 		if (sntod(osb, dtosn(osb, daddr)) == daddr) {
+			if (daddr == osb->lfs_start)
+				daddr += btofsb(osb, LFS_LABELPAD);
 			for (i = 0; i < LFS_MAXNUMSB; i++) {
 				if (osb->lfs_sboffs[i] < daddr)
 					break;
@@ -661,7 +664,7 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ufs_daddr_t goal, int debug)
 			break;
 		}
 		if (debug && sp->ss_serial != serial)
-			pwarn("warning, serial=%d ss_serial=%d",
+			pwarn("warning, serial=%d ss_serial=%d\n",
 				(int)serial, (int)sp->ss_serial);
 		++serial;
 		bc = check_summary(osb, sp, daddr, debug, devvp, NULL);
@@ -677,22 +680,20 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ufs_daddr_t goal, int debug)
 		daddr += btofsb(osb, osb->lfs_sumsize + bc);
 		if (dtosn(osb, odaddr) != dtosn(osb, daddr) ||
 		    dtosn(osb, daddr) != dtosn(osb, daddr +
-			btofsb(osb, osb->lfs_sumsize + osb->lfs_bsize))) {
+			btofsb(osb, osb->lfs_sumsize + osb->lfs_bsize) - 1)) {
 			daddr = sp->ss_next;
 		}
 
 		/*
 		 * Check for the beginning and ending of a sequence of
-		 * dirops.  We have to do the check this way, rather than
-		 * simply checking for the lack of SS_CONT, because the
-		 * cleaner sometimes injects SS_DIROP|SS_CONT partial-segments
-		 * without actually completing the dirop.
+		 * dirops.  Writes from the cleaner never involve new
+		 * information, and are always checkpoints; so don't try
+		 * to roll forward through them.  Likewise, psegs written
+		 * by a previous roll-forward attempt are not interesting.
 		 */
-		if (sp->ss_flags & SS_CONT)
-			dc = 1;
-		if ((sp->ss_flags & (SS_DIROP | SS_CONT)) == SS_DIROP)
-			dc = 0;
-		if (dc == 0)
+		if (sp->ss_flags & (SS_CLEAN | SS_RFW))
+			hitclean = 1;
+		if (hitclean == 0 && (sp->ss_flags & SS_CONT) == 0)
 			nodirop_daddr = daddr;
 
 		brelse(bp);
