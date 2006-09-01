@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.20 2005/12/11 12:19:21 christos Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.21 2006/09/01 03:22:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.20 2005/12/11 12:19:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.21 2006/09/01 03:22:58 matt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -138,7 +138,7 @@ void
 zs_kgdb_init(void)
 {
 	struct zs_chanstate cs;
-	volatile struct zschan *zc;
+	struct zschan *zc;
 	int channel, zsc_unit;
 	extern const struct cdevsw zstty_cdevsw;
 
