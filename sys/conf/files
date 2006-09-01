@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.804 2006/08/31 17:49:12 dyoung Exp $
+#	$NetBSD: files,v 1.805 2006/09/01 22:38:27 cube Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -21,7 +21,7 @@ defflag				KMEMSTATS
 defflag				KTRACE
 defflag				MBUFTRACE
 defflag				PTRACE
-defflag				SYSTRACE:	PTRACE
+defflag				SYSTRACE
 defflag				COREDUMP
 
 defparam			DEFCORENAME
