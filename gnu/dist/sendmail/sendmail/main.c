@@ -1,7 +1,7 @@
-/* $NetBSD: main.c,v 1.14 2005/03/15 02:14:17 atatat Exp $ */
+/* $NetBSD: main.c,v 1.14.2.1 2006/09/01 15:12:34 tron Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.14 2005/03/15 02:14:17 atatat Exp $");
+__RCSID("$NetBSD: main.c,v 1.14.2.1 2006/09/01 15:12:34 tron Exp $");
 #endif
 
 /*
@@ -2899,6 +2899,9 @@ finis(drop, cleanup, exitstat)
 				dropenvelope(CurEnv, true, false);
 				sm_rpool_free(CurEnv->e_rpool);
 				CurEnv->e_rpool = NULL;
+
+				/* this may have pointed to the rpool */
+				CurEnv->e_to = NULL;
 			}
 			else
 				poststats(StatFile);
