@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.5 2005/12/11 12:18:13 christos Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.6 2006/09/01 13:54:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.5 2005/12/11 12:18:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.6 2006/09/01 13:54:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ zs_setparam(cs, iena, rate)
 void
 zs_kgdb_init()
 {
-	volatile struct zschan *zc;
+	struct zschan *zc;
 	int channel, unit;
 	extern const struct cdevsw zstty_cdevsw;
 
