@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.33 2006/02/18 12:43:36 dsl Exp $	*/
+/*	$NetBSD: machines.c,v 1.34 2006/09/01 21:47:21 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: machines.c,v 1.33 2006/02/18 12:43:36 dsl Exp $");
+__RCSID("$NetBSD: machines.c,v 1.34 2006/09/01 21:47:21 uwe Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
@@ -53,19 +53,47 @@ __RCSID("$NetBSD: machines.c,v 1.33 2006/02/18 12:43:36 dsl Exp $");
  * isn't built with all the architectures defined.
  * A lot simpler that conditionally including the definitions themselves.
  */
-struct ib_mach 
-    ib_mach_alpha,   ib_mach_amd64,    ib_mach_amiga,   ib_mach_ews4800mips,
-    ib_mach_hp300,   ib_mach_hp700,    ib_mach_i386,    ib_mach_macppc,
-    ib_mach_news68k, ib_mach_newsmips, ib_mach_next68k, ib_mach_pmax,
-    ib_mach_sparc,   ib_mach_sparc64,  ib_mach_sun2,    ib_mach_sun3,
-    ib_mach_vax,     ib_mach_x68k;
+struct ib_mach
+    ib_mach_alpha,
+    ib_mach_amd64,
+    ib_mach_amiga,
+    ib_mach_ews4800mips,
+    ib_mach_hp300,
+    ib_mach_hp700,
+    ib_mach_i386,
+    ib_mach_landisk,
+    ib_mach_macppc,
+    ib_mach_news68k,
+    ib_mach_newsmips,
+    ib_mach_next68k,
+    ib_mach_pmax,
+    ib_mach_sparc,
+    ib_mach_sparc64,
+    ib_mach_sun2,
+    ib_mach_sun3,
+    ib_mach_vax,
+    ib_mach_x68k;
 
 struct ib_mach *machines[] = {
-    &ib_mach_alpha,   &ib_mach_amd64,    &ib_mach_amiga,   &ib_mach_ews4800mips,
-    &ib_mach_hp300,   &ib_mach_hp700,    &ib_mach_i386,    &ib_mach_macppc,
-    &ib_mach_news68k, &ib_mach_newsmips, &ib_mach_next68k, &ib_mach_pmax,
-    &ib_mach_sparc,   &ib_mach_sparc64,  &ib_mach_sun2,    &ib_mach_sun3,
-    &ib_mach_vax,     &ib_mach_x68k,
+    &ib_mach_alpha,
+    &ib_mach_amd64,
+    &ib_mach_amiga,
+    &ib_mach_ews4800mips,
+    &ib_mach_hp300,
+    &ib_mach_hp700,
+    &ib_mach_i386,
+    &ib_mach_landisk,
+    &ib_mach_macppc,
+    &ib_mach_news68k,
+    &ib_mach_newsmips,
+    &ib_mach_next68k,
+    &ib_mach_pmax,
+    &ib_mach_sparc,
+    &ib_mach_sparc64,
+    &ib_mach_sun2,
+    &ib_mach_sun3,
+    &ib_mach_vax,
+    &ib_mach_x68k,
     NULL
 };
 
