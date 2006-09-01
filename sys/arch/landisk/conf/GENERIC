@@ -1,0 +1,12 @@
+# $NetBSD: GENERIC,v 1.1 2006/09/01 21:26:18 uwe Exp $
+#
+# GENERIC
+#
+
+include "arch/landisk/conf/GENERIC.in"
+
+pciide*		at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+acardide*	at pci? dev ? function ?	# Acard IDE controllers
+
+wdc0	at obio? port 0x14000000 irq 10		# CF
+wdc1	at obio? port 0x18000000 irq 9		# iConnect
