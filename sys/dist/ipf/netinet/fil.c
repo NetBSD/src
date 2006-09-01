@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.25 2006/08/30 01:58:00 christos Exp $	*/
+/*	$NetBSD: fil.c,v 1.26 2006/09/01 09:47:47 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -140,7 +140,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.25 2006/08/30 01:58:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.26 2006/09/01 09:47:47 mrg Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.78 2006/03/29 11:19:54 darrenr Exp";
@@ -5874,7 +5874,7 @@ ipftuneable_t ipf_tuneables[] = {
 	{ { &ipl_logsize },	"ipl_logsize",		0,	0x80000,
 			sizeof(ipl_logsize),		0, NULL },
 #endif
-	{ { NULL },		"",			0, 0,
+	{ { NULL },		NULL,			0,	0,
 			0,				0, NULL }
 };
 
