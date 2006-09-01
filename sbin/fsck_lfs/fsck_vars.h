@@ -1,4 +1,4 @@
-/* $NetBSD: fsck_vars.h,v 1.11 2006/07/18 23:37:13 perseant Exp $	 */
+/* $NetBSD: fsck_vars.h,v 1.12 2006/09/01 19:52:48 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -35,6 +35,7 @@ extern struct dups *duplist;	/* head of dup list */
 extern struct dups *muldup;	/* end of unique duplicate dup block numbers */
 
 extern struct zlncnt *zlnhead;	/* head of zero link count list */
+extern struct zlncnt *orphead;	/* head of "properly orphaned" list */
 extern struct lfs *fs;
 
 extern daddr_t idaddr;		/* inode block containing ifile inode */
