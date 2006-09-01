@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.24 2006/03/09 22:17:49 he Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.25 2006/09/01 20:28:14 uwe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.24 2006/03/09 22:17:49 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.25 2006/09/01 20:28:14 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.24 2006/03/09 22:17:49 he Exp $");
  * on the part of Realtek. Memory mapped mode does appear to work on
  * uniprocessor systems though.
  */
-#ifndef dreamcast		/* XXX */
+#if !defined(__sh__)		/* XXX: dreamcast, landisk */
 #define RTK_USEIOSPACE
 #endif
 
