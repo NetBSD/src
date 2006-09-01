@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.152 2006/08/29 09:36:18 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.153 2006/09/01 15:13:41 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4463,4 +4463,10 @@ usr.sbin/bind/Makefile.inc			1.24
 	Avoid named(8) crash on sparc and sparc64 by disabling threading
 	support on those platforms.
 	[jdc, ticket #1490]
+
+gnu/dist/sendmail/sendmail/main.c		patch
+
+	Fixes potential DoS attack with sendmail(8).
+	[adrianp, ticket #1495]
+
 
