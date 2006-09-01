@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187 2006/06/10 06:38:07 rjs Exp $ */
+/*	$NetBSD: machdep.c,v 1.188 2006/09/01 09:21:18 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.187 2006/06/10 06:38:07 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.188 2006/09/01 09:21:18 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1061,7 +1061,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *sbuf,
 			continue;
 		}
 		if (++i >= map->_dm_segcnt)
-			return (E2BIG);
+			return (EFBIG);
 		map->dm_segs[i].ds_addr = pa;
 		map->dm_segs[i].ds_len = incr = PAGE_SIZE;
 	}
@@ -1134,7 +1134,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m,
 			/* Exceeded the size of our dmamap */
 			map->_dm_type = 0;
 			map->_dm_source = NULL;
-			return E2BIG;
+			return EFBIG;
 		}
 	}
 
@@ -1249,7 +1249,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		PRELE(p);
  		if (buflen > 0 && i >= MAX_DMA_SEGS) 
 			/* Exceeded the size of our dmamap */
-			return E2BIG;
+			return EFBIG;
 	}
 	map->_dm_type = DM_TYPE_UIO;
 	map->_dm_source = (void *)uio;
