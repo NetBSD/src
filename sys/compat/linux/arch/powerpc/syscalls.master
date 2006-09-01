@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.28 2006/08/30 11:14:39 matt Exp $  
+	$NetBSD: syscalls.master,v 1.29 2006/09/01 20:58:18 matt Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -65,7 +65,6 @@
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
-#include "opt_ptrace.h"
 #endif
 
 #include <sys/param.h>
@@ -119,12 +118,8 @@
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
 25	STD		{ int linux_sys_stime(linux_time_t *t); }
-#ifdef PTRACE
 26	STD		{ int linux_sys_ptrace(int request, int pid, \
 			    int addr, int data); }
-#else
-26	EXCL		ptrace
-#endif
 27	STD		{ int linux_sys_alarm(unsigned int secs); }
 28	OBSOL		ofstat
 29	STD		{ int linux_sys_pause(void); }

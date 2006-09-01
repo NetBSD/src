@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.52 2006/08/30 13:57:47 cube Exp $
+	$NetBSD: syscalls.master,v 1.53 2006/09/01 20:58:18 matt Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -43,7 +43,6 @@
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
 #include "opt_posix.h"
-#include "opt_ptrace.h"
 
 #include "fs_lfs.h"
 #include "fs_nfs.h"
@@ -93,11 +92,7 @@
 23	STD		{ int netbsd32_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
 25	NOARGS		{ uid_t sys_geteuid(void); }
-#if defined(PTRACE) || !defined(_KERNEL)
 26	STD		{ int netbsd32_ptrace(int req, pid_t pid, netbsd32_caddr_t addr, int data); }
-#else
-26	EXCL		netbsd32_ptrace
-#endif
 27	STD		{ netbsd32_ssize_t netbsd32_recvmsg(int s, netbsd32_msghdrp_t msg, int flags); }
 28	STD		{ netbsd32_ssize_t netbsd32_sendmsg(int s, const netbsd32_msghdrp_t msg, int flags); }
 29	STD		{ netbsd32_ssize_t netbsd32_recvfrom(int s, netbsd32_voidp buf, netbsd32_size_t len, int flags, netbsd32_sockaddrp_t from, netbsd32_intp fromlenaddr); }
