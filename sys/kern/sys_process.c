@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.109 2006/08/31 18:05:21 dogcow Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.110 2006/09/01 21:05:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.109 2006/08/31 18:05:21 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.110 2006/09/01 21:05:33 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -749,7 +749,9 @@ process_validfpregs(struct lwp *l)
 	return (0);
 #endif
 }
+#endif /* PTRACE */
 
+#if defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
 int
 process_domem(struct lwp *curl /*tracer*/,
     struct lwp *l /*traced*/,
@@ -795,7 +797,7 @@ process_domem(struct lwp *curl /*tracer*/,
 #endif
 	return (error);
 }
-#endif /* PTRACE */
+#endif /* KTRACE || PTRACE || SYSTRACE */
 
 #if defined(KTRACE) || defined(PTRACE)
 /*
