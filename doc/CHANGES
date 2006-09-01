@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.671 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.672 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -26,5 +26,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	mips64: Preliminary support for a MIPS64 toolchain using the N64
 		ABI. [matt 20060825]
 	postfix: Updated to 2.3.3 [rpaulo 20060827]
-	ndis(4): Ported FreeBSD's NDIS Wrapper.  See ndiscvt(8) for more 
-		information [rittera 20060831]
+
