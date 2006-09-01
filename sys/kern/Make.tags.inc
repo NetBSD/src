@@ -1,4 +1,4 @@
-#	$NetBSD: Make.tags.inc,v 1.10 2001/04/18 11:21:24 lukem Exp $
+#	$NetBSD: Make.tags.inc,v 1.11 2006/09/01 04:55:12 dyoung Exp $
 #
 #	from: @(#)Make.tags.inc	8.1 (Berkeley) 6/11/93
 
@@ -15,6 +15,6 @@
 # This promises to be easier to maintain, considering how often the directory
 # structure of the kernel sources has been changing recently.
 SYSDIR?= ${.CURDIR:H:H}
-COMM!=	find -H ${SYSDIR} -name arch -prune -o -name "*.[ch]" -print | \
+COMM!=	find -H ${SYSDIR} \( -path '*/dist/ipf' -o -name arch \) -prune -o -name "*.[ch]" -print | \
 		sed 's@\(.*/\).*\..*@\1*.\[ch\]@' | sort -t / -u
 .endif
