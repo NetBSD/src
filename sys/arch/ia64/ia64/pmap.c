@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.2 2006/04/08 14:52:09 cherry Exp $ */
+/* $NetBSD: pmap.c,v 1.3 2006/09/01 22:21:17 mrg Exp $ */
 
 
 /*-
@@ -92,7 +92,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2 2006/04/08 14:52:09 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.3 2006/09/01 22:21:17 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -904,7 +904,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
                 }
 
         } else {
-                for (va = sva; va < eva; va = va += PAGE_SIZE) {
+                for (va = sva; va < eva; va += PAGE_SIZE) {
                         pte = pmap_find_vhpt(va);
                         if (pte != NULL) {
                                 pmap_remove_pte(pmap, pte, va, 0, 1);
