@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.20 2006/08/30 16:58:38 christos Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.21 2006/09/01 16:28:53 cube Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.20 2006/08/30 16:58:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.21 2006/09/01 16:28:53 cube Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -323,6 +323,12 @@ tap_attach(struct device *parent, struct device *self, void *aux)
 	 * the softc structure, which we can use to build the string value on
 	 * the fly in the helper function of the node.  See the comments for
 	 * tap_sysctl_handler for details.
+	 *
+	 * Usually sysctl_createv is called with CTL_CREATE as the before-last
+	 * component.  However, we can allocate a number ourselves, as we are
+	 * the only consumer of the net.link.<iface> node.  In this case, the
+	 * unit number is conveniently used to number the node.  CTL_CREATE
+	 * would just work, too.
 	 */
 	if ((error = sysctl_createv(NULL, 0, NULL,
 	    &node, CTLFLAG_READWRITE,
