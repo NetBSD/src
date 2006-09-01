@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.14 2006/08/30 11:14:39 matt Exp $
+	$NetBSD: syscalls.master,v 1.15 2006/09/01 20:58:18 matt Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -36,7 +36,6 @@
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
-#include "opt_ptrace.h"
 #endif
 
 #include <sys/param.h>
@@ -247,12 +246,8 @@
 98	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
 99	STD		{ int linux_sys_sysinfo(struct linux_sysinfo *arg); }
 100	STD		{ int linux_sys_times(struct times *tms); }
-#ifdef PTRACE
 101	STD		{ int linux_sys_ptrace(long request, long pid, \
 			  long addr, long data); }
-#else
-101	EXCL		ptrace
-#endif
 102	NOARGS		{ uid_t sys_getuid(void); }
 103	UNIMPL		syslog
 104	NOARGS		{ gid_t sys_getgid(void); }
