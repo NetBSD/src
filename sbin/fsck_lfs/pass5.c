@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.20 2006/08/13 22:18:09 bjh21 Exp $	 */
+/* $NetBSD: pass5.c,v 1.21 2006/09/01 19:52:48 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -91,15 +91,14 @@ pass5(void)
 		LFS_SEGENTRY(su, fs, i, bp);
 		if (!preen && !(su->su_flags & SEGUSE_DIRTY) &&
 		    seg_table[i].su_nbytes > 0) {
-			pwarn("CLEAN SEGMENT %d CLAIMS %d BYTES\n",
+			pwarn("CLEAN SEGMENT %d CONTAINS %d BYTES\n",
 			    i, seg_table[i].su_nbytes);
 			if (reply("MARK SEGMENT DIRTY")) {
 				su->su_flags |= SEGUSE_DIRTY;
 				++diddirty;
 			}
 		}
-		if (!preen && (su->su_flags & SEGUSE_DIRTY) &&
-		    su->su_nbytes != seg_table[i].su_nbytes) {
+		if (!preen && su->su_nbytes != seg_table[i].su_nbytes) {
 			pwarn("SEGMENT %d CLAIMS %d BYTES BUT HAS %d",
 			    i, su->su_nbytes, seg_table[i].su_nbytes);
 			if ((int32_t)su->su_nbytes >

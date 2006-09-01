@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.34 2006/07/19 22:48:11 perseant Exp $	 */
+/* $NetBSD: inode.c,v 1.35 2006/09/01 19:52:48 perseant Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -439,12 +439,12 @@ clri(struct inodesc * idesc, const char *type, int flag)
 	struct uvnode *vp;
 
 	vp = vget(fs, idesc->id_number);
-	if (flag == 1) {
+	if (flag & 0x1) {
 		pwarn("%s %s", type,
 		      (VTOI(vp)->i_ffs1_mode & IFMT) == IFDIR ? "DIR" : "FILE");
 		pinode(idesc->id_number);
 	}
-	if (flag == 2 || preen || reply("CLEAR") == 1) {
+	if ((flag & 0x2) || preen || reply("CLEAR") == 1) {
 		if (preen && flag != 2)
 			printf(" (CLEARED)\n");
 		n_files--;
@@ -452,7 +452,9 @@ clri(struct inodesc * idesc, const char *type, int flag)
 		clearinode(idesc->id_number);
 		statemap[idesc->id_number] = USTATE;
 		vnode_destroy(vp);
+		return;
 	}
+	return;
 }
 
 void
