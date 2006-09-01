@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.187 2006/08/06 12:34:12 martin Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.188 2006/09/01 19:41:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.187 2006/08/06 12:34:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.188 2006/09/01 19:41:28 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -296,14 +296,13 @@ lfs_fsync(void *v)
 	}
 
 	/*
-	 * Don't reclaim any vnodes that are being cleaned.
-	 * This prevents the cleaner from writing files twice
-	 * in the same partial segment, causing an accounting
-	 * underflow.
+	 * If a vnode is bring cleaned, flush it out before we try to
+	 * reuse it.  This prevents the cleaner from writing files twice
+	 * in the same partial segment, causing an accounting underflow.
 	 */
-	if (ap->a_flags & FSYNC_RECLAIM) {
-		if (VTOI(vp)->i_flags & IN_CLEANING)
-			return EAGAIN;
+	if (ap->a_flags & FSYNC_RECLAIM && VTOI(vp)->i_flags & IN_CLEANING) {
+		/* printf("avoiding VONWORKLIST panic\n"); */
+		lfs_vflush(vp);
 	}
 
 	wait = (ap->a_flags & FSYNC_WAIT);
@@ -705,10 +704,12 @@ lfs_remove(void *v)
 		struct componentname *a_cnp;
 	} */ *ap = v;
 	struct vnode *dvp, *vp;
+	struct inode *ip;
 	int error;
 
 	dvp = ap->a_dvp;
 	vp = ap->a_vp;
+	ip = VTOI(vp);
 	if ((error = SET_DIROP_REMOVE(dvp, vp)) != 0) {
 		if (dvp == vp)
 			vrele(vp);
@@ -718,7 +719,9 @@ lfs_remove(void *v)
 		return error;
 	}
 	error = ufs_remove(ap);
-	SET_ENDOP_REMOVE(VTOI(dvp)->i_lfs, dvp, ap->a_vp, "remove");
+	if (ip->i_nlink == 0)
+		lfs_orphan(ip->i_lfs, ip->i_number);
+	SET_ENDOP_REMOVE(ip->i_lfs, dvp, ap->a_vp, "remove");
 	return (error);
 }
 
@@ -732,9 +735,11 @@ lfs_rmdir(void *v)
 		struct componentname *a_cnp;
 	} */ *ap = v;
 	struct vnode *vp;
+	struct inode *ip;
 	int error;
 
 	vp = ap->a_vp;
+	ip = VTOI(vp);
 	if ((error = SET_DIROP_REMOVE(ap->a_dvp, ap->a_vp)) != 0) {
 		vrele(ap->a_dvp);
 		if (ap->a_vp != ap->a_dvp)
@@ -743,7 +748,9 @@ lfs_rmdir(void *v)
 		return error;
 	}
 	error = ufs_rmdir(ap);
-	SET_ENDOP_REMOVE(VTOI(ap->a_dvp)->i_lfs, ap->a_dvp, ap->a_vp, "rmdir");
+	if (ip->i_nlink == 0)
+		lfs_orphan(ip->i_lfs, ip->i_number);
+	SET_ENDOP_REMOVE(ip->i_lfs, ap->a_dvp, ap->a_vp, "rmdir");
 	return (error);
 }
 
@@ -934,7 +941,7 @@ lfs_setattr(void *v)
 
 /*
  * Release the block we hold on lfs_newseg wrapping.  Called on file close,
- * or explicitly from LFCNWRAPGO.
+ * or explicitly from LFCNWRAPGO.  Called with the interlock held.
  */
 static int
 lfs_wrapgo(struct lfs *fs, struct inode *ip, int waitfor)
@@ -946,13 +953,12 @@ lfs_wrapgo(struct lfs *fs, struct inode *ip, int waitfor)
 
 	KASSERT(fs->lfs_nowrap > 0);
 	if (fs->lfs_nowrap <= 0) {
-		simple_unlock(&fs->lfs_interlock);
 		return 0;
 	}
 
 	if (--fs->lfs_nowrap == 0) {
 		log(LOG_NOTICE, "%s: re-enabled log wrap\n", fs->lfs_fsmnt);
-		wakeup(&fs->lfs_nowrap);
+		wakeup(&fs->lfs_wrappass);
 		lfs_wakeup_cleaner(fs);
 	}
 	if (waitfor) {
@@ -978,13 +984,19 @@ lfs_close(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
+#if 0
+        /* XXX fix this */
 	struct lfs *fs = ip->i_lfs;
 
-	if (ip->i_lfs_iflags & LFSI_WRAPBLOCK) {
+	if ((ip->i_lfs_iflags & (LFSI_WRAPBLOCK | LFSI_WRAPWAIT)) ==
+	    LFSI_WRAPBLOCK) {
 		simple_lock(&fs->lfs_interlock);
+		printf("lfs_close with flags 0x%x\n", (unsigned)ap->a_fflag);
+		log(LOG_NOTICE, "lfs_close: releasing log wrap control\n");
 		lfs_wrapgo(fs, ip, 0);
 		simple_unlock(&fs->lfs_interlock);
 	}
+#endif
 
 	if (vp == ip->i_lfs->lfs_ivnode &&
 	    vp->v_mount->mnt_iflag & IMNT_UNMOUNT)
@@ -1263,6 +1275,7 @@ lfs_flush_dirops(struct lfs *fs)
 				LFS_SET_UINO(ip, IN_MODIFIED);
 			}
 		}
+		KDASSERT(ip->i_number != LFS_IFILE_INUM);
 		(void) lfs_writeinode(fs, sp, ip);
 		if (waslocked)
 			LFS_SET_UINO(ip, IN_MODIFIED);
@@ -1351,6 +1364,7 @@ lfs_flush_pchain(struct lfs *fs)
 		    !(ip->i_flag & IN_ALLMOD)) {
 			LFS_SET_UINO(ip, IN_MODIFIED);
 		}
+		KDASSERT(ip->i_number != LFS_IFILE_INUM);
 		(void) lfs_writeinode(fs, sp, ip);
 
 		lfs_vunref(vp);
@@ -1416,6 +1430,7 @@ lfs_fcntl(void *v)
 	fs = VTOI(ap->a_vp)->i_lfs;
 	fsidp = &ap->a_vp->v_mount->mnt_stat.f_fsidx;
 
+	error = 0;
 	switch (ap->a_command) {
 	    case LFCNSEGWAITALL:
 	    case LFCNSEGWAITALL_COMPAT:
@@ -1555,8 +1570,10 @@ lfs_fcntl(void *v)
 		++fs->lfs_nowrap;
 		if (*(int *)ap->a_data == 1 ||
 		    ap->a_command == LFCNWRAPSTOP_COMPAT) {
+			log(LOG_NOTICE, "LFCNSTOPWRAP waiting for log wrap\n");
 			error = ltsleep(&fs->lfs_nowrap, PCATCH | PUSER,
 				"segwrap", 0, &fs->lfs_interlock);
+			log(LOG_NOTICE, "LFCNSTOPWRAP done waiting\n");
 			if (error) {
 				lfs_wrapgo(fs, VTOI(ap->a_vp), 0);
 			}
@@ -1577,6 +1594,38 @@ lfs_fcntl(void *v)
 				    *((int *)ap->a_data)));
 		simple_unlock(&fs->lfs_interlock);
 		return error;
+
+	    case LFCNWRAPPASS:
+		if (!(VTOI(ap->a_vp)->i_lfs_iflags & LFSI_WRAPBLOCK))
+			return EALREADY;
+		if ((VTOI(ap->a_vp)->i_lfs_iflags & LFSI_WRAPWAIT))
+			return EALREADY;
+		simple_lock(&fs->lfs_interlock);
+		if (fs->lfs_nowrap == 0) {
+			simple_unlock(&fs->lfs_interlock);
+			return EBUSY;
+		}
+		fs->lfs_wrappass = 1;
+		wakeup(&fs->lfs_wrappass);
+		/* Wait for the log to wrap, if asked */
+		if (*(int *)ap->a_data) {
+			lfs_vref(ap->a_vp);
+			VTOI(ap->a_vp)->i_lfs_iflags |= LFSI_WRAPWAIT;
+			log(LOG_NOTICE, "LFCNPASS waiting for log wrap\n");
+			error = ltsleep(&fs->lfs_nowrap, PCATCH | PUSER,
+				"segwrap", 0, &fs->lfs_interlock);
+			log(LOG_NOTICE, "LFCNPASS done waiting\n");
+			VTOI(ap->a_vp)->i_lfs_iflags &= ~LFSI_WRAPWAIT;
+			lfs_vunref(ap->a_vp);
+		}
+		simple_unlock(&fs->lfs_interlock);
+		return error;
+
+	    case LFCNWRAPSTATUS:
+		simple_lock(&fs->lfs_interlock);
+		*(int *)ap->a_data = fs->lfs_wrapstatus;
+		simple_unlock(&fs->lfs_interlock);
+		return 0;
 
 	    default:
 		return ufs_fcntl(v);

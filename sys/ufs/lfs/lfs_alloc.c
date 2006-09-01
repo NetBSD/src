@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.96 2006/07/20 23:49:07 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.97 2006/09/01 19:41:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.96 2006/07/20 23:49:07 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.97 2006/09/01 19:41:28 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -607,6 +607,9 @@ lfs_order_freelist(struct lfs *fs)
 	IFILE *ifp = NULL;
 	struct buf *bp;
 	ino_t ino, firstino, lastino, maxino;
+#ifdef notyet
+	struct vnode *vp;
+#endif
 	
 	ASSERT_NO_SEGLOCK(fs);
 	lfs_seglock(fs, SEGM_PROT);
@@ -628,6 +631,24 @@ lfs_order_freelist(struct lfs *fs)
 		/* Don't put zero or ifile on the free list */
 		if (ino == LFS_UNUSED_INUM || ino == LFS_IFILE_INUM)
 			continue;
+
+#ifdef notyet
+		/* Address orphaned files */
+		if (ifp->if_nextfree == LFS_ORPHAN_NEXTFREE &&
+		    VFS_VGET(fs->lfs_ivnode->v_mount, ino, &vp) == 0) {
+			lfs_truncate(vp, 0, 0, NOCRED, curlwp);
+			vput(vp);
+			LFS_SEGENTRY(sup, fs, dtosn(fs, ifp->if_daddr), bp);
+			KASSERT(sup->su_nbytes >= DINODE1_SIZE);
+			sup->su_nbytes -= DINODE1_SIZE;
+			LFS_WRITESEGENTRY(sup, fs, dtosn(fs, ifp->if_daddr), bp);
+
+			/* Set up to fall through to next section */
+			ifp->if_daddr = LFS_UNUSED_DADDR;
+			LFS_BWRITE_LOG(bp);
+			LFS_IENTRY(ifp, fs, ino, bp);
+		}
+#endif
 
 		if (ifp->if_daddr == LFS_UNUSED_DADDR) {
 			if (firstino == LFS_UNUSED_INUM)
@@ -654,4 +675,15 @@ lfs_order_freelist(struct lfs *fs)
 	LFS_PUT_TAILFREE(fs, cip, bp, lastino);
 
 	lfs_segunlock(fs);
+}
+
+void
+lfs_orphan(struct lfs *fs, ino_t ino)
+{
+	IFILE *ifp;
+	struct buf *bp;
+
+	LFS_IENTRY(ifp, fs, ino, bp);
+	ifp->if_nextfree = LFS_ORPHAN_NEXTFREE;
+	LFS_BWRITE_LOG(bp);
 }
