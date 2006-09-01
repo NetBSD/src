@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.218 2006/07/23 22:06:15 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.219 2006/09/01 19:41:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.218 2006/07/23 22:06:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.219 2006/09/01 19:41:28 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1812,6 +1812,7 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 	ip->i_gid = ip->i_ffs1_gid;
 
 	ip->i_lfs_effnblks = ip->i_ffs1_blocks;
+	ip->i_lfs_odnlink = ip->i_ffs1_nlink;
 
 	/*
 	 * Initialize the vnode from the inode, check for aliases.  In all
