@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.2 2006/03/05 01:28:51 rpaulo Exp $	*/
+/*	$NetBSD: scope6.c,v 1.3 2006/09/01 02:25:29 dyoung Exp $	*/
 /*	$KAME$	*/
 
 /*-
@@ -427,7 +427,7 @@ in6_setscope(struct in6_addr *in6, struct ifnet *ifp, uint32_t *ret_id)
 	if (ret_id != NULL)
 		*ret_id = zoneid;
 
-	if (IN6_IS_SCOPE_LINKLOCAL(in6) || IN6_IS_ADDR_MC_INTFACELOCAL(in6))
+	if (IN6_IS_SCOPE_EMBEDDABLE(in6))
 		in6->s6_addr16[1] = htons(zoneid & 0xffff); /* XXX */
 
 	return (0);
