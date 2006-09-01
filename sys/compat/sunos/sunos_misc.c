@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.141 2006/08/30 23:00:06 he Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.142 2006/09/01 21:20:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.141 2006/08/30 23:00:06 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.142 2006/09/01 21:20:47 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.141 2006/08/30 23:00:06 he Exp $");
 #include <sys/utsname.h>
 #include <sys/unistd.h>
 #include <sys/sa.h>
+#include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/conf.h>
 #include <sys/socketvar.h>
@@ -1179,6 +1180,7 @@ sunos_sys_setrlimit(l, v, retval)
 	return compat_43_sys_setrlimit(l, uap, retval);
 }
 
+#if defined(PTRACE) || defined(_LKM)
 /* for the m68k machines */
 #ifndef PT_GETFPREGS
 #define PT_GETFPREGS -1
@@ -1194,17 +1196,24 @@ static const int sreq2breq[] = {
 	PT_GETREGS,     PT_SETREGS,     PT_GETFPREGS,   PT_SETFPREGS
 };
 static const int nreqs = sizeof(sreq2breq) / sizeof(sreq2breq[0]);
+#endif /* PTRACE || _LKM */
 
-#if defined(PTRACE)
 int
 sunos_sys_ptrace(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
+#if defined(PTRACE) || defined(_LKM)
 	struct sunos_sys_ptrace_args *uap = v;
 	struct sys_ptrace_args pa;
 	int req;
+
+#ifdef _LKM
+#define	sys_ptrace sysent[SYS_ptrace].sy_call 
+	if (sys_ptrace == sys_nosys)
+		return ENOSYS;
+#endif
 
 	req = SCARG(uap, req);
 
@@ -1221,8 +1230,10 @@ sunos_sys_ptrace(l, v, retval)
 	SCARG(&pa, data) = SCARG(uap, data);
 
 	return sys_ptrace(l, &pa, retval);
+#else
+	return ENOSYS;
+#endif /* PTRACE || _LKM */
 }
-#endif /* PTRACE */
 
 /*
  * SunOS reboot system call (for compatibility).

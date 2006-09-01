@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.110 2006/08/30 13:56:48 cube Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.111 2006/09/01 21:20:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.110 2006/08/30 13:56:48 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.111 2006/09/01 21:20:47 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -466,13 +466,13 @@ netbsd32_setuid(l, v, retval)
 	return (sys_setuid(l, &ua, retval));
 }
 
-#ifdef PTRACE
 int
 netbsd32_ptrace(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
+#if defined(PTRACE) || defined(_LKM)
 	struct netbsd32_ptrace_args /* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
@@ -485,9 +485,15 @@ netbsd32_ptrace(l, v, retval)
 	NETBSD32TO64_UAP(pid);
 	NETBSD32TOX64_UAP(addr, caddr_t);
 	NETBSD32TO64_UAP(data);
-	return (sys_ptrace(l, &ua, retval));
-}
+#ifdef _LKM
+	return (*sysent[SYS_ptrace].sy_call)(l, &ua, retval);
+#else
+	return sys_ptrace(l, &ua, retval);
 #endif
+#else
+	return (ENOSYS);
+#endif /* PTRACE || _LKM */
+}
 
 int
 netbsd32_accept(l, v, retval)
