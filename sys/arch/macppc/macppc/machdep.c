@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.137 2006/08/05 21:26:48 sanjayl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.138 2006/09/01 03:24:50 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137 2006/08/05 21:26:48 sanjayl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 2006/09/01 03:24:50 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -506,7 +506,6 @@ lcsplx(ipl)
 void
 cninit()
 {
-	struct consdev *cp;
 	int stdout, node;
 	char type[16];
 #if defined (PMAC_G5)
@@ -530,6 +529,7 @@ cninit()
 
 #if NZSTTY > 0
 	if (strcmp(type, "serial") == 0) {
+		struct consdev *cp;
 #if defined (PMAC_G5)
 		/* The MMU hasn't been initialized yet, use failsafe for now */
 		cp = &failsafe_cons;
