@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.11 2005/12/11 12:18:52 christos Exp $	*/
+/*	$NetBSD: int.c,v 1.12 2006/09/01 03:33:41 rumble Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.11 2005/12/11 12:18:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.12 2006/09/01 03:33:41 rumble Exp $");
 
 #include "opt_cputype.h"
 
@@ -226,17 +226,10 @@ int_local0_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 	l0stat = bus_space_read_4(iot, ioh, INT2_LOCAL0_STATUS);
 	l0mask = bus_space_read_4(iot, ioh, INT2_LOCAL0_MASK);
 
-	/* The "FIFO full" bit is apparently not latched in the ISR, which
-	   means that it won't be present in l0stat unless we're very lucky.
-	   If no interrupts are pending, assume that it was caused by a full
-	   FIFO and dispatch.
-	 */
-	bus_space_write_4(iot, ioh, INT2_LOCAL0_MASK, l0mask & (0xfe));
-	if ( (l0mask & 0x01) && ((l0stat & l0mask) == 0) )
-	  l0stat = 0x01;
+	l0stat &= l0mask;
 
 	for (i = 0; i < 8; i++) {
-		if ( (l0stat & l0mask) & (1 << i)) {
+		if (l0stat & (1 << i)) {
 			for (ih = &intrtab[i]; ih != NULL; ih = ih->ih_next) {
 				if (ih->ih_fun != NULL)
 					(ih->ih_fun)(ih->ih_arg);
@@ -246,9 +239,6 @@ int_local0_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 			}
 		}
 	}
-
-	/* Unmask FIFO */
-	bus_space_write_4(iot, ioh, INT2_LOCAL0_MASK, l0mask | 0x01);
 }
 
 void
