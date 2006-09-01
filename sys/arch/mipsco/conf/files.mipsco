@@ -1,4 +1,4 @@
-#	$NetBSD: files.mipsco,v 1.12 2005/12/11 12:18:13 christos Exp $
+#	$NetBSD: files.mipsco,v 1.13 2006/09/01 13:28:17 cube Exp $
 
 #  MIPS Computer Corp -specific configuration info
 
@@ -14,7 +14,7 @@ device cpu
 attach cpu at mainbus
 file arch/mipsco/mipsco/cpu.c		cpu
 
-device isabus
+device isabus: isabus
 attach	isabus at mainbus
 file arch/mipsco/isa/isa_machdep.c	isabus
 include "dev/isa/files.isa"
