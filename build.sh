@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.151 2006/08/27 05:05:05 matt Exp $
+#	$NetBSD: build.sh,v 1.152 2006/09/01 21:52:55 uwe Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -216,7 +216,7 @@ getarch()
 		MACHINE_ARCH=sh3eb
 		;;
 
-	dreamcast|hpcsh)
+	dreamcast|hpcsh|landisk)
 		MACHINE_ARCH=sh3el
 		;;
 
@@ -881,7 +881,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.151 2006/08/27 05:05:05 matt Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.152 2006/09/01 21:52:55 uwe Exp $
 # with these arguments: ${_args}
 #
 EOF
