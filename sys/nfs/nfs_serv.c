@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.115 2006/07/20 15:12:23 christos Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.116 2006/09/02 07:26:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.115 2006/07/20 15:12:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.116 2006/09/02 07:26:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3517,6 +3517,7 @@ nfsrv_access(vp, flags, cred, rdonly, lwp, override)
 	kauth_cred_t cred;
 	int rdonly;
 	struct lwp *lwp;
+	int override;
 {
 	struct vattr vattr;
 	int error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.166 2006/07/13 12:00:26 martin Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.167 2006/09/02 07:26:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.166 2006/07/13 12:00:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.167 2006/09/02 07:26:47 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2532,6 +2532,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 	struct mbuf *nam;
 	int *rdonlyp;
 	int kerbflag;
+	int pubflag;
 {
 	struct mount *mp;
 	kauth_cred_t credanon;
