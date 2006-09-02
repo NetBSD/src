@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.141 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: key.c,v 1.142 2006/09/02 06:39:27 christos Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.141 2006/07/23 22:06:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.142 2006/09/02 06:39:27 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3353,7 +3353,7 @@ key_mature(sav)
 	switch (sav->sah->saidx.proto) {
 	case IPPROTO_ESP:
 	case IPPROTO_AH:
-		if (ntohl(sav->spi) >= 0 && ntohl(sav->spi) <= 255) {
+		if (ntohl(sav->spi) <= 255) {
 			ipseclog((LOG_DEBUG,
 			    "key_mature: illegal range of SPI %u.\n",
 			    (u_int32_t)ntohl(sav->spi)));
