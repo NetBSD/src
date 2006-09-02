@@ -1,3 +1,5 @@
+.\"	$NetBSD: wcsdup.3,v 1.2 2006/09/02 23:49:36 wiz Exp $
+.\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -26,7 +28,6 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strdup.3	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: wcsdup.3,v 1.1 2006/08/26 22:48:50 christos Exp $
 .\"
 .Dd August 25, 2006
 .Dt WCSDUP 3
@@ -52,11 +53,13 @@ The pointer may subsequently be used as an
 argument to the function
 .Xr free 3 .
 .Pp
-If insufficient memory is available, NULL is returned.
+If insufficient memory is available,
+.Dv NULL
+is returned.
 .Sh EXAMPLES
 The following will point
 .Va p
-to an allocated area of memory containing the null-terminated string
+to an allocated area of memory containing the nul-terminated string
 .Qq foobar :
 .Bd -literal -offset indent
 wchar_t *p;
@@ -74,9 +77,9 @@ function may fail and set the external variable
 for any of the errors specified for the library function
 .Xr malloc 3 .
 .Sh SEE ALSO
-.Xr malloc 3 ,
 .Xr free 3 ,
-.Xr strdup 3 ,
+.Xr malloc 3 ,
+.Xr strdup 3
 .Sh HISTORY
 The
 .Fn wcsdup
