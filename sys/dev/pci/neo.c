@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.31 2006/02/25 02:28:58 wiz Exp $	*/
+/*	$NetBSD: neo.c,v 1.32 2006/09/02 07:23:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.31 2006/02/25 02:28:58 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.32 2006/09/02 07:23:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,6 +272,7 @@ static const struct audio_hw_if neo_hw_if = {
 	neo_get_props,
 	neo_trigger_output,
 	neo_trigger_input,
+	NULL,
 	NULL,
 };
 
