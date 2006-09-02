@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.11 2006/02/09 18:03:12 gdamore Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.12 2006/09/02 22:33:06 gdamore Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.11 2006/02/09 18:03:12 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.12 2006/09/02 22:33:06 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.11 2006/02/09 18:03:12 gdamore Exp 
 #include <sys/systm.h>
 
 #include <mips/locore.h>
-
-#include <evbmips/evbmips/clockvar.h>
 
 #include <evbmips/malta/maltavar.h>
 #include <evbmips/malta/pci/pcibvar.h>
