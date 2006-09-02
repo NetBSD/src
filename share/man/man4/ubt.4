@@ -1,4 +1,4 @@
-.\" $NetBSD: ubt.4,v 1.4 2006/08/27 11:41:58 plunky Exp $
+.\" $NetBSD: ubt.4,v 1.5 2006/09/02 23:54:23 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -93,9 +93,6 @@ It was rewritten to support socket based Bluetooth access for
 .Nx 4.0
 by
 .An Iain Hibbert .
-.Sh BUGS
-The Isochronous configuration can only be changed when the device is not
-marked up.
 .Sh CAVEATS
 Isochronous data is seemingly not well supported over USB in the current
 system and to get SCO working, you may have to calculate the SCO packet
@@ -121,3 +118,6 @@ option to
 .Pp
 The failure mode is that the USB Bluetooth dongle locks up though
 generally removal/reinsertion will clear the problem.
+.Sh BUGS
+The Isochronous configuration can only be changed when the device is not
+marked up.
