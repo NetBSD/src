@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.227 2006/09/01 21:04:45 matt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.228 2006/09/02 06:29:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.227 2006/09/01 21:04:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228 2006/09/02 06:29:13 christos Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ktrace.h"
@@ -119,7 +119,8 @@ sigacts_poolpage_free(struct pool *pp, void *v)
 }
 
 static struct pool_allocator sigactspool_allocator = {
-        sigacts_poolpage_alloc, sigacts_poolpage_free,
+        .pa_alloc = sigacts_poolpage_alloc,
+	.pa_free = sigacts_poolpage_free,
 };
 
 POOL_INIT(siginfo_pool, sizeof(siginfo_t), 0, 0, 0, "siginfo",
@@ -1415,8 +1416,10 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 		if (sa_upcall(l, SA_UPCALL_SIGNAL | SA_UPCALL_DEFER, le, li,
 		    sizeof(*si), si, siginfo_free) != 0) {
 			siginfo_free(si);
+#if 0
 			if (KSI_TRAP_P(ksi))
 				/* XXX What do we do here?? */;
+#endif
 		}
 		l->l_flag |= f;
 		return;
