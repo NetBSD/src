@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.8,v 1.37 2006/08/27 22:00:33 martin Exp $
+.\"	$NetBSD: swapctl.8,v 1.38 2006/09/02 23:58:41 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -110,7 +110,7 @@ type.
 If no swap devices are configured,
 .Nm
 will exit with an error code.
-If usesd together with
+If uses together with
 .Fl t Ar auto
 this option will not read
 .Pa /etc/fstab
@@ -216,8 +216,8 @@ flag, this
 .Dq Dump Only
 option makes
 .Nm
-find the first swap device and configure it as dump device. No swap
-device is changed.
+find the first swap device and configure it as dump device.
+No swap device is changed.
 This option needs to be used in combination with
 .Fl A Fl t Ar auto
 and is mutually exclusive with
@@ -236,7 +236,7 @@ and
 .Fl l
 options.
 .It Fl q
-query
+Query
 .Pa /etc/fstab ,
 checking for any defined swap or dump devices.
 If any are found,
@@ -337,19 +337,6 @@ operation (query dump device) and
 swap partition has been configured.
 If any swap partition is available or
 a dump device is set, the respective query returns 0.
-.Sh CAVEATS
-Using the automatic swap partition detection done by the
-.Fl A Fl t Ar auto
-option may be dangereous.
-Depending on the on-disk partitioning scheme used, the type of a partition
-may not be accurately recognizable as a swap partition.
-The autodetection might recognize and use partitions on
-removable media like USB sticks.
-An easy way to test the autoconfiguration is to use
-.Nm
-with the
-.Fl n
-option.
 .Sh SEE ALSO
 .Xr swapctl 2 ,
 .Xr fstab 5 ,
@@ -368,6 +355,19 @@ The
 .Nm
 program was written by
 .An Matthew R. Green Aq mrg@eterna.com.au .
+.Sh CAVEATS
+Using the automatic swap partition detection done by the
+.Fl A Fl t Ar auto
+option may be dangereous.
+Depending on the on-disk partitioning scheme used, the type of a partition
+may not be accurately recognizable as a swap partition.
+The autodetection might recognize and use partitions on
+removable media like USB sticks.
+An easy way to test the autoconfiguration is to use
+.Nm
+with the
+.Fl n
+option.
 .Sh BUGS
 If no swap information is specified in
 .Pa /etc/fstab ,
