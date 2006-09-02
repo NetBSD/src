@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.7 2005/12/11 12:17:11 christos Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.8 2006/09/02 22:54:47 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,29 +37,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.7 2005/12/11 12:17:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.8 2006/09/02 22:54:47 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
+#include <mips/mips3_clock.h>
 #include <machine/intr.h>
 #include <machine/locore.h>
-
-#include <evbmips/evbmips/clockvar.h>
-
-struct evcnt mips_int5_evcnt =
-    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
-
-uint32_t last_cp0_count;	/* used by microtime() */
-uint32_t next_cp0_clk_intr;	/* used to schedule hard clock interrupts */
 
 void
 intr_init(void)
 {
 
-	evcnt_attach_static(&mips_int5_evcnt);
 	evbmips_intr_init();	/* board specific stuff */
 
 	softintr_init();
@@ -68,38 +60,11 @@ intr_init(void)
 void
 cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
-	struct clockframe cf;
-	uint32_t new_cnt;
-
 	uvmexp.intrs++;
 
 	if (ipending & MIPS_INT_MASK_5) {
-		last_cp0_count = next_cp0_clk_intr;
-		next_cp0_clk_intr += curcpu()->ci_cycles_per_hz;
-		mips3_cp0_compare_write(next_cp0_clk_intr);
-
-		/* Check for lost clock interrupts */
-		new_cnt = mips3_cp0_count_read();
-
-		/* 
-		 * Missed one or more clock interrupts, so let's start 
-		 * counting again from the current value.
-		 */
-		if ((next_cp0_clk_intr - new_cnt) & 0x80000000) {
-#if 0	/* XXX - should add an event counter for this */
-			missed_clk_intrs++;
-#endif
-
-			next_cp0_clk_intr = new_cnt +
-			    curcpu()->ci_cycles_per_hz;
-			mips3_cp0_compare_write(next_cp0_clk_intr);
-		}
-
-		cf.pc = pc;
-		cf.sr = status;
-		hardclock(&cf);
-
-		mips_int5_evcnt.ev_count++;
+		/* call the common MIPS3 clock interrupt handler */ 
+		mips3_clockintr(status, pc);
 
 		/* Re-enable clock interrupts. */
 		cause &= ~MIPS_INT_MASK_5;
