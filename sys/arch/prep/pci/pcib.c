@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.17 2006/06/21 20:08:11 garbled Exp $	*/
+/*	$NetBSD: pcib.c,v 1.17.2.1 2006/09/02 00:03:15 riz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.17 2006/06/21 20:08:11 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.17.2.1 2006/09/02 00:03:15 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -137,6 +137,13 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 			printf("\n");
 		}
 	}
+#if NISA > 0
+	/* if the lvlmask is different, reinitialize the icu, because we
+	 * set it to zero in mainbus_attach()
+	 */
+	if (lvlmask)
+		init_icu(lvlmask);
+#endif
 
 	config_defer(self, pcib_callback);
 }
