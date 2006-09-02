@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.200 2006/08/17 17:11:28 christos Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.201 2006/09/02 06:33:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.200 2006/08/17 17:11:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.201 2006/09/02 06:33:11 christos Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -491,8 +491,6 @@ sysctl_locate(struct lwp *l, const int *name, u_int namelen,
 		*rnode = &sysctl_root;
 	if (nip)
 		*nip = 0;
-	if (namelen < 0)
-		return (EINVAL);
 	if (namelen == 0)
 		return (0);
 
