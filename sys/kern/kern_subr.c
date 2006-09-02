@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.142 2006/09/01 21:24:50 matt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.143 2006/09/02 06:30:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.142 2006/09/01 21:24:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.143 2006/09/02 06:30:53 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -206,7 +206,7 @@ uiomove_frombuf(void *buf, size_t buflen, struct uio *uio)
 {
 	size_t offset;
 
-	if (uio->uio_offset < 0 || uio->uio_resid < 0 ||
+	if (uio->uio_offset < 0 || /* uio->uio_resid < 0 || */
 	    (offset = uio->uio_offset) != uio->uio_offset)
 		return (EINVAL);
 	if (offset >= buflen)
