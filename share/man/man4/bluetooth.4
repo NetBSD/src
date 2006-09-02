@@ -1,4 +1,4 @@
-.\"	$NetBSD: bluetooth.4,v 1.3 2006/08/28 08:21:38 plunky Exp $
+.\"	$NetBSD: bluetooth.4,v 1.4 2006/09/02 23:52:45 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -141,7 +141,7 @@ L2CAP socket options:
 .It Dv SO_L2CAP_IMTU Op Ar uint16_t
 Incoming MTU
 .It Dv SO_L2CAP_OMTU Op Ar uint16_t
-Outgoing MTU (read only)
+Outgoing MTU (read-only)
 .El
 .Pp
 L2CAP
@@ -199,14 +199,14 @@ SCO socket options:
 .Bl -tag -width XXX
 .It Dv SO_SCO_MTU Op Ar uint16_t
 Maximum packet size for use on this link.
-This is read only and will be set by the protocol code when a connection is made.
+This is read-only and will be set by the protocol code when a connection is made.
 Currently, due to limitations in the
 .Xr ubt 4
 driver, the SCO protocol code will only accept packets with
 exactly this size.
 .It Dv SO_SCO_HANDLE Op Ar uint16_t
 Connection handle for this link.
-This is read only and provided for informational purposes only.
+This is read-only and provided for informational purposes only.
 .El
 .Pp
 SCO
@@ -264,14 +264,14 @@ struct btreq {
 #define btr_stats	btru.btrs
 
 /* btr_flags */
-#define BTF_UP			(1<<0)	/* unit is up */
-#define BTF_RUNNING		(1<<1)	/* unit is running */
-#define BTF_XMIT_CMD		(1<<2)	/* transmitting CMD packets */
-#define BTF_XMIT_ACL		(1<<3)	/* transmitting ACL packets */
-#define BTF_XMIT_SCO		(1<<4)	/* transmitting SCO packets */
-#define BTF_INIT_BDADDR		(1<<5)	/* waiting for bdaddr */
-#define BTF_INIT_BUFFER_SIZE	(1<<6)	/* waiting for buffer size */
-#define BTF_INIT_FEATURES	(1<<7)	/* waiting for features */
+#define BTF_UP			(1\*[Lt]\*[Lt]0)	/* unit is up */
+#define BTF_RUNNING		(1\*[Lt]\*[Lt]1)	/* unit is running */
+#define BTF_XMIT_CMD		(1\*[Lt]\*[Lt]2)	/* transmitting CMD packets */
+#define BTF_XMIT_ACL		(1\*[Lt]\*[Lt]3)	/* transmitting ACL packets */
+#define BTF_XMIT_SCO		(1\*[Lt]\*[Lt]4)	/* transmitting SCO packets */
+#define BTF_INIT_BDADDR		(1\*[Lt]\*[Lt]5)	/* waiting for bdaddr */
+#define BTF_INIT_BUFFER_SIZE	(1\*[Lt]\*[Lt]6)	/* waiting for buffer size */
+#define BTF_INIT_FEATURES	(1\*[Lt]\*[Lt]7)	/* waiting for features */
 
 struct bt_stats {
 	uint32_t	err_tx;
@@ -316,11 +316,11 @@ Read device statistics, and zero them.
 .Pp
 Only the super-user may change device configurations.
 .Sh SEE ALSO
-.Xr bluetooth 3 ,
 .Xr bind 2 ,
 .Xr getsockname 2 ,
-.Xr options 4 ,
+.Xr bluetooth 3 ,
 .Xr bt3c 4 ,
+.Xr options 4 ,
 .Xr ubt 4
 .Sh HISTORY
 The Bluetooth Protocol Stack was written for
