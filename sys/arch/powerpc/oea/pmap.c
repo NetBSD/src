@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 2006/08/05 21:26:49 sanjayl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.39 2006/09/02 17:08:44 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2006/08/05 21:26:49 sanjayl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2006/09/02 17:08:44 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -157,6 +157,9 @@ struct pvo_entry {
 #define	PVO_WIRED		0x0010		/* PVO entry is wired */
 #define	PVO_MANAGED		0x0020		/* PVO e. for managed page */
 #define	PVO_EXECUTABLE		0x0040		/* PVO e. for executable page */
+#define	PVO_WIRED_P(pvo)	((pvo)->pvo_vaddr & PVO_WIRED)
+#define	PVO_MANAGED_P(pvo)	((pvo)->pvo_vaddr & PVO_MANAGED)
+#define	PVO_EXECUTABLE_P(pvo)	((pvo)->pvo_vaddr & PVO_EXECUTABLE)
 #define	PVO_ENTER_INSERT	0		/* PVO has been removed */
 #define	PVO_SPILL_UNSET		1		/* PVO has been evicted */
 #define	PVO_SPILL_SET		2		/* PVO has been spilled */
@@ -168,7 +171,6 @@ struct pvo_entry {
 #define	PVO_WHERE_SHFT		8
 } __attribute__ ((aligned (32)));
 #define	PVO_VADDR(pvo)		((pvo)->pvo_vaddr & ~ADDR_POFF)
-#define	PVO_ISEXECUTABLE(pvo)	((pvo)->pvo_vaddr & PVO_EXECUTABLE)
 #define	PVO_PTEGIDX_GET(pvo)	((pvo)->pvo_vaddr & PVO_PTEGIDX_MASK)
 #define	PVO_PTEGIDX_ISSET(pvo)	((pvo)->pvo_vaddr & PVO_PTEGIDX_VALID)
 #define	PVO_PTEGIDX_CLR(pvo)	\
@@ -1012,7 +1014,7 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr, boolean_t exec)
 				return 1;
 			}
 			source_pvo = pvo;
-			if (exec && !PVO_ISEXECUTABLE(source_pvo)) {
+			if (exec && !PVO_EXECUTABLE_P(source_pvo)) {
 				return 0;
 			}
 			if (victim_pvo != NULL)
@@ -1296,6 +1298,9 @@ void
 pmap_release(pmap_t pm)
 {
 	int idx, mask;
+
+	KASSERT(pm->pm_stats.resident_count == 0);
+	KASSERT(pm->pm_stats.wired_count == 0);
 	
 	if (pm->pm_sr[0] == 0)
 		panic("pmap_release");
@@ -1485,7 +1490,7 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 		failed = 1;
 	}
 
-	if (pvo->pvo_vaddr & PVO_MANAGED) {
+	if (PVO_MANAGED_P(pvo)) {
 		pvo_head = pa_to_pvoh(pvo->pvo_pte.pte_lo & PTE_RPGN, NULL);
 	} else {
 		if (pvo->pvo_vaddr < VM_MIN_KERNEL_ADDRESS) {
@@ -1574,7 +1579,7 @@ pmap_pvo_reclaim(struct pmap *pm)
 	     idx = (idx + 1) & pmap_pteg_mask) {
 		pvoh = &pmap_pvo_table[idx];
 		TAILQ_FOREACH(pvo, pvoh, pvo_olink) {
-			if ((pvo->pvo_vaddr & PVO_WIRED) == 0) {
+			if (!PVO_WIRED_P(pvo)) {
 				pmap_pvo_remove(pvo, -1, NULL);
 				pmap_pvo_reclaim_nextidx = idx;
 				PMAPCOUNT(pvos_reclaimed);
@@ -1702,7 +1707,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	pmap_pte_create(&pvo->pvo_pte, pm, va, pa | pte_lo);
 
 	LIST_INSERT_HEAD(pvo_head, pvo, pvo_vlink);
-	if (pvo->pvo_pte.pte_lo & PVO_WIRED)
+	if (PVO_WIRED_P(pvo))
 		pvo->pvo_pmap->pm_stats.wired_count++;
 	pvo->pvo_pmap->pm_stats.resident_count++;
 #if defined(DEBUG)
@@ -1790,20 +1795,20 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, struct pvo_head *pvol)
 	/*
 	 * Account for executable mappings.
 	 */
-	if (PVO_ISEXECUTABLE(pvo))
+	if (PVO_EXECUTABLE_P(pvo))
 		pvo_clear_exec(pvo);
 
 	/*
 	 * Update our statistics.
 	 */
 	pvo->pvo_pmap->pm_stats.resident_count--;
-	if (pvo->pvo_pte.pte_lo & PVO_WIRED)
+	if (PVO_WIRED_P(pvo))
 		pvo->pvo_pmap->pm_stats.wired_count--;
 
 	/*
 	 * Save the REF/CHG bits into their cache if the page is managed.
 	 */
-	if (pvo->pvo_vaddr & PVO_MANAGED) {
+	if (PVO_MANAGED_P(pvo)) {
 		register_t ptelo = pvo->pvo_pte.pte_lo;
 		struct vm_page *pg = PHYS_TO_VM_PAGE(ptelo & PTE_RPGN);
 
@@ -1855,8 +1860,7 @@ void
 pmap_pvo_free(struct pvo_entry *pvo)
 {
 
-	pool_put(pvo->pvo_vaddr & PVO_MANAGED ? &pmap_mpvo_pool :
-		 &pmap_upvo_pool, pvo);
+	pool_put(PVO_MANAGED_P(pvo) ? &pmap_mpvo_pool : &pmap_upvo_pool, pvo);
 }
 
 void
@@ -1881,7 +1885,7 @@ pvo_set_exec(struct pvo_entry *pvo)
 {
 	struct pmap *pm = pvo->pvo_pmap;
 
-	if (pm == pmap_kernel() || PVO_ISEXECUTABLE(pvo)) {
+	if (pm == pmap_kernel() || PVO_EXECUTABLE_P(pvo)) {
 		return;
 	}
 	pvo->pvo_vaddr |= PVO_EXECUTABLE;
@@ -1905,7 +1909,7 @@ pvo_clear_exec(struct pvo_entry *pvo)
 {
 	struct pmap *pm = pvo->pvo_pmap;
 
-	if (pm == pmap_kernel() || !PVO_ISEXECUTABLE(pvo)) {
+	if (pm == pmap_kernel() || !PVO_EXECUTABLE_P(pvo)) {
 		return;
 	}
 	pvo->pvo_vaddr &= ~PVO_EXECUTABLE;
@@ -2264,7 +2268,7 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 	msr = pmap_interrupts_off();
 	pvo = pmap_pvo_find_va(pm, va, NULL);
 	if (pvo != NULL) {
-		if (pvo->pvo_vaddr & PVO_WIRED) {
+		if (PVO_WIRED_P(pvo)) {
 			pvo->pvo_vaddr &= ~PVO_WIRED;
 			pm->pm_stats.wired_count--;
 		}
@@ -2531,7 +2535,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		if (seglen > len)
 			seglen = len;
 		pvo = pmap_pvo_find_va(p->p_vmspace->vm_map.pmap, va, NULL);
-		if (pvo != NULL && PVO_ISEXECUTABLE(pvo)) {
+		if (pvo != NULL && PVO_EXECUTABLE_P(pvo)) {
 			pmap_syncicache(
 			    (pvo->pvo_pte.pte_lo & PTE_RPGN) | offset, seglen);
 			PMAP_PVO_CHECK(pvo);
