@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsproto.h,v 1.15 2006/07/31 16:34:44 martin Exp $	*/
+/*	$NetBSD: nfsproto.h,v 1.16 2006/09/02 12:40:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -130,7 +130,7 @@
 /* variants for both versions */
 #define NFSX_FH(v3)		((v3) ? (NFSX_V3FHMAX + NFSX_UNSIGNED) : \
 					NFSX_V2FH)
-#define NFSX_SRVFH(v3)		((v3) ? NFSX_V3FH : NFSX_V2FH)
+#define NFSX_SRVFH(nsfh, v3)	(((v3) ? NFSX_UNSIGNED : 0) + NFSRVFH_SIZE(nsfh))
 #define	NFSX_FATTR(v3)		((v3) ? NFSX_V3FATTR : NFSX_V2FATTR)
 #define NFSX_PREOPATTR(v3)	((v3) ? (7 * NFSX_UNSIGNED) : 0)
 #define NFSX_POSTOPATTR(v3)	((v3) ? (NFSX_V3FATTR + NFSX_UNSIGNED) : 0)
@@ -144,6 +144,7 @@
 #define NFSX_READDIR(v3)	((v3) ? (5 * NFSX_UNSIGNED) : \
 					(2 * NFSX_UNSIGNED))
 #define	NFSX_STATFS(v3)		((v3) ? NFSX_V3STATFS : NFSX_V2STATFS)
+#define	NFSX_FHTOOBIG_P(sz, v3)	((sz) > ((v3) ? NFSX_V3FHMAX : NFSX_V2FH))
 
 /* nfs rpc procedure numbers (before version mapping) */
 #define	NFSPROC_NULL		0

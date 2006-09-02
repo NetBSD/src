@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.46 2006/08/08 13:07:32 yamt Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.47 2006/09/02 12:40:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -121,20 +121,22 @@
 
 #define nfsm_srvfhtom(f, v3) \
 		{ if (v3) { \
-			nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED + NFSX_V3FH); \
-			*tl++ = txdr_unsigned(NFSX_V3FH); \
-			memcpy((caddr_t)tl, (caddr_t)(f), NFSX_V3FH); \
+			nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED + \
+			    NFSRVFH_SIZE(f)); \
+			*tl++ = txdr_unsigned(NFSRVFH_SIZE(f)); \
+			memcpy(tl, NFSRVFH_DATA(f), NFSRVFH_SIZE(f)); \
 		} else { \
+			KASSERT(NFSRVFH_SIZE(f) == NFSX_V2FH); \
 			nfsm_build(cp, caddr_t, NFSX_V2FH); \
-			memcpy(cp, (caddr_t)(f), NFSX_V3FH); \
-			memset(cp + NFSX_V3FH, 0, NFSX_V2FH - NFSX_V3FH); \
+			memcpy(cp, NFSRVFH_DATA(f), NFSX_V2FH); \
 		} }
 
 #define nfsm_srvpostop_fh(f) \
-		{ nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED + NFSX_V3FH); \
+		{ nfsm_build(tl, u_int32_t *, \
+		    2 * NFSX_UNSIGNED + NFSRVFH_SIZE(f)); \
 		*tl++ = nfs_true; \
-		*tl++ = txdr_unsigned(NFSX_V3FH); \
-		memcpy((caddr_t)tl, (caddr_t)(f), NFSX_V3FH); \
+		*tl++ = txdr_unsigned(NFSRVFH_SIZE(f)); \
+		memcpy(tl, NFSRVFH_DATA(f), NFSRVFH_SIZE(f)); \
 		}
 
 /*
@@ -469,23 +471,23 @@
 			goto nfsmout; \
 		} }
 
-#define nfsm_srvmtofh(f) \
+#define nfsm_srvmtofh(nsfh) \
 	{ int fhlen = NFSX_V3FH; \
 		if (nfsd->nd_flag & ND_NFSV3) { \
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 			fhlen = fxdr_unsigned(int, *tl); \
-			if (fhlen == 0) { \
-				memset((caddr_t)(f), 0, NFSX_V3FH); \
-			} else if (fhlen != NFSX_V3FH) { \
+			if (fhlen > NFSX_V3FHMAX || \
+			    (fhlen < FHANDLE_SIZE_MIN && fhlen > 0)) { \
 				error = EBADRPC; \
 				nfsm_reply(0); \
 			} \
+		} else { \
+			fhlen = NFSX_V2FH; \
 		} \
+		(nsfh)->nsfh_size = fhlen; \
 		if (fhlen != 0) { \
-			nfsm_dissect(tl, u_int32_t *, NFSX_V3FH); \
-			memcpy( (caddr_t)(f), (caddr_t)tl, NFSX_V3FH); \
-			if ((nfsd->nd_flag & ND_NFSV3) == 0) \
-				nfsm_adv(NFSX_V2FH - NFSX_V3FH); \
+			nfsm_dissect(tl, u_int32_t *, fhlen); \
+			memcpy(NFSRVFH_DATA(nsfh), tl, fhlen); \
 		} \
 	}
 
