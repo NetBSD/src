@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.165 2006/08/30 17:28:32 tsutsui Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.166 2006/09/02 06:32:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.165 2006/08/30 17:28:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166 2006/09/02 06:32:09 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -996,8 +996,9 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	 * If we are using h/w performance counters, save context.
 	 */
 #if PERFCTRS
-	if (PMC_ENABLED(p))
+	if (PMC_ENABLED(p)) {
 		pmc_save_context(p);
+	}
 #endif
 
 	/*
@@ -1017,8 +1018,9 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	 * If we are using h/w performance counters, restore context.
 	 */
 #if PERFCTRS
-	if (PMC_ENABLED(p))
+	if (PMC_ENABLED(p)) {
 		pmc_restore_context(p);
+	}
 #endif
 
 	/*
