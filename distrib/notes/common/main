@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.31 2006/08/19 09:31:52 ghen Exp $
+.\"	$NetBSD: main,v 1.278.2.32 2006/09/02 21:20:14 ghen Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -540,6 +540,17 @@ Password aging works again.
 .(bullet
 Fixed a denial of service vulnerability in sendmail when handling malformed
 multipart MIME messages (SA2006-017).
+.It
+Fixed a buffer overflow in the in-kernel PPP code share by ISDN PPP interfaces
+.Xr ippp 4
+and
+.Xr pppoe 4
+(SA2006-019).
+.It
+X11: Fixed an integer overflow in FreeType.
+.It
+Fixed a potential DoS attack with
+.Xr sendmail 8 .
 .bullet)
 .
 .Ss2 Miscellaneous
@@ -555,6 +566,8 @@ Added
 .Xr ex 1
 to /rescue.
 .It
+Fixed some special case expansions in /bin/sh.
+.It
 Many, many more additions, improvements and bug fixes.
 .bullet)
 .
@@ -563,6 +576,12 @@ Many, many more additions, improvements and bug fixes.
 Support booting from FFSv2 filesystems.
 .bullet)
 .
+.Ss2 sparc specific
+.(bullet
+Disabled threading in
+.Xr named 8
+on sparc and sparc64 to avoid a crash.
+.bullet)
 .Ss2 xen specific
 .(bullet
 Added Xen-3 domU support
