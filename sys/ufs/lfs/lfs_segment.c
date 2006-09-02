@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.189 2006/09/01 19:41:28 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.190 2006/09/02 06:46:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.189 2006/09/01 19:41:28 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.190 2006/09/02 06:46:04 christos Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1523,7 +1523,7 @@ lfs_update_single(struct lfs *fs, struct segment *sp, struct vnode *vp,
 			ndupino = 0;
 		}
 #endif
-		KASSERT(oldsn >= 0 && oldsn < fs->lfs_nseg);
+		KASSERT(oldsn < fs->lfs_nseg);
 		if (lbn >= 0 && lbn < NDADDR)
 			osize = ip->i_lfs_fragsize[lbn];
 		else
