@@ -1,4 +1,4 @@
-/* $NetBSD: rb.c,v 1.4 2005/12/11 12:24:37 christos Exp $ */
+/* $NetBSD: rb.c,v 1.5 2006/09/02 20:46:50 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,11 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/types.h>
 #include <stddef.h>
-#ifndef _KERNEL
 #include <assert.h>
 #define	KASSERT(s)	assert(s)
+#else
+#include <lib/libkern/libkern.h>
 #endif
 #include "rb.h"
 
@@ -53,9 +55,7 @@ static void rb_tree_removal_rebalance(struct rb_tree *, struct rb_node *);
  * pointed to this node.  Note that by setting it to be const, that on
  * some architectures trying to write to it will cause a fault.
  */
-static const struct rb_node sentinel_node = {
-	NULL, NULL, NULL, { NULL, NULL }, 0, 0, 1
-};
+static const struct rb_node sentinel_node = { .rb_sentinel = 1 };
 
 void
 rb_tree_init(struct rb_tree *rbt, rb_compare_nodes_fn compare_nodes,
@@ -81,14 +81,14 @@ rb_tree_rotate(struct rb_tree *rbt, struct rb_node *self, int which)
 	struct rb_node * const parent = self->rb_parent;
 	struct rb_node * const child = self->rb_nodes[other];
 
-	assert(!child->rb_sentinel);
-	assert(child->rb_parent == self);
+	KASSERT(!child->rb_sentinel);
+	KASSERT(child->rb_parent == self);
 #if 0
 	(*rbt->rbt_print_node)(child, which ? "before-l " : "before-r ");
 #endif
 
 	if ((child->rb_parent = parent) == NULL) {
-		assert(rbt->rbt_root == self);
+		KASSERT(rbt->rbt_root == self);
 		rbt->rbt_root = child;
 	} else {
 		parent->rb_nodes[self->rb_position] = child;
@@ -110,8 +110,7 @@ void
 rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 {
 	struct rb_node *prev, *next, *tmp, *parent;
-	struct rb_node **insert_p;
-	u_int position;
+	u_int position = 2;
 
 	prev = NULL;
 	next = NULL;
@@ -124,7 +123,7 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 	while (!tmp->rb_sentinel) {
 		const int diff = (*rbt->rbt_compare_nodes)(tmp, self);
 		parent = tmp;
-		assert(diff != 0);
+		KASSERT(diff != 0);
 		if (diff < 0) {
 			position = RB_LEFT;
 			next = parent->rb_left;
@@ -144,8 +143,8 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 		next = TAILQ_NEXT(prev, rb_link);
 	if (prev == NULL && next != NULL)
 		next = TAILQ_PREV(next, rb_node_qh, rb_link);
-	assert(prev == NULL || (*rbt->rbt_compare_nodes)(prev, self) > 0);
-	assert(next == NULL || (*rbt->rbt_compare_nodes)(self, next) < 0);
+	KASSERT(prev == NULL || (*rbt->rbt_compare_nodes)(prev, self) > 0);
+	KASSERT(next == NULL || (*rbt->rbt_compare_nodes)(self, next) < 0);
 
 	/*
 	 * Initialize the node and insert as a leaf into the tree.
@@ -153,18 +152,19 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 	rbt->rbt_count++;
 	self->rb_parent = parent;
 	if (parent == NULL) {
-		assert(rbt->rbt_root->rb_sentinel);
+		KASSERT(rbt->rbt_root->rb_sentinel);
 		self->rb_position = RB_PARENT;
 		self->rb_left = rbt->rbt_root;
 		self->rb_right = rbt->rbt_root;
 		rbt->rbt_root = self;
 	} else {
+		KASSERT(position == RB_LEFT || position == RB_RIGHT);
 		self->rb_position = position;
 		self->rb_left = parent->rb_nodes[position];
 		self->rb_right = parent->rb_nodes[position];
 		parent->rb_nodes[position] = self;
 	}
-	assert(self->rb_left == &sentinel_node &&
+	KASSERT(self->rb_left == &sentinel_node &&
 	    self->rb_right == &sentinel_node);
 
 	/*
@@ -195,7 +195,7 @@ rb_tree_insert_rebalance(struct rb_tree *rbt, struct rb_node *self)
 		const int other = which ^ RB_OTHER;
 		struct rb_node *uncle;
 
-		assert(!self->rb_sentinel);
+		KASSERT(!self->rb_sentinel);
 		/*
 		 * We are red, our are parent is red, and our
 		 * grandparent is black.
@@ -243,7 +243,7 @@ rb_tree_insert_rebalance(struct rb_tree *rbt, struct rb_node *self)
 }
 
 struct rb_node *
-rb_tree_lookup(struct rb_tree *rbt, void *key)
+rb_tree_find(struct rb_tree *rbt, void *key)
 {
 	struct rb_node *parent = rbt->rbt_root;
 
@@ -283,7 +283,7 @@ rb_tree_remove_node(struct rb_tree *rbt, struct rb_node *self)
 		while (!child->rb_left->rb_sentinel)
 			child = child->rb_left;
 		new_self = child;
-		assert(new_self == TAILQ_NEXT(self, rb_link));
+		KASSERT(new_self == TAILQ_NEXT(self, rb_link));
 
 		/*
 		 * Take new_self out of the tree (its only subnode can be on the
@@ -319,7 +319,7 @@ rb_tree_remove_node(struct rb_tree *rbt, struct rb_node *self)
 	rbt->rbt_count--;
 
 	if (child != NULL) {
-		assert(!child->rb_sentinel);
+		KASSERT(!child->rb_sentinel);
 #if 0
 		(*rbt->rbt_print_node)(child, "before ");
 #endif
@@ -333,7 +333,7 @@ rb_tree_remove_node(struct rb_tree *rbt, struct rb_node *self)
 void
 rb_tree_removal_rebalance(struct rb_tree *rbt, struct rb_node *self)
 {
-	assert(!self->rb_sentinel);
+	KASSERT(!self->rb_sentinel);
 	while (self->rb_parent != NULL && !self->rb_red) {
 		struct rb_node *parent = self->rb_parent;
 		int which = (self == parent->rb_left) ? RB_LEFT : RB_RIGHT;
