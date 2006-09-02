@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.162 2006/09/02 07:26:47 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.163 2006/09/02 12:40:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.162 2006/09/02 07:26:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.163 2006/09/02 12:40:58 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1056,32 +1056,65 @@ SYSCTL_SETUP(sysctl_vfs_nfs_setup, "sysctl vfs.nfs subtree setup")
 		       CTL_VFS, 2, NFS_IOTHREADS, CTL_EOL);
 }
 
-/*
- * At this point, this should never happen
- */
 /* ARGSUSED */
 int
-nfs_fhtovp(mp, fhp, vpp)
-	struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
+nfs_fhtovp(struct mount *mp, struct fid *fid, struct vnode **vpp)
 {
+	size_t fidsize;
+	size_t fhsize;
+	struct nfsnode *np;
+	int error;
 
-	return (EINVAL);
+	fidsize = fid->fid_len;
+	if (fidsize < sizeof(*fid)) {
+		return EINVAL;
+	}
+	fhsize = fidsize - sizeof(*fid);
+	if ((fhsize % NFSX_UNSIGNED) != 0) {
+		return EINVAL;
+	}
+	if ((VFSTONFS(mp)->nm_flag & NFSMNT_NFSV3) != 0) {
+		if (fhsize > NFSX_V3FHMAX || fhsize == 0) {
+			return EINVAL;
+		}
+	} else {
+		if (fhsize != NFSX_V2FH) {
+			return EINVAL;
+		}
+	}
+	error = nfs_nget(mp, (void *)fid->fid_data, fhsize, &np);
+	if (error) {
+		return error;
+	}
+	*vpp = NFSTOV(np);
+	return 0;
 }
 
-/*
- * Vnode pointer to File handle, should never happen either
- */
 /* ARGSUSED */
 int
-nfs_vptofh(vp, fhp, fh_size)
-	struct vnode *vp;
-	struct fid *fhp;
-	size_t *fh_size;
+nfs_vptofh(struct vnode *vp, struct fid *buf, size_t *bufsize)
 {
+	struct nfsnode *np;
+	struct fid *fid;
+	size_t fidsize;
+	int error = 0;
 
-	return (EINVAL);
+	np = VTONFS(vp);
+	fidsize = sizeof(*fid) + np->n_fhsize;
+	if (*bufsize < fidsize) {
+		error = E2BIG;
+	}
+	*bufsize = fidsize;
+	if (error == 0) {
+		struct fid fid_store;
+
+		fid = &fid_store;
+		memset(fid, 0, sizeof(*fid));
+		fid->fid_len = fidsize;
+		memcpy(buf, fid, sizeof(*fid));
+		memcpy(buf->fid_data, np->n_fhp, np->n_fhsize);
+	}
+	return error;
 }
 
 /*
