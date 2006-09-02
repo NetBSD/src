@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.62 2006/07/01 11:29:42 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.63 2006/09/02 12:40:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -271,7 +271,7 @@ int nfs_getattrcache(struct vnode *, struct vattr *);
 void nfs_delayedtruncate(struct vnode *);
 int nfs_check_wccdata(struct nfsnode *, const struct timespec *,
 	struct timespec *, boolean_t);
-int nfs_namei(struct nameidata *, fhandle_t *, uint32_t, struct nfssvc_sock *,
+int nfs_namei(struct nameidata *, nfsrvfh_t *, uint32_t, struct nfssvc_sock *,
 	struct mbuf *, struct mbuf **, caddr_t *, struct vnode **, struct lwp *,
 	int, int);
 void nfs_zeropad(struct mbuf *, int, int);
@@ -280,9 +280,9 @@ void nfsm_srvwcc(struct nfsrv_descript *, int, struct vattr *, int,
 void nfsm_srvpostopattr(struct nfsrv_descript *, int, struct vattr *,
 	struct mbuf **, char **);
 void nfsm_srvfattr(struct nfsrv_descript *, struct vattr *, struct nfs_fattr *);
-int nfsrv_fhtovp(fhandle_t *, int, struct vnode **, kauth_cred_t,
+int nfsrv_fhtovp(nfsrvfh_t *, int, struct vnode **, kauth_cred_t,
 	struct nfssvc_sock *, struct mbuf *, int *, int, int);
-int nfs_ispublicfh __P((fhandle_t *));
+int nfs_ispublicfh __P((const nfsrvfh_t *));
 int netaddr_match(int, union nethostaddr *, struct mbuf *);
 
 /* flags for nfs_loadattrcache and friends */
@@ -302,6 +302,10 @@ void nfs_cookieheuristic(struct vnode *, int *, struct lwp *, kauth_cred_t);
 
 u_int32_t nfs_getxid(void);
 void nfs_renewxid(struct nfsreq *);
+
+int nfsrv_composefh(struct vnode *, nfsrvfh_t *, boolean_t);
+int nfsrv_comparefh(const nfsrvfh_t *, const nfsrvfh_t *);
+void nfsrv_copyfh(nfsrvfh_t *, const nfsrvfh_t *);
 
 /* nfs_syscalls.c */
 int sys_getfh(struct lwp *, void *, register_t *);

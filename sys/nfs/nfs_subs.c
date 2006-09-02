@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.167 2006/09/02 07:26:47 christos Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.168 2006/09/02 12:40:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.167 2006/09/02 07:26:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.168 2006/09/02 12:40:36 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2086,9 +2086,9 @@ nfs_cookieheuristic(vp, flagp, l, cred)
  * it is not.
  */
 int
-nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
+nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 	struct nameidata *ndp;
-	fhandle_t *fhp;
+	nfsrvfh_t *nsfh;
 	uint32_t len;
 	struct nfssvc_sock *slp;
 	struct mbuf *nam;
@@ -2154,7 +2154,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 	/*
 	 * Extract and set starting directory.
 	 */
-	error = nfsrv_fhtovp(fhp, FALSE, &dp, ndp->ni_cnd.cn_cred, slp,
+	error = nfsrv_fhtovp(nsfh, FALSE, &dp, ndp->ni_cnd.cn_cred, slp,
 	    nam, &rdonly, kerbflag, pubflag);
 	if (error)
 		goto out;
@@ -2523,8 +2523,8 @@ nfsm_srvfattr(nfsd, vap, fp)
  *	- if not lockflag unlock it with VOP_UNLOCK()
  */
 int
-nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
-	fhandle_t *fhp;
+nfsrv_fhtovp(nsfh, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
+	nfsrvfh_t *nsfh;
 	int lockflag;
 	struct vnode **vpp;
 	kauth_cred_t cred;
@@ -2538,10 +2538,12 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 	kauth_cred_t credanon;
 	int error, exflags;
 	struct sockaddr_in *saddr;
+	fhandle_t *fhp;
 
+	fhp = NFSRVFH_FHANDLE(nsfh);
 	*vpp = (struct vnode *)0;
 
-	if (nfs_ispublicfh(fhp)) {
+	if (nfs_ispublicfh(nsfh)) {
 		if (!pubflag || !nfs_pub.np_valid)
 			return (ESTALE);
 		fhp = nfs_pub.np_handle;
@@ -2597,20 +2599,24 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 
 /*
  * WebNFS: check if a filehandle is a public filehandle. For v3, this
- * means a length of 0, for v2 it means all zeroes. nfsm_srvmtofh has
- * transformed this to all zeroes in both cases, so check for it.
+ * means a length of 0, for v2 it means all zeroes.
  */
 int
-nfs_ispublicfh(fhp)
-	fhandle_t *fhp;
+nfs_ispublicfh(const nfsrvfh_t *nsfh)
 {
-	char *cp = (char *)fhp;
+	const char *cp = (char *)(NFSRVFH_DATA(nsfh));
 	int i;
 
-	for (i = 0; i < NFSX_V3FH; i++)
+	if (NFSRVFH_SIZE(nsfh) == 0) {
+		return TRUE;
+	}
+	if (NFSRVFH_SIZE(nsfh) != NFSX_V2FH) {
+		return FALSE;
+	}
+	for (i = 0; i < NFSX_V2FH; i++)
 		if (*cp++ != 0)
-			return (FALSE);
-	return (TRUE);
+			return FALSE;
+	return TRUE;
 }
 #endif /* NFSSERVER */
 
@@ -2977,3 +2983,50 @@ nfs_renewxid(struct nfsreq *req)
 	m_copyback(req->r_mreq, off, sizeof(xid), (void *)&xid);
 	req->r_xid = xid;
 }
+
+#if defined(NFSSERVER)
+int
+nfsrv_composefh(struct vnode *vp, nfsrvfh_t *nsfh, boolean_t v3)
+{
+	int error;
+	size_t fhsize;
+
+	fhsize = NFSD_MAXFHSIZE;
+	error = vfs_composefh(vp, NFSRVFH_DATA(nsfh), &fhsize);
+	if (NFSX_FHTOOBIG_P(fhsize, v3)) {
+		error = EOPNOTSUPP;
+	}
+	if (error != 0) {
+		return error;
+	}
+	if (!v3 && fhsize < NFSX_V2FH) {
+		memset((char *)NFSRVFH_DATA(nsfh) + fhsize, 0,
+		    NFSX_V2FH - fhsize);
+		fhsize = NFSX_V2FH;
+	}
+	if ((fhsize % NFSX_UNSIGNED) != 0) {
+		return EOPNOTSUPP;
+	}
+	nsfh->nsfh_size = fhsize;
+	return 0;
+}
+
+int
+nfsrv_comparefh(const nfsrvfh_t *fh1, const nfsrvfh_t *fh2)
+{
+
+	if (NFSRVFH_SIZE(fh1) != NFSRVFH_SIZE(fh2)) {
+		return NFSRVFH_SIZE(fh2) - NFSRVFH_SIZE(fh1);
+	}
+	return memcmp(NFSRVFH_DATA(fh1), NFSRVFH_DATA(fh2), NFSRVFH_SIZE(fh1));
+}
+
+void
+nfsrv_copyfh(nfsrvfh_t *fh1, const nfsrvfh_t *fh2)
+{
+	size_t size;
+
+	fh1->nsfh_size = size = NFSRVFH_SIZE(fh2);
+	memcpy(NFSRVFH_DATA(fh1), NFSRVFH_DATA(fh2), size);
+}
+#endif /* defined(NFSSERVER) */

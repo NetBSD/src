@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.58 2006/07/13 12:00:26 martin Exp $	*/
+/*	$NetBSD: nfs.h,v 1.59 2006/09/02 12:40:36 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -358,8 +358,6 @@ extern TAILQ_HEAD(nfsreqhead, nfsreq) nfs_reqq;
 #ifndef NFS_WDELAYHASHSIZ
 #define	NFS_WDELAYHASHSIZ 16	/* and with this */
 #endif
-#define	NWDELAYHASH(sock, f) \
-	(&(sock)->ns_wdelayhashtbl[(*((u_int32_t *)(f))) % NFS_WDELAYHASHSIZ])
 #ifndef NFS_MUIDHASHSIZ
 #define NFS_MUIDHASHSIZ	63	/* Tune the size of nfsmount with this */
 #endif
@@ -486,6 +484,18 @@ struct nfsd {
 #define	NFSD_NEEDAUTH	0x04
 #define	NFSD_AUTHFAIL	0x08
 
+#define	NFSD_MAXFHSIZE	64
+typedef struct nfsrvfh {
+	size_t nsfh_size;
+	union {
+		fhandle_t u_fh;
+		uint8_t u_opaque[NFSD_MAXFHSIZE];
+	} nsfh_u;
+} nfsrvfh_t;
+#define	NFSRVFH_SIZE(nsfh)	((nsfh)->nsfh_size)
+#define	NFSRVFH_DATA(nsfh)	((void *)(nsfh)->nsfh_u.u_opaque)
+#define	NFSRVFH_FHANDLE(nsfh)	(&(nsfh)->nsfh_u.u_fh)
+
 /*
  * This structure is used by the server for describing each request.
  * Some fields are used only when write request gathering is performed.
@@ -512,7 +522,7 @@ struct nfsrv_descript {
 	u_int32_t		nd_retxid;	/* Reply xid */
 	u_int32_t		nd_duration;	/* Lease duration */
 	struct timeval		nd_starttime;	/* Time RPC initiated */
-	nfsfh_t			nd_fh;		/* File handle */
+	nfsrvfh_t		nd_fh;		/* File handle */
 	kauth_cred_t	 	nd_cr;		/* Credentials */
 };
 
