@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.67 2006/07/13 12:00:26 martin Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.68 2006/09/02 12:39:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.67 2006/07/13 12:00:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.68 2006/09/02 12:39:59 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -144,7 +144,7 @@ extern int nfsd_waiting;
 extern struct nfsstats nfsstats;
 
 
-#if defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY))
+#if defined(NFSSERVER)
 /*
  * Get or check for a lease for "vp", based on ND_CHECK flag.
  * The rules are as follows:
@@ -622,9 +622,7 @@ tryagain:
 			lph++;
 	}
 }
-#endif /* NFSSERVER || (NFS && !NFS_V2_ONLY) */
 
-#ifdef NFSSERVER
 /*
  * Nqnfs server timer that maintains the server lease queue.
  * Scan the lease queue for expired entries:
