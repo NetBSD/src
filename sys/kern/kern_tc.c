@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.8 2006/09/02 06:35:12 christos Exp $ */
+/* $NetBSD: kern_tc.c,v 1.9 2006/09/02 13:45:04 kardel Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.8 2006/09/02 06:35:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.9 2006/09/02 13:45:04 kardel Exp $");
 
 #include "opt_ntp.h"
 
@@ -27,11 +27,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.8 2006/09/02 06:35:12 christos Exp $")
 #include <sys/timex.h>
 #include <sys/evcnt.h>
 #include <sys/kauth.h>
-
-/*
- * maximum name length for TC names in sysctl interface
- */
-#define MAX_TCNAMELEN	64
 
 /*
  * A large step happens on boot.  This constant detects such steps.
@@ -166,7 +161,7 @@ sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
 static int
 sysctl_kern_timecounter_choice(SYSCTLFN_ARGS)
 {
-	char buf[48];
+	char buf[MAX_TCNAMELEN+48];
 	char *where = oldp;
 	const char *spc;
 	struct timecounter *tc;
