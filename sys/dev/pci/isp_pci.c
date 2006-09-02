@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.95 2006/03/29 04:16:50 thorpej Exp $ */
+/* $NetBSD: isp_pci.c,v 1.96 2006/09/02 17:02:58 christos Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.95 2006/03/29 04:16:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.96 2006/09/02 17:02:58 christos Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -146,7 +146,8 @@ static struct ispmdvec mdvec = {
 	isp_pci_reset1,
 	isp_pci_dumpregs,
 	ISP_1040_RISC_CODE,
-	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64
+	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64,
+	0,	/* dv_clock */
 };
 #endif
 
@@ -162,7 +163,8 @@ static struct ispmdvec mdvec_1080 = {
 	isp_pci_reset1,
 	isp_pci_dumpregs,
 	ISP_1080_RISC_CODE,
-	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64
+	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64,
+	0,	/* dv_clock */
 };
 #endif
 
@@ -178,7 +180,8 @@ static struct ispmdvec mdvec_12160 = {
 	isp_pci_reset1,
 	isp_pci_dumpregs,
 	ISP_12160_RISC_CODE,
-	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64
+	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64,
+	0,	/* dv_clock */
 };
 #endif
 
@@ -193,7 +196,9 @@ static struct ispmdvec mdvec_2100 = {
 	NULL,
 	isp_pci_reset1,
 	isp_pci_dumpregs,
-	ISP_2100_RISC_CODE
+	ISP_2100_RISC_CODE,
+	0,	/* dv_conf1 */
+	0,	/* dv_clock */
 };
 #endif
 
@@ -208,7 +213,9 @@ static struct ispmdvec mdvec_2200 = {
 	NULL,
 	isp_pci_reset1,
 	isp_pci_dumpregs,
-	ISP_2200_RISC_CODE
+	ISP_2200_RISC_CODE,
+	0,	/* dv_conf1 */
+	0,	/* dv_clock */
 };
 #endif
 
@@ -223,7 +230,9 @@ static struct ispmdvec mdvec_2300 = {
 	NULL,
 	isp_pci_reset1,
 	isp_pci_dumpregs,
-	ISP_2300_RISC_CODE
+	ISP_2300_RISC_CODE,
+	0,	/* dv_conf1 */
+	0,	/* dv_clock */
 };
 #endif
 
