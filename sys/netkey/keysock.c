@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.42 2006/08/28 02:54:11 christos Exp $	*/
+/*	$NetBSD: keysock.c,v 1.43 2006/09/02 06:44:59 christos Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.42 2006/08/28 02:54:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.43 2006/09/02 06:44:59 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.42 2006/08/28 02:54:11 christos Exp $"
 
 #include <machine/stdarg.h>
 
-struct sockaddr key_dst = { 2, PF_KEY, };
-struct sockaddr key_src = { 2, PF_KEY, };
+struct sockaddr key_dst = { .sa_len = 2, .sa_family = PF_KEY, };
+struct sockaddr key_src = { .sa_len = 2, .sa_family = PF_KEY, };
 
 struct pfkeystat pfkeystat;
 
@@ -457,7 +457,10 @@ const struct protosw keysw[] = {
 }
 };
 
-struct domain keydomain =
-    { PF_KEY, "key", key_init, 0, 0,
-      keysw, &keysw[sizeof(keysw)/sizeof(keysw[0])] };
-
+struct domain keydomain = {
+	.dom_family = PF_KEY,
+    	.dom_name = "key",
+	.dom_init = key_init,
+	.dom_protosw = keysw,
+	.dom_protoswNPROTOSW = &keysw[sizeof(keysw)/sizeof(keysw[0])],
+};
