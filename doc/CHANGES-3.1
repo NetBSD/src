@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.153 2006/09/01 15:13:41 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.154 2006/09/02 21:01:00 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4469,4 +4469,24 @@ gnu/dist/sendmail/sendmail/main.c		patch
 	Fixes potential DoS attack with sendmail(8).
 	[adrianp, ticket #1495]
 
+
+bin/sh/expand.c					1.75-1.76
+
+	Fix corner case expansions of $@ and non-whitspace $IFS in /bin/sh.	
+	[dsl, tickets #1487 and #1488]
+
+sys/kern/vfs_subr.c				1.269
+
+	Fix the output of the ddb(4) "show mount" command.
+	[jld, ticket #1493]
+
+sbin/newfs_lfs/newfs.c				1.19
+
+	When testing seek speed (for the -A option), use sector-aligned
+	offsets so the reads don't always fail, and also be more careful
+	not to read off the end of the disk.  If a read does fail, error
+	out instead of silently leaving the loop early (and possibly
+	dividing by zero seconds), because it means our idea of the disk
+	size is wrong, or worse.
+	[jld, ticket #1494]
 
