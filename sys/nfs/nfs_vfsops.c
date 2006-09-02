@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.163 2006/09/02 12:40:58 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.164 2006/09/02 13:37:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.163 2006/09/02 12:40:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.164 2006/09/02 13:37:52 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1064,6 +1064,7 @@ nfs_fhtovp(struct mount *mp, struct fid *fid, struct vnode **vpp)
 	size_t fhsize;
 	struct nfsnode *np;
 	int error;
+	struct vattr va;
 
 	fidsize = fid->fid_len;
 	if (fidsize < sizeof(*fid)) {
@@ -1087,7 +1088,11 @@ nfs_fhtovp(struct mount *mp, struct fid *fid, struct vnode **vpp)
 		return error;
 	}
 	*vpp = NFSTOV(np);
-	return 0;
+	error = VOP_GETATTR(*vpp, &va, kauth_cred_get(), curlwp);
+	if (error != 0) {
+		vput(*vpp);
+	}
+	return error;
 }
 
 /* ARGSUSED */
