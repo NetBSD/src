@@ -1,4 +1,4 @@
-.\"     $NetBSD: efun.3,v 1.1 2006/08/26 18:11:45 christos Exp $
+.\"     $NetBSD: efun.3,v 1.2 2006/09/02 23:43:47 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -82,9 +82,11 @@ The
 .Nm estrdup ,
 .Nm estrlcat ,
 .Nm estrlcpy ,
+and
 .Nm evasprintf
+functions
 operate exactly as the correspoding functions that do not start with an
-.Dq e
+.Sq e
 except that they call
 the installed error handler that can be configured with
 .Nm esetfunc .
@@ -98,14 +100,14 @@ A
 error handler will just call
 .Xr exit 3 .
 .Sh SEE ALSO
-.Xr exit 3 ,
 .Xr asprintf 3 ,
-.Xr err 3 ,
-.Xr fopen 3 ,
 .Xr calloc 3 ,
+.Xr err 3 ,
+.Xr exit 3 ,
+.Xr fopen 3 ,
 .Xr malloc 3 ,
 .Xr realloc 3 ,
 .Xr strdup 3 ,
 .Xr strlcat 3 ,
 .Xr strlcpy 3 ,
-.Xr vasprintf 3 .
+.Xr vasprintf 3
