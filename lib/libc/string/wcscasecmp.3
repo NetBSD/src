@@ -1,3 +1,5 @@
+.\"	$NetBSD: wcscasecmp.3,v 1.2 2006/09/02 23:49:02 wiz Exp $
+.\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -28,9 +30,8 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)wcscasecmp.3	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: wcscasecmp.3,v 1.1 2006/08/26 22:48:50 christos Exp $
 .\"
-.Dd 24 8, 2006
+.Dd August 26, 2006
 .Dt WCSCASECMP 3
 .Os
 .Sh NAME
@@ -51,7 +52,7 @@ The
 and
 .Fn wcsncasecmp
 functions
-compare the null-terminated strings
+compare the nul-terminated strings
 .Fa s1
 and
 .Fa s2
@@ -69,17 +70,17 @@ compares at most
 .Fa len
 characters.
 .Sh SEE ALSO
-.Xr wcscmp 3 ,
+.Xr wcscmp 3
 .Sh HISTORY
 The
 .Fn wcscasecmp
 and
 .Fn wcsncasecmp
 functions first appeared in
-.Nx 4.0
+.Nx 4.0 .
 .Sh NOTES
 If
 .Fa len
-is zero
+is zero,
 .Fn wcsncasecmp
 returns always 0.
