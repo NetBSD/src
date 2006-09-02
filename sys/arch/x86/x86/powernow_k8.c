@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.5 2006/08/27 10:10:55 xtraeme Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.6 2006/09/02 11:00:52 xtraeme Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.5 2006/08/27 10:10:55 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.6 2006/09/02 11:00:52 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,23 +90,24 @@ static struct sysctllog *sysctllog;
 #define SYSCTLLOG	NULL
 #endif
 
-/* Global variables */
-struct powernow_cpu_state	*k8pnow_current_state;
-unsigned int			cur_freq;
-int				powernow_node_target, powernow_node_current;
-char				*freq_names;
-size_t				freq_names_len;
+#define READ_PENDING_WAIT(status)				\
+	do {							\
+		(status) = rdmsr(MSR_AMDK7_FIDVID_STATUS);	\
+	} while (PN8_STA_PENDING(status))
 
-/* Prototypes */
+struct powernow_cpu_state *k8pnow_current_state;
+unsigned int cur_freq;
+int powernow_node_target, powernow_node_current;
+char *freq_names;
+size_t freq_names_len;
+
 int k8pnow_sysctl_helper(SYSCTLFN_PROTO);
-int k8pnow_read_pending_wait(uint64_t *);
 int k8pnow_decode_pst(struct powernow_cpu_state *, uint8_t *);
 int k8pnow_states(struct powernow_cpu_state *, uint32_t, unsigned int,
     unsigned int);
 int k8_powernow_setperf(unsigned int);
 
 
-/* Functions */
 int k8pnow_sysctl_helper(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
@@ -136,20 +137,6 @@ int k8pnow_sysctl_helper(SYSCTLFN_ARGS)
 	}
 
 	return 0;
-}
-
-int
-k8pnow_read_pending_wait(uint64_t *status)
-{
-	unsigned int i = 100000;
-
-	while (i--) {
-		*status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
-		if (!PN8_STA_PENDING(*status))
-			return 0;
-	}
-	DPRINTF(("%s: change pending stuck.\n", __func__));
-	return 1;
 }
 
 int
@@ -196,8 +183,7 @@ k8_powernow_setperf(unsigned int freq)
 	while (cvid > vid) {
 		val = cvid - (1 << cstate->mvs);
 		WRITE_FIDVID(cfid, (val > 0) ? val : 0, 1ULL);
-		if (k8pnow_read_pending_wait(&status))
-			return 1;
+		READ_PENDING_WAIT(status);
 		cvid = PN8_STA_CVID(status);
 		COUNT_OFF_VST(cstate->vst);
 	}
@@ -208,8 +194,7 @@ k8_powernow_setperf(unsigned int freq)
 		 * in 0.25 step or in MVS.  Therefore do it as it's done
 		 * under Linux */
 		WRITE_FIDVID(cfid, cvid - 1, 1ULL);
-		if (k8pnow_read_pending_wait(&status))
-			return 1;
+		READ_PENDING_WAIT(status);
 		cvid = PN8_STA_CVID(status);
 		COUNT_OFF_VST(cstate->vst);
 	}
@@ -230,9 +215,7 @@ k8_powernow_setperf(unsigned int freq)
 			} else
 				val = cfid - 2;
 			WRITE_FIDVID(val, cvid, (uint64_t)cstate->pll * 1000 / 5);
-
-			if (k8pnow_read_pending_wait(&status))
-				return 1;
+			READ_PENDING_WAIT(status);
 			cfid = PN8_STA_CFID(status);
 			COUNT_OFF_IRT(cstate->irt);
 
@@ -240,8 +223,7 @@ k8_powernow_setperf(unsigned int freq)
 		}
 
 		WRITE_FIDVID(fid, cvid, (uint64_t) cstate->pll * 1000 / 5);
-		if (k8pnow_read_pending_wait(&status))
-			return 1;
+		READ_PENDING_WAIT(status);
 		cfid = PN8_STA_CFID(status);
 		COUNT_OFF_IRT(cstate->irt);
 	}
@@ -249,8 +231,7 @@ k8_powernow_setperf(unsigned int freq)
 	/* Phase 3: change to requested voltage */
 	if (cvid != vid) {
 		WRITE_FIDVID(cfid, vid, 1ULL);
-		if (k8pnow_read_pending_wait(&status))
-			return 1;
+		READ_PENDING_WAIT(status);
 		cvid = PN8_STA_CVID(status);
 		COUNT_OFF_VST(cstate->vst);
 	}
@@ -466,12 +447,10 @@ k8_powernow_init(void)
 
 	cur_freq = cstate->state_table[cstate->n_states-1].freq;
 
-	DPRINTF(("%s: cur_freq = %d\n", __func__, cur_freq));
-
-	aprint_normal("%s: AMD %s Technology\n", cpuname, techname);
-	aprint_normal("%s: available frequencies (Mhz): %s\n", cpuname,
-			freq_names);
-	aprint_normal("%s: current frequency (Mhz): %d\n", cpuname, cur_freq);
+	aprint_normal("%s: AMD %s Technology %d MHz\n",
+	    cpuname, techname, cur_freq);
+	aprint_normal("%s: available frequencies (Mhz): %s\n",
+	    cpuname, freq_names);
 
 	return;
 
