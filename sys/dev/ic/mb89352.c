@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.41 2006/09/02 07:00:23 christos Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.42 2006/09/02 09:26:47 xtraeme Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.41 2006/09/02 07:00:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.42 2006/09/02 09:26:47 xtraeme Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -1036,7 +1036,6 @@ nextbyte:
 	/* We now have a complete message.  Parse it. */
 	switch (sc->sc_state) {
 		struct spc_acb *acb;
-		struct scsipi_periph *periph;
 		struct spc_tinfo *ti;
 
 	case SPC_CONNECTED:
