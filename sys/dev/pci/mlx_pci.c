@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.13 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.14 2006/09/02 07:09:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.13 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.14 2006/09/02 07:09:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,13 +111,13 @@ static int	mlx_v5_findcomplete(struct mlx_softc *, u_int *, u_int *);
 static void	mlx_v5_intaction(struct mlx_softc *, int);
 static int	mlx_v5_fw_handshake(struct mlx_softc *, int *, int *, int *);
 
-struct mlx_pci_ident {
+static struct mlx_pci_ident {
 	u_short	mpi_vendor;
 	u_short	mpi_product;
 	u_short	mpi_subvendor;
 	u_short	mpi_subproduct;
 	int	mpi_iftype;
-} static const mlx_pci_ident[] = {
+} const mlx_pci_ident[] = {
 	{
 		PCI_VENDOR_MYLEX,
 		PCI_PRODUCT_MYLEX_RAID_V2,
