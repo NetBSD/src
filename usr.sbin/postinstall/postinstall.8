@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall.8,v 1.3.2.1 2006/09/02 12:33:24 tron Exp $
+.\"	$NetBSD: postinstall.8,v 1.3.2.2 2006/09/02 23:44:43 riz Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 12, 2005
+.Dd August 11, 2006
 .Dt POSTINSTALL 8
 .Os
 .Sh NAME
@@ -105,8 +105,9 @@ Apply fixes that
 .Cm check
 determines need to be applied.
 Not all items can be automatically fixed by
-.Nm ;
-in some cases manual intervention is required.
+.Nm .
+.Xr etcupdate 8
+may help, and in some cases manual intervention is required.
 .It Cm help
 Display a short help.
 .It Cm list
