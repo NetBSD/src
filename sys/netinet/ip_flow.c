@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.33 2006/06/07 22:34:01 kardel Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.34 2006/09/02 12:41:01 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.33 2006/06/07 22:34:01 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.34 2006/09/02 12:41:01 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,6 +270,7 @@ ipflow_addstats(struct ipflow *ipf)
 {
 	ipf->ipf_ro.ro_rt->rt_use += ipf->ipf_uses;
 	ipstat.ips_cantforward += ipf->ipf_errors + ipf->ipf_dropped;
+	ipstat.ips_total += ipf->ipf_uses;
 	ipstat.ips_forward += ipf->ipf_uses;
 	ipstat.ips_fastforward += ipf->ipf_uses;
 }
@@ -351,6 +352,7 @@ ipflow_slowtimo(void)
 		} else {
 			ipf->ipf_last_uses = ipf->ipf_uses;
 			ipf->ipf_ro.ro_rt->rt_use += ipf->ipf_uses;
+			ipstat.ips_total += ipf->ipf_uses;
 			ipstat.ips_forward += ipf->ipf_uses;
 			ipstat.ips_fastforward += ipf->ipf_uses;
 			ipf->ipf_uses = 0;
