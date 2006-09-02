@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12 2006/09/02 02:06:05 gdamore Exp $	*/
+/*	$NetBSD: clock.c,v 1.13 2006/09/02 20:27:21 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2006/09/02 02:06:05 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2006/09/02 20:27:21 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -91,10 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2006/09/02 02:06:05 gdamore Exp $");
 
 #include <mips/locore.h>
 
-#include <dev/clock_subr.h>
 #include <evbmips/evbmips/clockvar.h>
-
-todr_chip_handle_t todr_handle = NULL;
 
 static struct timecounter evbmips_timecounter =  {
 	(timecounter_get_t *)mips3_cp0_count_read,	/* get_timecount */
@@ -121,100 +118,6 @@ cpu_initclocks(void)
 		evbmips_timecounter.tc_frequency /= 2;
 
 	tc_init(&evbmips_timecounter);
-}
-
-/*
- * Attach the clock device to todr_handle.
- */
-void
-todr_attach(todr_chip_handle_t todr)
-{
-
-        if (todr_handle) {
-                printf("todr_attach: TOD already configured\n");
-		return;
-	}
-        todr_handle = todr;
-}
-
-/*
- * Set up the system's time, given a `reasonable' time value.
- */
-void
-inittodr(time_t base)
-{
-	int badbase = 0, waszero = base == 0;
-	struct timeval time;
-	struct timespec ts;
-
-	if (base < 5 * SECYR) {
-		/*
-		 * If base is 0, assume filesystem time is just unknown
-		 * in stead of preposterous. Don't bark.
-		 */
-		if (base != 0)
-			printf("WARNING: preposterous time in file system\n");
-		/* not going to use it anyway, if the chip is readable */
-		base = 21*SECYR + 186*SECDAY + SECDAY/2;
-		badbase = 1;
-	}
-
-	if ((todr_handle == NULL) ||
-	    (todr_gettime(todr_handle, &time) != 0) ||
-	    (time.tv_sec == 0)) {
-
-		if (todr_handle != NULL)
-			printf("WARNING: preposterous TOD clock time");
-		else
-			printf("WARNING: no TOD clock present");
-
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the clock.
-		 */
-		time.tv_sec = base;
-		ts.tv_sec = base;
-		ts.tv_nsec = 0;
-		tc_setclock(&ts);
-		if (!badbase)
-			resettodr();
-	} else {
-		int deltat = time.tv_sec - base;
-
-		ts.tv_sec = time.tv_sec;
-		ts.tv_nsec = time.tv_usec * 1000;
-		tc_setclock(&ts);
-
-		if (deltat < 0)
-			deltat = -deltat;
-		if (waszero || deltat < 2 * SECDAY)
-			return;
-		printf("WARNING: clock %s %d days",
-		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
-	}
-	printf(" -- CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * Reset the TODR based on the time value; used when the TODR
- * has a preposterous value and also when the time is reset
- * by the stime system call.  Also called when the TODR goes past
- * TODRZERO + 100*(SECYEAR+2*SECDAY) (e.g. on Jan 2 just after midnight)
- * to wrap the TODR around.
- */
-void
-resettodr(void)
-{
-	struct timeval	time;
-
-	getmicrotime(&time);
-
-	if (time.tv_sec == 0)
-		return;
-
-	if (todr_handle)
-		if (todr_settime(todr_handle, &time) != 0)
-			printf("Cannot set TOD clock time\n");
 }
 
 /*
