@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.7 2006/08/06 13:29:42 bjh21 Exp $ */
+/* $NetBSD: kern_tc.c,v 1.8 2006/09/02 06:35:12 christos Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.7 2006/08/06 13:29:42 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.8 2006/09/02 06:35:12 christos Exp $");
 
 #include "opt_ntp.h"
 
@@ -56,7 +56,7 @@ dummy_get_timecount(struct timecounter *tc)
 }
 
 static struct timecounter dummy_timecounter = {
-	dummy_get_timecount, 0, ~0u, 1000000, "dummy", -1000000
+	dummy_get_timecount, 0, ~0u, 1000000, "dummy", -1000000, NULL, NULL,
 };
 
 struct timehands {
