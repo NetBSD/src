@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.45 2006/05/10 21:53:16 mrg Exp $	*/
+/*	$NetBSD: machfb.c,v 1.46 2006/09/02 06:59:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.45 2006/05/10 21:53:16 mrg Exp $");
+	"$NetBSD: machfb.c,v 1.46 2006/09/02 06:59:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,10 +161,10 @@ struct mach64_crtcregs {
 	uint32_t dot_clock;
 };
 
-struct {
+static struct {
 	uint16_t chip_id;
 	uint32_t ramdac_freq;
-} static const mach64_info[] = {
+} const mach64_info[] = {
 	{ PCI_PRODUCT_ATI_MACH64_CT, 135000 },
 	{ PCI_PRODUCT_ATI_RAGE_PRO_AGP, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_PRO_AGP1X, 230000 },
@@ -191,7 +191,7 @@ struct {
 };
 
 static int mach64_chip_id, mach64_chip_rev;
-static struct videomode default_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static struct videomode default_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, };
 
 static const char *mach64_memtype_names[] = {
 	"(N/A)", "DRAM", "EDO DRAM", "EDO DRAM", "SDRAM", "SGRAM", "WRAM",
@@ -200,20 +200,20 @@ static const char *mach64_memtype_names[] = {
 
 static struct videomode mach64_modes[] = {
 	/* 640x400 @ 70 Hz, 31.5 kHz */
-	{ 25175, 640, 664, 760, 800, 400, 409, 411, 450, 0 },
+	{ 25175, 640, 664, 760, 800, 400, 409, 411, 450, 0, NULL, },
 	/* 640x480 @ 72 Hz, 36.5 kHz */
-	{ 25175, 640, 664, 760, 800, 480, 491, 493, 525, 0 },
+	{ 25175, 640, 664, 760, 800, 480, 491, 493, 525, 0, NULL, },
 	/* 800x600 @ 72 Hz, 48.0 kHz */
 	{ 50000, 800, 856, 976, 1040, 600, 637, 643, 666,
-	  VID_PHSYNC | VID_PVSYNC },
+	  VID_PHSYNC | VID_PVSYNC, NULL, },
 	/* 1024x768 @ 70 Hz, 56.5 kHz */
 	{ 75000, 1024, 1048, 1184, 1328, 768, 771, 777, 806,
-	  VID_NHSYNC | VID_NVSYNC },
+	  VID_NHSYNC | VID_NVSYNC, NULL, },
 	/* 1152x864 @ 70 Hz, 62.4 kHz */
-	{ 92000, 1152, 1208, 1368, 1474, 864, 865, 875, 895, 0 },
+	{ 92000, 1152, 1208, 1368, 1474, 864, 865, 875, 895, 0, NULL, },
 	/* 1280x1024 @ 70 Hz, 74.59 kHz */
 	{ 126500, 1280, 1312, 1472, 1696, 1024, 1032, 1040, 1068,
-	  VID_NHSYNC | VID_NVSYNC }
+	  VID_NHSYNC | VID_NVSYNC, NULL, }
 };
 
 extern const u_char rasops_cmap[768];
