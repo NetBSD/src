@@ -1,4 +1,4 @@
-#	$NetBSD: files.atheros,v 1.3 2006/06/08 06:15:59 gdamore Exp $
+#	$NetBSD: files.atheros,v 1.4 2006/09/02 22:54:47 gdamore Exp $
 
 file	arch/evbmips/atheros/mach_intr.c
 
@@ -6,12 +6,11 @@ file	arch/evbmips/atheros/autoconf.c
 file	arch/evbmips/atheros/machdep.c
 
 file	arch/mips/mips/bus_dma.c
-file	arch/evbmips/evbmips/clock.c
 file	arch/evbmips/evbmips/disksubr.c
 file	arch/evbmips/evbmips/interrupt.c
 
+file	arch/mips/mips/mips3_clock.c
 file	arch/mips/mips/softintr.c
-
 
 # System bus
 device	mainbus { }
