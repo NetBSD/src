@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.93 2006/04/13 23:16:33 christos Exp $	*/
+/*	$NetBSD: mcd.c,v 1.94 2006/09/02 07:01:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.93 2006/04/13 23:16:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.94 2006/09/02 07:01:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,7 @@ int	mcd_get_parms(struct mcd_softc *);
 void	mcdstart(struct mcd_softc *);
 void	mcd_pseudointr(void *);
 
-struct dkdriver mcddkdriver = { mcdstrategy };
+struct dkdriver mcddkdriver = { mcdstrategy, NULL, };
 
 #define MCD_RETRIES	3
 #define MCD_RDRETRIES	3
@@ -587,6 +587,14 @@ mcdioctl(dev, cmd, addr, flag, l)
 
 	part = MCDPART(dev);
 	switch (cmd) {
+        case DIOCGMEDIASIZE:
+		*(off_t *)addr = (off_t)sc->disksize * sc->blksize;
+		return 0;
+
+	case DIOCGSECTORSIZE:
+		*(u_int *)addr = sc->blksize;
+		return 0;
+
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(sc->sc_dk.dk_label);
 		return 0;
