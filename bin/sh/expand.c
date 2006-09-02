@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.68.2.3 2006/06/12 12:22:54 tron Exp $	*/
+/*	$NetBSD: expand.c,v 1.68.2.4 2006/09/02 20:38:46 ghen Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.68.2.3 2006/06/12 12:22:54 tron Exp $");
+__RCSID("$NetBSD: expand.c,v 1.68.2.4 2006/09/02 20:38:46 ghen Exp $");
 #endif
 #endif /* not lint */
 
@@ -874,8 +874,9 @@ numvar:
 		if (flag & EXP_FULL && quoted) {
 			for (ap = shellparam.p ; (p = *ap++) != NULL ; ) {
 				STRTODEST(p);
-				/* Nul forces a parameter split inside "" */
-				STPUTC('\0', expdest);
+				if (*ap)
+					/* A NUL separates args inside "" */
+					STPUTC('\0', expdest);
 			}
 			break;
 		}
@@ -955,11 +956,9 @@ ifsbreakup(char *string, struct arglist *arglist)
 	char *q;
 	const char *ifs;
 	const char *ifsspc;
-	int inquotes;
+	int had_param_ch = 0;
 
 	start = string;
-	ifsspc = NULL;
-	inquotes = 0;
 
 	if (ifslastp == NULL) {
 		/* Return entire argument, IFS doesn't apply to any of it */
@@ -974,23 +973,24 @@ ifsbreakup(char *string, struct arglist *arglist)
 
 	for (ifsp = &ifsfirst; ifsp != NULL; ifsp = ifsp->next) {
 		p = string + ifsp->begoff;
-		inquotes = ifsp->inquotes;
-		ifsspc = NULL;
 		while (p < string + ifsp->endoff) {
+			had_param_ch = 1;
 			q = p;
 			if (*p == CTLESC)
 				p++;
-			if (inquotes) {
-				/* Only NULs (probably from "$@") end args */
+			if (ifsp->inquotes) {
+				/* Only NULs (should be from "$@") end args */
 				if (*p != 0) {
 					p++;
 					continue;
 				}
+				ifsspc = NULL;
 			} else {
 				if (!strchr(ifs, *p)) {
 					p++;
 					continue;
 				}
+				had_param_ch = 0;
 				ifsspc = strchr(" \t\n", *p);
 
 				/* Ignore IFS whitespace at start */
@@ -999,6 +999,7 @@ ifsbreakup(char *string, struct arglist *arglist)
 					start = p;
 					continue;
 				}
+				had_param_ch = 0;
 			}
 
 			/* Save this argument... */
@@ -1036,7 +1037,7 @@ ifsbreakup(char *string, struct arglist *arglist)
 	 * Some recent clarification of the Posix spec say that it
 	 * should only generate one....
 	 */
-	if (*start) {
+	if (had_param_ch || *start != 0) {
 		sp = (struct strlist *)stalloc(sizeof *sp);
 		sp->text = start;
 		*arglist->lastp = sp;
