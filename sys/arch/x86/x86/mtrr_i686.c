@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.5 2006/03/27 21:25:21 bouyer Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.6 2006/09/02 07:16:41 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.5 2006/03/27 21:25:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.6 2006/09/02 07:16:41 christos Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -75,34 +75,34 @@ static int i686_mtrr_setone(struct mtrr *, struct proc *p);
 
 static struct mtrr_state
 mtrr_raw[] = {
-	{ MSR_MTRRphysBase0 },
-	{ MSR_MTRRphysMask0 },
-	{ MSR_MTRRphysBase1 },
-	{ MSR_MTRRphysMask1 },
-	{ MSR_MTRRphysBase2 },
-	{ MSR_MTRRphysMask2 },
-	{ MSR_MTRRphysBase3 },
-	{ MSR_MTRRphysMask3 },
-	{ MSR_MTRRphysBase4 },
-	{ MSR_MTRRphysMask4 },
-	{ MSR_MTRRphysBase5 },
-	{ MSR_MTRRphysMask5 },
-	{ MSR_MTRRphysBase6 },
-	{ MSR_MTRRphysMask6 },
-	{ MSR_MTRRphysBase7 },
-	{ MSR_MTRRphysMask7 },
-	{ MSR_MTRRfix64K_00000 },
-	{ MSR_MTRRfix16K_80000 },
-	{ MSR_MTRRfix16K_A0000 },
-	{ MSR_MTRRfix4K_C0000 },
-	{ MSR_MTRRfix4K_C8000 },
-	{ MSR_MTRRfix4K_D0000 },
-	{ MSR_MTRRfix4K_D8000 },
-	{ MSR_MTRRfix4K_E0000 },
-	{ MSR_MTRRfix4K_E8000 },
-	{ MSR_MTRRfix4K_F0000 },
-	{ MSR_MTRRfix4K_F8000 },
-	{ MSR_MTRRdefType }
+	{ MSR_MTRRphysBase0, 0 },
+	{ MSR_MTRRphysMask0, 0 },
+	{ MSR_MTRRphysBase1, 0 },
+	{ MSR_MTRRphysMask1, 0 },
+	{ MSR_MTRRphysBase2, 0 },
+	{ MSR_MTRRphysMask2, 0 },
+	{ MSR_MTRRphysBase3, 0 },
+	{ MSR_MTRRphysMask3, 0 },
+	{ MSR_MTRRphysBase4, 0 },
+	{ MSR_MTRRphysMask4, 0 },
+	{ MSR_MTRRphysBase5, 0 },
+	{ MSR_MTRRphysMask5, 0 },
+	{ MSR_MTRRphysBase6, 0 },
+	{ MSR_MTRRphysMask6, 0 },
+	{ MSR_MTRRphysBase7, 0 },
+	{ MSR_MTRRphysMask7, 0 },
+	{ MSR_MTRRfix64K_00000, 0 },
+	{ MSR_MTRRfix16K_80000, 0 },
+	{ MSR_MTRRfix16K_A0000, 0 },
+	{ MSR_MTRRfix4K_C0000, 0 },
+	{ MSR_MTRRfix4K_C8000, 0 },
+	{ MSR_MTRRfix4K_D0000, 0 },
+	{ MSR_MTRRfix4K_D8000, 0 },
+	{ MSR_MTRRfix4K_E0000, 0 },
+	{ MSR_MTRRfix4K_E8000, 0 },
+	{ MSR_MTRRfix4K_F0000, 0 },
+	{ MSR_MTRRfix4K_F8000, 0 },
+	{ MSR_MTRRdefType, 0 },
 };
 
 static const int nmtrr_raw = sizeof(mtrr_raw)/sizeof(mtrr_raw[0]);
