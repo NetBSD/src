@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.173 2006/07/26 11:14:55 tron Exp $
+# $NetBSD: mi,v 1.173.2.1 2006/09/02 23:56:14 riz Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -267,6 +267,7 @@
 ./etc/skel/.login				etc-sys-etc
 ./etc/skel/.logout				etc-sys-etc
 ./etc/skel/.profile				etc-sys-etc
+./etc/skel/.shrc				etc-sys-etc
 ./etc/skeykeys					etc-sys-etc
 ./etc/spamd.conf				etc-obsolete		obsolete
 ./etc/spwd.db					etc-sys-etc
