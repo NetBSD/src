@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.103 2006/06/07 22:34:04 kardel Exp $	*/
+/*	$NetBSD: nd6.c,v 1.104 2006/09/02 07:22:44 christos Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.103 2006/06/07 22:34:04 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.104 2006/09/02 07:22:44 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -102,7 +102,10 @@ int nd6_debug = 0;
 /* for debugging? */
 static int nd6_inuse, nd6_allocated;
 
-struct llinfo_nd6 llinfo_nd6 = {&llinfo_nd6, &llinfo_nd6};
+struct llinfo_nd6 llinfo_nd6 = {
+	.ln_prev = &llinfo_nd6,
+	.ln_next = &llinfo_nd6,
+};
 struct nd_drhead nd_defrouter;
 struct nd_prhead nd_prefix = { 0 };
 
@@ -1150,7 +1153,10 @@ nd6_rtrequest(req, rt, info)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
-	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
+	static const struct sockaddr_dl null_sdl = {
+		.sdl_len = sizeof(null_sdl),
+		.sdl_family = AF_LINK,
+	};
 	struct ifnet *ifp = rt->rt_ifp;
 	struct ifaddr *ifa;
 
@@ -1207,7 +1213,7 @@ nd6_rtrequest(req, rt, info)
 			 * (RTF_LLINFO && !ln case).
 			 */
 			rt_setgate(rt, rt_key(rt),
-				   (struct sockaddr *)&null_sdl);
+				   (const struct sockaddr *)&null_sdl);
 			gate = rt->rt_gateway;
 			SDL(gate)->sdl_type = ifp->if_type;
 			SDL(gate)->sdl_index = ifp->if_index;
@@ -1375,8 +1381,7 @@ nd6_rtrequest(req, rt, info)
 				IN6_LOOKUP_MULTI(llsol, ifp, in6m);
 				if (in6m)
 					in6_delmulti(in6m);
-			} else
-				; /* XXX: should not happen. bark here? */
+			}
 		}
 		nd6_inuse--;
 		ln->ln_next->ln_prev = ln->ln_prev;
