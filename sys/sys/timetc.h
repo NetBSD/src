@@ -1,4 +1,4 @@
-/* $NetBSD: timetc.h,v 1.2 2006/06/07 22:34:18 kardel Exp $ */
+/* $NetBSD: timetc.h,v 1.3 2006/09/02 13:47:03 kardel Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -17,6 +17,16 @@
 #ifndef _KERNEL
 #error "no user-serviceable parts inside"
 #endif
+
+/*
+ * max recommended timecounter name length
+ *
+ * it is not a functional limit but names longer
+ * then that will not be controllable via
+ * sysctl. see kern/kern_tc.c for the sysctl
+ * implementation.
+ */
+#define MAX_TCNAMELEN	64
 
 /*-
  * `struct timecounter' is the interface between the hardware which implements
