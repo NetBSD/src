@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.68.2.4 2006/09/02 20:38:46 ghen Exp $	*/
+/*	$NetBSD: expand.c,v 1.68.2.5 2006/09/02 20:39:51 ghen Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.68.2.4 2006/09/02 20:38:46 ghen Exp $");
+__RCSID("$NetBSD: expand.c,v 1.68.2.5 2006/09/02 20:39:51 ghen Exp $");
 #endif
 #endif /* not lint */
 
@@ -999,7 +999,6 @@ ifsbreakup(char *string, struct arglist *arglist)
 					start = p;
 					continue;
 				}
-				had_param_ch = 0;
 			}
 
 			/* Save this argument... */
