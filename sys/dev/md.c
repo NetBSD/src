@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.44 2006/03/28 17:38:29 thorpej Exp $	*/
+/*	$NetBSD: md.c,v 1.45 2006/09/02 07:02:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.44 2006/03/28 17:38:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.45 2006/09/02 07:02:33 christos Exp $");
 
 #include "opt_md.h"
 
@@ -114,7 +114,7 @@ const struct cdevsw md_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-static struct dkdriver mddkdriver = { mdstrategy };
+static struct dkdriver mddkdriver = { mdstrategy, NULL };
 
 static int   ramdisk_ndevs;
 static void *ramdisk_devs[MD_MAX_UNITS];
