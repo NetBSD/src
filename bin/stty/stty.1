@@ -1,4 +1,4 @@
-.\"	$NetBSD: stty.1,v 1.31 2004/04/01 16:10:03 tsarna Exp $
+.\"	$NetBSD: stty.1,v 1.32 2006/09/02 15:10:22 itohy Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -386,16 +386,17 @@ Recognized control-characters:
 .It eol2 Ta Tn VEOL2	EOL2 No character
 .It erase Ta Tn VERASE	ERASE No character
 .It werase Ta Tn VWERASE	WERASE No character
-.It intr Ta Tn VINTR	INTR No character
 .It kill Ta Tn VKILL	KILL No character
+.It reprint Ta Tn VREPRINT	REPRINT No character
+.It intr Ta Tn VINTR	INTR No character
 .It quit Ta Tn VQUIT	QUIT No character
 .It susp Ta Tn VSUSP	SUSP No character
+.It dsusp Ta Tn VDSUSP	DSUSP No character
 .It start Ta Tn VSTART	START No character
 .It stop Ta Tn VSTOP	STOP No character
-.It dsusp Ta Tn VDSUSP	DSUSP No character
 .It lnext Ta Tn VLNEXT	LNEXT No character
-.It reprint Ta Tn VREPRINT	REPRINT No character
 .It status Ta Tn VSTATUS	STATUS No character
+.It discard Ta Tn VDISCARD	DISCARD No character
 .El
 .Ed
 .It Cm min Ar number
