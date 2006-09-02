@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.805 2006/09/01 22:38:27 cube Exp $
+#	$NetBSD: files,v 1.806 2006/09/02 20:18:00 gdamore Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1282,6 +1282,7 @@ file	kern/kern_sysctl.c
 file	kern/kern_tc.c
 file	kern/kern_time.c
 file	kern/kern_timeout.c
+file	kern/kern_todr.c
 file	kern/kern_uuid.c
 file	kern/kern_xxx.c
 file	kern/kgdb_stub.c		kgdb
