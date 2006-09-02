@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.110 2006/08/26 18:15:37 christos Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.111 2006/09/02 11:10:24 yamt Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.110 2006/08/26 18:15:37 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.111 2006/09/02 11:10:24 yamt Exp $");
 #endif
 #endif				/* not lint */
 
@@ -169,7 +169,11 @@ struct hostlist {
 struct fhreturn {
 	int             fhr_flag;
 	int             fhr_vers;
-	nfsfh_t         fhr_fh;
+	size_t		fhr_fhsize;
+	union {
+		uint8_t v2[NFSX_V2FH];
+		uint8_t v3[NFSX_V3FHMAX];
+	} fhr_fh;
 };
 
 /* Global defs */
@@ -591,8 +595,8 @@ mntsrv(rqstp, transp)
 			fhr.fhr_flag = hostset;
 			fhr.fhr_vers = rqstp->rq_vers;
 			/* Get the file handle */
-			(void)memset(&fhr.fhr_fh, 0, sizeof(nfsfh_t));
-			fh_size = sizeof(nfsfh_t);
+			memset(&fhr.fhr_fh, 0, sizeof(fhr.fhr_fh)); /* for v2 */
+			fh_size = sizeof(fhr.fhr_fh);
 			if (getfh(dirpath, &fhr.fhr_fh, &fh_size) < 0) {
 				bad = errno;
 				syslog(LOG_ERR, "Can't get fh for %s", dirpath);
@@ -601,6 +605,15 @@ mntsrv(rqstp, transp)
 					syslog(LOG_ERR, "Can't send reply");
 				goto out;
 			}
+			if ((fhr.fhr_vers == 1 && fh_size > NFSX_V2FH) ||
+			    fh_size > NFSX_V3FHMAX) {
+				bad = EINVAL; /* XXX */
+				if (!svc_sendreply(transp, xdr_long,
+				    (char *)&bad))
+					syslog(LOG_ERR, "Can't send reply");
+				goto out;
+			}
+			fhr.fhr_fhsize = fh_size;
 			if (!svc_sendreply(transp, xdr_fhs, (char *) &fhr))
 				syslog(LOG_ERR, "Can't send reply");
 			if (!lookup_failed)
@@ -688,7 +701,7 @@ xdr_fhs(xdrsp, cp)
 	case 1:
 		return (xdr_opaque(xdrsp, (caddr_t)&fhrp->fhr_fh, NFSX_V2FH));
 	case 3:
-		len = NFSX_V3FH;
+		len = fhrp->fhr_fhsize;
 		if (!xdr_long(xdrsp, &len))
 			return (0);
 		if (!xdr_opaque(xdrsp, (caddr_t)&fhrp->fhr_fh, len))
