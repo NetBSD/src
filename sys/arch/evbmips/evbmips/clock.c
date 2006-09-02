@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 2006/09/02 02:04:25 gdamore Exp $	*/
+/*	$NetBSD: clock.c,v 1.12 2006/09/02 02:06:05 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2006/09/02 02:04:25 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2006/09/02 02:06:05 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -115,21 +115,6 @@ cpu_initclocks(void)
 
 	next_cp0_clk_intr = mips3_cp0_count_read() + curcpu()->ci_cycles_per_hz;
 	mips3_cp0_compare_write(next_cp0_clk_intr);
-
-#if 0
-	tick = 1000000 / hz;	/* number of microseconds between interrupts */
-	tickfix = 1000000 - (hz * tick);
-#ifdef NTP
-	fixtick = tickfix;
-#endif
-	if (tickfix) {
-		int ftp;
-
-		ftp = min(ffs(tickfix), ffs(hz));
-		tickfix >>= (ftp - 1);
-		tickfixinterval = hz >> (ftp - 1);
-        }
-#endif
 
 	evbmips_timecounter.tc_frequency = curcpu()->ci_cpu_freq;
 	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
