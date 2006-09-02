@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.49 2006/03/29 07:05:24 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.50 2006/09/02 07:06:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.49 2006/03/29 07:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.50 2006/09/02 07:06:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -134,7 +134,7 @@ mii_phy_setmedia(struct mii_softc *sc)
 	 */
 
 #ifdef DIAGNOSTIC
-	if (ife->ifm_data < 0 || ife->ifm_data >= MII_NMEDIA)
+	if (/* ife->ifm_data < 0 || */ ife->ifm_data >= MII_NMEDIA)
 		panic("mii_phy_setmedia");
 #endif
 
