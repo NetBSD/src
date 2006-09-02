@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.144 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.145 2006/09/02 06:22:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.144 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.145 2006/09/02 06:22:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1636,7 +1636,7 @@ filedescopen(dev_t dev, int mode, int type, struct lwp *l)
 
 const struct cdevsw filedesc_cdevsw = {
 	filedescopen, noclose, noread, nowrite, noioctl,
-	    nostop, notty, nopoll, nommap, nokqfilter,
+	    nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 /*
