@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.47 2006/09/02 18:58:02 christos Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.48 2006/09/02 18:59:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.47 2006/09/02 18:58:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.48 2006/09/02 18:59:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -997,8 +997,10 @@ decode_config(struct pcmcia_tuple *tuple, struct cis_state *state)
 	int i;
 	/* most of these are educated guesses */
 	static const struct pcmcia_config_entry init_cfe = {
-		-1, PCMCIA_CFE_RDYBSY_ACTIVE | PCMCIA_CFE_WP_ACTIVE |
-		PCMCIA_CFE_BVD_ACTIVE, PCMCIA_IFTYPE_MEMORY, 0,
+		.number	= -1,
+		.flags	= PCMCIA_CFE_RDYBSY_ACTIVE | PCMCIA_CFE_WP_ACTIVE |
+			  PCMCIA_CFE_BVD_ACTIVE,
+		.iftype	= PCMCIA_IFTYPE_MEMORY,
 	};
 
 	if (tuple->length < 3) {
