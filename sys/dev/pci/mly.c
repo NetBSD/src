@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.28 2006/08/23 15:44:30 christos Exp $	*/
+/*	$NetBSD: mly.c,v 1.29 2006/09/02 07:10:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.28 2006/08/23 15:44:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.29 2006/09/02 07:10:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,17 +172,17 @@ dev_type_ioctl(mlyioctl);
 
 const struct cdevsw mly_cdevsw = {
 	mlyopen, mlyclose, noread, nowrite, mlyioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
-struct mly_ident {
+static struct mly_ident {
 	u_short	vendor;
 	u_short	product;
 	u_short	subvendor;
 	u_short	subproduct;
 	int	hwif;
 	const char	*desc;
-} static const mly_ident[] = {
+} const mly_ident[] = {
 	{
 		PCI_VENDOR_MYLEX,
 		PCI_PRODUCT_MYLEX_EXTREMERAID,
