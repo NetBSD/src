@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10 2006/03/31 06:45:46 gdamore Exp $	*/
+/*	$NetBSD: clock.c,v 1.11 2006/09/02 02:04:25 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,13 +78,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2006/03/31 06:45:46 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2006/09/02 02:04:25 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/sched.h>
+#include <sys/timetc.h>
 
 #include <machine/bus.h>
 
@@ -94,6 +95,15 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2006/03/31 06:45:46 gdamore Exp $");
 #include <evbmips/evbmips/clockvar.h>
 
 todr_chip_handle_t todr_handle = NULL;
+
+static struct timecounter evbmips_timecounter =  {
+	(timecounter_get_t *)mips3_cp0_count_read,	/* get_timecount */
+	0,				/* no poll_pps */
+	~0u,				/* counter_mask */
+	0,				/* frequency */
+	"mips_cp0",			/* name */
+	0,				/* quality */
+};
 
 /*
  * Start the real-time and statistics clocks. Leave stathz 0 since there
@@ -106,6 +116,7 @@ cpu_initclocks(void)
 	next_cp0_clk_intr = mips3_cp0_count_read() + curcpu()->ci_cycles_per_hz;
 	mips3_cp0_compare_write(next_cp0_clk_intr);
 
+#if 0
 	tick = 1000000 / hz;	/* number of microseconds between interrupts */
 	tickfix = 1000000 - (hz * tick);
 #ifdef NTP
@@ -118,6 +129,13 @@ cpu_initclocks(void)
 		tickfix >>= (ftp - 1);
 		tickfixinterval = hz >> (ftp - 1);
         }
+#endif
+
+	evbmips_timecounter.tc_frequency = curcpu()->ci_cpu_freq;
+	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
+		evbmips_timecounter.tc_frequency /= 2;
+
+	tc_init(&evbmips_timecounter);
 }
 
 /*
@@ -141,6 +159,8 @@ void
 inittodr(time_t base)
 {
 	int badbase = 0, waszero = base == 0;
+	struct timeval time;
+	struct timespec ts;
 
 	if (base < 5 * SECYR) {
 		/*
@@ -168,10 +188,17 @@ inittodr(time_t base)
 		 * anything better, resetting the clock.
 		 */
 		time.tv_sec = base;
+		ts.tv_sec = base;
+		ts.tv_nsec = 0;
+		tc_setclock(&ts);
 		if (!badbase)
 			resettodr();
 	} else {
 		int deltat = time.tv_sec - base;
+
+		ts.tv_sec = time.tv_sec;
+		ts.tv_nsec = time.tv_usec * 1000;
+		tc_setclock(&ts);
 
 		if (deltat < 0)
 			deltat = -deltat;
@@ -193,6 +220,10 @@ inittodr(time_t base)
 void
 resettodr(void)
 {
+	struct timeval	time;
+
+	getmicrotime(&time);
+
 	if (time.tv_sec == 0)
 		return;
 
@@ -211,42 +242,6 @@ setstatclockrate(int newhz)
 {
 
 	/* nothing we can do */
-}
-
-
-/*
- * Return the best possible estimate of the time in the timeval to
- * which tvp points.  We guarantee that the time will be greater than
- * the value obtained by a previous call.
- */
-void
-microtime(struct timeval *tvp)
-{
-	int s;
-	static struct timeval lasttime;
-	uint32_t count, res;
-
-	s = splclock();
-	*tvp = time;
-
-	/* 32bit wrap-around during subtraction ok here. */
-	count = mips3_cp0_count_read() - last_cp0_count;
-	MIPS_COUNT_TO_MHZ(curcpu(), count, res);
-	tvp->tv_usec += res;
-
-	if (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
-
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
 }
 
 /*
