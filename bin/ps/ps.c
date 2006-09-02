@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.59 2005/06/26 19:10:49 christos Exp $	*/
+/*	$NetBSD: ps.c,v 1.60 2006/09/02 20:00:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.59 2005/06/26 19:10:49 christos Exp $");
+__RCSID("$NetBSD: ps.c,v 1.60 2006/09/02 20:00:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,6 +134,7 @@ static char	*kludge_oldps_options(char *);
 static int	 pscomp(const void *, const void *);
 static void	 scanvars(void);
 static void	 usage(void);
+static int	 parsenum(const char *, const char *);
 int		 main(int, char *[]);
 
 char dfmt[] = "pid tt state time command";
@@ -236,7 +237,7 @@ main(int argc, char *argv[])
 			break;
 		case 'p':
 			what = KERN_PROC_PID;
-			flag = atol(optarg);
+			flag = parsenum(optarg, "process id");
 			xflg = 1;
 			break;
 		case 'r':
@@ -295,18 +296,11 @@ main(int argc, char *argv[])
 		case 'U':
 			if (*optarg != '\0') {
 				struct passwd *pw;
-				char *ep;
 
 				what = KERN_PROC_UID;
 				pw = getpwnam(optarg);
 				if (pw == NULL) {
-					errno = 0;
-					flag = strtoul(optarg, &ep, 10);
-					if (errno)
-						err(1, "%s", optarg);
-					if (*ep != '\0')
-						errx(1, "%s: illegal user name",
-						    optarg);
+					flag = parsenum(optarg, "user name");
 				} else
 					flag = pw->pw_uid;
 			}
@@ -724,6 +718,23 @@ kludge_oldps_options(char *s)
 	(void)strcpy(ns, cp);		/* XXX strcpy is safe here */
 
 	return (newopts);
+}
+
+static int
+parsenum(const char *str, const char *msg)
+{
+	char *ep;
+	unsigned long ul;
+
+	ul = strtoul(str, &ep, 0);
+
+	if (*str == '\0' || *ep != '\0')
+		errx(1, "Invalid %s: `%s'", msg, str);
+
+	if (ul > INT_MAX)
+		errx(1, "Out of range %s: `%s'", msg, str);
+
+	return (int)ul;
 }
 
 static void
