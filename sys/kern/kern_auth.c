@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.17 2006/08/20 15:05:14 christos Exp $ */
+/* $NetBSD: kern_auth.c,v 1.18 2006/09/02 20:10:24 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -699,6 +699,10 @@ kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
 
 	/* Short-circuit requests coming from the kernel. */
 	if (cred == NOCRED || cred == FSCRED)
+		return (0);
+
+	/* Short-circuit requests when there are no listeners. */
+	if (SIMPLEQ_EMPTY(&scope->listenq))
 		return (0);
 
 	/*
