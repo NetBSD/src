@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.15 2006/03/29 06:32:36 thorpej Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.16 2006/09/02 07:08:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.15 2006/03/29 06:32:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.16 2006/09/02 07:08:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,10 +84,10 @@ static int	mlx_v1_reset(struct mlx_softc *);
 CFATTACH_DECL(mlx_eisa, sizeof(struct mlx_softc),
     mlx_eisa_match, mlx_eisa_attach, NULL, NULL);
 
-struct mlx_eisa_prod {
+static struct mlx_eisa_prod {
 	const char	*mp_idstr;
 	int		mp_nchan;
-} static const mlx_eisa_prod[] = {
+} const mlx_eisa_prod[] = {
 	{ "MLX0070", 1 },
 	{ "MLX0071", 3 },
 	{ "MLX0072", 3 },
