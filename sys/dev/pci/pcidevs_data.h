@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.825 2006/09/03 08:39:15 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.826 2006/09/03 10:20:13 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.826 2006/09/03 08:38:52 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.827 2006/09/03 10:19:26 xtraeme Exp
  */
 
 /*
@@ -7500,6 +7500,14 @@ static const struct pci_product pci_products[] = {
 	    "82801GBM/GHM SATA Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GBM_AHCI,
+	    "82801GBM AHCI SATA Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GHM_RAID,
+	    "82801GHM SATA RAID Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_USB_1,
 	    "82801GB/GR USB UHCI Controller",
 	},
@@ -7590,6 +7598,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SATA_2,
 	    "82801H SATA Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_SATA_1,
+	    "82801HBM SATA Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_SATA_2,
+	    "82081HBM SATA Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_USB_1,
@@ -12252,4 +12268,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2470;
+const int pci_nproducts = 2474;
