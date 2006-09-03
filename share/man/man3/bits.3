@@ -1,4 +1,4 @@
-.\"	$NetBSD: bits.3,v 1.1 2006/08/31 19:24:37 dyoung Exp $
+.\"	$NetBSD: bits.3,v 1.2 2006/09/03 00:04:02 wiz Exp $
 .\"
 .\" Copyright (c) 2006 David Young.  All rights reserved.
 .\"
@@ -67,16 +67,15 @@ through
 .Fa n ,
 inclusive, set.
 It does not matter whether
-.Fa m >
-.Fa n or
-.Fa m
-<=
-.Fa n .
+.Fa m No \*[Gt] Fa n
+or
+.Fa m No \*[Lt]= Fa n .
 The least significant bit is bit 0.
 .El
 .Pp
 .Fn __SHIFTIN ,
-.Fn __SHIFTOUT , and
+.Fn __SHIFTOUT ,
+and
 .Fn __SHIFTOUT_MASK
 help read and write bitfields from words:
 .Pp
@@ -145,24 +144,24 @@ len = __SHIFTOUT(rxstat, ATW_RXSTAT_FL_MASK);
 The
 .Nm bits
 macros first appeared in
-.Xr atw ,
+.Xr atw 4 ,
 with different names and implementation.
 .Nm bits
 macros appeared with their current names and implementation in
 .Nx 4.0 .
-.Sh BUGS
-.Fn __BIT 
-and
-.Fn __BITS
-can only express 32-bit bitmasks.
 .Sh AUTHORS
 The
-.Nm bits 
+.Nm bits
 macros were written by
-.An "David Young" Aq dyoung@NetBSD.org .
-.An "Matt Thomas" Aq matt@NetBSD.org
+.An David Young Aq dyoung@NetBSD.org .
+.An Matt Thomas Aq matt@NetBSD.org
 suggested important improvements to the implementation, and
 contributed the macro names
 .Fn SHIFTIN
 and
-.Fn SHIFTOUT . 
+.Fn SHIFTOUT .
+.Sh BUGS
+.Fn __BIT
+and
+.Fn __BITS
+can only express 32-bit bitmasks.
