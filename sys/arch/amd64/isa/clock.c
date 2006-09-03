@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10 2006/07/24 16:37:24 kardel Exp $	*/
+/*	$NetBSD: clock.c,v 1.11 2006/09/03 19:38:08 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2006/07/24 16:37:24 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2006/09/03 19:38:08 perry Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -169,8 +169,8 @@ int clock_debug = 0;
 #define DPRINTF(arg)
 #endif
 
-int sysbeepmatch __P((struct device *, struct cfdata *, void *));
-void sysbeepattach __P((struct device *, struct device *, void *));
+int sysbeepmatch(struct device *, struct cfdata *, void *);
+void sysbeepattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sysbeep, sizeof(struct device),
     sysbeepmatch, sysbeepattach, NULL, NULL);
@@ -179,15 +179,15 @@ static int ppi_attached;
 static pcppi_tag_t ppicookie;
 #endif /* PCPPI */
 
-void	spinwait __P((int));
-int	clockintr __P((void *, struct intrframe));
-int	gettick __P((void));
-void	sysbeep __P((int, int));
-void	rtcinit __P((void));
-int	rtcget __P((mc_todregs *));
-void	rtcput __P((mc_todregs *));
+void	spinwait(int);
+int	clockintr(void *, struct intrframe);
+int	gettick(void);
+void	sysbeep(int, int);
+void	rtcinit(void);
+int	rtcget(mc_todregs *);
+void	rtcput(mc_todregs *);
 
-static inline int gettick_broken_latch __P((void));
+static inline int gettick_broken_latch(void);
 static void       tickle_tc(void);
 
 static volatile uint32_t i8254_lastcount;
@@ -195,8 +195,8 @@ static volatile uint32_t i8254_offset;
 static volatile int i8254_ticked;
 static struct simplelock tmr_lock = SIMPLELOCK_INITIALIZER;  /* protect TC timer variables */
 
-inline u_int mc146818_read __P((void *, u_int));
-inline void mc146818_write __P((void *, u_int, u_int));
+inline u_int mc146818_read(void *, u_int);
+inline void mc146818_write(void *, u_int, u_int);
 
 u_int i8254_get_timecount(struct timecounter *);
 
@@ -211,19 +211,16 @@ static struct timecounter i8254_timecounter = {
 
 /* XXX use sc? */
 inline u_int
-mc146818_read(sc, reg)
-	void *sc;					/* XXX use it? */
-	u_int reg;
+mc146818_read(void *sc, u_int reg)
 {
 
 	outb(IO_RTC, reg);
 	return (inb(IO_RTC+1));
 }
 
+/* XXX use sc? */
 inline void
-mc146818_write(sc, reg, datum)
-	void *sc;					/* XXX use it? */
-	u_int reg, datum;
+mc146818_write(void *sc, u_int reg, u_int datum)
 {
 
 	outb(IO_RTC, reg);
@@ -246,7 +243,7 @@ static int ticks[6];
  */
 
 int
-gettick_broken_latch()
+gettick_broken_latch(void)
 {
 	u_long ef;
 	int v1, v2, v3;
@@ -321,7 +318,6 @@ void
 initrtclock(u_long freq)
 {
 	u_long tval;
-
 	/*
 	 * Compute timer_count, the count-down count the timer will be
 	 * set to.  Also, correctly round
@@ -342,7 +338,7 @@ initrtclock(u_long freq)
 }
 
 void
-startrtclock()
+startrtclock(void)
 {
 	int s;
 
@@ -364,7 +360,7 @@ startrtclock()
 
 
 static void
-tickle_tc() 
+tickle_tc(void) 
 {
 #if defined(MULTIPROCESSOR)
 	struct cpu_info *ci = curcpu();
@@ -439,7 +435,7 @@ i8254_get_timecount(struct timecounter *tc)
 }
 
 int
-gettick()
+gettick(void)
 {
 	u_long ef;
 	u_char lo, hi;
@@ -467,8 +463,7 @@ gettick()
  * Don't rely on this being particularly accurate.
  */
 void
-i8254_delay(n)
-	int n;
+i8254_delay(int n)
 {
 	int delay_tick, odelay_tick;
 	static const int delaytab[26] = {
@@ -550,18 +545,13 @@ i8254_delay(n)
 
 #if (NPCPPI > 0)
 int
-sysbeepmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+sysbeepmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	return (!ppi_attached);
 }
 
 void
-sysbeepattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sysbeepattach(struct device *parent, struct device *self, void *aux)
 {
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -572,8 +562,7 @@ sysbeepattach(parent, self, aux)
 #endif
 
 void
-sysbeep(pitch, period)
-	int pitch, period;
+sysbeep(int pitch, int period)
 {
 #if (NPCPPI > 0)
 	if (ppi_attached)
@@ -582,7 +571,7 @@ sysbeep(pitch, period)
 }
 
 void
-i8254_initclocks()
+i8254_initclocks(void)
 {
 
 	/*
@@ -594,7 +583,7 @@ i8254_initclocks()
 }
 
 void
-rtcinit()
+rtcinit(void)
 {
 	static int first_rtcopen_ever = 1;
 
@@ -608,8 +597,7 @@ rtcinit()
 }
 
 int
-rtcget(regs)
-	mc_todregs *regs;
+rtcget(mc_todregs *regs)
 {
 
 	rtcinit();
@@ -620,8 +608,7 @@ rtcget(regs)
 }	
 
 void
-rtcput(regs)
-	mc_todregs *regs;
+rtcput(mc_todregs *regs)
 {
 
 	rtcinit();
@@ -634,9 +621,9 @@ static int timeset;
  * check whether the CMOS layout is "standard"-like (ie, not PS/2-like),
  * to be called at splclock()
  */
-static int cmoscheck __P((void));
+static int cmoscheck(void);
 static int
-cmoscheck()
+cmoscheck(void)
 {
 	int i;
 	unsigned short cksum = 0;
@@ -652,9 +639,9 @@ cmoscheck()
 /*
  * Check whether the CMOS layout is PS/2 like, to be called at splclock().
  */
-static int cmoscheckps2 __P((void));
+static int cmoscheckps2(void);
 static int
-cmoscheckps2()
+cmoscheckps2(void)
 {
 #if 0
 	/* Disabled until I find out the CRC checksum algorithm IBM uses */
@@ -687,10 +674,9 @@ int rtc_update_century = 0;
  * Being here, deal with the CMOS century byte.
  */
 static int centb = NVRAM_CENTURY;
-static int clock_expandyear __P((int));
+static int clock_expandyear(int);
 static int
-clock_expandyear(clockyear)
-	int clockyear;
+clock_expandyear(int clockyear)
 {
 	int s, clockcentury, cmoscentury;
 
@@ -744,8 +730,7 @@ clock_expandyear(clockyear)
  * from a filesystem.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
@@ -839,7 +824,7 @@ fstime:
  * Reset the clock.
  */
 void
-resettodr()
+resettodr(void)
 {
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
@@ -882,7 +867,6 @@ resettodr()
 }
 
 void
-setstatclockrate(arg)
-	int arg;
+setstatclockrate(int arg)
 {
 }
