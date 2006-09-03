@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.21 2006/06/07 22:34:04 kardel Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.22 2006/09/03 06:53:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.21 2006/06/07 22:34:04 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.22 2006/09/03 06:53:08 christos Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -673,7 +673,10 @@ tpclnp_ctlinput(int cmd, struct sockaddr *saddr, void *dummy)
  * than a sockaddr_iso.
  */
 
-static struct sockaddr_iso siso = {sizeof(siso), AF_ISO};
+static struct sockaddr_iso siso = {
+	.siso_len = sizeof(siso),
+	.siso_family = AF_ISO,
+};
 void
 tpclnp_ctlinput1(int cmd, struct iso_addr *isoa)
 {
