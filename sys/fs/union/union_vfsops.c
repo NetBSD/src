@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.36 2006/07/23 22:06:10 ad Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.37 2006/09/03 21:29:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.36 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.37 2006/09/03 21:29:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -583,5 +583,7 @@ struct vfsops union_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	union_vnodeopv_descs,
+	0,				/* vfs_refcount */
+	{ NULL, NULL },
 };
 VFS_ATTACH(union_vfsops);
