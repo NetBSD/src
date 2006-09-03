@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.21 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.22 2006/09/03 04:53:19 christos Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.139 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
@@ -130,7 +130,7 @@ int			 pf_commit_rules(u_int32_t, int, char *);
 #ifdef __NetBSD__
 const struct cdevsw pf_cdevsw = {
 	pfopen, pfclose, noread, nowrite, pfioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 static int pf_pfil_attach(void);
