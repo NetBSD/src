@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 2006/09/03 20:05:37 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.14 2006/09/03 20:10:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2006/09/03 20:05:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14 2006/09/03 20:10:19 perry Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -180,7 +180,6 @@ int clock_debug = 0;
 #define DPRINTF(arg)
 #endif
 
-void		spinwait(int);
 int		gettick(void);
 void		sysbeep(int, int);
 static void     tickle_tc(void);
@@ -740,6 +739,7 @@ inittodr(time_t base)
 	struct clock_ymdhms dt;
 	struct timespec ts;
 	int s;
+
 	/*
 	 * We mostly ignore the suggested time (which comes from the
 	 * file system) and go for the RTC clock time stored in the
