@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.31.2.2 2006/08/11 15:45:33 yamt Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.31.2.3 2006/09/03 15:25:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.31.2.2 2006/08/11 15:45:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.31.2.3 2006/09/03 15:25:13 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -104,6 +104,8 @@ struct vfsops cd9660_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	cd9660_vnodeopv_descs,
+	0,	/* refcount */
+	{ NULL, NULL } /* list */
 };
 VFS_ATTACH(cd9660_vfsops);
 

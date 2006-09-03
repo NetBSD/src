@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.7.8.1 2006/04/11 11:53:26 yamt Exp $	*/
+/*	$NetBSD: pchb.c,v 1.7.8.2 2006/09/03 15:22:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.7.8.1 2006/04/11 11:53:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.7.8.2 2006/09/03 15:22:50 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,8 +51,8 @@ pchb_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_GALILEO) &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_GALILEO_GT64011))
+	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_MARVELL) &&
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MARVELL_GT64011))
 		return 1;
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.190.2.6 2006/08/11 15:45:46 yamt Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.190.2.7 2006/09/03 15:25:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.190.2.6 2006/08/11 15:45:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.190.2.7 2006/09/03 15:25:22 yamt Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -491,8 +491,6 @@ sysctl_locate(struct lwp *l, const int *name, u_int namelen,
 		*rnode = &sysctl_root;
 	if (nip)
 		*nip = 0;
-	if (namelen < 0)
-		return (EINVAL);
 	if (namelen == 0)
 		return (0);
 
@@ -672,10 +670,6 @@ sysctl_query(SYSCTLFN_ARGS)
 	return (error);
 }
 
-#ifdef SYSCTL_DEBUG_CREATE
-#undef sysctl_create
-#endif /* SYSCTL_DEBUG_CREATE */
-
 /*
  * sysctl_create -- Adds a node (the description of which is taken
  * from newp) to the tree, returning a copy of it in the space pointed
@@ -684,8 +678,14 @@ sysctl_query(SYSCTLFN_ARGS)
  * instead.  Yes, this is complex, but we want to make sure everything
  * is proper.
  */
+#ifdef SYSCTL_DEBUG_CREATE
+int _sysctl_create(SYSCTLFN_ARGS);
+int
+_sysctl_create(SYSCTLFN_ARGS)
+#else
 int
 sysctl_create(SYSCTLFN_ARGS)
+#endif
 {
 	struct sysctlnode nnode, *node, *pnode;
 	int error, ni, at, nm, type, sz, flags, anum, v;
@@ -1189,9 +1189,8 @@ sysctl_create(SYSCTLFN_ARGS)
  * ********************************************************************
  */
 #ifdef SYSCTL_DEBUG_CREATE
-int _sysctl_create(SYSCTLFN_PROTO);
 int
-_sysctl_create(SYSCTLFN_ARGS)
+sysctl_create(SYSCTLFN_ARGS)
 {
 	const struct sysctlnode *node;
 	int k, rc, ni, nl = namelen + (name - oname);
@@ -1210,7 +1209,7 @@ _sysctl_create(SYSCTLFN_ARGS)
 	       node->sysctl_size);
 
 	node = rnode;
-	rc = sysctl_create(SYSCTLFN_CALL(rnode));
+	rc = _sysctl_create(SYSCTLFN_CALL(rnode));
 
 	printf("sysctl_create(");
 	for (ni = 0; ni < nl - 1; ni++)
@@ -1219,7 +1218,6 @@ _sysctl_create(SYSCTLFN_ARGS)
 
 	return (rc);
 }
-#define sysctl_create _sysctl_create
 #endif /* SYSCTL_DEBUG_CREATE */
 
 /*

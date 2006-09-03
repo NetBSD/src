@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.51.2.4 2006/08/11 15:45:46 yamt Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.51.2.5 2006/09/03 15:25:22 yamt Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.51.2.4 2006/08/11 15:45:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.51.2.5 2006/09/03 15:25:22 yamt Exp $");
 
 #include "opt_systrace.h"
 
@@ -221,7 +221,7 @@ int systrace_debug = 0;
 #ifdef __NetBSD__
 const struct cdevsw systrace_cdevsw = {
 	systraceopen, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 #endif
 

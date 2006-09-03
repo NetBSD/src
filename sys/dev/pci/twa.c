@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.3.10.3 2006/08/11 15:44:26 yamt Exp $ */
+/*	$NetBSD: twa.c,v 1.3.10.4 2006/09/03 15:24:23 yamt Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.3.10.3 2006/08/11 15:44:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.3.10.4 2006/09/03 15:24:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -928,7 +928,7 @@ twa_recompute_openings(struct twa_softc *sc)
 
 #ifdef TWA_DEBUG
 	printf("%s: %d array%s, %d openings per array\n",
-	    sc->sc_twa.dv_xname, sc->sc_nunits,
+	    sc->twa_dv.dv_xname, sc->sc_nunits,
 	    sc->sc_nunits == 1 ? "" : "s", sc->sc_openings);
 #endif
 	for (unit = 0; unit < TWA_MAX_UNITS; unit++) {
@@ -2430,7 +2430,7 @@ fw_passthru_done:
 
 const struct cdevsw twa_cdevsw = {
 	twaopen, twaclose, noread, nowrite, twaioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 /*
@@ -3004,7 +3004,7 @@ twa_find_aen(struct twa_softc *sc, uint16_t aen_code)
 	return(1);
 }
 
-static void inline
+static inline void
 twa_request_init(struct twa_request *tr, int flags)
 {
 	tr->tr_data = NULL;
@@ -3141,7 +3141,7 @@ twa_describe_controller(struct twa_softc *sc)
 		if ((*((char *)(p[7]->data + i)) & TWA_DRIVE_DETECTED) == 0)
 			continue;
 
-		rv = twa_get_param(sc, TWA_PARAM_DRIVE_TABLE,
+		rv = twa_get_param(sc, TWA_PARAM_DRIVE_TABLE + i,
 			TWA_PARAM_DRIVEMODELINDEX,
 			TWA_PARAM_DRIVEMODEL_LENGTH, NULL, &p[8]);
 
@@ -3151,7 +3151,7 @@ twa_describe_controller(struct twa_softc *sc)
 			continue;
 		}
 
-		rv = twa_get_param(sc, TWA_PARAM_DRIVE_TABLE,
+		rv = twa_get_param(sc, TWA_PARAM_DRIVE_TABLE + i,
 			TWA_PARAM_DRIVESIZEINDEX,
 			TWA_PARAM_DRIVESIZE_LENGTH, NULL, &p[9]);
 

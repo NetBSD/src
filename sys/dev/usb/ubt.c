@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.13.8.1 2006/06/26 12:52:28 yamt Exp $	*/
+/*	$NetBSD: ubt.c,v 1.13.8.2 2006/09/03 15:25:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.13.8.1 2006/06/26 12:52:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.13.8.2 2006/09/03 15:25:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -280,6 +280,18 @@ static int ubt_set_isoc_config(struct ubt_softc *);
 static int ubt_sysctl_config(SYSCTLFN_PROTO);
 static void ubt_abortdealloc(struct ubt_softc *);
 
+/*
+ * If a device should be ignored then add
+ *
+ *	{ VendorID, ProductID }
+ *
+ * to this list.
+ */
+static const struct usb_devno ubt_ignore[] = {
+	{ USB_VENDOR_BROADCOM, USB_PRODUCT_BROADCOM_BCM2033NF },
+	{ 0, 0 }	/* end of list */
+};
+
 USB_MATCH(ubt)
 {
 	USB_MATCH_START(ubt, uaa);
@@ -288,6 +300,9 @@ USB_MATCH(ubt)
 	DPRINTFN(50, "ubt_match\n");
 
 	if (uaa->iface == NULL)
+		return UMATCH_NONE;
+
+	if (usb_lookup(ubt_ignore, uaa->vendor, uaa->product))
 		return UMATCH_NONE;
 
 	id = usbd_get_interface_descriptor(uaa->iface);
@@ -1326,6 +1341,12 @@ ubt_recv_event(usbd_xfer_handle xfer, usbd_private_handle h, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, &buf, &count, NULL);
 
+	if (count < sizeof(hci_event_hdr_t) - 1) {
+		DPRINTF("dumped undersized event (count = %d)\n", count);
+		sc->sc_unit.hci_stats.err_rx++;
+		return;
+	}
+
 	sc->sc_unit.hci_stats.evt_rx++;
 	sc->sc_unit.hci_stats.byte_rx += count;
 
@@ -1414,14 +1435,19 @@ ubt_recv_acl_complete(usbd_xfer_handle xfer,
 	} else {
 		usbd_get_xfer_status(xfer, NULL, &buf, &count, NULL);
 
-		sc->sc_unit.hci_stats.acl_rx++;
-		sc->sc_unit.hci_stats.byte_rx += count;
-
-		m = ubt_mbufload(buf, count, HCI_ACL_DATA_PKT);
-		if (m != NULL)
-			hci_input_acl(&sc->sc_unit, m);
-		else
+		if (count < sizeof(hci_acldata_hdr_t) - 1) {
+			DPRINTF("dumped undersized packet (%d)\n", count);
 			sc->sc_unit.hci_stats.err_rx++;
+		} else {
+			sc->sc_unit.hci_stats.acl_rx++;
+			sc->sc_unit.hci_stats.byte_rx += count;
+
+			m = ubt_mbufload(buf, count, HCI_ACL_DATA_PKT);
+			if (m != NULL)
+				hci_input_acl(&sc->sc_unit, m);
+			else
+				sc->sc_unit.hci_stats.err_rx++;
+		}
 	}
 
 	/* and restart */

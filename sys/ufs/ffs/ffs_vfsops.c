@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.180.2.3 2006/08/11 15:47:36 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.180.2.4 2006/09/03 15:26:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.180.2.3 2006/08/11 15:47:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.180.2.4 2006/09/03 15:26:07 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -109,6 +109,8 @@ struct vfsops ffs_vfsops = {
 	ffs_snapshot,
 	ffs_extattrctl,
 	ffs_vnodeopv_descs,
+	0,
+	{ NULL, NULL },
 };
 VFS_ATTACH(ffs_vfsops);
 

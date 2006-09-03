@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.86 2005/11/16 03:00:23 uwe Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.86.8.1 2006/09/03 15:23:32 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,9 +49,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.86 2005/11/16 03:00:23 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.86.8.1 2006/09/03 15:23:32 yamt Exp $");
 
 #include "opt_multiprocessor.h"
+#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,6 +334,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	pcb->pcb_wim = 1;		/* Fence at window #1 */
 }
 
+#ifdef COREDUMP
 /*
  * cpu_coredump is called to write a core dump header.
  * (should this be defined elsewhere?  machdep.c?)
@@ -373,3 +375,4 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
 	    sizeof(md_core));
 }
+#endif

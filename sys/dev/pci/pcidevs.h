@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.770.2.6 2006/08/11 15:44:26 yamt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.770.2.7 2006/09/03 15:24:22 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.818 2006/08/10 13:22:12 simonb Exp
+ *	NetBSD: pcidevs,v 1.826 2006/09/03 08:38:52 xtraeme Exp
  */
 
 /*
@@ -463,7 +463,7 @@
 #define	PCI_VENDOR_POWERCC	0x11a7		/* Power Computing */
 #define	PCI_VENDOR_INNOSYS	0x11a9		/* InnoSys */
 #define	PCI_VENDOR_ACTEL	0x11aa		/* Actel */
-#define	PCI_VENDOR_GALILEO	0x11ab		/* Galileo (Marvell) Technology */
+#define	PCI_VENDOR_MARVELL	0x11ab		/* Marvell */
 #define	PCI_VENDOR_CANNON	0x11ac		/* Cannon IS */
 #define	PCI_VENDOR_LITEON	0x11ad		/* Lite-On Communications */
 #define	PCI_VENDOR_SCITEX	0x11ae		/* Scitex */
@@ -1178,7 +1178,10 @@
 #define	PCI_PRODUCT_ATI_RADEON_RV280_5963	0x5963		/* Radeon 9200 5963 */
 #define	PCI_PRODUCT_ATI_RADEON_RV280_5964	0x5964		/* Radeon 9200SE 5964 */
 #define	PCI_PRODUCT_ATI_RS480_HB	0x5950		/* RS480 Host Bridge */
+#define	PCI_PRODUCT_ATI_RS482M	0x5975		/* Radeon Xpress Series (RS482M) */
 #define	PCI_PRODUCT_ATI_RS480_XRP	0x5a34		/* RS480 PCI Express Root Port */
+#define	PCI_PRODUCT_ATI_RS480_PPB_5A36	0x5a36		/* RS480 PCI Express Bridge */
+#define	PCI_PRODUCT_ATI_RS480_PPB_5A3F	0x5a3f		/* RS480 PCI Express Bridge */
 #define	PCI_PRODUCT_ATI_RADEON_RV370_5B60	0x5b60		/* Radeon X300 (RV370) 5B60 */
 #define	PCI_PRODUCT_ATI_RADEON_RV370_5B64	0x5b64		/* FireGL V3100 (RV370) 5B64 */
 #define	PCI_PRODUCT_ATI_RADEON_RV370_5B65	0x5b64		/* FireGL D1100 (RV370) 5B65 */
@@ -1277,6 +1280,10 @@
 #define	PCI_PRODUCT_BROADCOM_BCM5705K	0x1654		/* BCM5705K 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5705M	0x165d		/* BCM5705M 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5705_ALT	0x165e		/* BCM5705 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5706	0x164a		/* BCM5706 NetXtreme II 1000Base-T */
+#define	PCI_PRODUCT_BROADCOM_BCM5706S	0x16aa		/* BCM5706 NetXtreme II 1000Base-SX */
+#define	PCI_PRODUCT_BROADCOM_BCM5708	0x164c		/* BCM5708 NetXtreme II 1000Base-T */
+#define	PCI_PRODUCT_BROADCOM_BCM5708S	0x16ac		/* BCM5708 NetXtreme II 1000Base-SX */
 #define	PCI_PRODUCT_BROADCOM_BCM5714	0x1668		/* BCM5714 1000baseT Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5714S	0x1669		/* BCM5714S 1000baseX Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5715	0x1678		/* BCM5715 1000baseT Ethernet */
@@ -1295,6 +1302,7 @@
 #define	PCI_PRODUCT_BROADCOM_BCM4401_B0	0x170c		/* BCM4401-B0 10/100 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5901	0x170d		/* BCM5901 10/100 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5901A2	0x170e		/* BCM5901A 10/100 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM4318	0x4318		/* BCM4318 AirForce One 54g */
 #define	PCI_PRODUCT_BROADCOM_BCM4401	0x4401		/* BCM4401 10/100 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_5801	0x5801		/* 5801 Security processor */
 #define	PCI_PRODUCT_BROADCOM_5802	0x5802		/* 5802 Security processor */
@@ -1645,6 +1653,7 @@
 #define	PCI_PRODUCT_EUMITCOM_WL11000P	0x1100		/* WL11000P PCI WaveLAN/IEEE 802.11 */
 
 /* O2 Micro */
+#define	PCI_PRODUCT_O2MICRO_00F7	0x00f7		/* Integrated OHCI IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_O2MICRO_OZ6729	0x6729		/* OZ6729 PCI-PCMCIA Bridge */
 #define	PCI_PRODUCT_O2MICRO_OZ6730	0x673A		/* OZ6730 PCI-PCMCIA Bridge */
 #define	PCI_PRODUCT_O2MICRO_OZ6832	0x6832		/* OZ6832/OZ6833 PCI-CardBus Bridge */
@@ -1653,6 +1662,8 @@
 #define	PCI_PRODUCT_O2MICRO_OZ6922	0x6925		/* OZ6922 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_O2MICRO_OZ6933	0x6933		/* OZ6933 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_O2MICRO_OZ6972	0x6972		/* OZ6912/OZ6972 PCI-CardBus Bridge */
+#define	PCI_PRODUCT_O2MICRO_7120	0x7120		/* Integrated MMC/SD Controller */
+#define	PCI_PRODUCT_O2MICRO_7130	0x7130		/* Integrated MS/xD/SM Controller */
 
 /* Evans & Sutherland products */
 #define	PCI_PRODUCT_ES_FREEDOM	0x0001		/* Freedom PCI-GBus Interface */
@@ -1687,16 +1698,42 @@
 #define	PCI_PRODUCT_EFFICIENTNETS_ENI25P	0x0003		/* SpeedStream ENI-25p */
 #define	PCI_PRODUCT_EFFICIENTNETS_SS3000	0x0005		/* SpeedStream 3000 */
 
-/* Galileo Technology products */
-#define	PCI_PRODUCT_GALILEO_GT64010A	0x0146		/* GT-64010A System Controller */
-#define	PCI_PRODUCT_GALILEO_GT64115	0x4111		/* GT-64115 System Controller */
-#define	PCI_PRODUCT_GALILEO_GT64011	0x4146		/* GT-64011 System Controller */
-#define	PCI_PRODUCT_GALILEO_SKNET	0x4320		/* SK-NET Gigabit Ethernet */
-#define	PCI_PRODUCT_GALILEO_GT64120	0x4620		/* GT-64120 System Controller */
-#define	PCI_PRODUCT_GALILEO_BELKIN	0x5005		/* Belkin Gigabit Ethernet */
-#define	PCI_PRODUCT_GALILEO_GT64130	0x6320		/* GT-64130 System Controller */
-#define	PCI_PRODUCT_GALILEO_GT64260	0x6430		/* GT-64260 System Controller */
-#define	PCI_PRODUCT_GALILEO_GT64360	0x6460		/* MV6436x System Controller */
+/* Marvell products */
+#define	PCI_PRODUCT_MARVELL_GT64010A	0x0146		/* GT-64010A System Controller */
+#define	PCI_PRODUCT_MARVELL_88W8300_1	0x1fa6		/* Libertas 88W8300 */
+#define	PCI_PRODUCT_MARVELL_88W8310	0x1fa7		/* Libertas 88W8310 */
+#define	PCI_PRODUCT_MARVELL_88W8335_1	0x1faa		/* Libertas 88W8335 */
+#define	PCI_PRODUCT_MARVELL_88W8335_2	0x1fab		/* Libertas 88W8335 */
+#define	PCI_PRODUCT_MARVELL_88W8300_2	0x2a01		/* Libertas 88W8300 */
+#define	PCI_PRODUCT_MARVELL_GT64115	0x4111		/* GT-64115 System Controller */
+#define	PCI_PRODUCT_MARVELL_GT64011	0x4146		/* GT-64011 System Controller */
+#define	PCI_PRODUCT_MARVELL_SKNET	0x4320		/* SK-NET Gigabit Ethernet */
+#define	PCI_PRODUCT_MARVELL_YUKONII_8021CU	0x4340		/* Yukon-II 88E8021CU */
+#define	PCI_PRODUCT_MARVELL_YUKONII_8022CU	0x4341		/* Yukon-II 88E8022CU */
+#define	PCI_PRODUCT_MARVELL_YUKONII_8061CU	0x4342		/* Yukon-II 88E8061CU */
+#define	PCI_PRODUCT_MARVELL_YUKONII_8062CU	0x4343		/* Yukon-II 88E8062CU */
+#define	PCI_PRODUCT_MARVELL_YUKONII_8021X	0x4344		/* Yukon-II 88E8021X */
+#define	PCI_PRODUCT_MARVELL_YUKONII_8022X	0x4345		/* Yukon-II 88E8022X */
+#define	PCI_PRODUCT_MARVELL_YUKONII_8061X	0x4346		/* Yukon-II 88E8061X */
+#define	PCI_PRODUCT_MARVELL_YUKONII_8062X	0x4347		/* Yukon-II 88E8062X */
+#define	PCI_PRODUCT_MARVELL_YUKON_8035	0x4350		/* Yukon 88E8035 */
+#define	PCI_PRODUCT_MARVELL_YUKON_8036	0x4351		/* Yukon 88E8036 */
+#define	PCI_PRODUCT_MARVELL_YUKON_8038	0x4352		/* Yukon 88E8038 */
+#define	PCI_PRODUCT_MARVELL_YUKON_8052	0x4360		/* Yukon 88E8052 */
+#define	PCI_PRODUCT_MARVELL_YUKON_8050	0x4361		/* Yukon 88E8050 */
+#define	PCI_PRODUCT_MARVELL_YUKON_8053	0x4362		/* Yukon 88E8053 */
+#define	PCI_PRODUCT_MARVELL_YUKON_3	0x4363		/* Yukon */
+#define	PCI_PRODUCT_MARVELL_GT64120	0x4620		/* GT-64120 System Controller */
+#define	PCI_PRODUCT_MARVELL_BELKIN	0x5005		/* Belkin Gigabit Ethernet */
+#define	PCI_PRODUCT_MARVELL_88SX5040	0x5040		/* 88SX5040 SATA */
+#define	PCI_PRODUCT_MARVELL_88SX5041	0x5041		/* 88SX5041 SATA */
+#define	PCI_PRODUCT_MARVELL_88SX5080	0x5080		/* 88SX5080 SATA */
+#define	PCI_PRODUCT_MARVELL_88SX5081	0x5081		/* 88SX5081 SATA */
+#define	PCI_PRODUCT_MARVELL_88SX6041	0x6041		/* 88SX6041 SATA */
+#define	PCI_PRODUCT_MARVELL_88SX6081	0x6081		/* 88SX6041 SATA */
+#define	PCI_PRODUCT_MARVELL_GT64130	0x6320		/* GT-64130 System Controller */
+#define	PCI_PRODUCT_MARVELL_GT64260	0x6430		/* GT-64260 System Controller */
+#define	PCI_PRODUCT_MARVELL_GT64360	0x6460		/* MV6436x System Controller */
 
 /* Global Sun Tech products */
 #define	PCI_PRODUCT_GLOBALSUN_GL24110P	0x1101		/* GL24110P PCI IEEE 802.11b */
@@ -2669,8 +2706,8 @@
 #define	PCI_PRODUCT_NVIDIA_NFORCE430_PCIB	0x0260		/* nForce430 PCI-ISA bridge */
 #define	PCI_PRODUCT_NVIDIA_NFORCE430_SMBUS	0x0264		/* nForce430 SMBus Controller */
 #define	PCI_PRODUCT_NVIDIA_NFORCE430_ATA133	0x0265		/* nForce430 ATA133 IDE Controller */
-#define	PCI_PRODUCT_NVIDIA_NFORCE430_SATA1	0x0266		/* nForce430 Serial SATA Controller */
-#define	PCI_PRODUCT_NVIDIA_NFORCE430_SATA2	0x0267		/* nForce430 Serial SATA Controller */
+#define	PCI_PRODUCT_NVIDIA_NFORCE430_SATA1	0x0266		/* nForce430 Serial ATA Controller */
+#define	PCI_PRODUCT_NVIDIA_NFORCE430_SATA2	0x0267		/* nForce430 Serial ATA Controller */
 #define	PCI_PRODUCT_NVIDIA_NFORCE430_LAN1	0x0268		/* nForce430 Gigabit Ethernet Controller */
 #define	PCI_PRODUCT_NVIDIA_NFORCE430_LAN2	0x0269		/* nForce430 Gigabit Ethernet Controller */
 #define	PCI_PRODUCT_NVIDIA_NFORCE430_AC	0x026b		/* nForce430 AC-97 Audio Controller */
@@ -2700,13 +2737,53 @@
 #define	PCI_PRODUCT_NVIDIA_GF_FX5950U	0x0333		/* GeForce FX 5950 Ultra */
 #define	PCI_PRODUCT_NVIDIA_QUADRO_FX_3000	0x0338		/* Quadro FX 3000 */
 #define	PCI_PRODUCT_NVIDIA_GF_FX5700_LE	0x0343		/* GeForce FX 5700 LE */
-#define	PCI_PRODUCT_NVIDIA_MCP55_SMB	0x0368		/* MCP55 SMBus */
-#define	PCI_PRODUCT_NVIDIA_MCP55_IDE	0x036e		/* MCP55 IDE */
-#define	PCI_PRODUCT_NVIDIA_MCP55_HDA	0x0371		/* MCP55 High Definition Audio Controller */
-#define	PCI_PRODUCT_NVIDIA_MCP55_LAN1	0x0372		/* MCP55 LAN */
-#define	PCI_PRODUCT_NVIDIA_MCP55_LAN2	0x0373		/* MCP55 LAN */
-#define	PCI_PRODUCT_NVIDIA_MCP55_SATA	0x037e		/* MCP55 SATA */
-#define	PCI_PRODUCT_NVIDIA_MCP55_SATA2	0x037f		/* MCP55 SATA */
+#define	PCI_PRODUCT_NVIDIA_MCP55_SMB	0x0368		/* nForce MCP55 SMBus Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP55_IDE	0x036e		/* nForce MCP55 ATA133 IDE Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP55_HDA	0x0371		/* nForce MCP55 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP55_LAN1	0x0372		/* nForce MCP55 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP55_LAN2	0x0373		/* nForce MCP55 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP55_SATA	0x037e		/* nForce MCP55 Seria ATA Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP55_SATA2	0x037f		/* nForce MCP55 Serial ATA Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP61_ISA	0x03e0		/* nForce MCP61 PCI-ISA Bridge */
+#define	PCI_PRODUCT_NVIDIA_MCP61_HDA	0x03e4		/* nForce MCP61 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP61_LAN1	0x03e5		/* nForce MCP61 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP61_LAN2	0x03e6		/* nForce MCP61 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP61_SATA	0x03e7		/* nForce MCP61 Serial ATA Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP61_PPB_1	0x03e8		/* nForce MCP61 PCI-PCI Bridge */
+#define	PCI_PRODUCT_NVIDIA_MCP61_PPB_2	0x03e9		/* nForce MCP61 PCI-PCI Bridge */
+#define	PCI_PRODUCT_NVIDIA_MCP61_SMB	0x03eb		/* nForce MCP61 SMBus Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP61_IDE	0x03ec		/* nForce MCP61 ATA133 IDE Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP61_SATA2	0x03f6		/* nForce MCP61 Serial ATA Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP61_SATA3	0x03f7		/* nForce MCP61 Serial ATA Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP61_LAN3	0x03ee		/* nForce MCP61 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP61_LAN4	0x03ef		/* nForce MCP61 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_ISA	0x0440		/* nForce MCP65 PCI-ISA Bridge */
+#define	PCI_PRODUCT_NVIDIA_MCP65_MEM	0x0444		/* nForce MCP65 Memory Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_MEM2	0x0445		/* nForce MCP65 Memory Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_SMB	0x0446		/* nForce MCP65 SMBus Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_IDE	0x0448		/* nForce MCP65 ATA133 IDE Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_PCI	0x0449		/* nForce MCP65 PCI Brige */
+#define	PCI_PRODUCT_NVIDIA_MCP65_HDA_1	0x044a		/* nForce MCP65 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_HDA_2	0x044b		/* nForce MCP65 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_AHCI_1	0x044c		/* nForce MCP65 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_AHCI_2	0x044d		/* nForce MCP65 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_AHCI_3	0x044e		/* nForce MCP65 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_AHCI_4	0x044f		/* nForce MCP65 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_LAN1	0x0450		/* nForce MCP65 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_LAN2	0x0451		/* nForce MCP65 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_LAN3	0x0452		/* nForce MCP65 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_LAN4	0x0453		/* nForce MCP65 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_USB_1	0x0454		/* nForce MCP65 USB Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_USB_2	0x0455		/* nForce MCP65 USB Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_USB_3	0x0456		/* nForce MCP65 USB Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_USB_4	0x0457		/* nForce MCP65 USB Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_PPB_1	0x0458		/* nForce MCP65 PCI-PCI Bridge */
+#define	PCI_PRODUCT_NVIDIA_MCP65_PPB_2	0x0459		/* nForce MCP65 PCI-PCI Bridge */
+#define	PCI_PRODUCT_NVIDIA_MCP65_PPB_3	0x045a		/* nForce MCP65 PCI-PCI Bridge */
+#define	PCI_PRODUCT_NVIDIA_MCP65_SATA	0x045c		/* nForce MCP65 Serial ATA Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_SATA2	0x045d		/* nForce MCP65 Serial ATA Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_SATA3	0x045e		/* nForce MCP65 Serial ATA Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_SATA4	0x045f		/* nForce MCP65 Serial ATA Controller */
 
 /* Nvidia & SGS-Thomson Microelectronics */
 #define	PCI_PRODUCT_NVIDIA_SGS_RIVA128	0x0018		/* Riva 128 */
@@ -2803,6 +2880,7 @@
 #define	PCI_PRODUCT_PROMISE_PDC20571	0x3571		/* PDC20571 SATA/150 IDE controller */
 #define	PCI_PRODUCT_PROMISE_PDC20575	0x3d75		/* PDC20575 SATA/150 IDE controller */
 #define	PCI_PRODUCT_PROMISE_PDC20579	0x3574		/* PDC20579 SATA/150 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20771	0x3570		/* PDC20771 SATA/300 IDE controller */
 
 /* QLogic products */
 #define	PCI_PRODUCT_QLOGIC_ISP1020	0x1020		/* ISP1020 */

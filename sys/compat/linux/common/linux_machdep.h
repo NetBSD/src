@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.14 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.14.8.1 2006/09/03 15:23:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,8 +64,8 @@ dev_t linux_fakedev __P((dev_t, int));
 __END_DECLS
 #ifdef LINUX_NPTL
 __BEGIN_DECLS
-unsigned long linux_get_newtls __P((struct lwp *));
-int linux_set_newtls __P((struct lwp *, unsigned long));
+void *linux_get_newtls __P((struct lwp *));
+int linux_set_newtls __P((struct lwp *, void *));
 __END_DECLS
 #endif /* !LINUX_NPTL */
 #endif /* !_KERNEL */

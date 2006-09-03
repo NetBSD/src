@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.112.8.1 2006/05/24 10:59:21 yamt Exp $	*/
+/*	$NetBSD: exec.h,v 1.112.8.2 2006/09/03 15:25:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -221,6 +221,7 @@ struct exec_vmcmd {
 #define	VMCMD_RELATIVE	0x0001	/* ev_addr is relative to base entry */
 #define	VMCMD_BASE	0x0002	/* marks a base entry */
 #define	VMCMD_FIXED	0x0004	/* entry must be mapped at ev_addr */
+#define	VMCMD_STACK	0x0008	/* entry is for a stack */
 };
 
 #ifdef _KERNEL

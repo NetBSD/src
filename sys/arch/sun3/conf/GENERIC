@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.130.2.2 2006/08/11 15:43:11 yamt Exp $
+# $NetBSD: GENERIC,v 1.130.2.3 2006/09/03 15:23:36 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.130.2.2 $"
+#ident		"GENERIC-$Revision: 1.130.2.3 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -36,7 +36,7 @@ maxusers	4
 
 # Standard system options
 options 	KTRACE		# system call tracing
-options 	SYSTRACE	# system call vetting via systrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 #options 	SEMMNI=10	# number of semaphore identifiers
@@ -123,7 +123,6 @@ options 	INET6		# IPV6
 #options 	GATEWAY		# IP packet forwarding
 #options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -299,7 +298,6 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1
@@ -314,4 +312,3 @@ pseudo-device	ksyms			# /dev/ksyms
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
-

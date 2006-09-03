@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.95.2.4 2006/08/11 15:47:26 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.95.2.5 2006/09/03 15:26:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.95.2.4 2006/08/11 15:47:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.95.2.5 2006/09/03 15:26:07 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -140,6 +140,8 @@ struct vfsops ext2fs_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	ext2fs_vnodeopv_descs,
+	0,
+	{ NULL, NULL },
 };
 VFS_ATTACH(ext2fs_vfsops);
 

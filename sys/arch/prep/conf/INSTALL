@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.36.8.3 2006/06/26 12:45:13 yamt Exp $
+#	$NetBSD: INSTALL,v 1.36.8.4 2006/09/03 15:23:27 yamt Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -174,6 +174,10 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 # IDE controller found on most Power Personal machines
 wdc*	at pnpbus?
+
+# PCI IDE controllers
+pciide*		at pci? dev ? function ? flags 0x0000
+hptide*		at pci? dev ? function ?
 
 # PCMCIA IDE controllers
 #wdc*	at pcmcia? function ?

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.2.6.3 2006/08/11 15:45:34 yamt Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.2.6.4 2006/09/03 15:25:13 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.2.6.3 2006/08/11 15:45:34 yamt Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.2.6.4 2006/09/03 15:25:13 yamt Exp $");
 #endif /* not lint */
 
 
@@ -144,8 +144,8 @@ struct vfsops udf_vfsops = {
 	udf_snapshot,
 	vfs_stdextattrctl,
 	udf_vnodeopv_descs,
-	/* int vfs_refcount   */
-	/* LIST_ENTRY(vfsops) */
+	0, /* int vfs_refcount   */
+	{ NULL, NULL, }, /* LIST_ENTRY(vfsops) */
 };
 VFS_ATTACH(udf_vfsops);
 
@@ -213,6 +213,11 @@ free_udf_mountinfo(struct mount *mp)
 
 	ump = VFSTOUDF(mp);
 	if (ump) {
+		/* dispose of our descriptor pool */
+		if (ump->desc_pool)
+			pool_destroy(ump->desc_pool);
+
+		/* clear our data */
 		mp->mnt_data = NULL;
 		for (i = 0; i < UDF_ANCHORS; i++)
 			MPFREE(ump->anchors[i], M_UDFVOLD);
@@ -226,11 +231,6 @@ free_udf_mountinfo(struct mount *mp)
 		MPFREE(ump->fileset_desc,     M_UDFVOLD);
 		MPFREE(ump->vat_table,        M_UDFVOLD);
 		MPFREE(ump->sparing_table,    M_UDFVOLD);
-
-		/*
-		 * Note that the node related (e)fe descriptors pool is
-		 * destroyed already if it was used.
-		 */
 
 		free(ump, M_UDFMNT);
 	}
@@ -433,9 +433,6 @@ udf_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	 * VOP_RECLAIM on the nodes themselves.
 	 */
 
-	/* dispose of our descriptor pool */
-	pool_destroy(&ump->desc_pool);
-
 	/* close device */
 	DPRINTF(VOLUMES, ("closing device\n"));
 	if (mp->mnt_flag & MNT_RDONLY) {
@@ -547,7 +544,9 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	 * sector_size.
 	 */
 	lb_size = udf_rw32(ump->logical_vol->lb_size);
-	pool_init(&ump->desc_pool, lb_size, 0, 0, 0, "udf_desc_pool", NULL);
+	ump->desc_pool = malloc(sizeof(struct pool), M_UDFMNT, M_WAITOK);
+	memset(ump->desc_pool, 0, sizeof(struct pool));
+	pool_init(ump->desc_pool, lb_size, 0, 0, 0, "udf_desc_pool", NULL);
 
 	/* read vds support tables like VAT, sparable etc. */
 	if ((error = udf_read_vds_tables(ump, args))) {

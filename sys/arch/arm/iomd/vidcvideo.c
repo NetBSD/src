@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.21.8.2 2006/08/11 15:41:11 yamt Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.21.8.3 2006/09/03 15:22:42 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.21.8.2 2006/08/11 15:41:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.21.8.3 2006/09/03 15:22:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,8 +229,8 @@ vidcvideo_getdevconfig(vaddr_t dense_addr, struct fb_devconfig *dc)
 
 	vidcvideo_getmode(&dc->mode_info);
 
-	dc->dc_wid = dc->mode_info.hder;
-	dc->dc_ht = dc->mode_info.vder;
+	dc->dc_wid = dc->mode_info.timings.hdisplay;
+	dc->dc_ht = dc->mode_info.timings.vdisplay;
 	dc->dc_log2_depth = dc->mode_info.log2_bpp;
 	dc->dc_depth = 1 << dc->dc_log2_depth;
 	dc->dc_videobase = dc->dc_vaddr;
@@ -262,7 +262,7 @@ vidcvideo_getdevconfig(vaddr_t dense_addr, struct fb_devconfig *dc)
 	}
 
 	/* euhm... correct ? i.e. not complete VIDC memory */
-	dc->dc_size = dc->mode_info.vder * dc->dc_rowbytes;
+	dc->dc_size = dc->mode_info.timings.vdisplay * dc->dc_rowbytes;
 
 	/* initialize colormap and cursor resource */
 	vidcvideo_colourmap_and_cursor_init(dc);
@@ -370,7 +370,7 @@ vidcvideo_attach(struct device *parent, struct device *self, void *aux)
 	dc = sc->sc_dc;
 
 	vidcvideo_printdetails();
-	printf(": using %d x %d, %dbpp\n", dc->dc_wid, dc->dc_ht,
+	printf(": mode %s, %dbpp\n", dc->mode_info.timings.name,
 	    dc->dc_depth);
 
 	/* initialise rasops */

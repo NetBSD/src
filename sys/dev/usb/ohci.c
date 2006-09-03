@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.169.8.2 2006/05/24 10:58:24 yamt Exp $	*/
+/*	$NetBSD: ohci.c,v 1.169.8.3 2006/09/03 15:25:03 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.169.8.2 2006/05/24 10:58:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.169.8.3 2006/09/03 15:25:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2338,22 +2338,17 @@ Static usb_interface_descriptor_t ohci_ifcd = {
 };
 
 Static usb_endpoint_descriptor_t ohci_endpd = {
-	USB_ENDPOINT_DESCRIPTOR_SIZE,
-	UDESC_ENDPOINT,
-	UE_DIR_IN | OHCI_INTR_ENDPT,
-	UE_INTERRUPT,
-	{8, 0},			/* max packet */
-	255
+	.bLength = USB_ENDPOINT_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_ENDPOINT,
+	.bEndpointAddress = UE_DIR_IN | OHCI_INTR_ENDPT,
+	.bmAttributes = UE_INTERRUPT,
+	.wMaxPacketSize = {8, 0},			/* max packet */
+	.bInterval = 255,
 };
 
 Static usb_hub_descriptor_t ohci_hubd = {
-	USB_HUB_DESCRIPTOR_SIZE,
-	UDESC_HUB,
-	0,
-	{0,0},
-	0,
-	0,
-	{0},
+	.bDescLength = USB_HUB_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_HUB,
 };
 
 Static int

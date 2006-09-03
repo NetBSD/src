@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.242.2.5 2006/08/11 15:44:25 yamt Exp $
+#	$NetBSD: files.pci,v 1.242.2.6 2006/09/03 15:24:22 yamt Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -752,9 +752,17 @@ attach	voodoofb at pci
 file	dev/pci/voodoofb.c		voodoofb
 
 # VIA UniChrome framebuffer console driver
-device	unichromefb: wsemuldisplaydev, rasops32, vcons
+device	unichromefb: wsemuldisplaydev, rasops16, rasops32, vcons
 attach	unichromefb at pci
 file	dev/pci/unichromefb.c		unichromefb needs-flag
+
+# ATI Radeon framebuffer console driver
+# (Note: to enable the BIOS parser, add options RADEON_BIOS_INIT to the config)
+device	radeonfb: wsemuldisplaydev, videomode, rasops32, vcons, splash, iic, i2c_bitbang, ddc_read_edid, edid
+attach	radeonfb at pci
+file	dev/pci/radeonfb.c	radeonfb
+file	dev/pci/radeonfb_i2c.c	radeonfb
+file	dev/pci/radeonfb_bios.c	radeonfb
 
 # 3Com 3c990
 device	txp: ether, ifnet, arp
@@ -793,6 +801,16 @@ device	ipw: ifnet, arp, wlan, firmload
 attach	ipw at pci
 file	dev/pci/if_ipw.c		ipw
 
+# Intel PRO/Wireless 2200BG/2915ABG
+device	iwi: ifnet, arp, wlan, firmload
+attach	iwi at pci
+file	dev/pci/if_iwi.c		iwi
+
+# Intel PRO/Wireless 3945ABG
+device	wpi: ifnet, arp, wlan, firmload
+attach	wpi at pci
+file	dev/pci/if_wpi.c		wpi
+
 # Workbit NinjaSCSI-32 controllers
 # device declaration in sys/conf/files
 attach	njs at pci with njs_pci
@@ -802,11 +820,6 @@ file	dev/pci/njs_pci.c		njs_pci
 device  xge: ether, ifnet, arp
 attach  xge  at pci 
 file    dev/pci/if_xge.c		xge
-
-# Intel PRO/Wireless 2200BG/2915ABG
-device	iwi: ifnet, arp, wlan, firmload
-attach	iwi at pci
-file	dev/pci/if_iwi.c		iwi
 
 # Via Velocity 612x 10/100/1000 Ethernet
 device	vge: ether, ifnet, arp, mii

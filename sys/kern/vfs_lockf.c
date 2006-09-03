@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.48.8.2 2006/08/11 15:45:47 yamt Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.48.8.3 2006/09/03 15:25:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.48.8.2 2006/08/11 15:45:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.48.8.3 2006/09/03 15:25:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ int maxlocksperuid = 1024;
  * Print out a lock.
  */
 static void
-lf_print(char *tag, struct lockf *lock)
+lf_print(const char *tag, struct lockf *lock)
 {
 
 	printf("%s: lock %p for ", tag, lock);
@@ -146,7 +146,7 @@ lf_print(char *tag, struct lockf *lock)
 }
 
 static void
-lf_printlist(char *tag, struct lockf *lock)
+lf_printlist(const char *tag, struct lockf *lock)
 {
 	struct lockf *lf, *blk;
 

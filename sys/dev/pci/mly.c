@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.24.8.1 2006/05/24 10:58:01 yamt Exp $	*/
+/*	$NetBSD: mly.c,v 1.24.8.2 2006/09/03 15:24:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.24.8.1 2006/05/24 10:58:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.24.8.2 2006/09/03 15:24:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,17 +172,17 @@ dev_type_ioctl(mlyioctl);
 
 const struct cdevsw mly_cdevsw = {
 	mlyopen, mlyclose, noread, nowrite, mlyioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
-struct mly_ident {
+static struct mly_ident {
 	u_short	vendor;
 	u_short	product;
 	u_short	subvendor;
 	u_short	subproduct;
 	int	hwif;
 	const char	*desc;
-} static const mly_ident[] = {
+} const mly_ident[] = {
 	{
 		PCI_VENDOR_MYLEX,
 		PCI_PRODUCT_MYLEX_EXTREMERAID,
@@ -2310,14 +2310,14 @@ mlyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	struct mly_softc *mly;
 	int rv;
 
-	if (securelevel >= 2)
-		return (EPERM);
-
 	mly = device_lookup(&mly_cd, minor(dev));
 
 	switch (cmd) {
 	case MLYIO_COMMAND:
-		rv = mly_user_command(mly, (void *)data);
+		if (securelevel >= 2)
+			rv = EPERM;
+		else
+			rv = mly_user_command(mly, (void *)data);
 		break;
 	case MLYIO_HEALTH:
 		rv = mly_user_health(mly, (void *)data);

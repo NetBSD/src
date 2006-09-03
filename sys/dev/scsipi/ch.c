@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.72.8.1 2006/04/01 12:07:27 yamt Exp $	*/
+/*	$NetBSD: ch.c,v 1.72.8.2 2006/09/03 15:24:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.72.8.1 2006/04/01 12:07:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.72.8.2 2006/09/03 15:24:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ static dev_type_kqfilter(chkqfilter);
 
 const struct cdevsw ch_cdevsw = {
 	chopen, chclose, chread, nowrite, chioctl,
-	nostop, notty, chpoll, nommap, chkqfilter,
+	nostop, notty, chpoll, nommap, chkqfilter, D_OTHER
 };
 
 /* SCSI glue */

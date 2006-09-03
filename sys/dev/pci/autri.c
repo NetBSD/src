@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.29.2.1 2006/03/13 09:07:26 yamt Exp $	*/
+/*	$NetBSD: autri.c,v 1.29.2.2 2006/09/03 15:24:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.29.2.1 2006/03/13 09:07:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.29.2.2 2006/09/03 15:24:21 yamt Exp $");
 
 #include "midi.h"
 
@@ -163,6 +163,7 @@ static const struct audio_hw_if autri_hw_if = {
 	autri_trigger_output,
 	autri_trigger_input,
 	NULL,			/* dev_ioctl */
+	NULL,			/* powerstate */
 };
 
 #if NMIDI > 0

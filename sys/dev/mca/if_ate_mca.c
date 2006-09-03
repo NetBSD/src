@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate_mca.c,v 1.13.8.1 2006/04/01 12:07:11 yamt Exp $	*/
+/*	$NetBSD: if_ate_mca.c,v 1.13.8.2 2006/09/03 15:24:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.13.8.1 2006/04/01 12:07:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.13.8.2 2006/09/03 15:24:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ static const struct ate_mca_product {
 	{ MCA_PRODUCT_AT1720BT,	"ATI AT1720BT",	FE_TYPE_AT1700BT	},
 	{ MCA_PRODUCT_AT1720AT, "ATI AT1720AT",	FE_TYPE_AT1700AT	},
 	{ MCA_PRODUCT_AT1720FT, "ATI AT1720FT",	FE_TYPE_AT1700FT	},
-	{ 0, 	},
+	{ 0,			NULL,		0			},
 };
 
 static const struct ate_mca_product *ate_mca_lookup(u_int32_t);

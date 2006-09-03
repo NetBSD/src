@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.84.2.2 2006/05/24 10:57:42 yamt Exp $ */
+/* $NetBSD: vga.c,v 1.84.2.3 2006/09/03 15:23:57 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 #include "opt_wsmsgattrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.84.2.2 2006/05/24 10:57:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.84.2.3 2006/09/03 15:23:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -701,6 +701,25 @@ vga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 	vgaconsole = 1;
 	vga_console_type = type;
 	return (0);
+}
+
+int
+vga_cndetach(void)
+{
+	struct vga_config *vc;
+	struct vga_handle *vh;
+
+	vc = &vga_console_vc;
+	vh = &vc->hdl;
+
+	if (vgaconsole) {
+		bus_space_unmap(vh->vh_iot, vh->vh_ioh_vga, 0x10);
+		bus_space_unmap(vh->vh_iot, vh->vh_ioh_6845, 0x10);
+
+		return 1;
+	}
+
+	return 0;
 }
 
 int

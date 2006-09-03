@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.40.2.1 2006/08/11 15:40:59 yamt Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.40.2.2 2006/09/03 15:22:40 yamt Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -69,11 +69,8 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -190,27 +187,10 @@ wskbd*		at pckbd?
 pms*		at iomdkbc? slot ?	# PS/2 mouse
 wsmouse*	at pms?
 
-#rpckbd* 	at iomd?		# based on old `kbd' driver
-#wskbd*		at rpckbd?		# wskbd on RiscPC keyboard
-
 qms*		at iomd?		# ws quadmouse driver
 wsmouse*	at qms?			# wsmouse on ws quadmouse
 
 pseudo-device	wsmux
-
-# The origional vidcconsole :
-# vidcconsole kbd at IOMD
-# vidcconsole PS2 mouse at IOMD
-#vidcconsole0	at vidc?		# display + vt100 emulation
-#kbd*		at iomd?		# PS/2 keyboard for vidcconsole
-
-# generic VT console device
-#vt0		at vidc?
-#vt1		at vidc?
-#vt2		at vidc?
-#vt3		at vidc?
-#vt4		at vidc?
-#vt5		at vidc?
 
 
 # Peripheral IO Controller
@@ -266,7 +246,7 @@ audio*		at vidcaudio0
 #oak*	at podulebus?			# Oak SCSI I card
 #scsibus* at oak?
 
-#csa*	at podulebus?			# Cumana SCSI I adpater
+#csa*	at podulebus?			# Cumana SCSI I adapter
 #scsibus* at csa?
 
 #hcsc*	at podulebus0 slot ?	# HCCS 8-bit SCSI interface
@@ -308,6 +288,9 @@ pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and /dev/urandom
 pseudo-device	clockctl		# user control of clock subsystem
 
-makeoptions	MONITOR="Taxan875+LR"
+# If the standard modes don't work for your monitor, you can specify
+# a RISC-OS-format monitor definition file and a list of modes here.
+
+#makeoptions	MONITOR="Taxan875+LR"
 #makeoptions	MONITOR="AKF60"
-makeoptions	MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,900"
+#makeoptions	MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,900"

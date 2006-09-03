@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.1.6.3 2006/08/11 15:46:32 yamt Exp $	*/
+/*	$NetBSD: hci.h,v 1.1.6.4 2006/09/03 15:25:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.1.6.3 2006/08/11 15:46:32 yamt Exp $
+ * $Id: hci.h,v 1.1.6.4 2006/09/03 15:25:36 yamt Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -1952,6 +1952,7 @@ hci_filter_test(uint8_t bit, struct hci_filter *filter)
 #define SIOCZBTSTATS	_IOWR('b', 12, struct btreq) /* zero unit statistics */
 
 #define SIOCBTDUMP	 _IOW('b', 13, struct btreq) /* print debug info */
+#define SIOCSBTSCOMTU	_IOWR('b', 17, struct btreq) /* set sco_mtu value */
 
 struct bt_stats {
 	uint32_t	err_tx;

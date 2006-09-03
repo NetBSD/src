@@ -1,4 +1,4 @@
-/* $NetBSD: if_ath_arbus.c,v 1.3.2.4 2006/08/11 15:42:14 yamt Exp $ */
+/* $NetBSD: if_ath_arbus.c,v 1.3.2.5 2006/09/03 15:23:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.3.2.4 2006/08/11 15:42:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.3.2.5 2006/09/03 15:23:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.3.2.4 2006/08/11 15:42:14 yamt Ex
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
 
-#include <mips/atheros/include/ar531xreg.h>
+#include <mips/atheros/include/ar5312reg.h>
 #include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
 
@@ -108,7 +108,9 @@ ath_arbus_attach(struct device *parent, struct device *self, void *opaque)
 	sc = &asc->sc_ath;
 	aa = (struct arbus_attach_args *)opaque;
 
-	printf(": Atheros AR531X WLAN\n");
+	rev = GETSYSREG(AR5312_SYSREG_REVISION);
+	devid = AR5312_REVISION_WMAC(rev);
+	name = ath_hal_probe(PCI_VENDOR_ATHEROS, devid);
 
 	if ((board = ar531x_board_info()) == NULL) {
 		aprint_error("%s: unable to get board identity\n",

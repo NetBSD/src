@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.24.8.2 2006/08/11 15:42:41 yamt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.24.8.3 2006/09/03 15:23:27 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.24.8.2 2006/08/11 15:42:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.24.8.3 2006/09/03 15:23:27 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -827,4 +827,20 @@ mapiodev(paddr_t pa, psize_t len)
 	}
 	pmap_update(pmap_kernel());
 	return (void *)(va + off);
+}
+
+void
+unmapiodev(vaddr_t va, vsize_t len)
+{
+	paddr_t faddr;
+
+	if (! va)
+		return;
+
+	faddr = trunc_page(va);
+	len = round_page(va - faddr + len);
+
+	pmap_kremove(faddr, len);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, faddr, len, UVM_KMF_VAONLY);
 }

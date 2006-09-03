@@ -1,4 +1,4 @@
-/*	$NetBSD: at_extern.h,v 1.11.8.1 2006/08/11 15:46:32 yamt Exp $	*/
+/*	$NetBSD: at_extern.h,v 1.11.8.2 2006/09/03 15:25:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -49,6 +49,7 @@ void	aarpinput	__P((struct ifnet *, struct mbuf *));
 int	at_broadcast	__P((struct sockaddr_at  *));
 void	aarp_clean	__P((void));
 int	at_control	__P((u_long, caddr_t, struct ifnet *, struct lwp *));
+int	at_inithead	__P((void **, int));
 void	at_purgeaddr	__P((struct ifaddr *, struct ifnet *));
 void	at_purgeif	__P((struct ifnet *));
 u_int16_t
@@ -63,6 +64,7 @@ struct ddpcb  *
 	ddp_search	__P((struct sockaddr_at *, struct sockaddr_at *,
     struct at_ifaddr *));
 int     ddp_route	__P((struct mbuf *, struct route *));
+char *	prsockaddr	__P((const void *));
 
 
 #endif /* !_NETATALK_AT_EXTERN_H_ */
