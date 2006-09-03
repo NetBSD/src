@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.27 2005/12/24 20:27:41 perry Exp $	*/
+/*	$NetBSD: ym.c,v 1.28 2006/09/03 21:47:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.27 2005/12/24 20:27:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.28 2006/09/03 21:47:34 christos Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -204,6 +204,7 @@ const struct audio_hw_if ym_hw_if = {
 	ad1848_isa_trigger_output,
 	ad1848_isa_trigger_input,
 	NULL,
+	NULL,	/* powerstate */
 };
 
 static inline int ym_read(struct ym_softc *, int);
