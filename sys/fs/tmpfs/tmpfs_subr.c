@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.22 2006/07/23 22:06:10 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.23 2006/09/03 06:49:30 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.22 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.23 2006/09/03 06:49:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1263,8 +1263,10 @@ tmpfs_update(struct vnode *vp, const struct timespec *acc,
 
 	node = VP_TO_TMPFS_NODE(vp);
 
+#if 0
 	if (flags & UPDATE_CLOSE)
 		; /* XXX Need to do anything special? */
+#endif
 
 	tmpfs_itimes(vp, acc, mod);
 
