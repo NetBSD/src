@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.11 2006/08/26 19:35:51 christos Exp $ */
+/*	$NetBSD: twa.c,v 1.12 2006/09/03 07:02:54 christos Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.11 2006/08/26 19:35:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.12 2006/09/03 07:02:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2430,7 +2430,7 @@ fw_passthru_done:
 
 const struct cdevsw twa_cdevsw = {
 	twaopen, twaclose, noread, nowrite, twaioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 /*
@@ -3004,7 +3004,7 @@ twa_find_aen(struct twa_softc *sc, uint16_t aen_code)
 	return(1);
 }
 
-static void inline
+static inline void
 twa_request_init(struct twa_request *tr, int flags)
 {
 	tr->tr_data = NULL;
