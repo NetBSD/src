@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.h,v 1.5 2006/06/30 13:56:25 chap Exp $	*/
+/*	$NetBSD: umidi_quirks.h,v 1.6 2006/09/03 21:28:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 
 struct umq_data {
 	int		type;
+#define UMQ_TYPE_NONE		0
 #define UMQ_TYPE_FIXED_EP	1
 #define UMQ_TYPE_YAMAHA		2
 #define UMQ_TYPE_MIDIMAN_GARBLE	3
@@ -66,7 +67,7 @@ struct umidi_quirk {
 #define UMQ_ISTYPE(q, type) \
 	((q)->sc_quirk && ((q)->sc_quirk->type_mask & (1<<((type)-1))))
 
-#define UMQ_TERMINATOR	{ 0, }
+#define UMQ_TERMINATOR { .type = UMQ_TYPE_NONE, },
 #define UMQ_DEF(v, p, i)					\
 static struct umq_data	umq_##v##_##p##_##i[]
 #define UMQ_REG(v, p, i)					\
