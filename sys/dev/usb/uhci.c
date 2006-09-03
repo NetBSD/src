@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.197 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: uhci.c,v 1.198 2006/09/03 21:03:11 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.197 2006/06/19 15:44:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.198 2006/09/03 21:03:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3048,6 +3048,7 @@ usb_hub_descriptor_t uhci_hubd_piix = {
 	50,			/* power on to power good */
 	0,
 	{ 0x00 },		/* both ports are removable */
+	NULL,
 };
 
 int
