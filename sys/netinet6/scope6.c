@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.3 2006/09/01 02:25:29 dyoung Exp $	*/
+/*	$NetBSD: scope6.c,v 1.4 2006/09/03 05:16:59 christos Exp $	*/
 /*	$KAME$	*/
 
 /*-
@@ -348,7 +348,7 @@ sa6_recoverscope(struct sockaddr_in6 *sin6)
 		zoneid = ntohs(sin6->sin6_addr.s6_addr16[1]);
 		if (zoneid) {
 			/* sanity check */
-			if (zoneid < 0 || if_indexlim <= zoneid)
+			if (/* zoneid < 0 || */ if_indexlim <= zoneid)
 				return (ENXIO);
 #ifdef __FreeBSD__
 			if (!ifnet_byindex(zoneid))
