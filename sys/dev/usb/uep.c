@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.5 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: uep.c,v 1.6 2006/09/03 07:13:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.5 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.6 2006/09/03 07:13:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,8 +86,11 @@ struct uep_softc {
 };
 
 static struct wsmouse_calibcoords default_calib = {
-	0, 0, 2047, 2047,
-	WSMOUSE_CALIBCOORDS_RESET,
+	.minx = 0,
+	.miny = 0,
+	.maxx = 2047,
+	.maxy = 2047,
+	.samplelen = WSMOUSE_CALIBCOORDS_RESET,
 };
 
 Static void uep_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
