@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.84 2006/07/24 14:24:50 gdt Exp $	*/
+/*	$NetBSD: ugen.c,v 1.85 2006/09/03 07:14:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.84 2006/07/24 14:24:50 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.85 2006/09/03 07:14:47 christos Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 
@@ -153,7 +153,7 @@ dev_type_kqfilter(ugenkqfilter);
 
 const struct cdevsw ugen_cdevsw = {
 	ugenopen, ugenclose, ugenread, ugenwrite, ugenioctl,
-	nostop, notty, ugenpoll, nommap, ugenkqfilter,
+	nostop, notty, ugenpoll, nommap, ugenkqfilter, D_OTHER,
 };
 #elif defined(__OpenBSD__)
 cdev_decl(ugen);
