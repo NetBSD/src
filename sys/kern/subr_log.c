@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.36 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.37 2006/09/03 06:24:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.36 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.37 2006/09/03 06:24:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,5 +308,5 @@ logioctl(dev_t dev, u_long com, caddr_t data, int flag, struct lwp *lwp)
 
 const struct cdevsw log_cdevsw = {
 	logopen, logclose, logread, nowrite, logioctl,
-	    nostop, notty, logpoll, nommap, logkqfilter,
+	    nostop, notty, logpoll, nommap, logkqfilter, D_OTHER,
 };
