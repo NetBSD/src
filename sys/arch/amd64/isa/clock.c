@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 2006/09/03 19:38:08 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.12 2006/09/03 19:54:21 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,12 +121,13 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2006/09/03 19:38:08 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2006/09/03 19:54:21 perry Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
 
 #include "opt_multiprocessor.h"
+#include "opt_ntp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,13 +163,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2006/09/03 19:38:08 perry Exp $");
 #if (NPCPPI > 0)
 #include <dev/isa/pcppivar.h>
 
-#ifdef CLOCKDEBUG
-int clock_debug = 0;
-#define DPRINTF(arg) if (clock_debug) printf arg
-#else
-#define DPRINTF(arg)
-#endif
-
 int sysbeepmatch(struct device *, struct cfdata *, void *);
 void sysbeepattach(struct device *, struct device *, void *);
 
@@ -179,20 +173,33 @@ static int ppi_attached;
 static pcppi_tag_t ppicookie;
 #endif /* PCPPI */
 
-void	spinwait(int);
-int	clockintr(void *, struct intrframe);
-int	gettick(void);
-void	sysbeep(int, int);
-void	rtcinit(void);
-int	rtcget(mc_todregs *);
-void	rtcput(mc_todregs *);
+#ifdef CLOCKDEBUG
+int clock_debug = 0;
+#define DPRINTF(arg) if (clock_debug) printf arg
+#else
+#define DPRINTF(arg)
+#endif
+
+void		spinwait(int);
+int		gettick(void);
+void		sysbeep(int, int);
+static void     tickle_tc(void);
+
+int		clockintr(void *, struct intrframe);
+void		rtcinit(void);
+int		rtcget(mc_todregs *);
+void		rtcput(mc_todregs *);
+
+static int cmoscheck(void);
+
+static int clock_expandyear(int);
 
 static inline int gettick_broken_latch(void);
-static void       tickle_tc(void);
 
 static volatile uint32_t i8254_lastcount;
 static volatile uint32_t i8254_offset;
 static volatile int i8254_ticked;
+
 static struct simplelock tmr_lock = SIMPLELOCK_INITIALIZER;  /* protect TC timer variables */
 
 inline u_int mc146818_read(void *, u_int);
@@ -355,7 +362,6 @@ startrtclock(void)
 	tc_init(&i8254_timecounter);
 
 	init_TSC();
-
 }
 
 
@@ -621,7 +627,6 @@ static int timeset;
  * check whether the CMOS layout is "standard"-like (ie, not PS/2-like),
  * to be called at splclock()
  */
-static int cmoscheck(void);
 static int
 cmoscheck(void)
 {
@@ -674,7 +679,6 @@ int rtc_update_century = 0;
  * Being here, deal with the CMOS century byte.
  */
 static int centb = NVRAM_CENTURY;
-static int clock_expandyear(int);
 static int
 clock_expandyear(int clockyear)
 {
