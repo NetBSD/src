@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcreg.h,v 1.9 2006/03/04 01:55:03 uwe Exp $	*/
+/*	$NetBSD: rtcreg.h,v 1.10 2006/09/03 12:38:34 uwe Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -67,16 +67,17 @@
 #define	SH4_RCR1			0xffc80038
 #define	SH4_RCR2			0xffc8003c
 
-#define	  SH_RCR1_CF			  0x80
-#define	  SH_RCR1_CIE			  0x10
-#define	  SH_RCR1_AIE			  0x08
-#define	  SH_RCR1_AF			  0x01
-#define	  SH_RCR2_PEF			  0x80
-#define	  SH_RCR2_PES2			  0x40
-#define	  SH_RCR2_PES1			  0x20
-#define	  SH_RCR2_PES0			  0x10
+#define	  SH_RCR1_CF			  0x80 /* carry flag */
+#define	  SH_RCR1_CIE			  0x10 /* carry interrupt enable */
+#define	  SH_RCR1_AIE			  0x08 /* alarm interrupt enable */
+#define	  SH_RCR1_AF			  0x01 /* alarm flag */
+
+#define	  SH_RCR2_PEF			  0x80 /* periodic interrupt flag */
+#define	  SH_RCR2_PES2			  0x40 /* periodic interrupt freq */
+#define	  SH_RCR2_PES1			  0x20 /* -//- */
+#define	  SH_RCR2_PES0			  0x10 /* -//- */
 #define	  SH_RCR2_ENABLE		  0x08
-#define	  SH_RCR2_ADJ			  0x04
+#define	  SH_RCR2_ADJ			  0x04 /* second adjustment */
 #define	  SH_RCR2_RESET			  0x02
 #define	  SH_RCR2_START			  0x01
 
