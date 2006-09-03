@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.14 2006/09/03 20:10:19 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.15 2006/09/03 20:34:13 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14 2006/09/03 20:10:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15 2006/09/03 20:34:13 perry Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -205,6 +205,7 @@ inline u_int mc146818_read(void *, u_int);
 inline void mc146818_write(void *, u_int, u_int);
 
 u_int i8254_get_timecount(struct timecounter *);
+static void rtc_register(void);
 
 static struct timecounter i8254_timecounter = {
 	i8254_get_timecount,	/* get_timecount */
@@ -212,7 +213,9 @@ static struct timecounter i8254_timecounter = {
 	~0u,			/* counter_mask */
 	TIMER_FREQ,		/* frequency */
 	"i8254",		/* name */
-	100			/* quality */
+	100,			/* quality */
+	NULL,			/* prev */
+	NULL,			/* next */
 };
 
 /* XXX use sc? */
@@ -361,6 +364,8 @@ startrtclock(void)
 	tc_init(&i8254_timecounter);
 
 	init_TSC();
+
+	rtc_register();
 }
 
 
@@ -728,49 +733,19 @@ clock_expandyear(int clockyear)
 	return (clockyear);
 }
 
-/*
- * Initialize the time of day register, based on the time base which is, e.g.
- * from a filesystem.
- */
-void
-inittodr(time_t base)
+static int
+rtc_gettime(todr_chip_handle_t tch, volatile struct timeval *tv)
 {
+	int s;
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
-	struct timespec ts;
-	int s;
-
-	/*
-	 * We mostly ignore the suggested time (which comes from the
-	 * file system) and go for the RTC clock time stored in the
-	 * CMOS RAM.  If the time can't be obtained from the CMOS, or
-	 * if the time obtained from the CMOS is 5 or more years less
-	 * than the suggested time, we used the suggested time.  (In
-	 * the latter case, it's likely that the CMOS battery has
-	 * died.)
-	 */
-
-	/*
-	 * if the file system time is more than a year older than the
-	 * kernel, warn and then set the base time to the CONFIG_TIME.
-	 */
-	if (base && base < (CONFIG_TIME-SECYR)) {
-		printf("WARNING: preposterous time in file system\n");
-		base = CONFIG_TIME;
-	}
 
 	s = splclock();
 	if (rtcget(&rtclk)) {
 		splx(s);
-		printf("WARNING: invalid time in clock chip\n");
-		goto fstime;
+		return -1;
 	}
 	splx(s);
-#ifdef DEBUG_CLOCK
-	printf("readclock: %x/%x/%x %x:%x:%x\n", rtclk[MC_YEAR],
-	    rtclk[MC_MONTH], rtclk[MC_DOM], rtclk[MC_HOUR], rtclk[MC_MIN],
-	    rtclk[MC_SEC]);
-#endif
 
 	dt.dt_sec = bcdtobin(rtclk[MC_SEC]);
 	dt.dt_min = bcdtobin(rtclk[MC_MIN]);
@@ -791,44 +766,17 @@ inittodr(time_t base)
 	 */
 	if (sizeof(time_t) <= sizeof(int32_t)) {
 		if (dt.dt_year >= 2038) {
-			printf("WARNING: RTC time at or beyond 2038.\n");
-			dt.dt_year = 2037;
-			printf("WARNING: year set back to 2037.\n");
-			printf("WARNING: CHECK AND RESET THE DATE!\n");
+			return -1;
 		}
 	}
 
-	ts.tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
-	ts.tv_nsec = 0;
-	tc_setclock(&ts);
-#ifdef DEBUG_CLOCK
-	printf("readclock: %ld (%ld)\n", time_second, base);
-#endif
-
-	if (base != 0 && base < time_second - 5*SECYR)
-		printf("WARNING: file system time much less than clock time\n");
-	else if (base > time_second + 5*SECYR) {
-		printf("WARNING: clock time much less than file system time\n");
-		printf("WARNING: using file system time\n");
-		goto fstime;
-	}
-
-	timeset = 1;
-	return;
-
-fstime:
-	timeset = 1;
-	ts.tv_sec = base;
-	ts.tv_nsec = 0;
-	tc_setclock(&ts);
-	printf("WARNING: CHECK AND RESET THE DATE!\n");
+	tv->tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
+	tv->tv_usec = 0;
+	return 0;
 }
 
-/*
- * Reset the clock.
- */
-void
-resettodr(void)
+static int
+rtc_settime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 {
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
@@ -840,7 +788,7 @@ resettodr(void)
 	 * on.  Don't reset the clock chip in this case.
 	 */
 	if (!timeset)
-		return;
+		return 0;
 
 	s = splclock();
 	if (rtcget(&rtclk))
@@ -868,6 +816,33 @@ resettodr(void)
 		mc146818_write(NULL, centb, century); /* XXX softc */
 	}
 	splx(s);
+	return 0;
+
+}
+
+static int
+rtc_getcal(todr_chip_handle_t tch, int *vp)
+{
+	return EOPNOTSUPP;
+}
+
+static int
+rtc_setcal(todr_chip_handle_t tch, int v)
+{
+	return EOPNOTSUPP;
+}
+
+static void
+rtc_register(void)
+{
+	static struct todr_chip_handle	tch;
+	tch.todr_gettime = rtc_gettime;
+	tch.todr_settime = rtc_settime;
+	tch.todr_getcal = rtc_getcal;
+	tch.todr_setcal = rtc_setcal;
+	tch.todr_setwen = NULL;
+
+	todr_attach(&tch);
 }
 
 void
