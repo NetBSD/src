@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.91 2006/03/28 17:38:35 thorpej Exp $        */
+/*      $NetBSD: ukbd.c,v 1.92 2006/09/03 21:17:54 christos Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.91 2006/03/28 17:38:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.92 2006/09/03 21:17:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,6 +236,7 @@ Static void	ukbd_cnpollc(void *, int);
 const struct wskbd_consops ukbd_consops = {
 	ukbd_cngetc,
 	ukbd_cnpollc,
+	NULL,	/* bell */
 };
 #endif
 
