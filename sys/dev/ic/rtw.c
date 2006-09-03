@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.75 2006/08/31 19:24:38 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.76 2006/09/03 05:10:24 christos Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.75 2006/08/31 19:24:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.76 2006/09/03 05:10:24 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -410,9 +410,10 @@ rtw_access_string(enum rtw_access access)
 static void
 rtw_set_access1(struct rtw_regs *regs, enum rtw_access naccess)
 {
-	KASSERT(naccess >= RTW_ACCESS_NONE && naccess <= RTW_ACCESS_ANAPARM);
-	KASSERT(regs->r_access >= RTW_ACCESS_NONE &&
-	        regs->r_access <= RTW_ACCESS_ANAPARM);
+	KASSERT(/* naccess >= RTW_ACCESS_NONE && */
+	    naccess <= RTW_ACCESS_ANAPARM);
+	KASSERT(/* regs->r_access >= RTW_ACCESS_NONE && */
+	    regs->r_access <= RTW_ACCESS_ANAPARM);
 
 	if (naccess == regs->r_access)
 		return;
@@ -753,8 +754,7 @@ rtw_reset(struct rtw_softc *sc)
 	if ((rc = rtw_chip_reset(&sc->sc_regs, sc->sc_dev.dv_xname)) != 0)
 		return rc;
 
-	if ((rc = rtw_recall_eeprom(&sc->sc_regs, sc->sc_dev.dv_xname)) != 0)
-		;
+	rc = rtw_recall_eeprom(&sc->sc_regs, sc->sc_dev.dv_xname);
 
 	config1 = RTW_READ8(&sc->sc_regs, RTW_CONFIG1);
 	RTW_WRITE8(&sc->sc_regs, RTW_CONFIG1, config1 & ~RTW_CONFIG1_PMEN);
