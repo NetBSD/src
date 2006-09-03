@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.22 2005/12/24 20:27:29 perry Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.23 2006/09/03 04:27:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.22 2005/12/24 20:27:29 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.23 2006/09/03 04:27:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,8 +298,9 @@ wait_for_calibration(struct ad1848_softc *sc)
 		delay(10);
 		timeout--;
 	}
-	if (timeout <= 0)
+	if (timeout <= 0) {
 		DPRINTF(("ad1848: Auto calibration timed out(1).\n"));
+	}
 
 	/* Set register addr */
 	ADWRITE(sc, AD1848_IADDR, SP_TEST_AND_INIT);
@@ -310,8 +311,9 @@ wait_for_calibration(struct ad1848_softc *sc)
 		delay(10);
 		timeout--;
 	}
-	if (timeout <= 0)
+	if (timeout <= 0) {
 		DPRINTF(("ad1848: Auto calibration timed out(1.5).\n"));
+	}
 
 	if (!(ad_read(sc, SP_TEST_AND_INIT) & AUTO_CAL_IN_PROG)) {
 		if (sc->mode > 1) {
@@ -325,8 +327,9 @@ wait_for_calibration(struct ad1848_softc *sc)
 				delay(10);
 				timeout--;
 			}
-			if (timeout <= 0)
+			if (timeout <= 0) {
 				DPRINTF(("ad1848: Auto calibration timed out(2).\n"));
+			}
 		}
 	}
 
@@ -336,8 +339,9 @@ wait_for_calibration(struct ad1848_softc *sc)
 		delay(10);
 		timeout--;
 	}
-	if (timeout <= 0)
+	if (timeout <= 0) {
 		DPRINTF(("ad1848: Auto calibration timed out(3).\n"));
+	}
 }
 
 #ifdef AUDIO_DEBUG
