@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.23 2006/03/28 17:38:35 thorpej Exp $	*/
+/*	$NetBSD: urio.c,v 1.24 2006/09/03 21:30:24 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.23 2006/03/28 17:38:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.24 2006/09/03 21:30:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ dev_type_ioctl(urioioctl);
 
 const struct cdevsw urio_cdevsw = {
 	urioopen, urioclose, urioread, uriowrite, urioioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 #elif defined(__OpenBSD__)
 cdev_decl(urio);

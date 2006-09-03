@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.5 2006/04/11 23:08:08 scw Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.6 2006/09/03 21:33:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.5 2006/04/11 23:08:08 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.6 2006/09/03 21:33:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ dev_type_ioctl(utoppyioctl);
 
 const struct cdevsw utoppy_cdevsw = {
 	utoppyopen, utoppyclose, utoppyread, utoppywrite, utoppyioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 #define	UTOPPYUNIT(n)	(minor(n))
