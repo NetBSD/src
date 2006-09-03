@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.77 2006/08/27 17:05:39 xtraeme Exp $	*/
+/*	$NetBSD: twe.c,v 1.78 2006/09/03 07:05:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.77 2006/08/27 17:05:39 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.78 2006/09/03 07:05:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,7 @@ static void twe_clear_pci_parity_error(struct twe_softc *sc);
 
 static int	twe_add_unit(struct twe_softc *, int);
 static int	twe_del_unit(struct twe_softc *, int);
+static int	twe_init_connection(struct twe_softc *);
 
 static inline u_int32_t	twe_inl(struct twe_softc *, int);
 static inline void twe_outl(struct twe_softc *, int, u_int32_t);
@@ -1246,8 +1247,6 @@ done:
  */
 static int
 twe_init_connection(struct twe_softc *sc)
-/*###762 [cc] warning: `twe_init_connection' was used with no prototype before its definition%%%*/
-/*###762 [cc] warning: `twe_init_connection' was declared implicitly `extern' and later `static'%%%*/
 {
 	struct twe_ccb *ccb;
 	struct twe_cmd *tc;
@@ -1911,7 +1910,7 @@ done:
 
 const struct cdevsw twe_cdevsw = {
 	tweopen, tweclose, noread, nowrite, tweioctl,
-	    nostop, notty, nopoll, nommap,
+	    nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 /*
