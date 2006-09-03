@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.28 2006/02/26 19:56:51 apb Exp $
+# $NetBSD: etcupdate,v 1.29 2006/09/03 09:19:07 itohy Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -54,7 +54,7 @@ PATH="/sbin:/usr/sbin:/bin:/usr/bin:${PATH}"
 # Default settings
 TEMPROOT="${TEMPROOT:=/tmp/temproot}"
 PAGER="${PAGER:=/usr/bin/more}"
-SWIDTH=`stty -a | awk '/columns/{w=$6}END{if(w==0){w=80}print w}'`
+SWIDTH=`stty size | awk '{w=$2}END{if(w==0){w=80}print w}'`
 WIDTH="${WIDTH:=${SWIDTH}}"
 DIFF_COMMAND="diff -u"
 VERBOSE=false
