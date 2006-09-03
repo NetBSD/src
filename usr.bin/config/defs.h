@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.13 2006/08/30 13:48:11 cube Exp $	*/
+/*	$NetBSD: defs.h,v 1.14 2006/09/03 07:45:40 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,17 +106,13 @@ extern const char *progname;
  * integers.  The names can be NULL, resulting in simple value lists.
  */
 struct nvlist {
-	struct	nvlist *nv_next;
-	const char *nv_name;
-	union {
-		const char *un_str;
-		void *un_ptr;
-	} nv_un;
-#define	nv_str	nv_un.un_str
-#define	nv_ptr	nv_un.un_ptr
-	int	nv_int;
-	int	nv_ifunit;		/* XXX XXX XXX */
-	int	nv_flags;
+	struct nvlist	*nv_next;
+	const char	*nv_name;
+	const char	*nv_str;
+	void		*nv_ptr;
+	int		nv_int;
+	int		nv_ifunit;		/* XXX XXX XXX */
+	int		nv_flags;
 #define	NV_DEPENDED	1
 #define	NV_OBSOLETE	2
 };
