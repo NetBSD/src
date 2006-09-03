@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.14 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.15 2006/09/03 06:46:22 christos Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.14 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.15 2006/09/03 06:46:22 christos Exp $");
 
 #undef	TCICISADEBUG
 
@@ -137,6 +137,8 @@ static struct pcmcia_chip_functions tcic_isa_functions = {
 	tcic_chip_socket_enable,
 	tcic_chip_socket_disable,
 	tcic_chip_socket_settype,
+
+	NULL,	/* card_detect */
 };
 
 int
@@ -193,8 +195,9 @@ tcic_isa_probe(parent, match, aux)
 				found++;
 		}
 	}
-	else
+	else {
 		DPRINTF(("tcic: reserved bits didn't check OK\n"));
+	}
 
 	bus_space_unmap(iot, ioh, TCIC_IOSIZE);
 	bus_space_unmap(ia->ia_memt, memh, msize);
