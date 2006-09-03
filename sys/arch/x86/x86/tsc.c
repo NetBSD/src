@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.5 2006/06/13 17:37:06 dogcow Exp $ */
+/* $NetBSD: tsc.c,v 1.6 2006/09/03 07:00:48 christos Exp $ */
 
 
 /*-
@@ -83,7 +83,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.5 2006/06/13 17:37:06 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.6 2006/09/03 07:00:48 christos Exp $");
 
 #include "opt_multiprocessor.h"
 #ifdef i386
@@ -126,6 +126,8 @@ static struct timecounter tsc_timecounter = {
 #else
 	800,			/* quality (adjusted in code) */
 #endif
+	NULL,
+	NULL,
 };
 
 void
