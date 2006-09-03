@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.c,v 1.11 2006/06/30 13:56:25 chap Exp $	*/
+/*	$NetBSD: umidi_quirks.c,v 1.12 2006/09/03 21:28:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.11 2006/06/30 13:56:25 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.12 2006/09/03 21:28:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -514,7 +514,7 @@ struct umidi_quirk umidi_quirklist[] = {
 	UMQ_REG(ROLAND, ROLAND_PCR, 0),
 	UMQ_REG(ROLAND, ROLAND_UM3, 0),
 	UMQ_REG(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE),
-	UMQ_TERMINATOR
+	{ .vendor = 0 },
 };
 
 
