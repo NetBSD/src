@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.91 2006/07/14 22:33:27 kardel Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.92 2006/09/03 06:34:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.91 2006/07/14 22:33:27 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.92 2006/09/03 06:34:34 christos Exp $");
 
 #include "opt_ktrace.h"
 
@@ -115,7 +115,7 @@ dofileread(struct lwp *l, int fd, struct file *fp, void *buf, size_t nbyte,
 	size_t cnt;
 	int error;
 #ifdef KTRACE
-	struct iovec	ktriov = {0};
+	struct iovec	ktriov = { .iov_base = NULL, };
 #endif
 	p = l->l_proc;
 
@@ -343,7 +343,7 @@ dofilewrite(struct lwp *l, int fd, struct file *fp, const void *buf,
 	size_t cnt;
 	int error;
 #ifdef KTRACE
-	struct iovec	ktriov = {0};
+	struct iovec	ktriov = { .iov_base = NULL, };
 #endif
 
 	p = l->l_proc;
