@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.52 2006/07/21 16:48:47 ad Exp $	*/
+/*	$NetBSD: rnd.c,v 1.53 2006/09/03 05:03:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.52 2006/07/21 16:48:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.53 2006/09/03 05:03:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -166,7 +166,7 @@ dev_type_kqfilter(rndkqfilter);
 
 const struct cdevsw rnd_cdevsw = {
 	rndopen, nullclose, rndread, rndwrite, rndioctl,
-	nostop, notty, rndpoll, nommap, rndkqfilter,
+	nostop, notty, rndpoll, nommap, rndkqfilter, D_OTHER,
 };
 
 static inline void	rnd_wakeup_readers(void);
