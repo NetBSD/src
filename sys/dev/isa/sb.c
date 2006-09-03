@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.84 2006/04/14 19:56:40 christos Exp $	*/
+/*	$NetBSD: sb.c,v 1.85 2006/09/03 05:12:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.84 2006/04/14 19:56:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.85 2006/09/03 05:12:54 christos Exp $");
 
 #include "midi.h"
 
@@ -107,7 +107,8 @@ const struct audio_hw_if sb_hw_if = {
 	sbdsp_get_props,
 	sbdsp_trigger_output,
 	sbdsp_trigger_input,
-	0,
+	NULL,
+	NULL,
 };
 
 /*
@@ -290,7 +291,7 @@ sb_getdev(void *addr, struct audio_device *retp)
 		strlcpy(retp->name, "SoundBlaster", sizeof(retp->name));
 	snprintf(retp->version, sizeof(retp->version), "%d.%02d",
 	    SBVER_MAJOR(sc->sc_version), SBVER_MINOR(sc->sc_version));
-	if (0 <= sc->sc_model && sc->sc_model < sizeof names / sizeof names[0])
+	if (sc->sc_model < sizeof names / sizeof names[0])
 		config = names[sc->sc_model];
 	else
 		config = "??";
