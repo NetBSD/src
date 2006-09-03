@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.95 2006/09/03 06:03:51 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.96 2006/09/03 20:38:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.95 2006/09/03 06:03:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.96 2006/09/03 20:38:32 perry Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -372,7 +372,7 @@ startrtclock(void)
 
 
 static void
-tickle_tc() 
+tickle_tc(void) 
 {
 #if defined(MULTIPROCESSOR)
 	struct cpu_info *ci = curcpu();
