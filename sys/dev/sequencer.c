@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.33 2006/08/17 17:11:27 christos Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.34 2006/09/03 05:19:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.33 2006/08/17 17:11:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.34 2006/09/03 05:19:38 christos Exp $");
 
 #include "sequencer.h"
 
@@ -136,7 +136,7 @@ static dev_type_kqfilter(sequencerkqfilter);
 const struct cdevsw sequencer_cdevsw = {
 	sequenceropen, sequencerclose, sequencerread, sequencerwrite,
 	sequencerioctl, nostop, notty, sequencerpoll, nommap,
-	sequencerkqfilter,
+	sequencerkqfilter, D_OTHER,
 };
 
 void
@@ -985,7 +985,7 @@ seq_do_fullsize(struct sequencer_softc *sc, seq_event_t *b, struct uio *uio)
 #endif
 	memcpy(&sysex, b, sizeof sysex);
 	dev = sysex.device_no;
-	if (dev < 0 || dev >= sc->nmidi)
+	if (/* dev < 0 || */ dev >= sc->nmidi)
 		return (ENXIO);
 	DPRINTFN(2, ("seq_do_fullsize: fmt=%04x, dev=%d, len=%d\n",
 		     sysex.key, dev, sysex.len));
