@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.44 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.45 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8205,6 +8205,8 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		[he 20060321]
 	prep: Add support for updating the boot partition. [garbled 20060323]
 	tun(4): IPv6 support added [rpaulo 20060329]
+	ndis(4): Ported FreeBSD's NDIS Wrapper.  See ndiscvt(8) for more
+		information [rittera 20060330]
 	utoppy(4): Driver for Topfield TF5000PVR range of digital video
 		recorders.  [scw 20060403]
 	utoppya(1): Userland program to interface to utoppy(4).
