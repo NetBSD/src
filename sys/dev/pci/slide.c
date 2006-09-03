@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.12 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: slide.c,v 1.13 2006/09/03 05:24:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.12 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.13 2006/09/03 05:24:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ static const struct pciide_product_desc pciide_symphony_products[] = {
 	{ 0,
 	  0,
 	  NULL,
+	  NULL,
 	}
 };
 
@@ -77,6 +78,7 @@ static const struct pciide_product_desc pciide_winbond_products[] =  {
 	},
 	{ 0,
 	  0,
+	  NULL,
 	  NULL,
 	}
 };
