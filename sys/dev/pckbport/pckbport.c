@@ -1,4 +1,4 @@
-/* $NetBSD: pckbport.c,v 1.8 2006/06/18 20:53:10 christos Exp $ */
+/* $NetBSD: pckbport.c,v 1.9 2006/09/03 13:23:15 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.8 2006/06/18 20:53:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.9 2006/09/03 13:23:15 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,11 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.8 2006/06/18 20:53:10 christos Exp $"
 
 #include "locators.h"
 
-#ifdef __HAVE_NWSCONS /* XXX: this port uses sys/dev/pckbport */
 #include "pckbd.h"
-#else /* ie: only md drivers attach to pckbport */
-#define NPCKBD 0
-#endif
 #if (NPCKBD > 0)
 #include <dev/pckbport/pckbdvar.h>
 #endif
