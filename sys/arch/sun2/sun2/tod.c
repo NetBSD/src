@@ -1,4 +1,4 @@
-/*	$NetBSD: tod.c,v 1.11 2005/12/11 12:19:16 christos Exp $	*/
+/*	$NetBSD: tod.c,v 1.12 2006/09/03 18:38:46 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tod.c,v 1.11 2005/12/11 12:19:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tod.c,v 1.12 2006/09/03 18:38:46 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,6 +208,7 @@ tod_vme_attach(struct device *parent, struct device *self, void *aux)
 static void 
 tod_attach(struct mm58167_softc *sc)
 {
+	todr_chip_handle_t	tch;
 
 	/* Call the IC attach code. */
 	sc->mm58167_msec_xxx = MM58167REG_MSEC_XXX;
@@ -220,81 +221,10 @@ tod_attach(struct mm58167_softc *sc)
 	sc->mm58167_mon = MM58167REG_MON;
 	sc->mm58167_status = MM58167REG_STATUS;
 	sc->mm58167_go = MM58167REG_GO;
-	if ((todr_handle = mm58167_attach(sc)) == NULL)
+	if ((tch = mm58167_attach(sc)) == NULL)
 		panic("tod_attach: can't attach ic");
 
+	todr_attach(tch);
 	printf("\n");
 }
 
-/*
- * Machine-dependent clock routines.
- *
- * Inittodr initializes the time of day hardware which provides
- * date functions.
- *
- * Resettodr restores the time of day hardware after a time change.
- */
-
-/*
- * Initialize the time of day register, based on the time base
- * which is, e.g. from a filesystem.
- */
-void 
-inittodr(time_t fs_time)
-{
-	struct timeval tv;
-	time_t diff, clk_time;
-	time_t long_ago = (5 * SECYR);
-	int clk_bad = 0;
-
-	/*
-	 * Sanity check time from file system.
-	 * If it is zero,assume filesystem time is just unknown
-	 * instead of preposterous.  Don't bark.
-	 */
-	if (fs_time < long_ago) {
-		/*
-		 * If fs_time is zero, assume filesystem time is just
-		 * unknown instead of preposterous.  Don't bark.
-		 */
-		if (fs_time != 0)
-			printf("WARNING: preposterous time in file system\n");
-		/* 1991/07/01  12:00:00 */
-		fs_time = 21*SECYR + 186*SECDAY + SECDAY/2;
-	}
-
-	todr_gettime(todr_handle, &tv);
-	clk_time = tv.tv_sec;
-
-	/* Sanity check time from clock. */
-	if (clk_time < long_ago) {
-		printf("WARNING: bad date in battery clock");
-		clk_bad = 1;
-		clk_time = fs_time;
-	} else {
-		/* Does the clock time jive with the file system? */
-		diff = clk_time - fs_time;
-		if (diff < 0)
-			diff = -diff;
-		if (diff >= (SECDAY*2)) {
-			printf("WARNING: clock %s %d days",
-				   (clk_time < fs_time) ? "lost" : "gained",
-				   (int) (diff / SECDAY));
-			clk_bad = 1;
-		}
-	}
-	if (clk_bad)
-		printf(" -- CHECK AND RESET THE DATE!\n");
-	time.tv_sec = clk_time;
-}
-
-/*
- * Resettodr restores the time of day hardware after a time change.
- */
-void 
-resettodr(void)
-{
-	struct timeval tv;
-	tv = time;
-	todr_settime(todr_handle, &tv);
-}
