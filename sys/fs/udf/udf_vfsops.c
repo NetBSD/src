@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.11 2006/08/22 16:52:41 reinoud Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.12 2006/09/03 07:08:59 christos Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.11 2006/08/22 16:52:41 reinoud Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.12 2006/09/03 07:08:59 christos Exp $");
 #endif /* not lint */
 
 
@@ -144,8 +144,8 @@ struct vfsops udf_vfsops = {
 	udf_snapshot,
 	vfs_stdextattrctl,
 	udf_vnodeopv_descs,
-	/* int vfs_refcount   */
-	/* LIST_ENTRY(vfsops) */
+	0, /* int vfs_refcount   */
+	{ NULL, NULL, }, /* LIST_ENTRY(vfsops) */
 };
 VFS_ATTACH(udf_vfsops);
 
