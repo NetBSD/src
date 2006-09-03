@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.65 2006/08/26 07:59:22 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.66 2006/09/03 05:58:19 simonb Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/pc532/conf/std.pc532"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.65 $"
+#ident 		"GENERIC-$Revision: 1.66 $"
 
 maxusers	8			# estimated number of users
 
@@ -31,6 +31,10 @@ maxusers	8			# estimated number of users
 #options 	DIAGNOSTIC		# internal consistency checking
 options 	KTRACE			# system call tracing, a la ktrace(1)
 #options 	SYSTRACE		# system call vetting via systrace(1)
+# XXX
+# Need "-g" so that link sets in libraries work.  The "objcopy -x" step
+# will strip out static link set info from an a.out object.
+makeoptions 	DEBUG="-g"		# compile full symbol table
 
 #options 	ACCOUNTING		# process accounting
 #options 	SYSVMSG			# System V message queues
