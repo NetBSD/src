@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.24 2006/06/15 15:42:42 mlelstv Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.25 2006/09/03 05:27:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.24 2006/06/15 15:42:42 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.25 2006/09/03 05:27:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -789,6 +789,7 @@ struct smb_tran_desc smb_tran_nbtcp_desc = {
 	smb_nbst_send, smb_nbst_recv,
 	smb_nbst_timo, smb_nbst_intr,
 	smb_nbst_getparam, smb_nbst_setparam,
-	smb_nbst_fatal
+	smb_nbst_fatal,
+	{ NULL, NULL },
 };
 
