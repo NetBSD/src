@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.22 2006/04/26 16:09:22 rpaulo Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.23 2006/09/03 21:42:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.22 2006/04/26 16:09:22 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.23 2006/09/03 21:42:09 christos Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -156,11 +156,11 @@ static struct vga_raster_font vga_console_fontset_ascii;
 static struct videomode vga_console_modes[2] = {
 	/* 640x400 for 80x25, 80x40 and 80x50 modes */
 	{
-		25175, 640, 664, 760, 800, 400, 409, 411, 450, 0
+		25175, 640, 664, 760, 800, 400, 409, 411, 450, 0, NULL,
 	},
 	/* 640x480 for 80x30 mode */
 	{
-		25175, 640, 664, 760, 800, 480, 491, 493, 525, 0
+		25175, 640, 664, 760, 800, 480, 491, 493, 525, 0, NULL,
 	}
 };
 
@@ -322,6 +322,8 @@ const struct wsdisplay_accessops vga_raster_accessops = {
 	vga_raster_free_screen,
 	vga_raster_show_screen,
 	vga_raster_load_font,
+	NULL,	/* pollc */
+	NULL,	/* scroll */
 };
 
 int
