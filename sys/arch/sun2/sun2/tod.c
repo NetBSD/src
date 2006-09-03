@@ -1,4 +1,4 @@
-/*	$NetBSD: tod.c,v 1.12 2006/09/03 18:38:46 gdamore Exp $	*/
+/*	$NetBSD: tod.c,v 1.13 2006/09/03 21:34:33 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tod.c,v 1.12 2006/09/03 18:38:46 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tod.c,v 1.13 2006/09/03 21:34:33 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,8 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: tod.c,v 1.12 2006/09/03 18:38:46 gdamore Exp $");
 
 #include <dev/clock_subr.h>
 #include <dev/ic/mm58167var.h>
-
-static todr_chip_handle_t todr_handle;
 
 static int  tod_obio_match(struct device *, struct cfdata *, void *args);
 static void tod_obio_attach(struct device *, struct device *, void *);
