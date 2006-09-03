@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.93 2006/07/09 21:31:40 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.94 2006/09/03 05:26:11 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.93 2006/07/09 21:31:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.94 2006/09/03 05:26:11 gdamore Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -205,6 +205,7 @@ inline u_int mc146818_read(void *, u_int);
 inline void mc146818_write(void *, u_int, u_int);
 
 u_int i8254_get_timecount(struct timecounter *);
+static void rtc_register(void)
 
 static struct timecounter i8254_timecounter = {
 	i8254_get_timecount,	/* get_timecount */
@@ -363,6 +364,8 @@ startrtclock(void)
 #if defined(I586_CPU) || defined(I686_CPU)
 	init_TSC();
 #endif
+
+	rtc_register();
 }
 
 
@@ -730,6 +733,118 @@ clock_expandyear(int clockyear)
 	return (clockyear);
 }
 
+static int
+rtcgettime(todr_chip_handle_t tch, volatile struct timeval *tv)
+{
+	int s;
+	mc_todregs rtclk;
+	struct clock_ymdhms dt;
+
+	s = splclock();
+	if (rtcget(&rtclk)) {
+		splx(s);
+		return -1;
+	}
+	splx(s);
+
+	dt.dt_sec = bcdtobin(rtclk[MC_SEC]);
+	dt.dt_min = bcdtobin(rtclk[MC_MIN]);
+	dt.dt_hour = bcdtobin(rtclk[MC_HOUR]);
+	dt.dt_day = bcdtobin(rtclk[MC_DOM]);
+	dt.dt_mon = bcdtobin(rtclk[MC_MONTH]);
+	dt.dt_year = clock_expandyear(bcdtobin(rtclk[MC_YEAR]));
+
+	/*
+	 * If time_t is 32 bits, then the "End of Time" is 
+	 * Mon Jan 18 22:14:07 2038 (US/Eastern)
+	 * This code copes with RTC's past the end of time if time_t
+	 * is an int32 or less. Needed because sometimes RTCs screw
+	 * up or are badly set, and that would cause the time to go
+	 * negative in the calculation below, which causes Very Bad
+	 * Mojo. This at least lets the user boot and fix the problem.
+	 * Note the code is self eliminating once time_t goes to 64 bits.
+	 */
+	if (sizeof(time_t) <= sizeof(int32_t)) {
+		if (dt.dt_year >= 2038) {
+			return -1;
+		}
+	}
+
+	tv->tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
+	tv->tv_usec = 0;
+	return 0;
+}
+
+static int
+rtc_settime(todr_chip_handle_t tch, volatile struct timeval *tvp)
+{
+	mc_todregs rtclk;
+	struct clock_ymdhms dt;
+	int century;
+	int s;
+
+	/*
+	 * We might have been called by boot() due to a crash early
+	 * on.  Don't reset the clock chip in this case.
+	 */
+	if (!timeset)
+		return;
+
+	s = splclock();
+	if (rtcget(&rtclk))
+		memset(&rtclk, 0, sizeof(rtclk));
+	splx(s);
+
+	clock_secs_to_ymdhms(time_second - rtc_offset * 60, &dt);
+
+	rtclk[MC_SEC] = bintobcd(dt.dt_sec);
+	rtclk[MC_MIN] = bintobcd(dt.dt_min);
+	rtclk[MC_HOUR] = bintobcd(dt.dt_hour);
+	rtclk[MC_DOW] = dt.dt_wday + 1;
+	rtclk[MC_YEAR] = bintobcd(dt.dt_year % 100);
+	rtclk[MC_MONTH] = bintobcd(dt.dt_mon);
+	rtclk[MC_DOM] = bintobcd(dt.dt_day);
+
+#ifdef DEBUG_CLOCK
+	printf("setclock: %x/%x/%x %x:%x:%x\n", rtclk[MC_YEAR], rtclk[MC_MONTH],
+	   rtclk[MC_DOM], rtclk[MC_HOUR], rtclk[MC_MIN], rtclk[MC_SEC]);
+#endif
+	s = splclock();
+	rtcput(&rtclk);
+	if (rtc_update_century > 0) {
+		century = bintobcd(dt.dt_year / 100);
+		mc146818_write(NULL, centb, century); /* XXX softc */
+	}
+	splx(s);
+
+}
+
+static int
+rtc_getcal(todr_chip_handle_t *tch, int *vp)
+{
+	return ENOTSUPP;
+}
+
+static int
+rtc_setcal(todr_chip_handle_t *tch, int v)
+{
+	return ENOTSUPP;
+}
+
+static void
+rtc_register(void)
+{
+	static struct todr_chip_handle	tch;
+	tch.todr_gettime = rtc_gettime;
+	tch.todr_settime = rtc_settime;
+	tch.todr_getcal = rtc_getcal;
+	tch.todr_setcal = rtc_setcal;
+	tch.todr_setwen = NULL;
+
+	todr_attach(&tch);
+}
+
+#if 0
 /*
  * Initialize the time of day register, based on the time base which is, e.g.
  * from a filesystem.
@@ -876,3 +991,4 @@ void
 setstatclockrate(int arg)
 {
 }
+#endif
