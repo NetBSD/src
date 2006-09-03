@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.824 2006/09/03 07:36:34 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.825 2006/09/03 08:10:47 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.824 2006/09/03 07:36:10 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.825 2006/09/03 08:10:18 xtraeme Exp
  */
 
 /*
@@ -2737,17 +2737,43 @@
 #define	PCI_PRODUCT_NVIDIA_GF_FX5950U	0x0333		/* GeForce FX 5950 Ultra */
 #define	PCI_PRODUCT_NVIDIA_QUADRO_FX_3000	0x0338		/* Quadro FX 3000 */
 #define	PCI_PRODUCT_NVIDIA_GF_FX5700_LE	0x0343		/* GeForce FX 5700 LE */
-#define	PCI_PRODUCT_NVIDIA_MCP55_SMB	0x0368		/* MCP55 SMBus */
-#define	PCI_PRODUCT_NVIDIA_MCP55_IDE	0x036e		/* MCP55 IDE */
-#define	PCI_PRODUCT_NVIDIA_MCP55_HDA	0x0371		/* MCP55 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP55_SMB	0x0368		/* nForce MCP55 SMBus Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP55_IDE	0x036e		/* nForce MCP55 ATA133 IDE Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP55_HDA	0x0371		/* nForce MCP55 High Definition Audio Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP55_LAN1	0x0372		/* nForce MCP55 Gigabit Ethernet Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP55_LAN2	0x0373		/* nForce MCP55 Gigabit Ethernet Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP55_SATA	0x037e		/* nForce MCP55 Seria ATA Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP55_SATA2	0x037f		/* nForce MCP55 Serial ATA Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP61_ISA	0x03e0		/* nForce MCP61 PCI-ISA Bridge */
+#define	PCI_PRODUCT_NVIDIA_MCP61_HDA	0x03e4		/* nForce MCP61 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP61_SATA	0x03e7		/* nForce MCP61 Serial ATA Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP61_PPB_1	0x03e8		/* nForce MCP61 PCI-PCI Bridge */
+#define	PCI_PRODUCT_NVIDIA_MCP61_PPB_2	0x03e9		/* nForce MCP61 PCI-PCI Bridge */
+#define	PCI_PRODUCT_NVIDIA_MCP61_SMB	0x03eb		/* nForce MCP61 SMBus Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP61_IDE	0x03ec		/* nForce MCP61 ATA133 IDE Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP61_LAN1	0x03e5		/* nForce MCP61 Gigabit Ethernet Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP61_LAN2	0x03e6		/* nForce MCP61 Gigabit Ethernet Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP61_LAN3	0x03ee		/* nForce MCP61 Gigabit Ethernet Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP61_LAN4	0x03ef		/* nForce MCP61 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_ISA	0x0440		/* nForce MCP65 PCI-ISA Bridge */
+#define	PCI_PRODUCT_NVIDIA_MCP65_MEM	0x0444		/* nForce MCP65 Memory Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_MEM2	0x0445		/* nForce MCP65 Memory Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_SMB	0x0446		/* nForce MCP65 SMBus Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_IDE	0x0448		/* nForce MCP65 ATA133 IDE Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_PCI	0x0449		/* nForce MCP65 PCI Brige */
+#define	PCI_PRODUCT_NVIDIA_MCP65_HDA_1	0x044a		/* nForce MCP65 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_HDA_2	0x044b		/* nForce MCP65 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_AHCI_1	0x044c		/* nForce MCP65 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_AHCI_2	0x044d		/* nForce MCP65 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_AHCI_3	0x044e		/* nForce MCP65 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_AHCI_4	0x044f		/* nForce MCP65 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_USB_1	0x0454		/* nForce MCP65 USB Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_USB_2	0x0455		/* nForce MCP65 USB Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_USB_3	0x0456		/* nForce MCP65 USB Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_USB_4	0x0457		/* nForce MCP65 USB Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP65_PPB_1	0x0458		/* nForce MCP65 PCI-PCI Bridge */
+#define	PCI_PRODUCT_NVIDIA_MCP65_PPB_2	0x0459		/* nForce MCP65 PCI-PCI Bridge */
+#define	PCI_PRODUCT_NVIDIA_MCP65_PPB_3	0x045a		/* nForce MCP65 PCI-PCI Bridge */
 #define	PCI_PRODUCT_NVIDIA_MCP65_LAN1	0x0450		/* nForce MCP65 Gigabit Ethernet Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP65_LAN2	0x0451		/* nForce MCP65 Gigabit Ethernet Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP65_LAN3	0x0452		/* nForce MCP65 Gigabit Ethernet Controller */
