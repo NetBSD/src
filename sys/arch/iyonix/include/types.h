@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.2 2005/12/11 12:17:51 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.3 2006/09/03 13:51:23 bjh21 Exp $	*/
 
 #ifndef _IYONIX_TYPES_H_
 #define	_IYONIX_TYPES_H_
@@ -7,6 +7,5 @@
 
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
 #define	__HAVE_DEVICE_REGISTER
-#define	__HAVE_NWSCONS
 
 #endif
