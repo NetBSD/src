@@ -1,4 +1,4 @@
-/*	$NetBSD: oclock.c,v 1.12 2005/11/16 03:00:23 uwe Exp $ */
+/*	$NetBSD: oclock.c,v 1.13 2006/09/03 22:27:45 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.12 2005/11/16 03:00:23 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.13 2006/09/03 22:27:45 gdamore Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.12 2005/11/16 03:00:23 uwe Exp $");
 #include <dev/ic/intersil7170.h>
 
 /* Imported from clock.c: */
-extern todr_chip_handle_t todr_handle;
 extern int oldclk;
 extern int timerblurb;
 extern void (*timer_init)(void);
@@ -132,6 +131,7 @@ oclockattach(struct device *parent, struct device *self, void *aux)
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
 	bus_space_tag_t bt = oba->oba_bustag;
 	bus_space_handle_t bh;
+	todr_chip_handle_t tch;
 
 	oldclk = 1;  /* we've got an oldie! */
 
@@ -192,9 +192,10 @@ oclockattach(struct device *parent, struct device *self, void *aux)
 	intr_establish(10, 0, &level10, NULL);
 
 	/* Our TOD clock year 0 represents 1968 */
-	if ((todr_handle = intersil7170_attach(bt, bh, 1968)) == NULL)
+	if ((tch = intersil7170_attach(bt, bh, 1968)) == NULL)
 		panic("Can't attach tod clock");
 	printf("\n");
+	todr_attach(tch);
 #endif /* SUN4 */
 }
 

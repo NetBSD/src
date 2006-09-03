@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.263 2005/12/11 12:19:08 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.264 2006/09/03 22:27:45 gdamore Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.263 2005/12/11 12:19:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.264 2006/09/03 22:27:45 gdamore Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -1051,7 +1051,6 @@ cpu_reboot(int howto, char *user_boot_string)
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		extern struct lwp lwp0;
-		extern int sparc_clock_time_is_ok;
 
 		/* XXX protect against curlwp->p_stats.foo refs in sync() */
 		if (curlwp == NULL)
@@ -1062,12 +1061,10 @@ cpu_reboot(int howto, char *user_boot_string)
 		/*
 		 * If we've been adjusting the clock, the todr
 		 * will be out of synch; adjust it now.
-		 * Do this only if the TOD clock has already been read out
-		 * successfully by inittodr() or set by an explicit call
-		 * to resettodr() (e.g. from settimeofday()).
+		 * resettodr will only do this only if inittodr()
+		 * has already been called.
 		 */
-		if (sparc_clock_time_is_ok)
-			resettodr();
+		resettodr();
 	}
 
 	/* Disable interrupts. But still allow IPI on MP systems */

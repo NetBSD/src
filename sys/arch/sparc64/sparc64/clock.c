@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.79 2006/06/07 22:39:38 kardel Exp $ */
+/*	$NetBSD: clock.c,v 1.80 2006/09/03 22:27:45 gdamore Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.79 2006/06/07 22:39:38 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.80 2006/09/03 22:27:45 gdamore Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -145,9 +145,6 @@ CFATTACH_DECL(rtc_ebus, sizeof(struct mc146818_softc),
     clockmatch_rtc, clockattach_rtc, NULL, NULL);
 
 extern struct cfdriver clock_cd;
-
-/* Global TOD clock handle */
-static todr_chip_handle_t todr_handle = NULL;
 
 static int	timermatch(struct device *, struct cfdata *, void *);
 static void	timerattach(struct device *, struct device *, void *);
@@ -244,7 +241,9 @@ clockattach_sbus(struct device *parent, struct device *self, void *aux)
 	clockattach(sc, sa->sa_node);
 
 	/* Save info for the clock wenable call. */
-	todr_handle->todr_setwen = clock_wenable;
+	sc->sc_handle.todr_setwen = clock_wenable;
+
+	todr_attach(&sc->sc_handle);
 }
 
 /*
@@ -304,7 +303,9 @@ clockattach_ebus(struct device *parent, struct device *self, void *aux)
 	clockattach(sc, ea->ea_node);
 
 	/* Save info for the clock wenable call. */
-	todr_handle->todr_setwen = clock_wenable;
+	sc->sc_handle.todr_setwen = clock_wenable;
+
+	todr_attach(&sc->sc_handle);
 }
 
 
@@ -324,9 +325,6 @@ clockattach(struct mk48txx_softc *sc, int node)
 	mk48txx_attach(sc);
 
 	printf("\n");
-
-	/* XXX should be done by todr_attach() */
-	todr_handle = &sc->sc_handle;
 }
 
 /*
@@ -412,8 +410,7 @@ clockattach_rtc(struct device *parent, struct device *self, void *aux)
 	 */
 	/*sc->sc_handle.todr_setwen = NULL;*/
 
-	/* XXX should be done by todr_attach() */
-	todr_handle = &sc->sc_handle;
+	todr_attach(&sc->sc_handle);
 }
 
 static u_int timer_get_timecount(struct timecounter *);
@@ -799,111 +796,6 @@ schedintr(void *arg)
 	if (curlwp)
 		schedclock(curlwp);
 	return (1);
-}
-
-
-/*
- * `sparc_clock_time_is_ok' is used in cpu_reboot() to determine
- * whether it is appropriate to call resettodr() to consolidate
- * pending time adjustments.
- */
-int sparc_clock_time_is_ok;
-
-/*
- * Set up the system's time, given a `reasonable' time value.
- */
-void
-inittodr(base)
-	time_t base;
-{
-	int badbase = 0, waszero = base == 0;
-	int no_valid_todr = 1;
-	struct timeval tv;
-	struct timeval time;
-	struct timespec ts;
-
-	time.tv_sec = 0;
-	time.tv_usec = 0;
-
-	if (base < 5 * SECYR) {
-		/*
-		 * If base is 0, assume filesystem time is just unknown
-		 * in stead of preposterous. Don't bark.
-		 */
-		if (base != 0)
-			printf("WARNING: preposterous time in file system\n");
-		/* not going to use it anyway, if the chip is readable */
-		base = 33*SECYR + 186*SECDAY + SECDAY/2;
-		badbase = 1;
-	}
-
-	if (todr_handle) {
-		if (todr_gettime(todr_handle, &tv) == 0) {
-			if (tv.tv_sec != 0) {
-				time = tv;
-				no_valid_todr = 0;
-			}
-		}
-	}
-
-	if (no_valid_todr) {
-		printf("WARNING: bad date in battery clock");
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the clock.
-		 */
-		ts.tv_sec = base;
-		ts.tv_nsec = 0;
-		tc_setclock(&ts);
-
-		if (!badbase)
-			resettodr();
-	} else {
-		int deltat;
-		deltat = time.tv_sec - base;
-
-		sparc_clock_time_is_ok = 1;
-
-
-		ts.tv_sec = time.tv_sec;
-		ts.tv_nsec = time.tv_usec * 1000;
-		tc_setclock(&ts);
-
-		if (waszero)
-			return;
-
-		if (deltat < 0) {
-			deltat = -deltat;
-			if (deltat < 2 * SECDAY)
-				return;
-		} else if (deltat < 2 * SECYR) {
-			return;
-		}
-		printf("WARNING: clock %s %d days",
-		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
-	}
-	printf(" -- CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * Reset the clock based on the current time.
- * Used when the current clock is preposterous, when the time is changed,
- * and when rebooting.  Do nothing if the time is not yet known, e.g.,
- * when crashing during autoconfig.
- */
-void
-resettodr()
-{
-	struct timeval tv;
-
-	getmicrotime(&tv);
-
-	if (tv.tv_sec == 0)
-		return;
-
-	sparc_clock_time_is_ok = 1;
-	if (todr_handle == 0 || todr_settime(todr_handle, &tv) != 0)
-		printf("Cannot set time in time-of-day clock\n");
 }
 
 /*
