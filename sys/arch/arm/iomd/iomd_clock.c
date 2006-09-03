@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.20 2006/08/05 16:38:57 bjh21 Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.21 2006/09/03 12:46:57 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.20 2006/08/05 16:38:57 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.21 2006/09/03 12:46:57 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -78,7 +78,6 @@ static void *clockirq;
 static void *statclockirq;
 static struct clock_softc *clock_sc;
 static int timer0_count;
-static int timeset;
 
 static int clockmatch(struct device *parent, struct cfdata *cf, void *aux);
 static void clockattach(struct device *parent, struct device *self, void *aux);
@@ -369,106 +368,6 @@ delay(u_int n)
 		else
 			for (i = 8; --i;);
 	}
-}
-
-todr_chip_handle_t todr_handle;
-
-/*
- * todr_attach:
- *
- *	Set the specified time-of-day register as the system real-time clock.
- */
-void
-todr_attach(todr_chip_handle_t todr)
-{
-
-	if (todr_handle)
-		panic("todr_attach: rtc already configured");
-	todr_handle = todr;
-}
-
-/*
- * inittodr:
- *
- *	Initialize time from the time-of-day register.
- */
-#define	MINYEAR		2003	/* minimum plausible year */
-void
-inittodr(time_t base)
-{
-	time_t deltat;
-	int badbase;
-	int badtime;
-	struct timeval time;
-	struct timespec tc_time; /* for timecounters */
-	
-	/* Default is to assume that time from somewhere will be okay. 
-	 * If not badtime will be set to 1 */
-	badtime = 0;
-	if (base < (MINYEAR - 1970) * SECYR) {
-		printf("WARNING: preposterous time in file system");
-		/* read the system clock anyway */
-		base = (MINYEAR - 1970) * SECYR;
-		badbase = 1;
-	} else
-		badbase = 0;
-
-	if (todr_handle == NULL ||
-	    todr_gettime(todr_handle, &time) != 0 ||
-	    time.tv_sec == 0) {
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the TODR.
-		 */
-		time.tv_sec = base;
-		time.tv_usec = 0;
-		if (todr_handle != NULL && !badbase) {
-			printf("WARNING: preposterous clock chip time\n");
-			resettodr();
-		}
-		badtime = 1;
-	}
-
-	if (!badbase) {
-		/*
-		 * See if we gained/lost two or more days; if
-		 * so, assume something is amiss.
-		 */
-		deltat = time.tv_sec - base;
-		if (deltat < 0)
-			deltat = -deltat;
-		if (deltat >= 2 * SECDAY)
-		printf("WARNING: clock %s %ld days\n",
-		       time.tv_sec < base ? "lost" : "gained",
-		       (long)deltat / SECDAY);
-	}
-	/* At this point time is a time value we can initialise the system 
-	 * clock with */
-	tc_time.tv_sec = time.tv_sec;
-	tc_time.tv_nsec = time.tv_usec * 1000;
-	tc_setclock(&tc_time);
-	timeset = 1;
-	
-	if (badtime)
-		printf("WARNING: CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * resettodr:
- *
- *	Reset the time-of-day register with the current time.
- */
-void
-resettodr(void)
-{
-	struct timeval time;
-	if (!timeset)
-		return;
-
-	getmicrotime(&time);
-	if (todr_handle != NULL &&
-	    todr_settime(todr_handle, &time) != 0)
-		printf("resettodr: failed to set time\n");
 }
 
 /* End of iomd_clock.c */
