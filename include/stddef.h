@@ -1,4 +1,4 @@
-/*	$NetBSD: stddef.h,v 1.10 2003/08/07 09:44:11 agc Exp $	*/
+/*	$NetBSD: stddef.h,v 1.10.4.1 2006/09/03 00:33:25 riz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,6 +34,8 @@
 #ifndef _STDDEF_H_
 #define _STDDEF_H_
 
+#include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <machine/ansi.h>
 
 typedef	_BSD_PTRDIFF_T_	ptrdiff_t;
@@ -50,6 +52,16 @@ typedef	_BSD_WCHAR_T_	wchar_t;
 
 #include <sys/null.h>
 
+#if __GNUC_PREREQ__(4, 0)
+#define	offsetof(type, member)	__builtin_offsetof(type, member)
+#elif !defined(__cplusplus)
 #define	offsetof(type, member)	((size_t)(unsigned long)(&((type *)0)->member))
-
+#else
+#if !__GNUC_PREREQ__(3, 4)
+#define __offsetof__(a) a
+#endif
+#define	offsetof(type, member) __offsetof__((reinterpret_cast<size_t> \
+    (&reinterpret_cast<const volatile char &>(static_cast<type *>(0)->member))))
+#endif  
+ 
 #endif /* _STDDEF_H_ */
