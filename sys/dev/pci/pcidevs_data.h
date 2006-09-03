@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.827 2006/09/03 12:02:53 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.828 2006/09/03 12:14:32 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.828 2006/09/03 12:02:30 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.829 2006/09/03 12:13:56 xtraeme Exp
  */
 
 /*
@@ -9780,6 +9780,10 @@ static const struct pci_product pci_products[] = {
 	    "Ethernet",
 	},
 	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20265,
+	    "PDC20265 Ultra/66 IDE Controller",
+	},
+	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20263,
 	    "PDC20263 Ultra/66 IDE Controller",
 	},
@@ -12276,4 +12280,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2476;
+const int pci_nproducts = 2477;
