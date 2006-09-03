@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.828 2006/09/03 12:02:53 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.829 2006/09/03 12:14:32 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.828 2006/09/03 12:02:30 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.829 2006/09/03 12:13:56 xtraeme Exp
  */
 
 /*
@@ -2852,6 +2852,7 @@
 #define	PCI_PRODUCT_PROLAN_NE2KETHER	0x1980		/* Ethernet */
 
 /* Promise products */
+#define	PCI_PRODUCT_PROMISE_PDC20265	0x0d30		/* PDC20265 Ultra/66 IDE Controller */
 #define	PCI_PRODUCT_PROMISE_PDC20263	0x0d38		/* PDC20263 Ultra/66 IDE Controller */
 #define	PCI_PRODUCT_PROMISE_PDC20275	0x1275		/* PDC20275 Ultra/133 IDE Controller */
 #define	PCI_PRODUCT_PROMISE_PDC20318	0x3318		/* PDC20318 Serial ATA Controller */
