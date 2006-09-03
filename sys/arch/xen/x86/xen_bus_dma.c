@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.7 2006/08/28 19:58:57 bouyer Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.8 2006/09/03 19:04:20 bouyer Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.7 2006/08/28 19:58:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.8 2006/09/03 19:04:20 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,8 +109,10 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 		res.domid = DOMID_SELF;
 		if (HYPERVISOR_memory_op(XENMEM_decrease_reservation, &res)
 		    < 0) {
+#ifdef DEBUG
 			printf("xen_alloc_contig: XENMEM_decrease_reservation "
 			    "failed!\n");
+#endif
 			xpmap_phys_to_machine_mapping[
 			    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn;
 
@@ -120,8 +122,10 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 #else
 		if (HYPERVISOR_dom_mem_op(MEMOP_decrease_reservation,
 		    &mfn, 1, 0) != 1) {
+#ifdef DEBUG
 			printf("xen_alloc_contig: MEMOP_decrease_reservation "
 			    "failed!\n");
+#endif
 			xpmap_phys_to_machine_mapping[
 			    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn;
 			error = ENOMEM;
@@ -137,8 +141,10 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	res.address_bits = 31;
 	res.domid = DOMID_SELF;
 	if (HYPERVISOR_memory_op(XENMEM_increase_reservation, &res) < 0) {
+#ifdef DEBUG
 		printf("xen_alloc_contig: XENMEM_increase_reservation "
 		    "failed!\n");
+#endif
 		error = ENOMEM;
 		pg = NULL;
 		goto failed;
@@ -146,8 +152,10 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 #else
 	if (HYPERVISOR_dom_mem_op(MEMOP_increase_reservation,
 	    &mfn, 1, order) != 1) {
+#ifdef DEBUG
 		printf("xen_alloc_contig: MEMOP_increase_reservation "
 		    "failed!\n");
+#endif
 		error = ENOMEM;
 		pg = NULL;
 		goto failed;
