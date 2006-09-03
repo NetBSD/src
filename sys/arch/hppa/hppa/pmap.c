@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23 2006/08/25 06:49:15 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24 2006/09/03 13:40:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 2006/08/25 06:49:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 2006/09/03 13:40:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1065,7 +1065,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 
 	/* The first segment runs from [resvmem..kernel_text). */
 	phys_start = resvmem;
-	phys_end = atop(hppa_trunc_page(&kernel_text)) - 1;
+	phys_end = atop(hppa_trunc_page(&kernel_text));
 
         PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
 	    (u_int)phys_start, (u_int)phys_end));
@@ -1077,7 +1077,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 
 	/* The second segment runs from [__rodata_end..__data_start). */
 	phys_start = atop(&__rodata_end);
-	phys_end = atop(&__data_start) - 1;
+	phys_end = atop(&__data_start);
 
         PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
 	    (u_int)phys_start, (u_int)phys_end));
@@ -1089,7 +1089,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 
 	/* The third segment runs from [virtual_steal..totalphysmem). */
 	phys_start = atop(virtual_steal);
-	phys_end = totalphysmem - 1;
+	phys_end = totalphysmem;
 
         PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
 	    (u_int)phys_start, (u_int)phys_end));
