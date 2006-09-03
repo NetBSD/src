@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2var.h,v 1.8 2006/02/16 20:17:16 perry Exp $	*/
+/*	$NetBSD: tcic2var.h,v 1.9 2006/09/03 06:42:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -308,6 +308,7 @@ tcic_read_aux_1(iot, ioh, auxreg, reg)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	int auxreg;
+	int reg;
 {
 	int mode, val;
 	mode = bus_space_read_1(iot, ioh, TCIC_R_MODE);
