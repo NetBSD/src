@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_piix_reg.h,v 1.11 2006/06/17 17:45:52 jmcneill Exp $	*/
+/*	$NetBSD: pciide_piix_reg.h,v 1.12 2006/09/03 18:30:35 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -123,3 +123,31 @@ static const int8_t piix_rtc_dma[] __attribute__((__unused__)) =
     {0x00, 0x02, 0x03};
 static const int8_t piix4_sct_udma[] __attribute__((__unused__)) =
     {0x00, 0x01, 0x02, 0x01, 0x02, 0x01};
+
+/*
+ * ICH5/ICH5R SATA registers definitions
+ */
+#define ICH5_SATA_MAP		0x90 /* Address Map Register */
+#define ICH5_SATA_MAP_MV_MASK	0x07 /* Map Value mask */
+#define ICH5_SATA_MAP_COMBINED	0x04 /* Combined mode */
+
+#define ICH5_SATA_PI		0x09 /* Program Interface register */
+#define ICH5_SATA_PI_PRI_NATIVE	0x01 /* Put Pri IDE channel in native mode */
+#define ICH5_SATA_PI_SEC_NATIVE	0x04 /* Put Sec IDE channel in native mode */
+
+#define ICH_SATA_PCS		0x92 /* Port Control and Status Register */
+#define ICH_SATA_PCS_P0E	0x01 /* Port 0 enabled */
+#define ICH_SATA_PCS_P1E	0x02 /* Port 1 enabled */
+#define ICH_SATA_PCS_P0P	0x10 /* Port 0 present */
+#define ICH_SATA_PCS_P1P	0x20 /* Port 1 present */
+
+/*
+ *  * ICH6/ICH7 SATA registers definitions
+ *   */
+#define ICH6_SATA_MAP_CMB_MASK	0x03 /* Combined mode bits */
+#define ICH6_SATA_MAP_CMB_PRI	0x01 /* Combined mode, IDE Primary */
+#define ICH6_SATA_MAP_CMB_SEC	0x02 /* Combined mode, IDE Secondary */
+#define ICH7_SATA_MAP_SMS_MASK	0xc0 /* SATA Mode Select */
+#define ICH7_SATA_MAP_SMS_IDE	0x00
+#define ICH7_SATA_MAP_SMS_AHCI	0x40
+#define ICH7_SATA_MAP_SMS_RAID	0x80
