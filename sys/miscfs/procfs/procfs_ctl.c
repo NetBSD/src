@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.33 2006/07/23 22:06:12 ad Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.34 2006/09/03 04:56:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.33 2006/07/23 22:06:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.34 2006/09/03 04:56:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ static const vfs_namemap_t ctlnames[] = {
 	{ "step",	PROCFS_CTL_STEP },
 	{ "run",	PROCFS_CTL_RUN },
 	{ "wait",	PROCFS_CTL_WAIT },
-	{ 0 },
+	{ NULL,		0 },
 };
 
 static const vfs_namemap_t signames[] = {
@@ -123,7 +123,7 @@ static const vfs_namemap_t signames[] = {
 	{ "vtalrm",	SIGVTALRM },	{ "prof",	SIGPROF },
 	{ "winch",	SIGWINCH },	{ "info",	SIGINFO },
 	{ "usr1",	SIGUSR1 },	{ "usr2",	SIGUSR2 },
-	{ 0 },
+	{ NULL,		0 },
 };
 
 int procfs_control(struct lwp *, struct lwp *, int, int);

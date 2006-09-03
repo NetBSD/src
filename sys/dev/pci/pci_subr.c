@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.64 2006/05/31 10:01:18 drochner Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.65 2006/09/03 05:01:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.64 2006/05/31 10:01:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.65 2006/09/03 05:01:32 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -77,178 +77,178 @@ struct pci_class {
 };
 
 static const struct pci_class pci_subclass_prehistoric[] = {
-	{ "miscellaneous",	PCI_SUBCLASS_PREHISTORIC_MISC,		},
-	{ "VGA",		PCI_SUBCLASS_PREHISTORIC_VGA,		},
-	{ 0 }
+	{ "miscellaneous",	PCI_SUBCLASS_PREHISTORIC_MISC,	NULL,	},
+	{ "VGA",		PCI_SUBCLASS_PREHISTORIC_VGA,	NULL,	},
+	{ NULL,			0,				NULL,	},
 };
 
 static const struct pci_class pci_subclass_mass_storage[] = {
-	{ "SCSI",		PCI_SUBCLASS_MASS_STORAGE_SCSI,		},
-	{ "IDE",		PCI_SUBCLASS_MASS_STORAGE_IDE,		},
-	{ "floppy",		PCI_SUBCLASS_MASS_STORAGE_FLOPPY,	},
-	{ "IPI",		PCI_SUBCLASS_MASS_STORAGE_IPI,		},
-	{ "RAID",		PCI_SUBCLASS_MASS_STORAGE_RAID,		},
-	{ "ATA",		PCI_SUBCLASS_MASS_STORAGE_ATA,		},
-	{ "SATA",		PCI_SUBCLASS_MASS_STORAGE_SATA,		},
-	{ "SAS",		PCI_SUBCLASS_MASS_STORAGE_SAS,		},
-	{ "miscellaneous",	PCI_SUBCLASS_MASS_STORAGE_MISC,		},
-	{ 0 },
+	{ "SCSI",		PCI_SUBCLASS_MASS_STORAGE_SCSI,	NULL,	},
+	{ "IDE",		PCI_SUBCLASS_MASS_STORAGE_IDE,	NULL,	},
+	{ "floppy",		PCI_SUBCLASS_MASS_STORAGE_FLOPPY, NULL, },
+	{ "IPI",		PCI_SUBCLASS_MASS_STORAGE_IPI,	NULL,	},
+	{ "RAID",		PCI_SUBCLASS_MASS_STORAGE_RAID,	NULL,	},
+	{ "ATA",		PCI_SUBCLASS_MASS_STORAGE_ATA,	NULL,	},
+	{ "SATA",		PCI_SUBCLASS_MASS_STORAGE_SATA,	NULL,	},
+	{ "SAS",		PCI_SUBCLASS_MASS_STORAGE_SAS,	NULL,	},
+	{ "miscellaneous",	PCI_SUBCLASS_MASS_STORAGE_MISC,	NULL,	},
+	{ NULL,			0,				NULL,	},
 };
 
 static const struct pci_class pci_subclass_network[] = {
-	{ "ethernet",		PCI_SUBCLASS_NETWORK_ETHERNET,		},
-	{ "token ring",		PCI_SUBCLASS_NETWORK_TOKENRING,		},
-	{ "FDDI",		PCI_SUBCLASS_NETWORK_FDDI,		},
-	{ "ATM",		PCI_SUBCLASS_NETWORK_ATM,		},
-	{ "ISDN",		PCI_SUBCLASS_NETWORK_ISDN,		},
-	{ "WorldFip",		PCI_SUBCLASS_NETWORK_WORLDFIP,		},
-	{ "PCMIG Multi Computing", PCI_SUBCLASS_NETWORK_PCIMGMULTICOMP,	},
-	{ "miscellaneous",	PCI_SUBCLASS_NETWORK_MISC,		},
-	{ 0 },
+	{ "ethernet",		PCI_SUBCLASS_NETWORK_ETHERNET,	NULL,	},
+	{ "token ring",		PCI_SUBCLASS_NETWORK_TOKENRING,	NULL,	},
+	{ "FDDI",		PCI_SUBCLASS_NETWORK_FDDI,	NULL,	},
+	{ "ATM",		PCI_SUBCLASS_NETWORK_ATM,	NULL,	},
+	{ "ISDN",		PCI_SUBCLASS_NETWORK_ISDN,	NULL,	},
+	{ "WorldFip",		PCI_SUBCLASS_NETWORK_WORLDFIP,	NULL,	},
+	{ "PCMIG Multi Computing", PCI_SUBCLASS_NETWORK_PCIMGMULTICOMP, NULL, },
+	{ "miscellaneous",	PCI_SUBCLASS_NETWORK_MISC,	NULL,	},
+	{ NULL,			0,				NULL,	},
 };
 
 static const struct pci_class pci_subclass_display[] = {
-	{ "VGA",		PCI_SUBCLASS_DISPLAY_VGA,		},
-	{ "XGA",		PCI_SUBCLASS_DISPLAY_XGA,		},
-	{ "3D",			PCI_SUBCLASS_DISPLAY_3D,		},
-	{ "miscellaneous",	PCI_SUBCLASS_DISPLAY_MISC,		},
-	{ 0 },
+	{ "VGA",		PCI_SUBCLASS_DISPLAY_VGA,	NULL,	},
+	{ "XGA",		PCI_SUBCLASS_DISPLAY_XGA,	NULL,	},
+	{ "3D",			PCI_SUBCLASS_DISPLAY_3D,	NULL,	},
+	{ "miscellaneous",	PCI_SUBCLASS_DISPLAY_MISC,	NULL,	},
+	{ NULL,			0,				NULL,	},
 };
 
 static const struct pci_class pci_subclass_multimedia[] = {
-	{ "video",		PCI_SUBCLASS_MULTIMEDIA_VIDEO,		},
-	{ "audio",		PCI_SUBCLASS_MULTIMEDIA_AUDIO,		},
-	{ "telephony",		PCI_SUBCLASS_MULTIMEDIA_TELEPHONY,	},
-	{ "miscellaneous",	PCI_SUBCLASS_MULTIMEDIA_MISC,		},
-	{ 0 },
+	{ "video",		PCI_SUBCLASS_MULTIMEDIA_VIDEO,	NULL,	},
+	{ "audio",		PCI_SUBCLASS_MULTIMEDIA_AUDIO,	NULL,	},
+	{ "telephony",		PCI_SUBCLASS_MULTIMEDIA_TELEPHONY, NULL,},
+	{ "miscellaneous",	PCI_SUBCLASS_MULTIMEDIA_MISC,	NULL,	},
+	{ NULL,			0,				NULL,	},
 };
 
 static const struct pci_class pci_subclass_memory[] = {
-	{ "RAM",		PCI_SUBCLASS_MEMORY_RAM,		},
-	{ "flash",		PCI_SUBCLASS_MEMORY_FLASH,		},
-	{ "miscellaneous",	PCI_SUBCLASS_MEMORY_MISC,		},
-	{ 0 },
+	{ "RAM",		PCI_SUBCLASS_MEMORY_RAM,	NULL,	},
+	{ "flash",		PCI_SUBCLASS_MEMORY_FLASH,	NULL,	},
+	{ "miscellaneous",	PCI_SUBCLASS_MEMORY_MISC,	NULL,	},
+	{ NULL,			0,				NULL,	},
 };
 
 static const struct pci_class pci_subclass_bridge[] = {
-	{ "host",		PCI_SUBCLASS_BRIDGE_HOST,		},
-	{ "ISA",		PCI_SUBCLASS_BRIDGE_ISA,		},
-	{ "EISA",		PCI_SUBCLASS_BRIDGE_EISA,		},
-	{ "MicroChannel",	PCI_SUBCLASS_BRIDGE_MC,			},
-	{ "PCI",		PCI_SUBCLASS_BRIDGE_PCI,		},
-	{ "PCMCIA",		PCI_SUBCLASS_BRIDGE_PCMCIA,		},
-	{ "NuBus",		PCI_SUBCLASS_BRIDGE_NUBUS,		},
-	{ "CardBus",		PCI_SUBCLASS_BRIDGE_CARDBUS,		},
-	{ "RACEway",		PCI_SUBCLASS_BRIDGE_RACEWAY,		},
-	{ "Semi-transparent PCI", PCI_SUBCLASS_BRIDGE_STPCI,		},
-	{ "InfiniBand",		PCI_SUBCLASS_BRIDGE_INFINIBAND,		},
-	{ "miscellaneous",	PCI_SUBCLASS_BRIDGE_MISC,		},
-	{ 0 },
+	{ "host",		PCI_SUBCLASS_BRIDGE_HOST,	NULL,	},
+	{ "ISA",		PCI_SUBCLASS_BRIDGE_ISA,	NULL,	},
+	{ "EISA",		PCI_SUBCLASS_BRIDGE_EISA,	NULL,	},
+	{ "MicroChannel",	PCI_SUBCLASS_BRIDGE_MC,		NULL,	},
+	{ "PCI",		PCI_SUBCLASS_BRIDGE_PCI,	NULL,	},
+	{ "PCMCIA",		PCI_SUBCLASS_BRIDGE_PCMCIA,	NULL,	},
+	{ "NuBus",		PCI_SUBCLASS_BRIDGE_NUBUS,	NULL,	},
+	{ "CardBus",		PCI_SUBCLASS_BRIDGE_CARDBUS,	NULL,	},
+	{ "RACEway",		PCI_SUBCLASS_BRIDGE_RACEWAY,	NULL,	},
+	{ "Semi-transparent PCI", PCI_SUBCLASS_BRIDGE_STPCI,	NULL,	},
+	{ "InfiniBand",		PCI_SUBCLASS_BRIDGE_INFINIBAND,	NULL,	},
+	{ "miscellaneous",	PCI_SUBCLASS_BRIDGE_MISC,	NULL,	},
+	{ NULL,			0,				NULL,	},
 };
 
 static const struct pci_class pci_subclass_communications[] = {
-	{ "serial",		PCI_SUBCLASS_COMMUNICATIONS_SERIAL,	},
-	{ "parallel",		PCI_SUBCLASS_COMMUNICATIONS_PARALLEL,	},
-	{ "multi-port serial",	PCI_SUBCLASS_COMMUNICATIONS_MPSERIAL,	},
-	{ "modem",		PCI_SUBCLASS_COMMUNICATIONS_MODEM,	},
-	{ "GPIB",		PCI_SUBCLASS_COMMUNICATIONS_GPIB,	},
-	{ "smartcard",		PCI_SUBCLASS_COMMUNICATIONS_SMARTCARD,	},
-	{ "miscellaneous",	PCI_SUBCLASS_COMMUNICATIONS_MISC,	},
-	{ 0 },
+	{ "serial",		PCI_SUBCLASS_COMMUNICATIONS_SERIAL,	NULL, },
+	{ "parallel",		PCI_SUBCLASS_COMMUNICATIONS_PARALLEL,	NULL, },
+	{ "multi-port serial",	PCI_SUBCLASS_COMMUNICATIONS_MPSERIAL,	NULL, },
+	{ "modem",		PCI_SUBCLASS_COMMUNICATIONS_MODEM,	NULL, },
+	{ "GPIB",		PCI_SUBCLASS_COMMUNICATIONS_GPIB,	NULL, },
+	{ "smartcard",		PCI_SUBCLASS_COMMUNICATIONS_SMARTCARD,	NULL, },
+	{ "miscellaneous",	PCI_SUBCLASS_COMMUNICATIONS_MISC,	NULL, },
+	{ NULL,			0,					NULL, },
 };
 
 static const struct pci_class pci_subclass_system[] = {
-	{ "interrupt",		PCI_SUBCLASS_SYSTEM_PIC,		},
-	{ "8237 DMA",		PCI_SUBCLASS_SYSTEM_DMA,		},
-	{ "8254 timer",		PCI_SUBCLASS_SYSTEM_TIMER,		},
-	{ "RTC",		PCI_SUBCLASS_SYSTEM_RTC,		},
-	{ "PCI Hot-Plug",	PCI_SUBCLASS_SYSTEM_PCIHOTPLUG,		},
-	{ "SD Host Controller",	PCI_SUBCLASS_SYSTEM_SDHC,		},
-	{ "miscellaneous",	PCI_SUBCLASS_SYSTEM_MISC,		},
-	{ 0 },
+	{ "interrupt",		PCI_SUBCLASS_SYSTEM_PIC,	NULL,	},
+	{ "8237 DMA",		PCI_SUBCLASS_SYSTEM_DMA,	NULL,	},
+	{ "8254 timer",		PCI_SUBCLASS_SYSTEM_TIMER,	NULL,	},
+	{ "RTC",		PCI_SUBCLASS_SYSTEM_RTC,	NULL,	},
+	{ "PCI Hot-Plug",	PCI_SUBCLASS_SYSTEM_PCIHOTPLUG, NULL,	},
+	{ "SD Host Controller",	PCI_SUBCLASS_SYSTEM_SDHC,	NULL,	},
+	{ "miscellaneous",	PCI_SUBCLASS_SYSTEM_MISC,	NULL,	},
+	{ NULL,			0,				NULL,	},
 };
 
 static const struct pci_class pci_subclass_input[] = {
-	{ "keyboard",		PCI_SUBCLASS_INPUT_KEYBOARD,		},
-	{ "digitizer",		PCI_SUBCLASS_INPUT_DIGITIZER,		},
-	{ "mouse",		PCI_SUBCLASS_INPUT_MOUSE,		},
-	{ "scanner",		PCI_SUBCLASS_INPUT_SCANNER,		},
-	{ "game port",		PCI_SUBCLASS_INPUT_GAMEPORT,		},
-	{ "miscellaneous",	PCI_SUBCLASS_INPUT_MISC,		},
-	{ 0 },
+	{ "keyboard",		PCI_SUBCLASS_INPUT_KEYBOARD,	NULL,	},
+	{ "digitizer",		PCI_SUBCLASS_INPUT_DIGITIZER,	NULL,	},
+	{ "mouse",		PCI_SUBCLASS_INPUT_MOUSE,	NULL,	},
+	{ "scanner",		PCI_SUBCLASS_INPUT_SCANNER,	NULL,	},
+	{ "game port",		PCI_SUBCLASS_INPUT_GAMEPORT,	NULL,	},
+	{ "miscellaneous",	PCI_SUBCLASS_INPUT_MISC,	NULL,	},
+	{ NULL,			0,				NULL,	},
 };
 
 static const struct pci_class pci_subclass_dock[] = {
-	{ "generic",		PCI_SUBCLASS_DOCK_GENERIC,		},
-	{ "miscellaneous",	PCI_SUBCLASS_DOCK_MISC,			},
-	{ 0 },
+	{ "generic",		PCI_SUBCLASS_DOCK_GENERIC,	NULL,	},
+	{ "miscellaneous",	PCI_SUBCLASS_DOCK_MISC,		NULL,	},
+	{ NULL,			0,				NULL,	},
 };
 
 static const struct pci_class pci_subclass_processor[] = {
-	{ "386",		PCI_SUBCLASS_PROCESSOR_386,		},
-	{ "486",		PCI_SUBCLASS_PROCESSOR_486,		},
-	{ "Pentium",		PCI_SUBCLASS_PROCESSOR_PENTIUM,		},
-	{ "Alpha",		PCI_SUBCLASS_PROCESSOR_ALPHA,		},
-	{ "PowerPC",		PCI_SUBCLASS_PROCESSOR_POWERPC,		},
-	{ "MIPS",		PCI_SUBCLASS_PROCESSOR_MIPS,		},
-	{ "Co-processor",	PCI_SUBCLASS_PROCESSOR_COPROC,		},
-	{ 0 },
+	{ "386",		PCI_SUBCLASS_PROCESSOR_386,	NULL,	},
+	{ "486",		PCI_SUBCLASS_PROCESSOR_486,	NULL,	},
+	{ "Pentium",		PCI_SUBCLASS_PROCESSOR_PENTIUM, NULL,	},
+	{ "Alpha",		PCI_SUBCLASS_PROCESSOR_ALPHA,	NULL,	},
+	{ "PowerPC",		PCI_SUBCLASS_PROCESSOR_POWERPC, NULL,	},
+	{ "MIPS",		PCI_SUBCLASS_PROCESSOR_MIPS,	NULL,	},
+	{ "Co-processor",	PCI_SUBCLASS_PROCESSOR_COPROC,	NULL,	},
+	{ NULL,			0,				NULL,	},
 };
 
 static const struct pci_class pci_subclass_serialbus[] = {
-	{ "Firewire",		PCI_SUBCLASS_SERIALBUS_FIREWIRE,	},
-	{ "ACCESS.bus",		PCI_SUBCLASS_SERIALBUS_ACCESS,		},
-	{ "SSA",		PCI_SUBCLASS_SERIALBUS_SSA,		},
-	{ "USB",		PCI_SUBCLASS_SERIALBUS_USB,		},
+	{ "Firewire",		PCI_SUBCLASS_SERIALBUS_FIREWIRE, NULL,	},
+	{ "ACCESS.bus",		PCI_SUBCLASS_SERIALBUS_ACCESS,	NULL,	},
+	{ "SSA",		PCI_SUBCLASS_SERIALBUS_SSA,	NULL,	},
+	{ "USB",		PCI_SUBCLASS_SERIALBUS_USB,	NULL,	},
 	/* XXX Fiber Channel/_FIBRECHANNEL */
-	{ "Fiber Channel",	PCI_SUBCLASS_SERIALBUS_FIBER,		},
-	{ "SMBus",		PCI_SUBCLASS_SERIALBUS_SMBUS,		},
-	{ "InfiniBand",		PCI_SUBCLASS_SERIALBUS_INFINIBAND,	},
-	{ "IPMI",		PCI_SUBCLASS_SERIALBUS_IPMI,		},
-	{ "SERCOS",		PCI_SUBCLASS_SERIALBUS_SERCOS,		},
-	{ "CANbus",		PCI_SUBCLASS_SERIALBUS_CANBUS,		},
-	{ 0 },
+	{ "Fiber Channel",	PCI_SUBCLASS_SERIALBUS_FIBER,	NULL,	},
+	{ "SMBus",		PCI_SUBCLASS_SERIALBUS_SMBUS,	NULL,	},
+	{ "InfiniBand",		PCI_SUBCLASS_SERIALBUS_INFINIBAND, NULL,},
+	{ "IPMI",		PCI_SUBCLASS_SERIALBUS_IPMI,	NULL,	},
+	{ "SERCOS",		PCI_SUBCLASS_SERIALBUS_SERCOS,	NULL,	},
+	{ "CANbus",		PCI_SUBCLASS_SERIALBUS_CANBUS,	NULL,	},
+	{ NULL,			0,				NULL,	},
 };
 
 static const struct pci_class pci_subclass_wireless[] = {
-	{ "IrDA",		PCI_SUBCLASS_WIRELESS_IRDA,		},
-	{ "Consumer IR",	PCI_SUBCLASS_WIRELESS_CONSUMERIR,	},
-	{ "RF",			PCI_SUBCLASS_WIRELESS_RF,		},
-	{ "bluetooth",		PCI_SUBCLASS_WIRELESS_BLUETOOTH,	},
-	{ "broadband",		PCI_SUBCLASS_WIRELESS_BROADBAND,	},
-	{ "802.11a (5 GHz)",	PCI_SUBCLASS_WIRELESS_802_11A,		},
-	{ "802.11b (2.4 GHz)",	PCI_SUBCLASS_WIRELESS_802_11B,		},
-	{ "miscellaneous",	PCI_SUBCLASS_WIRELESS_MISC,		},
-	{ 0 },
+	{ "IrDA",		PCI_SUBCLASS_WIRELESS_IRDA,	NULL,	},
+	{ "Consumer IR",	PCI_SUBCLASS_WIRELESS_CONSUMERIR, NULL,	},
+	{ "RF",			PCI_SUBCLASS_WIRELESS_RF,	NULL,	},
+	{ "bluetooth",		PCI_SUBCLASS_WIRELESS_BLUETOOTH, NULL,	},
+	{ "broadband",		PCI_SUBCLASS_WIRELESS_BROADBAND, NULL,	},
+	{ "802.11a (5 GHz)",	PCI_SUBCLASS_WIRELESS_802_11A,	NULL,	},
+	{ "802.11b (2.4 GHz)",	PCI_SUBCLASS_WIRELESS_802_11B,	NULL,	},
+	{ "miscellaneous",	PCI_SUBCLASS_WIRELESS_MISC,	NULL,	},
+	{ NULL,			0,				NULL,	},
 };
 
 static const struct pci_class pci_subclass_i2o[] = {
-	{ "standard",		PCI_SUBCLASS_I2O_STANDARD,		},
-	{ 0 },
+	{ "standard",		PCI_SUBCLASS_I2O_STANDARD,	NULL,	},
+	{ NULL,			0,				NULL,	},
 };
 
 static const struct pci_class pci_subclass_satcom[] = {
-	{ "TV",			PCI_SUBCLASS_SATCOM_TV,			},
-	{ "audio",		PCI_SUBCLASS_SATCOM_AUDIO,		},
-	{ "voice",		PCI_SUBCLASS_SATCOM_VOICE,		},
-	{ "data",		PCI_SUBCLASS_SATCOM_DATA,		},
-	{ 0 },
+	{ "TV",			PCI_SUBCLASS_SATCOM_TV,	 	NULL,	},
+	{ "audio",		PCI_SUBCLASS_SATCOM_AUDIO, 	NULL,	},
+	{ "voice",		PCI_SUBCLASS_SATCOM_VOICE, 	NULL,	},
+	{ "data",		PCI_SUBCLASS_SATCOM_DATA,	NULL,	},
+	{ NULL,			0,				NULL,	},
 };
 
 static const struct pci_class pci_subclass_crypto[] = {
-	{ "network/computing",	PCI_SUBCLASS_CRYPTO_NETCOMP,		},
-	{ "entertainment",	PCI_SUBCLASS_CRYPTO_ENTERTAINMENT,	},
-	{ "miscellaneous",	PCI_SUBCLASS_CRYPTO_MISC,		},
-	{ 0 },
+	{ "network/computing",	PCI_SUBCLASS_CRYPTO_NETCOMP, 	NULL,	},
+	{ "entertainment",	PCI_SUBCLASS_CRYPTO_ENTERTAINMENT, NULL,},
+	{ "miscellaneous",	PCI_SUBCLASS_CRYPTO_MISC, 	NULL,	},
+	{ NULL,			0,				NULL,	},
 };
 
 static const struct pci_class pci_subclass_dasp[] = {
-	{ "DPIO",		PCI_SUBCLASS_DASP_DPIO,			},
-	{ "Time and Frequency",	PCI_SUBCLASS_DASP_TIMEFREQ,		},
-	{ "synchronization",	PCI_SUBCLASS_DASP_SYNC,			},
-	{ "management",		PCI_SUBCLASS_DASP_MGMT,			},
-	{ "miscellaneous",	PCI_SUBCLASS_DASP_MISC,			},
-	{ 0 },
+	{ "DPIO",		PCI_SUBCLASS_DASP_DPIO,		NULL,	},
+	{ "Time and Frequency",	PCI_SUBCLASS_DASP_TIMEFREQ,	NULL,	},
+	{ "synchronization",	PCI_SUBCLASS_DASP_SYNC,		NULL,	},
+	{ "management",		PCI_SUBCLASS_DASP_MGMT,		NULL,	},
+	{ "miscellaneous",	PCI_SUBCLASS_DASP_MISC,		NULL,	},
+	{ NULL,			0,				NULL,	},
 };
 
 static const struct pci_class pci_class[] = {
@@ -289,8 +289,9 @@ static const struct pci_class pci_class[] = {
 	{ "DASP",		PCI_CLASS_DASP,
 	    pci_subclass_dasp,					},
 	{ "undefined",		PCI_CLASS_UNDEFINED,
-	    0,							},
-	{ 0 },
+	    NULL,						},
+	{ NULL,			0,
+	    NULL,						},
 };
 
 #ifdef PCIVERBOSE
