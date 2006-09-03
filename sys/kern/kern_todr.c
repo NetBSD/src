@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.2 2006/09/03 05:25:05 gdamore Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.3 2006/09/03 06:37:55 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.2 2006/09/03 05:25:05 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.3 2006/09/03 06:37:55 gdamore Exp $");
 
 #include <sys/param.h>
 
@@ -145,7 +145,7 @@ inittodr(time_t base)
 		if (deltat < 0)
 			deltat = -deltat;
 
-		if (deltat >= 2 * SECDAY) {
+		if ((badbase == 0) && deltat >= 2 * SECDAY) {
 			
 			if (tv.tv_sec < base) {
 				/*
