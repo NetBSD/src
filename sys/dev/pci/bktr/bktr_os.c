@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.42 2006/08/28 00:08:38 christos Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.43 2006/09/03 19:06:32 bouyer Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.42 2006/08/28 00:08:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.43 2006/09/03 19:06:32 bouyer Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -451,7 +451,8 @@ bktr_attach(device_t dev)
         rev = pci_get_revid(dev);
 
 	/* call the common attach code */
-	common_bktr_attach(bktr, unit, fun, rev);
+	if (common_bktr_attach(bktr, unit, fun, rev) == 0)
+		return;
 
 	/* make the device entries */
 	bktr->bktrdev = make_dev(&bktr_cdevsw, unit,
@@ -1533,7 +1534,9 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 			       PCI_LATENCY_TIMER, latency<<8);
 	}
 
-	common_bktr_attach(bktr, unit, pa->pa_id, PCI_REVISION(pa->pa_class));
+	if (common_bktr_attach(bktr, unit, pa->pa_id,
+	    PCI_REVISION(pa->pa_class)) == 0)
+		return;
 
 #if NRADIO > 0
 	/* attach to radio(4) */
