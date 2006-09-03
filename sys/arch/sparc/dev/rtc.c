@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.12 2005/11/16 01:47:58 uwe Exp $ */
+/*	$NetBSD: rtc.c,v 1.13 2006/09/03 23:41:18 uwe Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.12 2005/11/16 01:47:58 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.13 2006/09/03 23:41:18 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -150,7 +150,7 @@ rtcattach_ebus(struct device *parent, struct device *self, void *aux)
 	handle->todr_setcal = rtc_setcal;
 	handle->todr_setwen = NULL; /* not necessary, no idprom to protect */
 
-	todr_handle = handle;
+	todr_attach(handle);
 }
 
 
