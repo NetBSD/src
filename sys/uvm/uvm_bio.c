@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.44.2.1 2006/05/24 10:59:30 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.44.2.2 2006/09/03 15:26:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.44.2.1 2006/05/24 10:59:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.44.2.2 2006/09/03 15:26:08 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -341,9 +341,16 @@ again:
 				prot &= ~VM_PROT_WRITE;
 
 			if (prot & VM_PROT_WRITE) {
-				pg = uvm_loanbreak(pg);
-				if (pg == NULL)
+				struct vm_page *newpg;
+
+				newpg = uvm_loanbreak(pg);
+				if (newpg == NULL) {
+					uvm_page_unbusy(&pg, 1);
+					simple_unlock(&uobj->vmobjlock);
+					uvm_wait("ubc_loanbrk");
 					continue; /* will re-fault */
+				}
+				pg = newpg;
 			}
 		}
 

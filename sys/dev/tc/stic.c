@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.30.8.2 2006/05/24 10:58:24 yamt Exp $	*/
+/*	$NetBSD: stic.c,v 1.30.8.3 2006/09/03 15:25:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.30.8.2 2006/05/24 10:58:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.30.8.3 2006/09/03 15:25:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1497,11 +1497,12 @@ sticmmap(dev_t dev, off_t offset, int prot)
 	struct stic_xmap *sxm;
 	paddr_t pa;
 
+	if (securelevel > 0)
+		return (-1L);
+
 	si = stic_info[minor(dev)];
 	sxm = NULL;
 
-	if (securelevel > 0)
-		return (-1L);
 	if (si->si_dispmode != WSDISPLAYIO_MODE_MAPPED)
 		return (-1L);
 

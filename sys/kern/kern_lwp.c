@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.33.10.3 2006/08/11 15:45:46 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.33.10.4 2006/09/03 15:25:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.33.10.3 2006/08/11 15:45:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.33.10.4 2006/09/03 15:25:22 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -90,13 +90,16 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 
 	error = copyin(SCARG(uap, ucp), newuc,
 	    l->l_proc->p_emul->e_sa->sae_ucsize);
-	if (error)
+	if (error) {
+		pool_put(&lwp_uc_pool, newuc);
 		return (error);
+	}
 
 	/* XXX check against resource limits */
 
 	inmem = uvm_uarea_alloc(&uaddr);
 	if (__predict_false(uaddr == 0)) {
+		pool_put(&lwp_uc_pool, newuc);
 		return (ENOMEM);
 	}
 
@@ -120,8 +123,10 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 
 	error = copyout(&l2->l_lid, SCARG(uap, new_lwp),
 	    sizeof(l2->l_lid));
-	if (error)
+	if (error) {
+		/* XXX We should destroy the LWP. */
 		return (error);
+	}
 
 	return (0);
 }

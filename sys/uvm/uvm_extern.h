@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.111.2.4 2006/08/11 15:47:46 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.111.2.5 2006/09/03 15:26:08 yamt Exp $	*/
 
 /*
  *
@@ -87,6 +87,7 @@ typedef unsigned int uvm_flag_t;
 
 typedef int vm_inherit_t;	/* XXX: inheritance codes */
 typedef off_t voff_t;		/* XXX: offset within a uvm_object */
+typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 
 /*
  * defines

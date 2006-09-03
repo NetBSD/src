@@ -1,4 +1,4 @@
-/*	$NetBSD: epwdog.c,v 1.1.12.1 2006/04/01 12:06:10 yamt Exp $	*/
+/*	$NetBSD: epwdog.c,v 1.1.12.2 2006/09/03 15:22:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epwdog.c,v 1.1.12.1 2006/04/01 12:06:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epwdog.c,v 1.1.12.2 2006/09/03 15:22:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,8 @@ epwdog_attach(struct device *parent, struct device *self, void *aux)
 #ifdef DIAGNOSTIC
 	else
 		printf("%s is already configured\n", sc->sc_dev.dv_xname);
+#endif
+}
 
 int
 epwdog_reset(void)

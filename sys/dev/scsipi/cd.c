@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.240.2.2 2006/08/11 15:45:08 yamt Exp $	*/
+/*	$NetBSD: cd.c,v 1.240.2.3 2006/09/03 15:24:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.240.2.2 2006/08/11 15:45:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.240.2.3 2006/09/03 15:24:48 yamt Exp $");
 
 #include "rnd.h"
 
@@ -203,7 +203,7 @@ const struct cdevsw cd_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-static struct dkdriver cddkdriver = { cdstrategy };
+static struct dkdriver cddkdriver = { cdstrategy, NULL };
 
 static const struct scsipi_periphsw cd_switch = {
 	cd_interpret_sense,	/* use our error handler first */
@@ -889,10 +889,14 @@ cddone(struct scsipi_xfer *xs, int error)
 	struct buf *bp = xs->bp;
 
 	if (bp) {
+		/* note, bp->b_resid is NOT initialised */
 		bp->b_error = error;
 		bp->b_resid = xs->resid;
-		if (error)
+		if (error) {
+			/* on a read/write error bp->b_resid is zero, so fix */
+			bp->b_resid = bp->b_bcount;
 			bp->b_flags |= B_ERROR;
+		}
 
 		disk_unbusy(&cd->sc_dk, bp->b_bcount - bp->b_resid,
 		    (bp->b_flags & B_READ));
@@ -1058,14 +1062,12 @@ cdminphys(struct buf *bp)
 static int
 cdread(dev_t dev, struct uio *uio, int ioflag)
 {
-
 	return (physio(cdstrategy, NULL, dev, B_READ, cdminphys, uio));
 }
 
 static int
 cdwrite(dev_t dev, struct uio *uio, int ioflag)
 {
-
 	return (physio(cdstrategy, NULL, dev, B_WRITE, cdminphys, uio));
 }
 
@@ -1643,7 +1645,7 @@ cdgetdisklabel(struct cd_softc *cd)
  * we count.
  */
 static int
-read_cd_capacity(struct scsipi_periph *periph, int *blksize, u_long *size)
+read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *size)
 {
 	struct scsipi_read_cd_capacity    cap_cmd;
 	struct scsipi_read_cd_cap_data    cap;
@@ -1726,7 +1728,7 @@ read_cd_capacity(struct scsipi_periph *periph, int *blksize, u_long *size)
 static u_long
 cd_size(struct cd_softc *cd, int flags)
 {
-	int blksize;
+	u_int blksize;
 	u_long size;
 	int error;
 
@@ -1744,7 +1746,7 @@ cd_size(struct cd_softc *cd, int flags)
 			blksize = 2048;
 	}
 	cd->params.blksize     = blksize;
-	cd->params.disksize    = size-1;   /* disklabel is exclusive */
+	cd->params.disksize    = size;
 	cd->params.disksize512 = ((u_int64_t)cd->params.disksize * blksize) / DEV_BSIZE;
 
 	SC_DEBUG(cd->sc_periph, SCSIPI_DB2,

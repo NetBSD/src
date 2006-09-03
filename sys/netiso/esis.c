@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.35.8.2 2006/08/11 15:46:49 yamt Exp $	*/
+/*	$NetBSD: esis.c,v 1.35.8.3 2006/09/03 15:25:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.35.8.2 2006/08/11 15:46:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.35.8.3 2006/09/03 15:25:45 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -109,7 +109,10 @@ int             esis_recvspace = 2048;
 short           esis_holding_time = ESIS_HT;
 short           esis_config_time = ESIS_CONFIG;
 short           esis_esconfig_time = ESIS_CONFIG;
-struct sockaddr_dl esis_dl = {sizeof(esis_dl), AF_LINK};
+struct sockaddr_dl esis_dl = {
+	.sdl_len = sizeof(esis_dl), 
+	.sdl_family = AF_LINK,
+};
 
 struct callout	esis_config_ch;
 

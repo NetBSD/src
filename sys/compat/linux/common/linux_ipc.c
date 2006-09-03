@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.34.2.1 2006/08/11 15:43:29 yamt Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.34.2.2 2006/09/03 15:23:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.34.2.1 2006/08/11 15:43:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.34.2.2 2006/09/03 15:23:41 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -407,6 +407,7 @@ linux_sys_shmget(l, v, retval)
  * in which the return value is to be passed. This is subsequently
  * handled by libc, apparently.
  */
+#ifndef __amd64__
 int
 linux_sys_shmat(l, v, retval)
 	struct lwp *l;
@@ -431,6 +432,7 @@ linux_sys_shmat(l, v, retval)
 	retval[0] = 0;
 	return 0;
 }
+#endif /* __amd64__ */
 
 /*
  * Convert between Linux and NetBSD shmid_ds structures.

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.39.2.2 2006/08/11 15:43:19 yamt Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.39.2.3 2006/09/03 15:23:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.39.2.2 2006/08/11 15:43:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.39.2.3 2006/09/03 15:23:38 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1070,8 +1070,8 @@ darwin_sysctl_procargs(SYSCTLFN_ARGS)
 	 */
 	len = (((u_long)oldp + len - 1) & ~0x3UL) - (u_long)oldp;
 	len = len - strlen(p->p_comm);
-	if (len < 0)
-		len = 0;
+	if (len > upper_bound)
+		len = upper_bound;
 
 	error = copyout(p->p_comm, (char *)oldp + len, strlen(p->p_comm) + 1);
 	if (error != 0)

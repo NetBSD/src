@@ -1,4 +1,4 @@
-#	$NetBSD: files.malta,v 1.10.8.1 2006/04/01 12:06:12 yamt Exp $
+#	$NetBSD: files.malta,v 1.10.8.2 2006/09/03 15:22:50 yamt Exp $
 
 file	arch/evbmips/malta/malta_bus_io.c
 file	arch/evbmips/malta/malta_bus_mem.c
@@ -10,11 +10,11 @@ file	arch/evbmips/malta/leds.c
 file	arch/evbmips/malta/machdep.c
 
 file	arch/mips/mips/bus_dma.c
-file	arch/evbmips/evbmips/clock.c
 file	arch/evbmips/evbmips/disksubr.c
 file	arch/evbmips/evbmips/interrupt.c
 file	arch/evbmips/evbmips/yamon.c			# XXX should be in arch/mips/yamon ?
 
+file	arch/mips/mips/mips3_clock.c
 file	arch/mips/mips/softintr.c
 
 # The autoconfiguration root.

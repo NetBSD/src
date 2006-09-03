@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.6.8.1 2006/08/11 15:42:41 yamt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.6.8.2 2006/09/03 15:23:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.6.8.1 2006/08/11 15:42:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.6.8.2 2006/09/03 15:23:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -623,6 +623,7 @@ memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 		if (BAT_VALID_P(batu, 0) && BAT_VA_MATCH_P(batu, va) &&
 		    BAT_VA_MATCH_P(batu, va + size - 1)) {
 			pa = va;
+			va = 0;
 		} else { 
 			pmap_extract(pmap_kernel(), va, &pa);
 		}
@@ -631,6 +632,7 @@ memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 		if (SR601_VALID_P(sr) && SR601_PA_MATCH_P(sr, va) &&
 		    SR601_PA_MATCH_P(sr, va + size - 1)) {
 			pa = va;
+			va = 0;
 		} else {
 			pmap_extract(pmap_kernel(), va, &pa);
 		}
@@ -646,6 +648,8 @@ memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 		    (unsigned long)bpa, (unsigned long)size);
 		printf("memio_unmap: can't free region\n");
 	}
+
+	unmapiodev(va, size);
 }
 
 int

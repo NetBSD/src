@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.89.6.1 2006/08/11 15:45:46 yamt Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.89.6.2 2006/09/03 15:25:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.89.6.1 2006/08/11 15:45:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.89.6.2 2006/09/03 15:25:22 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -128,7 +128,7 @@ dev_type_ioctl(lkmioctl);
 
 const struct cdevsw lkm_cdevsw = {
 	lkmopen, lkmclose, noread, nowrite, lkmioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 static ONCE_DECL(lkm_init_once);

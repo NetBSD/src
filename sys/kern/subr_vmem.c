@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.2.2.3 2006/08/11 15:45:46 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.2.2.4 2006/09/03 15:25:22 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -33,14 +33,16 @@
  *	http://www.usenix.org/event/usenix01/bonwick.html
  *
  * TODO:
- * -	implement quantum cache
  * -	implement vmem_xalloc/vmem_xfree
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.2.2.3 2006/08/11 15:45:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.2.2.4 2006/09/03 15:25:22 yamt Exp $");
 
 #define	VMEM_DEBUG
+#if defined(_KERNEL)
+#define	QCACHE
+#endif /* defined(_KERNEL) */
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -81,7 +83,7 @@ struct vmem_btag;
 void vmem_dump(const vmem_t *);
 #endif /* defined(VMEM_DEBUG) */
 
-#define	VMEM_MAXORDER		20
+#define	VMEM_MAXORDER		(sizeof(vmem_size_t) * CHAR_BIT)
 #define	VMEM_HASHSIZE_INIT	4096	/* XXX */
 
 #define	VM_FITMASK	(VM_BESTFIT | VM_INSTANTFIT)
@@ -89,6 +91,21 @@ void vmem_dump(const vmem_t *);
 CIRCLEQ_HEAD(vmem_seglist, vmem_btag);
 LIST_HEAD(vmem_freelist, vmem_btag);
 LIST_HEAD(vmem_hashlist, vmem_btag);
+
+#if defined(QCACHE)
+#define	VMEM_QCACHE_IDX_MAX	32
+
+#define	QC_NAME_MAX	16
+
+struct qcache {
+	struct pool qc_pool;
+	struct pool_cache qc_cache;
+	vmem_t *qc_vmem;
+	char qc_name[QC_NAME_MAX];
+};
+typedef struct qcache qcache_t;
+#define	QC_POOL_TO_QCACHE(pool)	((qcache_t *)(pool))
+#endif /* defined(QCACHE) */
 
 /* vmem arena */
 struct vmem {
@@ -102,11 +119,16 @@ struct vmem {
 	size_t vm_hashsize;
 	size_t vm_nbusytag;
 	struct vmem_hashlist *vm_hashlist;
-	size_t vm_qcache_max;
 	size_t vm_quantum_mask;
 	int vm_quantum_shift;
-	/* XXX qcache */
 	const char *vm_name;
+
+#if defined(QCACHE)
+	/* quantum cache */
+	size_t vm_qcache_max;
+	struct pool_allocator vm_qcache_allocator;
+	qcache_t vm_qcache[VMEM_QCACHE_IDX_MAX];
+#endif /* defined(QCACHE) */
 };
 
 #define	VMEM_LOCK(vm)	simple_lock(&vm->vm_lock)
@@ -143,20 +165,24 @@ typedef struct vmem_btag bt_t;
 
 /* ---- misc */
 
+#define	ORDER2SIZE(order)	((vmem_size_t)1 << (order))
+
 static int
 calc_order(vmem_size_t size)
 {
+	vmem_size_t target;
 	int i;
 
 	KASSERT(size != 0);
 
 	i = 0;
-	while (1 << (i + 1) <= size) {
+	target = size >> 1;
+	while (ORDER2SIZE(i) <= target) {
 		i++;
 	}
 
-	KASSERT(1 << i <= size);
-	KASSERT(size < 1 << (i + 1));
+	KASSERT(ORDER2SIZE(i) <= size);
+	KASSERT(size < ORDER2SIZE(i + 1) || ORDER2SIZE(i + 1) < ORDER2SIZE(i));
 
 	return i;
 }
@@ -259,7 +285,7 @@ bt_freehead_toalloc(vmem_t *vm, vmem_size_t size, vm_flag_t strat)
 	KASSERT(size != 0);
 
 	idx = calc_order(qsize);
-	if (strat == VM_INSTANTFIT && 1 << idx != qsize) {
+	if (strat == VM_INSTANTFIT && ORDER2SIZE(idx) != qsize) {
 		idx++;
 		/* check too large request? */
 	}
@@ -362,6 +388,116 @@ bt_insfree(vmem_t *vm, bt_t *bt)
 }
 
 /* ---- vmem internal functions */
+
+#if defined(QCACHE)
+static inline vm_flag_t
+prf_to_vmf(int prflags)
+{
+	vm_flag_t vmflags;
+
+	KASSERT((prflags & ~(PR_LIMITFAIL | PR_WAITOK | PR_NOWAIT)) == 0);
+	if ((prflags & PR_WAITOK) != 0) {
+		vmflags = VM_SLEEP;
+	} else {
+		vmflags = VM_NOSLEEP;
+	}
+	return vmflags;
+}
+
+static inline int
+vmf_to_prf(vm_flag_t vmflags)
+{
+	int prflags;
+
+	if ((vmflags & VM_SLEEP) != 0) {
+		prflags = PR_WAITOK;
+	} else {
+		prflags = PR_NOWAIT;
+	}
+	return prflags;
+}
+
+static size_t
+qc_poolpage_size(size_t qcache_max)
+{
+	int i;
+
+	for (i = 0; ORDER2SIZE(i) <= qcache_max * 3; i++) {
+		/* nothing */
+	}
+	return ORDER2SIZE(i);
+}
+
+static void *
+qc_poolpage_alloc(struct pool *pool, int prflags)
+{
+	qcache_t *qc = QC_POOL_TO_QCACHE(pool);
+	vmem_t *vm = qc->qc_vmem;
+
+	return (void *)vmem_alloc(vm, pool->pr_alloc->pa_pagesz,
+	    prf_to_vmf(prflags) | VM_INSTANTFIT);
+}
+
+static void
+qc_poolpage_free(struct pool *pool, void *addr)
+{
+	qcache_t *qc = QC_POOL_TO_QCACHE(pool);
+	vmem_t *vm = qc->qc_vmem;
+
+	vmem_free(vm, (vmem_addr_t)addr, pool->pr_alloc->pa_pagesz);
+}
+
+static void
+qc_init(vmem_t *vm, size_t qcache_max)
+{
+	struct pool_allocator *pa;
+	int qcache_idx_max;
+	int i;
+
+	KASSERT((qcache_max & vm->vm_quantum_mask) == 0);
+	if (qcache_max > (VMEM_QCACHE_IDX_MAX << vm->vm_quantum_shift)) {
+		qcache_max = VMEM_QCACHE_IDX_MAX << vm->vm_quantum_shift;
+	}
+	vm->vm_qcache_max = qcache_max;
+	pa = &vm->vm_qcache_allocator;
+	memset(pa, 0, sizeof(*pa));
+	pa->pa_alloc = qc_poolpage_alloc;
+	pa->pa_free = qc_poolpage_free;
+	pa->pa_pagesz = qc_poolpage_size(qcache_max);
+
+	qcache_idx_max = qcache_max >> vm->vm_quantum_shift;
+	for (i = 1; i <= qcache_idx_max; i++) {
+		qcache_t *qc = &vm->vm_qcache[i - 1];
+		size_t size = i << vm->vm_quantum_shift;
+
+		qc->qc_vmem = vm;
+		snprintf(qc->qc_name, sizeof(qc->qc_name), "%s-%zu",
+		    vm->vm_name, size);
+		pool_init(&qc->qc_pool, size, 0, 0,
+		    PR_NOALIGN | PR_NOTOUCH /* XXX */, qc->qc_name, pa);
+		pool_cache_init(&qc->qc_cache, &qc->qc_pool, NULL, NULL, NULL);
+	}
+}
+
+static boolean_t
+qc_reap(vmem_t *vm)
+{
+	int i;
+	int qcache_idx_max;
+	boolean_t didsomething = FALSE;
+
+	qcache_idx_max = vm->vm_qcache_max >> vm->vm_quantum_shift;
+	for (i = 1; i <= qcache_idx_max; i++) {
+		qcache_t *qc = &vm->vm_qcache[i - 1];
+
+		if (pool_reclaim(&qc->qc_pool) != 0) {
+			didsomething = TRUE;
+		}
+	}
+
+	return didsomething;
+}
+#endif /* defined(QCACHE) */
 
 #if defined(_KERNEL)
 static int
@@ -516,12 +652,14 @@ vmem_create(const char *name, vmem_addr_t base, vmem_size_t size,
 	vm->vm_name = name;
 	vm->vm_quantum_mask = quantum - 1;
 	vm->vm_quantum_shift = calc_order(quantum);
-	KASSERT((1 << vm->vm_quantum_shift) == quantum);
+	KASSERT(ORDER2SIZE(vm->vm_quantum_shift) == quantum);
 	vm->vm_allocfn = allocfn;
 	vm->vm_freefn = freefn;
 	vm->vm_source = source;
-	vm->vm_qcache_max = qcache_max;
 	vm->vm_nbusytag = 0;
+#if defined(QCACHE)
+	qc_init(vm, qcache_max);
+#endif /* defined(QCACHE) */
 
 	CIRCLEQ_INIT(&vm->vm_seglist);
 	for (i = 0; i < VMEM_MAXORDER; i++) {
@@ -600,6 +738,16 @@ vmem_alloc(vmem_t *vm, vmem_size_t size0, vm_flag_t flags)
 	if ((flags & VM_SLEEP) != 0) {
 		ASSERT_SLEEPABLE(NULL, "vmem_alloc");
 	}
+
+#if defined(QCACHE)
+	if (size <= vm->vm_qcache_max) {
+		int qidx = size >> vm->vm_quantum_shift;
+		qcache_t *qc = &vm->vm_qcache[qidx - 1];
+
+		return (vmem_addr_t)pool_cache_get(&qc->qc_cache,
+		    vmf_to_prf(flags));
+	}
+#endif /* defined(QCACHE) */
 
 	btnew = bt_alloc(vm, flags);
 	if (btnew == NULL) {
@@ -687,6 +835,15 @@ vmem_free(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 	KASSERT(addr != VMEM_ADDR_NULL);
 	KASSERT(size > 0);
 
+#if defined(QCACHE)
+	if (size <= vm->vm_qcache_max) {
+		int qidx = (size + vm->vm_quantum_mask) >> vm->vm_quantum_shift;
+		qcache_t *qc = &vm->vm_qcache[qidx - 1];
+
+		return pool_cache_put(&qc->qc_cache, (void *)addr);
+	}
+#endif /* defined(QCACHE) */
+
 	VMEM_LOCK(vm);
 
 	bt = bt_lookupbusy(vm, addr);
@@ -752,6 +909,25 @@ vmem_add(vmem_t *vm, vmem_addr_t addr, vmem_size_t size, vm_flag_t flags)
 {
 
 	return vmem_add1(vm, addr, size, flags, BT_TYPE_SPAN_STATIC);
+}
+
+/*
+ * vmem_reap: reap unused resources.
+ *
+ * => return TRUE if we successfully reaped something.
+ */
+
+boolean_t
+vmem_reap(vmem_t *vm)
+{
+	boolean_t didsomething = FALSE;
+
+	VMEM_ASSERT_UNLOCKED(vm);
+
+#if defined(QCACHE)
+	didsomething = qc_reap(vm);
+#endif /* defined(QCACHE) */
+	return didsomething;
 }
 
 /* ---- debug */

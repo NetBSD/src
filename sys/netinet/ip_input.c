@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.224.2.3 2006/08/11 15:46:33 yamt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.224.2.4 2006/09/03 15:25:42 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.224.2.3 2006/08/11 15:46:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.224.2.4 2006/09/03 15:25:42 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -445,7 +445,10 @@ ip_init(void)
 #endif /* MBUFTRACE */
 }
 
-struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
+struct	sockaddr_in ipaddr = {
+	.sin_len = sizeof(ipaddr),
+	.sin_family = AF_INET,
+};
 struct	route ipforward_rt;
 
 /*

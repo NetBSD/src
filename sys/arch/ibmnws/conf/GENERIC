@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.22.2.2 2006/08/11 15:42:01 yamt Exp $
+#	$NetBSD: GENERIC,v 1.22.2.3 2006/09/03 15:23:05 yamt Exp $
 #
 #
 
@@ -282,7 +282,6 @@ pseudo-device	ksyms
 pseudo-device	clockctl
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

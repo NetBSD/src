@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.2.4.2 2006/08/11 15:47:37 yamt Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.2.4.3 2006/09/03 15:26:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifdef LFS_KERNEL_RFW
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.2.4.2 2006/08/11 15:47:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.2.4.3 2006/09/03 15:26:07 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -92,6 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.2.4.2 2006/08/11 15:47:37 yamt Exp $")
  */
 static daddr_t check_segsum(struct lfs *, daddr_t, u_int64_t,
     kauth_cred_t, int, int *, struct lwp *);
+
+extern int lfs_do_rfw;
 
 /*
  * Allocate a particular inode with a particular version number, freeing
@@ -598,9 +600,16 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 void
 lfs_roll_forward(struct lfs *fs, struct mount *mp, struct lwp *l)
 {
-        int flags, dirty;
-        daddr_t offset, oldoffset, lastgoodpseg;
-        int sn, curseg, do_rollforward;
+	int flags, dirty;
+	daddr_t offset, oldoffset, lastgoodpseg;
+	int sn, curseg, do_rollforward;
+	struct proc *p;
+	kauth_cred_t cred;
+	SEGUSE *sup;
+	struct buf *bp;
+
+	p = l ? l->l_proc : NULL;
+	cred = p ? p->p_cred : NOCRED;
 
 	/*
 	 * Roll forward.

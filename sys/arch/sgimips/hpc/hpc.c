@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.35.8.1 2006/04/01 12:06:28 yamt Exp $	*/
+/*	$NetBSD: hpc.c,v 1.35.8.2 2006/09/03 15:23:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.35.8.1 2006/04/01 12:06:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.35.8.2 2006/09/03 15:23:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,7 +258,7 @@ static struct hpc_values hpc1_values = {
 };
 
 static struct hpc_values hpc3_values = {
-	.revision		3,
+	.revision =		3,
 	.scsi0_regs =		HPC3_SCSI0_REGS,
 	.scsi0_regs_size =	HPC3_SCSI0_REGS_SIZE,
 	.scsi0_cbp =		HPC3_SCSI0_CBP,

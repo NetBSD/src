@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.73.8.2 2006/06/26 12:52:56 yamt Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.73.8.3 2006/09/03 15:25:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.73.8.2 2006/06/26 12:52:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.73.8.3 2006/09/03 15:25:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -212,9 +212,7 @@ disk_attach0(struct disk *diskp)
 	/*
 	 * Set up the stats collection.
 	 */
-	diskp->dk_stats = iostat_alloc(IOSTAT_DISK);
-	diskp->dk_stats->io_parent = (void *) diskp;
-	diskp->dk_stats->io_name = diskp->dk_name;
+	diskp->dk_stats = iostat_alloc(IOSTAT_DISK, diskp, diskp->dk_name);
 }
 
 static void

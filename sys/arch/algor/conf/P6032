@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.40.2.1 2006/04/01 12:06:06 yamt Exp $
+#	$NetBSD: P6032,v 1.40.2.2 2006/09/03 15:22:41 yamt Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.40.2.1 $"
+#ident 		"P6032-$Revision: 1.40.2.2 $"
 
 maxusers 32
 
@@ -328,7 +328,7 @@ fd*	at	fdc? drive ?
 #ukbd*	at uhidev? reportid ?
 #wskbd*	at ukbd? console ?
 
-# USB serial adpater
+# USB serial adapter
 #ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices

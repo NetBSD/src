@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.19.8.1 2006/04/01 12:07:06 yamt Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.19.8.2 2006/09/03 15:24:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.19.8.1 2006/04/01 12:07:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.19.8.2 2006/09/03 15:24:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,7 @@ static struct pcmcia_chip_functions pcic_isa_functions = {
 	pcic_chip_socket_enable,
 	pcic_chip_socket_disable,
 	pcic_chip_socket_settype,
+	NULL,
 };
 
 int

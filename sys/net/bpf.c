@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.115.8.2 2006/08/11 15:46:14 yamt Exp $	*/
+/*	$NetBSD: bpf.c,v 1.115.8.3 2006/09/03 15:25:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.115.8.2 2006/08/11 15:46:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.115.8.3 2006/09/03 15:25:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ dev_type_open(bpfopen);
 
 const struct cdevsw bpf_cdevsw = {
 	bpfopen, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 static int

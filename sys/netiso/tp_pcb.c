@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.28.8.3 2006/08/11 15:46:49 yamt Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.28.8.4 2006/09/03 15:25:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.28.8.3 2006/08/11 15:46:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.28.8.4 2006/09/03 15:25:45 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -135,6 +135,7 @@ const struct tp_conn_param tp_conn_param[] = {
 		1,		/* no disc indications */
 		0,		/* don't change params */
 		ISO_CLNS,	/* p_netservice */
+		0,
 	},
 	/* IN_CLNS: TP4 CONNECTION LESS */
 	{
@@ -170,6 +171,7 @@ const struct tp_conn_param tp_conn_param[] = {
 		1,		/* no disc indications */
 		0,		/* don't change params */
 		IN_CLNS,	/* p_netservice */
+		0,
 	},
 	/* ISO_CONS: TP0 CONNECTION MODE */
 	{
@@ -208,6 +210,7 @@ const struct tp_conn_param tp_conn_param[] = {
 		0,		/* no disc indications */
 		0,		/* don't change params */
 		ISO_CONS,	/* p_netservice */
+		0,
 	},
 	/* ISO_COSNS: TP4 CONNECTION LESS SERVICE over CONSNS */
 	{
@@ -243,6 +246,7 @@ const struct tp_conn_param tp_conn_param[] = {
 		0,		/* no disc indications */
 		0,		/* don't change params */
 		ISO_COSNS,	/* p_netservice */
+		0,
 	},
 };
 
@@ -272,7 +276,7 @@ struct nl_protosw nl_protosw[] = {
 		(caddr_t) & tp_isopcb,
 	},
 #else
-	{0},
+	{ .nlp_afamily = 0, },
 #endif				/* ISO */
 	/* IN_CLNS */
 #ifdef INET
@@ -286,7 +290,7 @@ struct nl_protosw nl_protosw[] = {
 		(caddr_t) & tp_inpcb,
 	},
 #else
-	{0},
+	{ .nlp_afamily = 0, },
 #endif				/* INET */
 	/* ISO_CONS */
 #if defined(ISO) && defined(TPCONS)
@@ -300,10 +304,10 @@ struct nl_protosw nl_protosw[] = {
 		(caddr_t) & tp_isopcb,
 	},
 #else
-	{0},
+	{ .nlp_afamily = 0, },
 #endif				/* ISO_CONS */
 	/* End of protosw marker */
-	{0}
+	{ .nlp_afamily = 0, },
 };
 
 u_long          tp_sendspace = 1024 * 4;

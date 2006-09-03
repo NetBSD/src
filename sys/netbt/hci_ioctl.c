@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_ioctl.c,v 1.1.6.3 2006/08/11 15:46:32 yamt Exp $	*/
+/*	$NetBSD: hci_ioctl.c,v 1.1.6.4 2006/09/03 15:25:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.1.6.3 2006/08/11 15:46:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.1.6.4 2006/09/03 15:25:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -174,6 +174,7 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 	case SIOCSBTPTYPE:
 	case SIOCGBTSTATS:
 	case SIOCZBTSTATS:
+	case SIOCSBTSCOMTU:
 		SIMPLEQ_FOREACH(unit, &hci_unit_list, hci_next) {
 			if (strncmp(unit->hci_devname, btr->btr_name,
 			    HCI_DEVNAME_SIZE) == 0)
@@ -291,6 +292,21 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 		memset(&unit->hci_stats, 0, sizeof(struct bt_stats));
 		splx(s);
 
+		break;
+
+	case SIOCSBTSCOMTU:	/* set sco_mtu value for unit */
+		/*
+		 * This is a temporary ioctl and may not be supported
+		 * in the future. The need is that if SCO packets are
+		 * sent to USB bluetooth controllers that are not an
+		 * integer number of frame sizes, the USB bus locks up.
+		 */
+		err = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		if (err)
+			break;
+
+		unit->hci_max_sco_size = btr->btr_sco_mtu;
 		break;
 
 	default:
