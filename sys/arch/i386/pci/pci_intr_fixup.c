@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.42 2006/06/22 16:24:34 jmcneill Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.43 2006/09/03 21:05:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.42 2006/06/22 16:24:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.43 2006/09/03 21:05:01 christos Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -146,75 +146,75 @@ const struct pciintr_icu_table {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801AB_LPC,
 	  piix_init, piix_uninit },	/* ICH0 */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801BA_LPC,
-	  ich_init },			/* ICH2 */
+	  ich_init, NULL },			/* ICH2 */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801BAM_LPC,
-	  ich_init },			/* ICH2M */
+	  ich_init, NULL },			/* ICH2M */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801CA_LPC,
-	  ich_init },			/* ICH3S */
+	  ich_init, NULL },			/* ICH3S */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801CAM_LPC,
-	  ich_init },			/* ICH3M */
+	  ich_init, NULL },			/* ICH3M */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801DB_LPC,
-	  ich_init },			/* ICH4 */
+	  ich_init, NULL },			/* ICH4 */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801DB_ISA,
-	  ich_init },			/* ICH4M */
+	  ich_init, NULL },			/* ICH4M */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801EB_LPC,
-	  ich_init },			/* ICH5 */
+	  ich_init, NULL },			/* ICH5 */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801FB_LPC,
-	  ich_init },			/* ICH6/ICH6R */
+	  ich_init, NULL },			/* ICH6/ICH6R */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801FBM_LPC,
-	  ich_init },			/* ICH6M */
+	  ich_init, NULL },			/* ICH6M */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801G_LPC,
-	  ich_init },			/* ICH7/ICH7R */
+	  ich_init, NULL },			/* ICH7/ICH7R */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801GBM_LPC,
-	  ich_init },			/* ICH7-M */
+	  ich_init, NULL },			/* ICH7-M */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801GHM_LPC,
-	  ich_init },			/* ICH7DH/ICH7-M DH */
+	  ich_init, NULL },			/* ICH7DH/ICH7-M DH */
 
 	{ PCI_VENDOR_OPTI,	PCI_PRODUCT_OPTI_82C558,
-	  opti82c558_init },
+	  opti82c558_init, NULL },
 	{ PCI_VENDOR_OPTI,	PCI_PRODUCT_OPTI_82C700,
-	  opti82c700_init },
+	  opti82c700_init, NULL },
 
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT82C586_ISA,
-	  via82c586_init },
+	  via82c586_init, NULL },
 	{ PCI_VENDOR_VIATECH,   PCI_PRODUCT_VIATECH_VT82C596A,
-	  via82c586_init },
+	  via82c586_init, NULL },
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT82C686A_ISA,
-	  via82c586_init },
+	  via82c586_init, NULL },
 
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8231,
-	  via8231_init },
+	  via8231_init, NULL },
 	{ PCI_VENDOR_VIATECH,   PCI_PRODUCT_VIATECH_VT8233,
-	  via82c586_init },
+	  via82c586_init, NULL },
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8233A,
-	  via8231_init },
+	  via8231_init, NULL },
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8235,
-	  via8231_init },
+	  via8231_init, NULL },
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8237,
-	  via8231_init },
+	  via8231_init, NULL },
 
 
 	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_85C503,
-	  sis85c503_init },
+	  sis85c503_init, NULL },
 	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_962,
-	  sis85c503_init },
+	  sis85c503_init, NULL },
 	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_963,
-	  sis85c503_init },
+	  sis85c503_init, NULL },
 
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_PBC756_PMC,
-	  amd756_init },
+	  amd756_init, NULL },
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_PBC766_PMC,
-	  amd756_init },
+	  amd756_init, NULL },
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_PBC768_PMC,
-	  amd756_init },
+	  amd756_init, NULL },
 
 	{ PCI_VENDOR_ALI,	PCI_PRODUCT_ALI_M1533,
-	  ali1543_init },
+	  ali1543_init, NULL },
 	{ PCI_VENDOR_ALI,	PCI_PRODUCT_ALI_M1543,
-	  ali1543_init },
+	  ali1543_init, NULL },
 
 	{ 0,			0,
-	  NULL },
+	  NULL, NULL },
 };
 
 const struct pciintr_icu_table *pciintr_icu_lookup(pcireg_t);
