@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.41 2006/07/24 21:32:39 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.42 2006/09/03 21:38:23 christos Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.41 2006/07/24 21:32:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.42 2006/09/03 21:38:23 christos Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.41 2006/07/24 21:32:39 elad Exp $\n$NetBSD: verified_exec.c,v 1.41 2006/07/24 21:32:39 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.42 2006/09/03 21:38:23 christos Exp $\n$NetBSD: verified_exec.c,v 1.42 2006/09/03 21:38:23 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -94,6 +94,7 @@ const struct cdevsw veriexec_cdevsw = {
 	nommap,
 #if defined(__NetBSD__)
        nokqfilter,
+       D_OTHER,
 #elif defined(__FreeBSD__)
        nostrategy,
        "veriexec",
