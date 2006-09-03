@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.10 2006/08/24 12:55:46 cube Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.11 2006/09/03 06:49:57 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -190,6 +190,7 @@
 #define	MSR_CTR1		0x013	/* P5 only (trap on P6) */
 #define MSR_APICBASE		0x01b
 #define MSR_EBL_CR_POWERON	0x02a
+#define MSR_EBC_FREQUENCY_ID	0x02c	/* PIV only */
 #define	MSR_TEST_CTL		0x033
 #define MSR_BIOS_UPDT_TRIG	0x079
 #define	MSR_BBL_CR_D0		0x088	/* PII+ only */
@@ -198,6 +199,7 @@
 #define MSR_BIOS_SIGN		0x08b
 #define MSR_PERFCTR0		0x0c1
 #define MSR_PERFCTR1		0x0c2
+#define MSR_FSB_FREQ		0x0cd	/* Core Duo/Solo only */
 #define MSR_MTRRcap		0x0fe
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define	MSR_BBL_CR_DECC		0x118	/* PII+ only */

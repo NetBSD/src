@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.127 2006/08/23 22:59:45 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.128 2006/09/03 06:49:57 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -351,6 +351,7 @@ void	i386_init_pcb_tss_ldt(struct cpu_info *);
 void	i386_proc0_tss_ldt_init(void);
 
 /* identcpu.c */
+extern int bus_clock;
 extern int tmx86_has_longrun;
 extern u_int crusoe_longrun;
 extern u_int crusoe_frequency;
@@ -421,7 +422,7 @@ void x86_bus_space_mallocok(void);
 #include <machine/psl.h>	/* Must be after struct cpu_info declaration */
 
 /* est.c */
-void	est_init(struct cpu_info *);
+void	est_init(struct cpu_info *, int);
 
 #endif /* _KERNEL */
 
