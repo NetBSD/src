@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.3 2006/09/03 06:37:55 gdamore Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.4 2006/09/03 17:13:04 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.3 2006/09/03 06:37:55 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.4 2006/09/03 17:13:04 gdamore Exp $");
 
 #include <sys/param.h>
 
@@ -119,6 +119,8 @@ inittodr(time_t base)
 	struct timeval tv;
 
 	if (base < 5 * SECYR) {
+		struct clock_ymdhms basedate;
+
 		/*
 		 * If base is 0, assume filesystem time is just unknown
 		 * instead of preposterous. Don't bark.
@@ -126,7 +128,13 @@ inittodr(time_t base)
 		if (base != 0)
 			printf("WARNING: preposterous time in file system\n");
 		/* not going to use it anyway, if the chip is readable */
-		base = 21*SECYR + 186*SECDAY + SECDAY/2;
+		basedate.dt_year = 2006;
+		basedate.dt_mon = 1;
+		basedate.dt_day = 1;
+		basedate.dt_hour = 12;
+		basedate.dt_min = 0;
+		basedate.dt_sec = 0;
+		base = clock_ymdhms_to_secs(&basedate);
 		badbase = 1;
 	}
 
