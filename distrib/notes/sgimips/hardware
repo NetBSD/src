@@ -1,13 +1,13 @@
-.\"	$NetBSD: hardware,v 1.11 2004/07/13 14:03:29 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.12 2006/09/03 19:19:14 rumble Exp $
 .
 .Nx*M
 is aimed to run on MIPS-based computers manufactured by 
 .Tn SGI.
 .Ss2 Supported machines
 .(bullet -offset indent
-IP12 R3000 - Indigo
+IP12 R3000 \- Indigo, Personal Iris 4D/30, Personal Iris 4D/35
 .It
-IP20 R4000 - Indigo
+IP20 R4000/R4400 \- Indigo
 .It
 IP22 R4000/R4400/R4600 \- Challenge M, Challenge S, Indigo 2 and Indy
 .It
@@ -55,6 +55,14 @@ On-board SGI Seeq 80c03 ethernet controller (IP12, IP20, IP22/24)
 .Pq Em sq ,
 .bullet)
 .(bullet -compact
+Phobos G100/G130/G160 Fast Ethernet adapters (IP20, IP22/IP24)
+.Pq Em tlp ,
+.bullet)
+.\" .(bullet -compact
+.\" Set Engineering GIO Fast Ethernet (ThunderLAN) adapter (IP24)
+.\" .Pq Em tl ,
+.\" .bullet)
+.(bullet -compact
 On-board MACE Ethernet controller (IP32)
 .Pq Em mec ,
 .bullet)
@@ -101,6 +109,12 @@ PC keyboard/mouse controller (IP22/24)
 zs keyboard/mouse controller (IP12/20)
 .Pq Em zs
 .bullet)
+.It
+Miscellaneous Devices
+.(bullet -compact
+On-board Parallel Port (IP22/24)
+.Pq Em pi1ppc
+.bullet)
 .bullet)
 .
 .Ss2 Unsupported devices
@@ -109,5 +123,5 @@ Some graphics adapters
 .It
 Video hardware
 .It
-Parallel ports
+Some parallel ports
 .bullet)
