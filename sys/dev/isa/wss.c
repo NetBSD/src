@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.64 2006/03/29 04:16:50 thorpej Exp $	*/
+/*	$NetBSD: wss.c,v 1.65 2006/09/03 21:42:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.64 2006/03/29 04:16:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.65 2006/09/03 21:42:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,7 @@ const struct audio_hw_if wss_hw_if = {
 	ad1848_isa_trigger_output,
 	ad1848_isa_trigger_input,
 	NULL,
+	NULL,	/* powerstate */
 };
 
 /*
