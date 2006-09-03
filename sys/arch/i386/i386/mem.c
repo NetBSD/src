@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.62 2006/01/19 13:34:11 yamt Exp $	*/
+/*	$NetBSD: mem.c,v 1.63 2006/09/03 21:05:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.62 2006/01/19 13:34:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.63 2006/09/03 21:05:01 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -106,7 +106,7 @@ dev_type_mmap(mmmmap);
 
 const struct cdevsw mem_cdevsw = {
 	mmopen, nullclose, mmrw, mmrw, mmioctl,
-	nostop, notty, nopoll, mmmmap, nokqfilter,
+	nostop, notty, nopoll, mmmmap, nokqfilter, D_OTHER,
 };
 
 static int check_pa_acc(paddr_t, vm_prot_t);
