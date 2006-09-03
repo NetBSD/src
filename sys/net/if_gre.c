@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.63 2006/09/01 01:34:05 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.64 2006/09/03 06:10:06 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.63 2006/09/01 01:34:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.64 2006/09/03 06:10:06 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -199,8 +199,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	sc->g_dst.s_addr = sc->g_src.s_addr = INADDR_ANY;
 	sc->g_dstport = sc->g_srcport = 0;
 	sc->g_proto = IPPROTO_GRE;
-	IFQ_SET_READY(&sc->sc_snd);
-	IFQ_SET_MAXLEN(&sc->sc_snd, IFQ_MAXLEN);
+	sc->sc_snd.ifq_maxlen = 256;
 	sc->sc_if.if_flags |= IFF_LINK0;
 	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);
@@ -481,7 +480,10 @@ out:
 	GRE_DPRINTF(sc, "%s: stopping\n", __func__);
 	if (sc->g_proto == IPPROTO_UDP)
 		ifp->if_flags &= ~IFF_RUNNING;
-	IFQ_PURGE(&sc->sc_snd);
+	while (!IF_IS_EMPTY(&sc->sc_snd)) {
+		IF_DEQUEUE(&sc->sc_snd, m);
+		m_freem(m);
+	}
 	gre_stop(&sc->sc_thread);
 	/* must not touch sc after this! */
 	GRE_DPRINTF(sc, "%s: restore ipl\n", __func__);
