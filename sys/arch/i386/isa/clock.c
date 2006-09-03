@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.97 2006/09/03 20:46:23 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.98 2006/09/03 20:49:21 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.97 2006/09/03 20:46:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.98 2006/09/03 20:49:21 perry Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -194,8 +194,6 @@ static int cmoscheck(void);
 static int clock_expandyear(int);
 
 static inline int gettick_broken_latch(void);
-
-int clkintr_pending;
 
 static volatile uint32_t i8254_lastcount;
 static volatile uint32_t i8254_offset;
@@ -434,7 +432,7 @@ i8254_get_timecount(struct timecounter *tc)
 	high = inb(IO_TIMER1 + TIMER_CNTR0);
 	count = rtclock_tval - ((high << 8) | low);
 
-	if (rtclock_tval && (count < i8254_lastcount || (!i8254_ticked && clkintr_pending))) {
+	if (rtclock_tval && (count < i8254_lastcount || !i8254_ticked)) {
 		i8254_ticked = 1;
 		i8254_offset += rtclock_tval;
 	}
