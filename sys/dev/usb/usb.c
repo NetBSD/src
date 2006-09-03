@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.87 2006/06/09 21:33:42 christos Exp $	*/
+/*	$NetBSD: usb.c,v 1.88 2006/09/03 21:33:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.87 2006/06/09 21:33:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.88 2006/09/03 21:33:10 christos Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -116,7 +116,7 @@ dev_type_kqfilter(usbkqfilter);
 
 const struct cdevsw usb_cdevsw = {
 	usbopen, usbclose, usbread, nowrite, usbioctl,
-	nostop, notty, usbpoll, nommap, usbkqfilter,
+	nostop, notty, usbpoll, nommap, usbkqfilter, D_OTHER,
 };
 
 Static void	usb_discover(void *);
