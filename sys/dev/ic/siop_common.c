@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.38 2005/11/26 04:11:31 tsutsui Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.39 2006/09/03 05:23:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.38 2005/11/26 04:11:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.39 2006/09/03 05:23:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -672,6 +672,7 @@ void
 siop_wdtr_msg(siop_cmd, offset, wide)
 	struct siop_common_cmd *siop_cmd;
 	int offset;
+	int wide;
 {
 	siop_cmd->siop_tables->msg_out[offset + 0] = MSG_EXTENDED;
 	siop_cmd->siop_tables->msg_out[offset + 1] = MSG_EXT_WDTR_LEN;
