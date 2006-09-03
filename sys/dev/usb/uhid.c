@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.69 2006/03/28 17:38:35 thorpej Exp $	*/
+/*	$NetBSD: uhid.c,v 1.70 2006/09/03 21:09:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.69 2006/03/28 17:38:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.70 2006/09/03 21:09:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ dev_type_kqfilter(uhidkqfilter);
 
 const struct cdevsw uhid_cdevsw = {
 	uhidopen, uhidclose, uhidread, uhidwrite, uhidioctl,
-	nostop, notty, uhidpoll, nommap, uhidkqfilter,
+	nostop, notty, uhidpoll, nommap, uhidkqfilter, D_OTHER,
 };
 
 Static void uhid_intr(struct uhidev *, void *, u_int len);
@@ -456,7 +456,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 		if (sc->sc_async == NULL)
 			return (EINVAL);
 		if (-*(int *)addr != sc->sc_async->p_pgid
-		    && *(int *)addr != sc->sc_async->p_pid);
+		    && *(int *)addr != sc->sc_async->p_pid)
 			return (EPERM);
 		break;
 
