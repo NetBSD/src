@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.43 2006/06/28 20:55:46 martin Exp $ */
+/*	$NetBSD: types.h,v 1.44 2006/09/03 13:51:24 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,7 +105,6 @@ typedef	volatile int		__cpu_simple_lock_t;
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
 #define	__HAVE_SYSCALL_INTERN
 #define	__GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
-#define	__HAVE_NWSCONS
 #define	__HAVE_TIMECOUNTER
 
 #ifdef SUN4U

@@ -1,8 +1,7 @@
-/*	$NetBSD: types.h,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: types.h,v 1.2 2006/09/03 13:51:23 bjh21 Exp $	*/
 
 #include <mips/types.h>
 
-#define	__HAVE_NWSCONS
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
 
 /* MIPS specific options */

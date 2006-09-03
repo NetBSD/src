@@ -1,5 +1,5 @@
 #
-#	$NetBSD: MILAN.in,v 1.20 2006/04/19 10:31:44 drochner Exp $
+#	$NetBSD: MILAN.in,v 1.21 2006/09/03 13:51:24 bjh21 Exp $
 #
 # Milan
 #
@@ -96,9 +96,7 @@ atabus*		at ata? channel ?
 
 #
 # The Milan uses wscons
-#  XXX without the __HAVE_NWSCONS option, the keyboard won't work...
 #
-options 	__HAVE_NWSCONS
 vga0 		at pci? dev ? function ?	# a PCI VGA card
 wsdisplay* 	at vga? console ?		# as a wscons console
 pckbc0 		at isa? 			# PC keyboard controller

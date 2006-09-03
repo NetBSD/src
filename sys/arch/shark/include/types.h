@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.2 2002/02/28 03:17:31 simonb Exp $	*/
+/*	$NetBSD: types.h,v 1.3 2006/09/03 13:51:23 bjh21 Exp $	*/
 
 #ifndef _ARM32_TYPES_H_
 #define	_ARM32_TYPES_H_
@@ -9,6 +9,5 @@
 #define	__ARM_FIQ_INDIRECT
 
 #define	__HAVE_DEVICE_REGISTER
-#define	__HAVE_NWSCONS
 
 #endif
