@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.81.8.2 2006/08/11 15:44:25 yamt Exp $	*/
+/*	$NetBSD: eap.c,v 1.81.8.3 2006/09/03 15:24:21 yamt Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.81.8.2 2006/08/11 15:44:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.81.8.3 2006/09/03 15:24:21 yamt Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -266,6 +266,7 @@ static const struct audio_hw_if eap1370_hw_if = {
 	eap_trigger_output,
 	eap_trigger_input,
 	NULL,
+	NULL,
 };
 
 static const struct audio_hw_if eap1371_hw_if = {
@@ -295,6 +296,7 @@ static const struct audio_hw_if eap1371_hw_if = {
 	eap_get_props,
 	eap_trigger_output,
 	eap_trigger_input,
+	NULL,
 	NULL,
 };
 

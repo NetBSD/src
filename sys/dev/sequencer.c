@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.30.8.1 2006/08/11 15:43:52 yamt Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.30.8.2 2006/09/03 15:23:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.30.8.1 2006/08/11 15:43:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.30.8.2 2006/09/03 15:23:55 yamt Exp $");
 
 #include "sequencer.h"
 
@@ -136,7 +136,7 @@ static dev_type_kqfilter(sequencerkqfilter);
 const struct cdevsw sequencer_cdevsw = {
 	sequenceropen, sequencerclose, sequencerread, sequencerwrite,
 	sequencerioctl, nostop, notty, sequencerpoll, nommap,
-	sequencerkqfilter,
+	sequencerkqfilter, D_OTHER,
 };
 
 void
@@ -740,7 +740,7 @@ seq_do_command(struct sequencer_softc *sc, seq_event_t *b)
 {
 	int dev;
 
-	DPRINTFN(4, ("seq_do_command: %p cmd=0x%02x\n", sc, SEQ_CMD(b)));
+	DPRINTFN(4, ("seq_do_command: %p cmd=0x%02x\n", sc, b->timing.op));
 
 	switch(b->tag) {
 	case SEQ_LOCAL:
@@ -964,7 +964,7 @@ seq_do_timing(struct sequencer_softc *sc, seq_event_t *b)
 		error = EINVAL; /* not quite accurate... */
 		break;
 	default:
-		DPRINTF(("seq_timer: unknown %02x\n", cmd));
+		DPRINTF(("seq_timer: unknown %02x\n", b->timing.op));
 		error = EINVAL;
 		break;
 	}
@@ -985,7 +985,7 @@ seq_do_fullsize(struct sequencer_softc *sc, seq_event_t *b, struct uio *uio)
 #endif
 	memcpy(&sysex, b, sizeof sysex);
 	dev = sysex.device_no;
-	if (dev < 0 || dev >= sc->nmidi)
+	if (/* dev < 0 || */ dev >= sc->nmidi)
 		return (ENXIO);
 	DPRINTFN(2, ("seq_do_fullsize: fmt=%04x, dev=%d, len=%d\n",
 		     sysex.key, dev, sysex.len));

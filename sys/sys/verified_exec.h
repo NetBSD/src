@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.28.8.1 2006/08/11 15:47:26 yamt Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.28.8.2 2006/09/03 15:25:56 yamt Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -199,6 +199,8 @@ int veriexec_load(struct veriexec_params *, struct lwp *);
 int veriexec_delete(struct veriexec_delete_params *, struct lwp *);
 int veriexec_query(struct veriexec_query_params *, struct lwp *);
 void veriexec_clear(void *, int);
+void veriexec_purge(struct veriexec_file_entry *);
+int veriexec_rawchk(struct vnode *vp);
 
 #endif /* _KERNEL */
 

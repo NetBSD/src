@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.1.6.3 2006/08/11 15:46:32 yamt Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.1.6.4 2006/09/03 15:25:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,11 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.1.6.3 2006/08/11 15:46:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.1.6.4 2006/09/03 15:25:36 yamt Exp $");
 
 #include "opt_bluetooth.h"
 #ifdef BLUETOOTH_DEBUG
-#define PRUREQUESTS
 #define PRCOREQUESTS
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.2.2.3 2006/08/11 15:45:46 yamt Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.2.2.4 2006/09/03 15:25:22 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -34,17 +34,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.2.2.3 2006/08/11 15:45:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.2.2.4 2006/09/03 15:25:22 yamt Exp $");
 
 #include <sys/param.h>
+#include <sys/callback.h>
 #include <sys/kmem.h>
 #include <sys/vmem.h>
+
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_map.h>
 
 #include <lib/libkern/libkern.h>
 
 #define	KMEM_QUANTUM_SIZE	(ALIGNBYTES + 1)
 
 static vmem_t *kmem_arena;
+static struct callback_entry kmem_kva_reclaim_entry;
 
 #if defined(DEBUG)
 static void kmem_poison_fill(void *, size_t);
@@ -57,6 +62,7 @@ static void kmem_poison_check(void *, size_t);
 static vmem_addr_t kmem_backend_alloc(vmem_t *, vmem_size_t, vmem_size_t *,
     vm_flag_t);
 static void kmem_backend_free(vmem_t *, vmem_addr_t, vmem_size_t);
+static int kmem_kva_reclaim_callback(struct callback_entry *, void *, void *);
 
 static inline vm_flag_t
 kmf_to_vmf(km_flag_t kmflags)
@@ -133,7 +139,10 @@ kmem_init(void)
 {
 
 	kmem_arena = vmem_create("kmem", 0, 0, KMEM_QUANTUM_SIZE,
-	    kmem_backend_alloc, kmem_backend_free, NULL, 0, VM_SLEEP);
+	    kmem_backend_alloc, kmem_backend_free, NULL,
+	    KMEM_QUANTUM_SIZE * 32, VM_SLEEP);
+	callback_register(&vm_map_to_kernel(kernel_map)->vmk_reclaim_callback,
+	    &kmem_kva_reclaim_entry, kmem_arena, kmem_kva_reclaim_callback);
 }
 
 size_t
@@ -182,6 +191,15 @@ kmem_backend_free(vmem_t *dummy, vmem_addr_t addr, vmem_size_t size)
 
 	kmem_poison_check((void *)addr, size);
 	uvm_km_free(kernel_map, (vaddr_t)addr, size, UVM_KMF_WIRED);
+}
+
+static int
+kmem_kva_reclaim_callback(struct callback_entry *ce, void *obj, void *arg)
+{
+	vmem_t *vm = obj;
+
+	vmem_reap(vm);
+	return CALLBACK_CHAIN_CONTINUE;
 }
 
 /* ---- debug */

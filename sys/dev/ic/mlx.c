@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.38.8.3 2006/06/26 12:51:01 yamt Exp $	*/
+/*	$NetBSD: mlx.c,v 1.38.8.4 2006/09/03 15:23:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.38.8.3 2006/06/26 12:51:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.38.8.4 2006/09/03 15:23:57 yamt Exp $");
 
 #include "ld.h"
 
@@ -141,17 +141,17 @@ dev_type_ioctl(mlxioctl);
 
 const struct cdevsw mlx_cdevsw = {
 	mlxopen, mlxclose, noread, nowrite, mlxioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 extern struct	cfdriver mlx_cd;
 static struct	proc *mlx_periodic_proc;
 static void	*mlx_sdh;
 
-struct {
+static struct {
 	int	hwid;
 	const char	*name;
-} static const mlx_cname[] = {
+} const mlx_cname[] = {
 	{ 0x00, "960E/960M" },
 	{ 0x01, "960P/PD" },
 	{ 0x02,	"960PL" },
@@ -207,11 +207,11 @@ static const char * const mlx_status_msgs[] = {
 	"command busy (?)",				/* 22 */
 };
 
-struct {
+static struct {
 	u_char	command;
 	u_char	msg;		/* Index into mlx_status_msgs[]. */
 	u_short	status;
-} static const mlx_msgs[] = {
+} const mlx_msgs[] = {
 	{ MLX_CMD_READSG,	1,	0x0001 },
 	{ MLX_CMD_READSG,	1,	0x0002 },
 	{ MLX_CMD_READSG,	3,	0x0105 },
@@ -733,9 +733,6 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	struct mlx_sysdrive *ms;
 	int i, rv, *arg, result;
 
-	if (securelevel >= 2)
-		return (EPERM);
-
 	mlx = device_lookup(&mlx_cd, minor(dev));
 
 	rb = (struct mlx_rebuild_request *)data;
@@ -798,6 +795,9 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		return (0);
 
 	case MLX_COMMAND:
+		if (securelevel >= 2)
+			return (EPERM);
+
 		/*
 		 * Accept a command passthrough-style.
 		 */

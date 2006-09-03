@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.100.2.3 2006/08/11 15:43:29 yamt Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.100.2.4 2006/09/03 15:23:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100.2.3 2006/08/11 15:43:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100.2.4 2006/09/03 15:23:46 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100.2.3 2006/08/11 15:43:29 ya
 #include "opt_sysv.h"
 #include "opt_nfsserver.h"
 #include "opt_syscall_debug.h"
+#include "opt_ptrace.h"
 
 #include "fs_lfs.h"
 #include "fs_nfs.h"
@@ -471,6 +472,7 @@ netbsd32_ptrace(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if defined(PTRACE) || defined(_LKM)
 	struct netbsd32_ptrace_args /* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
@@ -483,7 +485,14 @@ netbsd32_ptrace(l, v, retval)
 	NETBSD32TO64_UAP(pid);
 	NETBSD32TOX64_UAP(addr, caddr_t);
 	NETBSD32TO64_UAP(data);
-	return (sys_ptrace(l, &ua, retval));
+#ifdef _LKM
+	return (*sysent[SYS_ptrace].sy_call)(l, &ua, retval);
+#else
+	return sys_ptrace(l, &ua, retval);
+#endif
+#else
+	return (ENOSYS);
+#endif /* PTRACE || _LKM */
 }
 
 int

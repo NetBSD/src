@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.67.2.1 2006/08/11 15:41:44 yamt Exp $
+# $NetBSD: GENERIC,v 1.67.2.2 2006/09/03 15:22:57 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -150,6 +150,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -346,7 +347,6 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 #wskbd* at hpf1275a? mux 1
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

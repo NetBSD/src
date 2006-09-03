@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.769.2.6 2006/08/11 15:44:26 yamt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.769.2.7 2006/09/03 15:24:22 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.818 2006/08/10 13:22:12 simonb Exp
+ *	NetBSD: pcidevs,v 1.826 2006/09/03 08:38:52 xtraeme Exp
  */
 
 /*
@@ -1664,8 +1664,8 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Actel",
 	},
 	{
-	    PCI_VENDOR_GALILEO,
-	    "Galileo (Marvell) Technology",
+	    PCI_VENDOR_MARVELL,
+	    "Marvell",
 	},
 	{
 	    PCI_VENDOR_CANNON,
@@ -4280,8 +4280,20 @@ static const struct pci_product pci_products[] = {
 	    "RS480 Host Bridge",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS482M,
+	    "Radeon Xpress Series (RS482M)",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_XRP,
 	    "RS480 PCI Express Root Port",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PPB_5A36,
+	    "RS480 PCI Express Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PPB_5A3F,
+	    "RS480 PCI Express Bridge",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B60,
@@ -4564,6 +4576,22 @@ static const struct pci_product pci_products[] = {
 	    "BCM5705 10/100/1000 Ethernet",
 	},
 	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5706,
+	    "BCM5706 NetXtreme II 1000Base-T",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5706S,
+	    "BCM5706 NetXtreme II 1000Base-SX",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5708,
+	    "BCM5708 NetXtreme II 1000Base-T",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5708S,
+	    "BCM5708 NetXtreme II 1000Base-SX",
+	},
+	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5714,
 	    "BCM5714 1000baseT Ethernet",
 	},
@@ -4634,6 +4662,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5901A2,
 	    "BCM5901A 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4318,
+	    "BCM4318 AirForce One 54g",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401,
@@ -5660,6 +5692,10 @@ static const struct pci_product pci_products[] = {
 	    "WL11000P PCI WaveLAN/IEEE 802.11",
 	},
 	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_00F7,
+	    "Integrated OHCI IEEE 1394 Host Controller",
+	},
+	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6729,
 	    "OZ6729 PCI-PCMCIA Bridge",
 	},
@@ -5690,6 +5726,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6972,
 	    "OZ6912/OZ6972 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_7120,
+	    "Integrated MMC/SD Controller",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_7130,
+	    "Integrated MS/xD/SM Controller",
 	},
 	{
 	    PCI_VENDOR_ES, PCI_PRODUCT_ES_FREEDOM,
@@ -5768,39 +5812,143 @@ static const struct pci_product pci_products[] = {
 	    "SpeedStream 3000",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64010A,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64010A,
 	    "GT-64010A System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64115,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8300_1,
+	    "Libertas 88W8300",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8310,
+	    "Libertas 88W8310",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8335_1,
+	    "Libertas 88W8335",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8335_2,
+	    "Libertas 88W8335",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8300_2,
+	    "Libertas 88W8300",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64115,
 	    "GT-64115 System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64011,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64011,
 	    "GT-64011 System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_SKNET,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_SKNET,
 	    "SK-NET Gigabit Ethernet",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64120,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8021CU,
+	    "Yukon-II 88E8021CU",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8022CU,
+	    "Yukon-II 88E8022CU",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8061CU,
+	    "Yukon-II 88E8061CU",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8062CU,
+	    "Yukon-II 88E8062CU",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8021X,
+	    "Yukon-II 88E8021X",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8022X,
+	    "Yukon-II 88E8022X",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8061X,
+	    "Yukon-II 88E8061X",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8062X,
+	    "Yukon-II 88E8062X",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8035,
+	    "Yukon 88E8035",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8036,
+	    "Yukon 88E8036",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8038,
+	    "Yukon 88E8038",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8052,
+	    "Yukon 88E8052",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8050,
+	    "Yukon 88E8050",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8053,
+	    "Yukon 88E8053",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_3,
+	    "Yukon",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64120,
 	    "GT-64120 System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_BELKIN,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_BELKIN,
 	    "Belkin Gigabit Ethernet",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64130,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX5040,
+	    "88SX5040 SATA",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX5041,
+	    "88SX5041 SATA",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX5080,
+	    "88SX5080 SATA",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX5081,
+	    "88SX5081 SATA",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX6041,
+	    "88SX6041 SATA",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX6081,
+	    "88SX6041 SATA",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64130,
 	    "GT-64130 System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64260,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64260,
 	    "GT-64260 System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64360,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64360,
 	    "MV6436x System Controller",
 	},
 	{
@@ -9153,11 +9301,11 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_SATA1,
-	    "nForce430 Serial SATA Controller",
+	    "nForce430 Serial ATA Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_SATA2,
-	    "nForce430 Serial SATA Controller",
+	    "nForce430 Serial ATA Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_LAN1,
@@ -9277,31 +9425,191 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SMB,
-	    "MCP55 SMBus",
+	    "nForce MCP55 SMBus Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_IDE,
-	    "MCP55 IDE",
+	    "nForce MCP55 ATA133 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_HDA,
-	    "MCP55 High Definition Audio Controller",
+	    "nForce MCP55 High Definition Audio Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_LAN1,
-	    "MCP55 LAN",
+	    "nForce MCP55 Gigabit Ethernet Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_LAN2,
-	    "MCP55 LAN",
+	    "nForce MCP55 Gigabit Ethernet Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SATA,
-	    "MCP55 SATA",
+	    "nForce MCP55 Seria ATA Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SATA2,
-	    "MCP55 SATA",
+	    "nForce MCP55 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_ISA,
+	    "nForce MCP61 PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_HDA,
+	    "nForce MCP61 High Definition Audio Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_LAN1,
+	    "nForce MCP61 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_LAN2,
+	    "nForce MCP61 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_SATA,
+	    "nForce MCP61 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_PPB_1,
+	    "nForce MCP61 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_PPB_2,
+	    "nForce MCP61 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_SMB,
+	    "nForce MCP61 SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_IDE,
+	    "nForce MCP61 ATA133 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_SATA2,
+	    "nForce MCP61 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_SATA3,
+	    "nForce MCP61 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_LAN3,
+	    "nForce MCP61 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_LAN4,
+	    "nForce MCP61 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_ISA,
+	    "nForce MCP65 PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_MEM,
+	    "nForce MCP65 Memory Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_MEM2,
+	    "nForce MCP65 Memory Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SMB,
+	    "nForce MCP65 SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_IDE,
+	    "nForce MCP65 ATA133 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PCI,
+	    "nForce MCP65 PCI Brige",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_HDA_1,
+	    "nForce MCP65 High Definition Audio Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_HDA_2,
+	    "nForce MCP65 High Definition Audio Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_AHCI_1,
+	    "nForce MCP65 AHCI Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_AHCI_2,
+	    "nForce MCP65 AHCI Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_AHCI_3,
+	    "nForce MCP65 AHCI Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_AHCI_4,
+	    "nForce MCP65 AHCI Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN1,
+	    "nForce MCP65 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN2,
+	    "nForce MCP65 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN3,
+	    "nForce MCP65 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN4,
+	    "nForce MCP65 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_USB_1,
+	    "nForce MCP65 USB Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_USB_2,
+	    "nForce MCP65 USB Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_USB_3,
+	    "nForce MCP65 USB Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_USB_4,
+	    "nForce MCP65 USB Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PPB_1,
+	    "nForce MCP65 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PPB_2,
+	    "nForce MCP65 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PPB_3,
+	    "nForce MCP65 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA,
+	    "nForce MCP65 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA2,
+	    "nForce MCP65 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA3,
+	    "nForce MCP65 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA4,
+	    "nForce MCP65 Serial ATA Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128,
@@ -9582,6 +9890,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20579,
 	    "PDC20579 SATA/150 IDE controller",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20771,
+	    "PDC20771 SATA/300 IDE controller",
 	},
 	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1020,
@@ -11940,4 +12252,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2392;
+const int pci_nproducts = 2470;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tra_mca.c,v 1.3.8.1 2006/04/01 12:07:11 yamt Exp $	*/
+/*	$NetBSD: if_tra_mca.c,v 1.3.8.2 2006/09/03 15:24:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.3.8.1 2006/04/01 12:07:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.3.8.2 2006/09/03 15:24:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ static const struct tiara_mca_product {
 	{ MCA_PRODUCT_TIARA,	"Tiara LANCard/E2"},
 	{ MCA_PRODUCT_TIARA_TP,	"Tiara LANCard/E2 TP"},
 	{ MCA_PRODUCT_SMC3016,  "SMC 3016/MC"},
-	{ 0	}
+	{ 0,			NULL },
 };
 
 static const struct tiara_mca_product *tiara_mca_lookup __P((u_int32_t));

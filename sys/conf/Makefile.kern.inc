@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.73.8.3 2006/06/26 12:46:37 yamt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.73.8.4 2006/09/03 15:23:47 yamt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -79,7 +79,7 @@ CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
 
 CFLAGS+=	-ffreestanding -fno-zero-initialized-in-bss
 CFLAGS+=	${CPUFLAGS} ${DEBUG} ${COPTS} ${CWARNFLAGS}
-AFLAGS+=	${CPUFLAGS} -D_LOCORE
+AFLAGS+=	${CPUFLAGS} -D_LOCORE -Wa,-fatal-warnings
 
 # XXX
 .if ${HAVE_GCC} > 3
@@ -177,8 +177,8 @@ SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ:O} .gdbinit
 SYSTEM_LD_HEAD?=@rm -f $@
 SYSTEM_LD?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
-		${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o; \
-		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
+		${LD} -Map $@.map --cref ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o; \
+		${LD} -Map $@.map --cref ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
 SYSTEM_LD_TAIL?=@${SIZE} $@; chmod 755 $@
 
 TEXTADDR?=	${LOADADDRESS}			# backwards compatibility

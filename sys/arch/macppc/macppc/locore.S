@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.54.8.1 2006/08/11 15:42:14 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.54.8.2 2006/09/03 15:23:21 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -102,6 +102,29 @@ __start:
 	mr	4,9
 1:
 #endif
+
+#if defined (PMAC_G5) || defined (MAMBO)
+	 /* and clear HID5 DCBZ bits (56/57), need to do this early */
+	mfspr	11,SPR_HID5
+	rldimi	11,0,6,56
+	sync
+	mtspr	SPR_HID5,11
+	isync
+	sync
+
+	/* Setup HID1 features, prefetch + i-cacheability controlled by PTE */
+	mfspr	0,SPR_HID1
+	li	11,0x1200
+	sldi	11,11,44
+	or	0,0,11
+	mtspr	SPR_HID1,0
+	isync
+	sync
+
+	/* Restore r0 */
+	li	0,0
+#endif /* PMAC_G5 */
+
 
 	/*
 	 * Initialize cpu_info[0]

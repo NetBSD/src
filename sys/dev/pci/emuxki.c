@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.43.8.1 2006/05/24 10:58:00 yamt Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.43.8.2 2006/09/03 15:24:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.43.8.1 2006/05/24 10:58:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.43.8.2 2006/09/03 15:24:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -207,6 +207,7 @@ static const struct audio_hw_if emuxki_hw_if = {
 	emuxki_trigger_output,
 	emuxki_trigger_input,
 	NULL,			/* dev_ioctl */
+	NULL,			/* powerstate */
 };
 
 #if 0
@@ -1427,7 +1428,7 @@ static int
 emuxki_recsrc_reserve(struct emuxki_voice *voice, emuxki_recsrc_t source)
 {
 
-	if (source < 0 || source >= EMU_NUMRECSRCS) {
+	if (source >= EMU_NUMRECSRCS) {
 #ifdef EMUXKI_DEBUG
 		printf("Tried to reserve invalid source: %d\n", source);
 #endif

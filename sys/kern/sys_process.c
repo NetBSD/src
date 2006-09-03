@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.99.2.5 2006/08/11 15:45:47 yamt Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.99.2.6 2006/09/03 15:25:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -88,8 +88,12 @@
  * in this file.
  */
 
+#include "opt_coredump.h"
+#include "opt_ptrace.h"
+#include "opt_ktrace.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.99.2.5 2006/08/11 15:45:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.99.2.6 2006/09/03 15:25:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.99.2.5 2006/08/11 15:45:47 yamt Ex
 
 #include <machine/reg.h>
 
+#ifdef PTRACE
 /*
  * Process debugging system call.
  */
@@ -131,7 +136,9 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	struct ptrace_lwpinfo pl;
 	struct vmspace *vm;
 	int s, error, write, tmp, size;
+#ifdef COREDUMP
 	char *path;
+#endif
 
 	/* "A foolish consistency..." XXX */
 	if (SCARG(uap, req) == PT_TRACE_ME)
@@ -211,7 +218,9 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	case  PT_DETACH:
 	case  PT_LWPINFO:
 	case  PT_SYSCALL:
+#ifdef COREDUMP
 	case  PT_DUMPCORE:
+#endif
 #ifdef PT_STEP
 	case  PT_STEP:
 #endif
@@ -358,6 +367,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		uvmspace_free(vm);
 		return (error);
 
+#ifdef COREDUMP
 	case  PT_DUMPCORE:
 		if ((path = SCARG(uap, addr)) != NULL) {
 			char *dst;
@@ -376,6 +386,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		if (path)
 			free(path, M_TEMP);
 		return error;
+#endif
 
 #ifdef PT_STEP
 	case  PT_STEP:
@@ -738,7 +749,9 @@ process_validfpregs(struct lwp *l)
 	return (0);
 #endif
 }
+#endif /* PTRACE */
 
+#if defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
 int
 process_domem(struct lwp *curl /*tracer*/,
     struct lwp *l /*traced*/,
@@ -784,7 +797,9 @@ process_domem(struct lwp *curl /*tracer*/,
 #endif
 	return (error);
 }
+#endif /* KTRACE || PTRACE || SYSTRACE */
 
+#if defined(KTRACE) || defined(PTRACE)
 /*
  * Ensure that a process has permission to perform I/O on another.
  * Arguments:
@@ -857,3 +872,4 @@ process_stoptrace(struct lwp *l)
 	if (dolock)
 		splx(s);
 }
+#endif /* KTRACE || PTRACE */

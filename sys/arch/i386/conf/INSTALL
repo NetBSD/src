@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.280.2.4 2006/08/11 15:41:53 yamt Exp $
+#	$NetBSD: INSTALL,v 1.280.2.5 2006/09/03 15:22:58 yamt Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -137,11 +137,8 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -661,7 +658,7 @@ uhidev*	at uhub? port ? configuration ? interface ?
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
 
-# USB serial adpater
+# USB serial adapter
 #ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices

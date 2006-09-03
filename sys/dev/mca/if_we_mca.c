@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_mca.c,v 1.14.8.1 2006/04/01 12:07:11 yamt Exp $	*/
+/*	$NetBSD: if_we_mca.c,v 1.14.8.2 2006/09/03 15:24:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.14.8.1 2006/04/01 12:07:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.14.8.2 2006/09/03 15:24:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,8 @@ static const struct we_mca_product {
 		WD_8003,	WE_TYPE_WD8003W, "WD8003W/A" },
 	{ MCA_PRODUCT_IBM_WD_O, "IBM PS/2 Adapter/A for Ethernet Networks",
 		WD_8003,	WE_TYPE_WD8003W, "IBM PS/2 Adapter/A" },
-	{ 0x0000,			NULL },
+	{ 0x0000,		NULL,
+		0,		0,		 NULL },
 };
 
 /* see POS description in we_mca_attach() */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.92.8.3 2006/06/26 12:55:08 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.92.8.4 2006/09/03 15:26:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,8 +67,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.92.8.3 2006/06/26 12:55:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.92.8.4 2006/09/03 15:26:08 yamt Exp $");
 
+#include "opt_coredump.h"
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
 #include "opt_uvmhist.h"
@@ -677,6 +678,7 @@ uvm_swapout(struct lwp *l)
 	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
 }
 
+#ifdef COREDUMP
 /*
  * uvm_coredump_walkmap: walk a process's map for the purpose of dumping
  * a core file.
@@ -797,3 +799,4 @@ uvm_coredump_walkmap(struct proc *p, void *iocookie,
 
 	return (0);
 }
+#endif /* COREDUMP */

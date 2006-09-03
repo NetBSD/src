@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.59.2.3 2006/08/11 15:43:29 yamt Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.59.2.4 2006/09/03 15:23:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.59.2.3 2006/08/11 15:43:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.59.2.4 2006/09/03 15:23:41 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -819,9 +819,11 @@ linux_sys_recvmsg(l, v, retval)
 				if (error)
 					goto done;
 				/* zero pad */
+#if 0
 				for(i=0; i < LINUX_CMSG_ALIGN(sizeof(cmsg)) - sizeof(cmsg); i++) {
 					copyout("",&ocontrol[sizeof(cmsg)+i],1);
 				}
+#endif
 
 				sd = CMSG_DATA(cc);
 				td = LINUX_CMSG_DATA(ocontrol);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.123.2.2 2006/08/11 15:41:54 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.123.2.3 2006/09/03 15:23:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,6 +39,7 @@
 
 #ifdef _KERNEL
 #if defined(_KERNEL_OPT)
+#include "opt_enhanced_speedstep.h"
 #include "opt_multiprocessor.h"
 #include "opt_math_emulate.h"
 #include "opt_user_ldt.h"
@@ -351,6 +352,9 @@ void	i386_init_pcb_tss_ldt(struct cpu_info *);
 void	i386_proc0_tss_ldt_init(void);
 
 /* identcpu.c */
+#ifdef ENHANCED_SPEEDSTEP
+extern int bus_clock;
+#endif
 extern int tmx86_has_longrun;
 extern u_int crusoe_longrun;
 extern u_int crusoe_frequency;
@@ -421,11 +425,7 @@ void x86_bus_space_mallocok(void);
 #include <machine/psl.h>	/* Must be after struct cpu_info declaration */
 
 /* est.c */
-void	est_init(struct cpu_info *);
-
-/* powernow_k7.c */
-void	k7_powernow_init(void);
-void	k7_powernow_destroy(void);
+void	est_init(struct cpu_info *, int);
 
 #endif /* _KERNEL */
 

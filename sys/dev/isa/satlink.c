@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.26.8.1 2006/05/24 10:57:52 yamt Exp $	*/
+/*	$NetBSD: satlink.c,v 1.26.8.2 2006/09/03 15:24:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.26.8.1 2006/05/24 10:57:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.26.8.2 2006/09/03 15:24:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ dev_type_kqfilter(satlinkkqfilter);
 
 const struct cdevsw satlink_cdevsw = {
 	satlinkopen, satlinkclose, satlinkread, nowrite, satlinkioctl,
-	nostop, notty, satlinkpoll, nommap, satlinkkqfilter,
+	nostop, notty, satlinkpoll, nommap, satlinkkqfilter, D_OTHER,
 };
 
 int

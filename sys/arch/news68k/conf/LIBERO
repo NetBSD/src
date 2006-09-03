@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.38.2.1 2006/04/01 12:06:23 yamt Exp $
+# 	$NetBSD: LIBERO,v 1.38.2.2 2006/09/03 15:23:26 yamt Exp $
 
 #	NEWS1750 config file;
 #
@@ -17,7 +17,7 @@ options 	CPU_SINGLE		# Will IOP be supported eventually?
 # Standard system options
 options 	NTP			# NTP phase/frequency locked loop
 options 	KTRACE			# system call tracing support
-options 	SYSTRACE		# system call vetting via systrace(1)
+#options 	SYSTRACE		# system call vetting via systrace(1)
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
@@ -85,6 +85,7 @@ options 	INET6		# IPv6
 #options 	GATEWAY		# IP packet forwarding
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 options 	NFS_BOOT_BOOTPARAM
 

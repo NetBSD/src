@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.51.8.2 2006/05/24 10:57:40 yamt Exp $	*/
+/*	$NetBSD: iop.c,v 1.51.8.3 2006/09/03 15:23:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.51.8.2 2006/05/24 10:57:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.51.8.3 2006/09/03 15:23:56 yamt Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -115,19 +115,19 @@ dev_type_ioctl(iopioctl);
 
 const struct cdevsw iop_cdevsw = {
 	iopopen, iopclose, noread, nowrite, iopioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 #define	IC_CONFIGURE	0x01
 #define	IC_PRIORITY	0x02
 
-struct iop_class {
+static struct iop_class {
 	u_short	ic_class;
 	u_short	ic_flags;
 #ifdef I2OVERBOSE
 	const char	*ic_caption;
 #endif
-} static const iop_class[] = {
+} const iop_class[] = {
 	{
 		I2O_CLASS_EXECUTIVE,
 		0,
@@ -2519,13 +2519,13 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	struct iovec *iov;
 	int rv, i;
 
-	if (securelevel >= 2)
-		return (EPERM);
-
 	sc = device_lookup(&iop_cd, minor(dev));
 
 	switch (cmd) {
 	case IOPIOCPT:
+		if (securelevel >= 2)
+			return (EPERM);
+
 		return (iop_passthrough(sc, (struct ioppt *)data, l->l_proc));
 
 	case IOPIOCGSTATUS:
@@ -2600,7 +2600,10 @@ iop_passthrough(struct iop_softc *sc, struct ioppt *pt, struct proc *p)
 	if (pt->pt_msglen > sc->sc_framesize ||
 	    pt->pt_msglen < sizeof(struct i2o_msg) ||
 	    pt->pt_nbufs > IOP_MAX_MSG_XFERS ||
-	    pt->pt_nbufs < 0 || pt->pt_replylen < 0 ||
+	    pt->pt_nbufs < 0 ||
+#if 0
+	    pt->pt_replylen < 0 ||
+#endif
             pt->pt_timo < 1000 || pt->pt_timo > 5*60*1000)
 		return (EINVAL);
 

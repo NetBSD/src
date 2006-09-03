@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.3.2.4 2006/08/11 15:45:46 yamt Exp $ */
+/* $NetBSD: kern_auth.c,v 1.3.2.5 2006/09/03 15:25:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -531,13 +531,13 @@ kauth_ifindscope(const char *id)
  */
 kauth_scope_t
 kauth_register_scope(const char *id, kauth_scope_callback_t callback,
-		     void *cookie)
+    void *cookie)
 {
 	kauth_scope_t scope;
 	kauth_listener_t listener;
 
 	/* Sanitize input */
-	if (id == NULL || callback == NULL)
+	if (id == NULL)
 		return (NULL);
 
 	/* Allocate space for a new scope and listener. */
@@ -562,18 +562,18 @@ kauth_register_scope(const char *id, kauth_scope_callback_t callback,
 	scope->cookie = cookie;
 	scope->nlisteners = 1;
 
-	/* Add default listener */
-	listener->func = callback;
-	listener->scope = scope;
-	listener->refcnt = 0;
 	SIMPLEQ_INIT(&scope->listenq);
-	SIMPLEQ_INSERT_HEAD(&scope->listenq, listener, listener_next);
+
+	/* Add default listener */
+	if (callback != NULL) {
+		listener->func = callback;
+		listener->scope = scope;
+		listener->refcnt = 0;
+		SIMPLEQ_INSERT_HEAD(&scope->listenq, listener, listener_next);
+	}
 
 	/* Insert scope to scopes list */
-	if (SIMPLEQ_EMPTY(&scope_list))
-		SIMPLEQ_INSERT_HEAD(&scope_list, scope, next_scope);
-	else
-		SIMPLEQ_INSERT_TAIL(&scope_list, scope, next_scope);
+	SIMPLEQ_INSERT_TAIL(&scope_list, scope, next_scope);
 
 	simple_unlock(&scopes_lock);
 
@@ -589,6 +589,7 @@ kauth_register_scope(const char *id, kauth_scope_callback_t callback,
 void
 kauth_init(void)
 {
+	SIMPLEQ_INIT(&scope_list);
 	simple_lock_init(&scopes_lock);
 
 	/* Register generic scope. */
@@ -695,6 +696,14 @@ kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
 		return (EFAULT);
 	if (!action)
 		return (EINVAL);
+
+	/* Short-circuit requests coming from the kernel. */
+	if (cred == NOCRED || cred == FSCRED)
+		return (0);
+
+	/* Short-circuit requests when there are no listeners. */
+	if (SIMPLEQ_EMPTY(&scope->listenq))
+		return (0);
 
 	/*
 	 * Each scope is associated with at least one listener. We need to

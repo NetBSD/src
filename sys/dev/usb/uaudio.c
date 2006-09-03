@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.100.8.2 2006/05/24 10:58:24 yamt Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.100.8.3 2006/09/03 15:25:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.100.8.2 2006/05/24 10:58:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.100.8.3 2006/09/03 15:25:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,6 +353,7 @@ Static const struct audio_hw_if uaudio_hw_if = {
 	uaudio_get_props,
 	uaudio_trigger_output,
 	uaudio_trigger_input,
+	NULL,
 	NULL,
 };
 

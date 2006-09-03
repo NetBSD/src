@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.41.8.1 2006/08/11 15:43:41 yamt Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.41.8.2 2006/09/03 15:23:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.41.8.1 2006/08/11 15:43:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.41.8.2 2006/09/03 15:23:47 yamt Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -85,7 +85,7 @@ dev_type_open(svr4_netopen);
 
 const struct cdevsw svr4_net_cdevsw = {
 	svr4_netopen, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 /*

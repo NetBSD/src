@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.31.8.1 2006/03/13 09:07:27 yamt Exp $ */
+/*      $NetBSD: sv.c,v 1.31.8.2 2006/09/03 15:24:23 yamt Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.31.8.1 2006/03/13 09:07:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.31.8.2 2006/09/03 15:24:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,6 +203,7 @@ static const struct audio_hw_if sv_hw_if = {
 	sv_get_props,
 	sv_trigger_output,
 	sv_trigger_input,
+	NULL,
 	NULL,
 };
 

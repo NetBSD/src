@@ -1,6 +1,8 @@
-#	$NetBSD: files,v 1.763.2.5 2006/08/11 15:43:51 yamt Exp $
+#	$NetBSD: files,v 1.763.2.6 2006/09/03 15:23:47 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
+
+version 	20060830
 
 #
 # device classes
@@ -18,7 +20,10 @@ defflag				KCONT
 defflag				KMEMSTATS
 defflag				KTRACE
 defflag				MBUFTRACE
+defflag				PTRACE
 defflag				SYSTRACE
+defflag				COREDUMP
+
 defparam			DEFCORENAME
 defparam			HZ
 defparam			MAXUPRC
@@ -76,10 +81,19 @@ defflag	opt_veriexec.h		VERIFIED_EXEC_FP_SHA1
 				VERIFIED_EXEC_FP_MD5
 				VERIFIED_EXEC_FP_RMD160
 
+# Per system call number counts and times
+defflag opt_syscall_stats.h	SYSCALL_STATS
+defflag opt_syscall_stats.h	SYSCALL_TIMES: SYSCALL_STATS 
+# Assume cpu_hascounter() returns true - to use disabled rdtsc() (for soekris)
+defflag opt_syscall_stats.h	SYSCALL_TIMES_HASCOUNTER: SYSCALL_TIMES 
+file kern/subr_syscall_stats.c	syscall_stats
+
 defparam opt_pax.h		PAX_MPROTECT
 
 defflag	opt_fileassoc.h		FILEASSOC
 defparam opt_fileassoc.h	FILEASSOC_NHOOKS
+
+defflag	opt_gre.h		GRE_DEBUG
 
 # compatibility options
 #
@@ -142,7 +156,6 @@ include "dev/sysmon/files.sysmon"
 include "net80211/files.net80211"
 include "netatalk/files.netatalk"
 include "netbt/files.netbt"
-include "netccitt/files.netccitt"
 include "netinet/files.netinet"
 include "netinet/files.ipfilter"
 include "netinet6/files.netinet6"
@@ -150,11 +163,14 @@ include "netinet6/files.ipsec"
 include "netipsec/files.netipsec"
 include "netiso/files.netiso"
 include "netnatm/files.netnatm"
-include "netns/files.netns"
 include "netsmb/files.netsmb"
 include "net/files.pf"
 
-defflag				IPX		# IPX network stack
+obsolete defflag		CCITT		# obsolete
+obsolete defflag		HDLC		# obsolete
+obsolete defflag		LLC		# obsolete
+obsolete defflag opt_ns.h	NS NSIP		# obsolete
+obsolete defflag		IPX		# obsolete
 defflag				PFIL_HOOKS	# pfil(9)
 defflag	opt_bridge_ipf.h	BRIDGE_IPF	# bridge(4) use inet_pfil_hooks
 defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
@@ -641,6 +657,10 @@ file	dev/ic/ncr53c9x.c		ncr53c9x
 # Fujitsu MB87030/MB89352 SCSI Protocol Controller
 device	spc: scsi
 file	dev/ic/mb89352.c		spc
+
+# Western Digital WD33C93/WD33C93A SCSI Bus Interface Controller
+define	wd33c93
+file	dev/ic/wd33c93.c		wd33c93
 
 # Hitachi HD44780 LCD panel controller
 define	hd44780
@@ -1188,7 +1208,7 @@ file	dev/cgd.c			cgd			needs-flag
 file	dev/cgd_crypto.c		cgd
 file	dev/clock_subr.c
 file	dev/clockctl.c			clockctl		needs-flag
-file	dev/dksubr.c			cgd | xbd
+file	dev/dksubr.c			cgd | xbd | ccd | raid
 file	dev/dkwedge/dk.c
 file	dev/dkwedge/dkwedge_bsdlabel.c	dkwedge_method_bsdlabel
 file	dev/dkwedge/dkwedge_gpt.c	dkwedge_method_gpt
@@ -1211,10 +1231,10 @@ file	kern/bufq_disksort.c		bufq_disksort
 file	kern/bufq_fcfs.c		bufq_fcfs
 file	kern/bufq_priocscan.c		bufq_priocscan
 file	kern/bufq_readprio.c		bufq_readprio | new_bufq_strategy
-file	kern/core_elf32.c		exec_elf32
-file	kern/core_elf64.c		exec_elf64
-file	kern/core_netbsd.c		exec_aout | exec_coff | exec_ecoff |
-					    exec_macho | lkm
+file	kern/core_elf32.c		coredump & exec_elf32
+file	kern/core_elf64.c		coredump & exec_elf64
+file	kern/core_netbsd.c		coredump & (exec_aout | exec_coff |
+					     exec_ecoff | exec_macho | lkm)
 file	kern/cnmagic.c
 file	kern/exec_aout.c		exec_aout
 file	kern/exec_conf.c
@@ -1262,6 +1282,7 @@ file	kern/kern_sysctl.c
 file	kern/kern_tc.c
 file	kern/kern_time.c
 file	kern/kern_timeout.c
+file	kern/kern_todr.c
 file	kern/kern_uuid.c
 file	kern/kern_xxx.c
 file	kern/kgdb_stub.c		kgdb
@@ -1288,7 +1309,7 @@ file	kern/subr_xxx.c
 file	kern/sys_generic.c
 file	kern/sys_pipe.c			!pipe_socketpair
 file	kern/sys_pmc.c
-file	kern/sys_process.c
+file	kern/sys_process.c		ptrace | ktrace
 file	kern/sys_socket.c
 file	kern/syscalls.c			syscall_debug
 file	kern/sysv_ipc.c			sysvshm | sysvsem | sysvmsg

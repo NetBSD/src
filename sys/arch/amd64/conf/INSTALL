@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.47.2.4 2006/08/11 15:41:00 yamt Exp $
+# $NetBSD: INSTALL,v 1.47.2.5 2006/09/03 15:22:41 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.47.2.4 $"
+#ident 		"INSTALL-$Revision: 1.47.2.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -528,7 +528,7 @@ wsmouse* at ums? mux 0
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 #ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices

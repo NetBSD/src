@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.51.8.3 2006/08/11 15:44:11 yamt Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.51.8.4 2006/09/03 15:23:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.51.8.3 2006/08/11 15:44:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.51.8.4 2006/09/03 15:23:57 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -143,6 +143,7 @@ const struct cdevsw esh_cdevsw = {
 	nommap,
 #endif
 	nullkqfilter,
+	D_OTHER,
 };
 
 /* General routines, not externally visable */
@@ -3639,6 +3640,7 @@ esh_dma_sync(sc, mem, start, end, entries, size, do_equal, ops)
 	void *mem;
 	int start;
 	int end;
+	int entries;
 	int size;
 	int do_equal;
 	int ops;

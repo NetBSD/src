@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.60.2.2 2006/08/11 15:41:19 yamt Exp $
+#	$NetBSD: GENERIC.in,v 1.60.2.3 2006/09/03 15:22:42 yamt Exp $
 #
 # Generic atari
 #
@@ -62,11 +62,8 @@ options 	INET6		# IPV6
 #options 	GATEWAY		# packet forwarding
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-options 	CCITT,LLC,HDLC	# X.25
 #ifndef NO_PHYS_NETWORK
 options 	NETATALK	# AppleTalk networking protocols
 #endif
@@ -79,6 +76,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #ifndef INSTALL_KERNEL
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
 #options  	IPFILTER_DEFAULT_BLOCK	# block packages by default
 
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
@@ -184,7 +182,7 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 # Support for various kernel options
 #
 options 	KTRACE			# Add kernel tracing system call
-options 	SYSTRACE		# system call vetting via systrace(1)
+#options 	SYSTRACE		# system call vetting via systrace(1)
 #options 	DIAGNOSTIC		# Add additional error checking code
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

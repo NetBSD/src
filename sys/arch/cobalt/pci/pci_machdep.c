@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.19.2.3 2006/08/11 15:41:20 yamt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.19.2.4 2006/09/03 15:22:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.19.2.3 2006/08/11 15:41:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.19.2.4 2006/09/03 15:22:50 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -232,8 +232,8 @@ pci_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func, pcireg_t id)
 		return 0;
 
 	/* Don't configure the bridge and PCI probe. */ 
-	if (PCI_VENDOR(id) == PCI_VENDOR_GALILEO &&
-	    PCI_PRODUCT(id) == PCI_PRODUCT_GALILEO_GT64011)
+	if (PCI_VENDOR(id) == PCI_VENDOR_MARVELL &&
+	    PCI_PRODUCT(id) == PCI_PRODUCT_MARVELL_GT64011)
 	        return 0;
 
 	/* Don't configure on-board VIA VT82C586 (pcib, uhci) */

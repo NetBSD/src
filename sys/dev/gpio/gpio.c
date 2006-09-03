@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.5.2.2 2006/04/11 11:55:13 yamt Exp $ */
+/* $NetBSD: gpio.c,v 1.5.2.3 2006/09/03 15:23:56 yamt Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.5.2.2 2006/04/11 11:55:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.5.2.3 2006/09/03 15:23:56 yamt Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -63,7 +63,7 @@ dev_type_ioctl(gpioioctl);
 
 const struct cdevsw gpio_cdevsw = {
 	gpioopen, gpioclose, noread, nowrite, gpioioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 extern struct cfdriver gpio_cd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.23.8.3 2006/08/11 15:44:11 yamt Exp $	*/
+/*	$NetBSD: opl.c,v 1.23.8.4 2006/09/03 15:23:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.23.8.3 2006/08/11 15:44:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.23.8.4 2006/09/03 15:23:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,7 +524,7 @@ oplsyn_setv(midisyn *ms,
 		     mp, level_cB));
 
 #ifdef DIAGNOSTIC
-	if (voice < 0 || voice >= sc->syn.nvoice) {
+	if (voice >= sc->syn.nvoice) {
 		printf("%s: bad voice %d\n", __func__, voice);
 		return;
 	}
@@ -617,11 +617,10 @@ oplsyn_releasev(midisyn *ms, uint_fast16_t voice, uint_fast8_t vel)
 	struct opl_softc *sc = ms->data;
 	struct opl_voice *v;
 
-	DPRINTFN(3, ("%s: %p %d %d\n", __func__, sc, voice,
-		     MIDISYN_FREQ_TO_HZ(note)));
+	DPRINTFN(1, ("%s: %p %d\n", __func__, sc, voice));
 
 #ifdef DIAGNOSTIC
-	if (voice < 0 || voice >= sc->syn.nvoice) {
+	if (voice >= sc->syn.nvoice) {
 		printf("oplsyn_noteoff: bad voice %d\n", voice);
 		return;
 	}
@@ -635,7 +634,7 @@ oplsyn_ctlnotice(midisyn *ms,
 		 midictl_evt evt, uint_fast8_t chan, uint_fast16_t key)
 {
 
-	DPRINTFN(1, ("%s: %p %d\n", __func__, sc, chan));
+	DPRINTFN(1, ("%s: %p %d\n", __func__, ms->data, chan));
 	
 	switch (evt) {
 	case MIDICTL_RESET:

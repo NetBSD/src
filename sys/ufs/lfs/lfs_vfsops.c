@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.193.2.5 2006/08/11 15:47:37 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.193.2.6 2006/09/03 15:26:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.193.2.5 2006/08/11 15:47:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.193.2.6 2006/09/03 15:26:08 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -157,6 +157,8 @@ struct vfsops lfs_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	lfs_vnodeopv_descs,
+	0,
+	{ NULL, NULL },
 };
 VFS_ATTACH(lfs_vfsops);
 
@@ -997,8 +999,10 @@ lfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 
 	sbp->f_bfree = fsbtofrags(fs, LFS_EST_BFREE(fs));
 	KASSERT(sbp->f_bfree <= fs->lfs_dsize);
+#if 0
 	if (sbp->f_bfree < 0)
 		sbp->f_bfree = 0;
+#endif
 
 	sbp->f_bresvd = fsbtofrags(fs, LFS_EST_RSVD(fs));
 	if (sbp->f_bfree > sbp->f_bresvd)
@@ -1812,6 +1816,7 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 	ip->i_gid = ip->i_ffs1_gid;
 
 	ip->i_lfs_effnblks = ip->i_ffs1_blocks;
+	ip->i_lfs_odnlink = ip->i_ffs1_nlink;
 
 	/*
 	 * Initialize the vnode from the inode, check for aliases.  In all

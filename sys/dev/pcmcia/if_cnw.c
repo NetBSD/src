@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.33.2.2 2006/08/11 15:45:08 yamt Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.33.2.3 2006/09/03 15:24:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.33.2.2 2006/08/11 15:45:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.33.2.3 2006/09/03 15:24:48 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -667,7 +667,7 @@ cnw_start(ifp)
 		if (lif == 0) {
 #ifdef CNW_DEBUG
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
-				printf("%s: link integrity %d\n", lif);
+				printf("%s: link integrity %d\n", ifp->if_xname, lif);
 #endif
 			break;
 		}
@@ -833,7 +833,7 @@ cnw_read(sc)
 				    read16(sc, buffer + 4);
 #ifdef CNW_DEBUG
 				if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
-					printf("%s:   %d bytes @0x%x+0x%x\n",
+					printf("%s:   %d bytes @0x%x+0x%lx\n",
 					    sc->sc_dev.dv_xname, bufbytes,
 					    buffer, bufptr - buffer -
 					    sc->sc_memoff);

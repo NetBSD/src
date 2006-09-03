@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.97.10.2 2006/08/11 15:46:33 yamt Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.97.10.3 2006/09/03 15:25:42 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.97.10.2 2006/08/11 15:46:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.97.10.3 2006/09/03 15:25:42 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -367,10 +367,22 @@ freeit:
 	m_freem(n);
 }
 
-struct sockaddr_in icmpsrc = { sizeof (struct sockaddr_in), AF_INET };
-static struct sockaddr_in icmpdst = { sizeof (struct sockaddr_in), AF_INET };
-static struct sockaddr_in icmpgw = { sizeof (struct sockaddr_in), AF_INET };
-struct sockaddr_in icmpmask = { 8, 0 };
+struct sockaddr_in icmpsrc = {
+	.sin_len = sizeof (struct sockaddr_in),
+	.sin_family = AF_INET,
+};
+static struct sockaddr_in icmpdst = {
+	.sin_len = sizeof (struct sockaddr_in),
+	.sin_family = AF_INET,
+};
+static struct sockaddr_in icmpgw = {
+	.sin_len = sizeof (struct sockaddr_in),
+	.sin_family = AF_INET,
+};
+struct sockaddr_in icmpmask = { 
+	.sin_len = 8,
+	.sin_family = 0,
+};
 
 /*
  * Process a received ICMP message.
@@ -444,11 +456,23 @@ icmp_input(struct mbuf *m, ...)
 	case ICMP_UNREACH:
 		switch (code) {
 			case ICMP_UNREACH_NET:
+				code = PRC_UNREACH_NET;
+				break;
+
 			case ICMP_UNREACH_HOST:
+				code = PRC_UNREACH_HOST;
+				break;
+
 			case ICMP_UNREACH_PROTOCOL:
+				code = PRC_UNREACH_PROTOCOL;
+				break;
+
 			case ICMP_UNREACH_PORT:
+				code = PRC_UNREACH_PORT;
+				break;
+
 			case ICMP_UNREACH_SRCFAIL:
-				code += PRC_UNREACH_NET;
+				code = PRC_UNREACH_SRCFAIL;
 				break;
 
 			case ICMP_UNREACH_NEEDFRAG:

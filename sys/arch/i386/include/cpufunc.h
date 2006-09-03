@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.31 2005/12/28 19:09:29 perry Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.31.8.1 2006/09/03 15:23:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
+#include <machine/segments.h>
 #include <machine/specialreg.h>
 
 static __inline void
@@ -54,13 +55,29 @@ x86_pause(void)
 	__asm volatile("pause");
 }
 
+/*
+ * XXX it's better to use real lfence insn if available.
+ *
+ * memory clobber to avoid compiler reordering.
+ */
 static __inline void
 x86_lfence(void)
 {
 
-	/*
-	 * XXX it's better to use real lfence insn if available.
-	 */
+	__asm volatile("lock; addl $0, 0(%%esp)" : : : "memory");
+}
+
+static __inline void
+x86_sfence(void)
+{
+
+	__asm volatile("lock; addl $0, 0(%%esp)" : : : "memory");
+}
+
+static __inline void
+x86_mfence(void)
+{
+
 	__asm volatile("lock; addl $0, 0(%%esp)" : : : "memory");
 }
 
@@ -75,9 +92,9 @@ invlpg(u_int addr)
 }  
 
 static __inline void
-lidt(void *p)
+lidt(struct region_descriptor *region)
 {
-	__asm volatile("lidt (%0)" : : "r" (p));
+	__asm volatile("lidt %0" : : "m" (*region));
 }
 
 static __inline void

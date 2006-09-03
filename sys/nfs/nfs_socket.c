@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.126.2.3 2006/08/11 15:47:05 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.126.2.4 2006/09/03 15:25:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.2.3 2006/08/11 15:47:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.2.4 2006/09/03 15:25:56 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2681,7 +2681,6 @@ nfsdreq_free(struct nfsrv_descript *nd)
 
 	cr = nd->nd_cr;
 	if (cr != NULL) {
-		KASSERT(kauth_cred_getrefcnt(cr) == 1);
 		kauth_cred_free(cr);
 	}
 	pool_put(&nfs_srvdesc_pool, nd);

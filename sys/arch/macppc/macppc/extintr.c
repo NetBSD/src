@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.55.8.2 2006/08/11 15:42:14 yamt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.55.8.3 2006/09/03 15:23:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.55.8.2 2006/08/11 15:42:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.55.8.3 2006/09/03 15:23:21 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1051,7 +1051,6 @@ init_interrupt()
 
 #if !defined (MAMBO)
 	if (mac_io == -1) {
-		panic("/ht/pci/mac-io not found");
 		/*
 		 * No mac-io.  Assume Grand-Central or OHare.
 		 */

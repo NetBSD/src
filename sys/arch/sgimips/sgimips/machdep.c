@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95.8.1 2006/04/11 11:53:47 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95.8.2 2006/09/03 15:23:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.8.1 2006/04/11 11:53:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.8.2 2006/09/03 15:23:31 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -754,15 +754,13 @@ microtime(struct timeval *tvp)
 	splx(s);
 }
 
-inline void
-delay(unsigned long n)
+void delay(unsigned long n)
 {
-	u_long i;
-	long divisor = curcpu()->ci_divisor_delay;
+	register int __N = curcpu()->ci_divisor_delay * n;
 
-	while (n-- > 0)
-		for (i = divisor; i > 0; i--)
-			;
+	do {
+		__asm("addiu %0,%1,-1" : "=r" (__N) : "0" (__N));
+	} while (__N > 0);
 }
 
 /*

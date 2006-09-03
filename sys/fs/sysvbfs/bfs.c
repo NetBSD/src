@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs.c,v 1.2.6.1 2006/08/11 15:45:34 yamt Exp $	*/
+/*	$NetBSD: bfs.c,v 1.2.6.2 2006/09/03 15:25:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.2.6.1 2006/08/11 15:45:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.2.6.2 2006/09/03 15:25:13 yamt Exp $");
 #define	BFS_DEBUG
 
 #include <sys/param.h>
@@ -281,7 +281,7 @@ bfs_file_write(struct bfs *bfs, const char *fname, void *buf,
 {
 	struct bfs_fileattr attr;
 	struct bfs_dirent *dirent;
-	int8_t name[BFS_FILENAME_MAXLEN];
+	char name[BFS_FILENAME_MAXLEN];
 	int err;
 
 	strncpy(name, fname, BFS_FILENAME_MAXLEN);

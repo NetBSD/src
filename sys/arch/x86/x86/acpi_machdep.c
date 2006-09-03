@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.9.2.1 2006/08/11 15:43:16 yamt Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.9.2.2 2006/09/03 15:23:37 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.9.2.1 2006/08/11 15:43:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.9.2.2 2006/09/03 15:23:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,10 +205,11 @@ found:
 #if NACPI > 0 || NIOAPIC > 0
 	/*
 	 * If there was no ACPI interrupt source override,
-	 * mark the SCI interrupt as active low in the
-	 * table.
+	 * mark the SCI interrupt as level-triggered, active low
+	 * in the table.
 	 */
 	if (mip != NULL && ((mip->sflags & MPI_OVR) == 0)) {
+		trigger = IST_LEVEL;
 		mip->flags &= ~3;
 		mip->flags |= MPS_INTPO_ACTLO;
 		mip->redir |= IOAPIC_REDLO_ACTLO;

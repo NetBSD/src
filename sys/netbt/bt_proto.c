@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_proto.c,v 1.1.6.2 2006/06/26 12:53:57 yamt Exp $	*/
+/*	$NetBSD: bt_proto.c,v 1.1.6.3 2006/09/03 15:25:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.1.6.2 2006/06/26 12:53:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.1.6.3 2006/09/03 15:25:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -58,15 +58,13 @@ const struct protosw btsw[] = {
 	hci_usrreq,	NULL,		NULL,		NULL,
 	hci_drain,
     },
-#ifdef BLUETOOTH_SCO
     {	/* HCI SCO data (audio) */
 	SOCK_SEQPACKET,	&btdomain,
-	BTPROTO_SCO,	PR_CONNREQUIRED | PR_ATOMIC,
+	BTPROTO_SCO,	PR_CONNREQUIRED | PR_ATOMIC | PR_LISTEN,
 	NULL,		NULL,		NULL,		sco_ctloutput,
 	sco_usrreq,	NULL,		NULL,		NULL,
 	NULL,
     },
-#endif
     {	/* L2CAP Connection Oriented */
 	SOCK_SEQPACKET,	&btdomain,
 	BTPROTO_L2CAP,	PR_CONNREQUIRED | PR_ATOMIC | PR_LISTEN,
@@ -110,4 +108,9 @@ struct domain btdomain = {
 	NULL,				/* attach to routing table */
 	32,				/* rtoffset */
 	sizeof(struct sockaddr_bt),	/* maxrtkey */
+	NULL,				/* attach af-data */
+	NULL,				/* detach af-data */
+	{ NULL, NULL },			/* queues */
+	{ NULL },			/* link */
+	MOWNER_INIT			/* owner */
 };

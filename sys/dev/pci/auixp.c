@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.11.6.2 2006/06/26 12:51:21 yamt Exp $ */
+/* $NetBSD: auixp.c,v 1.11.6.3 2006/09/03 15:24:21 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.11.6.2 2006/06/26 12:51:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.11.6.3 2006/09/03 15:24:21 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -206,7 +206,7 @@ static void	auixp_update_busbusy(struct auixp_softc *);
 
 #ifdef DEBUG_AUIXP
 static struct auixp_softc *static_sc;
-sdtatic void auixp_dumpreg(void);
+static void auixp_dumpreg(void);
 #	define DPRINTF(x) printf x;
 #else
 #	define DPRINTF(x)
@@ -239,7 +239,9 @@ static const struct audio_hw_if auixp_hw_if = {
 	auixp_mappage,
 	auixp_get_props,
 	auixp_trigger_output,
-	auixp_trigger_input
+	auixp_trigger_input,
+	NULL,			/* dev_ioctl */
+	NULL,			/* powerstate */
 };
 
 

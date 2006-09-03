@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.29.8.1 2006/04/01 12:07:15 yamt Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.29.8.2 2006/09/03 15:24:22 yamt Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.29.8.1 2006/04/01 12:07:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.29.8.2 2006/09/03 15:24:22 yamt Exp $");
 
 #include "rnd.h"
 
@@ -784,11 +784,11 @@ hifn_next_signature(u_int32_t a, u_int cnt)
 	return a;
 }
 
-struct pci2id {
+static struct pci2id {
 	u_short		pci_vendor;
 	u_short		pci_prod;
 	char		card_id[13];
-} static const pci2id[] = {
+} const pci2id[] = {
 	{
 		PCI_VENDOR_HIFN,
 		PCI_PRODUCT_HIFN_7951,

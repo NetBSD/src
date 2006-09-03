@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.37.6.3 2006/08/11 15:44:25 yamt Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.37.6.4 2006/09/03 15:24:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.37.6.3 2006/08/11 15:44:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.37.6.4 2006/09/03 15:24:21 yamt Exp $");
 
 #include "midi.h"
 
@@ -186,6 +186,7 @@ static const struct audio_hw_if cs4280_hw_if = {
 	cs428x_get_props,
 	cs4280_trigger_output,
 	cs4280_trigger_input,
+	NULL,
 	NULL,
 };
 
@@ -622,7 +623,7 @@ cs4280_set_params(void *addr, int setmode, int usemode,
 		p = mode == AUMODE_PLAY ? play : rec;
 
 		if (p == play) {
-			DPRINTFN(5,("play: sample=%ld precision=%d channels=%d\n",
+			DPRINTFN(5,("play: sample=%d precision=%d channels=%d\n",
 				p->sample_rate, p->precision, p->channels));
 			/* play back data format may be 8- or 16-bit and
 			 * either stereo or mono.
@@ -634,7 +635,7 @@ cs4280_set_params(void *addr, int setmode, int usemode,
 				return EINVAL;
 			}
 		} else {
-			DPRINTFN(5,("rec: sample=%ld precision=%d channels=%d\n",
+			DPRINTFN(5,("rec: sample=%d precision=%d channels=%d\n",
 				p->sample_rate, p->precision, p->channels));
 			/* capture data format must be 16bit stereo
 			 * and sample rate range from 11025Hz to 48000Hz.

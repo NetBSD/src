@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.37.2.2 2006/08/11 15:45:34 yamt Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.37.2.3 2006/09/03 15:25:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.37.2.2 2006/08/11 15:45:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.37.2.3 2006/09/03 15:25:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1022,6 +1022,8 @@ struct vfsops ntfs_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	ntfs_vnodeopv_descs,
+	0,
+	{ NULL, NULL },
 };
 VFS_ATTACH(ntfs_vfsops);
 #endif

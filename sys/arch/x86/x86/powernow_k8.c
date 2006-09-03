@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.3.2.2 2006/08/11 15:43:16 yamt Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.3.2.3 2006/09/03 15:23:37 yamt Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.3.2.2 2006/08/11 15:43:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.3.2.3 2006/09/03 15:23:37 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,7 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.3.2.2 2006/08/11 15:43:16 yamt Exp
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
 
-#include <x86/include/cpuvar.h>
 #include <x86/include/powernow.h>
 
 #include <dev/isa/isareg.h>
@@ -84,23 +83,31 @@ __KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.3.2.2 2006/08/11 15:43:16 yamt Exp
 #include <machine/cpufunc.h>
 #include <machine/bus.h>
 
-/* Global variables */
-struct powernow_cpu_state	*k8pnow_current_state;
-unsigned int			cur_freq;
-int				powernow_node_target, powernow_node_current;
-char				*freq_names;
-size_t				freq_names_len;
+#ifdef _LKM
+static struct sysctllog *sysctllog;
+#define SYSCTLLOG	&sysctllog
+#else
+#define SYSCTLLOG	NULL
+#endif
 
-/* Prototypes */
+#define READ_PENDING_WAIT(status)				\
+	do {							\
+		(status) = rdmsr(MSR_AMDK7_FIDVID_STATUS);	\
+	} while (PN8_STA_PENDING(status))
+
+struct powernow_cpu_state *k8pnow_current_state;
+unsigned int cur_freq;
+int powernow_node_target, powernow_node_current;
+char *freq_names;
+size_t freq_names_len;
+
 int k8pnow_sysctl_helper(SYSCTLFN_PROTO);
-int k8pnow_read_pending_wait(uint64_t *);
 int k8pnow_decode_pst(struct powernow_cpu_state *, uint8_t *);
 int k8pnow_states(struct powernow_cpu_state *, uint32_t, unsigned int,
     unsigned int);
 int k8_powernow_setperf(unsigned int);
 
 
-/* Functions */
 int k8pnow_sysctl_helper(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
@@ -130,20 +137,6 @@ int k8pnow_sysctl_helper(SYSCTLFN_ARGS)
 	}
 
 	return 0;
-}
-
-int
-k8pnow_read_pending_wait(uint64_t *status)
-{
-	unsigned int i = 1000;
-
-	while (i--) {
-		*status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
-		if (!PN8_STA_PENDING(*status))
-			return 0;
-	}
-	DPRINTF(("%s: change pending stuck.\n", __func__));
-	return 1;
 }
 
 int
@@ -190,8 +183,7 @@ k8_powernow_setperf(unsigned int freq)
 	while (cvid > vid) {
 		val = cvid - (1 << cstate->mvs);
 		WRITE_FIDVID(cfid, (val > 0) ? val : 0, 1ULL);
-		if (k8pnow_read_pending_wait(&status))
-			return 1;
+		READ_PENDING_WAIT(status);
 		cvid = PN8_STA_CVID(status);
 		COUNT_OFF_VST(cstate->vst);
 	}
@@ -202,8 +194,7 @@ k8_powernow_setperf(unsigned int freq)
 		 * in 0.25 step or in MVS.  Therefore do it as it's done
 		 * under Linux */
 		WRITE_FIDVID(cfid, cvid - 1, 1ULL);
-		if (k8pnow_read_pending_wait(&status))
-			return 1;
+		READ_PENDING_WAIT(status);
 		cvid = PN8_STA_CVID(status);
 		COUNT_OFF_VST(cstate->vst);
 	}
@@ -224,9 +215,7 @@ k8_powernow_setperf(unsigned int freq)
 			} else
 				val = cfid - 2;
 			WRITE_FIDVID(val, cvid, (uint64_t)cstate->pll * 1000 / 5);
-
-			if (k8pnow_read_pending_wait(&status))
-				return 1;
+			READ_PENDING_WAIT(status);
 			cfid = PN8_STA_CFID(status);
 			COUNT_OFF_IRT(cstate->irt);
 
@@ -234,8 +223,7 @@ k8_powernow_setperf(unsigned int freq)
 		}
 
 		WRITE_FIDVID(fid, cvid, (uint64_t) cstate->pll * 1000 / 5);
-		if (k8pnow_read_pending_wait(&status))
-			return 1;
+		READ_PENDING_WAIT(status);
 		cfid = PN8_STA_CFID(status);
 		COUNT_OFF_IRT(cstate->irt);
 	}
@@ -243,8 +231,7 @@ k8_powernow_setperf(unsigned int freq)
 	/* Phase 3: change to requested voltage */
 	if (cvid != vid) {
 		WRITE_FIDVID(cfid, vid, 1ULL);
-		if (k8pnow_read_pending_wait(&status))
-			return 1;
+		READ_PENDING_WAIT(status);
 		cvid = PN8_STA_CVID(status);
 		COUNT_OFF_VST(cstate->vst);
 	}
@@ -400,8 +387,9 @@ k8_powernow_init(void)
 			k8pnow_current_state = cstate;
 			DPRINTF(("%s: freq_names=%s\n", __func__, freq_names));
 		}
-	} else
+	} else {
 		DPRINTF(("%s: returned 0!\n", __func__));
+	}
 
 	if (k8pnow_current_state == NULL) {
 		DPRINTF(("%s: k8pnow_current_state is NULL!\n", __func__));
@@ -412,28 +400,28 @@ k8_powernow_init(void)
 	}
 
 	/* Create sysctl machdep.powernow.frequency. */
-	if (sysctl_createv(NULL, 0, NULL, &node,
+	if (sysctl_createv(SYSCTLLOG, 0, NULL, &node,
 	    CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE, "machdep", NULL,
 	    NULL, 0, NULL, 0,
 	    CTL_MACHDEP, CTL_EOL) != 0)
 		goto err;
 
-	if (sysctl_createv(NULL, 0, &node, &pnownode,
+	if (sysctl_createv(SYSCTLLOG, 0, &node, &pnownode,
 	    0,
 	    CTLTYPE_NODE, "powernow", NULL,
 	    NULL, 0, NULL, 0,
 	    CTL_CREATE, CTL_EOL) != 0)
 		goto err;
 
-	if (sysctl_createv(NULL, 0, &pnownode, &freqnode,
+	if (sysctl_createv(SYSCTLLOG, 0, &pnownode, &freqnode,
 	    0,
 	    CTLTYPE_NODE, "frequency", NULL,
 	    NULL, 0, NULL, 0,
 	    CTL_CREATE, CTL_EOL) != 0)
 		goto err;
 
-	if (sysctl_createv(NULL, 0, &freqnode, &node,
+	if (sysctl_createv(SYSCTLLOG, 0, &freqnode, &node,
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "target", NULL,
 	    k8pnow_sysctl_helper, 0, NULL, 0,
@@ -442,7 +430,7 @@ k8_powernow_init(void)
 
 	powernow_node_target = node->sysctl_num;
 
-	if (sysctl_createv(NULL, 0, &freqnode, &node,
+	if (sysctl_createv(SYSCTLLOG, 0, &freqnode, &node,
 	    0,
 	    CTLTYPE_INT, "current", NULL,
 	    k8pnow_sysctl_helper, 0, NULL, 0,
@@ -451,7 +439,7 @@ k8_powernow_init(void)
 
 	powernow_node_current = node->sysctl_num;
 
-	if (sysctl_createv(NULL, 0, &freqnode, &node,
+	if (sysctl_createv(SYSCTLLOG, 0, &freqnode, &node,
 	    0,
 	    CTLTYPE_STRING, "available", NULL,
 	    NULL, 0, freq_names, freq_names_len,
@@ -460,16 +448,25 @@ k8_powernow_init(void)
 
 	cur_freq = cstate->state_table[cstate->n_states-1].freq;
 
-	DPRINTF(("%s: cur_freq = %d\n", __func__, cur_freq));
-
-	aprint_normal("%s: AMD %s Technology\n", cpuname, techname);
-	aprint_normal("%s: available frequencies (Mhz): %s\n", cpuname,
-			freq_names);
-	aprint_normal("%s: current frequency (Mhz): %d\n", cpuname, cur_freq);
+	aprint_normal("%s: AMD %s Technology %d MHz\n",
+	    cpuname, techname, cur_freq);
+	aprint_normal("%s: available frequencies (Mhz): %s\n",
+	    cpuname, freq_names);
 
 	return;
 
   err:
 	free(cstate, M_DEVBUF);
 	free(freq_names, M_SYSCTLDATA);
+}
+
+void
+k8_powernow_destroy(void)
+{
+#ifdef _LKM
+	sysctl_teardown(SYSCTLLOG);
+
+	if (freq_names)
+		free(freq_names, M_SYSCTLDATA);
+#endif
 }

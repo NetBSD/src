@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.87.2.2 2006/05/24 10:59:21 yamt Exp $ */
+/* $NetBSD: device.h,v 1.87.2.3 2006/09/03 15:25:56 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -227,13 +227,13 @@ LIST_HEAD(cfattachlist, cfattach);
 
 #define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn)		\
 struct cfattach __CONCAT(name,_ca) = {					\
-	___STRING(name), { 0 }, ddsize, matfn, attfn, detfn, actfn, 0, 0 \
+    ___STRING(name), { NULL, NULL }, ddsize, matfn, attfn, detfn, actfn, 0, 0 \
 }
 
 #define	CFATTACH_DECL2(name, ddsize, matfn, attfn, detfn, actfn, \
 	rescanfn, chdetfn) \
 struct cfattach __CONCAT(name,_ca) = {					\
-	___STRING(name), { 0 }, ddsize, matfn, attfn, detfn, actfn, \
+    ___STRING(name), { NULL, NULL }, ddsize, matfn, attfn, detfn, actfn, \
 		rescanfn, chdetfn \
 }
 
@@ -254,7 +254,7 @@ LIST_HEAD(cfdriverlist, cfdriver);
 
 #define	CFDRIVER_DECL(name, class, attrs)				\
 struct cfdriver __CONCAT(name,_cd) = {					\
-	{ 0 }, { 0 }, NULL, ___STRING(name), class, 0, attrs		\
+    { NULL, NULL }, { NULL }, NULL, ___STRING(name), class, 0, attrs	\
 }
 
 /*

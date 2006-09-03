@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.47.2.3 2006/08/11 15:42:46 yamt Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.47.2.4 2006/09/03 15:23:27 yamt Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.47.2.3 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.47.2.4 $"
 
 maxusers	32
 
@@ -42,7 +42,7 @@ options		ENABLE_MIPS4_CACHE_R10K # enable R10000 cache ops
 
 #options 	NTP		# NTP phase/frequence locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
-options 	SYSTRACE	# system call vetting via systrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
@@ -130,17 +130,15 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -309,7 +307,7 @@ wsmouse* at ums? mux 0
 ukbd*   at uhidev? reportid ?
 wskbd*  at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
@@ -459,7 +457,6 @@ pseudo-device	irix_kmem		# IRIX /dev/kmem
 pseudo-device	irix_usema		# IRIX /dev/usema
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1
@@ -474,4 +471,3 @@ pseudo-device	irix_usema		# IRIX /dev/usema
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
-

@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.39.8.1 2006/04/01 12:07:21 yamt Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.39.8.2 2006/09/03 15:24:48 yamt Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.39.8.1 2006/04/01 12:07:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.39.8.2 2006/09/03 15:24:48 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -181,7 +181,7 @@ dev_type_mmap(bktr_mmap);
 
 const struct cdevsw bktr_cdevsw = {
 	bktr_open, bktr_close, bktr_read, bktr_write, bktr_ioctl,
-	nostop, notty, nopoll, bktr_mmap, nokqfilter,
+	nostop, notty, nopoll, bktr_mmap, nokqfilter, D_OTHER
 };
 #endif /* __NetBSD __ */
 
@@ -1781,9 +1781,6 @@ bktr_mmap(dev_t dev, off_t offset, int nprot)
 		return(-1);
 
 	bktr = bktr_cd.cd_devs[unit];
-
-	if ((vaddr_t)offset < 0)
-		return(-1);
 
 	if ((vaddr_t)offset >= bktr->alloc_pages * PAGE_SIZE)
 		return(-1);

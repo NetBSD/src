@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.1.2.3 2006/08/11 15:42:00 yamt Exp $	*/
+/*	$NetBSD: asm.h,v 1.1.2.4 2006/09/03 15:23:05 yamt Exp $	*/
 
 /* -
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -33,16 +33,6 @@
  *	Some rules to make assembly code understandable by
  *	a debugger are also noted.
  */
-
-/*
- * Useful stuff.
- */
-#ifdef __STDC__
-#define	__CONCAT(a,b)	a ## b
-#else
-#define	__CONCAT(a,b)	a/**/b
-#endif
-#define ___CONCAT(a,b)	__CONCAT(a,b)
 
 /*
  * Macro to make a local label name.

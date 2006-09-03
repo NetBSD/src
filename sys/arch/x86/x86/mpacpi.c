@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.35.8.1 2006/08/11 15:43:16 yamt Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.35.8.2 2006/09/03 15:23:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.35.8.1 2006/08/11 15:43:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.35.8.2 2006/09/03 15:23:37 yamt Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -249,6 +249,7 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 		mpi->ioapic_pin = pin;
 		mpi->sflags |= MPI_OVR;
 		mpi->redir = 0;
+		mpi->global_int = isa_ovr->Interrupt;
 		switch (isa_ovr->Polarity) {
 		case MPS_INTPO_ACTHI:
 			mpi->redir &= ~IOAPIC_REDLO_ACTLO;

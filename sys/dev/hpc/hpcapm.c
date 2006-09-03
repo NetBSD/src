@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.6.2.1 2006/04/01 12:06:55 yamt Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.6.2.2 2006/09/03 15:23:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.6.2.1 2006/04/01 12:06:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.6.2.2 2006/09/03 15:23:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -136,10 +136,10 @@ hpcapm_attach(struct device *parent, struct device *self, void *aux)
 					  CONFIG_HOOK_SHARE,
 					  hpcapm_hook, sc);
 
-	sc->sc_battery_hook = config_hook(CONFIG_HOOK_PMEVENT,
-					  CONFIG_HOOK_PMEVENT_AC,
-					  CONFIG_HOOK_SHARE,
-					  hpcapm_hook, sc);
+	sc->sc_ac_hook = config_hook(CONFIG_HOOK_PMEVENT,
+				     CONFIG_HOOK_PMEVENT_AC,
+				     CONFIG_HOOK_SHARE,
+				     hpcapm_hook, sc);
 
 	aaa.accessops = &hpcapm_accessops;
 	aaa.accesscookie = sc;

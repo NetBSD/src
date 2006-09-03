@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.26 2006/01/07 16:08:44 oster Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.26.6.1 2006/09/03 15:24:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,9 @@
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/pool.h>
+#include <sys/disk.h>
 
+#include <dev/dkvar.h>
 #include <dev/raidframe/raidframevar.h>
 
 struct raidcinfo {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.27.8.2 2006/06/26 12:51:21 yamt Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.27.8.3 2006/09/03 15:24:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.27.8.2 2006/06/26 12:51:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.27.8.3 2006/09/03 15:24:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,6 +135,7 @@ static const struct audio_hw_if cs4281_hw_if = {
 	cs428x_get_props,
 	cs4281_trigger_output,
 	cs4281_trigger_input,
+	NULL,
 	NULL,
 };
 

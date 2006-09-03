@@ -1,4 +1,4 @@
-/*	$NetBSD: nqnfs.h,v 1.17.8.3 2006/08/11 15:47:05 yamt Exp $	*/
+/*	$NetBSD: nqnfs.h,v 1.17.8.4 2006/09/03 15:25:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,7 +81,6 @@
  * hashed on lc_fh.
  */
 #define	LC_MOREHOSTSIZ	10
-#define	LC_MAXFIDSIZ	64
 
 struct nqhost {
 	union {
@@ -116,8 +115,7 @@ struct nqlease {
 	time_t		lc_expiry;	/* Expiry time (sec) */
 	struct nqhost	lc_host;	/* Host that got lease */
 	struct nqm	*lc_morehosts;	/* Other hosts that share read lease */
-	fsid_t		lc_fsid;	/* Fhandle */
-	char		lc_fiddata[LC_MAXFIDSIZ];
+	nfsrvfh_t	lc_fh;
 	struct vnode	*lc_vp;		/* Soft reference to associated vnode */
 };
 #define	lc_flag		lc_host.lph_un.un_udp.udp_flag

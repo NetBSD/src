@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.18.8.2 2006/08/11 15:45:33 yamt Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.18.8.3 2006/09/03 15:25:13 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -125,7 +125,7 @@ struct selinfo ipfselwait[IPL_LOGSIZE];
 
 const struct cdevsw ipl_cdevsw = {
 	iplopen, iplclose, iplread, nowrite, iplioctl,
-	nostop, notty, iplpoll, nommap,
+	nostop, notty, iplpoll, nommap, nokqfilter, D_OTHER,
 };
 #endif
 

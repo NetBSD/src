@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.102.2.3 2006/08/11 15:41:19 yamt Exp $
+# $NetBSD: GENERIC,v 1.102.2.4 2006/09/03 15:22:43 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -94,17 +94,15 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -160,7 +158,7 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
-options 	SYSTRACE	# system call vetting via systrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
@@ -382,7 +380,7 @@ wsmouse*	at ums?
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
 
-# USB serial adpater
+# USB serial adapter
 ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
@@ -600,7 +598,6 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

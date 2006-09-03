@@ -1,4 +1,4 @@
-/*	$NetBSD: btdev.c,v 1.1.4.2 2006/08/11 15:43:59 yamt Exp $	*/
+/*	$NetBSD: btdev.c,v 1.1.4.3 2006/09/03 15:23:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btdev.c,v 1.1.4.2 2006/08/11 15:43:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btdev.c,v 1.1.4.3 2006/09/03 15:23:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -58,8 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: btdev.c,v 1.1.4.2 2006/08/11 15:43:59 yamt Exp $");
  *	Each device corresponds to a character device /dev/btdevN
  */
 
-#define BTDEV_DEFAULT_COUNT	4	/* default number of btdevs */
-
 struct btdev_softc {
 	struct device	 sc_dev;
 	int		 sc_busy;
@@ -83,7 +81,7 @@ dev_type_ioctl(btdevioctl);
 
 const struct cdevsw btdev_cdevsw = {
 	btdevopen, btdevclose, noread, nowrite, btdevioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 /* print attach args */
@@ -108,9 +106,6 @@ void
 btdevattach(int num)
 {
 	int err, i;
-
-	if (num < 1)
-		num = BTDEV_DEFAULT_COUNT;
 
 	err = config_cfattach_attach(btdev_cd.cd_name, &btdev_ca);
 	if (err) {

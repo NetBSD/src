@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.228.2.4 2006/08/11 15:47:26 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.228.2.5 2006/09/03 15:25:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -144,6 +144,18 @@
 /* Machine type dependent parameters. */
 #include <machine/param.h>
 #include <machine/limits.h>
+
+/* pages ("clicks") to disk blocks */
+#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
+#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
+
+/* bytes to pages */
+#define	ctob(x)		((x) << PGSHIFT)
+#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
+
+/* bytes to disk blocks */
+#define	dbtob(x)	((x) << DEV_BSHIFT)
+#define	btodb(x)	((x) >> DEV_BSHIFT)
 
 /*
  * Stack macros.  On most architectures, the stack grows down,

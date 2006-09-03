@@ -1,4 +1,4 @@
-/* $NetBSD: argpio.c,v 1.1.6.2 2006/08/11 15:42:14 yamt Exp $ */
+/* $NetBSD: argpio.c,v 1.1.6.3 2006/09/03 15:23:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Garrett D'Amore
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: argpio.c,v 1.1.6.2 2006/08/11 15:42:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: argpio.c,v 1.1.6.3 2006/09/03 15:23:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: argpio.c,v 1.1.6.2 2006/08/11 15:42:14 yamt Exp $");
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <mips/atheros/include/ar531xreg.h>
+#include <mips/atheros/include/ar5312reg.h>
 #include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
 

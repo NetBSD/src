@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.h,v 1.5.6.2 2006/05/24 10:59:21 yamt Exp $	*/
+/*	$NetBSD: iostat.h,v 1.5.6.3 2006/09/03 15:25:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ struct io_sysctl {
  */
 
 struct io_stats {
-	char		*io_name;  /* device name */
+	char		io_name[IOSTATNAMELEN];  /* device name */
 	void		*io_parent; /* pointer to what we are attached to */
 	int		io_type;   /* type of device the state belong to */
 	int		io_busy;	/* busy counter */
@@ -106,7 +106,7 @@ TAILQ_HEAD(iostatlist_head, io_stats);	/* the iostatlist is a TAILQ */
 void	iostat_busy(struct io_stats *);
 void	iostat_unbusy(struct io_stats *, long, int);
 struct io_stats *iostat_find(const char *);
-struct io_stats *iostat_alloc(int32_t);
+struct io_stats *iostat_alloc(int32_t, void *, const char *);
 void	iostat_free(struct io_stats *);
 void	iostat_seek(struct io_stats *);
 #endif

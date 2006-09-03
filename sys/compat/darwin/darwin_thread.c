@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_thread.c,v 1.9 2005/12/11 12:19:56 christos Exp $ */
+/*	$NetBSD: darwin_thread.c,v 1.9.8.1 2006/09/03 15:23:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.9 2005/12/11 12:19:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.9.8.1 2006/09/03 15:23:38 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,7 +75,7 @@ darwin_sys_fork(l, v, retval)
 	int error;
 
 	if ((error = fork1(l, 0, SIGCHLD, NULL, 0,
-	    darwin_fork_child_return, NULL, retval, NULL)) != 0);
+	    darwin_fork_child_return, NULL, retval, NULL)) != 0)
 		return error;
 
 	return 0;
@@ -90,7 +90,7 @@ darwin_sys_vfork(l, v, retval)
 	int error;
 
 	if ((error = fork1(l, FORK_PPWAIT, SIGCHLD, NULL, 0,
-	    darwin_fork_child_return, NULL, retval, NULL)) != 0);
+	    darwin_fork_child_return, NULL, retval, NULL)) != 0)
 		return error;
 
 	return 0;

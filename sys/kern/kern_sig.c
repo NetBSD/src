@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.216.2.5 2006/08/11 15:45:46 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.216.2.6 2006/09/03 15:25:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,9 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.216.2.5 2006/08/11 15:45:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.216.2.6 2006/09/03 15:25:22 yamt Exp $");
 
+#include "opt_coredump.h"
 #include "opt_ktrace.h"
+#include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_netbsd.h"
@@ -84,7 +86,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.216.2.5 2006/08/11 15:45:46 yamt Exp 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
+#ifdef COREDUMP
 static int	build_corename(struct proc *, char *, const char *, size_t);
+#endif
 static void	ksiginfo_exithook(struct proc *, void *);
 static void	ksiginfo_put(struct proc *, const ksiginfo_t *);
 static ksiginfo_t *ksiginfo_get(struct proc *, int);
@@ -115,7 +119,8 @@ sigacts_poolpage_free(struct pool *pp, void *v)
 }
 
 static struct pool_allocator sigactspool_allocator = {
-        sigacts_poolpage_alloc, sigacts_poolpage_free,
+        .pa_alloc = sigacts_poolpage_alloc,
+	.pa_free = sigacts_poolpage_free,
 };
 
 POOL_INIT(siginfo_pool, sizeof(siginfo_t), 0, 0, 0, "siginfo",
@@ -1411,8 +1416,10 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 		if (sa_upcall(l, SA_UPCALL_SIGNAL | SA_UPCALL_DEFER, le, li,
 		    sizeof(*si), si, siginfo_free) != 0) {
 			siginfo_free(si);
+#if 0
 			if (KSI_TRAP_P(ksi))
 				/* XXX What do we do here?? */;
+#endif
 		}
 		l->l_flag |= f;
 		return;
@@ -1997,7 +2004,10 @@ sigexit(struct lwp *l, int signum)
 #if 0
 	struct lwp	*l2;
 #endif
-	int		error, exitsig;
+	int		exitsig;
+#ifdef COREDUMP
+	int		error;
+#endif
 
 	p = l->l_proc;
 
@@ -2028,18 +2038,22 @@ sigexit(struct lwp *l, int signum)
 	p->p_acflag |= AXSIG;
 	if (sigprop[signum] & SA_CORE) {
 		p->p_sigctx.ps_signo = signum;
+#ifdef COREDUMP
 		if ((error = coredump(l, NULL)) == 0)
 			exitsig |= WCOREFLAG;
+#endif
 
 		if (kern_logsigexit) {
 			/* XXX What if we ever have really large UIDs? */
 			int uid = l->l_cred ?
 			    (int)kauth_cred_geteuid(l->l_cred) : -1;
 
+#ifdef COREDUMP
 			if (error)
 				log(LOG_INFO, lognocoredump, p->p_pid,
 				    p->p_comm, uid, signum, error);
 			else
+#endif
 				log(LOG_INFO, logcoredump, p->p_pid,
 				    p->p_comm, uid, signum);
 		}
@@ -2050,6 +2064,7 @@ sigexit(struct lwp *l, int signum)
 	/* NOTREACHED */
 }
 
+#ifdef COREDUMP
 struct coredump_iostate {
 	struct lwp *io_lwp;
 	struct vnode *io_vp;
@@ -2193,11 +2208,16 @@ done:
 		PNBUF_PUT(name);
 	return error;
 }
+#endif /* COREDUMP */
 
 /*
  * Nonexistent system call-- signal process (may want to handle it).
  * Flag error in case process won't see signal immediately (blocked or ignored).
  */
+#ifndef PTRACE
+__weak_alias(sys_ptrace, sys_nosys);
+#endif
+
 /* ARGSUSED */
 int
 sys_nosys(struct lwp *l, void *v, register_t *retval)
@@ -2209,6 +2229,7 @@ sys_nosys(struct lwp *l, void *v, register_t *retval)
 	return (ENOSYS);
 }
 
+#ifdef COREDUMP
 static int
 build_corename(struct proc *p, char *dst, const char *src, size_t len)
 {
@@ -2249,6 +2270,7 @@ build_corename(struct proc *p, char *dst, const char *src, size_t len)
 	*d = '\0';
 	return 0;
 }
+#endif /* COREDUMP */
 
 void
 getucontext(struct lwp *l, ucontext_t *ucp)

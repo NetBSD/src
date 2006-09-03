@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.5.2.3 2006/08/11 15:45:34 yamt Exp $ */
+/* $NetBSD: udf_subr.c,v 1.5.2.4 2006/09/03 15:25:13 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.5.2.3 2006/08/11 15:45:34 yamt Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.5.2.4 2006/09/03 15:25:13 yamt Exp $");
 #endif /* not lint */
 
 
@@ -680,8 +680,6 @@ udf_read_anchors(struct udf_mount *ump, struct udf_args *args)
 			track_end = last_track.next_writable
 				    - ump->discinfo.link_block_penalty;
 	}
-	/* VATs are only recorded on sequential media, but initialise */
-	ump->possible_vat_location = track_end;
 
 	/* its no use reading a blank track */
 	first_anchor = 0;
@@ -706,6 +704,11 @@ udf_read_anchors(struct udf_mount *ump, struct udf_args *args)
 			ok++;
 		}
 	}
+
+	/* VATs are only recorded on sequential media, but initialise */
+	ump->first_possible_vat_location = track_start + 256 + 1;
+	ump->last_possible_vat_location  = track_end
+		+ ump->discinfo.blockingnr;
 
 	return ok;
 }
@@ -1254,8 +1257,9 @@ udf_search_vat(struct udf_mount *ump, union udf_pmap *mapping)
 	/* mapping info not needed */
 	mapping = mapping;
 
-	vat_loc = ump->possible_vat_location;
-	early_vat_loc = vat_loc - 20;
+	vat_loc = ump->last_possible_vat_location;
+	early_vat_loc = vat_loc - 2 * ump->discinfo.blockingnr;
+	early_vat_loc = MAX(early_vat_loc, ump->first_possible_vat_location);
 	late_vat_loc  = vat_loc + 1024;
 
 	/* TODO first search last sector? */
@@ -1695,9 +1699,9 @@ udf_dispose_node(struct udf_node *node)
 
 	/* free associated memory and the node itself */
 	if (node->fe)
-		pool_put(&node->ump->desc_pool, node->fe);
+		pool_put(node->ump->desc_pool, node->fe);
 	if (node->efe)
-		pool_put(&node->ump->desc_pool, node->efe);
+		pool_put(node->ump->desc_pool, node->efe);
 	pool_put(&udf_node_pool, node);
 
 	return 0;
@@ -1898,21 +1902,21 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 		/* get descriptor space from our pool */
 		KASSERT(udf_tagsize(tmpdscr, lb_size) == lb_size);
 
-		dscr = pool_get(&ump->desc_pool, PR_WAITOK);
+		dscr = pool_get(ump->desc_pool, PR_WAITOK);
 		memcpy(dscr, tmpdscr, lb_size);
 		free(tmpdscr, M_UDFTEMP);
 
 		/* record and process/update (ext)fentry */
 		if (dscr_type == TAGID_FENTRY) {
 			if (node->fe)
-				pool_put(&ump->desc_pool, node->fe);
+				pool_put(ump->desc_pool, node->fe);
 			node->fe  = &dscr->fe;
 			strat = udf_rw16(node->fe->icbtag.strat_type);
 			udf_file_type = node->fe->icbtag.file_type;
 			file_size = udf_rw64(node->fe->inf_len);
 		} else {
 			if (node->efe)
-				pool_put(&ump->desc_pool, node->efe);
+				pool_put(ump->desc_pool, node->efe);
 			node->efe = &dscr->efe;
 			strat = udf_rw16(node->efe->icbtag.strat_type);
 			udf_file_type = node->efe->icbtag.file_type;
@@ -2593,7 +2597,7 @@ udf_read_file_extent(struct udf_node *node,
  */
 
 
-/* mininum of 128 translations (!) (64 kb in 512 byte sectors) */
+/* maximum of 128 translations (!) (64 kb in 512 byte sectors) */
 #define FILEBUFSECT 128
 
 void

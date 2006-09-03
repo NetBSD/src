@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.30.8.1 2006/06/26 12:51:23 yamt Exp $	*/
+/*	$NetBSD: yds.c,v 1.30.8.2 2006/09/03 15:24:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.30.8.1 2006/06/26 12:51:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.30.8.2 2006/09/03 15:24:23 yamt Exp $");
 
 #include "mpu.h"
 
@@ -119,12 +119,14 @@ static uint32_t YREAD4(struct yds_softc *sc, bus_size_t r)
 	return bus_space_read_4(sc->memt, sc->memh, r);
 }
 
+#ifdef notdef
 static void YWRITE1(struct yds_softc *sc, bus_size_t r, uint8_t x)
 {
 	DPRINTFN(5, (" YWRITE1(0x%lX,0x%lX)\n", (unsigned long)r,
 		     (unsigned long)x));
 	bus_space_write_1(sc->memt, sc->memh, r, x);
 }
+#endif
 
 static void YWRITE2(struct yds_softc *sc, bus_size_t r, uint16_t x)
 {

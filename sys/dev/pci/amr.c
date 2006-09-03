@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.31.8.3 2006/08/11 15:44:25 yamt Exp $	*/
+/*	$NetBSD: amr.c,v 1.31.8.4 2006/09/03 15:24:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.31.8.3 2006/08/11 15:44:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.31.8.4 2006/09/03 15:24:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ CFATTACH_DECL(amr, sizeof(struct amr_softc),
 
 const struct cdevsw amr_cdevsw = {
 	amropen, amrclose, noread, nowrite, amrioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };      
 
 extern struct   cfdriver amr_cd;
@@ -134,11 +134,11 @@ extern struct   cfdriver amr_cd;
 #define AT_QUARTZ	0x01	/* `Quartz' chipset */
 #define	AT_SIG		0x02	/* Check for signature */
 
-struct amr_pci_type {
+static struct amr_pci_type {
 	u_short	apt_vendor;
 	u_short	apt_product;
 	u_short	apt_flags;
-} static const amr_pci_type[] = {
+} const amr_pci_type[] = {
 	{ PCI_VENDOR_AMI,   PCI_PRODUCT_AMI_MEGARAID,  0 },
 	{ PCI_VENDOR_AMI,   PCI_PRODUCT_AMI_MEGARAID2, 0 },
 	{ PCI_VENDOR_AMI,   PCI_PRODUCT_AMI_MEGARAID3, AT_QUARTZ },
@@ -156,10 +156,10 @@ struct amr_pci_type {
 	{ PCI_VENDOR_SYMBIOS,  PCI_PRODUCT_SYMBIOS_MEGARAID_300X, AT_QUARTZ },
 };
 
-struct amr_typestr {
+static struct amr_typestr {
 	const char	*at_str;
 	int		at_sig;
-} static const amr_typestr[] = {
+} const amr_typestr[] = {
 	{ "Series 431",			AMR_SIG_431 },
 	{ "Series 438",			AMR_SIG_438 },
 	{ "Series 466",			AMR_SIG_466 },
@@ -170,10 +170,10 @@ struct amr_typestr {
 	{ "HP NetRAID (T7)",		AMR_SIG_T7 },
 };
 
-struct {
+static struct {
 	const char	*ds_descr;
 	int	ds_happy;
-} static const amr_dstate[] = {
+} const amr_dstate[] = {
 	{ "offline",	0 },
 	{ "degraded",	1 },
 	{ "optimal",	1 },
@@ -1365,9 +1365,6 @@ amrioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	int error;
 	void *dp = NULL, *au_buffer;
 
-	if (securelevel >= 2)
-		return (EPERM);
-
 	amr = device_lookup(&amr_cd, minor(dev));
 
 	/* This should be compatible with the FreeBSD interface */
@@ -1377,6 +1374,9 @@ amrioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		*(int *)data = AMR_IO_VERSION_NUMBER;
 		return 0;
 	case AMR_IO_COMMAND:
+		if (securelevel >= 2)
+			return (EPERM);
+
 		au = (struct amr_user_ioctl *)data;
 		au_cmd = au->au_cmd;
 		au_buffer = au->au_buffer;
