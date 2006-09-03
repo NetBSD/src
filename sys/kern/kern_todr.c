@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.1 2006/09/02 20:18:00 gdamore Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.2 2006/09/03 05:25:05 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.1 2006/09/02 20:18:00 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.2 2006/09/03 05:25:05 gdamore Exp $");
 
 #include <sys/param.h>
 
@@ -104,22 +104,24 @@ todr_attach(todr_chip_handle_t todr)
         todr_handle = todr;
 }
 
+static int timeset = 0;
+
 /*
  * Set up the system's time, given a `reasonable' time value.
  */
 void
 inittodr(time_t base)
 {
-	int badbase = 0, waszero = base == 0;
+	int badbase = 0, waszero = base == 0, goodtime = 0, badrtc = 0;
 #ifdef	__HAVE_TIMECOUNTER
-	struct timeval time;
 	struct timespec ts;
 #endif
+	struct timeval tv;
 
 	if (base < 5 * SECYR) {
 		/*
 		 * If base is 0, assume filesystem time is just unknown
-		 * in stead of preposterous. Don't bark.
+		 * instead of preposterous. Don't bark.
 		 */
 		if (base != 0)
 			printf("WARNING: preposterous time in file system\n");
@@ -129,43 +131,69 @@ inittodr(time_t base)
 	}
 
 	if ((todr_handle == NULL) ||
-	    (todr_gettime(todr_handle, &time) != 0) ||
-	    (time.tv_sec == 0)) {
+	    (todr_gettime(todr_handle, &tv) != 0) ||
+	    (tv.tv_sec < (5 * SECYR))) {
 
 		if (todr_handle != NULL)
-			printf("WARNING: preposterous TOD clock time");
+			printf("WARNING: preposterous TOD clock time\n");
 		else
-			printf("WARNING: no TOD clock present");
-
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the clock.
-		 */
-		time.tv_sec = base;
-#ifdef __HAVE_TIMECOUNTER
-		ts.tv_sec = base;
-		ts.tv_nsec = 0;
-		tc_setclock(&ts);
-#endif
-		if (!badbase)
-			resettodr();
+			printf("WARNING: no TOD clock present\n");
+		badrtc = 1;
 	} else {
-		int deltat = time.tv_sec - base;
-
-#ifdef __HAVE_TIMECOUNTER
-		ts.tv_sec = time.tv_sec;
-		ts.tv_nsec = time.tv_usec * 1000;
-		tc_setclock(&ts);
-#endif
+		int deltat = tv.tv_sec - base;
 
 		if (deltat < 0)
 			deltat = -deltat;
-		if (waszero || deltat < 2 * SECDAY)
-			return;
-		printf("WARNING: clock %s %d days",
-		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
+
+		if (deltat >= 2 * SECDAY) {
+			
+			if (tv.tv_sec < base) {
+				/*
+				 * The clock should never go backwards
+				 * relative to filesystem time.  If it
+				 * does by more than the threshold,
+				 * believe the filesystem.
+				 */
+				printf("WARNING: clock lost %d days\n",
+				    deltat / SECDAY);
+				badrtc = 1;
+			}
+			else {
+				printf("WARNING: clock gained %d days\n",
+				    deltat / SECDAY);
+			}
+		} else {
+			goodtime = 1;
+		}
 	}
-	printf(" -- CHECK AND RESET THE DATE!\n");
+
+	/* if the rtc time is bad, use the filesystem time */
+	if (badrtc) {
+		if (badbase) {
+			printf("WARNING: using default initial time\n");
+		} else {
+			printf("WARNING: using filesystem time\n");
+		}
+		tv.tv_sec = base;
+		tv.tv_usec = 0;
+	}
+
+	timeset = 1;
+
+#ifdef	__HAVE_TIMECOUNTER
+	ts.tv_sec = tv.tv_sec;
+	ts.tv_nsec = tv.tv_usec * 1000;
+	tc_setclock(&ts);
+#else
+	time = tv;
+#endif
+
+	if (waszero || goodtime)
+		return;
+
+
+	printf("WARNING: CHECK AND RESET THE DATE!\n");
+
 }
 
 /*
@@ -180,7 +208,17 @@ resettodr(void)
 {
 #ifdef	__HAVE_TIMECOUNTER
 	struct timeval	time;
+#endif
 
+	/*
+	 * We might have been called by boot() due to a crash early
+	 * on.  Don't reset the clock chip if we don't know what time
+	 * it is.
+	 */
+	if (!timeset)
+		return;
+
+#ifdef	__HAVE_TIMECOUNTER
 	getmicrotime(&time);
 #endif
 
