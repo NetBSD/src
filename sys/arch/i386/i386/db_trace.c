@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.47 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.48 2006/09/03 21:05:01 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.47 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.48 2006/09/03 21:05:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,22 +53,22 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.47 2005/12/11 12:17:41 christos Exp $
 static int db_i386_regop(const struct db_variable *, db_expr_t *, int);
 
 const struct db_variable db_regs[] = {
-	{ "ds",		dbreg(ds),     db_i386_regop },
-	{ "es",		dbreg(es),     db_i386_regop },
-	{ "fs",		dbreg(fs),     db_i386_regop },
-	{ "gs",		dbreg(gs),     db_i386_regop },
-	{ "edi",	dbreg(edi),    db_i386_regop },
-	{ "esi",	dbreg(esi),    db_i386_regop },
-	{ "ebp",	dbreg(ebp),    db_i386_regop },
-	{ "ebx",	dbreg(ebx),    db_i386_regop },
-	{ "edx",	dbreg(edx),    db_i386_regop },
-	{ "ecx",	dbreg(ecx),    db_i386_regop },
-	{ "eax",	dbreg(eax),    db_i386_regop },
-	{ "eip",	dbreg(eip),    db_i386_regop },
-	{ "cs",		dbreg(cs),     db_i386_regop },
-	{ "eflags",	dbreg(eflags), db_i386_regop },
-	{ "esp",	dbreg(esp),    db_i386_regop },
-	{ "ss",		dbreg(ss),     db_i386_regop },
+	{ "ds",		dbreg(ds),     db_i386_regop, NULL },
+	{ "es",		dbreg(es),     db_i386_regop, NULL },
+	{ "fs",		dbreg(fs),     db_i386_regop, NULL },
+	{ "gs",		dbreg(gs),     db_i386_regop, NULL },
+	{ "edi",	dbreg(edi),    db_i386_regop, NULL },
+	{ "esi",	dbreg(esi),    db_i386_regop, NULL },
+	{ "ebp",	dbreg(ebp),    db_i386_regop, NULL },
+	{ "ebx",	dbreg(ebx),    db_i386_regop, NULL },
+	{ "edx",	dbreg(edx),    db_i386_regop, NULL },
+	{ "ecx",	dbreg(ecx),    db_i386_regop, NULL },
+	{ "eax",	dbreg(eax),    db_i386_regop, NULL },
+	{ "eip",	dbreg(eip),    db_i386_regop, NULL },
+	{ "cs",		dbreg(cs),     db_i386_regop, NULL },
+	{ "eflags",	dbreg(eflags), db_i386_regop, NULL },
+	{ "esp",	dbreg(esp),    db_i386_regop, NULL },
+	{ "ss",		dbreg(ss),     db_i386_regop, NULL },
 };
 const struct db_variable * const db_eregs =
     db_regs + sizeof(db_regs)/sizeof(db_regs[0]);

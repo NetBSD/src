@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.40 2006/09/03 09:21:26 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.41 2006/09/03 21:05:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.40 2006/09/03 09:21:26 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.41 2006/09/03 21:05:01 christos Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -59,45 +59,44 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.40 2006/09/03 09:21:26 xtraeme Exp $"
 
 static const struct x86_cache_info
 intel_cpuid_cache_info[] = {
-	{ CAI_ITLB, 	0x01,	 4, 32, 4 * 1024 },
-	{ CAI_ITLB2, 	0x02, 0xff,  2, 4 * 1024 * 1024 },
-	{ CAI_DTLB, 	0x03,    4, 64, 4 * 1024 },
-	{ CAI_DTLB2,    0x04,    4,  8, 4 * 1024 * 1024 },
-	{ CAI_ITLB,     0x50, 0xff, 64, 4 * 1024, "4K/4M: 64 entries" },
-	{ CAI_ITLB,     0x51, 0xff, 64, 4 * 1024, "4K/4M: 128 entries" },
-	{ CAI_ITLB,     0x52, 0xff, 64, 4 * 1024, "4K/4M: 256 entries" },
-	{ CAI_DTLB,     0x5b, 0xff, 64, 4 * 1024, "4K/4M: 64 entries" },
-	{ CAI_DTLB,     0x5c, 0xff, 64, 4 * 1024, "4K/4M: 128 entries" },
-	{ CAI_DTLB,     0x5d, 0xff, 64, 4 * 1024, "4K/4M: 256 entries" },
-
-	{ CAI_ICACHE,   0x06,  4,        8 * 1024, 32 },
-	{ CAI_ICACHE,   0x08,  4,       16 * 1024, 32 },
-	{ CAI_ICACHE,   0x30,  8,       32 * 1024, 64 },
-	{ CAI_DCACHE,   0x0a,  2,        8 * 1024, 32 },
-	{ CAI_DCACHE,   0x0c,  4,       16 * 1024, 32 },
+	{ CAI_ITLB, 	0x01,	 4, 32,        4 * 1024, NULL },
+	{ CAI_ITLB2, 	0x02, 0xff,  2, 4 * 1024 * 1024, NULL },
+	{ CAI_DTLB, 	0x03,    4, 64,        4 * 1024, NULL },
+	{ CAI_DTLB2,    0x04,    4,  8, 4 * 1024 * 1024, NULL },
+	{ CAI_ITLB,     0x50, 0xff, 64,        4 * 1024, "4K/4M: 64 entries" },
+	{ CAI_ITLB,     0x51, 0xff, 64,        4 * 1024, "4K/4M: 128 entries" },
+	{ CAI_ITLB,     0x52, 0xff, 64,        4 * 1024, "4K/4M: 256 entries" },
+	{ CAI_DTLB,     0x5b, 0xff, 64,        4 * 1024, "4K/4M: 64 entries" },
+	{ CAI_DTLB,     0x5c, 0xff, 64,        4 * 1024, "4K/4M: 128 entries" },
+	{ CAI_DTLB,     0x5d, 0xff, 64,        4 * 1024, "4K/4M: 256 entries" },
+	{ CAI_ICACHE,   0x06,  4,        8 * 1024, 32, NULL },
+	{ CAI_ICACHE,   0x08,  4,       16 * 1024, 32, NULL },
+	{ CAI_ICACHE,   0x30,  8,       32 * 1024, 64, NULL },
+	{ CAI_DCACHE,   0x0a,  2,        8 * 1024, 32, NULL },
+	{ CAI_DCACHE,   0x0c,  4,       16 * 1024, 32, NULL },
 	{ CAI_L2CACHE,  0x40,  0,               0,  0, "not present" },
-	{ CAI_L2CACHE,  0x41,  4,      128 * 1024, 32 },
-	{ CAI_L2CACHE,  0x42,  4,      256 * 1024, 32 },
-	{ CAI_L2CACHE,  0x43,  4,      512 * 1024, 32 },
-	{ CAI_L2CACHE,  0x44,  4, 1 * 1024 * 1024, 32 },
-	{ CAI_L2CACHE,  0x45,  4, 2 * 1024 * 1024, 32 },
-	{ CAI_DCACHE,   0x66,  4,        8 * 1024, 64 },
-	{ CAI_DCACHE,   0x67,  4,       16 * 1024, 64 },
-	{ CAI_DCACHE,   0x2c,  8,       32 * 1024, 64 },
-	{ CAI_DCACHE,   0x68,  4,  	32 * 1024, 64 },
+	{ CAI_L2CACHE,  0x41,  4,      128 * 1024, 32, NULL },
+	{ CAI_L2CACHE,  0x42,  4,      256 * 1024, 32, NULL },
+	{ CAI_L2CACHE,  0x43,  4,      512 * 1024, 32, NULL },
+	{ CAI_L2CACHE,  0x44,  4, 1 * 1024 * 1024, 32, NULL },
+	{ CAI_L2CACHE,  0x45,  4, 2 * 1024 * 1024, 32, NULL },
+	{ CAI_DCACHE,   0x66,  4,        8 * 1024, 64, NULL },
+	{ CAI_DCACHE,   0x67,  4,       16 * 1024, 64, NULL },
+	{ CAI_DCACHE,   0x2c,  8,       32 * 1024, 64, NULL },
+	{ CAI_DCACHE,   0x68,  4,  	32 * 1024, 64, NULL },
 	{ CAI_ICACHE,   0x70,  8,       12 * 1024, 64, "12K uOp cache"},
 	{ CAI_ICACHE,   0x71,  8,       16 * 1024, 64, "16K uOp cache"},
 	{ CAI_ICACHE,   0x72,  8,       32 * 1024, 64, "32K uOp cache"},
-	{ CAI_L2CACHE,  0x79,  8,      128 * 1024, 64 },
-	{ CAI_L2CACHE,  0x7a,  8,      256 * 1024, 64 },
-	{ CAI_L2CACHE,  0x7b,  8,      512 * 1024, 64 },
-	{ CAI_L2CACHE,  0x7c,  8, 1 * 1024 * 1024, 64 },
-	{ CAI_L2CACHE,  0x7d,  8, 2 * 1024 * 1024, 64 },
-	{ CAI_L2CACHE,  0x82,  8,      256 * 1024, 32 },
-	{ CAI_L2CACHE,  0x83,  8,      512 * 1024, 32 },
-	{ CAI_L2CACHE,  0x84,  8, 1 * 1024 * 1024, 32 },
-	{ CAI_L2CACHE,  0x85,  8, 2 * 1024 * 1024, 32 },
-	{ 0,               0,  0,	        0,  0 },
+	{ CAI_L2CACHE,  0x79,  8,      128 * 1024, 64, NULL },
+	{ CAI_L2CACHE,  0x7a,  8,      256 * 1024, 64, NULL },
+	{ CAI_L2CACHE,  0x7b,  8,      512 * 1024, 64, NULL },
+	{ CAI_L2CACHE,  0x7c,  8, 1 * 1024 * 1024, 64, NULL },
+	{ CAI_L2CACHE,  0x7d,  8, 2 * 1024 * 1024, 64, NULL },
+	{ CAI_L2CACHE,  0x82,  8,      256 * 1024, 32, NULL },
+	{ CAI_L2CACHE,  0x83,  8,      512 * 1024, 32, NULL },
+	{ CAI_L2CACHE,  0x84,  8, 1 * 1024 * 1024, 32, NULL },
+	{ CAI_L2CACHE,  0x85,  8, 2 * 1024 * 1024, 32, NULL },
+	{ 0,               0,  0,	        0,  0, NULL },
 };
 
 /*
@@ -181,19 +180,19 @@ char	cpu_model[120];
  */
 const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
 	{ CPUVENDOR_INTEL, "Intel", "386SX",	CPUCLASS_386,
-		NULL, NULL},			/* CPU_386SX */
+	  NULL, NULL, NULL },			/* CPU_386SX */
 	{ CPUVENDOR_INTEL, "Intel", "386DX",	CPUCLASS_386,
-		NULL, NULL},			/* CPU_386   */
+	  NULL, NULL, NULL },			/* CPU_386   */
 	{ CPUVENDOR_INTEL, "Intel", "486SX",	CPUCLASS_486,
-		NULL, NULL},			/* CPU_486SX */
+	  NULL, NULL, NULL },			/* CPU_486SX */
 	{ CPUVENDOR_INTEL, "Intel", "486DX",	CPUCLASS_486,
-		NULL, NULL},			/* CPU_486   */
+	  NULL, NULL, NULL },			/* CPU_486   */
 	{ CPUVENDOR_CYRIX, "Cyrix", "486DLC",	CPUCLASS_486,
-		NULL, NULL},			/* CPU_486DLC */
+	  NULL, NULL, NULL },			/* CPU_486DLC */
 	{ CPUVENDOR_CYRIX, "Cyrix", "6x86",	CPUCLASS_486,
-		cyrix6x86_cpu_setup, NULL},	/* CPU_6x86 */
+	  cyrix6x86_cpu_setup, NULL, NULL },	/* CPU_6x86 */
 	{ CPUVENDOR_NEXGEN,"NexGen","586",      CPUCLASS_386,
-		NULL, NULL},			/* CPU_NX586 */
+	  NULL, NULL, NULL },			/* CPU_NX586 */
 };
 
 const char *classnames[] = {

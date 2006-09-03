@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.28 2006/06/07 22:37:58 kardel Exp $ */
+/* $NetBSD: cpu.c,v 1.29 2006/09/03 21:05:01 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.28 2006/06/07 22:37:58 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29 2006/09/03 21:05:01 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -142,9 +142,16 @@ CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
  */
 #ifdef TRAPLOG
 struct tlog tlog_primary;
-struct cpu_info cpu_info_primary = { 0, &cpu_info_primary, &tlog_primary };
+struct cpu_info cpu_info_primary = {
+	.ci_dev = 0,
+	.ci_self = &cpu_info_primary,
+	.ci_tlog_base = &tlog_primary,
+};
 #else  /* TRAPLOG */
-struct cpu_info cpu_info_primary = { 0, &cpu_info_primary };
+struct cpu_info cpu_info_primary = {
+	.ci_dev = 0,
+	.ci_self = &cpu_info_primary,
+};
 #endif /* !TRAPLOG */
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
@@ -159,7 +166,7 @@ uint32_t cpus_attached = 0;
  * Array of CPU info structures.  Must be statically-allocated because
  * curproc, etc. are used early.
  */
-struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary };
+struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary, };
 
 uint32_t cpus_running = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_k6.c,v 1.7 2003/02/19 05:38:58 simonb Exp $	*/
+/*	$NetBSD: mtrr_k6.c,v 1.8 2006/09/03 21:05:01 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_k6.c,v 1.7 2003/02/19 05:38:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_k6.c,v 1.8 2006/09/03 21:05:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,8 @@ static void	k6_soft2raw(void);
 
 static struct mtrr_state
 mtrr_var_raw[] = {
-	{ 0 },
-	{ 1 },
+	{ 0, 0 },
+	{ 1, 0 },
 };
 
 static struct mtrr *mtrr_var;
