@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.29 2006/04/12 19:38:23 jmmv Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.30 2006/09/03 06:46:22 christos Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.29 2006/04/12 19:38:23 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.30 2006/09/03 06:46:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,14 +93,16 @@ const struct wsdisplay_emulops pcdisplay_emulops = {
 	pcdisplay_erasecols,
 	pcdisplay_copyrows,
 	pcdisplay_eraserows,
-	pcdisplay_allocattr
+	pcdisplay_allocattr,
+	NULL,	/* replaceattr */
 };
 
 const struct wsscreen_descr pcdisplay_scr = {
 	"80x25", 80, 25,
 	&pcdisplay_emulops,
 	0, 0, /* no font support */
-	WSSCREEN_REVERSE /* that's minimal... */
+	WSSCREEN_REVERSE, /* that's minimal... */
+	NULL, /* modecookie */
 };
 
 const struct wsscreen_descr *_pcdisplay_scrlist[] = {
@@ -126,7 +128,9 @@ const struct wsdisplay_accessops pcdisplay_accessops = {
 	pcdisplay_alloc_screen,
 	pcdisplay_free_screen,
 	pcdisplay_show_screen,
-	0 /* load_font */
+	NULL, /* load_font */
+	NULL, /* pollc */
+	NULL, /* scroll */
 };
 
 static int

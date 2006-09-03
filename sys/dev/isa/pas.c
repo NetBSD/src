@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.62 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: pas.c,v 1.63 2006/09/03 06:46:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.62 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.63 2006/09/03 06:46:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,6 +150,7 @@ const struct audio_hw_if pas_hw_if = {
 	sbdsp_trigger_output,
 	sbdsp_trigger_input,
 	0,
+	NULL,
 };
 
 /* The Address Translation code is used to convert I/O register addresses to
