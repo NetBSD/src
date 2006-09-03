@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.39 2006/09/03 06:49:57 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.40 2006/09/03 09:21:26 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.39 2006/09/03 06:49:57 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.40 2006/09/03 09:21:26 xtraeme Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -151,8 +151,10 @@ static const char *intel_family6_name(struct cpu_info *);
 
 static void transmeta_cpu_info(struct cpu_info *);
 
+#if (defined(I686_CPU) && defined(ENHANCED_SPEEDSTEP))
 void p3_get_bus_clock(struct cpu_info *);
 void p4_get_bus_clock(struct cpu_info *);
+#endif
 
 static inline u_char
 cyrix_read_reg(u_char reg)
@@ -260,7 +262,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			NULL,
 			NULL,
-#ifdef I686_CPU
+#if (defined(I686_CPU) && defined(ENHANCED_SPEEDSTEP))
 			p3_get_bus_clock,
 #else
 			NULL,
@@ -276,7 +278,11 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			NULL,
 			intel_family_new_probe,
+#if (defined(I686_CPU) && defined(ENHANCED_SPEEDSTEP))
 			p4_get_bus_clock,
+#else
+			NULL,
+#endif
 		} }
 	},
 	{
@@ -927,7 +933,7 @@ amd_family5_setup(struct cpu_info *ci)
 }
 
 
-#if defined(I686_CPU)
+#if (defined(I686_CPU) && defined(ENHANCED_SPEEDSTEP)) 
 void
 p3_get_bus_clock(struct cpu_info *ci)
 {
@@ -1065,7 +1071,7 @@ p4_get_bus_clock(struct cpu_info *ci)
 		}
 	}
 }
-#endif /* I686_CPU */
+#endif /* I686_CPU && ENHANCED_SPEEDSTEP */
 
 /*
  * Transmeta Crusoe LongRun Support by Tamotsu Hattori.
