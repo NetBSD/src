@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.13 2005/11/14 19:11:24 uwe Exp $ */
+/*	$NetBSD: mkclock.c,v 1.14 2006/09/03 22:27:45 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.13 2005/11/14 19:11:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.14 2006/09/03 22:27:45 gdamore Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -90,7 +90,6 @@ CFATTACH_DECL(clock_bootbus, sizeof(struct mk48txx_softc),
     clockmatch_bootbus, clockattach_bootbus, NULL, NULL);
 
 /* Imported from clock.c: */
-extern todr_chip_handle_t todr_handle;
 extern int (*eeprom_nvram_wenable)(int);
 
 
@@ -248,9 +247,6 @@ clockattach(struct mk48txx_softc *sc, int node)
 	sc->sc_year0 = 1968;
 	mk48txx_attach(sc);
 
-	/* XXX this should be done by todr_attach() */
-	todr_handle = &sc->sc_handle;
-
 	printf("\n");
 
 	/*
@@ -258,11 +254,13 @@ clockattach(struct mk48txx_softc *sc, int node)
 	 * by mk_nvram_wenable().
 	 */
 	mk_nvram_base = sc->sc_bsh;
-	if (mk48txx_get_nvram_size(todr_handle, &mk_nvram_size) != 0)
+	if (mk48txx_get_nvram_size(&sc->sc_handle, &mk_nvram_size) != 0)
 		panic("Cannot get nvram size on %s", sc->sc_model);
 
 	/* Establish clock write-enable method */
-	todr_handle->todr_setwen = mk_clk_wenable;
+	sc->sc_handle.todr_setwen = mk_clk_wenable;
+
+	todr_attach(&sc->sc_handle);
 
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
