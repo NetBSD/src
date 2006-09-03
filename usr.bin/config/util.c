@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3 2006/08/26 18:17:13 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.4 2006/09/03 07:45:40 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -197,28 +197,18 @@ sourcepath(const char *file)
 	return (cp);
 }
 
-static struct nvlist *nvfreelist;
-
 struct nvlist *
 newnv(const char *name, const char *str, void *ptr, int i, struct nvlist *next)
 {
 	struct nvlist *nv;
 
-	if ((nv = nvfreelist) == NULL)
-		nv = ecalloc(1, sizeof(*nv));
-	else
-		nvfreelist = nv->nv_next;
+	nv = ecalloc(1, sizeof(*nv));
 	nv->nv_next = next;
 	nv->nv_name = name;
-	if (ptr == NULL)
-		nv->nv_str = str;
-	else {
-		if (str != NULL)
-			panic("newnv");
-		nv->nv_ptr = ptr;
-	}
+	nv->nv_str = str;
+	nv->nv_ptr = ptr;
 	nv->nv_int = i;
-	return (nv);
+	return nv;
 }
 
 /*
@@ -228,9 +218,7 @@ void
 nvfree(struct nvlist *nv)
 {
 
-	memset(nv, 0, sizeof(*nv));
-	nv->nv_next = nvfreelist;
-	nvfreelist = nv;
+	free(nv);
 }
 
 /*
@@ -243,9 +231,7 @@ nvfreel(struct nvlist *nv)
 
 	for (; nv != NULL; nv = next) {
 		next = nv->nv_next;
-		memset(nv, 0, sizeof(*nv));
-		nv->nv_next = nvfreelist;
-		nvfreelist = nv;
+		free(nv);
 	}
 }
 
