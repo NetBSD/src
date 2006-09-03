@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.48 2006/03/30 16:09:28 thorpej Exp $	*/
+/*	$NetBSD: uk.c,v 1.49 2006/09/03 21:16:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.48 2006/03/30 16:09:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.49 2006/09/03 21:16:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ static dev_type_ioctl(ukioctl);
 
 const struct cdevsw uk_cdevsw = {
 	ukopen, ukclose, noread, nowrite, ukioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 static int
