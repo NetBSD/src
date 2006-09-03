@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.47 2006/02/22 22:28:18 drochner Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.48 2006/09/03 21:37:22 christos Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.47 2006/02/22 22:28:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.48 2006/09/03 21:37:22 christos Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -79,10 +79,10 @@ static int	udv_fault(struct uvm_faultinfo *, vaddr_t,
  */
 
 struct uvm_pagerops uvm_deviceops = {
-	udv_init,
-	udv_reference,
-	udv_detach,
-	udv_fault,
+	.pgo_init = udv_init,
+	.pgo_reference = udv_reference,
+	.pgo_detach = udv_detach,
+	.pgo_fault = udv_fault,
 };
 
 /*
