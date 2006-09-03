@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.15 2006/04/24 14:14:38 jmcneill Exp $ */
+/* $NetBSD: vesafb.c,v 1.16 2006/09/03 21:05:01 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.15 2006/04/24 14:14:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.16 2006/09/03 21:05:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,8 @@ struct wsscreen_descr vesafb_stdscreen = {
 	0, 0,
 	NULL,
 	8, 16,
+	0,	/* capabilities */
+	NULL,	/* modecookie */
 };
 
 static int	vesafb_ioctl(void *, void *, u_long, caddr_t, int,
@@ -92,10 +94,12 @@ static void	vesafb_set_palette(struct vesafb_softc *, int, struct paletteentry);
 struct wsdisplay_accessops vesafb_accessops = {
 	vesafb_ioctl,
 	vesafb_mmap,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
+	NULL,	/* load_font */
+	NULL,	/* pollc */
+	NULL,	/* scroll */
 };
 
 static struct vcons_screen vesafb_console_screen;
