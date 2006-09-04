@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15 2006/09/03 20:34:13 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.16 2006/09/04 00:56:08 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15 2006/09/03 20:34:13 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16 2006/09/04 00:56:08 perry Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -180,18 +180,18 @@ int clock_debug = 0;
 #define DPRINTF(arg)
 #endif
 
-int		gettick(void);
+static int	gettick(void);
 void		sysbeep(int, int);
 static void     tickle_tc(void);
 
-int		clockintr(void *, struct intrframe);
-void		rtcinit(void);
-int		rtcget(mc_todregs *);
-void		rtcput(mc_todregs *);
+static int	clockintr(void *, struct intrframe);
+static void	rtcinit(void);
+static int	rtcget(mc_todregs *);
+static void	rtcput(mc_todregs *);
 
-static int cmoscheck(void);
+static int	cmoscheck(void);
 
-static int clock_expandyear(int);
+static int	clock_expandyear(int);
 
 static inline int gettick_broken_latch(void);
 
@@ -394,7 +394,7 @@ tickle_tc(void)
 
 }
 
-int
+static int
 clockintr(void *arg, struct intrframe frame)
 {
 	tickle_tc();
@@ -444,7 +444,7 @@ i8254_get_timecount(struct timecounter *tc)
 	return (count);
 }
 
-int
+static int
 gettick(void)
 {
 	u_long ef;
@@ -592,7 +592,7 @@ i8254_initclocks(void)
 	    (int (*)(void *))clockintr, 0);
 }
 
-void
+static void
 rtcinit(void)
 {
 	static int first_rtcopen_ever = 1;
@@ -606,7 +606,7 @@ rtcinit(void)
 	mc146818_write(NULL, MC_REGB, MC_REGB_24HR);	/* XXX softc */
 }
 
-int
+static int
 rtcget(mc_todregs *regs)
 {
 
@@ -617,7 +617,7 @@ rtcget(mc_todregs *regs)
 	return (0);
 }	
 
-void
+static void
 rtcput(mc_todregs *regs)
 {
 
