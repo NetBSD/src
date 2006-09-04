@@ -1,4 +1,4 @@
-/* $NetBSD: argpio.c,v 1.2 2006/08/28 07:21:15 gdamore Exp $ */
+/* $NetBSD: argpio.c,v 1.3 2006/09/04 05:17:26 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Garrett D'Amore
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: argpio.c,v 1.2 2006/08/28 07:21:15 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: argpio.c,v 1.3 2006/09/04 05:17:26 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -44,11 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: argpio.c,v 1.2 2006/08/28 07:21:15 gdamore Exp $");
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <mips/atheros/include/ar5312reg.h>
-#include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
-
-#include <contrib/dev/ath/ah_soc.h>	/* this should really move */
 
 #include <dev/gpio/gpiovar.h>
 #include <dev/sysmon/sysmonvar.h>
@@ -75,6 +71,7 @@ struct argpio_softc {
 	struct sysmon_pswitch	sc_resetbtn;
 	void			*sc_ih;
 	int			sc_rstpin;
+	int			sc_ledpin;
 };
 
 static int argpio_match(struct device *, struct cfdata *, void *);
@@ -111,13 +108,15 @@ argpio_attach(struct device *parent, struct device *self, void *aux)
 	struct argpio_softc *sc = (struct argpio_softc *)self;
 	struct arbus_attach_args *aa = aux;
 	struct gpiobus_attach_args gba;
-	const struct ar531x_boarddata *board;
-	int rstpin = -1, ledpin = -1, i;
+	prop_number_t	pn;
+	int i;
 	uint32_t reg;
 
 	sc->sc_st = aa->aa_bst;
 	sc->sc_npins = ARGPIO_NPINS;
 	sc->sc_size = aa->aa_size;
+	sc->sc_ledpin = -1;
+	sc->sc_rstpin = -1;
 
 	if (bus_space_map(sc->sc_st, aa->aa_addr, sc->sc_size, 0,
 		&sc->sc_sh) != 0) {
@@ -130,27 +129,29 @@ argpio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gc.gp_pin_write = argpio_write;
 	sc->sc_gc.gp_pin_ctl = argpio_ctl;
 
-	board = ar531x_board_info();
-
 	aprint_normal(": Atheros AR531X GPIO");
-	if (board->config & BD_RSTFACTORY) {
-		rstpin = board->resetConfigGpio;
-		aprint_normal(", reset button pin %d", rstpin);
-		sc->sc_rstpin = rstpin;
+	pn = prop_dictionary_get(device_properties(&sc->sc_dev), "reset-pin");
+	if (pn != NULL) {
+		KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
+		sc->sc_rstpin = (int)prop_number_integer_value(pn);
+		aprint_normal(", reset button pin %d", sc->sc_rstpin);
 	}
-	if (board->config & BD_SYSLED) {
-		ledpin = board->sysLedGpio;
-		aprint_normal(", system led pin %d", ledpin);
+	pn = prop_dictionary_get(device_properties(&sc->sc_dev), "sysled-pin");
+	if (pn != NULL) {
+		KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
+		sc->sc_ledpin = (int)prop_number_integer_value(pn);
+		aprint_normal(", system led pin %d", sc->sc_ledpin);
 	}
+
 	printf("\n");
 
-	if ((board->config & BD_RSTFACTORY) && (aa->aa_irq > -1)) {
-		sc->sc_ih = arbus_intr_establish(aa->aa_irq, argpio_intr, sc);
+	if (sc->sc_ledpin) {
+		sc->sc_ih = arbus_intr_establish(aa->aa_cirq, aa->aa_mirq,
+		    argpio_intr, sc);
 		if (sc->sc_ih == NULL) {
 			aprint_error("%s: couldn't establish interrupt\n",
 			    sc->sc_dev.dv_xname);
 		}
-
 	}
 
 	if (sc->sc_ih) {
@@ -170,7 +171,7 @@ argpio_attach(struct device *parent, struct device *self, void *aux)
 
 		pp = &sc->sc_pins[i];
 
-		if (i == rstpin) {
+		if (i == sc->sc_rstpin) {
 			/* configure as interrupt for reset */
 			pp->pin_caps = GPIO_PIN_INPUT;
 			reg &= ~SERIAL(i);
@@ -179,7 +180,7 @@ argpio_attach(struct device *parent, struct device *self, void *aux)
 			if (sc->sc_ih != NULL)
 				reg |= INTR(i);
 
-		} else if (i == ledpin) {
+		} else if (i == sc->sc_ledpin) {
 			/* configure as output for LED */
 			pp->pin_caps = GPIO_PIN_OUTPUT;
 			reg &= ~SERIAL(i);

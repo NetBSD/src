@@ -1,4 +1,4 @@
-/* $Id: arbus.c,v 1.9 2006/08/28 07:21:15 gdamore Exp $ */
+/* $Id: arbus.c,v 1.10 2006/09/04 05:17:26 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.9 2006/08/28 07:21:15 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.10 2006/09/04 05:17:26 gdamore Exp $");
 
 #include "locators.h"
 #include <sys/param.h>
@@ -63,8 +63,8 @@ static void arbus_bus_mem_init(bus_space_tag_t, void *);
 static void arbus_dma_init(struct device *, bus_dma_tag_t);
 
 struct arbus_intrhand {
-	int		ih_irq;
-	int		ih_misc;
+	int		ih_cirq;
+	int		ih_mirq;
 	void		*ih_cookie;
 };
 
@@ -85,85 +85,6 @@ arbus_init(void)
 	arbus_bus_mem_init(&arbus_mbst, NULL);
 	arbus_dma_init(NULL, &arbus_mdt);
 }
-
-static struct {
-	const char	*name;
-	bus_addr_t	addr;
-	int		irq;
-	uint32_t	mask;
-	uint32_t	reset;
-	uint32_t	enable;
-} arbus_devices[] = {
-    {
-	    "ae",
-	    AR5312_ENET0_BASE,
-	    ARBUS_IRQ_ENET0,
-	    AR5312_BOARD_CONFIG_ENET0,
-	    AR5312_RESET_ENET0 | AR5312_RESET_PHY0,
-	    AR5312_ENABLE_ENET0
-    },
-    {
-	    "ae",
-	    AR5312_ENET1_BASE,
-	    ARBUS_IRQ_ENET1,
-	    AR5312_BOARD_CONFIG_ENET1,
-	    AR5312_RESET_ENET1 | AR5312_RESET_PHY1,
-	    AR5312_ENABLE_ENET1
-    },
-    {
-	    "com",
-	    AR5312_UART0_BASE,
-	    ARBUS_IRQ_UART0,
-	    AR5312_BOARD_CONFIG_UART0,
-	    0,
-	    0,
-    },
-    {
-	    "com",
-	    AR5312_UART1_BASE,
-	    -1,
-	    AR5312_BOARD_CONFIG_UART1,
-	    0,
-	    0,
-    },
-    {
-	    "ath",
-	    AR5312_WLAN0_BASE,
-	    ARBUS_IRQ_WLAN0,
-	    AR5312_BOARD_CONFIG_WLAN0,
-	    AR5312_RESET_WLAN0 |
-	    	AR5312_RESET_WARM_WLAN0_MAC |
-	    	AR5312_RESET_WARM_WLAN0_BB,
-	    AR5312_ENABLE_WLAN0
-    },
-    {
-	    "ath",
-	    AR5312_WLAN1_BASE,
-	    ARBUS_IRQ_WLAN1,
-	    AR5312_BOARD_CONFIG_WLAN1,
-	    AR5312_RESET_WLAN1 |
-	    	AR5312_RESET_WARM_WLAN1_MAC |
-	    	AR5312_RESET_WARM_WLAN1_BB,
-	    AR5312_ENABLE_WLAN1
-    },
-    {
-	    "athflash",
-	    AR5312_FLASH_BASE,
-	    -1,
-	    0,
-	    0,
-	    0,
-    },
-    {
-	    "argpio",
-	    AR5312_GPIO_BASE,
-	    ARBUS_IRQ_GPIO,
-	    0,
-	    0,
-	    0
-    },
-    { NULL }
-};
 
 /* this primarily exists so we can get to the console... */
 bus_space_tag_t
@@ -191,55 +112,28 @@ void
 arbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct arbus_attach_args aa;
-	const struct ar531x_boarddata *info;
+	const struct ar531x_device *devices;
 	int i;
 
 	printf("\n");
 	int locs[ARBUSCF_NLOCS];
 
-	info = ar531x_board_info();
 	arbus_init();
 
-	for (i = 0; arbus_devices[i].name; i++) {
-		if (arbus_devices[i].mask &&
-		    ((arbus_devices[i].mask & info->config) == 0)) {
-			continue;
-		}
-		aa.aa_name = arbus_devices[i].name;
+	for (i = 0, devices = ar531x_get_devices(); devices[i].name; i++) {
+
+		aa.aa_name = devices[i].name;
+		aa.aa_size = devices[i].size;
 		aa.aa_dmat = &arbus_mdt;
 		aa.aa_bst = &arbus_mbst;
-		aa.aa_irq = arbus_devices[i].irq;
-		aa.aa_addr = arbus_devices[i].addr;
-
-		if (aa.aa_addr < AR5312_UART0_BASE)
-			aa.aa_size = 0x00100000;
-		else if (aa.aa_addr < AR5312_FLASH_BASE)
-			aa.aa_size = 0x1000;
+		aa.aa_cirq = devices[i].cirq;
+		aa.aa_mirq = devices[i].mirq;
+		aa.aa_addr = devices[i].addr;
 
 		locs[ARBUSCF_ADDR] = aa.aa_addr;
 
-		if (arbus_devices[i].reset) {
-			/* put device into reset */
-			PUTSYSREG(AR5312_SYSREG_RESETCTL,
-			    GETSYSREG(AR5312_SYSREG_RESETCTL) |
-			    arbus_devices[i].reset);
-
-			/* this could probably be a tsleep */
-			delay(15000);
-
-			/* take it out of reset */
-			PUTSYSREG(AR5312_SYSREG_RESETCTL,
-			    GETSYSREG(AR5312_SYSREG_RESETCTL) &
-			    ~arbus_devices[i].reset);
-
-			delay(25);
-		}
-
-		if (arbus_devices[i].enable) {
-			/* enable it */
-			PUTSYSREG(AR5312_SYSREG_ENABLE,
-			    GETSYSREG(AR5312_SYSREG_ENABLE) |
-			    arbus_devices[i].enable);
+		if (ar531x_enable_device(&devices[i]) != 0) {
+			continue;
 		}
 
 		(void) config_found_sm_loc(self, "arbus", locs, &aa,
@@ -258,18 +152,17 @@ arbus_print(void *aux, const char *pnp)
 	if (aa->aa_addr)
 		aprint_normal(" addr 0x%lx", aa->aa_addr);
 
-	if (aa->aa_irq >= 0) {
-		aprint_normal(" interrupt %d", ARBUS_IRQ_CPU(aa->aa_irq));
+	if (aa->aa_cirq >= 0)
+		aprint_normal(" cpu irq %d", aa->aa_cirq);
 
-		if (ARBUS_IRQ_MISC(aa->aa_irq))
-			aprint_normal(" irq %d", ARBUS_IRQ_MISC(aa->aa_irq));
-	}
+	if (aa->aa_mirq >= 0)
+		aprint_normal(" misc irq %d", aa->aa_mirq);
 
 	return (UNCONF);
 }
 
 void *
-arbus_intr_establish(int irq, int (*handler)(void *), void *arg)
+arbus_intr_establish(int cirq, int mirq, int (*handler)(void *), void *arg)
 {
 	struct arbus_intrhand	*ih;
 
@@ -277,18 +170,17 @@ arbus_intr_establish(int irq, int (*handler)(void *), void *arg)
 	if (ih == NULL)
 		return NULL;
 
-	ih->ih_irq = irq;
+	ih->ih_cirq = ih->ih_mirq = -1;
 	ih->ih_cookie = NULL;
 
-	if (ARBUS_IRQ_MISC(irq)) {
-		irq = ARBUS_IRQ_MISC(irq);
-		ih->ih_misc = 1;
-		ih->ih_cookie = ar531x_misc_intr_establish(irq, handler, arg);
-	} else {
-		irq = ARBUS_IRQ_CPU(irq);
-		ih->ih_misc = 0;
-		ih->ih_cookie = ar531x_intr_establish(irq, handler, arg);
-	}
+	if (mirq >= 0) {
+		ih->ih_mirq = mirq;
+		ih->ih_cookie = ar531x_misc_intr_establish(mirq, handler, arg);
+	} else if (cirq >= 0) {
+		ih->ih_cirq = cirq;
+		ih->ih_cookie = ar531x_cpu_intr_establish(cirq, handler, arg);
+	} else
+		return ih;
 
 	if (ih->ih_cookie == NULL) {
 		free(ih, M_DEVBUF);
@@ -301,10 +193,10 @@ void
 arbus_intr_disestablish(void *arg)
 {
 	struct arbus_intrhand	*ih = arg;
-	if (ih->ih_misc)
+	if (ih->ih_mirq >= 0)
 		ar531x_misc_intr_disestablish(ih->ih_cookie);
-	else
-		ar531x_intr_disestablish(ih->ih_cookie);
+	else if (ih->ih_cirq >= 0)
+		ar531x_cpu_intr_disestablish(ih->ih_cookie);
 	free(ih, M_DEVBUF);
 }
 
