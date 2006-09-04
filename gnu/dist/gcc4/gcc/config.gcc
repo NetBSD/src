@@ -2019,6 +2019,7 @@ sh-*-symbianelf* | sh[12346l]*-*-symbianelf* | \
 	sh_multilibs=${with_multilib_list}
 	if test x${sh_multilibs} = x ; then
 		case ${target} in
+		sh5*-*-netbsd*)	sh_multilibs=m5-32media,m5-32media-nofpu,m5-64media,m5-64media-nofpu ;;
 		sh*-*-netbsd*)	sh_multilibs=m3,m3e,m4 ;;
 		sh[1234]*)	sh_multilibs=${sh_cpu_target} ;;
 		sh64* | sh5*)	sh_multilibs=m5-32media,m5-32media-nofpu,m5-compact,m5-compact-nofpu,m5-64media,m5-64media-nofpu ;;
