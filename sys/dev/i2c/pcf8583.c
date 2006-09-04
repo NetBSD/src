@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8583.c,v 1.5 2006/08/23 21:21:34 bjh21 Exp $	*/
+/*	$NetBSD: pcf8583.c,v 1.6 2006/09/04 23:45:30 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -88,8 +88,6 @@ static int pcfrtc_clock_write(struct pcfrtc_softc *, struct clock_ymdhms *,
 			      uint8_t);
 static int pcfrtc_gettime(struct todr_chip_handle *, volatile struct timeval *);
 static int pcfrtc_settime(struct todr_chip_handle *, volatile struct timeval *);
-static int pcfrtc_getcal(struct todr_chip_handle *, int *);
-static int pcfrtc_setcal(struct todr_chip_handle *, int);
 
 int
 pcfrtc_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -150,8 +148,6 @@ pcfrtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = pcfrtc_gettime;
 	sc->sc_todr.todr_settime = pcfrtc_settime;
-	sc->sc_todr.todr_getcal = pcfrtc_getcal;
-	sc->sc_todr.todr_setcal = pcfrtc_setcal;
 	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
@@ -294,20 +290,6 @@ pcfrtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 		return err;
 
 	return (0);
-}
-
-static int
-pcfrtc_setcal(struct todr_chip_handle *ch, int cal)
-{
-
-	return (EOPNOTSUPP);
-}
-
-static int
-pcfrtc_getcal(struct todr_chip_handle *ch, int *cal)
-{
-
-	return (EOPNOTSUPP);
 }
 
 static const int pcf8583_rtc_offset[] = {

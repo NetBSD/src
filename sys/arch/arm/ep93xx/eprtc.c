@@ -1,4 +1,4 @@
-/*	$NetBSD: eprtc.c,v 1.1 2005/11/12 05:33:23 hamajima Exp $	*/
+/*	$NetBSD: eprtc.c,v 1.2 2006/09/04 23:45:30 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eprtc.c,v 1.1 2005/11/12 05:33:23 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eprtc.c,v 1.2 2006/09/04 23:45:30 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,6 @@ static int eprtc_gettime(struct todr_chip_handle *,
 			    volatile struct timeval *);
 static int eprtc_settime(struct todr_chip_handle *,
 			    volatile struct timeval *);
-static int eprtc_getcal(struct todr_chip_handle *, int *);
-static int eprtc_setcal(struct todr_chip_handle *, int);
 
 static int
 eprtc_match(struct device *parent, struct cfdata *match, void *aux)
@@ -82,8 +80,6 @@ eprtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = eprtc_gettime;
 	sc->sc_todr.todr_settime = eprtc_settime;
-	sc->sc_todr.todr_getcal = eprtc_getcal;
-	sc->sc_todr.todr_setcal = eprtc_setcal;
 	sc->sc_todr.todr_setwen = NULL;
 	todr_attach(&sc->sc_todr);
 }
@@ -105,16 +101,4 @@ eprtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EP93XX_RTC_Load, tv->tv_sec);
 	return 0;
-}
-
-static int
-eprtc_setcal(struct todr_chip_handle *ch, int cal)
-{
-	return (EOPNOTSUPP);
-}
-
-static int
-eprtc_getcal(struct todr_chip_handle *ch, int *cal)
-{
-	return (EOPNOTSUPP);
 }

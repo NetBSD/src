@@ -1,4 +1,4 @@
-/* $NetBSD: r2025.c,v 1.2 2006/03/29 06:41:24 thorpej Exp $ */
+/* $NetBSD: r2025.c,v 1.3 2006/09/04 23:45:30 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.2 2006/03/29 06:41:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.3 2006/09/04 23:45:30 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,9 +67,6 @@ static int	r2025rtc_gettime(struct todr_chip_handle *,
 				volatile struct timeval *);
 static int	r2025rtc_settime(struct todr_chip_handle *,
 				volatile struct timeval *);
-static int	r2025rtc_getcal(struct todr_chip_handle *, int *);
-static int	r2025rtc_setcal(struct todr_chip_handle *, int);
-
 static int	r2025rtc_reg_write(struct r2025rtc_softc *, int, uint8_t*, int);
 static int	r2025rtc_reg_read(struct r2025rtc_softc *, int, uint8_t*, int);
 
@@ -100,8 +97,6 @@ r2025rtc_attach(struct device *parent, struct device *self, void *arg)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = r2025rtc_gettime;
 	sc->sc_todr.todr_settime = r2025rtc_settime;
-	sc->sc_todr.todr_getcal = r2025rtc_getcal;
-	sc->sc_todr.todr_setcal = r2025rtc_setcal;
 	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
@@ -207,18 +202,6 @@ r2025rtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 	}
 
 	return 0;
-}
-
-static int
-r2025rtc_setcal(struct todr_chip_handle *ch, int cal)
-{
-	return EOPNOTSUPP;
-}
-
-static int
-r2025rtc_getcal(struct todr_chip_handle *ch, int *cal)
-{
-	return EOPNOTSUPP;
 }
 
 static int

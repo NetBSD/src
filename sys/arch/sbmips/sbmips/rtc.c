@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.12 2005/12/11 12:18:51 christos Exp $ */
+/* $NetBSD: rtc.c,v 1.13 2006/09/04 23:45:30 gdamore Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.12 2005/12/11 12:18:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.13 2006/09/04 23:45:30 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,8 +76,6 @@ static void strtc_attach(struct device *, struct device *, void *);
 static int strtc_gettime(todr_chip_handle_t, volatile struct timeval *);
 static int strtc_settime(todr_chip_handle_t, volatile struct timeval *);
 
-static int rtc_getcal(todr_chip_handle_t, int *);
-static int rtc_setcal(todr_chip_handle_t, int);
 static void rtc_inittodr(void *, time_t base);
 static void rtc_resettodr(void *);
 static void rtc_cal_timer(void);
@@ -142,8 +140,6 @@ xirtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ct.cookie = sc;
 	sc->sc_ct.todr_settime = xirtc_settime;
 	sc->sc_ct.todr_gettime = xirtc_gettime;
-	sc->sc_ct.todr_getcal = rtc_getcal;
-	sc->sc_ct.todr_setcal = rtc_setcal;
 
 	system_set_todrfns(sc, rtc_inittodr, rtc_resettodr);
 
@@ -260,8 +256,6 @@ strtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ct.cookie = sc;
 	sc->sc_ct.todr_settime = strtc_settime;
 	sc->sc_ct.todr_gettime = strtc_gettime;
-	sc->sc_ct.todr_getcal = rtc_getcal;
-	sc->sc_ct.todr_setcal = rtc_setcal;
 
 	system_set_todrfns(sc, rtc_inittodr, rtc_resettodr);
 
@@ -322,21 +316,6 @@ strtc_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
 
 	return (0);
 }
-
-static int
-rtc_getcal(todr_chip_handle_t handle, int *vp)
-{
-
-	return (EOPNOTSUPP);
-}
-
-static int
-rtc_setcal(todr_chip_handle_t handle, int v)
-{
-
-	return (EOPNOTSUPP);
-}
-
 
 static void
 rtc_inittodr(void *cookie, time_t base)
