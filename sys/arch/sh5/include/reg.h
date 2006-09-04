@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.6 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: reg.h,v 1.7 2006/09/04 20:05:12 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -54,7 +54,6 @@ struct reg {
 	register_t r_pc;
 	register_t r_usr;
 	register_t r_regs[63];
-#define	r_sp r_regs[15];
 	register_t r_tr[8];
 };
 
