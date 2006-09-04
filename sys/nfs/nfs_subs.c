@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.168 2006/09/02 12:40:36 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.169 2006/09/04 08:27:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.168 2006/09/02 12:40:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.169 2006/09/04 08:27:49 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2992,7 +2992,7 @@ nfsrv_composefh(struct vnode *vp, nfsrvfh_t *nsfh, boolean_t v3)
 	size_t fhsize;
 
 	fhsize = NFSD_MAXFHSIZE;
-	error = vfs_composefh(vp, NFSRVFH_DATA(nsfh), &fhsize);
+	error = vfs_composefh(vp, (void *)NFSRVFH_DATA(nsfh), &fhsize);
 	if (NFSX_FHTOOBIG_P(fhsize, v3)) {
 		error = EOPNOTSUPP;
 	}
