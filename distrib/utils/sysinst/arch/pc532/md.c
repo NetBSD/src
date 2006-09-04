@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.34 2006/09/03 10:54:41 hubertf Exp $	*/
+/*	$NetBSD: md.c,v 1.35 2006/09/04 00:11:00 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -117,6 +117,7 @@ md_update(void)
 void
 md_cleanup_install(void)
 {
+  
 	enable_rc_conf();
 	
 	run_program(0, "rm -f %s", target_expand("/sysinst"));
