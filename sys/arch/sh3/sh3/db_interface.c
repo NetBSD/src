@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.34 2006/08/23 00:09:01 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.35 2006/09/04 22:10:50 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.34 2006/08/23 00:09:01 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.35 2006/09/04 22:10:50 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -81,13 +81,13 @@ void __db_print_symbol(db_expr_t);
 char *__db_procname_by_asid(int);
 
 const struct db_command db_machine_command_table[] = {
-	{ "tlb",	db_tlbdump_cmd,		0,	0 },
-	{ "cache",	db_cachedump_cmd,	0,	0 },
-	{ "frame",	db_frame_cmd,		0,	0 },
+	{ "tlb",	db_tlbdump_cmd,		0,	NULL },
+	{ "cache",	db_cachedump_cmd,	0,	NULL },
+	{ "frame",	db_frame_cmd,		0,	NULL },
 #ifdef KSTACK_DEBUG
-	{ "stack",	db_stackcheck_cmd,	0,	0 },
+	{ "stack",	db_stackcheck_cmd,	0,	NULL },
 #endif
-	{ 0 }
+	{ NULL }
 };
 
 int db_active;
@@ -118,11 +118,11 @@ kdb_trap(int type, int code, db_regs_t *regs)
 	case -1:		/* keyboard interrupt */
 		break;
 	default:
-		if (!db_onpanic && db_recover == 0)
+		if (!db_onpanic && db_recover == NULL)
 			return 0;
 
 		kdb_printtrap(type, code);
-		if (db_recover != 0) {
+		if (db_recover != NULL) {
 			db_error("Faulted in DDB; continuing...\n");
 			/*NOTREACHED*/
 		}
@@ -581,7 +581,7 @@ __db_print_symbol(db_expr_t value)
 
 	db_find_xtrn_sym_and_offset((db_addr_t)value, &name, &offset);
 
-	if (name != 0 && offset <= db_maxoff && offset != value)
+	if (name != NULL && offset <= db_maxoff && offset != value)
 		db_print_loc_and_inst(value);
 	else
 		db_printf("\n");
