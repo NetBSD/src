@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.99 2006/09/04 00:56:09 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.100 2006/09/04 01:06:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.99 2006/09/04 00:56:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.100 2006/09/04 01:06:01 perry Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -477,7 +477,7 @@ gettick(void)
 void
 i8254_delay(int n)
 {
-	int xtick, otick;
+	int delay_tick, odelay_tick;
 	static const int delaytab[26] = {
 		 0,  2,  3,  4,  5,  6,  7,  9, 10, 11,
 		12, 13, 15, 16, 17, 18, 19, 21, 22, 23,
@@ -492,7 +492,7 @@ i8254_delay(int n)
 	 * Read the counter first, so that the rest of the setup overhead is
 	 * counted.
 	 */
-	otick = gettick();
+	odelay_tick = gettick();
 
 	if (n <= 25)
 		n = delaytab[n];
@@ -527,14 +527,14 @@ i8254_delay(int n)
 	while (n > 0) {
 #ifdef CLOCK_PARANOIA
 		int delta;
-		xtick = gettick();
-		if (xtick > otick)
-			delta = rtclock_tval - (xtick - otick);
+		delay_tick = gettick();
+		if (delay_tick > odelay_tick)
+			delta = rtclock_tval - (delay_tick - odelay_tick);
 		else
-			delta = otick - xtick;
+			delta = odelay_tick - delay_tick;
 		if (delta < 0 || delta >= rtclock_tval / 2) {
 			DPRINTF(("delay: ignore ticks %.4x-%.4x",
-				 otick, xtick));
+				 odelay_tick, delay_tick));
 			if (clock_broken_latch) {
 				DPRINTF(("  (%.4x %.4x %.4x %.4x %.4x %.4x)\n",
 				         ticks[0], ticks[1], ticks[2],
@@ -545,13 +545,13 @@ i8254_delay(int n)
 		} else
 			n -= delta;
 #else
-		xtick = gettick();
-		if (xtick > otick)
-			n -= rtclock_tval - (xtick - otick);
+		delay_tick = gettick();
+		if (delay_tick > odelay_tick)
+			n -= rtclock_tval - (delay_tick - odelay_tick);
 		else
-			n -= otick - xtick;
+			n -= odelay_tick - delay_tick;
 #endif
-		otick = xtick;
+		odelay_tick = delay_tick;
 	}
 }
 
