@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.6 2006/08/26 18:17:13 christos Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.7 2006/09/04 06:45:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,6 +54,8 @@
 #include <util.h>
 #include "defs.h"
 
+#include <crc_extern.h>
+
 static int emitcnt(struct nvlist *);
 static int emitlocs(void);
 static int emitopts(void);
@@ -65,6 +67,8 @@ static int defopts_print(const char *, void *, void *);
 static char *cntname(const char *);
 static int fprintcnt(FILE *, struct nvlist *);
 static int fprintstr(FILE *, const char *);
+
+#define UNDEFINED ~0u
 
 /*
  * Make the various config-generated header files.
@@ -91,12 +95,52 @@ mkheaders(void)
 	return (0);
 }
 
+#if 1
+#define fprint_global(fp, name, value) 1
+#else
+static int
+fprint_global(FILE *fp, const char *name, unsigned int value)
+{
+	return fprintf(fp, "#ifdef _LOCORE\n"
+	    " .global _KERNEL_OPT_%s\n"
+	    " .set _KERNEL_OPT_%s,0x%x\n"
+	    "#else\n"
+	    "__asm(\" .global _KERNEL_OPT_%s\\n"
+	    " .set _KERNEL_OPT_%s,0x%x\");\n"
+	    "#endif\n",
+	    name, name, value,
+	    name, name, value);
+}
+
+/* Convert the option argument to a 32bit numder */
+static unsigned int
+global_hash(const char *str)
+{
+        unsigned int h;
+	char *ep;
+
+	/* If the value is a valid numeric, just use it */
+	h = strtoul(str, &ep, 0);
+	if (*ep != 0)
+		/* Otherwise shove through a 32bit CRC function */
+		h = crc_buf(0, str, strlen(str));
+
+	/* Avoid colliding with the value used for undefined options. */
+	/* At least until I stop any options being set to zero */
+	return h != UNDEFINED ? h : 0xcafebabe;
+}
+#endif
 
 static int
 fprintcnt(FILE *fp, struct nvlist *nv)
 {
-	return (fprintf(fp, "#define\t%s\t%d\n",
-	     cntname(nv->nv_name), nv->nv_int));
+	const char *name = cntname(nv->nv_name);
+
+	if (fprintf(fp, "#define\t%s\t%d\n", name, nv->nv_int) < 0)
+		return -1;
+	if (fprint_global(fp, name, nv->nv_int) < 0)
+		return -1;
+	return 0;
 }
 
 static int
@@ -161,6 +205,7 @@ defopts_print(const char *name, void *value, void *arg)
 {
 	char tfname[BUFSIZ];
 	struct nvlist *nv, *option;
+	const char *opt_value;
 	int isfsoption;
 	FILE *fp;
 
@@ -171,22 +216,42 @@ defopts_print(const char *name, void *value, void *arg)
 	for (nv = value; nv != NULL; nv = nv->nv_next) {
 		isfsoption = OPT_FSOPT(nv->nv_name);
 
-		if ((nv->nv_flags & NV_OBSOLETE) != 0 ||
-		    ((option = ht_lookup(opttab, nv->nv_name)) == NULL &&
-		    (option = ht_lookup(fsopttab, nv->nv_name)) == NULL)) {
+		if (nv->nv_flags & NV_OBSOLETE) {
+			if (fprintf(fp, "/* %s `%s' is obsolete */\n",
+			    isfsoption ? "file system" : "option",
+			    nv->nv_name) < 0)
+				goto bad;
+			if (fprint_global(fp, nv->nv_name, 0xdeadbeef) < 0)
+				goto bad;
+			continue;
+		}
+
+		if (((option = ht_lookup(opttab, nv->nv_name)) == NULL &&
+		    (option = ht_lookup(fsopttab, nv->nv_name)) == NULL) &&
+		    (nv->nv_str == NULL)) {
 			if (fprintf(fp, "/* %s `%s' not defined */\n",
 			    isfsoption ? "file system" : "option",
 			    nv->nv_name) < 0)
 				goto bad;
-		} else {
-			if (fprintf(fp, "#define\t%s", option->nv_name) < 0)
+			if (fprint_global(fp, nv->nv_name, UNDEFINED) < 0)
 				goto bad;
-			if (option->nv_str != NULL && isfsoption == 0 &&
-			    fprintstr(fp, option->nv_str) < 0)
-				goto bad;
-			if (fputc('\n', fp) < 0)
-				goto bad;
+			continue;
 		}
+
+		opt_value = option != NULL ? option->nv_str : nv->nv_str;
+		if (isfsoption == 1)
+			/* For filesysteme we'd output the lower case name */
+			opt_value = NULL;
+
+		if (fprintf(fp, "#define\t%s", nv->nv_name) < 0)
+			goto bad;
+		if (opt_value != NULL && fprintstr(fp, opt_value) < 0)
+			goto bad;
+		if (fputc('\n', fp) < 0)
+			goto bad;
+		if (fprint_global(fp, nv->nv_name,
+		    opt_value == NULL ? 1 : global_hash(opt_value)) < 0)
+			goto bad;
 	}
 
 	if (fclose(fp) == EOF)

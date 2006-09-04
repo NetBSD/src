@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.9 2006/08/30 10:12:25 matt Exp $	*/
+/*	$NetBSD: gram.y,v 1.10 2006/09/04 06:45:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -147,7 +147,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %type	<str>	deffs
 %type	<list>	deffses
 %type	<str>	fsoptfile_opt
-%type	<str>	defopt
+%type	<list>	defopt
 %type	<list>	defopts
 %type	<str>	optdep
 %type	<list>	optdeps
@@ -328,11 +328,12 @@ optdep:
 	WORD				{ $$ = $1; };
 
 defopts:
-	defopts defopt			{ $$ = new_nx($2, $1); } |
-	defopt				{ $$ = new_n($1); };
+	defopts defopt			{ $2->nv_next = $1; $$ = $2; } |
+	defopt				{ $$ = $1; };
 
 defopt:
-	WORD				{ $$ = $1; };
+	WORD				{ $$ = new_n($1); } | ;
+	WORD '=' value			{ $$ = new_ns($1, $3); };
 
 devbase:
 	WORD				{ $$ = getdevbase($1); };
