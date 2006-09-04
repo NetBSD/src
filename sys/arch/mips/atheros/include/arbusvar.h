@@ -1,4 +1,4 @@
-/* $Id: arbusvar.h,v 1.1 2006/03/21 08:15:19 gdamore Exp $ */
+/* $Id: arbusvar.h,v 1.2 2006/09/04 05:17:26 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -52,17 +52,18 @@ struct arbus_attach_args {
 
 	bus_addr_t	aa_addr;
 	bus_size_t	aa_size;
-	int		aa_irq;
+	int		aa_cirq;	/* cpu irq */
+	int		aa_mirq;	/* misc irq */
 };
 
 void arbus_init(void);
 bus_space_tag_t arbus_get_bus_space_tag(void);
 bus_dma_tag_t arbus_get_bus_dma_tag(void);
 
-void *arbus_intr_establish(int, int (*)(void *), void *);
+void *arbus_intr_establish(int, int, int (*)(void *), void *);
 void arbus_intr_disestablish(void *);
 
-void com_arbus_cnattach(bus_addr_t);
+void com_arbus_cnattach(bus_addr_t, uint32_t);
 
 /*
  * These definitions are "funny".  To distinquish between
