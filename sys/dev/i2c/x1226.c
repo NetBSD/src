@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.8 2006/03/29 06:41:24 thorpej Exp $	*/
+/*	$NetBSD: x1226.c,v 1.9 2006/09/04 23:45:30 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.8 2006/03/29 06:41:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.9 2006/09/04 23:45:30 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +81,6 @@ static int xrtc_clock_read(struct xrtc_softc *, struct clock_ymdhms *);
 static int xrtc_clock_write(struct xrtc_softc *, struct clock_ymdhms *);
 static int xrtc_gettime(struct todr_chip_handle *, volatile struct timeval *);
 static int xrtc_settime(struct todr_chip_handle *, volatile struct timeval *);
-static int xrtc_getcal(struct todr_chip_handle *, int *);
-static int xrtc_setcal(struct todr_chip_handle *, int);
-
 
 /*
  * xrtc_match()
@@ -118,8 +115,6 @@ xrtc_attach(struct device *parent, struct device *self, void *arg)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = xrtc_gettime;
 	sc->sc_todr.todr_settime = xrtc_settime;
-	sc->sc_todr.todr_getcal = xrtc_getcal;
-	sc->sc_todr.todr_setcal = xrtc_setcal;
 	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
@@ -271,18 +266,6 @@ xrtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 		return (-1);
 
 	return (0);
-}
-
-static int
-xrtc_setcal(struct todr_chip_handle *ch, int cal)
-{
-	return (EOPNOTSUPP);
-}
-
-static int
-xrtc_getcal(struct todr_chip_handle *ch, int *cal)
-{
-	return (EOPNOTSUPP);
 }
 
 static int

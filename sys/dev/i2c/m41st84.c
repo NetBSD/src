@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.7 2006/03/29 06:41:24 thorpej Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.8 2006/09/04 23:45:30 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -78,8 +78,6 @@ static int strtc_clock_read(struct strtc_softc *, struct clock_ymdhms *);
 static int strtc_clock_write(struct strtc_softc *, struct clock_ymdhms *);
 static int strtc_gettime(struct todr_chip_handle *, volatile struct timeval *);
 static int strtc_settime(struct todr_chip_handle *, volatile struct timeval *);
-static int strtc_getcal(struct todr_chip_handle *, int *);
-static int strtc_setcal(struct todr_chip_handle *, int);
 
 static int
 strtc_match(struct device *parent, struct cfdata *cf, void *arg)
@@ -107,8 +105,6 @@ strtc_attach(struct device *parent, struct device *self, void *arg)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = strtc_gettime;
 	sc->sc_todr.todr_settime = strtc_settime;
-	sc->sc_todr.todr_getcal = strtc_getcal;
-	sc->sc_todr.todr_setcal = strtc_setcal;
 	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
@@ -259,20 +255,6 @@ strtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 		return (-1);
 
 	return (0);
-}
-
-static int
-strtc_setcal(struct todr_chip_handle *ch, int cal)
-{
-
-	return (EOPNOTSUPP);
-}
-
-static int
-strtc_getcal(struct todr_chip_handle *ch, int *cal)
-{
-
-	return (EOPNOTSUPP);
 }
 
 static int

@@ -1,4 +1,4 @@
-/* $NetBSD: aurtc.c,v 1.10 2006/03/28 16:52:35 gdamore Exp $ */
+/* $NetBSD: aurtc.c,v 1.11 2006/09/04 23:45:30 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,7 +68,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.10 2006/03/28 16:52:35 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.11 2006/09/04 23:45:30 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,8 +98,6 @@ static int	aurtc_match(struct device *, struct cfdata *, void *);
 static void	aurtc_attach(struct device *, struct device *, void *);
 static int	aurtc_gettime(todr_chip_handle_t, volatile struct timeval *);
 static int	aurtc_settime(todr_chip_handle_t, volatile struct timeval *);
-static int	aurtc_getcal(todr_chip_handle_t, int *);
-static int	aurtc_setcal(todr_chip_handle_t, int);
 static void	aurtc_shutdown(void *);
 
 CFATTACH_DECL(aurtc, sizeof (struct aurtc_softc),
@@ -127,8 +125,6 @@ aurtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tch.bus_cookie = NULL;
 	sc->sc_tch.todr_gettime = aurtc_gettime;
 	sc->sc_tch.todr_settime = aurtc_settime;
-	sc->sc_tch.todr_getcal = aurtc_getcal;
-	sc->sc_tch.todr_setcal = aurtc_setcal;
 	sc->sc_tch.todr_setwen = NULL;
 
 	sc->sc_shutdownhook = shutdownhook_establish(aurtc_shutdown, NULL);
@@ -175,20 +171,6 @@ aurtc_settime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 	 * for settimeofday() calls with a short window between them.
 	 */
 	return 0;
-}
-
-int
-aurtc_getcal(todr_chip_handle_t tch, int *vp)
-{
-
-	return EOPNOTSUPP;
-}
-
-int
-aurtc_setcal(todr_chip_handle_t tch, int v)
-{
-
-	return EOPNOTSUPP;
 }
 
 void

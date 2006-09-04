@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818.c,v 1.7 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: mc146818.c,v 1.8 2006/09/04 23:45:30 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.7 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.8 2006/09/04 23:45:30 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.7 2005/12/11 12:21:27 christos Exp $"
 
 int mc146818_gettime(todr_chip_handle_t, volatile struct timeval *);
 int mc146818_settime(todr_chip_handle_t, volatile struct timeval *);
-int mc146818_getcal(todr_chip_handle_t, int *);
-int mc146818_setcal(todr_chip_handle_t, int);
 
 void
 mc146818_attach(struct mc146818_softc *sc)
@@ -67,8 +65,6 @@ mc146818_attach(struct mc146818_softc *sc)
 	handle->cookie = sc;
 	handle->todr_gettime = mc146818_gettime;
 	handle->todr_settime = mc146818_settime;
-	handle->todr_getcal  = mc146818_getcal;
-	handle->todr_setcal  = mc146818_setcal;
 	handle->todr_setwen  = NULL;
 }
 
@@ -194,18 +190,4 @@ mc146818_settime(todr_chip_handle_t handle, volatile struct timeval *tv)
 	splx(s);
 
 	return 0;
-}
-
-int
-mc146818_getcal(todr_chip_handle_t handle, int *vp)
-{
-
-	return EOPNOTSUPP;
-}
-
-int
-mc146818_setcal(todr_chip_handle_t handle, int v)
-{
-
-	return EOPNOTSUPP;
 }

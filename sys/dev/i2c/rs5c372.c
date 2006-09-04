@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c372.c,v 1.5 2006/03/29 06:41:24 thorpej Exp $	*/
+/*	$NetBSD: rs5c372.c,v 1.6 2006/09/04 23:45:30 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2005 Kimihiro Nonaka
@@ -58,8 +58,6 @@ static int rs5c372rtc_clock_read(struct rs5c372rtc_softc *, struct clock_ymdhms 
 static int rs5c372rtc_clock_write(struct rs5c372rtc_softc *, struct clock_ymdhms *);
 static int rs5c372rtc_gettime(struct todr_chip_handle *, volatile struct timeval *);
 static int rs5c372rtc_settime(struct todr_chip_handle *, volatile struct timeval *);
-static int rs5c372rtc_getcal(struct todr_chip_handle *, int *);
-static int rs5c372rtc_setcal(struct todr_chip_handle *, int);
 
 static int
 rs5c372rtc_match(struct device *parent, struct cfdata *cf, void *arg)
@@ -85,8 +83,6 @@ rs5c372rtc_attach(struct device *parent, struct device *self, void *arg)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = rs5c372rtc_gettime;
 	sc->sc_todr.todr_settime = rs5c372rtc_settime;
-	sc->sc_todr.todr_getcal = rs5c372rtc_getcal;
-	sc->sc_todr.todr_setcal = rs5c372rtc_setcal;
 	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
@@ -125,20 +121,6 @@ rs5c372rtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 		return (-1);
 
 	return (0);
-}
-
-static int
-rs5c372rtc_setcal(struct todr_chip_handle *ch, int cal)
-{
-
-	return (EOPNOTSUPP);
-}
-
-static int
-rs5c372rtc_getcal(struct todr_chip_handle *ch, int *cal)
-{
-
-	return (EOPNOTSUPP);
 }
 
 static void
