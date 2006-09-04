@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.17 2005/02/05 00:13:34 simonb Exp $	*/
+/*	$NetBSD: crc.c,v 1.18 2006/09/04 20:01:10 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: crc.c,v 1.17 2005/02/05 00:13:34 simonb Exp $");
+__RCSID("$NetBSD: crc.c,v 1.18 2006/09/04 20:01:10 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,4 +140,23 @@ crc(int fd, u_int32_t *cval, off_t *clen)
 
 	*cval = ~thecrc;
 	return 0;
+}
+
+/* These two are rather more useful to the outside world */
+
+uint32_t
+crc_buf(uint32_t thecrc, const void *buf, size_t len)
+{
+	const uint8_t *p = buf;
+
+	for (p = buf; len; p++, len--)
+		COMPUTE(thecrc, *p);
+	return thecrc;
+}
+
+uint32_t
+crc_byte(uint32_t thecrc, unsigned int byte_val)
+{
+	COMPUTE(thecrc, byte_val & 0xff);
+	return thecrc;
 }
