@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.3 2006/07/05 10:11:02 cube Exp $
+.\" $NetBSD: config.5,v 1.4 2006/09/04 06:45:14 dsl Exp $
 .\"
 .\"  Copyright (c) 2006 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -30,7 +30,7 @@
 .\"  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\"  POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 4, 2006
+.Dd September 4, 2006
 .Dt CONFIG 5
 .Os
 .Sh NAME
@@ -307,13 +307,15 @@ option, it will be empty.
 Several options can be combined in one header file, for convenience.
 The header file is created in the compilation directory, making them directly
 accessible by source files.
-.It Ic defparam Oo Ar file Oc Ar option Oo Ar option Oo Ar ... Oc Oc \
-    Op : Ar dependencies
+.It Ic defparam Oo Ar file Oc Ar option Oo = Ar value Oc \
+    Oo Ar option Oo Ar ... Oc Oc Op : Ar dependencies
 Behaves like
 .Ic defflag ,
 except the defined option must have a value.
 Such options are not typed:
 they can have either a numeric or a string value.
+If a value is specified, it is treated as a default, and the options is
+always defined in the corresponding header file.
 .It Ic deffs Oo Ar file Oc Ar name Op Ar name Op Ar ...
 Defines a file-system name.
 It is no more than a regular option, as defined by
