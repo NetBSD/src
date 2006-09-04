@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.47 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.48 2006/09/04 15:39:39 martin Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.47 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.48 2006/09/04 15:39:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,6 +157,8 @@ struct	ucom_methods uplcom_methods = {
 static const struct usb_devno uplcom_devs[] = {
 	/* I/O DATA USB-RSAQ2 */
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_RSAQ2 },
+	/* I/O DATA USB-RSAQ3 */
+	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_RSAQ3 },
 	/* I/O DATA USB-RSAQ */
 	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ },
 	/* PLANEX USB-RS232 URS-03 */
@@ -191,6 +193,16 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303X },
 };
 #define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
+
+static const struct {
+	uint16_t		vendor;
+	uint16_t		product;
+	enum pl2303_type	chiptype;
+} uplcom_devs_ext[] = {
+	/* I/O DATA USB-RSAQ3 */
+	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_RSAQ3, UPLCOM_TYPE_HX },
+	{0, 0, 0}
+};
 
 
 USB_DECLARE_DRIVER(uplcom);
@@ -251,7 +263,15 @@ USB_ATTACH(uplcom)
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
-	
+
+	/* determine chip type */
+	for (i = 0; uplcom_devs_ext[i].vendor != 0; i++) {
+		if (uplcom_devs_ext[i].vendor == uaa->vendor &&
+		    uplcom_devs_ext[i].product == uaa->product) {
+			sc->sc_type = uplcom_devs_ext[i].chiptype;
+			goto chiptype_determined;
+		}
+	}
 	/*
 	 * NOTE: The Linux driver distinguishes between UPLCOM_TYPE_0
 	 * and UPLCOM_TYPE_1 type chips by testing other fields in the
@@ -264,6 +284,7 @@ USB_ATTACH(uplcom)
 		sc->sc_type = UPLCOM_TYPE_HX;
 	else
 		sc->sc_type = UPLCOM_TYPE_0;
+chiptype_determined:
 
 	/* get the config descriptor */
 	cdesc = usbd_get_config_descriptor(sc->sc_udev);
