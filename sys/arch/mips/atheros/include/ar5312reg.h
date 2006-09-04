@@ -1,4 +1,4 @@
-/* $Id: ar5312reg.h,v 1.1 2006/08/28 07:21:15 gdamore Exp $ */
+/* $Id: ar5312reg.h,v 1.2 2006/09/04 05:17:26 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -181,6 +181,22 @@
 #define	GETSDRAMREG(x)	REGVAL((x) + AR5312_SDRAMCTL_BASE)
 #define	PUTSDRAMREG(x,v)	(REGVAL((x) + AR5312_SDRAMCTL_BASE)) = (v)
 
+/*
+ * Interrupts.
+ */
+#define	AR5312_IRQ_WLAN0		0
+#define	AR5312_IRQ_ENET0		1
+#define	AR5312_IRQ_ENET1		2
+#define	AR5312_IRQ_WLAN1		3
+#define	AR5312_IRQ_MISC			4
+
+#define	AR5312_MISC_IRQ_TIMER		0
+#define	AR5312_MISC_IRQ_AHBPERR		1
+#define	AR5312_MISC_IRQ_AHBDMAE		2
+#define	AR5312_MISC_IRQ_GPIO		3
+#define	AR5312_MISC_IRQ_UART0		4
+#define	AR5312_MISC_IRQ_UART0_DMA	5
+#define	AR5312_MISC_IRQ_WDOG		6
 /*
  * Board data.  This is located in flash somewhere, ar531x_board_info
  * locates it.

@@ -1,4 +1,4 @@
-/* $Id: com_arbus.c,v 1.3 2006/08/28 07:21:15 gdamore Exp $ */
+/* $Id: com_arbus.c,v 1.4 2006/09/04 05:17:26 gdamore Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -108,11 +108,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.3 2006/08/28 07:21:15 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.4 2006/09/04 05:17:26 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/termios.h>
 #include <sys/ttydefaults.h>
 #include <sys/types.h>
@@ -191,9 +192,18 @@ com_arbus_attach(struct device *parent, struct device *self, void *aux)
 	struct com_arbus_softc *arsc = (void *)self;
 	struct com_softc *sc = &arsc->sc_com;
 	struct arbus_attach_args *aa = aux;
+	prop_number_t prop;
 	bus_space_handle_t ioh;
 
-	sc->sc_frequency = ar531x_sys_freq();
+	prop = prop_dictionary_get(device_properties(&sc->sc_dev),
+	    "frequency");
+	if (prop == NULL) {
+		printf(": unable to get frequency property\n");
+		return;
+	}
+	KASSERT(prop_object_type(prop) == PROP_TYPE_NUMBER);
+
+	sc->sc_frequency = (int)prop_number_integer_value(prop);
 
 	if (!com_is_console(aa->aa_bst, aa->aa_addr, &ioh) &&
 	    bus_space_map(aa->aa_bst, aa->aa_addr, aa->aa_size, 0,
@@ -208,9 +218,7 @@ com_arbus_attach(struct device *parent, struct device *self, void *aux)
 
 	com_attach_subr(sc);
 
-	if (aa->aa_irq >= 0) {
-		arbus_intr_establish(aa->aa_irq, comintr, sc);
-	}
+	arbus_intr_establish(aa->aa_cirq, aa->aa_mirq, comintr, sc);
 }
 
 void
@@ -226,7 +234,7 @@ com_arbus_initmap(struct com_regs *regsp)
 }
 
 void
-com_arbus_cnattach(bus_addr_t addr)
+com_arbus_cnattach(bus_addr_t addr, uint32_t freq)
 {
 	struct com_regs		regs;
 
@@ -239,7 +247,6 @@ com_arbus_cnattach(bus_addr_t addr)
 		&regs.cr_ioh))
 		return;
 
-	comcnattach1(&regs, com_arbus_baud, ar531x_sys_freq(),
-	    COM_TYPE_NORMAL, CONMODE);
+	comcnattach1(&regs, com_arbus_baud, freq, COM_TYPE_NORMAL, CONMODE);
 }
 
