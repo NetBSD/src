@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.16 2006/07/21 10:01:39 tsutsui Exp $	*/
+/*	$NetBSD: rtc.c,v 1.17 2006/09/04 23:45:30 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.16 2006/07/21 10:01:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.17 2006/09/04 23:45:30 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,8 +108,6 @@ CFATTACH_DECL(rtc, sizeof (struct rtc_softc),
 
 static int	rtc_gettime(todr_chip_handle_t, volatile struct timeval *);
 static int	rtc_settime(todr_chip_handle_t, volatile struct timeval *);
-static int	rtc_getcal(todr_chip_handle_t, int *);
-static int	rtc_setcal(todr_chip_handle_t, int);
 static uint8_t	rtc_readreg(struct rtc_softc *, int);
 static uint8_t	rtc_writereg(struct rtc_softc *, int, uint8_t);
 
@@ -148,8 +146,6 @@ rtcattach(struct device *parent, struct device *self, void *aux)
 	todr_handle->cookie = sc;
 	todr_handle->todr_gettime = rtc_gettime;
 	todr_handle->todr_settime = rtc_settime;
-	todr_handle->todr_getcal = rtc_getcal;
-	todr_handle->todr_setcal = rtc_setcal;
 	todr_handle->todr_setwen = NULL;
 
 	todr_attach(todr_handle);
@@ -238,20 +234,6 @@ rtc_settime(todr_chip_handle_t handle, volatile struct timeval *tv)
 		    rtc_writereg(sc, i, rtc_registers[i]))
 			return 1;
 	return 0;
-}
-
-static int
-rtc_getcal(todr_chip_handle_t handle, int *vp)
-{
-
-	return EOPNOTSUPP;
-}
-
-static int
-rtc_setcal(todr_chip_handle_t handle, int v)
-{
-
-	return EOPNOTSUPP;
 }
 
 static uint8_t

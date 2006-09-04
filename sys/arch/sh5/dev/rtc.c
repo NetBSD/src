@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.11 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: rtc.c,v 1.12 2006/09/04 23:45:30 gdamore Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.11 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.12 2006/09/04 23:45:30 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,9 +75,6 @@ extern struct cfdriver rtc_cd;
 
 static int rtc_gettime(struct todr_chip_handle *, volatile struct timeval *);
 static int rtc_settime(struct todr_chip_handle *, volatile struct timeval *);
-static int rtc_getcal(struct todr_chip_handle *, int *);
-static int rtc_setcal(struct todr_chip_handle *, int);
-
 
 /*ARGSUSED*/
 static int
@@ -105,8 +102,6 @@ rtcattach(struct device *parent, struct device *self, void *args)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = rtc_gettime;
 	sc->sc_todr.todr_settime = rtc_settime;
-	sc->sc_todr.todr_getcal = rtc_getcal;
-	sc->sc_todr.todr_setcal = rtc_setcal;
 	sc->sc_todr.todr_setwen = NULL;
 
 	printf(" Real-time Clock\n");
@@ -215,20 +210,6 @@ rtc_settime(struct todr_chip_handle *todr, volatile struct timeval *tv)
 	}
 
 	return (0);
-}
-
-static int
-rtc_getcal(struct todr_chip_handle *todr, int *calp)
-{
-
-	return (EOPNOTSUPP);
-}
-
-static int
-rtc_setcal(struct todr_chip_handle *todr, int cal)
-{
-
-	return (EOPNOTSUPP);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mm58167.c,v 1.7 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: mm58167.c,v 1.8 2006/09/04 23:45:30 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.7 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.8 2006/09/04 23:45:30 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -55,8 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.7 2005/12/11 12:21:27 christos Exp $")
 
 int mm58167_gettime(todr_chip_handle_t, volatile struct timeval *);
 int mm58167_settime(todr_chip_handle_t, volatile struct timeval *);
-int mm58167_getcal(todr_chip_handle_t, int *);
-int mm58167_setcal(todr_chip_handle_t, int);
 
 /*
  * To quote SunOS's todreg.h:
@@ -80,8 +78,6 @@ mm58167_attach(sc)
 	handle->cookie = sc;
 	handle->todr_gettime = mm58167_gettime;
 	handle->todr_settime = mm58167_settime;
-	handle->todr_getcal = mm58167_getcal;
-	handle->todr_setcal = mm58167_setcal;
 	return (handle);
 }
 
@@ -266,20 +262,4 @@ mm58167_settime(handle, tv)
 
 	splx(s);
 	return (0);
-}
-
-int
-mm58167_getcal(handle, vp)
-	todr_chip_handle_t handle;
-	int *vp;
-{
-	return (EOPNOTSUPP);
-}
-
-int
-mm58167_setcal(handle, v)
-	todr_chip_handle_t handle;
-	int v;
-{
-	return (EOPNOTSUPP);
 }
