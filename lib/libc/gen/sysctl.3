@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.178 2006/08/11 19:17:47 christos Exp $
+.\"	$NetBSD: sysctl.3,v 1.179 2006/09/04 23:16:22 liamjfoy Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd August 10, 2006
+.Dd September 4, 2006
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -1090,6 +1090,10 @@ The currently defined protocols and names are:
 .It arp	keep	integer	yes
 .It arp	prune	integer	yes
 .It arp	refresh	integer	yes
+.It carp	allow	integer yes
+.It carp	preempt	integer yes
+.It carp	log	integer yes
+.It carp	arpbalance	integer yes
 .It icmp	errppslimit	integer	yes
 .It icmp	maskrepl	integer	yes
 .It icmp	rediraccept	integer	yes
@@ -1155,6 +1159,34 @@ Valid ARP entry lifetime.
 ARP cache pruning interval.
 .It Li arp.refresh
 ARP entry refresh interval.
+.It Li carp.allow
+If set to 0, incoming
+.Xr carp 4
+packets will not be processed.
+If set to any other value, processing will occur.
+Enabled by default.
+.It Li carp.arpbalance
+If set to any value other than 0, the ARP balancing functionality of
+.Xr carp 4
+is enabled.
+When ARP requests are received for an IP address which is part of any virtual
+host, carp will hash the source IP in the ARP request to select one of the
+virtual hosts from the set of all the virtual hosts which have that IP address.
+The master of that host will respond with the correct virtual MAC address.
+Disabled by default.
+.It Li carp.log
+If set to any value other than 0,
+.Xr carp 4
+will log errors.
+Disabled by default.
+.It Li carp.preempt
+If set to 0,
+.Xr carp 4
+will not attempt to become master if it is receiving advertisements from
+another active master.
+If set to any other value, carp will become master of the virtual host if it
+believes it can send advertisements more frequently than the current master.
+Disabled by default.
 .It Li ip.allowsrcrt
 If set to 1, the host accepts source routed packets.
 .It Li ip.anonportmax
