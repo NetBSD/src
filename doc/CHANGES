@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.675 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.676 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -32,3 +32,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[uwe 20060901]
 	evbmips: Add timecounter support. [gdamore 20060901]
 	sun2: Add timecounter support. [gdamore 2006090301]
+	sysinst: Besides full and custom installation, there's now also a
+		minimal installation consisting of just a kernel, base and
+		etc sets. [hubertf 20060904]
