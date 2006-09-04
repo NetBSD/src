@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.31 2006/07/22 22:43:43 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.31 2006/07/22 22:43:43 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -247,9 +247,6 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	printf(" spc %x ssr %x \n", tf->tf_spc, tf->tf_ssr);
 
 	panic("general_exception");
-
-	for (;;)
-		continue;
 	/* NOTREACHED */
 }
 
