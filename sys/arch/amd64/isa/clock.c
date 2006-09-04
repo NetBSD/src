@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.16 2006/09/04 00:56:08 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.17 2006/09/04 01:40:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16 2006/09/04 00:56:08 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17 2006/09/04 01:40:19 perry Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -172,6 +172,14 @@ CFATTACH_DECL(sysbeep, sizeof(struct device),
 static int ppi_attached;
 static pcppi_tag_t ppicookie;
 #endif /* PCPPI */
+
+#ifdef __x86_64__
+#define READ_FLAGS()	read_rflags()
+#define WRITE_FLAGS(x)	write_rflags(x)
+#else /* i386 architecture processor */
+#define READ_FLAGS()	read_eflags()
+#define WRITE_FLAGS(x)	write_eflags(x)
+#endif
 
 #ifdef CLOCKDEBUG
 int clock_debug = 0;
@@ -254,13 +262,12 @@ static int ticks[6];
 int
 gettick_broken_latch(void)
 {
-	u_long ef;
+	u_long flags;
 	int v1, v2, v3;
 	int w1, w2, w3;
 
-	/* Don't want someone screwing with the counter
-	   while we're here. */
-	ef = read_rflags();
+	/* Don't want someone screwing with the counter while we're here. */
+	flags = READ_FLAGS();
 	disable_intr();
 
 	v1 = inb(IO_TIMER1+TIMER_CNTR0);
@@ -270,7 +277,7 @@ gettick_broken_latch(void)
 	v3 = inb(IO_TIMER1+TIMER_CNTR0);
 	v3 |= inb(IO_TIMER1+TIMER_CNTR0) << 8;
 
-	write_rflags(ef);
+	WRITE_FLAGS(flags);
 
 #ifdef CLOCK_PARANOIA
 	if (clock_debug) {
@@ -363,7 +370,9 @@ startrtclock(void)
 
 	tc_init(&i8254_timecounter);
 
+#if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
 	init_TSC();
+#endif
 
 	rtc_register();
 }
@@ -415,10 +424,10 @@ i8254_get_timecount(struct timecounter *tc)
 {
 	u_int count;
 	u_char high, low;
-	u_long rflags;
+	u_long flags;
 
 	/* Don't want someone screwing with the counter while we're here. */
-	rflags = read_rflags();
+	flags = READ_FLAGS();
 	disable_intr();
 
 	simple_lock(&tmr_lock);
@@ -440,27 +449,27 @@ i8254_get_timecount(struct timecounter *tc)
 
 	simple_unlock(&tmr_lock);
 
-	write_rflags(rflags);
+	WRITE_FLAGS(flags);
 	return (count);
 }
 
 static int
 gettick(void)
 {
-	u_long ef;
+	u_long flags;
 	u_char lo, hi;
 
 	if (clock_broken_latch)
 		return (gettick_broken_latch());
 
 	/* Don't want someone screwing with the counter while we're here. */
-	ef = read_rflags();
+	flags = READ_FLAGS();
 	disable_intr();
 	/* Select counter 0 and latch it. */
 	outb(IO_TIMER1+TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
 	lo = inb(IO_TIMER1+TIMER_CNTR0);
 	hi = inb(IO_TIMER1+TIMER_CNTR0);
-	write_rflags(ef);
+	WRITE_FLAGS(flags);
 	return ((hi << 8) | lo);
 }
 
