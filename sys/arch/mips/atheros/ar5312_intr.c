@@ -1,4 +1,4 @@
-/* $Id: ar5312_intr.c,v 1.1 2006/08/28 07:21:15 gdamore Exp $ */
+/* $Id: ar5312_intr.c,v 1.2 2006/09/04 05:17:26 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5312_intr.c,v 1.1 2006/08/28 07:21:15 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5312_intr.c,v 1.2 2006/09/04 05:17:26 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -178,12 +178,12 @@ ar531x_intr_init(void)
 	PUTREG(AR5312_SYSREG_MISC_INTMASK, 0);
 
 	/* make sure we register the MISC interrupt handler */
-	ar531x_intr_establish(NINTRS - 1, ar531x_miscintr, NULL);
+	ar531x_cpu_intr_establish(NINTRS - 1, ar531x_miscintr, NULL);
 }
 
 
 void *
-ar531x_intr_establish(int intr, int (*func)(void *), void *arg)
+ar531x_cpu_intr_establish(int intr, int (*func)(void *), void *arg)
 {
 	struct ar531x_intrhand	*ih;
 	int			s;
@@ -212,7 +212,7 @@ ar531x_intr_establish(int intr, int (*func)(void *), void *arg)
 }
 
 void
-ar531x_intr_disestablish(void *arg)
+ar531x_cpu_intr_disestablish(void *arg)
 {
 	struct ar531x_intrhand	*ih = arg;
 	int			s;

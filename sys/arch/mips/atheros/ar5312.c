@@ -1,4 +1,4 @@
-/* $NetBSD: ar5312.c,v 1.1 2006/08/28 07:21:15 gdamore Exp $ */
+/* $NetBSD: ar5312.c,v 1.2 2006/09/04 05:17:26 gdamore Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -59,6 +59,10 @@
 #include <mips/locore.h>
 #include <mips/cpuregs.h>
 
+#include <sys/socket.h>		/* these three just to get ETHER_ADDR_LEN(!) */
+#include <net/if.h>
+#include <net/if_ether.h>
+
 #include <mips/atheros/include/ar5312reg.h>
 #include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
@@ -71,8 +75,8 @@ ar531x_memsize(void)
 	uint32_t memcfg, bank0, bank1;
 
 	/*
-	 * Determine the memory size.  Use the `memsize' PMON
-	 * variable.  If that's not available, panic.
+	 * Determine the memory size as established by system
+	 * firmware.
 	 *
 	 * NB: we allow compile time override
 	 */
@@ -136,7 +140,7 @@ ar531x_consinit(void)
 #if NCOM > 0
 	/* Setup polled serial for early console I/O */
 	/* XXX: pass in CONSPEED? */
-	com_arbus_cnattach(AR5312_UART0_BASE);
+	com_arbus_cnattach(AR5312_UART0_BASE, ar531x_bus_freq());
 #else
 	panic("Not configured to use serial console!\n");
 	/* not going to see that message now, are we? */
@@ -215,7 +219,203 @@ ar531x_cpu_freq(void)
 }
 
 uint32_t
-ar531x_sys_freq(void)
+ar531x_bus_freq(void)
 {
 	return (ar531x_cpu_freq() / 4);
 }
+
+static void
+addprop_data(struct device *dev, const char *name, const uint8_t *data,
+    int len)
+{
+	prop_data_t	pd;
+	pd = prop_data_create_data(data, len);
+	KASSERT(pd != NULL);
+	if (prop_dictionary_set(device_properties(dev), name, pd) == FALSE) {
+		printf("WARNING: unable to set %s property for %s\n",
+		    name, device_xname(dev));
+	}
+	prop_object_release(pd);
+}
+
+static void
+addprop_integer(struct device *dev, const char *name, uint32_t val)
+{
+	prop_number_t	pn;
+	pn = prop_number_create_integer(val);
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(device_properties(dev), name, pn) == FALSE) {
+		printf("WARNING: unable to set %s property for %s",
+		    name, device_xname(dev));
+	}
+	prop_object_release(pn);
+}
+
+void
+ar531x_device_register(struct device *dev, void *aux) 
+{
+	struct arbus_attach_args *aa = aux;
+	const struct ar531x_boarddata *info;
+
+	info = ar531x_board_info();
+	if (info == NULL) {
+		/* nothing known about this board! */
+		return;
+	}
+
+	/*
+	 * We don't ever know the boot device.  But that's because the
+	 * firmware only loads from the network.
+	 */
+
+	/* Fetch the MAC addresses. */
+	if (device_is_a(dev, "ae")) {
+		const uint8_t *enet;
+
+		if (aa->aa_addr == AR5312_ENET0_BASE)
+			enet = info->enet0Mac;
+		else if (aa->aa_addr == AR5312_ENET1_BASE)
+			enet = info->enet1Mac;
+		else
+			return;
+
+		addprop_data(dev, "mac-addr", enet, ETHER_ADDR_LEN);
+	}
+
+	if (device_is_a(dev, "ath")) {
+		const uint8_t *enet;
+
+		if (aa->aa_addr == AR5312_WLAN0_BASE)
+			enet = info->wlan0Mac;
+		else if (aa->aa_addr == AR5312_WLAN1_BASE)
+			enet = info->wlan1Mac;
+		else
+			return;
+
+		addprop_data(dev, "mac-addr", enet, ETHER_ADDR_LEN);
+	}
+
+	if (device_is_a(dev, "com")) {
+		addprop_integer(dev, "frequency", ar531x_cpu_freq() / 4);
+	}
+
+	if (device_is_a(dev, "argpio")) {
+		if (info->config & BD_RSTFACTORY) {
+			addprop_integer(dev, "reset-pin",
+			    info->resetConfigGpio);
+		}
+		if (info->config & BD_SYSLED) {
+			addprop_integer(dev, "sysled-pin",
+			    info->sysLedGpio);
+		}
+	}
+}
+
+int
+ar531x_enable_device(const struct ar531x_device *dev)
+{
+	const struct ar531x_boarddata *info;
+
+	info = ar531x_board_info();
+	if (dev->mask && ((dev->mask & info->config) == 0)) {
+		return -1;
+	}
+	if (dev->reset) {
+		/* put device into reset */
+		PUTSYSREG(AR5312_SYSREG_RESETCTL,
+		    GETSYSREG(AR5312_SYSREG_RESETCTL) | dev->reset);
+
+		delay(15000);	/* XXX: tsleep? */
+
+		/* take it out of reset */
+		PUTSYSREG(AR5312_SYSREG_RESETCTL,
+		    GETSYSREG(AR5312_SYSREG_RESETCTL) & ~dev->reset);
+
+		delay(25);
+	}
+	if (dev->enable) {
+		PUTSYSREG(AR5312_SYSREG_ENABLE,
+		    GETSYSREG(AR5312_SYSREG_ENABLE) | dev->enable);
+	}
+	return 0;
+}
+
+const struct ar531x_device *
+ar531x_get_devices(void)
+{
+	static const struct ar531x_device devices[] = {
+		{
+			"ae",
+			AR5312_ENET0_BASE, 0x100000,
+			AR5312_IRQ_ENET0, -1,
+			AR5312_BOARD_CONFIG_ENET0,
+			AR5312_RESET_ENET0 | AR5312_RESET_PHY0,
+			AR5312_ENABLE_ENET0
+		},
+		{
+			"ae",
+			AR5312_ENET1_BASE, 0x100000,
+			AR5312_IRQ_ENET1, -1,
+			AR5312_BOARD_CONFIG_ENET1,
+			AR5312_RESET_ENET1 | AR5312_RESET_PHY1,
+			AR5312_ENABLE_ENET1
+		},
+		{
+			"com",
+			AR5312_UART0_BASE, 0x1000,
+			AR5312_IRQ_MISC, AR5312_MISC_IRQ_UART0,
+			AR5312_BOARD_CONFIG_UART0,
+			0,
+			0,
+		},
+		{
+			"com",
+			AR5312_UART1_BASE, 0x1000,
+			-1, -1,
+			AR5312_BOARD_CONFIG_UART1,
+			0,
+			0,
+		},
+		{
+			"ath",
+			AR5312_WLAN0_BASE, 0x100000,
+			AR5312_IRQ_WLAN0, -1,
+			AR5312_BOARD_CONFIG_WLAN0,
+			AR5312_RESET_WLAN0 |
+			AR5312_RESET_WARM_WLAN0_MAC |
+			AR5312_RESET_WARM_WLAN0_BB,
+			AR5312_ENABLE_WLAN0
+		},
+		{
+			"ath",
+			AR5312_WLAN1_BASE, 0x100000,
+			AR5312_IRQ_WLAN1, -1,
+			AR5312_BOARD_CONFIG_WLAN1,
+			AR5312_RESET_WLAN1 |
+			AR5312_RESET_WARM_WLAN1_MAC |
+			AR5312_RESET_WARM_WLAN1_BB,
+			AR5312_ENABLE_WLAN1
+		},
+		{
+			"athflash",
+			AR5312_FLASH_BASE, 0,
+			-1, -1,
+			0,
+			0,
+			0,
+		},
+		{
+			"argpio", 0x1000,
+			AR5312_GPIO_BASE,
+			AR5312_IRQ_MISC, AR5312_MISC_IRQ_GPIO,
+			0,
+			0,
+			0
+		},
+		{ NULL }
+	};
+
+	return devices;
+}
+
+
