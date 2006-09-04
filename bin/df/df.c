@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.71 2006/08/21 19:05:14 christos Exp $	*/
+/*	$NetBSD: df.c,v 1.72 2006/09/04 16:32:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.71 2006/08/21 19:05:14 christos Exp $");
+__RCSID("$NetBSD: df.c,v 1.72 2006/09/04 16:32:57 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -316,7 +316,7 @@ prthuman(struct statvfs *sfsp, int64_t used, int64_t bavail)
 {
 
 	prthumanval(sfsp->f_blocks * sfsp->f_frsize, "");
-	prthumanval(used * sfsp->f_frsize, "  ");
+	prthumanval(used * sfsp->f_frsize, "   ");
 	prthumanval(bavail * sfsp->f_frsize, "   ");
 }
 
