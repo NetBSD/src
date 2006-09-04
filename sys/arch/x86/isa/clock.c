@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2006/09/04 03:07:52 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 2006/09/04 23:45:30 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2006/09/04 03:07:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3 2006/09/04 23:45:30 gdamore Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -829,26 +829,12 @@ rtc_settime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 
 }
 
-static int
-rtc_getcal(todr_chip_handle_t tch, int *vp)
-{
-	return EOPNOTSUPP;
-}
-
-static int
-rtc_setcal(todr_chip_handle_t tch, int v)
-{
-	return EOPNOTSUPP;
-}
-
 static void
 rtc_register(void)
 {
 	static struct todr_chip_handle	tch;
 	tch.todr_gettime = rtc_gettime;
 	tch.todr_settime = rtc_settime;
-	tch.todr_getcal = rtc_getcal;
-	tch.todr_setcal = rtc_setcal;
 	tch.todr_setwen = NULL;
 
 	todr_attach(&tch);

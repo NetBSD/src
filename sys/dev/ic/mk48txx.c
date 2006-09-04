@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.18 2005/12/11 12:21:27 christos Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.19 2006/09/04 23:45:30 gdamore Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.18 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.19 2006/09/04 23:45:30 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,8 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.18 2005/12/11 12:21:27 christos Exp $"
 
 int mk48txx_gettime(todr_chip_handle_t, volatile struct timeval *);
 int mk48txx_settime(todr_chip_handle_t, volatile struct timeval *);
-int mk48txx_getcal(todr_chip_handle_t, int *);
-int mk48txx_setcal(todr_chip_handle_t, int);
 u_int8_t mk48txx_def_nvrd(struct mk48txx_softc *, int);
 void mk48txx_def_nvwr(struct mk48txx_softc *, int, u_int8_t);
 
@@ -96,8 +94,6 @@ mk48txx_attach(sc)
 	handle->cookie = sc;
 	handle->todr_gettime = mk48txx_gettime;
 	handle->todr_settime = mk48txx_settime;
-	handle->todr_getcal = mk48txx_getcal;
-	handle->todr_setcal = mk48txx_setcal;
 	handle->todr_setwen = NULL;
 
 	if (sc->sc_nvrd == NULL)
@@ -211,24 +207,6 @@ mk48txx_settime(handle, tv)
 	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_ICSR, csr);
 	todr_wenable(handle, 0);
 	return 0;
-}
-
-int
-mk48txx_getcal(handle, vp)
-	todr_chip_handle_t handle;
-	int *vp;
-{
-
-	return EOPNOTSUPP;
-}
-
-int
-mk48txx_setcal(handle, v)
-	todr_chip_handle_t handle;
-	int v;
-{
-
-	return EOPNOTSUPP;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: intersil7170.c,v 1.5 2005/12/11 12:21:27 christos Exp $ */
+/*	$NetBSD: intersil7170.c,v 1.6 2006/09/04 23:45:30 gdamore Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intersil7170.c,v 1.5 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intersil7170.c,v 1.6 2006/09/04 23:45:30 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -63,8 +63,6 @@ struct intersil7170_softc {
 
 int intersil7170_gettime(todr_chip_handle_t, volatile struct timeval *);
 int intersil7170_settime(todr_chip_handle_t, volatile struct timeval *);
-int intersil7170_getcal(todr_chip_handle_t, int *);
-int intersil7170_setcal(todr_chip_handle_t, int);
 
 int intersil7170_auto_century_adjust = 1;
 
@@ -87,8 +85,6 @@ intersil7170_attach(bt, bh, year0)
 	handle->cookie = sil;
 	handle->todr_gettime = intersil7170_gettime;
 	handle->todr_settime = intersil7170_settime;
-	handle->todr_getcal = intersil7170_getcal;
-	handle->todr_setcal = intersil7170_setcal;
 	sil->sil_bt = bt;
 	sil->sil_bh = bh;
 	sil->sil_year0 = year0;
@@ -192,20 +188,4 @@ intersil7170_settime(handle, tv)
 	splx(s);
 
 	return (0);
-}
-
-int
-intersil7170_getcal(handle, vp)
-	todr_chip_handle_t handle;
-	int *vp;
-{
-	return (EOPNOTSUPP);
-}
-
-int
-intersil7170_setcal(handle, v)
-	todr_chip_handle_t handle;
-	int v;
-{
-	return (EOPNOTSUPP);
 }

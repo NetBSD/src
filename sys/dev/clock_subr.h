@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.14 2006/03/11 15:40:07 kleink Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.15 2006/09/04 23:45:30 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -73,8 +73,6 @@ void	clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
  *
  * todr_gettime: convert time-of-day clock into a `struct timeval'
  * todr_settime: set time-of-day clock from a `struct timeval'
- * todr_getcal: get current TOD clock calibration value in ppm
- * todr_setcal: set calibration value in ppm in TOD clock
  *
  * (this is probably not so useful:)
  * todr_setwen: provide a machine-dependent TOD clock write-enable callback
@@ -89,16 +87,12 @@ struct todr_chip_handle {
 				volatile struct timeval *);
 	int	(*todr_settime)(struct todr_chip_handle *,
 				volatile struct timeval *);
-	int	(*todr_getcal)(struct todr_chip_handle *, int *);
-	int	(*todr_setcal)(struct todr_chip_handle *, int);
 	int	(*todr_setwen)(struct todr_chip_handle *, int);
 };
 typedef struct todr_chip_handle *todr_chip_handle_t;
 
 #define todr_gettime(ct, t)	((*(ct)->todr_gettime)(ct, t))
 #define todr_settime(ct, t)	((*(ct)->todr_settime)(ct, t))
-#define todr_getcal(ct, vp)	((*(ct)->todr_gettime)(ct, vp))
-#define todr_setcal(ct, v)	((*(ct)->todr_settime)(ct, v))
 #define todr_wenable(ct, v)	if ((ct)->todr_setwen) \
 					((*(ct)->todr_setwen)(ct, v))
 
