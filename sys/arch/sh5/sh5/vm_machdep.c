@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.13 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.14 2006/09/04 20:10:42 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.13 2005/12/11 12:19:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.14 2006/09/04 20:10:42 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ cpu_lwp_free(struct lwp *l, int proc)
 void
 cpu_exit(struct lwp *l)
 {
-	extern volatile void switch_exit(struct lwp *, void (*)(struct lwp *));
+	extern void switch_exit(struct lwp *, void (*)(struct lwp *));
 
 	(void) splhigh();
 	switch_exit(l, lwp_exit2);
