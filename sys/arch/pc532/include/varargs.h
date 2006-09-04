@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.15 2006/05/12 06:05:23 simonb Exp $	*/
+/*	$NetBSD: varargs.h,v 1.16 2006/09/04 01:04:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,16 +41,27 @@
 
 #include <machine/stdarg.h>
 
-#if __GNUC__ == 1
+#if !__GNUC_PREREQ__(2, 0)
 #define	__va_ellipsis
 #else
 #define	__va_ellipsis	...
 #endif
 
+#if __GNUC_PREREQ__(2, 96)
+#define	__va_alist_t	__builtin_va_alist_t
+#else
+#define	__va_alist_t	long
+#endif
+
 #define	va_alist	__builtin_va_alist
-#define	va_dcl		long __builtin_va_alist; __va_ellipsis
+#define	va_dcl		__va_alist_t __builtin_va_alist; __va_ellipsis
 
 #undef va_start
-#define	va_start(ap)	((ap) = (va_list)&__builtin_va_alist)
+#if __GNUC_PREREQ__(2, 96)
+#define	va_start(ap)	__builtin_varargs_start((ap))
+#else
+#define	va_start(ap) \
+	((ap) = (va_list)&__builtin_va_alist)
+#endif
 
 #endif /* !_PC532_VARARGS_H_ */
