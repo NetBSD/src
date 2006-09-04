@@ -1,4 +1,4 @@
-.\"     $NetBSD: resize_lfs.8,v 1.2 2005/04/25 11:47:37 wiz Exp $
+.\"     $NetBSD: resize_lfs.8,v 1.3 2006/09/04 15:45:29 riz Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl v
-.Op Fl n Ar new-size
+.Op Fl s Ar new-size
 .Ar mounted-file-system
 .Sh DESCRIPTION
 .Nm
@@ -73,7 +73,7 @@ will return an error.
 To resize the file system mounted at
 .Pa /home
 to 32576 sectors:
-.Dl resize_lfs -n 32576 /home
+.Dl resize_lfs -s 32576 /home
 .Sh SEE ALSO
 .Xr fsck_lfs 8 ,
 .Xr lfs_cleanerd 8 ,
