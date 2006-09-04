@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.6 2005/02/05 14:23:24 xtraeme Exp $	*/
+/*	$NetBSD: command.c,v 1.7 2006/09/04 01:20:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip A. Nelson.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: command.c,v 1.6 2005/02/05 14:23:24 xtraeme Exp $");
+__RCSID("$NetBSD: command.c,v 1.7 2006/09/04 01:20:14 simonb Exp $");
 #endif /* not lint */
 
 /*
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: command.c,v 1.6 2005/02/05 14:23:24 xtraeme Exp $");
 const struct command *find_entry(char *);
 void	help_cmds(void);
 int	parse(char *, char **);
-int	StrCmp(char *, char *);
+int	StrCmp(const char *, const char *);
 
 /* A pointer to a function to be called after every command.
    A NULL pointer says no function is to be executed.
@@ -202,7 +202,7 @@ find_entry(char *name)
  * proper substring of p2, and CMP_NOMATCH if neither.
  */
 int
-StrCmp(char *p1, char *p2)
+StrCmp(const char *p1, const char *p2)
 {
 	while (*p1 == *p2 && *p1 != '\0') {
 		++p1;
@@ -246,7 +246,7 @@ help_cmds(void)
 
 /* The default help routine.  This may be redefined by the user. */
 int 
-help(int num, char **args, char *syntax)
+help(int num, char **args, const char *syntax)
 {
 	const struct command *item;
 	int     idx;
