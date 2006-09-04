@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.169 2006/09/04 08:27:49 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.170 2006/09/04 08:38:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.169 2006/09/04 08:27:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.170 2006/09/04 08:38:16 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2604,7 +2604,7 @@ nfsrv_fhtovp(nsfh, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 int
 nfs_ispublicfh(const nfsrvfh_t *nsfh)
 {
-	const char *cp = (char *)(NFSRVFH_DATA(nsfh));
+	const char *cp = (const void *)(NFSRVFH_DATA(nsfh));
 	int i;
 
 	if (NFSRVFH_SIZE(nsfh) == 0) {
