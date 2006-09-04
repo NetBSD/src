@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.7 2006/09/04 06:45:14 dsl Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.8 2006/09/04 18:42:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,11 @@
 #include <util.h>
 #include "defs.h"
 
+#ifdef notyet
 #include <crc_extern.h>
+#else
+#define fprint_global(fp, name, value) 1
+#endif
 
 static int emitcnt(struct nvlist *);
 static int emitlocs(void);
@@ -95,9 +99,7 @@ mkheaders(void)
 	return (0);
 }
 
-#if 1
-#define fprint_global(fp, name, value) 1
-#else
+#ifdef notyet
 static int
 fprint_global(FILE *fp, const char *name, unsigned int value)
 {
