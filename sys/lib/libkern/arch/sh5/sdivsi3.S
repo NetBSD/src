@@ -1,4 +1,4 @@
-/*	$NetBSD: sdivsi3.S,v 1.2 2002/09/28 10:33:59 scw Exp $	*/
+/*	$NetBSD: sdivsi3.S,v 1.3 2006/09/04 20:44:48 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -74,6 +74,7 @@
  * Return result in r0
  */
 ENTRY(__sdivsi3)
+STRONG_ALIAS(__sdivsi3_1,__sdivsi3)
 	fmov.dq	dr0, r1			/* Preserve dr0 (fr0/fr1) in r1 */
 	fmov.dq	dr2, r2			/* Preserve dr2 (fr2/fr3) in r2 */
 	fgetscr	fr0			/* Fetch FPSCR */
