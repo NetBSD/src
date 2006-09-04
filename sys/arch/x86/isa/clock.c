@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2006/09/04 02:16:03 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 2006/09/04 03:07:52 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1 2006/09/04 02:16:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2006/09/04 03:07:52 perry Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -188,7 +188,7 @@ int clock_debug = 0;
 #define DPRINTF(arg)
 #endif
 
-static int	gettick(void);
+int		gettick(void);
 void		sysbeep(int, int);
 static void     tickle_tc(void);
 
@@ -453,7 +453,7 @@ i8254_get_timecount(struct timecounter *tc)
 	return (count);
 }
 
-static int
+int
 gettick(void)
 {
 	u_long flags;
