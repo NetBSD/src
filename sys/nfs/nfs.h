@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.59 2006/09/02 12:40:36 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.60 2006/09/04 08:27:49 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -493,7 +493,7 @@ typedef struct nfsrvfh {
 	} nsfh_u;
 } nfsrvfh_t;
 #define	NFSRVFH_SIZE(nsfh)	((nsfh)->nsfh_size)
-#define	NFSRVFH_DATA(nsfh)	((void *)(nsfh)->nsfh_u.u_opaque)
+#define	NFSRVFH_DATA(nsfh)	((nsfh)->nsfh_u.u_opaque)
 #define	NFSRVFH_FHANDLE(nsfh)	(&(nsfh)->nsfh_u.u_fh)
 
 /*
