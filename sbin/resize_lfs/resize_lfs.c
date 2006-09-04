@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_lfs.c,v 1.2 2005/06/02 01:16:06 lukem Exp $	*/
+/*	$NetBSD: resize_lfs.c,v 1.3 2006/09/04 18:34:22 wiz Exp $	*/
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -57,7 +57,7 @@
 static void
 usage(void)
 {
-	errx(1, "usage: resize_lfs [-v] [-s new-size] [filesystem]\n");
+	errx(1, "usage: resize_lfs [-v] [-s new-size] [filesystem]");
 }
 
 int
