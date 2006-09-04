@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2006/06/10 12:42:37 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 2006/09/04 20:31:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -34,21 +34,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2006/06/10 12:42:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3 2006/09/04 20:31:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>		/* time */
 
-#include <dev/clock_subr.h>
-
 #include <mips/locore.h>	/* mips3_cp0_count_read */
 
 #include <machine/sbdvar.h>
-
-static todr_chip_handle_t todr_handle;
-
-#define	MINYEAR		2005	/* "today" */
 
 void
 cpu_initclocks(void)
@@ -64,73 +58,6 @@ setstatclockrate(int arg)
 {
 
 	/* not yet */
-}
-
-/*
- * Common parts of todclock autoconfiguration.
- */
-void
-todr_attach(todr_chip_handle_t handle)
-{
-
-	if (todr_handle)
-		panic("todr_attach: too many todclocks configured");
-
-	todr_handle = handle;
-}
-
-void
-inittodr(time_t base)
-{
-	int badbase, waszero;
-
-	badbase = 0;
-	waszero = (base == 0);
-
-	if (base < 5 * SECYR) {
-		/*
-		 * If base is 0, assume filesystem time is just unknown
-		 * in stead of preposterous. Don't bark.
-		 */
-		if (base != 0)
-			printf("WARNING: preposterous time in file system\n");
-		/* not going to use it anyway, if the chip is readable */
-		/* 2005/10/01   12:00:00 */
-		base = 35*SECYR + 273*SECDAY + SECDAY/2;
-		badbase = 1;
-	}
-
-	if (todr_gettime(todr_handle, &time) != 0 || time.tv_sec == 0) {
-		printf("WARNING: bad date in battery clock");
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the clock.
-		 */
-		time.tv_sec = base;
-		if (!badbase)
-			resettodr();
-	} else {
-		int deltat = time.tv_sec - base;
-
-		if (deltat < 0)
-			deltat = -deltat;
-		if (waszero || deltat < 2 * SECDAY)
-			return;
-		printf("WARNING: clock %s %d days",
-		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
-	}
-	printf(" -- CHECK AND RESET THE DATE!\n");
-}
-
-void
-resettodr(void)
-{
-
-	if (time.tv_sec == 0)
-		return;
-
-	if (todr_settime(todr_handle, &time) != 0)
-		printf("resettodr: cannot set time in time-of-day clock\n");
 }
 
 /*
