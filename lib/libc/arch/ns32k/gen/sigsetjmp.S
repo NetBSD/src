@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.4 2004/12/14 11:14:45 simonb Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.5 2006/09/04 01:08:11 simonb Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -28,10 +28,10 @@
 #include <machine/jmpbuf.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sigsetjmp.S,v 1.4 2004/12/14 11:14:45 simonb Exp $")
+	RCSID("$NetBSD: sigsetjmp.S,v 1.5 2006/09/04 01:08:11 simonb Exp $")
 #endif
 
-ENTRY(sigsetjmp)
+ENTRY(__sigsetjmp14)
 	movd	4(sp),r2		/* jmp_buf */
 	movd	0(sp),JMP_BUF_PC(r2)	/* pc of caller */
 	movd	8(sp),r1		/* savemask */
@@ -39,6 +39,7 @@ ENTRY(sigsetjmp)
 	cmpqd	0,r1
 	beq	1f
 	movqd	0,tos
+	/* XXX should use __sigprocmask14(SIG_BLOCK, &set, NULL) XXX */
 	bsr	_C_LABEL(sigblock)
 	adjspb	-4
 	movd	4(sp),r2		/* jmp_buf */
@@ -57,12 +58,13 @@ ENTRY(sigsetjmp)
 	movqd	0,r0
 	ret	0
 
-ENTRY(siglongjmp)
+ENTRY(__siglongjmp14)
 	movd	4(sp),r2		/* jmp_buf */
 	cmpqd	0,JMP_BUF_SIGMASK+4(r2)
 	beq	1f
 
 	movd	JMP_BUF_SIGMASK(r2),tos /* restore mask */
+	/* XXX should use __sigprocmask14(SIG_SETMASK, &set, NULL) XXX */
 	bsr	_C_LABEL(sigsetmask)
 	adjspb	-4
 	movd	4(sp),r2		/* jmp_buf */
