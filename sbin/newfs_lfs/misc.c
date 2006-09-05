@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.5 2006/05/11 16:56:50 mrg Exp $	*/
+/*	$NetBSD: misc.c,v 1.6 2006/09/05 19:44:44 riz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,13 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.5 2006/05/11 16:56:50 mrg Exp $");
+__RCSID("$NetBSD: misc.c,v 1.6 2006/09/05 19:44:44 riz Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/types.h>
-#include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
