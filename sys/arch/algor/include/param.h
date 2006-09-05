@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6 2005/12/11 12:16:08 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.7 2006/09/05 01:33:24 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -131,9 +131,8 @@
 #ifdef _KERNEL
 #ifndef _LOCORE
 
-void	delay __P((int n));
-extern	int cpuspeed;
-#define	DELAY(n)	{ int N = cpuspeed * (n); while (--N > 0); }
+void	delay(int n);
+#define	DELAY	delay
 
 #include <machine/intr.h>
 
