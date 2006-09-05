@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.44 2005/12/24 22:45:40 perry Exp $	 */
+/*	$NetBSD: clock.c,v 1.45 2006/09/05 19:32:57 matt Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,14 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.44 2005/12/24 22:45:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.45 2006/09/05 19:32:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <dev/clock_subr.h>
 
 #include <machine/mtpr.h>
 #include <machine/sid.h>
@@ -50,14 +48,24 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.44 2005/12/24 22:45:40 perry Exp $");
 struct evcnt clock_intrcnt =
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "clock", "intr");
 
+EVCNT_ATTACH_STATIC(clock_intrcnt);
+
+static int vax_gettime(todr_chip_handle_t, volatile struct timeval *);
+static int vax_settime(todr_chip_handle_t, volatile struct timeval *);
+
+static struct todr_chip_handle todr_handle = {
+	.todr_gettime = vax_gettime,
+	.todr_settime = vax_settime,
+};
+
+
 /*
  * microtime() should return number of usecs in struct timeval.
  * We may get wrap-arounds, but that will be fixed with lasttime
  * check. This may fault within 10 msecs.
  */
 void
-microtime(tvp)
-	struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	int s, i;
 	static struct timeval lasttime;
@@ -101,69 +109,16 @@ microtime(tvp)
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
-	bcopy(tvp, &lasttime, sizeof(struct timeval));
+	lasttime = *tvp;
 	splx(s);
 }
 
-/*
- * Sets year to the year in fs_time and then calculates the number of
- * 100th of seconds in the current year and saves that info in year_len.
- * fs_time contains the time set in the superblock in the root filesystem.
- * If the clock is started, it then checks if the time is valid
- * compared with the time in fs_time. If the clock is stopped, an
- * alert is printed and the time is temporary set to the time in fs_time.
- */
-
-void
-inittodr(fs_time) 
-	time_t fs_time;
-{
-	int rv;
-
-	rv = (*dep_call->cpu_clkread) (fs_time);
-	switch (rv) {
-
-	case CLKREAD_BAD: /* No useable information from system clock */
-		time.tv_sec = fs_time;
-		resettodr();
-		break;
-
-	case CLKREAD_WARN: /* Just give the warning */
-		break;
-
-	default: /* System clock OK, no warning if we don't want to. */
-		if (time.tv_sec > fs_time + 3 * SEC_PER_DAY) {
-			printf("Clock has gained %ld days",
-			    (time.tv_sec - fs_time) / SEC_PER_DAY);
-			rv = CLKREAD_WARN;
-		} else if (time.tv_sec + SEC_PER_DAY < fs_time) {
-			printf("Clock has lost %ld day(s)",
-			    (fs_time - time.tv_sec) / SEC_PER_DAY);
-			rv = CLKREAD_WARN;
-		}
-		break;
-	}
-
-	if (rv < CLKREAD_OK)
-		printf(" - CHECK AND RESET THE DATE.\n");
-}
-
-/*   
- * Resettodr restores the time of day hardware after a time change.
- */
-
-void
-resettodr()
-{
-	(*dep_call->cpu_clkwrite)();
-}
 /*
  * A delayloop that delays about the number of milliseconds that is
  * given as argument.
  */
 void
-delay(i)
-	int i;
+delay(int i)
 {
 	__asm ("1: sobgtr %0, 1b" : : "r" (dep_call->cpu_vups * i));
 }
@@ -174,11 +129,25 @@ delay(i)
  * register but it doesn't hurt to load it anyway.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	mtpr(-10000, PR_NICR); /* Load in count register */
 	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
-	evcnt_attach_static(&clock_intrcnt);
+
+	todr_attach(&todr_handle);
+}
+
+int
+vax_gettime(todr_chip_handle_t handle, volatile struct timeval *tvp)
+{
+	return (*dep_call->cpu_gettime)(tvp);
+}
+
+int
+vax_settime(todr_chip_handle_t handle, volatile struct timeval *tvp)
+{
+	(*dep_call->cpu_settime)(tvp);
+	return 0;
 }
 
 /*
@@ -192,8 +161,7 @@ cpu_initclocks()
  * Converts a year to corresponding number of ticks.
  */
 int
-yeartonum(y)
-	int y;
+yeartonum(int y)
 {
 	int n;
 
@@ -206,8 +174,7 @@ yeartonum(y)
  * Converts tick number to a year 70 ->
  */
 int
-numtoyear(num)
-	int num;
+numtoyear(int num)
 {
 	int y = 70, j;
 	while(num >= (j = SECPERYEAR(y))) {
@@ -220,13 +187,12 @@ numtoyear(num)
 #if VAX750 || VAX780 || VAX8600 || VAX650 || \
     VAX660 || VAX670 || VAX680 || VAX53 || VAXANY
 /*
- * Reads the TODR register; returns a (probably) true tick value,
- * or CLKREAD_BAD if failed. The year is based on the argument
+ * Reads the TODR register; returns a (probably) true tick value, and 0 is
+ * success or EINVAL if failed.  The year is based on the argument
  * year; the TODR doesn't hold years.
  */
 int
-generic_clkread(base)
-	time_t base;
+generic_gettime(volatile struct timeval *tvp)
 {
 	unsigned klocka = mfpr(PR_TODR);
 
@@ -238,20 +204,20 @@ generic_clkread(base)
 			printf("TODR stopped");
 		else
 			printf("TODR too small");
-		return CLKREAD_BAD;
+		return EINVAL;
 	}
 
-	time.tv_sec = yeartonum(numtoyear(base)) + (klocka - TODRBASE) / 100;
-	return CLKREAD_OK;
+	tvp->tv_sec = yeartonum(numtoyear(tvp->tv_sec)) + (klocka - TODRBASE) / 100;
+	return 0;
 }
 
 /*
  * Takes the current system time and writes it to the TODR.
  */
 void
-generic_clkwrite()
+generic_settime(volatile struct timeval *tvp)
 {
-	unsigned tid = time.tv_sec, bastid;
+	unsigned tid = tvp->tv_sec, bastid;
 
 	bastid = tid - yeartonum(numtoyear(tid));
 	mtpr((bastid * 100) + TODRBASE, PR_TODR);
@@ -268,8 +234,7 @@ int	clk_tweak;	/* Offset of time into word. */
 #define	REGPOKE(off, v)	(clk_page[off << clk_adrshift] = ((v) << clk_tweak))
 
 int
-chip_clkread(base)
-	time_t base;
+chip_gettime(volatile struct timeval *tvp)
 {
 	struct clock_ymdhms c;
 	int timeout = 1<<15, s;
@@ -281,13 +246,14 @@ chip_clkread(base)
 
 	if ((REGPEEK(CSRD_OFF) & CSRD_VRT) == 0) {
 		printf("WARNING: TOY clock not marked valid");
-		return CLKREAD_BAD;
+		return EINVAL;
 	}
-	while (REGPEEK(CSRA_OFF) & CSRA_UIP)
+	while (REGPEEK(CSRA_OFF) & CSRA_UIP) {
 		if (--timeout == 0) {
 			printf ("TOY clock timed out");
-			return CLKREAD_BAD;
+			return ETIMEDOUT;
 		}
+	}
 
 	s = splhigh();
 	c.dt_year = ((u_char)REGPEEK(YR_OFF)) + 1970;
@@ -299,12 +265,13 @@ chip_clkread(base)
 	c.dt_sec = REGPEEK(SEC_OFF);
 	splx(s);
 
-	time.tv_sec = clock_ymdhms_to_secs(&c);
-	return CLKREAD_OK;
+	tvp->tv_sec = clock_ymdhms_to_secs(&c);
+	tvp->tv_usec = 0;
+	return 0;
 }
 
 void
-chip_clkwrite()
+chip_settime(volatile struct timeval *tvp)
 {
 	struct clock_ymdhms c;
 
@@ -315,7 +282,7 @@ chip_clkwrite()
 
 	REGPOKE(CSRB_OFF, CSRB_SET);
 
-	clock_secs_to_ymdhms(time.tv_sec, &c);
+	clock_secs_to_ymdhms(tvp->tv_sec, &c);
 
 	REGPOKE(YR_OFF, ((u_char)(c.dt_year - 1970)));
 	REGPOKE(MON_OFF, c.dt_mon);

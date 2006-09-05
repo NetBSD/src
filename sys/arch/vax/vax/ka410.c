@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.28 2005/12/24 22:45:40 perry Exp $ */
+/*	$NetBSD: ka410.c,v 1.29 2006/09/05 19:32:57 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka410.c,v 1.28 2005/12/24 22:45:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka410.c,v 1.29 2006/09/05 19:32:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -74,8 +74,8 @@ struct	cpu_dep ka410_calls = {
 	ka410_mchk,
 	ka410_memerr, 
 	ka410_conf,
-	chip_clkread,
-	chip_clkwrite,
+	chip_gettime,
+	chip_settime,
 	1,      /* ~VUPS */
 	2,	/* SCB pages */
 	ka410_halt,

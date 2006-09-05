@@ -1,4 +1,4 @@
-/*	$NetBSD: ka670.c,v 1.11 2005/12/11 12:19:36 christos Exp $	*/
+/*	$NetBSD: ka670.c,v 1.12 2006/09/05 19:32:57 matt Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka670.c,v 1.11 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka670.c,v 1.12 2006/09/05 19:32:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -65,8 +65,8 @@ struct	cpu_dep ka670_calls = {
 	ka670_mchk,
 	ka670_memerr,
 	ka670_conf,
-	generic_clkread,
-	generic_clkwrite,
+	generic_gettime,
+	generic_settime,
 	8,	/* 8 VUP */
 	2,	/* SCB pages */
 	generic_halt,

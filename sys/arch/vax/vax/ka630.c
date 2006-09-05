@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.26 2005/12/24 22:45:40 perry Exp $	*/
+/*	$NetBSD: ka630.c,v 1.27 2006/09/05 19:32:57 matt Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka630.c,v 1.26 2005/12/24 22:45:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka630.c,v 1.27 2006/09/05 19:32:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -64,8 +64,8 @@ struct	cpu_dep ka630_calls = {
 	ka630_mchk,
 	ka630_memerr,
 	ka630_conf,
-	chip_clkread,
-	chip_clkwrite,
+	chip_gettime,
+	chip_settime,
 	1,      /* ~VUPS */
 	2,	/* SCB pages */
 	ka630_halt,
