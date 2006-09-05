@@ -1,4 +1,4 @@
-/*	$NetBSD: dsclock_hpc.c,v 1.9 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: dsclock_hpc.c,v 1.10 2006/09/05 01:38:59 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsclock_hpc.c,v 1.9 2005/12/11 12:18:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsclock_hpc.c,v 1.10 2006/09/05 01:38:59 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -54,20 +54,19 @@ __KERNEL_RCSID(0, "$NetBSD: dsclock_hpc.c,v 1.9 2005/12/11 12:18:53 christos Exp
 struct dsclock_softc {
 	struct device sc_dev;
 
+	struct todr_chip_handle sc_todrch;
+
 	/* RTC registers */
 	bus_space_tag_t sc_rtct;
 	bus_space_handle_t sc_rtch;
 };
 
-static void	dsclock_init(struct device *);
 static int	dsclock_match(struct device *, struct cfdata *, void *);
 static void	dsclock_attach(struct device *, struct device *, void *);
-static void	dsclock_get(struct device *, struct clock_ymdhms *);
-static void	dsclock_set(struct device *, struct clock_ymdhms *);
-
-const struct clockfns dsclock_clockfns = {
-	dsclock_init, dsclock_get, dsclock_set,
-};
+static int	dsclock_gettime(struct todr_chip_handle *,
+    volatile struct timeval *);
+static int	dsclock_settime(struct todr_chip_handle *,
+    volatile struct timeval *);
 
 CFATTACH_DECL(dsclock, sizeof(struct dsclock_softc),
     dsclock_match, dsclock_attach, NULL, NULL);
@@ -105,21 +104,22 @@ dsclock_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	clockattach(&sc->sc_dev, &dsclock_clockfns);
-}
+	sc->sc_todrch.cookie = sc;
+	sc->sc_todrch.todr_gettime = dsclock_gettime;
+	sc->sc_todrch.todr_settime = dsclock_settime;
+	sc->sc_todrch.todr_setwen = NULL;
 
-static void
-dsclock_init(struct device *dev)
-{
+	todr_attach(&sc->sc_todrch);
 }
 
 /*
  * Get the time of day, based on the clock's value and/or the base value.
  */
-static void
-dsclock_get(struct device *dev, struct clock_ymdhms * dt)
+static int
+dsclock_gettime(struct todr_chip_handle *todrch, volatile struct timeval *tv)
 {
-	struct dsclock_softc *sc = (struct dsclock_softc *)dev;
+	struct dsclock_softc *sc = (struct dsclock_softc *)todrch->cookie;
+	struct clock_ymdhms dt;
 	ds1286_todregs regs;
 	int s;
 
@@ -127,58 +127,75 @@ dsclock_get(struct device *dev, struct clock_ymdhms * dt)
 	DS1286_GETTOD(sc, &regs)
 	splx(s);
 
-	dt->dt_sec = FROMBCD(regs[DS1286_SEC]);
-	dt->dt_min = FROMBCD(regs[DS1286_MIN]);
+	dt.dt_sec = FROMBCD(regs[DS1286_SEC]);
+	dt.dt_min = FROMBCD(regs[DS1286_MIN]);
 
 	if (regs[DS1286_HOUR] & DS1286_HOUR_12MODE) {
-		dt->dt_hour = FROMBCD(regs[DS1286_HOUR] & DS1286_HOUR_12HR_MASK) +
-			((regs[DS1286_HOUR] & DS1286_HOUR_12HR_PM) ? 12 : 0);
+		dt.dt_hour = FROMBCD(regs[DS1286_HOUR] & DS1286_HOUR_12HR_MASK) 
+			+ ((regs[DS1286_HOUR] & DS1286_HOUR_12HR_PM) ? 12 : 0);
 
 		/*
 		 * In AM/PM mode, hour range is 01-12, so adding in 12 hours
 		 * for PM gives us 01-24, whereas we want 00-23, so map hour
 		 * 24 to hour 0.
 		 */
-		if (dt->dt_hour == 24)
-			dt->dt_hour = 0;
+		if (dt.dt_hour == 24)
+			dt.dt_hour = 0;
 	} else {
-		 dt->dt_hour = FROMBCD(regs[DS1286_HOUR] & DS1286_HOUR_24HR_MASK);
+		 dt.dt_hour= FROMBCD(regs[DS1286_HOUR] & DS1286_HOUR_24HR_MASK);
 	}
 
-	dt->dt_wday = FROMBCD(regs[DS1286_DOW]);
-	dt->dt_day = FROMBCD(regs[DS1286_DOM]);
-	dt->dt_mon = FROMBCD(regs[DS1286_MONTH] & DS1286_MONTH_MASK);
-	dt->dt_year = FROM_IRIX_YEAR(FROMBCD(regs[DS1286_YEAR]));
+	dt.dt_wday = FROMBCD(regs[DS1286_DOW]);
+	dt.dt_day = FROMBCD(regs[DS1286_DOM]);
+	dt.dt_mon = FROMBCD(regs[DS1286_MONTH] & DS1286_MONTH_MASK);
+	dt.dt_year = FROM_IRIX_YEAR(FROMBCD(regs[DS1286_YEAR]));
+
+	/* simple sanity checks */
+	if (dt.dt_mon > 12 || dt.dt_day > 31 ||
+	    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 60)
+		return (EIO);
+
+	tv->tv_sec = (long)clock_ymdhms_to_secs(&dt);
+	if (tv->tv_sec == -1)
+		return (ERANGE);
+	tv->tv_usec = 0;
+
+	return (0);
 }
 
 /*
  * Reset the TODR based on the time value.
  */
-static void
-dsclock_set(struct device *dev, struct clock_ymdhms * dt)
+static int
+dsclock_settime(struct todr_chip_handle *todrch, volatile struct timeval *tv)
 {
-	struct dsclock_softc *sc = (struct dsclock_softc *)dev;
+	struct dsclock_softc *sc = (struct dsclock_softc *)todrch->cookie;
+	struct clock_ymdhms dt;
 	ds1286_todregs regs;
 	int s;
+
+	clock_secs_to_ymdhms((time_t)(tv->tv_sec + (tv->tv_usec > 500000)),&dt);
 
 	s = splhigh();
 	DS1286_GETTOD(sc, &regs);
 	splx(s);
 
 	regs[DS1286_SUBSEC] = 0;
-	regs[DS1286_SEC] = TOBCD(dt->dt_sec);
-	regs[DS1286_MIN] = TOBCD(dt->dt_min);
-	regs[DS1286_HOUR] = TOBCD(dt->dt_hour) & DS1286_HOUR_24HR_MASK;
-	regs[DS1286_DOW] = TOBCD(dt->dt_wday);
-	regs[DS1286_DOM] = TOBCD(dt->dt_day);
+	regs[DS1286_SEC] = TOBCD(dt.dt_sec);
+	regs[DS1286_MIN] = TOBCD(dt.dt_min);
+	regs[DS1286_HOUR] = TOBCD(dt.dt_hour) & DS1286_HOUR_24HR_MASK;
+	regs[DS1286_DOW] = TOBCD(dt.dt_wday);
+	regs[DS1286_DOM] = TOBCD(dt.dt_day);
 
 	/* Leave wave-generator bits as set originally */
 	regs[DS1286_MONTH] &=  ~DS1286_MONTH_MASK;
-	regs[DS1286_MONTH] |=  TOBCD(dt->dt_mon) & DS1286_MONTH_MASK;
+	regs[DS1286_MONTH] |=  TOBCD(dt.dt_mon) & DS1286_MONTH_MASK;
 
-	regs[DS1286_YEAR] = TOBCD(TO_IRIX_YEAR(dt->dt_year));
+	regs[DS1286_YEAR] = TOBCD(TO_IRIX_YEAR(dt.dt_year));
 
 	s = splhigh();
 	DS1286_PUTTOD(sc, &regs);
 	splx(s);
+
+	return (0);
 }
