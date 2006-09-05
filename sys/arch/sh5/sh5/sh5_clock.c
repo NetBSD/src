@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_clock.c,v 1.9 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: sh5_clock.c,v 1.10 2006/09/05 07:34:54 gdamore Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh5_clock.c,v 1.9 2005/12/11 12:19:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh5_clock.c,v 1.10 2006/09/05 07:34:54 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,8 +101,6 @@ static struct evcnt clock_hardcnt;
 static struct evcnt clock_statcnt;
 
 static struct clock_attach_args *clock_args;
-static todr_chip_handle_t todr_handle;
-
 
 /*
  * Common parts of clock autoconfiguration
@@ -119,16 +117,6 @@ clock_config(struct device *dev, struct clock_attach_args *ca, struct evcnt *ev)
 	if (clock_args->ca_has_stat_clock)
 		evcnt_attach_dynamic(&clock_statcnt, EVCNT_TYPE_INTR, ev,
 		    dev->dv_xname, "statcnt");
-}
-
-void
-todr_attach(todr_chip_handle_t todr)
-{
-
-	if (todr_handle)
-		panic("todr_attach: rtc already configured");
-
-	todr_handle = todr;
 }
 
 /*
@@ -243,78 +231,4 @@ microtime(struct timeval *tvp)
 	}
 	lasttime = *tvp;
 	splx(s);
-}
-
-/*
- * Set up the system's time, given a `reasonable' time value.
- */
-void
-inittodr(time_t base)
-{
-        int badbase = 0, waszero = (base == 0);
-	struct timeval thetime;
-
-	if (todr_handle == NULL)
-		panic("inittodr: todr not configured");
-
-        if (base < 5 * SECYR) {
-                /*
-                 * If base is 0, assume filesystem time is just unknown
-                 * in stead of preposterous. Don't bark.
-                 */
-                if (base != 0)
-                        printf("WARNING: preposterous time in file system\n");
-                /* not going to use it anyway, if the chip is readable */
-                base = 21*SECYR + 186*SECDAY + SECDAY/2;
-                badbase = 1;
-        }
-
-        if (todr_gettime(todr_handle, &thetime) != 0 ||
-            thetime.tv_sec == 0) {
-badrtc:
-                printf("WARNING: bad date in battery clock");
-                /*
-                 * Believe the time in the file system for lack of
-                 * anything better, resetting the clock.
-                 */
-                time.tv_sec = base;
-		time.tv_usec = 0;
-                if (!badbase)
-                        resettodr();
-        } else {
-                int deltat = thetime.tv_sec - base;
-
-                if (deltat < 0)
-                        deltat = -deltat;
-                if (waszero || deltat < 2 * SECDAY)
-                        return;
-		if (deltat > 50 * SECDAY)
-			goto badrtc;
-
-                printf("WARNING: clock %s %d days",
-                    thetime.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
-
-		time = thetime;
-        }
-        printf(" -- CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * Reset the clock based on the current time.
- * Used when the current clock is preposterous, when the time is changed,
- * and when rebooting.  Do nothing if the time is not yet known, e.g.,
- * when crashing during autoconfig.
- */
-void
-resettodr(void)
-{
-	struct timeval thetime;
-
-        if (!time.tv_sec)
-                return;
-
-	thetime = time;
-
-        if (todr_settime(todr_handle, &thetime) != 0)
-                printf("resettodr: failed to set time\n");
 }
