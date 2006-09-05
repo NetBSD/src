@@ -1,4 +1,4 @@
-/*	$NetBSD: a34kbbc.c,v 1.16 2005/12/30 16:12:11 is Exp $ */
+/*	$NetBSD: a34kbbc.c,v 1.17 2006/09/05 05:32:30 mhitch Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.16 2005/12/30 16:12:11 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.17 2006/09/05 05:32:30 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -101,8 +101,9 @@ CFATTACH_DECL(a34kbbc, sizeof(struct device),
     a34kbbc_match, a34kbbc_attach, NULL, NULL);
 
 void *a34kclockaddr;
-int a34kugettod(struct timeval *);
-int a34kusettod(struct timeval *);
+int a34kugettod(todr_chip_handle_t, volatile struct timeval *);
+int a34kusettod(todr_chip_handle_t, volatile struct timeval *);
+static struct todr_chip_handle a34ktodr;
 
 int
 a34kbbc_match(struct device *pdp, struct cfdata *cfp, void *auxp)
@@ -120,7 +121,7 @@ a34kbbc_match(struct device *pdp, struct cfdata *cfp, void *auxp)
 		return(0);
 
 	a34kclockaddr = (void *)__UNVOLATILE(ztwomap(0xdc0000));
-	if (a34kugettod(0) == 0)
+	if (a34kugettod(&a34ktodr, 0) != 0)
 		return(0);
 
 	a34kbbc_matched = 1;
@@ -136,12 +137,14 @@ a34kbbc_attach(struct device *pdp, struct device *dp, void *auxp)
 	printf("\n");
 	a34kclockaddr = (void *)__UNVOLATILE(ztwomap(0xdc0000));
 
-	ugettod = a34kugettod;
-	usettod = a34kusettod;
+	a34ktodr.cookie = a34kclockaddr;
+	a34ktodr.todr_gettime = a34kugettod;
+	a34ktodr.todr_settime = a34kusettod;
+	todr_attach(&a34ktodr);
 }
 
 int
-a34kugettod(struct timeval *tvp)
+a34kugettod(todr_chip_handle_t h, volatile struct timeval *tvp)
 {
 	struct rtclock3000 *rt;
 	struct clock_ymdhms dt;
@@ -179,11 +182,11 @@ a34kugettod(struct timeval *tvp)
 	secs = clock_ymdhms_to_secs(&dt);
 	if (tvp)
 		tvp->tv_sec = secs;
-	return (1);
+	return (0);
 }
 
 int
-a34kusettod(struct timeval *tvp)
+a34kusettod(todr_chip_handle_t h, volatile struct timeval *tvp)
 {
 	struct rtclock3000 *rt;
 	struct clock_ymdhms dt;
@@ -197,7 +200,7 @@ a34kusettod(struct timeval *tvp)
 	 */
 
 	if (! rt)
-		return (0);
+		return (1);
 
 	clock_secs_to_ymdhms(secs, &dt);
 
@@ -219,5 +222,5 @@ a34kusettod(struct timeval *tvp)
 	rt->leapyear = dt.dt_year; 		/* XXX implicit % 4 */
 	rt->control1 = A3CONTROL1_FREE_CLOCK;		/* implies mode 1 */
 
-	return (1);
+	return (0);
 }
