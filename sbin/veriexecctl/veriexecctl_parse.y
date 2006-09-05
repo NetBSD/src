@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.15 2006/07/14 23:00:09 elad Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.16 2006/09/05 13:02:16 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -65,13 +65,13 @@ statement	:	/* empty */
 		|	statement path type fingerprint flags eol {
 	struct stat sb;
 	struct veriexec_up *p;
+	struct statvfs sf;
 
 	if (phase == 2) {
 		phase2_load();
 		goto phase_2_end;
 	}
 
-#if 1
 	if (stat(params.file, &sb) == -1) {
 		warnx("Line %lu: Can't stat `%s'",
 		    (unsigned long)line, params.file);
@@ -84,23 +84,21 @@ statement	:	/* empty */
 		    (unsigned long)line, params.file);
 		goto phase_2_end;
 	}
-#endif
 
-	/* if ((p = dev_lookup(sb.st_dev)) != NULL) { */
-	if ((p = dev_lookup(params.file)) != NULL) {
+	if (statvfs(params.file, &sf) == -1)
+		err(1, "Cannot statvfs `%s'", params.file);
+
+	if ((p = dev_lookup(sf.f_mntonname)) != NULL) {
 	    (p->vu_param.hash_size)++;
 	    goto phase_2_end;
 	}
 
 	if (verbose) {
-		struct statvfs sf;
-		if (statvfs(params.file, &sf) == -1)
-			err(1, "Cannot statvfs `%s'", params.file);
-
-		(void)printf( " => Adding mount `%s'.\n",
-		    sf.f_mntonname);
+		(void)printf( " => Adding mount `%s'.\n", sf.f_mntonname);
 	}
-	dev_add(params.file);
+
+	dev_add(sf.f_mntonname);
+
 phase_2_end:
 	(void)memset(&params, 0, sizeof(params));
 }
