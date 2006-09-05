@@ -1,4 +1,4 @@
-/*	$NetBSD: ka88.c,v 1.9 2005/12/24 22:45:40 perry Exp $	*/
+/*	$NetBSD: ka88.c,v 1.10 2006/09/05 19:32:57 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.9 2005/12/24 22:45:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.10 2006/09/05 19:32:57 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -69,8 +69,8 @@ static void ka88_memerr(void);
 static void ka88_conf(void);
 static int ka88_mchk(caddr_t);
 static void ka88_steal_pages(void);
-static int ka88_clkread(time_t);
-static void ka88_clkwrite(void);
+static int ka88_gettime(volatile struct timeval *);
+static void ka88_settime(volatile struct timeval *);
 static void ka88_badaddr(void);
 #if defined(MULTIPROCESSOR)
 static void ka88_startslave(struct device *, struct cpu_info *);
@@ -91,8 +91,8 @@ struct	cpu_dep ka88_calls = {
 	ka88_mchk,
 	ka88_memerr,
 	ka88_conf,
-	ka88_clkread,
-	ka88_clkwrite,
+	ka88_gettime,
+	ka88_settime,
 	6,	/* ~VUPS */
 	64,	/* SCB pages */
 	0,
@@ -288,7 +288,7 @@ fromcons(int func)
 }
 
 static int
-ka88_clkread(time_t base)
+ka88_gettime(volatile struct timeval *tvp)
 {
 	union {u_int ret;u_char r[4];} u;
 	int i, s = splhigh();
@@ -298,16 +298,17 @@ ka88_clkread(time_t base)
 		u.r[i] = fromcons(KA88_TOY) & 255;
 	}
 	splx(s);
-	return u.ret;
+	tvp->tv_sec = u.ret;
+	return 0;
 }
 
 static void
-ka88_clkwrite(void)
+ka88_settime(volatile struct timeval *tvp)
 {
 	union {u_int ret;u_char r[4];} u;
 	int i, s = splhigh();
 
-	u.ret = time.tv_sec - yeartonum(numtoyear(time.tv_sec));
+	u.ret = tvp->tv_sec - yeartonum(numtoyear(tvp->tv_sec));
 	tocons(KA88_COMM|KA88_TOYWRITE);
 	for (i = 0; i < 4; i++)
 		tocons(KA88_TOY|u.r[i]);

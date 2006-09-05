@@ -1,4 +1,4 @@
-/*	$NetBSD: ka53.c,v 1.12 2005/12/24 22:45:40 perry Exp $	*/
+/*	$NetBSD: ka53.c,v 1.13 2006/09/05 19:32:57 matt Exp $	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka53.c,v 1.12 2005/12/24 22:45:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka53.c,v 1.13 2006/09/05 19:32:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,8 +67,8 @@ struct cpu_dep ka53_calls = {
 	ka53_mchk,
 	ka53_memerr, 
 	ka53_conf,
-	generic_clkread,
-	generic_clkwrite,
+	generic_gettime,
+	generic_settime,
 	32,	 /* ~VUPS */
 	2,	/* SCB pages */
 	generic_halt,

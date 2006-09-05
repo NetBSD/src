@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.73 2006/03/28 17:25:11 thorpej Exp $      */
+/*      $NetBSD: cpu.h,v 1.74 2006/09/05 19:32:57 matt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -73,14 +73,16 @@
  */
 struct cpu_info;
 
-struct	cpu_dep {
+struct cpu_dep {
 	void	(*cpu_steal_pages)(void); /* pmap init before mm is on */
 	int	(*cpu_mchk)(caddr_t);   /* Machine check handling */
 	void	(*cpu_memerr)(void); /* Memory subsystem errors */
 	    /* Autoconfiguration */
 	void	(*cpu_conf)(void);
-	int	(*cpu_clkread)(time_t);	/* Read cpu clock time */
-	void	(*cpu_clkwrite)(void);	/* Write system time to cpu */
+	int	(*cpu_gettime)(volatile struct timeval *);
+						/* Read cpu clock time */
+	void	(*cpu_settime)(volatile struct timeval *);
+						/* Write system time to cpu */
 	short	cpu_vups;	/* speed of cpu */
 	short	cpu_scbsz;	/* (estimated) size of system control block */
 	void	(*cpu_halt)(void); /* Cpu dependent halt call */
