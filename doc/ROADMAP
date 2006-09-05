@@ -1,4 +1,4 @@
-#	$NetBSD: ROADMAP,v 1.9 2006/07/05 14:41:13 hubertf Exp $
+#	$NetBSD: ROADMAP,v 1.10 2006/09/05 00:43:44 rpaulo Exp $
 
 A high-level roadmap for NetBSD
 
@@ -171,9 +171,11 @@ ao. Review TCP/IP developments
     Add SACK support to the kernel.
 	Responsible: kurahone
 	ETA: (3.0)
-    Look into RFC3168 (ECN, http://www.icir.org/floyd/ecn.html) and
-    other "recent" and current TCP/IP research.  Adapt our stack to the
-    more modern world.
+    Add ECN support to the kernel.
+	Responsible: rpaulo
+	ETA: 5.0
+    Look into other "recent" and current TCP/IP research. Adapt our stack
+    to the more modern world.
 	Responsible: TBD
 	ETA: ?
 
