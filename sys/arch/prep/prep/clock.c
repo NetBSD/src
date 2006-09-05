@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17 2006/06/20 05:49:09 garbled Exp $	*/
+/*	$NetBSD: clock.c,v 1.18 2006/09/05 06:32:22 garbled Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17 2006/06/20 05:49:09 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18 2006/09/05 06:32:22 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -43,11 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17 2006/06/20 05:49:09 garbled Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <dev/clock_subr.h>
-
 #include <powerpc/spr.h>
-
-#define	MINYEAR	1990
 
 void decr_intr(struct clockframe *);
 void init_prep_tc(void);
@@ -57,11 +53,6 @@ u_long ticks_per_sec;
 u_long ns_per_tick;
 static long ticks_per_intr;
 
-struct device *clockdev;
-const struct clockfns *clockfns;
-
-static todr_chip_handle_t todr_handle;
-
 static struct timecounter prep_timecounter = {
 	get_prep_timecount,	/* get_timecount */
 	0,			/* no poll_pps */
@@ -70,16 +61,6 @@ static struct timecounter prep_timecounter = {
 	"prep_mftb",		/* name */
 	0			/* quality */
 };
-
-void
-todr_attach(todr_chip_handle_t handle)
-{
-
-	if (todr_handle)
-		panic("todr_attach: to many todclock configured");
-
-	todr_handle = handle;
-}
 
 /*
  * Start the real-time and statistics clocks. Leave stathz 0 since there
@@ -98,86 +79,6 @@ cpu_initclocks(void)
 		__asm volatile ("mftb %0" : "=r"(ci->ci_lasttb));
 	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 	init_prep_tc();
-}
-
-/*
- * Initialize the time of day register, based on the time base which is, e.g.
- * from a filesystem.
- */
-void
-inittodr(time_t base)
-{
-	int badbase, waszero;
-	struct timeval time;
-	struct timespec ts;
-
-	badbase = 0;
-	waszero = (base == 0);
-	time.tv_sec = 0;
-	time.tv_usec = 0;
-
-	if (base < (MINYEAR - 1970) * SECYR) {
-		if (base != 0)
-			printf("WARNING: preposterous time in file system\n");
-		/* read the system clock anyway */
-		base = (MINYEAR - 1970) * SECYR + 186 * SECDAY + SECDAY / 2;
-		badbase = 1;
-	}
-
-	if (todr_gettime(todr_handle, &time) != 0 ||
-	    time.tv_sec == 0) {
-		printf("WARNING: bad date in battery clock");
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the clock.
-		 */
-		ts.tv_sec = base;
-		ts.tv_nsec = 0;
-		tc_setclock(&ts);
-
-		if (!badbase)
-			resettodr();
-	} else {
-		/*
-		 * See if we gained/lost two or more days;
-		 * if so, assume something is amiss.
-		 */
-		int deltat = time.tv_sec - base;
-
-		ts.tv_sec = time.tv_sec;
-		ts.tv_nsec = time.tv_usec * 1000;
-		tc_setclock(&ts);
-
-		if (deltat < 0)
-			deltat = -deltat;
-		if (waszero || deltat < 2 * SECDAY)
-			return;
-
-		printf("WARNING: clock %s %d days",
-		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
-	}
-	printf(" -- CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * Reset the TODR based on the time value; used when the TODR
- * has a preposterous value and also when the time is reset
- * by the stime system call.  Also called when the TODR goes past
- * TODRZERO + 100*(SECYEAR+2*SECDAY) (e.g. on Jan 2 just after midnight)
- * to wrap the TODR around.
- */
-void
-resettodr(void)
-{
-	struct timeval time;
-
-	getmicrotime(&time);
-
-	if (time.tv_sec == 0)
-		return;
-
-	if (todr_settime(todr_handle, &time) != 0)
-		printf("resettodr: cannot set time in time-of-day clock\n");
 }
 
 /*
