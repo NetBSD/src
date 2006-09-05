@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.8 2006/05/11 16:56:50 mrg Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.9 2006/09/05 19:44:44 riz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -69,13 +69,12 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.8 2006/05/11 16:56:50 mrg Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.9 2006/09/05 19:44:44 riz Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#define FSTYPENAMES
-#include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <sys/time.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
@@ -318,7 +317,7 @@ make_dir(void *bufp, struct direct *protodir, int entries)
 }
 
 int
-make_lfs(int devfd, uint secsize, struct partition *partp, int minfree,
+make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	 int block_size, int frag_size, int seg_size, int minfreeseg,
 	 int resvseg, int version, daddr_t start, int ibsize, int interleave,
 	 u_int32_t roll_id)
@@ -351,7 +350,7 @@ make_lfs(int devfd, uint secsize, struct partition *partp, int minfree,
 	 * Initialize buffer cache.  Use a ballpark guess of the length of
 	 * the segment table for the number of hash chains.
 	 */
-	tnseg = partp->p_size / ((seg_size ? seg_size : DFL_LFSSEG) / secsize);
+	tnseg = dkw->dkw_size / ((seg_size ? seg_size : DFL_LFSSEG) / secsize);
 	tsepb = (block_size ? block_size : DFL_LFSBLOCK) / sizeof(SEGSUM);
 	if (tnseg == 0)
 		fatal("zero size partition");
@@ -370,24 +369,17 @@ make_lfs(int devfd, uint secsize, struct partition *partp, int minfree,
 	fs->lfs_version = version;
 
 	/* If partition is not an LFS partition, warn that that is the case */
-	if(partp->p_fstype != FS_BSDLFS) {
-		fatal("partition label indicated fs type \"%s\", expected \"%s\"",
-		      fstypenames[partp->p_fstype], fstypenames[FS_BSDLFS]);
+	if (strcmp(dkw->dkw_ptype, DKW_PTYPE_LFS) != 0) {
+		fatal("partition label indicated fs type \"%s\", "
+		    "expected \"%s\"", dkw->dkw_ptype, DKW_PTYPE_LFS);
 	}
 
 	if (!(bsize = block_size))
-		if (!(bsize = partp->p_fsize * partp->p_frag))
-			bsize = DFL_LFSBLOCK;
+		bsize = DFL_LFSBLOCK;
 	if (!(fsize = frag_size))
-		if (!(fsize = partp->p_fsize))
-			fsize = DFL_LFSFRAG;
+		fsize = DFL_LFSFRAG;
 	if (!(ssize = seg_size)) {
 		ssize = DFL_LFSSEG;
-		if (partp->p_sgs == 0 ||
-		    !(ssize = (partp->p_fsize * partp->p_frag) << partp->p_sgs))
-		{
-			ssize = DFL_LFSSEG;
-		}
 	}
 	if (version > 1) {
 		if (ibsize == 0)
@@ -412,7 +404,7 @@ make_lfs(int devfd, uint secsize, struct partition *partp, int minfree,
 		      progname, ssize, DFL_LFSSEG);
 		ssize = DFL_LFSSEG;
 	}
-	if (start < 0 || start >= partp->p_size)
+	if (start < 0 || start >= dkw->dkw_size)
 		fatal("filesystem offset %ld out of range", (long)start);
 	if (version == 1) {
 		if (start)
@@ -488,13 +480,13 @@ make_lfs(int devfd, uint secsize, struct partition *partp, int minfree,
 	if (version == 1) {
 		fs->lfs_sushift = lfs_log2(fs->lfs_sepb);
 		fs->lfs_fsbtodb = 0;
-		fs->lfs_size = partp->p_size >> fs->lfs_blktodb;
+		fs->lfs_size = dkw->dkw_size >> fs->lfs_blktodb;
 	}
 	label_fsb = btofsb(fs, roundup(LFS_LABELPAD, fsize));
 	sb_fsb = btofsb(fs, roundup(LFS_SBPAD, fsize));
 	fs->lfs_fsbpseg = dbtofsb(fs, ssize / secsize);
-	fs->lfs_size = partp->p_size >> fs->lfs_fsbtodb;
-	fs->lfs_dsize = dbtofsb(fs, partp->p_size) -
+	fs->lfs_size = dkw->dkw_size >> fs->lfs_fsbtodb;
+	fs->lfs_dsize = dbtofsb(fs, dkw->dkw_size) -
 		MAX(label_fsb, dbtofsb(fs, start));
 	fs->lfs_nseg = fs->lfs_dsize / segtod(fs, 1);
 
@@ -606,7 +598,7 @@ make_lfs(int devfd, uint secsize, struct partition *partp, int minfree,
 		if (fs->lfs_version > 1 && fs->lfs_start < label_fsb)
 			sb_addr -= label_fsb - start;
 		if (sb_addr + sizeof(struct dlfs)
-		    >= dbtofsb(fs, partp->p_size))
+		    >= dbtofsb(fs, dkw->dkw_size))
 			break;
 		fs->lfs_sboffs[i] = sb_addr;
 		fs->lfs_dsize -= sb_fsb;
