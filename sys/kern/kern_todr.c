@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.4 2006/09/03 17:13:04 gdamore Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.5 2006/09/05 19:32:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.4 2006/09/03 17:13:04 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.5 2006/09/05 19:32:17 matt Exp $");
 
 #include <sys/param.h>
 
@@ -112,7 +112,7 @@ static int timeset = 0;
 void
 inittodr(time_t base)
 {
-	int badbase = 0, waszero = base == 0, goodtime = 0, badrtc = 0;
+	int badbase = 0, waszero = (base == 0), goodtime = 0, badrtc = 0;
 #ifdef	__HAVE_TIMECOUNTER
 	struct timespec ts;
 #endif
@@ -137,6 +137,12 @@ inittodr(time_t base)
 		base = clock_ymdhms_to_secs(&basedate);
 		badbase = 1;
 	}
+
+	/*
+	 * Some ports need to be supplied base in order to fabricate a time_t.
+	 */
+	tv.tv_sec = base;
+	tv.tv_usec = 0;
 
 	if ((todr_handle == NULL) ||
 	    (todr_gettime(todr_handle, &tv) != 0) ||
@@ -199,9 +205,7 @@ inittodr(time_t base)
 	if (waszero || goodtime)
 		return;
 
-
 	printf("WARNING: CHECK AND RESET THE DATE!\n");
-
 }
 
 /*
