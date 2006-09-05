@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.5 2006/01/20 22:02:40 christos Exp $	*/
+/*	$NetBSD: asm.h,v 1.6 2006/09/05 19:00:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -120,5 +120,27 @@
 	.stabs msg,30,0,0,0 ;						\
 	.stabs __STRING(sym),1,0,0,0
 #endif /* __STDC__ */
+
+/*
+ * Assembley equivalent of spllower().  Label contains the label to jump to
+ * if we need to fire off pending interrupts (e.g. _C_LABEL(Xspllower)).
+ *
+ * On entry %rcx = new SPL.
+ */
+#define	SPLLOWER(label)						\
+	movq		CPUVAR(SELF), %r9 ;			\
+	cmpl		CPU_INFO_ILEVEL(%r9), %ecx ;		\
+	jae		99f ;					\
+	movl		CPU_INFO_IUNMASK(%r9,%rcx,4), %edi ;	\
+	pushfq		;					\
+	popq		%rax ;					\
+	cli		;					\
+	testl		CPU_INFO_IPENDING(%r9), %edi ;		\
+	movq		%rcx, %rdi ;				\
+	jnz		label ;					\
+	movl		%ecx, CPU_INFO_ILEVEL(%r9) ;		\
+	pushq		%rax ;					\
+	popfq		;					\
+99:
 
 #endif /* !_AMD64_ASM_H_ */
