@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.198 2006/04/15 02:30:39 christos Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.199 2006/09/05 00:29:36 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.198 2006/04/15 02:30:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.199 2006/09/05 00:29:36 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -184,6 +184,7 @@ int	tcp_do_win_scale = 1;	/* RFC1323 window scaling */
 int	tcp_do_timestamps = 1;	/* RFC1323 timestamps */
 int	tcp_do_newreno = 1;	/* Use the New Reno algorithms */
 int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
+int	tcp_do_ecn = 0;		/* Explicit Congestion Notification */
 #ifndef TCP_INIT_WIN
 #define	TCP_INIT_WIN	0	/* initial slow start window */
 #endif
@@ -204,6 +205,7 @@ int	tcp_do_loopback_cksum = 0;
 int	tcp_sack_tp_maxholes = 32;
 int	tcp_sack_globalmaxholes = 1024;
 int	tcp_sack_globalholes = 0;
+int	tcp_ecn_maxretries = 1;
 
 
 /* tcb hash */
