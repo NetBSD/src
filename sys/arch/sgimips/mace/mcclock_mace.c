@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.4 2005/12/11 12:18:54 christos Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.5 2006/09/05 01:38:59 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.4 2005/12/11 12:18:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.5 2006/09/05 01:38:59 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.4 2005/12/11 12:18:54 christos Ex
 struct mcclock_mace_softc {
 	struct device		sc_dev;
 
+	struct todr_chip_handle sc_todrch;
+
 	bus_space_tag_t		sc_st;
 	bus_space_handle_t	sc_sh;
 };
@@ -96,16 +98,13 @@ struct mcclock_mace_softc {
 static int	mcclock_mace_match(struct device *, struct cfdata *, void *);
 static void	mcclock_mace_attach(struct device*, struct device *, void *);
 
-static void	mcclock_mace_init(struct device *);
-static void	mcclock_mace_get(struct device *, struct clock_ymdhms *);
-static void	mcclock_mace_set(struct device *, struct clock_ymdhms *);
+static int	mcclock_mace_gettime(struct todr_chip_handle *,
+    volatile struct timeval *);
+static int	mcclock_mace_settime(struct todr_chip_handle *,
+    volatile struct timeval *);
 
 unsigned int	ds1687_read(void *arg, unsigned int addr);
 void		ds1687_write(void *arg, unsigned int addr, unsigned int data);
-
-const struct clockfns mcclock_mace_clockfns = {
-	mcclock_mace_init, mcclock_mace_get, mcclock_mace_set
-};
 
 CFATTACH_DECL(mcclock_mace, sizeof(struct mcclock_mace_softc),
     mcclock_mace_match, mcclock_mace_attach, NULL, NULL);
@@ -143,7 +142,13 @@ mcclock_mace_attach(struct device *parent, struct device *self, void *aux)
 		printf(": lithium cell is dead, RTC unreliable");
 
 	printf("\n");
-	clockattach(&sc->sc_dev, &mcclock_mace_clockfns);
+
+	sc->sc_todrch.cookie = sc;
+	sc->sc_todrch.todr_gettime = mcclock_mace_gettime;
+	sc->sc_todrch.todr_settime = mcclock_mace_settime;
+	sc->sc_todrch.todr_setwen = NULL;
+
+	todr_attach(&sc->sc_todrch);
 }
 
 /*
@@ -166,17 +171,13 @@ ds1687_write(void *arg, unsigned int addr, unsigned int data)
 	bus_space_write_1(sc->sc_st, sc->sc_sh, addr, data);
 }
 
-static void
-mcclock_mace_init(struct device *dev)
+static int
+mcclock_mace_gettime(struct todr_chip_handle *todrch,
+    volatile struct timeval *tv)
 {
-
-	return;
-}
-
-static void
-mcclock_mace_get(struct device *dev, struct clock_ymdhms *dt)
-{
-	struct mcclock_mace_softc *sc = (struct mcclock_mace_softc *)dev;
+	struct mcclock_mace_softc *sc =
+	    (struct mcclock_mace_softc *)todrch->cookie;
+	struct clock_ymdhms dt;
 	ds1687_todregs regs;
 	int s;
 
@@ -184,34 +185,53 @@ mcclock_mace_get(struct device *dev, struct clock_ymdhms *dt)
 	DS1687_GETTOD(sc, &regs);
 	splx(s);
 
-	dt->dt_sec = FROMBCD(regs[DS1687_SOFT_SEC]);
-	dt->dt_min = FROMBCD(regs[DS1687_SOFT_MIN]);
-	dt->dt_hour = FROMBCD(regs[DS1687_SOFT_HOUR]);
-	dt->dt_wday = FROMBCD(regs[DS1687_SOFT_DOW]);
-	dt->dt_day = FROMBCD(regs[DS1687_SOFT_DOM]);
-	dt->dt_mon = FROMBCD(regs[DS1687_SOFT_MONTH]);
-	dt->dt_year = FROMBCD(regs[DS1687_SOFT_YEAR]) +
+	dt.dt_sec = FROMBCD(regs[DS1687_SOFT_SEC]);
+	dt.dt_min = FROMBCD(regs[DS1687_SOFT_MIN]);
+	dt.dt_hour = FROMBCD(regs[DS1687_SOFT_HOUR]);
+	dt.dt_wday = FROMBCD(regs[DS1687_SOFT_DOW]);
+	dt.dt_day = FROMBCD(regs[DS1687_SOFT_DOM]);
+	dt.dt_mon = FROMBCD(regs[DS1687_SOFT_MONTH]);
+	dt.dt_year = FROMBCD(regs[DS1687_SOFT_YEAR]) +
 	    (100 * FROMBCD(regs[DS1687_SOFT_CENTURY]));
+
+	/* simple sanity checks */
+	if (dt.dt_mon > 12 || dt.dt_day > 31 ||
+	    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 60)
+		return (EIO);
+
+	tv->tv_sec = (long)clock_ymdhms_to_secs(&dt);
+	if (tv->tv_sec == -1)
+		return (ERANGE);
+	tv->tv_usec = 0;
+
+	return (0);
 }
 
-static void
-mcclock_mace_set(struct device *dev, struct clock_ymdhms *dt)
+static int
+mcclock_mace_settime(struct todr_chip_handle *todrch,
+    volatile struct timeval *tv)
 {
-	struct mcclock_mace_softc *sc = (struct mcclock_mace_softc *)dev;
+	struct mcclock_mace_softc *sc =
+	    (struct mcclock_mace_softc *)todrch->cookie;
+	struct clock_ymdhms dt;
 	ds1687_todregs regs;
 	int s;
 
+	clock_secs_to_ymdhms((time_t)(tv->tv_sec + (tv->tv_usec > 500000)),&dt);
+
 	memset(&regs, 0, sizeof(regs));
 
-	regs[DS1687_SOFT_SEC] = TOBCD(dt->dt_sec);
-	regs[DS1687_SOFT_MIN] = TOBCD(dt->dt_min);
-	regs[DS1687_SOFT_HOUR] = TOBCD(dt->dt_hour);
-	regs[DS1687_SOFT_DOW] = TOBCD(dt->dt_wday);
-	regs[DS1687_SOFT_DOM] = TOBCD(dt->dt_day);
-	regs[DS1687_SOFT_MONTH] = TOBCD(dt->dt_mon);
-	regs[DS1687_SOFT_YEAR] = TOBCD(dt->dt_year % 100);
-	regs[DS1687_SOFT_CENTURY] = TOBCD(dt->dt_year / 100);
+	regs[DS1687_SOFT_SEC] = TOBCD(dt.dt_sec);
+	regs[DS1687_SOFT_MIN] = TOBCD(dt.dt_min);
+	regs[DS1687_SOFT_HOUR] = TOBCD(dt.dt_hour);
+	regs[DS1687_SOFT_DOW] = TOBCD(dt.dt_wday);
+	regs[DS1687_SOFT_DOM] = TOBCD(dt.dt_day);
+	regs[DS1687_SOFT_MONTH] = TOBCD(dt.dt_mon);
+	regs[DS1687_SOFT_YEAR] = TOBCD(dt.dt_year % 100);
+	regs[DS1687_SOFT_CENTURY] = TOBCD(dt.dt_year / 100);
 	s = splhigh();
 	DS1687_PUTTOD(sc, &regs);
 	splx(s);
+
+	return (0);
 }
