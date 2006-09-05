@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframevar.h,v 1.9 2005/12/11 12:23:37 christos Exp $ */
+/*	$NetBSD: raidframevar.h,v 1.10 2006/09/05 01:55:21 oster Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -448,9 +448,9 @@ typedef struct RF_ComponentLabel_s {
 	int maxOutstanding;   /* maxOutstanding disk requests */
 	int blockSize;        /* size of component block.
 				 (disklabel->d_secsize) */
-	int numBlocks;        /* number of blocks on this component.  May
+	u_int numBlocks;      /* number of blocks on this component.  May
 			         be smaller than the partition size. */
-	int partitionSize;    /* number of blocks on this *partition*.
+	u_int partitionSize;  /* number of blocks on this *partition*.
 				 Must exactly match the partition size
 				 from the disklabel. */
 	int future_use[33];   /* Future expansion */
