@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_sysent.c,v 1.6 2006/09/01 21:19:45 matt Exp $ */
+/* $NetBSD: linux32_sysent.c,v 1.7 2006/09/05 08:17:09 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysent.c,v 1.6 2006/09/01 21:19:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysent.c,v 1.7 2006/09/05 08:17:09 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -368,7 +368,7 @@ struct sysent linux32_sysent[] = {
 	{ 3, s(struct linux_sys_setresuid16_args), 0,
 	    linux_sys_setresuid16 },		/* 164 = setresuid16 */
 	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 165 = unimplemented int */
+	    linux_sys_nosys },			/* 165 = unimplemented getresuid16 */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 166 = unimplemented vm86 */
 	{ 0, 0, 0,
