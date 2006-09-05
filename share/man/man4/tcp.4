@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcp.4,v 1.19 2004/04/29 12:47:59 wiz Exp $
+.\"	$NetBSD: tcp.4,v 1.20 2006/09/05 00:29:36 rpaulo Exp $
 .\"	$FreeBSD: tcp.4,v 1.11.2.16 2004/02/16 22:21:47 bms Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tcp.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd April 25, 2004
+.Dd September 5, 2006
 .Dt TCP 4
 .Os
 .Sh NAME
@@ -222,6 +222,10 @@ newReno algorithm for congestion control
 Logging of connection refusals
 .It
 RST packet rate limits
+.It
+SACK (Selective Acknowledgment)
+.It
+ECN (Explicit Congestion Notification)
 .El
 .Sh DIAGNOSTICS
 A socket operation may fail with one of the following errors returned:

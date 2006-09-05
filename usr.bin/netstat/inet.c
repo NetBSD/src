@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.75 2006/08/17 01:42:57 rpaulo Exp $	*/
+/*	$NetBSD: inet.c,v 1.76 2006/09/05 00:29:36 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.75 2006/08/17 01:42:57 rpaulo Exp $");
+__RCSID("$NetBSD: inet.c,v 1.76 2006/09/05 00:29:36 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -391,6 +391,9 @@ tcp_stats(off, name)
 	p(tcps_badsig, "\t%llu packet%s with bad signature\n");
 	p(tcps_goodsig, "\t%llu packet%s with good signature\n");
 
+	p(tcps_ecn_shs, "\t%llu sucessful ECN handshake%s\n");
+	p(tcps_ecn_ce, "\t%llu packet%s with ECN CE bit\n");
+	p(tcps_ecn_ect, "\t%llu packet%s ECN ECT(0) bit\n");
 #undef p
 #undef ps
 #undef p2
