@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.35 2006/09/04 22:10:50 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.36 2006/09/05 22:48:40 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.35 2006/09/04 22:10:50 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.36 2006/09/05 22:48:40 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -213,10 +213,12 @@ db_clear_single_step(db_regs_t *regs)
 }
 
 #ifndef KGDB
+
+#define	ON(x, c)	((x) & (c) ? '|' : '.')
+
 /*
  * MMU
  */
-#define	ON(x, c)	((x) & (c) ? '|' : '.')
 void
 db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count,
     const char *modif)
@@ -511,6 +513,7 @@ __db_cachedump_sh4(vaddr_t va)
 	RUN_P1;
 }
 #endif /* SH4 */
+
 #undef ON
 
 void
@@ -521,8 +524,10 @@ db_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 
 	/* Print switch frame */
 	db_printf("[switch frame]\n");
+
 #define	SF(x)	db_printf("sf_" #x "\t\t0x%08x\t", sf->sf_ ## x);	\
-	__db_print_symbol(sf->sf_ ## x)
+		__db_print_symbol(sf->sf_ ## x)
+
 	SF(sr);
 	SF(r15);
 	SF(r14);
@@ -533,20 +538,23 @@ db_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 	SF(r9);
 	SF(r8);
 	SF(pr);
-#undef	SF
 	db_printf("sf_r6_bank\t0x%08x\n", sf->sf_r6_bank);
 	db_printf("sf_r7_bank\t0x%08x\n", sf->sf_r7_bank);
 
-	tftop = (struct trapframe *)((vaddr_t)curpcb + PAGE_SIZE);
 
 	/* Print trap frame stack */
 	db_printf("[trap frame]\n");
+
 	__asm("stc r6_bank, %0" : "=r"(tf));
+	tftop = (struct trapframe *)((vaddr_t)curpcb + PAGE_SIZE);
+
 	for (; tf != tftop; tf++) {
 		db_printf("-- %p-%p --\n", tf, tf + 1);
 		db_printf("tf_expevt\t0x%08x\n", tf->tf_expevt);
+
 #define	TF(x)	db_printf("tf_" #x "\t\t0x%08x\t", tf->tf_ ## x);	\
-	__db_print_symbol(tf->tf_ ## x)
+		__db_print_symbol(tf->tf_ ## x)
+
 		TF(ubc);
 		TF(spc);
 		TF(ssr);
@@ -569,8 +577,9 @@ db_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 		TF(r0);
 		TF(r15);
 		TF(r14);
-#undef	TF
 	}
+#undef	SF
+#undef	TF
 }
 
 void
