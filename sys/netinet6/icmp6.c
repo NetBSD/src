@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.120 2006/09/01 02:44:46 dyoung Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.121 2006/09/05 16:11:26 dyoung Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.120 2006/09/01 02:44:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.121 2006/09/05 16:11:26 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -610,22 +610,10 @@ icmp6_input(mp, offp, proto)
 			 * Prepare an internal mbuf.  m_pullup() doesn't
 			 * always copy the length we specified.
 			 */
-			MGETHDR(n, M_DONTWAIT, n0->m_type);
-			if (n && ICMP6_MAXLEN >= MHLEN) {
-				MCLGET(n, M_DONTWAIT);
-				if ((n->m_flags & M_EXT) == 0) {
-					m_free(n);
-					n = NULL;
-				}
-			}
-			if (n == NULL) {
+			if ((n = m_dup(n0, 0, M_COPYALL, M_DONTWAIT)) == NULL) {
 				/* Give up local */
 				n = m;
 				m = NULL;
-			} else {
-				M_MOVE_PKTHDR(n, n0);
-				m_copydata(n0, 0, M_COPYALL, mtod(n, caddr_t));
-				n->m_len = n->m_pkthdr.len = n0->m_pkthdr.len;
 			}
 			m_freem(n0);
 		}
