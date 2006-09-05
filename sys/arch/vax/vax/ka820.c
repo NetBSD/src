@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.45 2005/12/24 22:45:40 perry Exp $	*/
+/*	$NetBSD: ka820.c,v 1.46 2006/09/05 19:32:57 matt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.45 2005/12/24 22:45:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.46 2006/09/05 19:32:57 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.45 2005/12/24 22:45:40 perry Exp $");
 #include <machine/scb.h>
 #include <machine/bus.h>
 
-#include <dev/clock_subr.h>
 #include <dev/cons.h>
 
 #include <dev/bi/bireg.h>
@@ -83,8 +82,8 @@ static void ka820_attach(struct device *, struct device *, void*);
 static void ka820_memerr(void);
 static void ka820_conf(void);
 static int ka820_mchk(caddr_t);
-static int ka820_clkread(time_t base);
-static void ka820_clkwrite(void);
+static int ka820_gettime(volatile struct timeval *);
+static void ka820_settime(volatile struct timeval *);
 static void rxcdintr(void *);
 static void vaxbierr(void *);
 #if defined(MULTIPROCESSOR)
@@ -105,8 +104,8 @@ struct	cpu_dep ka820_calls = {
 	ka820_mchk,
 	ka820_memerr,
 	ka820_conf,
-	ka820_clkread,
-	ka820_clkwrite,
+	ka820_gettime,
+	ka820_settime,
 	3,      /* ~VUPS */
 	5,	/* SCB pages */
 	0,
@@ -193,7 +192,7 @@ ka820_attach(struct device *parent, struct device *self, void *aux)
 	 * Copy cpu_info into new position.
 	 */
 	bcopy(curcpu(), &sc->sc_ci, sizeof(struct cpu_info));
-	mtpr(&sc->sc_ci, PR_SSP);
+	mtpr((uintptr_t)&sc->sc_ci, PR_SSP);
 	lwp0.l_addr->u_pcb.SSP = mfpr(PR_SSP);
 	lwp0.l_cpu = curcpu();
 	curcpu()->ci_dev = self;
@@ -478,7 +477,7 @@ rxcdintr(void *arg)
 
 #if defined(MULTIPROCESSOR)
 int
-rxchar()
+rxchar(void)
 {
 	int ret;
 
@@ -493,53 +492,54 @@ rxchar()
 #endif
 
 int
-ka820_clkread(time_t base)
+ka820_gettime(volatile struct timeval *tvp)
 {
 	struct clock_ymdhms c;
 	int s;
 
 	while (ka820_clkpage->csr0 & KA820CLK_0_BUSY)
 		;
+
 	s = splhigh();
-	c.dt_sec = ka820_clkpage->sec;
-	c.dt_min = ka820_clkpage->min;
+	c.dt_sec  = ka820_clkpage->sec;
+	c.dt_min  = ka820_clkpage->min;
 	c.dt_hour = ka820_clkpage->hr;
 	c.dt_wday = ka820_clkpage->dayofwk;
-	c.dt_day = ka820_clkpage->day;
-	c.dt_mon = ka820_clkpage->mon;
+	c.dt_day  = ka820_clkpage->day;
+	c.dt_mon  = ka820_clkpage->mon;
 	c.dt_year = ka820_clkpage->yr;
 	splx(s);
 
 	/* strange conversion */
-	c.dt_sec = ((c.dt_sec << 7) | (c.dt_sec >> 1)) & 0377;
-	c.dt_min = ((c.dt_min << 7) | (c.dt_min >> 1)) & 0377;
+	c.dt_sec  = ((c.dt_sec  << 7) | (c.dt_sec  >> 1)) & 0377;
+	c.dt_min  = ((c.dt_min  << 7) | (c.dt_min  >> 1)) & 0377;
 	c.dt_hour = ((c.dt_hour << 7) | (c.dt_hour >> 1)) & 0377;
 	c.dt_wday = ((c.dt_wday << 7) | (c.dt_wday >> 1)) & 0377;
-	c.dt_day = ((c.dt_day << 7) | (c.dt_day >> 1)) & 0377;
-	c.dt_mon = ((c.dt_mon << 7) | (c.dt_mon >> 1)) & 0377;
+	c.dt_day  = ((c.dt_day  << 7) | (c.dt_day  >> 1)) & 0377;
+	c.dt_mon  = ((c.dt_mon  << 7) | (c.dt_mon  >> 1)) & 0377;
 	c.dt_year = ((c.dt_year << 7) | (c.dt_year >> 1)) & 0377;
 
-	time.tv_sec = clock_ymdhms_to_secs(&c);
-	return CLKREAD_OK;
+	tvp->tv_sec = clock_ymdhms_to_secs(&c);
+	return 0;
 }
 
 void
-ka820_clkwrite(void)
+ka820_settime(volatile struct timeval *tvp)
 {
 	struct clock_ymdhms c;
 
-	clock_secs_to_ymdhms(time.tv_sec, &c);
+	clock_secs_to_ymdhms(tvp->tv_sec, &c);
 
-	ka820_clkpage->csr1 = KA820CLK_1_SET;
-	ka820_clkpage->sec = ((c.dt_sec << 1) | (c.dt_sec >> 7)) & 0377;
-	ka820_clkpage->min = ((c.dt_min << 1) | (c.dt_min >> 7)) & 0377;
-	ka820_clkpage->hr = ((c.dt_hour << 1) | (c.dt_hour >> 7)) & 0377;
+	ka820_clkpage->csr1    = KA820CLK_1_SET;
+	ka820_clkpage->sec     = ((c.dt_sec  << 1) | (c.dt_sec  >> 7)) & 0377;
+	ka820_clkpage->min     = ((c.dt_min  << 1) | (c.dt_min  >> 7)) & 0377;
+	ka820_clkpage->hr      = ((c.dt_hour << 1) | (c.dt_hour >> 7)) & 0377;
 	ka820_clkpage->dayofwk = ((c.dt_wday << 1) | (c.dt_wday >> 7)) & 0377;
-	ka820_clkpage->day = ((c.dt_day << 1) | (c.dt_day >> 7)) & 0377;
-	ka820_clkpage->mon = ((c.dt_mon << 1) | (c.dt_mon >> 7)) & 0377;
-	ka820_clkpage->yr = ((c.dt_year << 1) | (c.dt_year >> 7)) & 0377;
+	ka820_clkpage->day     = ((c.dt_day  << 1) | (c.dt_day  >> 7)) & 0377;
+	ka820_clkpage->mon     = ((c.dt_mon  << 1) | (c.dt_mon  >> 7)) & 0377;
+	ka820_clkpage->yr      = ((c.dt_year << 1) | (c.dt_year >> 7)) & 0377;
 
-	ka820_clkpage->csr1 = KA820CLK_1_GO;
+	ka820_clkpage->csr1    = KA820CLK_1_GO;
 }
 
 #if defined(MULTIPROCESSOR)
