@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.12 2006/09/03 07:08:59 christos Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.13 2006/09/05 17:03:04 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.12 2006/09/03 07:08:59 christos Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.13 2006/09/05 17:03:04 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -277,13 +277,12 @@ udf_mount(struct mount *mp, const char *path,
 	}
 
 	/* lookup name to get its vnode */
-	NDINIT(ndp, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, args.fspec, l);
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, l);
 	error = namei(ndp);
 	if (error)
 		return error;
-
-	/* devvp is *locked* now */
 	devvp = ndp->ni_vp;
+
 #ifdef DEBUG
 	if (udf_verbose & UDF_DEBUG_VOLUMES)
 		vprint("UDF mount, trying to mount \n", devvp);
@@ -310,10 +309,12 @@ udf_mount(struct mount *mp, const char *path,
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_ACCESS(devvp, accessmode, l->l_cred, l);
+		VOP_UNLOCK(devvp, 0);
 		if (error) {
-			vput(devvp);
-			return (error);
+			vrele(devvp);
+			return error;
 		}
 	}
 
@@ -324,11 +325,11 @@ udf_mount(struct mount *mp, const char *path,
 	 */
 	error = vfs_mountedon(devvp);
 	if (error) {
-		vput(devvp);
+		vrele(devvp);
 		return error;
 	}
 	if ((vcount(devvp) > 1) && (devvp != rootvp)) {
-		vput(devvp);
+		vrele(devvp);
 		return EBUSY;
 	}
 
@@ -346,13 +347,14 @@ udf_mount(struct mount *mp, const char *path,
 		error = udf_mountfs(devvp, mp, l, &args);
 		if (error) {
 			free_udf_mountinfo(mp);
-			/* devvp is still locked */
+			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void) VOP_CLOSE(devvp, openflags, NOCRED, l);
+			VOP_UNLOCK(devvp, 0);
 		}
 	}
 	if (error) {
 		/* devvp is still locked */
-		vput(devvp);
+		vrele(devvp);
 		return error;
 	}
 
@@ -362,10 +364,8 @@ udf_mount(struct mount *mp, const char *path,
 	/* successfully mounted */
 	DPRINTF(VOLUMES, ("udf_mount() successfull\n"));
 
-	/* unlock it but dont deref it */
-	VOP_UNLOCK(devvp, 0);
-
-	return set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE, mp, l);
+	return set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
+			mp, l);
 }
 
 /* --------------------------------------------------------------------- */
