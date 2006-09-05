@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.30 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.31 2006/09/05 06:45:05 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.30 2005/12/11 12:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.31 2006/09/05 06:45:05 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,6 +159,13 @@ static void oclock_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(oclock, sizeof(struct device),
     oclock_match, oclock_attach, NULL, NULL);
+
+static int clk_get_secs(todr_chip_handle_t, volatile struct timeval *);
+static int clk_set_secs(todr_chip_handle_t, volatile struct timeval *);
+static struct todr_chip_handle clk_hdl = {
+	.todr_gettime = clk_get_secs,
+	.todr_settime = clk_set_secs,
+};
 
 /*
  * Is there an intersil clock?
@@ -236,6 +243,8 @@ oclock_attach(struct device *parent, struct device *self, void *args)
 	 * For now, the handler is _isr_autovec(), which
 	 * will complain if it gets clock interrupts.
 	 */
+
+	todr_attach(&clk_hdl);
 }
 #endif	/* SUN3_470 */
 
@@ -289,6 +298,8 @@ clock_attach(struct device *parent, struct device *self, void *args)
 	 * For now, the handler is _isr_autovec(), which
 	 * will complain if it gets clock interrupts.
 	 */
+
+	todr_attach(&clk_hdl);
 }
 
 /*
@@ -439,41 +450,6 @@ clock_intr(struct clockframe cf)
 	hardclock(&cf);
 }
 
-
-/*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  We do this by returning the current time
- * plus the amount of time since the last clock interrupt.
- *
- * Check that this time is no less than any previously-reported time,
- * which could happen around the time of a clock adjustment.  Just for
- * fun, we guarantee that the time will be greater than the value
- * obtained by a previous call.
- */
-void
-microtime(struct timeval *tvp)
-{
-	int s;
-	static struct timeval lasttime;
-
-	s = splhigh();
-	*tvp = time;
-	tvp->tv_usec++; 	/* XXX */
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
-}
-
-
 /*
  * Machine-dependent clock routines.
  *
@@ -482,70 +458,6 @@ microtime(struct timeval *tvp)
  *
  * Resettodr restores the time of day hardware after a time change.
  */
-
-static long clk_get_secs(void);
-static void clk_set_secs(long);
-
-/*
- * Initialize the time of day register, based on the time base
- * which is, e.g. from a filesystem.
- */
-void 
-inittodr(time_t fs_time)
-{
-	long diff, clk_time;
-	long long_ago = (5 * SECYR);
-	int clk_bad = 0;
-
-	/*
-	 * Sanity check time from file system.
-	 * If it is zero,assume filesystem time is just unknown
-	 * instead of preposterous.  Don't bark.
-	 */
-	if (fs_time < long_ago) {
-		/*
-		 * If fs_time is zero, assume filesystem time is just
-		 * unknown instead of preposterous.  Don't bark.
-		 */
-		if (fs_time != 0)
-			printf("WARNING: preposterous time in file system\n");
-		/* 1991/07/01  12:00:00 */
-		fs_time = 21 * SECYR + 186 * SECDAY + SECDAY / 2;
-	}
-
-	clk_time = clk_get_secs();
-
-	/* Sanity check time from clock. */
-	if (clk_time < long_ago) {
-		printf("WARNING: bad date in battery clock");
-		clk_bad = 1;
-		clk_time = fs_time;
-	} else {
-		/* Does the clock time jive with the file system? */
-		diff = clk_time - fs_time;
-		if (diff < 0)
-			diff = -diff;
-		if (diff >= (SECDAY*2)) {
-			printf("WARNING: clock %s %d days",
-			    (clk_time < fs_time) ? "lost" : "gained",
-			    (int) (diff / SECDAY));
-			clk_bad = 1;
-		}
-	}
-	if (clk_bad)
-		printf(" -- CHECK AND RESET THE DATE!\n");
-	time.tv_sec = clk_time;
-}
-
-/*
- * Resettodr restores the time of day hardware after a time change.
- */
-void 
-resettodr(void)
-{
-
-	clk_set_secs(time.tv_sec);
-}
 
 
 /*
@@ -560,11 +472,10 @@ static void intersil_set_dt(struct clock_ymdhms *);
 static void mostek_get_dt(struct clock_ymdhms *);
 static void mostek_set_dt(struct clock_ymdhms *);
 
-static long 
-clk_get_secs(void)
+static int 
+clk_get_secs(todr_chip_handle_t tch, volatile struct timeval *tvp)
 {
 	struct clock_ymdhms dt;
-	long secs;
 
 	memset(&dt, 0, sizeof(dt));
 
@@ -587,19 +498,19 @@ clk_get_secs(void)
 	if ((dt.dt_hour > 24) ||
 	    (dt.dt_day  > 31) ||
 	    (dt.dt_mon  > 12))
-		return (0);
+		return (-1);
 
 	dt.dt_year += CLOCK_BASE_YEAR;
-	secs = clock_ymdhms_to_secs(&dt);
-	return (secs);
+	tvp->tv_sec = clock_ymdhms_to_secs(&dt);
+	return 0;
 }
 
-static void 
-clk_set_secs(long secs)
+static int 
+clk_set_secs(todr_chip_handle_t tch, volatile struct timeval *tvp)
 {
 	struct clock_ymdhms dt;
 
-	clock_secs_to_ymdhms(secs, &dt);
+	clock_secs_to_ymdhms(tvp->tv_sec, &dt);
 	dt.dt_year -= CLOCK_BASE_YEAR;
 
 #ifdef	SUN3_470
@@ -618,6 +529,7 @@ clk_set_secs(long secs)
 		/* Write the Mostek. */
 		mostek_set_dt(&dt);
 	}
+	return 0;
 }
 
 #ifdef	SUN3_470
