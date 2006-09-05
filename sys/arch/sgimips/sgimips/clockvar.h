@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.3 2002/01/14 16:23:27 pooka Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.4 2006/09/05 01:38:59 rumble Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -25,14 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-struct clockfns {
-	void (*cf_init)(struct device *);
-	void (*cf_get)(struct device *, struct clock_ymdhms *);
-	void (*cf_set)(struct device *, struct clock_ymdhms *);
-};
-
-void clockattach(struct device *, const struct clockfns *);
 
 #define IRIX_CLOCK_BASE 1940
 
