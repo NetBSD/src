@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.2 2002/10/08 11:58:54 simonb Exp $ */
+/* $NetBSD: rb.h,v 1.3 2006/09/05 04:35:45 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/endian.h>
 
 struct rb_node {
 	struct rb_node *rb_nodes[3];
@@ -51,10 +52,44 @@ struct rb_node {
 #define	rb_right	rb_nodes[RB_RIGHT]
 #define	rb_parent	rb_nodes[RB_PARENT]
 	TAILQ_ENTRY(rb_node) rb_link;
-	int rb_balance : 16;
-	unsigned int rb_red : 1;
-	unsigned int rb_sentinel : 1;
-	unsigned int rb_position : 2;
+	union {
+		struct {
+#if BYTE_ORDER == LITTLE_ENDIAN
+			unsigned int : 27;
+			unsigned int s_root : 1;
+			unsigned int s_position : 2;
+			unsigned int s_color : 1;
+			unsigned int s_sentinel : 1;
+#endif
+#if BYTE_ORDER == BIG_ENDIAN
+			unsigned int s_sentinel : 1;
+			unsigned int s_color : 1;
+			unsigned int s_position : 2;
+			unsigned int s_root : 1;
+			unsigned int : 27;
+#endif
+		} u_s;
+		unsigned int u_i;
+	} rb_u;
+#define	rb_root				rb_u.u_s.s_root
+#define	rb_position			rb_u.u_s.s_position
+#define	rb_color			rb_u.u_s.s_color
+#define	rb_sentinel			rb_u.u_s.s_sentinel
+#define	rb_properties			rb_u.u_i
+#define	RB_SENTINEL_P(rb)		((rb)->rb_sentinel + 0)
+#define	RB_LEFT_SENTINEL_P(rb)		((rb)->rb_left->rb_sentinel + 0)
+#define	RB_RIGHT_SENTINEL_P(rb)		((rb)->rb_right->rb_sentinel + 0)
+#define	RB_PARENT_SENTINEL_P(rb)	((rb)->rb_parent->rb_sentinel + 0)
+#define	RB_CHILDLESS_P(rb)		(RB_LEFT_SENTINEL_P(rb) \
+					 && RB_RIGHT_SENTINEL_P(rb))
+#define	RB_TWOCHILDREN_P(rb)		(!RB_LEFT_SENTINEL_P(rb) \
+					 && !RB_RIGHT_SENTINEL_P(rb))
+#define	RB_ROOT_P(rb)			((rb)->rb_root != false)
+#define	RB_RED_P(rb)			((rb)->rb_color + 0)
+#define	RB_BLACK_P(rb)			(!(rb)->rb_color)
+#define	RB_MARK_RED(rb)			((void)((rb)->rb_color = 1))
+#define	RB_MARK_BLACK(rb)		((void)((rb)->rb_color = 0))
+#define	RB_MARK_ROOT(rb)		((void)((rb)->rb_root = 1))
 };
 
 TAILQ_HEAD(rb_node_qh, rb_node);
@@ -70,7 +105,7 @@ struct rb_tree {
 	rb_compare_nodes_fn rbt_compare_nodes;
 	rb_compare_key_fn rbt_compare_key;
 	rb_print_node_fn rbt_print_node;
-	u_int rbt_count;
+	unsigned int rbt_count;
 };
 
 void	rb_tree_init(struct rb_tree *, rb_compare_nodes_fn, rb_compare_key_fn,
@@ -78,5 +113,6 @@ void	rb_tree_init(struct rb_tree *, rb_compare_nodes_fn, rb_compare_key_fn,
 void	rb_tree_insert_node(struct rb_tree *, struct rb_node *);
 struct rb_node	*rb_tree_find(struct rb_tree *, void *);
 void	rb_tree_remove_node(struct rb_tree *, struct rb_node *);
+void	rb_tree_check(const struct rb_tree *, bool);
 
 #endif	/* _LIBKERN_RB_H_*/
