@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.20 2006/08/26 18:17:42 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.21 2006/09/05 12:11:27 hira Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.20 2006/08/26 18:17:42 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.21 2006/09/05 12:11:27 hira Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ add(const char *fmt)
 	const char *savep;
 
 	/* start new linked list of format units */
-	tfs = emalloc(sizeof(FS));
+	tfs = ecalloc(1, sizeof(FS));
 	if (!fshead)
 		fshead = tfs;
 	else
@@ -109,7 +109,7 @@ add(const char *fmt)
 			break;
 
 		/* allocate a new format unit and link it in */
-		tfu = emalloc(sizeof(FU));
+		tfu = ecalloc(1, sizeof(FU));
 		*nextfu = tfu;
 		nextfu = &tfu->nextfu;
 		tfu->reps = 1;
