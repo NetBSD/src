@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_lfs.c,v 1.3 2006/09/04 18:34:22 wiz Exp $	*/
+/*	$NetBSD: resize_lfs.c,v 1.4 2006/09/05 19:46:14 riz Exp $	*/
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,6 +40,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <sys/file.h>
 #include <sys/mount.h>
 #include <sys/statvfs.h>
@@ -54,6 +55,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "partutil.h"
+
 static void
 usage(void)
 {
@@ -63,14 +66,14 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	char *cp, *rdev, *fsname, buf[LFS_SBPAD];
+	char *rdev, *fsname, buf[LFS_SBPAD];
 	daddr_t newsize, newnsegs;
 	int devfd, rootfd;
 	int ch, i, verbose;
 	off_t secsize, sboff;
-	struct disklabel lbl;
+	struct disk_geom geo;
+	struct dkwedge_info dkw;
 	struct lfs *fs;
-	struct partition *pp;
 	struct statvfs vfs;
 
 	/* Initialize and parse arguments */
@@ -110,15 +113,13 @@ main(int argc, char **argv)
 	 * given size against the partition size.  We can skip some
 	 * error checking here since we know the fs is mountable.
 	 */
-	if (ioctl(devfd, DIOCGDINFO, &lbl) < 0)
-		err(1, "%s: ioctl (GDINFO)", rdev);
-	secsize = lbl.d_secsize;
-	cp = strchr(rdev, '\0') - 1;
-	pp = &lbl.d_partitions[*cp - 'a'];
-	if (newsize > pp->p_size)
+	if (getdiskinfo(rdev, devfd, NULL, &geo, &dkw) == -1)
+		err(1, "%s: could not get info", rdev);
+	secsize = geo.dg_secsize;
+	if (newsize > dkw.dkw_size)
 		errx(1, "new size must be <= the partition size");
 	if (newsize == 0)
-		newsize = pp->p_size;
+		newsize = dkw.dkw_size;
 
 	/* Open the root of the filesystem so we can fcntl() it */
 	rootfd = open(fsname, O_RDONLY);
