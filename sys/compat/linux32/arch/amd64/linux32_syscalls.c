@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscalls.c,v 1.6 2006/09/01 21:19:45 matt Exp $ */
+/* $NetBSD: linux32_syscalls.c,v 1.7 2006/09/05 08:17:09 manu Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscalls.c,v 1.6 2006/09/01 21:19:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscalls.c,v 1.7 2006/09/05 08:17:09 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -202,7 +202,7 @@ const char *const linux32_syscallnames[] = {
 	"nanosleep",			/* 162 = nanosleep */
 	"#163 (unimplemented * mremap)",		/* 163 = unimplemented * mremap */
 	"setresuid16",			/* 164 = setresuid16 */
-	"#165 (unimplemented int)",		/* 165 = unimplemented int */
+	"#165 (unimplemented getresuid16)",		/* 165 = unimplemented getresuid16 */
 	"#166 (unimplemented vm86)",		/* 166 = unimplemented vm86 */
 	"#167 (unimplemented query_module)",		/* 167 = unimplemented query_module */
 	"poll",			/* 168 = poll */
