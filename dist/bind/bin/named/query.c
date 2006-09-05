@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.2 2006/05/11 09:28:45 mrg Exp $	*/
+/*	$NetBSD: query.c,v 1.3 2006/09/05 19:31:47 adrianp Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -2395,7 +2395,7 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 		authoritative = ISC_FALSE;
 
 		qtype = event->qtype;
-		if (qtype == dns_rdatatype_rrsig)
+		if (qtype == dns_rdatatype_rrsig || qtype == dns_rdatatype_sig)
 			type = dns_rdatatype_any;
 		else
 			type = qtype;
@@ -2436,7 +2436,7 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 	/*
 	 * If it's a SIG query, we'll iterate the node.
 	 */
-	if (qtype == dns_rdatatype_rrsig)
+	if (qtype == dns_rdatatype_rrsig || qtype == dns_rdatatype_sig)
 		type = dns_rdatatype_any;
 	else
 		type = qtype;
