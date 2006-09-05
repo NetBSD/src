@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.44 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: clock.c,v 1.45 2006/09/05 05:32:30 mhitch Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.44 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.45 2006/09/05 05:32:30 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -106,8 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.44 2005/12/11 12:16:28 christos Exp $");
 int amiga_clk_interval;
 int eclockfreq;
 struct CIA *clockcia;
-int (*usettod)(struct timeval *);
-int (*ugettod)(struct timeval *);
 
 /*
  * Machine-dependent clock routines.
@@ -669,46 +667,3 @@ profclock(caddr_t pc, int ps)
 }
 #endif
 #endif
-
-/*
- * Initialize the time of day register, based on the time base which is, e.g.
- * from a filesystem.
- */
-void
-inittodr(time_t base)
-{
-	struct timeval tvbuf;
-
-	tvbuf.tv_usec = 0;
-	tvbuf.tv_sec = base;	/* assume no battery clock exists */
-
-	if (ugettod == NULL)
-		printf("WARNING: no battery clock\n");
-	else {
-		ugettod(&tvbuf);
-		tvbuf.tv_sec +=  rtc_offset * 60;
-	}
-
-	if (tvbuf.tv_sec < base) {
-		printf("WARNING: bad date in battery clock\n");
-		tvbuf.tv_sec = base;
-	}
-
-	time = tvbuf;
-}
-
-void
-resettodr(void)
-{
-	struct timeval tvbuf;
-
-	if (!usettod)
-		return;
-
-	tvbuf = time;
-
-	tvbuf.tv_sec -= rtc_offset * 60;
-
-	if (!usettod(&tvbuf))
-		printf("Cannot set battery backed clock\n");
-}
