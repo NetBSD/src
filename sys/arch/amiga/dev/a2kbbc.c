@@ -1,4 +1,4 @@
-/*	$NetBSD: a2kbbc.c,v 1.17 2005/12/11 12:16:27 christos Exp $ */
+/*	$NetBSD: a2kbbc.c,v 1.18 2006/09/05 05:32:30 mhitch Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a2kbbc.c,v 1.17 2005/12/11 12:16:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a2kbbc.c,v 1.18 2006/09/05 05:32:30 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -101,8 +101,9 @@ CFATTACH_DECL(a2kbbc, sizeof(struct device),
     a2kbbc_match, a2kbbc_attach, NULL, NULL);
 
 void *a2kclockaddr;
-int a2kugettod(struct timeval *);
-int a2kusettod(struct timeval *);
+int a2kugettod(todr_chip_handle_t, volatile struct timeval *);
+int a2kusettod(todr_chip_handle_t, volatile struct timeval *);
+static struct todr_chip_handle a2ktodr;
 
 int
 a2kbbc_match(struct device *pdp, struct cfdata *cfp, void *auxp)
@@ -124,7 +125,7 @@ a2kbbc_match(struct device *pdp, struct cfdata *cfp, void *auxp)
 		return (0);
 
 	a2kclockaddr = (void *)__UNVOLATILE(ztwomap(0xdc0000));
-	if (a2kugettod(0) == 0)
+	if (a2kugettod(&a2ktodr, 0) != 0)
 		return (0);
 
 	a2kbbc_matched = 1;
@@ -140,12 +141,14 @@ a2kbbc_attach(struct device *pdp, struct device *dp, void *auxp)
 	printf("\n");
 	a2kclockaddr = (void *)__UNVOLATILE(ztwomap(0xdc0000));
 
-	ugettod = a2kugettod;
-	usettod = a2kusettod;
+	a2ktodr.cookie = a2kclockaddr;
+	a2ktodr.todr_gettime = a2kugettod;
+	a2ktodr.todr_settime = a2kusettod;
+	todr_attach(&a2ktodr);
 }
 
 int
-a2kugettod(struct timeval *tvp)
+a2kugettod(todr_chip_handle_t h, volatile struct timeval *tvp)
 {
 	struct rtclock2000 *rt;
 	struct clock_ymdhms dt;
@@ -218,11 +221,11 @@ a2kugettod(struct timeval *tvp)
 		tvp->tv_sec = secs;
 		tvp->tv_usec = 0;
 	}
-	return (1);
+	return (0);
 }
 
 int
-a2kusettod(struct timeval *tvp)
+a2kusettod(todr_chip_handle_t h, volatile struct timeval *tvp)
 {
 	struct rtclock2000 *rt;
 	struct clock_ymdhms dt;
@@ -236,7 +239,7 @@ a2kusettod(struct timeval *tvp)
 	 * currently used..
 	 */
 	if (! rt)
-		return (0);
+		return (1);
 
 	clock_secs_to_ymdhms(secs, &dt);
 
@@ -279,5 +282,5 @@ a2kusettod(struct timeval *tvp)
 	 */
 	rt->control2 &= ~A2CONTROL1_HOLD;
 
-	return (1);
+	return (0);
 }
