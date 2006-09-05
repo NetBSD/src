@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysctl.c,v 1.1 2006/02/09 19:18:57 manu Exp $ */
+/*	$NetBSD: linux32_sysctl.c,v 1.2 2006/09/05 17:12:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.1 2006/02/09 19:18:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.2 2006/09/05 17:12:19 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.1 2006/02/09 19:18:57 manu Exp 
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_sysctl.h>
 
 #include <compat/linux/linux_syscallargs.h>
 
@@ -104,6 +105,45 @@ SYSCTL_SETUP(sysctl_emul_linux32_setup, "sysctl emul.linux32 subtree setup")
 		       EMUL_LINUX32_KERN_VERSION, CTL_EOL);
 }
 
+#ifndef _LKM
+static
+#endif
+struct sysctlnode linux32_sysctl_root = {
+	.sysctl_flags = SYSCTL_VERSION|
+	    CTLFLAG_ROOT|CTLTYPE_NODE|CTLFLAG_READWRITE,
+	.sysctl_num = 0,
+	.sysctl_name = "(linux32_root)",
+	sysc_init_field(_sysctl_size, sizeof(struct sysctlnode)),
+};
+
+SYSCTL_SETUP(linux32_sysctl_setup, "linux32 emulated sysctl subtree setup")
+{
+	const struct sysctlnode *node = &linux32_sysctl_root;
+
+	sysctl_createv(clog, 0, &node, &node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "kern", NULL,
+		       NULL, 0, NULL, 0,
+		       LINUX_CTL_KERN, CTL_EOL);
+
+	sysctl_createv(clog, 0, &node, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "ostype", NULL,
+		       NULL, 0, linux32_sysname, sizeof(linux32_sysname),
+		       LINUX_KERN_OSTYPE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "osrelease", NULL,
+		       NULL, 0, linux32_release, sizeof(linux32_release),
+		       LINUX_KERN_OSRELEASE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "version", NULL,
+		       NULL, 0, linux32_version, sizeof(linux32_version),
+		       LINUX_KERN_VERSION, CTL_EOL);
+
+	linux32_sysctl_root.sysctl_flags &= ~CTLFLAG_READWRITE;
+}
 
 int
 linux32_sys___sysctl(l, v, retval)
@@ -114,64 +154,106 @@ linux32_sys___sysctl(l, v, retval)
 	struct linux32_sys___sysctl_args /* {
 		syscallarg(linux32___sysctlp_t) lsp;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(l->l_proc, 0);
 	struct linux32_sysctl ls32;
-	struct linux___sysctl ls;
-	struct linux_sys___sysctl_args ua;
+	int name[CTL_MAXNAME];
+	size_t savelen;
+	netbsd32_size_t oldlen32;
+	size_t oldlen;
 	int error;
 
+	/*
+	 * Read sysctl arguments 
+	 */
 	if ((error = copyin(NETBSD32PTR64(SCARG(uap, lsp)), 
 	    &ls32, sizeof(ls32))) != 0)
 		return error;
 
-	ls.name = NETBSD32PTR64(ls32.name);
-	ls.nlen = ls32.name;
-	ls.oldval = NETBSD32PTR64(ls32.oldval);
-	ls.oldlenp = NETBSD32PTR64(ls32.oldlenp);
-	ls.newval = NETBSD32PTR64(ls32.newval);
-	ls.newlen = ls32.newlen;
+	/*
+	 * Read oldlen
+	 */
+	if (NETBSD32PTR64(ls32.oldlenp) != NULL) {
+		if ((error = copyin(NETBSD32PTR64(ls32.oldlenp), 
+		    &oldlen32, sizeof(oldlen32))) != 0)
+			return error;
+	} else {
+		oldlen32 = 0;
+	}
+
+	savelen = (size_t)oldlen32;
+
+	/* 
+	 * Sanity check nlen
+	 */
+	if ((ls32.nlen > CTL_MAXNAME) || (ls32.nlen < 1))
+		return EINVAL;
+
+	/*
+	 * Read the sysctl name
+	 */
+	if ((error = copyin(NETBSD32PTR64(ls32.name), &name, 
+	   ls32.nlen * sizeof(int))) != 0)
+		return error;
 
 #ifdef DEBUG_LINUX
 	{
-		int i = ls.nlen;
-		int *cp = ls.name;
-		int val;
+		int i = 0;
 
-		printf("linux32_sysctl(%p, %d, %p, %p, %p, %ld) [",
-		    ls.name, ls.nlen, ls.oldval, 
-		    ls.oldlenp, ls.newval, ls.newlen);
-		while (i > 0) {
-			if ((error = copyin(cp, &val, sizeof(val))) != 0)
-				return error;
-			printf("%d ", val);
-			cp++;
-			i--;
-		}
+		printf("linux32_sysctl(%p, %d, %p, %p, %p, %d) [",
+		    NETBSD32PTR64(ls32.name), ls32.nlen, 
+		    NETBSD32PTR64(ls32.oldval), NETBSD32PTR64(ls32.oldlenp), 
+		    NETBSD32PTR64(ls32.newval), ls32.newlen);
+		for (i = 0; i < ls32.nlen; i++)
+			printf("%d ", name[i]);
 		printf("]\n");
 	}
 #endif
-
-	SCARG(&ua, lsp) = stackgap_alloc(l->l_proc, &sg, sizeof(ls));
-
-	if ((error = copyout(&ls, SCARG(&ua, lsp), sizeof(ls))) != 0)
+	if ((error = sysctl_lock(l, 
+	    NETBSD32PTR64(ls32.oldval), savelen)) != 0)
 		return error;
 
-	if ((error = linux_sys___sysctl(l, &ua, retval)) != 0)
-		return error;
+	/*
+	 * First try linux32 tree, then linux tree
+	 */
+	oldlen = (size_t)oldlen32;
+	error = sysctl_dispatch(name, ls32.nlen,
+				NETBSD32PTR64(ls32.oldval), &oldlen,
+				NETBSD32PTR64(ls32.newval), ls32.newlen,
+				name, l, &linux32_sysctl_root);
+	oldlen32 = (netbsd32_size_t)oldlen;
 
-	if ((error = copyin(SCARG(&ua, lsp), &ls, sizeof(ls))) != 0)
-		return error;
+	sysctl_unlock(l);
 
-	ls32.name = (netbsd32_intp)(long)ls.name;
-	ls32.nlen = ls.nlen;
-	ls32.oldval = (netbsd32_voidp)(long)ls.oldval;
-	ls32.oldlenp = (netbsd32_size_tp)(long)ls.oldlenp;
-	ls32.newval = (netbsd32_voidp)(long)ls.newval;
-	ls32.newlen = (netbsd32_size_t)(long)ls.newlen;
+	/*
+	 * Check for oldlen overflow (not likely, but who knows...)
+	 */
+	if (oldlen != oldlen32) {
+#ifdef DEBUG_LINUX
+		printf("%s: oldlen32 = %d, oldlen = %ld\n", 
+		    __func__, oldlen32, oldlen);
+#endif
+		return EINVAL;
+	}
 
-	if ((error = copyout(&ls32, 
-	    NETBSD32PTR64(SCARG(uap, lsp)), sizeof(ls32))) != 0)
-		return error;
+	/*
+	 * set caller's oldlen, even if we got an error
+	 */
+	if (NETBSD32PTR64(ls32.oldlenp)) {
+		int nerror;
 
-	return 0;
+		nerror = copyout(&oldlen32, 
+		    NETBSD32PTR64(ls32.oldlenp), sizeof(oldlen32));
+
+		if (error == 0)
+			error = nerror;
+	}
+
+	/*
+	 * oldlen was too short
+	 */
+	if ((error == 0) && 
+	    (NETBSD32PTR64(ls32.oldval) != NULL) &&
+	    (savelen < oldlen32))
+		error = ENOMEM;
+
+	return error;
 }
