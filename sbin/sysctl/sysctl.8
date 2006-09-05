@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.152 2006/09/04 23:40:18 liamjfoy Exp $
+.\"	$NetBSD: sysctl.8,v 1.153 2006/09/05 00:29:35 rpaulo Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -460,6 +460,8 @@ privilege can change the value.
 .It net.inet.tcp.sack.globalholes	integer	no
 .It net.inet.tcp.sack.globalmaxholes	integer	yes
 .It net.inet.tcp.sack.maxholes	integer	yes
+.It net.inet.tcp.ecn.enable	integer	yes
+.It net.inet.tcp.ecn.maxretries	integer	yes
 .It net.inet.tcp.sendspace	integer	yes
 .It net.inet.tcp.slowhz	integer	no
 .It net.inet.tcp.syn_bucket_limit	integer	yes
