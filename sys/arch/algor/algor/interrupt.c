@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.8 2006/04/15 16:13:24 simonb Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.9 2006/09/05 01:33:24 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.8 2006/04/15 16:13:24 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.9 2006/09/05 01:33:24 gdamore Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.8 2006/04/15 16:13:24 simonb Exp $")
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 #include <machine/locore.h>
+#include <mips/mips3_clock.h>
 
 #ifdef ALGOR_P4032
 #include <algor/algor/algor_p4032var.h>
@@ -126,9 +127,6 @@ const u_int32_t ipl_si_to_sr[_IPL_NSOFT] = {
 	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
 };
 
-struct evcnt mips_int5_evcnt =
-    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
-
 void
 intr_init(void)
 {
@@ -147,19 +145,11 @@ intr_init(void)
 void
 cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
-	struct clockframe cf;
-
 	uvmexp.intrs++;
 
 	if (ipending & MIPS_INT_MASK_5) {
-		u_int32_t cycles = mips3_cp0_count_read();
-		mips3_cp0_compare_write(cycles + cycles_per_hz);
 
-		cf.pc = pc;
-		cf.sr = status;
-		hardclock(&cf);
-
-		mips_int5_evcnt.ev_count++;
+		mips3_clockintr(status, pc);
 
 		/* Re-enable clock interrupts. */
 		cause &= ~MIPS_INT_MASK_5;

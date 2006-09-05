@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_intr.c,v 1.11 2006/04/15 16:13:24 simonb Exp $	*/
+/*	$NetBSD: algor_p4032_intr.c,v 1.12 2006/09/05 01:33:24 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.11 2006/04/15 16:13:24 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.12 2006/09/05 01:33:24 gdamore Exp $");
 
 #include "opt_ddb.h"
 
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.11 2006/04/15 16:13:24 simonb
 
 #include <algor/algor/algor_p4032reg.h>
 #include <algor/algor/algor_p4032var.h>
-
-#include <algor/algor/clockvar.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
