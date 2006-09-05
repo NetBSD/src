@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.31 2006/03/04 01:13:35 uwe Exp $	*/
+/*	$NetBSD: clock.c,v 1.32 2006/09/05 11:09:36 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.31 2006/03/04 01:13:35 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.32 2006/09/05 11:09:36 uwe Exp $");
 
 #include "opt_pclock.h"
 #include "opt_hz.h"
@@ -297,6 +297,9 @@ cpu_initclocks()
 	sh_clock.rtc.init(sh_clock.rtc._cookie);
 }
 
+
+#if !defined(__HAVE_GENERIC_TODR)
+
 void
 inittodr(time_t base)
 {
@@ -365,6 +368,9 @@ resettodr()
 	    dt.dt_wday, rtc_offset);
 #endif
 }
+
+#endif /* __HAVE_GENERIC_TODR */
+
 
 #ifdef SH3
 int

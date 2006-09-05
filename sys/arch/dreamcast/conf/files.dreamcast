@@ -1,4 +1,4 @@
-#	$NetBSD: files.dreamcast,v 1.27 2005/12/11 12:17:06 christos Exp $
+#	$NetBSD: files.dreamcast,v 1.28 2006/09/05 11:09:36 uwe Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
 maxpartitions 16
@@ -89,6 +89,10 @@ device	g2bus { }
 attach	g2bus at shb
 file	arch/dreamcast/dev/g2/g2bus.c			g2bus
 file	arch/dreamcast/dev/g2/g2bus_bus_mem.c		g2bus
+
+device	g2rtc
+attach	g2rtc at g2bus
+file	arch/dreamcast/dev/g2/g2rtc.c			g2rtc
 
 device	gapspci: pcibus
 attach	gapspci at g2bus

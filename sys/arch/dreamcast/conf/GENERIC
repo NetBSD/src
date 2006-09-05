@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.74 2006/08/26 20:26:44 christos Exp $
+# $NetBSD: GENERIC,v 1.75 2006/09/05 11:09:36 uwe Exp $
 #
 # GENERIC machine description file
 # 
@@ -187,6 +187,7 @@ mlcd*		at maple? port ? subunit ?
 gdrom0		at shb?
 
 g2bus0		at shb?
+g2rtc0		at g2bus?			# time-of-day clock
 gapspci*	at g2bus?			# GAPS PCI bridge
 pci*		at gapspci?
 rtk*		at pci? dev ? function ?	# SEGA Broadband Adapter

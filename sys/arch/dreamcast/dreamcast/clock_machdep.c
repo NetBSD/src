@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_machdep.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: clock_machdep.c,v 1.6 2006/09/05 11:09:36 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_machdep.c,v 1.5 2005/12/11 12:17:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_machdep.c,v 1.6 2006/09/05 11:09:36 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,31 +42,18 @@ __KERNEL_RCSID(0, "$NetBSD: clock_machdep.c,v 1.5 2005/12/11 12:17:06 christos E
 #include <dev/clock_subr.h>
 #include <sh3/clock.h>
 
-#include <dreamcast/dev/g2/g2busvar.h>
-
 #ifdef DEBUG
 #define STATIC
 #else
 #define STATIC static
 #endif
 
-#define DREAMCAST_RTC		0x00710000
-
 STATIC void dreamcast_rtc_init(void *);
-STATIC void dreamcast_rtc_get(void *, time_t, struct clock_ymdhms *);
-STATIC void dreamcast_rtc_set(void *, struct clock_ymdhms *);
-
-STATIC uint32_t dreamcast_read_rtc(void);
-STATIC void dreamcast_write_rtc(uint32_t);
 
 STATIC struct rtc_ops dreamcast_rtc_ops = {
 	.init	= dreamcast_rtc_init,
-	.get	= dreamcast_rtc_get,
-	.set	= dreamcast_rtc_set
 };
 
-static bus_space_tag_t rtc_tag;
-static bus_space_handle_t rtc_handle;
 
 void
 machine_clock_init(void)
@@ -75,90 +62,7 @@ machine_clock_init(void)
 	sh_clock_init(SH_CLOCK_NORTC, &dreamcast_rtc_ops); 	
 }
 
-void
+STATIC void
 dreamcast_rtc_init(void *cookie)
 {
-	struct device *dv;
-
-	/* Find g2bus device */
-	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-	     dv = TAILQ_NEXT(dv, dv_list))
-		if (!strcmp(dv->dv_xname, "g2bus0"))
-			break;
-
-	if (!dv)
-		panic("No g2bus!");
-
-	rtc_tag = &((struct g2bus_softc *)dv)->sc_memt;
-
-	bus_space_map(rtc_tag, DREAMCAST_RTC, 12, 0, &rtc_handle);
 }
-
-void
-dreamcast_rtc_get(void *cookie, time_t base, struct clock_ymdhms *dt)
-{
-
-	clock_secs_to_ymdhms(dreamcast_read_rtc(), dt);
-}
-
-void
-dreamcast_rtc_set(void *cookie, struct clock_ymdhms *dt)
-{
-	
-	dreamcast_write_rtc(clock_ymdhms_to_secs(dt));
-}
-
-uint32_t
-dreamcast_read_rtc(void)
-{
-	uint32_t new, old;
-	int i;
-	
-	for (old = 0;;) {
-		for (i = 0; i < 3; i++) {
-			new = ((bus_space_read_4(rtc_tag, rtc_handle, 0)
-				& 0xffff) << 16) 
-			  | (bus_space_read_4(rtc_tag, rtc_handle, 4) 
-			     & 0xffff);
-			if (new != old)
-				break;
-		}
-		if (i < 3)
-			old = new;
-		else
-			break;
-	}
-
-	/* offset 20 years */
-	return new - 631152000;
-}
-
-void
-dreamcast_write_rtc(uint32_t secs)
-{
-	uint32_t new;
-	int i, retry;
-
-	/* offset 20 years */
-	secs += 631152000;
-
-	for (retry = 0; retry < 5; retry++) {
-
-		/* Don't change an order */
-		bus_space_write_4(rtc_tag, rtc_handle, 8, 1);
-		bus_space_write_4(rtc_tag, rtc_handle, 4, secs & 0xffff);
-		bus_space_write_4(rtc_tag, rtc_handle, 0, secs >> 16);
-
-		/* verify */
-		for (i = 0; i < 3; i++) {
-			new = ((bus_space_read_4(rtc_tag, rtc_handle, 0)
-				& 0xffff) << 16)
-			  | (bus_space_read_4(rtc_tag, rtc_handle, 4)
-			     & 0xffff);
-			if (new == secs)
-				return;
-		}
-	}
-	/* set failure. but nothing to do */
-}
-
