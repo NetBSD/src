@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.5 2006/02/27 00:38:25 cube Exp $ */
+/*	$NetBSD: apmdev.c,v 1.6 2006/09/05 21:59:51 gdamore Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.5 2006/02/27 00:38:25 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.6 2006/09/05 21:59:51 gdamore Exp $");
 
 #include "opt_apmdev.h"
 
@@ -385,7 +385,7 @@ apm_resume(struct apm_softc *sc, u_int event_type, u_int event_info)
 	initrtclock();
 */
 
-	inittodr(time.tv_sec);
+	inittodr(time_second);
 	dopowerhooks(PWR_RESUME);
 
 	splx(apm_spl);
