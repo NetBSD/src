@@ -1,4 +1,4 @@
-/*	$NetBSD: sdivsi3.S,v 1.3 2006/09/04 20:44:48 scw Exp $	*/
+/*	$NetBSD: sdivsi3.S,v 1.4 2006/09/05 22:07:08 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -57,7 +57,7 @@
  *
  * Note: These don't follow the regular SH-5 ABI calling convention.
  * The dividend is passed in r4 instead of r2, the divisor is passed in
- * r5, and the result is returned in r0. Also, we can only clobber r1-r3.
+ * r5, and the result is returned in r0. Also, we can only clobber r1, r19-r21.
  */
 
 #include <machine/asm.h>
@@ -76,9 +76,9 @@
 ENTRY(__sdivsi3)
 STRONG_ALIAS(__sdivsi3_1,__sdivsi3)
 	fmov.dq	dr0, r1			/* Preserve dr0 (fr0/fr1) in r1 */
-	fmov.dq	dr2, r2			/* Preserve dr2 (fr2/fr3) in r2 */
+	fmov.dq	dr2, r19		/* Preserve dr2 (fr2/fr3) in r19 */
 	fgetscr	fr0			/* Fetch FPSCR */
-	fmov.sl	fr0, r3			/* Preserve in r3 */
+	fmov.sl	fr0, r20		/* Preserve in r20 */
 	fmov.ls	r63, fr0
 	fputscr	fr0			/* Disable FPU exceptions */
 	fmov.ls	r4, fr0			/* fr0 = bitwise copy of dividend */
@@ -87,10 +87,10 @@ STRONG_ALIAS(__sdivsi3_1,__sdivsi3)
 	float.ld fr2, dr2		/* int to double conversion of fr2 */
 	ptabs/l	r18, tr0
 	fdiv.d	dr0, dr2, dr0		/* dr0 = dr0 / dr2 */
-	fmov.qd	r2, dr2			/* Restore dr2 */
+	fmov.qd	r19, dr2		/* Restore dr2 */
 	ftrc.dl	dr0, fr0		/* double to int conversion */
 	fmov.sl	fr0, r0			/* Sign-extended result to r0 */
-	fmov.ls	r3, fr0			/* Restore FPSCR */
+	fmov.ls	r20, fr0		/* Restore FPSCR */
 	fputscr	fr0
 	fmov.qd	r1, dr0			/* Restore dr0 */
 	blink	tr0, r63
