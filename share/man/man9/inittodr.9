@@ -1,4 +1,4 @@
-.\" $NetBSD: inittodr.9,v 1.10 2006/03/02 19:49:25 uwe Exp $
+.\" $NetBSD: inittodr.9,v 1.11 2006/09/06 18:04:30 gdamore Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd March 2, 2006
+.Dd September 6, 2006
 .Dt INITTODR 9
 .Os
 .Sh NAME
@@ -52,10 +52,15 @@ system, as given in
 Those heuristics include:
 .Bl -bullet
 .It
-If the battery-backed clock has a valid time, it is used.
+If the battery-backed clock has a valid time, and is not significantly
+behind the time provided by
+.Fa base ,
+it is used.
 .It
-If the battery-backed clock does not have a valid time, and
-the time provided in
+If the battery-backed clock does not have a valid time, or is significantly
+behind the time provided in
+.Fa base ,
+and the time provided in
 .Fa base
 is within reason,
 .Fa base
@@ -64,8 +69,8 @@ is used as the current time.
 If the battery-backed clock appears invalid, and
 .Fa base
 appears non-sensical or was not provided (was given as zero),
-a arbitrary base (typically some time in the late 1970s)
-will be used.
+an arbitrary base (typically some time within the same year that
+the kernel was last updated) will be used.
 .El
 .Pp
 Once a system time has been determined, it is stored in the
@@ -78,6 +83,8 @@ function prints diagnostic messages if it has trouble figuring
 out the system time.
 Conditions that can cause diagnostic messages to be printed include:
 .Bl -bullet
+.It
+There is no battery-backed clock present on the system.
 .It
 The battery-backed clock's time appears nonsensical.
 .It
@@ -94,5 +101,5 @@ time and the battery-backed clock's time differ by a large amount.
 .Xr resettodr 9 ,
 .Xr time 9
 .Sh BUGS
-Each system's heuristics for picking the correct time are slightly
+Some system use heuristics for picking the correct time that are slightly
 different.

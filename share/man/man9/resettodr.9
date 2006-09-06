@@ -1,4 +1,4 @@
-.\" $NetBSD: resettodr.9,v 1.9 2006/03/02 19:47:25 uwe Exp $
+.\" $NetBSD: resettodr.9,v 1.10 2006/09/06 18:04:30 gdamore Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -44,10 +44,8 @@
 .Sh DESCRIPTION
 The
 .Fn resettodr
-function sets the system's battery-backed clock based on the contents
-of the system
-.Va time
-variable.
+function sets the system's battery-backed clock based on the current
+system time.
 .Sh SEE ALSO
 .Xr clock_secs_to_ymdhms 9 ,
 .Xr inittodr 9 ,
