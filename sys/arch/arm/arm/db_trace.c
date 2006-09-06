@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.10 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.11 2006/09/06 23:58:20 ad Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.10 2005/12/11 12:16:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.11 2006/09/06 23:58:20 ad Exp $");
 
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -109,7 +109,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			struct user *u;
 			struct lwp *l;
 			(*pr) ("trace: pid %d ", (int)addr);
-			p = pfind(addr);
+			p = p_find(addr, PFIND_LOCKED);
 			if (p == NULL) {
 				(*pr)("not found\n");
 				return;
