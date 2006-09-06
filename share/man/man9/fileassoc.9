@@ -1,4 +1,4 @@
-.\" $NetBSD: fileassoc.9,v 1.8 2006/08/20 10:38:23 blymn Exp $
+.\" $NetBSD: fileassoc.9,v 1.9 2006/09/06 13:37:49 blymn Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 19, 2006
+.Dd September 4, 2006
 .Dt FILEASSOC 9
 .Os
 .Sh NAME
@@ -146,20 +146,6 @@ Returns the private data for the file/id combination
 or
 .Dv NULL
 if not found.
-.It Ft void * Fn fileassoc_lookup_hint "struct vnode *vp" "fileassoc_t id" \
-"uint64_t hint"
-Returns the private data for the file/id combination or
-.Dv NULL
-if not found.
-.Pp
-.Ar hint
-is used to save calculation.
-.Pp
-While this routine can be used to bypass internal calculation for critical
-code paths, it exposes implementation internals and will require special
-care if the
-.Nm
-implementation changes.
 .El
 .Ss Mount-wide Routines
 .Bl -tag -width "123456"
@@ -242,24 +228,6 @@ for
 .Ar vp ,
 for the fileassoc specified by
 .Ar id .
-.Pp
-.It Ft int Fn fileassoc_add_hint "struct vnode *vp" "fileassoc_t id" \
-"void *data" "uint64_t hint"
-Add private data in
-.Ar data
-for
-.Ar vp
-for the fileassoc specified by
-.Ar id
-using
-.Ar hint
-to save calculation.
-.Pp
-While this routine can be used to bypass internal calculation for critical
-code paths, it exposes implementation internals and will require special
-care if the
-.Nm
-implementation changes.
 .Pp
 .It Ft int Fn fileassoc_clear "struct vnode *vp" "fileassoc_t id"
 Clear the private data for
@@ -412,26 +380,4 @@ KPI first appeared in
 .Nx 4.0 .
 .Sh AUTHORS
 .An Elad Efrat Aq elad@NetBSD.org
-designed and implemented the
-.Nm
-KPI.
-.Sh CAVEATS
-The current implementation of
-.Nm
-uses the file-id as returned from a
-.Fn VOP_GETATTR
-call to uniquely identify a file inside a mount.
-KPI routines that can result in a call to
-.Fn VOP_GETATTR
-are
-.Fn fileassoc_lookup ,
-.Fn fileassoc_add ,
-.Fn fileassoc_file_delete ,
-and
-.Fn fileassoc_clear .
-This should be taken into consideration when using the interface.
-.Pp
-For critical code paths, a hinted version of the routines is supplied as a
-mean to bypass internal calculation.
-.Pp
-This limitation is planned on being removed.
+.An Brett Lymn Aq blymn@NetBSD.org
