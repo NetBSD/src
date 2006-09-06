@@ -1,6 +1,6 @@
-.\"	$NetBSD: console.4,v 1.9 2005/06/20 13:25:24 peter Exp $
+.\"	$NetBSD: console.4,v 1.10 2006/09/06 16:47:00 rpaulo Exp $
 .\"
-.Dd April 9, 2003
+.Dd September 6, 2006
 .Os
 .Dt CONS 4 i386
 .Sh NAME
@@ -94,7 +94,7 @@ by the bootloader.
 .It Pa /sys/arch/i386/conf/CONFIG
 .El
 .Sh EXAMPLES
-.Cd options \&"CONSDEVNAME=\e"com\e"",CONADDR=0x2f8,CONSPEED=19200
+.Cd options CONSDEVNAME=\&"\e"com\e"\&",CONADDR=0x2f8,CONSPEED=57600
 .Sh SEE ALSO
 .Xr config 1 ,
 .Xr tty 4 ,
