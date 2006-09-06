@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.36 2006/09/05 22:48:40 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.37 2006/09/06 00:11:49 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.36 2006/09/05 22:48:40 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.37 2006/09/06 00:11:49 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -588,13 +588,11 @@ __db_print_symbol(db_expr_t value)
 	const char *name;
 	db_expr_t offset;
 
-	db_find_xtrn_sym_and_offset((db_addr_t)value, &name, &offset);
-
+	db_find_sym_and_offset((db_addr_t)value, &name, &offset);
 	if (name != NULL && offset <= db_maxoff && offset != value)
-		db_print_loc_and_inst(value);
-	else
-		db_printf("\n");
+		db_printsym(value, DB_STGY_ANY, db_printf);
 
+	db_printf("\n");
 }
 
 #ifdef KSTACK_DEBUG
