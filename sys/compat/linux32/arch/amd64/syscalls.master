@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.5 2006/09/06 08:32:00 manu Exp $
+	$NetBSD: syscalls.master,v 1.6 2006/09/06 12:01:23 manu Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -252,7 +252,7 @@
 146	NOARGS	writev { netbsd32_ssize_t netbsd32_writev(int fd, \
 		    const netbsd32_iovecp_t iovp, int iovcnt); }
 147	NOARGS	{ pid_t sys_getsid(pid_t pid); }
-148	UNIMPL	fdatasync
+148	NOARGS	{ int linux_sys_fdatasync(int fd); }
 149	STD	{ int linux32_sys___sysctl(linux32___sysctlp_t lsp); }
 150	UNIMPL	mlock
 151	UNIMPL	munlock
