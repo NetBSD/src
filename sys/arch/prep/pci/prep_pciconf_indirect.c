@@ -1,4 +1,4 @@
-/*	$NetBSD: prep_pciconf_indirect.c,v 1.7 2006/06/09 01:19:11 garbled Exp $	*/
+/*	$NetBSD: prep_pciconf_indirect.c,v 1.8 2006/09/06 22:32:56 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,9 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_indirect.c,v 1.7 2006/06/09 01:19:11 garbled Exp $");
-
-#include "opt_openpic.h"
+__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_indirect.c,v 1.8 2006/09/06 22:32:56 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,10 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: prep_pciconf_indirect.c,v 1.7 2006/06/09 01:19:11 ga
 #include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/platform.h>
-
-#if defined(OPENPIC)
-#include <powerpc/openpic.h>
-#endif /* OPENPIC */
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
@@ -117,27 +111,6 @@ prep_pci_indirect_attach_hook(struct device *parent, struct device *self,
 		return;
 
 	printf(": indirect configuration space access");
-
-#if defined(OPENPIC)
-	if (openpic_base) {
-		pci_chipset_tag_t pc;
-		pcitag_t tag;
-		pcireg_t id, address;
-
-		pc = pba->pba_pc;
-		tag = pci_make_tag(pc, 0, 13, 0);
-		id = pci_conf_read(pc, tag, PCI_ID_REG);
-
-		if (PCI_VENDOR(id) == PCI_VENDOR_IBM
-		    && PCI_PRODUCT(id) == PCI_PRODUCT_IBM_MPIC) {
-			address = pci_conf_read(pc, tag, PCI_CBIO);
-			if ((address & PCI_MAPREG_TYPE_MASK) == PCI_MAPREG_TYPE_MEM) {
-				address &= PCI_MAPREG_MEM_ADDR_MASK;
-				openpic_base = (unsigned char *)(PREP_BUS_SPACE_MEM | address);
-			}
-		}
-	}
-#endif /* OPENPIC */
 }
 
 pcitag_t
