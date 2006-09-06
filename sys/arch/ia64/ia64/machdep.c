@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2006/07/03 17:02:56 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2006/09/06 12:54:31 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -175,17 +175,17 @@ struct	user *proc0paddr; /* XXX: See: kern/kern_proc.c:proc0_init() */
 static void
 identifycpu(void)
 {                       
-        char vendor[17];
+        u_int64_t vendor[3];
         const char *family_name, *model_name;
         u_int64_t features, tmp;
         int number, revision, model, family, archrev;
                                 
         /*              
          * Assumes little-endian.
-         */             
-        *(u_int64_t *) &vendor[0] = ia64_get_cpuid(0);
-        *(u_int64_t *) &vendor[8] = ia64_get_cpuid(1);
-        vendor[16] = '\0';
+         */
+	vendor[0] = ia64_get_cpuid(0);
+	vendor[1] = ia64_get_cpuid(1); 
+	vendor[2] = '\0'; 
         
         tmp = ia64_get_cpuid(3);
         number = (tmp >> 0) & 0xff;
@@ -238,7 +238,7 @@ identifycpu(void)
                     ((processor_frequency + 4999) / (Mhz/100)) % 100);
         }
         printf("%s)\n", family_name);
-        printf("  Origin = \"%s\"  Revision = %d\n", vendor, revision);
+        printf("  Origin = \"%s\"  Revision = %d\n", (char *) vendor, revision);
         printf("  Features = 0x%x\n", (u_int32_t) features);
 
 }
