@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.2,v 1.1.2.19 2006/09/06 06:56:03 tron Exp $
+#	$NetBSD: CHANGES-3.0.2,v 1.1.2.20 2006/09/06 19:10:19 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0.1 release to the NetBSD 3.0.2
 release:
@@ -141,4 +141,9 @@ dist/bind/lib/dns/resolver.c			1.2
 
 	Fixes for CVE-2006-4095 and CVE-2006-4096 from bind-9.3.2-P1.
 	[adrianp, ticket #1498]
+
+sys/kern/vfs_subr.c				1.269
+
+	Add %'s to go with PRI format constants.
+	[jld, ticket #1493]
 
