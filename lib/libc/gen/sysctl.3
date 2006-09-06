@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.181 2006/09/06 18:56:21 liamjfoy Exp $
+.\"	$NetBSD: sysctl.3,v 1.182 2006/09/06 18:59:21 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1238,7 +1238,8 @@ be smaller than
 .It Li ip.maxflows
 IP Fast Forwarding is enabled by default.
 If set to 0, IP Fast Forwarding is disabled.
-.Li ip.maxflows controls the maximum amount of flows which can be created.
+.Li ip.maxflows
+controls the maximum amount of flows which can be created.
 The default value is 256.
 .It Li ip.maxfragpackets
 The maximum number of fragmented packets the node will accept.
