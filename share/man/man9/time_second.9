@@ -1,4 +1,4 @@
-.\" $NetBSD: time.9,v 1.15 2005/10/01 04:09:06 yamt Exp $
+.\" $NetBSD: time_second.9,v 1.1 2006/09/06 18:04:30 gdamore Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,23 +32,23 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd October 1, 2005
-.Dt TIME 9
+.Dd September 6, 2006
+.Dt TIME_SECOND 9
 .Os
 .Sh NAME
 .Nm boottime ,
-.Nm mono_time ,
-.Nm time
+.Nm time_second ,
+.Nm time_uptime
 .Nd system time variables
 .Sh SYNOPSIS
 .Va extern struct timeval boottime;
 .br
-.Va extern volatile struct timeval mono_time;
+.Va extern time_t time_uptime;
 .br
-.Va extern volatile struct timeval time;
+.Va extern time_t time_second;
 .Sh DESCRIPTION
 The
-.Va time
+.Va time_second
 variable is the system's
 .Dq wall time
 clock.
@@ -68,10 +68,10 @@ with
 .Xr settimeofday 2 .
 .Pp
 The
-.Va mono_time
+.Va time_uptime
 variable is a monotonically increasing system clock.
 It is set from
-.Va time
+.Va time_second
 at boot, and is updated by the periodic timer interrupt.
 (It is not updated by
 .Xr settimeofday 2 . )
@@ -82,9 +82,9 @@ January 1, 1970.
 .Pp
 Clock interrupts should be blocked
 when reading or writing
-.Va time
+.Va time_second
 or
-.Va mono_time ,
+.Va time_uptime ,
 because those variables are updated by
 .Fn hardclock .
 .Va boottime
