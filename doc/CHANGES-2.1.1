@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.45 2006/08/29 06:45:08 jdc Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.46 2006/09/06 07:00:49 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
@@ -429,4 +429,9 @@ xsrc/xfree/xc/lib/font/bitmap/pcfread.c		1.2
 	cause a denial of service (crash) and possibly execute arbitrary code 
 	via unknown vectors."
 	[adrianp, ticket #10683]
+
+gnu/dist/sendmail/sendmail/main.c		patch
+
+	Fixes potential DoS attack with sendmail(8).
+	[adrianp, ticket #10689]
 
