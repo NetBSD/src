@@ -1,4 +1,4 @@
-/* $NetBSD: fileassoc.h,v 1.4 2006/08/20 10:38:23 blymn Exp $ */
+/* $NetBSD: fileassoc.h,v 1.5 2006/09/06 13:37:49 blymn Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -57,7 +57,6 @@ fileassoc_t fileassoc_register(const char *, fileassoc_cleanup_cb_t);
 int fileassoc_deregister(fileassoc_t);
 void *fileassoc_tabledata_lookup(struct mount *, fileassoc_t);
 void *fileassoc_lookup(struct vnode *, fileassoc_t);
-void *fileassoc_lookup_hint(struct vnode *, fileassoc_t, uint64_t);
 int fileassoc_table_add(struct mount *, size_t);
 int fileassoc_table_delete(struct mount *);
 int fileassoc_table_clear(struct mount *, fileassoc_t);
@@ -65,7 +64,6 @@ int fileassoc_tabledata_add(struct mount *, fileassoc_t, void *);
 int fileassoc_tabledata_clear(struct mount *, fileassoc_t);
 int fileassoc_file_delete(struct vnode *);
 int fileassoc_add(struct vnode *, fileassoc_t, void *);
-int fileassoc_add_hint(struct vnode *, fileassoc_t, void *, uint64_t);
 int fileassoc_clear(struct vnode *, fileassoc_t);
 int fileassoc_table_run(struct mount *, fileassoc_t, fileassoc_cb_t);
 
