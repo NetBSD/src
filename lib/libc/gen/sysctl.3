@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.180 2006/09/05 00:29:35 rpaulo Exp $
+.\"	$NetBSD: sysctl.3,v 1.181 2006/09/06 18:56:21 liamjfoy Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd September 5, 2006
+.Dd September 6, 2006
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -1111,6 +1111,7 @@ The currently defined protocols and names are:
 .It ip	hostzerobroadcast	integer	yes
 .It ip	lowportmin	integer	yes
 .It ip	lowportmax	integer	yes
+.It ip	maxflows	integer	yes
 .It ip	maxfragpackets	integer	yes
 .It ip	mtudisc	integer	yes
 .It ip	mtudisctimeout	integer	yes
@@ -1234,6 +1235,11 @@ The lowest port number to use for TCP and UDP reserved port allocation.
 This cannot be set to less than 0 or greater than 1024, and must
 be smaller than
 .Li ip.lowportmax .
+.It Li ip.maxflows
+IP Fast Forwarding is enabled by default.
+If set to 0, IP Fast Forwarding is disabled.
+.Li ip.maxflows controls the maximum amount of flows which can be created.
+The default value is 256.
 .It Li ip.maxfragpackets
 The maximum number of fragmented packets the node will accept.
 0 means that the node will not accept any fragmented packets.
