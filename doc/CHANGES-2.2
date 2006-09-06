@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.71 2006/09/03 00:34:36 riz Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.72 2006/09/06 07:00:12 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -843,4 +843,9 @@ include/stddef.h				1.11-1.15
 
 	Fix C++ offsetof for GCC 3.4+.
 	[joerg, ticket #10676]
+
+gnu/dist/sendmail/sendmail/main.c		patch
+
+	Fixes potential DoS attack with sendmail(8).
+	[adrianp, ticket #10689]
 
