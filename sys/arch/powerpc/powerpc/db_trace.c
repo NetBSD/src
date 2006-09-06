@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.38 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.39 2006/09/06 23:58:20 ad Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.38 2005/12/11 12:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.39 2006/09/06 23:58:20 ad Exp $");
 
 #include "opt_ppcarch.h"
 
@@ -131,7 +131,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			struct user *u;
 
 			(*pr)("trace: pid %d ", (int)addr);
-			p = pfind(addr);
+			p = p_find(addr, PFIND_LOCKED);
 			if (p == NULL) {
 				(*pr)("not found\n");
 				return;
