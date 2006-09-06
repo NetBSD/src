@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.34 2006/05/12 07:20:13 he Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.35 2006/09/06 19:13:51 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -312,13 +312,13 @@ msg_display_add(msg msg_no, ...)
 
 static void
 _msg_vprompt(const char *fmt, int flags, const char *def, char *val,
-    size_t max_chars, va_list ap)
+    size_t val_buf_len, va_list ap)
 {
 	int ch;
 	int len, pos, npos, off;
 	int first;
 	int txt_y, txt_x;
-	char *ibuf = alloca(max_chars);
+	char *ibuf = alloca(val_buf_len);
 	int maxx;
 
 	keypad(msg_win, TRUE);
@@ -326,7 +326,7 @@ _msg_vprompt(const char *fmt, int flags, const char *def, char *val,
 	ibuf[0] = 0;
 	if (def != NULL && *def) {
 		if (flags & MSG_PROMPT_HIDE_DFLT)
-			strlcpy(ibuf, def, max_chars);
+			strlcpy(ibuf, def, val_buf_len);
 		else {
 			waddstr(msg_win, " [");
 			waddstr(msg_win, def);
@@ -414,7 +414,7 @@ _msg_vprompt(const char *fmt, int flags, const char *def, char *val,
 		case KEY_RIGHT:
 			if (len == 0 && pos == 0 && def != NULL) {
 				/* restore default! */
-				strlcpy(ibuf, def, max_chars);
+				strlcpy(ibuf, def, val_buf_len);
 				len = pos = strlen(ibuf);
 				break;
 			}
@@ -422,7 +422,7 @@ _msg_vprompt(const char *fmt, int flags, const char *def, char *val,
 				pos++;
 			break;
 		default:
-			if (len < (max_chars - 1) && isprint(ch)) {
+			if (len < (val_buf_len - 1) && isprint(ch)) {
 				memmove(ibuf + pos + 1, ibuf + pos, len - pos);
 				ibuf[pos++] = ch;
 				len++;
@@ -441,28 +441,28 @@ _msg_vprompt(const char *fmt, int flags, const char *def, char *val,
 	/* copy the appropriate string to the output */
 	if (len != 0 || flags & MSG_PROMPT_HIDE_DFLT) {
 		ibuf[len] = '\0';
-		strlcpy(val, ibuf, max_chars);
+		strlcpy(val, ibuf, val_buf_len);
 	} else if (def != NULL && val != def) {
-		strlcpy(val, def, max_chars);
+		strlcpy(val, def, val_buf_len);
 	}
 }
 
 void
-msg_prompt(msg msg_no, const char *def, char *val, size_t max_chars, ...)
+msg_prompt(msg msg_no, const char *def, char *val, size_t val_buf_len, ...)
 {
 	va_list ap;
 
 	msg_clear();
 
-	va_start(ap, max_chars);
+	va_start(ap, val_buf_len);
 	_msg_vprompt(msg_string(msg_no), MSG_PROMPT_ECHO,
-		def, val, max_chars, ap);
+		def, val, val_buf_len, ap);
 	va_end(ap);
 }
 
 void
 msg_prompt_win(msg msg_no, int x, int y, int w, int h,
-	const char *def, char *val, size_t max_chars, ...)
+	const char *def, char *val, size_t val_buf_len, ...)
 {
 	va_list ap;
 	WINDOW *win;
@@ -473,14 +473,14 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 	maxx = getmaxx(msg_win);
 	maxy = getmaxy(msg_win);
 	if (w == 0) {
-		va_start(ap, max_chars);
+		va_start(ap, val_buf_len);
 		w = vsnprintf(NULL, 0, msg_string(msg_no), ap);
 		va_end(ap);
-		if (def != NULL && *def != 0 && w + max_chars * 2 < maxx) {
+		if (def != NULL && *def != 0 && w + val_buf_len * 2 < maxx) {
 			w += 2 + strlen(def) + 1;
 			msg_flags &= ~MSG_PROMPT_HIDE_DFLT;
 		}
-		w += 1 + 2 + max_chars + 1;
+		w += 1 + 2 + val_buf_len + 1;
 		if (w > maxx) {
 			if (!(msg_flags & MSG_PROMPT_HIDE_DFLT)) {
 				w -= 2 + strlen(def) + 1;
@@ -529,8 +529,8 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 		msg_clear();
 	}
 
-	va_start(ap, max_chars);
-	_msg_vprompt(msg_string(msg_no), msg_flags, def, val, max_chars, ap);
+	va_start(ap, val_buf_len);
+	_msg_vprompt(msg_string(msg_no), msg_flags, def, val, val_buf_len, ap);
 	va_end(ap);
 
 	if (win != NULL) {
@@ -548,24 +548,24 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 }
 
 void
-msg_prompt_add(msg msg_no, const char *def, char *val, size_t max_chars, ...)
+msg_prompt_add(msg msg_no, const char *def, char *val, size_t val_buf_len, ...)
 {
 	va_list ap;
 
-	va_start(ap, max_chars);
-	_msg_vprompt(msg_string(msg_no), MSG_PROMPT_ECHO, def, val, max_chars, ap);
+	va_start(ap, val_buf_len);
+	_msg_vprompt(msg_string(msg_no), MSG_PROMPT_ECHO, def, val, val_buf_len, ap);
 	va_end(ap);
 }
 
 void
-msg_prompt_noecho(msg msg_no, const char *def, char *val, size_t max_chars, ...)
+msg_prompt_noecho(msg msg_no, const char *def, char *val, size_t val_buf_len, ...)
 {
 	va_list ap;
 
 	msg_clear();
 
-	va_start(ap, max_chars);
-	_msg_vprompt(msg_string(msg_no), 0, def, val, max_chars, ap);
+	va_start(ap, val_buf_len);
+	_msg_vprompt(msg_string(msg_no), 0, def, val, val_buf_len, ap);
 	va_end(ap);
 }
 
