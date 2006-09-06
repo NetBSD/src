@@ -1,4 +1,4 @@
-/* $NetBSD: rb.c,v 1.6 2006/09/05 04:35:45 matt Exp $ */
+/* $NetBSD: rb.c,v 1.7 2006/09/06 20:01:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ rb_tree_init(struct rb_tree *rbt, rb_compare_nodes_fn compare_nodes,
  * Swap the location and colors of 'self' and its child @ which.  The child
  * can not be a sentinel node.
  */
-void
+static void
 rb_tree_swap_nodes(struct rb_tree *rbt, struct rb_node *old_father, int which)
 {
 	const unsigned int other = which ^ RB_OTHER;
@@ -221,7 +221,7 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 #endif
 }
 
-void
+static void
 rb_tree_insert_rebalance(struct rb_tree *rbt, struct rb_node *self)
 {
 	RB_MARK_RED(self);
@@ -510,7 +510,7 @@ rb_tree_remove_node(struct rb_tree *rbt, struct rb_node *self)
 	rbt->rbt_count--;
 }
 
-void
+static void
 rb_tree_removal_rebalance(struct rb_tree *rbt, struct rb_node *parent,
 	unsigned int which)
 {
@@ -612,7 +612,7 @@ rb_tree_removal_rebalance(struct rb_tree *rbt, struct rb_node *parent,
 }
 
 #ifndef NDEBUG
-bool
+static bool
 rb_tree_check_node(const struct rb_tree *rbt, const struct rb_node *self,
 	const struct rb_node *prev, bool red_check)
 {
