@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.35 2006/09/06 19:13:51 dsl Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.36 2006/09/06 19:24:15 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -318,8 +318,16 @@ _msg_vprompt(const char *fmt, int flags, const char *def, char *val,
 	int len, pos, npos, off;
 	int first;
 	int txt_y, txt_x;
-	char *ibuf = alloca(val_buf_len);
+	char *ibuf;
 	int maxx;
+
+	if (val == NULL || val_buf_len == 0) {
+		/* No answer wanted */
+		val = NULL;
+		val_buf_len = 1;
+	}
+
+	ibuf = alloca(val_buf_len);
 
 	keypad(msg_win, TRUE);
 	_msg_vprintf(0, fmt, ap);
@@ -438,12 +446,14 @@ _msg_vprompt(const char *fmt, int flags, const char *def, char *val,
 		last_o_was_space = 1;
 	}
 
-	/* copy the appropriate string to the output */
-	if (len != 0 || flags & MSG_PROMPT_HIDE_DFLT) {
-		ibuf[len] = '\0';
-		strlcpy(val, ibuf, val_buf_len);
-	} else if (def != NULL && val != def) {
-		strlcpy(val, def, val_buf_len);
+	if (val != NULL) {
+		/* copy the appropriate string to the output */
+		if (len != 0 || flags & MSG_PROMPT_HIDE_DFLT) {
+			ibuf[len] = '\0';
+			strlcpy(val, ibuf, val_buf_len);
+		} else if (def != NULL && val != def) {
+			strlcpy(val, def, val_buf_len);
+		}
 	}
 }
 
