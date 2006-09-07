@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.15 2006/09/04 23:45:30 gdamore Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.16 2006/09/07 00:10:49 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -87,14 +87,22 @@ struct todr_chip_handle {
 				volatile struct timeval *);
 	int	(*todr_settime)(struct todr_chip_handle *,
 				volatile struct timeval *);
+	int	(*todr_gettime_ymdhms)(struct todr_chip_handle *,
+	    			struct clock_ymdhms *);
+	int	(*todr_settime_ymdhms)(struct todr_chip_handle *,
+	    			struct clock_ymdhms *);
 	int	(*todr_setwen)(struct todr_chip_handle *, int);
 };
 typedef struct todr_chip_handle *todr_chip_handle_t;
 
-#define todr_gettime(ct, t)	((*(ct)->todr_gettime)(ct, t))
-#define todr_settime(ct, t)	((*(ct)->todr_settime)(ct, t))
 #define todr_wenable(ct, v)	if ((ct)->todr_setwen) \
 					((*(ct)->todr_setwen)(ct, v))
+
+/*
+ * Probably these should evolve into internal routines in kern_todr.c.
+ */
+extern int todr_gettime(todr_chip_handle_t tch, struct timeval *);
+extern int todr_settime(todr_chip_handle_t tch, struct timeval *);
 
 /*
  * Machine-dependent function that machine-independent RTC drivers can

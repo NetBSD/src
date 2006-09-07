@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.5 2006/09/05 19:32:17 matt Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.6 2006/09/07 00:10:49 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.5 2006/09/05 19:32:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.6 2006/09/07 00:10:49 gdamore Exp $");
 
 #include <sys/param.h>
 
@@ -243,3 +243,56 @@ resettodr(void)
 }
 
 #endif	/* __HAVE_GENERIC_TODR */
+
+
+int
+todr_gettime(todr_chip_handle_t tch, struct timeval *tvp)
+{
+	struct clock_ymdhms	dt;
+	int			rv;
+
+	if (tch->todr_gettime)
+		return tch->todr_gettime(tch, tvp);
+
+	if (tch->todr_gettime_ymdhms) {
+		if ((rv = tch->todr_gettime_ymdhms(tch, &dt)) != 0)	
+			return rv;
+		/*
+		 * If tv_sec is 32 bits, then the "End of Time" is Mon
+		 * Jan 18 22:14:07 2038 (US/Eastern) This code copes
+		 * with RTC's past the end of time if tv_sec is an
+		 * int32 or less. Needed because sometimes RTCs screw
+		 * up or are badly set, and that would cause the time
+		 * to go negative in the calculation below, which
+		 * causes Very Bad Mojo. This at least lets the user
+		 * boot and fix the problem.  Note the code is self
+		 * eliminating once tv_sec goes to 64 bits.
+		 */
+		if ((sizeof (tvp->tv_sec) <= sizeof (int32_t)) &&
+		    (dt.dt_year >= 2038)) {
+			return -1;
+		}
+
+		tvp->tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
+		tvp->tv_usec = 0;
+		return 0;
+	}
+
+	return -1;
+}
+
+int
+todr_settime(todr_chip_handle_t tch, struct timeval *tvp)
+{
+	struct clock_ymdhms	dt;
+
+	if (tch->todr_settime)
+		return tch->todr_settime(tch, tvp);
+
+	if (tch->todr_settime_ymdhms) {
+		clock_secs_to_ymdhms(tvp->tv_sec - rtc_offset * 60, &dt);
+		return tch->todr_settime_ymdhms(tch, &dt);
+	}
+
+	return -1;
+}
