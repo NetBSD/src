@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.75 2006/08/27 23:50:53 christos Exp $      */
+/*      $NetBSD: ata.c,v 1.76 2006/09/07 12:34:42 itohy Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.75 2006/08/27 23:50:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.76 2006/09/07 12:34:42 itohy Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -52,8 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.75 2006/08/27 23:50:53 christos Exp $");
 #include <machine/intr.h>
 #include <machine/bus.h>
 
+#include <dev/ata/ataconf.h>
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
+#include <dev/ic/wdcvar.h>	/* for PIOBM */
 
 #include "locators.h"
 
@@ -853,6 +855,17 @@ ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 		return;
 	}
 
+#if NATA_PIOBM		/* XXX wdc dependent code */
+	if (xfer->c_flags & C_PIOBM) {
+		struct wdc_softc *wdc = CHAN_TO_WDC(chp);
+
+		/* finish the busmastering PIO */
+		(*wdc->piobm_done)(wdc->dma_arg,
+		    chp->ch_channel, xfer->c_drive);
+		chp->ch_flags &= ~(ATACH_DMA_WAIT | ATACH_PIOBM_WAIT | ATACH_IRQ_WAIT);
+	}
+#endif
+
 	if (atac->atac_free_hw)
 		(*atac->atac_free_hw)(chp);
 	s = splbio();
@@ -1015,7 +1028,12 @@ ata_print_modes(struct ata_channel *chp)
 			else if (drvp->UDMA_mode == 6)
 				aprint_normal(" (Ultra/133)");
 		}
-		if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA))
+		if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA))
+#if NATA_PIOBM
+		    /* PIOBM capable controllers use DMA for PIO commands */
+		    || (atac->atac_cap & ATAC_CAP_PIOBM)
+#endif
+		    )
 			aprint_normal(" (using DMA)");
 		aprint_normal("\n");
 	}

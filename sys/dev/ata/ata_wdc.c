@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.83 2005/12/11 12:21:14 christos Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.84 2006/09/07 12:34:42 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.83 2005/12/11 12:21:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.84 2006/09/07 12:34:42 itohy Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.83 2005/12/11 12:21:14 christos Exp $"
 #define    bus_space_read_multi_stream_4    bus_space_read_multi_4
 #endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
+#include <dev/ata/ataconf.h>
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
@@ -163,6 +164,10 @@ wdc_ata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
 	    (ata_bio->flags & ATA_SINGLE) == 0)
 		xfer->c_flags |= C_DMA;
+#if NATA_PIOBM
+	else if (atac->atac_cap & ATAC_CAP_PIOBM)
+		xfer->c_flags |= C_PIOBM;
+#endif
 	xfer->c_drive = drvp->drive;
 	xfer->c_cmd = ata_bio;
 	xfer->c_databuf = ata_bio->databuf;
@@ -330,7 +335,7 @@ _wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	    atac->atac_dev.dv_xname, chp->ch_channel, xfer->c_drive),
 	    DEBUG_INTR | DEBUG_XFERS);
 
-	if (xfer->c_flags & C_DMA) {
+	if (xfer->c_flags & (C_DMA | C_PIOBM)) {
 		if (drvp->n_xfers <= NXFER)
 			drvp->n_xfers++;
 		dma_flags = (ata_bio->flags & ATA_READ) ?  WDC_DMA_READ : 0;
@@ -449,6 +454,37 @@ again:
 			goto intr;
 		} /* else not DMA */
  do_pio:
+#if NATA_PIOBM
+		if ((xfer->c_flags & C_PIOBM) && xfer->c_skip == 0) {
+			if (ata_bio->flags & ATA_POLL) {
+				/* XXX not supported yet --- fall back to PIO */
+				xfer->c_flags &= ~C_PIOBM;
+			} else {
+				/* Init the DMA channel. */
+				error = (*wdc->dma_init)(wdc->dma_arg,
+				    chp->ch_channel, xfer->c_drive,
+				    (char *)xfer->c_databuf + xfer->c_skip,
+				    xfer->c_bcount,
+				    dma_flags | WDC_DMA_PIOBM_ATA);
+				if (error) {
+					if (error == EINVAL) {
+						/*
+						 * We can't do DMA on this
+						 * transfer for some reason.
+						 * Fall back to PIO.
+						 */
+						xfer->c_flags &= ~C_PIOBM;
+						error = 0;
+					} else {
+						ata_bio->error = ERR_DMA;
+						ata_bio->r_error = 0;
+						wdc_ata_bio_done(chp, xfer);
+						return;
+					}
+				}
+			}
+		}
+#endif
 		ata_bio->nblks = min(nblks, ata_bio->multi);
 		ata_bio->nbytes = ata_bio->nblks * ata_bio->lp->d_secsize;
 		KASSERT(nblks == 1 || (ata_bio->flags & ATA_SINGLE) == 0);
@@ -513,6 +549,16 @@ again:
 			wdc_ata_bio_done(chp, xfer);
 			return;
 		}
+#if NATA_PIOBM
+		if (xfer->c_flags & C_PIOBM) {
+			/* start the busmastering PIO */
+			(*wdc->piobm_start)(wdc->dma_arg,
+			    chp->ch_channel, xfer->c_drive,
+			    xfer->c_skip, ata_bio->nbytes, 0);
+			chp->ch_flags |= ATACH_DMA_WAIT;
+		} else
+#endif
+
 		wdc->dataout_pio(chp, drvp->drive_flags,
 		    (char *)xfer->c_databuf + xfer->c_skip, ata_bio->nbytes);
 	}
@@ -573,6 +619,14 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		wdc_ata_bio_done(chp, xfer);
 		return 1;
 	}
+
+#if NATA_PIOBM
+	/* Transfer-done interrupt for busmastering PIO read */
+	if ((xfer->c_flags & C_PIOBM) && (chp->ch_flags & ATACH_PIOBM_WAIT)) {
+		chp->ch_flags &= ~ATACH_PIOBM_WAIT;
+		goto end;
+	}
+#endif
 
 	/* Ack interrupt done by wdc_wait_for_unbusy */
 	if (wdc_wait_for_unbusy(chp, (irq == 0) ? ATA_DELAY : 0, AT_POLL) < 0) {
@@ -646,6 +700,17 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 			wdc_ata_bio_done(chp, xfer);
 			return 1;
 		}
+#if NATA_PIOBM
+		if (xfer->c_flags & C_PIOBM) {
+			/* start the busmastering PIO */
+			(*wdc->piobm_start)(wdc->dma_arg,
+			    chp->ch_channel, xfer->c_drive,
+			    xfer->c_skip, ata_bio->nbytes,
+			    WDC_PIOBM_XFER_IRQ);
+			chp->ch_flags |= ATACH_DMA_WAIT | ATACH_PIOBM_WAIT | ATACH_IRQ_WAIT;
+			return 1;
+		} else
+#endif
 		wdc->datain_pio(chp, drvp->drive_flags,
 		    (char *)xfer->c_databuf + xfer->c_skip, ata_bio->nbytes);
 	}
