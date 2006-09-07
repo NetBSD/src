@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.10 2006/09/07 04:51:42 gdamore Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.11 2006/09/07 07:26:07 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,17 +76,16 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.10 2006/09/07 04:51:42 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.11 2006/09/07 07:26:07 dogcow Exp $");
 
 #include <sys/param.h>
-
-#ifdef	__HAVE_GENERIC_TODR
-
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/timetc.h>
 #include <dev/clock_subr.h>	/* hmm.. this should probably move to sys */
+
+#ifdef	__HAVE_GENERIC_TODR
 
 static todr_chip_handle_t todr_handle = NULL;
 
