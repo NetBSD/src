@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2006/09/05 19:46:14 riz Exp $
+#	$NetBSD: Makefile,v 1.3 2006/09/07 23:53:41 riz Exp $
+
+.include <bsd.own.mk>
 
 PROG=resize_lfs
 SRCS=resize_lfs.c partutil.c
