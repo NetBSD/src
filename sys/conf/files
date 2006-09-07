@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.807 2006/09/07 00:20:28 ad Exp $
+#	$NetBSD: files,v 1.808 2006/09/07 01:12:00 uwe Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -899,6 +899,11 @@ file	dev/ic/mm58167.c		mm58167
 #
 define	mc146818
 file	dev/ic/mc146818.c		mc146818
+
+# Ricoh RS5C313 time of-day-clock
+#
+define	rs5c313
+file	dev/ic/rs5c313.c		rs5c313
 
 # D-Link DL10019/10022 NE2000-compatible network interface subroutines
 #
