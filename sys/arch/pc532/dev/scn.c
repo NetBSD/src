@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.73 2006/07/23 22:06:06 ad Exp $ */
+/*	$NetBSD: scn.c,v 1.74 2006/09/07 15:56:01 simonb Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.73 2006/07/23 22:06:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.74 2006/09/07 15:56:01 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1302,8 +1302,8 @@ static void
 scnoverrun(int unit, long *ptime, const char *what)
 {
 
-	if (*ptime != time.tv_sec) {
-		*ptime = time.tv_sec;
+	if (*ptime != time_second) {
+		*ptime = time_second;
 		log(LOG_WARNING, "scn%d: %s overrun\n", unit, what);
 	}
 }
