@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.908.2.3 2006/09/01 23:39:08 riz Exp $
+#	$NetBSD: mi,v 1.908.2.4 2006/09/07 13:47:50 tron Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2746,7 +2746,8 @@
 ./usr/libdata/debug/usr/sbin/bootpgw.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/bootptest.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/btconfig.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/btcontrol.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/btcontrol.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/btdevctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/bthcid.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/catman.debug	comp-man-debug		debug
 ./usr/libdata/debug/usr/sbin/chat.debug		comp-ppp-debug		debug
