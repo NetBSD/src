@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.11 2006/09/07 07:26:07 dogcow Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.12 2006/09/07 15:49:49 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.11 2006/09/07 07:26:07 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.12 2006/09/07 15:49:49 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -112,6 +112,7 @@ void
 inittodr(time_t base)
 {
 	int badbase = 0, waszero = (base == 0), goodtime = 0, badrtc = 0;
+	int s;
 #ifdef	__HAVE_TIMECOUNTER
 	struct timespec ts;
 #endif
@@ -193,6 +194,7 @@ inittodr(time_t base)
 
 	timeset = 1;
 
+	s = splclock();
 #ifdef	__HAVE_TIMECOUNTER
 	ts.tv_sec = tv.tv_sec;
 	ts.tv_nsec = tv.tv_usec * 1000;
@@ -200,6 +202,7 @@ inittodr(time_t base)
 #else
 	time = tv;
 #endif
+	splx(s);
 
 	if (waszero || goodtime)
 		return;
