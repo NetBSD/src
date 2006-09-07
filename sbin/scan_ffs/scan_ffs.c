@@ -1,7 +1,7 @@
-/* $NetBSD: scan_ffs.c,v 1.10 2006/09/07 00:48:21 xtraeme Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.11 2006/09/07 02:24:51 xtraeme Exp $ */
 
 /*
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -77,7 +77,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.10 2006/09/07 00:48:21 xtraeme Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.11 2006/09/07 02:24:51 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -424,7 +424,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-		"Usage: %s [-f file] [-lv] [-s start] [-e end] "
+		"Usage: %s [-F file] [-lv] [-s start] [-e end] "
 		"device\n", getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -441,13 +441,13 @@ main(int argc, char **argv)
 	fpath = NULL;
 
 	setprogname(*argv);
-	while ((ch = getopt(argc, argv, "e:f:ls:v")) != -1)
+	while ((ch = getopt(argc, argv, "e:F:ls:v")) != -1)
 		switch(ch) {
 		case 'e':
 			eflag = 1;
 			end = atoi(optarg);
 			break;
-		case 'f':
+		case 'F':
 			fflag = 1;
 			fpath = optarg;
 			break;
