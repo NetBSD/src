@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.218 2006/08/26 17:26:00 matt Exp $
+#	$NetBSD: Makefile,v 1.219 2006/09/07 00:50:45 ad Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -10,7 +10,7 @@ SUBDIR=	ac accton altq amd apm apmd arp bad144 bind bootp \
 	envstat eshconfig etcupdate extattrctl fssconfig fwctl gpioctl \
 	grfconfig grfinfo gspa hilinfo ifwatchd inetd installboot \
 	iopctl iostat ipwctl irdaattach isdn iteconfig iwictl\
-	kgmon lastlogin link lmcconfig lpr mailwrapper makefs \
+	kgmon lastlogin link lmcconfig lockstat lpr mailwrapper makefs \
 	map-mbone mdconfig memswitch mlxctl mopd mountd moused \
 	mrinfo mrouted mscdlabel mtrace \
 	mtree ndbootd ndiscvt netgroup_mkdb nfsd ntp pcictl pkg_install pppd \

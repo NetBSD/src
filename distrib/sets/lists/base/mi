@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.647 2006/08/26 19:31:53 matt Exp $
+# $NetBSD: mi,v 1.648 2006/09/07 00:50:45 ad Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1080,6 +1080,7 @@
 ./usr/sbin/linkfarm				base-pkgutil-bin
 ./usr/sbin/lmcconfig				base-netutil-bin
 ./usr/sbin/lmtp					base-obsolete		obsolete
+./usr/sbin/lockstat				base-sysutil-bin
 ./usr/sbin/lpc					base-lpr-bin
 ./usr/sbin/lpd					base-lpr-bin
 ./usr/sbin/lptest				base-lpr-bin
