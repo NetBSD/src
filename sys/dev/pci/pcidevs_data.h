@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.829 2006/09/07 12:38:59 itohy Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.830 2006/09/07 21:17:32 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.830 2006/09/07 12:37:49 itohy Exp
+ *	NetBSD: pcidevs,v 1.831 2006/09/07 21:16:55 riz Exp
  */
 
 /*
@@ -10968,6 +10968,10 @@ static const struct pci_product pci_products[] = {
 	    "SK-9D41 1000BASE-X",
 	},
 	{
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9SXX,
+	    "SK-9Sxx Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9E21,
 	    "SK-9E21D/SK-9E22 1000base-T",
 	},
@@ -12296,4 +12300,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2481;
+const int pci_nproducts = 2482;
