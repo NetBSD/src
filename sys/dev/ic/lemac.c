@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.29 2005/12/11 12:21:27 christos Exp $ */
+/* $NetBSD: lemac.c,v 1.30 2006/09/07 02:40:32 dogcow Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,10 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.29 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.30 2006/09/07 02:40:32 dogcow Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -68,10 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.29 2005/12/11 12:21:27 christos Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -775,22 +770,6 @@ lemac_ifioctl(
 		}
 #endif /* INET */
 
-#ifdef NS
-		/* This magic copied from if_is.c; I don't use XNS,
-		 * so I have no way of telling if this actually
-		 * works or not.
-		 */
-		case AF_NS: {
-		    struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-		    if (ns_nullhost(*ina)) {
-			ina->x_host = *(union ns_host *)sc->sc_enaddr;
-		    } else {
-			memcpy(sc->sc_enaddr, (caddr_t)ina->x_host.c_host,
-			      ifp->if_addrlen);
-		    }
-		    break;
-		}
-#endif /* NS */
 
 		default: {
 		    break;

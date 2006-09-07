@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.30 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.31 2006/09/07 02:40:33 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.30 2006/07/23 22:06:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.31 2006/09/07 02:40:33 dogcow Exp $");
 
 #include "opt_iso.h"
 
@@ -86,13 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.30 2006/07/23 22:06:14 ad Exp $");
 #include <netiso/iso_pcb.h>
 #include <netiso/iso_var.h>
 #include <sys/protosw.h>
-
-#ifdef TPCONS
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_var.h>
-#include <netccitt/pk_extern.h>
-#endif
 
 const struct iso_addr zeroiso_addr;
 

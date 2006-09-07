@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.36 2006/07/13 22:56:02 gdamore Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.37 2006/09/07 02:40:33 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -46,10 +46,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.36 2006/07/13 22:56:02 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.37 2006/09/07 02:40:33 dogcow Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -78,10 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.36 2006/07/13 22:56:02 gdamore Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

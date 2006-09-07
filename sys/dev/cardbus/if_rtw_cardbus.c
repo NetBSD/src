@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.12 2006/06/05 21:09:29 martin Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.13 2006/09/07 02:40:32 dogcow Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -74,10 +74,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.12 2006/06/05 21:09:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.13 2006/09/07 02:40:32 dogcow Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -110,10 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.12 2006/06/05 21:09:29 martin E
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>

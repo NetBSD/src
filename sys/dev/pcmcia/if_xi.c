@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.56 2006/04/14 17:46:29 christos Exp $ */
+/*	$NetBSD: if_xi.c,v 1.57 2006/09/07 02:40:33 dogcow Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.56 2006/04/14 17:46:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.57 2006/09/07 02:40:33 dogcow Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -90,10 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.56 2006/04/14 17:46:29 christos Exp $");
 #include <netipx/ipx_if.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -954,22 +950,6 @@ xi_ether_ioctl(ifp, cmd, data)
 			break;
 #endif	/* INET */
 
-#ifdef NS
-		case AF_NS:
-		{
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-					LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
-					ifp->if_addrlen);
-			/* Set new address. */
-			xi_init(sc);
-			break;
-		}
-#endif  /* NS */
 
 		default:
 			xi_init(sc);
