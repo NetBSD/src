@@ -1,4 +1,4 @@
-/*	$NetBSD: a2kbbc.c,v 1.18 2006/09/05 05:32:30 mhitch Exp $ */
+/*	$NetBSD: a2kbbc.c,v 1.19 2006/09/07 20:59:47 mhitch Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a2kbbc.c,v 1.18 2006/09/05 05:32:30 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a2kbbc.c,v 1.19 2006/09/07 20:59:47 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -165,7 +165,7 @@ a2kugettod(todr_chip_handle_t h, volatile struct timeval *tvp)
 	while (rt->control1 & A2CONTROL1_BUSY && i--)
 		;
 	if (rt->control1 & A2CONTROL1_BUSY)
-		return (0);	/* Give up and say it's not there */
+		return (ENXIO);		/* Give up and say it's not there */
 
 	/* Copy the info.  Careful about the order! */
 	dt.dt_sec   = rt->second1 * 10 + rt->second2;
@@ -214,7 +214,7 @@ a2kugettod(todr_chip_handle_t h, volatile struct timeval *tvp)
 	    (dt.dt_day  > 31) ||
 	    (dt.dt_mon  > 12) ||
 	    /* (dt.dt_year < STARTOFTIME) || */ (dt.dt_year > 2036))
-		return (0);
+		return (EINVAL);
 
 	secs = clock_ymdhms_to_secs(&dt);
 	if (tvp) {
@@ -239,7 +239,7 @@ a2kusettod(todr_chip_handle_t h, volatile struct timeval *tvp)
 	 * currently used..
 	 */
 	if (! rt)
-		return (1);
+		return (ENXIO);
 
 	clock_secs_to_ymdhms(secs, &dt);
 
@@ -251,7 +251,7 @@ a2kusettod(todr_chip_handle_t h, volatile struct timeval *tvp)
 	while (rt->control1 & A2CONTROL1_BUSY && i--)
 		;
 	if (rt->control1 & A2CONTROL1_BUSY)
-		return (0);	/* Give up and say it's not there */
+		return (ENXIO);		/* Give up and say it's not there */
 
 	ampm = 0;
 	if ((rt->control3 & A2CONTROL3_24HMODE) == 0) {

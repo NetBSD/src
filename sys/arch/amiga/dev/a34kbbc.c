@@ -1,4 +1,4 @@
-/*	$NetBSD: a34kbbc.c,v 1.17 2006/09/05 05:32:30 mhitch Exp $ */
+/*	$NetBSD: a34kbbc.c,v 1.18 2006/09/07 20:59:47 mhitch Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.17 2006/09/05 05:32:30 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.18 2006/09/07 20:59:47 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -177,7 +177,7 @@ a34kugettod(todr_chip_handle_t h, volatile struct timeval *tvp)
 	    (dt.dt_day  > 31) ||
 	    (dt.dt_mon  > 12) ||
 	    /* (dt.dt_year < STARTOFTIME) || */ (dt.dt_year > 2036))
-		return (0);
+		return (EINVAL);
 
 	secs = clock_ymdhms_to_secs(&dt);
 	if (tvp)
@@ -200,7 +200,7 @@ a34kusettod(todr_chip_handle_t h, volatile struct timeval *tvp)
 	 */
 
 	if (! rt)
-		return (1);
+		return (ENXIO);
 
 	clock_secs_to_ymdhms(secs, &dt);
 
