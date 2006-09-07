@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.678 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.679 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -37,3 +37,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		etc sets. [hubertf 20060904]
 	tcp: Add support for Explicit Congestion Notification as defined
 		in RFC 3168. Sponsored by Google SoC. [rpaulo 20060905]
+	scan_ffs(8): Add -f file support. Useful to search for partitions
+		on disk images. [xtraeme 20060907]
