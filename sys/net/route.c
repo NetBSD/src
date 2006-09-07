@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.70 2006/06/07 22:33:43 kardel Exp $	*/
+/*	$NetBSD: route.c,v 1.71 2006/09/07 02:40:33 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,9 +98,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.70 2006/06/07 22:33:43 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.71 2006/09/07 02:40:33 dogcow Exp $");
 
-#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,9 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: route.c,v 1.70 2006/06/07 22:33:43 kardel Exp $");
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 
-#ifdef NS
-#include <netns/ns.h>
-#endif
 
 struct	route_cb route_cb;
 struct	rtstat	rtstat;

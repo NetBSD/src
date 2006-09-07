@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.75 2006/08/30 17:05:30 christos Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.76 2006/09/07 02:40:33 dogcow Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,12 +61,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.75 2006/08/30 17:05:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.76 2006/09/07 02:40:33 dogcow Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
 #include "opt_iso.h"			/* ISO TP tunneled over IP */
-#include "opt_ns.h"			/* NSIP: XNS tunneled over IP */
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_pim.h"
@@ -127,11 +126,6 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.75 2006/08/30 17:05:30 christos Exp $
 #include <netipsec/ipsec.h>
 #include <netipsec/key.h>
 #endif	/* FAST_IPSEC */
-
-#ifdef NSIP
-#include <netns/ns_var.h>
-#include <netns/idp_var.h>
-#endif /* NSIP */
 
 #ifdef TPIP
 #include <netiso/tp_param.h>
@@ -292,13 +286,6 @@ const struct protosw inetsw[] = {
 },
 #endif /* EON */
 #endif /* ISO */
-#ifdef NSIP
-{ SOCK_RAW,	&inetdomain,	IPPROTO_IDP,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  idpip_input,	NULL,		nsip_ctlinput,	0,
-  rip_usrreq,
-  0,		0,		0,		0,
-},
-#endif /* NSIP */
 /* raw wildcard */
 { SOCK_RAW,	&inetdomain,	0,		PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   rip_input,	rip_output,	rip_ctlinput,	rip_ctloutput,

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.10 2006/08/17 17:11:28 christos Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.11 2006/09/07 02:40:33 dogcow Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,10 +44,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.10 2006/08/17 17:11:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.11 2006/09/07 02:40:33 dogcow Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -77,10 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.10 2006/08/17 17:11:28 christos Exp $"
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
-#endif
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <dev/mii/mii.h>

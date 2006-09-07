@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.57 2005/12/11 23:05:25 thorpej Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.58 2006/09/07 02:40:33 dogcow Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,12 +65,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.57 2005/12/11 23:05:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.58 2006/09/07 02:40:33 dogcow Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_iso.h"
-#include "opt_ns.h"
 #include "opt_ipx.h"
 #include "opt_mbuftrace.h"
 
@@ -107,10 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.57 2005/12/11 23:05:25 thorpej Exp $")
 #include <netinet/ip6.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #ifdef IPX
 #include <netipx/ipx.h>
@@ -302,12 +297,6 @@ looutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		isr = NETISR_IPV6;
 		break;
 #endif
-#ifdef NS
-	case AF_NS:
-		ifq = &nsintrq;
-		isr = NETISR_NS;
-		break;
-#endif
 #ifdef ISO
 	case AF_ISO:
 		ifq = &clnlintrq;
@@ -382,12 +371,6 @@ lostart(struct ifnet *ifp)
 		case AF_IPX:
 			ifq = &ipxintrq;
 			isr = NETISR_IPX;
-			break;
-#endif
-#ifdef NS
-		case AF_NS:
-			ifq = &nsintrq;
-			isr = NETISR_NS;
 			break;
 #endif
 #ifdef ISO

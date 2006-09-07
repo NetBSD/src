@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.96 2006/08/23 20:02:23 adrianp Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.97 2006/09/07 02:40:33 dogcow Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,12 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.96 2006/08/23 20:02:23 adrianp Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.97 2006/09/07 02:40:33 dogcow Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
 #include "opt_iso.h"
-#include "opt_ns.h"
 #include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
@@ -89,10 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.96 2006/08/23 20:02:23 adrianp Exp
 #include <netipx/ipx_if.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #ifdef ISO
 #include <netiso/argo_debug.h>
@@ -565,12 +560,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 				inq = &ipxintrq;
 				break;
 #endif
-#ifdef NS
-			case ETHERTYPE_NS:
-				schednetisr(NETISR_NS);
-				inq = &nsintrq;
-				break;
-#endif
 			}
 			goto queue_pkt;
 		default:        /* Invalid PPP packet. */
@@ -649,15 +638,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		if (sp->pp_phase == SPPP_PHASE_NETWORK) {
 			schednetisr(NETISR_IPX);
 			inq = &ipxintrq;
-		}
-		break;
-#endif
-#ifdef NS
-	case PPP_XNS:
-		/* XNS IDPCP not implemented yet */
-		if (sp->pp_phase == SPPP_PHASE_NETWORK) {
-			schednetisr(NETISR_NS);
-			inq = &nsintrq;
 		}
 		break;
 #endif
@@ -855,12 +835,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			if (sp->state[IDX_IPV6CP] != STATE_OPENED)
 				error = ENETDOWN;
 		}
-		break;
-#endif
-#ifdef NS
-	case AF_NS:     /* Xerox NS Protocol */
-		protocol = htons((sp->pp_flags & PP_CISCO) ?
-			ETHERTYPE_NS : PPP_XNS);
 		break;
 #endif
 #ifdef IPX
