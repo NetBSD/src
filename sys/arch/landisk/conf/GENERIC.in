@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.1 2006/09/01 21:26:18 uwe Exp $
+# $NetBSD: GENERIC.in,v 1.2 2006/09/07 01:55:02 uwe Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.1 $"
+#ident          "GENERIC-$Revision: 1.2 $"
 
 maxusers	16		# estimated number of users
 
@@ -209,6 +209,8 @@ obio0	at mainbus?
 options 	SCIFCONSOLE
 options 	SCIFCN_SPEED=9600
 scif0	at shb?
+
+rs5c313rtc0 at shb0			# time-of-day clock
 
 # SCSI Controllers and Devices
 

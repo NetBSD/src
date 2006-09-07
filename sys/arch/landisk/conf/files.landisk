@@ -1,4 +1,4 @@
-#	$NetBSD: files.landisk,v 1.1 2006/09/01 21:26:18 uwe Exp $
+#	$NetBSD: files.landisk,v 1.2 2006/09/07 01:55:02 uwe Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
 maxpartitions 16
@@ -80,6 +80,11 @@ include "dev/usb/files.usb"
 # SH bus
 #
 include	"arch/sh3/conf/files.shb"
+
+# Ricoh RS5C313 Real Time Clock
+device	rs5c313rtc: rs5c313
+attach	rs5c313rtc at shb with rs5c313_landisk
+file	arch/landisk/dev/rs5c313_landisk.c	rs5c313_landisk
 
 #
 # on-board I/O bus
