@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 2006/07/18 12:51:01 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22 2006/09/07 03:38:54 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2006/07/18 12:51:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2006/09/07 03:38:54 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,26 +53,13 @@ cpu_configure(void)
 	(void)splhigh();
 
 	evcnt_attach_static(&hardclock_ev);
-#ifdef ENABLE_INT5_STATCLOCK
-	evcnt_attach_static(&statclock_ev);
-#endif
 	icu_init();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
-#ifdef ENABLE_INT5_STATCLOCK
-	/*
-	 * Enable interrupt sources.
-	 * We can't enable CPU INT5 which is used by statclock(9) here
-	 * until cpu_initclocks(9) is called because there is no way
-	 * to disable it other than setting status register by spl(9).
-	 */
-	_spllower(MIPS_INT_MASK_5);
-#else
 	/* enable all interrupts */
 	_splnone();
-#endif
 }
 
 void
