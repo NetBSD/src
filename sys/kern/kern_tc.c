@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.10 2006/09/03 06:40:39 christos Exp $ */
+/* $NetBSD: kern_tc.c,v 1.11 2006/09/07 15:48:14 simonb Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.10 2006/09/03 06:40:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.11 2006/09/07 15:48:14 simonb Exp $");
 
 #include "opt_ntp.h"
 
@@ -426,6 +426,7 @@ void
 tc_init(struct timecounter *tc)
 {
 	u_int u;
+	int s;
 
 	u = tc->tc_frequency / tc->tc_counter_mask;
 	/* XXX: We need some margin here, 10% is a guess */
@@ -444,7 +445,8 @@ tc_init(struct timecounter *tc)
 		    tc->tc_quality);
 	}
 
-	/* XXX locking */
+	s = splclock();
+
 	tc->tc_next = timecounters;
 	timecounters = tc;
 	/*
@@ -463,6 +465,8 @@ tc_init(struct timecounter *tc)
 	(void)tc->tc_get_timecount(tc);
 	timecounter = tc;
 	tc_windup();
+
+	splx(s);
 }
 
 /* Report the frequency of the current timecounter. */
