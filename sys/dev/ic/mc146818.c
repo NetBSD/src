@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818.c,v 1.9 2006/09/06 06:26:54 simonb Exp $	*/
+/*	$NetBSD: mc146818.c,v 1.10 2006/09/07 04:29:34 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.9 2006/09/06 06:26:54 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.10 2006/09/07 04:29:34 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.9 2006/09/06 06:26:54 simonb Exp $");
 #include <dev/ic/mc146818reg.h>
 #include <dev/ic/mc146818var.h>
 
-int mc146818_gettime(todr_chip_handle_t, volatile struct timeval *);
-int mc146818_settime(todr_chip_handle_t, volatile struct timeval *);
+int mc146818_gettime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
+int mc146818_settime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
 
 void
 mc146818_attach(struct mc146818_softc *sc)
@@ -63,8 +63,10 @@ mc146818_attach(struct mc146818_softc *sc)
 
 	handle = &sc->sc_handle;
 	handle->cookie = sc;
-	handle->todr_gettime = mc146818_gettime;
-	handle->todr_settime = mc146818_settime;
+	handle->todr_gettime = NULL;
+	handle->todr_settime = NULL;
+	handle->todr_settime_ymdhms = mc146818_gettime_ymdhms;
+	handle->todr_settime_ymdhms = mc146818_settime_ymdhms;
 	handle->todr_setwen  = NULL;
 }
 
@@ -74,10 +76,9 @@ mc146818_attach(struct mc146818_softc *sc)
  *  Return 0 on success, an error number othersize.
  */
 int
-mc146818_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
+mc146818_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
 	struct mc146818_softc *sc;
-	struct clock_ymdhms dt;
 	int s, timeout, cent, year;
 
 	sc = handle->cookie;
@@ -98,12 +99,12 @@ mc146818_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
 
 #define	FROMREG(x)	((sc->sc_flag & MC146818_BCD) ? FROMBCD(x) : (x))
 
-	dt.dt_sec  = FROMREG((*sc->sc_mcread)(sc, MC_SEC));
-	dt.dt_min  = FROMREG((*sc->sc_mcread)(sc, MC_MIN));
-	dt.dt_hour = FROMREG((*sc->sc_mcread)(sc, MC_HOUR));
-	dt.dt_wday = FROMREG((*sc->sc_mcread)(sc, MC_DOW));
-	dt.dt_day  = FROMREG((*sc->sc_mcread)(sc, MC_DOM));
-	dt.dt_mon  = FROMREG((*sc->sc_mcread)(sc, MC_MONTH));
+	dt->dt_sec  = FROMREG((*sc->sc_mcread)(sc, MC_SEC));
+	dt->dt_min  = FROMREG((*sc->sc_mcread)(sc, MC_MIN));
+	dt->dt_hour = FROMREG((*sc->sc_mcread)(sc, MC_HOUR));
+	dt->dt_wday = FROMREG((*sc->sc_mcread)(sc, MC_DOW));
+	dt->dt_day  = FROMREG((*sc->sc_mcread)(sc, MC_DOM));
+	dt->dt_mon  = FROMREG((*sc->sc_mcread)(sc, MC_MONTH));
 	year       = FROMREG((*sc->sc_mcread)(sc, MC_YEAR));
 	if (sc->sc_getcent) {
 		cent = (*sc->sc_getcent)(sc);
@@ -116,19 +117,12 @@ mc146818_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
 	if (year < POSIX_BASE_YEAR &&
 	    (sc->sc_flag & MC146818_NO_CENT_ADJUST) == 0)
 		year += 100;
-	dt.dt_year = year;
+	dt->dt_year = year;
 
 	todr_wenable(handle, 0);
 
 	splx(s);
 
-	/* simple sanity checks */
-	if (dt.dt_mon > 12 || dt.dt_day > 31 ||
-	    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 60)
-		return EIO;
-
-	tv->tv_sec = clock_ymdhms_to_secs(&dt);
-	tv->tv_usec = 0;
 	return 0;
 }
 
@@ -138,16 +132,12 @@ mc146818_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
  *  Return 0 on success, an error number othersize.
  */
 int
-mc146818_settime(todr_chip_handle_t handle, volatile struct timeval *tv)
+mc146818_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
 	struct mc146818_softc *sc;
-	struct clock_ymdhms dt;
 	int s, timeout, cent, year;
 
 	sc = handle->cookie;
-
-	/* Note: we ignore `tv_usec' */
-	clock_secs_to_ymdhms(tv->tv_sec, &dt);
 
 	s = splclock();		/* XXX really needed? */
 
@@ -165,14 +155,14 @@ mc146818_settime(todr_chip_handle_t handle, volatile struct timeval *tv)
 
 #define	TOREG(x)	((sc->sc_flag & MC146818_BCD) ? TOBCD(x) : (x))
 
-	(*sc->sc_mcwrite)(sc, MC_SEC, TOREG(dt.dt_sec));
-	(*sc->sc_mcwrite)(sc, MC_MIN, TOREG(dt.dt_min));
-	(*sc->sc_mcwrite)(sc, MC_HOUR, TOREG(dt.dt_hour));
-	(*sc->sc_mcwrite)(sc, MC_DOW, TOREG(dt.dt_wday));
-	(*sc->sc_mcwrite)(sc, MC_DOM, TOREG(dt.dt_day));
-	(*sc->sc_mcwrite)(sc, MC_MONTH, TOREG(dt.dt_mon));
+	(*sc->sc_mcwrite)(sc, MC_SEC, TOREG(dt->dt_sec));
+	(*sc->sc_mcwrite)(sc, MC_MIN, TOREG(dt->dt_min));
+	(*sc->sc_mcwrite)(sc, MC_HOUR, TOREG(dt->dt_hour));
+	(*sc->sc_mcwrite)(sc, MC_DOW, TOREG(dt->dt_wday));
+	(*sc->sc_mcwrite)(sc, MC_DOM, TOREG(dt->dt_day));
+	(*sc->sc_mcwrite)(sc, MC_MONTH, TOREG(dt->dt_mon));
 
-	year = dt.dt_year - sc->sc_year0;
+	year = dt->dt_year - sc->sc_year0;
 	if (sc->sc_setcent) {
 		cent = year / 100;
 		(*sc->sc_setcent)(sc, cent);
