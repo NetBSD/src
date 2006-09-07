@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.1 2006/09/07 00:20:28 ad Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.2 2006/09/07 01:03:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.1 2006/09/07 00:20:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.2 2006/09/07 01:03:02 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -240,7 +240,7 @@ lockstat_start(lsenable_t *le)
 	lockstat_lockaddr = le->le_lock;
 
 	/*
-	 * Force a write barrier.
+	 * Force a write barrier.  XXX This may not be sufficient..
 	 */
 	lockstat_unlock(0);
 	tsleep(&lockstat_start, PPAUSE, "lockstat", mstohz(10));
@@ -268,7 +268,7 @@ lockstat_stop(lsdisable_t *ld)
 
 	/*
 	 * Set enabled false, force a write barrier, and wait for other CPUs
-	 * to exit lockstat_event().
+	 * to exit lockstat_event().  XXX This may not be sufficient..
 	 */
 	lockstat_enabled = 0;
 	lockstat_unlock(0);
@@ -411,7 +411,6 @@ lockstat_event(uintptr_t lock, uintptr_t callsite, u_int flags, u_int count,
 		SLIST_REMOVE_HEAD(&lc->lc_free, lb_chain.slist);
 		LIST_INSERT_HEAD(ll, lb, lb_chain.list);
 		lb->lb_flags = (uint16_t)flags;
-		lb->lb_cpu = (uint16_t)cpu_number();
 		lb->lb_lock = lock;
 		lb->lb_callsite = callsite;
 		lb->lb_counts[event] = count;
