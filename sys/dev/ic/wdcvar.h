@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.84 2005/12/11 12:21:29 christos Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.85 2006/09/07 12:46:47 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 
 #include <sys/callout.h>
 
+#include <dev/ata/ataconf.h>
 #include <dev/ic/wdcreg.h>
 
 #define	WAITTIME    (10 * hz)    /* time to wait for a completion */
@@ -80,10 +81,20 @@ struct wdc_softc {
 	int            (*dma_init)(void *, int, int, void *, size_t, int);
 	void           (*dma_start)(void *, int, int);
 	int            (*dma_finish)(void *, int, int, int);
+#if NATA_PIOBM
+	void           (*piobm_start)(void *, int, int, int, int, int);
+	void           (*piobm_done)(void *, int, int);
+#endif
 /* flags passed to dma_init */
-#define WDC_DMA_READ	0x01
-#define WDC_DMA_IRQW	0x02
-#define WDC_DMA_LBA48	0x04
+#define WDC_DMA_READ		0x01
+#define WDC_DMA_IRQW		0x02
+#define WDC_DMA_LBA48		0x04
+#define WDC_DMA_PIOBM_ATA	0x08
+#define WDC_DMA_PIOBM_ATAPI	0x10
+#if NATA_PIOBM
+/* flags passed to piobm_start */
+#define WDC_PIOBM_XFER_IRQ	0x01
+#endif
 
 /* values passed to dma_finish */
 #define WDC_DMAEND_END	0	/* check for proper end of a DMA xfer */
