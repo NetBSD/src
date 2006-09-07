@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.828 2006/09/03 12:14:32 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.829 2006/09/07 12:38:59 itohy Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.829 2006/09/03 12:13:56 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.830 2006/09/07 12:37:49 itohy Exp
  */
 
 /*
@@ -7961,7 +7961,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_IODATA, PCI_PRODUCT_IODATA_CBIDE2,
-	    "CBIDE2 IDE controller",
+	    "CBIDE2/CI-iCN NinjaATA-32Bi IDE",
 	},
 	{
 	    PCI_VENDOR_IODATA, PCI_PRODUCT_IODATA_CBSCII,
@@ -12204,12 +12204,20 @@ static const struct pci_product pci_products[] = {
 	    "NinjaSCSI-32Bi SCSI",
 	},
 	{
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJATA32BI,
+	    "NinjaATA-32Bi IDE",
+	},
+	{
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE,
 	    "NinjaSCSI-32UDE SCSI",
 	},
 	{
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32BI_KME,
 	    "NinjaSCSI-32Bi SCSI (KME)",
+	},
+	{
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJATA32BI_KME,
+	    "NinjaATA-32Bi IDE (KME)",
 	},
 	{
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_IODATA,
@@ -12226,6 +12234,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_BUFFALO,
 	    "NinjaSCSI-32UDE SCSI (BUFFALO)",
+	},
+	{
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NPATA32_CF32A,
+	    "CF32A CompactFlash Adapter",
+	},
+	{
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NPATA32_KME,
+	    "NPATA-32 IDE (KME)",
 	},
 	{
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3,
@@ -12280,4 +12296,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2477;
+const int pci_nproducts = 2481;
