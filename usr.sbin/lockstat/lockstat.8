@@ -1,4 +1,4 @@
-.\"	$NetBSD: lockstat.8,v 1.1 2006/09/07 00:50:45 ad Exp $
+.\"	$NetBSD: lockstat.8,v 1.2 2006/09/07 14:52:38 ad Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -126,6 +126,19 @@ List valid lock types for the
 .Fl T
 option and exit.
 .El
+.Sh EXAMPLES
+.Bd -literal
+# lockstat sleep 10
+Elapsed time: 10.02s
+
+-- Spin mutex spin
+
+Total%  Count   Time/ms       Lock                  Caller
+------ ------- --------- -------------- -------------------------------
+100.00    1576     44.27 kernel_mutex   <all>
+ 95.71    1493     42.46 kernel_mutex   _kernel_lock+0xd1
+  4.29      82      1.80 kernel_mutex   _kernel_lock_acquire_count+0xb0
+.Ed
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "lockstat: incompatible lockstat interface version"
