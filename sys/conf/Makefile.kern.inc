@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.84 2006/08/27 06:49:27 simonb Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.85 2006/09/07 18:41:28 mrg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -84,6 +84,13 @@ AFLAGS+=	${CPUFLAGS} -D_LOCORE -Wa,-fatal-warnings
 # XXX
 .if ${HAVE_GCC} > 3
 CFLAGS+=	-fno-strict-aliasing
+.endif
+
+# If we want the bpendtsleep: label in kern_synch.c, we need to use
+# -fno-reorder-blocks.  Don't make this a config(1) defflag without
+# making sure this fragment remains valid.
+.if ${HAVE_GCC} > 3 && !empty(${CFLAGS:M-DKERN_SYNCH_BPENDTSLEEP_LABEL})
+CFLAGS.kern_synch.c+=	-fno-reorder-blocks
 .endif
 
 # Use the per-source COPTS variables to add -g to just those
