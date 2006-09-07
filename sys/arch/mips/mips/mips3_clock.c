@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clock.c,v 1.1 2006/09/02 22:20:57 gdamore Exp $	*/
+/*	$NetBSD: mips3_clock.c,v 1.2 2006/09/07 03:14:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.1 2006/09/02 22:20:57 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.2 2006/09/07 03:14:22 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ init_mips3_tc(void)
 		~0u,				/* counter_mask */
 		0,				/* frequency */
 		"mips3_cp0_counter",		/* name */
-		0,				/* quality */
+		100,				/* quality */
 	};
 
 	tc.tc_frequency = curcpu()->ci_cpu_freq;
