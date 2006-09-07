@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.drivermod,v 1.4 2004/07/13 09:29:45 sekiya Exp $
+# $NetBSD: Makefile.drivermod,v 1.5 2006/09/07 03:45:50 dbj Exp $
 
 LIB=${MODULE}
 
@@ -10,7 +10,7 @@ LIB=${MODULE}
 __archivebuild: .USE
 	${_MKTARGET_BUILD}
 	rm -rf ${.TARGET}
-	${LD} -X -r ${OBJS} -o ${.TARGET}
+	${LD} -X -r ${.ALLSRC:M*o} -o ${.TARGET}
 
 __archiveinstall: .USE
 	${_MKTARGET_INSTALL}
