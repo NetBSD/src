@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.31 2006/03/08 19:18:04 hubertf Exp $
+#	$NetBSD: makesrctars,v 1.32 2006/09/07 22:03:58 tron Exp $
 #
 # makesrctars srcdir setdir
 #	Create source tarballs in setdir from the source under srcdir.
@@ -81,6 +81,7 @@ makeset()
 		${SED} -e 's:type=file:& mode=0664:' \
 			-e 's:type=dir:& mode=0775:' \
 			-e 's:$: uname=root gname=wsrc:' \
+			-e '/\/move-if-change /s:\(mode\)=[0-9]*:\1=0775:' \
 			-e '/^\.\/build.sh /s:\(mode\)=[0-9]*:\1=0775:' | \
 		${PAX} -M -N "${PASSWD}" -w -d -s'|^\.|'"${srcprefix}"'|' | \
 		${GZIP_CMD} > "${setdir}/${set}"
