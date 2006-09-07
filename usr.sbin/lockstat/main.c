@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2006/09/07 00:50:45 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2006/09/07 01:23:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.1 2006/09/07 00:50:45 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 2006/09/07 01:23:59 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -60,8 +60,9 @@ __RCSID("$NetBSD: main.c,v 1.1 2006/09/07 00:50:45 ad Exp $");
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/signal.h>
-#include <sys/lockstat.h>
 #include <sys/sysctl.h>
+
+#include <dev/lockstat.h>
 
 #include <stdio.h>
 #include <stdlib.h>

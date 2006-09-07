@@ -1,4 +1,4 @@
-/*	$NetBSD: elf32.c,v 1.1 2006/09/07 00:50:45 ad Exp $	*/
+/*	$NetBSD: elf32.c,v 1.2 2006/09/07 01:23:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: elf32.c,v 1.1 2006/09/07 00:50:45 ad Exp $");
+__RCSID("$NetBSD: elf32.c,v 1.2 2006/09/07 01:23:59 ad Exp $");
 #endif
 
 #ifndef ELFSIZE
@@ -82,7 +82,8 @@ __RCSID("$NetBSD: elf32.c,v 1.1 2006/09/07 00:50:45 ad Exp $");
 #include <sys/param.h>
 #include <sys/exec_elf.h>
 #include <sys/queue.h>
-#include <sys/lockstat.h>
+
+#include <dev/lockstat.h>
 
 #include <stdio.h>
 #include <stdlib.h>
