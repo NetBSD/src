@@ -1,4 +1,4 @@
-.\"	$NetBSD: scan_ffs.8,v 1.8 2006/09/07 00:48:21 xtraeme Exp $
+.\"	$NetBSD: scan_ffs.8,v 1.9 2006/09/07 02:24:51 xtraeme Exp $
 .\"     OpenBSD: scan_ffs.8,v 1.13 2004/12/14 00:04:21 jmc Exp
 .\"
 .\" Copyright (c) 2005 Juan Romero Pardines
@@ -35,7 +35,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl lv
-.Op Fl f Ar file
+.Op Fl F Ar file
 .Op Fl e Ar end
 .Op Fl s Ar start
 .Ar device
@@ -58,7 +58,7 @@ The
 argument specifies the last sector that will be searched.
 Default is the last sector of
 .Ar device .
-.It Fl f Ar file
+.It Fl F Ar file
 Path to a file containing possible partitions inside of it.
 .It Fl l
 Print out a string looking much like the input to disklabel.
