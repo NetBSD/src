@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.173.2.1 2006/09/02 23:56:14 riz Exp $
+# $NetBSD: mi,v 1.173.2.2 2006/09/07 13:47:49 tron Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -148,7 +148,8 @@
 ./etc/rc.d/bootconf.sh				etc-sys-rc
 ./etc/rc.d/bootparams				etc-bootserver-rc
 ./etc/rc.d/btconfig				etc-sys-rc
-./etc/rc.d/btcontrol				etc-sys-rc
+./etc/rc.d/btcontrol				etc-obsolete		obsolete
+./etc/rc.d/btdevctl				etc-sys-rc
 ./etc/rc.d/bthcid				etc-sys-rc
 ./etc/rc.d/ccd					etc-sys-rc
 ./etc/rc.d/cgd					etc-sys-rc
