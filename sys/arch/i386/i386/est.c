@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.26 2006/09/03 06:49:57 xtraeme Exp $	*/
+/*	$NetBSD: est.c,v 1.27 2006/09/07 22:50:50 xtraeme Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.26 2006/09/03 06:49:57 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.27 2006/09/07 22:50:50 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -742,20 +742,18 @@ static const uint16_t pm90_n765e[] = {
 
 /* Intel Pentium M processor 770 2.13 GHz */
 static const uint16_t pm90_n770[] = {
-	ID16(2133, 1551, BUS133),
-	ID16(1800, 1429, BUS133),
-	ID16(1600, 1356, BUS133),
-	ID16(1400, 1180, BUS133),
-	ID16(1200, 1132, BUS133),
-	ID16(1000, 1084, BUS133),
-	ID16( 800, 1036, BUS133),
-	ID16( 600,  988, BUS133),
+	ID16(2133, 1356, BUS133),
+	ID16(1867, 1292, BUS133),
+	ID16(1600, 1212, BUS133),
+	ID16(1333, 1148, BUS133),
+	ID16(1067, 1068, BUS133),
+	ID16( 800,  988, BUS133),
 };
 
 struct fqlist {
-	int vendor : 5;
-	unsigned bus_clk : 1;
-	unsigned n : 5;
+	int vendor;
+	unsigned bus_clk;
+	unsigned n;
 	const uint16_t *table;
 };
 
