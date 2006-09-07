@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.166 2006/09/02 06:32:09 christos Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.167 2006/09/07 18:41:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166 2006/09/02 06:32:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.167 2006/09/07 18:41:28 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -560,12 +560,13 @@ ltsleep(volatile const void *ident, int priority, const char *wmesg, int timo,
 	else
 		mi_switch(l, NULL);
 
-#if	defined(DDB) && !defined(GPROF) && \
-	!defined(__m68k__) && !defined(__vax__)
+#ifdef KERN_SYNCH_BPENDTSLEEP_LABEL
 	/*
 	 * XXX
 	 * gcc4 optimizer will duplicate this asm statement on some arch
 	 * and it will cause a multiple symbol definition error in gas.
+	 * the kernel Makefile is setup to use -fno-reorder-blocks if
+	 * this option is set.
 	 */
 	/* handy breakpoint location after process "wakes" */
 	__asm(".globl bpendtsleep\nbpendtsleep:");
