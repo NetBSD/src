@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.809 2006/09/07 12:34:41 itohy Exp $
+#	$NetBSD: files,v 1.810 2006/09/07 14:22:07 itohy Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -856,6 +856,10 @@ device	atabus: atapi,ata_hl
 attach	atabus at ata
 # The strange expression is to dump ata_* definitions to ata_dma.h.
 file	dev/ic/wdc.c			(ata_dma | ata_udma | ata_piobm | atabus) & atabus & wdc_common	needs-flag
+
+# Workbit NinjaATA-32 IDE controllers
+device	njata: ata, ata_piobm, wdc_common
+file	dev/ic/ninjaata32.c		njata
 
 # CHIPS and Technologies 82C7[12][01] Universal Peripheral Controller
 #
