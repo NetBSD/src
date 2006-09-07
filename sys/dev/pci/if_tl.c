@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.73 2006/08/30 23:29:01 rumble Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.74 2006/09/07 00:00:02 rumble Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.73 2006/08/30 23:29:01 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.74 2006/09/07 00:00:02 rumble Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -1106,7 +1106,7 @@ tl_intr(v)
 			    sc->sc_dev.dv_xname);
 			tl_reset(sc);
 			/* shedule reinit of the board */
-			callout_reset(&sc->tl_restart_ch, 1, tl_restart, sc);
+			callout_reset(&sc->tl_restart_ch, 1, tl_restart, ifp);
 			return(1);
 		}
 #endif
@@ -1211,7 +1211,7 @@ tl_intr(v)
 			    TL_HR_READ(sc, TL_HOST_CH_PARM));
 			tl_reset(sc);
 			/* shedule reinit of the board */
-			callout_reset(&sc->tl_restart_ch, 1, tl_restart, sc);
+			callout_reset(&sc->tl_restart_ch, 1, tl_restart, ifp);
 			return(1);
 		} else {
 			u_int8_t netstat;
