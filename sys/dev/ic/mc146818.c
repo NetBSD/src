@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818.c,v 1.10 2006/09/07 04:29:34 gdamore Exp $	*/
+/*	$NetBSD: mc146818.c,v 1.11 2006/09/07 04:33:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.10 2006/09/07 04:29:34 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.11 2006/09/07 04:33:55 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ mc146818_attach(struct mc146818_softc *sc)
 		panic("mc146818_attach: invalid read/write functions");
 #endif
 
-	printf(": mc146818 compatible time-of-day clock\n");
+	printf(": mc146818 compatible time-of-day clock");
 
 	handle = &sc->sc_handle;
 	handle->cookie = sc;
