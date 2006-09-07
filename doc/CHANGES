@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.681 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.682 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -42,3 +42,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	lockstat(8): Add the lockstat command: displays a summary of kernel
 		locking events recorded over the lifetime of a called program.
 		[ad 20060907]
+	njata(4): Add driver for Workbit NinjaATA-32 busmastering PIO IDE
+		controller. [itohy 20060907]
