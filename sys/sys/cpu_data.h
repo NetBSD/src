@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.5 2005/12/27 04:06:46 chs Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.6 2006/09/07 00:20:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -61,21 +61,23 @@ struct lwp;
  */
 
 struct cpu_data {
-	struct schedstate_percpu cpu_schedstate; /* scheduler state */
+	struct	schedstate_percpu cpu_schedstate; /* scheduler state */
 
 #if defined(MULTIPROCESSOR)
-	int cpu_biglock_count;
+	int	cpu_biglock_count;
 #endif /* defined(MULTIPROCESSOR) */
-	/*
-	 * for LOCKDEBUG
-	 */
-	u_long cpu_spin_locks;		/* # of spin locks held */
-	u_long cpu_simple_locks;	/* # of simple locks held */
+
+	/* For LOCKDEBUG. */
+	u_long	cpu_spin_locks;		/* # of spin locks held */
+	u_long	cpu_simple_locks;	/* # of simple locks held */
+
+	void	*cpu_lockstat;		/* lockstat private tables */
 };
 
 /* compat definitions */
 #define	ci_schedstate	ci_data.cpu_schedstate
 #define	ci_spin_locks	ci_data.cpu_spin_locks
 #define	ci_simple_locks	ci_data.cpu_simple_locks
+#define	ci_lockstat	ci_data.cpu_lockstat
 
 #endif /* _SYS_CPU_DATA_H_ */
