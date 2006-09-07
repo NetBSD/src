@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2006/09/04 23:45:30 gdamore Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 2006/09/07 00:18:50 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3 2006/09/04 23:45:30 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2006/09/07 00:18:50 gdamore Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -634,8 +634,6 @@ rtcput(mc_todregs *regs)
 	MC146818_PUTTOD(NULL, regs);			/* XXX softc */
 }
 
-static int timeset;
-
 /*
  * check whether the CMOS layout is "standard"-like (ie, not PS/2-like),
  * to be called at splclock()
@@ -743,11 +741,10 @@ clock_expandyear(int clockyear)
 }
 
 static int
-rtc_gettime(todr_chip_handle_t tch, volatile struct timeval *tv)
+rtc_get_ymdhms(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
 	int s;
 	mc_todregs rtclk;
-	struct clock_ymdhms dt;
 
 	s = splclock();
 	if (rtcget(&rtclk)) {
@@ -756,63 +753,35 @@ rtc_gettime(todr_chip_handle_t tch, volatile struct timeval *tv)
 	}
 	splx(s);
 
-	dt.dt_sec = bcdtobin(rtclk[MC_SEC]);
-	dt.dt_min = bcdtobin(rtclk[MC_MIN]);
-	dt.dt_hour = bcdtobin(rtclk[MC_HOUR]);
-	dt.dt_day = bcdtobin(rtclk[MC_DOM]);
-	dt.dt_mon = bcdtobin(rtclk[MC_MONTH]);
-	dt.dt_year = clock_expandyear(bcdtobin(rtclk[MC_YEAR]));
+	dt->dt_sec = bcdtobin(rtclk[MC_SEC]);
+	dt->dt_min = bcdtobin(rtclk[MC_MIN]);
+	dt->dt_hour = bcdtobin(rtclk[MC_HOUR]);
+	dt->dt_day = bcdtobin(rtclk[MC_DOM]);
+	dt->dt_mon = bcdtobin(rtclk[MC_MONTH]);
+	dt->dt_year = clock_expandyear(bcdtobin(rtclk[MC_YEAR]));
 
-	/*
-	 * If time_t is 32 bits, then the "End of Time" is 
-	 * Mon Jan 18 22:14:07 2038 (US/Eastern)
-	 * This code copes with RTC's past the end of time if time_t
-	 * is an int32 or less. Needed because sometimes RTCs screw
-	 * up or are badly set, and that would cause the time to go
-	 * negative in the calculation below, which causes Very Bad
-	 * Mojo. This at least lets the user boot and fix the problem.
-	 * Note the code is self eliminating once time_t goes to 64 bits.
-	 */
-	if (sizeof(time_t) <= sizeof(int32_t)) {
-		if (dt.dt_year >= 2038) {
-			return -1;
-		}
-	}
-
-	tv->tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
-	tv->tv_usec = 0;
 	return 0;
 }
 
 static int
-rtc_settime(todr_chip_handle_t tch, volatile struct timeval *tvp)
+rtc_set_ymdhms(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
 	mc_todregs rtclk;
-	struct clock_ymdhms dt;
 	int century;
 	int s;
-
-	/*
-	 * We might have been called by boot() due to a crash early
-	 * on.  Don't reset the clock chip in this case.
-	 */
-	if (!timeset)
-		return 0;
 
 	s = splclock();
 	if (rtcget(&rtclk))
 		memset(&rtclk, 0, sizeof(rtclk));
 	splx(s);
 
-	clock_secs_to_ymdhms(time_second - rtc_offset * 60, &dt);
-
-	rtclk[MC_SEC] = bintobcd(dt.dt_sec);
-	rtclk[MC_MIN] = bintobcd(dt.dt_min);
-	rtclk[MC_HOUR] = bintobcd(dt.dt_hour);
-	rtclk[MC_DOW] = dt.dt_wday + 1;
-	rtclk[MC_YEAR] = bintobcd(dt.dt_year % 100);
-	rtclk[MC_MONTH] = bintobcd(dt.dt_mon);
-	rtclk[MC_DOM] = bintobcd(dt.dt_day);
+	rtclk[MC_SEC] = bintobcd(dt->dt_sec);
+	rtclk[MC_MIN] = bintobcd(dt->dt_min);
+	rtclk[MC_HOUR] = bintobcd(dt->dt_hour);
+	rtclk[MC_DOW] = dt->dt_wday + 1;
+	rtclk[MC_YEAR] = bintobcd(dt->dt_year % 100);
+	rtclk[MC_MONTH] = bintobcd(dt->dt_mon);
+	rtclk[MC_DOM] = bintobcd(dt->dt_day);
 
 #ifdef DEBUG_CLOCK
 	printf("setclock: %x/%x/%x %x:%x:%x\n", rtclk[MC_YEAR], rtclk[MC_MONTH],
@@ -821,7 +790,7 @@ rtc_settime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 	s = splclock();
 	rtcput(&rtclk);
 	if (rtc_update_century > 0) {
-		century = bintobcd(dt.dt_year / 100);
+		century = bintobcd(dt->dt_year / 100);
 		mc146818_write(NULL, centb, century); /* XXX softc */
 	}
 	splx(s);
@@ -833,8 +802,8 @@ static void
 rtc_register(void)
 {
 	static struct todr_chip_handle	tch;
-	tch.todr_gettime = rtc_gettime;
-	tch.todr_settime = rtc_settime;
+	tch.todr_gettime_ymdhms = rtc_get_ymdhms;
+	tch.todr_settime_ymdhms = rtc_set_ymdhms;
 	tch.todr_setwen = NULL;
 
 	todr_attach(&tch);
