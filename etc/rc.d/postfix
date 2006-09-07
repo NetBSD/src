@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postfix,v 1.12 2006/09/07 14:16:55 christos Exp $
+# $NetBSD: postfix,v 1.13 2006/09/07 15:26:08 christos Exp $
 #
 
 # PROVIDE: mail
@@ -20,11 +20,12 @@ stop_cmd="postfix_op"
 reload_cmd="postfix_op"
 extra_commands="reload"
 spooletcdir="/var/spool/${name}/etc"
+postconf="/usr/sbin/postconf"
 required_dirs=$spooletcdir
 
 _rebuild() {
 	echo "${name}: rebuilding ${1} ($2 ${1}.db)"
-	$(postconf -h newaliases_path)
+	$($postconf -h newaliases_path)
 }
 
 postfix_precmd()
@@ -42,7 +43,7 @@ postfix_precmd()
 		fi
 	done
 
-	for f in $(postconf -h alias_database); do
+	for f in $($postconf -h alias_database); do
 		OIFS="${IFS}"
 		IFS="${IFS}:"
 		set -- $f
