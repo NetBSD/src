@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.919 2006/09/06 18:18:49 wiz Exp $
+#	$NetBSD: mi,v 1.920 2006/09/07 00:20:28 ad Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -354,6 +354,7 @@
 ./usr/include/dev/isapnp/isapnpreg.h		comp-obsolete		obsolete
 ./usr/include/dev/isapnp/isapnpvar.h		comp-obsolete		obsolete
 ./usr/include/dev/kttcpio.h			comp-c-include
+./usr/include/dev/lockstat.h			comp-c-include
 ./usr/include/dev/md.h				comp-c-include
 ./usr/include/dev/microcode/aic7xxx/aic7xxx_reg.h	comp-obsolete		obsolete
 ./usr/include/dev/microcode/aic7xxx/aic7xxx_seq.h	comp-obsolete		obsolete
