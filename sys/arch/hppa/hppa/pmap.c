@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 2005/12/24 20:07:04 perry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18.18.1 2006/09/07 18:09:42 riz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2005/12/24 20:07:04 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18.18.1 2006/09/07 18:09:42 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,7 @@ pmap_pv_add(vaddr_t pv_start, vaddr_t pv_end)
 	}
 	splx(s);
 	
-	PMAP_PRINTF(PDB_INIT, (": %d pv_entries @ %x allocated\n",
+	PMAP_PRINTF(PDB_INIT, (": %ld pv_entries @ %x allocated\n",
 		    (pv - (struct pv_entry *) pv_start), (u_int)pv_start));
 }
 
@@ -765,13 +765,13 @@ pmap_pv_remove(struct pv_entry *pv)
 }
 
 /*
- *	Bootstrap the system enough to run with virtual memory.
- *	Map the kernel's code and data, and allocate the system page table.
- *	Called with mapping OFF.
+ * Bootstrap the system enough to run with virtual memory.
+ * Map the kernel's code and data, and allocate the system page table.
+ * Called with mapping OFF.
  *
- *	Parameters:
- *	vstart	PA of first available physical page
- *	vend	PA of last available physical page
+ * Parameters:
+ * vstart	PA of first available physical page
+ * vend		PA of last available physical page
  */
 void
 pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
@@ -786,9 +786,14 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	int btlb_entry_vm_prot[BTLB_SET_SIZE];
 	int btlb_i, btlb_j;
 	vsize_t btlb_entry_min, btlb_entry_max, btlb_entry_got;
-	extern int kernel_text, etext;
+	extern int kernel_text;
+	extern int __data_start;
+	extern int __rodata_end;
 	vaddr_t kernel_data;
 	paddr_t phys_start, phys_end;
+
+        PMAP_PRINTF(PDB_INIT, (": phys addresses %p - %p\n",
+	    (void *)*vstart, (void *)*vend));
 
 	uvm_setpagesize();
 
@@ -855,12 +860,12 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 		hptp->hpt_tlbprot = 0;
 		hptp->hpt_entry   = NULL;
 	}
-#ifdef PMAPDEBUG
-	if (pmapdebug & PDB_INIT)
-		printf("hpt_table: 0x%lx @ %p\n", size + 1, (caddr_t)addr);
-#endif
-	/* load cr25 with the address of the HPT table
-	   NB: It sez CR_VTOP, but we (and the TLB handlers) know better ... */
+        PMAP_PRINTF(PDB_INIT, (": hpt_table 0x%lx @ %p\n", size + 1,
+	    (caddr_t)addr));
+	/*
+	 * load cr25 with the address of the HPT table
+	 * NB: It sez CR_VTOP, but we (and the TLB handlers) know better ...
+	 */
 	mtctl(addr, CR_VTOP);
 	hpt_base = addr;
 	hpt_mask = size;
@@ -961,10 +966,6 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 * is to allow (smaller) kernels (linked lower) to work fine.
 	 */
 	btlb_entry_min = (vaddr_t) &kernel_text;
-	__asm volatile (
-		"	ldil L%%$global$, %0	\n"
-		"	ldo R%%$global$(%0), %0	\n"
-		: "=r" (kernel_data)); 
 
 	/*
 	 * Now make BTLB entries to direct-map the kernel text
@@ -973,9 +974,11 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 * BTLB entry for the kernel text may also cover some of
 	 * the data segment, meaning it will have to allow writing.
 	 */
+	kernel_data = (vaddr_t) &__data_start;
 	addr = (vaddr_t) &kernel_text;
+
 	btlb_j = 0;
-	while (addr < (vaddr_t) &etext) {
+	while (addr < (vaddr_t) &__rodata_end) {
 
 		/* Set up the next BTLB entry. */
 		KASSERT(btlb_j < BTLB_SET_SIZE);
@@ -1063,21 +1066,21 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	/* The first segment runs from [resvmem..kernel_text). */
 	phys_start = resvmem;
 	phys_end = atop(hppa_trunc_page(&kernel_text));
-#ifdef DIAGNOSTIC
-	printf("phys segment: 0x%x 0x%x\n", (u_int)phys_start, (u_int)phys_end);
-#endif
+
+        PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
+	    (u_int)phys_start, (u_int)phys_end));
 	if (phys_end > phys_start) {
 		uvm_page_physload(phys_start, phys_end,
 			phys_start, phys_end, VM_FREELIST_DEFAULT);
 		physmem += phys_end - phys_start;
 	}
 
-	/* The second segment runs from [etext..kernel_data). */
-	phys_start = atop(hppa_round_page((vaddr_t) &etext));
-	phys_end = atop(hppa_trunc_page(kernel_data));
-#ifdef DIAGNOSTIC
-	printf("phys segment: 0x%x 0x%x\n", (u_int)phys_start, (u_int)phys_end);
-#endif
+	/* The second segment runs from [__rodata_end..__data_start). */
+	phys_start = atop(&__rodata_end);
+	phys_end = atop(&__data_start);
+
+        PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
+	    (u_int)phys_start, (u_int)phys_end));
 	if (phys_end > phys_start) {
 		uvm_page_physload(phys_start, phys_end,
 			phys_start, phys_end, VM_FREELIST_DEFAULT);
@@ -1087,9 +1090,9 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	/* The third segment runs from [virtual_steal..totalphysmem). */
 	phys_start = atop(virtual_steal);
 	phys_end = totalphysmem;
-#ifdef DIAGNOSTIC
-	printf("phys segment: 0x%x 0x%x\n", (u_int)phys_start, (u_int)phys_end);
-#endif
+
+        PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
+	    (u_int)phys_start, (u_int)phys_end));
 	if (phys_end > phys_start) {
 		uvm_page_physload(phys_start, phys_end,
 			phys_start, phys_end, VM_FREELIST_DEFAULT);
@@ -1945,16 +1948,22 @@ pmap_hptdump(void)
 	db_printf("HPT dump %p-%p:\n", hpt, ehpt);
 	for (; hpt < ehpt; hpt++)
 		if (hpt->hpt_valid || hpt->hpt_entry) {
-			db_printf("hpt@%p: %x{%sv=%x:%x},%b,%x\n",
+			char buf[128];
+
+			bitmask_snprintf(hpt->hpt_tlbprot, TLB_BITS, buf,
+			    sizeof(buf));
+			db_printf("hpt@%p: %x{%sv=%x:%x},%s,%x\n",
 			    hpt, *(int *)hpt, (hpt->hpt_valid?"ok,":""),
 			    hpt->hpt_space, hpt->hpt_vpn << 9,
-			    hpt->hpt_tlbprot, TLB_BITS,
-			    tlbptob(hpt->hpt_tlbpage));
-			for (pv = hpt->hpt_entry; pv; pv = pv->pv_hash)
-				db_printf("    pv={%p,%x:%x,%b,%x}->%p\n",
+			    buf, tlbptob(hpt->hpt_tlbpage));
+
+			for (pv = hpt->hpt_entry; pv; pv = pv->pv_hash) {
+				bitmask_snprintf(hpt->hpt_tlbprot, TLB_BITS, buf,
+				    sizeof(buf));
+				db_printf("    pv={%p,%x:%x,%s,%x}->%p\n",
 				    pv->pv_pmap, pv->pv_space, pv->pv_va,
-				    pv->pv_tlbprot, TLB_BITS,
-				    tlbptob(pv->pv_tlbpage), pv->pv_hash);
+				    buf, tlbptob(pv->pv_tlbpage), pv->pv_hash);
+			}
 		}
 }
 #endif
