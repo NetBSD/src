@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.98 2006/09/07 01:08:45 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.99 2006/09/07 02:06:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.98 2006/09/07 01:08:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99 2006/09/07 02:06:47 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -143,10 +143,6 @@ do {									\
 #define COUNT(lkp, p, cpu_id, x)
 #define COUNT_CPU(cpu_id, x)
 #endif /* LOCKDEBUG || DIAGNOSTIC */ /* } */
-
-#ifndef SPINLOCK_SPIN_HOOK		/* from <machine/lock.h> */
-#define	SPINLOCK_SPIN_HOOK		/* nothing */
-#endif
 
 #define	INTERLOCK_ACQUIRE(lkp, flags, s)				\
 do {									\
@@ -1563,5 +1559,27 @@ _kernel_lock_assert_locked()
 	simple_lock_assert_locked(&kernel_lock, "kernel_lock");
 }
 #endif
+
+int
+lock_owner_onproc(uintptr_t owner)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	for (CPU_INFO_FOREACH(cii, ci))
+		if (owner == (uintptr_t)ci || owner == (uintptr_t)ci->ci_curlwp)
+			return (1); 
+
+	return (0);
+}
+
+#else	/* MULTIPROCESSOR */
+
+int
+lock_owner_onproc(uintptr_t owner)
+{
+
+	return 0;
+}
 
 #endif /* MULTIPROCESSOR */
