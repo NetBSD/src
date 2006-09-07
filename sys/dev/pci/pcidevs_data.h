@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.814.2.3 2006/09/07 17:17:25 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.814.2.4 2006/09/07 17:29:23 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -9265,15 +9265,15 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SMB,
-	    "MCP55 SMBus",
+	    "nForce MCP55 SMBus Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_IDE,
-	    "MCP55 IDE",
+	    "nForce MCP55 ATA133 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_HDA,
-	    "MCP55 High Definition Audio Controller",
+	    "nForce MCP55 High Definition Audio Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_LAN1,
@@ -9292,6 +9292,14 @@ static const struct pci_product pci_products[] = {
 	    "nForce MCP55 Serial ATA Controller",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_ISA,
+	    "nForce MCP61 PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_HDA,
+	    "nForce MCP61 High Definition Audio Controller",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_LAN1,
 	    "nForce MCP61 Gigabit Ethernet Controller",
 	},
@@ -9300,12 +9308,88 @@ static const struct pci_product pci_products[] = {
 	    "nForce MCP61 Gigabit Ethernet Controller",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_SATA,
+	    "nForce MCP61 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_PPB_1,
+	    "nForce MCP61 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_PPB_2,
+	    "nForce MCP61 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_SMB,
+	    "nForce MCP61 SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_IDE,
+	    "nForce MCP61 ATA133 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_SATA2,
+	    "nForce MCP61 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_SATA3,
+	    "nForce MCP61 Serial ATA Controller",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_LAN3,
 	    "nForce MCP61 Gigabit Ethernet Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_LAN4,
 	    "nForce MCP61 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_ISA,
+	    "nForce MCP65 PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_MEM,
+	    "nForce MCP65 Memory Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_MEM2,
+	    "nForce MCP65 Memory Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SMB,
+	    "nForce MCP65 SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_IDE,
+	    "nForce MCP65 ATA133 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PCI,
+	    "nForce MCP65 PCI Brige",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_HDA_1,
+	    "nForce MCP65 High Definition Audio Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_HDA_2,
+	    "nForce MCP65 High Definition Audio Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_AHCI_1,
+	    "nForce MCP65 AHCI Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_AHCI_2,
+	    "nForce MCP65 AHCI Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_AHCI_3,
+	    "nForce MCP65 AHCI Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_AHCI_4,
+	    "nForce MCP65 AHCI Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN1,
@@ -9322,6 +9406,50 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN4,
 	    "nForce MCP65 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_USB_1,
+	    "nForce MCP65 USB Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_USB_2,
+	    "nForce MCP65 USB Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_USB_3,
+	    "nForce MCP65 USB Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_USB_4,
+	    "nForce MCP65 USB Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PPB_1,
+	    "nForce MCP65 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PPB_2,
+	    "nForce MCP65 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PPB_3,
+	    "nForce MCP65 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA,
+	    "nForce MCP65 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA2,
+	    "nForce MCP65 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA3,
+	    "nForce MCP65 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA4,
+	    "nForce MCP65 Serial ATA Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128,
@@ -11916,4 +12044,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2386;
+const int pci_nproducts = 2418;
