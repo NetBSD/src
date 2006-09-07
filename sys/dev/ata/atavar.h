@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.71 2005/12/24 20:27:29 perry Exp $	*/
+/*	$NetBSD: atavar.h,v 1.72 2006/09/07 12:34:42 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -60,6 +60,7 @@ struct ata_xfer {
 	int	c_bcount;		/* byte count left */
 	int	c_skip;			/* bytes already transferred */
 	int	c_dscpoll;		/* counter for dsc polling (ATAPI) */
+	int	c_lenoff;		/* offset to c_bcount (ATAPI) */
 
 	/* Link on the command queue. */
 	TAILQ_ENTRY(ata_xfer) c_xferchain;
@@ -78,6 +79,7 @@ struct ata_xfer {
 #define C_WAIT		0x0010		/* can use tsleep */
 #define C_WAITACT	0x0020		/* wakeup when active */
 #define C_FREE		0x0040		/* call ata_free_xfer() asap */
+#define C_PIOBM		0x0080		/* command uses busmastering PIO */
 
 /* reasons for c_kill_xfer() */
 #define KILL_GONE 1 /* device is gone */
@@ -325,6 +327,7 @@ struct ata_channel {
 #define ATACH_SHUTDOWN 0x02	/* channel is shutting down */
 #define ATACH_IRQ_WAIT 0x10	/* controller is waiting for irq */
 #define ATACH_DMA_WAIT 0x20	/* controller is waiting for DMA */
+#define ATACH_PIOBM_WAIT 0x40	/* controller is waiting for busmastering PIO */
 #define	ATACH_DISABLED 0x80	/* channel is disabled */
 #define ATACH_TH_RUN   0x100	/* the kernel thread is working */
 #define ATACH_TH_RESET 0x200	/* someone ask the thread to reset */
@@ -374,6 +377,7 @@ struct atac_softc {
 #define	ATAC_CAP_DATA32	0x0002		/* can do 32-bit data access */
 #define	ATAC_CAP_DMA	0x0008		/* can do ATA DMA modes */
 #define	ATAC_CAP_UDMA	0x0010		/* can do ATA Ultra DMA modes */
+#define	ATAC_CAP_PIOBM	0x0020		/* can do busmastering PIO transfer */
 #define	ATAC_CAP_ATA_NOSTREAM 0x0040	/* don't use stream funcs on ATA */
 #define	ATAC_CAP_ATAPI_NOSTREAM 0x0080	/* don't use stream funcs on ATAPI */
 #define	ATAC_CAP_NOIRQ	0x1000		/* controller never interrupts */
