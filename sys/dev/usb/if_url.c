@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.19 2006/02/25 00:58:35 wiz Exp $	*/
+/*	$NetBSD: if_url.c,v 1.20 2006/09/07 02:40:33 dogcow Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,10 +43,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.19 2006/02/25 00:58:35 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.20 2006/09/07 02:40:33 dogcow Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -76,10 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.19 2006/02/25 00:58:35 wiz Exp $");
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
-#endif
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <dev/mii/mii.h>

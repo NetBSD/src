@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.48 2005/12/24 23:41:34 perry Exp $	*/
+/*	$NetBSD: be.c,v 1.49 2006/09/07 02:40:33 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,13 +64,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.48 2005/12/24 23:41:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.49 2006/09/07 02:40:33 dogcow Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
-#include "opt_ccitt.h"
-#include "opt_llc.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -104,10 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: be.c,v 1.48 2005/12/24 23:41:34 perry Exp $");
 #include <netinet/ip.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -1009,22 +1002,6 @@ beioctl(ifp, cmd, data)
 			arp_ifinit(ifp, ifa);
 			break;
 #endif /* INET */
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-					*(union ns_host *)LLADDR(ifp->if_sadl);
-			else
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
-				      sizeof(sc->sc_enaddr));
-			/* Set new address. */
-			beinit(sc);
-			break;
-		    }
-#endif /* NS */
 		default:
 			beinit(sc);
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.64 2006/03/29 04:16:49 thorpej Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.65 2006/09/07 02:40:32 dogcow Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.64 2006/03/29 04:16:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.65 2006/09/07 02:40:32 dogcow Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.64 2006/03/29 04:16:49 thorpej Exp $")
  */
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -78,10 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.64 2006/03/29 04:16:49 thorpej Exp $")
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -1201,23 +1196,6 @@ mb86960_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			mb86960_init(sc);
 			arp_ifinit(ifp, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else {
-				memcpy(LLADDR(ifp->if_sadl),
-				    ina->x_host.c_host, ETHER_ADDR_LEN);
-			}
-			/* Set new address. */
-			mb86960_init(sc);
-			break;
-		    }
 #endif
 		default:
 			mb86960_init(sc);
