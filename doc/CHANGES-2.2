@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.72 2006/09/06 07:00:12 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.73 2006/09/07 00:20:21 rpaulo Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -848,4 +848,11 @@ gnu/dist/sendmail/sendmail/main.c		patch
 
 	Fixes potential DoS attack with sendmail(8).
 	[adrianp, ticket #10689]
+
+share/man/man4/sk.4				1.9
+sys/dev/pci/if_sk.c				1.22
+sys/dev/pci/if_skvar.h				1.10
+
+	Add jumbo frames support, from OpenBSD (mcbride).
+	[riz, ticket #10680]
 
