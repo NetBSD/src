@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.6 2006/09/07 00:10:49 gdamore Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.7 2006/09/07 01:43:52 uwe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.6 2006/09/07 00:10:49 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.7 2006/09/07 01:43:52 uwe Exp $");
 
 #include <sys/param.h>
 
@@ -268,10 +268,9 @@ todr_gettime(todr_chip_handle_t tch, struct timeval *tvp)
 		 * boot and fix the problem.  Note the code is self
 		 * eliminating once tv_sec goes to 64 bits.
 		 */
-		if ((sizeof (tvp->tv_sec) <= sizeof (int32_t)) &&
-		    (dt.dt_year >= 2038)) {
-			return -1;
-		}
+		if (/* CONSTCOND */ sizeof(tvp->tv_sec) <= sizeof(int32_t))
+			if (dt.dt_year >= 2038)
+				return -1;
 
 		tvp->tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
 		tvp->tv_usec = 0;
