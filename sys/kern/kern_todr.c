@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.8 2006/09/07 01:50:49 uwe Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.9 2006/09/07 04:24:26 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.8 2006/09/07 01:50:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.9 2006/09/07 04:24:26 gdamore Exp $");
 
 #include <sys/param.h>
 
@@ -271,6 +271,11 @@ todr_gettime(todr_chip_handle_t tch, struct timeval *tvp)
 		if (/* CONSTCOND */ sizeof(tvp->tv_sec) <= sizeof(int32_t))
 			if (dt.dt_year >= 2038)
 				return -1;
+
+		/* simple sanity checks */
+		if (dt.dt_mon > 12 || dt.dt_day > 31 ||
+		    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 60)
+			return -1;
 
 		tvp->tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
 		tvp->tv_usec = 0;
