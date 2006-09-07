@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.91 2006/08/30 17:00:15 christos Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.92 2006/09/07 02:40:33 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,10 +15,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.91 2006/08/30 17:00:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.92 2006/09/07 02:40:33 dogcow Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -53,10 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.91 2006/08/30 17:00:15 christos Exp $")
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include "bpfilter.h"
 #if NBPFILTER > 0

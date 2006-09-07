@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.64 2006/09/03 06:10:06 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.65 2006/09/07 02:40:33 dogcow Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,11 +48,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.64 2006/09/03 06:10:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.65 2006/09/07 02:40:33 dogcow Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #ifdef INET
@@ -93,10 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.64 2006/09/03 06:10:06 dyoung Exp $");
 #error "Huh? if_gre without inet?"
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #ifdef NETATALK
 #include <netatalk/at.h>
@@ -537,15 +532,6 @@ gre_input3(struct gre_softc *sc, struct mbuf *m, int hlen, u_char proto,
 			ifq = &ipintrq;          /* we are in ip_input */
 			isr = NETISR_IP;
 			break;
-#ifdef NS
-		case ETHERTYPE_NS:
-			ifq = &nsintrq;
-			isr = NETISR_NS;
-#if NBPFILTER > 0
-			af = AF_NS;
-#endif
-			break;
-#endif
 #ifdef NETATALK
 		case ETHERTYPE_ATALK:
 			ifq = &atintrq1;
@@ -704,11 +690,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 #ifdef NETATALK
 		case AF_APPLETALK:
 			etype = ETHERTYPE_ATALK;
-			break;
-#endif
-#ifdef NS
-		case AF_NS:
-			etype = ETHERTYPE_NS;
 			break;
 #endif
 #ifdef INET6

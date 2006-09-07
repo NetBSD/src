@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.5 2006/05/11 23:54:39 mrg Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.6 2006/09/07 02:40:32 dogcow Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.5 2006/05/11 23:54:39 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.6 2006/09/07 02:40:32 dogcow Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -120,7 +120,6 @@ __KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.5 2006/05/11 23:54:39 mrg Exp $");
  */
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -150,10 +149,6 @@ __KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.5 2006/05/11 23:54:39 mrg Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -480,21 +475,6 @@ mb86950_ioctl(ifp, cmd, data)
 			break;
 #endif
 
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)LLADDR(ifp->if_sadl);
-			else {
-				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host, ETHER_ADDR_LEN);
-			}
-			/* Set new address. */
-			mb86950_init(sc);
-			break;
-		    }
-#endif
 
 		default:
 			mb86950_init(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.53 2005/12/24 23:41:33 perry Exp $	*/
+/*	$NetBSD: hme.c,v 1.54 2006/09/07 02:40:32 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,12 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.53 2005/12/24 23:41:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.54 2006/09/07 02:40:32 dogcow Exp $");
 
 /* #define HMEDEBUG */
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -79,10 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.53 2005/12/24 23:41:33 perry Exp $");
 #include <netinet/udp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -1449,28 +1444,6 @@ hme_ioctl(ifp, cmd, data)
 			}
 			arp_ifinit(ifp, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else {
-				memcpy(LLADDR(ifp->if_sadl),
-				    ina->x_host.c_host, sizeof(sc->sc_enaddr));
-			}
-			/* Set new address. */
-			if (ifp->if_flags & IFF_UP)
-				hme_setladrf(sc);
-			else {
-				ifp->if_flags |= IFF_UP;
-				hme_init(sc);
-			}
-			break;
-		    }
 #endif
 		default:
 			ifp->if_flags |= IFF_UP;

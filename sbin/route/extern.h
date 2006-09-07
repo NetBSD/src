@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 2006/01/25 16:29:10 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 2006/09/07 02:40:31 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -35,9 +35,6 @@ struct sockaddr_ns;
 
 /* show.c */
 void show(int, char **);
-
-/* ccitt_addr.c */
-int ccitt_addr(char *, struct sockaddr_x25 *);
 
 /* route.c */
 extern int nflag, Sflag;

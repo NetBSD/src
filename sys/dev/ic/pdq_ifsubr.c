@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.43 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.44 2006/09/07 02:40:32 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,11 +35,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.43 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.44 2006/09/07 02:40:32 dogcow Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
-#include "opt_ns.h"
 #endif
 
 #include <sys/param.h>
@@ -90,10 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.43 2005/12/11 12:21:28 christos Exp
 #include <i386/isa/isavar.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #ifndef __NetBSD__
 #include <vm/vm.h>
@@ -443,26 +438,6 @@ pdq_ifioctl(
 		}
 #endif /* INET */
 
-#if defined(NS)
-		/* This magic copied from if_is.c; I don't use XNS,
-		 * so I have no way of telling if this actually
-		 * works or not.
-		 */
-		case AF_NS: {
-		    struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-		    if (ns_nullhost(*ina)) {
-			ina->x_host = *(union ns_host *)PDQ_LANADDR(sc);
-		    } else {
-			ifp->if_flags &= ~IFF_RUNNING;
-			memcpy((caddr_t)PDQ_LANADDR(sc),
-			    (caddr_t)ina->x_host.c_host,
-			    PDQ_LANADDR_SIZE(sc));
-		    }
-
-		    pdq_ifinit(sc);
-		    break;
-		}
-#endif /* NS */
 
 		default: {
 		    pdq_ifinit(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.120 2006/05/15 12:48:52 christos Exp $	*/
+/*	$NetBSD: if_de.c,v 1.121 2006/09/07 02:40:32 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,13 +37,12 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.120 2006/05/15 12:48:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.121 2006/09/07 02:40:32 dogcow Exp $");
 
 #define	TULIP_HDR_DATA
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
-#include "opt_ns.h"
 #endif
 
 #include <sys/param.h>
@@ -97,10 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.120 2006/05/15 12:48:52 christos Exp $")
 #include <netinet/ip.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if defined(__NetBSD__)
 #include <uvm/uvm_extern.h>
@@ -4770,26 +4765,6 @@ tulip_ifioctl(
 		}
 #endif /* INET */
 
-#ifdef NS
-		/*
-		 * This magic copied from if_is.c; I don't use XNS,
-		 * so I have no way of telling if this actually
-		 * works or not.
-		 */
-		case AF_NS: {
-		    struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-		    if (ns_nullhost(*ina)) {
-			ina->x_host = *(union ns_host *)(sc->tulip_enaddr);
-		    } else {
-			ifp->if_flags &= ~IFF_RUNNING;
-			memcpy((caddr_t)sc->tulip_enaddr,
-			    (caddr_t)ina->x_host.c_host,
-			    sizeof(sc->tulip_enaddr));
-		    }
-		    tulip_init(sc);
-		    break;
-		}
-#endif /* NS */
 
 		default: {
 		    tulip_init(sc);

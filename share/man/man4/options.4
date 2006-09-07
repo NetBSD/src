@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.329 2006/08/26 18:34:28 pavel Exp $
+.\"	$NetBSD: options.4,v 1.330 2006/09/07 02:40:31 dogcow Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1811,16 +1811,6 @@ Include support for tunneling
 protocols over
 .Tn IP .
 Known to be broken, or at least very fragile, and undocumented.
-.It Cd options CCITT,LLC,HDLC
-Include support for the
-.Tn CCITT
-(nee
-.Tn ITU-TSS )
-.Tn X.25
-protocol stack.
-The state of this code is currently unknown, and probably contains bugs.
-This option assumes
-.Em INET .
 .It Cd options NETATALK
 Include support for the
 .Tn AppleTalk

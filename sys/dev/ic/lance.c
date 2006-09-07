@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.34 2005/12/24 20:27:30 perry Exp $	*/
+/*	$NetBSD: lance.c,v 1.35 2006/09/07 02:40:32 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,10 +72,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.34 2005/12/24 20:27:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.35 2006/09/07 02:40:32 dogcow Exp $");
 
-#include "opt_ccitt.h"
-#include "opt_llc.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -97,13 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.34 2005/12/24 20:27:30 perry Exp $");
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#if defined(CCITT) && defined(LLC)
-#include <sys/socketvar.h>
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_var.h>
-#include <netccitt/pk_extern.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -584,19 +575,6 @@ lance_ioctl(ifp, cmd, data)
 		error = ether_ioctl(ifp, cmd, data);
 		break;
 
-#if defined(CCITT) && defined(LLC)
-	case SIOCSIFCONF_X25:
-	    {
-		struct ifaddr *ifa = (struct ifaddr *) data;
-
-		ifp->if_flags |= IFF_UP;
-		ifa->ifa_rtrequest = cons_rtrequest; /* XXX */
-		error = x25_llcglue(PRC_IFUP, ifa->ifa_addr);
-		if (error == 0)
-			lance_init(&sc->sc_ethercom.ec_if);
-		break;
-	    }
-#endif /* CCITT && LLC */
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:

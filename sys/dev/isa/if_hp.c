@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.39 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.40 2006/09/07 02:40:32 dogcow Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -80,13 +80,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.39 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.40 2006/09/07 02:40:32 dogcow Exp $");
 
 #include "hp.h"
 #if NHP > 0
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -113,10 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.39 2005/12/11 12:22:02 christos Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
@@ -992,28 +987,6 @@ hpioctl(ifp, cmd, data)
 			    IA_SIN(ifa)->sin_addr;
 			arpwhohas((struct arpcom *) ifp, &IA_SIN(ifa)->sin_addr);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-			{
-				struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-
-				if (ns_nullhost(*ina))
-					ina->x_host = *(union ns_host *) (ns->ns_addrp);
-				else {
-					/*
-							 * The manual says we can't change the address
-							 * while the receiver is armed,
-							 * so reset everything
-							 */
-					ifp->if_flags &= ~IFF_RUNNING;
-					memcpy((caddr_t) ns->ns_addrp,
-					    (caddr_t) ina->x_host.c_host,
-					    sizeof(ns->ns_addrp));
-				}
-				hpinit(ifp->if_unit);	/* does hp_setaddr() */
-				break;
-			}
 #endif
 		default:
 			hpinit(ifp->if_unit);

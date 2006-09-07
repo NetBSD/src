@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.17 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.18 2006/09/07 02:40:31 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,12 +35,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.17 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.18 2006/09/07 02:40:31 dogcow Exp $");
 
 #include "opt_inet.h"
-#include "opt_ccitt.h"
-#include "opt_llc.h"
-#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,18 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.17 2005/12/11 12:18:03 christos Exp $
 #include <netinet/ip.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
-#if defined(CCITT) && defined(LLC)
-#include <sys/socketvar.h>
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_var.h>
-#include <netccitt/pk_extern.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -218,24 +204,6 @@ mcioctl(ifp, cmd, data)
 			mcinit(sc);
 			arp_ifinit(ifp, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else {
-				memcpy(LLADDR(ifp->if_sadl),
-				    ina->x_host.c_host,
-				    sizeof(sc->sc_enaddr));
-			}
-			/* Set new address. */
-			mcinit(sc);
-			break;
-		    }
 #endif
 		default:
 			mcinit(sc);

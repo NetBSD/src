@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.58 2006/02/20 16:50:37 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.59 2006/09/07 02:40:32 dogcow Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,11 +14,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.58 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.59 2006/09/07 02:40:32 dogcow Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -49,10 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.58 2006/02/20 16:50:37 thorpej Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -889,23 +884,6 @@ dp8390_ioctl(ifp, cmd, data)
 			dp8390_init(sc);
 			arp_ifinit(ifp, ifa);
 			break;
-#endif
-#ifdef NS
-			/* XXX - This code is probably wrong. */
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl),
-				    ina->x_host.c_host, ETHER_ADDR_LEN);
-			/* Set new address. */
-			dp8390_init(sc);
-			break;
-		    }
 #endif
 		default:
 			dp8390_init(sc);

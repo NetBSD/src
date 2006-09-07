@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.26 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: tropic.c,v 1.27 2006/09/07 02:40:32 dogcow Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,10 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.26 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.27 2006/09/07 02:40:32 dogcow Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -69,10 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.26 2005/12/11 12:21:28 christos Exp $")
 #include <netinet/in_var.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

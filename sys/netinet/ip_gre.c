@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.41 2006/08/31 17:46:17 dyoung Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.42 2006/09/07 02:40:33 dogcow Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,13 +45,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.41 2006/08/31 17:46:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.42 2006/09/07 02:40:33 dogcow Exp $");
 
 #include "gre.h"
 #if NGRE > 0
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "opt_atalk.h"
 #include "bpfilter.h"
 
@@ -84,10 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.41 2006/08/31 17:46:17 dyoung Exp $");
 #error ip_gre input without IP?
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #ifdef NETATALK
 #include <netatalk/at.h>

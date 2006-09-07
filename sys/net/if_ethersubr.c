@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.135 2006/08/05 17:20:54 pavel Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.136 2006/09/07 02:40:33 dogcow Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,16 +61,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.135 2006/08/05 17:20:54 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.136 2006/09/07 02:40:33 dogcow Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_llc.h"
 #include "opt_iso.h"
 #include "opt_ipx.h"
 #include "opt_mbuftrace.h"
-#include "opt_ns.h"
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
 #include "opt_pppoe.h"
@@ -147,10 +144,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.135 2006/08/05 17:20:54 pavel Exp
 #include <netinet6/nd6.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include "carp.h"
 #if NCARP > 0
@@ -169,14 +162,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.135 2006/08/05 17:20:54 pavel Exp
 #include <netiso/iso_snpac.h>
 #endif
 
-#ifdef LLC
-#include <netccitt/dll.h>
-#include <netccitt/llc_var.h>
-#endif
 
-#if defined(LLC) && defined(CCITT)
-extern struct ifqueue pkintrq;
-#endif
 
 #ifdef NETATALK
 #include <netatalk/at.h>
@@ -381,18 +367,6 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		}
 		break;
 #endif /* NETATALK */
-#ifdef NS
-	case AF_NS:
-		etype = htons(ETHERTYPE_NS);
- 		bcopy((caddr_t)&(((struct sockaddr_ns *)dst)->sns_addr.x_host),
-		    (caddr_t)edst, sizeof (edst));
-		if (!bcmp((caddr_t)edst, (caddr_t)&ns_thishost, sizeof(edst)))
-			return (looutput(ifp, m, dst, rt));
-		/* If broadcasting on a simplex interface, loopback a copy */
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
-			mcopy = m_copy(m, 0, (int)M_COPYALL);
-		break;
-#endif
 #ifdef IPX
 	case AF_IPX:
 		etype = htons(ETHERTYPE_IPX);
@@ -449,44 +423,6 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 #endif
 		} break;
 #endif /* ISO */
-#ifdef	LLC
-/*	case AF_NSAP: */
-	case AF_CCITT: {
-		struct sockaddr_dl *sdl = rt ? 
-			(struct sockaddr_dl *) rt -> rt_gateway : NULL;
-
-		if (sdl && sdl->sdl_family == AF_LINK
-		    && sdl->sdl_alen > 0) {
-			bcopy(LLADDR(sdl), (char *)edst,
-				sizeof(edst));
-		} else goto bad; /* Not a link interface ? Funny ... */
-		if ((ifp->if_flags & IFF_SIMPLEX) && (*edst & 1) &&
-		    (mcopy = m_copy(m, 0, (int)M_COPYALL))) {
-			M_PREPEND(mcopy, sizeof (*eh), M_DONTWAIT);
-			if (mcopy) {
-				eh = mtod(mcopy, struct ether_header *);
-				bcopy((caddr_t)edst,
-				      (caddr_t)eh->ether_dhost, sizeof (edst));
-				bcopy(LLADDR(ifp->if_sadl),
-				      (caddr_t)eh->ether_shost, sizeof (edst));
-			}
-		}
-#ifdef LLC_DEBUG
-		{
-			int i;
-			struct llc *l = mtod(m, struct llc *);
-
-			printf("ether_output: sending LLC2 pkt to: ");
-			for (i=0; i<6; i++)
-				printf("%x ", edst[i] & 0xff);
-			printf(" len 0x%x dsap 0x%x ssap 0x%x control 0x%x\n",
-			    m->m_pkthdr.len, l->llc_dsap & 0xff, l->llc_ssap &0xff,
-			    l->llc_control & 0xff);
-
-		}
-#endif /* LLC_DEBUG */
-		} break;
-#endif /* LLC */
 
 	case pseudo_AF_HDRCMPLT:
 		hdrcmplt = 1;
@@ -962,13 +898,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		inq = &ip6intrq;
 		break;
 #endif
-#ifdef NS
-	case ETHERTYPE_NS:
-		schednetisr(NETISR_NS);
-		inq = &nsintrq;
-		break;
-
-#endif
 #ifdef IPX
 	case ETHERTYPE_IPX:
 		schednetisr(NETISR_IPX);
@@ -1093,27 +1022,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			}
 			break;
 #endif /* ISO */
-#ifdef LLC
-		case LLC_X25_LSAP:
-		{
-			if (m->m_pkthdr.len > etype)
-				m_adj(m, etype - m->m_pkthdr.len);
-			M_PREPEND(m, sizeof(struct sdl_hdr) , M_DONTWAIT);
-			if (m == 0)
-				return;
-			if ( !sdl_sethdrif(ifp, eh->ether_shost, LLC_X25_LSAP,
-					    eh->ether_dhost, LLC_X25_LSAP, 6,
-					    mtod(m, struct sdl_hdr *)))
-				panic("ETHER cons addr failure");
-			mtod(m, struct sdl_hdr *)->sdlhdr_len = etype;
-#ifdef LLC_DEBUG
-				printf("llc packet\n");
-#endif /* LLC_DEBUG */
-			schednetisr(NETISR_CCITT);
-			inq = &llcintrq;
-			break;
-		}
-#endif /* LLC */
 		dropanyway:
 		default:
 			m_freem(m);
@@ -1536,22 +1444,6 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			arp_ifinit(ifp, ifa);
 			break;
 #endif /* INET */
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-				    LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl),
-				    ina->x_host.c_host, ifp->if_addrlen);
-			/* Set new address. */
-			error = (*ifp->if_init)(ifp);
-			break;
-		    }
-#endif /* NS */
 		default:
 			if ((ifp->if_flags & IFF_RUNNING) == 0)
 				error = (*ifp->if_init)(ifp);
