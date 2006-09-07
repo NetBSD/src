@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2006/09/07 01:23:59 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2006/09/07 14:44:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -46,11 +46,12 @@
  *   FreeBSD's libelf.
  * - The way the namelist is searched sucks, is it worth doing something
  *   better?
+ * - Might be nice to record events and replay later, like ktrace/kdump.
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.2 2006/09/07 01:23:59 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.3 2006/09/07 14:44:05 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -122,7 +123,7 @@ const name_t alltypes[] = {
 	{ "Adaptive mutex spin", LB_ADAPTIVE_MUTEX | LB_SPIN },
 	{ "Adaptive mutex sleep", LB_ADAPTIVE_MUTEX | LB_SLEEP },
 	{ "Adaptive RW lock spin", LB_ADAPTIVE_RWLOCK | LB_SPIN },
-	{ "Adaptive RW lock sleep", LB_ADAPTIVE_RWLOCK | LB_SPIN },
+	{ "Adaptive RW lock sleep", LB_ADAPTIVE_RWLOCK | LB_SLEEP },
 	{ "Spin mutex spin", LB_SPIN_MUTEX | LB_SPIN },
 	{ "Spin RW lock spin", LB_SPIN_RWLOCK | LB_SPIN },
 	{ "lockmgr sleep", LB_LOCKMGR | LB_SLEEP },
