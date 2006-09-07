@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22 2006/07/18 12:51:01 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.23 2006/09/07 03:38:55 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -80,12 +80,7 @@ void _clrsoftintr(int);
 #define SPLBIO		(SPLSOFT | MIPS_INT_MASK_4)
 #define SPLNET		(SPLBIO | MIPS_INT_MASK_1 | MIPS_INT_MASK_2)
 #define SPLTTY		(SPLNET | MIPS_INT_MASK_3)
-#ifdef ENABLE_INT5_STATCLOCK
-#define SPLCLOCK	(SPLTTY | MIPS_INT_MASK_0)
-#define SPLSTATCLOCK	(SPLCLOCK | MIPS_INT_MASK_5)
-#else
 #define SPLCLOCK	(SPLTTY | MIPS_INT_MASK_0 | MIPS_INT_MASK_5)
-#endif
 #define splbio()	_splraise(SPLBIO)
 #define splnet()	_splraise(SPLNET)
 #define spltty()	_splraise(SPLTTY)
@@ -93,11 +88,7 @@ void _clrsoftintr(int);
 #define splserial()	_splraise(SPLTTY)
 #define splclock()	_splraise(SPLCLOCK)
 #define splvm()		splclock()
-#ifdef ENABLE_INT5_STATCLOCK
-#define splstatclock()	_splraise(SPLSTATCLOCK)
-#else
 #define splstatclock()	splclock()
-#endif
 #define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_0)
 
 #define	splsched()	splhigh()

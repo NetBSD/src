@@ -1,4 +1,4 @@
-/* $NetBSD: clockvar.h,v 1.4 2006/07/18 12:51:01 tsutsui Exp $ */
+/* $NetBSD: clockvar.h,v 1.5 2006/09/07 03:38:54 gdamore Exp $ */
 /*
  * Copyright (C) 2004 Izumi Tsutsui.  All rights reserved.
  *
@@ -26,11 +26,6 @@
  */
 
 extern struct evcnt hardclock_ev;
-
-#ifdef ENABLE_INT5_STATCLOCK
-void statclockintr(struct clockframe *);
-extern struct evcnt statclock_ev;
-#endif
 
 extern void (*timer_start)(void *);
 extern long (*timer_read)(void *);
