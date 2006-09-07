@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postfix,v 1.11 2006/09/05 22:10:51 christos Exp $
+# $NetBSD: postfix,v 1.12 2006/09/07 14:16:55 christos Exp $
 #
 
 # PROVIDE: mail
@@ -21,7 +21,11 @@ reload_cmd="postfix_op"
 extra_commands="reload"
 spooletcdir="/var/spool/${name}/etc"
 required_dirs=$spooletcdir
-newaliases="/usr/bin/newaliases"
+
+_rebuild() {
+	echo "${name}: rebuilding ${1} ($2 ${1}.db)"
+	$(postconf -h newaliases_path)
+}
 
 postfix_precmd()
 {
@@ -39,18 +43,23 @@ postfix_precmd()
 	done
 
 	for f in $(postconf -h alias_database); do
-		dbfile="${f#*:}"
-		if [ -f "${dbfile}.db" ]; then
-			if [ ! "${dbfile}" -ot "${dbfile}.db" ]; then
-				echo \
-	    "${name}: ${dbfile} newer than ${dbfile}.db, running $newaliases"
-				$newaliases
+		OIFS="${IFS}"
+		IFS="${IFS}:"
+		set -- $f
+		IFS="${OIFS}"
+		case "$1" in
+		hash)
+			if [ -f "$2.db" ]; then
+				if [ ! "$2" -ot "$2.db" ]; then
+					_rebuild "$2" "out of date"
+				fi
+			else
+				_rebuild "$2" "missing"
 			fi
-		else
-			echo \
-	    "${name}: ${dbfile}.db not present, running $newaliases"
-			$newaliases
-		fi
+			;;
+		*)
+			;;
+		esac
 	done
 }
 
