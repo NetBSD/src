@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.60 2006/08/13 18:53:31 martin Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.61 2006/09/07 01:18:01 ad Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -251,6 +251,7 @@
 #	joy*	joystick device
 #	kttcp	kernel ttcp helper device
 #	lkm	loadable kernel modules interface
+#	lockstat kernel locking statistics
 #	magma*	Magma multiport serial/parallel cards
 #	midi*	MIDI
 #	mlx*	Mylex DAC960 control interface
@@ -464,7 +465,7 @@ all)
 	makedev bpf
 	makedev tun0 tun1 tun2 tun3
 	makedev ipl pf crypto random systrace
-	makedev lkm clockctl
+	makedev lkm lockstat clockctl
 	makedev local
 	makedev atabus0 atabus1 atabus2 atabus3
 	makedev tap tap0 tap1 tap2 tap3
@@ -990,6 +991,10 @@ speaker)
 
 lkm)
 	mkdev lkm c %lkm_chr% 0 640 $g_kmem
+	;;
+
+lockstat)
+	mkdev lockstat c %lockstat_chr% 0
 	;;
 
 audio*)
