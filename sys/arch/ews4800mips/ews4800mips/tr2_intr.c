@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2_intr.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $	*/
+/*	$NetBSD: tr2_intr.c,v 1.2 2006/09/08 13:48:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.2 2006/09/08 13:48:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,32 +310,6 @@ tr2_initclocks(void)
 
 	last_clock_intr = mips3_cp0_count_read();
 
-	/* number of microseconds between interrupts */
-	tick = 1000000 / hz;
-	tickfix = 1000000 - (hz * tick);
-#ifdef NTP
-	fixtick = tickfix;
-#endif
-	if (tickfix) {
-		int ftp;
-
-		ftp = min(ffs(tickfix), ffs(hz));
-		tickfix >>= ftp - 1;
-		tickfixinterval = hz >> (ftp - 1);
-	}
-
 	/* Enable clock interrupt */
 	*PICNIC_INT5_MASK_REG |= PICNIC_INT_CLOCK;
-}
-
-u_long
-tr2_readclock(void)
-{
-	uint32_t res, count;
-
-	/* 32bit wrap-around during subtruction ok here. */
-	count = mips3_cp0_count_read() - last_clock_intr;
-	MIPS_COUNT_TO_MHZ(curcpu(), count, res);
-
-	return res;
 }
