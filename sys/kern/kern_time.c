@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.105 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.106 2006/09/08 20:58:57 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.105 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.106 2006/09/08 20:58:57 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -167,7 +167,9 @@ settime(struct proc *p, struct timespec *ts)
 #else /* !__HAVE_TIMECOUNTER */
 	timersub(&tv, &time, &delta);
 #endif /* !__HAVE_TIMECOUNTER */
-	if ((delta.tv_sec < 0 || delta.tv_usec < 0) && securelevel > 1) {
+	if ((delta.tv_sec < 0 || delta.tv_usec < 0) &&
+	    kauth_authorize_system(p->p_cred, KAUTH_SYSTEM_TIME,
+	    KAUTH_REQ_SYSTEM_TIME_BACKWARDS, NULL, NULL, NULL)) {
 		splx(s);
 		return (EPERM);
 	}
@@ -253,8 +255,8 @@ sys_clock_settime(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	int error;
 
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,
+	    KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL, NULL)) != 0)
 		return (error);
 
 	return clock_settime1(l->l_proc, SCARG(uap, clock_id), SCARG(uap, tp));
@@ -469,8 +471,8 @@ sys_settimeofday(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	int error;
 
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,
+	    KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL, NULL)) != 0)
 		return (error);
 
 	return settimeofday1(SCARG(uap, tv), SCARG(uap, tzp), l->l_proc);
@@ -520,8 +522,8 @@ sys_adjtime(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	int error;
 
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,
+	    KAUTH_REQ_SYSTEM_TIME_ADJTIME, NULL, NULL, NULL)) != 0)
 		return (error);
 
 	return adjtime1(SCARG(uap, delta), SCARG(uap, olddelta), l->l_proc);

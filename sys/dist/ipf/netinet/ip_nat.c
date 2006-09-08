@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.12 2006/06/13 02:08:20 christos Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.13 2006/09/08 20:58:57 elad Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -19,6 +19,9 @@
 #if defined(__NetBSD__) && (NetBSD >= 199905) && !defined(IPFILTER_LKM) && \
     defined(_KERNEL)
 # include "opt_ipfilter.h"
+#endif
+#if (__NetBSD_Version__ >= 399002000)
+#include <sys/kauth.h>
 #endif
 #if !defined(_KERNEL)
 # include <stdio.h>
@@ -621,7 +624,13 @@ int mode;
 	ipnat_t natd;
 
 #if (BSD >= 199306) && defined(_KERNEL)
+#if (__NetBSD_Version__ >= 399002000)
+	if ((mode & FWRITE) && kauth_authorize_network(curlwp->l_cred,
+	    KAUTH_NETWORK_FIREWALL, (void *)KAUTH_REQ_NETWORK_FIREWALL_NAT,
+	    NULL, NULL, NULL) != KAUTH_RESULT_ALLOW)
+#else
 	if ((securelevel >= 2) && (mode & FWRITE))
+#endif
 		return EPERM;
 #endif
 

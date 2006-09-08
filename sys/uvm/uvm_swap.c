@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.105 2006/09/03 21:37:06 christos Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.106 2006/09/08 20:58:58 elad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.105 2006/09/03 21:37:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.106 2006/09/08 20:58:58 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -508,8 +508,8 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * all other requests require superuser privs.   verify.
 	 */
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)))
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_SWAPCTL,
+	    0, NULL, NULL, NULL)))
 		goto out;
 
 	if (SCARG(uap, cmd) == SWAP_DUMPOFF) {

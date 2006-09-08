@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.88 2006/08/11 19:17:47 christos Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.89 2006/09/08 20:58:57 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.88 2006/08/11 19:17:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.89 2006/09/08 20:58:57 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -193,35 +193,44 @@ spec_open(v)
 	if (vp->v_mount && (vp->v_mount->mnt_flag & MNT_NODEV))
 		return (ENXIO);
 
+#define M2K(m)	(((m) & FREAD) && ((m) & FWRITE) ? KAUTH_REQ_SYSTEM_RAWIO_RW : \
+		 (m) & FWRITE ? KAUTH_REQ_SYSTEM_RAWIO_WRITE : \
+		 KAUTH_REQ_SYSTEM_RAWIO_READ)
+
 	switch (vp->v_type) {
 
 	case VCHR:
 		cdev = cdevsw_lookup(dev);
 		if (cdev == NULL)
 			return (ENXIO);
-		if (ap->a_cred != FSCRED && (ap->a_mode & FWRITE)) {
-			/*
-			 * When running in very secure mode, do not allow
-			 * opens for writing of any disk character devices.
-			 */
-			if (securelevel >= 2 && cdev->d_type == D_DISK)
-				return (EPERM);
-			/*
-			 * When running in secure mode, do not allow opens
-			 * for writing of /dev/mem, /dev/kmem, or character
-			 * devices whose corresponding block devices are
-			 * currently mounted.
-			 */
+
+		if (ap->a_cred != FSCRED) {
+			u_long rw;
+
+			rw = M2K(ap->a_mode);
+			error = 0;
 			bvp = NULL;
-			if (securelevel >= 1) {
+
+			/* XXX we're holding a vnode lock here */
+			if (iskmemdev(dev)) {
+				error = kauth_authorize_system(ap->a_cred,
+				    KAUTH_SYSTEM_RAWIO,
+				    KAUTH_REQ_SYSTEM_RAWIO_MEMORY,
+				    (void *)rw, NULL, NULL);
+			} else {
 				blkdev = devsw_chr2blk(dev);
-				if (blkdev != (dev_t)NODEV &&
-				    vfinddev(blkdev, VBLK, &bvp) &&
-				    (error = vfs_mountedon(bvp)))
-					return (error);
-				if (iskmemdev(dev))
-					return (EPERM);
+				if (blkdev != (dev_t)NODEV) {
+					vfinddev(blkdev, VBLK, &bvp);
+					error = kauth_authorize_system(ap->a_cred,
+					    KAUTH_SYSTEM_RAWIO,
+					    KAUTH_REQ_SYSTEM_RAWIO_DISK,
+					    (void *)rw, vp, (void *)(u_long)dev);
+					if (error) printf("nope.\n");
+				}
 			}
+
+			if (error)
+				return (error);
 
 #if NVERIEXEC > 0
 			if (veriexec_strict >= VERIEXEC_IPS && iskmemdev(dev))
@@ -231,6 +240,7 @@ spec_open(v)
 				return (error);
 #endif /* NVERIEXEC > 0 */
 		}
+
 		if (cdev->d_type == D_TTY)
 			vp->v_flag |= VISTTY;
 		VOP_UNLOCK(vp, 0);
@@ -245,19 +255,23 @@ spec_open(v)
 		bdev = bdevsw_lookup(dev);
 		if (bdev == NULL)
 			return (ENXIO);
+
 		/*
 		 * When running in very secure mode, do not allow
 		 * opens for writing of any disk block devices.
 		 */
-		if (securelevel >= 2 && ap->a_cred != FSCRED &&
-		    (ap->a_mode & FWRITE) && bdev->d_type == D_DISK)
-			return (EPERM);
-		/*
-		 * Do not allow opens of block devices that are
-		 * currently mounted.
-		 */
-		if ((error = vfs_mountedon(vp)) != 0)
-			return (error);
+		if (ap->a_cred != FSCRED) {
+			u_long rw;
+
+			rw = M2K(ap->a_mode);
+
+			error = kauth_authorize_system(ap->a_cred,
+			    KAUTH_SYSTEM_RAWIO,
+			    KAUTH_REQ_SYSTEM_RAWIO_DISK,
+			    (void *)rw, vp, (void *)(u_long)dev);
+			if (error)
+				return (error);
+		}
 
 #if NVERIEXEC > 0
 		error = veriexec_rawchk(vp);
@@ -279,6 +293,8 @@ spec_open(v)
 	default:
 		return 0;
 	}
+
+#undef M2K
 
 	if (error)
 		return error;

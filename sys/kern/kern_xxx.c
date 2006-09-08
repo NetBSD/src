@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.59 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.60 2006/09/08 20:58:57 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.59 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.60 2006/09/08 20:58:57 elad Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -59,8 +59,8 @@ sys_reboot(struct lwp *l, void *v, register_t *retval)
 	int error;
 	char *bootstr, bs[128];
 
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_REBOOT,
+	    0, NULL, NULL, NULL)) != 0)
 		return (error);
 
 	/*
