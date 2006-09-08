@@ -1,4 +1,4 @@
-/* $Id: ar531x_board.c,v 1.4 2006/08/28 07:21:15 gdamore Exp $ */
+/* $Id: ar531x_board.c,v 1.5 2006/09/08 23:39:27 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -40,7 +40,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar531x_board.c,v 1.4 2006/08/28 07:21:15 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar531x_board.c,v 1.5 2006/09/08 23:39:27 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: ar531x_board.c,v 1.4 2006/08/28 07:21:15 gdamore Exp
 #include <mips/atheros/include/ar531xvar.h>
 
 #include <contrib/dev/ath/ah_soc.h>
+
+extern const char *ether_sprintf(const uint8_t *);
 
 /*
  * Locate the Board Configuration data using heuristics.
@@ -95,6 +97,10 @@ ar531x_board_info(void)
 				board = (const struct ar531x_boarddata *) ptr;
 				break;
 			}
+		printf("enet0: mac: %s\n", ether_sprintf(board->enet0Mac));
+		printf("enet1: mac: %s\n", ether_sprintf(board->enet1Mac));
+		printf("wlan0: mac: %s\n", ether_sprintf(board->wlan0Mac));
+		printf("wlan1: mac: %s\n", ether_sprintf(board->wlan1Mac));
 	}
 	return board;
 }
