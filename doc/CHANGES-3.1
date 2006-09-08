@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.157 2006/09/08 09:33:56 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.158 2006/09/08 11:14:52 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4469,7 +4469,6 @@ gnu/dist/sendmail/sendmail/main.c		patch
 	Fixes potential DoS attack with sendmail(8).
 	[adrianp, ticket #1495]
 
-
 bin/sh/expand.c					1.75-1.76
 
 	Fix corner case expansions of $@ and non-whitspace $IFS in /bin/sh.	
@@ -4504,5 +4503,33 @@ dist/bind/lib/dns/resolver.c			1.2
 crypto/dist/openssl/crypto/rsa/rsa_sign.c	1.2-1.3
 
 	Fix for CVE-2006-4339 (RSA signature forgery) from openssl-0.9.7k.
-	[1504, ticket #adrianp]
+	[adrianp, ticket #1504]
+
+sys/arch/xen/conf/files.xen			1.46
+sys/arch/xen/include/shutdown_xenbus.h		1.1
+sys/arch/xen/xen/hypervisor.c			1.26
+sys/arch/xen/xen/shutdown_xenbus.c		1.1, patch
+sys/arch/xen/xenbus/xenbus_probe.c		1.13
+
+	Add "xm shutdown" support for xen3.
+	[jld, ticket #1499]
+
+sys/kern/uipc_usrreq.c				1.84
+
+	Honor the user's umask while creating local sockets.  Several other
+	systems do already this (such as FreeBSD, OpenBSD and Linux), so it
+	will improve portability of some third-party programs.
+	[martin, ticket #1500]
+
+sys/arch/xen/xen/clock.c			1.28
+
+	Prevent some unsafe debugging printf()'s by not enabling
+	options XEN_CLOCK_DEBUG automatically with options DEBUG.
+	[jld, ticket #1505]
+
+sys/arch/xen/xen/clock.c			1.26
+
+	Avoid hanging in the timer event handler when a glitch in Xen's
+	timekeeping occurs.
+	[jld, ticket #1506]
 
