@@ -1,4 +1,4 @@
-.\"	$NetBSD: exports.5,v 1.25 2005/10/18 11:01:39 wiz Exp $
+.\"	$NetBSD: exports.5,v 1.26 2006/09/08 21:32:05 yamt Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)exports.5	8.3 (Berkeley) 3/29/95
 .\"
-.Dd October 16, 2005
+.Dd September 9, 2006
 .Dt EXPORTS 5
 .Os
 .Sh NAME
@@ -362,6 +362,8 @@ The default remote mount-point file.
 .Xr mountd 8 ,
 .Xr nfsd 8 ,
 .Xr showmount 8
+.Sh CAVEATS
+Don't re-export NFS-mounted filesystems unless you are sure.
 .Sh BUGS
 The export options are tied to the local mount points in the kernel and
 must be non-contradictory for any exported subdirectory of the local
