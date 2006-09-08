@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.11 2006/09/07 02:24:51 xtraeme Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.12 2006/09/08 12:38:32 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.11 2006/09/07 02:24:51 xtraeme Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.12 2006/09/08 12:38:32 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -144,8 +144,8 @@ __RCSID("$NetBSD: scan_ffs.c,v 1.11 2006/09/07 02:24:51 xtraeme Exp $");
 struct sblockinfo {
 	struct lfs	*lfs;
 	struct fs	*ffs;
-	u_int64_t	lfs_off;
-	u_int64_t	ffs_off;
+	uint64_t	lfs_off;
+	uint64_t	ffs_off;
 	char		lfs_path[MAXMNTLEN];
 	char		ffs_path[MAXMNTLEN];
 } sbinfo;
@@ -475,7 +475,7 @@ main(int argc, char **argv)
 			err(1, "Cannot stat `%s'", fpath);
 
 		if (!eflag)
-			end = (unsigned)stp.st_size;
+			end = (uint64_t)stp.st_size;
 
 		fd = open(fpath, O_RDONLY);
 	} else {
