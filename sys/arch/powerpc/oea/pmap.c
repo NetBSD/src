@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 2006/08/05 21:26:49 sanjayl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.38.2.1 2006/09/08 19:47:13 rpaulo Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2006/08/05 21:26:49 sanjayl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38.2.1 2006/09/08 19:47:13 rpaulo Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -3386,7 +3386,6 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 				VM_FREELIST_DEFAULT);
 		}
 	}
-	printf("Done calling uvm_page_physload()\n");
 
 	/*
 	 * Make sure kernel vsid is allocated as well as VSID 0.
