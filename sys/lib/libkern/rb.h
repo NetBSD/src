@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.3 2006/09/05 04:35:45 matt Exp $ */
+/* $NetBSD: rb.h,v 1.4 2006/09/08 04:07:15 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,22 +51,21 @@ struct rb_node {
 #define	rb_left		rb_nodes[RB_LEFT]
 #define	rb_right	rb_nodes[RB_RIGHT]
 #define	rb_parent	rb_nodes[RB_PARENT]
-	TAILQ_ENTRY(rb_node) rb_link;
 	union {
 		struct {
 #if BYTE_ORDER == LITTLE_ENDIAN
-			unsigned int : 27;
+			unsigned int : 28;
 			unsigned int s_root : 1;
-			unsigned int s_position : 2;
+			unsigned int s_position : 1;
 			unsigned int s_color : 1;
 			unsigned int s_sentinel : 1;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
 			unsigned int s_sentinel : 1;
 			unsigned int s_color : 1;
-			unsigned int s_position : 2;
+			unsigned int s_position : 1;
 			unsigned int s_root : 1;
-			unsigned int : 27;
+			unsigned int : 28;
 #endif
 		} u_s;
 		unsigned int u_i;
@@ -90,29 +89,48 @@ struct rb_node {
 #define	RB_MARK_RED(rb)			((void)((rb)->rb_color = 1))
 #define	RB_MARK_BLACK(rb)		((void)((rb)->rb_color = 0))
 #define	RB_MARK_ROOT(rb)		((void)((rb)->rb_root = 1))
+#if !defined(NDEBUG) || defined(DEBUG)
+	TAILQ_ENTRY(rb_node) rb_link;
+#endif
 };
 
+#if !defined(NDEBUG) || defined(DEBUG)
 TAILQ_HEAD(rb_node_qh, rb_node);
+
+#define	RB_TAILQ_REMOVE				TAILQ_REMOVE
+#define	RB_TAILQ_INIT				TAILQ_INIT
+#define	RB_TAILQ_INSERT_HEAD(a, b, c)		TAILQ_INSERT_HEAD
+#define	RB_TAILQ_INSERT_BEFORE(a, b, c)		TAILQ_INSERT_BEFORE
+#define	RB_TAILQ_INSERT_AFTER(a, b, c, d)	TAILQ_INSERT_AFTER
+#else
+#define	RB_TAILQ_REMOVE(a, b, c)		do { } while (0)
+#define	RB_TAILQ_INIT(a)			do { } while (0)
+#define	RB_TAILQ_INSERT_HEAD(a, b, c)		do { } while (0)
+#define	RB_TAILQ_INSERT_BEFORE(a, b, c)		do { } while (0)
+#define	RB_TAILQ_INSERT_AFTER(a, b, c, d)	do { } while (0)
+#endif
 
 typedef int (*rb_compare_nodes_fn)(const struct rb_node *,
     const struct rb_node *);
 typedef int (*rb_compare_key_fn)(const struct rb_node *, const void *);
-typedef void (*rb_print_node_fn)(const struct rb_node *, const char *);
 
 struct rb_tree {
 	struct rb_node *rbt_root;
+#if !defined(NDEBUG) || defined(DEBUG)
 	struct rb_node_qh rbt_nodes;
+#endif
 	rb_compare_nodes_fn rbt_compare_nodes;
 	rb_compare_key_fn rbt_compare_key;
-	rb_print_node_fn rbt_print_node;
 	unsigned int rbt_count;
 };
 
-void	rb_tree_init(struct rb_tree *, rb_compare_nodes_fn, rb_compare_key_fn,
-	    rb_print_node_fn);
+void	rb_tree_init(struct rb_tree *, rb_compare_nodes_fn, rb_compare_key_fn);
 void	rb_tree_insert_node(struct rb_tree *, struct rb_node *);
-struct rb_node	*rb_tree_find(struct rb_tree *, void *);
+struct rb_node	*
+	rb_tree_find(struct rb_tree *, void *);
 void	rb_tree_remove_node(struct rb_tree *, struct rb_node *);
 void	rb_tree_check(const struct rb_tree *, bool);
+struct rb_node *
+	rb_tree_iterate(struct rb_tree *, struct rb_node *, unsigned int);
 
 #endif	/* _LIBKERN_RB_H_*/
