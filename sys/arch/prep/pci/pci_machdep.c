@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.27 2006/06/09 01:19:11 garbled Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.27.4.1 2006/09/08 19:02:52 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.27 2006/06/09 01:19:11 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.27.4.1 2006/09/08 19:02:52 rpaulo Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -303,6 +303,10 @@ prep_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
 	   alone */
 	if (PCI_VENDOR(id) == PCI_VENDOR_IBM &&
 	    PCI_PRODUCT(id) == PCI_PRODUCT_IBM_MPIC2)
+		return 0;
+
+	if (PCI_VENDOR(id) == PCI_VENDOR_IBM &&
+	    PCI_PRODUCT(id) == PCI_PRODUCT_IBM_MPIC)
 		return 0;
 
 	if (PCI_VENDOR(id) == PCI_VENDOR_INTEL &&
