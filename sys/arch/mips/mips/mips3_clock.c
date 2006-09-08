@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clock.c,v 1.2 2006/09/07 03:14:22 simonb Exp $	*/
+/*	$NetBSD: mips3_clock.c,v 1.3 2006/09/08 22:14:14 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.2 2006/09/07 03:14:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.3 2006/09/08 22:14:14 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,10 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.2 2006/09/07 03:14:22 simonb Exp $
 #include <mips/mips3_clock.h>
 #include <machine/intr.h>
 #include <machine/locore.h>
-
-#ifdef	__HAVE_TIMECOUNTER
-static void init_mips3_tc(void);
-#endif
 
 struct evcnt mips_int5_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
@@ -150,7 +146,7 @@ cpu_initclocks(void)
 	mips3_cp0_compare_write(next_cp0_clk_intr);
 
 #ifdef	__HAVE_TIMECOUNTER
-	init_mips3_tc();
+	mips3_init_tc();
 #endif
 }
 
@@ -201,7 +197,7 @@ delay(int n)
 
 #ifdef	__HAVE_TIMECOUNTER
 void
-init_mips3_tc(void)
+mips3_init_tc(void)
 {
 #if !defined(MULTIPROCESSOR)
 	static struct timecounter tc =  {
@@ -222,4 +218,3 @@ init_mips3_tc(void)
 #endif
 }
 #endif	/* __HAVE_TIMECOUNTER */
-
