@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.462 2006/08/30 23:31:53 rpaulo Exp $
+#	$NetBSD: 3RDPARTY,v 1.463 2006/09/08 23:35:48 agc Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -695,7 +695,7 @@ Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/rcs/
 Mailing List:	bug-gnu-utils@gnu.org
 Home Page:	http://www.gnu.org/software/rcs/
-Responsible:	mycroft
+Responsible:	agc
 License:	GPLv2
 Notes:
 Beta versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
