@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.41 2006/07/24 21:32:39 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.41.2.1 2006/09/08 03:11:50 riz Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.41 2006/07/24 21:32:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.41.2.1 2006/09/08 03:11:50 riz Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.41 2006/07/24 21:32:39 elad Exp $\n$NetBSD: verified_exec.c,v 1.41 2006/07/24 21:32:39 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.41.2.1 2006/09/08 03:11:50 riz Exp $\n$NetBSD: verified_exec.c,v 1.41.2.1 2006/09/08 03:11:50 riz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -238,9 +238,9 @@ veriexec_newtable(struct veriexec_sizing_params *params, struct lwp *l)
 		panic("Fileassoc: Inconsistency after adding table");
 #endif /* DIAGNOSTIC */
 
-	snprintf(buf, sizeof(buf), "table%ud", veriexec_tablecount++);
+	snprintf(buf, sizeof(buf), "table%u", veriexec_tablecount++);
 	sysctl_createv(NULL, 0, &veriexec_count_node, &vte->vte_node,
-		       0, CTLTYPE_NODE, "table0", NULL, NULL, 0, NULL,
+		       0, CTLTYPE_NODE, buf, NULL, NULL, 0, NULL,
 		       0, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(NULL, 0, &vte->vte_node, NULL,
