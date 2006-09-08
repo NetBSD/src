@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.242.6.1 2006/08/12 16:05:28 riz Exp $	*/
+/*	$NetBSD: cd.c,v 1.242.6.2 2006/09/08 18:41:21 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.242.6.1 2006/08/12 16:05:28 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.242.6.2 2006/09/08 18:41:21 rpaulo Exp $");
 
 #include "rnd.h"
 
@@ -889,10 +889,14 @@ cddone(struct scsipi_xfer *xs, int error)
 	struct buf *bp = xs->bp;
 
 	if (bp) {
+		/* note, bp->b_resid is NOT initialised */
 		bp->b_error = error;
 		bp->b_resid = xs->resid;
-		if (error)
+		if (error) {
+			/* on a read/write error bp->b_resid is zero, so fix */
+			bp->b_resid = bp->b_bcount;
 			bp->b_flags |= B_ERROR;
+		}
 
 		disk_unbusy(&cd->sc_dk, bp->b_bcount - bp->b_resid,
 		    (bp->b_flags & B_READ));
@@ -1058,14 +1062,12 @@ cdminphys(struct buf *bp)
 static int
 cdread(dev_t dev, struct uio *uio, int ioflag)
 {
-
 	return (physio(cdstrategy, NULL, dev, B_READ, cdminphys, uio));
 }
 
 static int
 cdwrite(dev_t dev, struct uio *uio, int ioflag)
 {
-
 	return (physio(cdstrategy, NULL, dev, B_WRITE, cdminphys, uio));
 }
 
@@ -1744,7 +1746,7 @@ cd_size(struct cd_softc *cd, int flags)
 			blksize = 2048;
 	}
 	cd->params.blksize     = blksize;
-	cd->params.disksize    = size-1;   /* disklabel is exclusive */
+	cd->params.disksize    = size;
 	cd->params.disksize512 = ((u_int64_t)cd->params.disksize * blksize) / DEV_BSIZE;
 
 	SC_DEBUG(cd->sc_periph, SCSIPI_DB2,
