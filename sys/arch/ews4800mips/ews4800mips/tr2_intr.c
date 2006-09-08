@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2_intr.c,v 1.2 2006/09/08 13:48:11 tsutsui Exp $	*/
+/*	$NetBSD: tr2_intr.c,v 1.3 2006/09/08 17:04:17 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.2 2006/09/08 13:48:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.3 2006/09/08 17:04:17 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,8 +110,6 @@ struct tr2_intr_handler {
 struct evcnt timer_tr2_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "picnic", "timer");
 
-static u_long last_clock_intr;
-
 void
 tr2_intr_init(void)
 {
@@ -175,7 +173,6 @@ tr2_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	cause0 = cause;
 
 	if (ipending & MIPS_INT_MASK_5) {	/* CLOCK */
-		last_clock_intr = mips3_cp0_count_read();
 		cf.pc = pc;
 		cf.sr = status;
 
@@ -307,8 +304,6 @@ tr2_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 void
 tr2_initclocks(void)
 {
-
-	last_clock_intr = mips3_cp0_count_read();
 
 	/* Enable clock interrupt */
 	*PICNIC_INT5_MASK_REG |= PICNIC_INT_CLOCK;
