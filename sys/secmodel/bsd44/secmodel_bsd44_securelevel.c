@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.1 2006/09/08 20:58:57 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.2 2006/09/08 21:57:38 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -36,6 +36,9 @@
  * The securelevel is a system-global indication on what operations are
  * allowed or not. It affects all users, including root.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.2 2006/09/08 21:57:38 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"

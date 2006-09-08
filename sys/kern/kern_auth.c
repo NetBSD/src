@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.19 2006/09/08 20:58:57 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.20 2006/09/08 21:57:38 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -34,6 +34,9 @@
  * Todo:
  *   - Garbage collection to pool_put() unused scopes/listeners.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.20 2006/09/08 21:57:38 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
