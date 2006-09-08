@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k7.c,v 1.17 2006/08/24 16:28:22 xtraeme Exp $ */
+/*	$NetBSD: powernow_k7.c,v 1.18 2006/09/08 09:55:13 xtraeme Exp $ */
 /*	$OpenBSD: powernow-k7.c,v 1.24 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K7 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.17 2006/08/24 16:28:22 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.18 2006/09/08 09:55:13 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,13 +108,11 @@ static char *freq_names;
 static size_t freq_names_len;
 static uint8_t k7pnow_flag;
 
-/* Prototypes */
 int k7_powernow_setperf(unsigned int);
 int k7pnow_sysctl_helper(SYSCTLFN_PROTO);
 int k7pnow_decode_pst(struct powernow_cpu_state *, uint8_t *, int);
 int k7pnow_states(struct powernow_cpu_state *, uint32_t, unsigned int, unsigned int);
 
-/* Functions */
 int
 k7pnow_sysctl_helper(SYSCTLFN_ARGS)
 {
@@ -280,9 +278,19 @@ k7pnow_states(struct powernow_cpu_state *cstate, uint32_t cpusig,
 			for (maxpst = 0; maxpst < psb->n_pst; maxpst++) {
 				pst = (struct powernow_pst_s*) p;
 
-				if (cpusig == pst->signature && fid == pst->fid
-				    && vid == pst->vid) {
-					
+				/*
+				 * The model with cpuid 0x6a0 has a different
+				 * signature in the PST table. Accept to
+				 * report frequencies if fid/vid match.
+				 */
+#define PNOW_REAL_CPUSIGN	0x6a0
+#define PNOW_PST_CPUSIGN	0x781
+				if (((cpusig == pst->signature) &&
+				    (fid == pst->fid && vid == pst->vid)) ||
+				    ((PNOW_REAL_CPUSIGN == PNOW_PST_CPUSIGN) &&
+				    (fid == pst->fid && vid == pst->vid))) {
+#undef PNOW_REAL_CPUSIGN
+#undef PNOW_PST_CPUSIGN
 					if (abs(cstate->fsb - pst->pll) > 5)
 						continue;
 					cstate->n_states = pst->n_states;
@@ -425,12 +433,10 @@ k7_powernow_init(void)
 
 	cur_freq = cstate->state_table[cstate->n_states-1].freq;
 
-	DPRINTF(("%s: cur_freq = %d\n", __func__, cur_freq));
-
-	aprint_normal("%s: AMD %s Technology\n", cpuname, techname);
-	aprint_normal("%s: available frequencies (Mhz): %s\n", cpuname,
-	    freq_names);
-	aprint_normal("%s: current frequency (Mhz): %d\n", cpuname, cur_freq);
+	aprint_normal("%s: AMD %s Technology %d (MHz)\n",
+	    cpuname, techname, cur_freq);
+	aprint_normal("%s: frequencies available (Mhz): %s\n",
+	    cpuname, freq_names);
 
 	return;
 
