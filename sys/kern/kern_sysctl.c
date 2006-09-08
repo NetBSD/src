@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.201 2006/09/02 06:33:11 christos Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.202 2006/09/08 20:58:57 elad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.201 2006/09/02 06:33:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.202 2006/09/08 20:58:57 elad Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -523,8 +523,9 @@ sysctl_locate(struct lwp *l, const int *name, u_int namelen,
 		 * can anyone traverse this node or only root?
 		 */
 		if (l != NULL && (pnode->sysctl_flags & CTLFLAG_PRIVATE) &&
-		    (error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		    (error = kauth_authorize_system(l->l_cred,
+		    KAUTH_SYSTEM_SYSCTL, KAUTH_REQ_SYSTEM_SYSCTL_PRVT,
+		    NULL, NULL, NULL)) != 0)
 			return (error);
 		/*
 		 * find a child node with the right number
@@ -713,10 +714,8 @@ sysctl_create(SYSCTLFN_ARGS)
 	 */
 	if (l != NULL) {
 #ifndef SYSCTL_DISALLOW_CREATE
-		if (securelevel > 0)
-			return (EPERM);
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_SYSCTL,
+		    KAUTH_REQ_SYSTEM_SYSCTL_ADD, NULL, NULL, NULL);
 		if (error)
 			return (error);
 		if (!(rnode->sysctl_flags & CTLFLAG_READWRITE))
@@ -1248,10 +1247,8 @@ sysctl_destroy(SYSCTLFN_ARGS)
 	 */
 	if (l != NULL) {
 #ifndef SYSCTL_DISALLOW_CREATE
-		if (securelevel > 0)
-			return (EPERM);
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_SYSCTL,
+		    KAUTH_REQ_SYSTEM_SYSCTL_DELETE, NULL, NULL, NULL);
 		if (error)
 			return (error);
 		if (!(rnode->sysctl_flags & CTLFLAG_READWRITE))
@@ -1417,8 +1414,8 @@ sysctl_lookup(SYSCTLFN_ARGS)
 	 * some nodes are private, so only root can look into them.
 	 */
 	if (l != NULL && (rnode->sysctl_flags & CTLFLAG_PRIVATE) &&
-	    (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	    (error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_SYSCTL,
+	    KAUTH_REQ_SYSTEM_SYSCTL_PRVT, NULL, NULL, NULL)) != 0)
 		return (error);
 
 	/*
@@ -1655,12 +1652,10 @@ sysctl_describe(SYSCTLFN_ARGS)
 			 */
 			if (l != NULL) {
 #ifndef SYSCTL_DISALLOW_CREATE
-				if (securelevel > 0) {
-					error = EPERM;
-					goto out;
-				}
-				error = kauth_authorize_generic(l->l_cred,
-				    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+				error = kauth_authorize_system(l->l_cred,
+				    KAUTH_SYSTEM_SYSCTL,
+				    KAUTH_REQ_SYSTEM_SYSCTL_DESC, NULL,
+				    NULL, NULL);
 				if (error)
 					goto out;
 #else /* SYSCTL_DISALLOW_CREATE */
@@ -1789,8 +1784,8 @@ sysctl_describe(SYSCTLFN_ARGS)
 		 * don't describe "private" nodes to non-suser users
 		 */
 		if ((node[i].sysctl_flags & CTLFLAG_PRIVATE) && (l != NULL) &&
-		    !(kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
+		    !(kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_SYSCTL,
+		    KAUTH_REQ_SYSTEM_SYSCTL_PRVT, NULL, NULL, NULL)))
 			continue;
 
 		/*

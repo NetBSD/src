@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.18 2006/09/02 20:10:24 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.19 2006/09/08 20:58:57 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -96,7 +96,10 @@ static struct simplelock scopes_lock;
 
 /* Built-in scopes: generic, process. */
 static kauth_scope_t kauth_builtin_scope_generic;
+static kauth_scope_t kauth_builtin_scope_system;
 static kauth_scope_t kauth_builtin_scope_process;
+static kauth_scope_t kauth_builtin_scope_network;
+static kauth_scope_t kauth_builtin_scope_machdep;
 
 /* Allocate new, empty kauth credentials. */
 kauth_cred_t
@@ -374,19 +377,13 @@ kauth_cred_getgroups(kauth_cred_t cred, gid_t *grbuf, size_t len)
 }
 
 /*
- * Match uids in two credentials. Checks if cred1 can access stuff owned by
- * cred2.
- * XXX: root bypasses this!
+ * Match uids in two credentials.
  */
-static int
+int
 kauth_cred_uidmatch(kauth_cred_t cred1, kauth_cred_t cred2)
 {
 	KASSERT(cred1 != NULL);
 	KASSERT(cred2 != NULL);
-
-	/* Are we root? */
-	if (cred1->cr_euid == 0)
-		return (1);
 
 	if (cred1->cr_uid == cred2->cr_uid ||
 	    cred1->cr_euid == cred2->cr_uid ||
@@ -594,11 +591,23 @@ kauth_init(void)
 
 	/* Register generic scope. */
 	kauth_builtin_scope_generic = kauth_register_scope(KAUTH_SCOPE_GENERIC,
-	    kauth_authorize_cb_generic, NULL);
+	    NULL, NULL);
+
+	/* Register system scope. */
+	kauth_builtin_scope_system = kauth_register_scope(KAUTH_SCOPE_SYSTEM,
+	    NULL, NULL);
 
 	/* Register process scope. */
 	kauth_builtin_scope_process = kauth_register_scope(KAUTH_SCOPE_PROCESS,
-	    kauth_authorize_cb_process, NULL);
+	    NULL, NULL);
+
+	/* Register network scope. */
+	kauth_builtin_scope_network = kauth_register_scope(KAUTH_SCOPE_NETWORK,
+	    NULL, NULL);
+
+	/* Register machdep scope. */
+	kauth_builtin_scope_machdep = kauth_register_scope(KAUTH_SCOPE_MACHDEP,
+	    NULL, NULL);
 }
 
 /*
@@ -705,11 +714,6 @@ kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
 	if (SIMPLEQ_EMPTY(&scope->listenq))
 		return (0);
 
-	/*
-	 * Each scope is associated with at least one listener. We need to
-	 * traverse that list of listeners, as long as they return either
-	 * KAUTH_REQUEST_DEFER or KAUTH_REQUEST_ALLOW.
-	 */
 	fail = 0;
 	allow = 0;
 	SIMPLEQ_FOREACH(listener, &scope->listenq, listener_next) {
@@ -726,49 +730,6 @@ kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
 };
 
 /*
- * Generic scope default callback.
- */
-int
-kauth_authorize_cb_generic(kauth_cred_t cred, kauth_action_t action,
-			   void *cookie, void *arg0, void *arg1, void *arg2,
-			   void *arg3)
-{
-	int error;
-
-	error = KAUTH_RESULT_DEFER;
-
-	switch (action) {
-	case KAUTH_GENERIC_ISSUSER:
-		/* Check if credential belongs to superuser. */
-		if (cred->cr_euid == 0) {
-			u_short *acflag = (u_short *)arg0;
-
-			if (acflag != NULL)
-				*acflag |= ASU;
-
-			error = KAUTH_RESULT_ALLOW;
-		} else
-			error = KAUTH_RESULT_DENY;
-		break;
-
-	case KAUTH_GENERIC_CANSEE:
-		if (!security_curtain) {
-			error = KAUTH_RESULT_ALLOW;
-		} else {
-			kauth_cred_t cred2 = arg0;
-
-			if (kauth_cred_uidmatch(cred, cred2))
-				error = KAUTH_RESULT_ALLOW;
-			else
-				error = KAUTH_RESULT_DENY;
-		}
-		break;
-	}
-
-	return (error);
-}
-
-/*
  * Generic scope authorization wrapper.
  */
 int
@@ -779,55 +740,14 @@ kauth_authorize_generic(kauth_cred_t cred, kauth_action_t action, void *arg0)
 }
 
 /*
- * Process scope default callback.
+ * System scope authorization wrapper.
  */
 int
-kauth_authorize_cb_process(kauth_cred_t cred, kauth_action_t action,
-			   void *cookie, void *arg0, void *arg1, void *arg2,
-			   void *arg3)
+kauth_authorize_system(kauth_cred_t cred, kauth_action_t action,
+    enum kauth_system_req req, void *arg1, void *arg2, void *arg3)
 {
-	struct proc *p;
-	int error;
-
-	error = KAUTH_RESULT_DEFER;
-
-	p = arg0;
-
-	switch (action) {
-	case KAUTH_PROCESS_CANSIGNAL: {
-		int signum;
-
-		signum = (int)(unsigned long)arg1;
-
-		if (kauth_cred_uidmatch(cred, p->p_cred) ||
-		    (signum == SIGCONT && (curproc->p_session == p->p_session)))
-			error = KAUTH_RESULT_ALLOW;
-		else
-			error = KAUTH_RESULT_DEFER;
-		break;
-		}
-
-	case KAUTH_PROCESS_CANPTRACE:
-		if (kauth_cred_uidmatch(cred, p->p_cred))
-			error = KAUTH_RESULT_ALLOW;
-		else
-			error = KAUTH_RESULT_DENY;
-		break;
-
-	case KAUTH_PROCESS_CANSEE:
-		if (!security_curtain) {
-			error = KAUTH_RESULT_ALLOW;
-		} else {
-			if (kauth_cred_uidmatch(cred, p->p_cred))
-				error = KAUTH_RESULT_ALLOW;
-			else
-				error = KAUTH_RESULT_DENY;
-				/* arg2 - type of information [XXX NOTIMPL] */
-		}
-		break;
-	}
-
-	return (error);
+	return (kauth_authorize_action(kauth_builtin_scope_system, cred,
+	    action, (void *)req, arg1, arg2, arg3));
 }
 
 /*
@@ -839,4 +759,23 @@ kauth_authorize_process(kauth_cred_t cred, kauth_action_t action,
 {
 	return (kauth_authorize_action(kauth_builtin_scope_process, cred,
 	    action, p, arg1, arg2, arg3));
+}
+
+/*
+ * Network scope authorization wrapper.
+ */
+int
+kauth_authorize_network(kauth_cred_t cred, kauth_action_t action,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	return (kauth_authorize_action(kauth_builtin_scope_network, cred,
+	    action, arg0, arg1, arg2, arg3));
+}
+
+int
+kauth_authorize_machdep(kauth_cred_t cred, kauth_action_t action,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	return (kauth_authorize_action(kauth_builtin_scope_machdep, cred,
+	    action, arg0, arg1, arg2, arg3));
 }

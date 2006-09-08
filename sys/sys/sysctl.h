@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.156 2006/08/17 17:11:29 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.157 2006/09/08 20:58:58 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -918,9 +918,6 @@ struct kinfo_file {
 
 /* Root node of the kernel sysctl tree */
 extern struct sysctlnode sysctl_root;
-
-/* XXX this should not be here */
-extern int security_curtain;
 
 /*
  * A log of nodes created by a setup function or set of setup

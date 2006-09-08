@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.22 2006/09/03 04:53:19 christos Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.23 2006/09/08 20:58:57 elad Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.139 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
@@ -66,6 +66,8 @@
 #include <sys/malloc.h>
 #ifdef __NetBSD__
 #include <sys/conf.h>
+#include <sys/lwp.h>
+#include <sys/kauth.h>
 #endif
 
 #include <net/if.h>
@@ -1137,7 +1139,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct lwp *l)
 	int			 error = 0;
 
 	/* XXX keep in sync with switch() below */
-	if (securelevel > 1)
+	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_FIREWALL,
+	    (void *)KAUTH_REQ_NETWORK_FIREWALL_FW, NULL, NULL, NULL)) 
 		switch (cmd) {
 		case DIOCGETRULES:
 		case DIOCGETRULE:
