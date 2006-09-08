@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2006/09/04 20:31:30 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 2006/09/08 13:48:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -34,15 +34,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3 2006/09/04 20:31:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2006/09/08 13:48:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>		/* time */
+#include <sys/timetc.h>
 
 #include <mips/locore.h>	/* mips3_cp0_count_read */
 
 #include <machine/sbdvar.h>
+
+static void init_mips3_tc(void);
 
 void
 cpu_initclocks(void)
@@ -51,6 +54,8 @@ cpu_initclocks(void)
 	KASSERT(platform.initclocks);
 
 	(*platform.initclocks)();
+
+	init_mips3_tc();
 }
 
 void
@@ -60,33 +65,26 @@ setstatclockrate(int arg)
 	/* not yet */
 }
 
-/*
- * Return the best possible estimate of the time in the timeval to
- * which tv points.
- */
 void
-microtime(struct timeval *tvp)
+init_mips3_tc(void)
 {
-	int s = splclock();
-	static struct timeval lasttime;
+#if !defined(MULTIPROCESSOR)
+	static struct timecounter tc =  {
+		(timecounter_get_t *)mips3_cp0_count_read, /* get_timecount */
+		0,				/* no poll_pps */
+		~0u,				/* counter_mask */
+		0,				/* frequency */
+		"mips3_cp0_counter",		/* name */
+		100,				/* quality */
+	};
 
-	*tvp = time;
-	if (platform.readclock)
-		tvp->tv_usec += (*platform.readclock)();
-
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
+	tc.tc_frequency = curcpu()->ci_cpu_freq;
+	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
+		tc.tc_frequency /= 2;
 	}
 
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
+	tc_init(&tc);
+#endif
 }
 
 /*
