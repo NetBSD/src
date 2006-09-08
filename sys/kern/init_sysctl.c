@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.81 2006/07/26 09:33:57 dogcow Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.82 2006/09/08 11:59:52 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81 2006/07/26 09:33:57 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.82 2006/09/08 11:59:52 manu Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
 #include "opt_posix.h"
+#include "opt_compat_netbsd32.h"
 #include "veriexec.h"
 #include "pty.h"
 #include "rnd.h"
@@ -88,6 +89,10 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81 2006/07/26 09:33:57 dogcow Exp 
 #endif
 #ifdef SYSVSHM
 #include <sys/shm.h>
+#endif
+
+#ifdef COMPAT_NETBSD32
+#include <compat/netbsd32/netbsd32.h>
 #endif
 
 #include <machine/cpu.h>
@@ -2477,7 +2482,6 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	 */
 	switch (type) {
 	case KERN_PROC_ARGV:
-		/* XXX compat32 stuff here */
 		/* FALLTHROUGH */
 	case KERN_PROC_ENV:
 		memcpy(&tmp, (char *)&pss + offsetv, sizeof(tmp));
@@ -2485,6 +2489,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	default:
 		return (EINVAL);
 	}
+
 	auio.uio_offset = (off_t)(unsigned long)tmp;
 	aiov.iov_base = &argv;
 	aiov.iov_len = sizeof(argv);
@@ -2496,6 +2501,15 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	error = uvm_io(&vmspace->vm_map, &auio);
 	if (error)
 		goto done;
+
+#ifdef COMPAT_NETBSD32
+	/*
+	 * Here we get a 32 bit pointer that has to be converted,
+	 * otherwise we get garbage in the 32 higher bits
+	 */
+	if (p->p_flag & P_32)
+		argv = (vaddr_t)NETBSD32PTR64(argv);
+#endif
 
 	/*
 	 * Now copy in the actual argument vector, one page at a time,
