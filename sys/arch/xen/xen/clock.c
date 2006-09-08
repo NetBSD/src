@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9.2.4 2005/06/29 12:23:27 tron Exp $	*/
+/*	$NetBSD: clock.c,v 1.9.2.4.2.1 2006/09/08 11:12:34 ghen Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.2.4 2005/06/29 12:23:27 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.2.4.2.1 2006/09/08 11:12:34 ghen Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,7 +256,7 @@ xen_timer_handler(void *arg, struct intrframe *regs)
 
 	delta = (int64_t)(shadow_system_time + get_tsc_offset_ns() -
 			  processed_system_time);
-	while (delta >= NS_PER_TICK) {
+	while (delta >= (int64_t)NS_PER_TICK) {
 		if (ci->ci_feature_flags & CPUID_TSC) {
 			if (
 #if defined(MULTIPROCESSOR)
