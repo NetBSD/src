@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.26 2006/09/07 03:38:55 gdamore Exp $
+#	$NetBSD: files.cobalt,v 1.27 2006/09/08 23:39:28 gdamore Exp $
 
 maxpartitions 16
 
@@ -10,6 +10,7 @@ include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
 
 file arch/mips/mips/mips3_clock.c
+file arch/mips/mips/mips3_clockintr.c
 
 device mainbus {[addr = -1], [level = -1]}: pcibus
 attach mainbus at root

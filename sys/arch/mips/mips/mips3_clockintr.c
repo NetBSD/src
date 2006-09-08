@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clock.c,v 1.4 2006/09/08 23:39:28 gdamore Exp $	*/
+/*	$NetBSD: mips3_clockintr.c,v 1.1 2006/09/08 23:39:28 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,70 +78,89 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.4 2006/09/08 23:39:28 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.1 2006/09/08 23:39:28 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/timetc.h>
 #include <mips/mips3_clock.h>
 #include <machine/intr.h>
 #include <machine/locore.h>
 
+struct evcnt mips_int5_evcnt =
+    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
+struct evcnt mips_int5_missed_evcnt =
+    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "missed int 5");
+
+uint32_t next_cp0_clk_intr;	/* used to schedule hard clock interrupts */
+
 /*
- * Wait for at least "n" microseconds.
+ * Handling to be done upon receipt of a MIPS 3 clock interrupt.  This
+ * routine is to be called from the master interrupt routine
+ * (e.g. cpu_intr), if MIPS INT5 is pending.  The caller is
+ * responsible for blocking and renabling the interrupt in the
+ * cpu_intr() routine.
  */
 void
-mips3_delay(int n)
+mips3_clockintr(uint32_t status, uint32_t pc)
 {
-	uint32_t cur, last, delta, usecs;
+	uint32_t		new_cnt;
+	struct clockframe	cf;
 
-	last = mips3_cp0_count_read();
-	delta = usecs = 0;
+	next_cp0_clk_intr += curcpu()->ci_cycles_per_hz;
+	mips3_cp0_compare_write(next_cp0_clk_intr);
 
-	while (n > usecs) {
-		cur = mips3_cp0_count_read();
+	/* Check for lost clock interrupts */
+	new_cnt = mips3_cp0_count_read();
 
-		/* Check to see if the timer has wrapped around. */
-		if (cur < last)
-			delta += ((curcpu()->ci_cycles_per_hz - last) + cur);
-		else
-			delta += (cur - last);
+	/* 
+	 * Missed one or more clock interrupts, so let's start 
+	 * counting again from the current value.
+	 */
+	if ((next_cp0_clk_intr - new_cnt) & 0x80000000) {
 
-		last = cur;
-
-		if (delta >= curcpu()->ci_divisor_delay) {
-			usecs += delta / curcpu()->ci_divisor_delay;
-			delta %= curcpu()->ci_divisor_delay;
-		}
+		next_cp0_clk_intr = new_cnt + curcpu()->ci_cycles_per_hz;
+		mips3_cp0_compare_write(next_cp0_clk_intr);
+		mips_int5_missed_evcnt.ev_count++;
 	}
+
+	cf.pc = pc;
+	cf.sr = status;
+	hardclock(&cf);
+
+	mips_int5_evcnt.ev_count++;
+
+	/* caller should renable clock interrupts */
 }
 
 /*
- * Support for using the MIPS 3 clock as a timecounter.
+ * Start the real-time and statistics clocks. Leave stathz 0 since there
+ * are no other timers available.
  */
+void
+mips3_initclocks(void)
+{
+	evcnt_attach_static(&mips_int5_evcnt);
+
+	next_cp0_clk_intr = mips3_cp0_count_read() + curcpu()->ci_cycles_per_hz;
+	mips3_cp0_compare_write(next_cp0_clk_intr);
 
 #ifdef	__HAVE_TIMECOUNTER
-void
-mips3_init_tc(void)
-{
-#if !defined(MULTIPROCESSOR)
-	static struct timecounter tc =  {
-		(timecounter_get_t *)mips3_cp0_count_read, /* get_timecount */
-		0,				/* no poll_pps */
-		~0u,				/* counter_mask */
-		0,				/* frequency */
-		"mips3_cp0_counter",		/* name */
-		100,				/* quality */
-	};
-
-	tc.tc_frequency = curcpu()->ci_cpu_freq;
-	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
-		tc.tc_frequency /= 2;
-	}
-
-	tc_init(&tc);
+	mips3_init_tc();
 #endif
 }
-#endif	/* __HAVE_TIMECOUNTER */
+
+/*
+ * We assume newhz is either stathz or profhz, and that neither will
+ * change after being set up above.  Could recalculate intervals here
+ * but that would be a drag.
+ */
+void
+mips3_setstatclockrate(int newhz)
+{
+
+	/* nothing we can do */
+}
 
 __weak_alias(delay, mips3_delay);
+__weak_alias(setstatclockrate, mips3_setstatclockrate);
+__weak_alias(cpu_initclocks, mips3_initclocks);
