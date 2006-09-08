@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.111 2006/05/25 14:27:28 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.111.4.1 2006/09/08 19:54:57 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.111 2006/05/25 14:27:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.111.4.1 2006/09/08 19:54:57 rpaulo Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -938,7 +938,7 @@ m_split0(struct mbuf *m0, int len0, int wait, int copyhdr)
 		MGETHDR(n, wait, m0->m_type);
 		if (n == 0)
 			return (NULL);
-		MCLAIM(m, m0->m_owner);
+		MCLAIM(n, m0->m_owner);
 		n->m_pkthdr.rcvif = m0->m_pkthdr.rcvif;
 		n->m_pkthdr.len = m0->m_pkthdr.len - len0;
 		len_save = m0->m_pkthdr.len;
