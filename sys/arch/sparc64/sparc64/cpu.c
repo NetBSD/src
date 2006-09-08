@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.47 2006/02/20 19:00:27 cdi Exp $ */
+/*	$NetBSD: cpu.c,v 1.48 2006/09/08 15:40:45 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.47 2006/02/20 19:00:27 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.48 2006/09/08 15:40:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,6 +188,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	long clk;
 	int impl, vers, fver;
 	struct mainbus_attach_args *ma = aux;
+	struct cpu_info *ci;
 	struct fpstate64 *fpstate;
 	struct fpstate64 fps[2];
 	const char *sep;
@@ -326,8 +327,8 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	 * Allocate cpu_info structure if needed and save cache information
 	 * in there.
 	 */
-	alloc_cpuinfo((u_int)node);
-	printf("%s: upa id %" PRIu64 "\n", dev->dv_xname, CPU_UPAID);
+	ci = alloc_cpuinfo((u_int)node);
+	printf("%s: upa id %d\n", dev->dv_xname, ci->ci_upaid);
 }
 
 #if defined(MULTIPROCESSOR)
