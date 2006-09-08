@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.26 2006/05/31 21:46:32 riz Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.26.4.1 2006/09/08 18:29:19 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -269,8 +269,8 @@ static const struct sk_product {
 	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1064, },
 	{ PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SKNET_GE, },
 	{ PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2, },
-	{ PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_SKNET, },
-	{ PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_BELKIN, },
+	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_SKNET, },
+	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_BELKIN, },
 	{ 0, 0, }
 };
 
@@ -1733,7 +1733,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_ID_CODE(PCI_VENDOR_LINKSYS,PCI_PRODUCT_LINKSYS_EG1064):
  		sc->sk_name = sc->sk_vpd_prodname;
  		break;
-	case PCI_ID_CODE(PCI_VENDOR_GALILEO,PCI_PRODUCT_GALILEO_SKNET):
+	case PCI_ID_CODE(PCI_VENDOR_MARVELL,PCI_PRODUCT_MARVELL_SKNET):
 	/* whoops yukon vpd prodname bears no resemblance to reality */
 		switch (sc->sk_type) {
 		case SK_GENESIS:
@@ -1773,7 +1773,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 			}
 		}
 		break;
-	case PCI_ID_CODE(PCI_VENDOR_GALILEO,PCI_PRODUCT_GALILEO_BELKIN):
+	case PCI_ID_CODE(PCI_VENDOR_MARVELL,PCI_PRODUCT_MARVELL_BELKIN):
 		sc->sk_name = sc->sk_vpd_prodname;
 		break;
  	default:
