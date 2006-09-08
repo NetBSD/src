@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.80.2.1 2005/07/11 11:40:12 tron Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.80.2.2 2006/09/08 10:38:10 ghen Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.80.2.1 2005/07/11 11:40:12 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.80.2.2 2006/09/08 10:38:10 ghen Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -638,7 +638,7 @@ restart:
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_type = VSOCK;
-	vattr.va_mode = ACCESSPERMS;
+	vattr.va_mode = ACCESSPERMS & ~(p->p_cwdi->cwdi_cmask);
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	vn_finished_write(mp, 0);
