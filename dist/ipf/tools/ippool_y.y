@@ -1,4 +1,4 @@
-/*	$NetBSD: ippool_y.y,v 1.1.1.2 2005/02/19 21:27:05 martti Exp $	*/
+/*	$NetBSD: ippool_y.y,v 1.1.1.2.8.1 2006/09/08 19:17:39 rpaulo Exp $	*/
 
 %{
 #include <sys/types.h>
@@ -34,6 +34,7 @@
 #include "kmem.h"
 
 #define	YYDEBUG	1
+#define YYSTACKSIZE 0x00ffffff
 
 extern	int	yyparse __P((void));
 extern	int	yydebug;
