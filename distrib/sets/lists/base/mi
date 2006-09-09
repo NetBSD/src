@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.648 2006/09/07 00:50:45 ad Exp $
+# $NetBSD: mi,v 1.649 2006/09/09 15:43:04 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1668,12 +1668,14 @@
 ./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-PT.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/EBCDIC/UCS%EBCDIC-UK.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB			base-sysutil-share
+./usr/share/i18n/csmapper/GB/GB18030%UCS@BMP.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/GB2312%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/GB2312EXT%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/GB2312UDA1%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/GB2312UDA2%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/GBKEXT%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/GBKUDA%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/GB/UCS@BMP%GB18030.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/UCS%GB2312.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/UCS%GB2312EXT.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/UCS%GB2312UDA1.mps	base-sysutil-share	nls
