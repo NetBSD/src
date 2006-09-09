@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.686 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.687 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -51,3 +51,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	sun3: Add timecounter support. [gdamore 20060907]
 	arc: Add timecounter support. [gdamore 20060908]
 	ews4800mips: Add timecounter support. [gdamore 20060908]
+	news68k: Add timecounter support. From gdamore. [tsutsui 20060909]
