@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.23 2005/12/11 12:20:22 christos Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.23.4.1 2006/09/09 02:46:12 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.23 2005/12/11 12:20:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.23.4.1 2006/09/09 02:46:12 rpaulo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -54,10 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.23 2005/12/11 12:20:22 christos Ex
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
+#include <compat/sys/mount.h>
 
 
 static int dofilereadv32 __P((struct lwp *, int, struct file *, struct netbsd32_iovec *,
@@ -137,8 +139,7 @@ dofilereadv32(l, fd, fp, iovp, iovcnt, offset, flags, retval)
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_lwp = l;
+	auio.uio_vmspace = l->l_proc->p_vmspace;
 	error = netbsd32_to_iovecin(iovp, iov, iovcnt);
 	if (error)
 		goto done;
@@ -260,8 +261,7 @@ dofilewritev32(l, fd, fp, iovp, iovcnt, offset, flags, retval)
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_WRITE;
-	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_lwp = l;
+	auio.uio_vmspace = l->l_proc->p_vmspace;
 	error = netbsd32_to_iovecin(iovp, iov, iovcnt);
 	if (error)
 		goto done;
@@ -350,7 +350,6 @@ change_utimes32(vp, tptr, l)
 {
 	struct netbsd32_timeval tv32[2];
 	struct timeval tv[2];
-	struct proc *p = l->l_proc;
 	struct vattr vattr;
 	int error;
 
@@ -367,13 +366,13 @@ change_utimes32(vp, tptr, l)
 		netbsd32_to_timeval(&tv32[0], &tv[0]);
 		netbsd32_to_timeval(&tv32[1], &tv[1]);
 	}
-	VOP_LEASE(vp, l, p->p_ucred, LEASE_WRITE);
+	VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	vattr.va_atime.tv_sec = tv[0].tv_sec;
 	vattr.va_atime.tv_nsec = tv[0].tv_usec * 1000;
 	vattr.va_mtime.tv_sec = tv[1].tv_sec;
 	vattr.va_mtime.tv_nsec = tv[1].tv_usec * 1000;
-	error = VOP_SETATTR(vp, &vattr, p->p_ucred, l);
+	error = VOP_SETATTR(vp, &vattr, l->l_cred, l);
 	VOP_UNLOCK(vp, 0);
 	return (error);
 }
@@ -477,12 +476,12 @@ netbsd32_getvfsstat(l, v, retval)
 
 	maxcount = SCARG(uap, bufsize) / sizeof(struct netbsd32_statvfs);
 	sfsp = (struct netbsd32_statvfs *)NETBSD32PTR64(SCARG(uap, buf));
-	simple_lock(&mountlist_slock);
-	count = 0;
 	sbuf = (struct statvfs *)malloc(sizeof(struct statvfs), M_TEMP,
 	    M_WAITOK);
 	s32 = (struct netbsd32_statvfs *)
 	    malloc(sizeof(struct netbsd32_statvfs), M_TEMP, M_WAITOK);
+	simple_lock(&mountlist_slock);
+	count = 0;
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
 		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
@@ -537,47 +536,42 @@ out:
 }
 
 int
-netbsd32_fhstatvfs1(l, v, retval)
+netbsd32___fhstatvfs140(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_fhstatvfs1_args /* {
-		syscallarg(const netbsd32_fhandlep_t) fhp;
+	struct netbsd32___fhstatvfs140_args /* {
+		syscallarg(const netbsd32_pointer_t) fhp;
+		syscallarg(netbsd32_size_t) fh_size;
 		syscallarg(netbsd32_statvfsp_t) buf;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct statvfs *sbuf;
 	struct netbsd32_statvfs *s32;
-	fhandle_t fh;
-	struct mount *mp;
+	fhandle_t *fh;
 	struct vnode *vp;
 	int error;
 
 	/*
 	 * Must be super user
 	 */
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 		return error;
 
-	if ((error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, fhp)), &fh,
-	    sizeof(fhandle_t))) != 0)
-		return error;
-
-	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
-		return ESTALE;
-	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
-		return error;
+	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)),
+	    SCARG(uap, fh_size), &fh)) != 0)
+		goto bad;
+	if ((error = vfs_fhtovp(fh, &vp)) != 0)
+		goto bad;
 
 	sbuf = (struct statvfs *)malloc(sizeof(struct statvfs), M_TEMP,
 	    M_WAITOK);
-	mp = vp->v_mount;
-	if ((error = dostatvfs(mp, sbuf, l, SCARG(uap, flags), 1)) != 0) {
-		vput(vp);
-		goto out;
-	}
+	error = dostatvfs(vp->v_mount, sbuf, l, SCARG(uap, flags), 1);
 	vput(vp);
+	if (error != 0)
+		goto out;
 
 	s32 = (struct netbsd32_statvfs *)
 	    malloc(sizeof(struct netbsd32_statvfs), M_TEMP, M_WAITOK);
@@ -588,6 +582,8 @@ netbsd32_fhstatvfs1(l, v, retval)
 
 out:
 	free(sbuf, M_TEMP);
+bad:
+	vfs_copyinfh_free(fh);
 	return (error);
 }
 
@@ -770,6 +766,47 @@ netbsd32_sys___lstat30(l, v, retval)
 	error = copyout(&sb32, (caddr_t)NETBSD32PTR64(SCARG(uap, ub)),
 	    sizeof(sb32));
 	return (error);
+}
+
+int netbsd32___fhstat40(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd32___fhstat40_args /* {
+		syscallarg(const netbsd32_pointer_t) fhp;
+		syscallarg(netbsd32_size_t) fh_size;
+		syscallarg(netbsd32_statp_t) sb;
+	} */ *uap = v;
+	struct stat sb;
+	struct netbsd32_stat sb32;
+	int error;
+	fhandle_t *fh;
+	struct vnode *vp;
+
+	/*
+	 * Must be super user
+	 */
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)))
+		return error;
+
+	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)),
+	    SCARG(uap, fh_size), &fh)) != 0)
+		goto bad;
+
+	if ((error = vfs_fhtovp(fh, &vp)) != 0)
+		goto bad;
+
+	error = vn_stat(vp, &sb, l);
+	vput(vp);
+	if (error)
+		goto bad;
+	netbsd32_from___stat30(&sb, &sb32);
+	error = copyout(&sb32, NETBSD32PTR64(SCARG(uap, sb)), sizeof(sb));
+bad:
+	vfs_copyinfh_free(fh);
+	return error;
 }
 
 int

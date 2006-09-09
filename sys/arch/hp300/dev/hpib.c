@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.31 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: hpib.c,v 1.31.4.1 2006/09/09 02:39:09 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.31 2005/12/11 12:17:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.31.4.1 2006/09/09 02:39:09 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ static int
 hpibbusmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 
-	return (1);
+	return 1;
 }
 
 static void
@@ -163,13 +163,12 @@ hpibbusattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ba = ha->ha_ba;
 	*(ha->ha_softcpp) = sc;			/* XXX */
 
-	hpibreset(self->dv_unit);		/* XXX souldn't be here */
+	hpibreset(device_unit(self));		/* XXX souldn't be here */
 
 	/*
 	 * Initialize the DMA queue entry.
 	 */
-	MALLOC(sc->sc_dq, struct dmaqueue *, sizeof(struct dmaqueue),
-	    M_DEVBUF, M_NOWAIT);
+	sc->sc_dq = malloc(sizeof(struct dmaqueue), M_DEVBUF, M_NOWAIT);
 	if (sc->sc_dq == NULL) {
 		printf("%s: can't allocate DMA queue entry\n", self->dv_xname);
 		return;
@@ -197,7 +196,7 @@ hpibbus_attach_children(struct hpibbus_softc *sc)
 		 * Plotters won't identify themselves, and
 		 * get the same value as non-existent devices.
 		 */
-		ha.ha_id = hpibid(sc->sc_dev.dv_unit, slave);
+		ha.ha_id = hpibid(device_unit(&sc->sc_dev), slave);
 
 		ha.ha_slave = slave;	/* not to be modified by children */
 		ha.ha_punit = 0;	/* children modify this */
@@ -245,7 +244,7 @@ hpibbussearch(struct device *parent, struct cfdata *cf,
 		config_attach(parent, cf, ha, hpibbusprint);
 	}
  out:
-	return (0);
+	return 0;
 }
 
 static int
@@ -254,7 +253,7 @@ hpibbusprint(void *aux, const char *pnp)
 	struct hpibbus_attach_args *ha = aux;
 
 	aprint_normal(" slave %d punit %d", ha->ha_slave, ha->ha_punit);
-	return (UNCONF);
+	return UNCONF;
 }
 
 int
@@ -264,7 +263,7 @@ hpibdevprint(void *aux, const char *pnp)
 	/* only hpibbus's can attach to hpibdev's -- easy. */
 	if (pnp != NULL)
 		aprint_normal("hpibbus at %s", pnp);
-	return (UNCONF);
+	return UNCONF;
 }
 
 void
@@ -286,9 +285,9 @@ hpibreq(struct device *pdev, struct hpibqueue *hq)
 	splx(s);
 
 	if (sc->sc_queue.tqh_first == hq)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -320,7 +319,7 @@ hpibid(int unit, int slave)
 	if (hpibrecv(unit, 31, slave, &id, 2) != 2)
 		id = 0;
 	hpibtimeout = ohpibtimeout;
-	return(id);
+	return id;
 }
 
 int
@@ -328,7 +327,7 @@ hpibsend(int unit, int slave, int sec, void *addr, int cnt)
 {
 	struct hpibbus_softc *sc = hpibbus_cd.cd_devs[unit];
 
-	return ((*sc->sc_ops->hpib_send)(sc, slave, sec, addr, cnt));
+	return (*sc->sc_ops->hpib_send)(sc, slave, sec, addr, cnt);
 }
 
 int
@@ -336,7 +335,7 @@ hpibrecv(int unit, int slave, int sec, void *addr, int cnt)
 {
 	struct hpibbus_softc *sc = hpibbus_cd.cd_devs[unit];
 
-	return ((*sc->sc_ops->hpib_recv)(sc, slave, sec, addr, cnt));
+	return (*sc->sc_ops->hpib_recv)(sc, slave, sec, addr, cnt);
 }
 
 int
@@ -344,7 +343,7 @@ hpibpptest(int unit, int slave)
 {
 	struct hpibbus_softc *sc = hpibbus_cd.cd_devs[unit];
 
-	return ((*sc->sc_ops->hpib_ppoll)(sc) & (0x80 >> slave));
+	return (*sc->sc_ops->hpib_ppoll)(sc) & (0x80 >> slave);
 }
 
 void
@@ -376,10 +375,10 @@ hpibswait(int unit, int slave)
 	while (((*ppoll)(sc) & mask) == 0) {
 		if (--timo == 0) {
 			printf("%s: swait timeout\n", sc->sc_dev.dv_xname);
-			return(-1);
+			return -1;
 		}
 	}
-	return(0);
+	return 0;
 }
 
 int
@@ -392,8 +391,8 @@ hpibustart(int unit)
 	else
 		sc->sc_dq->dq_chan = DMA0 | DMA1;
 	if (dmareq(sc->sc_dq))
-		return(1);
-	return(0);
+		return 1;
+	return 0;
 }
 
 static void
@@ -427,7 +426,7 @@ hpibintr(void *arg)
 {
 	struct hpibbus_softc *sc = arg;
 
-	return ((sc->sc_ops->hpib_intr)(arg));
+	return (sc->sc_ops->hpib_intr)(arg);
 }
 
 static int
@@ -440,9 +439,9 @@ hpibbus_alloc(struct hpibbus_softc *sc, int slave, int punit)
 
 	if (sc->sc_rmap[slave][punit] == 0) {
 		sc->sc_rmap[slave][punit] = 1;
-		return (0);
+		return 0;
 	}
-	return (1);
+	return 1;
 }
 
 #if 0

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2005/12/11 12:17:53 christos Exp $
+#	$NetBSD: Makefile,v 1.23.4.1 2006/09/09 02:40:59 rpaulo Exp $
 
 INCSDIR= /usr/include/m68k
 
@@ -6,7 +6,6 @@ INCS=	ansi.h aout_machdep.h asm.h asm_single.h \
 	bswap.h bus_dma.h byte_swap.h \
 	cacheops.h cacheops_20.h cacheops_30.h cacheops_40.h cacheops_60.h \
 	cdefs.h cpu.h cpuframe.h \
-	db_machdep.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h frame.h \
 	ieee.h ieeefp.h \
@@ -14,7 +13,8 @@ INCS=	ansi.h aout_machdep.h asm.h asm_single.h \
 	kcore.h \
 	limits.h lock.h \
 	m68k.h math.h mcontext.h \
-	param.h pmc.h pcb.h proc.h profile.h psl.h ptrace.h \
+	param.h pmap_motorola.h pmc.h pcb.h proc.h profile.h \
+	psl.h pte_motorola.h ptrace.h \
 	reg.h setjmp.h signal.h stdarg.h sync_icache.h \
 	sysctl.h \
 	trap.h types.h \

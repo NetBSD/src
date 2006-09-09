@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.14 2005/12/11 12:16:21 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.14.4.1 2006/09/09 02:37:05 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,11 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2005/12/11 12:16:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14.4.1 2006/09/09 02:37:05 rpaulo Exp $");
 
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,12 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2005/12/11 12:16:21 christos Exp $"
 #include <sys/signal.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
 #include <sys/systrace.h>
-#endif
 #include <sys/syscall.h>
 
 #include <uvm/uvm_extern.h>
@@ -66,9 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2005/12/11 12:16:21 christos Exp $"
 
 void syscall_intern(struct proc *);
 static void syscall_plain(struct trapframe *);
-#if defined(KTRACE) || defined(SYSTRACE)
 static void syscall_fancy(struct trapframe *);
-#endif
 
 void
 child_return(void *arg)
@@ -97,19 +89,11 @@ child_return(void *arg)
 void
 syscall_intern(struct proc *p)
 {
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
+
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = syscall_fancy;
-		return;
-	}
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		p->p_md.md_syscall = syscall_fancy;
-		return;
-	} 
-#endif
-	p->p_md.md_syscall = syscall_plain;
+	else
+		p->p_md.md_syscall = syscall_plain;
 }
 
 /*
@@ -131,6 +115,7 @@ syscall_plain(struct trapframe *frame)
 	uvmexp.syscalls++;
 	l = curlwp;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
@@ -183,15 +168,16 @@ syscall_plain(struct trapframe *frame)
 		}
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, argp);
-#endif /* SYSCALL_DEBUG */
-
 	rval[0] = 0;
 	rval[1] = 0;
-	KERNEL_PROC_LOCK(l);
-	error = (*callp->sy_call)(l, argp, rval);
-	KERNEL_PROC_UNLOCK(l);
+
+	if (callp->sy_flags & SYCALL_MPSAFE)
+		error = (*callp->sy_call)(l, argp, rval);
+	else {
+		KERNEL_PROC_LOCK(l);
+		error = (*callp->sy_call)(l, argp, rval);
+		KERNEL_PROC_UNLOCK(l);
+	}
 
 	switch (error) {
 	case 0:
@@ -219,13 +205,9 @@ syscall_plain(struct trapframe *frame)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
-#endif /* SYSCALL_DEBUG */
 	userret(l);
 }
 
-#if defined(KTRACE) || defined(SYSTRACE)
 static void
 syscall_fancy(struct trapframe *frame)
 {
@@ -240,6 +222,7 @@ syscall_fancy(struct trapframe *frame)
 	uvmexp.syscalls++;
 	l = curlwp;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
@@ -293,14 +276,22 @@ syscall_fancy(struct trapframe *frame)
 	}
 
 	KERNEL_PROC_LOCK(l);
-	if ((error = trace_enter(l, code, code, NULL, argp)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, argp)) != 0) {
+		KERNEL_PROC_UNLOCK(l);
 		goto out;
+	}
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(l, argp, rval);
+
+	if (callp->sy_flags & SYCALL_MPSAFE) {
+		KERNEL_PROC_UNLOCK(l);
+		error = (*callp->sy_call)(l, argp, rval);
+	} else {
+		error = (*callp->sy_call)(l, argp, rval);
+		KERNEL_PROC_UNLOCK(l);
+	}
 out:
-	KERNEL_PROC_UNLOCK(l);
 	switch (error) {
 	case 0:
 		frame->tf_rax = rval[0];
@@ -331,4 +322,3 @@ out:
 
 	userret(l);
 }
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.64 2006/01/16 14:45:49 is Exp $	   */
+/*	$NetBSD: pmap.h,v 1.64.2.1 2006/09/09 02:44:14 rpaulo Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -133,11 +133,11 @@ extern	struct  pv_entry *pv_table;
 
 /* Mapping macros used when allocating SPT */
 #define MAPVIRT(ptr, count)				\
-	(vaddr_t)ptr = virtual_avail;			\
+	ptr = virtual_avail;		\
 	virtual_avail += (count) * VAX_NBPG;
 
 #define MAPPHYS(ptr, count, perm)			\
-	(vaddr_t)ptr = avail_start + KERNBASE;		\
+	ptr = avail_start + KERNBASE;	\
 	avail_start += (count) * VAX_NBPG;
 
 #ifdef	_KERNEL
@@ -161,7 +161,7 @@ extern	struct pmap kernel_pmap_store;
 /*
  * This is the by far most used pmap routine. Make it inline.
  */
-inline static boolean_t
+__inline static boolean_t
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	paddr_t pa = 0;
@@ -179,11 +179,11 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	sva = PG_PFNUM(va);
 	if (va < 0x40000000) {
 		if (sva > (pmap->pm_p0lr & ~AST_MASK))
-			return FALSE;
+			goto fail;
 		pte = (int *)pmap->pm_p0br;
 	} else {
 		if (sva < pmap->pm_p1lr)
-			return FALSE;
+			goto fail;
 		pte = (int *)pmap->pm_p1br;
 	}
 	if (kvtopte(&pte[sva])->pg_pfn) {
@@ -191,6 +191,9 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 			*pap = (pte[sva] & PG_FRAME) << VAX_PGSHIFT;
 		return (TRUE);
 	}
+  fail:
+	if (pap)
+		*pap = 0;
 	return (FALSE);
 }
 
@@ -200,7 +203,7 @@ boolean_t pmap_is_modified_long(struct pv_entry *);
 void pmap_page_protect_long(struct pv_entry *, vm_prot_t);
 void pmap_protect_long(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 
-inline static boolean_t
+__inline static boolean_t
 pmap_is_referenced(struct vm_page *pg)
 {
 	struct pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
@@ -209,7 +212,7 @@ pmap_is_referenced(struct vm_page *pg)
 	return rv;
 }
 
-inline static boolean_t
+__inline static boolean_t
 pmap_clear_reference(struct vm_page *pg)
 {
 	struct pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
@@ -221,7 +224,7 @@ pmap_clear_reference(struct vm_page *pg)
 	return rv;
 }
 
-inline static boolean_t
+__inline static boolean_t
 pmap_clear_modify(struct vm_page *pg)
 {
 	struct  pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
@@ -233,7 +236,7 @@ pmap_clear_modify(struct vm_page *pg)
 	return rv;
 }
 
-inline static boolean_t
+__inline static boolean_t
 pmap_is_modified(struct vm_page *pg)
 {
 	struct pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
@@ -243,7 +246,7 @@ pmap_is_modified(struct vm_page *pg)
 		return pmap_is_modified_long(pv);
 }
 
-inline static void
+__inline static void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	struct  pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
@@ -252,7 +255,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		pmap_page_protect_long(pv, prot);
 }
 
-inline static void
+__inline static void
 pmap_protect(pmap_t pmap, vaddr_t start, vaddr_t end, vm_prot_t prot)
 {
 	if (pmap->pm_p0lr != 0 || pmap->pm_p1lr != 0x200000 ||
@@ -260,7 +263,7 @@ pmap_protect(pmap_t pmap, vaddr_t start, vaddr_t end, vm_prot_t prot)
 		pmap_protect_long(pmap, start, end, prot);
 }
 
-static inline void
+static __inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */

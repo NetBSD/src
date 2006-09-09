@@ -1,4 +1,4 @@
-
+/* $NetBSD: bootxx.ldscript,v 1.1.4.1 2006/09/09 02:39:09 rpaulo Exp $ */
 OUTPUT_FORMAT("elf32-tradbigmips")
 OUTPUT_ARCH(mips)
 STARTUP(entry.o)
@@ -17,10 +17,12 @@ SECTIONS {
 		*(.text)
 		_etext = .;
 	} > ram
+	.reginfo : { *(.reginfo) } > ram
 	.data ALIGN(4) :
 	{
 		_data = .;
 		*(.rodata)
+		*(.rodata.*)
 		*(.data)
 		_edata = .;
 		PROVIDE (edata = .);
@@ -30,7 +32,6 @@ SECTIONS {
 		_bss = .;
 		*(.bss)
 		*(.scommon)
-		*(.reginfo)
 		_ebss = .;
 	} > ram
 	_end = .;

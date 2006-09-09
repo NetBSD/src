@@ -1,4 +1,4 @@
-# $NetBSD: std,v 1.4 2005/12/11 12:20:30 christos Exp $
+# $NetBSD: std,v 1.4.4.1 2006/09/09 02:46:39 rpaulo Exp $
 #
 # standard MI 'options'
 #
@@ -10,3 +10,6 @@
 options	VMSWAP		# Swap device/file support
 options	BUFQ_FCFS	# First-come First-serve strategy
 options	BUFQ_DISKSORT	# Traditional min seek sort strategy
+options	RFC2292		# Previous version of Adv. Sockets API for IPv6 
+options	PTRACE		# Include ptrace(2)
+options	COREDUMP	# allow processes to coredump.

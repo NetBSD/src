@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.46 2005/12/07 09:10:13 tsutsui Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.46.4.1 2006/09/09 02:38:40 rpaulo Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -66,11 +66,8 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -204,13 +201,13 @@ uk*		at scsibus? target ? lun ?	# unknown SCSI devices
 
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 pseudo-device	raid		4	# RAIDframe devices
 #pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	ccd		4	# Concatenated disk devices
 
 # network pseudo-devices
-pseudo-device	bpfilter	4	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	kttcp
 

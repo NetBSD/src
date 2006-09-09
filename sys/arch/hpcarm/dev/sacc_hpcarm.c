@@ -1,4 +1,4 @@
-/*      $NetBSD: sacc_hpcarm.c,v 1.4 2005/12/11 12:17:32 christos Exp $	*/
+/*      $NetBSD: sacc_hpcarm.c,v 1.4.4.1 2006/09/09 02:39:38 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,11 +37,11 @@
  */
 
 /*
- * Platform dependent part for SA11[01]1 companion chip on hpcarm.
+ * Platform dependent part for SA-11[01]1 companion chip on hpcarm.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.4 2005/12/11 12:17:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.4.4.1 2006/09/09 02:39:38 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,14 +62,11 @@ __KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.4 2005/12/11 12:17:32 christos Exp
 #include <arm/sa11x0/sa1111_reg.h>
 #include <arm/sa11x0/sa1111_var.h>
 
-#include "locators.h"
-
 static void	sacc_attach(struct device *, struct device *, void *);
 static int	sacc_intr(void *);
 
 struct platid_data sacc_platid_table[] = {
-	{ &platid_mask_MACH_HP_JORNADA_720, (void *)1 },
-	{ &platid_mask_MACH_HP_JORNADA_720JP, (void *)1 },
+	{ &platid_mask_MACH_HP_JORNADA_7XX, (void *)1 },
 	{ NULL, NULL }
 };
 
@@ -86,7 +83,7 @@ static void
 sacc_attach(struct device *parent, struct device *self, void *aux)
 {
 	int i, gpiopin;
-	u_int32_t skid;
+	uint32_t skid;
 	struct sacc_softc *sc = (struct sacc_softc *)self;
 	struct sa11x0_softc *psc = (struct sa11x0_softc *)parent;
 	struct sa11x0_attach_args *sa = aux;
@@ -97,10 +94,12 @@ sacc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = sa->sa_iot;
 	sc->sc_piot = psc->sc_iot;
 	sc->sc_gpioh = psc->sc_gpioh;
-	if ((p = platid_search_data(&platid, sacc_platid_table)) == NULL)
+
+	p = platid_search_data(&platid, sacc_platid_table);
+	if (p == NULL)
 		return;
 
-	gpiopin = (int) p->data;
+	gpiopin = (int)p->data;
 	sc->sc_gpiomask = 1 << gpiopin;
 
 	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0,
@@ -111,13 +110,13 @@ sacc_attach(struct device *parent, struct device *self, void *aux)
 
 	skid = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACCSBI_SKID);
 
-	printf("%s: SA1111 rev %d.%d\n", sc->sc_dev.dv_xname,
-	       (skid & 0xf0) >> 3, skid & 0xf);
+	printf("%s: SA-1111 rev %d.%d\n", sc->sc_dev.dv_xname,
+	       (skid & 0xf0) >> 4, skid & 0xf);
 
 	for (i = 0; i < SACCIC_LEN; i++)
 		sc->sc_intrhand[i] = NULL;
 
-	/* initialize SA1111 interrupt controller */
+	/* initialize SA-1111 interrupt controller */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SACCIC_INTEN0, 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SACCIC_INTEN1, 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SACCIC_INTTSTSEL, 0);
@@ -126,12 +125,10 @@ sacc_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			  SACCIC_INTSTATCLR1, 0xffffffff);
 
-	/* connect to SA1110's GPIO intr */
+	/* connect to SA-1110's GPIO intr */
 	sa11x0_intr_establish(0, gpiopin, 1, IPL_SERIAL, sacc_intr, sc);
 
-	/*
-	 *  Attach each devices
-	 */
+	/* attach each devices */
 	config_search_ia(sa1111_search, self, "sacc", NULL);
 }
 
@@ -139,7 +136,7 @@ static int
 sacc_intr(void *arg)
 {
 	int i;
-	u_int32_t mask;
+	uint32_t mask;
 	struct sacc_intrvec intstat;
 	struct sacc_softc *sc = arg;
 	struct sacc_intrhand *ih;
@@ -148,9 +145,9 @@ sacc_intr(void *arg)
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACCIC_INTSTATCLR0);
 	intstat.hi =
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACCIC_INTSTATCLR1);
-	DPRINTF(("sacc_intr_dispatch: %x %x\n", intstat.lo, intstat.hi));
+	DPRINTF(("sacc_intr: %x %x\n", intstat.lo, intstat.hi));
 
-	/* clear SA1110's GPIO intr status */
+	/* clear SA-1110's GPIO intr status */
 	bus_space_write_4(sc->sc_piot, sc->sc_gpioh,
 			  SAGPIO_EDR, sc->sc_gpiomask);
 

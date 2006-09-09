@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.10 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.10.4.1 2006/09/09 02:39:19 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -33,6 +33,8 @@
 
 #include <sys/param.h>
 #include <machine/hp300spu.h>
+#include <m68k/frame.h>
+#include <lib/libsa/stand.h>
 
 #define	NHPIB		4
 #define	NSCSI		2
@@ -57,7 +59,6 @@
 #define MHZ_50		6
 
 /* autoconf.c */
-extern struct hp_hw sc_table[];
 extern int cpuspeed;
 #ifdef PRINTROMINFO
 void printrominvo(void);
@@ -105,7 +106,13 @@ void _transfer(char *, int, int, int, char *, char *);
 int tgets(char *);
 
 
-#define DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
+#define DELAY(n)							\
+do {									\
+	register int __N = cpuspeed * (n);				\
+	do {								\
+		__asm("subql #1, %0" : "=r" (__N) : "0" (__N));		\
+	} while (__N > 0);						\
+} while (/* CONSTCOND */ 0)
 
 /* bogon grfinfo structure to keep grf_softc happy */
 struct grfinfo {
@@ -120,12 +127,6 @@ struct punitsw {
 };
 extern	struct punitsw punitsw[];
 extern	int npunit;
-
-extern	struct devsw devsw_net[];
-extern	int ndevs_net;
-
-extern	struct devsw devsw_general[];
-extern	int ndevs_general;
 
 extern	struct fs_ops file_system_rawfs[];
 extern	struct fs_ops file_system_ufs[];

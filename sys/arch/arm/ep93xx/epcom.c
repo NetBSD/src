@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.6 2005/12/14 00:32:29 christos Exp $ */
+/*	$NetBSD: epcom.c,v 1.6.4.1 2006/09/09 02:37:59 rpaulo Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.6 2005/12/14 00:32:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.6.4.1 2006/09/09 02:37:59 rpaulo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -115,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.6 2005/12/14 00:32:29 christos Exp $");
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -188,11 +189,7 @@ struct consdev epcomcons = {
 #define COMDIALOUT(x)	(minor(x) & COMDIALOUT_MASK)
 
 #define COM_ISALIVE(sc)	((sc)->enabled != 0 && \
-			ISSET((sc)->sc_dev.dv_flags, DVF_ACTIVE))
-
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
+			device_is_active(&(sc)->sc_dev))
 
 void
 epcom_attach_subr(struct epcom_softc *sc)
@@ -240,7 +237,7 @@ epcom_attach_subr(struct epcom_softc *sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&epcom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
 	}
@@ -459,7 +456,7 @@ epcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_rbuf == NULL)
 		return (ENXIO);
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (ENXIO);
 
 #ifdef KGDB
@@ -474,7 +471,8 @@ epcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -696,7 +694,8 @@ epcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag); 
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag); 
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

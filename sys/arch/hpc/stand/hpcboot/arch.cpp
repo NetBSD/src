@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arch.cpp,v 1.13 2005/12/11 12:17:28 christos Exp $	 */
+/* -*-C++-*-	$NetBSD: arch.cpp,v 1.13.4.1 2006/09/09 02:39:27 rpaulo Exp $	 */
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ Architecture::_load_func(const TCHAR * name)
 void
 Architecture::systemInfo(void)
 {
-	u_int32_t val = 0;
+	uint32_t val = 0;
 	SYSTEM_INFO si;
 
 	DPRINTF((TEXT("_WIN32_WCE = %d\n"), _WIN32_WCE));

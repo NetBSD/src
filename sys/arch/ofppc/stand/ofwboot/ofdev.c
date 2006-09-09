@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.13 2005/12/11 12:18:30 christos Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.13.4.1 2006/09/09 02:41:57 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -166,7 +166,7 @@ devclose(struct open_file *of)
 	return 0;
 }
 
-static struct devsw devsw[1] = {
+struct devsw devsw[1] = {
 	{ "OpenFirmware", strategy, devopen_dummy, devclose, noioctl }
 };
 int ndevs = sizeof devsw / sizeof devsw[0];

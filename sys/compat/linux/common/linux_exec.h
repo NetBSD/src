@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.36 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.36.4.1 2006/09/09 02:45:52 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,6 +38,10 @@
 
 #ifndef _LINUX_EXEC_H
 #define _LINUX_EXEC_H
+
+#if defined(EXEC_ELF32) || defined(EXEC_ELF64)
+#include <sys/exec_elf.h>
+#endif
 
 #if defined(__i386__)
 #include <compat/linux/arch/i386/linux_exec.h>
@@ -95,6 +99,8 @@
 #define LINUX_AT_HWCAP		16	/* arch dependent CPU capabilities */
 #define LINUX_AT_CLKTCK		17	/* frequency times() increments */
 #define LINUX_AT_SECURE		23	/* secure mode boolean */
+#define LINUX_AT_SYSINFO	32	/* pointer to __kernel_vsyscall */
+#define LINUX_AT_SYSINFO_EHDR	33	/* pointer to ELF header */
 
 /*
  * Emulation specific sysctls.
@@ -131,18 +137,52 @@ int linux_aout_copyargs __P((struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *));
 void linux_trapsignal __P((struct lwp *, const ksiginfo_t *));
 int linux_usertrap __P((struct lwp *, vaddr_t, void *));
+#ifdef LINUX_NPTL
+void linux_nptl_proc_fork __P((struct proc *, struct proc *,
+	void (luserret)(struct lwp *, void *)));
+void linux_nptl_proc_exit __P((struct proc *));      
+void linux_nptl_proc_init __P((struct proc *, struct proc *));
+#endif
 
 #ifdef EXEC_ELF32
 int linux_elf32_probe __P((struct lwp *, struct exec_package *, void *,
     char *, vaddr_t *));
 int linux_elf32_copyargs __P((struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *));
+int linux_elf32_signature __P((struct lwp *, struct exec_package *,
+        Elf32_Ehdr *, char *));
+#ifdef LINUX_GCC_SIGNATURE
+int linux_elf32_gcc_signature __P((struct lwp *l,
+        struct exec_package *, Elf32_Ehdr *));
+#endif
+#ifdef LINUX_DEBUGLINK_SIGNATURE
+int linux_elf32_debuglink_signature __P((struct lwp *l,
+        struct exec_package *, Elf32_Ehdr *));
+#endif
+#ifdef LINUX_ATEXIT_SIGNATURE
+int linux_elf32_atexit_signature __P((struct lwp *l,
+        struct exec_package *, Elf32_Ehdr *));
+#endif
 #endif
 #ifdef EXEC_ELF64
 int linux_elf64_probe __P((struct lwp *, struct exec_package *, void *,
     char *, vaddr_t *));
 int linux_elf64_copyargs __P((struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *));
+int linux_elf64_signature __P((struct lwp *, struct exec_package *,
+        Elf64_Ehdr *, char *));
+#ifdef LINUX_GCC_SIGNATURE
+int linux_elf64_gcc_signature __P((struct lwp *l,
+        struct exec_package *, Elf64_Ehdr *));
+#endif
+#ifdef LINUX_DEBUGLINK_SIGNATURE
+int linux_elf64_debuglink_signature __P((struct lwp *l,
+        struct exec_package *, Elf64_Ehdr *));
+#endif
+#ifdef LINUX_ATEXIT_SIGNATURE
+int linux_elf64_atexit_signature __P((struct lwp *l,
+        struct exec_package *, Elf64_Ehdr *));
+#endif
 #endif
 __END_DECLS
 #endif /* !_KERNEL */

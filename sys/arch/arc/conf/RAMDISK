@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.66 2005/12/20 05:35:27 thorpej Exp $
+#	$NetBSD: RAMDISK,v 1.66.4.1 2006/09/09 02:37:43 rpaulo Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
 #
@@ -7,7 +7,7 @@ include		"arch/arc/conf/std.arc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.66 $"
+#ident		"GENERIC-$Revision: 1.66.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -62,7 +62,6 @@ options 	DDB			# in-kernel debugger
 #options 	KGDB_DEVRATE=19200	# kernel gdb port rate (default 9600)
 #options 	KGDB_DEV="17*256+0"	# device for kernel gdb
 #makeoptions	DEBUG="-g"		# compile full symbol table
-options 	SYMTAB_SPACE=262144
 
 # Compatibility options
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -121,17 +120,15 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -269,6 +266,10 @@ we1		at isa? port 0x300 iomem 0xcc000 irq 10
 # PLATFORM_NEC_RD94
 necpb*		at mainbus0	# NEC RISCstation PCI host bridge.
 pci*		at necpb?
+pci*		at ppb? bus ?
+options 	PCI_NETBSD_CONFIGURE
+
+ppb*		at pci? dev ? function ?
 
 #vga*	 	at pci? dev ? function ?
 tga*		at pci? dev ? function ?	# DEC ZLXp-E[123] Graphics
@@ -309,6 +310,7 @@ tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
 
 #### MII/PHY support
 
+bmtphy*		at mii? phy ?		# Broadcom BCM5201 and BCM5202 PHYs
 exphy*		at mii? phy ?		# 3Com internal PHYs
 icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS189x
 inphy*		at mii? phy ?		# Intel 82555 PHYs
@@ -385,22 +387,22 @@ wsmouse*	at pms?
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 #pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
-#pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop		1	# network loopback
-pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	sl		2	# Serial Line IP
-#pseudo-device	strip		2	# Starmode Radio IP (Metricom)
-#pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	sl			# Serial Line IP
+#pseudo-device	strip			# Starmode Radio IP (Metricom)
+#pseudo-device	tun			# network tunneling over tty
 #pseudo-device	tap			# virtual Ethernet
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	gre			# generic L3 over IP tunnel
+#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
 

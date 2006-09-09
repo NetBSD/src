@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.14 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.14.4.1 2006/09/09 02:42:22 rpaulo Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,12 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14 2005/12/24 22:45:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14.4.1 2006/09/09 02:42:22 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/properties.h>
+
+#include <prop/proplib.h>
 
 #include <machine/cpu.h>
 
@@ -58,7 +59,7 @@ void decr_intr(struct clockframe *);	/* called from trap_subr.S */
 void stat_intr(struct clockframe *);	/* called from trap_subr.S */
 
 #ifdef FAST_STAT_CLOCK
-/* Stat clock runs at ~ 1.5KHz */
+/* Stat clock runs at ~ 1.5 kHz */
 #define PERIOD_POWER	17
 #define TCR_PERIOD	TCR_FP_2_17
 #else
@@ -71,10 +72,8 @@ void stat_intr(struct clockframe *);	/* called from trap_subr.S */
 void
 stat_intr(struct clockframe *frame)
 {
-	extern u_long intrcnt[];
-
 	mtspr(SPR_TSR, TSR_FIS);	/* Clear TSR[FIS] */
-	intrcnt[CNT_STATCLOCK]++;
+	curcpu()->ci_ev_statclock.ev_count++;
   	statclock(frame);
 }
 
@@ -84,7 +83,7 @@ decr_intr(struct clockframe *frame)
 	int pri;
 	long tbtick, xticks;
 	int nticks;
-	extern u_long intrcnt[];
+
 	/*
 	 * Check whether we are initialized.
 	 */
@@ -99,11 +98,11 @@ decr_intr(struct clockframe *frame)
 		xticks -= ticks_per_intr;
 	lasttb2 = tbtick - xticks;
 
-	intrcnt[CNT_CLOCK]++;
+	curcpu()->ci_ev_clock.ev_count++;
 	pri = splclock();
-	if (pri & SPL_CLOCK) {
+	if (pri & mask_clock) {
 		tickspending += nticks;
-		ticksmissed+= nticks;
+		ticksmissed += nticks;
 	} else {
 		nticks += tickspending;
 		tickspending = 0;
@@ -123,7 +122,7 @@ decr_intr(struct clockframe *frame)
 		 * Do standard timer interrupt stuff.
 		 * Do softclock stuff only on the last iteration.
 		 */
-		frame->pri = pri | SINT_CLOCK;
+		frame->pri = pri | mask_clock;
 		while (--nticks > 0)
 			hardclock(frame);
 		frame->pri = pri;
@@ -135,12 +134,19 @@ decr_intr(struct clockframe *frame)
 void
 cpu_initclocks(void)
 {
+	/* Initialized in powerpc/ibm4xx/cpu.c */
+	evcnt_attach_static(&curcpu()->ci_ev_clock);
+	evcnt_attach_static(&curcpu()->ci_ev_statclock);
 
 	ticks_per_intr = ticks_per_sec / hz;
 	stathz = profhz = ticks_per_sec / (1 << PERIOD_POWER);
-	printf("Setting PIT to %ld/%d = %ld\n", ticks_per_sec, hz, ticks_per_intr);
+
+	printf("Setting PIT to %ld/%d = %ld\n", ticks_per_sec, hz,
+	    ticks_per_intr);
+
 	lasttb2 = lasttb = mftbl();
 	mtspr(SPR_PIT, ticks_per_intr);
+
 	/* Enable PIT & FIT(2^17c = 0.655ms) interrupts and auto-reload */
 	mtspr(SPR_TCR, TCR_PIE | TCR_ARE | TCR_FIE | TCR_PERIOD);
 }
@@ -148,13 +154,12 @@ cpu_initclocks(void)
 void
 calc_delayconst(void)
 {
-	unsigned int processor_freq;
+	prop_number_t freq;
 
-	if (board_info_get("processor-frequency",
-		&processor_freq, sizeof(processor_freq)) == -1)
-		panic("no processor-frequency");
+	freq = prop_dictionary_get(board_properties, "processor-frequency");
+	KASSERT(freq != NULL);
 
-	ticks_per_sec = processor_freq;
+	ticks_per_sec = (u_long) prop_number_integer_value(freq);
 	ns_per_tick = 1000000000 / ticks_per_sec;
 }
 

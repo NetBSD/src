@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_util.h,v 1.7 2000/12/01 12:28:32 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_util.h,v 1.7.54.1 2006/09/09 02:45:26 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 extern int ibcs2_debug;
 #define DPRINTF(a)      do { if (ibcs2_debug) printf a; } while (0)
 #else /* !DEBUG_IBCS2 */
-#define DPRINTF(a)
+#define DPRINTF(a)	do { } while (0)
 #endif /* DEBUG_IBCS2 */
 
 #endif /* _KERNEL */

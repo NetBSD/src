@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.6 2005/12/11 12:19:56 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.6.4.1 2006/09/09 02:45:14 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.6 2005/12/11 12:19:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.6.4.1 2006/09/09 02:45:14 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.6 2005/12/11 12:19:56 christos
 #include <sys/uio.h>
 #include <sys/dirent.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
@@ -59,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.6 2005/12/11 12:19:56 christos
 #include <compat/common/compat_util.h>
 #include <compat/sys/stat.h>
 #include <compat/sys/dirent.h>
+#include <compat/sys/mount.h>
 
 static void cvtstat(struct stat13 *, const struct stat *);
 
@@ -146,6 +148,46 @@ compat_30_sys___lstat13(struct lwp *l, void *v, register_t *retval)
 	return error;
 }
 
+/* ARGSUSED */
+int
+compat_30_sys_fhstat(struct lwp *l, void *v, register_t *retval)
+{
+	struct compat_30_sys_fhstat_args /* {
+		syscallarg(const struct compat_30_fhandle *) fhp;
+		syscallarg(struct stat13 *) sb;
+	} */ *uap = v;
+	struct stat sb;
+	struct stat13 osb;
+	int error;
+	struct compat_30_fhandle fh;
+	struct mount *mp;
+	struct vnode *vp;
+
+	/*
+	 * Must be super user
+	 */
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)))
+		return (error);
+
+	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fh))) != 0)
+		return (error);
+
+	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
+		return (ESTALE);
+	if (mp->mnt_op->vfs_fhtovp == NULL)
+		return EOPNOTSUPP;
+	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, &vp)))
+		return (error);
+	error = vn_stat(vp, &sb, l);
+	vput(vp);
+	if (error)
+		return (error);
+	cvtstat(&osb, &sb);
+	error = copyout(&osb, SCARG(uap, sb), sizeof(sb));
+	return (error);
+}
+
 /*
  * Return status information about a file descriptor.
  */
@@ -231,10 +273,9 @@ again:
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_lwp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
+	UIO_SETUP_SYSSPACE(&auio);
 	/*
          * First we read into the malloc'ed buffer, then
          * we massage it into user space, one record at a time.
@@ -308,4 +349,90 @@ out:
 out1:
 	FILE_UNUSE(fp, l);
 	return error;
+}
+
+/*
+ * Get file handle system call
+ */
+int
+compat_30_sys_getfh(struct lwp *l, void *v, register_t *retval)
+{
+	struct compat_30_sys_getfh_args /* {
+		syscallarg(char *) fname;
+		syscallarg(struct compat_30_fhandle *) fhp;
+	} */ *uap = v;
+	struct vnode *vp;
+	struct compat_30_fhandle fh;
+	int error;
+	struct nameidata nd;
+	size_t sz;
+
+	/*
+	 * Must be super user
+	 */
+	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag);
+	if (error)
+		return (error);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	    SCARG(uap, fname), l);
+	error = namei(&nd);
+	if (error)
+		return (error);
+	vp = nd.ni_vp;
+	sz = sizeof(struct compat_30_fhandle);
+	error = vfs_composefh(vp, (void *)&fh, &sz);
+	vput(vp);
+	if (sz != FHANDLE_SIZE_COMPAT) {
+		error = EINVAL;
+	}
+	if (error)
+		return (error);
+	error = copyout(&fh, SCARG(uap, fhp), sizeof(struct compat_30_fhandle));
+	return (error);
+}
+
+/*
+ * Open a file given a file handle.
+ *
+ * Check permissions, allocate an open file structure,
+ * and call the device open routine if any.
+ */
+int
+compat_30_sys_fhopen(struct lwp *l, void *v, register_t *retval)
+{
+	struct compat_30_sys_fhopen_args /* {
+		syscallarg(const fhandle_t *) fhp;
+		syscallarg(int) flags;
+	} */ *uap = v;
+
+	return dofhopen(l, SCARG(uap, fhp), FHANDLE_SIZE_COMPAT,
+	    SCARG(uap, flags), retval);
+}
+
+/* ARGSUSED */
+int
+compat_30_sys___fhstat30(struct lwp *l, void *v, register_t *retval)
+{
+	struct compat_30_sys___fhstat30_args /* {
+		syscallarg(const fhandle_t *) fhp;
+		syscallarg(struct stat *) sb;
+	} */ *uap = v;
+
+	return dofhstat(l, SCARG(uap, fhp), FHANDLE_SIZE_COMPAT,
+	    SCARG(uap, sb), retval);
+}
+
+/* ARGSUSED */
+int
+compat_30_sys_fhstatvfs1(struct lwp *l, void *v, register_t *retval)
+{
+	struct compat_30_sys_fhstatvfs1_args /* {
+		syscallarg(const fhandle_t *) fhp;
+		syscallarg(struct statvfs *) buf;
+		syscallarg(int)	flags;
+	} */ *uap = v;
+
+	return dofhstatvfs(l, SCARG(uap, fhp), FHANDLE_SIZE_COMPAT,
+	    SCARG(uap, buf), SCARG(uap, flags), retval);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.14 2005/12/11 12:20:12 christos Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.14.4.1 2006/09/09 02:45:27 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.14 2005/12/11 12:20:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.14.4.1 2006/09/09 02:45:27 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ irix_usema_ioctl(v)
 		u_long a_command;
 		caddr_t  a_data;
 		int  a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	u_long cmd = ap->a_command;
@@ -215,7 +215,7 @@ irix_usema_ioctl(v)
 		if ((iur = iur_lookup_by_vn(vp)) == NULL)
 			return EBADF;
 
-		(void *)iur_proc_queue(iur, ap->a_l->l_proc);
+		iwpr = iur_proc_queue(iur, ap->a_l->l_proc);
 		break;
 
 	case IRIX_UIOCAUNBLOCKQ: /* semaphore has been unblocked */
@@ -299,7 +299,7 @@ irix_usema_close(v)
 	struct vop_close_args /* {
 		struct vnode *a_vp;
 		int  a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -343,7 +343,7 @@ irix_usema_setattr(v)
 	struct vop_setattr_args /* {
 		struct vnode    *a_vp;
 		struct vattr    *a_vap;
-		struct ucred    *a_cred;
+		kauth_cred_t	 a_cred;
 		struct lwp      *a_l;
 	} */ *ap = v;
 	struct vnode *vp = (struct vnode *)(ap->a_vp->v_data);

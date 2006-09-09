@@ -1,4 +1,4 @@
-#	$NetBSD: NAPPI,v 1.22 2005/12/07 09:10:13 tsutsui Exp $
+#	$NetBSD: NAPPI,v 1.22.4.1 2006/09/09 02:38:40 rpaulo Exp $
 #
 #	NAPPI -- Netwise APlication Platform Board Kernel
 #
@@ -62,11 +62,8 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -174,10 +171,10 @@ inphy*  at mii? phy ?                   # Intel 82555 PHYs
 
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
-#pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
-#pseudo-device	bpfilter	4	# Berkeley packet filter
+#pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.29 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: trap.c,v 1.29.4.1 2006/09/09 02:42:22 rpaulo Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,13 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.29 2005/12/24 22:45:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.29.4.1 2006/09/09 02:42:22 rpaulo Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
-#include "opt_ktrace.h"
-#include "opt_systrace.h"
-#include "opt_syscall_debug.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -81,16 +78,11 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.29 2005/12/24 22:45:36 perry Exp $");
 #include <sys/syscall.h>
 #include <sys/systm.h>
 #include <sys/user.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
 #include <sys/pool.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 #include <sys/userret.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -141,8 +133,10 @@ trap(struct trapframe *frame)
 
 	KASSERT(l == 0 || (l->l_stat == LSONPROC));
 
-	if (frame->srr1 & PSL_PR)
+	if (frame->srr1 & PSL_PR) {
+		LWP_CACHE_CREDS(l, p);
 		type |= EXC_USER;
+	}
 
 	ftype = VM_PROT_READ;
 
@@ -206,7 +200,7 @@ trap(struct trapframe *frame)
 			    frame->srr0,
 			    (ftype & VM_PROT_WRITE) ? "write" : "read",
 			    (void *)va, frame->tf_xtra[TF_ESR]));
-			rv = uvm_fault(map, trunc_page(va), 0, ftype);
+			rv = uvm_fault(map, trunc_page(va), ftype);
 			KERNEL_UNLOCK();
 			if (map != kernel_map)
 				l->l_flag &= ~L_SA_PAGEFAULT;
@@ -245,7 +239,7 @@ trap(struct trapframe *frame)
 			l->l_flag |= L_SA_PAGEFAULT;
 		}
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->dar),
-		    0, ftype);
+		    ftype);
 		if (rv == 0) {
 			l->l_flag &= ~L_SA_PAGEFAULT;
 			KERNEL_PROC_UNLOCK(l);
@@ -259,8 +253,8 @@ trap(struct trapframe *frame)
 			printf("UVM: pid %d (%s) lid %d, uid %d killed: "
 			    "out of swap\n",
 			    p->p_pid, p->p_comm, l->l_lid,
-			    p->p_cred && p->p_ucred ?
-			    p->p_ucred->cr_uid : -1);
+			    l->l_cred ?
+			    kauth_cred_geteuid(l->l_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 		}
 		trapsignal(l, &ksi);
@@ -280,7 +274,7 @@ trap(struct trapframe *frame)
 		    ("trap(EXC_ISI|EXC_USER) at %lx execute fault tf %p\n",
 		    frame->srr0, frame));
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0),
-		    0, ftype);
+		    ftype);
 		if (rv == 0) {
 			l->l_flag &= ~L_SA_PAGEFAULT;
 			KERNEL_PROC_UNLOCK(l);

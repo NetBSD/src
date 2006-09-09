@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.10 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: hil.c,v 1.10.4.1 2006/09/09 02:39:18 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,6 @@
 #if defined(ITECONSOLE) && defined(HIL_KEYBOARD)
 
 #include <sys/param.h>
-#include <sys/device.h>			/* XXX */
 
 #include <hp300/dev/hilreg.h>
 #include <hp300/dev/kbdmap.h>

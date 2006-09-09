@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.7 2005/12/24 20:07:32 perry Exp $	*/
+/*	$NetBSD: param.h,v 1.7.4.1 2006/09/09 02:42:52 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -112,7 +112,7 @@
 #ifdef _KERNEL
 #ifndef _LOCORE
 
-inline extern void	delay(unsigned long);
+__inline extern void	delay(unsigned long);
 #define DELAY(n)	delay(n)
 
 #include <machine/intr.h>

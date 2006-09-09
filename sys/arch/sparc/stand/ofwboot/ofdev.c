@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.10 2006/01/27 18:31:12 cdi Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.10.2.1 2006/09/09 02:43:35 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -64,9 +64,7 @@ extern char bootdev[];
  */
 
 static char *
-filename(str, ppart)
-	char *str;
-	char *ppart;
+filename(char *str, char *ppart)
 {
 	char *cp, *lp;
 	char savec;
@@ -175,8 +173,7 @@ strategy(devdata, rw, blk, size, buf, rsize)
 }
 
 static int
-devclose(of)
-	struct open_file *of;
+devclose(struct open_file *of)
 {
 	struct of_dev *op = of->f_devdata;
 
@@ -188,14 +185,14 @@ devclose(of)
 	op->handle = -1;
 }
 
-static struct devsw devsw[1] = {
+static struct devsw ofdevsw[1] = {
 	"OpenFirmware",
 	strategy,
-	(int (*)__P((struct open_file *, ...)))nodev,
+	(int (*)(struct open_file *, ...))nodev,
 	devclose,
 	noioctl
 };
-int ndevs = sizeof devsw / sizeof devsw[0];
+int ndevs = sizeof ofdevsw / sizeof ofdevsw[0];
 
 #ifdef SPARC_BOOT_UFS
 static struct fs_ops file_system_ufs = FS_OPS(ufs);
@@ -218,8 +215,7 @@ char opened_name[256];
 int floppyboot;
 
 static u_long
-get_long(p)
-	const void *p;
+get_long(const void *p)
 {
 	const unsigned char *cp = p;
 
@@ -252,9 +248,7 @@ sun_fstypes[8] = {
  * The BSD label is cleared out before this is called.
  */
 static char *
-disklabel_sun_to_bsd(cp, lp)
-	char *cp;
-	struct disklabel *lp;
+disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 {
 	struct sun_disklabel *sl;
 	struct partition *npp;
@@ -333,12 +327,8 @@ disklabel_sun_to_bsd(cp, lp)
  * Find a valid disklabel.
  */
 static char *
-search_label(devp, off, buf, lp, off0)
-	struct of_dev *devp;
-	u_long off;
-	char *buf;
-	struct disklabel *lp;
-	u_long off0;
+search_label(struct of_dev *devp, u_long off, char *buf,
+	     struct disklabel *lp, u_long off0)
 {
 	size_t read;
 	struct mbr_partition *p;
@@ -384,10 +374,7 @@ search_label(devp, off, buf, lp, off0)
 }
 
 int
-devopen(of, name, file)
-	struct open_file *of;
-	const char *name;
-	char **file;
+devopen(struct open_file *of, const char *name, char **file)
 {
 	char *cp;
 	char partition;
@@ -504,7 +491,7 @@ devopen(of, name, file)
 			}
 		}
 
-		of->f_dev = devsw;
+		of->f_dev = ofdevsw;
 		of->f_devdata = &ofdev;
 #ifdef SPARC_BOOT_UFS
 		bcopy(&file_system_ufs, &file_system[nfsys++], sizeof file_system[0]);
@@ -521,7 +508,7 @@ devopen(of, name, file)
 #ifdef NETBOOT
 	if (!strcmp(buf, "network")) {
 		ofdev.type = OFDEV_NET;
-		of->f_dev = devsw;
+		of->f_dev = ofdevsw;
 		of->f_devdata = &ofdev;
 		bcopy(&file_system_nfs, file_system, sizeof file_system[0]);
 		nfsys = 1;

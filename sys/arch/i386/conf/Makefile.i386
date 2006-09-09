@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.142 2005/12/11 12:17:40 christos Exp $
+#	$NetBSD: Makefile.i386,v 1.142.4.1 2006/09/09 02:39:53 rpaulo Exp $
 
 # Makefile for NetBSD
 #
@@ -46,10 +46,10 @@ KERN_AS=	library
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
-MD_OBJS=	locore.o copy.o spl.o vector.o microtime.o
+MD_OBJS=	locore.o copy.o spl.o vector.o
 MD_CFILES=
 MD_SFILES=	${I386}/i386/locore.S ${I386}/i386/copy.S ${I386}/i386/spl.S \
-		${I386}/i386/vector.S ${I386}/i386/microtime.S
+		${I386}/i386/vector.S
 
 locore.o: ${I386}/i386/locore.S assym.h
 	${NORMAL_S}
@@ -61,9 +61,6 @@ spl.o: ${I386}/i386/spl.S assym.h
 	${NORMAL_S}
 
 vector.o: ${I386}/i386/vector.S assym.h
-	${NORMAL_S}
-
-microtime.o: ${I386}/i386/microtime.S assym.h
 	${NORMAL_S}
 
 ##
@@ -86,6 +83,7 @@ freebsd_sigcode.o ibcs2_sigcode.o linux_sigcode.o: assym.h
 svr4_sigcode.o mach_sigcode.o: assym.h
 apmcall.o in_cksum.o pnpbioscall.o bioscall.o: assym.h
 mptramp.o: assym.h
+kvm86call.o: assym.h
 clock.o: config_time.h
 
 ##
@@ -107,21 +105,8 @@ clock.o: config_time.h
 
 %RULES
 
-# XXX - Ugly, but make doesn't easily handle .o.uue (assumes it's a suffix)
-# XXX - Also, config has no simple was to just add foo.o to the Makefile. 
-#       It needs a pathname of some sort for "object"        
-.if !empty(OBJS:M\/athhal-i386-elf.hal.o)
-OBJS:=${OBJS:C/\/athhal-i386-elf.hal.o/athhal-i386-elf.hal.o/}
- 
-.PATH: $S/contrib/arch/i386/dev
-ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
-		${_MKSHECHO}\
-		${UUDECODE} -p $> \> ${.TARGET}; \
-		rm -f ${.TARGET}; \
-		${UUDECODE} -p $> > ${.TARGET}
-athhal-i386-elf.hal.o: athhal-i386-elf.hal.o.uue
-	${ATH_UUDEC}
-.endif
+## Include rules for Atheros WLAN
+.include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
 
 ##
 ## (9) port independent kernel machinery

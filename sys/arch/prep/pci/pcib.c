@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.14 2005/12/11 12:18:47 christos Exp $	*/
+/*	$NetBSD: pcib.c,v 1.14.4.1 2006/09/09 02:42:43 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.14 2005/12/11 12:18:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.14.4.1 2006/09/09 02:42:43 rpaulo Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,8 +61,10 @@ void	pcibattach(struct device *, struct device *, void *);
 
 struct pcib_softc {
 	struct device sc_dev;
-	struct prep_isa_chipset sc_chipset;
+	struct prep_isa_chipset *sc_chipset;
 };
+
+extern struct prep_isa_chipset prep_isa_chipset;
 
 CFATTACH_DECL(pcib, sizeof(struct pcib_softc),
     pcibmatch, pcibattach, NULL, NULL);
@@ -70,10 +72,7 @@ CFATTACH_DECL(pcib, sizeof(struct pcib_softc),
 void	pcib_callback(struct device *);
 
 int
-pcibmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+pcibmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -105,9 +104,7 @@ pcibmatch(parent, cf, aux)
 }
 
 void
-pcibattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcibattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
@@ -141,16 +138,18 @@ pcibattach(parent, self, aux)
 		}
 	}
 #if NISA > 0
-	/* Initialize interrupt controller */
-	init_icu(lvlmask);
+	/* if the lvlmask is different, reinitialize the icu, because we
+	 * set it to zero in mainbus_attach()
+	 */
+	if (lvlmask)
+		init_icu(lvlmask);
 #endif
 
 	config_defer(self, pcib_callback);
 }
 
 void
-pcib_callback(self)
-	struct device *self;
+pcib_callback(struct device *self)
 {
 	struct pcib_softc *sc = (struct pcib_softc *)self;
 #if NISA > 0
@@ -160,7 +159,8 @@ pcib_callback(self)
 	 * Attach the ISA bus behind this bridge.
 	 */
 	memset(&iba, 0, sizeof(iba));
-	iba.iba_ic = &sc->sc_chipset;
+	sc->sc_chipset = &prep_isa_chipset;
+	iba.iba_ic = sc->sc_chipset;
 	iba.iba_iot = &prep_isa_io_space_tag;
 	iba.iba_memt = &prep_isa_mem_space_tag;
 #if NISADMA > 0

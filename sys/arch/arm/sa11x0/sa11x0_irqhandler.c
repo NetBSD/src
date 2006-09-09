@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.6 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.6.4.1 2006/09/09 02:38:10 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.6 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.6.4.1 2006/09/09 02:38:10 rpaulo Exp $");
 
 #include "opt_irqstats.h"
 
@@ -104,12 +104,10 @@ u_int imask[NIPL];
 u_int spl_mask;
 u_int irqmasks[IPL_LEVELS];
 #endif
-u_int irqblock[NIRQS];
-
 
 extern void set_spl_masks(void);
 static int fakeintr(void *);
-#ifdef DEBUG
+#ifdef INTR_DEBUG
 static int dumpirqhandlers(void);
 #endif
 void intr_calculatemasks(void);
@@ -166,19 +164,6 @@ intr_calculatemasks(void)
 	for (level = IPL_LEVELS; level > 0; level--)
 		irqmasks[level - 1] |= irqmasks[level];
 #endif
-	/*
-	 * Calculate irqblock[], which emulates hardware interrupt levels.
-	 */
-	for (irq = 0; irq < ICU_LEN; irq++) {
-		int irqs = 1 << irq;
-		for (q = irqhandlers[irq]; q; q = q->ih_next)
-#ifdef hpcarm
-			irqs |= ~imask[q->ih_level];
-#else
-			irqs |= ~irqmasks[q->ih_level];
-#endif
-		irqblock[irq] = irqs;
-	}
 }
 
 
@@ -192,7 +177,7 @@ sa11x0_intr_evcnt(sa11x0_chipset_tag_t ic, int irq)
 
 void *
 sa11x0_intr_establish(sa11x0_chipset_tag_t ic, int irq, int type, int level,
-		      int (*ih_fun)(void *), void *ih_arg)
+    int (*ih_fun)(void *), void *ih_arg)
 {
 	int saved_cpsr;
 	struct irqhandler **p, *q, *ih;
@@ -214,7 +199,7 @@ sa11x0_intr_establish(sa11x0_chipset_tag_t ic, int irq, int type, int level,
 	 * generally small.
 	 */
 	for (p = &irqhandlers[irq]; (q = *p) != NULL; p = &q->ih_next)
-		;
+		continue;
 
 	/*
 	 * Actually install a fake handler momentarily, since we might be doing
@@ -250,10 +235,10 @@ sa11x0_intr_establish(sa11x0_chipset_tag_t ic, int irq, int type, int level,
 	irq_setmasks();
 
 	SetCPSR(I32_bit, saved_cpsr & I32_bit);
-#ifdef DEBUG
+#ifdef INTR_DEBUG
 	dumpirqhandlers();
 #endif
-	return (ih);
+	return ih;
 }
 
 #ifdef hpcarm
@@ -279,7 +264,7 @@ sa11x0_intr_disestablish(sa11x0_chipset_tag_t ic, void *arg)
 	 */
 	for (p = &irqhandlers[irq]; (q = *p) != NULL && q != ih;
 	     p = &q->ih_next)
-		;
+		continue;
 	if (q)
 		*p = q->ih_next;
 	else
@@ -310,9 +295,9 @@ fakeintr(void *p)
 	return 0;
 }
 
-#ifdef DEBUG
+#ifdef INTR_DEBUG
 int
-dumpirqhandlers()
+dumpirqhandlers(void)
 {
 	int irq;
 	struct irqhandler *p;
@@ -327,4 +312,3 @@ dumpirqhandlers()
 	return 0;
 }
 #endif
-/* End of irqhandler.c */

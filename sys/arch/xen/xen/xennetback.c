@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.19 2006/01/23 20:19:08 yamt Exp $      */
+/*      $NetBSD: xennetback.c,v 1.19.2.1 2006/09/09 02:45:05 rpaulo Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -442,6 +442,7 @@ fail_1:
 		hypervisor_mask_event(xneti->xni_evtchn);
 		event_remove_handler(xneti->xni_evtchn,
 		    xennetback_evthandler, xneti);
+		softintr_disestablish(xneti->xni_softintr);
 		ring_addr = (vaddr_t)xneti->xni_rxring;
 		pmap_remove(pmap_kernel(), ring_addr, ring_addr + PAGE_SIZE);
 		uvm_km_free(kernel_map, ring_addr, PAGE_SIZE,
@@ -568,8 +569,8 @@ again:
 		txreq =
 		    &xneti->xni_txring->ring[MASK_NETIF_TX_IDX(req_cons)].req;
 		XENPRINTF(("%s pkt size %d\n", xneti->xni_if.if_xname, txreq->size));
-		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
-		    (IFF_UP | IFF_RUNNING)) {
+		if (__predict_false((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
+		    (IFF_UP | IFF_RUNNING))) {
 			/* interface not up, drop */
 			xennetback_tx_response(xneti, txreq->id,
 			    NETIF_RSP_DROPPED);
@@ -578,8 +579,8 @@ again:
 		/*
 		 * Do some sanity checks, and map the packet's page.
 		 */
-		if (txreq->size < ETHER_HDR_LEN ||
-		   txreq->size > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
+		if (__predict_false(txreq->size < ETHER_HDR_LEN ||
+		   txreq->size > (ETHER_MAX_LEN - ETHER_CRC_LEN))) {
 			printf("%s: packet size %d too big\n",
 			    ifp->if_xname, txreq->size);
 			xennetback_tx_response(xneti, txreq->id,
@@ -588,7 +589,8 @@ again:
 			continue;
 		}
 		/* don't cross page boundaries */
-		if ((txreq->addr & PAGE_MASK) + txreq->size > PAGE_SIZE) {
+		if (__predict_false(
+		    (txreq->addr & PAGE_MASK) + txreq->size > PAGE_SIZE)) {
 			printf("%s: packet cross page boundary\n",
 			    ifp->if_xname);
 			xennetback_tx_response(xneti, txreq->id,
@@ -598,7 +600,7 @@ again:
 		}
 		/* get a mbuf for this packet */
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == NULL) {
+		if (__predict_false(m == NULL)) {
 			static struct timeval lasttime;
 			if (ratecheck(&lasttime, &xni_pool_errintvl))
 				printf("%s: mbuf alloc failed\n",
@@ -615,7 +617,7 @@ again:
 		    txreq->size, txreq->id, MASK_NETIF_TX_IDX(req_cons)));
 		    
 		pkt = pool_get(&xni_pkt_pool, PR_NOWAIT);
-		if (pkt == NULL) {
+		if (__predict_false(pkt == NULL)) {
 			static struct timeval lasttime;
 			if (ratecheck(&lasttime, &xni_pool_errintvl))
 				printf("%s: xnbpkt alloc failed\n",
@@ -635,7 +637,7 @@ again:
 		}
 		if (pkt_page == NULL) {
 			pkt_page = pool_get(&xni_page_pool, PR_NOWAIT);
-			if (pkt_page == NULL) {
+			if (__predict_false(pkt_page == NULL)) {
 				static struct timeval lasttime;
 				if (ratecheck(&lasttime, &xni_pool_errintvl))
 					printf("%s: xnbpa alloc failed\n",
@@ -648,8 +650,8 @@ again:
 				continue;
 			}
 			pkt_page->refcount = 0;
-			if (xen_shm_map(&pkt_ma,
-			    1, xneti->domid, &pkt_va, 0) != 0) {
+			if (__predict_false(xen_shm_map(&pkt_ma,
+			    1, xneti->domid, &pkt_va, 0) != 0)) {
 				static struct timeval lasttime;
 				if (ratecheck(&lasttime, &xni_pool_errintvl))
 					printf("%s: can't map packet page\n",
@@ -658,6 +660,8 @@ again:
 				    NETIF_RSP_DROPPED);
 				ifp->if_ierrors++;
 				m_freem(m);
+				pool_put(&xni_pkt_pool, pkt);
+				pool_put(&xni_page_pool, pkt_page);
 				continue;
 			}
 			XENPRINTF(("new pkt_page va 0x%lx mbuf %p\n",
@@ -671,6 +675,27 @@ again:
 			XENPRINTF(("pkt_page refcount %d va 0x%lx m %p\n",
 			    pkt_page->refcount, pkt_va, m));
 		}
+		if ((ifp->if_flags & IFF_PROMISC) == 0) {
+			struct ether_header *eh =
+			    (void*)(pkt_va | (txreq->addr & PAGE_MASK));
+			if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
+			    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+			    ETHER_ADDR_LEN) != 0) {
+				pool_put(&xni_pkt_pool, pkt);
+				m_freem(m);
+				if (pkt_page->refcount == 0) {
+					xen_shm_unmap(pkt_page->va,
+					    &pkt_page->ma, 1, xneti->domid);
+					SLIST_REMOVE(pkt_hash, pkt_page,
+					    xni_page, xni_page_next);
+					pool_put(&xni_page_pool, pkt_page);
+				}
+				xennetback_tx_response(xneti, txreq->id,
+				    NETIF_RSP_OKAY);
+				continue; /* packet is not for us */
+			}
+		}
+
 		if (MASK_NETIF_TX_IDX(req_cons + 1) ==
 		    MASK_NETIF_TX_IDX(xneti->xni_txring->resp_prod)) {
 			/*
@@ -816,7 +841,7 @@ xennetback_ifsoftstart(void *arg)
 	vaddr_t xmit_va;
 	paddr_t xmit_pa;
 	paddr_t xmit_ma;
-	paddr_t newp_ma;
+	paddr_t newp_ma = 0; /* XXX gcc */
 	int i, j, nppitems;
 	mmu_update_t *mmup;
 	multicall_entry_t *mclp;

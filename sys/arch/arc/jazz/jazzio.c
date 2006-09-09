@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzio.c,v 1.15 2005/11/15 15:07:36 tsutsui Exp $	*/
+/*	$NetBSD: jazzio.c,v 1.15.4.1 2006/09/09 02:37:52 rpaulo Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.15 2005/11/15 15:07:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.15.4.1 2006/09/09 02:37:52 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,11 +49,12 @@ __KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.15 2005/11/15 15:07:36 tsutsui Exp $");
 #include <arc/jazz/dma.h>
 #include <arc/jazz/pckbc_jazzioreg.h>
 
+#include "ioconf.h"
+
 void arc_sysreset(bus_addr_t, bus_size_t);
 
 struct jazzio_softc {
 	struct	device sc_dv;
-	struct	abus sc_bus;
 	struct	arc_bus_dma_tag sc_dmat;
 	struct	pica_dev *sc_devs;
 };
@@ -65,7 +66,6 @@ int	jazzioprint(void *, const char *);
 
 CFATTACH_DECL(jazzio, sizeof(struct jazzio_softc),
     jazziomatch, jazzioattach, NULL, NULL);
-extern struct cfdriver jazzio_cd;
 
 void	jazzio_intr_establish(int, int (*)(void *), void *);
 void	jazzio_intr_disestablish(int);
@@ -130,9 +130,7 @@ jazzioattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* set up interrupt handlers */
-	(*platform->set_intr)(MIPS_INT_MASK_1, jazzio_intr, 2);
-
-	sc->sc_bus.ab_dv = (struct device *)sc;
+	(*platform->set_intr)(MIPS_INT_MASK_1, jazzio_intr, ARC_INTPRI_JAZZ);
 
 	/* Initialize jazzio DMA mapping register area and pool */
 	jazz_dmatlb_init(&jazzio_bus, jazzio_conf->jc_dmatlbreg);
@@ -144,7 +142,6 @@ jazzioattach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; sc->sc_devs[i].ps_ca.ca_name != NULL; i++) {
 
 		ja.ja_name = sc->sc_devs[i].ps_ca.ca_name;
-		ja.ja_bus = &sc->sc_bus;
 		ja.ja_bust = &jazzio_bus;
 		ja.ja_dmat = &sc->sc_dmat;
 		ja.ja_addr = (bus_addr_t)sc->sc_devs[i].ps_base;

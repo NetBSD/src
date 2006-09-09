@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.4 2005/12/12 02:51:07 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.4.4.1 2006/09/09 02:46:12 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,11 +29,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.4 2005/12/12 02:51:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.4.4.1 2006/09/09 02:46:12 rpaulo Exp $");
 
-#if defined(_KERNEL_OPT)
-#include "opt_ktrace.h"
-#endif
+#include "opt_nfsserver.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +52,12 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.4 2005/12/12 02:51:07 chris
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
+#include <compat/sys/mount.h>
 
 
 int
@@ -74,7 +74,11 @@ netbsd32_getdents(l, v, retval)
 	struct file *fp;
 	int error, done;
 	char  *buf;
+	netbsd32_size_t count;
 	struct proc *p = l->l_proc;
+
+	/* Limit the size on any kernel buffers used by VOP_READDIR */
+	count = min(MAXBSIZE, SCARG(uap, count));
 
 	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
@@ -83,9 +87,8 @@ netbsd32_getdents(l, v, retval)
 		error = EBADF;
 		goto out;
 	}
-	buf = malloc(SCARG(uap, count), M_TEMP, M_WAITOK);
-	error = vn_readdir(fp, buf,
-	    UIO_SYSSPACE, SCARG(uap, count), &done, l, 0, 0);
+	buf = malloc(count, M_TEMP, M_WAITOK);
+	error = vn_readdir(fp, buf, UIO_SYSSPACE, count, &done, l, 0, 0);
 	if (error == 0) {
 		*retval = netbsd32_to_dirent12(buf, done);
 		error = copyout(buf, NETBSD32PTR64(SCARG(uap, buf)), *retval);
@@ -197,4 +200,199 @@ netbsd32___lstat13(l, v, retval)
 	error = copyout(&sb32, (caddr_t)NETBSD32PTR64(SCARG(uap, ub)),
 	    sizeof(sb32));
 	return (error);
+}
+
+int
+compat_30_netbsd32_fhstat(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct compat_30_netbsd32_fhstat_args /* {
+		syscallarg(const netbsd32_fhandlep_t) fhp;
+		syscallarg(netbsd32_stat13p_t) sb);
+	} */ *uap = v;
+	struct stat sb;
+	struct netbsd32_stat13 sb32;
+	int error;
+	struct compat_30_fhandle fh;
+	struct mount *mp;
+	struct vnode *vp;
+
+	/*
+	 * Must be super user
+	 */
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
+		return (error);
+
+	if ((error = copyin(NETBSD32PTR64(SCARG(uap, fhp)), &fh,
+	    sizeof(fh))) != 0)
+		return (error);
+
+	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
+		return (ESTALE);
+	if (mp->mnt_op->vfs_fhtovp == NULL)
+		return EOPNOTSUPP;
+	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, &vp)))
+		return (error);
+	error = vn_stat(vp, &sb, l);
+	vput(vp);
+	if (error)
+		return (error);
+	netbsd32_from___stat13(&sb, &sb32);
+	error = copyout(&sb32, NETBSD32PTR64(SCARG(uap, sb)), sizeof(sb));
+	return (error);
+}
+
+int
+compat_30_netbsd32_fhstatvfs1(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct compat_30_netbsd32_fhstatvfs1_args /* {
+		syscallarg(const netbsd32_fhandlep_t) fhp;
+		syscallarg(netbsd32_statvfsp_t) buf;
+		syscallarg(int) flags;
+	} */ *uap = v;
+	struct statvfs *sbuf;
+	struct netbsd32_statvfs *s32;
+	fhandle_t *fh;
+	struct vnode *vp;
+	int error;
+
+	/*
+	 * Must be super user
+	 */
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		return error;
+
+	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)), 
+	    FHANDLE_SIZE_COMPAT, &fh)) != 0)
+		goto bad;
+	if ((error = vfs_fhtovp(fh, &vp)) != 0)
+		goto bad;
+
+	sbuf = (struct statvfs *)malloc(sizeof(struct statvfs), M_TEMP,
+	    M_WAITOK);
+	error = dostatvfs(vp->v_mount, sbuf, l, SCARG(uap, flags), 1);
+	vput(vp);
+	if (error != 0)
+		goto out;
+
+	s32 = (struct netbsd32_statvfs *)
+	    malloc(sizeof(struct netbsd32_statvfs), M_TEMP, M_WAITOK);
+	netbsd32_from_statvfs(sbuf, s32);
+	error = copyout(s32, (caddr_t)NETBSD32PTR64(SCARG(uap, buf)),
+	    sizeof(struct netbsd32_statvfs));
+	free(s32, M_TEMP);
+
+out:
+	free(sbuf, M_TEMP);
+bad:
+	vfs_copyinfh_free(fh);
+	return (error);
+}
+
+int
+compat_30_netbsd32_socket(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct compat_30_netbsd32_socket_args /* {
+		syscallarg(int) domain;
+		syscallarg(int) type;
+		syscallarg(int) protocol;
+	} */ *uap = v;
+	struct compat_30_sys_socket_args ua;
+
+	NETBSD32TO64_UAP(domain);
+	NETBSD32TO64_UAP(type);
+	NETBSD32TO64_UAP(protocol);
+	return (compat_30_sys_socket(l, &ua, retval));
+}
+
+int
+compat_30_netbsd32_getfh(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct compat_30_netbsd32_getfh_args /* {
+		syscallarg(const netbsd32_charp) fname;
+		syscallarg(netbsd32_compat_30_fhandlep_t) fhp;
+	} */ *uap = v;
+	struct compat_30_sys_getfh_args ua;
+
+	NETBSD32TOP_UAP(fname, const char);
+	NETBSD32TOP_UAP(fhp, struct compat_30_fhandle);
+	/* Lucky for us a fhandle_t doesn't change sizes */
+	return (compat_30_sys_getfh(l, &ua, retval));
+}
+
+
+int compat_30_netbsd32_sys___fhstat30(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct compat_30_netbsd32_sys___fhstat30_args /* {
+		syscallarg(const netbsd32_fhandlep_t) fhp;
+		syscallarg(netbsd32_statp_t) sb;
+	} */ *uap = v;
+	struct stat sb;
+	struct netbsd32_stat sb32;
+	int error;
+	fhandle_t *fh;
+	struct vnode *vp;
+
+	/*
+	 * Must be super user
+	 */
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)))
+		return error;
+
+	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)),
+	    FHANDLE_SIZE_COMPAT, &fh)) != 0)
+		goto bad;
+
+	if ((error = vfs_fhtovp(fh, &vp)) != 0)
+		goto bad;
+
+	error = vn_stat(vp, &sb, l);
+	vput(vp);
+	if (error)
+		goto bad;
+	netbsd32_from___stat30(&sb, &sb32);
+	error = copyout(&sb32, NETBSD32PTR64(SCARG(uap, sb)), sizeof(sb));
+bad:
+	vfs_copyinfh_free(fh);
+	return error;
+}
+
+/*
+ * Open a file given a file handle.
+ *
+ * Check permissions, allocate an open file structure,
+ * and call the device open routine if any.
+ */
+int
+compat_30_netbsd32_fhopen(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct compat_30_netbsd32_fhopen_args /* {
+		syscallarg(const fhandle_t *) fhp;
+		syscallarg(int) flags;
+	} */ *uap = v;
+	struct compat_30_sys_fhopen_args ua;
+
+	NETBSD32TOP_UAP(fhp, struct compat_30_fhandle);
+	NETBSD32TO64_UAP(flags);
+	return (compat_30_sys_fhopen(l, &ua, retval));
 }

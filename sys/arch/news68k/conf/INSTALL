@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.35 2005/12/07 12:40:47 tsutsui Exp $
+# 	$NetBSD: INSTALL,v 1.35.4.1 2006/09/09 02:41:47 rpaulo Exp $
 
 #	config for bootable floppy kernel
 #
@@ -76,6 +76,7 @@ options 	INET		# Internet protocols
 #options 	GATEWAY		# IP packet forwarding
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 #options 	NFS_BOOT_BOOTPARAM
 
@@ -148,6 +149,6 @@ pseudo-device	loop			# loopback interface; required
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 pseudo-device	md		1	# memory disk device
 #pseudo-device	fss		4	# file system snapshot device
-pseudo-device	sl		1	# SLIP interfaces
+pseudo-device	sl			# SLIP interfaces
 
 pseudo-device	rnd			# /dev/random and in-kernel generator

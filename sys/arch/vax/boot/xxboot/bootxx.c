@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.23 2006/01/27 07:33:47 he Exp $ */
+/* $NetBSD: bootxx.c,v 1.23.2.1 2006/09/09 02:44:14 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -166,8 +166,8 @@ Xmain()
 			read(io, &tmp, sizeof(tmp));
 			off += sizeof(tmp);
 		}
-		read(io, (void *) ph.p_paddr, ph.p_filesz);
-		memset((void *) (ph.p_paddr + ph.p_filesz), 0,
+		read(io, (void *) hdr.elf.e_entry, ph.p_filesz);
+		memset((void *) (hdr.elf.e_entry + ph.p_filesz), 0,
 		       ph.p_memsz - ph.p_filesz);
 	} else {
 		goto die;
@@ -278,6 +278,9 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 {
 	int	block = dblk;
 	int     nsize = size;
+	char	*cbuf;
+
+	cbuf = (char *)buf;
 
 	if (romlabel.d_magic == DISKMAGIC && romlabel.d_magic2 == DISKMAGIC) {
 		if (romlabel.d_npartitions > 1) {
@@ -289,16 +292,16 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 	}
 
 	if (from == FROMMV) {
-		romread_uvax(block, size, buf, rpb);
+		romread_uvax(block, size, cbuf, rpb);
 	} else /* if (from == FROM750) */ {
 		while (size > 0) {
 			if (rpb->devtyp == BDEV_HP)
 				hpread(block);
 			else
-				read750(block, bootregs);
-			bcopy(0, buf, 512);
+				read750(block, (int *)bootregs);
+			bcopy(0, cbuf, 512);
 			size -= 512;
-			(char *)buf += 512;
+			cbuf += 512;
 			block++;
 		}
 	}

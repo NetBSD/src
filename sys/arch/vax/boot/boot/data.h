@@ -1,4 +1,4 @@
-/*	$NetBSD: data.h,v 1.3 2001/07/26 15:05:09 wiz Exp $ */
+/*	$NetBSD: data.h,v 1.3.52.1 2006/09/09 02:44:14 rpaulo Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -68,5 +68,3 @@ struct bqo {
 	 */
 	long  xxx[6];		/* 24 --	total: 84 bytes */
 };
-      
-extern struct bqo *bqo;

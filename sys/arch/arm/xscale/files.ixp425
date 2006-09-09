@@ -1,7 +1,9 @@
-#       $NetBSD: files.ixp425,v 1.8 2005/12/11 12:16:51 christos Exp $
+#       $NetBSD: files.ixp425,v 1.8.4.1 2006/09/09 02:38:10 rpaulo Exp $
 #
 # Configuration info for Intel IXP4xx CPU support
 #
+
+defparam opt_ixp425.h		IXP425_CLOCK_FREQ
 
 file    arch/arm/xscale/ixp425_intr.c
 file    arch/arm/xscale/ixp425_mem.c

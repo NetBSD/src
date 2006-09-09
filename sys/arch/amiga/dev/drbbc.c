@@ -1,4 +1,4 @@
-/*	$NetBSD: drbbc.c,v 1.13 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: drbbc.c,v 1.13.4.1 2006/09/09 02:37:30 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.13 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.13.4.1 2006/09/09 02:37:30 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.13 2005/12/11 12:16:28 christos Exp $");
 #include <amiga/amiga/drcustom.h>
 #include <amiga/dev/rtc.h>
 
+#include <dev/clock_subr.h>
 #include <dev/ic/ds.h>
 
 int draco_ds_read_bit(void *);
@@ -65,11 +66,10 @@ void draco_ds_reset(void *);
 void drbbc_attach(struct device *, struct device *, void *);
 int drbbc_match(struct device *, struct cfdata *, void *);
 
-int dracougettod(struct timeval *);
-#ifdef __NOTYET__
-int dracousettod(struct timeval *);
-#endif
+int dracougettod(todr_chip_handle_t, volatile struct timeval *);
+int dracousettod(todr_chip_handle_t, volatile struct timeval *);
 
+static struct todr_chip_handle dracotodr;
 struct drbbc_softc {
 	struct device sc_dev;
 	struct ds_handle sc_dsh;
@@ -121,9 +121,11 @@ drbbc_attach(struct device *pdp, struct device *dp, void *auxp)
 		rombuf[3], rombuf[2], rombuf[1], rombuf[0],
 		hostid);
 
-	ugettod = dracougettod;
-	usettod = (void *)0;
 	drbbc_sc = sc;
+	dracotodr.cookie = sc;
+	dracotodr.todr_gettime = dracougettod;
+	dracotodr.todr_settime = dracousettod;
+	todr_attach(&dracotodr);
 }
 
 int
@@ -168,7 +170,7 @@ draco_ds_reset(void *p)
 }
 
 int
-dracougettod(struct timeval *tvp)
+dracougettod(todr_chip_handle_t h, volatile struct timeval *tvp)
 {
 	u_int32_t clkbuf;
 	u_int32_t usecs;
@@ -188,12 +190,18 @@ dracougettod(struct timeval *tvp)
 	    + (ds_read_byte(&drbbc_sc->sc_dsh)<<16)
 	    + (ds_read_byte(&drbbc_sc->sc_dsh)<<24);
 
-	/* BSD time is wr. 1.1.1970; AmigaOS time wrt. 1.1.1978 */
+	/* BSD time is wrt. 1.1.1970; AmigaOS time wrt. 1.1.1978 */
 
 	clkbuf += (8*365 + 2) * 86400;
 
 	tvp->tv_sec = clkbuf;
 	tvp->tv_usec = usecs;
 
-	return (1);
+	return (0);
+}
+
+int
+dracousettod(todr_chip_handle_t h, volatile struct timeval *tvp)
+{
+	return (ENXIO);
 }

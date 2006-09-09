@@ -1,4 +1,4 @@
-/* $NetBSD: a12dc.c,v 1.14 2005/12/11 12:16:10 christos Exp $ */
+/* $NetBSD: a12dc.c,v 1.14.4.1 2006/09/09 02:36:53 rpaulo Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #ifndef BSIDE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.14 2005/12/11 12:16:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.14.4.1 2006/09/09 02:36:53 rpaulo Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.14 2005/12/11 12:16:10 christos Exp $");
 #include <sys/uio.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 
@@ -163,7 +164,7 @@ a12dcattach(parent, self, aux)
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12dcfound = 1;
 
-	printf(": driver %s\n", "$Revision: 1.14 $");
+	printf(": driver %s\n", "$Revision: 1.14.4.1 $");
 
 	tp = a12dc_tty[0] = ttymalloc();
 	tp->t_oproc = a12dcstart;
@@ -261,10 +262,10 @@ static int did_init;
 }
 
 int
-a12dcopen(dev, flag, mode, p)
+a12dcopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = minor(dev);
 	struct tty *tp;
@@ -286,7 +287,8 @@ a12dcopen(dev, flag, mode, p)
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    suser(p->p_ucred, &p->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return EBUSY;
 
 	s = spltty();

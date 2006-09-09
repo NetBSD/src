@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: WAPIKO,v 1.32 2005/12/07 09:10:17 tsutsui Exp $
+# 	$NetBSD: WAPIKO,v 1.32.4.1 2006/09/09 02:41:48 rpaulo Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -51,6 +51,7 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 # Networking options
 options 	INET		# Internet protocols
 options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
 
 config	netbsd root on ? type ?
 
@@ -93,12 +94,12 @@ wsdisplay0 at fb? console ?
 wskbd0	at kb? console ?
 wsmouse0 at ms?
 
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd		4	# concatenated and striped disks
 #pseudo-device	fss		4	# file system snapshot device
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	bpfilter	16	# Berkeley Packet Filter
+pseudo-device	bpfilter		# Berkeley Packet Filter
 pseudo-device	ipfilter		# ip filter
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
