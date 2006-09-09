@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_rb_impl.h,v 1.3 2006/09/09 15:01:37 thorpej Exp $	*/
+/*	$NetBSD: prop_rb_impl.h,v 1.4 2006/09/09 15:19:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,13 +45,13 @@
 
 struct rb_node {
 	struct rb_node *rb_nodes[3];
-#define	RB_LEFT		0
-#define	RB_RIGHT	1
-#define	RB_OTHER	1
-#define	RB_PARENT	2
-#define	rb_left		rb_nodes[RB_LEFT]
-#define	rb_right	rb_nodes[RB_RIGHT]
-#define	rb_parent	rb_nodes[RB_PARENT]
+#define	RB_NODE_LEFT		0
+#define	RB_NODE_RIGHT		1
+#define	RB_NODE_OTHER		1
+#define	RB_NODE_PARENT		2
+#define	rb_left		rb_nodes[RB_NODE_LEFT]
+#define	rb_right	rb_nodes[RB_NODE_RIGHT]
+#define	rb_parent	rb_nodes[RB_NODE_PARENT]
 	union {
 		struct {
 #if BYTE_ORDER == LITTLE_ENDIAN
