@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_itimes.c,v 1.4 2005/12/11 12:25:26 christos Exp $	*/
+/*	$NetBSD: lfs_itimes.c,v 1.4.4.1 2006/09/09 03:00:00 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -36,11 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.4 2005/12/11 12:25:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.4.4.1 2006/09/09 03:00:00 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/ucred.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
 
@@ -55,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.4 2005/12/11 12:25:26 christos Exp 
 #define panic call_panic
 #else
 #include <ufs/lfs/lfs_extern.h>
+#include <sys/kauth.h>
 #endif
 
 #include <ufs/lfs/lfs.h>
@@ -64,15 +64,17 @@ lfs_itimes(struct inode *ip, const struct timespec *acc,
     const struct timespec *mod, const struct timespec *cre)
 {
 #ifdef _KERNEL
-	struct timespec *ts = NULL, tsb;
+	struct timespec now;
 
 	KASSERT(ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY));
+
+	vfs_timestamp(&now);
 #endif
 
 	if (ip->i_flag & IN_ACCESS) {
 #ifdef _KERNEL
 		if (acc == NULL)
-			acc = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			acc = &now;
 #endif
 		ip->i_ffs1_atime = acc->tv_sec;
 		ip->i_ffs1_atimensec = acc->tv_nsec;
@@ -96,7 +98,7 @@ lfs_itimes(struct inode *ip, const struct timespec *acc,
 		if (ip->i_flag & (IN_UPDATE | IN_MODIFY)) {
 #ifdef _KERNEL
 			if (mod == NULL)
-				mod = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+				mod = &now;
 #endif
 			ip->i_ffs1_mtime = mod->tv_sec;
 			ip->i_ffs1_mtimensec = mod->tv_nsec;
@@ -105,7 +107,7 @@ lfs_itimes(struct inode *ip, const struct timespec *acc,
 		if (ip->i_flag & (IN_CHANGE | IN_MODIFY)) {
 #ifdef _KERNEL
 			if (cre == NULL)
-				cre = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+				cre = &now;
 #endif
 			ip->i_ffs1_ctime = cre->tv_sec;
 			ip->i_ffs1_ctimensec = cre->tv_nsec;

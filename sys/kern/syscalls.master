@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.150 2005/11/29 22:52:02 yamt Exp $
+	$NetBSD: syscalls.master,v 1.150.4.1 2006/09/09 02:57:17 rpaulo Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -219,7 +219,7 @@
 94	UNIMPL		setdopt
 95	STD		{ int sys_fsync(int fd); }
 96	STD		{ int sys_setpriority(int which, id_t who, int prio); }
-97	STD		{ int sys_socket(int domain, int type, int protocol); }
+97	COMPAT_30	{ int sys_socket(int domain, int type, int protocol); }
 98	STD		{ int sys_connect(int s, const struct sockaddr *name, \
 			    unsigned int namelen); }
 99	COMPAT_43	{ int sys_accept(int s, caddr_t name, \
@@ -323,7 +323,8 @@
 158	COMPAT_20	{ int sys_fstatfs(int fd, struct statfs12 *buf); }
 159	UNIMPL
 160	UNIMPL
-161	STD		{ int sys_getfh(const char *fname, fhandle_t *fhp); }
+161	COMPAT_30	{ int sys_getfh(const char *fname, \
+			    struct compat_30_fhandle *fhp); }
 162	COMPAT_09	{ int sys_getdomainname(char *domainname, int len); } \
 			    ogetdomainname
 163	COMPAT_09	{ int sys_setdomainname(char *domainname, int len); } \
@@ -360,7 +361,7 @@
 174	STD		{ ssize_t sys_pwrite(int fd, const void *buf, \
 			    size_t nbyte, int pad, off_t offset); }
 ; For some reason, ntp_gettime doesn't want to raise SIGSYS when it's excluded.
-175	STD		{ int sys_ntp_gettime(struct ntptimeval *ntvp); }
+175	COMPAT_30	{ int sys_ntp_gettime(struct ntptimeval30 *ntvp); }
 #if defined(NTP) || !defined(_KERNEL)
 176	STD		{ int sys_ntp_adjtime(struct timex *tp); }
 #else
@@ -411,8 +412,8 @@
 200	STD		{ int sys_truncate(const char *path, int pad, \
 			    off_t length); }
 201	STD		{ int sys_ftruncate(int fd, int pad, off_t length); }
-202	STD		{ int sys___sysctl(int *name, u_int namelen, \
-			    void *old, size_t *oldlenp, void *new, \
+202	STD		{ int sys___sysctl(const int *name, u_int namelen, \
+			    void *old, size_t *oldlenp, const void *new, \
 			    size_t newlen); }
 203	STD		{ int sys_mlock(const void *addr, size_t len); }
 204	STD		{ int sys_munlock(const void *addr, size_t len); }
@@ -571,9 +572,9 @@
 276	STD		{ int sys_lutimes(const char *path, \
 			    const struct timeval *tptr); }
 277	STD		{ int sys___msync13(void *addr, size_t len, int flags); }
-278	COMPAT_30	{ int sys___stat13(const char *path, struct stat30 *ub); }
-279	COMPAT_30	{ int sys___fstat13(int fd, struct stat30 *sb); }
-280	COMPAT_30	{ int sys___lstat13(const char *path, struct stat30 *ub); }
+278	COMPAT_30	{ int sys___stat13(const char *path, struct stat13 *ub); }
+279	COMPAT_30	{ int sys___fstat13(int fd, struct stat13 *sb); }
+280	COMPAT_30	{ int sys___lstat13(const char *path, struct stat13 *ub); }
 281	STD		{ int sys___sigaltstack14( \
 			    const struct sigaltstack *nss, \
 			    struct sigaltstack *oss); }
@@ -609,10 +610,10 @@
 295	COMPAT_16	{ int sys___sigreturn14(struct sigcontext *sigcntxp); }
 296	STD		{ int sys___getcwd(char *bufp, size_t length); }
 297	STD		{ int sys_fchroot(int fd); }
-298	STD		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
-299	STD		{ int sys_fhstat(const fhandle_t *fhp, \
-			    struct stat *sb); }
-300	COMPAT_20	{ int sys_fhstatfs(const fhandle_t *fhp, \
+298	COMPAT_30	{ int sys_fhopen(const struct compat_30_fhandle *fhp, int flags); }
+299	COMPAT_30	{ int sys_fhstat(const struct compat_30_fhandle *fhp, \
+			    struct stat13 *sb); }
+300	COMPAT_20	{ int sys_fhstatfs(const struct compat_30_fhandle *fhp, \
 			    struct statfs12 *buf); }
 #if defined(SYSVSEM) || !defined(_KERNEL)
 301	STD		{ int sys_____semctl13(int semid, int semnum, int cmd, \
@@ -711,7 +712,7 @@
 			    struct statvfs *buf, int flags); }
 358	STD		{ int sys_fstatvfs1(int fd, struct statvfs *buf, \
 			    int flags); }
-359	STD		{ int sys_fhstatvfs1(const fhandle_t *fhp, \
+359	COMPAT_30	{ int sys_fhstatvfs1(const struct compat_30_fhandle *fhp, \
 			    struct statvfs *buf, int flags); }
 360	STD		{ int sys_extattrctl(const char *path, int cmd, \
 			    const char *filename, int attrnamespace, \
@@ -784,3 +785,15 @@
 390	STD		{ int sys___getdents30(int fd, char *buf, size_t count); }
 391	STD		{ int sys_posix_fadvise(int fd, off_t offset, \
 			    off_t len, int advice); }
+392	COMPAT_30	{ int sys___fhstat30(const struct compat_30_fhandle \
+			    *fhp, struct stat *sb); }
+393	STD		{ int sys___ntp_gettime30(struct ntptimeval *ntvp); }
+394	STD		{ int sys___socket30(int domain, int type, int protocol); }
+395	STD		{ int sys___getfh30(const char *fname, void *fhp, \
+			    size_t *fh_size); }
+396	STD		{ int sys___fhopen40(const void *fhp, size_t fh_size,\
+			    int flags); }
+397	STD		{ int sys___fhstatvfs140(const void *fhp, \
+			    size_t fh_size, struct statvfs *buf, int flags); }
+398	STD		{ int sys___fhstat40(const void *fhp, \
+			    size_t fh_size, struct stat *sb); }

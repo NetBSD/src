@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.96 2006/01/21 00:15:36 rpaulo Exp $	*/
+/*	$NetBSD: nd6.c,v 1.96.2.1 2006/09/09 02:58:55 rpaulo Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.96 2006/01/21 00:15:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.96.2.1 2006/09/09 02:58:55 rpaulo Exp $");
 
 #include "opt_ipsec.h"
 
@@ -91,6 +91,8 @@ int nd6_maxndopt = 10;	/* max # of ND options allowed */
 
 int nd6_maxnudhint = 0;	/* max # of subsequent upper layer hints */
 
+int nd6_maxqueuelen = 1; /* max # of packets cached in unresolved ND entries */
+
 #ifdef ND6_DEBUG
 int nd6_debug = 1;
 #else
@@ -100,7 +102,10 @@ int nd6_debug = 0;
 /* for debugging? */
 static int nd6_inuse, nd6_allocated;
 
-struct llinfo_nd6 llinfo_nd6 = {&llinfo_nd6, &llinfo_nd6};
+struct llinfo_nd6 llinfo_nd6 = {
+	.ln_prev = &llinfo_nd6,
+	.ln_next = &llinfo_nd6,
+};
 struct nd_drhead nd_defrouter;
 struct nd_prhead nd_prefix = { 0 };
 
@@ -109,11 +114,14 @@ static struct sockaddr_in6 all1_sa;
 
 static void nd6_setmtu0 __P((struct ifnet *, struct nd_ifinfo *));
 static void nd6_slowtimo __P((void *));
+static int regen_tmpaddr __P((struct in6_ifaddr *));
 static struct llinfo_nd6 *nd6_free __P((struct rtentry *, int));
 static void nd6_llinfo_timer __P((void *));
+static void clear_llinfo_pqueue __P((struct llinfo_nd6 *));
 
 struct callout nd6_slowtimo_ch = CALLOUT_INITIALIZER;
 struct callout nd6_timer_ch = CALLOUT_INITIALIZER;
+extern struct callout in6_tmpaddrtimer_ch;
 
 static int fill_drlist __P((void *, size_t *, size_t));
 static int fill_prlist __P((void *, size_t *, size_t));
@@ -255,11 +263,11 @@ nd6_option(ndopts)
 	struct nd_opt_hdr *nd_opt;
 	int olen;
 
-	if (!ndopts)
+	if (ndopts == NULL)
 		panic("ndopts == NULL in nd6_option");
-	if (!ndopts->nd_opts_last)
+	if (ndopts->nd_opts_last == NULL)
 		panic("uninitialized ndopts in nd6_option");
-	if (!ndopts->nd_opts_search)
+	if (ndopts->nd_opts_search == NULL)
 		return NULL;
 	if (ndopts->nd_opts_done)
 		return NULL;
@@ -307,16 +315,16 @@ nd6_options(ndopts)
 	struct nd_opt_hdr *nd_opt;
 	int i = 0;
 
-	if (!ndopts)
+	if (ndopts == NULL)
 		panic("ndopts == NULL in nd6_options");
-	if (!ndopts->nd_opts_last)
+	if (ndopts->nd_opts_last == NULL)
 		panic("uninitialized ndopts in nd6_options");
-	if (!ndopts->nd_opts_search)
+	if (ndopts->nd_opts_search == NULL)
 		return 0;
-
+ 
 	while (1) {
 		nd_opt = nd6_option(ndopts);
-		if (!nd_opt && !ndopts->nd_opts_last) {
+		if (nd_opt == NULL && ndopts->nd_opts_last == NULL) {
 			/*
 			 * Message validation requires that all included
 			 * options have a length that is greater than zero.
@@ -326,7 +334,7 @@ nd6_options(ndopts)
 			return -1;
 		}
 
-		if (!nd_opt)
+		if (nd_opt == NULL)
 			goto skip1;
 
 		switch (nd_opt->nd_opt_type) {
@@ -394,7 +402,7 @@ nd6_llinfo_settimer(ln, xtick)
 		ln->ln_ntick = 0;
 		callout_stop(&ln->ln_timer_ch);
 	} else {
-		ln->ln_expire = time.tv_sec + xtick / hz;
+		ln->ln_expire = time_second + xtick / hz;
 		if (xtick > INT_MAX) {
 			ln->ln_ntick = xtick - INT_MAX;
 			callout_reset(&ln->ln_timer_ch, INT_MAX,
@@ -425,13 +433,7 @@ nd6_llinfo_timer(arg)
 	ln = (struct llinfo_nd6 *)arg;
 
 	if (ln->ln_ntick > 0) {
-		if (ln->ln_ntick > INT_MAX) {
-			ln->ln_ntick -= INT_MAX;
-			nd6_llinfo_settimer(ln, INT_MAX);
-		} else {
-			ln->ln_ntick = 0;
-			nd6_llinfo_settimer(ln, ln->ln_ntick);
-		}
+		nd6_llinfo_settimer(ln, ln->ln_ntick);
 		splx(s);
 		return;
 	}
@@ -459,14 +461,20 @@ nd6_llinfo_timer(arg)
 		} else {
 			struct mbuf *m = ln->ln_hold;
 			if (m) {
+				struct mbuf *m0;
+
 				/*
 				 * assuming every packet in ln_hold has
 				 * the same IP header
 				 */
-				ln->ln_hold = NULL;
+				m0 = m->m_nextpkt;
+				m->m_nextpkt = NULL;
 				icmp6_error2(m, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_ADDR, 0, rt->rt_ifp);
-			}
+
+				ln->ln_hold = m0;
+				clear_llinfo_pqueue(ln);
+ 			}
 			(void)nd6_free(rt, 0);
 			ln = NULL;
 		}
@@ -526,6 +534,7 @@ nd6_timer(ignored_arg)
 	struct nd_defrouter *dr;
 	struct nd_prefix *pr;
 	struct in6_ifaddr *ia6, *nia6;
+	struct in6_addrlifetime *lt6;
 
 	s = splsoftnet();
 	callout_reset(&nd6_timer_ch, nd6_prune * hz,
@@ -534,7 +543,7 @@ nd6_timer(ignored_arg)
 	/* expire default router list */
 	dr = TAILQ_FIRST(&nd_defrouter);
 	while (dr) {
-		if (dr->expire && dr->expire < time.tv_sec) {
+		if (dr->expire && dr->expire < time_second) {
 			struct nd_defrouter *t;
 			t = TAILQ_NEXT(dr, dr_entry);
 			defrtrlist_del(dr);
@@ -550,14 +559,63 @@ nd6_timer(ignored_arg)
 	 * However, from a stricter speci-confrmance standpoint, we should
 	 * rather separate address lifetimes and prefix lifetimes.
 	 */
+  addrloop:
 	for (ia6 = in6_ifaddr; ia6; ia6 = nia6) {
 		nia6 = ia6->ia_next;
 		/* check address lifetime */
+		lt6 = &ia6->ia6_lifetime;
 		if (IFA6_IS_INVALID(ia6)) {
-			in6_purgeaddr(&ia6->ia_ifa);
-		}
-		if (IFA6_IS_DEPRECATED(ia6)) {
-			ia6->ia6_flags |= IN6_IFF_DEPRECATED;
+			int regen = 0;
+
+			/*
+			 * If the expiring address is temporary, try
+			 * regenerating a new one.  This would be useful when
+			 * we suspended a laptop PC, then turned it on after a
+			 * period that could invalidate all temporary
+			 * addresses.  Although we may have to restart the
+			 * loop (see below), it must be after purging the
+			 * address.  Otherwise, we'd see an infinite loop of
+			 * regeneration.
+			 */
+			if (ip6_use_tempaddr &&
+			    (ia6->ia6_flags & IN6_IFF_TEMPORARY) != 0) {
+				if (regen_tmpaddr(ia6) == 0)
+					regen = 1;
+			}
+
+ 			in6_purgeaddr(&ia6->ia_ifa);
+
+			if (regen)
+				goto addrloop; /* XXX: see below */
+		} else if (IFA6_IS_DEPRECATED(ia6)) {
+			int oldflags = ia6->ia6_flags;
+
+ 			ia6->ia6_flags |= IN6_IFF_DEPRECATED;
+
+			/*
+			 * If a temporary address has just become deprecated,
+			 * regenerate a new one if possible.
+			 */
+			if (ip6_use_tempaddr &&
+			    (ia6->ia6_flags & IN6_IFF_TEMPORARY) != 0 &&
+			    (oldflags & IN6_IFF_DEPRECATED) == 0) {
+
+				if (regen_tmpaddr(ia6) == 0) {
+					/*
+					 * A new temporary address is
+					 * generated.
+					 * XXX: this means the address chain
+					 * has changed while we are still in
+					 * the loop.  Although the change
+					 * would not cause disaster (because
+					 * it's not a deletion, but an
+					 * addition,) we'd rather restart the
+					 * loop just for safety.  Or does this
+					 * significantly reduce performance??
+					 */
+					goto addrloop;
+				}
+			}
 		} else {
 			/*
 			 * A new RA might have made a deprecated address
@@ -576,7 +634,7 @@ nd6_timer(ignored_arg)
 		 * prefix is not necessary.
 		 */
 		if (pr->ndpr_vltime != ND6_INFINITE_LIFETIME &&
-		    time.tv_sec - pr->ndpr_lastupdate > pr->ndpr_vltime) {
+		    time_second - pr->ndpr_lastupdate > pr->ndpr_vltime) {
 			struct nd_prefix *t;
 			t = pr->ndpr_next;
 
@@ -591,6 +649,73 @@ nd6_timer(ignored_arg)
 			pr = pr->ndpr_next;
 	}
 	splx(s);
+}
+
+static int
+regen_tmpaddr(ia6)
+	struct in6_ifaddr *ia6; /* deprecated/invalidated temporary address */
+{
+	struct ifaddr *ifa;
+	struct ifnet *ifp;
+	struct in6_ifaddr *public_ifa6 = NULL;
+
+	ifp = ia6->ia_ifa.ifa_ifp;
+	for (ifa = ifp->if_addrlist.tqh_first; ifa;
+	     ifa = ifa->ifa_list.tqe_next) {
+		struct in6_ifaddr *it6;
+
+		if (ifa->ifa_addr->sa_family != AF_INET6)
+			continue;
+
+		it6 = (struct in6_ifaddr *)ifa;
+
+		/* ignore no autoconf addresses. */
+		if ((it6->ia6_flags & IN6_IFF_AUTOCONF) == 0)
+			continue;
+
+		/* ignore autoconf addresses with different prefixes. */
+		if (it6->ia6_ndpr == NULL || it6->ia6_ndpr != ia6->ia6_ndpr)
+			continue;
+
+		/*
+		 * Now we are looking at an autoconf address with the same
+		 * prefix as ours.  If the address is temporary and is still
+		 * preferred, do not create another one.  It would be rare, but
+		 * could happen, for example, when we resume a laptop PC after
+		 * a long period.
+		 */
+		if ((it6->ia6_flags & IN6_IFF_TEMPORARY) != 0 &&
+		    !IFA6_IS_DEPRECATED(it6)) {
+			public_ifa6 = NULL;
+			break;
+		}
+
+		/*
+		 * This is a public autoconf address that has the same prefix
+		 * as ours.  If it is preferred, keep it.  We can't break the
+		 * loop here, because there may be a still-preferred temporary
+		 * address with the prefix.
+		 */
+		if (!IFA6_IS_DEPRECATED(it6))
+		    public_ifa6 = it6;
+	}
+
+	if (public_ifa6 != NULL) {
+		int e;
+
+		/*
+		 * Random factor is introduced in the preferred lifetime, so
+		 * we do not need additional delay (3rd arg to in6_tmpifadd).
+		 */
+		if ((e = in6_tmpifadd(public_ifa6, 0, 0)) != 0) {
+			log(LOG_NOTICE, "regen_tmpaddr: failed to create a new"
+			    " tmp addr, errno=%d\n", e);
+			return (-1);
+		}
+		return (0);
+	}
+
+	return (-1);
 }
 
 /*
@@ -706,10 +831,10 @@ nd6_lookup(addr6, create, ifp)
 		 */
 		if (create) {
 			RTFREE(rt);
-			rt = 0;
+			rt = NULL;
 		}
 	}
-	if (!rt) {
+	if (rt == NULL) {
 		if (create && ifp) {
 			int e;
 
@@ -765,6 +890,10 @@ nd6_lookup(addr6, create, ifp)
 	 *      own address on a non-loopback interface. Instead, we should
 	 *      use rt->rt_ifa->ifa_ifp, which would specify the REAL
 	 *	interface.
+	 * Note also that ifa_ifp and ifp may differ when we connect two
+	 * interfaces to a same link, install a link prefix to an interface,
+	 * and try to install a neighbor cache on an interface that does not
+	 * have a route to the prefix.
 	 */
 	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 ||
 	    rt->rt_gateway->sa_family != AF_LINK || rt->rt_llinfo == NULL ||
@@ -894,9 +1023,9 @@ nd6_free(rt, gc)
 			 * XXX: the check for ln_state would be redundant,
 			 *      but we intentionally keep it just in case.
 			 */
-			if (dr->expire > time.tv_sec)
+			if (dr->expire > time_second)
 				nd6_llinfo_settimer(ln,
-				    (dr->expire - time.tv_sec) * hz);
+				    (dr->expire - time_second) * hz);
 			else
 				nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
 			splx(s);
@@ -966,7 +1095,7 @@ nd6_free(rt, gc)
 /*
  * Upper-layer reachability hint for Neighbor Unreachability Detection.
  *
- * XXX cost-effective metods?
+ * XXX cost-effective methods?
  */
 void
 nd6_nud_hint(rt, dst6, force)
@@ -980,10 +1109,10 @@ nd6_nud_hint(rt, dst6, force)
 	 * If the caller specified "rt", use that.  Otherwise, resolve the
 	 * routing table by supplied "dst6".
 	 */
-	if (!rt) {
-		if (!dst6)
+	if (rt == NULL) {
+		if (dst6 == NULL)
 			return;
-		if (!(rt = nd6_lookup(dst6, 0, NULL)))
+		if ((rt = nd6_lookup(dst6, 0, NULL)) == NULL)
 			return;
 	}
 
@@ -1024,7 +1153,10 @@ nd6_rtrequest(req, rt, info)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
-	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
+	static const struct sockaddr_dl null_sdl = {
+		.sdl_len = sizeof(null_sdl),
+		.sdl_family = AF_LINK,
+	};
 	struct ifnet *ifp = rt->rt_ifp;
 	struct ifaddr *ifa;
 
@@ -1081,7 +1213,7 @@ nd6_rtrequest(req, rt, info)
 			 * (RTF_LLINFO && !ln case).
 			 */
 			rt_setgate(rt, rt_key(rt),
-				   (struct sockaddr *)&null_sdl);
+				   (const struct sockaddr *)&null_sdl);
 			gate = rt->rt_gateway;
 			SDL(gate)->sdl_type = ifp->if_type;
 			SDL(gate)->sdl_index = ifp->if_index;
@@ -1142,13 +1274,13 @@ nd6_rtrequest(req, rt, info)
 		 */
 		R_Malloc(ln, struct llinfo_nd6 *, sizeof(*ln));
 		rt->rt_llinfo = (caddr_t)ln;
-		if (!ln) {
+		if (ln == NULL) {
 			log(LOG_DEBUG, "nd6_rtrequest: malloc failed\n");
 			break;
 		}
 		nd6_inuse++;
 		nd6_allocated++;
-		Bzero(ln, sizeof(*ln));
+		bzero(ln, sizeof(*ln));
 		ln->ln_rt = rt;
 		callout_init(&ln->ln_timer_ch);
 		/* this is required for "ndp" command. - shin */
@@ -1186,7 +1318,7 @@ nd6_rtrequest(req, rt, info)
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
 			if (macp) {
-				Bcopy(macp, LLADDR(SDL(gate)), ifp->if_addrlen);
+				bcopy(macp, LLADDR(SDL(gate)), ifp->if_addrlen);
 				SDL(gate)->sdl_alen = ifp->if_addrlen;
 			}
 			if (nd6_useloopback) {
@@ -1222,7 +1354,7 @@ nd6_rtrequest(req, rt, info)
 				llsol.s6_addr8[12] = 0xff;
 				if (in6_setscope(&llsol, ifp, NULL))
 					break;
-				if (!in6_addmulti(&llsol, ifp, &error)) {
+				if (!in6_addmulti(&llsol, ifp, &error, 0)) {
 					nd6log((LOG_ERR, "%s: failed to join "
 					    "%s (errno=%d)\n", if_name(ifp),
 					    ip6_sprintf(&llsol), error));
@@ -1232,7 +1364,7 @@ nd6_rtrequest(req, rt, info)
 		break;
 
 	case RTM_DELETE:
-		if (!ln)
+		if (ln == NULL)
 			break;
 		/* leave from solicited node multicast for proxy ND */
 		if ((rt->rt_flags & RTF_ANNOUNCE) != 0 &&
@@ -1249,8 +1381,7 @@ nd6_rtrequest(req, rt, info)
 				IN6_LOOKUP_MULTI(llsol, ifp, in6m);
 				if (in6m)
 					in6_delmulti(in6m);
-			} else
-				; /* XXX: should not happen. bark here? */
+			}
 		}
 		nd6_inuse--;
 		ln->ln_next->ln_prev = ln->ln_prev;
@@ -1259,8 +1390,7 @@ nd6_rtrequest(req, rt, info)
 		nd6_llinfo_settimer(ln, -1);
 		rt->rt_llinfo = 0;
 		rt->rt_flags &= ~RTF_LLINFO;
-		if (ln->ln_hold)
-			m_freem(ln->ln_hold);
+		clear_llinfo_pqueue(ln);
 		Free((caddr_t)ln);
 	}
 }
@@ -1329,7 +1459,23 @@ nd6_ioctl(cmd, data, ifp)
 			oprl->prefix[i].vltime = pr->ndpr_vltime;
 			oprl->prefix[i].pltime = pr->ndpr_pltime;
 			oprl->prefix[i].if_index = pr->ndpr_ifp->if_index;
-			oprl->prefix[i].expire = pr->ndpr_expire;
+			if (pr->ndpr_vltime == ND6_INFINITE_LIFETIME)
+				oprl->prefix[i].expire = 0;
+			else {
+				time_t maxexpire;
+
+				/* XXX: we assume time_t is signed. */
+				maxexpire = (-1) &
+				    ~((time_t)1 <<
+				    ((sizeof(maxexpire) * 8) - 1));
+				if (pr->ndpr_vltime <
+				    maxexpire - pr->ndpr_lastupdate) {
+					oprl->prefix[i].expire =
+						 pr->ndpr_lastupdate +
+						pr->ndpr_vltime;
+				} else
+					oprl->prefix[i].expire = maxexpire;
+			}
 
 			pfr = pr->ndpr_advrtrs.lh_first;
 			j = 0;
@@ -1353,23 +1499,53 @@ nd6_ioctl(cmd, data, ifp)
 
 		break;
 	case OSIOCGIFINFO_IN6:
+#define ND	ndi->ndi
 		/* XXX: old ndp(8) assumes a positive value for linkmtu. */
-		bzero(&ndi->ndi, sizeof(ndi->ndi));
-		ndi->ndi.linkmtu = IN6_LINKMTU(ifp);
-		ndi->ndi.maxmtu = ND_IFINFO(ifp)->maxmtu;
-		ndi->ndi.basereachable = ND_IFINFO(ifp)->basereachable;
-		ndi->ndi.reachable = ND_IFINFO(ifp)->reachable;
-		ndi->ndi.retrans = ND_IFINFO(ifp)->retrans;
-		ndi->ndi.flags = ND_IFINFO(ifp)->flags;
-		ndi->ndi.recalctm = ND_IFINFO(ifp)->recalctm;
-		ndi->ndi.chlim = ND_IFINFO(ifp)->chlim;
+		memset(&ND, 0, sizeof(ND));
+		ND.linkmtu = IN6_LINKMTU(ifp);
+		ND.maxmtu = ND_IFINFO(ifp)->maxmtu;
+		ND.basereachable = ND_IFINFO(ifp)->basereachable;
+		ND.reachable = ND_IFINFO(ifp)->reachable;
+		ND.retrans = ND_IFINFO(ifp)->retrans;
+		ND.flags = ND_IFINFO(ifp)->flags;
+		ND.recalctm = ND_IFINFO(ifp)->recalctm;
+		ND.chlim = ND_IFINFO(ifp)->chlim;
 		break;
 	case SIOCGIFINFO_IN6:
-		ndi->ndi = *ND_IFINFO(ifp);
+		ND = *ND_IFINFO(ifp);
 		break;
+	case SIOCSIFINFO_IN6:
+		/* 
+		 * used to change host variables from userland.
+		 * intented for a use on router to reflect RA configurations.
+		 */
+		/* 0 means 'unspecified' */
+		if (ND.linkmtu != 0) {
+			if (ND.linkmtu < IPV6_MMTU ||
+			    ND.linkmtu > IN6_LINKMTU(ifp)) {
+				error = EINVAL;
+				break;
+			}
+			ND_IFINFO(ifp)->linkmtu = ND.linkmtu;
+		}
+
+		if (ND.basereachable != 0) {
+			int obasereachable = ND_IFINFO(ifp)->basereachable;
+
+			ND_IFINFO(ifp)->basereachable = ND.basereachable;
+			if (ND.basereachable != obasereachable)
+				ND_IFINFO(ifp)->reachable =
+				    ND_COMPUTE_RTIME(ND.basereachable);
+		}
+		if (ND.retrans != 0)
+			ND_IFINFO(ifp)->retrans = ND.retrans;
+		if (ND.chlim != 0)
+			ND_IFINFO(ifp)->chlim = ND.chlim;
+		/* FALLTHROUGH */
 	case SIOCSIFINFO_FLAGS:
-		ND_IFINFO(ifp)->flags = ndi->ndi.flags;
+		ND_IFINFO(ifp)->flags = ND.flags;
 		break;
+#undef ND
 	case SIOCSNDFLUSH_IN6:	/* XXX: the ioctl name is confusing... */
 		/* sync kernel routing table with the default router list */
 		defrouter_reset();
@@ -1421,7 +1597,7 @@ nd6_ioctl(cmd, data, ifp)
 		break;
 	}
 	case SIOCGNBRINFO_IN6:
-	    {
+	{
 		struct llinfo_nd6 *ln;
 		struct in6_addr nb_addr = nbi->addr; /* make local for safety */
 
@@ -1474,9 +1650,9 @@ nd6_cache_lladdr(ifp, from, lladdr, lladdrlen, type, code)
 	int llchange;
 	int newstate = 0;
 
-	if (!ifp)
+	if (ifp == NULL)
 		panic("ifp == NULL in nd6_cache_lladdr");
-	if (!from)
+	if (from == NULL)
 		panic("from == NULL in nd6_cache_lladdr");
 
 	/* nothing must be updated for unspecified address */
@@ -1494,7 +1670,7 @@ nd6_cache_lladdr(ifp, from, lladdr, lladdrlen, type, code)
 	 */
 
 	rt = nd6_lookup(from, 0, ifp);
-	if (!rt) {
+	if (rt == NULL) {
 #if 0
 		/* nothing must be done if there's no lladdr */
 		if (!lladdr || !lladdrlen)
@@ -1510,7 +1686,7 @@ nd6_cache_lladdr(ifp, from, lladdr, lladdrlen, type, code)
 		is_newentry = 0;
 	}
 
-	if (!rt)
+	if (rt == NULL)
 		return NULL;
 	if ((rt->rt_flags & (RTF_GATEWAY | RTF_LLINFO)) != RTF_LLINFO) {
 fail:
@@ -1518,9 +1694,9 @@ fail:
 		return NULL;
 	}
 	ln = (struct llinfo_nd6 *)rt->rt_llinfo;
-	if (!ln)
+	if (ln == NULL)
 		goto fail;
-	if (!rt->rt_gateway)
+	if (rt->rt_gateway == NULL)
 		goto fail;
 	if (rt->rt_gateway->sa_family != AF_LINK)
 		goto fail;
@@ -1564,7 +1740,7 @@ fail:
 			do_update = 0;
 	} else {
 		do_update = 1;
-		if (!lladdr)				/* (6) */
+		if (lladdr == NULL)			/* (6) */
 			newstate = ND6_LLINFO_NOSTATE;
 		else					/* (7) */
 			newstate = ND6_LLINFO_STALE;
@@ -1585,15 +1761,31 @@ fail:
 			 */
 			nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
 
-			if (ln->ln_hold) {
-				/*
-				 * we assume ifp is not a p2p here, so just
-				 * set the 2nd argument as the 1st one.
-				 */
-				nd6_output(ifp, ifp, ln->ln_hold,
-				    (struct sockaddr_in6 *)rt_key(rt), rt);
-				ln->ln_hold = NULL;
-			}
+ 			if (ln->ln_hold) {
+				struct mbuf *m_hold, *m_hold_next;
+				for (m_hold = ln->ln_hold; m_hold;
+				     m_hold = m_hold_next) {
+					struct mbuf *mpkt = NULL;
+			
+					m_hold_next = m_hold->m_nextpkt;
+					mpkt = m_copym(m_hold, 0, M_COPYALL, M_DONTWAIT);
+					if (mpkt == NULL) {
+						m_freem(m_hold);
+						break;
+					}
+					mpkt->m_nextpkt = NULL;
+
+					/*
+					 * we assume ifp is not a p2p here, so
+					 * just set the 2nd argument as the 
+					 * 1st one.
+					 */
+					nd6_output(ifp, ifp, mpkt,
+					     (struct sockaddr_in6 *)rt_key(rt),
+					     rt);
+				}
+ 				ln->ln_hold = NULL;
+ 			}
 		} else if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {
 			/* probe right away */
 			nd6_llinfo_settimer((void *)ln, 0);
@@ -1736,7 +1928,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 		goto sendpkt;
 
 	/*
-	 * next hop determination.  This routine is derived from ether_outpout.
+	 * next hop determination.  This routine is derived from ether_output.
 	 */
 	if (rt) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
@@ -1813,7 +2005,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 		    (rt = nd6_lookup(&dst->sin6_addr, 1, ifp)) != NULL)
 			ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	}
-	if (!ln || !rt) {
+	if (ln == NULL || rt == NULL) {
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0 &&
 		    !(ND_IFINFO(ifp)->flags & ND6_IFF_PERFORMNUD)) {
 			log(LOG_DEBUG,
@@ -1843,7 +2035,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	if (ln->ln_state == ND6_LLINFO_STALE) {
 		ln->ln_asked = 0;
 		ln->ln_state = ND6_LLINFO_DELAY;
-		nd6_llinfo_settimer(ln, nd6_delay * hz);
+		nd6_llinfo_settimer(ln, (long)nd6_delay * hz);
 	}
 
 	/*
@@ -1856,14 +2048,35 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 
 	/*
 	 * There is a neighbor cache entry, but no ethernet address
-	 * response yet.  Replace the held mbuf (if any) with this
-	 * latest one.
+	 * response yet.  Append this latest packet to the end of the
+	 * packet queue in the mbuf, unless the number of the packet
+	 * does not exceed nd6_maxqueuelen.  When it exceeds nd6_maxqueuelen,
+	 * the oldest packet in the queue will be removed.
 	 */
 	if (ln->ln_state == ND6_LLINFO_NOSTATE)
 		ln->ln_state = ND6_LLINFO_INCOMPLETE;
-	if (ln->ln_hold)
-		m_freem(ln->ln_hold);
-	ln->ln_hold = m;
+	if (ln->ln_hold) {
+		struct mbuf *m_hold;
+		int i;
+
+		i = 0;
+		for (m_hold = ln->ln_hold; m_hold; m_hold = m_hold->m_nextpkt) {
+			i++;
+			if (m_hold->m_nextpkt == NULL) {
+				m_hold->m_nextpkt = m;
+				break;
+			}
+		}
+		while (i >= nd6_maxqueuelen) {
+			m_hold = ln->ln_hold;
+			ln->ln_hold = ln->ln_hold->m_nextpkt;
+			m_freem(m_hold);
+			i--;
+		}
+	} else {
+		ln->ln_hold = m;
+	}
+
 	/*
 	 * If there has been no NS for the neighbor after entering the
 	 * INCOMPLETE state, send the first solicitation.
@@ -1877,6 +2090,11 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	return (0);
 
   sendpkt:
+	/* discard the packet if IPv6 operation is disabled on the interface */
+	if ((ND_IFINFO(ifp)->flags & ND6_IFF_IFDISABLED)) {
+		error = ENETDOWN; /* better error? */
+		goto bad;
+	}
 
 #ifdef IPSEC
 	/* clean ipsec history once it goes out of the node */
@@ -1911,7 +2129,10 @@ nd6_need_cache(ifp)
 	case IFT_ETHER:
 	case IFT_FDDI:
 	case IFT_IEEE1394:
+	case IFT_CARP:
 	case IFT_GIF:		/* XXX need more cases? */
+	case IFT_PPP:
+	case IFT_TUNNEL:
 		return (1);
 	default:
 		return (0);
@@ -1970,6 +2191,22 @@ nd6_storelladdr(ifp, rt, m, dst, desten)
 	return (1);
 }
 
+static void 
+clear_llinfo_pqueue(ln)
+	struct llinfo_nd6 *ln;
+{
+	struct mbuf *m_hold, *m_hold_next;
+
+	for (m_hold = ln->ln_hold; m_hold; m_hold = m_hold_next) {
+		m_hold_next = m_hold->m_nextpkt;
+		m_hold->m_nextpkt = NULL;
+		m_freem(m_hold);
+	}
+
+	ln->ln_hold = NULL;
+	return;
+}
+ 
 int
 nd6_sysctl(name, oldp, oldlenp, newp, newlen)
 	int name;
@@ -1992,21 +2229,24 @@ nd6_sysctl(name, oldp, oldlenp, newp, newlen)
 
 	if (oldp) {
 		p = malloc(*oldlenp, M_TEMP, M_WAITOK);
-		if (!p)
+		if (p == NULL)
 			return ENOMEM;
 	} else
 		p = NULL;
 	switch (name) {
 	case ICMPV6CTL_ND6_DRLIST:
 		error = fill_drlist(p, oldlenp, ol);
-		if (!error && p && oldp)
+		if (!error && p != NULL && oldp != NULL)
 			error = copyout(p, oldp, *oldlenp);
 		break;
 
 	case ICMPV6CTL_ND6_PRLIST:
 		error = fill_prlist(p, oldlenp, ol);
-		if (!error && p && oldp)
+		if (!error && p != NULL && oldp != NULL)
 			error = copyout(p, oldp, *oldlenp);
+		break;
+
+	case ICMPV6CTL_ND6_MAXQLEN:
 		break;
 
 	default:
@@ -2063,11 +2303,11 @@ fill_drlist(oldp, oldlenp, ol)
 	}
 
 	if (oldp) {
-		*oldlenp = l;	/* (caddr_t)d - (caddr_t)oldp */
 		if (l > ol)
 			error = ENOMEM;
-	} else
-		*oldlenp = l;
+	}
+	if (oldlenp)
+		*oldlenp = l;	/* (caddr_t)d - (caddr_t)oldp */
 
 	splx(s);
 
@@ -2124,7 +2364,8 @@ fill_prlist(oldp, oldlenp, ol)
 
 				/* XXX: we assume time_t is signed. */
 				maxexpire = (-1) &
-					~(1 << ((sizeof(maxexpire) * 8) - 1));
+				    ~((time_t)1 <<
+				    ((sizeof(maxexpire) * 8) - 1));
 				if (pr->ndpr_vltime <
 				    maxexpire - pr->ndpr_lastupdate) {
 					p->expire = pr->ndpr_lastupdate +

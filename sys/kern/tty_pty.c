@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.86 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.86.4.1 2006/09/09 02:57:17 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.86 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.86.4.1 2006/09/09 02:57:17 rpaulo Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -60,14 +60,10 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.86 2005/12/11 12:24:30 christos Exp $"
 #include <sys/poll.h>
 #include <sys/malloc.h>
 #include <sys/pty.h>
+#include <sys/kauth.h>
 
 #define	DEFAULT_NPTYS		16	/* default number of initial ptys */
 #define DEFAULT_MAXPTYS		992	/* default maximum number of ptys */
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~((unsigned)(f))
-#define	ISSET(t, f)	((t) & (f))
 
 #define BUFSIZ 100		/* Chunk size iomoved to/from user */
 
@@ -316,7 +312,6 @@ ptsopen(dev, flag, devtype, l)
 	int flag, devtype;
 	struct lwp *l;
 {
-	struct proc *p = l->l_proc;
 	struct pt_softc *pti;
 	struct tty *tp;
 	int error;
@@ -337,7 +332,8 @@ ptsopen(dev, flag, devtype, l)
 		tp->t_cflag = TTYDEF_CFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		ttsetwater(tp);		/* would be done in xxparam() */
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0)
+	} else if (ISSET(tp->t_state, TS_XCLUDE) &&
+	    kauth_cred_geteuid(l->l_cred) != 0)
 		return (EBUSY);
 	if (tp->t_oproc)			/* Ctrlr still around. */
 		SET(tp->t_state, TS_CARR_ON);
@@ -757,6 +753,11 @@ again:
 				TTY_LOCK(tp);
 				/* check again for safety */
 				if (!ISSET(tp->t_state, TS_ISOPEN)) {
+					/*
+					 * adjust for data copied in but not
+					 * written
+					 */
+					uio->uio_resid += cc;
 					error = EIO;
 					goto out;
 				}
@@ -784,6 +785,8 @@ again:
 			TTY_LOCK(tp);
 			/* check again for safety */
 			if (!ISSET(tp->t_state, TS_ISOPEN)) {
+				/* adjust for data copied in but not written */
+				uio->uio_resid += cc;
 				error = EIO;
 				goto out;
 			}
@@ -816,6 +819,8 @@ block:
 	 * in outq, or space in rawq.
 	 */
 	if (!ISSET(tp->t_state, TS_CARR_ON)) {
+		/* adjust for data copied in but not written */
+		uio->uio_resid += cc;
 		error = EIO;
 		goto out;
 	}
@@ -1058,7 +1063,7 @@ ptyioctl(dev, cmd, data, flag, l)
 #ifndef NO_DEV_PTM
 	/* Allow getting the name from either the master or the slave */
 	if (cmd == TIOCPTSNAME)
-		return pty_fill_ptmget(dev, -1, -1, data);
+		return pty_fill_ptmget(l, dev, -1, -1, data);
 #endif
 
 	cdev = cdevsw_lookup(dev);
@@ -1129,7 +1134,7 @@ ptyioctl(dev, cmd, data, flag, l)
 				ttyflush(tp, FREAD|FWRITE);
 			if ((sig == SIGINFO) &&
 			    (!ISSET(tp->t_lflag, NOKERNINFO)))
-				ttyinfo(tp);
+				ttyinfo(tp, 1);
 			TTY_UNLOCK(tp);
 			pgsignal(tp->t_pgrp, sig, 1);
 			return(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.80 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.80.4.1 2006/09/09 02:58:06 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.80 2005/12/24 20:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.80.4.1 2006/09/09 02:58:06 rpaulo Exp $");
 
 #include "opt_inet.h"
 
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.80 2005/12/24 20:45:09 perry Exp $");
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -83,9 +84,9 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.80 2005/12/24 20:45:09 perry Exp $");
 
 DOMAIN_DEFINE(routedomain);	/* forward declare and add to link set */
 
-struct	sockaddr route_dst = { 2, PF_ROUTE, };
-struct	sockaddr route_src = { 2, PF_ROUTE, };
-struct	sockproto route_proto = { PF_ROUTE, };
+struct	sockaddr route_dst = { .sa_len = 2, .sa_family = PF_ROUTE, };
+struct	sockaddr route_src = { .sa_len = 2, .sa_family = PF_ROUTE, };
+struct	sockproto route_proto = { .sp_family = PF_ROUTE, };
 
 struct walkarg {
 	int	w_op;
@@ -260,7 +261,8 @@ route_output(struct mbuf *m, ...)
 	 * is the only operation the non-superuser is allowed.
 	 */
 	if (rtm->rtm_type != RTM_GET &&
-	    suser(curproc->p_ucred, &curproc->p_acflag) != 0)
+	    kauth_authorize_generic(curlwp->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &curlwp->l_acflag) != 0)
 		senderr(EACCES);
 
 	switch (rtm->rtm_type) {
@@ -494,7 +496,7 @@ rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim, struct rt_addrinfo 
 	}
 	/* Check for bad data length.  */
 	if (cp != cplim) {
-		if (i == RTAX_NETMASK + 1 &&
+		if (i == RTAX_NETMASK + 1 && sa &&
 		    cp - ROUNDUP(sa->sa_len) + sa->sa_len == cplim)
 			/*
 			 * The last sockaddr was netmask.
@@ -930,6 +932,7 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		rtm->rtm_flags = rt->rt_flags;
 		rtm->rtm_use = rt->rt_use;
 		rtm->rtm_rmx = rt->rt_rmx;
+		KASSERT(rt->rt_ifp != NULL);
 		rtm->rtm_index = rt->rt_ifp->if_index;
 		rtm->rtm_errno = rtm->rtm_pid = rtm->rtm_seq = 0;
 		rtm->rtm_addrs = info.rti_addrs;
@@ -954,6 +957,8 @@ sysctl_iflist(int af, struct walkarg *w, int type)
 		if (w->w_arg && w->w_arg != ifp->if_index)
 			continue;
 		ifa = TAILQ_FIRST(&ifp->if_addrlist);
+		if (ifa == NULL)
+			continue;
 		ifpaddr = ifa->ifa_addr;
 		switch (type) {
 		case NET_RT_IFLIST:
@@ -1157,19 +1162,24 @@ const struct protosw routesw[] = {
 } };
 
 struct domain routedomain = {
-	PF_ROUTE, "route", route_init, 0, 0,
-	routesw, &routesw[sizeof(routesw)/sizeof(routesw[0])]
+	.dom_family = PF_ROUTE,
+	.dom_name = "route",
+	.dom_init = route_init,
+	.dom_protosw = routesw,
+	.dom_protoswNPROTOSW = &routesw[sizeof(routesw)/sizeof(routesw[0])],
 };
 
 SYSCTL_SETUP(sysctl_net_route_setup, "sysctl net.route subtree setup")
 {
+	const struct sysctlnode *rnode = NULL;
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "net", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_EOL);
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "route",
 		       SYSCTL_DESCR("PF_ROUTE information"),
@@ -1181,4 +1191,10 @@ SYSCTL_SETUP(sysctl_net_route_setup, "sysctl net.route subtree setup")
 		       SYSCTL_DESCR("Routing table information"),
 		       sysctl_rtable, 0, NULL, 0,
 		       CTL_NET, PF_ROUTE, 0 /* any protocol */, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("Routing statistics"),
+		       NULL, 0, &rtstat, sizeof(rtstat),
+		       CTL_CREATE, CTL_EOL);
 }

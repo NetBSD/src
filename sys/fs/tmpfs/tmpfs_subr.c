@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.17 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.17.4.1 2006/09/09 02:57:06 rpaulo Exp $	*/
 
 /*
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.17 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.17.4.1 2006/09/09 02:57:06 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.17 2005/12/11 12:24:29 christos Exp
 #include <sys/systm.h>
 #include <sys/swap.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm.h>
 
@@ -130,7 +131,7 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	nnode->tn_status = 0;
 	nnode->tn_flags = 0;
 	nnode->tn_links = 0;
-	(void)nanotime(&nnode->tn_atime);
+	getnanotime(&nnode->tn_atime);
 	nnode->tn_birthtime = nnode->tn_ctime = nnode->tn_mtime =
 	    nnode->tn_atime;
 	nnode->tn_uid = uid;
@@ -143,16 +144,17 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	switch (nnode->tn_type) {
 	case VBLK:
 	case VCHR:
-		nnode->tn_rdev = rdev;
+		nnode->tn_spec.tn_dev.tn_rdev = rdev;
 		break;
 
 	case VDIR:
-		TAILQ_INIT(&nnode->tn_dir);
-		nnode->tn_parent = (parent == NULL) ? nnode : parent;
-		nnode->tn_readdir_lastn = 0;
-		nnode->tn_readdir_lastp = NULL;
+		TAILQ_INIT(&nnode->tn_spec.tn_dir.tn_dir);
+		nnode->tn_spec.tn_dir.tn_parent =
+		    (parent == NULL) ? nnode : parent;
+		nnode->tn_spec.tn_dir.tn_readdir_lastn = 0;
+		nnode->tn_spec.tn_dir.tn_readdir_lastp = NULL;
 		nnode->tn_links++;
-		nnode->tn_parent->tn_links++;
+		nnode->tn_spec.tn_dir.tn_parent->tn_links++;
 		break;
 
 	case VFIFO:
@@ -163,19 +165,20 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	case VLNK:
 		KASSERT(strlen(target) < MAXPATHLEN);
 		nnode->tn_size = strlen(target);
-		nnode->tn_link = tmpfs_str_pool_get(&tmp->tm_str_pool,
-		    nnode->tn_size, 0);
-		if (nnode->tn_link == NULL) {
+		nnode->tn_spec.tn_lnk.tn_link =
+		    tmpfs_str_pool_get(&tmp->tm_str_pool, nnode->tn_size, 0);
+		if (nnode->tn_spec.tn_lnk.tn_link == NULL) {
 			nnode->tn_type = VNON;
 			tmpfs_free_node(tmp, nnode);
 			return ENOSPC;
 		}
-		memcpy(nnode->tn_link, target, nnode->tn_size);
+		memcpy(nnode->tn_spec.tn_lnk.tn_link, target, nnode->tn_size);
 		break;
 
 	case VREG:
-		nnode->tn_aobj = uao_create(INT32_MAX - PAGE_SIZE, 0);
-		nnode->tn_aobj_pages = 0;
+		nnode->tn_spec.tn_reg.tn_aobj =
+		    uao_create(INT32_MAX - PAGE_SIZE, 0);
+		nnode->tn_spec.tn_reg.tn_aobj_pages = 0;
 		break;
 
 	default:
@@ -231,15 +234,15 @@ tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 		break;
 
 	case VLNK:
-		tmpfs_str_pool_put(&tmp->tm_str_pool, node->tn_link,
-		    node->tn_size);
+		tmpfs_str_pool_put(&tmp->tm_str_pool,
+		    node->tn_spec.tn_lnk.tn_link, node->tn_size);
 		pages = 0;
 		break;
 
 	case VREG:
-		if (node->tn_aobj != NULL)
-			uao_detach(node->tn_aobj);
-		pages = node->tn_aobj_pages;
+		if (node->tn_spec.tn_reg.tn_aobj != NULL)
+			uao_detach(node->tn_spec.tn_reg.tn_aobj);
+		pages = node->tn_spec.tn_reg.tn_aobj_pages;
 		break;
 
 	default:
@@ -372,7 +375,7 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 		/* FALLTHROUGH */
 	case VCHR:
 		vp->v_op = tmpfs_specop_p;
-		nvp = checkalias(vp, node->tn_rdev, mp);
+		nvp = checkalias(vp, node->tn_spec.tn_dev.tn_rdev, mp);
 		if (nvp != NULL) {
 			/* Discard unneeded vnode, but save its inode. */
 			nvp->v_data = vp->v_data;
@@ -398,7 +401,7 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 		break;
 
 	case VDIR:
-		vp->v_flag = node->tn_parent == node ? VROOT : 0;
+		vp->v_flag = node->tn_spec.tn_dir.tn_parent == node ? VROOT : 0;
 		break;
 
 	case VFIFO:
@@ -493,7 +496,7 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 		parent = NULL;
 
 	/* Allocate a node that represents the new file. */
-	error = tmpfs_alloc_node(tmp, vap->va_type, cnp->cn_cred->cr_uid,
+	error = tmpfs_alloc_node(tmp, vap->va_type, kauth_cred_geteuid(cnp->cn_cred),
 	    dnode->tn_gid, vap->va_mode, parent, target, vap->va_rdev,
 	    cnp->cn_lwp->l_proc, &node);
 	if (error != 0)
@@ -546,7 +549,7 @@ tmpfs_dir_attach(struct vnode *vp, struct tmpfs_dirent *de)
 
 	dnode = VP_TO_TMPFS_DIR(vp);
 
-	TAILQ_INSERT_TAIL(&dnode->tn_dir, de, td_entries);
+	TAILQ_INSERT_TAIL(&dnode->tn_spec.tn_dir.tn_dir, de, td_entries);
 	dnode->tn_size += sizeof(struct tmpfs_dirent);
 	dnode->tn_status |= TMPFS_NODE_ACCESSED | TMPFS_NODE_CHANGED | \
 	    TMPFS_NODE_MODIFIED;
@@ -569,12 +572,12 @@ tmpfs_dir_detach(struct vnode *vp, struct tmpfs_dirent *de)
 
 	dnode = VP_TO_TMPFS_DIR(vp);
 
-	if (dnode->tn_readdir_lastp == de) {
-		dnode->tn_readdir_lastn = 0;
-		dnode->tn_readdir_lastp = NULL;
+	if (dnode->tn_spec.tn_dir.tn_readdir_lastp == de) {
+		dnode->tn_spec.tn_dir.tn_readdir_lastn = 0;
+		dnode->tn_spec.tn_dir.tn_readdir_lastp = NULL;
 	}
 
-	TAILQ_REMOVE(&dnode->tn_dir, de, td_entries);
+	TAILQ_REMOVE(&dnode->tn_spec.tn_dir.tn_dir, de, td_entries);
 	dnode->tn_size -= sizeof(struct tmpfs_dirent);
 	dnode->tn_status |= TMPFS_NODE_ACCESSED | TMPFS_NODE_CHANGED | \
 	    TMPFS_NODE_MODIFIED;
@@ -605,7 +608,7 @@ tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 	node->tn_status |= TMPFS_NODE_ACCESSED;
 
 	found = 0;
-	TAILQ_FOREACH(de, &node->tn_dir, td_entries) {
+	TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
 		KASSERT(cnp->cn_namelen < 0xffff);
 		if (de->td_namelen == (uint16_t)cnp->cn_namelen &&
 		    memcmp(de->td_name, cnp->cn_nameptr, de->td_namelen) == 0) {
@@ -673,7 +676,7 @@ tmpfs_dir_getdotdotdent(struct tmpfs_node *node, struct uio *uio)
 	TMPFS_VALIDATE_DIR(node);
 	KASSERT(uio->uio_offset == TMPFS_DIRCOOKIE_DOTDOT);
 
-	dent.d_fileno = node->tn_parent->tn_id;
+	dent.d_fileno = node->tn_spec.tn_dir.tn_parent->tn_id;
 	dent.d_type = DT_DIR;
 	dent.d_namlen = 2;
 	dent.d_name[0] = '.';
@@ -688,7 +691,7 @@ tmpfs_dir_getdotdotdent(struct tmpfs_node *node, struct uio *uio)
 		if (error == 0) {
 			struct tmpfs_dirent *de;
 
-			de = TAILQ_FIRST(&node->tn_dir);
+			de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir);
 			if (de == NULL)
 				uio->uio_offset = TMPFS_DIRCOOKIE_EOF;
 			else
@@ -711,12 +714,12 @@ tmpfs_dir_lookupbycookie(struct tmpfs_node *node, off_t cookie)
 {
 	struct tmpfs_dirent *de;
 
-	if (cookie == node->tn_readdir_lastn &&
-	    node->tn_readdir_lastp != NULL) {
-		return node->tn_readdir_lastp;
+	if (cookie == node->tn_spec.tn_dir.tn_readdir_lastn &&
+	    node->tn_spec.tn_dir.tn_readdir_lastp != NULL) {
+		return node->tn_spec.tn_dir.tn_readdir_lastp;
 	}
 
-	TAILQ_FOREACH(de, &node->tn_dir, td_entries) {
+	TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
 		if (TMPFS_DIRCOOKIE(de) == cookie) {
 			break;
 		}
@@ -822,11 +825,12 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 	/* Update the offset and cache. */
 	if (de == NULL) {
 		uio->uio_offset = TMPFS_DIRCOOKIE_EOF;
-		node->tn_readdir_lastn = 0;
-		node->tn_readdir_lastp = NULL;
+		node->tn_spec.tn_dir.tn_readdir_lastn = 0;
+		node->tn_spec.tn_dir.tn_readdir_lastp = NULL;
 	} else {
-		node->tn_readdir_lastn = uio->uio_offset = TMPFS_DIRCOOKIE(de);
-		node->tn_readdir_lastp = de;
+		node->tn_spec.tn_dir.tn_readdir_lastn = uio->uio_offset =
+		    TMPFS_DIRCOOKIE(de);
+		node->tn_spec.tn_dir.tn_readdir_lastp = de;
 	}
 
 	node->tn_status |= TMPFS_NODE_ACCESSED;
@@ -864,7 +868,7 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	 * its own. */
 	oldsize = node->tn_size;
 	oldpages = round_page(oldsize) / PAGE_SIZE;
-	KASSERT(oldpages == node->tn_aobj_pages);
+	KASSERT(oldpages == node->tn_spec.tn_reg.tn_aobj_pages);
 	newpages = round_page(newsize) / PAGE_SIZE;
 
 	if (newpages > oldpages &&
@@ -873,7 +877,7 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 		goto out;
 	}
 
-	node->tn_aobj_pages = newpages;
+	node->tn_spec.tn_reg.tn_aobj_pages = newpages;
 
 	tmp->tm_pages_used += (newpages - oldpages);
 	node->tn_size = newsize;
@@ -886,7 +890,9 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 		 */
 
 		if (newpages < oldpages) {
-			struct uvm_object *uobj = node->tn_aobj;
+			struct uvm_object *uobj;
+			
+			uobj = node->tn_spec.tn_reg.tn_aobj;
 
 			simple_lock(&uobj->vmobjlock);
 			uao_dropswap_range(uobj, newpages, oldpages);
@@ -949,7 +955,7 @@ tmpfs_mem_info(boolean_t total)
  * The vnode must be locked on entry and remain locked on exit.
  */
 int
-tmpfs_chflags(struct vnode *vp, int flags, struct ucred *cred, struct proc *p)
+tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
 {
 	int error;
 	struct tmpfs_node *node;
@@ -965,10 +971,11 @@ tmpfs_chflags(struct vnode *vp, int flags, struct ucred *cred, struct proc *p)
 	/* XXX: The following comes from UFS code, and can be found in
 	 * several other file systems.  Shouldn't this be centralized
 	 * somewhere? */
-	if (cred->cr_uid != node->tn_uid &&
-	    (error = suser(cred, &p->p_acflag)))
+	if (kauth_cred_geteuid(cred) != node->tn_uid &&
+	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)))
 		return error;
-	if (cred->cr_uid == 0) {
+	if (kauth_cred_geteuid(cred) == 0) {
 		/* The super-user is only allowed to change flags if the file
 		 * wasn't protected before and the securelevel is zero. */
 		if ((node->tn_flags & (SF_IMMUTABLE | SF_APPEND)) &&
@@ -1004,9 +1011,9 @@ tmpfs_chflags(struct vnode *vp, int flags, struct ucred *cred, struct proc *p)
  * The vnode must be locked on entry and remain locked on exit.
  */
 int
-tmpfs_chmod(struct vnode *vp, mode_t mode, struct ucred *cred, struct proc *p)
+tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 {
-	int error;
+	int error, ismember = 0;
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -1024,14 +1031,16 @@ tmpfs_chmod(struct vnode *vp, mode_t mode, struct ucred *cred, struct proc *p)
 	/* XXX: The following comes from UFS code, and can be found in
 	 * several other file systems.  Shouldn't this be centralized
 	 * somewhere? */
-	if (cred->cr_uid != node->tn_uid &&
-	    (error = suser(cred, &p->p_acflag)))
+	if (kauth_cred_geteuid(cred) != node->tn_uid &&
+	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)))
 		return error;
-	if (cred->cr_uid != 0) {
+	if (kauth_cred_geteuid(cred) != 0) {
 		if (vp->v_type != VDIR && (mode & S_ISTXT))
 			return EFTYPE;
 
-		if (!groupmember(node->tn_gid, cred) && (mode & S_ISGID))
+		if ((kauth_cred_ismember_gid(cred, node->tn_gid,
+		    &ismember) != 0 || !ismember) && (mode & S_ISGID))
 			return EPERM;
 	}
 
@@ -1055,10 +1064,10 @@ tmpfs_chmod(struct vnode *vp, mode_t mode, struct ucred *cred, struct proc *p)
  * The vnode must be locked on entry and remain locked on exit.
  */
 int
-tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
-    struct proc *p)
+tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
+    struct lwp *l)
 {
-	int error;
+	int error, ismember = 0;
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -1084,10 +1093,11 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
 	/* XXX: The following comes from UFS code, and can be found in
 	 * several other file systems.  Shouldn't this be centralized
 	 * somewhere? */
-	if ((cred->cr_uid != node->tn_uid || uid != node->tn_uid ||
-	    (gid != node->tn_gid && !(cred->cr_gid == node->tn_gid ||
-	     groupmember(gid, cred)))) &&
-	    ((error = suser(cred, &p->p_acflag)) != 0))
+	if ((kauth_cred_geteuid(cred) != node->tn_uid || uid != node->tn_uid ||
+	    (gid != node->tn_gid && !(kauth_cred_getegid(cred) == node->tn_gid ||
+	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
+	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0))
 		return error;
 
 	node->tn_uid = uid;
@@ -1109,8 +1119,8 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
  * The vnode must be locked on entry and remain locked on exit.
  */
 int
-tmpfs_chsize(struct vnode *vp, u_quad_t size, struct ucred *cred,
-    struct proc *p)
+tmpfs_chsize(struct vnode *vp, u_quad_t size, kauth_cred_t cred,
+    struct lwp *l)
 {
 	int error;
 	struct tmpfs_node *node;
@@ -1167,7 +1177,7 @@ tmpfs_chsize(struct vnode *vp, u_quad_t size, struct ucred *cred,
  */
 int
 tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
-    int vaflags, struct ucred *cred, struct lwp *l)
+    int vaflags, kauth_cred_t cred, struct lwp *l)
 {
 	int error;
 	struct tmpfs_node *node;
@@ -1187,9 +1197,9 @@ tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
 	/* XXX: The following comes from UFS code, and can be found in
 	 * several other file systems.  Shouldn't this be centralized
 	 * somewhere? */
-	if (cred->cr_uid != node->tn_uid &&
-	    (error = suser(cred, &l->l_proc->p_acflag)) &&
-	    ((vaflags & VA_UTIMES_NULL) == 0 ||
+	if (kauth_cred_geteuid(cred) != node->tn_uid &&
+	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) && ((vaflags & VA_UTIMES_NULL) == 0 ||
 	    (error = VOP_ACCESS(vp, VWRITE, cred, l))))
 		return error;
 
@@ -1213,9 +1223,8 @@ void
 tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
     const struct timespec *mod)
 {
+	struct timespec now;
 	struct tmpfs_node *node;
-	const struct timespec *ts = NULL;
-	struct timespec tsb;
 
 	node = VP_TO_TMPFS_NODE(vp);
 
@@ -1223,21 +1232,20 @@ tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
 	    TMPFS_NODE_CHANGED)) == 0)
 		return;
 
+	getnanotime(&now);
 	if (node->tn_status & TMPFS_NODE_ACCESSED) {
 		if (acc == NULL)
-			acc = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			acc = &now;
 		node->tn_atime = *acc;
 	}
 	if (node->tn_status & TMPFS_NODE_MODIFIED) {
 		if (mod == NULL)
-			mod = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			mod = &now;
 		node->tn_mtime = *mod;
 	}
-	if (node->tn_status & TMPFS_NODE_CHANGED) {
-		if (ts == NULL)
-			ts = nanotime(&tsb);
-		node->tn_ctime = *ts;
-	}
+	if (node->tn_status & TMPFS_NODE_CHANGED)
+		node->tn_ctime = now;
+
 	node->tn_status &=
 	    ~(TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED | TMPFS_NODE_CHANGED);
 }
@@ -1255,8 +1263,10 @@ tmpfs_update(struct vnode *vp, const struct timespec *acc,
 
 	node = VP_TO_TMPFS_NODE(vp);
 
+#if 0
 	if (flags & UPDATE_CLOSE)
 		; /* XXX Need to do anything special? */
+#endif
 
 	tmpfs_itimes(vp, acc, mod);
 

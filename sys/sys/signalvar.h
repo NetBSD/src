@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.62 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.62.4.1 2006/09/09 02:59:42 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -111,9 +111,14 @@ do {									\
 #define	CURSIG(l)	(l->l_proc->p_sigctx.ps_sigcheck ? issignal(l) : 0)
 
 /*
- * Clear a pending signal from a process.
+ * Clear all pending signal from a process.
  */
-#define	CLRSIG(p, sig)	sigdelset(&p->p_sigctx.ps_siglist, sig)
+#define CLRSIG(l) \
+	do { \
+		int _sg; \
+		while ((_sg = CURSIG(l)) != 0) \
+			sigdelset(&(l)->l_proc->p_sigctx.ps_siglist, _sg); \
+	} while (/*CONSTCOND*/0)
 
 /*
  * Signal properties and actions.
@@ -136,7 +141,6 @@ do {									\
 extern sigset_t contsigmask, stopsigmask, sigcantmask;
 
 struct vnode;
-struct ucred;
 
 /*
  * Machine-independent functions:
@@ -155,12 +159,13 @@ void	kpsignal1(struct proc *, struct ksiginfo *, void *, int);
 #define	kpsignal(p, ksi, data)		kpsignal1((p), (ksi), (data), 1)
 #define	psignal(p, sig)			psignal1((p), (sig), 1)
 #define	sched_psignal(p, sig)		psignal1((p), (sig), 0)
+void	child_psignal(struct proc *, int);
 void	siginit(struct proc *);
 void	trapsignal(struct lwp *, const struct ksiginfo *);
 void	sigexit(struct lwp *, int);
 void	killproc(struct proc *, const char *);
 void	setsigvec(struct proc *, int, struct sigaction *);
-int	killpg1(struct proc *, struct ksiginfo *, int, int);
+int	killpg1(struct lwp *, struct ksiginfo *, int, int);
 struct lwp *proc_unstop(struct proc *p);
 
 int	sigaction1(struct proc *, int, const struct sigaction *,

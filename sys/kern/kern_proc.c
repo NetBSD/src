@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.85 2005/12/26 18:45:27 perry Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.85.4.1 2006/09/09 02:57:16 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,9 +69,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.85 2005/12/26 18:45:27 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.85.4.1 2006/09/09 02:57:16 rpaulo Exp $");
 
 #include "opt_kstack.h"
+#include "opt_maxuprc.h"
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.85 2005/12/26 18:45:27 perry Exp $")
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/filedesc.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
@@ -163,7 +167,7 @@ struct session session0;
 struct pgrp pgrp0;
 struct proc proc0;
 struct lwp lwp0;
-struct pcred cred0;
+kauth_cred_t cred0;
 struct filedesc0 filedesc0;
 struct cwdinfo cwdi0;
 struct plimit limit0;
@@ -187,8 +191,6 @@ POOL_INIT(lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
     &pool_allocator_nointr);
 POOL_INIT(pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
     &pool_allocator_nointr);
-POOL_INIT(pcred_pool, sizeof(struct pcred), 0, 0, 0, "pcredpl",
-    &pool_allocator_nointr);
 POOL_INIT(plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
     &pool_allocator_nointr);
 POOL_INIT(pstats_pool, sizeof(struct pstats), 0, 0, 0, "pstatspl",
@@ -196,14 +198,6 @@ POOL_INIT(pstats_pool, sizeof(struct pstats), 0, 0, 0, "pstatspl",
 POOL_INIT(rusage_pool, sizeof(struct rusage), 0, 0, 0, "rusgepl",
     &pool_allocator_nointr);
 POOL_INIT(ras_pool, sizeof(struct ras), 0, 0, 0, "raspl",
-    &pool_allocator_nointr);
-POOL_INIT(sadata_pool, sizeof(struct sadata), 0, 0, 0, "sadatapl",
-    &pool_allocator_nointr);
-POOL_INIT(saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0, "saupcpl",
-    &pool_allocator_nointr);
-POOL_INIT(sastack_pool, sizeof(struct sastack), 0, 0, 0, "sastackpl",
-    &pool_allocator_nointr);
-POOL_INIT(savp_pool, sizeof(struct sadata_vp), 0, 0, 0, "savppl",
     &pool_allocator_nointr);
 POOL_INIT(session_pool, sizeof(struct session), 0, 0, 0, "sessionpl",
     &pool_allocator_nointr);
@@ -329,10 +323,9 @@ proc0_init(void)
 	callout_init(&l->l_tsleep_ch);
 
 	/* Create credentials. */
-	cred0.p_refcnt = 1;
-	p->p_cred = &cred0;
-	p->p_ucred = crget();
-	p->p_ucred->cr_ngroups = 1;	/* group 0 */
+	cred0 = kauth_cred_alloc();
+	p->p_cred = cred0;
+	lwp_update_creds(l);
 
 	/* Create the CWD info. */
 	p->p_cwdi = &cwdi0;
@@ -468,6 +461,8 @@ pgid_in_session(struct proc *p, pid_t pg_id)
 
 /*
  * Is p an inferior of q?
+ *
+ * Call with the proclist_lock held.
  */
 int
 inferior(struct proc *p, struct proc *q)
@@ -857,7 +852,7 @@ enterpgrp(struct proc *p, pid_t pgid, int mksess)
 }
 
 /*
- * remove process from process group
+ * Remove a process from its process group.
  */
 int
 leavepgrp(struct proc *p)
@@ -869,7 +864,7 @@ leavepgrp(struct proc *p)
 	s = proclist_lock_write();
 	pgrp = p->p_pgrp;
 	LIST_REMOVE(p, p_pglist);
-	p->p_pgrp = 0;
+	p->p_pgrp = NULL;
 	pg_id = LIST_EMPTY(&pgrp->pg_members) ? pgrp->pg_id : NO_PGID;
 	proclist_unlock_write(s);
 
@@ -1176,7 +1171,7 @@ kstack_check_magic(const struct lwp *l)
 		if (*ip != KSTACK_MAGIC)
 			break;
 
-	stackleft = (caddr_t)ip - KSTACK_LOWEST_ADDR(l);
+	stackleft = ((const char *)ip) - (const char *)KSTACK_LOWEST_ADDR(l);
 #endif /* __MACHINE_STACK_GROWS_UP */
 
 	if (kstackleftmin > stackleft) {
@@ -1230,4 +1225,60 @@ proclist_foreach_call(struct proclist *list,
 	PRELE(l);
 
 	return ret;
+}
+
+int
+proc_vmspace_getref(struct proc *p, struct vmspace **vm)
+{
+
+	/* XXXCDC: how should locking work here? */
+
+	/* curproc exception is for coredump. */
+
+	if ((p != curproc && (p->p_flag & P_WEXIT) != 0) ||
+	    (p->p_vmspace->vm_refcnt < 1)) { /* XXX */
+		return EFAULT;
+	}
+
+	uvmspace_addref(p->p_vmspace);
+	*vm = p->p_vmspace;
+
+	return 0;
+}
+
+/*
+ * Acquire a write lock on the process credential.
+ */
+void 
+proc_crmod_enter(struct proc *p)
+{
+
+	/*
+	 * XXXSMP This should be a lightweight sleep lock.  'struct lock' is
+	 * too large.
+	 */
+	simple_lock(&p->p_lock);
+	while ((p->p_flag & P_CRLOCK) != 0)
+		ltsleep(&p->p_cred, PLOCK, "crlock", 0, &p->p_lock);
+	p->p_flag |= P_CRLOCK;
+	simple_unlock(&p->p_lock);
+}
+
+/*
+ * Block out readers, set in a new process credential, and drop the write
+ * lock.  The credential must have a reference already.  Optionally, free a
+ * no-longer required credential.
+ */
+void
+proc_crmod_leave(struct proc *p, kauth_cred_t scred, kauth_cred_t fcred)
+{
+
+	KDASSERT((p->p_flag & P_CRLOCK) != 0);
+	simple_lock(&p->p_lock);
+	p->p_cred = scred;
+	p->p_flag &= ~P_CRLOCK;
+	simple_unlock(&p->p_lock);
+	wakeup(&p->p_cred);
+	if (fcred != NULL)
+		kauth_cred_free(fcred);
 }

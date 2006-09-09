@@ -1,5 +1,6 @@
-/*	$NetBSD: icmp6.c,v 1.113.2.2 2006/02/23 16:09:01 rpaulo Exp $	*/
-/*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.113.2.3 2006/09/09 02:58:55 rpaulo Exp $	*/
+/*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $ */
+
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -62,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.113.2.2 2006/02/23 16:09:01 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.113.2.3 2006/09/09 02:58:55 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -163,10 +164,11 @@ static struct rtentry *icmp6_mtudisc_clone __P((struct sockaddr *));
 static void icmp6_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
 static void icmp6_redirect_timeout __P((struct rtentry *, struct rttimer *));
 
+
 void
 icmp6_init()
 {
-	mld6_init();
+	mld_init();
 	icmp6_mtudisc_timeout_q = rt_timer_queue_create(pmtu_expire);
 	icmp6_redirect_timeout_q = rt_timer_queue_create(icmp6_redirtimeout);
 }
@@ -420,7 +422,7 @@ icmp6_error(m, type, code, param)
 
 	/*
 	 * icmp6_reflect() is designed to be in the input path.
-	 * icmp6_error() can be called from both input and outut path,
+	 * icmp6_error() can be called from both input and output path,
 	 * and if we are in output path rcvif could contain bogus value.
 	 * clear m->m_pkthdr.rcvif for safety, we should have enough scope
 	 * information in ip header (nip6).
@@ -434,7 +436,7 @@ icmp6_error(m, type, code, param)
 
   freeit:
 	/*
-	 * If we can't tell wheter or not we can generate ICMP6, free it.
+	 * If we can't tell whether or not we can generate ICMP6, free it.
 	 */
 	m_freem(m);
 }
@@ -454,6 +456,8 @@ icmp6_input(mp, offp, proto)
 	int icmp6len = m->m_pkthdr.len - *offp;
 	int code, sum, noff;
 
+#define ICMP6_MAXLEN (sizeof(*nip6) + sizeof(*nicmp6) + 4)
+	KASSERT(ICMP6_MAXLEN < MCLBYTES);
 	icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_msg);
 
 	/*
@@ -494,7 +498,7 @@ icmp6_input(mp, offp, proto)
 	if (faithprefix(&ip6->ip6_dst)) {
 		/*
 		 * Deliver very specific ICMP6 type only.
-		 * This is important to deilver TOOBIG.  Otherwise PMTUD
+		 * This is important to deliver TOOBIG.  Otherwise PMTUD
 		 * will not work.
 		 */
 		switch (icmp6->icmp6_type) {
@@ -590,78 +594,38 @@ icmp6_input(mp, offp, proto)
 		 * Copy mbuf to send to two data paths: userland socket(s),
 		 * and to the querier (echo reply).
 		 * m: a copy for socket, n: a copy for querier
+		 *
+		 * If the first mbuf is shared, or the first mbuf is too short,
+		 * copy the first part of the data into a fresh mbuf.
+		 * Otherwise, we will wrongly overwrite both copies.
 		 */
 		if ((n = m_copym(m, 0, M_COPYALL, M_DONTWAIT)) == NULL) {
 			/* Give up local */
 			n = m;
 			m = NULL;
-			goto deliverecho;
-		}
-		/*
-		 * If the first mbuf is shared, or the first mbuf is too short,
-		 * copy the first part of the data into a fresh mbuf.
-		 * Otherwise, we will wrongly overwrite both copies.
-		 */
-		if ((n->m_flags & M_EXT) != 0 ||
+		} else if (M_READONLY(n) ||
 		    n->m_len < off + sizeof(struct icmp6_hdr)) {
 			struct mbuf *n0 = n;
-			const int maxlen = sizeof(*nip6) + sizeof(*nicmp6);
 
 			/*
 			 * Prepare an internal mbuf.  m_pullup() doesn't
 			 * always copy the length we specified.
 			 */
-			if (maxlen >= MCLBYTES) {
-				/* Give up remote */
-				m_freem(n0);
-				break;
-			}
-			MGETHDR(n, M_DONTWAIT, n0->m_type);
-			if (n && maxlen >= MHLEN) {
-				MCLGET(n, M_DONTWAIT);
-				if ((n->m_flags & M_EXT) == 0) {
-					m_free(n);
-					n = NULL;
-				}
-			}
-			if (n == NULL) {
+			if ((n = m_dup(n0, 0, M_COPYALL, M_DONTWAIT)) == NULL) {
 				/* Give up local */
-				m_freem(n0);
 				n = m;
 				m = NULL;
-				goto deliverecho;
 			}
-			M_MOVE_PKTHDR(n, n0);
-			/*
-			 * Copy IPv6 and ICMPv6 only.
-			 */
-			nip6 = mtod(n, struct ip6_hdr *);
-			bcopy(ip6, nip6, sizeof(struct ip6_hdr));
-			nicmp6 = (struct icmp6_hdr *)(nip6 + 1);
-			bcopy(icmp6, nicmp6, sizeof(struct icmp6_hdr));
-			noff = sizeof(struct ip6_hdr);
-			n->m_len = noff + sizeof(struct icmp6_hdr);
-			/*
-			 * Adjust mbuf.  ip6_plen will be adjusted in
-			 * ip6_output().
-			 * n->m_pkthdr.len == n0->m_pkthdr.len at this point.
-			 */
-			n->m_pkthdr.len += noff + sizeof(struct icmp6_hdr);
-			n->m_pkthdr.len -= (off + sizeof(struct icmp6_hdr));
-			m_adj(n0, off + sizeof(struct icmp6_hdr));
-			n->m_next = n0;
-		} else {
-	 deliverecho:
-			nip6 = mtod(n, struct ip6_hdr *);
-			nicmp6 = (struct icmp6_hdr *)((caddr_t)nip6 + off);
-			noff = off;
+			m_freem(n0);
 		}
+		nip6 = mtod(n, struct ip6_hdr *);
+		nicmp6 = (struct icmp6_hdr *)((caddr_t)nip6 + off);
 		nicmp6->icmp6_type = ICMP6_ECHO_REPLY;
 		nicmp6->icmp6_code = 0;
 		if (n) {
 			icmp6stat.icp6s_reflect++;
 			icmp6stat.icp6s_outhist[ICMP6_ECHO_REPLY]++;
-			icmp6_reflect(n, noff);
+			icmp6_reflect(n, off);
 		}
 		if (!m)
 			goto freeit;
@@ -683,11 +647,11 @@ icmp6_input(mp, offp, proto)
 			icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_mldreport);
 		if ((n = m_copym(m, 0, M_COPYALL, M_DONTWAIT)) == NULL) {
 			/* give up local */
-			mld6_input(m, off);
+			mld_input(m, off);
 			m = NULL;
 			goto freeit;
 		}
-		mld6_input(n, off);
+		mld_input(n, off);
 		/* m stays. */
 		break;
 
@@ -725,20 +689,15 @@ icmp6_input(mp, offp, proto)
 			noff = sizeof(struct ip6_hdr);
 		} else {
 			u_char *p;
-			int maxlen, maxhlen;
+			int maxhlen;
 
 			if ((icmp6_nodeinfo & 5) != 5)
 				break;
 
 			if (code != 0)
 				goto badcode;
-			maxlen = sizeof(*nip6) + sizeof(*nicmp6) + 4;
-			if (maxlen >= MCLBYTES) {
-				/* Give up remote */
-				break;
-			}
 			MGETHDR(n, M_DONTWAIT, m->m_type);
-			if (n && maxlen > MHLEN) {
+			if (n && ICMP6_MAXLEN > MHLEN) {
 				MCLGET(n, M_DONTWAIT);
 				if ((n->m_flags & M_EXT) == 0) {
 					m_free(n);
@@ -751,7 +710,7 @@ icmp6_input(mp, offp, proto)
 			}
 			n->m_pkthdr.rcvif = NULL;
 			n->m_len = 0;
-			maxhlen = M_TRAILINGSPACE(n) - maxlen;
+			maxhlen = M_TRAILINGSPACE(n) - ICMP6_MAXLEN;
 			if (maxhlen > hostnamelen)
 				maxhlen = hostnamelen;
 			/*
@@ -916,7 +875,7 @@ icmp6_input(mp, offp, proto)
 static int
 icmp6_notify_error(m, off, icmp6len, code)
 	struct mbuf *m;
-	int off, icmp6len;
+	int off, icmp6len, code;
 {
 	struct icmp6_hdr *icmp6;
 	struct ip6_hdr *eip6;
@@ -1243,6 +1202,7 @@ ni6_input(m, off)
 		/* FALLTHROUGH */
 	case NI_QTYPE_FQDN:
 	case NI_QTYPE_NODEADDR:
+	case NI_QTYPE_IPV4ADDR:
 		switch (ni6->ni_code) {
 		case ICMP6_NI_SUBJ_IPV6:
 #if ICMP6_NI_SUBJ_IPV6 != 0
@@ -1340,6 +1300,7 @@ ni6_input(m, off)
 			goto bad;
 		break;
 	case NI_QTYPE_NODEADDR:
+	case NI_QTYPE_IPV4ADDR:
 		if ((icmp6_nodeinfo & 2) == 0)
 			goto bad;
 		break;
@@ -1362,6 +1323,9 @@ ni6_input(m, off)
 					  sizeof(u_int32_t))) > MCLBYTES)
 			replylen = MCLBYTES; /* XXX: will truncate pkt later */
 		break;
+	case NI_QTYPE_IPV4ADDR:
+		/* unsupported - should respond with unknown Qtype? */
+		goto bad;
 	default:
 		/*
 		 * XXX: We must return a reply with the ICMP6 code
@@ -1828,8 +1792,7 @@ ni6_store_addrs(ni6, nni6, ifp0, resid)
 				 * We give up much more copy.
 				 * Set the truncate flag and return.
 				 */
-				nni6->ni_flags |=
-					NI_NODEADDR_FLAG_TRUNCATE;
+				nni6->ni_flags |= NI_NODEADDR_FLAG_TRUNCATE;
 				return (copied);
 			}
 
@@ -1854,8 +1817,9 @@ ni6_store_addrs(ni6, nni6, ifp0, resid)
 				ltime = ND6_INFINITE_LIFETIME;
 			else {
 				if (ifa6->ia6_lifetime.ia6t_expire >
-				    time.tv_sec)
-					ltime = ifa6->ia6_lifetime.ia6t_expire - time.tv_sec;
+				    time_second)
+					ltime = ifa6->ia6_lifetime.ia6t_expire -
+					    time_second;
 				else
 					ltime = 0;
 			}
@@ -1873,8 +1837,7 @@ ni6_store_addrs(ni6, nni6, ifp0, resid)
 			cp += sizeof(struct in6_addr);
 
 			resid -= (sizeof(struct in6_addr) + sizeof(u_int32_t));
-			copied += (sizeof(struct in6_addr) +
-				   sizeof(u_int32_t));
+			copied += (sizeof(struct in6_addr) + sizeof(u_int32_t));
 		}
 		if (ifp0)	/* we need search only on the specified IF */
 			break;
@@ -2061,7 +2024,7 @@ icmp6_reflect(m, off)
 	/*
 	 * If the incoming packet was addressed directly to us (i.e. unicast),
 	 * use dst as the src for the reply.
-	 * The IN6_IFF_NOTREADY case would be VERY rare, but is possible
+	 * The IN6_IFF_NOTREADY case should be VERY rare, but is possible
 	 * (for example) when we encounter an error while forwarding procedure
 	 * destined to a duplicated address of ours.
 	 * Note that ip6_getdstifaddr() may fail if we are in an error handling
@@ -2130,6 +2093,7 @@ icmp6_reflect(m, off)
 	} else
 		ip6->ip6_hlim = ip6_defhlim;
 
+	m->m_pkthdr.csum_flags = 0;
 	icmp6->icmp6_cksum = 0;
 	icmp6->icmp6_cksum = in6_cksum(m, IPPROTO_ICMPV6,
 					sizeof(struct ip6_hdr), plen);
@@ -2146,9 +2110,8 @@ icmp6_reflect(m, off)
 	 * Note that only echo and node information replies are affected,
 	 * since the length of ICMP6 errors is limited to the minimum MTU.
 	 */
-	if (ip6_output(m, NULL, NULL, IPV6_MINMTU,
-		(struct ip6_moptions *)NULL, (struct socket *)NULL, &outif) != 0
-	    && outif)
+	if (ip6_output(m, NULL, NULL, IPV6_MINMTU, NULL, NULL, &outif) != 0 &&
+	    outif)
 		icmp6_ifstat_inc(outif, ifs6_out_error);
 
 	if (outif)
@@ -2159,13 +2122,6 @@ icmp6_reflect(m, off)
  bad:
 	m_freem(m);
 	return;
-}
-
-void
-icmp6_fasttimo()
-{
-
-	mld6_fasttimeo();
 }
 
 static const char *
@@ -2590,7 +2546,7 @@ icmp6_redirect_output(m0, rt)
 			    m0->m_pkthdr.len);
 		} else {
 			/*
-                         * enough room, truncate if not aligned.
+			 * enough room, truncate if not aligned.
 			 * we don't pad here for simplicity.
 			 */
 			size_t extra;
@@ -2621,7 +2577,6 @@ noredhdropt:
 		m0 = NULL;
 	}
 
-	sip6 = mtod(m, struct ip6_hdr *);
 	/* XXX: clear embedded link IDs in the inner header */
 	in6_clearscope(&sip6->ip6_src);
 	in6_clearscope(&sip6->ip6_dst);
@@ -2848,6 +2803,7 @@ sysctl_net_inet6_icmp6_nd6(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_net_inet6_icmp6_setup,
 	     "sysctl net.inet6.icmp6 subtree setup")
 {
+	extern int nd6_maxqueuelen; /* defined in nd6.c */
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -2994,4 +2950,11 @@ SYSCTL_SETUP(sysctl_net_inet6_icmp6_setup,
 		       sysctl_net_inet6_icmp6_nd6, 0, NULL, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_ND6_PRLIST, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxqueuelen",
+		       SYSCTL_DESCR("max packet queue len for a unresolved ND"),
+		       NULL, 1, &nd6_maxqueuelen, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_ND6_MAXQLEN, CTL_EOL);
 }

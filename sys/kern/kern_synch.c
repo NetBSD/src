@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.160 2005/12/27 04:06:46 chs Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.160.4.1 2006/09/09 02:57:16 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.160 2005/12/27 04:06:46 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.160.4.1 2006/09/09 02:57:16 rpaulo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.160 2005/12/27 04:06:46 chs Exp $")
 #include <sys/sched.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -559,7 +560,14 @@ ltsleep(volatile const void *ident, int priority, const char *wmesg, int timo,
 	else
 		mi_switch(l, NULL);
 
-#if	defined(DDB) && !defined(GPROF)
+#ifdef KERN_SYNCH_BPENDTSLEEP_LABEL
+	/*
+	 * XXX
+	 * gcc4 optimizer will duplicate this asm statement on some arch
+	 * and it will cause a multiple symbol definition error in gas.
+	 * the kernel Makefile is setup to use -fno-reorder-blocks if
+	 * this option is set.
+	 */
 	/* handy breakpoint location after process "wakes" */
 	__asm(".globl bpendtsleep\nbpendtsleep:");
 #endif
@@ -969,8 +977,8 @@ mi_switch(struct lwp *l, struct lwp *newl)
 				rlim->rlim_cur += 5;
 		}
 	}
-	if (autonicetime && s > autonicetime && p->p_ucred->cr_uid &&
-	    p->p_nice == NZERO) {
+	if (autonicetime && s > autonicetime &&
+	    kauth_cred_geteuid(p->p_cred) && p->p_nice == NZERO) {
 		p->p_nice = autoniceval + NZERO;
 		resetpriority(l);
 	}
@@ -989,8 +997,9 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	 * If we are using h/w performance counters, save context.
 	 */
 #if PERFCTRS
-	if (PMC_ENABLED(p))
+	if (PMC_ENABLED(p)) {
 		pmc_save_context(p);
+	}
 #endif
 
 	/*
@@ -1010,8 +1019,9 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	 * If we are using h/w performance counters, restore context.
 	 */
 #if PERFCTRS
-	if (PMC_ENABLED(p))
+	if (PMC_ENABLED(p)) {
 		pmc_restore_context(p);
+	}
 #endif
 
 	/*
@@ -1312,7 +1322,7 @@ checkrunqueue(int whichq, struct lwp *l)
 	int found = 0;
 	int die = 0;
 	int empty = 1;
-	for (l2 = rq->ph_link; l2 != (void*) rq; l2 = l2->l_forw) {
+	for (l2 = rq->ph_link; l2 != (const void*) rq; l2 = l2->l_forw) {
 		if (l2->l_stat != LSRUN) {
 			printf("checkrunqueue[%d]: lwp %p state (%d) "
 			    " != LSRUN\n", whichq, l2, l2->l_stat);

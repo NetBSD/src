@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_powernow.c,v 1.2 2006/01/15 04:12:09 xtraeme Exp $	*/
+/*	$NetBSD: lkminit_powernow.c,v 1.2.4.1 2006/09/09 02:57:53 rpaulo Exp $	*/
 
 /*
  * Derived from:
@@ -37,20 +37,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.2 2006/01/15 04:12:09 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.2.4.1 2006/09/09 02:57:53 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/lkm.h>
 #include <sys/errno.h>
 #include <machine/cpu.h>
+#include <x86/include/powernow.h>
 
 int powernow_lkmentry(struct lkm_table *, int, int);
 static int powernow_mod_handle(struct lkm_table *, int);
 
 MOD_MISC("powernow");
-
-void pnowk7_destroy(void);
 
 /*
  * This function is called each time the module is loaded or unloaded.
@@ -65,8 +64,12 @@ void pnowk7_destroy(void);
 static int
 powernow_mod_handle(struct lkm_table *lkmtp, int cmd)
 {
-	int err = 0;	/* default = success */
+	uint32_t rval;
+	int featflags;
 	struct cpu_info *ci;
+	int err = 0;	/* default = success */
+
+	rval = 0;
 
 	switch (cmd) {
 	case LKM_E_LOAD:
@@ -77,11 +80,32 @@ powernow_mod_handle(struct lkm_table *lkmtp, int cmd)
 			return EEXIST;
 	
 		ci = curcpu();
-		pnowk7_init(ci);
+
+		/* Test for Athlon M first... */
+		rval = powernow_probe(ci, 0x600);
+		if (!rval)
+			/* not found... try Athlon 64 now */
+			rval = powernow_probe(ci, 0xf00);
+
+		DPRINTF(("%s: rval=%d\n", __func__, rval));
+
+		if (rval != 0) {
+			featflags = powernow_extflags(ci, rval);
+			if (featflags) {
+				if (rval == 6) /* Athlon M */
+					k7_powernow_init();
+				else if (rval == 15) /* Athlon 64 */
+					k8_powernow_init();
+			}
+		}
 		break;		/* Success */
 
 	case LKM_E_UNLOAD:
-		pnowk7_destroy();
+		if (rval == 6)
+			k7_powernow_destroy();
+		else if (rval == 15)
+			k8_powernow_destroy();
+
 		break;		/* Success */
 
 	default:	/* we only understand load/unload */

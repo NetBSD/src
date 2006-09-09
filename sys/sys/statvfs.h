@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.8 2005/12/11 12:25:21 christos Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.8.4.1 2006/09/09 02:59:42 rpaulo Exp $	 */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -121,7 +121,6 @@ struct statvfs {
 #define	ST_ASYNC	MNT_ASYNC
 #define	ST_NOCOREDUMP	MNT_NOCOREDUMP
 #define	ST_IGNORE	MNT_IGNORE
-#define	ST_MAGICLINKS	MNT_MAGICLINKS
 #define	ST_NOATIME	MNT_NOATIME
 #define	ST_SYMPERM	MNT_SYMPERM
 #define	ST_NODEVMTIME	MNT_NODEVMTIME
@@ -160,12 +159,24 @@ int	getvfsstat(struct statvfs *, size_t, int);
 int	getmntinfo(struct statvfs **, int) __RENAME(__getmntinfo13);
 #endif /* __LIBC12_SOURCE__ */
 #if defined(_NETBSD_SOURCE)
-int	fhstatvfs(const fhandle_t *, struct statvfs *);
+#ifndef __LIBC12_SOURCE__
+int	fhstatvfs(const void *, size_t, struct statvfs *) 
+    __RENAME(__fhstatvfs40);
+#endif
 
 int	statvfs1(const char *__restrict, struct statvfs *__restrict, int);
 int	fstatvfs1(int, struct statvfs *, int);
-int	fhstatvfs1(const fhandle_t *, struct statvfs *, int);
+#ifndef __LIBC12_SOURCE__
+int	fhstatvfs1(const void *, size_t, struct statvfs *, int)
+    __RENAME(__fhstatvfs140);
+#endif
 #endif /* _NETBSD_SOURCE */
 __END_DECLS
 #endif /* _KERNEL || _STANDALONE */
+
+#if defined(_KERNEL)
+#define	STATVFSBUF_GET()	malloc(sizeof(struct statvfs), M_TEMP, M_WAITOK)
+#define	STATVFSBUF_PUT(sb)	free(sb, M_TEMP);
+#endif /* defined(_KERNEL) */
+
 #endif /* !_SYS_STATVFS_H_ */

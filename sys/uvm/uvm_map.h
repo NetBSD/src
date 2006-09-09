@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.50 2006/01/21 13:34:15 yamt Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.50.2.1 2006/09/09 03:00:13 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -234,6 +234,9 @@ struct vm_map {
 };
 
 #if defined(_KERNEL)
+
+#include <sys/callback.h>
+
 struct vm_map_kernel {
 	struct vm_map vmk_map;
 	LIST_HEAD(, uvm_kmapent_hdr) vmk_kentry_free;
@@ -241,6 +244,7 @@ struct vm_map_kernel {
 	struct vm_map_entry	*vmk_merged_entries;
 			/* Merged entries, kept for later splitting */
 
+	struct callback_head vmk_reclaim_callback;
 #if !defined(PMAP_MAP_POOLPAGE)
 	struct pool vmk_vacache; /* kva cache */
 	struct pool_allocator vmk_vacache_allocator; /* ... and its allocator */
@@ -294,16 +298,6 @@ do {									\
 #endif /* _KERNEL */
 
 /*
- * handle inline options
- */
-
-#ifdef UVM_MAP_INLINE
-#define MAP_INLINE static inline
-#else
-#define MAP_INLINE /* nothing */
-#endif /* UVM_MAP_INLINE */
-
-/*
  * globals:
  */
 
@@ -317,7 +311,6 @@ extern vaddr_t	uvm_maxkaddr;
  * protos: the following prototypes define the interface to vm_map
  */
 
-MAP_INLINE
 void		uvm_map_deallocate(struct vm_map *);
 
 int		uvm_map_clean(struct vm_map *, vaddr_t, vaddr_t, int);
@@ -325,7 +318,6 @@ void		uvm_map_clip_start(struct vm_map *, struct vm_map_entry *,
 		    vaddr_t, struct uvm_mapent_reservation *);
 void		uvm_map_clip_end(struct vm_map *, struct vm_map_entry *,
 		    vaddr_t, struct uvm_mapent_reservation *);
-MAP_INLINE
 struct vm_map	*uvm_map_create(pmap_t, vaddr_t, vaddr_t, int);
 int		uvm_map_extract(struct vm_map *, vaddr_t, vsize_t,
 		    struct vm_map *, vaddr_t *, int);
@@ -338,7 +330,6 @@ int		uvm_map_advice(struct vm_map *, vaddr_t, vaddr_t, int);
 void		uvm_map_init(void);
 boolean_t	uvm_map_lookup_entry(struct vm_map *, vaddr_t,
 		    struct vm_map_entry **);
-MAP_INLINE
 void		uvm_map_reference(struct vm_map *);
 int		uvm_map_replace(struct vm_map *, vaddr_t, vaddr_t,
 		    struct vm_map_entry *, int);
@@ -347,12 +338,10 @@ int		uvm_map_reserve(struct vm_map *, vsize_t, vaddr_t, vsize_t,
 void		uvm_map_setup(struct vm_map *, vaddr_t, vaddr_t, int);
 void		uvm_map_setup_kernel(struct vm_map_kernel *,
 		    vaddr_t, vaddr_t, int);
-MAP_INLINE
 struct vm_map_kernel *
 		vm_map_to_kernel(struct vm_map *);
 int		uvm_map_submap(struct vm_map *, vaddr_t, vaddr_t,
 		    struct vm_map *);
-MAP_INLINE
 void		uvm_unmap1(struct vm_map *, vaddr_t, vaddr_t, int);
 #define	uvm_unmap(map, s, e)	uvm_unmap1((map), (s), (e), 0)
 void		uvm_unmap_detach(struct vm_map_entry *,int);
@@ -370,6 +359,8 @@ int		uvm_mapent_reserve(struct vm_map *,
 		    struct uvm_mapent_reservation *, int, int);
 void		uvm_mapent_unreserve(struct vm_map *,
 		    struct uvm_mapent_reservation *);
+
+vsize_t		uvm_mapent_overhead(vsize_t, int);
 
 int		uvm_mapent_trymerge(struct vm_map *,
 		    struct vm_map_entry *, int);
@@ -411,11 +402,11 @@ int		uvm_mapent_trymerge(struct vm_map *,
 #include <sys/proc.h>	/* for tsleep(), wakeup() */
 #include <sys/systm.h>	/* for panic() */
 
-static inline boolean_t	vm_map_lock_try(struct vm_map *);
-static inline void		vm_map_lock(struct vm_map *);
+static __inline boolean_t	vm_map_lock_try(struct vm_map *);
+static __inline void		vm_map_lock(struct vm_map *);
 extern const char vmmapbsy[];
 
-static inline boolean_t
+static __inline boolean_t
 vm_map_lock_try(struct vm_map *map)
 {
 	boolean_t rv;
@@ -438,7 +429,7 @@ vm_map_lock_try(struct vm_map *map)
 	return (rv);
 }
 
-static inline void
+static __inline void
 vm_map_lock(struct vm_map *map)
 {
 	int error;
@@ -521,6 +512,8 @@ do {									\
 	if (oflags & VM_MAP_WANTLOCK)					\
 		wakeup(&(map)->flags);					\
 } while (/*CONSTCOND*/ 0)
+
+boolean_t vm_map_starved_p(struct vm_map *);
 
 #endif /* _KERNEL */
 

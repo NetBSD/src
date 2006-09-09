@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.43 2005/12/10 23:21:38 elad Exp $	*/
+/*	$NetBSD: if_media.h,v 1.43.4.1 2006/09/09 02:58:06 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -178,6 +178,8 @@ u_quad_t	ifmedia_baudrate(int);
 #define	IFM_1000_T	16		/* 1000baseT - 4 pair cat 5 */
 #define	IFM_HPNA_1	17		/* HomePNA 1.0 (1Mb/s) */
 #define	IFM_10G_LR	18		/* 10GbaseLR - single-mode fiber */
+#define	IFM_10G_SR	19		/* 10GBase-SR 850nm Multi-mode */
+#define	IFM_10G_CX4	20		/* 10GBase CX4 copper */
 
 #define	IFM_ETH_MASTER	0x00000100	/* master mode (1000baseT) */
 #define	IFM_ETH_RXPAUSE	0x00000200	/* receive PAUSE frames */
@@ -231,10 +233,15 @@ u_quad_t	ifmedia_baudrate(int);
 #define	IFM_IEEE80211_TURBO	 0x00000800	/* Operate in Turbo mode */
 
 /* operating mode for multi-mode devices */
-#define	IFM_IEEE80211_11A	0x00010000	/* 5Ghz, OFDM mode */
+#define	IFM_IEEE80211_11A	0x00010000	/* 5 GHz, OFDM mode */
 #define	IFM_IEEE80211_11B	0x00020000	/* Direct Sequence mode */
-#define	IFM_IEEE80211_11G	0x00030000	/* 2Ghz, CCK mode */
-#define	IFM_IEEE80211_FH	0x00040000	/* 2Ghz, GFSK mode */
+#define	IFM_IEEE80211_11G	0x00030000	/* 2 GHz, CCK mode */
+#define	IFM_IEEE80211_FH	0x00040000	/* 2 GHz, GFSK mode */
+
+/*
+ * Common Access Redundancy Protocol
+ */
+#define	IFM_CARP		0x000000c0
 
 /*
  * Shared media sub-types
@@ -332,6 +339,7 @@ struct ifmedia_description {
 	{ IFM_TOKEN,			"token" },			\
 	{ IFM_FDDI,			"FDDI" },			\
 	{ IFM_IEEE80211,		"IEEE802.11" },			\
+	{ IFM_CARP,			"CARP" },			\
 	{ 0, NULL },							\
 }
 
@@ -399,6 +407,12 @@ struct ifmedia_description {
 	{ IFM_ETHER | IFM_10G_LR,	"10GbaseLR" },			\
 	{ IFM_ETHER | IFM_10G_LR,	"10GLR" },			\
 	{ IFM_ETHER | IFM_10G_LR,	"10GBASE-LR" },			\
+	{ IFM_ETHER | IFM_10G_SR,	"10GbaseSR" },			\
+	{ IFM_ETHER | IFM_10G_SR,	"10GSR" },			\
+	{ IFM_ETHER | IFM_10G_SR,	"10GBASE-SR" },			\
+	{ IFM_ETHER | IFM_10G_CX4,	"10GbaseCX4" },			\
+	{ IFM_ETHER | IFM_10G_CX4,	"10GCX4" },			\
+	{ IFM_ETHER | IFM_10G_CX4,	"10GBASE-CX4" },		\
 									\
 	{ IFM_TOKEN | IFM_TOK_STP4,	"DB9/4Mbit" },			\
 	{ IFM_TOKEN | IFM_TOK_STP4,	"4STP" },			\
@@ -519,6 +533,8 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER | IFM_1000_T,	IF_Mbps(1000) },		\
 	{ IFM_ETHER | IFM_HPNA_1,	IF_Mbps(1) },			\
 	{ IFM_ETHER | IFM_10G_LR,	IF_Gbps(10ULL) },		\
+	{ IFM_ETHER | IFM_10G_SR,	IF_Gbps(10ULL) },		\
+	{ IFM_ETHER | IFM_10G_CX4,	IF_Gbps(10ULL) },		\
 									\
 	{ IFM_TOKEN | IFM_TOK_STP4,	IF_Mbps(4) },			\
 	{ IFM_TOKEN | IFM_TOK_STP16,	IF_Mbps(16) },			\
@@ -574,6 +590,9 @@ struct ifmedia_status_description {
 									\
 	{ IFM_IEEE80211,	IFM_AVALID,	IFM_ACTIVE,		\
 	  { "no network", "active" } },					\
+									\
+	{ IFM_CARP,		IFM_AVALID,	IFM_ACTIVE,		\
+	    { "backup", "master" } },					\
 									\
 	{ 0,			0,		0,			\
 	  { NULL, NULL } },						\

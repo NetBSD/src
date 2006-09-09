@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.146.2.2 2006/02/07 04:51:49 rpaulo Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.146.2.3 2006/09/09 02:58:47 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.146.2.2 2006/02/07 04:51:49 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.146.2.3 2006/09/09 02:58:47 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -95,11 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.146.2.2 2006/02/07 04:51:49 rpaulo 
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 
-#ifdef IPSEC_NAT_T
-#include <netinet6/ipsec.h>
-#include <netinet6/esp.h>
-#endif
-
 #ifdef INET6
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
@@ -123,6 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.146.2.2 2006/02/07 04:51:49 rpaulo 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>			/* XXX ipsecstat namespace */
+#include <netipsec/esp.h>
 #ifdef INET6
 #include <netipsec/ipsec6.h>
 #endif
@@ -130,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.146.2.2 2006/02/07 04:51:49 rpaulo 
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
+#include <netinet6/esp.h>
 #include <netkey/key.h>
 #endif /*IPSEC*/
 
@@ -1177,14 +1174,12 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct lwp *l)
 {
 	struct inpcb *inp;
-	struct proc *p;
 	int s;
 	int error = 0;
 
-	p = l ? l->l_proc : NULL;
 	if (req == PRU_CONTROL)
 		return (in_control(so, (long)m, (caddr_t)nam,
-		    (struct ifnet *)control, p));
+		    (struct ifnet *)control, l));
 
 	if (req == PRU_PURGEIF) {
 		in_pcbpurgeif0(&udbtable, (struct ifnet *)control);
@@ -1237,7 +1232,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_BIND:
-		error = in_pcbbind(inp, nam, p);
+		error = in_pcbbind(inp, nam, l);
 		break;
 
 	case PRU_LISTEN:
@@ -1245,7 +1240,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_CONNECT:
-		error = in_pcbconnect(inp, nam, p);
+		error = in_pcbconnect(inp, nam, l);
 		if (error)
 			break;
 		soisconnected(so);
@@ -1287,7 +1282,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				error = EISCONN;
 				goto die;
 			}
-			error = in_pcbconnect(inp, nam, p);
+			error = in_pcbconnect(inp, nam, l);
 			if (error)
 				goto die;
 		} else {
@@ -1544,7 +1539,11 @@ udp4_espinudp(mp, off, src, so)
 	((u_int16_t *)(tag + 1))[1] = dport;
 	m_tag_prepend(n, tag);
 
+#ifdef FAST_IPSEC
+	ipsec4_common_input(n, iphdrlen);
+#else
 	esp4_input(n, iphdrlen);
+#endif
 
 	/* We handled it, it shoudln't be handled by UDP */
 	return 1;

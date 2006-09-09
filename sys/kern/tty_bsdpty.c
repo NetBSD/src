@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_bsdpty.c,v 1.5 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: tty_bsdpty.c,v 1.5.4.1 2006/09/09 02:57:17 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.5 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.5.4.1 2006/09/09 02:57:17 rpaulo Exp $");
 
 #include "opt_ptm.h"
 
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.5 2005/12/11 12:24:30 christos Exp 
 #include <sys/poll.h>
 #include <sys/malloc.h>
 #include <sys/pty.h>
+#include <sys/kauth.h>
 
 /*
  * pts == /dev/tty[pqrs]?
@@ -76,10 +77,11 @@ __KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.5 2005/12/11 12:24:30 christos Exp 
 #define TTY_OLD_SUFFIX  "0123456789abcdef"
 #define TTY_NEW_SUFFIX  "ghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-static int pty_makename(struct ptm_pty *, char *, size_t, dev_t, char);
+static int pty_makename(struct ptm_pty *, struct lwp *, char *, size_t, dev_t,
+    char);
 static int pty_allocvp(struct ptm_pty *, struct lwp *, struct vnode **,
     dev_t, char);
-static void pty_getvattr(struct ptm_pty *, struct proc *, struct vattr *);
+static void pty_getvattr(struct ptm_pty *, struct lwp *, struct vattr *);
 
 struct ptm_pty ptm_bsdpty = {
 	pty_allocvp,
@@ -90,26 +92,30 @@ struct ptm_pty ptm_bsdpty = {
 
 static int
 /*ARGSUSED*/
-pty_makename(struct ptm_pty *ptm, char *bf, size_t bufsiz, dev_t dev, char c)
+pty_makename(struct ptm_pty *ptm, struct lwp *l, char *bf, size_t bufsiz,
+    dev_t dev, char c)
 {
 	size_t nt;
 	dev_t minor = minor(dev);
+	const char *suffix;
+
 	if (bufsiz < TTY_NAMESIZE)
 		return EINVAL;
+
 	(void)memcpy(bf, TTY_TEMPLATE, TTY_NAMESIZE);
 
-	bf[5] = c;
-
 	if (minor < 256) {
+		suffix = TTY_OLD_SUFFIX;
 		nt = sizeof(TTY_OLD_SUFFIX) - 1;
-		bf[8] = TTY_LETTERS[minor / nt];
-		bf[9] = TTY_OLD_SUFFIX[minor % nt];
 	} else {
 		minor -= 256;
-		nt = sizeof(TTY_NEW_SUFFIX) - sizeof(TTY_OLD_SUFFIX);
-		bf[8] = TTY_LETTERS[minor / nt];
-		bf[9] = TTY_NEW_SUFFIX[minor % nt];
+		suffix = TTY_NEW_SUFFIX;
+		nt = sizeof(TTY_NEW_SUFFIX) - 1;
 	}
+
+	bf[5] = c;
+	bf[8] = TTY_LETTERS[minor / nt];
+	bf[9] = suffix[minor % nt];
 	return 0;
 }
 
@@ -123,7 +129,7 @@ pty_allocvp(struct ptm_pty *ptm, struct lwp *l, struct vnode **vp, dev_t dev,
 	struct nameidata nd;
 	char name[TTY_NAMESIZE];
 
-	error = (*ptm->makename)(ptm, name, sizeof(name), dev, ms);
+	error = (*ptm->makename)(ptm, l, name, sizeof(name), dev, ms);
 	if (error)
 		return error;
 
@@ -137,11 +143,11 @@ pty_allocvp(struct ptm_pty *ptm, struct lwp *l, struct vnode **vp, dev_t dev,
 
 static void
 /*ARGSUSED*/
-pty_getvattr(struct ptm_pty *ptm, struct proc *p, struct vattr *vattr)
+pty_getvattr(struct ptm_pty *ptm, struct lwp *l, struct vattr *vattr)
 {
 	VATTR_NULL(vattr);
 	/* get real uid */
-	vattr->va_uid = p->p_cred->p_ruid;
+	vattr->va_uid = kauth_cred_getuid(l->l_cred);
 	vattr->va_gid = TTY_GID;
 	vattr->va_mode = TTY_PERM;
 }

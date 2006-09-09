@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.36 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: iso.c,v 1.36.4.1 2006/09/09 02:59:08 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.36 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.36.4.1 2006/09/09 02:59:08 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.36 2005/12/11 12:25:12 christos Exp $");
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -447,9 +448,7 @@ iso_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 	struct iso_ifaddr *ia = 0;
 	struct iso_aliasreq *ifra = (struct iso_aliasreq *) data;
 	int             error, hostIsNew, maskIsNew;
-	struct proc *p;
 
-	p = l ? l->l_proc : NULL;
 	/*
 	 * Find address for this interface, if it exists.
 	 */
@@ -476,7 +475,8 @@ iso_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 	case SIOCSIFNETMASK:
 	case SIOCSIFDSTADDR:
 #endif
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
+		if (l == 0 || kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
 			return (EPERM);
 
 		if (ifp == 0)

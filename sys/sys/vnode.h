@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.152 2005/12/29 14:53:47 tsutsui Exp $	*/
+/*	$NetBSD: vnode.h,v 1.152.4.1 2006/09/09 02:59:42 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -303,15 +303,15 @@ void holdrelel(struct vnode *);
 void vholdl(struct vnode *);
 void vref(struct vnode *);
 
-static inline void holdrele(struct vnode *) __attribute__((__unused__));
-static inline void vhold(struct vnode *) __attribute__((__unused__));
+static __inline void holdrele(struct vnode *) __attribute__((__unused__));
+static __inline void vhold(struct vnode *) __attribute__((__unused__));
 
 #define	VATTR_NULL(vap)	vattr_null(vap)
 
 /*
  * decrease buf or page ref
  */
-static inline void
+static __inline void
 holdrele(struct vnode *vp)
 {
 
@@ -323,7 +323,7 @@ holdrele(struct vnode *vp)
 /*
  * increase buf or page ref
  */
-static inline void
+static __inline void
 vhold(struct vnode *vp)
 {
 
@@ -515,7 +515,6 @@ struct filedesc;
 struct nameidata;
 struct proc;
 struct stat;
-struct ucred;
 struct uio;
 struct vattr;
 struct vnode;
@@ -528,7 +527,7 @@ struct vnode *
 int 	getnewvnode(enum vtagtype, struct mount *, int (**)(void *),
 	    struct vnode **);
 void	ungetnewvnode(struct vnode *);
-int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, struct ucred *);
+int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, kauth_cred_t);
 void 	vattr_null(struct vattr *);
 int 	vcount(struct vnode *);
 void	vdevgone(int, int, int, enum vtype);
@@ -538,8 +537,7 @@ void	vflushbuf(struct vnode *, int);
 int 	vget(struct vnode *, int);
 void 	vgone(struct vnode *);
 void	vgonel(struct vnode *, struct lwp *);
-int	vinvalbuf(struct vnode *, int, struct ucred *,
-	    struct lwp *, int, int);
+int	vinvalbuf(struct vnode *, int, kauth_cred_t, struct lwp *, int, int);
 void	vprint(const char *, struct vnode *);
 void 	vput(struct vnode *);
 int	vrecycle(struct vnode *, struct simplelock *, struct lwp *);
@@ -549,16 +547,16 @@ void	vwakeup(struct buf *);
 
 /* see vnsubr(9) */
 int	vn_bwrite(void *);
-int 	vn_close(struct vnode *, int, struct ucred *, struct lwp *);
+int 	vn_close(struct vnode *, int, kauth_cred_t, struct lwp *);
 int	vn_isunder(struct vnode *, struct vnode *, struct lwp *);
 int	vn_lock(struct vnode *, int);
 void	vn_markexec(struct vnode *);
 int	vn_marktext(struct vnode *);
 int 	vn_open(struct nameidata *, int, int);
 int 	vn_rdwr(enum uio_rw, struct vnode *, caddr_t, int, off_t, enum uio_seg,
-	    int, struct ucred *, size_t *, struct lwp *);
+    int, kauth_cred_t, size_t *, struct lwp *);
 int	vn_readdir(struct file *, char *, int, u_int, int *, struct lwp *,
-	    off_t **, int *);
+    off_t **, int *);
 void	vn_restorerecurse(struct vnode *, u_int);
 u_int	vn_setrecurse(struct vnode *);
 int	vn_stat(struct vnode *, struct stat *, struct lwp *);
@@ -591,6 +589,7 @@ void	vfs_getnewfsid(struct mount *);
 int	vfs_drainvnodes(long target, struct lwp *);
 void	vfs_write_resume(struct mount *);
 int	vfs_write_suspend(struct mount *, int, int);
+void	vfs_timestamp(struct timespec *);
 #ifdef DDB
 void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...));
 void	vfs_mount_print(struct mount *, int, void (*)(const char *, ...));

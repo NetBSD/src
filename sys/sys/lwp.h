@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.32 2005/12/24 19:01:28 perry Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.32.4.1 2006/09/09 02:59:42 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,9 @@ struct	lwp {
 	int	l_stat;
 	lwpid_t	l_lid;		/* LWP identifier; local to process. */
 
-#define l_startzero l_swtime
+#define l_startzero l_cred
+	struct kauth_cred *l_cred;	/* Cached credentials */
+	u_short	l_acflag;	/* Accounting flags */
 	u_int	l_swtime;	/* Time swapped in or out. */
 	u_int	l_slptime;	/* Time since last blocked. */
 
@@ -92,6 +94,14 @@ struct	lwp {
 	struct	mdlwp l_md;	/* Any machine-dependent fields. */
 };
 
+#if !defined(USER_TO_UAREA)
+#if !defined(UAREA_USER_OFFSET)
+#define	UAREA_USER_OFFSET	0
+#endif /* !defined(UAREA_USER_OFFSET) */
+#define	USER_TO_UAREA(user)	((vaddr_t)(user) - UAREA_USER_OFFSET)
+#define	UAREA_TO_USER(uarea)	((struct user *)((uarea) + UAREA_USER_OFFSET))
+#endif /* !defined(UAREA_TO_USER) */
+
 LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 
 #ifdef _KERNEL
@@ -103,17 +113,17 @@ extern struct pool lwp_uc_pool;		/* memory pool for LWP startup args */
 extern struct lwp lwp0;			/* LWP for proc0 */
 #endif
 
-/* These flags are kept in l_flag. */
-#define	L_INMEM		0x00004	/* Loaded into memory. */
-#define	L_SELECT	0x00040	/* Selecting; wakeup/waiting danger. */
-#define	L_SINTR		0x00080	/* Sleep is interruptible. */
-#define	L_TIMEOUT	0x00400	/* Timing out during sleep. */
-#define	L_SA		0x100000 /* Scheduler activations LWP */
-#define	L_SA_UPCALL	0x200000 /* SA upcall is pending */
-#define	L_SA_BLOCKING	0x400000 /* Blocking in tsleep() */
-#define	L_DETACHED	0x800000 /* Won't be waited for. */
-#define	L_CANCELLED	0x2000000 /* tsleep should not sleep */
-#define	L_SA_PAGEFAULT	0x4000000 /* SA LWP in pagefault handler */
+/* These flags are kept in l_flag. [*] is shared with p_flag */
+#define	L_INMEM		0x00000004 /* [*] Loaded into memory. */
+#define	L_SELECT	0x00000040 /* [*] Selecting; wakeup/waiting danger. */
+#define	L_SINTR		0x00000080 /* [*] Sleep is interruptible. */
+#define	L_SA		0x00000400 /* [*] Scheduler activations LWP */
+#define	L_SA_UPCALL	0x00200000 /* SA upcall is pending */
+#define	L_SA_BLOCKING	0x00400000 /* Blocking in tsleep() */
+#define	L_DETACHED	0x00800000 /* Won't be waited for. */
+#define	L_CANCELLED	0x02000000 /* tsleep should not sleep */
+#define	L_SA_PAGEFAULT	0x04000000 /* SA LWP in pagefault handler */
+#define	L_TIMEOUT	0x08000000 /* Timing out during sleep. */
 #define	L_SA_YIELD	0x10000000 /* LWP on VP is yielding */
 #define	L_SA_IDLE	0x20000000 /* VP is idle */
 #define	L_COWINPROGRESS	0x40000000 /* UFS: doing copy on write */
@@ -144,6 +154,11 @@ do {									\
 } while (/* CONSTCOND */ 0)
 #define	PRELE(l)	(--(l)->l_holdcnt)
 
+#define	LWP_CACHE_CREDS(l, p)						\
+do {									\
+	if ((l)->l_cred != (p)->p_cred)					\
+		lwp_update_creds(l);					\
+} while (/* CONSTCOND */ 0)
 
 void	preempt (int);
 int	mi_switch (struct lwp *, struct lwp *);
@@ -179,7 +194,9 @@ void	upcallret(struct lwp *);
 void	lwp_exit (struct lwp *);
 void	lwp_exit2 (struct lwp *);
 struct lwp *proc_representative_lwp(struct proc *);
-inline int lwp_suspend(struct lwp *, struct lwp *);
+__inline int lwp_suspend(struct lwp *, struct lwp *);
+int	lwp_create1(struct lwp *, const void *, size_t, u_long, lwpid_t *);
+void	lwp_update_creds(struct lwp *);
 #endif	/* _KERNEL */
 
 /* Flags for _lwp_create(), as per Solaris. */
@@ -189,4 +206,3 @@ inline int lwp_suspend(struct lwp *, struct lwp *);
 #define __LWP_ASLWP     0x00000100 /* XXX more icky signal semantics */
 
 #endif	/* !_SYS_LWP_H_ */
-

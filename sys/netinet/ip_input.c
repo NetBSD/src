@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.223 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.223.4.1 2006/09/09 02:58:47 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.223 2005/12/24 20:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.223.4.1 2006/09/09 02:58:47 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -414,7 +414,7 @@ ip_init(void)
 	for (i = 0; i < IPREASS_NHASH; i++)
 	    	LIST_INIT(&ipq[i]);
 
-	ip_id = time.tv_sec & 0xfffff;
+	ip_id = time_second & 0xfffff;
 
 	ipintrq.ifq_maxlen = ipqmaxlen;
 	ip_nmbclusters_changed();
@@ -445,7 +445,10 @@ ip_init(void)
 #endif /* MBUFTRACE */
 }
 
-struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
+struct	sockaddr_in ipaddr = {
+	.sin_len = sizeof(ipaddr),
+	.sin_family = AF_INET,
+};
 struct	route ipforward_rt;
 
 /*
@@ -732,7 +735,7 @@ ip_input(struct mbuf *m)
 	}
 	if (ia != NULL)
 		goto ours;
-	if (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST) {
+	if (m->m_pkthdr.rcvif && m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST) {
 		IFADDR_FOREACH(ifa, m->m_pkthdr.rcvif) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
@@ -974,7 +977,7 @@ found:
 		goto bad;
 	}
 #endif
-#if FAST_IPSEC
+#ifdef FAST_IPSEC
 	/*
 	 * enforce IPsec policy checking if we are seeing last header.
 	 * note that we do not visit this with protocols with pcb layer
@@ -1839,10 +1842,10 @@ ip_forward(struct mbuf *m, int srcrt)
 
 	dest = 0;
 #ifdef DIAGNOSTIC
-	if (ipprintfs)
-		printf("forward: src %2.2x dst %2.2x ttl %x\n",
-		    ntohl(ip->ip_src.s_addr),
-		    ntohl(ip->ip_dst.s_addr), ip->ip_ttl);
+	if (ipprintfs) {
+		printf("forward: src %s ", inet_ntoa(ip->ip_src));
+		printf("dst %s ttl %x\n", inet_ntoa(ip->ip_dst), ip->ip_ttl);
+	}
 #endif
 	if (m->m_flags & (M_BCAST|M_MCAST) || in_canforward(ip->ip_dst) == 0) {
 		ipstat.ips_cantforward++;
@@ -2093,6 +2096,30 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 }
 
 /*
+ * sysctl helper routine for net.inet.ip.forwsrcrt.
+ */
+static int
+sysctl_net_inet_ip_forwsrcrt(SYSCTLFN_ARGS)
+{
+	int error, tmp;
+	struct sysctlnode node;
+
+	node = *rnode;
+	tmp = ip_forwsrcrt;
+	node.sysctl_data = &tmp;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (securelevel > 0)
+		return (EPERM);
+
+	ip_forwsrcrt = tmp;
+
+	return (0);
+}
+
+/*
  * sysctl helper routine for net.inet.ip.mtudisctimeout.  checks the
  * range of the new value and tweaks timers if it changes.
  */
@@ -2193,11 +2220,11 @@ SYSCTL_SETUP(sysctl_net_inet_ip_setup, "sysctl net.inet.ip subtree setup")
 		       IPCTL_DEFMTU, CTL_EOL);
 #endif /* IPCTL_DEFMTU */
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READONLY1,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "forwsrcrt",
 		       SYSCTL_DESCR("Enable forwarding of source-routed "
 				    "datagrams"),
-		       NULL, 0, &ip_forwsrcrt, 0,
+		       sysctl_net_inet_ip_forwsrcrt, 0, &ip_forwsrcrt, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_FORWSRCRT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.84 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.84.4.1 2006/09/09 02:57:16 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.84 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.84.4.1 2006/09/09 02:57:16 rpaulo Exp $");
 
 #include "opt_ktrace.h"
 
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.84 2005/12/11 12:24:30 christos Ex
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#include <uvm/uvm_extern.h>
 
 int selscan(struct lwp *, fd_mask *, fd_mask *, int, register_t *);
 int pollscan(struct lwp *, struct pollfd *, int, register_t *);
@@ -109,13 +111,18 @@ dofileread(struct lwp *l, int fd, struct file *fp, void *buf, size_t nbyte,
 	struct iovec aiov;
 	struct uio auio;
 	struct proc *p;
+	struct vmspace *vm;
 	size_t cnt;
 	int error;
 #ifdef KTRACE
-	struct iovec	ktriov = {0};
+	struct iovec	ktriov = { .iov_base = NULL, };
 #endif
 	p = l->l_proc;
-	error = 0;
+
+	error = proc_vmspace_getref(p, &vm);
+	if (error) {
+		goto out;
+	}
 
 	aiov.iov_base = (caddr_t)buf;
 	aiov.iov_len = nbyte;
@@ -123,8 +130,7 @@ dofileread(struct lwp *l, int fd, struct file *fp, void *buf, size_t nbyte,
 	auio.uio_iovcnt = 1;
 	auio.uio_resid = nbyte;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_lwp = l;
+	auio.uio_vmspace = vm;
 
 	/*
 	 * Reads return ssize_t because -1 is returned on error.  Therefore
@@ -157,6 +163,7 @@ dofileread(struct lwp *l, int fd, struct file *fp, void *buf, size_t nbyte,
 	*retval = cnt;
  out:
 	FILE_UNUSE(fp, l);
+	uvmspace_free(vm);
 	return (error);
 }
 
@@ -202,6 +209,7 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	struct proc *p;
 	struct uio	auio;
 	struct iovec	*iov, *needfree, aiov[UIO_SMALLIOV];
+	struct vmspace	*vm;
 	int		i, error;
 	size_t		cnt;
 	u_int		iovlen;
@@ -210,7 +218,11 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 #endif
 
 	p = l->l_proc;
-	error = 0;
+	error = proc_vmspace_getref(p, &vm);
+	if (error) {
+		goto out;
+	}
+
 #ifdef KTRACE
 	ktriov = NULL;
 #endif
@@ -234,8 +246,7 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_lwp = l;
+	auio.uio_vmspace = vm;
 	error = copyin(iovp, iov, iovlen);
 	if (error)
 		goto done;
@@ -282,6 +293,7 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 		free(needfree, M_IOV);
  out:
 	FILE_UNUSE(fp, l);
+	uvmspace_free(vm);
 	return (error);
 }
 
@@ -327,22 +339,25 @@ dofilewrite(struct lwp *l, int fd, struct file *fp, const void *buf,
 	struct iovec aiov;
 	struct uio auio;
 	struct proc *p;
+	struct vmspace *vm;
 	size_t cnt;
 	int error;
 #ifdef KTRACE
-	struct iovec	ktriov = {0};
+	struct iovec	ktriov = { .iov_base = NULL, };
 #endif
 
 	p = l->l_proc;
-	error = 0;
+	error = proc_vmspace_getref(p, &vm);
+	if (error) {
+		goto out;
+	}
 	aiov.iov_base = __UNCONST(buf);		/* XXXUNCONST kills const */
 	aiov.iov_len = nbyte;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_resid = nbyte;
 	auio.uio_rw = UIO_WRITE;
-	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_lwp = l;
+	auio.uio_vmspace = vm;
 
 	/*
 	 * Writes return ssize_t because -1 is returned on error.  Therefore
@@ -378,6 +393,7 @@ dofilewrite(struct lwp *l, int fd, struct file *fp, const void *buf,
 	*retval = cnt;
  out:
 	FILE_UNUSE(fp, l);
+	uvmspace_free(vm);
 	return (error);
 }
 
@@ -423,6 +439,7 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	struct proc	*p;
 	struct uio	auio;
 	struct iovec	*iov, *needfree, aiov[UIO_SMALLIOV];
+	struct vmspace	*vm;
 	int		i, error;
 	size_t		cnt;
 	u_int		iovlen;
@@ -431,7 +448,10 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 #endif
 
 	p = l->l_proc;
-	error = 0;
+	error = proc_vmspace_getref(p, &vm);
+	if (error) {
+		goto out;
+	}
 #ifdef KTRACE
 	ktriov = NULL;
 #endif
@@ -455,8 +475,7 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_WRITE;
-	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_lwp = l;
+	auio.uio_vmspace = vm;
 	error = copyin(iovp, iov, iovlen);
 	if (error)
 		goto done;
@@ -506,6 +525,7 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 		free(needfree, M_IOV);
  out:
 	FILE_UNUSE(fp, l);
+	uvmspace_free(vm);
 	return (error);
 }
 
@@ -698,6 +718,33 @@ sys_pselect(struct lwp *l, void *v, register_t *retval)
 }
 
 int
+inittimeleft(struct timeval *tv, struct timeval *sleeptv)
+{
+	if (itimerfix(tv))
+		return -1;
+	getmicrouptime(sleeptv);
+	return 0;
+}
+
+int
+gettimeleft(struct timeval *tv, struct timeval *sleeptv)
+{
+	/*
+	 * We have to recalculate the timeout on every retry.
+	 */
+	struct timeval slepttv;
+	/*
+	 * reduce tv by elapsed time
+	 * based on monotonic time scale
+	 */
+	getmicrouptime(&slepttv);
+	timeradd(tv, sleeptv, tv);
+	timersub(tv, &slepttv, tv);
+	*sleeptv = slepttv;
+	return tvtohz(tv);
+}
+
+int
 sys_select(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_select_args /* {
@@ -726,13 +773,14 @@ int
 selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 	fd_set *u_ou, fd_set *u_ex, struct timeval *tv, sigset_t *mask)
 {
-	struct proc	* const p = l->l_proc;
-	caddr_t		bits;
 	char		smallbits[howmany(FD_SETSIZE, NFDBITS) *
 			    sizeof(fd_mask) * 6];
+	struct proc	* const p = l->l_proc;
+	caddr_t		bits;
 	int		s, ncoll, error, timo;
 	size_t		ni;
 	sigset_t	oldmask;
+	struct timeval  sleeptv;
 
 	error = 0;
 	if (nd < 0)
@@ -760,15 +808,11 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 #undef	getbits
 
 	timo = 0;
-	if (tv) {
-		if (itimerfix(tv)) {
-			error = EINVAL;
-			goto done;
-		}
-		s = splclock();
-		timeradd(tv, &time, tv);
-		splx(s);
+	if (tv && inittimeleft(tv, &sleeptv) == -1) {
+		error = EINVAL;
+		goto done;
 	}
+
 	if (mask)
 		(void)sigprocmask1(p, SIG_SETMASK, mask, &oldmask);
 
@@ -779,14 +823,8 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 			   (fd_mask *)(bits + ni * 3), nd, retval);
 	if (error || *retval)
 		goto done;
-	if (tv) {
-		/*
-		 * We have to recalculate the timeout on every retry.
-		 */
-		timo = hzto(tv);
-		if (timo <= 0)
-			goto done;
-	}
+	if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
+		goto done;
 	s = splsched();
 	if ((l->l_flag & L_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
@@ -926,12 +964,13 @@ pollcommon(struct lwp *l, register_t *retval,
 	struct pollfd *u_fds, u_int nfds,
 	struct timeval *tv, sigset_t *mask)
 {
+	char		smallbits[32 * sizeof(struct pollfd)];
 	struct proc	* const p = l->l_proc;
 	caddr_t		bits;
-	char		smallbits[32 * sizeof(struct pollfd)];
 	sigset_t	oldmask;
 	int		s, ncoll, error, timo;
 	size_t		ni;
+	struct timeval	sleeptv;
 
 	if (nfds > p->p_fd->fd_nfiles) {
 		/* forgiving; slightly wrong */
@@ -948,15 +987,11 @@ pollcommon(struct lwp *l, register_t *retval,
 		goto done;
 
 	timo = 0;
-	if (tv) {
-		if (itimerfix(tv)) {
-			error = EINVAL;
-			goto done;
-		}
-		s = splclock();
-		timeradd(tv, &time, tv);
-		splx(s);
+	if (tv && inittimeleft(tv, &sleeptv) == -1) {
+		error = EINVAL;
+		goto done;
 	}
+
 	if (mask != NULL)
 		(void)sigprocmask1(p, SIG_SETMASK, mask, &oldmask);
 
@@ -966,14 +1001,8 @@ pollcommon(struct lwp *l, register_t *retval,
 	error = pollscan(l, (struct pollfd *)bits, nfds, retval);
 	if (error || *retval)
 		goto done;
-	if (tv) {
-		/*
-		 * We have to recalculate the timeout on every retry.
-		 */
-		timo = hzto(tv);
-		if (timo <= 0)
-			goto done;
-	}
+	if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
+		goto done;
 	s = splsched();
 	if ((l->l_flag & L_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);

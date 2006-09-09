@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_id.c,v 1.14 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: ip6_id.c,v 1.14.4.1 2006/09/09 02:58:55 rpaulo Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -82,11 +82,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.14 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.14.4.1 2006/09/09 02:58:55 rpaulo Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <lib/libkern/libkern.h>
 
 #include <net/if.h>
@@ -102,7 +100,7 @@ struct randomtab {
 	const u_int32_t ru_n;	/* ru_n: prime, ru_n - 1: product of pfacts[] */
 	const u_int32_t ru_agen; /* determine ru_a as ru_agen^(2*rand) */
 	const u_int32_t ru_m;	/* ru_m = 2^x*3^y */
-	const u_int32_t pfacts[4];	/* factors of ru_n */
+	const u_int32_t ru_pfacts[4];	/* factors of ru_n */
 
 	u_int32_t ru_counter;
 	u_int32_t ru_msb;
@@ -115,25 +113,25 @@ struct randomtab {
 };
 
 static struct randomtab randomtab_32 = {
-	32,			/* resulting bits */
-	180,			/* Time after wich will be reseeded */
-	1000000000,		/* Uniq cycle, avoid blackjack prediction */
-	2,			/* Starting generator */
-	2147483629,		/* RU_N-1 = 2^2*3^2*59652323 */
-	7,			/* determine ru_a as RU_AGEN^(2*rand) */
-	1836660096,		/* RU_M = 2^7*3^15 - don't change */
-	{ 2, 3, 59652323, 0 },	/* factors of ru_n */
+	.ru_bits = 32,		/* resulting bits */
+	.ru_out = 180,		/* Time after wich will be reseeded */
+	.ru_max = 1000000000,	/* Uniq cycle, avoid blackjack prediction */
+	.ru_gen = 2,		/* Starting generator */
+	.ru_n = 2147483629,	/* RU_N-1 = 2^2*3^2*59652323 */
+	.ru_agen = 7,		/* determine ru_a as RU_AGEN^(2*rand) */
+	.ru_m = 1836660096,	/* RU_M = 2^7*3^15 - don't change */
+	.ru_pfacts = { 2, 3, 59652323, 0 },	/* factors of ru_n */
 };
 
 static struct randomtab randomtab_20 = {
-	20,			/* resulting bits */
-	180,			/* Time after wich will be reseeded */
-	200000,			/* Uniq cycle, avoid blackjack prediction */
-	2,			/* Starting generator */
-	524269,			/* RU_N-1 = 2^2*3^2*14563 */
-	7,			/* determine ru_a as RU_AGEN^(2*rand) */
-	279936,			/* RU_M = 2^7*3^7 - don't change */
-	{ 2, 3, 14563, 0 },	/* factors of ru_n */
+	.ru_bits = 20,		/* resulting bits */
+	.ru_out = 180,		/* Time after wich will be reseeded */
+	.ru_max = 200000,	/* Uniq cycle, avoid blackjack prediction */
+	.ru_gen = 2,		/* Starting generator */
+	.ru_n = 524269,		/* RU_N-1 = 2^2*3^2*14563 */
+	.ru_agen = 7,		/* determine ru_a as RU_AGEN^(2*rand) */
+	.ru_m = 279936,		/* RU_M = 2^7*3^7 - don't change */
+	.ru_pfacts = { 2, 3, 14563, 0 },	/* factors of ru_n */
 };
 
 static u_int32_t pmod(u_int32_t, u_int32_t, u_int32_t);
@@ -198,11 +196,11 @@ initid(struct randomtab *p)
 	 * RU_GEN^j mod RU_N
 	 */
 	while (noprime) {
-		for (i = 0; p->pfacts[i] > 0; i++)
-			if (j % p->pfacts[i] == 0)
+		for (i = 0; p->ru_pfacts[i] > 0; i++)
+			if (j % p->ru_pfacts[i] == 0)
 				break;
 
-		if (p->pfacts[i] == 0)
+		if (p->ru_pfacts[i] == 0)
 			noprime = 0;
 		else
 			j = (j + 1) % p->ru_n;
@@ -211,7 +209,7 @@ initid(struct randomtab *p)
 	p->ru_g = pmod(p->ru_gen, j, p->ru_n);
 	p->ru_counter = 0;
 
-	p->ru_reseed = time.tv_sec + p->ru_out;
+	p->ru_reseed = time_second + p->ru_out;
 	p->ru_msb = p->ru_msb ? 0 : (1U << (p->ru_bits - 1));
 }
 
@@ -220,7 +218,7 @@ randomid(struct randomtab *p)
 {
 	int i, n;
 
-	if (p->ru_counter >= p->ru_max || time.tv_sec > p->ru_reseed)
+	if (p->ru_counter >= p->ru_max || time_second > p->ru_reseed)
 		initid(p);
 
 	/* Skip a random number of ids */

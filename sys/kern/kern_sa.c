@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.70 2005/12/24 19:12:23 perry Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.70.4.1 2006/09/09 02:57:16 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,8 @@
 #include <sys/cdefs.h>
 
 #include "opt_ktrace.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.70 2005/12/24 19:12:23 perry Exp $");
+#include "opt_multiprocessor.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.70.4.1 2006/09/09 02:57:16 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.70 2005/12/24 19:12:23 perry Exp $");
 #include <sys/proc.h>
 #include <sys/types.h>
 #include <sys/ucontext.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
@@ -55,6 +56,15 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.70 2005/12/24 19:12:23 perry Exp $");
 #include <sys/ktrace.h>
 
 #include <uvm/uvm_extern.h>
+
+static POOL_INIT(sadata_pool, sizeof(struct sadata), 0, 0, 0, "sadatapl",
+    &pool_allocator_nointr); /* memory pool for sadata structures */
+static POOL_INIT(saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0,
+    "saupcpl", &pool_allocator_nointr); /* memory pool for pending upcalls */
+static POOL_INIT(sastack_pool, sizeof(struct sastack), 0, 0, 0, "sastackpl",
+    &pool_allocator_nointr); /* memory pool for sastack structs */
+static POOL_INIT(savp_pool, sizeof(struct sadata_vp), 0, 0, 0, "savppl",
+    &pool_allocator_nointr); /* memory pool for sadata_vp structures */
 
 static struct sadata_vp *sa_newsavp(struct sadata *);
 static inline int sa_stackused(struct sastack *, struct sadata *);
@@ -76,8 +86,6 @@ static inline int sa_pagefault(struct lwp *, ucontext_t *);
 static void sa_upcall0(struct sadata_upcall *, int, struct lwp *, struct lwp *,
     size_t, void *, void (*)(void *));
 static void sa_upcall_getstate(union sau_state *, struct lwp *);
-
-MALLOC_DEFINE(M_SA, "sa", "Scheduler activations");
 
 #define SA_DEBUG
 
@@ -187,10 +195,26 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) flags;
 		syscallarg(ssize_t) stackinfo_offset;
 	} */ *uap = v;
+	int error;
+	sa_upcall_t prev;
+
+	error = dosa_register(l, SCARG(uap, new), &prev, SCARG(uap, flags),
+	    SCARG(uap, stackinfo_offset));
+	if (error)
+		return error;
+
+	if (SCARG(uap, old))
+		return copyout(&prev, SCARG(uap, old),
+		    sizeof(prev));
+	return 0;
+}
+
+int
+dosa_register(struct lwp *l, sa_upcall_t new, sa_upcall_t *prev, int flags,
+    ssize_t stackinfo_offset)
+{
 	struct proc *p = l->l_proc;
 	struct sadata *sa;
-	sa_upcall_t prev;
-	int error;
 
 	if (p->p_sa == NULL) {
 		/* Allocate scheduler activations data structure */
@@ -198,13 +222,13 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 		/* Initialize. */
 		memset(sa, 0, sizeof(*sa));
 		simple_lock_init(&sa->sa_lock);
-		sa->sa_flag = SCARG(uap, flags) & SA_FLAG_ALL;
+		sa->sa_flag = flags & SA_FLAG_ALL;
 		sa->sa_maxconcurrency = 1;
 		sa->sa_concurrency = 1;
 		SPLAY_INIT(&sa->sa_stackstree);
 		sa->sa_stacknext = NULL;
-		if (SCARG(uap, flags) & SA_FLAG_STACKINFO)
-			sa->sa_stackinfo_offset = SCARG(uap, stackinfo_offset);
+		if (flags & SA_FLAG_STACKINFO)
+			sa->sa_stackinfo_offset = stackinfo_offset;
 		else
 			sa->sa_stackinfo_offset = 0;
 		sa->sa_nstacks = 0;
@@ -217,14 +241,8 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 		sa_newcachelwp(l);
 	}
 
-	prev = p->p_sa->sa_upcall;
-	p->p_sa->sa_upcall = SCARG(uap, new);
-	if (SCARG(uap, old)) {
-		error = copyout(&prev, SCARG(uap, old),
-		    sizeof(prev));
-		if (error)
-			return (error);
-	}
+	*prev = p->p_sa->sa_upcall;
+	p->p_sa->sa_upcall = new;
 
 	return (0);
 }
@@ -262,16 +280,25 @@ sa_release(struct proc *p)
 	}
 }
 
+static int
+sa_fetchstackgen(struct sastack *sast, struct sadata *sa, unsigned int *gen)
+{
+	int error;
+
+	/* COMPAT_NETBSD32:  believe it or not, but the following is ok */
+	error = copyin(&((struct sa_stackinfo_t *)
+	    ((char *)sast->sast_stack.ss_sp +
+	    sa->sa_stackinfo_offset))->sasi_stackgen, gen, sizeof(*gen));
+
+	return error;
+}
 
 static inline int
 sa_stackused(struct sastack *sast, struct sadata *sa)
 {
 	unsigned int gen;
 
-	if (copyin((void *)&((struct sa_stackinfo_t *)
-		       ((char *)sast->sast_stack.ss_sp +
-			   sa->sa_stackinfo_offset))->sasi_stackgen,
-		&gen, sizeof(unsigned int)) != 0) {
+	if (sa_fetchstackgen(sast, sa, &gen)) {
 #ifdef DIAGNOSTIC
 		printf("sa_stackused: couldn't copyin sasi_stackgen");
 #endif
@@ -284,17 +311,16 @@ sa_stackused(struct sastack *sast, struct sadata *sa)
 static inline void
 sa_setstackfree(struct sastack *sast, struct sadata *sa)
 {
+	unsigned int gen;
 
-	if (copyin((void *)&((struct sa_stackinfo_t *)
-		       ((char *)sast->sast_stack.ss_sp +
-			   sa->sa_stackinfo_offset))->sasi_stackgen,
-		&sast->sast_gen, sizeof(unsigned int)) != 0) {
+	if (sa_fetchstackgen(sast, sa, &gen)) {
 #ifdef DIAGNOSTIC
 		printf("sa_setstackfree: couldn't copyin sasi_stackgen");
 #endif
 		sigexit(curlwp, SIGILL);
 		/* NOTREACHED */
 	}
+	sast->sast_gen = gen;
 }
 
 /*
@@ -354,6 +380,12 @@ sast_compare(struct sastack *a, struct sastack *b)
 	return (0);
 }
 
+static int
+sa_copyin_stack(stack_t *stacks, int index, stack_t *dest)
+{
+	return copyin(stacks + index, dest, sizeof(stack_t));
+}
+
 int
 sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 {
@@ -361,6 +393,14 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) num;
 		syscallarg(stack_t *) stacks;
 	} */ *uap = v;
+
+	return sa_stacks1(l, retval, SCARG(uap, num), SCARG(uap, stacks), sa_copyin_stack);
+}
+
+int
+sa_stacks1(struct lwp *l, register_t *retval, int num, stack_t *stacks,
+    sa_copyin_stack_t do_sa_copyin_stack)
+{
 	struct sadata *sa = l->l_proc->p_sa;
 	struct sastack *sast, newsast;
 	int count, error, f, i;
@@ -369,7 +409,7 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 	if (sa == NULL)
 		return (EINVAL);
 
-	count = SCARG(uap, num);
+	count = num;
 	if (count < 0)
 		return (EINVAL);
 
@@ -378,13 +418,13 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 	error = 0;
 
 	for (i = 0; i < count; i++) {
-		error = copyin(SCARG(uap, stacks) + i, &newsast.sast_stack,
-		    sizeof(stack_t));
+		error = do_sa_copyin_stack(stacks, i, &newsast.sast_stack);
 		if (error) {
 			count = i;
 			break;
 		}
-		if ((sast = SPLAY_FIND(sasttree, &sa->sa_stackstree, &newsast))) {
+		sast = SPLAY_FIND(sasttree, &sa->sa_stackstree, &newsast);
+		if (sast != NULL) {
 			DPRINTFN(9, ("sa_stacks(%d.%d) returning stack %p\n",
 				     l->l_proc->p_pid, l->l_lid,
 				     newsast.sast_stack.ss_sp));
@@ -393,10 +433,12 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 				error = EEXIST;
 				break;
 			}
-		} else if (sa->sa_nstacks >= SA_MAXNUMSTACKS * sa->sa_concurrency) {
-			DPRINTFN(9, ("sa_stacks(%d.%d) already using %d stacks\n",
-				     l->l_proc->p_pid, l->l_lid,
-				     SA_MAXNUMSTACKS * sa->sa_concurrency));
+		} else if (sa->sa_nstacks >=
+		    SA_MAXNUMSTACKS * sa->sa_concurrency) {
+			DPRINTFN(9,
+			    ("sa_stacks(%d.%d) already using %d stacks\n",
+			    l->l_proc->p_pid, l->l_lid,
+			    SA_MAXNUMSTACKS * sa->sa_concurrency));
 			count = i;
 			error = ENOMEM;
 			break;
@@ -611,8 +653,10 @@ sys_sa_yield(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 
 	if (p->p_sa == NULL || !(p->p_flag & P_SA)) {
-		DPRINTFN(1,("sys_sa_yield(%d.%d) proc %p not SA (p_sa %p, flag %s)\n",
-		    p->p_pid, l->l_lid, p, p->p_sa, p->p_flag & P_SA ? "T" : "F"));
+		DPRINTFN(1,
+		    ("sys_sa_yield(%d.%d) proc %p not SA (p_sa %p, flag %s)\n",
+		    p->p_pid, l->l_lid, p, p->p_sa,
+		    p->p_flag & P_SA ? "T" : "F"));
 		return (EINVAL);
 	}
 
@@ -677,7 +721,7 @@ sa_yield(struct lwp *l)
 		sa->sa_concurrency--;
 		simple_unlock(&sa->sa_lock);
 
-		ret = tsleep((caddr_t) l, PUSER | PCATCH, "sawait", 0);
+		ret = tsleep(l, PUSER | PCATCH, "sawait", 0);
 
 		simple_lock(&sa->sa_lock);
 		sa->sa_concurrency++;
@@ -736,7 +780,7 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	struct sadata *sa = l->l_proc->p_sa;
 	struct sadata_vp *vp = l->l_savp;
 	struct sastack *sast;
-	int f;
+	int f, error;
 
 	/* XXX prevent recursive upcalls if we sleep for memory */
 	SA_LWP_STATE_LOCK(l, f);
@@ -747,6 +791,13 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	}
 	DPRINTFN(9,("sa_upcall(%d.%d) using stack %p\n",
 	    l->l_proc->p_pid, l->l_lid, sast->sast_stack.ss_sp));
+
+	if (l->l_proc->p_emul->e_sa->sae_upcallconv) {
+		error = (*l->l_proc->p_emul->e_sa->sae_upcallconv)(l, type,
+		    &argsize, &arg, &func);
+		if (error)
+			return error;
+	}
 
 	SA_LWP_STATE_LOCK(l, f);
 	sau = sadata_upcall_alloc(1);
@@ -786,6 +837,13 @@ sa_upcall0(struct sadata_upcall *sau, int type, struct lwp *event,
 	sau->sau_argfreefunc = func;
 }
 
+void *
+sa_ucsp(void *arg)
+{
+	ucontext_t *uc = arg;
+
+	return (void *)(uintptr_t)_UC_MACHINE_SP(uc);
+}
 
 static void
 sa_upcall_getstate(union sau_state *ss, struct lwp *l)
@@ -795,14 +853,17 @@ sa_upcall_getstate(union sau_state *ss, struct lwp *l)
 
 	if (l) {
 		l->l_flag |= L_SA_SWITCHING;
-		getucontext(l, &ss->ss_captured.ss_ctx);
+		(*l->l_proc->p_emul->e_sa->sae_getucontext)(l,
+		    (void *)&ss->ss_captured.ss_ctx);
 		l->l_flag &= ~L_SA_SWITCHING;
-		sp = (void *)
-			((intptr_t)_UC_MACHINE_SP(&ss->ss_captured.ss_ctx));
+		sp = (*l->l_proc->p_emul->e_sa->sae_ucsp)
+		    (&ss->ss_captured.ss_ctx);
+		/* XXX COMPAT_NETBSD32: _UC_UCONTEXT_ALIGN */
 		sp = STACK_ALIGN(sp, ~_UC_UCONTEXT_ALIGN);
-		ucsize = roundup(sizeof(ucontext_t), (~_UC_UCONTEXT_ALIGN) + 1);
-		ss->ss_captured.ss_sa.sa_context = (ucontext_t *)
-			STACK_ALLOC(sp, ucsize);
+		ucsize = roundup(l->l_proc->p_emul->e_sa->sae_ucsize,
+		    (~_UC_UCONTEXT_ALIGN) + 1);
+		ss->ss_captured.ss_sa.sa_context =
+		    (ucontext_t *)STACK_ALLOC(sp, ucsize);
 		ss->ss_captured.ss_sa.sa_id = l->l_lid;
 		ss->ss_captured.ss_sa.sa_cpu = l->l_savp->savp_id;
 	} else
@@ -837,7 +898,7 @@ sa_pagefault(struct lwp *l, ucontext_t *l_ctx)
 		return 1;
 	}
 
-	sast.sast_stack.ss_sp = (void *)(intptr_t)_UC_MACHINE_SP(l_ctx);
+	sast.sast_stack.ss_sp = (*p->p_emul->e_sa->sae_ucsp)(l_ctx);
 	sast.sast_stack.ss_size = 1;
 
 	if (SPLAY_FIND(sasttree, &sa->sa_stackstree, &sast)) {
@@ -1248,8 +1309,15 @@ sa_upcall_userret(struct lwp *l)
 	KDASSERT((l->l_flag & L_SA_BLOCKING) == 0);
 
 	sast = NULL;
-	if (SIMPLEQ_EMPTY(&vp->savp_upcalls) && vp->savp_wokenq_head != NULL)
+	if (SIMPLEQ_EMPTY(&vp->savp_upcalls) && vp->savp_wokenq_head != NULL) {
 		sast = sa_getstack(sa);
+		if (sast == NULL) {
+			SA_LWP_STATE_UNLOCK(l, f);
+			KERNEL_PROC_UNLOCK(l);
+			preempt(1);
+			return;
+		}
+	}
 	SCHED_LOCK(s);
 	if (SIMPLEQ_EMPTY(&vp->savp_upcalls) && vp->savp_wokenq_head != NULL &&
 	    sast != NULL) {
@@ -1302,26 +1370,34 @@ sa_upcall_userret(struct lwp *l)
 	return;
 }
 
+#define	SACOPYOUT(sae, type, kp, up) \
+	(((sae)->sae_sacopyout != NULL) ? \
+	(*(sae)->sae_sacopyout)((type), (kp), (void *)(up)) : \
+	copyout((kp), (void *)(up), sizeof(*(kp))))
+
 static inline void
 sa_makeupcalls(struct lwp *l)
 {
 	struct lwp *l2, *eventq;
 	struct proc *p;
+	const struct sa_emul *sae;
 	struct sadata *sa;
 	struct sadata_vp *vp;
-	struct sa_t **sapp, *sap;
+	uintptr_t sapp, sap;
 	struct sa_t self_sa;
-	struct sa_t *sas[3], *sasp;
+	struct sa_t *sas[3];
 	struct sadata_upcall *sau;
-	union sau_state e_ss;
 	void *stack, *ap;
-	ucontext_t u, *up;
-	size_t sz;
-	int i, nint, nevents, s, type;
+	union sau_state *e_ss;
+	ucontext_t *kup, *up;
+	size_t sz, ucsize;
+	int i, nint, nevents, s, type, error;
 
 	p = l->l_proc;
+	sae = p->p_emul->e_sa;
 	sa = p->p_sa;
 	vp = l->l_savp;
+	ucsize = sae->sae_ucsize;
 
 	sau = SIMPLEQ_FIRST(&vp->savp_upcalls);
 	SIMPLEQ_REMOVE_HEAD(&vp->savp_upcalls, sau_next);
@@ -1348,7 +1424,7 @@ sa_makeupcalls(struct lwp *l)
 	if (sau->sau_event.ss_captured.ss_sa.sa_context != NULL) {
 		if (copyout(&sau->sau_event.ss_captured.ss_ctx,
 		    sau->sau_event.ss_captured.ss_sa.sa_context,
-		    sizeof(ucontext_t)) != 0) {
+		    ucsize) != 0) {
 #ifdef DIAGNOSTIC
 			printf("sa_makeupcalls(%d.%d): couldn't copyout"
 			    " context of event LWP %d\n",
@@ -1366,7 +1442,7 @@ sa_makeupcalls(struct lwp *l)
 		    sau->sau_event.ss_captured.ss_sa.sa_context);
 		if (copyout(&sau->sau_interrupted.ss_captured.ss_ctx,
 		    sau->sau_interrupted.ss_captured.ss_sa.sa_context,
-		    sizeof(ucontext_t)) != 0) {
+		    ucsize) != 0) {
 #ifdef DIAGNOSTIC
 			printf("sa_makeupcalls(%d.%d): couldn't copyout"
 			    " context of interrupted LWP %d\n",
@@ -1393,13 +1469,14 @@ sa_makeupcalls(struct lwp *l)
 	}
 
 	/* Copy out the activation's ucontext */
-	u.uc_stack = sau->sau_stack;
-	u.uc_flags = _UC_STACK;
-
-	up = (void *)STACK_ALLOC(stack, sizeof(ucontext_t));
-	stack = STACK_GROW(stack, sizeof(ucontext_t));
-
-	if (copyout(&u, up, sizeof(ucontext_t)) != 0) {
+	up = (void *)STACK_ALLOC(stack, ucsize);
+	stack = STACK_GROW(stack, ucsize);
+	kup = kmem_zalloc(sizeof(*kup), KM_SLEEP);
+	kup->uc_stack = sau->sau_stack;
+	kup->uc_flags = _UC_STACK;
+	error = SACOPYOUT(sae, SAOUT_UCONTEXT, kup, up);
+	kmem_free(kup, sizeof(*kup));
+	if (error) {
 		sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
 		printf("sa_makeupcalls: couldn't copyout activation"
@@ -1413,20 +1490,24 @@ sa_makeupcalls(struct lwp *l)
 
 	/* Next, copy out the sa_t's and pointers to them. */
 
-	sz = (1 + nevents + nint) * sizeof(struct sa_t);
-	sap = (void *)STACK_ALLOC(stack, sz);
-	sap += 1 + nevents + nint;
+	sz = (1 + nevents + nint) * sae->sae_sasize;
+	sap = (uintptr_t)STACK_ALLOC(stack, sz);
+	sap += sz;
 	stack = STACK_GROW(stack, sz);
 
-	sz = (1 + nevents + nint) * sizeof(struct sa_t *);
-	sapp = (void *)STACK_ALLOC(stack, sz);
-	sapp += 1 + nevents + nint;
+	sz = (1 + nevents + nint) * sae->sae_sapsize;
+	sapp = (uintptr_t)STACK_ALLOC(stack, sz);
+	sapp += sz;
 	stack = STACK_GROW(stack, sz);
 
 	KDASSERT(nint <= 1);
+	e_ss = NULL;
 	for (i = nevents + nint; i >= 0; i--) {
-		sap--;
-		sapp--;
+		struct sa_t *sasp;
+
+		sap -= sae->sae_sasize;
+		sapp -= sae->sae_sapsize;
+		error = 0;
 		if (i == 1 + nevents)	/* interrupted sa */
 			sasp = sas[2];
 		else if (i <= 1)	/* self_sa and event sa */
@@ -1437,38 +1518,40 @@ sa_makeupcalls(struct lwp *l)
 			l2 = eventq;
 			KDASSERT(l2 != NULL);
 			eventq = l2->l_forw;
-			DPRINTFN(8,("sa_makeupcalls(%d.%d) unblocking extra %d\n",
-				     p->p_pid, l->l_lid, l2->l_lid));
-			sa_upcall_getstate(&e_ss, l2);
+			DPRINTFN(8,
+			    ("sa_makeupcalls(%d.%d) unblocking extra %d\n",
+			    p->p_pid, l->l_lid, l2->l_lid));
+			if (e_ss == NULL) {
+				e_ss = kmem_alloc(sizeof(*e_ss), KM_SLEEP);
+			}
+			sa_upcall_getstate(e_ss, l2);
 			SCHED_LOCK(s);
 			l2->l_flag &= ~L_SA_BLOCKING;
 			sa_putcachelwp(p, l2); /* PHOLD from sa_setwoken */
 			SCHED_UNLOCK(s);
 
-			if (copyout(&e_ss.ss_captured.ss_ctx,
-				e_ss.ss_captured.ss_sa.sa_context,
-				sizeof(ucontext_t)) != 0) {
-#ifdef DIAGNOSTIC
-				printf("sa_makeupcalls(%d.%d): couldn't copyout"
-				    " context of event LWP %d\n",
-				    p->p_pid, l->l_lid, e_ss.ss_captured.ss_sa.sa_id);
-#endif
-				sigexit(l, SIGILL);
-				/* NOTREACHED */
-			}
-			sasp = &e_ss.ss_captured.ss_sa;
+			error = copyout(&e_ss->ss_captured.ss_ctx,
+			    e_ss->ss_captured.ss_sa.sa_context, ucsize);
+			sasp = &e_ss->ss_captured.ss_sa;
 		}
-		if ((copyout(sasp, sap, sizeof(struct sa_t)) != 0) ||
-		    (copyout(&sap, sapp, sizeof(struct sa_t *)) != 0)) {
+		if (error != 0 ||
+		    SACOPYOUT(sae, SAOUT_SA_T, sasp, sap) ||
+		    SACOPYOUT(sae, SAOUT_SAP_T, &sap, sapp)) {
 			/* Copying onto the stack didn't work. Die. */
 			sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
-			printf("sa_makeupcalls: couldn't copyout sa_t "
-			    "%d for %d.%d\n", i, p->p_pid, l->l_lid);
+			printf("sa_makeupcalls(%d.%d): couldn't copyout\n",
+			    p->p_pid, l->l_lid);
 #endif
+			if (e_ss != NULL) {
+				kmem_free(e_ss, sizeof(*e_ss));
+			}
 			sigexit(l, SIGILL);
 			/* NOTREACHED */
 		}
+	}
+	if (e_ss != NULL) {
+		kmem_free(e_ss, sizeof(*e_ss));
 	}
 	KDASSERT(eventq == NULL);
 
@@ -1506,9 +1589,10 @@ sa_makeupcalls(struct lwp *l)
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SAUPCALL))
-		ktrsaupcall(l, type, nevents, nint, sapp, ap);
+		ktrsaupcall(l, type, nevents, nint, (void *)sapp, ap);
 #endif
-	cpu_upcall(l, type, nevents, nint, sapp, ap, stack, sa->sa_upcall);
+	(*sae->sae_upcall)(l, type, nevents, nint, (void *)sapp, ap, stack,
+	    sa->sa_upcall);
 
 	l->l_flag &= ~L_SA_YIELD;
 }
@@ -1544,9 +1628,10 @@ sa_setwoken(struct lwp *l)
 	if (vp_lwp->l_flag & L_SA_IDLE) {
 		KDASSERT((vp_lwp->l_flag & L_SA_UPCALL) == 0);
 		KDASSERT(vp->savp_wokenq_head == NULL);
-		DPRINTFN(3,("sa_setwoken(%d.%d) repossess: idle vp_lwp %d state %d\n",
-			     l->l_proc->p_pid, l->l_lid,
-			     vp_lwp->l_lid, vp_lwp->l_stat));
+		DPRINTFN(3,
+		    ("sa_setwoken(%d.%d) repossess: idle vp_lwp %d state %d\n",
+		    l->l_proc->p_pid, l->l_lid,
+		    vp_lwp->l_lid, vp_lwp->l_stat));
 		vp_lwp->l_flag &= ~L_SA_IDLE;
 		SCHED_UNLOCK(s);
 		return;
@@ -1639,14 +1724,14 @@ sa_vp_repossess(struct lwp *l)
 	 */
 	l2 = vp->savp_lwp;
 	vp->savp_lwp = l;
-	if (l2->l_flag & L_SA_YIELD)
-		l2->l_flag &= ~(L_SA_YIELD|L_SA_IDLE);
-
-	DPRINTFN(1,("sa_vp_repossess(%d.%d) vp lwp %d state %d\n",
-		     p->p_pid, l->l_lid, l2->l_lid, l2->l_stat));
-
-	KDASSERT(l2 != l);
 	if (l2) {
+		if (l2->l_flag & L_SA_YIELD)
+			l2->l_flag &= ~(L_SA_YIELD|L_SA_IDLE);
+
+		DPRINTFN(1,("sa_vp_repossess(%d.%d) vp lwp %d state %d\n",
+			     p->p_pid, l->l_lid, l2->l_lid, l2->l_stat));
+
+		KDASSERT(l2 != l);
 		switch (l2->l_stat) {
 		case LSRUN:
 			remrunqueue(l2);

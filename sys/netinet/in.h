@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.74 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: in.h,v 1.74.4.1 2006/09/09 02:58:47 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -102,7 +102,7 @@ typedef __sa_family_t	sa_family_t;
 #define	IPPROTO_PIM		103		/* Protocol indep. multicast */
 #define	IPPROTO_IPCOMP		108		/* IP Payload Comp. Protocol */
 #define	IPPROTO_VRRP		112		/* VRRP RFC 2338 */
-
+#define	IPPROTO_CARP		112		/* Common Address Resolution Protocol */
 #define	IPPROTO_RAW		255		/* raw IP packet */
 #define	IPPROTO_MAX		256
 
@@ -213,6 +213,7 @@ struct in_addr {
 #define	INADDR_UNSPEC_GROUP	__IPADDR(0xe0000000)	/* 224.0.0.0 */
 #define	INADDR_ALLHOSTS_GROUP	__IPADDR(0xe0000001)	/* 224.0.0.1 */
 #define	INADDR_ALLRTRS_GROUP	__IPADDR(0xe0000002)	/* 224.0.0.2 */
+#define	INADDR_CARP_GROUP	__IPADDR(0xe0000012)	/* 224.0.0.18 */
 #define	INADDR_MAX_LOCAL_GROUP	__IPADDR(0xe00000ff)	/* 224.0.0.255 */
 
 #define	IN_LOOPBACKNET		127			/* official! */
@@ -487,7 +488,7 @@ struct ip_mreq {
  *		dst		Destination IP address
  *		lenproto	htons(proto-hdr-len + proto-number)
  */
-static inline u_int16_t __attribute__((__unused__))
+static __inline u_int16_t __attribute__((__unused__))
 in_cksum_phdr(u_int32_t src, u_int32_t dst, u_int32_t lenproto)
 {
 	u_int32_t sum;
@@ -511,7 +512,7 @@ in_cksum_phdr(u_int32_t src, u_int32_t dst, u_int32_t lenproto)
  *
  *	Add the two 16-bit network-order values, carry, and return.
  */
-static inline u_int16_t __attribute__((__unused__))
+static __inline u_int16_t __attribute__((__unused__))
 in_cksum_addword(u_int16_t a, u_int16_t b)
 {
 	u_int32_t sum = a + b;

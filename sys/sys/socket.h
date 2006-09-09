@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.78 2006/01/28 13:20:18 kleink Exp $	*/
+/*	$NetBSD: socket.h,v 1.78.2.1 2006/09/09 02:59:42 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -122,6 +122,7 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #define	SO_REUSEPORT	0x0200		/* allow local address & port reuse */
 #define	SO_TIMESTAMP	0x0400		/* timestamp received dgram traffic */
 
+
 /*
  * Additional options, not kept in so_options.
  */
@@ -194,8 +195,9 @@ struct	linger {
 #define	pseudo_AF_HDRCMPLT 30		/* Used by BPF to not rewrite hdrs
 					   in interface output routine */
 #endif
+#define AF_BLUETOOTH	31
 
-#define	AF_MAX		31
+#define	AF_MAX		32
 
 /*
  * Structure used by kernel to store most
@@ -281,6 +283,7 @@ struct sockaddr_storage {
 #if defined(_NETBSD_SOURCE)
 #define PF_KEY 		pseudo_AF_KEY	/* like PF_ROUTE, only for key mgmt */
 #endif
+#define PF_BLUETOOTH	AF_BLUETOOTH
 
 #define	PF_MAX		AF_MAX
 
@@ -447,16 +450,17 @@ struct msghdr {
 	int		msg_flags;	/* flags on received message */
 };
 
-#define	MSG_OOB		0x1		/* process out-of-band data */
-#define	MSG_PEEK	0x2		/* peek at incoming message */
-#define	MSG_DONTROUTE	0x4		/* send without using routing tables */
-#define	MSG_EOR		0x8		/* data completes record */
-#define	MSG_TRUNC	0x10		/* data discarded before delivery */
-#define	MSG_CTRUNC	0x20		/* control data lost before delivery */
-#define	MSG_WAITALL	0x40		/* wait for full request or error */
-#define	MSG_DONTWAIT	0x80		/* this message should be nonblocking */
-#define	MSG_BCAST	0x100		/* this message was rcvd using link-level brdcst */
-#define	MSG_MCAST	0x200		/* this message was rcvd using link-level mcast */
+#define	MSG_OOB		0x0001		/* process out-of-band data */
+#define	MSG_PEEK	0x0002		/* peek at incoming message */
+#define	MSG_DONTROUTE	0x0004		/* send without using routing tables */
+#define	MSG_EOR		0x0008		/* data completes record */
+#define	MSG_TRUNC	0x0010		/* data discarded before delivery */
+#define	MSG_CTRUNC	0x0020		/* control data lost before delivery */
+#define	MSG_WAITALL	0x0040		/* wait for full request or error */
+#define	MSG_DONTWAIT	0x0080		/* this message should be nonblocking */
+#define	MSG_BCAST	0x0100		/* this message was rcvd using link-level brdcst */
+#define	MSG_MCAST	0x0200		/* this message was rcvd using link-level mcast */
+#define	MSG_NOSIGNAL	0x0400		/* do not generate SIGPIPE on EOF */
 
 /*
  * Header for ancillary data objects in msg_control buffer.
@@ -554,7 +558,11 @@ ssize_t	sendmsg(int, const struct msghdr *, int);
 int	setsockopt(int, int, int, const void *, socklen_t);
 int	shutdown(int, int);
 int	sockatmark(int);
-int	socket(int, int, int);
+int	socket(int, int, int)
+#if !defined(__LIBC12_SOURCE__) && !defined(_STANDALONE)
+__RENAME(__socket30)
+#endif
+			     ;
 int	socketpair(int, int, int, int *);
 __END_DECLS
 #endif /* !_KERNEL */

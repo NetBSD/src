@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.34 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.34.4.1 2006/09/09 02:59:08 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.34 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.34.4.1 2006/09/09 02:59:08 rpaulo Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.34 2005/12/11 12:25:12 christos Exp 
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -99,15 +100,32 @@ LIST_HEAD(, llinfo_llc) llinfo_llc;
 
 struct callout snpac_age_ch;
 
-struct sockaddr_iso blank_siso = {sizeof(blank_siso), AF_ISO};
+struct sockaddr_iso blank_siso = {
+	.siso_len = sizeof(blank_siso),
+	.siso_family = AF_ISO,
+};
 static struct sockaddr_iso
-	dst = {sizeof(dst), AF_ISO},
-	gte = {sizeof(gte), AF_ISO},
+	dst = {
+		.siso_len = sizeof(dst),
+		.siso_family = AF_ISO,
+	},
+	gte = {
+		.siso_len = sizeof(gte),
+		.siso_family = AF_ISO,
+	},
 #if 0
-	src = {sizeof(src), AF_ISO},
+	src = {
+		.siso_len = sizeof(src),
+		.siso_family = AF_ISO,
+	},
 #endif
-	msk = {sizeof(msk), AF_ISO},
-	zmk = {0, 0};
+	msk = {
+		.siso_len = sizeof(msk),
+		.siso_family = AF_ISO,
+	},
+	zmk = {
+		.siso_len = 0,
+	};
 
 #define zsi blank_siso
 #define zero_isoa	zsi.siso_addr
@@ -115,7 +133,10 @@ static struct sockaddr_iso
 	   Bcopy(r, &a.siso_addr, 1 + (r)->isoa_len);}
 #define S(x) ((struct sockaddr *)&(x))
 
-static struct sockaddr_dl blank_dl = {sizeof(blank_dl), AF_LINK};
+static struct sockaddr_dl blank_dl = {
+	.sdl_len = sizeof(blank_dl),
+	.sdl_family = AF_LINK,
+};
 static struct sockaddr_dl gte_dl;
 #define zap_linkaddr(a, b, c, i) \
 	(*a = blank_dl, memcpy(a->sdl_data, b, a->sdl_alen = c), a->sdl_index = i)
@@ -473,7 +494,7 @@ add:
 	}
 	if ((lc = (struct llinfo_llc *) rt->rt_llinfo) == 0)
 		panic("snpac_rtrequest");
-	rt->rt_rmx.rmx_expire = ht + time.tv_sec;
+	rt->rt_rmx.rmx_expire = ht + time_second;
 	lc->lc_flags = SNPA_VALID | type;
 	if ((type & SNPA_IS) && !(iso_systype & SNPA_IS))
 		snpac_logdefis(rt);
@@ -515,9 +536,7 @@ snpac_ioctl(
 	struct lwp *l)
 {
 	struct systype_req *rq = (struct systype_req *) data;
-	struct proc *p;
 
-	p = l ? l->l_proc : NULL;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_IOCTL]) {
 		if (cmd == SIOCSSTYPE)
@@ -529,7 +548,8 @@ snpac_ioctl(
 #endif
 
 	if (cmd == SIOCSSTYPE) {
-		if (p == 0 || suser(p->p_ucred, &p->p_acflag))
+		if (l == NULL || kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
 			return (EPERM);
 		if ((rq->sr_type & (SNPA_ES | SNPA_IS)) == (SNPA_ES | SNPA_IS))
 			return (EINVAL);
@@ -626,7 +646,8 @@ snpac_age(void *v)
 		nlc = lc->lc_list.le_next;
 		if (lc->lc_flags & SNPA_VALID) {
 			rt = lc->lc_rt;
-			if (rt->rt_rmx.rmx_expire && rt->rt_rmx.rmx_expire < time.tv_sec)
+			if (rt->rt_rmx.rmx_expire &&
+			    rt->rt_rmx.rmx_expire < time_second)
 				snpac_free(lc);
 		}
 	}

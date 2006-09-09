@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.18 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.18.4.1 2006/09/09 02:59:08 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.18 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.18.4.1 2006/09/09 02:59:08 rpaulo Exp $");
 
 
 #include <sys/param.h>
@@ -171,6 +171,7 @@ const struct protosw  isosw[] = {
 #endif
 };
 
+extern struct ifqueue clnlintrq;
 
 struct domain   isodomain = {
 	PF_ISO,			/* family */
@@ -182,5 +183,10 @@ struct domain   isodomain = {
 	&isosw[sizeof(isosw) / sizeof(isosw[0])],	/* NPROTOSW */
 	rn_inithead,		/* rtattach */
 	48,			/* rtoffset */
-	sizeof(struct sockaddr_iso)	/* maxkeylen */
+	sizeof(struct sockaddr_iso),	/* maxkeylen */
+	0,
+	0,
+	{ &clnlintrq, NULL },		/* ifqueues */
+	{ NULL },
+	MOWNER_INIT,
 };

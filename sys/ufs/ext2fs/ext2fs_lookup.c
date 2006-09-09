@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.39 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.39.4.1 2006/09/09 03:00:00 rpaulo Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.39 2005/12/11 12:25:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.39.4.1 2006/09/09 03:00:00 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.39 2005/12/11 12:25:25 christos 
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
@@ -129,7 +130,7 @@ ext2fs_readdir(void *v)
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int **a_eofflag;
 		off_t **a_cookies;
 		int ncookies;
@@ -162,10 +163,10 @@ ext2fs_readdir(void *v)
 	auio = *uio;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
-	auio.uio_segflg = UIO_SYSSPACE;
 	aiov.iov_len = e2fs_count;
 	auio.uio_resid = e2fs_count;
-	MALLOC(dirbuf, caddr_t, e2fs_count, M_TEMP, M_WAITOK);
+	UIO_SETUP_SYSSPACE(&auio);
+	dirbuf = malloc(e2fs_count, M_TEMP, M_WAITOK);
 	if (ap->a_ncookies) {
 		nc = ncookies = e2fs_count / 16;
 		cookies = malloc(sizeof (off_t) * ncookies, M_TEMP, M_WAITOK);
@@ -280,7 +281,7 @@ ext2fs_lookup(void *v)
 	int namlen, error;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
-	struct ucred *cred = cnp->cn_cred;
+	kauth_cred_t cred = cnp->cn_cred;
 	int flags;
 	int nameiop = cnp->cn_nameiop;
 	struct ufsmount *ump = dp->i_ump;
@@ -390,6 +391,7 @@ searchloop:
 		 * directory. Complete checks can be run by patching
 		 * "dirchk" to be true.
 		 */
+		KASSERT(bp != NULL);
 		ep = (struct ext2fs_direct *)
 			((char *)bp->b_data + entryoffsetinblock);
 		if (ep->e2d_reclen == 0 ||
@@ -498,12 +500,6 @@ searchloop:
 			dp->i_offset = roundup(ext2fs_size(dp), dirblksiz);
 			dp->i_count = 0;
 			enduseful = dp->i_offset;
-		} else if (nameiop == DELETE) {
-			dp->i_offset = slotoffset;
-			if ((dp->i_offset & (dirblksiz - 1)) == 0)
-				dp->i_count = 0;
-			else
-				dp->i_count = dp->i_offset - prevoff;
 		} else {
 			dp->i_offset = slotoffset;
 			dp->i_count = slotsize;
@@ -611,9 +607,9 @@ found:
 		 * implements append-only directories.
 		 */
 		if ((dp->i_e2fs_mode & ISVTX) &&
-		    cred->cr_uid != 0 &&
-		    cred->cr_uid != dp->i_e2fs_uid &&
-		    VTOI(tdp)->i_e2fs_uid != cred->cr_uid) {
+		    kauth_cred_geteuid(cred) != 0 &&
+		    kauth_cred_geteuid(cred) != dp->i_e2fs_uid &&
+		    VTOI(tdp)->i_e2fs_uid != kauth_cred_geteuid(cred)) {
 			vput(tdp);
 			return (EPERM);
 		}
@@ -818,8 +814,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp, struct componentname *cnp)
 		auio.uio_iov = &aiov;
 		auio.uio_iovcnt = 1;
 		auio.uio_rw = UIO_WRITE;
-		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_lwp = NULL;
+		UIO_SETUP_SYSSPACE(&auio);
 		error = VOP_WRITE(dvp, &auio, IO_SYNC, cnp->cn_cred);
 		if (dirblksiz > dvp->v_mount->mnt_stat.f_bsize)
 			/* XXX should grow with balloc() */
@@ -991,7 +986,7 @@ ext2fs_dirrewrite(struct inode *dp, struct inode *ip,
  * NB: does not handle corrupted directories.
  */
 int
-ext2fs_dirempty(struct inode *ip, ino_t parentino, struct ucred *cred)
+ext2fs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 {
 	off_t off;
 	struct ext2fs_dirtemplate dbuf;
@@ -1043,7 +1038,7 @@ ext2fs_dirempty(struct inode *ip, ino_t parentino, struct ucred *cred)
  */
 int
 ext2fs_checkpath(struct inode *source, struct inode *target,
-	struct ucred *cred)
+	kauth_cred_t cred)
 {
 	struct vnode *vp;
 	int error, rootino, namlen;

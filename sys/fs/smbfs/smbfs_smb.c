@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.29 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.29.4.1 2006/09/09 02:57:05 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.29 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.29.4.1 2006/09/09 02:57:05 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -642,7 +642,7 @@ smbfs_smb_create(struct smbnode *dnp, const char *name, int nmlen,
 	smb_rq_getrequest(rqp, &mbp);
 
 	/* get current time */
-	(void)nanotime(&ctime);
+	getnanotime(&ctime);
 	smb_time_local2server(&ctime, SSTOVC(ssp)->vc_sopt.sv_tz, &tm);
 
 	smb_rq_wstart(rqp);
@@ -1054,8 +1054,10 @@ smbfs_smb_trans2find2(struct smbfs_fctx *ctx)
 		return error;
 	if ((error = md_get_uint16le(mdp, &tw)) != 0)
 		return error;
-	if (ctx->f_ecnt == 0)
+	if (ctx->f_ecnt == 0) {
+		ctx->f_flags |= SMBFS_RDD_EOF | SMBFS_RDD_NOCLOSE;
 		return ENOENT;
+	}
 	ctx->f_rnameofs = tw;
 	mdp = &t2p->t2_rdata;
 

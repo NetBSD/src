@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.21 2005/12/10 23:36:23 elad Exp $	*/
+/*	$NetBSD: tcp.h,v 1.21.4.1 2006/09/09 02:58:47 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -66,8 +66,8 @@ struct tcphdr {
 #define	TH_PUSH	  0x08
 #define	TH_ACK	  0x10
 #define	TH_URG	  0x20
-#define	TH_ECE	  0x40			/* (unimplemented) */
-#define	TH_CWR	  0x80			/* (unimplemented) */
+#define	TH_ECE	  0x40
+#define	TH_CWR	  0x80
 	u_int16_t th_win;			/* window */
 	u_int16_t th_sum;			/* checksum */
 	u_int16_t th_urp;			/* urgent pointer */

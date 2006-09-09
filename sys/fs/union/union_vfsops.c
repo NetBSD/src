@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.32 2006/01/05 20:31:33 wrstuden Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.32.2.1 2006/09/09 02:57:15 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.32 2006/01/05 20:31:33 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.32.2.1 2006/09/09 02:57:15 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.32 2006/01/05 20:31:33 wrstuden E
 #include <sys/filedesc.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/kauth.h>
 
 #include <fs/union/union.h>
 
@@ -101,7 +102,7 @@ int union_unmount(struct mount *, int, struct lwp *);
 int union_root(struct mount *, struct vnode **);
 int union_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
 int union_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int union_sync(struct mount *, int, struct ucred *, struct lwp *);
+int union_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int union_vget(struct mount *, ino_t, struct vnode **);
 
 /*
@@ -120,7 +121,6 @@ union_mount(mp, path, data, ndp, l)
 	struct vnode *lowerrootvp = NULLVP;
 	struct vnode *upperrootvp = NULLVP;
 	struct union_mount *um = 0;
-	struct ucred *cred = 0;
 	const char *cp;
 	char *xp;
 	int len;
@@ -223,8 +223,8 @@ union_mount(mp, path, data, ndp, l)
 			goto bad;
 	}
 
-	um->um_cred = l->l_proc->p_ucred;
-	crhold(um->um_cred);
+	um->um_cred = l->l_cred;
+	kauth_cred_hold(um->um_cred);
 	um->um_cmode = UN_DIRMODE &~ l->l_proc->p_cwdi->cwdi_cmask;
 
 	/*
@@ -301,8 +301,6 @@ union_mount(mp, path, data, ndp, l)
 bad:
 	if (um)
 		free(um, M_UFSMNT);
-	if (cred)
-		crfree(cred);
 	if (upperrootvp)
 		vrele(upperrootvp);
 	if (lowerrootvp)
@@ -337,6 +335,7 @@ union_unmount(mp, mntflags, l)
 {
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
 	int freeing;
+	int error;
 
 #ifdef UNION_DIAGNOSTIC
 	printf("union_unmount(mp = %p)\n", mp);
@@ -351,7 +350,7 @@ union_unmount(mp, mntflags, l)
 	 * (d) times, where (d) is the maximum tree depth
 	 * in the filesystem.
 	 */
-	for (freeing = 0; vflush(mp, NULL, 0) != 0;) {
+	for (freeing = 0; (error = vflush(mp, NULL, 0)) != 0;) {
 		struct vnode *vp;
 		int n;
 
@@ -374,8 +373,10 @@ union_unmount(mp, mntflags, l)
 	 */
 
 	if (mntflags & MNT_FORCE)
-		vflush(mp, NULL, FORCECLOSE);
+		error = vflush(mp, NULL, FORCECLOSE);
 
+	if (error)
+		return error;
 
 	/*
 	 * Discard references to upper and lower target vnodes.
@@ -383,7 +384,7 @@ union_unmount(mp, mntflags, l)
 	if (um->um_lowervp)
 		vrele(um->um_lowervp);
 	vrele(um->um_uppervp);
-	crfree(um->um_cred);
+	kauth_cred_free(um->um_cred);
 	/*
 	 * Finally, throw away the union_mount structure
 	 */
@@ -514,7 +515,7 @@ int
 union_sync(mp, waitfor, cred, l)
 	struct mount *mp;
 	int waitfor;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 
@@ -582,5 +583,7 @@ struct vfsops union_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	union_vnodeopv_descs,
+	0,				/* vfs_refcount */
+	{ NULL, NULL },
 };
 VFS_ATTACH(union_vfsops);

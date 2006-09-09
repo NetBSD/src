@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.261 2006/01/18 14:26:55 reinoud Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.261.2.1 2006/09/09 02:57:17 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.261 2006/01/18 14:26:55 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.261.2.1 2006/09/09 02:57:17 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.261 2006/01/18 14:26:55 reinoud Exp $
 #include <sys/syscallargs.h>
 #include <sys/device.h>
 #include <sys/filedesc.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/genfs/genfs.h>
@@ -130,6 +131,7 @@ int doforce = 1;		/* 1 => permit forcible unmounting */
 int prtactive = 0;		/* 1 => print out reclaim of active vnodes */
 
 extern int dovfsusermount;	/* 1 => permit any user to mount filesystems */
+extern int vfs_magiclinks;	/* 1 => expand "magic" symlinks */
 
 /*
  * Insq/Remq for the vnode usage lists.
@@ -689,7 +691,7 @@ vwakeup(struct buf *bp)
  * buffers from being queued.
  */
 int
-vinvalbuf(struct vnode *vp, int flags, struct ucred *cred, struct lwp *l,
+vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
     int slpflag, int slptimeo)
 {
 	struct buf *bp, *nbp;
@@ -1970,6 +1972,12 @@ SYSCTL_SETUP(sysctl_vfs_setup, "sysctl vfs subtree setup")
 		       SYSCTL_DESCR("List of file systems present"),
 		       sysctl_vfs_generic_fstypes, 0, NULL, 0,
 		       CTL_VFS, VFS_GENERIC, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "magiclinks",
+		       SYSCTL_DESCR("Whether \"magic\" symlinks are expanded"),
+		       NULL, 0, &vfs_magiclinks, 0,
+		       CTL_VFS, VFS_GENERIC, VFS_MAGICLINKS, CTL_EOL);
 }
 
 
@@ -2090,15 +2098,16 @@ vfs_mountedon(struct vnode *vp)
  */
 int
 vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
-    mode_t acc_mode, struct ucred *cred)
+    mode_t acc_mode, kauth_cred_t cred)
 {
 	mode_t mask;
+	int error, ismember;
 
 	/*
 	 * Super-user always gets read/write access, but execute access depends
 	 * on at least one execute bit being set.
 	 */
-	if (cred->cr_uid == 0) {
+	if (kauth_cred_geteuid(cred) == 0) {
 		if ((acc_mode & VEXEC) && type != VDIR &&
 		    (file_mode & (S_IXUSR|S_IXGRP|S_IXOTH)) == 0)
 			return (EACCES);
@@ -2108,7 +2117,7 @@ vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
 	mask = 0;
 
 	/* Otherwise, check the owner. */
-	if (cred->cr_uid == uid) {
+	if (kauth_cred_geteuid(cred) == uid) {
 		if (acc_mode & VEXEC)
 			mask |= S_IXUSR;
 		if (acc_mode & VREAD)
@@ -2119,7 +2128,10 @@ vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
 	}
 
 	/* Otherwise, check the groups. */
-	if (cred->cr_gid == gid || groupmember(gid, cred)) {
+	error = kauth_cred_ismember_gid(cred, gid, &ismember);
+	if (error)
+		return (error);
+	if (kauth_cred_getegid(cred) == gid || ismember) {
 		if (acc_mode & VEXEC)
 			mask |= S_IXGRP;
 		if (acc_mode & VREAD)
@@ -2186,12 +2198,12 @@ extern struct simplelock bqueue_slock; /* XXX */
 void
 vfs_shutdown(void)
 {
-	struct lwp *l = curlwp;
-	struct proc *p;
+	struct lwp *l;
 
-	/* XXX we're certainly not running in proc0's context! */
-	if (l == NULL || (p = l->l_proc) == NULL)
-		p = &proc0;
+	/* XXX we're certainly not running in lwp0's context! */
+	l = curlwp;
+	if (l == NULL)
+		l = &lwp0;
 
 	printf("syncing disks... ");
 
@@ -2243,7 +2255,7 @@ vfs_mountroot(void)
 	if (root_device == NULL)
 		panic("vfs_mountroot: root device unknown");
 
-	switch (root_device->dv_class) {
+	switch (device_class(root_device)) {
 	case DV_IFNET:
 		if (rootdev != NODEV)
 			panic("vfs_mountroot: rootdev set for DV_IFNET "
@@ -2296,14 +2308,14 @@ vfs_mountroot(void)
 
 	if (v == NULL) {
 		printf("no file system for %s", root_device->dv_xname);
-		if (root_device->dv_class == DV_DISK)
+		if (device_class(root_device) == DV_DISK)
 			printf(" (dev 0x%x)", rootdev);
 		printf("\n");
 		error = EFTYPE;
 	}
 
 done:
-	if (error && root_device->dv_class == DV_DISK) {
+	if (error && device_class(root_device) == DV_DISK) {
 		VOP_CLOSE(rootvp, FREAD, FSCRED, curlwp);
 		vrele(rootvp);
 	}
@@ -2447,7 +2459,7 @@ vfs_write_suspend(struct mount *mp, int slpflag, int slptimeo)
 			0, &mp->mnt_slock);
 	simple_unlock(&mp->mnt_slock);
 
-	error = VFS_SYNC(mp, MNT_WAIT, l->l_proc->p_ucred, l);
+	error = VFS_SYNC(mp, MNT_WAIT, l->l_cred, l);
 	if (error) {
 		vfs_write_resume(mp);
 		return error;
@@ -2572,6 +2584,13 @@ set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 	return 0;
 }
 
+void
+vfs_timestamp(struct timespec *ts)
+{
+
+	nanotime(ts);
+}
+
 #ifdef DDB
 static const char buf_flagbits[] = BUF_FLAGBITS;
 
@@ -2580,8 +2599,9 @@ vfs_buf_print(struct buf *bp, int full, void (*pr)(const char *, ...))
 {
 	char bf[1024];
 
-	(*pr)("  vp %p lblkno 0x%"PRIx64" blkno 0x%"PRIx64" dev 0x%x\n",
-		  bp->b_vp, bp->b_lblkno, bp->b_blkno, bp->b_dev);
+	(*pr)("  vp %p lblkno 0x%"PRIx64" blkno 0x%"PRIx64" rawblkno 0x%"
+	    PRIx64 " dev 0x%x\n",
+	    bp->b_vp, bp->b_lblkno, bp->b_blkno, bp->b_rawblkno, bp->b_dev);
 
 	bitmask_snprintf(bp->b_flags, buf_flagbits, bf, sizeof(bf));
 	(*pr)("  error %d flags 0x%s\n", bp->b_error, bf);
@@ -2678,15 +2698,15 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	(*pr)("\tfrsize = %lu\n",mp->mnt_stat.f_frsize);
 	(*pr)("\tiosize = %lu\n",mp->mnt_stat.f_iosize);
 
-	(*pr)("\tblocks = "PRIu64"\n",mp->mnt_stat.f_blocks);
-	(*pr)("\tbfree = "PRIu64"\n",mp->mnt_stat.f_bfree);
-	(*pr)("\tbavail = "PRIu64"\n",mp->mnt_stat.f_bavail);
-	(*pr)("\tbresvd = "PRIu64"\n",mp->mnt_stat.f_bresvd);
+	(*pr)("\tblocks = %"PRIu64"\n",mp->mnt_stat.f_blocks);
+	(*pr)("\tbfree = %"PRIu64"\n",mp->mnt_stat.f_bfree);
+	(*pr)("\tbavail = %"PRIu64"\n",mp->mnt_stat.f_bavail);
+	(*pr)("\tbresvd = %"PRIu64"\n",mp->mnt_stat.f_bresvd);
 
-	(*pr)("\tfiles = "PRIu64"\n",mp->mnt_stat.f_files);
-	(*pr)("\tffree = "PRIu64"\n",mp->mnt_stat.f_ffree);
-	(*pr)("\tfavail = "PRIu64"\n",mp->mnt_stat.f_favail);
-	(*pr)("\tfresvd = "PRIu64"\n",mp->mnt_stat.f_fresvd);
+	(*pr)("\tfiles = %"PRIu64"\n",mp->mnt_stat.f_files);
+	(*pr)("\tffree = %"PRIu64"\n",mp->mnt_stat.f_ffree);
+	(*pr)("\tfavail = %"PRIu64"\n",mp->mnt_stat.f_favail);
+	(*pr)("\tfresvd = %"PRIu64"\n",mp->mnt_stat.f_fresvd);
 
 	(*pr)("\tf_fsidx = { 0x%"PRIx32", 0x%"PRIx32" }\n",
 			mp->mnt_stat.f_fsidx.__fsid_val[0],
@@ -2698,10 +2718,10 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	bitmask_snprintf(mp->mnt_stat.f_flag, __MNT_FLAG_BITS, sbuf,
 	    sizeof(sbuf));
 	(*pr)("\tflag = %s\n",sbuf);
-	(*pr)("\tsyncwrites = " PRIu64 "\n",mp->mnt_stat.f_syncwrites);
-	(*pr)("\tasyncwrites = " PRIu64 "\n",mp->mnt_stat.f_asyncwrites);
-	(*pr)("\tsyncreads = " PRIu64 "\n",mp->mnt_stat.f_syncreads);
-	(*pr)("\tasyncreads = " PRIu64 "\n",mp->mnt_stat.f_asyncreads);
+	(*pr)("\tsyncwrites = %" PRIu64 "\n",mp->mnt_stat.f_syncwrites);
+	(*pr)("\tasyncwrites = %" PRIu64 "\n",mp->mnt_stat.f_asyncwrites);
+	(*pr)("\tsyncreads = %" PRIu64 "\n",mp->mnt_stat.f_syncreads);
+	(*pr)("\tasyncreads = %" PRIu64 "\n",mp->mnt_stat.f_asyncreads);
 	(*pr)("\tfstypename = %s\n",mp->mnt_stat.f_fstypename);
 	(*pr)("\tmntonname = %s\n",mp->mnt_stat.f_mntonname);
 	(*pr)("\tmntfromname = %s\n",mp->mnt_stat.f_mntfromname);

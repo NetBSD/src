@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.113.4.2 2006/02/05 03:47:54 rpaulo Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.113.4.3 2006/09/09 02:58:47 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 /*-
- * Copyright (c) 1997, 1998, 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,6 +38,8 @@
  * Facility, NASA Ames Research Center.
  * This code is derived from software contributed to The NetBSD Foundation
  * by Charles M. Hannum.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Rui Paulo.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -100,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.113.4.2 2006/02/05 03:47:54 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.113.4.3 2006/09/09 02:58:47 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -120,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.113.4.2 2006/02/05 03:47:54 rpaulo 
 #include <sys/proc.h>
 #include <sys/domain.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -173,7 +176,6 @@ tcp_usrreq(struct socket *so, int req,
 	struct in6pcb *in6p;
 #endif
 	struct tcpcb *tp = NULL;
-	struct proc *p;
 	int s;
 	int error = 0;
 #ifdef TCP_DEBUG
@@ -181,7 +183,6 @@ tcp_usrreq(struct socket *so, int req,
 #endif
 	int family;	/* family of the socket */
 
-	p = l ? l->l_proc : NULL;
 	family = so->so_proto->pr_domain->dom_family;
 
 	if (req == PRU_CONTROL) {
@@ -189,12 +190,12 @@ tcp_usrreq(struct socket *so, int req,
 #ifdef INET
 		case PF_INET:
 			return (in_control(so, (long)m, (caddr_t)nam,
-			    (struct ifnet *)control, p));
+			    (struct ifnet *)control, l));
 #endif
 #ifdef INET6
 		case PF_INET6:
 			return (in6_control(so, (long)m, (caddr_t)nam,
-			    (struct ifnet *)control, p));
+			    (struct ifnet *)control, l));
 #endif
 		default:
 			return EAFNOSUPPORT;
@@ -329,12 +330,12 @@ tcp_usrreq(struct socket *so, int req,
 		switch (family) {
 #ifdef INET
 		case PF_INET:
-			error = in_pcbbind(inp, nam, p);
+			error = in_pcbbind(inp, nam, l);
 			break;
 #endif
 #ifdef INET6
 		case PF_INET6:
-			error = in6_pcbbind(in6p, nam, p);
+			error = in6_pcbbind(in6p, nam, l);
 			if (!error) {
 				/* mapped addr case */
 				if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr))
@@ -354,7 +355,7 @@ tcp_usrreq(struct socket *so, int req,
 #ifdef INET
 		if (inp && inp->inp_lport == 0) {
 			error = in_pcbbind(inp, (struct mbuf *)0,
-			    (struct proc *)0);
+			    (struct lwp *)0);
 			if (error)
 				break;
 		}
@@ -362,7 +363,7 @@ tcp_usrreq(struct socket *so, int req,
 #ifdef INET6
 		if (in6p && in6p->in6p_lport == 0) {
 			error = in6_pcbbind(in6p, (struct mbuf *)0,
-			    (struct proc *)0);
+			    (struct lwp *)0);
 			if (error)
 				break;
 		}
@@ -382,22 +383,22 @@ tcp_usrreq(struct socket *so, int req,
 		if (inp) {
 			if (inp->inp_lport == 0) {
 				error = in_pcbbind(inp, (struct mbuf *)0,
-				    (struct proc *)0);
+				    (struct lwp *)0);
 				if (error)
 					break;
 			}
-			error = in_pcbconnect(inp, nam, p);
+			error = in_pcbconnect(inp, nam, l);
 		}
 #endif
 #ifdef INET6
 		if (in6p) {
 			if (in6p->in6p_lport == 0) {
 				error = in6_pcbbind(in6p, (struct mbuf *)0,
-				    (struct proc *)0);
+				    (struct lwp *)0);
 				if (error)
 					break;
 			}
-			error = in6_pcbconnect(in6p, nam, p);
+			error = in6_pcbconnect(in6p, nam, l);
 			if (!error) {
 				/* mapped addr case */
 				if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr))
@@ -917,7 +918,8 @@ tcp_usrclosed(struct tcpcb *tp)
 #endif
 		else
 			so = NULL;
-		soisdisconnected(so);
+		if (so)
+			soisdisconnected(so);
 		/*
 		 * If we are in FIN_WAIT_2, we arrived here because the
 		 * application did a shutdown of the send side.  Like the
@@ -1213,18 +1215,23 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 	if (namelen != 4)
 		return (EINVAL);
 
+	if (oldp != NULL) {
+		    len = *oldlenp;
+		    elem_size = name[2];
+		    elem_count = name[3];
+		    if (elem_size != sizeof(pcb))
+			    return EINVAL;
+	} else {
+		    len = 0;
+		    elem_count = INT_MAX;
+		    elem_size = sizeof(pcb);
+	}
 	error = 0;
 	dp = oldp;
-	len = (oldp != NULL) ? *oldlenp : 0;
 	op = name[0];
 	arg = name[1];
-	elem_size = name[2];
-	elem_count = name[3];
-	out_size = MIN(sizeof(pcb), elem_size);
+	out_size = elem_size;
 	needed = 0;
-
-	elem_count = INT_MAX;
-	elem_size = out_size = sizeof(pcb);
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return (sysctl_query(SYSCTLFN_CALL(rnode)));
@@ -1234,14 +1241,17 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 
 	pf = oname[1];
 	proto = oname[2];
-	pf2 = (oldp == NULL) ? 0 : pf;
+	pf2 = (oldp != NULL) ? pf : 0;
 
 	CIRCLEQ_FOREACH(inp, &pcbtbl->inpt_queue, inp_queue) {
 		if (inp->inp_af != pf)
 			continue;
 
-		if (CURTAIN(l->l_proc->p_ucred->cr_uid,
-			    inp->inp_socket->so_uidinfo->ui_uid))
+		/* XXX elad - should be done better */
+		if (security_curtain &&
+		    (kauth_cred_geteuid(l->l_cred) != 0) &&
+		    (kauth_cred_geteuid(l->l_cred) !=
+		     inph->inph_socket->so_uidinfo->ui_uid))
 			continue;
 
 		memset(&pcb, 0, sizeof(pcb));
@@ -1366,7 +1376,8 @@ static void
 sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 			   const char *tcpname)
 {
-	const struct sysctlnode *sack_node;
+	int ecn_node;
+	const struct sysctlnode *sack_node, *node;
 #ifdef TCP_DEBUG
 	extern struct tcp_debug tcp_debug[TCP_NDEBUG];
 	extern int tcp_debx;
@@ -1457,6 +1468,13 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       SYSCTL_DESCR("RFC2018 Selective ACKnowledgement tunables"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SACK, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, &node,
+	    	       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ecn",
+	    	       SYSCTL_DESCR("RFC3168 Explicit Congestion Notification"),
+	    	       NULL, 0, NULL, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	ecn_node = node->sysctl_num;
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "win_scale",
@@ -1581,6 +1599,23 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       sysctl_inpcblist, 0, &tcbtable, 0,
 		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE,
 		       CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    	       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "enable",
+		       SYSCTL_DESCR("Enable TCP Explicit Congestion "
+			   "Notification"),
+	    	       NULL, 0, &tcp_do_ecn, 0,
+	    	       CTL_NET, pf, IPPROTO_TCP, ecn_node,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+	    	       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxretries",
+		       SYSCTL_DESCR("Number of times to retry ECN setup "
+			       "before disabling ECN on the connection"),
+	    	       NULL, 0, &tcp_ecn_maxretries, 0,
+	    	       CTL_NET, pf, IPPROTO_TCP, ecn_node,
+		       CTL_CREATE, CTL_EOL);
 
 	/* SACK gets it's own little subtree. */
 	sysctl_createv(clog, 0, NULL, &sack_node,

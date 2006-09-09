@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.36 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.36.4.1 2006/09/09 02:57:05 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.36 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.36.4.1 2006/09/09 02:57:05 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.36 2005/12/11 12:24:29 christos Ex
 #include <sys/sysctl.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #if defined(__NetBSD__)
 #include <uvm/uvm_extern.h>
@@ -78,14 +79,14 @@ static int	ntfs_root(struct mount *, struct vnode **);
 static int	ntfs_start(struct mount *, int, struct lwp *);
 static int	ntfs_statvfs(struct mount *, struct statvfs *,
 				 struct lwp *);
-static int	ntfs_sync(struct mount *, int, struct ucred *,
+static int	ntfs_sync(struct mount *, int, kauth_cred_t,
 			       struct lwp *);
 static int	ntfs_unmount(struct mount *, int, struct lwp *);
 static int	ntfs_vget(struct mount *mp, ino_t ino,
 			       struct vnode **vpp);
 static int	ntfs_mountfs(struct vnode *, struct mount *,
 				  struct ntfs_args *, struct lwp *);
-static int	ntfs_vptofh(struct vnode *, struct fid *);
+static int	ntfs_vptofh(struct vnode *, struct fid *, size_t *);
 
 #if defined(__FreeBSD__)
 static int	ntfs_init(struct vfsconf *);
@@ -103,7 +104,7 @@ static int	ntfs_mountroot(void);
 static int	ntfs_init(void);
 static int	ntfs_fhtovp(struct mount *, struct fid *,
 				 struct mbuf *, struct vnode **,
-				 int *, struct ucred **);
+				 int *, kauth_cred_t *);
 #endif
 
 static const struct genfs_ops ntfs_genfsops = {
@@ -141,7 +142,7 @@ ntfs_mountroot()
 	int error;
 	struct ntfs_args args;
 
-	if (root_device->dv_class != DV_DISK)
+	if (device_class(root_device) != DV_DISK)
 		return (ENODEV);
 
 	if ((error = vfs_rootmountalloc(MOUNT_NTFS, "root_device", &mp))) {
@@ -409,11 +410,13 @@ ntfs_mountfs(devvp, mp, argsp, l)
 	int error, ronly, i;
 	struct vnode *vp;
 
+	ntmp = NULL;
+
 	/*
 	 * Flush out any old buffers remaining from a previous use.
 	 */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_ucred, l, 0, 0);
+	error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0);
 	VOP_UNLOCK(devvp, 0);
 	if (error)
 		return (error);
@@ -572,6 +575,14 @@ out:
 	devvp->v_specmountpoint = NULL;
 	if (bp)
 		brelse(bp);
+
+	if (error) {
+		if (ntmp) {
+			if (ntmp->ntm_ad)
+				free(ntmp->ntm_ad, M_NTFSMNT);
+			free(ntmp, M_NTFSMNT);
+		}
+	}
 
 	return (error);
 }
@@ -754,7 +765,7 @@ static int
 ntfs_sync (
 	struct mount *mp,
 	int waitfor,
-	struct ucred *cred,
+	kauth_cred_t cred,
 	struct lwp *l)
 {
 	/*dprintf(("ntfs_sync():\n"));*/
@@ -784,13 +795,16 @@ ntfs_fhtovp(
 	struct ucred **credanonp)
 #endif
 {
-	struct ntfid *ntfhp = (struct ntfid *)fhp;
+	struct ntfid ntfh;
 	int error;
 
+	if (fhp->fid_len != sizeof(struct ntfid))
+		return EINVAL;
+	memcpy(&ntfh, fhp, sizeof(ntfh));
 	ddprintf(("ntfs_fhtovp(): %s: %llu\n", mp->mnt_stat.f_mntonname,
-	    (unsigned long long)ntfhp->ntfid_ino));
+	    (unsigned long long)ntfh.ntfid_ino));
 
-	error = ntfs_vgetex(mp, ntfhp->ntfid_ino, ntfhp->ntfid_attr, NULL,
+	error = ntfs_vgetex(mp, ntfh.ntfid_ino, ntfh.ntfid_attr, NULL,
 			LK_EXCLUSIVE | LK_RETRY, 0, vpp);
 	if (error != 0) {
 		*vpp = NULLVP;
@@ -805,24 +819,32 @@ ntfs_fhtovp(
 static int
 ntfs_vptofh(
 	struct vnode *vp,
-	struct fid *fhp)
+	struct fid *fhp,
+	size_t *fh_size)
 {
 	struct ntnode *ntp;
-	struct ntfid *ntfhp;
+	struct ntfid ntfh;
 	struct fnode *fn;
+
+	if (*fh_size < sizeof(struct ntfid)) {
+		*fh_size = sizeof(struct ntfid);
+		return E2BIG;
+	}
+	*fh_size = sizeof(struct ntfid);
 
 	ddprintf(("ntfs_fhtovp(): %s: %p\n", vp->v_mount->mnt_stat.f_mntonname,
 		vp));
 
 	fn = VTOF(vp);
 	ntp = VTONT(vp);
-	ntfhp = (struct ntfid *)fhp;
-	ntfhp->ntfid_len = sizeof(struct ntfid);
-	ntfhp->ntfid_ino = ntp->i_number;
-	ntfhp->ntfid_attr = fn->f_attrtype;
+	memset(&ntfh, 0, sizeof(ntfh));
+	ntfh.ntfid_len = sizeof(struct ntfid);
+	ntfh.ntfid_ino = ntp->i_number;
+	ntfh.ntfid_attr = fn->f_attrtype;
 #ifdef notyet
-	ntfhp->ntfid_gen = ntp->i_gen;
+	ntfh.ntfid_gen = ntp->i_gen;
 #endif
+	memcpy(fhp, &ntfh, sizeof(ntfh));
 	return (0);
 }
 
@@ -1000,6 +1022,8 @@ struct vfsops ntfs_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	ntfs_vnodeopv_descs,
+	0,
+	{ NULL, NULL },
 };
 VFS_ATTACH(ntfs_vfsops);
 #endif
