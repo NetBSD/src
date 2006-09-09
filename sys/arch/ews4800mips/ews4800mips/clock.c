@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 2006/09/09 00:14:27 gdamore Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 2006/09/09 00:14:46 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2006/09/09 00:14:27 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2006/09/09 00:14:46 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ cpu_initclocks(void)
 
 	mips3_init_tc();
 }
+
 void
 setstatclockrate(int arg)
 {
