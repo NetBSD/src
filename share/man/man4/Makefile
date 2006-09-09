@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.403 2006/09/07 14:22:08 itohy Exp $
+#	$NetBSD: Makefile,v 1.404 2006/09/09 23:52:27 riz Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adc.4 adt7467c.4 adv.4 \
@@ -138,7 +138,7 @@ MLINKS+=scsi.4 atapi.4
 MLINKS+=scsi.4 atapibus.4
 MLINKS+=scsi.4 scsibus.4
 MLINKS+=si.4 sw.4
-MLINKS+=sk.4 skc.4
+MLINKS+=sk.4 skc.4 sk.4 msk.4 sk.4 mskc.4
 MLINKS+=sl.4 slip.4
 MLINKS+=speaker.4 spkr.4
 MLINKS+=tty.4 dty.4
