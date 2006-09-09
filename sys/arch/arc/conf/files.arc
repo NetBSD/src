@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.56 2006/09/03 18:12:48 gdamore Exp $
+#	$NetBSD: files.arc,v 1.57 2006/09/09 00:47:54 gdamore Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -78,6 +78,7 @@ file	arch/arc/arc/wired_map_machdep.c
 
 file	arch/arc/arc/arcbios.c
 
+file	arch/mips/mips/mips3_clock.c
 file	arch/mips/mips/softintr.c
 
 ##
