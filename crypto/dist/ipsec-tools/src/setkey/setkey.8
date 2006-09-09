@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.18 2005/12/04 20:46:40 manu Exp $
+.\"	$NetBSD: setkey.8,v 1.19 2006/09/09 16:22:37 manu Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -218,7 +218,7 @@ on the command line achieves the same functionality.
 .It Xo
 .Li spdadd
 .Op Fl 46n
-.Ar src_range Ar dst_range Ar upperspec Ar policy
+.Ar src_range Ar dst_range Ar upperspec Ar label Ar policy
 .Li ;
 .Xc
 Add an SPD entry.
@@ -368,6 +368,20 @@ Specify hard/soft life time duration of the SA measured in seconds.
 .It Fl bh Ar bytes
 .It Fl bs Ar bytes
 Specify hard/soft life time duration of the SA measured in bytes transported.
+.\"
+.It Fl ctx Ar doi Ar algorithm Ar context-name
+Specify an access control label. The access control label is interpreted 
+by the LSM (e.g., SELinux). Ultimately, it enables MAC on network 
+communications. 
+.Bl -tag -width Fl -compact
+.It Ar doi
+The domain of interpretation, which is used by the
+IKE daemon to identify the domain in which negotiation takes place. 
+.It Ar algorithm
+Indicates the LSM for which the label is generated (e.g., SELinux).
+.It Ar context-name 
+The string representation of the label that is interpreted by the LSM.
+.El
 .El
 .\"
 .Pp
@@ -486,6 +500,27 @@ There are many protocols in
 but all protocols except of TCP, UDP, and ICMP may not be suitable
 to use with IPsec.
 You have to consider carefully what to use.
+.\"
+.Pp
+.It Ar label
+.Ar label 
+is the access control label for the policy. This label is interpreted
+by the LSM (e.g., SELinux). Ultimately, it enables MAC on network
+communications. When a policy contains an access control label, SAs
+negotiated with this policy will contain the label. It's format:
+.Bl -tag -width Fl -compact
+.\"
+.It Fl ctx Ar doi Ar algorithm Ar context-name
+.Bl -tag -width Fl -compact
+.It Ar doi
+The domain of interpretation, which is used by the
+IKE daemon to identify the domain in which negotiation takes place.
+.It Ar algorithm
+Indicates the LSM for which the label is generated (e.g., SELinux).
+.It Ar context-name
+The string representation of the label that is interpreted by the LSM.
+.El
+.El
 .\"
 .Pp
 .It Ar policy
@@ -796,6 +831,14 @@ spdadd 10.0.11.41/32[21] 10.0.11.33/32[any] any
 	-P out ipsec esp/tunnel/192.168.0.1-192.168.1.2/require ;
 
 add 10.1.10.34 10.1.10.36 tcp 0x1000 -A tcp-md5 "TCP-MD5 BGP secret" ;
+
+add 10.0.11.41 10.0.11.33 esp 0x10001
+	-ctx 1 1 "system_u:system_r:unconfined_t:SystemLow-SystemHigh"
+	-E des-cbc 0x3ffe05014819ffff;
+
+spdadd 10.0.11.41 10.0.11.33 any
+	-ctx 1 1 "system_u:system_r:unconfined_t:SystemLow-SystemHigh"
+	-P out ipsec esp/transport//require ;
 .Ed
 .\"
 .Sh SEE ALSO

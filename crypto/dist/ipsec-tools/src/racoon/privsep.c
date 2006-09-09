@@ -1,6 +1,6 @@
-/*	$NetBSD: privsep.c,v 1.5 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: privsep.c,v 1.6 2006/09/09 16:22:10 manu Exp $	*/
 
-/* Id: privsep.c,v 1.6.2.7 2005/08/08 11:25:01 vanhu Exp */
+/* Id: privsep.c,v 1.15 2005/08/08 11:23:44 vanhu Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus
@@ -56,12 +56,14 @@
 #include "isakmp_var.h"
 #include "isakmp.h"
 #ifdef ENABLE_HYBRID
+#include "resolv.h"
 #include "isakmp_xauth.h"
 #include "isakmp_cfg.h"
 #endif
 #include "localconf.h"
 #include "remoteconf.h"
 #include "admin.h"
+#include "sockmisc.h"
 #include "privsep.h"
 
 static int privsep_sock[2] = { -1, -1 };
@@ -69,14 +71,10 @@ static int privsep_sock[2] = { -1, -1 };
 static int privsep_recv(int, struct privsep_com_msg **, size_t *);
 static int privsep_send(int, struct privsep_com_msg *, size_t);
 static int safety_check(struct privsep_com_msg *, int i);
-#ifdef HAVE_LIBPAM
 static int port_check(int);
-#endif
 static int unsafe_env(char *const *);
 static int unknown_name(int);
-static int unknown_script(int);
 static int unsafe_path(char *, int);
-static char *script_name2path(int);
 
 static int
 privsep_send(sock, buf, len)
@@ -173,15 +171,15 @@ privsep_init(void)
 	if (lcconf->uid == 0)
 		return 0;
 
-	/*
-	 * When running privsep, certificate and script paths
+	/* 
+	 * When running privsep, certificate and script paths 
 	 * are mandatory, as they enable us to check path safety
 	 * in the privilegied instance
 	 */
 	if ((lcconf->pathinfo[LC_PATHTYPE_CERT] == NULL) ||
 	    (lcconf->pathinfo[LC_PATHTYPE_SCRIPT] == NULL)) {
 		plog(LLV_ERROR, LOCATION, NULL, "privilege separation "
-		    "require path cert and path script in the config file\n");
+		   "require path cert and path script in the config file\n");
 		return -1;
 	}
 
@@ -335,7 +333,7 @@ privsep_init(void)
 		 * stuff eay_get_pkcs1privkey and eay_get_x509sign
 		 * together and sign the hash in the privilegied 
 		 * instance? 
-		 * pro: the key remains inaccessibleato
+		 * pro: the key remains inaccessible to unpriv
 		 * con: a compromised unpriv racoon can still sign anything
 		 */
 		case PRIVSEP_EAY_GET_PKCS1PRIVKEY: {
@@ -347,10 +345,13 @@ privsep_init(void)
 			bufs[0][combuf->bufs.buflen[0] - 1] = '\0';
 
 			if (unsafe_path(bufs[0], LC_PATHTYPE_CERT) != 0) {
-				plog(LLV_ERROR, LOCATION, NULL,
+				plog(LLV_ERROR, LOCATION, NULL, 
 				    "privsep_eay_get_pkcs1privkey: "
-				    "unsafe key \"%s\"\n", bufs[0]);
+				    "unsafe cert \"%s\"\n", bufs[0]);
 			}
+
+			plog(LLV_DEBUG, LOCATION, NULL, 
+			    "eay_get_pkcs1privkey(\"%s\")\n", bufs[0]);
 
 			if ((privkey = eay_get_pkcs1privkey(bufs[0])) == NULL){
 				reply->hdr.ac_errno = errno;
@@ -373,7 +374,7 @@ privsep_init(void)
 		}
 		
 		case PRIVSEP_SCRIPT_EXEC: {
-			int script;
+			char *script;
 			int name;
 			char **envp = NULL;
 			int envc = 0;
@@ -386,7 +387,11 @@ privsep_init(void)
 			 *
 			 * We expect: script, name, envp[], void
 			 */ 
+			if (safety_check(combuf, 0) != 0)
+				break;
+			bufs[0][combuf->bufs.buflen[0] - 1] = '\0';
 			count++;	/* script */
+
 			count++;	/* name */
 
 			for (; count < PRIVSEP_NBUF_MAX; count++) {
@@ -423,13 +428,7 @@ privsep_init(void)
 			 * Populate script, name and envp 
 			 */
 			count = 0;
-
-			if (combuf->bufs.buflen[count] != sizeof(script)) {
-				plog(LLV_ERROR, LOCATION, NULL, 
-				    "privsep_script_exec: corrupted message\n");
-				goto out;
-			}
-			memcpy((char *)&script, bufs[count++], sizeof(script));
+			script = bufs[count++];
 
 			if (combuf->bufs.buflen[count] != sizeof(name)) {
 				plog(LLV_ERROR, LOCATION, NULL, 
@@ -443,6 +442,10 @@ privsep_init(void)
 
 			count++;		/* void */
 
+			plog(LLV_DEBUG, LOCATION, NULL, 
+			    "script_exec(\"%s\", %d, %p)\n", 
+			    script, name, envp);
+
 			/* 
 			 * Check env for dangerous variables
 			 * Check script path and name
@@ -450,15 +453,12 @@ privsep_init(void)
 			 */
 			if ((unsafe_env(envp) == 0) &&
 			    (unknown_name(name) == 0) &&
-			    (unknown_script(script) == 0) &&
-			    (unsafe_path(script_name2path(script), 
-			    LC_PATHTYPE_SCRIPT) == 0))
+			    (unsafe_path(script, LC_PATHTYPE_SCRIPT) == 0))
 				(void)script_exec(script, name, envp);
 			else
-				plog(LLV_ERROR, LOCATION, NULL,
+				plog(LLV_ERROR, LOCATION, NULL, 
 				    "privsep_script_exec: "
-				    "unsafe script \"%s\"\n", 
-				    script_name2path(script));
+				    "unsafe script \"%s\"\n", script);
 
 			racoon_free(envp);
 			break;
@@ -479,6 +479,10 @@ privsep_init(void)
 				goto out;
 			}
 			memcpy(&keylen, bufs[1], sizeof(keylen));
+
+			plog(LLV_DEBUG, LOCATION, NULL, 
+			    "getpsk(\"%s\", %d)\n", bufs[0], keylen);
+
 			if ((psk = getpsk(bufs[0], keylen)) == NULL) {
 				reply->hdr.ac_errno = errno;
 				break;
@@ -500,6 +504,44 @@ privsep_init(void)
 		}
 
 #ifdef ENABLE_HYBRID
+		case PRIVSEP_ACCOUNTING_SYSTEM: {
+			int pool_size;
+			int port;
+			int inout;
+			struct sockaddr *raddr;
+
+			if (safety_check(combuf, 0) != 0)
+				break;
+			if (safety_check(combuf, 1) != 0)
+				break;
+			if (safety_check(combuf, 2) != 0)
+				break;
+			if (safety_check(combuf, 3) != 0)
+				break;
+
+			memcpy(&port, bufs[0], sizeof(port));
+			raddr = (struct sockaddr *)bufs[1];
+
+			bufs[2][combuf->bufs.buflen[2] - 1] = '\0';
+			memcpy(&inout, bufs[3], sizeof(port));
+
+			if (port_check(port) != 0)
+				break;
+
+			plog(LLV_DEBUG, LOCATION, NULL, 
+			    "accounting_system(%d, %s, %s)\n", 
+			    port, saddr2str(raddr), bufs[2]); 
+
+			errno = 0;
+			if (isakmp_cfg_accounting_system(port, 
+			    raddr, bufs[2], inout) != 0) {
+				if (errno == 0)
+					reply->hdr.ac_errno = EINVAL;
+				else
+					reply->hdr.ac_errno = errno;
+			}
+			break;
+		}
 		case PRIVSEP_XAUTH_LOGIN_SYSTEM: {
 			if (safety_check(combuf, 0) != 0)
 				break;
@@ -508,6 +550,10 @@ privsep_init(void)
 			if (safety_check(combuf, 1) != 0)
 				break;
 			bufs[1][combuf->bufs.buflen[1] - 1] = '\0';
+
+			plog(LLV_DEBUG, LOCATION, NULL, 
+			    "xauth_login_system(\"%s\", <password>)\n", 
+			    bufs[0]);
 
 			errno = 0;
 			if (xauth_login_system(bufs[0], bufs[1]) != 0) {
@@ -522,17 +568,29 @@ privsep_init(void)
 		case PRIVSEP_ACCOUNTING_PAM: {
 			int port;
 			int inout;
+			int pool_size;
 
 			if (safety_check(combuf, 0) != 0)
 				break;
 			if (safety_check(combuf, 1) != 0)
 				break;
+			if (safety_check(combuf, 2) != 0)
+				break;
 
 			memcpy(&port, bufs[0], sizeof(port));
 			memcpy(&inout, bufs[1], sizeof(inout));
+			memcpy(&pool_size, bufs[2], sizeof(pool_size));
+
+			if (pool_size != isakmp_cfg_config.pool_size)
+				if (isakmp_cfg_resize_pool(pool_size) != 0)
+					break;
 
 			if (port_check(port) != 0)
 				break;
+
+			plog(LLV_DEBUG, LOCATION, NULL, 
+			    "isakmp_cfg_accounting_pam(%d, %d)\n", 
+			    port, inout); 
 
 			errno = 0;
 			if (isakmp_cfg_accounting_pam(port, inout) != 0) {
@@ -546,6 +604,7 @@ privsep_init(void)
 
 		case PRIVSEP_XAUTH_LOGIN_PAM: {
 			int port;
+			int pool_size;
 			struct sockaddr *raddr;
 
 			if (safety_check(combuf, 0) != 0)
@@ -556,19 +615,30 @@ privsep_init(void)
 				break;
 			if (safety_check(combuf, 3) != 0)
 				break;
+			if (safety_check(combuf, 4) != 0)
+				break;
 
 			memcpy(&port, bufs[0], sizeof(port));
-			raddr = (struct sockaddr *)bufs[1];
+			memcpy(&pool_size, bufs[1], sizeof(pool_size));
+			raddr = (struct sockaddr *)bufs[2];
 			
-			bufs[2][combuf->bufs.buflen[2] - 1] = '\0';
 			bufs[3][combuf->bufs.buflen[3] - 1] = '\0';
+			bufs[4][combuf->bufs.buflen[4] - 1] = '\0';
+
+			if (pool_size != isakmp_cfg_config.pool_size)
+				if (isakmp_cfg_resize_pool(pool_size) != 0)
+					break;
 
 			if (port_check(port) != 0)
 				break;
 
+			plog(LLV_DEBUG, LOCATION, NULL, 
+			    "xauth_login_pam(%d, %s, \"%s\", <password>)\n", 
+			    port, saddr2str(raddr), bufs[3]); 
+
 			errno = 0;
 			if (xauth_login_pam(port, 
-			    raddr, bufs[2], bufs[3]) != 0) {
+			    raddr, bufs[3], bufs[4]) != 0) {
 				if (errno == 0)
 					reply->hdr.ac_errno = EINVAL;
 				else
@@ -579,14 +649,25 @@ privsep_init(void)
 
 		case PRIVSEP_CLEANUP_PAM: {
 			int port;
+			int pool_size;
 
 			if (safety_check(combuf, 0) != 0)
 				break;
+			if (safety_check(combuf, 1) != 0)
+				break;
 
 			memcpy(&port, bufs[0], sizeof(port));
+			memcpy(&pool_size, bufs[1], sizeof(pool_size));
+
+			if (pool_size != isakmp_cfg_config.pool_size)
+				if (isakmp_cfg_resize_pool(pool_size) != 0)
+					break;
 
 			if (port_check(port) != 0)
 				break;
+
+			plog(LLV_DEBUG, LOCATION, NULL, 
+			    "cleanup_pam(%d)\n", port);
 
 			cleanup_pam(port);
 			reply->hdr.ac_errno = 0;
@@ -697,7 +778,7 @@ privsep_pfkey_close(ps)
 
 int
 privsep_script_exec(script, name, envp)
-	int script;
+	char *script;
 	int name;
 	char *const envp[];
 {
@@ -747,7 +828,7 @@ privsep_script_exec(script, name, envp)
 	 * Compute the length
 	 */
 	count = 0;
-	msg->bufs.buflen[count] = sizeof(script);	/* script */
+	msg->bufs.buflen[count] = strlen(script) + 1;	/* script */
 	msg->hdr.ac_len += msg->bufs.buflen[count++];
 
 	msg->bufs.buflen[count] = sizeof(name);		/* name */
@@ -773,7 +854,7 @@ privsep_script_exec(script, name, envp)
 	data = (char *)(msg + 1);
 	count = 0;
 
-	memcpy(data, (char *)&script, msg->bufs.buflen[count]);	/* script */
+	memcpy(data, (char *)script, msg->bufs.buflen[count]);	/* script */
 	data += msg->bufs.buflen[count++];
 
 	memcpy(data, (char *)&name, msg->bufs.buflen[count]);	/* name */
@@ -905,9 +986,73 @@ privsep_xauth_login_system(usr, pwd)
 	racoon_free(msg);
 	return 0;
 }
-#endif /* ENABLE_HYBRID */
 
-#ifdef HAVE_LIBPAM
+int 
+privsep_accounting_system(port, raddr, usr, inout)
+	int port;
+	struct sockaddr *raddr;
+	char *usr;
+	int inout;
+{
+	struct privsep_com_msg *msg;
+	size_t len;
+	char *data;
+	int result;
+
+	if (geteuid() == 0)
+		return isakmp_cfg_accounting_system(port, raddr,
+						    usr, inout);
+
+	len = sizeof(*msg) 
+	    + sizeof(port)
+	    + sysdep_sa_len(raddr) 
+	    + strlen(usr) + 1
+	    + sizeof(inout);
+
+	if ((msg = racoon_malloc(len)) == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL, 
+		    "Cannot allocate memory: %s\n", strerror(errno));
+		return -1;
+	}
+	bzero(msg, len);
+	msg->hdr.ac_cmd = PRIVSEP_ACCOUNTING_SYSTEM;
+	msg->hdr.ac_len = len;
+	msg->bufs.buflen[0] = sizeof(port);
+	msg->bufs.buflen[1] = sysdep_sa_len(raddr);
+	msg->bufs.buflen[2] = strlen(usr) + 1;
+	msg->bufs.buflen[3] = sizeof(inout);
+
+	data = (char *)(msg + 1);
+	memcpy(data, &port, msg->bufs.buflen[0]);
+
+	data += msg->bufs.buflen[0];
+	memcpy(data, raddr, msg->bufs.buflen[1]);
+
+	data += msg->bufs.buflen[1];
+	memcpy(data, usr, msg->bufs.buflen[2]);
+
+	data += msg->bufs.buflen[2];
+	memcpy(data, &inout, msg->bufs.buflen[3]);
+
+	if (privsep_send(privsep_sock[1], msg, len) != 0)
+		return -1;
+
+	if (privsep_recv(privsep_sock[1], &msg, &len) != 0)
+		return -1;
+
+	if (msg->hdr.ac_errno != 0) {
+		errno = msg->hdr.ac_errno;
+		goto out;
+	}
+
+	racoon_free(msg);
+	return 0;
+
+out:
+	racoon_free(msg);
+	return -1;
+}
+
 static int
 port_check(port)
 	int port;
@@ -969,10 +1114,10 @@ found:
 	return -1;
 }
 
-/*                       
- * Check path safety     
- */                     
-static int                  
+/*
+ * Check path safety
+ */
+static int 
 unsafe_path(script, pathtype)
 	char *script;
 	int pathtype;
@@ -981,8 +1126,8 @@ unsafe_path(script, pathtype)
 	char rpath[MAXPATHLEN + 1];
 	size_t len;
 
-	if (script == NULL)
-		return -1; 
+	if (script == NULL) 
+		return -1;
 
 	path = lcconf->pathinfo[pathtype];
 
@@ -1001,45 +1146,6 @@ unsafe_path(script, pathtype)
 		return -1;
 
 	return 0;
-}
-
-static char *
-script_name2path(name)
-	int name;
-{
-	vchar_t **sp;
-
-	if (script_paths == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
-		    "script_name2path: script_paths was not initialized\n");
-		return NULL;
-	}
-
-	sp = (vchar_t **)(script_paths->v);
-
-	return sp[name]->v;
-}
-
-/*
- * Check the script path index is correct
- */
-static int 
-unknown_script(script)
-	int script;
-{
-	if (script_paths == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL, 
-		    "privsep_script_exec: script_paths was not initialized\n");
-		return -1;
-	}
-
-	if ((script < 0) || (script > (script_paths->l / sizeof(vchar_t *)))) {
-		plog(LLV_ERROR, LOCATION, NULL, 
-		    "privsep_script_exec: unsafe script index\n");
-		return -1;
-	}
-
-	 return 0;
 }
 
 static int 
@@ -1065,12 +1171,17 @@ privsep_accounting_pam(port, inout)
 	size_t len;
 	int *port_data;
 	int *inout_data;
+	int *pool_size_data;
 	int result;
 
 	if (geteuid() == 0)
 		return isakmp_cfg_accounting_pam(port, inout);
 
-	len = sizeof(*msg) + sizeof(port) + sizeof(inout);
+	len = sizeof(*msg) 
+	    + sizeof(port) 
+	    + sizeof(inout)
+	    + sizeof(isakmp_cfg_config.pool_size);
+
 	if ((msg = racoon_malloc(len)) == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL, 
 		    "Cannot allocate memory: %s\n", strerror(errno));
@@ -1081,12 +1192,15 @@ privsep_accounting_pam(port, inout)
 	msg->hdr.ac_len = len;
 	msg->bufs.buflen[0] = sizeof(port);
 	msg->bufs.buflen[1] = sizeof(inout);
+	msg->bufs.buflen[2] = sizeof(isakmp_cfg_config.pool_size);
 
 	port_data = (int *)(msg + 1);
 	inout_data = (int *)(port_data + 1);
+	pool_size_data = (int *)(inout_data + 1);
 
 	*port_data = port;
 	*inout_data = inout;
+	*pool_size_data = isakmp_cfg_config.pool_size;
 
 	if (privsep_send(privsep_sock[1], msg, len) != 0)
 		return -1;
@@ -1124,9 +1238,11 @@ privsep_xauth_login_pam(port, raddr, usr, pwd)
 
 	len = sizeof(*msg) 
 	    + sizeof(port)
+	    + sizeof(isakmp_cfg_config.pool_size)
 	    + sysdep_sa_len(raddr) 
 	    + strlen(usr) + 1
 	    + strlen(pwd) + 1;
+
 	if ((msg = racoon_malloc(len)) == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL, 
 		    "Cannot allocate memory: %s\n", strerror(errno));
@@ -1136,21 +1252,25 @@ privsep_xauth_login_pam(port, raddr, usr, pwd)
 	msg->hdr.ac_cmd = PRIVSEP_XAUTH_LOGIN_PAM;
 	msg->hdr.ac_len = len;
 	msg->bufs.buflen[0] = sizeof(port);
-	msg->bufs.buflen[1] = sysdep_sa_len(raddr);
-	msg->bufs.buflen[2] = strlen(usr) + 1;
-	msg->bufs.buflen[3] = strlen(pwd) + 1;
+	msg->bufs.buflen[1] = sizeof(isakmp_cfg_config.pool_size);
+	msg->bufs.buflen[2] = sysdep_sa_len(raddr);
+	msg->bufs.buflen[3] = strlen(usr) + 1;
+	msg->bufs.buflen[4] = strlen(pwd) + 1;
 
 	data = (char *)(msg + 1);
 	memcpy(data, &port, msg->bufs.buflen[0]);
 
-	data += sizeof(msg->bufs.buflen[0]);
-	memcpy(data, raddr, msg->bufs.buflen[1]);
+	data += msg->bufs.buflen[0];
+	memcpy(data, &isakmp_cfg_config.pool_size, msg->bufs.buflen[1]);
 
 	data += msg->bufs.buflen[1];
-	memcpy(data, usr, msg->bufs.buflen[2]);
+	memcpy(data, raddr, msg->bufs.buflen[2]);
 
 	data += msg->bufs.buflen[2];
-	memcpy(data, pwd, msg->bufs.buflen[3]);
+	memcpy(data, usr, msg->bufs.buflen[3]);
+
+	data += msg->bufs.buflen[3];
+	memcpy(data, pwd, msg->bufs.buflen[4]);
 
 	if (privsep_send(privsep_sock[1], msg, len) != 0)
 		return -1;
@@ -1183,7 +1303,10 @@ privsep_cleanup_pam(port)
 	if (geteuid() == 0)
 		return cleanup_pam(port);
 
-	len = sizeof(*msg) + sizeof(port);
+	len = sizeof(*msg) 
+	    + sizeof(port)
+	    + sizeof(isakmp_cfg_config.pool_size);
+
 	if ((msg = racoon_malloc(len)) == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL, 
 		    "Cannot allocate memory: %s\n", strerror(errno));
@@ -1193,9 +1316,13 @@ privsep_cleanup_pam(port)
 	msg->hdr.ac_cmd = PRIVSEP_CLEANUP_PAM;
 	msg->hdr.ac_len = len;
 	msg->bufs.buflen[0] = sizeof(port);
+	msg->bufs.buflen[1] = sizeof(isakmp_cfg_config.pool_size);
 
 	data = (char *)(msg + 1);
 	memcpy(data, &port, msg->bufs.buflen[0]);
+
+	data += msg->bufs.buflen[0];
+	memcpy(data, &isakmp_cfg_config.pool_size, msg->bufs.buflen[1]);
 
 	if (privsep_send(privsep_sock[1], msg, len) != 0)
 		return;

@@ -1,6 +1,6 @@
-/*	$NetBSD: racoonctl.c,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: racoonctl.c,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
 
-/*	Id: racoonctl.c,v 1.2.2.1 2005/04/21 09:07:20 monas Exp */
+/*	Id: racoonctl.c,v 1.11 2006/04/06 17:06:25 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -62,6 +62,7 @@
 #endif
 #include <err.h>
 #include <sys/ioctl.h> 
+#include <resolv.h>
 
 #include "var.h"
 #include "vmbuf.h"
@@ -74,6 +75,7 @@
 #include "handler.h"
 #include "sockmisc.h"
 #include "vmbuf.h"
+#include "plog.h"
 #include "isakmp_var.h"
 #include "isakmp.h"
 #include "isakmp_xauth.h"
@@ -96,6 +98,9 @@ static vchar_t *f_exchangesa __P((int, char **));
 static vchar_t *f_vpnc __P((int, char **));
 static vchar_t *f_vpnd __P((int, char **));
 static vchar_t *f_getevt __P((int, char **));
+#ifdef ENABLE_HYBRID
+static vchar_t *f_logoutusr __P((int, char **));
+#endif
 
 struct cmd_tag {
 	vchar_t *(*func) __P((int, char **));
@@ -120,6 +125,10 @@ struct cmd_tag {
 	{ f_vpnd,	ADMIN_DELETE_ALL_SA_DST,"vd" },
 	{ f_getevt,	ADMIN_SHOW_EVT,		"show-event" },
 	{ f_getevt,	ADMIN_SHOW_EVT,		"se" },
+#ifdef ENABLE_HYBRID
+	{ f_logoutusr,	ADMIN_LOGOUT_USER,	"logout-user" },
+	{ f_logoutusr,	ADMIN_LOGOUT_USER,	"lu" },
+#endif
 	{ NULL, 0, NULL },
 };
 
@@ -142,7 +151,10 @@ struct evtmsg {
 	{ EVTT_XAUTH_FAILED, "Xauth exchange failed", ERROR },
 	{ EVTT_PEERPH1AUTH_FAILED, "Peer failed phase 1 authentication "
 	    "(certificate problem?)", ERROR },
+	{ EVTT_PEERPH1_NOPROP, "Peer failed phase 1 initiation "
+	    "(proposal problem?)", ERROR },
 	{ 0, NULL, UNSPEC },
+	{ EVTT_NO_ISAKMP_CFG, "No need for ISAKMP mode config ", INFO },
 };
 
 static int get_proto __P((char *));
@@ -204,6 +216,7 @@ void print_evt __P((caddr_t, int));
 void print_cfg __P((caddr_t, int));
 void print_err __P((caddr_t, int));
 void print_ph1down __P((caddr_t, int));
+void print_ph1up __P((caddr_t, int));
 int evt_poll __P((void));
 char * fixed_addr __P((char *, char *, int));
 
@@ -329,6 +342,7 @@ evt_poll(void) {
 		com_init();
 		if (com_send(sendbuf) != 0)
 			errx(1, "Cannot send combuf");
+		vfree(sendbuf);
 
 		if (com_recv(&recvbuf) == 0) {
 			handle_recv(recvbuf);
@@ -552,7 +566,7 @@ f_deletesa(ac, av)
 
 	buf = vmalloc(sizeof(*head) + index->l);
 	if (buf == NULL)
-		return NULL;
+		goto out;
 
 	head = (struct admin_com *)buf->v;
 	head->ac_len = buf->l + index->l;
@@ -561,6 +575,10 @@ f_deletesa(ac, av)
 	head->ac_proto = proto;
 
 	memcpy(buf->v+sizeof(*head), index->v, index->l);
+
+out:
+	if (index != NULL)
+		vfree(index);
 
 	return buf;
 }
@@ -603,7 +621,7 @@ f_deleteallsadst(ac, av)
 
 	buf = vmalloc(sizeof(*head) + index->l);
 	if (buf == NULL)
-		return NULL;
+		goto out;
 
 	head = (struct admin_com *)buf->v;
 	head->ac_len = buf->l + index->l;
@@ -612,6 +630,10 @@ f_deleteallsadst(ac, av)
 	head->ac_proto = proto;
 
 	memcpy(buf->v+sizeof(*head), index->v, index->l);
+
+out:
+	if (index != NULL)
+		vfree(index);
 
 	return buf;
 }
@@ -692,7 +714,7 @@ f_exchangesa(ac, av)
 		acp = (struct admin_com_psk *)
 		    (buf->v + sizeof(*head) + index->l);
 
-		acp->id_type = IDTYPE_LOGIN;
+		acp->id_type = IDTYPE_USERFQDN;
 		acp->id_len = strlen(id) + 1;
 		acp->key_len = strlen(key) + 1;
 
@@ -702,6 +724,8 @@ f_exchangesa(ac, av)
 		data = (char *)(data + acp->id_len);
 		strcpy(data, key);
 	}
+
+	vfree(index);
 
 	return buf;
 }
@@ -782,7 +806,6 @@ f_vpnd(ac, av)
 	char *inet = "inet";
 	char *anyaddr = "0.0.0.0";
 	char *idx;
-	vchar_t *buf, *index;
 
 	if (ac < 1)
 		errx(1, "VPN gateway required");	
@@ -799,6 +822,39 @@ f_vpnd(ac, av)
 
 	return f_deleteallsadst(nac, nav);
 }
+
+#ifdef ENABLE_HYBRID
+static vchar_t *
+f_logoutusr(ac, av)
+	int ac;
+	char **av;
+{
+	vchar_t *buf;
+	struct admin_com *head;
+	char *user;
+
+	/* need username */
+	if (ac < 1)
+		errx(1, "insufficient arguments");
+	user = av[0];
+	if ((user == NULL) || (strlen(user) > LOGINLEN))
+		errx(1, "bad login (too long?)");
+
+	buf = vmalloc(sizeof(*head) + strlen(user) + 1);
+	if (buf == NULL)
+		return NULL;
+
+	head = (struct admin_com *)buf->v;
+	head->ac_len = buf->l;
+	head->ac_cmd = ADMIN_LOGOUT_USER;
+	head->ac_errno = 0;
+	head->ac_proto = 0;
+
+	strncpy((char *)(head + 1), user, LOGINLEN);
+
+	return buf;
+}
+#endif /* ENABLE_HYBRID */
 
 
 static int
@@ -956,20 +1012,23 @@ get_comindex(str, name, port, pref)
 
 	*name = *port = *pref = NULL;
 
-	*name = strdup(str);
+	*name = racoon_strdup(str);
+	STRDUP_FATAL(*name);
 	p = strpbrk(*name, "/[");
 	if (p != NULL) {
 		if (*(p + 1) == '\0')
 			goto bad;
 		if (*p == '/') {
 			*p = '\0';
-			*pref = strdup(p + 1);
+			*pref = racoon_strdup(p + 1);
+			STRDUP_FATAL(*pref);
 			p = strchr(*pref, '[');
 			if (p != NULL) {
 				if (*(p + 1) == '\0')
 					goto bad;
 				*p = '\0';
-				*port = strdup(p + 1);
+				*port = racoon_strdup(p + 1);
+				STRDUP_FATAL(*port);
 				p = strchr(*pref, ']');
 				if (p == NULL)
 					goto bad;
@@ -977,7 +1036,8 @@ get_comindex(str, name, port, pref)
 			}
 		} else if (*p == '[') {
 			*p = '\0';
-			*port = strdup(p + 1);
+			*port = racoon_strdup(p + 1);
+			STRDUP_FATAL(*port);
 			p = strchr(*pref, ']');
 			if (p == NULL)
 				goto bad;
@@ -1366,7 +1426,8 @@ print_cfg(buf, len)
 	
 	memset(&addr4, 0, sizeof(addr4));
 
-	if (evtdump->type != EVTT_ISAKMP_CFG_DONE)
+	if (evtdump->type != EVTT_ISAKMP_CFG_DONE && 
+	    evtdump->type != EVTT_NO_ISAKMP_CFG)
 		return;
 
 	len -= sizeof(*evtdump);
@@ -1419,8 +1480,12 @@ print_cfg(buf, len)
 			    (n + sizeof(*attr) + ntohs(attr->lorv));
 		}
 	}
-
-	printf("Bound to address %s\n", inet_ntoa(addr4));
+	
+	if (evtdump->type == EVTT_ISAKMP_CFG_DONE)
+		printf("Bound to address %s\n", inet_ntoa(addr4));
+	else
+		printf("VPN connexion established\n");
+	
 	if (banner) {
 		struct winsize win;
 		int col = 0;
@@ -1435,6 +1500,7 @@ print_cfg(buf, len)
 		for (i = 0; i < col; i++)
 			printf("%c", '=');
 		printf("\n");
+		racoon_free(banner);
 	}
 	
 	if (evt_filter & EVTF_CFG_STOP)

@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp_quick.c,v 1.8 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.9 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: isakmp_quick.c,v 1.13.2.7 2005/07/20 08:02:05 vanhu Exp */
+/* Id: isakmp_quick.c,v 1.29 2006/08/22 18:17:17 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -53,6 +53,9 @@
 #  include <time.h>
 # endif
 #endif
+#ifdef ENABLE_HYBRID
+#include <resolv.h>
+#endif
 
 #ifndef HAVE_NETINET6_IPSEC
 #include <netinet/ipsec.h>
@@ -69,12 +72,13 @@
 
 #include "localconf.h"
 #include "remoteconf.h"
+#include "handler.h"
+#include "proposal.h"
 #include "isakmp_var.h"
 #include "isakmp.h"
 #include "isakmp_inf.h"
 #include "isakmp_quick.h"
 #include "oakley.h"
-#include "handler.h"
 #include "ipsec_doi.h"
 #include "crypto_openssl.h"
 #include "pfkey.h"
@@ -205,9 +209,9 @@ quick_i1send(iph2, msg)
 			"failed to get ID.\n");
 		goto end;
 	}
-	plog(LLV_DEBUG, LOCATION, NULL, "IDci:");
+	plog(LLV_DEBUG, LOCATION, NULL, "IDci:\n");
 	plogdump(LLV_DEBUG, iph2->id->v, iph2->id->l);
-	plog(LLV_DEBUG, LOCATION, NULL, "IDcr:");
+	plog(LLV_DEBUG, LOCATION, NULL, "IDcr:\n");
 	plogdump(LLV_DEBUG, iph2->id_p->v, iph2->id_p->l);
 
 	/*
@@ -727,6 +731,11 @@ quick_i3recv(iph2, msg0)
 			hash = (struct isakmp_pl_hash *)pa->ptr;
 			break;
 		case ISAKMP_NPTYPE_N:
+			if (notify != NULL) {
+				plog(LLV_WARNING, LOCATION, NULL,
+				    "Ignoring multiples notifications\n");
+				break;
+			}
 			isakmp_check_notify(pa->ptr, iph2->ph1);
 			notify = vmalloc(pa->len);
 			if (notify == NULL) {
@@ -1061,6 +1070,7 @@ quick_r1recv(iph2, msg0)
 			"failed to get sainfo.\n");
 		goto end;
 	}
+
 
 	/* check the existence of ID payload and create responder's proposal */
 	error = get_proposal_r(iph2);
@@ -1592,6 +1602,18 @@ end:
 	return error;
 }
 
+int
+tunnel_mode_prop(p)
+	struct saprop *p;
+{
+	struct saproto *pr;
+
+	for (pr = p->head; pr; pr = pr->next)
+		if (pr->encmode == IPSECDOI_ATTR_ENC_MODE_TUNNEL)
+			return 1;
+	return 0;
+}
+
 /*
  * set SA to kernel.
  */
@@ -1600,7 +1622,6 @@ quick_r3prep(iph2, msg0)
 	struct ph2handle *iph2;
 	vchar_t *msg0;
 {
-	vchar_t *msg = NULL;
 	int error = ISAKMP_INTERNAL_ERROR;
 
 	/* validity check */
@@ -1705,9 +1726,6 @@ quick_r3prep(iph2, msg0)
 	error = 0;
 
 end:
-	if (msg != NULL)
-		vfree(msg);
-
 	return error;
 }
 
@@ -1758,6 +1776,7 @@ quick_ir1mx(iph2, body, hash)
 
 	/* encoding */
 	new = oakley_do_encrypt(iph2->ph1, buf, iph2->ivm->ive, iph2->ivm->iv);
+	
 	if (new == NULL)
 		goto end;
 
@@ -1788,7 +1807,7 @@ get_sainfo_r(iph2)
 	int prefixlen;
 	int error = ISAKMP_INTERNAL_ERROR;
 
-	if (iph2->id_p == NULL) {
+	if (iph2->id == NULL) {
 		switch (iph2->src->sa_family) {
 		case AF_INET:
 			prefixlen = sizeof(struct in_addr) << 3;
@@ -1812,7 +1831,7 @@ get_sainfo_r(iph2)
 		goto end;
 	}
 
-	if (iph2->id == NULL) {
+	if (iph2->id_p == NULL) {
 		switch (iph2->dst->sa_family) {
 		case AF_INET:
 			prefixlen = sizeof(struct in_addr) << 3;
@@ -1843,8 +1862,15 @@ get_sainfo_r(iph2)
 		goto end;
 	}
 
+#ifdef ENABLE_HYBRID
+	/* xauth group inclusion check */
+	if (iph2->sainfo->group != NULL)
+		if(group_check(iph2->ph1,&iph2->sainfo->group->v,1))
+			goto end;
+#endif
+
 	plog(LLV_DEBUG, LOCATION, NULL,
-		"get sa info: %s\n", sainfo2str(iph2->sainfo));
+		"selected sainfo: %s\n", sainfo2str(iph2->sainfo));
 
 	error = 0;
 end:
@@ -1992,7 +2018,17 @@ get_proposal_r(iph2)
 		if (_XIDT(iph2->id_p) == idi2type
 		 && spidx.dst.ss_family == spidx.src.ss_family) {
 			iph2->src_id = dupsaddr((struct sockaddr *)&spidx.dst);
+			if (iph2->src_id  == NULL) {
+				plog(LLV_ERROR, LOCATION, NULL,
+				    "buffer allocation failed.\n");
+				return ISAKMP_INTERNAL_ERROR;
+			}
 			iph2->dst_id = dupsaddr((struct sockaddr *)&spidx.src);
+			if (iph2->dst_id  == NULL) {
+				plog(LLV_ERROR, LOCATION, NULL,
+				    "buffer allocation failed.\n");
+				return ISAKMP_INTERNAL_ERROR;
+			}
 		}
 
 	} else {
@@ -2119,3 +2155,4 @@ get_proposal_r(iph2)
 
 	return 0;
 }
+

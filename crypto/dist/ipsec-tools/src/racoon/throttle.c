@@ -1,6 +1,6 @@
-/*	$NetBSD: throttle.c,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: throttle.c,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
 
-/* Id: throttle.c,v 1.2 2004/11/30 07:40:13 manubsd Exp */
+/* Id: throttle.c,v 1.5 2006/04/05 20:54:50 manubsd Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus
@@ -51,6 +51,7 @@
 #include <sys/socket.h>
 
 #include <netinet/in.h>
+#include <resolv.h>
 
 #include "vmbuf.h"
 #include "misc.h"
@@ -102,14 +103,15 @@ throttle_host(addr, authfail)
 
 	now = time(NULL);
 
-	TAILQ_FOREACH_REVERSE(te, &throttle_list, throttle_list, next) {
-		/* 
-		 * Remove outdated entries 
-		 */
+restart:
+	RACOON_TAILQ_FOREACH_REVERSE(te, &throttle_list, throttle_list, next) {
+	  /*
+	   * Remove outdated entries 
+	   */
 		if (te->penalty < now) {
 			TAILQ_REMOVE(&throttle_list, te, next);
 			racoon_free(te);
-			continue;
+			goto restart;
 		}
 			
 		if (cmpsaddrwop(addr, (struct sockaddr *)&te->host) == 0) {

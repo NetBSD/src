@@ -1,6 +1,6 @@
-/*	$NetBSD: admin.h,v 1.3 2005/11/21 14:20:28 manu Exp $	*/
+/*	$NetBSD: admin.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: admin.h,v 1.10 2004/12/30 13:45:49 manubsd Exp */
+/* Id: admin.h,v 1.11 2005/06/19 22:37:47 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -76,6 +76,11 @@ struct admin_com {
  * The admin_com_indexes and admin_com_psk follow, see below.
  */
 #define ADMIN_ESTABLISH_SA_PSK	0x0203
+
+/*
+ * user login follows
+ */
+#define ADMIN_LOGOUT_USER	0x0205  /* Delete SA for a given Xauth user */
 
 /*
  * Range 0x08xx is reserved for privilege separation, see privsep.h 

@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp_frag.h,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: isakmp_frag.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
-/*	Id: isakmp_frag.h,v 1.2 2004/10/24 16:51:24 manubsd Exp */
+/*	Id: isakmp_frag.h,v 1.3 2005/04/09 16:25:24 manubsd Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus 
@@ -32,6 +32,7 @@
  */
 
 /* IKE fragmentation capabilities */
+#define VENDORID_FRAG_IDENT 	0x80000000
 #define VENDORID_FRAG_BASE 	0x40000000
 #define VENDORID_FRAG_AGG 	0x80000000
 

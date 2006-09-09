@@ -1,4 +1,4 @@
-/*	$NetBSD: backupsa.c,v 1.3 2005/11/21 14:20:28 manu Exp $	*/
+/*	$NetBSD: backupsa.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
 /*	$KAME: backupsa.c,v 1.16 2001/12/31 20:13:40 thorpej Exp $	*/
 
@@ -176,9 +176,9 @@ backupsa_to_file(satype, mode, src, dst, spi, reqid, wsize,
 
 	k = val2str(keymat, e_keylen + a_keylen);
 	l = snprintf(p, len, " %s", k);
+	racoon_free(k);
 	if (l < 0 || l >= len)
 		goto err;
-	racoon_free(k);
 	p += l;
 	len -= l;
 	if (len < 0)

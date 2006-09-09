@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
 /*	$KAME: dnssec.c,v 1.2 2001/08/05 18:46:07 itojun Exp $	*/
 
@@ -96,7 +96,7 @@ dnssec_getcert(id)
 			"inpropper ID type passed %s "
 			"though getcert method is dnssec.\n",
 			s_ipsecdoi_ident(id_b->type));
-		return NULL;
+		goto err;
 	}
 
 	/* check response */
@@ -145,7 +145,10 @@ end:
 err:
 	if (name)
 		racoon_free(name);
-	if (cert)
+	if (cert) {
 		oakley_delcert(cert);
+		cert = NULL;
+	}
+
 	goto end;
 }

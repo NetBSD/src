@@ -1,6 +1,6 @@
-/*	$NetBSD: misc.h,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: misc.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: misc.h,v 1.6.10.1 2005/11/06 17:18:26 monas Exp */
+/* Id: misc.h,v 1.9 2006/04/06 14:00:06 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -49,6 +49,15 @@ extern const char *debug_location __P((const char *, int, const char *));
 extern int getfsize __P((char *));
 struct timeval;
 extern double timedelta __P((struct timeval *, struct timeval *));
+char *strdup __P((const char *));
+
+#if defined(__APPLE__) && defined(__MACH__)
+#define RACOON_TAILQ_FOREACH_REVERSE(var, head, headname ,field)	\
+  TAILQ_FOREACH_REVERSE(var, head, field, headname)
+#else
+#define RACOON_TAILQ_FOREACH_REVERSE(var, head, headname ,field)	\
+    TAILQ_FOREACH_REVERSE(var, head, headname, field)
+#endif
 
 #ifndef HAVE_STRLCPY
 #define strlcpy(d,s,l) (strncpy(d,s,l), (d)[(l)-1] = '\0')
@@ -57,6 +66,11 @@ extern double timedelta __P((struct timeval *, struct timeval *));
 #ifndef HAVE_STRLCAT
 #define strlcat(d,s,l) strncat(d,s,(l)-strlen(d)-1)
 #endif
+
+#define STRDUP_FATAL(x) if (x == NULL) {			\
+	plog(LLV_ERROR, LOCATION, NULL, "strdup failed\n");	\
+	exit(1);						\
+}
 
 #include "libpfkey.h"
 

@@ -1,6 +1,6 @@
-/*	$NetBSD: remoteconf.c,v 1.6 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.7 2006/09/09 16:22:10 manu Exp $	*/
 
-/* Id: remoteconf.c,v 1.26.2.5 2005/11/06 17:18:26 monas Exp */
+/* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -62,6 +62,9 @@
 #include "debug.h"
 
 #include "isakmp_var.h"
+#ifdef ENABLE_HYBRID
+#include "isakmp_xauth.h"
+#endif
 #include "isakmp.h"
 #include "ipsec_doi.h"
 #include "oakley.h"
@@ -76,13 +79,12 @@
 #include "nattraversal.h"
 #include "genlist.h"
 
-static TAILQ_HEAD(_rmtree, remoteconf) rmtree;
+static TAILQ_HEAD(_rmtree, remoteconf) rmtree, rmtree_save, rmtree_tmp;
 
 /* 
  * Script hook names and script hook paths
  */
 char *script_names[SCRIPT_MAX + 1] = { "phase1_up", "phase1_down" };
-vchar_t *script_paths = NULL;
 
 /*%%%*/
 /*
@@ -210,12 +212,13 @@ newrmconf()
 	new->getcert_method = ISAKMP_GETCERT_PAYLOAD;
 	new->getcacert_method = ISAKMP_GETCERT_LOCALFILE;
 	new->cacerttype = ISAKMP_CERT_X509SIGN;
+	new->certtype = ISAKMP_CERT_NONE;
 	new->cacertfile = NULL;
 	new->send_cert = TRUE;
 	new->send_cr = TRUE;
 	new->support_proxy = FALSE;
 	for (i = 0; i <= SCRIPT_MAX; i++)
-		new->script[i] = -1;
+		new->script[i] = NULL;
 	new->gen_policy = FALSE;
 	new->retry_counter = lcconf->retry_counter;
 	new->retry_interval = lcconf->retry_interval;
@@ -229,6 +232,12 @@ newrmconf()
 	new->dpd_interval = 0; /* Disable DPD checks by default */
 	new->dpd_retry = 5;
 	new->dpd_maxfails = 5;
+
+	new->weak_phase1_check = 0;
+
+#ifdef ENABLE_HYBRID
+	new->xauth = NULL;
+#endif
 
 	return new;
 }
@@ -262,8 +271,10 @@ dupidvl(entry, arg)
 	id = newidspec();
 	if (!id) return (void *) -1;
 
-	if (set_identifier(&id->id, old->idtype, old->id) != 0) 
+	if (set_identifier(&id->id, old->idtype, old->id) != 0) {
+		racoon_free(id);
 		return (void *) -1;
+	}
 
 	id->idtype = old->idtype;
 
@@ -305,8 +316,14 @@ void
 delrmconf(rmconf)
 	struct remoteconf *rmconf;
 {
-	if (rmconf->etypes)
+#ifdef ENABLE_HYBRID
+	if (rmconf->xauth)
+		xauth_rmconf_delete(&rmconf->xauth);
+#endif
+	if (rmconf->etypes){
 		deletypes(rmconf->etypes);
+		rmconf->etypes=NULL;
+	}
 	if (rmconf->idvl_p)
 		genlist_free(rmconf->idvl_p, idspec_free);
 	if (rmconf->dhgrp)
@@ -397,6 +414,25 @@ initrmconf()
 	TAILQ_INIT(&rmtree);
 }
 
+void
+save_rmconf()
+{
+	rmtree_save=rmtree;
+	initrmconf();
+}
+
+void
+save_rmconf_flush()
+{
+	rmtree_tmp=rmtree;
+	rmtree=rmtree_save;
+	flushrmconf();
+	initrmconf();
+	rmtree=rmtree_tmp;
+}
+
+
+
 /* check exchange type to be acceptable */
 struct etypes *
 check_etypeok(rmconf, etype)
@@ -465,15 +501,14 @@ insisakmpsa(new, rmconf)
 struct remoteconf *
 foreachrmconf(rmconf_func_t rmconf_func, void *data)
 {
-	struct remoteconf *p, *ret = NULL;
-	
-	TAILQ_FOREACH_REVERSE(p, &rmtree, _rmtree, chain) {
-		ret = (*rmconf_func)(p, data);
-		if (ret)
-			break;
-	}
+  struct remoteconf *p, *ret = NULL;
+  RACOON_TAILQ_FOREACH_REVERSE(p, &rmtree, _rmtree, chain) {
+    ret = (*rmconf_func)(p, data);
+    if (ret)
+      break;
+  }
 
-	return ret;
+  return ret;
 }
 
 static void *
@@ -614,13 +649,13 @@ newidspec()
 	return new;
 }
 
-int
+vchar_t *
 script_path_add(path)
 	vchar_t *path;
 {
 	char *script_dir;
-	vchar_t *new_storage;
 	vchar_t *new_path;
+	vchar_t *new_storage;
 	vchar_t **sp;
 	size_t len;
 	size_t size;
@@ -634,7 +669,7 @@ script_path_add(path)
 		if ((new_path = vmalloc(len)) == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL,
 			    "Cannot allocate memory: %s\n", strerror(errno));
-			return -1;
+			return NULL;
 		}
 
 		new_path->v[0] = '\0';
@@ -646,52 +681,31 @@ script_path_add(path)
 		path = new_path;
 	}
 
-	/* First time, initialize */
-	if (script_paths == NULL)
-		len = sizeof(vchar_t *);
-	else
-		len = script_paths->l;
-
-	/* Add a slot for a new path */
-	len += sizeof(vchar_t *);
-	if ((new_storage = vrealloc(script_paths, len)) == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
-		    "Cannot allocate memory: %s\n", strerror(errno));
-		return -1;
-	}
-	script_paths = new_storage;
-
-	size = len / sizeof(vchar_t *);
-	sp = (vchar_t **)script_paths->v;	
-	sp[size - 1] = NULL;
-	sp[size - 2] = path;
-
-	return (size - 2);
+	return path;
 }
 
-struct isakmpsa *
-dupisakmpsa(sa)
-	struct isakmpsa *sa;
-{
-	struct isakmpsa *res = NULL;
 
-	if (sa == NULL)
+struct isakmpsa *
+dupisakmpsa(struct isakmpsa *sa)
+{
+	struct isakmpsa *res=NULL;
+
+	if(sa == NULL)
 		return NULL;
 
-	res = newisakmpsa();
+	res=newisakmpsa();
 	if(res == NULL)
 		return NULL;
 
-	*res = *sa;
+	*res=*sa;
 #ifdef HAVE_GSSAPI
-	/* 
-	 * XXX gssid
+	/* XXX gssid
 	 */
 #endif
 	res->next=NULL;
 
-	if (sa->dhgrp != NULL)
-		oakley_setdhgroup(sa->dh_group, &(res->dhgrp));
+	if(sa->dhgrp != NULL)
+		oakley_setdhgroup (sa->dh_group, &(res->dhgrp));
 
 	return res;
 

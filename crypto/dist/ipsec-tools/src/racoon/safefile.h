@@ -1,4 +1,4 @@
-/*	$NetBSD: safefile.h,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: safefile.h,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
 
 /* Id: safefile.h,v 1.4 2004/07/12 18:32:12 ludvigm Exp */
 

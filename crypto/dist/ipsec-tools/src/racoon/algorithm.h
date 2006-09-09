@@ -1,6 +1,6 @@
-/*	$NetBSD: algorithm.h,v 1.3 2005/11/21 14:20:28 manu Exp $	*/
+/*	$NetBSD: algorithm.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: algorithm.h,v 1.8 2004/11/18 15:14:44 ludvigm Exp */
+/* Id: algorithm.h,v 1.10 2005/04/09 16:25:23 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -118,6 +118,10 @@ enum algtype {
 	algtype_hybrid_dss_s,
 	algtype_hybrid_rsa_c,
 	algtype_hybrid_dss_c,
+	algtype_xauth_psk_s,
+	algtype_xauth_psk_c,
+	algtype_xauth_rsa_s,
+	algtype_xauth_rsa_c,
 #endif
 };
 
