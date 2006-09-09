@@ -1,6 +1,6 @@
-#	$NetBSD: files.procfs,v 1.5 2005/12/11 12:24:51 christos Exp $
+#	$NetBSD: files.procfs,v 1.5.4.1 2006/09/09 02:58:00 rpaulo Exp $
 
-deffs	PROCFS
+deffs	PROCFS:	PTRACE
 
 file	miscfs/procfs/procfs_cmdline.c	procfs
 file	miscfs/procfs/procfs_ctl.c	procfs

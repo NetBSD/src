@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.26 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.26.4.1 2006/09/09 02:56:56 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.26 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.26.4.1 2006/09/09 02:56:56 rpaulo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.26 2005/12/11 12:24:25 christos Exp $
 #include <sys/queue.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 #include <fs/adosfs/adosfs.h>
 
 void adosfs_init __P((void));
@@ -67,10 +68,10 @@ int adosfs_unmount __P((struct mount *, int, struct lwp *));
 int adosfs_root __P((struct mount *, struct vnode **));
 int adosfs_quotactl __P((struct mount *, int, uid_t, void *, struct lwp *));
 int adosfs_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
-int adosfs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
+int adosfs_sync __P((struct mount *, int, kauth_cred_t, struct lwp *));
 int adosfs_vget __P((struct mount *, ino_t, struct vnode **));
 int adosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int adosfs_vptofh __P((struct vnode *, struct fid *));
+int adosfs_vptofh __P((struct vnode *, struct fid *, size_t *));
 
 int adosfs_mountfs __P((struct vnode *, struct mount *, struct lwp *));
 int adosfs_loadbitmap __P((struct adosfsmount *));
@@ -101,11 +102,9 @@ adosfs_mount(mp, path, data, ndp, l)
 	struct vnode *devvp;
 	struct adosfs_args args;
 	struct adosfsmount *amp;
-	struct proc *p;
 	int error;
 	mode_t accessmode;
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		amp = VFSTOADOSFS(mp);
 		if (amp == NULL)
@@ -147,12 +146,12 @@ adosfs_mount(mp, path, data, ndp, l)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (p->p_ucred->cr_uid != 0) {
+	if (kauth_cred_geteuid(l->l_cred) != 0) {
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_cred, l);
 		if (error) {
 			vput(devvp);
 			return (error);
@@ -198,7 +197,7 @@ adosfs_mountfs(devvp, mp, l)
 		return (error);
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_ucred, l, 0, 0))
+	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0))
 	    != 0)
 		return (error);
 
@@ -707,18 +706,23 @@ adosfs_fhtovp(mp, fhp, vpp)
 	struct fid *fhp;
 	struct vnode **vpp;
 {
-	struct ifid *ifhp = (struct ifid *)fhp;
+	struct ifid ifh;
 #if 0
 	struct anode *ap;
 #endif
 	struct vnode *nvp;
 	int error;
 
+	if (fhp->fid_len != sizeof(struct ifid))
+		return EINVAL;
+
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("adfhtovp(%x, %x, %x)\n", mp, fhp, vpp);
 #endif
 
-	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) != 0) {
+	memcpy(&ifh, fhp, sizeof(ifh));
+
+	if ((error = VFS_VGET(mp, ifh.ifid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}
@@ -735,18 +739,25 @@ adosfs_fhtovp(mp, fhp, vpp)
 }
 
 int
-adosfs_vptofh(vp, fhp)
+adosfs_vptofh(vp, fhp, fh_size)
 	struct vnode *vp;
 	struct fid *fhp;
+	size_t *fh_size;
 {
 	struct anode *ap = VTOA(vp);
-	struct ifid *ifhp;
+	struct ifid ifh;
 
-	ifhp = (struct ifid *)fhp;
-	ifhp->ifid_len = sizeof(struct ifid);
+	if (*fh_size < sizeof(struct ifid)) {
+		*fh_size = sizeof(struct ifid);
+		return E2BIG;
+	}
+	*fh_size = sizeof(struct ifid);
 
-	ifhp->ifid_ino = ap->block;
-	ifhp->ifid_start = ap->block;
+	memset(&ifh, 0, sizeof(ifh));
+	ifh.ifid_len = sizeof(struct ifid);
+	ifh.ifid_ino = ap->block;
+	ifh.ifid_start = ap->block;
+	memcpy(fhp, &ifh, sizeof(ifh));
 
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("advptofh(%x, %x)\n", vp, fhp);
@@ -769,7 +780,7 @@ int
 adosfs_sync(mp, waitfor, uc, l)
 	struct mount *mp;
 	int waitfor;
-	struct ucred *uc;
+	kauth_cred_t uc;
 	struct lwp *l;
 {
 #ifdef ADOSFS_DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.20 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.20.4.1 2006/09/09 02:59:24 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.20 2005/12/24 20:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.20.4.1 2006/09/09 02:59:24 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,10 +162,7 @@ nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 		atv = *tv;
 		if (itimerfix(&atv))
 			return (EINVAL);
-		s = splclock();
-		timeradd(&atv, &time, &atv);
-		splx(s);
-		timo = hzto(&atv);
+		timo = tvtohz(&atv);
 		if (timo <= 0)
 			return (EWOULDBLOCK);
 	} else
@@ -183,7 +180,7 @@ nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 		/*
 		 * We have to recalculate the timeout on every retry.
 		 */
-		timo = hzto(&atv);
+		timo = tvtohz(&atv);
 		if (timo <= 0) {
 			error = EWOULDBLOCK;
 			goto done;
@@ -406,11 +403,10 @@ nbssn_recvhdr(struct nbpcb *nbp, int *lenp,
 	aio.iov_len = sizeof(len);
 	auio.uio_iov = &aio;
 	auio.uio_iovcnt = 1;
-	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
 	auio.uio_offset = 0;
 	auio.uio_resid = sizeof(len);
-	auio.uio_lwp = NULL;
+	UIO_SETUP_SYSSPACE(&auio);
 #ifndef __NetBSD__
 	error = so->so_proto->pr_usrreqs->pru_soreceive
 	    (so, (struct sockaddr **)NULL, &auio,
@@ -447,6 +443,9 @@ nbssn_recv(struct nbpcb *nbp, struct mbuf **mpp, int *lenp,
 	u_int8_t rpcode;
 	int len, resid;
 	int error, rcvflg;
+
+	len = 0;	/* XXX gcc */
+	rpcode = 0;	/* XXX gcc */
 
 	if (so == NULL)
 		return ENOTCONN;
@@ -493,7 +492,7 @@ nbssn_recv(struct nbpcb *nbp, struct mbuf **mpp, int *lenp,
 			rcvflg = MSG_WAITALL;
 			bzero(&auio, sizeof(auio));
 			auio.uio_resid = min(resid, NB_SORECEIVE_CHUNK);
-			auio.uio_lwp = l;
+			/* not need to setup uio_vmspace */
 			resid -= auio.uio_resid;
 			/*
 			 * Spin until we have collected everything in
@@ -790,6 +789,7 @@ struct smb_tran_desc smb_tran_nbtcp_desc = {
 	smb_nbst_send, smb_nbst_recv,
 	smb_nbst_timo, smb_nbst_intr,
 	smb_nbst_getparam, smb_nbst_setparam,
-	smb_nbst_fatal
+	smb_nbst_fatal,
+	{ NULL, NULL },
 };
 

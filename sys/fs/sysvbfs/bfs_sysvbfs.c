@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs_sysvbfs.c,v 1.1 2005/12/29 14:53:45 tsutsui Exp $	*/
+/*	$NetBSD: bfs_sysvbfs.c,v 1.1.4.1 2006/09/09 02:57:06 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,19 +38,20 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs_sysvbfs.c,v 1.1 2005/12/29 14:53:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs_sysvbfs.c,v 1.1.4.1 2006/09/09 02:57:06 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 #include <fs/sysvbfs/bfs.h>
 
 struct bc_io_ops {
 	struct sector_io_ops io;
 	struct vnode *vp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 };
 
 #define	STATIC
@@ -116,7 +117,8 @@ bc_read(void *self, uint8_t *buf, daddr_t block)
 
 	return TRUE;
  error_exit:
-	printf("%s: block %lld read failed.\n", __FUNCTION__, block);
+	printf("%s: block %lld read failed.\n", __FUNCTION__, 
+	    (long long int)block);
 
 	if (bp != NULL)
 		brelse(bp);

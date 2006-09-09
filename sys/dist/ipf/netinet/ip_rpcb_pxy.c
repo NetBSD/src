@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_rpcb_pxy.c,v 1.7 2005/12/11 12:24:21 christos Exp $	*/
+/*	$NetBSD: ip_rpcb_pxy.c,v 1.7.4.1 2006/09/09 02:56:45 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Ryan Beasley <ryanb@goddamnbastard.org>
@@ -285,6 +285,8 @@ ippr_rpcb_out(fin, aps, nat)
 	u_int off, dlen;
 	int rv, diff;
 	mb_t *m;
+
+	rx = NULL;	/* XXX gcc */
 
 	/* Disallow fragmented or illegally short packets. */
 	if ((fin->fin_flx & (FI_FRAG|FI_SHORT)) != 0)
@@ -1193,8 +1195,9 @@ ippr_rpcb_getnat(fin, nat, proto, port)
 	 * no use for this lock, so simply unlock it if necessary.
 	 */
 	is = fr_stlookup(&fi, &tcp, NULL);
-	if (is != NULL)
+	if (is != NULL) {
 		RWLOCK_EXIT(&ipf_state);
+	}
 
 	RWLOCK_EXIT(&ipf_nat);
 

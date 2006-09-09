@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsproto.h,v 1.12 2005/12/11 12:25:17 christos Exp $	*/
+/*	$NetBSD: nfsproto.h,v 1.12.4.1 2006/09/09 02:59:25 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -54,7 +54,7 @@
 #define NFS_VER2	2
 #define	NFS_VER3	3
 #define NFS_V2MAXDATA	8192
-#define	NFS_MAXDGRAMDATA 32768
+#define	NFS_MAXDGRAMDATA (60*1024)
 #define	NFS_MAXDATA	MAXBSIZE
 #define	NFS_MAXPATHLEN	1024
 #define	NFS_MAXNAMLEN	255
@@ -113,7 +113,7 @@
 #define NFSX_V2STATFS	20
 
 /* specific to NFS Version 3 */
-#define NFSX_V3FH		(sizeof (fhandle_t)) /* size this server uses */
+#define NFSX_V3FH		(12/*sizeof(fhandle_t)*/+16)
 #define	NFSX_V3FHMAX		64	/* max. allowed by protocol */
 #define NFSX_V3FATTR		84
 #define NFSX_V3SATTR		60	/* max. all fields filled in */
@@ -130,7 +130,7 @@
 /* variants for both versions */
 #define NFSX_FH(v3)		((v3) ? (NFSX_V3FHMAX + NFSX_UNSIGNED) : \
 					NFSX_V2FH)
-#define NFSX_SRVFH(v3)		((v3) ? NFSX_V3FH : NFSX_V2FH)
+#define NFSX_SRVFH(nsfh, v3)	(((v3) ? NFSX_UNSIGNED : 0) + NFSRVFH_SIZE(nsfh))
 #define	NFSX_FATTR(v3)		((v3) ? NFSX_V3FATTR : NFSX_V2FATTR)
 #define NFSX_PREOPATTR(v3)	((v3) ? (7 * NFSX_UNSIGNED) : 0)
 #define NFSX_POSTOPATTR(v3)	((v3) ? (NFSX_V3FATTR + NFSX_UNSIGNED) : 0)
@@ -144,6 +144,7 @@
 #define NFSX_READDIR(v3)	((v3) ? (5 * NFSX_UNSIGNED) : \
 					(2 * NFSX_UNSIGNED))
 #define	NFSX_STATFS(v3)		((v3) ? NFSX_V3STATFS : NFSX_V2STATFS)
+#define	NFSX_FHTOOBIG_P(sz, v3)	((sz) > ((v3) ? NFSX_V3FHMAX : NFSX_V2FH))
 
 /* nfs rpc procedure numbers (before version mapping) */
 #define	NFSPROC_NULL		0
@@ -252,7 +253,9 @@ typedef enum { NFNON=0, NFREG=1, NFDIR=2, NFBLK=3, NFCHR=4, NFLNK=5,
 #define NFS_SMALLFH	64
 #endif
 union nfsfh {
+#ifdef _KERNEL
 	fhandle_t fh_generic;
+#endif
 	u_char    fh_bytes[NFS_SMALLFH];
 };
 typedef union nfsfh nfsfh_t;

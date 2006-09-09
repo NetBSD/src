@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.59 2005/12/07 06:14:13 thorpej Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.59.4.1 2006/09/09 02:57:17 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.59 2005/12/07 06:14:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.59.4.1 2006/09/09 02:57:17 rpaulo Exp $");
 
 #define SYSVSEM
 
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.59 2005/12/07 06:14:13 thorpej Exp $"
 #include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 static int	semtot = 0;
 struct	semid_ds *sema;			/* semaphore id pool */
@@ -287,7 +288,6 @@ sys_____semctl13(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) cmd;
 		syscallarg(union __semun *) arg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct semid_ds sembuf;
 	int cmd, error;
 	void *pass_arg;
@@ -322,7 +322,7 @@ sys_____semctl13(struct lwp *l, void *v, register_t *retval)
 		}
 	}
 
-	error = semctl1(p, SCARG(uap, semid), SCARG(uap, semnum), cmd,
+	error = semctl1(l, SCARG(uap, semid), SCARG(uap, semnum), cmd,
 	    pass_arg, retval);
 
 	if (error == 0 && cmd == IPC_STAT)
@@ -332,10 +332,10 @@ sys_____semctl13(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-semctl1(struct proc *p, int semid, int semnum, int cmd, void *v,
+semctl1(struct lwp *l, int semid, int semnum, int cmd, void *v,
     register_t *retval)
 {
-	struct ucred *cred = p->p_ucred;
+	kauth_cred_t cred = l->l_cred;
 	union __semun *arg = v;
 	struct semid_ds *sembuf = v, *semaptr;
 	int i, error, ix;
@@ -356,8 +356,8 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, void *v,
 	case IPC_RMID:
 		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_M)) != 0)
 			return (error);
-		semaptr->sem_perm.cuid = cred->cr_uid;
-		semaptr->sem_perm.uid = cred->cr_uid;
+		semaptr->sem_perm.cuid = kauth_cred_geteuid(cred);
+		semaptr->sem_perm.uid = kauth_cred_geteuid(cred);
 		semtot -= semaptr->sem_nsems;
 		for (i = semaptr->_sem_base - sem; i < semtot; i++)
 			sem[i] = sem[i + semaptr->sem_nsems];
@@ -378,7 +378,7 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, void *v,
 		semaptr->sem_perm.gid = sembuf->sem_perm.gid;
 		semaptr->sem_perm.mode = (semaptr->sem_perm.mode & ~0777) |
 		    (sembuf->sem_perm.mode & 0777);
-		semaptr->sem_ctime = time.tv_sec;
+		semaptr->sem_ctime = time_second;
 		break;
 
 	case IPC_STAT:
@@ -414,6 +414,7 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, void *v,
 	case GETALL:
 		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
 			return (error);
+		KASSERT(arg != NULL);
 		for (i = 0; i < semaptr->sem_nsems; i++) {
 			error = copyout(&semaptr->_sem_base[i].semval,
 			    &arg->array[i], sizeof(arg->array[i]));
@@ -435,6 +436,7 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, void *v,
 			return (error);
 		if (semnum < 0 || semnum >= semaptr->sem_nsems)
 			return (EINVAL);
+		KASSERT(arg != NULL);
 		semaptr->_sem_base[semnum].semval = arg->val;
 		semundo_clear(ix, semnum);
 		wakeup(semaptr);
@@ -443,6 +445,7 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, void *v,
 	case SETALL:
 		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_W)))
 			return (error);
+		KASSERT(arg != NULL);
 		for (i = 0; i < semaptr->sem_nsems; i++) {
 			error = copyin(&arg->array[i],
 			    &semaptr->_sem_base[i].semval,
@@ -473,7 +476,7 @@ sys_semget(struct lwp *l, void *v, register_t *retval)
 	int key = SCARG(uap, key);
 	int nsems = SCARG(uap, nsems);
 	int semflg = SCARG(uap, semflg);
-	struct ucred *cred = l->l_proc->p_ucred;
+	kauth_cred_t cred = l->l_cred;
 
 	SEM_PRINTF(("semget(0x%x, %d, 0%o)\n", key, nsems, semflg));
 
@@ -523,16 +526,16 @@ sys_semget(struct lwp *l, void *v, register_t *retval)
 		}
 		SEM_PRINTF(("semid %d is available\n", semid));
 		sema[semid].sem_perm._key = key;
-		sema[semid].sem_perm.cuid = cred->cr_uid;
-		sema[semid].sem_perm.uid = cred->cr_uid;
-		sema[semid].sem_perm.cgid = cred->cr_gid;
-		sema[semid].sem_perm.gid = cred->cr_gid;
+		sema[semid].sem_perm.cuid = kauth_cred_geteuid(cred);
+		sema[semid].sem_perm.uid = kauth_cred_geteuid(cred);
+		sema[semid].sem_perm.cgid = kauth_cred_getegid(cred);
+		sema[semid].sem_perm.gid = kauth_cred_getegid(cred);
 		sema[semid].sem_perm.mode = (semflg & 0777) | SEM_ALLOC;
 		sema[semid].sem_perm._seq =
 		    (sema[semid].sem_perm._seq + 1) & 0x7fff;
 		sema[semid].sem_nsems = nsems;
 		sema[semid].sem_otime = 0;
-		sema[semid].sem_ctime = time.tv_sec;
+		sema[semid].sem_ctime = time_second;
 		sema[semid]._sem_base = &sem[semtot];
 		semtot += nsems;
 		memset(sema[semid]._sem_base, 0,
@@ -568,7 +571,7 @@ sys_semop(struct lwp *l, void *v, register_t *retval)
 	struct sembuf *sopptr = NULL;
 	struct __sem *semptr = NULL;
 	struct sem_undo *suptr = NULL;
-	struct ucred *cred = p->p_ucred;
+	kauth_cred_t cred = l->l_cred;
 	int i, eval;
 	int do_wakeup, do_undos;
 
@@ -787,7 +790,7 @@ done:
 	}
 
 	/* Update sem_otime */
-	semaptr->sem_otime = time.tv_sec;
+	semaptr->sem_otime = time_second;
 
 	/* Do a wakeup if any semaphore was up'd. */
 	if (do_wakeup) {

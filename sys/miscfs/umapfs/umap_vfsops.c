@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.56 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.56.4.1 2006/09/09 02:58:06 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.56 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.56.4.1 2006/09/09 02:58:06 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.56 2005/12/11 12:24:51 christos Ex
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
+
 #include <miscfs/umapfs/umap.h>
 #include <miscfs/genfs/layer_extern.h>
 
@@ -73,7 +75,6 @@ umapfs_mount(mp, path, data, ndp, l)
 	struct umap_args args;
 	struct vnode *lowerrootvp, *vp;
 	struct umap_mount *amp;
-	struct proc *p = l->l_proc;
 	int error;
 #ifdef UMAPFS_DIAGNOSTIC
 	int i;
@@ -90,7 +91,8 @@ umapfs_mount(mp, path, data, ndp, l)
 	}
 
 	/* only for root */
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return error;
 
 #ifdef UMAPFS_DIAGNOSTIC
@@ -333,5 +335,7 @@ struct vfsops umapfs_vfsops = {
 	layerfs_snapshot,
 	vfs_stdextattrctl,
 	umapfs_vnodeopv_descs,
+	0,				/* vfs_refcount */
+	{ NULL, NULL },
 };
 VFS_ATTACH(umapfs_vfsops);

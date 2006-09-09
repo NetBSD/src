@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.77 2005/12/20 19:35:26 christos Exp $
+#	$NetBSD: Makefile,v 1.77.4.1 2006/09/09 02:57:52 rpaulo Exp $
 
 LIB=		kern
 NOPIC=		# defined
@@ -26,6 +26,9 @@ M= ${KERNDIR}/arch/${ARCHSUBDIR}
 CPPFLAGS=	-I$M ${KERNCPPFLAGS} ${KERNMISCCPPFLAGS}
 
 .include "${.PARSEDIR}/../../../common/lib/libc/Makefile.inc"
+.include "${.PARSEDIR}/../../../common/lib/libprop/Makefile.inc"
+
+CPPFLAGS+=	-I${KERNDIR}/../../../common/include
 
 .PATH.c: ${KERNDIR}
 .if exists ($M/Makefile.inc)
@@ -43,9 +46,11 @@ SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 
 # Other stuff
 SRCS+=	__cmsg_alignbytes.c inet_addr.c intoa.c md4c.c md5c.c sha1.c pmatch.c
-SRCS+=	_que.c arc4random.c mcount.c
+SRCS+=	_que.c arc4random.c bcd.c mcount.c
 
 SRCS+=	strstr.c strlcpy.c strlcat.c
+
+SRCS+=	strtoumax.c
 
 SRCS+=	xlat_mbr_fstype.c
 

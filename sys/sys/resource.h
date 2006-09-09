@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.27 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: resource.h,v 1.27.4.1 2006/09/09 02:59:42 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -125,8 +125,8 @@ struct loadavg {
 #ifdef _KERNEL
 extern struct loadavg averunnable;
 struct pcred;
-int	dosetrlimit(struct proc *, struct pcred *, int, struct rlimit *);
-int	donice(struct proc *, struct proc *, int);
+int	dosetrlimit(struct lwp *, struct proc *, int, struct rlimit *);
+int	donice(struct lwp *, struct proc *, int);
 
 #else
 #include <sys/cdefs.h>

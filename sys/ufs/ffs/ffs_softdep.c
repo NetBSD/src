@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.73 2005/12/24 20:45:10 perry Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.73.4.1 2006/09/09 03:00:00 rpaulo Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.73 2005/12/24 20:45:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.73.4.1 2006/09/09 03:00:00 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -47,7 +47,10 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.73 2005/12/24 20:45:10 perry Exp $
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/inttypes.h>
+#include <sys/kauth.h>
+
 #include <miscfs/specfs/specdev.h>
+
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
@@ -920,7 +923,7 @@ softdep_flushworklist(oldmnt, countp, l)
 	while ((count = softdep_process_worklist(oldmnt)) > 0) {
 		*countp += count;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_FSYNC(devvp, p->p_ucred, FSYNC_WAIT, 0, 0, l);
+		error = VOP_FSYNC(devvp, l->l_cred, FSYNC_WAIT, 0, 0, l);
 		VOP_UNLOCK(devvp, 0);
 		if (error)
 			break;
@@ -1290,7 +1293,7 @@ softdep_mount(devvp, mp, fs, cred)
 	struct vnode *devvp;
 	struct mount *mp;
 	struct fs *fs;
-	struct ucred *cred;
+	kauth_cred_t cred;
 {
 	struct csum_total cstotal;
 	struct cg *cgp;
@@ -3311,7 +3314,7 @@ handle_workitem_remove(dirrem)
 		panic("handle_workitem_remove: bad dir delta");
 	inodedep->id_nlinkdelta = ip->i_nlink - ip->i_ffs_effnlink;
 	FREE_LOCK(&lk);
-	if ((error = ffs_truncate(vp, (off_t)0, 0, l->l_proc->p_ucred, l)) != 0)
+	if ((error = ffs_truncate(vp, (off_t)0, 0, l->l_cred, l)) != 0)
 		softdep_error("handle_workitem_remove: truncate", error);
 	/*
 	 * Rename a directory to a new parent. Since, we are both deleting
@@ -4760,7 +4763,7 @@ softdep_fsync(vp, f)
 				return (error);
 			}
 			if ((pagedep->pd_state & NEWBLOCK) &&
-			    (error = VOP_FSYNC(pvp, lp->l_proc->p_ucred,
+			    (error = VOP_FSYNC(pvp, lp->l_cred,
 			    FSYNC_WAIT, 0, 0, lp))) {
 				vput(pvp);
 				return (error);
@@ -4770,7 +4773,7 @@ softdep_fsync(vp, f)
 		 * Flush directory page containing the inode's name.
 		 */
 		error = bread(pvp, lbn, blksize(fs, VTOI(pvp), lbn),
-		    lp->l_proc->p_ucred, &bp);
+		    lp->l_cred, &bp);
 		if (error == 0)
 			error = VOP_BWRITE(bp);
 		vput(pvp);
@@ -4788,7 +4791,7 @@ softdep_fsync(vp, f)
 		 */
 		l = 0;
 		VOP_IOCTL(ip->i_devvp, DIOCCACHESYNC, &l, FWRITE,
-		    lp->l_proc->p_ucred, lp);
+		    lp->l_cred, lp);
 	}
 	return (0);
 }
@@ -4861,7 +4864,7 @@ softdep_sync_metadata(v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int a_waitfor;
 		off_t a_offlo;
 		off_t a_offhi;
@@ -4874,7 +4877,7 @@ softdep_sync_metadata(v)
 	struct allocindir *aip;
 	struct buf *bp, *nbp;
 	struct worklist *wk;
-	int i, error, waitfor;
+	int i, error, waitfor, must_sync;
 
 	/*
 	 * Check whether this vnode is involved in a filesystem
@@ -4923,6 +4926,7 @@ loop:
 	 * As we hold the buffer locked, none of its dependencies
 	 * will disappear.
 	 */
+	must_sync = 0;
 	for (wk = LIST_FIRST(&bp->b_dep); wk;
 	     wk = LIST_NEXT(wk, wk_list)) {
 		switch (wk->wk_type) {
@@ -5035,23 +5039,25 @@ loop:
 
 		case D_BMSAFEMAP:
 			/*
-			 * This case should never happen if the vnode has
-			 * been properly sync'ed. However, if this function
-			 * is used at a place where the vnode has not yet
-			 * been sync'ed, this dependency can show up. So,
-			 * rather than panic, just flush it.
+			 * If the vnode is a block device associated with a
+			 * file system it may have new I/O requests posted for
+			 * it even if the vnode is locked. For other vnodes
+			 * this case should never happen if the vnode has
+			 * been properly sync'ed. As this dependency can show
+			 * up we have to deal with it.
+			 * For a BMSAFEMAP dependency its sm_buf points to the
+			 * buffer holding it so all we can do is to note this
+			 * condition so bp gets written synchronously if
+			 * waitfor is not MNT_NOWAIT.
 			 */
 			nbp = WK_BMSAFEMAP(wk)->sm_buf;
-			if (getdirtybuf(&nbp, waitfor) == 0)
-				break;
-			FREE_LOCK(&lk);
-			if (waitfor == MNT_NOWAIT) {
-				bawrite(nbp);
-			} else if ((error = VOP_BWRITE(nbp)) != 0) {
-				bawrite(bp);
-				return (error);
-			}
-			ACQUIRE_LOCK(&lk);
+			KASSERT(nbp == bp);
+#ifdef DIAGNOSTIC
+			if (vp->v_type != VBLK)
+				vprint("softdep_sync_metadata: bmsafemap", vp);
+#endif
+			if (waitfor != MNT_NOWAIT)
+				must_sync = 1;
 			break;
 
 		default:
@@ -5063,7 +5069,11 @@ loop:
 	(void) getdirtybuf(&bp->b_vnbufs.le_next, MNT_WAIT);
 	nbp = bp->b_vnbufs.le_next;
 	FREE_LOCK(&lk);
-	bawrite(bp);
+	if (must_sync) {
+		if ((error = VOP_BWRITE(bp)) != 0)
+			return error;
+	} else
+		bawrite(bp);
 	ACQUIRE_LOCK(&lk);
 	if (nbp != NULL) {
 		bp = nbp;
@@ -5307,9 +5317,9 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 			ipflag = vn_setrecurse(pvp);	/* XXX */
 			if ((error = VFS_VGET(mp, inum, &vp)) != 0)
 				break;
-			if ((error = VOP_FSYNC(vp, l->l_proc->p_ucred,
+			if ((error = VOP_FSYNC(vp, l->l_cred,
 					       0, 0, 0, l)) ||
-			    (error = VOP_FSYNC(vp, l->l_proc->p_ucred,
+			    (error = VOP_FSYNC(vp, l->l_cred,
 					       0, 0, 0, l))) {
 				vput(vp);
 				break;
@@ -5502,7 +5512,7 @@ clear_remove(l)
 				vn_finished_write(mp, 0);
 				return;
 			}
-			if ((error = VOP_FSYNC(vp, l->l_proc->p_ucred, 0, 0, 0, l)))
+			if ((error = VOP_FSYNC(vp, l->l_cred, 0, 0, 0, l)))
 				softdep_error("clear_remove: fsync", error);
 			drain_output(vp, 0);
 			vput(vp);
@@ -5576,11 +5586,11 @@ clear_inodedeps(l)
 			return;
 		}
 		if (ino == lastino) {
-			if ((error = VOP_FSYNC(vp, l->l_proc->p_ucred, FSYNC_WAIT,
+			if ((error = VOP_FSYNC(vp, l->l_cred, FSYNC_WAIT,
 				    0, 0, l)))
 				softdep_error("clear_inodedeps: fsync1", error);
 		} else {
-			if ((error = VOP_FSYNC(vp, l->l_proc->p_ucred, 0, 0, 0, l)))
+			if ((error = VOP_FSYNC(vp, l->l_cred, 0, 0, 0, l)))
 				softdep_error("clear_inodedeps: fsync2", error);
 			drain_output(vp, 0);
 		}

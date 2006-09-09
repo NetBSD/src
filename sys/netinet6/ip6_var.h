@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.35.2.1 2006/02/07 04:51:49 rpaulo Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.35.2.2 2006/09/09 02:58:55 rpaulo Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -124,15 +124,34 @@ struct	ip6po_rhinfo {
 #define ip6po_rthdr	ip6po_rhinfo.ip6po_rhi_rthdr
 #define ip6po_route	ip6po_rhinfo.ip6po_rhi_route
 
+/* Nexthop related info */
+struct	ip6po_nhinfo {
+	struct	sockaddr *ip6po_nhi_nexthop;
+	struct	route_in6 ip6po_nhi_route; /* Route to the nexthop */
+};
+#define ip6po_nexthop	ip6po_nhinfo.ip6po_nhi_nexthop
+#define ip6po_nextroute	ip6po_nhinfo.ip6po_nhi_route
+
 struct	ip6_pktopts {
 	struct	mbuf *ip6po_m;	/* Pointer to mbuf storing the data */
 	int	ip6po_hlim;		/* Hoplimit for outgoing packets */
 	struct	in6_pktinfo *ip6po_pktinfo; /* Outgoing IF/address information */
-	struct	sockaddr *ip6po_nexthop;	/* Next-hop address */
+	struct	ip6po_nhinfo ip6po_nhinfo; /* Next-hop address information */
 	struct	ip6_hbh *ip6po_hbh; /* Hop-by-Hop options header */
 	struct	ip6_dest *ip6po_dest1; /* Destination options header(1st part) */
 	struct	ip6po_rhinfo ip6po_rhinfo; /* Routing header related info. */
 	struct	ip6_dest *ip6po_dest2; /* Destination options header(2nd part) */
+	int	ip6po_tclass;	/* traffic class */
+	int	ip6po_minmtu;  /* fragment vs PMTU discovery policy */
+#define IP6PO_MINMTU_MCASTONLY	-1 /* default; send at min MTU for multicast*/
+#define IP6PO_MINMTU_DISABLE	 0 /* always perform pmtu disc */
+#define IP6PO_MINMTU_ALL	 1 /* always send at min MTU */
+	int ip6po_flags;
+#if 0	/* parameters in this block is obsolete. do not reuse the values. */
+#define IP6PO_REACHCONF	0x01	/* upper-layer reachability confirmation. */
+#define IP6PO_MINMTU	0x02	/* use minimum MTU (IPV6_USE_MIN_MTU) */
+#endif
+#define IP6PO_DONTFRAG	0x04	/* disable fragmentation (IPV6_DONTFRAG) */
 };
 
 struct	ip6stat {
@@ -228,6 +247,7 @@ extern int	ip6_forward_srcrt;	/* forward src-routed? */
 extern int	ip6_use_deprecated;	/* allow deprecated addr as source */
 extern int	ip6_rr_prune;		/* router renumbering prefix
 					 * walk list every 5 sec.    */
+extern int	ip6_mcast_pmtu;		/* enable pMTU discovery for multicast? */
 extern int	ip6_v6only;
 
 extern struct socket *ip6_mrouter; 	/* multicast routing daemon */
@@ -251,6 +271,9 @@ extern int   ip6_anonportmax;		/* maximum ephemeral port */
 extern int   ip6_lowportmin;		/* minimum reserved port */
 extern int   ip6_lowportmax;		/* maximum reserved port */
 
+extern int	ip6_use_tempaddr; /* whether to use temporary addresses. */
+extern int	ip6_prefer_tempaddr; /* whether to prefer temporary addresses
+					in the source address selection */
 extern int	ip6_use_defzone; /* whether to use the default scope zone
 				    when unspecified */
 
@@ -262,6 +285,7 @@ void	ip6_init __P((void));
 void	ip6intr __P((void));
 void	ip6_input __P((struct mbuf *));
 struct in6_ifaddr *ip6_getdstifaddr __P((struct mbuf *));
+void	ip6_freepcbopts __P((struct ip6_pktopts *));
 void	ip6_freemoptions __P((struct ip6_moptions *));
 int	ip6_unknown_opt __P((u_int8_t *, struct mbuf *, int));
 u_int8_t *ip6_get_prevhdr __P((struct mbuf *, int));
@@ -277,6 +301,8 @@ int	ip6_process_hopopts __P((struct mbuf *, u_int8_t *, int, u_int32_t *,
 				 u_int32_t *));
 void	ip6_savecontrol __P((struct inpcb *, struct mbuf **, struct ip6_hdr *,
 		struct mbuf *));
+void	ip6_notify_pmtu __P((struct in6pcb *, struct sockaddr_in6 *,
+		u_int32_t *));
 int	ip6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 
 void	ip6_forward __P((struct mbuf *, int));
@@ -288,8 +314,12 @@ int	ip6_output __P((struct mbuf *, struct ip6_pktopts *,
 			struct ifnet **));
 int	ip6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 int	ip6_raw_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
-int	ip6_setpktoptions __P((struct mbuf *, struct ip6_pktopts *, int));
-int	ip6_optlen __P((struct inpcb *));
+void	ip6_initpktopts __P((struct ip6_pktopts *));
+int	ip6_setpktopts __P((struct mbuf *, struct ip6_pktopts *,
+			    struct ip6_pktopts *, int, int));
+void	ip6_clearpktopts __P((struct ip6_pktopts *, int));
+struct ip6_pktopts *ip6_copypktopts __P((struct ip6_pktopts *, int));
+int	ip6_optlen __P((struct in6pcb *));
 
 int	route6_input __P((struct mbuf **, int *, int));
 

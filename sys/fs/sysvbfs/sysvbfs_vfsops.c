@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.1 2005/12/29 14:53:45 tsutsui Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.1.4.1 2006/09/09 02:57:06 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.1 2005/12/29 14:53:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.1.4.1 2006/09/09 02:57:06 rpaulo Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.1 2005/12/29 14:53:45 tsutsui E
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 /* v-node */
 #include <sys/namei.h>
@@ -80,7 +81,6 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data,
 	struct sysvbfs_args args;
 	struct sysvbfs_mount *bmp = NULL;
 	struct vnode *devvp = NULL;
-	struct proc *p = l->l_proc;
 	int error;
 	boolean_t update;
 
@@ -133,14 +133,14 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (error == 0 && p->p_ucred->cr_uid != 0) {
+	if (error == 0 && kauth_cred_geteuid(l->l_cred) != 0) {
 		int accessmode = VREAD;
 		if (update ?
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_cred, l);
 		VOP_UNLOCK(devvp, 0);
 	}
 
@@ -165,7 +165,7 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data,
 int
 sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 {
-	struct ucred *cred = l->l_proc->p_ucred;
+	kauth_cred_t cred = l->l_cred;
 	struct sysvbfs_mount *bmp;
 	struct partinfo dpart;
 	int error;
@@ -184,7 +184,7 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if ((error = VOP_OPEN(devvp, FREAD, NOCRED, l)) != 0)
 		return error;
 
-	/* Get partition infomation */
+	/* Get partition information */
 	if ((error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred, l)) != 0)
 		return error;
 
@@ -305,7 +305,7 @@ sysvbfs_statvfs(struct mount *mp, struct statvfs *f, struct lwp *l)
 }
 
 int
-sysvbfs_sync(struct mount *mp, int waitfor, struct ucred *cred,
+sysvbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred,
     struct lwp *l)
 {
 	struct sysvbfs_mount *bmp = mp->mnt_data;
@@ -403,7 +403,7 @@ sysvbfs_fhtovp(struct mount *mp, struct fid *fid, struct vnode **vpp)
 }
 
 int
-sysvbfs_vptofh(struct vnode *vpp, struct fid *fid)
+sysvbfs_vptofh(struct vnode *vpp, struct fid *fid, size_t *fh_size)
 {
 
 	DPRINTF("%s:\n", __FUNCTION__);
@@ -437,7 +437,7 @@ sysvbfs_done(void)
 
 int
 sysvbfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
-    struct ucred *cred)
+    kauth_cred_t cred)
 {
 
 	return 0;

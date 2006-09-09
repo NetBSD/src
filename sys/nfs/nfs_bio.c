@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.141 2006/01/14 08:57:40 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.141.2.1 2006/09/09 02:59:24 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.141 2006/01/14 08:57:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.141.2.1 2006/09/09 02:59:24 rpaulo Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.141 2006/01/14 08:57:40 yamt Exp $");
 #include <sys/namei.h>
 #include <sys/dirent.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
@@ -81,11 +82,10 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	struct vnode *vp;
 	struct uio *uio;
 	int ioflag, cflag;
-	struct ucred *cred;
+	kauth_cred_t cred;
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct buf *bp = NULL, *rabp;
-	struct lwp *l = uio->uio_lwp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	struct nfsdircache *ndp = NULL, *nndp = NULL;
 	caddr_t baddr;
@@ -94,6 +94,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	struct dirent *dp, *pdp, *edp, *ep;
 	off_t curoff = 0;
 	int advice;
+	struct lwp *l = curlwp;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ)
@@ -285,10 +286,12 @@ diragain:
 			 */
 			nfs_putdircache(np, ndp);
 			brelse(bp);
-			if (error == NFSERR_BAD_COOKIE) {
+			/*
+			 * nfs_request maps NFSERR_BAD_COOKIE to EINVAL.
+			 */
+			if (error == EINVAL) { /* NFSERR_BAD_COOKIE */
 			    nfs_invaldircache(vp, 0);
 			    nfs_vinvalbuf(vp, 0, cred, l, 1);
-			    error = EINVAL;
 			}
 			return (error);
 		    }
@@ -495,13 +498,13 @@ nfs_write(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct uio *uio = ap->a_uio;
-	struct lwp *l = uio->uio_lwp;
+	struct lwp *l = curlwp;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
-	struct ucred *cred = ap->a_cred;
+	kauth_cred_t cred = ap->a_cred;
 	struct vattr vattr;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	void *win;
@@ -695,7 +698,7 @@ int
 nfs_vinvalbuf(vp, flags, cred, l, intrflg)
 	struct vnode *vp;
 	int flags;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 	int intrflg;
 {
@@ -758,7 +761,7 @@ nfs_vinvalbuf(vp, flags, cred, l, intrflg)
  */
 
 int
-nfs_flushstalebuf(struct vnode *vp, struct ucred *cred, struct lwp *l,
+nfs_flushstalebuf(struct vnode *vp, kauth_cred_t cred, struct lwp *l,
     int flags)
 {
 	struct nfsnode *np = VTONFS(vp);
@@ -957,6 +960,7 @@ nfs_doio_read(bp, uiop)
 			memset((char *)bp->b_data + diff, 0, len);
 			uiop->uio_resid = 0;
 		}
+#if 0
 		if (uiop->uio_lwp && (vp->v_flag & VTEXT) &&
 		    (((nmp->nm_flag & NFSMNT_NQNFS) &&
 		      NQNFS_CKINVALID(vp, np, ND_READ) &&
@@ -968,6 +972,7 @@ nfs_doio_read(bp, uiop)
 			uiop->uio_lwp->l_proc->p_holdcnt++;
 #endif
 		}
+#endif
 		break;
 	case VLNK:
 		KASSERT(uiop->uio_offset == (off_t)0);
@@ -980,8 +985,11 @@ nfs_doio_read(bp, uiop)
 #ifndef NFS_V2_ONLY
 		if (nmp->nm_flag & NFSMNT_RDIRPLUS) {
 			error = nfs_readdirplusrpc(vp, uiop,
-			    curlwp->l_proc->p_ucred);
-			if (error == NFSERR_NOTSUPP)
+			    curlwp->l_cred);
+			/*
+			 * nfs_request maps NFSERR_NOTSUPP to ENOTSUP.
+			 */
+			if (error == ENOTSUP)
 				nmp->nm_flag &= ~NFSMNT_RDIRPLUS;
 		}
 #else
@@ -989,7 +997,7 @@ nfs_doio_read(bp, uiop)
 #endif
 		if ((nmp->nm_flag & NFSMNT_RDIRPLUS) == 0)
 			error = nfs_readdirrpc(vp, uiop,
-			    curlwp->l_proc->p_ucred);
+			    curlwp->l_cred);
 		if (!error) {
 			bp->b_dcookie = uiop->uio_offset;
 		}
@@ -1271,9 +1279,8 @@ nfs_doio(bp)
 
 	uiop->uio_iov = &io;
 	uiop->uio_iovcnt = 1;
-	uiop->uio_segflg = UIO_SYSSPACE;
-	uiop->uio_lwp = NULL;
 	uiop->uio_offset = (((off_t)bp->b_blkno) << DEV_BSHIFT);
+	UIO_SETUP_SYSSPACE(uiop);
 	io.iov_base = bp->b_data;
 	io.iov_len = uiop->uio_resid = bp->b_bcount;
 

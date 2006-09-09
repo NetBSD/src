@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.86 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.86.4.1 2006/09/09 02:57:17 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.86 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.86.4.1 2006/09/09 02:57:17 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.86 2005/12/11 12:24:30 christos Ex
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/mbuf.h>
+#include <sys/kauth.h>
 
 /*
  * Unix communications domain.
@@ -129,14 +130,17 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.86 2005/12/11 12:24:30 christos Ex
  *	rethink name space problems
  *	need a proper out-of-band
  */
-const struct	sockaddr_un sun_noname = { sizeof(sun_noname), AF_LOCAL };
+const struct sockaddr_un sun_noname = {
+	.sun_len = sizeof(sun_noname),
+	.sun_family = AF_LOCAL,
+};
 ino_t	unp_ino;			/* prototype for fake inode numbers */
 
-struct mbuf *unp_addsockcred(struct proc *, struct mbuf *);
+struct mbuf *unp_addsockcred(struct lwp *, struct mbuf *);
 
 int
 unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp,
-	struct proc *p)
+	struct lwp *l)
 {
 	struct socket *so2;
 	const struct sockaddr_un *sun;
@@ -147,7 +151,7 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp,
 	else
 		sun = &sun_noname;
 	if (unp->unp_conn->unp_flags & UNP_WANTCRED)
-		control = unp_addsockcred(p, control);
+		control = unp_addsockcred(l, control);
 	if (sbappendaddr(&so2->so_rcv, (const struct sockaddr *)sun, m,
 	    control) == 0) {
 		m_freem(control);
@@ -229,6 +233,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_BIND:
+		KASSERT(l != NULL);
 		error = unp_bind(unp, nam, l);
 		break;
 
@@ -238,6 +243,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_CONNECT:
+		KASSERT(l != NULL);
 		error = unp_connect(so, nam, l);
 		break;
 
@@ -306,8 +312,10 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * has the side-effect of preventing a caller from
 		 * forging SCM_CREDS.
 		 */
-		if (control && (error = unp_internalize(control, l))) {
-			goto die;
+		if (control) {
+			KASSERT(l != NULL);
+			if ((error = unp_internalize(control, l)) != 0)
+				goto die;
 		}
 		switch (so->so_type) {
 
@@ -317,6 +325,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 					error = EISCONN;
 					goto die;
 				}
+				KASSERT(l != NULL);
 				error = unp_connect(so, nam, l);
 				if (error) {
 				die:
@@ -330,7 +339,8 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 					goto die;
 				}
 			}
-			error = unp_output(m, control, unp, p);
+			KASSERT(p != NULL);
+			error = unp_output(m, control, unp, l);
 			if (nam)
 				unp_disconnect(unp);
 			break;
@@ -339,8 +349,10 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		case SOCK_STREAM:
 #define	rcv (&so2->so_rcv)
 #define	snd (&so->so_snd)
-			if (unp->unp_conn == 0)
-				panic("uipc 3");
+			if (unp->unp_conn == NULL) {
+				error = ENOTCONN;
+				break;
+			}
 			so2 = unp->unp_conn->unp_socket;
 			if (unp->unp_conn->unp_flags & UNP_WANTCRED) {
 				/*
@@ -348,7 +360,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				 * SOCK_STREAM.
 				 */
 				unp->unp_conn->unp_flags &= ~UNP_WANTCRED;
-				control = unp_addsockcred(p, control);
+				control = unp_addsockcred(l, control);
 			}
 			/*
 			 * Send to paired receive port, and then reduce
@@ -381,6 +393,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	case PRU_ABORT:
 		unp_drop(unp, ECONNABORTED);
 
+		KASSERT(so->so_head == NULL);
 #ifdef DIAGNOSTIC
 		if (so->so_pcb == 0)
 			panic("uipc 5: drop killed pcb");
@@ -641,7 +654,7 @@ restart:
 	VATTR_NULL(&vattr);
 	vattr.va_type = VSOCK;
 	vattr.va_mode = ACCESSPERMS & ~(p->p_cwdi->cwdi_cmask);
-	VOP_LEASE(nd.ni_dvp, l, p->p_ucred, LEASE_WRITE);
+	VOP_LEASE(nd.ni_dvp, l, l->l_cred, LEASE_WRITE);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	vn_finished_write(mp, 0);
 	if (error)
@@ -690,7 +703,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 		error = ENOTSOCK;
 		goto bad;
 	}
-	if ((error = VOP_ACCESS(vp, VWRITE, l->l_proc->p_ucred, l)) != 0)
+	if ((error = VOP_ACCESS(vp, VWRITE, l->l_cred, l)) != 0)
 		goto bad;
 	so2 = vp->v_socket;
 	if (so2 == 0) {
@@ -1032,15 +1045,15 @@ unp_internalize(struct mbuf *control, struct lwp *l)
 }
 
 struct mbuf *
-unp_addsockcred(struct proc *p, struct mbuf *control)
+unp_addsockcred(struct lwp *l, struct mbuf *control)
 {
 	struct cmsghdr *cmp;
 	struct sockcred *sc;
 	struct mbuf *m, *n;
 	int len, space, i;
 
-	len = CMSG_LEN(SOCKCREDSIZE(p->p_ucred->cr_ngroups));
-	space = CMSG_SPACE(SOCKCREDSIZE(p->p_ucred->cr_ngroups));
+	len = CMSG_LEN(SOCKCREDSIZE(kauth_cred_ngroups(l->l_cred)));
+	space = CMSG_SPACE(SOCKCREDSIZE(kauth_cred_ngroups(l->l_cred)));
 
 	m = m_get(M_WAIT, MT_CONTROL);
 	if (space > MLEN) {
@@ -1061,13 +1074,13 @@ unp_addsockcred(struct proc *p, struct mbuf *control)
 	cmp->cmsg_len = len;
 	cmp->cmsg_level = SOL_SOCKET;
 	cmp->cmsg_type = SCM_CREDS;
-	sc->sc_uid = p->p_cred->p_ruid;
-	sc->sc_euid = p->p_ucred->cr_uid;
-	sc->sc_gid = p->p_cred->p_rgid;
-	sc->sc_egid = p->p_ucred->cr_gid;
-	sc->sc_ngroups = p->p_ucred->cr_ngroups;
+	sc->sc_uid = kauth_cred_getuid(l->l_cred);
+	sc->sc_euid = kauth_cred_geteuid(l->l_cred);
+	sc->sc_gid = kauth_cred_getgid(l->l_cred);
+	sc->sc_egid = kauth_cred_getegid(l->l_cred);
+	sc->sc_ngroups = kauth_cred_ngroups(l->l_cred);
 	for (i = 0; i < sc->sc_ngroups; i++)
-		sc->sc_groups[i] = p->p_ucred->cr_groups[i];
+		sc->sc_groups[i] = kauth_cred_group(l->l_cred, i);
 
 	/*
 	 * If a control message already exists, append us to the end.

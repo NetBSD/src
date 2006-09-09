@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.99 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.99.4.1 2006/09/09 02:57:16 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.99 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.99.4.1 2006/09/09 02:57:16 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,9 +45,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.99 2005/12/11 12:24:29 christos 
 #include <sys/file.h>
 #include <sys/resourcevar.h>
 #include <sys/malloc.h>
+#include <sys/namei.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
@@ -109,11 +111,11 @@ sys_getpriority(struct lwp *l, void *v, register_t *retval)
 
 	case PRIO_USER:
 		if (SCARG(uap, who) == 0)
-			SCARG(uap, who) = curp->p_ucred->cr_uid;
+			SCARG(uap, who) = kauth_cred_geteuid(l->l_cred);
 		proclist_lock_read();
 		PROCLIST_FOREACH(p, &allproc) {
-			if (p->p_ucred->cr_uid == (uid_t) SCARG(uap, who) &&
-			    p->p_nice < low)
+			if (kauth_cred_geteuid(p->p_cred) ==
+			    (uid_t) SCARG(uap, who) && p->p_nice < low)
 				low = p->p_nice;
 		}
 		proclist_unlock_read();
@@ -149,7 +151,7 @@ sys_setpriority(struct lwp *l, void *v, register_t *retval)
 			p = pfind(SCARG(uap, who));
 		if (p == 0)
 			break;
-		error = donice(curp, p, SCARG(uap, prio));
+		error = donice(l, p, SCARG(uap, prio));
 		found++;
 		break;
 
@@ -161,7 +163,7 @@ sys_setpriority(struct lwp *l, void *v, register_t *retval)
 		else if ((pg = pgfind(SCARG(uap, who))) == NULL)
 			break;
 		LIST_FOREACH(p, &pg->pg_members, p_pglist) {
-			error = donice(curp, p, SCARG(uap, prio));
+			error = donice(l, p, SCARG(uap, prio));
 			found++;
 		}
 		break;
@@ -169,11 +171,12 @@ sys_setpriority(struct lwp *l, void *v, register_t *retval)
 
 	case PRIO_USER:
 		if (SCARG(uap, who) == 0)
-			SCARG(uap, who) = curp->p_ucred->cr_uid;
+			SCARG(uap, who) = kauth_cred_geteuid(l->l_cred);
 		proclist_lock_read();
 		PROCLIST_FOREACH(p, &allproc) {
-			if (p->p_ucred->cr_uid == (uid_t) SCARG(uap, who)) {
-				error = donice(curp, p, SCARG(uap, prio));
+			if (kauth_cred_geteuid(p->p_cred) ==
+			    (uid_t)SCARG(uap, who)) {
+				error = donice(l, p, SCARG(uap, prio));
 				found++;
 			}
 		}
@@ -189,21 +192,22 @@ sys_setpriority(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-donice(struct proc *curp, struct proc *chgp, int n)
+donice(struct lwp *l, struct proc *chgp, int n)
 {
-	struct pcred *pcred = curp->p_cred;
+	kauth_cred_t cred = l->l_cred;
 	int s;
 
-	if (pcred->pc_ucred->cr_uid && pcred->p_ruid &&
-	    pcred->pc_ucred->cr_uid != chgp->p_ucred->cr_uid &&
-	    pcred->p_ruid != chgp->p_ucred->cr_uid)
+	if (kauth_cred_geteuid(cred) && kauth_cred_getuid(cred) &&
+	    kauth_cred_geteuid(cred) != kauth_cred_geteuid(chgp->p_cred) &&
+	    kauth_cred_getuid(cred) != kauth_cred_geteuid(chgp->p_cred))
 		return (EPERM);
 	if (n > PRIO_MAX)
 		n = PRIO_MAX;
 	if (n < PRIO_MIN)
 		n = PRIO_MIN;
 	n += NZERO;
-	if (n < chgp->p_nice && suser(pcred->pc_ucred, &curp->p_acflag))
+	if (n < chgp->p_nice && kauth_authorize_generic(cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
 		return (EACCES);
 	chgp->p_nice = n;
 	SCHED_LOCK(s);
@@ -220,7 +224,6 @@ sys_setrlimit(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) which;
 		syscallarg(const struct rlimit *) rlp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int which = SCARG(uap, which);
 	struct rlimit alim;
 	int error;
@@ -228,11 +231,11 @@ sys_setrlimit(struct lwp *l, void *v, register_t *retval)
 	error = copyin(SCARG(uap, rlp), &alim, sizeof(struct rlimit));
 	if (error)
 		return (error);
-	return (dosetrlimit(p, p->p_cred, which, &alim));
+	return (dosetrlimit(l, l->l_proc, which, &alim));
 }
 
 int
-dosetrlimit(struct proc *p, struct pcred *cred, int which, struct rlimit *limp)
+dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 {
 	struct rlimit *alimp;
 	struct plimit *oldplim;
@@ -257,8 +260,9 @@ dosetrlimit(struct proc *p, struct pcred *cred, int which, struct rlimit *limp)
 		 */
 		return (EINVAL);
 	}
-	if (limp->rlim_max > alimp->rlim_max
-	    && (error = suser(cred->pc_ucred, &p->p_acflag)) != 0)
+	if (limp->rlim_max > alimp->rlim_max && (error =
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 			return (error);
 
 	if (p->p_limit->p_refcnt > 1 &&
@@ -322,7 +326,7 @@ dosetrlimit(struct proc *p, struct pcred *cred, int which, struct rlimit *limp)
 				     alimp->rlim_cur;
 			}
 			(void) uvm_map_protect(&p->p_vmspace->vm_map,
-					      addr, addr+size, prot, FALSE);
+			    addr, addr+size, prot, FALSE);
 		}
 		break;
 
@@ -558,41 +562,47 @@ pstatsfree(struct pstats *ps)
  * process by pid.
  */
 static int
-sysctl_proc_findproc(struct proc *p, struct proc **p2, pid_t pid)
+sysctl_proc_findproc(struct lwp *l, struct proc **p2, pid_t pid)
 {
 	struct proc *ptmp;
-	int i, error = 0;
+	int error = 0;
 
 	if (pid == PROC_CURPROC)
-		ptmp = p;
+		ptmp = l->l_proc;
 	else if ((ptmp = pfind(pid)) == NULL)
 		error = ESRCH;
 	else {
 		/*
 		 * suid proc of ours or proc not ours
 		 */
-		if (p->p_cred->p_ruid != ptmp->p_cred->p_ruid ||
-		    p->p_cred->p_ruid != ptmp->p_cred->p_svuid)
-			error = suser(p->p_ucred, &p->p_acflag);
+		if (kauth_cred_getuid(l->l_cred) !=
+		    kauth_cred_getuid(ptmp->p_cred) ||
+		    kauth_cred_getuid(l->l_cred) !=
+		    kauth_cred_getsvuid(ptmp->p_cred))
+			error = kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 
 		/*
 		 * sgid proc has sgid back to us temporarily
 		 */
-		else if (ptmp->p_cred->p_rgid != ptmp->p_cred->p_svgid)
-			error = suser(p->p_ucred, &p->p_acflag);
+		else if (kauth_cred_getgid(ptmp->p_cred) !=
+		    kauth_cred_getsvgid(ptmp->p_cred))
+			error = kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 
 		/*
 		 * our rgid must be in target's group list (ie,
 		 * sub-processes started by a sgid process)
 		 */
 		else {
-			for (i = 0; i < p->p_ucred->cr_ngroups; i++) {
-				if (p->p_ucred->cr_groups[i] ==
-				    ptmp->p_cred->p_rgid)
-					break;
+			int ismember = 0;
+
+			if (kauth_cred_ismember_gid(l->l_cred,
+			    kauth_cred_getgid(ptmp->p_cred), &ismember) != 0 ||
+			    !ismember) {
+				error = kauth_authorize_generic(l->l_cred,
+				    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 			}
-			if (i == p->p_ucred->cr_ngroups)
-				error = suser(p->p_ucred, &p->p_acflag);
 		}
 	}
 
@@ -608,10 +618,11 @@ sysctl_proc_findproc(struct proc *p, struct proc **p2, pid_t pid)
 static int
 sysctl_proc_corename(SYSCTLFN_ARGS)
 {
-	struct proc *ptmp, *p;
+	struct proc *ptmp;
 	struct plimit *lim;
 	int error = 0, len;
-	char cname[MAXPATHLEN], *tmp;
+	char *cname;
+	char *tmp;
 	struct sysctlnode node;
 
 	/*
@@ -625,16 +636,16 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	/*
 	 * whom are we tweaking?
 	 */
-	p = l->l_proc;
-	error = sysctl_proc_findproc(p, &ptmp, (pid_t)name[-2]);
+	error = sysctl_proc_findproc(l, &ptmp, (pid_t)name[-2]);
 	if (error)
 		return (error);
 
+	cname = PNBUF_GET();
 	/*
 	 * let them modify a temporary copy of the core name
 	 */
 	node = *rnode;
-	strlcpy(cname, ptmp->p_limit->pl_corename, sizeof(cname));
+	strlcpy(cname, ptmp->p_limit->pl_corename, MAXPATHLEN);
 	node.sysctl_data = cname;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 
@@ -643,8 +654,12 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	 * heard it before...
 	 */
 	if (error || newp == NULL ||
-	    strcmp(cname, ptmp->p_limit->pl_corename) == 0)
-		return (error);
+	    strcmp(cname, ptmp->p_limit->pl_corename) == 0) {
+		goto done;
+	}
+
+	if (securelevel > 1)
+		return (EPERM);
 
 	/*
 	 * no error yet and cname now has the new core name in it.
@@ -652,19 +667,25 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	 * or end in ".core" or "/core".
 	 */
 	len = strlen(cname);
-	if (len < 4)
-		return (EINVAL);
-	if (strcmp(cname + len - 4, "core") != 0)
-		return (EINVAL);
-	if (len > 4 && cname[len - 5] != '/' && cname[len - 5] != '.')
-		return (EINVAL);
+	if (len < 4) {
+		error = EINVAL;
+	} else if (strcmp(cname + len - 4, "core") != 0) {
+		error = EINVAL;
+	} else if (len > 4 && cname[len - 5] != '/' && cname[len - 5] != '.') {
+		error = EINVAL;
+	}
+	if (error != 0) {
+		goto done;
+	}
 
 	/*
 	 * hmm...looks good.  now...where do we put it?
 	 */
 	tmp = malloc(len + 1, M_TEMP, M_WAITOK|M_CANFAIL);
-	if (tmp == NULL)
-		return (ENOMEM);
+	if (tmp == NULL) {
+		error = ENOMEM;
+		goto done;
+	}
 	strlcpy(tmp, cname, len + 1);
 
 	lim = ptmp->p_limit;
@@ -676,8 +697,9 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	if (lim->pl_corename != defcorename)
 		free(lim->pl_corename, M_TEMP);
 	lim->pl_corename = tmp;
-
-	return (error);
+done:
+	PNBUF_PUT(cname);
+	return error;
 }
 
 /*
@@ -687,15 +709,14 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 static int
 sysctl_proc_stop(SYSCTLFN_ARGS)
 {
-	struct proc *p, *ptmp;
+	struct proc *ptmp;
 	int i, f, error = 0;
 	struct sysctlnode node;
 
 	if (namelen != 0)
 		return (EINVAL);
 
-	p = l->l_proc;
-	error = sysctl_proc_findproc(p, &ptmp, (pid_t)name[-2]);
+	error = sysctl_proc_findproc(l, &ptmp, (pid_t)name[-2]);
 	if (error)
 		return (error);
 
@@ -734,7 +755,7 @@ sysctl_proc_stop(SYSCTLFN_ARGS)
 static int
 sysctl_proc_plimit(SYSCTLFN_ARGS)
 {
-	struct proc *ptmp, *p;
+	struct proc *ptmp;
 	u_int limitno;
 	int which, error = 0;
         struct rlimit alim;
@@ -755,8 +776,7 @@ sysctl_proc_plimit(SYSCTLFN_ARGS)
 	if (name[-3] != PROC_PID_LIMIT)
 		return (EINVAL);
 
-	p = l->l_proc;
-	error = sysctl_proc_findproc(p, &ptmp, (pid_t)name[-4]);
+	error = sysctl_proc_findproc(l, &ptmp, (pid_t)name[-4]);
 	if (error)
 		return (error);
 
@@ -771,7 +791,7 @@ sysctl_proc_plimit(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
-	return (dosetrlimit(ptmp, p->p_cred, limitno, &alim));
+	return (dosetrlimit(l, ptmp, limitno, &alim));
 }
 
 /*
@@ -793,7 +813,7 @@ SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
 		       CTL_PROC, PROC_CURPROC, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READONLY2|CTLFLAG_ANYWRITE,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_ANYWRITE,
 		       CTLTYPE_STRING, "corename",
 		       SYSCTL_DESCR("Core file name"),
 		       sysctl_proc_corename, 0, NULL, MAXPATHLEN,

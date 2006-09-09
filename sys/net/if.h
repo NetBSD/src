@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.114 2005/12/11 23:05:24 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.114.4.1 2006/09/09 02:58:06 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -122,7 +122,6 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
-#include "agr.h"
 #endif
 
 struct mbuf;
@@ -148,7 +147,7 @@ struct if_clone {
 };
 
 #define	IF_CLONE_INITIALIZER(name, create, destroy)			\
-	{ { 0 }, name, sizeof(name) - 1, create, destroy }
+	{ { NULL, NULL }, name, sizeof(name) - 1, create, destroy }
 
 /*
  * Structure used to query names of interface cloners.
@@ -279,7 +278,12 @@ struct ifnet {				/* and the entries */
 	struct pfil_head if_pfil;	/* filtering point */
 	uint64_t if_capabilities;	/* interface capabilities */
 	uint64_t if_capenable;		/* capabilities enabled */
-
+	union {
+		caddr_t		carp_s;	/* carp structure (used by !carp ifs) */
+		struct ifnet	*carp_d;/* ptr to carpdev (used by carp ifs) */
+	} if_carp_ptr;
+#define if_carp		if_carp_ptr.carp_s
+#define if_carpdev	if_carp_ptr.carp_d
 	/*
 	 * These are pre-computed based on an interfaces enabled
 	 * capabilities, for speed elsewhere.
@@ -290,9 +294,7 @@ struct ifnet {				/* and the entries */
 	void	*if_afdata[AF_MAX];
 	struct	mowner *if_mowner;	/* who owns mbufs for this interface */
 
-#if NAGR > 0
-	void	*if_agrprivate;
-#endif
+	void	*if_agrprivate;		/* used only when #if NAGR > 0 */
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
@@ -776,7 +778,7 @@ extern struct ifnet **ifindex2ifnet;
 extern struct ifnet *lo0ifp;
 extern size_t if_indexlim;
 
-char	*ether_sprintf(const u_char *);
+void    ether_input(struct ifnet *, struct mbuf *);
 
 void	if_alloc_sadl(struct ifnet *);
 void	if_free_sadl(struct ifnet *);

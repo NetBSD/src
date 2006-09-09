@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.28 2005/12/28 09:18:46 christos Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.28.4.1 2006/09/09 02:59:08 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.28 2005/12/28 09:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.28.4.1 2006/09/09 02:59:08 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -135,6 +135,7 @@ const struct tp_conn_param tp_conn_param[] = {
 		1,		/* no disc indications */
 		0,		/* don't change params */
 		ISO_CLNS,	/* p_netservice */
+		0,
 	},
 	/* IN_CLNS: TP4 CONNECTION LESS */
 	{
@@ -170,6 +171,7 @@ const struct tp_conn_param tp_conn_param[] = {
 		1,		/* no disc indications */
 		0,		/* don't change params */
 		IN_CLNS,	/* p_netservice */
+		0,
 	},
 	/* ISO_CONS: TP0 CONNECTION MODE */
 	{
@@ -208,6 +210,7 @@ const struct tp_conn_param tp_conn_param[] = {
 		0,		/* no disc indications */
 		0,		/* don't change params */
 		ISO_CONS,	/* p_netservice */
+		0,
 	},
 	/* ISO_COSNS: TP4 CONNECTION LESS SERVICE over CONSNS */
 	{
@@ -243,6 +246,7 @@ const struct tp_conn_param tp_conn_param[] = {
 		0,		/* no disc indications */
 		0,		/* don't change params */
 		ISO_COSNS,	/* p_netservice */
+		0,
 	},
 };
 
@@ -272,7 +276,7 @@ struct nl_protosw nl_protosw[] = {
 		(caddr_t) & tp_isopcb,
 	},
 #else
-	{0},
+	{ .nlp_afamily = 0, },
 #endif				/* ISO */
 	/* IN_CLNS */
 #ifdef INET
@@ -286,7 +290,7 @@ struct nl_protosw nl_protosw[] = {
 		(caddr_t) & tp_inpcb,
 	},
 #else
-	{0},
+	{ .nlp_afamily = 0, },
 #endif				/* INET */
 	/* ISO_CONS */
 #if defined(ISO) && defined(TPCONS)
@@ -300,10 +304,10 @@ struct nl_protosw nl_protosw[] = {
 		(caddr_t) & tp_isopcb,
 	},
 #else
-	{0},
+	{ .nlp_afamily = 0, },
 #endif				/* ISO_CONS */
 	/* End of protosw marker */
-	{0}
+	{ .nlp_afamily = 0, },
 };
 
 u_long          tp_sendspace = 1024 * 4;
@@ -376,13 +380,15 @@ tp_soisdisconnecting(struct socket *so)
 	if (DOPERF(sototpcb(so))) {
 		struct tp_pcb *tpcb = sototpcb(so);
 		u_int           fsufx, lsufx;
+		struct timeval	now;
 
 		bcopy((caddr_t) tpcb->tp_fsuffix, (caddr_t) &fsufx,
 		      sizeof(u_int));
 		bcopy((caddr_t) tpcb->tp_lsuffix, (caddr_t) &lsufx,
 		      sizeof(u_int));
 
-		tpmeas(tpcb->tp_lref, TPtime_close, &time, fsufx, lsufx,
+		getmicrotime(&now);
+		tpmeas(tpcb->tp_lref, TPtime_close, &now, fsufx, lsufx,
 		       tpcb->tp_fref);
 		tpcb->tp_perf_on = 0;	/* turn perf off */
 	}
@@ -424,6 +430,7 @@ tp_soisdisconnected(struct tp_pcb *tpcb)
 	if (DOPERF(tpcb)) {
 		struct tp_pcb *ttpcb = sototpcb(so);
 		u_int           fsufx, lsufx;
+		struct timeval	now;
 
 		/* CHOKE */
 		bcopy((caddr_t) ttpcb->tp_fsuffix, (caddr_t) &fsufx,
@@ -431,8 +438,9 @@ tp_soisdisconnected(struct tp_pcb *tpcb)
 		bcopy((caddr_t) ttpcb->tp_lsuffix, (caddr_t) &lsufx,
 		      sizeof(u_int));
 
+		getmicrotime(&now);
 		tpmeas(ttpcb->tp_lref, TPtime_close,
-		       &time, &lsufx, &fsufx, ttpcb->tp_fref);
+		       &now, &lsufx, &fsufx, ttpcb->tp_fref);
 		tpcb->tp_perf_on = 0;	/* turn perf off */
 	}
 #endif
@@ -692,8 +700,11 @@ tp_attach(struct socket *so, int protocol)
 	ASSERT(tpcb->tp_nlproto->nlp_afamily == tpcb->tp_domain);
 
 	/* nothing to do for iso case */
-	if (dom == AF_INET)
+	if (dom == AF_INET) {
+		/* tp_set_npcb sets it */
+		KASSERT(so->so_pcb != NULL);
 		sotoinpcb(so)->inp_ppcb = (caddr_t) tpcb;
+	}
 
 	return 0;
 
@@ -919,7 +930,7 @@ tp_tselinuse(int tlen, caddr_t tsel, struct sockaddr_iso *siso, int reuseaddr)
 
 
 int
-tp_pcbbind(void *v, struct mbuf *nam, struct proc *p)
+tp_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 {
 	struct tp_pcb *tpcb = v;
 	struct sockaddr_iso *siso = 0;
@@ -993,5 +1004,5 @@ tp_pcbbind(void *v, struct mbuf *nam, struct proc *p)
 		tpcb->tp_flags |= TPF_GENERAL_ADDR;
 		return (0);
 	}
-	return (*tpcb->tp_nlproto->nlp_pcbbind)(tpcb->tp_npcb, nam, p);
+	return (*tpcb->tp_nlproto->nlp_pcbbind)(tpcb->tp_npcb, nam, l);
 }

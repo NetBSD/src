@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.183 2005/12/26 18:41:36 perry Exp $	*/
+/*	$NetBSD: systm.h,v 1.183.4.1 2006/09/09 02:59:42 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -75,6 +75,10 @@
 
 #include <machine/endian.h>
 
+#ifdef _KERNEL
+#include <sys/types.h>
+#endif
+
 struct clockframe;
 struct device;
 struct lwp;
@@ -83,6 +87,7 @@ struct timeval;
 struct tty;
 struct uio;
 struct vnode;
+struct vmspace;
 
 extern int securelevel;		/* system security level */
 extern const char *panicstr;	/* panic message */
@@ -247,6 +252,8 @@ typedef int	(*copyout_t)(const void *, void *, size_t);
 
 int	copyin_proc(struct proc *, const void *, void *, size_t);
 int	copyout_proc(struct proc *, const void *, void *, size_t);
+int	copyin_vmspace(struct vmspace *, const void *, void *, size_t);
+int	copyout_vmspace(struct vmspace *, const void *, void *, size_t);
 
 int	ioctl_copyin(int ioctlflags, const void *src, void *dst, size_t len);
 int	ioctl_copyout(int ioctlflags, const void *src, void *dst, size_t len);
@@ -267,19 +274,29 @@ int	fuswintr(const void *);
 long	fuword(const void *);
 long	fuiword(const void *);
 
-int	hzto(struct timeval *);
-
 void	hardclock(struct clockframe *);
 void	softclock(void *);
 void	statclock(struct clockframe *);
+
 #ifdef NTP
+void	ntp_init(void);
+#ifndef __HAVE_TIMECOUNTER
 void	hardupdate(long offset);
+#endif /* !__HAVE_TIMECOUNTER */
 #ifdef PPS_SYNC
+#ifdef __HAVE_TIMECOUNTER
+void	hardpps(struct timespec *, long);
+#else /* !__HAVE_TIMECOUNTER */
 void	hardpps(struct timeval *, long);
-extern	void *pps_kc_hardpps_source;
-extern	int pps_kc_hardpps_mode;
-#endif
-#endif
+extern void *pps_kc_hardpps_source;
+extern int pps_kc_hardpps_mode;
+#endif /* !__HAVE_TIMECOUNTER */
+#endif /* PPS_SYNC */
+#else
+#ifdef __HAVE_TIMECOUNTER
+void	ntp_init(void);	/* also provides adjtime() functionality */
+#endif /* __HAVE_TIMECOUNTER */
+#endif /* NTP */
 
 void	initclocks(void);
 void	inittodr(time_t);
@@ -350,16 +367,19 @@ void	doforkhooks(struct proc *, struct proc *);
 /*
  * kernel syscall tracing/debugging hooks.
  */
+#ifdef _KERNEL
+boolean_t trace_is_enabled(struct proc *);
 int	trace_enter(struct lwp *, register_t, register_t,
 	    const struct sysent *, void *);
 void	trace_exit(struct lwp *, register_t, void *, register_t [], int);
+#endif
 
 int	uiomove(void *, size_t, struct uio *);
 int	uiomove_frombuf(void *, size_t, struct uio *);
 
 #ifdef _KERNEL
 int	setjmp(label_t *);
-void	longjmp(label_t *);
+void	longjmp(label_t *) __attribute__((__noreturn__));
 #endif
 
 void	consinit(void);

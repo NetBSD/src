@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.36 2006/01/17 13:23:02 christos Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.36.2.1 2006/09/09 02:58:06 rpaulo Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.36 2006/01/17 13:23:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.36.2.1 2006/09/09 02:58:06 rpaulo Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.36 2006/01/17 13:23:02 christos Exp 
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
+#include <sys/kauth.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -129,6 +130,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.36 2006/01/17 13:23:02 christos Exp 
 #endif
 
 #define	BRIDGE_RTHASH_MASK		(BRIDGE_RTHASH_SIZE - 1)
+
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/in.h>
+#include <netinet/in_var.h>
+#include <netinet/ip_carp.h>
+#endif
 
 /*
  * Maximum number of addresses to cache.
@@ -443,7 +451,7 @@ static int
 bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct bridge_softc *sc = ifp->if_softc;
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;	/* XXX */
 	union {
 		struct ifbreq ifbreq;
 		struct ifbifconf ifbifconf;
@@ -478,7 +486,8 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 
 		if (bc->bc_flags & BC_F_SUSER) {
-			error = suser(p->p_ucred, &p->p_acflag);
+			error = kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 			if (error)
 				break;
 		}
@@ -818,9 +827,9 @@ bridge_ioctl_rts(struct bridge_softc *sc, void *arg)
 		strlcpy(bareq.ifba_ifsname, brt->brt_ifp->if_xname,
 		    sizeof(bareq.ifba_ifsname));
 		memcpy(bareq.ifba_dst, brt->brt_addr, sizeof(brt->brt_addr));
-		if ((brt->brt_flags & IFBAF_TYPEMASK) == IFBAF_DYNAMIC)
-			bareq.ifba_expire = brt->brt_expire - mono_time.tv_sec;
-		else
+		if ((brt->brt_flags & IFBAF_TYPEMASK) == IFBAF_DYNAMIC) {
+			bareq.ifba_expire = brt->brt_expire - time_uptime;
+		} else
 			bareq.ifba_expire = 0;
 		bareq.ifba_flags = brt->brt_flags;
 
@@ -1532,7 +1541,12 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 			continue;
 		/* It is destined for us. */
 		if (memcmp(LLADDR(bif->bif_ifp->if_sadl), eh->ether_dhost,
-		    ETHER_ADDR_LEN) == 0) {
+		    ETHER_ADDR_LEN) == 0
+#if NCARP > 0
+		    || (bif->bif_ifp->if_carp && carp_ourether(bif->bif_ifp->if_carp,
+			eh, IFT_ETHER, 0) != NULL)
+#endif /* NCARP > 0 */
+		    ) {
 			if (bif->bif_flags & IFBIF_LEARNING)
 				(void) bridge_rtupdate(sc,
 				    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);
@@ -1550,7 +1564,12 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 
 		/* We just received a packet that we sent out. */
 		if (memcmp(LLADDR(bif->bif_ifp->if_sadl), eh->ether_shost,
-		    ETHER_ADDR_LEN) == 0) {
+		    ETHER_ADDR_LEN) == 0
+#if NCARP > 0
+		    || (bif->bif_ifp->if_carp && carp_ourether(bif->bif_ifp->if_carp,
+			eh, IFT_ETHER, 1) != NULL)
+#endif /* NCARP > 0 */
+		    ) {
 			m_freem(m);
 			return (NULL);
 		}
@@ -1645,7 +1664,7 @@ bridge_rtupdate(struct bridge_softc *sc, const uint8_t *dst,
 			return (ENOMEM);
 
 		memset(brt, 0, sizeof(*brt));
-		brt->brt_expire = mono_time.tv_sec + sc->sc_brttimeout;
+		brt->brt_expire = time_uptime + sc->sc_brttimeout;
 		brt->brt_flags = IFBAF_DYNAMIC;
 		memcpy(brt->brt_addr, dst, ETHER_ADDR_LEN);
 
@@ -1658,8 +1677,10 @@ bridge_rtupdate(struct bridge_softc *sc, const uint8_t *dst,
 	brt->brt_ifp = dst_if;
 	if (setflags) {
 		brt->brt_flags = flags;
-		brt->brt_expire = (flags & IFBAF_STATIC) ? 0 :
-		    mono_time.tv_sec + sc->sc_brttimeout;
+		if (flags & IFBAF_STATIC)
+			brt->brt_expire = 0;
+		else
+			brt->brt_expire = time_uptime + sc->sc_brttimeout;
 	}
 
 	return (0);
@@ -1745,7 +1766,7 @@ bridge_rtage(struct bridge_softc *sc)
 	for (brt = LIST_FIRST(&sc->sc_rtlist); brt != NULL; brt = nbrt) {
 		nbrt = LIST_NEXT(brt, brt_list);
 		if ((brt->brt_flags & IFBAF_TYPEMASK) == IFBAF_DYNAMIC) {
-			if (mono_time.tv_sec >= brt->brt_expire)
+			if (time_uptime >= brt->brt_expire)
 				bridge_rtnode_destroy(sc, brt);
 		}
 	}

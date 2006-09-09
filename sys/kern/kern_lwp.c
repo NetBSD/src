@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.33 2005/11/12 02:28:31 chs Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.33.6.1 2006/09/09 02:57:16 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.33 2005/11/12 02:28:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.33.6.1 2006/09/09 02:57:16 rpaulo Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.33 2005/11/12 02:28:31 chs Exp $");
 #include <sys/resourcevar.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -87,14 +88,18 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 
 	newuc = pool_get(&lwp_uc_pool, PR_WAITOK);
 
-	error = copyin(SCARG(uap, ucp), newuc, sizeof(*newuc));
-	if (error)
+	error = copyin(SCARG(uap, ucp), newuc,
+	    l->l_proc->p_emul->e_sa->sae_ucsize);
+	if (error) {
+		pool_put(&lwp_uc_pool, newuc);
 		return (error);
+	}
 
 	/* XXX check against resource limits */
 
 	inmem = uvm_uarea_alloc(&uaddr);
 	if (__predict_false(uaddr == 0)) {
+		pool_put(&lwp_uc_pool, newuc);
 		return (ENOMEM);
 	}
 
@@ -118,8 +123,10 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 
 	error = copyout(&l2->l_lid, SCARG(uap, new_lwp),
 	    sizeof(l2->l_lid));
-	if (error)
+	if (error) {
+		/* XXX We should destroy the LWP. */
 		return (error);
+	}
 
 	return (0);
 }
@@ -216,7 +223,9 @@ lwp_suspend(struct lwp *l, struct lwp *t)
 
 	if (t == l) {
 		SCHED_LOCK(s);
+		KASSERT(l->l_stat == LSONPROC);
 		l->l_stat = LSSUSPENDED;
+		p->p_nrlwps--;
 		/* XXX NJWLWP check if this makes sense here: */
 		p->p_stats->p_ru.ru_nvcsw++;
 		mi_switch(l, NULL);
@@ -499,12 +508,13 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	l2->l_flag = inmem ? L_INMEM : 0;
 	l2->l_flag |= (flags & LWP_DETACHED) ? L_DETACHED : 0;
 
+	lwp_update_creds(l2);
 	callout_init(&l2->l_tsleep_ch);
 
 	if (rnewlwpp != NULL)
 		*rnewlwpp = l2;
 
-	l2->l_addr = (struct user *)uaddr;
+	l2->l_addr = UAREA_TO_USER(uaddr);
 	uvm_lwp_fork(l1, l2, stack, stacksize, func,
 	    (arg != NULL) ? arg : l2);
 
@@ -560,6 +570,14 @@ lwp_exit(struct lwp *l)
 	s = proclist_lock_write();
 	LIST_REMOVE(l, l_list);
 	proclist_unlock_write(s);
+
+	/*
+	 * Release our cached credentials, and collate accounting flags.
+	 */
+	kauth_cred_free(l->l_cred);
+	simple_lock(&p->p_lock);
+	p->p_acflag |= l->l_acflag;
+	simple_unlock(&p->p_lock);
 
 	/* Free MD LWP resources */
 #ifndef __NO_CPU_LWP_FREE
@@ -698,4 +716,29 @@ proc_representative_lwp(struct proc *p)
 		" %d (%s)", p->p_pid, p->p_comm);
 	/* NOTREACHED */
 	return NULL;
+}
+
+/*
+ * Update an LWP's cached credentials to mirror the process' master copy.
+ *
+ * This happens early in the syscall path, on user trap, and on LWP
+ * creation.  A long-running LWP can also voluntarily choose to update
+ * it's credentials by calling this routine.  This may be called from
+ * LWP_CACHE_CREDS(), which checks l->l_cred != p->p_cred beforehand.
+ */
+void
+lwp_update_creds(struct lwp *l)
+{
+	kauth_cred_t oc;
+	struct proc *p;
+
+	p = l->l_proc;
+	oc = l->l_cred;
+
+	simple_lock(&p->p_lock);
+	kauth_cred_hold(p->p_cred);
+	l->l_cred = p->p_cred;
+	simple_unlock(&p->p_lock);
+	if (oc != NULL)
+		kauth_cred_free(oc);
 }

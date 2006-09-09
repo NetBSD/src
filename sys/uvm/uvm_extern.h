@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.109 2006/01/21 13:34:15 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.109.2.1 2006/09/09 03:00:13 rpaulo Exp $	*/
 
 /*
  *
@@ -84,10 +84,10 @@
  */
 
 typedef unsigned int uvm_flag_t;
-typedef int vm_fault_t;
 
 typedef int vm_inherit_t;	/* XXX: inheritance codes */
 typedef off_t voff_t;		/* XXX: offset within a uvm_object */
+typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 
 /*
  * defines
@@ -154,7 +154,7 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
 #define UVM_ADVICE(X)		(((X) >> 12) & UVM_ADV_MASK)
 
 #define UVM_MAPFLAG(PROT,MAXPROT,INH,ADVICE,FLAGS) \
-	((MAXPROT << 8)|(PROT)|(INH)|((ADVICE) << 12)|(FLAGS))
+	(((MAXPROT) << 8)|(PROT)|(INH)|((ADVICE) << 12)|(FLAGS))
 
 /* magic offset value: offset not known(obj) or don't care(!obj) */
 #define UVM_UNKNOWN_OFFSET ((voff_t) -1)
@@ -168,6 +168,7 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
 #define	UVM_KMF_TYPEMASK (UVM_KMF_VAONLY | UVM_KMF_PAGEABLE | UVM_KMF_WIRED)
 #define UVM_KMF_CANFAIL	0x8			/* caller handles failure */
 #define UVM_KMF_ZERO	0x10			/* want zero filled memory */
+#define UVM_KMF_EXEC	0x20			/* need executable mapping */
 #define UVM_KMF_TRYLOCK	UVM_FLAG_TRYLOCK	/* try locking only */
 #define UVM_KMF_NOWAIT	UVM_FLAG_NOWAIT		/* not allowed to sleep */
 #define UVM_KMF_WAITVA	UVM_FLAG_WAITVA		/* sleep for va */
@@ -233,7 +234,6 @@ struct loadavg;
 struct mount;
 struct pglist;
 struct proc;
-struct ucred;
 struct uio;
 struct uvm_object;
 struct vm_anon;
@@ -322,7 +322,7 @@ struct uvmexp {
 	int swpgonly;	/* number of swap pages in use, not also in RAM */
 	int nswget;	/* number of times fault calls uvm_swap_get() */
 
-	/* stat counters */
+	/* stat counters.  XXX: should be 64-bit counters */
 	int faults;		/* page fault count */
 	int traps;		/* trap count */
 	int intrs;		/* interrupt count */
@@ -347,7 +347,7 @@ struct uvmexp {
 	int colorhit;		/* pagealloc where we got optimal color */
 	int colormiss;		/* pagealloc where we didn't */
 
-	/* fault subcounters */
+	/* fault subcounters.  XXX: should be 64-bit counters */
 	int fltnoram;	/* number of times fault was out of ram */
 	int fltnoanon;	/* number of times fault was out of anons */
 	int fltpgwait;	/* number of times fault had to wait on a page */
@@ -367,7 +367,7 @@ struct uvmexp {
 	int flt_prcopy;	/* number of times fault promotes with copy (2b) */
 	int flt_przero;	/* number of times fault promotes with zerofill (2b) */
 
-	/* daemon counters */
+	/* daemon counters.  XXX: should be 64-bit counters */
 	int pdwoke;	/* number of times daemon woke up */
 	int pdrevs;	/* number of times daemon rev'd clock hand */
 	int pdswout;	/* number of times daemon called for swapout */
@@ -480,13 +480,12 @@ extern struct uvmexp uvmexp;
  */
 #include <sys/vmmeter.h>
 #include <sys/queue.h>
-#include <uvm/uvm_param.h>
 #include <sys/lock.h>
+#include <uvm/uvm_param.h>
 #include <uvm/uvm_prot.h>
 #include <uvm/uvm_page.h>
 #include <uvm/uvm_pmap.h>
 #include <uvm/uvm_map.h>
-#include <uvm/uvm_fault.h>
 #include <uvm/uvm_pager.h>
 
 /*
@@ -511,6 +510,7 @@ struct vmspace {
 	caddr_t vm_maxsaddr;	/* user VA at max stack growth */
 	caddr_t vm_minsaddr;	/* user VA at top of stack */
 };
+#define	VMSPACE_IS_KERNEL_P(vm)	VM_MAP_IS_KERNEL(&(vm)->vm_map)
 
 #ifdef _KERNEL
 
@@ -574,9 +574,9 @@ void			ubc_release(void *, int);
 void			ubc_flush(struct uvm_object *, voff_t, voff_t);
 
 /* uvm_fault.c */
-int			uvm_fault(struct vm_map *, vaddr_t, vm_fault_t,
-			    vm_prot_t);
-				/* handle a page fault */
+#define uvm_fault(m, a, p) uvm_fault_internal(m, a, p, 0)
+int		uvm_fault_internal(struct vm_map *, vaddr_t, vm_prot_t, int);
+			/* handle a page fault */
 
 /* uvm_glue.c */
 #if defined(KGDB)
@@ -639,6 +639,7 @@ void			uvmspace_init(struct vmspace *, struct pmap *,
 			    vaddr_t, vaddr_t);
 void			uvmspace_exec(struct lwp *, vaddr_t, vaddr_t);
 struct vmspace		*uvmspace_fork(struct vmspace *);
+void			uvmspace_addref(struct vmspace *);
 void			uvmspace_free(struct vmspace *);
 void			uvmspace_share(struct proc *, struct proc *);
 void			uvmspace_unshare(struct lwp *);

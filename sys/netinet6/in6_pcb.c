@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.69.2.1 2006/02/07 04:58:11 rpaulo Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.69.2.2 2006/09/09 02:58:55 rpaulo Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.69.2.1 2006/02/07 04:58:11 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.69.2.2 2006/09/09 02:58:55 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.69.2.1 2006/02/07 04:58:11 rpaulo Exp 
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -181,10 +182,10 @@ in6_pcballoc(so, v)
 }
 
 int
-in6_pcbbind(v, nam, p)
+in6_pcbbind(v, nam, l)
 	void *v;
 	struct mbuf *nam;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct in6pcb *in6p = v;
 	struct socket *so = in6p->in6p_socket;
@@ -282,7 +283,8 @@ in6_pcbbind(v, nam, p)
 			 * NOTE: all operating systems use suser() for
 			 * privilege check!  do not rewrite it into SS_PRIV.
 			 */
-			priv = (p && !suser(p->p_ucred, &p->p_acflag)) ? 1 : 0;
+			priv = (l && !kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) ? 1 : 0;
 			/* GROSS */
 			if (ntohs(lport) < IPV6PORT_RESERVED && !priv)
 				return (EACCES);
@@ -316,7 +318,7 @@ in6_pcbbind(v, nam, p)
 
 	if (lport == 0) {
 		int e;
-		e = in6_pcbsetport(&in6p->in6p_laddr, in6p, p);
+		e = in6_pcbsetport(&in6p->in6p_laddr, in6p, l);
 		if (e != 0)
 			return (e);
 	} else {
@@ -341,10 +343,10 @@ in6_pcbbind(v, nam, p)
  * then pick one.
  */
 int
-in6_pcbconnect(v, nam, p)
+in6_pcbconnect(v, nam, l)
 	void *v;
 	struct mbuf *nam;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct in6pcb *in6p = v;
 	struct in6_addr *in6a = NULL;
@@ -453,7 +455,7 @@ in6_pcbconnect(v, nam, p)
 	     in6p->in6p_laddr.s6_addr32[3] == 0))
 	{
 		if (in6p->in6p_lport == 0) {
-			error = in6_pcbbind(in6p, (struct mbuf *)0, p);
+			error = in6_pcbbind(in6p, (struct mbuf *)0, l);
 			if (error != 0)
 				return error;
 		}
@@ -676,6 +678,22 @@ in6_pcbnotify(table, dst, fport_arg, src, lport_arg, cmd, cmdarg, notify)
 			if (IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr,
 			    &sa6_dst->sin6_addr))
 				goto do_notify;
+		}
+
+		/*
+		 * If the error designates a new path MTU for a destination
+		 * and the application (associated with this socket) wanted to
+		 * know the value, notify. Note that we notify for all
+		 * disconnected sockets if the corresponding application
+		 * wanted. This is because some UDP applications keep sending
+		 * sockets disconnected.
+		 * XXX: should we avoid to notify the value to TCP sockets?
+		 */
+		if (cmd == PRC_MSGSIZE && (in6p->in6p_flags & IN6P_MTU) != 0 &&
+		    (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr) ||
+		     IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr, &sa6_dst->sin6_addr))) {
+			ip6_notify_pmtu(in6p, (struct sockaddr_in6 *)dst,
+					(u_int32_t *)cmdarg);
 		}
 
 		/*

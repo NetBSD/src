@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.69 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.69.4.1 2006/09/09 03:00:13 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.69 2005/12/11 12:25:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.69.4.1 2006/09/09 03:00:13 rpaulo Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -195,7 +195,7 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 			    (voff_t)pi.part->p_size;
 		}
 	} else {
-		result = VOP_GETATTR(vp, &vattr, curproc->p_ucred, curlwp);
+		result = VOP_GETATTR(vp, &vattr, curlwp->l_cred, curlwp);
 		if (result == 0)
 			used_vnode_size = vattr.va_size;
 	}
@@ -482,6 +482,7 @@ uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 {
 	struct uvm_object *uobj = &vp->v_uobj;
 	voff_t pgend = round_page(newsize);
+	voff_t oldsize;
 	UVMHIST_FUNC("uvm_vnp_setsize"); UVMHIST_CALLED(ubchist);
 
 	simple_lock(&uobj->vmobjlock);
@@ -493,12 +494,13 @@ uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 	 * toss some pages...
 	 */
 
-	if (vp->v_size > pgend && vp->v_size != VSIZENOTSET) {
+	oldsize = vp->v_size;
+	vp->v_size = newsize;
+	if (oldsize > pgend && oldsize != VSIZENOTSET) {
 		(void) uvn_put(uobj, pgend, 0, PGO_FREE | PGO_SYNCIO);
 	} else {
 		simple_unlock(&uobj->vmobjlock);
 	}
-	vp->v_size = newsize;
 }
 
 /*

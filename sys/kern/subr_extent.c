@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.54 2005/12/24 19:12:23 perry Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.54.4.1 2006/09/09 02:57:16 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.54 2005/12/24 19:12:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.54.4.1 2006/09/09 02:57:16 rpaulo Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -513,8 +513,7 @@ extent_alloc_region(struct extent *ex, u_long start, u_long size, int flags)
 #endif
 #ifdef LOCKDEBUG
 	if (flags & EX_WAITSPACE)
-		simple_lock_only_held(NULL,
-		    "extent_alloc_region(EX_WAITSPACE)");
+		ASSERT_SLEEPABLE(NULL, "extent_alloc_region(EX_WAITSPACE)");
 #endif
 
 	/*
@@ -593,13 +592,14 @@ extent_alloc_region(struct extent *ex, u_long start, u_long size, int flags)
 				error = ltsleep(ex,
 				    PNORELOCK | PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
 				    "extnt", 0, &ex->ex_slock);
-				if (error)
-					return (error);
-				goto alloc_start;
+				if (error == 0)
+					goto alloc_start;
+			} else {
+				simple_unlock(&ex->ex_slock);
+				error = EAGAIN;
 			}
 			extent_free_region_descriptor(ex, myrp);
-			simple_unlock(&ex->ex_slock);
-			return (EAGAIN);
+			return error;
 		}
 		/*
 		 * We don't conflict, but this region lies before
@@ -681,8 +681,7 @@ extent_alloc_subregion1(struct extent *ex, u_long substart, u_long subend,
 #endif
 #ifdef LOCKDEBUG
 	if (flags & EX_WAITSPACE)
-		simple_lock_only_held(NULL,
-		    "extent_alloc_subregion1(EX_WAITSPACE)");
+		ASSERT_SLEEPABLE(NULL, "extent_alloc_subregion1(EX_WAITSPACE)");
 #endif
 
 	/*
@@ -984,14 +983,15 @@ skip:
 		error = ltsleep(ex,
 		    PNORELOCK | PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
 		    "extnt", 0, &ex->ex_slock);
-		if (error)
-			return (error);
-		goto alloc_start;
+		if (error == 0)
+			goto alloc_start;
+	} else {
+		simple_unlock(&ex->ex_slock);
+		error = EAGAIN;
 	}
 
 	extent_free_region_descriptor(ex, myrp);
-	simple_unlock(&ex->ex_slock);
-	return (EAGAIN);
+	return error;
 
  found:
 	/*
@@ -1004,11 +1004,40 @@ skip:
 }
 
 int
+extent_alloc_subregion(struct extent *ex, u_long start, u_long end, u_long size,
+    u_long alignment, u_long boundary, int flags, u_long *result)
+{
+
+	return (extent_alloc_subregion1(ex, start, end, size, alignment,
+					0, boundary, flags, result));
+}
+
+int
+extent_alloc(struct extent *ex, u_long size, u_long alignment, u_long boundary,
+    int flags, u_long *result)
+{
+
+	return (extent_alloc_subregion1(ex, ex->ex_start, ex->ex_end,
+					size, alignment, 0, boundary,
+					flags, result));
+}
+
+int
+extent_alloc1(struct extent *ex, u_long size, u_long alignment, u_long skew,
+    u_long boundary, int flags, u_long *result)
+{
+
+	return (extent_alloc_subregion1(ex, ex->ex_start, ex->ex_end,
+					size, alignment, skew, boundary,
+					flags, result));
+}
+
+int
 extent_free(struct extent *ex, u_long start, u_long size, int flags)
 {
 	struct extent_region *rp, *nrp = NULL;
 	u_long end = start + (size - 1);
-	int exflags;
+	int coalesce;
 
 #ifdef DIAGNOSTIC
 	/*
@@ -1044,10 +1073,10 @@ extent_free(struct extent *ex, u_long start, u_long size, int flags)
 	 * XXX have to lock to read it!
 	 */
 	simple_lock(&ex->ex_slock);
-	exflags = ex->ex_flags;
+	coalesce = (ex->ex_flags & EXF_NOCOALESCE) == 0;
 	simple_unlock(&ex->ex_slock);
 
-	if ((exflags & EXF_NOCOALESCE) == 0) {
+	if (coalesce) {
 		/* Allocate a region descriptor. */
 		nrp = extent_alloc_region_descriptor(ex, flags);
 		if (nrp == NULL)
@@ -1103,7 +1132,7 @@ extent_free(struct extent *ex, u_long start, u_long size, int flags)
 		 * The following cases all require that EXF_NOCOALESCE
 		 * is not set.
 		 */
-		if (ex->ex_flags & EXF_NOCOALESCE)
+		if (!coalesce)
 			continue;
 
 		/* Case 2. */

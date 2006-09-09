@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.23.2.3 2006/02/23 16:11:13 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.23.2.4 2006/09/09 02:58:55 rpaulo Exp $");
 
 #include "opt_inet.h"
 
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.23.2.3 2006/02/23 16:11:13 rpaulo Exp 
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -198,6 +199,7 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, ifpp, errorp)
 	int dst_scope = -1, best_scope = -1, best_matchlen = -1;
 	struct in6_addrpolicy *dst_policy = NULL, *best_policy = NULL;
 	u_int32_t odstzone;
+	int error;
 #ifdef notyet /* until introducing ND extensions and address selection */
 	int prefer_tempaddr;
 #endif
@@ -211,6 +213,17 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, ifpp, errorp)
 		*ifpp = NULL;
 
 	/*
+	 * Try to determine the outgoing interface for the given destination.
+	 * We do this regardless of whether the socket is bound, since the
+	 * caller may need this information as a side effect of the call
+	 * to this function (e.g., for identifying the appropriate scope zone
+	 * ID).
+	 */
+	error = in6_selectif(dstsock, opts, mopts, ro, &ifp);
+	if (ifpp)
+		*ifpp = ifp;
+
+	/*
 	 * If the source address is explicitly specified by the caller,
 	 * check if the requested source address is indeed a unicast address
 	 * assigned to the node, and can be used as the packet's source
@@ -220,12 +233,6 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, ifpp, errorp)
 	    !IN6_IS_ADDR_UNSPECIFIED(&pi->ipi6_addr)) {
 		struct sockaddr_in6 srcsock;
 		struct in6_ifaddr *ia6;
-
-		/* get the outgoing interface */
-		if ((*errorp = in6_selectif(dstsock, opts, mopts, ro, &ifp))
-		    != 0) {
-			return (NULL);
-		}
 
 		/*
 		 * Determine the appropriate zone id of the source based on
@@ -257,18 +264,26 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, ifpp, errorp)
 	}
 
 	/*
-	 * Otherwise, if the socket has already bound the source, just use it.
+	 * If the socket has already bound the source, just use it.  We don't
+	 * care at the moment whether in6_selectif() succeeded above, even
+	 * though it would eventually cause an error.
 	 */
 	if (laddr && !IN6_IS_ADDR_UNSPECIFIED(laddr))
 		return (laddr);
 
 	/*
-	 * If the address is not specified, choose the best one based on
+	 * The outgoing interface is crucial in the general selection procedure
+	 * below.  If it is not known at this point, we fail.
+	 */
+	if (ifp == NULL) {
+		*errorp = error;
+		return (NULL);
+	}
+
+	/*
+	 * If the address is not yet determined, choose the best one based on
 	 * the outgoing interface and the destination address.
 	 */
-	/* get the outgoing interface */
-	if ((*errorp = in6_selectif(dstsock, opts, mopts, ro, &ifp)) != 0)
-		return (NULL);
 
 #if defined(MIP6) && NMIP > 0
 	/*
@@ -556,8 +571,6 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, ifpp, errorp)
 		return (NULL);
 	}
 
-	if (ifpp)
-		*ifpp = ifp;
 	return (&ia->ia_addr.sin6_addr);
 }
 #undef REPLACE
@@ -636,9 +649,7 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 	 * use it as the gateway.
 	 */
 	if (opts && opts->ip6po_nexthop) {
-#ifdef notyet			/* until introducing RFC3542 support */
 		struct route_in6 *ron;
-#endif
 
 		sin6_next = satosin6(opts->ip6po_nexthop);
 
@@ -652,7 +663,6 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 		 * If the next hop is an IPv6 address, then the node identified
 		 * by that address must be a neighbor of the sending host.
 		 */
-#ifdef notyet			/* see above */
 		ron = &opts->ip6po_nextroute;
 		if ((ron->ro_rt &&
 		    (ron->ro_rt->rt_flags & (RTF_UP | RTF_GATEWAY)) !=
@@ -693,7 +703,6 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 		 */
 		if (!clone)
 			goto done;
-#endif
 	}
 
 	/*
@@ -880,10 +889,10 @@ in6_selecthlim(inp, ifp)
  * Find an empty port and set it to the specified PCB.
  */
 int
-in6_pcbsetport(laddr, inp, p)
+in6_pcbsetport(laddr, in6p, l)
 	struct in6_addr *laddr;
-	struct inpcb *inp;
-	struct proc *p;
+	struct in6pcb *in6p;
+	struct lwp *l;
 {
 	struct socket *so = inp->inp_socket;
 	struct inpcbtable *table = inp->inp_table;
@@ -901,7 +910,8 @@ in6_pcbsetport(laddr, inp, p)
 
 	if (inp->inp_flags & IN6P_LOWPORT) {
 #ifndef IPNOPRIVPORTS
-		if (p == 0 || (suser(p->p_ucred, &p->p_acflag) != 0))
+		if (l == 0 || (kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag) != 0))
 			return (EACCES);
 #endif
 		minport = ip6_lowportmin;
@@ -1007,7 +1017,7 @@ in6_src_sysctl(oldp, oldlenp, newp, newlen)
 	}
 	if (oldp || oldlenp) {
 		struct walkarg w;
-		size_t oldlen = (oldlenp ? *oldlenp : 0);
+		size_t oldlen = *oldlenp;
 
 		bzero(&w, sizeof(w));
 		w.w_given = oldlen;

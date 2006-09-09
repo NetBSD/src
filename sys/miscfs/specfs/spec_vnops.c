@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.85 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.85.4.1 2006/09/09 02:58:00 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -31,8 +31,12 @@
  *	@(#)spec_vnops.c	8.15 (Berkeley) 7/14/95
  */
 
+#if defined(_KERNEL_OPT)
+#include "veriexec.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.85 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.85.4.1 2006/09/09 02:58:00 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -51,9 +55,14 @@ __KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.85 2005/12/11 12:24:51 christos Exp
 #include <sys/disklabel.h>
 #include <sys/lockf.h>
 #include <sys/tty.h>
+#include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
+
+#if NVERIEXEC > 0
+#include <sys/verified_exec.h>
+#endif /* NVERIEXEC > 0 */
 
 /* symbolic sleep message strings for devices */
 const char	devopn[] = "devopn";
@@ -166,7 +175,7 @@ spec_open(v)
 	struct vop_open_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct lwp *l = ap->a_l;
@@ -203,6 +212,7 @@ spec_open(v)
 			 * devices whose corresponding block devices are
 			 * currently mounted.
 			 */
+			bvp = NULL;
 			if (securelevel >= 1) {
 				blkdev = devsw_chr2blk(dev);
 				if (blkdev != (dev_t)NODEV &&
@@ -212,6 +222,14 @@ spec_open(v)
 				if (iskmemdev(dev))
 					return (EPERM);
 			}
+
+#if NVERIEXEC > 0
+			if (veriexec_strict >= VERIEXEC_IPS && iskmemdev(dev))
+				return (error);
+			error = veriexec_rawchk(bvp);
+			if (error)
+				return (error);
+#endif /* NVERIEXEC > 0 */
 		}
 		if (cdev->d_type == D_TTY)
 			vp->v_flag |= VISTTY;
@@ -240,6 +258,13 @@ spec_open(v)
 		 */
 		if ((error = vfs_mountedon(vp)) != 0)
 			return (error);
+
+#if NVERIEXEC > 0
+		error = veriexec_rawchk(vp);
+		if (error)
+			return (error);
+#endif /* NVERIEXEC > 0 */
+
 		error = (*bdev->d_open)(dev, ap->a_mode, S_IFBLK, l);
 		d_ioctl = bdev->d_ioctl;
 		break;
@@ -274,11 +299,11 @@ spec_read(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
- 	struct lwp *l = uio->uio_lwp;
+ 	struct lwp *l = curlwp;
 	struct buf *bp;
 	const struct bdevsw *bdev;
 	const struct cdevsw *cdev;
@@ -291,7 +316,8 @@ spec_read(v)
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ)
 		panic("spec_read mode");
-	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_lwp != curlwp)
+	if (&uio->uio_vmspace->vm_map != kernel_map &&
+	    uio->uio_vmspace != curproc->p_vmspace)
 		panic("spec_read proc");
 #endif
 	if (uio->uio_resid == 0)
@@ -356,11 +382,11 @@ spec_write(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
-	struct lwp *l = uio->uio_lwp;
+	struct lwp *l = curlwp;
 	struct buf *bp;
 	const struct bdevsw *bdev;
 	const struct cdevsw *cdev;
@@ -373,7 +399,8 @@ spec_write(v)
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
 		panic("spec_write mode");
-	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_lwp != curlwp)
+	if (&uio->uio_vmspace->vm_map != kernel_map &&
+	    uio->uio_vmspace != curproc->p_vmspace)
 		panic("spec_write proc");
 #endif
 
@@ -451,7 +478,7 @@ spec_ioctl(v)
 		u_long a_command;
 		void  *a_data;
 		int  a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	const struct bdevsw *bdev;
@@ -569,7 +596,7 @@ spec_fsync(v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int  a_flags;
 		off_t offlo;
 		off_t offhi;
@@ -684,7 +711,7 @@ spec_close(v)
 	struct vop_close_args /* {
 		struct vnode *a_vp;
 		int  a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;

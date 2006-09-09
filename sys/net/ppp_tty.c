@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.41 2005/12/11 23:05:25 thorpej Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.41.4.1 2006/09/09 02:58:06 rpaulo Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.41 2005/12/11 23:05:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.41.4.1 2006/09/09 02:58:06 rpaulo Exp $");
 
 #include "ppp.h"
 
@@ -113,6 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.41 2005/12/11 23:05:25 thorpej Exp $")
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/systm.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -203,11 +204,12 @@ static void	pppdumpframe(struct ppp_softc *sc, struct mbuf* m, int xmit);
 static int
 pppopen(dev_t dev, struct tty *tp)
 {
-    struct proc *p = curproc;		/* XXX */
+    struct lwp *l = curlwp;		/* XXX */
     struct ppp_softc *sc;
     int error, s;
 
-    if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+    if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	&l->l_acflag)) != 0)
 	return (error);
 
     s = spltty();
@@ -220,7 +222,7 @@ pppopen(dev_t dev, struct tty *tp)
 	}
     }
 
-    if ((sc = pppalloc(p->p_pid)) == NULL) {
+    if ((sc = pppalloc(l->l_proc->p_pid)) == NULL) {
 	splx(s);
 	return ENXIO;
     }
@@ -438,7 +440,6 @@ ppptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
     struct ppp_softc *sc = (struct ppp_softc *) tp->t_sc;
     int error, s;
-    struct proc *p = l->l_proc;
 
     if (sc == NULL || tp != (struct tty *) sc->sc_devp)
 	return (EPASSTHROUGH);
@@ -450,7 +451,8 @@ ppptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	break;
 
     case PPPIOCSASYNCMAP:
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+ 	  KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 	    break;
 	sc->sc_asyncmap[0] = *(u_int *)data;
 	break;
@@ -460,7 +462,8 @@ ppptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	break;
 
     case PPPIOCSRASYNCMAP:
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+	  KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 	    break;
 	sc->sc_rasyncmap = *(u_int *)data;
 	break;
@@ -470,7 +473,8 @@ ppptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	break;
 
     case PPPIOCSXASYNCMAP:
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+	  KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 	    break;
 	s = spltty();
 	bcopy(data, sc->sc_asyncmap, sizeof(sc->sc_asyncmap));
@@ -485,7 +489,7 @@ ppptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	break;
 
     default:
-	error = pppioctl(sc, cmd, data, flag, p);
+	error = pppioctl(sc, cmd, data, flag, l);
 	if (error == 0 && cmd == PPPIOCSMRU)
 	    pppgetm(sc);
     }
