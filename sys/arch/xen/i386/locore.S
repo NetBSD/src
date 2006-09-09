@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14 2006/01/15 22:09:51 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.14.2.1 2006/09/09 02:44:49 rpaulo Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -209,7 +209,7 @@
 #ifdef COMPAT_OLDBOOT
 	.globl	_C_LABEL(bootdev)
 #endif
-	.globl	_C_LABEL(proc0paddr),_C_LABEL(PDPpaddr)
+	.globl	_C_LABEL(proc0uarea),_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
 	.globl	_C_LABEL(gdt)
 #ifdef I586_CPU
@@ -244,7 +244,7 @@ _C_LABEL(lapic_tpr):
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
-_C_LABEL(proc0paddr):	.long	0
+_C_LABEL(proc0uarea):	.long	0
 _C_LABEL(PDPpaddr):	.long	0	# paddr of PDP, for libkvm
 #ifndef REALBASEMEM
 _C_LABEL(biosbasemem):	.long	0	# base memory reported by BIOS
@@ -420,6 +420,11 @@ start:
 	orl	$(PG_V|PG_RW), %eax;
 	movl	%eax, (%ebx)
 	addl	$4,%ebx
+	movl	RELOC(start_info_union)+START_INFO_STORE_MFN,%eax
+	shll	$PGSHIFT,%eax
+	orl	$(PG_V|PG_RW), %eax;
+	movl	%eax, (%ebx)
+	addl	$4,%ebx
 1:
 #endif
 
@@ -448,22 +453,24 @@ start:
 	movl	%edx,_C_LABEL(HYPERVISOR_shared_info)
 	addl	$PAGE_SIZE,%edx			# shared_inf
 #ifdef XEN3
-	/* set console page virtual address if not domain0 */
+	/* set console and xenstore pages virtual address if not domain0 */
 	movl	RELOC(start_info_union)+START_INFO_FLAGS,%eax
 	testl	$SIF_INITDOMAIN, %eax;
 	jnz	1f
 	movl	%edx,_C_LABEL(xencons_interface)
 	addl	$PAGE_SIZE,%edx			# xencons_interface
+	movl	%edx,_C_LABEL(xenstore_interface)
+	addl	$PAGE_SIZE,%edx			# xenstore_interface
 1:
 #endif
 	movl	%edx,_C_LABEL(atdevbase)
 
 	/* Set up bootstrap stack. */
 	leal	(PROC0STACK)(%esi),%eax
-	movl	%eax,_C_LABEL(proc0paddr)
-	leal	(USPACE-FRAMESIZE)(%eax),%esp
+	movl	%eax,_C_LABEL(proc0uarea)
+	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
 	subl	$KERNBASE,%esi
-	movl	%esi,PCB_CR3(%eax)	# pcb->pcb_cr3
+	movl	%esi,(KSTACK_SIZE+PCB_CR3)(%eax)	# pcb->pcb_cr3
 	xorl	%ebp,%ebp               # mark end of frames
 
 	movl	_C_LABEL(atdevbase),%eax
@@ -611,8 +618,8 @@ NENTRY(switch_error)
 
 /*
  * void cpu_switch(struct lwp *)
- * Find a runnable process and switch to it.  Wait if necessary.  If the new
- * process is the same as the old one, we short-circuit the context save and
+ * Find a runnable lwp and switch to it.  Wait if necessary.  If the new
+ * lwp is the same as the old one, we short-circuit the context save and
  * restore.
  *
  * Note that the stack frame layout is known to "struct switchframe"
@@ -672,7 +679,7 @@ ENTRY(cpu_switch)
 	 */
 
 	pushl	%esi
-	call	_C_LABEL(pmap_deactivate2)	# pmap_deactivate(oldproc)
+	call	_C_LABEL(pmap_deactivate2)	# pmap_deactivate(oldlwp)
 	addl	$4,%esp
 
 	movl	L_ADDR(%esi),%esi
@@ -836,7 +843,7 @@ switch_resume:
 	 */
 
 	pushl	%esi
-	call	_C_LABEL(pmap_deactivate2)	# pmap_deactivate(oldproc)
+	call	_C_LABEL(pmap_deactivate2)	# pmap_deactivate(oldlwp)
 	addl	$4,%esp
 
 	movl	L_ADDR(%esi),%esi

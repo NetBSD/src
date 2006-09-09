@@ -1,5 +1,5 @@
 
-#	$NetBSD: KLONDIKE,v 1.36 2005/12/07 09:10:18 tsutsui Exp $
+#	$NetBSD: KLONDIKE,v 1.36.4.1 2006/09/09 02:41:58 rpaulo Exp $
 #
 # KLONDIKE: Matthias Pfaller's pc532
 #
@@ -62,10 +62,8 @@ options 	FFS_NO_SNAPSHOT		# No FFS snapshot support
 # networking options
 #options 	GATEWAY			# packet forwarding
 options 	INET			# IP + ICMP + TCP + UDP
-#options 	NS			# XNS
 #options 	ISO,TPIP		# OSI
 #options 	EON			# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC		# X.25
 options 	PPP_BSDCOMP,PPP_DEFLATE	# compression for PPP
 
 # pc532 specific options
@@ -94,10 +92,10 @@ lpt1 at mainbus? addr 0xffc80034 irq 6
 
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop 1			# loopback network
-pseudo-device	vnd 4			# vnode devices
-pseudo-device	bpfilter 8		# packet filter
-pseudo-device	sl 1			# compressed SLIP
-pseudo-device	ppp 1			# Point-to-Point Protocol
-pseudo-device	tun 1			# ip tunneling
+pseudo-device	vnd 			# vnode devices
+pseudo-device	bpfilter		# packet filter
+pseudo-device	sl 			# compressed SLIP
+pseudo-device	ppp 			# Point-to-Point Protocol
+pseudo-device	tun 			# ip tunneling
 pseudo-device	clockctl		# user control of clock subsystem
 #pseudo-device	fss 4			# file system snapshot device

@@ -1,8 +1,9 @@
-/*	$NetBSD: types.h,v 1.7 2003/05/25 14:40:30 tsutsui Exp $	*/
+/*	$NetBSD: types.h,v 1.7.32.1 2006/09/09 02:41:48 rpaulo Exp $	*/
 
 #include <mips/types.h>
 
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
+#define	__HAVE_GENERIC_TODR
 
 /* MIPS specific options */
 #define	__HAVE_BOOTINFO_H

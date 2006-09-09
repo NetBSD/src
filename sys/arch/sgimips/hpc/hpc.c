@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.35 2005/12/28 08:31:09 kurahone Exp $	*/
+/*	$NetBSD: hpc.c,v 1.35.4.1 2006/09/09 02:42:52 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.35 2005/12/28 08:31:09 kurahone Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.35.4.1 2006/09/09 02:42:52 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,7 +258,7 @@ static struct hpc_values hpc1_values = {
 };
 
 static struct hpc_values hpc3_values = {
-	.revision		3,
+	.revision =		3,
 	.scsi0_regs =		HPC3_SCSI0_REGS,
 	.scsi0_regs_size =	HPC3_SCSI0_REGS_SIZE,
 	.scsi0_cbp =		HPC3_SCSI0_CBP,
@@ -456,7 +456,7 @@ hpc_revision(struct hpc_softc *sc, struct gio_attach_args *ga)
 	int hpctype;
 
 	/* Allow forcing of our hpc revision. */ 
-	switch (sc->sc_dev.dv_cfdata->cf_flags & HPC_REVISION_MASK) {
+	switch (device_cfdata(&sc->sc_dev)->cf_flags & HPC_REVISION_MASK) {
 	case HPC_REVISION_1:
 		return (1);
 

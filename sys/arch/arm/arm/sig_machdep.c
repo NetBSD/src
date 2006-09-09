@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.25 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.25.4.1 2006/09/09 02:37:53 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.25 2005/12/11 12:16:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.25.4.1 2006/09/09 02:37:53 rpaulo Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -113,7 +113,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	fp--;
 	
 	/* make the stack aligned */
-	(u_int)fp = STACKALIGN(fp);
+	fp = (struct sigframe_siginfo *)STACKALIGN(fp);
 
 	/* Build stack frame for signal trampoline. */
 	switch (ps->sa_sigdesc[sig].sd_vers) {
@@ -239,15 +239,8 @@ cpu_setmcontext(l, mcp, flags)
 	if ((flags & _UC_CPU) != 0) {
 		/* Restore General Register context. */
 		/* Make sure the processor mode has not been tampered with. */
-#ifdef PROG32
-		if ((gr[_REG_CPSR] & PSR_MODE) != PSR_USR32_MODE ||
-		    (gr[_REG_CPSR] & (I32_bit | F32_bit)) != 0)
-			return (EINVAL);
-#else /* PROG26 */
-		if ((gr[_REG_PC] & R15_MODE) != R15_MODE_USR ||
-		    (gr[_REG_PC] & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
-			return (EINVAL);
-#endif
+		if (!VALID_R15_PSR(gr[_REG_PC], gr[_REG_CPSR]))
+			return EINVAL;
 
 		tf->tf_r0     = gr[_REG_R0];
 		tf->tf_r1     = gr[_REG_R1];

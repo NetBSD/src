@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.17 2005/12/11 12:20:16 christos Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.17.4.1 2006/09/09 02:45:39 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.17 2005/12/11 12:20:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.17.4.1 2006/09/09 02:45:39 rpaulo Exp $");
 
 #if defined (__alpha__)
 #define ELFSIZE 64
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.17 2005/12/11 12:20:16 chri
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/resourcevar.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -85,10 +86,8 @@ ELFNAME2(linux,copyargs)(l, pack, arginfo, stackp, argp)
 	size_t len;
 	AuxInfo ai[LINUX_ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
-	struct proc *p;
 	int error;
 
-	p = l->l_proc;
 #ifdef LINUX_SHIFT
 	/*
 	 * Seems that PowerPC Linux binaries expect argc to start on a 16 bytes
@@ -125,22 +124,22 @@ ELFNAME2(linux,copyargs)(l, pack, arginfo, stackp, argp)
 		 * The exec_package doesn't have a proc pointer and it's not
 		 * exactly trivial to add one since the credentials are
 		 * changing. XXX Linux uses curlwp's credentials.
-		 * Why can't we use them too?
+		 * Why can't we use them too? XXXad we do, what's different?
 		 */
 		a->a_type = LINUX_AT_EGID;
-		a->a_v = p->p_ucred->cr_gid;
+		a->a_v = kauth_cred_getegid(l->l_cred);
 		a++;
 
 		a->a_type = LINUX_AT_GID;
-		a->a_v = p->p_cred->p_rgid;
+		a->a_v = kauth_cred_getgid(l->l_cred);
 		a++;
 
 		a->a_type = LINUX_AT_EUID;
-		a->a_v = p->p_ucred->cr_uid;
+		a->a_v = kauth_cred_geteuid(l->l_cred);
 		a++;
 
 		a->a_type = LINUX_AT_UID;
-		a->a_v = p->p_cred->p_ruid;
+		a->a_v = kauth_cred_getuid(l->l_cred);
 		a++;
 #endif
 

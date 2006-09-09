@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.h,v 1.9 2005/12/11 12:20:12 christos Exp $ */
+/*	$NetBSD: irix_usema.h,v 1.9.4.1 2006/09/09 02:45:27 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <sys/device.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
+#include <sys/vnode.h>
 
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_exec.h>

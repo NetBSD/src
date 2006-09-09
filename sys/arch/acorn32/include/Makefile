@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.21 2005/12/11 12:16:05 christos Exp $
+#	$NetBSD: Makefile,v 1.21.4.1 2006/09/09 02:36:41 rpaulo Exp $
 
 INCSDIR= /usr/include/acorn32
 
 INCS=	ansi.h aout_machdep.h asm.h \
 	bswap.h bus.h \
 	cdefs.h cpu.h \
-	db_machdep.h disklabel.h \
+	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h fp.h frame.h \
 	ieee.h ieeefp.h \
@@ -20,6 +20,6 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	varargs.h vmparam.h \
 	wchar_limits.h
 
-INCS+=	joystick.h kbd.h vconsole.h
+INCS+=	joystick.h
 
 .include <bsd.kinc.mk>

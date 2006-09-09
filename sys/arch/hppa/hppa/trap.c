@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30 2005/12/24 20:07:04 perry Exp $	*/
+/*	$NetBSD: trap.c,v 1.30.4.1 2006/09/09 02:39:52 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,16 +69,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30 2005/12/24 20:07:04 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30.4.1 2006/09/09 02:39:52 rpaulo Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
 /* #define USERTRACE */
 
 #include "opt_kgdb.h"
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,9 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30 2005/12/24 20:07:04 perry Exp $");
 #include <sys/savar.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 #include <sys/proc.h>
 #include <sys/signalvar.h>
@@ -213,7 +208,7 @@ userret(struct lwp *l, register_t pc, u_quad_t oticks)
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
-	if (l->l_flag & P_PROFIL) {
+	if (p->p_flag & P_PROFIL) {
 		extern int psratio;
 
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
@@ -508,6 +503,8 @@ trap(int type, struct trapframe *frame)
 
 	l = curlwp;
 	p = l ? l->l_proc : NULL;
+	if ((type & T_USER) != 0)
+		LWP_CACHE_CREDS(l, p);
 
 	tts = (type & ~T_USER) > trap_types ? "reserved" :
 		trap_type[type & ~T_USER];
@@ -813,7 +810,7 @@ do_onfault:
 
 		if (map->pmap->pmap_space != space) {
 #ifdef TRAPDEBUG
-			printf("trap: space missmatch %d != %d\n",
+			printf("trap: space mismatch %d != %d\n",
 			    space, map->pmap->pmap_space);
 #endif
 			/* actually dump the user, crap the kernel */
@@ -825,12 +822,12 @@ do_onfault:
 
 		onfault = l->l_addr->u_pcb.pcb_onfault;
 		l->l_addr->u_pcb.pcb_onfault = 0;
-		ret = uvm_fault(map, va, 0, vftype);
+		ret = uvm_fault(map, va, vftype);
 		l->l_addr->u_pcb.pcb_onfault = onfault;
 
 #ifdef TRAPDEBUG
-		printf("uvm_fault(%p, %x, %d, %d)=%d\n",
-		    map, (u_int)va, 0, vftype, ret);
+		printf("uvm_fault(%p, %x, %d)=%d\n",
+		    map, (u_int)va, vftype, ret);
 #endif
 
 		if (map != kernel_map)
@@ -868,8 +865,8 @@ do_onfault:
 				if (l->l_addr->u_pcb.pcb_onfault) {
 					goto do_onfault;
 				}
-				panic("trap: uvm_fault(%p, %lx, %d, %d): %d",
-				    map, va, 0, vftype, ret);
+				panic("trap: uvm_fault(%p, %lx, %d): %d",
+				    map, va, vftype, ret);
 			}
 		}
 		break;
@@ -971,6 +968,7 @@ syscall(struct trapframe *frame, int *args)
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 	code = frame->tf_t1;
+	LWP_CACHE_CREDS(l, p);
 
 	/*
 	 * Restarting a system call is touchy on the HPPA, 
@@ -1145,7 +1143,7 @@ syscall(struct trapframe *frame, int *args)
 
 #ifdef USERTRACE
 	if (0) {
-		user_backtrace(frame, p, -1);
+		user_backtrace(frame, l, -1);
 		frame->tf_ipsw |= PSW_R;
 		frame->tf_rctr = 0;
 		printf("r %08x", frame->tf_iioq_head);

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.12 2006/01/27 18:31:11 cdi Exp $	*/
+/*	$NetBSD: boot.c,v 1.12.2.1 2006/09/09 02:43:35 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -95,8 +95,7 @@ int compatmode = 0;
 
 #if 0
 static void
-prom2boot(dev)
-	char *dev;
+prom2boot(char *dev)
 {
 	char *cp, *lp = 0;
 	int handle;

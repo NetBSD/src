@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.46 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.46.4.1 2006/09/09 02:42:28 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -72,9 +72,9 @@ struct cpu_info {
 	int ci_want_resched;
 	volatile u_long ci_lasttb;
 	volatile int ci_tickspending;
-	int ci_cpl;
-	int ci_iactive;
-	int ci_ipending;
+	volatile int ci_cpl;
+	volatile int ci_iactive;
+	volatile int ci_ipending;
 	int ci_intrdepth;
 	char *ci_intstk;
 #define	CPUSAVE_LEN	8
@@ -96,6 +96,7 @@ struct cpu_info {
 	void (*ci_idlespin)(void);
 	uint32_t ci_khz;
 	struct evcnt ci_ev_clock;	/* clock intrs */
+	struct evcnt ci_ev_statclock; 	/* stat clock */
 	struct evcnt ci_ev_softclock;	/* softclock intrs */
 	struct evcnt ci_ev_softnet;	/* softnet intrs */
 	struct evcnt ci_ev_softserial;	/* softserial intrs */
@@ -118,7 +119,7 @@ struct cpu_info {
 };
 
 #ifdef MULTIPROCESSOR
-static inline int
+static __inline int
 cpu_number(void)
 {
 	int pir;
@@ -147,7 +148,7 @@ void	cpu_boot_secondary_processors(void);
 
 extern struct cpu_info cpu_info[];
 
-static inline struct cpu_info *
+static __inline struct cpu_info *
 curcpu(void)
 {
 	struct cpu_info *ci;
@@ -160,7 +161,7 @@ curcpu(void)
 #define curpcb			(curcpu()->ci_curpcb)
 #define curpm			(curcpu()->ci_curpm)
 
-static inline register_t
+static __inline register_t
 mfmsr(void)
 {
 	register_t msr;
@@ -169,14 +170,14 @@ mfmsr(void)
 	return msr;
 }
 
-static inline void
+static __inline void
 mtmsr(register_t msr)
 {
 
 	__asm volatile ("mtmsr %0" : : "r"(msr));
 }
 
-static inline uint32_t
+static __inline uint32_t
 mftbl(void)
 {
 	uint32_t tbl;
@@ -192,7 +193,7 @@ mftbl(void)
 	return tbl;
 }
 
-static inline uint64_t
+static __inline uint64_t
 mftb(void)
 {
 	uint64_t tb;
@@ -220,7 +221,7 @@ mftb(void)
 	return tb;
 }
 
-static inline uint32_t
+static __inline uint32_t
 mfrtcl(void)
 {
 	uint32_t rtcl;
@@ -229,7 +230,7 @@ mfrtcl(void)
 	return rtcl;
 }
 
-static inline void
+static __inline void
 mfrtc(uint32_t *rtcp)
 {
 	uint32_t tmp;
@@ -243,7 +244,7 @@ mfrtc(uint32_t *rtcp)
 	    : "=r"(*rtcp), "=r"(*(rtcp + 1)), "=r"(tmp) :: "cr0");
 }
 
-static inline uint32_t
+static __inline uint32_t
 mfpvr(void)
 {
 	uint32_t pvr;
@@ -251,6 +252,33 @@ mfpvr(void)
 	__asm volatile ("mfpvr %0" : "=r"(pvr));
 	return (pvr);
 }
+
+static __inline int
+cntlzw(uint32_t val)
+{
+	int 			cnt;
+
+	__asm volatile ("cntlzw %0,%1" : "=r"(cnt) : "r"(val));
+	return (cnt);
+}
+
+#if defined(PPC_IBM4XX) || defined(PPC_IBM403)
+/*
+ * DCR (Device Control Register) access. These have to be
+ * macros because register address is encoded as immediate
+ * operand.
+ */
+#define mtdcr(reg, val) 					\
+	__asm volatile("mtdcr %0,%1" : : "K"(reg), "r"(val))
+
+#define mfdcr(reg)						\
+({								\
+	uint32_t __val;						\
+								\
+	__asm volatile("mfdcr %0,%1" : "=r"(__val) : "K"(reg)); \
+	__val;							\
+})
+#endif /* PPC_IBM4XX || PPC_IBM403 */
 
 /*
  * CLKF_BASEPRI is dependent on the underlying interrupt code
@@ -281,6 +309,7 @@ void icache_flush_page(vaddr_t);
 void dcache_flush(vaddr_t, vsize_t);
 void icache_flush(vaddr_t, vsize_t);
 void *mapiodev(paddr_t, psize_t);
+void unmapiodev(vaddr_t, vsize_t);
 
 #define	DELAY(n)		delay(n)
 
@@ -288,7 +317,7 @@ void *mapiodev(paddr_t, psize_t);
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, curcpu()->ci_astpending = 1)
 #define	signotify(p)		(curcpu()->ci_astpending = 1)
 
-#ifdef PPC_OEA
+#if defined(PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 void oea_init(void (*)(void));
 void oea_startup(const char *);
 void oea_dumpsys(void);
@@ -307,7 +336,11 @@ extern int cpu_altivec;
 #ifdef PPC_IBM403
 #define	CACHELINESIZE	16
 #else
+#if defined (PPC_OEA64_BRIDGE)
+#define	CACHELINESIZE	128
+#else
 #define	CACHELINESIZE	32
+#endif /* PPC_OEA64_BRIDGE */
 #endif
 #endif
 #endif

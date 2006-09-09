@@ -1,0 +1,10 @@
+# $NetBSD: USL-5P,v 1.1.6.2 2006/09/09 02:40:48 rpaulo Exp $
+#
+# USL-5P
+#
+
+include "arch/landisk/conf/GENERIC.in"
+
+options 	PCLOCK=33333333			# 33.33MHz
+
+wdc0	at obio? port 0x14000000 irq 10		# CF

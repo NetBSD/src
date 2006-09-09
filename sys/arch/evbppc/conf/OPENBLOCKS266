@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.28 2005/12/20 05:35:27 thorpej Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.28.4.1 2006/09/09 02:39:05 rpaulo Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs405"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS266-$Revision: 1.28 $"
+#ident 		"OPENBLOCKS266-$Revision: 1.28.4.1 $"
 
 maxusers	32
 
@@ -52,7 +52,7 @@ options 	DEBUG			# expensive debugging checks/support
 options 	DDB			# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT
-options 	SYMTAB_SPACE=300000	# size for embedded symbol table
+options 	SYMTAB_SPACE=410000	# size for embedded symbol table
 
 makeoptions	DEBUG="-g"		# compile full symbol table
 
@@ -126,17 +126,15 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options        DIRECTED_BROADCAST      # allow broadcasts through routers
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -166,10 +164,8 @@ options	EMAC_EVENT_COUNTERS
 gpiic0	at opb? addr ? irq ?		# On-chip IIC controller
 iic0	at gpiic?			# I2C bus
 xrtc0	at iic? addr 0x6f		# RTC
-ppcgpio0 at opb? addr ? irq ?		# On-chip GPIO controller
-obsled0	at ppcgpio? addr 0x0c		# OBS LED connected GPIO
-obsled1	at ppcgpio? addr 0x0d		# OBS LED connected GPIO
-obsled2	at ppcgpio? addr 0x0e		# OBS LED connected GPIO
+opbgpio0 at opb? addr ? irq ?		# On-chip GPIO controller
+gpio*	at opbgpio?			# GPIO framework
 
 # PCI bus support
 pci*	at pchb?
@@ -187,8 +183,8 @@ atabus* at ata?
 wd*	at atabus? drive ?
 
 # MII/PHY support
-lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101/9102 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 options 	MIIVERBOSE		# verbose PHY autoconfig messages
 
 
@@ -203,7 +199,7 @@ options 	MIIVERBOSE		# verbose PHY autoconfig messages
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	md		1	# memory disk device
-#pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback
@@ -219,7 +215,7 @@ pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IPv[46] pfil hooks too
@@ -230,3 +226,4 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms

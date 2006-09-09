@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465uart.c,v 1.12 2005/12/24 23:24:00 perry Exp $	*/
+/*	$NetBSD: hd64465uart.c,v 1.12.4.1 2006/09/09 02:39:44 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465uart.c,v 1.12 2005/12/24 23:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465uart.c,v 1.12.4.1 2006/09/09 02:39:44 rpaulo Exp $");
 
 #include "opt_kgdb.h"
 
@@ -87,9 +87,9 @@ CFATTACH_DECL(hd64465uart, sizeof(struct hd64465uart_softc),
     hd64465uart_match, hd64465uart_attach, NULL, NULL);
 
 STATIC void hd64465uart_init(void);
-STATIC u_int8_t hd64465uart_read_1(void *, bus_space_handle_t, bus_size_t);
+STATIC uint8_t hd64465uart_read_1(void *, bus_space_handle_t, bus_size_t);
 STATIC void hd64465uart_write_1(void *, bus_space_handle_t, bus_size_t,
-    u_int8_t);
+    uint8_t);
 
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #ifndef COMCN_SPEED
@@ -159,6 +159,7 @@ hd64465uart_attach(struct device *parent, struct device *self, void *aux)
 	struct hd64465_attach_args *ha = aux;
 	struct hd64465uart_softc *sc = (struct hd64465uart_softc *)self;
 	struct com_softc *csc = &sc->sc_com;
+	bus_space_handle_t ioh;
 
 	sc->sc_chip = &hd64465uart_chip;
 
@@ -167,15 +168,14 @@ hd64465uart_attach(struct device *parent, struct device *self, void *aux)
 	if (!sc->sc_chip->console)
 		hd64465uart_init();
 
-	csc->sc_iot = sc->sc_chip->io_tag;
-	bus_space_map(csc->sc_iot, 0, 8, 0, &csc->sc_ioh);
-	csc->sc_iobase = 0;
+	bus_space_map(sc->sc_chip->io_tag, 0, 8, 0, &ioh);
+	COM_INIT_REGS(csc->sc_regs, sc->sc_chip->io_tag, ioh, 0);
 	csc->sc_frequency = COM_FREQ;
 
 	/* supply clock XXX notyet */
 
 	/* sanity check */
-	if (!comprobe1(csc->sc_iot, csc->sc_ioh)) {
+	if (!com_probe_subr(&csc->sc_regs)) {
 		printf(": device problem. don't attach.\n");
 
 		/* stop clock XXX notyet */
@@ -205,17 +205,17 @@ hd64465uart_init()
 	hd64465uart_chip.io_tag->hbs_w_1 = hd64465uart_write_1;
 }
 
-u_int8_t
+uint8_t
 hd64465uart_read_1(void *t, bus_space_handle_t h, bus_size_t ofs)
 {
 
-	return *(volatile u_int8_t *)(h + (ofs << 1));
+	return *(volatile uint8_t *)(h + (ofs << 1));
 }
 
 void
 hd64465uart_write_1(void *t, bus_space_handle_t h, bus_size_t ofs,
-    u_int8_t val)
+    uint8_t val)
 {
 
-	*(volatile u_int8_t *)(h + (ofs << 1)) = val;	
+	*(volatile uint8_t *)(h + (ofs << 1)) = val;	
 }

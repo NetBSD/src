@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.44 2005/12/20 05:35:30 thorpej Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.44.4.1 2006/09/09 02:42:52 rpaulo Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.44 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.44.4.1 $"
 
 maxusers	32
 
@@ -42,7 +42,7 @@ options		ENABLE_MIPS4_CACHE_R10K # enable R10000 cache ops
 
 #options 	NTP		# NTP phase/frequence locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
-options 	SYSTRACE	# system call vetting via systrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
@@ -108,6 +108,7 @@ file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -129,17 +130,15 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -184,6 +183,8 @@ crime0 		at mainbus0 addr 0x14000000
 mace0 		at mainbus0 addr 0x1f000000
 macepci0 	at mace0 offset 0x080000 intr 7
 pci0 		at macepci0 bus 0
+pci*		at ppb? bus ?
+options 	PCI_NETBSD_CONFIGURE
 
 # MACE devices
 mec0 		at mace0 offset 0x280000 intr 3
@@ -192,6 +193,9 @@ lpt0 		at mace0 offset 0x380000 intr 4 intrmask 0x000f0000
 com0 		at mace0 offset 0x390000 intr 4 intrmask 0x03f00000
 com1 		at mace0 offset 0x398000 intr 4 intrmask 0xfc000000
 mcclock0	at mace0 offset 0x3a0000
+
+# PCI bridges
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
 # PCI cryptographic devices
 hifn*	at pci? dev ? function ?	# Hifn 7755/7811/795x
@@ -207,7 +211,7 @@ esh*    at pci? dev ? function ?        # Essential HIPPI card
 ex*     at pci? dev ? function ?        # 3Com 90x[BC]
 fpa*    at pci? dev ? function ?        # DEC DEFPA FDDI
 fxp*    at pci? dev ? function ?        # Intel EtherExpress PRO 10+/100B
-#gsip*   at pci? dev ? function ?        # NS83820 Gigabit Ethernet
+gsip*   at pci? dev ? function ?        # NS83820 Gigabit Ethernet
 #hme*   at pci? dev ? function ?        # Sun Microelectronics STP2002-STQ
 le*     at pci? dev ? function ?        # PCnet-PCI Ethernet
 lmc*    at pci? dev ? function ?        # Lan Media Corp SSI/HSSI/DS3
@@ -255,6 +259,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 urlphy* at mii? phy ?                   # Realtek RTL8150L internal PHYs
 
 # O2 SCSI
+adv* 		at pci? dev ? function ?
 ahc* 		at pci? dev ? function ?
 esiop*		at pci? dev ? function ?
 njs*		at pci? dev ? function ?
@@ -302,7 +307,7 @@ wsmouse* at ums? mux 0
 ukbd*   at uhidev? reportid ?
 wskbd*  at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
@@ -413,22 +418,23 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-pseudo-device	ppp		2	# Point-to-Point Protocol
-pseudo-device	sl		2	# Serial Line IP
-pseudo-device	strip		2	# Starmode Radio IP (Metricom)
-pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	ppp			# Point-to-Point Protocol
+pseudo-device	sl			# Serial Line IP
+pseudo-device	strip			# Starmode Radio IP (Metricom)
+pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
-pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
@@ -451,7 +457,6 @@ pseudo-device	irix_kmem		# IRIX /dev/kmem
 pseudo-device	irix_usema		# IRIX /dev/usema
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1
@@ -466,4 +471,3 @@ pseudo-device	irix_usema		# IRIX /dev/usema
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
-

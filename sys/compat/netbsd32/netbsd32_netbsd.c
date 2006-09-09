@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.99 2005/12/11 12:20:22 christos Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.99.4.1 2006/09/09 02:46:12 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.99 2005/12/11 12:20:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.99.4.1 2006/09/09 02:46:12 rpaulo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.99 2005/12/11 12:20:22 christo
 #include "opt_sysv.h"
 #include "opt_nfsserver.h"
 #include "opt_syscall_debug.h"
+#include "opt_ptrace.h"
 
 #include "fs_lfs.h"
 #include "fs_nfs.h"
@@ -75,10 +76,12 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.99 2005/12/11 12:20:22 christo
 #include <sys/filedesc.h>
 #include <sys/namei.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/acct.h>
@@ -91,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.99 2005/12/11 12:20:22 christo
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
+#include <compat/netbsd32/netbsd32_sa.h>
 
 #include <machine/frame.h>
 
@@ -114,6 +118,17 @@ struct uvm_object *emul_netbsd32_object;
 #endif
 
 extern struct sysctlnode netbsd32_sysctl_root;
+
+const struct sa_emul saemul_netbsd32 = {
+	sizeof(ucontext32_t),
+	sizeof(struct netbsd32_sa_t),
+	sizeof(netbsd32_sa_tp),
+	netbsd32_sacopyout,
+	netbsd32_upcallconv,
+	netbsd32_cpu_upcall,
+	(void (*)(struct lwp *, void *))getucontext32,
+	netbsd32_sa_ucsp
+};
 
 const struct emul emul_netbsd32 = {
 	"netbsd32",
@@ -157,6 +172,8 @@ const struct emul emul_netbsd32 = {
 	NULL,
 
 	netbsd32_vm_default_addr,
+	NULL,
+	&saemul_netbsd32,
 };
 
 /*
@@ -455,6 +472,7 @@ netbsd32_ptrace(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if defined(PTRACE) || defined(_LKM)
 	struct netbsd32_ptrace_args /* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
@@ -467,7 +485,14 @@ netbsd32_ptrace(l, v, retval)
 	NETBSD32TO64_UAP(pid);
 	NETBSD32TOX64_UAP(addr, caddr_t);
 	NETBSD32TO64_UAP(data);
-	return (sys_ptrace(l, &ua, retval));
+#ifdef _LKM
+	return (*sysent[SYS_ptrace].sy_call)(l, &ua, retval);
+#else
+	return sys_ptrace(l, &ua, retval);
+#endif
+#else
+	return (ENOSYS);
+#endif /* PTRACE || _LKM */
 }
 
 int
@@ -485,7 +510,7 @@ netbsd32_accept(l, v, retval)
 
 	NETBSD32TO64_UAP(s);
 	NETBSD32TOP_UAP(name, struct sockaddr);
-	NETBSD32TOP_UAP(anamelen, int);
+	NETBSD32TOP_UAP(anamelen, socklen_t);
 	return (sys_accept(l, &ua, retval));
 }
 
@@ -504,7 +529,7 @@ netbsd32_getpeername(l, v, retval)
 
 	NETBSD32TO64_UAP(fdes);
 	NETBSD32TOP_UAP(asa, struct sockaddr);
-	NETBSD32TOP_UAP(alen, int);
+	NETBSD32TOP_UAP(alen, socklen_t);
 /* NB: do the protocol specific sockaddrs need to be converted? */
 	return (sys_getpeername(l, &ua, retval));
 }
@@ -524,7 +549,7 @@ netbsd32_getsockname(l, v, retval)
 
 	NETBSD32TO64_UAP(fdes);
 	NETBSD32TOP_UAP(asa, struct sockaddr);
-	NETBSD32TOP_UAP(alen, int);
+	NETBSD32TOP_UAP(alen, socklen_t);
 	return (sys_getsockname(l, &ua, retval));
 }
 
@@ -952,21 +977,25 @@ netbsd32_getgroups(l, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(netbsd32_gid_tp) gidset;
 	} */ *uap = v;
-	struct pcred *pc = l->l_proc->p_cred;
+	kauth_cred_t pc = l->l_cred;
 	int ngrp;
 	int error;
+	gid_t *grbuf;
 
 	ngrp = SCARG(uap, gidsetsize);
 	if (ngrp == 0) {
-		*retval = pc->pc_ucred->cr_ngroups;
+		*retval = kauth_cred_ngroups(pc);
 		return (0);
 	}
-	if (ngrp < pc->pc_ucred->cr_ngroups)
+	if (ngrp < kauth_cred_ngroups(pc))
 		return (EINVAL);
-	ngrp = pc->pc_ucred->cr_ngroups;
+	ngrp = kauth_cred_ngroups(pc);
 	/* Should convert gid_t to netbsd32_gid_t, but they're the same */
-	error = copyout((caddr_t)pc->pc_ucred->cr_groups,
-	    (caddr_t)NETBSD32PTR64(SCARG(uap, gidset)), ngrp * sizeof(gid_t));
+	grbuf = malloc(ngrp * sizeof(*grbuf), M_TEMP, M_WAITOK);
+	kauth_cred_getgroups(pc, grbuf, ngrp);
+	error = copyout(grbuf, (caddr_t)NETBSD32PTR64(SCARG(uap, gidset)),
+			ngrp * sizeof(*grbuf));
+	free(grbuf, M_TEMP);
 	if (error)
 		return (error);
 	*retval = ngrp;
@@ -1079,22 +1108,22 @@ netbsd32_setpriority(l, v, retval)
 }
 
 int
-netbsd32_socket(l, v, retval)
+netbsd32_sys___socket30(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_socket_args /* {
+	struct netbsd32_sys___socket30_args /* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
 	} */ *uap = v;
-	struct sys_socket_args ua;
+	struct sys___socket30_args ua;
 
 	NETBSD32TO64_UAP(domain);
 	NETBSD32TO64_UAP(type);
 	NETBSD32TO64_UAP(protocol);
-	return (sys_socket(l, &ua, retval));
+	return (sys___socket30(l, &ua, retval));	
 }
 
 int
@@ -1282,7 +1311,7 @@ netbsd32_getsockopt(l, v, retval)
 	NETBSD32TO64_UAP(level);
 	NETBSD32TO64_UAP(name);
 	NETBSD32TOP_UAP(val, void);
-	NETBSD32TOP_UAP(avalsize, int);
+	NETBSD32TOP_UAP(avalsize, socklen_t);
 	return (sys_getsockopt(l, &ua, retval));
 }
 
@@ -1455,25 +1484,60 @@ netbsd32_nfssvc(l, v, retval)
 }
 #endif
 
-#if defined(NFS) || defined(NFSSERVER)
 int
-netbsd32_getfh(l, v, retval)
+netbsd32___getfh30(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_getfh_args /* {
+	struct netbsd32___getfh30_args /* {
 		syscallarg(const netbsd32_charp) fname;
 		syscallarg(netbsd32_fhandlep_t) fhp;
+		syscallarg(netbsd32_size_tp) fh_size;
 	} */ *uap = v;
-	struct sys_getfh_args ua;
+	struct vnode *vp;
+	fhandle_t *fh;
+	int error;
+	struct nameidata nd;
+	netbsd32_size_t sz32;
+	size_t sz;
 
-	NETBSD32TOP_UAP(fname, const char);
-	NETBSD32TOP_UAP(fhp, struct fhandle);
-	/* Lucky for us a fhandlep_t doesn't change sizes */
-	return (sys_getfh(l, &ua, retval));
+	/*
+	 * Must be super user
+	 */
+	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag);
+	if (error)
+		return (error);
+	fh = NULL;
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	    (char *)NETBSD32PTR64(SCARG(uap, fname)), l);
+	error = namei(&nd);
+	if (error)
+		return (error);
+	vp = nd.ni_vp;
+	error = copyin(NETBSD32PTR64(SCARG(uap, fh_size)), &sz32,
+	    sizeof(netbsd32_size_t));
+	if (!error) {
+		fh = malloc(sz32, M_TEMP, M_WAITOK);
+		if (fh == NULL) 
+			return EINVAL;
+		sz = sz32;
+		error = vfs_composefh(vp, fh, &sz);
+		sz32 = sz;
+	}
+	vput(vp);
+	if (error == E2BIG)
+		copyout(&sz, NETBSD32PTR64(SCARG(uap, fh_size)), sizeof(size_t));
+	if (error == 0) {
+		error = copyout(&sz32, NETBSD32PTR64(SCARG(uap, fh_size)),
+		    sizeof(netbsd32_size_t));
+		if (!error)
+			error = copyout(fh, NETBSD32PTR64(SCARG(uap, fhp)), sz);
+	}
+	free(fh, M_TEMP);
+	return (error);
 }
-#endif
 
 int
 netbsd32_pread(l, v, retval)
@@ -1689,7 +1753,6 @@ netbsd32_setrlimit(l, v, retval)
 		int which = SCARG(uap, which);
 	struct rlimit alim;
 	int error;
-	struct proc *p = l->l_proc;
 
 	error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, rlp)), &alim,
 	    sizeof(struct rlimit));
@@ -1713,7 +1776,7 @@ netbsd32_setrlimit(l, v, retval)
 		break;
 	}
 
-	return (dosetrlimit(p, p->p_cred, which, &alim));
+	return (dosetrlimit(l, l->l_proc, which, &alim));
 }
 
 int
@@ -1896,6 +1959,7 @@ netbsd32_reboot(l, v, retval)
 	return (sys_reboot(l, &ua, retval));
 }
 
+#include <sys/poll.h>
 int
 netbsd32_poll(l, v, retval)
 	struct lwp *l;
@@ -1912,6 +1976,7 @@ netbsd32_poll(l, v, retval)
 	NETBSD32TOP_UAP(fds, struct pollfd);
 	NETBSD32TO64_UAP(nfds);
 	NETBSD32TO64_UAP(timeout);
+
 	return (sys_poll(l, &ua, retval));
 }
 
@@ -2212,36 +2277,22 @@ int netbsd32_fchroot(l, v, retval)
  * and call the device open routine if any.
  */
 int
-netbsd32_fhopen(l, v, retval)
+netbsd32___fhopen40(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_fhopen_args /* {
-		syscallarg(const fhandle_t *) fhp;
+	struct netbsd32___fhopen40_args /* {
+		syscallarg(const netbsd32_pointer_t *) fhp;
+		syscallarg(netbsd32_size_t) fh_size;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct sys_fhopen_args ua;
+	struct sys___fhopen40_args ua;
 
 	NETBSD32TOP_UAP(fhp, fhandle_t);
+	NETBSD32TO64_UAP(fh_size);
 	NETBSD32TO64_UAP(flags);
-	return (sys_fhopen(l, &ua, retval));
-}
-
-int netbsd32_fhstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct netbsd32_fhstat_args /* {
-		syscallarg(const netbsd32_fhandlep_t) fhp;
-		syscallarg(struct stat *) sb;
-	} */ *uap = v;
-	struct sys_fhstat_args ua;
-
-	NETBSD32TOP_UAP(fhp, const fhandle_t);
-	NETBSD32TOP_UAP(sb, struct stat);
-	return (sys_fhstat(l, &ua, retval));
+	return (sys___fhopen40(l, &ua, retval));
 }
 
 /* virtual memory syscalls */

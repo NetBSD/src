@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.17 2005/12/24 23:24:00 perry Exp $	*/
+/*	$NetBSD: profile.h,v 1.17.4.1 2006/09/09 02:40:59 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -31,7 +31,7 @@
  *	@(#)profile.h	8.1 (Berkeley) 6/10/93
  */
 
-#define	_MCOUNT_DECL static inline void _mcount
+#define	_MCOUNT_DECL static __inline void _mcount
 
 #ifdef __ELF__
 #define	MCOUNT_ENTRY	"__mcount"
@@ -41,7 +41,7 @@
 
 #ifndef	__mc68010__
 #define	MCOUNT \
-extern void mcount __P((void)) __asm(MCOUNT_ENTRY) \
+extern void mcount(void) __asm(MCOUNT_ENTRY) \
 	__attribute__((__no_instrument_function__)); \
 void mcount() { \
 	int selfpc, frompcindex; \
@@ -56,7 +56,7 @@ void mcount() { \
  * to do something different.
  */
 #define	MCOUNT \
-extern void mcount __P((void)) __asm("mcount"); void mcount() { \
+extern void mcount(void) __asm("mcount"); void mcount() { \
 	int selfpc, frompcindex; \
 	__asm("movl %%a6@(4),%0" : "=r" (selfpc)); \
 	__asm("movl %%a6@(0),%%a0 ; movl %%a0@(4),%0" : "=r" (frompcindex) : /* no inputs */ : "a0"); \

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.11 2005/12/11 12:16:03 christos Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.11.4.1 2006/09/09 02:36:40 rpaulo Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.9 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.11 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.11.4.1 2006/09/09 02:36:40 rpaulo Exp $");
 
 #ident "@(#)rm_class.c  1.48     97/12/05 SMI"
 
@@ -230,19 +230,15 @@ rmc_newclass(pri, ifd, nsecPerByte, action, maxq, parent, borrow,
 	}
 #endif
 
-	MALLOC(cl, struct rm_class *, sizeof(struct rm_class),
-	       M_DEVBUF, M_WAITOK);
+	cl = malloc(sizeof(struct rm_class), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cl == NULL)
 		return (NULL);
-	(void)memset(cl, 0, sizeof(struct rm_class));
 	CALLOUT_INIT(&cl->callout_);
-	MALLOC(cl->q_, class_queue_t *, sizeof(class_queue_t),
-	       M_DEVBUF, M_WAITOK);
+	cl->q_ = malloc(sizeof(class_queue_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cl->q_ == NULL) {
-		FREE(cl, M_DEVBUF);
+		free(cl, M_DEVBUF);
 		return (NULL);
 	}
-	(void)memset(cl->q_, 0, sizeof(class_queue_t));
 
 	/*
 	 * Class initialization.
@@ -553,7 +549,7 @@ rmc_depth_recompute(rm_class_t *cl)
 /*
  * void
  * rmc_delete_class(struct rm_ifdat *ifdat, struct rm_class *cl) - This
- *	function deletes a class from the link-sharing stucture and frees
+ *	function deletes a class from the link-sharing structure and frees
  *	all resources associated with the class.
  *
  *	Returns: NONE
@@ -660,8 +656,8 @@ rmc_delete_class(ifd, cl)
 			red_destroy(cl->red_);
 #endif
 	}
-	FREE(cl->q_, M_DEVBUF);
-	FREE(cl, M_DEVBUF);
+	free(cl->q_, M_DEVBUF);
+	free(cl, M_DEVBUF);
 }
 
 

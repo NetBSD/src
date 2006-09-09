@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.76 2005/12/11 12:20:02 christos Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.76.4.1 2006/09/09 02:45:26 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.76 2005/12/11 12:20:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.76.4.1 2006/09/09 02:45:26 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.76 2005/12/11 12:20:02 christos Exp
 #include <sys/wait.h>
 #include <sys/utsname.h>
 #include <sys/unistd.h>
+#include <sys/kauth.h>
 
 #include <netinet/in.h>
 #include <sys/sa.h>
@@ -441,10 +442,9 @@ again:
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_lwp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
+	UIO_SETUP_SYSSPACE(&auio);
 	/*
 	 * First we read into the malloc'ed buffer, then
 	 * we massage it into user space, one record at a time.
@@ -580,10 +580,9 @@ again:
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_lwp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
+	UIO_SETUP_SYSSPACE(&auio);
 	/*
 	 * First we read into the malloc'ed buffer, then
 	 * we massage it into user space, one record at a time.
@@ -1202,14 +1201,13 @@ ibcs2_sys_plock(l, v, retval)
 	struct ibcs2_sys_plock_args /* {
 		syscallarg(int) cmd;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 #define IBCS2_UNLOCK	0
 #define IBCS2_PROCLOCK	1
 #define IBCS2_TEXTLOCK	2
 #define IBCS2_DATALOCK	4
 
-
-        if (suser(p->p_ucred, &p->p_acflag) != 0)
+        if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
                 return EPERM;
 	switch(SCARG(uap, cmd)) {
 	case IBCS2_UNLOCK:
@@ -1232,7 +1230,6 @@ ibcs2_sys_uadmin(l, v, retval)
 		syscallarg(int) func;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int error;
 
 #define SCO_A_REBOOT        1
@@ -1254,7 +1251,8 @@ ibcs2_sys_uadmin(l, v, retval)
 #define SCO_AD_GETCMAJ      1
 
 	/* XXX: is this the right place for this call? */
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 		return (error);
 
 	switch(SCARG(uap, cmd)) {

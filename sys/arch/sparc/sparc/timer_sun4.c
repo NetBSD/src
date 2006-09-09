@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4.c,v 1.13 2005/11/16 03:00:23 uwe Exp $	*/
+/*	$NetBSD: timer_sun4.c,v 1.13.4.1 2006/09/09 02:43:24 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4.c,v 1.13 2005/11/16 03:00:23 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4.c,v 1.13.4.1 2006/09/09 02:43:24 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -98,6 +98,7 @@ clockintr_4(void *cap)
 
 	/* read the limit register to clear the interrupt */
 	*((volatile int *)&timerreg4->t_c10.t_limit);
+	tickle_tc();
 	hardclock((struct clockframe *)cap);
 	return (1);
 }
@@ -168,7 +169,7 @@ timerattach_obio_4(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	timerattach(&timerreg4->t_c14.t_counter, &timerreg4->t_c14.t_limit);
+	timerattach(&timerreg4->t_c10.t_counter, &timerreg4->t_c10.t_limit);
 }
 #endif /* SUN4 */
 
@@ -193,6 +194,6 @@ timerattach_mainbus_4c(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	timerattach(&timerreg4->t_c14.t_counter, &timerreg4->t_c14.t_limit);
+	timerattach(&timerreg4->t_c10.t_counter, &timerreg4->t_c10.t_limit);
 }
 #endif /* SUN4C */

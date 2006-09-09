@@ -1,4 +1,4 @@
-/*	$NetBSD: prf.c,v 1.1 2006/01/27 18:31:12 cdi Exp $	*/
+/*	$NetBSD: prf.c,v 1.1.2.1 2006/09/09 02:43:35 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -40,14 +40,15 @@
 #include <machine/promlib.h>
 
 void
-putchar(c)
-	unsigned char c;
+putchar(int c)
 {
+
 	prom_putchar(c);
 }
 
 int
-getchar()
+getchar(void)
 {
+
 	return (prom_getchar());
 }

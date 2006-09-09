@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.32 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.32.4.1 2006/09/09 02:39:10 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.32 2005/12/11 12:17:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.32.4.1 2006/09/09 02:39:10 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,9 +177,9 @@ nhpib_intio_match(struct device *parent, struct cfdata *match, void *aux)
 	struct intio_attach_args *ia = aux;
 
 	if (strcmp("hpib", ia->ia_modname) == 0)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -188,9 +188,9 @@ nhpib_dio_match(struct device *parent, struct cfdata *match, void *aux)
 	struct dio_attach_args *da = aux;
 
 	if (da->da_id == DIO_DEVICE_ID_NHPIB)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -213,7 +213,7 @@ nhpib_intio_attach(struct device *parent, struct device *self, void *aux)
 	nhpib_common_attach(sc, desc);
 
 	/* establish the interrupt handler */
-	(void) intio_intr_establish(nhpibintr, sc, ia->ia_ipl, IPL_BIO);
+	(void)intio_intr_establish(nhpibintr, sc, ia->ia_ipl, IPL_BIO);
 }
 
 static void
@@ -263,7 +263,8 @@ nhpib_common_attach(struct nhpib_softc *sc, const char *desc)
 static void
 nhpibreset(struct hpibbus_softc *hs)
 {
-	struct nhpib_softc *sc = (struct nhpib_softc *)hs->sc_dev.dv_parent;
+	struct nhpib_softc *sc =
+	    (struct nhpib_softc *)device_parent(&hs->sc_dev);
 	struct nhpibdevice *hd = sc->sc_regs;
 
 	hd->hpib_acr = AUX_SSWRST;
@@ -288,6 +289,7 @@ nhpibreset(struct hpibbus_softc *hs)
 static void
 nhpibifc(struct nhpibdevice *hd)
 {
+
 	hd->hpib_acr = AUX_TCA;
 	hd->hpib_acr = AUX_CSRE;
 	hd->hpib_acr = AUX_SSIC;
@@ -299,7 +301,8 @@ nhpibifc(struct nhpibdevice *hd)
 static int
 nhpibsend(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int origcnt)
 {
-	struct nhpib_softc *sc = (struct nhpib_softc *)hs->sc_dev.dv_parent;
+	struct nhpib_softc *sc =
+	    (struct nhpib_softc *)device_parent(&hs->sc_dev);
 	struct nhpibdevice *hd = sc->sc_regs;
 	int cnt = origcnt;
 	char *addr = ptr;
@@ -344,17 +347,18 @@ nhpibsend(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int origcnt)
 		(void) nhpibwait(hd, MIS_BO);
 #endif
 	}
-	return(origcnt);
+	return origcnt;
 
 senderror:
 	nhpibifc(hd);
-	return(origcnt - cnt - 1);
+	return origcnt - cnt - 1;
 }
 
 static int
 nhpibrecv(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int origcnt)
 {
-	struct nhpib_softc *sc = (struct nhpib_softc *)hs->sc_dev.dv_parent;
+	struct nhpib_softc *sc =
+	    (struct nhpib_softc *)device_parent(&hs->sc_dev);
 	struct nhpibdevice *hd = sc->sc_regs;
 	int cnt = origcnt;
 	char *addr = ptr;
@@ -393,19 +397,20 @@ nhpibrecv(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int origcnt)
 		hd->hpib_data = (slave == 31) ? C_UNA_P : C_UNT_P;
 		(void) nhpibwait(hd, MIS_BO);
 	}
-	return(origcnt);
+	return origcnt;
 
 recverror:
 	nhpibifc(hd);
 recvbyteserror:
-	return(origcnt - cnt - 1);
+	return origcnt - cnt - 1;
 }
 
 static void
 nhpibgo(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int count,
     int rw, int timo)
 {
-	struct nhpib_softc *sc = (struct nhpib_softc *)hs->sc_dev.dv_parent;
+	struct nhpib_softc *sc =
+	    (struct nhpib_softc *)device_parent(&hs->sc_dev);
 	struct nhpibdevice *hd = sc->sc_regs;
 	char *addr = ptr;
 
@@ -453,7 +458,8 @@ static void
 nhpibreadtimo(void *arg)
 {
 	struct hpibbus_softc *hs = arg;
-	struct nhpib_softc *sc = (struct nhpib_softc *)hs->sc_dev.dv_parent;
+	struct nhpib_softc *sc =
+	    (struct nhpib_softc *)device_parent(&hs->sc_dev);
 	int s = splbio();
 
 	if (hs->sc_flags & HPIBF_IO) {
@@ -474,7 +480,8 @@ nhpibreadtimo(void *arg)
 static void
 nhpibdone(struct hpibbus_softc *hs)
 {
-	struct nhpib_softc *sc = (struct nhpib_softc *)hs->sc_dev.dv_parent;
+	struct nhpib_softc *sc =
+	    (struct nhpib_softc *)device_parent(&hs->sc_dev);
 	struct nhpibdevice *hd = sc->sc_regs;
 	int cnt;
 
@@ -513,10 +520,11 @@ nhpibintr(void *arg)
 	int stat1;
 
 #ifdef lint
-	if (stat1 = unit) return(1);
+	if (stat1 = unit)
+		return 1;
 #endif
 	if ((hd->hpib_ids & IDS_IR) == 0)
-		return(0);
+		return 0;
 	stat0 = hd->hpib_mis;
 	stat1 = hd->hpib_lis;
 
@@ -547,13 +555,14 @@ nhpibintr(void *arg)
 			       hs->sc_dev.dv_xname, stat0);
 #endif
 	}
-	return(1);
+	return 1;
 }
 
 static int
 nhpibppoll(struct hpibbus_softc *hs)
 {
-	struct nhpib_softc *sc = (struct nhpib_softc *)hs->sc_dev.dv_parent;
+	struct nhpib_softc *sc =
+	    (struct nhpib_softc *)device_parent(&hs->sc_dev);
 	struct nhpibdevice *hd = sc->sc_regs;
 	int ppoll;
 
@@ -561,7 +570,7 @@ nhpibppoll(struct hpibbus_softc *hs)
 	DELAY(25);
 	ppoll = hd->hpib_cpt;
 	hd->hpib_acr = AUX_CPP;
-	return(ppoll);
+	return ppoll;
 }
 
 #ifdef DEBUG
@@ -580,22 +589,23 @@ nhpibwait(struct nhpibdevice *hd, int x)
 		if (nhpibreporttimo)
 			printf("hpib0: %s timo\n", x==MIS_BO?"OUT":"IN");
 #endif
-		return(-1);
+		return -1;
 	}
-	return(0);
+	return 0;
 }
 
 static void
 nhpibppwatch(void *arg)
 {
 	struct hpibbus_softc *hs = arg;
-	struct nhpib_softc *sc = (struct nhpib_softc *)hs->sc_dev.dv_parent;
+	struct nhpib_softc *sc =
+	    (struct nhpib_softc *)device_parent(&hs->sc_dev);
 
 	if ((hs->sc_flags & HPIBF_PPOLL) == 0)
 		return;
 again:
 	if (nhpibppoll(hs) & (0x80 >> hs->sc_queue.tqh_first->hq_slave))
-       		sc->sc_regs->hpib_mim = MIS_BO;
+		sc->sc_regs->hpib_mim = MIS_BO;
 	else if (cold)
 		/* timeouts not working yet */
 		goto again;

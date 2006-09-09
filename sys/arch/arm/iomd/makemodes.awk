@@ -1,4 +1,4 @@
-#	$NetBSD: makemodes.awk,v 1.1 2001/10/05 22:27:41 reinoud Exp $
+#	$NetBSD: makemodes.awk,v 1.1.54.1 2006/09/09 02:37:59 rpaulo Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,12 @@ BEGIN {
 	# argument is used as a filename.
 	realargc = ARGC;
 	ARGC=2;
+
+	# Translation of sync_pol to videomode.flags
+	pol[0] = "HP|VP";
+	pol[1] = "HN|VP";
+	pol[2] = "HP|VN";
+	pol[3] = "HN|VN";
 }
 
 # MDF File format
@@ -180,12 +186,17 @@ END {
 	printf(" */\n\n");
 	printf("#include <sys/types.h>\n");
 	printf("#include <arm/iomd/vidc.h>\n\n");
-	printf("const char *monitor = \"%s\";\n", monitor);
+	printf("const char * const monitor = \"%s\";\n", monitor);
 	printf("const int dpms = %d;\n", dpms);
+	printf("#define HP VID_PHSYNC\n");
+	printf("#define HN VID_NHSYNC\n");
+	printf("#define VP VID_PVSYNC\n");
+	printf("#define VN VID_NVSYNC\n");
 	printf("\n");
 
 	# Now define the modes array
-	printf("struct vidc_mode vidcmodes[] = {\n");
+	printf("const struct videomode vidc_videomode_list[] = {\n");
+	nmodes = 0
 
 	# Loop round all the modespecs on the command line
 	for (res = 2; res < realargc; res = res + 1) {
@@ -194,14 +205,14 @@ END {
 		closest = 200;
 
 		# Report the mode specifier being processed
-		printf("%s ==> ", ARGV[res]) > "/dev/stderr";
+		printf("%s ==> ", ARGV[res]) | "cat 1>&2";
 
 		# Pull apart the modespec
 		args = split(ARGV[res], modespec, ",");
 
 		# We need at least 2 arguments
 		if (args < 2) {
-			printf("Invalid mode specifier\n") > "/dev/stderr";
+			printf("Invalid mode specifier\n") | "cat 1>&2";
 			continue;
 		}
 
@@ -218,7 +229,7 @@ END {
 
 		# Report the full mode specifier
 		printf("%d x %d x %d x %d : ", modespec[1], modespec[2],
-		    modespec[3], modespec[4]) > "/dev/stderr";
+		    modespec[3], modespec[4]) | "cat 1>&2";
 
 		# Now loop round all the modes we parsed and find the matches
 		for (loop = 0; loop < mode; loop = loop + 1) {
@@ -238,14 +249,32 @@ END {
 			    htimings[3] + htimings[4] + htimings[5] + \
 			    htimings[6]) / ( vtimings[1] + vtimings[2] + \
 			    vtimings[3] + vtimings[4] + vtimings[5] + \
-			    vtimgings[6]);
+			    vtimings[6]);
 			fr = fr * 1000;
 
 			# Remember the frame rate
 			modes[loop, 7] = int(fr + 0.5);
 
+			# Create the internal version of the timings
+			modes[loop, "timings"] = \
+			    sprintf( \
+			    "{ %d, %d,%d,%d,%d, %d,%d,%d,%d, %s, \"%s\" }",\
+			    modes[loop, 3], htimings[4], \
+			    htimings[4] + htimings[5] + htimings[6], \
+			    htimings[4] + htimings[5] + htimings[6] + \
+			    htimings[1], \
+			    htimings[4] + htimings[5] + htimings[6] + \
+			    htimings[1] + htimings[2] + htimings[3], \
+			    vtimings[4], \
+			    vtimings[4] + vtimings[5] + vtimings[6], \
+			    vtimings[4] + vtimings[5] + vtimings[6] + \
+			    vtimings[1], \
+			    vtimings[4] + vtimings[5] + vtimings[6] + \
+			    vtimings[1] + vtimings[2] + vtimings[3], \
+			    pol[modes[loop, 6]], modes[loop, 0]);
+
 			# Report the frame rate
-			printf("%d ", modes[loop, 7]) > "/dev/stderr";
+			printf("%d ", modes[loop, 7]) | "cat 1>&2";
 
 			# Is this the closest
 			if (closest > mod(modes[loop, 7] - modespec[4])) {
@@ -264,41 +293,23 @@ END {
 
 		# Did we find any sort of match ?
 		if (found == -1) {
-			printf("Cannot find mode") > "/dev/stderr";
+			printf("Cannot find mode") | "cat 1>&2";
 			continue;
 		}
 
 		# Report the frame rate matched
-		printf("- %d", modes[found, 7]) > "/dev/stderr";
+		printf("- %d", modes[found, 7]) | "cat 1>&2";
 
 		# Output the mode as part of the mode definition array
-		printf("\t{ %6d, %22s, %22s, %d, %d, %d },\n",
-		    modes[found, 3], modes[found, 4], modes[found, 5],
-		    cdepth(modespec[3]), modes[found, 6], modes[found, 7]);
+		printf("\t%s,\n", modes[found, "timings"]);
 
-		printf("\n") > "/dev/stderr";
+		printf("\n") | "cat 1>&2";
+		nmodes++;
 	}
 
-	# Add a terminating entry and close the array.
-	printf("\t{ 0 }\n");
-	printf("};\n");
-}
-
-#
-# cdepth() function
-#
-# This returns the colour depth as a power of 2 + 1
-#
-function cdepth(depth) {
-	if (depth == 16)
-		return 5;
-	if (depth == 256)
-		return 9;
-	if (depth == 32768)
-		return 16;
-	if (depth == 65536)
-		return 17;
-	return 9;
+	# Close the array.
+	printf("};\n\n");
+	printf("const int vidc_videomode_count = %d;\n", nmodes);
 }
 
 #

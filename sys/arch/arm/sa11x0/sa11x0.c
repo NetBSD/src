@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.18 2006/01/03 23:14:23 peter Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.18.2.1 2006/09/09 02:38:10 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -21,6 +21,18 @@
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 /*-
  * Copyright (c) 1999
@@ -42,10 +54,10 @@
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -57,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.18 2006/01/03 23:14:23 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.18.2.1 2006/09/09 02:38:10 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,9 +111,7 @@ extern vaddr_t saipic_base;
  */
 
 static int
-sa11x0_print(aux, name)
-	void *aux;
-	const char *name;
+sa11x0_print(void *aux, const char *name)
 {
 	struct sa11x0_attach_args *sa = (struct sa11x0_attach_args*)aux;
 
@@ -114,23 +124,18 @@ sa11x0_print(aux, name)
 	if (sa->sa_gpio != -1)
 		aprint_normal(" gpio %d", sa->sa_gpio);
 
-        return (UNCONF);
+        return UNCONF;
 }
 
 int
-sa11x0_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+sa11x0_match(struct device *parent, struct cfdata *match, void *aux)
 {
+
 	return 1;
 }
 
 void
-sa11x0_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+sa11x0_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sa11x0_softc *sc = (struct sa11x0_softc*)self;
 
@@ -199,11 +204,8 @@ sa11x0_attach(parent, self, aux)
 }
 
 int
-sa11x0_search(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+sa11x0_search(struct device *parent, struct cfdata *cf, const int *ldesc,
+    void *aux)
 {
 	struct sa11x0_softc *sc = (struct sa11x0_softc *)parent;
 	struct sa11x0_attach_args sa;

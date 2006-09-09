@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20.c,v 1.13 2005/12/11 12:16:47 christos Exp $	*/
+/*	$NetBSD: vidc20.c,v 1.13.4.1 2006/09/09 02:37:59 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vidc20.c,v 1.13 2005/12/11 12:16:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20.c,v 1.13.4.1 2006/09/09 02:37:59 rpaulo Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,7 +77,7 @@ int *vidc_base = (int *)VIDC_BASE;
 
 
 /*
- * vidc_fref is the reference frequency in Mhz of the detected VIDC
+ * vidc_fref is the reference frequency in MHz of the detected VIDC
  * (dependent on IOMD/IOC)
  * XXX default is RPC600 ?
  */
@@ -97,7 +97,7 @@ static int
 vidcmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	return(1);
+	return 1;
 }
 
 /*
@@ -114,7 +114,7 @@ vidcsearch(struct device *parent, struct cfdata *cf,
 	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, NULL);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -148,7 +148,7 @@ vidcattach(struct device *parent, struct device *self, void *aux)
 		printf(": VIDC20\n");
 		vidc_fref = 24000000;
 		break;
-	};
+	}
 
 	config_search_ia(vidcsearch, self, "vidc", NULL);
 }

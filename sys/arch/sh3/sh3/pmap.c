@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 2006/01/21 00:56:05 uwe Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52.2.1 2006/09/09 02:42:59 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 2006/01/21 00:56:05 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52.2.1 2006/09/09 02:42:59 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ STATIC struct pool_allocator pmap_pv_page_allocator = {
 STATIC int __pmap_asid_alloc(void);
 STATIC void __pmap_asid_free(int);
 STATIC struct {
-	u_int32_t map[8];
+	uint32_t map[8];
 	int hint;	/* hint for next allocation */
 } __pmap_asid;
 
@@ -310,7 +310,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	struct vm_page *pg;
 	struct vm_page_md *pvh;
-	pt_entry_t entry;
+	pt_entry_t entry, *pte;
 	boolean_t kva = (pmap == pmap_kernel());
 
 	/* "flags" never exceed "prot" */
@@ -368,7 +368,18 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	}
 
 	/* Register to page table */
-	*__pmap_pte_alloc(pmap, va) = entry;
+	if (kva)
+		pte = __pmap_kpte_lookup(va);
+	else {
+		pte = __pmap_pte_alloc(pmap, va);
+		if (pte == NULL) {
+			if (flags & PMAP_CANFAIL)
+				return ENOMEM;
+			panic("pmap_enter: cannot allocate pte");
+		}
+	}
+
+	*pte = entry;
 
 	if (pmap->pm_asid != -1)
 		sh_tlb_update(pmap->pm_asid, va, entry);
@@ -585,8 +596,16 @@ pmap_kremove(vaddr_t va, vsize_t len)
 boolean_t
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
-	pt_entry_t *pte = __pmap_pte_lookup(pmap, va);
+	pt_entry_t *pte;
 
+	/* handle P1 and P2 specially: va == pa */
+	if (pmap == pmap_kernel() && (va >> 30) == 2) {
+		if (pap != NULL)
+			*pap = va & SH3_PHYS_MASK;
+		return (TRUE);
+	}
+
+	pte = __pmap_pte_lookup(pmap, va);
 	if (pte == NULL || *pte == 0)
 		return (FALSE);
 
@@ -884,6 +903,8 @@ __pmap_pte_alloc(pmap_t pmap, vaddr_t va)
 
 	/* Allocate page table (not managed page) */
 	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE | UVM_PGA_ZERO);
+	if (pg == NULL)
+		return NULL;
 
 	ptp = (pt_entry_t *)SH3_PHYS_TO_P1SEG(VM_PAGE_TO_PHYS(pg));
 	pmap->pm_ptp[__PMAP_PTP_INDEX(va)] = ptp;

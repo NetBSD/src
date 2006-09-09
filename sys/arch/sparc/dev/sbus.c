@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.65 2005/11/16 00:49:03 uwe Exp $ */
+/*	$NetBSD: sbus.c,v 1.65.4.1 2006/09/09 02:43:09 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.65 2005/11/16 00:49:03 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.65.4.1 2006/09/09 02:43:09 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -528,7 +528,7 @@ sbus_establish(struct sbusdev *sd, struct device *dev)
 	 * We don't just use the device structure of the above-attached
 	 * sbus, since we might (in the future) support multiple sbus's.
 	 */
-	for (curdev = dev->dv_parent; ; curdev = curdev->dv_parent) {
+	for (curdev = device_parent(dev); ; curdev = device_parent(curdev)) {
 		if (!curdev || !curdev->dv_xname)
 			panic("sbus_establish: can't find sbus parent for %s",
 			      sd->sd_dev->dv_xname
@@ -668,12 +668,12 @@ static	int straytime, nstray;
 	printf("\taddress: 0x%x%x\n", afsr & SBUS_AFSR_PAH, afva);
 
 	/* For now, do the same dance as on stray interrupts */
-	timesince = time.tv_sec - straytime;
+	timesince = time_uptime - straytime;
 	if (timesince <= 10) {
 		if (++nstray > 9)
 			panic("too many SBus errors");
 	} else {
-		straytime = time.tv_sec;
+		straytime = time_uptime;
 		nstray = 1;
 	}
 

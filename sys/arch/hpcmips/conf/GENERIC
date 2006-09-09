@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.180 2005/12/09 23:34:02 elad Exp $
+# $NetBSD: GENERIC,v 1.180.4.1 2006/09/09 02:39:38 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.180 $"
+#ident 		"GENERIC-$Revision: 1.180.4.1 $"
 
 maxusers	16
 
@@ -45,7 +45,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
-options 	SYSTRACE		# system call vetting via systrace(1)
+#options 	SYSTRACE		# system call vetting via systrace(1)
 options 	MSGBUFSIZE=8192		# dmesg buffer size
 
 ## UVM options.
@@ -90,6 +90,7 @@ file-system 	PROCFS		# /proc
 file-system 	UNION
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.
@@ -110,7 +111,6 @@ options 	INET6		# IPV6
 #options 	ISO		# OSI networking
 #options 	TPIP		# TPIP
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
 #options 	ALTQ_BLUE	# Stochastic Fair Blue
@@ -325,8 +325,8 @@ pcic0	at isa2 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00060003
 #
 # Vadem Clio and Sharp Tripad
 #
-vrisab3	at vrgiu? platform SHARP_TRIPAD isaportoffset 0x1000000
-vrisab3	at vrgiu? platform VADEM_CLIO_C isaportoffset 0x1000000
+vrisab3	at vrgiu? platform SHARP_TRIPAD isaportoffset 0x0
+vrisab3	at vrgiu? platform VADEM_CLIO_C isaportoffset 0x0
 isa3	at vrisab3
 pcic0	at isa3 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x000d0003
 
@@ -532,7 +532,7 @@ com*	at pcmcia? function ?		# Modems and serial cards
 # PCMCIA SCSI interfaces
 aic*	at pcmcia? function ?
 esp*	at pcmcia? function ?		# NCR53c406 SCSI
-spc*	at pcmcia? function ?
+spc*	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 
 # ATAPI bus support
 atapibus* at atapi?
@@ -562,7 +562,7 @@ wsmouse*	at ums? mux 0
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
@@ -577,7 +577,6 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass?
 scsibus* at umass? channel ?
 
 # USB audio
@@ -601,7 +600,7 @@ udav*	at uhub? port ?		# Davicom DM9601 based adapters
 # MII/PHY support
 ukphy*	at mii? phy ?		# generic unknown PHYs
 
-# Prolofic PL2301/PL2302 host-to-host adapter
+# Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
 
 # Serial adapters
@@ -644,13 +643,14 @@ audio*	at uaudio?
 # Pseudo-Devices
 
 pseudo-device	loop		1	# network loopback
-pseudo-device	ppp		2	# serial-line IP ports
+pseudo-device	ppp			# serial-line IP ports
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	bpfilter	16	# packet filter ports
+pseudo-device	bpfilter		# packet filter ports
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter, NAT
 
-pseudo-device	vnd		4	# virtual disk ick
+pseudo-device	vnd			# virtual disk ick
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd		4	# concatenated disks
 pseudo-device	fss		4	# file system snapshot device
@@ -674,9 +674,9 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 
 # for IPv6
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 ## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
 pseudo-device	vlan
@@ -689,7 +689,6 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

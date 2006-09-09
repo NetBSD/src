@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.2 2002/05/24 21:41:40 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.2.36.1 2006/09/09 02:44:14 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -93,7 +93,7 @@ int
 deopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 {
 	int i, cdata, *map, npgs;
-	char eaddr[6];
+	u_char eaddr[6];
 
 	/* point to the device in memory */
 	if (askname == 0) /* Override if autoboot */
@@ -114,7 +114,7 @@ deopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 
 	/* Map in the control structures and buffers */
 	dc = alloc(sizeof(struct de_cdata));
-	(int)pdc = (int)dc & VAX_PGOFSET;
+	pdc = (struct de_cdata *)((int)dc & VAX_PGOFSET);
 	map = (int *)nexaddr + 512;
 	npgs = (sizeof(struct de_cdata) >> VAX_PGSHIFT) + 1;
 	cdata = (int)dc >> VAX_PGSHIFT;

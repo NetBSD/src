@@ -1,4 +1,4 @@
-/*	$NetBSD: com_hpcio.c,v 1.8 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: com_hpcio.c,v 1.8.4.1 2006/09/09 02:39:43 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_hpcio.c,v 1.8 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_hpcio.c,v 1.8.4.1 2006/09/09 02:39:43 rpaulo Exp $");
 
 #include "opt_kgdb.h"
 
@@ -60,6 +60,14 @@ int	com_hpcio_debug = 0;
 #else
 #define	DPRINTF(arg...) do {} while (0)
 #endif
+
+/*
+ * XXX: NOTE: With the new com(4) COM_REGMAP support, the custom bus_space
+ * in this file could/should probably be removed and replaced with a custom
+ * map.  Resulting in smaller/cleaner code.  An hpcmips hacker should fix
+ * this, since I don't have h/w to test with -- I'm taking the route of least
+ * risk.	- gdamore
+ */
 
 #define COM_HPCIO_BYTE_ALIGNMENT	0
 #define COM_HPCIO_HALFWORD_ALIGNMENT	1
@@ -294,7 +302,7 @@ com_hpcio_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t ioh;
 	int addr, port, mode, alignment, *loc;
 
-	loc = sc->sc_dev.dv_cfdata->cf_loc;
+	loc = device_cfdata(&sc->sc_dev)->cf_loc;
 	addr = loc[HPCIOIFCF_ADDR];
 	printf(" addr %x", addr);
 	if ((com_hpcio_cniot == haa->haa_iot ||
@@ -318,9 +326,7 @@ com_hpcio_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map bus space\n");
 		return;
 	}
-	sc->sc_iobase = addr;
-	sc->sc_iot = iot;
-	sc->sc_ioh = ioh;
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, addr);
 
 	sc->enable = NULL;
 	sc->disable = NULL;

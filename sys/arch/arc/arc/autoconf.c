@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 2005/12/11 12:16:37 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26.4.1 2006/09/09 02:37:42 rpaulo Exp $	*/
 /*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 
 /*
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26 2005/12/11 12:16:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26.4.1 2006/09/09 02:37:42 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26 2005/12/11 12:16:37 christos Exp $
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
+#include <arc/arc/timervar.h>
+
 struct bootdev_data {
 	const char *dev_type;
 	int	bus;
@@ -112,7 +114,7 @@ struct bootdev_data {
 	int	partition;
 };
 
-int getpno(const char **, int *);
+static int getpno(const char **, int *);
 
 /*
  * The following several variables are related to
@@ -131,12 +133,27 @@ cpu_configure(void)
 
 	softintr_init();
 
+#ifdef ENABLE_INT5_STATCLOCK
+	evcnt_attach_static(&statclock_ev);
+#endif
+
 	(void)splhigh();	/* To be really sure.. */
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
 	/* Configuration is finished, turn on interrupts. */
-	_splnone();	/* enable all source forcing SOFT_INTs cleared */
+#ifdef ENABLE_INT5_STATCLOCK
+	/*
+	 * Enable interrupt sources.
+	 * We can't enable CPU INT5 which is used by statclock(9) here
+	 * until cpu_initclocks(9) is called because there is no way
+	 * to disable it other than setting status register by spl(9).
+	 */
+	_spllower(MIPS_INT_MASK_5);
+#else
+	/* enable all source forcing SOFT_INTs cleared */
+	_splnone();
+#endif
 }
 
 #if defined(NFS_BOOT_BOOTP) || defined(NFS_BOOT_DHCP)
@@ -217,7 +234,7 @@ makebootdev(const char *cp)
 	bootdev_data = &bd;
 }
 
-int
+static int
 getpno(const char **cp, int *np)
 {
 	int val = 0;
@@ -250,9 +267,7 @@ void
 device_register(struct device *dev, void *aux)
 {
 	struct bootdev_data *b = bootdev_data;
-	struct device *parent = dev->dv_parent;
-	struct cfdata *cf = dev->dv_cfdata;
-	const char *name = cf->cf_name;
+	struct device *parent = device_parent(dev);
 
 	static int found = 0, initted = 0, scsiboot = 0;
 	static struct device *scsibusdev = NULL;
@@ -268,8 +283,9 @@ device_register(struct device *dev, void *aux)
 		initted = 1;
 	}
 
-	if (scsiboot && strcmp(name, "scsibus") == 0) {
-		if (dev->dv_unit == b->bus) {
+	if (scsiboot && device_is_a(dev, "scsibus")) {
+		/* XXX device_unit() abuse */
+		if (device_unit(dev) == b->bus) {
 			scsibusdev = dev;
 #if 0
 			printf("\nscsibus = %s\n", dev->dv_xname);
@@ -278,10 +294,10 @@ device_register(struct device *dev, void *aux)
 		return;
 	}
 
-	if (strcmp(b->dev_type, name) != 0)
+	if (!device_is_a(dev, b->dev_type))
 		return;
 
-	if (strcmp(name, "sd") == 0) {
+	if (device_is_a(dev, "sd")) {
 		struct scsipibus_attach_args *sa = aux;
 
 		if (scsiboot && scsibusdev && parent == scsibusdev &&
@@ -294,7 +310,8 @@ device_register(struct device *dev, void *aux)
 		}
 		return;
 	}
-	if (dev->dv_unit == b->unit) {
+	/* XXX device_unit() abuse */
+	if (device_unit(dev) == b->unit) {
 		booted_device = dev;
 #if 0
 		printf("\nbooted_device = %s\n", dev->dv_xname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.76 2005/12/11 12:19:45 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.76.4.1 2006/09/09 02:44:36 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.76 2005/12/11 12:19:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.76.4.1 2006/09/09 02:44:36 rpaulo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.76 2005/12/11 12:19:45 christos Exp $");
 #include <sys/syslog.h>
 #include <sys/user.h>
 #include <sys/userret.h>
+#include <sys/kauth.h>
 
 #include <machine/psl.h>
 #include <machine/trap.h>
@@ -325,6 +326,7 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 		type |= T_USER;
 		sticks = p->p_sticks;
 		l->l_md.md_regs = frame.f_regs;
+		LWP_CACHE_CREDS(l, p);
 	}
 	switch (type) {
 
@@ -450,7 +452,7 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 	/*
 	 * Unimplemented FPU instructions/datatypes.
 	 */
-	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */
+	case T_FPEMULI|T_USER:	/* unimplemented FP instruction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
 #ifdef FPU_EMULATE
 		if (fpu_emulate(&frame, &l->l_addr->u_pcb.pcb_fpregs,
@@ -706,16 +708,16 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 			rv = pmap_mapmulti(map->pmap, va);
 			if (rv != 0) {
 				bva = HPMMBASEADDR(va);
-				rv = uvm_fault(map, bva, 0, ftype);
+				rv = uvm_fault(map, bva, ftype);
 				if (rv == 0)
 					(void) pmap_mapmulti(map->pmap, va);
 			}
 		} else
 #endif
-		rv = uvm_fault(map, va, 0, ftype);
+		rv = uvm_fault(map, va, ftype);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
-			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
+			printf("uvm_fault(%p, 0x%lx, 0x%x) -> 0x%x\n",
 			    map, va, ftype, rv);
 #endif
 		/*
@@ -747,7 +749,7 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 		if (type == T_MMUFLT) {
 			if (l->l_addr->u_pcb.pcb_onfault)
 				goto copyfault;
-			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
+			printf("uvm_fault(%p, 0x%lx, 0x%x) -> 0x%x\n",
 			    map, va, ftype, rv);
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 			       type, code);
@@ -758,8 +760,8 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       l->l_cred ?
+			       kauth_cred_geteuid(l->l_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 		} else {
 			ksi.ksi_signo = SIGSEGV;
@@ -852,7 +854,7 @@ writeback(struct frame *fp, int docachepush)
 			pmap_update(pmap_kernel());
 		} else
 			printf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",
-			       p->p_pid, p->p_comm, p->p_ucred->cr_uid);
+			       p->p_pid, p->p_comm, kauth_cred_geteuid(l->l_cred));
 	} else if ((f->f_ssw & (SSW4_RW|SSW4_TTMASK)) == SSW4_TTM16) {
 		/*
 		 * MOVE16 fault.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.121 2005/12/31 17:55:55 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.121.2.1 2006/09/09 02:40:14 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,6 +39,7 @@
 
 #ifdef _KERNEL
 #if defined(_KERNEL_OPT)
+#include "opt_enhanced_speedstep.h"
 #include "opt_multiprocessor.h"
 #include "opt_math_emulate.h"
 #include "opt_user_ldt.h"
@@ -192,7 +193,7 @@ extern struct cpu_info *cpu_info_list;
 
 static struct cpu_info *curcpu(void);
 
-inline static struct cpu_info * __attribute__((__unused__))
+__inline static struct cpu_info * __attribute__((__unused__))
 curcpu()
 {
 	struct cpu_info *ci;
@@ -296,11 +297,9 @@ struct clockframe {
  */
 extern void (*delay_func)(int);
 struct timeval;
-extern void (*microtime_func)(struct timeval *);
 
 #define	DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
-#define microtime(tv)		(*microtime_func)(tv)
 
 /*
  * pull in #defines for kinds of processors
@@ -353,6 +352,9 @@ void	i386_init_pcb_tss_ldt(struct cpu_info *);
 void	i386_proc0_tss_ldt_init(void);
 
 /* identcpu.c */
+#ifdef ENHANCED_SPEEDSTEP
+extern int bus_clock;
+#endif
 extern int tmx86_has_longrun;
 extern u_int crusoe_longrun;
 extern u_int crusoe_frequency;
@@ -376,7 +378,7 @@ void	savectx(struct pcb *);
 void	proc_trampoline(void);
 
 /* clock.c */
-void	initrtclock(void);
+void	initrtclock(u_long);
 void	startrtclock(void);
 void	i8254_delay(int);
 void	i8254_microtime(struct timeval *);
@@ -423,10 +425,7 @@ void x86_bus_space_mallocok(void);
 #include <machine/psl.h>	/* Must be after struct cpu_info declaration */
 
 /* est.c */
-void	est_init(struct cpu_info *);
-
-/* pnow_k7.c */
-void	pnowk7_init(struct cpu_info *);
+void	est_init(struct cpu_info *, int);
 
 #endif /* _KERNEL */
 

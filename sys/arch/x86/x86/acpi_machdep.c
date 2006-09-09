@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.8 2005/12/11 12:19:47 christos Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.8.4.1 2006/09/09 02:44:49 rpaulo Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.8 2005/12/11 12:19:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.8.4.1 2006/09/09 02:44:49 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.8 2005/12/11 12:19:47 christos Ex
 
 #include "ioapic.h"
 
-#include "opt_mpacpi.h"
+#include "acpi.h"
 #include "opt_mpbios.h"
+#include "opt_acpi.h"
 
 static int acpi_intrcold = 1;
 
@@ -82,7 +83,7 @@ struct acpi_intr_defer {
 	LIST_ENTRY(acpi_intr_defer) list;
 };
 
-LIST_HEAD(, acpi_intr_defer) acpi_intr_deferq =
+static LIST_HEAD(, acpi_intr_defer) acpi_intr_deferq =
     LIST_HEAD_INITIALIZER(acpi_intr_deferq);
 
 ACPI_STATUS
@@ -117,12 +118,12 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 	int irq, pin, trigger;
 	struct acpi_intr_defer *aip;
 #if NIOAPIC > 0
-#ifdef MPACPI
+#if NACPI > 0
 	int i, h;
 #endif
 	struct ioapic_softc *sc;
 #endif
-#if defined(MPACPI) || NIOAPIC > 0
+#if NACPI > 0 || NIOAPIC > 0
 	struct mp_intr_map *mip = NULL;
 #endif
 
@@ -141,10 +142,10 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 
 	trigger = IST_LEVEL;
 
-#if defined(MPACPI) && NIOAPIC > 0
+#if NACPI > 0 && NIOAPIC > 0
 	/*
 	 * Can only match on ACPI global interrupt numbers if the ACPI
-	 * interrupt info was extracted, which is in the MPACPI case.
+	 * interrupt info was extracted, which is in the ACPI case.
 	 */
 	if (mp_busses == NULL)
 		goto nomap;
@@ -197,17 +198,18 @@ nomap:
 		irq = pin = (int)InterruptNumber;
 	}
 
-#if defined(MPACPI) && NIOAPIC > 0
+#if NACPI > 0 && NIOAPIC > 0
 found:
 #endif
 
-#if defined(MPACPI) || NIOAPIC > 0
+#if NACPI > 0 || NIOAPIC > 0
 	/*
 	 * If there was no ACPI interrupt source override,
-	 * mark the SCI interrupt as active low in the
-	 * table.
+	 * mark the SCI interrupt as level-triggered, active low
+	 * in the table.
 	 */
 	if (mip != NULL && ((mip->sflags & MPI_OVR) == 0)) {
+		trigger = IST_LEVEL;
 		mip->flags &= ~3;
 		mip->flags |= MPS_INTPO_ACTLO;
 		mip->redir |= IOAPIC_REDLO_ACTLO;
@@ -334,7 +336,7 @@ acpi_md_callback(struct device *acpi)
 {
 	struct acpi_intr_defer *aip;
 
-#ifdef MPACPI
+#if NACPI > 0
 #ifdef MPBIOS
 	if (!mpbios_scanned)
 #endif

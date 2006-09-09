@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_mbmem.c,v 1.10 2005/12/11 12:19:16 christos Exp $	*/
+/*	$NetBSD: sc_mbmem.c,v 1.10.4.1 2006/09/09 02:43:59 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  ****************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc_mbmem.c,v 1.10 2005/12/11 12:19:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc_mbmem.c,v 1.10.4.1 2006/09/09 02:43:59 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ static void
 sunsc_mbmem_attach(struct device *parent, struct device *self, void *args)
 {
 	struct sunscpal_softc *sc = (void *) self;
-	struct cfdata *cf = self->dv_cfdata;
+	struct cfdata *cf = device_cfdata(self);
 	struct mbmem_attach_args *mbma = args;
 	int i;
 

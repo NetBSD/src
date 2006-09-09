@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.17 2005/12/11 12:19:08 christos Exp $ */
+/*	$NetBSD: promdev.c,v 1.17.4.1 2006/09/09 02:43:35 rpaulo Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -48,32 +48,38 @@
 #include <lib/libkern/libkern.h>
 #include <sparc/stand/common/promdev.h>
 
+#ifndef BOOTXX
+#include <sys/disklabel.h>
+#include <dev/sun/disklabel.h>
+#include <dev/raidframe/raidframevar.h>
+#endif
+
 /* OBP V0-3 PROM vector */
 #define obpvec	((struct promvec *)romp)
 
-int	obp_close __P((struct open_file *));
-int	obp_strategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int	obp_v0_strategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-ssize_t	obp_v0_xmit __P((struct promdata *, void *, size_t));
-ssize_t	obp_v0_recv __P((struct promdata *, void *, size_t));
-int	obp_v2_strategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-ssize_t	obp_v2_xmit __P((struct promdata *, void *, size_t));
-ssize_t	obp_v2_recv __P((struct promdata *, void *, size_t));
-int	oldmon_close __P((struct open_file *));
-int	oldmon_strategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-void	oldmon_iclose __P((struct saioreq *));
-int	oldmon_iopen __P((struct promdata *));
-ssize_t	oldmon_xmit __P((struct promdata *, void *, size_t));
-ssize_t	oldmon_recv __P((struct promdata *, void *, size_t));
+int	obp_close(struct open_file *);
+int	obp_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	obp_v0_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+ssize_t	obp_v0_xmit(struct promdata *, void *, size_t);
+ssize_t	obp_v0_recv(struct promdata *, void *, size_t);
+int	obp_v2_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+ssize_t	obp_v2_xmit(struct promdata *, void *, size_t);
+ssize_t	obp_v2_recv(struct promdata *, void *, size_t);
+int	oldmon_close(struct open_file *);
+int	oldmon_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+void	oldmon_iclose(struct saioreq *);
+int	oldmon_iopen(struct promdata *);
+ssize_t	oldmon_xmit(struct promdata *, void *, size_t);
+ssize_t	oldmon_recv(struct promdata *, void *, size_t);
 
-static char	*oldmon_mapin __P((u_long, int, int));
+static char	*oldmon_mapin(u_long, int, int);
 #ifndef BOOTXX
-static char	*mygetpropstring __P((int, char *));
-static int	getdevtype __P((int, char *));
+static char	*mygetpropstring(int, char *);
+static int	getdevtype(int, char *);
 #endif
 
-extern struct filesystem file_system_nfs[];
-extern struct filesystem file_system_ufs[];
+extern struct fs_ops file_system_nfs[];
+extern struct fs_ops file_system_ufs[];
 
 #define null_devopen	(void *)sparc_noop
 #define null_devioctl	(void *)sparc_noop
@@ -94,10 +100,13 @@ struct devsw obp_v2_devsw =
 char	prom_bootdevice[MAX_PROM_PATH];
 static int	saveecho;
 
+#ifndef BOOTXX
+static daddr_t doffset = 0;
+#endif
+
 
 void
-putchar(c)
-	int c;
+putchar(int c)
 {
  
 	if (c == '\n')
@@ -106,19 +115,26 @@ putchar(c)
 }
 
 void
-_rtt()
+_rtt(void)
 {
+
 	prom_halt();
 }
 
 int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;
+devopen(struct open_file *f, const char *fname, char **file)
 {
 	int	error = 0, fd = 0;
 	struct	promdata *pd;
+#ifndef BOOTXX
+	char *partition;
+	int part = 0;
+	char rawpart[MAX_PROM_PATH];
+	struct promdata *disk_pd;
+	char buf[DEV_BSIZE];
+	struct disklabel *dlp;
+	size_t read;
+#endif
 
 	pd = (struct promdata *)alloc(sizeof *pd);
 	f->f_devdata = (void *)pd;
@@ -188,26 +204,94 @@ devopen(f, fname, file)
 				prom_bootdevice);
 			return (error);
 		}
-	} else
+	} else {
 		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
+
+#ifdef NOTDEF_DEBUG
+	printf("devopen: Checking disklabel for RAID partition\n");
+#endif
+
+		/*
+		 * We need to read from the raw partition (i.e. the
+		 * beginning of the disk in order to check the NetBSD
+		 * disklabel to see if the boot partition is type RAID.
+		 *
+		 * For machines with prom_version() == PROM_OLDMON, we
+		 * only handle boot from RAID for the first disk partition.
+		 */
+		disk_pd = (struct promdata *)alloc(sizeof *disk_pd);
+		memcpy(disk_pd, pd, sizeof(struct promdata));
+		if (prom_version() != PROM_OLDMON) {
+			strcpy(rawpart, prom_bootdevice);
+			if ((partition = strchr(rawpart, ':')) != '\0' &&
+		    	    *++partition >= 'a' &&
+			    *partition <= 'a' +  MAXPARTITIONS) {
+				part = *partition - 'a';
+				*partition = RAW_PART + 'a';
+			} else
+				strcat(rawpart, ":c");
+			if ((disk_pd->fd = prom_open(rawpart)) == 0)
+				return 0;
+		}
+		error = f->f_dev->dv_strategy(disk_pd, F_READ, LABELSECTOR,
+		    DEV_BSIZE, &buf, &read);
+		if (prom_version() != PROM_OLDMON)
+			prom_close(disk_pd->fd);
+		if (error || (read != DEV_BSIZE))
+			return 0;
+#ifdef NOTDEF_DEBUG
+		{
+			int x = 0;
+			char *p = (char *) buf;
+
+			printf("  Sector %d:\n", LABELSECTOR);
+			printf("00000000  ");
+			while (x < DEV_BSIZE) {
+				if (*p >= 0x00 && *p < 0x10)
+					printf("0%x ", *p & 0xff);
+				else
+					printf("%x ", *p & 0xff);
+				x++;
+				if (x && !(x % 8))
+					printf(" ");
+				if (x && !(x % 16)) {
+					if(x < 0x100)
+						printf("\n000000%x  ", x);
+					else
+						printf("\n00000%x  ", x);
+				}
+				p++;
+			}
+			printf("\n");
+		}
+#endif
+		/* Check for NetBSD disk label. */
+		dlp = (struct disklabel *) (buf + LABELOFFSET);
+		if (dlp->d_magic == DISKMAGIC && !dkcksum(dlp) &&
+		    dlp->d_partitions[part].p_fstype == FS_RAID) {
+#ifdef NOTDEF_DEBUG
+			printf("devopen: found RAID partition, "
+			    "adjusting offset to %d\n", RF_PROTECTED_SECTORS);
+#endif
+			doffset = RF_PROTECTED_SECTORS;
+		}
+	}
 #endif /* BOOTXX */
 	return (0);
 }
 
 
 int
-obp_v0_strategy(devdata, flag, dblk, size, buf, rsize)
-	void	*devdata;
-	int	flag;
-	daddr_t	dblk;
-	size_t	size;
-	void	*buf;
-	size_t	*rsize;
+obp_v0_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
+		void *buf, size_t *rsize)
 {
 	int	n, error = 0;
 	struct	promdata *pd = (struct promdata *)devdata;
 	int	fd = pd->fd;
 
+#ifndef BOOTXX
+	dblk += doffset;
+#endif
 #ifdef DEBUG_PROM
 	printf("promstrategy: size=%d dblk=%d\n", size, dblk);
 #endif
@@ -237,18 +321,16 @@ obp_v0_strategy(devdata, flag, dblk, size, buf, rsize)
 }
 
 int
-obp_v2_strategy(devdata, flag, dblk, size, buf, rsize)
-	void	*devdata;
-	int	flag;
-	daddr_t	dblk;
-	size_t	size;
-	void	*buf;
-	size_t	*rsize;
+obp_v2_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
+		void *buf, size_t *rsize)
 {
 	int	error = 0;
 	struct	promdata *pd = (struct promdata *)devdata;
 	int	fd = pd->fd;
 
+#ifndef BOOTXX
+	dblk += doffset;
+#endif
 #ifdef DEBUG_PROM
 	printf("promstrategy: size=%d dblk=%d\n", size, dblk);
 #endif
@@ -272,13 +354,8 @@ obp_v2_strategy(devdata, flag, dblk, size, buf, rsize)
  * On old-monitor machines, things work differently.
  */
 int
-oldmon_strategy(devdata, flag, dblk, size, buf, rsize)
-	void	*devdata;
-	int	flag;
-	daddr_t	dblk;
-	size_t	size;
-	void	*buf;
-	size_t	*rsize;
+oldmon_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
+		void *buf, size_t *rsize)
 {
 	struct promdata	*pd = devdata;
 	struct saioreq	*si;
@@ -290,6 +367,9 @@ oldmon_strategy(devdata, flag, dblk, size, buf, rsize)
 	si = pd->si;
 	ops = si->si_boottab;
 
+#ifndef BOOTXX
+	dblk += doffset;
+#endif
 #ifdef DEBUG_PROM
 	printf("prom_strategy: size=%d dblk=%d\n", size, dblk);
 #endif
@@ -316,8 +396,7 @@ oldmon_strategy(devdata, flag, dblk, size, buf, rsize)
 }
 
 int
-obp_close(f)
-	struct open_file *f;
+obp_close(struct open_file *f)
 {
 	struct promdata *pd = f->f_devdata;
 	register int fd = pd->fd;
@@ -331,8 +410,7 @@ obp_close(f)
 }
 
 int
-oldmon_close(f)
-	struct open_file *f;
+oldmon_close(struct open_file *f)
 {
 	struct promdata *pd = f->f_devdata;
 
@@ -348,40 +426,28 @@ oldmon_close(f)
 
 #ifndef BOOTXX
 ssize_t
-obp_v0_xmit(pd, buf, len)
-	struct	promdata *pd;
-	void	*buf;
-	size_t	len;
+obp_v0_xmit(struct promdata *pd, void *buf, size_t len)
 {
 
 	return ((*obpvec->pv_v0devops.v0_wnet)(pd->fd, len, buf));
 }
 
 ssize_t
-obp_v2_xmit(pd, buf, len)
-	struct	promdata *pd;
-	void	*buf;
-	size_t	len;
+obp_v2_xmit(struct promdata *pd, void *buf, size_t len)
 {
 
 	return (prom_write(pd->fd, buf, len));
 }
 
 ssize_t
-obp_v0_recv(pd, buf, len)
-	struct	promdata *pd;
-	void	*buf;
-	size_t	len;
+obp_v0_recv(struct promdata *pd, void *buf, size_t len)
 {
 
 	return ((*obpvec->pv_v0devops.v0_rnet)(pd->fd, len, buf));
 }
 
 ssize_t
-obp_v2_recv(pd, buf, len)
-	struct	promdata *pd;
-	void	*buf;
-	size_t	len;
+obp_v2_recv(struct promdata *pd, void *buf, size_t len)
 {
 	int	n;
 
@@ -392,10 +458,7 @@ obp_v2_recv(pd, buf, len)
 }
 
 ssize_t
-oldmon_xmit(pd, buf, len)
-	struct	promdata *pd;
-	void	*buf;
-	size_t	len;
+oldmon_xmit(struct promdata *pd, void *buf, size_t len)
 {
 	struct saioreq	*si;
 	struct saif	*sif;
@@ -416,10 +479,7 @@ oldmon_xmit(pd, buf, len)
 }
 
 ssize_t
-oldmon_recv(pd, buf, len)
-	struct	promdata *pd;
-	void	*buf;
-	size_t	len;
+oldmon_recv(struct promdata *pd, void *buf, size_t len)
 {
 	struct saioreq	*si;
 	struct saif	*sif;
@@ -436,14 +496,16 @@ oldmon_recv(pd, buf, len)
 }
 
 int
-getchar()
+getchar(void)
 {
+
 	return (prom_getchar());
 }
 
 time_t
-getsecs()
+getsecs(void)
 {
+
 	(void)prom_peekchar();
 	return (prom_ticks() / 1000);
 }
@@ -466,9 +528,7 @@ static struct dtab {
 };
 
 int
-getdevtype(fd, name)
-	int	fd;
-	char	*name;
+getdevtype(int fd, char *name)
 {
 	struct dtab *dp;
 	int node;
@@ -506,9 +566,7 @@ getdevtype(fd, name)
  * subsequent calls.
  */
 char *
-mygetpropstring(node, name)
-	int node;
-	char *name;
+mygetpropstring(int node, char *name)
 {
 	int len;
 static	char buf[64];
@@ -532,8 +590,7 @@ struct saioreq prom_si;
 static int promdev_inuse;
 
 int
-oldmon_iopen(pd)
-	struct promdata	*pd;
+oldmon_iopen(struct promdata *pd)
 {
 	struct om_bootparam *bp;
 	struct om_boottable *ops;
@@ -611,8 +668,7 @@ oldmon_iopen(pd)
 }
 
 void
-oldmon_iclose(si)
-	struct saioreq *si;
+oldmon_iclose(struct saioreq *si)
 {
 	struct om_boottable *ops;
 	struct devinfo *dip;
@@ -657,9 +713,7 @@ static int oldmon_mapinfo_cnt =
 static u_long prom_devmap = MONSHORTSEG;
 
 static char *
-oldmon_mapin(physaddr, length, maptype)
-	u_long physaddr;
-	int length, maptype;
+oldmon_mapin(u_long physaddr, int length, int maptype)
 {
 	int i, pa, pte, va;
 

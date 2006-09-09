@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.6 2005/12/24 23:24:06 perry Exp $ */
+/*	$NetBSD: promlib.c,v 1.6.4.1 2006/09/09 02:43:35 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -63,10 +63,10 @@
 
 #define obpvec ((struct promvec *)romp)
 
-static void	obp_v2_putchar __P((int));
-static int	obp_v2_seek __P((int, u_quad_t));
-static const char	*obp_v0_getbootpath __P((void));
-static const char	*obp_v2_getbootpath __P((void));
+static void	obp_v2_putchar(int);
+static int	obp_v2_seek(int, u_quad_t);
+static const char	*obp_v0_getbootpath(void);
+static const char	*obp_v2_getbootpath(void);
 
 /*
  * PROM entry points.
@@ -77,7 +77,7 @@ struct promops promops;
  * Determine whether a node has the given property.
  */
 void
-prom_halt()
+prom_halt(void)
 {
 
 	_prom_halt();
@@ -85,8 +85,7 @@ prom_halt()
 
 
 void
-obp_v2_putchar(c)
-	int c;
+obp_v2_putchar(int c)
 {
 	char c0;
 
@@ -95,14 +94,12 @@ obp_v2_putchar(c)
 }
 
 int
-obp_v2_seek(handle, offset)
-	int handle;
-	u_quad_t offset;
+obp_v2_seek(int handle, u_quad_t offset)
 {
-	u_int32_t hi, lo;
+	uint32_t hi, lo;
 
-	lo = offset & ((u_int32_t)-1);
-	hi = (offset >> 32) & ((u_int32_t)-1);
+	lo = offset & ((uint32_t)-1);
+	hi = (offset >> 32) & ((uint32_t)-1);
 	(*obpvec->pv_v2devops.v2_seek)(handle, hi, lo);
 	return (0);
 }
@@ -115,25 +112,25 @@ obp_v2_seek(handle, offset)
  * "netbsd -s" or whatever.
  */
 const char *
-obp_v0_getbootpath()
+obp_v0_getbootpath(void)
 {
 	struct v0bootargs *ba = promops.po_bootcookie;
 	return (ba->ba_argv[0]);
 }
 
 const char *
-obp_v2_getbootpath()
+obp_v2_getbootpath(void)
 {
 	struct v2bootargs *ba = promops.po_bootcookie;
 	return (*ba->v2_bootpath);
 }
 
 
-static void prom_init_oldmon __P((void));
-static void prom_init_obp __P((void));
+static void prom_init_oldmon(void);
+static void prom_init_obp(void);
 
 static inline void
-prom_init_oldmon()
+prom_init_oldmon(void)
 {
 	struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
 
@@ -148,7 +145,7 @@ prom_init_oldmon()
 }
 
 static inline void
-prom_init_obp()
+prom_init_obp(void)
 {
 	/*
 	 * OBP v0, v2 & v3
@@ -202,7 +199,7 @@ prom_init_obp()
  * Initialize our PROM operations vector.
  */
 void
-prom_init()
+prom_init(void)
 {
 
 	if (CPU_ISSUN4) {
