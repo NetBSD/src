@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.5 2006/09/09 05:55:51 matt Exp $ */
+/* $NetBSD: rb.h,v 1.6 2006/09/09 06:52:18 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -89,12 +89,12 @@ struct rb_node {
 #define	RB_MARK_RED(rb)			((void)((rb)->rb_color = 1))
 #define	RB_MARK_BLACK(rb)		((void)((rb)->rb_color = 0))
 #define	RB_MARK_ROOT(rb)		((void)((rb)->rb_root = 1))
-#if !defined(NDEBUG) || defined(DEBUG)
+#ifdef RBDEBUG
 	TAILQ_ENTRY(rb_node) rb_link;
 #endif
 };
 
-#if !defined(NDEBUG) || defined(DEBUG)
+#ifdef RBDEBUG
 TAILQ_HEAD(rb_node_qh, rb_node);
 
 #define	RB_TAILQ_REMOVE(a, b, c)		TAILQ_REMOVE(a, b, c)
@@ -108,22 +108,29 @@ TAILQ_HEAD(rb_node_qh, rb_node);
 #define	RB_TAILQ_INSERT_HEAD(a, b, c)		do { } while (0)
 #define	RB_TAILQ_INSERT_BEFORE(a, b, c)		do { } while (0)
 #define	RB_TAILQ_INSERT_AFTER(a, b, c, d)	do { } while (0)
-#endif
+#endif /* RBDEBUG */
 
-typedef int (*rb_compare_nodes_fn)(const struct rb_node *,
+typedef signed int (*const rb_compare_nodes_fn)(const struct rb_node *,
     const struct rb_node *);
-typedef int (*rb_compare_key_fn)(const struct rb_node *, const void *);
+typedef signed int (*const rb_compare_key_fn)(const struct rb_node *,
+    const void *);
+
+struct rb_tree_ops {
+	rb_compare_nodes_fn rb_compare_nodes;
+	rb_compare_key_fn rb_compare_key;
+};
 
 struct rb_tree {
 	struct rb_node *rbt_root;
-#if !defined(NDEBUG) || defined(DEBUG)
+	const struct rb_tree_ops *rbt_ops;
+#ifndef RBSMALL
+	struct rb_node *rbt_minmax[2];
+#endif
+#ifdef RBDEBUG
 	struct rb_node_qh rbt_nodes;
 #endif
-	rb_compare_nodes_fn rbt_compare_nodes;
-	rb_compare_key_fn rbt_compare_key;
-	struct rb_node *rbt_minmax[2];
-	unsigned int rbt_count;
 #ifdef RBSTATS
+	unsigned int rbt_count;
 	unsigned int rbt_insertions;
 	unsigned int rbt_removals;
 	unsigned int rbt_insertion_rebalance_calls;
@@ -135,11 +142,13 @@ struct rb_tree {
 
 #ifdef RBSTATS
 #define	RBSTAT_INC(v)	((void)((v)++))
+#define	RBSTAT_DEC(v)	((void)((v)--))
 #else
 #define	RBSTAT_INC(v)	do { } while (0)
+#define	RBSTAT_DEC(v)	do { } while (0)
 #endif
 
-void	rb_tree_init(struct rb_tree *, rb_compare_nodes_fn, rb_compare_key_fn);
+void	rb_tree_init(struct rb_tree *, const struct rb_tree_ops *);
 void	rb_tree_insert_node(struct rb_tree *, struct rb_node *);
 struct rb_node	*
 	rb_tree_find_node(struct rb_tree *, const void *);
@@ -150,7 +159,7 @@ struct rb_node	*
 void	rb_tree_remove_node(struct rb_tree *, struct rb_node *);
 struct rb_node *
 	rb_tree_iterate(struct rb_tree *, struct rb_node *, unsigned int);
-#if !defined(NDEBUG) || defined(DIAGNOSTIC)
+#ifdef RBDEBUG
 void	rb_tree_check(const struct rb_tree *, bool);
 #endif
 #ifdef RBSTATS
