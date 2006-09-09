@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.9 2005/12/11 12:23:22 christos Exp $ */
+/* $NetBSD: pms.c,v 1.9.4.1 2006/09/09 02:53:54 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -28,7 +28,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.9 2005/12/11 12:23:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.9.4.1 2006/09/09 02:53:54 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ pmsprobe(struct device *parent, struct cfdata *match, void *aux)
 void
 pmsattach(struct device *parent, struct device *self, void *aux)
 {
-	struct pms_softc *sc = (void *)self;
+	struct pms_softc *sc = device_private(self);
 	struct pckbport_attach_args *pa = aux;
 	struct wsmousedev_attach_args a;
 	u_char cmd[2], resp[2];
@@ -493,16 +493,13 @@ pmsinput(void *vsc, int data)
 	u_int changed;
 	int dx, dy, dz = 0;
 	int newbuttons = 0;
-	int s;
 
 	if (!sc->sc_enabled) {
 		/* Interrupts are not expected.	 Discard the byte. */
 		return;
 	}
 
-	s = splclock();
-	sc->current = mono_time;
-	splx(s);
+	getmicrouptime(&sc->current);
 
 	if (sc->inputstate > 0) {
 		struct timeval diff;

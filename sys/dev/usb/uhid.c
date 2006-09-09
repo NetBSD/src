@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.68 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: uhid.c,v 1.68.4.1 2006/09/09 02:55:33 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.68 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.68.4.1 2006/09/09 02:55:33 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ dev_type_kqfilter(uhidkqfilter);
 
 const struct cdevsw uhid_cdevsw = {
 	uhidopen, uhidclose, uhidread, uhidwrite, uhidioctl,
-	nostop, notty, uhidpoll, nommap, uhidkqfilter,
+	nostop, notty, uhidpoll, nommap, uhidkqfilter, D_OTHER,
 };
 
 Static void uhid_intr(struct uhidev *, void *, u_int len);
@@ -211,7 +211,7 @@ uhid_detach(struct device *self, int flags)
 #endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 #if 0
@@ -456,7 +456,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 		if (sc->sc_async == NULL)
 			return (EINVAL);
 		if (-*(int *)addr != sc->sc_async->p_pgid
-		    && *(int *)addr != sc->sc_async->p_pid);
+		    && *(int *)addr != sc->sc_async->p_pid)
 			return (EPERM);
 		break;
 

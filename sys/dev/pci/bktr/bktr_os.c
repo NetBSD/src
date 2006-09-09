@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.39 2005/12/11 12:23:22 christos Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.39.4.1 2006/09/09 02:53:54 rpaulo Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.39 2005/12/11 12:23:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.39.4.1 2006/09/09 02:53:54 rpaulo Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -181,7 +181,7 @@ dev_type_mmap(bktr_mmap);
 
 const struct cdevsw bktr_cdevsw = {
 	bktr_open, bktr_close, bktr_read, bktr_write, bktr_ioctl,
-	nostop, notty, nopoll, bktr_mmap, nokqfilter,
+	nostop, notty, nopoll, bktr_mmap, nokqfilter, D_OTHER
 };
 #endif /* __NetBSD __ */
 
@@ -451,7 +451,8 @@ bktr_attach(device_t dev)
         rev = pci_get_revid(dev);
 
 	/* call the common attach code */
-	common_bktr_attach(bktr, unit, fun, rev);
+	if (common_bktr_attach(bktr, unit, fun, rev) == 0)
+		return;
 
 	/* make the device entries */
 	bktr->bktrdev = make_dev(&bktr_cdevsw, unit,
@@ -1455,7 +1456,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 	int unit;
 
 	bktr = (bktr_ptr_t)self;
-	unit = bktr->bktr_dev.dv_unit;
+	unit = device_unit(&bktr->bktr_dev);
         bktr->dmat = pa->pa_dmat;
 
 	printf("\n");
@@ -1533,7 +1534,9 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 			       PCI_LATENCY_TIMER, latency<<8);
 	}
 
-	common_bktr_attach(bktr, unit, pa->pa_id, PCI_REVISION(pa->pa_class));
+	if (common_bktr_attach(bktr, unit, pa->pa_id,
+	    PCI_REVISION(pa->pa_class)) == 0)
+		return;
 
 #if NRADIO > 0
 	/* attach to radio(4) */
@@ -1781,9 +1784,6 @@ bktr_mmap(dev_t dev, off_t offset, int nprot)
 		return(-1);
 
 	bktr = bktr_cd.cd_devs[unit];
-
-	if ((vaddr_t)offset < 0)
-		return(-1);
 
 	if ((vaddr_t)offset >= bktr->alloc_pages * PAGE_SIZE)
 		return(-1);

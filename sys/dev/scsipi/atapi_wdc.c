@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.97 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.97.4.1 2006/09/09 02:54:25 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.97 2005/12/11 12:23:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.97.4.1 2006/09/09 02:54:25 rpaulo Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.97 2005/12/11 12:23:50 christos Exp 
 #define	bus_space_read_multi_stream_4	bus_space_read_multi_4
 #endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
+#include <dev/ata/ataconf.h>
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
@@ -229,7 +230,7 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 	}
 	chp->ch_drive[drive].state = 0;
 
-	bus_space_read_1(wdr->cmd_iot, wdr->cmd_iohs[wd_status], 0);
+	(void)bus_space_read_1(wdr->cmd_iot, wdr->cmd_iohs[wd_status], 0);
 
 	/* Some ATAPI devices need a bit more time after software reset. */
 	delay(5000);
@@ -300,9 +301,11 @@ wdc_atapi_probe_device(struct atapibus_softc *sc, int target)
 		sa.sa_inqbuf.type =  ATAPI_CFG_TYPE(id->atap_config);
 		sa.sa_inqbuf.removable = id->atap_config & ATAPI_CFG_REMOV ?
 		    T_REMOV : T_FIXED;
-		scsipi_strvis(model, 40, id->atap_model, 40);
-		scsipi_strvis(serial_number, 20, id->atap_serial, 20);
-		scsipi_strvis(firmware_revision, 8, id->atap_revision, 8);
+		scsipi_strvis((u_char *)model, 40, id->atap_model, 40);
+		scsipi_strvis((u_char *)serial_number, 20, id->atap_serial,
+		    20);
+		scsipi_strvis((u_char *)firmware_revision, 8,
+		    id->atap_revision, 8);
 		sa.sa_inqbuf.vendor = model;
 		sa.sa_inqbuf.product = serial_number;
 		sa.sa_inqbuf.revision = firmware_revision;
@@ -352,7 +355,7 @@ wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 		ATADEBUG_PRINT(("wdc_atapi_scsipi_request %s:%d:%d\n",
 		    atac->atac_dev.dv_xname, channel, drive), DEBUG_XFERS);
-		if ((atac->atac_dev.dv_flags & DVF_ACTIVE) == 0) {
+		if (!device_is_active(&atac->atac_dev)) {
 			sc_xfer->error = XS_DRIVER_STUFFUP;
 			scsipi_done(sc_xfer);
 			return;
@@ -370,6 +373,11 @@ wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		if ((atac->atac_channels[channel]->ch_drive[drive].drive_flags &
 		    (DRIVE_DMA | DRIVE_UDMA)) && sc_xfer->datalen > 0)
 			xfer->c_flags |= C_DMA;
+#if NATA_PIOBM
+		else if ((atac->atac_cap & ATAC_CAP_PIOBM) &&
+		    sc_xfer->datalen > 0)
+			xfer->c_flags |= C_PIOBM;
+#endif
 		xfer->c_drive = drive;
 		xfer->c_flags |= C_ATAPI;
 		if (sc_xfer->cmd->opcode == GPCMD_REPORT_KEY ||
@@ -556,6 +564,39 @@ ready:
 	    0, 0, 0,
 	    (xfer->c_flags & C_DMA) ? ATAPI_PKT_CMD_FTRE_DMA : 0);
 
+#if NATA_PIOBM
+	if (xfer->c_flags & C_PIOBM) {
+		int error;
+		int dma_flags = (sc_xfer->xs_control & XS_CTL_DATA_IN)
+		    ?  WDC_DMA_READ : 0;
+		if (xfer->c_flags & C_POLL) {
+			/* XXX not supported yet --- fall back to PIO */
+			xfer->c_flags &= ~C_PIOBM;
+		} else {
+			/* Init the DMA channel. */
+			error = (*wdc->dma_init)(wdc->dma_arg,
+			    chp->ch_channel, xfer->c_drive,
+			    (char *)xfer->c_databuf,
+			    xfer->c_bcount,
+			    dma_flags | WDC_DMA_PIOBM_ATAPI);
+			if (error) {
+				if (error == EINVAL) {
+					/*
+					 * We can't do DMA on this transfer
+					 * for some reason.  Fall back to
+					 * PIO.
+					 */
+					xfer->c_flags &= ~C_PIOBM;
+					error = 0;
+				} else {
+					sc_xfer->error = XS_DRIVER_STUFFUP;
+					errstring = "piobm";
+					goto error;
+				}
+			}
+		}
+	}
+#endif
 	/*
 	 * If there is no interrupt for CMD input, busy-wait for it (done in
 	 * the interrupt routine. If it is a polled command, call the interrupt
@@ -637,6 +678,23 @@ wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		return 1;
 	}
 
+#if NATA_PIOBM
+	/* Transfer-done interrupt for busmastering PIO operation */
+	if ((xfer->c_flags & C_PIOBM) && (chp->ch_flags & ATACH_PIOBM_WAIT)) {
+		chp->ch_flags &= ~ATACH_PIOBM_WAIT;
+
+		/* restore transfer length */
+		len = xfer->c_bcount;
+		if (xfer->c_lenoff < 0)
+			len += xfer->c_lenoff;
+
+		if (sc_xfer->xs_control & XS_CTL_DATA_IN)
+			goto end_piobm_datain;
+		else
+			goto end_piobm_dataout;
+	}
+#endif
+
 	/* Ack interrupt done in wdc_wait_for_unbusy */
 	if (wdc->select)
 		wdc->select(chp, xfer->c_drive);
@@ -675,7 +733,7 @@ wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	 * previously recorded, else continue normal processing
 	 */
 
-	if (xfer->c_flags & C_DMA)
+	if (xfer->c_flags & (C_DMA | C_PIOBM))
 		dma_flags = (sc_xfer->xs_control & XS_CTL_DATA_IN)
 		    ?  WDC_DMA_READ : 0;
 again:
@@ -742,23 +800,36 @@ again:
 			wdc_atapi_reset(chp, xfer);
 			return 1;
 		}
+		xfer->c_lenoff = len - xfer->c_bcount;
 		if (xfer->c_bcount < len) {
 			printf("wdc_atapi_intr: warning: write only "
 			    "%d of %d requested bytes\n", xfer->c_bcount, len);
-			wdc->dataout_pio(chp, drvp->drive_flags,
-		    	    (char *)xfer->c_databuf + xfer->c_skip,
-			    xfer->c_bcount);
-			for (i = xfer->c_bcount; i < len; i += 2)
-				bus_space_write_2(wdr->cmd_iot,
-				    wdr->cmd_iohs[wd_data], 0, 0);
-			xfer->c_skip += xfer->c_bcount;
-			xfer->c_bcount = 0;
-		} else {
-			wdc->dataout_pio(chp, drvp->drive_flags,
-		    	    (char *)xfer->c_databuf + xfer->c_skip, len);
-			xfer->c_skip += len;
-			xfer->c_bcount -= len;
+			len = xfer->c_bcount;
 		}
+
+#if NATA_PIOBM
+		if (xfer->c_flags & C_PIOBM) {
+			/* start the busmastering PIO */
+			(*wdc->piobm_start)(wdc->dma_arg,
+			    chp->ch_channel, xfer->c_drive,
+			    xfer->c_skip, len, WDC_PIOBM_XFER_IRQ);
+			chp->ch_flags |= ATACH_DMA_WAIT | ATACH_IRQ_WAIT |
+			    ATACH_PIOBM_WAIT;
+			return 1;
+		}
+#endif
+		wdc->dataout_pio(chp, drvp->drive_flags,
+	    	    (char *)xfer->c_databuf + xfer->c_skip, len);
+
+#if NATA_PIOBM
+	end_piobm_dataout:
+#endif
+		for (i = xfer->c_lenoff; i > 0; i -= 2)
+			bus_space_write_2(wdr->cmd_iot,
+			    wdr->cmd_iohs[wd_data], 0, 0);
+
+		xfer->c_skip += len;
+		xfer->c_bcount -= len;
 		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0) {
 			chp->ch_flags |= ATACH_IRQ_WAIT;
 		}
@@ -778,21 +849,35 @@ again:
 			wdc_atapi_reset(chp, xfer);
 			return 1;
 		}
+		xfer->c_lenoff = len - xfer->c_bcount;
 		if (xfer->c_bcount < len) {
 			printf("wdc_atapi_intr: warning: reading only "
 			    "%d of %d bytes\n", xfer->c_bcount, len);
-			wdc->datain_pio(chp, drvp->drive_flags,
-			    (char *)xfer->c_databuf + xfer->c_skip,
-			    xfer->c_bcount);
-			wdcbit_bucket(chp, len - xfer->c_bcount);
-			xfer->c_skip += xfer->c_bcount;
-			xfer->c_bcount = 0;
-		} else {
-			wdc->datain_pio(chp, drvp->drive_flags,
-			    (char *)xfer->c_databuf + xfer->c_skip, len);
-			xfer->c_skip += len;
-			xfer->c_bcount -=len;
+			len = xfer->c_bcount;
 		}
+
+#if NATA_PIOBM
+		if (xfer->c_flags & C_PIOBM) {
+			/* start the busmastering PIO */
+			(*wdc->piobm_start)(wdc->dma_arg,
+			    chp->ch_channel, xfer->c_drive,
+			    xfer->c_skip, len, WDC_PIOBM_XFER_IRQ);
+			chp->ch_flags |= ATACH_DMA_WAIT | ATACH_IRQ_WAIT |
+			    ATACH_PIOBM_WAIT;
+			return 1;
+		}
+#endif
+		wdc->datain_pio(chp, drvp->drive_flags,
+		    (char *)xfer->c_databuf + xfer->c_skip, len);
+
+#if NATA_PIOBM
+	end_piobm_datain:
+#endif
+		if (xfer->c_lenoff > 0)
+			wdcbit_bucket(chp, len - xfer->c_bcount);
+
+		xfer->c_skip += len;
+		xfer->c_bcount -= len;
 		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0) {
 			chp->ch_flags |= ATACH_IRQ_WAIT;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: xdreg.h,v 1.5 2005/12/11 12:24:07 christos Exp $	*/
+/*	$NetBSD: xdreg.h,v 1.5.4.1 2006/09/09 02:55:52 rpaulo Exp $	*/
 
 /*
  *
@@ -141,7 +141,7 @@ struct xd_iopb {
 #define XDCMD_TST 0x9            /* diagnostic tests */
                                  /* 0xa to 0xf are reserved */
                                  /* section 4.1.2: byte 1 */
-  volatile u_char errno;         /* status byte 1 (non-zero if error) */
+  volatile u_char errnum;        /* status byte 1 (non-zero if error) */
                                  /* section 4.1.3: byte 2 */
   volatile u_char status;        /* status byte 2 (see below) */
 #define XDST_SR   0x40           /* slipped revolution */

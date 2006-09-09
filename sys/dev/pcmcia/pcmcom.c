@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.25 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.25.4.1 2006/09/09 02:53:55 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.25 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.25.4.1 2006/09/09 02:53:55 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,12 +361,9 @@ com_pcmcom_attach(parent, self, aux)
 	struct com_softc *sc = (struct com_softc *)self;
 	struct pcmcom_attach_args *pca = aux;
 
-	sc->sc_iot = pca->pca_iot;
-	sc->sc_ioh = pca->pca_ioh;
-
+	COM_INIT_REGS(sc->sc_regs, pca->pca_iot, pca->pca_ioh, -1);
 	sc->enabled = 1;
 
-	sc->sc_iobase = -1;
 	sc->sc_frequency = COM_FREQ;
 
 	sc->enable = com_pcmcom_enable;
@@ -382,7 +379,7 @@ com_pcmcom_enable(sc)
 	struct com_softc *sc;
 {
 
-	return (pcmcom_enable((struct pcmcom_softc *)sc->sc_dev.dv_parent));
+	return (pcmcom_enable((struct pcmcom_softc *)device_parent(&sc->sc_dev)));
 }
 
 void
@@ -390,6 +387,6 @@ com_pcmcom_disable(sc)
 	struct com_softc *sc;
 {
 
-	pcmcom_disable((struct pcmcom_softc *)sc->sc_dev.dv_parent);
+	pcmcom_disable((struct pcmcom_softc *)device_parent(&sc->sc_dev));
 }
 #endif /* NCOM_PCMCOM > 0 */

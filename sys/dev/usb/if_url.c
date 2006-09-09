@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.18 2005/11/28 13:31:09 augustss Exp $	*/
+/*	$NetBSD: if_url.c,v 1.18.4.1 2006/09/09 02:55:33 rpaulo Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,10 +43,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.18 2005/11/28 13:31:09 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.18.4.1 2006/09/09 02:55:33 rpaulo Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -76,10 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.18 2005/11/28 13:31:09 augustss Exp $")
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
-#endif
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <dev/mii/mii.h>
@@ -270,7 +265,7 @@ USB_ATTACH(url)
 	/* Print Ethernet Address */
 	printf("%s: Ethernet address %s\n", devname, ether_sprintf(eaddr));
 
-	/* initialize interface infomation */
+	/* initialize interface information */
 	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;

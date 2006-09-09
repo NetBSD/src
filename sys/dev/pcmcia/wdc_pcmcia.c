@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.104 2006/01/22 00:08:38 christos Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.104.2.1 2006/09/09 02:53:55 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.104 2006/01/22 00:08:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.104.2.1 2006/09/09 02:53:55 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -161,6 +161,10 @@ static const struct wdc_pcmcia_product {
 	 */
 	{ { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  {"PCMCIA", "PnPIDE", NULL, NULL} }, 2 },
+
+	{ { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  {"PCMCIA", "IDE CARD", NULL, NULL} }, 2 },
+
 };
 static const size_t wdc_pcmcia_nproducts =
     sizeof(wdc_pcmcia_products) / sizeof(wdc_pcmcia_products[0]);
@@ -318,9 +322,11 @@ wdc_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	 * and probe properly, so give them half a second.
 	 * See PR 25659 for details.
 	 */
+	config_pending_incr();
 	tsleep(wdc_pcmcia_attach, PWAIT, "wdcattach", hz / 2);
 
 	wdcattach(&sc->ata_channel);
+	config_pending_decr();
 	ata_delref(&sc->ata_channel);
 	sc->sc_state = WDC_PCMCIA_ATTACHED;
 	return;

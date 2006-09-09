@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.48 2005/12/11 12:21:15 christos Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.48.4.1 2006/09/09 02:49:44 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,10 +43,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.48 2005/12/11 12:21:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.48.4.1 2006/09/09 02:49:44 rpaulo Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -75,10 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.48 2005/12/11 12:21:15 christos
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -142,7 +137,7 @@ const struct tulip_cardbus_product {
 	{ PCI_VENDOR_XIRCOM,	PCI_PRODUCT_XIRCOM_X3201_3_21143,
 	  TULIP_CHIP_X3201_3 },
 
-	{ PCI_VENDOR_ADMTEK,	PCI_PRODUCT_ADMTEK_AN985,
+	{ PCI_VENDOR_ADMTEK,	PCI_PRODUCT_ADMTEK_AN983,
 	  TULIP_CHIP_AN985 },
 
 	{ PCI_VENDOR_ACCTON,	PCI_PRODUCT_ACCTON_EN2242,
@@ -160,7 +155,7 @@ const struct tulip_cardbus_product {
 	{ PCI_VENDOR_HAWKING,	PCI_PRODUCT_HAWKING_PN672TX,
 	  TULIP_CHIP_AN985 },
 
-	{ PCI_VENDOR_ADMTEK,	PCI_PRODUCT_ADMTEK_AN985_2,
+	{ PCI_VENDOR_ADMTEK,	PCI_PRODUCT_ADMTEK_AN985,
 	  TULIP_CHIP_AN985 },
 
 	{ PCI_VENDOR_MICROSOFT,	PCI_PRODUCT_MICROSOFT_MN120,
@@ -252,7 +247,7 @@ tlp_cardbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct tulip_cardbus_softc *csc = (void *)self;
+	struct tulip_cardbus_softc *csc = device_private(self);
 	struct tulip_softc *sc = &csc->sc_tulip;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
@@ -491,7 +486,7 @@ tlp_cardbus_detach(self, flags)
 	struct device *self;
 	int flags;
 {
-	struct tulip_cardbus_softc *csc = (void *)self;
+	struct tulip_cardbus_softc *csc = device_private(self);
 	struct tulip_softc *sc = &csc->sc_tulip;
 	struct cardbus_devfunc *ct = csc->sc_ct;
 	int rv;

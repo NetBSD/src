@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.65 2005/12/11 12:24:00 christos Exp $
+#	$NetBSD: files.usb,v 1.65.4.1 2006/09/09 02:55:33 rpaulo Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -48,6 +48,7 @@ file	dev/usb/ucom.c			ucom | ucombus		needs-flag
 
 
 # Generic devices
+defflag UGEN_BULK_RA_WB
 device	ugen
 attach	ugen at uhub
 file	dev/usb/ugen.c			ugen			needs-flag
@@ -76,7 +77,7 @@ defparam	UKBD_LAYOUT
 device	ukbd: hid, wskbddev
 attach	ukbd at uhidbus
 file	dev/usb/ukbd.c			ukbd			needs-flag
-file	dev/usb/ukbdmap.c		ukbd
+file	dev/usb/ukbdmap.c		ukbd | btkbd
 
 # Mice
 device	ums: hid, wsmousedev
@@ -119,15 +120,10 @@ attach	ustir at uhub
 file	dev/usb/ustir.c			ustir
 
 
-# Bluetooth bridges
-device	ubt: btbus
+# Bluetooth controllers
+device	ubt: bluetooth
 attach	ubt at uhub
 file	dev/usb/ubt.c			ubt
-
-# BCM2033 firmware download
-device	ubtbcmfw
-attach	ubtbcmfw at uhub
-file	dev/usb/ubtbcmfw.c		ubtbcmfw		needs-flag
 
 
 # Misc
@@ -262,3 +258,8 @@ file	dev/usb/if_atu.c		atu
 # Ralink Technology RT2500USB
 attach	ral at uhub with ural
 file	dev/usb/if_ural.c		ural
+
+# Topfield digital PVRs
+device	utoppy
+attach	utoppy at uhub
+file	dev/usb/utoppy.c		utoppy

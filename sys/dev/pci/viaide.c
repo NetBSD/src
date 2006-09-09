@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.28 2006/01/31 16:49:26 xtraeme Exp $	*/
+/*	$NetBSD: viaide.c,v 1.28.2.1 2006/09/09 02:52:19 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.28 2006/01/31 16:49:26 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.28.2.1 2006/09/09 02:52:19 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,11 @@ static const struct pciide_product_desc pciide_nvidia_products[] = {
 	  "NVIDIA nForce3 250 Serial ATA Controller",
 	  via_sata_chip_map
 	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA2,
+	  0,
+	  "NVIDIA nForce3 250 Serial ATA Controller",
+	  via_sata_chip_map
+	},
 	{ PCI_PRODUCT_NVIDIA_NFORCE4_ATA133,
 	  0,
 	  "NVIDIA nForce4 IDE Controller",
@@ -150,6 +155,81 @@ static const struct pciide_product_desc pciide_nvidia_products[] = {
 	  "NVIDIA nForce430 Serial ATA Controller",
 	  via_sata_chip_map
 	},
+	{ PCI_PRODUCT_NVIDIA_MCP04_IDE,
+	  0,
+	  "NVIDIA MCP04 IDE Controller",
+	  via_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP04_SATA,
+	  0,
+	  "NVIDIA MCP04 Serial ATA Controller",
+	  via_sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP04_SATA2,
+	  0,
+	  "NVIDIA MCP04 Serial ATA Controller",
+	  via_sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP55_IDE,
+	  0,
+	  "NVIDIA MCP55 IDE Controller",
+	  via_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP55_SATA,
+	  0,
+	  "NVIDIA MCP55 Serial ATA Controller",
+	  via_sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP55_SATA2,
+	  0,
+	  "NVIDIA MCP55 Serial ATA Controller",
+	  via_sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP61_IDE,
+	  0,
+	  "NVIDIA MCP61 IDE Controller",
+	  via_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP65_IDE,
+	  0,
+	  "NVIDIA MCP65 IDE Controller",
+	  via_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP61_SATA,
+	  0,
+	  "NVIDIA MCP61 Serial ATA Controller",
+	  via_sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP61_SATA2,
+	  0,
+	  "NVIDIA MCP61 Serial ATA Controller",
+	  via_sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP61_SATA3,
+	  0,
+	  "NVIDIA MCP61 Serial ATA Controller",
+	  via_sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP65_SATA,
+	  0,
+	  "NVIDIA MCP65 Serial ATA Controller",
+	  via_sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP65_SATA2,
+	  0,
+	  "NVIDIA MCP65 Serial ATA Controller",
+	  via_sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP65_SATA3,
+	  0,
+	  "NVIDIA MCP65 Serial ATA Controller",
+	  via_sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP65_SATA4,
+	  0,
+	  "NVIDIA MCP65 Serial ATA Controller",
+	  via_sata_chip_map
+	},
 	{ 0,
 	  0,
 	  NULL,
@@ -176,6 +256,11 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	{ PCI_PRODUCT_VIATECH_VT8237_SATA,
 	  0,
 	  "VIA Technologies VT8237 SATA Controller",
+	  via_sata_chip_map,
+	},
+	{ PCI_PRODUCT_VIATECH_VT8237R_SATA,
+	  0,
+	  "VIA Technologies VT8237R SATA Controller",
 	  via_sata_chip_map,
 	},
 	{ 0,
@@ -344,6 +429,10 @@ unknown:
 		case PCI_PRODUCT_NVIDIA_NFORCE3_250_ATA133:
 		case PCI_PRODUCT_NVIDIA_NFORCE4_ATA133:
 		case PCI_PRODUCT_NVIDIA_NFORCE430_ATA133:
+		case PCI_PRODUCT_NVIDIA_MCP04_IDE:
+		case PCI_PRODUCT_NVIDIA_MCP55_IDE:
+		case PCI_PRODUCT_NVIDIA_MCP61_IDE:
+		case PCI_PRODUCT_NVIDIA_MCP65_IDE:
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		}

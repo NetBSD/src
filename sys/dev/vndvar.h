@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.18 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.18.4.1 2006/09/09 02:49:09 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -143,21 +143,19 @@ struct vnd_ioctl {
 #ifdef _KERNEL
 
 struct vnode;
-struct ucred;
 
 /*
  * A vnode disk's state information.
  */
 struct vnd_softc {
-	int		 sc_unit;	/* logical unit number */
+	struct device    sc_dev;
 	int		 sc_flags;	/* flags */
 	size_t		 sc_size;	/* size of vnd */
 	struct vnode	*sc_vp;		/* vnode */
-	struct ucred	*sc_cred;	/* credentials */
+	kauth_cred_t	 sc_cred;	/* credentials */
 	int		 sc_maxactive;	/* max # of active requests */
 	struct bufq_state *sc_tab;	/* transfer queue */
 	int		 sc_active;	/* number of active transfers */
-	char		 sc_xname[8];	/* XXX external name */
 	struct disk	 sc_dkdev;	/* generic disk device info */
 	struct vndgeom	 sc_geom;	/* virtual geometry */
 	struct pool	 sc_vxpool;	/* vndxfer pool */

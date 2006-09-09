@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.4 2005/12/13 20:55:46 abs Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.4.4.1 2006/09/09 02:49:51 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -78,8 +78,6 @@ static int dsrtc_clock_read(struct dsrtc_softc *, struct clock_ymdhms *);
 static int dsrtc_clock_write(struct dsrtc_softc *, struct clock_ymdhms *);
 static int dsrtc_gettime(struct todr_chip_handle *, volatile struct timeval *);
 static int dsrtc_settime(struct todr_chip_handle *, volatile struct timeval *);
-static int dsrtc_getcal(struct todr_chip_handle *, int *);
-static int dsrtc_setcal(struct todr_chip_handle *, int);
 
 static int
 dsrtc_match(struct device *parent, struct cfdata *cf, void *arg)
@@ -95,7 +93,7 @@ dsrtc_match(struct device *parent, struct cfdata *cf, void *arg)
 static void
 dsrtc_attach(struct device *parent, struct device *self, void *arg)
 {
-	struct dsrtc_softc *sc = (struct dsrtc_softc *)self;
+	struct dsrtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = arg;
 
 	aprint_naive(": Real-time Clock/NVRAM\n");
@@ -107,8 +105,6 @@ dsrtc_attach(struct device *parent, struct device *self, void *arg)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = dsrtc_gettime;
 	sc->sc_todr.todr_settime = dsrtc_settime;
-	sc->sc_todr.todr_getcal = dsrtc_getcal;
-	sc->sc_todr.todr_setcal = dsrtc_setcal;
 	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
@@ -259,20 +255,6 @@ dsrtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 		return (-1);
 
 	return (0);
-}
-
-static int
-dsrtc_setcal(struct todr_chip_handle *ch, int cal)
-{
-
-	return (EOPNOTSUPP);
-}
-
-static int
-dsrtc_getcal(struct todr_chip_handle *ch, int *cal)
-{
-
-	return (EOPNOTSUPP);
 }
 
 static int

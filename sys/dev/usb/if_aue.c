@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.92 2005/11/28 13:31:09 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.92.4.1 2006/09/09 02:55:33 rpaulo Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,11 +77,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.92 2005/11/28 13:31:09 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.92.4.1 2006/09/09 02:55:33 rpaulo Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 #elif defined(__OpenBSD__)
@@ -133,10 +132,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.92 2005/11/28 13:31:09 augustss Exp $")
 #endif
 #endif /* defined(__OpenBSD__) */
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -186,6 +181,7 @@ Static const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUS},	  PNA },
  {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUSII},	  PII },
  {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUSII_2},  PII },
+ {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUSII_3},  PII },
  {{ USB_VENDOR_AEI,		USB_PRODUCT_AEI_USBTOLAN},	  PII },
  {{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_USB2LAN},	  PII },
  {{ USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USB100},	  0 },
@@ -1568,21 +1564,6 @@ aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 #endif
 			break;
 #endif /* INET */
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-					LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl),
-				       ina->x_host.c_host,
-				       ifp->if_addrlen);
-			break;
-		    }
-#endif /* NS */
 		}
 		break;
 

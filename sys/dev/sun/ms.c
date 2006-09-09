@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.30 2005/12/11 12:23:56 christos Exp $	*/
+/*	$NetBSD: ms.c,v 1.30.4.1 2006/09/09 02:55:16 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.30 2005/12/11 12:23:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.30.4.1 2006/09/09 02:55:16 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,7 @@ ms_input(ms, c)
 		ms->ms_byteno = -1;
 		return;
 	}
-	if ((c & ~0x0f) == 0x80) {	/* if in 0x80..0x8f */
+	if ((c & 0xb0) == 0x80) {	/* if in 0x80..0x8f of 0xc0..0xcf */
 		if (c & 8) {
 			ms->ms_byteno = 1;	/* short form (3 bytes) */
 		} else {
@@ -372,7 +372,7 @@ ms_input(ms, c)
 		d = to_one[d - 1];		/* from 1..7 to {1,2,4} */
 		fe->id = to_id[d - 1];		/* from {1,2,4} to ID */
 		fe->value = mb & d ? VKEY_DOWN : VKEY_UP;
-		fe->time = time;
+		getmicrotime(&fe->time);
 		ADVANCE;
 		ub ^= d;
 	}
@@ -380,7 +380,7 @@ ms_input(ms, c)
 		NEXT;
 		fe->id = LOC_X_DELTA;
 		fe->value = ms->ms_dx;
-		fe->time = time;
+		getmicrotime(&fe->time);
 		ADVANCE;
 		ms->ms_dx = 0;
 	}
@@ -388,7 +388,7 @@ ms_input(ms, c)
 		NEXT;
 		fe->id = LOC_Y_DELTA;
 		fe->value = ms->ms_dy;
-		fe->time = time;
+		getmicrotime(&fe->time);
 		ADVANCE;
 		ms->ms_dy = 0;
 	}

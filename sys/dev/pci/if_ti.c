@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.69 2005/12/11 12:22:49 christos Exp $ */
+/* $NetBSD: if_ti.c,v 1.69.4.1 2006/09/09 02:52:18 rpaulo Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,11 +81,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.69 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.69.4.1 2006/09/09 02:52:18 rpaulo Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
-#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,10 +116,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.69 2005/12/11 12:22:49 christos Exp $");
 #include <netinet/ip.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -2549,7 +2544,7 @@ static void ti_init2(sc)
 	ifp = &sc->ethercom.ec_if;
 
 	/* Specify MTU and interface index. */
-	CSR_WRITE_4(sc, TI_GCR_IFINDEX, sc->sc_dev.dv_unit); /* ??? */
+	CSR_WRITE_4(sc, TI_GCR_IFINDEX, device_unit(&sc->sc_dev)); /* ??? */
 
 	tmp = ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
 	if (sc->ethercom.ec_capenable & ETHERCAP_VLAN_MTU)
@@ -2774,20 +2769,6 @@ ti_ether_ioctl(ifp, cmd, data)
 		case AF_INET:
 			arp_ifinit(ifp, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			 struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			 if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-				    LLADDR(ifp->if_sadl);
-			 else
-				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
-				    ifp->if_addrlen);
-			 break;
-		    }
 #endif
 		default:
 			break;

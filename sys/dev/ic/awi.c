@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.69 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: awi.c,v 1.69.4.1 2006/09/09 02:50:01 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.69 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.69.4.1 2006/09/09 02:50:01 rpaulo Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $");
@@ -214,7 +214,7 @@ struct awi_chanset awi_chanset[] = {
     { AWI_PHY_TYPE_DS, AWI_REG_DOMAIN_US,  1, 11,  3 },
     { AWI_PHY_TYPE_DS, AWI_REG_DOMAIN_CA,  1, 11,  3 },
     { AWI_PHY_TYPE_DS, AWI_REG_DOMAIN_EU,  1, 13,  3 },
-    { 0, 0 }
+    { 0, 0, 0, 0, 0 }
 };
 
 #ifdef __FreeBSD__
@@ -816,7 +816,7 @@ awi_start(struct ifnet *ifp)
 			    sc->sc_adhoc_ap == 0 &&
 			    (ifp->if_flags & IFF_LINK0) == 0 &&
 			    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
-			    IEEE80211_FC0_TYPE_DATA && ni == NULL) {
+			    IEEE80211_FC0_TYPE_DATA) {
 				m_freem(m0);
 				ieee80211_free_node(ni);
 				ifp->if_oerrors++;

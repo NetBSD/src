@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.51 2005/12/11 12:21:23 christos Exp $	*/
+/*	$NetBSD: iop.c,v 1.51.4.1 2006/09/09 02:50:00 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.51 2005/12/11 12:21:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.51.4.1 2006/09/09 02:50:00 rpaulo Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -115,19 +115,19 @@ dev_type_ioctl(iopioctl);
 
 const struct cdevsw iop_cdevsw = {
 	iopopen, iopclose, noread, nowrite, iopioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 #define	IC_CONFIGURE	0x01
 #define	IC_PRIORITY	0x02
 
-struct iop_class {
+static struct iop_class {
 	u_short	ic_class;
 	u_short	ic_flags;
 #ifdef I2OVERBOSE
 	const char	*ic_caption;
 #endif
-} static const iop_class[] = {
+} const iop_class[] = {
 	{
 		I2O_CLASS_EXECUTIVE,
 		0,
@@ -486,7 +486,7 @@ iop_config_interrupts(struct device *self)
 	int rv, i, niop;
 	int locs[IOPCF_NLOCS];
 
-	sc = (struct iop_softc *)self;
+	sc = device_private(self);
 	LIST_INIT(&sc->sc_iilist);
 
 	printf("%s: configuring...\n", sc->sc_dv.dv_xname);
@@ -531,7 +531,7 @@ iop_config_interrupts(struct device *self)
 				continue;
 
 			ste->orgid = iop->sc_status.orgid;
-			ste->iopid = iop->sc_dv.dv_unit + 2;
+			ste->iopid = device_unit(&iop->sc_dv) + 2;
 			ste->segnumber =
 			    htole32(le32toh(iop->sc_status.segnumber) & ~4095);
 			ste->iopcaps = iop->sc_status.iopcaps;
@@ -766,8 +766,10 @@ iop_reconfigure(struct iop_softc *sc, u_int chgind)
 			if (ii->ii_tid == sc->sc_tidmap[i].it_tid)
 				break;
 		if (i == sc->sc_nlctent ||
-		    (sc->sc_tidmap[i].it_flags & IT_CONFIGURED) == 0)
+		    (sc->sc_tidmap[i].it_flags & IT_CONFIGURED) == 0) {
 			config_detach(ii->ii_dv, DETACH_FORCE);
+			continue;
+		}
 
 		/*
 		 * Tell initiators that existed before the re-configuration
@@ -1510,7 +1512,7 @@ iop_systab_set(struct iop_softc *sc)
 	mf->msgfunc = I2O_MSGFUNC(I2O_TID_IOP, I2O_EXEC_SYS_TAB_SET);
 	mf->msgictx = IOP_ICTX;
 	mf->msgtctx = im->im_tctx;
-	mf->iopid = (sc->sc_dv.dv_unit + 2) << 12;
+	mf->iopid = (device_unit(&sc->sc_dv) + 2) << 12;
 	mf->segnumber = 0;
 
 	mema[1] = sc->sc_status.desiredprivmemsize;
@@ -1770,15 +1772,18 @@ iop_handle_reply(struct iop_softc *sc, u_int32_t rmfa)
 		/* Notify the initiator. */
 		if ((im->im_flags & IM_WAIT) != 0)
 			wakeup(im);
-		else if ((im->im_flags & (IM_POLL | IM_POLL_INTR)) != IM_POLL)
-			(*ii->ii_intr)(ii->ii_dv, im, rb);
+		else if ((im->im_flags & (IM_POLL | IM_POLL_INTR)) != IM_POLL) {
+			if (ii)
+				(*ii->ii_intr)(ii->ii_dv, im, rb);
+		}
 	} else {
 		/*
 		 * This initiator discards message wrappers.
 		 *
 		 * Simply pass the reply frame to the initiator.
 		 */
-		(*ii->ii_intr)(ii->ii_dv, NULL, rb);
+		if (ii)
+			(*ii->ii_intr)(ii->ii_dv, NULL, rb);
 	}
 
 	return (status);
@@ -2514,13 +2519,13 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	struct iovec *iov;
 	int rv, i;
 
-	if (securelevel >= 2)
-		return (EPERM);
-
 	sc = device_lookup(&iop_cd, minor(dev));
 
 	switch (cmd) {
 	case IOPIOCPT:
+		if (securelevel >= 2)
+			return (EPERM);
+
 		return (iop_passthrough(sc, (struct ioppt *)data, l->l_proc));
 
 	case IOPIOCGSTATUS:
@@ -2595,7 +2600,10 @@ iop_passthrough(struct iop_softc *sc, struct ioppt *pt, struct proc *p)
 	if (pt->pt_msglen > sc->sc_framesize ||
 	    pt->pt_msglen < sizeof(struct i2o_msg) ||
 	    pt->pt_nbufs > IOP_MAX_MSG_XFERS ||
-	    pt->pt_nbufs < 0 || pt->pt_replylen < 0 ||
+	    pt->pt_nbufs < 0 ||
+#if 0
+	    pt->pt_replylen < 0 ||
+#endif
             pt->pt_timo < 1000 || pt->pt_timo > 5*60*1000)
 		return (EINVAL);
 

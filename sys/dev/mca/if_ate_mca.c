@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate_mca.c,v 1.13 2005/12/11 12:22:18 christos Exp $	*/
+/*	$NetBSD: if_ate_mca.c,v 1.13.4.1 2006/09/09 02:51:56 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.13 2005/12/11 12:22:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.13.4.1 2006/09/09 02:51:56 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ static const struct ate_mca_product {
 	{ MCA_PRODUCT_AT1720BT,	"ATI AT1720BT",	FE_TYPE_AT1700BT	},
 	{ MCA_PRODUCT_AT1720AT, "ATI AT1720AT",	FE_TYPE_AT1700AT	},
 	{ MCA_PRODUCT_AT1720FT, "ATI AT1720FT",	FE_TYPE_AT1700FT	},
-	{ 0, 	},
+	{ 0,			NULL,		0			},
 };
 
 static const struct ate_mca_product *ate_mca_lookup(u_int32_t);
@@ -133,7 +133,7 @@ ate_mca_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct ate_softc *isc = (struct ate_softc *)self;
+	struct ate_softc *isc = device_private(self);
 	struct mb86960_softc *sc = &isc->sc_mb86960;
 	struct mca_attach_args *ma = aux;
 	bus_space_tag_t iot = ma->ma_iot;
