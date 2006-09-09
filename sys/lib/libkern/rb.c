@@ -1,4 +1,4 @@
-/* $NetBSD: rb.c,v 1.9 2006/09/09 05:55:51 matt Exp $ */
+/* $NetBSD: rb.c,v 1.10 2006/09/09 06:52:18 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,17 +41,20 @@
 #include <stddef.h>
 #include <assert.h>
 #include <stdbool.h>
+#ifdef RBDEBUG
 #define	KASSERT(s)	assert(s)
+#else
+#define KASSERT(s)	(void) 0
+#endif
 #else
 #include <lib/libkern/libkern.h>
 #endif
 #include "rb.h"
 
-static void rb_tree_reparent_nodes(struct rb_tree *, struct rb_node *, int);
 static void rb_tree_insert_rebalance(struct rb_tree *, struct rb_node *);
 static void rb_tree_removal_rebalance(struct rb_tree *, struct rb_node *,
 	unsigned int);
-#ifndef NDEBUG
+#ifdef RBDEBUG
 static const struct rb_node *rb_tree_iterate_const(const struct rb_tree *,
 	const struct rb_node *, unsigned int);
 static bool rb_tree_check_node(const struct rb_tree *, const struct rb_node *,
@@ -71,17 +74,17 @@ static const struct rb_node sentinel_node = {
 };
 
 void
-rb_tree_init(struct rb_tree *rbt, rb_compare_nodes_fn compare_nodes,
-	rb_compare_key_fn compare_key)
+rb_tree_init(struct rb_tree *rbt, const struct rb_tree_ops *ops)
 {
-	RB_TAILQ_INIT(&rbt->rbt_nodes);
-	rbt->rbt_count = 0;
-	rbt->rbt_compare_nodes = compare_nodes;
-	rbt->rbt_compare_key = compare_key;
+	rbt->rbt_ops = ops;
 	*((const struct rb_node **)&rbt->rbt_root) = &sentinel_node;
+	RB_TAILQ_INIT(&rbt->rbt_nodes);
+#ifndef RBSMALL
 	rbt->rbt_minmax[RB_LEFT] = rbt->rbt_root;	/* minimum node */
 	rbt->rbt_minmax[RB_RIGHT] = rbt->rbt_root;	/* maximum node */
+#endif
 #ifdef RBSTATS
+	rbt->rbt_count = 0;
 	rbt->rbt_insertions = 0;
 	rbt->rbt_removals = 0;
 	rbt->rbt_insertion_rebalance_calls = 0;
@@ -94,10 +97,11 @@ rb_tree_init(struct rb_tree *rbt, rb_compare_nodes_fn compare_nodes,
 struct rb_node *
 rb_tree_find_node(struct rb_tree *rbt, const void *key)
 {
+	rb_compare_key_fn compare_key = rbt->rbt_ops->rb_compare_key;
 	struct rb_node *parent = rbt->rbt_root;
 
 	while (!RB_SENTINEL_P(parent)) {
-		const int diff = (*rbt->rbt_compare_key)(parent, key);
+		const signed int diff = (*compare_key)(parent, key);
 		if (diff == 0)
 			return parent;
 		parent = parent->rb_nodes[diff > 0];
@@ -109,11 +113,12 @@ rb_tree_find_node(struct rb_tree *rbt, const void *key)
 struct rb_node *
 rb_tree_find_node_geq(struct rb_tree *rbt, const void *key)
 {
+	rb_compare_key_fn compare_key = rbt->rbt_ops->rb_compare_key;
 	struct rb_node *parent = rbt->rbt_root;
 	struct rb_node *last = NULL;
 
 	while (!RB_SENTINEL_P(parent)) {
-		const int diff = (*rbt->rbt_compare_key)(parent, key);
+		const signed int diff = (*compare_key)(parent, key);
 		if (diff == 0)
 			return parent;
 		if (diff < 0)
@@ -127,11 +132,12 @@ rb_tree_find_node_geq(struct rb_tree *rbt, const void *key)
 struct rb_node *
 rb_tree_find_node_leq(struct rb_tree *rbt, const void *key)
 {
+	rb_compare_key_fn compare_key = rbt->rbt_ops->rb_compare_key;
 	struct rb_node *parent = rbt->rbt_root;
 	struct rb_node *last = NULL;
 
 	while (!RB_SENTINEL_P(parent)) {
-		const int diff = (*rbt->rbt_compare_key)(parent, key);
+		const signed int diff = (*compare_key)(parent, key);
 		if (diff == 0)
 			return parent;
 		if (diff > 0)
@@ -145,6 +151,7 @@ rb_tree_find_node_leq(struct rb_tree *rbt, const void *key)
 void
 rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 {
+	rb_compare_nodes_fn compare_nodes = rbt->rbt_ops->rb_compare_nodes;
 	struct rb_node *parent, *tmp;
 	unsigned int position;
 
@@ -166,7 +173,7 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 	 * Find out where to place this new leaf.
 	 */
 	while (!RB_SENTINEL_P(tmp)) {
-		const int diff = (*rbt->rbt_compare_nodes)(tmp, self);
+		const signed int diff = (*compare_nodes)(tmp, self);
 		parent = tmp;
 		KASSERT(diff != 0);
 		if (diff < 0) {
@@ -177,7 +184,7 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 		tmp = parent->rb_nodes[position];
 	}
 
-#if !defined(NDEBUG) || defined(DIAGNOSTIC)
+#ifdef RBDEBUG
 	{
 		struct rb_node *prev = NULL, *next = NULL;
 
@@ -197,10 +204,8 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 			prev = TAILQ_PREV(next, rb_node_qh, rb_link);
 		KASSERT(prev == NULL || !RB_SENTINEL_P(prev));
 		KASSERT(next == NULL || !RB_SENTINEL_P(next));
-		KASSERT(prev == NULL
-			|| (*rbt->rbt_compare_nodes)(prev, self) > 0);
-		KASSERT(next == NULL
-			|| (*rbt->rbt_compare_nodes)(self, next) > 0);
+		KASSERT(prev == NULL || (*compare_nodes)(prev, self) > 0);
+		KASSERT(next == NULL || (*compare_nodes)(self, next) > 0);
 	}
 #endif
 
@@ -211,11 +216,14 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 	self->rb_position = position;
 	if (__predict_false(parent == (struct rb_node *) &rbt->rbt_root)) {
 		RB_MARK_ROOT(self);
+#ifndef RBSMALL
 		rbt->rbt_minmax[RB_LEFT] = self;
 		rbt->rbt_minmax[RB_RIGHT] = self;
+#endif
 	} else {
 		KASSERT(position == RB_LEFT || position == RB_RIGHT);
 		KASSERT(!RB_ROOT_P(self)); 	/* Already done */
+#ifndef RBSMALL
 		/*
 		 * Keep track of the minimum and maximum nodes.  If our
 		 * parent is a minmax node and we on their min/max side,
@@ -223,6 +231,7 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 		 */
 		if (parent == rbt->rbt_minmax[position])
 			rbt->rbt_minmax[position] = self;
+#endif
 	}
 	KASSERT(RB_SENTINEL_P(parent->rb_nodes[position]));
 	self->rb_left = parent->rb_nodes[position];
@@ -234,15 +243,15 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 	/*
 	 * Insert the new node into a sorted list for easy sequential access
 	 */
-	rbt->rbt_count++;
-#if !defined(NDEBUG) || defined(DIAGNOSTIC)
+	RBSTAT_INC(rbt->rbt_count);
+#ifdef RBDEBUG
 	if (RB_ROOT_P(self)) {
 		RB_TAILQ_INSERT_HEAD(&rbt->rbt_nodes, self, rb_link);
 	} else if (position == RB_LEFT) {
-		KASSERT((*rbt->rbt_compare_nodes)(self, self->rb_parent) > 0);
+		KASSERT((*compare_nodes)(self, self->rb_parent) > 0);
 		RB_TAILQ_INSERT_BEFORE(self->rb_parent, self, rb_link);
 	} else {
-		KASSERT((*rbt->rbt_compare_nodes)(self->rb_parent, self) > 0);
+		KASSERT((*compare_nodes)(self->rb_parent, self) > 0);
 		RB_TAILQ_INSERT_AFTER(&rbt->rbt_nodes, self->rb_parent,
 		    self, rb_link);
 	}
@@ -276,7 +285,8 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
  * as a separate step.
  */
 static void
-rb_tree_reparent_nodes(struct rb_tree *rbt, struct rb_node *old_father, int which)
+rb_tree_reparent_nodes(struct rb_tree *rbt, struct rb_node *old_father,
+	const unsigned int which)
 {
 	const unsigned int other = which ^ RB_OTHER;
 	struct rb_node * const grandpa = old_father->rb_parent;
@@ -409,7 +419,7 @@ rb_tree_insert_rebalance(struct rb_tree *rbt, struct rb_node *self)
 }
 
 static void
-rb_tree_prune_node(struct rb_tree *rbt, struct rb_node *self, int rebalance)
+rb_tree_prune_node(struct rb_tree *rbt, struct rb_node *self, bool rebalance)
 {
 	const unsigned int which = self->rb_position;
 	struct rb_node *father = self->rb_parent;
@@ -430,7 +440,8 @@ rb_tree_prune_node(struct rb_tree *rbt, struct rb_node *self, int rebalance)
 	 * and update min/max.
 	 */
 	RB_TAILQ_REMOVE(&rbt->rbt_nodes, self, rb_link);
-	rbt->rbt_count--;
+	RBSTAT_DEC(rbt->rbt_count);
+#ifndef RBSMALL
 	if (__predict_false(rbt->rbt_minmax[self->rb_position] == self)) {
 		rbt->rbt_minmax[self->rb_position] = father;
 		/*
@@ -442,6 +453,7 @@ rb_tree_prune_node(struct rb_tree *rbt, struct rb_node *self, int rebalance)
 			rbt->rbt_minmax[RB_RIGHT] = father;
 		}
 	}
+#endif
 	self->rb_sentinel = 1;	/* so remove_node will fail */
 
 	/*
@@ -570,10 +582,12 @@ rb_tree_swap_prune_and_rebalance(struct rb_tree *rbt, struct rb_node *self,
 	 * and update min/max.
 	 */
 	RB_TAILQ_REMOVE(&rbt->rbt_nodes, self, rb_link);
-	rbt->rbt_count--;
+	RBSTAT_DEC(rbt->rbt_count);
+#ifndef RBSMALL
 	if (__predict_false(rbt->rbt_minmax[self->rb_position] == self))
 		rbt->rbt_minmax[self->rb_position] = self->rb_parent;
 	self->rb_sentinel = 1;
+#endif
 
 
 	KASSERT(rb_tree_check_node(rbt, standin, NULL, false));
@@ -620,7 +634,8 @@ rb_tree_prune_blackred_branch(struct rb_tree *rbt, struct rb_node *self,
 	 * and update minmax.
 	 */
 	RB_TAILQ_REMOVE(&rbt->rbt_nodes, self, rb_link);
-	rbt->rbt_count--;
+	RBSTAT_DEC(rbt->rbt_count);
+#ifndef RBSMALL
 	if (__predict_false(RB_ROOT_P(self))) {
 		KASSERT(rbt->rbt_minmax[which] == son);
 		rbt->rbt_minmax[which ^ RB_OTHER] = son;
@@ -628,6 +643,7 @@ rb_tree_prune_blackred_branch(struct rb_tree *rbt, struct rb_node *self,
 		rbt->rbt_minmax[self->rb_position] = son;
 	}
 	self->rb_sentinel = 1;
+#endif
 
 	KASSERT(RB_ROOT_P(self) || rb_tree_check_node(rbt, father, NULL, true));
 	KASSERT(rb_tree_check_node(rbt, son, NULL, true));
@@ -848,9 +864,18 @@ rb_tree_iterate(struct rb_tree *rbt, struct rb_node *self,
 	KASSERT(direction == RB_LEFT || direction == RB_RIGHT);
 
 	if (self == NULL) {
+#ifndef RBSMALL
 		if (RB_SENTINEL_P(rbt->rbt_root))
 			return NULL;
 		return rbt->rbt_minmax[direction];
+#else
+		self = rbt->rbt_root;
+		if (RB_SENTINEL_P(self))
+			return NULL;
+		while (!RB_SENTINEL_P(self->rb_nodes[other]))
+			self = self->rb_nodes[other];
+		return self;
+#endif /* !RBSMALL */
 	}
 	KASSERT(!RB_SENTINEL_P(self));
 	/*
@@ -877,7 +902,7 @@ rb_tree_iterate(struct rb_tree *rbt, struct rb_node *self,
 	return self;
 }
 
-#ifndef NDEBUG
+#ifdef RBDEBUG
 static const struct rb_node *
 rb_tree_iterate_const(const struct rb_tree *rbt, const struct rb_node *self,
 	unsigned int direction)
@@ -886,9 +911,18 @@ rb_tree_iterate_const(const struct rb_tree *rbt, const struct rb_node *self,
 	KASSERT(direction == RB_LEFT || direction == RB_RIGHT);
 
 	if (self == NULL) {
+#ifndef RBSMALL
 		if (RB_SENTINEL_P(rbt->rbt_root))
 			return NULL;
 		return rbt->rbt_minmax[direction];
+#else
+		self = rbt->rbt_root;
+		if (RB_SENTINEL_P(self))
+			return NULL;
+		while (!RB_SENTINEL_P(self->rb_nodes[other]))
+			self = self->rb_nodes[other];
+		return self;
+#endif /* !RBSMALL */
 	}
 	KASSERT(!RB_SENTINEL_P(self));
 	/*
@@ -919,10 +953,11 @@ static bool
 rb_tree_check_node(const struct rb_tree *rbt, const struct rb_node *self,
 	const struct rb_node *prev, bool red_check)
 {
+	rb_compare_nodes_fn compare_nodes = rbt->rbt_ops->rb_compare_nodes;
 	KASSERT(!self->rb_sentinel);
 	KASSERT(self->rb_left);
 	KASSERT(self->rb_right);
-	KASSERT(prev == NULL || (*rbt->rbt_compare_nodes)(prev, self) > 0);
+	KASSERT(prev == NULL || (*compare_nodes)(prev, self) > 0);
 
 	/*
 	 * Verify our relationship to our parent.
@@ -936,10 +971,10 @@ rb_tree_check_node(const struct rb_tree *rbt, const struct rb_node *self,
 		KASSERT(self != rbt->rbt_root);
 		KASSERT(!RB_PARENT_SENTINEL_P(self));
 		if (self->rb_position == RB_LEFT) {
-			KASSERT((*rbt->rbt_compare_nodes)(self, self->rb_parent) > 0);
+			KASSERT((*compare_nodes)(self, self->rb_parent) > 0);
 			KASSERT(self->rb_parent->rb_nodes[RB_LEFT] == self);
 		} else {
-			KASSERT((*rbt->rbt_compare_nodes)(self, self->rb_parent) < 0);
+			KASSERT((*compare_nodes)(self, self->rb_parent) < 0);
 			KASSERT(self->rb_parent->rb_nodes[RB_RIGHT] == self);
 		}
 	}
@@ -952,8 +987,10 @@ rb_tree_check_node(const struct rb_tree *rbt, const struct rb_node *self,
 		const struct rb_node *next0 = rb_tree_iterate_const(rbt, self, RB_RIGHT);
 		KASSERT(prev0 == TAILQ_PREV(self, rb_node_qh, rb_link));
 		KASSERT(next0 == TAILQ_NEXT(self, rb_link));
+#ifndef RBSMALL
 		KASSERT(prev0 != NULL || self == rbt->rbt_minmax[RB_LEFT]);
 		KASSERT(next0 != NULL || self == rbt->rbt_minmax[RB_RIGHT]);
+#endif
 	}
 
 	/*
@@ -1129,36 +1166,43 @@ rb_tree_check(const struct rb_tree *rbt, bool red_check)
 {
 	const struct rb_node *self;
 	const struct rb_node *prev;
-	unsigned int count;
+#ifdef RBSTATS
+	unsigned int count = 0;
+#endif
 
 	KASSERT(rbt->rbt_root != NULL);
 	KASSERT(rbt->rbt_root->rb_position == RB_LEFT);
 
+#if defined(RBSTATS) && !defined(RBSMALL)
 	KASSERT(rbt->rbt_count > 1
 		|| rbt->rbt_minmax[RB_LEFT] == rbt->rbt_minmax[RB_RIGHT]);
+#endif
 
 	prev = NULL;
-	count = 0;
 	TAILQ_FOREACH(self, &rbt->rbt_nodes, rb_link) {
 		rb_tree_check_node(rbt, self, prev, false);
+#ifdef RBSTATS
 		count++;
+#endif
 	}
+#ifdef RBSTATS
 	KASSERT(rbt->rbt_count == count);
-	KASSERT(RB_SENTINEL_P(rbt->rbt_root)
-		|| rb_tree_count_black(rbt->rbt_root));
-
-	/*
-	 * The root must be black.
-	 * There can never be two adjacent red nodes. 
-	 */
+#endif
 	if (red_check) {
-		KASSERT(rbt->rbt_root == NULL || RB_BLACK_P(rbt->rbt_root));
+		KASSERT(RB_BLACK_P(rbt->rbt_root));
+		KASSERT(RB_SENTINEL_P(rbt->rbt_root)
+			|| rb_tree_count_black(rbt->rbt_root));
+
+		/*
+		 * The root must be black.
+		 * There can never be two adjacent red nodes. 
+		 */
 		TAILQ_FOREACH(self, &rbt->rbt_nodes, rb_link) {
 			rb_tree_check_node(rbt, self, NULL, true);
 		}
 	}
 }
-#endif /* !NDEBUG || DIAGNOSTIC */
+#endif /* RBDEBUG */
 
 #ifdef RBSTATS
 static void
