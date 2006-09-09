@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.79 2006/07/31 20:39:34 bjh21 Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.80 2006/09/09 11:27:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.79 2006/07/31 20:39:34 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.80 2006/09/09 11:27:19 tsutsui Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.79 2006/07/31 20:39:34 bjh21 Exp $
 #include <sys/user.h>
 #include <sys/mman.h>
 #include <sys/kauth.h>
+#include <sys/timetc.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -1197,6 +1198,9 @@ hpux_sys_stime_6x(l, v, retval)
 		syscallarg(int) time;
 	} */ *uap = v;
 	struct timeval tv;
+#ifdef __HAVE_TIMECOUNTER
+	struct timespec ts;
+#endif
 	int s, error;
 
 	tv.tv_sec = SCARG(uap, time);
@@ -1206,8 +1210,15 @@ hpux_sys_stime_6x(l, v, retval)
 		return (error);
 
 	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
-	boottime.tv_sec += tv.tv_sec - time.tv_sec;
-	s = splclock(); time = tv; splx(s);
+	boottime.tv_sec += tv.tv_sec - time_second;
+	s = splclock();
+#ifdef __HAVE_TIMECOUNTER
+	TIMEVAL_TO_TIMESPEC(&tv, &ts);
+	tc_setclock(&ts);
+#else
+	time = tv;
+#endif
+	splx(s);
 	resettodr();
 	return (0);
 }
@@ -1222,12 +1233,11 @@ hpux_sys_ftime_6x(l, v, retval)
 		syscallarg(struct hpux_timeb *) tp;
 	} */ *uap = v;
 	struct hpux_otimeb tb;
-	int s;
+	struct timeval tv;
 
-	s = splclock();
-	tb.time = time.tv_sec;
-	tb.millitm = time.tv_usec / 1000;
-	splx(s);
+	microtime(&tv);
+	tb.time = tv.tv_sec;
+	tb.millitm = tv.tv_usec / 1000;
 	/* NetBSD has no kernel notion of timezone -- fake it. */
 	tb.timezone = 0;
 	tb.dstflag = 0;
@@ -1247,6 +1257,7 @@ hpux_sys_alarm_6x(l, v, retval)
 	int s;
 	struct itimerval *itp, it;
 	struct ptimer *ptp;
+	struct timeval tv;
 
  	if (p->p_timers && p->p_timers->pts_timers[ITIMER_REAL]) {
 		ptp = p->p_timers->pts_timers[ITIMER_REAL];
@@ -1262,9 +1273,10 @@ hpux_sys_alarm_6x(l, v, retval)
 	if (itp) {
 		callout_stop(&p->p_timers->pts_timers[ITIMER_REAL]->pt_ch);
 		timerclear(&itp->it_interval);
+		microtime(&tv);
 		if (timerisset(&itp->it_value) &&
-		    timercmp(&itp->it_value, &time, >))
-			timersub(&itp->it_value, &time, &itp->it_value);
+		    timercmp(&itp->it_value, &tv, >))
+			timersub(&itp->it_value, &tv, &itp->it_value);
 		/*
 		 * Return how many seconds were left (rounded up)
 		 */
@@ -1315,7 +1327,8 @@ hpux_sys_alarm_6x(l, v, retval)
 		 * We don't need to check the hzto() return value, here.
 		 * callout_reset() does it for us.
 		 */
-		timeradd(&it.it_value, &time, &it.it_value);
+		microtime(&tv);
+		timeradd(&it.it_value, &tv, &it.it_value);
 		callout_reset(&ptp->pt_ch, hzto(&ptp->pt_time.it_value),
 		    realtimerexpire, ptp);
 	}
@@ -1365,7 +1378,7 @@ hpux_sys_times_6x(l, v, retval)
 	error = copyout((caddr_t)&atms, (caddr_t)SCARG(uap, tms),
 	    sizeof (atms));
 	if (error == 0) {
-		tv = time;
+		microtime(&tv);
 		*(time_t *)retval = hpux_scale(&tv) -
 		    hpux_scale(&boottime);
 	}
@@ -1410,7 +1423,7 @@ hpux_sys_utime_6x(l, v, retval)
 		if (error)
 			return (error);
 	} else
-		tv[0] = tv[1] = time.tv_sec;
+		tv[0] = tv[1] = time_second;
 	vattr_null(&vattr);
 	vattr.va_atime.tv_sec = tv[0];
 	vattr.va_atime.tv_nsec = 0;
