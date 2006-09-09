@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.4 2006/08/21 04:13:28 thorpej Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.5 2006/09/09 06:59:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,6 +38,12 @@
 
 #ifndef _PROPLIB_PROP_OBJECT_IMPL_H_
 #define	_PROPLIB_PROP_OBJECT_IMPL_H_
+
+#if defined(_KERNEL) || defined(_STANDALONE)
+#include <lib/libkern/libkern.h>
+#else
+#include <inttypes.h>
+#endif
 
 struct _prop_object_externalize_context {
 	char *		poec_buf;		/* string buffer */
@@ -226,7 +232,6 @@ struct _prop_object_iterator {
  */
 
 #include <lib/libsa/stand.h>
-#include <lib/libkern/libkern.h>
 
 void *		_prop_standalone_calloc(size_t);
 void *		_prop_standalone_realloc(void *, size_t);
@@ -259,6 +264,7 @@ void *		_prop_standalone_realloc(void *, size_t);
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 
 #define	_PROP_ASSERT(x)		assert(x)
 
