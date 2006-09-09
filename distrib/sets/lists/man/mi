@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.928 2006/09/07 14:22:08 itohy Exp $
+# $NetBSD: mi,v 1.929 2006/09/09 23:52:27 riz Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1069,6 +1069,8 @@
 ./usr/share/man/cat4/mpt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mpu.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mr.0			man-sys-catman		.cat
+./usr/share/man/cat4/msk.0			man-sys-catman		.cat
+./usr/share/man/cat4/mskc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mtd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mtio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/multicast.0		man-sys-catman		.cat
@@ -3440,6 +3442,8 @@
 ./usr/share/man/man4/mpt.4			man-sys-man		.man
 ./usr/share/man/man4/mpu.4			man-sys-man		.man
 ./usr/share/man/man4/mr.4			man-sys-man		.man
+./usr/share/man/man4/msk.4			man-sys-man		.man
+./usr/share/man/man4/mskc.4			man-sys-man		.man
 ./usr/share/man/man4/mtd.4			man-sys-man		.man
 ./usr/share/man/man4/mtio.4			man-sys-man		.man
 ./usr/share/man/man4/multicast.4		man-sys-man		.man
