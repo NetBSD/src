@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.5 2006/08/22 21:21:23 thorpej Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.6 2006/09/09 06:59:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,9 +38,9 @@
 
 #include <prop/prop_number.h>
 #include "prop_object_impl.h"
+#include "prop_rb_impl.h"
 
 #if defined(_KERNEL)
-#include <sys/inttypes.h>
 #include <sys/systm.h>
 #elif defined(_STANDALONE)
 #include <sys/param.h>
@@ -48,13 +48,17 @@
 #else
 #include <errno.h>
 #include <stdlib.h>
-#include <inttypes.h>
 #endif
 
 struct _prop_number {
 	struct _prop_object	pn_obj;
+	struct rb_node		pn_link;
 	uint64_t		pn_number;
 };
+
+#define	RBNODE_TO_PN(n)							\
+	((struct _prop_number *)					\
+	 ((uintptr_t)n - offsetof(struct _prop_number, pn_link)))
 
 _PROP_POOL_INIT(_prop_number_pool, sizeof(struct _prop_number), "propnmbr")
 
@@ -74,11 +78,60 @@ static const struct _prop_object_type _prop_object_type_number = {
 #define	prop_object_is_number(x)	\
 	((x) != NULL && (x)->pn_obj.po_type == &_prop_object_type_number)
 
+/*
+ * Number objects are immutable, and we are likely to have many number
+ * objects that have the same value.  So, to save memory, we unique'ify
+ * numbers so we only have one copy of each.
+ */
+
+static int
+_prop_number_rb_compare_nodes(const struct rb_node *n1,
+			      const struct rb_node *n2)
+{
+	const prop_number_t pn1 = RBNODE_TO_PN(n1);
+	const prop_number_t pn2 = RBNODE_TO_PN(n2);
+
+	if (pn1->pn_number < pn2->pn_number)
+		return (-1);
+	if (pn1->pn_number > pn2->pn_number)
+		return (1);
+	return (0);
+}
+
+static int
+_prop_number_rb_compare_key(const struct rb_node *n,
+			    const void *v)
+{
+	const prop_number_t pn = RBNODE_TO_PN(n);
+	const uint64_t *valp = v;
+
+	if (pn->pn_number < *valp)
+		return (-1);
+	if (pn->pn_number > *valp)
+		return (1);
+	return (0);
+}
+
+static const struct rb_tree_ops _prop_number_rb_tree_ops = {
+	.rbto_compare_nodes = _prop_number_rb_compare_nodes,
+	.rbto_compare_key   = _prop_number_rb_compare_key,
+};
+
+static struct rb_tree _prop_number_tree;
+static boolean_t _prop_number_tree_initialized;
+
+_PROP_MUTEX_DECL(_prop_number_tree_mutex)
+
 static void
 _prop_number_free(void *v)
 {
+	prop_number_t pn = v;
 
-	_PROP_POOL_PUT(_prop_number_pool, v);
+	_PROP_MUTEX_LOCK(_prop_number_tree_mutex);
+	_prop_rb_tree_remove_node(&_prop_number_tree, &pn->pn_link);
+	_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
+
+	_PROP_POOL_PUT(_prop_number_pool, pn);
 }
 
 static boolean_t
@@ -108,21 +161,66 @@ _prop_number_equals(void *v1, void *v2)
 	       prop_object_is_number(num2)))
 		return (FALSE);
 
-	return (num1->pn_number == num2->pn_number);
+	/*
+	 * There is only ever one copy of a number object at any given
+	 * time, so we can reduce this to a simple pointer equality check.
+	 */
+	return (num1 == num2);
 }
 
 static prop_number_t
 _prop_number_alloc(uint64_t val)
 {
-	prop_number_t pn;
+	prop_number_t opn, pn;
+	struct rb_node *n;
+
+	/*
+	 * Check to see if this already exists in the tree.  If it does,
+	 * we just retain it and return it.
+	 */
+	_PROP_MUTEX_LOCK(_prop_number_tree_mutex);
+	if (! _prop_number_tree_initialized) {
+		_prop_rb_tree_init(&_prop_number_tree,
+				   &_prop_number_rb_tree_ops);
+		_prop_number_tree_initialized = TRUE;
+	} else {
+		n = _prop_rb_tree_find(&_prop_number_tree, &val);
+		if (n != NULL) {
+			opn = RBNODE_TO_PN(n);
+			prop_object_retain(opn);
+			_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
+			return (opn);
+		}
+	}
+	_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
+
+	/*
+	 * Not in the tree.  Create it now.
+	 */
 
 	pn = _PROP_POOL_GET(_prop_number_pool);
-	if (pn != NULL) {
-		_prop_object_init(&pn->pn_obj, &_prop_object_type_number);
+	if (pn == NULL)
+		return (NULL);
 
-		pn->pn_number = val;
+	_prop_object_init(&pn->pn_obj, &_prop_object_type_number);
+
+	pn->pn_number = val;
+
+	/*
+	 * We dropped the mutex when we allocated the new object, so
+	 * we have to check again if it is in the tree.
+	 */
+	_PROP_MUTEX_LOCK(_prop_number_tree_mutex);
+	n = _prop_rb_tree_find(&_prop_number_tree, &val);
+	if (n != NULL) {
+		opn = RBNODE_TO_PN(n);
+		prop_object_retain(opn);
+		_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
+		_PROP_POOL_PUT(_prop_number_pool, pn);
+		return (opn);
 	}
-
+	_prop_rb_tree_insert_node(&_prop_number_tree, &pn->pn_link);
+	_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
 	return (pn);
 }
 
@@ -149,7 +247,12 @@ prop_number_copy(prop_number_t opn)
 	if (! prop_object_is_number(opn))
 		return (NULL);
 
-	return (_prop_number_alloc(opn->pn_number));
+	/*
+	 * Because we only ever allocate one object for any given
+	 * value, this can be reduced to a simple retain operation.
+	 */
+	prop_object_retain(opn);
+	return (opn);
 }
 
 /*

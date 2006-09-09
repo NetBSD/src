@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.11 2006/08/22 21:21:23 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.12 2006/09/09 06:59:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,12 +39,7 @@
 #include <prop/prop_dictionary.h>
 #include <prop/prop_string.h>
 #include "prop_object_impl.h"
-
-#if defined(__NetBSD__)
-#include <sys/tree.h>
-#else
-#error Need to find a NetBSD sys/tree.h
-#endif
+#include "prop_rb_impl.h"
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <errno.h>
@@ -72,10 +67,14 @@
 struct _prop_dictionary_keysym {
 	struct _prop_object		pdk_obj;
 	size_t				pdk_size;
-	RB_ENTRY(_prop_dictionary_keysym) pdk_link;
+	struct rb_node			pdk_link;
 	char 				pdk_key[1];
 	/* actually variable length */
 };
+
+#define	RBNODE_TO_PDK(n)						\
+	((struct _prop_dictionary_keysym *)				\
+	 ((uintptr_t)n - offsetof(struct _prop_dictionary_keysym, pdk_link)))
 
 	/* pdk_key[1] takes care of the NUL */
 #define	PDK_SIZE_16		(sizeof(struct _prop_dictionary_keysym) + 16)
@@ -156,19 +155,32 @@ struct _prop_dictionary_iterator {
  */
 
 static int
-_prop_dict_keysym_tree_cmp(prop_dictionary_keysym_t pdk1,
-			   prop_dictionary_keysym_t pdk2)
+_prop_dict_keysym_rb_compare_nodes(const struct rb_node *n1,
+				   const struct rb_node *n2)
 {
+	const prop_dictionary_keysym_t pdk1 = RBNODE_TO_PDK(n1);
+	const prop_dictionary_keysym_t pdk2 = RBNODE_TO_PDK(n2);
 
 	return (strcmp(pdk1->pdk_key, pdk2->pdk_key));
 }
 
-static RB_HEAD(_prop_dict_keysym_tree, _prop_dictionary_keysym)
-    _prop_dict_keysym_tree = RB_INITIALIZER(&_prop_dict_keysym_tree);
-RB_PROTOTYPE(_prop_dict_keysym_tree, _prop_dictionary_keysym, pdk_link,
-	     _prop_dict_keysym_tree_cmp)
-RB_GENERATE(_prop_dict_keysym_tree, _prop_dictionary_keysym, pdk_link,
-	    _prop_dict_keysym_tree_cmp)
+static int
+_prop_dict_keysym_rb_compare_key(const struct rb_node *n,
+				 const void *v)
+{
+	const prop_dictionary_keysym_t pdk = RBNODE_TO_PDK(n);
+	const char *cp = v;
+
+	return (strcmp(pdk->pdk_key, cp));
+}
+
+static const struct rb_tree_ops _prop_dict_keysym_rb_tree_ops = {
+	.rbto_compare_nodes = _prop_dict_keysym_rb_compare_nodes,
+	.rbto_compare_key   = _prop_dict_keysym_rb_compare_key,
+};
+
+static struct rb_tree _prop_dict_keysym_tree;
+static boolean_t _prop_dict_keysym_tree_initialized;
 
 _PROP_MUTEX_DECL(_prop_dict_keysym_tree_mutex)
 
@@ -192,7 +204,7 @@ _prop_dict_keysym_free(void *v)
 	prop_dictionary_keysym_t pdk = v;
 
 	_PROP_MUTEX_LOCK(_prop_dict_keysym_tree_mutex);
-	RB_REMOVE(_prop_dict_keysym_tree, &_prop_dict_keysym_tree, pdk);
+	_prop_rb_tree_remove_node(&_prop_dict_keysym_tree, &pdk->pdk_link);
 	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
 
 	_prop_dict_keysym_put(pdk);
@@ -238,12 +250,31 @@ static prop_dictionary_keysym_t
 _prop_dict_keysym_alloc(const char *key)
 {
 	prop_dictionary_keysym_t opdk, pdk;
+	const struct rb_node *n;
 	size_t size;
 
 	/*
-	 * Because of the way our RB trees work, we need to create the
-	 * new keysym in order to check if it's already in the tree.
-	 * Oh well.
+	 * Check to see if this already exists in the tree.  If it does,
+	 * we just retain it and return it.
+	 */
+	_PROP_MUTEX_LOCK(_prop_dict_keysym_tree_mutex);
+	if (! _prop_dict_keysym_tree_initialized) {
+		_prop_rb_tree_init(&_prop_dict_keysym_tree,
+				   &_prop_dict_keysym_rb_tree_ops);
+		_prop_dict_keysym_tree_initialized = TRUE;
+	} else {
+		n = _prop_rb_tree_find(&_prop_dict_keysym_tree, key);
+		if (n != NULL) {
+			opdk = RBNODE_TO_PDK(n);
+			prop_object_retain(opdk);
+			_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
+			return (opdk);
+		}
+	}
+	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
+
+	/*
+	 * Not in the tree.  Create it now.
 	 */
 
 	size = sizeof(*pdk) + strlen(key) /* pdk_key[1] covers the NUL */;
@@ -266,18 +297,19 @@ _prop_dict_keysym_alloc(const char *key)
 	pdk->pdk_size = size;
 
 	/*
-	 * Now check to see if this already exists in the tree.  If it
-	 * does, we return a reference to the existing one and free the
-	 * new one we just created.
+	 * We dropped the mutex when we allocated the new object, so
+	 * we have to check again if it is in the tree.
 	 */
 	_PROP_MUTEX_LOCK(_prop_dict_keysym_tree_mutex);
-	opdk = RB_INSERT(_prop_dict_keysym_tree, &_prop_dict_keysym_tree, pdk);
-	if (opdk != NULL) {
+	n = _prop_rb_tree_find(&_prop_dict_keysym_tree, key);
+	if (n != NULL) {
+		opdk = RBNODE_TO_PDK(n);
 		prop_object_retain(opdk);
 		_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
 		_prop_dict_keysym_put(pdk);
 		return (opdk);
 	}
+	_prop_rb_tree_insert_node(&_prop_dict_keysym_tree, &pdk->pdk_link);
 	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
 	return (pdk);
 }
