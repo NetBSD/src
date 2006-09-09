@@ -1,6 +1,6 @@
-/*	$NetBSD: remoteconf.h,v 1.5 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: remoteconf.h,v 1.6 2006/09/09 16:22:10 manu Exp $	*/
 
-/* Id: remoteconf.h,v 1.19.2.1 2005/05/20 00:37:42 manubsd Exp */
+/* Id: remoteconf.h,v 1.26 2006/05/06 15:52:44 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -38,6 +38,10 @@
 
 #include <sys/queue.h>
 #include "genlist.h"
+#ifdef ENABLE_HYBRID
+#include "isakmp_var.h"
+#include "isakmp_xauth.h"
+#endif
 
 struct proposalspec;
 
@@ -51,7 +55,6 @@ struct etypes {
 #define SCRIPT_PHASE1_DOWN	1
 #define SCRIPT_MAX		1
 extern char *script_names[SCRIPT_MAX + 1];
-extern vchar_t *script_paths;
 
 struct remoteconf {
 	struct sockaddr *remote;	/* remote IP address */
@@ -86,11 +89,14 @@ struct remoteconf {
 	int esp_frag;			/* ESP fragmentation */
 	int mode_cfg;			/* Gets config through mode config */
 	int support_proxy;		/* support mip6/proxy */
+#define GENERATE_POLICY_NONE   0
+#define GENERATE_POLICY_REQUIRE        1
+#define GENERATE_POLICY_UNIQUE 2
 	int gen_policy;			/* generate policy if no policy found */
 	int ini_contact;		/* initial contact */
 	int pcheck_level;		/* level of propocl checking */
 	int nat_traversal;		/* NAT-Traversal */
-	int script[SCRIPT_MAX + 1];	/* script hooks index in script_paths */
+	vchar_t *script[SCRIPT_MAX + 1];/* script hooks paths */
 	int dh_group;			/* use it when only aggressive mode */
 	struct dhgroup *dhgrp;		/* use it when only aggressive mode */
 					/* above two can't be defined by user*/
@@ -104,6 +110,8 @@ struct remoteconf {
 	int dpd_interval;		/* in seconds */
 	int dpd_maxfails; 
 
+	int weak_phase1_check;		/* act on unencrypted deletions ? */
+
 	struct isakmpsa *proposal;	/* proposal list */
 	struct remoteconf *inherited_from;	/* the original rmconf 
 						   from which this one 
@@ -112,6 +120,11 @@ struct remoteconf {
 
 	struct genlist	*rsa_private,	/* lists of PlainRSA keys to use */
 			*rsa_public;
+
+#ifdef ENABLE_HYBRID
+	struct xauth_rmconf *xauth;
+#endif
+
 	TAILQ_ENTRY(remoteconf) chain;	/* next remote conf */
 };
 
@@ -159,6 +172,9 @@ extern void insrmconf __P((struct remoteconf *));
 extern void remrmconf __P((struct remoteconf *));
 extern void flushrmconf __P((void));
 extern void initrmconf __P((void));
+extern void save_rmconf __P((void));
+extern void save_rmconf_flush __P((void));
+
 extern struct etypes *check_etypeok
 	__P((struct remoteconf *, u_int8_t));
 extern struct remoteconf *foreachrmconf __P((rmconf_func_t rmconf_func,
@@ -173,6 +189,6 @@ extern void dumprmconf __P((void));
 
 extern struct idspec *newidspec __P((void));
 
-extern int script_path_add __P((vchar_t *));
+extern vchar_t *script_path_add __P((vchar_t *));
 
 #endif /* _REMOTECONF_H */

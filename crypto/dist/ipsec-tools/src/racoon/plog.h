@@ -1,6 +1,6 @@
-/*	$NetBSD: plog.h,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: plog.h,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
 
-/* Id: plog.h,v 1.5 2004/06/11 16:00:17 ludvigm Exp */
+/* Id: plog.h,v 1.7 2006/06/20 09:57:31 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -49,14 +49,14 @@
  * DEBUG1: debugging informatioin.
  * DEBUG2: too more verbose. e.g. parsing config.
  */
-#define LLV_INFO	1
-#define LLV_NOTIFY	2
-#define LLV_WARNING	3
-#define LLV_ERROR	4
+#define LLV_ERROR	1
+#define LLV_WARNING	2
+#define LLV_NOTIFY	3
+#define LLV_INFO	4
 #define LLV_DEBUG	5
 #define LLV_DEBUG2	6
  
-#define LLV_BASE	4	/* always logging less than this value. */
+#define LLV_BASE	LLV_INFO /* by default log less than this value. */
 
 extern char *pname;
 extern u_int32_t loglevel;
@@ -71,5 +71,7 @@ extern void plogv __P((int, const char *, struct sockaddr *,
 extern void plogdump __P((int, void *, size_t));
 extern void ploginit __P((void));
 extern void plogset __P((char *));
+
+extern char* binsanitize __P((char*, size_t));
 
 #endif /* _PLOG_H */

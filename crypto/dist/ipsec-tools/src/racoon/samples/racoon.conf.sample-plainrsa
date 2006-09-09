@@ -1,4 +1,4 @@
-# Id: racoon.conf.sample-plainrsa,v 1.2.10.1 2005/04/18 11:10:55 manubsd Exp
+# Id: racoon.conf.sample-plainrsa,v 1.4 2005/12/13 16:41:07 vanhu Exp
 # Contributed by: Michal Ludvig <mludvig@suse.cz>, SUSE Labs
 #                 http://www.logix.cz/michal
 
@@ -26,7 +26,7 @@ remote anonymous
 	peers_certfile plain_rsa "pubkey2.rsa";
 
 	# Standard setup follows...
-	proposal_check obey;
+	proposal_check strict;
 
 	proposal {
 		encryption_algorithm 3des;

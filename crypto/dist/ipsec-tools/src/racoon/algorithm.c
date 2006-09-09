@@ -1,6 +1,6 @@
-/*	$NetBSD: algorithm.c,v 1.5 2005/11/21 14:20:28 manu Exp $	*/
+/*	$NetBSD: algorithm.c,v 1.6 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: algorithm.c,v 1.11.4.1 2005/06/28 22:38:02 manubsd Exp */
+/* Id: algorithm.c,v 1.15 2006/05/23 20:23:09 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -215,22 +215,46 @@ static struct misc_algorithm ipsec_compdef[] = {
 { "lzs",	algtype_lzs,		IPSECDOI_IPCOMP_LZS, },
 };
 
+/*
+ * In case of asymetric modes (hybrid xauth), what's racoon mode of
+ * operations ; it seems that the proposal should always use the
+ * initiator half (unless a server initiates a connection, which is
+ * not handled, and probably not useful).
+ */
 static struct misc_algorithm oakley_authdef[] = {
-{ "pre_shared_key",	algtype_psk,		OAKLEY_ATTR_AUTH_METHOD_PSKEY, },
-{ "dsssig",	algtype_dsssig,		OAKLEY_ATTR_AUTH_METHOD_DSSSIG, },
-{ "rsasig",	algtype_rsasig,		OAKLEY_ATTR_AUTH_METHOD_RSASIG, },
-{ "rsaenc",	algtype_rsaenc,		OAKLEY_ATTR_AUTH_METHOD_RSAENC, },
-{ "rsarev",	algtype_rsarev,		OAKLEY_ATTR_AUTH_METHOD_RSAREV, },
-{ "gssapi_krb",	algtype_gssapikrb,	OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB, },
+{ "pre_shared_key",	algtype_psk,	OAKLEY_ATTR_AUTH_METHOD_PSKEY, },
+{ "dsssig",		algtype_dsssig,	OAKLEY_ATTR_AUTH_METHOD_DSSSIG, },
+{ "rsasig",		algtype_rsasig,	OAKLEY_ATTR_AUTH_METHOD_RSASIG, },
+{ "rsaenc",		algtype_rsaenc,	OAKLEY_ATTR_AUTH_METHOD_RSAENC, },
+{ "rsarev",		algtype_rsarev,	OAKLEY_ATTR_AUTH_METHOD_RSAREV, },
+
+{ "gssapi_krb",		algtype_gssapikrb,
+    OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB, },
+
 #ifdef ENABLE_HYBRID
-{ "hybrid_rsa_server",        algtype_hybrid_rsa_s,
-	OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_I, },
-{ "hybrid_dss_server",        algtype_hybrid_dss_s,
-	OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_I, },
-{ "hybrid_rsa_client",        algtype_hybrid_rsa_c,
-	OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_R, },
-{ "hybrid_dss_client",        algtype_hybrid_dss_c,
-	OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_R, },
+{ "hybrid_rsa_server",	algtype_hybrid_rsa_s,	
+    OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_R, },
+
+{ "hybrid_dss_server",	algtype_hybrid_dss_s,	
+    OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_R, },
+
+{ "xauth_psk_server", 	algtype_xauth_psk_s,	
+    OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_R, },
+
+{ "xauth_rsa_server", 	algtype_xauth_rsa_s,	
+    OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_R, },
+
+{ "hybrid_rsa_client",	algtype_hybrid_rsa_c,	
+    OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_I, },
+
+{ "hybrid_dss_client",	algtype_hybrid_dss_c,	
+    OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_I, },
+
+{ "xauth_psk_client",	algtype_xauth_psk_c,	
+    OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_I, },
+
+{ "xauth_rsa_client",	algtype_xauth_rsa_c,	
+    OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_I, },
 #endif
 };
 
@@ -396,7 +420,7 @@ alg_oakley_hmacdef_one(doi, key, buf)
 
 #ifdef ENABLE_STATS
 	gettimeofday(&end, NULL);
-	syslog(LOG_NOTICE, "%s(%s size=%d): %8.6f", __func__,
+	syslog(LOG_NOTICE, "%s(%s size=%zu): %8.6f", __func__,
 		f->name, buf->l, timedelta(&start, &end));
 #endif
 
@@ -508,7 +532,7 @@ alg_oakley_encdef_decrypt(doi, buf, key, iv)
 
 #ifdef ENABLE_STATS
 	gettimeofday(&end, NULL);
-	syslog(LOG_NOTICE, "%s(%s klen=%d size=%d): %8.6f", __func__,
+	syslog(LOG_NOTICE, "%s(%s klen=%zu size=%zu): %8.6f", __func__,
 		f->name, key->l << 3, buf->l, timedelta(&start, &end));
 #endif
 	return res;
@@ -537,7 +561,7 @@ alg_oakley_encdef_encrypt(doi, buf, key, iv)
 
 #ifdef ENABLE_STATS
 	gettimeofday(&end, NULL);
-	syslog(LOG_NOTICE, "%s(%s klen=%d size=%d): %8.6f", __func__,
+	syslog(LOG_NOTICE, "%s(%s klen=%zu size=%zu): %8.6f", __func__,
 		f->name, key->l << 3, buf->l, timedelta(&start, &end));
 #endif
 	return res;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken_proto.h,v 1.3 2005/11/21 14:20:28 manu Exp $	*/
+/*	$NetBSD: cftoken_proto.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
 /* Id: cftoken_proto.h,v 1.3 2004/06/11 16:00:15 ludvigm Exp */
 

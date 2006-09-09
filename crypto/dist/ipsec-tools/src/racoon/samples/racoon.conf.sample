@@ -39,10 +39,12 @@ remote anonymous
 		dh_group 2 ;
 	}
 
-	# the configuration makes racoon (as a responder) to obey the
-	# initiator's lifetime and PFS group proposal.
-	# this makes testing so much easier.
-	proposal_check obey;
+	# the configuration could makes racoon (as a responder)
+	# to obey the initiator's lifetime and PFS group proposal,
+	# by setting proposal_check to obey.
+	# this would makes testing "so much easier", but is really
+	# *not* secure !!!
+	proposal_check strict;
 }
 
 # phase 2 proposal (for IPsec SA).

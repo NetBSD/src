@@ -1,6 +1,6 @@
-/*	$NetBSD: localconf.h,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: localconf.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: localconf.h,v 1.9.2.3 2005/11/06 17:18:26 monas Exp */
+/* Id: localconf.h,v 1.13 2005/11/06 18:13:18 monas Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -130,5 +130,8 @@ extern void getpathname __P((char *, int, int, const char *));
 extern int sittype2doi __P((int));
 extern int doitype2doi __P((int));
 extern vchar_t *getpsk __P((const char *, const int)); 
+
+extern void restore_params __P((void));
+extern void save_params __P((void));
 
 #endif /* _LOCALCONF_H */

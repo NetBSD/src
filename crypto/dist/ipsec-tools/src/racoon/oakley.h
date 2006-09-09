@@ -1,6 +1,6 @@
-/*	$NetBSD: oakley.h,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: oakley.h,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
 
-/* Id: oakley.h,v 1.9 2004/10/24 17:37:00 manubsd Exp */
+/* Id: oakley.h,v 1.13 2005/05/30 20:12:43 fredsen Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -75,7 +75,7 @@
 
 					/*	65001 - 65535 Private Use */
 
-        /* Plain Xauth, Not implemented */
+        /* Plain Xauth */
 #define OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_I	65001
 #define OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_R	65002
 #define OAKLEY_ATTR_AUTH_METHOD_XAUTH_DSSSIG_I	65003
@@ -87,6 +87,12 @@
 #define OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAREV_I	65009
 #define OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAREV_R	65010
 #endif
+
+					/*	65500 -> still private
+					 * to avoid clash with GSSAPI_KRB below 
+					 */
+#define FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I	65500
+
 
 	/*
 	 * The following are valid when the Vendor ID is one of
@@ -216,5 +222,21 @@ extern vchar_t *oakley_do_decrypt __P((struct ph1handle *,
 	vchar_t *, vchar_t *, vchar_t *));
 extern vchar_t *oakley_do_encrypt __P((struct ph1handle *,
 	vchar_t *, vchar_t *, vchar_t *));
+
+#ifdef ENABLE_HYBRID
+#define AUTHMETHOD(iph1)						     \
+    (((iph1)->rmconf->xauth &&						     \
+    (iph1)->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_I) ? \
+	FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I : (iph1)->approval->authmethod)
+#define RMAUTHMETHOD(iph1)						     \
+    (((iph1)->rmconf->xauth &&						     \
+    (iph1)->rmconf->proposal->authmethod ==                                  \
+	OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_I) ?                             \
+	FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I :                                  \
+	(iph1)->rmconf->proposal->authmethod)
+#else
+#define AUTHMETHOD(iph1) (iph1)->approval->authmethod
+#define RMAUTHMETHOD(iph1) (iph1)->rmconf->proposal->authmethod
+#endif /* ENABLE_HYBRID */
 
 #endif /* _OAKLEY_H */

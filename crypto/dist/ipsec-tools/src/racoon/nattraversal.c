@@ -1,4 +1,4 @@
-/*	$NetBSD: nattraversal.c,v 1.5 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: nattraversal.c,v 1.6 2006/09/09 16:22:09 manu Exp $	*/
 
 /*
  * Copyright (C) 2004 SuSE Linux AG, Nuernberg, Germany.
@@ -198,6 +198,11 @@ natt_compare_addr_hash (struct ph1handle *iph1, vchar_t *natd_received,
     flag = NAT_DETECTED_PEER;
   }
 
+  if (natd_computed == NULL) {
+	plog(LLV_ERROR, LOCATION, NULL, "natd_computed allocation failed\n");
+	return verified; /* XXX should abort */
+  }
+
   if (natd_received->l == natd_computed->l &&
       memcmp (natd_received->v, natd_computed->v, natd_received->l) == 0) {
     iph1->natt_flags &= ~flag;
@@ -377,8 +382,16 @@ natt_keepalive_add (struct sockaddr *src, struct sockaddr *dst)
     return -1;
   }
 
-  new_addr->src = dupsaddr(src);
-  new_addr->dst = dupsaddr(dst);
+  if ((new_addr->src = dupsaddr(src)) == NULL) {
+	racoon_free(new_addr);
+    	plog (LLV_ERROR, LOCATION, NULL, "Can't allocate new KA list item\n");
+	return -1;
+  }
+  if ((new_addr->dst = dupsaddr(dst)) == NULL) {
+	racoon_free(new_addr);
+    	plog (LLV_ERROR, LOCATION, NULL, "Can't allocate new KA list item\n");
+	return -1;
+  }
   new_addr->in_use = 1;
   TAILQ_INSERT_TAIL(&ka_tree, new_addr, chain);
 

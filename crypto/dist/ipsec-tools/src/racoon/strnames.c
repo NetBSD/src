@@ -1,4 +1,4 @@
-/*	$NetBSD: strnames.c,v 1.5 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: strnames.c,v 1.6 2006/09/09 16:22:10 manu Exp $	*/
 
 /*	$KAME: strnames.c,v 1.25 2003/11/13 10:53:26 itojun Exp $	*/
 
@@ -47,6 +47,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef ENABLE_HYBRID
+#include <resolv.h>
+#endif
 
 #include "var.h"
 #include "misc.h"
@@ -55,6 +58,11 @@
 
 #include "isakmp_var.h"
 #include "isakmp.h"
+#ifdef ENABLE_HYBRID
+#  include "isakmp_xauth.h"
+#  include "isakmp_unity.h"
+#  include "isakmp_cfg.h"
+#endif
 #include "ipsec_doi.h"
 #include "oakley.h"
 #include "handler.h"
@@ -220,6 +228,7 @@ static struct ksmap name_isakmp_etype[] = {
 { ISAKMP_ETYPE_AUTH,	"Authentication Only",	NULL },
 { ISAKMP_ETYPE_AGG,	"Aggressive",		NULL },
 { ISAKMP_ETYPE_INFO,	"Informational",	NULL },
+{ ISAKMP_ETYPE_CFG,	"Mode config",		NULL },
 { ISAKMP_ETYPE_QUICK,	"Quick",		NULL },
 { ISAKMP_ETYPE_NEWGRP,	"New Group",		NULL },
 { ISAKMP_ETYPE_ACKINFO,	"Acknowledged Informational",	NULL },
@@ -271,6 +280,9 @@ static struct ksmap name_isakmp_notify_msg[] = {
 { ISAKMP_NTYPE_RESPONDER_LIFETIME,	"RESPONDER-LIFETIME",		NULL },
 { ISAKMP_NTYPE_REPLAY_STATUS,		"REPLAY-STATUS",		NULL },
 { ISAKMP_NTYPE_INITIAL_CONTACT,		"INITIAL-CONTACT",		NULL },
+#ifdef ENABLE_HYBRID
+{ ISAKMP_NTYPE_UNITY_HEARTBEAT,		"HEARTBEAT (Unity)",		NULL },
+#endif
 { ISAKMP_LOG_RETRY_LIMIT_REACHED,	"RETRY-LIMIT-REACHED",		NULL },
 };
 
@@ -287,25 +299,27 @@ s_isakmp_notify_msg(k)
 }
 
 static struct ksmap name_isakmp_nptype[] = {
-{ ISAKMP_NPTYPE_NONE,	"none",		NULL },
-{ ISAKMP_NPTYPE_SA,	"sa",		NULL },
-{ ISAKMP_NPTYPE_P,	"prop",		NULL },
-{ ISAKMP_NPTYPE_T,	"trns",		NULL },
-{ ISAKMP_NPTYPE_KE,	"ke",		NULL },
-{ ISAKMP_NPTYPE_ID,	"id",		NULL },
-{ ISAKMP_NPTYPE_CERT,	"cert",		NULL },
-{ ISAKMP_NPTYPE_CR,	"cr",		NULL },
-{ ISAKMP_NPTYPE_HASH,	"hash",		NULL },
-{ ISAKMP_NPTYPE_SIG,	"sig",		NULL },
-{ ISAKMP_NPTYPE_NONCE,	"nonce",	NULL },
-{ ISAKMP_NPTYPE_N,	"notify",	NULL },
-{ ISAKMP_NPTYPE_D,	"delete",	NULL },
-{ ISAKMP_NPTYPE_VID,	"vid",		NULL },
-{ ISAKMP_NPTYPE_GSS,	"gss id",	NULL },
+{ ISAKMP_NPTYPE_NONE,		"none",		NULL },
+{ ISAKMP_NPTYPE_SA,		"sa",		NULL },
+{ ISAKMP_NPTYPE_P,		"prop",		NULL },
+{ ISAKMP_NPTYPE_T,		"trns",		NULL },
+{ ISAKMP_NPTYPE_KE,		"ke",		NULL },
+{ ISAKMP_NPTYPE_ID,		"id",		NULL },
+{ ISAKMP_NPTYPE_CERT,		"cert",		NULL },
+{ ISAKMP_NPTYPE_CR,		"cr",		NULL },
+{ ISAKMP_NPTYPE_HASH,		"hash",		NULL },
+{ ISAKMP_NPTYPE_SIG,		"sig",		NULL },
+{ ISAKMP_NPTYPE_NONCE,		"nonce",	NULL },
+{ ISAKMP_NPTYPE_N,		"notify",	NULL },
+{ ISAKMP_NPTYPE_D,		"delete",	NULL },
+{ ISAKMP_NPTYPE_VID,		"vid",		NULL },
+{ ISAKMP_NPTYPE_ATTR,		"attr",		NULL },
+{ ISAKMP_NPTYPE_GSS,		"gss id",	NULL },
 { ISAKMP_NPTYPE_NATD_RFC,	"nat-d",	NULL },
 { ISAKMP_NPTYPE_NATOA_RFC,	"nat-oa",	NULL },
 { ISAKMP_NPTYPE_NATD_DRAFT,	"nat-d",	NULL },
 { ISAKMP_NPTYPE_NATOA_DRAFT,	"nat-oa",	NULL },
+{ ISAKMP_NPTYPE_FRAG,		"ike frag",	NULL },
 };
 
 char *
@@ -318,6 +332,79 @@ s_isakmp_nptype(k)
 			return name_isakmp_nptype[i].str;
 	return num2str(k);
 }
+
+#ifdef ENABLE_HYBRID
+/* isakmp_cfg.h / isakmp_unity.h / isakmp_xauth.h */
+static struct ksmap name_isakmp_cfg_type[] = {
+{ INTERNAL_IP4_ADDRESS,		"INTERNAL_IP4_ADDRESS",		NULL },
+{ INTERNAL_IP4_NETMASK,		"INTERNAL_IP4_NETMASK",		NULL },
+{ INTERNAL_IP4_DNS,		"INTERNAL_IP4_DNS",		NULL },
+{ INTERNAL_IP4_NBNS,		"INTERNAL_IP4_NBNS",		NULL },
+{ INTERNAL_ADDRESS_EXPIRY,	"INTERNAL_ADDRESS_EXPIRY",	NULL },
+{ INTERNAL_IP4_DHCP,		"INTERNAL_IP4_DHCP",		NULL },
+{ APPLICATION_VERSION,		"APPLICATION_VERSION",		NULL },
+{ INTERNAL_IP6_ADDRESS,		"INTERNAL_IP6_ADDRESS",		NULL },
+{ INTERNAL_IP6_NETMASK,		"INTERNAL_IP6_NETMASK",		NULL },
+{ INTERNAL_IP6_DNS,		"INTERNAL_IP6_DNS",		NULL },
+{ INTERNAL_IP6_NBNS,		"INTERNAL_IP6_NBNS",		NULL },
+{ INTERNAL_IP6_DHCP,		"INTERNAL_IP6_DHCP",		NULL },
+{ INTERNAL_IP4_SUBNET,		"INTERNAL_IP4_SUBNET",		NULL },
+{ SUPPORTED_ATTRIBUTES,		"SUPPORTED_ATTRIBUTES",		NULL },
+{ INTERNAL_IP6_SUBNET,		"INTERNAL_IP6_SUBNET",		NULL },
+{ XAUTH_TYPE,			"XAUTH_TYPE",			NULL },
+{ XAUTH_USER_NAME,		"XAUTH_USER_NAME",		NULL },
+{ XAUTH_USER_PASSWORD,		"XAUTH_USER_PASSWORD",		NULL },
+{ XAUTH_PASSCODE,		"XAUTH_PASSCODE",		NULL },
+{ XAUTH_MESSAGE,		"XAUTH_MESSAGE",		NULL },
+{ XAUTH_CHALLENGE,		"XAUTH_CHALLENGE",		NULL },
+{ XAUTH_DOMAIN,			"XAUTH_DOMAIN",			NULL },
+{ XAUTH_STATUS,			"XAUTH_STATUS",			NULL },
+{ XAUTH_NEXT_PIN,		"XAUTH_NEXT_PIN",		NULL },
+{ XAUTH_ANSWER,			"XAUTH_ANSWER",			NULL },
+{ UNITY_BANNER,			"UNITY_BANNER",			NULL },
+{ UNITY_SAVE_PASSWD,		"UNITY_SAVE_PASSWD",		NULL },
+{ UNITY_DEF_DOMAIN,		"UNITY_DEF_DOMAIN",		NULL },
+{ UNITY_SPLITDNS_NAME,		"UNITY_SPLITDNS_NAME",		NULL },
+{ UNITY_SPLIT_INCLUDE,		"UNITY_SPLIT_INCLUDE",		NULL },
+{ UNITY_NATT_PORT,		"UNITY_NATT_PORT",		NULL },
+{ UNITY_LOCAL_LAN,		"UNITY_LOCAL_LAN",		NULL },
+{ UNITY_PFS,			"UNITY_PFS",			NULL },
+{ UNITY_FW_TYPE,		"UNITY_FW_TYPE",		NULL },
+{ UNITY_BACKUP_SERVERS,		"UNITY_BACKUP_SERVERS",		NULL },
+{ UNITY_DDNS_HOSTNAME,		"UNITY_DDNS_HOSTNAME",		NULL },
+};
+
+char *
+s_isakmp_cfg_type(k)
+	int k;
+{
+	int i;
+	for (i = 0; i < ARRAYLEN(name_isakmp_cfg_type); i++)
+		if (name_isakmp_cfg_type[i].key == k)
+			return name_isakmp_cfg_type[i].str;
+	return num2str(k);
+}
+
+/* isakmp_cfg.h / isakmp_unity.h / isakmp_xauth.h */
+static struct ksmap name_isakmp_cfg_ptype[] = {
+{ ISAKMP_CFG_ACK,		"mode config ACK",		NULL },
+{ ISAKMP_CFG_SET,		"mode config SET",		NULL },
+{ ISAKMP_CFG_REQUEST,		"mode config REQUEST",		NULL },
+{ ISAKMP_CFG_REPLY,		"mode config REPLY",		NULL },
+};
+
+char *
+s_isakmp_cfg_ptype(k)
+	int k;
+{
+	int i;
+	for (i = 0; i < ARRAYLEN(name_isakmp_cfg_ptype); i++)
+		if (name_isakmp_cfg_ptype[i].key == k)
+			return name_isakmp_cfg_ptype[i].str;
+	return num2str(k);
+}
+
+#endif
 
 /* ipsec_doi.h */
 static struct ksmap name_ipsecdoi_proto[] = {
@@ -587,6 +674,7 @@ static struct ksmap name_attr_isakmp_enc[] = {
 { OAKLEY_ATTR_ENC_ALG_RC5,	"RC5-R16-B64-CBC",	NULL },
 { OAKLEY_ATTR_ENC_ALG_3DES,	"3DES-CBC",		NULL },
 { OAKLEY_ATTR_ENC_ALG_CAST,	"CAST-CBC",		NULL },
+{ OAKLEY_ATTR_ENC_ALG_AES,	"AES-CBC",		NULL },
 };
 
 char *
@@ -621,19 +709,25 @@ s_attr_isakmp_hash(k)
 }
 
 static struct ksmap name_attr_isakmp_method[] = {
-{ OAKLEY_ATTR_AUTH_METHOD_PSKEY,	"pre-shared key",	NULL },
-{ OAKLEY_ATTR_AUTH_METHOD_DSSSIG,	"DSS signatures",	NULL },
-{ OAKLEY_ATTR_AUTH_METHOD_RSASIG,	"RSA signatures",	NULL },
-{ OAKLEY_ATTR_AUTH_METHOD_RSAENC,	"Encryption with RSA",	NULL },
-{ OAKLEY_ATTR_AUTH_METHOD_RSAREV,	"Revised encryption with RSA",	NULL },
-{ OAKLEY_ATTR_AUTH_METHOD_EGENC,	"Encryption with El-Gamal",	NULL },
-{ OAKLEY_ATTR_AUTH_METHOD_EGREV,	"Revised encryption with El-Gamal",	NULL },
-{ OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB,	"GSS-API on Kerberos 5", NULL },
+{ OAKLEY_ATTR_AUTH_METHOD_PSKEY,		"pre-shared key",	NULL },
+{ OAKLEY_ATTR_AUTH_METHOD_DSSSIG,		"DSS signatures",	NULL },
+{ OAKLEY_ATTR_AUTH_METHOD_RSASIG,		"RSA signatures",	NULL },
+{ OAKLEY_ATTR_AUTH_METHOD_RSAENC,		"Encryption with RSA",	NULL },
+{ OAKLEY_ATTR_AUTH_METHOD_RSAREV,		"Revised encryption with RSA",	NULL },
+{ OAKLEY_ATTR_AUTH_METHOD_EGENC,		"Encryption with El-Gamal",	NULL },
+{ OAKLEY_ATTR_AUTH_METHOD_EGREV,		"Revised encryption with El-Gamal",	NULL },
+#ifdef HAVE_GSSAPI
+{ OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB,		"GSS-API on Kerberos 5", NULL },
+#endif
 #ifdef ENABLE_HYBRID
-{ OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_I,	"Hybrid DSS server",	NULL },
-{ OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_I,	"Hybrid RSA server",	NULL },
-{ OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_R,	"Hybrid DSS client",	NULL },
-{ OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_R,	"Hybrid RSA client",	NULL },
+{ OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_R,		"Hybrid DSS server",	NULL },
+{ OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_R,		"Hybrid RSA server",	NULL },
+{ OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_I,		"Hybrid DSS client",	NULL },
+{ OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_I,		"Hybrid RSA client",	NULL },
+{ OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_I,	"XAuth pskey client",	NULL },
+{ OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_R,	"XAuth pskey server",	NULL },
+{ OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_I,	"XAuth RSASIG client",	NULL },
+{ OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_R,	"XAuth RSASIG server",	NULL },
 #endif
 };
 
@@ -780,7 +874,7 @@ static struct ksmap name_pfkey_type[] = {
 { SADB_EXPIRE,		"EXPIRE",	NULL },
 { SADB_FLUSH,		"FLUSH",	NULL },
 { SADB_DUMP,		"DUMP",		NULL },
-{ SADB_X_PROMISC,	"X_PRIMISC",	NULL },
+{ SADB_X_PROMISC,	"X_PROMISC",	NULL },
 { SADB_X_PCHANGE,	"X_PCHANGE",	NULL },
 { SADB_X_SPDUPDATE,	"X_SPDUPDATE",	NULL },
 { SADB_X_SPDADD,	"X_SPDADD",	NULL },
@@ -792,8 +886,11 @@ static struct ksmap name_pfkey_type[] = {
 { SADB_X_SPDSETIDX,	"X_SPDSETIDX",	NULL },
 { SADB_X_SPDEXPIRE,	"X_SPDEXPIRE",	NULL },
 { SADB_X_SPDDELETE2,	"X_SPDDELETE2",	NULL },
-#ifdef ENABLE_NATT
+#ifdef SADB_X_NAT_T_NEW_MAPPING
 { SADB_X_NAT_T_NEW_MAPPING, "X_NAT_T_NEW_MAPPING", NULL },
+#endif
+#ifdef SADB_X_MIGRATE
+{ SADB_X_MIGRATE,	"X_MIGRATE",	NULL },
 #endif
 };
 

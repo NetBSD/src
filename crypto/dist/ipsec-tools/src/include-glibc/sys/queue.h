@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.3 2005/11/21 14:20:28 manu Exp $	*/
+/*	$NetBSD: queue.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
