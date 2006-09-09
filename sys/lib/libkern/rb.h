@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.4 2006/09/08 04:07:15 matt Exp $ */
+/* $NetBSD: rb.h,v 1.5 2006/09/09 05:55:51 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -97,11 +97,11 @@ struct rb_node {
 #if !defined(NDEBUG) || defined(DEBUG)
 TAILQ_HEAD(rb_node_qh, rb_node);
 
-#define	RB_TAILQ_REMOVE				TAILQ_REMOVE
-#define	RB_TAILQ_INIT				TAILQ_INIT
-#define	RB_TAILQ_INSERT_HEAD(a, b, c)		TAILQ_INSERT_HEAD
-#define	RB_TAILQ_INSERT_BEFORE(a, b, c)		TAILQ_INSERT_BEFORE
-#define	RB_TAILQ_INSERT_AFTER(a, b, c, d)	TAILQ_INSERT_AFTER
+#define	RB_TAILQ_REMOVE(a, b, c)		TAILQ_REMOVE(a, b, c)
+#define	RB_TAILQ_INIT(a)			TAILQ_INIT(a)
+#define	RB_TAILQ_INSERT_HEAD(a, b, c)		TAILQ_INSERT_HEAD(a, b, c)
+#define	RB_TAILQ_INSERT_BEFORE(a, b, c)		TAILQ_INSERT_BEFORE(a, b, c)
+#define	RB_TAILQ_INSERT_AFTER(a, b, c, d)	TAILQ_INSERT_AFTER(a, b, c, d)
 #else
 #define	RB_TAILQ_REMOVE(a, b, c)		do { } while (0)
 #define	RB_TAILQ_INIT(a)			do { } while (0)
@@ -121,16 +121,40 @@ struct rb_tree {
 #endif
 	rb_compare_nodes_fn rbt_compare_nodes;
 	rb_compare_key_fn rbt_compare_key;
+	struct rb_node *rbt_minmax[2];
 	unsigned int rbt_count;
+#ifdef RBSTATS
+	unsigned int rbt_insertions;
+	unsigned int rbt_removals;
+	unsigned int rbt_insertion_rebalance_calls;
+	unsigned int rbt_insertion_rebalance_passes;
+	unsigned int rbt_removal_rebalance_calls;
+	unsigned int rbt_removal_rebalance_passes;
+#endif
 };
+
+#ifdef RBSTATS
+#define	RBSTAT_INC(v)	((void)((v)++))
+#else
+#define	RBSTAT_INC(v)	do { } while (0)
+#endif
 
 void	rb_tree_init(struct rb_tree *, rb_compare_nodes_fn, rb_compare_key_fn);
 void	rb_tree_insert_node(struct rb_tree *, struct rb_node *);
 struct rb_node	*
-	rb_tree_find(struct rb_tree *, void *);
+	rb_tree_find_node(struct rb_tree *, const void *);
+struct rb_node	*
+	rb_tree_find_node_geq(struct rb_tree *, const void *);
+struct rb_node	*
+	rb_tree_find_node_leq(struct rb_tree *, const void *);
 void	rb_tree_remove_node(struct rb_tree *, struct rb_node *);
-void	rb_tree_check(const struct rb_tree *, bool);
 struct rb_node *
 	rb_tree_iterate(struct rb_tree *, struct rb_node *, unsigned int);
+#if !defined(NDEBUG) || defined(DIAGNOSTIC)
+void	rb_tree_check(const struct rb_tree *, bool);
+#endif
+#ifdef RBSTATS
+void	rb_tree_depths(const struct rb_tree *, size_t *);
+#endif
 
 #endif	/* _LIBKERN_RB_H_*/
