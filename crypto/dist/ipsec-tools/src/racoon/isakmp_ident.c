@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp_ident.c,v 1.4 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: isakmp_ident.c,v 1.5 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: isakmp_ident.c,v 1.13.2.2 2005/11/21 09:46:23 vanhu Exp */
+/* Id: isakmp_ident.c,v 1.21 2006/04/06 16:46:08 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -81,6 +81,14 @@
 #ifdef HAVE_GSSAPI
 #include "gssapi.h"
 #endif
+#ifdef ENABLE_HYBRID
+#include <resolv.h>
+#include "isakmp_xauth.h"
+#include "isakmp_cfg.h"
+#endif
+#ifdef ENABLE_FRAG 
+#include "isakmp_frag.h"
+#endif
 
 static vchar_t *ident_ir2mx __P((struct ph1handle *));
 static vchar_t *ident_ir3mx __P((struct ph1handle *));
@@ -106,6 +114,13 @@ ident_i1send(iph1, msg)
 	vchar_t *vid_natt[MAX_NATT_VID_COUNT] = { NULL };
 	int i;
 #endif
+#ifdef ENABLE_HYBRID  
+	vchar_t *vid_xauth = NULL;
+	vchar_t *vid_unity = NULL;
+#endif
+#ifdef ENABLE_FRAG 
+	vchar_t *vid_frag = NULL;
+#endif 
 #ifdef ENABLE_DPD
 	vchar_t *vid_dpd = NULL;
 #endif
@@ -138,12 +153,53 @@ ident_i1send(iph1, msg)
 	if (iph1->rmconf->nat_traversal) 
 		plist = isakmp_plist_append_natt_vids(plist, vid_natt);
 #endif
+#ifdef ENABLE_HYBRID
+	/* Do we need Xauth VID? */
+	switch (RMAUTHMETHOD(iph1)) {
+	case FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I:
+	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_I:
+	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_DSSSIG_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAENC_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAREV_I:
+		if ((vid_xauth = set_vendorid(VENDORID_XAUTH)) == NULL)
+			plog(LLV_ERROR, LOCATION, NULL,
+			     "Xauth vendor ID generation failed\n");
+		else
+			plist = isakmp_plist_append(plist,
+			    vid_xauth, ISAKMP_NPTYPE_VID);
+			
+		if ((vid_unity = set_vendorid(VENDORID_UNITY)) == NULL)
+			plog(LLV_ERROR, LOCATION, NULL,
+			     "Unity vendor ID generation failed\n");
+		else
+                	plist = isakmp_plist_append(plist,
+			    vid_unity, ISAKMP_NPTYPE_VID);
+		break;
+	default:
+		break;
+	}
+#endif
+#ifdef ENABLE_FRAG
+	if (iph1->rmconf->ike_frag) {
+		if ((vid_frag = set_vendorid(VENDORID_FRAG)) == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			    "Frag vendorID construction failed\n");
+		} else {
+			vid_frag = isakmp_frag_addcap(vid_frag,
+			    VENDORID_FRAG_IDENT);
+			plist = isakmp_plist_append(plist, 
+			    vid_frag, ISAKMP_NPTYPE_VID);
+		}
+	}
+#endif
 #ifdef ENABLE_DPD
 	if(iph1->rmconf->dpd){
 		vid_dpd = set_vendorid(VENDORID_DPD);
 		if (vid_dpd != NULL)
 			plist = isakmp_plist_append(plist, vid_dpd,
-										ISAKMP_NPTYPE_VID);
+			    ISAKMP_NPTYPE_VID);
 	}
 #endif
 
@@ -163,9 +219,19 @@ ident_i1send(iph1, msg)
 	error = 0;
 
 end:
+#ifdef ENABLE_FRAG
+	if (vid_frag) 
+		vfree(vid_frag);
+#endif  
 #ifdef ENABLE_NATT
 	for (i = 0; i < MAX_NATT_VID_COUNT && vid_natt[i] != NULL; i++)
 		vfree(vid_natt[i]);
+#endif
+#ifdef ENABLE_HYBRID
+	if (vid_xauth != NULL)
+		vfree(vid_xauth);
+	if (vid_unity != NULL)
+		vfree(vid_unity);
 #endif
 #ifdef ENABLE_DPD
 	if (vid_dpd != NULL)
@@ -238,6 +304,22 @@ ident_i2recv(iph1, msg)
 			if (iph1->rmconf->nat_traversal && natt_vendorid(vid_numeric))
 			  natt_handle_vendorid(iph1, vid_numeric);
 #endif
+#ifdef ENABLE_HYBRID
+			switch (vid_numeric) {
+			case VENDORID_XAUTH:
+				iph1->mode_cfg->flags |=
+				    ISAKMP_CFG_VENDORID_XAUTH;
+				break;
+	
+			case VENDORID_UNITY:
+				iph1->mode_cfg->flags |=
+				    ISAKMP_CFG_VENDORID_UNITY;
+				break;
+	
+			default:
+				break;
+			}
+#endif  
 #ifdef ENABLE_DPD
 			if (vid_numeric == VENDORID_DPD && iph1->rmconf->dpd)
 				iph1->dpd_support=1;
@@ -319,7 +401,7 @@ ident_i2send(iph1, msg)
 		goto end;
 
 #ifdef HAVE_GSSAPI
-	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB &&
+	if (AUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB &&
 	    gssapi_get_itoken(iph1, NULL) < 0)
 		goto end;
 #endif
@@ -485,6 +567,10 @@ ident_i3recv(iph1, msg)
 	error = 0;
 
 end:
+#ifdef HAVE_GSSAPI
+	if (gsstoken)
+		vfree(gsstoken);
+#endif
 	if (pbuf)
 		vfree(pbuf);
 	if (error) {
@@ -544,7 +630,7 @@ ident_i3send(iph1, msg0)
 		goto end;
 
 #ifdef HAVE_GSSAPI
-	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB &&
+	if (AUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB &&
 	    gssapi_more_tokens(iph1)) {
 		plog(LLV_DEBUG, LOCATION, NULL, "calling get_itoken\n");
 		if (gssapi_get_itoken(iph1, &len) < 0)
@@ -840,6 +926,27 @@ ident_r1recv(iph1, msg)
 			if (iph1->rmconf->nat_traversal && natt_vendorid(vid_numeric))
 				natt_handle_vendorid(iph1, vid_numeric);
 #endif
+#ifdef ENABLE_FRAG
+			if ((vid_numeric == VENDORID_FRAG) &&
+			    (vendorid_frag_cap(pa->ptr) & VENDORID_FRAG_IDENT))
+				iph1->frag = 1;
+#endif   
+#ifdef ENABLE_HYBRID
+			switch (vid_numeric) {
+			case VENDORID_XAUTH:
+				iph1->mode_cfg->flags |=
+				    ISAKMP_CFG_VENDORID_XAUTH;
+				break;
+		
+			case VENDORID_UNITY:
+				iph1->mode_cfg->flags |=
+				    ISAKMP_CFG_VENDORID_UNITY;
+				break;
+	
+			default:  
+				break;
+			}
+#endif
 #ifdef ENABLE_DPD
 			if (vid_numeric == VENDORID_DPD && iph1->rmconf->dpd)
 				iph1->dpd_support=1;
@@ -905,13 +1012,23 @@ ident_r1send(iph1, msg)
 	struct payload_list *plist = NULL;
 	int error = -1;
 	vchar_t *gss_sa = NULL;
+#ifdef HAVE_GSSAPI
+	int free_gss_sa = 0;
+#endif
 	vchar_t *vid = NULL;
 #ifdef ENABLE_NATT
 	vchar_t *vid_natt = NULL;
 #endif
+#ifdef ENABLE_HYBRID
+        vchar_t *vid_xauth = NULL;
+        vchar_t *vid_unity = NULL;
+#endif  
 #ifdef ENABLE_DPD
 	vchar_t *vid_dpd = NULL;
 #endif
+#ifdef ENABLE_FRAG          
+	vchar_t *vid_frag = NULL;
+#endif 
 
 	/* validity check */
 	if (iph1->status != PHASE1ST_MSG1RECEIVED) {
@@ -924,9 +1041,11 @@ ident_r1send(iph1, msg)
 	isakmp_newcookie((caddr_t)&iph1->index.r_ck, iph1->remote, iph1->local);
 
 #ifdef HAVE_GSSAPI
-	if (iph1->approval->gssid != NULL)
+	if (iph1->approval->gssid != NULL) {
 		gss_sa = ipsecdoi_setph1proposal(iph1->approval);
-	else
+		if (gss_sa != iph1->sa_ret)
+			free_gss_sa = 1;
+	} else 
 #endif
 		gss_sa = iph1->sa_ret;
 
@@ -937,6 +1056,28 @@ ident_r1send(iph1, msg)
 	if (vid)
 		plist = isakmp_plist_append(plist, vid, ISAKMP_NPTYPE_VID);
 
+#ifdef ENABLE_HYBRID
+	if (iph1->mode_cfg->flags & ISAKMP_CFG_VENDORID_XAUTH) {
+		plog (LLV_INFO, LOCATION, NULL, "Adding xauth VID payload.\n");
+		if ((vid_xauth = set_vendorid(VENDORID_XAUTH)) == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			    "Cannot create Xauth vendor ID\n");
+			goto end;
+		}
+		plist = isakmp_plist_append(plist,
+		    vid_xauth, ISAKMP_NPTYPE_VID);
+	}
+
+	if (iph1->mode_cfg->flags & ISAKMP_CFG_VENDORID_UNITY) {
+		if ((vid_unity = set_vendorid(VENDORID_UNITY)) == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			    "Cannot create Unity vendor ID\n");
+			goto end;
+		}
+		plist = isakmp_plist_append(plist,
+		    vid_unity, ISAKMP_NPTYPE_VID);
+	}
+#endif
 #ifdef ENABLE_NATT
 	/* Has the peer announced NAT-T? */
 	if (NATT_AVAILABLE(iph1))
@@ -953,6 +1094,20 @@ ident_r1send(iph1, msg)
 			plist = isakmp_plist_append(plist, vid_dpd, ISAKMP_NPTYPE_VID);
 	}
 #endif
+#ifdef ENABLE_FRAG
+	if (iph1->frag) {
+		vid_frag = set_vendorid(VENDORID_FRAG);
+		if (vid_frag != NULL)
+			vid_frag = isakmp_frag_addcap(vid_frag,
+			    VENDORID_FRAG_IDENT);
+		if (vid_frag == NULL)
+			plog(LLV_ERROR, LOCATION, NULL,
+			    "Frag vendorID construction failed\n");
+		else
+			plist = isakmp_plist_append(plist, 
+			     vid_frag, ISAKMP_NPTYPE_VID);
+	}
+#endif
 
 	iph1->sendbuf = isakmp_plist_set_all (&plist, iph1);
 
@@ -962,8 +1117,9 @@ ident_r1send(iph1, msg)
 
 	/* send the packet, add to the schedule to resend */
 	iph1->retry_counter = iph1->rmconf->retry_counter;
-	if (isakmp_ph1resend(iph1) == -1)
+	if (isakmp_ph1resend(iph1) == -1) {
 		goto end;
+	}
 
 	/* the sending message is added to the received-list. */
 	if (add_recvdpkt(iph1->remote, iph1->local, iph1->sendbuf, msg) == -1) {
@@ -978,7 +1134,7 @@ ident_r1send(iph1, msg)
 
 end:
 #ifdef HAVE_GSSAPI
-	if (gss_sa != iph1->sa_ret)
+	if (free_gss_sa)
 		vfree(gss_sa);
 #endif
 	if (vid)
@@ -988,9 +1144,19 @@ end:
 	if (vid_natt)
 		vfree(vid_natt);
 #endif
+#ifdef ENABLE_HYBRID
+	if (vid_xauth != NULL)
+		vfree(vid_xauth);
+	if (vid_unity != NULL)
+		vfree(vid_unity);
+#endif
 #ifdef ENABLE_DPD
 	if (vid_dpd != NULL)
 		vfree(vid_dpd);
+#endif
+#ifdef ENABLE_FRAG
+	if (vid_frag != NULL)
+		vfree(vid_frag);
 #endif
 
 	return error;
@@ -1064,7 +1230,7 @@ ident_r2recv(iph1, msg)
 		case ISAKMP_NPTYPE_NATD_DRAFT:
 		case ISAKMP_NPTYPE_NATD_RFC:
 			if (NATT_AVAILABLE(iph1) && iph1->natt_options != NULL &&
-			    pa->type == iph1->natt_options->payload_nat_d)
+				pa->type == iph1->natt_options->payload_nat_d)
 			{
 				vchar_t *natd_received = NULL;
 				int natd_verified;
@@ -1168,7 +1334,7 @@ ident_r2send(iph1, msg)
 		goto end;
 
 #ifdef HAVE_GSSAPI
-	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
+	if (AUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
 		gssapi_get_rtoken(iph1, NULL);
 #endif
 
@@ -1315,18 +1481,31 @@ ident_r3recv(iph1, msg0)
     {
 	int ng = 0;
 
-	switch (iph1->approval->authmethod) {
+	switch (AUTHMETHOD(iph1)) {
 	case OAKLEY_ATTR_AUTH_METHOD_PSKEY:
+#ifdef ENABLE_HYBRID
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_R:
+	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_R:
+	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_R:
+#endif
 		if (iph1->id_p == NULL || iph1->pl_hash == NULL)
 			ng++;
 		break;
 	case OAKLEY_ATTR_AUTH_METHOD_DSSSIG:
 	case OAKLEY_ATTR_AUTH_METHOD_RSASIG:
+#ifdef ENABLE_HYBRID
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_R:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_DSSSIG_R:
+#endif
 		if (iph1->id_p == NULL || iph1->sig_p == NULL)
 			ng++;
 		break;
 	case OAKLEY_ATTR_AUTH_METHOD_RSAENC:
 	case OAKLEY_ATTR_AUTH_METHOD_RSAREV:
+#ifdef ENABLE_HYBRID
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAENC_R:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAREV_R:
+#endif
 		if (iph1->pl_hash == NULL)
 			ng++;
 		break;
@@ -1455,7 +1634,7 @@ ident_r3send(iph1, msg)
 		goto end;
 
 #ifdef HAVE_GSSAPI
-	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB &&
+	if (AUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB &&
 	    gssapi_more_tokens(iph1)) {
 		gssapi_get_rtoken(iph1, &len);
 		if (len != 0)
@@ -1549,7 +1728,7 @@ ident_ir2mx(iph1)
 	}
 
 #ifdef HAVE_GSSAPI
-	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
+	if (AUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
 		gssapi_get_token_to_send(iph1, &gsstoken);
 #endif
 
@@ -1560,7 +1739,7 @@ ident_ir2mx(iph1)
 	plist = isakmp_plist_append(plist, iph1->nonce, ISAKMP_NPTYPE_NONCE);
 
 #ifdef HAVE_GSSAPI
-	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
+	if (AUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
 		plist = isakmp_plist_append(plist, gsstoken, ISAKMP_NPTYPE_GSS);
 #endif
 
@@ -1653,8 +1832,14 @@ ident_ir3mx(iph1)
 	vchar_t *gsshash = NULL;
 #endif
 
-	switch (iph1->approval->authmethod) {
+	switch (AUTHMETHOD(iph1)) {
 	case OAKLEY_ATTR_AUTH_METHOD_PSKEY:
+#ifdef ENABLE_HYBRID
+	case FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_R:
+	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_I:
+	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_I:
+#endif
 		/* create isakmp ID payload */
 		plist = isakmp_plist_append(plist, iph1->id, ISAKMP_NPTYPE_ID);
 
@@ -1663,6 +1848,14 @@ ident_ir3mx(iph1)
 		break;
 	case OAKLEY_ATTR_AUTH_METHOD_DSSSIG:
 	case OAKLEY_ATTR_AUTH_METHOD_RSASIG:
+#ifdef ENABLE_HYBRID
+	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_R:
+	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_R:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_R:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_DSSSIG_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_DSSSIG_R:
+#endif 
 		if (oakley_getmycert(iph1) < 0)
 			goto end;
 
@@ -1724,6 +1917,12 @@ ident_ir3mx(iph1)
 #endif
 	case OAKLEY_ATTR_AUTH_METHOD_RSAENC:
 	case OAKLEY_ATTR_AUTH_METHOD_RSAREV:
+#ifdef ENABLE_HYBRID
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAENC_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAENC_R:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAREV_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAREV_R:
+#endif
 		plog(LLV_ERROR, LOCATION, NULL,
 			"not supported authentication type %d\n",
 			iph1->approval->authmethod);
@@ -1753,6 +1952,10 @@ ident_ir3mx(iph1)
 	error = 0;
 
 end:
+#ifdef HAVE_GSSAPI
+	if (gsstoken)
+		vfree(gsstoken);
+#endif
 	if (cr)
 		vfree(cr);
 	if (error && buf != NULL) {

@@ -1,6 +1,6 @@
-/*	$NetBSD: evt.h,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: evt.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: evt.h,v 1.3 2004/11/29 23:30:39 manubsd Exp */
+/* Id: evt.h,v 1.5 2006/01/19 10:24:09 fredsen Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus
@@ -61,6 +61,8 @@ struct evtdump {
 #define EVTT_XAUTH_FAILED	11
 #define EVTT_OVERFLOW		12	/* Event queue overflowed */
 #define EVTT_PEERPH1AUTH_FAILED	13
+#define EVTT_PEERPH1_NOPROP	14	/* NO_PROPOSAL_CHOSEN & friends */
+#define EVTT_NO_ISAKMP_CFG	15	/* no need to wait for mode_cfg */
 
 struct evt {
 	struct evtdump *dump;

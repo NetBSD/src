@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.9 2005/11/21 14:20:28 manu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.10 2006/09/09 16:22:09 manu Exp $	*/
 
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
@@ -1198,6 +1198,100 @@ pfkey_send_spddump(so)
 	return len;
 }
 
+
+#ifdef SADB_X_MIGRATE
+/*
+ * sending SADB_X_MIGRATE message to the kernel.
+ * OUT:
+ *	positive: success and return length sent.
+ *	-1	: error occured, and set errno.
+ */
+int
+pfkey_send_migrate(so, src, prefs, dst, prefd, proto, policy, policylen, seq)
+	int so;
+	struct sockaddr *src, *dst;
+	u_int prefs, prefd, proto;
+	caddr_t policy;
+	int policylen;
+	u_int32_t seq;
+{
+	struct sadb_msg *newmsg;
+	int len;
+	caddr_t p;
+	int plen;
+	caddr_t ep;
+
+	/* validity check */
+	if (src == NULL || dst == NULL) {
+		__ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
+		return -1;
+	}
+	if (src->sa_family != dst->sa_family) {
+		__ipsec_errcode = EIPSEC_FAMILY_MISMATCH;
+		return -1;
+	}
+
+	switch (src->sa_family) {
+	case AF_INET:
+		plen = sizeof(struct in_addr) << 3;
+		break;
+	case AF_INET6:
+		plen = sizeof(struct in6_addr) << 3;
+		break;
+	default:
+		__ipsec_errcode = EIPSEC_INVAL_FAMILY;
+		return -1;
+	}
+	if (prefs > plen || prefd > plen) {
+		__ipsec_errcode = EIPSEC_INVAL_PREFIXLEN;
+		return -1;
+	}
+
+	/* create new sadb_msg to reply. */
+	len = sizeof(struct sadb_msg)
+		+ sizeof(struct sadb_address)
+		+ PFKEY_ALIGN8(src->sa_len)
+		+ sizeof(struct sadb_address)
+		+ PFKEY_ALIGN8(src->sa_len)
+		+ policylen;
+
+	if ((newmsg = CALLOC(len, struct sadb_msg *)) == NULL) {
+		__ipsec_set_strerror(strerror(errno));
+		return -1;
+	}
+	ep = ((caddr_t)newmsg) + len;
+
+	p = pfkey_setsadbmsg((caddr_t)newmsg, ep, SADB_X_MIGRATE, (u_int)len,
+	    SADB_SATYPE_UNSPEC, seq, getpid());
+	if (!p) {
+		free(newmsg);
+		return -1;
+	}
+	p = pfkey_setsadbaddr(p, ep, SADB_EXT_ADDRESS_SRC, src, prefs, proto);
+	if (!p) {
+		free(newmsg);
+		return -1;
+	}
+	p = pfkey_setsadbaddr(p, ep, SADB_EXT_ADDRESS_DST, dst, prefd, proto);
+	if (!p || p + policylen != ep) {
+		free(newmsg);
+		return -1;
+	}
+	memcpy(p, policy, policylen);
+
+	/* send message */
+	len = pfkey_send(so, newmsg, len);
+	free(newmsg);
+
+	if (len < 0)
+		return -1;
+
+	__ipsec_errcode = EIPSEC_NO_ERROR;
+	return len;
+}
+#endif
+
+
 /* sending SADB_ADD or SADB_UPDATE message to the kernel */
 static int
 pfkey_send_x1(so, type, satype, mode, src, dst, spi, reqid, wsize,
@@ -1971,7 +2065,9 @@ pfkey_align(msg, mhp)
 #ifdef SADB_X_EXT_PACKET
 		case SADB_X_EXT_PACKET:
 #endif
-
+#ifdef SADB_X_EXT_SEC_CTX
+		case SADB_X_EXT_SEC_CTX:
+#endif
 			mhp[ext->sadb_ext_type] = (void *)ext;
 			break;
 		default:

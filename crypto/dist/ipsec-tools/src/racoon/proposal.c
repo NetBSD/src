@@ -1,6 +1,6 @@
-/*	$NetBSD: proposal.c,v 1.6 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: proposal.c,v 1.7 2006/09/09 16:22:10 manu Exp $	*/
 
-/* Id: proposal.c,v 1.13.8.5 2005/07/28 05:05:52 manubsd Exp */
+/* Id: proposal.c,v 1.19 2006/04/27 03:41:54 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -74,6 +74,8 @@
 #ifdef ENABLE_NATT
 #include "nattraversal.h"
 #endif
+
+static uint g_nextreqid = 1;
 
 /* %%%
  * modules for ipsec sa spec
@@ -1113,6 +1115,10 @@ set_proposal_from_proposal(iph2)
         for (i = 0; i < MAXPROPPAIRLEN; i++) {
                 if (pair[i] == NULL)
                         continue;
+
+		if (pp_peer != NULL)
+			flushsaprop(pp_peer);
+
 		pp_peer = aproppair2saprop(pair[i]);
 		if (pp_peer == NULL)
 			goto end;
@@ -1134,8 +1140,8 @@ set_proposal_from_proposal(iph2)
 			/*FALLTHROUGH*/
 		}
 
-		for (pr = pp_peer->head; pr; pr = pr->next) { 
-
+		for (pr = pp_peer->head; pr; pr = pr->next) {
+			
 			newpr = newsaproto();
 			if (newpr == NULL) {
 				plog(LLV_ERROR, LOCATION, NULL,
@@ -1147,8 +1153,23 @@ set_proposal_from_proposal(iph2)
 			newpr->encmode = pr->encmode;
 			newpr->spi = 0;
 			newpr->spi_p = pr->spi;	/* copy peer's SPI */
-			newpr->reqid_in = 0;
-			newpr->reqid_out = 0;
+			{
+				struct remoteconf *conf;
+				conf = getrmconf(iph2->dst);
+				if (conf != NULL &&
+					conf->gen_policy == GENERATE_POLICY_UNIQUE){
+					newpr->reqid_in = g_nextreqid ;
+					newpr->reqid_out = g_nextreqid ++;
+					/* XXX there is a (very limited) risk of reusing the same reqid
+					 * as another SP entry for the same peer
+					 */
+					if(g_nextreqid >= IPSEC_MANUAL_REQID_MAX)
+						g_nextreqid = 1;
+				}else{
+					newpr->reqid_in = 0;
+					newpr->reqid_out = 0;
+				}
+			}
 		}
 
 		if (set_satrnsbysainfo(newpr, iph2->sainfo) < 0) {
@@ -1176,16 +1197,4 @@ end:
 		flushsaprop(pp_peer);
 	free_proppair(pair);
 	return error;
-}
-
-int
-tunnel_mode_prop(p)
-	struct saprop *p;
-{
-	struct saproto *pr;
-
-	for (pr = p->head; pr; pr = pr->next)
-		if (pr->encmode == IPSECDOI_ATTR_ENC_MODE_TUNNEL)
-			return 1;
-	return 0;
 }

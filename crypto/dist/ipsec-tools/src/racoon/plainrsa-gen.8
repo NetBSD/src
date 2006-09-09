@@ -1,6 +1,6 @@
-.\"	$NetBSD: plainrsa-gen.8,v 1.10 2005/11/21 14:20:29 manu Exp $
+.\"	$NetBSD: plainrsa-gen.8,v 1.11 2006/09/09 16:22:10 manu Exp $
 .\"
-.\" Id: plainrsa-gen.8,v 1.2.10.1 2005/04/18 11:10:55 manubsd Exp
+.\" Id: plainrsa-gen.8,v 1.4 2005/04/18 11:07:55 manubsd Exp
 .\"
 .\" Copyright (C) 2004 SuSE Linux AG, Nuernberg, Germany.
 .\" Contributed by: Michal Ludvig <mludvig@suse.cz>, SUSE Labs
@@ -62,22 +62,20 @@ or
 .\"
 .Bl -tag -width Ds
 .It Fl b Ar bits
-bit length of the key.
-Default is
+bit length of the key. Default is 
 .Li 1024 ,
 recommended length is
 .Li 2048
 or even
 .Li 4096
-bits.
-Note that generating longer keys takes more time.
+bits. 
+Note that generating longer keys takes longer time.
 .It Fl e Ar pubexp
-value of the RSA public exponent.
+value of RSA public exponent. 
 Default is
 .Li 0x3 .
 Don't change this unless you really know what you are doing!
 .It Fl f Ar outfile
-write the resulting key to
 .Ar outfile
 instead of
 .Li stdout .

@@ -1,6 +1,6 @@
-/*	$NetBSD: vmbuf.h,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: vmbuf.h,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
 
-/* Id: vmbuf.h,v 1.3 2004/06/11 16:00:17 ludvigm Exp */
+/* Id: vmbuf.h,v 1.4 2005/10/30 10:28:44 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -59,6 +59,11 @@ do { \
 		(p) = NULL; \
 	} \
 } while(0);
+
+#if defined(__APPLE__) && defined(__MACH__)
+/* vfree is already defined in Apple's system libraries */
+#define vfree   vmbuf_free
+#endif
 
 extern vchar_t *vmalloc __P((size_t));
 extern vchar_t *vrealloc __P((vchar_t *, size_t));

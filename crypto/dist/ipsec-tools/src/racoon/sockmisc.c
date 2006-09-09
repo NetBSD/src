@@ -1,6 +1,6 @@
-/*	$NetBSD: sockmisc.c,v 1.4 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: sockmisc.c,v 1.5 2006/09/09 16:22:10 manu Exp $	*/
 
-/* Id: sockmisc.c,v 1.17.4.4 2005/10/04 09:54:27 manubsd Exp */
+/* Id: sockmisc.c,v 1.24 2006/05/07 21:32:59 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,6 +63,7 @@
 #include "sockmisc.h"
 #include "debug.h"
 #include "gcmalloc.h"
+#include "debugrm.h"
 #include "libpfkey.h"
 
 #ifndef IP_IPSEC_POLICY
@@ -652,7 +653,8 @@ sendfromto(s, buf, buflen, src, dst, cnt)
 #endif
 				       (void *)&yes, sizeof(yes)) < 0) {
 				plog(LLV_ERROR, LOCATION, NULL,
-					"setsockopt (%s)\n", strerror(errno));
+					"setsockopt SO_REUSEPORT (%s)\n", 
+					strerror(errno));
 				close(sendsock);
 				return -1;
 			}
@@ -661,7 +663,8 @@ sendfromto(s, buf, buflen, src, dst, cnt)
 			    setsockopt(sendsock, IPPROTO_IPV6, IPV6_USE_MIN_MTU,
 			    (void *)&yes, sizeof(yes)) < 0) {
 				plog(LLV_ERROR, LOCATION, NULL,
-					"setsockopt (%s)\n", strerror(errno));
+					"setsockopt IPV6_USE_MIN_MTU (%s)\n", 
+					strerror(errno));
 				close(sendsock);
 				return -1;
 			}
@@ -740,7 +743,7 @@ setsockopt_bypass(so, family)
 	                         IP_IPSEC_POLICY : IPV6_IPSEC_POLICY),
 	               buf, ipsec_get_policylen(buf)) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"setsockopt (%s)\n",
+			"setsockopt IP_IPSEC_POLICY (%s)\n",
 			strerror(errno));
 		return -1;
 	}
@@ -759,7 +762,7 @@ setsockopt_bypass(so, family)
 	                         IP_IPSEC_POLICY : IPV6_IPSEC_POLICY),
 	               buf, ipsec_get_policylen(buf)) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"setsockopt (%s)\n",
+			"setsockopt IP_IPSEC_POLICY (%s)\n",
 			strerror(errno));
 		return -1;
 	}
@@ -871,8 +874,10 @@ naddrwop2str_fromto(const char *format, const struct netaddr *saddr,
 	static char buf[2*(NI_MAXHOST + NI_MAXSERV + 10) + 100];
 	char *src, *dst;
 
-	src = strdup(naddrwop2str(saddr));
-	dst = strdup(naddrwop2str(daddr));
+	src = racoon_strdup(naddrwop2str(saddr));
+	dst = racoon_strdup(naddrwop2str(daddr));
+	STRDUP_FATAL(src);
+	STRDUP_FATAL(dst);
 	/* WARNING: Be careful about the format string! Don't 
 	   ever pass in something that a user can modify!!! */
 	snprintf (buf, sizeof(buf), format, src, dst);
@@ -891,8 +896,10 @@ saddr2str_fromto(format, saddr, daddr)
 	static char buf[2*(NI_MAXHOST + NI_MAXSERV + 10) + 100];
 	char *src, *dst;
 
-	src = strdup(saddr2str(saddr));
-	dst = strdup(saddr2str(daddr));
+	src = racoon_strdup(saddr2str(saddr));
+	dst = racoon_strdup(saddr2str(daddr));
+	STRDUP_FATAL(src);
+	STRDUP_FATAL(dst);
 	/* WARNING: Be careful about the format string! Don't 
 	   ever pass in something that a user can modify!!! */
 	snprintf (buf, sizeof(buf), format, src, dst);
@@ -997,7 +1004,7 @@ naddr_score(const struct netaddr *naddr, const struct sockaddr *saddr)
 {
 	static const struct netaddr naddr_any;	/* initialized to all-zeros */
 	struct sockaddr sa;
-	uint16_t naddr_port, saddr_port;
+	u_int16_t naddr_port, saddr_port;
 	int port_score;
 
 	if (!naddr || !saddr) {
@@ -1029,9 +1036,12 @@ naddr_score(const struct netaddr *naddr, const struct sockaddr *saddr)
 	mask_sockaddr(&sa, saddr, naddr->prefix);
 	if (loglevel >= LLV_DEBUG) {	/* debug only */
 		char *a1, *a2, *a3;
-		a1 = strdup(naddrwop2str(naddr));
-		a2 = strdup(saddrwop2str(saddr));
-		a3 = strdup(saddrwop2str(&sa));
+		a1 = racoon_strdup(naddrwop2str(naddr));
+		a2 = racoon_strdup(saddrwop2str(saddr));
+		a3 = racoon_strdup(saddrwop2str(&sa));
+		STRDUP_FATAL(a1);
+		STRDUP_FATAL(a2);
+		STRDUP_FATAL(a3);
 		plog(LLV_DEBUG, LOCATION, NULL,
 		     "naddr=%s, saddr=%s (masked=%s)\n",
 		     a1, a2, a3);

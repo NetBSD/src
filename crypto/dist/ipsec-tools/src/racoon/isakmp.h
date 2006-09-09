@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp.h,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: isakmp.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: isakmp.h,v 1.10 2005/01/29 16:34:25 vanhu Exp */
+/* Id: isakmp.h,v 1.11 2005/04/25 22:19:39 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -350,6 +350,8 @@ struct isakmp_pl_n {
 #define ISAKMP_NTYPE_CERTIFICATE_UNAVAILABLE	28
 #define ISAKMP_NTYPE_UNSUPPORTED_EXCHANGE_TYPE	29
 #define ISAKMP_NTYPE_UNEQUAL_PAYLOAD_LENGTHS	30
+#define ISAKMP_NTYPE_MINERROR			1
+#define ISAKMP_NTYPE_MAXERROR			16383
 /* NOTIFY MESSAGES - STATUS TYPES */
 #define ISAKMP_NTYPE_CONNECTED			16384
 /* 4.6.3 IPSEC DOI Notify Message Types */

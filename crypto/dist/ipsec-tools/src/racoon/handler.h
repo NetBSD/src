@@ -1,6 +1,6 @@
-/*	$NetBSD: handler.h,v 1.8 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: handler.h,v 1.9 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: handler.h,v 1.11.4.3 2005/05/07 17:26:05 manubsd Exp */
+/* Id: handler.h,v 1.19 2006/02/25 08:25:12 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -131,8 +131,10 @@ struct ph1handle {
 	u_int8_t flags;			/* Flags */
 	u_int32_t msgid;		/* message id */
 
+#ifdef ENABLE_NATT
 	struct ph1natt_options *natt_options;	/* Selected NAT-T IKE version */
 	u_int32_t natt_flags;		/* NAT-T related flags */
+#endif
 #ifdef ENABLE_FRAG
 	int frag;			/* IKE phase 1 fragmentation */
 	struct isakmp_frag_item *frag_chain;	/* Received fragments */
@@ -167,7 +169,7 @@ struct ph1handle {
 	struct genlist *rsa_candidates;	/* possible candidates for peer's RSA key */
 	vchar_t *id;			/* ID minus gen header */
 	vchar_t *id_p;			/* partner's ID minus general header */
-					/* i.e. strut ipsecdoi_id_b*. */
+					/* i.e. struct ipsecdoi_id_b*. */
 	struct isakmp_ivm *ivm;		/* IVs */
 
 	vchar_t *sa;			/* whole SA payload to send/to be sent*/
@@ -193,11 +195,13 @@ struct ph1handle {
 	struct timeval end;
 #endif
 
+#ifdef ENABLE_DPD
 	int		dpd_support;	/* Does remote supports DPD ? */
 	time_t		dpd_lastack;	/* Last ack received */
 	u_int16_t	dpd_seq;		/* DPD seq number to receive */
 	u_int8_t	dpd_fails;		/* number of failures */
 	struct sched	*dpd_r_u;
+#endif
 
 	u_int32_t msgid2;		/* msgid counter for Phase 2 */
 	int ph2cnt;	/* the number which is negotiated by this phase 1 */
@@ -426,6 +430,10 @@ extern struct ph1handle *getph1byaddr __P((struct sockaddr *,
 extern struct ph1handle *getph1byaddrwop __P((struct sockaddr *,
 	struct sockaddr *));
 extern struct ph1handle *getph1bydstaddrwop __P((struct sockaddr *));
+#ifdef ENABLE_HYBRID
+struct ph1handle *getph1bylogin __P((char *));
+int purgeph1bylogin __P((char *));
+#endif
 extern vchar_t *dumpph1 __P((void));
 extern struct ph1handle *newph1 __P((void));
 extern void delph1 __P((struct ph1handle *));
@@ -469,5 +477,7 @@ extern void init_recvdpkt __P((void));
 #ifdef ENABLE_HYBRID
 extern int exclude_cfg_addr __P((const struct sockaddr *));
 #endif
+
+extern int revalidate_ph12(void);
 
 #endif /* _HANDLER_H */

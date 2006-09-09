@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp_inf.h,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: isakmp_inf.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: isakmp_inf.h,v 1.4 2004/11/16 15:44:46 ludvigm Exp */
+/* Id: isakmp_inf.h,v 1.6 2005/05/07 14:15:59 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -53,5 +53,8 @@ extern void isakmp_check_notify __P((struct isakmp_gen *, struct ph1handle *));
 #ifdef ENABLE_DPD
 extern int isakmp_sched_r_u __P((struct ph1handle *, int));
 #endif
+
+extern void purge_ipsec_spi __P((struct sockaddr *, int,	u_int32_t *, size_t));
+extern int tunnel_mode_prop __P((struct saprop *));
 
 #endif /* _ISAKMP_INF_H */

@@ -1,6 +1,6 @@
-/*	$NetBSD: racoonctl.h,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: racoonctl.h,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
 
-/* Id: racoonctl.h,v 1.2 2004/12/30 11:08:32 manubsd Exp */
+/* Id: racoonctl.h,v 1.3 2005/06/19 22:37:47 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,7 +35,7 @@
 #define _RACOONCTL_H
 
 /* bumped on any change to the interface */
-#define RACOONCTL_INTERFACE	20041230
+#define RACOONCTL_INTERFACE	20050619
 extern u_int32_t racoonctl_interface;
 
 /* bumped when introducing changes that break backward compatibility */

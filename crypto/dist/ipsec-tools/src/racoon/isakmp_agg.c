@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp_agg.c,v 1.7 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: isakmp_agg.c,v 1.8 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: isakmp_agg.c,v 1.20.2.5 2005/11/21 09:46:23 vanhu Exp */
+/* Id: isakmp_agg.c,v 1.28 2006/04/06 16:46:08 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,6 +61,10 @@
 #include "schedule.h"
 #include "debug.h"
 
+#ifdef ENABLE_HYBRID
+#include <resolv.h>
+#endif
+
 #include "localconf.h"
 #include "remoteconf.h"
 #include "isakmp_var.h"
@@ -110,7 +114,7 @@ agg_i1send(iph1, msg)
 {
 	struct payload_list *plist = NULL;
 	int need_cr = 0;
-	vchar_t *cr = NULL, *gsstoken = NULL;
+	vchar_t *cr = NULL; 
 	int error = -1;
 #ifdef ENABLE_NATT
 	vchar_t *vid_natt[MAX_NATT_VID_COUNT] = { NULL };
@@ -124,6 +128,7 @@ agg_i1send(iph1, msg)
 	vchar_t *vid_frag = NULL;
 #endif
 #ifdef HAVE_GSSAPI
+	vchar_t *gsstoken = NULL;
 	int len;
 #endif
 #ifdef ENABLE_DPD
@@ -175,9 +180,14 @@ agg_i1send(iph1, msg)
 
 #ifdef ENABLE_HYBRID
 	/* Do we need Xauth VID? */
-	switch (iph1->rmconf->proposal->authmethod) {
-	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_R:
-	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_R:
+	switch (RMAUTHMETHOD(iph1)) {
+	case FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I:
+	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_I:
+	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_DSSSIG_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAENC_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAREV_I:
 		if ((vid_xauth = set_vendorid(VENDORID_XAUTH)) == NULL)
 			plog(LLV_ERROR, LOCATION, NULL, 
 			     "Xauth vendor ID generation failed\n");
@@ -218,10 +228,8 @@ agg_i1send(iph1, msg)
 	plog(LLV_DEBUG, LOCATION, NULL, "authmethod is %s\n",
 		s_oakley_attr_method(iph1->rmconf->proposal->authmethod));
 #ifdef HAVE_GSSAPI
-	if (iph1->rmconf->proposal->authmethod ==
-	    OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB) {
+	if (RMAUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
 		gssapi_get_itoken(iph1, &len);
-	}
 #endif
 
 	/* set SA payload to propose */
@@ -237,11 +245,10 @@ agg_i1send(iph1, msg)
 	plist = isakmp_plist_append(plist, iph1->id, ISAKMP_NPTYPE_ID);
 
 #ifdef HAVE_GSSAPI
-	if (iph1->rmconf->proposal->authmethod ==
-	    OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB) {
+	if (RMAUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB) {
 		gssapi_get_token_to_send(iph1, &gsstoken);
 		plist = isakmp_plist_append(plist, gsstoken, ISAKMP_NPTYPE_GSS);
-	} else
+	}
 #endif
 	/* create isakmp CR payload */
 	if (need_cr)
@@ -293,8 +300,10 @@ agg_i1send(iph1, msg)
 end:
 	if (cr)
 		vfree(cr);
+#ifdef HAVE_GSSAPI
 	if (gsstoken)
 		vfree(gsstoken);
+#endif
 #ifdef ENABLE_FRAG
 	if (vid_frag)
 		vfree(vid_frag);
@@ -303,15 +312,15 @@ end:
 	for (i = 0; i < MAX_NATT_VID_COUNT && vid_natt[i] != NULL; i++)
 		vfree(vid_natt[i]);
 #endif
-#ifdef ENABLE_DPD
-	if (vid_dpd != NULL)
-		vfree(vid_dpd);
-#endif
 #ifdef ENABLE_HYBRID
 	if (vid_xauth != NULL)
 		vfree(vid_xauth);
 	if (vid_unity != NULL)
 		vfree(vid_unity);
+#endif
+#ifdef ENABLE_DPD
+	if (vid_dpd != NULL)
+		vfree(vid_dpd);
 #endif
 
 	return error;
@@ -595,6 +604,10 @@ agg_i2recv(iph1, msg)
 	error = 0;
 
 end:
+#ifdef HAVE_GSSAPI
+	if (gsstoken)
+		vfree(gsstoken);
+#endif
 	if (pbuf)
 		vfree(pbuf);
 	if (satmp)
@@ -645,28 +658,35 @@ agg_i2send(iph1, msg)
 	iph1->hash = oakley_ph1hash_common(iph1, GENERATE);
 	if (iph1->hash == NULL) {
 #ifdef HAVE_GSSAPI
-		if (gssapi_more_tokens(iph1))
+		if (gssapi_more_tokens(iph1) &&
+#ifdef ENABLE_HYBRID
+		    !iph1->rmconf->xauth &&
+#endif
+		    1)
 			isakmp_info_send_n1(iph1,
 			    ISAKMP_NTYPE_INVALID_EXCHANGE_TYPE, NULL);
 #endif
 		goto end;
 	}
 
-	switch (iph1->approval->authmethod) {
+	switch (AUTHMETHOD(iph1)) {
 	case OAKLEY_ATTR_AUTH_METHOD_PSKEY:
 #ifdef ENABLE_HYBRID
-	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_R:
-	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_R:
-#endif  
-		/* set HASH payload */
-		plist = isakmp_plist_append(plist, iph1->hash, ISAKMP_NPTYPE_HASH);
-		break;
-	case OAKLEY_ATTR_AUTH_METHOD_DSSSIG:
-	case OAKLEY_ATTR_AUTH_METHOD_RSASIG:
-#ifdef ENABLE_HYBRID
+	case FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I:
 	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_I:
 	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_I:
 #endif  
+		/* set HASH payload */
+		plist = isakmp_plist_append(plist, 
+		    iph1->hash, ISAKMP_NPTYPE_HASH);
+		break;
+
+	case OAKLEY_ATTR_AUTH_METHOD_DSSSIG:
+	case OAKLEY_ATTR_AUTH_METHOD_RSASIG:
+#ifdef ENABLE_HYBRID
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_DSSSIG_I:
+#endif
 		/* XXX if there is CR or not ? */
 
 		if (oakley_getmycert(iph1) < 0)
@@ -680,14 +700,20 @@ agg_i2send(iph1, msg)
 
 		/* add CERT payload if there */
 		if (need_cert)
-			plist = isakmp_plist_append(plist, iph1->cert->pl, ISAKMP_NPTYPE_CERT);
+			plist = isakmp_plist_append(plist, 
+			    iph1->cert->pl, ISAKMP_NPTYPE_CERT);
 
 		/* add SIG payload */
-		plist = isakmp_plist_append(plist, iph1->sig, ISAKMP_NPTYPE_SIG);
+		plist = isakmp_plist_append(plist, 
+		    iph1->sig, ISAKMP_NPTYPE_SIG);
 		break;
 
 	case OAKLEY_ATTR_AUTH_METHOD_RSAENC:
 	case OAKLEY_ATTR_AUTH_METHOD_RSAREV:
+#ifdef ENABLE_HYBRID
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAENC_I:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAREV_I:
+#endif
 		break;
 #ifdef HAVE_GSSAPI
 	case OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB:
@@ -700,37 +726,38 @@ agg_i2send(iph1, msg)
 			goto end;
 		}
 
-		plist = isakmp_plist_append(plist, gsshash, ISAKMP_NPTYPE_HASH);
+		plist = isakmp_plist_append(plist, 
+		    gsshash, ISAKMP_NPTYPE_HASH);
 		break;
 #endif
-	default:
-		plog(LLV_ERROR, LOCATION, NULL, "invalid authmethod %d\n",
-			iph1->approval->authmethod);
-		goto end;
-		break;
 	}
 
 #ifdef ENABLE_NATT
 	/* generate NAT-D payloads */
-	if (NATT_AVAILABLE(iph1))
-	{
+	if (NATT_AVAILABLE(iph1)) {
 		vchar_t *natd[2] = { NULL, NULL };
 
-		plog (LLV_INFO, LOCATION, NULL, "Adding remote and local NAT-D payloads.\n");
+		plog(LLV_INFO, LOCATION, 
+		    NULL, "Adding remote and local NAT-D payloads.\n");
+
 		if ((natd[0] = natt_hash_addr (iph1, iph1->remote)) == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL,
-				"NAT-D hashing failed for %s\n", saddr2str(iph1->remote));
+			    "NAT-D hashing failed for %s\n", 
+			    saddr2str(iph1->remote));
 			goto end;
 		}
 
 		if ((natd[1] = natt_hash_addr (iph1, iph1->local)) == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL,
-				"NAT-D hashing failed for %s\n", saddr2str(iph1->local));
+			    "NAT-D hashing failed for %s\n", 
+			    saddr2str(iph1->local));
 			goto end;
 		}
 
-		plist = isakmp_plist_append(plist, natd[0], iph1->natt_options->payload_nat_d);
-		plist = isakmp_plist_append(plist, natd[1], iph1->natt_options->payload_nat_d);
+		plist = isakmp_plist_append(plist, 
+		    natd[0], iph1->natt_options->payload_nat_d);
+		plist = isakmp_plist_append(plist, 
+		    natd[1], iph1->natt_options->payload_nat_d);
 	}
 #endif
 
@@ -932,6 +959,10 @@ agg_r1recv(iph1, msg)
 	error = 0;
 
 end:
+#ifdef HAVE_GSSAPI
+	if (gsstoken)
+		vfree(gsstoken);
+#endif
 	if (pbuf)
 		vfree(pbuf);
 	if (error) {
@@ -976,11 +1007,15 @@ agg_r1send(iph1, msg)
 #ifdef ENABLE_DPD
 	vchar_t *vid_dpd = NULL;
 #endif
+#ifdef ENABLE_FRAG
+	vchar_t *vid_frag = NULL;
+#endif
 
 #ifdef HAVE_GSSAPI
 	int gsslen;
 	vchar_t *gsstoken = NULL, *gsshash = NULL;
 	vchar_t *gss_sa = NULL;
+	int free_gss_sa = 0;
 #endif
 
 	/* validity check */
@@ -1023,8 +1058,7 @@ agg_r1send(iph1, msg)
 		goto end;
 
 #ifdef HAVE_GSSAPI
-	if (iph1->rmconf->proposal->authmethod ==	
-	    OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
+	if (RMAUTHMETHOD(iph1) == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
 		gssapi_get_rtoken(iph1, &gsslen);
 #endif
 
@@ -1079,37 +1113,60 @@ agg_r1send(iph1, msg)
 	if (iph1->dpd_support && iph1->rmconf->dpd)
 		vid_dpd = set_vendorid(VENDORID_DPD);
 #endif
+#ifdef ENABLE_FRAG
+	if (iph1->frag) {
+		vid_frag = set_vendorid(VENDORID_FRAG);
+		if (vid_frag != NULL)
+			vid_frag = isakmp_frag_addcap(vid_frag,
+			    VENDORID_FRAG_AGG);
+		if (vid_frag == NULL)
+			plog(LLV_ERROR, LOCATION, NULL,
+			    "Frag vendorID construction failed\n");
+	}
+#endif
 
-	switch (iph1->approval->authmethod) {
+	switch (AUTHMETHOD(iph1)) {
 	case OAKLEY_ATTR_AUTH_METHOD_PSKEY:
+#ifdef ENABLE_HYBRID
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_R:
+#endif
 		/* set SA payload to reply */
-		plist = isakmp_plist_append(plist, iph1->sa_ret, ISAKMP_NPTYPE_SA);
+		plist = isakmp_plist_append(plist, 
+		    iph1->sa_ret, ISAKMP_NPTYPE_SA);
 
 		/* create isakmp KE payload */
-		plist = isakmp_plist_append(plist, iph1->dhpub, ISAKMP_NPTYPE_KE);
+		plist = isakmp_plist_append(plist, 
+		    iph1->dhpub, ISAKMP_NPTYPE_KE);
 
 		/* create isakmp NONCE payload */
-		plist = isakmp_plist_append(plist, iph1->nonce, ISAKMP_NPTYPE_NONCE);
+		plist = isakmp_plist_append(plist, 
+		    iph1->nonce, ISAKMP_NPTYPE_NONCE);
 
 		/* create isakmp ID payload */
-		plist = isakmp_plist_append(plist, iph1->id, ISAKMP_NPTYPE_ID);
+		plist = isakmp_plist_append(plist, 
+		    iph1->id, ISAKMP_NPTYPE_ID);
 
 		/* create isakmp HASH payload */
-		plist = isakmp_plist_append(plist, iph1->hash, ISAKMP_NPTYPE_HASH);
+		plist = isakmp_plist_append(plist, 
+		    iph1->hash, ISAKMP_NPTYPE_HASH);
 
 		/* append vendor id, if needed */
 		if (vid)
-			plist = isakmp_plist_append(plist, vid, ISAKMP_NPTYPE_VID);
+			plist = isakmp_plist_append(plist, 
+			    vid, ISAKMP_NPTYPE_VID);
 
 		/* create isakmp CR payload if needed */
 		if (need_cr)
-			plist = isakmp_plist_append(plist, cr, ISAKMP_NPTYPE_CR);
+			plist = isakmp_plist_append(plist, 
+			    cr, ISAKMP_NPTYPE_CR);
 		break;
 	case OAKLEY_ATTR_AUTH_METHOD_DSSSIG:
 	case OAKLEY_ATTR_AUTH_METHOD_RSASIG:
 #ifdef ENABLE_HYBRID
-	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_I:
-	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_I:
+	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_R:
+	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_R:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_R:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_DSSSIG_R:
 #endif
 		/* XXX if there is CR or not ? */
 
@@ -1123,30 +1180,111 @@ agg_r1send(iph1, msg)
 			need_cert = 1;
 
 		/* set SA payload to reply */
-		plist = isakmp_plist_append(plist, iph1->sa_ret, ISAKMP_NPTYPE_SA);
+		plist = isakmp_plist_append(plist, 
+		    iph1->sa_ret, ISAKMP_NPTYPE_SA);
 
 		/* create isakmp KE payload */
-		plist = isakmp_plist_append(plist, iph1->dhpub, ISAKMP_NPTYPE_KE);
+		plist = isakmp_plist_append(plist, 
+		    iph1->dhpub, ISAKMP_NPTYPE_KE);
 
 		/* create isakmp NONCE payload */
-		plist = isakmp_plist_append(plist, iph1->nonce, ISAKMP_NPTYPE_NONCE);
+		plist = isakmp_plist_append(plist, 
+		    iph1->nonce, ISAKMP_NPTYPE_NONCE);
 
 		/* add ID payload */
-		plist = isakmp_plist_append(plist, iph1->id, ISAKMP_NPTYPE_ID);
+		plist = isakmp_plist_append(plist, 
+		    iph1->id, ISAKMP_NPTYPE_ID);
 
 		/* add CERT payload if there */
 		if (need_cert)
-			plist = isakmp_plist_append(plist, iph1->cert->pl, ISAKMP_NPTYPE_CERT);
+			plist = isakmp_plist_append(plist, 
+			    iph1->cert->pl, ISAKMP_NPTYPE_CERT);
 
 		/* add SIG payload */
-		plist = isakmp_plist_append(plist, iph1->sig, ISAKMP_NPTYPE_SIG);
+		plist = isakmp_plist_append(plist, 
+		    iph1->sig, ISAKMP_NPTYPE_SIG);
 
 		/* append vendor id, if needed */
 		if (vid)
-			plist = isakmp_plist_append(plist, vid, ISAKMP_NPTYPE_VID);
+			plist = isakmp_plist_append(plist, 
+			    vid, ISAKMP_NPTYPE_VID);
+
+		/* create isakmp CR payload if needed */
+		if (need_cr)
+			plist = isakmp_plist_append(plist, 
+			    cr, ISAKMP_NPTYPE_CR);
+		break;
+
+	case OAKLEY_ATTR_AUTH_METHOD_RSAENC:
+	case OAKLEY_ATTR_AUTH_METHOD_RSAREV:
+#ifdef ENABLE_HYBRID
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAENC_R:
+	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAREV_R:
+#endif
+		break;
+#ifdef HAVE_GSSAPI
+	case OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB:
+			/* create buffer to send isakmp payload */
+			gsshash = gssapi_wraphash(iph1);
+			if (gsshash == NULL) {
+				plog(LLV_ERROR, LOCATION, NULL,
+					"failed to wrap hash\n");
+				/*
+				 * This is probably due to the GSS 
+				 * roundtrips not being finished yet. 
+				 * Return this error in the hope that 
+				 * a fallback to main mode will be done.
+				 */
+				isakmp_info_send_n1(iph1,
+				    ISAKMP_NTYPE_INVALID_EXCHANGE_TYPE, NULL);
+				goto end;
+			}
+			if (iph1->approval->gssid != NULL)
+				gss_sa = 
+				    ipsecdoi_setph1proposal(iph1->approval);  
+			else
+				gss_sa = iph1->sa_ret;
+
+			if (gss_sa != iph1->sa_ret)
+				free_gss_sa = 1;
+
+			/* set SA payload to reply */
+			plist = isakmp_plist_append(plist, 
+			    gss_sa, ISAKMP_NPTYPE_SA);
+
+			/* create isakmp KE payload */
+			plist = isakmp_plist_append(plist, 
+			    iph1->dhpub, ISAKMP_NPTYPE_KE);
+
+			/* create isakmp NONCE payload */
+			plist = isakmp_plist_append(plist, 
+			    iph1->nonce, ISAKMP_NPTYPE_NONCE);
+
+			/* create isakmp ID payload */
+			plist = isakmp_plist_append(plist, 
+			    iph1->id, ISAKMP_NPTYPE_ID);
+
+			/* create GSS payload */
+			gssapi_get_token_to_send(iph1, &gsstoken);
+			plist = isakmp_plist_append(plist, 
+			    gsstoken, ISAKMP_NPTYPE_GSS);
+
+			/* create isakmp HASH payload */
+			plist = isakmp_plist_append(plist, 
+			    gsshash, ISAKMP_NPTYPE_HASH);
+
+			/* append vendor id, if needed */
+			if (vid)
+				plist = isakmp_plist_append(plist, 
+				    vid, ISAKMP_NPTYPE_VID);
+
+			break;
+#endif
+	}
 
 #ifdef ENABLE_HYBRID
 	if (iph1->mode_cfg->flags & ISAKMP_CFG_VENDORID_XAUTH) {
+		plog (LLV_INFO, LOCATION, NULL, "Adding xauth VID payload.\n");
 		if ((xauth_vid = set_vendorid(VENDORID_XAUTH)) == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL,
 			    "Cannot create Xauth vendor ID\n");
@@ -1167,68 +1305,6 @@ agg_r1send(iph1, msg)
 	}
 #endif
 
-		/* create isakmp CR payload if needed */
-		if (need_cr)
-			plist = isakmp_plist_append(plist, cr, ISAKMP_NPTYPE_CR);
-		break;
-
-	case OAKLEY_ATTR_AUTH_METHOD_RSAENC:
-	case OAKLEY_ATTR_AUTH_METHOD_RSAREV:
-		break;
-#ifdef HAVE_GSSAPI
-	case OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB:
-		/* create buffer to send isakmp payload */
-		gsshash = gssapi_wraphash(iph1);
-		if (gsshash == NULL) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"failed to wrap hash\n");
-			/*
-			 * This is probably due to the GSS roundtrips not
-			 * being finished yet. Return this error in
-			 * the hope that a fallback to main mode will
-			 * be done.
-			 */
-			isakmp_info_send_n1(iph1,
-			    ISAKMP_NTYPE_INVALID_EXCHANGE_TYPE, NULL);
-			goto end;
-		}
-		if (iph1->approval->gssid != NULL)
-			gss_sa = ipsecdoi_setph1proposal(iph1->approval);  
-		else
-			gss_sa = iph1->sa_ret;
-
-		/* set SA payload to reply */
-		plist = isakmp_plist_append(plist, gss_sa, ISAKMP_NPTYPE_SA);
-
-		/* create isakmp KE payload */
-		plist = isakmp_plist_append(plist, iph1->dhpub, ISAKMP_NPTYPE_KE);
-
-		/* create isakmp NONCE payload */
-		plist = isakmp_plist_append(plist, iph1->nonce, ISAKMP_NPTYPE_NONCE);
-
-		/* create isakmp ID payload */
-		plist = isakmp_plist_append(plist, iph1->id, ISAKMP_NPTYPE_ID);
-
-		/* create GSS payload */
-		gssapi_get_token_to_send(iph1, &gsstoken);
-		plist = isakmp_plist_append(plist, gsstoken, ISAKMP_NPTYPE_GSS);
-
-		/* create isakmp HASH payload */
-		plist = isakmp_plist_append(plist, gsshash, ISAKMP_NPTYPE_HASH);
-
-		/* append vendor id, if needed */
-		if (vid)
-			plist = isakmp_plist_append(plist, vid, ISAKMP_NPTYPE_VID);
-
-		break;
-#endif
-	default:
-		plog(LLV_ERROR, LOCATION, NULL, "Invalid authmethod %d\n",
-			iph1->approval->authmethod);
-		goto end;
-		break;
-	}
-
 #ifdef ENABLE_NATT
 	/* append NAT-T payloads */
 	if (vid_natt) {
@@ -1239,6 +1315,12 @@ agg_r1send(iph1, msg)
 		plist = isakmp_plist_append(plist, natd[1], iph1->natt_options->payload_nat_d);
 	}
 #endif
+
+#ifdef ENABLE_FRAG
+	if (vid_frag)
+		plist = isakmp_plist_append(plist, vid_frag, ISAKMP_NPTYPE_VID);
+#endif
+
 #ifdef ENABLE_DPD
 	if (vid_dpd)
 		plist = isakmp_plist_append(plist, vid_dpd, ISAKMP_NPTYPE_VID);
@@ -1282,12 +1364,16 @@ end:
 		vfree(gsstoken);
 	if (gsshash)
 		vfree(gsshash);
-	if (gss_sa != iph1->sa_ret)
+	if (free_gss_sa)
 		vfree(gss_sa);
 #endif
 #ifdef ENABLE_DPD
 	if (vid_dpd)
 		vfree(vid_dpd);
+#endif
+#ifdef ENABLE_FRAG
+	if (vid_frag)
+		vfree(vid_frag);
 #endif
 
 	return error;

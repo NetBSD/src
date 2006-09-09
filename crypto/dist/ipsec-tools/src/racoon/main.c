@@ -1,6 +1,6 @@
-/*	$NetBSD: main.c,v 1.5 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: main.c,v 1.6 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: main.c,v 1.14.2.3 2005/11/06 17:18:26 monas Exp */
+/* Id: main.c,v 1.25 2006/06/20 20:31:34 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,9 +66,11 @@
 
 #include "cfparse_proto.h"
 #include "isakmp_var.h"
-#ifdef HAVE_LIBRADIUS
+#ifdef ENABLE_HYBRID
+#include <resolv.h>
 #include "isakmp.h"
 #include "isakmp_xauth.h"
+#include "isakmp_cfg.h"
 #endif
 #include "remoteconf.h"
 #include "localconf.h"
@@ -95,9 +97,6 @@ static char version[] = "@(#) racoon / IPsec-tools";
 int main __P((int, char **));
 static void usage __P((void));
 static void parse __P((int, char **));
-static void restore_params __P((void));
-static void save_params __P((void));
-static void saverestore_params __P((int));
 #if 0
 static void cleanup_pidfile __P((void));
 #endif
@@ -180,12 +179,24 @@ main(ac, av)
 	plog(LLV_INFO, LOCATION, NULL, "@(#)"
 	    "This product linked %s (http://www.openssl.org/)"
 	    "\n", eay_version());
+	plog(LLV_INFO, LOCATION, NULL, "Reading configuration from \"%s\"\n", 
+	    lcconf->racoon_conf);
 
 	if (pfkey_init() < 0) {
 		errx(1, "something error happened "
 			"while pfkey initializing.");
 		/* NOTREACHED*/
 	}
+
+#ifdef ENABLE_HYBRID
+	if (isakmp_cfg_init(ISAKMP_CFG_INIT_COLD))
+		errx(1, "could not initialize ISAKMP mode config structures");
+#endif
+
+#ifdef HAVE_LIBLDAP
+	if (xauth_ldap_init() != 0)
+		errx(1, "could not initialize libldap");
+#endif
 
 	/*
 	 * in order to prefer the parameters by command line,
@@ -197,15 +208,15 @@ main(ac, av)
 		errx(1, "failed to parse configuration file.");
 	restore_params();
 
+	if (dump_config)
+		dumprmconf ();
+
 #ifdef HAVE_LIBRADIUS
 	if (xauth_radius_init() != 0) {
 		errx(1, "could not initialize libradius");
 		/* NOTREACHED*/
 	}
 #endif
-
-	if (dump_config)
-		dumprmconf ();
 
 	/*
 	 * install SAs from the specified file.  If the file is not specified
@@ -374,39 +385,4 @@ parse(ac, av)
 	}
 
 	return;
-}
-
-static void
-restore_params()
-{
-	saverestore_params(1);
-}
-
-static void
-save_params()
-{
-	saverestore_params(0);
-}
-
-static void
-saverestore_params(f)
-	int f;
-{
-	static u_int16_t s_port_isakmp;
-#ifdef ENABLE_ADMINPORT
-	static u_int16_t s_port_admin;
-#endif
-
-	/* 0: save, 1: restore */
-	if (f) {
-		lcconf->port_isakmp = s_port_isakmp;
-#ifdef ENABLE_ADMINPORT
-		lcconf->port_admin = s_port_admin;
-#endif
-	} else {
-		s_port_isakmp = lcconf->port_isakmp;
-#ifdef ENABLE_ADMINPORT
-		s_port_admin = lcconf->port_admin;
-#endif
-	}
 }

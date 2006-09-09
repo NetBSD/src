@@ -1,6 +1,6 @@
-.\"	$NetBSD: racoon.conf.5,v 1.25 2005/11/24 20:23:02 wiz Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.26 2006/09/09 16:22:10 manu Exp $
 .\"
-.\" Id: racoon.conf.5,v 1.27.2.11 2005/11/06 17:18:26 monas Exp
+.\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -135,7 +135,14 @@ When enabled, these enable
 to operate with an unprivileged instance doing most of the work, while
 a privileged instance takes care of performing the following operations
 as root: reading PSK and private keys, launching hook scripts, and
-validating passwords against system databases or against PAM.
+validating passwords against system databases or against PAM. Please
+note that using privilege separation makes changes to the 
+.Ar listen
+and
+.Ar paths
+sections ignored upon configuration reloads. A
+.Xr racoon 8 
+restart is required if you want such changes to be taken into account.
 .Pp
 .Bl -tag -width Ds -compact
 .It Ic user Ar user ;
@@ -144,7 +151,7 @@ The user to which the unprivileged instance of
 should switch.
 This can be a quoted user name or a numeric UID.
 .It Ic group Ar group ;
-The group to which the unprivileged instance of
+The group the unprivilegied instance of
 .Xr racoon 8 ,
 should switch.
 This can be a quoted group name or a numeric GID.
@@ -158,8 +165,8 @@ reachable:
 .Bl -tag -width Ds -compact
 .It Pa /dev/random
 .It Pa /dev/urandom
-.It the certificates
-.It the file containing the Xauth banner
+.It The certificates
+.It The file containing the Xauth banner
 .El
 .Pp
 The PSK file, the private keys, and the hook scripts are accessed through the
@@ -176,7 +183,9 @@ When running in privilege separation mode,
 .Ic certificate
 and
 .Ic script
-paths are mandatory.
+paths are mandatory, and you need a to restart
+.Xr racoon 8
+if you want to change them.
 .Bl -tag -width Ds -compact
 .It Ic path include Ar path ;
 specifies a path to include a file.
@@ -293,6 +302,12 @@ There is no default.
 require that all addresses for ISAKMP must be bound.
 This statement will be ignored if you do not specify any address.
 .El
+When running in privilege separation mode, you need to restart 
+.Xr racoon 8
+to have changes to the
+.Ar listen
+section taken into account. 
+.Pp
 The
 .Ar listen
 section can also be used to specify the admin socket mode and ownership,
@@ -397,15 +412,26 @@ is obsolete.
 Instead, use
 .Ic my_identifier .
 .\"
-.It Ic my_identifier Ar idtype ... ;
+.It Xo
+.Ic my_identifier Bq Ar qualifier
+.Ar idtype ... ;
+.Xc
 specifies the identifier sent to the remote host
 and the type to use in the phase 1 negotiation.
 .Ic address, fqdn , user_fqdn , keyid ,
 and
 .Ic asn1dn
 can be used as an
-.Ar idtype .
-Use them in the following way:
+.Ar idtype ;
+the
+.Ar qualifier
+is currently only used for
+.Ic keyid ,
+and can be either
+.Ic file
+or
+.Ic tag .
+The possible values are :
 .Bl -tag -width Ds -compact
 .It Ic my_identifier Ic address Bq Ar address ;
 the type is the IP address.
@@ -414,8 +440,13 @@ This is the default type if you do not specify an identifier to use.
 the type is a USER_FQDN (user fully-qualified domain name).
 .It Ic my_identifier Ic fqdn Ar string ;
 the type is a FQDN (fully-qualified domain name).
-.It Ic my_identifier Ic keyid Ar file ;
-the type is a KEY_ID.
+.It Xo
+.Ic my_identifier Ic keyid Bq Ic file
+.Ar file ;
+.Xc
+the type is a KEY_ID, read from the file.
+.It Ic my_identifier Ic keyid Ic tag Ar string ;
+the type is a KEY_ID, specified in the quoted string.
 .It Ic my_identifier Ic asn1dn Bq Ar string ;
 the type is an ASN.1 distinguished name.
 If
@@ -455,7 +486,7 @@ Alternative acceptable peer identifiers may be specified by repeating the
 .Ic peers_identifier
 statement.
 .\"
-.It Ic verify_identifier (on \(ba off) ;
+.It Ic verify_identifier (on | off) ;
 If you want to verify the peer's identifier,
 set this to on.
 In this case, if the value defined by
@@ -487,9 +518,15 @@ Default is
 .Pa /etc/openssl/cert.pem
 .El
 .\"
-.It Ic mode_cfg (on \(ba off) ;
+.It Ic mode_cfg (on | off) ;
 Gather network information through ISAKMP mode configuration.
 Default is off.
+.\"
+.It Ic weak_phase1_check (on | off) ;
+Tells racoon to act on unencrypted deletion messages on phase 1.
+This is a small security risk, so the default is off, meaning that
+racoon will keep on trying to establish a connection even if the
+user credentials ar wrong, for instance.
 .\"
 .It Ic peers_certfile ( dnssec | Ar certfile ) ;
 If
@@ -532,22 +569,41 @@ was enabled:
 An IPv4 internal address obtained by ISAKMP mode config.
 .It INTERNAL_NETMASK4
 An IPv4 internal netmask obtained by ISAKMP mode config.
+.It INTERNAL_CIDR4
+An IPv4 internal netmask obtained by ISAKMP mode config, in CIDR notation.
 .It INTERNAL_DNS4
-Internal DNS server IPv4 address obtained by ISAKMP mode config.
-.It INTERNAL_NBNS4
-Internal WINS server IPv4 address obtained by ISAKMP mode config.
+The first internal DNS server IPv4 address obtained by ISAKMP mode config.
+.It INTERNAL_DNS4_LIST
+A list of internal DNS servers IPv4 address obtained by ISAKMP mode config,
+separated by spaces.
+.It INTERNAL_WINS4
+The first internal WINS server IPv4 address obtained by ISAKMP mode config.
+.It INTERNAL_WINS4_LIST
+A list of internal WINS servers IPv4 address obtained by ISAKMP mode config,
+separated by spaces.
+.It SPLIT_INCLUDE
+The space separated list of IPv4 addresses and masks (address slash mask)
+that define the networks to be encrypted (as opposed to the default where
+all the traffic should be encrypted) ; obtained by ISAKMP mode config ;
+SPLIT_INCLUDE and SPLIT_LOCAL are mutually exclusive.
+.It SPLIT_LOCAL
+The space separated list of IPv4 addresses and masks (address slash mask)
+that define the networks to be considered local, and thus excluded from the
+tunnels ; obtained by ISAKMP mode config.
+.It DEFAULT_DOMAIN
+The DNS default domain name obtained by ISAKMP mode config.
 .El
 .\"
 .\"
-.It Ic send_cert (on \(ba off) ;
+.It Ic send_cert (on | off) ;
 If you do not want to send a certificate for some reason, set this to off.
 The default is on.
 .\"
-.It Ic send_cr (on \(ba off) ;
+.It Ic send_cr (on | off) ;
 If you do not want to send a certificate request for some reason, set this to off.
 The default is on.
 .\"
-.It Ic verify_cert (on \(ba off) ;
+.It Ic verify_cert (on | off) ;
 If you do not want to verify the peer's certificate for some reason,
 set this to off.
 The default is on.
@@ -559,7 +615,7 @@ Any proposal will be accepted, and the attribute(s) will be not proposed to
 the peer if you do not specify it (them).
 They can be individually specified in each proposal.
 .\"
-.It Ic ike_frag (on \(ba off) ;
+.It Ic ike_frag (on | off) ;
 Enable receiver-side IKE fragmentation, if
 .Xr racoon 8
 has been built with this feature.
@@ -585,7 +641,7 @@ is, the better is the performance.
 Note that because PMTU discovery is broken on many sites, you will
 have to use MSS clamping if you want TCP to work correctly.
 .\"
-.It Ic initial_contact (on \(ba off) ;
+.It Ic initial_contact (on | off) ;
 enable this to send an INITIAL-CONTACT message.
 The default value is
 .Ic on .
@@ -598,7 +654,7 @@ The KAME stack has the switch in the system wide value
 net.key.preferred_oldsa.
 when the value is zero, the stack always uses a new SA.
 .\"
-.It Ic passive (on \(ba off) ;
+.It Ic passive (on | off) ;
 If you do not want to initiate the negotiation, set this to on.
 The default value is
 .Ic off .
@@ -639,13 +695,13 @@ If PFS is required by both sides and if the responder's group is not equal to
 the initiator's one, then the responder will reject the proposal.
 .El
 .\"
-.It Ic support_proxy (on \(ba off) ;
+.It Ic support_proxy (on | off) ;
 If this value is set to on, then both values of ID payloads in the
 phase 2 exchange are always used as the addresses of end-point of
 IPsec-SAs.
 The default is off.
 .\"
-.It Ic generate_policy (on \(ba off) ;
+.It Ic generate_policy (on | off | require | unique) ;
 This directive is for the responder.
 Therefore you should set
 .Ic passive
@@ -663,12 +719,19 @@ Note that an inappropriate policy might be installed into the responder's SPD
 by the initiator,
 so other communications might fail if such policies are installed
 due to a policy mismatch between the initiator and the responder.
+.Ic on
+and
+.Ic require
+values means the same thing (generate a require policy).
+.Ic unique
+tells racoon to set up unique policies, with a monotoning increasing
+reqid number between 1 and IPSEC_MANUAL_REQID_MAX).
 This directive is ignored in the initiator case.
 The default value is
 .Ic off .
 .\"
 .\"
-.It Ic nat_traversal (on \(ba off \(ba force) ;
+.It Ic nat_traversal (on | off | force) ;
 This directive enables use of the NAT-Traversal IPsec extension
 (NAT-T).
 NAT-T allows one or both peers to reside behind a NAT gateway (i.e.,
@@ -732,7 +795,7 @@ specify the encryption algorithm used for the phase 1 negotiation.
 This directive must be defined.
 .Ar algorithm
 is one of following:
-.Ic des , 3des , blowfish , cast128 , aes
+.Ic des, 3des, blowfish, cast128, aes
 .\".Ic rc5 , idea
 for Oakley.
 For other transforms, this statement should not be used.
@@ -751,8 +814,9 @@ This directive must be defined.
 .Ar type
 is one of:
 .Ic pre_shared_key , rsasig , gssapi_krb , hybrid_rsa_server ,
+.Ic hybrid_rsa_client , xauth_rsa_server , xauth_rsa_client , xauth_psk_server
 or
-.Ic hybrid_rsa_client .
+.Ic xauth_psk_client .
 .\"
 .It Ic dh_group Ar group ;
 define the group used for the Diffie-Hellman exponentiations.
@@ -800,7 +864,7 @@ and policies in the kernel.
 .Ss Sainfo Specifications
 .Bl -tag -width Ds -compact
 .It Xo
-.Ic sainfo ( Ar source_id destination_id | Ic anonymous ) [ from Ar idtype [ Ar string ] ]
+.Ic sainfo ( Ar source_id destination_id | Ar source_id Ic anonymous | Ic anonymous Ar destination_id | Ic anonymous ) [ from Ar idtype [ Ar string ] ] [ Ic group Ar string ]
 .Ic { Ar statements Ic }
 .Xc
 defines the parameters of the IKE phase 2 (IPsec-SA establishment).
@@ -825,7 +889,8 @@ or
 .Pp
 .Ar idtype Ar string
 .Pp
-It means exactly the content of ID payload.
+It means exactly the content of ID payload (source is the local end,
+destination is the remote end).
 This is not like a filter rule.
 For example, if you define 3ffe:501:4819::/48 as
 .Ar source_id .
@@ -837,6 +902,11 @@ instructs to send ID type of ADDRESS, while
 .Ar subnet
 instructs to send ID type of SUBNET.
 Otherwise these instructions are identical.
+.Pp
+The group keyword allows an xauth group membership check to be performed
+for this sainfo section. When the mode_cfg auth source is set to system
+or ldap, the xauth user is verified to be a member of the specified group
+before allowing a matching sa to be negotiated.
 .Pp
 .Bl -tag -width Ds -compact
 .\"
@@ -917,11 +987,11 @@ Note that the kernel may not support the algorithm you have specified.
 define logging level.
 .Ar level
 is one of following:
-.Ic notify , debug ,
+.Ic error , warning , notify , info , debug
 and
 .Ic debug2 .
 The default is
-.Ic notify .
+.Ic info .
 If you set the logging level too high on slower machines,
 IKE negotiation can fail due to timing constraint changes.
 .El
@@ -932,10 +1002,10 @@ IKE negotiation can fail due to timing constraint changes.
 specified padding format.
 The following are valid statements:
 .Bl -tag -width Ds -compact
-.It Ic randomize (on \(ba off) ;
+.It Ic randomize (on | off) ;
 enable using a randomized value for padding.
 The default is on.
-.It Ic randomize_length (on \(ba off) ;
+.It Ic randomize_length (on | off) ;
 the pad length is random.
 The default is off.
 .It Ic maximum_length Ar number ;
@@ -944,11 +1014,11 @@ If
 .Ic randomize_length
 is off, this is ignored.
 The default is 20 bytes.
-.It Ic exclusive_tail (on \(ba off) ;
+.It Ic exclusive_tail (on | off) ;
 means to put the number of pad bytes minus one into the last part
 of the padding.
 The default is on.
-.It Ic strict_check (on \(ba off) ;
+.It Ic strict_check (on | off) ;
 means to constrain the peer to set the number of pad bytes.
 The default is off.
 .El
@@ -959,12 +1029,12 @@ The default is off.
 Defines the information to return for remote hosts' ISAKMP mode config
 requests.
 Also defines the authentication source for remote peers
-authenticating through hybrid auth.
+authenticating through Xauth.
 .Pp
 The following are valid statements:
 .Bl -tag -width Ds -compact
-.It Ic auth_source (system \(ba radius \(ba pam) ;
-Specify the source for authentication of users through hybrid auth.
+.It Ic auth_source (system | radius | pam | ldap) ;
+Specify the source for authentication of users through Xauth.
 .Ar system
 means to use the Unix user database.
 This is the default.
@@ -978,8 +1048,33 @@ was built with libradius support, and the configuration is done in
 means to use PAM.
 It works only if
 .Xr racoon 8
-was built with libpam support.
-.It Ic conf_source (local \(ba radius) ;
+was build with libpam support.
+.Ar ldap
+means to use LDAP.
+It works only if
+.Xr racoon 8
+was build with libldap support, and the configuration is handled by
+adding statements to the
+.Ic ldapcfg
+section.
+.It Ic auth_groups Ar "group1", ... ;
+Specify the group memberships for Xauth, in quoted group name strings.
+When defined, the authenticating user must be a member of at least one
+group for Xauth to succeed.
+.It Ic group_source (system | ldap) ;
+Specify the source for group validataion of users through Xauth.
+.Ar system
+means to use the Unix user database.
+This is the default.
+.Ar ldap
+means to use LDAP.
+It works only if
+.Xr racoon 8
+was build with libldap support, and the configuration is handled by
+adding statements to the
+.Ic ldapcfg
+section.
+.It Ic conf_source (local | radius | ldap) ;
 Specify the source for IP addresses and netmask allocated through ISAKMP
 mode config.
 .Ar local
@@ -993,27 +1088,39 @@ This is the default.
 means to use a RADIUS server.
 It works only if
 .Xr racoon 8
-was built with libradius support, and the configuration is done in
+was build with libradius support, and the configuration is done in
 .Xr radius.conf 5 .
 RADIUS configuration requires RADIUS authentication.
-.It Ic accounting (none \(ba radius \(ba pam) ;
+.Ar ldap
+means to use an LDAP server.
+It works only if
+.Xr racoon 8
+was build with libldap support, and the configuration is done in the
+.Ic ldapcfg
+section.
+LDAP configuration requires LDAP authentication.
+.It Ic accounting (none | system | radius | pam) ;
 Enable or disable accounting for Xauth logins and logouts.
 Default is
 .Ar none ,
 which disable accounting.
+.Ar system
+enable system accounting through
+.Xr utmp 5 .
 .Ar radius
 enable RADIUS accounting.
 It works only if
 .Xr racoon 8
-was built with libradius support, and the configuration is done in
+was build with libradius support, and the configuration is done in
 .Xr radius.conf 5 .
 RADIUS accounting require RADIUS authentication.
 .Ar pam
 enable PAM accounting.
 It works only if
 .Xr racoon 8
-was built with libpam support.
-PAM accounting requires PAM authentication.
+was build with libpam support.
+PAM accounting require
+PAM authentication.
 .It Ic pool_size Ar size
 Specify the size of the IP address pool, either local or allocated
 through RADIUS.
@@ -1035,10 +1142,26 @@ or if the RADIUS server returned
 .Ar 255.255.255.254 .
 Default is
 .Ar 0.0.0.0/0.0.0.0 .
-.It Ic dns4 Ar address ;
-The IPv4 address for a DNS server.
-.It Ic nbns4 Ar address ;
-The IPv4 address for a WINS server.
+.It Ic dns4 Ar addresses ;
+A list of IPv4 addresses for DNS servers, separated by commas, or on multiple
+.Ic dns4
+lines.
+.It Ic nbns4 Ar addresses ;
+A list of IPv4 address for WINS servers.
+.It Ic split_network (include | local_lan) Ar network/mask, ...
+The network configuration to send, in cidr notation (e.g. 192.168.1.0/24).  If
+.Ic include
+is specified, the tunnel should be only used to encrypt the indicated
+destinations ; otherwise, if
+.Ic local_lan
+is used, everything will pass through the tunnel but those destinations.
+.It Ic default_domain Ar domain ;
+The default DNS domain to send.
+.It Ic split_dns Ar "domain", ...
+The split dns configuration to send, in quoted domain name strings. This list can
+be used to describe a list of domain names for which a peer should query a modecfg 
+assigned dns server. DNS queries for all other domains would be handled locally.
+(Cisco VPN client only).
 .It Ic banner Ar path ;
 The path of a file displayed on the client at connection time.
 Default is
@@ -1058,9 +1181,64 @@ Allow the client to save the Xauth password (Cisco VPN client only).
 Default is off.
 .El
 .El
+.Ss Ldap configuration settings
+.Bl -tag -width Ds -compact
+.It Ic ldapcfg { Ar statements Ic }
+Defines the parameters that will be used to communicate with an ldap
+server for
+.Ic xauth
+authentication.
+.Pp
+The following are valid statements:
+.Bl -tag -width Ds -compact
+.It Ic version (2 | 3) ;
+The ldap protocol version used to communicate with the server. The default is
+.Ic 3 .
+.It Ic host Ar (hostname | address) ;
+The host name or ip address of the ldap server. The default is
+.Ic localhost .
+.It Ic port Ar number;
+The port that the ldap server is configured to listen on. The default is
+.Ic 389 .
+.It Ic base Ar distinguished name;
+The ldap search base. This option has no default value.
+.It Ic subtree (on | off) ;
+Use the subtree ldap search scope. Otherwise, use the one level search scope.
+The default is
+.Ic off .
+.It Ic bind_dn Ar distinguised name;
+The user dn used to optionaly bind as before performing ldap search operations.
+If this option is not specified, anonymous binds are used.
+.It Ic bind_pw Ar string;
+The password used when binding as
+.Ic bind_dn .
+.It Ic attr_user Ar attribute name;
+The attribute used to specify a users name in an ldap directory. For example,
+if a user dn is "cn=jdoe,dc=my,dc=net" then the attribute would be "cn".
+The default value is
+.Ic cn .
+.It Ic attr_addr Ar attribute name;
+.It Ic attr_mask Ar attribute name;
+The attributes used to specify a users network address and subnet mask in an
+ldap directory. These values are forwarded during mode_cfg negotiation when
+the conf_source is set to ldap. The default values are
+.Ic racoon-address
+and
+.Ic racoon-netmask .
+.It Ic attr_group Ar attribute name;
+The attribute used to specify a group name in an ldap directory. For example,
+if a group dn is "cn=users,dc=my,dc=net" then the attribute would be "cn".
+The default value is
+.Ic cn .
+.It Ic attr_member Ar attribute name;
+The attribute used to specify group membership in an ldap directory.
+The default value is
+.Ic member .
+.El
+.El
 .Ss Special directives
 .Bl -tag -width Ds -compact
-.It Ic complex_bundle (on \(ba off) ;
+.It Ic complex_bundle (on | off) ;
 defines the interpretation of proposal in the case of SA bundle.
 Normally
 .Dq IP AH ESP IP payload

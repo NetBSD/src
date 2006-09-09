@@ -1,6 +1,6 @@
-/*	$NetBSD: sainfo.h,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: sainfo.h,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
 
-/* Id: sainfo.h,v 1.3 2004/06/11 16:00:17 ludvigm Exp */
+/* Id: sainfo.h,v 1.5 2006/07/09 17:19:38 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,6 +46,10 @@ struct sainfo {
 		 * If idsrc == NULL, that is anonymous entry.
 		 */
 
+#ifdef ENABLE_HYBRID
+	vchar_t *group;
+#endif
+
 	time_t lifetime;
 	int lifebyte;
 	int pfs_group;		/* only use when pfs is required. */
@@ -74,5 +78,9 @@ extern struct sainfoalg *newsainfoalg __P((void));
 extern void delsainfoalg __P((struct sainfoalg *));
 extern void inssainfoalg __P((struct sainfoalg **, struct sainfoalg *));
 extern const char * sainfo2str __P((const struct sainfo *));
+
+extern void save_sainfotree __P((void));
+extern void save_sainfotree_flush __P((void));
+extern void save_sainfotree_restore __P((void));
 
 #endif /* _SAINFO_H */

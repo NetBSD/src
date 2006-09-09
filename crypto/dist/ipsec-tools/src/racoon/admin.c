@@ -1,6 +1,6 @@
-/*	$NetBSD: admin.c,v 1.7 2005/11/21 14:20:28 manu Exp $	*/
+/*	$NetBSD: admin.c,v 1.8 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: admin.c,v 1.17.2.4 2005/07/12 11:49:44 manubsd Exp */
+/* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -58,6 +58,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef ENABLE_HYBRID
+#include <resolv.h>
+#endif
 
 #include "var.h"
 #include "misc.h"
@@ -80,6 +83,9 @@
 #include "admin.h"
 #include "admin_var.h"
 #include "isakmp_inf.h"
+#ifdef ENABLE_HYBRID
+#include "isakmp_cfg.h"
+#endif
 #include "session.h"
 #include "gcmalloc.h"
 
@@ -193,13 +199,18 @@ admin_process(so2, combuf)
 	{
 		caddr_t p;
 		int len;
-		if (sched_dump(&p, &len) == -1)
+		if (sched_dump(&p, &len) == -1) {
 			com->ac_errno = -1;
+			break;
+		}
+
 		buf = vmalloc(len);
-		if (buf == NULL)
+		if (buf == NULL) {
 			com->ac_errno = -1;
-		else
-			memcpy(buf->v, p, len);
+			break;
+		}
+
+		memcpy(buf->v, p, len);
 	}
 		break;
 
@@ -280,16 +291,10 @@ admin_process(so2, combuf)
 			&((struct admin_com_indexes *)
 			    ((caddr_t)com + sizeof(*com)))->dst;
 
-		if ((loc = strdup(saddrwop2str(src))) == NULL) {
-			plog(LLV_ERROR, LOCATION, NULL, 
-			    "cannot allocate memory\n");
-			break;
-		}
-		if ((rem = strdup(saddrwop2str(dst))) == NULL) {
-			plog(LLV_ERROR, LOCATION, NULL, 
-			    "cannot allocate memory\n");
-			break;
-		}
+		loc = racoon_strdup(saddrwop2str(src));
+		rem = racoon_strdup(saddrwop2str(dst));
+		STRDUP_FATAL(loc);
+		STRDUP_FATAL(rem);
 
 		if ((iph1 = getph1byaddrwop(src, dst)) == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL, 
@@ -306,6 +311,27 @@ admin_process(so2, combuf)
 		break;
 	}
 
+#ifdef ENABLE_HYBRID
+	case ADMIN_LOGOUT_USER: {
+		struct ph1handle *iph1;
+		char *user;
+		int found = 0;
+
+		if (com->ac_len > sizeof(com) + LOGINLEN + 1) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			    "malformed message (login too long)\n");
+			break;
+		}
+
+		user = (char *)(com + 1);
+		found = purgeph1bylogin(user);
+		plog(LLV_INFO, LOCATION, NULL, 
+		    "deleted %d SA for user \"%s\"\n", found, user);
+
+		break;
+	}
+#endif
+
 	case ADMIN_DELETE_ALL_SA_DST: {
 		struct ph1handle *iph1;
 		struct sockaddr *dst;
@@ -315,21 +341,15 @@ admin_process(so2, combuf)
 			&((struct admin_com_indexes *)
 			    ((caddr_t)com + sizeof(*com)))->dst;
 
-		if ((rem = strdup(saddrwop2str(dst))) == NULL) {
-			plog(LLV_ERROR, LOCATION, NULL, 
-			    "cannot allocate memory\n");
-			break;
-		}
+		rem = racoon_strdup(saddrwop2str(dst));
+		STRDUP_FATAL(rem);
 
 		plog(LLV_INFO, LOCATION, NULL, 
 		    "Flushing all SAs for peer %s\n", rem);
 
 		while ((iph1 = getph1bydstaddrwop(dst)) != NULL) {
-			if ((loc = strdup(saddrwop2str(iph1->local))) == NULL) {
-				plog(LLV_ERROR, LOCATION, NULL, 
-				    "cannot allocate memory\n");
-				break;
-			}
+			loc = racoon_strdup(saddrwop2str(iph1->local));
+			STRDUP_FATAL(loc);
 
 			if (iph1->status == PHASE1ST_ESTABLISHED)
 				isakmp_info_send_d1(iph1);
@@ -453,21 +473,27 @@ admin_process(so2, combuf)
 				break;
 			}
 
+#ifdef ENABLE_HYBRID
 			/* Set the id and key */
 			if (id && key) {
-				if (rmconf->idv != NULL) {
-					vfree(rmconf->idv);
-					rmconf->idv = NULL;
-				}
-				if (rmconf->key != NULL) {
-					vfree(rmconf->key);
-					rmconf->key = NULL;
+				if (xauth_rmconf_used(&rmconf->xauth) == -1) {
+					com->ac_errno = -1;
+					break;
 				}
 
-				rmconf->idvtype = idtype;
-				rmconf->idv = id;
-				rmconf->key = key;
+				if (rmconf->xauth->login != NULL) {
+					vfree(rmconf->xauth->login);
+					rmconf->xauth->login = NULL;
+				}
+				if (rmconf->xauth->pass != NULL) {
+					vfree(rmconf->xauth->pass);
+					rmconf->xauth->pass = NULL;
+				}
+
+				rmconf->xauth->login = id;
+				rmconf->xauth->pass = key;
 			}
+#endif
  
 			plog(LLV_INFO, LOCATION, NULL,
 				"accept a request to establish IKE-SA: "
@@ -636,3 +662,4 @@ admin_close()
 	return 0;
 }
 #endif
+

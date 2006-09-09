@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: misc.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
 /*	$KAME: misc.c,v 1.23 2001/08/16 14:37:29 itojun Exp $	*/
 

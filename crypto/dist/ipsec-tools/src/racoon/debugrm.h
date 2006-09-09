@@ -1,6 +1,6 @@
-/*	$NetBSD: debugrm.h,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: debugrm.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: debugrm.h,v 1.3 2004/06/11 16:00:16 ludvigm Exp */
+/* Id: debugrm.h,v 1.4 2006/04/06 14:00:06 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -49,6 +49,9 @@
 #ifndef racoon_free
 #define	racoon_free(p)		free((p))
 #endif
+#ifndef racoon_strdup
+#define	racoon_strdup(p)	strdup((p))
+#endif
 #else /*!NONEED_DRM*/
 #ifndef racoon_malloc
 #define	racoon_malloc(sz)	\
@@ -66,6 +69,10 @@
 #define	racoon_free(p)		\
 	DRM_free(__FILE__, __LINE__, __func__, (p))
 #endif
+#ifndef racoon_strdup
+#define	racoon_strdup(p)	\
+	DRM_strdup(__FILE__, __LINE__, __func__, (p))
+#endif
 #endif /*NONEED_DRM*/
 
 extern void DRM_init __P((void));
@@ -74,6 +81,7 @@ extern void *DRM_malloc __P((char *, int, char *, size_t));
 extern void *DRM_calloc __P((char *, int, char *, size_t, size_t));
 extern void *DRM_realloc __P((char *, int, char *, void *, size_t));
 extern void DRM_free __P((char *, int, char *, void *));
+extern char *DRM_strdup __P((char *, int, char *, const char *));
 
 #ifndef NONEED_DRM
 #define	vmalloc(sz)	\

@@ -1,4 +1,4 @@
-/*	$NetBSD: localconf.c,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: localconf.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
 /*	$KAME: localconf.c,v 1.33 2001/08/09 07:32:19 sakane Exp $	*/
 
@@ -333,3 +333,39 @@ doitype2doi(doitype)
 	return -1;
 }
 
+
+
+static void
+saverestore_params(f)
+	int f;
+{
+	static u_int16_t s_port_isakmp;
+#ifdef ENABLE_ADMINPORT
+	static u_int16_t s_port_admin;
+#endif
+
+	/* 0: save, 1: restore */
+	if (f) {
+		lcconf->port_isakmp = s_port_isakmp;
+#ifdef ENABLE_ADMINPORT
+		lcconf->port_admin = s_port_admin;
+#endif
+	} else {
+		s_port_isakmp = lcconf->port_isakmp;
+#ifdef ENABLE_ADMINPORT
+		s_port_admin = lcconf->port_admin;
+#endif
+	}
+}
+
+void
+restore_params()
+{
+	saverestore_params(1);
+}
+
+void
+save_params()
+{
+	saverestore_params(0);
+}

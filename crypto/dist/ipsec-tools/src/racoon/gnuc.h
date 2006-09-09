@@ -1,4 +1,4 @@
-/*	$NetBSD: gnuc.h,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: gnuc.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
 /* Id: gnuc.h,v 1.4 2004/11/18 15:14:44 ludvigm Exp */
 

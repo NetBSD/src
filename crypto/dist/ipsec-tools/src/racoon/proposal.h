@@ -1,6 +1,6 @@
-/*	$NetBSD: proposal.h,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: proposal.h,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
 
-/* Id: proposal.h,v 1.5.10.1 2005/05/12 19:34:10 manubsd Exp */
+/* Id: proposal.h,v 1.5 2004/06/11 16:00:17 ludvigm Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -208,6 +208,5 @@ extern void print_proppair __P((int, struct prop_pair *));
 extern int set_proposal_from_policy __P((struct ph2handle *,
 	struct secpolicy *, struct secpolicy *));
 extern int set_proposal_from_proposal __P((struct ph2handle *));
-extern int tunnel_mode_prop __P((struct saprop *p));
 
 #endif /* _PROPOSAL_H */

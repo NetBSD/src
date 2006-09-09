@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.2 2005/08/20 00:57:06 manu Exp $	*/
+/*	$NetBSD: dump.c,v 1.3 2006/09/09 16:22:09 manu Exp $	*/
 
 /*	$KAME: dump.c,v 1.3 2000/09/23 15:31:05 itojun Exp $	*/
 

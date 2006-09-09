@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp_unity.c,v 1.5 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: isakmp_unity.c,v 1.6 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: isakmp_unity.c,v 1.5.4.1 2005/05/10 09:45:46 manubsd Exp */
+/* Id: isakmp_unity.c,v 1.10 2006/07/31 04:49:23 manubsd Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus
@@ -61,6 +61,7 @@
 #include <unistd.h>
 #endif
 #include <ctype.h>
+#include <resolv.h>
 
 #include "var.h"
 #include "misc.h"
@@ -77,6 +78,9 @@
 #include "isakmp_unity.h"
 #include "isakmp_cfg.h"
 #include "strnames.h"
+
+static vchar_t *isakmp_cfg_split(struct ph1handle *, 
+    struct isakmp_data *, struct unity_netentry*,int);
 
 vchar_t *
 isakmp_unity_req(iph1, attr)
@@ -100,13 +104,14 @@ isakmp_unity_req(iph1, attr)
 		type &= ~ISAKMP_GEN_MASK;
 
 		plog(LLV_DEBUG, LOCATION, NULL,
-		     "Short attribute %d = %d\n", 
-		     type, ntohs(attr->lorv));
+		     "Short attribute %s = %d\n", 
+		     s_isakmp_cfg_type(type), ntohs(attr->lorv));
 
 		switch (type) {
 		default:
 			plog(LLV_DEBUG, LOCATION, NULL,
-			     "Ignored short attribute %d\n", type);
+			     "Ignored short attribute %s\n",
+			     s_isakmp_cfg_type(type));
 			break;
 		}
 
@@ -156,14 +161,37 @@ isakmp_unity_req(iph1, attr)
 		break;
 
 	case UNITY_DEF_DOMAIN:
-	case UNITY_FW_TYPE:
-	case UNITY_SPLITDNS_NAME:
+		reply_attr = isakmp_cfg_string(iph1, 
+		    attr, isakmp_cfg_config.default_domain);
+		break;
+
 	case UNITY_SPLIT_INCLUDE:
+		if(isakmp_cfg_config.splitnet_type == UNITY_SPLIT_INCLUDE)
+			reply_attr = isakmp_cfg_split(iph1, attr,
+			isakmp_cfg_config.splitnet_list,
+			isakmp_cfg_config.splitnet_count);
+		else
+			return NULL;
+		break;
+	case UNITY_LOCAL_LAN:
+		if(isakmp_cfg_config.splitnet_type == UNITY_LOCAL_LAN)
+			reply_attr = isakmp_cfg_split(iph1, attr,
+			isakmp_cfg_config.splitnet_list,
+			isakmp_cfg_config.splitnet_count);
+		else
+			return NULL;
+		break;
+	case UNITY_SPLITDNS_NAME:
+		reply_attr = isakmp_cfg_varlen(iph1, attr,
+				isakmp_cfg_config.splitdns_list,
+				isakmp_cfg_config.splitdns_len);
+		break;
+	case UNITY_FW_TYPE:
 	case UNITY_NATT_PORT:
 	case UNITY_BACKUP_SERVERS:
 	default:
 		plog(LLV_DEBUG, LOCATION, NULL,
-		     "Ignored attribute %d\n", type);
+		     "Ignored attribute %s\n", s_isakmp_cfg_type(type));
 		return NULL;
 		break;
 	}
@@ -171,4 +199,203 @@ isakmp_unity_req(iph1, attr)
 	return reply_attr;
 }
 
+void
+isakmp_unity_reply(iph1, attr)
+	struct ph1handle *iph1;
+	struct isakmp_data *attr;
+{
+	int type = ntohs(attr->type);
+	int alen = ntohs(attr->lorv);
 
+	struct unity_network *network = (struct unity_network *)(attr + 1);
+	int index = 0;
+	int count = 0;
+
+	switch(type) {
+	case UNITY_SPLIT_INCLUDE:
+	{
+		if (alen)
+			count = alen / sizeof(struct unity_network);
+
+		for(;index < count; index++)
+			splitnet_list_add(
+				&iph1->mode_cfg->split_include,
+				&network[index],
+				&iph1->mode_cfg->include_count);
+
+		iph1->mode_cfg->flags |= ISAKMP_CFG_GOT_SPLIT_INCLUDE;
+		break;
+	}
+	case UNITY_LOCAL_LAN:
+	{
+		if (alen)
+			count = alen / sizeof(struct unity_network);
+
+		for(;index < count; index++)
+			splitnet_list_add(
+				&iph1->mode_cfg->split_local,
+				&network[index],
+				&iph1->mode_cfg->local_count);
+
+		iph1->mode_cfg->flags |= ISAKMP_CFG_GOT_SPLIT_LOCAL;
+		break;
+	}
+	case UNITY_SPLITDNS_NAME:
+	case UNITY_BANNER:
+	case UNITY_SAVE_PASSWD:
+	case UNITY_NATT_PORT:
+	case UNITY_PFS:
+	case UNITY_FW_TYPE:
+	case UNITY_BACKUP_SERVERS:
+	case UNITY_DDNS_HOSTNAME:
+	default:
+		plog(LLV_WARNING, LOCATION, NULL,
+		     "Ignored attribute %s\n",
+		     s_isakmp_cfg_type(type));
+		break;
+	}
+	return;
+}
+
+static vchar_t *
+isakmp_cfg_split(iph1, attr, netentry, count)
+	struct ph1handle *iph1;
+	struct isakmp_data *attr;
+	struct unity_netentry *netentry;
+	int count;
+{
+	vchar_t *buffer;
+	struct isakmp_data *new;
+	struct unity_network * network;
+	size_t len;
+	int index = 0;
+
+	char tmp1[40];
+	char tmp2[40];
+
+	len = sizeof(struct unity_network) * count;
+	if ((buffer = vmalloc(sizeof(*attr) + len)) == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL, "Cannot allocate memory\n");
+		return NULL;
+	}
+
+	new = (struct isakmp_data *)buffer->v;
+	new->type = attr->type;
+	new->lorv = htons(len);
+
+	network = (struct unity_network *)(new + 1);
+	for (; index < count; index++) {
+
+		memcpy(&network[index],
+			&netentry->network,
+			sizeof(struct unity_network));
+
+		inet_ntop(AF_INET, &netentry->network.addr4, tmp1, 40);
+		inet_ntop(AF_INET, &netentry->network.mask4, tmp2, 40);
+		plog(LLV_DEBUG, LOCATION, NULL, "splitnet: %s/%s\n", tmp1, tmp2);
+
+		netentry = netentry->next;
+	}
+
+	return buffer;
+}
+
+int  splitnet_list_add(list, network, count)
+	struct unity_netentry ** list;
+	struct unity_network * network;
+	int *count;
+{
+	struct unity_netentry * newentry;
+
+	/*
+	 * allocate new netentry and copy
+         * new splitnet network data
+	 */
+	newentry = (struct unity_netentry *)
+		racoon_malloc(sizeof(struct unity_netentry));
+	if (newentry == NULL)
+		return -1;
+
+	memcpy(&newentry->network,network,
+		sizeof(struct unity_network));
+	newentry->next = NULL;
+
+	/*
+	 * locate the last netentry in our
+	 * splitnet list and add our entry
+	 */
+	if (*list == NULL)
+		*list = newentry;
+	else {
+		struct unity_netentry * tmpentry = *list;
+		while (tmpentry->next != NULL)
+			tmpentry = tmpentry->next;
+		tmpentry->next = newentry;
+	}
+
+	(*count)++;
+
+	return 0;
+}
+
+void splitnet_list_free(list, count)
+	struct unity_netentry * list;
+	int *count;
+{
+	struct unity_netentry * netentry = list;
+	struct unity_netentry * delentry;
+
+	*count = 0;
+
+	while (netentry != NULL) {
+		delentry = netentry;
+		netentry = netentry->next;
+		racoon_free(delentry);
+	}
+}
+
+char * splitnet_list_2str(list)
+	struct unity_netentry * list;
+{
+	struct unity_netentry * netentry;
+	char tmp1[40];
+	char tmp2[40];
+	char * str;
+	int len;
+
+	/* determine string length */
+	len = 0;
+	netentry = list;
+	while (netentry != NULL) {
+
+		inet_ntop(AF_INET, &netentry->network.addr4, tmp1, 40);
+		inet_ntop(AF_INET, &netentry->network.mask4, tmp2, 40);
+		len += strlen(tmp1);
+		len += strlen(tmp2);
+		len += 2;
+
+		netentry = netentry->next;
+	}
+
+	/* allocate network list string */
+	str = racoon_malloc(len);
+	if (str == NULL)
+		return NULL;
+
+	/* create network list string */
+	len = 0;
+	netentry = list;
+	while (netentry != NULL) {
+
+		inet_ntop(AF_INET, &netentry->network.addr4, tmp1, 40);
+		inet_ntop(AF_INET, &netentry->network.mask4, tmp2, 40);
+
+		len += sprintf(str+len, "%s/%s ", tmp1, tmp2);
+
+		netentry = netentry->next;
+	}
+
+	str[len-1]=0;
+
+	return str;
+}

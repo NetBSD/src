@@ -1,6 +1,6 @@
-/*	$NetBSD: ipsec_doi.h,v 1.5 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.h,v 1.6 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: ipsec_doi.h,v 1.9.2.2 2005/10/17 16:23:50 monas Exp */
+/* Id: ipsec_doi.h,v 1.15 2006/08/11 16:06:30 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -181,8 +181,12 @@ struct ipsecdoi_pl_id {
 #define IDTYPE_KEYID		3
 #define IDTYPE_ADDRESS		4
 #define IDTYPE_ASN1DN		5
-#define IDTYPE_LOGIN		6
-#define IDTYPE_SUBNET		7
+#define IDTYPE_SUBNET		6
+
+/* qualifiers for KEYID (and maybe others) */
+#define IDQUAL_UNSPEC		0
+#define IDQUAL_FILE		1
+#define IDQUAL_TAG		2
 
 /* The use for checking proposal payload. This is not exchange type. */
 #define IPSECDOI_TYPE_PH1	0
@@ -206,11 +210,14 @@ extern vchar_t *get_sabysaprop __P((struct saprop *, vchar_t *));
 extern int ipsecdoi_checkid1 __P((struct ph1handle *));
 extern int ipsecdoi_setid1 __P((struct ph1handle *));
 extern int set_identifier __P((vchar_t **, int, vchar_t *));
+extern int set_identifier_qual __P((vchar_t **, int, vchar_t *, int));
 extern int ipsecdoi_setid2 __P((struct ph2handle *));
 extern vchar_t *ipsecdoi_sockaddr2id __P((struct sockaddr *, u_int, u_int));
 extern int ipsecdoi_id2sockaddr __P((vchar_t *, struct sockaddr *,
 	u_int8_t *, u_int16_t *));
-extern const char *ipsecdoi_id2str __P((const vchar_t *));
+extern char *ipsecdoi_id2str __P((const vchar_t *));
+extern vchar_t *ipsecdoi_sockrange2id __P((	struct sockaddr *,
+	struct sockaddr *, u_int));
 
 extern vchar_t *ipsecdoi_setph1proposal __P((struct isakmpsa *));
 extern int ipsecdoi_setph2proposal __P((struct ph2handle *));

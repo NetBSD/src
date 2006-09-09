@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.8 2005/12/04 20:46:40 manu Exp $	*/
+/*	$NetBSD: parse.y,v 1.9 2006/09/09 16:22:37 manu Exp $	*/
 
 /*	$KAME: parse.y,v 1.81 2003/07/01 04:01:48 itojun Exp $	*/
 
@@ -61,6 +61,10 @@
 #include "vchar.h"
 #include "extern.h"
 
+#ifndef IPPROTO_MH
+#define IPPROTO_MH		135
+#endif
+
 #define DEFAULT_NATT_PORT	4500
 
 #ifndef UDP_ENCAP_ESPINUDP
@@ -79,6 +83,15 @@ const char *p_key_enc;
 const char *p_key_auth;
 time_t p_lt_hard, p_lt_soft;
 size_t p_lb_hard, p_lb_soft;
+
+struct security_ctx {
+	u_int8_t doi;
+	u_int8_t alg;
+	u_int16_t len;
+	char *buf;
+};
+
+struct security_ctx sec_ctx;
 
 static u_int p_natt_type;
 static struct addrinfo * p_natt_oa = NULL;
@@ -126,6 +139,7 @@ static int setkeymsg_add __P((unsigned int, unsigned int,
 %token F_POLICY PL_REQUESTS
 %token F_AIFLAGS
 %token TAGGED
+%token SECURITY_CTX
 
 %type <num> prefix protocol_spec upper_spec
 %type <num> ALG_ENC ALG_ENC_DESDERIV ALG_ENC_DES32IV ALG_ENC_OLD ALG_ENC_NOKEY
@@ -535,12 +549,18 @@ extension
 	|	F_LIFETIME_SOFT DECSTRING { p_lt_soft = $2; }
 	|	F_LIFEBYTE_HARD DECSTRING { p_lb_hard = $2; }
 	|	F_LIFEBYTE_SOFT DECSTRING { p_lb_soft = $2; }
+	|	SECURITY_CTX DECSTRING DECSTRING QUOTEDSTRING {
+		sec_ctx.doi = $2;
+		sec_ctx.alg = $3;
+		sec_ctx.len = $4.len+1;
+		sec_ctx.buf = $4.buf;
+	}
 	;
 
 	/* definition about command for SPD management */
 	/* spdadd */
 spdadd_command
-	:	SPDADD ipaddropts STRING prefix portstr STRING prefix portstr upper_spec upper_misc_spec policy_spec EOT
+	:	SPDADD ipaddropts STRING prefix portstr STRING prefix portstr upper_spec upper_misc_spec context_spec policy_spec EOT
 		{
 			int status;
 			struct addrinfo *src, *dst;
@@ -551,7 +571,8 @@ spdadd_command
 
 			/* fixed port fields if ulp is icmpv6 */
 			if ($10.buf != NULL) {
-				if ($9 != IPPROTO_ICMPV6)
+				if ( ($9 != IPPROTO_ICMPV6) &&
+					 ($9 != IPPROTO_MH))
 					return -1;
 				free($5.buf);
 				free($8.buf);
@@ -572,7 +593,7 @@ spdadd_command
 				return -1;
 			}
 
-			status = setkeymsg_spdaddr(SADB_X_SPDADD, $9, &$11,
+			status = setkeymsg_spdaddr(SADB_X_SPDADD, $9, &$12,
 			    src, $4, dst, $7);
 			freeaddrinfo(src);
 			freeaddrinfo(dst);
@@ -591,14 +612,15 @@ spdadd_command
 	;
 
 spddelete_command
-	:	SPDDELETE ipaddropts STRING prefix portstr STRING prefix portstr upper_spec upper_misc_spec policy_spec EOT
+	:	SPDDELETE ipaddropts STRING prefix portstr STRING prefix portstr upper_spec upper_misc_spec context_spec policy_spec EOT
 		{
 			int status;
 			struct addrinfo *src, *dst;
 
 			/* fixed port fields if ulp is icmpv6 */
 			if ($10.buf != NULL) {
-				if ($9 != IPPROTO_ICMPV6)
+				if (($9 != IPPROTO_ICMPV6) &&
+					($9 != IPPROTO_MH))
 					return -1;
 				free($5.buf);
 				free($8.buf);
@@ -619,7 +641,7 @@ spddelete_command
 				return -1;
 			}
 
-			status = setkeymsg_spdaddr(SADB_X_SPDDELETE, $9, &$11,
+			status = setkeymsg_spdaddr(SADB_X_SPDDELETE, $9, &$12,
 			    src, $4, dst, $7);
 			freeaddrinfo(src);
 			freeaddrinfo(dst);
@@ -794,6 +816,16 @@ upper_misc_spec
 		}
 	;
 
+context_spec
+	:	/* NOTHING */
+	|	SECURITY_CTX DECSTRING DECSTRING QUOTEDSTRING {
+			sec_ctx.doi = $2;
+			sec_ctx.alg = $3;
+			sec_ctx.len = $4.len+1;
+			sec_ctx.buf = $4.buf;
+		}
+	;
+
 policy_spec
 	:	F_POLICY policy_requests
 		{
@@ -941,7 +973,27 @@ setkeymsg_spdaddr(type, upper, policy, srcs, splen, dsts, dplen)
 
 			setvarbuf(buf, &l, (struct sadb_ext *)&m_addr,
 			    sizeof(m_addr), sa, salen);
+#ifdef SADB_X_EXT_SEC_CTX
+			/* Add security context label */
+			if (sec_ctx.doi) {
+				struct sadb_x_sec_ctx m_sec_ctx;
+				u_int slen = sizeof(struct sadb_x_sec_ctx);
 
+				memset(&m_sec_ctx, 0, slen);
+
+				m_sec_ctx.sadb_x_sec_len =
+				PFKEY_UNIT64(slen + PFKEY_ALIGN8(sec_ctx.len));
+
+				m_sec_ctx.sadb_x_sec_exttype = 
+					SADB_X_EXT_SEC_CTX;
+				m_sec_ctx.sadb_x_ctx_len = sec_ctx.len;/*bytes*/
+				m_sec_ctx.sadb_x_ctx_doi = sec_ctx.doi;
+				m_sec_ctx.sadb_x_ctx_alg = sec_ctx.alg;
+				setvarbuf(buf, &l, 
+					  (struct sadb_ext *)&m_sec_ctx, slen, 
+					  (caddr_t)sec_ctx.buf, sec_ctx.len);
+			}
+#endif
 			msg->sadb_msg_len = PFKEY_UNIT64(l);
 
 			sendkeymsg(buf, l);
@@ -1270,6 +1322,25 @@ setkeymsg_add(type, satype, srcs, dsts)
 		l += slen;
 	}
 
+#ifdef SADB_X_EXT_SEC_CTX
+	/* Add security context label */
+	if (sec_ctx.doi) {
+		struct sadb_x_sec_ctx m_sec_ctx;
+		u_int slen = sizeof(struct sadb_x_sec_ctx);
+
+		memset(&m_sec_ctx, 0, slen);
+
+		m_sec_ctx.sadb_x_sec_len = PFKEY_UNIT64(slen +
+					PFKEY_ALIGN8(sec_ctx.len));
+		m_sec_ctx.sadb_x_sec_exttype = SADB_X_EXT_SEC_CTX;
+		m_sec_ctx.sadb_x_ctx_len = sec_ctx.len; /* bytes */
+		m_sec_ctx.sadb_x_ctx_doi = sec_ctx.doi;
+		m_sec_ctx.sadb_x_ctx_alg = sec_ctx.alg;
+		setvarbuf(buf, &l, (struct sadb_ext *)&m_sec_ctx, slen,
+			  (caddr_t)sec_ctx.buf, sec_ctx.len); 
+	}
+#endif
+
 	len = sizeof(struct sadb_sa);
 	m_sa.sadb_sa_len = PFKEY_UNIT64(len);
 	m_sa.sadb_sa_exttype = SADB_EXT_SA;
@@ -1514,6 +1585,8 @@ parse_init()
 	p_key_enc = p_key_auth = 0;
 	p_lt_hard = p_lt_soft = 0;
 	p_lb_hard = p_lb_soft = 0;
+
+	memset(&sec_ctx, 0, sizeof(struct security_ctx));
 
 	p_aiflags = 0;
 	p_aifamily = PF_UNSPEC;

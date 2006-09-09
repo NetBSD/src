@@ -1,6 +1,6 @@
-/*	$NetBSD: vendorid.c,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: vendorid.c,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
 
-/* Id: vendorid.c,v 1.7 2005/01/29 16:34:25 vanhu Exp */
+/* Id: vendorid.c,v 1.10 2006/02/22 16:10:21 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -55,7 +55,7 @@
 #include "crypto_openssl.h"
 
 static struct vendor_id all_vendor_ids[] = {
-{ VENDORID_KAME       , "KAME/racoon" },
+{ VENDORID_IPSEC_TOOLS, "IPSec-Tools" },
 { VENDORID_GSSAPI_LONG, "A GSS-API Authentication Method for IKE" },
 { VENDORID_GSSAPI     , "GSSAPI" },
 { VENDORID_MS_NT5     , "MS NT5 ISAKMPOAKLEY" },
@@ -75,6 +75,8 @@ static struct vendor_id all_vendor_ids[] = {
 { VENDORID_FRAG       , "FRAGMENTATION" },
 /* Just a readable string for DPD ... */
 { VENDORID_DPD        , "DPD" },
+/* Other known Vendor IDs */
+{ VENDORID_KAME       , "KAME/racoon" },
 };
 
 #define NUMVENDORIDS	(sizeof(all_vendor_ids)/sizeof(all_vendor_ids[0]))
@@ -139,7 +141,7 @@ compute_vendorids (void)
 
 	for (i = 0; i < NUMVENDORIDS; i++) {
 		/* VENDORID_DPD is not a MD5 sum... */
-		if(i == VENDORID_DPD){
+		if(all_vendor_ids[i].id == VENDORID_DPD){
 			all_vendor_ids[i].hash = vmalloc(sizeof(vendorid_dpd_hash));
 			if (all_vendor_ids[i].hash == NULL) {
 				plog(LLV_ERROR, LOCATION, NULL,
@@ -181,7 +183,7 @@ set_vendorid(int vendorid)
 		 * The default unknown ID gets translated to
 		 * KAME/racoon.
 		 */
-		vendorid = VENDORID_KAME;
+		vendorid = VENDORID_DEFAULT;
 	}
 
 	current = lookup_vendor_id_by_id(vendorid);
@@ -232,6 +234,7 @@ check_vendorid(struct isakmp_gen *gen)
 
 unknown:
 	plog(LLV_DEBUG, LOCATION, NULL, "received unknown Vendor ID\n");
+	plogdump(LLV_DEBUG, (char *)(gen + 1), vidlen);
 	return (VENDORID_UNKNOWN);
 }
 

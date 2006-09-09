@@ -1,6 +1,6 @@
-/*	$NetBSD: grabmyaddr.c,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: grabmyaddr.c,v 1.23.4.2 2005/07/16 04:41:01 monas Exp */
+/* Id: grabmyaddr.c,v 1.27 2006/04/06 16:27:05 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -42,7 +42,8 @@
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include <net/if_var.h>
 #endif
-#if defined(__NetBSD__) || defined(__FreeBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) ||	\
+  (defined(__APPLE__) && defined(__MACH__))
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>
 #endif
@@ -804,6 +805,12 @@ dupmyaddr(struct myaddrs *old)
 	/* Copy the whole structure and set the differences.  */
 	memcpy (new, old, sizeof (*new));
 	new->addr = dupsaddr (old->addr);
+	if (new->addr == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"failed to allocate buffer for myaddrs.\n");
+		racoon_free(new);
+		return NULL;
+	}
 	new->next = old->next;
 	old->next = new;
 

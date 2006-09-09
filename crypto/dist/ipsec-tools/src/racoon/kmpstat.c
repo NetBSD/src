@@ -1,4 +1,4 @@
-/*	$NetBSD: kmpstat.c,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: kmpstat.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
 /*	$KAME: kmpstat.c,v 1.33 2004/08/16 08:20:28 itojun Exp $	*/
 
@@ -62,6 +62,7 @@
 #endif
 #include <err.h>
 #include <sys/ioctl.h> 
+#include <resolv.h>
 
 #include "libpfkey.h"
 
@@ -80,7 +81,6 @@
 #include "isakmp_xauth.h"
 #include "isakmp_var.h"
 #include "isakmp_cfg.h"
-#include "isakmp_unity.h"
 #include "oakley.h"
 #include "handler.h"
 #include "pfkey.h"
