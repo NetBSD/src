@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2006/09/08 13:48:11 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 2006/09/09 00:14:27 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2006/09/08 13:48:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2006/09/09 00:14:27 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,10 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2006/09/08 13:48:11 tsutsui Exp $");
 #include <sys/timetc.h>
 
 #include <mips/locore.h>	/* mips3_cp0_count_read */
+#include <mips/mips3_clock.h>
 
 #include <machine/sbdvar.h>
-
-static void init_mips3_tc(void);
 
 void
 cpu_initclocks(void)
@@ -55,63 +54,11 @@ cpu_initclocks(void)
 
 	(*platform.initclocks)();
 
-	init_mips3_tc();
+	mips3_init_tc();
 }
-
 void
 setstatclockrate(int arg)
 {
 
 	/* not yet */
-}
-
-void
-init_mips3_tc(void)
-{
-#if !defined(MULTIPROCESSOR)
-	static struct timecounter tc =  {
-		(timecounter_get_t *)mips3_cp0_count_read, /* get_timecount */
-		0,				/* no poll_pps */
-		~0u,				/* counter_mask */
-		0,				/* frequency */
-		"mips3_cp0_counter",		/* name */
-		100,				/* quality */
-	};
-
-	tc.tc_frequency = curcpu()->ci_cpu_freq;
-	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
-		tc.tc_frequency /= 2;
-	}
-
-	tc_init(&tc);
-#endif
-}
-
-/*
- *  Wait at least `n' usec.
- */
-void
-delay(unsigned int n)
-{
-	uint32_t cur, last, delta, usecs;
-	
-	last = mips3_cp0_count_read();
-	delta = usecs = 0;
-
-	while (n > usecs) {
-		cur = mips3_cp0_count_read();
-
-		/* Check to see if the timer has wrapped around. */
-		if (cur < last)
-			delta += ((curcpu()->ci_cycles_per_hz - last) + cur);
-		else
-			delta += (cur - last);
-
-		last = cur;
-
-		if (delta >= curcpu()->ci_divisor_delay) {
-			usecs += delta / curcpu()->ci_divisor_delay;
-			delta %= curcpu()->ci_divisor_delay;
-		}
-	}
 }
