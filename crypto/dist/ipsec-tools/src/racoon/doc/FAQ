@@ -39,6 +39,14 @@ A:
 		http://ipsec-tools.sourceforge.net/netbsd_nat-t.diff
 		If you live in a country where software patents are legal,
 		using NAT-Traversal might infringe a patent. 
+	--enable-broken-natt:
+		When ipsec-tools is built with --enable-natt, racoon 
+		sets IKE ports in SAD and SPD so that the kernel is 
+		able to ditinguish peers hidden behind the same NAT.
+		Some kernel will not cope with that ports. Use that
+		option to force the ports to 0 in SAD ans SPD. Of 
+		course this means that you cannot have multiple peers
+		behind the same NAT.
 	--enable-frag:
 		Enable IKE fragmentation, which is a workaround for 
 		broken routers that drop fragmented packets
