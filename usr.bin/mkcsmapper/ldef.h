@@ -1,7 +1,7 @@
-/*	$NetBSD: ldef.h,v 1.1 2003/06/26 06:30:13 tshiozak Exp $	*/
+/*	$NetBSD: ldef.h,v 1.2 2006/09/09 14:35:17 tnozaki Exp $	*/
 
 /*-
- * Copyright (c)2003 Citrus Project,
+ * Copyright (c)2003, 2006 Citrus Project,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,16 +27,9 @@
  */
 
 typedef struct {
-	u_int32_t	row_begin;
-	u_int32_t	row_end;
-	u_int32_t	col_begin;
-	u_int32_t	col_end;
-	int		col_bits;
-} zone_t;
-
-typedef struct {
 	u_int32_t	begin;
 	u_int32_t	end;
+	u_int32_t	width;
 } linear_zone_t;
 
 extern int	line_number;
