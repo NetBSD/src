@@ -1,17 +1,15 @@
 Version history:
 ----------------
-0.6.3	- 21 November 2005
-	o Various bug fixes
-
-0.6.2	- 14 October 2005
-	o ISAKMP mode config works without Xauth
-
-0.6.1	- 10 august 2005
-	o NAT-T fixes for situations where NAT-T is not used
-	o OpenSSL 0.9.8 support
-	o keys are not restricted to OpenSSL default size anymore
-	o PKCS7 support
+0.7???	- ??
+	o Xauth with pre-shared key PSK
+	o Xauth with certificates
 	o SHA2 support
+	o pkcs7 support
+	o system accounting (utmp)
+	o Darwin support
+	o configuration can be reloaded
+	o support for UNIQUE generated policies
+	o support for semi anonymous sainfos
 
 0.6	- 27 June 2005
 	o Generated policies are now correctly flushed
@@ -23,7 +21,7 @@ Version history:
 	o ESP fragmentation in tunnel mode can be tunned (NetBSD only)
 	o racoon admin interface is exported (header and library) to 
 	  help building control programs for racoon (think GUI)
- 	o Fixed single DES support; single DES users MUST UPGRADE
+ 	o Fixed single DES support; single DES users MUST UPGRADE.
 
 0.5	- 10 April 2005
 	o Rewritten buildsystem. Now completely autoconfed, automaked,
