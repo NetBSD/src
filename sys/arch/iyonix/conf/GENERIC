@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.24 2005/12/09 23:34:02 elad Exp $
+#	$NetBSD: GENERIC,v 1.24.4.1 2006/09/09 02:40:48 rpaulo Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -53,6 +53,7 @@ file-system     FILECORE        # Acorn filecore file system
 #file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -72,11 +73,8 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -149,13 +147,12 @@ options 	PERFCTRS	# performance counters
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=270000
+options 	SYMTAB_SPACE=280000
 
 ##options 	PMAP_INCLUDE_PTE_SYNC
 ##options 	LOCKDEBUG
 
-##config		netbsd		root on ? type ?
-config		netbsd		root on rtk0 type nfs
+config		netbsd		root on ? type ?
 #config		netbsd-wm0	root on wm0 type nfs
 #config		netbsd-wd0	root on wd0 type ffs
 #config		netbsd-sd0	root on sd0 type ffs
@@ -338,7 +335,7 @@ usb*	at uhci?
 # ukbd*	at uhidev? reportid ?
 # wskbd*	at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 # ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
@@ -494,12 +491,13 @@ com0	at obio? addr 0x900002f8 xint 1 # on-board UART
 
 # disk/mass storage pseudo-devices
 pseudo-device	md		1	# memory disk device (ramdisk)
-#pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
-pseudo-device	bpfilter	4	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	loop			# network loopback
 #pseudo-device	kttcp			# network loopback
 
@@ -514,7 +512,6 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.160 2005/11/13 12:41:30 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.160.6.1 2006/09/09 02:41:26 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,12 +52,9 @@
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ns.h"
-#include "opt_ccitt.h"
 #include "opt_iso.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
-#include "fs_coda.h"
 
 #include <sys/cdefs.h>
 
@@ -208,7 +205,7 @@ END(mips_idle)
 
 /*
  * cpu_switch(struct lwp *)
- * Find the highest priority process and resume it.
+ * Find the highest priority LWP and resume it.
  * Arguments:
  *	a0	'struct lwp *' of the current LWP
  *
@@ -241,7 +238,7 @@ NESTED(cpu_switch, CALLFRAME_SIZ, ra)
 	sw	ra, CALLFRAME_RA(sp)
 	.mask	0x80000000, -4
 
-	move	s0, a0				# s0 = old proc
+	move	s0, a0				# s0 = old lwp
 /*
  * Entered here from idle() and switch_exit().  Interrupts are
  * blocked, and sched_lock is held.
@@ -289,7 +286,7 @@ cpu_switch_queuescan:
 	xor	t3, t3, v1			# clear bit in 'whichqs'
 	sw	t3, _C_LABEL(sched_whichqs)
 3:
-	/* Squirrel away proc pointer into s7 */
+	/* Squirrel away lwp pointer into s7 */
 	move	s7, a0
 #if defined(LOCKDEBUG)
 	/*
@@ -321,7 +318,7 @@ cpu_switch_queuescan:
 	 * saved it.  Also note that switch_exit() ensures that
 	 * s0 is clear before jumping here to find a new process.
 	 */
-	beq	s0, s7, 4f			# oldproc == newproc ??
+	beq	s0, s7, 4f			# oldlwp == newlwp ??
 	li	s5, 0				# BDslot: didn't switch
 
 /*

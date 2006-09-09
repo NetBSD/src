@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.3 2001/03/03 12:51:44 takemura Exp $	*/
+/*	$NetBSD: scan.l,v 1.3.54.1 2006/09/09 02:39:27 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -41,8 +41,8 @@
 #include "platid_gen.h"
 
 int	yyline;
-char	*getstr __P((char*));
-void	getcomment __P((void));
+char	*getstr(char *);
+void	getcomment(void);
 
 #define	yywrap() 1
 

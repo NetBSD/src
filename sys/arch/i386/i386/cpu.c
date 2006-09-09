@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.26 2005/12/26 19:23:59 perry Exp $ */
+/* $NetBSD: cpu.c,v 1.26.4.1 2006/09/09 02:40:06 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26 2005/12/26 19:23:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26.4.1 2006/09/09 02:40:06 rpaulo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -142,9 +142,16 @@ CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
  */
 #ifdef TRAPLOG
 struct tlog tlog_primary;
-struct cpu_info cpu_info_primary = { 0, &cpu_info_primary, &tlog_primary };
+struct cpu_info cpu_info_primary = {
+	.ci_dev = 0,
+	.ci_self = &cpu_info_primary,
+	.ci_tlog_base = &tlog_primary,
+};
 #else  /* TRAPLOG */
-struct cpu_info cpu_info_primary = { 0, &cpu_info_primary };
+struct cpu_info cpu_info_primary = {
+	.ci_dev = 0,
+	.ci_self = &cpu_info_primary,
+};
 #endif /* !TRAPLOG */
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
@@ -159,7 +166,7 @@ uint32_t cpus_attached = 0;
  * Array of CPU info structures.  Must be statically-allocated because
  * curproc, etc. are used early.
  */
-struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary };
+struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary, };
 
 uint32_t cpus_running = 0;
 
@@ -229,7 +236,7 @@ cpu_vm_init(struct cpu_info *ci)
 	 */
 	if (ncolors <= uvmexp.ncolors)
 		return;
-	printf("%s: %d page colors\n", ci->ci_dev->dv_xname, ncolors);
+	aprint_verbose("%s: %d page colors\n", ci->ci_dev->dv_xname, ncolors);
 	uvm_page_recolor(ncolors);
 }
 
@@ -253,11 +260,14 @@ cpu_attach(parent, self, aux)
 	 * structure, otherwise use the primary's.
 	 */
 	if (caa->cpu_role == CPU_ROLE_AP) {
+		aprint_naive(": Application Processor\n");
 		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK);
 		memset(ci, 0, sizeof(*ci));
 #if defined(MULTIPROCESSOR)
-		if (cpu_info[cpunum] != NULL)
+		if (cpu_info[cpunum] != NULL) {
+			printf("\n");
 			panic("cpu at apic id %d already attached?", cpunum);
+		}
 		cpu_info[cpunum] = ci;
 #endif
 #ifdef TRAPLOG
@@ -265,9 +275,12 @@ cpu_attach(parent, self, aux)
 		    M_DEVBUF, M_WAITOK);
 #endif
 	} else {
+		aprint_naive(": %s Processor\n",
+		    caa->cpu_role == CPU_ROLE_SP ? "Single" : "Boot");
 		ci = &cpu_info_primary;
 #if defined(MULTIPROCESSOR)
 		if (cpunum != lapic_cpu_number()) {
+			printf("\n");
 			panic("%s: running CPU is at apic %d"
 			    " instead of at expected %d",
 			    sc->sc_dev.dv_xname, lapic_cpu_number(), cpunum);
@@ -296,10 +309,12 @@ cpu_attach(parent, self, aux)
 	kstack = uvm_km_alloc(kernel_map, USPACE, 0, UVM_KMF_WIRED);
 	if (kstack == 0) {
 		if (caa->cpu_role != CPU_ROLE_AP) {
+			printf("\n");
 			panic("cpu_attach: unable to allocate idle stack for"
 			    " primary");
 		}
-		printf("%s: unable to allocate idle stack\n",
+		aprint_normal("\n");
+		aprint_error("%s: unable to allocate idle stack\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -320,11 +335,9 @@ cpu_attach(parent, self, aux)
 
 	/* further PCB init done later. */
 
-	printf(": ");
-
 	switch (caa->cpu_role) {
 	case CPU_ROLE_SP:
-		printf("(uniprocessor)\n");
+		aprint_normal(": (uniprocessor)\n");
 		ci->ci_flags |= CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY;
 		cpu_intr_init(ci);
 		identifycpu(ci);
@@ -333,7 +346,7 @@ cpu_attach(parent, self, aux)
 		break;
 
 	case CPU_ROLE_BP:
-		printf("apid %d (boot processor)\n", caa->cpu_number);
+		aprint_normal(": apid %d (boot processor)\n", caa->cpu_number);
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
 		cpu_intr_init(ci);
 		identifycpu(ci);
@@ -356,7 +369,8 @@ cpu_attach(parent, self, aux)
 		/*
 		 * report on an AP
 		 */
-		printf("apid %d (application processor)\n", caa->cpu_number);
+		aprint_normal(": apid %d (application processor)\n",
+		    caa->cpu_number);
 
 #if defined(MULTIPROCESSOR)
 		cpu_intr_init(ci);
@@ -369,11 +383,12 @@ cpu_attach(parent, self, aux)
 			cpu_info_list->ci_next = ci;
 		}
 #else
-		printf("%s: not started\n", sc->sc_dev.dv_xname);
+		aprint_normal("%s: not started\n", sc->sc_dev.dv_xname);
 #endif
 		break;
 
 	default:
+		printf("\n");
 		panic("unknown processor type??\n");
 	}
 	cpu_vm_init(ci);
@@ -382,9 +397,9 @@ cpu_attach(parent, self, aux)
 
 #if defined(MULTIPROCESSOR)
 	if (mp_verbose) {
-		printf("%s: kstack at 0x%lx for %d bytes\n",
+		aprint_verbose("%s: kstack at 0x%lx for %d bytes\n",
 		    sc->sc_dev.dv_xname, kstack, USPACE);
-		printf("%s: idle pcb at %p, idle sp at 0x%x\n",
+		aprint_verbose("%s: idle pcb at %p, idle sp at 0x%x\n",
 		    sc->sc_dev.dv_xname, pcb, pcb->pcb_esp);
 	}
 #endif
@@ -409,19 +424,7 @@ cpu_init(ci)
 	if (ci->ci_cpu_class >= CPUCLASS_486)
 		lcr0(rcr0() | CR0_WP);
 #endif
-#if defined(I586_CPU) || defined(I686_CPU)
-#ifndef NO_TSC_TIME
-	/*
-	 * On systems with a cycle counter, use that for
-	 * interval timing inbetween hz ticks in microtime(9)
-	 * N.B. this is not a good idea on processors whose
-	 * frequency varies a lot over time (e.g. modern laptops)
-	 */
-	if (cpu_feature & CPUID_TSC) {
-		microtime_func = cc_microtime;
-	}
-#endif
-#endif
+
 #if defined(I686_CPU)
 	/*
 	 * On a P6 or above, enable global TLB caching if the
@@ -519,7 +522,7 @@ cpu_init_idle_pcbs()
 }
 
 void
-cpu_start_secondary (ci)
+cpu_start_secondary(ci)
 	struct cpu_info *ci;
 {
 	struct pcb *pcb;
@@ -533,7 +536,7 @@ cpu_start_secondary (ci)
 
 	ci->ci_flags |= CPUF_AP;
 
-	printf("%s: starting\n", ci->ci_dev->dv_xname);
+	aprint_normal("%s: starting\n", ci->ci_dev->dv_xname);
 
 	CPU_STARTUP(ci);
 
@@ -544,7 +547,8 @@ cpu_start_secondary (ci)
 		delay(10);
 	}
 	if (! (ci->ci_flags & CPUF_PRESENT)) {
-		printf("%s: failed to become ready\n", ci->ci_dev->dv_xname);
+		aprint_error("%s: failed to become ready\n",
+		    ci->ci_dev->dv_xname);
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
@@ -566,7 +570,7 @@ cpu_boot_secondary(ci)
 		delay(10);
 	}
 	if (! (ci->ci_flags & CPUF_RUNNING)) {
-		printf("%s: failed to start\n", ci->ci_dev->dv_xname);
+		aprint_error("%s: failed to start\n", ci->ci_dev->dv_xname);
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
@@ -623,11 +627,9 @@ cpu_hatch(void *v)
 	lapic_tpr = 0;
 	enable_intr();
 
-	printf("%s: CPU %ld running\n",ci->ci_dev->dv_xname, ci->ci_cpuid);
-#if defined(I586_CPU) || defined(I686_CPU)
-	if (ci->ci_feature_flags & CPUID_TSC)
-		cc_microset(ci);
-#endif
+	aprint_normal("%s: CPU %ld running\n", ci->ci_dev->dv_xname,
+	    ci->ci_cpuid);
+
 	microtime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.h,v 1.7 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: exception.h,v 1.7.4.1 2006/09/09 02:42:59 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -169,11 +169,17 @@
 #define	SH4_INTEVT_PCIDMA3	0xa20
 
 #ifndef _LOCORE
+
 #if defined(SH3) && defined(SH4)
-extern u_int32_t __sh_TRA;
-extern u_int32_t __sh_EXPEVT;
-extern u_int32_t __sh_INTEVT;
+extern uint32_t __sh_TRA;
+extern uint32_t __sh_EXPEVT;
+extern uint32_t __sh_INTEVT;
 #endif /* SH3 && SH4 */
+
+extern const char * const exp_type[];
+extern const int exp_types;
+
 #endif /* !_LOCORE */
+
 #endif /* _KERNEL */
 #endif /* !_SH3_EXCEPTION_H_ */

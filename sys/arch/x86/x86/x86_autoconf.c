@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.5 2005/12/11 12:19:47 christos Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.5.4.1 2006/09/09 02:44:49 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/disk.h>
 #include <sys/proc.h>
 #include <sys/md5.h>
+#include <sys/kauth.h>
 
 #include <machine/bootinfo.h>
 
@@ -64,18 +65,125 @@ __KERNEL_RCSID(0, "$NetBSD");
 struct disklist *x86_alldisks;
 int x86_ndisks;
 
+static struct vnode *
+opendisk(struct device *dv)
+{
+	int bmajor, bminor;
+	struct vnode *tmpvn;
+	int error;
+	dev_t dev;
+	
+	/*
+	 * Lookup major number for disk block device.
+	 */
+	bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
+	if (bmajor == -1)
+		return NULL;
+	
+	bminor = minor(device_unit(dv));
+	/*
+	 * Fake a temporary vnode for the disk, open it, and read
+	 * and hash the sectors.
+	 */
+	dev = device_is_a(dv, "dk") ? makedev(bmajor, bminor) :
+	    MAKEDISKDEV(bmajor, bminor, RAW_PART);
+	if (bdevvp(dev, &tmpvn))
+		panic("%s: can't alloc vnode for %s", __func__, dv->dv_xname);
+	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
+	if (error) {
+#ifndef DEBUG
+		/*
+		 * Ignore errors caused by missing device, partition,
+		 * or medium.
+		 */
+		if (error != ENXIO && error != ENODEV)
+#endif
+			printf("%s: can't open dev %s (%d)\n",
+			    __func__, dv->dv_xname, error);
+		vput(tmpvn);
+		return NULL;
+	}
+
+	return tmpvn;
+}
+
+static void
+handle_wedges(struct device *dv, int par)
+{
+	struct dkwedge_list wl;
+	struct dkwedge_info *wi;
+	struct vnode *vn;
+	char diskname[16];
+	int i, error;
+
+	if ((vn = opendisk(dv)) == NULL)
+		goto out;
+
+	wl.dkwl_bufsize = sizeof(*wi) * 16;
+	wl.dkwl_buf = wi = malloc(wl.dkwl_bufsize, M_TEMP, M_WAITOK);
+
+	error = VOP_IOCTL(vn, DIOCLWEDGES, &wl, FREAD, NOCRED, 0);
+	vput(vn);
+	if (error) {
+#ifdef DEBUG_WEDGE
+		printf("%s: List wedges returned %d\n", dv->dv_xname, error);
+#endif
+		free(wi, M_TEMP);
+		goto out;
+	}
+
+#ifdef DEBUG_WEDGE
+	printf("%s: Returned %u(%u) wedges\n", dv->dv_xname,
+	    wl.dkwl_nwedges, wl.dkwl_ncopied);
+#endif
+	snprintf(diskname, sizeof(diskname), "%s%c", dv->dv_xname,
+	    par + 'a');
+
+	for (i = 0; i < wl.dkwl_ncopied; i++) {
+#ifdef DEBUG_WEDGE
+		printf("%s: Looking for %s in %s\n", 
+		    dv->dv_xname, diskname, wi[i].dkw_wname);
+#endif
+		if (strcmp(wi[i].dkw_wname, diskname) == 0)
+			break;
+	}
+
+	if (i == wl.dkwl_ncopied) {
+#ifdef DEBUG_WEDGE
+		printf("%s: Cannot find wedge with parent %s\n",
+		    dv->dv_xname, diskname);
+#endif
+		free(wi, M_TEMP);
+		goto out;
+	}
+
+#ifdef DEBUG_WEDGE
+	printf("%s: Setting boot wedge %s (%s) at %llu %llu\n", 
+		dv->dv_xname, wi[i].dkw_devname, wi[i].dkw_wname,
+		(unsigned long long)wi[i].dkw_offset,
+		(unsigned long long)wi[i].dkw_size);
+#endif
+	dkwedge_set_bootwedge(dv, wi[i].dkw_offset, wi[i].dkw_size);
+	free(wi, M_TEMP);
+	return;
+out:
+	booted_device = dv;
+	booted_partition = par;
+}
+
+
 static int
 is_valid_disk(struct device *dv)
 {
-	const char *name;
 
-	if (dv->dv_class != DV_DISK)
+	if (device_class(dv) != DV_DISK)
 		return (0);
 	
-	name = dv->dv_cfdata->cf_name;
-
-	return (strcmp(name, "sd") == 0 || strcmp(name, "wd") == 0 ||
-		strcmp(name, "ld") == 0 || strcmp(name, "ed") == 0);
+	return (device_is_a(dv, "dk") ||
+		device_is_a(dv, "sd") ||
+		device_is_a(dv, "wd") ||
+		device_is_a(dv, "ld") ||
+		device_is_a(dv, "ed"));
 }
 
 /*
@@ -92,7 +200,7 @@ matchbiosdisks(void)
 	struct vnode *tv;
 	char mbr[DEV_BSIZE];
 	int dklist_size;
-	int bmajor, numbig;
+	int numbig;
 
 	big = lookup_bootinfo(BTINFO_BIOSGEOM);
 
@@ -135,32 +243,22 @@ matchbiosdisks(void)
 	n = -1;
 	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
 	     dv = TAILQ_NEXT(dv, dv_list)) {
-		if (dv->dv_class != DV_DISK)
+		if (device_class(dv) != DV_DISK)
 			continue;
 #ifdef GEOM_DEBUG
 		printf("matchbiosdisks: trying to match (%s) %s\n",
-		    dv->dv_xname, dv->dv_cfdata->cf_name);
+		    dv->dv_xname, device_cfdata(dv)->cf_name);
 #endif
 		if (is_valid_disk(dv)) {
 			n++;
 			/* XXXJRT why not just dv_xname?? */
 			snprintf(x86_alldisks->dl_nativedisks[n].ni_devname,
 			    sizeof(x86_alldisks->dl_nativedisks[n].ni_devname),
-			    "%s%d", dv->dv_cfdata->cf_name, dv->dv_unit);
+			    "%s", dv->dv_xname);
 
-			bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
-			if (bmajor == -1)
-				return;
-			
-			if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, RAW_PART),
-				   &tv))
-				panic("matchbiosdisks: can't alloc vnode");
-
-			error = VOP_OPEN(tv, FREAD, NOCRED, 0);
-			if (error) {
-				vput(tv);
+			if ((tv = opendisk(dv)) == NULL)
 				continue;
-			}
+
 			error = vn_rdwr(UIO_READ, tv, mbr, DEV_BSIZE, 0,
 			    UIO_SYSSPACE, 0, NOCRED, NULL, NULL);
 			VOP_CLOSE(tv, FREAD, NOCRED, 0);
@@ -214,7 +312,6 @@ match_bootwedge(struct device *dv, struct btinfo_bootwedge *biw)
 	uint8_t bf[DEV_BSIZE];
 	uint8_t hash[16];
 	int found = 0;
-	int bmajor;
 	daddr_t blk;
 	uint64_t nblks;
 
@@ -223,34 +320,9 @@ match_bootwedge(struct device *dv, struct btinfo_bootwedge *biw)
 	 */
 	if (biw->matchblk == -1)
 		return (0);
-	
-	/*
-	 * Lookup major number for disk block device.
-	 */
-	bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
-	if (bmajor == -1)
-		return (0);	/* XXX panic ??? */
-	
-	/*
-	 * Fake a temporary vnode for the disk, open it, and read
-	 * and hash the sectors.
-	 */
-	if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, RAW_PART), &tmpvn))
-		panic("findroot: can't alloc vnode");
-	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
-	if (error) {
-#ifndef DEBUG
-		/*
-		 * Ignore errors caused by missing device, partition,
-		 * or medium.
-		 */
-		if (error != ENXIO && error != ENODEV)
-#endif
-			printf("findroot: can't open dev %s (%d)\n",
-			    dv->dv_xname, error);
-		vput(tmpvn);
-		return (0);
-	}
+
+	if ((tmpvn = opendisk(dv)) == NULL)
+		return 0;
 
 	MD5Init(&ctx);
 	for (blk = biw->matchblk, nblks = biw->matchnblks;
@@ -287,7 +359,9 @@ match_bootdisk(struct device *dv, struct btinfo_bootdisk *bid)
 	int error;
 	struct disklabel label;
 	int found = 0;
-	int bmajor;
+
+	if (device_is_a(dv, "dk"))
+		return 0;
 
 	/*
 	 * A disklabel is required here.  The boot loader doesn't refuse
@@ -297,33 +371,9 @@ match_bootdisk(struct device *dv, struct btinfo_bootdisk *bid)
 	if (bid->labelsector == -1)
 		return (0);
 	
-	/*
-	 * Lookup major number for disk block device.
-	 */
-	bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
-	if (bmajor == -1)
-		return (0);	/* XXX panic ??? */
+	if ((tmpvn = opendisk(dv)) == NULL)
+		return 0;
 
-	/*
-	 * Fake a temporary vnode for the disk, open it, and read
-	 * the disklabel for comparison.
-	 */
-	if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, RAW_PART), &tmpvn))
-		panic("findroot: can't alloc vnode");
-	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
-	if (error) {
-#ifndef DEBUG
-		/*
-		 * Ignore errors caused by missing device, partition,
-		 * or medium.
-		 */
-		if (error != ENXIO && error != ENODEV)
-#endif
-			printf("findroot: can't open dev %s (%d)\n",
-			    dv->dv_xname, error);
-		vput(tmpvn);
-		return (0);
-	}
 	error = VOP_IOCTL(tmpvn, DIOCGDINFO, &label, FREAD, NOCRED, 0);
 	if (error) {
 		/*
@@ -339,7 +389,7 @@ match_bootdisk(struct device *dv, struct btinfo_bootdisk *bid)
 	if (label.d_type == bid->label.type &&
 	    label.d_checksum == bid->label.checksum &&
 	    strncmp(label.d_packname, bid->label.packname, 16) == 0)
-	    	found = 1;
+		found = 1;
 
  closeout:
 	VOP_CLOSE(tmpvn, FREAD, NOCRED, 0);
@@ -364,6 +414,7 @@ uint32_t bootdev = 0;
 static void
 findroot(void)
 {
+	struct btinfo_rootdevice *biv;
 	struct btinfo_bootdisk *bid;
 	struct btinfo_bootwedge *biw;
 	struct device *dv;
@@ -387,6 +438,26 @@ findroot(void)
 		return;
 	}
 
+	if ((biv = lookup_bootinfo(BTINFO_ROOTDEVICE)) != NULL) {
+		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+		     dv = TAILQ_NEXT(dv, dv_list)) {
+			struct cfdata *cd;
+			size_t len;
+
+			if (device_class(dv) != DV_DISK)
+				continue;
+
+			cd = device_cfdata(dv);
+			len = strlen(cd->cf_name);
+
+			if (strncmp(cd->cf_name, biv->devname, len) == 0 &&
+			    biv->devname[len] - '0' == cd->cf_unit) {
+				handle_wedges(dv, biv->devname[len + 1] - 'a');
+				return;
+			}
+		}
+	}
+
 	if ((biw = lookup_bootinfo(BTINFO_BOOTWEDGE)) != NULL) {
 		/*
 		 * Scan all disk devices for ones that match the passed data.
@@ -397,7 +468,7 @@ findroot(void)
 		 */
 		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
 		     dv = TAILQ_NEXT(dv, dv_list)) {
-			if (dv->dv_class != DV_DISK)
+			if (device_class(dv) != DV_DISK)
 				continue;
 
 			if (is_valid_disk(dv)) {
@@ -437,21 +508,19 @@ findroot(void)
 		 */
 		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
 		     dv = TAILQ_NEXT(dv, dv_list)) {
-			if (dv->dv_class != DV_DISK)
+			if (device_class(dv) != DV_DISK)
 				continue;
 
-			if (strcmp(dv->dv_cfdata->cf_name, "fd") == 0) {
+			if (device_is_a(dv, "fd")) {
 				/*
 				 * Assume the configured unit number matches
 				 * the BIOS device number.  (This is the old
 				 * behavior.)  Needs some ideas how to handle
 				 * the BIOS's "swap floppy drive" options.
-				 *
-				 * XXXJRT This use of the unit number is
-				 * totally bogus!
 				 */
+				/* XXX device_unit() abuse */
 				if ((bid->biosdev & 0x80) != 0 ||
-				    dv->dv_unit != bid->biosdev)
+				    device_unit(dv) != bid->biosdev)
 				    	continue;
 				goto bootdisk_found;
 			}
@@ -476,8 +545,7 @@ findroot(void)
 				    booted_device->dv_xname, dv->dv_xname);
 				continue;
 			}
-			booted_device = dv;
-			booted_partition = bid->partition;
+			handle_wedges(dv, bid->partition);
 		}
 
 		if (booted_device)
@@ -541,7 +609,7 @@ device_register(struct device *dev, void *aux)
 	 *
 	 * For disks, there is nothing useful available at attach time.
 	 */
-	if (dev->dv_class == DV_IFNET) {
+	if (device_class(dev) == DV_IFNET) {
 		struct btinfo_netif *bin = lookup_bootinfo(BTINFO_NETIF);
 		if (bin == NULL)
 			return;
@@ -554,7 +622,7 @@ device_register(struct device *dev, void *aux)
 		 * idenfity the device.
 		 */
 		if (bin->bus == BI_BUS_ISA &&
-		    strcmp(dev->dv_parent->dv_cfdata->cf_name, "isa") == 0) {
+		    device_is_a(device_parent(dev), "isa")) {
 			struct isa_attach_args *iaa = aux;
 
 			/* Compare IO base address */
@@ -565,7 +633,7 @@ device_register(struct device *dev, void *aux)
 		}
 #if NPCI > 0
 		if (bin->bus == BI_BUS_PCI &&
-		    strcmp(dev->dv_parent->dv_cfdata->cf_name, "pci") == 0) {
+		    device_is_a(device_parent(dev), "pci")) {
 			struct pci_attach_args *paa = aux;
 			int b, d, f;
 

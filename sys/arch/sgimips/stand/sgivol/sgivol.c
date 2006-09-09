@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.11 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.11.4.1 2006/09/09 02:42:58 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,9 @@
 #include <string.h>
 #include <fcntl.h>
 #include <util.h>
+#ifndef HAVE_NBTOOL_CONFIG_H
 #include <sys/endian.h>
+#endif
 
 int	fd;
 int	opt_i;			/* Initialize volume header */
@@ -201,8 +203,8 @@ main(int argc, char *argv[])
 		perror("File open");
 		exit(1);
 #else
-		sprintf(buf, "/dev/r%s%c", argv[0], 'a' + getrawpartition());
-		fd = open(buf, (opt_i | opt_w | opt_d | opt_p) 
+		sprintf((char *)buf, "/dev/r%s%c", argv[0], 'a' + getrawpartition());
+		fd = open((char *)buf, (opt_i | opt_w | opt_d | opt_p) 
 				? O_RDWR : O_RDONLY);
 		if (fd < 0) {
 			printf("Error opening device %s: %s\n",

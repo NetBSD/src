@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.11 2005/12/11 12:16:51 christos Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.11.4.1 2006/09/09 02:38:10 rpaulo Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.11 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.11.4.1 2006/09/09 02:38:10 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ sacpcic_attach_common(struct sacc_softc *psc, struct sacpcic_softc *sc,
 	sc->sc_pc.sc_iot = psc->sc_iot;
 	sc->sc_ioh = psc->sc_ioh;
 
-	for(i = 0; i < 2; i++) {
+	for (i = 0; i < 2; i++) {
 		sc->sc_socket[i].sc = (struct sapcic_softc *)sc;
 		sc->sc_socket[i].socket = i;
 		sc->sc_socket[i].pcictag_cookie = psc;
@@ -115,11 +115,10 @@ sacpcic_attach_common(struct sacc_softc *psc, struct sacpcic_softc *sc,
 }
 
 int
-sacpcic_print(aux, name)
-	void *aux;
-	const char *name;
+sacpcic_print(void *aux, const char *name)
 {
-	return (UNCONF);
+
+	return UNCONF;
 }
 
 int
@@ -208,29 +207,24 @@ sacpcic_write(struct sapcic_socket *so, int reg, int arg)
 }
 		
 void
-sacpcic_clear_intr(arg)
+sacpcic_clear_intr(int arg)
 {
 	/* sacc_intr_dispatch takes care of intr status */
 }
 
 void *
-sacpcic_intr_establish(so, level, ih_fun, ih_arg)
-	struct sapcic_socket *so;
-	int level;
-	int (*ih_fun)(void *);
-	void *ih_arg;
+sacpcic_intr_establish(struct sapcic_socket *so, int level,
+    int (*ih_fun)(void *), void *ih_arg)
 {
 	int irq;
 
 	irq = so->socket ? IRQ_S1_READY : IRQ_S0_READY;
-	return (sacc_intr_establish((sacc_chipset_tag_t)so->pcictag_cookie, irq,
-				    IST_EDGE_FALL, level, ih_fun, ih_arg));
+	return sacc_intr_establish((sacc_chipset_tag_t)so->pcictag_cookie, irq,
+				    IST_EDGE_FALL, level, ih_fun, ih_arg);
 }
 
 void
-sacpcic_intr_disestablish(so, ih)
-	struct sapcic_socket *so;
-	void *ih;
+sacpcic_intr_disestablish(struct sapcic_socket *so, void *ih)
 {
 	sacc_intr_disestablish((sacc_chipset_tag_t)so->pcictag_cookie, ih);
 }

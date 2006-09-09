@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.11.4.1 2006/09/09 02:42:28 rpaulo Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -57,11 +57,15 @@
 #define PVR_405GPR     		0x50910000
 #define PVR_405GPR_REVB		0x50910951
 
+#define	PVR_405D5X1 		0x20010000 	/* Virtex II Pro */
+#define	PVR_405D5X2 		0x20011000 	/* Virtex 4 FX */
+
 #if defined(_KERNEL)
 extern char bootpath[];
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <prop/proplib.h>
 
 /* export from ibm4xx/autoconf.c */
 extern void (*md_device_register) __P((struct device *dev, void *aux));
@@ -92,14 +96,9 @@ extern void ppc4xx_reset(void) __attribute__((__noreturn__));
 
 #include <powerpc/cpu.h>
 
-/* Board info database stuff */
-extern struct propdb *board_info;
-
+/* Board info dictionary */
+extern prop_dictionary_t board_properties;
 extern void board_info_init(void);
-#define	board_info_set(n, v, l, f, w)	\
-	prop_set(board_info, 0, (n), (v), (l), (f), (w))
-#define	board_info_get(n, v, l)		\
-	prop_get(board_info, 0, (n), (v), (l), NULL)
 
 /*****************************************************************************/
 /* THIS CODE IS OBSOLETE. WILL BE REMOVED */

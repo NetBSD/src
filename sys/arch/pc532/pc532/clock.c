@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.29 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.29.4.1 2006/09/09 02:41:59 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.29 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.29.4.1 2006/09/09 02:41:59 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.29 2005/12/11 12:18:31 christos Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/timetc.h>
 
 #include <dev/clock_subr.h>
 
@@ -53,37 +54,36 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.29 2005/12/11 12:18:31 christos Exp $");
 #define ROM_ORIGIN	0xFFF00000	/* Mapped origin! */
 static volatile u_char * const rom = (u_char *)ROM_ORIGIN;
 static int divisor;
-static int clockinitted;
 static int clock_attached;
 static int rtc_attached;
+static unsigned cpu_counter = 0;
 static u_char rtc_magic[8] = {
 	0xc5, 0x3a, 0xa3, 0x5c, 0xc5, 0x3a, 0xa3, 0x5c
 };
 
-static long	clk_get_secs __P((void));
-static void	clk_set_secs __P((long));
-static u_char	bcd2bin __P((u_char));
-static u_char	bin2bcd __P((u_char));
-static void	rw_rtc __P((struct clock_ymdhms *, int));
-static void	write_rtc __P((u_char *));
+static u_char	bcd2bin(u_char);
+static u_char	bin2bcd(u_char);
+static void	rw_rtc(struct clock_ymdhms *, int);
+static void	write_rtc(u_char *);
 
-static int  clock_match __P((struct device *, struct cfdata *, void *args));
-static void clock_attach __P((struct device *, struct device *, void *));
+static int  clock_match(struct device *, struct cfdata *, void *args);
+static void clock_attach(struct device *, struct device *, void *);
+static u_int icu_counter(struct timecounter *);
+
+static int rtc_gettime(todr_chip_handle_t, volatile struct timeval *);
+static int rtc_settime(todr_chip_handle_t, volatile struct timeval *);
 
 CFATTACH_DECL(clock, sizeof(struct device),
     clock_match, clock_attach, NULL, NULL);
 
-static int  rtc_match __P((struct device *, struct cfdata *, void *args));
-static void rtc_attach __P((struct device *, struct device *, void *));
+static int  rtc_match(struct device *, struct cfdata *, void *args);
+static void rtc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(rtc, sizeof(struct device),
     rtc_match, rtc_attach, NULL, NULL);
 
 static int
-clock_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+clock_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -102,10 +102,14 @@ clock_match(parent, cf, aux)
 }
 
 static void
-clock_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+clock_intr(struct clockframe *arg)
+{
+	cpu_counter += divisor;
+	hardclock(arg);
+}
+
+static void
+clock_attach(struct device *parent, struct device *self, void *aux)
 {
 	static u_char icu_table[] = {
 		CICTL,	0,		/* Disable clock interrupt for now. */
@@ -123,7 +127,7 @@ clock_attach(parent, self, aux)
 	icu_init(icu_table);
 
 	/* Establish interrupt vector */
-	intr_establish(IR_CLK, (void (*)(void *))hardclock, NULL,
+	intr_establish(IR_CLK, (void (*)(void *))clock_intr, NULL,
 		       self->dv_xname, IPL_CLOCK, IPL_CLOCK, FALLING_EDGE);
 
 	/* Write the timer values to the ICU. */
@@ -133,51 +137,50 @@ clock_attach(parent, self, aux)
 }
 
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
+	static struct timecounter tc = {
+		icu_counter,		/* get_timecount */
+		NULL,			/* no poll_pps */
+		~0,			/* counter mask */
+		ICU_CLK_HZ,		/* frequency */
+		"ns32202",		/* name */
+		100,			/* quality */
+	};
+	
 	/* Enable the clock interrupt. */
 	ICUB(CICTL) = 0x30;
+
+	tc_init(&tc);
 }
 
 void
-setstatclockrate(arg)
-	int arg;
+setstatclockrate(int arg)
 {
 
 	/* Nothing */
 }
 
-void
-microtime(tvp)
-	register struct timeval *tvp;
+u_int
+icu_counter(struct timecounter *tc)
 {
-	u_short count, delta, ipend;
+	uint16_t count, ipend;
+	uint32_t ccnt;
 
 	di();
 	ICUB(MCTL) |= 0x88;		/* freeze HCCV, IPND */
 	count = ICUW(HCCV);
 	ipend = ICUW(IPND);
-	*tvp = time;
+	ccnt = cpu_counter;
 	ICUB(MCTL) &= 0x77;		/* thaw ICU regs */
 	ei();
 
-	/* yields value 0..9999 */
-	delta = ((divisor - count) * (4096 * 1000000UL / ICU_CLK_HZ)) >> 12;
-	tvp->tv_usec += delta;
-
+	count = (divisor - count);
 	/* check for timer overflow (ie; clock int disabled) */
-	if (count > 0 && (ipend & (1 << IR_CLK)))
-		tvp->tv_usec += tick;
-
-	if (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
+	if ((count > 0) && (ipend & (1 << IR_CLK))) {
+		count += divisor;
 	}
-
-#ifdef DIAGNOSTIC
-	if (tvp->tv_usec < 0 || tvp->tv_usec > 1000000)
-		printf("microtime bad tv_usec: %ld\n", tvp->tv_usec);
-#endif
+	return (ccnt + count);
 }
 
 /*
@@ -190,10 +193,7 @@ microtime(tvp)
  */
 
 static int
-rtc_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+rtc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	int rom_val, rom_cnt, i;
@@ -223,83 +223,18 @@ rtc_match(parent, cf, aux)
 	return(1);
 }
 
+
 static void
-rtc_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+rtc_attach(struct device *parent, struct device *self, void *aux)
 {
+	static struct todr_chip_handle hdl;
+
 	printf("\n");
+	hdl.todr_gettime = rtc_gettime;
+	hdl.todr_settime = rtc_settime;
+	hdl.todr_setwen = NULL;
+	todr_attach(&hdl);
 	rtc_attached = 1;
-}
-
-/*
- * Initialize the time of day register, based on the time base
- * which is, e.g. from a filesystem.
- */
-void
-inittodr(fs_time)
-	time_t fs_time;
-{
-	long diff, clk_time;
-	long long_ago = (5 * SECYR);
-	int clk_bad = 0;
-
-	clockinitted = 1;
-
-	/*
-	 * Sanity check time from file system.
-	 * If it is zero,assume filesystem time is just unknown
-	 * instead of preposterous.  Don't bark.
-	 */
-	if (fs_time < long_ago) {
-		/*
-		 * If fs_time is zero, assume filesystem time is just
-		 * unknown instead of preposterous.  Don't bark.
-		 */
-		if (fs_time != 0)
-			printf("WARNING: preposterous time in file system\n");
-		/* 1991/07/01  12:00:00 */
-		fs_time = 21*SECYR + 186*SECDAY + SECDAY/2;
-	}
-
-	clk_time = clk_get_secs();
-
-	/* Sanity check time from clock. */
-	if (clk_time < long_ago) {
-		printf("WARNING: bad date in battery clock");
-		clk_bad = 1;
-		clk_time = fs_time;
-	} else {
-		/* Does the clock time jive with the file system? */
-		diff = clk_time - fs_time;
-		if (diff < 0)
-			diff = -diff;
-		if (diff >= (SECDAY*2)) {
-			printf("WARNING: clock %s %d days",
-				   (clk_time < fs_time) ? "lost" : "gained",
-				   (int) (diff / SECDAY));
-			clk_bad = 1;
-		}
-	}
-	if (clk_bad)
-		printf(" -- CHECK AND RESET THE DATE!\n");
-	time.tv_sec = clk_time;
-}
-
-/*
- * Resettodr restores the time of day hardware after a time change.
- */
-void
-resettodr()
-{
-	/*
-	 * We might have been called by boot() due to a crash early
-	 * on.  Don't reset the clock chip in this case.
-	 */
-	if (clockinitted == 0)
-		return;
-	clk_set_secs(time.tv_sec);
 }
 
 /*
@@ -316,22 +251,21 @@ resettodr()
  */
 
 static u_char
-bcd2bin(n)
-	u_char n;
+bcd2bin(u_char n)
 {
+
 	return(((n >> 4) & 0x0f) * 10 + (n & 0x0f));
 }
 
 static u_char
-bin2bcd(n)
-	u_char n;
+bin2bcd(u_char n)
 {
+
 	return((char)(((n / 10) << 4) & 0xf0) | ((n % 10) & 0x0f));
 }
 
 static void
-write_rtc(p)
-	u_char *p;
+write_rtc(u_char *p)
 {
 	u_char *q;
 	int i;
@@ -343,9 +277,7 @@ write_rtc(p)
 }
 
 static void
-rw_rtc(dt, rw)
-	struct clock_ymdhms *dt;
-	int rw;
+rw_rtc(struct clock_ymdhms *dt, int rw)
 {
 	struct {
 		u_char rtc_csec;
@@ -410,14 +342,13 @@ rw_rtc(dt, rw)
 	}
 }
 
-static long
-clk_get_secs()
+static int
+rtc_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 {
 	struct clock_ymdhms dt;
-	long secs;
 
 	if (rtc_attached == 0)
-		return(0);
+		return -1;
 
 	rw_rtc(&dt, 0);
 	if ((dt.dt_sec  > 59) ||
@@ -426,29 +357,29 @@ clk_get_secs()
 	    (dt.dt_day  > 31) ||
 	    (dt.dt_mon  > 12) ||
 	    (dt.dt_year > 99))
-		return(0);
+		return -1;
 
 	if (dt.dt_year < 70)
 		dt.dt_year += 100;
 
 	dt.dt_year += CLOCK_BASE_YEAR;
-	secs = clock_ymdhms_to_secs(&dt);
-	return(secs);
+	tvp->tv_sec = clock_ymdhms_to_secs(&dt);
+	return 0;
 }
 
-static void
-clk_set_secs(secs)
-	long secs;
+static int
+rtc_settime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 {
 	struct clock_ymdhms dt;
 
 	if (rtc_attached == 0)
-		return;
+		return -1;
 
-	clock_secs_to_ymdhms(secs, &dt);
+	clock_secs_to_ymdhms(tvp->tv_sec, &dt);
 	dt.dt_year -= CLOCK_BASE_YEAR;
 	if (dt.dt_year >= 100)
 		dt.dt_year -= 100;
 
 	rw_rtc(&dt, 1);
+	return 0;
 }

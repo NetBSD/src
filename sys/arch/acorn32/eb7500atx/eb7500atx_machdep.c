@@ -1,4 +1,4 @@
-/*	$NetBSD: eb7500atx_machdep.c,v 1.3 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: eb7500atx_machdep.c,v 1.3.4.1 2006/09/09 02:36:41 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -50,12 +50,11 @@
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
 #include "vidcvideo.h"
-#include "rpckbd.h"
 #include "pckbc.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.3 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.3.4.1 2006/09/09 02:36:41 rpaulo Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -82,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.3 2005/12/11 12:16:05 christ
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 #include <arm/arm32/machdep.h>
-#include <machine/vconsole.h>
 #include <arm/undefined.h>
 #include <machine/rtc.h>
 #include <machine/bus.h>
@@ -94,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.3 2005/12/11 12:16:05 christ
 #include <arm/iomd/vidcvideo.h>
 
 #include <sys/device.h>
-#include <arm/iomd/rpckbdvar.h>
 #include <dev/ic/pckbcvar.h>
 
 #include <dev/i2c/i2cvar.h>
@@ -209,8 +206,6 @@ static void canonicalise_bootconfig(struct bootconfig *, struct bootconfig *);
 static void process_kernel_args(void);
 
 extern void dump_spl_masks(void);
-extern void vidcrender_reinit(void);
-extern int vidcrender_blank(struct vconsole *, int);
 
 void rpc_sa110_cc_setup(void);
 
@@ -220,11 +215,7 @@ void parse_rpc_bootargs(char *args);
 extern void dumpsys(void);
 
 
-#if NVIDCVIDEO > 0
 #	define console_flush()		/* empty */
-#else
-	extern void console_flush(void);
-#endif
 
 
 #define panic2(a) do {							\
@@ -404,7 +395,7 @@ initarm(void *cookie)
 	u_int kerneldatasize;
 	u_int l1pagetable;
 	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
-	pv_addr_t kernel_l1pt;
+	pv_addr_t kernel_l1pt = { {0} };
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
@@ -817,11 +808,6 @@ initarm(void *cookie)
 	};
 	vidc_base = (int *) VIDC_BASE;
 	iomd_base =         IOMD_BASE;
-
-#if NVIDCVIDEO == 0
-	physcon_display_base(VMEM_VBASE);
-	vidcrender_reinit();
-#endif
 
 #ifdef VERBOSE_INIT_ARM
 	printf("running on the new L1 page table!\n");

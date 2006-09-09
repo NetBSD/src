@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.73 2005/12/12 22:44:04 dsl Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.73.4.1 2006/09/09 02:46:39 rpaulo Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -54,8 +54,8 @@ S!=	cd ../../../..; pwd
 ##
 ## CPPFLAGS, CFLAGS, and AFLAGS must be set in the port's Makefile
 ##
-_ISGCC295!=		${CC} --version 2>/dev/null | grep 2.95 2>/dev/null || echo 0
-INCLUDES?=	-I. ${EXTRA_INCLUDES} -I$S/arch -I$S -nostdinc
+INCLUDES?=	-I. ${EXTRA_INCLUDES} -I${S}/../common/include -I$S/arch \
+		-I$S -nostdinc
 CPPFLAGS+=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT
 DEFCOPTS?=	-O2
 COPTS?=		${DEFCOPTS}
@@ -67,25 +67,30 @@ CWARNFLAGS+=	-Werror
 .endif
 CWARNFLAGS+=	-Wall -Wno-main -Wno-format-zero-length -Wpointer-arith
 CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
-.if !${_ISGCC295}
-CWARNFLAGS+=	-Wreturn-type
-.endif
 CWARNFLAGS+=	-Wswitch -Wshadow
 CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 # Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
 # but our sources aren't up for it yet.
 CWARNFLAGS+=	-Wno-sign-compare
+. if ${HAVE_GCC} > 3
+CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
+. endif
 .endif
 
-CFLAGS+=	${CPUFLAGS} -ffreestanding
+CFLAGS+=	-ffreestanding -fno-zero-initialized-in-bss
 CFLAGS+=	${CPUFLAGS} ${DEBUG} ${COPTS} ${CWARNFLAGS}
-AFLAGS+=	${CPUFLAGS} -D_LOCORE
+AFLAGS+=	${CPUFLAGS} -D_LOCORE -Wa,-fatal-warnings
 
-# Disable unitialized warnings with 2.95 - it gets it wrong way too often
-.if ${_ISGCC295}
-CWARNFLAGS+=	-Wno-uninitialized
-.else
-CFLAGS+=	-fno-zero-initialized-in-bss
+# XXX
+.if ${HAVE_GCC} > 3
+CFLAGS+=	-fno-strict-aliasing
+.endif
+
+# If we want the bpendtsleep: label in kern_synch.c, we need to use
+# -fno-reorder-blocks.  Don't make this a config(1) defflag without
+# making sure this fragment remains valid.
+.if ${HAVE_GCC} > 3 && !empty(${CFLAGS:M-DKERN_SYNCH_BPENDTSLEEP_LABEL})
+CFLAGS.kern_synch.c+=	-fno-reorder-blocks
 .endif
 
 # Use the per-source COPTS variables to add -g to just those
@@ -175,12 +180,12 @@ ${_cfile:T:R}.o: ${_cfile}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
 SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS} ${SYSLIBCOMPAT} ${LIBKERN}
-SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ} .gdbinit
+SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ:O} .gdbinit
 SYSTEM_LD_HEAD?=@rm -f $@
 SYSTEM_LD?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
-		${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o; \
-		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
+		${LD} -Map $@.map --cref ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o; \
+		${LD} -Map $@.map --cref ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
 SYSTEM_LD_TAIL?=@${SIZE} $@; chmod 755 $@
 
 TEXTADDR?=	${LOADADDRESS}			# backwards compatibility
@@ -306,7 +311,7 @@ MKDEP_CFLAGS?=	${CFLAGS}
 SSRCS=${MD_SFILES} ${SFILES}
 CSRCS=${MD_CFILES} ${MI_CFILES} ${CFILES}
 SRCS=${SSRCS} ${CSRCS}
-DEPS=	${SRCS:T:R:S/$/.d/g}
+DEPS=	${SRCS:T:O:u:R:S/$/.d/g}
 
 .for _s in ${SSRCS}
 ${_s:T:R}.d: ${_s} assym.h config_time.h

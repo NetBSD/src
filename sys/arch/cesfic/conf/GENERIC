@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.39 2005/12/09 23:34:01 elad Exp $
+# $NetBSD: GENERIC,v 1.39.4.1 2006/09/09 02:38:27 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -61,7 +61,7 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	SYSVMSG		# System V-style message queues
 #options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	KTRACE		# system call tracing support
-options 	SYSTRACE	# system call vetting via systrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
 #options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 #options 	LKM		# Loadable kernel modules
 options 	COMPAT_SUNOS
@@ -78,6 +78,7 @@ file-system 	NFS		# Network filesystem client
 #file-system 	MFS		# Memory-based filesystem
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # Filesystem options
 options 	FIFO		# POSIX fifo support (in all filesystems)
@@ -131,13 +132,14 @@ zstty*		at zsc? channel ?
 le*		at mainbus0		# LANCE ethernet interfaces
 
 pseudo-device	pty		64	# pseudo ptys
-#pseudo-device	sl		4	# SLIP network interfaces
-#pseudo-device	ppp		4	# PPP network interfaces
+#pseudo-device	sl			# SLIP network interfaces
+#pseudo-device	ppp			# PPP network interfaces
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-#pseudo-device	bpfilter	16	# Berkeley packet filter
+#pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
-#pseudo-device	vnd		4	# vnode pseudo-disks
+#pseudo-device	vnd			# vnode pseudo-disks
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
@@ -150,7 +152,6 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

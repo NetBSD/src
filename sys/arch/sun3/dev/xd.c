@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.51 2005/12/11 12:19:20 christos Exp $	*/
+/*	$NetBSD: xd.c,v 1.51.4.1 2006/09/09 02:43:59 rpaulo Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.51 2005/12/11 12:19:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.51.4.1 2006/09/09 02:43:59 rpaulo Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.51 2005/12/11 12:19:20 christos Exp $");
 #include <sys/syslog.h>
 #include <sys/dkbad.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -324,7 +325,7 @@ xdgetdisklabel(struct xd_softc *xd, void *b)
 	/* Required parameter for readdisklabel() */
 	xd->sc_dk.dk_label->d_secsize = XDFM_BPS;
 
-	err = readdisklabel(MAKEDISKDEV(0, xd->sc_dev.dv_unit, RAW_PART),
+	err = readdisklabel(MAKEDISKDEV(0, device_unit(&xd->sc_dev), RAW_PART),
 			    xddummystrat,
 			    xd->sc_dk.dk_label, xd->sc_dk.dk_cpulabel);
 	if (err) {
@@ -528,7 +529,7 @@ xdmatch(struct device *parent, struct cfdata *cf, void *aux)
 	int xd_unit;
 
 	/* Match only on the "wired-down" controller+disk. */
-	xd_unit = parent->dv_unit * 2 + xa->driveno;
+	xd_unit = device_unit(parent) * 2 + xa->driveno;
 	if (cf->cf_unit != xd_unit)
 		return (0);
 
@@ -873,7 +874,8 @@ xdioctl(dev_t dev, u_long command, caddr_t addr, int flag, struct lwp *l)
 
 	case DIOSXDCMD:
 		xio = (struct xd_iocmd *) addr;
-		if ((error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (error);
 		return (xdc_ioctlcmd(xd, dev, xio));
 

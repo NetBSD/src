@@ -1,4 +1,4 @@
-/*	$NetBSD: hydravar.h,v 1.1 2002/10/05 23:30:03 bjh21 Exp $	*/
+/*	$NetBSD: hydravar.h,v 1.1.40.1 2006/09/09 02:36:41 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -40,4 +40,8 @@ struct hydraboot_vars {
 	register_t	hb_sp;
 	void		(*hb_entry)(void);
 };
+
+extern int hydra_intr(void);
+extern void hydra_ipi_unicast(cpuid_t);
+
 #endif

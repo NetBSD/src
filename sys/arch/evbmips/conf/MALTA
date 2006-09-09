@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.37 2005/12/20 05:35:27 thorpej Exp $
+#	$NetBSD: MALTA,v 1.37.4.1 2006/09/09 02:39:04 rpaulo Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.37 $"
+#ident 		"MALTA-$Revision: 1.37.4.1 $"
 
 maxusers	32
 
@@ -38,7 +38,7 @@ options 	USERCONF	# userconf(4) support
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=150000	# size for embedded symbol table
+options 	SYMTAB_SPACE=160000	# size for embedded symbol table
 
 # Compatibility options
 #options 	COMPAT_43	# compatibility with 4.3BSD binaries
@@ -53,7 +53,7 @@ options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system	FFS		# Berkeley Fast Filesystem
@@ -93,17 +93,15 @@ options 	INET		# Internet protocols
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# Xerox NS networking
-#options 	NSIP		# Xerox NS tunneling over IP
 #options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_LOOKUP	# ippool(8) support
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42
@@ -299,31 +297,32 @@ audio*		at clct?
 #pseudo-device	raid		4		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG			# auto-configuration of RAID
 #pseudo-device	fss		4		# file system snapshot device
-pseudo-device	md		1		# memory disk device (ramdisk)
-#pseudo-device	vnd		4		# disk-like interface to files
+#pseudo-device	md		1		# memory disk device (ramdisk)
+pseudo-device	vnd				# disk-like interface to files
 
 # Network pseudo-devices
-pseudo-device	bpfilter	8		# Berkeley packet filter
-#pseudo-device	ipfilter			# IP filter (firewall) and NAT
+pseudo-device	bpfilter			# Berkeley packet filter
+pseudo-device	ipfilter			# IP filter (firewall) and NAT
 pseudo-device	loop				# network loopback
-#pseudo-device	ppp		2		# Point-to-Point Protocol
-#pseudo-device	sl		2		# Serial Line IP
-#pseudo-device	strip		2		# Starmode Radio IP (Metricom)
-#pseudo-device	tun		2		# network tunneling over tty
-#pseudo-device	gre		2		# generic L3 over IP tunnel
+#pseudo-device	ppp				# Point-to-Point Protocol
+#pseudo-device	sl				# Serial Line IP
+#pseudo-device	strip				# Starmode Radio IP (Metricom)
+#pseudo-device	tun				# network tunneling over tty
+#pseudo-device	tap				# virtual Ethernet
+#pseudo-device	gre				# generic L3 over IP tunnel
 #pseudo-device	ipip		2		# RFC 2003 IP Encapsulation
-#pseudo-device	gif		4		# RFC1933 tunnel
-#pseudo-device	faith		1		# IPv[46] tcp relay translation
-#pseudo-device	stf		1		# 6to4 IPv6 over IPv4 encapsulation
-pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	gif				# RFC1933 tunnel
+#pseudo-device	faith				# IPv[46] tcp relay translation
+#pseudo-device	stf				# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan				# IEEE 802.1q encapsulation
+pseudo-device	bridge				# simple inter-network bridging
 
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
 #pseudo-device	sequencer	1		# MIDI sequencer
-# rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd				# /dev/random & kernel generator
-#options 	RND_COM				# use "com" randomness (BROKEN)
-pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	clockctl			# user control of clock subsystem
+pseudo-device	ksyms				# /dev/ksyms
 
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda		4		# coda minicache <-> venus comm.

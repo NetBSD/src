@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22 2005/12/27 17:28:27 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.22.4.1 2006/09/09 02:37:06 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.22 2005/12/27 17:28:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.22.4.1 2006/09/09 02:37:06 rpaulo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.22 2005/12/27 17:28:27 chs Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/acct.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
@@ -211,6 +212,7 @@ trap(frame)
 	if (!KERNELMODE(frame->tf_cs, frame->tf_rflags)) {
 		type |= T_USER;
 		l->l_md.md_regs = frame;
+		LWP_CACHE_CREDS(l, p);
 	}
 
 	switch (type) {
@@ -379,6 +381,7 @@ copyfault:
 			preempt(0);
 		goto out;
 
+#if 0 /* handled by fpudna() */
 	case T_DNA|T_USER: {
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
@@ -388,6 +391,7 @@ copyfault:
 		ksi.ksi_addr = (void *)frame->tf_rip;
 		goto trapsignal;
 	}
+#endif
 
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
@@ -482,7 +486,7 @@ faultcommon:
 		/* Fault the original page in. */
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = NULL;
-		error = uvm_fault(map, va, 0, ftype);
+		error = uvm_fault(map, va, ftype);
 		pcb->pcb_onfault = onfault;
 		if (error == 0) {
 			if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr)
@@ -510,7 +514,7 @@ faultcommon:
 				KERNEL_UNLOCK();
 				goto copyfault;
 			}
-			printf("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
+			printf("uvm_fault(%p, 0x%lx, %d) -> %x\n",
 			    map, va, ftype, error);
 			goto we_re_toast;
 		}
@@ -518,8 +522,8 @@ faultcommon:
 			ksi.ksi_signo = SIGKILL;
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       l->l_cred ?
+			       kauth_cred_geteuid(l->l_cred) : -1);
 		} else {
 #ifdef TRAP_SIGDEBUG
 			printf("pid %d (%s): SEGV at rip %lx addr %lx\n",

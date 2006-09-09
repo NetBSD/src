@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_dv.c,v 1.30 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: grf_dv.c,v 1.30.4.1 2006/09/09 02:39:09 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_dv.c,v 1.30 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_dv.c,v 1.30.4.1 2006/09/09 02:39:09 rpaulo Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -137,6 +137,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_dv.c,v 1.30 2005/12/11 12:17:13 christos Exp $")
 
 #include <dev/cons.h>
 
+#include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 #include <hp300/dev/intiovar.h>
@@ -201,19 +202,19 @@ dvbox_intio_match(struct device *parent, struct cfdata *match, void *aux)
 	struct grfreg *grf;
 
 	if (strcmp("fb",ia->ia_modname) != 0)
-		return (0);
+		return 0;
 
 	if (badaddr((caddr_t)ia->ia_addr))
-		return (0);
+		return 0;
 
 	grf = (struct grfreg *)ia->ia_addr;
 
 	if (grf->gr_id == DIO_DEVICE_ID_FRAMEBUFFER &&
 	    grf->gr_id2 == DIO_DEVICE_SECID_DAVINCI) {
-		return (1);
+		return 1;
 	}
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -237,9 +238,9 @@ dvbox_dio_match(struct device *parent, struct cfdata *match, void *aux)
 
 	if (da->da_id == DIO_DEVICE_ID_FRAMEBUFFER &&
 	    da->da_secid == DIO_DEVICE_SECID_DAVINCI)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -247,18 +248,20 @@ dvbox_dio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct grfdev_softc *sc = (struct grfdev_softc *)self;
 	struct dio_attach_args *da = aux;
+	bus_space_handle_t bsh;
 	caddr_t grf;
 
 	sc->sc_scode = da->da_scode;
 	if (sc->sc_scode == dvconscode)
 		grf = dvconaddr;
 	else {
-		grf = iomap(dio_scodetopa(sc->sc_scode), da->da_size);
-		if (grf == 0) {
+		if (bus_space_map(da->da_bst, da->da_addr, da->da_size,
+		    0, &bsh)) {
 			printf("%s: can't map framebuffer\n",
 			    sc->sc_dev.dv_xname);
 			return;
 		}
+		grf = bus_space_vaddr(da->da_bst, bsh);
 	}
 
 	sc->sc_isconsole = (sc->sc_scode == dvconscode);
@@ -319,7 +322,7 @@ dv_init(struct grf_data *gp, int scode, caddr_t addr)
 
 		dv_reset(dbp);
 	}
-	return(1);
+	return 1;
 }
 
 /*
@@ -455,7 +458,7 @@ dv_mode(struct grf_data *gp, int cmd, caddr_t data)
 		error = EINVAL;
 		break;
 	}
-	return(error);
+	return error;
 }
 
 #if NITE > 0
@@ -667,29 +670,24 @@ dvboxcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	caddr_t va;
 	struct grfreg *grf;
 	struct grf_data *gp = &grf_cn;
-	uint8_t *dioiidev;
 	int size;
 
 	if (bus_space_map(bst, addr, PAGE_SIZE, 0, &bsh))
-		return (1);
+		return 1;
 	va = bus_space_vaddr(bst, bsh);
 	grf = (struct grfreg *)va;
 
 	if (badaddr(va) ||
 	    (grf->gr_id != GRFHWID) || (grf->gr_id2 != GID_DAVINCI)) {
 		bus_space_unmap(bst, bsh, PAGE_SIZE);
-		return (1);
+		return 1;
 	}
 
-	if (scode > 132) {
-		dioiidev = (uint8_t *)va;
-		size =  ((dioiidev[0x101] + 1) * 0x100000);
-	} else
-		size = DIOCSIZE;
+	size = DIO_SIZE(scode, va);
 
 	bus_space_unmap(bst, bsh, PAGE_SIZE);
 	if (bus_space_map(bst, addr, size, 0, &bsh))
-		return (1);
+		return 1;
 	va = bus_space_vaddr(bst, bsh);
 
 	/*
@@ -710,7 +708,7 @@ dvboxcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	 * Initialize the terminal emulator.
 	*/
 	itedisplaycnattach(gp, &dvbox_itesw);
-	return (0);
+	return 0;
 }
 
 #endif /* NITE > 0 */

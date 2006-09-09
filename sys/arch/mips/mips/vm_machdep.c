@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.109 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.109.4.1 2006/09/09 02:41:26 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,9 +77,10 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.109 2005/12/11 12:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.109.4.1 2006/09/09 02:41:26 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +155,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * If specified, give the child a different stack.
 	 */
 	if (stack != NULL)
-		f->f_regs[_R_SP] = (u_int)stack + stacksize;
+		f->f_regs[_R_SP] = (uintptr_t)stack + stacksize;
 
 	l2->l_md.md_regs = (void *)f;
 	l2->l_md.md_flags = l1->l_md.md_flags & MDP_FPUSED;
@@ -166,10 +167,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		l2->l_md.md_upte[i] = pte[i].pt_entry &~ x;
 
 	pcb = &l2->l_addr->u_pcb;
-	pcb->pcb_context[0] = (int)func;		/* S0 */
-	pcb->pcb_context[1] = (int)arg;			/* S1 */
-	pcb->pcb_context[8] = (int)f;			/* SP */
-	pcb->pcb_context[10] = (int)proc_trampoline;	/* RA */
+	pcb->pcb_context[0] = (intptr_t)func;		/* S0 */
+	pcb->pcb_context[1] = (intptr_t)arg;		/* S1 */
+	pcb->pcb_context[8] = (intptr_t)f;		/* SP */
+	pcb->pcb_context[10] = (intptr_t)proc_trampoline;	/* RA */
 	pcb->pcb_context[11] |= PSL_LOWIPL;		/* SR */
 #ifdef IPL_ICU_MASK
 	pcb->pcb_ppl = 0;	/* machine dependent interrupt mask */
@@ -190,11 +191,11 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	KASSERT(l->l_md.md_regs == f);
 
 	pcb = &l->l_addr->u_pcb;
-	pcb->pcb_context[0] = (int)func;		/* S0 */
-	pcb->pcb_context[1] = (int)arg;			/* S1 */
-	pcb->pcb_context[8] = (int)f;			/* SP */
-	pcb->pcb_context[10] = (int)proc_trampoline;	/* RA */
-	pcb->pcb_context[11] |= PSL_LOWIPL;		/* SR */
+	pcb->pcb_context[0] = (intptr_t)func;			/* S0 */
+	pcb->pcb_context[1] = (intptr_t)arg;			/* S1 */
+	pcb->pcb_context[8] = (intptr_t)f;			/* SP */
+	pcb->pcb_context[10] = (intptr_t)proc_trampoline;	/* RA */
+	pcb->pcb_context[11] |= PSL_LOWIPL;			/* SR */
 #ifdef IPL_ICU_MASK
 	pcb->pcb_ppl = 0;	/* machine depenedend interrupt mask */
 #endif
@@ -250,6 +251,7 @@ cpu_exit(struct lwp *l)
 	/* NOTREACHED */
 }
 
+#ifdef COREDUMP
 /*
  * Dump the machine specific segment at the start of a core dump.
  */
@@ -289,6 +291,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	return coredump_write(iocookie, UIO_SYSSPACE, &cpustate,
 	    chdr->c_cpusize);
 }
+#endif
 
 /*
  * Map a user I/O request into kernel virtual address space.
@@ -308,14 +311,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 	uva = mips_trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - uva;
 	len = mips_round_page(off + len);
-	kva = vm_map_min(phys_map);
-	if (uvm_map(phys_map, &kva, len, NULL, uva, 0,
-	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
-	    UVM_ADV_RANDOM, UVM_KMF_WAITVA | UVM_FLAG_QUANTUM)))
-		panic("vmapbuf: space");
-
+	kva = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	bp->b_data = (caddr_t)(kva + off);
-
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	do {
 		if (pmap_extract(upmap, uva, &pa) == FALSE)
@@ -346,8 +343,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	len = mips_round_page(off + len);
 	pmap_remove(vm_map_pmap(phys_map), kva, kva + len);
 	pmap_update(pmap_kernel());
-	uvm_unmap1(phys_map, kva, kva + len,
-	    UVM_FLAG_QUANTUM | UVM_FLAG_VAONLY);
+	uvm_km_free(phys_map, kva, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
@@ -373,7 +369,7 @@ kvtophys(vaddr_t kva)
 
 		pte = kvtopte(kva);
 		if ((size_t) (pte - Sysmap) > Sysmapsize)  {
-			printf("oops: Sysmap overrun, max %d index %d\n",
+			printf("oops: Sysmap overrun, max %d index %zd\n",
 			       Sysmapsize, pte - Sysmap);
 		}
 		if (!mips_pg_v(pte->pt_entry)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.21 2006/01/29 03:12:40 kochi Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.21.2.1 2006/09/09 02:39:52 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.21 2006/01/29 03:12:40 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.21.2.1 2006/09/09 02:39:52 rpaulo Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.21 2006/01/29 03:12:40 kochi Exp $
 #include <sys/kernel.h>
 #include <machine/bus.h>
 #include <sys/proc.h>
+#include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
@@ -86,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.21 2006/01/29 03:12:40 kochi Exp $
 
 #include "acpi.h"
 
+#include <dev/ic/i8253reg.h>
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpivar.h>
 #define ACPI_MACHDEP_PRIVATE
@@ -95,8 +97,11 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.21 2006/01/29 03:12:40 kochi Exp $
 
 #include "acpi_wakecode.h"
 
+static paddr_t phys_wakeup = 0;
+static int acpi_md_node = CTL_EOL;
+static int acpi_md_vbios_reset = 1;
 
-paddr_t	phys_wakeup = 0;
+static int	sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS);
 
 uint32_t
 acpi_md_get_npages_of_wakecode(void)
@@ -322,7 +327,6 @@ acpi_md_sleep(int state)
 	struct pmap			*pm;
 	uint32_t			cr3;
 	paddr_t				oldphys;
-
 	if (!phys_wakeup) {
 		printf("acpi: can't sleep since wakecode is not installed.\n");
 		return (-1);
@@ -331,22 +335,24 @@ acpi_md_sleep(int state)
 	AcpiSetFirmwareWakingVector(phys_wakeup);
 
 	ef = read_eflags();
-	disable_intr();
 
 	/* Create identity mapping */
 	if ((p = curproc) == NULL)
 		p = &proc0;
+
 	pm = vm_map_pmap(&p->p_vmspace->vm_map);
+	if (pm != pmap_kernel()) {
+		if (!pmap_extract(pm, phys_wakeup, &oldphys))
+			oldphys = 0;
+		pmap_enter(pm, phys_wakeup, phys_wakeup,
+		    VM_PROT_READ | VM_PROT_WRITE,
+		    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
+		pmap_update(pm);
+	}
 	cr3 = rcr3();
-	lcr3(pm->pm_pdirpa);
-	if (!pmap_extract(pm, phys_wakeup, &oldphys))
-		oldphys = 0;
-	pmap_enter(pm, phys_wakeup, phys_wakeup,
-			VM_PROT_READ | VM_PROT_WRITE,
-			PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
-	pmap_update(pm);
 
 	ret_addr = 0;
+	disable_intr();
 	if (acpi_savecpu()) {
 		/* Execute Sleep */
 
@@ -356,6 +362,8 @@ acpi_md_sleep(int state)
 		p_gdt = (struct region_descriptor *)(phys_wakeup+physical_gdt);
 		p_gdt->rd_limit = r_gdt.rd_limit;
 		p_gdt->rd_base = vtophys(r_gdt.rd_base);
+
+		WAKECODE_FIXUP(vbios_reset, uint8_t, acpi_md_vbios_reset);
 
 		WAKECODE_FIXUP(previous_cr0, uint32_t, r_cr0);
 		WAKECODE_FIXUP(previous_cr2, uint32_t, r_cr2);
@@ -418,6 +426,7 @@ acpi_md_sleep(int state)
 
 		for (;;) ;
 	} else {
+		printf("acpi0: good morning!\n");
 		/* Execute Wakeup */
 
 		npxinit(&cpu_info_primary);
@@ -429,8 +438,8 @@ acpi_md_sleep(int state)
 		 * XXX must the local APIC be re-inited?
 		 */
 
-		initrtclock();
-		inittodr(time.tv_sec);
+		initrtclock(TIMER_FREQ);
+		inittodr(time_second);
 
 #ifdef ACPI_PRINT_REG
 		acpi_savecpu();
@@ -439,22 +448,61 @@ acpi_md_sleep(int state)
 	}
 
 out:
-	/* Clean up identity mapping. */
-	pmap_remove(pm, phys_wakeup, phys_wakeup + PAGE_SIZE);
-	if (oldphys) {
-		pmap_enter(pm, phys_wakeup, oldphys,
-				VM_PROT_READ | VM_PROT_WRITE,
-				PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
-	}
-	pmap_update(pm);
+	enable_intr();
 
 	lcr3(cr3);
+	if (pm != pmap_kernel()) {
+		/* Clean up identity mapping. */
+		pmap_remove(pm, phys_wakeup, phys_wakeup + PAGE_SIZE);
+		if (oldphys) {
+			pmap_enter(pm, phys_wakeup, oldphys,
+			    VM_PROT_READ | VM_PROT_WRITE,
+			    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
+		}
+		pmap_update(pm);
+	}
 
-	enable_intr();
 	write_eflags(ef);
-	AcpiUtReleaseMutex(ACPI_MTX_HARDWARE);
 
 	return (ret);
 #undef WAKECODE_FIXUP
 #undef WAKECODE_BCOPY
+}
+
+SYSCTL_SETUP(sysctl_md_acpi_setup, "acpi i386 sysctl setup")
+{
+	const struct sysctlnode *node;
+	const struct sysctlnode *ssnode;
+
+	if (sysctl_createv(NULL, 0, NULL, &node, CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "machdep", NULL, NULL, 0, NULL, 0, CTL_MACHDEP,
+	    CTL_EOL) != 0)
+		return;
+	if (sysctl_createv(NULL, 0, &node, &ssnode, CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "acpi_vbios_reset", NULL, sysctl_md_acpi_vbios_reset,
+	    0, NULL, 0, CTL_CREATE, CTL_EOL) != 0)
+		return;
+
+	acpi_md_node = node->sysctl_num;
+}
+
+static int
+sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS)
+{
+	int error, t;
+	struct sysctlnode node;
+
+	node = *rnode;
+	t = acpi_md_vbios_reset;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (t < 0 || t > 1)
+		return EINVAL;
+
+	acpi_md_vbios_reset = t;
+
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: iociic.c,v 1.2 2005/12/11 12:16:04 christos Exp $	*/
+/*	$NetBSD: iociic.c,v 1.2.4.1 2006/09/09 02:36:41 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@ iociic_bb_set_bits(void *cookie, uint32_t bits)
 {
 	struct iociic_softc *sc = cookie;
 
-	ioc_ctl_write(sc->sc_dev.dv_parent, sc->sc_ioc_ctl | bits,
+	ioc_ctl_write(device_parent(&sc->sc_dev), sc->sc_ioc_ctl | bits,
 		      IOC_CTL_SDA | IOC_CTL_SCL);
 }
 
@@ -98,7 +98,7 @@ iociic_bb_read_bits(void *cookie)
 {
 	struct iociic_softc *sc = cookie;
 
-	return (ioc_ctl_read(sc->sc_dev.dv_parent));
+	return (ioc_ctl_read(device_parent(&sc->sc_dev)));
 }
 
 static const struct i2c_bitbang_ops iociic_bbops = {
@@ -139,9 +139,8 @@ iociic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c.ic_read_byte = iociic_read_byte;
 	sc->sc_i2c.ic_write_byte = iociic_write_byte;
 
-	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c;
-	(void) config_found(&sc->sc_dev, &iba, iicbus_print);
+	(void) config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
 }
 
 CFATTACH_DECL(iociic, sizeof(struct iociic_softc),

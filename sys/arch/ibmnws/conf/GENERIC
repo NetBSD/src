@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.20 2005/12/09 23:34:02 elad Exp $
+#	$NetBSD: GENERIC,v 1.20.4.1 2006/09/09 02:40:43 rpaulo Exp $
 #
 #
 
@@ -38,6 +38,7 @@ file-system 	NFS		# Network File System client
 #file-system 	MSDOSFS		# MS-DOS file system
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 #options 	FFS_EI		# FFS Endian Independant support
@@ -75,7 +76,7 @@ options 	NFS_BOOT_DHCP
 # different kernel output - see dev/wscons/wsdisplayvar.h
 #options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
@@ -163,11 +164,12 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 # adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
 # ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 # iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
-# pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
+# pcscp* 	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 # siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 
 # PCMCIA SCSI controllers
 # aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
+# spc* 	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 
 # SCSI bus support
 # scsibus* at adw?
@@ -176,6 +178,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 # scsibus* at iha?
 # scsibus* at pcscp?
 # scsibus* at siop?
+# scsibus* at spc?
 
 # SCSI devices
 # sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -267,7 +270,8 @@ audio*	at audiobus?
 pseudo-device	md		1	# memory disk device (ramdisk)
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# network tap
+pseudo-device	bpfilter		# network tap
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
@@ -278,7 +282,6 @@ pseudo-device	ksyms
 pseudo-device	clockctl
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

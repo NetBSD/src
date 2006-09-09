@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.3 2005/12/11 12:18:34 christos Exp $    */
+/*      $NetBSD: param.h,v 1.3.4.1 2006/09/09 02:42:13 rpaulo Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -136,27 +136,7 @@
  * Some macros for units conversion
  */
 
-/* pages ("clicks") to disk blocks */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
-
-/* clicks to bytes */
-#define	ctob(x)		((x) << PGSHIFT)
-#define	btoc(x)		(((unsigned)(x) + PGOFSET) >> PGSHIFT)
 #define	btop(x)		(((unsigned)(x)) >> PGSHIFT)
-
-/* bytes to disk blocks */
-#define	btodb(x)	((unsigned long)(x) >> DEV_BSHIFT)
-#define	dbtob(x)	((unsigned long)(x) << DEV_BSHIFT)
-
-/*
- * Map a ``block device block'' to a file system block.
- * This should be device dependent, and will be if we
- * add an entry to cdevsw/bdevsw for that purpose.
- * For now though just use DEV_BSIZE.
- */
-
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
 
 #ifdef _KERNEL
 #include <machine/intr.h>

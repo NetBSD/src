@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.12 2005/11/16 01:47:58 uwe Exp $ */
+/*	$NetBSD: rtc.c,v 1.12.4.1 2006/09/09 02:43:09 rpaulo Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.12 2005/11/16 01:47:58 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.12.4.1 2006/09/09 02:43:09 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -73,8 +73,6 @@ extern todr_chip_handle_t todr_handle;
 /* todr(9) methods */
 static int rtc_gettime(todr_chip_handle_t, volatile struct timeval *);
 static int rtc_settime(todr_chip_handle_t, volatile struct timeval *);
-static int rtc_getcal(todr_chip_handle_t, int *);
-static int rtc_setcal(todr_chip_handle_t, int);
 
 int rtc_auto_century_adjust = 1; /* XXX: do we ever want not to? */
 
@@ -146,11 +144,9 @@ rtcattach_ebus(struct device *parent, struct device *self, void *aux)
 	handle->bus_cookie = NULL; /* unused */
 	handle->todr_gettime = rtc_gettime;
 	handle->todr_settime = rtc_settime;
-	handle->todr_getcal = rtc_getcal;
-	handle->todr_setcal = rtc_setcal;
 	handle->todr_setwen = NULL; /* not necessary, no idprom to protect */
 
-	todr_handle = handle;
+	todr_attach(handle);
 }
 
 
@@ -234,25 +230,4 @@ rtc_settime(todr_chip_handle_t handle, volatile struct timeval *tv)
 	mc146818_write(sc, MC_REGB,
 		       (mc146818_read(sc, MC_REGB) & ~MC_REGB_SET));
 	return (0);
-}
-
-
-/*
- * RTC does not support TOD clock calibration
- */
-
-/* ARGSUSED */
-static int
-rtc_getcal(todr_chip_handle_t handle, int *vp)
-{
-
-	return (EOPNOTSUPP);
-}
-
-/* ARGSUSED */
-static int
-rtc_setcal(todr_chip_handle_t handle, int v)
-{
-
-	return (EOPNOTSUPP);
 }

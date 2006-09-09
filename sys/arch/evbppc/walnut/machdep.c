@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2005/12/24 22:45:35 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25.4.1 2006/09/09 02:39:08 rpaulo Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2005/12/24 22:45:35 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25.4.1 2006/09/09 02:39:08 rpaulo Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -89,12 +89,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2005/12/24 22:45:35 perry Exp $");
 #include <sys/kernel.h>
 #include <sys/user.h>
 #include <sys/boot_flag.h>
-#include <sys/properties.h>
 #include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <net/netisr.h>
+
+#include <prop/proplib.h>
 
 #include <machine/bus.h>
 #include <machine/powerpc.h>
@@ -266,6 +267,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 
 	__syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
 	mtspr(SPR_EVPR, 0);		/* Set Exception vector base */
+
 	consinit();
 
 	/* Handle trap instruction as PGM exception */
@@ -356,6 +358,8 @@ void
 cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
+	prop_number_t pn;
+	prop_data_t pd;
 	char pbuf[9];
 
 	/*
@@ -406,20 +410,39 @@ cpu_startup(void)
 	printf("avail memory = %s\n", pbuf);
 
 	/*
-	 * Set up the board properties database.
+	 * Set up the board properties dictionary.
 	 */
-	if (!(board_info = propdb_create("board info")))
-		panic("Cannot create board info database");
+	board_properties = prop_dictionary_create();
+	KASSERT(board_properties != NULL);
 
-	if (board_info_set("mem-size", &board_data.mem_size, 
-		sizeof(&board_data.mem_size), PROP_CONST, 0))
+	pn = prop_number_create_integer(board_data.mem_size);
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "mem-size", pn) == FALSE)
 		panic("setting mem-size");
-	if (board_info_set("sip0-mac-addr", &board_data.mac_address_pci, 
-		sizeof(&board_data.mac_address_pci), PROP_CONST, 0))
+	prop_object_release(pn);
+
+	pd = prop_data_create_data_nocopy(board_data.mac_address_local,
+					  sizeof(board_data.mac_address_local));
+	KASSERT(pd != NULL);
+	if (prop_dictionary_set(board_properties, "emac0-mac-addr",
+				pd) == FALSE)
+		panic("setting emac0-mac-addr");
+	prop_object_release(pd);
+
+	pd = prop_data_create_data_nocopy(board_data.mac_address_pci,
+					  sizeof(board_data.mac_address_pci));
+	KASSERT(pd != NULL);
+	if (prop_dictionary_set(board_properties, "sip0-mac-addr",
+				pd) == FALSE)
 		panic("setting sip0-mac-addr");
-	if (board_info_set("processor-frequency", &board_data.processor_speed, 
-		sizeof(&board_data.processor_speed), PROP_CONST, 0))
+	prop_object_release(pd);
+
+	pn = prop_number_create_integer(board_data.processor_speed);
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "processor-frequency",
+				pn) == FALSE)
 		panic("setting processor-frequency");
+	prop_object_release(pn);
 
 	/*
 	 * Now that we have VM, malloc()s are OK in bus_space.
@@ -434,42 +457,6 @@ dumpsys(void)
 {
 
 	printf("dumpsys: TBD\n");
-}
-
-/*
- * Soft networking interrupts.
- */
-void
-softnet(void)
-{
-	int isr;
-
-	isr = netisr;
-	netisr = 0;
-
-#define DONETISR(bit, fn) do {		\
-	if (isr & (1 << bit))		\
-		fn();			\
-} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-
-}
-
-/*
- * Soft tty interrupts.
- */
-#include "com.h"
-void
-softserial(void)
-{
-#if NCOM > 0
-	void comsoft(void);	/* XXX from dev/ic/com.c */
-
-	comsoft();
-#endif
 }
 
 /*

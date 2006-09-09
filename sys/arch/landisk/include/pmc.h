@@ -1,0 +1,3 @@
+/*	$NetBSD: pmc.h,v 1.1.6.2 2006/09/09 02:40:49 rpaulo Exp $	*/
+
+/* No performance counters */

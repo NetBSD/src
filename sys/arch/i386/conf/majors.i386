@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.31 2005/12/11 12:17:41 christos Exp $
+#	$NetBSD: majors.i386,v 1.31.4.1 2006/09/09 02:39:53 rpaulo Exp $
 #
 # Device majors for i386
 #

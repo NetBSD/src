@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.5 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.5.4.1 2006/09/09 02:39:08 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5.4.1 2006/09/09 02:39:08 rpaulo Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -205,8 +205,9 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 	static char irqstr[8];		/* 4 + 2 + NUL + sanity */
 
-	if (ih == 0 || ih >= ICU_LEN)
-		panic("pci_intr_string: bogus handle 0x%x", ih);
+	/* Make sure it looks sane, intr_establish does the real check. */
+	if (ih < 0 || ih > 99)
+		panic("pci_intr_string: handle %d won't fit two digits", ih);
 
 	sprintf(irqstr, "irq %d", ih);
 	return (irqstr);
@@ -225,10 +226,6 @@ void *
 pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 		   int (*func)(void *), void *arg)
 {
-
-	if (ih == 0 || ih >= ICU_LEN)
-		panic("pci_intr_establish: bogus handle 0x%x", ih);
-
 	return intr_establish(ih, IST_LEVEL, level, func, arg);
 }
 
@@ -267,5 +264,5 @@ pci_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func, pcireg_t id)
 		/* Don't configure the bridge and PCI probe. */
 		return 0;
 	}
-	return PCI_CONF_ALL & ~PCI_CONF_MAP_ROM;
+	return PCI_CONF_DEFAULT;
 }

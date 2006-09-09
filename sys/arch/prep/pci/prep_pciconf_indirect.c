@@ -1,4 +1,4 @@
-/*	$NetBSD: prep_pciconf_indirect.c,v 1.5 2005/12/11 12:18:47 christos Exp $	*/
+/*	$NetBSD: prep_pciconf_indirect.c,v 1.5.4.1 2006/09/09 02:42:43 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,9 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_indirect.c,v 1.5 2005/12/11 12:18:47 christos Exp $");
-
-#include "opt_openpic.h"
+__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_indirect.c,v 1.5.4.1 2006/09/09 02:42:43 rpaulo Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,18 +56,17 @@ __KERNEL_RCSID(0, "$NetBSD: prep_pciconf_indirect.c,v 1.5 2005/12/11 12:18:47 ch
 #include <machine/pio.h>
 #include <machine/platform.h>
 
-#if defined(OPENPIC)
-#include <powerpc/openpic.h>
-#endif /* OPENPIC */
-
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
+#include <prop/proplib.h>
+
 #define	PCI_MODE1_ENABLE	0x80000000UL
-#define	PCI_MODE1_ADDRESS_REG	(PREP_BUS_SPACE_IO + 0xcf8)
-#define	PCI_MODE1_DATA_REG	(PREP_BUS_SPACE_IO + 0xcfc)
+
+extern volatile unsigned char *prep_pci_baseaddr;
+extern volatile unsigned char *prep_pci_basedata;
 
 #define	PCI_CBIO		0x10
 
@@ -114,27 +111,6 @@ prep_pci_indirect_attach_hook(struct device *parent, struct device *self,
 		return;
 
 	printf(": indirect configuration space access");
-
-#if defined(OPENPIC)
-	if (openpic_base) {
-		pci_chipset_tag_t pc;
-		pcitag_t tag;
-		pcireg_t id, address;
-
-		pc = pba->pba_pc;
-		tag = pci_make_tag(pc, 0, 13, 0);
-		id = pci_conf_read(pc, tag, PCI_ID_REG);
-
-		if (PCI_VENDOR(id) == PCI_VENDOR_IBM
-		    && PCI_PRODUCT(id) == PCI_PRODUCT_IBM_MPIC) {
-			address = pci_conf_read(pc, tag, PCI_CBIO);
-			if ((address & PCI_MAPREG_TYPE_MASK) == PCI_MAPREG_TYPE_MEM) {
-				address &= PCI_MAPREG_MEM_ADDR_MASK;
-				openpic_base = (unsigned char *)(PREP_BUS_SPACE_MEM | address);
-			}
-		}
-	}
-#endif /* OPENPIC */
 }
 
 pcitag_t
@@ -171,9 +147,9 @@ prep_pci_indirect_conf_read(void *v, pcitag_t tag, int reg)
 	int s;
 
 	s = splhigh();
-	out32rb(PCI_MODE1_ADDRESS_REG, tag | reg);
-	data = in32rb(PCI_MODE1_DATA_REG);
-	out32rb(PCI_MODE1_ADDRESS_REG, 0);
+	out32rb(prep_pci_baseaddr, tag | reg);
+	data = in32rb(prep_pci_basedata);
+	out32rb(prep_pci_baseaddr, 0);
 	splx(s);
 
 	return data;
@@ -185,8 +161,8 @@ prep_pci_indirect_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	int s;
 
 	s = splhigh();
-	out32rb(PCI_MODE1_ADDRESS_REG, tag | reg);
-	out32rb(PCI_MODE1_DATA_REG, data);
-	out32rb(PCI_MODE1_ADDRESS_REG, 0);
+	out32rb(prep_pci_baseaddr, tag | reg);
+	out32rb(prep_pci_basedata, data);
+	out32rb(prep_pci_baseaddr, 0);
 	splx(s);
 }

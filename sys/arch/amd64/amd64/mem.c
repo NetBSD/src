@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.5 2005/12/11 12:16:21 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.5.4.1 2006/09/09 02:37:05 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.5 2005/12/11 12:16:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.5.4.1 2006/09/09 02:37:05 rpaulo Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.5 2005/12/11 12:16:21 christos Exp $");
 #ifdef LKM
 #include <sys/lkm.h>
 #endif
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 
@@ -225,7 +226,7 @@ mmmmap(dev, off, prot)
 	off_t off;
 	int prot;
 {
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;	/* XXX */
 
 	/*
 	 * /dev/mem is the only one that makes sense through this
@@ -238,7 +239,8 @@ mmmmap(dev, off, prot)
 	if (minor(dev) != DEV_MEM)
 		return (-1);
 
-	if (off > ctob(physmem) && suser(p->p_ucred, &p->p_acflag) != 0)
+	if (off > ctob(physmem) && kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag) != 0)
 		return (-1);
 	return (x86_btop(off));
 }

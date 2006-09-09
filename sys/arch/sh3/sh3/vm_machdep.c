@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.51 2006/01/23 23:07:19 uwe Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.51.2.1 2006/09/09 02:42:59 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,9 +81,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.51 2006/01/23 23:07:19 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.51.2.1 2006/09/09 02:42:59 rpaulo Exp $");
 
 #include "opt_kstack_debug.h"
+#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,6 +312,7 @@ cpu_lwp_free(struct lwp *l, int proc)
 	/* Nothing to do */
 }
 
+#ifdef COREDUMP
 /*
  * Dump the machine specific segment at the start of a core dump.
  */
@@ -351,6 +353,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
 	    sizeof(md_core));
 }
+#endif /* COREDUMP */
 
 /*
  * Map an IO request into kernel virtual address space.  Requests fall into
@@ -380,7 +383,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
+	bp->b_saveaddr = bp->b_data;
+	faddr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);

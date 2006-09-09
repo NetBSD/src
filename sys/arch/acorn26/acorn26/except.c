@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.9 2005/12/11 12:16:03 christos Exp $ */
+/* $NetBSD: except.c,v 1.9.4.1 2006/09/09 02:36:40 rpaulo Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,10 +31,9 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.9 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.9.4.1 2006/09/09 02:36:40 rpaulo Exp $");
 
 #include "opt_ddb.h"
-#include "opt_ktrace.h"
 
 #include <sys/errno.h>
 #include <sys/kernel.h>
@@ -57,10 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: except.c,v 1.9 2005/12/11 12:16:03 christos Exp $");
 #ifdef DDB
 #include <ddb/db_output.h>
 #include <machine/db_machdep.h>
-#endif
-
-#ifdef KTRACE
-#include <sys/ktrace.h>
 #endif
 
 void syscall(struct trapframe *);
@@ -117,8 +112,10 @@ prefetch_abort_handler(struct trapframe *tf)
 		l = &lwp0;
 	p = l->l_proc;
 
-	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
+	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR) {
 		l->l_addr->u_pcb.pcb_tf = tf;
+		LWP_CACHE_CREDS(l, p);
+	}
 
 	if ((tf->tf_r15 & R15_MODE) != R15_MODE_USR) {
 #ifdef DDB
@@ -171,8 +168,10 @@ data_abort_handler(struct trapframe *tf)
 	if (l == NULL)
 		l = &lwp0;
 	p = l->l_proc;
-	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
+	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR) {
 		l->l_addr->u_pcb.pcb_tf = tf;
+		LWP_CACHE_CREDS(l, p);
+	}
 	pc = tf->tf_r15 & R15_PC;
 	data_abort_fixup(tf);
 	va = data_abort_address(tf, &asize);
@@ -207,7 +206,7 @@ do_fault(struct trapframe *tf, struct lwp *l,
 	KASSERT(current_intr_depth == 0);
 
 	for (;;) {
-		error = uvm_fault(map, va, 0, atype);
+		error = uvm_fault(map, va, atype);
 		if (error != ENOMEM)
 			break;
 		log(LOG_WARNING, "pid %d.%d: VM shortage, sleeping\n",
@@ -442,8 +441,10 @@ address_exception_handler(struct trapframe *tf)
 	l = curlwp;
 	if (l == NULL)
 		l = &lwp0;
-	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
+	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR) {
 		l->l_addr->u_pcb.pcb_tf = tf;
+		LWP_CACHE_CREDS(l, l->l_proc);
+	}
 
 	if (curpcb->pcb_onfault != NULL) {
 		tf->tf_r0 = EFAULT;

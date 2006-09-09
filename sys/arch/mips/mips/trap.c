@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.198 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.198.4.1 2006/09/09 02:41:26 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.198 2005/12/11 12:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.198.4.1 2006/09/09 02:41:26 rpaulo Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.198 2005/12/11 12:18:09 christos Exp $");
 #endif
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/kauth.h>
 
 #include <mips/cache.h>
 #include <mips/locore.h>
@@ -162,12 +163,12 @@ const char *trap_type[] = {
 	"r4000 virtual coherency data",
 };
 
-void trap(unsigned, unsigned, unsigned, unsigned, struct trapframe *);
-void ast(unsigned);
+void trap(unsigned int, unsigned int, vaddr_t, vaddr_t, struct trapframe *);
+void ast(unsigned int);
 
-vaddr_t MachEmulateBranch(struct frame *, vaddr_t, unsigned, int);	/* XXX */
-void MachEmulateInst(u_int32_t, u_int32_t, u_int32_t, struct frame *);	/* XXX */
-void MachFPTrap(u_int32_t, u_int32_t, u_int32_t, struct frame *);	/* XXX */
+vaddr_t MachEmulateBranch(struct frame *, vaddr_t, unsigned int, int);	/* XXX */
+void MachEmulateInst(u_int32_t, u_int32_t, vaddr_t, struct frame *);	/* XXX */
+void MachFPTrap(u_int32_t, u_int32_t, vaddr_t, struct frame *);	/* XXX */
 
 #define DELAYBRANCH(x) ((int)(x)<0)
 
@@ -196,7 +197,7 @@ child_return(void *arg)
 #else
 #define TRAPTYPE(x) (((x) & MIPS1_CR_EXC_CODE) >> MIPS_CR_EXC_CODE_SHIFT)
 #endif
-#define KERNLAND(x) ((int)(x) < 0)
+#define KERNLAND(x) ((intptr_t)(x) < 0)
 
 /*
  * Trap is called from locore to handle most types of processor traps.
@@ -204,7 +205,7 @@ child_return(void *arg)
  * interrupts as a part of real interrupt processing.
  */
 void
-trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
+trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
     struct trapframe *frame)
 {
 	int type;
@@ -218,8 +219,10 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 
 	uvmexp.traps++;
 	type = TRAPTYPE(cause);
-	if (USERMODE(status))
+	if (USERMODE(status)) {
 		type |= T_USER;
+		LWP_CACHE_CREDS(l, p);
+	}
 
 	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV)) {
 		if (type != T_BREAK) {
@@ -238,7 +241,7 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 		printf("trap: %s in %s mode\n",
 			trap_type[TRAPTYPE(cause)],
 			USERMODE(status) ? "user" : "kernel");
-		printf("status=0x%x, cause=0x%x, epc=0x%x, vaddr=0x%x\n",
+		printf("status=0x%x, cause=0x%x, epc=%#lx, vaddr=%#lx\n",
 			status, cause, opc, vaddr);
 		if (curlwp != NULL) {
 			fp = (struct frame *)l->l_md.md_regs;
@@ -246,7 +249,7 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 			    p->p_pid, p->p_comm, (int)fp->f_regs[_R_SP]);
 		} else
 			printf("curlwp == NULL ");
-		printf("ksp=0x%x\n", (int)&status);
+		printf("ksp=%p\n", &status);
 #if defined(DDB)
 		kdb_trap(type, (mips_reg_t *) frame);
 		/* XXX force halt XXX */
@@ -296,7 +299,7 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 			MachTLBUpdate(vaddr, entry);
 			pa = mips_tlbpfn_to_paddr(entry);
 			if (!IS_VM_PHYSADDR(pa)) {
-				printf("ktlbmod: va %x pa %llx\n",
+				printf("ktlbmod: va %#lx pa %#llx\n",
 				    vaddr, (long long)pa);
 				panic("ktlbmod: unmanaged page");
 			}
@@ -331,7 +334,7 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 		MachTLBUpdate(vaddr, entry);
 		pa = mips_tlbpfn_to_paddr(entry);
 		if (!IS_VM_PHYSADDR(pa)) {
-			printf("utlbmod: va %x pa %llx\n",
+			printf("utlbmod: va %#lx pa %#llx\n",
 			    vaddr, (long long)pa);
 			panic("utlbmod: unmanaged page");
 		}
@@ -379,12 +382,12 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 		}
 
 		if (p->p_emul->e_fault)
-			rv = (*p->p_emul->e_fault)(p, va, 0, ftype);
+			rv = (*p->p_emul->e_fault)(p, va, ftype);
 		else
-			rv = uvm_fault(map, va, 0, ftype);
+			rv = uvm_fault(map, va, ftype);
 #ifdef VMFAULT_TRACE
 		printf(
-	    "uvm_fault(%p (pmap %p), %lx (0x%x), 0, %d) -> %d at pc %p\n",
+	    "uvm_fault(%p (pmap %p), %lx (0x%x), %d) -> %d at pc %p\n",
 		    map, vm->vm_map.pmap, va, vaddr, ftype, rv, (void*)opc);
 #endif
 		/*
@@ -412,8 +415,8 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : (uid_t) -1);
+			       l->l_cred ?
+			       kauth_cred_geteuid(l->l_cred) : (uid_t) -1);
 			ksi.ksi_signo = SIGKILL;
 			ksi.ksi_code = 0;
 		} else {
@@ -435,7 +438,7 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 		int rv;
 
 		va = trunc_page(vaddr);
-		rv = uvm_fault(kernel_map, va, 0, ftype);
+		rv = uvm_fault(kernel_map, va, ftype);
 		if (rv == 0)
 			return; /* KERN */
 		/*FALLTHROUGH*/
@@ -446,7 +449,7 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 	copyfault:
 		if (l == NULL || l->l_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
-		frame->tf_regs[TF_EPC] = (int)l->l_addr->u_pcb.pcb_onfault;
+		frame->tf_regs[TF_EPC] = (intptr_t)l->l_addr->u_pcb.pcb_onfault;
 		return; /* KERN */
 
 	case T_ADDR_ERR_LD+T_USER:	/* misaligned or kseg access */
@@ -491,7 +494,8 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 #endif
 	case T_BREAK+T_USER:
 	    {
-		unsigned va, instr;
+		vaddr_t va;
+		uint32_t instr;
 		int rv;
 
 		/* compute address of break instruction */
@@ -598,10 +602,6 @@ netintr(void)
 
 	n = netisr;
 	netisr = 0;
-
-#ifdef SOFTNET_INTR		/* XXX TEMPORARY XXX */
-	intrcnt[SOFTNET_INTR]++;
-#endif
 
 #include <net/netisr_dispatch.h>
 
@@ -764,7 +764,7 @@ void mips_idle(void);	/* XXX */
  */
 
 /* forward */
-const char *fn_name(unsigned addr);
+const char *fn_name(vaddr_t addr);
 void stacktrace_subr(int, int, int, int, u_int, u_int, u_int, u_int,
 	    void (*)(const char*, ...));
 
@@ -782,7 +782,7 @@ stacktrace_subr(int a0, int a1, int a2, int a3,
     u_int pc, u_int sp, u_int fp, u_int ra,
     void (*printfn)(const char*, ...))
 {
-	unsigned va, subr;
+	vaddr_t va, subr;
 	unsigned instr, mask;
 	InstFmt i;
 	int more, stksize;
@@ -992,7 +992,7 @@ static struct { void *addr; const char *name;} names[] = {
  * Map a function address to a string name, if known; or a hex string.
  */
 const char *
-fn_name(unsigned addr)
+fn_name(vaddr_t addr)
 {
 	static char buf[17];
 	int i = 0;
@@ -1013,7 +1013,7 @@ fn_name(unsigned addr)
 	for (i = 0; names[i].name; i++)
 		if (names[i].addr == (void*)addr)
 			return (names[i].name);
-	sprintf(buf, "%x", addr);
+	sprintf(buf, "%lx", addr);
 	return (buf);
 }
 

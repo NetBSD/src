@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.32 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.32.4.1 2006/09/09 02:41:58 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@
 #include <machine/cpu.h>
 #endif
 
-#define	_MACHINE 	pc532
+#define	_MACHINE	pc532
 #define	MACHINE		"pc532"
 #define	_MACHINE_ARCH	ns32k
 #define	MACHINE_ARCH	"ns32k"
@@ -129,26 +129,6 @@
 /*
  * Some macros for units conversion
  */
-
-/* pages ("clicks") to disk blocks */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
-
-/* clicks to bytes */
-#define	ctob(x)		((x) << PGSHIFT)
-#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
-
-/* bytes to disk blocks */
-#define	btodb(x)	((x) >> DEV_BSHIFT)
-#define	dbtob(x)	((x) << DEV_BSHIFT)
-
-/*
- * Map a ``block device block'' to a file system block.
- * This should be device dependent, and should use the bsize
- * field from the disk label.
- * For now though just use DEV_BSIZE.
- */
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
 
 /*
  * Mach derived conversion macros

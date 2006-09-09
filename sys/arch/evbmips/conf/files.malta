@@ -1,4 +1,4 @@
-#	$NetBSD: files.malta,v 1.10 2005/12/11 12:17:11 christos Exp $
+#	$NetBSD: files.malta,v 1.10.4.1 2006/09/09 02:39:04 rpaulo Exp $
 
 file	arch/evbmips/malta/malta_bus_io.c
 file	arch/evbmips/malta/malta_bus_mem.c
@@ -10,11 +10,11 @@ file	arch/evbmips/malta/leds.c
 file	arch/evbmips/malta/machdep.c
 
 file	arch/mips/mips/bus_dma.c
-file	arch/evbmips/evbmips/clock.c
 file	arch/evbmips/evbmips/disksubr.c
 file	arch/evbmips/evbmips/interrupt.c
 file	arch/evbmips/evbmips/yamon.c			# XXX should be in arch/mips/yamon ?
 
+file	arch/mips/mips/mips3_clock.c
 file	arch/mips/mips/softintr.c
 
 # The autoconfiguration root.
@@ -25,9 +25,6 @@ file	arch/evbmips/malta/dev/mainbus.c	mainbus
 device	cpu
 attach	cpu at mainbus
 file	arch/evbmips/malta/cpu.c		cpu
-
-device	mcclock
-file	arch/evbmips/dev/mcclock.c		mcclock
 
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"
@@ -79,6 +76,7 @@ file	arch/evbmips/malta/pci/pcib.c		pcib
 #
 # ISA bus support.
 #
+device	mcclock: mc146818
 attach	mcclock at isa with mcclock_isa
 file	arch/evbmips/isa/mcclock_isa.c		mcclock_isa
 

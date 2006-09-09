@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.721 2006/01/31 16:42:09 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.721.2.1 2006/09/09 02:39:53 rpaulo Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.721 $"
+#ident 		"GENERIC-$Revision: 1.721.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -44,11 +44,17 @@ options 	ENHANCED_SPEEDSTEP
 #options 	EST_FREQ_USERWRITE	# any user can set frequency
 
 # AMD PowerNow! K7
-#options	POWERNOW_K7
+options 	POWERNOW_K7
+
+# AMD PowerNow! and Cool`n'Quiet technology
+options         POWERNOW_K8
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
 #options 	PERFCTRS	# performance-monitoring counters support
+
+options 	MULTIBOOT	# Multiboot support (see multiboot(8))
+#options 	MULTIBOOT_SYMTAB_SPACE=1048576
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
@@ -78,7 +84,7 @@ options 	NTP		# NTP phase/frequency locked loop
 				# Improves time behavior under VMware.
 
 options 	KTRACE		# system call tracing via ktrace(1)
-options 	SYSTRACE	# system call vetting via systrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -143,6 +149,7 @@ options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 #options 	COMPAT_MACH	# binary compatibility with Mach binaries
 #options 	COMPAT_DARWIN	# binary compatibility with Darwin binaries
 #options 	EXEC_MACHO	# exec MACH-O binaries
+#options 	COMPAT_NDIS	# NDIS network driver
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
@@ -167,11 +174,14 @@ file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/ptm support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
+# Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
+# It is not recommended for general use.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -188,17 +198,15 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -249,7 +257,7 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_COLATTR=""
 #options 	WS_KERNEL_MONOATTR=""
 # customization of console border color
-options 	WSDISPLAY_CUSTOM_BORDER	# border customization from wsconsctl(8)
+options 	WSDISPLAY_CUSTOM_BORDER	# custom border colors via wsconsctl(8)
 #options 	WSDISPLAY_BORDER_COLOR=WSCOL_BLUE	# default color
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
@@ -259,7 +267,7 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #options 	WSKBD_EVENT_AUTOREPEAT		# auto repeat in event mode
 # don't attach pckbd as the console if no PS/2 keyboard is found
 options 	PCKBD_CNATTACH_MAY_FAIL
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)" # for pckbd driver
 #options 	UKBD_LAYOUT="(KB_DE | KB_NODEAD)"  # for ukbd driver 
 # allocate a number of virtual screens at autoconfiguration time
@@ -270,14 +278,13 @@ options 	PCDISPLAY_SOFTCURSOR
 #options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
 # work around a hardware bug that loaded fonts don't work; found on ATI cards
 #options 	VGA_CONSOLE_ATI_BROKEN_FONTSEL
-# the following enables some functions to get mouse console support.
-# if you want a really secure system, it may be better not to enable them,
-# see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
-#options 	WSDISPLAY_CHARFUNCS		# mouse console support
 # console scrolling support.
 options 	WSDISPLAY_SCROLLSUPPORT
 # enable VGA raster mode capable of displaying multilingual text on console
 #options 	VGA_RASTERCONSOLE
+# enable splash screen support; requires hw driver support
+#options 	SPLASHSCREEN
+#options 	SPLASHSCREEN_PROGRESS
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -315,9 +322,7 @@ cpu* at mainbus?
 # To use the I/O APIC(s), enable the ioapic line above.
 #options 	MPBIOS		# configure CPUs and APICs using MPBIOS
 #options 	MPBIOS_SCANPCI	# find PCI roots using MPBIOS
-#options 	MPACPI		# configure CPUs and APICs using ACPI
-				# (acpi at mainbus must also be enabled)
-#options 	MPACPI_SCANPCI	# find PCI roots using MPACPI
+#options 	ACPI_SCANPCI	# find PCI roots using ACPI
 
 #acpi0 		at mainbus0
 
@@ -343,6 +348,7 @@ cpu* at mainbus?
 #pckbc*  	at acpi?		# PC keyboard controller
 #pcppi*		at acpi?                # AT-style speaker sound
 #wss* 		at acpi?		# NeoMagic 256AV in wss mode
+#ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
 
 # Sony Vaio jog dial
 #spic* 		at acpi?		# Sony Programmable I/O Controller
@@ -362,7 +368,7 @@ cpu* at mainbus?
 #ess*		at pnpbios? index ?	# ESS AudioDrive
 #sb*		at pnpbios? index ?	# NeoMagic 256AV in sb mode
 #wss*		at pnpbios? index ?	# NeoMagic 256AV in wss mode
-#ym*		at pnpbios? index ?	# OPL3-SA3
+#ym*		at pnpbios? index ?	# Yamaha OPL3-SA[23] audio
 
 # com port
 # If enabled, consider changing "com0", "com1", and "com2" under "ISA Serial
@@ -413,7 +419,10 @@ gpio* 	at elansc?
 # PCI bridges
 #ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
 					# SpeedStep support
+piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 #gscpcib* at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
+#viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
+#iic*	at viapcib?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
@@ -431,7 +440,9 @@ eisa0	at pceb?
 
 # ISA bus support
 #isa0	at ichlpcib?
+isa0	at piixpcib?
 #isa0	at gscpcib?
+#isa0	at viapcib?
 isa0	at mainbus?
 isa0	at pceb?
 isa0	at pcib?
@@ -499,6 +510,16 @@ wsdisplay*	at pcdisplay? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
+# VESA framebuffer console
+#options 	KVM86			# required for vesabios
+#vesabios*	at vesabiosbus?
+#vesafb* 	at vesabios?
+#options 	VESAFB_WIDTH=640
+#options 	VESAFB_HEIGHT=480
+#options 	VESAFB_DEPTH=8
+#options 	VESAFB_PM		# power management support
+#wsdisplay*	at vesafb? console ?
+
 attimer0	at isa?
 pcppi0		at isa?
 sysbeep0	at pcppi?
@@ -561,8 +582,22 @@ lpt2	at isa? port 0x3bc
 
 # Hardware monitors
 
+# AMD 768 and 8111 power/ACPI controllers
+amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
+#iic*	at amdpm?			# sensors below are on this bus
+#adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
+#adt7463c* at iic? addr 0x2D		# Tyan S2881
+#adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+
+# Intel PIIX4 power management controllers
+piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
+iic*	at piixpm?			# SMBus on PIIX4
+
+# iTE IT87xxF and compatible hardware monitors
+#it0	at isa? port 0x290		# other ports: 0xc00, 0xd00
+
 # LM7[89] and compatible hardware monitors
-#lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00
+#lm0	at isa?	port 0x290		# other common: 0x280, 0x310
 
 # PC87366 hardware monitor
 #nsclpcsio*	at isa?
@@ -582,6 +617,12 @@ dpti*	at iop? tid 0			# DPT/Adaptec control interface
 # GPIO devices
 #gpio*	at gscpcib?
 
+# 1-Wire support
+#gpioow* 	at gpio? offset 6 mask 0x1	# 1-wire bitbanging via gpio
+#onewire*	at gpioow?
+
+# 1-Wire devices
+#owtemp* 	at onewire?			# Temperature sensors
 
 # SCSI Controllers and Devices
 
@@ -613,6 +654,7 @@ uha*	at eisa? slot ?			# UltraStor 24f SCSI
 # PCMCIA SCSI controllers
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
+spc* 	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 
 # ISA Plug-and-Play SCSI controllers
 aha*	at isapnp? 			# Adaptec AHA-154[02
@@ -662,15 +704,18 @@ aac*	at pci? dev ? function ?	# Adaptec AAC family
 amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
 cac*	at eisa? slot ?			# Compaq EISA array controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+ciss*	at pci? dev ? function ?	# HP Smart Array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 mlx*	at eisa? slot ?			# Mylex DAC960 & DEC SWXCR family
+twa*	at pci? dev ? function ?	# 3ware Escalade 95xx RAID controllers
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
 
 ld*	at aac? unit ?			# logical disk devices
 ld*	at amr? unit ?
 ld*	at cac? unit ?
 ld*	at icp? unit ?
+ld*	at twa? unit ?
 ld*	at twe? unit ?
 ld*	at mlx? unit ?
 
@@ -699,6 +744,7 @@ rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
+svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
 stpcide*	at pci? dev ? function ?	# STMicro STPC IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
@@ -707,6 +753,9 @@ wdc*	at isapnp?
 
 # PCMCIA IDE controllers
 wdc*	at pcmcia? function ?
+
+# CardBus IDE controllers
+#njata*  at cardbus? function ? flags 0		# Workbit NinjaATA-32
 
 # ISA ST506, ESDI, and IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
@@ -792,11 +841,13 @@ iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
+#ndis* 	at pci? dev ? function ?	# Experimental - NDIS Network Driver
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
-ral*	at pci? dev ? function ?	# ralink wifi
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
 sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
@@ -812,6 +863,7 @@ vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
+wpi*	at pci? dev ? function ?	# Intel PRO/Wireless 3945ABG
 xge*	at pci? dev ? function ?	# Neterion (S2io) Xframe-I 10GbE
 
 # EISA network interfaces
@@ -882,6 +934,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #ex*	at cardbus? function ?	# 3Com 3C575TX
 #fxp*	at cardbus? function ?	# Intel i8255x
 #rtk*	at cardbus? function ?	# Realtek 8129/8139
+#ral*	at cardbus? function ?	# Ralink Technology
 #rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
 #tlp*	at cardbus? function ?	# DECchip 21143
 
@@ -916,6 +969,7 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ? 		# NS83843 PHYs
 pnaphy* at mii? phy ?			# generic HomePNA PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
 rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
@@ -964,7 +1018,7 @@ wsmouse* at uep? mux 0
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
@@ -1048,6 +1102,9 @@ uscanner* at uhub? port ?
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
 
+# Topfield TF5000PVR range of DVB recorders
+utoppy*	at uhub? port ?
+
 # Y@P firmware loader
 uyap* at uhub? port ?
 
@@ -1057,6 +1114,8 @@ radio*	at udsbr?
 
 # USB Generic driver
 ugen*	at uhub? port ?
+# On ugen bulk endpoints, perform read-ahead and write-behind.
+options	UGEN_BULK_RA_WB
 
 
 # IrDA and Consumer Ir devices
@@ -1104,7 +1163,7 @@ ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
 guspnp* at isapnp?			# Gravis Ultra Sound PnP audio
 sb*	at isapnp?			# SoundBlaster-compatible audio
 wss*	at isapnp?			# Windows Sound System
-ym*	at isapnp?			# Yamaha OPL3-SA3 audio
+ym*	at isapnp?			# Yamaha OPL3-SA[23] audio
 
 # ISA audio devices
 # the "aria" probe might give false hits
@@ -1138,6 +1197,7 @@ audio*	at audiobus?
 
 # MPU 401 UARTs
 #mpu*	at isa? port 0x330 irq 9	# MPU401 or compatible card
+mpu*	at isapnp?
 mpu*	at cmpci?
 mpu*	at eso?
 mpu*	at fms?
@@ -1183,6 +1243,32 @@ bktr* at pci? dev ? function ?
 radio* at bktr?
 
 
+# Bluetooth Controller and Device support
+
+# Bluetooth PCMCIA Controllers
+bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+
+# Bluetooth USB Controllers
+ubt* at uhub? port ? configuration ? interface ?
+
+# Bluetooth Devices
+pseudo-device btdev	4
+
+# Bluetooth HID support
+bthidev* at btdev?
+
+# Bluetooth Mouse
+btms* at bthidev? reportid ?
+wsmouse* at btms? mux 0
+
+# Bluetooth Keyboard
+btkbd* at bthidev? reportid ?
+wskbd* at btkbd? console ? mux 1
+
+# Bluetooth Audio support
+btsco* at btdev?
+
+
 # Mice
 
 # ISA busmice
@@ -1210,6 +1296,7 @@ joy*	at isapnp?			# Game ports (usually on audio cards)
 
 # PCI joysticks
 joy*	at pci?				# Game ports (usually on audio cards)
+#joy*	at eap?				# See CAVEATS in eap(4) before enabling
 joy*	at eso?				# ESS Solo-1 on-board joystick
 
 # ISA joysticks. Probe is a little strange; add only if you have one.
@@ -1217,8 +1304,9 @@ joy*	at eso?				# ESS Solo-1 on-board joystick
 
 
 # Miscellaneous Devices
-
-geodewdog* at pci? dev ? function ?	# AMD Geode SC1100 watchdog timer
+geodegcb*  at pci? dev ? function ?	# Geode GCB area
+geodewdog* at geodegcb? 		# AMD Geode SC1100 watchdog timer
+geodecntr* at geodegcb? 		# AMD Geode SC1100 high res. counter
 
 # Planetconnect Satellite receiver driver.
 #satlink0 at isa? port 0x300 drq 1
@@ -1251,29 +1339,26 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss		4	# file system snapshot device
 
-# Vinum
-# pseudo-device	vinum		8	# Vinum
-# options 	VINUMDEBUG
-
 pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	sl		2	# Serial Line IP
-pseudo-device	strip		2	# Starmode Radio IP (Metricom)
+pseudo-device	sl			# Serial Line IP
+pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tap			# virtual Ethernet
-pseudo-device	tun		2	# network tunneling over tty
-pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	tun			# network tunneling over tty
+pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
@@ -1287,6 +1372,7 @@ pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
@@ -1297,13 +1383,12 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
-pseudo-device	ksyms			# /dev/ksyms
+
+#options	FILEASSOC		# fileassoc(9) - required for Veriexec 
+#options	FILEASSOC_NHOOKS=4	# Default number of storage slots
 
 # Veriexec
-#options VERIFIED_EXEC
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

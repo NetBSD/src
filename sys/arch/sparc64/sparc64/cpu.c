@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.44 2006/01/27 18:37:49 cdi Exp $ */
+/*	$NetBSD: cpu.c,v 1.44.2.1 2006/09/09 02:43:47 rpaulo Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.44 2006/01/27 18:37:49 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.44.2.1 2006/09/09 02:43:47 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,8 +102,7 @@ extern struct cfdriver cpu_cd;
 #define	IU_VERS(v)	((((uint64_t)(v)) & VER_MASK) >> VER_MASK_SHIFT)
 
 struct cpu_info *
-alloc_cpuinfo(cpu_node)
-	u_int cpu_node;
+alloc_cpuinfo(u_int cpu_node)
 {
 	paddr_t pa0, pa;
 	vaddr_t va, va0;
@@ -170,10 +169,7 @@ alloc_cpuinfo(cpu_node)
 }
 
 int
-cpu_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -186,15 +182,13 @@ cpu_match(parent, cf, aux)
  * (slightly funny place to do it, but this is where it is to be found).
  */
 void
-cpu_attach(parent, dev, aux)
-	struct device *parent;
-	struct device *dev;
-	void *aux;
+cpu_attach(struct device *parent, struct device *dev, void *aux)
 {
 	int node;
 	long clk;
 	int impl, vers, fver;
 	struct mainbus_attach_args *ma = aux;
+	struct cpu_info *ci;
 	struct fpstate64 *fpstate;
 	struct fpstate64 fps[2];
 	const char *sep;
@@ -333,7 +327,8 @@ cpu_attach(parent, dev, aux)
 	 * Allocate cpu_info structure if needed and save cache information
 	 * in there.
 	 */
-	alloc_cpuinfo((u_int)node);
+	ci = alloc_cpuinfo((u_int)node);
+	printf("%s: upa id %d\n", dev->dv_xname, ci->ci_upaid);
 }
 
 #if defined(MULTIPROCESSOR)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.38 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: kd.c,v 1.38.4.1 2006/09/09 02:43:09 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.38 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.38.4.1 2006/09/09 02:43:09 rpaulo Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.38 2005/12/11 12:19:05 christos Exp $");
 #include <sys/file.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <machine/bsd_openprom.h>
 #include <machine/promlib.h>
@@ -210,7 +211,8 @@ static	int firstopen = 1;
 	/* It's simpler to do this up here. */
 	if (((tp->t_state & (TS_ISOPEN | TS_XCLUDE))
 	     ==             (TS_ISOPEN | TS_XCLUDE))
-	    && (suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0) )
+	    && (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0) )
 	{
 		return (EBUSY);
 	}

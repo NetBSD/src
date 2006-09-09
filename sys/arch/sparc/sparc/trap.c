@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.163 2005/11/14 03:30:49 uwe Exp $ */
+/*	$NetBSD: trap.c,v 1.163.6.1 2006/09/09 02:43:24 rpaulo Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,11 +49,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163 2005/11/14 03:30:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163.6.1 2006/09/09 02:43:24 rpaulo Exp $");
 
 #include "opt_ddb.h"
-#include "opt_ktrace.h"
-#include "opt_systrace.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_sparc_arch.h"
@@ -73,12 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163 2005/11/14 03:30:49 uwe Exp $");
 #include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -312,6 +305,7 @@ trap(unsigned type, int psr, int pc, struct trapframe *tf)
 	if ((l = curlwp) == NULL)
 		l = &lwp0;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 	pcb = &l->l_addr->u_pcb;
 	l->l_md.md_tf = tf;	/* for ptrace/signals */
@@ -801,6 +795,7 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 	if ((l = curlwp) == NULL)	/* safety check */
 		l = &lwp0;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 
 	if ((psr & PSR_PS) == 0)
@@ -878,7 +873,7 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 			}
 			if (rv > 0)
 				return;
-			rv = uvm_fault(kernel_map, va, 0, atype);
+			rv = uvm_fault(kernel_map, va, atype);
 			if (rv == 0)
 				return;
 			goto kfault;
@@ -906,7 +901,7 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 		goto out;
 
 	/* alas! must call the horrible vm code */
-	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, atype);
+	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, atype);
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -960,8 +955,8 @@ kfault:
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       l->l_cred ?
+			       kauth_cred_geteuid(l->l_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 			ksi.ksi_code = SI_NOINFO;
 		} else {
@@ -1007,6 +1002,7 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 	if ((l = curlwp) == NULL)	/* safety check */
 		l = &lwp0;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 
 #ifdef FPU_DEBUG
@@ -1141,7 +1137,7 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 			/* On HS, we have va for both */
 			vm = p->p_vmspace;
 			if (uvm_fault(&vm->vm_map, trunc_page(pc),
-				      0, VM_PROT_READ) != 0)
+				      VM_PROT_READ) != 0)
 #ifdef DEBUG
 				printf("mem_access_fault: "
 					"can't pagein 1st text fault.\n")
@@ -1188,7 +1184,7 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 		if (cold)
 			goto kfault;
 		if (va >= KERNBASE) {
-			rv = uvm_fault(kernel_map, va, 0, atype);
+			rv = uvm_fault(kernel_map, va, atype);
 			if (rv == 0) {
 				KERNEL_UNLOCK();
 				return;
@@ -1206,7 +1202,7 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 	vm = p->p_vmspace;
 
 	/* alas! must call the horrible vm code */
-	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, atype);
+	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, atype);
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1246,8 +1242,8 @@ kfault:
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       l->l_cred ?
+			       kauth_cred_geteuid(l->l_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 			ksi.ksi_code = SI_NOINFO;
 		} else {
@@ -1272,3 +1268,37 @@ out_nounlock:
 		KERNEL_UNLOCK();
 }
 #endif /* SUN4M */
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
+
+	KERNEL_PROC_UNLOCK(l);
+	userret(l, l->l_md.md_tf->tf_pc, 0);
+}
+
+/*
+ * Start a new LWP
+ */
+void
+startlwp(void *arg)
+{
+	int err;
+	ucontext_t *uc = arg;
+	struct lwp *l = curlwp;
+
+	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+#if DIAGNOSTIC
+	if (err) {
+		printf("Error %d from cpu_setmcontext.", err);
+	}
+#endif
+	pool_put(&lwp_uc_pool, uc);
+
+	KERNEL_PROC_UNLOCK(l);
+	userret(l, l->l_md.md_tf->tf_pc, 0);
+}
+

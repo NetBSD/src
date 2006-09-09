@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.70 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.70.4.1 2006/09/09 02:45:52 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.70 2005/12/11 12:20:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.70.4.1 2006/09/09 02:45:52 rpaulo Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.70 2005/12/11 12:20:19 christ
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/stat.h>
+#include <sys/kauth.h>
 
 #include <sys/mman.h>
 #include <sys/sa.h>
@@ -77,17 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.70 2005/12/11 12:20:19 christ
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_syscall.h>
 
-static int ELFNAME2(linux,signature) __P((struct lwp *, struct exec_package *,
-	Elf_Ehdr *, char *));
-#ifdef LINUX_GCC_SIGNATURE
-static int ELFNAME2(linux,gcc_signature) __P((struct lwp *l,
-	struct exec_package *, Elf_Ehdr *));
-#endif
-#ifdef LINUX_ATEXIT_SIGNATURE
-static int ELFNAME2(linux,atexit_signature) __P((struct lwp *l,
-	struct exec_package *, Elf_Ehdr *));
-#endif
-
 #ifdef DEBUG_LINUX
 #define DPRINTF(a)	uprintf a
 #else
@@ -101,7 +91,7 @@ static int ELFNAME2(linux,atexit_signature) __P((struct lwp *l,
  * binaries features a __libc_atexit ELF section. We therefore assume we
  * have a Linux binary if we find this section.
  */
-static int
+int
 ELFNAME2(linux,atexit_signature)(l, epp, eh)
 	struct lwp *l;
 	struct exec_package *epp;
@@ -177,7 +167,7 @@ out:
  * XXX we have the same gcc signature which incorrectly identifies
  * XXX NetBSD binaries as Linux.
  */
-static int
+int
 ELFNAME2(linux,gcc_signature)(l, epp, eh)
 	struct lwp *l;
 	struct exec_package *epp;
@@ -232,7 +222,76 @@ out:
 }
 #endif
 
-static int
+#ifdef LINUX_DEBUGLINK_SIGNATURE
+/*
+ * Look for a .gnu_debuglink, specific to x86_64 interpeter
+ */
+int
+ELFNAME2(linux,debuglink_signature)(l, epp, eh)
+	struct lwp *l;
+	struct exec_package *epp;
+	Elf_Ehdr *eh;
+{
+	size_t shsize;
+	int strndx;
+	size_t i;
+	static const char signature[] = ".gnu_debuglink";
+	char *strtable = NULL;
+	Elf_Shdr *sh;
+
+	int error;
+
+	/*
+	 * load the section header table
+	 */
+	shsize = eh->e_shnum * sizeof(Elf_Shdr);
+	sh = (Elf_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
+	error = exec_read_from(l, epp->ep_vp, eh->e_shoff, sh, shsize);
+	if (error)
+		goto out;
+
+	/*
+	 * Now let's find the string table. If it does not exists, give up.
+	 */
+	strndx = (int)(eh->e_shstrndx);
+	if (strndx == SHN_UNDEF) {
+		error = ENOEXEC;
+		goto out;
+	}
+
+	/*
+	 * strndx is the index in section header table of the string table
+	 * section get the whole string table in strtable, and then we get access to the names
+	 * s->sh_name is the offset of the section name in strtable.
+	 */
+	strtable = malloc(sh[strndx].sh_size, M_TEMP, M_WAITOK);
+	error = exec_read_from(l, epp->ep_vp, sh[strndx].sh_offset, strtable,
+	    sh[strndx].sh_size);
+	if (error)
+		goto out;
+
+	for (i = 0; i < eh->e_shnum; i++) {
+		Elf_Shdr *s = &sh[i];
+
+		if (!memcmp((void*)(&(strtable[s->sh_name])), signature,
+				sizeof(signature))) {
+			DPRINTF(("linux_debuglink_sig=%s\n",
+			    &(strtable[s->sh_name])));
+			error = 0;
+			goto out;
+		}
+	}
+	error = ENOEXEC;
+
+out:
+	free(sh, M_TEMP);
+	if (strtable)
+		free(strtable, M_TEMP);
+	return (error);
+}
+#endif
+
+int
 ELFNAME2(linux,signature)(l, epp, eh, itp)
 	struct lwp *l;
 	struct exec_package *epp;
@@ -329,8 +388,13 @@ ELFNAME2(linux,probe)(l, epp, eh, itp, pos)
 #ifdef LINUX_ATEXIT_SIGNATURE
 	    ((error = ELFNAME2(linux,atexit_signature)(l, epp, eh)) != 0) &&
 #endif
-	    1)
+#ifdef LINUX_DEBUGLINK_SIGNATURE
+	    ((error = ELFNAME2(linux,debuglink_signature)(l, epp, eh)) != 0) &&
+#endif
+	    1) {
+			DPRINTF(("linux_probe: returning %d\n", error));
 			return error;
+	}
 
 	if (itp) {
 		if ((error = emul_find_interp(l, epp->ep_esch->es_emul->e_path,
@@ -350,7 +414,6 @@ int
 ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
     struct ps_strings *arginfo, char **stackp, void *argp)
 {
-	struct proc *p = l->l_proc;
 	size_t len;
 	AuxInfo ai[LINUX_ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
@@ -408,25 +471,25 @@ ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
 	vap = pack->ep_vap;
 
 	a->a_type = LINUX_AT_UID;
-	a->a_v = p->p_cred->p_ruid;
+	a->a_v = kauth_cred_getuid(l->l_cred);
 	a++;
 
 	a->a_type = LINUX_AT_EUID;
 	if (vap->va_mode & S_ISUID)
 		a->a_v = vap->va_uid;
 	else
-		a->a_v = p->p_ucred->cr_uid;
+		a->a_v = kauth_cred_geteuid(l->l_cred);
 	a++;
 
 	a->a_type = LINUX_AT_GID;
-	a->a_v = p->p_cred->p_rgid;
+	a->a_v = kauth_cred_getgid(l->l_cred);
 	a++;
 
 	a->a_type = LINUX_AT_EGID;
 	if (vap->va_mode & S_ISGID)
 		a->a_v = vap->va_gid;
 	else
-		a->a_v = p->p_ucred->cr_gid;
+		a->a_v = kauth_cred_getegid(l->l_cred);
 	a++;
 
 	a->a_type = AT_NULL;

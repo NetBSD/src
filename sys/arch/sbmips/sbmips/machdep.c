@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.28 2005/12/11 12:18:51 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.28.4.1 2006/09/09 02:42:52 rpaulo Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2005/12/11 12:18:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.4.1 2006/09/09 02:42:52 rpaulo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -121,9 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2005/12/11 12:18:51 christos Exp $"
 /* start and end of kernel symbol table */
 void	*ksym_start, *ksym_end;
 #endif
-
-/* For sysctl_hw. */
-extern char cpu_model[];
 
 /* Our exported CPU info.  Only one for now */
 struct cpu_info cpu_info_store;
@@ -236,7 +233,7 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 		mem_cluster_cnt = 0;
 		while (cfe_enummem(idx, 0, &start, &len, &type) == 0) {
 			added = 0;
-			printf("Memory Block #%d start %08llX len %08llX: %s: ",
+			printf("Memory Block #%d start %08"PRIx64"X len %08"PRIx64"X: %s: ",
 			    idx, start, len, (type == CFE_MI_AVAILABLE) ?
 			    "Available" : "Reserved");
 			if ((type == CFE_MI_AVAILABLE) &&

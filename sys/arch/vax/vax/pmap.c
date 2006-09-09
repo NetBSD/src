@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.135 2005/12/11 12:19:36 christos Exp $	   */
+/*	$NetBSD: pmap.c,v 1.135.4.1 2006/09/09 02:44:23 rpaulo Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135.4.1 2006/09/09 02:44:23 rpaulo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -345,7 +345,7 @@ pmap_bootstrap()
 
 	/* Init SCB and set up stray vectors. */
 	avail_start = scb_init(avail_start);
-	bcopy((caddr_t)proc0paddr + REDZONEADDR, 0, sizeof(struct rpb));
+	*(struct rpb *) 0 = *(struct rpb *) ((caddr_t)proc0paddr + REDZONEADDR);
 
 	if (dep_call->cpu_steal_pages)
 		(*dep_call->cpu_steal_pages)();
@@ -1201,7 +1201,7 @@ pmap_map(virtuell, pstart, pend, prot)
 	pstart=(uint)pstart &0x7fffffff;
 	pend=(uint)pend &0x7fffffff;
 	virtuell=(uint)virtuell &0x7fffffff;
-	(uint)pentry= (((uint)(virtuell)>>VAX_PGSHIFT)*4)+(uint)Sysmap;
+	pentry = (int *)((((uint)(virtuell)>>VAX_PGSHIFT)*4)+(uint)Sysmap);
 	for(count=pstart;count<pend;count+=VAX_NBPG){
 		*pentry++ = (count>>VAX_PGSHIFT)|PG_V|
 		    (prot & VM_PROT_WRITE ? PG_KW : PG_KR);

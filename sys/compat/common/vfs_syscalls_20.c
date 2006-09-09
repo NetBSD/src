@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.6 2005/12/11 12:19:56 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.6.4.1 2006/09/09 02:45:14 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,11 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.6 2005/12/11 12:19:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.6.4.1 2006/09/09 02:45:14 rpaulo Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
-#include "opt_ktrace.h"
 #include "fss.h"
 
 #include <sys/param.h>
@@ -60,9 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.6 2005/12/11 12:19:56 christos
 #include <sys/sysctl.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
+#include <sys/kauth.h>
 
 #include <compat/sys/mount.h>
 
@@ -189,18 +186,20 @@ compat_20_sys_fstatfs(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
-	struct statvfs sbuf;
+	struct statvfs *sbuf;
 	int error;
 
 	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
-	if ((error = dostatvfs(mp, &sbuf, l, 0, 1)) != 0)
+	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
+	if ((error = dostatvfs(mp, sbuf, l, 0, 1)) != 0)
 		goto out;
-	error = vfs2fs(SCARG(uap, buf), &sbuf);
+	error = vfs2fs(SCARG(uap, buf), sbuf);
  out:
 	FILE_UNUSE(fp, l);
+	free(sbuf, M_TEMP);
 	return error;
 }
 
@@ -221,11 +220,12 @@ compat_20_sys_getfsstat(l, v, retval)
 	} */ *uap = v;
 	int root = 0;
 	struct mount *mp, *nmp;
-	struct statvfs sbuf;
+	struct statvfs *sbuf;
 	struct statfs12 *sfsp;
 	size_t count, maxcount;
 	int error = 0;
 
+	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 	maxcount = (size_t)SCARG(uap, bufsize) / sizeof(struct statfs12);
 	sfsp = SCARG(uap, buf);
 	simple_lock(&mountlist_slock);
@@ -237,20 +237,20 @@ compat_20_sys_getfsstat(l, v, retval)
 			continue;
 		}
 		if (sfsp && count < maxcount) {
-			error = dostatvfs(mp, &sbuf, l, SCARG(uap, flags), 0);
+			error = dostatvfs(mp, sbuf, l, SCARG(uap, flags), 0);
 			if (error) {
 				simple_lock(&mountlist_slock);
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				vfs_unbusy(mp);
 				continue;
 			}
-			error = vfs2fs(sfsp, &sbuf);
+			error = vfs2fs(sfsp, sbuf);
 			if (error) {
 				vfs_unbusy(mp);
-				return (error);
+				goto out;
 			}
 			sfsp++;
-			root |= strcmp(sbuf.f_mntonname, "/") == 0;
+			root |= strcmp(sbuf->f_mntonname, "/") == 0;
 		}
 		count++;
 		simple_lock(&mountlist_slock);
@@ -262,17 +262,19 @@ compat_20_sys_getfsstat(l, v, retval)
 		/*
 		 * fake a root entry
 		 */
-		if ((error = dostatvfs(l->l_proc->p_cwdi->cwdi_rdir->v_mount, &sbuf, l,
-		    SCARG(uap, flags), 1)) != 0)
-			return error;
+		if ((error = dostatvfs(l->l_proc->p_cwdi->cwdi_rdir->v_mount,
+				       sbuf, l, SCARG(uap, flags), 1)) != 0)
+			goto out;
 		if (sfsp)
-			error = vfs2fs(sfsp, &sbuf);
+			error = vfs2fs(sfsp, sbuf);
 		count++;
 	}
 	if (sfsp && count > maxcount)
 		*retval = maxcount;
 	else
 		*retval = count;
+out:
+	free(sbuf, M_TEMP);
 	return error;
 }
 
@@ -283,12 +285,11 @@ compat_20_sys_fhstatfs(l, v, retval)
 	register_t *retval;
 {
 	struct compat_20_sys_fhstatfs_args /*
-		syscallarg(const fhandle_t *) fhp;
+		syscallarg(const struct compat_30_fhandle *) fhp;
 		syscallarg(struct statfs12 *) buf;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct statvfs sbuf;
-	fhandle_t fh;
+	struct statvfs *sbuf;
+	struct compat_30_fhandle fh;
 	struct mount *mp;
 	struct vnode *vp;
 	int error;
@@ -296,19 +297,24 @@ compat_20_sys_fhstatfs(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = suser(p->p_ucred, &p->p_acflag)))
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
 		return (error);
 
-	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fhandle_t))) != 0)
+	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fh))) != 0)
 		return (error);
 
 	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
 		return (ESTALE);
-	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
+	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, &vp)))
 		return (error);
 	mp = vp->v_mount;
 	vput(vp);
-	if ((error = VFS_STATVFS(mp, &sbuf, l)) != 0)
-		return (error);
-	return vfs2fs(SCARG(uap, buf), &sbuf);
+	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
+	if ((error = VFS_STATVFS(mp, sbuf, l)) != 0)
+		goto out;
+	error = vfs2fs(SCARG(uap, buf), sbuf);
+out:
+	free(sbuf, M_TEMP);
+	return error;
 }

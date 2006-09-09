@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.109 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: trap.c,v 1.109.4.1 2006/09/09 02:42:34 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.109 2005/12/24 20:07:28 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.109.4.1 2006/09/09 02:42:34 rpaulo Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.109 2005/12/24 20:07:28 perry Exp $");
 #include <sys/savar.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -96,6 +97,7 @@ trap(struct trapframe *frame)
 			panic("trap: user trap %d with lwp = %p, proc = %p",
 			    type, l, p);
 #endif
+		LWP_CACHE_CREDS(l, p);
 	}
 
 	uvmexp.traps++;
@@ -155,7 +157,7 @@ trap(struct trapframe *frame)
 					l->l_savp->savp_faultaddr = va;
 					l->l_flag |= L_SA_PAGEFAULT;
 				}
-#if defined(DIAGNOSTIC) && defined(PPC_OEA)
+#if defined(DIAGNOSTIC) && (defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE))
 			} else if ((va >> ADDR_SR_SHFT) == USER_SR) {
 				printf("trap: kernel %s DSI trap @ %#lx by %#lx"
 				    " (DSISR %#x): USER_SR unset\n",
@@ -175,7 +177,7 @@ trap(struct trapframe *frame)
 
 			onfault = pcb->pcb_onfault;
 			pcb->pcb_onfault = NULL;
-			rv = uvm_fault(map, trunc_page(va), 0, ftype);
+			rv = uvm_fault(map, trunc_page(va), ftype);
 			pcb->pcb_onfault = onfault;
 
 			if (map != kernel_map) {
@@ -210,8 +212,8 @@ trap(struct trapframe *frame)
 			return;
 		}
 		printf("trap: kernel %s DSI trap @ %#lx by %#lx (DSISR %#x, err"
-		    "=%d)\n", (frame->dsisr & DSISR_STORE) ? "write" : "read",
-		    va, frame->srr0, frame->dsisr, rv);
+		    "=%d), lr %#lx\n", (frame->dsisr & DSISR_STORE) ? "write" : "read",
+		    va, frame->srr0, frame->dsisr, rv, frame->lr);
 		goto brain_damage2;
 	}
 	case EXC_DSI|EXC_USER:
@@ -250,7 +252,7 @@ trap(struct trapframe *frame)
 			l->l_savp->savp_faultaddr = (vaddr_t)frame->dar;
 			l->l_flag |= L_SA_PAGEFAULT;
 		}
-		rv = uvm_fault(map, trunc_page(frame->dar), 0, ftype);
+		rv = uvm_fault(map, trunc_page(frame->dar), ftype);
 		if (rv == 0) {
 			/*
 			 * Record any stack growth...
@@ -278,8 +280,8 @@ trap(struct trapframe *frame)
 			printf("UVM: pid %d.%d (%s), uid %d killed: "
 			       "out of swap\n",
 			       p->p_pid, l->l_lid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       l->l_cred ?
+			       kauth_cred_geteuid(l->l_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 		}
 		(*p->p_emul->e_trapsignal)(l, &ksi);
@@ -290,8 +292,8 @@ trap(struct trapframe *frame)
 	case EXC_ISI:
 		ci->ci_ev_kisi.ev_count++;
 
-		printf("trap: kernel ISI by %#lx (SRR1 %#lx)\n",
-		    frame->srr0, frame->srr1);
+		printf("trap: kernel ISI by %#lx (SRR1 %#lx), lr: %#lx\n",
+		    frame->srr0, frame->srr1, frame->lr);
 		goto brain_damage2;
 
 	case EXC_ISI|EXC_USER:
@@ -325,7 +327,7 @@ trap(struct trapframe *frame)
 			l->l_flag |= L_SA_PAGEFAULT;
 		}
 		ftype = VM_PROT_EXECUTE;
-		rv = uvm_fault(map, trunc_page(frame->srr0), 0, ftype);
+		rv = uvm_fault(map, trunc_page(frame->srr0), ftype);
 		if (rv == 0) {
 			l->l_flag &= ~L_SA_PAGEFAULT;
 			KERNEL_PROC_UNLOCK(l);

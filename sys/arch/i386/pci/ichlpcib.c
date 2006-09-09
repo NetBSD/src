@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.11 2005/12/26 19:24:00 perry Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.11.4.1 2006/09/09 02:40:14 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.11 2005/12/26 19:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.11.4.1 2006/09/09 02:40:14 rpaulo Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,14 +67,24 @@ struct lpcib_softc {
 	/* Device object. */
 	struct device		sc_dev;
 
+	pci_chipset_tag_t	sc_pc;
+	pcitag_t		sc_pcitag;
+
 	/* Watchdog variables. */
 	struct sysmon_wdog	sc_smw;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+
+	/* Power management */
+	void			*sc_powerhook;
+	struct pci_conf_state	sc_pciconf;
+	pcireg_t		sc_pirq[8];
 };
 
 static int lpcibmatch(struct device *, struct cfdata *, void *);
 static void lpcibattach(struct device *, struct device *, void *);
+
+static void lpcib_powerhook(int, void *);
 
 static void tcotimer_configure(struct lpcib_softc *, struct pci_attach_args *);
 static int tcotimer_setmode(struct sysmon_wdog *);
@@ -134,6 +144,9 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct lpcib_softc *sc = (void*) self;
 
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_pcitag = pa->pa_tag;
+
 	pcibattach(parent, self, aux);
 
 	/* Set up the TCO (watchdog). */
@@ -141,6 +154,60 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 
 	/* Set up SpeedStep. */
 	speedstep_configure(sc, pa);
+
+	/* Install powerhook */
+	sc->sc_powerhook = powerhook_establish(lpcib_powerhook, sc);
+	if (sc->sc_powerhook == NULL)
+		aprint_error("%s: can't establish powerhook\n",
+		    sc->sc_dev.dv_xname);
+
+	return;
+}
+
+static void
+lpcib_powerhook(int why, void *opaque)
+{
+	struct lpcib_softc *sc;
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+
+	sc = (struct lpcib_softc *)opaque;
+	pc = sc->sc_pc;
+	tag = sc->sc_pcitag;
+
+	switch (why) {
+	case PWR_SUSPEND:
+		pci_conf_capture(pc, tag, &sc->sc_pciconf);
+
+		/* capture PIRQ routing control registers */
+		sc->sc_pirq[0] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQA_ROUT);
+		sc->sc_pirq[1] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQB_ROUT);
+		sc->sc_pirq[2] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQC_ROUT);
+		sc->sc_pirq[3] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQD_ROUT);
+		sc->sc_pirq[4] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQE_ROUT);
+		sc->sc_pirq[5] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQF_ROUT);
+		sc->sc_pirq[6] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQG_ROUT);
+		sc->sc_pirq[7] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQH_ROUT);
+
+		break;
+
+	case PWR_RESUME:
+		pci_conf_restore(pc, tag, &sc->sc_pciconf);
+
+		/* restore PIRQ routing control registers */
+		pci_conf_write(pc, tag, LPCIB_PCI_PIRQA_ROUT, sc->sc_pirq[0]);
+		pci_conf_write(pc, tag, LPCIB_PCI_PIRQB_ROUT, sc->sc_pirq[1]);
+		pci_conf_write(pc, tag, LPCIB_PCI_PIRQC_ROUT, sc->sc_pirq[2]);
+		pci_conf_write(pc, tag, LPCIB_PCI_PIRQD_ROUT, sc->sc_pirq[3]);
+		pci_conf_write(pc, tag, LPCIB_PCI_PIRQE_ROUT, sc->sc_pirq[4]);
+		pci_conf_write(pc, tag, LPCIB_PCI_PIRQF_ROUT, sc->sc_pirq[5]);
+		pci_conf_write(pc, tag, LPCIB_PCI_PIRQG_ROUT, sc->sc_pirq[6]);
+		pci_conf_write(pc, tag, LPCIB_PCI_PIRQH_ROUT, sc->sc_pirq[7]);
+
+		break;
+	}
+
+	return;
 }
 
 /*
@@ -160,7 +227,7 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 		lpcib_tcotimer_tick_to_second(LPCIB_TCOTIMER_MAX_TICK);
 
 	if (sysmon_wdog_register(&sc->sc_smw)) {
-		printf("%s: unable to register TCO timer"
+		aprint_error("%s: unable to register TCO timer"
 		       "as a sysmon watchdog device.\n",
 		       sc->sc_dev.dv_xname);
 		return;
@@ -174,7 +241,7 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 	if (pci_mapreg_map(pa, LPCIB_PCI_PMBASE, PCI_MAPREG_TYPE_IO, 0,
 			   &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
 		sysmon_wdog_unregister(&sc->sc_smw);
-		printf("%s: can't map i/o space; "
+		aprint_error("%s: can't map i/o space; "
 		       "TCO timer disabled\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -204,7 +271,7 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 		pcireg = pci_conf_read(pa->pa_pc, pa->pa_tag,
 					LPCIB_PCI_GEN_STA);
 		if (pcireg & LPCIB_PCI_GEN_STA_NO_REBOOT) {
-			printf("%s: TCO timer reboot disabled by hardware; "
+			aprint_error("%s: TCO timer reboot disabled by hardware; "
 			       "hope SMBIOS properly handles it.\n",
 			       sc->sc_dev.dv_xname);
 			ioreg |= LPCIB_SMI_EN_TCO_EN;
@@ -214,7 +281,8 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 	if (ioreg & LPCIB_SMI_EN_GBL_SMI_EN)
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN, ioreg);
 
-	printf("%s: TCO (watchdog) timer configured.\n", sc->sc_dev.dv_xname);
+	aprint_verbose("%s: TCO (watchdog) timer configured.\n",
+	    sc->sc_dev.dv_xname);
 
 	return;
 }
@@ -343,9 +411,9 @@ speedstep_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 		/* XXX save the sc for IO tag/handle */
 		speedstep_cookie = sc;
 
-		printf("%s: SpeedStep enabled\n", sc->sc_dev.dv_xname);
+		aprint_verbose("%s: SpeedStep enabled\n", sc->sc_dev.dv_xname);
 	} else
-		printf("%s: No SpeedStep\n", sc->sc_dev.dv_xname);
+		aprint_verbose("%s: No SpeedStep\n", sc->sc_dev.dv_xname);
 
 	return;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.90 2005/12/24 07:37:18 christos Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.90.4.1 2006/09/09 02:44:23 rpaulo Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,10 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.90 2005/12/24 07:37:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.90.4.1 2006/09/09 02:44:23 rpaulo Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
+#include "opt_coredump.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -226,6 +227,7 @@ sys_sysarch(l, v, retval)
 	return (ENOSYS);
 };
 
+#ifdef COREDUMP
 /*
  * Dump the machine specific header information at the start of a core dump.
  * First put all regs in PCB for debugging purposes. This is not an good
@@ -261,6 +263,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
 	    sizeof(md_core));
 }
+#endif
 
 /*
  * Map in a bunch of pages read/writable for the kernel.
@@ -321,7 +324,7 @@ vmapbuf(bp, len)
 	faddr = trunc_page((vaddr_t)bp->b_saveaddr);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
-	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY);
+	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	bp->b_data = (caddr_t)(taddr + off);
 	len = atop(len);
 	while (len--) {

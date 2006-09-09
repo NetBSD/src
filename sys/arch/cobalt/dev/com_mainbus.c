@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.10 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.10.4.1 2006/09/09 02:38:28 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.10 2005/12/11 12:17:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.10.4.1 2006/09/09 02:38:28 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,14 @@ int
 com_mainbus_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 
-	return console_present != 0;
+	switch (cobalt_id) {
+	case COBALT_ID_RAQ:
+	case COBALT_ID_QUBE2:
+	case COBALT_ID_RAQ2:
+		return 1;
+	}
+
+	return 0;
 }
 
 void
@@ -73,20 +80,14 @@ com_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	struct com_mainbus_softc *msc = (void *)self;
 	struct com_softc *sc = &msc->sc_com;
 	struct mainbus_attach_args *maa = aux;
+	bus_space_handle_t	ioh;
 
-	sc->sc_iot = maa->ma_iot;
-	sc->sc_iobase = maa->ma_addr;
-
-#if 0	/* XXX */
-	if (!com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) &&
-	    bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS, 0,
-	    &sc->sc_ioh)) {
+	if (!com_is_console(maa->ma_iot, maa->ma_addr, &ioh) &&
+	    bus_space_map(maa->ma_iot, maa->ma_addr, COM_NPORTS, 0, &ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
-#else
-	sc->sc_ioh = maa->ma_ioh;
-#endif
+	COM_INIT_REGS(sc->sc_regs, maa->ma_iot, ioh, maa->ma_addr);
 
 	sc->sc_frequency = COM_MAINBUS_FREQ;
 
@@ -115,7 +116,7 @@ com_mainbus_cnprobe(struct consdev *cn)
 	 */
 	if ((bi_flags = lookup_bootinfo(BTINFO_FLAGS)) == NULL) {
 		/* No boot information, probe console now */
-		console_present = *(volatile u_int32_t *)
+		console_present = *(volatile uint32_t *)
 					MIPS_PHYS_TO_KSEG1(0x0020001c);
 	} else {
 		/* Get the value determined by the boot loader. */

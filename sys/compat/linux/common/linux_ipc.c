@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.32 2005/11/10 18:33:37 christos Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.32.6.1 2006/09/09 02:45:52 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.32 2005/11/10 18:33:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.32.6.1 2006/09/09 02:45:52 rpaulo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -57,14 +57,14 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.32 2005/11/10 18:33:37 christos Exp 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_util.h>
-
-#include <compat/linux/linux_syscallargs.h>
-#include <compat/linux/linux_syscall.h>
-
 #include <compat/linux/common/linux_ipc.h>
 #include <compat/linux/common/linux_msg.h>
 #include <compat/linux/common/linux_shm.h>
 #include <compat/linux/common/linux_sem.h>
+
+#include <compat/linux/linux_syscallargs.h>
+#include <compat/linux/linux_syscall.h>
+
 #include <compat/linux/common/linux_ipccall.h>
 
 /*
@@ -205,7 +205,6 @@ linux_sys_semctl(l, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(union linux_semun) arg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct semid_ds sembuf;
 	struct linux_semid_ds lsembuf;
 	union __semun semun;
@@ -275,7 +274,7 @@ linux_sys_semctl(l, v, retval)
 		linux_to_bsd_semid_ds(&lsembuf, &sembuf);
 	}
 
-	error = semctl1(p, SCARG(uap, semid), SCARG(uap, semnum), cmd,
+	error = semctl1(l, SCARG(uap, semid), SCARG(uap, semnum), cmd,
 	    pass_arg, retval);
 
 	if (error == 0 && cmd == IPC_STAT) {
@@ -408,6 +407,7 @@ linux_sys_shmget(l, v, retval)
  * in which the return value is to be passed. This is subsequently
  * handled by libc, apparently.
  */
+#ifndef __amd64__
 int
 linux_sys_shmat(l, v, retval)
 	struct lwp *l;
@@ -432,6 +432,7 @@ linux_sys_shmat(l, v, retval)
 	retval[0] = 0;
 	return 0;
 }
+#endif /* __amd64__ */
 
 /*
  * Convert between Linux and NetBSD shmid_ds structures.

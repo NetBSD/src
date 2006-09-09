@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.23 2005/12/11 12:19:05 christos Exp $       */
+/*      $NetBSD: pccons.c,v 1.23.4.1 2006/09/09 02:43:07 rpaulo Exp $       */
 
 /*
  * Copyright 1997
@@ -135,7 +135,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.23 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.23.4.1 2006/09/09 02:43:07 rpaulo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -154,6 +154,7 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.23 2005/12/11 12:19:05 christos Exp $")
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 #include <machine/kerndebug.h>
 
 #include <uvm/uvm_extern.h>
@@ -603,7 +604,7 @@ kbd_init(bus_space_tag_t     iot,
 **
 **  IMPLICIT INPUTS:
 **
-**     addr_6845    -  Base adddress of the video registers 
+**     addr_6845    -  Base address of the video registers 
 **
 **  IMPLICIT OUTPUTS:
 **
@@ -651,7 +652,7 @@ set_cursor_shape(struct pc_softc *sc)
 **
 **  IMPLICIT INPUTS:
 **
-**     addr_6845    -  Base adddress of the video registers 
+**     addr_6845    -  Base address of the video registers 
 **
 **  IMPLICIT OUTPUTS:
 **
@@ -1207,7 +1208,9 @@ pcopen(dev_t       dev,
         pcparam(tp, &tp->t_termios);
         ttsetwater(tp);
     } 
-    else if ( tp->t_state & TS_XCLUDE && suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0 )
+    else if ( tp->t_state & TS_XCLUDE &&
+	     kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	     &l->l_acflag) != 0 )
     {
         /*
         ** Don't allow the open if the tty has been set up 

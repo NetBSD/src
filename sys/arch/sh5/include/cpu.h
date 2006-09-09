@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 2005/12/24 20:07:32 perry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17.4.1 2006/09/09 02:43:07 rpaulo Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -139,7 +139,7 @@ struct cpu_info {
 	struct tlb_scratch_frame ci_tscratch;	/* TLB miss scratch area */
 };
 
-static inline struct cpu_info *
+static __inline struct cpu_info *
 curcpu(void)
 {
 	struct cpu_info *ci;

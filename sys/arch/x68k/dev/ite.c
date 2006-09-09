@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.43 2005/12/24 20:07:41 perry Exp $	*/
+/*	$NetBSD: ite.c,v 1.43.4.1 2006/09/09 02:44:35 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.43 2005/12/24 20:07:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.43.4.1 2006/09/09 02:44:35 rpaulo Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.43 2005/12/24 20:07:41 perry Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 #include <machine/kbio.h>
@@ -245,7 +246,7 @@ iteattach(struct device *pdp, struct device *dp, void *auxp)
 			kbd_ite = ip;
 		}
 		ip->grf = gp;
-		iteinit(ip->device.dv_unit); /* XXX */
+		iteinit(device_unit(&ip->device)); /* XXX */
 		printf(": rows %d cols %d", ip->rows, ip->cols);
 		if (kbd_ite == NULL)
 			kbd_ite = ip;
@@ -287,7 +288,7 @@ iteinit(dev_t dev)
 	ip->cursorx = 0;
 	ip->cursory = 0;
 
-	ip->isw = &itesw[ip->device.dv_unit]; /* XXX */
+	ip->isw = &itesw[device_unit(&ip->device)]; /* XXX */
 	SUBR_INIT(ip);
 	SUBR_CURSOR(ip, DRAW_CURSOR);
 	if (!ip->tabs)
@@ -393,7 +394,8 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 	} else
 		tp = ite_tty[unit];
 	if ((tp->t_state&(TS_ISOPEN|TS_XCLUDE)) == (TS_ISOPEN|TS_XCLUDE)
-	    && suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    && kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		error = iteon(dev, 0);
@@ -761,7 +763,7 @@ ite_filter(c)
 	struct key key;
 	int s, i;
 
-	if (!kbd_ite || !(kbd_tty = ite_tty[kbd_ite->device.dv_unit]))
+	if (!kbd_ite || !(kbd_tty = ite_tty[device_unit(&kbd_ite->device)]))
 		return;
 
 	/* have to make sure we're at spltty in here */
@@ -2131,7 +2133,7 @@ iteputchar(int c, struct ite_softc *ip)
 
 	case BEL:
 #if NBELL > 0
-		if (kbd_ite && ite_tty[kbd_ite->device.dv_unit])
+		if (kbd_ite && ite_tty[device_unit(&kbd_ite->device)])
 			opm_bell();
 #endif
 		break;

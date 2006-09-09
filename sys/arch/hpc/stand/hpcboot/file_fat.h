@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: file_fat.h,v 1.3 2005/12/11 12:17:28 christos Exp $	*/
+/* -*-C++-*-	$NetBSD: file_fat.h,v 1.3.4.1 2006/09/09 02:39:27 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ public:
 	virtual ~FatFile(void);
 
 	BOOL setRoot(TCHAR *);
-	BOOL open(const TCHAR *, u_int32_t);
+	BOOL open(const TCHAR *, uint32_t);
 	size_t size(void) { return GetFileSize(_handle, 0); }
 	BOOL close(void) { return CloseHandle(_handle); }
 	size_t read(void *, size_t, off_t = -1);

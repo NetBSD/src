@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.55 2005/12/11 12:20:20 christos Exp $ */
+/*	$NetBSD: mach_task.c,v 1.55.4.1 2006/09/09 02:46:04 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -36,11 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_ktrace.h"
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.55 2005/12/11 12:20:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.55.4.1 2006/09/09 02:46:04 rpaulo Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.55 2005/12/11 12:20:20 christos Exp 
 #include <sys/mount.h>
 #include <sys/ktrace.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_param.h>
@@ -663,7 +663,6 @@ mach_sys_task_for_pid(l, v, retval)
 	} */ *uap = v;
 	struct mach_right *mr;
 	struct mach_emuldata *med;
-	struct proc *p = l->l_proc;
 	struct proc *t;
 	int error;
 
@@ -682,9 +681,9 @@ mach_sys_task_for_pid(l, v, retval)
 		return ESRCH;
 
 	/* Allowed only if the UID match, if setuid, or if superuser */
-	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
-		ISSET(t->p_flag, P_SUGID)) &&
-		    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((kauth_cred_getuid(t->p_cred) != kauth_cred_getuid(l->l_cred) ||
+	    ISSET(t->p_flag, P_SUGID)) && (error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			    return (error);
 
 	/* This will only work on a Mach process */

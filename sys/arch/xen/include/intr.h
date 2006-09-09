@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2005/12/24 20:07:48 perry Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.4.1 2006/09/09 02:44:56 rpaulo Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -46,6 +46,8 @@
 #include <machine/cpu.h>
 #include <machine/pic.h>
 
+#include "opt_xen.h"
+
 /*
  * Struct describing an event channel. 
  */
@@ -71,6 +73,11 @@ struct intrstub {
 	void *ist_recurse; 
 	void *ist_resume;
 };
+
+#ifdef XEN3
+/* for x86 compatibility */
+extern struct intrstub i8259_stubs[];
+#endif
 
 struct iplsource {
 	struct intrhand *ipl_handlers;   /* handler chain */
@@ -104,14 +111,14 @@ extern struct intrstub xenev_stubs[];
 
 extern void Xspllower(int);
 
-static inline int splraise(int);
-static inline void spllower(int);
-static inline void softintr(int);
+static __inline int splraise(int);
+static __inline void spllower(int);
+static __inline void softintr(int);
 
 /*
  * Add a mask to cpl, and return the old value of cpl.
  */
-static inline int
+static __inline int
 splraise(int nlevel)
 {
 	int olevel;
@@ -128,7 +135,7 @@ splraise(int nlevel)
  * Restore a value to cpl (unmasking interrupts).  If any unmasked
  * interrupts are pending, call Xspllower() to process them.
  */
-static inline void
+static __inline void
 spllower(int nlevel)
 {
 	struct cpu_info *ci = curcpu();
@@ -177,7 +184,7 @@ spllower(int nlevel)
  *
  * XXX always scheduled on the current CPU.
  */
-static inline void
+static __inline void
 softintr(int sir)
 {
 	struct cpu_info *ci = curcpu();
@@ -209,6 +216,7 @@ struct pcibus_attach_args;
 void intr_default_setup(void);
 int x86_nmi(void);
 void intr_calculatemasks(struct evtsource *);
+
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *);
 void intr_disestablish(struct intrhand *);
 const char *intr_string(int);
@@ -216,6 +224,7 @@ void cpu_intr_init(struct cpu_info *);
 #ifdef INTRDEBUG
 void intr_printconfig(void);
 #endif
+
 
 #endif /* !_LOCORE */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_conf.c,v 1.12 2005/12/11 12:16:03 christos Exp $	*/
+/*	$NetBSD: altq_conf.c,v 1.12.4.1 2006/09/09 02:36:40 rpaulo Exp $	*/
 /*	$KAME: altq_conf.c,v 1.13 2002/01/29 10:16:01 kjc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.12 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.12.4.1 2006/09/09 02:36:40 rpaulo Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.12 2005/12/11 12:16:03 christos Exp 
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
+#include <sys/kauth.h>
 #if defined(__FreeBSD__) && (__FreeBSD_version < 400000) && defined(DEVFS)
 #include <sys/devfsext.h>
 #endif /*DEVFS*/
@@ -204,7 +205,7 @@ static struct cdevsw altq_cdevsw =
 #if defined(__NetBSD__)
 const struct cdevsw altq_cdevsw = {
 	altqopen, altqclose, noread, nowrite, altqioctl,
-	nostop, notty, nopoll, nommap, nokqfilter
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 #endif
 
@@ -257,7 +258,6 @@ altqioctl(dev, cmd, addr, flag, l)
 	int flag;
 	struct lwp *l;
 {
-	struct proc *p = l->l_proc;
 	int unit = minor(dev);
 
 	if (unit == 0) {
@@ -275,7 +275,8 @@ altqioctl(dev, cmd, addr, flag, l)
 			if ((error = suser(p)) != 0)
 				return (error);
 #else
-			if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			if ((error = kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 				return (error);
 #endif
 			break;

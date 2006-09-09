@@ -1,5 +1,5 @@
 #
-#	$NetBSD: MILAN.in,v 1.19 2005/12/11 12:16:54 christos Exp $
+#	$NetBSD: MILAN.in,v 1.19.4.1 2006/09/09 02:38:21 rpaulo Exp $
 #
 # Milan
 #
@@ -26,7 +26,7 @@ options 	WS_KERNEL_BG=WSCOL_BLACK
 #options 	WSDISPLAY_COMPAT_USL	# VT handling
 #options 	WSDISPLAY_COMPAT_RAWKBD	# can get raw scancodes
 
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 options 	WSDISPLAY_DEFAULTSCREENS=4
@@ -96,9 +96,7 @@ atabus*		at ata? channel ?
 
 #
 # The Milan uses wscons
-#  XXX without the __HAVE_NWSCONS option, the keyboard won't work...
 #
-options 	__HAVE_NWSCONS
 vga0 		at pci? dev ? function ?	# a PCI VGA card
 wsdisplay* 	at vga? console ?		# as a wscons console
 pckbc0 		at isa? 			# PC keyboard controller

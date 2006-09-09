@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.96 2005/11/14 19:11:24 uwe Exp $ */
+/*	$NetBSD: clock.c,v 1.96.4.1 2006/09/09 02:43:24 rpaulo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.96 2005/11/14 19:11:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.96.4.1 2006/09/09 02:43:24 rpaulo Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.96 2005/11/14 19:11:24 uwe Exp $");
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/timetc.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -138,9 +139,6 @@ static int	eeprom_take(void);
 static void	eeprom_give(void);
 static int	eeprom_update(char *, int, int);
 #endif
-
-/* Global TOD clock handle */
-todr_chip_handle_t todr_handle;
 
 /*
  * Set up the real-time and statistics clocks.
@@ -209,111 +207,6 @@ schedintr(void *v)
 	if (l != NULL)
 		schedclock(l);
 }
-
-/*
- * `sparc_clock_time_is_ok' is used in cpu_reboot() to determine
- * whether it is appropriate to call resettodr() to consolidate
- * pending time adjustments.
- */
-int sparc_clock_time_is_ok;
-
-/*
- * Set up the system's time, given a `reasonable' time value.
- */
-void
-inittodr(time_t base)
-{
-	int badbase = 0, waszero = base == 0;
-
-	if (base < 5 * SECYR) {
-		/*
-		 * If base is 0, assume filesystem time is just unknown
-		 * in stead of preposterous. Don't bark.
-		 */
-		if (base != 0)
-			printf("WARNING: preposterous time in file system\n");
-		/* not going to use it anyway, if the chip is readable */
-		base = 21*SECYR + 186*SECDAY + SECDAY/2;
-		badbase = 1;
-	}
-
-	if (todr_gettime(todr_handle, &time) != 0 ||
-	    time.tv_sec == 0) {
-
-		printf("WARNING: bad date in battery clock");
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the clock.
-		 */
-		time.tv_sec = base;
-		if (!badbase)
-			resettodr();
-	} else {
-		int deltat = time.tv_sec - base;
-
-		sparc_clock_time_is_ok = 1;
-
-		if (deltat < 0)
-			deltat = -deltat;
-		if (waszero || deltat < 2 * SECDAY)
-			return;
-		printf("WARNING: clock %s %d days",
-		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
-	}
-	printf(" -- CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * Reset the clock based on the current time.
- * Used when the current clock is preposterous, when the time is changed,
- * and when rebooting.  Do nothing if the time is not yet known, e.g.,
- * when crashing during autoconfig.
- */
-void
-resettodr(void)
-{
-
-	if (time.tv_sec == 0)
-		return;
-
-	sparc_clock_time_is_ok = 1;
-	if (todr_settime(todr_handle, &time) != 0)
-		printf("Cannot set time in time-of-day clock\n");
-}
-
-#if defined(SUN4)
-/*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  We do this by returning the current time
- * plus the amount of time since the last clock interrupt.
- *
- * Check that this time is no less than any previously-reported time,
- * which could happen around the time of a clock adjustment.  Just for
- * fun, we guarantee that the time will be greater than the value
- * obtained by a previous call.
- */
-void
-microtime(struct timeval *tvp)
-{
-	int s;
-	static struct timeval lasttime;
-	static struct timeval oneusec = {0, 1};
-
-	if (!oldclk) {
-		lo_microtime(tvp);
-		return;
-	}
-
-	s = splhigh();
-	*tvp = time;
-	splx(s);
-
-	if (timercmp(tvp, &lasttime, <=))
-		timeradd(&lasttime, &oneusec, tvp);
-
-	lasttime = *tvp;
-}
-#endif /* SUN4 */
 
 /*
  * XXX: these may actually belong somewhere else, but since the

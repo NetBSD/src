@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.31 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: msc.c,v 1.31.4.1 2006/09/09 02:37:30 rpaulo Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.31 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.31.4.1 2006/09/09 02:37:30 rpaulo Exp $");
 
 #include "msc.h"
 
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.31 2005/12/11 12:16:28 christos Exp $");
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <amiga/amiga/device.h>
 #include <amiga/dev/zbusvar.h>
@@ -252,7 +253,7 @@ mscattach(struct device *pdp, struct device *dp, void *auxp)
 	int Count;
 
 	zap = (struct zbus_args *)auxp;
-	unit = dp->dv_unit;
+	unit = device_unit(dp);
 
 	/*
 	 * Make config msgs look nicer.
@@ -408,7 +409,8 @@ mscopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	} else {
 		if (tp->t_state & TS_XCLUDE &&
-		    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0) {
+		    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+		    &l->l_acflag) != 0) {
 			splx(s);
 			return (EBUSY);
 		}
@@ -861,7 +863,8 @@ mscioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			break;
 
 		case TIOCSFLAGS:
-			error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+			error = kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 			if (error != 0)
 				return(EPERM);
 			msc->openflags = *(int *)data;

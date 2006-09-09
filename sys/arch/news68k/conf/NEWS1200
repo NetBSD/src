@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.35 2005/12/07 09:10:17 tsutsui Exp $
+# 	$NetBSD: NEWS1200,v 1.35.4.1 2006/09/09 02:41:47 rpaulo Exp $
 
 #	news1200 config file
 #
@@ -87,17 +87,15 @@ options 	INET6		# IPV6
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	NFS_BOOT_BOOTPARAM
@@ -140,18 +138,18 @@ zstty1	at zsc0 channel 1
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	md		1	# memory disk device
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd		4	# concatenated and striped disks
 #pseudo-device	raid		4	# RAIDframe disk driver
-pseudo-device	sl		2	# SLIP interfaces
-pseudo-device	ppp		2	# PPP interfaces
-pseudo-device	tun		4	# Network "tunnel" device
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	bpfilter	16	# Berkeley Packet Filter
+pseudo-device	sl			# SLIP interfaces
+pseudo-device	ppp			# PPP interfaces
+pseudo-device	tun			# Network "tunnel" device
+#pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	bpfilter		# Berkeley Packet Filter
 pseudo-device	ipfilter		# ip filter
-#pseudo-device	strip		1	# Starmode Radio IP (Metricom)
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	strip			# Starmode Radio IP (Metricom)
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	rnd			# /dev/random and in-kernle generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 pseudo-device	clockctl		# user control of clock subsystem

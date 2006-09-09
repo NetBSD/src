@@ -1,9 +1,9 @@
-/*      $NetBSD: bswap.h,v 1.6 2006/01/31 07:58:56 dsl Exp $      */
+/*      $NetBSD: bswap.h,v 1.6.2.1 2006/09/09 02:42:58 rpaulo Exp $      */
 
 #ifndef _SH3_BSWAP_H_
 #define	_SH3_BSWAP_H_
 
-#include <machine/byte_swap.h>
+#include <sh3/byte_swap.h>
 
 #include <sys/bswap.h>
 

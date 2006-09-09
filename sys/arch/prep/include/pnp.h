@@ -481,6 +481,31 @@ typedef enum _PnPItemName {
   MemoryRangeFixed32 = 6,
   } PnPItemName;
 
+typedef enum _PnPTagType {
+  PNP_SMALL = 0,
+  PNP_LARGE = 1,
+} PnPTagType;
+
+typedef enum _PnPLargeVendorItems {
+  LV_FloppyDrive = 1,
+  LV_L2Cache = 2,
+  LV_PCIBridge = 3,
+  LV_Display = 4,
+  LV_BridgeAddrTrans = 5,
+  LV_BusBridgeAttr = 6,
+  LV_SCSIController = 7,
+  LV_PowerManagement = 8,
+  LV_GenericAddress = 9,
+  LV_ISABridgeInfo = 10,
+  LV_VideoChannels = 11,
+  LV_PowerControl = 12,
+  LV_MemoryPDData = 13,
+  LV_SystemInterrupts = 14,
+  LV_ErrorLog = 15,
+  LV_ExtendedVPD = 16,
+  LV_TimebaseControl = 17,
+} PnPLargeVendorItems;
+
 /* Define a bunch of access functions for the bits in the tag field */
 
 /* Tag type - 0 = small; 1 = large */

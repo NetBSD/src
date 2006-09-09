@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.30 2005/12/24 20:07:37 perry Exp $ */
+/*	$NetBSD: psl.h,v 1.30.4.1 2006/09/09 02:43:47 rpaulo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,11 +81,12 @@
 #define PIL_TTY		6
 #define PIL_LPT		6
 #define PIL_NET		6
-#define PIL_IMP		7
+#define PIL_VM		7
 #define	PIL_AUD		8
 #define PIL_CLOCK	10
 #define PIL_FD		11
 #define PIL_SER		12
+#define	PIL_STATCLOCK	14
 #define PIL_HIGH	15
 #define PIL_SCHED	PIL_CLOCK
 #define PIL_LOCK	PIL_HIGH
@@ -250,7 +251,7 @@
 /*
  * Inlines for manipulating privileged registers
  */
-static inline int
+static __inline int
 getpstate(void)
 {
 	int pstate;
@@ -259,13 +260,13 @@ getpstate(void)
 	return (pstate);
 }
 
-static inline void
+static __inline void
 setpstate(int newpstate)
 {
 	__asm volatile("wrpr %0,0,%%pstate" : : "r" (newpstate));
 }
 
-static inline int
+static __inline int
 getcwp(void)
 {
 	int cwp;
@@ -274,13 +275,13 @@ getcwp(void)
 	return (cwp);
 }
 
-static inline void
+static __inline void
 setcwp(int newcwp)
 {
 	__asm volatile("wrpr %0,0,%%cwp" : : "r" (newcwp));
 }
 
-static inline uint64_t
+static __inline uint64_t
 getver(void)
 {
 	uint64_t ver;
@@ -289,7 +290,7 @@ getver(void)
 	return (ver);
 }
 
-static inline int
+static __inline int
 intr_disable(void)
 {
 	int pstate = getpstate();
@@ -298,7 +299,7 @@ intr_disable(void)
 	return (pstate);
 }
 
-static inline void
+static __inline void
 intr_restore(int pstate)
 {
 	setpstate(pstate);
@@ -309,7 +310,7 @@ intr_restore(int pstate)
  */
 
 #ifdef SPLDEBUG
-void prom_printf __P((const char *fmt, ...));
+void prom_printf(const char *fmt, ...);
 extern int printspl;
 #define SPLPRINT(x) \
 { \
@@ -321,7 +322,7 @@ extern int printspl;
 	} \
 }
 #define	SPL(name, newpil) \
-static inline int name##X(const char* file, int line) \
+static __inline int name##X(const char* file, int line) \
 { \
 	int oldpil; \
 	__asm volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
@@ -331,7 +332,7 @@ static inline int name##X(const char* file, int line) \
 }
 /* A non-priority-decreasing version of SPL */
 #define	SPLHOLD(name, newpil) \
-static inline int name##X(const char* file, int line) \
+static __inline int name##X(const char* file, int line) \
 { \
 	int oldpil; \
 	__asm volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
@@ -345,7 +346,7 @@ static inline int name##X(const char* file, int line) \
 #else
 #define SPLPRINT(x)	
 #define	SPL(name, newpil) \
-static inline int name(void) \
+static __inline int name(void) \
 { \
 	int oldpil; \
 	__asm volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
@@ -354,7 +355,7 @@ static inline int name(void) \
 }
 /* A non-priority-decreasing version of SPL */
 #define	SPLHOLD(name, newpil) \
-static inline int name(void) \
+static __inline int name(void) \
 { \
 	int oldpil; \
 	__asm volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
@@ -364,6 +365,22 @@ static inline int name(void) \
 	return (oldpil); \
 }
 #endif
+
+static __inline int __attribute__((__unused__))
+splraiseipl(int newpil)
+{
+	int oldpil;
+
+	/*
+	 * NetBSD/sparc64's IPL_* constants equate directly to the
+	 * corresponding PIL_* names; no need to map them here.
+	 */
+	__asm __volatile("rdpr %%pil,%0" : "=r" (oldpil));
+	if (newpil <= oldpil)
+		return (oldpil);
+	__asm __volatile("wrpr %0,0,%%pil" : : "r" (newpil));
+	return (oldpil);
+}
 
 SPL(spl0, 0)
 
@@ -396,7 +413,7 @@ SPLHOLD(spllpt, PIL_LPT)
 /*
  * Memory allocation (must be as high as highest network, tty, or disk device)
  */
-SPLHOLD(splvm, PIL_IMP)
+SPLHOLD(splvm, PIL_VM)
 
 SPLHOLD(splclock, PIL_CLOCK)
 
@@ -411,7 +428,7 @@ SPLHOLD(splserial, PIL_SER)
 SPLHOLD(splaudio, PIL_AUD)
 
 /* second sparc timer interrupts at level 14 */
-SPLHOLD(splstatclock, 14)
+SPLHOLD(splstatclock, PIL_STATCLOCK)
 
 SPLHOLD(splsched, PIL_SCHED)
 SPLHOLD(spllock, PIL_LOCK)
@@ -445,9 +462,9 @@ SPLHOLD(splhigh, PIL_HIGH)
 #define splx(x)		splxX((x),__FILE__, __LINE__)
 #define splipi()	splhighX(__FILE__, __LINE__)
 
-static inline void splxX(int newpil, const char *file, int line)
+static __inline void splxX(int newpil, const char *file, int line)
 #else
-static inline void splx(int newpil)
+static __inline void splx(int newpil)
 #endif
 {
 #ifdef SPLDEBUG

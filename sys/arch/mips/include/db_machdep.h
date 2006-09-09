@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.17 2005/12/11 12:18:09 christos Exp $ */
+/* $NetBSD: db_machdep.h,v 1.17.4.1 2006/09/09 02:41:26 rpaulo Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -49,7 +49,7 @@ typedef struct frame db_regs_t;
 extern db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->f_regs[_R_PC])
+#define	PC_REGS(regs)	((regs)->f_regs[_R_PC])
 
 #define PC_ADVANCE(regs) do {						\
 	if ((db_get_value((regs)->f_regs[_R_PC], sizeof(int), FALSE) &\
@@ -66,7 +66,7 @@ extern db_regs_t	ddb_regs;	/* register state */
 #define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
 #define BKPT_INST	0x0001000D
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
-#define	BKPT_SET(inst)	(BKPT_INST)
+#define	BKPT_SET(inst, addr)	(BKPT_INST)
 
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAK)
 #define IS_WATCHPOINT_TRAP(type, code)	(0)	/* XXX mips3 watchpoint */

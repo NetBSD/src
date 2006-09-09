@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95.4.1 2006/09/09 02:42:58 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2005/12/11 12:18:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.4.1 2006/09/09 02:42:58 rpaulo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -102,9 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2005/12/11 12:18:58 christos Exp $"
 #define ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif
-
-/* For sysctl_hw. */
-extern char cpu_model[];
 
 struct sgimips_intrhand intrtab[NINTR];
 
@@ -757,15 +754,13 @@ microtime(struct timeval *tvp)
 	splx(s);
 }
 
-inline void
-delay(unsigned long n)
+void delay(unsigned long n)
 {
-	u_long i;
-	long divisor = curcpu()->ci_divisor_delay;
+	register int __N = curcpu()->ci_divisor_delay * n;
 
-	while (n-- > 0)
-		for (i = divisor; i > 0; i--)
-			;
+	do {
+		__asm("addiu %0,%1,-1" : "=r" (__N) : "0" (__N));
+	} while (__N > 0);
 }
 
 /*

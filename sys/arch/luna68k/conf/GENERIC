@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.68 2005/12/09 23:34:02 elad Exp $
+# $NetBSD: GENERIC,v 1.68.4.1 2006/09/09 02:40:57 rpaulo Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.68 $"
+#ident 		"GENERIC-$Revision: 1.68.4.1 $"
 
 maxusers	8
 
@@ -35,7 +35,7 @@ options 	M68030
 # Standard system options
 options 	NTP			# NTP phase/frequency locked loop
 options 	KTRACE
-options 	SYSTRACE	# system call vetting via systrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
 #options 	SYSVMSG			# System V message queues
 #options 	SYSVSEM			# System V semaphores
 #options 	SEMMNI=10	# number of semaphore identifiers
@@ -96,6 +96,7 @@ file-system 	NULLFS		# loopback file system
 #file-system	CODA		# Coda File System; also needs vcode (below)
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# ffs quotas
@@ -114,17 +115,15 @@ options 	INET		# IP protocol stack support
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 options 	NFS_BOOT_DHCP	# superset of BOOTP
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
@@ -179,25 +178,26 @@ st* at scsibus? target ? lun ?		# SCSI tapes
 #ss* at scsibus? target ? lun ?		# SCSI scanners
 #uk* at scsibus? target ? lun ?		# unknown SCSI devices
 
-pseudo-device	bpfilter	2	# Berkeley Packet Filter
+pseudo-device	bpfilter		# Berkeley Packet Filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	ccd		2	# concatenated and striped disks
 #pseudo-device	cgd		2	# cryptographic disks
-#pseudo-device	gre		2	# generic L3 over IP tunnel
+#pseudo-device	gre			# generic L3 over IP tunnel
 #pseudo-device	ipfilter	1	# ip filter
 pseudo-device	loop		1	# loopback interface; required
 pseudo-device	md		1	# memory disk device
-#pseudo-device	ppp		1	# PPP interfaces
+#pseudo-device	ppp			# PPP interfaces
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	raid		2	# RAIDframe disk driver
 pseudo-device	fss		4	# file system snapshot device
-#pseudo-device	sl		1	# SLIP interfaces
-#pseudo-device	tun		2	# Network "tunnel" device
+#pseudo-device	sl			# SLIP interfaces
+#pseudo-device	tun			# Network "tunnel" device
 #pseudo-device	tap			# virtual Ethernet
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
-#pseudo-device	vnd		2	# disk-like interface to files
+#pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
@@ -206,7 +206,6 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

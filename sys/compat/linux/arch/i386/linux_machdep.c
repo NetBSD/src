@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.112 2005/12/11 12:20:14 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.112.4.1 2006/09/09 02:45:38 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.112 2005/12/11 12:20:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.112.4.1 2006/09/09 02:45:38 rpaulo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.112 2005/12/11 12:20:14 christos
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
+#include <sys/kauth.h>
+
 #include <miscfs/specfs/specdev.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -1136,10 +1138,10 @@ linux_sys_iopl(l, v, retval)
 		syscallarg(int) level;
 	} */ *uap = v;
 #endif
-	struct proc *p = l->l_proc;
 	struct trapframe *fp = l->l_md.md_regs;
 
-	if (suser(p->p_ucred, &p->p_acflag) != 0)
+	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return EPERM;
 	fp->tf_eflags |= PSL_IOPL;
 	*retval = 0;
@@ -1161,10 +1163,10 @@ linux_sys_ioperm(l, v, retval)
 		syscallarg(unsigned int) hi;
 		syscallarg(int) val;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct trapframe *fp = l->l_md.md_regs;
 
-	if (suser(p->p_ucred, &p->p_acflag) != 0)
+	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return EPERM;
 	if (SCARG(uap, val))
 		fp->tf_eflags |= PSL_IOPL;

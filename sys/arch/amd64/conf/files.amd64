@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.19 2005/12/21 22:35:41 rjs Exp $
+#	$NetBSD: files.amd64,v 1.19.4.1 2006/09/09 02:37:18 rpaulo Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -17,7 +17,6 @@ defflag			LARGEPAGES
 # The REAL{BASE,EXT}MEM options
 defparam opt_realmem.h	REALBASEMEM REALEXTMEM
 
-
 #
 # XXX these are just here at the moment so that we can share files
 # with the i386 (they include the opt_*.h for these)
@@ -32,9 +31,9 @@ file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c	ddb
 file	arch/amd64/amd64/db_memrw.c		ddb | kgdb
 file	arch/amd64/amd64/db_trace.c		ddb
+file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 file	kern/subr_disk_mbr.c			disk
 file	arch/amd64/amd64/gdt.c
-
 #
 # XXXfvdl write the optimized versions for these.
 #
@@ -55,7 +54,6 @@ file	arch/amd64/amd64/trap.c
 file	arch/amd64/amd64/vm_machdep.c
 file	arch/amd64/amd64/fpu.c
 file	dev/cons.c
-file	kern/kern_microtime.c
 
 file	arch/amd64/amd64/mptramp.S        multiprocessor
 file	arch/amd64/amd64/ipifuncs.c       multiprocessor
@@ -111,6 +109,7 @@ defparam			PCI_CONF_MODE
 device	pchb: pcibus
 attach	pchb at pci
 file	arch/amd64/pci/pchb.c			pchb
+file	arch/x86/pci/pchb_rnd.c			pchb & rnd
 
 # PCI-ISA bridges
 device	pcib: isabus
@@ -128,7 +127,10 @@ file 	arch/x86/pci/aapic.c			aapic
 include	"dev/isa/files.isa"
 
 # PC clock
-file	arch/amd64/isa/clock.c			isa
+file	arch/x86/isa/clock.c			isa
+
+# TSC timecounter support
+file	arch/x86/x86/tsc.c
 
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device
@@ -169,6 +171,12 @@ file	arch/amd64/amd64/linux_sigcode.S		compat_linux
 file	arch/amd64/amd64/linux_syscall.c		compat_linux
 file	arch/x86/x86/linux_trap.c			compat_linux
 
+# Linux 32 bit compatibility (COMPAT_LINUX32)
+include "compat/linux32/files.linux32"
+include "compat/linux32/arch/amd64/files.linux32_amd64"
+file	arch/amd64/amd64/linux32_sigcode.S		compat_linux32
+file	arch/amd64/amd64/linux32_syscall.c		compat_linux32
+
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"
 
@@ -187,11 +195,8 @@ include	"dev/pcmcia/files.pcmcia"
 include	"dev/usb/files.usb"
 
 include	"dev/ieee1394/files.ieee1394"
-
+include "dev/apm/files.apm"
 include "dev/acpi/files.acpi"
 file	arch/amd64/acpi/acpi_wakeup.c	acpi
-
-# Atheros 5210/5211/5212 Hardware Abstraction Layer (HAL)
-object	/athhal-x86_64-elf.hal.o	ath
 
 include	"arch/amd64/conf/majors.amd64"

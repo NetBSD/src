@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.49 2005/12/24 23:23:59 perry Exp $	*/
+/*	$NetBSD: ite.c,v 1.49.4.1 2006/09/09 02:38:21 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.49 2005/12/24 23:23:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.49.4.1 2006/09/09 02:38:21 rpaulo Exp $");
 
 #include "opt_ddb.h"
 
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.49 2005/12/24 23:23:59 perry Exp $");
 #include <sys/callout.h>
 #include <sys/proc.h>
 #include <dev/cons.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 
@@ -240,7 +241,7 @@ iteattach(pdp, dp, auxp)
 	ip = (struct ite_softc *)dp;
 
 	maj = cdevsw_lookup_major(&ite_cdevsw);
-	unit = (dp != NULL) ? ip->device.dv_unit : cons_ite;
+	unit = (dp != NULL) ? device_unit(&ip->device) : cons_ite;
 	gp->g_itedev = makedev(maj, unit);
 
 	if (dp) {
@@ -442,7 +443,8 @@ iteopen(dev, mode, devtype, l)
 	else tp = ip->tp;
 
 	if ((tp->t_state & (TS_ISOPEN | TS_XCLUDE)) == (TS_ISOPEN | TS_XCLUDE)
-	    && suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    && kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		ite_on(dev, 0);

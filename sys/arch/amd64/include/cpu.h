@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 2005/12/24 22:50:07 perry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9.4.1 2006/09/09 02:37:18 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -235,12 +235,9 @@ struct clockframe {
  * We need a machine-independent name for this.
  */
 extern void (*delay_func) __P((int));
-struct timeval;
-extern void (*microtime_func) __P((struct timeval *));
 
 #define DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
-#define microtime(tv)		(*microtime_func)(tv)
 
 
 /*
@@ -261,7 +258,6 @@ void	identifycpu __P((struct cpu_info *));
 void cpu_probe_features __P((struct cpu_info *));
 
 /* machdep.c */
-void	delay __P((int));
 void	dumpconf __P((void));
 int	cpu_maxproc __P((void));
 void	cpu_reset __P((void));
@@ -280,7 +276,7 @@ void	proc_trampoline __P((void));
 void	child_trampoline __P((void));
 
 /* clock.c */
-void	initrtclock __P((void));
+void	initrtclock __P((u_long));
 void	startrtclock __P((void));
 void	i8254_delay __P((int));
 void	i8254_microtime __P((struct timeval *));
@@ -301,6 +297,9 @@ void kgdb_port_init __P((void));
 /* bus_machdep.c */
 void x86_bus_space_init __P((void));
 void x86_bus_space_mallocok __P((void));
+
+/* powernow_k8.c */
+void k8_powernow_init(void);
 
 #endif /* _KERNEL */
 

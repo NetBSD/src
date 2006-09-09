@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.24 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.24.4.1 2006/09/09 02:42:28 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.24 2005/12/24 20:07:28 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.24.4.1 2006/09/09 02:42:28 rpaulo Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -97,7 +97,10 @@ struct vm_map *phys_map = NULL;
  */
 extern struct user *proc0paddr;
 
+
+/* XXXSL: The battable is not initialized to non-zero for PPC_OEA64 and PPC_OEA64_BRIDGE */
 struct bat battable[512];
+
 register_t iosrtable[16];	/* I/O segments, for kernel_pmap setup */
 paddr_t msgbuf_paddr;
 
@@ -132,7 +135,6 @@ oea_init(void (*handler)(void))
 	mtspr(SPR_SPRG0, ci);
 	cpuvers = mfpvr() >> 16;
 
-
 	/*
 	 * Initialize proc0 and current pcb and pmap pointers.
 	 */
@@ -162,13 +164,17 @@ oea_init(void (*handler)(void))
 
 	/*
 	 * Cause a PGM trap if we branch to 0.
+	 *
+	 * XXX GCC4.1 complains about memset on address zero, so
+	 * don't use the builtin.
 	 */
+#undef memset
 	memset(0, 0, 0x100);
 
 	/*
 	 * Set up trap vectors.  Don't assume vectors are on 0x100.
 	 */
-	for (exc = 0; exc <= EXC_LAST; exc += 0x100) {
+	for (exc = 0x0; exc <= EXC_LAST; exc += 0x100) {
 		switch (exc) {
 		default:
 			size = (size_t)trapsize;
@@ -371,9 +377,11 @@ oea_init(void (*handler)(void))
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
 	 */
+#ifdef PPC_OEA
 	__asm volatile ("sync; mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
 	    : "=r"(scratch)
 	    : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
+#endif
 
 	KASSERT(curcpu() == ci);
 }
@@ -396,6 +404,8 @@ mpc601_ioseg_add(paddr_t pa, register_t len)
 		"r"(pa));
 }
 
+
+#if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
 void
 oea_iobat_add(paddr_t pa, register_t len)
 {
@@ -619,6 +629,7 @@ oea_batinit(paddr_t pa, ...)
 		}
 	}
 }
+#endif /* (PPC_OEA) && !(PPC_OEA64) && !(PPC_OEA64_BRIDGE) */
 
 void
 oea_install_extint(void (*handler)(void))
@@ -675,6 +686,8 @@ oea_startup(const char *model)
 			panic("startup: cannot allocate VM for msgbuf");
 		v = (caddr_t)minaddr;
 		for (i = 0; i < sz; i += PAGE_SIZE) {
+			printf("pmap_kenter_pa: 0x%08lx, 0x%08lx\n",
+				minaddr + i, msgbuf_paddr + i);
 			pmap_kenter_pa(minaddr + i, msgbuf_paddr + i,
 			    VM_PROT_READ|VM_PROT_WRITE);
 		}
@@ -814,4 +827,20 @@ mapiodev(paddr_t pa, psize_t len)
 	}
 	pmap_update(pmap_kernel());
 	return (void *)(va + off);
+}
+
+void
+unmapiodev(vaddr_t va, vsize_t len)
+{
+	paddr_t faddr;
+
+	if (! va)
+		return;
+
+	faddr = trunc_page(va);
+	len = round_page(va - faddr + len);
+
+	pmap_kremove(faddr, len);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, faddr, len, UVM_KMF_VAONLY);
 }

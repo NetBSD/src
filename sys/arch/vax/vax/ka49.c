@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka49.c,v 1.14 2005/12/24 22:45:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka49.c,v 1.14.4.1 2006/09/09 02:44:23 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,8 +64,8 @@ struct	cpu_dep ka49_calls = {
 	ka49_mchk,
 	ka49_memerr, 
 	ka49_conf,
-	chip_clkread,
-	chip_clkwrite,
+	chip_gettime,
+	chip_settime,
 	32,      /* ~VUPS */
 	2,	/* SCB pages */
 	ka49_halt,

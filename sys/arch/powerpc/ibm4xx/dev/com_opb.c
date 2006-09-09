@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.13 2005/12/11 12:18:42 christos Exp $ */
+/* $NetBSD: com_opb.c,v 1.13.4.1 2006/09/09 02:42:22 rpaulo Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.13 2005/12/11 12:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.13.4.1 2006/09/09 02:42:22 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -110,20 +110,22 @@ com_opb_attach(struct device *parent, struct device *self, void *aux)
 	struct com_opb_softc *msc = (void *)self;
 	struct com_softc *sc = &msc->sc_com;
 	struct opb_attach_args *oaa = aux;
-
-	sc->sc_iot = oaa->opb_bt;
-	sc->sc_iobase = oaa->opb_addr;
+	prop_number_t freq;
+	bus_space_handle_t ioh;
 
 	/* XXX console check */
 
-	bus_space_map(sc->sc_iot, oaa->opb_addr, COM_NPORTS, 0,
-	    &sc->sc_ioh);
+	bus_space_map(oaa->opb_bt, oaa->opb_addr, COM_NPORTS, 0, &ioh);
+	COM_INIT_REGS(sc->sc_regs, oaa->opb_bt, ioh, oaa->opb_addr);
 
-	if (prop_get(dev_propdb, &sc->sc_dev, "frequency",
-		     &sc->sc_frequency, sizeof(sc->sc_frequency), NULL) == -1) {
-		printf(": unable to get frequency property\n");
+	freq = prop_dictionary_get(device_properties(&sc->sc_dev),
+	    "clock-frequency");
+	if (freq == NULL) {
+		printf(": unable to get clock-frequency property\n");
 		return;
 	}
+	KASSERT(prop_object_type(freq) == PROP_TYPE_NUMBER);
+	sc->sc_frequency = (int) prop_number_integer_value(freq);
 
 	com_attach_subr(sc);
 
@@ -139,7 +141,7 @@ com_opb_cnattach(int com_freq, int conaddr, int conspeed, int conmode)
 {
 	static int attached = 0;
 #if (NCOM > 0)
-	bus_space_tag_t tag;
+	struct com_regs	regs;
 #endif
 
 	if (attached)
@@ -148,10 +150,12 @@ com_opb_cnattach(int com_freq, int conaddr, int conspeed, int conmode)
 
 #if (NCOM > 0)
 	/* We *know* the com-console attaches to opb */
-	tag = opb_get_bus_space_tag();
+	regs.cr_iot = opb_get_bus_space_tag();
+	regs.cr_iobase = conaddr;
+	regs.cr_nports = COM_NPORTS;
+	/* regs.ioh is initialized by comcnattach */
 
-	if (comcnattach(tag,
-		conaddr, conspeed, com_freq, COM_TYPE_NORMAL, conmode))
+	if (comcnattach1(&regs, conspeed, com_freq, COM_TYPE_NORMAL, conmode))
 		panic("can't init serial console @%x", conaddr);
 	else
 		return;
@@ -166,12 +170,14 @@ com_opb_cnattach(int com_freq, int conaddr, int conspeed, int conmode)
 void
 com_opb_device_register(struct device *dev, int frequency)
 {
-	int com_freq = frequency;
-
 	/* Set the frequency of the on-chip UART. */
-	if (prop_set(dev_propdb, dev, "frequency",
-		&com_freq, sizeof(com_freq), PROP_INT, 0) != 0)
-		printf("WARNING: unable to set frequency "
+	prop_number_t pn = prop_number_create_integer(frequency);
+	KASSERT(pn != NULL);
+
+	if (prop_dictionary_set(device_properties(dev),
+				"clock-frequency", pn) == FALSE) {
+		printf("WARNING: unable to set clock-frequency "
 			"property for %s\n", dev->dv_xname);
-	return;
+	}
+	prop_object_release(pn);
 }

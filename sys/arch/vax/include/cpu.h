@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.72 2005/12/11 12:19:34 christos Exp $      */
+/*      $NetBSD: cpu.h,v 1.72.4.1 2006/09/09 02:44:14 rpaulo Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -73,14 +73,16 @@
  */
 struct cpu_info;
 
-struct	cpu_dep {
+struct cpu_dep {
 	void	(*cpu_steal_pages)(void); /* pmap init before mm is on */
 	int	(*cpu_mchk)(caddr_t);   /* Machine check handling */
 	void	(*cpu_memerr)(void); /* Memory subsystem errors */
 	    /* Autoconfiguration */
 	void	(*cpu_conf)(void);
-	int	(*cpu_clkread)(time_t);	/* Read cpu clock time */
-	void	(*cpu_clkwrite)(void);	/* Write system time to cpu */
+	int	(*cpu_gettime)(volatile struct timeval *);
+						/* Read cpu clock time */
+	void	(*cpu_settime)(volatile struct timeval *);
+						/* Write system time to cpu */
 	short	cpu_vups;	/* speed of cpu */
 	short	cpu_scbsz;	/* (estimated) size of system control block */
 	void	(*cpu_halt)(void); /* Cpu dependent halt call */
@@ -163,6 +165,7 @@ struct cpu_mp_softc {
 };
 #endif /* defined(MULTIPROCESSOR) */
 
+				/* XXX need to cache this in cpu_info */
 #define	ci_cpuid		ci_dev->dv_unit
 #define	curcpu()		((struct cpu_info *)mfpr(PR_SSP))
 #define	curlwp			(curcpu()->ci_curlwp)

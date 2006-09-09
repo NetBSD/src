@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.97 2005/12/11 12:19:08 christos Exp $
+#	$NetBSD: files.sparc64,v 1.97.4.1 2006/09/09 02:43:36 rpaulo Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -46,6 +46,10 @@ attach clock at ebus with clock_ebus
 
 device rtc: mc146818
 attach rtc at ebus with rtc_ebus
+
+device psm: sysmon_envsys, sysmon_power
+attach psm at ebus
+file	arch/sparc64/dev/psm.c			psm
 
 device timer
 attach timer at mainbus, sbus
@@ -155,7 +159,6 @@ file	arch/sparc64/dev/pld_wdog.c		pldwdog
 
 file	dev/cons.c
 file	arch/sparc64/dev/consinit.c
-file	kern/kern_microtime.c
 file	dev/sun/disksubr.c 
 
 file	arch/sparc/fpu/fpu.c

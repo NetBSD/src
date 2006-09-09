@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.22 2005/12/11 12:16:50 christos Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.22.4.1 2006/09/09 02:38:10 rpaulo Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.22 2005/12/11 12:16:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.22.4.1 2006/09/09 02:38:10 rpaulo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.22 2005/12/11 12:16:50 christos Ex
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -176,16 +177,12 @@ struct consdev ixpcomcons = {
 #define COMDIALOUT(x)	(minor(x) & COMDIALOUT_MASK)
 
 #define COM_ISALIVE(sc)	((sc)->enabled != 0 && \
-			ISSET((sc)->sc_dev.dv_flags, DVF_ACTIVE))
+			 device_is_active(&(sc)->sc_dev))
 
 #define COM_BARRIER(t, h, f) bus_space_barrier((t), (h), 0, COM_NPORTS, (f))
 
 #define	COM_LOCK(sc);
 #define	COM_UNLOCK(sc);
-
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 
 #define CFLAGS2CR_MASK	(CR_PE | CR_OES | CR_SBS | CR_DSS | CR_BRD)
 
@@ -239,7 +236,7 @@ ixpcom_attach_subr(sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&ixpcom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
 	}
@@ -496,7 +493,7 @@ ixpcomopen(dev, flag, mode, l)
 		sc->sc_rbuf == NULL)
 		return (ENXIO);
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (ENXIO);
 
 #ifdef KGDB
@@ -511,7 +508,8 @@ ixpcomopen(dev, flag, mode, l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -752,7 +750,8 @@ ixpcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag); 
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag); 
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

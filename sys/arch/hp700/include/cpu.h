@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 2005/12/24 20:07:04 perry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17.4.1 2006/09/09 02:39:26 rpaulo Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -227,7 +227,7 @@ extern int want_resched;
 
 #define DELAY(x) delay(x)
 
-static inline paddr_t
+static __inline paddr_t
 kvtop(const caddr_t va)
 {
 	paddr_t pa;
@@ -242,7 +242,6 @@ void	delay(u_int);
 void	hppa_init(paddr_t);
 void	trap(int, struct trapframe *);
 void	hppa_ras(struct lwp *);
-int	dma_cachectl(caddr_t, int);
 int	spcopy(pa_space_t, const void *, pa_space_t, void *, size_t);
 int	spstrcpy(pa_space_t, const void *, pa_space_t, void *, size_t,
 		 size_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.175 2005/12/24 20:07:11 perry Exp $	*/
+/*	$NetBSD: pccons.c,v 1.175.4.1 2006/09/09 02:40:14 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.175 2005/12/24 20:07:11 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.175.4.1 2006/09/09 02:40:14 rpaulo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.175 2005/12/24 20:07:11 perry Exp $");
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 
@@ -776,7 +777,7 @@ pcattach(struct device *parent, struct device *self, void *aux)
 		maj = cdevsw_lookup_major(&pc_cdevsw);
 
 		/* There can be only one, but it can have any unit number. */
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 		printf("%s: console\n", sc->sc_dev.dv_xname);
 	}
@@ -847,7 +848,8 @@ pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 		pcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if (tp->t_state&TS_XCLUDE &&
-		   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+		   kauth_authorize_generic(l->l_cred,
+		   KAUTH_GENERIC_ISSUSER, &l->l_acflag) != 0)
 		return (EBUSY);
 	tp->t_state |= TS_CARR_ON;
 

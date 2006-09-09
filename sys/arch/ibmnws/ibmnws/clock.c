@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2005/12/24 22:45:35 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.4.4.1 2006/09/09 02:40:43 rpaulo Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -36,14 +36,13 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/timetc.h>
 
-#include <dev/clock_subr.h>
+#include <uvm/uvm_extern.h>
 
-#include <ibmnws/ibmnws/clockvar.h>
-
-#define	MINYEAR	1990
-
-void decr_intr __P((struct clockframe *));
+void decr_intr(struct clockframe *);
+void init_ibmnws_tc(void);
+static u_int get_ibmnws_timecount(struct timecounter *);
 
 /*
  * Initially we assume a processor with a bus frequency of 12.5 MHz.
@@ -51,194 +50,32 @@ void decr_intr __P((struct clockframe *));
 u_long ticks_per_sec;
 u_long ns_per_tick;
 static long ticks_per_intr;
-static volatile u_long lasttb;
 
-struct device *clockdev;
-const struct clockfns *clockfns;
 int clockinitted;
 
-static void ns1000_clock_init __P((struct device *));
-static void ns1000_clock_get __P((struct device *, time_t, struct clocktime *));
-static void ns1000_clock_set __P((struct device *, struct clocktime *));
-
-const struct clockfns ns1000_clockfns = {
-	ns1000_clock_init,
-	ns1000_clock_get,
-	ns1000_clock_set
+static struct timecounter ibmnws_timecounter = {
+	get_ibmnws_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	0x7fffffff,		/* counter_mask */
+	0,			/* frequency */
+	"ibmnws_mftb",		/* name */
+	0			/* quality */
 };
-
-void
-ns1000_clock_init (dev)
-        struct device *dev;
-{
-}
-
-void
-ns1000_clock_get(dev, base, ct)
-        struct device *dev;
-        time_t base;
-        struct clocktime *ct;
-{
-        ct->sec		= 0;
-        ct->min		= 0;
-        ct->hour	= 0;
-        ct->dow  	= 0;
-        ct->day  	= 0;
-        ct->mon  	= 0;
-        ct->year  	= 0;
-}
-
-void
-ns1000_clock_set(dev, ct)
-        struct device *dev;
-        struct clocktime *ct;
-{
-}
-
-void
-clockattach(dev, fns)
-        struct device *dev;
-        const struct clockfns *fns;
-{
-
-	printf("\n");
-
-	if (clockfns != NULL)
-		panic("clockattach: multiple clocks");
-
-	clockdev = dev;
-	clockfns = fns;
-}
 
 /*
  * Start the real-time and statistics clocks. Leave stathz 0 since there
  * are no other timers available.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
+	struct cpu_info * const ci = curcpu();
 
 	ticks_per_intr = ticks_per_sec / hz;
-	__asm volatile ("mftb %0" : "=r"(lasttb));
+	__asm volatile ("mftb %0" : "=r"(ci->ci_lasttb));
 	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 
-	/*
-	 * The NS 1000 has no RTC hardware, so fake the clock functions
-	 * to prevent odd failures...
-	 */
-
-	clockattach (NULL, &ns1000_clockfns);
-}
-
-/*
- * Initialize the time of day register, based on the time base which is, e.g.
- * from a filesystem.
- */
-void
-inittodr(base)
-	time_t base;
-{
-	struct clocktime ct;
-	int year;
-	struct clock_ymdhms dt;
-	time_t deltat;
-	int badbase = 0;
-
-	if (base < (MINYEAR - 1970) * SECYR) {
-		printf("WARNING: preposterous time in file system");
-		/* read the system clock anyway */
-		base = (MINYEAR - 1970) * SECYR + 186 * SECDAY + SECDAY / 2;
-		badbase = 1;
-	}
-
-	(*clockfns->cf_get)(clockdev, base, &ct);
-#ifdef DEBUG
-	printf("readclock: %d/%d/%d/%d/%d/%d\n", ct.year, ct.mon, ct.day,
-	    ct.hour, ct.min, ct.sec);
-#endif
-	clockinitted = 1;
-
-	year = 1900 + ct.year;
-	if (year < 1970)
-		year += 100;
-
-	/* simple sanity checks (2037 = time_t overflow) */
-	if (year < MINYEAR || year > 2037 ||
-	    ct.mon < 1 || ct.mon > 12 || ct.day < 1 ||
-	    ct.day > 31 || ct.hour > 23 || ct.min > 59 || ct.sec > 59) {
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the TODR.
-		 */
-		time.tv_sec = base;
-		if (!badbase) {
-			printf("WARNING: preposterous clock chip time\n");
-			resettodr();
-		}
-		goto bad;
-	}
-
-	dt.dt_year = year;
-	dt.dt_mon = ct.mon;
-	dt.dt_day = ct.day;
-	dt.dt_hour = ct.hour;
-	dt.dt_min = ct.min;
-	dt.dt_sec = ct.sec;
-	time.tv_sec = clock_ymdhms_to_secs(&dt);
-#ifdef DEBUG
-	printf("=>%ld (%d)\n", (long int)time.tv_sec, (int)base);
-#endif
-
-	if (!badbase) {
-		/*
-		 * See if we gained/lost two or more days;
-		 * if so, assume something is amiss.
-		 */
-		deltat = time.tv_sec - base;
-		if (deltat < 0)
-			deltat = -deltat;
-		if (deltat < 2 * SECDAY)
-			return;
-		printf("WARNING: clock %s %ld days",
-		    time.tv_sec < base ? "lost" : "gained",
-		    (long)deltat / SECDAY);
-	}
-bad:
-	printf(" -- CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * Reset the TODR based on the time value; used when the TODR
- * has a preposterous value and also when the time is reset
- * by the stime system call.  Also called when the TODR goes past
- * TODRZERO + 100*(SECYEAR+2*SECDAY) (e.g. on Jan 2 just after midnight)
- * to wrap the TODR around.
- */
-void
-resettodr()
-{
-	struct clock_ymdhms dt;
-	struct clocktime ct;
-
-	if (!clockinitted)
-		return;
-
-	clock_secs_to_ymdhms(time.tv_sec, &dt);
-
-	/* rt clock wants 2 digits */
-	ct.year = dt.dt_year % 100;
-	ct.mon = dt.dt_mon;
-	ct.day = dt.dt_day;
-	ct.hour = dt.dt_hour;
-	ct.min = dt.dt_min;
-	ct.sec = dt.dt_sec;
-	ct.dow = dt.dt_wday;
-#ifdef DEBUG
-	printf("setclock: %d/%d/%d/%d/%d/%d\n", ct.year, ct.mon, ct.day,
-	    ct.hour, ct.min, ct.sec);
-#endif
-
-	(*clockfns->cf_set)(clockdev, &ct);
+	init_ibmnws_tc();
 }
 
 /*
@@ -247,23 +84,21 @@ resettodr()
  * but that would be a drag.
  */
 void
-setstatclockrate(arg)
-	int arg;
+setstatclockrate(int arg)
 {
 
 	/* Nothing we can do */
 }
 
 void
-decr_intr(frame)
-	struct clockframe *frame;
+decr_intr(struct clockframe *frame)
 {
+	struct cpu_info * const ci = curcpu();
 	int msr;
 	int pri;
 	u_long tb;
-	long count;
+	long ticks;
 	int nticks;
-	extern long intrcnt[];
 
 	/*
 	 * Check whether we are initialized.
@@ -275,26 +110,27 @@ decr_intr(frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	__asm ("mfdec %0" : "=r"(count));
-	for (nticks = 0; count < 0; nticks++)
-		count += ticks_per_intr;
-	__asm volatile ("mtdec %0" :: "r"(count));
+	__asm ("mfdec %0" : "=r"(ticks));
+	for (nticks = 0; ticks < 0; nticks++)
+		ticks += ticks_per_intr;
+	__asm volatile ("mtdec %0" :: "r"(ticks));
 
-	intrcnt[CNT_CLOCK]++;
+	uvmexp.intrs++;
+	ci->ci_ev_clock.ev_count++;
 
 	pri = splclock();
 	if (pri & SPL_CLOCK)
-		tickspending += nticks;
+		ci->ci_tickspending += nticks;
 	else {
-		nticks += tickspending;
-		tickspending = 0;
+		nticks += ci->ci_tickspending;
+		ci->ci_tickspending = 0;
 
 		/*
 		 * lasttb is used during microtime. Set it to the virtual
 		 * start of this tick interval.
 		 */
 		__asm ("mftb %0" : "=r"(tb));
-		lasttb = tb + count - ticks_per_intr;
+		ci->ci_lasttb = tb + ticks - ticks_per_intr;
 
 		/*
 		 * Reenable interrupts
@@ -316,36 +152,10 @@ decr_intr(frame)
 }
 
 /*
- * Fill in *tvp with current time with microsecond resolution.
- */
-void
-microtime(tvp)
-	struct timeval *tvp;
-{
-	u_long tb;
-	u_long ticks;
-	int msr, scratch;
-	
-	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
-		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
-	__asm ("mftb %0" : "=r"(tb));
-	ticks = (tb - lasttb) * ns_per_tick;
-	*tvp = time;
-	__asm volatile ("mtmsr %0" :: "r"(msr));
-	ticks /= 1000;
-	tvp->tv_usec += ticks;
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
-}
-
-/*
  * Wait for about n microseconds (at least!).
  */
 void
-delay(n)
-	unsigned int n;
+delay(unsigned int n)
 {
 	u_quad_t tb;
 	u_long tbh, tbl, scratch;
@@ -357,4 +167,26 @@ delay(n)
 	__asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
 		      "mftb %0; cmplw %0,%2; blt 1b; 2:"
 		      : "=r"(scratch) : "r"(tbh), "r"(tbl));
+}
+
+static u_int
+get_ibmnws_timecount(struct timecounter *tc)
+{
+	u_long tb;
+	int msr, scratch;
+	
+	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
+		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
+	__asm volatile ("mftb %0" : "=r"(tb));
+	mtmsr(msr);
+
+	return tb;
+}
+
+void
+init_ibmnws_tc()
+{
+	/* from machdep initialization */
+	ibmnws_timecounter.tc_frequency = ticks_per_sec;
+	tc_init(&ibmnws_timecounter);
 }

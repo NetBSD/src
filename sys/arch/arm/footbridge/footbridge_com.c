@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.16 2005/12/11 12:16:45 christos Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.16.4.1 2006/09/09 02:37:59 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.16 2005/12/11 12:16:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.16.4.1 2006/09/09 02:37:59 rpaulo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.16 2005/12/11 12:16:45 christos
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/termios.h>
+#include <sys/kauth.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <arm/footbridge/dc21285mem.h>
@@ -98,11 +99,6 @@ struct fcom_softc {
 };
 
 #define RX_BUFFER_SIZE	0x100
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 
 static int  fcom_probe   __P((struct device *, struct cfdata *, void *));
 static void fcom_attach  __P((struct device *, struct device *, void *));
@@ -210,7 +206,7 @@ fcom_attach(parent, self, aux)
 		/* locate the major number */
 		major = cdevsw_lookup_major(&fcom_cdevsw);
 
-		cn_tab->cn_dev = makedev(major, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(major, device_unit(&sc->sc_dev));
 		printf(": console");
 	}
 	printf("\n");
@@ -231,7 +227,6 @@ fcomopen(dev, flag, mode, l)
 	int flag, mode;
 	struct lwp *l;
 {
-	struct proc *p = l->l_proc;
 	struct fcom_softc *sc;
 	int unit = minor(dev);
 	struct tty *tp;
@@ -275,7 +270,9 @@ fcomopen(dev, flag, mode, l)
 
 		fcomparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state&TS_XCLUDE) && suser(p->p_ucred, &p->p_acflag))
+	} else if ((tp->t_state&TS_XCLUDE) &&
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag))
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 
@@ -352,7 +349,6 @@ fcomioctl(dev, cmd, data, flag, l)
 	int flag;
 	struct lwp *l;
 {
-	struct proc *p = l->l_proc;
 	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
 	int error;
@@ -369,7 +365,8 @@ fcomioctl(dev, cmd, data, flag, l)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag); 
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag); 
 		if (error)
 			return (error); 
 		sc->sc_swflags = *(int *)data;

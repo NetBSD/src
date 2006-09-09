@@ -1,4 +1,4 @@
-/*	$NetBSD: tyneisabr.c,v 1.8 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: tyneisabr.c,v 1.8.4.1 2006/09/09 02:37:52 rpaulo Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tyneisabr.c,v 1.8 2005/12/11 12:16:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tyneisabr.c,v 1.8.4.1 2006/09/09 02:37:52 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: tyneisabr.c,v 1.8 2005/12/11 12:16:39 christos Exp $
 
 #include <arc/isa/isabrvar.h>
 
+#include "ioconf.h"
+
 /* Definition of the driver for autoconfig. */
 int	tyneisabrmatch(struct device *, struct cfdata *, void *);
 void	tyneisabrattach(struct device *, struct device *, void *);
@@ -96,7 +98,6 @@ uint32_t tyneisabr_iointr(uint32_t mask, struct clockframe *cf);
 
 CFATTACH_DECL(tyneisabr, sizeof(struct isabr_softc),
     tyneisabrmatch, tyneisabrattach, NULL, NULL);
-extern struct cfdriver tyneisabr_cd;
 
 int
 tyneisabrmatch(struct device *parent, struct cfdata *match, void *aux)
@@ -116,7 +117,7 @@ tyneisabrattach(struct device *parent, struct device *self, void *aux)
 	struct isabr_softc *sc = (struct isabr_softc *)self;
 
 	_bus_dma_tag_init(&sc->sc_dmat); /* XXX dedicated bounce mem */
-	(*platform->set_intr)(MIPS_INT_MASK_2, isabr_iointr, 2);
+	(*platform->set_intr)(MIPS_INT_MASK_2, isabr_iointr, ARC_INTPRI_PCIISA);
 
 	isabrattach(sc);
 }

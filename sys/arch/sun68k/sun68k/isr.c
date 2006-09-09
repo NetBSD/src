@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.7 2005/12/11 12:19:29 christos Exp $	*/
+/*	$NetBSD: isr.c,v 1.7.4.1 2006/09/09 02:44:14 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.7 2005/12/11 12:19:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.7.4.1 2006/09/09 02:44:14 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,12 +305,18 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 {
 	struct softintr_handler *sh;
 	struct softintr_head *shd;
+	int level;
 
-	if (ipl < _IPL_SOFT_LEVEL_MIN || ipl > _IPL_SOFT_LEVEL_MAX)
+	if (ipl == IPL_SOFT_LEVEL1)
+		level = _IPL_SOFT_LEVEL1;
+	else if (ipl == IPL_SOFT_LEVEL2)
+		level = _IPL_SOFT_LEVEL2;
+	else if (ipl == IPL_SOFT_LEVEL3)
+		level = _IPL_SOFT_LEVEL3;
+	else
 		panic("softintr_establish: unsupported soft IPL");
 
-	shd = &soft_level_heads[ipl - _IPL_SOFT_LEVEL_MIN];
-
+	shd = &soft_level_heads[level - _IPL_SOFT_LEVEL_MIN];
 	sh = malloc(sizeof(*sh), M_SOFTINTR, M_NOWAIT);
 	if (sh == NULL)
 		return NULL;
