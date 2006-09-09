@@ -1,8 +1,8 @@
-/*	$NetBSD: yacc.y,v 1.6 2005/06/02 02:07:54 lukem Exp $	*/
+/*	$NetBSD: yacc.y,v 1.7 2006/09/09 14:35:17 tnozaki Exp $	*/
 
 %{
 /*-
- * Copyright (c)2003 Citrus Project,
+ * Copyright (c)2003, 2006 Citrus Project,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: yacc.y,v 1.6 2005/06/02 02:07:54 lukem Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.7 2006/09/09 14:35:17 tnozaki Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -68,13 +68,10 @@ static void		*table = NULL;
 static size_t		table_size;
 static char		*map_name;
 static int		map_type;
-static zone_t		src_zone;
-static u_int32_t	colmask, rowmask;
 static u_int32_t	dst_invalid, dst_ilseq, oob_mode, dst_unit_bits;
 static void		(*putfunc)(void *, size_t, u_int32_t) = 0;
 
 static u_int32_t	src_next;
-static int		next_valid;
 
 static u_int32_t	done_flag = 0;
 #define DF_TYPE			0x00000001
@@ -85,27 +82,31 @@ static u_int32_t	done_flag = 0;
 #define DF_DST_UNIT_BITS	0x00000020
 #define DF_OOB_MODE		0x00000040
 
+static linear_zone_t	rowcol[_CITRUS_MAPPER_STD_ROWCOL_MAX];
+static size_t		rowcol_len = 0;
+static u_int32_t	rowcol_bits = 0, rowcol_mask = 0;
+
 static void	dump_file(void);
 static void	setup_map(void);
 static void	set_type(int);
 static void	set_name(char *);
-static void	set_src_zone(const zone_t *);
+static void	set_src_zone(u_int32_t);
 static void	set_dst_invalid(u_int32_t);
 static void	set_dst_ilseq(u_int32_t);
 static void	set_dst_unit_bits(u_int32_t);
 static void	set_oob_mode(u_int32_t);
-static void	calc_next(void);
 static int	check_src(u_int32_t, u_int32_t);
 static void	store(const linear_zone_t *, u_int32_t, int);
 static void	put8(void *, size_t, u_int32_t);
 static void	put16(void *, size_t, u_int32_t);
 static void	put32(void *, size_t, u_int32_t);
+static void	set_range(u_int32_t, u_int32_t);
+static void	set_src(linear_zone_t *, u_int32_t, u_int32_t);
 %}
 
 %union {
 	u_int32_t	i_value;
 	char		*s_value;
-	zone_t		z_value;
 	linear_zone_t	lz_value;
 }
 
@@ -117,9 +118,8 @@ static void	put32(void *, size_t, u_int32_t);
 %token <i_value>	L_IMM
 %token <s_value>	L_STRING
 
-%type <z_value>		zone
 %type <lz_value>	src
-%type <i_value>		dst types oob_mode_sel
+%type <i_value>		dst types oob_mode_sel zone
 
 %%
 
@@ -139,16 +139,17 @@ property	: /* empty */
 name		: R_NAME L_STRING { set_name($2); $2 = NULL; }
 type		: R_TYPE types { set_type($2); }
 types		: R_ROWCOL { $$ = R_ROWCOL; }
-src_zone	: R_SRC_ZONE zone { set_src_zone(&$2); }
-zone		: L_IMM '-' L_IMM {
-			$$.row_begin = $$.row_end = 0;
-			$$.col_begin = $1; $$.col_end = $3;
-			$$.col_bits = 32;
+range		: L_IMM '-' L_IMM { set_range($1, $3); }
+
+ranges		: /* empty */
+		| ranges range '/'
+
+src_zone	: R_SRC_ZONE zone { set_src_zone($2); }
+zone		: range {
+			$$ = 32;
 		}
-		| L_IMM '-' L_IMM '/' L_IMM '-' L_IMM '/' L_IMM {
-			$$.row_begin = $1; $$.row_end = $3;
-			$$.col_begin = $5; $$.col_end = $7;
-			$$.col_bits = $9;
+		| range '/' range '/' ranges L_IMM {
+			$$ = $6;
 		}
 
 dst_invalid	: R_DST_INVALID L_IMM { set_dst_invalid($2); }
@@ -184,41 +185,19 @@ dst		: L_IMM
 
 src		: /* empty */
 		{
-			if (!next_valid) {
-				yyerror("cannot omit src");
-			}
-			$$.begin = $$.end = src_next;
-			calc_next();
+			set_src(&$$, src_next, src_next);
 		}
 		| L_IMM
 		{
-			if (check_src($1, $1)) {
-				yyerror("illegal zone");
-			}
-			$$.begin = $$.end = $1;
-			src_next = $1;
-			calc_next();
+			set_src(&$$, $1, $1);
 		}
 		| L_IMM '-' L_IMM
 		{
-			if (check_src($1, $3)) {
-				yyerror("illegal zone");
-			}
-			$$.begin = $1; $$.end = $3;
-			src_next = $3;
-			calc_next();
+			set_src(&$$, $1, $3);
 		}
 		| '-' L_IMM
 		{
-			if (!next_valid) {
-				yyerror("cannot omit src");
-			}
-			if (check_src(src_next, $2)) {
-				yyerror("illegal zone");
-			}
-			$$.begin = src_next; $$.end = $2;
-			src_next = $2;
-			calc_next();
+			set_src(&$$, src_next, $2);
 		}
 lns		: R_LN
 		| lns R_LN
@@ -263,12 +242,17 @@ alloc_table(void)
 {
 	size_t i;
 	u_int32_t val = 0;
+	linear_zone_t *p;
 
-	table_size =
-	    (src_zone.row_end-src_zone.row_begin + 1) *
-	    (src_zone.col_end-src_zone.col_begin + 1);
-	table = malloc(table_size*dst_unit_bits / 8);
-	if (!table) {
+	i = rowcol_len;
+	p = &rowcol[--i];
+	table_size = p->width;
+	while (i > 0) {
+		p = &rowcol[--i];
+		table_size *= p->width;
+	}
+	table = (void *)malloc(table_size * dst_unit_bits / 8);
+	if (table == NULL) {
 		perror("malloc");
 		exit(1);
 	}
@@ -314,24 +298,37 @@ static void
 create_rowcol_info(struct _region *r)
 {
 	void *ptr;
-	size_t ofs;
+	size_t ofs, i, len;
 
 	ofs = 0;
 	ptr = malloc(_CITRUS_MAPPER_STD_ROWCOL_INFO_SIZE);
-	if (ptr==NULL)
+	if (ptr == NULL)
 		err(EXIT_FAILURE, "malloc");
-
-	put32(ptr, ofs, src_zone.col_bits); ofs++;
+	put32(ptr, ofs, rowcol_bits); ofs++;
 	put32(ptr, ofs, dst_invalid); ofs++;
-	put32(ptr, ofs, src_zone.row_begin); ofs++;
-	put32(ptr, ofs, src_zone.row_end); ofs++;
-	put32(ptr, ofs, src_zone.col_begin); ofs++;
-	put32(ptr, ofs, src_zone.col_end); ofs++;
-	put32(ptr, ofs, dst_unit_bits); ofs++;
-	put32(ptr, ofs, 0); /* pad */
 
-	_region_init(r, ptr, _CITRUS_MAPPER_STD_ROWCOL_INFO_SIZE);
+	/* XXX: keep backward compatibility */
+	switch (rowcol_len) {
+	case 1:
+		put32(ptr, ofs, 0); ofs++;
+		put32(ptr, ofs, 0); ofs++;
+	/*FALLTHROUGH*/
+	case 2:
+		len = 0;
+		break;
+	default:
+		len = rowcol_len;
+	}
+	for (i = 0; i < rowcol_len; ++i) {
+		put32(ptr, ofs, rowcol[i].begin); ofs++;
+		put32(ptr, ofs, rowcol[i].end); ofs++;
+	}
+	put32(ptr, ofs, dst_unit_bits); ofs++;
+	put32(ptr, ofs, len); ofs++;
+
+	_region_init(r, ptr, ofs * 4);
 }
+
 
 static void
 create_rowcol_ext_ilseq_info(struct _region *r)
@@ -446,39 +443,39 @@ set_name(char *str)
 	done_flag |= DF_NAME;
 }
 static void
-set_src_zone(const zone_t *zone)
+set_src_zone(u_int32_t val)
 {
+	size_t i;
+	linear_zone_t *p;
 
 	if (done_flag & DF_SRC_ZONE) {
 		warning("SRC_ZONE is duplicated. ignored this one");
 		return;
 	}
+	rowcol_bits = val;
 
 	/* sanity check */
-	if (zone->col_bits < 1 || zone->col_bits > 32) {
+	switch (rowcol_bits) {
+	case 8: case 16: case 32:
+		if (rowcol_len <= 32 / rowcol_bits)
+			break;
+	/*FALLTHROUGH*/
+	default: 
 		goto bad;
 	}
-
-	if (zone->col_bits != 32)
-		colmask = (1 << zone->col_bits )- 1;
-	else
-		colmask = ~0;
-	rowmask = ~colmask;
-	if (zone->col_begin > zone->col_end ||
-	    zone->row_begin > zone->row_end ||
-	    (zone->col_begin & rowmask) != 0 ||
-	    (zone->col_end & rowmask) != 0 ||
-	    ((zone->row_begin << zone->col_bits) & colmask) != 0 ||
-	    ((zone->row_end << zone->col_bits) & colmask) != 0) {
-bad:
-		yyerror("Illegal argument for SRC_ZONE");
+	rowcol_mask = 1 << (rowcol_bits - 1);
+	rowcol_mask |= rowcol_mask - 1;
+	for (i = 0; i < rowcol_len; ++i) {
+		p = &rowcol[i];
+		_DIAGASSERT(p->begin <= p->end);
+		if (p->end > rowcol_mask)
+			goto bad;
 	}
-
-	src_zone = *zone;
-
 	done_flag |= DF_SRC_ZONE;
-
 	return;
+
+bad:
+	yyerror("Illegal argument for SRC_ZONE");
 }
 static void
 set_dst_invalid(u_int32_t val)
@@ -546,57 +543,87 @@ set_dst_unit_bits(u_int32_t val)
 	}
 	done_flag |= DF_DST_UNIT_BITS;
 }
-static void
-calc_next(void)
-{
-	src_next++;
-	if (check_src(src_next, src_next))
-		next_valid = 0;
-	else
-		next_valid = 1;
-}
 static int
 check_src(u_int32_t begin, u_int32_t end)
 {
-	u_int32_t b_row = 0, e_row = 0, b_col, e_col;
+	size_t i;
+	linear_zone_t *p;
+	u_int32_t m, n;
 
-	b_col = begin & colmask;
-	e_col = end & colmask;
-	if (src_zone.col_bits != 32) {
-		b_row = begin >> src_zone.col_bits;
-		e_row = end >> src_zone.col_bits;
+	if (begin > end)
+		return 1;
+	if (begin < end) {
+		m = begin & ~rowcol_mask;
+		n = end & ~rowcol_mask;
+		if (m != n)
+			return 1;
 	}
-
-	if (b_row != e_row ||
-	    b_row < src_zone.row_begin ||
-	    b_row > src_zone.row_end ||
-	    e_row < src_zone.row_begin ||
-	    e_row > src_zone.row_end ||
-	    b_col < src_zone.col_begin ||
-	    b_col > src_zone.col_end ||
-	    e_col < src_zone.col_begin ||
-	    e_col > src_zone.col_end ||
-	    b_col>e_col) {
-		return (-1);
+	for (i = rowcol_len * rowcol_bits, p = &rowcol[0]; i > 0; ++p) {
+		i -= rowcol_bits;
+		m = (begin >> i) & rowcol_mask;
+		if (m < p->begin || m > p->end)
+			return 1;
 	}
-	return (0);
+	if (begin < end) {
+		n = end & rowcol_mask;
+		_DIAGASSERT(p > rowcol);
+		--p;
+		if (n < p->begin || n > p->end)
+			return 1;
+	}
+	return 0;
 }
 static void
 store(const linear_zone_t *lz, u_int32_t dst, int inc)
 {
-	u_int32_t row=0, col, ofs, i;
+	size_t i, ofs;
+	linear_zone_t *p;
+	u_int32_t n;
 
-	if (src_zone.col_bits != 32)
-		row = lz->begin >> src_zone.col_bits;
-	col = lz->begin & colmask;
-	ofs = (row-src_zone.row_begin) *
-	    (src_zone.col_end-src_zone.col_begin + 1) +
-	    (col-src_zone.col_begin);
-	for (i = lz->end - lz->begin + 1; i > 0; i--) {
+	ofs = 0;
+	for (i = rowcol_len * rowcol_bits, p = &rowcol[0]; i > 0; ++p) {
+		i -= rowcol_bits;
+		n = ((lz->begin >> i) & rowcol_mask) - p->begin;
+		ofs = (ofs * p->width) + n;
+	}
+	n = lz->width;
+	while (n-- > 0) {
 		(*putfunc)(table, ofs++, dst);
 		if (inc)
 			dst++;
 	}
+}
+static void
+set_range(u_int32_t begin, u_int32_t end)
+{
+	linear_zone_t *p;
+
+	if (rowcol_len >= _CITRUS_MAPPER_STD_ROWCOL_MAX)
+		goto bad;
+	p = &rowcol[rowcol_len++];
+
+	if (begin > end)
+		goto bad;
+	p->begin = begin, p->end = end;
+	p->width = end - begin + 1;
+
+	return;
+
+bad:
+	yyerror("Illegal argument for SRC_ZONE");
+}
+static void
+set_src(linear_zone_t *lz, u_int32_t begin, u_int32_t end)
+{
+	_DIAGASSERT(lz != NULL);
+
+	if (check_src(begin, end) != 0)
+		yyerror("illegal zone");
+
+	lz->begin = begin, lz->end = end;
+	lz->width = end - begin + 1;
+
+	src_next = end + 1;
 }
 
 static void

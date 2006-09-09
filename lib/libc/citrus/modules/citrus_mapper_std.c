@@ -1,7 +1,7 @@
-/*	$NetBSD: citrus_mapper_std.c,v 1.6 2006/03/19 01:17:30 christos Exp $	*/
+/*	$NetBSD: citrus_mapper_std.c,v 1.7 2006/09/09 14:35:17 tnozaki Exp $	*/
 
 /*-
- * Copyright (c)2003 Citrus Project,
+ * Copyright (c)2003, 2006 Citrus Project,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mapper_std.c,v 1.6 2006/03/19 01:17:30 christos Exp $");
+__RCSID("$NetBSD: citrus_mapper_std.c,v 1.7 2006/09/09 14:35:17 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -84,34 +84,34 @@ rowcol_convert(struct _citrus_mapper_std * __restrict ms,
 	       _index_t * __restrict dst, _index_t src,
 	       void * __restrict ps)
 {
-	struct _citrus_mapper_std_rowcol *rc = &ms->ms_rowcol;
-	_index_t row, col, idx;
+	struct _citrus_mapper_std_rowcol *rc;
+	size_t i;
+	struct _citrus_mapper_std_linear_zone *lz;
+	_index_t n, idx = 0;
 	u_int32_t conv;
 
-	if (rc->rc_src_col_bits == 32) {
-		row = 0;
-		col = src;
-	} else {
-		row = src >> rc->rc_src_col_bits;
-		col = src & ((1U<<rc->rc_src_col_bits)-1);
-	}
-	if (row < rc->rc_src_row_begin || row > rc->rc_src_row_end ||
-	    col < rc->rc_src_col_begin || col > rc->rc_src_col_end) {
-		switch (rc->rc_oob_mode) {
-		case _CITRUS_MAPPER_STD_OOB_NONIDENTICAL:
-			*dst = rc->rc_dst_invalid;
-			return _MAPPER_CONVERT_NONIDENTICAL;
-		case _CITRUS_MAPPER_STD_OOB_ILSEQ:
-			return _MAPPER_CONVERT_ILSEQ;
-		default:
-			return _MAPPER_CONVERT_FATAL;
+	_DIAGASSERT(ms != NULL);
+	_DIAGASSERT(dst ! NULL);
+	/* ps may be unused */
+	rc = &ms->ms_rowcol;
+
+	for (i = rc->rc_src_rowcol_len * rc->rc_src_rowcol_bits,
+	     lz = &rc->rc_src_rowcol[0]; i > 0; ++lz) {
+		i -= rc->rc_src_rowcol_bits;
+		n = (src >> i) & rc->rc_src_rowcol_mask;
+		if (n < lz->begin || n > lz->end) {
+			switch (rc->rc_oob_mode) {
+			case _CITRUS_MAPPER_STD_OOB_NONIDENTICAL:
+				*dst = rc->rc_dst_invalid;
+				return _MAPPER_CONVERT_NONIDENTICAL;
+			case _CITRUS_MAPPER_STD_OOB_ILSEQ:
+				return _MAPPER_CONVERT_ILSEQ;
+			default:
+				return _MAPPER_CONVERT_FATAL;
+			}
 		}
+		idx = idx * lz->width + n - lz->begin;
 	}
-
-	idx  =
-	    (row - rc->rc_src_row_begin)*rc->rc_src_col_width +
-	    (col - rc->rc_src_col_begin);
-
 	switch (rc->rc_dst_unit_bits) {
 	case 8:
 		conv = _region_peek8(&rc->rc_table, idx);
@@ -138,19 +138,132 @@ rowcol_convert(struct _citrus_mapper_std * __restrict ms,
 	return _MAPPER_CONVERT_SUCCESS;
 }
 
+static __inline int
+set_linear_zone(struct _citrus_mapper_std_linear_zone *lz,
+	u_int32_t begin, u_int32_t end)
+{
+	_DIAGASSERT(lz != NULL);
+
+	if (begin > end)
+		return EFTYPE;
+
+	lz->begin = begin;
+	lz->end = end;
+	lz->width= end - begin + 1;
+
+	return 0;
+}
+
+static __inline int
+rowcol_parse_variable_compat(struct _citrus_mapper_std_rowcol *rc,
+	struct _region *r)
+{
+	const struct _citrus_mapper_std_rowcol_info_compat_x *rcx;
+	struct _citrus_mapper_std_linear_zone *lz;
+	u_int32_t m, n;
+	int ret;
+
+	_DIAGASSERT(rc != NULL);
+	_DIAGASSERT(r != NULL && _region_size(r) == sizeof(*rcx));
+	rcx = _region_head(r);
+
+	rc->rc_dst_invalid = be32toh(rcx->rcx_dst_invalid);
+	rc->rc_dst_unit_bits = be32toh(rcx->rcx_dst_unit_bits);
+	m = be32toh(rcx->rcx_src_col_bits);
+	n = 1 << (m - 1);
+	n |= n - 1;
+	rc->rc_src_rowcol_bits = m;
+	rc->rc_src_rowcol_mask = n;
+
+	rc->rc_src_rowcol = malloc(2 *
+	    sizeof (*rc->rc_src_rowcol));
+	if (rc->rc_src_rowcol == NULL)
+		return ENOMEM;
+	lz = rc->rc_src_rowcol;
+	rc->rc_src_rowcol_len = 1;
+	m = be32toh(rcx->rcx_src_row_begin);
+	n = be32toh(rcx->rcx_src_row_end);
+	if (m + n > 0) {
+		ret = set_linear_zone(lz, m, n);
+		if (ret != 0)
+			return ret;
+		++rc->rc_src_rowcol_len, ++lz;
+	}
+	m = be32toh(rcx->rcx_src_col_begin);
+	n = be32toh(rcx->rcx_src_col_end);
+
+	return set_linear_zone(lz, m, n);
+}
+
+static __inline int
+rowcol_parse_variable(struct _citrus_mapper_std_rowcol *rc,
+	struct _region *r)
+{
+	const struct _citrus_mapper_std_rowcol_info_x *rcx;
+	struct _citrus_mapper_std_linear_zone *lz;
+	u_int32_t m, n;
+	size_t i;
+	int ret;
+
+	_DIAGASSERT(rc != NULL);
+	_DIAGASSERT(r != NULL && _region_size(r) == sizeof(*rcx));
+	rcx = _region_head(r);
+
+	rc->rc_dst_invalid = be32toh(rcx->rcx_dst_invalid);
+	rc->rc_dst_unit_bits = be32toh(rcx->rcx_dst_unit_bits);
+
+	m = be32toh(rcx->rcx_src_rowcol_bits);
+	n = 1 << (m - 1);
+	n |= n - 1;
+	rc->rc_src_rowcol_bits = m;
+	rc->rc_src_rowcol_mask = n;
+
+	rc->rc_src_rowcol_len = be32toh(rcx->rcx_src_rowcol_len);
+	if (rc->rc_src_rowcol_len > _CITRUS_MAPPER_STD_ROWCOL_MAX)
+		return EFTYPE;
+	rc->rc_src_rowcol = malloc(rc->rc_src_rowcol_len *
+	    sizeof (*rc->rc_src_rowcol));
+	if (rc->rc_src_rowcol == NULL)
+		return ENOMEM;
+	for (i = 0, lz = rc->rc_src_rowcol;
+	     i < rc->rc_src_rowcol_len; ++i, ++lz) {
+		m = be32toh(rcx->rcx_src_rowcol[i].begin),
+		n = be32toh(rcx->rcx_src_rowcol[i].end);
+		ret = set_linear_zone(lz, m, n);
+		if (ret != 0) {
+			free(rc->rc_src_rowcol);
+			rc->rc_src_rowcol = NULL;
+			return ret;
+		}
+	}
+	return 0;
+}
+
+static void
+rowcol_uninit(struct _citrus_mapper_std *ms)
+{
+	struct _citrus_mapper_std_rowcol *rc;
+	_DIAGASSERT(ms != NULL);
+
+	rc = &ms->ms_rowcol;
+	free(rc->rc_src_rowcol);
+}
 
 static int
 rowcol_init(struct _citrus_mapper_std *ms)
 {
 	int ret;
-	struct _citrus_mapper_std_rowcol *rc = &ms->ms_rowcol;
-	const struct _citrus_mapper_std_rowcol_info_x *rcx;
+	struct _citrus_mapper_std_rowcol *rc;
 	const struct _citrus_mapper_std_rowcol_ext_ilseq_info_x *eix;
 	struct _region r;
 	u_int64_t table_size;
+	size_t i;
+	struct _citrus_mapper_std_linear_zone *lz;
 
+	_DIAGASSERT(ms != NULL);
 	ms->ms_convert = &rowcol_convert;
-	ms->ms_uninit = NULL;
+	ms->ms_uninit = &rowcol_uninit;
+	rc = &ms->ms_rowcol;
 
 	/* get table region */
 	ret = _db_lookup_by_s(ms->ms_db, _CITRUS_MAPPER_STD_SYM_TABLE,
@@ -168,22 +281,27 @@ rowcol_init(struct _citrus_mapper_std *ms)
 			ret = EFTYPE;
 		return ret;
 	}
-	if (_region_size(&r) < sizeof(*rcx))
+	switch (_region_size(&r)) {
+	case _CITRUS_MAPPER_STD_ROWCOL_INFO_COMPAT_SIZE:
+		ret = rowcol_parse_variable_compat(rc, &r);
+		break;
+	case _CITRUS_MAPPER_STD_ROWCOL_INFO_SIZE:
+		ret = rowcol_parse_variable(rc, &r);
+		break;
+	default:
 		return EFTYPE;
-	rcx = _region_head(&r);
-
-	/* convert */
-#define CONV_ROWCOL(rc, rcx, elem)			\
-do {							\
-	(rc)->rc_##elem = be32toh((rcx)->rcx_##elem);	\
-} while (/*CONSTCOND*/0)
-	CONV_ROWCOL(rc, rcx, src_col_bits);
-	CONV_ROWCOL(rc, rcx, dst_invalid);
-	CONV_ROWCOL(rc, rcx, src_row_begin);
-	CONV_ROWCOL(rc, rcx, src_row_end);
-	CONV_ROWCOL(rc, rcx, src_col_begin);
-	CONV_ROWCOL(rc, rcx, src_col_end);
-	CONV_ROWCOL(rc, rcx, dst_unit_bits);
+	}
+	if (ret != 0)
+		return ret;
+	/* sanity check */
+	switch (rc->rc_src_rowcol_bits) {
+	case 8: case 16: case 32:
+		if (rc->rc_src_rowcol_len <= 32 / rc->rc_src_rowcol_bits)
+			break;
+	/*FALLTHROUGH*/
+	default:
+		return EFTYPE;
+	}
 
 	/* ilseq extension */
 	rc->rc_oob_mode = _CITRUS_MAPPER_STD_OOB_NONIDENTICAL;
@@ -200,19 +318,15 @@ do {							\
 		rc->rc_oob_mode = be32toh(eix->eix_oob_mode);
 		rc->rc_dst_ilseq = be32toh(eix->eix_dst_ilseq);
 	}
-	rc->rc_src_col_width = rc->rc_src_col_end - rc->rc_src_col_begin +1;
-
-	/* validation checks */
-	if (rc->rc_src_col_end < rc->rc_src_col_begin ||
-	    rc->rc_src_row_end < rc->rc_src_row_begin ||
-	    !(rc->rc_dst_unit_bits==8 || rc->rc_dst_unit_bits==16 ||
-	      rc->rc_dst_unit_bits==32) ||
-	    !(rc->rc_src_col_bits >= 0 && rc->rc_src_col_bits <= 32))
-		return EFTYPE;
 
 	/* calcurate expected table size */
-	table_size  = rc->rc_src_row_end - rc->rc_src_row_begin + 1;
-	table_size *= rc->rc_src_col_width;
+	i = rc->rc_src_rowcol_len;
+	lz = &rc->rc_src_rowcol[--i];
+	table_size = lz->width;
+	while (i > 0) {
+		lz = &rc->rc_src_rowcol[--i];
+		table_size *= lz->width;
+	}
 	table_size *= rc->rc_dst_unit_bits/8;
 
 	if (table_size > UINT32_MAX ||
