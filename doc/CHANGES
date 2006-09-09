@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.687 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.688 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -52,3 +52,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	arc: Add timecounter support. [gdamore 20060908]
 	ews4800mips: Add timecounter support. [gdamore 20060908]
 	news68k: Add timecounter support. From gdamore. [tsutsui 20060909]
+	evbsh5: Add timecounter support.  [gdamore 20060909]
+	todr(9): New machine independent time-of-day chip framework for
+		drivers, which provides uniform handling across all ports.
+		Not all ports have adopted it yet.  [gdamore 20060909]
