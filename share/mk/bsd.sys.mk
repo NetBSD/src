@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.134 2006/07/01 06:02:51 mrg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.135 2006/09/09 03:53:19 simonb Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -57,6 +57,10 @@ FFLAGS+=	-mieee
 
 .if ${MACHINE} == "sparc64" && ${MACHINE_ARCH} == "sparc"
 CFLAGS+=	-Wa,-Av8plus
+.endif
+
+.if ${MACHINE_ARCH} == "ns32k"
+CFLAGS+=	-Wno-uninitialized
 .endif
 
 CFLAGS+=	${CPUFLAGS}
