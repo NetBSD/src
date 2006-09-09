@@ -1,4 +1,4 @@
-# Id: Makefile.am,v 1.19.2.4 2005/07/01 09:11:59 manubsd Exp
+# Id: Makefile.am,v 1.23 2005/07/01 08:57:50 manubsd Exp
 
 sbin_PROGRAMS = racoon racoonctl plainrsa-gen
 noinst_PROGRAMS = eaytest
