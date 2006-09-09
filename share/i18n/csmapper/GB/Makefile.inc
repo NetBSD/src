@@ -1,16 +1,18 @@
-# $NetBSD: Makefile.inc,v 1.4 2006/08/19 10:58:41 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.5 2006/09/09 15:43:04 tnozaki Exp $
 
 .PATH: ${.CURDIR}/GB
 
 SRCS_mapper.dir+=	mapper.dir.GB
 SRCS_charset.pivot+=	charset.pivot.GB
 CLEANFILES+=		mapper.dir.GB charset.pivot.GB
-MAPS_GB=		GB2312%UCS.mps \
+MAPS_GB=		GB18030%UCS@BMP.mps \
+			GB2312%UCS.mps \
 			GB2312EXT%UCS.mps \
 			GB2312UDA1%UCS.mps \
 			GB2312UDA2%UCS.mps \
 			GBKEXT%UCS.mps \
 			GBKUDA%UCS.mps \
+			UCS@BMP%GB18030.mps \
 			UCS%GB2312.mps \
 			UCS%GB2312EXT.mps \
 			UCS%GB2312UDA1.mps \
