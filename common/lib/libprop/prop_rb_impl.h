@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_rb_impl.h,v 1.2 2006/09/09 09:35:16 xtraeme Exp $	*/
+/*	$NetBSD: prop_rb_impl.h,v 1.3 2006/09/09 15:01:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,10 +42,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <machine/endian.h>
-
-#undef RB_LEFT
-#undef RB_RIGHT
-#undef RB_PARENT
 
 struct rb_node {
 	struct rb_node *rb_nodes[3];
