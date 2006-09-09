@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.73 2006/07/23 22:06:05 ad Exp $	*/
+/*	$NetBSD: dcm.c,v 1.74 2006/09/09 11:09:48 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.73 2006/07/23 22:06:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.74 2006/09/09 11:09:48 tsutsui Exp $");
 
 #include "opt_kgdb.h"
 
@@ -790,7 +790,7 @@ dcmintr(void *arg)
 	 * See if it is time to check/change the interrupt rate.
 	 */
 	if (dcmistype < 0 &&
-	    (i = time.tv_sec - dis->dis_time) >= dcminterval) {
+	    (i = time_second - dis->dis_time) >= dcminterval) {
 		/*
 		 * If currently per-character and averaged over 70 interrupts
 		 * per-second (66 is threshold of 600 baud) in last interval,
@@ -814,7 +814,7 @@ dcmintr(void *arg)
 			dcmrint(sc);
 		}
 		dis->dis_intr = dis->dis_char = 0;
-		dis->dis_time = time.tv_sec;
+		dis->dis_time = time_second;
 	}
 	return 1;
 }
