@@ -1,7 +1,7 @@
-/*	$NetBSD: citrus_mapper_std_local.h,v 1.2 2003/07/12 15:39:21 tshiozak Exp $	*/
+/*	$NetBSD: citrus_mapper_std_local.h,v 1.3 2006/09/09 14:35:17 tnozaki Exp $	*/
 
 /*-
- * Copyright (c)2003 Citrus Project,
+ * Copyright (c)2003, 2006 Citrus Project,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,15 +31,19 @@
 
 typedef u_int32_t (*_citrus_mapper_std_getvalfunc_t)(const void *, u_int32_t);
 
+struct _citrus_mapper_std_linear_zone {
+	_citrus_index_t		begin;
+	_citrus_index_t		end;
+	_citrus_index_t		width;
+};
 struct _citrus_mapper_std_rowcol {
 	struct _citrus_region	rc_table;
-	int			rc_src_col_bits;
+	size_t			rc_src_rowcol_len;
+	struct _citrus_mapper_std_linear_zone
+				*rc_src_rowcol;
+	_citrus_index_t		rc_src_rowcol_bits;
+	_citrus_index_t		rc_src_rowcol_mask;
 	_citrus_index_t		rc_dst_invalid;
-	_citrus_index_t		rc_src_row_begin;
-	_citrus_index_t		rc_src_row_end;
-	_citrus_index_t		rc_src_col_begin;
-	_citrus_index_t		rc_src_col_end;
-	_citrus_index_t		rc_src_col_width;
 	_citrus_index_t		rc_dst_unit_bits;
 	int			rc_oob_mode;
 	_citrus_index_t		rc_dst_ilseq;
