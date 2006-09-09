@@ -1,4 +1,4 @@
-/*	$NetBSD: tmu.c,v 1.11 2006/09/09 22:33:13 gdamore Exp $	*/
+/*	$NetBSD: tmu.c,v 1.12 2006/09/09 22:40:42 gdamore Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmu.c,v 1.11 2006/09/09 22:33:13 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmu.c,v 1.12 2006/09/09 22:40:42 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,6 +250,8 @@ tmu_init_timecounter(struct tmu_softc *sc)
 	bus_space_write_1(sc->sc_bust, sc->sc_bush, TMU_REG_TSTR,
 	    bus_space_read_1(sc->sc_bust, sc->sc_bush, TMU_REG_TSTR) |
 	    TMU_TSTR(2));
+
+	tc_init(&sc->sc_tc);
 }
 
 static unsigned
