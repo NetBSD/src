@@ -1,0 +1,9 @@
+#	$NetBSD: files.udf,v 1.1.22.2 2006/09/09 02:57:06 rpaulo Exp $
+
+deffs	fs_udf.h			UDF
+
+file	fs/udf/udf_osta.c		udf
+file	fs/udf/udf_vfsops.c		udf
+file	fs/udf/udf_vnops.c		udf
+file	fs/udf/udf_subr.c		udf
+

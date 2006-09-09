@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.52 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.52.4.1 2006/09/09 03:00:00 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.52 2005/12/11 12:25:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.52.4.1 2006/09/09 03:00:00 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.52 2005/12/11 12:25:25 christos E
 #include <sys/malloc.h>
 #include <sys/trace.h>
 #include <sys/resourcevar.h>
+#include <sys/kauth.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
@@ -146,7 +147,6 @@ ext2fs_inactive(void *v)
 	struct inode *ip = VTOI(vp);
 	struct mount *mp;
 	struct lwp *l = ap->a_l;
-	struct timespec ts;
 	int error = 0;
 
 	if (prtactive && vp->v_usecount != 0)
@@ -161,8 +161,7 @@ ext2fs_inactive(void *v)
 		if (ext2fs_size(ip) != 0) {
 			error = ext2fs_truncate(vp, (off_t)0, 0, NOCRED, NULL);
 		}
-		nanotime(&ts);
-		ip->i_e2fs_dtime = ts.tv_sec;
+		ip->i_e2fs_dtime = time_uptime;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		ext2fs_vfree(vp, ip->i_number, ip->i_e2fs_mode);
 		vn_finished_write(mp, V_LOWER);
@@ -246,7 +245,7 @@ ext2fs_update(struct vnode *vp, const struct timespec *acc,
  */
 int
 ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
-    struct ucred *cred, struct proc *p)
+    kauth_cred_t cred, struct proc *p)
 {
 	daddr_t lastblock;
 	struct inode *oip = VTOI(ovp);
@@ -507,7 +506,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	bap = (int32_t *)bp->b_data;	/* XXX ondisk32 */
 	if (lastbn >= 0) {
 		/* XXX ondisk32 */
-		MALLOC(copy, int32_t *, fs->e2fs_bsize, M_TEMP, M_WAITOK);
+		copy = malloc(fs->e2fs_bsize, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)copy, (caddr_t)bap, (u_int)fs->e2fs_bsize);
 		memset((caddr_t)&bap[last + 1], 0,
 			(u_int)(NINDIR(fs) - (last + 1)) * sizeof (u_int32_t));

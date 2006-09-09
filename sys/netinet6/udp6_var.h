@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_var.h,v 1.19.4.1 2006/02/07 04:51:49 rpaulo Exp $	*/
+/*	$NetBSD: udp6_var.h,v 1.19.4.2 2006/09/09 02:58:55 rpaulo Exp $	*/
 /*	$KAME: udp6_var.h,v 1.11 2000/06/05 00:14:31 itojun Exp $	*/
 
 /*

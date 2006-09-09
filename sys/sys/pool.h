@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.47 2005/12/01 13:21:05 yamt Exp $	*/
+/*	$NetBSD: pool.h,v 1.47.4.1 2006/09/09 02:59:42 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -53,6 +53,9 @@
 #include <sys/queue.h>
 #include <sys/time.h>
 #include <sys/tree.h>
+#if defined(_KERNEL)
+#include <sys/callback.h>
+#endif /* defined(_KERNEL) */
 #endif
 
 #define	PCG_NOBJECTS		16
@@ -108,9 +111,13 @@ struct pool_allocator {
 	TAILQ_HEAD(, pool) pa_list;	/* list of pools using this allocator */
 	int		pa_flags;
 #define	PA_INITIALIZED	0x01
-#define	PA_WANT		0x02		/* wakeup any sleeping pools on free */
 	int		pa_pagemask;
 	int		pa_pageshift;
+	struct vm_map *pa_backingmap;
+#if defined(_KERNEL)
+	struct vm_map **pa_backingmapptr;
+	SLIST_ENTRY(pool_allocator) pa_q;
+#endif /* defined(_KERNEL) */
 };
 
 LIST_HEAD(pool_pagelist,pool_item_header);
@@ -159,6 +166,7 @@ struct pool {
 #define PR_LIMITFAIL	0x100	/* even if waiting, fail if we hit limit */
 #define PR_RECURSIVE	0x200	/* pool contains pools, for vmstat(8) */
 #define PR_NOTOUCH	0x400	/* don't use free items to keep internal state*/
+#define PR_NOALIGN	0x800	/* don't assume backend alignment */
 
 	/*
 	 * `pr_slock' protects the pool's data structures when removing
@@ -205,6 +213,10 @@ struct pool {
 
 	const char	*pr_entered_file; /* reentrancy check */
 	long		pr_entered_line;
+
+#if defined(_KERNEL)
+	struct callback_entry pr_reclaimerentry;
+#endif
 };
 #endif /* __POOL_EXPOSE */
 
@@ -217,6 +229,11 @@ struct pool {
  */
 extern struct pool_allocator pool_allocator_kmem;
 extern struct pool_allocator pool_allocator_nointr;
+#ifdef POOL_SUBPAGE
+/* The above are subpage allocators in this case. */
+extern struct pool_allocator pool_allocator_kmem_fullpage;
+extern struct pool_allocator pool_allocator_nointr_fullpage;
+#endif
 
 struct link_pool_init {	/* same as args to pool_init() */
 	struct pool *pp;
@@ -234,7 +251,7 @@ static const struct link_pool_init _link_ ## pp[1] = {			\
 };									\
 __link_set_add_rodata(pools, _link_ ## pp)
 
-void		link_pool_init(void);
+void		pool_subsystem_init(void);
 
 void		pool_init(struct pool *, size_t, u_int, u_int,
 		    int, const char *, struct pool_allocator *);

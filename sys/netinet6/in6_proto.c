@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.61.4.1 2006/02/07 04:58:11 rpaulo Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.61.4.2 2006/09/09 02:58:55 rpaulo Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.61.4.1 2006/02/07 04:58:11 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.61.4.2 2006/09/09 02:58:55 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -114,6 +114,11 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.61.4.1 2006/02/07 04:58:11 rpaulo Ex
 #include <netinet6/ipcomp.h>
 #endif /* IPSEC */
 
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
+#endif
+
 #include <netinet6/ip6protosw.h>
 
 #include <net/net_osdep.h>
@@ -133,13 +138,11 @@ const struct ip6protosw inet6sw[] = {
   0,		0,		0,		0,
   0,
   ip6_init,	0,		frag6_slowtimo,	frag6_drain,
-  NULL,
 },
 { SOCK_DGRAM,	&inet6domain,	IPPROTO_UDP,	PR_ATOMIC|PR_ADDR|PR_PURGEIF,
   udp6_input,	0,		udp6_ctlinput,	ip6_ctloutput,
   udp6_usrreq,	udp6_init,
   0,		0,		0,
-  NULL,
 },
 { SOCK_STREAM,	&inet6domain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS|PR_PURGEIF,
   tcp6_input,	0,		tcp6_ctlinput,	tcp_ctloutput,
@@ -149,7 +152,6 @@ const struct ip6protosw inet6sw[] = {
 #else
   tcp_init,	0,		tcp_slowtimo,	tcp_drain,
 #endif
-  NULL,
 },
 { SOCK_RAW,	&inet6domain,	IPPROTO_RAW,	PR_ATOMIC|PR_ADDR|PR_PURGEIF,
   rip6_input,	rip6_output,	rip6_ctlinput,	rip6_ctloutput,
@@ -159,8 +161,7 @@ const struct ip6protosw inet6sw[] = {
 { SOCK_RAW,	&inet6domain,	IPPROTO_ICMPV6,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   icmp6_input,	rip6_output,	rip6_ctlinput,	rip6_ctloutput,
   rip6_usrreq,
-  icmp6_init,	icmp6_fasttimo,	0,		0,
-  NULL,
+  icmp6_init,	0,		0,		0,
 },
 { SOCK_RAW,	&inet6domain,	IPPROTO_DSTOPTS,PR_ATOMIC|PR_ADDR,
   dest6_input,	0,	 	0,		0,
@@ -182,21 +183,18 @@ const struct ip6protosw inet6sw[] = {
   ah6_input,	0,	 	ah6_ctlinput,	0,
   0,
   0,		0,		0,		0,
-  NULL,
 },
 #ifdef IPSEC_ESP
 { SOCK_RAW,	&inet6domain,	IPPROTO_ESP,	PR_ATOMIC|PR_ADDR,
   esp6_input,	0,	 	esp6_ctlinput,	0,
   0,
   0,		0,		0,		0,
-  NULL,
 },
 #endif
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPCOMP,	PR_ATOMIC|PR_ADDR,
   ipcomp6_input, 0,	 	0,		0,
   0,
   0,		0,		0,		0,
-  NULL,
 },
 #endif /* IPSEC */
 #ifdef INET
@@ -211,6 +209,13 @@ const struct ip6protosw inet6sw[] = {
   rip6_usrreq,
   encap_init,	0,		0,		0,
 },
+#if NCARP > 0
+{ SOCK_RAW,	&inet6domain,	IPPROTO_CARP,	PR_ATOMIC|PR_ADDR,
+  carp6_proto_input,	rip6_output,	0,		rip6_ctloutput,
+  rip6_usrreq,
+  0,		0,		0,		0,
+},
+#endif /* NCARP */
 #ifdef ISO
 { SOCK_RAW,	&inet6domain,	IPPROTO_EON,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   encap6_input,	rip6_output,	encap6_ctlinput, rip6_ctloutput,
@@ -231,14 +236,18 @@ const struct ip6protosw inet6sw[] = {
 },
 };
 
-struct domain inet6domain =
-    { AF_INET6, "internet6", 0, 0, 0,
-      (const struct protosw *)inet6sw,
-      (const struct protosw *)&inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])],
-      rn_inithead,
-      offsetof(struct sockaddr_in6, sin6_addr) << 3,
-      sizeof(struct sockaddr_in6),
-      in6_domifattach, in6_domifdetach, };
+struct domain inet6domain = {
+	AF_INET6, "internet6", NULL, NULL, NULL,
+	(const struct protosw *)inet6sw,
+	(const struct protosw *)&inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])],
+	rn_inithead,
+	offsetof(struct sockaddr_in6, sin6_addr) << 3,
+	sizeof(struct sockaddr_in6),
+	in6_domifattach, in6_domifdetach,
+	{ &ip6intrq, NULL },
+	{ NULL },
+	MOWNER_INIT
+};
 
 /*
  * Internet configuration info
@@ -265,6 +274,7 @@ int	ip6_auto_flowlabel = 1;
 int	ip6_use_deprecated = 1;	/* allow deprecated addr (RFC2462 5.5.4) */
 int	ip6_rr_prune = 5;	/* router renumbering prefix
 				 * walk list every 5 sec. */
+int	ip6_mcast_pmtu = 0;	/* enable pMTU discovery for multicast? */
 int	ip6_v6only = 1;
 
 int	ip6_keepfaith = 0;

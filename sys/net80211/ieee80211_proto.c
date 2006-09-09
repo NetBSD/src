@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.23 2005/11/18 16:40:09 skrll Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.23.4.1 2006/09/09 02:58:25 rpaulo Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.23 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.23 2005/11/18 16:40:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.23.4.1 2006/09/09 02:58:25 rpaulo Exp $");
 #endif
 
 /*
@@ -119,6 +119,8 @@ ieee80211_proto_attach(struct ieee80211com *ic)
 	ic->ic_rtsthreshold = IEEE80211_RTS_DEFAULT;
 	ic->ic_fragthreshold = IEEE80211_FRAG_DEFAULT;
 	ic->ic_fixed_rate = IEEE80211_FIXED_RATE_NONE;
+	ic->ic_bmiss_max = IEEE80211_BMISS_MAX;
+	ic->ic_mcast_rate = IEEE80211_MCAST_RATE_DEFAULT;
 	ic->ic_protmode = IEEE80211_PROT_CTSONLY;
 	ic->ic_roaming = IEEE80211_ROAMING_AUTO;
 
@@ -531,11 +533,11 @@ void
 ieee80211_set11gbasicrates(struct ieee80211_rateset *rs, enum ieee80211_phymode mode)
 {
 	static const struct ieee80211_rateset basic[] = {
-	    { 0 },			/* IEEE80211_MODE_AUTO */
+	    { .rs_nrates = 0 },		/* IEEE80211_MODE_AUTO */
 	    { 3, { 12, 24, 48 } },	/* IEEE80211_MODE_11A */
 	    { 2, { 2, 4 } },		/* IEEE80211_MODE_11B */
 	    { 4, { 2, 4, 11, 22 } },	/* IEEE80211_MODE_11G (mixed b/g) */
-	    { 0 },			/* IEEE80211_MODE_FH */
+	    { .rs_nrates = 0 },		/* IEEE80211_MODE_FH */
 					/* IEEE80211_MODE_PUREG (not yet) */
 	    { 7, { 2, 4, 11, 22, 12, 24, 48 } },
 	};
@@ -563,68 +565,68 @@ typedef struct phyParamType {
 } paramType;
 
 static const struct phyParamType phyParamForAC_BE[IEEE80211_MODE_MAX] = {
-	{ 3, 4, 6 },		/* IEEE80211_MODE_AUTO */
-	{ 3, 4, 6 },		/* IEEE80211_MODE_11A */ 
-	{ 3, 5, 7 },		/* IEEE80211_MODE_11B */ 
-	{ 3, 4, 6 },		/* IEEE80211_MODE_11G */ 
-	{ 3, 5, 7 },		/* IEEE80211_MODE_FH */ 
-	{ 2, 3, 5 },		/* IEEE80211_MODE_TURBO_A */ 
-	{ 2, 3, 5 },		/* IEEE80211_MODE_TURBO_G */ 
+	{ 3, 4, 6, 0, 0, },		/* IEEE80211_MODE_AUTO */
+	{ 3, 4, 6, 0, 0, },		/* IEEE80211_MODE_11A */ 
+	{ 3, 5, 7, 0, 0, },		/* IEEE80211_MODE_11B */ 
+	{ 3, 4, 6, 0, 0, },		/* IEEE80211_MODE_11G */ 
+	{ 3, 5, 7, 0, 0, },		/* IEEE80211_MODE_FH */ 
+	{ 2, 3, 5, 0, 0, },		/* IEEE80211_MODE_TURBO_A */ 
+	{ 2, 3, 5, 0, 0, },		/* IEEE80211_MODE_TURBO_G */ 
 };
 static const struct phyParamType phyParamForAC_BK[IEEE80211_MODE_MAX] = {
-	{ 7, 4, 10 },		/* IEEE80211_MODE_AUTO */
-	{ 7, 4, 10 },		/* IEEE80211_MODE_11A */ 
-	{ 7, 5, 10 },		/* IEEE80211_MODE_11B */ 
-	{ 7, 4, 10 },		/* IEEE80211_MODE_11G */ 
-	{ 7, 5, 10 },		/* IEEE80211_MODE_FH */ 
-	{ 7, 3, 10 },		/* IEEE80211_MODE_TURBO_A */ 
-	{ 7, 3, 10 },		/* IEEE80211_MODE_TURBO_G */ 
+	{ 7, 4, 10, 0, 0, },		/* IEEE80211_MODE_AUTO */
+	{ 7, 4, 10, 0, 0, },		/* IEEE80211_MODE_11A */ 
+	{ 7, 5, 10, 0, 0, },		/* IEEE80211_MODE_11B */ 
+	{ 7, 4, 10, 0, 0, },		/* IEEE80211_MODE_11G */ 
+	{ 7, 5, 10, 0, 0, },		/* IEEE80211_MODE_FH */ 
+	{ 7, 3, 10, 0, 0, },		/* IEEE80211_MODE_TURBO_A */ 
+	{ 7, 3, 10, 0, 0, },		/* IEEE80211_MODE_TURBO_G */ 
 };
 static const struct phyParamType phyParamForAC_VI[IEEE80211_MODE_MAX] = {
-	{ 1, 3, 4,  94 },	/* IEEE80211_MODE_AUTO */
-	{ 1, 3, 4,  94 },	/* IEEE80211_MODE_11A */ 
-	{ 1, 4, 5, 188 },	/* IEEE80211_MODE_11B */ 
-	{ 1, 3, 4,  94 },	/* IEEE80211_MODE_11G */ 
-	{ 1, 4, 5, 188 },	/* IEEE80211_MODE_FH */ 
-	{ 1, 2, 3,  94 },	/* IEEE80211_MODE_TURBO_A */ 
-	{ 1, 2, 3,  94 },	/* IEEE80211_MODE_TURBO_G */ 
+	{ 1, 3, 4,  94, 0, },	/* IEEE80211_MODE_AUTO */
+	{ 1, 3, 4,  94, 0, },	/* IEEE80211_MODE_11A */ 
+	{ 1, 4, 5, 188, 0, },	/* IEEE80211_MODE_11B */ 
+	{ 1, 3, 4,  94, 0, },	/* IEEE80211_MODE_11G */ 
+	{ 1, 4, 5, 188, 0, },	/* IEEE80211_MODE_FH */ 
+	{ 1, 2, 3,  94, 0, },	/* IEEE80211_MODE_TURBO_A */ 
+	{ 1, 2, 3,  94, 0, },	/* IEEE80211_MODE_TURBO_G */ 
 };
 static const struct phyParamType phyParamForAC_VO[IEEE80211_MODE_MAX] = {
-	{ 1, 2, 3,  47 },	/* IEEE80211_MODE_AUTO */
-	{ 1, 2, 3,  47 },	/* IEEE80211_MODE_11A */ 
-	{ 1, 3, 4, 102 },	/* IEEE80211_MODE_11B */ 
-	{ 1, 2, 3,  47 },	/* IEEE80211_MODE_11G */ 
-	{ 1, 3, 4, 102 },	/* IEEE80211_MODE_FH */ 
-	{ 1, 2, 2,  47 },	/* IEEE80211_MODE_TURBO_A */ 
-	{ 1, 2, 2,  47 },	/* IEEE80211_MODE_TURBO_G */ 
+	{ 1, 2, 3,  47, 0, },	/* IEEE80211_MODE_AUTO */
+	{ 1, 2, 3,  47, 0, },	/* IEEE80211_MODE_11A */ 
+	{ 1, 3, 4, 102, 0, },	/* IEEE80211_MODE_11B */ 
+	{ 1, 2, 3,  47, 0, },	/* IEEE80211_MODE_11G */ 
+	{ 1, 3, 4, 102, 0, },	/* IEEE80211_MODE_FH */ 
+	{ 1, 2, 2,  47, 0, },	/* IEEE80211_MODE_TURBO_A */ 
+	{ 1, 2, 2,  47, 0, },	/* IEEE80211_MODE_TURBO_G */ 
 };
 
 static const struct phyParamType bssPhyParamForAC_BE[IEEE80211_MODE_MAX] = {
-	{ 3, 4, 10 },		/* IEEE80211_MODE_AUTO */
-	{ 3, 4, 10 },		/* IEEE80211_MODE_11A */ 
-	{ 3, 5, 10 },		/* IEEE80211_MODE_11B */ 
-	{ 3, 4, 10 },		/* IEEE80211_MODE_11G */ 
-	{ 3, 5, 10 },		/* IEEE80211_MODE_FH */ 
-	{ 2, 3, 10 },		/* IEEE80211_MODE_TURBO_A */ 
-	{ 2, 3, 10 },		/* IEEE80211_MODE_TURBO_G */ 
+	{ 3, 4, 10, 0, 0, },		/* IEEE80211_MODE_AUTO */
+	{ 3, 4, 10, 0, 0, },		/* IEEE80211_MODE_11A */ 
+	{ 3, 5, 10, 0, 0, },		/* IEEE80211_MODE_11B */ 
+	{ 3, 4, 10, 0, 0, },		/* IEEE80211_MODE_11G */ 
+	{ 3, 5, 10, 0, 0, },		/* IEEE80211_MODE_FH */ 
+	{ 2, 3, 10, 0, 0, },		/* IEEE80211_MODE_TURBO_A */ 
+	{ 2, 3, 10, 0, 0, },		/* IEEE80211_MODE_TURBO_G */ 
 };
 static const struct phyParamType bssPhyParamForAC_VI[IEEE80211_MODE_MAX] = {
-	{ 2, 3, 4,  94 },	/* IEEE80211_MODE_AUTO */
-	{ 2, 3, 4,  94 },	/* IEEE80211_MODE_11A */ 
-	{ 2, 4, 5, 188 },	/* IEEE80211_MODE_11B */ 
-	{ 2, 3, 4,  94 },	/* IEEE80211_MODE_11G */ 
-	{ 2, 4, 5, 188 },	/* IEEE80211_MODE_FH */ 
-	{ 2, 2, 3,  94 },	/* IEEE80211_MODE_TURBO_A */ 
-	{ 2, 2, 3,  94 },	/* IEEE80211_MODE_TURBO_G */ 
+	{ 2, 3, 4,  94, 0, },	/* IEEE80211_MODE_AUTO */
+	{ 2, 3, 4,  94, 0, },	/* IEEE80211_MODE_11A */ 
+	{ 2, 4, 5, 188, 0, },	/* IEEE80211_MODE_11B */ 
+	{ 2, 3, 4,  94, 0, },	/* IEEE80211_MODE_11G */ 
+	{ 2, 4, 5, 188, 0, },	/* IEEE80211_MODE_FH */ 
+	{ 2, 2, 3,  94, 0, },	/* IEEE80211_MODE_TURBO_A */ 
+	{ 2, 2, 3,  94, 0, },	/* IEEE80211_MODE_TURBO_G */ 
 };
 static const struct phyParamType bssPhyParamForAC_VO[IEEE80211_MODE_MAX] = {
-	{ 2, 2, 3,  47 },	/* IEEE80211_MODE_AUTO */
-	{ 2, 2, 3,  47 },	/* IEEE80211_MODE_11A */ 
-	{ 2, 3, 4, 102 },	/* IEEE80211_MODE_11B */ 
-	{ 2, 2, 3,  47 },	/* IEEE80211_MODE_11G */ 
-	{ 2, 3, 4, 102 },	/* IEEE80211_MODE_FH */ 
-	{ 1, 2, 2,  47 },	/* IEEE80211_MODE_TURBO_A */ 
-	{ 1, 2, 2,  47 },	/* IEEE80211_MODE_TURBO_G */ 
+	{ 2, 2, 3,  47, 0, },	/* IEEE80211_MODE_AUTO */
+	{ 2, 2, 3,  47, 0, },	/* IEEE80211_MODE_11A */ 
+	{ 2, 3, 4, 102, 0, },	/* IEEE80211_MODE_11B */ 
+	{ 2, 2, 3,  47, 0, },	/* IEEE80211_MODE_11G */ 
+	{ 2, 3, 4, 102, 0, },	/* IEEE80211_MODE_FH */ 
+	{ 1, 2, 2,  47, 0, },	/* IEEE80211_MODE_TURBO_A */ 
+	{ 1, 2, 2,  47, 0, },	/* IEEE80211_MODE_TURBO_G */ 
 };
 
 void
@@ -723,13 +725,13 @@ void
 ieee80211_wme_updateparams_locked(struct ieee80211com *ic)
 {
 	static const paramType phyParam[IEEE80211_MODE_MAX] = {
-		{ 2, 4, 10, 64 },	/* IEEE80211_MODE_AUTO */ 
-		{ 2, 4, 10, 64 },	/* IEEE80211_MODE_11A */ 
-		{ 2, 5, 10, 64 },	/* IEEE80211_MODE_11B */ 
-		{ 2, 4, 10, 64 },	/* IEEE80211_MODE_11G */ 
-		{ 2, 5, 10, 64 },	/* IEEE80211_MODE_FH */ 
-		{ 1, 3, 10, 64 },	/* IEEE80211_MODE_TURBO_A */ 
-		{ 1, 3, 10, 64 },	/* IEEE80211_MODE_TURBO_G */ 
+		{ 2, 4, 10, 64, 0, },	/* IEEE80211_MODE_AUTO */ 
+		{ 2, 4, 10, 64, 0, },	/* IEEE80211_MODE_11A */ 
+		{ 2, 5, 10, 64, 0, },	/* IEEE80211_MODE_11B */ 
+		{ 2, 4, 10, 64, 0, },	/* IEEE80211_MODE_11G */ 
+		{ 2, 5, 10, 64, 0, },	/* IEEE80211_MODE_FH */ 
+		{ 1, 3, 10, 64, 0, },	/* IEEE80211_MODE_TURBO_A */ 
+		{ 1, 3, 10, 64, 0, },	/* IEEE80211_MODE_TURBO_G */ 
 	};
 	struct ieee80211_wme_state *wme = &ic->ic_wme;
 	const struct wmeParams *wmep;
@@ -856,7 +858,46 @@ sta_disassoc(void *arg, struct ieee80211_node *ni)
 		ieee80211_node_leave(ic, ni);
 	}
 }
+#endif /* !IEEE80211_NO_HOSTAP */
 
+void
+ieee80211_beacon_miss(struct ieee80211com *ic)
+{
+
+	if (ic->ic_flags & IEEE80211_F_SCAN) {
+		/* XXX check ic_curchan != ic_bsschan? */
+		return;
+	}
+	IEEE80211_DPRINTF(ic,
+		IEEE80211_MSG_STATE | IEEE80211_MSG_DEBUG,
+		"%s\n", "beacon miss");
+
+	/*
+	 * Our handling is only meaningful for stations that are
+	 * associated; any other conditions else will be handled
+	 * through different means (e.g. the tx timeout on mgt frames).
+	 */
+	if (ic->ic_opmode != IEEE80211_M_STA || ic->ic_state != IEEE80211_S_RUN)
+		return;
+
+	if (++ic->ic_bmiss_count < ic->ic_bmiss_max) {
+		/*
+		 * Send a directed probe req before falling back to a scan;
+		 * if we receive a response ic_bmiss_count will be reset.
+		 * Some cards mistakenly report beacon miss so this avoids
+		 * the expensive scan if the ap is still there.
+		 */
+		ieee80211_send_probereq(ic->ic_bss, ic->ic_myaddr,
+			ic->ic_bss->ni_bssid, ic->ic_bss->ni_bssid,
+			ic->ic_bss->ni_essid, ic->ic_bss->ni_esslen,
+			ic->ic_opt_ie, ic->ic_opt_ie_len);
+		return;
+	}
+	ic->ic_bmiss_count = 0;
+	ieee80211_new_state(ic, IEEE80211_S_SCAN, 0);
+}
+
+#ifndef IEEE80211_NO_HOSTAP
 static void
 sta_deauth(void *arg, struct ieee80211_node *ni)
 {
@@ -950,19 +991,11 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 			break;
 		case IEEE80211_S_SCAN:
 			/*
-			 * Scan next. If doing an active scan and the
-			 * channel is not marked passive-only then send
-			 * a probe request.  Otherwise just listen for
-			 * beacons on the channel.
+			 * Scan next. If doing an active scan probe
+			 * for the requested ap (if any).
 			 */
-			if ((ic->ic_flags & IEEE80211_F_ASCAN) &&
-			    (ic->ic_curchan->ic_flags & IEEE80211_CHAN_PASSIVE) == 0) {
-				ieee80211_send_probereq(ni,
-					ic->ic_myaddr, ifp->if_broadcastaddr,
-					ifp->if_broadcastaddr,
-					ic->ic_des_essid, ic->ic_des_esslen,
-					ic->ic_opt_ie, ic->ic_opt_ie_len);
-			}
+			if (ic->ic_flags & IEEE80211_F_ASCAN)
+				ieee80211_probe_curchan(ic, 0);
 			break;
 		case IEEE80211_S_RUN:
 			/* beacon miss */

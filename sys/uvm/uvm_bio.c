@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.43 2006/01/31 14:11:25 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.43.2.1 2006/09/09 03:00:13 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.43 2006/01/31 14:11:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.43.2.1 2006/09/09 03:00:13 rpaulo Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.43 2006/01/31 14:11:25 yamt Exp $");
  */
 
 static int	ubc_fault(struct uvm_faultinfo *, vaddr_t, struct vm_page **,
-			  int, int, vm_fault_t, vm_prot_t, int);
+			  int, int, vm_prot_t, int);
 static struct ubc_map *ubc_find_mapping(struct uvm_object *, voff_t);
 
 /*
@@ -106,10 +106,7 @@ static struct ubc_object
 
 struct uvm_pagerops ubc_pager =
 {
-	NULL,		/* init */
-	NULL,		/* reference */
-	NULL,		/* detach */
-	ubc_fault,	/* fault */
+	.pgo_fault = ubc_fault,
 	/* ... rest are NULL */
 };
 
@@ -204,7 +201,7 @@ ubc_init(void)
 
 static int
 ubc_fault(struct uvm_faultinfo *ufi, vaddr_t ign1, struct vm_page **ign2,
-    int ign3, int ign4, vm_fault_t fault_type, vm_prot_t access_type,
+    int ign3, int ign4, vm_prot_t access_type,
     int flags)
 {
 	struct uvm_object *uobj;
@@ -341,9 +338,16 @@ again:
 				prot &= ~VM_PROT_WRITE;
 
 			if (prot & VM_PROT_WRITE) {
-				pg = uvm_loanbreak(pg);
-				if (pg == NULL)
+				struct vm_page *newpg;
+
+				newpg = uvm_loanbreak(pg);
+				if (newpg == NULL) {
+					uvm_page_unbusy(&pg, 1);
+					simple_unlock(&uobj->vmobjlock);
+					uvm_wait("ubc_loanbrk");
 					continue; /* will re-fault */
+				}
+				pg = newpg;
 			}
 		}
 
@@ -359,14 +363,20 @@ again:
 		    pg->offset < umap->writeoff ||
 		    pg->offset + PAGE_SIZE > umap->writeoff + umap->writelen);
 		mask = rdonly ? ~VM_PROT_WRITE : VM_PROT_ALL;
-		pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
-		    prot & mask, access_type & mask);
+		error = pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
+		    prot & mask, PMAP_CANFAIL | (access_type & mask));
 		uvm_lock_pageq();
 		uvm_pageactivate(pg);
 		uvm_unlock_pageq();
-		pg->flags &= ~(PG_BUSY);
+		pg->flags &= ~(PG_BUSY|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
 		simple_unlock(&uobj->vmobjlock);
+		if (error) {
+			UVMHIST_LOG(ubchist, "pmap_enter fail %d",
+			    error, 0, 0, 0);
+			uvm_wait("ubc_pmfail");
+			/* will refault */
+		}
 	}
 	pmap_update(ufi->orig_map->pmap);
 	return 0;

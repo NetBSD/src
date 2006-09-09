@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.157 2006/01/16 21:45:38 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.157.2.1 2006/09/09 02:59:24 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.157 2006/01/16 21:45:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.157.2.1 2006/09/09 02:59:24 rpaulo Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.157 2006/01/16 21:45:38 yamt Exp $");
 #include <sys/time.h>
 #include <sys/dirent.h>
 #include <sys/once.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -642,7 +643,7 @@ nfsm_reqh(np, procid, hsiz, bposp)
 struct mbuf *
 nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 	verf_str, mrest, mrest_len, mbp, xidp)
-	struct ucred *cr;
+	kauth_cred_t cr;
 	int nmflag;
 	int procid;
 	int auth_type;
@@ -709,12 +710,12 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 		nfsm_build(tl, u_int32_t *, auth_len);
 		*tl++ = 0;		/* stamp ?? */
 		*tl++ = 0;		/* NULL hostname */
-		*tl++ = txdr_unsigned(cr->cr_uid);
-		*tl++ = txdr_unsigned(cr->cr_gid);
+		*tl++ = txdr_unsigned(kauth_cred_geteuid(cr));
+		*tl++ = txdr_unsigned(kauth_cred_getegid(cr));
 		grpsiz = (auth_len >> 2) - 5;
 		*tl++ = txdr_unsigned(grpsiz);
 		for (i = 0; i < grpsiz; i++)
-			*tl++ = txdr_unsigned(cr->cr_groups[i]);
+			*tl++ = txdr_unsigned(kauth_cred_group(cr, i)); /* XXX elad review */
 		break;
 	case RPCAUTH_KERB4:
 		siz = auth_len;
@@ -825,19 +826,11 @@ nfsm_mbuftouio(mrep, uiop, siz, dpos)
 				len = mp->m_len;
 			}
 			xfer = (left > len) ? len : left;
-#ifdef notdef
-			/* Not Yet.. */
-			if (uiop->uio_iov->iov_op != NULL)
-				(*(uiop->uio_iov->iov_op))
-				(mbufcp, uiocp, xfer);
-			else
-#endif
-			if (uiop->uio_segflg == UIO_SYSSPACE)
-				memcpy(uiocp, mbufcp, xfer);
-			else
-				if ((error = copyout_proc(uiop->uio_lwp->l_proc,
-				    mbufcp, uiocp, xfer)) != 0)
-					return error;
+			error = copyout_vmspace(uiop->uio_vmspace, mbufcp,
+			    uiocp, xfer);
+			if (error) {
+				return error;
+			}
 			left -= xfer;
 			len -= xfer;
 			mbufcp += xfer;
@@ -882,6 +875,7 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 	int xfer, left, mlen;
 	int uiosiz, clflg, rem;
 	char *cp;
+	int error;
 
 #ifdef DIAGNOSTIC
 	if (uiop->uio_iovcnt != 1)
@@ -914,18 +908,11 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 			}
 			xfer = (left > mlen) ? mlen : left;
 			cp = mtod(mp, caddr_t) + mp->m_len;
-#ifdef notdef
-			/* Not Yet.. */
-			if (uiop->uio_iov->iov_op != NULL)
-				(*(uiop->uio_iov->iov_op))(uiocp, cp, xfer);
-			else
-#endif
-			if (uiop->uio_segflg == UIO_SYSSPACE)
-				(void)memcpy(cp, uiocp, xfer);
-			else
-				/*XXX: Check error */
-				(void)copyin_proc(uiop->uio_lwp->l_proc, uiocp,
-				    cp, xfer);
+			error = copyin_vmspace(uiop->uio_vmspace, uiocp, cp,
+			    xfer);
+			if (error) {
+				/* XXX */
+			}
 			mp->m_len += xfer;
 			left -= xfer;
 			uiocp += xfer;
@@ -1409,7 +1396,7 @@ nfs_enterdircache(vp, off, blkoff, en, blkno)
 	struct nfsdircache *ndp = NULL;
 	struct nfsdircache *newndp = NULL;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	int hashent, gen, overwrite;
+	int hashent = 0, gen, overwrite;	/* XXX: GCC */
 
 	/*
 	 * XXX refuse entries for offset 0. amd(8) erroneously sets
@@ -1464,6 +1451,7 @@ retry:
 			 * We're allocating a new entry, so bump the
 			 * generation number.
 			 */
+			KASSERT(np->n_dirgens);
 			gen = ++np->n_dirgens[hashent];
 			if (gen == 0) {
 				np->n_dirgens[hashent]++;
@@ -1574,9 +1562,11 @@ nfs_init0(void)
 #ifdef NFSSERVER
 	nfsrv_init(0);			/* Init server data structures */
 	nfsrv_initcache();		/* Init the server request cache */
-	pool_init(&nfs_srvdesc_pool, sizeof(struct nfsrv_descript),
-	    0, 0, 0, "nfsrvdescpl", &pool_allocator_nointr);
 #endif /* NFSSERVER */
+
+#if defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY))
+	nfsdreq_init();
+#endif /* defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY)) */
 
 #if defined(NFSSERVER) || !defined(NFS_V2_ONLY)
 	/*
@@ -1852,7 +1842,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 			}
 		}
 	}
-	np->n_attrstamp = mono_time.tv_sec;
+	np->n_attrstamp = time_second;
 	if (vaper != NULL) {
 		memcpy((caddr_t)vaper, (caddr_t)vap, sizeof(*vap));
 		if (np->n_flag & NCHG) {
@@ -1880,7 +1870,7 @@ nfs_getattrcache(vp, vaper)
 	struct vattr *vap;
 
 	if (np->n_attrstamp == 0 ||
-	    (mono_time.tv_sec - np->n_attrstamp) >= NFS_ATTRTIMEO(nmp, np)) {
+	    (time_second - np->n_attrstamp) >= NFS_ATTRTIMEO(nmp, np)) {
 		nfsstats.attrcache_misses++;
 		return (ENOENT);
 	}
@@ -1947,7 +1937,7 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 	if (docheck) {
 		struct vnode *vp = NFSTOV(np);
 		struct nfsmount *nmp;
-		long now = mono_time.tv_sec;
+		long now = time_second;
 #if defined(DEBUG)
 		const char *reason = NULL; /* XXX: gcc */
 #endif
@@ -2031,7 +2021,7 @@ nfs_cookieheuristic(vp, flagp, l, cred)
 	struct vnode *vp;
 	int *flagp;
 	struct lwp *l;
-	struct ucred *cred;
+	kauth_cred_t cred;
 {
 	struct uio auio;
 	struct iovec aiov;
@@ -2047,10 +2037,9 @@ nfs_cookieheuristic(vp, flagp, l, cred)
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_lwp = NULL;
 	auio.uio_resid = NFS_DIRFRAGSIZ;
 	auio.uio_offset = 0;
+	UIO_SETUP_SYSSPACE(&auio);
 
 	error = VOP_READDIR(vp, &auio, cred, &eof, &cookies, &nc);
 
@@ -2097,9 +2086,9 @@ nfs_cookieheuristic(vp, flagp, l, cred)
  * it is not.
  */
 int
-nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
+nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 	struct nameidata *ndp;
-	fhandle_t *fhp;
+	nfsrvfh_t *nsfh;
 	uint32_t len;
 	struct nfssvc_sock *slp;
 	struct mbuf *nam;
@@ -2165,7 +2154,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 	/*
 	 * Extract and set starting directory.
 	 */
-	error = nfsrv_fhtovp(fhp, FALSE, &dp, ndp->ni_cnd.cn_cred, slp,
+	error = nfsrv_fhtovp(nsfh, FALSE, &dp, ndp->ni_cnd.cn_cred, slp,
 	    nam, &rdonly, kerbflag, pubflag);
 	if (error)
 		goto out;
@@ -2293,9 +2282,8 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 		auio.uio_iovcnt = 1;
 		auio.uio_offset = 0;
 		auio.uio_rw = UIO_READ;
-		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_lwp = NULL;
 		auio.uio_resid = MAXPATHLEN;
+		UIO_SETUP_SYSSPACE(&auio);
 		error = VOP_READLINK(ndp->ni_vp, &auio, cnp->cn_cred);
 		if (error) {
 		badlink:
@@ -2390,6 +2378,7 @@ nfs_zeropad(mp, len, nul)
 			}
 			count -= m->m_len;
 		}
+		KASSERT(m && m->m_next);
 		m_freem(m->m_next);
 		m->m_next = NULL;
 	}
@@ -2534,28 +2523,30 @@ nfsm_srvfattr(nfsd, vap, fp)
  *	- if not lockflag unlock it with VOP_UNLOCK()
  */
 int
-nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
-	fhandle_t *fhp;
+nfsrv_fhtovp(nsfh, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
+	nfsrvfh_t *nsfh;
 	int lockflag;
 	struct vnode **vpp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct nfssvc_sock *slp;
 	struct mbuf *nam;
 	int *rdonlyp;
 	int kerbflag;
+	int pubflag;
 {
 	struct mount *mp;
-	int i;
-	struct ucred *credanon;
+	kauth_cred_t credanon;
 	int error, exflags;
 	struct sockaddr_in *saddr;
+	fhandle_t *fhp;
 
+	fhp = NFSRVFH_FHANDLE(nsfh);
 	*vpp = (struct vnode *)0;
 
-	if (nfs_ispublicfh(fhp)) {
+	if (nfs_ispublicfh(nsfh)) {
 		if (!pubflag || !nfs_pub.np_valid)
 			return (ESTALE);
-		fhp = &nfs_pub.np_handle;
+		fhp = nfs_pub.np_handle;
 	}
 
 	error = netexport_check(&fhp->fh_fsid, nam, &mp, &exflags, &credanon);
@@ -2593,12 +2584,9 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 	} else if (kerbflag) {
 		vput(*vpp);
 		return (NFSERR_AUTHERR | AUTH_TOOWEAK);
-	} else if (cred->cr_uid == 0 || (exflags & MNT_EXPORTANON)) {
-		cred->cr_uid = credanon->cr_uid;
-		cred->cr_gid = credanon->cr_gid;
-		for (i = 0; i < credanon->cr_ngroups && i < NGROUPS; i++)
-			cred->cr_groups[i] = credanon->cr_groups[i];
-		cred->cr_ngroups = i;
+	} else if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    NULL) == 0 || (exflags & MNT_EXPORTANON)) {
+		kauth_cred_clone(credanon, cred);
 	}
 	if (exflags & MNT_EXRDONLY)
 		*rdonlyp = 1;
@@ -2611,20 +2599,24 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 
 /*
  * WebNFS: check if a filehandle is a public filehandle. For v3, this
- * means a length of 0, for v2 it means all zeroes. nfsm_srvmtofh has
- * transformed this to all zeroes in both cases, so check for it.
+ * means a length of 0, for v2 it means all zeroes.
  */
 int
-nfs_ispublicfh(fhp)
-	fhandle_t *fhp;
+nfs_ispublicfh(const nfsrvfh_t *nsfh)
 {
-	char *cp = (char *)fhp;
+	const char *cp = (const void *)(NFSRVFH_DATA(nsfh));
 	int i;
 
-	for (i = 0; i < NFSX_V3FH; i++)
+	if (NFSRVFH_SIZE(nsfh) == 0) {
+		return TRUE;
+	}
+	if (NFSRVFH_SIZE(nsfh) != NFSX_V2FH) {
+		return FALSE;
+	}
+	for (i = 0; i < NFSX_V2FH; i++)
 		if (*cp++ != 0)
-			return (FALSE);
-	return (TRUE);
+			return FALSE;
+	return TRUE;
 }
 #endif /* NFSSERVER */
 
@@ -2940,48 +2932,6 @@ nfsrv_errmap(nd, err)
 	return (NFSERR_IO);
 }
 
-/*
- * Sort the group list in increasing numerical order.
- * (Insertion sort by Chris Torek, who was grossed out by the bubble sort
- *  that used to be here.)
- */
-void
-nfsrvw_sort(list, num)
-        gid_t *list;
-        int num;
-{
-	int i, j;
-	gid_t v;
-
-	/* Insertion sort. */
-	for (i = 1; i < num; i++) {
-		v = list[i];
-		/* find correct slot for value v, moving others up */
-		for (j = i; --j >= 0 && v < list[j];)
-			list[j + 1] = list[j];
-		list[j + 1] = v;
-	}
-}
-
-/*
- * copy credentials making sure that the result can be compared with memcmp().
- */
-void
-nfsrv_setcred(incred, outcred)
-	struct ucred *incred, *outcred;
-{
-	int i;
-
-	memset((caddr_t)outcred, 0, sizeof (struct ucred));
-	outcred->cr_ref = 1;
-	outcred->cr_uid = incred->cr_uid;
-	outcred->cr_gid = incred->cr_gid;
-	outcred->cr_ngroups = incred->cr_ngroups;
-	for (i = 0; i < incred->cr_ngroups; i++)
-		outcred->cr_groups[i] = incred->cr_groups[i];
-	nfsrvw_sort(outcred->cr_groups, outcred->cr_ngroups);
-}
-
 u_int32_t
 nfs_getxid()
 {
@@ -3033,3 +2983,50 @@ nfs_renewxid(struct nfsreq *req)
 	m_copyback(req->r_mreq, off, sizeof(xid), (void *)&xid);
 	req->r_xid = xid;
 }
+
+#if defined(NFSSERVER)
+int
+nfsrv_composefh(struct vnode *vp, nfsrvfh_t *nsfh, boolean_t v3)
+{
+	int error;
+	size_t fhsize;
+
+	fhsize = NFSD_MAXFHSIZE;
+	error = vfs_composefh(vp, (void *)NFSRVFH_DATA(nsfh), &fhsize);
+	if (NFSX_FHTOOBIG_P(fhsize, v3)) {
+		error = EOPNOTSUPP;
+	}
+	if (error != 0) {
+		return error;
+	}
+	if (!v3 && fhsize < NFSX_V2FH) {
+		memset((char *)NFSRVFH_DATA(nsfh) + fhsize, 0,
+		    NFSX_V2FH - fhsize);
+		fhsize = NFSX_V2FH;
+	}
+	if ((fhsize % NFSX_UNSIGNED) != 0) {
+		return EOPNOTSUPP;
+	}
+	nsfh->nsfh_size = fhsize;
+	return 0;
+}
+
+int
+nfsrv_comparefh(const nfsrvfh_t *fh1, const nfsrvfh_t *fh2)
+{
+
+	if (NFSRVFH_SIZE(fh1) != NFSRVFH_SIZE(fh2)) {
+		return NFSRVFH_SIZE(fh2) - NFSRVFH_SIZE(fh1);
+	}
+	return memcmp(NFSRVFH_DATA(fh1), NFSRVFH_DATA(fh2), NFSRVFH_SIZE(fh1));
+}
+
+void
+nfsrv_copyfh(nfsrvfh_t *fh1, const nfsrvfh_t *fh2)
+{
+	size_t size;
+
+	fh1->nsfh_size = size = NFSRVFH_SIZE(fh2);
+	memcpy(NFSRVFH_DATA(fh1), NFSRVFH_DATA(fh2), size);
+}
+#endif /* defined(NFSSERVER) */

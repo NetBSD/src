@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.19 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.19.4.1 2006/09/09 02:56:56 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.19 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.19.4.1 2006/09/09 02:56:56 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.19 2005/12/11 12:24:25 christos E
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
@@ -91,7 +92,7 @@ int	iso_shipdir(struct isoreaddir *);
 int
 cd9660_mknod(ndp, vap, cred, p)
 	struct nameidata *ndp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct vattr *vap;
 	struct proc *p;
 {
@@ -152,7 +153,7 @@ cd9660_access(v)
 	struct vop_access_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -185,7 +186,7 @@ cd9660_getattr(v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -218,9 +219,8 @@ cd9660_getattr(v)
 		auio.uio_iovcnt = 1;
 		auio.uio_offset = 0;
 		auio.uio_rw = UIO_READ;
-		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_lwp = NULL;
 		auio.uio_resid = MAXPATHLEN;
+		UIO_SETUP_SYSSPACE(&auio);
 		rdlnk.a_uio = &auio;
 		rdlnk.a_vp = ap->a_vp;
 		rdlnk.a_cred = ap->a_cred;
@@ -247,7 +247,7 @@ cd9660_read(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
@@ -419,7 +419,7 @@ cd9660_readdir(v)
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int *a_eofflag;
 		off_t **a_cookies;
 		int *a_ncookies;
@@ -492,6 +492,7 @@ cd9660_readdir(v)
 		/*
 		 * Get pointer to next entry.
 		 */
+		KASSERT(bp != NULL);
 		ep = (struct iso_directory_record *)
 			((char *)bp->b_data + entryoffsetinblock);
 
@@ -623,7 +624,7 @@ cd9660_readlink(v)
 	struct vop_readlink_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	ISONODE	*ip;
 	ISODIR	*dirp;
@@ -633,6 +634,7 @@ cd9660_readlink(v)
 	u_short	symlen;
 	int	error;
 	char	*symname;
+	boolean_t use_pnbuf;
 
 	ip  = VTOI(ap->a_vp);
 	imp = ip->i_mnt;
@@ -672,19 +674,21 @@ cd9660_readlink(v)
 	 * Now get a buffer
 	 * Abuse a namei buffer for now.
 	 */
-	if (uio->uio_segflg == UIO_SYSSPACE &&
-	    uio->uio_iov->iov_len >= MAXPATHLEN)
-		symname = uio->uio_iov->iov_base;
-	else
+	use_pnbuf = !VMSPACE_IS_KERNEL_P(uio->uio_vmspace) ||
+	    uio->uio_iov->iov_len < MAXPATHLEN;
+	if (use_pnbuf) {
 		symname = PNBUF_GET();
+	} else {
+		symname = uio->uio_iov->iov_base;
+	}
 
 	/*
 	 * Ok, we just gathering a symbolic name in SL record.
 	 */
 	if (cd9660_rrip_getsymname(dirp, symname, &symlen, imp) == 0) {
-		if (uio->uio_segflg != UIO_SYSSPACE ||
-		    uio->uio_iov->iov_len < MAXPATHLEN)
+		if (use_pnbuf) {
 			PNBUF_PUT(symname);
+		}
 		brelse(bp);
 		return (EINVAL);
 	}
@@ -696,8 +700,7 @@ cd9660_readlink(v)
 	/*
 	 * return with the symbolic name to caller's.
 	 */
-	if (uio->uio_segflg != UIO_SYSSPACE ||
-	    uio->uio_iov->iov_len < MAXPATHLEN) {
+	if (use_pnbuf) {
 		error = uiomove(symname, symlen, uio);
 		PNBUF_PUT(symname);
 		return (error);
@@ -849,7 +852,7 @@ cd9660_setattr(v)
 		struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vattr *vap = ap->a_vap;

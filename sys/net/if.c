@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.163 2005/12/11 23:05:24 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.163.4.1 2006/09/09 02:58:06 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.163 2005/12/11 23:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.163.4.1 2006/09/09 02:58:06 rpaulo Exp $");
 
 #include "opt_inet.h"
 
@@ -106,7 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.163 2005/12/11 23:05:24 thorpej Exp $");
 #include "opt_compat_ultrix.h"
 #include "opt_compat_43.h"
 #include "opt_atalk.h"
-#include "opt_ccitt.h"
 #include "opt_natm.h"
 #include "opt_pfil_hooks.h"
 
@@ -123,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.163 2005/12/11 23:05:24 thorpej Exp $");
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -144,6 +144,11 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.163 2005/12/11 23:05:24 thorpej Exp $");
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
+#endif
+
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
 #endif
 
 #if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || defined(COMPAT_ULTRIX) || defined(LKM)
@@ -171,10 +176,7 @@ static int if_cloners_count;
 struct pfil_head if_pfil;	/* packet filtering hook for interfaces */
 #endif
 
-#if defined(INET) || defined(INET6) || defined(NETATALK) || defined(NS) || \
-    defined(ISO) || defined(CCITT) || defined(NATM)
 static void if_detach_queues(struct ifnet *, struct ifqueue *);
-#endif
 
 /*
  * Network interface utility routines.
@@ -575,6 +577,13 @@ if_detach(struct ifnet *ifp)
 		altq_detach(&ifp->if_snd);
 #endif
 
+
+#if NCARP > 0
+	/* Remove the interface from any carp group it is a part of.  */
+	if (ifp->if_carp && ifp->if_type != IFT_CARP)
+		carp_ifdetach(ifp);
+#endif
+
 #ifdef PFIL_HOOKS
 	(void)pfil_run_hooks(&if_pfil,
 	    (struct mbuf **)PFIL_IFNET_DETACH, ifp, PFIL_IFNET);
@@ -679,51 +688,19 @@ if_detach(struct ifnet *ifp)
 	TAILQ_REMOVE(&ifnet, ifp, if_list);
 
 	/*
-	 * remove packets came from ifp, from software interrupt queues.
-	 * net/netisr_dispatch.h is not usable, as some of them use
-	 * strange queue names.
+	 * remove packets that came from ifp, from software interrupt queues.
 	 */
-#define IF_DETACH_QUEUES(x) \
-do { \
-	extern struct ifqueue x; \
-	if_detach_queues(ifp, & x); \
-} while (/*CONSTCOND*/ 0)
-#ifdef INET
-#if NARP > 0
-	IF_DETACH_QUEUES(arpintrq);
-#endif
-	IF_DETACH_QUEUES(ipintrq);
-#endif
-#ifdef INET6
-	IF_DETACH_QUEUES(ip6intrq);
-#endif
-#ifdef NETATALK
-	IF_DETACH_QUEUES(atintrq1);
-	IF_DETACH_QUEUES(atintrq2);
-#endif
-#ifdef NS
-	IF_DETACH_QUEUES(nsintrq);
-#endif
-#ifdef ISO
-	IF_DETACH_QUEUES(clnlintrq);
-#endif
-#ifdef CCITT
-	IF_DETACH_QUEUES(llcintrq);
-	IF_DETACH_QUEUES(hdintrq);
-#endif
-#ifdef NATM
-	IF_DETACH_QUEUES(natmintrq);
-#endif
-#ifdef DECNET
-	IF_DETACH_QUEUES(decnetintrq);
-#endif
-#undef IF_DETACH_QUEUES
+	DOMAIN_FOREACH(dp) {
+		for (i = 0; i < __arraycount(dp->dom_ifqueues); i++) {
+			if (dp->dom_ifqueues[i] == NULL)
+				break;
+			if_detach_queues(ifp, dp->dom_ifqueues[i]);
+		}
+	}
 
 	splx(s);
 }
 
-#if defined(INET) || defined(INET6) || defined(NETATALK) || defined(NS) || \
-    defined(ISO) || defined(CCITT) || defined(NATM) || defined(DECNET)
 static void
 if_detach_queues(struct ifnet *ifp, struct ifqueue *q)
 {
@@ -756,7 +733,6 @@ if_detach_queues(struct ifnet *ifp, struct ifqueue *q)
 		IF_DROP(q);
 	}
 }
-#endif /* defined(INET) || ... */
 
 /*
  * Callback for a radix tree walk to delete all references to an
@@ -1172,8 +1148,10 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 	if (ifp->if_link_state != link_state) {
 		ifp->if_link_state = link_state;
 		rt_ifmsg(ifp);
-		log(LOG_NOTICE, "%s: link state changed to %s\n", ifp->if_xname,
-		    (link_state == LINK_STATE_UP) ? "UP" : "DOWN" );
+#if NCARP > 0
+		if (ifp->if_carp)
+			carp_carpdev_state(ifp);
+#endif
 	}
 }
 
@@ -1193,6 +1171,10 @@ if_down(struct ifnet *ifp)
 	     ifa = TAILQ_NEXT(ifa, ifa_list))
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
 	IFQ_PURGE(&ifp->if_snd);
+#if NCARP > 0
+	if (ifp->if_carp)
+		carp_carpdev_state(ifp);
+#endif
 	rt_ifmsg(ifp);
 }
 
@@ -1215,6 +1197,10 @@ if_up(struct ifnet *ifp)
 	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
 	     ifa = TAILQ_NEXT(ifa, ifa_list))
 		pfctlinput(PRC_IFUP, ifa->ifa_addr);
+#endif
+#if NCARP > 0
+	if (ifp->if_carp)
+		carp_carpdev_state(ifp);
 #endif
 	rt_ifmsg(ifp);
 #ifdef INET6
@@ -1363,7 +1349,8 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
 	case SIOCIFCREATE:
 	case SIOCIFDESTROY:
 		if (l) {
-			error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+			error = kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 			if (error)
 				return error;
 		}
@@ -1401,7 +1388,8 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
 	case SIOCS80211BSSID:
 	case SIOCS80211CHANNEL:
 		if (l) {
-			error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+			error = kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 			if (error)
 				return error;
 		}

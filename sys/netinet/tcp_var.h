@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.133.4.2 2006/03/14 17:45:28 rpaulo Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.133.4.3 2006/09/09 02:58:47 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -217,6 +217,9 @@ struct tcpcb {
 #define	TF_REASSEMBLING	0x1000		/* we're busy reassembling */
 #define	TF_DEAD		0x2000		/* dead and to-be-released */
 #define	TF_PMTUD_PEND	0x4000		/* Path MTU Discovery pending */
+#define	TF_ECN_PERMIT	0x10000		/* other side said is ECN-ready */
+#define	TF_ECN_SND_CWR	0x20000		/* ECN CWR in queue */
+#define	TF_ECN_SND_ECE	0x40000		/* ECN ECE in queue */
 #define	TF_SIGNATURE	0x400000	/* require MD5 digests (RFC2385) */
 
 
@@ -225,7 +228,7 @@ struct tcpcb {
 	struct	callout t_delack_ch;	/* delayed ACK callout */
 /*
  * The following fields are used as in the protocol specification.
- * See RFC783, Dec. 1981, page 21.
+ * See RFC793, Dec. 1981, page 21.
  */
 /* send sequence variables */
 	tcp_seq	snd_una;		/* send unacknowledged */
@@ -319,7 +322,14 @@ struct tcpcb {
 	u_int	t_pmtud_nextmtu;	/* Advertised Next-Hop MTU from ICMP */
 	u_short	t_pmtud_ip_len;		/* IP length from ICMP payload */
 	u_short	t_pmtud_ip_hl;		/* IP header length from ICMP payload */
+
+	uint8_t t_ecn_retries;		/* # of ECN setup retries */
 };
+
+/*
+ * Macros to aid ECN TCP.
+ */
+#define TCP_ECN_ALLOWED(tp)	(tp->t_flags & TF_ECN_PERMIT)
 
 /*
  * Macros to aid SACK/FACK TCP.
@@ -333,12 +343,12 @@ struct tcpcb {
 /*
  * TCP reassembly queue locks.
  */
-static inline int tcp_reass_lock_try (struct tcpcb *)
+static __inline int tcp_reass_lock_try (struct tcpcb *)
 	__attribute__((__unused__));
-static inline void tcp_reass_unlock (struct tcpcb *)
+static __inline void tcp_reass_unlock (struct tcpcb *)
 	__attribute__((__unused__));
 
-static inline int
+static __inline int
 tcp_reass_lock_try(tp)
 	struct tcpcb *tp;
 {
@@ -358,7 +368,7 @@ tcp_reass_lock_try(tp)
 	return (1);
 }
 
-static inline void
+static __inline void
 tcp_reass_unlock(tp)
 	struct tcpcb *tp;
 {
@@ -482,6 +492,7 @@ struct syn_cache {
 #define	SCF_TIMESTAMP		0x0002		/* peer will do timestamps */
 #define	SCF_DEAD		0x0004		/* this entry to be released */
 #define SCF_SACK_PERMIT		0x0008		/* peer will do SACK */
+#define SCF_ECN_PERMIT		0x0010		/* peer will do ECN */
 #define SCF_SIGNATURE	0x40			/* send MD5 digests */
 
 	struct mbuf *sc_ipopts;			/* IP options */
@@ -633,6 +644,10 @@ struct	tcpstat {
 	u_quad_t tcps_selfquench;	/* # of ENOBUFS we get on output */
 	u_quad_t tcps_badsig;		/* # of drops due to bad signature */
 	u_quad_t tcps_goodsig;		/* # of packets with good signature */
+
+	u_quad_t tcps_ecn_shs;		/* # of sucessful ECN handshakes */
+	u_quad_t tcps_ecn_ce;		/* # of packets with CE bit */
+	u_quad_t tcps_ecn_ect;		/* # of packets with ECT(0) bit */
 };
 
 /*
@@ -732,6 +747,8 @@ extern	int tcp_ack_on_push;	/* ACK immediately on PUSH */
 extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_log_refused;	/* log refused connections */
+extern	int tcp_do_ecn;		/* TCP ECN enabled/disabled? */
+extern	int tcp_ecn_maxretries;	/* Max ECN setup retries */
 extern int tcp_sack_tp_maxholes;	/* Max holes per connection. */
 extern int tcp_sack_globalmaxholes;	/* Max holes per system. */
 extern int tcp_sack_globalholes;	/* Number of holes present. */

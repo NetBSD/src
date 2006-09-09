@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.29 2005/12/28 09:18:46 christos Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.29.4.1 2006/09/09 02:59:08 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.29 2005/12/28 09:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.29.4.1 2006/09/09 02:59:08 rpaulo Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.29 2005/12/28 09:18:46 christos Exp $
 #define LOCAL_CREDIT_EXPAND
 
 #include "opt_inet.h"
-#include "opt_ccitt.h"
 #include "opt_iso.h"
 
 #include <sys/param.h>
@@ -110,11 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.29 2005/12/28 09:18:46 christos Exp $
 #include <netiso/tp_var.h>
 #include <netiso/cons.h>
 #include <netiso/clnp.h>
-
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_var.h>
-#include <netccitt/pk_extern.h>
 
 #if 0
 static void copyQOSparms (struct tp_conn_param *, struct tp_conn_param *);
@@ -736,13 +730,6 @@ done:
 	return error;
 }
 
-#ifndef CCITT
-void
-pk_flowcontrol(struct pklcd *lcp, int foo, int bar)
-{
-}
-#endif
-
 /* class zero version */
 void
 tp0_stash(struct tp_pcb *tpcb, struct tp_event *e)
@@ -750,7 +737,6 @@ tp0_stash(struct tp_pcb *tpcb, struct tp_event *e)
 #define E e->TPDU_ATTR(DT)
 
 	struct sockbuf *sb = &tpcb->tp_sock->so_rcv;
-	struct isopcb *isop = (struct isopcb *) tpcb->tp_npcb;
 
 #ifdef TP_PERF_MEAS
 	if (DOPERF(tpcb)) {
@@ -787,23 +773,13 @@ tp0_stash(struct tp_pcb *tpcb, struct tp_event *e)
 #endif
 	if (tpcb->tp_netservice != ISO_CONS)
 		printf("tp0_stash: tp running over something weird\n");
-	else {
-		struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
-		pk_flowcontrol(lcp, sbspace(sb) <= 0, 1);
-	}
 }
 
 void
 tp0_openflow(struct tp_pcb *tpcb)
 {
-	struct isopcb *isop = (struct isopcb *) tpcb->tp_npcb;
 	if (tpcb->tp_netservice != ISO_CONS)
 		printf("tp0_openflow: tp running over something weird\n");
-	else {
-		struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
-		if (lcp->lcd_rxrnr_condition)
-			pk_flowcontrol(lcp, 0, 0);
-	}
 }
 
 #ifdef TP_PERF_MEAS

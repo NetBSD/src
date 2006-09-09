@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.88.4.1 2006/02/05 03:03:09 rpaulo Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.88.4.2 2006/09/09 02:58:47 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.88.4.1 2006/02/05 03:03:09 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.88.4.2 2006/09/09 02:58:47 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.88.4.1 2006/02/05 03:03:09 rpaulo Exp $
 #include <sys/errno.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -503,17 +504,15 @@ rip_usrreq(struct socket *so, int req,
     struct mbuf *m, struct mbuf *nam, struct mbuf *control, struct lwp *l)
 {
 	struct inpcb *inp;
-	struct proc *p;
 	int s;
 	int error = 0;
 #ifdef MROUTING
 	extern struct socket *ip_mrouter;
 #endif
 
-	p = l ? l->l_proc : NULL;
 	if (req == PRU_CONTROL)
 		return (in_control(so, (long)m, (caddr_t)nam,
-		    (struct ifnet *)control, p));
+		    (struct ifnet *)control, l));
 
 	if (req == PRU_PURGEIF) {
 		in_pcbpurgeif0(&rawcbtable, (struct ifnet *)control);
@@ -540,7 +539,8 @@ rip_usrreq(struct socket *so, int req,
 			error = EISCONN;
 			break;
 		}
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))) {
+		if (l == 0 || (error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag))) {
 			error = EACCES;
 			break;
 		}

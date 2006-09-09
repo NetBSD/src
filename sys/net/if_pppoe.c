@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.64 2006/01/31 23:50:15 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.64.2.1 2006/09/09 02:58:06 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.64 2006/01/31 23:50:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.64.2.1 2006/09/09 02:58:06 rpaulo Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
 #include "opt_pfil_hooks.h"
+#include "opt_pppoe.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.64 2006/01/31 23:50:15 martin Exp $")
 #include <sys/socket.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
+#include <sys/kauth.h>
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_ether.h>
@@ -81,6 +83,7 @@ struct pppoetag {
 } __attribute__((__packed__));
 
 #define PPPOE_HEADERLEN	sizeof(struct pppoehdr)
+#define	PPPOE_OVERHEAD	(PPPOE_HEADERLEN + 2)
 #define	PPPOE_VERTYPE	0x11	/* VER=1, TYPE = 1 */
 
 #define	PPPOE_TAG_EOL		0x0000		/* end of list */
@@ -101,7 +104,7 @@ struct pppoetag {
 #define	PPPOE_CODE_PADT		0xA7		/* Active Discovery Terminate */
 
 /* two byte PPP protocol discriminator, then IP data */
-#define	PPPOE_MAXMTU	(ETHERMTU-PPPOE_HEADERLEN-2)
+#define	PPPOE_MAXMTU	(ETHERMTU - PPPOE_OVERHEAD)
 
 /* Add a 16 bit unsigned value to a buffer pointed to by PTR */
 #define	PPPOE_ADD_16(PTR, VAL)			\
@@ -148,8 +151,8 @@ struct pppoe_softc {
 };
 
 /* incoming traffic will be queued here */
-struct ifqueue ppoediscinq = { NULL };
-struct ifqueue ppoeinq = { NULL };
+struct ifqueue ppoediscinq = { .ifq_maxlen = IFQ_MAXLEN };
+struct ifqueue ppoeinq = { .ifq_maxlen = IFQ_MAXLEN };
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void * pppoe_softintr = NULL;
@@ -216,9 +219,6 @@ pppoeattach(int count)
 {
 	LIST_INIT(&pppoe_softc_list);
 	if_clone_attach(&pppoe_cloner);
-
-	ppoediscinq.ifq_maxlen = IFQ_MAXLEN;
-	ppoeinq.ifq_maxlen = IFQ_MAXLEN;
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	pppoe_softintr = softintr_establish(IPL_SOFTNET, pppoe_softintr_handler, NULL);
@@ -708,7 +708,8 @@ breakbreak:;
 	}
 
 done:
-	m_freem(m);
+	if (m)
+		m_freem(m);
 	return;
 }
 
@@ -848,7 +849,7 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 static int
 pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 {
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;	/* XXX */
 	struct pppoe_softc *sc = (struct pppoe_softc*)ifp;
 	int error = 0;
 
@@ -856,14 +857,26 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 	case PPPOESETPARMS:
 	{
 		struct pppoediscparms *parms = (struct pppoediscparms*)data;
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return error;
 		if (parms->eth_ifname[0] != 0) {
-			sc->sc_eth_if = ifunit(parms->eth_ifname);
-			if (sc->sc_eth_if == NULL)
+			struct ifnet	*eth_if;
+
+			eth_if = ifunit(parms->eth_ifname);
+			if (eth_if == NULL || eth_if->if_dlt != DLT_EN10MB) {
+				sc->sc_eth_if = NULL;
 				return ENXIO;
+			}
+
+			if (sc->sc_sppp.pp_if.if_mtu >
+			    eth_if->if_mtu - PPPOE_OVERHEAD) {
+				sc->sc_sppp.pp_if.if_mtu = eth_if->if_mtu -
+				    PPPOE_OVERHEAD;
+			}
+			sc->sc_eth_if = eth_if;
 		}
-		if (parms->ac_name) {
+		if (parms->ac_name != NULL) {
 			size_t s;
 			char *b = malloc(parms->ac_name_len + 1, M_DEVBUF,
 			    M_WAITOK);
@@ -883,7 +896,7 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 				free(sc->sc_concentrator_name, M_DEVBUF);
 			sc->sc_concentrator_name = b;
 		}
-		if (parms->service_name) {
+		if (parms->service_name != NULL) {
 			size_t s;
 			char *b = malloc(parms->service_name_len + 1, M_DEVBUF,
 			    M_WAITOK);
@@ -946,10 +959,12 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 	}
 	case SIOCSIFMTU:
 	{
-		struct ifreq *ifr = (struct ifreq*) data;
+		struct ifreq *ifr = (struct ifreq *)data;
 
-		if (ifr->ifr_mtu > PPPOE_MAXMTU)
+		if (ifr->ifr_mtu > (sc->sc_eth_if == NULL ?
+		    PPPOE_MAXMTU : (sc->sc_eth_if->if_mtu - PPPOE_OVERHEAD))) {
 			return EINVAL;
+		}
 		return sppp_ioctl(ifp, cmd, data);
 	}
 	default:
@@ -1331,6 +1346,7 @@ pppoe_send_pado(struct pppoe_softc *sc)
 static int
 pppoe_send_pads(struct pppoe_softc *sc)
 {
+	struct bintime bt;
 	struct mbuf *m0;
 	u_int8_t *p;
 	size_t len, l1 = 0;	/* XXX: gcc */
@@ -1338,7 +1354,8 @@ pppoe_send_pads(struct pppoe_softc *sc)
 	if (sc->sc_state != PPPOE_STATE_PADO_SENT)
 		return EIO;
 
-	sc->sc_session = mono_time.tv_sec % 0xff + 1;
+	getbinuptime(&bt);
+	sc->sc_session = bt.sec % 0xff + 1;
 	/* calc length */
 	len = 0;
 	/* include hunique */

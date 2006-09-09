@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.9 2006/01/05 12:21:00 yamt Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.9.2.1 2006/09/09 02:59:24 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.9 2006/01/05 12:21:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.9.2.1 2006/09/09 02:59:24 rpaulo Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.9 2006/01/05 12:21:00 yamt Exp $");
 #include <sys/mbuf.h>
 #include <sys/dirent.h>
 #include <sys/socket.h>		/* XXX for AF_MAX */
+#include <sys/kauth.h>
 
 #include <net/radix.h>
 
@@ -117,7 +118,7 @@ struct netcred {
 	struct	radix_node netc_rnodes[2];
 	int	netc_refcnt;
 	int	netc_exflags;
-	struct	ucred netc_anon;
+	kauth_cred_t netc_anon;
 };
 
 /*
@@ -146,13 +147,13 @@ static int hang_addrlist(struct mount *, struct netexport *,
     const struct export_args *);
 static int sacheck(struct sockaddr *);
 static int free_netcred(struct radix_node *, void *);
-static void clear_exports(struct netexport *);
 static int export(struct netexport *, const struct export_args *);
 static int setpublicfs(struct mount *, struct netexport *,
     const struct export_args *);
 static struct netcred *netcred_lookup(struct netexport *, struct mbuf *);
 static struct netexport *netexport_lookup(const struct mount *);
 static struct netexport *netexport_lookup_byfsid(const fsid_t *);
+static void netexport_clear(struct netexport *);
 static void netexport_insert(struct netexport *);
 static void netexport_remove(struct netexport *);
 static void netexport_wrlock(void);
@@ -195,11 +196,7 @@ nfs_export_unmount(struct mount *mp)
 
 	KASSERT(mp->mnt_op->vfs_vptofh != NULL &&
 	    mp->mnt_op->vfs_fhtovp != NULL);
-
-	if (mp->mnt_flag & MNT_EXPUBLIC) {
-		setpublicfs(NULL, NULL, NULL);
-	}
-
+	netexport_clear(ne);
 	netexport_remove(ne);
 	netexport_wrunlock();
 	free(ne, M_NFS_EXPORT);
@@ -226,9 +223,11 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	struct netexport *ne;
 	struct nameidata nd;
 	struct vnode *vp;
-	struct fid fid;
+	struct fid *fid;
+	size_t fid_size;
 
-	if (suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return EPERM;
 
 	/* Lookup the file system path. */
@@ -241,8 +240,19 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 
 	/* The selected file system may not support NFS exports, so ensure
 	 * it does. */
-	if (mp->mnt_op->vfs_vptofh == NULL || mp->mnt_op->vfs_fhtovp == NULL ||
-	    VFS_VPTOFH(vp, &fid) != 0) {
+	if (mp->mnt_op->vfs_vptofh == NULL || mp->mnt_op->vfs_fhtovp == NULL) {
+		error = EOPNOTSUPP;
+		goto out_locked;
+	}
+	fid_size = 0;
+	if ((error = VFS_VPTOFH(vp, NULL, &fid_size)) == E2BIG) {
+		fid = malloc(fid_size, M_TEMP, M_NOWAIT);
+		if (fid != NULL) {
+			error = VFS_VPTOFH(vp, fid, &fid_size);
+			free(fid, M_TEMP);
+		}
+	}
+	if (error != 0) {
 		error = EOPNOTSUPP;
 		goto out_locked;
 	}
@@ -277,12 +287,12 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	 * preprocessor conditional and enable the first one.
 	 */
 #ifdef notyet
-	clear_exports(ne);
+	netexport_clear(ne);
 	for (i = 0; error == 0 && i < mel->mel_nexports; i++)
 		error = export(ne, &mel->mel_exports[i]);
 #else
 	if (mel->mel_nexports == 0)
-		clear_exports(ne);
+		netexport_clear(ne);
 	else if (mel->mel_nexports == 1)
 		error = export(ne, &mel->mel_exports[0]);
 	else {
@@ -364,7 +374,7 @@ done:
 
 int
 netexport_check(const fsid_t *fsid, struct mbuf *mb, struct mount **mpp,
-    int *wh, struct ucred **anon)
+    int *wh, kauth_cred_t *anon)
 {
 	struct netexport *ne;
 	struct netcred *np;
@@ -380,7 +390,7 @@ netexport_check(const fsid_t *fsid, struct mbuf *mb, struct mount **mpp,
 
 	*mpp = ne->ne_mount;
 	*wh = np->netc_exflags;
-	*anon = &np->netc_anon;
+	*anon = np->netc_anon;
 
 	return 0;
 }
@@ -502,9 +512,10 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 		if (mp->mnt_flag & MNT_DEFEXPORTED)
 			return EPERM;
 		np = &nep->ne_defexported;
+		KASSERT(np->netc_anon == NULL);
+		np->netc_anon = kauth_cred_alloc();
 		np->netc_exflags = argp->ex_flags;
-		crcvt(&np->netc_anon, &argp->ex_anon);
-		np->netc_anon.cr_ref = 1;
+		kauth_cred_uucvt(np->netc_anon, &argp->ex_anon);
 		mp->mnt_flag |= MNT_DEFEXPORTED;
 		return 0;
 	}
@@ -514,6 +525,7 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 
 	i = sizeof(struct netcred) + argp->ex_addrlen + argp->ex_masklen;
 	np = malloc(i, M_NETADDR, M_WAITOK | M_ZERO);
+	np->netc_anon = kauth_cred_alloc();
 	saddr = (struct sockaddr *)(np + 1);
 	error = copyin(argp->ex_addr, saddr, argp->ex_addrlen);
 	if (error)
@@ -571,16 +583,17 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 		enp->netc_refcnt = 1;
 
 	np->netc_exflags = argp->ex_flags;
-	crcvt(&np->netc_anon, &argp->ex_anon);
-	np->netc_anon.cr_ref = 1;
+	kauth_cred_uucvt(np->netc_anon, &argp->ex_anon);
 	return 0;
 check:
 	if (enp->netc_exflags != argp->ex_flags ||
-	    crcmp(&enp->netc_anon, &argp->ex_anon) != 0)
+	    kauth_cred_uucmp(enp->netc_anon, &argp->ex_anon) != 0)
 		error = EPERM;
 	else
 		error = 0;
 out:
+	KASSERT(np->netc_anon != NULL);
+	kauth_cred_free(np->netc_anon);
 	free(np, M_NETADDR);
 	return error;
 }
@@ -637,8 +650,11 @@ free_netcred(struct radix_node *rn, void *w)
 	struct netcred *np = (struct netcred *)(void *)rn;
 
 	(*rnh->rnh_deladdr)(rn->rn_key, rn->rn_mask, rnh);
-	if (--(np->netc_refcnt) <= 0)
+	if (--(np->netc_refcnt) <= 0) {
+		KASSERT(np->netc_anon != NULL);
+		kauth_cred_free(np->netc_anon);
 		free(np, M_NETADDR);
+	}
 	return 0;
 }
 
@@ -646,7 +662,7 @@ free_netcred(struct radix_node *rn, void *w)
  * Clears the exports list for a given file system.
  */
 static void
-clear_exports(struct netexport *ne)
+netexport_clear(struct netexport *ne)
 {
 	struct radix_node_head *rnh;
 	struct mount *mp = ne->ne_mount;
@@ -663,6 +679,16 @@ clear_exports(struct netexport *ne)
 			free(rnh, M_RTABLE);
 			ne->ne_rtable[i] = NULL;
 		}
+	}
+
+	if ((mp->mnt_flag & MNT_DEFEXPORTED) != 0) {
+		struct netcred *np = &ne->ne_defexported;
+
+		KASSERT(np->netc_anon != NULL);
+		kauth_cred_free(np->netc_anon);
+		np->netc_anon = NULL;
+	} else {
+		KASSERT(ne->ne_defexported.netc_anon == NULL);
 	}
 
 	mp->mnt_flag &= ~(MNT_EXPORTED | MNT_DEFEXPORTED);
@@ -702,6 +728,7 @@ setpublicfs(struct mount *mp, struct netexport *nep,
 	char *cp;
 	int error;
 	struct vnode *rvp;
+	size_t fhsize;
 
 	/*
 	 * mp == NULL -> invalidate the current info, the FS is
@@ -711,6 +738,10 @@ setpublicfs(struct mount *mp, struct netexport *nep,
 	if (mp == NULL) {
 		if (nfs_pub.np_valid) {
 			nfs_pub.np_valid = 0;
+			if (nfs_pub.np_handle != NULL) {
+				free(nfs_pub.np_handle, M_TEMP);
+				nfs_pub.np_handle = NULL;
+			}
 			if (nfs_pub.np_index != NULL) {
 				FREE(nfs_pub.np_index, M_TEMP);
 				nfs_pub.np_index = NULL;
@@ -728,13 +759,19 @@ setpublicfs(struct mount *mp, struct netexport *nep,
 	/*
 	 * Get real filehandle for root of exported FS.
 	 */
-	memset((caddr_t)&nfs_pub.np_handle, 0, sizeof(nfs_pub.np_handle));
-	nfs_pub.np_handle.fh_fsid = mp->mnt_stat.f_fsidx;
-
 	if ((error = VFS_ROOT(mp, &rvp)))
 		return error;
 
-	if ((error = VFS_VPTOFH(rvp, &nfs_pub.np_handle.fh_fid)))
+	fhsize = 0;
+	error = vfs_composefh(rvp, NULL, &fhsize);
+	if (error != E2BIG)
+		return error;
+	nfs_pub.np_handle = malloc(fhsize, M_TEMP, M_NOWAIT);
+	if (nfs_pub.np_handle == NULL)
+		error = ENOMEM;
+	else
+		error = vfs_composefh(rvp, nfs_pub.np_handle, &fhsize);
+	if (error)
 		return error;
 
 	vput(rvp);

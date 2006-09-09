@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.29 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.29.4.1 2006/09/09 02:56:57 rpaulo Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.29 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.29.4.1 2006/09/09 02:56:57 rpaulo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.29 2005/12/11 12:24:25 christos
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <fs/msdosfs/bpb.h>
 #include <fs/msdosfs/bootsect.h>
@@ -92,10 +93,10 @@ int msdosfs_unmount(struct mount *, int, struct lwp *);
 int msdosfs_root(struct mount *, struct vnode **);
 int msdosfs_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
 int msdosfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int msdosfs_sync(struct mount *, int, struct ucred *, struct lwp *);
+int msdosfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int msdosfs_vget(struct mount *, ino_t, struct vnode **);
 int msdosfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int msdosfs_vptofh(struct vnode *, struct fid *);
+int msdosfs_vptofh(struct vnode *, struct fid *, size_t *fh_size);
 
 int msdosfs_mountfs(struct vnode *, struct mount *, struct lwp *,
     struct msdosfs_args *);
@@ -133,6 +134,8 @@ struct vfsops msdosfs_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	msdosfs_vnodeopv_descs,
+	0,
+	{ NULL, NULL },
 };
 VFS_ATTACH(msdosfs_vfsops);
 
@@ -191,7 +194,7 @@ msdosfs_mountroot()
 	int error;
 	struct msdosfs_args args;
 
-	if (root_device->dv_class != DV_DISK)
+	if (device_class(root_device) != DV_DISK)
 		return (ENODEV);
 
 	if ((error = vfs_rootmountalloc(MOUNT_MSDOS, "root_device", &mp))) {
@@ -246,11 +249,9 @@ msdosfs_mount(mp, path, data, ndp, l)
 	struct msdosfs_args args; /* will hold data from mount request */
 	/* msdosfs specific mount control block */
 	struct msdosfsmount *pmp = NULL;
-	struct proc *p;
 	int error, flags;
 	mode_t accessmode;
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		pmp = VFSTOMSDOSFS(mp);
 		if (pmp == NULL)
@@ -307,11 +308,12 @@ msdosfs_mount(mp, path, data, ndp, l)
 			 * If upgrade to read-write by non-root, then verify
 			 * that user has necessary permissions on the device.
 			 */
-			if (p->p_ucred->cr_uid != 0) {
+			if (kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 				devvp = pmp->pm_devvp;
 				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 				error = VOP_ACCESS(devvp, VREAD | VWRITE,
-						   l->l_proc->p_ucred, l);
+						   l->l_cred, l);
 				VOP_UNLOCK(devvp, 0);
 				if (error)
 					return (error);
@@ -342,12 +344,12 @@ msdosfs_mount(mp, path, data, ndp, l)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (p->p_ucred->cr_uid != 0) {
+	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_proc->p_ucred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_cred, l);
 		VOP_UNLOCK(devvp, 0);
 		if (error) {
 			vrele(devvp);
@@ -428,7 +430,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	int	bsize = 0, dtype = 0, tmp;
 
 	/* Flush out any old buffers remaining from a previous use. */
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_ucred, l, 0, 0)) != 0)
+	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)) != 0)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
@@ -517,9 +519,12 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	}
 
 	if (pmp->pm_RootDirEnts == 0) {
-		if (bsp->bs710.bsBootSectSig2 != BOOTSIG2
-		    || bsp->bs710.bsBootSectSig3 != BOOTSIG3
-		    || pmp->pm_Sectors
+		/*
+		 * Some say that bsBootSectSig[23] must be zero, but
+		 * Windows does not require this and some digital cameras
+		 * do not set these to zero.  Therefore, do not insist.
+		 */
+		if (pmp->pm_Sectors
 		    || pmp->pm_FATsecs
 		    || getushort(b710->bpbFSVers)) {
 			error = EINVAL;
@@ -888,7 +893,7 @@ int
 msdosfs_sync(mp, waitfor, cred, l)
 	struct mount *mp;
 	int waitfor;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 	struct vnode *vp, *nvp;
@@ -964,11 +969,15 @@ msdosfs_fhtovp(mp, fhp, vpp)
 	struct vnode **vpp;
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
-	struct defid *defhp = (struct defid *) fhp;
+	struct defid defh;
 	struct denode *dep;
 	int error;
 
-	error = deget(pmp, defhp->defid_dirclust, defhp->defid_dirofs, &dep);
+	if (fhp->fid_len != sizeof(struct defid))
+		return EINVAL;
+
+	memcpy(&defh, fhp, sizeof(defh));
+	error = deget(pmp, defh.defid_dirclust, defh.defid_dirofs, &dep);
 	if (error) {
 		*vpp = NULLVP;
 		return (error);
@@ -978,19 +987,26 @@ msdosfs_fhtovp(mp, fhp, vpp)
 }
 
 int
-msdosfs_vptofh(vp, fhp)
+msdosfs_vptofh(vp, fhp, fh_size)
 	struct vnode *vp;
 	struct fid *fhp;
+	size_t *fh_size;
 {
 	struct denode *dep;
-	struct defid *defhp;
+	struct defid defh;
 
+	if (*fh_size < sizeof(struct defid)) {
+		*fh_size = sizeof(struct defid);
+		return E2BIG;
+	}
+	*fh_size = sizeof(struct defid);
 	dep = VTODE(vp);
-	defhp = (struct defid *)fhp;
-	defhp->defid_len = sizeof(struct defid);
-	defhp->defid_dirclust = dep->de_dirclust;
-	defhp->defid_dirofs = dep->de_diroffset;
-	/* defhp->defid_gen = dep->de_gen; */
+	memset(&defh, 0, sizeof(defh));
+	defh.defid_len = sizeof(struct defid);
+	defh.defid_dirclust = dep->de_dirclust;
+	defh.defid_dirofs = dep->de_diroffset;
+	/* defh.defid_gen = dep->de_gen; */
+	memcpy(fhp, &defh, sizeof(defh));
 	return (0);
 }
 

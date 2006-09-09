@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.23 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.23.4.1 2006/09/09 02:59:08 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.23 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.23.4.1 2006/09/09 02:59:08 rpaulo Exp $");
 
 #include "opt_iso.h"
 
@@ -108,14 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.23 2005/12/11 12:25:12 christos Exp $
 #include <netiso/tp_trace.h>
 #include <netiso/tp_tpdu.h>
 #include <netiso/iso_var.h>
-
-#ifdef TRUE
-#undef FALSE
-#undef TRUE
-#endif
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_var.h>
 
 #include <machine/stdarg.h>
 
@@ -1443,7 +1435,7 @@ again:
 
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_DROP]) {
-				if (time.tv_usec & 0x4 &&
+				if (time_second & 0x4 &&
 				    hdr->tpdu_DTseq & 0x1) {
 					IncStat(ts_ydebug);
 					goto discard;

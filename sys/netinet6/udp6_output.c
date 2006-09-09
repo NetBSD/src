@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.23.2.2 2006/02/23 16:15:56 rpaulo Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.23.2.3 2006/09/09 02:58:55 rpaulo Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.23.2.2 2006/02/23 16:15:56 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.23.2.3 2006/09/09 02:58:55 rpaulo Exp $");
 
 #include "opt_inet.h"
 
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.23.2.2 2006/02/23 16:15:56 rpaulo 
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -111,7 +112,7 @@ udp6_output(inp, m, addr6, control, p)
 	struct inpcb *inp;
 	struct mbuf *m;
 	struct mbuf *addr6, *control;
-	struct proc *p;
+	struct lwp *l;
 {
 	u_int32_t ulen = m->m_pkthdr.len;
 	u_int32_t plen = sizeof(struct udphdr) + ulen;
@@ -124,18 +125,19 @@ udp6_output(inp, m, addr6, control, p)
 	int scope_ambiguous = 0;
 	u_int16_t fport;
 	int error = 0;
-	struct ip6_pktopts opt, *stickyopt = inp->in6p_outputopts;
+	struct ip6_pktopts *optp, opt;
 	int priv;
 	int af = AF_INET6, hlen = sizeof(struct ip6_hdr);
 #ifdef INET
 	struct ip *ip;
 	struct udpiphdr *ui;
-#endif
 	int flags = 0;
+#endif
 	struct sockaddr_in6 tmp;
 
 	priv = 0;
-	if (p && !suser(p->p_ucred, &p->p_acflag))
+	if (l && !kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag))
 		priv = 1;
 
 	if (addr6) {
@@ -168,10 +170,13 @@ udp6_output(inp, m, addr6, control, p)
 	}
 
 	if (control) {
-		if ((error = ip6_setpktoptions(control, &opt, priv)) != 0)
+		if ((error = ip6_setpktopts(control, &opt,
+		    in6p->in6p_outputopts, priv, IPPROTO_UDP)) != 0)
 			goto release;
-		inp->in6p_outputopts = &opt;
-	}
+		optp = &opt;
+	} else
+		optp = inp->in6p_outputopts;
+
 
 	if (sin6) {
 		faddr = &sin6->sin6_addr;
@@ -355,9 +360,6 @@ udp6_output(inp, m, addr6, control, p)
 		m->m_pkthdr.csum_flags = M_CSUM_UDPv6;
 		m->m_pkthdr.csum_data = offsetof(struct udphdr, uh_sum);
 
-		if (inp->inp_flags & IN6P_MINMTU)
-			flags |= IPV6_MINMTU;
-
 		udp6stat.udp6s_opackets++;
 		error = ip6_output(m, inp->in6p_outputopts, &inp->in6p_route,
 		    flags, inp->in6p_moptions, inp->inp_socket, NULL);
@@ -407,7 +409,7 @@ release:
 
 releaseopt:
 	if (control) {
-		inp->in6p_outputopts = stickyopt;
+		ip6_clearpktopts(&opt, -1);
 		m_freem(control);
 	}
 	return (error);

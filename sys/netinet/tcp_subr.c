@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.196.4.2 2006/02/05 03:28:18 rpaulo Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.196.4.3 2006/09/09 02:58:47 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.196.4.2 2006/02/05 03:28:18 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.196.4.3 2006/09/09 02:58:47 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -183,6 +183,7 @@ int	tcp_do_win_scale = 1;	/* RFC1323 window scaling */
 int	tcp_do_timestamps = 1;	/* RFC1323 timestamps */
 int	tcp_do_newreno = 1;	/* Use the New Reno algorithms */
 int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
+int	tcp_do_ecn = 0;		/* Explicit Congestion Notification */
 #ifndef TCP_INIT_WIN
 #define	TCP_INIT_WIN	0	/* initial slow start window */
 #endif
@@ -203,6 +204,7 @@ int	tcp_do_loopback_cksum = 0;
 int	tcp_sack_tp_maxholes = 32;
 int	tcp_sack_globalmaxholes = 1024;
 int	tcp_sack_globalholes = 0;
+int	tcp_ecn_maxretries = 1;
 
 
 /* tcb hash */
@@ -1924,7 +1926,10 @@ tcp_mss_from_peer(struct tcpcb *tp, int offer)
 		bufsize = rt->rt_rmx.rmx_sendpipe;
 	else
 #endif
+	{
+		KASSERT(so != NULL);
 		bufsize = so->so_snd.sb_hiwat;
+	}
 	if (bufsize < mss)
 		mss = bufsize;
 	else {
@@ -1991,7 +1996,10 @@ tcp_established(struct tcpcb *tp)
 		bufsize = rt->rt_rmx.rmx_recvpipe;
 	else
 #endif
+	{
+		KASSERT(so != NULL);
 		bufsize = so->so_rcv.sb_hiwat;
+	}
 	if (bufsize > tp->t_ourmss) {
 		bufsize = roundup(bufsize, tp->t_ourmss);
 		if (bufsize > sb_max)

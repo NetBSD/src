@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.111 2006/01/26 15:07:25 christos Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.111.2.1 2006/09/09 02:57:16 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.111 2006/01/26 15:07:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.111.2.1 2006/09/09 02:57:16 rpaulo Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -82,12 +82,16 @@ static struct pool phpool[PHPOOL_MAX];
 static struct pool psppool;
 #endif
 
+static SLIST_HEAD(, pool_allocator) pa_deferinitq =
+    SLIST_HEAD_INITIALIZER(pa_deferinitq);
+
 static void *pool_page_alloc_meta(struct pool *, int);
 static void pool_page_free_meta(struct pool *, void *);
 
 /* allocator for pool metadata */
 static struct pool_allocator pool_allocator_meta = {
-	pool_page_alloc_meta, pool_page_free_meta
+	pool_page_alloc_meta, pool_page_free_meta,
+	.pa_backingmapptr = &kmem_map,
 };
 
 /* # of seconds to retain page after last use */
@@ -183,8 +187,9 @@ static void	pool_prime_page(struct pool *, caddr_t,
 		    struct pool_item_header *);
 static void	pool_update_curpage(struct pool *);
 
-void		*pool_allocator_alloc(struct pool *, int);
-void		pool_allocator_free(struct pool *, void *);
+static int	pool_grow(struct pool *, int);
+static void	*pool_allocator_alloc(struct pool *, int);
+static void	pool_allocator_free(struct pool *, void *);
 
 static void pool_print_pagelist(struct pool *, struct pool_pagelist *,
 	void (*)(const char *, ...));
@@ -359,10 +364,16 @@ pr_item_notouch_get(const struct pool *pp, struct pool_item_header *ph)
 static inline int
 phtree_compare(struct pool_item_header *a, struct pool_item_header *b)
 {
+
+	/*
+	 * we consider pool_item_header with smaller ph_page bigger.
+	 * (this unnatural ordering is for the benefit of pr_find_pagehead.)
+	 */
+
 	if (a->ph_page < b->ph_page)
-		return (-1);
-	else if (a->ph_page > b->ph_page)
 		return (1);
+	else if (a->ph_page > b->ph_page)
+		return (-1);
 	else
 		return (0);
 }
@@ -371,18 +382,38 @@ SPLAY_PROTOTYPE(phtree, pool_item_header, ph_node, phtree_compare);
 SPLAY_GENERATE(phtree, pool_item_header, ph_node, phtree_compare);
 
 /*
- * Return the pool page header based on page address.
+ * Return the pool page header based on item address.
  */
 static inline struct pool_item_header *
-pr_find_pagehead(struct pool *pp, caddr_t page)
+pr_find_pagehead(struct pool *pp, void *v)
 {
 	struct pool_item_header *ph, tmp;
 
-	if ((pp->pr_roflags & PR_PHINPAGE) != 0)
-		return ((struct pool_item_header *)(page + pp->pr_phoffset));
+	if ((pp->pr_roflags & PR_NOALIGN) != 0) {
+		tmp.ph_page = (caddr_t)(uintptr_t)v;
+		ph = SPLAY_FIND(phtree, &pp->pr_phtree, &tmp);
+		if (ph == NULL) {
+			ph = SPLAY_ROOT(&pp->pr_phtree);
+			if (ph != NULL && phtree_compare(&tmp, ph) >= 0) {
+				ph = SPLAY_NEXT(phtree, &pp->pr_phtree, ph);
+			}
+			KASSERT(ph == NULL || phtree_compare(&tmp, ph) < 0);
+		}
+	} else {
+		caddr_t page =
+		    (caddr_t)((uintptr_t)v & pp->pr_alloc->pa_pagemask);
 
-	tmp.ph_page = page;
-	ph = SPLAY_FIND(phtree, &pp->pr_phtree, &tmp);
+		if ((pp->pr_roflags & PR_PHINPAGE) != 0) {
+			ph = (void *)(page + pp->pr_phoffset);
+		} else {
+			tmp.ph_page = page;
+			ph = SPLAY_FIND(phtree, &pp->pr_phtree, &tmp);
+		}
+	}
+
+	KASSERT(ph == NULL || ((pp->pr_roflags & PR_PHINPAGE) != 0) ||
+	    (ph->ph_page <= (char *)v &&
+	    (char *)v < ph->ph_page + pp->pr_alloc->pa_pagesz));
 	return ph;
 }
 
@@ -442,12 +473,86 @@ pr_rmpage(struct pool *pp, struct pool_item_header *ph,
 	pool_update_curpage(pp);
 }
 
+static boolean_t
+pa_starved_p(struct pool_allocator *pa)
+{
+
+	if (pa->pa_backingmap != NULL) {
+		return vm_map_starved_p(pa->pa_backingmap);
+	}
+	return FALSE;
+}
+
+static int
+pool_reclaim_callback(struct callback_entry *ce, void *obj, void *arg)
+{
+	struct pool *pp = obj;
+	struct pool_allocator *pa = pp->pr_alloc;
+
+	KASSERT(&pp->pr_reclaimerentry == ce);
+	pool_reclaim(pp);
+	if (!pa_starved_p(pa)) {
+		return CALLBACK_CHAIN_ABORT;
+	}
+	return CALLBACK_CHAIN_CONTINUE;
+}
+
+static void
+pool_reclaim_register(struct pool *pp)
+{
+	struct vm_map *map = pp->pr_alloc->pa_backingmap;
+	int s;
+
+	if (map == NULL) {
+		return;
+	}
+
+	s = splvm(); /* not necessary for INTRSAFE maps, but don't care. */
+	callback_register(&vm_map_to_kernel(map)->vmk_reclaim_callback,
+	    &pp->pr_reclaimerentry, pp, pool_reclaim_callback);
+	splx(s);
+}
+
+static void
+pool_reclaim_unregister(struct pool *pp)
+{
+	struct vm_map *map = pp->pr_alloc->pa_backingmap;
+	int s;
+
+	if (map == NULL) {
+		return;
+	}
+
+	s = splvm(); /* not necessary for INTRSAFE maps, but don't care. */
+	callback_unregister(&vm_map_to_kernel(map)->vmk_reclaim_callback,
+	    &pp->pr_reclaimerentry);
+	splx(s);
+}
+
+static void
+pa_reclaim_register(struct pool_allocator *pa)
+{
+	struct vm_map *map = *pa->pa_backingmapptr;
+	struct pool *pp;
+
+	KASSERT(pa->pa_backingmap == NULL);
+	if (map == NULL) {
+		SLIST_INSERT_HEAD(&pa_deferinitq, pa, pa_q);
+		return;
+	}
+	pa->pa_backingmap = map;
+	TAILQ_FOREACH(pp, &pa->pa_list, pr_alloc_list) {
+		pool_reclaim_register(pp);
+	}
+}
+
 /*
  * Initialize all the pools listed in the "pools" link set.
  */
 void
-link_pool_init(void)
+pool_subsystem_init(void)
 {
+	struct pool_allocator *pa;
 	__link_set_decl(pools, struct link_pool_init);
 	struct link_pool_init * const *pi;
 
@@ -455,6 +560,13 @@ link_pool_init(void)
 		pool_init((*pi)->pp, (*pi)->size, (*pi)->align,
 		    (*pi)->align_offset, (*pi)->flags, (*pi)->wchan,
 		    (*pi)->palloc);
+
+	while ((pa = SLIST_FIRST(&pa_deferinitq)) != NULL) {
+		KASSERT(pa->pa_backingmapptr != NULL);
+		KASSERT(*pa->pa_backingmapptr != NULL);
+		SLIST_REMOVE_HEAD(&pa_deferinitq, pa_q);
+		pa_reclaim_register(pa);
+	}
 }
 
 /*
@@ -467,12 +579,26 @@ void
 pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
     const char *wchan, struct pool_allocator *palloc)
 {
-	int off, slack;
+#ifdef DEBUG
+	struct pool *pp1;
+#endif
 	size_t trysize, phsize;
-	int s;
+	int off, slack, s;
 
 	KASSERT((1UL << (CHAR_BIT * sizeof(pool_item_freelist_t))) - 2 >=
 	    PHPOOL_FREELIST_NELEM(PHPOOL_MAX - 1));
+
+#ifdef DEBUG
+	/*
+	 * Check that the pool hasn't already been initialised and
+	 * added to the list of all pools.
+	 */
+	LIST_FOREACH(pp1, &pool_head, pr_poollist) {
+		if (pp == pp1)
+			panic("pool_init: pool %s already initialised",
+			    wchan);
+	}
+#endif
 
 #ifdef POOL_DIAGNOSTIC
 	/*
@@ -482,55 +608,42 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		flags |= PR_LOGGING;
 #endif
 
-#ifdef POOL_SUBPAGE
-	/*
-	 * XXX We don't provide a real `nointr' back-end
-	 * yet; all sub-pages come from a kmem back-end.
-	 * maybe some day...
-	 */
-	if (palloc == NULL) {
-		extern struct pool_allocator pool_allocator_kmem_subpage;
-		palloc = &pool_allocator_kmem_subpage;
-	}
-	/*
-	 * We'll assume any user-specified back-end allocator
-	 * will deal with sub-pages, or simply don't care.
-	 */
-#else
 	if (palloc == NULL)
 		palloc = &pool_allocator_kmem;
+#ifdef POOL_SUBPAGE
+	if (size > palloc->pa_pagesz) {
+		if (palloc == &pool_allocator_kmem)
+			palloc = &pool_allocator_kmem_fullpage;
+		else if (palloc == &pool_allocator_nointr)
+			palloc = &pool_allocator_nointr_fullpage;
+	}		
 #endif /* POOL_SUBPAGE */
 	if ((palloc->pa_flags & PA_INITIALIZED) == 0) {
-		if (palloc->pa_pagesz == 0) {
-#ifdef POOL_SUBPAGE
-			if (palloc == &pool_allocator_kmem)
-				palloc->pa_pagesz = PAGE_SIZE;
-			else
-				palloc->pa_pagesz = POOL_SUBPAGE;
-#else
+		if (palloc->pa_pagesz == 0)
 			palloc->pa_pagesz = PAGE_SIZE;
-#endif /* POOL_SUBPAGE */
-		}
 
 		TAILQ_INIT(&palloc->pa_list);
 
 		simple_lock_init(&palloc->pa_slock);
 		palloc->pa_pagemask = ~(palloc->pa_pagesz - 1);
 		palloc->pa_pageshift = ffs(palloc->pa_pagesz) - 1;
+
+		if (palloc->pa_backingmapptr != NULL) {
+			pa_reclaim_register(palloc);
+		}
 		palloc->pa_flags |= PA_INITIALIZED;
 	}
 
 	if (align == 0)
 		align = ALIGN(1);
 
-	if (size < sizeof(struct pool_item))
+	if ((flags & PR_NOTOUCH) == 0 && size < sizeof(struct pool_item))
 		size = sizeof(struct pool_item);
 
 	size = roundup(size, align);
 #ifdef DIAGNOSTIC
 	if (size > palloc->pa_pagesz)
-		panic("pool_init: pool item size (%lu) too large",
-		      (u_long)size);
+		panic("pool_init: pool item size (%zu) too large", size);
 #endif
 
 	/*
@@ -579,7 +692,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	/* See the comment below about reserved bytes. */
 	trysize = palloc->pa_pagesz - ((align - ioff) % align);
 	phsize = ALIGN(sizeof(struct pool_item_header));
-	if ((pp->pr_roflags & PR_NOTOUCH) == 0 &&
+	if ((pp->pr_roflags & (PR_NOTOUCH | PR_NOALIGN)) == 0 &&
 	    (pp->pr_size < MIN(palloc->pa_pagesz / 16, phsize << 3) ||
 	    trysize / pp->pr_size == (trysize - phsize) / pp->pr_size)) {
 		/* Use the end of the page for the page header */
@@ -698,6 +811,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	TAILQ_INSERT_TAIL(&palloc->pa_list, pp, pr_alloc_list);
 	simple_unlock(&palloc->pa_slock);
 	splx(s);
+	pool_reclaim_register(pp);
 }
 
 /*
@@ -718,6 +832,7 @@ pool_destroy(struct pool *pp)
 	simple_unlock(&pool_head_slock);
 
 	/* Remove this pool from its allocator's list of pools. */
+	pool_reclaim_unregister(pp);
 	s = splvm();
 	simple_lock(&pp->pr_alloc->pa_slock);
 	TAILQ_REMOVE(&pp->pr_alloc->pa_list, pp, pr_alloc_list);
@@ -813,7 +928,7 @@ pool_get(struct pool *pp, int flags)
 #endif /* DIAGNOSTIC */
 #ifdef LOCKDEBUG
 	if (flags & PR_WAITOK)
-		simple_lock_only_held(NULL, "pool_get(PR_WAITOK)");
+		ASSERT_SLEEPABLE(NULL, "pool_get(PR_WAITOK)");
 	SCHED_ASSERT_UNLOCKED();
 #endif
 
@@ -883,6 +998,8 @@ pool_get(struct pool *pp, int flags)
 	 * has no items in its bucket.
 	 */
 	if ((ph = pp->pr_curpage) == NULL) {
+		int error;
+
 #ifdef DIAGNOSTIC
 		if (pp->pr_nitems != 0) {
 			simple_unlock(&pp->pr_slock);
@@ -898,18 +1015,9 @@ pool_get(struct pool *pp, int flags)
 		 * may block.
 		 */
 		pr_leave(pp);
-		simple_unlock(&pp->pr_slock);
-		v = pool_allocator_alloc(pp, flags);
-		if (__predict_true(v != NULL))
-			ph = pool_alloc_item_header(pp, v, flags);
-
-		if (__predict_false(v == NULL || ph == NULL)) {
-			if (v != NULL)
-				pool_allocator_free(pp, v);
-
-			simple_lock(&pp->pr_slock);
-			pr_enter(pp, file, line);
-
+		error = pool_grow(pp, flags);
+		pr_enter(pp, file, line);
+		if (error != 0) {
 			/*
 			 * We were unable to allocate a page or item
 			 * header, but we released the lock during
@@ -919,32 +1027,11 @@ pool_get(struct pool *pp, int flags)
 			if (pp->pr_curpage != NULL)
 				goto startover;
 
-			if ((flags & PR_WAITOK) == 0) {
-				pp->pr_nfail++;
-				pr_leave(pp);
-				simple_unlock(&pp->pr_slock);
-				return (NULL);
-			}
-
-			/*
-			 * Wait for items to be returned to this pool.
-			 *
-			 * wake up once a second and try again,
-			 * as the check in pool_cache_put_paddr() is racy.
-			 */
-			pp->pr_flags |= PR_WANTED;
-			/* PA_WANTED is already set on the allocator. */
+			pp->pr_nfail++;
 			pr_leave(pp);
-			ltsleep(pp, PSWP, pp->pr_wchan, hz, &pp->pr_slock);
-			pr_enter(pp, file, line);
-			goto startover;
+			simple_unlock(&pp->pr_slock);
+			return (NULL);
 		}
-
-		/* We have more memory; add it to the pool */
-		simple_lock(&pp->pr_slock);
-		pr_enter(pp, file, line);
-		pool_prime_page(pp, v, ph);
-		pp->pr_npagealloc++;
 
 		/* Start the allocation process over. */
 		goto startover;
@@ -1059,13 +1146,9 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 {
 	struct pool_item *pi = v;
 	struct pool_item_header *ph;
-	caddr_t page;
-	int s;
 
 	LOCK_ASSERT(simple_lock_held(&pp->pr_slock));
 	SCHED_ASSERT_UNLOCKED();
-
-	page = (caddr_t)((u_long)v & pp->pr_alloc->pa_pagemask);
 
 #ifdef DIAGNOSTIC
 	if (__predict_false(pp->pr_nout == 0)) {
@@ -1075,7 +1158,7 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 	}
 #endif
 
-	if (__predict_false((ph = pr_find_pagehead(pp, page)) == NULL)) {
+	if (__predict_false((ph = pr_find_pagehead(pp, v)) == NULL)) {
 		pr_printlog(pp, NULL, printf);
 		panic("pool_put: %s: page header missing", pp->pr_wchan);
 	}
@@ -1143,7 +1226,7 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 		pp->pr_nidle++;
 		if (pp->pr_npages > pp->pr_minpages &&
 		    (pp->pr_npages > pp->pr_maxpages ||
-		     (pp->pr_alloc->pa_flags & PA_WANT) != 0)) {
+		     pa_starved_p(pp->pr_alloc))) {
 			pr_rmpage(pp, ph, pq);
 		} else {
 			LIST_REMOVE(ph, ph_pagelist);
@@ -1155,9 +1238,7 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 			 * be reclaimed by the pagedaemon.  This minimizes
 			 * ping-pong'ing for memory.
 			 */
-			s = splclock();
-			ph->ph_time = mono_time;
-			splx(s);
+			getmicrotime(&ph->ph_time);
 		}
 		pool_update_curpage(pp);
 	}
@@ -1220,35 +1301,56 @@ pool_put(struct pool *pp, void *v)
 #endif
 
 /*
+ * pool_grow: grow a pool by a page.
+ *
+ * => called with pool locked.
+ * => unlock and relock the pool.
+ * => return with pool locked.
+ */
+
+static int
+pool_grow(struct pool *pp, int flags)
+{
+	struct pool_item_header *ph = NULL;
+	char *cp;
+
+	simple_unlock(&pp->pr_slock);
+	cp = pool_allocator_alloc(pp, flags);
+	if (__predict_true(cp != NULL)) {
+		ph = pool_alloc_item_header(pp, cp, flags);
+	}
+	if (__predict_false(cp == NULL || ph == NULL)) {
+		if (cp != NULL) {
+			pool_allocator_free(pp, cp);
+		}
+		simple_lock(&pp->pr_slock);
+		return ENOMEM;
+	}
+
+	simple_lock(&pp->pr_slock);
+	pool_prime_page(pp, cp, ph);
+	pp->pr_npagealloc++;
+	return 0;
+}
+
+/*
  * Add N items to the pool.
  */
 int
 pool_prime(struct pool *pp, int n)
 {
-	struct pool_item_header *ph = NULL;
-	caddr_t cp;
 	int newpages;
+	int error = 0;
 
 	simple_lock(&pp->pr_slock);
 
 	newpages = roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
 	while (newpages-- > 0) {
-		simple_unlock(&pp->pr_slock);
-		cp = pool_allocator_alloc(pp, PR_NOWAIT);
-		if (__predict_true(cp != NULL))
-			ph = pool_alloc_item_header(pp, cp, PR_NOWAIT);
-
-		if (__predict_false(cp == NULL || ph == NULL)) {
-			if (cp != NULL)
-				pool_allocator_free(pp, cp);
-			simple_lock(&pp->pr_slock);
+		error = pool_grow(pp, PR_NOWAIT);
+		if (error) {
 			break;
 		}
-
-		simple_lock(&pp->pr_slock);
-		pool_prime_page(pp, cp, ph);
-		pp->pr_npagealloc++;
 		pp->pr_minpages++;
 	}
 
@@ -1256,7 +1358,7 @@ pool_prime(struct pool *pp, int n)
 		pp->pr_maxpages = pp->pr_minpages + 1;	/* XXX */
 
 	simple_unlock(&pp->pr_slock);
-	return (0);
+	return error;
 }
 
 /*
@@ -1272,12 +1374,12 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	unsigned int align = pp->pr_align;
 	unsigned int ioff = pp->pr_itemoffset;
 	int n;
-	int s;
 
 	LOCK_ASSERT(simple_lock_held(&pp->pr_slock));
 
 #ifdef DIAGNOSTIC
-	if (((u_long)cp & (pp->pr_alloc->pa_pagesz - 1)) != 0)
+	if ((pp->pr_roflags & PR_NOALIGN) == 0 &&
+	    ((uintptr_t)cp & (pp->pr_alloc->pa_pagesz - 1)) != 0)
 		panic("pool_prime_page: %s: unaligned page", pp->pr_wchan);
 #endif
 
@@ -1288,9 +1390,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	LIST_INIT(&ph->ph_itemlist);
 	ph->ph_page = storage;
 	ph->ph_nmissing = 0;
-	s = splclock();
-	ph->ph_time = mono_time;
-	splx(s);
+	getmicrotime(&ph->ph_time);
 	if ((pp->pr_roflags & PR_PHINPAGE) == 0)
 		SPLAY_INSERT(phtree, &pp->pr_phtree, ph);
 
@@ -1361,34 +1461,15 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 static int
 pool_catchup(struct pool *pp)
 {
-	struct pool_item_header *ph = NULL;
-	caddr_t cp;
 	int error = 0;
 
 	while (POOL_NEEDS_CATCHUP(pp)) {
-		/*
-		 * Call the page back-end allocator for more memory.
-		 *
-		 * XXX: We never wait, so should we bother unlocking
-		 * the pool descriptor?
-		 */
-		simple_unlock(&pp->pr_slock);
-		cp = pool_allocator_alloc(pp, PR_NOWAIT);
-		if (__predict_true(cp != NULL))
-			ph = pool_alloc_item_header(pp, cp, PR_NOWAIT);
-		if (__predict_false(cp == NULL || ph == NULL)) {
-			if (cp != NULL)
-				pool_allocator_free(pp, cp);
-			error = ENOMEM;
-			simple_lock(&pp->pr_slock);
+		error = pool_grow(pp, PR_NOWAIT);
+		if (error) {
 			break;
 		}
-		simple_lock(&pp->pr_slock);
-		pool_prime_page(pp, cp, ph);
-		pp->pr_npagealloc++;
 	}
-
-	return (error);
+	return error;
 }
 
 static void
@@ -1475,7 +1556,6 @@ pool_reclaim(struct pool *pp)
 	struct pool_pagelist pq;
 	struct pool_cache_grouplist pcgl;
 	struct timeval curtime, diff;
-	int s;
 
 	if (pp->pr_drain_hook != NULL) {
 		/*
@@ -1497,9 +1577,7 @@ pool_reclaim(struct pool *pp)
 	LIST_FOREACH(pc, &pp->pr_cachelist, pc_poollist)
 		pool_cache_reclaim(pc, &pq, &pcgl);
 
-	s = splclock();
-	curtime = mono_time;
-	splx(s);
+	getmicrotime(&curtime);
 
 	for (ph = LIST_FIRST(&pp->pr_emptypages); ph != NULL; ph = phnext) {
 		phnext = LIST_NEXT(ph, ph_pagelist);
@@ -1510,7 +1588,8 @@ pool_reclaim(struct pool *pp)
 
 		KASSERT(ph->ph_nmissing == 0);
 		timersub(&curtime, &ph->ph_time, &diff);
-		if (diff.tv_sec < pool_inactive_time)
+		if (diff.tv_sec < pool_inactive_time
+		    && !pa_starved_p(pp->pr_alloc))
 			continue;
 
 		/*
@@ -1556,7 +1635,8 @@ pool_drain(void *arg)
 		drainpp = LIST_NEXT(pp, pr_poollist);
 	}
 	simple_unlock(&pool_head_slock);
-	pool_reclaim(pp);
+	if (pp)
+		pool_reclaim(pp);
 	splx(s);
 }
 
@@ -1706,8 +1786,9 @@ pool_print1(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 	(*pr)("\n");
 	if ((pp->pr_roflags & PR_LOGGING) == 0)
 		(*pr)("\tno log\n");
-	else
+	else {
 		pr_printlog(pp, NULL, pr);
+	}
 
  skip_log:
 	if (print_cache == 0)
@@ -1758,16 +1839,18 @@ pool_chk_page(struct pool *pp, const char *label, struct pool_item_header *ph)
 	caddr_t page;
 	int n;
 
-	page = (caddr_t)((u_long)ph & pp->pr_alloc->pa_pagemask);
-	if (page != ph->ph_page &&
-	    (pp->pr_roflags & PR_PHINPAGE) != 0) {
-		if (label != NULL)
-			printf("%s: ", label);
-		printf("pool(%p:%s): page inconsistency: page %p;"
-		       " at page head addr %p (p %p)\n", pp,
-			pp->pr_wchan, ph->ph_page,
-			ph, page);
-		return 1;
+	if ((pp->pr_roflags & PR_NOALIGN) == 0) {
+		page = (caddr_t)((uintptr_t)ph & pp->pr_alloc->pa_pagemask);
+		if (page != ph->ph_page &&
+		    (pp->pr_roflags & PR_PHINPAGE) != 0) {
+			if (label != NULL)
+				printf("%s: ", label);
+			printf("pool(%p:%s): page inconsistency: page %p;"
+			       " at page head addr %p (p %p)\n", pp,
+				pp->pr_wchan, ph->ph_page,
+				ph, page);
+			return 1;
+		}
 	}
 
 	if ((pp->pr_roflags & PR_NOTOUCH) != 0)
@@ -1782,15 +1865,16 @@ pool_chk_page(struct pool *pp, const char *label, struct pool_item_header *ph)
 			if (label != NULL)
 				printf("%s: ", label);
 			printf("pool(%s): free list modified: magic=%x;"
-			       " page %p; item ordinal %d;"
-			       " addr %p (p %p)\n",
+			       " page %p; item ordinal %d; addr %p\n",
 				pp->pr_wchan, pi->pi_magic, ph->ph_page,
-				n, pi, page);
+				n, pi);
 			panic("pool");
 		}
 #endif
-		page =
-		    (caddr_t)((u_long)pi & pp->pr_alloc->pa_pagemask);
+		if ((pp->pr_roflags & PR_NOALIGN) != 0) {
+			continue;
+		}
+		page = (caddr_t)((uintptr_t)pi & pp->pr_alloc->pa_pagemask);
 		if (page == ph->ph_page)
 			continue;
 
@@ -1954,7 +2038,7 @@ pool_cache_get_paddr(struct pool_cache *pc, int flags, paddr_t *pap)
 
 #ifdef LOCKDEBUG
 	if (flags & PR_WAITOK)
-		simple_lock_only_held(NULL, "pool_cache_get(PR_WAITOK)");
+		ASSERT_SLEEPABLE(NULL, "pool_cache_get(PR_WAITOK)");
 #endif
 
 	simple_lock(&pc->pc_slock);
@@ -2190,142 +2274,82 @@ pool_cache_reclaim(struct pool_cache *pc, struct pool_pagelist *pq,
 void	*pool_page_alloc(struct pool *, int);
 void	pool_page_free(struct pool *, void *);
 
+#ifdef POOL_SUBPAGE
+struct pool_allocator pool_allocator_kmem_fullpage = {
+	pool_page_alloc, pool_page_free, 0,
+	.pa_backingmapptr = &kmem_map,
+};
+#else
 struct pool_allocator pool_allocator_kmem = {
 	pool_page_alloc, pool_page_free, 0,
+	.pa_backingmapptr = &kmem_map,
 };
+#endif
 
 void	*pool_page_alloc_nointr(struct pool *, int);
 void	pool_page_free_nointr(struct pool *, void *);
 
+#ifdef POOL_SUBPAGE
+struct pool_allocator pool_allocator_nointr_fullpage = {
+	pool_page_alloc_nointr, pool_page_free_nointr, 0,
+	.pa_backingmapptr = &kernel_map,
+};
+#else
 struct pool_allocator pool_allocator_nointr = {
 	pool_page_alloc_nointr, pool_page_free_nointr, 0,
+	.pa_backingmapptr = &kernel_map,
 };
+#endif
 
 #ifdef POOL_SUBPAGE
 void	*pool_subpage_alloc(struct pool *, int);
 void	pool_subpage_free(struct pool *, void *);
 
-struct pool_allocator pool_allocator_kmem_subpage = {
-	pool_subpage_alloc, pool_subpage_free, 0,
+struct pool_allocator pool_allocator_kmem = {
+	pool_subpage_alloc, pool_subpage_free, POOL_SUBPAGE,
+	.pa_backingmapptr = &kmem_map,
+};
+
+void	*pool_subpage_alloc_nointr(struct pool *, int);
+void	pool_subpage_free_nointr(struct pool *, void *);
+
+struct pool_allocator pool_allocator_nointr = {
+	pool_subpage_alloc, pool_subpage_free, POOL_SUBPAGE,
+	.pa_backingmapptr = &kmem_map,
 };
 #endif /* POOL_SUBPAGE */
 
-/*
- * We have at least three different resources for the same allocation and
- * each resource can be depleted.  First, we have the ready elements in the
- * pool.  Then we have the resource (typically a vm_map) for this allocator.
- * Finally, we have physical memory.  Waiting for any of these can be
- * unnecessary when any other is freed, but the kernel doesn't support
- * sleeping on multiple wait channels, so we have to employ another strategy.
- *
- * The caller sleeps on the pool (so that it can be awakened when an item
- * is returned to the pool), but we set PA_WANT on the allocator.  When a
- * page is returned to the allocator and PA_WANT is set, pool_allocator_free
- * will wake up all sleeping pools belonging to this allocator.
- *
- * XXX Thundering herd.
- */
-void *
-pool_allocator_alloc(struct pool *org, int flags)
+static void *
+pool_allocator_alloc(struct pool *pp, int flags)
 {
-	struct pool_allocator *pa = org->pr_alloc;
-	struct pool *pp, *start;
-	int s, freed;
+	struct pool_allocator *pa = pp->pr_alloc;
 	void *res;
 
-	LOCK_ASSERT(!simple_lock_held(&org->pr_slock));
+	LOCK_ASSERT(!simple_lock_held(&pp->pr_slock));
 
-	do {
-		if ((res = (*pa->pa_alloc)(org, flags)) != NULL)
-			return (res);
-		if ((flags & PR_WAITOK) == 0) {
-			/*
-			 * We only run the drain hookhere if PR_NOWAIT.
-			 * In other cases, the hook will be run in
-			 * pool_reclaim().
-			 */
-			if (org->pr_drain_hook != NULL) {
-				(*org->pr_drain_hook)(org->pr_drain_hook_arg,
-				    flags);
-				if ((res = (*pa->pa_alloc)(org, flags)) != NULL)
-					return (res);
-			}
-			break;
-		}
-
+	res = (*pa->pa_alloc)(pp, flags);
+	if (res == NULL && (flags & PR_WAITOK) == 0) {
 		/*
-		 * Drain all pools, that use this allocator.
-		 * We do this to reclaim VA space.
-		 * pa_alloc is responsible for waiting for
-		 * physical memory.
-		 *
-		 * XXX We risk looping forever if start if someone
-		 * calls pool_destroy on "start".  But there is no
-		 * other way to have potentially sleeping pool_reclaim,
-		 * non-sleeping locks on pool_allocator, and some
-		 * stirring of drained pools in the allocator.
-		 *
-		 * XXX Maybe we should use pool_head_slock for locking
-		 * the allocators?
+		 * We only run the drain hook here if PR_NOWAIT.
+		 * In other cases, the hook will be run in
+		 * pool_reclaim().
 		 */
-		freed = 0;
-
-		s = splvm();
-		simple_lock(&pa->pa_slock);
-		pp = start = TAILQ_FIRST(&pa->pa_list);
-		do {
-			TAILQ_REMOVE(&pa->pa_list, pp, pr_alloc_list);
-			TAILQ_INSERT_TAIL(&pa->pa_list, pp, pr_alloc_list);
-			simple_unlock(&pa->pa_slock);
-			freed = pool_reclaim(pp);
-			simple_lock(&pa->pa_slock);
-		} while ((pp = TAILQ_FIRST(&pa->pa_list)) != start &&
-			 freed == 0);
-
-		if (freed == 0) {
-			/*
-			 * We set PA_WANT here, the caller will most likely
-			 * sleep waiting for pages (if not, this won't hurt
-			 * that much), and there is no way to set this in
-			 * the caller without violating locking order.
-			 */
-			pa->pa_flags |= PA_WANT;
+		if (pp->pr_drain_hook != NULL) {
+			(*pp->pr_drain_hook)(pp->pr_drain_hook_arg, flags);
+			res = (*pa->pa_alloc)(pp, flags);
 		}
-		simple_unlock(&pa->pa_slock);
-		splx(s);
-	} while (freed);
-	return (NULL);
+	}
+	return res;
 }
 
-void
+static void
 pool_allocator_free(struct pool *pp, void *v)
 {
 	struct pool_allocator *pa = pp->pr_alloc;
-	int s;
 
 	LOCK_ASSERT(!simple_lock_held(&pp->pr_slock));
 
 	(*pa->pa_free)(pp, v);
-
-	s = splvm();
-	simple_lock(&pa->pa_slock);
-	if ((pa->pa_flags & PA_WANT) == 0) {
-		simple_unlock(&pa->pa_slock);
-		splx(s);
-		return;
-	}
-
-	TAILQ_FOREACH(pp, &pa->pa_list, pr_alloc_list) {
-		simple_lock(&pp->pr_slock);
-		if ((pp->pr_flags & PR_WANTED) != 0) {
-			pp->pr_flags &= ~PR_WANTED;
-			wakeup(pp);
-		}
-		simple_unlock(&pp->pr_slock);
-	}
-	pa->pa_flags &= ~PA_WANT;
-	simple_unlock(&pa->pa_slock);
-	splx(s);
 }
 
 void *
@@ -2382,19 +2406,19 @@ pool_subpage_free(struct pool *pp, void *v)
 
 /* We don't provide a real nointr allocator.  Maybe later. */
 void *
-pool_page_alloc_nointr(struct pool *pp, int flags)
+pool_subpage_alloc_nointr(struct pool *pp, int flags)
 {
 
 	return (pool_subpage_alloc(pp, flags));
 }
 
 void
-pool_page_free_nointr(struct pool *pp, void *v)
+pool_subpage_free_nointr(struct pool *pp, void *v)
 {
 
 	pool_subpage_free(pp, v);
 }
-#else
+#endif /* POOL_SUBPAGE */
 void *
 pool_page_alloc_nointr(struct pool *pp, int flags)
 {
@@ -2409,4 +2433,3 @@ pool_page_free_nointr(struct pool *pp, void *v)
 
 	uvm_km_free_poolpage_cache(kernel_map, (vaddr_t) v);
 }
-#endif /* POOL_SUBPAGE */

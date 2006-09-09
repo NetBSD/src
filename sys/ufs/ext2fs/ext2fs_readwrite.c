@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.41 2006/01/14 23:49:59 christos Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.41.2.1 2006/09/09 03:00:00 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.41 2006/01/14 23:49:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.41.2.1 2006/09/09 03:00:00 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.41 2006/01/14 23:49:59 christ
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/signalvar.h>
+#include <sys/kauth.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
@@ -101,7 +102,7 @@ ext2fs_read(void *v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp;
 	struct inode *ip;
@@ -225,7 +226,7 @@ ext2fs_write(void *v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp;
 	struct uio *uio;
@@ -281,7 +282,7 @@ ext2fs_write(void *v)
 	 * Maybe this should be above the vnode op call, but so long as
 	 * file servers have no limits, I don't think it matters.
 	 */
-	p = uio->uio_lwp ? uio->uio_lwp->l_proc : NULL;
+	p = curproc;
 	if (vp->v_type == VREG && p &&
 	    uio->uio_offset + uio->uio_resid >
 	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
@@ -393,13 +394,13 @@ ext2fs_write(void *v)
 
 out:
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)
+	if (resid > uio->uio_resid && ap->a_cred && kauth_cred_geteuid(ap->a_cred) != 0)
 		ip->i_e2fs_mode &= ~(ISUID | ISGID);
 	if (resid > uio->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
 		(void) ext2fs_truncate(vp, osize, ioflag & IO_SYNC, ap->a_cred,
-		    uio->uio_lwp == NULL ? NULL : uio->uio_lwp->l_proc);
+		    p);
 		uio->uio_offset -= resid - uio->uio_resid;
 		uio->uio_resid = resid;
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)

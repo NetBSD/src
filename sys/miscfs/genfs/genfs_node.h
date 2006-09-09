@@ -1,4 +1,4 @@
-/* $NetBSD: genfs_node.h,v 1.9 2005/12/11 12:24:50 christos Exp $ */
+/* $NetBSD: genfs_node.h,v 1.9.4.1 2006/09/09 02:57:59 rpaulo Exp $ */
 
 /*
  * Copyright (c) 2001 Chuck Silvers.
@@ -34,10 +34,12 @@
 #define	_MISCFS_GENFS_GENFS_NODE_H_
 
 struct vm_page;
+struct kauth_cred;
 
 struct genfs_ops {
 	void	(*gop_size)(struct vnode *, off_t, off_t *, int);
-	int	(*gop_alloc)(struct vnode *, off_t, off_t, int, struct ucred *);
+	int	(*gop_alloc)(struct vnode *, off_t, off_t, int,
+	    struct kauth_cred *);
 	int	(*gop_write)(struct vnode *, struct vm_page **, int, int);
 	void	(*gop_markupdate)(struct vnode *, int);
 };
@@ -62,8 +64,6 @@ struct genfs_ops {
 	(void)0;
 
 /* Flags to GOP_SIZE */
-#define	GOP_SIZE_READ	0x1	/* Advise how many pages to read */
-#define	GOP_SIZE_WRITE	0x2	/* Tell how many pages to write */
 #define	GOP_SIZE_MEM	0x4	/* in-memory size */
 
 /* Flags to GOP_MARKUPDATE */

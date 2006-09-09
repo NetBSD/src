@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_subr.c,v 1.20 2005/12/27 04:06:46 chs Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.20.4.1 2006/09/09 03:00:00 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,13 +65,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.20 2005/12/27 04:06:46 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.20.4.1 2006/09/09 03:00:00 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/inttypes.h>
+#include <sys/kauth.h>
+
 #include <ufs/ufs/inode.h>
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
@@ -109,26 +111,27 @@ void
 ext2fs_itimes(struct inode *ip, const struct timespec *acc,
     const struct timespec *mod, const struct timespec *cre)
 {
-	struct timespec *ts = NULL, tsb;
+	struct timespec now;
 
 	if (!(ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY))) {
 		return;
 	}
 
+	vfs_timestamp(&now);
 	if (ip->i_flag & IN_ACCESS) {
 		if (acc == NULL)
-			acc = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			acc = &now;
 		ip->i_e2fs_atime = acc->tv_sec;
 	}
 	if (ip->i_flag & (IN_UPDATE | IN_MODIFY)) {
 		if (mod == NULL)
-			mod = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			mod = &now;
 		ip->i_e2fs_mtime = mod->tv_sec;
 		ip->i_modrev++;
 	}
 	if (ip->i_flag & (IN_CHANGE | IN_MODIFY)) {
 		if (cre == NULL)
-			cre = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			cre = &now;
 		ip->i_e2fs_ctime = cre->tv_sec;
 	}
 	if (ip->i_flag & (IN_ACCESS | IN_MODIFY))

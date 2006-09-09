@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.82.2.2 2006/02/23 16:57:04 rpaulo Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.82.2.3 2006/09/09 02:58:55 rpaulo Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,9 +62,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.82.2.2 2006/02/23 16:57:04 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.82.2.3 2006/09/09 02:58:55 rpaulo Exp $");
 
 #include "opt_inet.h"
+#include "opt_inet6.h"
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
 
@@ -129,6 +130,8 @@ static int ip6qmaxlen = IFQ_MAXLEN;
 struct in6_ifaddr *in6_ifaddr;
 struct ifqueue ip6intrq;
 
+extern struct callout in6_tmpaddrtimer_ch;
+
 int ip6_forward_srcrt;			/* XXX */
 int ip6_sourcecheck;			/* XXX */
 int ip6_sourcecheck_interval;		/* XXX */
@@ -170,6 +173,7 @@ ip6_init()
 	addrsel_policy_init();
 	nd6_init();
 	frag6_init();
+	ip6_desync_factor = arc4random() % MAX_TEMP_DESYNC_FACTOR;
 
 	ip6_init2((void *)0);
 
@@ -192,6 +196,13 @@ ip6_init2(dummy)
 	/* nd6_timer_init */
 	callout_init(&nd6_timer_ch);
 	callout_reset(&nd6_timer_ch, hz, nd6_timer, NULL);
+
+	/* timer for regeneranation of temporary addresses randomize ID */
+	callout_init(&in6_tmpaddrtimer_ch);
+	callout_reset(&in6_tmpaddrtimer_ch,
+		      (ip6_temp_preferred_lifetime - ip6_desync_factor -
+		       ip6_temp_regen_advance) * hz,
+		      in6_tmpaddrtimer, NULL);
 }
 
 /*
@@ -209,6 +220,11 @@ ip6intr()
 		splx(s);
 		if (m == 0)
 			return;
+		/* drop the packet if IPv6 operation is disabled on the IF */
+		if ((ND_IFINFO(m->m_pkthdr.rcvif)->flags & ND6_IFF_IFDISABLED)) {
+			m_freem(m);
+			return;
+		}
 		ip6_input(m);
 	}
 }
@@ -394,6 +410,10 @@ ip6_input(m)
 	 * dst are the loopback address and the receiving interface
 	 * is not loopback. 
 	 */
+	if (__predict_false(
+	    m_makewritable(&m, 0, sizeof(struct ip6_hdr), M_DONTWAIT)))
+		goto bad;
+	ip6 = mtod(m, struct ip6_hdr *);
 	if (in6_clearscope(&ip6->ip6_src) || in6_clearscope(&ip6->ip6_dst)) {
 		ip6stat.ip6s_badscope++; /* XXX */
 		goto bad;
@@ -602,7 +622,7 @@ ip6_input(m)
 		if (ip6->ip6_plen == 0 && plen == 0) {
 			/*
 			 * Note that if a valid jumbo payload option is
-			 * contained, ip6_hoptops_input() must set a valid
+			 * contained, ip6_hopopts_input() must set a valid
 			 * (non-zero) payload length to the variable plen.
 			 */
 			ip6stat.ip6s_badoptions++;
@@ -1015,6 +1035,11 @@ ip6_savecontrol(inp, mp, ip6, m)
 	struct ip6_hdr *ip6;
 	struct mbuf *m;
 {
+#ifdef RFC2292
+#define IS2292(x, y)	((in6p->in6p_flags & IN6P_RFC2292) ? (x) : (y))
+#else
+#define IS2292(x, y)	(y)
+#endif
 
 #ifdef SO_TIMESTAMP
 	if (inp->inp_socket->so_options & SO_TIMESTAMP) {
@@ -1027,50 +1052,55 @@ ip6_savecontrol(inp, mp, ip6, m)
 			mp = &(*mp)->m_next;
 	}
 #endif
-	if (inp->inp_flags & IN6P_RECVDSTADDR) {
-		*mp = sbcreatecontrol((caddr_t) &ip6->ip6_dst,
-		    sizeof(struct in6_addr), IPV6_RECVDSTADDR, IPPROTO_IPV6);
-		if (*mp)
-			mp = &(*mp)->m_next;
-	}
 
-#ifdef noyet
-	/* options were tossed above */
-	if (inp->inp_flags & IN6P_RECVOPTS)
-		/* broken */
-	/* ip6_srcroute doesn't do what we want here, need to fix */
-	if (inp->inp_flags & IPV6P_RECVRETOPTS)
-		/* broken */
-#endif
+	/* some OSes call this logic with IPv4 packet, for SO_TIMESTAMP */
+	if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION)
+		return;
 
 	/* RFC 2292 sec. 5 */
 	if ((inp->inp_flags & IN6P_PKTINFO) != 0) {
 		struct in6_pktinfo pi6;
+
 		bcopy(&ip6->ip6_dst, &pi6.ipi6_addr, sizeof(struct in6_addr));
 		in6_clearscope(&pi6.ipi6_addr);	/* XXX */
-		pi6.ipi6_ifindex = (m && m->m_pkthdr.rcvif)
-					? m->m_pkthdr.rcvif->if_index
-					: 0;
+		pi6.ipi6_ifindex = m->m_pkthdr.rcvif ?
+		    m->m_pkthdr.rcvif->if_index : 0;
 		*mp = sbcreatecontrol((caddr_t) &pi6,
-		    sizeof(struct in6_pktinfo), IPV6_PKTINFO, IPPROTO_IPV6);
+		    sizeof(struct in6_pktinfo),
+		    IS2292(IPV6_2292PKTINFO, IPV6_PKTINFO), IPPROTO_IPV6);
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
 	if (inp->inp_flags & IN6P_HOPLIMIT) {
 		int hlim = ip6->ip6_hlim & 0xff;
+
 		*mp = sbcreatecontrol((caddr_t) &hlim, sizeof(int),
-		    IPV6_HOPLIMIT, IPPROTO_IPV6);
+		    IS2292(IPV6_2292HOPLIMIT, IPV6_HOPLIMIT), IPPROTO_IPV6);
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
-	/* IN6P_NEXTHOP - for outgoing packet only */
+
+	if ((in6p->in6p_flags & IN6P_TCLASS) != 0) {
+		u_int32_t flowinfo;
+		int tclass;
+
+		flowinfo = (u_int32_t)ntohl(ip6->ip6_flow & IPV6_FLOWINFO_MASK);
+		flowinfo >>= 20;
+
+		tclass = flowinfo & 0xff;
+		*mp = sbcreatecontrol((caddr_t)&tclass, sizeof(tclass),
+		    IPV6_TCLASS, IPPROTO_IPV6);
+
+		if (*mp)
+			mp = &(*mp)->m_next;
+	}
 
 	/*
 	 * IPV6_HOPOPTS socket option.  Recall that we required super-user
 	 * privilege for the option (see ip6_ctloutput), but it might be too
 	 * strict, since there might be some hop-by-hop options which can be
 	 * returned to normal user.
-	 * See also RFC 2292 section 6.
+	 * See also RFC3542 section 8 (or RFC2292 section 6).
 	 */
 	if ((inp->inp_flags & IN6P_HOPOPTS) != 0) {
 		/*
@@ -1104,10 +1134,11 @@ ip6_savecontrol(inp, mp, ip6, m)
 			 * XXX: We copy whole the header even if a jumbo
 			 * payload option is included, which option is to
 			 * be removed before returning in the RFC 2292.
-			 * But it's too painful operation...
+			 * Note: this constraint is removed in RFC3542.
 			 */
 			*mp = sbcreatecontrol((caddr_t)hbh, hbhlen,
-			    IPV6_HOPOPTS, IPPROTO_IPV6);
+			    IS2292(IPV6_2292HOPOPTS, IPV6_HOPOPTS),
+			    IPPROTO_IPV6);
 			if (*mp)
 				mp = &(*mp)->m_next;
 			m_freem(ext);
@@ -1126,7 +1157,7 @@ ip6_savecontrol(inp, mp, ip6, m)
 		 * Note that the order of the headers remains in
 		 * the chain of ancillary data.
 		 */
-		while (1) {	/* is explicit loop prevention necessary? */
+		for (;;) {	/* is explicit loop prevention necessary? */
 			struct ip6_ext *ip6e = NULL;
 			int elen;
 			struct mbuf *ext = NULL;
@@ -1168,7 +1199,8 @@ ip6_savecontrol(inp, mp, ip6, m)
 					break;
 
 				*mp = sbcreatecontrol((caddr_t)ip6e, elen,
-				    IPV6_DSTOPTS, IPPROTO_IPV6);
+				    IS2292(IPV6_2292DSTOPTS, IPV6_DSTOPTS),
+				    IPPROTO_IPV6);
 				if (*mp)
 					mp = &(*mp)->m_next;
 				break;
@@ -1178,7 +1210,8 @@ ip6_savecontrol(inp, mp, ip6, m)
 					break;
 
 				*mp = sbcreatecontrol((caddr_t)ip6e, elen,
-				    IPV6_RTHDR, IPPROTO_IPV6);
+				    IS2292(IPV6_2292RTHDR, IPV6_RTHDR),
+				    IPPROTO_IPV6);
 				if (*mp)
 					mp = &(*mp)->m_next;
 				break;
@@ -1209,6 +1242,45 @@ ip6_savecontrol(inp, mp, ip6, m)
 	  loopend:
 	  	;
 	}
+}
+#undef IS2292
+
+
+void
+ip6_notify_pmtu(struct in6pcb *in6p, struct sockaddr_in6 *dst, uint32_t *mtu)
+{
+	struct socket *so;
+	struct mbuf *m_mtu;
+	struct ip6_mtuinfo mtuctl;
+
+	so = in6p->in6p_socket;
+
+	if (mtu == NULL)
+		return;
+
+#ifdef DIAGNOSTIC
+	if (so == NULL)		/* I believe this is impossible */
+		panic("ip6_notify_pmtu: socket is NULL");
+#endif
+
+	memset(&mtuctl, 0, sizeof(mtuctl));	/* zero-clear for safety */
+	mtuctl.ip6m_mtu = *mtu;
+	mtuctl.ip6m_addr = *dst;
+	if (sa6_recoverscope(&mtuctl.ip6m_addr))
+		return;
+
+	if ((m_mtu = sbcreatecontrol((caddr_t)&mtuctl, sizeof(mtuctl),
+	    IPV6_PATHMTU, IPPROTO_IPV6)) == NULL)
+		return;
+
+	if (sbappendaddr(&so->so_rcv, (struct sockaddr *)dst, NULL, m_mtu)
+	    == 0) {
+		m_freem(m_mtu);
+		/* XXX: should count statistics */
+	} else
+		sorwakeup(so);
+
+	return;
 }
 
 /*
@@ -1337,6 +1409,9 @@ ip6_nexthdr(m, off, proto, nxtp)
 
 	switch (proto) {
 	case IPPROTO_IPV6:
+		/* do not chase beyond intermediate IPv6 headers */
+		if (off != 0)
+			return -1;
 		if (m->m_pkthdr.len < off + sizeof(ip6))
 			return -1;
 		m_copydata(m, off, sizeof(ip6), (caddr_t)&ip6);
@@ -1412,7 +1487,7 @@ ip6_lasthdr(m, off, proto, nxtp)
 		nxt = -1;
 		nxtp = &nxt;
 	}
-	while (1) {
+	for (;;) {
 		newoff = ip6_nexthdr(m, off, proto, nxtp);
 		if (newoff < 0)
 			return off;
@@ -1480,6 +1555,11 @@ u_char	inet6ctlerrmap[PRC_NCMDS] = {
 
 SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")
 {
+#ifdef RFC2292
+#define IS2292(x, y)	((in6p->in6p_flags & IN6P_RFC2292) ? (x) : (y))
+#else
+#define IS2292(x, y)	(y)
+#endif
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -1696,6 +1776,27 @@ SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")
 #endif /* IPNOPRIVPORTS */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "use_tempaddr",
+		       SYSCTL_DESCR("Use temporary address"),
+		       NULL, 0, &ip6_use_tempaddr, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "temppltime",
+		       SYSCTL_DESCR("preferred lifetime of a temporary address"),
+		       NULL, 0, &ip6_temp_preferred_lifetime, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "tempvltime",
+		       SYSCTL_DESCR("valid lifetime of a temporary address"),
+		       NULL, 0, &ip6_temp_valid_lifetime, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxfrags",
 		       SYSCTL_DESCR("Maximum fragments in reassembly queue"),
 		       NULL, 0, &ip6_maxfrags, 0,
@@ -1715,4 +1816,11 @@ SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")
 		       NULL, 0, &ip6_use_defzone, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       IPV6CTL_USE_DEFAULTZONE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "mcast_pmtu",
+		       SYSCTL_DESCR("Enable pMTU discovery for multicast packet"),
+		       NULL, 0, &ip6_mcast_pmtu, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       CTL_CREATE, CTL_EOL);
 }

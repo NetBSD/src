@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.84 2005/12/24 19:01:28 perry Exp $ */
+/* $NetBSD: device.h,v 1.84.4.1 2006/09/09 02:59:41 rpaulo Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -78,8 +78,9 @@
 #define	_SYS_DEVICE_H_
 
 #include <sys/evcnt.h>
-#include <sys/properties.h>
 #include <sys/queue.h>
+
+#include <prop/proplib.h>
 
 /*
  * Minimal device structures.
@@ -103,6 +104,8 @@ typedef enum devact {
 } devact_t;
 
 typedef struct cfdata *cfdata_t;
+typedef struct cfdriver *cfdriver_t;
+typedef struct cfattach *cfattach_t;
 typedef struct device *device_t;
 
 struct device {
@@ -110,14 +113,15 @@ struct device {
 	TAILQ_ENTRY(device) dv_list;	/* entry on list of all devices */
 	cfdata_t	dv_cfdata;	/* config data that found us
 					   (NULL if pseudo-device) */
-	struct	cfdriver *dv_cfdriver;	/* our cfdriver */
-	struct	cfattach *dv_cfattach;	/* our cfattach */
-	int	dv_unit;		/* device unit number */
-	char	dv_xname[16];		/* external name (name + unit) */
-	device_t dv_parent;		/* pointer to parent device
+	cfdriver_t	dv_cfdriver;	/* our cfdriver */
+	cfattach_t	dv_cfattach;	/* our cfattach */
+	int		dv_unit;	/* device unit number */
+	char		dv_xname[16];	/* external name (name + unit) */
+	device_t	dv_parent;	/* pointer to parent device
 					   (NULL if pesudo- or root node) */
-	int	dv_flags;		/* misc. flags; see below */
-	int	*dv_locators;		/* our actual locators (optional) */
+	int		dv_flags;	/* misc. flags; see below */
+	int		*dv_locators;	/* our actual locators (optional) */
+	prop_dictionary_t dv_properties;/* properties dictionary */
 };
 
 /* dv_flags */
@@ -223,13 +227,13 @@ LIST_HEAD(cfattachlist, cfattach);
 
 #define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn)		\
 struct cfattach __CONCAT(name,_ca) = {					\
-	___STRING(name), { 0 }, ddsize, matfn, attfn, detfn, actfn, 0, 0 \
+    ___STRING(name), { NULL, NULL }, ddsize, matfn, attfn, detfn, actfn, 0, 0 \
 }
 
 #define	CFATTACH_DECL2(name, ddsize, matfn, attfn, detfn, actfn, \
 	rescanfn, chdetfn) \
 struct cfattach __CONCAT(name,_ca) = {					\
-	___STRING(name), { 0 }, ddsize, matfn, attfn, detfn, actfn, \
+    ___STRING(name), { NULL, NULL }, ddsize, matfn, attfn, detfn, actfn, \
 		rescanfn, chdetfn \
 }
 
@@ -250,7 +254,7 @@ LIST_HEAD(cfdriverlist, cfdriver);
 
 #define	CFDRIVER_DECL(name, class, attrs)				\
 struct cfdriver __CONCAT(name,_cd) = {					\
-	{ 0 }, { 0 }, NULL, ___STRING(name), class, 0, attrs		\
+    { NULL, NULL }, { NULL }, NULL, ___STRING(name), class, 0, attrs	\
 }
 
 /*
@@ -303,8 +307,6 @@ extern int booted_partition;		/* or the partition on that device */
 
 extern volatile int config_pending; 	/* semaphore for mountroot */
 
-extern propdb_t dev_propdb;		/* device properties database */
-
 void	config_init(void);
 void	configure(void);
 
@@ -350,13 +352,24 @@ void	config_pending_decr(void);
 int	config_finalize_register(device_t, int (*)(device_t));
 void	config_finalize(void);
 
+void		*device_lookup(cfdriver_t, int);
 #ifdef __HAVE_DEVICE_REGISTER
-void	device_register(device_t, void *);
+void		device_register(device_t, void *);
 #endif
 
-/* convenience definitions */
-#define	device_lookup(cfd, unit)					\
-	(((unit) < (cfd)->cd_ndevs) ? (cfd)->cd_devs[(unit)] : NULL)
+devclass_t	device_class(device_t);
+cfdata_t	device_cfdata(device_t);
+cfdriver_t	device_cfdriver(device_t);
+cfattach_t	device_cfattach(device_t);
+int		device_unit(device_t);
+const char	*device_xname(device_t);
+device_t	device_parent(device_t);
+boolean_t	device_is_active(device_t);
+int		device_locator(device_t, u_int);
+void		*device_private(device_t);
+prop_dictionary_t device_properties(device_t);
+
+boolean_t	device_is_a(device_t, const char *);
 
 #endif /* _KERNEL */
 

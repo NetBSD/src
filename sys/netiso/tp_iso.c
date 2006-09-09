@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.20 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.20.4.1 2006/09/09 02:59:08 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.20 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.20.4.1 2006/09/09 02:59:08 rpaulo Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -548,7 +548,10 @@ tpclnp_input(struct mbuf *m, ...)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_QUENCH]) {{
-			if (time.tv_usec & 0x4 && time.tv_usec & 0x40) {
+			struct timeval now;
+
+			getmicrotime(&now);
+			if (now.tv_usec & 0x4 && now.tv_usec & 0x40) {
 				printf("tpclnp_input: FAKING %s\n",
 				       tp_stat.ts_pkt_rcvd & 0x1 ? "QUENCH" : "QUENCH2");
 				if (tp_stat.ts_pkt_rcvd & 0x1)
@@ -670,7 +673,10 @@ tpclnp_ctlinput(int cmd, struct sockaddr *saddr, void *dummy)
  * than a sockaddr_iso.
  */
 
-static struct sockaddr_iso siso = {sizeof(siso), AF_ISO};
+static struct sockaddr_iso siso = {
+	.siso_len = sizeof(siso),
+	.siso_family = AF_ISO,
+};
 void
 tpclnp_ctlinput1(int cmd, struct iso_addr *isoa)
 {

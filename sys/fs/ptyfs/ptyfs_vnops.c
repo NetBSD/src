@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.12 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.12.4.1 2006/09/09 02:57:05 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.12 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.12.4.1 2006/09/09 02:57:05 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.12 2005/12/11 12:24:29 christos Ex
 #include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/pty.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 
@@ -151,9 +152,9 @@ int	ptyfs_pathconf	(void *);
 
 static int ptyfs_update(struct vnode *, const struct timespec *,
     const struct timespec *, int);
-static int ptyfs_chown(struct vnode *, uid_t, gid_t, struct ucred *,
-    struct proc *);
-static int ptyfs_chmod(struct vnode *, mode_t, struct ucred *, struct proc *);
+static int ptyfs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,
+    struct lwp *);
+static int ptyfs_chmod(struct vnode *, mode_t, kauth_cred_t, struct lwp *);
 static int atoi(const char *, size_t);
 
 extern const struct cdevsw pts_cdevsw, ptc_cdevsw;
@@ -296,7 +297,7 @@ ptyfs_getattr(void *v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct ptyfsnode *ptyfs = VTOPTYFS(ap->a_vp);
@@ -353,15 +354,14 @@ ptyfs_setattr(void *v)
 		struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 	struct vattr *vap = ap->a_vap;
-	struct ucred *cred = ap->a_cred;
+	kauth_cred_t cred = ap->a_cred;
 	struct lwp *l = ap->a_l;
-	struct proc *p = l->l_proc;
 	int error;
 
 	if (vap->va_size != VNOVAL) {
@@ -379,10 +379,11 @@ ptyfs_setattr(void *v)
 	if (vap->va_flags != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return EROFS;
-		if (cred->cr_uid != ptyfs->ptyfs_uid &&
-		    (error = suser(cred, &p->p_acflag)) != 0)
+		if (kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid &&
+		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    &l->l_acflag)) != 0)
 			return error;
-		if (cred->cr_uid == 0) {
+		if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0) {
 			if ((ptyfs->ptyfs_flags & (SF_IMMUTABLE | SF_APPEND)) &&
 			    securelevel > 0)
 				return EPERM;
@@ -415,7 +416,7 @@ ptyfs_setattr(void *v)
 			return EROFS;
 		if (ptyfs->ptyfs_type == PTYFSroot)
 			return EPERM;
-		error = ptyfs_chown(vp, vap->va_uid, vap->va_gid, cred, p);
+		error = ptyfs_chown(vp, vap->va_uid, vap->va_gid, cred, l);
 		if (error)
 			return error;
 	}
@@ -426,8 +427,9 @@ ptyfs_setattr(void *v)
 			return EROFS;
 		if ((ptyfs->ptyfs_flags & SF_SNAPSHOT) != 0)
 			return EPERM;
-		if (cred->cr_uid != ptyfs->ptyfs_uid &&
-		    (error = suser(cred, &p->p_acflag)) &&
+		if (kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid &&
+		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    &l->l_acflag)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 		    (error = VOP_ACCESS(vp, VWRITE, cred, l)) != 0))
 			return (error);
@@ -452,7 +454,7 @@ ptyfs_setattr(void *v)
 		    (vap->va_mode &
 		    (S_IXUSR|S_IWUSR|S_IXGRP|S_IWGRP|S_IXOTH|S_IWOTH)))
 			return EPERM;
-		error = ptyfs_chmod(vp, vap->va_mode, cred, p);
+		error = ptyfs_chmod(vp, vap->va_mode, cred, l);
 		if (error)
 			return error;
 	}
@@ -465,13 +467,14 @@ ptyfs_setattr(void *v)
  * Inode must be locked before calling.
  */
 static int
-ptyfs_chmod(struct vnode *vp, mode_t mode, struct ucred *cred, struct proc *p)
+ptyfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 {
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 	int error;
 
-	if (cred->cr_uid != ptyfs->ptyfs_uid &&
-	    (error = suser(cred, &p->p_acflag)) != 0)
+	if (kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid &&
+	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return error;
 	ptyfs->ptyfs_mode &= ~ALLPERMS;
 	ptyfs->ptyfs_mode |= (mode & ALLPERMS);
@@ -483,11 +486,11 @@ ptyfs_chmod(struct vnode *vp, mode_t mode, struct ucred *cred, struct proc *p)
  * inode must be locked prior to call.
  */
 static int
-ptyfs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
-    struct proc *p)
+ptyfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
+    struct lwp *l)
 {
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
-	int		error;
+	int		error, ismember = 0;
 
 	if (uid == (uid_t)VNOVAL)
 		uid = ptyfs->ptyfs_uid;
@@ -499,10 +502,12 @@ ptyfs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
 	 * the caller's credentials must imply super-user privilege
 	 * or the call fails.
 	 */
-	if ((cred->cr_uid != ptyfs->ptyfs_uid || uid != ptyfs->ptyfs_uid ||
+	if ((kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid || uid != ptyfs->ptyfs_uid ||
 	    (gid != ptyfs->ptyfs_gid &&
-	     !(cred->cr_gid == gid || groupmember((gid_t)gid, cred)))) &&
-	    ((error = suser(cred, &p->p_acflag)) != 0))
+	    !(kauth_cred_getegid(cred) == gid ||
+	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
+	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0))
 		return error;
 
 	ptyfs->ptyfs_gid = gid;
@@ -525,7 +530,7 @@ ptyfs_access(void *v)
 	struct vop_access_args /* {
 		struct vnode *a_vp;
 		int a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr va;
@@ -633,7 +638,7 @@ ptyfs_readdir(void *v)
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int *a_eofflag;
 		off_t **a_cookies;
 		int *a_ncookies;
@@ -738,7 +743,7 @@ ptyfs_open(void *v)
 	struct vop_open_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -762,16 +767,16 @@ ptyfs_close(void *v)
 	struct vop_close_args /* {
 		struct vnode *a_vp;
 		int  a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 
-        simple_lock(&vp->v_interlock);
-        if (vp->v_usecount > 1)
+	simple_lock(&vp->v_interlock);
+	if (vp->v_usecount > 1)
 		PTYFS_ITIMES(ptyfs, NULL, NULL, NULL);
-        simple_unlock(&vp->v_interlock);
+	simple_unlock(&vp->v_interlock);
 
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSpts:
@@ -791,7 +796,7 @@ ptyfs_read(void *v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct timespec ts;
 	struct vnode *vp = ap->a_vp;
@@ -800,7 +805,7 @@ ptyfs_read(void *v)
 
 	ptyfs->ptyfs_flag |= PTYFS_ACCESS;
 	/* hardclock() resolution is good enough for ptyfs */
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	getnanotime(&ts);
 	(void)ptyfs_update(vp, &ts, &ts, 0);
 
 	switch (ptyfs->ptyfs_type) {
@@ -828,7 +833,7 @@ ptyfs_write(void *v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct timespec ts;
 	struct vnode *vp = ap->a_vp;
@@ -836,8 +841,7 @@ ptyfs_write(void *v)
 	int error;
 
 	ptyfs->ptyfs_flag |= PTYFS_MODIFY;
-	/* hardclock() resolution is good enough for ptyfs */
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	getnanotime(&ts);
 	(void)ptyfs_update(vp, &ts, &ts, 0);
 
 	switch (ptyfs->ptyfs_type) {
@@ -866,7 +870,7 @@ ptyfs_ioctl(void *v)
 		u_long a_command;
 		void *a_data;
 		int  a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -942,22 +946,24 @@ void
 ptyfs_itimes(struct ptyfsnode *ptyfs, const struct timespec *acc,
     const struct timespec *mod, const struct timespec *cre)
 {
-	struct timespec *ts = NULL, tsb;
-
+	struct timespec now;
+ 
 	KASSERT(ptyfs->ptyfs_flag & (PTYFS_ACCESS|PTYFS_CHANGE|PTYFS_MODIFY));
+
+	getnanotime(&now);
 	if (ptyfs->ptyfs_flag & (PTYFS_ACCESS|PTYFS_MODIFY)) {
 		if (acc == NULL)
-			acc = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			acc = &now;
 		ptyfs->ptyfs_atime = *acc;
 	}
 	if (ptyfs->ptyfs_flag & PTYFS_MODIFY) {
 		if (mod == NULL)
-			mod = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			mod = &now;
 		ptyfs->ptyfs_mtime = *mod;
 	}
 	if (ptyfs->ptyfs_flag & PTYFS_CHANGE) {
 		if (cre == NULL)
-			cre = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			cre = &now;
 		ptyfs->ptyfs_ctime = *cre;
 	}
 	ptyfs->ptyfs_flag &= ~(PTYFS_ACCESS|PTYFS_CHANGE|PTYFS_MODIFY);

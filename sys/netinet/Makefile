@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14.4.1 2006/02/02 22:05:28 rpaulo Exp $
+#	$NetBSD: Makefile,v 1.14.4.2 2006/09/09 02:58:46 rpaulo Exp $
 
 INCSDIR= /usr/include/netinet
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.140 2006/01/31 14:02:10 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.140.2.1 2006/09/09 02:57:16 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.140 2006/01/31 14:02:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.140.2.1 2006/09/09 02:57:16 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.140 2006/01/31 14:02:10 yamt Exp 
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
 #include <sys/event.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
@@ -946,36 +947,17 @@ restart:
 }
 
 /*
- * Check to see whether n user file descriptors
- * are available to the process p.
- */
-int
-fdavail(struct proc *p, int n)
-{
-	struct filedesc	*fdp;
-	struct file	**fpp;
-	int		i, lim;
-
-	fdp = p->p_fd;
-	lim = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
-	if ((i = lim - fdp->fd_nfiles) > 0 && (n -= i) <= 0)
-		return (1);
-	fpp = &fdp->fd_ofiles[fdp->fd_freefile];
-	for (i = min(lim,fdp->fd_nfiles) - fdp->fd_freefile; --i >= 0; fpp++)
-		if (*fpp == NULL && --n <= 0)
-			return (1);
-	return (0);
-}
-
-/*
  * Create a new open file structure and allocate
  * a file descriptor for the process that refers to it.
  */
 int
-falloc(struct proc *p, struct file **resultfp, int *resultfd)
+falloc(struct lwp *l, struct file **resultfp, int *resultfd)
 {
 	struct file	*fp, *fq;
+	struct proc	*p;
 	int		error, i;
+
+	p = l->l_proc;
 
  restart:
 	if ((error = fdalloc(p, 0, &i)) != 0) {
@@ -1016,8 +998,8 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 	p->p_fd->fd_ofiles[i] = fp;
 	simple_lock_init(&fp->f_slock);
 	fp->f_count = 1;
-	fp->f_cred = p->p_ucred;
-	crhold(fp->f_cred);
+	fp->f_cred = l->l_cred;
+	kauth_cred_hold(fp->f_cred);
 	if (resultfp) {
 		fp->f_usecount = 1;
 		*resultfp = fp;
@@ -1041,7 +1023,7 @@ ffree(struct file *fp)
 
 	simple_lock(&filelist_slock);
 	LIST_REMOVE(fp, f_list);
-	crfree(fp->f_cred);
+	kauth_cred_free(fp->f_cred);
 #ifdef DIAGNOSTIC
 	fp->f_count = 0; /* What's the point? */
 #endif
@@ -1654,7 +1636,7 @@ filedescopen(dev_t dev, int mode, int type, struct lwp *l)
 
 const struct cdevsw filedesc_cdevsw = {
 	filedescopen, noclose, noread, nowrite, noioctl,
-	    nostop, notty, nopoll, nommap, nokqfilter,
+	    nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 /*
@@ -1796,8 +1778,8 @@ fdcheckstd(l)
 			continue;
 		snprintf(which, sizeof(which), ",%d", i);
 		strlcat(closed, which, sizeof(closed));
-		if (devnull < 0) {
-			if ((error = falloc(p, &fp, &fd)) != 0)
+		if (devnullfp == NULL) {
+			if ((error = falloc(l, &fp, &fd)) != 0)
 				return (error);
 			NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/null",
 			    l);
@@ -1839,7 +1821,7 @@ restart:
 		log(LOG_WARNING, "set{u,g}id pid %d (%s) "
 		    "was invoked by uid %d ppid %d (%s) "
 		    "with fd %s closed\n",
-		    p->p_pid, p->p_comm, pp->p_ucred->cr_uid,
+		    p->p_pid, p->p_comm, kauth_cred_geteuid(pp->p_cred),
 		    pp->p_pid, pp->p_comm, &closed[1]);
 	}
 	return (0);

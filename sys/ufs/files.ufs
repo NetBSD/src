@@ -1,6 +1,6 @@
-#	$NetBSD: files.ufs,v 1.13 2005/12/11 12:25:25 christos Exp $
+#	$NetBSD: files.ufs,v 1.13.4.1 2006/09/09 03:00:00 rpaulo Exp $
 
-deffs					FFS
+deffs	fs_ffs.h			FFS
 deffs					EXT2FS
 deffs	fs_mfs.h			MFS		# XXX
 deffs	fs_lfs.h			LFS		# XXX
@@ -41,6 +41,7 @@ file	ufs/lfs/lfs_cksum.c		lfs
 file	ufs/lfs/lfs_debug.c		lfs
 file	ufs/lfs/lfs_inode.c		lfs
 file	ufs/lfs/lfs_itimes.c		lfs
+file	ufs/lfs/lfs_rfw.c		lfs
 file	ufs/lfs/lfs_segment.c		lfs
 file	ufs/lfs/lfs_subr.c		lfs
 file	ufs/lfs/lfs_syscalls.c		lfs

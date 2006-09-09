@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.139.2.1 2006/02/07 17:13:58 rpaulo Exp $	*/
+/*	$NetBSD: key.c,v 1.139.2.2 2006/09/09 02:59:24 rpaulo Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.139.2.1 2006/02/07 17:13:58 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.139.2.2 2006/09/09 02:59:24 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -534,7 +534,7 @@ found:
 	KEY_CHKSPDIR(sp->dir, dir, "key_allocsp");
 
 	/* found a SPD entry */
-	sp->lastused = time.tv_sec;
+	sp->lastused = time_second;
 	sp->refcnt++;
 	splx(s);
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
@@ -1847,8 +1847,8 @@ key_spdadd(so, m, mhp)
 		}
 	}
 
-	newsp->created = time.tv_sec;
-	newsp->lastused = time.tv_sec;
+	newsp->created = time_second;
+	newsp->lastused = time_second;
 	newsp->lifetime = lft ? lft->sadb_lifetime_addtime : 0;
 	newsp->validtime = lft ? lft->sadb_lifetime_usetime : 0;
 
@@ -1862,7 +1862,7 @@ key_spdadd(so, m, mhp)
 		struct secspacq *spacq;
 		if ((spacq = key_getspacq(&spidx)) != NULL) {
 			/* reset counter in order to deletion by timehandler. */
-			spacq->created = time.tv_sec;
+			spacq->created = time_second;
 			spacq->count = 0;
 		}
     	}
@@ -2912,7 +2912,7 @@ key_newsav(m, mhp, sah, errp)
 	}
 
 	/* reset created */
-	newsav->created = time.tv_sec;
+	newsav->created = time_second;
 
 	newsav->pid = mhp->msg->sadb_msg_pid;
 
@@ -3222,7 +3222,7 @@ key_setsaval(sav, m, mhp)
 	}
 
 	/* reset created */
-	sav->created = time.tv_sec;
+	sav->created = time_second;
 
 	/* make lifetime for CURRENT */
 	KMALLOC(sav->lft_c, struct sadb_lifetime *,
@@ -3238,7 +3238,7 @@ key_setsaval(sav, m, mhp)
 	sav->lft_c->sadb_lifetime_exttype = SADB_EXT_LIFETIME_CURRENT;
 	sav->lft_c->sadb_lifetime_allocations = 0;
 	sav->lft_c->sadb_lifetime_bytes = 0;
-	sav->lft_c->sadb_lifetime_addtime = time.tv_sec;
+	sav->lft_c->sadb_lifetime_addtime = time_second;
 	sav->lft_c->sadb_lifetime_usetime = 0;
 
 	/* lifetimes for HARD and SOFT */
@@ -3350,7 +3350,7 @@ key_mature(sav)
 	switch (sav->sah->saidx.proto) {
 	case IPPROTO_ESP:
 	case IPPROTO_AH:
-		if (ntohl(sav->spi) >= 0 && ntohl(sav->spi) <= 255) {
+		if (ntohl(sav->spi) <= 255) {
 			ipseclog((LOG_DEBUG,
 			    "key_mature: illegal range of SPI %u.\n",
 			    (u_int32_t)ntohl(sav->spi)));
@@ -4652,7 +4652,7 @@ key_timehandler(arg)
 	int s;
 	struct timeval tv;
 
-	tv = time;
+	getmicrotime(&tv);
 
 	s = splsoftnet();	/*called from softclock()*/
 
@@ -5111,7 +5111,7 @@ key_getspi(so, m, mhp)
 		struct secacq *acq;
 		if ((acq = key_getacqbyseq(mhp->msg->sadb_msg_seq)) != NULL) {
 			/* reset counter in order to deletion by timehandler. */
-			acq->created = time.tv_sec;
+			acq->created = time_second;
 			acq->count = 0;
 		}
     	}
@@ -6544,8 +6544,8 @@ key_acquire(saidx, sp)
 		id->sadb_ident_exttype = idexttype;
 		id->sadb_ident_type = SADB_IDENTTYPE_USERFQDN;
 		/* XXX is it correct? */
-		if (curproc && curproc->p_cred)
-			id->sadb_ident_id = curproc->p_cred->p_ruid;
+		if (curlwp)
+			id->sadb_ident_id = kauth_cred_getuid(curlwp->l_cred);
 		if (userfqdn && userfqdnlen)
 			bcopy(userfqdn, id + 1, userfqdnlen);
 		p += sizeof(struct sadb_ident) + PFKEY_ALIGN8(userfqdnlen);
@@ -6621,7 +6621,7 @@ key_newacq(saidx)
 	/* copy secindex */
 	bcopy(saidx, &newacq->saidx, sizeof(newacq->saidx));
 	newacq->seq = (acq_seq == ~0 ? 1 : ++acq_seq);
-	newacq->created = time.tv_sec;
+	newacq->created = time_second;
 	newacq->count = 1;
 
 	return newacq;
@@ -6675,7 +6675,7 @@ key_newspacq(spidx)
 
 	/* copy secindex */
 	bcopy(spidx, &acq->spidx, sizeof(acq->spidx));
-	acq->created = time.tv_sec;
+	acq->created = time_second;
 	acq->count = 0;
 
 	return acq;
@@ -6755,7 +6755,7 @@ key_acquire2(so, m, mhp)
 		}
 
 		/* reset acq counter in order to deletion by timehander. */
-		acq->created = time.tv_sec;
+		acq->created = time_second;
 		acq->count = 0;
 #endif
 		m_freem(m);
@@ -8214,7 +8214,7 @@ key_sa_recordxfer(sav, m)
 	 *	<-----> SOFT
 	 */
     {
-	sav->lft_c->sadb_lifetime_usetime = time.tv_sec;
+	sav->lft_c->sadb_lifetime_usetime = time_second;
 	/* XXX check for expires? */
     }
 

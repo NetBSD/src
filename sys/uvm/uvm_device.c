@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.46 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.46.4.1 2006/09/09 03:00:13 rpaulo Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.46 2005/12/11 12:25:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.46.4.1 2006/09/09 03:00:13 rpaulo Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -71,7 +71,7 @@ static void	udv_init(void);
 static void	udv_reference(struct uvm_object *);
 static void	udv_detach(struct uvm_object *);
 static int	udv_fault(struct uvm_faultinfo *, vaddr_t,
-			  struct vm_page **, int, int, vm_fault_t, vm_prot_t,
+			  struct vm_page **, int, int, vm_prot_t,
 			  int);
 
 /*
@@ -79,10 +79,10 @@ static int	udv_fault(struct uvm_faultinfo *, vaddr_t,
  */
 
 struct uvm_pagerops uvm_deviceops = {
-	udv_init,
-	udv_reference,
-	udv_detach,
-	udv_fault,
+	.pgo_init = udv_init,
+	.pgo_reference = udv_reference,
+	.pgo_detach = udv_detach,
+	.pgo_fault = udv_fault,
 };
 
 /*
@@ -350,7 +350,7 @@ again:
 
 static int
 udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
-    int npages, int centeridx, vm_fault_t fault_type, vm_prot_t access_type,
+    int npages, int centeridx, vm_prot_t access_type,
     int flags)
 {
 	struct vm_map_entry *entry = ufi->entry;

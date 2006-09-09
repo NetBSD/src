@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.99 2006/01/21 18:57:45 matt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.99.2.1 2006/09/09 03:00:13 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.99 2006/01/21 18:57:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.99.2.1 2006/09/09 03:00:13 rpaulo Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.99 2006/01/21 18:57:45 matt Exp $");
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/swap.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm.h>
 
@@ -433,13 +434,13 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 		syscallarg(void *) arg;
 		syscallarg(int) misc;
 	} */ *uap = (struct sys_swapctl_args *)v;
-	struct proc *p = l->l_proc;
 	struct vnode *vp;
 	struct nameidata nd;
 	struct swappri *spp;
 	struct swapdev *sdp;
 	struct swapent *sep;
-	char	userpath[PATH_MAX + 1];
+#define SWAP_PATH_MAX (PATH_MAX + 1)
+	char	*userpath;
 	size_t	len;
 	int	error, misc;
 	int	priority;
@@ -452,6 +453,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 	 */
 	lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, NULL);
 
+	userpath = malloc(SWAP_PATH_MAX, M_TEMP, M_WAITOK);
 	/*
 	 * we handle the non-priv NSWAP and STATS request first.
 	 *
@@ -506,8 +508,16 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * all other requests require superuser privs.   verify.
 	 */
-	if ((error = suser(p->p_ucred, &p->p_acflag)))
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)))
 		goto out;
+
+	if (SCARG(uap, cmd) == SWAP_DUMPOFF) {
+		/* drop the current dump device */
+		dumpdev = NODEV;
+		cpu_dumpconf();
+		goto out;
+	}
 
 	/*
 	 * at this point we expect a path name in arg.   we will
@@ -524,7 +534,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 			goto out;
 		}
 		if (SCARG(uap, cmd) == SWAP_ON &&
-		    copystr("miniroot", userpath, sizeof userpath, &len))
+		    copystr("miniroot", userpath, SWAP_PATH_MAX, &len))
 			panic("swapctl: miniroot copy failed");
 	} else {
 		int	space;
@@ -532,7 +542,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 
 		if (SCARG(uap, cmd) == SWAP_ON) {
 			if ((error = copyinstr(SCARG(uap, arg), userpath,
-			    sizeof userpath, &len)))
+			    SWAP_PATH_MAX, &len)))
 				goto out;
 			space = UIO_SYSSPACE;
 			where = userpath;
@@ -666,6 +676,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 	vput(vp);
 
 out:
+	free(userpath, M_TEMP);
 	lockmgr(&swap_syscall_lock, LK_RELEASE, NULL);
 
 	UVMHIST_LOG(pdhist, "<- done!  error=%d", error, 0, 0, 0);
@@ -751,7 +762,6 @@ static int
 swap_on(struct lwp *l, struct swapdev *sdp)
 {
 	struct vnode *vp;
-	struct proc *p = l->l_proc;
 	int error, npages, nblocks, size;
 	long addr;
 	u_long result;
@@ -780,7 +790,7 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	 * has already been opened when root was mounted (mountroot).
 	 */
 	if (vp != rootvp) {
-		if ((error = VOP_OPEN(vp, FREAD|FWRITE, p->p_ucred, l)))
+		if ((error = VOP_OPEN(vp, FREAD|FWRITE, l->l_cred, l)))
 			return (error);
 	}
 
@@ -807,7 +817,7 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 		break;
 
 	case VREG:
-		if ((error = VOP_GETATTR(vp, &va, p->p_ucred, l)))
+		if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)))
 			goto bad;
 		nblocks = (int)btodb(va.va_size);
 		if ((error =
@@ -950,7 +960,7 @@ bad:
 		blist_destroy(sdp->swd_blist);
 	}
 	if (vp != rootvp) {
-		(void)VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, l);
+		(void)VOP_CLOSE(vp, FREAD|FWRITE, l->l_cred, l);
 	}
 	return (error);
 }
@@ -963,7 +973,6 @@ bad:
 static int
 swap_off(struct lwp *l, struct swapdev *sdp)
 {
-	struct proc *p = l->l_proc;
 	int npages = sdp->swd_npages;
 	int error = 0;
 
@@ -1007,7 +1016,7 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 	 */
 	vrele(sdp->swd_vp);
 	if (sdp->swd_vp != rootvp) {
-		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_ucred, l);
+		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, l->l_cred, l);
 	}
 
 	simple_lock(&uvm.swap_data_lock);
@@ -1150,12 +1159,12 @@ swwrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 const struct bdevsw swap_bdevsw = {
-	noopen, noclose, swstrategy, noioctl, nodump, nosize,
+	noopen, noclose, swstrategy, noioctl, nodump, nosize, D_OTHER,
 };
 
 const struct cdevsw swap_cdevsw = {
 	nullopen, nullclose, swread, swwrite, noioctl,
-	    nostop, notty, nopoll, nommap, nokqfilter
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 /*

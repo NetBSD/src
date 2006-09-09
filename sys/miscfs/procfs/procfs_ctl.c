@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.30 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.30.4.1 2006/09/09 02:58:00 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.30 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.30.4.1 2006/09/09 02:58:00 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.30 2005/12/11 12:24:51 christos Exp
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
+#include <sys/kauth.h>
+
 #include <miscfs/procfs/procfs.h>
 
 #define PROCFS_CTL_ATTACH	1
@@ -100,7 +102,7 @@ static const vfs_namemap_t ctlnames[] = {
 	{ "step",	PROCFS_CTL_STEP },
 	{ "run",	PROCFS_CTL_RUN },
 	{ "wait",	PROCFS_CTL_WAIT },
-	{ 0 },
+	{ NULL,		0 },
 };
 
 static const vfs_namemap_t signames[] = {
@@ -121,15 +123,10 @@ static const vfs_namemap_t signames[] = {
 	{ "vtalrm",	SIGVTALRM },	{ "prof",	SIGPROF },
 	{ "winch",	SIGWINCH },	{ "info",	SIGINFO },
 	{ "usr1",	SIGUSR1 },	{ "usr2",	SIGUSR2 },
-	{ 0 },
+	{ NULL,		0 },
 };
 
 int procfs_control(struct lwp *, struct lwp *, int, int);
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 int
 procfs_control(curl, l, op, sig)
@@ -170,9 +167,10 @@ procfs_control(curl, l, op, sig)
 		 *      (3) it's not owned by you, or is set-id on exec
 		 *          (unless you're root), or...
 		 */
-		if ((p->p_cred->p_ruid != curp->p_cred->p_ruid ||
-			ISSET(p->p_flag, P_SUGID)) &&
-		    (error = suser(curp->p_ucred, &curp->p_acflag)) != 0)
+		if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curl->l_cred) ||
+		    ISSET(p->p_flag, P_SUGID)) &&
+		    (error = kauth_authorize_generic(curl->l_cred, KAUTH_GENERIC_ISSUSER,
+		    &curl->l_acflag)) != 0)
 			return (error);
 
 		/*

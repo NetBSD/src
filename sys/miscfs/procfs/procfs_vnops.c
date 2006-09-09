@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.128 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.128.4.1 2006/09/09 02:58:00 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.128 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.128.4.1 2006/09/09 02:58:00 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.128 2005/12/11 12:24:51 christos 
 #include <sys/stat.h>
 #include <sys/ptrace.h>
 #include <sys/sysctl.h> /* XXX for curtain */
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 
@@ -271,7 +272,7 @@ procfs_open(v)
 	struct vop_open_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
@@ -320,7 +321,7 @@ procfs_close(v)
 	struct vop_close_args /* {
 		struct vnode *a_vp;
 		int  a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
@@ -542,7 +543,7 @@ procfs_getattr(v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
@@ -566,8 +567,8 @@ procfs_getattr(v)
 	}
 
 	if (procp != NULL) {
-		if (CURTAIN(curlwp->l_proc->p_ucred->cr_uid,
-			    procp->p_ucred->cr_uid))
+		if (kauth_authorize_process(kauth_cred_get(),
+		    KAUTH_PROCESS_CANSEE, procp, NULL, NULL, NULL) != 0)
 			return (ENOENT);
 	}
 
@@ -584,9 +585,7 @@ procfs_getattr(v)
 	vap->va_blocksize = PAGE_SIZE;
 
 	/*
-	 * Make all times be current TOD.  Avoid microtime(9), it's slow.
-	 * We don't guard the read from time(9) with splclock(9) since we
-	 * don't actually need to be THAT sure the access is atomic.
+	 * Make all times be current TOD.
 	 *
 	 * It would be possible to get the process start
 	 * time from the p_stats structure, but there's
@@ -594,13 +593,13 @@ procfs_getattr(v)
 	 * p_stats structure is not addressable if u. gets
 	 * swapped out for that process.
 	 */
-	TIMEVAL_TO_TIMESPEC(&time, &vap->va_ctime);
+	getnanotime(&vap->va_ctime);
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 	if (procp)
 		TIMEVAL_TO_TIMESPEC(&procp->p_stats->p_start,
 		    &vap->va_birthtime);
 	else
-		TIMEVAL_TO_TIMESPEC(&boottime, &vap->va_birthtime);
+		getnanotime(&vap->va_birthtime);
 
 	switch (pfs->pfs_type) {
 	case PFSmem:
@@ -626,8 +625,8 @@ procfs_getattr(v)
 	case PFSmaps:
 	case PFScmdline:
 		vap->va_nlink = 1;
-		vap->va_uid = procp->p_ucred->cr_uid;
-		vap->va_gid = procp->p_ucred->cr_gid;
+		vap->va_uid = kauth_cred_geteuid(procp->p_cred);
+		vap->va_gid = kauth_cred_getegid(procp->p_cred);
 		break;
 	case PFSmeminfo:
 	case PFScpuinfo:
@@ -662,6 +661,7 @@ procfs_getattr(v)
 		vap->va_bytes = vap->va_size = DEV_BSIZE;
 		break;
 
+	case PFSself:
 	case PFScurproc: {
 		char bf[16];		/* should be enough */
 		vap->va_nlink = 1;
@@ -672,13 +672,6 @@ procfs_getattr(v)
 		break;
 	}
 
-	case PFSself:
-		vap->va_nlink = 1;
-		vap->va_uid = 0;
-		vap->va_gid = 0;
-		vap->va_bytes = vap->va_size = sizeof("curproc") - 1;
-		break;
-
 	case PFSfd:
 		if (pfs->pfs_fd != -1) {
 			struct file *fp;
@@ -688,8 +681,8 @@ procfs_getattr(v)
 				return error;
 			FILE_USE(fp);
 			vap->va_nlink = 1;
-			vap->va_uid = fp->f_cred->cr_uid;
-			vap->va_gid = fp->f_cred->cr_gid;
+			vap->va_uid = kauth_cred_geteuid(fp->f_cred);
+			vap->va_gid = kauth_cred_getegid(fp->f_cred);
 			switch (fp->f_type) {
 			case DTYPE_VNODE:
 				vap->va_bytes = vap->va_size =
@@ -705,8 +698,8 @@ procfs_getattr(v)
 		/*FALLTHROUGH*/
 	case PFSproc:
 		vap->va_nlink = 2;
-		vap->va_uid = procp->p_ucred->cr_uid;
-		vap->va_gid = procp->p_ucred->cr_gid;
+		vap->va_uid = kauth_cred_geteuid(procp->p_cred);
+		vap->va_gid = kauth_cred_getegid(procp->p_cred);
 		vap->va_bytes = vap->va_size = DEV_BSIZE;
 		break;
 
@@ -821,7 +814,7 @@ procfs_access(v)
 	struct vop_access_args /* {
 		struct vnode *a_vp;
 		int a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr va;
@@ -1101,8 +1094,9 @@ procfs_root_readdir_callback(struct proc *p, void *arg)
 		return 0;
 	}
 
-	if (CURTAIN(curlwp->l_proc->p_ucred->cr_uid, p->p_ucred->cr_uid))
-		return (0);
+	if (kauth_authorize_process(kauth_cred_get(),
+	    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL) != 0)
+		return 0;
 
 	memset(&d, 0, UIO_MX);
 	d.d_reclen = UIO_MX;
@@ -1146,7 +1140,7 @@ procfs_readdir(v)
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int *a_eofflag;
 		off_t **a_cookies;
 		int *a_ncookies;
@@ -1229,9 +1223,9 @@ procfs_readdir(v)
 		if (p == NULL)
 			return ESRCH;
 
-		if (CURTAIN(curlwp->l_proc->p_ucred->cr_uid,
-			    p->p_ucred->cr_uid))
-			return (ESRCH);
+		if (kauth_authorize_process(kauth_cred_get(),
+		    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL) != 0)
+			return ESRCH;
 
 		fdp = p->p_fd;
 

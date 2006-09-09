@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.56 2005/12/29 10:06:52 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.56.4.1 2006/09/09 02:58:25 rpaulo Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.56 2005/12/29 10:06:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.56.4.1 2006/09/09 02:58:25 rpaulo Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -139,9 +139,9 @@ static struct mbuf *ieee80211_defrag(struct ieee80211com *,
 static struct mbuf *ieee80211_decap(struct ieee80211com *, struct mbuf *, int);
 static void ieee80211_send_error(struct ieee80211com *, struct ieee80211_node *,
 		const u_int8_t *mac, int subtype, int arg);
-#ifndef IEEE80211_NO_HOSTAP
 static void ieee80211_deliver_data(struct ieee80211com *,
 	struct ieee80211_node *, struct mbuf *);
+#ifndef IEEE80211_NO_HOSTAP
 static void ieee80211_node_pwrsave(struct ieee80211_node *, int enable);
 static void ieee80211_recv_pspoll(struct ieee80211com *,
 	struct ieee80211_node *, struct mbuf *);
@@ -1368,33 +1368,33 @@ ieee80211_ssid_mismatch(struct ieee80211com *ic, const char *tag,
 	  (((const u_int8_t *)(p))[2] << 16) |		\
 	  (((const u_int8_t *)(p))[3] << 24)))
 
-static int __inline
+static __inline int
 iswpaoui(const u_int8_t *frm)
 {
 	return frm[1] > 3 && LE_READ_4(frm+2) == ((WPA_OUI_TYPE<<24)|WPA_OUI);
 }
 
-static int __inline
+static __inline int
 iswmeoui(const u_int8_t *frm)
 {
 	return frm[1] > 3 && LE_READ_4(frm+2) == ((WME_OUI_TYPE<<24)|WME_OUI);
 }
 
-static int __inline
+static __inline int
 iswmeparam(const u_int8_t *frm)
 {
 	return frm[1] > 5 && LE_READ_4(frm+2) == ((WME_OUI_TYPE<<24)|WME_OUI) &&
 		frm[6] == WME_PARAM_OUI_SUBTYPE;
 }
 
-static int __inline
+static __inline int
 iswmeinfo(const u_int8_t *frm)
 {
 	return frm[1] > 5 && LE_READ_4(frm+2) == ((WME_OUI_TYPE<<24)|WME_OUI) &&
 		frm[6] == WME_INFO_OUI_SUBTYPE;
 }
 
-static int __inline
+static __inline int
 isatherosoui(const u_int8_t *frm)
 {
 	return frm[1] > 3 && LE_READ_4(frm+2) == ((ATH_OUI_TYPE<<24)|ATH_OUI);
@@ -1780,7 +1780,7 @@ ieee80211_saveie(u_int8_t **iep, const u_int8_t *ie)
 	if (*iep == NULL || (*iep)[1] != ie[1]) {
 		if (*iep != NULL)
 			FREE(*iep, M_DEVBUF);
-		MALLOC(*iep, void*, ielen, M_DEVBUF, M_NOWAIT);
+		*iep = malloc(ielen, M_DEVBUF, M_NOWAIT);
 	}
 	if (*iep != NULL)
 		memcpy(*iep, ie, ielen);
@@ -2085,12 +2085,25 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			if (ic->ic_flags & IEEE80211_F_SCAN)
 				ieee80211_add_scan(ic, &scan, wh,
 					subtype, rssi, rstamp);
+			ic->ic_bmiss_count = 0;
 			return;
 		}
 		/*
 		 * If scanning, just pass information to the scan module.
 		 */
 		if (ic->ic_flags & IEEE80211_F_SCAN) {
+			if (ic->ic_flags_ext & IEEE80211_FEXT_PROBECHAN) {
+				/*
+				 * Actively scanning a channel marked passive;
+				 * send a probe request now that we know there
+				 * is 802.11 traffic present.
+				 *
+				 * XXX check if the beacon we recv'd gives
+				 * us what we need and suppress the probe req
+				 */
+				ieee80211_probe_curchan(ic, 1);
+				ic->ic_flags_ext &= ~IEEE80211_FEXT_PROBECHAN;
+			}
 			ieee80211_add_scan(ic, &scan, wh,
 				subtype, rssi, rstamp);
 			return;
@@ -2600,6 +2613,11 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		ic->ic_stats.is_rx_deauth++;
 		IEEE80211_NODE_STAT(ni, rx_deauth);
 
+		if (!IEEE80211_ADDR_EQ(wh->i_addr1, ic->ic_myaddr)) {
+			/* Not intended for this station. */
+			ic->ic_stats.is_rx_mgtdiscard++;
+			break;
+		}
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
 		    "[%s] recv deauthenticate (reason %d)\n",
 		    ether_sprintf(ni->ni_macaddr), reason);
@@ -2639,6 +2657,11 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		ic->ic_stats.is_rx_disassoc++;
 		IEEE80211_NODE_STAT(ni, rx_disassoc);
 
+		if (!IEEE80211_ADDR_EQ(wh->i_addr1, ic->ic_myaddr)) {
+			/* Not intended for this station. */
+			ic->ic_stats.is_rx_mgtdiscard++;
+			break;
+		}
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
 		    "[%s] recv disassociate (reason %d)\n",
 		    ether_sprintf(ni->ni_macaddr), reason);

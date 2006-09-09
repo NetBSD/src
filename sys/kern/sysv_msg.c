@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.40 2005/12/07 06:14:13 thorpej Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.40.4.1 2006/09/09 02:57:17 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.40 2005/12/07 06:14:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.40.4.1 2006/09/09 02:57:17 rpaulo Exp $");
 
 #define SYSVMSG
 
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.40 2005/12/07 06:14:13 thorpej Exp $"
 #include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 #define MSG_DEBUG
 #undef MSG_DEBUG_OK
@@ -187,7 +188,6 @@ sys___msgctl13(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) cmd;
 		syscallarg(struct msqid_ds *) buf;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct msqid_ds msqbuf;
 	int cmd, error;
 
@@ -199,7 +199,7 @@ sys___msgctl13(struct lwp *l, void *v, register_t *retval)
 			return (error);
 	}
 
-	error = msgctl1(p, SCARG(uap, msqid), cmd,
+	error = msgctl1(l, SCARG(uap, msqid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &msqbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT)
@@ -209,9 +209,9 @@ sys___msgctl13(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-msgctl1(struct proc *p, int msqid, int cmd, struct msqid_ds *msqbuf)
+msgctl1(struct lwp *l, int msqid, int cmd, struct msqid_ds *msqbuf)
 {
-	struct ucred *cred = p->p_ucred;
+	kauth_cred_t cred = l->l_cred;
 	struct msqid_ds *msqptr;
 	int error = 0, ix;
 
@@ -269,7 +269,8 @@ msgctl1(struct proc *p, int msqid, int cmd, struct msqid_ds *msqbuf)
 	case IPC_SET:
 		if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_M)))
 			return (error);
-		if (msqbuf->msg_qbytes > msqptr->msg_qbytes && cred->cr_uid != 0)
+		if (msqbuf->msg_qbytes > msqptr->msg_qbytes &&
+		    kauth_cred_geteuid(cred) != 0)
 			return (EPERM);
 		if (msqbuf->msg_qbytes > msginfo.msgmnb) {
 			MSG_PRINTF(("can't increase msg_qbytes beyond %d "
@@ -286,7 +287,7 @@ msgctl1(struct proc *p, int msqid, int cmd, struct msqid_ds *msqbuf)
 		msqptr->msg_perm.mode = (msqptr->msg_perm.mode & ~0777) |
 		    (msqbuf->msg_perm.mode & 0777);
 		msqptr->msg_qbytes = msqbuf->msg_qbytes;
-		msqptr->msg_ctime = time.tv_sec;
+		msqptr->msg_ctime = time_second;
 		break;
 
 	case IPC_STAT:
@@ -312,11 +313,10 @@ sys_msgget(struct lwp *l, void *v, register_t *retval)
 		syscallarg(key_t) key;
 		syscallarg(int) msgflg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int msqid, error;
 	int key = SCARG(uap, key);
 	int msgflg = SCARG(uap, msgflg);
-	struct ucred *cred = p->p_ucred;
+	kauth_cred_t cred = l->l_cred;
 	struct msqid_ds *msqptr = NULL;
 
 	MSG_PRINTF(("msgget(0x%x, 0%o)\n", key, msgflg));
@@ -364,10 +364,10 @@ sys_msgget(struct lwp *l, void *v, register_t *retval)
 		}
 		MSG_PRINTF(("msqid %d is available\n", msqid));
 		msqptr->msg_perm._key = key;
-		msqptr->msg_perm.cuid = cred->cr_uid;
-		msqptr->msg_perm.uid = cred->cr_uid;
-		msqptr->msg_perm.cgid = cred->cr_gid;
-		msqptr->msg_perm.gid = cred->cr_gid;
+		msqptr->msg_perm.cuid = kauth_cred_geteuid(cred);
+		msqptr->msg_perm.uid = kauth_cred_geteuid(cred);
+		msqptr->msg_perm.cgid = kauth_cred_getegid(cred);
+		msqptr->msg_perm.gid = kauth_cred_getegid(cred);
 		msqptr->msg_perm.mode = (msgflg & 0777);
 		/* Make sure that the returned msqid is unique */
 		msqptr->msg_perm._seq++;
@@ -380,7 +380,7 @@ sys_msgget(struct lwp *l, void *v, register_t *retval)
 		msqptr->msg_lrpid = 0;
 		msqptr->msg_stime = 0;
 		msqptr->msg_rtime = 0;
-		msqptr->msg_ctime = time.tv_sec;
+		msqptr->msg_ctime = time_second;
 	} else {
 		MSG_PRINTF(("didn't find it and wasn't asked to create it\n"));
 		return (ENOENT);
@@ -401,13 +401,17 @@ sys_msgsnd(struct lwp *l, void *v, register_t *retval)
 		syscallarg(size_t) msgsz;
 		syscallarg(int) msgflg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int msqid = SCARG(uap, msqid);
-	const char *user_msgp = SCARG(uap, msgp);
-	size_t msgsz = SCARG(uap, msgsz);
-	int msgflg = SCARG(uap, msgflg);
-	int segs_needed, error;
-	struct ucred *cred = p->p_ucred;
+
+	return msgsnd1(l, SCARG(uap, msqid), SCARG(uap, msgp),
+	    SCARG(uap, msgsz), SCARG(uap, msgflg), sizeof(long), copyin);
+}
+
+int
+msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
+    int msgflg, size_t typesz, copyin_t fetch_type)
+{
+	int segs_needed, error, msqid;
+	kauth_cred_t cred = l->l_cred;
 	struct msqid_ds *msqptr;
 	struct __msg *msghdr;
 	short next;
@@ -415,7 +419,7 @@ sys_msgsnd(struct lwp *l, void *v, register_t *retval)
 	MSG_PRINTF(("call to msgsnd(%d, %p, %lld, %d)\n", msqid, user_msgp,
 	    (long long)msgsz, msgflg));
 
-	msqid = IPCID_TO_IX(msqid);
+	msqid = IPCID_TO_IX(msqidr);
 
 	if (msqid < 0 || msqid >= msginfo.msgmni) {
 		MSG_PRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", msqid,
@@ -428,7 +432,7 @@ sys_msgsnd(struct lwp *l, void *v, register_t *retval)
 		MSG_PRINTF(("no such message queue id\n"));
 		return (EINVAL);
 	}
-	if (msqptr->msg_perm._seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
+	if (msqptr->msg_perm._seq != IPCID_TO_SEQ(msqidr)) {
 		MSG_PRINTF(("wrong sequence number\n"));
 		return (EINVAL);
 	}
@@ -574,15 +578,15 @@ sys_msgsnd(struct lwp *l, void *v, register_t *retval)
 	 * Copy in the message type
 	 */
 
-	if ((error = copyin(user_msgp, &msghdr->msg_type,
-	    sizeof(msghdr->msg_type))) != 0) {
+	if ((error = (*fetch_type)(user_msgp, &msghdr->msg_type,
+	    typesz)) != 0) {
 		MSG_PRINTF(("error %d copying the message type\n", error));
 		msg_freehdr(msghdr);
 		msqptr->msg_perm.mode &= ~MSG_LOCKED;
 		wakeup(msqptr);
 		return (error);
 	}
-	user_msgp += sizeof(msghdr->msg_type);
+	user_msgp += typesz;
 
 	/*
 	 * Validate the message type
@@ -658,8 +662,8 @@ sys_msgsnd(struct lwp *l, void *v, register_t *retval)
 
 	msqptr->_msg_cbytes += msghdr->msg_ts;
 	msqptr->msg_qnum++;
-	msqptr->msg_lspid = p->p_pid;
-	msqptr->msg_stime = time.tv_sec;
+	msqptr->msg_lspid = l->l_proc->p_pid;
+	msqptr->msg_stime = time_second;
 
 	wakeup(msqptr);
 	return (0);
@@ -675,23 +679,27 @@ sys_msgrcv(struct lwp *l, void *v, register_t *retval)
 		syscallarg(long) msgtyp;
 		syscallarg(int) msgflg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int msqid = SCARG(uap, msqid);
-	char *user_msgp = SCARG(uap, msgp);
-	size_t msgsz = SCARG(uap, msgsz);
-	long msgtyp = SCARG(uap, msgtyp);
-	int msgflg = SCARG(uap, msgflg);
+
+	return msgrcv1(l, SCARG(uap, msqid), SCARG(uap, msgp),
+	    SCARG(uap, msgsz), SCARG(uap, msgtyp), SCARG(uap, msgflg),
+	    sizeof(long), copyout, retval);
+}
+
+int
+msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
+    int msgflg, size_t typesz, copyout_t put_type, register_t *retval)
+{
 	size_t len;
-	struct ucred *cred = p->p_ucred;
+	kauth_cred_t cred = l->l_cred;
 	struct msqid_ds *msqptr;
 	struct __msg *msghdr;
-	int error;
+	int error, msqid;
 	short next;
 
 	MSG_PRINTF(("call to msgrcv(%d, %p, %lld, %ld, %d)\n", msqid,
 	    user_msgp, (long long)msgsz, msgtyp, msgflg));
 
-	msqid = IPCID_TO_IX(msqid);
+	msqid = IPCID_TO_IX(msqidr);
 
 	if (msqid < 0 || msqid >= msginfo.msgmni) {
 		MSG_PRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", msqid,
@@ -704,7 +712,7 @@ sys_msgrcv(struct lwp *l, void *v, register_t *retval)
 		MSG_PRINTF(("no such message queue id\n"));
 		return (EINVAL);
 	}
-	if (msqptr->msg_perm._seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
+	if (msqptr->msg_perm._seq != IPCID_TO_SEQ(msqidr)) {
 		MSG_PRINTF(("wrong sequence number\n"));
 		return (EINVAL);
 	}
@@ -842,7 +850,7 @@ sys_msgrcv(struct lwp *l, void *v, register_t *retval)
 		 */
 
 		if (msqptr->msg_qbytes == 0 ||
-		    msqptr->msg_perm._seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
+		    msqptr->msg_perm._seq != IPCID_TO_SEQ(msqidr)) {
 			MSG_PRINTF(("msqid deleted\n"));
 			return (EIDRM);
 		}
@@ -856,8 +864,8 @@ sys_msgrcv(struct lwp *l, void *v, register_t *retval)
 
 	msqptr->_msg_cbytes -= msghdr->msg_ts;
 	msqptr->msg_qnum--;
-	msqptr->msg_lrpid = p->p_pid;
-	msqptr->msg_rtime = time.tv_sec;
+	msqptr->msg_lrpid = l->l_proc->p_pid;
+	msqptr->msg_rtime = time_second;
 
 	/*
 	 * Make msgsz the actual amount that we'll be returning.
@@ -874,14 +882,14 @@ sys_msgrcv(struct lwp *l, void *v, register_t *retval)
 	 * Return the type to the user.
 	 */
 
-	error = copyout(&msghdr->msg_type, user_msgp, sizeof(msghdr->msg_type));
+	error = (*put_type)(&msghdr->msg_type, user_msgp, typesz);
 	if (error != 0) {
 		MSG_PRINTF(("error (%d) copying out message type\n", error));
 		msg_freehdr(msghdr);
 		wakeup(msqptr);
 		return (error);
 	}
-	user_msgp += sizeof(msghdr->msg_type);
+	user_msgp += typesz;
 
 	/*
 	 * Return the segments to the user

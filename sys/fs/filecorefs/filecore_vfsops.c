@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.22 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.22.4.1 2006/09/09 02:56:56 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.22 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.22.4.1 2006/09/09 02:56:56 rpaulo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.22 2005/12/11 12:24:25 christo
 #include <sys/pool.h>
 #include <sys/conf.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <fs/filecorefs/filecore.h>
 #include <fs/filecorefs/filecore_extern.h>
@@ -147,7 +148,7 @@ filecore_mountroot()
 	int error;
 	struct filecore_args args;
 
-	if (root_device->dv_class != DV_DISK)
+	if (device_class(root_device) != DV_DISK)
 		return (ENODEV);
 
 	/*
@@ -190,11 +191,9 @@ filecore_mount(mp, path, data, ndp, l)
 {
 	struct vnode *devvp;
 	struct filecore_args args;
-	struct proc *p;
 	int error;
 	struct filecore_mnt *fcmp = NULL;
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		fcmp = VFSTOFILECORE(mp);
 		if (fcmp == NULL)
@@ -236,9 +235,9 @@ filecore_mount(mp, path, data, ndp, l)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (p->p_ucred->cr_uid != 0) {
+	if (kauth_cred_geteuid(l->l_cred) != 0) {
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, VREAD, p->p_ucred, l);
+		error = VOP_ACCESS(devvp, VREAD, l->l_cred, l);
 		VOP_UNLOCK(devvp, 0);
 		if (error) {
 			vrele(devvp);
@@ -295,7 +294,7 @@ filecore_mountfs(devvp, mp, l, argp)
 		return error;
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return EBUSY;
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_ucred, l, 0, 0))
+	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0))
 	    != 0)
 		return (error);
 
@@ -377,8 +376,8 @@ filecore_mountfs(devvp, mp, l, argp)
 	fcmp->fc_devvp = devvp;
 	fcmp->fc_mntflags = argp->flags;
 	if (argp->flags & FILECOREMNT_USEUID) {
-		fcmp->fc_uid = l->l_proc->p_cred->p_ruid;
-		fcmp->fc_gid = l->l_proc->p_cred->p_rgid;
+		fcmp->fc_uid = kauth_cred_getuid(l->l_cred);
+		fcmp->fc_gid = kauth_cred_getgid(l->l_cred);
 	} else {
 		fcmp->fc_uid = argp->uid;
 		fcmp->fc_gid = argp->gid;
@@ -515,7 +514,7 @@ int
 filecore_sync(mp, waitfor, cred, l)
 	struct mount *mp;
 	int waitfor;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 	return (0);
@@ -544,12 +543,16 @@ filecore_fhtovp(mp, fhp, vpp)
 	struct fid *fhp;
 	struct vnode **vpp;
 {
-	struct ifid *ifhp = (struct ifid *)fhp;
+	struct ifid ifh;
 	struct vnode *nvp;
 	struct filecore_node *ip;
 	int error;
 
-	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) != 0) {
+	if (fhp->fid_len != sizeof(struct ifid))
+		return EINVAL;
+
+	memcpy(&ifh, fhp, sizeof(ifh));
+	if ((error = VFS_VGET(mp, ifh.ifid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}
@@ -694,16 +697,22 @@ filecore_vget(mp, ino, vpp)
  */
 /* ARGSUSED */
 int
-filecore_vptofh(vp, fhp)
+filecore_vptofh(vp, fhp, fh_size)
 	struct vnode *vp;
 	struct fid *fhp;
+	size_t *fh_size;
 {
 	struct filecore_node *ip = VTOI(vp);
-	struct ifid *ifhp;
+	struct ifid ifh;
 
-	ifhp = (struct ifid *)fhp;
-	ifhp->ifid_len = sizeof(struct ifid);
-	ifhp->ifid_ino = ip->i_number;
+	if (*fh_size < sizeof(struct ifid)) {
+		*fh_size = sizeof(struct ifid);
+		return E2BIG;
+	}
+	memset(&ifh, 0, sizeof(ifh));
+	ifh.ifid_len = sizeof(struct ifid);
+	ifh.ifid_ino = ip->i_number;
+	memcpy(fhp, &ifh, sizeof(ifh));
        	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.211 2005/12/24 19:01:28 perry Exp $	*/
+/*	$NetBSD: proc.h,v 1.211.4.1 2006/09/09 02:59:42 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -42,6 +42,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_kstack.h"
+#include "opt_lockdebug.h"
 #endif
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct */
@@ -52,6 +53,11 @@
 #include <sys/signalvar.h>
 #include <sys/siginfo.h>
 #include <sys/event.h>
+
+#ifndef _KERNEL
+#include <sys/time.h>
+#include <sys/resource.h>
+#endif
 
 /*
  * One structure allocated per session.
@@ -86,6 +92,8 @@ struct pgrp {
 struct exec_package;
 struct ps_strings;
 struct ras;
+struct sa_emul;
+struct kauth_cred;
 
 struct emul {
 	const char	*e_name;	/* Symbolic name */
@@ -125,12 +133,15 @@ struct emul {
 #endif
 					/* Emulation specific sysctl data */
 	struct sysctlnode *e_sysctlovly;
-	int		(*e_fault)(struct proc *, vaddr_t, int, int);
+	int		(*e_fault)(struct proc *, vaddr_t, int);
 
 	vaddr_t		(*e_vm_default_addr)(struct proc *, vaddr_t, vsize_t);
 
 	/* Emulation-specific hook for userspace page faults */
 	int		(*e_usertrap)(struct lwp *, vaddr_t, void *);
+
+	/* SA-related information */
+	const struct sa_emul *e_sa;
 };
 
 /*
@@ -149,15 +160,19 @@ struct emul {
  * which might be addressible only on a processor on which the process
  * is running.
  *
- * Fields marked 'p:' are protected by the process's own p_lock.
- * Fields marked 'l:' are protected by the proclist_lock
- * Fields marked 's:' are protected by the SCHED_LOCK.
+ * Field markings and the corresponding locks (not yet fully implemented,
+ * more a statement of intent):
+ *
+ * c:	P_CRLOCK - credentials write lock
+ * l:	proclist_lock
+ * p:	p->p_lock
+ * s:	sched_lock
  */
 struct proc {
-	LIST_ENTRY(proc) p_list;	/* List of all processes */
+	LIST_ENTRY(proc) p_list;	/* l: List of all processes */
 
 	/* Substructures: */
-	struct pcred	*p_cred;	/* Process owner's identity */
+	struct kauth_cred *p_cred;	/* p, c: Master copy of credentials */
 	struct filedesc	*p_fd;		/* Ptr to open files structure */
 	struct cwdinfo	*p_cwdi;	/* cdir/rdir/cmask info */
 	struct pstats	*p_stats;	/* Accounting/statistics (PROC ONLY) */
@@ -166,8 +181,6 @@ struct proc {
 	struct sigacts	*p_sigacts;	/* Process sigactions (state is below)*/
 
 	void		*p_ksems;	/* p1003.1b semaphores */
-
-#define	p_ucred		p_cred->pc_ucred
 #define	p_rlimit	p_limit->pl_rlimit
 
 	int		p_exitsig;	/* signal to send to parent on exit */
@@ -261,7 +274,7 @@ struct proc {
 #define	p_endcopy	p_xstat
 
 	u_short		p_xstat;	/* Exit status for wait; also stop signal */
-	u_short		p_acflag;	/* Accounting flags */
+	u_short		p_acflag;	/* p: Acc. flags; see struct lwp also */
 	struct rusage 	*p_ru;		/* Exit information. XXX */
 
 	struct mdproc	p_md;		/* Any machine-dependent fields */
@@ -284,12 +297,15 @@ struct proc {
 /* These flags are kept in p_flag. */
 #define	P_ADVLOCK	0x00000001 /* Process may hold a POSIX advisory lock */
 #define	P_CONTROLT	0x00000002 /* Has a controlling terminal */
+#define	P_INMEM	     /* 0x00000004 */	L_INMEM
 #define	P_NOCLDSTOP	0x00000008 /* No SIGCHLD when children stop */
 #define	P_PPWAIT	0x00000010 /* Parent is waiting for child exec/exit */
 #define	P_PROFIL	0x00000020 /* Has started profiling */
+#define	P_SELECT     /* 0x00000040 */	L_SELECT
+#define	P_SINTR	     /* 0x00000080 */	L_SINTR
 #define	P_SUGID		0x00000100 /* Had set id privileges since last exec */
 #define	P_SYSTEM	0x00000200 /* System proc: no sigs, stats or swapping */
-#define	P_SA		0x00000400 /* Using scheduler activations */
+#define	P_SA	     /* 0x00000400 */	L_SA
 #define	P_TRACED	0x00000800 /* Debugged process being traced */
 #define	P_WAITED	0x00001000 /* Debugging process has waited for child */
 #define	P_WEXIT		0x00002000 /* Working on exiting */
@@ -305,7 +321,14 @@ struct proc {
 #define	P_STOPFORK	0x00800000 /* Child will be stopped on fork(2) */
 #define	P_STOPEXEC	0x01000000 /* Will be stopped on exec(2) */
 #define	P_STOPEXIT	0x02000000 /* Will be stopped at process exit */
+#define	P_SYSCALL	0x04000000 /* process has PT_SYSCALL enabled */
+#define	P_PAXMPROTECT  	0x08000000 /* Explicitly enable PaX MPROTECT */
+#define	P_PAXNOMPROTECT	0x10000000 /* Explicitly disable PaX MPROTECT */
+#define	P_CRLOCK	0x20000000 /* p_cred write lock */
+#define	P_UNUSED1	0x40000000
 #define	P_MARKER	0x80000000 /* Is a dummy marker process */
+
+#define	P_SHARED	(L_INMEM|L_SELECT|L_SINTR|L_SA)
 
 /*
  * Macro to compute the exit signal to be delivered.
@@ -389,7 +412,7 @@ extern struct lwp	*curlwp;		/* Current running LWP */
 
 static struct proc *__curproc(void);
 
-static inline struct proc *
+static __inline struct proc *
 __curproc()
 {
 	struct lwp *l = curlwp;
@@ -402,6 +425,7 @@ __curproc()
 
 extern struct proc	proc0;		/* Process slot for swapper */
 extern int		nprocs, maxproc; /* Current and max number of procs */
+#define	vmspace_kernel()	(proc0.p_vmspace)
 
 /* Process list lock; see kern_proc.c for locking protocol details */
 extern struct lock	proclist_lock;
@@ -460,7 +484,6 @@ void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,
 	    void (*)(void *), void *, register_t *, struct proc **);
 void	rqinit(void);
-int	groupmember(gid_t, const struct ucred *);
 int	pgid_in_session(struct proc *, pid_t);
 #ifndef cpu_idle
 void	cpu_idle(void);
@@ -487,11 +510,15 @@ int	proclist_lock_write(void);
 void	proclist_unlock_write(int);
 void	p_sugid(struct proc *);
 
+int	proc_vmspace_getref(struct proc *, struct vmspace **);
+void	proc_crmod_leave(struct proc *, kauth_cred_t, kauth_cred_t);
+void	proc_crmod_enter(struct proc *);
+
 int	proclist_foreach_call(struct proclist *,
     int (*)(struct proc *, void *arg), void *);
-static inline struct proc *_proclist_skipmarker(struct proc *);
+static __inline struct proc *_proclist_skipmarker(struct proc *);
 
-static inline struct proc *
+static __inline struct proc *
 _proclist_skipmarker(struct proc *p0)
 {
 	struct proc *p = p0;
@@ -505,6 +532,13 @@ _proclist_skipmarker(struct proc *p0)
 	for ((var) = LIST_FIRST(head);					\
 		((var) = _proclist_skipmarker(var)) != NULL;		\
 		(var) = LIST_NEXT(var, p_list))
+
+#if defined(LOCKDEBUG)
+void assert_sleepable(struct simplelock *, const char *);
+#define	ASSERT_SLEEPABLE(lk, msg)	assert_sleepable((lk), (msg))
+#else /* defined(LOCKDEBUG) */
+#define	ASSERT_SLEEPABLE(lk, msg)	/* nothing */
+#endif /* defined(LOCKDEBUG) */
 
 /* Compatibility with old, non-interlocked tsleep call */
 #define	tsleep(chan, pri, wmesg, timo)					\

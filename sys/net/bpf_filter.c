@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.28 2005/12/14 20:33:46 rpaulo Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.28.4.1 2006/09/09 02:58:06 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.28 2005/12/14 20:33:46 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.28.4.1 2006/09/09 02:58:06 rpaulo Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -168,6 +168,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 	A = 0;
 	X = 0;
 	--pc;
+	/* CONSTCOND */
 	while (1) {
 		++pc;
 		switch (pc->code) {
@@ -188,7 +189,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 			k = pc->k;
 			if (k + sizeof(int32_t) > buflen) {
 #ifdef _KERNEL
-				int merr;
+				int merr = 0;	/* XXX: GCC */
 
 				if (buflen != 0)
 					return 0;
@@ -252,7 +253,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 			k = X + pc->k;
 			if (k + sizeof(int32_t) > buflen) {
 #ifdef _KERNEL
-				int merr;
+				int merr = 0;	/* XXX: GCC */
 
 				if (buflen != 0)
 					return 0;
@@ -271,7 +272,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 			k = X + pc->k;
 			if (k + sizeof(int16_t) > buflen) {
 #ifdef _KERNEL
-				int merr;
+				int merr = 0;	/* XXX: GCC */
 
 				if (buflen != 0)
 					return 0;
@@ -532,6 +533,7 @@ bpf_validate(struct bpf_insn *f, int len)
 				 */
 				if (BPF_RVAL(p->code) == BPF_K && p->k == 0)
 					return 0;
+				break;
 			default:
 				return 0;
 			}

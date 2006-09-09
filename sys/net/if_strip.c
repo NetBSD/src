@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.64 2005/12/11 23:05:25 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.64.4.1 2006/09/09 02:58:06 rpaulo Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.64 2005/12/11 23:05:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.64.4.1 2006/09/09 02:58:06 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.64 2005/12/11 23:05:25 thorpej Exp $"
 #if __NetBSD__
 #include <sys/systm.h>
 #include <sys/callout.h>
+#include <sys/kauth.h>
 #endif
 #include <sys/syslog.h>
 
@@ -313,7 +314,7 @@ void	strip_timeout(void *x);
 #define CLEAR_RESET_TIMER(sc) \
  do {\
     (sc)->sc_state = ST_ALIVE;	\
-    (sc)->sc_statetimo = time.tv_sec + ST_PROBE_INTERVAL;	\
+    (sc)->sc_statetimo = time_second + ST_PROBE_INTERVAL;	\
 } while (/*CONSTCOND*/ 0)
 
 /*
@@ -322,13 +323,13 @@ void	strip_timeout(void *x);
  */
 #define FORCE_RESET(sc) \
  do {\
-    (sc)->sc_statetimo = time.tv_sec - 1; \
+    (sc)->sc_statetimo = time_second - 1; \
     (sc)->sc_state = ST_DEAD;	\
     /*(sc)->sc_if.if_timer = 0;*/ \
  } while (/*CONSTCOND*/ 0)
 
 #define RADIO_PROBE_TIMEOUT(sc) \
-	 ((sc)-> sc_statetimo > time.tv_sec)
+	 ((sc)-> sc_statetimo > time_second)
 
 static int	stripclose(struct tty *, int);
 static int	stripinput(int, struct tty *);
@@ -461,7 +462,7 @@ stripinit(struct strip_softc *sc)
 
 	/* Initialize radio probe/reset state machine */
 	sc->sc_state = ST_DEAD;		/* assumet the worst. */
-	sc->sc_statetimo = time.tv_sec; /* do reset immediately */
+	sc->sc_statetimo = time_second; /* do reset immediately */
 
 	return (1);
 }
@@ -474,14 +475,15 @@ stripinit(struct strip_softc *sc)
 int
 stripopen(dev_t dev, struct tty *tp)
 {
-	struct proc *p = curproc;		/* XXX */
+	struct lwp *l = curlwp;		/* XXX */
 	struct strip_softc *sc;
 	int error;
 #ifdef __NetBSD__
 	int s;
 #endif
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 		return (error);
 
 	if (tp->t_linesw == &strip_disc)
@@ -728,7 +730,7 @@ strip_send(struct strip_softc *sc, struct mbuf *m0)
 	 * If a radio probe is due now, append it to this packet rather
 	 * than waiting until the watchdog routine next runs.
 	 */
-	if (time.tv_sec >= sc->sc_statetimo && sc->sc_state == ST_ALIVE)
+	if (time_second >= sc->sc_statetimo && sc->sc_state == ST_ALIVE)
 		strip_proberadio(sc, tp);
 }
 
@@ -866,11 +868,12 @@ stripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	s = spltty();
 	if (sc->sc_oqlen && sc->sc_ttyp->t_outq.c_cc == sc->sc_oqlen) {
-		struct timeval tv;
+		struct bintime bt;
 
 		/* if output's been stalled for too long, and restart */
-		timersub(&time, &sc->sc_lastpacket, &tv);
-		if (tv.tv_sec > 0) {
+		getbinuptime(&bt);
+		bintime_sub(&bt, &sc->sc_lastpacket);
+		if (bt.sec > 0) {
 			DPRINTF(("stripoutput: stalled, resetting\n"));
 			sc->sc_otimeout++;
 			stripstart(sc->sc_ttyp);
@@ -884,7 +887,7 @@ stripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		splx(s);
 		return error;
 	}
-	sc->sc_lastpacket = time;
+	getbinuptime(&sc->sc_lastpacket);
 	splx(s);
 
 	s = spltty();
@@ -1188,7 +1191,7 @@ stripintr(void *arg)
 			bpf_mtap_sl_out(sc->sc_if.if_bpf, mtod(m, u_char *),
 			    bpf_m);
 #endif
-		sc->sc_lastpacket = time;
+		getbinuptime(&sc->sc_lastpacket);
 
 		s = spltty();
 		strip_send(sc, m);
@@ -1291,7 +1294,7 @@ stripintr(void *arg)
 		}
 
 		sc->sc_if.if_ipackets++;
-		sc->sc_lastpacket = time;
+		getbinuptime(&sc->sc_lastpacket);
 
 #ifdef INET
 		s = splnet();
@@ -1399,8 +1402,8 @@ strip_resetradio(struct strip_softc *sc, struct tty *tp)
 	 * is so badlyhung it needs  powercycling.
 	 */
 	sc->sc_state = ST_DEAD;
-	sc->sc_lastpacket = time;
-	sc->sc_statetimo = time.tv_sec + STRIP_RESET_INTERVAL;
+	getbinuptime(&sc->sc_lastpacket);
+	sc->sc_statetimo = time_second + STRIP_RESET_INTERVAL;
 
 	/*
 	 * XXX Does calling the tty output routine now help resets?
@@ -1436,7 +1439,7 @@ strip_proberadio(struct strip_softc *sc, struct tty *tp)
 			       sc->sc_if.if_xname);
 		/* Go to probe-sent state, set timeout accordingly. */
 		sc->sc_state = ST_PROBE_SENT;
-		sc->sc_statetimo = time.tv_sec + ST_PROBERESPONSE_INTERVAL;
+		sc->sc_statetimo = time_second + ST_PROBERESPONSE_INTERVAL;
 	} else {
 		addlog("%s: incomplete probe, tty queue %d bytes overfull\n",
 			sc->sc_if.if_xname, overflow);
@@ -1510,13 +1513,13 @@ strip_watchdog(struct ifnet *ifp)
 		       ifp->if_xname,
  		       ((unsigned) sc->sc_state < 3) ?
 		       strip_statenames[sc->sc_state] : "<<illegal state>>",
-		       sc->sc_statetimo - time.tv_sec);
+		       sc->sc_statetimo - time_second);
 #endif
 
 	/*
 	 * If time in this state hasn't yet expired, return.
 	 */
-	if ((ifp->if_flags & IFF_UP) ==  0 || sc->sc_statetimo > time.tv_sec) {
+	if ((ifp->if_flags & IFF_UP) ==  0 || sc->sc_statetimo > time_second) {
 		goto done;
 	}
 

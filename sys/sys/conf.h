@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.122 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: conf.h,v 1.122.4.1 2006/09/09 02:59:41 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -55,6 +55,7 @@ struct vnode;
 /*
  * Types for d_type
  */
+#define D_OTHER	0
 #define	D_TAPE	1
 #define	D_DISK	2
 #define	D_TTY	3

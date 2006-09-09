@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.25 2006/01/14 23:49:59 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.25.2.1 2006/09/09 02:56:57 rpaulo Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.25 2006/01/14 23:49:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.25.2.1 2006/09/09 02:56:57 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.25 2006/01/14 23:49:59 christos 
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/lockf.h>
+#include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h> /* XXX */	/* defines v_rdev */
@@ -194,7 +195,7 @@ msdosfs_open(v)
 	struct vop_open_args /* {
 		struct vnode *a_vp;
 		int a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap;
 #endif
@@ -209,7 +210,7 @@ msdosfs_close(v)
 	struct vop_close_args /* {
 		struct vnode *a_vp;
 		int a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -229,7 +230,7 @@ msdosfs_access(v)
 	struct vop_access_args /* {
 		struct vnode *a_vp;
 		int a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -270,7 +271,7 @@ msdosfs_getattr(v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct denode *dep = VTODE(ap->a_vp);
@@ -338,7 +339,7 @@ msdosfs_setattr(v)
 	struct vop_setattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	int error = 0, de_changed = 0;
@@ -346,7 +347,7 @@ msdosfs_setattr(v)
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct vnode *vp  = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
-	struct ucred *cred = ap->a_cred;
+	kauth_cred_t cred = ap->a_cred;
 
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_setattr(): vp %p, vap %p, cred %p, p %p\n",
@@ -388,8 +389,9 @@ msdosfs_setattr(v)
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		if (cred->cr_uid != pmp->pm_uid &&
-		    (error = suser(cred, &ap->a_l->l_proc->p_acflag)) &&
+		if (kauth_cred_geteuid(cred) != pmp->pm_uid &&
+		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    &ap->a_l->l_acflag)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 		    (error = VOP_ACCESS(ap->a_vp, VWRITE, cred, ap->a_l))))
 			return (error);
@@ -410,8 +412,9 @@ msdosfs_setattr(v)
 	if (vap->va_mode != (mode_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		if (cred->cr_uid != pmp->pm_uid &&
-		    (error = suser(cred, &ap->a_l->l_proc->p_acflag)))
+		if (kauth_cred_geteuid(cred) != pmp->pm_uid &&
+		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    &ap->a_l->l_acflag)))
 			return (error);
 		/* We ignore the read and execute bits. */
 		if (vap->va_mode & S_IWUSR)
@@ -427,8 +430,9 @@ msdosfs_setattr(v)
 	if (vap->va_flags != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		if (cred->cr_uid != pmp->pm_uid &&
-		    (error = suser(cred, &ap->a_l->l_proc->p_acflag)))
+		if (kauth_cred_geteuid(cred) != pmp->pm_uid &&
+		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    &ap->a_l->l_acflag)))
 			return (error);
 		if (vap->va_flags & SF_ARCHIVED)
 			dep->de_Attributes &= ~ATTR_ARCHIVE;
@@ -453,7 +457,7 @@ msdosfs_read(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	int error = 0, flags;
 	int64_t diff;
@@ -550,7 +554,7 @@ msdosfs_write(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	int resid, flags, extended = 0;
 	int error = 0;
@@ -561,11 +565,11 @@ msdosfs_write(v)
 	vsize_t bytelen;
 	off_t oldoff;
 	struct uio *uio = ap->a_uio;
-	struct proc *p = uio->uio_lwp ? uio->uio_lwp->l_proc : NULL;
+	struct proc *p = curproc;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
 	struct msdosfsmount *pmp = dep->de_pmp;
-	struct ucred *cred = ap->a_cred;
+	kauth_cred_t cred = ap->a_cred;
 	boolean_t async;
 
 #ifdef MSDOSFS_DEBUG
@@ -599,8 +603,7 @@ msdosfs_write(v)
 	/*
 	 * If they've exceeded their filesize limit, tell them about it.
 	 */
-	if (p &&
-	    ((uio->uio_offset + uio->uio_resid) >
+	if (((uio->uio_offset + uio->uio_resid) >
 	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur)) {
 		psignal(p, SIGXFSZ);
 		return (EFBIG);
@@ -1400,7 +1403,7 @@ msdosfs_readdir(v)
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int *a_eofflag;
 		off_t **a_cookies;
 		int *a_ncookies;
@@ -1671,7 +1674,7 @@ msdosfs_readlink(v)
 	struct vop_readlink_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap;
 #endif
 
@@ -1832,11 +1835,11 @@ msdosfs_fsync(v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int a_flags;
 		off_t offlo;
 		off_t offhi;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	int wait;
@@ -1855,7 +1858,7 @@ msdosfs_fsync(v)
 
 		int l = 0;
 		error = VOP_IOCTL(devvp, DIOCCACHESYNC, &l, FWRITE,
-					  ap->a_l->l_proc->p_ucred, ap->a_l);
+					  ap->a_l->l_cred, ap->a_l);
 	}
 
 	return (error);
@@ -1868,22 +1871,27 @@ msdosfs_detimes(struct denode *dep, const struct timespec *acc,
 	struct timespec *ts = NULL, tsb;
 
 	KASSERT(dep->de_flag & (DE_UPDATE | DE_CREATE | DE_ACCESS));
+	/* XXX just call getnanotime early and use result if needed? */
 	dep->de_flag |= DE_MODIFIED;
 	if (dep->de_flag & DE_UPDATE) {
-		if (mod == NULL)
-			mod = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+		if (mod == NULL) {
+			getnanotime(&tsb);
+			mod = ts = &tsb;
+		}
 		unix2dostime(mod, gmtoff, &dep->de_MDate, &dep->de_MTime, NULL);
 		dep->de_Attributes |= ATTR_ARCHIVE;
 	}
 	if ((dep->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95) == 0) {
 		if (dep->de_flag & DE_ACCESS)  {
 			if (acc == NULL)
-				acc = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+				acc = ts == NULL ?
+				    (getnanotime(&tsb), ts = &tsb) : ts;
 			unix2dostime(acc, gmtoff, &dep->de_ADate, NULL, NULL);
 		}
 		if (dep->de_flag & DE_CREATE) {
 			if (cre == NULL)
-				cre = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+				cre = ts == NULL ?
+				    (getnanotime(&tsb), ts = &tsb) : ts;
 			unix2dostime(cre, gmtoff, &dep->de_CDate,
 			    &dep->de_CTime, &dep->de_CHun);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.54 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: libkern.h,v 1.54.4.1 2006/09/09 02:57:52 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,10 +35,11 @@
 #define _LIB_LIBKERN_LIBKERN_H_
 
 #include <sys/types.h>
+#include <sys/inttypes.h>
 #include <sys/null.h>
 
 #ifndef LIBKERN_INLINE
-#define LIBKERN_INLINE	static inline
+#define LIBKERN_INLINE	static __inline
 #define LIBKERN_BODY
 #endif
 
@@ -171,6 +172,8 @@ tolower(int ch)
 }
 #endif
 
+#define	__NULL_STMT		do { } while (/* CONSTCOND */ 0)
+
 #ifdef NDEBUG						/* tradition! */
 #define	assert(e)	((void)0)
 #else
@@ -180,6 +183,12 @@ tolower(int ch)
 #else
 #define	assert(e)	(__predict_true((e)) ? (void)0 :		    \
 			    __assert("", __FILE__, __LINE__, "e"))
+#endif
+#endif
+
+#ifdef __COVERITY__
+#ifndef DIAGNOSTIC
+#define DIAGNOSTIC
 #endif
 #endif
 
@@ -236,15 +245,18 @@ void	 bzero __P((void *, size_t));
 void	*memcpy __P((void *, const void *, size_t));
 int	 memcmp __P((const void *, const void *, size_t));
 void	*memset __P((void *, int, size_t));
-#if __GNUC_PREREQ__(2, 95) && !defined(__vax__)
+#if __GNUC_PREREQ__(2, 95) && (__GNUC_PREREQ__(4, 0) || !defined(__vax__))
 #define	memcpy(d, s, l)		__builtin_memcpy(d, s, l)
 #define	memcmp(a, b, l)		__builtin_memcmp(a, b, l)
+#endif
+#if __GNUC_PREREQ__(2, 95) && !defined(__vax__)
 #define	memset(d, v, l)		__builtin_memset(d, v, l)
 #endif
 
 char	*strcpy __P((char *, const char *));
 int	 strcmp __P((const char *, const char *));
 size_t	 strlen __P((const char *));
+char	*strsep(char **, const char *);
 #if __GNUC_PREREQ__(2, 95)
 #define	strcpy(d, s)		__builtin_strcpy(d, s)
 #define	strcmp(a, b)		__builtin_strcmp(a, b)
@@ -270,11 +282,15 @@ char	*strstr __P((const char *, const char *));
  */
 int	 ffs __P((int));
 #if __GNUC_PREREQ__(2, 95) && !defined(__vax__)
-#define	ffs(x)			__builtin_ffs(x)
+#define	ffs(x)		__builtin_ffs(x)
 #endif
 
 void	 __assert __P((const char *, const char *, int, const char *))
 	    __attribute__((__noreturn__));
+unsigned int
+	bcdtobin __P((unsigned int));
+unsigned int
+	bintobcd __P((unsigned int));
 u_int32_t
 	inet_addr __P((const char *));
 struct in_addr;
@@ -299,4 +315,5 @@ size_t	 strlcpy __P((char *, const char *, size_t));
 size_t	 strlcat __P((char *, const char *, size_t));
 int	 strncasecmp __P((const char *, const char *, size_t));
 u_long	 strtoul __P((const char *, char **, int));
+uintmax_t strtoumax __P((const char *, char **, int));
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.141.4.1 2006/02/05 03:09:11 rpaulo Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.141.4.2 2006/09/09 02:58:47 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -70,7 +70,7 @@
  */
 
 /*-
- * Copyright (c) 1997, 1998, 2001, 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -78,6 +78,8 @@
  * Facility, NASA Ames Research Center.
  * This code is derived from software contributed to The NetBSD Foundation
  * by Charles M. Hannum.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Rui Paulo.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -140,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.141.4.1 2006/02/05 03:09:11 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.141.4.2 2006/09/09 02:58:47 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -247,7 +249,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 	struct rtentry *rt;
 	struct ifnet *ifp;
 	int size;
-	int iphlen;
+	int hdrlen;
 	int optlen;
 
 #ifdef DIAGNOSTIC
@@ -257,12 +259,12 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 	switch (tp->t_family) {
 #ifdef INET
 	case AF_INET:
-		iphlen = sizeof(struct ip);
+		hdrlen = sizeof(struct ip) + sizeof(struct tcphdr);
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		iphlen = sizeof(struct ip6_hdr);
+		hdrlen = sizeof(struct ip6_hdr) + sizeof(struct tcphdr);
 		break;
 #endif
 	default:
@@ -299,21 +301,19 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 			 * smaller than 1280, use 1280 as packet size and
 			 * attach fragment header.
 			 */
-			size = IPV6_MMTU - iphlen - sizeof(struct ip6_frag) -
-			    sizeof(struct tcphdr);
+			size = IPV6_MMTU - hdrlen - sizeof(struct ip6_frag);
 		} else
-			size = rt->rt_rmx.rmx_mtu - iphlen -
-			    sizeof(struct tcphdr);
+			size = rt->rt_rmx.rmx_mtu - hdrlen;
 #else
-		size = rt->rt_rmx.rmx_mtu - iphlen - sizeof(struct tcphdr);
+		size = rt->rt_rmx.rmx_mtu - hdrlen;
 #endif
 	} else if (ifp->if_flags & IFF_LOOPBACK)
-		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+		size = ifp->if_mtu - hdrlen;
 #ifdef INET
 	else if (inp && tp->t_mtudisc)
-		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+		size = ifp->if_mtu - hdrlen;
 	else if (inp && in_localaddr(inp->inp_faddr))
-		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+		size = ifp->if_mtu - hdrlen;
 #endif
 #ifdef INET6
 	else if (in6p) {
@@ -323,7 +323,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 			struct in_addr d;
 			bcopy(&in6p->in6p_faddr.s6_addr32[3], &d, sizeof(d));
 			if (tp->t_mtudisc || in_localaddr(d))
-				size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+				size = ifp->if_mtu - hdrlen;
 		} else
 #endif
 		{
@@ -332,7 +332,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 			 * or the node must use packet size <= 1280.
 			 */
 			size = tp->t_mtudisc ? IN6_LINKMTU(ifp) : IPV6_MMTU;
-			size -= (iphlen + sizeof(struct tcphdr));
+			size -= hdrlen;
 		}
 	}
 #endif
@@ -1234,6 +1234,58 @@ send:
 	if (tp->t_template->m_len < iphdrlen)
 		panic("tcp_output");
 	bcopy(mtod(tp->t_template, caddr_t), mtod(m, caddr_t), iphdrlen);
+
+	/*
+	 * If we are starting a connection, send ECN setup
+	 * SYN packet. If we are on a retransmit, we may
+	 * resend those bits a number of times as per
+	 * RFC 3168.
+	 */
+	if (tp->t_state == TCPS_SYN_SENT && tcp_do_ecn) {
+		if (tp->t_flags & TF_SYN_REXMT) {
+			if (tp->t_ecn_retries--)
+				flags |= TH_ECE|TH_CWR;
+		} else {
+			flags |= TH_ECE|TH_CWR;
+			tp->t_ecn_retries = tcp_ecn_maxretries;
+		}
+	}
+
+	if (TCP_ECN_ALLOWED(tp)) {
+		/*
+		 * If the peer has ECN, mark data packets
+		 * ECN capable. Ignore pure ack packets, retransmissions
+		 * and window probes.
+		 */
+		if (len > 0 && SEQ_GEQ(tp->snd_nxt, tp->snd_max) &&
+		    !(tp->t_force && len == 1)) {
+			switch (af) {
+#ifdef INET
+			case AF_INET:
+				tp->t_inpcb->inp_ip.ip_tos |= IPTOS_ECN_ECT0;
+				break;
+#endif
+#ifdef INET6
+			case AF_INET6:
+				ip6->ip6_flow |= htonl(IPTOS_ECN_ECT0 << 20);
+				break;
+#endif
+			}
+			tcpstat.tcps_ecn_ect++;
+		}
+
+		/*
+		 * Reply with proper ECN notifications.
+		 */
+		if (tp->t_flags & TF_ECN_SND_CWR) {
+			flags |= TH_CWR;
+			tp->t_flags &= ~TF_ECN_SND_CWR;
+		} 
+		if (tp->t_flags & TF_ECN_SND_ECE) {
+			flags |= TH_ECE;
+		}
+	}
+
 
 	/*
 	 * If we are doing retransmissions, then snd_nxt will

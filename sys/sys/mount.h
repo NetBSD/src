@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.136 2005/12/29 14:53:47 tsutsui Exp $	*/
+/*	$NetBSD: mount.h,v 1.136.4.1 2006/09/09 02:59:42 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -127,8 +127,10 @@ struct mount {
 #define VFS_CONF	2		/* struct: vfsconf for filesystem given
 					   as next argument */
 #define VFS_USERMOUNT	3		/* enable/disable fs mnt by non-root */
-#define	VFSGEN_MAXID	4		/* number of valid vfs.generic ids */
+#define	VFS_MAGICLINKS  4		/* expand 'magic' symlinks */
+#define	VFSGEN_MAXID	5		/* number of valid vfs.generic ids */
 
+#ifndef _STANDALONE
 /*
  * USE THE SAME NAMES AS MOUNT_*!
  *
@@ -166,6 +168,7 @@ struct mount {
 	{ "maxtypenum", CTLTYPE_INT }, \
 	{ "conf", CTLTYPE_NODE }, 	/* Special */ \
 	{ "usermount", CTLTYPE_INT }, \
+	{ "magiclinks", CTLTYPE_INT }, \
 }
 
 /*
@@ -177,6 +180,7 @@ struct mount {
 struct nameidata;
 struct mbuf;
 struct vnodeopv_desc;
+struct kauth_cred;
 #endif
 
 struct vfsops {
@@ -190,12 +194,12 @@ struct vfsops {
 				    struct lwp *);
 	int	(*vfs_statvfs)	(struct mount *, struct statvfs *,
 				    struct lwp *);
-	int	(*vfs_sync)	(struct mount *, int, struct ucred *,
+	int	(*vfs_sync)	(struct mount *, int, struct kauth_cred *,
 				    struct lwp *);
 	int	(*vfs_vget)	(struct mount *, ino_t, struct vnode **);
 	int	(*vfs_fhtovp)	(struct mount *, struct fid *,
 				    struct vnode **);
-	int	(*vfs_vptofh)	(struct vnode *, struct fid *);
+	int	(*vfs_vptofh)	(struct vnode *, struct fid *, size_t *);
 	void	(*vfs_init)	(void);
 	void	(*vfs_reinit)	(void);
 	void	(*vfs_done)	(void);
@@ -222,7 +226,7 @@ struct vfsops {
 #define VFS_SYNC(MP, WAIT, C, L)  (*(MP)->mnt_op->vfs_sync)(MP, WAIT, C, L)
 #define VFS_VGET(MP, INO, VPP)    (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
 #define VFS_FHTOVP(MP, FIDP, VPP) (*(MP)->mnt_op->vfs_fhtovp)(MP, FIDP, VPP)
-#define	VFS_VPTOFH(VP, FIDP)	  (*(VP)->v_mount->mnt_op->vfs_vptofh)(VP, FIDP)
+#define	VFS_VPTOFH(VP, FIDP, FIDSZP)  (*(VP)->v_mount->mnt_op->vfs_vptofh)(VP, FIDP, FIDSZP)
 #define VFS_SNAPSHOT(MP, VP, TS)  (*(MP)->mnt_op->vfs_snapshot)(MP, VP, TS)
 #define	VFS_EXTATTRCTL(MP, C, VP, AS, AN, L) \
 	(*(MP)->mnt_op->vfs_extattrctl)(MP, C, VP, AS, AN, L)
@@ -230,7 +234,7 @@ struct vfsops {
 struct vfs_hooks {
 	void	(*vh_unmount)(struct mount *);
 };
-#define	VFS_HOOKS_ATTACH(hooks)	__link_set_add_rodata(vfs_hooks, hooks)
+#define	VFS_HOOKS_ATTACH(hooks)	__link_set_add_data(vfs_hooks, hooks)
 
 void	vfs_hooks_unmount(struct mount *);
 
@@ -268,6 +272,10 @@ MALLOC_DECLARE(M_MOUNT);
  * exported VFS interface (see vfssubr(9))
  */
 struct	mount *vfs_getvfs(fsid_t *);    /* return vfs given fsid */
+int	vfs_composefh(struct vnode *, fhandle_t *, size_t *);
+int	vfs_composefh_alloc(struct vnode *, fhandle_t **);
+void	vfs_composefh_free(fhandle_t *);
+int	vfs_fhtovp(fhandle_t *, struct vnode **);
 int	vfs_mountedon(struct vnode *);/* is a vfs mounted on vp */
 int	vfs_mountroot(void);
 void	vfs_shutdown(void);	    /* unmount and sync file systems */
@@ -297,6 +305,19 @@ void	vfs_opv_free(const struct vnodeopv_desc * const *);
 void	vfs_bufstats(void);
 #endif
 
+/*
+ * syscall helpers
+ */
+
+int	vfs_copyinfh_alloc(const void *, size_t, fhandle_t **);
+void	vfs_copyinfh_free(fhandle_t *);
+
+struct stat;
+int dofhopen(struct lwp *, const void *, size_t, int, register_t *);
+int dofhstat(struct lwp *, const void *, size_t, struct stat *, register_t *);
+int dofhstatvfs(struct lwp *, const void *, size_t, struct statvfs *, int,
+    register_t *);
+
 LIST_HEAD(vfs_list_head, vfsops);
 extern struct vfs_list_head vfs_list;
 
@@ -305,15 +326,22 @@ extern struct vfs_list_head vfs_list;
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	getfh(const char *, fhandle_t *);
+#if !defined(__LIBC12_SOURCE__) && !defined(_STANDALONE)
+int	getfh(const char *, void *, size_t *)
+	__RENAME(__getfh30);
+#endif
+
 int	mount(const char *, const char *, int, void *);
 int	unmount(const char *, int);
 #if defined(_NETBSD_SOURCE)
-int	fhopen(const fhandle_t *, int);
-int	fhstat(const fhandle_t *, struct stat *);
+#ifndef __LIBC12_SOURCE__
+int	fhopen(const void *, size_t, int) __RENAME(__fhopen40);
+int	fhstat(const void *, size_t, struct stat *) __RENAME(__fhstat40);
+#endif
 #endif /* _NETBSD_SOURCE */
 __END_DECLS
 
 #endif /* _KERNEL */
+#endif /* !_STANDALONE */
 
 #endif /* !_SYS_MOUNT_H_ */

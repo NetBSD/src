@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.22 2005/12/10 23:26:35 elad Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.22.4.1 2006/09/09 02:58:25 rpaulo Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -73,10 +73,13 @@
 #define	IEEE80211_BINTVAL_MIN	25	/* min beacon interval (TU's) */
 #define	IEEE80211_BINTVAL_DEFAULT 100	/* default beacon interval (TU's) */
 
+#define	IEEE80211_BMISS_MAX	2	/* maximum consecutive bmiss allowed */
+
 #define	IEEE80211_PS_SLEEP	0x1	/* STA is in power saving mode */
 #define	IEEE80211_PS_MAX_QUEUE	50	/* maximum saved packets */
 
 #define	IEEE80211_FIXED_RATE_NONE	-1
+#define	IEEE80211_MCAST_RATE_DEFAULT	(2*1)	/* default mcast rate (1M) */
 
 #define	IEEE80211_RTS_DEFAULT		IEEE80211_RTS_MAX
 #define	IEEE80211_FRAG_DEFAULT		IEEE80211_FRAG_MAX
@@ -145,8 +148,11 @@ struct ieee80211com {
 	struct ieee80211_channel *ic_ibss_chan;
 	struct ieee80211_channel *ic_curchan;	/* current channel */
 	int			ic_fixed_rate;	/* index to ic_sup_rates[] */
+	int			ic_mcast_rate;	/* rate for mcast frames */
 	u_int16_t		ic_rtsthreshold;
 	u_int16_t		ic_fragthreshold;
+	u_int8_t		ic_bmiss_count;	/* current beacon miss count */
+	int			ic_bmiss_max;	/* max bmiss before scan */
 	struct ieee80211_node	*(*ic_node_alloc)(struct ieee80211_node_table*);
 	void			(*ic_node_free)(struct ieee80211_node *);
 	void			(*ic_node_cleanup)(struct ieee80211_node *);
@@ -250,6 +256,7 @@ extern struct ieee80211com_head ieee80211com_head;
 #define	IEEE80211_FEXT_WDS	0x00000001	/* CONF: 4 addr allowed */
 /* 0x00000006 reserved */
 #define	IEEE80211_FEXT_BGSCAN	0x00000008	/* STATUS: enable full bgscan completion */
+#define	IEEE80211_FEXT_PROBECHAN 0x00020000	/* CONF: probe passive channel*/
 
 /* ic_caps */
 #define	IEEE80211_C_WEP		0x00000001	/* CAPABILITY: WEP available */
@@ -303,7 +310,7 @@ u_int	ieee80211_ieee2mhz(u_int, u_int);
 int	ieee80211_setmode(struct ieee80211com *, enum ieee80211_phymode);
 enum ieee80211_phymode ieee80211_chan2mode(struct ieee80211com *,
 		struct ieee80211_channel *);
-int	ieee80211_get_rate(struct ieee80211com *);
+int	ieee80211_get_rate(const struct ieee80211_node *);
 
 /* 
  * Key update synchronization methods.  XXX should not be visible.
