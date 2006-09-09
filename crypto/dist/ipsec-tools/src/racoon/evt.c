@@ -1,6 +1,6 @@
-/*	$NetBSD: evt.c,v 1.4 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: evt.c,v 1.5 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: evt.c,v 1.2.4.1 2005/09/26 17:49:38 manubsd Exp */
+/* Id: evt.c,v 1.5 2006/06/22 20:11:35 manubsd Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus
@@ -45,10 +45,11 @@
 #include "vmbuf.h"
 #include "plog.h"
 #include "misc.h"
+#include "admin.h"
 #include "gcmalloc.h"
 #include "evt.h"
 
-
+#ifdef ENABLE_ADMINPORT
 struct evtlist evtlist = TAILQ_HEAD_INITIALIZER(evtlist);
 int evtlist_len = 0;
 
@@ -62,6 +63,10 @@ evt_push(src, dst, type, optdata)
 	struct evtdump *evtdump;
 	struct evt *evt;
 	size_t len;
+
+	/* If admin socket is disabled, silently discard anything */
+	if (adminsock_path == NULL)
+		return;
 
 	/* If we are above the limit, don't record anything */
 	if (evtlist_len > EVTLIST_MAX) {
@@ -149,3 +154,5 @@ evt_dump(void) {
 
 	return buf;
 }
+
+#endif /* ENABLE_ADMINPORT */

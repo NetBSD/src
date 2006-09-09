@@ -1,6 +1,6 @@
-.\"	$NetBSD: racoonctl.8,v 1.12 2005/11/21 14:20:29 manu Exp $
+.\"	$NetBSD: racoonctl.8,v 1.13 2006/09/09 16:22:10 manu Exp $
 .\"
-.\" Id: racoonctl.8,v 1.2.4.2 2005/04/18 11:10:55 manubsd Exp
+.\" Id: racoonctl.8,v 1.6 2006/05/07 21:32:59 manubsd Exp
 .\"
 .\" Copyright (C) 2004 Emmanuel Dreyfus
 .\" All rights reserved.
@@ -66,6 +66,9 @@ vpn-disconnect
 .Nm
 show-event
 .Op Fl l
+.Nm
+logout-user
+.Ar login
 .\"
 .Sh DESCRIPTION
 .Nm
@@ -88,7 +91,6 @@ The following commands are available:
 This should cause
 .Xr racoon 8
 to reload its configuration file.
-This seems completely broken at the time this man page is written.
 .It show-schedule
 Unknown command.
 .It show-sa Op isakmp|esp|ah|ipsec
@@ -143,6 +145,9 @@ flag causes
 .Nm
 to not stop once all the events have been read, but rather to loop
 awaiting and reporting new events.
+.It logout-user Ar login
+Delete all SA established on behalf of the Xauth user
+.Ar login .
 .El
 .Pp
 Command shortcuts are available:
@@ -165,6 +170,8 @@ vpn-connect
 vpn-disconnect
 .It se
 show-event
+.It lu
+logout-user
 .El
 .\"
 .Sh RETURN VALUES

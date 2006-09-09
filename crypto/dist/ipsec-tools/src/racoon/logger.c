@@ -1,4 +1,4 @@
-/*	$NetBSD: logger.c,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: logger.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
 /*	$KAME: logger.c,v 1.9 2002/09/03 14:37:03 itojun Exp $	*/
 
@@ -89,7 +89,7 @@ log_open(siz, fname)
 
 	p->siz = siz;
 	if (fname)
-		p->fname = strdup(fname);
+		p->fname = racoon_strdup(fname);
 
 	return p;
 }
@@ -107,7 +107,7 @@ log_add(p, str)
 	/* syslog if p->fname == NULL? */
 	if (p->buf[p->head])
 		racoon_free(p->buf[p->head]);
-	p->buf[p->head] = strdup(str);
+	p->buf[p->head] = racoon_strdup(str);
 	p->tbuf[p->head] = time(NULL);
 	p->head++;
 	p->head %= p->siz;

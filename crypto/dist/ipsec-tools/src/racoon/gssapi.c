@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi.c,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: gssapi.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
 
 /*	$KAME: gssapi.c,v 1.19 2001/04/03 15:51:55 thorpej Exp $	*/
 
@@ -155,6 +155,7 @@ gssapi_get_default_name(struct ph1handle *iph1, int remote, gss_name_t *service)
 {
 	char name[NI_MAXHOST];
 	struct sockaddr *sa;
+	char* buf = NULL;
 	gss_buffer_desc name_token;
 	OM_uint32 min_stat, maj_stat;
 
@@ -163,8 +164,9 @@ gssapi_get_default_name(struct ph1handle *iph1, int remote, gss_name_t *service)
 	if (getnameinfo(sa, sysdep_sa_len(sa), name, NI_MAXHOST, NULL, 0, 0) != 0)
 		return -1;
 
-	name_token.length = asprintf((char **)&name_token.value,
-	    "%s@%s", GSSAPI_DEF_NAME, name);  
+	name_token.length = asprintf(&buf, "%s@%s", GSSAPI_DEF_NAME, name);
+	name_token.value = buf;
+
 	maj_stat = gss_import_name(&min_stat, &name_token,
 	    GSS_C_NT_HOSTBASED_SERVICE, service);
 	if (GSS_ERROR(maj_stat)) {
@@ -290,7 +292,7 @@ gssapi_get_itoken(struct ph1handle *iph1, int *lenp)
 	if (iph1->approval != NULL && iph1->approval->gssid != NULL) {
 		plog(LLV_DEBUG, LOCATION, NULL,
 		    "using provided service '%.*s'\n",
-		    iph1->approval->gssid->l, iph1->approval->gssid->v);
+		    (int)iph1->approval->gssid->l, iph1->approval->gssid->v);
 		name_token.length = iph1->approval->gssid->l;
 		name_token.value = iph1->approval->gssid->v;
 		maj_stat = gss_import_name(&min_stat, &name_token,
@@ -468,7 +470,7 @@ gssapi_get_itokens(struct ph1handle *iph1, vchar_t **tokens)
 	*tokens = toks;
 
 	plog(LLV_DEBUG, LOCATION, NULL,
-		"%d itokens of length %d\n", gps->gsscnt, (*tokens)->l);
+		"%d itokens of length %zu\n", gps->gsscnt, (*tokens)->l);
 
 	return 0;
 }
@@ -549,7 +551,7 @@ gssapi_wraphash(struct ph1handle *iph1)
 		return NULL;
 	}
 
-	plog(LLV_DEBUG, LOCATION, NULL, "wrapped HASH, ilen %d olen %d\n",
+	plog(LLV_DEBUG, LOCATION, NULL, "wrapped HASH, ilen %zu olen %zu\n",
 	    hash_in->length, hash_out->length);
 
 	maj_stat = gss_release_buffer(&min_stat, hash_in);
@@ -591,7 +593,7 @@ gssapi_unwraphash(struct ph1handle *iph1)
 	hashbuf.length = ntohs(iph1->pl_hash->h.len) - sizeof(*iph1->pl_hash);
 	hashbuf.value = (char *)(iph1->pl_hash + 1);
 
-	plog(LLV_DEBUG, LOCATION, NULL, "unwrapping HASH of len %d\n",
+	plog(LLV_DEBUG, LOCATION, NULL, "unwrapping HASH of len %zu\n",
 	    hashbuf.length);
 
 	maj_stat = gss_unwrap(&min_stat, gps->gss_context, hash_in, hash_out,

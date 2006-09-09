@@ -1,6 +1,6 @@
-/*	$NetBSD: cftoken.l,v 1.6 2005/11/21 14:20:28 manu Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.7 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: cftoken.l,v 1.31.2.7 2005/11/06 17:18:26 monas Exp */
+/* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
 %{
 /*
@@ -74,6 +74,7 @@
 #include "ipsec_doi.h"
 #include "proposal.h"
 #include "nattraversal.h"
+#include "remoteconf.h"
 #ifdef GC
 #include "gcmalloc.h"
 #endif
@@ -124,6 +125,7 @@ bcl		\{
 ecl		\}
 blcl		\[
 elcl		\]
+hyphen          \-
 percent		\%
 semi		\;
 comment		\#.*
@@ -134,7 +136,7 @@ addrstring	[a-fA-F0-9:]([a-fA-F0-9:\.]*|[a-fA-F0-9:\.]*%[a-zA-Z0-9]*)
 decstring	{digit}+
 hexstring	0x{hexdigit}+
 
-%s S_INI S_PRIV S_PTH S_INF S_LOG S_PAD S_LST S_RTRY S_CFG
+%s S_INI S_PRIV S_PTH S_INF S_LOG S_PAD S_LST S_RTRY S_CFG S_LDAP
 %s S_ALGST S_ALGCL
 %s S_SAINF S_SAINFS
 %s S_RMT S_RMTS S_RMTP
@@ -165,7 +167,7 @@ hexstring	0x{hexdigit}+
 				return(PATHTYPE); }
 <S_PTH>certificate	{ YYD; yylval.num = LC_PATHTYPE_CERT;
 				return(PATHTYPE); }
-<S_PTH>script 		{ YYD; yylval.num = LC_PATHTYPE_SCRIPT;
+<S_PTH>script		{ YYD; yylval.num = LC_PATHTYPE_SCRIPT;
 				return(PATHTYPE); }
 <S_PTH>backupsa		{ YYD; yylval.num = LC_PATHTYPE_BACKUPSA;
 				return(PATHTYPE); }
@@ -185,12 +187,14 @@ hexstring	0x{hexdigit}+
 
 	/* logging */
 <S_INI>log		{ BEGIN S_LOG; YYDB; return(LOGGING); }
-<S_LOG>info		{ YYD; yywarn("it is obsoleted.  use \"notify\""); yylval.num = 0; return(LOGLEV); }
-<S_LOG>notify		{ YYD; yylval.num = 0; return(LOGLEV); }
-<S_LOG>debug		{ YYD; yylval.num = 1; return(LOGLEV); }
-<S_LOG>debug2		{ YYD; yylval.num = 2; return(LOGLEV); }
-<S_LOG>debug3		{ YYD; yywarn("it is osboleted.  use \"debug2\""); yylval.num = 2; return(LOGLEV); }
-<S_LOG>debug4		{ YYD; yywarn("it is obsoleted.  use \"debug2\""); yylval.num = 2; return(LOGLEV); }
+<S_LOG>error		{ YYD; yylval.num = LLV_ERROR; return(LOGLEV); }
+<S_LOG>warning		{ YYD; yylval.num = LLV_WARNING; return(LOGLEV); }
+<S_LOG>notify		{ YYD; yylval.num = LLV_NOTIFY; return(LOGLEV); }
+<S_LOG>info		{ YYD; yylval.num = LLV_INFO; return(LOGLEV); }
+<S_LOG>debug		{ YYD; yylval.num = LLV_DEBUG; return(LOGLEV); }
+<S_LOG>debug2		{ YYD; yylval.num = LLV_DEBUG2; return(LOGLEV); }
+<S_LOG>debug3		{ YYD; yywarn("it is obsoleted.  use \"debug2\""); yylval.num = LLV_DEBUG2; return(LOGLEV); }
+<S_LOG>debug4		{ YYD; yywarn("it is obsoleted.  use \"debug2\""); yylval.num = LLV_DEBUG2; return(LOGLEV); }
 <S_LOG>{semi}		{ BEGIN S_INI; return(EOS); }
 
 	/* padding */
@@ -214,6 +218,23 @@ hexstring	0x{hexdigit}+
 <S_LST>strict_address	{ YYD; return(STRICT_ADDRESS); }
 <S_LST>{ecl}		{ BEGIN S_INI; return(EOC); }
 
+	/* ldap config */
+<S_INI>ldapcfg		{ BEGIN S_LDAP; YYDB; return(LDAPCFG); }
+<S_LDAP>{bcl}		{ return(BOC); }
+<S_LDAP>version		{ YYD; return(LDAP_PVER); }
+<S_LDAP>host		{ YYD; return(LDAP_HOST); }
+<S_LDAP>port		{ YYD; return(LDAP_PORT); }
+<S_LDAP>base		{ YYD; return(LDAP_BASE); }
+<S_LDAP>subtree		{ YYD; return(LDAP_SUBTREE); }
+<S_LDAP>bind_dn		{ YYD; return(LDAP_BIND_DN); }
+<S_LDAP>bind_pw		{ YYD; return(LDAP_BIND_PW); }
+<S_LDAP>attr_user	{ YYD; return(LDAP_ATTR_USER); }
+<S_LDAP>attr_addr	{ YYD; return(LDAP_ATTR_ADDR); }
+<S_LDAP>attr_mask	{ YYD; return(LDAP_ATTR_MASK); }
+<S_LDAP>attr_group	{ YYD; return(LDAP_ATTR_GROUP); }
+<S_LDAP>attr_member	{ YYD; return(LDAP_ATTR_MEMBER); }
+<S_LDAP>{ecl}		{ BEGIN S_INI; return(EOC); }
+
 	/* mode_cfg */
 <S_INI>mode_cfg		{ BEGIN S_CFG; YYDB; return(MODECFG); }
 <S_CFG>{bcl}		{ return(BOC); }
@@ -221,7 +242,10 @@ hexstring	0x{hexdigit}+
 <S_CFG>netmask4		{ YYD; return(CFG_MASK4); }
 <S_CFG>dns4		{ YYD; return(CFG_DNS4); }
 <S_CFG>wins4		{ YYD; return(CFG_NBNS4); }
+<S_CFG>default_domain	{ YYD; return(CFG_DEFAULT_DOMAIN); }
 <S_CFG>auth_source	{ YYD; return(CFG_AUTH_SOURCE); }
+<S_CFG>auth_groups	{ YYD; return(CFG_AUTH_GROUPS); }
+<S_CFG>group_source	{ YYD; return(CFG_GROUP_SOURCE); }
 <S_CFG>conf_source	{ YYD; return(CFG_CONF_SOURCE); }
 <S_CFG>accounting	{ YYD; return(CFG_ACCOUNTING); }
 <S_CFG>system		{ YYD; return(CFG_SYSTEM); }
@@ -229,11 +253,17 @@ hexstring	0x{hexdigit}+
 <S_CFG>none		{ YYD; return(CFG_NONE); }
 <S_CFG>radius		{ YYD; return(CFG_RADIUS); }
 <S_CFG>pam		{ YYD; return(CFG_PAM); }
+<S_CFG>ldap		{ YYD; return(CFG_LDAP); }
 <S_CFG>pool_size	{ YYD; return(CFG_POOL_SIZE); }
 <S_CFG>banner		{ YYD; return(CFG_MOTD); }
 <S_CFG>auth_throttle	{ YYD; return(CFG_AUTH_THROTTLE); }
+<S_CFG>split_network	{ YYD; return(CFG_SPLIT_NETWORK); }
+<S_CFG>local_lan	{ YYD; return(CFG_SPLIT_LOCAL); }
+<S_CFG>include		{ YYD; return(CFG_SPLIT_INCLUDE); }
+<S_CFG>split_dns	{ YYD; return(CFG_SPLIT_DNS); }
 <S_CFG>pfs_group	{ YYD; return(CFG_PFS_GROUP); }
 <S_CFG>save_passwd	{ YYD; return(CFG_SAVE_PASSWD); }
+<S_CFG>{comma}		{ YYD; return(COMMA); }
 <S_CFG>{ecl}		{ BEGIN S_INI; return(EOC); }
 
 	/* timer */
@@ -253,6 +283,7 @@ hexstring	0x{hexdigit}+
 <S_SAINF>{blcl}any{elcl}	{ YYD; return(PORTANY); }
 <S_SAINF>any		{ YYD; return(ANY); }
 <S_SAINF>from		{ YYD; return(FROM); }
+<S_SAINF>group		{ YYD; return(GROUP); }
 	/* sainfo spec */
 <S_SAINF>{bcl}		{ BEGIN S_SAINFS; return(BOC); }
 <S_SAINF>{semi}		{ BEGIN S_INI; return(EOS); }
@@ -303,6 +334,8 @@ hexstring	0x{hexdigit}+
 <S_RMTS>dh_group	{ YYD; return(DH_GROUP); }
 <S_RMTS>nonce_size	{ YYD; return(NONCE_SIZE); }
 <S_RMTS>generate_policy	{ YYD; return(GENERATE_POLICY); }
+<S_RMTS>unique		{ YYD; yylval.num = GENERATE_POLICY_UNIQUE; return(GENERATE_LEVEL); }
+<S_RMTS>require		{ YYD; yylval.num = GENERATE_POLICY_REQUIRE; return(GENERATE_LEVEL); }
 <S_RMTS>support_mip6	{ YYD; yywarn("it is obsoleted.  use \"support_proxy\"."); return(SUPPORT_PROXY); }
 <S_RMTS>support_proxy	{ YYD; return(SUPPORT_PROXY); }
 <S_RMTS>initial_contact	{ YYD; return(INITIAL_CONTACT); }
@@ -328,6 +361,7 @@ hexstring	0x{hexdigit}+
 <S_RMTS>phase1_up	{ YYD; return(PHASE1_UP); }
 <S_RMTS>phase1_down	{ YYD; return(PHASE1_DOWN); }
 <S_RMTS>mode_cfg	{ YYD; return(MODE_CFG); }
+<S_RMTS>weak_phase1_check { YYD; return(WEAK_PHASE1_CHECK); }
 	/* remote proposal */
 <S_RMTS>proposal	{ BEGIN S_RMTP; YYDB; return(PROPOSAL); }
 <S_RMTP>{bcl}		{ return(BOC); }
@@ -372,6 +406,19 @@ off		{ YYD; yylval.num = FALSE; return(SWITCH); }
 			yylval.num = atoi(yytext);
 			return(PORT);
 		}
+
+	/* address range */
+{hyphen}{addrstring} {
+                        YYD;
+                        yytext++;
+			yylval.val = vmalloc(yyleng + 1);
+			if (yylval.val == NULL) {
+				yyerror("vmalloc failed");
+				return -1;
+			}
+			memcpy(yylval.val->v, yytext, yylval.val->l);
+                        return(ADDRRANGE);
+                } 
 
 	/* upper protocol */
 esp		{ YYD; yylval.num = IPPROTO_ESP; return(UL_PROTO); }
@@ -465,6 +512,34 @@ hybrid_dss_client {
 	yyerror("racoon not configured with --enable-hybrid");
 #endif
 }
+xauth_psk_server {
+#ifdef ENABLE_HYBRID
+	YYD; yylval.num = algtype_xauth_psk_s; return(ALGORITHMTYPE);
+#else
+	yyerror("racoon not configured with --enable-hybrid");
+#endif
+}
+xauth_psk_client {
+#ifdef ENABLE_HYBRID
+	YYD; yylval.num = algtype_xauth_psk_c; return(ALGORITHMTYPE);
+#else
+	yyerror("racoon not configured with --enable-hybrid");
+#endif
+}
+xauth_rsa_server {
+#ifdef ENABLE_HYBRID
+	YYD; yylval.num = algtype_xauth_rsa_s; return(ALGORITHMTYPE);
+#else
+	yyerror("racoon not configured with --enable-hybrid");
+#endif
+}
+xauth_rsa_client {
+#ifdef ENABLE_HYBRID
+	YYD; yylval.num = algtype_xauth_rsa_c; return(ALGORITHMTYPE);
+#else
+	yyerror("racoon not configured with --enable-hybrid");
+#endif
+}
 
 
 	/* identifier type */
@@ -476,6 +551,10 @@ address		{ YYD; yylval.num = IDTYPE_ADDRESS; return(IDENTIFIERTYPE); }
 subnet		{ YYD; yylval.num = IDTYPE_SUBNET; return(IDENTIFIERTYPE); }
 asn1dn		{ YYD; yylval.num = IDTYPE_ASN1DN; return(IDENTIFIERTYPE); }
 certname	{ YYD; yywarn("certname will be obsoleted in near future."); yylval.num = IDTYPE_ASN1DN; return(IDENTIFIERTYPE); }
+
+	/* identifier qualifier */
+tag		{ YYD; yylval.num = IDQUAL_TAG;  return(IDENTIFIERQUAL); }
+file		{ YYD; yylval.num = IDQUAL_FILE; return(IDENTIFIERQUAL); }
 
 	/* units */
 B|byte|bytes		{ YYD; return(UNITTYPE_BYTE); }
@@ -637,7 +716,7 @@ yycf_switch_buffer(path)
 	if (glob(path, GLOB_TILDE, NULL, &incstack[incstackp].matches) != 0 ||
 	    incstack[incstackp].matches.gl_pathc == 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"glob found no matches for path");
+			"glob found no matches for path \"%s\"\n", path);
 		return -1;
 	}
 	incstack[incstackp].matchon = 0;
@@ -679,7 +758,10 @@ yycf_set_buffer(path)
 
 	/* initialize */
 	incstack[incstackp].fp = yyin;
-	incstack[incstackp].path = strdup(path);
+	if (incstack[incstackp].path != NULL)
+		racoon_free(incstack[incstackp].path);
+	incstack[incstackp].path = racoon_strdup(path);
+	STRDUP_FATAL(incstack[incstackp].path);
 	incstack[incstackp].lineno = 1;
 	plog(LLV_DEBUG, LOCATION, NULL,
 		"reading config file %s\n", path);

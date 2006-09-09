@@ -1,4 +1,4 @@
-/*	$NetBSD: debugrm.c,v 1.2 2005/08/20 00:57:06 manu Exp $	*/
+/*	$NetBSD: debugrm.c,v 1.3 2006/09/09 16:22:09 manu Exp $	*/
 
 /*	$KAME: debugrm.c,v 1.6 2001/12/13 16:07:46 sakane Exp $	*/
 
@@ -204,6 +204,25 @@ DRM_free(file, line, func, ptr)
 {
 	DRM_del(ptr);
 	free(ptr);
+}
+
+char *
+DRM_strdup(file, line, func, str)
+	char *file, *func;
+	int line;
+	const char *str;
+{
+	char *p;
+
+	p = strdup(str);
+
+	if (p) {
+		char buf[1024];
+		DRM_setmsg(buf, sizeof(buf), p, size, file, line, func);
+		DRM_add(p, buf);
+	}
+
+	return p;
 }
 
 /*

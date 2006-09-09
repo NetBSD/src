@@ -1,4 +1,4 @@
-/*	$NetBSD: sainfo.c,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: sainfo.c,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
 
 /*	$KAME: sainfo.c,v 1.16 2003/06/27 07:32:39 sakane Exp $	*/
 
@@ -68,7 +68,7 @@
 #include "sainfo.h"
 #include "gcmalloc.h"
 
-static LIST_HEAD(_sitree, sainfo) sitree;
+static LIST_HEAD(_sitree, sainfo) sitree, sitree_save, sitree_tmp;
 
 /* %%%
  * modules for ipsec sa info
@@ -90,8 +90,45 @@ getsainfo(src, dst, peer)
 
 	if (peer == NULL)
 		pass = 2;
+
+	/* debug level output */
+	if(loglevel >= LLV_DEBUG) {
+		char *dsrc, *ddst, *dpeer, *dclient;
+ 
+		if (src == NULL)
+			dsrc = strdup("ANONYMOUS");
+		else
+			dsrc = ipsecdoi_id2str(src);
+ 
+		if (dst == NULL)
+			ddst = strdup("ANONYMOUS");
+		else
+			ddst = ipsecdoi_id2str(dst);
+ 
+		if (peer == NULL)
+			dpeer = strdup("NULL");
+		else
+			dpeer = ipsecdoi_id2str(peer);
+ 
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"getsainfo params: src=\'%s\', dst=\'%s\', peer=\'%s\'\n",
+			dsrc, ddst, dpeer );
+ 
+                racoon_free(dsrc);
+                racoon_free(ddst);
+                racoon_free(dpeer);
+	}
+
     again:
+	plog(LLV_DEBUG, LOCATION, NULL,
+		"getsainfo pass #%i\n", pass);
+ 
 	LIST_FOREACH(s, &sitree, chain) {
+ 
+		const char *sainfostr = sainfo2str(s);
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"evaluating sainfo: %s\n", sainfostr);
+
 		if (s->id_i != NULL) {
 			if (pass == 2)
 				continue;
@@ -99,7 +136,7 @@ getsainfo(src, dst, peer)
 				continue;
 		} else if (pass == 1)
 			continue;
-		if (s->idsrc == NULL) {
+		if (s->idsrc == NULL && s->iddst == NULL) {
 			anonymous = s;
 			continue;
 		}
@@ -111,9 +148,12 @@ getsainfo(src, dst, peer)
 			continue;
 		}
 
-		if (memcmp(src->v, s->idsrc->v, s->idsrc->l) == 0
-		 && memcmp(dst->v, s->iddst->v, s->iddst->l) == 0)
+		if ((s->idsrc == NULL || src == NULL ||
+			 memcmp(src->v, s->idsrc->v, s->idsrc->l) == 0) &&
+			(s->iddst == NULL || dst == NULL ||
+			 memcmp(dst->v, s->iddst->v, s->iddst->l) == 0)){
 			return s;
+		}
 	}
 
 	if (anonymous) {
@@ -155,6 +195,11 @@ delsainfo(si)
 		vfree(si->idsrc);
 	if (si->iddst)
 		vfree(si->iddst);
+
+#ifdef ENABLE_HYBRID
+	if (si->group)
+		vfree(si->group);
+#endif
 
 	racoon_free(si);
 }
@@ -234,19 +279,47 @@ const char *
 sainfo2str(si)
 	const struct sainfo *si;
 {
-	static char buf[256];
+        static char buf[256];
 
-	if (si->idsrc == NULL)
-		snprintf(buf, sizeof(buf), "anonymous");
-	else {
-		snprintf(buf, sizeof(buf), "%s", ipsecdoi_id2str(si->idsrc));
-		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-			" %s", ipsecdoi_id2str(si->iddst));
-	}
+        char *idsrc = NULL, *iddst = NULL, *id_i;
+ 
+        if (si->idsrc == NULL)
+                idsrc = strdup("ANONYMOUS");
+        else
+                idsrc = ipsecdoi_id2str(si->idsrc);
+ 
+        if (si->iddst == NULL)
+                iddst = strdup("ANONYMOUS");
+        else
+                iddst = ipsecdoi_id2str(si->iddst);
+ 
+        if (si->id_i == NULL)
+                id_i = strdup("ANY");
+        else
+                id_i = ipsecdoi_id2str(si->id_i);
+ 
+        snprintf(buf, 255, "src=\'%s\', dst=\'%s\', peer=\'%s\'", idsrc, iddst, id_i);
+ 
+        racoon_free(idsrc);
+        racoon_free(iddst);
+        racoon_free(id_i);
+ 
+        return buf;
+}
 
-	if (si->id_i != NULL)
-		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-			" from %s", ipsecdoi_id2str(si->id_i));
+void save_sainfotree(void){
+	sitree_save=sitree;
+	initsainfo();
+}
 
-	return buf;
+void save_sainfotree_flush(void){
+	sitree_tmp=sitree;
+	sitree=sitree_save;
+	flushsainfo();
+	sitree=sitree_tmp;
+}
+
+void save_sainfotree_restore(void){
+	flushsainfo();
+	sitree=sitree_save;
 }

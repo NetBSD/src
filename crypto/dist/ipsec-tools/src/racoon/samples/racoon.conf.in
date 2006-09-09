@@ -61,7 +61,7 @@ remote anonymous
 
 	nonce_size 16;
 	initial_contact on;
-	proposal_check obey;	# obey, strict, or claim
+	proposal_check strict;	# obey, strict, or claim
 
 	proposal {
 		encryption_algorithm 3des;

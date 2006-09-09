@@ -1,6 +1,6 @@
-/*	$NetBSD: vendorid.h,v 1.3 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: vendorid.h,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
 
-/* Id: vendorid.h,v 1.10 2005/01/29 16:34:25 vanhu Exp */
+/* Id: vendorid.h,v 1.11 2006/02/17 14:09:10 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -37,8 +37,11 @@
 /* The unknown vendor ID. */
 #define	VENDORID_UNKNOWN	-1
 
+
 /* Our default vendor ID. */
-#define	VENDORID_KAME		0
+#define	VENDORID_DEFAULT	VENDORID_IPSEC_TOOLS
+
+#define	VENDORID_IPSEC_TOOLS 0		
 
 /*
  * Refer to draft-ietf-ipsec-isakmp-gss-auth-06.txt.
@@ -79,6 +82,14 @@
 
 /* Dead Peer Detection */
 #define VENDORID_DPD		18
+
+
+/* Other Vendors...
+ * XXX: do some cleanup to have separate lists for "real" vendors (to complete)
+ * and "features" VendorIDs
+ */
+#define	VENDORID_KAME		19
+
 
 struct vendor_id {
 	int		id;

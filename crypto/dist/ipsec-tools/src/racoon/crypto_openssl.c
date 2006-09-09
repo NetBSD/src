@@ -1,6 +1,6 @@
-/*	$NetBSD: crypto_openssl.c,v 1.7 2005/11/26 02:32:58 christos Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.8 2006/09/09 16:22:09 manu Exp $	*/
 
-/* Id: crypto_openssl.c,v 1.40.4.5 2005/07/12 11:50:15 manubsd Exp */
+/* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -80,17 +80,10 @@
 #include "crypto/rijndael/rijndael-api-fst.h"
 #endif
 #ifdef WITH_SHA2
-#ifdef notdef
 #ifdef HAVE_OPENSSL_SHA2_H
 #include <openssl/sha2.h>
 #else
 #include "crypto/sha2/sha2.h"
-#endif
-#else
-#define SHA384_CTX SHA512_CTX
-#define EVP_sha2_256 EVP_sha256
-#define EVP_sha2_384 EVP_sha384
-#define EVP_sha2_512 EVP_sha512
 #endif
 #endif
 
@@ -601,37 +594,36 @@ eay_get_x509asn1subjectname(cert)
 	u_char *bp;
 	vchar_t *name = NULL;
 	int len;
-	int error = -1;
 
 	bp = (unsigned char *) cert->v;
 
 	x509 = mem2x509(cert);
 	if (x509 == NULL)
-		goto end;
+		goto error;
 
 	/* get the length of the name */
 	len = i2d_X509_NAME(x509->cert_info->subject, NULL);
 	name = vmalloc(len);
 	if (!name)
-		goto end;
+		goto error;
 	/* get the name */
 	bp = (unsigned char *) name->v;
 	len = i2d_X509_NAME(x509->cert_info->subject, &bp);
 
-	error = 0;
-
-   end:
-	if (error) {
-		plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
-		if (name) {
-			vfree(name);
-			name = NULL;
-		}
-	}
-	if (x509)
-		X509_free(x509);
+	X509_free(x509);
 
 	return name;
+
+error:
+	plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
+
+	if (name != NULL) 
+		vfree(name);
+
+	if (x509 != NULL)
+		X509_free(x509);
+
+	return NULL;
 }
 
 /*

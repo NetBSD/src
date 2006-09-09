@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.5 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: session.c,v 1.6 2006/09/09 16:22:10 manu Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -64,6 +64,9 @@
 #include <sys/stat.h>
 #include <paths.h>
 
+#include <netinet/in.h>
+#include <resolv.h>
+
 #include "libpfkey.h"
 
 #include "var.h"
@@ -78,6 +81,8 @@
 #include "evt.h"
 #include "cfparse_proto.h"
 #include "isakmp_var.h"
+#include "isakmp_xauth.h"
+#include "isakmp_cfg.h"
 #include "admin_var.h"
 #include "admin.h"
 #include "privsep.h"
@@ -90,6 +95,11 @@
 #ifdef ENABLE_NATT
 #include "nattraversal.h"
 #endif
+
+
+#include "algorithm.h" /* XXX ??? */
+
+#include "sainfo.h"
 
 static void close_session __P((void));
 static void check_rtsock __P((void *));
@@ -104,7 +114,7 @@ static int close_sockets __P((void));
 static fd_set mask0;
 static fd_set maskdying;
 static int nfds = 0;
-static int sigreq = 0;
+static volatile sig_atomic_t sigreq[NSIG + 1];
 static int dying = 0;
 
 int
@@ -117,6 +127,7 @@ session(void)
 	char pid_file[MAXPATHLEN];
 	FILE *fp;
 	pid_t racoon_pid = 0;
+	int i;
 
 	/* initialize schedular */
 	sched_init();
@@ -142,7 +153,8 @@ session(void)
 	if (privsep_init() != 0)
 		exit(1);
 
-	sigreq = 0;
+	for (i = 0; i <= NSIG; i++)
+		sigreq[i] = 0;
 
 	/* write .pid file */
 	racoon_pid = getpid();
@@ -226,6 +238,9 @@ session(void)
 static void
 close_session()
 {
+#ifdef ENABLE_FASTQUIT
+	flushph2();
+#endif
 	flushph1();
 	close_sockets();
 	backupsa_clean();
@@ -319,57 +334,153 @@ RETSIGTYPE
 signal_handler(sig)
 	int sig;
 {
-	switch (sig) {
-	case SIGCHLD:
-	    {
-		pid_t pid;
-		int s;
+	/* Do not just set it to 1, because we may miss some signals by just setting
+	 * values to 0/1
+	 */
+	sigreq[sig]++;
+}
 
-		pid = wait(&s);
-	    }
-		break;
 
-#ifdef DEBUG_RECORD_MALLOCATION
-	case SIGUSR2:
-		DRM_dump();
-		break;
-#endif
-	default:
-		/* XXX should be blocked any signal ? */
-		sigreq = sig;
-		break;
+/* XXX possible mem leaks and no way to go back for now !!!
+ */
+static void reload_conf(){
+	int error;
+
+#ifdef ENABLE_HYBRID
+	if ((isakmp_cfg_init(ISAKMP_CFG_INIT_WARM)) != 0) {
+		plog(LLV_ERROR, LOCATION, NULL, 
+		    "ISAKMP mode config structure reset failed, "
+		    "not reloading\n");
+		return;
 	}
+#endif
+
+	save_sainfotree();
+
+	/* TODO: save / restore / flush old lcconf (?) / rmtree
+	 */
+/*	initlcconf();*/ /* racoon_conf ? ! */
+
+	save_rmconf();
+	initrmconf();
+
+	/* Do a part of pfkey_init() ?
+	 * SPD reload ?
+	 */
+	
+	save_params();
+	error = cfparse();
+	if (error != 0){
+		plog(LLV_ERROR, LOCATION, NULL, "config reload failed\n");
+		/* We are probably in an inconsistant state... */
+		return;
+	}
+	restore_params();
+
+#if 0	
+	if (dump_config)
+		dumprmconf ();
+#endif
+
+	/* 
+	 * init_myaddr() ?
+	 * If running in privilege separation, do not reinitialize
+	 * the IKE listener, as we will not have the right to 
+	 * setsockopt(IP_IPSEC_POLICY). 
+	 */
+	if (geteuid() == 0) {
+		struct myaddrs *p;
+
+		for (p = lcconf->myaddrs; p; p = p->next) {
+			if (!p->addr) {
+				continue;
+			}
+			close(p->sock);
+			p->sock=-1;
+		}
+
+		isakmp_open();
+	}
+
+	/* Revalidate ph1 / ph2tree !!!
+	 * update ctdtree if removing some ph1 !
+	 */
+	revalidate_ph12();
+	/* Update ctdtree ?
+	 */
+
+	save_sainfotree_flush();
+	save_rmconf_flush();
 }
 
 static void
 check_sigreq()
 {
-	switch (sigreq) {
-	case 0:
-		return;
+	int sig;
 
-	case SIGHUP:
-		isakmp_close();
-		close(lcconf->rtsock);
-		if (cfreparse()) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"configuration read failed\n");
-			exit(1);
+	/* 
+	 * XXX We are not able to tell if we got 
+	 * several time the same signal. This is
+	 * not a problem for the current code, 
+	 * but we shall remember this limitation.
+	 */
+	for (sig = 0; sig <= NSIG; sig++) {
+		if (sigreq[sig] == 0)
+			continue;
+
+		sigreq[sig]--;
+		switch(sig) {
+		case 0:
+			return;
+			
+			/* Catch up childs, mainly scripts.
+			 */
+		case SIGCHLD:
+	    {
+			pid_t pid;
+			int s;
+			
+			pid = wait(&s);
+	    }
+		break;
+
+#ifdef DEBUG_RECORD_MALLOCATION
+		/* 
+		 * XXX This operation is signal handler unsafe and may lead to 
+		 * crashes and security breaches: See Henning Brauer talk at
+		 * EuroBSDCon 2005. Do not run in production with this option
+		 * enabled.
+		 */
+		case SIGUSR2:
+			DRM_dump();
+			break;
+#endif
+
+		case SIGHUP:
+			/* Save old configuration, load new one...  */
+			reload_conf();
+			break;
+
+		case SIGINT:
+		case SIGTERM:			
+			plog(LLV_INFO, LOCATION, NULL, 
+			    "caught signal %d\n", sig);
+			EVT_PUSH(NULL, NULL, EVTT_RACOON_QUIT, NULL);
+			pfkey_send_flush(lcconf->sock_pfkey, 
+			    SADB_SATYPE_UNSPEC);
+#ifdef ENABLE_FASTQUIT
+			close_session();
+#else
+			sched_new(1, check_flushsa_stub, NULL);
+#endif
+			dying = 1;
+			break;
+
+		default:
+			plog(LLV_INFO, LOCATION, NULL, 
+			    "caught signal %d\n", sig);
+			break;
 		}
-		initmyaddr();
-		isakmp_init();
-		initfds();
-		sigreq = 0;
-		break;
-
-	default:
-		plog(LLV_INFO, LOCATION, NULL, "caught signal %d\n", sigreq);
-		EVT_PUSH(NULL, NULL, EVTT_RACOON_QUIT, NULL);
-		pfkey_send_flush(lcconf->sock_pfkey, SADB_SATYPE_UNSPEC);
-		sched_new(1, check_flushsa_stub, NULL);
-		sigreq = 0;
-		dying = 1;
-		break;
 	}
 }
 
