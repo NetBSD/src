@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.50 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.50.4.1 2006/09/09 02:55:34 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.50 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.50.4.1 2006/09/09 02:55:34 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,6 +264,7 @@ dev_type_kqfilter(uscannerkqfilter);
 const struct cdevsw uscanner_cdevsw = {
 	uscanneropen, uscannerclose, uscannerread, uscannerwrite,
 	uscannerioctl, nostop, notty, uscannerpoll, nommap, uscannerkqfilter,
+	D_OTHER,
 };
 #elif defined(__OpenBSD__)
 cdev_decl(uscanner);
@@ -681,7 +682,7 @@ USB_DETACH(uscanner)
 #endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit * USB_MAX_ENDPOINTS;
+	mn = device_unit(self) * USB_MAX_ENDPOINTS;
 	vdevgone(maj, mn, mn + USB_MAX_ENDPOINTS - 1, VCHR);
 #elif defined(__FreeBSD__)
 	/* destroy the device for the control endpoint */

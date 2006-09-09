@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.15 2005/12/11 12:20:53 christos Exp $ */
+/* $NetBSD: radio.c,v 1.15.4.1 2006/09/09 02:49:09 rpaulo Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.15 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.15.4.1 2006/09/09 02:49:09 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ dev_type_ioctl(radioioctl);
 
 const struct cdevsw radio_cdevsw = {
 	radioopen, radioclose, noread, nowrite, radioioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 extern struct cfdriver radio_cd;
@@ -183,7 +183,7 @@ radiodetach(struct device *self, int flags)
 	maj = cdevsw_lookup_major(&radio_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.11 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.11.4.1 2006/09/09 02:52:16 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.11 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.11.4.1 2006/09/09 02:52:16 rpaulo Exp $");
 #endif
 
 /*
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.11 2005/12/11 12:22:49 christos Exp
 
 #include <dev/ic/ath_netbsd.h>
 #include <dev/ic/athvar.h>
-#include <contrib/dev/ic/athhal.h>
+#include <contrib/dev/ath/ah.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -91,7 +91,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.11 2005/12/11 12:22:49 christos Exp
 struct ath_pci_softc {
 	struct ath_softc	sc_sc;
 	pci_chipset_tag_t	sc_pc;
+        pcitag_t 		sc_pcitag; 
+        struct pci_conf_state 	sc_pciconf;
 	void			*sc_ih;		/* interrupt handler */
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+	void			*sc_sdhook;
 };
 
 #define	BS_BAR	0x10
@@ -101,6 +106,7 @@ struct ath_pci_softc {
 static int ath_pci_match(struct device *, struct cfdata *, void *);
 static void ath_pci_attach(struct device *, struct device *, void *);
 static void ath_pci_shutdown(void *);
+static void ath_pci_powerhook(int, void *);
 static int ath_pci_detach(struct device *, int);
 
 CFATTACH_DECL(ath_pci,
@@ -162,13 +168,14 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct ath_softc *sc = &psc->sc_sc;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
 	pci_intr_handle_t ih;
-	void *hook;
+	pcireg_t mem_type;
+	void *phook;
 	const char *intrstr = NULL;
 
 	psc->sc_pc = pc;
+
+	psc->sc_pcitag = pa->pa_tag;
 
 	if (!ath_pci_setup(pa))
 		goto bad;
@@ -176,13 +183,20 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Setup memory-mapping of PCI registers.
 	 */
-	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0, &iot, &ioh, 
-	    NULL, NULL)) {
+	mem_type = pci_mapreg_type(pc, pa->pa_tag, BS_BAR);
+	if (mem_type != PCI_MAPREG_TYPE_MEM &&
+	    mem_type != PCI_MAPREG_MEM_TYPE_64BIT) {
+		aprint_error("bad pci register type %d\n", (int)mem_type);
+		goto bad;
+	}
+	if (pci_mapreg_map(pa, BS_BAR, mem_type, 0, &psc->sc_iot,
+		&psc->sc_ioh, NULL, NULL)) {
 		aprint_error("cannot map register space\n");
 		goto bad;
 	}
-	sc->sc_st = iot;
-	sc->sc_sh = ioh;
+
+	sc->sc_st = HALTAG(psc->sc_iot);
+	sc->sc_sh = HALHANDLE(psc->sc_ioh);
 
 	sc->sc_invalid = 1;
 
@@ -206,16 +220,23 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	hook = shutdownhook_establish(ath_pci_shutdown, psc);
-	if (hook == NULL) {
+	psc->sc_sdhook = shutdownhook_establish(ath_pci_shutdown, psc);
+	if (psc->sc_sdhook == NULL) {
 		aprint_error("couldn't make shutdown hook\n");
+		goto bad3;
+	}
+
+	phook = powerhook_establish(ath_pci_powerhook, psc);
+	if (phook == NULL) {
+		aprint_error("couldn't make power hook\n");
 		goto bad3;
 	}
 
 	if (ath_attach(PCI_PRODUCT(pa->pa_id), sc) == 0)
 		return;
 
-	shutdownhook_disestablish(hook);
+	shutdownhook_disestablish(psc->sc_sdhook);
+	powerhook_disestablish(phook);
 
 bad3:	pci_intr_disestablish(pc, psc->sc_ih);
 bad2:	/* XXX */
@@ -229,6 +250,7 @@ ath_pci_detach(struct device *self, int flags)
 {
 	struct ath_pci_softc *psc = (struct ath_pci_softc *)self;
 
+	shutdownhook_disestablish(psc->sc_sdhook);
 	ath_detach(&psc->sc_sc);
 	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
 
@@ -241,4 +263,26 @@ ath_pci_shutdown(void *self)
 	struct ath_pci_softc *psc = (struct ath_pci_softc *)self;
 
 	ath_shutdown(&psc->sc_sc);
+}
+
+static void
+ath_pci_powerhook(int why, void *arg)
+{
+	struct ath_pci_softc *sc = arg;
+	pci_chipset_tag_t pc = sc->sc_pc;
+	pcitag_t tag = sc->sc_pcitag;
+
+	switch (why) {
+	case PWR_SOFTSUSPEND:
+		ath_pci_shutdown(sc);
+		break;
+	case PWR_SUSPEND:
+		pci_conf_capture(pc, tag, &sc->sc_pciconf);
+		break;
+	case PWR_RESUME:
+		pci_conf_restore(pc, tag, &sc->sc_pciconf);
+		break;
+	}
+
+	return;
 }

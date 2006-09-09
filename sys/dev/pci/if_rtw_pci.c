@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtw_pci.c,v 1.4 2005/12/04 17:44:02 christos Exp $	*/
+/*	$NetBSD: if_rtw_pci.c,v 1.4.4.1 2006/09/09 02:52:17 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.4 2005/12/04 17:44:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.4.4.1 2006/09/09 02:52:17 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ rtw_pci_enable(struct rtw_softc *sc)
 	psc->psc_intrcookie = pci_intr_establish(psc->psc_pc, psc->psc_ih,
 	    IPL_NET, rtw_intr, sc);
 	if (psc->psc_intrcookie == NULL) {
-		printf("%s: unable to establish interrupt\n",
+		aprint_error("%s: unable to establish interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return (1);
 	}
@@ -181,8 +181,7 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t ioh, memh;
 	int ioh_valid, memh_valid;
 	const struct rtw_pci_product *app;
-	pcireg_t reg;
-	int pmreg;
+	int error;
 
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_pcitag = pa->pa_tag;
@@ -203,42 +202,15 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Get revision info, and set some chip-specific variables.
 	 */
 	sc->sc_rev = PCI_REVISION(pa->pa_class);
-	printf(": %s, revision %d.%d\n", app->app_product_name,
+	aprint_normal(": %s, revision %d.%d\n", app->app_product_name,
 	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
-	/*
-	 * Check to see if the device is in power-save mode, and
-	 * being it out if necessary.
-	 *
-	 * XXX This code comes almost verbatim from if_tlp_pci.c. I do
-	 * not understand it. Tulip clears the "sleep mode" bit in the
-	 * CFDA register, first.  There is an equivalent (?) register at the
-	 * same place in the ADM8211, but the docs do not assign its bits
-	 * any meanings. -dcy
-	 */
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		reg = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR);
-		switch (reg & PCI_PMCSR_STATE_MASK) {
-		case PCI_PMCSR_STATE_D1:
-		case PCI_PMCSR_STATE_D2:
-			printf(": waking up from power state D%d\n%s",
-			    reg & PCI_PMCSR_STATE_MASK, sc->sc_dev.dv_xname);
-			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    (reg & ~PCI_PMCSR_STATE_MASK) |
-			    PCI_PMCSR_STATE_D0);
-			break;
-		case PCI_PMCSR_STATE_D3:
-			/*
-			 * The card has lost all configuration data in
-			 * this state, so punt.
-			 */
-			printf(": unable to wake up from power state D3, "
-			       "reboot required.\n");
-			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    (reg & ~PCI_PMCSR_STATE_MASK) |
-			    PCI_PMCSR_STATE_D0);
-			return;
-		}
+	/* power up chip */
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    NULL)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
 	}
 
 	/*
@@ -258,7 +230,7 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 		regs->r_bt = iot;
 		regs->r_bh = ioh;
 	} else {
-		printf(": unable to map device registers\n");
+		aprint_error(": unable to map device registers\n");
 		return;
 	}
 
@@ -275,7 +247,7 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &psc->psc_ih)) {
-		printf("%s: unable to map interrupt\n",
+		aprint_error("%s: unable to map interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -283,15 +255,15 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->psc_intrcookie = pci_intr_establish(pc, psc->psc_ih, IPL_NET,
 	    rtw_intr, sc);
 	if (psc->psc_intrcookie == NULL) {
-		printf("%s: unable to establish interrupt",
+		aprint_error("%s: unable to establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
+			aprint_error(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
 
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	sc->sc_enable = rtw_pci_enable;
 	sc->sc_disable = rtw_pci_disable;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.32 2005/12/24 20:27:42 perry Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.32.4.1 2006/09/09 02:52:19 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -108,7 +108,10 @@ struct pciide_softc {
 	/* for SiS */
 	u_int8_t sis_type;
 
-	/* For Silicon Image SATALink, Artisea SATA and Promise SATA */
+	/*
+	 * For Silicon Image SATALink, Serverworks SATA, Artisea SATA
+	 * and Promise SATA
+	 */
 	bus_space_tag_t sc_ba5_st;
 	bus_space_handle_t sc_ba5_sh;
 	int sc_ba5_en;
@@ -146,6 +149,9 @@ struct pciide_softc {
 	/* Power management */
 	void			*sc_powerhook;
 	struct pci_conf_state	sc_pciconf; /* Restore buffer */
+	/* Intel power management */
+	pcireg_t		sc_idetim;
+	pcireg_t		sc_udmatim;
 };
 
 /* Given an ata_channel, get the pciide_softc. */

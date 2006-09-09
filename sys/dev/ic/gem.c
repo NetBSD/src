@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.45 2006/01/02 05:46:25 heas Exp $ */
+/*	$NetBSD: gem.c,v 1.45.2.1 2006/09/09 02:50:02 rpaulo Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.45 2006/01/02 05:46:25 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.45.2.1 2006/09/09 02:50:02 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -299,8 +299,13 @@ gem_attach(sc, enaddr)
 
 	gem_mifinit(sc);
 
+#if defined (PMAC_G5)
+	mii_attach(&sc->sc_dev, mii, 0xffffffff,
+			1, MII_OFFSET_ANY, MIIF_FORCEANEG);
+#else
 	mii_attach(&sc->sc_dev, mii, 0xffffffff,
 			MII_PHY_ANY, MII_OFFSET_ANY, MIIF_FORCEANEG);
+#endif
 
 	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL) {
@@ -497,7 +502,7 @@ gem_bitwait(sc, r, clr, set)
 {
 	int i;
 	u_int32_t reg;
-	
+
 	for (i = TRIES; i--; DELAY(100)) {
 		reg = bus_space_read_4(sc->sc_bustag, sc->sc_h, r);
 		if ((r & clr) == 0 && (r & set) == set)

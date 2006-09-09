@@ -1,4 +1,4 @@
-/*	$NetBSD: max6900.c,v 1.4 2005/12/13 20:55:46 abs Exp $	*/
+/*	$NetBSD: max6900.c,v 1.4.4.1 2006/09/09 02:49:51 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -78,8 +78,6 @@ static int maxrtc_clock_read(struct maxrtc_softc *, struct clock_ymdhms *);
 static int maxrtc_clock_write(struct maxrtc_softc *, struct clock_ymdhms *);
 static int maxrtc_gettime(struct todr_chip_handle *, volatile struct timeval *);
 static int maxrtc_settime(struct todr_chip_handle *, volatile struct timeval *);
-static int maxrtc_getcal(struct todr_chip_handle *, int *);
-static int maxrtc_setcal(struct todr_chip_handle *, int);
 
 int
 maxrtc_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -95,7 +93,7 @@ maxrtc_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 maxrtc_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct maxrtc_softc *sc = (struct maxrtc_softc *)self;
+	struct maxrtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 
 	sc->sc_tag = ia->ia_tag;
@@ -109,8 +107,6 @@ maxrtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = maxrtc_gettime;
 	sc->sc_todr.todr_settime = maxrtc_settime;
-	sc->sc_todr.todr_getcal = maxrtc_getcal;
-	sc->sc_todr.todr_setcal = maxrtc_setcal;
 	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
@@ -276,20 +272,6 @@ maxrtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 		return (-1);
 
 	return (0);
-}
-
-static int
-maxrtc_setcal(struct todr_chip_handle *ch, int cal)
-{
-
-	return (EOPNOTSUPP);
-}
-
-static int
-maxrtc_getcal(struct todr_chip_handle *ch, int *cal)
-{
-
-	return (EOPNOTSUPP);
 }
 
 /*

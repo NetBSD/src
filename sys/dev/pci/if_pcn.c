@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.28 2005/12/24 20:27:42 perry Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.28.4.1 2006/09/09 02:52:17 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 #include "opt_pcn.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.28 2005/12/24 20:27:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.28.4.1 2006/09/09 02:52:17 rpaulo Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -530,6 +530,18 @@ pcn_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
+	/*
+	 * IBM Makes a PCI variant of this card which shows up as a
+	 * Trident Microsystems 4DWAVE DX (ethernet network, revision 0x25)
+	 * this card is truly a pcn card, so we have a special case match for
+	 * it
+	 */
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_TRIDENT &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TRIDENT_4DWAVE_DX &&
+	    PCI_CLASS(pa->pa_class) == PCI_CLASS_NETWORK)
+		return(1);
+
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_AMD)
 		return (0);
 
@@ -556,10 +568,8 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 	bus_dma_segment_t seg;
 	int ioh_valid, memh_valid;
 	int i, rseg, error;
-	pcireg_t pmode;
 	uint32_t chipid, reg;
 	uint8_t enaddr[ETHER_ADDR_LEN];
-	int pmreg;
 
 	callout_init(&sc->sc_tick_ch);
 
@@ -593,25 +603,12 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
 	    PCI_COMMAND_MASTER_ENABLE);
 
-	/* Get it out of power save mode, if needed. */
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		pmode = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR) &
-		    PCI_PMCSR_STATE_MASK;
-		if (pmode == PCI_PMCSR_STATE_D3) {
-			/*
-			 * The card has lost all configuration data in
-			 * this state, so punt.
-			 */
-			printf("%s: unable to wake from power state D3\n",
-			    sc->sc_dev.dv_xname);
-			return;
-		}
-		if (pmode != PCI_PMCSR_STATE_D0) {
-			printf("%s: waking up from power date D%d\n",
-			    sc->sc_dev.dv_xname, pmode);
-			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    PCI_PMCSR_STATE_D0);
-		}
+	/* power up chip */
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    NULL)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
 	}
 
 	/*
@@ -875,6 +872,8 @@ pcn_shutdown(void *arg)
 	struct pcn_softc *sc = arg;
 
 	pcn_stop(&sc->sc_ethercom.ec_if, 1);
+	/* explicitly reset the chip for some onboard one with lazy firmware */
+	pcn_reset(sc);
 }
 
 /*

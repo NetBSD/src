@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.72 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: ch.c,v 1.72.4.1 2006/09/09 02:54:25 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.72 2005/12/11 12:23:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.72.4.1 2006/09/09 02:54:25 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ static dev_type_kqfilter(chkqfilter);
 
 const struct cdevsw ch_cdevsw = {
 	chopen, chclose, chread, nowrite, chioctl,
-	nostop, notty, chpoll, nommap, chkqfilter,
+	nostop, notty, chpoll, nommap, chkqfilter, D_OTHER
 };
 
 /* SCSI glue */
@@ -195,7 +195,7 @@ chmatch(struct device *parent, struct cfdata *match, void *aux)
 static void
 chattach(struct device *parent, struct device *self, void *aux)
 {
-	struct ch_softc *sc = (struct ch_softc *)self;
+	struct ch_softc *sc = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 

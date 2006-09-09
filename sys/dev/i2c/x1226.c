@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.7 2005/12/11 12:21:23 christos Exp $	*/
+/*	$NetBSD: x1226.c,v 1.7.4.1 2006/09/09 02:49:51 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.7 2005/12/11 12:21:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.7.4.1 2006/09/09 02:49:51 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +81,6 @@ static int xrtc_clock_read(struct xrtc_softc *, struct clock_ymdhms *);
 static int xrtc_clock_write(struct xrtc_softc *, struct clock_ymdhms *);
 static int xrtc_gettime(struct todr_chip_handle *, volatile struct timeval *);
 static int xrtc_settime(struct todr_chip_handle *, volatile struct timeval *);
-static int xrtc_getcal(struct todr_chip_handle *, int *);
-static int xrtc_setcal(struct todr_chip_handle *, int);
-
 
 /*
  * xrtc_match()
@@ -106,7 +103,7 @@ xrtc_match(struct device *parent, struct cfdata *cf, void *arg)
 static void
 xrtc_attach(struct device *parent, struct device *self, void *arg)
 {
-	struct xrtc_softc *sc = (struct xrtc_softc *)self;
+	struct xrtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = arg;
 
 	aprint_naive(": Real-time Clock/NVRAM\n");
@@ -118,8 +115,6 @@ xrtc_attach(struct device *parent, struct device *self, void *arg)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = xrtc_gettime;
 	sc->sc_todr.todr_settime = xrtc_settime;
-	sc->sc_todr.todr_getcal = xrtc_getcal;
-	sc->sc_todr.todr_setcal = xrtc_setcal;
 	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
@@ -271,18 +266,6 @@ xrtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 		return (-1);
 
 	return (0);
-}
-
-static int
-xrtc_setcal(struct todr_chip_handle *ch, int cal)
-{
-	return (EOPNOTSUPP);
-}
-
-static int
-xrtc_getcal(struct todr_chip_handle *ch, int *cal)
-{
-	return (EOPNOTSUPP);
 }
 
 static int

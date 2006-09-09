@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.54 2005/12/24 20:27:30 perry Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.54.4.1 2006/09/09 02:50:03 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,12 +78,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.54 2005/12/24 20:27:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.54.4.1 2006/09/09 02:50:03 rpaulo Exp $");
 
 #include "opt_inet.h"
-#include "opt_ccitt.h"
-#include "opt_llc.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -117,18 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.54 2005/12/24 20:27:30 perry Exp $");
 #include <netinet/ip.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
-#if defined(CCITT) && defined(LLC)
-#include <sys/socketvar.h>
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_var.h>
-#include <netccitt/pk_extern.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -895,7 +881,7 @@ smc91cxx_intr(arg)
 	u_int16_t packetno, tx_status, card_stats;
 
 	if ((sc->sc_flags & SMC_FLAGS_ENABLED) == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	    !device_is_active(&sc->sc_dev))
 		return (0);
 
 	SMC_SELECT_BANK(sc, 2);
@@ -1279,45 +1265,12 @@ smc91cxx_ioctl(ifp, cmd, data)
 		arp_ifinit(ifp, ifa);
 		break;
 #endif
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else {
-				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
-				    ETHER_ADDR_LEN);
-			}
-
-			/*
-			 * Set new address.  Reset, because the receiver
-			 * has to be stopped before we can set the new
-			 * MAC address.
-			 */
-			smc91cxx_reset(sc);
-			break;
-		    }
-#endif
 		default:
 			smc91cxx_init(sc);
 			break;
 		}
 		break;
 
-#if defined(CCITT) && defined(LLC)
-	case SIOCSIFCONF_X25:
-		if ((error = smc91cxx_enable(sc)) != 0)
-			break;
-		ifp->if_flags |= IFF_UP;
-		ifa->ifa_rtrequest = cons_rtrequest;	/* XXX */
-		error = x25_llcglue(PRC_IFUP, ifa->ifa_addr);
-		if (error == 0)
-			smc91cxx_init(sc);
-		break;
-#endif
 
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == 0 &&
@@ -1612,7 +1565,7 @@ smc91cxx_tick(arg)
 		panic("smc91cxx_tick");
 #endif
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return;
 
 	s = splnet();

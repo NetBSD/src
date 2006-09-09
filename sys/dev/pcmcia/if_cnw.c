@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.32 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.32.4.1 2006/09/09 02:53:55 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.32 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.32.4.1 2006/09/09 02:53:55 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.32 2005/12/11 12:23:23 christos Exp $")
 #include <sys/mbuf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 
@@ -666,7 +667,7 @@ cnw_start(ifp)
 		if (lif == 0) {
 #ifdef CNW_DEBUG
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
-				printf("%s: link integrity %d\n", lif);
+				printf("%s: link integrity %d\n", ifp->if_xname, lif);
 #endif
 			break;
 		}
@@ -832,7 +833,7 @@ cnw_read(sc)
 				    read16(sc, buffer + 4);
 #ifdef CNW_DEBUG
 				if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
-					printf("%s:   %d bytes @0x%x+0x%x\n",
+					printf("%s:   %d bytes @0x%x+0x%lx\n",
 					    sc->sc_dev.dv_xname, bufbytes,
 					    buffer, bufptr - buffer -
 					    sc->sc_memoff);
@@ -908,7 +909,7 @@ cnw_intr(arg)
 	int ret, status, rser, tser;
 
 	if ((sc->sc_ethercom.ec_if.if_flags & IFF_RUNNING) == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	    !device_is_active(&sc->sc_dev))
 		return (0);
 	ifp->if_timer = 0;	/* stop watchdog timer */
 
@@ -1035,7 +1036,7 @@ cnw_ioctl(ifp, cmd, data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
-	struct proc *p = curproc;	/*XXX*/
+	struct lwp *l = curlwp;	/*XXX*/
 
 	s = splnet();
 
@@ -1096,21 +1097,24 @@ cnw_ioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSCNWDOMAIN:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (error)
 			break;
 		error = cnw_setdomain(sc, ifr->ifr_domain);
 		break;
 
 	case SIOCSCNWKEY:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (error)
 			break;
 		error = cnw_setkey(sc, ifr->ifr_key);
 		break;
 
 	case SIOCGCNWSTATUS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(l->l_cred,
+		     KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (error)
 			break;
 		if ((ifp->if_flags & IFF_RUNNING) == 0)

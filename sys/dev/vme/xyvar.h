@@ -1,4 +1,4 @@
-/*	$NetBSD: xyvar.h,v 1.11 2005/12/11 12:24:07 christos Exp $	*/
+/*	$NetBSD: xyvar.h,v 1.11.4.1 2006/09/09 02:55:52 rpaulo Exp $	*/
 
 /*
  *
@@ -53,7 +53,7 @@ struct xy_iorq {
 	int ttl;		/* time to live */
 	int mode;		/* current mode (state+other data) */
 	int tries;		/* number of times we have tried it */
-	int errno;		/* error number if we fail */
+	int errnum;		/* error number if we fail */
 	int lasterror;		/* last error we got */
 	int blockno;		/* starting block no for this xfer */
 	int sectcnt;		/* number of sectors in xfer */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.65 2005/12/24 20:27:29 perry Exp $	*/
+/*	$NetBSD: bha.c,v 1.65.4.1 2006/09/09 02:50:01 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.65 2005/12/24 20:27:29 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.65.4.1 2006/09/09 02:50:01 rpaulo Exp $");
 
 #include "opt_ddb.h"
 
@@ -801,7 +801,7 @@ bha_cmd(bus_space_tag_t iot, bus_space_handle_t ioh, const char *name, int icnt,
 	if (ocnt) {
 		while ((bus_space_read_1(iot, ioh, BHA_STAT_PORT)) &
 		    BHA_STAT_DF)
-			bus_space_read_1(iot, ioh, BHA_DATA_PORT);
+			(void)bus_space_read_1(iot, ioh, BHA_DATA_PORT);
 	}
 
 	/*
@@ -1559,7 +1559,7 @@ bha_finish_ccbs(struct bha_softc *sc)
 
 #ifdef BHADEBUG
 		if (bha_debug) {
-			u_char *cp = &ccb->scsi_cmd;
+			u_char *cp = ccb->scsi_cmd;
 			printf("op=%x %x %x %x %x %x\n",
 			    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
 			printf("comp_stat %x for mbi addr = %p, ",

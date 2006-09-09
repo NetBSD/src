@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.234 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.234.4.1 2006/09/09 02:54:25 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.234 2005/12/11 12:23:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.234.4.1 2006/09/09 02:54:25 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ static dev_type_ioctl(scsibusioctl);
 
 const struct cdevsw scsibus_cdevsw = {
 	scsibusopen, scsibusclose, noread, nowrite, scsibusioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 static int	scsibusprint(void *, const char *);
@@ -162,7 +162,7 @@ scsibusmatch(struct device *parent, struct cfdata *cf, void *aux)
 static void
 scsibusattach(struct device *parent, struct device *self, void *aux)
 {
-	struct scsibus_softc *sc = (void *) self;
+	struct scsibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = aux;
 	struct scsi_initq *scsi_initq;
 
@@ -242,7 +242,7 @@ scsibus_config(struct scsipi_channel *chan, void *arg)
 static int
 scsibusactivate(struct device *self, enum devact act)
 {
-	struct scsibus_softc *sc = (void *) self;
+	struct scsibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = sc->sc_channel;
 	struct scsipi_periph *periph;
 	int target, lun, error = 0, s;
@@ -278,7 +278,7 @@ scsibusactivate(struct device *self, enum devact act)
 static int
 scsibusdetach(struct device *self, int flags)
 {
-	struct scsibus_softc *sc = (void *) self;
+	struct scsibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = sc->sc_channel;
 	struct scsipi_periph *periph;
 	int ctarget, clun;
@@ -399,8 +399,8 @@ scsidevdetached(struct device *sc, struct device *dev)
 	struct scsipi_periph *periph;
 	int target, lun;
 
-	target = dev->dv_locators[SCSIBUSCF_TARGET];
-	lun = dev->dv_locators[SCSIBUSCF_LUN];
+	target = device_locator(dev, SCSIBUSCF_TARGET);
+	lun = device_locator(dev, SCSIBUSCF_LUN);
 
 	periph = scsipi_lookup_periph(chan, target, lun);
 	KASSERT(periph->periph_dev == dev);
@@ -637,6 +637,8 @@ static const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "MICROP  ", "1924",          ""},     PQUIRK_CAP_SYNC},
 	{{T_DIRECT, T_FIXED,
 	 "FUJITSU ", "M2266",         ""},     PQUIRK_CAP_SYNC},
+	{{T_DIRECT, T_FIXED,
+	 "FUJITSU ", "M2624S-512      ", ""},     PQUIRK_CAP_SYNC},
 
 	{{T_DIRECT, T_REMOV,
 	 "IOMEGA", "ZIP 100",		 "J.03"}, PQUIRK_NOLUNS},

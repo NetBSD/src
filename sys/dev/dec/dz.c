@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.18 2005/12/11 12:21:20 christos Exp $	*/
+/*	$NetBSD: dz.c,v 1.18.4.1 2006/09/09 02:49:44 rpaulo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.18 2005/12/11 12:21:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.18.4.1 2006/09/09 02:49:44 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.18 2005/12/11 12:21:20 christos Exp $");
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 
@@ -321,7 +322,6 @@ dzxint(void *arg)
 int
 dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct proc *p = l->l_proc;
 	struct tty *tp;
 	int unit, line;
 	struct	dz_softc *sc;
@@ -359,7 +359,8 @@ dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 		(void) dzparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if ((tp->t_state & TS_XCLUDE) &&
-		   suser(p->p_ucred, &p->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
 		return (EBUSY);
 	/* Use DMBIS and *not* DMSET or else we clobber incoming bits */
 	if (dzmctl(sc, line, DML_DTR, DMBIS) & DML_DCD)

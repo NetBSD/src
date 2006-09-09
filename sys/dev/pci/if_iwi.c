@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.44 2005/12/24 20:27:42 perry Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.44.4.1 2006/09/09 02:52:17 rpaulo Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.44 2005/12/24 20:27:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.44.4.1 2006/09/09 02:52:17 rpaulo Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -46,10 +46,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.44 2005/12/24 20:27:42 perry Exp $");
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>
 #include <machine/intr.h>
+
+#include <dev/firmload.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -138,14 +141,13 @@ static int	iwi_alloc_unr(struct iwi_softc *);
 static void	iwi_free_unr(struct iwi_softc *, int);
 
 static int	iwi_get_table0(struct iwi_softc *, uint32_t *);
-static int	iwi_get_radio(struct iwi_softc *, int *);
 
 static int	iwi_ioctl(struct ifnet *, u_long, caddr_t);
 static void	iwi_stop_master(struct iwi_softc *);
 static int	iwi_reset(struct iwi_softc *);
 static int	iwi_load_ucode(struct iwi_softc *, void *, int);
 static int	iwi_load_firmware(struct iwi_softc *, void *, int);
-static int	iwi_cache_firmware(struct iwi_softc *, void *);
+static int	iwi_cache_firmware(struct iwi_softc *);
 static void	iwi_free_firmware(struct iwi_softc *);
 static int	iwi_config(struct iwi_softc *);
 static int	iwi_set_chan(struct iwi_softc *, struct ieee80211_channel *);
@@ -153,7 +155,9 @@ static int	iwi_scan(struct iwi_softc *);
 static int	iwi_auth_and_assoc(struct iwi_softc *);
 static int	iwi_init(struct ifnet *);
 static void	iwi_stop(struct ifnet *, int);
+static int	iwi_getrfkill(struct iwi_softc *);
 static void	iwi_led_set(struct iwi_softc *, uint32_t, int);
+static void	iwi_sysctlattach(struct iwi_softc *);
 static void	iwi_error_log(struct iwi_softc *);
 
 /*
@@ -248,6 +252,14 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* clear unit numbers allocated to IBSS */
 	sc->sc_unr = 0;
+
+	/* power up chip */
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    NULL)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
+	}
 
 	/* enable bus-mastering */
 	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
@@ -347,6 +359,9 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_opmode = IEEE80211_M_STA; /* default to BSS mode */
 	ic->ic_state = IEEE80211_S_INIT;
 
+	sc->sc_fwname = "iwi-bss.fw";
+	sc->sc_ucname = "iwi-ucode-bss.fw";
+
 	/* set device capabilities */
 	ic->ic_caps =
 	    IEEE80211_C_IBSS |		/* IBSS mode supported */
@@ -371,7 +386,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	    ether_sprintf(ic->ic_myaddr));
 
 	/* read the NIC type from EEPROM */
-	val = iwi_read_prom_word(sc, IWI_EEPROM_NIC_TYPE); 
+	val = iwi_read_prom_word(sc, IWI_EEPROM_NIC_TYPE);
 	sc->nictype = val & 0xff;
 
 	DPRINTF(("%s: NIC type %d\n", sc->sc_dev.dv_xname, sc->nictype));
@@ -441,6 +456,8 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(IWI_TX_RADIOTAP_PRESENT);
 #endif
 
+	iwi_sysctlattach(sc);	
+
 	/*
 	 * Make sure the interface is shutdown during reboot.
 	 */
@@ -450,17 +467,10 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 	sc->sc_powerhook = powerhook_establish(iwi_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
+		aprint_error("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
 
 	ieee80211_announce(ic);
-	/*
-	 * Add a few sysctl knobs.
-	 * XXX: Not yet.
-	 */
-	sc->dwelltime = 100;
-	sc->bluetooth = 1;
-	sc->antenna = 0;
 
 	return;
 
@@ -473,7 +483,9 @@ iwi_detach(struct device* self, int flags)
 	struct iwi_softc *sc = (struct iwi_softc *)self;
 	struct ifnet *ifp = &sc->sc_if;
 
-	iwi_stop(ifp, 1);
+	if (ifp != NULL)
+		iwi_stop(ifp, 1);
+
 	iwi_free_firmware(sc);
 
 #if NBPFILTER > 0
@@ -844,20 +856,25 @@ static void
 iwi_powerhook(int why, void *arg)
 {
         struct iwi_softc *sc = arg;
+	pci_chipset_tag_t pc = sc->sc_pct;
+	pcitag_t tag = sc->sc_pcitag;
 	int s;
 
 	s = splnet();
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
-		iwi_suspend(sc);
+		pci_conf_capture(pc, tag, &sc->sc_pciconf);
 		break;
 	case PWR_RESUME:
-		iwi_resume(sc);
+		pci_conf_restore(pc, tag, &sc->sc_pciconf);
 		break;
 	case PWR_SOFTSUSPEND:
 	case PWR_SOFTSTANDBY:
+		iwi_suspend(sc);
+		break;
 	case PWR_SOFTRESUME:
+		iwi_resume(sc);
 		break;
 	}
 	splx(s);
@@ -1039,17 +1056,17 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
  * be reused here.
  */
 static const struct wmeParams iwi_wme_cck_params[WME_NUM_AC] = {
-	{ 0, 3, 5,  7,   0 },	/* WME_AC_BE */
-	{ 0, 3, 5, 10,   0 },	/* WME_AC_BK */
-	{ 0, 2, 4,  5, 188 },	/* WME_AC_VI */
-	{ 0, 2, 3,  4, 102 }	/* WME_AC_VO */
+	{ 0, 3, 5,  7,   0, 0, },	/* WME_AC_BE */
+	{ 0, 3, 5, 10,   0, 0, },	/* WME_AC_BK */
+	{ 0, 2, 4,  5, 188, 0, },	/* WME_AC_VI */
+	{ 0, 2, 3,  4, 102, 0, },	/* WME_AC_VO */
 };
 
 static const struct wmeParams iwi_wme_ofdm_params[WME_NUM_AC] = {
-	{ 0, 3, 4,  6,   0 },	/* WME_AC_BE */
-	{ 0, 3, 4, 10,   0 },	/* WME_AC_BK */
-	{ 0, 2, 3,  4,  94 },	/* WME_AC_VI */
-	{ 0, 2, 2,  3,  47 }	/* WME_AC_VO */
+	{ 0, 3, 4,  6,   0, 0, },	/* WME_AC_BE */
+	{ 0, 3, 4, 10,   0, 0, },	/* WME_AC_BK */
+	{ 0, 2, 3,  4,  94, 0, },	/* WME_AC_VI */
+	{ 0, 2, 2,  3,  47, 0, },	/* WME_AC_VO */
 };
 
 static int
@@ -1882,15 +1899,6 @@ iwi_get_table0(struct iwi_softc *sc, uint32_t *tbl)
 }
 
 static int
-iwi_get_radio(struct iwi_softc *sc, int *ret)
-{
-	int val;
-
-	val = (CSR_READ_4(sc, IWI_CSR_IO) & IWI_IO_RADIO_ENABLED) ? 1 : 0;
-	return copyout(&val, ret, sizeof val);
-}
-
-static int
 iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 #define	IS_RUNNING(ifp) \
@@ -1900,6 +1908,7 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
+	int val;
 
 	s = splnet();
 
@@ -1930,26 +1939,25 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCGRADIO:
-		error = iwi_get_radio(sc, (int *)ifr->ifr_data);
+		val = !iwi_getrfkill(sc);
+		error = copyout(&val, (int *)ifr->ifr_data, sizeof val);
 		break;
 
-	case SIOCSLOADFW:
-		/* only super-user can do that! */
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
-			break;
-
-		error = iwi_cache_firmware(sc, ifr->ifr_data);
-		break;
-
-	case SIOCSKILLFW:
-		/* only super-user can do that! */
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
-			break;
-
-		ifp->if_flags &= ~IFF_UP;
-		iwi_stop(ifp, 1);
-		iwi_free_firmware(sc);
-		break;
+	case SIOCSIFMEDIA:
+		if (ifr->ifr_media & IFM_IEEE80211_ADHOC) {
+			sc->sc_fwname = "iwi-ibss.fw";
+			sc->sc_ucname = "iwi-ucode-ibss.fw";
+		} else if (ifr->ifr_media & IFM_IEEE80211_MONITOR) {
+			sc->sc_fwname = "iwi-sniffer.fw";
+			sc->sc_ucname = "iwi-ucode-sniffer.fw";
+		} else {
+			sc->sc_fwname = "iwi-bss.fw";
+			sc->sc_ucname = "iwi-ucode-bss.fw";
+		}
+		error = iwi_cache_firmware(sc);
+		if (error)
+ 			break;
+ 		/* FALLTRHOUGH */
 
 	default:
 		error = ieee80211_ioctl(&sc->sc_ic, cmd, data);
@@ -2236,46 +2244,64 @@ fail1:
  * e.g when the adapter wakes up from suspend mode.
  */
 static int
-iwi_cache_firmware(struct iwi_softc *sc, void *data)
+iwi_cache_firmware(struct iwi_softc *sc)
 {
 	struct iwi_firmware *kfw = &sc->fw;
-	struct iwi_firmware ufw;
+	firmware_handle_t fwh;
 	int error;
 
 	iwi_free_firmware(sc);
-
-	if ((error = copyin(data, &ufw, sizeof ufw)) != 0)
+	error = firmware_open("if_iwi", "iwi-boot.fw", &fwh);
+	if (error != 0)
 		goto fail1;
 
-	kfw->boot_size  = ufw.boot_size;
-	kfw->ucode_size = ufw.ucode_size;
-	kfw->main_size  = ufw.main_size;
-
-	kfw->boot = malloc(kfw->boot_size, M_DEVBUF, M_NOWAIT);
+	kfw->boot_size = firmware_get_size(fwh);
+	kfw->boot = firmware_malloc(kfw->boot_size);
 	if (kfw->boot == NULL) {
 		error = ENOMEM;
+		firmware_close(fwh);
 		goto fail1;
 	}
 
-	kfw->ucode = malloc(kfw->ucode_size, M_DEVBUF, M_NOWAIT);
+	error = firmware_read(fwh, sizeof(struct iwi_firmware_hdr),
+	    kfw->boot, kfw->boot_size - sizeof(struct iwi_firmware_hdr));
+	firmware_close(fwh);
+	if (error != 0)
+		goto fail2;
+
+	error = firmware_open("if_iwi", sc->sc_ucname, &fwh);
+	if (error != 0)
+		goto fail2;
+
+	kfw->ucode_size = firmware_get_size(fwh);
+	kfw->ucode = firmware_malloc(kfw->ucode_size);
 	if (kfw->ucode == NULL) {
 		error = ENOMEM;
+		firmware_close(fwh);
 		goto fail2;
 	}
 
-	kfw->main = malloc(kfw->main_size, M_DEVBUF, M_NOWAIT);
+	error = firmware_read(fwh, sizeof(struct iwi_firmware_hdr),
+	    kfw->ucode, kfw->ucode_size - sizeof(struct iwi_firmware_hdr));
+	firmware_close(fwh);
+	if (error != 0)
+		goto fail3;
+
+	error = firmware_open("if_iwi", sc->sc_fwname, &fwh);
+	if (error != 0)
+		goto fail3;
+
+	kfw->main_size = firmware_get_size(fwh);
+	kfw->main = firmware_malloc(kfw->main_size);
 	if (kfw->main == NULL) {
 		error = ENOMEM;
 		goto fail3;
 	}
 
-	if ((error = copyin(ufw.boot, kfw->boot, kfw->boot_size)) != 0)
-		goto fail4;
-
-	if ((error = copyin(ufw.ucode, kfw->ucode, kfw->ucode_size)) != 0)
-		goto fail4;
-
-	if ((error = copyin(ufw.main, kfw->main, kfw->main_size)) != 0)
+	error = firmware_read(fwh, sizeof(struct iwi_firmware_hdr),
+	     kfw->main, kfw->main_size - sizeof(struct iwi_firmware_hdr));
+	firmware_close(fwh);
+	if (error != 0)
 		goto fail4;
 
 	DPRINTF(("Firmware cached: boot %u, ucode %u, main %u\n",
@@ -2285,9 +2311,9 @@ iwi_cache_firmware(struct iwi_softc *sc, void *data)
 
 	return 0;
 
-fail4:	free(kfw->boot, M_DEVBUF);
-fail3:	free(kfw->ucode, M_DEVBUF);
-fail2:	free(kfw->main, M_DEVBUF);
+fail4:	firmware_free(kfw->main, 0);
+fail3:	firmware_free(kfw->ucode, 0);
+fail2:	firmware_free(kfw->boot, 0);
 fail1:
 	return error;
 }
@@ -2295,12 +2321,14 @@ fail1:
 static void
 iwi_free_firmware(struct iwi_softc *sc)
 {
+	struct iwi_firmware *kfw = &sc->fw;
+
 	if (!(sc->flags & IWI_FLAG_FW_CACHED))
 		return;
 
-	free(sc->fw.boot, M_DEVBUF);
-	free(sc->fw.ucode, M_DEVBUF);
-	free(sc->fw.main, M_DEVBUF);
+	firmware_free(kfw->main, 0);
+	firmware_free(kfw->ucode, 0);
+	firmware_free(kfw->boot, 0);
 
 	sc->flags &= ~IWI_FLAG_FW_CACHED;
 }
@@ -2613,7 +2641,7 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 		assoc.auth = (ic->ic_crypto.cs_def_txkey << 4) | IWI_AUTH_SHARED;
 	if ((ic->ic_flags & IEEE80211_F_WME) && ni->ni_wme_ie != NULL)
 		assoc.policy |= htole16(IWI_POLICY_WME);
-	if (ic->ic_opt_ie != NULL)
+	if (ic->ic_flags & IEEE80211_F_WPA)
 		assoc.policy |= htole16(IWI_POLICY_WPA);
 	memcpy(assoc.tstamp, ni->ni_tstamp.data, 8);
 
@@ -2652,12 +2680,11 @@ iwi_init(struct ifnet *ifp)
 
 	/* exit immediately if firmware has not been ioctl'd */
 	if (!(sc->flags & IWI_FLAG_FW_CACHED)) {
-		if (!(sc->flags & IWI_FLAG_FW_WARNED))
-			aprint_error("%s: Firmware not loaded\n",
+		if ((error = iwi_cache_firmware(sc)) != 0) {
+			aprint_error("%s: could not cache the firmware\n",
 			    sc->sc_dev.dv_xname);
-		sc->flags |= IWI_FLAG_FW_WARNED;
-		ifp->if_flags &= ~IFF_UP;
-		return EIO;
+			goto fail;
+		}
 	}
 
 	iwi_stop(ifp, 0);
@@ -2739,6 +2766,125 @@ fail:	ifp->if_flags &= ~IFF_UP;
 	iwi_stop(ifp, 0);
 
 	return error;
+}
+
+
+/*
+ * Return whether or not the radio is enabled in hardware
+ * (i.e. the rfkill switch is "off").
+ */
+static int
+iwi_getrfkill(struct iwi_softc *sc)
+{
+	return (CSR_READ_4(sc, IWI_CSR_IO) & IWI_IO_RADIO_ENABLED) == 0;
+}
+
+static int
+iwi_sysctl_radio(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct iwi_softc *sc;
+	int val, error;
+
+	node = *rnode;
+	sc = (struct iwi_softc *)node.sysctl_data;
+
+	val = !iwi_getrfkill(sc);
+
+	node.sysctl_data = &val;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return error;
+
+	return 0;
+}
+
+#ifdef IWI_DEBUG
+SYSCTL_SETUP(sysctl_iwi, "sysctl iwi(4) subtree setup")
+{
+	int rc;
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "iwi",
+	    SYSCTL_DESCR("iwi global controls"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	/* control debugging printfs */
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Enable debugging output"),
+	    NULL, 0, &iwi_debug, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	return;
+err:
+	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
+}
+
+#endif /* IWI_DEBUG */
+
+/*
+ * Add sysctl knobs.
+ */
+static void
+iwi_sysctlattach(struct iwi_softc *sc)
+{
+	int rc;
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
+
+	struct sysctllog **clog = &sc->sc_sysctllog;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, sc->sc_dev.dv_xname,
+	    SYSCTL_DESCR("iwi controls and statistics"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_INT, "radio",
+	    SYSCTL_DESCR("radio transmitter switch state (0=off, 1=on)"),
+	    iwi_sysctl_radio, 0, sc, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	sc->dwelltime = 100;
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "dwell", SYSCTL_DESCR("channel dwell time (ms) for AP/station scanning"),
+	    NULL, 0, &sc->dwelltime, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	sc->bluetooth = 1;
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "bluetooth", SYSCTL_DESCR("bluetooth coexistence"),
+	    NULL, 0, &sc->bluetooth, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	sc->antenna = 0;
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "antenna", SYSCTL_DESCR("antenna (0=auto)"),
+	    NULL, 0, &sc->antenna, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	return;
+err:
+	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*      $NetBSD: pciide_hpt_reg.h,v 1.13 2005/12/11 12:22:50 christos Exp $       */
+/*      $NetBSD: pciide_hpt_reg.h,v 1.13.4.1 2006/09/09 02:52:19 rpaulo Exp $       */
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -44,6 +44,7 @@
  * same revision
  */
 #define HPT366_REV 0x01
+#define HPT368_REV 0x02
 #define HPT370_REV 0x03
 #define HPT370A_REV 0x04
 #define HPT372_REV 0x05

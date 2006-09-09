@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_eisa.c,v 1.14 2005/12/11 12:21:20 christos Exp $	*/
+/*	$NetBSD: if_tlp_eisa.c,v 1.14.4.1 2006/09/09 02:49:44 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,10 +43,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.14 2005/12/11 12:21:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.14.4.1 2006/09/09 02:49:44 rpaulo Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -75,10 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.14 2005/12/11 12:21:20 christos Ex
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -166,7 +161,7 @@ tlp_eisa_attach(struct device *parent, struct device *self, void *aux)
 {
 	static const u_int8_t testpat[] =
 	    { 0xff, 0, 0x55, 0xaa, 0xff, 0, 0x55, 0xaa };
-	struct tulip_eisa_softc *esc = (void *) self;
+	struct tulip_eisa_softc *esc = device_private(self);
 	struct tulip_softc *sc = &esc->sc_tulip;
 	struct eisa_attach_args *ea = aux;
 	eisa_chipset_tag_t ec = ea->ea_ec;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.81 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: sb.c,v 1.81.4.1 2006/09/09 02:51:26 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.81 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.81.4.1 2006/09/09 02:51:26 rpaulo Exp $");
 
 #include "midi.h"
 
@@ -107,7 +107,8 @@ const struct audio_hw_if sb_hw_if = {
 	sbdsp_get_props,
 	sbdsp_trigger_output,
 	sbdsp_trigger_input,
-	0,
+	NULL,
+	NULL,
 };
 
 /*
@@ -181,6 +182,21 @@ sbmatch(struct sbdsp_softc *sc)
 
 	if (ISSB16CLASS(sc) && !(sc->sc_quirks & SB_QUIRK_NO_INIT_DRQ)) {
 		int w, r;
+		if (sc->sc_irq >= __arraycount(irq_conf)) {
+			printf("%s: Cannot handle irq %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_irq);
+			return 0;
+		}
+		if (sc->sc_drq16 >= __arraycount(drq_conf)) {
+			printf("%s: Cannot handle drq16 %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_drq16);
+			return 0;
+		}
+		if (sc->sc_drq8 >= __arraycount(drq_conf)) {
+			printf("%s: Cannot handle drq8 %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_drq8);
+			return 0;
+		}
 #if 0
 		printf("%s: old drq conf %02x\n", sc->sc_dev.dv_xname,
 		    sbdsp_mix_read(sc, SBP_SET_DRQ));
@@ -234,16 +250,21 @@ sbattach(struct sbdsp_softc *sc)
 	audio_attach_mi(&sb_hw_if, sc, &sc->sc_dev);
 
 #if NMPU > 0
-	if (sc->sc_hasmpu) {
+	switch(sc->sc_hasmpu) {
+	default:
+	case SBMPU_NONE:	/* no mpu */
+		break;
+	case SBMPU_INTERNAL:	/* try to attach midi directly */
+		midi_attach_mi(&sb_midi_hw_if, sc, &sc->sc_dev);
+		break;
+	case SBMPU_EXTERNAL:	/* search for mpu */
 		arg.type = AUDIODEV_TYPE_MPU;
 		arg.hwif = 0;
 		arg.hdl = 0;
 		sc->sc_mpudev = config_found(&sc->sc_dev, &arg, audioprint);
-	} else {
-		midi_attach_mi(&sb_midi_hw_if, sc, &sc->sc_dev);
+		break;
 	}
 #endif
-
 	if (sc->sc_model >= SB_20) {
 		arg.type = AUDIODEV_TYPE_OPL;
 		arg.hwif = 0;
@@ -270,7 +291,7 @@ sb_getdev(void *addr, struct audio_device *retp)
 		strlcpy(retp->name, "SoundBlaster", sizeof(retp->name));
 	snprintf(retp->version, sizeof(retp->version), "%d.%02d",
 	    SBVER_MAJOR(sc->sc_version), SBVER_MINOR(sc->sc_version));
-	if (0 <= sc->sc_model && sc->sc_model < sizeof names / sizeof names[0])
+	if (sc->sc_model < sizeof names / sizeof names[0])
 		config = names[sc->sc_model];
 	else
 		config = "??";

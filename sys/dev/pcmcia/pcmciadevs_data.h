@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.216 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.216.4.1 2006/09/09 02:53:55 rpaulo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.213 2005/11/07 16:37:28 tsutsui Exp
+ *	NetBSD: pcmciadevs,v 1.217 2006/07/28 08:02:39 scottr Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -90,6 +90,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "3Com Corporation",
 	    "3Com/Megahertz 3CXEM556-INT Ethernet/Modem",	}
+	,
+	{
+	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CRWB6096,
+	    PCMCIA_CIS_3COM_3CRWB6096,
+	    0,
+	    "3Com Corporation",
+	    "3Com 3CRWB60-A Bluetooth PC Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CCFEM556BI,
@@ -258,6 +265,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "BreezeCOM",
 	    "BreezeCOM BreezeNET",	}
+	,
+	{
+	    PCMCIA_VENDOR_BELKIN, PCMCIA_PRODUCT_BELKIN_F5D5020,
+	    PCMCIA_CIS_BELKIN_F5D5020,
+	    0,
+	    "Belkin",
+	    "Belkin F5D5020 PCMCIA Network Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_WLI_PCM_S11,
@@ -1056,6 +1070,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Socket Communications",
 	    "Socket Communications 10/100 Ethernet",	}
+	,
+	{
+	    PCMCIA_VENDOR_SIEMENS, PCMCIA_PRODUCT_SIEMENS_SS1021,
+	    PCMCIA_CIS_SIEMENS_SS1021,
+	    0,
+	    "Siemens",
+	    "SpeedStream SS1021 WLAN",	}
 	,
 	{
 	    PCMCIA_VENDOR_SYMBOL, PCMCIA_PRODUCT_SYMBOL_LA4100,
@@ -2022,6 +2043,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_BELKIN,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Belkin",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_BAY,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -2123,6 +2152,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Asustek Computer",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_SIEMENS,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Siemens",
 	    NULL,
 	},
 	{

@@ -1346,8 +1346,8 @@ extern const int ahd_num_aic7770_devs;
 void			ahd_reset_cmds_pending(struct ahd_softc *);
 u_int			ahd_find_busy_tcl(struct ahd_softc *, u_int);
 void			ahd_busy_tcl(struct ahd_softc *, u_int, u_int);
-static inline void	ahd_unbusy_tcl(struct ahd_softc *, u_int);
-static inline void
+static __inline void	ahd_unbusy_tcl(struct ahd_softc *, u_int);
+static __inline void
 ahd_unbusy_tcl(struct ahd_softc *ahd, u_int tcl)
 {
 	ahd_busy_tcl(ahd, tcl, SCB_LIST_NULL);

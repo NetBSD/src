@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.30 2005/12/11 12:22:51 christos Exp $	*/
+/*	$NetBSD: yds.c,v 1.30.4.1 2006/09/09 02:52:19 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.30 2005/12/11 12:22:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.30.4.1 2006/09/09 02:52:19 rpaulo Exp $");
 
 #include "mpu.h"
 
@@ -119,12 +119,14 @@ static uint32_t YREAD4(struct yds_softc *sc, bus_size_t r)
 	return bus_space_read_4(sc->memt, sc->memh, r);
 }
 
+#ifdef notdef
 static void YWRITE1(struct yds_softc *sc, bus_size_t r, uint8_t x)
 {
 	DPRINTFN(5, (" YWRITE1(0x%lX,0x%lX)\n", (unsigned long)r,
 		     (unsigned long)x));
 	bus_space_write_1(sc->memt, sc->memh, r, x);
 }
+#endif
 
 static void YWRITE2(struct yds_softc *sc, bus_size_t r, uint16_t x)
 {
@@ -228,6 +230,7 @@ static const struct audio_hw_if yds_hw_if = {
 	yds_trigger_output,
 	yds_trigger_input,
 	NULL,
+	NULL,	/* powerstate */
 };
 
 static const struct audio_device yds_device = {
@@ -679,16 +682,60 @@ static void
 yds_powerhook(int why, void *addr)
 {
 	struct yds_softc *sc;
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	pcireg_t reg;
+	int s;
 
-	if (why == PWR_RESUME) {
-		sc = addr;
+	sc = (struct yds_softc *)addr;
+	pc = sc->sc_pc;
+	tag = sc->sc_pcitag;
+
+	s = splaudio();
+	switch (why) {
+	case PWR_SUSPEND:
+		pci_conf_capture(pc, tag, &sc->sc_pciconf);
+
+		sc->sc_dsctrl = pci_conf_read(pc, tag, YDS_PCI_DSCTRL);
+		sc->sc_legacy = pci_conf_read(pc, tag, YDS_PCI_LEGACY);
+		sc->sc_ba[0] = pci_conf_read(pc, tag, YDS_PCI_FM_BA);
+		sc->sc_ba[1] = pci_conf_read(pc, tag, YDS_PCI_MPU_BA);
+		break;
+	case PWR_RESUME:
+		pci_conf_restore(pc, tag, &sc->sc_pciconf);
+
+		/* Disable legacy mode */
+		reg = pci_conf_read(pc, tag, YDS_PCI_LEGACY);
+		pci_conf_write(pc, tag, YDS_PCI_LEGACY,
+		    reg & YDS_PCI_LEGACY_LAD);
+
+		/* Enable the device. */
+		reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+		reg |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+			PCI_COMMAND_MASTER_ENABLE);
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, reg);
+		reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 		if (yds_init(sc)) {
 			printf("%s: reinitialize failed\n",
 				sc->sc_dev.dv_xname);
+			splx(s);
 			return;
 		}
+		pci_conf_write(pc, tag, YDS_PCI_DSCTRL, sc->sc_dsctrl);
 		sc->sc_codec[0].codec_if->vtbl->restore_ports(sc->sc_codec[0].codec_if);
+		break;
+	case PWR_SOFTRESUME:
+		pci_conf_write(pc, tag, YDS_PCI_LEGACY, sc->sc_legacy);
+		pci_conf_write(pc, tag, YDS_PCI_FM_BA, sc->sc_ba[0]);
+		pci_conf_write(pc, tag, YDS_PCI_MPU_BA, sc->sc_ba[1]);
+#if notyet
+		yds_configure_legacy(addr);
+#endif
+		break;
 	}
+	splx(s);
+
+	return;
 }
 
 static void
@@ -926,7 +973,7 @@ yds_read_codec(void *sc_, uint8_t reg, uint16_t *data)
 	    sc->sc->sc_revision < 2) {
 		int i;
 		for (i=0; i<600; i++)
-			YREAD2(sc->sc, sc->status_data);
+			(void)YREAD2(sc->sc, sc->status_data);
 	}
 
 	*data = YREAD2(sc->sc, sc->status_data);

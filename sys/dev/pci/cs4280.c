@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.37 2006/01/29 21:42:41 dsl Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.37.2.1 2006/09/09 02:52:16 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.37 2006/01/29 21:42:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.37.2.1 2006/09/09 02:52:16 rpaulo Exp $");
 
 #include "midi.h"
 
@@ -103,13 +103,21 @@ static int  cs4280_trigger_output(void *, void *, void *, int, void (*)(void *),
 				  void *, const audio_params_t *);
 static int  cs4280_trigger_input(void *, void *, void *, int, void (*)(void *),
 				 void *, const audio_params_t *);
-
+static int  cs4280_read_codec(void *, u_int8_t, u_int16_t *);
+static int  cs4280_write_codec(void *, u_int8_t, u_int16_t);
+#if 0
 static int cs4280_reset_codec(void *);
+#endif
+static enum ac97_host_flags cs4280_flags_codec(void *);
 
 /* For PowerHook */
 static void cs4280_power(int, void *);
 
 /* Internal functions */
+static const struct cs4280_card_t * cs4280_identify_card(struct pci_attach_args *);
+static int  cs4280_piix4_match(struct pci_attach_args *);
+static void cs4280_clkrun_hack(struct cs428x_softc *, int);
+static void cs4280_clkrun_hack_init(struct cs428x_softc *);
 static void cs4280_set_adc_rate(struct cs428x_softc *, int );
 static void cs4280_set_dac_rate(struct cs428x_softc *, int );
 static int  cs4280_download(struct cs428x_softc *, const uint32_t *, uint32_t,
@@ -125,6 +133,31 @@ static int  cs4280_check_images(struct cs428x_softc *);
 static int  cs4280_checkimage(struct cs428x_softc *, uint32_t *, uint32_t,
 			      uint32_t);
 #endif
+
+/* Special cards */
+struct cs4280_card_t
+{
+	pcireg_t id;
+	enum cs428x_flags flags;
+};
+
+#define _card(vend, prod, flags) \
+	{PCI_ID_CODE(vend, prod), flags}
+
+static const struct cs4280_card_t cs4280_cards[] = {
+#if 0	/* untested, from ALSA driver */
+	_card(PCI_VENDOR_MITAC, PCI_PRODUCT_MITAC_MI6020,
+	      CS428X_FLAG_INVAC97EAMP),
+#endif
+	_card(PCI_VENDOR_TURTLE_BEACH, PCI_PRODUCT_TURTLE_BEACH_SANTA_CRUZ,
+	      CS428X_FLAG_INVAC97EAMP),
+	_card(PCI_VENDOR_IBM, PCI_PRODUCT_IBM_TPAUDIO,
+	      CS428X_FLAG_CLKRUNHACK)
+};
+
+#undef _card
+
+#define CS4280_CARDS_SIZE (sizeof(cs4280_cards)/sizeof(cs4280_cards[0]))
 
 static const struct audio_hw_if cs4280_hw_if = {
 	NULL,			/* open */
@@ -153,6 +186,7 @@ static const struct audio_hw_if cs4280_hw_if = {
 	cs428x_get_props,
 	cs4280_trigger_output,
 	cs4280_trigger_input,
+	NULL,
 	NULL,
 };
 
@@ -206,12 +240,13 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	struct cs428x_softc *sc;
 	struct pci_attach_args *pa;
 	pci_chipset_tag_t pc;
+	const struct cs4280_card_t *cs_card;
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t reg;
 	char devinfo[256];
 	uint32_t mem;
-	int pci_pwrmgmt_cap_reg, pci_pwrmgmt_csr_reg;
+	int error;
 
 	sc = (struct cs428x_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -221,6 +256,16 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
+
+	cs_card = cs4280_identify_card(pa);
+	if (cs_card != NULL) {
+		aprint_normal("%s: %s %s\n",sc->sc_dev.dv_xname,
+			      pci_findvendor(cs_card->id),
+			      pci_findproduct(cs_card->id));
+		sc->sc_flags = cs_card->flags;
+	} else {
+		sc->sc_flags = CS428X_FLAG_NONE;
+	}
 
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_BA0,
@@ -238,19 +283,12 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmatag = pa->pa_dmat;
 
-	/* Check and set Power State */
-	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PWRMGMT,
-	    &pci_pwrmgmt_cap_reg, 0)) {
-		pci_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + PCI_PMCSR;
-		reg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-		    pci_pwrmgmt_csr_reg);
-		DPRINTF(("%s: Power State is %d\n",
-		    sc->sc_dev.dv_xname, reg & PCI_PMCSR_STATE_MASK));
-		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0) {
-			pci_conf_write(pc, pa->pa_tag, pci_pwrmgmt_csr_reg,
-			    (reg & ~PCI_PMCSR_STATE_MASK) |
-			    PCI_PMCSR_STATE_D0);
-		}
+	/* power up chip */
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	    pci_activate_null)) && error != EOPNOTSUPP) {
+		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		    error);
+		return;
 	}
 
 	/* Enable the device (set bus master flag) */
@@ -265,6 +303,9 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 		mem |= 0x00002000;
 		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG, mem);
 	}
+
+	/* CLKRUN hack initialization */
+	cs4280_clkrun_hack_init(sc);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
@@ -301,9 +342,14 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	/* AC 97 attachment */
 	sc->host_if.arg = sc;
 	sc->host_if.attach = cs428x_attach_codec;
-	sc->host_if.read   = cs428x_read_codec;
-	sc->host_if.write  = cs428x_write_codec;
+	sc->host_if.read   = cs4280_read_codec;
+	sc->host_if.write  = cs4280_write_codec;
+#if 0
 	sc->host_if.reset  = cs4280_reset_codec;
+#else
+	sc->host_if.reset  = NULL;
+#endif
+	sc->host_if.flags  = cs4280_flags_codec;
 	if (ac97_attach(&sc->host_if, self) != 0) {
 		aprint_error("%s: ac97_attach failed\n", sc->sc_dev.dv_xname);
 		return;
@@ -356,6 +402,10 @@ cs4280_intr(void *p)
 	intr = BA0READ4(sc, CS4280_HISR);
 	BA0WRITE4(sc, CS4280_HICR, HICR_CHGM | HICR_IEV);
 
+	/* not for us ? */
+	if ((intr & HISR_INTENA) == 0)
+		return 0;
+
 	/* Playback Interrupt */
 	if (intr & HISR_PINT) {
 		handled = 1;
@@ -364,18 +414,19 @@ cs4280_intr(void *p)
 		if (sc->sc_prun) {
 			if ((sc->sc_pi%sc->sc_pcount) == 0)
 				sc->sc_pintr(sc->sc_parg);
+			/* copy buffer */
+			++sc->sc_pi;
+			empty_dma = sc->sc_pdma->addr;
+			if (sc->sc_pi&1)
+				empty_dma += sc->hw_blocksize;
+			memcpy(empty_dma, sc->sc_pn, sc->hw_blocksize);
+			sc->sc_pn += sc->hw_blocksize;
+			if (sc->sc_pn >= sc->sc_pe)
+				sc->sc_pn = sc->sc_ps;
 		} else {
-			printf("unexpected play intr\n");
+			printf("%s: unexpected play intr\n",
+			       sc->sc_dev.dv_xname);
 		}
-		/* copy buffer */
-		++sc->sc_pi;
-		empty_dma = sc->sc_pdma->addr;
-		if (sc->sc_pi&1)
-			empty_dma += sc->hw_blocksize;
-		memcpy(empty_dma, sc->sc_pn, sc->hw_blocksize);
-		sc->sc_pn += sc->hw_blocksize;
-		if (sc->sc_pn >= sc->sc_pe)
-			sc->sc_pn = sc->sc_ps;
 		BA1WRITE4(sc, CS4280_PFIE, mem);
 	}
 	/* Capture Interrupt */
@@ -386,64 +437,70 @@ cs4280_intr(void *p)
 		handled = 1;
 		mem = BA1READ4(sc, CS4280_CIE);
 		BA1WRITE4(sc, CS4280_CIE, (mem & ~CIE_CI_MASK) | CIE_CI_DISABLE);
-		++sc->sc_ri;
-		empty_dma = sc->sc_rdma->addr;
-		if ((sc->sc_ri&1) == 0)
-			empty_dma += sc->hw_blocksize;
 
-		/*
-		 * XXX
-		 * I think this audio data conversion should be
-		 * happend in upper layer, but I put this here
-		 * since there is no conversion function available.
-		 */
-		switch(sc->sc_rparam) {
-		case CF_16BIT_STEREO:
-			/* just copy it */
-			memcpy(sc->sc_rn, empty_dma, sc->hw_blocksize);
-			sc->sc_rn += sc->hw_blocksize;
-			break;
-		case CF_16BIT_MONO:
-			for (i = 0; i < 512; i++) {
-				rdata  = *((int16_t *)empty_dma)>>1;
-				empty_dma += 2;
-				rdata += *((int16_t *)empty_dma)>>1;
-				empty_dma += 2;
-				*((int16_t *)sc->sc_rn) = rdata;
-				sc->sc_rn += 2;
+		if (sc->sc_rrun) {
+			++sc->sc_ri;
+			empty_dma = sc->sc_rdma->addr;
+			if ((sc->sc_ri&1) == 0)
+				empty_dma += sc->hw_blocksize;
+
+			/*
+			 * XXX
+			 * I think this audio data conversion should be
+			 * happend in upper layer, but I put this here
+			 * since there is no conversion function available.
+			 */
+			switch(sc->sc_rparam) {
+			case CF_16BIT_STEREO:
+				/* just copy it */
+				memcpy(sc->sc_rn, empty_dma, sc->hw_blocksize);
+				sc->sc_rn += sc->hw_blocksize;
+				break;
+			case CF_16BIT_MONO:
+				for (i = 0; i < 512; i++) {
+					rdata  = *((int16_t *)empty_dma)>>1;
+					empty_dma += 2;
+					rdata += *((int16_t *)empty_dma)>>1;
+					empty_dma += 2;
+					*((int16_t *)sc->sc_rn) = rdata;
+					sc->sc_rn += 2;
+				}
+				break;
+			case CF_8BIT_STEREO:
+				for (i = 0; i < 512; i++) {
+					rdata = *((int16_t*)empty_dma);
+					empty_dma += 2;
+					*sc->sc_rn++ = rdata >> 8;
+					rdata = *((int16_t*)empty_dma);
+					empty_dma += 2;
+					*sc->sc_rn++ = rdata >> 8;
+				}
+				break;
+			case CF_8BIT_MONO:
+				for (i = 0; i < 512; i++) {
+					rdata =	 *((int16_t*)empty_dma) >>1;
+					empty_dma += 2;
+					rdata += *((int16_t*)empty_dma) >>1;
+					empty_dma += 2;
+					*sc->sc_rn++ = rdata >>8;
+				}
+				break;
+			default:
+				/* Should not reach here */
+				printf("%s: unknown sc->sc_rparam: %d\n",
+				       sc->sc_dev.dv_xname, sc->sc_rparam);
 			}
-			break;
-		case CF_8BIT_STEREO:
-			for (i = 0; i < 512; i++) {
-				rdata = *((int16_t*)empty_dma);
-				empty_dma += 2;
-				*sc->sc_rn++ = rdata >> 8;
-				rdata = *((int16_t*)empty_dma);
-				empty_dma += 2;
-				*sc->sc_rn++ = rdata >> 8;
-			}
-			break;
-		case CF_8BIT_MONO:
-			for (i = 0; i < 512; i++) {
-				rdata =	 *((int16_t*)empty_dma) >>1;
-				empty_dma += 2;
-				rdata += *((int16_t*)empty_dma) >>1;
-				empty_dma += 2;
-				*sc->sc_rn++ = rdata >>8;
-			}
-			break;
-		default:
-			/* Should not reach here */
-			printf("unknown sc->sc_rparam: %d\n", sc->sc_rparam);
+			if (sc->sc_rn >= sc->sc_re)
+				sc->sc_rn = sc->sc_rs;
 		}
-		if (sc->sc_rn >= sc->sc_re)
-			sc->sc_rn = sc->sc_rs;
 		BA1WRITE4(sc, CS4280_CIE, mem);
+
 		if (sc->sc_rrun) {
 			if ((sc->sc_ri%(sc->sc_rcount)) == 0)
 				sc->sc_rintr(sc->sc_rarg);
 		} else {
-			printf("unexpected record intr\n");
+			printf("%s: unexpected record intr\n",
+			       sc->sc_dev.dv_xname);
 		}
 	}
 
@@ -566,7 +623,7 @@ cs4280_set_params(void *addr, int setmode, int usemode,
 		p = mode == AUMODE_PLAY ? play : rec;
 
 		if (p == play) {
-			DPRINTFN(5,("play: sample=%ld precision=%d channels=%d\n",
+			DPRINTFN(5,("play: sample=%d precision=%d channels=%d\n",
 				p->sample_rate, p->precision, p->channels));
 			/* play back data format may be 8- or 16-bit and
 			 * either stereo or mono.
@@ -578,7 +635,7 @@ cs4280_set_params(void *addr, int setmode, int usemode,
 				return EINVAL;
 			}
 		} else {
-			DPRINTFN(5,("rec: sample=%ld precision=%d channels=%d\n",
+			DPRINTFN(5,("rec: sample=%d precision=%d channels=%d\n",
 				p->sample_rate, p->precision, p->channels));
 			/* capture data format must be 16bit stereo
 			 * and sample rate range from 11025Hz to 48000Hz.
@@ -660,6 +717,8 @@ cs4280_halt_output(void *addr)
 	mem = BA1READ4(sc, CS4280_PCTL);
 	BA1WRITE4(sc, CS4280_PCTL, mem & ~PCTL_MASK);
 	sc->sc_prun = 0;
+	cs4280_clkrun_hack(sc, -1);
+
 	return 0;
 }
 
@@ -673,6 +732,8 @@ cs4280_halt_input(void *addr)
 	mem = BA1READ4(sc, CS4280_CCTL);
 	BA1WRITE4(sc, CS4280_CCTL, mem & ~CCTL_MASK);
 	sc->sc_rrun = 0;
+	cs4280_clkrun_hack(sc, -1);
+
 	return 0;
 }
 
@@ -699,6 +760,7 @@ cs4280_trigger_output(void *addr, void *start, void *end, int blksize,
 		printf("cs4280_trigger_output: already running\n");
 #endif
 	sc->sc_prun = 1;
+	cs4280_clkrun_hack(sc, 1);
 
 	DPRINTF(("cs4280_trigger_output: sc=%p start=%p end=%p "
 	    "blksize=%d intr=%p(%p)\n", addr, start, end, blksize, intr, arg));
@@ -788,6 +850,7 @@ cs4280_trigger_input(void *addr, void *start, void *end, int blksize,
 		printf("cs4280_trigger_input: already running\n");
 #endif
 	sc->sc_rrun = 1;
+	cs4280_clkrun_hack(sc, 1);
 
 	DPRINTF(("cs4280_trigger_input: sc=%p start=%p end=%p "
 	    "blksize=%d intr=%p(%p)\n", addr, start, end, blksize, intr, arg));
@@ -890,8 +953,9 @@ cs4280_power(int why, void *v)
 		}
 		sc->sc_suspend = why;
 		cs4280_init(sc, 0);
+#if 0
 		cs4280_reset_codec(sc);
-
+#endif
 		/* restore ac97 registers */
 		(*sc->codec_if->vtbl->restore_ports)(sc->codec_if);
 
@@ -922,6 +986,33 @@ cs4280_power(int why, void *v)
 	}
 }
 
+static int
+cs4280_read_codec(void *addr, u_int8_t reg, u_int16_t *result)
+{
+	struct cs428x_softc *sc = addr;
+	int rv;
+
+	cs4280_clkrun_hack(sc, 1);
+	rv = cs428x_read_codec(addr, reg, result);
+	cs4280_clkrun_hack(sc, -1);
+
+	return rv;
+}
+
+static int
+cs4280_write_codec(void *addr, u_int8_t reg, u_int16_t data)
+{
+	struct cs428x_softc *sc = addr;
+	int rv;
+
+	cs4280_clkrun_hack(sc, 1);
+	rv = cs428x_write_codec(addr, reg, data);
+	cs4280_clkrun_hack(sc, -1);
+
+	return rv;
+}
+
+#if 0 /* XXX buggy and not required */
 /* control AC97 codec */
 static int
 cs4280_reset_codec(void *addr)
@@ -957,10 +1048,98 @@ cs4280_reset_codec(void *addr)
 			return ETIMEDOUT;
 		}
 	}
+
+	return 0;
+}
+#endif
+
+static enum ac97_host_flags cs4280_flags_codec(void *addr)
+{
+	struct cs428x_softc *sc;
+
+	sc = addr;
+	if (sc->sc_flags & CS428X_FLAG_INVAC97EAMP)
+		return AC97_HOST_INVERTED_EAMP;
+
 	return 0;
 }
 
 /* Internal functions */
+
+static const struct cs4280_card_t *
+cs4280_identify_card(struct pci_attach_args *pa)
+{
+	pcireg_t idreg;
+	u_int16_t i;
+
+	idreg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+	for (i = 0; i < CS4280_CARDS_SIZE; i++) {
+		if (idreg == cs4280_cards[i].id)
+			return &cs4280_cards[i];
+	}
+
+	return NULL;
+}
+
+static int
+cs4280_piix4_match(struct pci_attach_args *pa)
+{
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82371AB_PMC) {
+			return 1;
+	}
+
+	return 0;
+}
+
+static void
+cs4280_clkrun_hack(struct cs428x_softc *sc, int change)
+{
+	uint16_t control, val;
+	
+	if (!(sc->sc_flags & CS428X_FLAG_CLKRUNHACK))
+		return;
+		
+	sc->sc_active += change;
+	val = control = bus_space_read_2(sc->sc_pm_iot, sc->sc_pm_ioh, 0x10);
+	if (!sc->sc_active)
+		val |= 0x2000;
+	else
+		val &= ~0x2000;
+	if (val != control)
+		bus_space_write_2(sc->sc_pm_iot, sc->sc_pm_ioh, 0x10, val);
+}
+
+static void
+cs4280_clkrun_hack_init(struct cs428x_softc *sc)
+{
+	struct pci_attach_args smbuspa;
+	uint16_t reg;
+	pcireg_t port;
+
+	if (!(sc->sc_flags & CS428X_FLAG_CLKRUNHACK))
+		return;
+
+	if (pci_find_device(&smbuspa, cs4280_piix4_match)) {
+		sc->sc_active = 0;
+		printf("%s: enabling CLKRUN hack\n",
+		    sc->sc_dev.dv_xname);
+
+		reg = pci_conf_read(smbuspa.pa_pc, smbuspa.pa_tag, 0x40);
+		port = reg & 0xffc0;
+		printf("%s: power management port 0x%x\n", sc->sc_dev.dv_xname,
+		    port);
+
+		sc->sc_pm_iot = smbuspa.pa_iot;
+		if (bus_space_map(sc->sc_pm_iot, port, 0x20 /* XXX */, 0,
+		    &sc->sc_pm_ioh) == 0)
+			return;
+	}
+
+	/* handle error */
+	sc->sc_flags &= ~CS428X_FLAG_CLKRUNHACK;
+	printf("%s: disabling CLKRUN hack\n", sc->sc_dev.dv_xname);
+}
 
 static void
 cs4280_set_adc_rate(struct cs428x_softc *sc, int rate)
@@ -1125,7 +1304,7 @@ cs4280_set_dac_rate(struct cs428x_softc *sc, int rate)
 	BA1WRITE4(sc, CS4280_PPI, ppi);
 }
 
-/* Download Proceessor Code and Data image */
+/* Download Processor Code and Data image */
 static int
 cs4280_download(struct cs428x_softc *sc, const uint32_t *src,
 		uint32_t offset, uint32_t len)
@@ -1204,6 +1383,10 @@ cs4280_init(struct cs428x_softc *sc, int init)
 {
 	int n;
 	uint32_t mem;
+	int rv;
+
+	rv = 1;
+	cs4280_clkrun_hack(sc, 1);
 
 	/* Start PLL out in known state */
 	BA0WRITE4(sc, CS4280_CLKCR1, 0);
@@ -1265,7 +1448,7 @@ cs4280_init(struct cs428x_softc *sc, int init)
 		if (++n > 1000) {
 			printf("%s: codec ready timeout\n",
 			       sc->sc_dev.dv_xname);
-			return 1;
+			goto exit;
 		}
 	}
 
@@ -1279,7 +1462,7 @@ cs4280_init(struct cs428x_softc *sc, int init)
 		delay(1000);
 		if (++n > 1000) {
 			printf("AC97 inputs slot ready timeout\n");
-			return 1;
+			goto exit;
 		}
 	}
 
@@ -1292,7 +1475,7 @@ cs4280_init(struct cs428x_softc *sc, int init)
 	/* Download the image to the processor */
 	if (cs4280_download_image(sc) != 0) {
 		printf("%s: image download error\n", sc->sc_dev.dv_xname);
-		return 1;
+		goto exit;
 	}
 
 	/* Save playback parameter and then write zero.
@@ -1325,7 +1508,7 @@ cs4280_init(struct cs428x_softc *sc, int init)
 		delay(10);
 		if (++n > 1000) {
 			printf("SPCR 1->0 transition timeout\n");
-			return 1;
+			goto exit;
 		}
 	}
 
@@ -1334,7 +1517,7 @@ cs4280_init(struct cs428x_softc *sc, int init)
 		delay(10);
 		if (++n > 1000) {
 			printf("SPCS 0->1 transition timeout\n");
-			return 1;
+			goto exit;
 		}
 	}
 	/* Processor is now running !!! */
@@ -1364,7 +1547,12 @@ cs4280_init(struct cs428x_softc *sc, int init)
 	mem |= MIDCR_TXE | MIDCR_RXE | MIDCR_RIE | MIDCR_TIE;
 	BA0WRITE4(sc, CS4280_MIDCR, mem);
 #endif
-	return 0;
+
+	rv = 0;
+
+exit:
+	cs4280_clkrun_hack(sc, -1);
+	return rv;
 }
 
 static void

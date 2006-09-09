@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.18 2006/01/29 21:42:42 dsl Exp $	*/
+/*	$NetBSD: icp.c,v 1.18.2.1 2006/09/09 02:50:02 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.18 2006/01/29 21:42:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.18.2.1 2006/09/09 02:50:02 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -651,7 +651,8 @@ icp_async_event(struct icp_softc *icp, int service)
 	} else {
 		if ((icp->icp_fw_vers & 0xff) >= 0x1a) {
 			icp->icp_evt.size = 0;
-			icp->icp_evt.eu.async.ionode = icp->icp_dv.dv_unit;
+			icp->icp_evt.eu.async.ionode =
+			    device_unit(&icp->icp_dv);
 			icp->icp_evt.eu.async.status = icp->icp_status;
 			/*
 			 * Severity and event string are filled in by the
@@ -661,7 +662,8 @@ icp_async_event(struct icp_softc *icp, int service)
 			    icp->icp_evt.event_string);
 		} else {
 			icp->icp_evt.size = sizeof(icp->icp_evt.eu.async);
-			icp->icp_evt.eu.async.ionode = icp->icp_dv.dv_unit;
+			icp->icp_evt.eu.async.ionode =
+			    device_unit(&icp->icp_dv);
 			icp->icp_evt.eu.async.service = service;
 			icp->icp_evt.eu.async.status = icp->icp_status;
 			icp->icp_evt.eu.async.info = icp->icp_info;
@@ -706,7 +708,7 @@ icp_intr(void *cookie)
 		printf("%s: uninitialized or unknown service (%d/%d)\n",
 		    icp->icp_dv.dv_xname, ctx.info, ctx.info2);
 		icp->icp_evt.size = sizeof(icp->icp_evt.eu.driver);
-		icp->icp_evt.eu.driver.ionode = icp->icp_dv.dv_unit;
+		icp->icp_evt.eu.driver.ionode = device_unit(&icp->icp_dv);
 		icp_store_event(icp, GDT_ES_DRIVER, 4, &icp->icp_evt);
 		return (1);
 	}
@@ -1321,7 +1323,7 @@ icp_store_event(struct icp_softc *icp, u_int16_t source, u_int16_t idx,
 	     (evt->size == 0 && e->event_data.size == 0 &&
 	      strcmp((char *) e->event_data.event_string,
 	      	     (char *) evt->event_string) == 0))) {
-		e->last_stamp = time.tv_sec;
+		e->last_stamp = time_second;
 		e->same_count++;
 	} else {
 		if (icp_event_buffer[icp_event_lastidx].event_source != 0) {
@@ -1337,7 +1339,7 @@ icp_store_event(struct icp_softc *icp, u_int16_t source, u_int16_t idx,
 		e = &icp_event_buffer[icp_event_lastidx];
 		e->event_source = source;
 		e->event_idx = idx;
-		e->first_stamp = e->last_stamp = time.tv_sec;
+		e->first_stamp = e->last_stamp = time_second;
 		e->same_count = 1;
 		e->event_data = *evt;
 		e->application = 0;

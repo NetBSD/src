@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.38 2005/12/24 23:41:33 perry Exp $	*/
+/*	$NetBSD: mlx.c,v 1.38.4.1 2006/09/09 02:50:02 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.38 2005/12/24 23:41:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.38.4.1 2006/09/09 02:50:02 rpaulo Exp $");
 
 #include "ld.h"
 
@@ -135,25 +135,23 @@ static int	mlx_rebuild(struct mlx_softc *, int, int);
 static void	mlx_shutdown(void *);
 static int	mlx_user_command(struct mlx_softc *, struct mlx_usercommand *);
 
-static inline time_t	mlx_curtime(void);
-
 dev_type_open(mlxopen);
 dev_type_close(mlxclose);
 dev_type_ioctl(mlxioctl);
 
 const struct cdevsw mlx_cdevsw = {
 	mlxopen, mlxclose, noread, nowrite, mlxioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 extern struct	cfdriver mlx_cd;
 static struct	proc *mlx_periodic_proc;
 static void	*mlx_sdh;
 
-struct {
+static struct {
 	int	hwid;
 	const char	*name;
-} static const mlx_cname[] = {
+} const mlx_cname[] = {
 	{ 0x00, "960E/960M" },
 	{ 0x01, "960P/PD" },
 	{ 0x02,	"960PL" },
@@ -209,11 +207,11 @@ static const char * const mlx_status_msgs[] = {
 	"command busy (?)",				/* 22 */
 };
 
-struct {
+static struct {
 	u_char	command;
 	u_char	msg;		/* Index into mlx_status_msgs[]. */
 	u_short	status;
-} static const mlx_msgs[] = {
+} const mlx_msgs[] = {
 	{ MLX_CMD_READSG,	1,	0x0001 },
 	{ MLX_CMD_READSG,	1,	0x0002 },
 	{ MLX_CMD_READSG,	3,	0x0105 },
@@ -252,23 +250,6 @@ struct {
 
 	{ 0,			14,	0x0104 },
 };
-
-/*
- * Return the current time in seconds - we're not particularly interested in
- * precision here.
- */
-static inline time_t
-mlx_curtime(void)
-{
-	time_t rt;
-	int s;
-
-	s = splclock();
-	rt = mono_time.tv_sec;
-	splx(s);
-
-	return (rt);
-}
 
 /*
  * Initialise the controller and our interface.
@@ -700,7 +681,7 @@ mlx_adjqparam(struct mlx_softc *mlx, int mpu, int slop)
 	for (i = 0; i < ld_cd.cd_ndevs; i++) {
 		if ((ld = device_lookup(&ld_cd, i)) == NULL)
 			continue;
-		if (ld->sc_dv.dv_parent != &mlx->mlx_dv)
+		if (device_parent(&ld->sc_dv) != &mlx->mlx_dv)
 			continue;
 		ldadjqparam(ld, mpu + (slop-- > 0));
 	}
@@ -751,9 +732,6 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	struct mlx_pause *mp;
 	struct mlx_sysdrive *ms;
 	int i, rv, *arg, result;
-
-	if (securelevel >= 2)
-		return (EPERM);
 
 	mlx = device_lookup(&mlx_cd, minor(dev));
 
@@ -810,13 +788,16 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 		/* Looks ok, go with it. */
 		mlx->mlx_pause.mp_which = mp->mp_which;
-		mlx->mlx_pause.mp_when = mlx_curtime() + mp->mp_when;
+		mlx->mlx_pause.mp_when = time_second + mp->mp_when;
 		mlx->mlx_pause.mp_howlong =
 		    mlx->mlx_pause.mp_when + mp->mp_howlong;
 
 		return (0);
 
 	case MLX_COMMAND:
+		if (securelevel >= 2)
+			return (EPERM);
+
 		/*
 		 * Accept a command passthrough-style.
 		 */
@@ -999,13 +980,10 @@ mlx_periodic(struct mlx_softc *mlx)
 {
 	struct mlx_ccb *mc, *nmc;
 	int etype, s;
-	time_t ct;
-
-	ct = mlx_curtime();
 
 	if ((mlx->mlx_pause.mp_which != 0) &&
 	    (mlx->mlx_pause.mp_when > 0) &&
-	    (ct >= mlx->mlx_pause.mp_when)) {
+	    (time_second >= mlx->mlx_pause.mp_when)) {
 	    	/*
 	    	 * Start bus pause.
 	    	 */
@@ -1016,15 +994,15 @@ mlx_periodic(struct mlx_softc *mlx)
 		/*
 		 * Stop pause if required.
 		 */
-		if (ct >= mlx->mlx_pause.mp_howlong) {
+		if (time_second >= mlx->mlx_pause.mp_howlong) {
 			mlx_pause_action(mlx);
 			mlx->mlx_pause.mp_which = 0;
 		}
-	} else if (ct > (mlx->mlx_lastpoll + 10)) {
+	} else if (time_second > (mlx->mlx_lastpoll + 10)) {
 		/*
 		 * Run normal periodic activities...
 		 */
-		mlx->mlx_lastpoll = ct;
+		mlx->mlx_lastpoll = time_second;
 
 		/*
 		 * Check controller status.
@@ -1068,7 +1046,7 @@ mlx_periodic(struct mlx_softc *mlx)
 	s = splbio();
 	for (mc = TAILQ_FIRST(&mlx->mlx_ccb_worklist); mc != NULL; mc = nmc) {
 		nmc = TAILQ_NEXT(mc, mc_chain.tailq);
-		if (mc->mc_expiry > ct) {
+		if (mc->mc_expiry > time_second) {
 			/*
 			 * The remaining CCBs will expire after this one, so
 			 * there's no point in going further.
@@ -1479,9 +1457,6 @@ mlx_pause_action(struct mlx_softc *mlx)
 {
 	struct mlx_ccb *mc;
 	int failsafe, i, cmd;
-	time_t ct;
-
-	ct = mlx_curtime();
 
 	/* What are we doing here? */
 	if (mlx->mlx_pause.mp_when == 0) {
@@ -1495,11 +1470,12 @@ mlx_pause_action(struct mlx_softc *mlx)
 		 * period, which is specified in multiples of 30 seconds.
 		 * This constrains us to a maximum pause of 450 seconds.
 		 */
-		failsafe = ((mlx->mlx_pause.mp_howlong - ct) + 5) / 30;
+		failsafe = ((mlx->mlx_pause.mp_howlong - time_second) + 5) / 30;
 
 		if (failsafe > 0xf) {
 			failsafe = 0xf;
-			mlx->mlx_pause.mp_howlong = ct + (0xf * 30) - 5;
+			mlx->mlx_pause.mp_howlong =
+			     time_second + (0xf * 30) - 5;
 		}
 	}
 
@@ -1542,7 +1518,7 @@ mlx_pause_done(struct mlx_ccb *mc)
 	else if (command == MLX_CMD_STOPCHANNEL)
 		printf("%s: channel %d pausing for %ld seconds\n",
 		    mlx->mlx_dv.dv_xname, channel,
-		    (long)(mlx->mlx_pause.mp_howlong - mlx_curtime()));
+		    (long)(mlx->mlx_pause.mp_howlong - time_second));
 	else
 		printf("%s: channel %d resuming\n", mlx->mlx_dv.dv_xname,
 		    channel);
@@ -1611,11 +1587,8 @@ mlx_enquire(struct mlx_softc *mlx, int command, size_t bufsize,
 
 	/* We got an error, and we allocated a result. */
 	if (rv != 0 && result != NULL) {
-		if (handler != NULL && mc != NULL) {
-			if (mapped)
-				mlx_ccb_unmap(mlx, mc);
+		if (mc != NULL)
 			mlx_ccb_free(mlx, mc);
-		}
 		free(result, M_DEVBUF);
 		result = NULL;
 	}
@@ -1807,19 +1780,19 @@ mlx_user_command(struct mlx_softc *mlx, struct mlx_usercommand *mu)
 			goto out;
 		}
 		mapped = 1;
+		/*
+		 * If this is a passthrough SCSI command, the DCDB is packed at
+		 * the beginning of the data area.  Fix up the DCDB to point to
+		 * the correct physical address and override any bufptr
+		 * supplied by the caller since we know what it's meant to be.
+		 */
+		if (mc->mc_mbox[0] == MLX_CMD_DIRECT_CDB) {
+			dcdb = (struct mlx_dcdb *)kbuf;
+			dcdb->dcdb_physaddr = mc->mc_xfer_phys + sizeof(*dcdb);
+			mu->mu_bufptr = 8;
+		}
 	}
 
-	/*
-	 * If this is a passthrough SCSI command, the DCDB is packed at the
-	 * beginning of the data area.  Fix up the DCDB to point to the correct physical
-	 * address and override any bufptr supplied by the caller since we know
-	 * what it's meant to be.
-	 */
-	if (mc->mc_mbox[0] == MLX_CMD_DIRECT_CDB) {
-		dcdb = (struct mlx_dcdb *)kbuf;
-		dcdb->dcdb_physaddr = mc->mc_xfer_phys + sizeof(*dcdb);
-		mu->mu_bufptr = 8;
-	}
 
 	/*
 	 * If there's a data buffer, fix up the command's buffer pointer.
@@ -1848,13 +1821,12 @@ mlx_user_command(struct mlx_softc *mlx, struct mlx_usercommand *mu)
 
  out:
 	if (mc != NULL) {
+		/* Copy out status and data */
+		mu->mu_status = mc->mc_status;
 		if (mapped)
 			mlx_ccb_unmap(mlx, mc);
 		mlx_ccb_free(mlx, mc);
 	}
-
-	/* Copy out status and data */
-	mu->mu_status = mc->mc_status;
 
 	if (kbuf != NULL) {
 		if (mu->mu_datasize > 0 && (mu->mu_bufdir & MU_XFER_IN) != 0) {
@@ -2087,7 +2059,7 @@ mlx_ccb_submit(struct mlx_softc *mlx, struct mlx_ccb *mc)
 
 	/* Mark the command as currently being processed. */
 	mc->mc_status = MLX_STATUS_BUSY;
-	mc->mc_expiry = mlx_curtime() + MLX_TIMEOUT;
+	mc->mc_expiry = time_second + MLX_TIMEOUT;
 
 	/* Spin waiting for the mailbox. */
 	for (i = 100; i != 0; i--) {

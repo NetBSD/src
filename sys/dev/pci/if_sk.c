@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.18 2005/11/23 18:56:22 riz Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.18.4.1 2006/09/09 02:52:17 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*	$OpenBSD: if_sk.c,v 1.33 2003/08/12 05:23:06 nate Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.116 2006/06/22 23:06:03 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -122,6 +122,7 @@
  */
 
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,23 +134,20 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/callout.h>
+#include <sys/sysctl.h>
+#include <sys/endian.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
 
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#include <netinet/if_ether.h>
-#endif
-
 #include <net/if_media.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+#if NRND > 0
+#include <sys/rnd.h>
 #endif
 
 #include <dev/mii/mii.h>
@@ -160,7 +158,6 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#define	SK_VERBOSE
 /* #define SK_USEIOSPACE */
 
 #include <dev/pci/if_skreg.h>
@@ -190,12 +187,18 @@ int sk_ifmedia_upd(struct ifnet *);
 void sk_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 void sk_reset(struct sk_softc *);
 int sk_newbuf(struct sk_if_softc *, int, struct mbuf *, bus_dmamap_t);
+int sk_alloc_jumbo_mem(struct sk_if_softc *);
+void sk_free_jumbo_mem(struct sk_if_softc *);
+void *sk_jalloc(struct sk_if_softc *);
+void sk_jfree(struct mbuf *, caddr_t, size_t, void *);
 int sk_init_rx_ring(struct sk_if_softc *);
 int sk_init_tx_ring(struct sk_if_softc *);
 u_int8_t sk_vpd_readbyte(struct sk_softc *, int);
 void sk_vpd_read_res(struct sk_softc *,
 					struct vpd_res *, int);
 void sk_vpd_read(struct sk_softc *);
+
+void sk_update_int_mod(struct sk_softc *);
 
 int sk_xmac_miibus_readreg(struct device *, int, int);
 void sk_xmac_miibus_writereg(struct device *, int, int, int);
@@ -243,6 +246,9 @@ void sk_dump_bytes(const char *, int);
 #define SK_WIN_CLRBIT_2(sc, reg, x)	\
 	sk_win_write_2(sc, reg, sk_win_read_2(sc, reg) & ~x)
 
+static int sk_sysctl_handler(SYSCTLFN_PROTO);
+static int sk_root_num;
+
 /* supported device vendors */
 static const struct sk_product {
 	pci_vendor_id_t		sk_vendor;
@@ -250,11 +256,13 @@ static const struct sk_product {
 } sk_products[] = {
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C940, },
 	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T, },
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560T, },
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560T_2, },
 	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1064, },
 	{ PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SKNET_GE, },
 	{ PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2, },
-	{ PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_SKNET, },
-	{ PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_BELKIN, },
+	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_SKNET, },
+	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_BELKIN, },
 	{ 0, 0, }
 };
 
@@ -351,9 +359,9 @@ sk_vpd_readbyte(struct sk_softc *sc, int addr)
 	}
 
 	if (i == SK_TIMEOUT)
-		return(0);
+		return 0;
 
-	return(sk_win_read_1(sc, SK_PCI_REG(SK_PCI_VPD_DATA)));
+	return sk_win_read_1(sc, SK_PCI_REG(SK_PCI_VPD_DATA));
 }
 
 void
@@ -383,7 +391,7 @@ sk_vpd_read(struct sk_softc *sc)
 	sk_vpd_read_res(sc, &res, pos);
 
 	if (res.vr_id != VPD_RES_ID) {
-		printf("%s: bad VPD resource id: expected %x got %x\n",
+		aprint_error("%s: bad VPD resource id: expected %x got %x\n",
 		    sc->sk_dev.dv_xname, VPD_RES_ID, res.vr_id);
 		return;
 	}
@@ -400,7 +408,7 @@ sk_vpd_read(struct sk_softc *sc)
 	sk_vpd_read_res(sc, &res, pos);
 
 	if (res.vr_id != VPD_RES_READ) {
-		printf("%s: bad VPD resource id: expected %x got %x\n",
+		aprint_error("%s: bad VPD resource id: expected %x got %x\n",
 		    sc->sk_dev.dv_xname, VPD_RES_READ, res.vr_id);
 		return;
 	}
@@ -422,7 +430,7 @@ sk_xmac_miibus_readreg(struct device *dev, int phy, int reg)
 	DPRINTFN(9, ("sk_xmac_miibus_readreg\n"));
 
 	if (sc_if->sk_phytype == SK_PHYTYPE_XMAC && phy != 0)
-		return(0);
+		return 0;
 
 	SK_XM_WRITE_2(sc_if, XM_PHY_ADDR, reg|(phy << 8));
 	SK_XM_READ_2(sc_if, XM_PHY_DATA);
@@ -435,13 +443,13 @@ sk_xmac_miibus_readreg(struct device *dev, int phy, int reg)
 		}
 
 		if (i == SK_TIMEOUT) {
-			printf("%s: phy failed to come ready\n",
+			aprint_error("%s: phy failed to come ready\n",
 			    sc_if->sk_dev.dv_xname);
-			return(0);
+			return 0;
 		}
 	}
 	DELAY(1);
-	return(SK_XM_READ_2(sc_if, XM_PHY_DATA));
+	return SK_XM_READ_2(sc_if, XM_PHY_DATA);
 }
 
 void
@@ -459,7 +467,7 @@ sk_xmac_miibus_writereg(struct device *dev, int phy, int reg, int val)
 	}
 
 	if (i == SK_TIMEOUT) {
-		printf("%s: phy failed to come ready\n",
+		aprint_error("%s: phy failed to come ready\n",
 		    sc_if->sk_dev.dv_xname);
 		return;
 	}
@@ -472,7 +480,7 @@ sk_xmac_miibus_writereg(struct device *dev, int phy, int reg, int val)
 	}
 
 	if (i == SK_TIMEOUT)
-		printf("%s: phy write timed out\n", sc_if->sk_dev.dv_xname);
+		aprint_error("%s: phy write timed out\n", sc_if->sk_dev.dv_xname);
 }
 
 void
@@ -488,18 +496,15 @@ sk_xmac_miibus_statchg(struct device *dev)
 	 * duplex mode accordingly.
 	 */
 	if (sc_if->sk_phytype != SK_PHYTYPE_XMAC) {
-		if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX) {
+		if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
 			SK_XM_SETBIT_2(sc_if, XM_MMUCMD, XM_MMUCMD_GMIIFDX);
-		} else {
+		else
 			SK_XM_CLRBIT_2(sc_if, XM_MMUCMD, XM_MMUCMD_GMIIFDX);
-		}
 	}
 }
 
 int
-sk_marv_miibus_readreg(dev, phy, reg)
-	struct device *dev;
-	int phy, reg;
+sk_marv_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
 	u_int16_t val;
@@ -510,7 +515,7 @@ sk_marv_miibus_readreg(dev, phy, reg)
 	     sc_if->sk_phytype != SK_PHYTYPE_MARV_FIBER)) {
 		DPRINTFN(9, ("sk_marv_miibus_readreg (skip) phy=%d, reg=%#x\n",
 			     phy, reg));
-		return(0);
+		return 0;
 	}
 
         SK_YU_WRITE_2(sc_if, YUKON_SMICR, YU_SMICR_PHYAD(phy) |
@@ -524,7 +529,7 @@ sk_marv_miibus_readreg(dev, phy, reg)
 	}
 
 	if (i == SK_TIMEOUT) {
-		printf("%s: phy failed to come ready\n",
+		aprint_error("%s: phy failed to come ready\n",
 		       sc_if->sk_dev.dv_xname);
 		return 0;
 	}
@@ -541,9 +546,7 @@ sk_marv_miibus_readreg(dev, phy, reg)
 }
 
 void
-sk_marv_miibus_writereg(dev, phy, reg, val)
-	struct device *dev;
-	int phy, reg, val;
+sk_marv_miibus_writereg(struct device *dev, int phy, int reg, int val)
 {
 	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
 	int i;
@@ -563,8 +566,7 @@ sk_marv_miibus_writereg(dev, phy, reg, val)
 }
 
 void
-sk_marv_miibus_statchg(dev)
-	struct device *dev;
+sk_marv_miibus_statchg(struct device *dev)
 {
 	DPRINTFN(9, ("sk_marv_miibus_statchg: gpcr=%x\n",
 		     SK_YU_READ_2(((struct sk_if_softc *)dev), YUKON_GPCR)));
@@ -580,7 +582,7 @@ sk_xmac_hash(caddr_t addr)
 	crc = ether_crc32_le(addr,ETHER_ADDR_LEN);
 	crc = ~crc & ((1<< SK_HASH_BITS) - 1);
 	DPRINTFN(2,("multicast hash for %s is %x\n",ether_sprintf(addr),crc));
-	return (crc);
+	return crc;
 }
 
 u_int32_t
@@ -591,7 +593,7 @@ sk_yukon_hash(caddr_t addr)
 	crc = ether_crc32_be(addr,ETHER_ADDR_LEN);
 	crc &= ((1 << SK_HASH_BITS) - 1);
 	DPRINTFN(2,("multicast hash for %s is %x\n",ether_sprintf(addr),crc));
-	return (crc);
+	return crc;
 }
 
 void
@@ -617,7 +619,7 @@ sk_setmulti(struct sk_if_softc *sc_if)
 	u_int8_t dummy[] = { 0, 0, 0, 0, 0 ,0 };
 
 	/* First, zot all the existing filters. */
-	switch(sc->sk_type) {
+	switch (sc->sk_type) {
 	case SK_GENESIS:
 		for (i = 1; i < XM_RXFILT_MAX; i++)
 			sk_setfilt(sc_if, (caddr_t)&dummy, i);
@@ -682,7 +684,7 @@ allmulti:
 		}
 	}
 
-	switch(sc->sk_type) {
+	switch (sc->sk_type) {
 	case SK_GENESIS:
 		SK_XM_SETBIT_4(sc_if, XM_MODE, XM_MODE_RX_USE_HASH|
 			       XM_MODE_RX_USE_PERFECT);
@@ -714,24 +716,27 @@ sk_init_rx_ring(struct sk_if_softc *sc_if)
 		cd->sk_rx_chain[i].sk_desc = &rd->sk_rx_ring[i];
 		if (i == (SK_RX_RING_CNT - 1)) {
 			cd->sk_rx_chain[i].sk_next = &cd->sk_rx_chain[0];
-			rd->sk_rx_ring[i].sk_next = SK_RX_RING_ADDR(sc_if, 0);
+			rd->sk_rx_ring[i].sk_next =
+				htole32(SK_RX_RING_ADDR(sc_if, 0));
 		} else {
 			cd->sk_rx_chain[i].sk_next = &cd->sk_rx_chain[i + 1];
-			rd->sk_rx_ring[i].sk_next = SK_RX_RING_ADDR(sc_if,i+1);
+			rd->sk_rx_ring[i].sk_next =
+				htole32(SK_RX_RING_ADDR(sc_if,i+1));
 		}
 	}
 
 	for (i = 0; i < SK_RX_RING_CNT; i++) {
-		if (sk_newbuf(sc_if, i, NULL, NULL) == ENOBUFS) {
-			printf("%s: failed alloc of %dth mbuf\n",
+		if (sk_newbuf(sc_if, i, NULL, 
+		    sc_if->sk_cdata.sk_rx_jumbo_map) == ENOBUFS) {
+			aprint_error("%s: failed alloc of %dth mbuf\n",
 			    sc_if->sk_dev.dv_xname, i);
-			return(ENOBUFS);
+			return ENOBUFS;
 		}
 	}
 	sc_if->sk_cdata.sk_rx_prod = 0;
 	sc_if->sk_cdata.sk_rx_cons = 0;
 
-	return(0);
+	return 0;
 }
 
 int
@@ -748,10 +753,12 @@ sk_init_tx_ring(struct sk_if_softc *sc_if)
 		cd->sk_tx_chain[i].sk_desc = &rd->sk_tx_ring[i];
 		if (i == (SK_TX_RING_CNT - 1)) {
 			cd->sk_tx_chain[i].sk_next = &cd->sk_tx_chain[0];
-			rd->sk_tx_ring[i].sk_next = SK_TX_RING_ADDR(sc_if, 0);
+			rd->sk_tx_ring[i].sk_next =
+				htole32(SK_TX_RING_ADDR(sc_if, 0));
 		} else {
 			cd->sk_tx_chain[i].sk_next = &cd->sk_tx_chain[i + 1];
-			rd->sk_tx_ring[i].sk_next = SK_TX_RING_ADDR(sc_if,i+1);
+			rd->sk_tx_ring[i].sk_next =
+				htole32(SK_TX_RING_ADDR(sc_if,i+1));
 		}
 	}
 
@@ -762,54 +769,40 @@ sk_init_tx_ring(struct sk_if_softc *sc_if)
 	SK_CDTXSYNC(sc_if, 0, SK_TX_RING_CNT,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-	return (0);
+	return 0;
 }
 
 int
 sk_newbuf(struct sk_if_softc *sc_if, int i, struct mbuf *m,
 	  bus_dmamap_t dmamap)
 {
-	struct sk_softc		*sc = sc_if->sk_softc;
 	struct mbuf		*m_new = NULL;
 	struct sk_chain		*c;
 	struct sk_rx_desc	*r;
 
-	if (dmamap == NULL) {
-		/* if (m) panic() */
-
-		if (bus_dmamap_create(sc->sc_dmatag, MCLBYTES, 1, MCLBYTES,
-				      0, BUS_DMA_NOWAIT, &dmamap)) {
-			printf("%s: can't create recv map\n",
-			       sc_if->sk_dev.dv_xname);
-			return(ENOMEM);
-		}
-	} else if (m == NULL)
-		bus_dmamap_unload(sc->sc_dmatag, dmamap);
-
-	sc_if->sk_cdata.sk_rx_map[i] = dmamap;
-
 	if (m == NULL) {
+		caddr_t buf = NULL;
+
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-			printf("%s: no memory for rx list -- "
+			aprint_error("%s: no memory for rx list -- "
 			    "packet dropped!\n", sc_if->sk_dev.dv_xname);
-			return(ENOBUFS);
+			return ENOBUFS;
 		}
 
 		/* Allocate the jumbo buffer */
-		MCLGET(m_new, M_DONTWAIT);
-		if (!(m_new->m_flags & M_EXT)) {
+		buf = sk_jalloc(sc_if);
+		if (buf == NULL) {
 			m_freem(m_new);
-			return (ENOBUFS);
+			DPRINTFN(1, ("%s jumbo allocation failed -- packet "
+			    "dropped!\n", sc_if->sk_ethercom.ec_if.if_xname));
+			return ENOBUFS;
 		}
 
-		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
+		/* Attach the buffer to the mbuf */
+		m_new->m_len = m_new->m_pkthdr.len = SK_JLEN;
+		MEXTADD(m_new, buf, SK_JLEN, 0, sk_jfree, sc_if);
 
-		m_adj(m_new, ETHER_ALIGN);
-
-		if (bus_dmamap_load_mbuf(sc->sc_dmatag, dmamap, m_new,
-					 BUS_DMA_NOWAIT))
-			return(ENOBUFS);
 	} else {
 		/*
 	 	 * We're re-using a previously allocated mbuf;
@@ -817,20 +810,177 @@ sk_newbuf(struct sk_if_softc *sc_if, int i, struct mbuf *m,
 		 * default values.
 		 */
 		m_new = m;
-		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-		m_adj(m_new, ETHER_ALIGN);
+		m_new->m_len = m_new->m_pkthdr.len = SK_JLEN;
 		m_new->m_data = m_new->m_ext.ext_buf;
 	}
+	m_adj(m_new, ETHER_ALIGN);
 
 	c = &sc_if->sk_cdata.sk_rx_chain[i];
 	r = c->sk_desc;
 	c->sk_mbuf = m_new;
-	r->sk_data_lo = dmamap->dm_segs[0].ds_addr;
-	r->sk_ctl = dmamap->dm_segs[0].ds_len | SK_RXSTAT;
+	r->sk_data_lo = htole32(dmamap->dm_segs[0].ds_addr +
+	    (((vaddr_t)m_new->m_data
+		- (vaddr_t)sc_if->sk_cdata.sk_jumbo_buf)));
+	r->sk_ctl = htole32(SK_JLEN | SK_RXSTAT);
 
 	SK_CDRXSYNC(sc_if, i, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
-	return(0);
+	return 0;
+}
+
+/*
+ * Memory management for jumbo frames.
+ */
+
+int
+sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
+{
+	struct sk_softc		*sc = sc_if->sk_softc;
+	caddr_t			ptr, kva;
+	bus_dma_segment_t	seg;
+	int		i, rseg, state, error;
+	struct sk_jpool_entry   *entry;
+
+	state = error = 0;
+
+	/* Grab a big chunk o' storage. */
+	if (bus_dmamem_alloc(sc->sc_dmatag, SK_JMEM, PAGE_SIZE, 0,
+			     &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+		aprint_error("%s: can't alloc rx buffers\n", sc->sk_dev.dv_xname);
+		return ENOBUFS;
+	}
+
+	state = 1;
+	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg, SK_JMEM, &kva,
+			   BUS_DMA_NOWAIT)) {
+		aprint_error("%s: can't map dma buffers (%d bytes)\n",
+		    sc->sk_dev.dv_xname, SK_JMEM);
+		error = ENOBUFS;
+		goto out;
+	}
+
+	state = 2;
+	if (bus_dmamap_create(sc->sc_dmatag, SK_JMEM, 1, SK_JMEM, 0,
+	    BUS_DMA_NOWAIT, &sc_if->sk_cdata.sk_rx_jumbo_map)) {
+		aprint_error("%s: can't create dma map\n", sc->sk_dev.dv_xname);
+		error = ENOBUFS;
+		goto out;
+	}
+
+	state = 3;
+	if (bus_dmamap_load(sc->sc_dmatag, sc_if->sk_cdata.sk_rx_jumbo_map,
+			    kva, SK_JMEM, NULL, BUS_DMA_NOWAIT)) {
+		aprint_error("%s: can't load dma map\n", sc->sk_dev.dv_xname);
+		error = ENOBUFS;
+		goto out;
+	}
+
+	state = 4;
+	sc_if->sk_cdata.sk_jumbo_buf = (caddr_t)kva;
+	DPRINTFN(1,("sk_jumbo_buf = 0x%p\n", sc_if->sk_cdata.sk_jumbo_buf));
+
+	LIST_INIT(&sc_if->sk_jfree_listhead);
+	LIST_INIT(&sc_if->sk_jinuse_listhead);
+
+	/*
+	 * Now divide it up into 9K pieces and save the addresses
+	 * in an array.
+	 */
+	ptr = sc_if->sk_cdata.sk_jumbo_buf;
+	for (i = 0; i < SK_JSLOTS; i++) {
+		sc_if->sk_cdata.sk_jslots[i] = ptr;
+		ptr += SK_JLEN;
+		entry = malloc(sizeof(struct sk_jpool_entry),
+		    M_DEVBUF, M_NOWAIT);
+		if (entry == NULL) {
+			aprint_error("%s: no memory for jumbo buffer queue!\n",
+			    sc->sk_dev.dv_xname);
+			error = ENOBUFS;
+			goto out;
+		}
+		entry->slot = i;
+		if (i)
+			LIST_INSERT_HEAD(&sc_if->sk_jfree_listhead,
+				 entry, jpool_entries);
+		else
+			LIST_INSERT_HEAD(&sc_if->sk_jinuse_listhead,
+				 entry, jpool_entries);
+	}
+out:
+	if (error != 0) {
+		switch (state) {
+		case 4:
+			bus_dmamap_unload(sc->sc_dmatag,
+			    sc_if->sk_cdata.sk_rx_jumbo_map);
+		case 3:
+			bus_dmamap_destroy(sc->sc_dmatag,
+			    sc_if->sk_cdata.sk_rx_jumbo_map);
+		case 2:
+			bus_dmamem_unmap(sc->sc_dmatag, kva, SK_JMEM);
+		case 1:
+			bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
+			break;
+		default:
+			break;
+		}
+	}
+
+	return error;
+}
+
+/*
+ * Allocate a jumbo buffer.
+ */
+void *
+sk_jalloc(struct sk_if_softc *sc_if)
+{
+	struct sk_jpool_entry   *entry;
+
+	entry = LIST_FIRST(&sc_if->sk_jfree_listhead);
+
+	if (entry == NULL)
+		return NULL;
+
+	LIST_REMOVE(entry, jpool_entries);
+	LIST_INSERT_HEAD(&sc_if->sk_jinuse_listhead, entry, jpool_entries);
+	return sc_if->sk_cdata.sk_jslots[entry->slot];
+}
+
+/*
+ * Release a jumbo buffer.
+ */
+void
+sk_jfree(struct mbuf *m, caddr_t buf, size_t size, void	*arg)
+{
+	struct sk_jpool_entry *entry;
+	struct sk_if_softc *sc;
+	int i, s;
+
+	/* Extract the softc struct pointer. */
+	sc = (struct sk_if_softc *)arg;
+
+	if (sc == NULL)
+		panic("sk_jfree: can't find softc pointer!");
+
+	/* calculate the slot this buffer belongs to */
+
+	i = ((vaddr_t)buf
+	     - (vaddr_t)sc->sk_cdata.sk_jumbo_buf) / SK_JLEN;
+
+	if ((i < 0) || (i >= SK_JSLOTS))
+		panic("sk_jfree: asked to free buffer that we don't manage!");
+
+	s = splvm();
+	entry = LIST_FIRST(&sc->sk_jinuse_listhead);
+	if (entry == NULL)
+		panic("sk_jfree: buffer not in use!");
+	entry->slot = i;
+	LIST_REMOVE(entry, jpool_entries);
+	LIST_INSERT_HEAD(&sc->sk_jfree_listhead, entry, jpool_entries);
+
+	if (__predict_true(m != NULL))
+		pool_cache_put(&mbpool_cache, m);
+	splx(s);
 }
 
 /*
@@ -843,7 +993,7 @@ sk_ifmedia_upd(struct ifnet *ifp)
 
 	(void) sk_init(ifp);
 	mii_mediachg(&sc_if->sk_mii);
-	return(0);
+	return 0;
 }
 
 /*
@@ -865,7 +1015,6 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct sk_if_softc *sc_if = ifp->if_softc;
 	struct sk_softc *sc = sc_if->sk_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
-	/* struct ifaddr *ifa = (struct ifaddr *) data; */
 	struct mii_data *mii;
 	int s, error = 0;
 
@@ -873,7 +1022,7 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	s = splnet();
 
-	switch(command) {
+	switch (command) {
 
 	case SIOCSIFFLAGS:
 	        DPRINTFN(2, ("sk_ioctl IFFLAGS\n"));
@@ -881,7 +1030,7 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING &&
 			    ifp->if_flags & IFF_PROMISC &&
 			    !(sc_if->sk_if_flags & IFF_PROMISC)) {
-				switch(sc->sk_type) {
+				switch (sc->sk_type) {
 				case SK_GENESIS:
 					SK_XM_SETBIT_4(sc_if, XM_MODE,
 					    XM_MODE_RX_PROMISC);
@@ -897,7 +1046,7 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			} else if (ifp->if_flags & IFF_RUNNING &&
 			    !(ifp->if_flags & IFF_PROMISC) &&
 			    sc_if->sk_if_flags & IFF_PROMISC) {
-				switch(sc->sk_type) {
+				switch (sc->sk_type) {
 				case SK_GENESIS:
 					SK_XM_CLRBIT_4(sc_if, XM_MODE,
 					    XM_MODE_RX_PROMISC);
@@ -945,7 +1094,40 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	}
 
 	splx(s);
-	return(error);
+	return error;
+}
+
+void
+sk_update_int_mod(struct sk_softc *sc)
+{
+	u_int32_t sk_imtimer_ticks;
+
+	/*
+         * Configure interrupt moderation. The moderation timer
+	 * defers interrupts specified in the interrupt moderation
+	 * timer mask based on the timeout specified in the interrupt
+	 * moderation timer init register. Each bit in the timer
+	 * register represents one tick, so to specify a timeout in
+	 * microseconds, we have to multiply by the correct number of
+	 * ticks-per-microsecond.
+	 */
+	switch (sc->sk_type) {
+	case SK_GENESIS:
+		sk_imtimer_ticks = SK_IMTIMER_TICKS_GENESIS;
+		break;
+	case SK_YUKON_EC:
+		sk_imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
+		break;
+	default:
+		sk_imtimer_ticks = SK_IMTIMER_TICKS_YUKON;
+	}
+	aprint_verbose("%s: interrupt moderation is %d us\n",
+	    sc->sk_dev.dv_xname, sc->sk_int_mod);
+        sk_win_write_4(sc, SK_IMTIMERINIT, SK_IM_USECS(sc->sk_int_mod));
+        sk_win_write_4(sc, SK_IMMR, SK_ISR_TX1_S_EOF|SK_ISR_TX2_S_EOF|
+	    SK_ISR_RX1_EOF|SK_ISR_RX2_EOF);
+        sk_win_write_1(sc, SK_IMTIMERCTL, SK_IMCTL_START);
+	sc->sk_int_mod_pending = 0;
 }
 
 /*
@@ -961,9 +1143,9 @@ sk_lookup(const struct pci_attach_args *pa)
 	for ( psk = &sk_products[0]; psk->sk_vendor != 0; psk++ ) {
 		if (PCI_VENDOR(pa->pa_id) == psk->sk_vendor &&
 		    PCI_PRODUCT(pa->pa_id) == psk->sk_product)
-			return (psk);
+			return psk;
 	}
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -983,12 +1165,12 @@ skc_probe(struct device *parent, struct cfdata *match, void *aux)
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_LINKSYS &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_LINKSYS_EG1032 &&
 	    subid == SK_LINKSYS_EG1032_SUBID)
-		return(1);
+		return 1;
 
 	if ((psk = sk_lookup(pa))) {
-		return(1);
+		return 1;
 	}
-	return(0);
+	return 0;
 }
 
 /*
@@ -1026,18 +1208,7 @@ void sk_reset(struct sk_softc *sc)
 	/* Enable RAM interface */
 	sk_win_write_4(sc, SK_RAMCTL, SK_RAMCTL_UNRESET);
 
-	/*
-         * Configure interrupt moderation. The moderation timer
-	 * defers interrupts specified in the interrupt moderation
-	 * timer mask based on the timeout specified in the interrupt
-	 * moderation timer init register. Each bit in the timer
-	 * register represents 18.825ns, so to specify a timeout in
-	 * microseconds, we have to multiply by 54.
-	 */
-        sk_win_write_4(sc, SK_IMTIMERINIT, SK_IM_USECS(100));
-        sk_win_write_4(sc, SK_IMMR, SK_ISR_TX1_S_EOF|SK_ISR_TX2_S_EOF|
-	    SK_ISR_RX1_EOF|SK_ISR_RX2_EOF);
-        sk_win_write_1(sc, SK_IMTIMERCTL, SK_IMCTL_START);
+	sk_update_int_mod(sc);
 }
 
 int
@@ -1046,9 +1217,9 @@ sk_probe(struct device *parent, struct cfdata *match, void *aux)
 	struct skc_attach_args *sa = aux;
 
 	if (sa->skc_port != SK_PORT_A && sa->skc_port != SK_PORT_B)
-		return(0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 /*
@@ -1101,7 +1272,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	 * amount of SRAM on it, somewhere between 512K and 2MB. We
 	 * need to divide this up a) between the transmitter and
  	 * receiver and b) between the two XMACs, if this is a
-	 * dual port NIC. Our algotithm is to divide up the memory
+	 * dual port NIC. Our algorithm is to divide up the memory
 	 * evenly so that everyone gets a fair share.
 	 */
 	if (sk_win_read_1(sc, SK_CONFIG) & SK_CONFIG_SINGLEMAC) {
@@ -1195,8 +1366,8 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < SK_TX_RING_CNT; i++) {
 		sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf = NULL;
 
-		if (bus_dmamap_create(sc->sc_dmatag, MCLBYTES, SK_NTXSEG,
-		    MCLBYTES, 0, BUS_DMA_NOWAIT, &dmamap)) {
+		if (bus_dmamap_create(sc->sc_dmatag, SK_JLEN, SK_NTXSEG,
+		    SK_JLEN, 0, BUS_DMA_NOWAIT, &dmamap)) {
 			aprint_error("%s: Can't create TX dmamap\n",
 				sc_if->sk_dev.dv_xname);
 			bus_dmamap_unload(sc->sc_dmatag, sc_if->sk_ring_map);
@@ -1226,12 +1397,15 @@ sk_attach(struct device *parent, struct device *self, void *aux)
         sc_if->sk_rdata = (struct sk_ring_data *)kva;
 	bzero(sc_if->sk_rdata, sizeof(struct sk_ring_data));
 
-	/* XXX TLS It's not clear what's wrong with the Jumbo MTU
-	   XXX TLS support in this driver, so we don't enable it. */
-
-	sc_if->sk_ethercom.ec_capabilities = ETHERCAP_VLAN_MTU;
-
 	ifp = &sc_if->sk_ethercom.ec_if;
+	/* Try to allocate memory for jumbo buffers. */
+	if (sk_alloc_jumbo_mem(sc_if)) {
+		aprint_error("%s: jumbo buffer allocation failed\n", ifp->if_xname);
+		goto fail;
+	}
+	sc_if->sk_ethercom.ec_capabilities = ETHERCAP_VLAN_MTU 
+		| ETHERCAP_JUMBO_MTU;
+
 	ifp->if_softc = sc_if;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = sk_ioctl;
@@ -1284,12 +1458,11 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	mii_attach(self, &sc_if->sk_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc_if->sk_mii.mii_phys) == NULL) {
-		printf("%s: no PHY found!\n", sc_if->sk_dev.dv_xname);
+		aprint_error("%s: no PHY found!\n", sc_if->sk_dev.dv_xname);
 		ifmedia_add(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_MANUAL,
 			    0, NULL);
 		ifmedia_set(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_MANUAL);
-	}
-	else
+	} else
 		ifmedia_set(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
 	callout_init(&sc_if->sk_tick_ch);
@@ -1305,7 +1478,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp, sc_if->sk_enaddr);
 
 #if NRND > 0
-        rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+        rnd_attach_source(&sc->rnd_source, sc->sk_dev.dv_xname,
             RND_TYPE_NET, 0);
 #endif
 
@@ -1328,7 +1501,7 @@ skcprint(void *aux, const char *pnp)
 	else
 		aprint_normal(" port %c",
 		    (sa->skc_port == SK_PORT_A) ? 'A' : 'B');
-	return (UNCONF);
+	return UNCONF;
 }
 
 /*
@@ -1342,18 +1515,19 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct skc_attach_args skca;
 	pci_chipset_tag_t pc = pa->pa_pc;
+#ifndef SK_USEIOSPACE
 	pcireg_t memtype;
+#endif
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	bus_addr_t iobase;
 	bus_size_t iosize;
-	int s;
+	int rc, sk_nodenum;
 	u_int32_t command;
 	const char *revstr;
+	const struct sysctlnode *node;
 
 	DPRINTFN(2, ("begin skc_attach\n"));
-
-	s = splnet();
 
 	/*
 	 * Handle power management nonsense.
@@ -1398,20 +1572,21 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 #ifdef SK_USEIOSPACE
 	if (!(command & PCI_COMMAND_IO_ENABLE)) {
 		aprint_error(": failed to enable I/O ports!\n");
-		goto fail;
+		return;
 	}
 	/*
 	 * Map control/status registers.
 	 */
 	if (pci_mapreg_map(pa, SK_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-			   &iobase, &iosize)) {
+			&sc->sk_btag, &sc->sk_bhandle,
+			&iobase, &iosize)) {
 		aprint_error(": can't find i/o space\n");
-		goto fail;
+		return;
 	}
 #else
 	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
 		aprint_error(": failed to enable memory mapping!\n");
-		goto fail;
+		return;
 	}
 	memtype = pci_mapreg_type(pc, pa->pa_tag, SK_PCI_LOMEM);
 	switch (memtype) {
@@ -1432,7 +1607,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmatag = pa->pa_dmat;
 
 	sc->sk_type = sk_win_read_1(sc, SK_CHIPVER);
-	sc->sk_rev  = (sk_win_read_1(sc, SK_CONFIG) >> 4);
+	sc->sk_rev = (sk_win_read_1(sc, SK_CONFIG) >> 4);
 
 	/* bail out here if chip is not recognized */
 	if ( sc->sk_type != SK_GENESIS && ! SK_YUKON_FAMILY(sc->sk_type)) {
@@ -1466,7 +1641,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sk_type == SK_GENESIS) {
 		u_int8_t val = sk_win_read_1(sc, SK_EPROM0);
 		/* Read and save RAM size and RAMbuffer offset */
-		switch(val) {
+		switch (val) {
 		case SK_RAMSIZE_512K_64:
 			sc->sk_ramsize = 0x80000;
 			sc->sk_rboff = SK_RBOFF_0;
@@ -1486,7 +1661,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		default:
 			aprint_error("%s: unknown ram size: %d\n",
 			       sc->sk_dev.dv_xname, val);
-			goto fail;
+			goto fail_1;
 			break;
 		}
 
@@ -1504,7 +1679,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Read and save physical media type */
-	switch(sk_win_read_1(sc, SK_PMDTYPE)) {
+	switch (sk_win_read_1(sc, SK_PMDTYPE)) {
 	case SK_PMD_1000BASESX:
 		sc->sk_pmd = IFM_1000_SX;
 		break;
@@ -1515,12 +1690,13 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sk_pmd = IFM_1000_CX;
 		break;
 	case SK_PMD_1000BASETX:
+	case SK_PMD_1000BASETX_ALT:
 		sc->sk_pmd = IFM_1000_T;
 		break;
 	default:
 		aprint_error("%s: unknown media type: 0x%x\n",
 		    sc->sk_dev.dv_xname, sk_win_read_1(sc, SK_PMDTYPE));
-		goto fail;
+		goto fail_1;
 	}
 
 	/* determine whether to name it with vpd or just make it up */
@@ -1532,17 +1708,21 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2:
 	case PCI_PRODUCT_3COM_3C940:
 	case PCI_PRODUCT_DLINK_DGE530T:
+	case PCI_PRODUCT_DLINK_DGE560T:
+	case PCI_PRODUCT_DLINK_DGE560T_2:
 	case PCI_PRODUCT_LINKSYS_EG1032:
 	case PCI_PRODUCT_LINKSYS_EG1064:
 	case PCI_ID_CODE(PCI_VENDOR_SCHNEIDERKOCH,
 			 PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2):
 	case PCI_ID_CODE(PCI_VENDOR_3COM,PCI_PRODUCT_3COM_3C940):
 	case PCI_ID_CODE(PCI_VENDOR_DLINK,PCI_PRODUCT_DLINK_DGE530T):
+	case PCI_ID_CODE(PCI_VENDOR_DLINK,PCI_PRODUCT_DLINK_DGE560T):
+	case PCI_ID_CODE(PCI_VENDOR_DLINK,PCI_PRODUCT_DLINK_DGE560T_2):
 	case PCI_ID_CODE(PCI_VENDOR_LINKSYS,PCI_PRODUCT_LINKSYS_EG1032):
 	case PCI_ID_CODE(PCI_VENDOR_LINKSYS,PCI_PRODUCT_LINKSYS_EG1064):
  		sc->sk_name = sc->sk_vpd_prodname;
  		break;
-	case PCI_ID_CODE(PCI_VENDOR_GALILEO,PCI_PRODUCT_GALILEO_SKNET):
+	case PCI_ID_CODE(PCI_VENDOR_MARVELL,PCI_PRODUCT_MARVELL_SKNET):
 	/* whoops yukon vpd prodname bears no resemblance to reality */
 		switch (sc->sk_type) {
 		case SK_GENESIS:
@@ -1582,11 +1762,11 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 			}
 		}
 		break;
-	case PCI_ID_CODE(PCI_VENDOR_GALILEO,PCI_PRODUCT_GALILEO_BELKIN):
+	case PCI_ID_CODE(PCI_VENDOR_MARVELL,PCI_PRODUCT_MARVELL_BELKIN):
 		sc->sk_name = sc->sk_vpd_prodname;
 		break;
  	default:
-		sc->sk_name = "Unkown Marvell";
+		sc->sk_name = "Unknown Marvell";
 	}
 
 
@@ -1623,8 +1803,42 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	/* Turn on the 'driver is loaded' LED. */
 	CSR_WRITE_2(sc, SK_LED, SK_LED_GREEN_ON);
 
+	/* skc sysctl setup */
+
+	sc->sk_int_mod = SK_IM_DEFAULT;
+	sc->sk_int_mod_pending = 0;
+
+	if ((rc = sysctl_createv(&sc->sk_clog, 0, NULL, &node,
+	    0, CTLTYPE_NODE, sc->sk_dev.dv_xname,
+	    SYSCTL_DESCR("skc per-controller controls"),
+	    NULL, 0, NULL, 0, CTL_HW, sk_root_num, CTL_CREATE,
+	    CTL_EOL)) != 0) {
+		aprint_normal("%s: couldn't create sysctl node\n",
+		    sc->sk_dev.dv_xname);
+		goto fail_1;
+	}
+
+	sk_nodenum = node->sysctl_num;
+
+	/* interrupt moderation time in usecs */
+	if ((rc = sysctl_createv(&sc->sk_clog, 0, NULL, &node,
+	    CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "int_mod",
+	    SYSCTL_DESCR("sk interrupt moderation timer"),
+	    sk_sysctl_handler, 0, sc,
+	    0, CTL_HW, sk_root_num, sk_nodenum, CTL_CREATE,
+	    CTL_EOL)) != 0) {
+		aprint_normal("%s: couldn't create int_mod sysctl node\n",
+		    sc->sk_dev.dv_xname);
+		goto fail_1;
+	}
+
+	return;
+
+fail_1:
+	pci_intr_disestablish(pc, sc->sk_intrhand);
 fail:
-	splx(s);
+	bus_space_unmap(sc->sk_btag, sc->sk_bhandle, iosize);
 }
 
 int
@@ -1632,7 +1846,7 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 {
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct sk_tx_desc	*f = NULL;
-	u_int32_t		frag, cur, cnt = 0;
+	u_int32_t		frag, cur, cnt = 0, sk_ctl;
 	int			i;
 	struct sk_txmap_entry	*entry;
 	bus_dmamap_t		txmap;
@@ -1661,7 +1875,7 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 	if (bus_dmamap_load_mbuf(sc->sc_dmatag, txmap, m_head,
 	    BUS_DMA_NOWAIT)) {
 		DPRINTFN(1, ("sk_encap: dmamap failed\n"));
-		return(ENOBUFS);
+		return ENOBUFS;
 	}
 
 	DPRINTFN(3, ("sk_encap: dm_nsegs=%d\n", txmap->dm_nsegs));
@@ -1673,16 +1887,16 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 	for (i = 0; i < txmap->dm_nsegs; i++) {
 		if ((SK_TX_RING_CNT - (sc_if->sk_cdata.sk_tx_cnt + cnt)) < 2) {
 			DPRINTFN(1, ("sk_encap: too few descriptors free\n"));
-			return(ENOBUFS);
+			return ENOBUFS;
 		}
 		f = &sc_if->sk_rdata->sk_tx_ring[frag];
-		f->sk_data_lo = txmap->dm_segs[i].ds_addr;
-		f->sk_ctl = txmap->dm_segs[i].ds_len | SK_OPCODE_DEFAULT;
+		f->sk_data_lo = htole32(txmap->dm_segs[i].ds_addr);
+		sk_ctl = txmap->dm_segs[i].ds_len | SK_OPCODE_DEFAULT;
 		if (cnt == 0)
-			f->sk_ctl |= SK_TXCTL_FIRSTFRAG;
+			sk_ctl |= SK_TXCTL_FIRSTFRAG;
 		else
-			f->sk_ctl |= SK_TXCTL_OWN;
-
+			sk_ctl |= SK_TXCTL_OWN;
+		f->sk_ctl = htole32(sk_ctl);
 		cur = frag;
 		SK_INC(frag, SK_TX_RING_CNT);
 		cnt++;
@@ -1693,13 +1907,14 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 
 	sc_if->sk_cdata.sk_tx_map[cur] = entry;
 	sc_if->sk_rdata->sk_tx_ring[cur].sk_ctl |=
-		SK_TXCTL_LASTFRAG|SK_TXCTL_EOF_INTR;
+		htole32(SK_TXCTL_LASTFRAG|SK_TXCTL_EOF_INTR);
 
 	/* Sync descriptors before handing to chip */
 	SK_CDTXSYNC(sc_if, *txidx, txmap->dm_nsegs,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-	sc_if->sk_rdata->sk_tx_ring[*txidx].sk_ctl |= SK_TXCTL_OWN;
+	sc_if->sk_rdata->sk_tx_ring[*txidx].sk_ctl |=
+		htole32(SK_TXCTL_OWN);
 
 	/* Sync first descriptor to hand it off */
 	SK_CDTXSYNC(sc_if, *txidx, 1, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -1721,7 +1936,7 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 
 	DPRINTFN(3, ("sk_encap: completed successfully\n"));
 
-	return(0);
+	return 0;
 }
 
 void
@@ -1736,8 +1951,7 @@ sk_start(struct ifnet *ifp)
 	DPRINTFN(3, ("sk_start (idx %d, tx_chain[idx] %p)\n", idx,
 		sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf));
 
-	while(sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf == NULL) {
-
+	while (sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf == NULL) {
 		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
@@ -1784,8 +1998,18 @@ sk_watchdog(struct ifnet *ifp)
 {
 	struct sk_if_softc *sc_if = ifp->if_softc;
 
-	printf("%s: watchdog timeout\n", sc_if->sk_dev.dv_xname);
-	(void) sk_init(ifp);
+	/*
+	 * Reclaim first as there is a possibility of losing Tx completion
+	 * interrupts.
+	 */
+	sk_txeof(sc_if);
+	if (sc_if->sk_cdata.sk_tx_cnt != 0) {
+		aprint_error("%s: watchdog timeout\n", sc_if->sk_dev.dv_xname);
+
+		ifp->if_oerrors++;
+
+		sk_init(ifp);
+	}
 }
 
 void
@@ -1816,7 +2040,7 @@ sk_rxeof(struct sk_if_softc *sc_if)
 	struct sk_chain		*cur_rx;
 	struct sk_rx_desc	*cur_desc;
 	int			i, cur, total_len = 0;
-	u_int32_t		rxstat;
+	u_int32_t		rxstat, sk_ctl;
 	bus_dmamap_t		dmamap;
 
 	i = sc_if->sk_cdata.sk_rx_prod;
@@ -1830,7 +2054,8 @@ sk_rxeof(struct sk_if_softc *sc_if)
 		SK_CDRXSYNC(sc_if, cur,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		if (sc_if->sk_rdata->sk_rx_ring[cur].sk_ctl & SK_RXCTL_OWN) {
+		sk_ctl = le32toh(sc_if->sk_rdata->sk_rx_ring[cur].sk_ctl);
+		if (sk_ctl & SK_RXCTL_OWN) {
 			/* Invalidate the descriptor -- it's not ready yet */
 			SK_CDRXSYNC(sc_if, cur, BUS_DMASYNC_PREREAD);
 			sc_if->sk_cdata.sk_rx_prod = i;
@@ -1839,15 +2064,15 @@ sk_rxeof(struct sk_if_softc *sc_if)
 
 		cur_rx = &sc_if->sk_cdata.sk_rx_chain[cur];
 		cur_desc = &sc_if->sk_rdata->sk_rx_ring[cur];
-		dmamap = sc_if->sk_cdata.sk_rx_map[cur];
+		dmamap = sc_if->sk_cdata.sk_rx_jumbo_map;
 
 		bus_dmamap_sync(sc_if->sk_softc->sc_dmatag, dmamap, 0,
 		    dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
-		rxstat = cur_desc->sk_xmac_rxstat;
+		rxstat = le32toh(cur_desc->sk_xmac_rxstat);
 		m = cur_rx->sk_mbuf;
 		cur_rx->sk_mbuf = NULL;
-		total_len = SK_RXBYTES(cur_desc->sk_ctl);
+		total_len = SK_RXBYTES(le32toh(cur_desc->sk_ctl));
 
 		sc_if->sk_cdata.sk_rx_map[cur] = 0;
 
@@ -1872,7 +2097,7 @@ sk_rxeof(struct sk_if_softc *sc_if)
 			    total_len + ETHER_ALIGN, 0, ifp, NULL);
 			sk_newbuf(sc_if, cur, m, dmamap);
 			if (m0 == NULL) {
-				printf("%s: no receive buffers "
+				aprint_error("%s: no receive buffers "
 				    "available -- packet dropped!\n",
 				    sc_if->sk_dev.dv_xname);
 				ifp->if_ierrors++;
@@ -1902,7 +2127,7 @@ sk_txeof(struct sk_if_softc *sc_if)
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct sk_tx_desc	*cur_tx;
 	struct ifnet		*ifp = &sc_if->sk_ethercom.ec_if;
-	u_int32_t		idx;
+	u_int32_t		idx, sk_ctl;
 	struct sk_txmap_entry	*entry;
 
 	DPRINTFN(3, ("sk_txeof\n"));
@@ -1912,20 +2137,21 @@ sk_txeof(struct sk_if_softc *sc_if)
 	 * frames that have been sent.
 	 */
 	idx = sc_if->sk_cdata.sk_tx_cons;
-	while(idx != sc_if->sk_cdata.sk_tx_prod) {
+	while (idx != sc_if->sk_cdata.sk_tx_prod) {
 		SK_CDTXSYNC(sc_if, idx, 1,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		cur_tx = &sc_if->sk_rdata->sk_tx_ring[idx];
+		sk_ctl = le32toh(cur_tx->sk_ctl);
 #ifdef SK_DEBUG
 		if (skdebug >= 3)
 			sk_dump_txdesc(cur_tx, idx);
 #endif
-		if (cur_tx->sk_ctl & SK_TXCTL_OWN) {
+		if (sk_ctl & SK_TXCTL_OWN) {
 			SK_CDTXSYNC(sc_if, idx, 1, BUS_DMASYNC_PREREAD);
 			break;
 		}
-		if (cur_tx->sk_ctl & SK_TXCTL_LASTFRAG)
+		if (sk_ctl & SK_TXCTL_LASTFRAG)
 			ifp->if_opackets++;
 		if (sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf != NULL) {
 			entry = sc_if->sk_cdata.sk_tx_map[idx];
@@ -2078,8 +2304,7 @@ sk_intr_xmac(struct sk_if_softc	*sc_if)
 }
 
 void
-sk_intr_yukon(sc_if)
-	struct sk_if_softc *sc_if;
+sk_intr_yukon(struct sk_if_softc *sc_if)
 {
 	int status;
 
@@ -2113,38 +2338,40 @@ sk_intr(void *xsc)
 		claimed = 1;
 
 		/* Handle receive interrupts first. */
-		if (status & SK_ISR_RX1_EOF) {
+		if (sc_if0 && (status & SK_ISR_RX1_EOF)) {
 			sk_rxeof(sc_if0);
 			CSR_WRITE_4(sc, SK_BMU_RX_CSR0,
 			    SK_RXBMU_CLR_IRQ_EOF|SK_RXBMU_RX_START);
 		}
-		if (status & SK_ISR_RX2_EOF) {
+		if (sc_if1 && (status & SK_ISR_RX2_EOF)) {
 			sk_rxeof(sc_if1);
 			CSR_WRITE_4(sc, SK_BMU_RX_CSR1,
 			    SK_RXBMU_CLR_IRQ_EOF|SK_RXBMU_RX_START);
 		}
 
 		/* Then transmit interrupts. */
-		if (status & SK_ISR_TX1_S_EOF) {
+		if (sc_if0 && (status & SK_ISR_TX1_S_EOF)) {
 			sk_txeof(sc_if0);
 			CSR_WRITE_4(sc, SK_BMU_TXS_CSR0,
 			    SK_TXBMU_CLR_IRQ_EOF);
 		}
-		if (status & SK_ISR_TX2_S_EOF) {
+		if (sc_if1 && (status & SK_ISR_TX2_S_EOF)) {
 			sk_txeof(sc_if1);
 			CSR_WRITE_4(sc, SK_BMU_TXS_CSR1,
 			    SK_TXBMU_CLR_IRQ_EOF);
 		}
 
 		/* Then MAC interrupts. */
-		if (status & SK_ISR_MAC1 && (ifp0->if_flags & IFF_RUNNING)) {
+		if (sc_if0 && (status & SK_ISR_MAC1) &&
+		    (ifp0->if_flags & IFF_RUNNING)) {
 			if (sc->sk_type == SK_GENESIS)
 				sk_intr_xmac(sc_if0);
 			else
 				sk_intr_yukon(sc_if0);
 		}
 
-		if (status & SK_ISR_MAC2 && (ifp1->if_flags & IFF_RUNNING)) {
+		if (sc_if1 && (status & SK_ISR_MAC2) &&
+		    (ifp1->if_flags & IFF_RUNNING)) {
 			if (sc->sk_type == SK_GENESIS)
 				sk_intr_xmac(sc_if1);
 			else
@@ -2153,11 +2380,11 @@ sk_intr(void *xsc)
 		}
 
 		if (status & SK_ISR_EXTERNAL_REG) {
-			if (ifp0 != NULL &&
+			if (sc_if0 != NULL &&
 			    sc_if0->sk_phytype == SK_PHYTYPE_BCOM)
 				sk_intr_bcom(sc_if0);
 
-			if (ifp1 != NULL &&
+			if (sc_if1 != NULL &&
 			    sc_if1->sk_phytype == SK_PHYTYPE_BCOM)
 				sk_intr_bcom(sc_if1);
 		}
@@ -2170,7 +2397,15 @@ sk_intr(void *xsc)
 	if (ifp1 != NULL && !IFQ_IS_EMPTY(&ifp1->if_snd))
 		sk_start(ifp1);
 
-	return (claimed);
+#if NRND > 0
+	if (RND_ENABLED(&sc->rnd_source))
+		rnd_add_uint32(&sc->rnd_source, status);
+#endif
+
+	if (sc->sk_int_mod_pending)
+		sk_update_int_mod(sc);
+
+	return claimed;
 }
 
 void
@@ -2230,7 +2465,7 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 		 */
 		if (sk_xmac_miibus_readreg((struct device *)sc_if,
 		    SK_PHYADDR_BCOM, 0x03) == 0x6041) {
-			while(bhack[i].reg) {
+			while (bhack[i].reg) {
 				sk_xmac_miibus_writereg((struct device *)sc_if,
 				    SK_PHYADDR_BCOM, bhack[i].reg,
 				    bhack[i].val);
@@ -2248,17 +2483,15 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 		      *(u_int16_t *)(&sc_if->sk_enaddr[4]));
 	SK_XM_SETBIT_4(sc_if, XM_MODE, XM_MODE_RX_USE_STATION);
 
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC)
 		SK_XM_SETBIT_4(sc_if, XM_MODE, XM_MODE_RX_PROMISC);
-	} else {
+	else
 		SK_XM_CLRBIT_4(sc_if, XM_MODE, XM_MODE_RX_PROMISC);
-	}
 
-	if (ifp->if_flags & IFF_BROADCAST) {
+	if (ifp->if_flags & IFF_BROADCAST)
 		SK_XM_CLRBIT_4(sc_if, XM_MODE, XM_MODE_RX_NOBROAD);
-	} else {
+	else
 		SK_XM_SETBIT_4(sc_if, XM_MODE, XM_MODE_RX_NOBROAD);
-	}
 
 	/* We don't need the FCS appended to the packet. */
 	SK_XM_SETBIT_2(sc_if, XM_RXCMD, XM_RXCMD_STRIPFCS);
@@ -2306,7 +2539,7 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 		SK_XM_WRITE_2(sc_if, XM_IMR, 0xFFFF);
 
 	/* Configure MAC arbiter */
-	switch(sc_if->sk_xmac_rev) {
+	switch (sc_if->sk_xmac_rev) {
 	case XM_XMAC_REV_B2:
 		sk_win_write_1(sc, SK_RCINIT_RX1, SK_RCINIT_XMAC_B2);
 		sk_win_write_1(sc, SK_RCINIT_TX1, SK_RCINIT_XMAC_B2);
@@ -2338,8 +2571,7 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 	sc_if->sk_link = 1;
 }
 
-void sk_init_yukon(sc_if)
-	struct sk_if_softc	*sc_if;
+void sk_init_yukon(struct sk_if_softc *sc_if)
 {
 	u_int32_t		/*mac, */phy;
 	u_int16_t		reg;
@@ -2375,7 +2607,7 @@ void sk_init_yukon(sc_if)
 	phy = SK_GPHY_INT_POL_HI | SK_GPHY_DIS_FC | SK_GPHY_DIS_SLEEP |
 		SK_GPHY_ENA_XC | SK_GPHY_ANEG_ALL | SK_GPHY_ENA_PAUSE;
 
-	switch(sc_if->sk_softc->sk_pmd) {
+	switch (sc_if->sk_softc->sk_pmd) {
 	case IFM_1000_SX:
 	case IFM_1000_LX:
 		phy |= SK_GPHY_FIBER;
@@ -2432,7 +2664,8 @@ void sk_init_yukon(sc_if)
 	/* serial mode register */
 	DPRINTFN(6, ("sk_init_yukon: 9\n"));
 	SK_YU_WRITE_2(sc_if, YUKON_SMR, YU_SMR_DATA_BLIND(0x1c) |
-		      YU_SMR_MFL_VLAN | YU_SMR_IPG_DATA(0x1e));
+		      YU_SMR_MFL_VLAN | YU_SMR_MFL_JUMBO |
+		      YU_SMR_IPG_DATA(0x1e));
 
 	DPRINTFN(6, ("sk_init_yukon: 10\n"));
 	/* Setup Yukon's address */
@@ -2481,6 +2714,7 @@ sk_init(struct ifnet *ifp)
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct mii_data		*mii = &sc_if->sk_mii;
 	int			s;
+	u_int32_t		imr, sk_imtimer_ticks;
 
 	DPRINTFN(1, ("sk_init\n"));
 
@@ -2568,19 +2802,38 @@ sk_init(struct ifnet *ifp)
 
 	/* Init descriptors */
 	if (sk_init_rx_ring(sc_if) == ENOBUFS) {
-		printf("%s: initialization failed: no "
+		aprint_error("%s: initialization failed: no "
 		    "memory for rx buffers\n", sc_if->sk_dev.dv_xname);
 		sk_stop(ifp,0);
 		splx(s);
-		return(ENOBUFS);
+		return ENOBUFS;
 	}
 
 	if (sk_init_tx_ring(sc_if) == ENOBUFS) {
-		printf("%s: initialization failed: no "
+		aprint_error("%s: initialization failed: no "
 		    "memory for tx buffers\n", sc_if->sk_dev.dv_xname);
 		sk_stop(ifp,0);
 		splx(s);
-		return(ENOBUFS);
+		return ENOBUFS;
+	}
+
+	/* Set interrupt moderation if changed via sysctl. */
+	switch (sc->sk_type) {
+	case SK_GENESIS:
+		sk_imtimer_ticks = SK_IMTIMER_TICKS_GENESIS;
+		break;
+	case SK_YUKON_EC:
+		sk_imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
+		break;
+	default:
+		sk_imtimer_ticks = SK_IMTIMER_TICKS_YUKON;
+	}
+	imr = sk_win_read_4(sc, SK_IMTIMERINIT);
+	if (imr != SK_IM_USECS(sc->sk_int_mod)) {
+		sk_win_write_4(sc, SK_IMTIMERINIT,
+		    SK_IM_USECS(sc->sk_int_mod));
+		aprint_verbose("%s: interrupt moderation is %d us\n",
+		    sc->sk_dev.dv_xname, sc->sk_int_mod);
 	}
 
 	/* Configure interrupt handling */
@@ -2616,7 +2869,7 @@ sk_init(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	splx(s);
-	return(0);
+	return 0;
 }
 
 void
@@ -2700,39 +2953,27 @@ sk_stop(struct ifnet *ifp, int disable)
 
 CFATTACH_DECL(skc,sizeof(struct sk_softc), skc_probe, skc_attach, NULL, NULL);
 
-/*
-struct cfdriver skc_cd = {
-	0, "skc", DV_DULL
-};
-*/
-
 CFATTACH_DECL(sk,sizeof(struct sk_if_softc), sk_probe, sk_attach, NULL, NULL);
-
-/*
-struct cfdriver sk_cd = {
-	0, "sk", DV_IFNET
-};
-*/
 
 #ifdef SK_DEBUG
 void
 sk_dump_txdesc(struct sk_tx_desc *desc, int idx)
 {
 #define DESC_PRINT(X)					\
-	if (desc->X)					\
+	if (X)					\
 		printf("txdesc[%d]." #X "=%#x\n",	\
-		       idx, desc->X);
+		       idx, X);
 
-	DESC_PRINT(sk_ctl);
-	DESC_PRINT(sk_next);
-	DESC_PRINT(sk_data_lo);
-	DESC_PRINT(sk_data_hi);
-	DESC_PRINT(sk_xmac_txstat);
-	DESC_PRINT(sk_rsvd0);
-	DESC_PRINT(sk_csum_startval);
-	DESC_PRINT(sk_csum_startpos);
-	DESC_PRINT(sk_csum_writepos);
-	DESC_PRINT(sk_rsvd1);
+	DESC_PRINT(le32toh(desc->sk_ctl));
+	DESC_PRINT(le32toh(desc->sk_next));
+	DESC_PRINT(le32toh(desc->sk_data_lo));
+	DESC_PRINT(le32toh(desc->sk_data_hi));
+	DESC_PRINT(le32toh(desc->sk_xmac_txstat));
+	DESC_PRINT(le16toh(desc->sk_rsvd0));
+	DESC_PRINT(le16toh(desc->sk_csum_startval));
+	DESC_PRINT(le16toh(desc->sk_csum_startpos));
+	DESC_PRINT(le16toh(desc->sk_csum_writepos));
+	DESC_PRINT(le16toh(desc->sk_rsvd1));
 #undef PRINT
 }
 
@@ -2785,3 +3026,57 @@ sk_dump_mbuf(struct mbuf *m)
 	}
 }
 #endif
+
+static int
+sk_sysctl_handler(SYSCTLFN_ARGS)
+{
+	int error, t;
+	struct sysctlnode node;
+	struct sk_softc *sc;
+
+	node = *rnode;
+	sc = node.sysctl_data;
+	t = sc->sk_int_mod;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (t < SK_IM_MIN || t > SK_IM_MAX)
+		return EINVAL;
+
+	/* update the softc with sysctl-changed value, and mark
+	   for hardware update */
+	sc->sk_int_mod = t;
+	sc->sk_int_mod_pending = 1;
+	return 0;
+}
+
+/*
+ * Set up sysctl(3) MIB, hw.sk.* - Individual controllers will be
+ * set up in skc_attach()
+ */
+SYSCTL_SETUP(sysctl_sk, "sysctl sk subtree setup")
+{
+	int rc;
+	const struct sysctlnode *node;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
+	    0, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
+		goto err;
+	}
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    0, CTLTYPE_NODE, "sk",
+	    SYSCTL_DESCR("sk interface controls"),
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0) {
+		goto err;
+	}
+
+	sk_root_num = node->sysctl_num;
+	return;
+
+err:
+	aprint_error("%s: syctl_createv failed (rc = %d)\n", __func__, rc);
+}

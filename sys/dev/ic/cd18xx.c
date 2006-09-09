@@ -1,4 +1,6 @@
-/*	$NetBSD: cd18xx.c,v 1.13 2005/12/24 20:27:29 perry Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.13.4.1 2006/09/09 02:50:01 rpaulo Exp $	*/
+
+/* XXXad does this even compile? */
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -101,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.13 2005/12/24 20:27:29 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.13.4.1 2006/09/09 02:50:01 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -112,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.13 2005/12/24 20:27:29 perry Exp $");
 #include <sys/kernel.h>
 #include <sys/tty.h>
 #include <sys/fcntl.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 
@@ -431,8 +434,9 @@ cdttyopen(dev, flag, mode, p)
 	/* enforce exclude */
 	if (tp == NULL ||
 	    (ISSET(tp->t_state, TS_ISOPEN) &&
-	     ISSET(tp->t_state, TS_XCLUDE) &&
-	     suser(p->p_ucred, &p->p_acflag) != 0))
+	    ISSET(tp->t_state, TS_XCLUDE) &&
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0))
 		return (EBUSY);
 
 	s = spltty();
@@ -653,7 +657,8 @@ cdttyioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (error)
 			return (error);
 		port->p_swflags = *(int *)data;
@@ -909,8 +914,7 @@ cdttyparam(tp, t)
 	 *    overflows.
 	 *  * Otherwise set it a bit higher.
 	 */
-	p->p_cor3 = (t->c_ospeed <= 1200 ? 1 :
-			 t->c_ospeed <= 38400 ? 8 : 4);
+	p->p_cor3 = (t->c_ospeed <= 1200 ? 1 : t->c_ospeed <= 38400 ? 8 : 4);
 
 #define PORT_RATE(o, s)	\
 	(((((o) + (s)/2) / (s)) + CD18xx_xBRPR_TPC/2) / CD18xx_xBRPR_TPC)

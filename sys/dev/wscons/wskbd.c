@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.85 2005/12/11 12:24:12 christos Exp $ */
+/* $NetBSD: wskbd.c,v 1.85.4.1 2006/09/09 02:56:07 rpaulo Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.85 2005/12/11 12:24:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.85.4.1 2006/09/09 02:56:07 rpaulo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.85 2005/12/11 12:24:12 christos Exp $");
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -264,7 +265,7 @@ dev_type_kqfilter(wskbdkqfilter);
 
 const struct cdevsw wskbd_cdevsw = {
 	wskbdopen, wskbdclose, wskbdread, nowrite, wskbdioctl,
-	nostop, notty, wskbdpoll, nommap, wskbdkqfilter,
+	nostop, notty, wskbdpoll, nommap, wskbdkqfilter, D_OTHER
 };
 
 #ifndef WSKBD_DEFAULT_BELL_PITCH
@@ -391,7 +392,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_base.me_ops = &wskbd_srcops;
 #endif
 #if NWSMUX > 0
-	mux = sc->sc_base.me_dv.dv_cfdata->wskbddevcf_mux;
+	mux = device_cfdata(&sc->sc_base.me_dv)->wskbddevcf_mux;
 	if (ap->console) {
 		/* Ignore mux for console; it always goes to the console mux. */
 		/* printf(" (mux %d ignored for console)", mux); */
@@ -400,7 +401,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 	if (mux >= 0)
 		printf(" mux %d", mux);
 #else
-	if (sc->sc_base.me_dv.dv_cfdata->wskbddevcf_mux >= 0)
+	if (device_cfdata(&sc->sc_base.me_dv)->wskbddevcf_mux >= 0)
 		printf(" (mux ignored)");
 #endif
 
@@ -576,10 +577,14 @@ wskbd_detach(struct device  *self, int flags)
 	if (evar != NULL && evar->io != NULL) {
 		s = spltty();
 		if (--sc->sc_refcnt >= 0) {
+			struct wscons_event event;
+
 			/* Wake everyone by generating a dummy event. */
-			if (++evar->put >= WSEVENT_QSIZE)
-				evar->put = 0;
-			WSEVENT_WAKEUP(evar);
+			event.type = 0;
+			event.value = 0;
+			if (wsevent_inject(evar, &event, 1) != 0)
+				wsevent_wakeup(evar);
+
 			/* Wait for processes to go away. */
 			if (tsleep(sc, PZERO, "wskdet", hz * 60))
 				printf("wskbd_detach: %s didn't detach\n",
@@ -592,7 +597,7 @@ wskbd_detach(struct device  *self, int flags)
 	maj = cdevsw_lookup_major(&wskbd_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	return (0);
@@ -667,8 +672,7 @@ static void
 wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value)
 {
 	struct wseventvar *evar;
-	struct wscons_event *ev;
-	int put;
+	struct wscons_event event;
 
 	evar = sc->sc_base.me_evp;
 
@@ -684,19 +688,11 @@ wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value)
 	}
 #endif
 	
-	put = evar->put;
-	ev = &evar->q[put];
-	put = (put + 1) % WSEVENT_QSIZE;
-	if (put == evar->get) {
+	event.type = type;
+	event.value = value;
+	if (wsevent_inject(evar, &event, 1) != 0)
 		log(LOG_WARNING, "%s: event queue overflow\n",
 		    sc->sc_base.me_dv.dv_xname);
-		return;
-	}
-	ev->type = type;
-	ev->value = value;
-	nanotime(&ev->time);
-	evar->put = put;
-	WSEVENT_WAKEUP(evar);
 }
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
@@ -798,8 +794,8 @@ wskbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 		return (ENXIO);
 
 #if NWSMUX > 0
-	DPRINTF(("wskbdopen: %s mux=%p p=%p\n", sc->sc_base.me_dv.dv_xname,
-		 sc->sc_base.me_parent, p));
+	DPRINTF(("wskbdopen: %s mux=%p l=%p\n", sc->sc_base.me_dv.dv_xname,
+		 sc->sc_base.me_parent, l));
 #endif
 
 	if (sc->sc_dying)
@@ -821,8 +817,7 @@ wskbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 		return (EBUSY);
 
 	evar = &sc->sc_base.me_evar;
-	wsevent_init(evar);
-	evar->io = l->l_proc;
+	wsevent_init(evar, l->l_proc);
 
 	error = wskbd_do_open(sc, evar);
 	if (error) {
@@ -1027,7 +1022,8 @@ getbell:
 		return (0);
 
 	case WSKBDIO_SETDEFAULTBELL:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if (p && (error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (error);
 		kbdp = &wskbd_default_bell_data;
 		goto setbell;
@@ -1065,7 +1061,8 @@ getkeyrepeat:
 		return (0);
 
 	case WSKBDIO_SETDEFAULTKEYREPEAT:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (error);
 		kkdp = &wskbd_default_keyrepeat_data;
 		goto setkeyrepeat;
@@ -1334,7 +1331,7 @@ wskbd_cngetc(dev_t dev)
 				 * to deliver pure ASCII it is in a state that
 				 * it can not track press/release events
 				 * reliable - so we clear all previously
-				 * accuulated modifier state.
+				 * accumulated modifier state.
 				 */
 				wskbd_console_data.t_modifiers = 0;
 				return(data);

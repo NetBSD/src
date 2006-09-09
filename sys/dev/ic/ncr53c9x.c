@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.118 2005/12/24 23:41:33 perry Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.118.4.1 2006/09/09 02:50:02 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.118 2005/12/24 23:41:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.118.4.1 2006/09/09 02:50:02 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,7 +301,7 @@ ncr53c9x_attach(sc)
 	}
 
 	/* Reset state & bus */
-	sc->sc_cfflags = sc->sc_dev.dv_cfdata->cf_flags;
+	sc->sc_cfflags = device_cfdata(&sc->sc_dev)->cf_flags;
 	sc->sc_state = 0;
 	ncr53c9x_init(sc, 1);
 
@@ -1110,7 +1110,7 @@ ncr53c9x_sched(sc)
 			if (lun < NCR_NLUN)
 				ti->lun[lun] = li;
 		}
-		li->last_used = time.tv_sec;
+		li->last_used = time_second;
 		if (tag == 0) {
 			/* Try to issue this as an un-tagged command */
 			if (li->untagged == NULL)
@@ -2948,7 +2948,7 @@ ncr53c9x_watch(arg)
 	struct ncr53c9x_linfo *li;
 	int t, s;
 	/* Delete any structures that have not been used in 10min. */
-	time_t old = time.tv_sec - (10 * 60);
+	time_t old = time_second - (10 * 60);
 
 	s = splbio();
 	simple_lock(&sc->sc_lock);

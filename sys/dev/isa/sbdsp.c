@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.118 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.118.4.1 2006/09/09 02:51:26 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.118 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.118.4.1 2006/09/09 02:51:26 rpaulo Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -150,12 +150,12 @@ struct {
  *
  *				SBPRO			SB20
  *				-----			--------
- * input ls min			4	KHz		4	KHz
- * input ls max			23	KHz		13	KHz
- * input hs max			44.1	KHz		15	KHz
- * output ls min		4	KHz		4	KHz
- * output ls max		23	KHz		23	KHz
- * output hs max		44.1	KHz		44.1	KHz
+ * input ls min			4	kHz		4	kHz
+ * input ls max			23	kHz		13	kHz
+ * input hs max			44.1	kHz		15	kHz
+ * output ls min		4	kHz		4	kHz
+ * output ls max		23	kHz		23	kHz
+ * output hs max		44.1	kHz		44.1	kHz
  */
 /* XXX Should we round the tc?
 #define SB_RATE_TO_TC(x) (((65536 - 256 * 1000000 / (x)) + 128) >> 8)
@@ -173,13 +173,13 @@ struct sbmode {
 	u_char	cmdchan;
 };
 static struct sbmode sbpmodes[] = {
- { SB_1,   1, 8, 4000,22727,SB_DSP_WDMA     ,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_20,  1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_2x,  1, 8,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_2x,  1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_PRO, 1, 8,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_PRO, 1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_PRO, 2, 8,11025,22727,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_1,   1, 8, 4000,22727,SB_DSP_WDMA     ,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_20,  1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_2x,  1, 8,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_2x,  1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_PRO, 1, 8,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_PRO, 1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_PRO, 2, 8,11025,22727,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
  /* Yes, we write the record mode to set 16-bit playback mode. weird, huh? */
  { SB_JAZZ,1, 8,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
  { SB_JAZZ,1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
@@ -187,18 +187,18 @@ static struct sbmode sbpmodes[] = {
  { SB_JAZZ,1,16,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_MONO },
  { SB_JAZZ,1,16, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_MONO },
  { SB_JAZZ,2,16,11025,22727,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_STEREO },
- { SB_16,  1, 8, 5000,49000,SB_DSP16_WDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_16,  2, 8, 5000,49000,SB_DSP16_WDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_16,  1, 8, 5000,49000,SB_DSP16_WDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_16,  2, 8, 5000,49000,SB_DSP16_WDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
 #define PLAY16 15 /* must be the index of the next entry in the table */
- { SB_16,  1,16, 5000,49000,SB_DSP16_WDMA_16,SB_DSP16_HALT,SB_DSP16_CONT},
- { SB_16,  2,16, 5000,49000,SB_DSP16_WDMA_16,SB_DSP16_HALT,SB_DSP16_CONT},
- { -1 }
+ { SB_16,  1,16, 5000,49000,SB_DSP16_WDMA_16,SB_DSP16_HALT,SB_DSP16_CONT, 0, },
+ { SB_16,  2,16, 5000,49000,SB_DSP16_WDMA_16,SB_DSP16_HALT,SB_DSP16_CONT, 0, },
+ { .model = -1 }
 };
 static struct sbmode sbrmodes[] = {
- { SB_1,   1, 8, 4000,12987,SB_DSP_RDMA     ,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_20,  1, 8, 4000,12987,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_2x,  1, 8,12987,14925,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_2x,  1, 8, 4000,12987,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_1,   1, 8, 4000,12987,SB_DSP_RDMA     ,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_20,  1, 8, 4000,12987,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_2x,  1, 8,12987,14925,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_2x,  1, 8, 4000,12987,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
  { SB_PRO, 1, 8,22727,45454,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
  { SB_PRO, 1, 8, 4000,22727,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
  { SB_PRO, 2, 8,11025,22727,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_STEREO },
@@ -208,11 +208,11 @@ static struct sbmode sbrmodes[] = {
  { SB_JAZZ,1,16,22727,45454,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_MONO },
  { SB_JAZZ,1,16, 4000,22727,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_MONO },
  { SB_JAZZ,2,16,11025,22727,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_STEREO },
- { SB_16,  1, 8, 5000,49000,SB_DSP16_RDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_16,  2, 8, 5000,49000,SB_DSP16_RDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_16,  1,16, 5000,49000,SB_DSP16_RDMA_16,SB_DSP16_HALT,SB_DSP16_CONT},
- { SB_16,  2,16, 5000,49000,SB_DSP16_RDMA_16,SB_DSP16_HALT,SB_DSP16_CONT},
- { -1 }
+ { SB_16,  1, 8, 5000,49000,SB_DSP16_RDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_16,  2, 8, 5000,49000,SB_DSP16_RDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_16,  1,16, 5000,49000,SB_DSP16_RDMA_16,SB_DSP16_HALT,SB_DSP16_CONT, 0, },
+ { SB_16,  2,16, 5000,49000,SB_DSP16_RDMA_16,SB_DSP16_HALT,SB_DSP16_CONT, 0, },
+ { .model = -1 }
 };
 
 void	sbversion(struct sbdsp_softc *);
@@ -275,7 +275,7 @@ sbdsp_probe(struct sbdsp_softc *sc)
 		return 0;
 	}
 	/* if flags set, go and probe the jazz16 stuff */
-	if (sc->sc_dev.dv_cfdata->cf_flags & 1)
+	if (device_cfdata(&sc->sc_dev)->cf_flags & 1)
 		sbdsp_jazz16_probe(sc);
 	else
 		sbversion(sc);
@@ -344,8 +344,9 @@ sbdsp_jazz16_probe(struct sbdsp_softc *sc)
 	/* XXX set both 8 & 16-bit drq to same channel, it works fine. */
 	sc->sc_drq16 = sc->sc_drq8;
 	if (sbdsp_wdsp(sc, JAZZ16_SET_DMAINTR) ||
+	    (sc->sc_drq16 >= 0 &&
 	    sbdsp_wdsp(sc, (jazz16_drq_conf[sc->sc_drq16] << 4) |
-		jazz16_drq_conf[sc->sc_drq8]) ||
+		jazz16_drq_conf[sc->sc_drq8])) ||
 	    sbdsp_wdsp(sc, jazz16_irq_conf[sc->sc_irq])) {
 		DPRINTF(("sbdsp: can't write jazz16 probe stuff\n"));
 	} else {

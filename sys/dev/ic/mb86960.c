@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.62 2005/12/24 23:41:33 perry Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.62.4.1 2006/09/09 02:50:02 rpaulo Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.62 2005/12/24 23:41:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.62.4.1 2006/09/09 02:50:02 rpaulo Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.62 2005/12/24 23:41:33 perry Exp $");
  */
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -78,10 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.62 2005/12/24 23:41:33 perry Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -189,7 +184,7 @@ mb86960_attach(struct mb86960_softc *sc, uint8_t *myea)
 void
 mb86960_config(struct mb86960_softc *sc, int *media, int nmedia, int defmedia)
 {
-	struct cfdata *cf = sc->sc_dev.dv_cfdata;
+	struct cfdata *cf = device_cfdata(&sc->sc_dev);
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int i;
 
@@ -1095,7 +1090,7 @@ mb86960_intr(void *arg)
 	uint8_t tstat, rstat;
 
 	if ((sc->sc_stat & FE_STAT_ENABLED) == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	    !device_is_active(&sc->sc_dev))
 		return (0);
 
 #if FE_DEBUG >= 4
@@ -1201,23 +1196,6 @@ mb86960_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			mb86960_init(sc);
 			arp_ifinit(ifp, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else {
-				memcpy(LLADDR(ifp->if_sadl),
-				    ina->x_host.c_host, ETHER_ADDR_LEN);
-			}
-			/* Set new address. */
-			mb86960_init(sc);
-			break;
-		    }
 #endif
 		default:
 			mb86960_init(sc);

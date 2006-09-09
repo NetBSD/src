@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.41 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: eso.c,v 1.41.4.1 2006/09/09 02:52:16 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.41 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.41.4.1 2006/09/09 02:52:16 rpaulo Exp $");
 
 #include "mpu.h"
 
@@ -154,6 +154,7 @@ static const struct audio_hw_if eso_hw_if = {
 	eso_trigger_output,
 	eso_trigger_input,
 	NULL,			/* dev_ioctl */
+	NULL,			/* powerstate */
 };
 
 static const char * const eso_rev2model[] = {
@@ -749,7 +750,10 @@ eso_set_params(void *hdl, int setmode, int usemode, audio_params_t *play,
 		r[1] = ESO_CLK1 /
 		    (128 - (rd[1] = 128 - ESO_CLK1 / p->sample_rate));
 
-		clk = ABS(p->sample_rate - r[0]) > ABS(p->sample_rate - r[1]);
+		if (r[0] > r[1])
+			clk = p->sample_rate - r[1];
+		else
+			clk = p->sample_rate - r[0];
 		srg = rd[clk] | (clk == 1 ? ESO_CLK1_SELECT : 0x00);
 
 		/* Roll-off frequency of 87%, as in the ES1888 driver. */
@@ -1151,8 +1155,7 @@ eso_get_port(void *hdl, mixer_ctrl_t *cp)
 
 	case ESO_MASTER_MUTE:
 		/* Reload from mixer after hardware volume control use. */
-		if (sc->sc_gain[cp->dev][ESO_LEFT] == (uint8_t)~0)
-			eso_reload_master_vol(sc);
+		eso_reload_master_vol(sc);
 		cp->un.ord = sc->sc_mvmute;
 		break;
 

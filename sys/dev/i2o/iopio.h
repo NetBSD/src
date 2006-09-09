@@ -1,4 +1,4 @@
-/*	$NetBSD: iopio.h,v 1.2 2001/09/27 18:43:38 ad Exp $	*/
+/*	$NetBSD: iopio.h,v 1.2.50.1 2006/09/09 02:50:00 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.

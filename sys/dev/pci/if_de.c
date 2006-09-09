@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.118 2005/12/24 23:41:34 perry Exp $	*/
+/*	$NetBSD: if_de.c,v 1.118.4.1 2006/09/09 02:52:16 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,13 +37,12 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.118 2005/12/24 23:41:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.118.4.1 2006/09/09 02:52:16 rpaulo Exp $");
 
 #define	TULIP_HDR_DATA
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
-#include "opt_ns.h"
 #endif
 
 #include <sys/param.h>
@@ -97,10 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.118 2005/12/24 23:41:34 perry Exp $");
 #include <netinet/ip.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if defined(__NetBSD__)
 #include <uvm/uvm_extern.h>
@@ -147,6 +142,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.118 2005/12/24 23:41:34 perry Exp $");
 #include <machine/intr.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 #include <dev/ic/dc21040reg.h>
 #define	DEVAR_INCLUDE	"dev/pci/if_devar.h"
 #endif /* __NetBSD__ */
@@ -4769,26 +4765,6 @@ tulip_ifioctl(
 		}
 #endif /* INET */
 
-#ifdef NS
-		/*
-		 * This magic copied from if_is.c; I don't use XNS,
-		 * so I have no way of telling if this actually
-		 * works or not.
-		 */
-		case AF_NS: {
-		    struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-		    if (ns_nullhost(*ina)) {
-			ina->x_host = *(union ns_host *)(sc->tulip_enaddr);
-		    } else {
-			ifp->if_flags &= ~IFF_RUNNING;
-			memcpy((caddr_t)sc->tulip_enaddr,
-			    (caddr_t)ina->x_host.c_host,
-			    sizeof(sc->tulip_enaddr));
-		    }
-		    tulip_init(sc);
-		    break;
-		}
-#endif /* NS */
 
 		default: {
 		    tulip_init(sc);
@@ -5436,6 +5412,7 @@ tulip_pci_match(
     id = pci_inl(pa, PCI_VENDOR_ID);
     if (PCI_VENDORID(id) != DEC_VENDORID)
 	return 0;
+
     id = PCI_CHIPID(id);
     if (id != CHIPID_21040 && id != CHIPID_21041
 	    && id != CHIPID_21140 && id != CHIPID_21142)
@@ -5578,6 +5555,10 @@ tulip_pci_probe(
 {
     struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
+    /* Don't match lmc cards */
+    if (PCI_VENDOR(pci_conf_read(pa->pa_pc, pa->pa_tag,
+	PCI_SUBSYS_ID_REG)) == PCI_VENDOR_LMC)
+	return 0;
     if (PCI_VENDORID(pa->pa_id) != DEC_VENDORID)
 	return 0;
     if (PCI_CHIPID(pa->pa_id) == CHIPID_21040

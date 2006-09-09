@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.108 2006/01/17 12:30:00 xtraeme Exp $ */
+/*	$NetBSD: ehci.c,v 1.108.2.1 2006/09/09 02:55:33 rpaulo Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.108 2006/01/17 12:30:00 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.108.2.1 2006/09/09 02:55:33 rpaulo Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1635,7 +1635,8 @@ Static usb_hub_descriptor_t ehci_hubd = {
 	{0,0},
 	0,
 	0,
-	{0},
+	{""},
+	{""},
 };
 
 Static int
@@ -1723,6 +1724,8 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
 		DPRINTFN(8,("ehci_root_ctrl_start: wValue=0x%04x\n", value));
+		if (len == 0)
+			break;
 		switch(value >> 8) {
 		case UDESC_DEVICE:
 			if ((value & 0xff) != 0) {
@@ -1771,8 +1774,6 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			memcpy(buf, &ehci_endpd, l);
 			break;
 		case UDESC_STRING:
-			if (len == 0)
-				break;
 			*(u_int8_t *)buf = 0;
 			totlen = 1;
 			switch (value & 0xff) {
@@ -1907,6 +1908,8 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 #endif
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
+		if (len == 0)
+			break;
 		if ((value & 0xff) != 0) {
 			err = USBD_IOERROR;
 			goto ret;
@@ -2342,8 +2345,8 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		len -= curlen;
 
 		/*
-		 * Allocate another transfer if there's more data left, 
-		 * or if force last short transfer flag is set and we're 
+		 * Allocate another transfer if there's more data left,
+		 * or if force last short transfer flag is set and we're
 		 * allocating a multiple of the max packet size.
 		 */
 		if (len != 0 ||
@@ -2358,7 +2361,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 			nextphys = EHCI_NULL;
 		}
 
-		for (i = 0; i * EHCI_PAGE_SIZE < 
+		for (i = 0; i * EHCI_PAGE_SIZE <
 		            curlen + EHCI_PAGE_OFFSET(dataphys); i++) {
 			ehci_physaddr_t a = dataphys + i * EHCI_PAGE_SIZE;
 			if (i != 0) /* use offset only in first buffer */

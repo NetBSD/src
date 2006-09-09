@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.8 2005/11/28 13:31:09 augustss Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.8.4.1 2006/09/09 02:55:33 rpaulo Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,10 +44,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.8 2005/11/28 13:31:09 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.8.4.1 2006/09/09 02:55:33 rpaulo Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -77,10 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.8 2005/11/28 13:31:09 augustss Exp $")
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
-#endif
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <dev/mii/mii.h>
@@ -265,7 +260,7 @@ USB_ATTACH(udav)
 	/* Print Ethernet Address */
 	printf("%s: Ethernet address %s\n", devname, ether_sprintf(eaddr));
 
-	/* initialize interface infomation */
+	/* initialize interface information */
 	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
@@ -1150,7 +1145,8 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	/* first byte in received data */
 	pktstat = mtod(m, u_int8_t *);
 	m_adj(m, sizeof(u_int8_t));
-	DPRINTF(("%s: RX Status: 0x%02x\n", *pktstat));
+	DPRINTF(("%s: RX Status: 0x%02x\n", USBDEVNAME(sc->sc_dev),
+				*pktstat));
 
 	total_len = UGETW(mtod(m, u_int8_t *));
 	m_adj(m, sizeof(u_int16_t));

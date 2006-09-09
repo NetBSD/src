@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.24 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.24.4.1 2006/09/09 02:52:15 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.24 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.24.4.1 2006/09/09 02:52:15 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.24 2005/12/11 12:22:48 christos Exp $")
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/tty.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 
@@ -105,7 +106,7 @@ ofcons_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct ofcons_softc *sc = (struct ofcons_softc *) self;
+	struct ofcons_softc *sc = device_private(self);
 
 	printf("\n");
 
@@ -146,7 +147,8 @@ ofcons_open(dev, flag, mode, l)
 		ofcons_param(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if ((tp->t_state&TS_XCLUDE) &&
-	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag))
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag))
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 

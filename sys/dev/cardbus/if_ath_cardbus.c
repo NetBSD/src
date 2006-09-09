@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.8 2005/12/11 12:21:15 christos Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.8.4.1 2006/09/09 02:49:44 rpaulo Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,10 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.8 2005/12/11 12:21:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.8.4.1 2006/09/09 02:49:44 rpaulo Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -71,10 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.8 2005/12/11 12:21:15 christos 
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -84,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.8 2005/12/11 12:21:15 christos 
 
 #include <dev/ic/ath_netbsd.h>
 #include <dev/ic/athvar.h>
-#include <contrib/dev/ic/athhal.h>
+#include <contrib/dev/ath/ah.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -110,11 +105,15 @@ struct ath_cardbus_softc {
 	pcireg_t sc_bar_val;		/* value of the BAR */
 
 	int	sc_intrline;		/* interrupt line */
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+	void	*sc_sdhook;
 };
 
 int	ath_cardbus_match(struct device *, struct cfdata *, void *);
 void	ath_cardbus_attach(struct device *, struct device *, void *);
 int	ath_cardbus_detach(struct device *, int);
+void	ath_cardbus_shutdown(void *arg);
 
 CFATTACH_DECL(ath_cardbus, sizeof(struct ath_cardbus_softc),
     ath_cardbus_match, ath_cardbus_attach, ath_cardbus_detach, ath_activate);
@@ -145,7 +144,7 @@ void
 ath_cardbus_attach(struct device *parent, struct device *self,
 	void *aux)
 {
-	struct ath_cardbus_softc *csc = (void *)self;
+	struct ath_cardbus_softc *csc = device_private(self);
 	struct ath_softc *sc = &csc->sc_ath;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
@@ -164,11 +163,17 @@ ath_cardbus_attach(struct device *parent, struct device *self,
 	sc->sc_disable = ath_cardbus_disable;
 	sc->sc_power = ath_cardbus_power;
 
+	csc->sc_sdhook = shutdownhook_establish(ath_cardbus_shutdown, csc);
+	if (csc->sc_sdhook == NULL) {
+		aprint_error("couldn't establish shutdown hook\n");
+		return;
+	}
+
 	/*
 	 * Map the device.
 	 */
 	if (Cardbus_mapreg_map(ct, ATH_PCI_MMBA, CARDBUS_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_st, &sc->sc_sh, &adr, &csc->sc_mapsize) == 0) {
+	    &csc->sc_iot, &csc->sc_ioh, &adr, &csc->sc_mapsize) == 0) {
 #if rbus
 #else
 		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
@@ -179,8 +184,12 @@ ath_cardbus_attach(struct device *parent, struct device *self,
 	else {
 		printf("%s: unable to map device registers\n",
 		    sc->sc_dev.dv_xname);
+		shutdownhook_disestablish(csc->sc_sdhook);
 		return;
 	}
+
+	sc->sc_st = HALTAG(csc->sc_iot);
+	sc->sc_sh = HALHANDLE(csc->sc_ioh);
 
 	/*
 	 * Set up the PCI configuration registers.
@@ -195,16 +204,18 @@ ath_cardbus_attach(struct device *parent, struct device *self,
 	 */
 	ath_attach(PCI_PRODUCT(ca->ca_id), sc);
 
+#ifdef ath_powerdown
 	/*
 	 * Power down the socket.
 	 */
 	Cardbus_function_disable(csc->sc_ct);
+#endif /* ath_powerdown */
 }
 
 int
 ath_cardbus_detach(struct device *self, int flags)
 {
-	struct ath_cardbus_softc *csc = (void *)self;
+	struct ath_cardbus_softc *csc = device_private(self);
 	struct ath_softc *sc = &csc->sc_ath;
 	struct cardbus_devfunc *ct = csc->sc_ct;
 	int rv;
@@ -213,6 +224,8 @@ ath_cardbus_detach(struct device *self, int flags)
 	if (ct == NULL)
 		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
 #endif
+
+	shutdownhook_disestablish(csc->sc_sdhook);
 
 	rv = ath_detach(sc);
 	if (rv)
@@ -228,10 +241,20 @@ ath_cardbus_detach(struct device *self, int flags)
 	/*
 	 * Release bus space and close window.
 	 */
-	Cardbus_mapreg_unmap(ct, ATH_PCI_MMBA,
-		    sc->sc_st, sc->sc_sh, csc->sc_mapsize);
+	Cardbus_mapreg_unmap(ct, ATH_PCI_MMBA, csc->sc_iot, csc->sc_ioh,
+	    csc->sc_mapsize);
 
 	return (0);
+}
+
+void
+ath_cardbus_shutdown(void *arg)
+{
+	struct ath_cardbus_softc *csc;
+
+	csc = arg;
+
+	ath_shutdown(&csc->sc_ath);
 }
 
 int
@@ -281,8 +304,10 @@ ath_cardbus_disable(struct ath_softc *sc)
 	cardbus_intr_disestablish(cc, cf, csc->sc_ih);
 	csc->sc_ih = NULL;
 
+#ifdef ath_powerdown
 	/* Power down the socket. */
 	Cardbus_function_disable(ct);
+#endif /* ath_powerdown */
 }
 
 void

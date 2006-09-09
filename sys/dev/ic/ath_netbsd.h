@@ -1,3 +1,5 @@
+/*	$NetBSD: ath_netbsd.h,v 1.4.12.1 2006/09/09 02:50:01 rpaulo Exp $ */
+
 /*-
  * Copyright (c) 2003, 2004 David Young
  * All rights reserved.

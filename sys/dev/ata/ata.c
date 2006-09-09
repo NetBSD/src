@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.73 2006/01/22 16:40:56 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.73.2.1 2006/09/09 02:49:44 rpaulo Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.73 2006/01/22 16:40:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.73.2.1 2006/09/09 02:49:44 rpaulo Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -52,8 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.73 2006/01/22 16:40:56 bouyer Exp $");
 #include <machine/intr.h>
 #include <machine/bus.h>
 
+#include <dev/ata/ataconf.h>
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
+#include <dev/ic/wdcvar.h>	/* for PIOBM */
 
 #include "locators.h"
 
@@ -100,7 +102,7 @@ dev_type_ioctl(atabusioctl);
 
 const struct cdevsw atabus_cdevsw = {
 	atabusopen, atabusclose, noread, nowrite, atabusioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 extern struct cfdriver atabus_cd;
@@ -853,6 +855,17 @@ ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 		return;
 	}
 
+#if NATA_PIOBM		/* XXX wdc dependent code */
+	if (xfer->c_flags & C_PIOBM) {
+		struct wdc_softc *wdc = CHAN_TO_WDC(chp);
+
+		/* finish the busmastering PIO */
+		(*wdc->piobm_done)(wdc->dma_arg,
+		    chp->ch_channel, xfer->c_drive);
+		chp->ch_flags &= ~(ATACH_DMA_WAIT | ATACH_PIOBM_WAIT | ATACH_IRQ_WAIT);
+	}
+#endif
+
 	if (atac->atac_free_hw)
 		(*atac->atac_free_hw)(chp);
 	s = splbio();
@@ -1015,7 +1028,12 @@ ata_print_modes(struct ata_channel *chp)
 			else if (drvp->UDMA_mode == 6)
 				aprint_normal(" (Ultra/133)");
 		}
-		if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA))
+		if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA))
+#if NATA_PIOBM
+		    /* PIOBM capable controllers use DMA for PIO commands */
+		    || (atac->atac_cap & ATAC_CAP_PIOBM)
+#endif
+		    )
 			aprint_normal(" (using DMA)");
 		aprint_normal("\n");
 	}
@@ -1033,7 +1051,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
 	struct device *drv_dev = drvp->drv_softc;
-	int cf_flags = drv_dev->dv_cfdata->cf_flags;
+	int cf_flags = device_cfdata(drv_dev)->cf_flags;
 
 	/* if drive or controller don't know its mode, we can't do much */
 	if ((drvp->drive_flags & DRIVE_MODE) == 0 ||
@@ -1274,7 +1292,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		else if (drvp->PIO_cap > 2)
 			drvp->ata_vers = 2; /* should be at last ATA-2 */
 	}
-	cf_flags = drv_dev->dv_cfdata->cf_flags;
+	cf_flags = device_cfdata(drv_dev)->cf_flags;
 	if (cf_flags & ATA_CONFIG_PIO_SET) {
 		s = splbio();
 		drvp->PIO_mode =
