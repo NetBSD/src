@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.24 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: mly.c,v 1.24.4.1 2006/09/09 02:52:18 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.24 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.24.4.1 2006/09/09 02:52:18 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,17 +172,17 @@ dev_type_ioctl(mlyioctl);
 
 const struct cdevsw mly_cdevsw = {
 	mlyopen, mlyclose, noread, nowrite, mlyioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
-struct mly_ident {
+static struct mly_ident {
 	u_short	vendor;
 	u_short	product;
 	u_short	subvendor;
 	u_short	subproduct;
 	int	hwif;
 	const char	*desc;
-} static const mly_ident[] = {
+} const mly_ident[] = {
 	{
 		PCI_VENDOR_MYLEX,
 		PCI_PRODUCT_MYLEX_EXTREMERAID,
@@ -984,7 +984,8 @@ mly_ioctl(struct mly_softc *mly, struct mly_cmd_ioctl *ioctl, void **data,
  bad:
 	if (mc != NULL) {
 		/* Do we need to free a data buffer we allocated? */
-		if (rv != 0 && mc->mc_data != NULL && *data == NULL)
+		if (rv != 0 && mc->mc_data != NULL &&
+		    (data == NULL || *data == NULL))
 			free(mc->mc_data, M_DEVBUF);
 		mly_ccb_free(mly, mc);
 	}
@@ -2309,14 +2310,14 @@ mlyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	struct mly_softc *mly;
 	int rv;
 
-	if (securelevel >= 2)
-		return (EPERM);
-
 	mly = device_lookup(&mly_cd, minor(dev));
 
 	switch (cmd) {
 	case MLYIO_COMMAND:
-		rv = mly_user_command(mly, (void *)data);
+		if (securelevel >= 2)
+			rv = EPERM;
+		else
+			rv = mly_user_command(mly, (void *)data);
 		break;
 	case MLYIO_HEALTH:
 		rv = mly_user_health(mly, (void *)data);
@@ -2416,8 +2417,7 @@ mly_user_command(struct mly_softc *mly, struct mly_user_command *uc)
  		mly_ccb_unmap(mly, mc);
 	if (mc->mc_data != NULL)
 		free(mc->mc_data, M_DEVBUF);
-	if (mc != NULL)
-		mly_ccb_free(mly, mc);
+	mly_ccb_free(mly, mc);
 
 	return (rv);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.66 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.66.4.1 2006/09/09 02:51:26 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,10 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.66 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.66.4.1 2006/09/09 02:51:26 rpaulo Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -74,10 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.66 2005/12/11 12:22:02 christos Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -304,7 +299,6 @@ egreadPCB(iot, ioh, pcb)
 	if (egreadPCBstat(iot, ioh, EG_PCB_DONE))
 		return 1;
 	if (bus_space_read_1(iot, ioh, EG_COMMAND) != pcb[1] + 2) {
-		DPRINTF(("%d != %d\n", b, pcb[1] + 2));
 		return 1;
 	}
 
@@ -874,22 +868,6 @@ egioctl(ifp, cmd, data)
 			eginit(sc);
 			arp_ifinit(ifp, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				   *(union ns_host *)LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
-				    ETHER_ADDR_LEN);
-			/* Set new address. */
-			eginit(sc);
-			break;
-		    }
 #endif
 		default:
 			eginit(sc);

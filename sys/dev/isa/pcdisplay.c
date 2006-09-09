@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.28 2005/12/11 12:22:03 christos Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.28.4.1 2006/09/09 02:51:26 rpaulo Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.28 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.28.4.1 2006/09/09 02:51:26 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,14 +93,16 @@ const struct wsdisplay_emulops pcdisplay_emulops = {
 	pcdisplay_erasecols,
 	pcdisplay_copyrows,
 	pcdisplay_eraserows,
-	pcdisplay_allocattr
+	pcdisplay_allocattr,
+	NULL,	/* replaceattr */
 };
 
 const struct wsscreen_descr pcdisplay_scr = {
 	"80x25", 80, 25,
 	&pcdisplay_emulops,
 	0, 0, /* no font support */
-	WSSCREEN_REVERSE /* that's minimal... */
+	WSSCREEN_REVERSE, /* that's minimal... */
+	NULL, /* modecookie */
 };
 
 const struct wsscreen_descr *_pcdisplay_scrlist[] = {
@@ -112,8 +114,8 @@ const struct wsscreen_list pcdisplay_screenlist = {
 	_pcdisplay_scrlist
 };
 
-static int pcdisplay_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t pcdisplay_mmap(void *, off_t, int);
+static int pcdisplay_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t pcdisplay_mmap(void *, void *, off_t, int);
 static int pcdisplay_alloc_screen(void *, const struct wsscreen_descr *,
 				       void **, int *, int *, long *);
 static void pcdisplay_free_screen(void *, void *);
@@ -126,7 +128,9 @@ const struct wsdisplay_accessops pcdisplay_accessops = {
 	pcdisplay_alloc_screen,
 	pcdisplay_free_screen,
 	pcdisplay_show_screen,
-	0 /* load_font */
+	NULL, /* load_font */
+	NULL, /* pollc */
+	NULL, /* scroll */
 };
 
 static int
@@ -375,8 +379,9 @@ pcdisplay_is_console(iot)
 }
 
 static int
-pcdisplay_ioctl(v, cmd, data, flag, l)
+pcdisplay_ioctl(v, vs, cmd, data, flag, l)
 	void *v;
+	void *vs;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -389,8 +394,9 @@ pcdisplay_ioctl(v, cmd, data, flag, l)
 }
 
 static paddr_t
-pcdisplay_mmap(v, offset, prot)
+pcdisplay_mmap(v, vs, offset, prot)
 	void *v;
+	void *vs;
 	off_t offset;
 	int prot;
 {

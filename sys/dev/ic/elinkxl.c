@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.86 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.86.4.1 2006/09/09 02:50:02 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.86 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.86.4.1 2006/09/09 02:50:02 rpaulo Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1184,7 +1184,7 @@ ex_intr(arg)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	    !device_is_active(&sc->sc_dev))
 		return (0);
 
 	for (;;) {
@@ -1455,18 +1455,18 @@ ex_getstats(sc)
 	 * Upper byte counters are latched from reading the totals, so
 	 * they don't need to be read if we don't need their values.
 	 */
-	bus_space_read_2(iot, ioh, RX_TOTAL_OK);
-	bus_space_read_2(iot, ioh, TX_TOTAL_OK);
+	(void)bus_space_read_2(iot, ioh, RX_TOTAL_OK);
+	(void)bus_space_read_2(iot, ioh, TX_TOTAL_OK);
 
 	/*
 	 * Clear the following to avoid stats overflow interrupts
 	 */
-	bus_space_read_1(iot, ioh, TX_DEFERRALS);
-	bus_space_read_1(iot, ioh, TX_AFTER_1_COLLISION);
-	bus_space_read_1(iot, ioh, TX_NO_SQE);
-	bus_space_read_1(iot, ioh, TX_CD_LOST);
+	(void)bus_space_read_1(iot, ioh, TX_DEFERRALS);
+	(void)bus_space_read_1(iot, ioh, TX_AFTER_1_COLLISION);
+	(void)bus_space_read_1(iot, ioh, TX_NO_SQE);
+	(void)bus_space_read_1(iot, ioh, TX_CD_LOST);
 	GO_WINDOW(4);
-	bus_space_read_1(iot, ioh, ELINK_W4_BADSSD);
+	(void)bus_space_read_1(iot, ioh, ELINK_W4_BADSSD);
 	GO_WINDOW(1);
 }
 
@@ -1493,7 +1493,7 @@ ex_tick(arg)
 	struct ex_softc *sc = arg;
 	int s;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return;
 
 	s = splnet();

@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.4 2005/12/11 12:21:22 christos Exp $ */
+/*	$NetBSD: apmdev.c,v 1.4.4.1 2006/09/09 02:49:51 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.4 2005/12/11 12:21:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.4.4.1 2006/09/09 02:49:51 rpaulo Exp $");
 
 #include "opt_apmdev.h"
 
@@ -385,7 +385,7 @@ apm_resume(struct apm_softc *sc, u_int event_type, u_int event_info)
 	initrtclock();
 */
 
-	inittodr(time.tv_sec);
+	inittodr(time_second);
 	dopowerhooks(PWR_RESUME);
 
 	splx(apm_spl);
@@ -884,6 +884,7 @@ apmdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		}
 		break;
 
+	case OAPM_IOC_GETPOWER:
 	case APM_IOC_GETPOWER:
 		powerp = (struct apm_power_info *)data;
 		if ((error = sc->ops->get_powstat(sc->cookie, powerp)) != 0) {

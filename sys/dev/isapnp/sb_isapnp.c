@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.44 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.44.4.1 2006/09/09 02:51:56 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_isapnp.c,v 1.44 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_isapnp.c,v 1.44.4.1 2006/09/09 02:51:56 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ sb_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	struct sbdsp_softc *sc;
 	struct isapnp_attach_args *ipa;
 
-	sc = (struct sbdsp_softc *)self;
+	sc = device_private(self);
 	ipa = aux;
 	printf("\n");
 
@@ -135,8 +135,20 @@ sb_isapnp_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_drq16 = -1;
 
 #if NMPU > 0
-	if (ipa->ipa_nio > 1) {
-		sc->sc_hasmpu = 1;
+	/*
+	 * Aztech 1020 doesn't store information about its mpu in io[1].
+	 * It has a separate pnpdev for the mpu.
+	 * The same is true for an AD1816 AOpen soundcard (ID ADS7180)
+	 * so it will be treated the same here. But it was not before,
+	 * which leads to the question: could there be other cards that
+	 * identify as ADS7180 but map the mpu differently? That would be
+	 * inconvenient....
+	 */
+	if (strcmp(ipa->ipa_devlogic, "AZT1016") == 0 ||
+	    strcmp(ipa->ipa_devlogic, "ADS7180") == 0)
+		sc->sc_hasmpu = SBMPU_NONE;
+	else if (ipa->ipa_nio > 1) {
+		sc->sc_hasmpu = SBMPU_EXTERNAL;
 		sc->sc_mpu_iot = ipa->ipa_iot;
 		sc->sc_mpu_ioh = ipa->ipa_io[1].h;
 	}

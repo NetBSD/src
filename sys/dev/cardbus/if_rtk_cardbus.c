@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.26 2005/12/11 12:21:15 christos Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.26.4.1 2006/09/09 02:49:44 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,10 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.26 2005/12/11 12:21:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.26.4.1 2006/09/09 02:49:44 rpaulo Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -61,10 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.26 2005/12/11 12:21:15 christos
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
-#endif
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #if NBPFILTER > 0
@@ -190,7 +185,7 @@ rtk_cardbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct rtk_cardbus_softc *csc = (struct rtk_cardbus_softc *)self;
+	struct rtk_cardbus_softc *csc = device_private(self);
 	struct rtk_softc *sc = &csc->sc_rtk;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
@@ -270,7 +265,7 @@ rtk_cardbus_detach(self, flags)
 	struct device *self;
 	int flags;
 {
-	struct rtk_cardbus_softc *csc = (void *) self;
+	struct rtk_cardbus_softc *csc = device_private(self);
 	struct rtk_softc *sc = &csc->sc_rtk;
 	struct cardbus_devfunc *ct = csc->sc_ct;
 	int	rv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.65 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: lpt.c,v 1.65.4.1 2006/09/09 02:50:02 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.65 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.65.4.1 2006/09/09 02:50:02 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ dev_type_ioctl(lptioctl);
 
 const struct cdevsw lpt_cdevsw = {
 	lptopen, lptclose, noread, lptwrite, lptioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 #define	LPTUNIT(s)	(minor(s) & 0x1f)

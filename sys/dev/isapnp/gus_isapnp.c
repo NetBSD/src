@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.25 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.25.4.1 2006/09/09 02:51:55 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.25 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.25.4.1 2006/09/09 02:51:55 rpaulo Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
@@ -105,6 +105,7 @@ static const struct audio_hw_if guspnp_hw_if = {
 	NULL,			/* trigger_output */
 	NULL,			/* trigger_input */
 	NULL,			/* dev_ioctl */
+	NULL,			/* powerstate */
 };
 
 CFATTACH_DECL(guspnp, sizeof(struct iw_softc),
@@ -145,7 +146,7 @@ gus_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	struct iw_softc *sc;
 	struct isapnp_attach_args *ipa;
 
-	sc = (struct iw_softc *)self;
+	sc = device_private(self);
 	ipa = aux;
 	printf("\n");
 

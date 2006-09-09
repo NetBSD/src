@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.h,v 1.9 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: cs428x.h,v 1.9.4.1 2006/09/09 02:52:16 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -60,6 +60,15 @@ struct cs428x_dma {
 #define BUFADDR(p)  ((void *)((p)->dum))  /* buffer for audio driver */
 
 /*
+ * Flags (currently used only for CS4280)
+ */
+enum cs428x_flags {
+	CS428X_FLAG_NONE	= 0x0,
+	CS428X_FLAG_INVAC97EAMP	= 0x1,	/* inverted AC97 external amp */
+	CS428X_FLAG_CLKRUNHACK	= 0x2	/* needs CLKRUN hack */
+};
+
+/*
  * Software state
  */
 struct cs428x_softc {
@@ -118,8 +127,9 @@ struct cs428x_softc {
 
 	/*
 	 * XXX
-	 * Actually thease 2 variables are needed only for CS4280.
+	 * Actually these 3 variables are needed only for CS4280.
 	 */
+	enum cs428x_flags sc_flags;
 	uint32_t pctl;
 	uint32_t cctl;
 
@@ -130,6 +140,11 @@ struct cs428x_softc {
 	/* Power Management */
 	char	sc_suspend;
 	void   *sc_powerhook;		/* Power Hook */
+
+	/* CLKRUN hack (CS428X_FLAG_CLKRUN), only for CS4280 */
+	int sc_active;
+	bus_space_tag_t    sc_pm_iot;
+	bus_space_handle_t sc_pm_ioh;
 };
 
 

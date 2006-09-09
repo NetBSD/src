@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.61 2005/12/11 12:24:07 christos Exp $	*/
+/*	$NetBSD: xy.c,v 1.61.4.1 2006/09/09 02:55:52 rpaulo Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.61 2005/12/11 12:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.61.4.1 2006/09/09 02:55:52 rpaulo Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.61 2005/12/11 12:24:07 christos Exp $");
 #include <sys/syslog.h>
 #include <sys/dkbad.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -101,13 +102,14 @@ __KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.61 2005/12/11 12:24:07 christos Exp $");
  * XYC_GO: start iopb ADDR (DVMA addr in a u_long) on XYC
  */
 #define XYC_GO(XYC, ADDR) { \
-	(XYC)->xyc_addr_lo = ((ADDR) & 0xff); \
-	(ADDR) = ((ADDR) >> 8); \
-	(XYC)->xyc_addr_hi = ((ADDR) & 0xff); \
-	(ADDR) = ((ADDR) >> 8); \
-	(XYC)->xyc_reloc_lo = ((ADDR) & 0xff); \
-	(ADDR) = ((ADDR) >> 8); \
-	(XYC)->xyc_reloc_hi = (ADDR); \
+	u_long addr = (u_long)ADDR; \
+	(XYC)->xyc_addr_lo = ((addr) & 0xff); \
+	(addr) = ((addr) >> 8); \
+	(XYC)->xyc_addr_hi = ((addr) & 0xff); \
+	(addr) = ((addr) >> 8); \
+	(XYC)->xyc_reloc_lo = ((addr) & 0xff); \
+	(addr) = ((addr) >> 8); \
+	(XYC)->xyc_reloc_hi = (addr); \
 	(XYC)->xyc_csr = XYC_GBSY; /* go! */ \
 }
 
@@ -117,7 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.61 2005/12/11 12:24:07 christos Exp $");
 
 #define XYC_DONE(SC,ER) { \
 	if ((ER) == XY_ERR_AOK) { \
-		(ER) = (SC)->ciorq->errno; \
+		(ER) = (SC)->ciorq->errnum; \
 		(SC)->ciorq->mode = XY_SUB_FREE; \
 		wakeup((SC)->ciorq); \
 	} \
@@ -265,7 +267,7 @@ xygetdisklabel(xy, b)
 	/* Required parameter for readdisklabel() */
 	xy->sc_dk.dk_label->d_secsize = XYFM_BPS;
 
-	err = readdisklabel(MAKEDISKDEV(0, xy->sc_dev.dv_unit, RAW_PART),
+	err = readdisklabel(MAKEDISKDEV(0, device_unit(&xy->sc_dev), RAW_PART),
 					xydummystrat,
 				xy->sc_dk.dk_label, xy->sc_dk.dk_cpulabel);
 	if (err) {
@@ -1031,7 +1033,8 @@ xyioctl(dev, command, addr, flag, l)
 
 	case DIOSXDCMD:
 		xio = (struct xd_iocmd *) addr;
-		if ((error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (error);
 		return (xyc_ioctlcmd(xy, dev, xio));
 
@@ -1299,7 +1302,7 @@ xyc_rqinit(rq, xyc, xy, md, blk, cnt, db, bp)
 	rq->xy = xy;
 	rq->ttl = XYC_MAXTTL + 10;
 	rq->mode = md;
-	rq->tries = rq->errno = rq->lasterror = 0;
+	rq->tries = rq->errnum = rq->lasterror = 0;
 	rq->blockno = blk;
 	rq->sectcnt = cnt;
 	rq->dbuf = db;
@@ -1324,7 +1327,7 @@ xyc_rqtopb(iorq, iopb, cmd, subfun)
 	/* chain bit handled later */
 	iopb->ien = (XY_STATE(iorq->mode) == XY_SUB_POLL) ? 0 : 1;
 	iopb->com = cmd;
-	iopb->errno = 0;
+	iopb->errnum = 0;
 	iopb->errs = 0;
 	iopb->done = 0;
 	if (iorq->xy) {
@@ -1558,7 +1561,7 @@ xyc_submit_iorq(xycsc, iorq, type)
 			while (iorq->iopb->done == 0) {
 				(void) tsleep(iorq, PRIBIO, "xyciorq", 0);
 			}
-			return (iorq->errno);
+			return (iorq->errnum);
 		case XY_SUB_POLL:		/* steal controller */
 			(void)xycsc->xyc->xyc_rsetup; /* RESET */
 			if (xyc_unbusy(xycsc->xyc,XYC_RESETUSEC) == XY_ERR_FAIL)
@@ -1578,7 +1581,7 @@ xyc_submit_iorq(xycsc, iorq, type)
 		panic("xyc_submit_iorq: xyc_chain failed!");
 	}
 
-	XYC_GO(xycsc->xyc, (u_long)dmaiopb);
+	XYC_GO(xycsc->xyc, dmaiopb);
 
 	/* command now running, wrap it up */
 	switch (type) {
@@ -1589,7 +1592,7 @@ xyc_submit_iorq(xycsc, iorq, type)
 		while (iorq->iopb->done == 0) {
 			(void) tsleep(iorq, PRIBIO, "xyciorq", 0);
 		}
-		return (iorq->errno);
+		return (iorq->errnum);
 	case XY_SUB_POLL:
 		return (xyc_piodriver(xycsc, iorq));
 	default:
@@ -1723,11 +1726,11 @@ xyc_piodriver(xycsc, iorq)
 
 	/* get return value */
 
-	retval = iorq->errno;
+	retval = iorq->errnum;
 
 #ifdef XYC_DEBUG
 	printf("xyc_piodriver: done, retval = 0x%x (%s)\n",
-	    iorq->errno, xyc_e2str(iorq->errno));
+	    iorq->errnum, xyc_e2str(iorq->errnum));
 #endif
 
 	/* start up any bufs that have queued */
@@ -1761,7 +1764,7 @@ xyc_xyreset(xycsc, xysc)
 	iopb->com = XYCMD_RST;
 	iopb->unit = xysc->xy_drive;
 
-	XYC_GO(xycsc->xyc, (u_long)xycsc->ciorq->dmaiopb);
+	XYC_GO(xycsc->xyc, xycsc->ciorq->dmaiopb);
 
 	del = XYC_RESETUSEC;
 	while (del > 0) {
@@ -1773,7 +1776,7 @@ xyc_xyreset(xycsc, xysc)
 
 	if (del <= 0 || iopb->errs) {
 		printf("%s: off-line: %s\n", xycsc->sc_dev.dv_xname,
-		    xyc_e2str(iopb->errno));
+		    xyc_e2str(iopb->errnum));
 		del = xycsc->xyc->xyc_rsetup;
 		if (xyc_unbusy(xycsc->xyc, XYC_RESETUSEC) == XY_ERR_FAIL)
 			panic("xyc_reset");
@@ -1827,7 +1830,7 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 		if (blastmode == XY_RSET_ALL ||
 				blastmode != iorq) {
 			/* failed */
-			iorq->errno = error;
+			iorq->errnum = error;
 			xycsc->iopbase[lcv].done = xycsc->iopbase[lcv].errs = 1;
 			switch (XY_STATE(iorq->mode)) {
 			case XY_SUB_NORM:
@@ -1907,7 +1910,7 @@ xyc_remove_iorq(xycsc)
 	struct xyc_softc *xycsc;
 
 {
-	int     errno, rq, comm, errs;
+	int     errnum, rq, comm, errs;
 	struct xyc *xyc = xycsc->xyc;
 	u_long  addr;
 	struct xy_iopb *iopb;
@@ -1920,9 +1923,9 @@ xyc_remove_iorq(xycsc)
 		 * error is so bad, you can't even tell which IOPB is bad, so
 		 * we dump them all.
 		 */
-		errno = XY_ERR_DERR;
+		errnum = XY_ERR_DERR;
 		printf("%s: DOUBLE ERROR!\n", xycsc->sc_dev.dv_xname);
-		if (xyc_reset(xycsc, 0, XY_RSET_ALL, errno, 0) != XY_ERR_AOK) {
+		if (xyc_reset(xycsc, 0, XY_RSET_ALL, errnum, 0) != XY_ERR_AOK) {
 			printf("%s: soft reset failed!\n",
 				xycsc->sc_dev.dv_xname);
 			panic("xyc_remove_iorq: controller DEAD");
@@ -1954,9 +1957,9 @@ xyc_remove_iorq(xycsc)
 		errs = iopb->errs;
 
 		if (errs)
-			iorq->errno = iopb->errno;
+			iorq->errnum = iopb->errnum;
 		else
-			iorq->errno = 0;
+			iorq->errnum = 0;
 
 		/* handle non-fatal errors */
 
@@ -1990,7 +1993,7 @@ xyc_remove_iorq(xycsc)
 			iorq->mode = iorq->mode & (~XY_MODE_B144);
 
 			if (iorq->sectcnt) {	/* more to go! */
-				iorq->lasterror = iorq->errno = iopb->errno = 0;
+				iorq->lasterror = iorq->errnum = iopb->errnum = 0;
 				iopb->errs = iopb->done = 0;
 				iorq->tries = 0;
 				iopb->scnt = iorq->sectcnt;
@@ -2051,10 +2054,10 @@ xyc_remove_iorq(xycsc)
  * xyc_perror: print error.
  * - if still_trying is true: we got an error, retried and got a
  *   different error.  in that case lasterror is the old error,
- *   and errno is the new one.
+ *   and errnum is the new one.
  * - if still_trying is not true, then if we ever had an error it
- *   is in lasterror. also, if iorq->errno == 0, then we recovered
- *   from that error (otherwise iorq->errno == iorq->lasterror).
+ *   is in lasterror. also, if iorq->errnum == 0, then we recovered
+ *   from that error (otherwise iorq->errnum == iorq->lasterror).
  */
 void
 xyc_perror(iorq, iopb, still_trying)
@@ -2077,9 +2080,9 @@ xyc_perror(iorq, iopb, still_trying)
 	printf("%s", xyc_e2str(error));
 
 	if (still_trying)
-		printf(" [still trying, new error=%s]", xyc_e2str(iorq->errno));
+		printf(" [still trying, new error=%s]", xyc_e2str(iorq->errnum));
 	else
-		if (iorq->errno == 0)
+		if (iorq->errnum == 0)
 			printf(" [recovered in %d tries]", iorq->tries);
 
 	printf("\n");
@@ -2097,8 +2100,8 @@ xyc_error(xycsc, iorq, iopb, comm)
 	int     comm;
 
 {
-	int     errno = iorq->errno;
-	int     erract = xyc_entoact(errno);
+	int     errnum = iorq->errnum;
+	int     erract = xyc_entoact(errnum);
 	int     oldmode, advance;
 #ifdef __sparc__
 	int i;
@@ -2108,7 +2111,7 @@ xyc_error(xycsc, iorq, iopb, comm)
 		oldmode = iorq->mode;
 		iorq->mode = XY_SUB_DONE | (~XY_SUB_MASK & oldmode);
 		/* make xyc_start ignore us */
-		xyc_reset(xycsc, 1, XY_RSET_NONE, errno, iorq->xy);
+		xyc_reset(xycsc, 1, XY_RSET_NONE, errnum, iorq->xy);
 		iorq->mode = oldmode;
 	}
 	/* check for read/write to a sector in bad144 table if bad: redirect
@@ -2124,7 +2127,7 @@ xyc_error(xycsc, iorq, iopb, comm)
 			    iorq->blockno % iorq->xy->nsect)) != -1) {
 			iorq->mode |= XY_MODE_B144;	/* enter bad144 mode &
 							 * redirect */
-			iopb->errno = iopb->done = iopb->errs = 0;
+			iopb->errnum = iopb->done = iopb->errs = 0;
 			iopb->scnt = 1;
 			iopb->cyl = (iorq->xy->ncyl + iorq->xy->acyl) - 2;
 			/* second to last acyl */
@@ -2145,12 +2148,12 @@ xyc_error(xycsc, iorq, iopb, comm)
 	if ((iorq->mode & XY_MODE_VERBO) && iorq->lasterror)
 		xyc_perror(iorq, iopb, 1);	/* inform of error state
 						 * change */
-	iorq->lasterror = errno;
+	iorq->lasterror = errnum;
 
 	if ((erract == XY_ERA_RSET || erract == XY_ERA_HARD)
 	    && iorq->tries < XYC_MAXTRIES) {	/* retry? */
 		iorq->tries++;
-		iorq->errno = iopb->errno = iopb->done = iopb->errs = 0;
+		iorq->errnum = iopb->errnum = iopb->done = iopb->errs = 0;
 		/* will resubmit at end of remove_iorq */
 		return (XY_ERR_AOK);	/* recovered! */
 	}
@@ -2270,7 +2273,7 @@ xyc_ioctlcmd(xy, dev, xio)
 		error = EIO;
 		goto done;
 	}
-	xio->errno = xycsc->ciorq->errno;
+	xio->errnum = xycsc->ciorq->errnum;
 	xio->tries = xycsc->ciorq->tries;
 	XYC_DONE(xycsc, dummy);
 
@@ -2356,12 +2359,12 @@ xyc_e2str(no)
 }
 
 int
-xyc_entoact(errno)
+xyc_entoact(errnum)
 
-int errno;
+int errnum;
 
 {
-  switch (errno) {
+  switch (errnum) {
     case XY_ERR_FAIL:	case XY_ERR_DERR:	case XY_ERR_IPEN:
     case XY_ERR_BCFL:	case XY_ERR_ICYL:	case XY_ERR_ISEC:
     case XY_ERR_UIMP:	case XY_ERR_SZER:	case XY_ERR_ISSZ:

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.14 2005/12/24 20:27:41 perry Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.14.4.1 2006/09/09 02:51:56 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,13 +45,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.14 2005/12/24 20:27:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.14.4.1 2006/09/09 02:51:56 rpaulo Exp $");
 
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
@@ -248,14 +249,14 @@ unsigned int gtmpsc_poll_pollc_miss = 0;
 #define GTMPSC_CACHE_FLUSH(p)		gtmpsc_cache_flush(p)
 #define GTMPSC_CACHE_INVALIDATE(p)	gtmpsc_cache_invalidate(p)
 
-static volatile inline void
+static inline void
 gtmpsc_cache_flush(void *p)
 {
 	__asm volatile ("eieio; dcbf 0,%0; lwz %0,0(%0); sync;"
 					: "+r"(p):);
 }
 
-static volatile inline void
+static inline void
 gtmpsc_cache_invalidate(void *p)
 {
 	__asm volatile ("eieio; dcbi 0,%0; sync;" :: "r"(p));
@@ -296,7 +297,7 @@ gtmpsc_cache_invalidate(void *p)
 	GT_WRITE(sc, SDMA_IMASK, __r); \
 } while (/*CONSTCOND*/ 0)
 
-static volatile inline unsigned int
+static inline unsigned int
 desc_read(unsigned int *ip)
 {
 	unsigned int rv;
@@ -306,7 +307,7 @@ desc_read(unsigned int *ip)
 	return rv;
 }
 
-static volatile inline void
+static inline void
 desc_write(unsigned int *ip, unsigned int val)
 {
 	__asm volatile ("stwx %0,0,%1; eieio;"
@@ -421,7 +422,7 @@ gtmpsc_loadchannelregs(struct gtmpsc_softc *sc)
 STATIC int
 gtmpscmatch(struct device *parent, struct cfdata *self, void *aux)
 {
-	struct gt_softc *gt = (struct gt_softc *) parent;
+	struct gt_softc *gt = device_private(parent);
 	struct gt_attach_args *ga = aux;
 
 	return GT_MPSCOK(gt, ga, &gtmpsc_cd);
@@ -431,8 +432,8 @@ STATIC void
 gtmpscattach(struct device *parent, struct device *self, void *aux)
 {
 	struct gt_attach_args *ga = aux;
-	struct gt_softc *gt = (struct gt_softc *) parent;
-	struct gtmpsc_softc *sc = (struct gtmpsc_softc *) self;
+	struct gt_softc *gt = device_private(parent);
+	struct gtmpsc_softc *sc = device_private(self);
 	gtmpsc_poll_sdma_t *vmps;
 	gtmpsc_poll_sdma_t *pmps;
 	struct tty *tp;
@@ -527,7 +528,7 @@ gtmpscattach(struct device *parent, struct device *self, void *aux)
 	if (cn_tab == &gtmpsc_consdev &&
 	    cn_tab->cn_dev == makedev(0, sc->gtmpsc_unit)) {
 		cn_tab->cn_dev = makedev(cdevsw_lookup_major(&gtmpsc_cdevsw),
-		    sc->gtmpsc_dev.dv_unit);
+		    device_unit(&sc->gtmpsc_dev));
 		is_console = 1;
 	}
 
@@ -611,7 +612,8 @@ gtmpscopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp = sc->gtmpsc_tty;
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();

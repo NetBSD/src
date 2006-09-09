@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.5 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: i2c.c,v 1.5.4.1 2006/09/09 02:49:51 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -48,15 +48,15 @@
 struct iic_softc {
 	struct device sc_dev;
 	i2c_tag_t sc_tag;
+	int sc_type;
 };
 
 int
 iicbus_print(void *aux, const char *pnp)
 {
-	struct i2cbus_attach_args *iba = aux;
 
 	if (pnp != NULL)
-		aprint_normal("%s at %s", iba->iba_name, pnp);
+		aprint_normal("iic at %s", pnp);
 
 	return (UNCONF);
 }
@@ -66,7 +66,8 @@ iic_print(void *aux, const char *pnp)
 {
 	struct i2c_attach_args *ia = aux;
 
-	aprint_normal(" addr 0x%x", ia->ia_addr);
+	if (ia->ia_addr != (i2c_addr_t)-1)
+		aprint_normal(" addr 0x%x", ia->ia_addr);
 
 	return (UNCONF);
 }
@@ -81,6 +82,7 @@ iic_search(struct device *parent, struct cfdata *cf,
 	ia.ia_tag = sc->sc_tag;
 	ia.ia_addr = cf->cf_loc[IICCF_ADDR];
 	ia.ia_size = cf->cf_loc[IICCF_SIZE];
+	ia.ia_type = sc->sc_type;
 
 	if (config_match(parent, cf, &ia) > 0)
 		config_attach(parent, cf, &ia, iic_print);
@@ -91,22 +93,21 @@ iic_search(struct device *parent, struct cfdata *cf,
 static int
 iic_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct i2cbus_attach_args *iba = aux;
 
-	/* Just make sure we're looking for i2c. */
-	return (strcmp(iba->iba_name, cf->cf_name) == 0);
+	return (1);
 }
 
 static void
 iic_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct iic_softc *sc = (void *) self;
+	struct iic_softc *sc = device_private(self);
 	struct i2cbus_attach_args *iba = aux;
 
 	aprint_naive(": I2C bus\n");
 	aprint_normal(": I2C bus\n");
 
 	sc->sc_tag = iba->iba_tag;
+	sc->sc_type = iba->iba_type;
 
 	/*
 	 * Attach all i2c devices described in the kernel

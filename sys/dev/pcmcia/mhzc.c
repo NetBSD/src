@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.34 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.34.4.1 2006/09/09 02:53:55 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -46,10 +46,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.34 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.34.4.1 2006/09/09 02:53:55 rpaulo Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -78,10 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.34 2005/12/11 12:23:23 christos Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -530,7 +525,7 @@ mhzc_em3336_enaddr(sc, myla)
 {
 
 	/* Get the station address from CIS tuple 0x81. */
-	if (pcmcia_scan_cis(sc->sc_dev.dv_parent,
+	if (pcmcia_scan_cis(device_parent(&sc->sc_dev),
 	    mhzc_em3336_lannid_ciscallback, myla) != 1) {
 		printf("%s: unable to get Ethernet address from CIS\n",
 		    sc->sc_dev.dv_xname);
@@ -697,12 +692,13 @@ com_mhzc_attach(parent, self, aux)
 
 	aprint_normal("\n");
 
-	sc->sc_iot = msc->sc_modem_pcioh.iot;
-	sc->sc_ioh = msc->sc_modem_pcioh.ioh;
+	COM_INIT_REGS(sc->sc_regs, 
+	    msc->sc_modem_pcioh.iot,
+	    msc->sc_modem_pcioh.ioh,
+	    -1);
 
 	sc->enabled = 1;
 
-	sc->sc_iobase = -1;
 	sc->sc_frequency = COM_FREQ;
 
 	sc->enable = com_mhzc_enable;
@@ -720,7 +716,7 @@ com_mhzc_enable(sc)
 	struct com_softc *sc;
 {
 
-	return (mhzc_enable((struct mhzc_softc *)sc->sc_dev.dv_parent,
+	return (mhzc_enable((struct mhzc_softc *)device_parent(&sc->sc_dev),
 	    MHZC_MODEM_ENABLED));
 }
 
@@ -729,7 +725,7 @@ com_mhzc_disable(sc)
 	struct com_softc *sc;
 {
 
-	mhzc_disable((struct mhzc_softc *)sc->sc_dev.dv_parent,
+	mhzc_disable((struct mhzc_softc *)device_parent(&sc->sc_dev),
 	    MHZC_MODEM_ENABLED);
 }
 
@@ -793,7 +789,7 @@ sm_mhzc_enable(sc)
 	struct smc91cxx_softc *sc;
 {
 
-	return (mhzc_enable((struct mhzc_softc *)sc->sc_dev.dv_parent,
+	return (mhzc_enable((struct mhzc_softc *)device_parent(&sc->sc_dev),
 	    MHZC_ETHERNET_ENABLED));
 }
 
@@ -802,7 +798,7 @@ sm_mhzc_disable(sc)
 	struct smc91cxx_softc *sc;
 {
 
-	mhzc_disable((struct mhzc_softc *)sc->sc_dev.dv_parent,
+	mhzc_disable((struct mhzc_softc *)device_parent(&sc->sc_dev),
 	    MHZC_ETHERNET_ENABLED);
 }
 

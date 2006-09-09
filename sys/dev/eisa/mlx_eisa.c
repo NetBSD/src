@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.14 2005/12/11 12:21:20 christos Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.14.4.1 2006/09/09 02:49:44 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.14 2005/12/11 12:21:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.14.4.1 2006/09/09 02:49:44 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,10 +84,10 @@ static int	mlx_v1_reset(struct mlx_softc *);
 CFATTACH_DECL(mlx_eisa, sizeof(struct mlx_softc),
     mlx_eisa_match, mlx_eisa_attach, NULL, NULL);
 
-struct mlx_eisa_prod {
+static struct mlx_eisa_prod {
 	const char	*mp_idstr;
 	int		mp_nchan;
-} static const mlx_eisa_prod[] = {
+} const mlx_eisa_prod[] = {
 	{ "MLX0070", 1 },
 	{ "MLX0071", 3 },
 	{ "MLX0072", 3 },
@@ -126,7 +126,7 @@ mlx_eisa_attach(struct device *parent, struct device *self, void *aux)
 	int irq, i, icfg;
 
 	ea = aux;
-	mlx = (struct mlx_softc *)self;
+	mlx = device_private(self);
 	iot = ea->ea_iot;
 	ec = ea->ea_ec;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.73 2006/01/29 21:42:41 dsl Exp $	*/
+/*	$NetBSD: twe.c,v 1.73.2.1 2006/09/09 02:52:19 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.73 2006/01/29 21:42:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.73.2.1 2006/09/09 02:52:19 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,7 @@ static void twe_clear_pci_parity_error(struct twe_softc *sc);
 
 static int	twe_add_unit(struct twe_softc *, int);
 static int	twe_del_unit(struct twe_softc *, int);
+static int	twe_init_connection(struct twe_softc *);
 
 static inline u_int32_t	twe_inl(struct twe_softc *, int);
 static inline void twe_outl(struct twe_softc *, int, u_int32_t);
@@ -337,12 +338,6 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": RAID controller\n");
 	aprint_normal(": 3ware Escalade\n");
 
-	ccb = malloc(sizeof(*ccb) * TWE_MAX_QUEUECNT, M_DEVBUF, M_NOWAIT);
-	if (ccb == NULL) {
-		aprint_error("%s: unable to allocate memory for ccbs\n",
-		    sc->sc_dv.dv_xname);
-		return;
-	}
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
@@ -406,6 +401,13 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	    size, NULL, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: unable to load command DMA map, rv = %d\n",
 		    sc->sc_dv.dv_xname, rv);
+		return;
+	}
+
+	ccb = malloc(sizeof(*ccb) * TWE_MAX_QUEUECNT, M_DEVBUF, M_NOWAIT);
+	if (ccb == NULL) {
+		aprint_error("%s: unable to allocate memory for ccbs\n",
+		    sc->sc_dv.dv_xname);
 		return;
 	}
 
@@ -1245,8 +1247,6 @@ done:
  */
 static int
 twe_init_connection(struct twe_softc *sc)
-/*###762 [cc] warning: `twe_init_connection' was used with no prototype before its definition%%%*/
-/*###762 [cc] warning: `twe_init_connection' was declared implicitly `extern' and later `static'%%%*/
 {
 	struct twe_ccb *ccb;
 	struct twe_cmd *tc;
@@ -1761,9 +1761,6 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	int s, error = 0;
 	u_int8_t cmdid;
 
-	if (securelevel >= 2)
-		return (EPERM);
-
 	twe = device_lookup(&twe_cd, minor(dev));
 	tu = (struct twe_usercommand *)data;
 	tp = (struct twe_paramcommand *)data;
@@ -1772,6 +1769,9 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	/* This is intended to be compatible with the FreeBSD interface. */
 	switch (cmd) {
 	case TWEIO_COMMAND:
+		if (securelevel >= 2)
+			return (EPERM);
+
 		/* XXX mutex */
 		if (tu->tu_size > 0) {
 			/*
@@ -1874,6 +1874,7 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		}
 		error = copyout(param->tp_data, tp->tp_data,
 		    param->tp_param_size);
+		free(param, M_DEVBUF);
 		goto done;
 
 	case TWEIO_SET_PARAM:
@@ -1909,7 +1910,7 @@ done:
 
 const struct cdevsw twe_cdevsw = {
 	tweopen, tweclose, noread, nowrite, tweioctl,
-	    nostop, notty, nopoll, nommap,
+	    nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 /*
@@ -1922,6 +1923,8 @@ twe_describe_controller(struct twe_softc *sc)
 	int i, rv = 0;
 	uint32_t dsize;
 	uint8_t ports;
+
+	ports = 0;
 
 	/* get the port count */
 	rv |= twe_param_get_1(sc, TWE_PARAM_CONTROLLER,

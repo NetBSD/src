@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.15 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.15.4.1 2006/09/09 02:49:51 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.15 2005/12/11 12:21:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.15.4.1 2006/09/09 02:49:51 rpaulo Exp $");
 
 #define BTNMGRDEBUG
 
@@ -116,7 +116,7 @@ const struct wskbd_accessops btnmgr_wskbd_accessops = {
 	btnmgr_wskbd_ioctl,
 };
 
-/* button config: index by buttun event id */
+/* button config: index by button event id */
 static const struct {
 	int  kevent;
 	int  keycode;
@@ -185,7 +185,7 @@ void
 btnmgrattach(struct device *parent, struct device *self, void *aux)
 {
 	int id;
-	struct btnmgr_softc *sc = (struct btnmgr_softc *)self;
+	struct btnmgr_softc *sc = device_private(self);
 	struct wskbddev_attach_args wa;
 
 	printf("\n");

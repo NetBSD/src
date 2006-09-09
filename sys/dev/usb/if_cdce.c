@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.8 2005/11/28 13:31:09 augustss Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.8.4.1 2006/09/09 02:55:33 rpaulo Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.8 2005/11/28 13:31:09 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.8.4.1 2006/09/09 02:55:33 rpaulo Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -91,10 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.8 2005/11/28 13:31:09 augustss Exp $")
 #endif
 #endif /* defined(__OpenBSD__) */
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -254,7 +250,7 @@ USB_ATTACH(cdce)
 		printf("%s: faking address\n", USBDEVNAME(sc->cdce_dev));
 		eaddr[0]= 0x2a;
 		memcpy(&eaddr[1], &hardclock_ticks, sizeof(u_int32_t));
-		eaddr[5] = (u_int8_t)(sc->cdce_dev.dv_unit);
+		eaddr[5] = (u_int8_t)(device_unit(&sc->cdce_dev));
 	} else {
 		int j;
 
@@ -474,21 +470,6 @@ cdce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 #endif
 			break;
 #endif /* INET */
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-					LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl),
-				       ina->x_host.c_host,
-				       ifp->if_addrlen);
-			break;
-		    }
-#endif /* NS */
 		}
 		break;
 

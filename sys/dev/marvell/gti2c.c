@@ -1,4 +1,4 @@
-/*	$NetBSD: gti2c.c,v 1.3 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: gti2c.c,v 1.3.4.1 2006/09/09 02:51:56 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2005 Brocade Communcations, inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gti2c.c,v 1.3 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gti2c.c,v 1.3.4.1 2006/09/09 02:51:56 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -237,7 +237,7 @@ gt_i2c_intr(void *aux)
 int
 gt_i2c_match(struct device *parent, struct cfdata *cfdata, void *aux)
 {
-	struct gt_softc * const gt = (void *) parent;
+	struct gt_softc * const gt = device_private(parent);
 	struct gt_attach_args * const ga = aux;
 
 	return GT_I2COK(gt, ga, &gtiic_cd);
@@ -246,8 +246,8 @@ gt_i2c_match(struct device *parent, struct cfdata *cfdata, void *aux)
 void
 gt_i2c_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct gt_softc * const gt = (void *) parent;
-	struct gti2c_softc * const sc = (void *) self;
+	struct gt_softc * const gt = device_private(parent);
+	struct gti2c_softc * const sc = device_private(self);
 	struct gt_attach_args * const ga = aux;
 	struct i2cbus_attach_args iba;
 
@@ -272,7 +272,6 @@ gt_i2c_attach(struct device *parent, struct device *self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR, NULL,
 		sc->sc_dev.dv_xname, "intr");
 
-	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c;
-	config_found(self, &iba, iicbus_print);
+	config_found_ia(self, "i2cbus", &iba, iicbus_print);
 }

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.216 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.216.4.1 2006/09/09 02:53:55 rpaulo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.213 2005/11/07 16:37:28 tsutsui Exp
+ *	NetBSD: pcmciadevs,v 1.217 2006/07/28 08:02:39 scottr Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -88,6 +88,7 @@
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
 #define	PCMCIA_VENDOR_RAYTHEON	0x01a6	/* Raytheon */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
+#define	PCMCIA_VENDOR_BELKIN	0x01bf	/* Belkin */
 #define	PCMCIA_VENDOR_BAY	0x01eb	/* Bay Networks */
 #define	PCMCIA_VENDOR_FARALLON	0x0200	/* Farallon Communications */
 #define	PCMCIA_VENDOR_TELECOMDEVICE	0x021b	/* Telecom Device */
@@ -101,6 +102,7 @@
 #define	PCMCIA_VENDOR_LINKSYS2	0x0274	/* The Linksys Group */
 #define	PCMCIA_VENDOR_IODATA2	0x028a	/* I-O DATA */
 #define	PCMCIA_VENDOR_ASUSTEK	0x02aa	/* Asustek Computer */
+#define	PCMCIA_VENDOR_SIEMENS	0x02ac	/* Siemens */
 #define	PCMCIA_VENDOR_MICROSOFT	0x02d2	/* Microsoft Corporation */
 #define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
 #define	PCMCIA_VENDOR_NEWMEDIA2	0x10cd	/* NewMedia */
@@ -137,6 +139,8 @@
 #define	PCMCIA_PRODUCT_3COM_3CXEM556	0x0035
 #define	PCMCIA_CIS_3COM_3CXEM556INT	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3CXEM556INT	0x003d
+#define	PCMCIA_CIS_3COM_3CRWB6096	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_3COM_3CRWB6096	0x0040
 #define	PCMCIA_CIS_3COM_3CCFEM556BI	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3CCFEM556BI	0x0556
 #define	PCMCIA_CIS_3COM_3C562	{ NULL, NULL, NULL, NULL }
@@ -207,6 +211,10 @@
 /* BreezeCOM */
 #define	PCMCIA_CIS_BREEZECOM_BREEZENET	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_BREEZECOM_BREEZENET	0x0102
+
+/* Belkin */
+#define	PCMCIA_CIS_BELKIN_F5D5020	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_BELKIN_F5D5020	0x2328
 
 /* BUFFALO */
 #define	PCMCIA_CIS_BUFFALO_WLI_PCM_S11	{ NULL, NULL, NULL, NULL }
@@ -531,6 +539,10 @@
 #define	PCMCIA_PRODUCT_SOCKET_LP_ETHER_CF	0x0075
 #define	PCMCIA_CIS_SOCKET_LP_ETH_10_100_CF	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SOCKET_LP_ETH_10_100_CF	0x0145
+
+/* SpeedStream */
+#define	PCMCIA_CIS_SIEMENS_SS1021	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SIEMENS_SS1021	0x0002
 
 /* Symbol */
 #define	PCMCIA_CIS_SYMBOL_LA4100	{ NULL, NULL, NULL, NULL }

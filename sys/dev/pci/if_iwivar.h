@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwivar.h,v 1.9 2005/11/29 13:57:00 rpaulo Exp $ */
+/*	$NetBSD: if_iwivar.h,v 1.9.4.1 2006/09/09 02:52:17 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -121,10 +121,12 @@ struct iwi_softc {
 	uint32_t		sc_unr;
 
 	struct iwi_firmware	fw;
+	const char		*sc_fwname;
+	const char		*sc_ucname;
+
 	uint32_t		flags;
 #define IWI_FLAG_FW_CACHED	(1 << 0)
 #define IWI_FLAG_FW_INITED	(1 << 1)
-#define IWI_FLAG_FW_WARNED	(1 << 2)
 #define IWI_FLAG_SCANNING	(1 << 3)
 
 	bus_dma_tag_t		sc_dmat;
@@ -144,6 +146,9 @@ struct iwi_softc {
 
 	void			*sc_sdhook;	/* shutdown hook */
 	void			*sc_powerhook;	/* power management hook */
+	struct pci_conf_state	sc_pciconf;
+
+	struct sysctllog	*sc_sysctllog;
 
 	int			antenna;
 	int			dwelltime;
@@ -173,7 +178,5 @@ struct iwi_softc {
 
 #define	sc_if	sc_ec.ec_if
 
-#define SIOCSLOADFW	 _IOW('i', 137, struct ifreq)
-#define SIOCSKILLFW	 _IOW('i', 138, struct ifreq)
 #define SIOCGRADIO	_IOWR('i', 139, struct ifreq)
 #define SIOCGTABLE0	_IOWR('i', 140, struct ifreq)

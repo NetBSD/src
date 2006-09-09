@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.15 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: xirc.c,v 1.15.4.1 2006/09/09 02:53:55 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,10 +38,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.15 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.15.4.1 2006/09/09 02:53:55 rpaulo Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -68,10 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.15 2005/12/11 12:23:23 christos Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -618,12 +613,13 @@ com_xirc_attach(parent, self, aux)
 
 	aprint_normal("\n");
 
-	sc->sc_iot = msc->sc_modem_pcioh.iot;
-	sc->sc_ioh = msc->sc_modem_pcioh.ioh;
+	COM_INIT_REGS(sc->sc_regs, 
+	    msc->sc_modem_pcioh.iot,
+	    msc->sc_modem_pcioh.ioh,
+	    -1);
 
 	sc->enabled = 1;
 
-	sc->sc_iobase = -1;
 	sc->sc_frequency = COM_FREQ;
 
 	sc->enable = com_xirc_enable;
@@ -640,7 +636,8 @@ int
 com_xirc_enable(sc)
 	struct com_softc *sc;
 {
-	struct xirc_softc *msc = (struct xirc_softc *)sc->sc_dev.dv_parent;
+	struct xirc_softc *msc =
+	    (struct xirc_softc *)device_parent(&sc->sc_dev);
 
 	return (xirc_enable(msc, XIRC_MODEM_ENABLED, XIMEDIA_MODEM));
 }
@@ -649,7 +646,8 @@ void
 com_xirc_disable(sc)
 	struct com_softc *sc;
 {
-	struct xirc_softc *msc = (struct xirc_softc *)sc->sc_dev.dv_parent;
+	struct xirc_softc *msc =
+	    (struct xirc_softc *)device_parent(&sc->sc_dev);
 
 	xirc_disable(msc, XIRC_MODEM_ENABLED, XIMEDIA_MODEM);
 }
@@ -704,8 +702,8 @@ xi_xirc_attach(parent, self, aux)
 	sc->sc_enable = xi_xirc_enable;
 	sc->sc_disable = xi_xirc_disable;
 
-	if (!pcmcia_scan_cis(msc->sc_dev.dv_parent, xi_xirc_lan_nid_ciscallback,
-	    myla)) {
+	if (!pcmcia_scan_cis(device_parent(&msc->sc_dev),
+	    xi_xirc_lan_nid_ciscallback, myla)) {
 		aprint_error("%s: can't find MAC address\n", self->dv_xname);
 		return;
 	}
@@ -718,7 +716,8 @@ int
 xi_xirc_enable(sc)
 	struct xi_softc *sc;
 {
-	struct xirc_softc *msc = (struct xirc_softc *)sc->sc_dev.dv_parent;
+	struct xirc_softc *msc =
+	    (struct xirc_softc *)device_parent(&sc->sc_dev);
 
 	return (xirc_enable(msc, XIRC_ETHERNET_ENABLED, XIMEDIA_ETHER));
 }
@@ -727,7 +726,8 @@ void
 xi_xirc_disable(sc)
 	struct xi_softc *sc;
 {
-	struct xirc_softc *msc = (struct xirc_softc *)sc->sc_dev.dv_parent;
+	struct xirc_softc *msc =
+	    (struct xirc_softc *)device_parent(&sc->sc_dev);
 
 	xirc_disable(msc, XIRC_ETHERNET_ENABLED, XIMEDIA_ETHER);
 }

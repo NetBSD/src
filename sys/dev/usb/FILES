@@ -19,13 +19,14 @@ if_cue.c		USB CATC Ethernet driver
 if_cuereg.h		  and definitions for it
 if_kue.c		USB Kawasaki Ethernet driver
 if_kuereg.h		  and definitions for it
-if_upl.c		USB Prolofic host-to-host driver
+if_upl.c		USB Prolific host-to-host driver
 kue_fw.h		Kawasaki Ethernet firmware
 ohci.c			Host controller driver for OHCI
 ohcireg.h		Hardware definitions for OHCI
 ohcivar.h		API for ohci.c
 uaudio.c		USB audio class driver
 uaudioreg.h		  and definitions for it
+ubt.c			USB Bluetooth driver
 ucom.c			TTY emulation for two bulk pipes
 ucomvar.h		TTY emulation interface
 uftdi.c			USB FTDI serial driver

@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.9 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: joy.c,v 1.9.4.1 2006/09/09 02:50:02 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.9 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.9.4.1 2006/09/09 02:50:02 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ dev_type_ioctl(joyioctl);
 
 const struct cdevsw joy_cdevsw = {
 	joyopen, joyclose, joyread, nowrite, joyioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 void
@@ -98,7 +98,7 @@ joydetach(sc, flags)
 	int maj, mn;
 
 	maj = cdevsw_lookup_major(&joy_cdevsw);
-	mn = sc->sc_dev.dv_unit << 1;
+	mn = device_unit(&sc->sc_dev) << 1;
 	vdevgone(maj, mn, mn, VCHR);
 	vdevgone(maj, mn + 1, mn + 1, VCHR);
 

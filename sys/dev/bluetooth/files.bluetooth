@@ -1,12 +1,32 @@
-#	$NetBSD: files.bluetooth,v 1.5 2005/12/11 12:21:15 christos Exp $
+#	$NetBSD: files.bluetooth,v 1.5.4.1 2006/09/09 02:49:44 rpaulo Exp $
+#
+# Config file for machine independent Bluetooth devices
 
-define	btbus { }
+# Bluetooth Devices
+defpseudo btdev { }
+file dev/bluetooth/btdev.c		btdev
 
-# Bluetooth host controller driver
-define	bthcidrv
-device	bthci { }: bthcidrv
-attach	bthci at btbus
+# HID "bus"
+define bthidbus {[ reportid = -1 ]}
 
-file	dev/bluetooth/bluetooth.c	btbus
-file	dev/bluetooth/bthci.c		bthcidrv		needs-flag
-file	dev/bluetooth/bthci_util.c	bthcidrv
+# HID Device
+device bthidev: bluetooth, bthidbus, hid
+attach bthidev at btdev
+file dev/bluetooth/bthidev.c		bthidev
+
+# HID Keyboards
+defflag		opt_btkbd.h	BTKBD_REPEAT
+defparam	opt_btkbd.h	BTKBD_LAYOUT
+device btkbd: hid, wskbddev
+attach btkbd at bthidbus
+file dev/bluetooth/btkbd.c		btkbd
+
+# HID Mice
+device btms: hid, wsmousedev
+attach btms at bthidbus
+file dev/bluetooth/btms.c		btms
+
+# SCO Audio
+device btsco: bluetooth, audiobus, auconv, mulaw, aurateconv
+attach btsco at btdev
+file dev/bluetooth/btsco.c		btsco

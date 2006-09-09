@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.43 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: md.c,v 1.43.4.1 2006/09/09 02:49:09 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.43 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.43.4.1 2006/09/09 02:49:09 rpaulo Exp $");
 
 #include "opt_md.h"
 
@@ -114,7 +114,7 @@ const struct cdevsw md_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-static struct dkdriver mddkdriver = { mdstrategy };
+static struct dkdriver mddkdriver = { mdstrategy, NULL };
 
 static int   ramdisk_ndevs;
 static void *ramdisk_devs[MD_MAX_UNITS];
@@ -172,7 +172,7 @@ md_attach(struct device *parent, struct device *self, void *aux)
 	 * All it would need to do is setup the md_conf struct.
 	 * See sys/dev/md_root.c for an example.
 	 */
-	md_attach_hook(sc->sc_dev.dv_unit, &sc->sc_md);
+	md_attach_hook(device_unit(&sc->sc_dev), &sc->sc_md);
 #endif
 
 	/*

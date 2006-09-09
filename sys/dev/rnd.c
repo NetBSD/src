@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.49 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: rnd.c,v 1.49.4.1 2006/09/09 02:49:09 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.49 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.49.4.1 2006/09/09 02:49:09 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.49 2005/12/11 12:20:53 christos Exp $");
 #include <sys/rnd.h>
 #include <sys/vnode.h>
 #include <sys/pool.h>
+#include <sys/kauth.h>
 
 #ifdef __HAVE_CPU_COUNTER
 #include <machine/cpu_counter.h>
@@ -165,7 +166,7 @@ dev_type_kqfilter(rndkqfilter);
 
 const struct cdevsw rnd_cdevsw = {
 	rndopen, nullclose, rndread, rndwrite, rndioctl,
-	nostop, notty, rndpoll, nommap, rndkqfilter,
+	nostop, notty, rndpoll, nommap, rndkqfilter, D_OTHER,
 };
 
 static inline void	rnd_wakeup_readers(void);
@@ -488,11 +489,9 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 	rndctl_t *rctl;
 	rnddata_t *rnddata;
 	u_int32_t count, start;
-	struct proc *p;
 	int ret, s;
 
 	ret = 0;
-	p = l->l_proc;
 
 	switch (cmd) {
 
@@ -511,7 +510,8 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDGETPOOLSTAT:
-		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (ret);
 
 		s = splsoftclock();
@@ -520,7 +520,8 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDGETSRCNUM:
-		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (ret);
 
 		rst = (rndstat_t *)addr;
@@ -563,7 +564,8 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDGETSRCNAME:
-		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (ret);
 
 		/*
@@ -586,7 +588,8 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDCTL:
-		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (ret);
 
 		/*
@@ -630,7 +633,8 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDADDDATA:
-		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (ret);
 
 		rnddata = (rnddata_t *)addr;
@@ -906,12 +910,6 @@ rnd_add_uint32(rndsource_element_t *rs, u_int32_t val)
 	rnd_sample_t *state;
 	u_int32_t ts;
 	int s;
-
-	/*
-	 * If we are not collecting any data at all, just return.
-	 */
-	if (rs == NULL)
-		return;
 
 	rst = &rs->data;
 

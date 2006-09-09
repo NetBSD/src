@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.26 2005/12/11 12:21:26 christos Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.26.4.1 2006/09/09 02:50:01 rpaulo Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.26 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.26.4.1 2006/09/09 02:50:01 rpaulo Exp $");
 
 #include "opt_ddb.h"
 
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.26 2005/12/11 12:21:26 christos Exp $")
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -89,11 +90,7 @@ static int 	clmpcc_modem_control(struct clmpcc_chan *, int, int);
 /*
  * These should be in a header file somewhere...
  */
-#define	ISSET(v, f)	(((v) & (f)) != 0)
 #define	ISCLR(v, f)	(((v) & (f)) == 0)
-#define SET(v, f)	(v) |= (f)
-#define CLR(v, f)	(v) &= ~(f)
-
 
 extern struct cfdriver clmpcc_cd;
 
@@ -528,7 +525,8 @@ clmpccopen(dev, flag, mode, l)
 
 	if ( ISSET(tp->t_state, TS_ISOPEN) &&
 	     ISSET(tp->t_state, TS_XCLUDE) &&
-	     suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0 )
+	     kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	     &l->l_acflag) != 0 )
 		return EBUSY;
 
 	/*
@@ -755,7 +753,8 @@ clmpccioctl(dev, cmd, data, flag, l)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if ( error )
 			break;
 		ch->ch_openflags = *((int *)data) &

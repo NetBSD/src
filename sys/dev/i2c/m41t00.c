@@ -1,4 +1,4 @@
-/*	$NetBSD: m41t00.c,v 1.5 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: m41t00.c,v 1.5.4.1 2006/09/09 02:49:51 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -81,8 +81,6 @@ static int m41t00_clock_read(struct m41t00_softc *, struct clock_ymdhms *);
 static int m41t00_clock_write(struct m41t00_softc *, struct clock_ymdhms *);
 static int m41t00_gettime(struct todr_chip_handle *, volatile struct timeval *);
 static int m41t00_settime(struct todr_chip_handle *, volatile struct timeval *);
-static int m41t00_getcal(struct todr_chip_handle *, int *);
-static int m41t00_setcal(struct todr_chip_handle *, int);
 
 int
 m41t00_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -99,7 +97,7 @@ m41t00_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 m41t00_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct m41t00_softc *sc = (struct m41t00_softc *)self;
+	struct m41t00_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 
 	sc->sc_tag = ia->ia_tag;
@@ -112,8 +110,6 @@ m41t00_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = m41t00_gettime;
 	sc->sc_todr.todr_settime = m41t00_settime;
-	sc->sc_todr.todr_getcal = m41t00_getcal;
-	sc->sc_todr.todr_setcal = m41t00_setcal;
 	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
@@ -254,20 +250,6 @@ m41t00_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 		return (-1);
 
 	return (0);
-}
-
-static int
-m41t00_setcal(struct todr_chip_handle *ch, int cal)
-{
-
-	return (EOPNOTSUPP);
-}
-
-static int
-m41t00_getcal(struct todr_chip_handle *ch, int *cal)
-{
-
-	return (EOPNOTSUPP);
 }
 
 static int m41t00_rtc_offset[] = {

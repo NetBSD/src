@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.68 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: midway.c,v 1.68.4.1 2006/09/09 02:50:02 rpaulo Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.68 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.68.4.1 2006/09/09 02:50:02 rpaulo Exp $");
 
 #include "opt_natm.h"
 
@@ -160,8 +160,10 @@ __KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.68 2005/12/11 12:21:27 christos Exp $")
 #include <sys/socketvar.h>
 #include <sys/queue.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 #include <net/if_atm.h>
 
 #ifdef __NetBSD__
@@ -1306,7 +1308,8 @@ caddr_t data;
 		if (ifp == &sc->enif) {
 		  struct ifnet *sifp;
 
-		  if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
+		  if ((error = kauth_authorize_generic(curlwp->l_cred,
+		     KAUTH_GENERIC_ISSUSER, &curlwp->l_acflag)) != 0)
 		    break;
 
 		  if ((sifp = en_pvcattach(ifp)) != NULL) {
@@ -1334,7 +1337,8 @@ caddr_t data;
 		break;
 
 	case SIOCSPVCTX:
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) == 0)
+		if ((error = kauth_authorize_generic(curlwp->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &curlwp->l_acflag)) == 0)
 			error = en_pvctx(sc, (struct pvctxreq *)data);
 		break;
 
@@ -1760,7 +1764,7 @@ struct ifnet *ifp;
        * check that vpi/vci is one we can use
        */
 
-      if (atm_vpi || atm_vci > MID_N_VC) {
+      if (atm_vpi || atm_vci >= MID_N_VC) {
 	printf("%s: output vpi=%d, vci=%d out of card range, dropping...\n",
 		sc->sc_dev.dv_xname, atm_vpi, atm_vci);
 	m_freem(m);
@@ -2095,6 +2099,8 @@ int chan;
   int datalen = 0, dtqneed, len, ncells;
   u_int8_t *cp;
   struct ifnet *ifp;
+
+  memset(&launch, 0, sizeof launch);	/* XXX gcc */
 
 #ifdef EN_DEBUG
   printf("%s: tx%d: starting...\n", sc->sc_dev.dv_xname, chan);
