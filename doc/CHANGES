@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.684 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.685 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -49,3 +49,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	cesfic: Add timecounter support. [gdamore 20060907]
 	cobalt: Add timecounter support. [gdamore 20060907]
 	sun3: Add timecounter support. [gdamore 20060907]
+	arc: Add timecounter support. [gdamore 20060908]
