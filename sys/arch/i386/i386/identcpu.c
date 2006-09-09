@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.41 2006/09/03 21:05:01 christos Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.42 2006/09/09 03:32:17 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.41 2006/09/03 21:05:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.42 2006/09/09 03:32:17 dogcow Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -1610,8 +1610,8 @@ identifycpu(struct cpu_info *ci)
 		rval = powernow_probe(ci, 0x600);
 		if (rval) {
 			featflag = powernow_extflags(ci, rval);
-			if (featflag)
 #ifdef POWERNOW_K7
+			if (featflag)
 				k7_powernow_init();
 #endif
 		}
@@ -1619,8 +1619,8 @@ identifycpu(struct cpu_info *ci)
 		rval = powernow_probe(ci, 0xf00);
 		if (rval) {
 			featflag = powernow_extflags(ci, rval);
-			if (featflag)
 #ifdef POWERNOW_K8
+			if (featflag)
 				k8_powernow_init();
 #endif
 		}
