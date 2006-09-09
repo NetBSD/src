@@ -1,4 +1,4 @@
-/*	$NetBSD: schedule.c,v 1.1.1.2 2005/02/23 14:54:27 manu Exp $	*/
+/*	$NetBSD: schedule.c,v 1.1.1.3 2006/09/09 16:12:20 manu Exp $	*/
 
 /*	$KAME: schedule.c,v 1.19 2001/11/05 10:53:19 sakane Exp $	*/
 
@@ -310,7 +310,7 @@ getstdin()
 		struct scheddump *scbuf, *p;
 		int len;
 		sched_dump((caddr_t *)&scbuf, &len);
-		if (buf == NULL)
+		if (scbuf == NULL)
 			return;
 		for (p = scbuf; len; p++) {
 			printf("xtime=%ld\n", p->xtime);

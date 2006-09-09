@@ -1,4 +1,4 @@
-/*	$NetBSD: getcertsbyname.c,v 1.1.1.3 2005/08/07 08:46:35 manu Exp $	*/
+/*	$NetBSD: getcertsbyname.c,v 1.1.1.4 2006/09/09 16:11:45 manu Exp $	*/
 
 /*	$KAME: getcertsbyname.c,v 1.7 2001/11/16 04:12:59 sakane Exp $	*/
 
@@ -39,6 +39,9 @@
 
 #include <netinet/in.h>
 #include <arpa/nameser.h>
+#if (defined(__APPLE__) && defined(__MACH__))
+# include <nameser8_compat.h>
+#endif
 #include <resolv.h>
 #ifdef HAVE_LWRES_GETRRSETBYNAME
 #include <lwres/netdb.h>

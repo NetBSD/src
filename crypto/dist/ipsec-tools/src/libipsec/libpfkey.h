@@ -1,6 +1,6 @@
-/*	$NetBSD: libpfkey.h,v 1.1.1.4 2005/08/07 08:49:20 manu Exp $	*/
+/*	$NetBSD: libpfkey.h,v 1.1.1.5 2006/09/09 16:11:34 manu Exp $	*/
 
-/* Id: libpfkey.h,v 1.8.2.3 2005/06/29 13:01:28 manubsd Exp */
+/* Id: libpfkey.h,v 1.13 2005/12/04 20:26:43 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,6 +46,7 @@
 
 struct sadb_msg;
 extern void pfkey_sadump __P((struct sadb_msg *));
+extern void pfkey_sadump_withports __P((struct sadb_msg *));
 extern void pfkey_spdump __P((struct sadb_msg *));
 extern void pfkey_spdump_withports __P((struct sadb_msg *));
 
@@ -134,6 +135,10 @@ int pfkey_send_spdsetidx __P((int, struct sockaddr *, u_int,
 	struct sockaddr *, u_int, u_int, caddr_t, int, u_int32_t));
 int pfkey_send_spdflush __P((int));
 int pfkey_send_spddump __P((int));
+#ifdef SADB_X_MIGRATE
+int pfkey_send_migrate __P((int, struct sockaddr *, u_int,
+	struct sockaddr *, u_int, u_int, caddr_t, int, u_int32_t));
+#endif
 
 int pfkey_open __P((void));
 void pfkey_close __P((int));

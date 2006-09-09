@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.1.1.5 2005/10/14 13:21:44 manu Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.1.1.6 2006/09/09 16:11:31 manu Exp $	*/
 
 /*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
@@ -107,10 +107,12 @@ do { \
 } while (/*CONSTCOND*/0)
 
 static char *str_ipaddr __P((struct sockaddr *));
+static char *str_ipport __P((struct sockaddr *));
 static char *str_prefport __P((u_int, u_int, u_int, u_int));
 static void str_upperspec __P((u_int, u_int, u_int));
 static char *str_time __P((time_t));
 static void str_lifetime_byte __P((struct sadb_lifetime *, char *));
+static void pfkey_sadump1(struct sadb_msg *, int);
 static void pfkey_spdump1(struct sadb_msg *, int);
 
 struct val2str {
@@ -210,9 +212,25 @@ static struct val2str str_alg_comp[] = {
 /*
  * dump SADB_MSG formated.  For debugging, you should use kdebug_sadb().
  */
+
 void
 pfkey_sadump(m)
 	struct sadb_msg *m;
+{
+	pfkey_sadump1(m, 0);
+}
+
+void
+pfkey_sadump_withports(m)
+	struct sadb_msg *m;
+{
+	pfkey_sadump1(m, 1);
+}
+
+void
+pfkey_sadump1(m, withports)
+	struct sadb_msg *m;
+	int withports;
 {
 	caddr_t mhp[SADB_EXT_MAX + 1];
 	struct sadb_sa *m_sa;
@@ -227,6 +245,9 @@ pfkey_sadump(m)
 	struct sadb_ident *m_sid, *m_did;
 	struct sadb_sens *m_sens;
 #endif
+#ifdef SADB_X_EXT_SEC_CTX
+	struct sadb_x_sec_ctx *m_sec_ctx;
+#endif
 #ifdef SADB_X_EXT_NAT_T_TYPE
 	struct sadb_x_nat_t_type *natt_type;
 	struct sadb_x_nat_t_port *natt_sport, *natt_dport;
@@ -234,6 +255,7 @@ pfkey_sadump(m)
 
 	int use_natt = 0;
 #endif
+	struct sockaddr *sa;
 
 	/* check pfkey message. */
 	if (pfkey_align(m, mhp)) {
@@ -262,6 +284,9 @@ pfkey_sadump(m)
 	m_did = (void *)mhp[SADB_EXT_IDENTITY_DST];
 	m_sens = (void *)mhp[SADB_EXT_SENSITIVITY];
 #endif
+#ifdef SADB_X_EXT_SEC_CTX
+	m_sec_ctx = (struct sadb_x_sec_ctx *)mhp[SADB_X_EXT_SEC_CTX];
+#endif
 #ifdef SADB_X_EXT_NAT_T_TYPE
 	natt_type = (void *)mhp[SADB_X_EXT_NAT_T_TYPE];
 	natt_sport = (void *)mhp[SADB_X_EXT_NAT_T_SPORT];
@@ -276,7 +301,11 @@ pfkey_sadump(m)
 		printf("no ADDRESS_SRC extension.\n");
 		return;
 	}
-	printf("%s", str_ipaddr((void *)(m_saddr + 1)));
+	sa = (void *)(m_saddr + 1);
+	if (withports)
+		printf("%s[%s]", str_ipaddr(sa), str_ipport(sa));
+	else
+		printf("%s", str_ipaddr(sa));
 #ifdef SADB_X_EXT_NAT_T_TYPE
 	if (use_natt && natt_sport)
 		printf("[%u]", ntohs(natt_sport->sadb_x_nat_t_port_port));
@@ -288,7 +317,11 @@ pfkey_sadump(m)
 		printf(" no ADDRESS_DST extension.\n");
 		return;
 	}
-	printf("%s", str_ipaddr((void *)(m_daddr + 1)));
+	sa = (void *)(m_daddr + 1);
+	if (withports)
+		printf("%s[%s]", str_ipaddr(sa), str_ipport(sa));
+	else
+		printf("%s", str_ipaddr(sa));
 #ifdef SADB_X_EXT_NAT_T_TYPE
 	if (use_natt && natt_dport)
 		printf("[%u]", ntohs(natt_dport->sadb_x_nat_t_port_port));
@@ -408,6 +441,19 @@ pfkey_sadump(m)
 			0 : m_lfts->sadb_lifetime_allocations));
 	}
 
+#ifdef SADB_X_EXT_SEC_CTX
+	if (m_sec_ctx != NULL) {
+		printf("\tsecurity context doi: %u\n",
+					m_sec_ctx->sadb_x_ctx_doi);
+		printf("\tsecurity context algorithm: %u\n",
+					m_sec_ctx->sadb_x_ctx_alg);
+		printf("\tsecurity context length: %u\n",
+					m_sec_ctx->sadb_x_ctx_len);
+		printf("\tsecurity context: %s\n",
+			(char *)m_sec_ctx + sizeof(struct sadb_x_sec_ctx));
+	}
+#endif
+
 	printf("\tsadb_seq=%lu pid=%lu ",
 		(u_long)m->sadb_msg_seq,
 		(u_long)m->sadb_msg_pid);
@@ -445,6 +491,9 @@ pfkey_spdump1(m, withports)
 #endif
 	struct sadb_x_policy *m_xpl;
 	struct sadb_lifetime *m_lftc = NULL, *m_lfth = NULL;
+#ifdef SADB_X_EXT_SEC_CTX
+	struct sadb_x_sec_ctx *m_sec_ctx;
+#endif
 	struct sockaddr *sa;
 	u_int16_t sport = 0, dport = 0;
 
@@ -467,6 +516,9 @@ pfkey_spdump1(m, withports)
 	m_lftc = (void *)mhp[SADB_EXT_LIFETIME_CURRENT];
 	m_lfth = (void *)mhp[SADB_EXT_LIFETIME_HARD];
 
+#ifdef SADB_X_EXT_SEC_CTX
+	m_sec_ctx = (struct sadb_x_sec_ctx *)mhp[SADB_X_EXT_SEC_CTX];
+#endif
 #ifdef __linux__
 	/* *bsd indicates per-socket policies by omiting src and dst 
 	 * extensions. Linux always includes them, but we can catch it
@@ -571,6 +623,18 @@ pfkey_spdump1(m, withports)
 			(u_long)m_lfth->sadb_lifetime_usetime);
 	}
 
+#ifdef SADB_X_EXT_SEC_CTX
+	if (m_sec_ctx != NULL) {
+		printf("\tsecurity context doi: %u\n",
+					m_sec_ctx->sadb_x_ctx_doi);
+		printf("\tsecurity context algorithm: %u\n",
+					m_sec_ctx->sadb_x_ctx_alg);
+		printf("\tsecurity context length: %u\n",
+					m_sec_ctx->sadb_x_ctx_len);
+		printf("\tsecurity context: %s\n",
+			(char *)m_sec_ctx + sizeof(struct sadb_x_sec_ctx));
+	}
+#endif
 
 	printf("\tspid=%ld seq=%ld pid=%ld\n",
 		(u_long)m_xpl->sadb_x_policy_id,
@@ -601,6 +665,26 @@ str_ipaddr(sa)
 		return buf;
 	return NULL;
 }
+
+/*
+ * set "port" to buffer.
+ */
+static char *
+str_ipport(sa)
+	struct sockaddr *sa;
+{
+	static char buf[NI_MAXHOST];
+	const int niflag = NI_NUMERICSERV;
+
+	if (sa == NULL)
+		return "";
+
+	if (getnameinfo(sa, (socklen_t)sysdep_sa_len(sa), NULL, 0, 
+	    buf, sizeof(buf), niflag) == 0)
+		return buf;
+	return NULL;
+}
+
 
 /*
  * set "/prefix[port number]" to buffer.

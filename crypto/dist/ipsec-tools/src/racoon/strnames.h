@@ -1,6 +1,6 @@
-/*	$NetBSD: strnames.h,v 1.1.1.2 2005/02/23 14:54:28 manu Exp $	*/
+/*	$NetBSD: strnames.h,v 1.1.1.3 2006/09/09 16:12:23 manu Exp $	*/
 
-/* Id: strnames.h,v 1.5 2004/07/12 20:37:13 ludvigm Exp */
+/* Id: strnames.h,v 1.7 2005/04/18 10:04:26 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -72,5 +72,9 @@ extern char *s_doi __P((int));
 extern char *s_etype __P((int));
 extern char *s_idtype __P((int));
 extern char *s_switch __P((int));
+#ifdef ENABLE_HYBRID
+extern char *s_isakmp_cfg_type __P((int));
+extern char *s_isakmp_cfg_ptype __P((int));
+#endif
 
 #endif /* _STRNAMES_H */

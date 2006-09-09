@@ -1,6 +1,6 @@
-/*	$NetBSD: plog.c,v 1.1.1.2 2005/02/23 14:54:24 manu Exp $	*/
+/*	$NetBSD: plog.c,v 1.1.1.3 2006/09/09 16:12:13 manu Exp $	*/
 
-/* Id: plog.c,v 1.6 2004/07/12 20:15:08 ludvigm Exp */
+/* Id: plog.c,v 1.11 2006/06/20 09:57:31 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -85,10 +85,10 @@ static struct plogtags {
 	int priority;
 } ptab[] = {
 	{ "(not defined)",	0, },
-	{ "INFO",		LOG_INFO, },
-	{ "NOTIFY",		LOG_INFO, },
-	{ "WARNING",		LOG_INFO, },
 	{ "ERROR",		LOG_INFO, },
+	{ "WARNING",		LOG_INFO, },
+	{ "NOTIFY",		LOG_INFO, },
+	{ "INFO",		LOG_INFO, },
 	{ "DEBUG",		LOG_DEBUG, },
 	{ "DEBUG2",		LOG_DEBUG, },
 };
@@ -129,6 +129,10 @@ plog_common(pri, fmt, func)
 		snprintf(p, reslen, "%s: %s", func, fmt);
 	else
 		snprintf(p, reslen, "%s", fmt);
+#ifdef BROKEN_PRINTF
+	while ((p = strstr(buf,"%z")) != NULL)
+		p[1] = 'l';
+#endif
 
 	return buf;
 }
@@ -231,6 +235,31 @@ plogset(file)
 {
 	if (logfile != NULL)
 		racoon_free(logfile);
-	logfile = strdup(file);
+	logfile = racoon_strdup(file);
+	STRDUP_FATAL(logfile);
 }
 
+/*
+   Returns a printable string from (possibly) binary data ;
+   concatenates all unprintable chars to one space.
+   XXX Maybe the printable chars range is too large...
+ */
+char*
+binsanitize(binstr, n)
+	char *binstr;
+	size_t n;
+{
+	int p,q;
+	char* d;
+	for (p = 0, q = 0; p < n; p++) {
+                 if (isgraph((int)binstr[p])) {
+			binstr[q++] = binstr[p];
+		} else {
+			if (q && binstr[q - 1] != ' ')
+				 binstr[q++] = ' ';
+		}
+	}
+	binstr[q++] = '\0';
+	return binstr;
+}
+	

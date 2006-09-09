@@ -1,4 +1,4 @@
-/*	$NetBSD: setkey.c,v 1.1.1.3 2005/08/07 08:49:31 manu Exp $	*/
+/*	$NetBSD: setkey.c,v 1.1.1.4 2006/09/09 16:13:02 manu Exp $	*/
 
 /*	$KAME: setkey.c,v 1.36 2003/09/24 23:52:51 itojun Exp $	*/
 
@@ -135,7 +135,7 @@ usage(int only_version)
 		printf("usage: setkey [-v" RK_OPTS "] file ...\n");
 		printf("       setkey [-nv" RK_OPTS "] -c\n");
 		printf("       setkey [-nv" RK_OPTS "] -f filename\n");
-		printf("       setkey [-Palv" RK_OPTS "] -D\n");
+		printf("       setkey [-Palpv" RK_OPTS "] -D\n");
 		printf("       setkey [-Pv] -F\n");
 		printf("       setkey [-H] -x\n");
 		printf("       setkey [-V] [-h]\n");
@@ -570,7 +570,10 @@ postproc(msg, len)
 
 	switch (msg->sadb_msg_type) {
 	case SADB_GET:
-		pfkey_sadump(msg);
+		if (f_withports)
+			pfkey_sadump_withports(msg);
+		else
+			pfkey_sadump(msg);
 		break;
 
 	case SADB_DUMP:
@@ -585,10 +588,15 @@ postproc(msg, len)
 					break;
 			}
 		}
-		if (f_forever)
+		if (f_forever) {
+			/* TODO: f_withports */
 			shortdump(msg);
-		else
-			pfkey_sadump(msg);
+		} else {
+			if (f_withports)
+				pfkey_sadump_withports(msg);
+			else
+				pfkey_sadump(msg);
+		}
 		msg = (struct sadb_msg *)((caddr_t)msg +
 				     PFKEY_UNUNIT64(msg->sadb_msg_len));
 		if (f_verbose) {
