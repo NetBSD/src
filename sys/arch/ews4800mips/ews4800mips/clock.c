@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 2006/09/09 00:14:46 gdamore Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 2006/09/09 03:18:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -34,14 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2006/09/09 00:14:46 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2006/09/09 03:18:00 tsutsui Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>		/* time */
-#include <sys/timetc.h>
 
-#include <mips/locore.h>	/* mips3_cp0_count_read */
 #include <mips/mips3_clock.h>
 
 #include <machine/sbdvar.h>
