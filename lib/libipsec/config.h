@@ -125,7 +125,7 @@
 #define HAVE_SELECT 1
 
 /* sha2 is defined in sha.h */
-/* #undef HAVE_SHA2_IN_SHA_H */
+#define HAVE_SHA2_IN_SHA_H 1
 
 /* Define to 1 if you have the <shadow.h> header file. */
 /* #undef HAVE_SHADOW_H */
