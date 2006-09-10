@@ -1,4 +1,4 @@
-.\"	$NetBSD: lockstat.8,v 1.2 2006/09/07 14:52:38 ad Exp $
+.\"	$NetBSD: lockstat.8,v 1.3 2006/09/10 21:08:56 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,13 +43,13 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl celpst
+.Op Fl b Ar nbuf
 .Op Fl E Ar event
 .Op Fl F Ar func
 .Op Fl L Ar lock
 .Op Fl N Ar nlist
-.Op Fl T Ar type
-.Op Fl b Ar nbuf
 .Op Fl o Ar file
+.Op Fl T Ar type
 .Ar command ...
 .Sh DESCRIPTION
 The
@@ -70,11 +70,22 @@ command may only be used by the root user.
 .Pp
 The options are as follows:
 .Bl -tag -width wellhello
+.It Fl b Ar nbuf
+Adjust the number of trace buffers allocated by the kernel to
+.Ar nbuf .
+.It Fl c
+Report percentage of total events by count, and sort the output by number
+of events.
+The default is to key on event timings.
 .It Fl E Ar event
 Limit tracing to one type of event.
 Use the
 .Fl e
 option to list valid events.
+.It Fl e
+List valid event types for the
+.Fl E
+option and exit.
 .It Fl F Ar func
 Limit tracing to locking operations performed within the specified function.
 .Ar func
@@ -84,28 +95,12 @@ Limit tracing to one lock.
 .Ar lock
 may either be the name of a lock object in the kernel, or a kernel virtual
 address.
+.It Fl l
+Trace only by lock; do not report on calling functions.
 .It Fl N Ar nlist
 Extract symbol information from the
 .Ar nlist
 file.
-.It Fl T Ar type
-Limit tracing to one type of lock.
-Use the
-.Fl t
-option to list valid lock types.
-.It Fl b Ar nbuf
-Adjust the number of trace buffers allocated by the kernel to 
-.Ar nbuf .
-.It Fl c
-Report percentage of total events by count, and sort the output by number
-of events.
-The default is to key on event timings.
-.It Fl e
-List valid event types for the
-.Fl E
-option and exit.
-.It Fl l
-Trace only by lock; do not report on calling functions.
 .It Fl o Ar file
 Send output to the file named by
 .Ar file ,
@@ -121,10 +116,25 @@ Show the average number of events per second, and the average time spent per
 second.
 The accuracy will naturally increase with longer run times.
 The default is to show the total values.
+.It Fl T Ar type
+Limit tracing to one type of lock.
+Use the
+.Fl t
+option to list valid lock types.
 .It Fl t
 List valid lock types for the
 .Fl T
 option and exit.
+.El
+.Sh FILES
+.Bl -tag -width /dev/lockstat -compact
+.It Pa /dev/lockstat
+.Nm
+control device
+.It Pa /dev/ksyms
+default namelist
+.It Pa /netbsd
+namelist
 .El
 .Sh EXAMPLES
 .Bd -literal
@@ -135,7 +145,7 @@ Elapsed time: 10.02s
 
 Total%  Count   Time/ms       Lock                  Caller
 ------ ------- --------- -------------- -------------------------------
-100.00    1576     44.27 kernel_mutex   <all>
+100.00    1576     44.27 kernel_mutex   \*[Lt]all\*[Gt]
  95.71    1493     42.46 kernel_mutex   _kernel_lock+0xd1
   4.29      82      1.80 kernel_mutex   _kernel_lock_acquire_count+0xb0
 .Ed
@@ -156,22 +166,12 @@ option.
 The number of trace buffers is outside the minimum and maximum
 bounds set by the kernel.
 .El
-.Sh FILES
-.Bl -tag -width /dev/lockstat -compact
-.It Pa /dev/lockstat
-.Nm lockstat
-control device
-.It Pa /dev/ksyms
-default namelist
-.It Pa /netbsd
-namelist
-.El
 .Sh SEE ALSO
 .Xr ps 1 ,
-.Xr pstat 1 ,
 .Xr systat 1 ,
 .Xr vmstat 1 ,
-.Xr iostat 8
+.Xr iostat 8 ,
+.Xr pstat 8
 .Sh HISTORY
 The
 .Nm
