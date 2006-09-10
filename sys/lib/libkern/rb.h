@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.6 2006/09/09 06:52:18 matt Exp $ */
+/* $NetBSD: rb.h,v 1.7 2006/09/10 23:57:31 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,38 +43,37 @@
 #include <sys/endian.h>
 
 struct rb_node {
-	struct rb_node *rb_nodes[3];
+	struct rb_node *rb_nodes[2];
 #define	RB_LEFT		0
 #define	RB_RIGHT	1
 #define	RB_OTHER	1
-#define	RB_PARENT	2
 #define	rb_left		rb_nodes[RB_LEFT]
 #define	rb_right	rb_nodes[RB_RIGHT]
-#define	rb_parent	rb_nodes[RB_PARENT]
-	union {
-		struct {
+	struct rb_node *rb_parent;
+	struct rb_properties {
 #if BYTE_ORDER == LITTLE_ENDIAN
-			unsigned int : 28;
-			unsigned int s_root : 1;
-			unsigned int s_position : 1;
-			unsigned int s_color : 1;
-			unsigned int s_sentinel : 1;
+		unsigned long int s_data : 8 * sizeof(unsigned long int) - 5;
+		unsigned long int s_moved : 1;
+		unsigned long int s_root : 1;
+		unsigned long int s_position : 1;
+		unsigned long int s_color : 1;
+		unsigned long int s_sentinel : 1;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-			unsigned int s_sentinel : 1;
-			unsigned int s_color : 1;
-			unsigned int s_position : 1;
-			unsigned int s_root : 1;
-			unsigned int : 28;
+		unsigned long int s_sentinel : 1;
+		unsigned long int s_color : 1;
+		unsigned long int s_position : 1;
+		unsigned long int s_root : 1;
+		unsigned long int s_moved : 1;
+		unsigned long int s_data : 8 * sizeof(unsigned long int) - 5;
 #endif
-		} u_s;
-		unsigned int u_i;
-	} rb_u;
-#define	rb_root				rb_u.u_s.s_root
-#define	rb_position			rb_u.u_s.s_position
-#define	rb_color			rb_u.u_s.s_color
-#define	rb_sentinel			rb_u.u_s.s_sentinel
-#define	rb_properties			rb_u.u_i
+	} rb_info;
+#define	rb_moved			rb_info.s_moved
+#define	rb_root				rb_info.s_root
+#define	rb_position			rb_info.s_position
+#define	rb_color			rb_info.s_color
+#define	rb_sentinel			rb_info.s_sentinel
+#define	rb_data				rb_info.s_data
 #define	RB_SENTINEL_P(rb)		((rb)->rb_sentinel + 0)
 #define	RB_LEFT_SENTINEL_P(rb)		((rb)->rb_left->rb_sentinel + 0)
 #define	RB_RIGHT_SENTINEL_P(rb)		((rb)->rb_right->rb_sentinel + 0)
@@ -86,9 +85,29 @@ struct rb_node {
 #define	RB_ROOT_P(rb)			((rb)->rb_root != false)
 #define	RB_RED_P(rb)			((rb)->rb_color + 0)
 #define	RB_BLACK_P(rb)			(!(rb)->rb_color)
+#define	RB_MOVED_P(rb)			((rb)->rb_moved + 0)
+#ifdef RBSMALL
+#define	RB_MARK_UNMOVED(rb)		((void)0)
+#define	RB_MARK_MOVED(rb)		((void)0)
+#else
+#define	RB_MARK_UNMOVED(rb)		((void)((rb)->rb_moved = 0))
+#define	RB_MARK_MOVED(rb)		((void)((rb)->rb_moved = 1))
+#endif
 #define	RB_MARK_RED(rb)			((void)((rb)->rb_color = 1))
 #define	RB_MARK_BLACK(rb)		((void)((rb)->rb_color = 0))
+#define	RB_INVERT_COLOR(rb)		((void)((rb)->rb_color ^= 1))
 #define	RB_MARK_ROOT(rb)		((void)((rb)->rb_root = 1))
+#define	RB_MARK_NONROOT(rb)		((void)((rb)->rb_root = 0))
+#define	RB_ZERO_PROPERTIES(rb)		((void)((rb)->rb_sentinel = 0, \
+						(rb)->rb_color = 0, \
+						(rb)->rb_position = 0, \
+						(rb)->rb_root = 0, \
+						(rb)->rb_moved = 0))
+#define	RB_COPY_PROPERTIES(dst, src)	\
+		((void)((dst)->rb_color = (src)->rb_color, \
+			(dst)->rb_position = (src)->rb_position, \
+			(dst)->rb_root = (src)->rb_root, \
+			(dst)->rb_moved = (src)->rb_moved))
 #ifdef RBDEBUG
 	TAILQ_ENTRY(rb_node) rb_link;
 #endif
@@ -158,7 +177,7 @@ struct rb_node	*
 	rb_tree_find_node_leq(struct rb_tree *, const void *);
 void	rb_tree_remove_node(struct rb_tree *, struct rb_node *);
 struct rb_node *
-	rb_tree_iterate(struct rb_tree *, struct rb_node *, unsigned int);
+	rb_tree_iterate(struct rb_tree *, struct rb_node *, const unsigned int);
 #ifdef RBDEBUG
 void	rb_tree_check(const struct rb_tree *, bool);
 #endif
