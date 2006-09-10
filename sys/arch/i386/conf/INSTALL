@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.288 2006/08/26 20:26:45 christos Exp $
+#	$NetBSD: INSTALL,v 1.289 2006/09/10 02:28:33 riz Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -523,6 +523,8 @@ gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 #iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
+msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
