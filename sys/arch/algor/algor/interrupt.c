@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.9 2006/09/05 01:33:24 gdamore Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.10 2006/09/10 14:27:38 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.9 2006/09/05 01:33:24 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.10 2006/09/10 14:27:38 tsutsui Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -145,11 +145,15 @@ intr_init(void)
 void
 cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
+	struct clockframe cf;
+
 	uvmexp.intrs++;
 
 	if (ipending & MIPS_INT_MASK_5) {
 
-		mips3_clockintr(status, pc);
+		cf.pc = pc;
+		cf.sr = status;
+		mips3_clockintr(&cf);
 
 		/* Re-enable clock interrupts. */
 		cause &= ~MIPS_INT_MASK_5;
