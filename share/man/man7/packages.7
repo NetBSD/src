@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.93 2006/09/10 22:32:28 wiz Exp $
+.\"	$NetBSD: packages.7,v 1.94 2006/09/10 22:34:31 wiz Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -367,29 +367,6 @@ or
 Do not set this to
 .Dq update
 or you will get stuck in an endless loop!
-.El
-.Sh INSTALL VARIABLES
-This section documents variables that serve as convenient aliases.
-for your *-install targets.
-.Bl -tag -offset indent -width XXXXXXXX
-.It INSTALL_PROGRAM
-A command to install binary executables.
-Use these like:
-.Dq ${INSTALL_PROGRAM} ${WRKSRC}/prog ${PREFIX}/bin .
-.It INSTALL_SCRIPT
-A command to install executable scripts.
-.It INSTALL_DATA
-A command to install sharable data.
-.It INSTALL_MAN
-A command to install man pages (doesn't compress).
-.It INSTALL_PROGRAM_DIR
-Create a directory for storing programs.
-.It INSTALL_SCRIPT_DIR
-Create a directory for storing scripts.
-.It INSTALL_DATA_DIR
-Create a directory for storing arbitrary data.
-.It INSTALL_MAN_DIR
-Create a directory for storing man pages.
 .El
 .Sh MANUAL PAGE VARIABLES
 This section documents variables used to configure the way manual pages
