@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72 2006/09/07 03:38:54 gdamore Exp $	*/
+/*	$NetBSD: machdep.c,v 1.73 2006/09/10 06:41:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2006/09/07 03:38:54 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2006/09/10 06:41:09 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -86,8 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2006/09/07 03:38:54 gdamore Exp $")
 
 #include <dev/ic/i8259reg.h>
 #include <dev/isa/isareg.h>
-
-#include <cobalt/cobalt/clockvar.h>
 
 #include <cobalt/dev/gtreg.h>
 #define GT_BASE		0x14000000	/* XXX */
@@ -126,9 +124,6 @@ int	bootunit = -1;
 int	bootpart = -1;
 
 int cpuspeed;
-
-struct evcnt hardclock_ev =
-    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "cpu", "hardclock");
 
 u_int cobalt_id;
 static const char * const cobalt_model[] =
@@ -668,7 +663,9 @@ cpu_intr_disestablish(void *cookie)
 void
 cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
+#if 0
 	struct clockframe cf;
+#endif
 	struct cobalt_intrhand *ih;
 
 	uvmexp.intrs++;
@@ -683,13 +680,14 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	_splset((status & MIPS_INT_MASK_5) | MIPS_SR_INT_IE);
 
 	if (ipending & MIPS_INT_MASK_0) {
-		/* GT64x11 timer0 for hardclock */
+		/* GT64x11 timer0 */
 		volatile uint32_t *irq_src =
 		    (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_INTR_CAUSE);
 
 		if (__predict_true((*irq_src & T0EXP) != 0)) {
 			*irq_src = 0;
 
+#if 0	/* GT64x11 timer is no longer used for hardclock(9) */
 			cf.pc = pc;
 			cf.sr = status;
 
@@ -718,6 +716,7 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 			}
 			hardclock(&cf);
 			hardclock_ev.ev_count++;
+#endif
 		}
 		cause &= ~MIPS_INT_MASK_0;
 	}
