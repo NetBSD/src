@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.65 2006/09/07 14:23:44 itohy Exp $
+# $NetBSD: GENERIC,v 1.66 2006/09/10 19:49:28 plunky Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.65 $"
+#ident 		"GENERIC-$Revision: 1.66 $"
 
 maxusers	64
 
@@ -774,6 +774,32 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 # PCMCIA audio devices
 #esl*	at pcmcia? function ?			# ESS 1688 AudioDrive UT
+
+#### Bluetooth Controller and Device support
+
+## Bluetooth PCMCIA Controllers
+#bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+
+## Bluetooth USB Controllers
+ubt* at uhub? port ? configuration ? interface ?
+
+## Bluetooth Device Hub
+#bthub* at bt3c?
+bthub* at ubt?
+
+## Bluetooth HID support
+bthidev* at bthub?
+
+## Bluetooth Mouse
+btms* at bthidev? reportid ?
+wsmouse* at btms? mux 0
+
+## Bluetooth Keyboard
+btkbd* at bthidev? reportid ?
+wskbd* at btkbd? console ? mux 1
+
+## Bluetooth Audio support
+btsco* at bthub?
 
 #### Audio and video devices
 

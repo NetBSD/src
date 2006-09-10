@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.101 2006/07/10 17:54:08 gdamore Exp $
+#	$NetBSD: files.sparc64,v 1.102 2006/09/10 19:49:28 plunky Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -206,6 +206,9 @@ include "dev/wsfont/files.wsfont"
 
 # USB Support
 include "dev/usb/files.usb"
+
+# Bluetooth Support
+include "dev/bluetooth/files.bluetooth"
 
 # IEEE1394 Support
 include "dev/ieee1394/files.ieee1394"
