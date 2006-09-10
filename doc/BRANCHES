@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.92 2006/09/10 08:12:58 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.93 2006/09/10 08:56:54 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -398,7 +398,7 @@ Description:	play with page replacement policy
 Status:		Active
 Start Date:	Sun Mar  5 2006
 End Date:	
-Base Tag:	yamt-pdpolicy-base7
+Base Tag:	yamt-pdpolicy-base8
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
