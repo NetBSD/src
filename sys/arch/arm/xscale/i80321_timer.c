@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_timer.c,v 1.13 2005/12/24 20:06:52 perry Exp $	*/
+/*	$NetBSD: i80321_timer.c,v 1.14 2006/09/10 18:57:02 gdamore Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.13 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.14 2006/09/10 18:57:02 gdamore Exp $");
 
 #include "opt_perfctrs.h"
 #include "opt_i80321.h"
@@ -320,6 +320,7 @@ delay(u_int n)
 	}
 }
 
+#ifndef __HAVE_GENERIC_TODR
 todr_chip_handle_t todr_handle;
 
 /*
@@ -406,6 +407,7 @@ resettodr(void)
 	    todr_settime(todr_handle, &time) != 0)
 		printf("resettodr: failed to set time\n");
 }
+#endif
 
 /*
  * clockhandler:
