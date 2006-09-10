@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.11 2006/09/07 15:48:14 simonb Exp $ */
+/* $NetBSD: kern_tc.c,v 1.12 2006/09/10 08:09:46 tsutsui Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.11 2006/09/07 15:48:14 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.12 2006/09/10 08:09:46 tsutsui Exp $");
 
 #include "opt_ntp.h"
 
@@ -455,17 +455,18 @@ tc_init(struct timecounter *tc)
 	 * worse since this timecounter may not be monotonous.
 	 */
 	if (tc->tc_quality < 0)
-		return;
+		goto out;
 	if (tc->tc_quality < timecounter->tc_quality)
-		return;
+		goto out;
 	if (tc->tc_quality == timecounter->tc_quality &&
 	    tc->tc_frequency < timecounter->tc_frequency)
-		return;
+		goto out;
 	(void)tc->tc_get_timecount(tc);
 	(void)tc->tc_get_timecount(tc);
 	timecounter = tc;
 	tc_windup();
 
+ out:
 	splx(s);
 }
 
