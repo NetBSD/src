@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.162 2006/09/03 21:39:29 christos Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.163 2006/09/10 06:35:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.162 2006/09/03 21:39:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.163 2006/09/10 06:35:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,6 +126,7 @@ static void *bufpool_page_alloc(struct pool *, int);
 static void bufpool_page_free(struct pool *, void *);
 static inline struct buf *bio_doread(struct vnode *, daddr_t, int,
     kauth_cred_t, int);
+static struct buf *getnewbuf(int, int, int);
 static int buf_lotsfree(void);
 static int buf_canrelease(void);
 static inline u_long buf_mempoolidx(u_long);
