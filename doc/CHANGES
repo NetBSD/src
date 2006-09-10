@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.689 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.690 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -31,29 +31,30 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		done by NONAKA Kimihiro <nonaka@NetBSD.org>.
 		[uwe 20060901]
 	evbmips: Add timecounter support. [gdamore 20060901]
+	todr(9): New machine independent time-of-day chip framework for
+		drivers, which provides uniform handling across all ports.
+		Not all ports have adopted it yet.  [gdamore 20060902]
 	sun2: Add timecounter support. [gdamore 20060903]
 	sysinst: Besides full and custom installation, there's now also a
 		minimal installation consisting of just a kernel, base and
 		etc sets. [hubertf 20060904]
 	tcp: Add support for Explicit Congestion Notification as defined
 		in RFC 3168. Sponsored by Google SoC. [rpaulo 20060905]
-	prep: Convert prep to MI todr driver. [garbled 20060905]
+	prep: Convert prep to MI todr(9) driver. [garbled 20060905]
+	sun3: Add timecounter support. [gdamore 20060905]
+	cesfic: Add timecounter support. [gdamore 20060906]
 	scan_ffs(8): Add -F file support. Useful to search for partitions
 		on disk images. [xtraeme 20060907]
 	prep: Add support for the IBM 7025-F40. [garbled 20060907]
 	lockstat(8): Add the lockstat command: displays a summary of kernel
 		locking events recorded over the lifetime of a called program.
 		[ad 20060907]
+	cobalt: Add timecounter support. [gdamore 20060907]
 	njata(4): Add driver for Workbit NinjaATA-32 busmastering PIO IDE
 		controller. [itohy 20060907]
-	cesfic: Add timecounter support. [gdamore 20060907]
-	cobalt: Add timecounter support. [gdamore 20060907]
-	sun3: Add timecounter support. [gdamore 20060907]
-	arc: Add timecounter support. [gdamore 20060908]
-	ews4800mips: Add timecounter support. [gdamore 20060908]
+	ews4800mips: Add timecounter support. [gdamore 20060909]
+	arc: Add timecounter support. [gdamore 20060909]
 	news68k: Add timecounter support. From gdamore. [tsutsui 20060909]
-	evbsh5: Add timecounter support.  [gdamore 20060909]
-	todr(9): New machine independent time-of-day chip framework for
-		drivers, which provides uniform handling across all ports.
-		Not all ports have adopted it yet.  [gdamore 20060909]
 	msk(4): Driver for Marvell Yukon 2 Gigabit Ethernet. [riz 20060909]
+	evbsh5: Add timecounter support.  [gdamore 20060909]
+	hp300: Add timecounter support.  [tsutsui 20060909]
