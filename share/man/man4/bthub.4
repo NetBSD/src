@@ -1,4 +1,4 @@
-.\" $NetBSD: btdev.4,v 1.5 2006/08/20 09:40:26 wiz Exp $
+.\" $NetBSD: bthub.4,v 1.3 2006/09/10 15:45:56 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -29,35 +29,39 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 20, 2006
-.Dt BTDEV 4
+.Dd September 9, 2006
+.Dt BTHUB 4
 .Os
 .Sh NAME
-.Nm btdev
-.Nd Bluetooth Remote Device
+.Nm bthub
+.Nd Bluetooth Remote Device Hub
 .Sh SYNOPSIS
-.Cd "pseudo-device btdev"
+.Cd "bthub* at bt3c?"
+.Cd "bthub* at ubt?"
 .Pp
-.Cd "bthidev* at btdev?"
-.Cd "btsco* at btdev?"
+.Cd "bthidev* at bthub?"
+.Cd "btsco* at bthub?"
 .Sh DESCRIPTION
 The
 .Nm
-pseudo-device is used to attach remote Bluetooth devices to the system.
+device is used to attach remote Bluetooth devices to the system, and
+will attach to Bluetooth controllers as they are enabled.
 .Sh CONFIGURATION
-Normally, Bluetooth Remote Devices will be configured using the
+Normally, Bluetooth Remote Devices will be configured on the
+.Nm
+using the
 .Xr btdevctl 8
 program, which passes a
 .Xr proplib 3
-dictionary to the appropriate control file
-.Pa /dev/btdevN
-with the following
+dictionary to the control file
+.Pa /dev/bthub
+with the
+.Dv BTDEV_ATTACH
+and
+.Dv BTDEV_DETACH
 .Xr ioctl 2
-calls:
+commands.
 .Pp
-.Bl -tag -width XX -compact
-.It Cm BTDEV_ATTACH
-Attach Bluetooth Device.
 The following properties are used by
 .Nm :
 .Pp
@@ -71,7 +75,7 @@ This required property should be a six byte data blob.
 .It device-type
 Device type.
 This required property should be a string indicating the
-device type to attach, and may be one of the following:
+device type, and may be one of the following:
 .Pp
 .Bl -tag -compact
 .It bthidev
@@ -86,13 +90,9 @@ SCO Audio Device, see
 Properties used by the configured device are listed in the appropriate device
 manual page.
 .Pp
-.It Cm BTHID_DETACH
-Detach Bluetooth Device. Currently no properties are used.
-.Pp
-.El
 .Sh FILES
 .Bl -tag -compact
-.It Pa /dev/btdevN
+.It Pa /dev/bthub
 .El
 .Sh SEE ALSO
 .Xr bluetooth 4 ,

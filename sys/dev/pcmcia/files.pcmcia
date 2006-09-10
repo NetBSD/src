@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.50 2006/06/21 17:14:13 drochner Exp $
+#	$NetBSD: files.pcmcia,v 1.51 2006/09/10 15:45:56 plunky Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -142,6 +142,6 @@ attach	opl at esl with opl_esl
 file	dev/pcmcia/opl_esl.c			opl_esl
 
 # 3Com Bluetooth controller 3CRW6096
-device	bt3c: bluetooth, firmload
+device	bt3c: btbus, bluetooth, firmload
 attach	bt3c at pcmcia
 file	dev/pcmcia/bt3c.c			bt3c		needs-flag

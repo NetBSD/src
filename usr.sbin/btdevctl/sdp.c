@@ -1,4 +1,4 @@
-/*	$NetBSD: cfg.c,v 1.3 2006/08/27 11:41:58 plunky Exp $	*/
+/*	$NetBSD: sdp.c,v 1.1 2006/09/10 15:45:56 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -52,27 +52,26 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id: cfg.c,v 1.3 2006/08/27 11:41:58 plunky Exp $
- * $FreeBSD: src/usr.sbin/bluetooth/bthidcontrol/sdp.c,v 1.2 2006/02/10 19:54:17 markus Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cfg.c,v 1.3 2006/08/27 11:41:58 plunky Exp $");
+__RCSID("$NetBSD: sdp.c,v 1.1 2006/09/10 15:45:56 plunky Exp $");
+
+#include <sys/types.h>
 
 #include <dev/bluetooth/btdev.h>
+#include <dev/bluetooth/bthidev.h>
+#include <dev/bluetooth/btsco.h>
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
+
 #include <prop/proplib.h>
 
 #include <bluetooth.h>
 #include <err.h>
 #include <errno.h>
 #include <sdp.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 #include <usbhid.h>
 
 #include "btdevctl.h"
@@ -84,7 +83,7 @@ static int32_t parse_boolean(sdp_attr_t *);
 
 static int config_hid(prop_dictionary_t);
 static int config_hset(prop_dictionary_t);
-static int config_hfp(prop_dictionary_t);
+static int config_hf(prop_dictionary_t);
 
 uint16_t hid_services[] = {
 	SDP_SERVICE_CLASS_HUMAN_INTERFACE_DEVICE
@@ -112,11 +111,11 @@ uint32_t hset_attrs[] = {
 			SDP_ATTR_PROTOCOL_DESCRIPTOR_LIST),
 };
 
-uint16_t hfp_services[] = {
+uint16_t hf_services[] = {
 	SDP_SERVICE_CLASS_HANDSFREE_AUDIO_GATEWAY
 };
 
-uint32_t hfp_attrs[] = {
+uint32_t hf_attrs[] = {
 	SDP_ATTR_RANGE(	SDP_ATTR_PROTOCOL_DESCRIPTOR_LIST,
 			SDP_ATTR_PROTOCOL_DESCRIPTOR_LIST),
 };
@@ -124,13 +123,13 @@ uint32_t hfp_attrs[] = {
 #define NUM(v)		(sizeof(v) / sizeof(v[0]))
 
 static struct {
-	const char	*name;
-	int		(*handler)(prop_dictionary_t);
-	const char	*description;
-	uint16_t	*services;
-	int		nservices;
-	uint32_t	*attrs;
-	int		nattrs;
+	const char		*name;
+	int			(*handler)(prop_dictionary_t);
+	const char		*description;
+	uint16_t		*services;
+	int			nservices;
+	uint32_t		*attrs;
+	int			nattrs;
 } cfgtype[] = {
     {
 	"HID",		config_hid,	"Human Interface Device",
@@ -143,103 +142,25 @@ static struct {
 	hset_attrs,	NUM(hset_attrs),
     },
     {
-	"HFP",		config_hfp,	"Hands Free Profile",
-	hfp_services,	NUM(hfp_services),
-	hfp_attrs,	NUM(hfp_attrs),
+	"HF",		config_hf,	"Handsfree",
+	hf_services,	NUM(hf_services),
+	hf_attrs,	NUM(hf_attrs),
     },
 };
 
 static sdp_attr_t	values[8];
 static uint8_t		buffer[NUM(values)][512];
 
-int
-cfg_print(int ac, char **av)
+prop_dictionary_t
+cfg_query(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 {
-	prop_dictionary_t cfg, dev;
-	char *xml;
+	prop_dictionary_t dict;
+	void *ss;
+	int rv, i;
 
-	cfg = read_config();
-	if (cfg == NULL)
-		return EXIT_FAILURE;
-
-	dev = prop_dictionary_get(cfg, control_file);
-	if (dev == NULL)
-		errx(EXIT_FAILURE, "%s not found", control_file);
-
-	if (prop_object_type(dev) != PROP_TYPE_DICTIONARY)
-		errx(EXIT_FAILURE, "%s invalid config", control_file);
-
-	xml = prop_dictionary_externalize(dev);
-	if (xml == NULL)
-		err(EXIT_FAILURE, "prop_dictionary_externalize");
-
-	printf("%s", xml);
-
-	free(xml);
-	prop_object_release(cfg);
-	return EXIT_SUCCESS;
-}
-
-int
-cfg_query(int ac, char **av)
-{
-	bdaddr_t		 laddr, raddr;
-	prop_dictionary_t	 cfg, dev;
-	prop_object_t		 obj;
-	void			*ss;
-	char			*service;
-	int			 rv, i, ch;
-
-	bdaddr_copy(&laddr, BDADDR_ANY);
-	bdaddr_copy(&raddr, BDADDR_ANY);
-	service = NULL;
-
-	while ((ch = getopt(ac, av, "a:d:s:")) != -1) {
-		switch (ch) {
-		case 'a': /* remote address */
-			if (!bt_aton(optarg, &raddr)) {
-				struct hostent  *he = NULL;
-
-				if ((he = bt_gethostbyname(optarg)) == NULL)
-					errx(EXIT_FAILURE, "%s: %s",
-						optarg, hstrerror(h_errno));
-
-				bdaddr_copy(&raddr, (bdaddr_t *)he->h_addr);
-			}
-			break;
-
-		case 'd': /* local device address */
-			if (!bt_devaddr(optarg, &laddr))
-				err(EXIT_FAILURE, "%s", optarg);
-
-			break;
-
-		case 's': /* service */
-			service = optarg;
-			break;
-
-		default:
-			err(EXIT_FAILURE, "unknown option -%c", ch);
-		}
-	}
-
-	if (bdaddr_any(&raddr))
-		errx(EXIT_FAILURE, "must specify remote device address");
-
-	if (service == NULL)
-		errx(EXIT_FAILURE, "must specify service to configure");
-
-	dev = prop_dictionary_create();
-	if (dev == NULL)
-		err(EXIT_FAILURE, "prop_dictinary_create");
-
-	obj = prop_data_create_data_nocopy(&laddr, sizeof(laddr));
-	if (obj == NULL || !prop_dictionary_set(dev, "local-bdaddr", obj))
-		err(EXIT_FAILURE, "proplib");;
-
-	obj = prop_data_create_data_nocopy(&raddr, sizeof(raddr));
-	if (obj == NULL || !prop_dictionary_set(dev, "remote-bdaddr", obj))
-		err(EXIT_FAILURE, "proplib");;
+	dict = prop_dictionary_create();
+	if (dict == NULL)
+		return NULL;
 
 	for (i = 0 ; i < NUM(values) ; i++) {
 		values[i].flags = SDP_ATTR_INVALID;
@@ -250,10 +171,10 @@ cfg_query(int ac, char **av)
 
 	for (i = 0 ; i < NUM(cfgtype) ; i++) {
 		if (strcasecmp(service, cfgtype[i].name) == 0) {
-			ss = sdp_open(&laddr, &raddr);
+			ss = sdp_open(laddr, raddr);
 
 			if (ss == NULL || (errno = sdp_error(ss)) != 0)
-				err(EXIT_FAILURE, "sdp_open");
+				return NULL;
 
 			rv = sdp_search(ss,
 				cfgtype[i].nservices, cfgtype[i].services,
@@ -262,29 +183,15 @@ cfg_query(int ac, char **av)
 
 			if (rv != 0) {
 				errno = sdp_error(ss);
-				err(EXIT_FAILURE, "sdp_search");
+				return NULL;
 			}
 			sdp_close(ss);
 
-			rv = (*cfgtype[i].handler)(dev);
+			rv = (*cfgtype[i].handler)(dict);
 			if (rv != 0)
-				errx(EXIT_FAILURE, "%s: %s", cfgtype[i].name, strerror(rv));
+				return NULL;
 
-			cfg = read_config();
-			if (cfg == NULL && errno == ENOENT)
-				cfg = prop_dictionary_create();
-
-			if (cfg == NULL)
-				err(EXIT_FAILURE, "%s", config_file);
-
-			if (!prop_dictionary_set(cfg, control_file, dev))
-				err(EXIT_FAILURE, "prop_dictionary_set");
-
-			if (!write_config(cfg))
-				err(EXIT_FAILURE, "%s", config_file);
-
-			prop_object_release(cfg);
-			return EXIT_SUCCESS;
+			return dict;
 		}
 	}
 
@@ -292,29 +199,7 @@ cfg_query(int ac, char **av)
 	for (i = 0 ; i < NUM(cfgtype) ; i++)
 		printf("\t%s\t%s\n", cfgtype[i].name, cfgtype[i].description);
 
-	return EXIT_FAILURE;
-}
-
-int
-cfg_remove(int ac, char **av)
-{
-	prop_dictionary_t cfg, dev;
-
-	cfg = read_config();
-	if (cfg == NULL)
-		return EXIT_FAILURE;
-
-	dev = prop_dictionary_get(cfg, control_file);
-	if (dev == NULL)
-		errx(EXIT_FAILURE, "%s not found", control_file);
-
-	prop_dictionary_remove(cfg, control_file);
-
-	if (!write_config(cfg))
-		err(EXIT_FAILURE, "%s", config_file);
-
-	prop_object_release(cfg);
-	return EXIT_SUCCESS;
+	exit(EXIT_FAILURE);
 }
 
 /*
@@ -380,24 +265,24 @@ config_hid(prop_dictionary_t dict)
 		return ENOATTR;
 
 	obj = prop_string_create_cstring_nocopy("bthidev");
-	if (obj == NULL || !prop_dictionary_set(dict, "device-type", obj))
+	if (obj == NULL || !prop_dictionary_set(dict, BTDEVtype, obj))
 		return errno;
 
 	obj = prop_number_create_integer(control_psm);
-	if (obj == NULL || !prop_dictionary_set(dict, "control-psm", obj))
+	if (obj == NULL || !prop_dictionary_set(dict, BTHIDEVcontrolpsm, obj))
 		return errno;
 
 	obj = prop_number_create_integer(interrupt_psm);
-	if (obj == NULL || !prop_dictionary_set(dict, "interrupt-psm", obj))
+	if (obj == NULL || !prop_dictionary_set(dict, BTHIDEVinterruptpsm, obj))
 		return errno;
 
 	obj = prop_data_create_data(hid_descriptor, hid_length);
-	if (obj == NULL || !prop_dictionary_set(dict, "descriptor", obj))
+	if (obj == NULL || !prop_dictionary_set(dict, BTHIDEVdescriptor, obj))
 		return errno;
 
 	if (!reconnect_initiate) {
 		obj = prop_bool_create(TRUE);
-		if (obj == NULL || !prop_dictionary_set(dict, "reconnect", obj))
+		if (obj == NULL || !prop_dictionary_set(dict, BTHIDEVreconnect, obj))
 			return errno;
 	}
 
@@ -431,21 +316,21 @@ config_hset(prop_dictionary_t dict)
 		return ENOATTR;
 
 	obj = prop_string_create_cstring_nocopy("btsco");
-	if (obj == NULL || !prop_dictionary_set(dict, "device-type", obj))
+	if (obj == NULL || !prop_dictionary_set(dict, BTDEVtype, obj))
 		return errno;
 
 	obj = prop_number_create_integer(channel);
-	if (obj == NULL || !prop_dictionary_set(dict, "rfcomm-channel", obj))
+	if (obj == NULL || !prop_dictionary_set(dict, BTSCOchannel, obj))
 		return errno;
 
 	return 0;
 }
 
 /*
- * Configure HFP results
+ * Configure HF results
  */
 static int
-config_hfp(prop_dictionary_t dict)
+config_hf(prop_dictionary_t dict)
 {
 	prop_object_t obj;
 	uint32_t channel;
@@ -468,15 +353,15 @@ config_hfp(prop_dictionary_t dict)
 		return ENOATTR;
 
 	obj = prop_string_create_cstring_nocopy("btsco");
-	if (obj == NULL || !prop_dictionary_set(dict, "device-type", obj))
+	if (obj == NULL || !prop_dictionary_set(dict, BTDEVtype, obj))
 		return errno;
 
 	obj = prop_bool_create(TRUE);
-	if (obj == NULL || !prop_dictionary_set(dict, "listen", obj))
+	if (obj == NULL || !prop_dictionary_set(dict, BTSCOlisten, obj))
 		return errno;
 
 	obj = prop_number_create_integer(channel);
-	if (obj == NULL || !prop_dictionary_set(dict, "rfcomm-channel", obj))
+	if (obj == NULL || !prop_dictionary_set(dict, BTSCOchannel, obj))
 		return errno;
 
 	return 0;
