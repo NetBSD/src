@@ -1,4 +1,4 @@
-.\"	$NetBSD: njata.4,v 1.1 2006/09/07 14:22:08 itohy Exp $
+.\"	$NetBSD: njata.4,v 1.2 2006/09/10 21:53:36 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,11 +53,11 @@ Workbit Bus-Master CardBus IDE controller chips:
 .It NinjaATA-32Bi
 CardBus / PCMCIA dual mode IDE controller
 .Pq Dq DuoATA .
-This controller is mainly used for portable drives's equipment.
+This controller is mainly used for portable drives.
 This driver supports the CardBus mode.
 .It NPATA-32
 CardBus IDE controller.
-This controller is widely used for CardBus CompactFlash adapter.
+This controller is widely used for CardBus CompactFlash adapters.
 .El
 .Pp
 These controllers are capable of bus-mastering
@@ -71,16 +71,15 @@ compared with usual PIO transfer.
 .Sh CONFIGURATION
 The optional flags parameter is the
 .Dq wait
-value for ATA transfer.
+value for ATA transfers.
 Some combinations of host and device may fail without flags parameter or
-.Tn flags 0 ,
-in which case try the wait value
-between
+.Tn flags 0 .
+In this case try wait values between
 .Tn flags 1
 and
 .Tn flags 3 .
-The smaller wait value should be faster.
-Too long wait may cause DMA error.
+Smaller wait values should be faster.
+Too long waits may cause DMA error.
 .Sh SEE ALSO
 .Xr ata 4 ,
 .Xr atapi 4 ,
