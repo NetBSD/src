@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.93 2006/09/10 08:56:54 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.94 2006/09/10 23:37:44 ad Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -304,6 +304,21 @@ Scope:		Kernel
 Notes:		The goal is to replace the existing lockmgr() and
 		simple_lock() based locking mechanisms with the
 		primitives found in Solaris: mutexes and rwlocks.
+
+Branch:		newlock2
+Description:	New locking primitives, based on Solaris's
+Status:		Active
+Start Date:	September 9, 2006
+End Date:
+Base Tag:	newlock2-base
+Maintainer:	Andrew Doran <ad@NetBSD.org>
+Scope:		Kernel
+Notes:		As per the newlock branch, however given the amount of time
+		the original branch has lain dormant, a new one has been
+		created. Goals:
+		- Implement new locking primatives on most-used ports.
+		- Minor locking improvements.
+		- Remove spinlockmgr().
 
 Branch:		peter-altq
 Description:	New ALTQ framework:
