@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.1 2006/08/13 09:03:23 plunky Exp $
+# $NetBSD: Makefile,v 1.2 2006/09/10 15:45:56 plunky Exp $
 
 PROG=		btdevctl
 MAN=		btdevctl.8
-SRCS=		btdevctl.c cfg.c dev.c hid.c
+SRCS=		btdevctl.c db.c print.c sdp.c
 
 DPADD+=		${LIBBLUETOOTH} ${LIBPROP} ${LIBSDP} ${LIBUSBHID}
 LDADD+=		-lbluetooth -lprop -lsdp -lusbhid

@@ -1,4 +1,4 @@
-/*	$NetBSD: btdevctl.c,v 1.1 2006/08/13 09:03:23 plunky Exp $	*/
+/*	$NetBSD: btdevctl.c,v 1.2 2006/09/10 15:45:56 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,134 +34,191 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: btdevctl.c,v 1.1 2006/08/13 09:03:23 plunky Exp $");
+__RCSID("$NetBSD: btdevctl.c,v 1.2 2006/09/10 15:45:56 plunky Exp $");
 
 #include <prop/proplib.h>
+#include <sys/ioctl.h>
 
+#include <bluetooth.h>
+#include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#include <dev/bluetooth/btdev.h>
+
 #include "btdevctl.h"
 
-const char *config_file = "/var/db/btdev.xml";
-const char *control_file = NULL;
+#define BTHUB_PATH		"/dev/bthub"
 
-struct command {
-	const char	*command;
-	int		(*handler)(int, char **);
-	const char	*description;
-} commands[] = {
-	{ "Attach",	dev_attach,	"attach device"		},
-	{ "Detach",	dev_detach,	"detach device"		},
-	{ "Parse",	hid_parse,	"parse HID descriptor"	},
-	{ "Print",	cfg_print,	"print config entry"	},
-	{ "Query",	cfg_query,	"make config entry"	},
-	{ "Remove",	cfg_remove,	"remove config entry"	},
-	{ NULL }
-};
-
-static void
-usage(void)
-{
-	struct command *cmd;
-
-	fprintf(stderr, "Usage: %s <btdev> <command> [parameters]\n"
-			"Commands:\n",
-			getprogname());
-
-	for (cmd = commands ; cmd->command != NULL ; cmd++)
-		fprintf(stderr, "\t%-13s%s\n", cmd->command, cmd->description);
-
-	exit(EXIT_FAILURE);
-}
+int main(int, char *[]);
+void usage(void);
+char *uppercase(const char *);
+int bthub_pioctl(unsigned long, prop_dictionary_t);
 
 int
 main(int argc, char *argv[])
 {
-	struct command *cmd;
+	prop_dictionary_t dev;
+	prop_object_t obj;
+	bdaddr_t laddr, raddr;
+	const char *service;
+	int ch, query, verbose, attach, detach;
 
-	if (argc < 3)
+	bdaddr_copy(&laddr, BDADDR_ANY);
+	bdaddr_copy(&raddr, BDADDR_ANY);
+	service = NULL;
+	query = FALSE;
+	verbose = FALSE;
+	attach = FALSE;
+	detach = FALSE;
+
+	while ((ch = getopt(argc, argv, "Aa:Dd:hqs:v")) != -1) {
+		switch (ch) {
+		case 'A': /* Attach device */
+			attach = TRUE;
+			break;
+
+		case 'a': /* remote address */
+			if (!bt_aton(optarg, &raddr)) {
+				struct hostent  *he = NULL;
+
+				if ((he = bt_gethostbyname(optarg)) == NULL)
+					errx(EXIT_FAILURE, "%s: %s",
+						optarg, hstrerror(h_errno));
+
+				bdaddr_copy(&raddr, (bdaddr_t *)he->h_addr);
+			}
+			break;
+
+		case 'D': /* Detach device */
+			detach = TRUE;
+			break;
+
+		case 'd': /* local device address */
+			if (!bt_devaddr(optarg, &laddr))
+				err(EXIT_FAILURE, "%s", optarg);
+
+			break;
+
+		case 'q':
+			query = TRUE;
+			break;
+
+		case 's': /* service */
+			service = uppercase(optarg);
+			break;
+
+		case 'v': /* verbose */
+			verbose = TRUE;
+			break;
+
+		case 'h':
+		default:
+			usage();
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	if (argc > 0
+	    || (attach == TRUE && detach == TRUE)
+	    || bdaddr_any(&laddr)
+	    || bdaddr_any(&raddr)
+	    || service == NULL)
 		usage();
 
-	control_file = argv[1];
+	if (attach == FALSE && detach == FALSE)
+		verbose = TRUE;
 
-	for (cmd = commands ; cmd->command != NULL ; cmd++) {
-		if (strcasecmp(argv[2], cmd->command) == 0)
-			return (cmd->handler)(argc - 2, argv + 2);
+	dev = db_get(&laddr, &raddr, service);
+	if (dev == NULL || query == TRUE) {
+		if (verbose == TRUE)
+			printf("Performing SDP query for service '%s'..\n", service);
+
+		dev = cfg_query(&laddr, &raddr, service);
+		if (dev == NULL)
+			errx(EXIT_FAILURE, "%s/%s not found", bt_ntoa(&raddr, NULL), service);
+
+		if (!db_set(dev, &laddr, &raddr, service))
+			errx(EXIT_FAILURE, "service store failed");
 	}
 
-	errx(EXIT_FAILURE, "%s: unknown command", argv[2]);
+	/* add binary local-bdaddr */
+	obj = prop_data_create_data(&laddr, sizeof(laddr));
+	if (obj == NULL || !prop_dictionary_set(dev, BTDEVladdr, obj))
+		errx(EXIT_FAILURE, "proplib failure (%s)", BTDEVladdr);
+
+	prop_object_release(obj);
+
+	/* add binary remote-bdaddr */
+	obj = prop_data_create_data(&raddr, sizeof(raddr));
+	if (obj == NULL || !prop_dictionary_set(dev, BTDEVraddr, obj))
+		errx(EXIT_FAILURE, "proplib failure (%s)", BTDEVraddr);
+
+	prop_object_release(obj);
+
+	if (verbose == TRUE)
+		cfg_print(dev);
+
+	if (attach == TRUE)
+		bthub_pioctl(BTDEV_ATTACH, dev);
+
+	if (detach == TRUE)
+		bthub_pioctl(BTDEV_DETACH, dev);
+
+	exit(EXIT_SUCCESS);
 }
 
-prop_dictionary_t
-read_config(void)
+void
+usage(void)
 {
-	prop_dictionary_t dict;
-	char *xml;
-	off_t len;
-	int fd;
 
-	fd = open(config_file, O_RDONLY, 0);
-	if (fd < 0)
-		return NULL;
+	fprintf(stderr,
+		"usage: %s [-A | -D] [-qv] -a address -d device -s service\n"
+		"Where:\n"
+		"\t-A           attach device\n"
+		"\t-a address   remote device address\n"
+		"\t-D           detach device\n"
+		"\t-d device    local device address\n"
+		"\t-q           force SDP query\n"
+		"\t-s service   remote service\n"
+		"\t-v           verbose\n"
+		"", getprogname());
 
-	len = lseek(fd, 0, SEEK_END);
-	if (len == 0) {
-		close(fd);
-		return NULL;
-	}
+	exit(EXIT_FAILURE);
+}
 
-	xml = malloc(len);
-	if (xml == NULL) {
-		close(fd);
-		return NULL;
-	}
+char *
+uppercase(const char *arg)
+{
+	char *str, *ptr;
 
-	(void)lseek(fd, 0, SEEK_SET);
-	if (read(fd, xml, len) != len) {
-		close(fd);
-		free(xml);
-		return NULL;
-	}
+	str = strdup(arg);
+	if (str == NULL)
+		err(EXIT_FAILURE, "strdup");
 
-	dict = prop_dictionary_internalize(xml);
+	for (ptr = str ; *ptr ; ptr++)
+		*ptr = (char)toupper((int)*ptr);
 
-	free(xml);
-	close(fd);
-
-	return dict;
+	return str;
 }
 
 int
-write_config(prop_dictionary_t dict)
+bthub_pioctl(unsigned long cmd, prop_dictionary_t dict)
 {
-	char *xml;
-	size_t len;
 	int fd;
 
-	fd = open(config_file, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+	fd = open(BTHUB_PATH, O_WRONLY, 0);
 	if (fd < 0)
-		return 0;
+		err(EXIT_FAILURE, "%s", BTHUB_PATH);
 
-	xml = prop_dictionary_externalize(dict);
-	if (xml == NULL) {
-		close(fd);
-		return 0;
-	}
+	if (prop_dictionary_send_ioctl(dict, fd, cmd))
+		err(EXIT_FAILURE, "%s", BTHUB_PATH);
 
-	len = strlen(xml);
-	if (write(fd, xml, len) != len) {
-		free(xml);
-		close(fd);
-		return 0;
-	}
-
-	free(xml);
 	close(fd);
-
-	return 1;
+	return EXIT_SUCCESS;
 }

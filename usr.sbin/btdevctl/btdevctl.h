@@ -1,4 +1,4 @@
-/*	$NetBSD: btdevctl.h,v 1.1 2006/08/13 09:03:23 plunky Exp $	*/
+/*	$NetBSD: btdevctl.h,v 1.2 2006/09/10 15:45:56 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,17 +34,14 @@
 #ifndef __BTDEVCTL_H__
 #define __BTDEVCTL_H__
 
-extern const char *control_file;
-extern const char *config_file;
+/* db.c */
+prop_dictionary_t db_get(bdaddr_t *, bdaddr_t *, const char *);
+int db_set(prop_dictionary_t, bdaddr_t *, bdaddr_t *, const char *);
 
-int cfg_print(int, char **);
-int cfg_query(int, char **);
-int cfg_remove(int, char **);
-int dev_attach(int, char **);
-int dev_detach(int, char **);
-int hid_parse(int, char **);
+/* print.c */
+void cfg_print(prop_dictionary_t);
 
-prop_dictionary_t read_config(void);
-int write_config(prop_dictionary_t);
+/* sdp.c */
+prop_dictionary_t cfg_query(bdaddr_t *, bdaddr_t *, const char *);
 
 #endif /* __BTDEVCTL_H__ */

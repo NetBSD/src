@@ -1,8 +1,10 @@
-/*	$NetBSD: hid.c,v 1.1 2006/08/13 09:03:23 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.1 2006/09/10 15:45:56 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
  * All rights reserved.
+ *
+ * Written by Iain Hibbert for Itronix Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,8 +31,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * hid.c
- *
  * Copyright (c) 2004 Maksim Yevmenkin <m_evmenkin@yahoo.com>
  * All rights reserved.
  *
@@ -55,55 +55,118 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hid.c,v 1.1 2006/08/13 09:03:23 plunky Exp $
- * $FreeBSD: src/usr.sbin/bluetooth/bthidcontrol/hid.c,v 1.1 2004/04/10 00:18:00 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hid.c,v 1.1 2006/08/13 09:03:23 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.1 2006/09/10 15:45:56 plunky Exp $");
 
+#include <sys/types.h>
+
+#include <dev/bluetooth/btdev.h>
+#include <dev/bluetooth/bthidev.h>
+#include <dev/bluetooth/btsco.h>
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
+
 #include <prop/proplib.h>
 
+#include <bluetooth.h>
 #include <err.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <usbhid.h>
 
 #include "btdevctl.h"
 
-static void hid_dump_item	(char const *, struct hid_item *);
+static void cfg_bthidev(prop_dictionary_t dict);
+static void cfg_btsco(prop_dictionary_t dict);
 
-int
-hid_parse(int ac, char **av)
+static void hid_dump_item(char const *, struct hid_item *);
+static void hid_parse(prop_data_t);
+
+void
+cfg_print(prop_dictionary_t dict)
 {
-	prop_dictionary_t	 cfg, dev;
-	prop_object_t		 desc;
+	prop_object_t obj;
+
+	obj = prop_dictionary_get(dict, BTDEVladdr);
+	if (prop_object_type(obj) != PROP_TYPE_DATA) {
+		return;
+	}
+	printf("local bdaddr: %s\n", bt_ntoa(prop_data_data_nocopy(obj), NULL));
+
+	obj = prop_dictionary_get(dict, BTDEVraddr);
+	if (prop_object_type(obj) != PROP_TYPE_DATA) {
+		return;
+	}
+	printf("remote bdaddr: %s\n", bt_ntoa(prop_data_data_nocopy(obj), NULL));
+
+	obj = prop_dictionary_get(dict, BTDEVtype);
+	if (prop_object_type(obj) != PROP_TYPE_STRING) {
+		printf("No device type!\n");
+		return;
+	}
+	printf("device type: %s\n", prop_string_cstring(obj));
+
+	if (prop_string_equals_cstring(obj, "bthidev")) {
+		cfg_bthidev(dict);
+		return;
+	}
+
+	if (prop_string_equals_cstring(obj, "btsco")) {
+		cfg_btsco(dict);
+		return;
+	}
+
+	printf("Unknown device type!\n");
+}
+
+static void
+cfg_bthidev(prop_dictionary_t dict)
+{
+	prop_object_t obj;
+
+	obj = prop_dictionary_get(dict, BTHIDEVcontrolpsm);
+	if (prop_object_type(obj) == PROP_TYPE_NUMBER)
+		printf("control psm: 0x%4.4llx\n", prop_number_integer_value(obj));
+
+	obj = prop_dictionary_get(dict, BTHIDEVinterruptpsm);
+	if (prop_object_type(obj) == PROP_TYPE_NUMBER)
+		printf("interrupt psm: 0x%4.4llx\n", prop_number_integer_value(obj));
+
+	obj = prop_dictionary_get(dict, BTHIDEVreconnect);
+	if (prop_bool_true(obj))
+		printf("reconnect mode: TRUE\n");
+
+	obj = prop_dictionary_get(dict, BTHIDEVdescriptor);
+	if (prop_object_type(obj) == PROP_TYPE_DATA)
+		hid_parse(obj);
+}
+
+static void
+cfg_btsco(prop_dictionary_t dict)
+{
+	prop_object_t obj;
+
+	obj = prop_dictionary_get(dict, BTSCOlisten);
+	printf("mode: %s\n", prop_bool_true(obj) ? "listen" : "connect");
+
+	obj = prop_dictionary_get(dict, BTSCOchannel);
+	if (prop_object_type(obj) == PROP_TYPE_NUMBER)
+		printf("channel: %lld\n", prop_number_integer_value(obj));
+}
+
+static void
+hid_parse(prop_data_t desc)
+{
 	report_desc_t		 r;
 	hid_data_t		 d;
 	struct hid_item		 h;
 
 	hid_init(NULL);
 
-	cfg = read_config();
-	if (cfg == NULL)
-		err(EXIT_FAILURE, "%s", config_file);
-
-	dev = prop_dictionary_get(cfg, control_file);
-	if (dev == NULL)
-		errx(EXIT_FAILURE, "%s: no config entry", control_file);
-
-	if (prop_object_type(dev) != PROP_TYPE_DICTIONARY)
-		errx(EXIT_FAILURE, "%s: not a dictionary", control_file);
-
-	desc = prop_dictionary_get(dev, "descriptor");
-	if (desc == NULL || prop_object_type(desc) != PROP_TYPE_DATA)
-		errx(EXIT_FAILURE, "%s: no HID descriptor", control_file);
-
-	r = hid_use_report_desc((unsigned char *)prop_data_data_nocopy(desc), prop_data_size(desc));
+	r = hid_use_report_desc((unsigned char *)prop_data_data_nocopy(desc),
+				prop_data_size(desc));
 	if (r == NULL)
-		errx(EXIT_FAILURE, "%s: Can't use HID descriptor", control_file);
+		return;
 
 	d = hid_start_parse(r, ~0, -1);
 	while (hid_get_item(d, &h)) {
@@ -134,8 +197,6 @@ hid_parse(int ac, char **av)
 
 	hid_end_parse(d);
 	hid_dispose_report_desc(r);
-	prop_object_release(cfg);
-	return EXIT_SUCCESS;
 }
 
 static void

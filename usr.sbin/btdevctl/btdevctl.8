@@ -1,4 +1,4 @@
-.\" $NetBSD: btdevctl.8,v 1.2 2006/08/27 11:41:58 plunky Exp $
+.\" $NetBSD: btdevctl.8,v 1.3 2006/09/10 15:45:56 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -51,10 +51,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $Id: btdevctl.8,v 1.2 2006/08/27 11:41:58 plunky Exp $
+.\" $Id: btdevctl.8,v 1.3 2006/09/10 15:45:56 plunky Exp $
 .\" $FreeBSD: src/usr.sbin/bluetooth/bthidcontrol/bthidcontrol.8,v 1.3 2005/01/18 20:02:30 ru Exp $
 .\"
-.Dd August 27, 2006
+.Dd September 9, 2006
 .Dt BTDEVCTL 8
 .Os
 .Sh NAME
@@ -62,84 +62,84 @@
 .Nd Bluetooth remote device control utility
 .Sh SYNOPSIS
 .Nm
-.Ar btdev
-.Ar command
-.Op Ar parameters
+.Op Fl A | Fl D
+.Op Fl qv
+.Fl a Ar address
+.Fl d Ar device
+.Fl s Ar service
 .Sh DESCRIPTION
 The
 .Nm
-utility is used to configure
-.Xr btdev 4
-devices in the system, and manage the configuration entries stored in the
-.Pa /var/db/btdev.xml
-file.
-.Pp
-The
+utility is used to configure bluetooth devices in the system.
+Normally,
 .Nm
-utility will print results to the standard output and error messages to the
-standard error.
+will perform  an SDP query to the remote device as needed, and
+cache the results in the
+.Pa /var/db/btdevctl.plist
+file for later use.
+If neither Attach nor Detach is specified,
+.Nm
+will display the configuration.
 .Pp
-The commands are as follows:
-.Bl -tag -width indent
-.It Cm Attach Op Fl q
-Attach device to
-.Ar btdev .
-If the
-.Fl q
-flag is given, be quiet about unconfigured devices.
-.It Cm Detach Op Fl q
-Detach device from
-.Ar btdev .
-.It Cm Parse
-Parse HID descriptor in configuration entry for
-.Ar btdev
-and print in legible format.
-.It Cm Print
-Print configuration entry for
-.Ar btdev
-.It Cm Query Oo Fl d Ar device Oc Fl a Ar address Fl s Ar service
-Perform an SDP query to the remote Bluetooth
-.Ar address
-for the given
-.Ar service
-and create a configuration entry for
-.Ar btdev .
+The options are:
+.Bl -tag
+.It Fl A
+Attach device
+.It Fl a Ar address
+Remote device address.
+The
 .Ar address
 may be given as BDADDR or a name.
 If a name was specified,
 .Nm
 attempts to resolve the name via
 .Xr bt_gethostbyname 3 .
-Communications can be limited to a specific controller by use of the
-.Fl d
-option.
+.It Fl D
+Detach device
+.It Fl d Ar device
+Local device address.
+May be given as BDADDR or device name.
+.It Fl q
+Ignore any cached data and perform a SDP query for the given
+.Ar service .
+.It Fl s Ar service
+Service to configure.
 Known services are:
 .Pp
-.Bl -tag -compact
+.Bl -tag -width HSETXX -compact
 .It Dv HID
-Human Interface Device
-.It Dv HFP
-Hands Free Profile
+Human Interface Device.
+.It Dv HF
+Handsfree.
 .It Dv HSET
-Headset
+Headset.
+.El
+.It Fl v
+Be verbose.
 .El
 .Pp
-.It Cm Remove
-Remove config entry for
-.Ar btdev
-from configuration file.
-.El
+For device configurations to persist across boots, add entries to the
+.Pa /etc/bluetooth/btdevctl.conf
+file and
+set the
+.Xr rc.conf 5
+variable
+.Sy btdevctl
+to YES.
+.Pp
 .Sh EXIT STATUS
 .Ex -std
 .Sh FILES
 .Bl -tag -compact
-.It Pa /dev/btdevN
-.It Pa /var/db/btdev.xml
+.It Pa /etc/bluetooth/btdevctl.conf
+.It Pa /dev/bthub
+.It Pa /var/db/btdevctl.plist
 .El
 .Sh SEE ALSO
-.Xr btdev 4 ,
 .Xr bthidev 4 ,
-.Xr btsco 4
+.Xr bthub 4 ,
+.Xr btsco 4 ,
+.Xr rc.conf 5
 .Sh HISTORY
 Parts of the
 .Nm
