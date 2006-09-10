@@ -1,10 +1,10 @@
-.\"	$NetBSD: packages.7,v 1.92 2005/09/11 23:35:17 wiz Exp $
+.\"	$NetBSD: packages.7,v 1.93 2006/09/10 22:32:28 wiz Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
 .\"	This file is in the public domain.
 .\"
-.Dd August 1, 2005
+.Dd September 9, 2006
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -29,65 +29,14 @@ This section documents variables that typically apply to an individual
 package.
 Non-Boolean variables without defaults are *mandatory*.
 .Bl -tag -offset indent -width XXXXXXXX
-.It DIST_SUBDIR
-Suffix to
-.Pa ${DISTDIR} .
-If set, all
-.Pa ${DISTFILES}
-and
-.Pa ${PATCHFILES}
-will be put in this subdirectory of
-.Pa ${DISTDIR}.
-.It ALLFILES
-All of
-.Pa ${DISTFILES}
-and
-.Pa ${PATCHFILES} .
 .It IGNOREFILES
 If some of the
 .Pa ${ALLFILES}
 are not checksum-able, set this variable to their names.
-.It PKGNAME
-Name of the package file to create if the
-.Pa ${DISTNAME}
-isn't really relevant for the package.
-The default is
-.Pa ${DISTNAME} .
-.It SVR4_PKGNAME
-Name of the package file to create if the
-.Pa ${PKGNAME}
-isn't unique enough on a SVR4 system.
-The default is
-.Pa ${PKGNAME}
-which may be shortened when you use gensolpkg.
-Only add SVR4_PKGNAME if
-.Pa ${PKGNAME}
-does not produce an unique package name on a SVR4 system.
-The length of SVR4_PKGNAME is limited to 5 characters.
-.It PKGREVISION
-This number indicates the package's revision within the
-.Nx
-Packages Collection (pkgsrc).
-If set, this will be attached to the PKGNAME variable separated by
-a
-.Dq nb .
-.It EXTRACT_ONLY
-If defined, a subset of
-.Pa ${DISTFILES}
-you want to actually extract.
-.It PATCHDIR
-A directory containing any additional patches you made
-to package this software.
-The default is
-.Pa ${.CURDIR}/patches .
 .It SCRIPTDIR
 A directory containing any auxiliary scripts.
 The default is
 .Pa ${.CURDIR}/scripts .
-.It FILESDIR
-A directory containing any miscellaneous additional files.
-The default is
-.Pa ${.CURDIR}/files .
 .It PKGDIR
 A direction containing any package creation files.
 The default is
@@ -116,77 +65,6 @@ or
 is set, or
 .Pa /etc/mtree/BSD.pkg.dist
 otherwise.
-.It USE_X11
-Instructs the package system that the package will use headers and libraries
-from
-.Dv X11BASE
-and so a check must be made that these are available.
-If they are not, an IGNORE message will be displayed, and the package
-will not be built.
-.It PLIST_SRC
-Which file(s) to use to build
-.Pa ${PLIST} .
-Default is
-.Pa ${PKGDIR}/PLIST .
-.It PLIST_SUBST
-Patterns that get automatically expanded during the PLIST creation.
-Takes arguments of the form
-.Li VARNAME =
-.Dq value
-and subsequently replaces every occurrence of
-.Li ${VARNAME}
-with
-.Li value .
-.It INSTALL_FILE
-The name of a script which will be invoked when installing
-binary packages.
-If there is a file called
-.Pa ${PKGDIR}/INSTALL ,
-that file will be used.
-.It DEINSTALL_FILE
-The name of a script which will be invoked when de-installing
-binary packages.
-If there is a file called
-.Pa ${PKGDIR}/DEINSTALL ,
-that file will be used.
-.It MESSAGE
-The name of a file which will be displayed during the installation
-of a package.
-No substitution according to MESSAGE_SUBST takes place.
-Overrides MESSAGE_SRC.
-Should not be used.
-.It MESSAGE_SRC
-The name of a file which will be displayed when installing
-a package.
-If neither MESSAGE_SRC nor MESSAGE are set, and there
-is a file called
-.Pa ${PKGDIR}/MESSAGE ,
-that file will be used.
-Before displaying the file, substitution according to MESSAGE_SUBST
-takes place.
-.It MESSAGE_SUBST
-This variable takes equations of the form
-.Li VARNAME =
-.Dq value ,
-and replaces all occurrences of
-.Li ${VARNAME}
-in MESSAGE_SRC with
-.Li value .
-By default, substitution is performed for
-.Li LOCALBASE ,
-.Li PKGNAME ,
-.Li PREFIX ,
-.Li X11BASE ,
-and
-.Li X11PREFIX .
-.It NO_BIN_ON_CDROM
-Binaries of this package may not be placed on CDROM.
-Set this string to
-.Pa ${RESTRICTED} .
-.It NO_BIN_ON_FTP
-Binaries of this package may not be made available via ftp.
-Set this string to
-.Pa ${RESTRICTED} .
 .It NO_BUILD
 Use a dummy (do-nothing) build target.
 .It NO_CONFIGURE
@@ -197,100 +75,16 @@ Use a dummy (do-nothing) install target.
 Use a dummy (do-nothing) package target.
 .It NO_PKG_REGISTER
 Don't register a package install as a package.
-.It NO_SRC_ON_CDROM
-Distfile(s) of this package may not be placed on CDROM.
-Set this string to
-.Pa ${RESTRICTED} .
-.It NO_SRC_ON_FTP
-Distfile(s) of this package may not be made available via ftp.
-Set this string to
-.Pa ${RESTRICTED} .
-If this variable is set, the distfile will not be mirrored by ftp.NetBSD.org.
 .It NO_DEPENDS
 Don't verify build of dependencies.
-.It CHECK_SHLIBS
-Do not run 'check-shlibs' even if PKG_DEVELOPER is set.
-This prevents
-errors on emul/compat packages (e.g., Linux binaries, ...).
-.It MAKEFILE
-Name of the Makefile in ${WRKSRC}, used in the default build and
-install targets.
-Default:
-.Dq Makefile .
-.It BROKEN
-Package is broken.
-Set this string to the reason why.
-.It RESTRICTED
-Package is restricted.
-Set this string to the reason why.
-.It LICENCE
-The package has a non-standard licence, such as shareware, or
-non-commercial-use only.
-This string should be set to the type of licence the package has,
-like "shareware", or "non-commercial-use".
-If LICENCE is set, the
-.Dv ACCEPTABLE_LICENCES
-variable will be searched, if set, for a string matching the licence.
-.It PASSIVE_FETCH
-Uses passive
-.Xr ftp 1
-to retrieve distribution files.
-.It REPLACE_PERL
-Takes a list of files and replaces each occurrence of "/usr/bin/perl", "/usr/local/bin/perl"
-and "/usr/pkg/bin/perl" in the named files with the value of ${PERL5}.
-This can be used to point perl scripts to the proper interpreter that pkgsrc installs.
-Note: it looks for the listed files in ${WRKSRC}.
-.It UNLIMIT_RESOURCES
-List of process limits which need to be raised to hard limits for building
-this package.
-So far "datasize" and "stacksize" are supported.
-.It USE_LIBTOOL
-Says that the package uses
-.Pa libtool
-to manage building of libraries and shared objects, where applicable.
-.It LTCONFIG_OVERRIDE
-If set, override the specified
-.Pa ltconfig
-for using the
-.Pa libtool
-package instead of the pkg's own
-.Pa libtool .
-.It USE_FORTRAN
-Says that the package uses a Fortran compiler for building.
-.It USE_GMAKE
-Says that the package uses
-.Pa gmake .
-.It USE_JAVA
-Says that the package uses a Java virtual machine.
-.It USE_PERL5
-Says that the package uses
-.Pa perl5
-for building and running.
-.It PERL5_REQD
-Sets the minimum
-.Pa perl5
-version required.
-The default is 5.0.
 .It USE_IMAKE
 Says that the package uses
 .Pa imake .
-.It USE_MESA
-Says that the package uses the Mesa library.
-This will include all Mesa components that are not included in the
-installed X11 distribution.
 .It USE_X11BASE
 Says that the package installs itself into the X11 base directory
 .Dv ${X11BASE} .
 This is necessary for packages that install X11 fonts, application
 default files or Imake rule or template files.
-.It USE_XAW
-Says that the package uses the Athena widget set.
-.It USE_XPM
-Says that the package uses the Xpm library.
-If it is not included
-in the installed X11 distribution the xpm package will be used.
-.It USE_GTEXINFO
-Says that the package uses gtexinfo.
 .It NO_INSTALL_MANPAGES
 For imake packages that don't like the install.man target.
 .It HAS_CONFIGURE
