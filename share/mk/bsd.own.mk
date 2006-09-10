@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.470 2006/09/04 20:03:21 scw Exp $
+#	$NetBSD: bsd.own.mk,v 1.471 2006/09/10 21:04:43 cherry Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -51,6 +51,7 @@ TOOLCHAIN_MISSING?=	no
     ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "armeb" || \
     ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "ia64" || \
     ${MACHINE_ARCH} == "m68000" || \
     ${MACHINE_ARCH} == "mips64el" || \
     ${MACHINE_ARCH} == "mips64eb" || \
