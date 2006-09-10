@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.69 2006/08/19 16:35:03 plunky Exp $
+#	$NetBSD: files.usb,v 1.70 2006/09/10 15:45:56 plunky Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -121,7 +121,7 @@ file	dev/usb/ustir.c			ustir
 
 
 # Bluetooth controllers
-device	ubt: bluetooth
+device	ubt: btbus, bluetooth
 attach	ubt at uhub
 file	dev/usb/ubt.c			ubt
 

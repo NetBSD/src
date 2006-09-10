@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.24 2006/08/18 12:01:53 hubertf Exp $
+# $NetBSD: postinstall,v 1.25 2006/09/10 15:45:56 plunky Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -539,13 +539,23 @@ contents_owner()
 #
 #	bluetooth
 #
-additem bluetooth "/etc/bluetooth/ is populated"
+additem bluetooth "bluetooth configuration is up to date"
 do_bluetooth()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_bluetooth fix|check"
+	op=$1
+	failed=0
 
-	populate_dir ${op} true ${SRC_DIR}/etc/bluetooth ${DEST_DIR}/etc/bluetooth 644 hosts protocols
-	return $?
+	populate_dir ${op} true \
+		${SRC_DIR}/etc/bluetooth ${DEST_DIR}/etc/bluetooth 644 \
+		hosts protocols btdevctl.conf
+	failed=$(( ${failed} + $? ))
+
+	move_file ${op} ${DEST_DIR}/var/db/btdev.xml \
+			${DEST_DIR}/var/db/btdevctl.plist
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
 }
 
 #
