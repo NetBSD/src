@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.17 2006/09/07 01:50:49 uwe Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.18 2006/09/10 14:06:54 gavan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ typedef struct todr_chip_handle *todr_chip_handle_t;
 /*
  * Probably these should evolve into internal routines in kern_todr.c.
  */
-extern int todr_gettime(todr_chip_handle_t tch, struct timeval *);
+extern int todr_gettime(todr_chip_handle_t tch, volatile struct timeval *);
 extern int todr_settime(todr_chip_handle_t tch, volatile struct timeval *);
 
 /*
