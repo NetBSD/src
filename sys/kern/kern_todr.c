@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.13 2006/09/10 07:06:48 tsutsui Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.14 2006/09/10 14:06:54 gavan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.13 2006/09/10 07:06:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.14 2006/09/10 14:06:54 gavan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -248,7 +248,7 @@ resettodr(void)
 
 
 int
-todr_gettime(todr_chip_handle_t tch, struct timeval *tvp)
+todr_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 {
 	struct clock_ymdhms	dt;
 	int			rv;
