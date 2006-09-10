@@ -1,4 +1,4 @@
-.\" $NetBSD: ubt.4,v 1.5 2006/09/02 23:54:23 wiz Exp $
+.\" $NetBSD: ubt.4,v 1.6 2006/09/10 20:09:11 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -106,10 +106,20 @@ the frame size is indicated by the
 sysctl variable.
 .Pp
 For example: I want one voice channel (which is all that is supported,
-for now) so am using configuration number 2, with a frame length of 17
+for now) so am using configuration #2, with a frame length of 17
 bytes.
-My USB dongle says the maximum SCO payload is 64 bytes, so I am
-using an size of 48 bytes (17 * 3 - 3 = 48).
+This gives possible values of:
+.Pp
+.Dl "(17 * 1) - 3 = 14"
+.Dl "(17 * 2) - 3 = 31"
+.Dl "(17 * 3) - 3 = 48"
+.Dl "(17 * 4) - 3 = 65"
+.Dl "(17 * 5) - 3 = 82"
+.Dl "etc."
+.Pp
+.Xr btconfig 8
+shows the maximum SCO payload as 64 bytes, so I am using the next smaller
+size of 48, to minimize the overhead of the 3 header bytes.
 .Pp
 The SCO packet size can be changed using the
 .Sq scomtu
