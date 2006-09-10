@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2006/09/07 14:44:05 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2006/09/10 21:09:48 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.3 2006/09/07 14:44:05 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.4 2006/09/10 21:09:48 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -366,18 +366,18 @@ usage(void)
 	fprintf(stderr,
 	    "%s: usage:\n"
 	    "%s [options] <command>\n\n"
-	    "-F func\t\tlimit trace to one function\n"
-	    "-E evt\t\tdisplay only one type of event\n"
-	    "-L lock\t\tlimit trace to one lock (name, or address)\n"
-	    "-N nlist\tspecify name list file\n"
-	    "-T type\t\tdisplay only one type of lock\n"
 	    "-b nbuf\t\tset number of event buffers to allocate\n"
 	    "-c\t\treport percentage of total events by count, not time\n"
+	    "-E evt\t\tdisplay only one type of event\n"
 	    "-e\t\tlist event types\n"
+	    "-F func\t\tlimit trace to one function\n"
+	    "-L lock\t\tlimit trace to one lock (name, or address)\n"
 	    "-l\t\ttrace only by lock\n"
+	    "-N nlist\tspecify name list file\n"
 	    "-o file\t\tsend output to named file, not stdout\n"
 	    "-p\t\tshow average count/time per CPU, not total\n"
 	    "-s\t\tshow average count/time per second, not total\n"
+	    "-T type\t\tdisplay only one type of lock\n"
 	    "-t\t\tlist lock types\n",
 	    getprogname(), getprogname());
 
