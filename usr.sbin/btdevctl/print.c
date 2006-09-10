@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.1 2006/09/10 15:45:56 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.2 2006/09/10 19:13:54 he Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.1 2006/09/10 15:45:56 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.2 2006/09/10 19:13:54 he Exp $");
 
 #include <sys/types.h>
 
@@ -126,11 +126,13 @@ cfg_bthidev(prop_dictionary_t dict)
 
 	obj = prop_dictionary_get(dict, BTHIDEVcontrolpsm);
 	if (prop_object_type(obj) == PROP_TYPE_NUMBER)
-		printf("control psm: 0x%4.4llx\n", prop_number_integer_value(obj));
+		printf("control psm: 0x%4.4" PRIx64 "\n",
+			prop_number_integer_value(obj));
 
 	obj = prop_dictionary_get(dict, BTHIDEVinterruptpsm);
 	if (prop_object_type(obj) == PROP_TYPE_NUMBER)
-		printf("interrupt psm: 0x%4.4llx\n", prop_number_integer_value(obj));
+		printf("interrupt psm: 0x%4.4" PRIx64 "\n",
+			prop_number_integer_value(obj));
 
 	obj = prop_dictionary_get(dict, BTHIDEVreconnect);
 	if (prop_bool_true(obj))
@@ -151,7 +153,8 @@ cfg_btsco(prop_dictionary_t dict)
 
 	obj = prop_dictionary_get(dict, BTSCOchannel);
 	if (prop_object_type(obj) == PROP_TYPE_NUMBER)
-		printf("channel: %lld\n", prop_number_integer_value(obj));
+		printf("channel: %" PRId64 "\n",
+			prop_number_integer_value(obj));
 }
 
 static void
