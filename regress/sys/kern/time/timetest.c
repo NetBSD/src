@@ -1,4 +1,4 @@
-/* $NetBSD: timetest.c,v 1.1 2006/09/10 11:37:04 kardel Exp $ */
+/* $NetBSD: timetest.c,v 1.2 2006/09/10 11:46:57 kardel Exp $ */
 
 /*-
  * Copyright (c) 2006 Frank Kardel
@@ -68,9 +68,10 @@ check_time(time_t endlimit, int exitonerror, int verbose)
 	    mindiff = diff;
 
     if (diff < 0 || (verbose && diff > MINPOSDIFF)) {
+	    long long elapsed;
 	    printf("%stime TSA: 0x%x.%08x, TSB: 0x%x.%08x, diff = %lld nsec, ", (diff < 0) ? "BAD " : "", tsa.tv_sec, tsa.tv_nsec, tsb.tv_sec, tsb.tv_nsec, diff);
-      diff = 1000000000LL * (tsb.tv_sec - tsl.tv_sec) + tsb.tv_nsec - tsl.tv_nsec;
-      printf("%lld nsec\n", diff);
+      elapsed = 1000000000LL * (tsb.tv_sec - tsl.tv_sec) + tsb.tv_nsec - tsl.tv_nsec;
+      printf("%lld nsec\n", elapsed);
       tsl = tsb;
       if (exitonerror && diff < 0)
 	      return -1LL;
