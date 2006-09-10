@@ -1,7 +1,7 @@
-/* $NetBSD: scan_ffs.c,v 1.9 2005/09/02 17:48:40 xtraeme Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.9.2.1 2006/09/10 05:07:18 riz Exp $ */
 
 /*
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -77,7 +77,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.9 2005/09/02 17:48:40 xtraeme Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.9.2.1 2006/09/10 05:07:18 riz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -144,8 +144,8 @@ __RCSID("$NetBSD: scan_ffs.c,v 1.9 2005/09/02 17:48:40 xtraeme Exp $");
 struct sblockinfo {
 	struct lfs	*lfs;
 	struct fs	*ffs;
-	u_int64_t	lfs_off;
-	u_int64_t	ffs_off;
+	uint64_t	lfs_off;
+	uint64_t	ffs_off;
 	char		lfs_path[MAXMNTLEN];
 	char		ffs_path[MAXMNTLEN];
 } sbinfo;
@@ -153,6 +153,7 @@ struct sblockinfo {
 static daddr_t	blk, lastblk;
 
 static int	eflag = 0;
+static int	fflag = 0;
 static int	flags = 0;
 static int 	sbaddr = 0; /* counter for the LFS superblocks */
 
@@ -374,7 +375,7 @@ lfs_scan(int n)
 static int
 scan_disk(int fd, daddr_t beg, daddr_t end, int fflags)
 {
-	u_int8_t buf[SBLOCKSIZE * SBCOUNT];
+	uint8_t buf[SBLOCKSIZE * SBCOUNT];
 	int n, fstype;
 
 	n = fstype = 0;
@@ -423,7 +424,8 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-		"Usage: %s [-lv] [-s start] [-e end] device\n", getprogname());
+		"Usage: %s [-F file] [-lv] [-s start] [-e end] "
+		"device\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -432,15 +434,22 @@ int
 main(int argc, char **argv)
 {
 	int ch, fd;
+	const char *fpath;
 	daddr_t end = -1, beg = 0;
 	struct disklabel dl;
 
+	fpath = NULL;
+
 	setprogname(*argv);
-	while ((ch = getopt(argc, argv, "e:ls:v")) != -1)
+	while ((ch = getopt(argc, argv, "e:F:ls:v")) != -1)
 		switch(ch) {
 		case 'e':
 			eflag = 1;
 			end = atoi(optarg);
+			break;
+		case 'F':
+			fflag = 1;
+			fpath = optarg;
 			break;
 		case 'l':
 			flags |= LABELS;
@@ -459,27 +468,39 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 1)
-		usage();
+	if (fflag) {
+		struct stat stp;
 
-	fd = opendisk(argv[0], O_RDONLY, device, sizeof(device), 0);
+		if (stat(fpath, &stp))
+			err(1, "Cannot stat `%s'", fpath);
+
+		if (!eflag)
+			end = (uint64_t)stp.st_size;
+
+		fd = open(fpath, O_RDONLY);
+	} else {
+		if (argc != 1)
+			usage();
+
+		fd = opendisk(argv[0], O_RDONLY, device, sizeof(device), 0);
+
+		if (ioctl(fd, DIOCGDINFO, &dl) == -1) {
+			warn("Couldn't retrieve disklabel");
+			(void)memset(&dl, 0, sizeof(dl));
+			dl.d_secperunit = 0x7fffffff;
+		} else {
+			(void)printf("Disk: %s\n", dl.d_typename);
+			(void)printf("Total sectors on disk: %" PRIu32 "\n\n",
+			    dl.d_secperunit);
+		}
+	}
+
+	if (!eflag && !fflag)
+		end = dl.d_secperunit; /* default to max sectors */
 
 	if (fd == -1)
 		err(1, "Cannot open `%s'", device);
 		/* NOTREACHED */
-
-	if (ioctl(fd, DIOCGDINFO, &dl) == -1) {
-		warn("Couldn't retrieve disklabel");
-		(void)memset(&dl, 0, sizeof(dl));
-		dl.d_secperunit = 0x7fffffff;
-	} else {
-		(void)printf("Disk: %s\n", dl.d_typename);
-		(void)printf("Total sectors on disk: %" PRIu32 "\n\n",
-		    dl.d_secperunit);
-	}
-	
-	if (!eflag)
-		end = dl.d_secperunit; /* default to max sectors */
 
 	return scan_disk(fd, beg, end, flags);
 }
