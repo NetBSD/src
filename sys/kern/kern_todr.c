@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.12 2006/09/07 15:49:49 gdamore Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.13 2006/09/10 07:06:48 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.12 2006/09/07 15:49:49 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.13 2006/09/10 07:06:48 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -266,12 +266,14 @@ todr_gettime(todr_chip_handle_t tch, struct timeval *tvp)
 		 *
 		 * However, clock_ymdhms_to_secs performs the same
 		 * check for us, so we need not worry about it.  Note
-		 * that this assumes that the tvp->tv_sec member is is
+		 * that this assumes that the tvp->tv_sec member is
 		 * a time_t.
 		 */
 
 		/* simple sanity checks */
-		if (dt.dt_mon > 12 || dt.dt_day > 31 ||
+		if (dt.dt_mon < 1 || dt.dt_mon > 12 ||
+		    dt.dt_day < 1 || dt.dt_day > 31 ||
+		    dt.dt_wday > 6 ||
 		    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 60)
 			return -1;
 
