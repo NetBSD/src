@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.91 2006/08/30 20:40:36 wiz Exp $
+#	$NetBSD: BRANCHES,v 1.92 2006/09/10 08:12:58 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -375,6 +375,13 @@ Notes:		Kernels built from this branch are not expected
 
 Branch:		yamt-lazymbuf
 Description:	implement and evaluate lazy mapping of mbuf external data pages
+		it's intended as the first step of larger changes.
+			1. support operations (esp. bus_dma load) on
+			   unmapped mbuf.
+			2. unify mbuf and buf.
+			   (or, at least some parts of them)
+			3. then it should be trivial to implement
+			   i/o coalescing, etc.
 Status:		Active
 Start Date:	Wed Jul  6 2005
 End Date:	
