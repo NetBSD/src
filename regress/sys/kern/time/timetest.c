@@ -1,4 +1,4 @@
-/* $NetBSD: timetest.c,v 1.2 2006/09/10 11:46:57 kardel Exp $ */
+/* $NetBSD: timetest.c,v 1.3 2006/09/10 13:21:46 kardel Exp $ */
 
 /*-
  * Copyright (c) 2006 Frank Kardel
@@ -147,7 +147,7 @@ main(int argc, char **argv)
 	long long mindiff;
 	time_t endtime;
 	time_t timeout;
-	int ch, index;
+	int ch, idx;
 	int verbose, exitonerror, allcounters;
 
 	verbose = 0;
@@ -216,7 +216,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	index = 0;
+	idx = 0;
 
 	do {
 		if (endtime) {
@@ -241,9 +241,9 @@ main(int argc, char **argv)
 				       resolution, 1.0 / resolution * 1e9, mindiff);
 			}
 		}
-		if (allcounters && index < cnt) {
+		if (allcounters && idx < cnt) {
 			if (sysctlbyname(TC_HARDWARE, NULL, 0,
-					 ctrs[index], strlen(ctrs[index])) != 0) {
+					 ctrs[idx], strlen(ctrs[idx])) != 0) {
 				perror("selecting new timecounter");
 				return 3;
 			} else {
@@ -252,12 +252,12 @@ main(int argc, char **argv)
 				/* wait a bit to select new counter in clockinterrupt */
 				ts.tv_sec = 0;
 				ts.tv_nsec = 100000000;
-				printf("switching to timecounter \"%s\"...\n", ctrs[index]);
+				printf("switching to timecounter \"%s\"...\n", ctrs[idx]);
 				nanosleep(&ts, NULL);
 			}
-			snprintf(cbuf, sizeof cbuf, "timecounter \"%s\"", ctrs[index]);
+			snprintf(cbuf, sizeof cbuf, "timecounter \"%s\"", ctrs[idx]);
 		}
-	} while (allcounters && ++index <= cnt);
+	} while (allcounters && ++idx <= cnt);
 	/* restore the counter we started with */
 	if (allcounters)
 		(void)sysctlbyname(TC_HARDWARE, NULL, 0,
