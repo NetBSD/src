@@ -1,4 +1,4 @@
-/* $NetBSD: timetest.c,v 1.3 2006/09/10 13:21:46 kardel Exp $ */
+/* $NetBSD: timetest.c,v 1.4 2006/09/10 13:28:29 kardel Exp $ */
 
 /*-
  * Copyright (c) 2006 Frank Kardel
@@ -183,9 +183,17 @@ main(int argc, char **argv)
 		case '?':
 		default:
 			usage(argv[0]);
+			return 1;
 		}
 	}
+
 	argc -= optind;
+
+	if (argc > 0) {
+		usage(argv[0]);
+		return 1;
+	}
+
 	argv += optind;
 
 	if (endtime) {
