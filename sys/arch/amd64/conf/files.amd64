@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.28 2006/09/04 02:16:03 perry Exp $
+#	$NetBSD: files.amd64,v 1.29 2006/09/10 19:50:48 plunky Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -193,6 +193,8 @@ file	arch/amd64/amd64/rbus_machdep.c	cardbus
 include	"dev/pcmcia/files.pcmcia"
 
 include	"dev/usb/files.usb"
+
+include "dev/bluetooth/files.bluetooth"
 
 include	"dev/ieee1394/files.ieee1394"
 include "dev/apm/files.apm"
