@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.649 2006/09/09 15:43:04 tnozaki Exp $
+# $NetBSD: mi,v 1.650 2006/09/10 15:45:55 plunky Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -42,6 +42,10 @@
 ./bin/test					base-util-root
 ./dev						base-sys-root
 ./dev/altq					base-sys-root
+./dev/btdev0					base-obsolete		obsolete
+./dev/btdev1					base-obsolete		obsolete
+./dev/btdev2					base-obsolete		obsolete
+./dev/btdev3					base-obsolete		obsolete
 ./dev/bthubctl					base-obsolete		obsolete
 ./dev/fd					base-sys-root
 ./dev/i4b					base-obsolete		obsolete
