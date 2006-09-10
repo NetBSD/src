@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.28 2006/08/16 13:23:33 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.29 2006/09/10 22:25:58 jld Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.28 2006/08/16 13:23:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.29 2006/09/10 22:25:58 jld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -464,6 +464,13 @@ xen_timer_handler(void *arg, struct intrframe *regs)
 		processed_system_time += NS_PER_TICK;
 		ticks_done++;
 	}
+	/*
+	 * Re-arm the timer here, if needed; Xen's auto-ticking while runnable
+	 * is useful only for HZ==100, and even then may be out of phase with
+	 * the processed_system_time steps.
+	 */
+	if (ticks_done != 0)
+		HYPERVISOR_set_timer_op(processed_system_time + NS_PER_TICK);
 
 	/*
 	 * Right now, delta holds the number of ns elapsed from when the last
@@ -484,12 +491,16 @@ setstatclockrate(int arg)
 void
 idle_block(void)
 {
+	int s, r;
 	/*
 	 * We set the timer to when we expect the next timer
 	 * interrupt.  We could set the timer to later if we could
 	 * easily find out when we will have more work (callouts) to
 	 * process from hardclock.
 	 */
-	if (HYPERVISOR_set_timer_op(processed_system_time + NS_PER_TICK) == 0)
+	s = splclock();
+	r = HYPERVISOR_set_timer_op(processed_system_time + NS_PER_TICK);
+	splx(s);
+	if (r == 0)
 		HYPERVISOR_block();
 }
