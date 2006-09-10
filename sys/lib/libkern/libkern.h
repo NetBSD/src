@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.65 2006/08/31 19:24:38 dyoung Exp $	*/
+/*	$NetBSD: libkern.h,v 1.66 2006/09/10 23:49:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -233,6 +233,12 @@ tolower(int ch)
 #ifndef offsetof
 #define	offsetof(type, member) \
     ((size_t)(unsigned long)(&(((type *)0)->member)))
+#endif
+
+#if defined(__STDC__) && __GNUC_PREREQ__(3, 0)
+#define bool	_Bool
+#define true	1
+#define false	0
 #endif
 
 /* Prototypes for non-quad routines. */
