@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.88 2006/05/14 21:38:18 elad Exp $	*/
+/*	$NetBSD: buf.h,v 1.89 2006/09/10 06:35:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -281,7 +281,6 @@ void	bufinit(void);
 int	bwrite(struct buf *);
 struct buf *getblk(struct vnode *, daddr_t, int, int, int);
 struct buf *geteblk(int);
-struct buf *getnewbuf(int, int, int);
 struct buf *incore(struct vnode *, daddr_t);
 
 void	minphys(struct buf *);
