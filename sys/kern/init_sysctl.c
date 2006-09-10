@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.83 2006/09/08 20:58:57 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.81 2006/07/26 09:33:57 dogcow Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,12 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.83 2006/09/08 20:58:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81 2006/07/26 09:33:57 dogcow Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
 #include "opt_posix.h"
-#include "opt_compat_netbsd32.h"
 #include "veriexec.h"
 #include "pty.h"
 #include "rnd.h"
@@ -91,13 +90,10 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.83 2006/09/08 20:58:57 elad Exp $"
 #include <sys/shm.h>
 #endif
 
-#ifdef COMPAT_NETBSD32
-#include <compat/netbsd32/netbsd32.h>
-#endif
-
 #include <machine/cpu.h>
 
 /* XXX this should not be here */
+int security_curtain = 0;
 int security_setidcore_dump;
 char security_setidcore_path[MAXPATHLEN] = "/var/crash/%n.core";
 uid_t security_setidcore_owner = 0;
@@ -1074,6 +1070,25 @@ SYSCTL_SETUP(sysctl_debug_setup, "sysctl debug subtree setup")
 }
 #endif /* DEBUG */
 
+SYSCTL_SETUP(sysctl_security_setup, "sysctl security subtree setup")
+{
+	const struct sysctlnode *rnode = NULL;
+
+	sysctl_createv(clog, 0, NULL, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "security", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_SECURITY, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "curtain",
+		       SYSCTL_DESCR("Curtain information about objects"
+				    " to users not owning them."),
+		       NULL, 0, &security_curtain, 0,
+		       CTL_CREATE, CTL_EOL);
+}
+
 /*
  * ********************************************************************
  * section 2: private node-specific helper routines.
@@ -1151,9 +1166,7 @@ sysctl_kern_rtc_offset(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
-	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,
-	    KAUTH_REQ_SYSTEM_TIME_RTCOFFSET,
-	    (void *)(u_long)new_rtc_offset, NULL, NULL) != KAUTH_RESULT_ALLOW)
+	if (securelevel > 0)
 		return (EPERM);
 	if (rtc_offset == new_rtc_offset)
 		return (0);
@@ -2382,10 +2395,14 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 
 	/* only root or same user change look at the environment */
 	if (type == KERN_PROC_ENV || type == KERN_PROC_NENV) {
-		if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
-		     p, NULL, NULL, NULL) != KAUTH_RESULT_ALLOW) {
+		if (kauth_cred_geteuid(l->l_cred) != 0) {
+			if (kauth_cred_getuid(l->l_cred) !=
+			    kauth_cred_getuid(p->p_cred) ||
+			    kauth_cred_getuid(l->l_cred) !=
+			    kauth_cred_getsvuid(p->p_cred)) {
 				error = EPERM;
 				goto out_locked;
+			}
 		}
 	}
 
@@ -2460,6 +2477,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	 */
 	switch (type) {
 	case KERN_PROC_ARGV:
+		/* XXX compat32 stuff here */
 		/* FALLTHROUGH */
 	case KERN_PROC_ENV:
 		memcpy(&tmp, (char *)&pss + offsetv, sizeof(tmp));
@@ -2467,7 +2485,6 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	default:
 		return (EINVAL);
 	}
-
 	auio.uio_offset = (off_t)(unsigned long)tmp;
 	aiov.iov_base = &argv;
 	aiov.iov_len = sizeof(argv);
@@ -2479,15 +2496,6 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	error = uvm_io(&vmspace->vm_map, &auio);
 	if (error)
 		goto done;
-
-#ifdef COMPAT_NETBSD32
-	/*
-	 * Here we get a 32 bit pointer that has to be converted,
-	 * otherwise we get garbage in the 32 higher bits
-	 */
-	if (p->p_flag & P_32)
-		argv = (vaddr_t)NETBSD32PTR64(argv);
-#endif
 
 	/*
 	 * Now copy in the actual argument vector, one page at a time,
@@ -2600,8 +2608,7 @@ sysctl_security_setidcore(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_SETIDCORE,
-	    0, NULL, NULL, NULL) != KAUTH_RESULT_ALLOW)
+	if (securelevel > 0)
 		return (EPERM);
 
 	*(int *)rnode->sysctl_data = newsize;
@@ -2624,8 +2631,7 @@ sysctl_security_setidcorename(SYSCTLFN_ARGS)
 	if (error || newp == NULL) {
 		goto out;
 	}
-	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_SETIDCORE,
-	    0, NULL, NULL, NULL) != KAUTH_RESULT_ALLOW) {
+	if (securelevel > 0) {
 		error = EPERM;
 		goto out;
 	}

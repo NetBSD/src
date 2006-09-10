@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdvar.h,v 1.2 2006/09/08 13:48:12 tsutsui Exp $	*/
+/*	$NetBSD: sbdvar.h,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@ struct sbd {
 
 	/* Interval timer helper routines */
 	void (*initclocks)(void);
+	u_long (*readclock)(void);
 
 	/* Miscellaneous */
 	void (*consinit)(void);
@@ -97,6 +98,7 @@ void * x ## _intr_establish(int, int (*)(void *), void *);		\
 void x ## _intr_disestablish(void *);					\
 void x ## _intr(uint32_t, uint32_t, uint32_t, uint32_t);		\
 void x ## _initclocks(void);						\
+u_long x ## _readclock(void);						\
 void x ## _consinit(void);						\
 int x ## _ipl_bootdev(void);						\
 void x ## _reboot(void);						\
@@ -115,6 +117,7 @@ extern const uint32_t x ## _sr_bits[]
 	_SBD_OPS_SET(m, intr_disestablish);				\
 	_SBD_OPS_SET(m, intr);						\
 	_SBD_OPS_SET(m, initclocks);					\
+	_SBD_OPS_SET(m, readclock);					\
 	_SBD_OPS_SET(m, consinit);				       	\
 	_SBD_OPS_SET(m, ipl_bootdev);					\
 	_SBD_OPS_SET(m, reboot);					\

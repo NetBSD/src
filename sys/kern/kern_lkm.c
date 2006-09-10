@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.92 2006/09/08 20:58:57 elad Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.91 2006/09/02 06:26:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.92 2006/09/08 20:58:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.91 2006/09/02 06:26:13 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.92 2006/09/08 20:58:57 elad Exp $");
 #include <sys/ksyms.h>
 #include <sys/device.h>
 #include <sys/once.h>
-#include <sys/kauth.h>
 
 #include <sys/lkm.h>
 #include <sys/syscall.h>
@@ -344,8 +343,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 	switch(cmd) {
 	case LMRESERV:		/* reserve pages for a module */
-		if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LKM,
-		    0, (void *)cmd, NULL, NULL) != KAUTH_RESULT_ALLOW)
+		if (securelevel > 0)
 			return EPERM;
 
 		if ((flag & FWRITE) == 0) /* only allow this if writing */
@@ -396,8 +394,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case LMLOADBUF:		/* Copy in; stateful, follows LMRESERV */
-		if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LKM,
-		    0, (void *)cmd, NULL, NULL) != KAUTH_RESULT_ALLOW)
+		if (securelevel > 0)
 			return EPERM;
 
 		if ((flag & FWRITE) == 0) /* only allow this if writing */
@@ -465,8 +462,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case LMUNRESRV:		/* discard reserved pages for a module */
-		if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LKM,
-		    0, (void *)cmd, NULL, NULL) != KAUTH_RESULT_ALLOW)
+		if (securelevel > 0)
 			return EPERM;
 
 		if ((flag & FWRITE) == 0) /* only allow this if writing */
@@ -482,8 +478,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case LMREADY:		/* module loaded: call entry */
-		if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LKM,
-		    0, (void *)cmd, NULL, NULL) != KAUTH_RESULT_ALLOW)
+		if (securelevel > 0)
 			return EPERM;
 
 		if ((flag & FWRITE) == 0) /* only allow this if writing */
@@ -572,8 +567,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case LMUNLOAD:		/* unload a module */
-		if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LKM,
-		    0, (void *)cmd, NULL, NULL) != KAUTH_RESULT_ALLOW)
+		if (securelevel > 0)
 			return EPERM;
 
 		if ((flag & FWRITE) == 0) /* only allow this if writing */
@@ -626,8 +620,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 #ifdef LMFORCE
 	case LMFORCE:		/* stateful, optionally follows LMRESERV */
-		if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LKM,
-		    0, (void *)cmd, NULL, NULL) != KAUTH_RESULT_ALLOW)
+		if (securelevel > 0)
 			return EPERM;
 
 		if ((flag & FWRITE) == 0) /* only allow this if writing */
