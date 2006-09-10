@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.83 2006/09/08 20:58:57 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.84 2006/09/10 05:46:02 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.83 2006/09/08 20:58:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.84 2006/09/10 05:46:02 manu Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2334,13 +2334,13 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 {
 	struct ps_strings pss;
 	struct proc *p;
-	size_t len, upper_bound, xlen, i;
+	size_t len, i;
 	struct uio auio;
 	struct iovec aiov;
-	vaddr_t argv;
 	pid_t pid;
 	int nargv, type, error;
 	char *arg;
+	char **argv = NULL;
 	char *tmp;
 	struct vmspace *vmspace;
 	vaddr_t psstr_addr;
@@ -2468,72 +2468,96 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		return (EINVAL);
 	}
 
-	auio.uio_offset = (off_t)(unsigned long)tmp;
-	aiov.iov_base = &argv;
-	aiov.iov_len = sizeof(argv);
+#ifdef COMPAT_NETBSD32
+	if (p->p_flag & P_32)
+		len = sizeof(netbsd32_charp) * nargv;
+	else
+#endif
+		len = sizeof(char *) * nargv;
+
+	argv = malloc(len, M_TEMP, M_WAITOK);
+
+	aiov.iov_base = argv;
+	aiov.iov_len = len;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
-	auio.uio_resid = sizeof(argv);
+	auio.uio_offset = (off_t)(unsigned long)tmp;
+	auio.uio_resid = len;
 	auio.uio_rw = UIO_READ;
 	UIO_SETUP_SYSSPACE(&auio);
 	error = uvm_io(&vmspace->vm_map, &auio);
 	if (error)
 		goto done;
 
+	/* 
+	 * Now copy each string.
+	 */
+	len = 0; /* bytes written to user buffer */
+	for (i = 0; i < nargv; i++) {
+		int finished = 0;
+		vaddr_t base;
+		size_t xlen;
+		int j;
+
 #ifdef COMPAT_NETBSD32
-	/*
-	 * Here we get a 32 bit pointer that has to be converted,
-	 * otherwise we get garbage in the 32 higher bits
-	 */
-	if (p->p_flag & P_32)
-		argv = (vaddr_t)NETBSD32PTR64(argv);
+		if (p->p_flag & P_32) {
+			netbsd32_charp *argv32;
+
+			argv32 = (netbsd32_charp *)argv;
+
+			base = (vaddr_t)NETBSD32PTR64(argv32[i]);
+		} else
 #endif
+			base = (vaddr_t)argv[i];
 
-	/*
-	 * Now copy in the actual argument vector, one page at a time,
-	 * since we don't know how long the vector is (though, we do
-	 * know how many NUL-terminated strings are in the vector).
-	 */
-	len = 0;
-	upper_bound = *oldlenp;
-	for (; nargv != 0 && len < upper_bound; len += xlen) {
-		aiov.iov_base = arg;
-		aiov.iov_len = PAGE_SIZE;
-		auio.uio_iov = &aiov;
-		auio.uio_iovcnt = 1;
-		auio.uio_offset = argv + len;
-		xlen = PAGE_SIZE - ((argv + len) & PAGE_MASK);
-		auio.uio_resid = xlen;
-		auio.uio_rw = UIO_READ;
-		UIO_SETUP_SYSSPACE(&auio);
-		error = uvm_io(&vmspace->vm_map, &auio);
-		if (error)
-			goto done;
+		while (!finished) {
+			xlen = PAGE_SIZE - (base & PAGE_MASK);
 
-		for (i = 0; i < xlen && nargv != 0; i++) {
-			if (arg[i] == '\0')
-				nargv--;	/* one full string */
-		}
+			aiov.iov_base = arg;
+			aiov.iov_len = PAGE_SIZE;
+			auio.uio_iov = &aiov;
+			auio.uio_iovcnt = 1;
+			auio.uio_offset = base;
+			auio.uio_resid = xlen;
+			auio.uio_rw = UIO_READ;
+			UIO_SETUP_SYSSPACE(&auio);
+			error = uvm_io(&vmspace->vm_map, &auio);
+			if (error)
+				goto done;
 
-		/*
-		 * Make sure we don't copyout past the end of the user's
-		 * buffer.
-		 */
-		if (len + i > upper_bound)
-			i = upper_bound - len;
+			/* Look for the end of the string */
+			for (j = 0; j < xlen; j++) {
+				if (arg[j] == '\0') {
+					xlen = j + 1;
+					finished = 1;
+					break;
+				}
+			}
 
-		error = copyout(arg, (char *)oldp + len, i);
-		if (error)
-			break;
+			/* Check for user buffer overflow */
+			if (len + xlen > *oldlenp) {
+				finished = 1;
+				if (len > *oldlenp) 
+					xlen = 0;
+				else
+					xlen = *oldlenp - len;
+			}
+				
+			/* Copyout the page */
+			error = copyout(arg, (char *)oldp + len, xlen);
+			if (error)
+				goto done;
 
-		if (nargv == 0) {
-			len += i;
-			break;
+			len += xlen;
+			base += xlen;
 		}
 	}
 	*oldlenp = len;
 
 done:
+	if (argv != NULL)
+		free(argv, M_TEMP);
+
 	uvmspace_free(vmspace);
 
 	free(arg, M_TEMP);
