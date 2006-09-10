@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.32 2006/08/25 20:16:57 riz Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.33 2006/09/10 18:39:27 riz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -227,24 +227,6 @@ void sk_dump_bytes(const char *, int);
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
-
-#define SK_SETBIT(sc, reg, x)		\
-	CSR_WRITE_4(sc, reg, CSR_READ_4(sc, reg) | x)
-
-#define SK_CLRBIT(sc, reg, x)		\
-	CSR_WRITE_4(sc, reg, CSR_READ_4(sc, reg) & ~x)
-
-#define SK_WIN_SETBIT_4(sc, reg, x)	\
-	sk_win_write_4(sc, reg, sk_win_read_4(sc, reg) | x)
-
-#define SK_WIN_CLRBIT_4(sc, reg, x)	\
-	sk_win_write_4(sc, reg, sk_win_read_4(sc, reg) & ~x)
-
-#define SK_WIN_SETBIT_2(sc, reg, x)	\
-	sk_win_write_2(sc, reg, sk_win_read_2(sc, reg) | x)
-
-#define SK_WIN_CLRBIT_2(sc, reg, x)	\
-	sk_win_write_2(sc, reg, sk_win_read_2(sc, reg) & ~x)
 
 static int sk_sysctl_handler(SYSCTLFN_PROTO);
 static int sk_root_num;
