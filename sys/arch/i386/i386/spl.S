@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.13 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: spl.S,v 1.13.20.1 2006/09/10 23:42:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,11 +64,9 @@ _C_LABEL(splhigh):
 
 	ALIGN_TEXT
 _C_LABEL(splx):
-	movl	4(%esp),%eax
-	movl	%eax,CPUVAR(ILEVEL)
-	testl	%eax,%eax
-	jnz	_C_LABEL(Xspllower)
-	ret
+	movl	4(%esp),%ecx
+	SPLLOWER(_C_LABEL(Xspllower))
+	/* ret */
 #endif /* PROF || GPROF */
 #endif
 	

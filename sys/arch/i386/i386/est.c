@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.28 2006/09/09 09:39:35 mlelstv Exp $	*/
+/*	$NetBSD: est.c,v 1.26 2006/09/03 06:49:57 xtraeme Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.28 2006/09/09 09:39:35 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.26 2006/09/03 06:49:57 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -742,18 +742,20 @@ static const uint16_t pm90_n765e[] = {
 
 /* Intel Pentium M processor 770 2.13 GHz */
 static const uint16_t pm90_n770[] = {
-	ID16(2133, 1356, BUS133),
-	ID16(1867, 1292, BUS133),
-	ID16(1600, 1212, BUS133),
-	ID16(1333, 1148, BUS133),
-	ID16(1067, 1068, BUS133),
-	ID16( 800,  988, BUS133),
+	ID16(2133, 1551, BUS133),
+	ID16(1800, 1429, BUS133),
+	ID16(1600, 1356, BUS133),
+	ID16(1400, 1180, BUS133),
+	ID16(1200, 1132, BUS133),
+	ID16(1000, 1084, BUS133),
+	ID16( 800, 1036, BUS133),
+	ID16( 600,  988, BUS133),
 };
 
 struct fqlist {
-	int vendor;
-	unsigned bus_clk;
-	unsigned n;
+	int vendor : 5;
+	unsigned bus_clk : 1;
+	unsigned n : 5;
 	const uint16_t *table;
 };
 
@@ -838,8 +840,6 @@ static const struct fqlist est_cpus[] = {
 #define MSR2MV(msr)		(MSR2VOLTINC(msr) * 16 + 700)
 
 static const struct 	fqlist *est_fqlist; /* not NULL if functional */
-static uint16_t         fake_table[3];      /* guessed est_cpu table */
-static struct fqlist    fake_fqlist;
 static int 		est_node_target, est_node_current;
 static const char 	est_desc[] = "Enhanced SpeedStep";
 /* bus_clock is assigned in identcpu.c */
@@ -926,7 +926,6 @@ est_init(struct cpu_info *ci, int vendor)
 	/*
 	 * Find an entry which matches (vendor, bus_clock, idhi, idlo)
 	 */
-	est_fqlist = NULL;
 	for (i = 0; i < NELEM(est_cpus); i++) {
 		fql = &est_cpus[i];
 		if (vendor == fql->vendor && bus_clock == BUS_CLK(fql) &&
@@ -937,6 +936,9 @@ est_init(struct cpu_info *ci, int vendor)
 	}
 
 	if (est_fqlist == NULL) {
+		uint16_t fake_table[3];
+		struct fqlist fake_fqlist;
+
                 aprint_normal("%s: unknown Enhanced SpeedStep CPU.\n",
                     cpuname);
                 /*

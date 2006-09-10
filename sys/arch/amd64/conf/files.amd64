@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.28 2006/09/04 02:16:03 perry Exp $
+#	$NetBSD: files.amd64,v 1.28.2.1 2006/09/10 23:42:41 ad Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -53,6 +53,7 @@ file	arch/amd64/amd64/syscall.c
 file	arch/amd64/amd64/trap.c
 file	arch/amd64/amd64/vm_machdep.c
 file	arch/amd64/amd64/fpu.c
+file	arch/amd64/amd64/lock_stubs.S
 file	dev/cons.c
 
 file	arch/amd64/amd64/mptramp.S        multiprocessor

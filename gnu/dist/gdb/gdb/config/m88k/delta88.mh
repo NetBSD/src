@@ -1,6 +1,0 @@
-# OBSOLETE # Host: Motorola 88k running SVR3
-# OBSOLETE 
-# OBSOLETE XM_FILE= xm-delta88.h
-# OBSOLETE 
-# OBSOLETE NAT_FILE= nm-m88k.h
-# OBSOLETE NATDEPFILES= infptrace.o inftarg.o fork-child.o m88k-nat.o corelow.o core-aout.o
