@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.690 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.691 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -43,8 +43,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	prep: Convert prep to MI todr(9) driver. [garbled 20060905]
 	sun3: Add timecounter support. [gdamore 20060905]
 	cesfic: Add timecounter support. [gdamore 20060906]
-	scan_ffs(8): Add -F file support. Useful to search for partitions
-		on disk images. [xtraeme 20060907]
 	prep: Add support for the IBM 7025-F40. [garbled 20060907]
 	lockstat(8): Add the lockstat command: displays a summary of kernel
 		locking events recorded over the lifetime of a called program.
