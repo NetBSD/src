@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clockintr.c,v 1.1 2006/09/08 23:39:28 gdamore Exp $	*/
+/*	$NetBSD: mips3_clockintr.c,v 1.2 2006/09/10 14:27:38 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.1 2006/09/08 23:39:28 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.2 2006/09/10 14:27:38 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,10 +101,9 @@ uint32_t next_cp0_clk_intr;	/* used to schedule hard clock interrupts */
  * cpu_intr() routine.
  */
 void
-mips3_clockintr(uint32_t status, uint32_t pc)
+mips3_clockintr(struct clockframe *cfp)
 {
-	uint32_t		new_cnt;
-	struct clockframe	cf;
+	uint32_t new_cnt;
 
 	next_cp0_clk_intr += curcpu()->ci_cycles_per_hz;
 	mips3_cp0_compare_write(next_cp0_clk_intr);
@@ -123,9 +122,7 @@ mips3_clockintr(uint32_t status, uint32_t pc)
 		mips_int5_missed_evcnt.ev_count++;
 	}
 
-	cf.pc = pc;
-	cf.sr = status;
-	hardclock(&cf);
+	hardclock(cfp);
 
 	mips_int5_evcnt.ev_count++;
 
