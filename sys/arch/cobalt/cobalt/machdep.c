@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 2006/09/10 06:41:09 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74 2006/09/10 14:27:38 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2006/09/10 06:41:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2006/09/10 14:27:38 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -663,9 +663,7 @@ cpu_intr_disestablish(void *cookie)
 void
 cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
-#if 0
 	struct clockframe cf;
-#endif
 	struct cobalt_intrhand *ih;
 
 	uvmexp.intrs++;
@@ -673,7 +671,9 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	if (ipending & MIPS_INT_MASK_5) {
 
 		/* call the common MIPS3 clock interrupt handler */ 
-		mips3_clockintr(status, pc);
+		cf.pc = pc;
+		cf.sr = status;
+		mips3_clockintr(&cf);
 
 		cause &= ~MIPS_INT_MASK_5;
 	}
