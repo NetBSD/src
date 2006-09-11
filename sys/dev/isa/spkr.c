@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.20 2006/09/03 05:29:46 christos Exp $	*/
+/*	$NetBSD: spkr.c,v 1.21 2006/09/11 03:37:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.20 2006/09/03 05:29:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.21 2006/09/11 03:37:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,10 +125,6 @@ rest(ticks)
  * except possibly at physical block boundaries.
  */
 
-typedef int	bool;
-#define TRUE	1
-#define FALSE	0
-
 #define dtoi(c)		((c) - '0')
 
 static int octave;	/* currently selected octave */
@@ -185,8 +181,8 @@ playinit()
     whole = (hz * SECS_PER_MIN * WHOLE_NOTE) / DFLT_TEMPO;
     fill = NORMAL;
     value = DFLT_VALUE;
-    octtrack = FALSE;
-    octprefix = TRUE;	/* act as though there was an initial O(n) */
+    octtrack = false;
+    octprefix = true;	/* act as though there was an initial O(n) */
 }
 
 static void
@@ -285,7 +281,7 @@ playstring(cp, slen)
 		    }
 		}
 	    }
-	    octprefix = FALSE;
+	    octprefix = false;
 	    lastpitch = pitch;
 
 	    /* ...which may in turn be followed by an override time value */
@@ -307,13 +303,13 @@ playstring(cp, slen)
 	case 'O':
 	    if (slen > 0 && (cp[1] == 'N' || cp[1] == 'n'))
 	    {
-		octprefix = octtrack = FALSE;
+		octprefix = octtrack = false;
 		++cp;
 		slen--;
 	    }
 	    else if (slen > 0 && (cp[1] == 'L' || cp[1] == 'l'))
 	    {
-		octtrack = TRUE;
+		octtrack = true;
 		++cp;
 		slen--;
 	    }
@@ -322,20 +318,20 @@ playstring(cp, slen)
 		GETNUM(cp, octave);
 		if (octave >= NOCTAVES)
 		    octave = DFLT_OCTAVE;
-		octprefix = TRUE;
+		octprefix = true;
 	    }
 	    break;
 
 	case '>':
 	    if (octave < NOCTAVES - 1)
 		octave++;
-	    octprefix = TRUE;
+	    octprefix = true;
 	    break;
 
 	case '<':
 	    if (octave > 0)
 		octave--;
-	    octprefix = TRUE;
+	    octprefix = true;
 	    break;
 
 	case 'N':
