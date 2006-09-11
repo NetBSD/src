@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.26 2006/07/23 22:06:10 ad Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.26.4.1 2006/09/11 18:07:25 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.26 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.26.4.1 2006/09/11 18:07:25 ad Exp $");
 
 /* If not included by core_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -338,9 +338,11 @@ ELFNAMEEND(coredump_notes)(struct proc *p, struct lwp *l,
 		    sizeof(cpi.cpi_sigcatch));
 
 		cpi.cpi_pid = p->p_pid;
+		rw_enter(&proclist_lock, RW_READER);
 		cpi.cpi_ppid = p->p_pptr->p_pid;
 		cpi.cpi_pgrp = p->p_pgid;
 		cpi.cpi_sid = p->p_session->s_sid;
+		rw_exit(&proclist_lock);
 
 		cpi.cpi_ruid = kauth_cred_getuid(l->l_cred);
 		cpi.cpi_euid = kauth_cred_geteuid(l->l_cred);

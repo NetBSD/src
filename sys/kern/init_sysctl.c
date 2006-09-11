@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.81 2006/07/26 09:33:57 dogcow Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.81.4.1 2006/09/11 18:07:25 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81 2006/07/26 09:33:57 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81.4.1 2006/09/11 18:07:25 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2059,7 +2059,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 		if (arg < -1)
 			/* -1 means all processes */
 			return (EINVAL);
-		proclist_lock_read();
+		rw_enter(&proclist_lock, RW_READER);
 		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_stat == SIDL)
 				/* skip embryonic processes */
@@ -2092,7 +2092,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 				}
 			}
 		}
-		proclist_unlock_read();
+		rw_exit(&proclist_lock);
 		break;
 	default:
 		return (EINVAL);
@@ -2193,7 +2193,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		eproc = NULL;
 		kproc2 = malloc(sizeof(*kproc2), M_TEMP, M_WAITOK);
 	}
-	proclist_lock_read();
+	rw_enter(&proclist_lock, RW_READER);
 
 	pd = proclists;
 again:
@@ -2309,7 +2309,7 @@ again:
 	pd++;
 	if (pd->pd_list != NULL)
 		goto again;
-	proclist_unlock_read();
+	rw_exit(&proclist_lock);
 
 	if (where != NULL) {
 		if (type == KERN_PROC)
@@ -2330,7 +2330,7 @@ again:
 		free(eproc, M_TEMP);
 	return 0;
  cleanup:
-	proclist_unlock_read();
+	rw_exit(&proclist_lock);
  out:
 	if (kproc2)
 		free(kproc2, M_TEMP);
@@ -2379,7 +2379,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		return (EINVAL);
 	}
 
-	proclist_lock_read();
+	rw_enter(&proclist_lock, RW_READER);
 
 	/* check pid */
 	if ((p = p_find(pid, PFIND_LOCKED)) == NULL) {
@@ -2444,7 +2444,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	vmspace = p->p_vmspace;
 	vmspace->vm_refcnt++;	/* XXX */
 
-	proclist_unlock_read();
+	rw_exit(&proclist_lock);
 
 	/*
 	 * Allocate a temporary buffer to hold the arguments.
@@ -2548,7 +2548,7 @@ done:
 	return error;
 
 out_locked:
-	proclist_unlock_read();
+	rw_exit(&proclist_lock);
 	return error;
 }
 

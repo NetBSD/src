@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.110 2006/09/01 21:05:33 matt Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.110.2.1 2006/09/11 18:07:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.110 2006/09/01 21:05:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.110.2.1 2006/09/11 18:07:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,7 +452,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 
 		if (SCARG(uap, req) == PT_DETACH) {
 			/* give process back to original parent or init */
-			s = proclist_lock_write();
+ 			rw_enter(&proclist_lock, RW_WRITER);
 			if (t->p_opptr != t->p_pptr) {
 				struct proc *pp = t->p_opptr;
 				proc_reparent(t, pp ? pp : initproc);
@@ -460,7 +460,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 
 			/* not being traced any more */
 			t->p_opptr = NULL;
-			proclist_unlock_write(s);
+ 			rw_exit(&proclist_lock);
 			CLR(t->p_flag, P_TRACED|P_WAITED|P_SYSCALL|P_FSTRACE);
 		}
 
@@ -504,13 +504,13 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		 * Stop the target.
 		 */
 		SET(t->p_flag, P_TRACED);
-		s = proclist_lock_write();
+		rw_enter(&proclist_lock, RW_WRITER);
 		t->p_opptr = t->p_pptr;
 		if (t->p_pptr != p) {
 			t->p_pptr->p_flag |= P_CHTRACED;
 			proc_reparent(t, p);
 		}
-		proclist_unlock_write(s);
+		rw_exit(&proclist_lock);
 		SCARG(uap, data) = SIGSTOP;
 		goto sendsig;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.105 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.105.4.1 2006/09/11 18:07:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.4.1 2006/09/11 18:07:25 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -797,7 +797,7 @@ ktrace_common(struct lwp *curl, int ops, int facs, int pid, struct file *fp)
 		if (ktd == NULL)
 			goto done;
 
-		proclist_lock_read();
+		rw_enter(&proclist_lock, RW_READER);
 		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_tracep == ktd) {
 				if (ktrcanset(curl, p))
@@ -806,7 +806,7 @@ ktrace_common(struct lwp *curl, int ops, int facs, int pid, struct file *fp)
 					error = EPERM;
 			}
 		}
-		proclist_unlock_read();
+		rw_exit(&proclist_lock);
 		goto done;
 
 	case KTROP_SET:
@@ -893,7 +893,7 @@ ktrace_common(struct lwp *curl, int ops, int facs, int pid, struct file *fp)
 		else
 			ret |= ktrops(curl, p, ops, facs, ktd);
 	}
-	proclist_unlock_read();	/* taken by p{g}_find */
+	rw_exit(&proclist_lock);	/* taken by p{g}_find */
 	if (!ret)
 		error = EPERM;
 done:
@@ -1174,12 +1174,12 @@ again:
 			log(LOG_NOTICE,
 			    "ktrace write failed, errno %d, tracing stopped\n",
 			    error);
-		proclist_lock_read();
+		rw_enter(&proclist_lock, RW_READER);
 		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_tracep == ktd)
 				ktrderef(p);
 		}
-		proclist_unlock_read();
+		rw_exit(&proclist_lock);
 	}
 
 	while ((kte = top) != NULL) {
