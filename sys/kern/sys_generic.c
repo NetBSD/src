@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.92 2006/09/03 06:34:34 christos Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.92.2.1 2006/09/11 18:43:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.92 2006/09/03 06:34:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.92.2.1 2006/09/11 18:43:43 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -1120,9 +1120,16 @@ selwakeup(sip)
 		wakeup((caddr_t)&selwait);
 		return;
 	}
-	p = pfind(sip->sel_pid);
+
+	/*
+	 * We must use the proclist_mutex as we can be called from an
+	 * interrupt context.
+	 */
+	mutex_enter(&proclist_mutex);
+	p = p_find(sip->sel_pid, PFIND_LOCKED);
 	sip->sel_pid = 0;
 	if (p != NULL) {
+		/* XXXSMP transfer to p->p_smutex */
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			SCHED_LOCK(s);
 			if (l->l_wchan == (caddr_t)&selwait) {
@@ -1135,4 +1142,5 @@ selwakeup(sip)
 			SCHED_UNLOCK(s);
 		}
 	}
+	mutex_exit(&proclist_mutex);
 }

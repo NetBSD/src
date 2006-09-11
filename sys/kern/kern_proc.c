@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.94.4.1 2006/09/11 18:19:09 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.94.4.2 2006/09/11 18:43:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.1 2006/09/11 18:19:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.2 2006/09/11 18:43:43 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -127,7 +127,7 @@ struct proclist zombproc;	/* resources have been freed */
  *	proclist_lock	proclist_mutex	alllwp_mutex	structure
  *	--------------- --------------- --------------- -----------------
  *	x						zombproc
- *	x						pid_table
+ *	x		x				pid_table
  *	x						proc::p_pptr
  *	x						proc::p_sibling
  *	x						proc::p_children
@@ -550,8 +550,10 @@ expand_pid_table(void)
 	}
 
 	/* Switch tables */
+	mutex_enter(&proclist_mutex);
 	n_pt = pid_table;
 	pid_table = new_pt;
+	mutex_exit(&proclist_mutex);
 	pid_tbl_mask = pt_size * 2 - 1;
 
 	/*
@@ -606,7 +608,9 @@ proc_alloc(void)
 	next_free_pt = nxt & pid_tbl_mask;
 
 	/* Grab table slot */
+	mutex_enter(&proclist_mutex);
 	pt->pt_proc = p;
+	mutex_exit(&proclist_mutex);
 	pid_alloc_cnt++;
 
 	rw_exit(&proclist_lock);
@@ -633,6 +637,7 @@ proc_free_mem(struct proc *p)
 		panic("proc_free: pid_table mismatch, pid %x, proc %p",
 			pid, p);
 #endif
+	mutex_enter(&proclist_mutex);
 	/* save pid use count in slot */
 	pt->pt_proc = P_FREE(pid & ~pid_tbl_mask);
 
@@ -644,6 +649,7 @@ proc_free_mem(struct proc *p)
 		last_free_pt = pid;
 		pid_alloc_cnt--;
 	}
+	mutex_exit(&proclist_mutex);
 
 	nprocs--;
 	rw_exit(&proclist_lock);
@@ -754,6 +760,7 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 		goto done;
 
 	/* Ok all setup, link up required structures */
+
 	if (pgrp == NULL) {
 		pgrp = new_pgrp;
 		new_pgrp = 0;
@@ -782,9 +789,11 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 		if (__predict_false(mksess && p != curp))
 			panic("enterpgrp: mksession and p != curproc");
 #endif
+		mutex_enter(&proclist_mutex);
 		pid_table[pgid & pid_tbl_mask].pt_pgrp = pgrp;
 		pgrp->pg_jobc = 0;
-	}
+	} else
+		mutex_enter(&proclist_mutex);
 
 #ifdef notyet
 	/*
@@ -807,7 +816,6 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 	fixjobc(p, p->p_pgrp, 0);
 
 	/* Move process to requested group. */
-	mutex_enter(&proclist_mutex);
 	LIST_REMOVE(p, p_pglist);
 	if (LIST_EMPTY(&p->p_pgrp->pg_members))
 		/* defer delete until we've dumped the lock */
@@ -898,10 +906,11 @@ pg_free(pid_t pg_id)
 		if (__predict_false(P_NEXT(pt->pt_proc) & pid_tbl_mask))
 			panic("pg_free: process slot on free list");
 #endif
-
+		mutex_enter(&proclist_mutex);
 		pg_id &= pid_tbl_mask;
 		pt = &pid_table[last_free_pt];
 		pt->pt_proc = P_FREE(P_NEXT(pt->pt_proc) | pg_id);
+		mutex_exit(&proclist_mutex);
 		last_free_pt = pg_id;
 		pid_alloc_cnt--;
 	}
