@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.276 2006/07/26 09:33:57 dogcow Exp $	*/
+/*	$NetBSD: init_main.c,v 1.276.4.1 2006/09/11 16:19:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276 2006/07/26 09:33:57 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.1 2006/09/11 16:19:01 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -115,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276 2006/07/26 09:33:57 dogcow Exp $
 #include <sys/sysctl.h>
 #include <sys/event.h>
 #include <sys/mbuf.h>
+#include <sys/turnstile.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -264,8 +265,6 @@ main(void)
 #if NRND > 0
 	rnd_init();		/* initialize RNG */
 #endif
-	/* Initialize the sysctl subsystem. */
-	sysctl_init();
 
 	/* Initialize process and pgrp structures. */
 	procinit();
@@ -282,6 +281,12 @@ main(void)
 	(void)chgproccnt(0, 1);
 
 	rqinit();
+
+	/* Initiaize turnstiles. */
+	turnstile_init();
+
+	/* Initialize the sysctl subsystem. */
+	sysctl_init();
 
 	/* Initialize the file systems. */
 #ifdef NVNODE_IMPLICIT
@@ -464,8 +469,8 @@ main(void)
 	 * from the file system.  Reset p->p_rtime as it may have been
 	 * munched in mi_switch() after the time got set.
 	 */
-	proclist_lock_read();
-	s = splsched();
+	rw_enter(&proclist_lock, RW_READER);
+	SCHED_LOCK(s);
 #ifdef __HAVE_TIMECOUNTER
 	getmicrotime(&time);
 #else
@@ -481,8 +486,8 @@ main(void)
 		}
 		p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
 	}
-	splx(s);
-	proclist_unlock_read();
+	SCHED_UNLOCK(s);
+	rw_exit(&proclist_lock);
 
 	/* Create the pageout daemon kernel thread. */
 	uvm_swap_init();
