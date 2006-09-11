@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.75 2003/07/15 02:43:16 lukem Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.75.6.1 2006/09/11 21:26:54 tron Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.75 2003/07/15 02:43:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.75.6.1 2006/09/11 21:26:54 tron Exp $");
 
 #include "bpfilter.h"
 
@@ -33,6 +33,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.75 2003/07/15 02:43:16 lukem Exp $");
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>
 #include <mac68k/dev/if_aevar.h>
+
+#define ETHER_PAD_LEN	(ETHER_MIN_LEN - ETHER_CRC_LEN)
 
 int
 ae_size_card_memory(bst, bsh, ofs)
@@ -172,16 +174,21 @@ ae_write_mbuf(sc, m, buf)
 		}
 	}
 
+	len = ETHER_PAD_LEN - totlen;
 	if (wantbyte) {
 		savebyte[1] = 0;
 		bus_space_write_region_2(sc->sc_buft, sc->sc_bufh,
 		    buf, (u_int16_t *)savebyte, 1);
-		    buf += 2;
+		buf += 2;
+		if (len > 0)
+			totlen++;
+		len--;
 	}
-	if (totlen < ETHER_MIN_LEN - ETHER_CRC_LEN) {
+	/* if sent data is shorter than EHTER_PAD_LEN, put 0 to padding */
+	if (len > 0) {
 		bus_space_set_region_2(sc->sc_buft, sc->sc_bufh, buf, 0,
-		    (ETHER_MIN_LEN - ETHER_CRC_LEN - totlen) >> 1);
-		totlen = ETHER_MIN_LEN - ETHER_CRC_LEN;
+		    len >> 1);
+		totlen = ETHER_PAD_LEN;
 	}
 	return (totlen);
 }
