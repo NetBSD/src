@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.267 2006/08/08 13:08:08 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.267.2.1 2006/09/11 00:20:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.267 2006/08/08 13:08:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.267.2.1 2006/09/11 00:20:01 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -443,7 +443,7 @@ checkdirs(struct vnode *olddp)
 		return;
 	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
 		panic("mount: lost mount");
-	proclist_lock_read();
+	rw_enter(&proclist_lock, RW_READER);
 	PROCLIST_FOREACH(p, &allproc) {
 		cwdi = p->p_cwdi;
 		if (!cwdi)
@@ -459,7 +459,7 @@ checkdirs(struct vnode *olddp)
 			cwdi->cwdi_rdir = newdp;
 		}
 	}
-	proclist_unlock_read();
+	rw_exit(&proclist_lock);
 	if (rootvnode == olddp) {
 		vrele(rootvnode);
 		VREF(newdp);
@@ -526,10 +526,10 @@ sys_unmount(struct lwp *l, void *v, register_t *retval)
 	 * XXX Freeze syncer.  Must do this before locking the
 	 * mount point.  See dounmount() for details.
 	 */
-	lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&syncer_mutex);
 
 	if (vfs_busy(mp, 0, 0)) {
-		lockmgr(&syncer_lock, LK_RELEASE, NULL);
+		mutex_exit(&syncer_mutex);
 		return (EBUSY);
 	}
 
@@ -588,15 +588,15 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	 * per-mountpoint basis, so the softdep code would become a maze
 	 * of vfs_busy() calls.
 	 *
-	 * The caller of dounmount() must acquire syncer_lock because
-	 * the syncer itself acquires locks in syncer_lock -> vfs_busy
+	 * The caller of dounmount() must acquire syncer_mutex because
+	 * the syncer itself acquires locks in syncer_mutex -> vfs_busy
 	 * order, and we must preserve that order to avoid deadlock.
 	 *
 	 * So, if the file system did not use the syncer, now is
-	 * the time to release the syncer_lock.
+	 * the time to release the syncer_mutex.
 	 */
 	if (used_syncer == 0)
-		lockmgr(&syncer_lock, LK_RELEASE, NULL);
+		mutex_exit(&syncer_mutex);
 
 	mp->mnt_iflag |= IMNT_UNMOUNT;
 	mp->mnt_unmounter = l;
@@ -629,7 +629,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK | LK_REENABLE,
 		    &mountlist_slock);
 		if (used_syncer)
-			lockmgr(&syncer_lock, LK_RELEASE, NULL);
+			mutex_exit(&syncer_mutex);
 		simple_lock(&mp->mnt_slock);
 		while (mp->mnt_wcnt > 0) {
 			wakeup(mp);
@@ -650,7 +650,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	mp->mnt_iflag |= IMNT_GONE;
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock);
 	if (used_syncer)
-		lockmgr(&syncer_lock, LK_RELEASE, NULL);
+		mutex_exit(&syncer_mutex);
 	simple_lock(&mp->mnt_slock);
 	while (mp->mnt_wcnt > 0) {
 		wakeup(mp);

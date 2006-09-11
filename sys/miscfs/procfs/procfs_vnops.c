@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.133 2006/06/13 13:57:33 yamt Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.133.6.1 2006/09/11 00:20:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.133 2006/06/13 13:57:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.133.6.1 2006/09/11 00:20:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1105,9 +1105,9 @@ procfs_root_readdir_callback(struct proc *p, void *arg)
 	    UIO_MX - offsetof(struct dirent, d_name), "%ld", (long)p->p_pid);
 	d.d_type = DT_DIR;
 
-	proclist_unlock_read();
+	rw_exit(&proclist_lock);
 	error = uiomove(&d, UIO_MX, uiop);
-	proclist_lock_read();
+	rw_enter(&proclist_lock, RW_READER);
 	if (error) {
 		ctxp->error = error;
 		return -1;
