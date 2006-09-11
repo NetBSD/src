@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.94 2006/09/10 23:37:44 ad Exp $
+#	$NetBSD: BRANCHES,v 1.95 2006/09/11 05:53:55 wiz Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -316,7 +316,7 @@ Scope:		Kernel
 Notes:		As per the newlock branch, however given the amount of time
 		the original branch has lain dormant, a new one has been
 		created. Goals:
-		- Implement new locking primatives on most-used ports.
+		- Implement new locking primitives on most-used ports.
 		- Minor locking improvements.
 		- Remove spinlockmgr().
 
