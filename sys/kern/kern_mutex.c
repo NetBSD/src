@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.36.1 2006/09/10 23:42:41 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.36.2 2006/09/11 01:31:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.1 2006/09/10 23:42:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.2 2006/09/11 01:31:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -245,7 +245,8 @@ mutex_vector_enter(kmutex_t *mtx, int s)
 	MUTEX_DASSERT(mtx, curthread != 0);
 
 #ifdef LOCKDEBUG
-	simple_lock_only_held(NULL, "mutex_enter");
+	if (panicstr == NULL)
+		simple_lock_only_held(NULL, "mutex_enter");
 #endif
 
 	/*
