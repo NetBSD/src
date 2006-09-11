@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.36 2006/05/12 18:00:06 mrg Exp $
+# $NetBSD: Makefile,v 1.37 2006/09/11 22:24:09 dbj Exp $
 
 NOLINT=		# defined
 
@@ -188,7 +188,6 @@ MLINKS=									\
 	krb5_address.3			krb5_copy_address.3		\
 	krb5_address.3			krb5_copy_addresses.3		\
 	krb5_address.3			krb5_free_address.3		\
-	krb5_address.3			krb5_free_addresses.3		\
 	krb5_address.3			krb5_h_addr2addr.3		\
 	krb5_address.3			krb5_h_addr2sockaddr.3		\
 	krb5_address.3			krb5_make_addrport.3		\

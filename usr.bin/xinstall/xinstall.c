@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.95 2006/05/11 06:09:44 mrg Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.96 2006/09/11 22:24:09 dbj Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.95 2006/05/11 06:09:44 mrg Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.96 2006/09/11 22:24:09 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -405,9 +405,11 @@ do_link(char *from_name, char *to_name)
 		ret = link(from_name, tmpl);
 		if (ret == 0) {
 			ret = rename(tmpl, to_name);
-			if (ret < 0)
-				/* remove temporary link before exiting */
-				(void)unlink(tmpl);
+			/* If rename has posix semantics, then the temporary
+			 * file may still exist when from_name and to_name point
+			 * to the smae file, so unlink it unconditionally.
+			 */
+			(void)unlink(tmpl);
 		}
 		return (ret);
 	} else
