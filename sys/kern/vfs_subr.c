@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.269 2006/08/24 01:08:00 jld Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.269.2.1 2006/09/11 00:20:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.269 2006/08/24 01:08:00 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.269.2.1 2006/09/11 00:20:01 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2174,9 +2174,9 @@ vfs_unmountall(struct lwp *l)
 		 * XXX Freeze syncer.  Must do this before locking the
 		 * mount point.  See dounmount() for details.
 		 */
-		lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+		mutex_enter(&syncer_mutex);
 		if (vfs_busy(mp, 0, 0)) {
-			lockmgr(&syncer_lock, LK_RELEASE, NULL);
+			mutex_exit(&syncer_mutex);
 			continue;
 		}
 		if ((error = dounmount(mp, MNT_FORCE, l)) != 0) {
@@ -2675,14 +2675,11 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	else if (mp->mnt_lock.lk_flags & LK_HAVE_EXCL) {
 		(*pr)(" lock type %s: EXCL (count %d) by ",
 		    mp->mnt_lock.lk_wmesg, mp->mnt_lock.lk_exclusivecount);
-		if (mp->mnt_lock.lk_flags & LK_SPIN)
-			(*pr)("processor %lu", mp->mnt_lock.lk_cpu);
-		else
-			(*pr)("pid %d.%d", mp->mnt_lock.lk_lockholder,
-			    mp->mnt_lock.lk_locklwp);
+		(*pr)("pid %d.%d", mp->mnt_lock.lk_lockholder,
+		    mp->mnt_lock.lk_locklwp);
 	} else
 		(*pr)(" not locked");
-	if ((mp->mnt_lock.lk_flags & LK_SPIN) == 0 && mp->mnt_lock.lk_waitcount > 0)
+	if (mp->mnt_lock.lk_waitcount > 0)
 		(*pr)(" with %d pending", mp->mnt_lock.lk_waitcount);
 
 	(*pr)("\n");

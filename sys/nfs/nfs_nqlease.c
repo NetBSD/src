@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.69 2006/09/02 12:40:36 yamt Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.69.2.1 2006/09/11 00:20:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.69 2006/09/02 12:40:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.69.2.1 2006/09/11 00:20:01 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1063,9 +1063,9 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 		 * XXX Freeze syncer.  Must do this before locking
 		 * the mount point.  See dounmount() for details.
 		 */
-		lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+		mutex_enter(&syncer_mutex);
 		if (vfs_busy(nmp->nm_mountp, LK_NOWAIT, 0) != 0)
-			lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+			mutex_exit(&syncer_mutex);
 		else if (dounmount(nmp->nm_mountp, 0, l) != 0)
 			CLRSIG(l);
 		sleepreturn = 0;

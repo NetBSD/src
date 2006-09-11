@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.58 2006/09/02 06:35:49 christos Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.58.2.1 2006/09/11 00:20:01 ad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.58 2006/09/02 06:35:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.58.2.1 2006/09/11 00:20:01 ad Exp $");
 
 #include "opt_systrace.h"
 
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.58 2006/09/02 06:35:49 christos 
 #include <sys/filedesc.h>
 #include <sys/filio.h>
 #include <sys/signalvar.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/pool.h>
 #include <sys/mount.h>
 #include <sys/poll.h>
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.58 2006/09/02 06:35:49 christos 
 #include <compat/common/compat_util.h>
 
 #ifdef __NetBSD__
-#define	SYSTRACE_LOCK(fst, p)	lockmgr(&fst->lock, LK_EXCLUSIVE, NULL)
-#define	SYSTRACE_UNLOCK(fst, p)	lockmgr(&fst->lock, LK_RELEASE, NULL)
+#define	SYSTRACE_LOCK(fst, p)	mutex_enter(&fst->mutex)
+#define	SYSTRACE_UNLOCK(fst, p)	mutex_exit(&fst->mutex)
 #else
 #define	SYSTRACE_LOCK(fst, p)	lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, p)
 #define	SYSTRACE_UNLOCK(fst, p)	lockmgr(&fst->lock, LK_RELEASE, NULL, p)
@@ -207,7 +207,7 @@ POOL_INIT(systr_policy_pl, sizeof(struct str_policy), 0, 0, 0, "strpolpl",
 POOL_INIT(systr_msgcontainer_pl, sizeof(struct str_msgcontainer), 0, 0, 0,
     "strmsgpl", NULL);
 
-struct lock systrace_lck = LOCK_INITIALIZER(PLOCK, "systrace", 0, 0);
+kmutex_t systrace_mutex = MUTEX_INITIALIZER_ADAPTIVE;
 #else /* ! __NetBSD__ */
 struct pool systr_proc_pl;
 struct pool systr_policy_pl;
@@ -538,7 +538,7 @@ void
 systrace_lock(void)
 {
 #ifdef __NetBSD__
-	lockmgr(&systrace_lck, LK_EXCLUSIVE, NULL);
+	mutex_enter(&systrace_mutex);
 #else
 	lockmgr(&systrace_lck, LK_EXCLUSIVE, NULL, curlwp);
 #endif
@@ -548,7 +548,7 @@ void
 systrace_unlock(void)
 {
 #ifdef __NetBSD__
-	lockmgr(&systrace_lck, LK_RELEASE, NULL);
+	mutex_exit(&systrace_mutex);
 #else
 	lockmgr(&systrace_lck, LK_RELEASE, NULL, curlwp);
 #endif
@@ -584,7 +584,11 @@ systraceopen(dev_t dev, int flag, int mode, struct lwp *l)
 	MALLOC(fst, struct fsystrace *, sizeof(*fst), M_XDATA, M_WAITOK);
 
 	memset(fst, 0, sizeof(struct fsystrace));
+#ifdef __NetBSD__
+	mutex_init(&fst->mutex, MUTEX_ADAPTIVE, IPL_NONE);
+#else
 	lockinit(&fst->lock, PLOCK, "systrace", 0, 0);
+#endif
 
 	TAILQ_INIT(&fst->processes);
 	TAILQ_INIT(&fst->messages);
