@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.99 2006/09/07 02:06:47 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.99.2.1 2006/09/11 00:04:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,11 +76,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99 2006/09/07 02:06:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99.2.1 2006/09/11 00:04:40 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_ddb.h"
+
+#define	__MUTEX_PRIVATE
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -102,7 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99 2006/09/07 02:06:47 ad Exp $");
 void	lock_printf(const char *fmt, ...)
     __attribute__((__format__(__printf__,1,2)));
 
-static int acquire(volatile struct lock **, int *, int, int, int, uintptr_t ra);
+static int acquire(volatile struct lock **, int *, int, int, int, uintptr_t);
 
 int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 
@@ -115,7 +117,14 @@ int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 #endif /* defined(LOCKDEBUG) */
 
 #if defined(MULTIPROCESSOR)
-struct simplelock kernel_lock;
+/*
+ * IPL_BIGLOCK: block IPLs which need to grab kernel_mutex.
+ * XXX IPL_VM or IPL_AUDIO should be enough.
+ */
+#if !defined(__HAVE_SPLBIGLOCK)
+#define	IPL_BIGLOCK	IPL_CLOCK
+#endif
+kmutex_t kernel_mutex;
 #endif
 
 /*
@@ -1359,10 +1368,6 @@ simple_lock_only_held(volatile struct simplelock *lp, const char *where)
 	TAILQ_FOREACH(alp, &simplelock_list, list) {
 		if (alp == lp)
 			continue;
-#if defined(MULTIPROCESSOR)
-		if (alp == &kernel_lock)
-			continue;
-#endif /* defined(MULTIPROCESSOR) */
 		if (alp->lock_holder == cpu_num)
 			break;
 	}
@@ -1424,7 +1429,6 @@ assert_sleepable(struct simplelock *interlock, const char *msg)
 	if (curlwp == NULL) {
 		panic("assert_sleepable: NULL curlwp");
 	}
-	spinlock_switchcheck();
 	simple_lock_only_held(interlock, msg);
 }
 
@@ -1436,19 +1440,12 @@ assert_sleepable(struct simplelock *interlock, const char *msg)
  * so that they show up in profiles.
  */
 
-/*
- * splbiglock: block IPLs which need to grab kernel_lock.
- * XXX splvm or splaudio should be enough.
- */
-#if !defined(__HAVE_SPLBIGLOCK)
-#define	splbiglock()	splclock()
-#endif
 
 void
 _kernel_lock_init(void)
 {
 
-	simple_lock_init(&kernel_lock);
+	mutex_init(&kernel_mutex, MUTEX_SPIN, IPL_BIGLOCK);
 }
 
 /*
@@ -1463,19 +1460,12 @@ _kernel_lock(int flag)
 	SCHED_ASSERT_UNLOCKED();
 
 	if (ci->ci_data.cpu_biglock_count > 0) {
-		LOCK_ASSERT(simple_lock_held(&kernel_lock));
+		LOCK_ASSERT(mutex_owned(&kernel_mutex));
 		ci->ci_data.cpu_biglock_count++;
 	} else {
-		int s;
-
-		s = splbiglock();
-		while (!simple_lock_try(&kernel_lock)) {
-			splx(s);
-			SPINLOCK_SPIN_HOOK;
-			s = splbiglock();
-		}
+		mutex_enter(&kernel_mutex);
 		ci->ci_data.cpu_biglock_count++;
-		splx(s);
+		splx(kernel_mutex.mtx_oldspl);
 	}
 }
 
@@ -1487,10 +1477,12 @@ _kernel_unlock(void)
 
 	KASSERT(ci->ci_data.cpu_biglock_count > 0);
 
-	s = splbiglock();
-	if ((--ci->ci_data.cpu_biglock_count) == 0)
-		simple_unlock(&kernel_lock);
-	splx(s);
+	s = splraiseipl(kernel_mutex.mtx_minspl);
+	if ((--ci->ci_data.cpu_biglock_count) == 0) {
+		kernel_mutex.mtx_oldspl = s;
+		mutex_exit(&kernel_mutex);
+	} else
+		splx(s);
 }
 
 /*
@@ -1521,12 +1513,9 @@ _kernel_lock_release_all()
 	hold_count = ci->ci_data.cpu_biglock_count;
 
 	if (hold_count) {
-		int s;
-
-		s = splbiglock();
+		kernel_mutex.mtx_oldspl = splraiseipl(kernel_mutex.mtx_minspl);
 		ci->ci_data.cpu_biglock_count = 0;
-		simple_unlock(&kernel_lock);
-		splx(s);
+		mutex_exit(&kernel_mutex);
 	}
 
 	return hold_count;
@@ -1540,23 +1529,18 @@ _kernel_lock_acquire_count(int hold_count)
 
 	if (hold_count != 0) {
 		struct cpu_info *ci = curcpu();
-		int s;
 
-		s = splbiglock();
-		while (!simple_lock_try(&kernel_lock)) {
-			splx(s);
-			SPINLOCK_SPIN_HOOK;
-			s = splbiglock();
-		}
+		mutex_enter(&kernel_mutex);
 		ci->ci_data.cpu_biglock_count = hold_count;
-		splx(s);
+		splx(kernel_mutex.mtx_oldspl);
 	}
 }
 #if defined(DEBUG)
 void
 _kernel_lock_assert_locked()
 {
-	simple_lock_assert_locked(&kernel_lock, "kernel_lock");
+
+	LOCK_ASSERT(mutex_owned(&kernel_mutex));
 }
 #endif
 
