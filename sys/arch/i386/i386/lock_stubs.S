@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.1 2006/09/10 23:42:41 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.2 2006/09/11 01:24:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -195,26 +195,35 @@ NENTRY(mutex_exit)
 NENTRY(rw_enter)
 	IF386(_80386_rw_enter)
 
-	pushl	%edi
-	movl	$RW_READ_INCR, %ecx
-	movl	8(%esp), %edi
-	cmpl	$RW_READER, 12(%esp)
-	movl	(%edi), %eax
-	je	1f
-	movl	CPUVAR(CURLWP), %ecx
-	orb	$RW_WRITE_LOCKED, %cl
+	movl	4(%esp), %edx
+	cmpl	$RW_READER, 8(%esp)
+	movl	(%edx), %eax
+	jne	2f
 
+	/*
+	 * Reader
+	 */
 1:	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
-	leal	(%eax,%ecx), %edx
-	jnz	2f
+	leal	RW_READ_INCR(%eax), %ecx
+	jnz	_C_LABEL(rw_vector_enter)
 	lock
-	cmpxchgl %edx, (%edi)
+	cmpxchgl %ecx, (%edx)
 	jnz	1b
-	popl	%edi
 	ret
 
-2:	popl	%edi
-	jmp	_C_LABEL(rw_vector_enter)
+	/*
+	 * Writer
+	 */
+2:	testl	%eax, %eax
+	movl	%eax, %ecx
+	jnz	_C_LABEL(rw_vector_enter)
+	addl	CPUVAR(CURLWP), %ecx
+	jz	_C_LABEL(rw_vector_enter)
+	orb	$RW_WRITE_LOCKED, %cl
+	lock
+	cmpxchgl %ecx, (%edx)
+	jnz	_C_LABEL(rw_vector_enter)
+	ret
 
 /*
  * void	rw_exit(krwlock_t *rwl);
@@ -225,43 +234,39 @@ NENTRY(rw_exit)
 	movl	4(%esp), %edx
 	movl	(%edx), %eax
 	testb	$RW_WRITE_LOCKED, %al
-	jnz	3f
+	jnz	2f
 
 	/*
 	 * Reader
 	 */
-	pushl	%edi
 1:	testb	$(RW_HAS_WAITERS|RW_WRITE_LOCKED), %al
-	jnz	2f
+	jnz	3f
 	testl	$RW_THREAD, %eax
-	movl	$-RW_READ_INCR, %ecx
-	jz	2f
-	leal	(%eax,%ecx), %edi
+	jz	3f
+	leal	-RW_READ_INCR(%eax), %ecx
 	lock
-	cmpxchgl %edi, (%edx)
+	cmpxchgl %ecx, (%edx)
 	jnz	1b
-	popl	%edi
-	ret
-
-2:	popl	%edi
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	$RW_READER
-	pushl	%edx
-	call	_C_LABEL(rw_vector_exit)
-	leave
 	ret
 
 	/*
 	 * Writer
 	 */
-3:	movl	%eax, %ecx
+2:	movl	%eax, %ecx
 	subl	$RW_WRITE_LOCKED, %ecx
 	subl	CPUVAR(CURLWP), %ecx
 	jnz	4f
 	lock
 	cmpxchgl %ecx, (%edx)
 	jnz	4f
+	ret
+
+3:	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	$RW_READER
+	pushl	%edx
+	call	_C_LABEL(rw_vector_exit)
+	leave
 	ret
 
 4:	pushl	%ebp
@@ -389,24 +394,37 @@ NENTRY(_80386_mutex_exit)
  * void	rw_enter(krwlock_t *rwl, krw_t op);
  */
 NENTRY(_80386_rw_enter)
-	movl	$RW_READ_INCR, %ecx
 	movl	4(%esp), %edx
 	cmpl	$RW_READER, 8(%esp)
 	pushfl
 	cli
-	je	1f
-	movl	CPUVAR(CURLWP), %ecx
-	orb	$RW_WRITE_LOCKED, %cl
+	movl	(%edx), %eax
+	jne	2f
 
-1:	movl	(%edx), %eax
+	/*
+	 * Reader
+	 *
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
-	jnz	2f
-	addl	%ecx, %eax
+	jnz	3f
+	addl	$RW_READ_INCR, %eax
 	movl	%eax, (%edx)
 	popfl
 	ret
 
-2:	popfl
+	/*
+	 * Writer
+	 */
+2:	testl	%eax, %eax
+	jnz	3f
+	movl	%eax, %ecx
+	addl	CPUVAR(CURLWP), %eax
+	jz	3f
+	orb	$RW_WRITE_LOCKED, %al
+	movl	%eax, (%edx)
+	popfl
+	ret
+
+3:	popfl
 	jmp	_C_LABEL(rw_vector_enter)
 
 /*
