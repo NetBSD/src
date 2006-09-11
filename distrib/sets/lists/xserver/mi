@@ -1,8 +1,9 @@
-# $NetBSD: mi,v 1.16 2005/03/22 13:45:46 tron Exp $
+# $NetBSD: mi,v 1.17 2006/09/11 22:28:33 dbj Exp $
 ./etc/mtree/set.xserver				xserver-sys-root
 ./usr/X11R6/bin/Xdmx
 ./usr/X11R6/bin/Xnest
 ./usr/X11R6/bin/Xprt
+./usr/X11R6/bin/dmx
 ./usr/X11R6/bin/dmxaddinput
 ./usr/X11R6/bin/dmxaddscreen
 ./usr/X11R6/bin/dmxreconfig
@@ -15,7 +16,7 @@
 ./usr/X11R6/bin/res
 ./usr/X11R6/bin/vdltodmx
 ./usr/X11R6/bin/xbell
-./usr/X11R6/bin/xdmx
+./usr/X11R6/bin/xdmx		                xserver-obsolete	obsolete
 ./usr/X11R6/bin/xdmxconfig
 ./usr/X11R6/bin/xinput
 ./usr/X11R6/bin/xled
