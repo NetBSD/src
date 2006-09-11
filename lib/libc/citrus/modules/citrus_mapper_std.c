@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper_std.c,v 1.7 2006/09/09 14:35:17 tnozaki Exp $	*/
+/*	$NetBSD: citrus_mapper_std.c,v 1.8 2006/09/11 13:06:33 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)2003, 2006 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mapper_std.c,v 1.7 2006/09/09 14:35:17 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_mapper_std.c,v 1.8 2006/09/11 13:06:33 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -91,7 +91,7 @@ rowcol_convert(struct _citrus_mapper_std * __restrict ms,
 	u_int32_t conv;
 
 	_DIAGASSERT(ms != NULL);
-	_DIAGASSERT(dst ! NULL);
+	_DIAGASSERT(dst != NULL);
 	/* ps may be unused */
 	rc = &ms->ms_rowcol;
 
@@ -176,7 +176,7 @@ rowcol_parse_variable_compat(struct _citrus_mapper_std_rowcol *rc,
 	rc->rc_src_rowcol_mask = n;
 
 	rc->rc_src_rowcol = malloc(2 *
-	    sizeof (*rc->rc_src_rowcol));
+	    sizeof(*rc->rc_src_rowcol));
 	if (rc->rc_src_rowcol == NULL)
 		return ENOMEM;
 	lz = rc->rc_src_rowcol;
@@ -222,7 +222,7 @@ rowcol_parse_variable(struct _citrus_mapper_std_rowcol *rc,
 	if (rc->rc_src_rowcol_len > _CITRUS_MAPPER_STD_ROWCOL_MAX)
 		return EFTYPE;
 	rc->rc_src_rowcol = malloc(rc->rc_src_rowcol_len *
-	    sizeof (*rc->rc_src_rowcol));
+	    sizeof(*rc->rc_src_rowcol));
 	if (rc->rc_src_rowcol == NULL)
 		return ENOMEM;
 	for (i = 0, lz = rc->rc_src_rowcol;
