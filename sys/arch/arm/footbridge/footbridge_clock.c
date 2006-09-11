@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.21 2006/04/17 00:03:17 chris Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.22 2006/09/11 06:02:30 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.21 2006/04/17 00:03:17 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.22 2006/09/11 06:02:30 gdamore Exp $");
 
 /* Include header files */
 
@@ -57,9 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.21 2006/04/17 00:03:17 chris 
 extern struct footbridge_softc *clock_sc;
 extern u_int dc21285_fclk;
 
-int clockhandler __P((void *));
-int statclockhandler __P((void *));
-static int load_timer __P((int, int));
+int clockhandler(void *);
+int statclockhandler(void *);
+static int load_timer(int, int);
 
 /*
  * Statistics clock variance, in usec.  Variance must be a
@@ -75,8 +75,8 @@ int statcountperusec;		/* number of ticks per usec at current stathz */
 int statprev;			/* last value of we set statclock to */
 
 #if 0
-static int clockmatch	__P((struct device *parent, struct cfdata *cf, void *aux));
-static void clockattach	__P((struct device *parent, struct device *self, void *aux));
+static int clockmatch(struct device *parent, struct cfdata *cf, void *aux);
+static void clockattach(struct device *parent, struct device *self, void *aux);
 
 CFATTACH_DECL(footbridge_clock, sizeof(struct clock_softc),
     clockmatch, clockattach, NULL, NULL);
@@ -88,16 +88,13 @@ CFATTACH_DECL(footbridge_clock, sizeof(struct clock_softc),
  */ 
  
 static int
-clockmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+clockmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	union footbridge_attach_args *fba = aux;
 
 	if (strcmp(fba->fba_ca.ca_name, "clk") == 0)
-		return(1);
-	return(0);
+		return 1;
+	return 0;
 }
 
 
@@ -107,10 +104,7 @@ clockmatch(parent, cf, aux)
  */
   
 static void
-clockattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+clockattach(struct device *parent, struct device *self, void *aux)
 {
 	struct clock_softc *sc = (struct clock_softc *)self;
 	union footbridge_attach_args *fba = aux;
@@ -134,14 +128,13 @@ clockattach(parent, self, aux)
  */
 
 int
-clockhandler(aframe)
-	void *aframe;
+clockhandler(void *aframe)
 {
 	struct clockframe *frame = aframe;
 	bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_ioh,
 	    TIMER_1_CLEAR, 0);
 	hardclock(frame);
-	return(0);	/* Pass the interrupt on down the chain */
+	return 0;	/* Pass the interrupt on down the chain */
 }
 
 /*
@@ -152,8 +145,7 @@ clockhandler(aframe)
  */
  
 int
-statclockhandler(aframe)
-	void *aframe;
+statclockhandler(void *aframe)
 {
 	struct clockframe *frame = aframe;
 	int newint, r;
@@ -201,13 +193,11 @@ statclockhandler(aframe)
 		 */
 		statclock(frame);
 
-	return(0);	/* Pass the interrupt on down the chain */
+	return 0;	/* Pass the interrupt on down the chain */
 }
 
 static int
-load_timer(base, herz)
-	int base;
-	int herz;
+load_timer(int base, int herz)
 {
 	unsigned int timer_count;
 	int control;
@@ -229,7 +219,7 @@ load_timer(base, herz)
 	    base + TIMER_CONTROL, control);
 	bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_ioh,
 	    base + TIMER_CLEAR, 0);
-	return(timer_count);
+	return timer_count;
 }
 
 /*
@@ -239,8 +229,7 @@ load_timer(base, herz)
  */
 
 void
-setstatclockrate(herz)
-	int herz;
+setstatclockrate(int herz)
 {
 	int statint;
 	int countpersecond;
@@ -273,7 +262,7 @@ setstatclockrate(herz)
  */
  
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	/* stathz and profhz should be set to something, we have the timer */
 	if (stathz == 0)
@@ -322,8 +311,7 @@ cpu_initclocks()
  */
 
 void
-microtime(tvp)
-	struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	int s;
 	int tm;
@@ -413,8 +401,7 @@ calibrate_delay(void)
 int delaycount = 25000;
 
 void
-delay(n)
-	u_int n;
+delay(u_int n)
 {
 	volatile u_int i;
 	uint32_t cur, last, delta, usecs;
