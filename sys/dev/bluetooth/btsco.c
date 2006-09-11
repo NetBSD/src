@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.3 2006/09/10 15:45:56 plunky Exp $	*/
+/*	$NetBSD: btsco.c,v 1.4 2006/09/11 21:59:09 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.3 2006/09/10 15:45:56 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.4 2006/09/11 21:59:09 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -97,7 +97,7 @@ struct btsco_softc {
 	uint16_t		 sc_state;	/* link state */
 	struct sco_pcb		*sc_sco;	/* SCO handle */
 	struct sco_pcb		*sc_sco_l;	/* SCO listen handle */
-	int			 sc_mtu;	/* SCO mtu */
+	uint16_t		 sc_mtu;	/* SCO mtu */
 	uint8_t			 sc_channel;	/* RFCOMM channel */
 	int			 sc_err;	/* stored error */
 
@@ -770,8 +770,11 @@ btsco_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
 {
 	struct btsco_softc *sc = hdl;
 
-	if (sc->sc_mtu > 0)
+	if (sc->sc_mtu > 0) {
 		bs = (bs / sc->sc_mtu) * sc->sc_mtu;
+		if (bs == 0)
+			bs = sc->sc_mtu;
+	}
 	
 	DPRINTF("%s mode=0x%x, bs=%d, sc_mtu=%d\n",
 			device_xname((struct device *)sc), mode, bs, sc->sc_mtu);
