@@ -1,10 +1,10 @@
-#	$NetBSD: bsd.man.mk,v 1.95 2006/03/16 18:43:34 jwise Exp $
+#	$NetBSD: bsd.man.mk,v 1.96 2006/09/11 22:24:09 dbj Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
 
 ##### Basic targets
-.PHONY:		catinstall maninstall catpages manpages
+.PHONY:		catinstall maninstall catpages manpages catlinks manlinks
 realinstall:	${MANINSTALL}
 
 ##### Default values
@@ -50,10 +50,16 @@ __installpage: .USE
 	     ${INSTALL_FILE} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
 		${.ALLSRC} ${.TARGET})
 
+# XXX consider including bsd.links.mk and using __linkinstall instead
+__linkinstallpage: .USE
+	${_MKSHMSG_INSTALL} ${.TARGET}; \
+	${_MKSHECHO} "${INSTALL_LINK} ${.ALLSRC} ${.TARGET}" && \
+	${INSTALL_LINK} ${.ALLSRC} ${.TARGET}
+
 ##### Build and install rules (source form pages)
 
 .if ${MKMAN} != "no"
-maninstall:	manlinks
+maninstall:	manpages manlinks
 manpages::	# ensure target exists
 MANPAGES=	${MAN:C/.$/&${MANSUFFIX}/}
 
@@ -85,29 +91,29 @@ manpages::	${_F}
 .PRECIOUS:	${_F}					# keep if install fails
 .endfor
 
-manlinks: .PHONY manpages				# symlink install
-.if !empty(MLINKS)
-	@set ${MLINKS}; \
-	while test $$# -ge 2; do \
-		name=$$1; shift; \
-		dir=${DESTDIR}${MANDIR}/man$${name##*.}; \
-		l=$${dir}${MANSUBDIR}/$${name}${MANSUFFIX}; \
-		name=$$1; shift; \
-		dir=${DESTDIR}${MANDIR}/man$${name##*.}; \
-		t=$${dir}${MANSUBDIR}/$${name}${MANSUFFIX}; \
-		if test $$l -nt $$t -o ! -f $$t; then \
-			${_MKSHMSG_INSTALL} $$t; \
-			${_MKSHECHO} ${INSTALL_LINK} $$l $$t; \
-			${INSTALL_LINK} $$l $$t; \
-		fi; \
-	done
+manlinks::						# link install
+
+.for _src _dst in ${MLINKS}
+_l:=${DESTDIR}${MANDIR}/man${_src:T:E}${MANSUBDIR}/${_src}${MANSUFFIX}
+_t:=${DESTDIR}${MANDIR}/man${_dst:T:E}${MANSUBDIR}/${_dst}${MANSUFFIX}
+
+# Handle case conflicts carefully, when _dst occurs
+# more than once after case flattening
+.if ${MKUPDATE} == "no" || ${MLINKS:tl:M${_dst:tl:Q}:[\#]} > 1
+${_t}!		${_l} __linkinstallpage
+.else
+${_t}:		${_l} __linkinstallpage
 .endif
+
+manlinks::	${_t}
+.PRECIOUS:	${_t}
+.endfor
 .endif # ${MKMAN} != "no"
 
 ##### Build and install rules (plaintext pages)
 
 .if (${MKCATPAGES} != "no") && (${MKMAN} != "no")
-catinstall:	catlinks
+catinstall:	catpages catlinks
 catpages::	# ensure target exists
 CATPAGES=	${MAN:C/\.([1-9])$/.cat\1${MANSUFFIX}/}
 
@@ -146,23 +152,23 @@ catpages::	${_F}
 .PRECIOUS:	${_F}					# keep if install fails
 .endfor
 
-catlinks: .PHONY catpages				# symlink install
-.if !empty(MLINKS)
-	@set ${MLINKS}; \
-	while test $$# -ge 2; do \
-		name=$$1; shift; \
-		dir=${DESTDIR}${MANDIR}/cat$${name##*.}; \
-		l=$${dir}${MANSUBDIR}/$${name%.*}.0${MANSUFFIX}; \
-		name=$$1; shift; \
-		dir=${DESTDIR}${MANDIR}/cat$${name##*.}; \
-		t=$${dir}${MANSUBDIR}/$${name%.*}.0${MANSUFFIX}; \
-		if test $$l -nt $$t -o ! -f $$t; then \
-			${_MKSHMSG_INSTALL} $$t; \
-			${_MKSHECHO} ${INSTALL_LINK} $$l $$t; \
-			${INSTALL_LINK} $$l $$t; \
-		fi; \
-	done
+catlinks::						# link install
+
+.for _src _dst in ${MLINKS}
+_l:=${DESTDIR}${MANDIR}/cat${_src:T:E}${MANSUBDIR}/${_src:R}.0${MANSUFFIX}
+_t:=${DESTDIR}${MANDIR}/cat${_dst:T:E}${MANSUBDIR}/${_dst:R}.0${MANSUFFIX}
+
+# Handle case conflicts carefully, when _dst occurs
+# more than once after case flattening
+.if ${MKUPDATE} == "no" || ${MLINKS:tl:M${_dst:tl:Q}:[\#]} > 1
+${_t}!		${_l} __linkinstallpage
+.else
+${_t}:		${_l} __linkinstallpage
 .endif
+
+catlinks::	${_t}
+.PRECIOUS:	${_t}
+.endfor
 .endif # (${MKCATPAGES} != "no") && (${MKMAN} != "no")
 
 ##### Build and install rules (HTML pages)

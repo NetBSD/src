@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2004/11/24 11:57:09 blymn Exp $
+#	$NetBSD: Makefile,v 1.8 2006/09/11 22:24:09 dbj Exp $
 #
 
 CPPFLAGS+=-I${.CURDIR}
@@ -36,12 +36,11 @@ MLINKS+=	forms.3 form.3 form_page.3 current_field.3 \
 		form_field_buffer.3 field_status.3 form_hook.3 field_term.3 \
 		form_field_validation.3 field_type.3 \
 		form_field_userptr.3 field_userptr.3 \
-		form_driver.3 form_driver.3 form_field.3 form_fields.3 \
+		form_field.3 form_fields.3 \
 		form_hook.3 form_init.3 form_page.3 form_max_page.3 \
-		form_opts.3 form_opts.3 form_opts.3 form_opts_off.3 \
-		form_opts.3 form_opts_on.3 form_page.3 form_page.3 \
+		form_opts.3 form_opts_off.3 \
+		form_opts.3 form_opts_on.3 \
 		form_win.3 form_sub.3 form_hook.3 form_term.3 \
-		form_userptr.3 form_userptr.3 form_win.3 form_win.3 \
 		form_field_new.3 free_field.3 \
 		form_fieldtype.3 free_fieldtype.3 \
 		form_new.3 free_form.3 form_field_new.3 link_field.3 \
