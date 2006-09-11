@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.44 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.44.4.1 2006/09/11 18:47:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.44 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.44.4.1 2006/09/11 18:47:17 ad Exp $");
 
 #define SYSVMSG
 
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.44 2006/07/23 22:06:11 ad Exp $");
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
+#include <sys/mutex.h>
 
 #define MSG_DEBUG
 #undef MSG_DEBUG_OK
@@ -86,6 +87,7 @@ static char	*msgpool;		/* MSGMAX byte long msg buffer pool */
 static struct	msgmap *msgmaps;	/* MSGSEG msgmap structures */
 static struct __msg *msghdrs;		/* MSGTQL msg headers */
 struct	msqid_ds *msqids;		/* MSGMNI msqid_ds struct's */
+static kmutex_t msgmutex;
 
 static void msg_freehdr(struct __msg *);
 
@@ -155,11 +157,16 @@ msginit(void)
 		msqids[i].msg_qbytes = 0;	/* implies entry is available */
 		msqids[i].msg_perm._seq = 0;	/* reset to a known value */
 	}
+
+	mutex_init(&msgmutex, MUTEX_DEFAULT, IPL_NONE);
 }
 
 static void
 msg_freehdr(struct __msg *msghdr)
 {
+
+	KASSERT(mutex_owned(&msgmutex));
+
 	while (msghdr->msg_ts > 0) {
 		short next;
 		if (msghdr->msg_spot < 0 || msghdr->msg_spot >= msginfo.msgseg)
@@ -219,21 +226,26 @@ msgctl1(struct lwp *l, int msqid, int cmd, struct msqid_ds *msqbuf)
 
 	ix = IPCID_TO_IX(msqid);
 
+	mutex_enter(&msgmutex);
+
 	if (ix < 0 || ix >= msginfo.msgmni) {
 		MSG_PRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", ix,
 		    msginfo.msgmni));
-		return (EINVAL);
+		error = EINVAL;
+		goto unlock;
 	}
 
 	msqptr = &msqids[ix];
 
 	if (msqptr->msg_qbytes == 0) {
 		MSG_PRINTF(("no such msqid\n"));
-		return (EINVAL);
+		error = EINVAL;
+		goto unlock;
 	}
 	if (msqptr->msg_perm._seq != IPCID_TO_SEQ(msqid)) {
 		MSG_PRINTF(("wrong sequence number\n"));
-		return (EINVAL);
+		error = EINVAL;
+		goto unlock;
 	}
 
 	switch (cmd) {
@@ -241,7 +253,7 @@ msgctl1(struct lwp *l, int msqid, int cmd, struct msqid_ds *msqbuf)
 	{
 		struct __msg *msghdr;
 		if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_M)) != 0)
-			return (error);
+			break;
 		/* Free the message headers */
 		msghdr = msqptr->_msg_first;
 		while (msghdr != NULL) {
@@ -280,7 +292,8 @@ msgctl1(struct lwp *l, int msqid, int cmd, struct msqid_ds *msqbuf)
 		}
 		if (msqbuf->msg_qbytes == 0) {
 			MSG_PRINTF(("can't reduce msg_qbytes to 0\n"));
-			return (EINVAL);	/* XXX non-standard errno! */
+			error = EINVAL;		/* XXX non-standard errno! */
+			break;
 		}
 		msqptr->msg_perm.uid = msqbuf->msg_perm.uid;
 		msqptr->msg_perm.gid = msqbuf->msg_perm.gid;
@@ -300,9 +313,12 @@ msgctl1(struct lwp *l, int msqid, int cmd, struct msqid_ds *msqbuf)
 
 	default:
 		MSG_PRINTF(("invalid command %d\n", cmd));
-		return (EINVAL);
+		error = EINVAL;
+		break;
 	}
 
+ unlock:
+	mutex_exit(&msgmutex);
 	return (error);
 }
 
@@ -313,11 +329,13 @@ sys_msgget(struct lwp *l, void *v, register_t *retval)
 		syscallarg(key_t) key;
 		syscallarg(int) msgflg;
 	} */ *uap = v;
-	int msqid, error;
+	int msqid, error = 0;
 	int key = SCARG(uap, key);
 	int msgflg = SCARG(uap, msgflg);
 	kauth_cred_t cred = l->l_cred;
 	struct msqid_ds *msqptr = NULL;
+
+	mutex_enter(&msgmutex);
 
 	MSG_PRINTF(("msgget(0x%x, 0%o)\n", key, msgflg));
 
@@ -332,13 +350,14 @@ sys_msgget(struct lwp *l, void *v, register_t *retval)
 			MSG_PRINTF(("found public key\n"));
 			if ((msgflg & IPC_CREAT) && (msgflg & IPC_EXCL)) {
 				MSG_PRINTF(("not exclusive\n"));
-				return(EEXIST);
+				error = EEXIST;
+				goto unlock;
 			}
 			if ((error = ipcperm(cred, &msqptr->msg_perm,
 			    msgflg & 0700 ))) {
 				MSG_PRINTF(("requester doesn't have 0%o access\n",
 				    msgflg & 0700));
-				return (error);
+				goto unlock;
 			}
 			goto found;
 		}
@@ -360,7 +379,8 @@ sys_msgget(struct lwp *l, void *v, register_t *retval)
 		}
 		if (msqid == msginfo.msgmni) {
 			MSG_PRINTF(("no more msqid_ds's available\n"));
-			return (ENOSPC);
+			error = ENOSPC;
+			goto unlock;
 		}
 		MSG_PRINTF(("msqid %d is available\n", msqid));
 		msqptr->msg_perm._key = key;
@@ -383,13 +403,17 @@ sys_msgget(struct lwp *l, void *v, register_t *retval)
 		msqptr->msg_ctime = time_second;
 	} else {
 		MSG_PRINTF(("didn't find it and wasn't asked to create it\n"));
-		return (ENOENT);
+		error = ENOENT;
+		goto unlock;
 	}
 
  found:
 	/* Construct the unique msqid */
 	*retval = IXSEQ_TO_IPCID(msqid, msqptr->msg_perm);
-	return (0);
+
+ unlock:
+  	mutex_exit(&msgmutex);
+	return (error);
 }
 
 int
@@ -410,7 +434,7 @@ int
 msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
     int msgflg, size_t typesz, copyin_t fetch_type)
 {
-	int segs_needed, error, msqid;
+	int segs_needed, error = 0, msqid;
 	kauth_cred_t cred = l->l_cred;
 	struct msqid_ds *msqptr;
 	struct __msg *msghdr;
@@ -421,25 +445,30 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 
 	msqid = IPCID_TO_IX(msqidr);
 
+	mutex_enter(&msgmutex);
+
 	if (msqid < 0 || msqid >= msginfo.msgmni) {
 		MSG_PRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", msqid,
 		    msginfo.msgmni));
-		return (EINVAL);
+		error = EINVAL;
+		goto unlock;
 	}
 
 	msqptr = &msqids[msqid];
 	if (msqptr->msg_qbytes == 0) {
 		MSG_PRINTF(("no such message queue id\n"));
-		return (EINVAL);
+		error = EINVAL;
+		goto unlock;
 	}
 	if (msqptr->msg_perm._seq != IPCID_TO_SEQ(msqidr)) {
 		MSG_PRINTF(("wrong sequence number\n"));
-		return (EINVAL);
+		error = EINVAL;
+		goto unlock;
 	}
 
 	if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_W))) {
 		MSG_PRINTF(("requester doesn't have write access\n"));
-		return (error);
+		goto unlock;
 	}
 
 	segs_needed = (msgsz + msginfo.msgssz - 1) / msginfo.msgssz;
@@ -455,7 +484,8 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 
 		if (msgsz > msqptr->msg_qbytes) {
 			MSG_PRINTF(("msgsz > msqptr->msg_qbytes\n"));
-			return (EINVAL);
+			error = EINVAL;
+			goto unlock;
 		}
 
 		if (msqptr->msg_perm.mode & MSG_LOCKED) {
@@ -481,7 +511,8 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 			if ((msgflg & IPC_NOWAIT) != 0) {
 				MSG_PRINTF(("need more resources but caller "
 				    "doesn't want to wait\n"));
-				return (EAGAIN);
+				error = EAGAIN;
+				goto unlock;
 			}
 
 			if ((msqptr->msg_perm.mode & MSG_LOCKED) != 0) {
@@ -495,15 +526,16 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 				we_own_it = 1;
 			}
 			MSG_PRINTF(("goodnight\n"));
-			error = tsleep(msqptr, (PZERO - 4) | PCATCH,
-			    "msgwait", 0);
+			error = mtsleep(msqptr, (PZERO - 4) | PCATCH,
+			    "msgwait", 0, &msgmutex);
 			MSG_PRINTF(("good morning, error=%d\n", error));
 			if (we_own_it)
 				msqptr->msg_perm.mode &= ~MSG_LOCKED;
 			if (error != 0) {
 				MSG_PRINTF(("msgsnd: interrupted system "
 				    "call\n"));
-				return (EINTR);
+				error = EINTR;
+				goto unlock;
 			}
 
 			/*
@@ -512,7 +544,8 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 
 			if (msqptr->msg_qbytes == 0) {
 				MSG_PRINTF(("msqid deleted\n"));
-				return (EIDRM);
+				error = EIDRM;
+				goto unlock;
 			}
 		} else {
 			MSG_PRINTF(("got all the resources that we need\n"));
@@ -577,14 +610,15 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 	/*
 	 * Copy in the message type
 	 */
-
-	if ((error = (*fetch_type)(user_msgp, &msghdr->msg_type,
-	    typesz)) != 0) {
+	mutex_exit(&msgmutex);
+	error = (*fetch_type)(user_msgp, &msghdr->msg_type, typesz);
+	mutex_enter(&msgmutex);
+	if (error != 0) {
 		MSG_PRINTF(("error %d copying the message type\n", error));
 		msg_freehdr(msghdr);
 		msqptr->msg_perm.mode &= ~MSG_LOCKED;
 		wakeup(msqptr);
-		return (error);
+		goto unlock;
 	}
 	user_msgp += typesz;
 
@@ -597,7 +631,7 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 		msqptr->msg_perm.mode &= ~MSG_LOCKED;
 		wakeup(msqptr);
 		MSG_PRINTF(("mtype (%ld) < 1\n", msghdr->msg_type));
-		return (EINVAL);
+		goto unlock;
 	}
 
 	/*
@@ -615,14 +649,16 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 			panic("next too low #2");
 		if (next >= msginfo.msgseg)
 			panic("next out of range #2");
-		if ((error = copyin(user_msgp, &msgpool[next * msginfo.msgssz],
-		    tlen)) != 0) {
+		mutex_exit(&msgmutex);
+		error = copyin(user_msgp, &msgpool[next * msginfo.msgssz], tlen);
+		mutex_enter(&msgmutex);
+		if (error != 0) {
 			MSG_PRINTF(("error %d copying in message segment\n",
 			    error));
 			msg_freehdr(msghdr);
 			msqptr->msg_perm.mode &= ~MSG_LOCKED;
 			wakeup(msqptr);
-			return (error);
+			goto unlock;
 		}
 		msgsz -= tlen;
 		user_msgp += tlen;
@@ -644,7 +680,8 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 	if (msqptr->msg_qbytes == 0) {
 		msg_freehdr(msghdr);
 		wakeup(msqptr);
-		return (EIDRM);
+		error = EIDRM;
+		goto unlock;
 	}
 
 	/*
@@ -666,7 +703,10 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 	msqptr->msg_stime = time_second;
 
 	wakeup(msqptr);
-	return (0);
+
+ unlock:
+ 	mutex_exit(&msgmutex);
+	return error;
 }
 
 int
@@ -693,7 +733,7 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 	kauth_cred_t cred = l->l_cred;
 	struct msqid_ds *msqptr;
 	struct __msg *msghdr;
-	int error, msqid;
+	int error = 0, msqid;
 	short next;
 
 	MSG_PRINTF(("call to msgrcv(%d, %p, %lld, %ld, %d)\n", msqid,
@@ -701,32 +741,38 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 
 	msqid = IPCID_TO_IX(msqidr);
 
+	mutex_enter(&msgmutex);
+
 	if (msqid < 0 || msqid >= msginfo.msgmni) {
 		MSG_PRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", msqid,
 		    msginfo.msgmni));
-		return (EINVAL);
+		error = EINVAL;
+		goto unlock;
 	}
 
 	msqptr = &msqids[msqid];
 	if (msqptr->msg_qbytes == 0) {
 		MSG_PRINTF(("no such message queue id\n"));
-		return (EINVAL);
+		error = EINVAL;
+		goto unlock;
 	}
 	if (msqptr->msg_perm._seq != IPCID_TO_SEQ(msqidr)) {
 		MSG_PRINTF(("wrong sequence number\n"));
-		return (EINVAL);
+		error = EINVAL;
+		goto unlock;
 	}
 
 	if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_R))) {
 		MSG_PRINTF(("requester doesn't have read access\n"));
-		return (error);
+		goto unlock;
 	}
 
 #if 0
 	/* cannot happen, msgsz is unsigned */
 	if (msgsz < 0) {
 		MSG_PRINTF(("msgsz < 0\n"));
-		return (EINVAL);
+		error = EINVAL;
+		goto unlock;
 	}
 #endif
 
@@ -741,7 +787,8 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 					    "queue is too big "
 					    "(want %lld, got %d)\n",
 					    (long long)msgsz, msghdr->msg_ts));
-					return (E2BIG);
+					error = E2BIG;
+					goto unlock;
 				}
 				if (msqptr->_msg_first == msqptr->_msg_last) {
 					msqptr->_msg_first = NULL;
@@ -781,7 +828,8 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 						    "(want %lld, got %d)\n",
 						    (long long)msgsz,
 						    msghdr->msg_ts));
-						return (E2BIG);
+						error = E2BIG;
+						goto unlock;
 					}
 					*prev = msghdr->msg_next;
 					if (msghdr == msqptr->_msg_last) {
@@ -824,11 +872,12 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 			    msgtyp));
 			/* The SVID says to return ENOMSG. */
 #ifdef ENOMSG
-			return (ENOMSG);
+			error = ENOMSG;
 #else
 			/* Unfortunately, BSD doesn't define that code yet! */
-			return (EAGAIN);
+			error = EAGAIN;
 #endif
+			goto unlock;
 		}
 
 		/*
@@ -836,13 +885,14 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 		 */
 
 		MSG_PRINTF(("msgrcv:  goodnight\n"));
-		error = tsleep(msqptr, (PZERO - 4) | PCATCH, "msgwait",
-		    0);
+		error = mtsleep(msqptr, (PZERO - 4) | PCATCH, "msgwait",
+		    0, &msgmutex);
 		MSG_PRINTF(("msgrcv: good morning (error=%d)\n", error));
 
 		if (error != 0) {
 			MSG_PRINTF(("msgsnd: interrupted system call\n"));
-			return (EINTR);
+			error = EINTR;
+			goto unlock;
 		}
 
 		/*
@@ -852,7 +902,8 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 		if (msqptr->msg_qbytes == 0 ||
 		    msqptr->msg_perm._seq != IPCID_TO_SEQ(msqidr)) {
 			MSG_PRINTF(("msqid deleted\n"));
-			return (EIDRM);
+			error = EIDRM;
+			goto unlock;
 		}
 	}
 
@@ -881,13 +932,14 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 	/*
 	 * Return the type to the user.
 	 */
-
+	mutex_exit(&msgmutex);
 	error = (*put_type)(&msghdr->msg_type, user_msgp, typesz);
+	mutex_enter(&msgmutex);
 	if (error != 0) {
 		MSG_PRINTF(("error (%d) copying out message type\n", error));
 		msg_freehdr(msghdr);
 		wakeup(msqptr);
-		return (error);
+		goto unlock;
 	}
 	user_msgp += typesz;
 
@@ -907,14 +959,16 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 			panic("next too low #3");
 		if (next >= msginfo.msgseg)
 			panic("next out of range #3");
+		mutex_exit(&msgmutex);
 		error = copyout(&msgpool[next * msginfo.msgssz],
 		    user_msgp, tlen);
+		mutex_enter(&msgmutex);
 		if (error != 0) {
 			MSG_PRINTF(("error (%d) copying out message segment\n",
 			    error));
 			msg_freehdr(msghdr);
 			wakeup(msqptr);
-			return (error);
+			goto unlock;
 		}
 		user_msgp += tlen;
 		next = msgmaps[next].next;
@@ -927,5 +981,8 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 	msg_freehdr(msghdr);
 	wakeup(msqptr);
 	*retval = msgsz;
-	return (0);
+
+ unlock:
+ 	mutex_exit(&msgmutex);
+	return error;
 }
