@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.166 2006/09/02 06:32:09 christos Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.166.2.1 2006/09/11 18:45:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166 2006/09/02 06:32:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.1 2006/09/11 18:45:24 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -318,7 +318,7 @@ schedcpu(void *arg)
 
 	schedcpu_ticks++;
 
-	proclist_lock_read();
+	mutex_enter(&proclist_mutex);
 	PROCLIST_FOREACH(p, &allproc) {
 		/*
 		 * Increment time in/out of memory and sleep time
@@ -377,7 +377,7 @@ schedcpu(void *arg)
 		}
 		SCHED_UNLOCK(s);
 	}
-	proclist_unlock_read();
+	mutex_exit(&proclist_mutex);
 	uvm_meter();
 	wakeup((caddr_t)&lbolt);
 	callout_schedule(&schedcpu_ch, hz);
@@ -625,6 +625,215 @@ ltsleep(volatile const void *ident, int priority, const char *wmesg, int timo,
 #endif
 	if (relock && interlock != NULL)
 		simple_lock(interlock);
+
+	/* XXXNJW this is very much a kluge.
+	 * revisit. a better way of preventing looping/hanging syscalls like
+	 * wait4() and _lwp_wait() from wedging an exiting process
+	 * would be preferred.
+	 */
+	if (catch && ((p->p_flag & P_WEXIT) && p->p_nlwps > 1 && exiterr))
+		return (EINTR);
+	return (0);
+}
+
+/* XXX temporary */
+int
+mtsleep(volatile const void *ident, int priority, const char *wmesg, int timo,
+    kmutex_t *mtx)
+{
+	struct lwp *l = curlwp;
+	struct proc *p = l ? l->l_proc : NULL;
+	struct slpque *qp;
+	struct sadata_upcall *sau;
+	int sig, s;
+	int catch = priority & PCATCH;
+	int relock = (priority & PNORELOCK) == 0;
+	int exiterr = (priority & PNOEXITERR) == 0;
+
+	/*
+	 * XXXSMP
+	 * This is probably bogus.  Figure out what the right
+	 * thing to do here really is.
+	 * Note that not sleeping if ltsleep is called with curlwp == NULL
+	 * in the shutdown case is disgusting but partly necessary given
+	 * how shutdown (barely) works.
+	 */
+	if (cold || (doing_shutdown && (panicstr || (l == NULL)))) {
+		/*
+		 * After a panic, or during autoconfiguration,
+		 * just give interrupts a chance, then just return;
+		 * don't run any other procs or panic below,
+		 * in case this is the idle process and already asleep.
+		 */
+		s = splhigh();
+		splx(safepri);
+		splx(s);
+		if (mtx != NULL && relock == 0)
+			mutex_exit(mtx);
+		return (0);
+	}
+
+	KASSERT(p != NULL);
+	LOCK_ASSERT(mtx == NULL || mutex_owned(mtx));
+
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_CSW))
+		ktrcsw(l, 1, 0);
+#endif
+
+	/*
+	 * XXX We need to allocate the sadata_upcall structure here,
+	 * XXX since we can't sleep while waiting for memory inside
+	 * XXX sa_upcall().  It would be nice if we could safely
+	 * XXX allocate the sadata_upcall structure on the stack, here.
+	 */
+	if (l->l_flag & L_SA) {
+		sau = sadata_upcall_alloc(0);
+	} else {
+		sau = NULL;
+	}
+
+	SCHED_LOCK(s);
+
+#ifdef DIAGNOSTIC
+	if (ident == NULL)
+		panic("ltsleep: ident == NULL");
+	if (l->l_stat != LSONPROC)
+		panic("ltsleep: l_stat %d != LSONPROC", l->l_stat);
+	if (l->l_back != NULL)
+		panic("ltsleep: p_back != NULL");
+#endif
+
+	l->l_wchan = ident;
+	l->l_wmesg = wmesg;
+	l->l_slptime = 0;
+	l->l_priority = priority & PRIMASK;
+	sig = 0;
+
+	qp = SLPQUE(ident);
+	if (qp->sq_head == 0)
+		qp->sq_head = l;
+	else {
+		*qp->sq_tailp = l;
+	}
+	*(qp->sq_tailp = &l->l_forw) = 0;
+
+	if (timo)
+		callout_reset(&l->l_tsleep_ch, timo, endtsleep, l);
+
+	if (mtx != NULL) {
+		/*
+		 * XXXAD Release the sched lock before the interlock, as it
+		 * may be re-entered in turnstile_wakeup().  If someone on
+		 * another CPU or from interrupt context tries to wake us
+		 * up, they'll get a nasty surprise.
+		 */
+		SCHED_UNLOCK(s);
+		mutex_exit(mtx);
+		SCHED_LOCK(s);
+		if (l->l_wchan == NULL) {
+			catch = 0;
+			SCHED_UNLOCK(s);
+			goto resume;
+		}
+	}
+
+	/*
+	 * We put ourselves on the sleep queue and start our timeout
+	 * before calling CURSIG, as we could stop there, and a wakeup
+	 * or a SIGCONT (or both) could occur while we were stopped.
+	 * A SIGCONT would cause us to be marked as SSLEEP
+	 * without resuming us, thus we must be ready for sleep
+	 * when CURSIG is called.  If the wakeup happens while we're
+	 * stopped, p->p_wchan will be 0 upon return from CURSIG.
+	 */
+	if (catch) {
+		l->l_flag |= L_SINTR;
+		if (((sig = CURSIG(l)) != 0) ||
+		    ((p->p_flag & P_WEXIT) && p->p_nlwps > 1)) {
+			if (l->l_wchan != NULL)
+				unsleep(l);
+			l->l_stat = LSONPROC;
+			SCHED_UNLOCK(s);
+			goto resume;
+		}
+		if (l->l_wchan == NULL) {
+			catch = 0;
+			SCHED_UNLOCK(s);
+			goto resume;
+		}
+	} else
+		sig = 0;
+
+	l->l_stat = LSSLEEP;
+	p->p_nrlwps--;
+	p->p_stats->p_ru.ru_nvcsw++;
+	SCHED_ASSERT_LOCKED();
+	if (l->l_flag & L_SA)
+		sa_switch(l, sau, SA_UPCALL_BLOCKED);
+	else
+		mi_switch(l, NULL);
+
+#if	defined(DDB) && !defined(GPROF) && !defined(sun2) && !defined(__vax__)
+	/* handy breakpoint location after process "wakes" */
+	__asm(".globl bpendmtsleep\nbpendmtsleep:");
+#endif
+
+	/*
+	 * p->p_nrlwps is incremented by whoever made us runnable again,
+	 * either setrunnable() or awaken().
+	 */
+
+	SCHED_ASSERT_UNLOCKED();
+	splx(s);
+
+ resume:
+	KDASSERT(l->l_cpu != NULL);
+	KDASSERT(l->l_cpu == curcpu());
+	l->l_cpu->ci_schedstate.spc_curpriority = l->l_usrpri;
+
+	l->l_flag &= ~L_SINTR;
+	if (l->l_flag & L_TIMEOUT) {
+		l->l_flag &= ~(L_TIMEOUT|L_CANCELLED);
+		if (sig == 0) {
+#ifdef KTRACE
+			if (KTRPOINT(p, KTR_CSW))
+				ktrcsw(l, 0, 0);
+#endif
+			if (relock && mtx != NULL)
+				mutex_enter(mtx);
+			return (EWOULDBLOCK);
+		}
+	} else if (timo)
+		callout_stop(&l->l_tsleep_ch);
+
+	if (catch) {
+		const int cancelled = l->l_flag & L_CANCELLED;
+		l->l_flag &= ~L_CANCELLED;
+		if (sig != 0 || (sig = CURSIG(l)) != 0 || cancelled) {
+#ifdef KTRACE
+			if (KTRPOINT(p, KTR_CSW))
+				ktrcsw(l, 0, 0);
+#endif
+			if (relock && mtx != NULL)
+				mutex_enter(mtx);
+			/*
+			 * If this sleep was canceled, don't let the syscall
+			 * restart.
+			 */
+			if (cancelled ||
+			    (SIGACTION(p, sig).sa_flags & SA_RESTART) == 0)
+				return (EINTR);
+			return (ERESTART);
+		}
+	}
+
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_CSW))
+		ktrcsw(l, 0, 0);
+#endif
+	if (relock && mtx != NULL)
+		mutex_enter(mtx);
 
 	/* XXXNJW this is very much a kluge.
 	 * revisit. a better way of preventing looping/hanging syscalls like
@@ -1223,7 +1432,7 @@ suspendsched()
 	 * Convert all non-P_SYSTEM LSSLEEP or LSRUN processes to
 	 * LSSUSPENDED.
 	 */
-	proclist_lock_read();
+	mutex_enter(&alllwp_mutex);
 	SCHED_LOCK(s);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		if ((l->l_proc->p_flag & P_SYSTEM) != 0)
@@ -1249,7 +1458,7 @@ suspendsched()
 		}
 	}
 	SCHED_UNLOCK(s);
-	proclist_unlock_read();
+	mutex_exit(&alllwp_mutex);
 }
 
 /*
@@ -1284,6 +1493,24 @@ scheduler_wait_hook(struct proc *parent, struct proc *child)
 		parent->p_estcpu =
 		    ESTCPULIM(parent->p_estcpu + child->p_estcpu - estcpu);
 	}
+}
+
+/*
+ * XXXAD Scale an LWP priority (possibly a user priority) to a kernel one. 
+ * This is a hack; think of something better.
+ */
+int
+sched_kpri(struct lwp *l)
+{
+	const int obase = PUSER;
+	const int ospan = MAXPRI - obase;
+	const int nbase = PRIBIO;
+	const int nspan = PUSER - nbase;
+
+	if (l->l_priority < obase)
+		return (l->l_priority);
+
+	return (l->l_priority - obase) * nspan / ospan + nbase;
 }
 
 /*
