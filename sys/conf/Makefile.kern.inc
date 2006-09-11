@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.85 2006/09/07 18:41:28 mrg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.86 2006/09/11 03:12:48 matt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -435,6 +435,7 @@ EXTRA_CLEAN+= .gdbinit
 .endfor
 .endif
 
+AFLAGS+=	${AOPTS.${.IMPSRC:T}}
 CFLAGS+=	${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}
 CPPFLAGS+=	${CPPFLAGS.${.IMPSRC:T}}
 CWARNFLAGS+=	${CWARNFLAGS.${.IMPSRC:T}}
