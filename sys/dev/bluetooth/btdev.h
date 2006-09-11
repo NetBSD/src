@@ -1,4 +1,4 @@
-/*	$NetBSD: btdev.h,v 1.3 2006/09/10 15:45:56 plunky Exp $	*/
+/*	$NetBSD: btdev.h,v 1.4 2006/09/11 18:30:27 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -42,6 +42,7 @@
 #define BTDEVtype		"device-type"
 #define BTDEVladdr		"local-bdaddr"
 #define BTDEVraddr		"remote-bdaddr"
+#define BTDEVservice		"service-name"
 
 #ifdef _KERNEL
 struct btdev {
