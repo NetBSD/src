@@ -1,4 +1,4 @@
-/*	$NetBSD: btdevctl.c,v 1.2 2006/09/10 15:45:56 plunky Exp $	*/
+/*	$NetBSD: btdevctl.c,v 1.3 2006/09/11 18:30:27 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: btdevctl.c,v 1.2 2006/09/10 15:45:56 plunky Exp $");
+__RCSID("$NetBSD: btdevctl.c,v 1.3 2006/09/11 18:30:27 plunky Exp $");
 
 #include <prop/proplib.h>
 #include <sys/ioctl.h>
@@ -158,6 +158,13 @@ main(int argc, char *argv[])
 	obj = prop_data_create_data(&raddr, sizeof(raddr));
 	if (obj == NULL || !prop_dictionary_set(dev, BTDEVraddr, obj))
 		errx(EXIT_FAILURE, "proplib failure (%s)", BTDEVraddr);
+
+	prop_object_release(obj);
+
+	/* add service name */
+	obj = prop_string_create_cstring(service);
+	if (obj == NULL || !prop_dictionary_set(dev, BTDEVservice, obj))
+		errx(EXIT_FAILURE, "proplib failure (%s)", BTDEVservice);
 
 	prop_object_release(obj);
 
