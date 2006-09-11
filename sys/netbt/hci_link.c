@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.3 2006/07/26 10:20:56 tron Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.4 2006/09/11 22:08:38 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.3 2006/07/26 10:20:56 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.4 2006/09/11 22:08:38 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -748,7 +748,7 @@ hci_link_free(struct hci_link *link, int err)
 {
 	struct l2cap_req *req;
 	struct l2cap_pdu *pdu;
-	struct l2cap_channel *chan;
+	struct l2cap_channel *chan, *next;
 
 	KASSERT(link);
 
@@ -758,7 +758,9 @@ hci_link_free(struct hci_link *link, int err)
 
 	/* ACL reference count */
 	if (link->hl_refcnt > 0) {
-		LIST_FOREACH(chan, &l2cap_active_list, lc_ncid) {
+		next = LIST_FIRST(&l2cap_active_list);
+		while ((chan = next) != NULL) {
+			next = LIST_NEXT(chan, lc_ncid);
 			if (chan->lc_link == link)
 				l2cap_close(chan, err);
 		}
