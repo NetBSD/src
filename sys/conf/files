@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.810 2006/09/07 14:22:07 itohy Exp $
+#	$NetBSD: files,v 1.810.2.1 2006/09/11 18:56:28 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1279,6 +1279,7 @@ file	kern/kern_lock.c
 file	kern/kern_lwp.c
 file	kern/kern_malloc.c
 file	kern/kern_malloc_debug.c	malloc_debug
+file	kern/kern_mutex.c
 file	kern/kern_fileassoc.c		fileassoc
 file	kern/kern_ntptime.c
 file	kern/kern_pax.c			pax_mprotect
@@ -1287,6 +1288,7 @@ file	kern/kern_proc.c
 file	kern/kern_prot.c
 file	kern/kern_ras.c
 file	kern/kern_resource.c
+file	kern/kern_rwlock.c
 file	kern/kern_sa.c
 file	kern/kern_securelevel.c
 file	kern/kern_sig.c
@@ -1297,6 +1299,7 @@ file	kern/kern_sysctl.c
 file	kern/kern_tc.c
 file	kern/kern_time.c
 file	kern/kern_timeout.c
+file	kern/kern_turnstile.c
 file	kern/kern_todr.c
 file	kern/kern_uuid.c
 file	kern/kern_xxx.c
