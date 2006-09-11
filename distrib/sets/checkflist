@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.32 2006/01/28 19:01:23 apb Exp $
+#	$NetBSD: checkflist,v 1.33 2006/09/11 22:16:10 dbj Exp $
 #
 # Verify output of makeflist against contents of ${DESTDIR} and ${metalog}.
 
@@ -112,6 +112,14 @@ if false && [ -n "${metalog}" ]; then
     ${COMM} -23 "${SDIR}/files" "${SDIR}/mlist" > "${SDIR}/missing"
     ${COMM} -13 "${SDIR}/files" "${SDIR}/mlist" > "${SDIR}/extra"
 
+    # Handle case insensitive filesystems
+    mv -f "${SDIR}/extra" "${SDIR}/extra.all"
+    while read f; do
+	[ -f "${DESTDIR}/${f}" ] || \
+	    [ -d "${DESTDIR}/${f}" ] || \
+	    [ -L "${DESTDIR}/${f}" ] || echo "$f"
+    done < "${SDIR}/extra.all" > "${SDIR}/extra"
+
     if [ -s "${SDIR}/extra" ]; then
 	count="$(${AWK} 'END {print NR}' "${SDIR}/extra")"
 	echo ""
@@ -144,6 +152,14 @@ fi
 #
 ${COMM} -23 "${SDIR}/flist" "${SDIR}/files" > "${SDIR}/missing"
 ${COMM} -13 "${SDIR}/flist" "${SDIR}/files" > "${SDIR}/extra"
+
+# Handle case insensitive filesystems
+mv -f "${SDIR}/missing" "${SDIR}/missing.all"
+while read f; do
+    [ -f "${DESTDIR}/${f}" ] || \
+	[ -d "${DESTDIR}/${f}" ] || \
+	[ -L "${DESTDIR}/${f}" ] || echo "$f"
+done < "${SDIR}/missing.all" > "${SDIR}/missing"
 
 if [ -s "${SDIR}/extra" ]; then
 	count="$(${AWK} 'END {print NR}' "${SDIR}/extra")"
