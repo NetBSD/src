@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.29 2006/09/10 22:25:58 jld Exp $	*/
+/*	$NetBSD: clock.c,v 1.30 2006/09/11 06:57:30 jld Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.29 2006/09/10 22:25:58 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.30 2006/09/11 06:57:30 jld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,9 @@ volatile static uint64_t shadow_tsc_stamp;
 volatile static uint64_t shadow_system_time;
 #ifndef XEN3
 volatile static unsigned long shadow_time_version;
+#else
+volatile static uint32_t shadow_freq_mul;
+volatile static int8_t shadow_freq_shift;
 #endif
 volatile static struct timeval shadow_tv;
 
@@ -90,6 +93,8 @@ get_time_values_from_xen(void)
 		x86_lfence();
 		shadow_tsc_stamp = t->tsc_timestamp;
 		shadow_system_time = t->system_time;
+		shadow_freq_mul = t->tsc_to_system_mul;
+		shadow_freq_shift = t->tsc_shift;
 		x86_lfence();
 	} while ((t->version & 1) || (tversion != t->version));
 	do {
@@ -114,14 +119,46 @@ get_time_values_from_xen(void)
 #endif
 }
 
+#ifdef XEN3
+/*
+ * Xen 3 helpfully provides the CPU clock speed in the form of a multiplier
+ * and shift that can be used to convert a cycle count into nanoseconds
+ * without using an actual (slow) divide insn.
+ */
+static inline uint64_t
+scale_delta(uint64_t delta, uint32_t mul_frac, int8_t shift)
+{
+	if (shift < 0)
+		delta >>= -shift;
+	else
+		delta <<= shift;
+
+	/*
+	 * Here, we multiply a 64-bit and a 32-bit value, and take the top
+	 * 64 bits of that 96-bit product.  This is broken up into two
+	 * 32*32=>64-bit multiplies and a 64-bit add.  The casts are needed
+	 * to hint to GCC that both multiplicands really are 32-bit; the
+	 * generated code is still fairly bad, but not insanely so.
+	 */
+	return ((uint64_t)(uint32_t)(delta >> 32) * mul_frac)
+	    + ((((uint64_t)(uint32_t)(delta & 0xFFFFFFFF)) * mul_frac) >> 32);
+}
+#endif
+
 static uint64_t
 get_tsc_offset_ns(void)
 {
 	uint64_t tsc_delta, offset;
+#ifndef XEN3
 	struct cpu_info *ci = curcpu();
+#endif
 
 	tsc_delta = cpu_counter() - shadow_tsc_stamp;
+#ifndef XEN3
 	offset = tsc_delta * 1000000000ULL / cpu_frequency(ci);
+#else
+	offset = scale_delta(tsc_delta, shadow_freq_mul, shadow_freq_shift);
+#endif
 #ifdef XEN_CLOCK_DEBUG
 	if (offset > 10000000000ULL)
 		printf("get_tsc_offset_ns: tsc_delta=%llu offset=%llu\n",
