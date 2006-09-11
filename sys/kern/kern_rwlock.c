@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.1.36.1 2006/09/10 23:42:42 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.1.36.2 2006/09/11 01:31:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.36.1 2006/09/10 23:42:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.36.2 2006/09/11 01:31:39 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -205,7 +205,8 @@ rw_vector_enter(krwlock_t *rw, krw_t op)
 	RW_ASSERT(rw, curthread != 0);
 
 #ifdef LOCKDEBUG
-	simple_lock_only_held(NULL, "rw_enter");
+	if (panicstr == NULL)
+		simple_lock_only_held(NULL, "rw_enter");
 #endif
 
 	/*
