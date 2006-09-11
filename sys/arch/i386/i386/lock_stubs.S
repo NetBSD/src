@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.2 2006/09/11 01:24:29 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.3 2006/09/11 18:54:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -239,11 +239,11 @@ NENTRY(rw_exit)
 	/*
 	 * Reader
 	 */
-1:	testb	$(RW_HAS_WAITERS|RW_WRITE_LOCKED), %al
+1:	testb	$RW_HAS_WAITERS, %al
 	jnz	3f
 	testl	$RW_THREAD, %eax
-	jz	3f
 	leal	-RW_READ_INCR(%eax), %ecx
+	jz	3f
 	lock
 	cmpxchgl %ecx, (%edx)
 	jnz	1b
@@ -252,8 +252,7 @@ NENTRY(rw_exit)
 	/*
 	 * Writer
 	 */
-2:	movl	%eax, %ecx
-	subl	$RW_WRITE_LOCKED, %ecx
+2:	leal	-RW_WRITE_LOCKED(%eax), %ecx
 	subl	CPUVAR(CURLWP), %ecx
 	jnz	4f
 	lock
@@ -376,7 +375,7 @@ NENTRY(_80386_mutex_exit)
 	jz	3f
 #endif
 	SPLLOWER(_C_LABEL(Xspllower))
-	ret
+	/* ret */
 
 1:	movl	CPUVAR(CURLWP), %ecx
 	pushfl

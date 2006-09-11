@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.2 2006/09/11 01:24:28 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.3 2006/09/11 18:54:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -166,8 +166,8 @@ NENTRY(rw_enter)
 	movq	%rax, %rcx
 	jnz	_C_LABEL(rw_vector_enter)
 	addq	CPUVAR(CURLWP), %rcx
+	leaq	RW_WRITE_LOCKED(%rcx), %rcx
 	jz	_C_LABEL(rw_vector_enter)
-	orb	$RW_WRITE_LOCKED, %cl 
 	lock
 	cmpxchgq %rcx, (%rdi)
 	jnz	_C_LABEL(rw_vector_enter)
@@ -181,20 +181,19 @@ NENTRY(rw_exit)
 	testb	$RW_WRITE_LOCKED, %al
 	jnz	2f
 
-1:	testb	$(RW_HAS_WAITERS|RW_WRITE_LOCKED), %al
+1:	testb	$RW_HAS_WAITERS, %al
 	movq	$RW_READER, %rsi
 	jnz	_C_LABEL(rw_vector_exit)
 	testq	$RW_THREAD, %rax
-	jz	_C_LABEL(rw_vector_exit)
 	leaq	-RW_READ_INCR(%rax), %rdx
+	jz	_C_LABEL(rw_vector_exit)
 	lock
 	cmpxchgq %rdx, (%rdi)
 	jnz	1b
 
 	ret
 
-2:	movq	%rax, %rdx
-	subq	$RW_WRITE_LOCKED, %rdx
+2:	leaq	-RW_WRITE_LOCKED(%rax), %rdx
 	subq	CPUVAR(CURLWP), %rdx
 	movq	$RW_WRITER, %rsi
 	jnz	_C_LABEL(rw_vector_exit)
