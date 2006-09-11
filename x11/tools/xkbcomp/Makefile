@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/09/30 06:41:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2006/09/11 22:13:51 dbj Exp $
 
 NOMAN=		1
 
@@ -15,8 +15,10 @@ SRCS=		xkbcomp.c xkbscan.c expr.c vmod.c indicators.c misc.c \
 SRCS+=		xkbcomp-stubs.c xkbcomp-KeyBind.c
 
 .PATH:		${X11SRCDIR.xc}/lib/xkbfile
-SRCS+=		xkbatom.c xkberrs.c xkbmisc.c xkbout.c xkmread.c xkbtext.c \
+SRCS+=		xkbatom.c xkberrs.c xkbout.c xkmread.c xkbtext.c \
 		cout.c xkmout.c
+
+SRCS+=		xkbfile-xkbmisc.c
 
 .PATH:		${X11SRCDIR.xc}/lib/X11
 SRCS+=		KeysymStr.c StrKeysym.c Quarks.c Xrm.c 
