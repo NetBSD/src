@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.15 2006/09/10 16:25:32 gdamore Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.16 2006/09/11 20:48:55 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.15 2006/09/10 16:25:32 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.16 2006/09/11 20:48:55 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -273,7 +273,6 @@ todr_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 		/* simple sanity checks */
 		if (dt.dt_mon < 1 || dt.dt_mon > 12 ||
 		    dt.dt_day < 1 || dt.dt_day > 31 ||
-		    dt.dt_wday > 6 ||
 		    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 62)
 			return -1;
 
