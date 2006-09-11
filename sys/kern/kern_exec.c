@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.227 2006/07/30 21:58:11 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.227.4.1 2006/09/11 18:07:25 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227 2006/07/30 21:58:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.4.1 2006/09/11 18:07:25 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -206,7 +206,7 @@ const struct emul emul_netbsd = {
  * Exec lock. Used to control access to execsw[] structures.
  * This must not be static so that netbsd32 can access it, too.
  */
-struct lock exec_lock;
+krwlock_t exec_lock;
 
 static void link_es(struct execsw_entry **, const struct execsw *);
 #endif /* LKM */
@@ -481,7 +481,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	pack.ep_flags = 0;
 
 #ifdef LKM
-	lockmgr(&exec_lock, LK_SHARED, NULL);
+	rw_enter(&exec_lock, RW_READER);
 #endif
 
 	/* see if we can run it. */
@@ -910,7 +910,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #endif
 
 #ifdef LKM
-	lockmgr(&exec_lock, LK_RELEASE, NULL);
+	rw_exit(&exec_lock);
 #endif
 	p->p_flag &= ~P_INEXEC;
 
@@ -961,7 +961,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	l->l_flag |= oldlwpflags;
 	p->p_flag &= ~P_INEXEC;
 #ifdef LKM
-	lockmgr(&exec_lock, LK_RELEASE, NULL);
+	rw_exit(&exec_lock);
 #endif
 
 	return error;
@@ -969,7 +969,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
  exec_abort:
 	p->p_flag &= ~P_INEXEC;
 #ifdef LKM
-	lockmgr(&exec_lock, LK_RELEASE, NULL);
+	rw_exit(&exec_lock);
 #endif
 
 	/*
@@ -1064,7 +1064,7 @@ emul_register(const struct emul *emul, int ro_entry)
 	int			error;
 
 	error = 0;
-	lockmgr(&exec_lock, LK_SHARED, NULL);
+	rw_enter(&exec_lock, RW_READER);
 
 	if (emul_search(emul->e_name)) {
 		error = EEXIST;
@@ -1078,7 +1078,7 @@ emul_register(const struct emul *emul, int ro_entry)
 	LIST_INSERT_HEAD(&el_head, ee, el_list);
 
  out:
-	lockmgr(&exec_lock, LK_RELEASE, NULL);
+	rw_exit(&exec_lock);
 	return error;
 }
 
@@ -1094,7 +1094,7 @@ emul_unregister(const char *name)
 	struct proc		*ptmp;
 
 	error = 0;
-	lockmgr(&exec_lock, LK_SHARED, NULL);
+	rw_enter(&exec_lock, RW_READER);
 
 	LIST_FOREACH(it, &el_head, el_list) {
 		if (strcmp(it->el_emul->e_name, name) == 0)
@@ -1124,7 +1124,7 @@ emul_unregister(const char *name)
 	 * emul_unregister() is running quite sendomly, it's better
 	 * to do expensive check here than to use any locking.
 	 */
-	proclist_lock_read();
+	rw_enter(&proclist_lock, RW_READER);
 	for (pd = proclists; pd->pd_list != NULL && !error; pd++) {
 		PROCLIST_FOREACH(ptmp, pd->pd_list) {
 			if (ptmp->p_emul == it->el_emul) {
@@ -1133,7 +1133,7 @@ emul_unregister(const char *name)
 			}
 		}
 	}
-	proclist_unlock_read();
+	rw_exit(&proclist_lock);
 
 	if (error)
 		goto out;
@@ -1144,7 +1144,7 @@ emul_unregister(const char *name)
 	FREE(it, M_EXEC);
 
  out:
-	lockmgr(&exec_lock, LK_RELEASE, NULL);
+	rw_exit(&exec_lock);
 	return error;
 }
 
@@ -1158,7 +1158,7 @@ exec_add(struct execsw *esp, const char *e_name)
 	int			error;
 
 	error = 0;
-	lockmgr(&exec_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&exec_lock, RW_WRITER);
 
 	if (!esp->es_emul) {
 		esp->es_emul = emul_search(e_name);
@@ -1188,7 +1188,7 @@ exec_add(struct execsw *esp, const char *e_name)
 	exec_init(0);
 
  out:
-	lockmgr(&exec_lock, LK_RELEASE, NULL);
+	rw_exit(&exec_lock);
 	return error;
 }
 
@@ -1202,7 +1202,7 @@ exec_remove(const struct execsw *esp)
 	int			error;
 
 	error = 0;
-	lockmgr(&exec_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&exec_lock, RW_WRITER);
 
 	LIST_FOREACH(it, &ex_head, ex_list) {
 		/* assume tuple (makecmds, probe_func, emulation) is unique */
@@ -1224,7 +1224,7 @@ exec_remove(const struct execsw *esp)
 	exec_init(0);
 
  out:
-	lockmgr(&exec_lock, LK_RELEASE, NULL);
+	rw_exit(&exec_lock);
 	return error;
 }
 
@@ -1288,7 +1288,7 @@ exec_init(int init_boot)
 
 	if (init_boot) {
 		/* do one-time initializations */
-		lockinit(&exec_lock, PWAIT, "execlck", 0, 0);
+		rw_init(&exec_lock);
 
 		/* register compiled-in emulations */
 		for(i=0; i < nexecs_builtin; i++) {

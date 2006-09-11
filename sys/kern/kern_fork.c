@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.126 2006/07/17 15:29:06 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.126.4.1 2006/09/11 18:07:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.126 2006/07/17 15:29:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.126.4.1 2006/09/11 18:07:25 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -225,7 +225,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * processes, maxproc is the limit.
 	 */
 	p1 = l1->l_proc;
+	mutex_enter(&p1->p_crmutex);
 	uid = kauth_cred_getuid(p1->p_cred);
+	mutex_exit(&p1->p_crmutex);
 	if (__predict_false((nprocs >= maxproc - 5 && uid != 0) ||
 			    nprocs >= maxproc)) {
 		static struct timeval lasttfm;
@@ -305,8 +307,11 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	if (p1->p_flag & P_PROFIL)
 		startprofclock(p2);
 
+	mutex_init(&p2->p_crmutex, MUTEX_DEFAULT, IPL_NONE);
+	mutex_enter(&p1->p_crmutex);
 	kauth_cred_hold(p1->p_cred);
 	p2->p_cred = p1->p_cred;
+	mutex_exit(&p1->p_crmutex);
 
 	LIST_INIT(&p2->p_raslist);
 #if defined(__HAVE_RAS)
@@ -353,10 +358,12 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_pptr = parent;
 	LIST_INIT(&p2->p_children);
 
-	s = proclist_lock_write();
+	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_mutex);
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
+	mutex_exit(&proclist_mutex);
 	LIST_INSERT_HEAD(&parent->p_children, p2, p_sibling);
-	proclist_unlock_write(s);
+	rw_exit(&proclist_lock);
 
 #ifdef KTRACE
 	/*
@@ -412,10 +419,12 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	    arg, &l2);
 
 	/* Now safe for scheduler to see child process */
-	s = proclist_lock_write();
+	rw_enter(&proclist_lock, RW_WRITER);
 	p2->p_exitsig = exitsig;		/* signal for parent on exit */
+	mutex_enter(&proclist_mutex);
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
-	proclist_unlock_write(s);
+	mutex_exit(&proclist_mutex);
+	rw_exit(&proclist_lock);
 
 #ifdef SYSTRACE
 	/* Tell systrace what's happening. */

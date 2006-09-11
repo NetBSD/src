@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.228 2006/09/02 06:29:13 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.228.2.1 2006/09/11 18:07:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228 2006/09/02 06:29:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.1 2006/09/11 18:07:25 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ktrace.h"
@@ -829,7 +829,7 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 		/*
 		 * broadcast
 		 */
-		proclist_lock_read();
+		rw_enter(&proclist_lock, RW_READER);
 		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM || p == cp ||
 			    kauth_authorize_process(pc, KAUTH_PROCESS_CANSIGNAL,
@@ -839,7 +839,7 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 			if (signum)
 				kpsignal2(p, ksi, 1);
 		}
-		proclist_unlock_read();
+		rw_exit(&proclist_lock);
 	} else {
 		if (pgid == 0)
 			/*

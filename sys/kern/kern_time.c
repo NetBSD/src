@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.105 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.105.4.1 2006/09/11 18:07:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.105 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.105.4.1 2006/09/11 18:07:25 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -149,12 +149,18 @@ settime(struct proc *p, struct timespec *ts)
 	 *	time_t is 32 bits even when atv.tv_sec is 64 bits.
 	 */
 	if (ts->tv_sec > INT_MAX - 365*24*60*60) {
-		struct proc *pp = p->p_pptr;
+		struct proc *pp;
+
+		rw_enter(&proclist_lock, RW_READER);
+		pp = p->p_pptr;
+		mutex_enter(&pp->p_crmutex);
 		log(LOG_WARNING, "pid %d (%s) "
 		    "invoked by uid %d ppid %d (%s) "
 		    "tried to set clock forward to %ld\n",
 		    p->p_pid, p->p_comm, kauth_cred_geteuid(pp->p_cred),
 		    pp->p_pid, pp->p_comm, (long)ts->tv_sec);
+		mutex_exit(&pp->p_crmutex);
+		rw_exit(&proclist_lock);
 		return (EPERM);
 	}
 	TIMESPEC_TO_TIMEVAL(&tv, ts);

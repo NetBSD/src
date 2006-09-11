@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.103 2006/07/30 17:38:19 elad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.103.4.1 2006/09/11 18:07:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103 2006/07/30 17:38:19 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.1 2006/09/11 18:07:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,43 +82,50 @@ sys_getpriority(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct proc *curp = l->l_proc, *p;
 	int low = NZERO + PRIO_MAX + 1;
+	int who = SCARG(uap, who);
 
 	switch (SCARG(uap, which)) {
 
 	case PRIO_PROCESS:
-		if (SCARG(uap, who) == 0)
+		if (who == 0)
 			p = curp;
 		else
-			p = pfind(SCARG(uap, who));
-		if (p == 0)
-			break;
-		low = p->p_nice;
+			p = p_find(who, 0);
+		if (p != NULL)
+			low = p->p_nice;
+		if (who != 0)
+			rw_exit(&proclist_lock);
 		break;
 
 	case PRIO_PGRP: {
 		struct pgrp *pg;
 
-		if (SCARG(uap, who) == 0)
+		rw_enter(&proclist_lock, RW_READER);
+		if (who == 0)
 			pg = curp->p_pgrp;
-		else if ((pg = pgfind(SCARG(uap, who))) == NULL)
+		else if ((pg = pg_find(who, PFIND_LOCKED | PFIND_UNLOCK_FAIL))
+		    == NULL)
 			break;
 		LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 			if (p->p_nice < low)
 				low = p->p_nice;
 		}
+		rw_exit(&proclist_lock);
 		break;
 	}
 
 	case PRIO_USER:
-		if (SCARG(uap, who) == 0)
-			SCARG(uap, who) = kauth_cred_geteuid(l->l_cred);
-		proclist_lock_read();
+		if (who == 0)
+			who = (int)kauth_cred_geteuid(l->l_cred);
+		rw_enter(&proclist_lock, RW_READER);
 		PROCLIST_FOREACH(p, &allproc) {
+			mutex_enter(&p->p_crmutex);
 			if (kauth_cred_geteuid(p->p_cred) ==
-			    (uid_t) SCARG(uap, who) && p->p_nice < low)
+			    (uid_t)who && p->p_nice < low)
 				low = p->p_nice;
+			mutex_exit(&p->p_crmutex);
 		}
-		proclist_unlock_read();
+		rw_exit(&proclist_lock);
 		break;
 
 	default:
@@ -141,46 +148,57 @@ sys_setpriority(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct proc *curp = l->l_proc, *p;
 	int found = 0, error = 0;
+	int who = SCARG(uap, who);
 
 	switch (SCARG(uap, which)) {
 
 	case PRIO_PROCESS:
-		if (SCARG(uap, who) == 0)
+		if (who == 0)
 			p = curp;
 		else
-			p = pfind(SCARG(uap, who));
-		if (p == 0)
-			break;
-		error = donice(l, p, SCARG(uap, prio));
+			p = p_find(who, 0);
+		if (p != 0) {
+			mutex_enter(&p->p_crmutex);
+			error = donice(l, p, SCARG(uap, prio));
+			mutex_exit(&p->p_crmutex);
+		}
+		if (who != 0)
+			rw_exit(&proclist_lock);
 		found++;
 		break;
 
 	case PRIO_PGRP: {
 		struct pgrp *pg;
 
-		if (SCARG(uap, who) == 0)
+		rw_enter(&proclist_lock, RW_READER);
+		if (who == 0)
 			pg = curp->p_pgrp;
-		else if ((pg = pgfind(SCARG(uap, who))) == NULL)
+		else if ((pg = pg_find(who, PFIND_LOCKED | PFIND_UNLOCK_FAIL)) == NULL)
 			break;
 		LIST_FOREACH(p, &pg->pg_members, p_pglist) {
+			mutex_enter(&p->p_crmutex);
 			error = donice(l, p, SCARG(uap, prio));
+			mutex_exit(&p->p_crmutex);
 			found++;
 		}
+		rw_exit(&proclist_lock);
 		break;
 	}
 
 	case PRIO_USER:
-		if (SCARG(uap, who) == 0)
-			SCARG(uap, who) = kauth_cred_geteuid(l->l_cred);
-		proclist_lock_read();
+		if (who == 0)
+			who = (int)kauth_cred_geteuid(l->l_cred);
+		rw_enter(&proclist_lock, RW_READER);
 		PROCLIST_FOREACH(p, &allproc) {
+			mutex_enter(&p->p_crmutex);
 			if (kauth_cred_geteuid(p->p_cred) ==
 			    (uid_t)SCARG(uap, who)) {
 				error = donice(l, p, SCARG(uap, prio));
 				found++;
 			}
+			mutex_exit(&p->p_crmutex);
 		}
-		proclist_unlock_read();
+		rw_exit(&proclist_lock);
 		break;
 
 	default:
@@ -191,11 +209,18 @@ sys_setpriority(struct lwp *l, void *v, register_t *retval)
 	return (error);
 }
 
+/*
+ * Renice a process.
+ *
+ * Call with the target process' credentials locked.
+ */
 int
 donice(struct lwp *l, struct proc *chgp, int n)
 {
 	kauth_cred_t cred = l->l_cred;
 	int s;
+
+	LOCK_ASSERT(mutex_owned(&chgp->p_crmutex));
 
 	if (kauth_cred_geteuid(cred) && kauth_cred_getuid(cred) &&
 	    kauth_cred_geteuid(cred) != kauth_cred_geteuid(chgp->p_cred) &&

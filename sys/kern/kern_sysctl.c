@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.201 2006/09/02 06:33:11 christos Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.201.2.1 2006/09/11 18:07:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.201 2006/09/02 06:33:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.201.2.1 2006/09/11 18:07:25 ad Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -149,7 +149,7 @@ __link_set_decl(sysctl_funcs, sysctl_setup_func);
  * memory, if there is one, so that it can be released more easily
  * from anywhere.
  */
-struct lock sysctl_treelock;
+krwlock_t sysctl_treelock;
 caddr_t sysctl_memaddr;
 size_t sysctl_memsize;
 
@@ -218,7 +218,7 @@ sysctl_init(void)
 {
 	sysctl_setup_func * const *sysctl_setup, f;
 
-	lockinit(&sysctl_treelock, PRIBIO|PCATCH, "sysctl", 0, 0);
+	rw_init(&sysctl_treelock);
 
 	/*
 	 * dynamic mib numbers start here
@@ -337,11 +337,9 @@ sys___sysctl(struct lwp *l, void *v, register_t *retval)
 int
 sysctl_lock(struct lwp *l, void *oldp, size_t savelen)
 {
-	int error = 0;
+	int error;
 
-	error = lockmgr(&sysctl_treelock, LK_EXCLUSIVE, NULL);
-	if (error)
-		return (error);
+	rw_enter(&sysctl_treelock, RW_WRITER);	/* XXX write */
 
 	if (l != NULL && oldp != NULL && savelen) {
 		/*
@@ -349,12 +347,12 @@ sysctl_lock(struct lwp *l, void *oldp, size_t savelen)
 		 * just do a basic check against system limit
 		 */
 		if (uvmexp.wired + atop(savelen) > uvmexp.wiredmax) {
-			lockmgr(&sysctl_treelock, LK_RELEASE, NULL);
+			rw_exit(&sysctl_treelock);
 			return (ENOMEM);
 		}
 		error = uvm_vslock(l->l_proc, oldp, savelen, VM_PROT_WRITE);
 		if (error) {
-			(void) lockmgr(&sysctl_treelock, LK_RELEASE, NULL);
+			rw_exit(&sysctl_treelock);
 			return (error);
 		}
 		sysctl_memaddr = oldp;
@@ -456,7 +454,7 @@ sysctl_unlock(struct lwp *l)
 		sysctl_memsize = 0;
 	}
 
-	(void) lockmgr(&sysctl_treelock, LK_RELEASE, NULL);
+	rw_exit(&sysctl_treelock);	/* XXX write */
 }
 
 /*
