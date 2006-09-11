@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.84 2006/05/06 00:20:18 groo Exp $
+#	$NetBSD: Makefile,v 1.84.8.1 2006/09/11 16:19:01 ad Exp $
 
 INCSDIR= /usr/include/sys
 
@@ -17,18 +17,18 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	kcore.h kgdb.h ksem.h ksyms.h ktrace.h \
 	lkm.h localedef.h lock.h lockf.h lwp.h \
 	malloc.h mallocvar.h mbuf.h md4.h \
-	md5.h midiio.h mman.h mount.h msg.h msgbuf.h mtio.h \
+	md5.h midiio.h mman.h mount.h msg.h msgbuf.h mtio.h mutex.h \
 	namei.h null.h \
 	param.h pipe.h pmc.h poll.h pool.h power.h proc.h \
 	protosw.h ptrace.h queue.h \
-	ras.h reboot.h radioio.h resource.h resourcevar.h rnd.h \
+	ras.h reboot.h radioio.h resource.h resourcevar.h rnd.h rwlock.h \
 	sa.h scanio.h sched.h scsiio.h select.h selinfo.h sem.h sha1.h shm.h \
 	siginfo.h signal.h signalvar.h sigtypes.h socket.h \
 	socketvar.h sockio.h stat.h statvfs.h syscall.h syscallargs.h \
 	sysctl.h stdint.h swap.h syslimits.h syslog.h \
 	tape.h termios.h time.h timeb.h timepps.h times.h \
 	timex.h trace.h tree.h tty.h ttychars.h ttycom.h \
-	ttydefaults.h ttydev.h types.h \
+	ttydefaults.h ttydev.h turnstile.h types.h \
 	ucontext.h ucred.h uio.h un.h unistd.h unpcb.h user.h utsname.h uuid.h \
 	vadvise.h verified_exec.h vmmeter.h vnode.h vnode_if.h \
 	wait.h wdog.h
