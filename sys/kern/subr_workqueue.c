@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.3 2006/05/02 13:26:07 rpaulo Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.3.10.1 2006/09/11 00:05:43 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.3 2006/05/02 13:26:07 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.3.10.1 2006/09/11 00:05:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,12 +35,12 @@ __KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.3 2006/05/02 13:26:07 rpaulo Ex
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/workqueue.h>
+#include <sys/mutex.h>
 
 SIMPLEQ_HEAD(workqhead, work);
 
 struct workqueue_queue {
-	struct simplelock q_lock;
-	int q_savedipl;
+	kmutex_t q_mutex;
 	struct workqhead q_queue;
 	struct proc *q_worker;
 };
@@ -58,29 +58,6 @@ struct workqueue {
 MALLOC_DEFINE(M_WORKQUEUE, "workqueue", "work queue");
 
 #define	POISON	0xaabbccdd
-
-static void
-workqueue_lock(struct workqueue *wq, struct workqueue_queue *q)
-{
-	int s;
-
-#if 0 /* notyet */
-	s = splraiseipl(wq->wq_ipl);
-#else
-	s = splhigh(); /* XXX */
-#endif
-	simple_lock(&q->q_lock);
-	q->q_savedipl = s;
-}
-
-static void
-workqueue_unlock(struct workqueue *wq, struct workqueue_queue *q)
-{
-	int s = q->q_savedipl;
-
-	simple_unlock(&q->q_lock);
-	splx(s);
-}
 
 static void
 workqueue_runlist(struct workqueue *wq, struct workqhead *list)
@@ -115,10 +92,10 @@ workqueue_run(struct workqueue *wq)
 		tmp.sqh_last = (void *)POISON;
 #endif /* defined(DIAGNOSTIC) */
 
-		workqueue_lock(wq, q);
+		mutex_enter(&q->q_mutex);
 		while (SIMPLEQ_EMPTY(&q->q_queue)) {
-			error = ltsleep(q, wq->wq_prio, wq->wq_name, 0,
-			    &q->q_lock);
+			error = mtsleep(q, wq->wq_prio, wq->wq_name, 0,
+			    &q->q_mutex);
 			if (error) {
 				panic("%s: %s error=%d",
 				    __func__, wq->wq_name, error);
@@ -126,7 +103,7 @@ workqueue_run(struct workqueue *wq)
 		}
 		tmp.sqh_first = q->q_queue.sqh_first; /* XXX */
 		SIMPLEQ_INIT(&q->q_queue);
-		workqueue_unlock(wq, q);
+		mutex_exit(&q->q_mutex);
 
 		workqueue_runlist(wq, &tmp);
 	}
@@ -159,7 +136,7 @@ workqueue_initqueue(struct workqueue *wq)
 	struct workqueue_queue *q = &wq->wq_queue;
 	int error;
 
-	simple_lock_init(&q->q_lock);
+	mutex_init(&q->q_mutex, MUTEX_SPIN, wq->wq_ipl);
 	SIMPLEQ_INIT(&q->q_queue);
 	error = kthread_create1(workqueue_worker, wq, &q->q_worker,
 	    wq->wq_name);
@@ -200,10 +177,10 @@ workqueue_enqueue(struct workqueue *wq, struct work *wk)
 	struct workqueue_queue *q = &wq->wq_queue;
 	boolean_t wasempty;
 
-	workqueue_lock(wq, q);
+	mutex_enter(&q->q_mutex);
 	wasempty = SIMPLEQ_EMPTY(&q->q_queue);
 	SIMPLEQ_INSERT_TAIL(&q->q_queue, wk, wk_entry);
-	workqueue_unlock(wq, q);
+	mutex_exit(&q->q_mutex);
 
 	if (wasempty) {
 		wakeup(q);
