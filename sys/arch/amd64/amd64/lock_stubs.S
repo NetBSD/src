@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.1 2006/09/10 23:42:41 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.2 2006/09/11 01:24:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -150,20 +150,27 @@ NENTRY(mutex_exit)
  * void	rw_enter(krwlock_t *rwl, krw_t op);
  */
 NENTRY(rw_enter)
-	movq	CPUVAR(CURLWP), %rcx
-	movq	$RW_READ_INCR, %rdx
-	orb	$RW_WRITE_LOCKED, %cl
 	cmpl	$RW_READER, %esi
 	movq	(%rdi), %rax
-	cmoveq	%rdx, %rcx
+	jne	2f
 
 1:	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
-	leaq	(%rax,%rcx), %rdx 
+	leaq	RW_READ_INCR(%rax), %rdx 
 	jnz	_C_LABEL(rw_vector_enter)
 	lock
 	cmpxchgq %rdx, (%rdi)
 	jnz	1b
+	ret
 
+2:	testq	%rax, %rax
+	movq	%rax, %rcx
+	jnz	_C_LABEL(rw_vector_enter)
+	addq	CPUVAR(CURLWP), %rcx
+	jz	_C_LABEL(rw_vector_enter)
+	orb	$RW_WRITE_LOCKED, %cl 
+	lock
+	cmpxchgq %rcx, (%rdi)
+	jnz	_C_LABEL(rw_vector_enter)
 	ret
 
 /*
@@ -178,9 +185,8 @@ NENTRY(rw_exit)
 	movq	$RW_READER, %rsi
 	jnz	_C_LABEL(rw_vector_exit)
 	testq	$RW_THREAD, %rax
-	movq	$-RW_READ_INCR, %rcx
 	jz	_C_LABEL(rw_vector_exit)
-	leaq	(%rax,%rcx), %rdx
+	leaq	-RW_READ_INCR(%rax), %rdx
 	lock
 	cmpxchgq %rdx, (%rdi)
 	jnz	1b
