@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.22 2006/09/11 06:02:30 gdamore Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.23 2006/09/11 15:18:23 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.22 2006/09/11 06:02:30 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.23 2006/09/11 15:18:23 gdamore Exp $");
 
 /* Include header files */
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.22 2006/09/11 06:02:30 gdamor
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
+#include <sys/timetc.h>
 #include <sys/device.h>
 
 #include <machine/intr.h>
@@ -73,6 +74,8 @@ const int statvar = 1024;
 int statmin;			/* minimum stat clock count in ticks */
 int statcountperusec;		/* number of ticks per usec at current stathz */
 int statprev;			/* last value of we set statclock to */
+
+void footbridge_tc_init(void);
 
 #if 0
 static int clockmatch(struct device *parent, struct cfdata *cf, void *aux);
@@ -300,61 +303,29 @@ cpu_initclocks(void)
 			panic("%s: Cannot install timer 2 interrupt handler",
 			    clock_sc->sc_dev.dv_xname);
 	}
+
+	footbridge_tc_init();
 }
 
-
-/*
- * void microtime(struct timeval *tvp)
- *
- * Fill in the specified timeval struct with the current time
- * accurate to the microsecond.
- */
+static uint32_t
+fclk_get_count(struct timecounter *tc)
+{
+	return (TIMER_MAX_VAL -
+	    bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_ioh,
+	    TIMER_3_VALUE));
+}
 
 void
-microtime(struct timeval *tvp)
+footbridge_tc_init(void)
 {
-	int s;
-	int tm;
-	int deltatm;
-	static struct timeval oldtv;
-
-	if (clock_sc == NULL || clock_sc->sc_clock_count == 0)
-		return;
-
-	s = splhigh();
-
-	tm = bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_ioh,
-	    TIMER_1_VALUE);
-
-	deltatm = clock_sc->sc_clock_count - tm;
-
-#ifdef DIAGNOSTIC
-	if (deltatm < 0)
-		panic("opps deltatm < 0 tm=%d deltatm=%d", tm, deltatm);
-#endif
-
-	/* Fill in the timeval struct */
-	*tvp = time;
-	tvp->tv_usec += ((deltatm << 8) / clock_sc->sc_clock_ticks_per_256us);
-
-	/* Make sure the micro seconds don't overflow. */
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		++tvp->tv_sec;
-	}
-
-	/* Make sure the time has advanced. */
-	if (tvp->tv_sec == oldtv.tv_sec &&
-	    tvp->tv_usec <= oldtv.tv_usec) {
-		tvp->tv_usec = oldtv.tv_usec + 1;
-		if (tvp->tv_usec >= 1000000) {
-			tvp->tv_usec -= 1000000;
-			++tvp->tv_sec;
-		}
-	}
-
-	oldtv = *tvp;
-	(void)splx(s);		
+	static struct timecounter fb_tc = {
+		.tc_get_timecount = fclk_get_count,
+		.tc_counter_mask = TIMER_MAX_VAL,
+		.tc_name = "dc21285_fclk",
+		.tc_quality = 100
+	};
+	fb_tc.tc_frequency = dc21285_fclk;
+	tc_init(&fb_tc);
 }
 
 /*
@@ -362,95 +333,76 @@ microtime(struct timeval *tvp)
  * rely on an estimated loop, however footbridge is attached very early on.
  */
 
-static int delay_clock_count = 0;
 static int delay_count_per_usec = 0;
 
 void
 calibrate_delay(void)
 {
-     delay_clock_count = load_timer(TIMER_3_BASE, 100);
-     delay_count_per_usec = delay_clock_count/10000;
-#ifdef VERBOSE_DELAY_CALIBRATION
-     printf("delay calibration: delay_cc = %d, delay_c/us=%d\n",
-		     delay_clock_count, delay_count_per_usec);
-     
-     printf("0..");
-     delay(1000000);
-     printf("1..");
-     delay(1000000);
-     printf("2..");
-     delay(1000000);
-     printf("3..");
-     delay(1000000);
-     printf("4..");
-      delay(1000000);
-     printf("5..");
-      delay(1000000);
-     printf("6..");
-      delay(1000000);
-     printf("7..");
-      delay(1000000);
-     printf("8..");
-      delay(1000000);
-     printf("9..");
-      delay(1000000);
-     printf("10\n");
-#endif
+	/*
+	 * For all current footbridge hardware, the fclk runs at a
+	 * rate that is sufficiently slow enough that we don't need to
+	 * use a prescaler.  A prescaler would be needed if the fclk
+	 * could wrap within 2 hardclock periods (2 * HZ).  With
+	 * normal values of HZ (100 and higher), this is unlikely to
+	 * ever happen.
+	 *
+	 * We let TIMER 3 just run free, at the freqeuncy supplied by
+	 * dc21285_fclk.
+	 */
+	bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_ioh,
+	    TIMER_3_BASE + TIMER_CONTROL, TIMER_ENABLE);
+	delay_count_per_usec = dc21285_fclk / 1000000;
+	if (dc21285_fclk % 1000000)
+		delay_count_per_usec += 1;
 }
 
-int delaycount = 25000;
-
 void
-delay(u_int n)
+delay(unsigned n)
 {
-	volatile u_int i;
 	uint32_t cur, last, delta, usecs;
 
-	if (n == 0) return;
+	if (n == 0)
+		return;
 
 	/* 
 	 * not calibrated the timer yet, so try to live with this horrible
 	 * loop!
+	 *
+	 * Note: a much better solution might be to have the timers
+	 * get get calibrated out of mach_init.  Of course, the
+	 * clock_sc needs to be set up, so we can read/write the clock
+	 * registers.
 	 */
-	if (delay_clock_count == 0)
+	if (!delay_count_per_usec)
 	{
-	    while (n-- > 0) {
-		for (i = delaycount; --i;);
-	    }
-	    return;	
+		int delaycount = 25000;
+		volatile int i;
+
+		while (n-- > 0) {
+			for (i = delaycount; --i;);
+		}
+		return;	
 	}
 
-	/* 
-	 * read the current value (do not reset it as delay is reentrant)
-	 */
 	last = bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_ioh,
+	    TIMER_3_VALUE);
+	delta = usecs = 0;
+	
+	while (n > usecs) {
+		cur = bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_ioh,
 		    TIMER_3_VALUE);
-	 
-	delta = 0;
+		if (last < cur)
+			/* timer has wrapped */
+			delta += ((TIMER_MAX_VAL - cur) + last);
+		else
+			delta += (last - cur);
 
-	usecs = n * delay_count_per_usec;
+		last = cur;
 
-	while (usecs > delta)
-	{
-	    cur = bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_ioh,
-		    TIMER_3_VALUE);
-	    if (last < cur)
-		/* timer has wrapped */
-		delta += ((delay_clock_count - cur) + last);
-	    else
-		delta += (last - cur);
-	    
-	    if (cur == 0)
-	    {
-		/*
-		 * reset the timer, note that if something blocks us for more
-		 * than 1/100s we may delay for too long, but I believe that
-		 * is fairly unlikely.
-		 */
-		bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_ioh,
-			TIMER_3_CLEAR, 0);
-	    }
-	    last = cur;
+		while (delta >= delay_count_per_usec) {
+			delta -= delay_count_per_usec;
+			usecs++;
+		}
 	}
 }
 
