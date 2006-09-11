@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.28 2006/07/23 11:41:26 lukem Exp $
+# $NetBSD: mi,v 1.29 2006/09/11 22:28:33 dbj Exp $
 ./etc/mtree/set.xcomp			xcomp-sys-root
 ./usr/X11R6/bin/bdftruncate.pl		xcomp-obsolete	obsolete
 ./usr/X11R6/bin/ccmakedep
@@ -3816,6 +3816,7 @@
 ./usr/libdata/debug/usr/X11R6/bin/bmtoa.debug		-unknown-	debug
 ./usr/libdata/debug/usr/X11R6/bin/cxpm.debug		-unknown-	debug
 ./usr/libdata/debug/usr/X11R6/bin/dga.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/dmx.debug		-unknown-	debug
 ./usr/libdata/debug/usr/X11R6/bin/dmxaddinput.debug	-unknown-	debug
 ./usr/libdata/debug/usr/X11R6/bin/dmxaddscreen.debug	-unknown-	debug
 ./usr/libdata/debug/usr/X11R6/bin/dmxreconfig.debug	-unknown-	debug
@@ -3879,7 +3880,7 @@
 ./usr/libdata/debug/usr/X11R6/bin/xcutsel.debug		-unknown-	debug
 ./usr/libdata/debug/usr/X11R6/bin/xditview.debug	-unknown-	debug
 ./usr/libdata/debug/usr/X11R6/bin/xdm.debug		-unknown-	debug
-./usr/libdata/debug/usr/X11R6/bin/xdmx.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/xdmx.debug		xcomp-obsolete	obsolete
 ./usr/libdata/debug/usr/X11R6/bin/xdmxconfig.debug	-unknown-	debug
 ./usr/libdata/debug/usr/X11R6/bin/xdpyinfo.debug	-unknown-	debug
 ./usr/libdata/debug/usr/X11R6/bin/xedit.debug		-unknown-	debug

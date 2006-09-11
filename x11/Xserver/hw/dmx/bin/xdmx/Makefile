@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2005/03/22 04:18:49 rtr Exp $
+# $NetBSD: Makefile,v 1.2 2006/09/11 22:28:33 dbj Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,8 @@ DPADD=  ${LIBDMX} ${LIBXEXT} ${LIBX11}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/include/extensions
 CPPFLAGS+=	${X11FLAGS.SERVER}
+
+PROGNAME=dmx
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
