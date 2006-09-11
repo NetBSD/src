@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.17 2006/06/04 14:04:29 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.18 2006/09/11 21:31:30 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.17.2.17 2006/06/04 14:03:45 tron Exp 
+ *	NetBSD: pcidevs,v 1.615.2.17.2.18 2006/09/11 21:30:21 tron Exp 
  */
 
 /*
@@ -3916,52 +3916,58 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "SpeedStream 3000",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64010A,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64010A,
 	    0,
-	    "Galileo Technology",
+	    "Marvell",
 	    "GT-64010A System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64115,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64115,
 	    0,
-	    "Galileo Technology",
+	    "Marvell",
 	    "GT-64115 System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64011,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64011,
 	    0,
-	    "Galileo Technology",
+	    "Marvell",
 	    "GT-64011 System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_SKNET,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_SKNET,
 	    0,
-	    "Galileo Technology",
+	    "Marvell",
 	    "SK-NET Gigabit Ethernet",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64120,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64120,
 	    0,
-	    "Galileo Technology",
+	    "Marvell",
 	    "GT-64120 System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_BELKIN,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_BELKIN,
 	    0,
-	    "Galileo Technology",
+	    "Marvell",
 	    "Belkin Gigabit Ethernet",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64130,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64130,
 	    0,
-	    "Galileo Technology",
+	    "Marvell",
 	    "GT-64130 System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64260,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64260,
 	    0,
-	    "Galileo Technology",
+	    "Marvell",
 	    "GT-64260 System Controller",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64360,
+	    0,
+	    "Marvell",
+	    "MV6436x System Controller",
 	},
 	{
 	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P,
@@ -13678,9 +13684,9 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_GALILEO, 0,
+	    PCI_VENDOR_MARVELL, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Galileo Technology",
+	    "Marvell",
 	    NULL,
 	},
 	{
