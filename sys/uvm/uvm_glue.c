@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.96 2006/08/29 23:34:48 matt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.96.2.1 2006/09/11 18:19:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.96 2006/08/29 23:34:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.96.2.1 2006/09/11 18:19:09 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -472,7 +472,7 @@ loop:
 #endif
 	ll = NULL;		/* process to choose */
 	ppri = INT_MIN;	/* its priority */
-	proclist_lock_read();
+	rw_enter(&proclist_lock, RW_READER);
 
 	LIST_FOREACH(l, &alllwp, l_list) {
 		/* is it a runnable swapped out process? */
@@ -489,7 +489,7 @@ loop:
 	 * XXXSMP: possible unlock/sleep race between here and the
 	 * "scheduler" tsleep below..
 	 */
-	proclist_unlock_read();
+	rw_exit(&proclist_lock);
 
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
@@ -577,7 +577,7 @@ uvm_swapout_threads(void)
 	 */
 	outl = outl2 = NULL;
 	outpri = outpri2 = 0;
-	proclist_lock_read();
+	rw_enter(&proclist_lock, RW_READER);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		KASSERT(l->l_proc != NULL);
 		if (!swappable(l))
@@ -605,7 +605,7 @@ uvm_swapout_threads(void)
 			continue;
 		}
 	}
-	proclist_unlock_read();
+	rw_exit(&proclist_lock);
 
 	/*
 	 * If we didn't get rid of any real duds, toss out the next most

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.40 2006/08/14 14:11:21 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.40.2.1 2006/09/11 18:19:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40 2006/08/14 14:11:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.1 2006/09/11 18:19:09 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -54,10 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40 2006/08/14 14:11:21 ad Exp $");
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
+#include <sys/turnstile.h>
 
 #include <uvm/uvm_extern.h>
 
-struct lwplist alllwp;
+struct lwplist	alllwp;
+kmutex_t	alllwp_mutex;
 
 #define LWP_DEBUG
 
@@ -473,7 +475,6 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
     void (*func)(void *), void *arg, struct lwp **rnewlwpp)
 {
 	struct lwp *l2;
-	int s;
 
 	l2 = pool_get(&lwp_pool, PR_WAITOK);
 
@@ -510,6 +511,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 
 	lwp_update_creds(l2);
 	callout_init(&l2->l_tsleep_ch);
+	l2->l_ts = pool_cache_get(&turnstile_cache, PR_WAITOK);
 
 	if (rnewlwpp != NULL)
 		*rnewlwpp = l2;
@@ -524,10 +526,9 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	p2->p_nlwps++;
 	simple_unlock(&p2->p_lock);
 
-	/* XXX should be locked differently... */
-	s = proclist_lock_write();
+	mutex_enter(&alllwp_mutex);
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
-	proclist_unlock_write(s);
+	mutex_exit(&alllwp_mutex);
 
 	if (p2->p_emul->e_lwp_fork)
 		(*p2->p_emul->e_lwp_fork)(l1, l2);
@@ -567,13 +568,13 @@ lwp_exit(struct lwp *l)
 		/* NOTREACHED */
 	}
 
-	s = proclist_lock_write();
+	mutex_enter(&alllwp_mutex);
 	LIST_REMOVE(l, l_list);
-	proclist_unlock_write(s);
+	mutex_exit(&alllwp_mutex);
 
-	/*
-	 * Release our cached credentials, and collate accounting flags.
-	 */
+	pool_cache_put(&turnstile_cache, l->l_ts);
+
+	/* Release our cached credentials, and collate accounting flags. */
 	kauth_cred_free(l->l_cred);
 	simple_lock(&p->p_lock);
 	p->p_acflag |= l->l_acflag;
@@ -735,10 +736,10 @@ lwp_update_creds(struct lwp *l)
 	p = l->l_proc;
 	oc = l->l_cred;
 
-	simple_lock(&p->p_lock);
+	mutex_enter(&p->p_crmutex);
 	kauth_cred_hold(p->p_cred);
 	l->l_cred = p->p_cred;
-	simple_unlock(&p->p_lock);
+	mutex_exit(&p->p_crmutex);
 	if (oc != NULL)
 		kauth_cred_free(oc);
 }
