@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.136 2006/09/11 17:57:07 reinoud Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.137 2006/09/11 19:43:55 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.136 2006/09/11 17:57:07 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.137 2006/09/11 19:43:55 reinoud Exp $");
 
 #include "opt_scsi.h"
 
@@ -1049,7 +1049,7 @@ scsipi_size(struct scsipi_periph *periph, int flags)
 		return (0);
 
 	if (_4btol(data.data.addr) != 0xffffffff)
-		return _4btol(data.data.addr);
+		return (_4btol(data.data.addr) + 1);
 
 	/*
 	 * Device is larger than can be reflected by READ CAPACITY (10).
@@ -1067,7 +1067,7 @@ scsipi_size(struct scsipi_periph *periph, int flags)
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
 		return (0);
 
-	return _8btol(data.data16.addr);
+	return (_8btol(data.data16.addr) + 1);
 }
 
 /*
