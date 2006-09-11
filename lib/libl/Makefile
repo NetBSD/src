@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2005/05/07 00:23:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2006/09/11 22:24:09 dbj Exp $
 
 NOPIC=		# defined
 
@@ -13,8 +13,8 @@ LINKS=		${LIBDIR}/libl.a ${LIBDIR}/libfl.a
 
 .PATH:		${NETBSDSRCDIR}/usr.bin/lex
 
-.include <bsd.lib.mk>
-
 .if ${MKPROFILE} != "no"
 LINKS+=		${LIBDIR}/libl_p.a ${LIBDIR}/libfl_p.a
 .endif
+
+.include <bsd.lib.mk>
