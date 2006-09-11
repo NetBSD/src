@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.24 2006/09/08 20:58:57 elad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.25 2006/09/11 12:06:39 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.24 2006/09/08 20:58:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25 2006/09/11 12:06:39 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.24 2006/09/08 20:58:57 elad Exp $");
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
+#include <sys/kauth.h>
+#include <sys/proc.h>
 
 /*
  * Attempt to read a disk label from a device
@@ -205,8 +207,8 @@ bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */
 	if (kauth_authorize_system(curlwp->l_cred, KAUTH_SYSTEM_RAWIO,
-	    (void *)KAUTH_REQ_SYSTEM_RAWIO_DISK,
-	    (void *)KAUTH_REQ_SYSTEM_RAWIO_READWRITE, NULL, NULL) &&
+	    KAUTH_REQ_SYSTEM_RAWIO_DISK,
+	    (void *)KAUTH_REQ_SYSTEM_RAWIO_RW, NULL, NULL) &&
 	    bp->b_blkno + p->p_offset <= labelsector &&
 	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
