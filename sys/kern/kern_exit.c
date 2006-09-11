@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.158 2006/08/23 19:49:09 manu Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.158.2.1 2006/09/11 18:19:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158 2006/08/23 19:49:09 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.1 2006/09/11 18:19:09 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -114,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158 2006/08/23 19:49:09 manu Exp $")
 #include <sys/syscallargs.h>
 #include <sys/systrace.h>
 #include <sys/kauth.h>
+#include <sys/turnstile.h>
 
 #include <machine/cpu.h>
 
@@ -239,7 +240,9 @@ exit1(struct lwp *l, int rv)
 	 */
 	if (p->p_flag & P_PPWAIT) {
 		p->p_flag &= ~P_PPWAIT;
+		rw_enter(&proclist_lock, RW_READER);
 		wakeup(p->p_pptr);
+		rw_exit(&proclist_lock);
 	}
 	sigfillset(&p->p_sigctx.ps_sigignore);
 	sigemptyset(&p->p_sigctx.ps_siglist);
@@ -354,6 +357,12 @@ exit1(struct lwp *l, int rv)
 	uvm_proc_exit(p);
 
 	/*
+	 * We must acquire the proclist lock now, as we may need to sleep on
+	 * the lock.
+	 */
+	rw_enter(&proclist_lock, RW_WRITER);
+
+	/*
 	 * Give machine-dependent code a chance to free any
 	 * MD LWP resources while we can still block. This must be done
 	 * before uvm_lwp_exit(), in case these resources are in the
@@ -395,7 +404,6 @@ exit1(struct lwp *l, int rv)
 	}
 #endif
 
-	s = proclist_lock_write();
 	/*
 	 * Reset p_opptr pointer of all former children which got
 	 * traced by another process and were reparented. We reset
@@ -435,6 +443,7 @@ exit1(struct lwp *l, int rv)
 			} else
 				proc_reparent(q, initproc);
 			q->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE|P_SYSCALL);
+			/* XXXAD will re-enter proclist_lock through tty and panic */
 			killproc(q, "orphaned traced process");
 		} else {
 			proc_reparent(q, initproc);
@@ -448,14 +457,21 @@ exit1(struct lwp *l, int rv)
 	 * context.
 	 * Changing the state to SZOMB stops it being found by pfind().
 	 */
+	mutex_enter(&proclist_mutex);
+	mutex_enter(&alllwp_mutex);
 	LIST_REMOVE(p, p_list);
-	LIST_INSERT_HEAD(&zombproc, p, p_list);
-	p->p_stat = SZOMB;
-
 	LIST_REMOVE(l, l_list);
+	mutex_exit(&alllwp_mutex);
+	mutex_exit(&proclist_mutex);
 	LIST_REMOVE(l, l_sibling);
+
+	LIST_INSERT_HEAD(&zombproc, p, p_list);
+
+	SCHED_LOCK(s);
+	p->p_stat = SZOMB;
 	l->l_flag |= L_DETACHED;	/* detached from proc too */
 	l->l_stat = LSDEAD;
+	SCHED_UNLOCK(s);
 
 	KASSERT(p->p_nrlwps == 1);
 	KASSERT(p->p_nlwps == 1);
@@ -488,18 +504,6 @@ exit1(struct lwp *l, int rv)
 			wakeup(q);
 	}
 
-	/*
-	 * Clear curlwp after we've done all operations
-	 * that could block, and before tearing down the rest
-	 * of the process state that might be used from clock, etc.
-	 * Also, can't clear curlwp while we're still runnable,
-	 * as we're not on a run queue (we are current, just not
-	 * a proper proc any longer!).
-	 *
-	 * Other substructures are freed from wait().
-	 */
-	curlwp = NULL;
-
 	/* Delay release until after dropping the proclist lock */
 	plim = p->p_limit;
 	pstats = p->p_stats;
@@ -522,7 +526,7 @@ exit1(struct lwp *l, int rv)
 	 * process structure anymore, since it's now on the zombie
 	 * list and available for collection by the parent.
 	 */
-	proclist_unlock_write(s);
+	rw_exit(&proclist_lock);
 
 	if (do_psignal)
 		kpsignal(q, &ksi, NULL);
@@ -530,10 +534,25 @@ exit1(struct lwp *l, int rv)
 	/* Wake up the parent so it can get exit status. */
 	wakeup(q);
 
+	/*
+	 * Clear curlwp after we've done all operations
+	 * that could block, and before tearing down the rest
+	 * of the process state that might be used from clock, etc.
+	 * Also, can't clear curlwp while we're still runnable,
+	 * as we're not on a run queue (we are current, just not
+	 * a proper proc any longer!).
+	 *
+	 * Other substructures are freed from wait().
+	 */
+	curlwp = NULL;
+
 	/* Release substructures */
 	sigactsfree(ps);
 	limfree(plim);
 	pstatsfree(pstats);
+
+	/* Release turnstile. */
+	pool_cache_put(&turnstile_cache, l->l_ts);
 
 	/* Release cached credentials. */
 	kauth_cred_free(l->l_cred);
@@ -541,6 +560,7 @@ exit1(struct lwp *l, int rv)
 #ifdef DEBUG
 	/* Nothing should use the process link anymore */
 	l->l_proc = NULL;
+	l->l_ts = NULL;
 #endif
 
 	/* This process no longer needs to hold the kernel lock. */
@@ -726,7 +746,7 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 	int error;
 
 	for (;;) {
-		proclist_lock_read();
+		rw_enter(&proclist_lock, RW_READER);
 		error = ECHILD;
 		LIST_FOREACH(child, &parent->p_children, p_sibling) {
 			if (pid >= 0) {
@@ -777,11 +797,12 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 				break;
 			}
 		}
-		proclist_unlock_read();
+		rw_exit(&proclist_lock);
 		if (child != NULL || error != 0 || options & WNOHANG) {
 			*child_p = child;
 			return error;
 		}
+		/* XXXSMP need to sleep on 'zombcount' or similar to avoid race. */
 		error = tsleep(parent, PWAIT | PCATCH, "wait", 0);
 		if (error != 0)
 			return error;
@@ -790,13 +811,19 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 
 /*
  * Free a process after parent has taken all the state info.
+ *
+ * XXXSMP we acquire and drop the proclist_lock multiple times in this
+ * routine.  Needs to be simplified.
  */
 void
 proc_free(struct proc *p)
 {
-	struct proc *parent = p->p_pptr;
+	struct proc *parent;
 	ksiginfo_t ksi;
-	int s;
+	kauth_cred_t cred;
+	struct rusage *ru;
+	struct vnode *vp;
+	uid_t uid;
 
 	KASSERT(p->p_nlwps == 0);
 	KASSERT(p->p_nzlwps == 0);
@@ -811,25 +838,39 @@ proc_free(struct proc *p)
 	 * parent the exit signal.  The rest of the cleanup
 	 * will be done when the old parent waits on the child.
 	 */
-	if ((p->p_flag & P_TRACED) && p->p_opptr != parent){
-		parent = p->p_opptr;
-		if (parent == NULL)
-			parent = initproc;
-		proc_reparent(p, parent);
-		p->p_opptr = NULL;
-		p->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE|P_SYSCALL);
-		if (p->p_exitsig != 0) {
-			exit_psignal(p, parent, &ksi);
-			kpsignal(parent, &ksi, NULL);
+	if ((p->p_flag & P_TRACED) != 0) {
+		rw_enter(&proclist_lock, RW_WRITER);
+		parent = p->p_pptr;
+		if (p->p_opptr != parent){
+			parent = p->p_opptr;
+			if (parent == NULL)
+				parent = initproc;
+			proc_reparent(p, parent);
+			p->p_opptr = NULL;
+			p->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE|P_SYSCALL);
+			if (p->p_exitsig != 0) {
+				exit_psignal(p, parent, &ksi);
+				kpsignal(parent, &ksi, NULL);
+			}
+			wakeup(parent);
+			rw_exit(&proclist_lock);
+			return;
 		}
-		wakeup(parent);
-		return;
+		rw_exit(&proclist_lock);
 	}
 
-	scheduler_wait_hook(parent, p);
-	p->p_xstat = 0;
+	/*
+	 * Finally finished with old proc entry.  Unlink it from its process
+	 * group.
+	 */
+	leavepgrp(p);
 
+	rw_enter(&proclist_lock, RW_WRITER);
+
+	parent = p->p_pptr;
+	scheduler_wait_hook(parent, p);
 	ruadd(&parent->p_stats->p_cru, p->p_ru);
+	p->p_xstat = 0;
 
 	/*
 	 * At this point we are going to start freeing the final resources.
@@ -837,55 +878,59 @@ proc_free(struct proc *p)
 	 * will get a shock - bits are missing.
 	 * Attempt to make it hard!
 	 */
-
 	p->p_stat = SIDL;		/* not even a zombie any more */
 
-	pool_put(&rusage_pool, p->p_ru);
-
-	/*
-	 * Finally finished with old proc entry.
-	 * Unlink it from its process group and free it.
-	 */
-	leavepgrp(p);
-
-	s = proclist_lock_write();
 	LIST_REMOVE(p, p_list);	/* off zombproc */
+	parent = p->p_pptr;
 	p->p_pptr->p_nstopchild--;
 	LIST_REMOVE(p, p_sibling);
-	proclist_unlock_write(s);
 
-	/*
-	 * Decrement the count of procs running with this uid.
-	 */
-	(void)chgproccnt(kauth_cred_getuid(p->p_cred), -1);
-
-	/*
-	 * Free up credentials.
-	 */
-	kauth_cred_free(p->p_cred);
-
-	/*
-	 * Release reference to text vnode
-	 */
-	if (p->p_textvp)
-		vrele(p->p_textvp);
+	uid = kauth_cred_getuid(p->p_cred);
+	vp = p->p_textvp;
+	cred = p->p_cred;
+	ru = p->p_ru;
 
 	/* Release any SA state. */
 	if (p->p_sa)
 		sa_release(p);
 
-	/* Free proc structure and let pid be reallocated */
+	mutex_destroy(&p->p_crmutex);
+
+	/*
+	 * Free the proc structure and let pid be reallocated.  XXX This
+	 * will release the proclist_lock.
+	 */
 	proc_free_mem(p);
+
+	pool_put(&rusage_pool, ru);
+
+	/*
+	 * Decrement the count of procs running with this uid.
+	 */
+	(void)chgproccnt(uid, -1);
+
+	/*
+	 * Free up credentials.
+	 */
+	kauth_cred_free(cred);
+
+	/*
+	 * Release reference to text vnode
+	 */
+	if (vp)
+		vrele(vp);
 }
 
 /*
  * make process 'parent' the new parent of process 'child'.
  *
- * Must be called with proclist_lock_write() held.
+ * Must be called with proclist_lock write locked held.
  */
 void
 proc_reparent(struct proc *child, struct proc *parent)
 {
+
+	LOCK_ASSERT(rw_write_held(&proclist_lock));
 
 	if (child->p_pptr == parent)
 		return;

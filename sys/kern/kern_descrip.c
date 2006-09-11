@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.145 2006/09/02 06:22:45 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.145.2.1 2006/09/11 18:19:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.145 2006/09/02 06:22:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.145.2.1 2006/09/11 18:19:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1817,12 +1817,16 @@ restart:
 	if (devnullfp)
 		FILE_UNUSE(devnullfp, l);
 	if (closed[0] != '\0') {
+		rw_enter(&proclist_lock, RW_READER);
 		pp = p->p_pptr;
+		mutex_enter(&pp->p_crmutex);
 		log(LOG_WARNING, "set{u,g}id pid %d (%s) "
 		    "was invoked by uid %d ppid %d (%s) "
 		    "with fd %s closed\n",
 		    p->p_pid, p->p_comm, kauth_cred_geteuid(pp->p_cred),
 		    pp->p_pid, pp->p_comm, &closed[1]);
+		mutex_exit(&pp->p_crmutex);
+		rw_exit(&proclist_lock);
 	}
 	return (0);
 }
@@ -1884,6 +1888,7 @@ void
 fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 {
 	struct proc *p1;
+	struct pgrp *pgrp;
 	ksiginfo_t ksi;
 
 	memset(&ksi, 0, sizeof(ksi));
@@ -1891,10 +1896,16 @@ fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 	ksi.ksi_code = code;
 	ksi.ksi_band = band;
 
-	if (pgid > 0 && (p1 = pfind(pgid)))
+	/*
+	 * Since we may be called from an interrupt context, we must use
+	 * the proclist_mutex.
+	 */
+	mutex_enter(&proclist_mutex);
+	if (pgid > 0 && (p1 = p_find(pgid, PFIND_LOCKED)))
 		kpsignal(p1, &ksi, fdescdata);
-	else if (pgid < 0)
-		kgsignal(-pgid, &ksi, fdescdata);
+	else if (pgid < 0 && (pgrp = pg_find(-pgid, PFIND_LOCKED)))
+		kpgsignal(pgrp, &ksi, fdescdata, 0);
+	mutex_exit(&proclist_mutex);
 }
 
 int

@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.41 2006/07/30 21:58:11 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.41.4.1 2006/09/11 18:19:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
 #include <sys/queue.h>
 #include <sys/callout.h>
+#include <sys/mutex.h>
 
 struct	lwp {
 	struct	lwp *l_forw;		/* Doubly-linked run/sleep queue. */
@@ -55,7 +56,7 @@ struct	lwp {
 	struct proc *l_proc;	/* Process with which we are associated. */
 
 	LIST_ENTRY(lwp) l_sibling;	/* Entry on process's list of LWPs. */
-
+	struct turnstile *l_ts;		/* current turnstile */
 	struct cpu_info * volatile l_cpu; /* CPU we're running on if
 					       SONPROC */
 	int	l_flag;
@@ -105,6 +106,7 @@ struct	lwp {
 LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 
 #ifdef _KERNEL
+extern kmutex_t alllwp_mutex;		/* Mutex on alllwp */
 extern struct lwplist alllwp;		/* List of all LWPs. */
 
 extern struct pool lwp_pool;		/* memory pool for LWPs */

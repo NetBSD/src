@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.225 2006/07/30 21:58:11 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.225.4.1 2006/09/11 18:19:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -47,6 +47,8 @@
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct */
 #include <sys/lock.h>
+#include <sys/rwlock.h>
+#include <sys/mutex.h>
 #include <sys/lwp.h>
 #include <sys/queue.h>
 #include <sys/callout.h>
@@ -163,16 +165,18 @@ struct emul {
  * Field markings and the corresponding locks (not yet fully implemented,
  * more a statement of intent):
  *
- * c:	P_CRLOCK - credentials write lock
+ * m:	proclist_mutex
+ * c:	p_crmutex - credentials mutex
  * l:	proclist_lock
  * p:	p->p_lock
  * s:	sched_lock
  */
 struct proc {
-	LIST_ENTRY(proc) p_list;	/* l: List of all processes */
+	LIST_ENTRY(proc) p_list;	/* l, (a): List of all processes */
 
 	/* Substructures: */
-	struct kauth_cred *p_cred;	/* p, c: Master copy of credentials */
+	kmutex_t	p_crmutex;	/* credentials mutex */
+	struct kauth_cred *p_cred;	/* c: Master copy of credentials */
 	struct filedesc	*p_fd;		/* Ptr to open files structure */
 	struct cwdinfo	*p_cwdi;	/* cdir/rdir/cmask info */
 	struct pstats	*p_stats;	/* Accounting/statistics (PROC ONLY) */
@@ -324,7 +328,7 @@ struct proc {
 #define	P_SYSCALL	0x04000000 /* process has PT_SYSCALL enabled */
 #define	P_PAXMPROTECT  	0x08000000 /* Explicitly enable PaX MPROTECT */
 #define	P_PAXNOMPROTECT	0x10000000 /* Explicitly disable PaX MPROTECT */
-#define	P_CRLOCK	0x20000000 /* p_cred write lock */
+#define	P_UNUSED2	0x20000000
 #define	P_UNUSED1	0x40000000
 #define	P_MARKER	0x80000000 /* Is a dummy marker process */
 
@@ -427,8 +431,9 @@ extern struct proc	proc0;		/* Process slot for swapper */
 extern int		nprocs, maxproc; /* Current and max number of procs */
 #define	vmspace_kernel()	(proc0.p_vmspace)
 
-/* Process list lock; see kern_proc.c for locking protocol details */
-extern struct lock	proclist_lock;
+/* Process list locks; see kern_proc.c for locking protocol details */
+extern krwlock_t	proclist_lock;
+extern kmutex_t		proclist_mutex;
 
 extern struct proclist	allproc;	/* List of all processes */
 extern struct proclist	zombproc;	/* List of zombie processes */
@@ -459,10 +464,10 @@ struct pgrp *pg_find(pid_t, uint);	/* Find process group by id */
 #define pgfind(pgid) pg_find((pgid), PFIND_UNLOCK)
 
 struct simplelock;
-int	enterpgrp(struct proc *, pid_t, int);
+int	enterpgrp(struct proc *, pid_t, pid_t, int);
+void	leavepgrp(struct proc *);
 void	fixjobc(struct proc *, struct pgrp *, int);
 int	inferior(struct proc *, struct proc *);
-int	leavepgrp(struct proc *);
 void	sessdelete(struct session *);
 void	yield(void);
 struct lwp *chooselwp(void);
@@ -472,6 +477,7 @@ void	resetprocpriority(struct proc *);
 void	suspendsched(void);
 int	ltsleep(volatile const void *, int, const char *, int,
 	    volatile struct simplelock *);
+int	mtsleep(volatile const void *, int, const char *, int, kmutex_t *);
 void	wakeup(volatile const void *);
 void	wakeup_one(volatile const void *);
 void	exit1(struct lwp *, int);
@@ -504,10 +510,6 @@ void	child_return(void *);
 int	proc_isunder(struct proc *, struct lwp *);
 void	proc_stop(struct proc *, int);
 
-void	proclist_lock_read(void);
-void	proclist_unlock_read(void);
-int	proclist_lock_write(void);
-void	proclist_unlock_write(int);
 void	p_sugid(struct proc *);
 
 int	proc_vmspace_getref(struct proc *, struct vmspace **);
