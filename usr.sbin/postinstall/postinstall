@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.25 2006/09/10 15:45:56 plunky Exp $
+# $NetBSD: postinstall,v 1.26 2006/09/11 22:16:10 dbj Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -365,6 +365,27 @@ stat()
 	return $?
 }
 
+# file_exists_exact path
+#	Returns true if file exists matching exact case for path
+#	Each path is relative to ${DEST_DIR}, and should
+#	be an absolute path or start with `./'.
+#
+file_exists_exact()
+{
+	[ -n "1" ] || err 2 "USAGE: file_exists_exact path"
+	_path=${1#.}
+	[ -e "${DEST_DIR}${_path}" ] || return 1
+	while [ "${_path}" != "/" ] ; do
+		_dirname=$(dirname "${_path}" 2>/dev/null)
+		_basename=$(basename "${_path}" 2>/dev/null)
+		ls -fa "${DEST_DIR}${_dirname}" 2> /dev/null \
+			| grep -q -x -F "${_basename}" \
+			|| return 1
+		_path=${_dirname}
+	done
+	return 0
+}
+
 # obsolete_paths op
 #	Obsolete the list of paths provided on stdin.
 #	Each path is relative to ${DEST_DIR}, and should
@@ -377,6 +398,9 @@ obsolete_paths()
 
 	failed=0
 	while read ofile; do
+                if ! file_exists_exact "${ofile}"; then
+                    continue
+                fi
 		ofile=${DEST_DIR}${ofile#.}
 		cmd="rm"
 		ftype="file"
@@ -385,8 +409,6 @@ obsolete_paths()
 		elif [ -d "${ofile}" ]; then
 			ftype="directory"
 			cmd="rmdir"
-		elif [ ! -e "${ofile}" ]; then
-			continue
 		fi
 		if [ "${op}" = "check" ]; then
 			msg "Remove obsolete ${ftype} ${ofile}"
