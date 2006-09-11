@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/09/20 06:20:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2006/09/11 22:28:33 dbj Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,8 @@ MLINKS=	bitmap.1 bmtoa.1 bitmap.1 atobm.1
 FILES=	Dashes Down Excl FlipHoriz FlipVert Fold Left Right RotateLeft \
 	RotateRight Stipple Term Up
 FILESDIR=${X11INCDIR}/X11/bitmaps
+
+FILESNAME_Stipple=Stippler
 
 APPDEFS=Bitmap.ad Bitmap-color.ad
 
