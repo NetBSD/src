@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.242.6.3 2006/09/11 21:17:30 tron Exp $	*/
+/*	$NetBSD: cd.c,v 1.242.6.4 2006/09/11 21:18:09 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.242.6.3 2006/09/11 21:17:30 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.242.6.4 2006/09/11 21:18:09 tron Exp $");
 
 #include "rnd.h"
 
@@ -1685,7 +1685,7 @@ read_cd_capacity(struct scsipi_periph *periph, int *blksize, u_long *size)
 	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT;
 	memset(&di_cmd, 0, sizeof(di_cmd));
 	di_cmd.opcode = READ_DISCINFO;
-	_lto2b(sizeof(di), di_cmd.data_len);
+	_lto2b(READ_DISCINFO_BIGSIZE, di_cmd.data_len);
 
 	error = scsipi_command(periph,
 	    (void *) &di_cmd,  sizeof(di_cmd),
