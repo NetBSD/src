@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_pool.c,v 1.122 2006/09/03 06:25:19 christos Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.122.2.1 2006/09/11 00:12:01 ad Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1999, 2000, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.122 2006/09/03 06:25:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.122.2.1 2006/09/11 00:12:01 ad Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1135,6 +1135,7 @@ pool_get(struct pool *pp, int flags)
 	}
 
 	simple_unlock(&pp->pr_slock);
+	KASSERT((((vaddr_t)v + pp->pr_itemoffset) & (pp->pr_align - 1)) == 0);
 	return (v);
 }
 
@@ -1371,8 +1372,8 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 {
 	struct pool_item *pi;
 	caddr_t cp = storage;
-	unsigned int align = pp->pr_align;
-	unsigned int ioff = pp->pr_itemoffset;
+	const unsigned int align = pp->pr_align;
+	const unsigned int ioff = pp->pr_itemoffset;
 	int n;
 
 	LOCK_ASSERT(simple_lock_held(&pp->pr_slock));
@@ -1409,6 +1410,8 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	if (ioff != 0)
 		cp = (caddr_t)(cp + (align - ioff));
 
+	KASSERT((((vaddr_t)cp + ioff) & (align - 1)) == 0);
+
 	/*
 	 * Insert remaining chunks on the bucket list.
 	 */
@@ -1436,6 +1439,8 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 			pi->pi_magic = PI_MAGIC;
 #endif
 			cp = (caddr_t)(cp + pp->pr_size);
+
+			KASSERT((((vaddr_t)cp + ioff) & (align - 1)) == 0);
 		}
 	}
 
@@ -2068,6 +2073,8 @@ pool_cache_get_paddr(struct pool_cache *pc, int flags, paddr_t *pap)
 				return (NULL);
 			}
 		}
+		KASSERT((((vaddr_t)object + pc->pc_pool->pr_itemoffset) &
+		    (pc->pc_pool->pr_align - 1)) == 0);
 		if (object != NULL && pap != NULL) {
 #ifdef POOL_VTOPHYS
 			*pap = POOL_VTOPHYS(object);
@@ -2088,6 +2095,8 @@ pool_cache_get_paddr(struct pool_cache *pc, int flags, paddr_t *pap)
 	}
 	simple_unlock(&pc->pc_slock);
 
+	KASSERT((((vaddr_t)object + pc->pc_pool->pr_itemoffset) &
+	    (pc->pc_pool->pr_align - 1)) == 0);
 	return (object);
 }
 
