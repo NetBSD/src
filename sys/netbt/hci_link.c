@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.4 2006/09/11 22:08:38 plunky Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.5 2006/09/11 22:12:39 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.4 2006/09/11 22:08:38 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.5 2006/09/11 22:12:39 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -98,7 +98,7 @@ hci_acl_open(struct hci_unit *unit, bdaddr_t *bdaddr)
 		if (memo != NULL) {
 			cp.page_scan_rep_mode = memo->response.page_scan_rep_mode;
 			cp.page_scan_mode = memo->response.page_scan_mode;
-			cp.clock_offset = memo->response.clock_offset;
+			cp.clock_offset = htole16(memo->response.clock_offset);
 		}
 
 		if (unit->hci_link_policy & HCI_LINK_POLICY_ENABLE_ROLE_SWITCH)
@@ -261,7 +261,8 @@ hci_acl_recv(struct mbuf *m, struct hci_unit *unit)
 	}
 
 	if (m->m_pkthdr.len != le16toh(hdr.length)) {
-		printf("%s: bad ACL packet length\n", unit->hci_devname);
+		printf("%s: bad ACL packet length (%d != %d)\n",
+			unit->hci_devname, m->m_pkthdr.len, le16toh(hdr.length));
 		goto bad;
 	}
 #endif
