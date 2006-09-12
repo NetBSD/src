@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.3 2006/09/10 15:45:56 plunky Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.4 2006/09/12 18:18:01 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.3 2006/09/10 15:45:56 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.4 2006/09/12 18:18:01 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -396,25 +396,36 @@ bthidev_identify(struct btdev *dev, prop_dictionary_t dict)
  */
 
 /*
- * callouts are scheduled to initiate outgoing connections
- * after the connection has been lost.
+ * callouts are scheduled after connections have been lost, in order
+ * to clean up and reconnect.
  */
 static void
 bthidev_timeout(void *arg)
 {
 	struct bthidev_softc *sc = arg;
-	int s, err;
+	int s;
 
 	s = splsoftnet();
 	callout_ack(&sc->sc_reconnect);
 
 	switch (sc->sc_state) {
 	case BTHID_CLOSED:
-		sc->sc_flags |= BTHID_CONNECTING;
-		err = bthidev_connect(sc);
-		if (err)
-			printf("%s: connect failed (%d)\n",
-				device_xname((struct device *)sc), err);
+		if (sc->sc_int != NULL) {
+			l2cap_disconnect(sc->sc_int, 0);
+			break;
+		}
+
+		if (sc->sc_ctl != NULL) {
+			l2cap_disconnect(sc->sc_ctl, 0);
+			break;
+		}
+
+		if (sc->sc_flags & BTHID_RECONNECT) {
+			sc->sc_flags |= BTHID_CONNECTING;
+			bthidev_connect(sc);
+			break;
+		}
+
 		break;
 
 	case BTHID_WAIT_CTL:
@@ -642,9 +653,11 @@ bthidev_ctl_disconnected(void *arg, int err)
 	} else {
 		/*
 		 * The interrupt channel should have been closed first,
-		 * so if its still up then kick it along..
+		 * but its potentially unsafe to detach that from here.
+		 * Give them a second to do the right thing or let the
+		 * callout handle it.
 		 */
-		l2cap_disconnect(sc->sc_int, 0);
+		callout_schedule(&sc->sc_reconnect, hz);
 	}
 }
 
@@ -670,6 +683,12 @@ bthidev_int_disconnected(void *arg, int err)
 					BTHID_RETRY_INTERVAL * hz);
 		else
 			sc->sc_state = BTHID_WAIT_CTL;
+	} else {
+		/*
+		 * The control channel should be closing also, allow
+		 * them a chance to do that before we force it.
+		 */
+		callout_schedule(&sc->sc_reconnect, hz);
 	}
 }
 
