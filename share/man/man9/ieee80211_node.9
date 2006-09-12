@@ -1,4 +1,4 @@
-.\" $NetBSD: ieee80211_node.9,v 1.3 2006/09/12 11:05:23 pooka Exp $
+.\" $NetBSD: ieee80211_node.9,v 1.4 2006/09/12 13:05:17 pooka Exp $
 .\"
 .\" Copyright (c) 2004 Bruce M. Simpson <bms@spc.org>
 .\" Copyright (c) 2004 Darron Broad <darron@kewl.org>
@@ -68,11 +68,11 @@
 .Ft struct ieee80211_node *
 .Fn ieee80211_alloc_node "struct ieee80211com *ic" "u_int8_t *macaddr"
 .Ft struct ieee80211_node *
-.Fn ieee80211_dup_bss
+.Fo ieee80211_dup_bss
 .Fa "struct ieee80211_node_table *nt" "const u_int8_t *macaddr"
 .Fc
 .Ft struct ieee80211_node *
-.Fn ieee80211_find_node
+.Fo ieee80211_find_node
 .Fa "struct ieee80211_node_table *nt" "const u_int8_t *macaddr"
 .Fc
 .Ft void
