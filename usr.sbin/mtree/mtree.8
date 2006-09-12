@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.43 2006/04/22 19:35:35 wiz Exp $
+.\"	$NetBSD: mtree.8,v 1.44 2006/09/12 20:22:49 pavel Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,7 +63,7 @@
 .\"
 .\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd November 10, 2005
+.Dd September 12, 2006
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -178,6 +178,10 @@ keywords instead of the current set of keywords.
 If
 .Ql all
 is specified, use all of the other keywords.
+If the
+.Sy type
+keyword is not desired, suppress it with
+.Fl R Ar type .
 .It Fl l
 Do
 .Dq loose
