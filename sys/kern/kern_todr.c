@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.16 2006/09/11 20:48:55 gdamore Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.17 2006/09/12 05:47:47 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.16 2006/09/11 20:48:55 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.17 2006/09/12 05:47:47 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -146,10 +146,11 @@ inittodr(time_t base)
 
 	if ((todr_handle == NULL) ||
 	    (todr_gettime(todr_handle, &tv) != 0) ||
-	    (tv.tv_sec < (5 * SECYR))) {
+	    (tv.tv_sec < (25 * SECYR))) {
 
-		if (todr_handle != NULL)
+		if (todr_handle != NULL) {
 			printf("WARNING: preposterous TOD clock time\n");
+		}
 		else
 			printf("WARNING: no TOD clock present\n");
 		badrtc = 1;
@@ -210,6 +211,35 @@ inittodr(time_t base)
 	printf("WARNING: CHECK AND RESET THE DATE!\n");
 }
 
+#ifdef	TODR_DEBUG
+static void
+todr_debug(const char *prefix, int rv, struct clock_ymdhms *dt,
+    volatile struct timeval *tvp)
+{
+	struct timeval tv_val;
+	struct clock_ymdhms dt_val;
+
+	if (dt == NULL) {
+		clock_secs_to_ymdhms(tvp->tv_sec, &dt_val);
+		dt = &dt_val;
+	}
+	if (tvp == NULL) {
+		tvp = &tv_val;
+		tvp->tv_sec = clock_ymdhms_to_secs(dt);
+		tvp->tv_usec = 0;
+	}
+	printf("%s: rv = %d\n", prefix, rv);
+	printf("%s: rtc_offset = %d\n", prefix, rtc_offset);
+	printf("%s: %u/%u/%u %02u:%02u:%02u, (wday %d) (epoch %u.%06u)\n",
+	    prefix,
+	    dt->dt_year, dt->dt_mon, dt->dt_day,
+	    dt->dt_hour, dt->dt_min, dt->dt_sec,
+	    dt->dt_wday, (unsigned)tvp->tv_sec, (unsigned)tvp->tv_usec);
+}
+#else	/* !TODR_DEBUG */
+#define	todr_debug(prefix, rv, dt, tvp)
+#endif	/* TODR_DEBUG */
+
 /*
  * Reset the TODR based on the time value; used when the TODR
  * has a preposterous value and also when the time is reset
@@ -253,11 +283,14 @@ todr_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 	struct clock_ymdhms	dt;
 	int			rv;
 
-	if (tch->todr_gettime)
-		return tch->todr_gettime(tch, tvp);
-
-	if (tch->todr_gettime_ymdhms) {
-		if ((rv = tch->todr_gettime_ymdhms(tch, &dt)) != 0)	
+	if (tch->todr_gettime) {
+		rv = tch->todr_gettime(tch, tvp);
+		todr_debug("TOD-GET-SECS", rv, NULL, tvp);
+		return rv;
+	} else if (tch->todr_gettime_ymdhms) {
+		rv = tch->todr_gettime_ymdhms(tch, &dt);
+		todr_debug("TOD-GET-YMDHMS", rv, &dt, NULL);
+		if (rv)
 			return rv;
 
 		/*
@@ -273,32 +306,36 @@ todr_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 		/* simple sanity checks */
 		if (dt.dt_mon < 1 || dt.dt_mon > 12 ||
 		    dt.dt_day < 1 || dt.dt_day > 31 ||
-		    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 62)
-			return -1;
-
+		    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 62) {
+			return EINVAL;
+		}
 		tvp->tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
 		tvp->tv_usec = 0;
-		return tvp->tv_sec < 0 ? -1 : 0;
+		return tvp->tv_sec < 0 ? EINVAL : 0;
 	}
 
-	return -1;
+	return ENXIO;
 }
 
 int
 todr_settime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 {
 	struct clock_ymdhms	dt;
+	int			rv;
 
-	if (tch->todr_settime)
-		return tch->todr_settime(tch, tvp);
-
-	if (tch->todr_settime_ymdhms) {
+	if (tch->todr_settime) {
+		rv = tch->todr_settime(tch, tvp);
+		todr_debug("TODR-SET-SECS", rv, NULL, tvp);
+		return rv;
+	} else if (tch->todr_settime_ymdhms) {
 		time_t	sec = tvp->tv_sec - rtc_offset * 60;
 		if (tvp->tv_usec >= 500000)
 			sec++;
 		clock_secs_to_ymdhms(sec, &dt);
-		return tch->todr_settime_ymdhms(tch, &dt);
+		rv = tch->todr_settime_ymdhms(tch, &dt);
+		todr_debug("TODR-SET-YMDHMS", rv, &dt, NULL);
+		return rv;
+	} else {
+		return ENXIO;
 	}
-
-	return -1;
 }
