@@ -1,4 +1,4 @@
-# $NetBSD: md.mac68k,v 1.54 2006/07/26 20:09:17 drochner Exp $
+# $NetBSD: md.mac68k,v 1.55 2006/09/12 02:36:37 simonb Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mac68k				comp-c-include
 ./usr/include/mac68k/_G_config.h		comp-obsolete		obsolete
@@ -11,7 +11,7 @@
 ./usr/include/mac68k/bus.h			comp-c-include
 ./usr/include/mac68k/cdefs.h			comp-c-include
 ./usr/include/mac68k/cpu.h			comp-c-include
-./usr/include/mac68k/db_machdep.h		comp-obsolete        obsolete
+./usr/include/mac68k/db_machdep.h		comp-obsolete		obsolete
 ./usr/include/mac68k/disklabel.h		comp-c-include
 ./usr/include/mac68k/elf_machdep.h		comp-c-include
 ./usr/include/mac68k/endian.h			comp-c-include

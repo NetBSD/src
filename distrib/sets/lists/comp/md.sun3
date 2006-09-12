@@ -1,4 +1,4 @@
-# $NetBSD: md.sun3,v 1.56 2006/07/26 20:09:17 drochner Exp $
+# $NetBSD: md.sun3,v 1.57 2006/09/12 02:36:37 simonb Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sun3				comp-c-include
 ./usr/include/sun3/_G_config.h			comp-obsolete		obsolete
@@ -10,7 +10,7 @@
 ./usr/include/sun3/cdefs.h			comp-c-include
 ./usr/include/sun3/cg2reg.h			comp-c-include
 ./usr/include/sun3/cpu.h			comp-c-include
-./usr/include/sun3/db_machdep.h			comp-obsolete        obsolete
+./usr/include/sun3/db_machdep.h			comp-obsolete		obsolete
 ./usr/include/sun3/disklabel.h			comp-c-include
 ./usr/include/sun3/dvma.h			comp-c-include
 ./usr/include/sun3/dvma3.h			comp-c-include

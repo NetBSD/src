@@ -1,4 +1,4 @@
-# $NetBSD: md.amiga,v 1.53 2006/07/26 20:09:17 drochner Exp $
+# $NetBSD: md.amiga,v 1.54 2006/09/12 02:36:37 simonb Exp $
 ./usr/include/amiga				comp-c-include
 ./usr/include/amiga/_G_config.h			comp-obsolete		obsolete
 ./usr/include/amiga/ansi.h			comp-c-include
@@ -10,7 +10,7 @@
 ./usr/include/amiga/conf.h			comp-obsolete		obsolete
 ./usr/include/amiga/cpu.h			comp-c-include
 ./usr/include/amiga/cpufunc.h			comp-c-include
-./usr/include/amiga/db_machdep.h		comp-obsolete        obsolete
+./usr/include/amiga/db_machdep.h		comp-obsolete		obsolete
 ./usr/include/amiga/disklabel.h			comp-c-include
 ./usr/include/amiga/elf_machdep.h		comp-c-include
 ./usr/include/amiga/endian.h			comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.51 2006/09/11 22:28:33 dbj Exp $
+# $NetBSD: mi,v 1.52 2006/09/12 02:36:37 simonb Exp $
 ./etc/mtree/set.xbase				xbase-sys-root
 ./var/db/obsolete/xbase				xbase-sys-root
 ./var/db/obsolete/xetc				xbase-sys-root
@@ -138,7 +138,7 @@
 ./usr/X11R6/include/X11/bitmaps/Right
 ./usr/X11R6/include/X11/bitmaps/RotateLeft
 ./usr/X11R6/include/X11/bitmaps/RotateRight
-./usr/X11R6/include/X11/bitmaps/Stipple         xbase-obsolete  obsolete
+./usr/X11R6/include/X11/bitmaps/Stipple		xbase-obsolete	obsolete
 ./usr/X11R6/include/X11/bitmaps/Stippler
 ./usr/X11R6/include/X11/bitmaps/Term
 ./usr/X11R6/include/X11/bitmaps/Up

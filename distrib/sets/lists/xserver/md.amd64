@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.18 2005/11/12 22:57:46 spz Exp $
+# $NetBSD: md.amd64,v 1.19 2006/09/12 02:36:38 simonb Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xvfb
@@ -173,7 +173,7 @@
 ./usr/X11R6/lib/modules/libfb.a
 ./usr/X11R6/lib/modules/libi2c.a
 ./usr/X11R6/lib/modules/libint10.a
-./usr/X11R6/lib/modules/liblayer.a 
+./usr/X11R6/lib/modules/liblayer.a
 ./usr/X11R6/lib/modules/libmfb.a
 ./usr/X11R6/lib/modules/libpcidata.a
 ./usr/X11R6/lib/modules/librac.a

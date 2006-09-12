@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm,v 1.10 2006/07/26 20:09:17 drochner Exp $
+# $NetBSD: md.evbarm,v 1.11 2006/09/12 02:36:37 simonb Exp $
 ./usr/include/evbarm				comp-c-include
 ./usr/include/evbarm/ansi.h			comp-c-include
 ./usr/include/evbarm/aout_machdep.h		comp-c-include
@@ -7,7 +7,7 @@
 ./usr/include/evbarm/bus.h			comp-c-include
 ./usr/include/evbarm/cdefs.h			comp-c-include
 ./usr/include/evbarm/cpu.h			comp-c-include
-./usr/include/evbarm/db_machdep.h		comp-obsolete        obsolete
+./usr/include/evbarm/db_machdep.h		comp-obsolete		obsolete
 ./usr/include/evbarm/disklabel.h		comp-c-include
 ./usr/include/evbarm/elf_machdep.h		comp-c-include
 ./usr/include/evbarm/endian.h			comp-c-include

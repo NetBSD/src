@@ -1,4 +1,4 @@
-# $NetBSD: md.evbmips,v 1.10 2006/07/26 20:09:17 drochner Exp $
+# $NetBSD: md.evbmips,v 1.11 2006/09/12 02:36:37 simonb Exp $
 ./usr/include/evbmips				comp-c-include
 ./usr/include/evbmips/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbmips/ansi.h			comp-c-include
@@ -8,7 +8,7 @@
 ./usr/include/evbmips/bus.h			comp-c-include
 ./usr/include/evbmips/cdefs.h			comp-c-include
 ./usr/include/evbmips/cpu.h			comp-c-include
-./usr/include/evbmips/db_machdep.h		comp-obsolete        obsolete
+./usr/include/evbmips/db_machdep.h		comp-obsolete		obsolete
 ./usr/include/evbmips/disklabel.h		comp-c-include
 ./usr/include/evbmips/ecoff_machdep.h		comp-c-include
 ./usr/include/evbmips/elf_machdep.h		comp-c-include

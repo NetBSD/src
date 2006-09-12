@@ -1,4 +1,4 @@
-# $NetBSD: md.iyonix,v 1.2 2006/07/26 20:09:17 drochner Exp $
+# $NetBSD: md.iyonix,v 1.3 2006/09/12 02:36:37 simonb Exp $
 ./usr/include/iyonix				comp-c-include
 ./usr/include/iyonix/ansi.h			comp-c-include
 ./usr/include/iyonix/aout_machdep.h		comp-c-include
@@ -7,7 +7,7 @@
 ./usr/include/iyonix/bus.h			comp-c-include
 ./usr/include/iyonix/cdefs.h			comp-c-include
 ./usr/include/iyonix/cpu.h			comp-c-include
-./usr/include/iyonix/db_machdep.h		comp-obsolete        obsolete
+./usr/include/iyonix/db_machdep.h		comp-obsolete		obsolete
 ./usr/include/iyonix/disklabel.h		comp-c-include
 ./usr/include/iyonix/elf_machdep.h		comp-c-include
 ./usr/include/iyonix/endian.h			comp-c-include

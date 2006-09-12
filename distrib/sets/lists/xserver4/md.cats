@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.7 2004/03/05 20:07:27 tron Exp $
+# $NetBSD: md.cats,v 1.8 2006/09/12 02:36:38 simonb Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xnest
@@ -22,7 +22,7 @@
 ./usr/X11R6/lib/X11/doc/LICENSE
 ./usr/X11R6/lib/X11/doc/README
 ./usr/X11R6/lib/X11/doc/README.DECtga
-./usr/X11R6/lib/X11/doc/README.DGA		xserver-obsolete obsolete	
+./usr/X11R6/lib/X11/doc/README.DGA		xserver-obsolete obsolete
 ./usr/X11R6/lib/X11/doc/README.DRI
 ./usr/X11R6/lib/X11/doc/README.DRIcomp
 ./usr/X11R6/lib/X11/doc/README.I128
