@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.18 2006/09/12 14:27:17 gdamore Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.19 2006/09/12 15:25:05 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.18 2006/09/12 14:27:17 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.19 2006/09/12 15:25:05 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -303,10 +303,23 @@ todr_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 		 * a time_t.
 		 */
 
-		/* simple sanity checks */
+		/*
+		 * Simple sanity checks.  Note that this includes a
+		 * value for clocks that can return a leap second.
+		 * Note that we don't support double leap seconds,
+		 * since this was apparently an error/misunderstanding
+		 * on the part of the ISO C committee, and can never
+		 * actually occur.  If your clock issues us a double
+		 * leap second, it must be broken.  Ultimately, you'd
+		 * have to be trying to read time at precisely that
+		 * instant to even notice, so even broken clocks will
+		 * work the vast majority of the time.  In such a case
+		 * I recommend correction be applied in the clock
+		 * driver.
+		 */
 		if (dt.dt_mon < 1 || dt.dt_mon > 12 ||
 		    dt.dt_day < 1 || dt.dt_day > 31 ||
-		    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 62) {
+		    dt.dt_hour > 23 || dt.dt_min > 59 || dt.dt_sec > 60) {
 			return EINVAL;
 		}
 		tvp->tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
