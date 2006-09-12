@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.25.2.2 2006/09/10 04:52:13 riz Exp $	*/
+/*	$NetBSD: est.c,v 1.25.2.3 2006/09/12 13:20:16 tron Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.25.2.2 2006/09/10 04:52:13 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.25.2.3 2006/09/12 13:20:16 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -838,6 +838,8 @@ static const struct fqlist est_cpus[] = {
 #define MSR2MV(msr)		(MSR2VOLTINC(msr) * 16 + 700)
 
 static const struct 	fqlist *est_fqlist; /* not NULL if functional */
+static uint16_t         fake_table[3];      /* guessed est_cpu table */
+static struct fqlist    fake_fqlist;
 static int 		est_node_target, est_node_current;
 static const char 	est_desc[] = "Enhanced SpeedStep";
 /* bus_clock is assigned in identcpu.c */
@@ -924,6 +926,7 @@ est_init(struct cpu_info *ci, int vendor)
 	/*
 	 * Find an entry which matches (vendor, bus_clock, idhi, idlo)
 	 */
+	est_fqlist = NULL;
 	for (i = 0; i < NELEM(est_cpus); i++) {
 		fql = &est_cpus[i];
 		if (vendor == fql->vendor && bus_clock == BUS_CLK(fql) &&
@@ -934,9 +937,6 @@ est_init(struct cpu_info *ci, int vendor)
 	}
 
 	if (est_fqlist == NULL) {
-		uint16_t fake_table[3];
-		struct fqlist fake_fqlist;
-
                 aprint_normal("%s: unknown Enhanced SpeedStep CPU.\n",
                     cpuname);
                 /*
