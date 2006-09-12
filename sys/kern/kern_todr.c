@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.20 2006/09/12 20:47:39 gdamore Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.21 2006/09/12 21:38:55 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.20 2006/09/12 20:47:39 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.21 2006/09/12 21:38:55 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -322,8 +322,8 @@ todr_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 		 * have to be trying to read time at precisely that
 		 * instant to even notice, so even broken clocks will
 		 * work the vast majority of the time.  In such a case
-		 * I recommend correction be applied in the clock
-		 * driver.
+		 * it is recommended correction be applied in the
+		 * clock driver.
 		 */
 		if (dt.dt_mon < 1 || dt.dt_mon > 12 ||
 		    dt.dt_day < 1 || dt.dt_day > 31 ||
