@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.29 2006/07/26 20:09:17 drochner Exp $
+# $NetBSD: md.sparc64,v 1.30 2006/09/12 02:36:37 simonb Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -75,7 +75,7 @@
 ./usr/include/sparc64/conf.h			comp-obsolete		obsolete
 ./usr/include/sparc64/cpu.h			comp-c-include
 ./usr/include/sparc64/ctlreg.h			comp-c-include
-./usr/include/sparc64/db_machdep.h		comp-obsolete        obsolete
+./usr/include/sparc64/db_machdep.h		comp-obsolete		obsolete
 ./usr/include/sparc64/disklabel.h		comp-c-include
 ./usr/include/sparc64/eeprom.h			comp-c-include
 ./usr/include/sparc64/elf_machdep.h		comp-c-include

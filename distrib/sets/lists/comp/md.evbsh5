@@ -1,4 +1,4 @@
-#	$NetBSD: md.evbsh5,v 1.3 2006/07/26 20:09:17 drochner Exp $
+#	$NetBSD: md.evbsh5,v 1.4 2006/09/12 02:36:37 simonb Exp $
 ./usr/include/evbsh5				comp-c-include
 ./usr/include/evbsh5/alphaledio.h		comp-c-include
 ./usr/include/evbsh5/ansi.h			comp-c-include
@@ -9,7 +9,7 @@
 ./usr/include/evbsh5/cdefs.h			comp-c-include
 ./usr/include/evbsh5/conreg.h			comp-c-include
 ./usr/include/evbsh5/cpu.h			comp-c-include
-./usr/include/evbsh5/db_machdep.h		comp-obsolete        obsolete
+./usr/include/evbsh5/db_machdep.h		comp-obsolete		obsolete
 ./usr/include/evbsh5/disklabel.h		comp-c-include
 ./usr/include/evbsh5/elf_machdep.h		comp-c-include
 ./usr/include/evbsh5/endian.h			comp-c-include
