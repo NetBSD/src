@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.923 2006/09/12 00:54:06 dbj Exp $
+#	$NetBSD: mi,v 1.924 2006/09/12 02:36:37 simonb Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2816,7 +2816,7 @@
 ./usr/libdata/debug/usr/sbin/link.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/lmcconfig.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/lpc.debug		comp-lpr-debug		debug
-./usr/libdata/debug/usr/sbin/lockstat.debug     comp-sysutil-debug      debug
+./usr/libdata/debug/usr/sbin/lockstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/lpd.debug		comp-lpr-debug		debug
 ./usr/libdata/debug/usr/sbin/lptest.debug	comp-lpr-debug		debug
 ./usr/libdata/debug/usr/sbin/mailwrapper.debug	comp-mailwrapper-debug	debug

@@ -1,4 +1,4 @@
-# $NetBSD: md.netwinder,v 1.9 2006/07/26 20:09:17 drochner Exp $
+# $NetBSD: md.netwinder,v 1.10 2006/09/12 02:36:37 simonb Exp $
 ./usr/include/netwinder				comp-c-include
 ./usr/include/netwinder/ansi.h			comp-c-include
 ./usr/include/netwinder/aout_machdep.h		comp-c-include
@@ -7,7 +7,7 @@
 ./usr/include/netwinder/bus.h			comp-c-include
 ./usr/include/netwinder/cdefs.h			comp-c-include
 ./usr/include/netwinder/cpu.h			comp-c-include
-./usr/include/netwinder/db_machdep.h		comp-obsolete        obsolete
+./usr/include/netwinder/db_machdep.h		comp-obsolete		obsolete
 ./usr/include/netwinder/disklabel.h		comp-c-include
 ./usr/include/netwinder/elf_machdep.h		comp-c-include
 ./usr/include/netwinder/endian.h		comp-c-include

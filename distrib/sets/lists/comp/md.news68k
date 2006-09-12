@@ -1,4 +1,4 @@
-# $NetBSD: md.news68k,v 1.23 2006/07/26 20:09:17 drochner Exp $
+# $NetBSD: md.news68k,v 1.24 2006/09/12 02:36:37 simonb Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/news68k				comp-c-include
 ./usr/include/news68k/_G_config.h		comp-obsolete		obsolete
@@ -11,7 +11,7 @@
 ./usr/include/news68k/bus.h			comp-c-include
 ./usr/include/news68k/cdefs.h			comp-c-include
 ./usr/include/news68k/cpu.h			comp-c-include
-./usr/include/news68k/db_machdep.h		comp-obsolete        obsolete
+./usr/include/news68k/db_machdep.h		comp-obsolete		obsolete
 ./usr/include/news68k/disklabel.h		comp-c-include
 ./usr/include/news68k/elf_machdep.h		comp-c-include
 ./usr/include/news68k/endian.h			comp-c-include
