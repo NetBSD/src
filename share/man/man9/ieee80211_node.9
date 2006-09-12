@@ -1,4 +1,4 @@
-.\" $NetBSD: ieee80211_node.9,v 1.2 2005/04/25 14:36:48 wiz Exp $
+.\" $NetBSD: ieee80211_node.9,v 1.3 2006/09/12 11:05:23 pooka Exp $
 .\"
 .\" Copyright (c) 2004 Bruce M. Simpson <bms@spc.org>
 .\" Copyright (c) 2004 Darron Broad <darron@kewl.org>
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/ieee80211_node.9,v 1.3 2004/07/07 12:59:39 ru Exp $
 .\"
-.Dd July 4, 2004
+.Dd September 12, 2006
 .Dt IEEE80211_NODE 9
 .Os
 .Sh NAME
@@ -36,15 +36,13 @@
 .Nm ieee80211_node_detach ,
 .Nm ieee80211_begin_scan ,
 .Nm ieee80211_next_scan ,
-.Nm ieee80211_create_ibss ,
 .Nm ieee80211_end_scan ,
+.Nm ieee80211_create_ibss ,
 .Nm ieee80211_alloc_node ,
 .Nm ieee80211_dup_bss ,
 .Nm ieee80211_find_node ,
-.Nm ieee80211_lookup_node ,
 .Nm ieee80211_free_node ,
 .Nm ieee80211_free_allnodes ,
-.Nm ieee80211_timeout_nodes ,
 .Nm ieee80211_iterate_nodes
 .Nd software 802.11 stack node management functions
 .Sh SYNOPSIS
@@ -52,41 +50,38 @@
 .In net80211/ieee80211_proto.h
 .In net80211/ieee80211_node.h
 .Ft void
-.Fn ieee80211_node_attach "struct ifnet *ifp"
+.Fn ieee80211_node_attach "struct ieee80211com *ic"
 .Ft void
-.Fn ieee80211_node_lateattach "struct ifnet *ifp"
+.Fn ieee80211_node_lateattach "struct ieee80211com *ic"
 .Ft void
-.Fn ieee80211_node_detach "struct ifnet *ifp"
+.Fn ieee80211_node_detach "struct ieee80211com *ic"
 .Ft void
-.Fn ieee80211_begin_scan "struct ifnet *ifp"
+.Fn ieee80211_begin_scan "struct ieee80211com *ic" "int reset"
 .Ft void
-.Fn ieee80211_next_scan "struct ifnet *ifp"
+.Fn ieee80211_next_scan "struct ieee80211com *ic"
+.Ft void
+.Fn ieee80211_end_scan "struct ieee80211com *ic"
 .Ft void
 .Fo ieee80211_create_ibss
 .Fa "struct ieee80211com *ic" "struct ieee80211_channel *chan"
 .Fc
-.Ft void
-.Fn ieee80211_end_scan "struct ifnet *ifp"
 .Ft struct ieee80211_node *
 .Fn ieee80211_alloc_node "struct ieee80211com *ic" "u_int8_t *macaddr"
 .Ft struct ieee80211_node *
-.Fn ieee80211_dup_bss "struct ieee80211com *ic" "u_int8_t *macaddr"
+.Fn ieee80211_dup_bss
+.Fa "struct ieee80211_node_table *nt" "const u_int8_t *macaddr"
+.Fc
 .Ft struct ieee80211_node *
-.Fn ieee80211_find_node "struct ieee80211com *ic" "u_int8_t *macaddr"
-.Ft struct ieee80211_node *
-.Fo ieee80211_lookup_node
-.Fa "struct ieee80211com *ic" "u_int8_t *macaddr"
-.Fa "struct ieee80211_channel *chan"
+.Fn ieee80211_find_node
+.Fa "struct ieee80211_node_table *nt" "const u_int8_t *macaddr"
 .Fc
 .Ft void
-.Fn ieee80211_free_node "struct ieee80211com *ic" "struct ieee80211_node *ni"
+.Fn ieee80211_free_node "struct ieee80211_node *ni"
 .Ft void
-.Fn ieee80211_free_allnodes "struct ieee80211com *ic"
-.Ft void
-.Fn ieee80211_timeout_nodes "struct ieee80211com *ic"
+.Fn ieee80211_free_allnodes "struct ieee80211_node_table *nt"
 .Ft void
 .Fo ieee80211_iterate_nodes
-.Fa "struct ieee80211com *ic" "ieee80211_iter_func *f" "void *arg"
+.Fa "struct ieee80211_node_table *nt" "ieee80211_iter_func *f" "void *arg"
 .Fc
 .Sh DESCRIPTION
 These functions are used to manage node lists within the software
@@ -100,7 +95,7 @@ The
 function is called from
 .Xr ieee80211_ifattach 9
 to initialize node database management callbacks for the interface
-.Fa ifp
+.Fa ic
 (specifically for memory allocation, node copying and node
 signal inspection).
 These functions may be overridden in special circumstances,
@@ -114,7 +109,7 @@ The
 function initialises the
 .Va ic_bss
 node element of the interface
-.Fa ifp
+.Fa ic
 during
 .Xr ieee80211_media_init 9 .
 This late attachment is to account for certain special cases described under
@@ -124,40 +119,31 @@ This late attachment is to account for certain special cases described under
 The
 .Fn ieee80211_node_detach
 function destroys all node database state associated with the interface
-.Fa ifp ,
+.Fa ic ,
 and is usually called during device detach.
 .Pp
 .\"
 The
 .Fn ieee80211_begin_scan
-function initialises the node database in preparation of an active
+function initialises the node database in preparation of a
 scan for an access point on the interface
-.Fa ifp .
-The scan begins on the next radio channel by calling
-.Fn ieee80211_next_scan
-internally.
-The actual scanning for an access point is not automated;
-the device driver itself only handles setting the radio frequency
-of the card and stepping through the channels.
+.Fa ic
+and begins the scan.
+The parameter
+.Fa reset
+controls if a previously built node list should be cleared.
+The actual scanning for an access point is not fully automated:
+the device driver itself controls stepping through the channels, usually
+by a periodical callback.
 .Pp
 .\"
 The
 .Fn ieee80211_next_scan
 function is used to inform the
 .Xr ieee80211 9
-layer that the interface
-.Fa ifp
-is now scanning for an access point on the next radio channel.
-A device driver is expected to first call
-.Fn ieee80211_begin_scan ,
-to initialize the node database,
-then set the radio channel on the device;
-then, after a certain time has elapsed (200ms for example), call
-.Fn ieee80211_next_scan
-to move to the next channel.
-Typically, a callout is used to automate this process; see
-.Xr callout_init 9
-for more information on how to use callouts.
+layer that the next channel for interface
+.Fa ic
+should be scanned.
 .Pp
 .\"
 The
@@ -176,10 +162,10 @@ all available radio channels.
 Internally,
 .Fn ieee80211_end_scan
 will inspect the node cache associated with the interface
-.Fa ifp
+.Fa ic
 for suitable access points found during scanning, and associate with one,
 should the parameters of the node match those of the configuration
-requested from userland.
+requested.
 .Pp
 .\"
 The
@@ -188,8 +174,8 @@ function allocates an instance of
 .Vt "struct ieee80211_node"
 for a node having the MAC address
 .Fa macaddr ,
-and associates it with the interface
-.Fa ic .
+and associates it with the node table
+.Fa nt .
 If the allocation is successful, the node structure is initialised by
 .Fn ieee80211_setup_node ;
 otherwise,
@@ -203,8 +189,8 @@ function is similar to
 .Fn ieee80211_alloc_node ,
 but is instead used to create a node database entry for the BSSID
 .Fa macaddr
-associated with the interface
-.Fa ic .
+associated with the note table
+.Fa nt .
 If the allocation is successful, the node structure is initialised by
 .Fn ieee80211_setup_node ;
 otherwise,
@@ -214,70 +200,36 @@ is returned.
 .\"
 The
 .Fn ieee80211_find_node
-function will iterate through the node list associated with the interface
-.Fa ic ,
+function will iterate through the node table
+.Fa nt ,
 searching for a node entry which matches
 .Fa macaddr .
 If the entry is found, its reference count is incremented, and
 a pointer to the node is returned; otherwise,
 .Dv NULL
-will be returned.
+is be returned.
 .Pp
 .\"
-The
-.Fn ieee80211_lookup_node
-function is similar to
-.Fn ieee80211_find_node ,
-with an additional argument
-.Fa chan
-which is used to specify a channel for the match.
-If the entry is found, its reference count is incremented, and
-a pointer to the node is returned; otherwise,
-.Dv NULL
-will be returned.
-.Pp
-.\"
-The
-.Fn ieee80211_free_node
-function will remove the node
-.Fa ni
-from the node database entries associated with the interface
-.Fa ic ,
-and free any memory associated with the node.
-This private method can be overridden in
-.Fn ieee80211_node_attach .
-.\"
-.Pp
 The
 .Fn ieee80211_free_allnodes
 function will iterate through the node list calling
 .Fn ieee80211_free_node
-for all nodes associated with the interface
-.Fa ic .
-.Pp
-.\"
-The
-.Fn ieee80211_timeout_nodes
-checks if the inactivity timer of each node associated with the interface
-.Fa ic
-has exceeded the pre-defined constant
-.Dv IEEE80211_INACT_MAX .
-If so, then the node is freed, after sending a deauthentication message.
+for all the nodes in table
+.Fa nt .
 .Pp
 .\"
 The
 .Fn ieee80211_iterate_nodes
 function will call the user-defined callback function
 .Fa f
-for all nodes in the node database associated with the interface
-.Fa ic .
+for all nodes in the table
+.Fa nt .
 The callback is invoked with the with the user-supplied value
 .Fa arg
 and a pointer to the current node.
 .\"
 .Sh SEE ALSO
-.Xr ieee80211 9 ,
-.Xr ifnet 9
+.Xr ieee80211 9
 .Sh HISTORY
 The
 .Nm ieee80211

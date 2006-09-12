@@ -1,4 +1,4 @@
-.\" $NetBSD: ieee80211.9,v 1.2 2005/04/25 14:36:48 wiz Exp $
+.\" $NetBSD: ieee80211.9,v 1.3 2006/09/12 11:05:23 pooka Exp $
 .\"
 .\"
 .\" Copyright (c) 2004 Bruce M. Simpson <bms@spc.org>
@@ -28,7 +28,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/ieee80211.9,v 1.3 2004/07/07 12:59:39 ru Exp $
 .\"
-.Dd March 2, 2004
+.Dd September 12, 2006
 .Dt IEEE80211 9
 .Os
 .Sh NAME
@@ -43,9 +43,9 @@
 .In net80211/ieee80211_var.h
 .In net80211/ieee80211_proto.h
 .Ft void
-.Fn ieee80211_ifattach "struct ifnet *ifp"
+.Fn ieee80211_ifattach "struct ieee80211com *ic"
 .Ft void
-.Fn ieee80211_ifdetach "struct ifnet *ifp"
+.Fn ieee80211_ifdetach "struct ieee80211com *ic"
 .Ft u_int
 .Fn ieee80211_mhz2ieee "u_int freq" "u_int flags"
 .Ft u_int
@@ -54,15 +54,15 @@
 .Fn ieee80211_ieee2mhz "u_int chan" "u_int flags"
 .Ft void
 .Fo ieee80211_media_init
-.Fa "struct ifnet *ifp" "ifm_change_cb_t media_change"
+.Fa "struct ieee80211com *ic" "ifm_change_cb_t media_change"
 .Fa "ifm_stat_cb_t media_stat"
 .Fc
-.Fa int
+.Ft int
 .Fn ieee80211_media_change "struct ifnet *ifp"
-.Fa void
+.Ft void
 .Fn ieee80211_media_status "struct ifnet *ifp" "struct ifmediareq *imr"
 .Ft void
-.Fn ieee80211_watchdog "struct ifnet *ifp"
+.Fn ieee80211_watchdog "struct ieee80211com *ic"
 .Ft int
 .Fn ieee80211_setmode "struct ieee80211com *ic" "enum ieee80211_phymode mode"
 .Ft enum ieee80211_phymode
@@ -88,29 +88,17 @@ any driver without prior initialization.
 .\"
 The
 .Fn ieee80211_ifattach
-function attaches the network interface
-.Fa ifp
+function attaches the wireless network interface
+.Fa ic
 to the 802.11 network stack layer.
 This function must be called before using any of the
 .Nm ieee80211
-functions which need to store driver state across invocations;
-The
-.Vt struct ifnet
-instance pointed to by
-.Fa ifp
-MUST be an instance of
-.Vt struct ieee80211com ,
-with various fields initialized to tell
-.Nm ieee80211
-about its capabilities.
-This function performs Ethernet and BPF attachment (by calling
+functions which need to store driver state across invocations.
+This function also performs Ethernet and BPF attachment (by calling
 .Fn ether_ifattach
 and
 .Fn bpfattach2 )
 on behalf of the caller.
-It also implements the
-.Vt ifmedia
-interface.
 .Pp
 .\"
 The
@@ -168,10 +156,10 @@ The
 .Fn ieee80211_media_init
 function initializes media data structures used by the
 .Vt ifmedia
-interface, for the driver
-.Fa ifp .
+interface for the driver
+.Fa ic .
 It must be called by the driver after calling
-.Fn ieee80211_attach
+.Fn ieee80211_ifattach
 and before calling most
 .Nm ieee80211
 functions.
