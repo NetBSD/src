@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.268 2006/09/08 20:58:57 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.269 2006/09/12 07:51:29 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.268 2006/09/08 20:58:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.269 2006/09/12 07:51:29 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1495,8 +1495,8 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 	/*
 	 * Must be super user
 	 */
-	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
-	    0, NULL, NULL, NULL);
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
+	    0, NULL, NULL, NULL)) != KAUTH_RESULT_ALLOW)
 		return (error);
 
 	flags = FFLAGS(oflags);
