@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.123 2006/09/10 10:59:44 blymn Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.124 2006/09/12 08:23:51 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.123 2006/09/10 10:59:44 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.124 2006/09/12 08:23:51 elad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -238,7 +238,7 @@ restart:
 	}
 
 	if (fmode & O_TRUNC) {
-#ifdef VERIFIED_EXEC
+#if NVERIEXEC > 0 
 		if ((error = veriexec_verify(l, vp, pathbuf, VERIEXEC_FILE,
 					     &vfe)) != 0) {
 			/*VOP_UNLOCK(vp, 0);*/
@@ -258,7 +258,7 @@ restart:
 				veriexec_purge(vfe);
 			}
 		}
-#endif
+#endif /* NVERIEXEC > 0 */
 
 		VOP_UNLOCK(vp, 0);			/* XXX */
 
