@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.924 2006/09/12 02:36:37 simonb Exp $
+#	$NetBSD: mi,v 1.925 2006/09/12 05:29:50 dbj Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2935,7 +2935,7 @@
 ./usr/libdata/debug/usr/sbin/traceroute.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/traceroute6.debug	comp-netutil-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/trpt.debug		comp-netutil-debug	debug
-./usr/libdata/debug/usr/sbin/trsp.debug		comp-netutil-debug	debug
+./usr/libdata/debug/usr/sbin/trsp.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/unlink.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/usbdevs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/user.debug		comp-sysutil-debug	debug
