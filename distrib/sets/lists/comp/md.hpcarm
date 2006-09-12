@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcarm,v 1.9 2006/07/26 20:09:17 drochner Exp $
+# $NetBSD: md.hpcarm,v 1.10 2006/09/12 02:36:37 simonb Exp $
 ./usr/include/hpcarm				comp-c-include
 ./usr/include/hpcarm/ansi.h			comp-c-include
 ./usr/include/hpcarm/aout_machdep.h		comp-c-include
@@ -8,7 +8,7 @@
 ./usr/include/hpcarm/bus.h			comp-c-include
 ./usr/include/hpcarm/cdefs.h			comp-c-include
 ./usr/include/hpcarm/cpu.h			comp-c-include
-./usr/include/hpcarm/db_machdep.h		comp-obsolete        obsolete
+./usr/include/hpcarm/db_machdep.h		comp-obsolete		obsolete
 ./usr/include/hpcarm/disklabel.h		comp-c-include
 ./usr/include/hpcarm/elf_machdep.h		comp-c-include
 ./usr/include/hpcarm/endian.h			comp-c-include

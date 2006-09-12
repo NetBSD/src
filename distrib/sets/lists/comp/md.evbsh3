@@ -1,4 +1,4 @@
-# $NetBSD: md.evbsh3,v 1.24 2006/07/26 20:09:17 drochner Exp $
+# $NetBSD: md.evbsh3,v 1.25 2006/09/12 02:36:37 simonb Exp $
 ./usr/include/evbsh3				comp-c-include
 ./usr/include/evbsh3/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbsh3/ansi.h			comp-c-include
@@ -13,7 +13,7 @@
 ./usr/include/evbsh3/cpu.h			comp-c-include
 ./usr/include/evbsh3/cpufunc.h			comp-obsolete		obsolete
 ./usr/include/evbsh3/cputypes.h			comp-c-include
-./usr/include/evbsh3/db_machdep.h		comp-obsolete        obsolete
+./usr/include/evbsh3/db_machdep.h		comp-obsolete		obsolete
 ./usr/include/evbsh3/disklabel.h		comp-c-include
 ./usr/include/evbsh3/elf_machdep.h		comp-c-include
 ./usr/include/evbsh3/endian.h			comp-c-include

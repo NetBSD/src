@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.10 2006/07/26 20:09:17 drochner Exp $
+# $NetBSD: md.cats,v 1.11 2006/09/12 02:36:37 simonb Exp $
 ./usr/include/cats				comp-c-include
 ./usr/include/cats/ansi.h			comp-c-include
 ./usr/include/cats/aout_machdep.h		comp-c-include
@@ -8,7 +8,7 @@
 ./usr/include/cats/byte_swap.h			comp-obsolete		obsolete
 ./usr/include/cats/cdefs.h			comp-c-include
 ./usr/include/cats/cpu.h			comp-c-include
-./usr/include/cats/db_machdep.h			comp-obsolete        obsolete
+./usr/include/cats/db_machdep.h			comp-obsolete		obsolete
 ./usr/include/cats/disklabel.h			comp-c-include
 ./usr/include/cats/elf_machdep.h		comp-c-include
 ./usr/include/cats/endian.h			comp-c-include

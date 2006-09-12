@@ -1,4 +1,4 @@
-# $NetBSD: md.newsmips,v 1.24 2006/07/26 20:09:17 drochner Exp $
+# $NetBSD: md.newsmips,v 1.25 2006/09/12 02:36:37 simonb Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/newsmips				comp-c-include
 ./usr/include/newsmips/_G_config.h		comp-obsolete		obsolete
@@ -12,7 +12,7 @@
 ./usr/include/newsmips/cdefs.h			comp-c-include
 ./usr/include/newsmips/conf.h			comp-obsolete		obsolete
 ./usr/include/newsmips/cpu.h			comp-c-include
-./usr/include/newsmips/db_machdep.h		comp-obsolete        obsolete
+./usr/include/newsmips/db_machdep.h		comp-obsolete		obsolete
 ./usr/include/newsmips/disklabel.h		comp-c-include
 ./usr/include/newsmips/ecoff_machdep.h		comp-c-include
 ./usr/include/newsmips/elf.h			comp-obsolete		obsolete
