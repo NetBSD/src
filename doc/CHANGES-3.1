@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.159 2006/09/08 12:07:26 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.160 2006/09/12 09:53:14 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4538,4 +4538,11 @@ sys/kern/uipc_mbuf.c				1.112
 	Fix a bug in collecting mbuf usage statistics in kernels built with the
 	MBUFTRACE debugging option.
 	[pavel, ticket #1503]
+
+sys/arch/sparc64/dev/ffb.c			1.28
+sys/arch/sparc64/dev/zs.c			1.61
+
+	Fix wrong prom_getoption() return value checks (fixes serial console on
+	second port of sbus machines)
+	[martin, ticket #1507]
 
