@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.17 2006/09/12 05:47:47 gdamore Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.18 2006/09/12 14:27:17 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.17 2006/09/12 05:47:47 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.18 2006/09/12 14:27:17 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -211,35 +211,6 @@ inittodr(time_t base)
 	printf("WARNING: CHECK AND RESET THE DATE!\n");
 }
 
-#ifdef	TODR_DEBUG
-static void
-todr_debug(const char *prefix, int rv, struct clock_ymdhms *dt,
-    volatile struct timeval *tvp)
-{
-	struct timeval tv_val;
-	struct clock_ymdhms dt_val;
-
-	if (dt == NULL) {
-		clock_secs_to_ymdhms(tvp->tv_sec, &dt_val);
-		dt = &dt_val;
-	}
-	if (tvp == NULL) {
-		tvp = &tv_val;
-		tvp->tv_sec = clock_ymdhms_to_secs(dt);
-		tvp->tv_usec = 0;
-	}
-	printf("%s: rv = %d\n", prefix, rv);
-	printf("%s: rtc_offset = %d\n", prefix, rtc_offset);
-	printf("%s: %u/%u/%u %02u:%02u:%02u, (wday %d) (epoch %u.%06u)\n",
-	    prefix,
-	    dt->dt_year, dt->dt_mon, dt->dt_day,
-	    dt->dt_hour, dt->dt_min, dt->dt_sec,
-	    dt->dt_wday, (unsigned)tvp->tv_sec, (unsigned)tvp->tv_usec);
-}
-#else	/* !TODR_DEBUG */
-#define	todr_debug(prefix, rv, dt, tvp)
-#endif	/* TODR_DEBUG */
-
 /*
  * Reset the TODR based on the time value; used when the TODR
  * has a preposterous value and also when the time is reset
@@ -275,6 +246,35 @@ resettodr(void)
 }
 
 #endif	/* __HAVE_GENERIC_TODR */
+
+#ifdef	TODR_DEBUG
+static void
+todr_debug(const char *prefix, int rv, struct clock_ymdhms *dt,
+    volatile struct timeval *tvp)
+{
+	struct timeval tv_val;
+	struct clock_ymdhms dt_val;
+
+	if (dt == NULL) {
+		clock_secs_to_ymdhms(tvp->tv_sec, &dt_val);
+		dt = &dt_val;
+	}
+	if (tvp == NULL) {
+		tvp = &tv_val;
+		tvp->tv_sec = clock_ymdhms_to_secs(dt);
+		tvp->tv_usec = 0;
+	}
+	printf("%s: rv = %d\n", prefix, rv);
+	printf("%s: rtc_offset = %d\n", prefix, rtc_offset);
+	printf("%s: %u/%u/%u %02u:%02u:%02u, (wday %d) (epoch %u.%06u)\n",
+	    prefix,
+	    dt->dt_year, dt->dt_mon, dt->dt_day,
+	    dt->dt_hour, dt->dt_min, dt->dt_sec,
+	    dt->dt_wday, (unsigned)tvp->tv_sec, (unsigned)tvp->tv_usec);
+}
+#else	/* !TODR_DEBUG */
+#define	todr_debug(prefix, rv, dt, tvp)
+#endif	/* TODR_DEBUG */
 
 
 int
