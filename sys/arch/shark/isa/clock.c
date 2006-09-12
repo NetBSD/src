@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 2006/09/05 15:50:37 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.12 2006/09/12 17:07:14 gdamore Exp $	*/
 
 /*
  * Copyright 1997
@@ -154,7 +154,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2006/09/05 15:50:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2006/09/12 17:07:14 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,18 +188,11 @@ static int  gettick(void);
 
 void startrtclock(void);
 
-inline u_int mc146818_read(void *, u_int);
-inline void mc146818_write(void *, u_int, u_int);
+inline unsigned mc146818_read(void *, unsigned);
+inline void mc146818_write(void *, unsigned, unsigned);
 
-#define	SECMIN	((unsigned)60)			/* seconds per minute */
-#define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
-#define	SECDAY	((unsigned)(24*SECHOUR))	/* seconds per day */
-#define	SECYR	((unsigned)(365*SECDAY))	/* seconds per common year */
-
-inline u_int
-mc146818_read(sc, reg)
-	void *sc;					/* XXX use it? */
-	u_int reg;
+inline unsigned
+mc146818_read(void *sc, unsigned reg)
 {
 
 	outb(IO_RTC, reg);
@@ -207,9 +200,7 @@ mc146818_read(sc, reg)
 }
 
 inline void
-mc146818_write(sc, reg, datum)
-	void *sc;					/* XXX use it? */
-	u_int reg, datum;
+mc146818_write(void *sc, unsigned reg, unsigned datum)
 {
 
 	outb(IO_RTC, reg);
@@ -236,8 +227,8 @@ u_short	isa_timer_lsb_table[256];	/* timer->usec conversion for LSB */
 
 /* 64 bit counts from timer 0 */
 struct count64 {
-  unsigned lo;   /* low 32 bits */
-  unsigned hi;   /* high 32 bits */
+	unsigned lo;   /* low 32 bits */
+	unsigned hi;   /* high 32 bits */
 };
 
 #define TIMER0_ROLLOVER  0xFFFF  /* maximum rollover for 8254 counter */
@@ -262,23 +253,25 @@ unsigned hatCount2 = 0;
 
 void hatTest(int testReason)
 {
-  fiqReason |= testReason;
-  nHats++;
 
+	fiqReason |= testReason;
+	nHats++;
 }
 
 void hatWedge(int nFIQs)
 {
-    printf("Unwedging the HAT.  fiqs_happened = %d\n", nFIQs);
-    nHatWedges++;
+
+	printf("Unwedging the HAT.  fiqs_happened = %d\n", nFIQs);
+	nHatWedges++;
 }
 #endif
 
 void
-startrtclock()
+startrtclock(void)
 {
-	findcpuspeed();		/* use the clock (while it's free)
-					to find the CPU speed */
+
+	findcpuspeed();		/* use the clock (while it's free) to
+				   find the CPU speed */
 
 	init_isa_timer_tables(); 
 
@@ -301,7 +294,7 @@ startrtclock()
 }
 
 static void
-init_isa_timer_tables()
+init_isa_timer_tables(void)
 {
 	int s;
 	u_long t, msbmillion, quotient, remainder;
@@ -333,8 +326,7 @@ init_isa_timer_tables()
 }
 
 int
-timer_hz_to_count(timer_hz)
-	int timer_hz;
+timer_hz_to_count(int timer_hz)
 {
 	u_long tval;
 
@@ -342,14 +334,12 @@ timer_hz_to_count(timer_hz)
 	tval = (tval / 2) + (tval & 0x1);
 
 	return (int)tval;
-
 }
 
 void gettimer0count(struct count64 *);
 
 /* must be called at SPL_CLOCK or higher */
-void gettimer0count(pcount)
-	struct count64 *pcount;
+void gettimer0count(struct count64 *pcount)
 {
 	unsigned current, ticks, oldlo;
 
@@ -361,23 +351,22 @@ void gettimer0count(pcount)
 	current = gettick();
 
 	if (timer0last >= current)
-	  ticks = timer0last - current;
+		ticks = timer0last - current;
 	else
-	  ticks = timer0last + (TIMER0_ROLLOVER - current);
+		ticks = timer0last + (TIMER0_ROLLOVER - current);
 
 	timer0last = current;
 
 	oldlo = timer0count.lo;
 
 	if (oldlo > (timer0count.lo = oldlo + ticks)) /* carry? */
-	  timer0count.hi++;
+		timer0count.hi++;
 
 	*pcount = timer0count;
 }
 
 static int
-clockintr(arg)
-	void *arg;
+clockintr(void *arg)
 {
 	struct clockframe *frame = arg;		/* not strictly necessary */
 	extern void isa_specific_eoi(int irq);
@@ -392,30 +381,32 @@ clockintr(arg)
 
 	/* check to see if the high-availability timer needs to be unwedged */
 	if (++hatUnwedgeCtr >= (hz / HAT_MIN_FREQ)) {
-	  hatUnwedgeCtr = 0;
-	  hatUnwedge(); 
+		hatUnwedgeCtr = 0;
+		hatUnwedge(); 
 	}
 
 #ifdef TESTHAT
 	++ticks;
 
 	if (testHatOn && ((ticks & 0x3f) == 0)) {
-	  if (testHatOn == 1) {
-	    hatClkAdjust(hatCount2);
-	    testHatOn = 2;
-	  } else {
-	    testHatOn = 0;
-	    hatClkOff();
-	    printf("hat off status: %d %d %x\n", nHats, nHatWedges, fiqReason);
-	  }
+		if (testHatOn == 1) {
+			hatClkAdjust(hatCount2);
+			testHatOn = 2;
+		} else {
+			testHatOn = 0;
+			hatClkOff();
+			printf("hat off status: %d %d %x\n", nHats,
+			    nHatWedges, fiqReason);
+		}
 	} else if (!testHatOn && (ticks & 0x1ff) == 0) {
-	  printf("hat on status: %d %d %x\n", nHats, nHatWedges, fiqReason);
-	  testHatOn = 1;
-	  nHats = 0;
-	  fiqReason = 0;
-	  hatClkOn(hatCount, hatTest, 0xfeedface,
-		   hatStack + HATSTACKSIZE - sizeof(unsigned),
-		   hatWedge);
+		printf("hat on status: %d %d %x\n",
+		    nHats, nHatWedges, fiqReason);
+		testHatOn = 1;
+		nHats = 0;
+		fiqReason = 0;
+		hatClkOn(hatCount, hatTest, 0xfeedface,
+		    hatStack + HATSTACKSIZE - sizeof(unsigned),
+		    hatWedge);
 	}
 #endif
 	hardclock(frame);
@@ -423,7 +414,7 @@ clockintr(arg)
 }
 
 static int
-gettick()
+gettick(void)
 {
 	u_char lo, hi;
 	u_int savedints;
@@ -459,17 +450,17 @@ gettick()
  * wave' mode counts at 2:1).
  */
 void
-delay(n)
-	unsigned n;
+delay(unsigned n)
 {
 	int ticks, otick;
 	int nticks;
 
 	if (n < 100) {
-	  /* it can take a long time (1 usec or longer) just for 1 ISA read,
-	     so it's best not to use the timer for short delays */
-	  delayloop((n * count1024usec) >> 10);
-	  return;
+		/* it can take a long time (1 usec or longer) just for
+		   1 ISA read, so it's best not to use the timer for
+		   short delays */
+		delayloop((n * count1024usec) >> 10);
+		return;
 	}
 
 	/*
@@ -505,57 +496,56 @@ delay(n)
 }
 
 void
-sysbeepstop(arg)
-	void *arg;
+sysbeepstop(void *arg)
 {
 }
 
 void
-sysbeep(pitch, period)
-	int pitch, period;
+sysbeep(int pitch, int period)
 {
 }
 
 #define FIRST_GUESS   0x2000
 
 static void
-findcpuspeed()
+findcpuspeed(void)
 {
 	int ticks;
 	unsigned int guess = FIRST_GUESS;
 
 	while (1) { /* loop until accurate enough */
-	  /* Put counter in count down mode */
-	  outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0 | TIMER_16BIT | TIMER_RATEGEN);
-	  outb(IO_TIMER1 + TIMER_CNTR0, 0xff);
-	  outb(IO_TIMER1 + TIMER_CNTR0, 0xff);
-	  delayloop(guess);
+		/* Put counter in count down mode */
+		outb(IO_TIMER1 + TIMER_MODE,
+		    TIMER_SEL0 | TIMER_16BIT | TIMER_RATEGEN);
+		outb(IO_TIMER1 + TIMER_CNTR0, 0xff);
+		outb(IO_TIMER1 + TIMER_CNTR0, 0xff);
+		delayloop(guess);
 
-	  /* Read the value left in the counter */
-	  /*
-	   * Formula for delaycount is:
-	   *  (loopcount * timer clock speed) / (counter ticks * 1000)
-	   */
-	  ticks = 0xFFFF - gettick();
-	  if (ticks == 0) ticks = 1; /* just in case */
-	  if (ticks < (TIMER_MUSECDIV(1024))) { /* not accurate enough */
-	    guess *= max(2, (TIMER_MUSECDIV(1024) / ticks));
-	    continue;
-	  }
-	  count1024usec = (guess * (TIMER_MUSECDIV(1024))) / ticks;
-	  return;
+		/* Read the value left in the counter */
+		/*
+		 * Formula for delaycount is:
+		 *  (loopcount * timer clock speed) / (counter ticks * 1000)
+		 */
+		ticks = 0xFFFF - gettick();
+		if (ticks == 0) ticks = 1; /* just in case */
+		if (ticks < (TIMER_MUSECDIV(1024))) { /* not accurate enough */
+			guess *= max(2, (TIMER_MUSECDIV(1024) / ticks));
+			continue;
+		}
+		count1024usec = (guess * (TIMER_MUSECDIV(1024))) / ticks;
+		return;
 	}
 }
 
 static void
-delayloop(counts)
+delayloop(int counts)
 {
-  while (counts--)
-	__insn_barrier();
+	while (counts--)
+		__insn_barrier();
 }
 
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
         unsigned hzval;
 
@@ -605,7 +595,7 @@ cpu_initclocks()
 }
 
 void
-rtcinit()
+rtcinit(void)
 {
 	static int first_rtcopen_ever = 1;
 
@@ -619,8 +609,7 @@ rtcinit()
 }
 
 void
-setstatclockrate(arg)
-	int arg;
+setstatclockrate(int arg)
 {
 }
 
@@ -632,8 +621,7 @@ setstatclockrate(arg)
  */
 
 void
-microtime(tvp)
-	struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
         int s;
 	unsigned lsb, msb;
@@ -655,31 +643,31 @@ microtime(tvp)
 
 #ifdef DIAGNOSTIC
 	if ((ticks < 0) || (ticks > 0xffff))
-	  printf("microtime bug: ticks = %x\n", ticks);
+		printf("microtime bug: ticks = %x\n", ticks);
 #endif
 
 	while (ticks > 0) {
 
-	  if (ticks < 0xffff) {
-	    msb = (ticks >> 8) & 0xFF;
-	    lsb = ticks & 0xFF;
-	  } else {
-	    msb = 0xff;
-	    lsb = 0xff;
-	  }
+		if (ticks < 0xffff) {
+			msb = (ticks >> 8) & 0xFF;
+			lsb = ticks & 0xFF;
+		} else {
+			msb = 0xff;
+			lsb = 0xff;
+		}
 
-	  /* see comments above */
-	  tm  += isa_timer_msb_table[msb] + isa_timer_lsb_table[lsb];
+		/* see comments above */
+		tm  += isa_timer_msb_table[msb] + isa_timer_lsb_table[lsb];
 
-	  /* for a 64 Hz RTC, ticks will never overflow table */
-	  /* microtime will be less accurate if the RTC is < 36 Hz */
-	  ticks -= 0xffff;
+		/* for a 64 Hz RTC, ticks will never overflow table */
+		/* microtime will be less accurate if the RTC is < 36 Hz */
+		ticks -= 0xffff;
 	}
 	
 	tvp->tv_sec = time.tv_sec;
 	if (tm >= 1000000) {
-	  tvp->tv_sec += 1;
-	  tm -= 1000000;
+		tvp->tv_sec += 1;
+		tm -= 1000000;
 	}
 
 	tvp->tv_usec = tm;
