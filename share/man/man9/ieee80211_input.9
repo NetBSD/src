@@ -1,4 +1,4 @@
-.\" $NetBSD: ieee80211_input.9,v 1.2 2005/04/25 14:36:48 wiz Exp $
+.\" $NetBSD: ieee80211_input.9,v 1.3 2006/09/12 11:05:23 pooka Exp $
 .\"
 .\" Copyright (c) 2004 Bruce M. Simpson <bms@spc.org>
 .\" Copyright (c) 2004 Darron Broad <darron@kewl.org>
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/ieee80211_input.9,v 1.2 2004/07/07 12:59:39 ru Exp $
 .\"
-.Dd March 2, 2004
+.Dd September 12, 2006
 .Dt IEEE80211_INPUT 9
 .Os
 .Sh NAME
@@ -38,11 +38,11 @@
 .In net80211/ieee80211_proto.h
 .Ft void
 .Fo ieee80211_input
-.Fa "struct ifnet *ifp" "struct mbuf *m" "struct ieee80211_node *ni"
+.Fa "struct ieee80211com *ic" "struct mbuf *m" "struct ieee80211_node *ni"
 .Fa "int rssi" "u_int32_t rstamp"
 .Fc
 .Ft struct mbuf *
-.Fn ieee80211_decap "struct ifnet *ifp" "struct mbuf *m"
+.Fn ieee80211_decap "struct ieee80211com *ic" "struct mbuf *m"
 .Ft void
 .Fo ieee80211_recv_mgmt
 .Fa "struct ieee80211com *ic" "struct mbuf *m0" "struct ieee80211_node *ni"
@@ -58,7 +58,7 @@ The
 function takes an mbuf chain
 .Fa m
 containing a complete 802.11 frame from the driver
-.Fa ifp
+.Fa ic
 and passes it to the software 802.11 stack for input processing.
 The
 .Fa ni
@@ -79,7 +79,7 @@ The
 function performs decapsulation of the 802.11 frame in the mbuf chain
 .Fa m
 received by the device
-.Fa ifp ,
+.Fa ic ,
 taking the form of the 802.11 address fields into account;
 the structure of 802.11 addresses vary according to the intended
 source and destination of the frame.
@@ -94,8 +94,7 @@ It is typically called from within
 .Fn ieee80211_input .
 .\"
 .Sh SEE ALSO
-.Xr ieee80211 9 ,
-.Xr ifnet 9
+.Xr ieee80211 9
 .Sh HISTORY
 The
 .Nm ieee80211

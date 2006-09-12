@@ -1,4 +1,4 @@
-.\" $NetBSD: ieee80211_crypto.9,v 1.2 2005/04/25 14:36:48 wiz Exp $
+.\" $NetBSD: ieee80211_crypto.9,v 1.3 2006/09/12 11:05:23 pooka Exp $
 .\"
 .\" Copyright (c) 2004 Bruce M. Simpson <bms@spc.org>
 .\" Copyright (c) 2004 Darron Broad <darron@kewl.org>
@@ -27,66 +27,62 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/ieee80211_crypto.9,v 1.2 2004/07/07 12:59:39 ru Exp $
 .\"
-.Dd March 2, 2004
+.Dd September 12, 2006
 .Dt IEEE80211_CRYPTO 9
 .Os
 .Sh NAME
-.Nm ieee80211_crypto_attach , ieee80211_crypto_detach , ieee80211_wep_crypt
+.Nm ieee80211_crypto_attach , ieee80211_crypto_detach , ieee80211_crypto_encap
 .Nd 802.11 WEP encryption functions
 .Sh SYNOPSIS
 .Ft void
-.Fn ieee80211_crypto_attach "struct ifnet *ifp"
+.Fn ieee80211_crypto_attach "struct ieee80211com *ic"
 .Ft void
-.Fn ieee80211_crypto_detach "struct ifnet *ifp"
-.Ft struct mbuf *
-.Fn ieee80211_wep_crypt "struct ifnet *ifp" "struct mbuf *m0" "int txflag"
+.Fn ieee80211_crypto_detach "struct ieee80211com *ic"
+.Ft struct ieee80211_key *
+.Fo ieee80211_crypto_encap
+.Fa "struct ieee80211com *ic" "struct ieee80211_node *ni" "struct mbuf *m0"
+.Fc
 .Sh DESCRIPTION
-These functions provide software encryption support
-for 802.11 device drivers.
+These functions provide encryption support for 802.11 device drivers.
 .Pp
 .\"
 The
 .Fn ieee80211_crypto_attach
 function initializes crypto support for the interface
-.Fa ifp ,
-and sets the initialization vector (IV) for WEP encryption to
-a random number derived from a secure PRNG.
+.Fa ic .
+The default is null crypto.
 .Pp
 .\"
 The
 .Fn ieee80211_crypto_detach
 function frees data structures associated with crypto support
 for the interface
-.Fa ifp .
+.Fa ic .
+.Pp
+.\"
+The two above functions are automatically called by the interface
+attach and detach routines, respectively.
 .Pp
 .\"
 The
-.Fn ieee80211_wep_crypt
-function runs the appropriate WEP encryption algorithm over the 802.11
-encapsulated frame held in the mbuf chain
+.Fn ieee80211_crypto_encap
+function encapsulates the packet supplied in mbuf
 .Fa m0 ,
-for transmission or reception on the interface
-.Fa ifp .
-The
-.Fa txflag
-argument specifies whether the frame is being received or transmitted.
-A value of 0 indicates that the frame is being received and should
-therefore be decrypted; a non-zero value indicates that the frame
-is being transmitted
-and should be encrypted.
+with the crypto headers given the for node
+.Fa ni .
+Software encryption is possibly performed.
+In case of no specified key for
+.Fa ni
+or multicast traffic, the default key for the interface
+.Fa ic
+is used for encapsulation.
+The key is returned in the case of successful encapsulation,
+otherwise
+.Dv NULL
+is returned.
 .\"
-.Sh IMPLEMENTATION NOTES
-The
-.Fn ieee80211_wep_crypt
-function stores its IV in the interface's embedded
-.Vt struct ieee80211com
-instance.
 .Sh SEE ALSO
-.Xr awi 4 ,
-.Xr wi 4 ,
-.Xr arc4random 9 ,
-.Xr ieee80211 9 ,
-.Xr ifnet 9
+.Xr ieee80211 9
 .Sh HISTORY
 The
 .Nm ieee80211

@@ -1,4 +1,4 @@
-.\" $NetBSD: ieee80211_ioctl.9,v 1.2 2005/04/25 14:36:48 wiz Exp $
+.\" $NetBSD: ieee80211_ioctl.9,v 1.3 2006/09/12 11:05:23 pooka Exp $
 .\"
 .\" Copyright (c) 2004 Bruce M. Simpson <bms@spc.org>
 .\" Copyright (c) 2004 Darron Broad <darron@kewl.org>
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/ieee80211_ioctl.9,v 1.2 2004/07/07 12:59:39 ru Exp $
 .\"
-.Dd March 2, 2004
+.Dd September 12, 2006
 .Dt IEEE80211_IOCTL 9
 .Os
 .Sh NAME
@@ -38,11 +38,11 @@
 .In net80211/ieee80211_proto.h
 .In net80211/ieee80211_ioctl.h
 .Ft int
-.Fn ieee80211_cfgget "struct ifnet *ifp" "u_long cmd" "caddr_t data"
+.Fn ieee80211_cfgget "struct ieee80211com *ic" "u_long cmd" "caddr_t data"
 .Ft int
-.Fn ieee80211_cfgset "struct ifnet *ifp" "u_long cmd" "caddr_t data"
+.Fn ieee80211_cfgset "struct ieee80211com *ic" "u_long cmd" "caddr_t data"
 .Ft int
-.Fn ieee80211_ioctl "struct ifnet *ifp" "u_long cmd" "caddr_t data"
+.Fn ieee80211_ioctl "struct ieee80211com *ic" "u_long cmd" "caddr_t data"
 .Sh DESCRIPTION
 These
 functions are typically invoked by drivers in response to requests
@@ -55,8 +55,8 @@ and
 .Fn ieee80211_cfgset
 functions implement a legacy interface for getting and setting 802.11
 interface attributes respectively.
-The interface is compatible with the RIDs implemented by the legacy
-.Xr owi 4
+The interface is compatible with the RIDs implemented by the
+.Xr wi 4
 driver and used by the
 .Xr wicontrol 8
 utility.
@@ -64,26 +64,19 @@ utility.
 .\"
 The
 .Fn ieee80211_ioctl
-function provides a default implementation of the
-.Dv SIOCS80211
-and
-.Dv SIOCG80211
-ifioctls commands for 802.11 drivers.
-The call signature is identical to that of the
-.Va if_ioctl
-member found in
-.Vt struct ifnet ,
-however, many drivers store attributes such as
-.Dv IEEE80211_IOC_STATIONNAME
-in the driver's private soft state structure, so driver writers may prefer
-to use this as the catch-all in a switch statement to avoid code duplication.
+function implements ioctls such as key management for wireless devices.
+Ioctls related to the Ethernet layer also pass through here, but are
+handed off to
+.Fn ether_ioctl
+when no match for
+.Fa cmd
+is found.
 .\"
 .Sh SEE ALSO
-.Xr owi 4 ,
+.Xr wi 4 ,
 .Xr ifconfig 8 ,
 .Xr wicontrol 8 ,
-.Xr ieee80211 9 ,
-.Xr ifnet 9
+.Xr ieee80211 9
 .Sh HISTORY
 The
 .Nm ieee80211
