@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.214 2006/09/09 22:47:12 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.215 2006/09/13 11:35:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -1416,7 +1416,7 @@ ktr_trap_gen:
 	 nop
 #endif
 
-	
+
 /*
  * v9 machines do not have a trap window.
  *
@@ -1548,14 +1548,10 @@ intr_setup_msg:
 	\
 	add	%g6, %g7, %g6; \
 	rdpr	%wstate, %g7;					/* Find if we're from user mode */ \
-\
-	\
-	\
 	\
 	sub	%g7, WSTATE_KERN, %g7;				/* Compare & leave in register */ \
 	\
 	movrz	%g7, %sp, %g6;					/* Select old (kernel) stack or base of kernel stack */ \
-	\
 	\
 	btst	1, %g6;						/* Fixup 64-bit stack if necessary */ \
 	bnz,pt	%icc, 1f; \
@@ -3310,6 +3306,7 @@ breakpoint:
 	rdpr	%cwp, %g7
 	inc	1, %g7					! Equivalent of save
 	wrpr	%g7, 0, %cwp				! Now we have some unused locals to fiddle with
+XXX ddb_regs is now ddb-regp and is a pointer not a symbol.
 	set	_C_LABEL(ddb_regs), %l0
 	stx	%g1, [%l0+DBR_IG+(1*8)]			! Save IGs
 	stx	%g2, [%l0+DBR_IG+(2*8)]
@@ -3585,8 +3582,8 @@ syscall_setup:
 	clr	%g4
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Restore default ASI
 
-	set	CURLWP, %l1
-	LDPTR	[%l1], %l1
+	sethi	%hi(CURLWP), %l1
+	LDPTR	[%l1 + %lo(CURLWP)], %l1
 	LDPTR	[%l1 + L_PROC], %l1		! now %l1 points to p
 	LDPTR	[%l1 + P_MD_SYSCALL], %l1
 	call	%l1
@@ -3754,27 +3751,6 @@ setup_sparcintr:
 	bne,pn	%xcc, 1b		! No, try again
 	 nop
 2:
-#ifdef NOT_DEBUG
-	set	_C_LABEL(intrdebug), %g7
-	ld	[%g7], %g7
-	btst	INTRDEBUG_VECTOR, %g7
-	bz,pt	%icc, 97f
-	 nop
-
-	STACKFRAME(-CC64FSZ)		! Get a clean register window
-	LOAD_ASCIZ(%o0,\
-	    "interrupt_vector: number %lx softint mask %lx pil %lu slot %p\r\n")
-	mov	%g2, %o1
-	rdpr	%pil, %o3
-	mov	%g1, %o4
-	GLOBTOLOC
-	clr	%g4
-	call	prom_printf
-	 mov	%g6, %o2
-	LOCTOGLOB
-	restore
-97:
-#endif
 	mov	1, %g7
 	sll	%g7, %g6, %g6
 	wr	%g6, 0, SET_SOFTINT	! Invoke a softint
@@ -3791,7 +3767,6 @@ ret_from_intr_vector:
 	stx	%g5, [%g3 + KTR_PARM3]
 12:
 #endif
-	CLRTT
 	retry
 	NOTREACHED
 
@@ -3803,6 +3778,7 @@ ret_from_intr_vector:
 	bz,pt	%icc, 97f
 	 nop
 #endif
+#if 1
 	STACKFRAME(-CC64FSZ)		! Get a clean register window
 	LOAD_ASCIZ(%o0, "interrupt_vector: spurious vector %lx at pil %d\r\n")
 	mov	%g2, %o1
@@ -3813,10 +3789,34 @@ ret_from_intr_vector:
 	LOCTOGLOB
 	restore
 97:
+#endif
 	ba,a	ret_from_intr_vector
 	 nop				! XXX spitfire bug?
 
 #if defined(MULTIPROCESSOR)
+/*
+ * IPI handler to halt the CPU.  Just calls the C vector.
+ * void sparc64_ipi_halt(void *);
+ */
+ENTRY(sparc64_ipi_halt)
+	call	_C_LABEL(sparc64_ipi_halt_thiscpu)
+	 clr	%g4
+	ba,a	ret_from_intr_vector
+	 nop
+
+/*
+ * IPI handler to pause the CPU.  We just trap to the debugger if it
+ * is configured, otherwise just return.
+ */
+ENTRY(sparc64_ipi_pause)
+#if defined(DDB)
+sparc64_ipi_pause_trap_point:
+	ta	1
+	 nop
+#endif
+	ba,a	ret_from_intr_vector
+	 nop
+
 /*
  * IPI handler to flush single pte.
  * void sparc64_ipi_flush_pte(void *);
@@ -3826,13 +3826,20 @@ ret_from_intr_vector:
  * %g2	- pointer to 'ipi_tlb_args' structure
  */
 ENTRY(sparc64_ipi_flush_pte)
-#if 0 & KTR_COMPILE & KTR_PMAP
+#if  KTR_COMPILE & KTR_PMAP
 	CATR(KTR_TRAP, "sparc64_ipi_flush_pte:",
 		 %g1, %g3, %g4, 10, 11, 12)
 12:
 #endif
+#if 0
+	STACKFRAME(-CC64FSZ)
+	LDPTR	[%g2 + ITA_VADDR], %o0
+	call	sp_tlb_flush_pte
+	 ld	[%g2 + ITA_CTX], %o1
+#endif
+	 
 	ba,a	ret_from_intr_vector
-	 nop
+	 restore
 
 /*
  * IPI handler to flush single context.
@@ -3848,22 +3855,21 @@ ENTRY(sparc64_ipi_flush_ctx)
 		 %g1, %g3, %g4, 10, 11, 12)
 12:
 #endif
+#if 0
+	STACKFRAME(-CC64FSZ)
+	call	sp_tlb_flush_ctx
+	 ld	[%g2 + ITA_CTX], %o0
+#endif
+	 
 	ba,a	ret_from_intr_vector
-	 nop
+	 restore
 
 /*
  * IPI handler to flush the whole TLB.
  * void sparc64_ipi_flush_all(void *);
- *
- * On Entry:
- *
- * %g2	- pointer to 'ipi_tlb_args' structure
  */
 ENTRY(sparc64_ipi_flush_all)
-!	rdpr	%pstate, %g3
-!	andn	%g3, PSTATE_IE, %g2			! disable interrupts
-!	wrpr	%g2, 0, %pstate
-#if  0 & KTR_COMPILE & KTR_PMAP
+#if KTR_COMPILE & KTR_PMAP
 	CATR(KTR_TRAP, "sparc64_ipi_flush_all: %p %p",
 		 %g1, %g4, %g5, 10, 11, 12)
 	stx	%g3, [%g1 + KTR_PARM1]
@@ -4367,7 +4373,16 @@ rft_kernel:
 #if	0
 	wrpr	%g0, 0, %cleanwin	! DEBUG
 #endif
-	retry					! We should allow some way to distinguish retry/done
+#if defined(DDB) && defined(MULTIPROCESSOR)
+	set	sparc64_ipi_pause_trap_point, %g1
+	rdpr	%tpc, %g2
+	cmp	%g1, %g2
+	bne,pt	%icc, 0f
+	 nop
+	done
+0:
+#endif
+	retry
 	NOTREACHED
 /*
  * Return from trap, to user.  Checks for scheduling trap (`ast') first;
@@ -5094,6 +5109,7 @@ _C_LABEL(cpu_initialize):
 	wrpr	%g0, 0, %tpc
 	wrpr	%g0, 0, %tnpc
 	wrpr	%g0, 0, %tstate
+	wrpr	%g0, 0, %tl
 #endif
 
 #ifdef DEBUG
@@ -5262,6 +5278,8 @@ ENTRY(cpu_mp_startup)
 	sethi	%hi(_C_LABEL(sched_whichqs)), %l2
 	sethi	%hi(CURLWP), %l7
 	sethi	%hi(CPCB), %l6
+	LDPTR	[%l7 + %lo(CURLWP)], %l4
+	LDPTR	[%l6 + %lo(CPCB)], %l5
 
 	set	_C_LABEL(idle), %l1
 	jmpl	%l1, %g0
@@ -5272,7 +5290,7 @@ ENTRY(cpu_mp_startup)
 
 	.globl cpu_mp_startup_end
 cpu_mp_startup_end:
-#endif
+#endif	/* MULTIPROCESSOR */
 
 	.align 8
 ENTRY(get_romtba)
@@ -5613,7 +5631,7 @@ ENTRY(sp_tlb_flush_all)
 	ldxa	[%o0] ASI_DMMU_TLB_TAG, %o2		! fetch the TLB tag
 	andcc	%o2, %o5, %o1				! context 0?
 	bz,pt	%xcc, 1f				! if so, skip
-	 set	CTX_SECONDARY, %o2
+	 mov	CTX_SECONDARY, %o2
 
 	stxa	%o1, [%o2] ASI_DMMU			! set the context
 	set	DEMAP_CTX_SECONDARY, %o2
@@ -5636,7 +5654,7 @@ ENTRY(sp_tlb_flush_all)
 	ldxa	[%o0] ASI_IMMU_TLB_TAG, %o2		! fetch the TLB tag
 	andcc	%o2, %o5, %o1				! context 0?
 	bz,pt	%xcc, 1f				! if so, skip
-	 set	CTX_SECONDARY, %o2
+	 mov	CTX_SECONDARY, %o2
 
 	stxa	%o1, [%o2] ASI_DMMU			! set the context
 	set	DEMAP_CTX_SECONDARY, %o2
@@ -6732,7 +6750,7 @@ ENTRY(cpu_exit)
 #ifdef DEBUG
 	flushw					! DEBUG
 	sethi	%hi(IDLE_U), %l6
-	LDPTR	[%l1 + %lo(IDLE_U)], %l6
+	LDPTR	[%l6 + %lo(IDLE_U)], %l6
 !	set	_C_LABEL(idle_u), %l6
 	SET_SP_REDZONE(%l6, %l5)
 #endif
@@ -6759,7 +6777,7 @@ ENTRY(cpu_exit)
 	 * REGISTER USAGE AT THIS POINT:
 	 *	%l2 = %hi(_whichqs)
 	 *	%l4 = lastproc
-	 *	%l5 = oldpsr (excluding ipl bits)
+	 *	%l5 = cpcb
 	 *	%l6 = %hi(cpcb)
 	 *	%l7 = %hi(curlwp)
 	 *	%o0 = tmp 1
@@ -6775,11 +6793,13 @@ ENTRY(cpu_exit)
 	sethi	%hi(CPCB), %l6
 	sethi	%hi(CURLWP), %l7
 	ldxa	[%o0] ASI_DMMU, %l1		! Don't demap the kernel
+#if 0
 	LDPTR	[%l6 + %lo(CPCB)], %l5
+#endif
 	clr	%l4				! lastproc = NULL;
 	brz,pn	%l1, 1f
 #ifdef SPITFIRE
-	 set	DEMAP_CTX_SECONDARY, %l1	! Demap secondary context
+	 mov	DEMAP_CTX_SECONDARY, %l1	! Demap secondary context
 	stxa	%g1, [%l1] ASI_DMMU_DEMAP
 	stxa	%g1, [%l1] ASI_IMMU_DEMAP
 	membar	#Sync
@@ -6886,7 +6906,6 @@ idlemsg1:	.asciz	" %x %x %x\r\n"
  */
 	.globl	_C_LABEL(time)
 ENTRY(cpu_switch)
-	save	%sp, -CC64FSZ, %sp
 	/*
 	 * REGISTER USAGE AT THIS POINT:
 	 *	%l1 = tmp 0
@@ -6903,6 +6922,8 @@ ENTRY(cpu_switch)
 	 *	%o4 = tmp 5, then at Lsw_scan, which
 	 *	%o5 = tmp 6, then at Lsw_scan, q
 	 */
+	save	%sp, -CC64FSZ, %sp
+	mov	%i0, %l4			! save lwp
 #ifdef NOTDEF_DEBUG
 	set	_C_LABEL(intrdebug), %l1
 	mov	INTRDEBUG_FUNC, %o1
@@ -6915,12 +6936,14 @@ ENTRY(cpu_switch)
 	sethi	%hi(CPCB), %l6
 	sethi	%hi(_C_LABEL(sched_whichqs)), %l2	! set up addr regs
 	LDPTR	[%l6 + %lo(CPCB)], %l5
+
 	sethi	%hi(CURLWP), %l7
-	stx	%o7, [%l5 + PCB_PC]		! cpcb->pcb_pc = pc;
-	LDPTR	[%l7 + %lo(CURLWP)], %l4	! lastlwp = curlwp;
 	sth	%o1, [%l5 + PCB_PSTATE]		! cpcb->pcb_pstate = oldpstate;
 
 	STPTR	%g0, [%l7 + %lo(CURLWP)]	! curlwp = NULL;
+
+	stx	%i7, [%l5 + PCB_PC]		! cpcb->pcb_pc = pc;
+	stx	%i6, [%l5 + PCB_SP]
 
 #if KTR_COMPILE & KTR_PROC
 	CATR(KTR_TRAP, "cpu_switch: %p",
@@ -7055,7 +7078,7 @@ cpu_loadproc:
 	 */
 	call	_C_LABEL(sched_unlock_idle)
 #endif
-	 STPTR	%l4, [%l7 + %lo(CURLWP)]	! restore old lwp so we can save it
+	 STPTR	%l3, [%l7 + %lo(CURLWP)]	! store new lwp
 
 #if KTR_COMPILE & KTR_PROC
 	CATR(KTR_TRAP, "cpu_switch: %p->%p",
@@ -7332,6 +7355,7 @@ ENTRY(cpu_switchto)
 	LDPTR	[%l6 + %lo(CPCB)], %l5
 
 	stx	%o7, [%l5 + PCB_PC]		! cpcb->pcb_pc = pc;
+	stx	%o6, [%l5 + PCB_SP]		! cpcb->pcb_sp = sp;
 
 	mov	%i0, %l4			! lastproc = curlwp; (hope he's right)
 	sth	%o1, [%l5 + PCB_PSTATE]		! cpcb->pcb_pstate = oldpstate;
