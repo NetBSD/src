@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.84 2006/09/10 05:46:02 manu Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.85 2006/09/13 10:07:42 elad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.84 2006/09/10 05:46:02 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.85 2006/09/13 10:07:42 elad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1153,7 +1153,7 @@ sysctl_kern_rtc_offset(SYSCTLFN_ARGS)
 
 	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,
 	    KAUTH_REQ_SYSTEM_TIME_RTCOFFSET,
-	    (void *)(u_long)new_rtc_offset, NULL, NULL) != KAUTH_RESULT_ALLOW)
+	    (void *)(u_long)new_rtc_offset, NULL, NULL))
 		return (EPERM);
 	if (rtc_offset == new_rtc_offset)
 		return (0);
@@ -2383,7 +2383,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	/* only root or same user change look at the environment */
 	if (type == KERN_PROC_ENV || type == KERN_PROC_NENV) {
 		if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
-		     p, NULL, NULL, NULL) != KAUTH_RESULT_ALLOW) {
+		     p, NULL, NULL, NULL)) {
 				error = EPERM;
 				goto out_locked;
 		}
@@ -2625,7 +2625,7 @@ sysctl_security_setidcore(SYSCTLFN_ARGS)
 		return error;
 
 	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_SETIDCORE,
-	    0, NULL, NULL, NULL) != KAUTH_RESULT_ALLOW)
+	    0, NULL, NULL, NULL))
 		return (EPERM);
 
 	*(int *)rnode->sysctl_data = newsize;
@@ -2649,7 +2649,7 @@ sysctl_security_setidcorename(SYSCTLFN_ARGS)
 		goto out;
 	}
 	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_SETIDCORE,
-	    0, NULL, NULL, NULL) != KAUTH_RESULT_ALLOW) {
+	    0, NULL, NULL, NULL)) {
 		error = EPERM;
 		goto out;
 	}

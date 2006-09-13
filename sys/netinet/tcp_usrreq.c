@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.121 2006/09/08 20:58:58 elad Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.122 2006/09/13 10:07:42 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.121 2006/09/08 20:58:58 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.122 2006/09/13 10:07:42 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1259,7 +1259,7 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 
 #ifdef notyet
 		if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_CANSEE,
-		    inph->inph_socket->so_cred) != KAUTH_RESULT_ALLOW)
+		    inph->inph_socket->so_cred))
 #endif
 		if (kauth_cred_geteuid(l->l_cred) != 0 &&
 		    kauth_cred_geteuid(l->l_cred) !=

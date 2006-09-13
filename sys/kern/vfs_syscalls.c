@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.269 2006/09/12 07:51:29 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.270 2006/09/13 10:07:42 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.269 2006/09/12 07:51:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.270 2006/09/13 10:07:42 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1496,7 +1496,7 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 	 * Must be super user
 	 */
 	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
-	    0, NULL, NULL, NULL)) != KAUTH_RESULT_ALLOW)
+	    0, NULL, NULL, NULL)))
 		return (error);
 
 	flags = FFLAGS(oflags);
@@ -1631,7 +1631,7 @@ dofhstat(struct lwp *l, const void *ufhp, size_t fhsize, struct stat *sbp,
 	 * Must be super user
 	 */
 	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
-	    0, NULL, NULL, NULL)) != KAUTH_RESULT_ALLOW)
+	    0, NULL, NULL, NULL)))
 		return (error);
 
 	error = vfs_copyinfh_alloc(ufhp, fhsize, &fh);
@@ -1682,7 +1682,7 @@ dofhstatvfs(struct lwp *l, const void *ufhp, size_t fhsize, struct statvfs *buf,
 	 * Must be super user
 	 */
 	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
-	    0, NULL, NULL, NULL)) != KAUTH_RESULT_ALLOW)
+	    0, NULL, NULL, NULL)))
 		return error;
 
 	error = vfs_copyinfh_alloc(ufhp, fhsize, &fh);

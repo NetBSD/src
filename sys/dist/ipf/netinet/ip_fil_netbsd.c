@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.22 2006/09/08 20:58:57 elad Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.23 2006/09/13 10:07:42 elad Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -524,7 +524,7 @@ int mode;
 #if (__NetBSD_Version__ >= 399002000)
 	if ((mode & FWRITE) && kauth_authorize_network(p->l_cred,
 	    KAUTH_NETWORK_FIREWALL, (void *)KAUTH_REQ_NETWORK_FIREWALL_FW,
-	    NULL, NULL, NULL) != KAUTH_RESULT_ALLOW)
+	    NULL, NULL, NULL))
 #else
 	if ((securelevel >= 2) && (mode & FWRITE))
 #endif

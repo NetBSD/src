@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.230 2006/09/08 20:58:58 elad Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.231 2006/09/13 10:07:42 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.230 2006/09/08 20:58:58 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.231 2006/09/13 10:07:42 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -2113,7 +2113,7 @@ sysctl_net_inet_ip_forwsrcrt(SYSCTLFN_ARGS)
 		return (error);
 
 	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_FORWSRCRT,
-	    NULL, NULL, NULL, NULL) != KAUTH_RESULT_ALLOW)
+	    NULL, NULL, NULL, NULL))
 		return (EPERM);
 
 	ip_forwsrcrt = tmp;
