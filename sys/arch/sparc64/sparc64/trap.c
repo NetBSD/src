@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.133 2006/07/23 22:06:07 ad Exp $ */
+/*	$NetBSD: trap.c,v 1.134 2006/09/13 11:35:53 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133 2006/07/23 22:06:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134 2006/09/13 11:35:53 mrg Exp $");
 
 #define NEW_FPSTATE
 
@@ -113,7 +113,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133 2006/07/23 22:06:07 ad Exp $");
 #endif
 
 /* trapstats */
-int trapstats = 0;
 int protfix = 0;
 int udmiss = 0;	/* Number of normal/nucleus data/text miss/protection faults */
 int udhit = 0;	
@@ -371,7 +370,6 @@ const char *trap_type[] = {
 
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
 
-
 void trap(struct trapframe64 *, unsigned int, vaddr_t, long);
 void data_access_fault(struct trapframe64 *, unsigned int, vaddr_t, vaddr_t,
 	vaddr_t, u_long);
@@ -384,6 +382,7 @@ void text_access_error(struct trapframe64 *, unsigned int, vaddr_t, u_long,
 
 #ifdef DEBUG
 void print_trapframe(struct trapframe64 *);
+
 void
 print_trapframe(struct trapframe64 *tf)
 {
@@ -571,8 +570,8 @@ dopanic:
 			{
 				char sbuf[sizeof(PSTATE_BITS) + 64];
 
-				printf("trap type 0x%x: pc=%lx",
-				       type, pc); 
+				printf("trap type 0x%x: cpu %ld, pc=%lx",
+				       type, CPU_UPAID, pc); 
 				bitmask_snprintf(pstate, PSTATE_BITS, sbuf,
 						 sizeof(sbuf));
 				printf(" npc=%lx pstate=%s\n",
@@ -1106,9 +1105,9 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 			 * message.
 			 */
 			if (curlwp == NULL) {
-				panic("kernel data access fault accessing"
-				    " 0x%lx at pc 0x%lx\n",
-				    va, (long)tf->tf_pc);
+				panic("cpu%d: kernel data access fault "
+				    "accessing 0x%lx at pc 0x%lx\n",
+				    cpu_number(), va, (long)tf->tf_pc);
 			}
 #endif
 			rv = uvm_fault(kernel_map, va, access_type);
