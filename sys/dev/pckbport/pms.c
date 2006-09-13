@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.11 2006/06/07 22:33:37 kardel Exp $ */
+/* $NetBSD: pms.c,v 1.12 2006/09/13 00:55:57 christos Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -28,7 +28,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.11 2006/06/07 22:33:37 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.12 2006/09/13 00:55:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -437,9 +437,10 @@ pms_reset_thread(void *arg)
 		cmd[0] = PMS_RESET;
 		res = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd,
 		    1, 2, 1, resp);
-		if (res)
+		if (res) {
 			DPRINTF(("%s: reset error %d\n", sc->sc_dev.dv_xname,
 			    res));
+		}
 
 #ifdef PMS_SYNAPTICS_TOUCHPAD
 		/* For the synaptics case, leave the protocol alone. */
@@ -457,16 +458,18 @@ pms_reset_thread(void *arg)
 			cmd[0] = PMS_RESET;
 			res = pckbport_enqueue_cmd(sc->sc_kbctag,
 			    sc->sc_kbcslot, cmd, 1, 2, 1, resp);
-			if (res)
+			if (res) {
 				DPRINTF(("%s: reset error %d\n",
 				    sc->sc_dev.dv_xname, res));
+			}
 			tsleep(pms_reset_thread, PWAIT, "pmsreset", hz);
 			cmd[0] = PMS_RESET;
 			res = pckbport_enqueue_cmd(sc->sc_kbctag,
 			    sc->sc_kbcslot, cmd, 1, 2, 1, resp);
-			if (res)
+			if (res) {
 				DPRINTF(("%s: reset error %d\n",
 				    sc->sc_dev.dv_xname, res));
+			}
 			sc->protocol = PMS_UNKNOWN;	/* reprobe protocol */
 			pms_enable(sc);
 #if defined(PMSDEBUG) || defined(DIAGNOSTIC)
