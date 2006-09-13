@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.189 2006/09/03 22:27:45 gdamore Exp $ */
+/*	$NetBSD: machdep.c,v 1.190 2006/09/13 11:35:53 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189 2006/09/03 22:27:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.190 2006/09/13 11:35:53 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -634,7 +634,7 @@ cpu_reboot(register int howto, char *user_boot_string)
 
 #if defined(MULTIPROCESSOR)
 	/* Stop all secondary cpus */
-	sparc64_ipi_halt_cpus();
+	mp_halt_cpus();
 #endif
 
 	/* If rebooting and a dump is requested, do it. */
