@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.161 2006/09/01 21:20:47 matt Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.162 2006/09/13 19:55:49 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.161 2006/09/01 21:20:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.162 2006/09/13 19:55:49 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -1637,12 +1637,13 @@ linux_sys_sysinfo(l, v, retval)
 	si.loads[0] = la->ldavg[0] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
 	si.loads[1] = la->ldavg[1] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
 	si.loads[2] = la->ldavg[2] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
-	si.totalram = ctob(physmem);
-	si.freeram = uvmexp.free * uvmexp.pagesize;
+	si.totalram = ctob((u_long)physmem);
+	si.freeram = (u_long)uvmexp.free * uvmexp.pagesize;
 	si.sharedram = 0;	/* XXX */
-	si.bufferram = uvmexp.filepages * uvmexp.pagesize;
-	si.totalswap = uvmexp.swpages * uvmexp.pagesize;
-	si.freeswap = (uvmexp.swpages - uvmexp.swpginuse) * uvmexp.pagesize;
+	si.bufferram = (u_long)uvmexp.filepages * uvmexp.pagesize;
+	si.totalswap = (u_long)uvmexp.swpages * uvmexp.pagesize;
+	si.freeswap = 
+	    (u_long)(uvmexp.swpages - uvmexp.swpginuse) * uvmexp.pagesize;
 	si.procs = nprocs;
 
 	/* The following are only present in newer Linux kernels. */
