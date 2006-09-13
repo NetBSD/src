@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.53 2005/12/24 20:45:08 perry Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.54 2006/09/13 00:57:29 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.53 2005/12/24 20:45:08 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.54 2006/09/13 00:57:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,9 +153,10 @@ svr4_to_native_sigaction(ssa, bsa)
 		bsa->sa_flags |= SA_NOCLDWAIT;
 	if ((ssa->svr4_sa_flags & SVR4_SA_NOCLDSTOP) != 0)
 		bsa->sa_flags |= SA_NOCLDSTOP;
-	if ((ssa->svr4_sa_flags & ~SVR4_SA_ALLBITS) != 0)
+	if ((ssa->svr4_sa_flags & ~SVR4_SA_ALLBITS) != 0) {
 		DPRINTF(("svr4_to_native_sigaction: extra bits %x ignored\n",
 		    ssa->svr4_sa_flags & ~SVR4_SA_ALLBITS));
+	}
 }
 
 void
