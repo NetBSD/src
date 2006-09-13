@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.104 2006/09/08 20:58:57 elad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.105 2006/09/13 10:07:42 elad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.104 2006/09/08 20:58:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.105 2006/09/13 10:07:42 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,7 +264,7 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 	if (limp->rlim_max > alimp->rlim_max && (error =
 	    kauth_authorize_process(l->l_cred, KAUTH_PROCESS_RESOURCE,
 	    p, (void *)KAUTH_REQ_PROCESS_RESOURCE_RLIMIT, limp,
-	    (void *)(u_long)which)) != KAUTH_RESULT_ALLOW)
+	    (void *)(u_long)which)))
 			return (error);
 
 	if (p->p_limit->p_refcnt > 1 &&
