@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.7 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.8 2006/09/13 06:47:28 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -144,7 +144,7 @@ devclose(struct open_file *of)
 
 static char ofw[] = "OpenFirmware";
 
-static struct devsw devsw[1] = {
+struct devsw devsw[1] = {
 	{
 		ofw,
 		strategy,
