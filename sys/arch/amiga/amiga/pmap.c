@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.116 2006/08/03 20:26:24 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.117 2006/09/13 16:43:51 spz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116 2006/08/03 20:26:24 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.117 2006/09/13 16:43:51 spz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ int pmapdebug = PDB_PARANOIA;
 
 #define	PMAP_DPRINTF(l, x)	if (pmapdebug & (l)) printf x
 
-static void	pmap_check_wiring(char *, vaddr_t);
+static void	pmap_check_wiring(const char *, vaddr_t);
 static void	pmap_pvdump(paddr_t);
 #else
 #define	PMAP_DPRINTF(l, x)
@@ -1293,7 +1293,7 @@ validate:
 #if DEBUG
 	if (pmapdebug & 0x10000 && mmutype == MMU_68040 &&
 	    pmap == pmap_kernel()) {
-		char *s;
+		const char *s;
 		struct proc *cp = curproc;
 		if (va >= amiga_uptbase &&
 		    va < (amiga_uptbase + AMIGA_UPTMAXSIZE))
@@ -2715,7 +2715,7 @@ pmap_pvdump(pa)
  */
 void
 pmap_check_wiring(str, va)
-	char *str;
+	const char *str;
 	vaddr_t va;
 {
 	pt_entry_t *pte;
