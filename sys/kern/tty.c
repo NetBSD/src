@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.187 2006/08/03 22:51:05 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.188 2006/09/13 13:28:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.187 2006/08/03 22:51:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.188 2006/09/13 13:28:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -807,7 +807,7 @@ int
 ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	extern struct tty *constty;	/* Temporary virtual console. */
-	struct proc *p = l->l_proc;
+	struct proc *p = l ? l->l_proc : NULL;
 	struct linesw	*lp;
 	int		s, error;
 	struct nameidata nd;
