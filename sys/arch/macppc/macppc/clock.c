@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.27 2005/12/24 22:45:35 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.28 2006/09/13 03:37:21 gdamore Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.27 2005/12/24 22:45:35 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.28 2006/09/13 03:37:21 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.27 2005/12/24 22:45:35 perry Exp $");
 static u_long ticks_per_sec = 50*1000*1000/4;
 static u_long ns_per_tick = 80;
 long ticks_per_intr;
-static int clockinitted;
 static int clockrunning;
 
 #ifdef TIMEBASE_FREQ
@@ -62,65 +61,6 @@ u_int timebase_freq = TIMEBASE_FREQ;
 #else
 u_int timebase_freq = 0;
 #endif
-
-#define SECDAY 86400
-#define DIFF19041970 2082844800
-
-#if NADB > 0
-extern int adb_read_date_time __P((int *));
-extern int adb_set_date_time __P((int));
-#endif
-
-void
-inittodr(base)
-	time_t base;
-{
-	time_t deltat;
-	u_int rtc_time;
-
-	/*
-	 * If we can't read from RTC, use the fs time.
-	 */
-#if NADB > 0
-	if (adb_read_date_time(&rtc_time) < 0)
-#endif
-	{
-		time.tv_sec = base;
-		return;
-	}
-	clockinitted = 1;
-	time.tv_sec = rtc_time - DIFF19041970 + rtc_offset * 60;
-
-	deltat = time.tv_sec - base;
-	if (deltat < 0)
-		deltat = -deltat;
-	if (deltat < 2 * SECDAY)
-		return;
-
-	printf("WARNING: clock %s %d days",
-	    time.tv_sec < base ? "lost" : "gained", (int)(deltat / SECDAY));
-	if (time.tv_sec < base && deltat > 1000 * SECDAY) {
-		printf(", using FS time");
-		time.tv_sec = base;
-	}
-	printf(" -- CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * Similar to the above
- */
-void
-resettodr()
-{
-#if NADB > 0
-	u_int rtc_time;
-
-	if (clockinitted) {
-		rtc_time = time.tv_sec + DIFF19041970 - rtc_offset * 60;
-		adb_set_date_time(rtc_time);
-	}
-#endif
-}
 
 void
 decr_intr(struct clockframe *frame)
