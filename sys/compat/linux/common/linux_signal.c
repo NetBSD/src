@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.49 2005/11/23 16:14:57 manu Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.50 2006/09/13 00:52:07 christos Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.49 2005/11/23 16:14:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.50 2006/09/13 00:52:07 christos Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -215,9 +215,10 @@ linux_to_native_sigflags(lsf)
 		bsf |= SA_NODEFER;
 	if ((lsf & LINUX_SA_SIGINFO) != 0)
 		bsf |= SA_SIGINFO;
-	if ((lsf & ~LINUX_SA_ALLBITS) != 0)
+	if ((lsf & ~LINUX_SA_ALLBITS) != 0) {
 		DPRINTF(("linux_old_to_native_sigflags: "
 		    "%lx extra bits ignored\n", lsf));
+	}
 	return bsf;
 }
 
