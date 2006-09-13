@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.114 2006/07/23 22:06:08 ad Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.115 2006/09/13 00:49:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.114 2006/07/23 22:06:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.115 2006/09/13 00:49:07 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -1109,9 +1109,10 @@ linux_machdepioctl(l, v, retval)
 			error = 0;
 		}
 
-		if (error == ENOTTY)
+		if (error == ENOTTY) {
 			DPRINTF(("linux_machdepioctl: invalid ioctl %08lx\n",
 			    com));
+		}
 		goto out;
 	}
 	SCARG(&bia, com) = com;
