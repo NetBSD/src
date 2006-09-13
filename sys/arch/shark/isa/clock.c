@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12 2006/09/12 17:07:14 gdamore Exp $	*/
+/*	$NetBSD: clock.c,v 1.13 2006/09/13 07:13:03 gdamore Exp $	*/
 
 /*
  * Copyright 1997
@@ -154,11 +154,12 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2006/09/12 17:07:14 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2006/09/13 07:13:03 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
+#include <sys/timetc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
@@ -181,10 +182,10 @@ void	rtcinit(void);
 int     timer_hz_to_count(int);
 
 static void findcpuspeed(void);
-static void init_isa_timer_tables(void);
 static void delayloop(int);
 static int  clockintr(void *);
 static int  gettick(void);
+static void tc_init_i8253(void);
 
 void startrtclock(void);
 
@@ -222,7 +223,6 @@ unsigned int count1024usec; /* calibrated loop variable (1024 microseconds) */
  * time.tv_usec += isa_timer_msb_table[cnt_msb] + isa_timer_lsb_table[cnt_lsb];
  */
 
-u_short	isa_timer_msb_table[256];	/* timer->usec MSB */
 u_short	isa_timer_lsb_table[256];	/* timer->usec conversion for LSB */
 
 /* 64 bit counts from timer 0 */
@@ -273,8 +273,6 @@ startrtclock(void)
 	findcpuspeed();		/* use the clock (while it's free) to
 				   find the CPU speed */
 
-	init_isa_timer_tables(); 
-
 	timer0count.lo = 0;
 	timer0count.hi = 0;
 	timer0_at_last_clockintr.lo = 0;
@@ -291,38 +289,6 @@ startrtclock(void)
 	hatCount2 = timer_hz_to_count(HATHZ2);
 	printf("HAT test on @ %d Hz = %d ticks\n", HATHZ, hatCount);
 #endif
-}
-
-static void
-init_isa_timer_tables(void)
-{
-	int s;
-	u_long t, msbmillion, quotient, remainder;
-
-	for (s = 0; s < 256; s++) {
-	        /* LSB table is easy, just divide and round */
-		t = ((u_long) s * 1000000 * 2) / TIMER_FREQ;
-		isa_timer_lsb_table[s] = (u_short) ((t / 2) + (t & 0x1));
-		
-		msbmillion = s * 1000000;
-		quotient = msbmillion / TIMER_FREQ;
-		remainder = msbmillion % TIMER_FREQ;
-		t = (remainder * 256 * 2) / TIMER_FREQ;
-		isa_timer_msb_table[s] = 
-		  (u_short)((t / 2) + (t & 1) + (quotient * 256));
-
-#ifdef DIAGNOSTIC
-		if ((s > 0) &&
-		    (isa_timer_msb_table[s] < 
-		     (isa_timer_msb_table[s - 1] + isa_timer_lsb_table[0xFF])))
-		  panic ("time tables not monotonic %d: %d < (%d + %d) = %d\n",
-			 s, isa_timer_msb_table[s],
-			 isa_timer_msb_table[s - 1], 
-			 isa_timer_lsb_table[0xFF],
-			 isa_timer_msb_table[s - 1] + 
-			 isa_timer_lsb_table[0xFF]);
-#endif	
-	} /* END for */
 }
 
 int
@@ -555,16 +521,6 @@ cpu_initclocks(void)
 	(void)isa_intr_establish(NULL, IRQ_RTC, IST_LEVEL, IPL_CLOCK, 
 				 clockintr, 0);
 
-	/* code for values of hz that don't divide 1000000 exactly */
-        tickfix = 1000000 - (hz * tick);
-        if (tickfix) {
-                int ftp;
-
-                ftp = min(ffs(tickfix), ffs(hz));
-                tickfix >>= (ftp - 1);
-                tickfixinterval = hz >> (ftp - 1);
-        }
-
 	/* set  up periodic interrupt @ hz
 	   this is the subset of hz values in kern_clock.c that are
 	   supported by the ISA RTC */
@@ -592,6 +548,8 @@ cpu_initclocks(void)
 	/* enable periodic interrupt */
 	mc146818_write(NULL, MC_REGB,
 		       mc146818_read(NULL, MC_REGB) | MC_REGB_PIE);
+
+	tc_init_i8253();
 }
 
 void
@@ -613,78 +571,24 @@ setstatclockrate(int arg)
 {
 }
 
-/*
- * void microtime(struct timeval *tvp)
- *
- * Fill in the specified timeval struct with the current time
- * accurate to the microsecond.
- */
+static uint32_t
+i8253_get_timecount(struct timecounter *tc)
+{
+	return (TIMER0_ROLLOVER - gettick());
+}
 
 void
-microtime(struct timeval *tvp)
+tc_init_i8253(void)
 {
-        int s;
-	unsigned lsb, msb;
-	int tm;
-	static struct timeval oldtv;
-	struct count64 timer0current;
-	int ticks;
+	static struct timecounter i8253_tc = {
+		.tc_get_timecount = i8253_get_timecount,
+		.tc_counter_mask = TIMER0_ROLLOVER,
+		.tc_frequency = TIMER_FREQ,
+		.tc_name = "i8253",
+		.tc_quality = 100
+	};
 
-	s = splstatclock();
-
-	gettimer0count(&timer0current);
-
-	tm = time.tv_usec;
-
-	/* unsigned arithmetic should take care of overflow */
-	/* with a >= 32 Hz clock, ticks will always be < 0x7FFF */
-	ticks = (int)((unsigned)
-		      (timer0current.lo - timer0_at_last_clockintr.lo));
-
-#ifdef DIAGNOSTIC
-	if ((ticks < 0) || (ticks > 0xffff))
-		printf("microtime bug: ticks = %x\n", ticks);
-#endif
-
-	while (ticks > 0) {
-
-		if (ticks < 0xffff) {
-			msb = (ticks >> 8) & 0xFF;
-			lsb = ticks & 0xFF;
-		} else {
-			msb = 0xff;
-			lsb = 0xff;
-		}
-
-		/* see comments above */
-		tm  += isa_timer_msb_table[msb] + isa_timer_lsb_table[lsb];
-
-		/* for a 64 Hz RTC, ticks will never overflow table */
-		/* microtime will be less accurate if the RTC is < 36 Hz */
-		ticks -= 0xffff;
-	}
-	
-	tvp->tv_sec = time.tv_sec;
-	if (tm >= 1000000) {
-		tvp->tv_sec += 1;
-		tm -= 1000000;
-	}
-
-	tvp->tv_usec = tm;
-
-	/* Make sure the time has advanced. */
-
-	if (tvp->tv_sec == oldtv.tv_sec &&
-	    tvp->tv_usec <= oldtv.tv_usec) {
-		tvp->tv_usec = oldtv.tv_usec + 1;
-		if (tvp->tv_usec >= 1000000) {
-			tvp->tv_usec -= 1000000;
-			++tvp->tv_sec;
-		}
-	}
-	    
-	oldtv = *tvp;
-	(void)splx(s);		
+	tc_init(&i8253_tc);
 }
 
 /* End of clock.c */
