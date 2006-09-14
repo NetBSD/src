@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.20 2006/09/08 21:57:38 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.21 2006/09/14 11:37:07 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.20 2006/09/08 21:57:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.21 2006/09/14 11:37:07 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -534,7 +534,7 @@ kauth_register_scope(const char *id, kauth_scope_callback_t callback,
     void *cookie)
 {
 	kauth_scope_t scope;
-	kauth_listener_t listener;
+	kauth_listener_t listener = NULL; /* XXX gcc */
 
 	/* Sanitize input */
 	if (id == NULL)
@@ -542,7 +542,9 @@ kauth_register_scope(const char *id, kauth_scope_callback_t callback,
 
 	/* Allocate space for a new scope and listener. */
 	scope = pool_get(&kauth_scope_pool, PR_WAITOK);
-	listener = pool_get(&kauth_listener_pool, PR_WAITOK);
+	if (callback != NULL) {
+		listener = pool_get(&kauth_listener_pool, PR_WAITOK);
+	}
 
 	/* Acquire scope list lock. */
 	simple_lock(&scopes_lock);
@@ -552,7 +554,9 @@ kauth_register_scope(const char *id, kauth_scope_callback_t callback,
 		simple_unlock(&scopes_lock);
 
 		pool_put(&kauth_scope_pool, scope);
-		pool_put(&kauth_listener_pool, listener);
+		if (callback != NULL) {
+			pool_put(&kauth_listener_pool, listener);
+		}
 
 		return (NULL);
 	}
