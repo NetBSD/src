@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.9.2.1 2006/09/10 05:07:18 riz Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.9.2.2 2006/09/14 19:25:00 riz Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.9.2.1 2006/09/10 05:07:18 riz Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.9.2.2 2006/09/14 19:25:00 riz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -424,7 +424,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-		"Usage: %s [-F file] [-lv] [-s start] [-e end] "
+		"Usage: %s [-lv] [-e end] [-F file] [-s start] "
 		"device\n", getprogname());
 	exit(EXIT_FAILURE);
 }
