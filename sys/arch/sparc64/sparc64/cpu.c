@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.48 2006/09/08 15:40:45 martin Exp $ */
+/*	$NetBSD: cpu.c,v 1.49 2006/09/14 08:31:09 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.48 2006/09/08 15:40:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.49 2006/09/14 08:31:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ struct cpu_info *cpus = NULL;
 volatile cpuset_t cpus_active;/* set of active cpus */
 struct cpu_bootargs *cpu_args;	/* allocated very early in pmap_bootstrap. */
 
-static struct cpu_info *alloc_cpuinfo(u_int);
+static struct cpu_info *alloc_cpuinfo(u_int, int);
 
 /* The following are used externally (sysctl_hw). */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
@@ -102,7 +102,7 @@ extern struct cfdriver cpu_cd;
 #define	IU_VERS(v)	((((uint64_t)(v)) & VER_MASK) >> VER_MASK_SHIFT)
 
 struct cpu_info *
-alloc_cpuinfo(u_int cpu_node)
+alloc_cpuinfo(u_int cpu_node, int cpuno)
 {
 	paddr_t pa0, pa;
 	vaddr_t va, va0;
@@ -146,7 +146,7 @@ alloc_cpuinfo(u_int cpu_node)
 	 */
 	cpi->ci_next = NULL;
 	cpi->ci_curlwp = NULL;
-	cpi->ci_number = portid;
+	cpi->ci_number = cpuno;
 	cpi->ci_cpuid = portid;
 	cpi->ci_upaid = portid;
 	cpi->ci_fplwp = NULL;
@@ -327,7 +327,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	 * Allocate cpu_info structure if needed and save cache information
 	 * in there.
 	 */
-	ci = alloc_cpuinfo((u_int)node);
+	ci = alloc_cpuinfo((u_int)node, dev->dv_unit);
 	printf("%s: upa id %d\n", dev->dv_xname, ci->ci_upaid);
 }
 
