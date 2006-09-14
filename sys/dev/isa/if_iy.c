@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.70.8.1 2006/05/24 10:57:52 yamt Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.70.8.2 2006/09/14 12:31:32 yamt Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -46,10 +46,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.70.8.1 2006/05/24 10:57:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.70.8.2 2006/09/14 12:31:32 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -87,10 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.70.8.1 2006/05/24 10:57:52 yamt Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if defined(SIOCSIFMEDIA)
 #include <net/if_media.h>
@@ -1235,23 +1230,6 @@ iyioctl(ifp, cmd, data)
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
-#ifdef NS
-		/* XXX - This code is probably wrong. */
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-				    LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
-				    ETHER_ADDR_LEN);
-			/* Set new address. */
-			iyinit(sc);
-			break;
-		    }
-#endif /* NS */
 		default:
 			iyinit(sc);
 			break;

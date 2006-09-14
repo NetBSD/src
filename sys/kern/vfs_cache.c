@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.63.8.1 2006/05/24 10:58:42 yamt Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.63.8.2 2006/09/14 12:31:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.63.8.1 2006/05/24 10:58:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.63.8.2 2006/09/14 12:31:48 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -277,7 +277,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		error = vn_lock(vp, LK_EXCLUSIVE);
 		/*
 		 * If the above vn_lock() failed or either of LOCKPARENT or
-		 * ISLASTCN is set, unlock the directory vnode.
+		 * ISLASTCN is not set, unlock the directory vnode.
 		 */
 		if (error || (~cnp->cn_flags & (LOCKPARENT|ISLASTCN)) != 0) {
 			VOP_UNLOCK(dvp, 0);

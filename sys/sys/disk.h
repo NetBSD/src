@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.33.8.1 2006/05/24 10:59:21 yamt Exp $	*/
+/*	$NetBSD: disk.h,v 1.33.8.2 2006/09/14 12:32:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ struct dkwedge_discovery_method {
 
 #define	DKWEDGE_DISCOVERY_METHOD_DECL(name, prio, discover)		\
 static struct dkwedge_discovery_method name ## _ddm = {			\
-	{ 0 },								\
+	{ NULL, NULL },							\
 	#name,								\
 	prio,								\
 	discover							\

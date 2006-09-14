@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.158.2.4 2006/09/03 15:25:56 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.158.2.5 2006/09/14 12:32:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158.2.4 2006/09/03 15:25:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158.2.5 2006/09/14 12:32:00 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2604,7 +2604,7 @@ nfsrv_fhtovp(nsfh, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 int
 nfs_ispublicfh(const nfsrvfh_t *nsfh)
 {
-	const char *cp = (char *)(NFSRVFH_DATA(nsfh));
+	const char *cp = (const void *)(NFSRVFH_DATA(nsfh));
 	int i;
 
 	if (NFSRVFH_SIZE(nsfh) == 0) {
@@ -2992,7 +2992,7 @@ nfsrv_composefh(struct vnode *vp, nfsrvfh_t *nsfh, boolean_t v3)
 	size_t fhsize;
 
 	fhsize = NFSD_MAXFHSIZE;
-	error = vfs_composefh(vp, NFSRVFH_DATA(nsfh), &fhsize);
+	error = vfs_composefh(vp, (void *)NFSRVFH_DATA(nsfh), &fhsize);
 	if (NFSX_FHTOOBIG_P(fhsize, v3)) {
 		error = EOPNOTSUPP;
 	}

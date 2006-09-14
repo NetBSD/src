@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9.8.2 2006/06/26 12:45:40 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.9.8.3 2006/09/14 12:31:21 yamt Exp $
 
 RELOC=0x2f0000
 .PATH:	${.CURDIR}/../../vax ${.CURDIR}/../common
@@ -14,6 +14,9 @@ WARNS?=	1
 CFLAGS+=-ffreestanding
 
 MKMAN=no
+
+LIBCRTBEGIN=
+LIBCRTEND=  
 
 .if ${MACHINE} == "vax"
 .PHONY: machine-links

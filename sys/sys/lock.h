@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.63.6.2 2006/09/03 15:25:56 yamt Exp $	*/
+/*	$NetBSD: lock.h,v 1.63.6.3 2006/09/14 12:32:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -406,6 +406,29 @@ void	simple_lock_switchcheck(void);
 #endif /* __lint__ */
 #define	LOCK_ASSERT(x)		/* nothing */
 #endif
+
+int	lock_owner_onproc(uintptr_t);
+
+#ifndef SPINLOCK_SPIN_HOOK		/* from <machine/lock.h> */
+#define	SPINLOCK_SPIN_HOOK		/* nothing */
+#endif
+
+#ifndef	SPINLOCK_BACKOFF_MIN
+#define	SPINLOCK_BACKOFF_MIN	32
+#endif
+#ifndef	SPINLOCK_BACKOFF_MAX
+#define	SPINLOCK_BACKOFF_MAX	1024
+#endif
+#define	SPINLOCK_BACKOFF(count)					\
+do {								\
+	int __i;						\
+	for (__i = 0; __i < (count); __i++) {			\
+		SPINLOCK_SPIN_HOOK;				\
+		nullop(NULL);					\
+	}							\
+	if ((__i <<= 1) <= SPINLOCK_BACKOFF_MAX)		\
+		(count) = SPINLOCK_BACKOFF_MAX;			\
+} while (/* CONSTCOND */ 0);
 
 #endif /* _KERNEL */
 

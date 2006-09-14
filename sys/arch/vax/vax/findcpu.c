@@ -1,4 +1,4 @@
-/*	$NetBSD: findcpu.c,v 1.16 2005/12/24 22:45:40 perry Exp $	*/
+/*	$NetBSD: findcpu.c,v 1.16.8.1 2006/09/14 12:31:22 yamt Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,10 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: findcpu.c,v 1.16 2005/12/24 22:45:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: findcpu.c,v 1.16.8.1 2006/09/14 12:31:22 yamt Exp $");
 
 #include <sys/param.h>
+#ifdef _KERNEL
 #include <sys/device.h>
+#endif
 
 #include <machine/sid.h>
 #include <machine/nexus.h>

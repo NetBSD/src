@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.1.8.3 2006/09/03 15:22:50 yamt Exp $ */
+/* $NetBSD: wdog.c,v 1.1.8.4 2006/09/14 12:31:09 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.1.8.3 2006/09/03 15:22:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.1.8.4 2006/09/14 12:31:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ wdog_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdog_softc *sc = (void *)self;
 
-	sc->sc_mult = ar531x_sys_freq();
+	sc->sc_mult = ar531x_bus_freq();
 	sc->sc_wdog_period = WDOG_DEFAULT_PERIOD;
 	sc->sc_wdog_max = 0xffffffffU / sc->sc_mult;
 	sc->sc_wdog_reload = sc->sc_wdog_period * sc->sc_mult;

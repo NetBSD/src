@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.11.8.1 2006/06/26 12:44:22 yamt Exp $	*/
+/*	$NetBSD: types.h,v 1.11.8.2 2006/09/14 12:31:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -64,13 +64,13 @@ typedef	volatile int		__cpu_simple_lock_t;
 #define	__NO_STRICT_ALIGNMENT
 
 #define	__HAVE_DEVICE_REGISTER
-#define	__HAVE_NWSCONS
 #define	__HAVE_CPU_COUNTER
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
 #define __HAVE_GENERIC_SOFT_INTERRUPTS
 #define __HAVE_CPU_MAXPROC
 #define __HAVE_TIMECOUNTER
+#define __HAVE_GENERIC_TODR
 
 #if defined(_KERNEL)
 #define __HAVE_RAS

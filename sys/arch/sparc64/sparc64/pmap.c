@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.171.2.1 2006/06/26 12:45:29 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.171.2.2 2006/09/14 12:31:18 yamt Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.171.2.1 2006/06/26 12:45:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.171.2.2 2006/09/14 12:31:18 yamt Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -422,7 +422,7 @@ pmap_mp_init(void)
 
 	extern void cpu_mp_startup(void);
 
-	if ( (v = OF_claim(NULL, PAGE_SIZE, PAGE_SIZE)) == NULL) {
+	if ((v = OF_claim(NULL, PAGE_SIZE, PAGE_SIZE)) == NULL) {
 		panic("pmap_mp_init: Cannot claim a page.");
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.8.1 2006/05/24 10:57:14 yamt Exp $ */
+/*	$NetBSD: intr.h,v 1.12.8.2 2006/09/14 12:31:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,26 +63,14 @@
 #define	IPL_LPT		PIL_LPT
 #define	IPL_IPI		PIL_HIGH
 
-/*
- * Interprocessor interrupts. In order how we want them processed.
- */
-#define	SPARC64_IPI_HALT	(1UL << 0)
-#define	SPARC64_IPI_PAUSE	(1UL << 1)
-#define	SPARC64_IPI_FLUSH_PTE	(1UL << 2)
-#define	SPARC64_IPI_FLUSH_CTX	(1UL << 3)
-#define	SPARC64_IPI_FLUSH_ALL	(1UL << 4)
-#define	SPARC64_IPI_SAVE_FP	(1UL << 5)
-
-#define SPARC64_NIPIS		6
-
 #if defined(MULTIPROCESSOR)
 void	sparc64_ipi_init (void);
-void	sparc64_multicast_ipi (cpuset_t, u_long);
-void	sparc64_broadcast_ipi (u_long);
-void	sparc64_send_ipi (int, u_long);
-void	sparc64_ipi_halt_cpus (void);
-void	sparc64_ipi_pause_cpus (void);
-void	sparc64_ipi_resume_cpus (void);
+int	sparc64_ipi_halt_thiscpu (void *);
+int	sparc64_ipi_pause_thiscpu (void *);
+void	mp_halt_cpus (void);
+void	mp_pause_cpus (void);
+void	mp_resume_cpus (void);
+int	mp_cpu_is_paused (cpuset_t);
 #endif
 
 void *softintr_establish (int level, void (*fun)(void *), void *arg);

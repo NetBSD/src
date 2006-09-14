@@ -1,4 +1,4 @@
-#	$NetBSD: files.atheros,v 1.2.4.4 2006/09/03 15:22:50 yamt Exp $
+#	$NetBSD: files.atheros,v 1.2.4.5 2006/09/14 12:31:09 yamt Exp $
 
 file	arch/evbmips/atheros/mach_intr.c
 
@@ -10,6 +10,7 @@ file	arch/evbmips/evbmips/disksubr.c
 file	arch/evbmips/evbmips/interrupt.c
 
 file	arch/mips/mips/mips3_clock.c
+file	arch/mips/mips/mips3_clockintr.c
 file	arch/mips/mips/softintr.c
 
 # System bus

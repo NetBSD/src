@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.731.2.7 2006/09/03 15:22:58 yamt Exp $
+# $NetBSD: GENERIC,v 1.731.2.8 2006/09/14 12:31:10 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.731.2.7 $"
+#ident 		"GENERIC-$Revision: 1.731.2.8 $"
 
 maxusers	32		# estimated number of users
 
@@ -754,6 +754,9 @@ wdc*	at isapnp?
 # PCMCIA IDE controllers
 wdc*	at pcmcia? function ?
 
+# CardBus IDE controllers
+#njata*  at cardbus? function ? flags 0		# Workbit NinjaATA-32
+
 # ISA ST506, ESDI, and IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
 # fall back to 16bits I/O if 32bits I/O are not functional).
@@ -837,6 +840,8 @@ ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
+msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 #ndis* 	at pci? dev ? function ?	# Experimental - NDIS Network Driver
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
@@ -1248,11 +1253,12 @@ bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
 # Bluetooth USB Controllers
 ubt* at uhub? port ? configuration ? interface ?
 
-# Bluetooth Devices
-pseudo-device btdev	4
+# Bluetooth Device Hub
+bthub* at bt3c?
+bthub* at ubt?
 
 # Bluetooth HID support
-bthidev* at btdev?
+bthidev* at bthub?
 
 # Bluetooth Mouse
 btms* at bthidev? reportid ?
@@ -1263,7 +1269,7 @@ btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
 
 # Bluetooth Audio support
-btsco* at btdev?
+btsco* at bthub?
 
 
 # Mice

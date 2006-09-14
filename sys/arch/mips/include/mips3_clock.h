@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clock.h,v 1.1.2.2 2006/09/03 15:23:21 yamt Exp $	*/
+/*	$NetBSD: mips3_clock.h,v 1.1.2.3 2006/09/14 12:31:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Garrett D'Amore.
@@ -34,6 +34,13 @@
 #ifndef	_MIPS3_CLOCK_H
 #define	_MIPS3_CLOCK_H
 
-extern void	mips3_clockintr(uint32_t, uint32_t);
+void	mips3_clockintr(struct clockframe *);
+void	mips3_initclocks(void);
+void	mips3_delay(int);
+void	mips3_setstatclockrate(int);
+
+#ifdef	__HAVE_TIMECOUNTER
+void	mips3_init_tc(void);
+#endif
 
 #endif	/* _MIPS3_CLOCK_H */

@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.21.8.3 2006/09/03 15:23:55 yamt Exp $ */
+/* $NetBSD: dksubr.c,v 1.21.8.4 2006/09/14 12:31:26 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.21.8.3 2006/09/03 15:23:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.21.8.4 2006/09/14 12:31:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 	    di->di_dkname, dksc, bp));
 
 	if (!(dksc->sc_flags & DKF_INITED)) {
-		DPRINTF_FOLLOW(("dk_stragy: not inited\n"));
+		DPRINTF_FOLLOW(("dk_strategy: not inited\n"));
 		bp->b_error  = ENXIO;
 		bp->b_flags |= B_ERROR;
 		biodone(bp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.38.8.1 2006/04/01 12:06:33 yamt Exp $ */
+/*	$NetBSD: ka750.c,v 1.38.8.2 2006/09/14 12:31:22 yamt Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka750.c,v 1.38.8.1 2006/04/01 12:06:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka750.c,v 1.38.8.2 2006/09/14 12:31:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -97,8 +97,8 @@ struct	cpu_dep ka750_calls = {
 	ka750_mchk,
 	ka750_memerr,
 	ka750_conf,
-	generic_clkread,
-	generic_clkwrite,
+	generic_gettime,
+	generic_settime,
 	1,	/* ~VUPS */
 	4,	/* SCB pages */
 	0,	/* halt call */

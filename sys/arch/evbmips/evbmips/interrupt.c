@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.7.8.1 2006/09/03 15:22:50 yamt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.7.8.2 2006/09/14 12:31:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.7.8.1 2006/09/03 15:22:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.7.8.2 2006/09/14 12:31:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,11 +60,15 @@ intr_init(void)
 void
 cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
+	struct clockframe cf;
+
 	uvmexp.intrs++;
 
 	if (ipending & MIPS_INT_MASK_5) {
 		/* call the common MIPS3 clock interrupt handler */ 
-		mips3_clockintr(status, pc);
+		cf.pc = pc;
+		cf.sr = status;
+		mips3_clockintr(&cf);
 
 		/* Re-enable clock interrupts. */
 		cause &= ~MIPS_INT_MASK_5;

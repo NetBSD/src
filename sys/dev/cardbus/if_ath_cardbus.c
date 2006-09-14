@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.9.2.4 2006/08/11 15:43:59 yamt Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.9.2.5 2006/09/14 12:31:27 yamt Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,10 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.9.2.4 2006/08/11 15:43:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.9.2.5 2006/09/14 12:31:27 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -71,10 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.9.2.4 2006/08/11 15:43:59 yamt 
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>

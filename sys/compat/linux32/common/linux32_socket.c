@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.1 2006/02/09 19:18:57 manu Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.1.4.1 2006/09/14 12:31:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.1 2006/02/09 19:18:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.1.4.1 2006/09/14 12:31:23 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -251,8 +251,10 @@ linux32_sys_connect(l, v, retval)
 	NETBSD32TOP_UAP(name, struct osockaddr)
 	NETBSD32TO64_UAP(namelen);
 
+#ifdef DEBUG_LINUX
 	printf("linux32_sys_connect: s = %d, name = %p, namelen = %d\n",
 		SCARG(&ua, s), SCARG(&ua, name), SCARG(&ua, namelen));
+#endif
 
 	return linux_sys_connect(l, &ua, retval);
 }

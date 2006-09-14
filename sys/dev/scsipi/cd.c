@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.240.2.3 2006/09/03 15:24:48 yamt Exp $	*/
+/*	$NetBSD: cd.c,v 1.240.2.4 2006/09/14 12:31:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.240.2.3 2006/09/03 15:24:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.240.2.4 2006/09/14 12:31:40 yamt Exp $");
 
 #include "rnd.h"
 
@@ -1685,11 +1685,11 @@ read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *size)
 	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT;
 	memset(&di_cmd, 0, sizeof(di_cmd));
 	di_cmd.opcode = READ_DISCINFO;
-	_lto2b(sizeof(di), di_cmd.data_len);
+	_lto2b(READ_DISCINFO_BIGSIZE, di_cmd.data_len);
 
 	error = scsipi_command(periph,
 	    (void *) &di_cmd,  sizeof(di_cmd),
-	    (void *) &di,      sizeof(di),
+	    (void *) &di,      READ_DISCINFO_BIGSIZE,
 	    CDRETRIES, 30000, NULL, flags);
 	if (error == 0) {
 		msb = di.last_track_last_session_msb;

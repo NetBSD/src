@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.106.2.5 2006/08/11 15:45:47 yamt Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.106.2.6 2006/09/14 12:31:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.106.2.5 2006/08/11 15:45:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.106.2.6 2006/09/14 12:31:49 yamt Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -223,14 +223,14 @@ restart:
 #if NVERIEXEC > 0
 			if (vfe != NULL) {
 				veriexec_report("Write access request.",
-				    pathbuf, l, REPORT_ALWAYS|REPORT_ALARM); 
+				    pathbuf, l, REPORT_ALWAYS|REPORT_ALARM);
 
 				/* IPS mode: Deny writing to monitored files. */
 				if (veriexec_strict >= VERIEXEC_IPS) {
 					error = EPERM;
 					goto bad;
 				} else {
-					vfe->status = FINGERPRINT_NOTEVAL;
+					veriexec_purge(vfe);
 				}
 			}
 #endif /* NVERIEXEC > 0 */
@@ -238,7 +238,30 @@ restart:
 	}
 
 	if (fmode & O_TRUNC) {
+#if NVERIEXEC > 0 
+		if ((error = veriexec_verify(l, vp, pathbuf, VERIEXEC_FILE,
+					     &vfe)) != 0) {
+			/*VOP_UNLOCK(vp, 0);*/
+			goto bad;
+		}
+
+		if (vfe != NULL) {
+			veriexec_report("truncate access request.",
+					pathbuf, l,
+					REPORT_VERBOSE | REPORT_ALARM);
+
+			/* IPS mode: Deny truncating monitored files. */
+			if (veriexec_strict >= 2) {
+				error = EPERM;
+				goto bad;
+			} else {
+				veriexec_purge(vfe);
+			}
+		}
+#endif /* NVERIEXEC > 0 */
+
 		VOP_UNLOCK(vp, 0);			/* XXX */
+
 		if ((error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH)) != 0) {
 			vrele(vp);
 			return (error);

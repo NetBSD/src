@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.105.6.4 2006/08/11 15:45:47 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.105.6.5 2006/09/14 12:31:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.105.6.4 2006/08/11 15:45:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.105.6.5 2006/09/14 12:31:48 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -111,7 +111,8 @@ static void	*mclpool_alloc(struct pool *, int);
 static void	mclpool_release(struct pool *, void *);
 
 static struct pool_allocator mclpool_allocator = {
-	mclpool_alloc, mclpool_release, 0,
+	.pa_alloc = mclpool_alloc,
+	.pa_free = mclpool_release,
 };
 
 static struct mbuf *m_copym0(struct mbuf *, int, int, int, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.30.8.2 2006/09/03 15:24:23 yamt Exp $	*/
+/*	$NetBSD: yds.c,v 1.30.8.3 2006/09/14 12:31:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.30.8.2 2006/09/03 15:24:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.30.8.3 2006/09/14 12:31:34 yamt Exp $");
 
 #include "mpu.h"
 
@@ -230,6 +230,7 @@ static const struct audio_hw_if yds_hw_if = {
 	yds_trigger_output,
 	yds_trigger_input,
 	NULL,
+	NULL,	/* powerstate */
 };
 
 static const struct audio_device yds_device = {

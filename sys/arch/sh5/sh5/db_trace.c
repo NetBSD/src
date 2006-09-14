@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.16 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.16.8.1 2006/09/14 12:31:17 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.16 2005/12/11 12:19:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.16.8.1 2006/09/14 12:31:17 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -153,7 +153,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
     const char *modif, void (*pr)(const char *, ...))
 {
 	db_addr_t pc, fp;
-	db_addr_t nextpc, nextfp;
+	db_addr_t nextpc = 0, nextfp;
 	db_addr_t lastpc = 0, lastfp = 0;
 	db_sym_t sym;
 	db_expr_t diff, pc_adj;
@@ -184,7 +184,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			struct proc *p;
 			struct lwp *l;
 			(*pr)("trace: pid %d ", (int)addr);
-			p = pfind(addr);
+			p = p_find(addr, PFIND_LOCKED);
 			if (p == NULL) {
 				(*pr)("not found\n");
 				return;
