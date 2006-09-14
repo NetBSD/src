@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.134 2006/09/13 11:35:53 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.135 2006/09/14 22:44:18 he Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134 2006/09/13 11:35:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.135 2006/09/14 22:44:18 he Exp $");
 
 #define NEW_FPSTATE
 
@@ -570,8 +570,8 @@ dopanic:
 			{
 				char sbuf[sizeof(PSTATE_BITS) + 64];
 
-				printf("trap type 0x%x: cpu %ld, pc=%lx",
-				       type, CPU_UPAID, pc); 
+				printf("trap type 0x%x: cpu %d, pc=%lx",
+				       type, cpu_number(), pc); 
 				bitmask_snprintf(pstate, PSTATE_BITS, sbuf,
 						 sizeof(sbuf));
 				printf(" npc=%lx pstate=%s\n",
