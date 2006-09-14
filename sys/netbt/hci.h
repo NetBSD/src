@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.3.2.1 2006/09/07 13:52:47 tron Exp $	*/
+/*	$NetBSD: hci.h,v 1.3.2.2 2006/09/14 21:16:30 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.3.2.1 2006/09/07 13:52:47 tron Exp $
+ * $Id: hci.h,v 1.3.2.2 2006/09/14 21:16:30 riz Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2083,6 +2083,7 @@ struct hci_memo {
  */
 struct hci_unit {
 	void		*hci_softc;		/* ptr to device softc */
+	struct device	*hci_bthub;		/* bthub(4) handle */
 
 	/* device info */
 	char		*hci_devname;		/* device name */

@@ -1,4 +1,4 @@
-.\" $NetBSD: bthidev.4,v 1.3.2.2 2006/09/14 21:16:31 riz Exp $
+.\" $NetBSD: bthub.4,v 1.1.2.2 2006/09/14 21:16:31 riz Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -30,75 +30,74 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd September 9, 2006
-.Dt BTHIDEV 4
+.Dt BTHUB 4
 .Os
 .Sh NAME
-.Nm bthidev
-.Nd Bluetooth Human Interface Device support
+.Nm bthub
+.Nd Bluetooth Remote Device Hub
 .Sh SYNOPSIS
-.Cd "bthidev* at bthub?"
+.Cd "bthub* at bt3c?"
+.Cd "bthub* at ubt?"
 .Pp
-.Cd "btkbd*   at bthidev? reportid ?"
-.Cd "btms*    at bthidev? reportid ?"
+.Cd "bthidev* at bthub?"
+.Cd "btsco* at bthub?"
 .Sh DESCRIPTION
 The
 .Nm
-driver handles all Bluetooth Human Interface Devices.
-Each HID device can have several components, e.g., a keyboard and
-a mouse.
-These components use different report identifiers to
-distinguish which component data is coming from.
-The
+device is used to attach remote Bluetooth devices to the system, and
+will attach to Bluetooth controllers as they are enabled.
+.Sh CONFIGURATION
+Normally, Bluetooth Remote Devices will be configured on the
 .Nm
-driver may have several children attached that handle particular
-components and dispatches data to them based on the report id.
-.Pp
-Normally, Bluetooth HIDs will be attached using the
+using the
 .Xr btdevctl 8
-program.
-The following properties are used by the
-.Nm
-driver during autoconfiguration:
-.Bl -tag -width interrupt_psmXX
+program, which passes a
+.Xr proplib 3
+dictionary to the control file
+.Pa /dev/bthub
+with the
+.Dv BTDEV_ATTACH
+and
+.Dv BTDEV_DETACH
+.Xr ioctl 2
+commands.
+.Pp
+The following properties are used by
+.Nm :
+.Pp
+.Bl -tag
 .It local-bdaddr
-Local device address.
+Local BD_ADDR.
+This required property should be a six byte data blob.
 .It remote-bdaddr
-Remote device address.
+Remote BD_ADDR.
+This required property should be a six byte data blob.
 .It device-type
-Should be
-.Sq bthidev ,
-indicating a Human Interface Device.
-.It control-psm
-This, if set, will indicate the PSM to use for the Control channel.
-If not set,
-.Dv L2CAP_PSM_HID_CNTL
-will be used.
-.It interrupt-psm
-This, if set, will indicate the PSM to use for the Interrupt channel.
-If not set,
-.Dv L2CAP_PSM_HID_INTR
-will be used.
-.It descriptor
-This required binary blob is the HID descriptor containing information about
-reports the device will produce, and obtained via SDP.
-.It reconnect
-If this boolean value is set, and is true, then the
-.Nm
-driver will initiate reconnections to the remote device when no
-connection is present.
+Device type.
+This required property should be a string indicating the
+device type, and may be one of the following:
+.Pp
+.Bl -tag -compact
+.It bthidev
+Human Interface Device, see
+.Xr bthidev 4 .
+.It btsco
+SCO Audio Device, see
+.Xr btsco 4 .
+.El
 .El
 .Pp
-When the
-.Nm
-driver has configured its children, it will initate a connection
-to the remote device.
-If this fails and the reconnect flag is not set, it will then wait for
-the device to initiate the connection.
+Properties used by the configured device are listed in the appropriate device
+manual page.
+.Pp
+.Sh FILES
+.Bl -tag -compact
+.It Pa /dev/bthub
+.El
 .Sh SEE ALSO
 .Xr bluetooth 4 ,
-.Xr bthub 4 ,
-.Xr btkbd 4 ,
-.Xr btms 4 ,
+.Xr bthidev 4 ,
+.Xr btsco 4 ,
 .Xr btdevctl 8
 .Sh HISTORY
 The
