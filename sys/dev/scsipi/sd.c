@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.249 2006/07/09 17:12:21 drochner Exp $	*/
+/*	$NetBSD: sd.c,v 1.250 2006/09/14 17:54:34 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.249 2006/07/09 17:12:21 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.250 2006/09/14 17:54:34 reinoud Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -935,8 +935,11 @@ sddone(struct scsipi_xfer *xs, int error)
 	if (bp) {
 		bp->b_error = error;
 		bp->b_resid = xs->resid;
-		if (error)
+		if (error) {
+			/* on a read/write error bp->b_resid is zero, so fix */
+			bp->b_resid  =bp->b_bcount;
 			bp->b_flags |= B_ERROR;
+		}
 
 		disk_unbusy(&sd->sc_dk, bp->b_bcount - bp->b_resid,
 		    (bp->b_flags & B_READ));
