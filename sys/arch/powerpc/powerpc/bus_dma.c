@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.26.2.1 2006/03/13 09:06:59 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.26.2.2 2006/09/14 12:31:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26.2.1 2006/03/13 09:06:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26.2.2 2006/09/14 12:31:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -486,7 +486,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	__asm volatile("eieio");
 	for (; len > 0; ds++, offset = 0) {
 		bus_size_t seglen = ds->ds_len - offset;
-		bus_addr_t addr = ds->ds_addr + offset;
+		bus_addr_t addr = BUS_MEM_TO_PHYS(t, ds->ds_addr) + offset;
 		if (seglen > len)
 			seglen = len;
 		len -= seglen;

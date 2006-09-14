@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c313reg.h,v 1.1.2.2 2006/09/03 15:23:07 yamt Exp $	*/
+/*	$NetBSD: rs5c313reg.h,v 1.1.6.2 2006/09/14 12:31:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,28 +30,28 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	DEV_RS5C313REG_H__
-#define	DEV_RS5C313REG_H__
+#ifndef	_DEV_IC_RS5C313REG_H_
+#define	_DEV_IC_RS5C313REG_H_
 
 /*
- * RICOH RS5C313
+ * RICOH RS5C313 Real Time Clock
  */
-#define	RS5C313_ADDR_SEC1	0
-#define	RS5C313_ADDR_SEC10	1
-#define	RS5C313_ADDR_MIN1	2
-#define	RS5C313_ADDR_MIN10	3
-#define	RS5C313_ADDR_HOUR1	4
-#define	RS5C313_ADDR_HOUR10	5
-#define	RS5C313_ADDR_WDAY	6
-#define	RS5C313_ADDR_TINT	7
-#define	RS5C313_ADDR_DAY1	8
-#define	RS5C313_ADDR_DAY10	9
-#define	RS5C313_ADDR_MON1	10
-#define	RS5C313_ADDR_MON10	11
-#define	RS5C313_ADDR_YEAR1	12
-#define	RS5C313_ADDR_YEAR10	13
-#define	RS5C313_ADDR_CTRL	14
-#define	RS5C313_ADDR_TEST	15
+#define	RS5C313_SEC1	0
+#define	RS5C313_SEC10	1
+#define	RS5C313_MIN1	2
+#define	RS5C313_MIN10	3
+#define	RS5C313_HOUR1	4
+#define	RS5C313_HOUR10	5
+#define	RS5C313_WDAY	6
+#define	RS5C313_TINT	7
+#define	RS5C313_DAY1	8
+#define	RS5C313_DAY10	9
+#define	RS5C313_MON1	10
+#define	RS5C313_MON10	11
+#define	RS5C313_YEAR1	12
+#define	RS5C313_YEAR10	13
+#define	RS5C313_CTRL	14
+#define	RS5C313_TEST	15
 
 /* TINT register */
 #define	TINT_CT0		0x01
@@ -69,4 +69,4 @@
 
 #define	CTRL_BASE		CTRL_24H
 
-#endif	/* DEV_RS5C313REG_H__ */
+#endif	/* _DEV_IC_RS5C313REG_H_ */

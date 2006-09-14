@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.113.2.2 2006/09/03 15:23:32 yamt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.113.2.3 2006/09/14 12:31:18 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.113.2.2 2006/09/03 15:23:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.113.2.3 2006/09/14 12:31:18 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -634,7 +634,12 @@ cpu_rootconf()
 	char diskname[16];
 	int i, error;
 
-	KASSERT(booted_device != NULL);
+	if (booted_device == NULL) {
+		printf("FATAL: boot device not found, check your firmware "
+		    "settings!\n");
+		setroot(NULL, 0);
+		return;
+	}
 
 	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
 	if (bp == NULL)

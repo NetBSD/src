@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.262.2.6 2006/08/11 15:45:46 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.262.2.7 2006/09/14 12:31:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.262.2.6 2006/08/11 15:45:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.262.2.7 2006/09/14 12:31:48 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -168,6 +168,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.262.2.6 2006/08/11 15:45:46 yamt Exp
 
 #include <net/if.h>
 #include <net/raw_cb.h>
+
+#include <secmodel/secmodel.h>
 
 extern struct proc proc0;
 extern struct lwp lwp0;
@@ -332,6 +334,9 @@ main(void)
 
 	/* Initialize kauth. */
 	kauth_init();
+
+	/* Initialize default security model. */
+	secmodel_start();
 
 #ifdef FILEASSOC
 	fileassoc_init();

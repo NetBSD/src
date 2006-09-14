@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1.2.2 2006/04/11 11:53:27 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.1.2.3 2006/09/14 12:31:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -44,15 +44,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 
-/*
- * Fill in *tvp with current time with microsecond resolution.
- */
-void
-microtime(tvp)
-	struct timeval *tvp;
-{
-}
-
 void
 cpu_initclocks()
 {
@@ -64,24 +55,3 @@ setstatclockrate(newhz)
 {
 }
 
-/*
- * Initialize the time of day register, based on the time base which is, e.g.
- * from a filesystem.  Base provides the time to within six months,
- * and the time of year clock (if any) provides the rest.
- */
-void
-inittodr(base)
-	time_t base;
-{
-}
-
-/*
- * Reset the TODR based on the time value; used when the TODR
- * has a preposterous value and also when the time is reset
- * by the stime system call.  
- */
-void
-resettodr()
-{
-	return;
-}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.62.8.3 2006/08/11 15:45:46 yamt Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.62.8.4 2006/09/14 12:31:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.62.8.3 2006/08/11 15:45:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.62.8.4 2006/09/14 12:31:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,8 +299,8 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 	int error;
 
 	/* Make sure that the caller is root. */
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_ACCOUNTING,
+	    0, NULL, NULL, NULL)))
 		return (error);
 
 	/*

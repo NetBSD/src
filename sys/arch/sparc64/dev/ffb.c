@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.22.2.4 2006/09/03 15:23:32 yamt Exp $	*/
+/*	$NetBSD: ffb.c,v 1.22.2.5 2006/09/14 12:31:18 yamt Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.22.2.4 2006/09/03 15:23:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.22.2.5 2006/09/14 12:31:18 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -640,13 +640,9 @@ ffb_ras_setfg(struct ffb_softc *sc, int32_t fg)
 static void
 ffbfb_unblank(struct device *dev)
 {
-	/* u_int on = 1; */
+	u_int on = 1;
 
-	if (dev && dev->dv_xname)
-		printf("%s: ffbfb_unblank\n", dev->dv_xname);
-	else
-		printf("ffbfb_unblank(%p)n", dev);
-	/* ffb_blank((struct ffb_softc*)dev, WSDISPLAYIO_SVIDEO, &on); */
+	ffb_blank((struct ffb_softc*)dev, WSDISPLAYIO_SVIDEO, &on);
 }
 
 int

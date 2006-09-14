@@ -1,4 +1,4 @@
-/* $NetBSD: if_ath_arbus.c,v 1.3.2.5 2006/09/03 15:23:21 yamt Exp $ */
+/* $NetBSD: if_ath_arbus.c,v 1.3.2.6 2006/09/14 12:31:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.3.2.5 2006/09/03 15:23:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.3.2.6 2006/09/14 12:31:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,8 @@ ath_arbus_attach(struct device *parent, struct device *self, void *opaque)
 
 	sc->sc_invalid = 1;
 
-	asc->sc_ih = arbus_intr_establish(aa->aa_irq, ath_intr, sc);
+	asc->sc_ih = arbus_intr_establish(aa->aa_cirq, aa->aa_mirq, ath_intr,
+	    sc);
 	if (asc->sc_ih == NULL) {
 		aprint_error("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);

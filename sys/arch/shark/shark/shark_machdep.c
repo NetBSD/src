@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.23 2006/02/26 05:31:54 thorpej Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.23.2.1 2006/09/14 12:31:17 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.23 2006/02/26 05:31:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.23.2.1 2006/09/14 12:31:17 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -332,7 +332,7 @@ static void
 process_kernel_args(void)
 {
 #ifdef RB_QUIET
-	int bool;
+	int value;
 #endif
 	
 #if defined(RB_QUIET) && defined(BOOT_QUIETLY)
@@ -343,14 +343,14 @@ process_kernel_args(void)
 	parse_mi_bootargs(boot_args);
 
 #ifdef RB_QUIET
-	if (get_bootconf_option(args, "noquiet", BOOTOPT_TYPE_BOOLEAN, &bool)) {
-		if (!bool)
+	if (get_bootconf_option(args, "noquiet", BOOTOPT_TYPE_BOOLEAN, &value)) {
+		if (!value)
 			boothowto |= RB_QUIET;
 		else
 			boothowto &= ~RB_QUIET;
 	}
-	if (get_bootconf_option(args, "quiet", BOOTOPT_TYPE_BOOLEAN, &bool)) {
-		if (bool)
+	if (get_bootconf_option(args, "quiet", BOOTOPT_TYPE_BOOLEAN, &value)) {
+		if (value)
 			boothowto |= RB_QUIET;
 		else
 			boothowto &= ~RB_QUIET;

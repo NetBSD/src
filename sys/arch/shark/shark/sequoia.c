@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.c,v 1.4.8.1 2006/03/13 09:07:02 yamt Exp $	*/
+/*	$NetBSD: sequoia.c,v 1.4.8.2 2006/09/14 12:31:17 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -40,7 +40,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.4.8.1 2006/03/13 09:07:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.4.8.2 2006/09/14 12:31:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -469,7 +469,7 @@ int  scrGetData (void)
 
 void ledNetActive (void)
 {
-    ledLastActive = time;
+    getmicrotime(&ledLastActive);
 }
 
 void ledNetBlock    (void)
@@ -491,15 +491,17 @@ void ledPanic       (void)
 static void   ledTimeout(void * arg)
 {
     int timeSpan;   /* in usec */
-    
-    if(time.tv_sec == ledLastActive.tv_sec)
+    struct timeval now;
+
+    getmicrotime(&now);
+    if(now.tv_sec == ledLastActive.tv_sec)
     {
-        timeSpan = time.tv_usec -  ledLastActive.tv_usec;
+        timeSpan = now.tv_usec -  ledLastActive.tv_usec;
     }
     
-    else if (time.tv_sec - 10  < ledLastActive.tv_sec) /* stop rollover problems */
+    else if (now.tv_sec - 10  < ledLastActive.tv_sec) /* stop rollover problems */
     {
-        timeSpan = (1000000 + time.tv_usec) -  ledLastActive.tv_usec;
+        timeSpan = (1000000 + now.tv_usec) -  ledLastActive.tv_usec;
     }
 
     else

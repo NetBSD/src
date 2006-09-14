@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.1.1.1.6.3 2006/09/03 15:25:22 yamt Exp $ */
+/* $NetBSD: kern_tc.c,v 1.1.1.1.6.4 2006/09/14 12:31:48 yamt Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.6.3 2006/09/03 15:25:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.6.4 2006/09/14 12:31:48 yamt Exp $");
 
 #include "opt_ntp.h"
 
@@ -426,6 +426,7 @@ void
 tc_init(struct timecounter *tc)
 {
 	u_int u;
+	int s;
 
 	u = tc->tc_frequency / tc->tc_counter_mask;
 	/* XXX: We need some margin here, 10% is a guess */
@@ -444,7 +445,8 @@ tc_init(struct timecounter *tc)
 		    tc->tc_quality);
 	}
 
-	/* XXX locking */
+	s = splclock();
+
 	tc->tc_next = timecounters;
 	timecounters = tc;
 	/*
@@ -453,16 +455,19 @@ tc_init(struct timecounter *tc)
 	 * worse since this timecounter may not be monotonous.
 	 */
 	if (tc->tc_quality < 0)
-		return;
+		goto out;
 	if (tc->tc_quality < timecounter->tc_quality)
-		return;
+		goto out;
 	if (tc->tc_quality == timecounter->tc_quality &&
 	    tc->tc_frequency < timecounter->tc_frequency)
-		return;
+		goto out;
 	(void)tc->tc_get_timecount(tc);
 	(void)tc->tc_get_timecount(tc);
 	timecounter = tc;
 	tc_windup();
+
+ out:
+	splx(s);
 }
 
 /* Report the frequency of the current timecounter. */

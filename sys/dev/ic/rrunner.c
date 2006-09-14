@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.51.8.4 2006/09/03 15:23:57 yamt Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.51.8.5 2006/09/14 12:31:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,10 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.51.8.4 2006/09/03 15:23:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.51.8.5 2006/09/14 12:31:30 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 
 #include "bpfilter.h"
 #include "esh.h"
@@ -83,10 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.51.8.4 2006/09/03 15:23:57 yamt Exp $"
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -3002,23 +2997,6 @@ eshioctl(ifp, cmd, data)
 		case AF_INET:
 			/* The driver doesn't really care about IP addresses */
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		{
-			struct ns_addr *ina =
-				&IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-					LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl),
-				    ina->x_host.c_host, ifp->if_addrlen);
-				/* Set new address. */
-			eshinit(sc);
-			break;
-		}
 #endif
 		default:
 			break;

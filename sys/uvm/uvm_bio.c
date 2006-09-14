@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.44.2.2 2006/09/03 15:26:08 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.44.2.3 2006/09/14 12:32:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.44.2.2 2006/09/03 15:26:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.44.2.3 2006/09/14 12:32:00 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -106,10 +106,7 @@ static struct ubc_object
 
 struct uvm_pagerops ubc_pager =
 {
-	NULL,		/* init */
-	NULL,		/* reference */
-	NULL,		/* detach */
-	ubc_fault,	/* fault */
+	.pgo_fault = ubc_fault,
 	/* ... rest are NULL */
 };
 

@@ -1,0 +1,11 @@
+# $NetBSD: files.secmodel,v 1.1.2.2 2006/09/14 12:32:00 yamt Exp $
+
+#
+# Traditional NetBSD (derived from 4.4BSD)
+#
+include	"secmodel/bsd44/files.bsd44"
+
+#
+# Sample overlay model on-top of the traditional one
+#
+include "secmodel/overlay/files.overlay"

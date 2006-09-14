@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.41.8.2 2006/08/11 15:42:47 yamt Exp $ */
+/*	$NetBSD: types.h,v 1.41.8.3 2006/09/14 12:31:17 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,8 +105,8 @@ typedef	volatile int		__cpu_simple_lock_t;
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
 #define	__HAVE_SYSCALL_INTERN
 #define	__GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
-#define	__HAVE_NWSCONS
 #define	__HAVE_TIMECOUNTER
+#define __HAVE_GENERIC_TODR
 
 #ifdef SUN4U
 #define __HAVE_CPU_COUNTER	/* sparc v9 CPUs have %tick */

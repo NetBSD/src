@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.21.2.3 2006/08/11 15:41:00 yamt Exp $
+#	$NetBSD: files.amd64,v 1.21.2.4 2006/09/14 12:31:07 yamt Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -127,7 +127,7 @@ file 	arch/x86/pci/aapic.c			aapic
 include	"dev/isa/files.isa"
 
 # PC clock
-file	arch/amd64/isa/clock.c			isa
+file	arch/x86/isa/clock.c			isa
 
 # TSC timecounter support
 file	arch/x86/x86/tsc.c
@@ -193,6 +193,8 @@ file	arch/amd64/amd64/rbus_machdep.c	cardbus
 include	"dev/pcmcia/files.pcmcia"
 
 include	"dev/usb/files.usb"
+
+include "dev/bluetooth/files.bluetooth"
 
 include	"dev/ieee1394/files.ieee1394"
 include "dev/apm/files.apm"

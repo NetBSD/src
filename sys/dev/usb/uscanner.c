@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.50.8.1 2006/04/01 12:07:32 yamt Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.50.8.2 2006/09/14 12:31:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.50.8.1 2006/04/01 12:07:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.50.8.2 2006/09/14 12:31:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,6 +264,7 @@ dev_type_kqfilter(uscannerkqfilter);
 const struct cdevsw uscanner_cdevsw = {
 	uscanneropen, uscannerclose, uscannerread, uscannerwrite,
 	uscannerioctl, nostop, notty, uscannerpoll, nommap, uscannerkqfilter,
+	D_OTHER,
 };
 #elif defined(__OpenBSD__)
 cdev_decl(uscanner);
