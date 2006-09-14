@@ -1,8 +1,11 @@
-/*	$NetBSD: types.h,v 1.2 2002/02/28 03:17:33 simonb Exp $	*/
+/*	$NetBSD: types.h,v 1.3 2006/09/14 15:04:07 gdamore Exp $	*/
 
 #ifndef _MACHINE_TYPES_H_
 #define	_MACHINE_TYPES_H_
 
 #include <m68k/types.h>
+
+#define	__HAVE_TIMECOUNTER
+#define	__HAVE_GENERIC_TODR
 
 #endif
