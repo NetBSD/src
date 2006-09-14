@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.59 2006/08/26 15:33:20 matt Exp $	*/
+/*	$NetBSD: main.c,v 1.60 2006/09/14 20:43:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.59 2006/08/26 15:33:20 matt Exp $");
+__RCSID("$NetBSD: main.c,v 1.60 2006/09/14 20:43:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -541,9 +541,11 @@ main(argc, argv)
 		(void)setegid(egid);
 
 
-	if ((kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY,
-	    buf)) == NULL && !use_sysctl)
-		errx(1, "%s", buf);
+	if ((kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf)) == NULL) {
+		if (!use_sysctl)
+			errx(1, "%s", buf);
+	} else
+		use_sysctl = 0;
 
 	/* do this now anyway */
 	if (use_sysctl)
@@ -559,7 +561,7 @@ main(argc, argv)
 	}
 #endif
 
-	if ((kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0) && !use_sysctl) {
+	if (kvmd && (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0) && !use_sysctl) {
 		if (nlistf)
 			errx(1, "%s: no namelist", nlistf);
 		else
