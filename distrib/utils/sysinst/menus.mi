@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.28 2006/09/04 02:20:40 hubertf Exp $	*/
+/*	$NetBSD: menus.mi,v 1.29 2006/09/14 14:42:37 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -237,7 +237,7 @@ menu distset, title MSG_Select_your_distribution;
 	display action { msg_display (MSG_distset); };
 	option MSG_Full_installation, exit, action { init_set_status(0);  };
 	option MSG_Minimal_installation, exit, action { init_set_status(1); };
-	option MSG_Custom_installation, exit, action { };
+	option MSG_Custom_installation, exit, action { init_set_status(1); customise_sets(); };
 
 menu ftpsource, y=-4, x=0, w=70, no box, no clear,
 	    exitstring MSG_Get_Distribution;
