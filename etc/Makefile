@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.335 2006/08/13 14:11:36 jmmv Exp $
+#	$NetBSD: Makefile,v 1.336 2006/09/14 13:01:31 pavel Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -93,7 +93,7 @@ BIN1+=	bootptab changelist csh.cshrc csh.login csh.logout daily \
 	netconfig networks newsyslog.conf nsswitch.conf ntp.conf \
 	passwd.conf phones printcap profile protocols \
 	rbootd.conf rc rc.conf rc.lkm rc.local rc.subr rc.shutdown remote rpc \
-	security security.conf services shells sysctl.conf syslog.conf \
+	security security.conf services shells shrc sysctl.conf syslog.conf \
 	weekly weekly.conf wscons.conf
 
 # Use machine-specific disktab if it exists, or the MI one otherwise

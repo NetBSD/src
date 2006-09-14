@@ -1,9 +1,8 @@
-#	$NetBSD: dot.shrc,v 1.1 2006/08/31 22:49:55 hubertf Exp $
+#	$NetBSD: dot.shrc,v 1.2 2006/09/14 13:01:32 pavel Exp $
 
-ll(){ ls -l ${1+"$@"}; }
+. /etc/shrc
 
 case "$-" in *i*)
-	PS1="${HOST%%.*}$PS1"
-	set -o emacs
+	# interactive mode settings go here
 	;;
 esac
