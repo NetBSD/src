@@ -1,4 +1,4 @@
-/*	$NetBSD: getservent_r.c,v 1.7 2006/07/28 01:24:24 joerg Exp $	*/
+/*	$NetBSD: getservent_r.c,v 1.8 2006/09/14 19:58:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getservent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservent_r.c,v 1.7 2006/07/28 01:24:24 joerg Exp $");
+__RCSID("$NetBSD: getservent_r.c,v 1.8 2006/09/14 19:58:48 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,7 +58,7 @@ __weak_alias(setservent_r,_setservent_r)
 int
 _servent_open(struct servent_data *sd)
 {
-	sd->flags = _SV_FIRST;
+	sd->flags |= _SV_FIRST;
 	if (sd->db == NULL) {
 		if ((sd->db = dbopen(_PATH_SERVICES_DB, O_RDONLY, 0,
 		    DB_HASH, NULL)) != NULL)
