@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.22 2005/12/24 22:45:40 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.23 2006/09/14 01:18:11 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.22 2005/12/24 22:45:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.23 2006/09/14 01:18:11 gdamore Exp $");
 
 #include "clock.h"
 
@@ -535,46 +535,6 @@ microtime(struct timeval *tvp)
 	lasttime = *tvp;
 }
 
-/* this is a hook set by a clock driver for the configured realtime clock,
-   returning plain current unix-time */
-time_t (*gettod)(void) = 0;
-int    (*settod)(long) = 0;
-
-/*
- * Initialize the time of day register, based on the time base which is, e.g.
- * from a filesystem.
- */
-void
-inittodr(time_t base)
-{
-	u_long timbuf = base;	/* assume no battery clock exists */
-  
-	if (!gettod)
-		printf ("WARNING: no battery clock\n");
-	else
-		timbuf = gettod();
-  
-	if (timbuf < base) {
-		printf ("WARNING: bad date in battery clock\n");
-		timbuf = base;
-	}
-	if (base < 5*SECYR) {
-		printf("WARNING: preposterous time in file system");
-		timbuf = 6*SECYR + 186*SECDAY + SECDAY/2;
-		printf(" -- CHECK AND RESET THE DATE!\n");
-	}
-
-	/* Battery clock does not store usec's, so forget about it. */
-	time.tv_sec = timbuf;
-}
-
-void
-resettodr(void)
-{
-	if (settod)
-		if (settod (time.tv_sec) != 1)
-			printf("Cannot set battery backed clock\n");
-}
 #else	/* NCLOCK */
 #error loose.
 #endif
