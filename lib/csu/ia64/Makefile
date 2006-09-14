@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2006/07/02 17:15:22 cherry Exp $
+#	$NetBSD: Makefile,v 1.2 2006/09/14 23:55:54 cherry Exp $
+
+ELFSIZE=	64
 
 #Uncomment the next line to enable the new .init fallthru
 CPPFLAGS+=	-I- -I${.CURDIR}
