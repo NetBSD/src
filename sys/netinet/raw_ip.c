@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.88.8.2 2006/08/11 15:46:33 yamt Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.88.8.3 2006/09/14 12:31:55 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.88.8.2 2006/08/11 15:46:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.88.8.3 2006/09/14 12:31:55 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -541,8 +541,10 @@ rip_usrreq(struct socket *so, int req,
 			error = EISCONN;
 			break;
 		}
-		if (l == 0 || (error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag))) {
+		if (l == 0 || (error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_SOCKET,
+		    (void *)KAUTH_REQ_NETWORK_SOCKET_RAWSOCK, so, NULL,
+		    NULL))) {
 			error = EACCES;
 			break;
 		}

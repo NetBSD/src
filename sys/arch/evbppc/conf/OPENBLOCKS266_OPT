@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266_OPT,v 1.2.8.1 2006/09/03 15:22:51 yamt Exp $
+#	$NetBSD: OPENBLOCKS266_OPT,v 1.2.8.2 2006/09/14 12:31:09 yamt Exp $
 #
 
 include         "arch/evbppc/conf/OPENBLOCKS266"
@@ -43,6 +43,9 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # PCMCIA IDE controllers
 wdc*	at pcmcia? function ?
+
+# CardBus IDE controllers
+#njata*  at cardbus? function ? flags 0	# Workbit NinjaATA-32
 
 # ATA (IDE) bus support
 atabus* at ata?

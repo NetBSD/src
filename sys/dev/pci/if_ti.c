@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.69.8.1 2006/04/01 12:07:16 yamt Exp $ */
+/* $NetBSD: if_ti.c,v 1.69.8.2 2006/09/14 12:31:33 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,11 +81,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.69.8.1 2006/04/01 12:07:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.69.8.2 2006/09/14 12:31:33 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
-#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,10 +116,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.69.8.1 2006/04/01 12:07:16 yamt Exp $");
 #include <netinet/ip.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -2774,20 +2769,6 @@ ti_ether_ioctl(ifp, cmd, data)
 		case AF_INET:
 			arp_ifinit(ifp, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			 struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			 if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-				    LLADDR(ifp->if_sadl);
-			 else
-				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
-				    ifp->if_addrlen);
-			 break;
-		    }
 #endif
 		default:
 			break;

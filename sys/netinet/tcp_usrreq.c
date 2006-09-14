@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.113.8.2 2006/08/11 15:46:33 yamt Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.113.8.3 2006/09/14 12:31:55 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 /*-
- * Copyright (c) 1997, 1998, 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,6 +38,8 @@
  * Facility, NASA Ames Research Center.
  * This code is derived from software contributed to The NetBSD Foundation
  * by Charles M. Hannum.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Rui Paulo.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -100,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.113.8.2 2006/08/11 15:46:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.113.8.3 2006/09/14 12:31:55 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1255,11 +1257,13 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 		if (inph->inph_af != pf)
 			continue;
 
-		/* XXX elad - should be done better */
-		if (security_curtain &&
-		    (kauth_cred_geteuid(l->l_cred) != 0) &&
-		    (kauth_cred_geteuid(l->l_cred) !=
-		     inph->inph_socket->so_uidinfo->ui_uid))
+#ifdef notyet
+		if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_CANSEE,
+		    inph->inph_socket->so_cred))
+#endif
+		if (kauth_cred_geteuid(l->l_cred) != 0 &&
+		    kauth_cred_geteuid(l->l_cred) !=
+		    inph->inph_socket->so_uidinfo->ui_uid)
 			continue;
 
 		memset(&pcb, 0, sizeof(pcb));
@@ -1384,7 +1388,8 @@ static void
 sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 			   const char *tcpname)
 {
-	const struct sysctlnode *sack_node;
+	int ecn_node;
+	const struct sysctlnode *sack_node, *node;
 #ifdef TCP_DEBUG
 	extern struct tcp_debug tcp_debug[TCP_NDEBUG];
 	extern int tcp_debx;
@@ -1475,6 +1480,13 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       SYSCTL_DESCR("RFC2018 Selective ACKnowledgement tunables"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SACK, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, &node,
+	    	       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ecn",
+	    	       SYSCTL_DESCR("RFC3168 Explicit Congestion Notification"),
+	    	       NULL, 0, NULL, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	ecn_node = node->sysctl_num;
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "win_scale",
@@ -1599,6 +1611,23 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       sysctl_inpcblist, 0, &tcbtable, 0,
 		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE,
 		       CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    	       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "enable",
+		       SYSCTL_DESCR("Enable TCP Explicit Congestion "
+			   "Notification"),
+	    	       NULL, 0, &tcp_do_ecn, 0,
+	    	       CTL_NET, pf, IPPROTO_TCP, ecn_node,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+	    	       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxretries",
+		       SYSCTL_DESCR("Number of times to retry ECN setup "
+			       "before disabling ECN on the connection"),
+	    	       NULL, 0, &tcp_ecn_maxretries, 0,
+	    	       CTL_NET, pf, IPPROTO_TCP, ecn_node,
+		       CTL_CREATE, CTL_EOL);
 
 	/* SACK gets it's own little subtree. */
 	sysctl_createv(clog, 0, NULL, &sack_node,

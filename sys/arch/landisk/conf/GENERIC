@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1.2.2 2006/09/03 15:23:05 yamt Exp $
+# $NetBSD: GENERIC,v 1.1.2.3 2006/09/14 12:31:11 yamt Exp $
 #
 # GENERIC
 #
@@ -9,4 +9,3 @@ pciide*		at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide*	at pci? dev ? function ?	# Acard IDE controllers
 
 wdc0	at obio? port 0x14000000 irq 10		# CF
-wdc1	at obio? port 0x18000000 irq 9		# iConnect

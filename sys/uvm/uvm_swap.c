@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.99.6.4 2006/09/03 15:26:08 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.99.6.5 2006/09/14 12:32:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.99.6.4 2006/09/03 15:26:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.99.6.5 2006/09/14 12:32:00 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -508,8 +508,8 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * all other requests require superuser privs.   verify.
 	 */
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)))
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_SWAPCTL,
+	    0, NULL, NULL, NULL)))
 		goto out;
 
 	if (SCARG(uap, cmd) == SWAP_DUMPOFF) {
@@ -1159,12 +1159,12 @@ swwrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 const struct bdevsw swap_bdevsw = {
-	noopen, noclose, swstrategy, noioctl, nodump, nosize,
+	noopen, noclose, swstrategy, noioctl, nodump, nosize, D_OTHER,
 };
 
 const struct cdevsw swap_cdevsw = {
 	nullopen, nullclose, swread, swwrite, noioctl,
-	    nostop, notty, nopoll, nommap, nokqfilter
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 /*

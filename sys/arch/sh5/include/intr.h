@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2002/10/14 14:19:28 scw Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.40.1 2006/09/14 12:31:17 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,6 +37,8 @@
 
 #ifndef _SH5_INTR_H
 #define _SH5_INTR_H
+
+#include <sys/evcnt.h>
 
 /* Interrupt sharing types */
 #define	IST_NONE	0	/* none */

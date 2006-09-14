@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.18.8.3 2006/09/03 15:25:13 yamt Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.18.8.4 2006/09/14 12:31:47 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -37,6 +37,10 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.38 2006/03/25 13:0
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/poll.h>
+
+#if (__NetBSD_Version__ >= 399002000)
+#include <sys/kauth.h>
+#endif
 
 #include <net/if.h>
 #include <net/route.h>
@@ -517,7 +521,13 @@ int mode;
 	int error = 0, unit = 0, tmp;
 	friostat_t fio;
 
+#if (__NetBSD_Version__ >= 399002000)
+	if ((mode & FWRITE) && kauth_authorize_network(p->l_cred,
+	    KAUTH_NETWORK_FIREWALL, (void *)KAUTH_REQ_NETWORK_FIREWALL_FW,
+	    NULL, NULL, NULL))
+#else
 	if ((securelevel >= 2) && (mode & FWRITE))
+#endif
 		return EPERM;
 
 	unit = GET_MINOR(dev);

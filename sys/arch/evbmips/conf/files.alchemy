@@ -1,4 +1,4 @@
-#	$NetBSD: files.alchemy,v 1.5.2.1 2006/09/03 15:22:50 yamt Exp $
+#	$NetBSD: files.alchemy,v 1.5.2.2 2006/09/14 12:31:09 yamt Exp $
 
 # Platform support - select just one, please
 defflag		opt_alchemy.h	ALCHEMY_GENERIC
@@ -25,6 +25,7 @@ file	arch/evbmips/evbmips/interrupt.c
 file	arch/evbmips/evbmips/yamon.c
 
 file	arch/mips/mips/mips3_clock.c
+file	arch/mips/mips/mips3_clockintr.c
 file	arch/mips/mips/softintr.c
 
 # System bus

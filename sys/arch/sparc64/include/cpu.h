@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.53.2.1 2006/06/26 12:45:29 yamt Exp $ */
+/*	$NetBSD: cpu.h,v 1.53.2.2 2006/09/14 12:31:18 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,6 +133,8 @@ struct cpu_info {
 	int			ci_want_resched;
 
 	struct cpu_data		ci_data;	/* MI per-cpu data */
+
+	volatile void		*ci_ddb_regs;	/* DDB regs */
 };
 
 #define CPUF_PRIMARY	1
@@ -290,9 +292,6 @@ extern struct intrhand *intrhand[];
 extern struct intrhand *intrlev[MAXINTNUM];
 
 void	intr_establish(int level, struct intrhand *);
-
-#define mp_pause_cpus()		sparc64_ipi_pause_cpus()
-#define mp_resume_cpus()	sparc64_ipi_resume_cpus()
 
 /* disksubr.c */
 struct dkbad;

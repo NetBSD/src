@@ -1,4 +1,4 @@
-# $NetBSD: std.atheros,v 1.1.4.2 2006/04/11 12:20:51 yamt Exp $
+# $NetBSD: std.atheros,v 1.1.4.3 2006/09/14 12:31:09 yamt Exp $
 
 machine evbmips mips
 include		"conf/std"	# MI standard options
@@ -9,6 +9,7 @@ options	EXEC_ELF32	# exec ELF32 binaries
 options	EXEC_SCRIPT	# exec #! scripts
 
 makeoptions	DEFTEXTADDR="0x80020000"
+#makeoptions	DEFTEXTADDR="0x80041000"
 makeoptions	BOARDTYPE="atheros"
 
 include 	"arch/evbmips/conf/files.atheros"

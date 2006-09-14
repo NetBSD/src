@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7.8.3 2006/08/11 15:41:00 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.4.6.2 2006/09/14 12:31:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,12 +121,13 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7.8.3 2006/08/11 15:41:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4.6.2 2006/09/14 12:31:22 yamt Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
 
 #include "opt_multiprocessor.h"
+#include "opt_ntp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,15 +163,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7.8.3 2006/08/11 15:41:00 yamt Exp $");
 #if (NPCPPI > 0)
 #include <dev/isa/pcppivar.h>
 
-#ifdef CLOCKDEBUG
-int clock_debug = 0;
-#define DPRINTF(arg) if (clock_debug) printf arg
-#else
-#define DPRINTF(arg)
-#endif
-
-int sysbeepmatch __P((struct device *, struct cfdata *, void *));
-void sysbeepattach __P((struct device *, struct device *, void *));
+int sysbeepmatch(struct device *, struct cfdata *, void *);
+void sysbeepattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sysbeep, sizeof(struct device),
     sysbeepmatch, sysbeepattach, NULL, NULL);
@@ -179,26 +173,47 @@ static int ppi_attached;
 static pcppi_tag_t ppicookie;
 #endif /* PCPPI */
 
-void	spinwait __P((int));
-int	clockintr __P((void *, struct intrframe));
-int	gettick __P((void));
-void	sysbeep __P((int, int));
-void	rtcinit __P((void));
-int	rtcget __P((mc_todregs *));
-void	rtcput __P((mc_todregs *));
+#ifdef __x86_64__
+#define READ_FLAGS()	read_rflags()
+#define WRITE_FLAGS(x)	write_rflags(x)
+#else /* i386 architecture processor */
+#define READ_FLAGS()	read_eflags()
+#define WRITE_FLAGS(x)	write_eflags(x)
+#endif
 
-static inline int gettick_broken_latch __P((void));
-static void       tickle_tc(void);
+#ifdef CLOCKDEBUG
+int clock_debug = 0;
+#define DPRINTF(arg) if (clock_debug) printf arg
+#else
+#define DPRINTF(arg)
+#endif
+
+int		gettick(void);
+void		sysbeep(int, int);
+static void     tickle_tc(void);
+
+static int	clockintr(void *, struct intrframe);
+static void	rtcinit(void);
+static int	rtcget(mc_todregs *);
+static void	rtcput(mc_todregs *);
+
+static int	cmoscheck(void);
+
+static int	clock_expandyear(int);
+
+static inline int gettick_broken_latch(void);
 
 static volatile uint32_t i8254_lastcount;
 static volatile uint32_t i8254_offset;
 static volatile int i8254_ticked;
+
 static struct simplelock tmr_lock = SIMPLELOCK_INITIALIZER;  /* protect TC timer variables */
 
-inline u_int mc146818_read __P((void *, u_int));
-inline void mc146818_write __P((void *, u_int, u_int));
+inline u_int mc146818_read(void *, u_int);
+inline void mc146818_write(void *, u_int, u_int);
 
 u_int i8254_get_timecount(struct timecounter *);
+static void rtc_register(void);
 
 static struct timecounter i8254_timecounter = {
 	i8254_get_timecount,	/* get_timecount */
@@ -206,24 +221,23 @@ static struct timecounter i8254_timecounter = {
 	~0u,			/* counter_mask */
 	TIMER_FREQ,		/* frequency */
 	"i8254",		/* name */
-	100			/* quality */
+	100,			/* quality */
+	NULL,			/* prev */
+	NULL,			/* next */
 };
 
 /* XXX use sc? */
 inline u_int
-mc146818_read(sc, reg)
-	void *sc;					/* XXX use it? */
-	u_int reg;
+mc146818_read(void *sc, u_int reg)
 {
 
 	outb(IO_RTC, reg);
 	return (inb(IO_RTC+1));
 }
 
+/* XXX use sc? */
 inline void
-mc146818_write(sc, reg, datum)
-	void *sc;					/* XXX use it? */
-	u_int reg, datum;
+mc146818_write(void *sc, u_int reg, u_int datum)
 {
 
 	outb(IO_RTC, reg);
@@ -246,15 +260,14 @@ static int ticks[6];
  */
 
 int
-gettick_broken_latch()
+gettick_broken_latch(void)
 {
-	u_long ef;
+	u_long flags;
 	int v1, v2, v3;
 	int w1, w2, w3;
 
-	/* Don't want someone screwing with the counter
-	   while we're here. */
-	ef = read_rflags();
+	/* Don't want someone screwing with the counter while we're here. */
+	flags = READ_FLAGS();
 	disable_intr();
 
 	v1 = inb(IO_TIMER1+TIMER_CNTR0);
@@ -264,7 +277,7 @@ gettick_broken_latch()
 	v3 = inb(IO_TIMER1+TIMER_CNTR0);
 	v3 |= inb(IO_TIMER1+TIMER_CNTR0) << 8;
 
-	write_rflags(ef);
+	WRITE_FLAGS(flags);
 
 #ifdef CLOCK_PARANOIA
 	if (clock_debug) {
@@ -321,7 +334,6 @@ void
 initrtclock(u_long freq)
 {
 	u_long tval;
-
 	/*
 	 * Compute timer_count, the count-down count the timer will be
 	 * set to.  Also, correctly round
@@ -342,7 +354,7 @@ initrtclock(u_long freq)
 }
 
 void
-startrtclock()
+startrtclock(void)
 {
 	int s;
 
@@ -358,13 +370,16 @@ startrtclock()
 
 	tc_init(&i8254_timecounter);
 
+#if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
 	init_TSC();
+#endif
 
+	rtc_register();
 }
 
 
 static void
-tickle_tc() 
+tickle_tc(void) 
 {
 #if defined(MULTIPROCESSOR)
 	struct cpu_info *ci = curcpu();
@@ -388,7 +403,7 @@ tickle_tc()
 
 }
 
-int
+static int
 clockintr(void *arg, struct intrframe frame)
 {
 	tickle_tc();
@@ -409,10 +424,10 @@ i8254_get_timecount(struct timecounter *tc)
 {
 	u_int count;
 	u_char high, low;
-	u_long rflags;
+	u_long flags;
 
 	/* Don't want someone screwing with the counter while we're here. */
-	rflags = read_rflags();
+	flags = READ_FLAGS();
 	disable_intr();
 
 	simple_lock(&tmr_lock);
@@ -434,27 +449,27 @@ i8254_get_timecount(struct timecounter *tc)
 
 	simple_unlock(&tmr_lock);
 
-	write_rflags(rflags);
+	WRITE_FLAGS(flags);
 	return (count);
 }
 
 int
-gettick()
+gettick(void)
 {
-	u_long ef;
+	u_long flags;
 	u_char lo, hi;
 
 	if (clock_broken_latch)
 		return (gettick_broken_latch());
 
 	/* Don't want someone screwing with the counter while we're here. */
-	ef = read_rflags();
+	flags = READ_FLAGS();
 	disable_intr();
 	/* Select counter 0 and latch it. */
 	outb(IO_TIMER1+TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
 	lo = inb(IO_TIMER1+TIMER_CNTR0);
 	hi = inb(IO_TIMER1+TIMER_CNTR0);
-	write_rflags(ef);
+	WRITE_FLAGS(flags);
 	return ((hi << 8) | lo);
 }
 
@@ -467,8 +482,7 @@ gettick()
  * Don't rely on this being particularly accurate.
  */
 void
-i8254_delay(n)
-	int n;
+i8254_delay(int n)
 {
 	int delay_tick, odelay_tick;
 	static const int delaytab[26] = {
@@ -550,18 +564,13 @@ i8254_delay(n)
 
 #if (NPCPPI > 0)
 int
-sysbeepmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+sysbeepmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	return (!ppi_attached);
 }
 
 void
-sysbeepattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sysbeepattach(struct device *parent, struct device *self, void *aux)
 {
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -572,8 +581,7 @@ sysbeepattach(parent, self, aux)
 #endif
 
 void
-sysbeep(pitch, period)
-	int pitch, period;
+sysbeep(int pitch, int period)
 {
 #if (NPCPPI > 0)
 	if (ppi_attached)
@@ -582,7 +590,7 @@ sysbeep(pitch, period)
 }
 
 void
-i8254_initclocks()
+i8254_initclocks(void)
 {
 
 	/*
@@ -593,8 +601,8 @@ i8254_initclocks()
 	    (int (*)(void *))clockintr, 0);
 }
 
-void
-rtcinit()
+static void
+rtcinit(void)
 {
 	static int first_rtcopen_ever = 1;
 
@@ -607,9 +615,8 @@ rtcinit()
 	mc146818_write(NULL, MC_REGB, MC_REGB_24HR);	/* XXX softc */
 }
 
-int
-rtcget(regs)
-	mc_todregs *regs;
+static int
+rtcget(mc_todregs *regs)
 {
 
 	rtcinit();
@@ -619,24 +626,20 @@ rtcget(regs)
 	return (0);
 }	
 
-void
-rtcput(regs)
-	mc_todregs *regs;
+static void
+rtcput(mc_todregs *regs)
 {
 
 	rtcinit();
 	MC146818_PUTTOD(NULL, regs);			/* XXX softc */
 }
 
-static int timeset;
-
 /*
  * check whether the CMOS layout is "standard"-like (ie, not PS/2-like),
  * to be called at splclock()
  */
-static int cmoscheck __P((void));
 static int
-cmoscheck()
+cmoscheck(void)
 {
 	int i;
 	unsigned short cksum = 0;
@@ -652,9 +655,9 @@ cmoscheck()
 /*
  * Check whether the CMOS layout is PS/2 like, to be called at splclock().
  */
-static int cmoscheckps2 __P((void));
+static int cmoscheckps2(void);
 static int
-cmoscheckps2()
+cmoscheckps2(void)
 {
 #if 0
 	/* Disabled until I find out the CRC checksum algorithm IBM uses */
@@ -687,10 +690,8 @@ int rtc_update_century = 0;
  * Being here, deal with the CMOS century byte.
  */
 static int centb = NVRAM_CENTURY;
-static int clock_expandyear __P((int));
 static int
-clock_expandyear(clockyear)
-	int clockyear;
+clock_expandyear(int clockyear)
 {
 	int s, clockcentury, cmoscentury;
 
@@ -739,134 +740,48 @@ clock_expandyear(clockyear)
 	return (clockyear);
 }
 
-/*
- * Initialize the time of day register, based on the time base which is, e.g.
- * from a filesystem.
- */
-void
-inittodr(base)
-	time_t base;
+static int
+rtc_get_ymdhms(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	mc_todregs rtclk;
-	struct clock_ymdhms dt;
-	struct timespec ts;
 	int s;
-	/*
-	 * We mostly ignore the suggested time (which comes from the
-	 * file system) and go for the RTC clock time stored in the
-	 * CMOS RAM.  If the time can't be obtained from the CMOS, or
-	 * if the time obtained from the CMOS is 5 or more years less
-	 * than the suggested time, we used the suggested time.  (In
-	 * the latter case, it's likely that the CMOS battery has
-	 * died.)
-	 */
-
-	/*
-	 * if the file system time is more than a year older than the
-	 * kernel, warn and then set the base time to the CONFIG_TIME.
-	 */
-	if (base && base < (CONFIG_TIME-SECYR)) {
-		printf("WARNING: preposterous time in file system\n");
-		base = CONFIG_TIME;
-	}
+	mc_todregs rtclk;
 
 	s = splclock();
 	if (rtcget(&rtclk)) {
 		splx(s);
-		printf("WARNING: invalid time in clock chip\n");
-		goto fstime;
+		return -1;
 	}
 	splx(s);
-#ifdef DEBUG_CLOCK
-	printf("readclock: %x/%x/%x %x:%x:%x\n", rtclk[MC_YEAR],
-	    rtclk[MC_MONTH], rtclk[MC_DOM], rtclk[MC_HOUR], rtclk[MC_MIN],
-	    rtclk[MC_SEC]);
-#endif
 
-	dt.dt_sec = bcdtobin(rtclk[MC_SEC]);
-	dt.dt_min = bcdtobin(rtclk[MC_MIN]);
-	dt.dt_hour = bcdtobin(rtclk[MC_HOUR]);
-	dt.dt_day = bcdtobin(rtclk[MC_DOM]);
-	dt.dt_mon = bcdtobin(rtclk[MC_MONTH]);
-	dt.dt_year = clock_expandyear(bcdtobin(rtclk[MC_YEAR]));
+	dt->dt_sec = bcdtobin(rtclk[MC_SEC]);
+	dt->dt_min = bcdtobin(rtclk[MC_MIN]);
+	dt->dt_hour = bcdtobin(rtclk[MC_HOUR]);
+	dt->dt_day = bcdtobin(rtclk[MC_DOM]);
+	dt->dt_mon = bcdtobin(rtclk[MC_MONTH]);
+	dt->dt_year = clock_expandyear(bcdtobin(rtclk[MC_YEAR]));
 
-	/*
-	 * If time_t is 32 bits, then the "End of Time" is 
-	 * Mon Jan 18 22:14:07 2038 (US/Eastern)
-	 * This code copes with RTC's past the end of time if time_t
-	 * is an int32 or less. Needed because sometimes RTCs screw
-	 * up or are badly set, and that would cause the time to go
-	 * negative in the calculation below, which causes Very Bad
-	 * Mojo. This at least lets the user boot and fix the problem.
-	 * Note the code is self eliminating once time_t goes to 64 bits.
-	 */
-	if (sizeof(time_t) <= sizeof(int32_t)) {
-		if (dt.dt_year >= 2038) {
-			printf("WARNING: RTC time at or beyond 2038.\n");
-			dt.dt_year = 2037;
-			printf("WARNING: year set back to 2037.\n");
-			printf("WARNING: CHECK AND RESET THE DATE!\n");
-		}
-	}
-
-	ts.tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
-	ts.tv_nsec = 0;
-	tc_setclock(&ts);
-#ifdef DEBUG_CLOCK
-	printf("readclock: %ld (%ld)\n", time.tv_sec, base);
-#endif
-
-	if (base != 0 && base < time_second - 5*SECYR)
-		printf("WARNING: file system time much less than clock time\n");
-	else if (base > time_second + 5*SECYR) {
-		printf("WARNING: clock time much less than file system time\n");
-		printf("WARNING: using file system time\n");
-		goto fstime;
-	}
-
-	timeset = 1;
-	return;
-
-fstime:
-	timeset = 1;
-	ts.tv_sec = base;
-	ts.tv_nsec = 0;
-	tc_setclock(&ts);
-	printf("WARNING: CHECK AND RESET THE DATE!\n");
+	return 0;
 }
 
-/*
- * Reset the clock.
- */
-void
-resettodr()
+static int
+rtc_set_ymdhms(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
 	mc_todregs rtclk;
-	struct clock_ymdhms dt;
 	int century;
 	int s;
-
-	/*
-	 * We might have been called by boot() due to a crash early
-	 * on.  Don't reset the clock chip in this case.
-	 */
-	if (!timeset)
-		return;
 
 	s = splclock();
 	if (rtcget(&rtclk))
 		memset(&rtclk, 0, sizeof(rtclk));
 	splx(s);
 
-	clock_secs_to_ymdhms(time_second - rtc_offset * 60, &dt);
-
-	rtclk[MC_SEC] = bintobcd(dt.dt_sec);
-	rtclk[MC_MIN] = bintobcd(dt.dt_min);
-	rtclk[MC_HOUR] = bintobcd(dt.dt_hour);
-	rtclk[MC_DOW] = dt.dt_wday + 1;
-	rtclk[MC_YEAR] = bintobcd(dt.dt_year % 100);
-	rtclk[MC_MONTH] = bintobcd(dt.dt_mon);
-	rtclk[MC_DOM] = bintobcd(dt.dt_day);
+	rtclk[MC_SEC] = bintobcd(dt->dt_sec);
+	rtclk[MC_MIN] = bintobcd(dt->dt_min);
+	rtclk[MC_HOUR] = bintobcd(dt->dt_hour);
+	rtclk[MC_DOW] = dt->dt_wday + 1;
+	rtclk[MC_YEAR] = bintobcd(dt->dt_year % 100);
+	rtclk[MC_MONTH] = bintobcd(dt->dt_mon);
+	rtclk[MC_DOM] = bintobcd(dt->dt_day);
 
 #ifdef DEBUG_CLOCK
 	printf("setclock: %x/%x/%x %x:%x:%x\n", rtclk[MC_YEAR], rtclk[MC_MONTH],
@@ -875,14 +790,26 @@ resettodr()
 	s = splclock();
 	rtcput(&rtclk);
 	if (rtc_update_century > 0) {
-		century = bintobcd(dt.dt_year / 100);
+		century = bintobcd(dt->dt_year / 100);
 		mc146818_write(NULL, centb, century); /* XXX softc */
 	}
 	splx(s);
+	return 0;
+
+}
+
+static void
+rtc_register(void)
+{
+	static struct todr_chip_handle	tch;
+	tch.todr_gettime_ymdhms = rtc_get_ymdhms;
+	tch.todr_settime_ymdhms = rtc_set_ymdhms;
+	tch.todr_setwen = NULL;
+
+	todr_attach(&tch);
 }
 
 void
-setstatclockrate(arg)
-	int arg;
+setstatclockrate(int arg)
 {
 }

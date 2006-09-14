@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.47 2006/02/20 19:00:27 cdi Exp $ */
+/*	$NetBSD: cpu.c,v 1.47.2.1 2006/09/14 12:31:18 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.47 2006/02/20 19:00:27 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.47.2.1 2006/09/14 12:31:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,7 @@ struct cacheinfo cacheinfo;
 /* Linked list of all CPUs in system. */
 int sparc_ncpus = 0;
 struct cpu_info *cpus = NULL;
+static int cpu_instance;
 
 volatile cpuset_t cpus_active;/* set of active cpus */
 struct cpu_bootargs *cpu_args;	/* allocated very early in pmap_bootstrap. */
@@ -146,7 +147,7 @@ alloc_cpuinfo(u_int cpu_node)
 	 */
 	cpi->ci_next = NULL;
 	cpi->ci_curlwp = NULL;
-	cpi->ci_number = portid;
+	cpi->ci_number = cpu_instance++;
 	cpi->ci_cpuid = portid;
 	cpi->ci_upaid = portid;
 	cpi->ci_fplwp = NULL;
@@ -188,6 +189,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	long clk;
 	int impl, vers, fver;
 	struct mainbus_attach_args *ma = aux;
+	struct cpu_info *ci;
 	struct fpstate64 *fpstate;
 	struct fpstate64 fps[2];
 	const char *sep;
@@ -326,8 +328,8 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	 * Allocate cpu_info structure if needed and save cache information
 	 * in there.
 	 */
-	alloc_cpuinfo((u_int)node);
-	printf("%s: upa id %" PRIu64 "\n", dev->dv_xname, CPU_UPAID);
+	ci = alloc_cpuinfo((u_int)node);
+	printf("%s: upa id %d\n", dev->dv_xname, ci->ci_upaid);
 }
 
 #if defined(MULTIPROCESSOR)

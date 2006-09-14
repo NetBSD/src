@@ -1,8 +1,14 @@
-#	$NetBSD: files.atheros,v 1.1.4.5 2006/09/03 15:23:21 yamt Exp $
+#	$NetBSD: files.atheros,v 1.1.4.6 2006/09/14 12:31:12 yamt Exp $
 
-file	arch/mips/atheros/ar5312.c
-file	arch/mips/atheros/ar5312_intr.c
-file	arch/mips/atheros/ar531x_board.c
+defflag	opt_wisoc.h	WISOC_AR5312
+			WISOC_AR5315
+
+file	arch/mips/atheros/ar5312.c		wisoc_ar5312
+file	arch/mips/atheros/ar5312_intr.c		wisoc_ar5312
+file	arch/mips/atheros/ar531x_board.c	wisoc_ar5312
+
+file	arch/mips/atheros/ar5315.c		wisoc_ar5315
+file	arch/mips/atheros/ar5315_intr.c		wisoc_ar5315
 
 # Atheros system bus
 device	arbus { [addr=-1] }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.37.2.3 2006/09/03 15:25:13 yamt Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.37.2.4 2006/09/14 12:31:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.37.2.3 2006/09/03 15:25:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.37.2.4 2006/09/14 12:31:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -568,9 +568,9 @@ out1:
 	for(i=0;i<NTFS_SYSNODESNUM;i++)
 		if(ntmp->ntm_sysvn[i]) vrele(ntmp->ntm_sysvn[i]);
 
-	if (vflush(mp,NULLVP,0))
+	if (vflush(mp,NULLVP,0)) {
 		dprintf(("ntfs_mountfs: vflush failed\n"));
-
+	}
 out:
 	devvp->v_specmountpoint = NULL;
 	if (bp)

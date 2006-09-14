@@ -1,6 +1,8 @@
-/* $NetBSD: clockvar.h,v 1.2.8.2 2006/08/11 15:41:19 yamt Exp $ */
+/*	$NetBSD: rs5c313var.h,v 1.1.6.2 2006/09/14 12:31:30 yamt Exp $	*/
+
 /*
- * Copyright (C) 2004 Izumi Tsutsui.  All rights reserved.
+ * Copyright (c) 2006 Valeriy E. Ushakov
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -11,7 +13,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -21,17 +23,43 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-extern struct evcnt hardclock_ev;
+#ifndef	_DEV_IC_RS5C313VAR_H_
+#define	_DEV_IC_RS5C313VAR_H_
 
-#ifdef ENABLE_INT5_STATCLOCK
-void statclockintr(struct clockframe *);
-extern struct evcnt statclock_ev;
-#endif
+/*
+ * RICOH RS5C313 Real Time Clock
+ */
 
-extern void (*timer_start)(void *);
-extern long (*timer_read)(void *);
-extern void *timer_cookie;
+struct rs5c313_ops;
+
+struct rs5c313_softc {
+	struct device sc_dev;
+
+	struct todr_chip_handle sc_todr;
+	struct rs5c313_ops *sc_ops;
+
+	int sc_valid;		/* oscillation halt sensing on init */
+};
+
+struct rs5c313_ops {
+	void (*rs5c313_op_begin)(struct rs5c313_softc *);
+
+	/* CE pin */
+	void (*rs5c313_op_ce)(struct rs5c313_softc *, int);
+
+	/* SCLK pin */
+	void (*rs5c313_op_clk)(struct rs5c313_softc *, int);
+
+	/* SIO pin */
+	void (*rs5c313_op_dir)(struct rs5c313_softc *, int);
+	int  (*rs5c313_op_read)(struct rs5c313_softc *);
+	void (*rs5c313_op_write)(struct rs5c313_softc *, int);
+};
+
+void rs5c313_attach(struct rs5c313_softc *);
+
+#endif	/* _DEV_IC_RS5C313VAR_H_ */

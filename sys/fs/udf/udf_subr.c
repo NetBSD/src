@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.5.2.4 2006/09/03 15:25:13 yamt Exp $ */
+/* $NetBSD: udf_subr.c,v 1.5.2.5 2006/09/14 12:31:48 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.5.2.4 2006/09/03 15:25:13 yamt Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.5.2.5 2006/09/14 12:31:48 yamt Exp $");
 #endif /* not lint */
 
 
@@ -368,7 +368,7 @@ udf_read_descriptor(struct udf_mount *ump, uint32_t sector,
 		src = (union dscrptr *) bp->b_data;
 		dscrlen = udf_tagsize(src, sector_size);
 		dst = malloc(dscrlen, mtype, M_WAITOK);
-		memcpy(dst, src, dscrlen);
+		memcpy(dst, src, sector_size);
 	}
 	/* dispose first block */
 	bp->b_flags |= B_AGE;

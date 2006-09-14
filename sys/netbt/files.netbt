@@ -1,9 +1,12 @@
-# $NetBSD: files.netbt,v 1.2.4.3 2006/09/03 15:25:36 yamt Exp $
+# $NetBSD: files.netbt,v 1.2.4.4 2006/09/14 12:31:55 yamt Exp $
 
 # Bluetooth Protocols
 
 define	bluetooth
 defflag	opt_bluetooth.h		BLUETOOTH
+
+# Bluetooth HCI controller (bthub attaches here)
+define	btbus	{ }
 
 file	netbt/bt_proto.c	bluetooth
 file	netbt/bt_sysctl.c	bluetooth

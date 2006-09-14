@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.h,v 1.1.4.2 2006/08/11 15:43:59 yamt Exp $	*/
+/*	$NetBSD: btsco.h,v 1.1.4.3 2006/09/14 12:31:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,6 +33,12 @@
 
 #ifndef _DEV_BLUETOOTH_BTSCO_H_
 #define _DEV_BLUETOOTH_BTSCO_H_
+
+#include <netbt/bluetooth.h>
+
+/* btsco(4) properties */
+#define BTSCOlisten		"listen"
+#define BTSCOchannel		"rfcomm-channel"
 
 /*
  * We need to provide a way to get the SCO Audio contact information

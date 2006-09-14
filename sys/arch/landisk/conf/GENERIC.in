@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.1.2.2 2006/09/03 15:23:05 yamt Exp $
+# $NetBSD: GENERIC.in,v 1.1.2.3 2006/09/14 12:31:11 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.1.2.2 $"
+#ident          "GENERIC-$Revision: 1.1.2.3 $"
 
 maxusers	16		# estimated number of users
 
@@ -30,6 +30,7 @@ makeoptions     COPTS="-O -m4-nofpu"
 options 	SYMTAB_SPACE=512000
 
 # CPU-related options.
+options 	PCLOCK=33333333			# 33.33MHz
 options 	DONT_INIT_BSC
 #options 	DONT_INIT_PCIBSC
 
@@ -139,11 +140,8 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -209,6 +207,8 @@ obio0	at mainbus?
 options 	SCIFCONSOLE
 options 	SCIFCN_SPEED=9600
 scif0	at shb?
+
+rs5c313rtc0 at shb0			# time-of-day clock
 
 # SCSI Controllers and Devices
 

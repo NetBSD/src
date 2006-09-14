@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.87.2.2 2006/08/11 15:45:47 yamt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.87.2.3 2006/09/14 12:31:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.87.2.2 2006/08/11 15:45:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.87.2.3 2006/09/14 12:31:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,10 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.87.2.2 2006/08/11 15:45:47 yamt Ex
  *	rethink name space problems
  *	need a proper out-of-band
  */
-const struct	sockaddr_un sun_noname = { sizeof(sun_noname), AF_LOCAL };
+const struct sockaddr_un sun_noname = {
+	.sun_len = sizeof(sun_noname),
+	.sun_family = AF_LOCAL,
+};
 ino_t	unp_ino;			/* prototype for fake inode numbers */
 
 struct mbuf *unp_addsockcred(struct lwp *, struct mbuf *);

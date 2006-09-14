@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.81.2.4 2006/09/03 15:25:35 yamt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.81.2.5 2006/09/14 12:31:55 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.81.2.4 2006/09/03 15:25:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.81.2.5 2006/09/14 12:31:55 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -260,9 +260,8 @@ route_output(struct mbuf *m, ...)
 	 * Verify that the caller has the appropriate privilege; RTM_GET
 	 * is the only operation the non-superuser is allowed.
 	 */
-	if (rtm->rtm_type != RTM_GET &&
-	    kauth_authorize_generic(curlwp->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &curlwp->l_acflag) != 0)
+	if (kauth_authorize_network(curlwp->l_cred, KAUTH_NETWORK_ROUTE,
+	    rtm, NULL, NULL, NULL) != 0)
 		senderr(EACCES);
 
 	switch (rtm->rtm_type) {

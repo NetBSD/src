@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.27.2.2 2006/08/11 15:41:26 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.27.2.3 2006/09/14 12:31:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.2.2 2006/08/11 15:41:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.2.3 2006/09/14 12:31:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -506,6 +506,8 @@ cpu_reboot(int howto, char *bootstr)
 		cnpollc(0);
 	}
 
+	printf("reseting board...\n\n");
+
 	/*
 	 * Try to use board-specific reset logic, which might involve a better
 	 * hardware reset.
@@ -519,7 +521,6 @@ cpu_reboot(int howto, char *bootstr)
 	 * YAMON isn't happy with it.  So just call the reset vector (grr,
 	 * Alchemy YAMON doesn't have a "reset" command).
 	 */
-	printf("reseting board...\n\n");
 	mips_icache_sync_all();
 	mips_dcache_wbinv_all();
 	__asm volatile("jr	%0" :: "r"(MIPS_RESET_EXC_VEC));

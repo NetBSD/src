@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.282.2.5 2006/08/11 15:41:53 yamt Exp $
+#	$NetBSD: files.i386,v 1.282.2.6 2006/09/14 12:31:10 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -246,7 +246,7 @@ file	arch/i386/pci/p64h2apic.c	p64h2apic
 include	"dev/isa/files.isa"
 
 # PC clock
-file	arch/i386/isa/clock.c		isa
+file	arch/x86/isa/clock.c		isa
 
 # TSC support
 file	arch/x86/x86/tsc.c		i586_cpu | i686_cpu

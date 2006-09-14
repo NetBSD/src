@@ -39,5 +39,3 @@ void rtc_init(void);
 u_char rtc_read(u_char);
 void rtc_write(u_char, u_char);
 void rtc_print(void);
-time_t getsecs(void);
-void setsecs(time_t);
