@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.471 2006/09/10 21:04:43 cherry Exp $
+#	$NetBSD: bsd.own.mk,v 1.472 2006/09/14 06:28:47 skrll Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -471,6 +471,7 @@ MKGDB=		no
 #
 .if ${MACHINE_ARCH} == "ia64"
 MKLINT=		no
+MKGDB=		no
 .endif
 
 #
