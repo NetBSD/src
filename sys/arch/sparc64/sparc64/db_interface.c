@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.88 2006/09/13 11:35:53 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.89 2006/09/14 22:43:27 he Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.88 2006/09/13 11:35:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.89 2006/09/14 22:43:27 he Exp $");
 
 #include "opt_ddb.h"
 
@@ -415,7 +415,7 @@ kdb_trap(int type, register struct trapframe64 *tf)
 
 	/* Initialise local dbregs storage from trap frame */
 	dbregs.db_tf = *tf;
-	dbregs.db_fr = *(struct frame64 *)tf->tf_out[6];
+	dbregs.db_fr = *(struct frame64 *)(uintptr_t)tf->tf_out[6];
 
 	/* Setup current CPU & reg pointers */
 	ddb_cpuinfo = curcpu();
