@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.33 2006/08/08 08:30:11 tron Exp $
+.\" $NetBSD: mdoc.local,v 1.34 2006/09/14 23:23:56 wiz Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,13 +67,13 @@
 .ds doc-operating-system-NetBSD-4.0    4.0
 .ds doc-operating-system-NetBSD-5.0    5.0
 .\" Platforms not yet in groff distribution
-.ds doc-volume-as-amigappc		amigappc
-.ds doc-volume-as-evbsh5		evbsh5
-.ds doc-volume-as-ews4800mips		ews4800mips
-.ds doc-volume-as-ibmnws		ibmnws
-.ds doc-volume-as-iyonix		iyonix
+.ds doc-volume-as-amigappc              amigappc
+.ds doc-volume-as-evbsh5                evbsh5
+.ds doc-volume-as-ews4800mips           ews4800mips
+.ds doc-volume-as-ibmnws                ibmnws
+.ds doc-volume-as-iyonix                iyonix
 .
 .\" Bluetooth libraries
-.ds doc-str-Lb-libbluetooth	Bluetooth Host Lookup library (libbluetooth, \-lbluetooth)
-.ds doc-str-Lb-libsdp		Bluetooth Service Discovery Protocol library (libsdp, \-libsdp)
-.ds doc-str-Lb-libprop		Property Container Object Library (libprop, \-lprop)
+.ds doc-str-Lb-libbluetooth     Bluetooth Host Lookup library (libbluetooth, \-lbluetooth)
+.ds doc-str-Lb-libsdp           Bluetooth Service Discovery Protocol library (libsdp, \-libsdp)
+.ds doc-str-Lb-libprop          Property Container Object Library (libprop, \-lprop)
