@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.115 2006/09/15 15:51:12 yamt Exp $	*/
+/*	$NetBSD: lfs.h,v 1.116 2006/09/15 18:50:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -350,7 +350,7 @@ struct lfid {
 
 /* Heuristic emptiness measure */
 #define VPISEMPTY(vp)	 (LIST_EMPTY(&(vp)->v_dirtyblkhd) && 		\
-			  !((vp)->v_flag & VONWORKLST) &&		\
+			  !(vp->v_type == VREG && (vp)->v_flag & VONWORKLST) &&\
 			  VTOI(vp)->i_lfs_nbtree == 0)
 
 #define WRITEINPROG(vp) ((vp)->v_numoutput > 0 ||			\

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.188 2006/09/01 19:41:28 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.189 2006/09/15 18:50:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.188 2006/09/01 19:41:28 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.189 2006/09/15 18:50:49 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1277,7 +1277,7 @@ lfs_flush_dirops(struct lfs *fs)
 		}
 		KDASSERT(ip->i_number != LFS_IFILE_INUM);
 		(void) lfs_writeinode(fs, sp, ip);
-		if (waslocked)
+		if (waslocked == LK_EXCLOTHER)
 			LFS_SET_UINO(ip, IN_MODIFIED);
 		simple_lock(&fs->lfs_interlock);
 	}
@@ -2057,8 +2057,7 @@ lfs_putpages(void *v)
 		int locked;
 
 		DLOG((DLOG_PAGE, "lfs_putpages: flushing VDIROP\n"));
-		locked = VOP_ISLOCKED(vp) && /* XXX */
-			vp->v_lock.lk_lockholder == curproc->p_pid;
+		locked = (VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 		simple_unlock(&vp->v_interlock);
 		lfs_writer_enter(fs, "ppdirop");
 		if (locked)
