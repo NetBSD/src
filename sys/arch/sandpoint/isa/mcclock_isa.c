@@ -1,4 +1,4 @@
-/*	$NetBSD: isaclock.c,v 1.8 2006/09/15 16:03:14 gdamore Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.1 2006/09/15 16:03:14 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -116,73 +116,132 @@ NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-/*
- * Primitive clock interrupt routines.
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isaclock.c,v 1.8 2006/09/15 16:03:14 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.1 2006/09/15 16:03:14 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/callout.h>
-#include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/time.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/pio.h>
+#include <machine/bus.h>
 
+#include <dev/clock_subr.h>
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <dev/ic/i8253reg.h>
-#include <sandpoint/isa/nvram.h>
-#include <sandpoint/isa/spkrreg.h>
+#include <dev/ic/mc146818reg.h>
+#include <dev/ic/mc146818var.h>
 
-extern void disable_intr(void);	/* In locore.S */
-extern void enable_intr(void);	/* In locore.S */
+/*
+ * We only deal with the RTC portion of the mc146818 right now.  Later
+ * we might want to add support for the NVRAM portion, since it
+ * appears that some systems use that.
+ */
 
-void	sysbeepstop __P((void *));
-void	sysbeep __P((int, int));
+static int mcclock_isa_probe(struct device *, struct cfdata *, void *);
+static void mcclock_isa_attach(struct device *, struct device *, void *);
 
-static int beeping;
+CFATTACH_DECL(mcclock_isa, sizeof(struct mc146818_softc),
+    mcclock_isa_probe, mcclock_isa_attach, NULL, NULL);
 
-void
-sysbeepstop(arg)
-	void *arg;
+static unsigned
+mcclock_isa_read(struct mc146818_softc *sc, unsigned reg)
 {
-	/* disable counter 2 */
-	disable_intr();
-	isa_outb(PITAUX_PORT, isa_inb(PITAUX_PORT) & ~PIT_SPKR);
-	enable_intr();
-	beeping = 0;
+
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 0, reg);
+	return bus_space_read_1(sc->sc_bst, sc->sc_bsh, 1);
+}
+
+static void
+mcclock_isa_write(struct mc146818_softc *sc, unsigned reg, unsigned datum)
+{
+
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 0, reg);
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 1, datum);
+}
+
+int
+mcclock_isa_probe(struct device *parent, struct cfdata *match, void *aux)
+{
+	struct isa_attach_args *ia = aux;
+	bus_space_handle_t ioh;
+
+	if (ia->ia_nio < 1)
+		return 0;
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return 0;
+
+	if ((ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT) &&
+	    (ia->ia_io[0].ir_addr != IO_RTC))
+		return 0;
+
+	if (ia->ia_niomem > 0 &&
+	    (ia->ia_iomem[0].ir_addr != ISA_UNKNOWN_IOMEM))
+		return 0;
+
+	if (ia->ia_nirq > 0 &&
+	    (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ))
+		return 0;
+
+	if (ia->ia_ndrq > 0 &&
+	    (ia->ia_drq[0].ir_drq != ISA_UNKNOWN_DRQ))
+		return 0;
+
+	if (bus_space_map(ia->ia_iot, IO_RTC, 2, 0, &ioh))
+		return 0;
+	bus_space_unmap(ia->ia_iot, ioh, 2);
+
+	ia->ia_io[0].ir_addr = IO_RTC;
+	ia->ia_io[0].ir_size = 2;
+	ia->ia_nio = 1;
+
+	ia->ia_niomem = 0;
+	ia->ia_nirq = 0;
+	ia->ia_ndrq = 0;
+
+	return 1;
 }
 
 void
-sysbeep(pitch, period)
-	int pitch, period;
+mcclock_isa_attach(struct device *parent, struct device *self, void *aux)
 {
-	static struct callout sysbeep_ch = CALLOUT_INITIALIZER;
-	static int last_pitch;
+	struct mc146818_softc *sc = (struct mc146818_softc *)self;
+	struct isa_attach_args *ia = aux;
 
-	if (beeping)
-		callout_stop(&sysbeep_ch);
-	if (pitch == 0 || period == 0) {
-		sysbeepstop(0);
-		last_pitch = 0;
+	sc->sc_bst = ia->ia_iot;
+	if (bus_space_map(sc->sc_bst, ia->ia_io[0].ir_addr,
+		ia->ia_io[0].ir_size, 0, &sc->sc_bsh)) {
+		printf(": can't map registers!\n");
 		return;
 	}
-	if (!beeping || last_pitch != pitch) {
-		disable_intr();
-		isa_outb(IO_TIMER1 + TIMER_MODE,
-			 TIMER_SEL2 | TIMER_16BIT | TIMER_SQWAVE);
-		isa_outb(IO_TIMER1 + TIMER_CNTR2, TIMER_DIV(pitch) % 256);
-		isa_outb(IO_TIMER1 + TIMER_CNTR2, TIMER_DIV(pitch) / 256);
-		isa_outb(PITAUX_PORT, isa_inb(PITAUX_PORT) | PIT_SPKR);	/* enable counter 2 */
-		enable_intr();
-	}
-	last_pitch = pitch;
-	beeping = 1;
-	callout_reset(&sysbeep_ch, period, sysbeepstop, NULL);
+
+	/*
+	 * Select a 32KHz crystal, periodic interrupt every 1024 Hz.
+	 * XXX: We disable periodic interrupts, so why set a rate?
+	 */
+	mcclock_isa_write(sc, MC_REGA, MC_BASE_32_KHz | MC_RATE_1024_Hz);
+
+	/*
+	 * 24 Hour clock, no interrupts please.
+	 */
+	mcclock_isa_write(sc, MC_REGB, MC_REGB_24HR);
+
+	sc->sc_year0 = 1900;
+	sc->sc_flag = 0;
+	sc->sc_mcread = mcclock_isa_read;
+	sc->sc_mcwrite = mcclock_isa_write;
+#if 0
+	/*
+	 * XXX: perhaps on some systems we should manage the century byte?
+	 * For now we don't worry about it.  (Ugly MD code.)
+	 */
+	sc->sc_getcent = mcclock_isa_getcent;
+	sc->sc_setcent = mcclock_isa_setcent;
+#endif
+	mc146818_attach(sc);
+	printf("\n");
+
+	todr_attach(&sc->sc_handle);
 }
