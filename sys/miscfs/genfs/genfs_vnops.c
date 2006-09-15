@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.128 2006/07/23 22:06:12 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.129 2006/09/15 15:51:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.128 2006/07/23 22:06:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.129 2006/09/15 15:51:12 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -970,7 +970,7 @@ out:
 				uvm_pagefree(pg);
 				continue;
 			}
-			uvm_pageactivate(pg);
+			uvm_pageenqueue(pg);
 			pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
 			UVM_PAGE_OWN(pg, NULL);
 		}
@@ -1331,9 +1331,7 @@ genfs_putpages(void *v)
 				pg = tpg;
 			if (tpg->offset < startoff || tpg->offset >= endoff)
 				continue;
-			if (flags & PGO_DEACTIVATE &&
-			    (tpg->pqflags & PQ_INACTIVE) == 0 &&
-			    tpg->wire_count == 0) {
+			if (flags & PGO_DEACTIVATE && tpg->wire_count == 0) {
 				(void) pmap_clear_reference(tpg);
 				uvm_pagedeactivate(tpg);
 			} else if (flags & PGO_FREE) {
