@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 2006/09/15 07:51:17 skrll Exp $	*/
 
 /*	$OpenBSD: clock.c,v 1.10 2001/08/31 03:13:42 mickey Exp $	*/
 
@@ -33,14 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2006/09/15 07:51:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
-
-#include <dev/clock_subr.h>
 
 #include <machine/pdc.h>
 #include <machine/iomod.h>
@@ -57,12 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2005/12/11 12:17:24 christos Exp $");
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #endif
-
-volatile struct timeval time;
-
-void startrtclock(void);
-
-static struct pdc_tod tod PDC_ALIGNMENT;
 
 void
 cpu_initclocks(void)
@@ -95,60 +87,6 @@ clock_intr(void *v)
 	/* printf ("clock out 0x%x\n", t); */
 
 	return 1;
-}
-
-
-/*
- * initialize the system time from the time of day clock
- */
-void
-inittodr(time_t t)
-{
-	int 	tbad = 0;
-	int pagezero_cookie;
-
-	if (t < 5*SECYR) {
-		printf ("WARNING: preposterous time in file system");
-		t = 6*SECYR + 186*SECDAY + SECDAY/2;
-		tbad = 1;
-	}
-
-	pagezero_cookie = hp700_pagezero_map();
-	pdc_call((iodcio_t)PAGE0->mem_pdc, 1, PDC_TOD, PDC_TOD_READ,
-		&tod, 0, 0, 0, 0, 0);
-	hp700_pagezero_unmap(pagezero_cookie);
-
-	time.tv_sec = tod.sec;
-	time.tv_usec = tod.usec;
-
-	if (!tbad) {
-		u_long	dt;
-
-		dt = (time.tv_sec < t)?  t - time.tv_sec : time.tv_sec - t;
-
-		if (dt < 2 * SECDAY)
-			return;
-		printf("WARNING: clock %s %ld days",
-		    time.tv_sec < t? "lost" : "gained", dt / SECDAY);
-	}
-
-	printf (" -- CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * reset the time of day clock to the value in time
- */
-void
-resettodr(void)
-{
-	int pagezero_cookie;
-
-	tod.sec = time.tv_sec;
-	tod.usec = time.tv_usec;
-
-	pagezero_cookie = hp700_pagezero_map();
-	pdc_call((iodcio_t)PAGE0->mem_pdc, 1, PDC_TOD, PDC_TOD_WRITE, &tod);
-	hp700_pagezero_unmap(pagezero_cookie);
 }
 
 void
