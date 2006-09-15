@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.76.2.2 2006/03/12 09:38:56 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.76.2.3 2006/09/15 11:54:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.76.2.2 2006/03/12 09:38:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.76.2.3 2006/09/15 11:54:56 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.76.2.2 2006/03/12 09:38:56 yamt Ex
 #include <sys/vnode.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_pdpolicy.h>
 
 /*
  * UVMPD_NUMDIRTYREACTS is how many dirty pages the pagedaemon will reactivate
@@ -160,6 +161,21 @@ uvm_wait(const char *wmsg)
 	splx(s);
 }
 
+/*
+ * uvm_kick_pdaemon: perform checks to determine if we need to
+ * give the pagedaemon a nudge, and do so if necessary.
+ */
+
+void
+uvm_kick_pdaemon(void)
+{
+
+	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||
+	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&
+	     uvmpdpol_needsscan_p())) {
+		wakeup(&uvm.pagedaemon);
+	}
+}
 
 /*
  * uvmpd_tune: tune paging parameters

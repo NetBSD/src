@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.38.8.1 2006/03/05 12:51:09 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.38.8.2 2006/09/15 11:54:56 yamt Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.38.8.1 2006/03/05 12:51:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.38.8.2 2006/09/15 11:54:56 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.38.8.1 2006/03/05 12:51:09 yamt Exp $
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_swap.h>
+#include <uvm/uvm_pdpolicy.h>
 
 static POOL_INIT(uvm_anon_pool, sizeof(struct vm_anon), 0, 0, 0, "anonpl",
     &pool_allocator_nointr);

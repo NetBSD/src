@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.1.2.1 2006/03/05 12:51:09 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.1.2.2 2006/09/15 11:54:56 yamt Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.1.2.1 2006/03/05 12:51:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.1.2.2 2006/09/15 11:54:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.1.2.1 2006/03/05 12:51:09 y
 #include <sys/vnode.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_pdpolicy.h>
 #include <uvm/uvm_pdpolicy_impl.h>
 
 #endif /* defined(PDSIM) */

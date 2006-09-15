@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.34.8.2 2006/05/24 10:59:30 yamt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.34.8.3 2006/09/15 11:54:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.34.8.2 2006/05/24 10:59:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.34.8.3 2006/09/15 11:54:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.34.8.2 2006/05/24 10:59:30 yamt Exp
 #include <sys/proc.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_pdpolicy.h>
 
 #ifdef VM_PAGE_ALLOC_MEMORY_STATS
 #define	STAT_INCR(v)	(v)++
@@ -277,7 +278,7 @@ out:
 	 * the pagedaemon.
 	 */
 
-	UVM_KICK_PDAEMON();
+	uvm_kick_pdaemon();
 	uvm_unlock_fpageq(s);
 	return (error);
 }
@@ -369,7 +370,7 @@ out:
 	 * the pagedaemon.
 	 */
 
-	UVM_KICK_PDAEMON();
+	uvm_kick_pdaemon();
 	uvm_unlock_fpageq(s);
 	if (error) {
 		if (waitok) {
