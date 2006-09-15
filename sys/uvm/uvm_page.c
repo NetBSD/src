@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.111.2.3 2006/05/24 10:59:30 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.111.2.4 2006/09/15 11:54:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.111.2.3 2006/05/24 10:59:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.111.2.4 2006/09/15 11:54:56 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.111.2.3 2006/05/24 10:59:30 yamt Exp 
 #include <sys/proc.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_pdpolicy.h>
 
 /*
  * global vars... XXXCDC: move to uvm. structure.
@@ -1059,7 +1060,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	 * the pagedaemon.
 	 */
 
-	UVM_KICK_PDAEMON();
+	uvm_kick_pdaemon();
 
 	/*
 	 * fail if any of these conditions is true:
