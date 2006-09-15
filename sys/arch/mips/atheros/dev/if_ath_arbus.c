@@ -1,4 +1,4 @@
-/* $NetBSD: if_ath_arbus.c,v 1.3.2.6 2006/09/14 12:31:12 yamt Exp $ */
+/* $NetBSD: if_ath_arbus.c,v 1.3.2.7 2006/09/15 13:27:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.3.2.6 2006/09/14 12:31:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.3.2.7 2006/09/15 13:27:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.3.2.6 2006/09/14 12:31:12 yamt Ex
 #include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
 
+#include <dev/pci/pcidevs.h>
 #include <dev/ic/ath_netbsd.h>
 #include <dev/ic/athvar.h>
-#include <contrib/dev/ic/athhal.h>
+#include <contrib/dev/ath/ah.h>
 
 struct ath_arbus_softc {
 	struct ath_softc	sc_ath;
@@ -103,6 +104,8 @@ ath_arbus_attach(struct device *parent, struct device *self, void *opaque)
 	struct arbus_attach_args *aa;
 	const char *name;
 	int rv;
+	uint16_t devid;
+	uint32_t rev;
 
 	asc = (struct ath_arbus_softc *)self;
 	sc = &asc->sc_ath;
@@ -112,11 +115,7 @@ ath_arbus_attach(struct device *parent, struct device *self, void *opaque)
 	devid = AR5312_REVISION_WMAC(rev);
 	name = ath_hal_probe(PCI_VENDOR_ATHEROS, devid);
 
-	if ((board = ar531x_board_info()) == NULL) {
-		aprint_error("%s: unable to get board identity\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}	
+	printf(": %s\n", name ? name : "Unknown AR531X WLAN");
 
 	asc->sc_iot = aa->aa_bst;
 	rv = bus_space_map(asc->sc_iot, aa->aa_addr, aa->aa_size, 0,
@@ -164,8 +163,6 @@ ath_arbus_attach(struct device *parent, struct device *self, void *opaque)
 		    sc->sc_dev.dv_xname);
 		goto err;
 	}
-
-	ath_attach(board->ab_pci_id, sc);
 
 	return;
 
