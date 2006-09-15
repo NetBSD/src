@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.210 2006/09/08 20:58:56 elad Exp $
+#       $NetBSD: Makefile,v 1.211 2006/09/15 20:01:38 elad Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -35,8 +35,9 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	preempt.9 \
 	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rssadapt.9 \
 	rt_timer.9 RUN_ONCE.9 \
-	SCHED_LOCK.9 scheduler.9 \
-	scsipi.9 secmodel.9 setjmp.9 setrunqueue.9 shutdownhook_establish.9 \
+	SCHED_LOCK.9 scheduler.9 scsipi.9 \
+	secmodel.9 secmodel_bsd44.9 \
+	setjmp.9 setrunqueue.9 shutdownhook_establish.9 \
 	signal.9 softintr.9 spl.9 store.9 suspendsched.9 \
 	sysctl.9 tc.9 timecounter.9 time_second.9 \
 	todr.9 uiomove.9 ucom.9 userret.9 \
