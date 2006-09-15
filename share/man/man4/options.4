@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.331 2006/09/10 21:11:01 wiz Exp $
+.\"	$NetBSD: options.4,v 1.332 2006/09/15 16:01:24 yamt Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd September 7, 2006
+.Dd September 16, 2006
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -2163,6 +2163,8 @@ for port specific details including availability.
 .It Cd options VMSWAP
 Enable paging device/file support.
 This option is on by default.
+.It Cd options PDPOLICY_CLOCKPRO
+Use CLOCK-Pro, an alternative page replace policy.
 .El
 .Ss Security Options
 .Bl -ohang
