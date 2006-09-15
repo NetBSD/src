@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.94 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.95 2006/09/15 10:47:34 is Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.94 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.95 2006/09/15 10:47:34 is Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -140,6 +140,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.94 2006/09/07 02:40:33 dogcow Exp $");
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
+
+#if defined(__NetBSD__)
+#include <sys/workqueue.h>
+#endif
 
 #include <dev/usb/if_auereg.h>
 
@@ -229,6 +233,10 @@ Static const struct aue_type aue_devs[] = {
 #define aue_lookup(v, p) ((const struct aue_type *)usb_lookup(aue_devs, v, p))
 
 USB_DECLARE_DRIVER(aue);
+
+#if defined(__NetBSD__)
+Static void aue_multiwork(struct work *wkp, void *arg);
+#endif
 
 Static void aue_reset_pegasus_II(struct aue_softc *sc);
 Static int aue_tx_list_init(struct aue_softc *);
@@ -729,6 +737,7 @@ USB_ATTACH(aue)
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
 	int			i;
+	char			wqn[20];
 
 	DPRINTFN(5,(" : aue_attach: sc=%p", sc));
 
@@ -754,7 +763,18 @@ USB_ATTACH(aue)
 		    USBDEVNAME(sc->aue_dev));
 		USB_ATTACH_ERROR_RETURN;
 	}
+#if defined(__NetBSD__)
+	strcpy(wqn,USBDEVNAME(sc->aue_dev));
+	strcat(wqn,"-wq");
+	err = workqueue_create(&sc->wqp, wqn,
+		aue_multiwork, sc, 0, IPL_NET, 0);
 
+	if (err) {
+		printf("%s: creating multicast configuration work queue\n",
+		    USBDEVNAME(sc->aue_dev));
+		USB_ATTACH_ERROR_RETURN;
+	}
+#endif
 	sc->aue_flags = aue_lookup(uaa->vendor, uaa->product)->aue_flags;
 
 	sc->aue_udev = dev;
@@ -1600,8 +1620,13 @@ aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			ether_delmulti(ifr, &sc->aue_ec);
 		if (error == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
+#if defined(__NetBSD__)
+				workqueue_enqueue(sc->wqp,&sc->wk);
+				/* XXX */
+#else
 				aue_init(sc);
 				aue_setmulti(sc);
+#endif
 			}
 			error = 0;
 		}
@@ -1736,3 +1761,17 @@ aue_stop(struct aue_softc *sc)
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
+
+#if defined(__NetBSD__)
+Static void
+aue_multiwork(struct work *wkp, void *arg) {
+	struct aue_softc *sc;
+
+	sc = (struct aue_softc *)arg;
+	(void)wkp;
+
+	aue_init(sc);
+	/* XXX called by aue_init, but rc ifconfig hangs without it: */
+	aue_setmulti(sc);
+}
+#endif
