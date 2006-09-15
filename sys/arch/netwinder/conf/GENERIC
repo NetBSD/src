@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.84 2006/08/26 20:26:55 christos Exp $
+# $NetBSD: GENERIC,v 1.85 2006/09/15 16:28:41 gdamore Exp $
 #
 # GENERIC machine description file
 # 
@@ -196,9 +196,6 @@ footbridge0	at mainbus?
 
 # system clock via footbridge
 #clock*		at footbridge?
-
-# time-of-day device via footbridge
-todclock0	at footbridge?
 
 # PCI bus via footbridge
 pci0		at footbridge?			# PCI bus
