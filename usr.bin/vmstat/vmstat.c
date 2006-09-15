@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.149 2006/08/15 07:09:12 kardel Exp $ */
+/* $NetBSD: vmstat.c,v 1.150 2006/09/15 15:53:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.149 2006/08/15 07:09:12 kardel Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.150 2006/09/15 15:53:42 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -762,8 +762,6 @@ dosum(void)
 
 	(void)printf("%9u pages managed\n", uvmexp.npages);
 	(void)printf("%9u pages free\n", uvmexp.free);
-	(void)printf("%9u pages active\n", uvmexp.active);
-	(void)printf("%9u pages inactive\n", uvmexp.inactive);
 	(void)printf("%9u pages paging\n", uvmexp.paging);
 	(void)printf("%9u pages wired\n", uvmexp.wired);
 	(void)printf("%9u zero pages\n", uvmexp.zeropages);
@@ -776,7 +774,6 @@ dosum(void)
 
 	(void)printf("%9u minimum free pages\n", uvmexp.freemin);
 	(void)printf("%9u target free pages\n", uvmexp.freetarg);
-	(void)printf("%9u target inactive pages\n", uvmexp.inactarg);
 	(void)printf("%9u maximum wired pages\n", uvmexp.wiredmax);
 
 	(void)printf("%9u swap devices\n", uvmexp.nswapdev);
@@ -839,10 +836,6 @@ dosum(void)
 	    uvmexp.pdanscan);
 	(void)printf("%9u object pages scanned by daemon\n", uvmexp.pdobscan);
 	(void)printf("%9u pages reactivated\n", uvmexp.pdreact);
-	(void)printf("%9u anonymous pages reactivated\n", uvmexp.pdreanon);
-	(void)printf("%9u cached file pages reactivated\n", uvmexp.pdrefile);
-	(void)printf("%9u cached executable pages reactivated\n",
-	    uvmexp.pdreexec);
 	(void)printf("%9u pages found busy by daemon\n", uvmexp.pdbusy);
 	(void)printf("%9u total pending pageouts\n", uvmexp.pdpending);
 	(void)printf("%9u pages deactivated\n", uvmexp.pddeact);
