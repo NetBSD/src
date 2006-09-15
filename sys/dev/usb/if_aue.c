@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.95 2006/09/15 10:47:34 is Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.96 2006/09/15 11:22:21 is Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.95 2006/09/15 10:47:34 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.96 2006/09/15 11:22:21 is Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -737,7 +737,6 @@ USB_ATTACH(aue)
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
 	int			i;
-	char			wqn[20];
 
 	DPRINTFN(5,(" : aue_attach: sc=%p", sc));
 
@@ -764,9 +763,7 @@ USB_ATTACH(aue)
 		USB_ATTACH_ERROR_RETURN;
 	}
 #if defined(__NetBSD__)
-	strcpy(wqn,USBDEVNAME(sc->aue_dev));
-	strcat(wqn,"-wq");
-	err = workqueue_create(&sc->wqp, wqn,
+	err = workqueue_create(&sc->wqp, USBDEVNAME(sc->aue_dev),
 		aue_multiwork, sc, 0, IPL_NET, 0);
 
 	if (err) {
