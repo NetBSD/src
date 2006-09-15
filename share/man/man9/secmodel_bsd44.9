@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel_bsd44.9,v 1.1 2006/09/15 20:01:38 elad Exp $
+.\" $NetBSD: secmodel_bsd44.9,v 1.2 2006/09/15 20:15:33 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -50,7 +50,7 @@ The
 is the host administrator, considered to have higher privileges than other
 users.
 It is the only entity the kernel recognizes by having an effective user-id
-or zero.
+of zero.
 .Ss Securelevel
 The securelevel mechanism is intended to allow protecting the persistance
 of code and data on the system, or a subset thereof, from modification, even
@@ -158,7 +158,7 @@ see
 for details.
 Lower securelevels require the kernel to be compiled with
 .Sy options INSECURE ,
-causing it to always default to securelevel -1.
+causing it to always default to securelevel \-1.
 .Pp
 In order for this protection to be effective, the administrator
 must ensure that no program that is run while the security level
