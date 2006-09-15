@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.114.2.3 2006/08/11 15:44:25 yamt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.114.2.4 2006/09/15 14:00:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.114.2.3 2006/08/11 15:44:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.114.2.4 2006/09/15 14:00:41 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -878,9 +878,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 			} else if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_IO,
 					0, &sc->sc_iot, &sc->sc_ioh,
 					NULL, NULL) == 0) {
-#if 0
 				sc->sc_flags |= WM_F_IOH_VALID;
-#endif
 			} else {
 				aprint_error("%s: WARNING: unable to map "
 				    "I/O space\n", sc->sc_dev.dv_xname);
