@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.21 2006/09/14 11:37:07 yamt Exp $ */
+/* $NetBSD: kern_auth.c,v 1.22 2006/09/15 14:28:04 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.21 2006/09/14 11:37:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.22 2006/09/15 14:28:04 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,6 +103,8 @@ static kauth_scope_t kauth_builtin_scope_system;
 static kauth_scope_t kauth_builtin_scope_process;
 static kauth_scope_t kauth_builtin_scope_network;
 static kauth_scope_t kauth_builtin_scope_machdep;
+
+static boolean_t listeners_have_been_loaded = FALSE;
 
 /* Allocate new, empty kauth credentials. */
 kauth_cred_t
@@ -667,6 +669,8 @@ kauth_listen_scope(const char *id, kauth_scope_callback_t callback,
 	scope->nlisteners++;
 	listener->scope = scope;
 
+	listeners_have_been_loaded = TRUE;
+
 	return (listener);
 }
 
@@ -717,9 +721,11 @@ kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
 	if (cred == NOCRED || cred == FSCRED)
 		return (0);
 
-	/* Short-circuit requests when there are no listeners. */
-	if (SIMPLEQ_EMPTY(&scope->listenq))
+	if (!listeners_have_been_loaded) {
+		KASSERT(SIMPLEQ_EMPTY(&scope->listenq));
+
 		return (0);
+	}
 
 	fail = 0;
 	allow = 0;
