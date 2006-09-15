@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.78 2006/04/24 19:00:30 snj Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.79 2006/09/15 20:32:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.78 2006/04/24 19:00:30 snj Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.79 2006/09/15 20:32:59 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -257,7 +257,7 @@ void	die(struct kevent *);	/* SIGTERM kevent dispatch routine */
 void	domark(struct kevent *);/* timer kevent dispatch routine */
 void	fprintlog(struct filed *, int, char *);
 int	getmsgbufsize(void);
-int*	socksetup(int);
+int*	socksetup(int, const char *);
 void	init(struct kevent *);	/* SIGHUP kevent dispatch routine */
 void	logerror(const char *, ...);
 void	logmsg(int, char *, char *, int);
@@ -290,6 +290,7 @@ static void dispatch_read_funix(struct kevent *);
  */
 static char *linebuf;
 static size_t linebufsize;
+static const char *bindhostname = NULL;
 
 #define	A_CNT(x)	(sizeof((x)) / sizeof((x)[0]))
 
@@ -314,8 +315,11 @@ main(int argc, char *argv[])
 
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "dnsSf:m:p:P:ru:g:t:TUv")) != -1)
+	while ((ch = getopt(argc, argv, "b:dnsSf:m:p:P:ru:g:t:TUv")) != -1)
 		switch(ch) {
+		case 'b':
+			bindhostname = optarg;
+			break;
 		case 'd':		/* debug */
 			Debug++;
 			break;
@@ -1784,7 +1788,7 @@ init(struct kevent *ev)
 		}
 	}
 
-	finet = socksetup(PF_UNSPEC);
+	finet = socksetup(PF_UNSPEC, bindhostname);
 	if (finet) {
 		if (SecureMode) {
 			for (i = 0; i < *finet; i++) {
@@ -2093,7 +2097,7 @@ getmsgbufsize(void)
 }
 
 int *
-socksetup(int af)
+socksetup(int af, const char *hostname)
 {
 	struct addrinfo hints, *res, *r;
 	struct kevent *ev;
@@ -2107,7 +2111,7 @@ socksetup(int af)
 	hints.ai_flags = AI_PASSIVE;
 	hints.ai_family = af;
 	hints.ai_socktype = SOCK_DGRAM;
-	error = getaddrinfo(NULL, "syslog", &hints, &res);
+	error = getaddrinfo(hostname, "syslog", &hints, &res);
 	if (error) {
 		logerror(gai_strerror(error));
 		errno = 0;

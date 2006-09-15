@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.41 2006/04/23 16:51:56 wiz Exp $
+.\"	$NetBSD: syslogd.8,v 1.42 2006/09/15 20:32:59 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd April 19, 2006
+.Dd September 15, 2006
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -38,6 +38,9 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl dnrSsTUv
+.Bk -words
+.Op Fl b Ar bind_address
+.Ek
 .Bk -words
 .Op Fl f Ar config_file
 .Ek
@@ -68,6 +71,10 @@ reads and logs messages to the system console, log files, other
 machines and/or users as specified by its configuration file.
 The options are as follows:
 .Bl -tag -width 15n
+.It Fl b Ar bind_address
+Specify one specific IP address or hostname to bind to.
+If a hostname is specified, the IPv4 or IPv6 address
+which corresponds to it is used.
 .It Fl d
 Enable debugging to the standard output,
 and do not disassociate from the controlling terminal.
