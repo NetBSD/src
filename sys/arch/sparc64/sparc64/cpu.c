@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.50 2006/09/14 09:00:14 martin Exp $ */
+/*	$NetBSD: cpu.c,v 1.51 2006/09/15 17:29:45 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.50 2006/09/14 09:00:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.51 2006/09/15 17:29:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ alloc_cpuinfo(u_int cpu_node)
 	 */
 	cpi->ci_next = NULL;
 	cpi->ci_curlwp = NULL;
-	cpi->ci_number = cpu_instance++;
+	cpi->ci_number = ++cpu_instance;
 	cpi->ci_cpuid = portid;
 	cpi->ci_upaid = portid;
 	cpi->ci_fplwp = NULL;
