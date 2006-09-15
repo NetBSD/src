@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel_bsd44.9,v 1.3 2006/09/15 20:20:06 elad Exp $
+.\" $NetBSD: secmodel_bsd44.9,v 1.4 2006/09/15 20:27:57 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -184,7 +184,8 @@ the TCB.
 .Sh SEE ALSO
 .Xr kauth 9 ,
 .Xr secmodel 9
-.SH BUGS
+.Sh AUTHORS
+.An Elad Efrat Aq elad@NetBSD.org
 .Sh BUGS
 Systems without
 .Xr sysctl 8
@@ -196,5 +197,3 @@ Restrictions dependent upon security level but not relating to TCB
 integrity protection should be selected by
 .Xr sysctl 8
 settings available only at security level 0 or lower.
-.Sh AUTHORS
-.An Elad Efrat Aq elad@NetBSD.org
