@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.64 2006/08/31 16:49:21 matt Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.65 2006/09/15 07:42:38 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.64 2006/08/31 16:49:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.65 2006/09/15 07:42:38 martin Exp $");
 
 #include "opt_coredump.h"
 
@@ -325,7 +325,7 @@ cpu_lwp_free(l, proc)
 
 	if ((fs = l->l_md.md_fpstate) != NULL) {
 		if (l == fplwp) {
-			savefpstate(fs);
+			clearfpstate();
 			fplwp = NULL;
 		}
 		free((void *)fs, M_SUBPROC);

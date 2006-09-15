@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.55 2006/09/13 11:35:53 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.56 2006/09/15 07:42:38 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -307,6 +307,7 @@ int	statintr(void *);	/* level 14 (statclock) interrupt code */
 struct fpstate64;
 void	savefpstate(struct fpstate64 *);
 void	loadfpstate(struct fpstate64 *);
+void	clearfpstate(void);
 uint64_t	probeget(paddr_t, int, int);
 int	probeset(paddr_t, int, int, uint64_t);
 

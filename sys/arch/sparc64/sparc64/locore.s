@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215 2006/09/13 11:35:53 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.216 2006/09/15 07:42:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -10232,6 +10232,17 @@ Lkcerr:
 	 mov	EFAULT, %o0
 	NOTREACHED
 
+/*
+ * clearfpstate()
+ *
+ * Drops the current fpu state, without saving it.
+ */
+ENTRY(clearfpstate)
+	rdpr	%pstate, %o1		! enable FPU
+	wr	%g0, FPRS_FEF, %fprs
+	or	%o1, PSTATE_PEF, %o1
+	retl
+	 wrpr	%o1, 0, %pstate
 
 /*
  * savefpstate(f) struct fpstate *f;
