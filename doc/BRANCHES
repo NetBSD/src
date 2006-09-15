@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.96 2006/09/15 14:07:56 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.97 2006/09/15 15:56:11 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -403,19 +403,6 @@ End Date:
 Base Tag:	yamt-lazymbuf-base2
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys
-Notes:		
-
-Branch:		yamt-pdpolicy
-Description:	play with page replacement policy
-		- separate page replacement policy from the rest of kernel
-		- implement alternative replacement policy
-		- related read-ahead adjustment?
-Status:		Active
-Start Date:	Sun Mar  5 2006
-End Date:	
-Base Tag:	yamt-pdpolicy-base9
-Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
-Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
 
 
@@ -950,6 +937,19 @@ Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
 			src/sys/arch/x68k/conf/GENERIC
 
 			src/sys/arch/playstation2/conf/GENERIC
+
+Branch:		yamt-pdpolicy
+Description:	play with page replacement policy
+		- separate page replacement policy from the rest of kernel
+		- implement alternative replacement policy
+		- related read-ahead adjustment?
+Status:		Terminated; merged to -current
+Start Date:	Sun Mar  5 2006
+End Date:	Sat Sep 16 2006
+Base Tag:	yamt-pdpolicy-base9
+Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
+Scope:		src/sys  (src/common is tagged but not branched)
+Notes:		
 
 Branch:		yamt-readahead
 Description:	play with file readahead
