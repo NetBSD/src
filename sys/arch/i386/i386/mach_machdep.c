@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.17 2005/12/11 12:17:41 christos Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.18 2006/09/15 15:51:12 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.17 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.18 2006/09/15 15:51:12 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -163,10 +163,13 @@ void
 mach_host_basic_info(info)
     struct mach_host_basic_info *info;
 {
+	int active, inactive;
+
 	/* XXX fill this  accurately */
 	info->max_cpus = 1;
 	info->avail_cpus = 1;
-	info->memory_size = uvmexp.active + uvmexp.inactive;
+	uvm_estimatepageable(&active, &inactive);
+	info->memory_size = active + inactive;
 #undef cpu_type
 	info->cpu_type = MACHO_CPU_TYPE_I386;
 	switch (cpu_info_primary.ci_cpu_class) {
