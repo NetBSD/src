@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.94 2006/06/29 19:28:21 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.95 2006/09/15 15:51:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.94 2006/06/29 19:28:21 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.95 2006/09/15 15:51:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -843,4 +843,22 @@ lfs_countlocked(int *count, long *bytes, const char *msg)
 	simple_unlock(&bqueue_slock);
 	splx(s);
 	return;
+}
+
+int
+lfs_wait_pages(void)
+{
+	int active, inactive;
+
+	uvm_estimatepageable(&active, &inactive);
+	return LFS_WAIT_RESOURCE(active + inactive + uvmexp.free, 1);
+}
+
+int
+lfs_max_pages(void)
+{
+	int active, inactive;
+
+	uvm_estimatepageable(&active, &inactive);
+	return LFS_MAX_RESOURCE(active + inactive + uvmexp.free, 1);
 }
