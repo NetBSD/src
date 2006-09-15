@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.12.8.2 2006/06/26 12:51:21 yamt Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.12.8.3 2006/09/15 14:00:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -79,8 +79,7 @@
 /*
  * Default to using PIO access for this driver.
  */
-/*#define RE_USEIOSPACE */
-#undef RE_USEIOSPACE
+#define RE_USEIOSPACE
 
 #include <dev/ic/rtl81x9reg.h>
 #include <dev/ic/rtl81x9var.h>
