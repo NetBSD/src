@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.61 2006/09/01 19:41:28 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.62 2006/09/15 18:50:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.61 2006/09/01 19:41:28 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.62 2006/09/15 18:50:49 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,8 +371,7 @@ lfs_unmark_dirop(struct lfs *fs)
 		vp = ITOV(ip);
 
 		simple_lock(&vp->v_interlock);
-		if (VOP_ISLOCKED(vp) &&
-			   vp->v_lock.lk_lockholder != curproc->p_pid) {
+		if (VOP_ISLOCKED(vp) == LK_EXCLOTHER) {
 			simple_lock(&fs->lfs_interlock);
 			simple_unlock(&vp->v_interlock);
 			continue;
