@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.815.2.7 2006/09/15 11:51:54 tron Exp $
+$NetBSD: pcidevs,v 1.815.2.8 2006/09/15 11:53:27 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3182,6 +3182,8 @@ product SCHNEIDERKOCH	SK_9DX1		0x4400	SK-NET SK-9DX1 Gigabit Ethernet
 /* These next two are are really subsystem IDs */
 product SCHNEIDERKOCH	SK_9D21		0x4421	SK-9D21 1000BASE-T
 product SCHNEIDERKOCH	SK_9D41		0x4441	SK-9D41 1000BASE-X
+
+product SCHNEIDERKOCH	SK_9SXX		0x9000	SK-9Sxx Gigabit Ethernet
 /* This next entry is used for both single-port (SK-9E21D) and dual-port
  * (SK-9E22) gig-e based on Marvell Yukon-2, with PCI revision	0x17 for
  * the single-port and 0x12 for the	dual-port.
