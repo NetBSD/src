@@ -131,7 +131,9 @@
 #define COMPILER_DEPENDENT_UINT64 uint64_t
 
 #ifdef _KERNEL
+#ifdef _KERNEL_OPT
 #include "opt_acpi.h"           /* collect build-time options here */
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +159,9 @@
 #undef DEBUGGER_THREADING
 #endif /* DEBUGGER_THREADING */
 #define DEBUGGER_THREADING 0    /* integrated with DDB */
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
+#endif
 #ifdef DDB
 #define ACPI_DISASSEMBLER
 #define ACPI_DEBUGGER
