@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.208.2.1 2006/08/25 12:33:57 tron Exp $
+#	$NetBSD: DEVNAMES,v 1.208.2.2 2006/09/15 11:56:41 tron Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -851,6 +851,7 @@ msc			amiga
 msc			amigappc
 mscp			MI		Attribute
 mscpbus			MI
+msk			MI
 msiiep			sparc
 msiop			mvme68k		Attribute
 mspcic			sparc
