@@ -1,3 +1,6 @@
+2006-08-15  Emmanuel Dreyfus  <manu@netbsd.org>
+	* src/racoon/ipsec_doi.c: fix build on Linux
+
 ---------------------------------------------
 
 	Migration to cvs.netbsd.org
