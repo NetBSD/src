@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10 2005/12/24 20:07:32 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.10.18.1 2006/09/16 17:36:03 rpaulo Exp $	*/
 
 /*
  * Copyright 1997
@@ -154,7 +154,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2005/12/24 20:07:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10.18.1 2006/09/16 17:36:03 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -550,7 +550,8 @@ findcpuspeed()
 static void
 delayloop(counts)
 {
-  while (counts--);
+  while (counts--)
+	__insn_barrier();
 }
 
 void
