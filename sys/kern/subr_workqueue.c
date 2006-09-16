@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.3 2006/05/02 13:26:07 rpaulo Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.4 2006/09/16 11:14:36 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,12 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.3 2006/05/02 13:26:07 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.4 2006/09/16 11:14:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kthread.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/workqueue.h>
 
@@ -54,8 +54,6 @@ struct workqueue {
 	int wq_prio;
 	int wq_ipl;
 };
-
-MALLOC_DEFINE(M_WORKQUEUE, "workqueue", "work queue");
 
 #define	POISON	0xaabbccdd
 
@@ -177,7 +175,7 @@ workqueue_create(struct workqueue **wqp, const char *name,
 	struct workqueue *wq;
 	int error;
 
-	wq = malloc(sizeof(*wq), M_WORKQUEUE, 0);
+	wq = kmem_alloc(sizeof(*wq), KM_SLEEP);
 	if (wq == NULL) {
 		return ENOMEM;
 	}
@@ -186,7 +184,7 @@ workqueue_create(struct workqueue **wqp, const char *name,
 
 	error = workqueue_initqueue(wq);
 	if (error) {
-		free(wq, M_WORKQUEUE);
+		kmem_free(wq, sizeof(*wq));
 		return error;
 	}
 
