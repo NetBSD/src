@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.650 2006/09/10 15:45:55 plunky Exp $
+# $NetBSD: mi,v 1.651 2006/09/16 08:38:20 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1771,17 +1771,21 @@
 ./usr/share/i18n/csmapper/JIS/UCS%JISX0212UDC.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/JIS/UCS%JISX0212VDC@IBM.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/KOI			base-sysutil-share
+./usr/share/i18n/csmapper/KOI/GOST19768-74%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/KOI/ISO-5427%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/KOI/KOI7%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/KOI/KOI8%UCS.mps	base-sysutil-share	nls
-./usr/share/i18n/csmapper/KOI/KOI8-BASE%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/KOI/KOI8-BASE%UCS.mps	base-obsolete		obsolete
 ./usr/share/i18n/csmapper/KOI/KOI8-C%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/KOI/KOI8-E%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/KOI/KOI8-R%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/KOI/KOI8-RU%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/KOI/KOI8-T%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/KOI/KOI8-U%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/KOI/UCS%GOST19768-74.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/KOI/UCS%ISO-5427.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/KOI/UCS%KOI7.mps	base-sysutil-share	nls
-./usr/share/i18n/csmapper/KOI/UCS%KOI8-BASE.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/KOI/UCS%KOI8-BASE.mps	base-obsolete		obsolete
 ./usr/share/i18n/csmapper/KOI/UCS%KOI8-C.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/KOI/UCS%KOI8-E.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/KOI/UCS%KOI8-R.mps	base-sysutil-share	nls
