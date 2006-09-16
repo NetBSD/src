@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.81 2006/09/16 16:57:27 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.82 2006/09/16 17:05:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.81 2006/09/16 16:57:27 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.82 2006/09/16 17:05:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1617,7 +1617,7 @@ die(struct kevent *ev)
 void
 init(struct kevent *ev)
 {
-	int i;
+	size_t i;
 	FILE *cf;
 	struct filed *f, *next, **nextp;
 	char *p;
@@ -1735,9 +1735,15 @@ init(struct kevent *ev)
 				strcpy(host, "*");
 				continue;
 			}
-			if (*p == '@')
-				p = LocalHostName;
 			for (i = 1; i < MAXHOSTNAMELEN - 1; i++) {
+				if (*p == '@') {
+					(void)strncpy(&host[i], LocalHostName,
+					    sizeof(host) - 1 - i);
+					host[sizeof(host) - 1] = '\0';
+					i = strlen(host) - 1;
+					p++;
+					continue;
+				}
 				if (!isalnum((unsigned char)*p) &&
 				    *p != '.' && *p != '-' && *p != ',')
 					break;
