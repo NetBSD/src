@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.926 2006/09/15 20:01:38 elad Exp $
+#	$NetBSD: mi,v 1.927 2006/09/16 08:37:33 elad Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7046,6 +7046,7 @@
 ./usr/share/man/cat9/scsipi.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/secmodel.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/secmodel_bsd44.0		comp-sys-catman		.cat
+./usr/share/man/cat9/secmodel_overlay.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/selnotify.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/selrecord.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/selwakeup.0		comp-sys-catman		.cat
@@ -11219,6 +11220,7 @@
 ./usr/share/man/man9/scsipi.9			comp-sys-man		.man
 ./usr/share/man/man9/secmodel.9			comp-sys-man		.man
 ./usr/share/man/man9/secmodel_bsd44.9		comp-sys-man		.man
+./usr/share/man/man9/secmodel_overlay.9		comp-sys-man		.man
 ./usr/share/man/man9/selnotify.9		comp-sys-man		.man
 ./usr/share/man/man9/selrecord.9		comp-sys-man		.man
 ./usr/share/man/man9/selwakeup.9		comp-sys-man		.man
