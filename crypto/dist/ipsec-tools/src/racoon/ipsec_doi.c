@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.14 2006/09/15 09:40:45 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.15 2006/09/16 04:31:38 manu Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -3335,7 +3335,7 @@ ipsecdoi_checkid1(iph1)
 	}
 
 	/* if phase 1 ID payload conformed RFC2407 4.6.2. */
-	if (id_b->type == IPSECDOI_ID_IPV4_ADDR &&
+	if (id_b->type == IPSECDOI_ID_IPV4_ADDR ||
 	    id_b->type == IPSECDOI_ID_IPV6_ADDR) {
 
 		if (id_b->proto_id == 0 && ntohs(id_b->port) != 0) {
