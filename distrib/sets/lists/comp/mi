@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.927 2006/09/16 08:37:33 elad Exp $
+#	$NetBSD: mi,v 1.928 2006/09/16 11:17:09 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7325,6 +7325,7 @@
 ./usr/share/man/cat9/wdc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/workqueue.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/workqueue_create.0		comp-sys-catman		.cat
+./usr/share/man/cat9/workqueue_destroy.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/workqueue_enqueue.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/writedisklabel.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/wscons.0			comp-sys-catman		.cat
@@ -11499,6 +11500,7 @@
 ./usr/share/man/man9/wdc.9			comp-sys-man		.man
 ./usr/share/man/man9/workqueue.9		comp-sys-man		.man
 ./usr/share/man/man9/workqueue_create.9		comp-sys-man		.man
+./usr/share/man/man9/workqueue_destroy.9	comp-sys-man		.man
 ./usr/share/man/man9/workqueue_enqueue.9	comp-sys-man		.man
 ./usr/share/man/man9/writedisklabel.9		comp-sys-man		.man
 ./usr/share/man/man9/wscons.9			comp-sys-man		.man
