@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.3.2.4 2005/08/25 20:52:46 tron Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.3.2.5 2006/09/16 11:18:59 ghen Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.3.2.4 2005/08/25 20:52:46 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.3.2.5 2006/09/16 11:18:59 ghen Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,10 +75,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	unsigned long npagesreq, npages, mfn;
 	bus_addr_t pa;
 	struct vm_page *pg, *pgnext;
-	struct pglist freelist;
 	int s, error;
-
-	TAILQ_INIT(&freelist);
 
 	/*
 	 * When requesting a contigous memory region, the hypervisor will
@@ -104,17 +101,26 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = INVALID_P2M_ENTRY;
 		if (HYPERVISOR_dom_mem_op(MEMOP_decrease_reservation,
 		    &mfn, 1, 0) != 1) {
+#ifdef DEBUG
 			printf("xen_alloc_contig: MEMOP_decrease_reservation "
 			    "failed!\n");
-			return ENOMEM;
+#endif
+			xpmap_phys_to_machine_mapping[
+			    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn;
+			error = ENOMEM;
+			goto failed;
 		}
 	}
 	/* Get the new contiguous memory extent */
 	if (HYPERVISOR_dom_mem_op(MEMOP_increase_reservation,
 	    &mfn, 1, order) != 1) {
+#ifdef DEBUG
 		printf("xen_alloc_contig: MEMOP_increase_reservation "
 		    "failed!\n");
-		return ENOMEM;
+#endif
+		error = ENOMEM;
+		pg = NULL;
+		goto failed;
 	}
 	s = splvm();
 	/* Map the new extent in place of the old pages */
@@ -136,6 +142,44 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	xpq_flush_queue();
 	splx(s);
 	return 0;
+
+failed:
+	/*
+	 * Attempt to recover from a failed decrease or increase reservation:
+	 * if decrease_reservation failed, we don't have given all pages
+	 * back to Xen; give them back to UVM, and get the missing pages
+	 * from Xen.
+	 * if increase_reservation failed, we expect pg to be NULL and we just
+	 * get back the missing pages from Xen one by one.
+	 */
+	/* give back remaining pages to UVM */
+	for (; pg != NULL; pg = pgnext) {
+		pgnext = pg->pageq.tqe_next;
+		TAILQ_REMOVE(mlistp, pg, pageq);
+		uvm_pagefree(pg);
+	}
+	/* remplace the pages that we already gave to Xen */
+	s = splvm();
+	for (pg = mlistp->tqh_first; pg != NULL; pg = pgnext) {
+		pgnext = pg->pageq.tqe_next;
+		if (HYPERVISOR_dom_mem_op(MEMOP_increase_reservation,
+		    &mfn, 1, 0) != 1) {
+			printf("xen_alloc_contig: recovery "
+			    "MEMOP_increase_reservation failed!\n");
+			break;
+		}
+		pa = VM_PAGE_TO_PHYS(pg);
+		xpmap_phys_to_machine_mapping[
+		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn;
+		xpq_queue_machphys_update((mfn) << PAGE_SHIFT, pa);
+		TAILQ_REMOVE(mlistp, pg, pageq);
+		uvm_pagefree(pg);
+	}
+	/* Flush updates through and flush the TLB */
+	xpq_queue_tlb_flush();
+	xpq_flush_queue();
+	splx(s);
+	return error;
 }
 
 
@@ -149,8 +193,7 @@ _xen_bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size,
     bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs,
     int nsegs, int *rsegs, int flags, bus_addr_t low, bus_addr_t high)
 {
-	paddr_t curaddr, lastaddr;
-	bus_addr_t bus_curaddr, bus_lastaddr;
+	bus_addr_t curaddr, lastaddr;
 	struct vm_page *m;
 	struct pglist mlist;
 	int curseg, error;
@@ -181,18 +224,16 @@ again:
 	 */
 	m = mlist.tqh_first;
 	curseg = 0;
-	lastaddr = segs[curseg].ds_addr = VM_PAGE_TO_PHYS(m);
+	lastaddr = segs[curseg].ds_addr = _BUS_VM_PAGE_TO_BUS(m);
 	segs[curseg].ds_len = PAGE_SIZE;
 	m = m->pageq.tqe_next;
-	if ((_BUS_PHYS_TO_BUS(segs[curseg].ds_addr) & (alignment - 1)) != 0)
+	if ((segs[curseg].ds_addr & (alignment - 1)) != 0)
 		goto dorealloc;
 
 	for (; m != NULL; m = m->pageq.tqe_next) {
-		curaddr = VM_PAGE_TO_PHYS(m);
-		bus_curaddr = _BUS_PHYS_TO_BUS(curaddr);
-		bus_lastaddr = _BUS_PHYS_TO_BUS(lastaddr);
-		if ((bus_lastaddr < low || bus_lastaddr >= high) ||
-		    (bus_curaddr < low || bus_curaddr >= high)) {
+		curaddr = _BUS_VM_PAGE_TO_BUS(m);
+		if ((lastaddr < low || lastaddr >= high) ||
+		    (curaddr < low || curaddr >= high)) {
 			/*
 			 * If machine addresses are outside the allowed
 			 * range we have to bail. Xen2 doesn't offer an
@@ -204,16 +245,15 @@ again:
 			uvm_pglistfree(&mlist);
 			return EINVAL;
 		}
-		if (bus_curaddr == (bus_lastaddr + PAGE_SIZE)) {
+		if (curaddr == (lastaddr + PAGE_SIZE)) {
 			segs[curseg].ds_len += PAGE_SIZE;
-			if ((bus_lastaddr & boundary) !=
-			    (bus_curaddr & boundary))
+			if ((lastaddr & boundary) !=
+			    (curaddr & boundary))
 				goto dorealloc;
-		}
-		else {
+		} else {
 			curseg++;
 			if (curseg >= nsegs ||
-			    (bus_curaddr & (alignment - 1)) != 0) {
+			    (curaddr & (alignment - 1)) != 0) {
 dorealloc:
 				if (doingrealloc == 1)
 					panic("_xen_bus_dmamem_alloc_range: "
