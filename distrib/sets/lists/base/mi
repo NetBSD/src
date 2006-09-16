@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.651 2006/09/16 08:38:20 tnozaki Exp $
+# $NetBSD: mi,v 1.652 2006/09/16 20:54:43 elad Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1029,6 +1029,7 @@
 ./usr/sbin/faithd				base-router-bin		inet6
 ./usr/sbin/fixmount				base-nfsclient-bin
 ./usr/sbin/flush				base-obsolete		obsolete
+./usr/sbin/veriexecgen				base-sysutil-bin
 ./usr/sbin/fsinfo				base-sysutil-bin
 ./usr/sbin/fssconfig				base-sysutil-bin
 ./usr/sbin/fwctl				base-sysutil-bin
