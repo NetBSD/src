@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.18 2006/09/10 14:06:54 gavan Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.19 2006/09/16 00:50:52 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@ void	clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
 struct todr_chip_handle {
 	void	*cookie;	/* Device specific data */
 	void	*bus_cookie;	/* Bus specific data */
+	time_t	base_time;	/* Base time (e.g. rootfs time) */
 
 	int	(*todr_gettime)(struct todr_chip_handle *,
 				volatile struct timeval *);
@@ -92,6 +93,7 @@ struct todr_chip_handle {
 	int	(*todr_settime_ymdhms)(struct todr_chip_handle *,
 	    			struct clock_ymdhms *);
 	int	(*todr_setwen)(struct todr_chip_handle *, int);
+
 };
 typedef struct todr_chip_handle *todr_chip_handle_t;
 

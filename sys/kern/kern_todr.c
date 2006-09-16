@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.21 2006/09/12 21:38:55 gdamore Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.22 2006/09/16 00:50:52 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.21 2006/09/12 21:38:55 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.22 2006/09/16 00:50:52 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -141,8 +141,8 @@ inittodr(time_t base)
 	/*
 	 * Some ports need to be supplied base in order to fabricate a time_t.
 	 */
-	tv.tv_sec = base;
-	tv.tv_usec = 0;
+	if (todr_handle)
+		todr_handle->base_time = base;
 
 	if ((todr_handle == NULL) ||
 	    (todr_gettime(todr_handle, &tv) != 0) ||

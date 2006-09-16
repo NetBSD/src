@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.45 2006/09/05 19:32:57 matt Exp $	 */
+/*	$NetBSD: clock.c,v 1.46 2006/09/16 00:50:52 gdamore Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.45 2006/09/05 19:32:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.46 2006/09/16 00:50:52 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -140,6 +140,7 @@ cpu_initclocks(void)
 int
 vax_gettime(todr_chip_handle_t handle, volatile struct timeval *tvp)
 {
+	tvp->tv_sec = handle->base_time;
 	return (*dep_call->cpu_gettime)(tvp);
 }
 
