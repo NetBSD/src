@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.79 2006/09/15 20:32:59 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.80 2006/09/16 06:34:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.79 2006/09/15 20:32:59 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.80 2006/09/16 06:34:55 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -609,9 +609,10 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-dnrSsTUv] [-f config_file] [-g group] [-m mark_interval]\n"
-	    "\t[-P file_list] [-p log_socket [-p log_socket2 ...]]\n"
-	    "\t[-t chroot_dir] [-u user]\n", getprogname());
+	    "usage: %s [-dnrSsTUv] [-b bind_address] [-f config_file] [-g group]\n"
+	    "\t[-m mark_interval] [-P file_list] [-p log_socket\n"
+	    "\t[-p log_socket2 ...]] [-t chroot_dir] [-u user]\n",
+	    getprogname());
 	exit(1);
 }
 
