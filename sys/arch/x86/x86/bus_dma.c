@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.19.2.3 2005/08/25 20:57:24 tron Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.19.2.4 2006/09/16 11:18:59 ghen Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19.2.3 2005/08/25 20:57:24 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19.2.4 2006/09/16 11:18:59 ghen Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -1000,7 +1000,7 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 		for (addr = segs[curseg].ds_addr;
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
 		    addr += PAGE_SIZE) {
-			m = PHYS_TO_VM_PAGE(addr);
+			m = _BUS_BUS_TO_VM_PAGE(addr);
 			TAILQ_INSERT_TAIL(&mlist, m, pageq);
 		}
 	}
@@ -1043,7 +1043,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		    addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
-			pmap_enter(pmap_kernel(), va, addr,
+			_BUS_PMAP_ENTER(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE,
 			    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
 			/*
@@ -1131,7 +1131,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			continue;
 		}
 
-		return (x86_btop((caddr_t)segs[i].ds_addr + off));
+		return (x86_btop(_BUS_BUS_TO_PHYS(segs[i].ds_addr + off)));
 	}
 
 	/* Page not found. */
