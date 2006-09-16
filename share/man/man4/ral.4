@@ -1,4 +1,4 @@
-.\" $NetBSD: ral.4,v 1.3 2006/06/07 18:38:59 rpaulo Exp $
+.\" $NetBSD: ral.4,v 1.4 2006/09/16 20:24:27 hubertf Exp $
 .\" $OpenBSD: ral.4,v 1.53 2006/05/06 17:26:25 jmc Exp $
 .\"
 .\" Copyright (c) 2005, 2006
@@ -391,7 +391,7 @@ The following
 .Xr ifconfig.if 5
 example creates a host-based access point on boot:
 .Bd -literal -offset indent
-inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
+inet 192.168.1.1 netmask 255.255.255.0 media autoselect \e
 	mediaopt hostap nwid my_net chan 11
 .Ed
 .Pp
