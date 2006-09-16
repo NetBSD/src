@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecgen.8,v 1.1 2006/09/16 20:54:42 elad Exp $
+.\" $NetBSD: veriexecgen.8,v 1.2 2006/09/16 21:41:59 elad Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -110,8 +110,30 @@ or
 Verbose mode.
 Print messages describing what operations are being done.
 .El
-.\" .Sh EXAMPLES
-.\" Foo.
+.Sh EXAMPLES
+Fingerprint files in the common system directories using the default hashing
+algorithm
+.Dq sha256
+and save to the default fingerprint database:
+.Bd -literal -offset indent 
+# veriexecgen -D 
+.Ed
+.Pp
+Fingerprint files in
+.Pa /etc ,
+appending to the default fingerprint database:
+.Bd -literal
+# veriexecgen -A -d /etc
+.Ed
+.Pp
+Fingerprint files in
+.Pa /path/to/somewhere using
+.Dq rmd160
+as the hashing algorithm, saving to
+.Pa /etc/somewhere.fp :
+.Bd -literal -offset indent 
+# veriexecgen -d /path/to/somewhere -t rmd160 -o /etc/somewhere.fp
+.Ed
 .Sh SEE ALSO
 .Xr veriexec 4 ,
 .Xr veriexectl 8
