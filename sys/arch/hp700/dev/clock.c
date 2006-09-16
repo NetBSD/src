@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 2006/09/15 07:51:17 skrll Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 2006/09/16 15:43:24 skrll Exp $	*/
 
 /*	$OpenBSD: clock.c,v 1.10 2001/08/31 03:13:42 mickey Exp $	*/
 
@@ -33,12 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2006/09/15 07:51:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2006/09/16 15:43:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
+#include <sys/timetc.h>
 
 #include <machine/pdc.h>
 #include <machine/iomod.h>
@@ -56,26 +57,54 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2006/09/15 07:51:17 skrll Exp $");
 #include <ddb/db_extern.h>
 #endif
 
+static unsigned get_itimer_count(struct timecounter *);
+
 void
 cpu_initclocks(void)
 {
+	static struct timecounter tc = {
+		.tc_get_timecount = get_itimer_count,
+		.tc_name = "itimer",
+		.tc_counter_mask = ~0,
+		.tc_quality = 100,
+	};
+
 	extern u_int cpu_hzticks;
 	u_int time_inval;
+
+	tc.tc_frequency = cpu_hzticks * hz;
 
 	/* Start the interval timer. */
 	mfctl(CR_ITMR, time_inval);
 	mtctl(time_inval + cpu_hzticks, CR_ITMR);
+
+	tc_init(&tc);
+}
+
+unsigned
+get_itimer_count(struct timecounter *tc)
+{
+	uint32_t val;
+
+	mfctl(CR_ITMR, val);
+
+	return val;
 }
 
 int
 clock_intr(void *v)
 {
 	struct clockframe *frame = v;
+	extern u_int cpu_hzticks;
+	u_int time_inval;
+
+	/* Restart the interval timer. */
+	mfctl(CR_ITMR, time_inval);
+	mtctl(time_inval + cpu_hzticks, CR_ITMR);
 
 	/* printf ("clock int 0x%x @ 0x%x for %p\n", t,
 	   CLKF_PC(frame), curproc); */
 
-	cpu_initclocks();
 	if (!cold)
 		hardclock(frame);
 
