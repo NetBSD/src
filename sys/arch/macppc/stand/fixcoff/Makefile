@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 2005/12/11 12:18:06 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2006/09/16 00:57:49 uwe Exp $
 
+NOMAN=		# defined
 .include <bsd.own.mk>
 
 .if ${USETOOLS} == "yes"
