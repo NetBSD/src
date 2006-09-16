@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.698 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.699 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -64,3 +64,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	newsmips: Add timecounter support. From gdamore. [tsutsui 20060913]
 	luna68k: Add timecounter support.  [gdamore 20060914]
 	mipsco: Add timecounter support.  [gdamore 20060915]
+	hpcmips: Add tiemcounter support.  [gdamore 20060915]
