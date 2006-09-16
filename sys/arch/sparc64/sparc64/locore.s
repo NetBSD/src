@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.217 2006/09/16 08:29:06 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.218 2006/09/16 08:43:24 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -5970,6 +5970,7 @@ ENTRY_NOPROFILE(sigcode)
 	stda	%f48, [%l0] ASI_BLK_P
 2:
 	membar	#Sync
+	rd	%fprs, %l0		! reload fprs copy, for checking after
 	rd	%y, %l1			! in any case, save %y
 	lduw	[%fp + BIAS + 128], %o0	! sig
 	lduw	[%fp + BIAS + 128 + 4], %o1	! code
@@ -5981,11 +5982,11 @@ ENTRY_NOPROFILE(sigcode)
 	 * Now that the handler has returned, re-establish all the state
 	 * we just saved above, then do a sigreturn.
 	 */
-	btst	3, %l0			! All clean?
+	btst	FPRS_DL|FPRS_DU, %l0	! All clean?
 	bz,pt	%icc, 2f
-	 btst	1, %l0			! test dl
+	 btst	FPRS_DL, %l0		! test dl
 	bz,pt	%icc, 1f
-	 btst	2, %l0			! test du
+	 btst	FPRS_DU, %l0		! test du
 
 	ldx	[%sp + CC64FSZ + BIAS + 0], %fsr
 	add	%sp, BIAS+CC64FSZ+BLOCK_SIZE, %l0	! Generate a pointer so we can
