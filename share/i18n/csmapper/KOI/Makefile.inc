@@ -1,47 +1,55 @@
-# $NetBSD: Makefile.inc,v 1.1 2006/04/08 14:15:48 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.2 2006/09/16 08:38:20 tnozaki Exp $
 
 .PATH: ${.CURDIR}/KOI
 
 SRCS_mapper.dir+=	mapper.dir.KOI
 SRCS_charset.pivot+=	charset.pivot.KOI
 CLEANFILES+=		mapper.dir.KOI charset.pivot.KOI
+MAPS_KOI=		GOST19768-74%UCS.mps	\
+			UCS%GOST19768-74.mps	\
+			ISO-5427%UCS.mps	\
+			UCS%ISO-5427.mps	\
+			KOI7%UCS.mps		\
+			UCS%KOI7.mps
 PART_KOI8!=		sed '/^\#/d;/^$$/d;' ${.CURDIR}/KOI/KOI8.part
 
-mapper.dir.KOI: ${.CURDIR}/KOI/KOI8.part
+mapper.dir.KOI: ${.CURDIR}/KOI/KOI8.part mapper.dir.KOI.src
 	${_MKTARGET_CREATE}
 	( \
-	    echo "# KOI"; \
-	    for i in 7 8-BASE ${PART_KOI8}; do \
-		printf "%-31s %-31s %s\n" KOI$$i"/UCS" \
+	    cat ${.CURDIR}/KOI/mapper.dir.KOI.src; \
+	    for i in ${PART_KOI8}; do \
+		printf "%-31s %-31s %s\n" KOI$$i"EXT/UCS" \
 			mapper_std KOI/KOI$$i"%UCS.mps"; \
-		printf "%-31s %-31s %s\n" UCS/KOI$$i \
+		printf "%-31s %-31s %s\n" UCS/KOI$$i"EXT" \
 			mapper_std KOI/UCS%KOI$$i".mps"; \
 	    done; \
 	    for i in ${PART_KOI8}; do \
-		printf "%-31s %-31s %s\n" KOI$$i"-PARALLEL/UCS" \
-			mapper_parallel KOI8-BASE/UCS,KOI$$i"/UCS"; \
-		printf "%-31s %-31s %s\n" UCS/KOI$$i"-PARALLEL" \
-			mapper_parallel UCS/KOI$$i",UCS/KOI8-BASE"; \
+		printf "%-31s %-31s %s\n" KOI$$i"/UCS" \
+			mapper_parallel GOST19768-74/UCS,KOI$$i"EXT/UCS"; \
+		printf "%-31s %-31s %s\n" UCS/KOI$$i \
+			mapper_parallel UCS/GOST19768-74,UCS/KOI$$i"EXT"; \
 	    done; \
 	    echo; \
 	) > ${.TARGET}
 
-charset.pivot.KOI: ${.CURDIR}/KOI/KOI8.part
+charset.pivot.KOI: ${.CURDIR}/KOI/KOI8.part charset.pivot.KOI.src
 	${_MKTARGET_CREATE}
 	( \
-	    echo "# KOI"; \
-	    for i in 7 8-BASE ${PART_KOI8}; do \
+	    cat ${.CURDIR}/KOI/charset.pivot.KOI.src; \
+	    for i in ${PART_KOI8}; do \
 		printf "%-31s %-31s%d\n" KOI$$i UCS 1; \
 		printf "%-31s %-31s%d\n" UCS KOI$$i 1; \
 	    done; \
-	    for i in ${PART_KOI8}; do \
-		printf "%-31s %-31s%d\n" KOI$$i"-PARALLEL" UCS 1; \
-		printf "%-31s %-31s%d\n" UCS KOI$$i"-PARALLEL" 1; \
-	    done; \
 	    echo; \
 	) > ${.TARGET}
 
-.for i in 7 8-BASE ${PART_KOI8}
+FILES+=		${MAPS_KOI}
+CLEANFILES+=	${MAPS_KOI}
+.for i in ${MAPS_KOI}
+FILESDIR_$i=	${BINDIR}/KOI
+.endfor
+
+.for i in ${PART_KOI8}
 FILES+=		KOI${i:S/:/@/}%UCS.mps UCS%KOI${i:S/:/@/}.mps
 CLEANFILES+=	KOI${i:S/:/@/}%UCS.mps UCS%KOI${i:S/:/@/}.mps
 FILESDIR_KOI${i:S/:/@/}%UCS.mps=	${BINDIR}/KOI
