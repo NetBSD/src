@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.50 2006/09/16 08:47:18 yamt Exp $
+.\"     $NetBSD: vnodeops.9,v 1.51 2006/09/16 08:54:22 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1233,7 +1233,7 @@ is a description of the lock.
 In the case of
 .Dv SEEK_CUR ,
 The caller should add the current file offset to
-fl-\>l_start beforehand.
+fl-\*[Gt]l_start beforehand.
 .Fn VOP_ADVLOCK
 treats
 .Dv SEEK_CUR
