@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.652 2006/09/16 20:54:43 elad Exp $
+# $NetBSD: mi,v 1.653 2006/09/16 21:03:11 elad Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1412,11 +1412,11 @@
 ./usr/share/examples/smbfs			base-sysutil-examples
 ./usr/share/examples/supfiles			base-sup-examples
 ./usr/share/examples/syslogd			base-sysutil-examples
-./usr/share/examples/veriexecctl		base-sysutil-examples
-./usr/share/examples/veriexecctl/fpgen.sh	base-sysutil-examples	share
-./usr/share/examples/veriexecctl/gen_md5	base-sysutil-examples	share
-./usr/share/examples/veriexecctl/gen_sha1	base-sysutil-examples	share
-./usr/share/examples/veriexecctl/gen_rmd160	base-sysutil-examples	share
+./usr/share/examples/veriexecctl		base-obsolete	obsolete
+./usr/share/examples/veriexecctl/fpgen.sh	base-obsolete	obsolete
+./usr/share/examples/veriexecctl/gen_md5	base-obsolete	obsolete
+./usr/share/examples/veriexecctl/gen_sha1	base-obsolete	obsolete
+./usr/share/examples/veriexecctl/gen_rmd160	base-obsolete	obsolete
 ./usr/share/examples/verifiedexec_load		base-obsolete		obsolete
 ./usr/share/examples/verifiedexec_load/gen_md5	base-obsolete		obsolete
 ./usr/share/examples/verifiedexec_load/gen_sha1	base-obsolete		obsolete
