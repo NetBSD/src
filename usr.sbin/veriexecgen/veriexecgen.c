@@ -1,4 +1,4 @@
-/* $NetBSD: veriexecgen.c,v 1.1 2006/09/16 20:54:42 elad Exp $ */
+/* $NetBSD: veriexecgen.c,v 1.2 2006/09/16 21:26:02 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 #include <util.h>
 
 #include <md5.h>
-#include <crypto/sha1.h>
+#include <sha1.h>
 #include <crypto/sha2.h>
 #include <crypto/rmd160.h>
 
