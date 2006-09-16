@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecctl.8,v 1.24 2006/07/22 10:43:51 elad Exp $
+.\" $NetBSD: veriexecctl.8,v 1.25 2006/09/16 17:17:23 elad Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexecctl.8,v 1.24 2006/07/22 10:43:51 elad Exp $
+.\"	$Id: veriexecctl.8,v 1.25 2006/09/16 17:17:23 elad Exp $
 .\"
 .Dd July 22, 2006
 .Dt VERIEXECCTL 8
@@ -99,7 +99,7 @@ Currently there are seven valid options:
 Allow direct execution only.
 .It Dv INDIRECT
 If this option is set then the executable cannot be invoked directly, it
-can only be used as an interpreter in shell scripts.
+can only be used as an interpreter in scripts.
 .It Dv FILE
 Indicates that the fingerprint is associated with a file, not an
 executable.
@@ -116,16 +116,16 @@ allow direct execution only.
 An alias for
 .Dv INDIRECT ,
 the executable may only be used as an interpreter
-for shell scripts.
+for scripts.
 .It Dv SCRIPT
-The file is a shell script.
+The file is a script.
 For correct operation of veriexec, a script must have both
 .Dv FILE
 and
 .Dv DIRECT
 attributes set.
 This option is a shorthand way of setting the options for correct
-operation of shell scripts.
+operation of scripts.
 .It Dv LIBRARY
 The file is a library, this option is an alias of the
 .Dv FILE
