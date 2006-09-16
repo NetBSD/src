@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.80 2006/09/16 06:34:55 wiz Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.81 2006/09/16 16:57:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.80 2006/09/16 06:34:55 wiz Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.81 2006/09/16 16:57:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1076,7 +1076,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 	struct iovec iov[10];
 	struct iovec *v;
 	struct addrinfo *r;
-	int j, l, lsent;
+	int j, l, lsent, fail, retry;
 	char line[MAXLINE + 1], repbuf[80], greetings[200];
 #define ADDEV() assert(++v - iov < A_CNT(iov))
 
@@ -1187,7 +1187,9 @@ fprintlog(struct filed *f, int flags, char *msg)
 			l = MAXLINE;
 		if (finet) {
 			lsent = -1;
+			fail = 0;
 			for (r = f->f_un.f_forw.f_addr; r; r = r->ai_next) {
+				retry = 0;
 				for (j = 0; j < *finet; j++) {
 #if 0 
 					/*
@@ -1197,13 +1199,33 @@ fprintlog(struct filed *f, int flags, char *msg)
 					if (r->ai_family ==
 					    address_family_of(finet[j+1])) 
 #endif
+sendagain:
 					lsent = sendto(finet[j+1], line, l, 0,
 					    r->ai_addr, r->ai_addrlen);
-					if (lsent == l) 
+					if (lsent == -1) {
+						switch (errno) {
+						case ENOBUFS:
+							/* wait/retry/drop */
+							if (++retry < 5) {
+								usleep(1000);
+								goto sendagain;
+							}
+							break;
+						case EHOSTDOWN:
+						case EHOSTUNREACH:
+						case ENETDOWN:
+							/* drop */
+							break;
+						default:
+							/* busted */
+							fail++;
+							break;
+						}
+					} else if (lsent == l) 
 						break;
 				}
 			}
-			if (lsent != l) {
+			if (lsent != l && fail) {
 				f->f_type = F_UNUSED;
 				logerror("sendto() failed");
 			}
