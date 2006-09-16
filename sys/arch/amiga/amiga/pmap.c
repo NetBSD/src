@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.116 2006/08/03 20:26:24 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.116.2.1 2006/09/16 17:31:42 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116 2006/08/03 20:26:24 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116.2.1 2006/09/16 17:31:42 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2471,13 +2471,15 @@ pmap_enter_ptpage(pmap, va)
 #if defined(M68060)
 			stpa = (u_int)pmap->pm_stpa;
 			if (cputype == CPU_68060) {
+				pt_entry_t	*pte;
+
+				pte = pmap_pte(pmap_kernel(), pmap->pm_stab);
 				while (stpa < (u_int)pmap->pm_stpa +
 				    AMIGA_STSIZE) {
-					pmap_changebit(stpa, PG_CCB, 0);
-					pmap_changebit(stpa, PG_CI, 1);
+					*pte = (*pte & ~PG_CMASK) | PG_CI;
+					++pte;
 					stpa += PAGE_SIZE;
 				}
-				DCIS(); /* XXX */
 	 		}
 #endif
 			pmap->pm_stfree = protostfree;
