@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.2,v 1.1.2.23 2006/09/08 11:14:04 ghen Exp $
+#	$NetBSD: CHANGES-3.0.2,v 1.1.2.24 2006/09/16 16:57:51 riz Exp $
 
 A complete list of changes from the NetBSD 3.0.1 release to the NetBSD 3.0.2
 release:
@@ -157,4 +157,11 @@ sys/arch/xen/xen/clock.c			1.26 via patch
 	Avoid hanging in the timer event handler when a glitch in Xen's
 	timekeeping occurs.
 	[jld, ticket #1506]
+
+xfree/xc/lib/font/Type1/afm.c			1.2
+xfree/xc/lib/font/Type1/scanfont.c		1.2
+xfree/xc/lib/font/Type1/util.c			1.2
+
+	Fix vulnerability in Adobe Type 1 font handling.
+	[adrianp, ticket #1516]
 
