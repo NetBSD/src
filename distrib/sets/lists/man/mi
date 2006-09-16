@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.930 2006/09/10 15:45:55 plunky Exp $
+# $NetBSD: mi,v 1.931 2006/09/16 20:54:43 elad Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1854,6 +1854,7 @@
 ./usr/share/man/cat8/fingerd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fixmount.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/flush.0			man-postfix-catman	postfix,.cat
+./usr/share/man/cat8/veriexecgen.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fsck.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fsck_ext2fs.0		man-ext2fs-catman	.cat
 ./usr/share/man/cat8/fsck_ffs.0			man-sysutil-catman	.cat
@@ -4226,6 +4227,7 @@
 ./usr/share/man/man8/fingerd.8			man-sysutil-man		.man
 ./usr/share/man/man8/fixmount.8			man-sysutil-man		.man
 ./usr/share/man/man8/flush.8			man-postfix-man		postfix,.man
+./usr/share/man/man8/veriexecgen.8			man-sysutil-man		.man
 ./usr/share/man/man8/fsck.8			man-sysutil-man		.man
 ./usr/share/man/man8/fsck_ext2fs.8		man-ext2fs-man		.man
 ./usr/share/man/man8/fsck_ffs.8			man-sysutil-man		.man
