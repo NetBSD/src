@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.105.2.1 2005/09/19 21:03:13 tron Exp $	*/
+/*	$NetBSD: net.c,v 1.105.2.2 2006/09/16 10:26:09 ghen Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -298,7 +298,7 @@ get_ifconfig_info(void)
 }
 
 static int
-do_ifreq(struct ifmediareq *ifmr, int cmd)
+do_ifreq(struct ifmediareq *ifmr, unsigned long cmd)
 {
 	int sock;
 	int rval;
