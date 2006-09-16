@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.32 2006/09/02 21:20:14 ghen Exp $
+.\"	$NetBSD: main,v 1.278.2.33 2006/09/16 17:57:27 ghen Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -547,10 +547,17 @@ and
 .Xr pppoe 4
 (SA2006-019).
 .It
-X11: Fixed an integer overflow in FreeType.
+X11: fixed an integer overflow in FreeType.
 .It
 Fixed a potential DoS attack with
 .Xr sendmail 8 .
+.It
+Fixed a DoS vulnerability in BIND.
+.It
+Fixed a RSA signature forgery in
+.Xr openssl 1 .
+.It
+X11: fixed a vulnerability in Adobe Type 1 font handling.
 .bullet)
 .
 .Ss2 Miscellaneous
@@ -566,7 +573,8 @@ Added
 .Xr ex 1
 to /rescue.
 .It
-Fixed some special case expansions in /bin/sh.
+Fixed some special case expansions in
+.Xr sh 1 .
 .It
 Many, many more additions, improvements and bug fixes.
 .bullet)
@@ -584,7 +592,7 @@ on sparc and sparc64 to avoid a crash.
 .bullet)
 .Ss2 xen specific
 .(bullet
-Added Xen-3 domU support
+Added Xen-3 domU support.
 .It
 Renamed XEN kernel config files to be more consistent: XEN2_DOM0, XEN2_DOMU,
 XEN3_DOMU, INSTALL_XEN2_DOMU and INSTALL_XEN3_DOMU.
