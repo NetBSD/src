@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.160 2006/09/12 09:53:14 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.161 2006/09/16 17:34:38 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4545,4 +4545,86 @@ sys/arch/sparc64/dev/zs.c			1.61
 	Fix wrong prom_getoption() return value checks (fixes serial console on
 	second port of sbus machines)
 	[martin, ticket #1507]
+
+distrib/sparc64/instfs/Makefile.instfs		1.5
+
+	Fix creation of bpf(4) device nodes on the installation filesystem.
+	[martin, ticket #1508]
+
+distrib/utils/sysinst/geom.c			1.9
+distrib/utils/sysinst/net.c			1.110
+
+	The "request" arg of ioctl(2) is unsigned long, not int!  Sign extended
+	requests do not work on archs with sizeof(long) > sizeof(int).
+	Fixes dhclient(8) on 64-bit archs in sysinst.
+	[martin, ticket #1509]
+
+sys/arch/x86/include/bus_private.h		1.6
+sys/arch/x86/x86/bus_dma.c			1.30
+sys/arch/xen/include/bus_private.h		1.7
+sys/arch/xen/x86/xen_bus_dma.c			1.7-1.8 via patch
+
+	Some bus_dma(9) fixes for Xen.
+	[bouyer, ticket #1510]
+
+sys/arch/mac68k/dev/if_ae.c			1.78
+sys/arch/mac68k/include/bus.h			1.25
+
+	Make ae(4) work properly on mac68k.
+	[tsutsui, ticket #1512]
+
+usr.bin/msgc/msg_sys.def			1.32
+
+	Stop sysinst from re-instating the default text when the user tries to
+	completely delete the input buffer.
+	[dsl, ticket #1513]
+
+share/man/man4/ath.4				1.11-1.12
+
+	Note that Netgear WG311 v3 does *not* use an Atheros chip.
+	[dillo, ticket #1514]
+
+sys/arch/xen/xen/clock.c			1.27
+
+	Xen3 changed how it presents wall-clock time to domains.  This change
+	has us set our clock to the correct current time on domU boot, rather
+	than to whatever time it was when the dom0 booted (which may have be
+	months earlier).
+	[jld, ticket #1515]
+
+xfree/xc/lib/font/Type1/afm.c			1.2
+xfree/xc/lib/font/Type1/scanfont.c		1.2
+xfree/xc/lib/font/Type1/util.c			1.2
+
+	Fix vulnerability in Adobe Type 1 font handling.
+	[adrianp, ticket #1516]
+
+sys/arch/sgimips/dev/int.c			1.12
+
+	Remove the 'FIFO Full' hack for interrupt vector 0.
+
+	It is unclear that this interrupt fails to latch as int2_wait_fifo()
+	depends on it doing so and appears to work. Furthermore, we were
+	previously unconditionally unmasking the interrupt 0 vector, which led
+	to more 'unexpected interrupt' messages on the console, rather than
+	avoiding them.
+	[rumble, ticket #1496]
+
+sys/arch/sgimips/hpc/haltwo.c			1.10
+
+	Check the haltwo hardware present bit in the match function, rather
+	than in the attach function after we've thwacked several registers and
+	potentially wedged the machine. This fixes booting on Challenge S
+	systems and addresses PR 25202.
+	[rumble, ticket #1497]
+
+sys/dist/ipf/netinet/ip_lookup.c		1.4
+
+	Fix error message when flushing ippool.
+	[christos, ticket #1501]
+
+dist/ipf/tools/ippool_y.y			1.2
+
+	Increase YYSTACKSIZE so that we can handle huge pools.
+	[christos, ticket #1502]
 
