@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecctl.8,v 1.26 2006/09/16 21:06:13 elad Exp $
+.\" $NetBSD: veriexecctl.8,v 1.27 2006/09/17 13:03:02 elad Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexecctl.8,v 1.26 2006/09/16 21:06:13 elad Exp $
+.\"	$Id: veriexecctl.8,v 1.27 2006/09/17 13:03:02 elad Exp $
 .\"
-.Dd September 16, 2006
+.Dd September 17, 2006
 .Dt VERIEXECCTL 8
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@ The
 command is used to manipulate the Veriexec feature.
 Veriexec must have been configured into the booted kernel for this
 commaned to work.
-.Sh COMMANDS
+.Ss Commands
 .Bl -tag -width 25n
 .It Cm load Ar signatures
 Load the fingerprint entries contained in
@@ -71,7 +71,7 @@ Query Veriexec about information associated with
 Filename, mount, fingerprint, fingerprint algorithm, evaluation status,
 and entry type.
 .El
-.Sh SIGNATURES
+.Ss Signatures
 The
 .Pa signatures
 file contains lines of fields (separated by one or more whitespace
