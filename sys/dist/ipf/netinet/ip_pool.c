@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pool.c,v 1.6 2006/08/26 20:37:50 christos Exp $	*/
+/*	$NetBSD: ip_pool.c,v 1.7 2006/09/17 13:43:15 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -17,6 +17,11 @@
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
+#if defined(__NetBSD__)
+# if (NetBSD >= 199905) && !defined(IPFILTER_LKM) && defined(_KERNEL)
+#  include "opt_ipfilter.h"
+# endif
+#endif
 #include <sys/file.h>
 #if !defined(_KERNEL) && !defined(__KERNEL__)
 # include <stdio.h>
