@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.213 2006/09/16 11:15:50 yamt Exp $
+#       $NetBSD: Makefile,v 1.214 2006/09/17 21:46:39 wiz Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -226,6 +226,19 @@ MLINKS+=getiobuf.9 getiobuf_nowait.9 \
 MLINKS+=hash.9 hash32_buf.9 hash.9 hash32_str.9 hash.9 hash32_strn.9
 MLINKS+=hashinit.9 hashdone.9
 MLINKS+=humanize_number.9 format_bytes.9
+MLINKS+=ieee80211.9 ieee80211_chan2ieee.9 \
+	ieee80211.9 ieee80211_chan2mode.9 \
+	ieee80211.9 ieee80211_ieee2mhz.9 \
+	ieee80211.9 ieee80211_ifattach.9 \
+	ieee80211.9 ieee80211_ifdetach.9 \
+	ieee80211.9 ieee80211_media2rate.9 \
+	ieee80211.9 ieee80211_media_change.9 \
+	ieee80211.9 ieee80211_media_init.9 \
+	ieee80211.9 ieee80211_media_status.9 \
+	ieee80211.9 ieee80211_mhz2ieee.9 \
+	ieee80211.9 ieee80211_rate2media.9 \
+	ieee80211.9 ieee80211_setmode.9 \
+	ieee80211.9 ieee80211_watchdog.9
 MLINKS+=imax.9 imin.9
 MLINKS+=in4_cksum.9 in_cksum.9 \
 	in4_cksum.9 in6_cksum.9
