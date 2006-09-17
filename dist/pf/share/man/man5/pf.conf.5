@@ -1,4 +1,4 @@
-.\"	$NetBSD: pf.conf.5,v 1.9 2006/08/10 12:30:49 peter Exp $
+.\"	$NetBSD: pf.conf.5,v 1.10 2006/09/17 13:53:33 wiz Exp $
 .\"	$OpenBSD: pf.conf.5,v 1.326 2005/03/01 18:10:44 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
@@ -2714,7 +2714,7 @@ bandwidth-spec = "number" ( "b" | "Kb" | "Mb" | "Gb" | "%" )
 
 action         = "pass" | "block" [ return ] | [ "no" ] "scrub"
 return         = "drop" | "return" | "return-rst" [ "( ttl" number ")" ] |
-                 "return-icmp" [ "(" icmpcode ["," icmp6code ] ")" ] |
+                 "return-icmp" [ "(" icmpcode [ [ "," ] icmp6code ] ")" ] |
                  "return-icmp6" [ "(" icmp6code ")" ]
 icmpcode       = ( icmp-code-name | icmp-code-number )
 icmp6code      = ( icmp6-code-name | icmp6-code-number )
