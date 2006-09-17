@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmppc,v 1.10 2005/12/11 12:18:41 christos Exp $
+#	$NetBSD: files.pmppc,v 1.11 2006/09/17 02:45:53 gdamore Exp $
 #
 #
 maxpartitions 16
@@ -47,7 +47,7 @@ file	arch/pmppc/pmppc/mainbus.c		mainbus | cpu	needs-flag
 attach	cs at mainbus with cs_mainbus
 file	arch/pmppc/dev/if_cs_mainbus.c		cs_mainbus
 
-device	rtc
+device	rtc : mc146818
 attach	rtc at mainbus
 file	arch/pmppc/dev/ds17485.c		rtc
 
