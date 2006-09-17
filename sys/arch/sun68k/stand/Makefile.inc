@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2006/09/17 05:44:46 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2006/09/17 06:15:40 tsutsui Exp $
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
@@ -52,7 +52,7 @@ CLEANFILES+= machine m68k sun68k
 
 machine :
 	-rm -f $@
-	ln -s ${S}/arch/sun68k/include $@
+	ln -s ${S}/arch/${MACHINE}/include $@
 
 m68k :
 	-rm -f $@
@@ -60,4 +60,4 @@ m68k :
 
 sun68k :
 	-rm -f $@
-	ln -s ${S}/arch/sun68k $@
+	ln -s ${S}/arch/sun68k/include $@
