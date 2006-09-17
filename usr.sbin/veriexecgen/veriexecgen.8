@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecgen.8,v 1.4 2006/09/17 05:04:05 elad Exp $
+.\" $NetBSD: veriexecgen.8,v 1.5 2006/09/17 10:14:36 elad Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,13 +51,10 @@
 .Nm
 can be used to create a fingerprint database for use with Veriexec.
 .Pp
-By default,
+If no command line arguments were specified,
 .Nm
-will scan the current working directory for executable file, fingerprint them
-using
-.Dq sha256 ,
-then write the data to
-.Pa /etc/signatures .
+will resort to default operation, implying
+.Fl D Fl o Ar /etc/signatures Fl t Ar sha256 .
 .Pp
 If the output file already exists,
 .Nm
@@ -112,15 +109,16 @@ Print messages describing what operations are being done.
 Fingerprint files in the common system directories using the default hashing
 algorithm
 .Dq sha256
-and save to the default fingerprint database:
+and save to the default fingerprint database in
+.Pa /etc/signatures :
 .Bd -literal -offset indent
-# veriexecgen -D
+# veriexecgen
 .Ed
 .Pp
 Fingerprint files in
 .Pa /etc ,
 appending to the default fingerprint database:
-.Bd -literal
+.Bd -literal -offset indent
 # veriexecgen -A -d /etc
 .Ed
 .Pp
@@ -132,6 +130,8 @@ as the hashing algorithm, saving to
 .Bd -literal -offset indent
 # veriexecgen -d /path/to/somewhere -t rmd160 -o /etc/somewhere.fp
 .Ed
+.Sh FILES
+.Pa /etc/signatures
 .Sh SEE ALSO
 .Xr veriexec 4 ,
 .Xr veriexecctl 8
