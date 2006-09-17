@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2006/09/17 05:44:46 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.24 2006/09/17 06:15:40 tsutsui Exp $
 
 LIB=sa
 
@@ -7,7 +7,7 @@ LIB=sa
 # but this way the separate object files get built
 #
 
-POBJS=SRT0.o SRT1.o
+POBJS=SRT0.o
 
 NOLINT=# defined
 NOPIC=# defined
@@ -33,7 +33,7 @@ DIR_LIBC=${S}/../common/lib/libc
 
 CPUFLAGS=	# ignore settings in /etc/mk.conf
 DEFS= -Dsun3 -D_STANDALONE -D__daddr_t=int32_t
-INCL= -I. -I${.CURDIR} -I${S}/lib/libsa -I${S}
+INCL= -I. -I${.CURDIR} -I${S}/lib/libsa -I${S} -I${.CURDIR}/../../..
 AFLAGS= -Wa,-mc68020 -Wa,-mc68851
 CFLAGS= -mc68000 -Wa,-mc68010 -Wa,-m68851 -msoft-float
 COPTS= -Os -fno-defer-pop -ffreestanding
@@ -57,7 +57,7 @@ SRC_libc_quad= ashldi3.c ashrdi3.c
 
 SRC_libc_string= bcmp.S bzero.S memcmp.S memset.S strcmp.S strlen.S strncmp.S
 
-SRC_here= clock.c dev_disk.c devopen.c \
+SRC_here= SRT1.c clock.c dev_disk.c devopen.c \
 	 gets.c idprom.c netif_sun.c panic.c \
 	 promboot.c promcons.c promdev.c putstr.c \
 	 sun2.c sun3.c sun3x.c vers.c xxboot.c
