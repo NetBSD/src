@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.37 2006/06/14 14:18:44 he Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.38 2006/09/17 08:41:31 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.37 2006/06/14 14:18:44 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.38 2006/09/17 08:41:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -671,6 +671,7 @@ svr4_32_sys_sysconfig(l, v, retval)
 {
 	struct svr4_32_sys_sysconfig_args *uap = v;
 	extern int	maxfiles;
+	int active;
 
 	switch (SCARG(uap, name)) {
 	case SVR4_CONFIG_NGROUPS:
@@ -752,7 +753,8 @@ svr4_32_sys_sysconfig(l, v, retval)
 		*retval = uvmexp.free;	/* XXX: free instead of total */
 		break;
 	case SVR4_CONFIG_AVPHYS_PAGES:
-		*retval = uvmexp.active;	/* XXX: active instead of avg */
+		uvm_estimatepageable(&active, NULL);
+		*retval = active;	/* XXX: active instead of avg */
 		break;
 	case SVR4_CONFIG_COHERENCY:
 		*retval = 0;	/* XXX */
