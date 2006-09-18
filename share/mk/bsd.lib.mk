@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.268 2006/07/22 05:29:03 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.269 2006/09/18 05:15:35 dbj Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -418,7 +418,7 @@ __archivebuild: .USE
 __archiveinstall: .USE
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	    ${UPDATE:D:U-a "${RANLIB} -t"} ${.ALLSRC} ${.TARGET}
+	    ${empty(PRESERVE):?-a "${RANLIB} -t":} ${.ALLSRC} ${.TARGET}
 .endif
 
 __archivesymlinkpic: .USE
@@ -505,7 +505,7 @@ libinstall::
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}.a
 
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 .if !defined(BUILD) && !make(all) && !make(lib${LIB}.a)
 ${DESTDIR}${LIBDIR}/lib${LIB}.a! .MADE
 .endif
@@ -522,7 +522,7 @@ ${DESTDIR}${LIBDIR}/lib${LIB}.a: lib${LIB}.a __archiveinstall
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 .if !defined(BUILD) && !make(all) && !make(lib${LIB}_p.a)
 ${DESTDIR}${LIBDIR}/lib${LIB}_p.a! .MADE
 .endif
@@ -539,7 +539,7 @@ ${DESTDIR}${LIBDIR}/lib${LIB}_p.a: lib${LIB}_p.a __archiveinstall
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_g.a
 .PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}_g.a
 
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 .if !defined(BUILD) && !make(all) && !make(lib${LIB}_g.a)
 ${DESTDIR}${LIBDIR}/lib${LIB}_g.a! .MADE
 .endif
@@ -556,7 +556,7 @@ ${DESTDIR}${LIBDIR}/lib${LIB}_g.a: lib${LIB}_g.a __archiveinstall
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 .if !defined(BUILD) && !make(all) && !make(lib${LIB}_pic.a)
 ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a! .MADE
 .endif
@@ -581,7 +581,7 @@ ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: lib${LIB}_pic.a __archiveinstall
 libinstall:: ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
 .PRECIOUS: ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
 
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 .if !defined(BUILD) && !make(all) && !make(lib${LIB}.so.${SHLIB_FULLVERSION})
 ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}! .MADE
 .endif
@@ -629,7 +629,7 @@ ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_F
 libinstall:: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 .PRECIOUS: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 .if !defined(BUILD) && !make(all) && !make(llib-l${LIB}.ln)
 ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln! .MADE
 .endif
