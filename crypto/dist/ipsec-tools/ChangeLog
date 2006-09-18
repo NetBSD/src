@@ -1,14 +1,18 @@
-2006-08-18  Emmanuel Dreyfus  <manu@netbsd.org>
+2006-09-18  Yvan Vanhullebus  <vanhu@NetBSD.org>
+	* src/racoon/cf[parse|token].c: removed those files from the CVS,
+	  as they are generated during the build.
+
+2006-09-18  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	From Matthew Grooms:
 	* src/racoon/isakmp.c: handle IKE frag used in the first packet.
 
-2006-08-16  Emmanuel Dreyfus  <manu@netbsd.org>
+2006-09-16  Emmanuel Dreyfus  <manu@netbsd.org>
 
 	From Matthew Grooms:
 	* src/racoon/ipsec_doi.c: Trivial bugfix in RFC2407 4.6.2 conformance
 	
-2006-08-15  Emmanuel Dreyfus  <manu@netbsd.org>
+2006-09-15  Emmanuel Dreyfus  <manu@netbsd.org>
 	* src/racoon/ipsec_doi.c: fix build on Linux
 
 ---------------------------------------------
