@@ -1,4 +1,4 @@
-/* $NetBSD: veriexecgen.c,v 1.3 2006/09/18 17:47:25 elad Exp $ */
+/* $NetBSD: veriexecgen.c,v 1.4 2006/09/18 20:53:48 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -374,7 +374,7 @@ main(int argc, char **argv)
 
 	store_entries(dbfile, hash);
 
-	if (chflags(dbfile, SF_IMMUTABLE) != 0)
+	if (Sflag && chflags(dbfile, SF_IMMUTABLE) != 0)
 		err(1, "Can't set immutable flag");
 
 	return 0;
