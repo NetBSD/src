@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.24 2006/03/03 15:07:00 christos Exp $	*/
+/*	$NetBSD: send.c,v 1.25 2006/09/18 19:46:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.24 2006/03/03 15:07:00 christos Exp $");
+__RCSID("$NetBSD: send.c,v 1.25 2006/09/18 19:46:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -358,7 +358,7 @@ mail1(struct header *hp, int printheaders)
 		goto out;
 	}
 	if ((cp = value("record")) != NULL)
-		(void)savemail(expand(cp), mtf);
+		(void)savemail(expand(cp), mtf, hp->h_to);
 	/*
 	 * Fork, set up the temporary mail file as standard
 	 * input for "mail", and exec with the user list we generated
@@ -486,9 +486,12 @@ puthead(struct header *hp, FILE *fo, int w)
 
 	gotcha = 0;
 	if (hp->h_to != NULL && w & GTO)
-		fmt("To:", hp->h_to, fo, w&GCOMMA), gotcha++;
+		if (!Bflag)
+			fmt("To:", hp->h_to, fo, w&GCOMMA), gotcha++;
 	if (hp->h_subject != NULL && w & GSUBJECT)
 		(void)fprintf(fo, "Subject: %s\n", hp->h_subject), gotcha++;
+	if (hp->h_smopts != NULL && w & GSMOPTS)
+		(void)fprintf(fo, "(sendmail options: %s)\n", detract(hp->h_smopts, GSMOPTS)), gotcha++;
 	if (hp->h_cc != NULL && w & GCC)
 		fmt("Cc:", hp->h_cc, fo, w&GCOMMA), gotcha++;
 	if (hp->h_bcc != NULL && w & GBCC)
@@ -534,7 +537,7 @@ fmt(const char *str, struct name *np, FILE *fo, int comma)
 
 /*ARGSUSED*/
 int
-savemail(const char name[], FILE *fi)
+savemail(const char name[], FILE *fi, struct name *to)
 {
 	FILE *fo;
 	char buf[BUFSIZ];
@@ -551,6 +554,16 @@ savemail(const char name[], FILE *fi)
 	}
 	(void)time(&now);
 	(void)fprintf(fo, "From %s %s", myname, ctime(&now));
+
+	if (Bflag) { /* Make sure we save a "To:" line if -B is set */
+		struct name *n;
+		(void)fputs("To: undisclosed-recipients:", fo);
+		for (n = to; n != NULL; n = n->n_flink)
+			if ((n->n_type & GDEL) == 0)
+				(void)fprintf(fo, " %s", n->n_name);
+		(void)putc('\n', fo);
+	}
+
 	while ((i = fread(buf, 1, sizeof buf, fi)) > 0)
 		(void)fwrite(buf, 1, (size_t)i, fo);
 	(void)putc('\n', fo);
