@@ -1,4 +1,4 @@
-/* $NetBSD: veriexecgen.c,v 1.2 2006/09/16 21:26:02 elad Exp $ */
+/* $NetBSD: veriexecgen.c,v 1.3 2006/09/18 17:47:25 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -86,13 +86,13 @@ struct hash {
 	{ NULL, NULL },
 };
 
-int Aflag, aflag, Dflag, Fflag, rflag, vflag;
+int Aflag, aflag, Dflag, Fflag, rflag, Sflag, vflag;
 
 static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-Aarv] [-D] [-d dir] [-o fingerprintdb]"
+	    "usage: %s [-AaDrSv] [-d dir] [-o fingerprintdb]"
 	    " [-t algorithm]\n", getprogname());
 }
 
@@ -297,9 +297,9 @@ main(int argc, char **argv)
 	char **search_path = NULL;
 	struct hash *hash = NULL;
 
-	Aflag = aflag = Dflag = Fflag = rflag = vflag = 0;
+	Aflag = aflag = Dflag = Fflag = rflag = Sflag = vflag = 0;
 
-	while ((ch = getopt(argc, argv, "AaDd:ho:rt:v")) != -1) {
+	while ((ch = getopt(argc, argv, "AaDd:ho:rSt:v")) != -1) {
 		switch (ch) {
 		case 'A':
 			Aflag = 1;
@@ -329,6 +329,9 @@ main(int argc, char **argv)
 			break;
 		case 'r':
 			rflag = 1;
+			break;
+		case 'S':
+			Sflag = 1;
 			break;
 		case 't':
 			hash = find_hash(optarg);
@@ -370,6 +373,9 @@ main(int argc, char **argv)
 	}
 
 	store_entries(dbfile, hash);
+
+	if (chflags(dbfile, SF_IMMUTABLE) != 0)
+		err(1, "Can't set immutable flag");
 
 	return 0;
 }
