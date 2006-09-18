@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.653 2006/09/16 21:03:11 elad Exp $
+# $NetBSD: mi,v 1.654 2006/09/18 08:09:29 dbj Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -92,9 +92,9 @@
 ./etc/powerd					base-sysutil-bin
 ./etc/powerd/scripts				base-sysutil-bin
 ./etc/racoon					base-netutil-bin
-./etc/release					etc-sys-etc
 ./etc/rc.conf.d					base-sys-root
 ./etc/rc.d					base-sys-root
+./etc/release					etc-sys-etc
 ./etc/skel					base-sys-root
 ./etc/sliphome					base-slip-root
 ./etc/ssh					base-sys-root
@@ -612,8 +612,8 @@
 ./usr/bin/sdpquery				base-util-bin
 ./usr/bin/sed					base-util-bin
 ./usr/bin/send-pr				base-gnats-bin
-./usr/bin/setextattr				base-util-bin
 ./usr/bin/seq					base-util-bin
+./usr/bin/setextattr				base-util-bin
 ./usr/bin/sftp					base-secsh-bin		crypto
 ./usr/bin/sha1					base-util-bin
 ./usr/bin/shar					base-util-bin
@@ -830,7 +830,6 @@
 ./usr/include/vm				base-obsolete		obsolete
 ./usr/lib					base-sys-usr
 ./usr/lib/i18n					base-i18n-root
-./usr/lib/security				base-sys-usr
 ./usr/lib/libntp.so				base-obsolete		obsolete
 ./usr/lib/libntp.so.0				base-obsolete		obsolete
 ./usr/lib/libntp.so.0.0				base-obsolete		obsolete
@@ -867,6 +866,7 @@
 ./usr/lib/runemodule/libUTF8.so			base-obsolete		obsolete
 ./usr/lib/runemodule/libUTF8.so.3		base-obsolete		obsolete
 ./usr/lib/runemodule/libUTF8.so.3.0		base-obsolete		obsolete
+./usr/lib/security				base-sys-usr
 ./usr/libdata					base-sys-usr
 ./usr/libdata/debug				base-sys-usr
 ./usr/libdata/debug/bin				base-sys-usr
@@ -917,6 +917,9 @@
 ./usr/libexec/makewhatis			base-man-bin
 ./usr/libexec/named-xfer			base-obsolete		obsolete
 ./usr/libexec/ntalkd				base-netutil-bin
+./usr/libexec/pfspamd				base-obsolete		obsolete
+./usr/libexec/pfspamd-setup			base-obsolete		obsolete
+./usr/libexec/pfspamlogd			base-obsolete		obsolete
 ./usr/libexec/postfix				base-postfix-usr
 ./usr/libexec/postfix/anvil			base-postfix-bin	postfix
 ./usr/libexec/postfix/bounce			base-postfix-bin	postfix
@@ -958,11 +961,8 @@
 ./usr/libexec/sftp-server			base-secsh-bin		crypto
 ./usr/libexec/sm.bin				base-obsolete		obsolete
 ./usr/libexec/smrsh				base-obsolete		obsolete
-./usr/libexec/pfspamd				base-obsolete		obsolete
 ./usr/libexec/spamd				base-obsolete		obsolete
-./usr/libexec/pfspamd-setup			base-obsolete		obsolete
 ./usr/libexec/spamd-setup			base-obsolete		obsolete
-./usr/libexec/pfspamlogd			base-obsolete		obsolete
 ./usr/libexec/spamlogd				base-obsolete		obsolete
 ./usr/libexec/spellprog				base-util-bin
 ./usr/libexec/ssh-keysign			base-secsh-bin		crypto
@@ -1029,7 +1029,6 @@
 ./usr/sbin/faithd				base-router-bin		inet6
 ./usr/sbin/fixmount				base-nfsclient-bin
 ./usr/sbin/flush				base-obsolete		obsolete
-./usr/sbin/veriexecgen				base-sysutil-bin
 ./usr/sbin/fsinfo				base-sysutil-bin
 ./usr/sbin/fssconfig				base-sysutil-bin
 ./usr/sbin/fwctl				base-sysutil-bin
@@ -1145,6 +1144,7 @@
 ./usr/sbin/omshell				base-dhcpd-bin
 ./usr/sbin/pac					base-sysutil-bin
 ./usr/sbin/pcictl				base-sysutil-bin
+./usr/sbin/pfspamdb				base-obsolete		obsolete
 ./usr/sbin/pim6dd				base-obsolete		obsolete
 ./usr/sbin/pim6sd				base-obsolete		obsolete
 ./usr/sbin/pim6stat				base-obsolete		obsolete
@@ -1190,9 +1190,9 @@
 ./usr/sbin/repquota				base-sysutil-bin
 ./usr/sbin/revnetgroup				base-nis-bin		yp
 ./usr/sbin/rip6query				base-netutil-bin	inet6
+./usr/sbin/rmt					base-sysutil-bin
 ./usr/sbin/rndc					base-bind-bin
 ./usr/sbin/rndc-confgen				base-bind-bin
-./usr/sbin/rmt					base-sysutil-bin
 ./usr/sbin/route6d				base-router-bin		use_inet6
 ./usr/sbin/rpc.bootparamd			base-bootserver-bin
 ./usr/sbin/rpc.lockd				base-nfsserver-bin
@@ -1218,15 +1218,14 @@
 ./usr/sbin/slstats				base-slip-bin
 ./usr/sbin/smrsh				base-obsolete		obsolete
 ./usr/sbin/sntp					base-ntp-bin
-./usr/sbin/pfspamdb				base-obsolete		obsolete
 ./usr/sbin/spamdb				base-obsolete		obsolete
 ./usr/sbin/spawn				base-obsolete		obsolete
 ./usr/sbin/spray				base-rpcutil-bin
 ./usr/sbin/sshd					base-secsh-bin		crypto
 ./usr/sbin/statmsg				base-obsolete		obsolete
-./usr/sbin/sti					base-sysutil-bin
 ./usr/sbin/stdethers				base-nis-bin		yp
 ./usr/sbin/stdhosts				base-nis-bin		yp
+./usr/sbin/sti					base-sysutil-bin
 ./usr/sbin/sunlabel				base-sysutil-bin
 ./usr/sbin/sup					base-sup-bin
 ./usr/sbin/supfilesrv				base-sup-bin
@@ -1254,6 +1253,7 @@
 ./usr/sbin/userinfo				base-sysutil-bin
 ./usr/sbin/usermod				base-sysutil-bin
 ./usr/sbin/uuchk				base-uucp-bin		uucp
+./usr/sbin/veriexecgen				base-sysutil-bin
 ./usr/sbin/vipw					base-sysutil-bin
 ./usr/sbin/vnconfig				base-sysutil-bin
 ./usr/sbin/wiconfig				base-sysutil-bin
@@ -1415,8 +1415,8 @@
 ./usr/share/examples/veriexecctl		base-obsolete	obsolete
 ./usr/share/examples/veriexecctl/fpgen.sh	base-obsolete	obsolete
 ./usr/share/examples/veriexecctl/gen_md5	base-obsolete	obsolete
-./usr/share/examples/veriexecctl/gen_sha1	base-obsolete	obsolete
 ./usr/share/examples/veriexecctl/gen_rmd160	base-obsolete	obsolete
+./usr/share/examples/veriexecctl/gen_sha1	base-obsolete	obsolete
 ./usr/share/examples/verifiedexec_load		base-obsolete		obsolete
 ./usr/share/examples/verifiedexec_load/gen_md5	base-obsolete		obsolete
 ./usr/share/examples/verifiedexec_load/gen_sha1	base-obsolete		obsolete
@@ -1680,13 +1680,13 @@
 ./usr/share/i18n/csmapper/GB/GB2312UDA2%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/GBKEXT%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/GBKUDA%UCS.mps	base-sysutil-share	nls
-./usr/share/i18n/csmapper/GB/UCS@BMP%GB18030.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/UCS%GB2312.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/UCS%GB2312EXT.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/UCS%GB2312UDA1.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/UCS%GB2312UDA2.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/UCS%GBKEXT.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/UCS%GBKUDA.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/GB/UCS@BMP%GB18030.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GEORGIAN					base-sysutil-share
 ./usr/share/i18n/csmapper/GEORGIAN/GEORGIAN-ACADEMY%UCS.mps		base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GEORGIAN/GEORGIAN-ACADEMY@OldCapital%UCS.mps	base-sysutil-share	nls
@@ -2289,11 +2289,11 @@
 ./usr/share/locale/pt/LC_MESSAGES		base-locale-pt
 ./usr/share/locale/pt/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/pt_BR			base-locale-pt
+./usr/share/locale/pt_BR.ISO8859-1		base-locale-pt
+./usr/share/locale/pt_BR.ISO8859-1/LC_CTYPE	base-locale-pt		nls
 ./usr/share/locale/pt_BR/LC_MESSAGES		base-locale-pt
 ./usr/share/locale/pt_BR/LC_MESSAGES/grep.mo	base-locale-pt		nls
 ./usr/share/locale/pt_BR/LC_MESSAGES/tar.mo	base-obsolete		obsolete
-./usr/share/locale/pt_BR.ISO8859-1		base-locale-pt
-./usr/share/locale/pt_BR.ISO8859-1/LC_CTYPE	base-locale-pt		nls
 ./usr/share/locale/pt_PT.ISO8859-1		base-locale-pt
 ./usr/share/locale/pt_PT.ISO8859-1/LC_CTYPE	base-locale-pt		nls
 ./usr/share/locale/pt_PT.ISO8859-15		base-locale-pt
@@ -3157,19 +3157,19 @@
 ./usr/share/wscons/fonts/vt220l.814		base-util-share		share
 ./usr/share/wscons/fonts/vt220l.816		base-util-share		share
 ./usr/share/wscons/keymaps			base-util-share
-./usr/share/wscons/keymaps/pckbd.br.abnt2	base-util-share		share
 ./usr/share/wscons/keymaps/amikbd.pl.qwertz.iso8859-2	base-util-share		share
-./usr/share/wscons/keymaps/mkbd.pt.iso8859-2	base-obsolete		obsolete
 ./usr/share/wscons/keymaps/mkbd.pt.iso8859-1	base-util-share		share
+./usr/share/wscons/keymaps/mkbd.pt.iso8859-2	base-obsolete		obsolete
 ./usr/share/wscons/keymaps/pckbd.be.azerty	base-util-share		share
+./usr/share/wscons/keymaps/pckbd.br.abnt2	base-util-share		share
+./usr/share/wscons/keymaps/pckbd.de_CH.iso8859-1	base-util-share		share
+./usr/share/wscons/keymaps/pckbd.de_CH.iso8859-2	base-obsolete	obsolete
+./usr/share/wscons/keymaps/pckbd.fr_CH.iso8859-1	base-util-share		share
+./usr/share/wscons/keymaps/pckbd.fr_CH.iso8859-2	base-obsolete	obsolete
 ./usr/share/wscons/keymaps/pckbd.hu.iso8859-2	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.pl.iso8859-2	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.ru.koi8-r	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.sv.svascii	base-util-share		share
-./usr/share/wscons/keymaps/pckbd.de_CH.iso8859-2	base-obsolete	obsolete
-./usr/share/wscons/keymaps/pckbd.fr_CH.iso8859-2	base-obsolete	obsolete
-./usr/share/wscons/keymaps/pckbd.de_CH.iso8859-1	base-util-share		share
-./usr/share/wscons/keymaps/pckbd.fr_CH.iso8859-1	base-util-share		share
 ./usr/share/zoneinfo				base-sys-share
 ./usr/share/zoneinfo/Africa			base-sys-share
 ./usr/share/zoneinfo/Africa/Abidjan		base-sys-share		share
