@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.16 2006/08/27 23:59:40 christos Exp $ */
+/* $NetBSD: auixp.c,v 1.17 2006/09/18 15:18:52 reinoud Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.16 2006/08/27 23:59:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.17 2006/09/18 15:18:52 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1157,21 +1157,6 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 	if (!sc->sc_output_dma || !sc->sc_input_dma)
 		return;
 
-	/* fill in the missing details about the dma channels. */
-
-	/* for output */
-	sc->sc_output_dma->linkptr        = ATI_REG_OUT_DMA_LINKPTR;
-	sc->sc_output_dma->dma_enable_bit = ATI_REG_CMD_OUT_DMA_EN |
-					    ATI_REG_CMD_SEND_EN;
-	/* have spdif? then this too! XXX not seeing LED yet! XXX */
-	if (sc->has_spdif)
-		sc->sc_output_dma->dma_enable_bit |= ATI_REG_CMD_SPDF_OUT_EN;
-
-	/* and for input */
-	sc->sc_input_dma->linkptr         = ATI_REG_IN_DMA_LINKPTR;
-	sc->sc_input_dma->dma_enable_bit  = ATI_REG_CMD_IN_DMA_EN  |
-					    ATI_REG_CMD_RECEIVE_EN;
-
 #if 0
 	/* could preliminary program DMA chain */
 	auixp_program_dma_chain(sc, sc->sc_output_dma);
@@ -1312,6 +1297,26 @@ auixp_post_config(struct device *self)
 		if (codec->present)
 			audio_attach_mi(&auixp_hw_if, codec, &sc->sc_dev);
 	}
+
+	if (sc->has_spdif) {
+		aprint_normal("%s: codec spdif support detected but disabled "
+		    "for now\n", sc->sc_dev.dv_xname);
+		sc->has_spdif = 0;
+	}
+
+	/* fill in the missing details about the dma channels. */
+	/* for output */
+	sc->sc_output_dma->linkptr        = ATI_REG_OUT_DMA_LINKPTR;
+	sc->sc_output_dma->dma_enable_bit = ATI_REG_CMD_OUT_DMA_EN |
+					    ATI_REG_CMD_SEND_EN;
+	/* have spdif? then this too! XXX not seeing LED yet! XXX */
+	if (sc->has_spdif)
+		sc->sc_output_dma->dma_enable_bit |= ATI_REG_CMD_SPDF_OUT_EN;
+
+	/* and for input */
+	sc->sc_input_dma->linkptr         = ATI_REG_IN_DMA_LINKPTR;
+	sc->sc_input_dma->dma_enable_bit  = ATI_REG_CMD_IN_DMA_EN  |
+					    ATI_REG_CMD_RECEIVE_EN;
 
 	/* done! now enable all interrupts we can service */
 	auixp_enable_interrupts(sc);
