@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.205 2006/09/10 15:45:56 plunky Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.206 2006/09/18 15:13:15 pavel Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.205 $"
+#ident 		"GENERIC-$Revision: 1.206 $"
 
 maxusers	32		# estimated number of users
 
@@ -270,13 +270,13 @@ acpi0 		at mainbus0
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 
 # ACPI devices
-#apm*		at acpi?		# ACPI apm emulation
-#acpiacad* 	at acpi?		# ACPI AC Adapter
-#acpibat* 	at acpi?		# ACPI Battery
-#acpibut* 	at acpi?		# ACPI Button
-#acpiec* 	at acpi?		# ACPI Embedded Controller
-#acpilid* 	at acpi?		# ACPI Lid Switch
-#acpitz* 	at acpi?		# ACPI Thermal Zone
+apm*		at acpi?		# ACPI apm emulation
+acpiacad* 	at acpi?		# ACPI AC Adapter
+acpibat* 	at acpi?		# ACPI Battery
+acpibut* 	at acpi?		# ACPI Button
+acpiec* 	at acpi?		# ACPI Embedded Controller
+acpilid* 	at acpi?		# ACPI Lid Switch
+acpitz* 	at acpi?		# ACPI Thermal Zone
 
 # Mainboard devices
 #attimer*	at acpi?		# AT Timer
