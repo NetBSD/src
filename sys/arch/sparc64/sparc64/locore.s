@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.218 2006/09/16 08:43:24 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.219 2006/09/18 08:18:47 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -10233,6 +10233,41 @@ Lkcerr:
 	retl				! and return error indicator
 	 mov	EFAULT, %o0
 	NOTREACHED
+
+#ifdef MULTIPROCESSOR
+ENTRY(sparc64_ipi_save_fpstate)
+	mov	%o0, %g1		! save registers used by savefpstate
+	mov	%o1, %g2		! to alternate globals
+	mov	%o2, %g3
+	mov	%o3, %g4
+	mov	%o4, %g5
+	mov	%o5, %g6
+	set	CPUINFO_VA + CI_FPLWP, %o0
+	ldx	[%o0], %o0
+	call	savefpstate
+	 ldx	[%o0 + L_FPSTATE], %l1
+	stx	%g0, [%o0]		! fplwp = NULL
+	mov	%g6, %o5		! restore saved registers
+	mov	%g5, %o4
+	mov	%g4, %o3
+	mov	%g3, %o2
+	mov	%g2, %o1
+	ba	ret_from_intr_vector
+	 mov	%g1, %o0
+
+ENTRY(sparc64_ipi_drop_fpstate)
+	mov	%o0, %g1		! save registers used here
+	mov	%o1, %g2		! to alternate globals
+	rdpr	%pstate, %o1
+	wr	%g0, FPRS_FEF, %fprs
+	or	%o1, PSTATE_PEF, %o1
+	wrpr	%o1, 0, %pstate
+	set	CPUINFO_VA + CI_FPLWP, %o0
+	stx	%g0, [%o0]		! fplwp = NULL
+	mov	%g2, %o1		! restore saved registers
+	ba	ret_from_intr_vector
+	 mov	%g1, %o0
+#endif
 
 /*
  * clearfpstate()

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.56 2006/09/15 07:42:38 martin Exp $ */
+/*	$NetBSD: cpu.h,v 1.57 2006/09/18 08:18:47 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -199,6 +199,18 @@ extern  u_long  mp_tramp_ci;
 
 void	cpu_hatch(void);
 void	cpu_boot_secondary_processors(void);
+
+/*
+ * Call a function on other cpus:
+ *	multicast - send to everyone in the cpuset_t
+ *	broadcast - send to to all cpus but ourselves
+ *	send - send to just this cpu
+ */
+typedef void (* ipifunc_t)(void *);
+
+void	sparc64_multicast_ipi (cpuset_t, ipifunc_t);
+void	sparc64_broadcast_ipi (ipifunc_t);
+void	sparc64_send_ipi (int, ipifunc_t);
 #endif
 
 extern uint64_t cpu_clockrate[];

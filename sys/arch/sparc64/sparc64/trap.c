@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.135 2006/09/14 22:44:18 he Exp $ */
+/*	$NetBSD: trap.c,v 1.136 2006/09/18 08:18:47 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.135 2006/09/14 22:44:18 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.136 2006/09/18 08:18:47 martin Exp $");
 
 #define NEW_FPSTATE
 
@@ -528,6 +528,9 @@ extern void db_printf(const char * , ...);
 				newfplwp = &lwp0;
 			} else {
 				newfplwp = curlwp;
+				/* force other cpus to give up this fpstate */
+				if (curlwp->l_md.md_fpstate)
+					save_and_clear_fpstate(newfplwp);
 			}
 			if (fplwp != newfplwp) {
 				if (fplwp != NULL) {
@@ -536,7 +539,7 @@ extern void db_printf(const char * , ...);
 					fplwp = NULL;
 				}
 				/* If we have an allocated fpstate, load it */
-				if (newfplwp->l_md.md_fpstate != 0) {
+				if (newfplwp->l_md.md_fpstate != NULL) {
 					fplwp = newfplwp;
 					loadfpstate(fplwp->l_md.md_fpstate);
 				} else
@@ -689,6 +692,8 @@ badtrap:
 			break;
 		}
 		if (fplwp != l) {		/* we do not have it */
+			/* but maybe another CPU has it? */
+			save_and_clear_fpstate(l);
 			if (fplwp != NULL)	/* someone else had it */
 				savefpstate(fplwp->l_md.md_fpstate);
 			loadfpstate(fs);
