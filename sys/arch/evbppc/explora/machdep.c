@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2006/06/30 17:54:50 freza Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2006/09/18 22:05:47 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2006/06/30 17:54:50 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2006/09/18 22:05:47 gdamore Exp $");
 
 #include "opt_explora.h"
 #include "ksyms.h"
@@ -440,18 +440,6 @@ cpu_reboot(int howto, char *what)
 	while (1)
 		;
 #endif
-}
-
-void
-inittodr(time_t base)
-{
-	if (base > 365*24*60*60 && time.tv_sec < 365*24*60*60)
-		time.tv_sec = base;
-}
-
-void
-resettodr(void)
-{
 }
 
 void
