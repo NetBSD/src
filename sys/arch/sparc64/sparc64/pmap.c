@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.173 2006/09/13 11:35:53 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.174 2006/09/18 23:56:54 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.173 2006/09/13 11:35:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.174 2006/09/18 23:56:54 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1088,17 +1088,19 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		cpus->ci_self = cpus;
 		cpus->ci_next = NULL;
 		cpus->ci_curlwp = &lwp0;
-		cpus->ci_cpcb = (struct pcb *)u0[0]; /* Need better source */
 		cpus->ci_flags = CPUF_PRIMARY;
 		cpus->ci_upaid = CPU_UPAID;
 		cpus->ci_number = 0;
 		cpus->ci_cpuid = cpus->ci_upaid;
 		cpus->ci_fplwp = NULL;
 		cpus->ci_spinup = main; /* Call main when we're running. */
-		cpus->ci_initstack = (void *)u0[1];
 		cpus->ci_paddr = cpu0paddr;
-		cpus->ci_eintstack = (void *)EINTSTACK;
 		cpus->ci_idle_u = (struct pcb *)(CPUINFO_VA + 2 * PAGE_SIZE);
+		cpus->ci_cpcb = cpus->ci_idle_u;
+		proc0paddr = (struct pcb *)cpus->ci_idle_u;
+		cpus->ci_initstack = (void *)((vaddr_t)cpus->ci_idle_u + 2 * PAGE_SIZE);
+				/* (void *)u0[1]; */
+		cpus->ci_eintstack = (void *)EINTSTACK;
 
 		cpu0paddr += 64 * KB;
 
@@ -2049,6 +2051,11 @@ pmap_extract(pm, va, pap)
 	} else if (pm == pmap_kernel() && va >= ktext && va < ektext) {
 		/* Need to deal w/locked TLB entry specially. */
 		pa = pmap_kextract(va);
+		DPRINTF(PDB_EXTRACT, ("pmap_extract: va=%lx pa=%llx\n",
+		    (u_long)va, (unsigned long long)pa));
+	} else if (pm == pmap_kernel() && va >= INTSTACK && va < (INTSTACK + 4*USPACE)) {
+		/* XXX  */
+		pa = (paddr_t)(curcpu()->ci_paddr - INTSTACK + va);
 		DPRINTF(PDB_EXTRACT, ("pmap_extract: va=%lx pa=%llx\n",
 		    (u_long)va, (unsigned long long)pa));
 	} else {
@@ -3410,7 +3417,7 @@ pmap_update(struct pmap *pmap)
 {
 
 #ifdef MULTIPROCESSOR
-	smp_tlb_flush_all();
+	smp_tlb_flush_all();	/* XXX */
 #endif
 
 	if (pmap->pm_refs > 0) {
