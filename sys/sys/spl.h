@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.h,v 1.4.18.1 2006/09/18 09:59:29 yamt Exp $	*/
+/*	$NetBSD: spl.h,v 1.4.18.2 2006/09/18 10:37:45 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,6 +28,10 @@
 
 /*
  * this header is intended to be included by MD header.
+ *
+ * an assumption: makeiplcookie() is reasonably fast.
+ * if it isn't the case for your port, it's better to have MD optimized
+ * splxxx() functions, rather than using this header.
  */
 
 #if !defined(_KERNEL)
