@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.220 2006/09/18 20:36:26 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.221 2006/09/18 20:56:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3798,8 +3798,7 @@ ret_from_intr_vector:
 ENTRY(sparc64_ipi_halt)
 	call	_C_LABEL(sparc64_ipi_halt_thiscpu)
 	 clr	%g4
-	ba,a	ret_from_intr_vector
-	 nop
+	sir
 
 /*
  * IPI handler to pause the CPU.  We just trap to the debugger if it
@@ -3829,10 +3828,23 @@ ENTRY(sparc64_ipi_flush_pte)
 12:
 #endif
 #if 0
-	STACKFRAME(-CC64FSZ)
+	! save %o0 - %o5
+	mov	%o0, %g1
+	mov	%o1, %g3
+	mov	%o2, %g4
+	mov	%o3, %g5
+	mov	%o4, %g6
+	mov	%o5, %g7
 	LDPTR	[%g2 + ITA_VADDR], %o0
 	call	sp_tlb_flush_pte
 	 ld	[%g2 + ITA_CTX], %o1
+	! restore %o0 - %o5
+	mov	%g1, %o0
+	mov	%g3, %o1
+	mov	%g4, %o2
+	mov	%g5, %o3
+	mov	%g6, %o4 
+	mov	%g7, %o5
 #endif
 	 
 	ba,a	ret_from_intr_vector
@@ -3853,9 +3865,21 @@ ENTRY(sparc64_ipi_flush_ctx)
 12:
 #endif
 #if 0
-	STACKFRAME(-CC64FSZ)
+	! save %o0 - %o5
+	mov	%o0, %g1
+	mov	%o1, %g3
+	mov	%o2, %g4
+	mov	%o3, %g5
+	mov	%o4, %g6
 	call	sp_tlb_flush_ctx
 	 ld	[%g2 + ITA_CTX], %o0
+	! restore %o0 - %o5
+	mov	%g1, %o0
+	mov	%g3, %o1
+	mov	%g4, %o2
+	mov	%g5, %o3
+	mov	%g6, %o4 
+	mov	%g7, %o5
 #endif
 	 
 	ba,a	ret_from_intr_vector
@@ -5441,6 +5465,8 @@ ENTRY(openfirmware_exit)
  * sp_tlb_flush_pte(vaddr_t va, int ctx)
  *
  * Flush tte from both IMMU and DMMU.
+ *
+ * This uses %o0-%o5
  */
 	.align 8
 ENTRY(sp_tlb_flush_pte)
@@ -5473,18 +5499,18 @@ ENTRY(sp_tlb_flush_pte)
 #endif
 #ifdef	SPITFIRE
 	mov	CTX_SECONDARY, %o2
-	andn	%o0, 0xfff, %g2				! drop unused va bits
+	andn	%o0, 0xfff, %o0				! drop unused va bits
 	ldxa	[%o2] ASI_DMMU, %g1			! Save secondary context
 	sethi	%hi(KERNBASE), %o4
 	membar	#LoadStore
 	stxa	%o1, [%o2] ASI_DMMU			! Insert context to demap
 	membar	#Sync
-	or	%g2, DEMAP_PAGE_SECONDARY, %g2		! Demap page from secondary context only
-	stxa	%g2, [%g2] ASI_DMMU_DEMAP		! Do the demap
-	stxa	%g2, [%g2] ASI_IMMU_DEMAP		! to both TLBs
-	srl	%g2, 0, %g2				! and make sure it's both 32- and 64-bit entries
-	stxa	%g2, [%g2] ASI_DMMU_DEMAP		! Do the demap
-	stxa	%g2, [%g2] ASI_IMMU_DEMAP		! Do the demap
+	or	%o0, DEMAP_PAGE_SECONDARY, %o0		! Demap page from secondary context only
+	stxa	%o0, [%o0] ASI_DMMU_DEMAP		! Do the demap
+	stxa	%o0, [%o0] ASI_IMMU_DEMAP		! to both TLBs
+	srl	%o0, 0, %o0				! and make sure it's both 32- and 64-bit entries
+	stxa	%o0, [%o0] ASI_DMMU_DEMAP		! Do the demap
+	stxa	%o0, [%o0] ASI_IMMU_DEMAP		! Do the demap
 	flush	%o4
 	stxa	%g1, [%o2] ASI_DMMU			! Restore secondary context
 	membar	#Sync
@@ -5497,22 +5523,22 @@ ENTRY(sp_tlb_flush_pte)
 	rdpr	%tl, %o3
 	mov	CTX_PRIMARY, %o2
 	brnz,pt	%o3, 1f
-	 andn	%o0, 0xfff, %g2				! drop unused va bits
+	 andn	%o0, 0xfff, %o0				! drop unused va bits
 	wrpr	%g0, 1, %tl				! Make sure we're NUCLEUS
 1:	
-	ldxa	[%o2] ASI_DMMU, %g1			! Save primary context
+	ldxa	[%o2] ASI_DMMU, %o5			! Save primary context
 	sethi	%hi(KERNBASE), %o4
 	membar	#LoadStore
 	stxa	%o1, [%o2] ASI_DMMU			! Insert context to demap
 	membar	#Sync
-	or	%g2, DEMAP_PAGE_PRIMARY, %g2
-	stxa	%g2, [%g2] ASI_DMMU_DEMAP		! Do the demap
-	stxa	%g2, [%g2] ASI_IMMU_DEMAP		! to both TLBs
-	srl	%g2, 0, %g2				! and make sure it's both 32- and 64-bit entries
-	stxa	%g2, [%g2] ASI_DMMU_DEMAP		! Do the demap
-	stxa	%g2, [%g2] ASI_IMMU_DEMAP		! Do the demap
+	or	%o0, DEMAP_PAGE_PRIMARY, %o0
+	stxa	%o0, [%o0] ASI_DMMU_DEMAP		! Do the demap
+	stxa	%o0, [%o0] ASI_IMMU_DEMAP		! to both TLBs
+	srl	%o0, 0, %o0				! and make sure it's both 32- and 64-bit entries
+	stxa	%o0, [%o0] ASI_DMMU_DEMAP		! Do the demap
+	stxa	%o0, [%o0] ASI_IMMU_DEMAP		! Do the demap
 	flush	%o4
-	stxa	%g1, [%o2] ASI_DMMU			! Restore primary context
+	stxa	%o5, [%o2] ASI_DMMU			! Restore primary context
 	brz,pt	%o3, 1f
 	 flush	%o4
 	retl
@@ -5526,6 +5552,8 @@ ENTRY(sp_tlb_flush_pte)
  * sp_tlb_flush_ctx(int ctx)
  *
  * Flush entire context from both IMMU and DMMU.
+ *
+ * This uses %o0-%o5
  */
 	.align 8
 ENTRY(sp_tlb_flush_ctx)
@@ -5560,16 +5588,16 @@ ENTRY(sp_tlb_flush_ctx)
 #endif
 #ifdef SPITFIRE
 	mov	CTX_SECONDARY, %o2
-	ldxa	[%o2] ASI_DMMU, %g1		! Save secondary context
+	ldxa	[%o2] ASI_DMMU, %o1		! Save secondary context
 	sethi	%hi(KERNBASE), %o4
 	membar	#LoadStore
 	stxa	%o0, [%o2] ASI_DMMU		! Insert context to demap
-	set	DEMAP_CTX_SECONDARY, %g2
+	set	DEMAP_CTX_SECONDARY, %o5
 	membar	#Sync
-	stxa	%g2, [%g2] ASI_DMMU_DEMAP	! Do the demap
-	stxa	%g2, [%g2] ASI_IMMU_DEMAP	! Do the demap
+	stxa	%o5, [%o5] ASI_DMMU_DEMAP	! Do the demap
+	stxa	%o5, [%o5] ASI_IMMU_DEMAP	! Do the demap
 	membar	#Sync
-	stxa	%g1, [%o2] ASI_DMMU		! Restore secondary asi
+	stxa	%o1, [%o2] ASI_DMMU		! Restore secondary asi
 	flush	%o4
 	retl
 	 nop
@@ -5580,15 +5608,15 @@ ENTRY(sp_tlb_flush_ctx)
 	 sethi	%hi(KERNBASE), %o4
 	wrpr	%g0, 1, %tl
 1:	
-	ldxa	[%o2] ASI_DMMU, %g1		! Save secondary context
+	ldxa	[%o2] ASI_DMMU, %o1		! Save secondary context
 	membar	#LoadStore
 	stxa	%o0, [%o2] ASI_DMMU		! Insert context to demap
 	membar	#Sync
-	set	DEMAP_CTX_PRIMARY, %g2
-	stxa	%g2, [%g2] ASI_DMMU_DEMAP	! Do the demap
-	stxa	%g2, [%g2] ASI_IMMU_DEMAP	! Do the demap
+	set	DEMAP_CTX_PRIMARY, %o5
+	stxa	%o5, [%o5] ASI_DMMU_DEMAP	! Do the demap
+	stxa	%o5, [%o5] ASI_IMMU_DEMAP	! Do the demap
 	membar	#Sync
-	stxa	%g1, [%o2] ASI_DMMU		! Restore secondary asi
+	stxa	%o1, [%o2] ASI_DMMU		! Restore secondary asi
 	membar	#Sync
 	brz,pt	%o3, 1f
 	 flush	%o4
