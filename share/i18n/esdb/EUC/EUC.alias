@@ -1,7 +1,0 @@
-# $NetBSD: EUC.alias,v 1.2 2003/07/19 20:20:44 tshiozak Exp $
-
-CN		euc-cn euccn gb2312
-JP		euc-jp eucjp
-JP-MS		euc-jp-ms eucjp-ms
-KR		euc-kr euckr
-TW		euc-tw euctw cns11643

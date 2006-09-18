@@ -1,4 +1,0 @@
-# $NetBSD: charset.pivot.CP.src,v 1.1 2003/06/27 08:40:25 tshiozak Exp $
-
-CP932KANJI			UCS				1
-UCS				CP932KANJI			1

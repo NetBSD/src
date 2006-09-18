@@ -1,4 +1,0 @@
-# $NetBSD: charset.pivot.MISC.src,v 1.6 2006/06/19 17:28:25 tnozaki Exp $
-
-PTCP154			UCS			1
-UCS			PTCP154			1
