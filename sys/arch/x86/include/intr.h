@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.21.6.1 2006/09/18 10:00:46 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.21.6.2 2006/09/18 10:01:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -200,7 +200,7 @@ splraiseipl(ipl_cookie_t cookie)
 	return splraise(cookie._ipl);
 }
 
-#include <sys/spl2.h>
+#include <sys/spl.h>
 
 /*
  * Software interrupt registration
