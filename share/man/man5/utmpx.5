@@ -1,4 +1,4 @@
-.\"	$NetBSD: utmpx.5,v 1.3 2006/09/18 21:10:34 hubertf Exp $
+.\"	$NetBSD: utmpx.5,v 1.4 2006/09/18 22:01:42 hubertf Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 26, 2002
+.Dd September 18, 2006
 .Dt UTMPX 5
 .Os
 .Sh NAME
@@ -45,6 +45,17 @@
 .Sh SYNOPSIS
 .In utmpx.h
 .Sh DESCRIPTION
+In contrast to 
+.Pa utmp
+and
+.Pa wtmp ,
+the extended databases in
+.Pa utmpx
+and
+.Pa wtmpx
+reserve more space for logging hostnames, and also
+information on a process' ID, termination signal and exit status.
+.Pp
 The
 .Aq Pa utmpx.h
 header defines the structures and functions for logging user.
@@ -61,7 +72,7 @@ must be created manually.
 The interface to the
 .Nm utmpx
 file is described in
-.Xr endutxent 3 .
+.Xr getutxent 3 .
 .Pp
 The
 .Nm wtmpx
