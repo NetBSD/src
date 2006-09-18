@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.20 2006/06/15 13:03:29 ghen Exp $	*/
+/*	$NetBSD: names.c,v 1.21 2006/09/18 19:46:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.20 2006/06/15 13:03:29 ghen Exp $");
+__RCSID("$NetBSD: names.c,v 1.21 2006/09/18 19:46:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,6 +111,12 @@ extract(char line[], int ntype)
 	return begin;
 }
 
+/* XXX - is this really sufficient? */
+static int need_quotes(char *str)
+{
+	return (strchr(str, ' ') || strchr(str, '\t'));
+}
+
 /*
  * Turn a list of names into a string of the same names.
  */
@@ -121,7 +127,9 @@ detract(struct name *np, int ntype)
 	char *cp, *begin;
 	struct name *p;
 	int comma;
+	int quote;
 
+	quote = ntype & GSMOPTS;
 	comma = ntype & GCOMMA;
 	if (np == NULL)
 		return(NULL);
@@ -135,6 +143,8 @@ detract(struct name *np, int ntype)
 		s += strlen(p->n_name) + 1;
 		if (comma)
 			s++;
+		if (quote && need_quotes(p->n_name))
+			s += 2;
 	}
 	if (s == 0)
 		return(NULL);
@@ -142,11 +152,17 @@ detract(struct name *np, int ntype)
 	begin = salloc(s);
 	cp = begin;
 	for (p = np; p != NULL; p = p->n_flink) {
+		int do_quotes;
 		if (ntype && (p->n_type & GMASK) != ntype)
 			continue;
+		do_quotes = (quote && need_quotes(p->n_name));
+		if (do_quotes)
+			*cp++ = '"';
 		cp = copy(p->n_name, cp);
 		if (comma && p->n_flink != NULL)
 			*cp++ = ',';
+		if (do_quotes)
+			*cp++ = '"';
 		*cp++ = ' ';
 	}
 	*--cp = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.20 2006/05/10 21:53:48 mrg Exp $	*/
+/*	$NetBSD: tty.c,v 1.21 2006/09/18 19:46:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.20 2006/05/10 21:53:48 mrg Exp $");
+__RCSID("$NetBSD: tty.c,v 1.21 2006/09/18 19:46:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,9 @@ __RCSID("$NetBSD: tty.c,v 1.20 2006/05/10 21:53:48 mrg Exp $");
 
 #include "rcv.h"
 #include "extern.h"
+#ifdef USE_READLINE
+#include "complete.h"
+#endif
 
 static	cc_t	c_erase;		/* Current erase char */
 static	cc_t	c_kill;			/* Current kill char */
@@ -149,6 +152,36 @@ grabh(struct header *hp, int gflags)
 		hp->h_bcc =
 			extract(readtty("Bcc: ", detract(hp->h_bcc, 0)), GBCC);
 	}
+	if (gflags & GSMOPTS) {
+		char *smopts;
+		char *argv[MAXARGC];
+		int argc, i;
+		struct name *np, *t;
+
+#ifndef TIOCSTI
+		if (!ttyset && hp->h_smopts != NULL)
+			ttyset++, tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf);
+#endif
+		smopts = readtty("Smopts: ", detract(hp->h_smopts, GSMOPTS));
+
+		/* Parse smopts with getrawlist() rather than expand()
+		 * to get a shell-like expansion.
+		 */
+		hp->h_smopts = NULL;
+		if (smopts) {
+			np = NULL;
+			argc = getrawlist(smopts, argv, sizeof(argv)/sizeof(*argv));
+			for (i = 0 ; i < argc ; i++) {
+				t = nalloc(argv[i], GSMOPTS);
+				if (hp->h_smopts == NULL)
+			hp->h_smopts = t;
+				else
+			np->n_flink = t;
+				t->n_blink = np;
+				np = t;
+			}
+		}
+	}
 out:
 	(void)signal(SIGTSTP, savetstp);
 	(void)signal(SIGTTOU, savettou);
@@ -179,6 +212,13 @@ out:
  *
  */
 
+#ifdef USE_READLINE
+char *
+readtty(const char pr[], char src[])
+{
+  return savestr(rl_getline(pr, src));
+}
+#else
 char *
 readtty(const char pr[], char src[])
 {
@@ -281,6 +321,7 @@ redo:
 		return(NULL);
 	return(savestr(canonb));
 }
+#endif
 
 /*
  * Receipt continuation.

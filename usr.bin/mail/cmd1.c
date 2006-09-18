@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.23 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.24 2006/09/18 19:46:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd1.c,v 1.23 2005/07/19 23:07:10 christos Exp $");
+__RCSID("$NetBSD: cmd1.c,v 1.24 2006/09/18 19:46:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -359,6 +359,48 @@ void
 brokpipe(int signo)
 {
 	longjmp(pipestop, 1);
+}
+
+/*
+ * Pipe the current message buffer to a command.
+ */
+int
+pipecmd(void *v)
+{
+	char *cmd = v;
+	FILE *obuf;
+#if __GNUC__
+	/* Avoid longjmp clobbering */
+	(void)&obuf;
+#endif
+	if (dot == NULL) {
+		warn("pipcmd: no current message");
+		return 1;
+	}
+
+	obuf = stdout;
+	if (setjmp(pipestop))
+		goto close_pipe;
+
+	obuf = Popen(cmd, "w");
+	if (obuf == NULL) {
+		warn("pipecmd: Popen failed: %s", cmd);
+		return 1;
+	} else
+		(void)signal(SIGPIPE, brokpipe);
+
+	(void)sendmessage(dot, obuf, ignoreall, NULL);
+
+ close_pipe:
+	if (obuf != stdout) {
+		/*
+		 * Ignore SIGPIPE so it can't cause a duplicate close.
+		 */
+		(void)signal(SIGPIPE, SIG_IGN);
+		(void)Pclose(obuf);
+		(void)signal(SIGPIPE, SIG_DFL);
+	}
+	return 0;
 }
 
 /*

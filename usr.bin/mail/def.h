@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.18 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: def.h,v 1.19 2006/09/18 19:46:21 christos Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$NetBSD: def.h,v 1.18 2005/07/19 23:07:10 christos Exp $
+ *	$NetBSD: def.h,v 1.19 2006/09/18 19:46:21 christos Exp $
  */
 
 /*
@@ -113,6 +113,9 @@ struct message {
 struct cmd {
 	const char *c_name;		/* Name of command */
 	int	(*c_func)(void *);	/* Implementor of the command */
+#ifdef USE_READLINE
+	const char *c_complete;		/* String describing completion */
+#endif
 	short	c_argtype;		/* Type of arglist (see below) */
 	short	c_msgflag;		/* Required flags of messages */
 	short	c_msgmask;		/* Relevant flags of messages */
@@ -159,16 +162,17 @@ struct headline {
 	char	*l_date;	/* The entire date string */
 };
 
-#define	GTO	1		/* Grab To: line */
-#define	GSUBJECT 2		/* Likewise, Subject: line */
-#define	GCC	4		/* And the Cc: line */
-#define	GBCC	8		/* And also the Bcc: line */
-#define	GMASK	(GTO|GSUBJECT|GCC|GBCC)
+#define	GTO	 0x001		/* Grab To: line */
+#define	GSUBJECT 0x002		/* Likewise, Subject: line */
+#define	GCC	 0x004		/* And the Cc: line */
+#define	GBCC	 0x008		/* And also the Bcc: line */
+#define GSMOPTS  0x010		/* Grab the sendmail options */
+#define	GMASK	(GTO|GSUBJECT|GCC|GBCC|GSMOPTS)
 				/* Mask of places from whence */
 
-#define	GNL	16		/* Print blank line after */
-#define	GDEL	32		/* Entity removed from list */
-#define	GCOMMA	64		/* detract puts in commas */
+#define	GNL	 0x100		/* Print blank line after */
+#define	GDEL	 0x200		/* Entity removed from list */
+#define	GCOMMA	 0x400		/* detract puts in commas */
 
 /*
  * Structure used to pass about the current

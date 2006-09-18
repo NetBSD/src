@@ -14,6 +14,7 @@ q				quit, saving unresolved messages in mbox
 x				quit, do not remove system mailbox
 h				print out active message headers
 !				shell escape
+| <command>			pipe current message body into command
 cd [directory]			chdir to directory or home if none given
 
 A <message list> consists of integers, ranges of same, or user names separated

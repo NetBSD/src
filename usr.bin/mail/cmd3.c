@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.28 2006/03/03 13:36:27 christos Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.29 2006/09/18 19:46:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.28 2006/03/03 13:36:27 christos Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.29 2006/09/18 19:46:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -196,6 +196,33 @@ respond(void *v)
 		return (_Respond(msgvec));
 }
 
+static struct name *
+set_smopts(struct message *mp)
+{
+	char *cp;
+	struct name *np = NULL;
+	char *reply_from = value("ReplyFrom");
+
+	if (reply_from &&
+	    (cp = skin(hfield("to", mp))) != NULL &&
+	    extract(cp, GTO)->n_flink == NULL) {  /* check for one recepient */
+		char *p, *q;
+		int len = strlen(cp);
+		for (p = q = reply_from ; *p ; p = q) {
+			while (*q != '\0' && *q != ',' && *q != ' ' && *q != '\t')
+				q++;
+			if (p + len == q && strncmp(cp, p, len) == 0)
+				return np;
+			while (*q == ',' || *q == ' ' || *q == '\t')
+				q++;
+		}
+		np = extract(__UNCONST("-f"), GSMOPTS);
+		np = cat(np, extract(cp, GSMOPTS));
+	}
+
+	return np;
+}
+
 /*
  * Reply to a list of messages.  Extract each name from the
  * message header and send them off to mail1()
@@ -254,7 +281,7 @@ _respond(int *msgvec)
 	} else
 		head.h_cc = NULL;
 	head.h_bcc = NULL;
-	head.h_smopts = NULL;
+	head.h_smopts = set_smopts(mp);
 	mail1(&head, 1);
 	return(0);
 }
@@ -446,6 +473,39 @@ unset(void *v)
 		free(vp2);
 	}
 	return(errs);
+}
+
+/*
+ * Show a variable value.
+ */
+int
+show(void *v)
+{
+	char **arglist = v;
+	struct var *vp;
+	char **ap, **p;
+	int h, s;
+
+	if (*arglist == NULL) {
+		for (h = 0, s = 1; h < HSHSIZE; h++)
+			for (vp = variables[h]; vp != NULL; vp = vp->v_link)
+				s++;
+		ap = salloc(s * sizeof *ap);
+		for (h = 0, p = ap; h < HSHSIZE; h++)
+			for (vp = variables[h]; vp != NULL; vp = vp->v_link)
+				*p++ = vp->v_name;
+		*p = NULL;
+		sort(ap);
+		for (p = ap; *p != NULL; p++)
+			(void)printf("%s=%s\n", *p, value(*p));
+		return(0);
+	}
+
+	for (ap = arglist; *ap != NULL; ap++) {
+		char *val = value(*ap);
+		(void)printf("%s=%s\n", *ap, val ? val : "<null>");
+	}
+	return 0;
 }
 
 /*
@@ -667,7 +727,7 @@ _Respond(int msgvec[])
 	head.h_subject = reedit(head.h_subject);
 	head.h_cc = NULL;
 	head.h_bcc = NULL;
-	head.h_smopts = NULL;
+	head.h_smopts = set_smopts(mp);
 	mail1(&head, 1);
 	return 0;
 }
