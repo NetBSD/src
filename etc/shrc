@@ -1,7 +1,0 @@
-ll(){ ls -l ${1+"$@"}; }
-
-case "$-" in *i*)
-	PS1="${HOST%%.*}$PS1"
-	set -o emacs
-	;;
-esac
