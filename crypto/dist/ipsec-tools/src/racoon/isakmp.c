@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.13 2006/09/18 08:05:48 manu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.14 2006/09/18 20:32:40 manu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -115,6 +115,7 @@
 # include "nattraversal.h"
 # ifdef __linux__
 #  include <linux/udp.h>
+#  include <linux/ip.h>
 #  ifndef SOL_UDP
 #   define SOL_UDP 17
 #  endif
@@ -123,6 +124,8 @@
   (defined(__APPLE__) && defined(__MACH__))
 #  include <netinet/in.h>
 #  include <netinet/udp.h>
+#  include <netinet/in_systm.h>
+#  include <netinet/ip.h>
 #  define SOL_UDP IPPROTO_UDP
 # endif /* __NetBSD__ / __FreeBSD__ */
 #endif
@@ -199,6 +202,9 @@ isakmp_handler(so_isakmp)
 	union {
 		char		buf[sizeof (isakmp) + 4];
 		u_int32_t	non_esp[2];
+		char		lbuf[sizeof(struct udphdr) + 
+				     sizeof(struct ip) + 
+				     sizeof(isakmp) + 4];
 	} x;
 	struct sockaddr_storage remote;
 	struct sockaddr_storage local;
@@ -232,6 +238,18 @@ isakmp_handler(so_isakmp)
 		}
 		goto end;
 	}
+
+	/* Lucent IKE in UDP encapsulation */
+	{
+		struct udphdr *udp;
+		struct ip *ip;
+
+		udp = (struct udphdr *)&x.lbuf[0];
+		if (ntohs(udp->uh_dport) == 501) {
+			ip = (struct ip *)(x.lbuf + sizeof(*udp));
+			extralen += sizeof(*udp) + ip->ip_hl;
+		}
+	}	
 
 #ifdef ENABLE_NATT
 	/* we don't know about portchange yet, 
@@ -1033,7 +1051,11 @@ isakmp_ph1begin_i(rmconf, remote, local)
 	}
 #endif
 #ifdef ENABLE_FRAG
-	iph1->frag = 0;
+
+	if(rmconf->ike_frag == ISAKMP_FRAG_FORCE)
+		iph1->frag = 1;
+	else
+		iph1->frag = 0;
 	iph1->frag_chain = NULL;
 #endif
 	iph1->approval = NULL;
@@ -1044,6 +1066,7 @@ isakmp_ph1begin_i(rmconf, remote, local)
 		delph1(iph1);
 		return -1;
 	}
+	printf("%s: iph1->local = %p\n", __func__, iph1->local);
 
 	(void)insph1(iph1);
 
@@ -1168,6 +1191,7 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 		delph1(iph1);
 		return -1;
 	}
+	printf("%s: iph1->local = %p\n", __func__, iph1->local);
 
 	(void)insph1(iph1);
 

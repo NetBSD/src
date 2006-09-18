@@ -1,9 +1,13 @@
+2006-09-18  Emmanuel Dreyfus  <manu@netbsd.org>
+
+	From Matthew Grooms:
+	* src/racoon/{cfparse.y|cftoken.l|isakmp.c|isakmp_frag.h}
+	  src/racoon/{racoon.conf.5|remoteconf.c}: ike_frag force option to 
+	  force the use of IKE on first packet exchange (prior to peer consent)
+
 2006-09-18  Yvan Vanhullebus  <vanhu@NetBSD.org>
-	* src/racoon/cf[parse|token].c: removed those files from the CVS,
-	  as they are generated during the build.
-	* src/racoon/prsa_[par|tok].c: removed those files from the CVS,
-	  as they are generated during the build.
-	* rpm/suse/ipsec-tools.spec: removed those files from the CVS,
+	* src/racoon/{cfparse.c|cftoken.c|prsa_par.c|prsa_tok.c}
+	  rpm/suse/ipsec-tools.spec: removed those files from the CVS,
 	  as they are generated during the build.
 
 2006-09-18  Emmanuel Dreyfus  <manu@netbsd.org>

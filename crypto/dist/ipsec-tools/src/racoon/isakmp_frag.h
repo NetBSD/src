@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_frag.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: isakmp_frag.h,v 1.5 2006/09/18 20:32:40 manu Exp $	*/
 
 /*	Id: isakmp_frag.h,v 1.3 2005/04/09 16:25:24 manubsd Exp */
 
@@ -30,6 +30,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+/* These are the values from parsing "remote {}"
+   block of the config file. */
+#define ISAKMP_FRAG_OFF		FLASE   /* = 0 */
+#define ISAKMP_FRAG_ON		TRUE    /* = 1 */
+#define ISAKMP_FRAG_FORCE	2
 
 /* IKE fragmentation capabilities */
 #define VENDORID_FRAG_IDENT 	0x80000000
