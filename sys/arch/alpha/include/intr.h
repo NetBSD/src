@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.55.16.1 2006/09/18 10:02:21 yamt Exp $ */
+/* $NetBSD: intr.h,v 1.55.16.2 2006/09/18 10:03:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -186,7 +186,7 @@ _splraise(int s)
 
 #define	splraiseipl(cookie)	_splraise((cookie)._psl)
 
-#include <sys/spl2.h>
+#include <sys/spl.h>
 
 /*
  * Interprocessor interrupts.  In order how we want them processed.
