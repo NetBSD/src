@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.323 2006/08/25 23:29:33 matt Exp $
+#	$NetBSD: NetBSD.dist,v 1.324 2006/09/18 08:41:21 dbj Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -448,7 +448,6 @@
 ./usr/share/examples/smbfs
 ./usr/share/examples/supfiles
 ./usr/share/examples/syslogd
-./usr/share/examples/veriexecctl
 ./usr/share/examples/wsmoused
 ./usr/share/games
 ./usr/share/games/atc
