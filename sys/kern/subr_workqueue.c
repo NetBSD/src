@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.5.2.1 2006/09/18 10:05:26 yamt Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.5.2.2 2006/09/18 10:41:45 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.5.2.1 2006/09/18 10:05:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.5.2.2 2006/09/18 10:41:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,11 +62,7 @@ workqueue_lock(struct workqueue *wq, struct workqueue_queue *q)
 {
 	int s;
 
-#if 0 /* notyet */
 	s = splraiseipl(wq->wq_ipl);
-#else
-	s = splhigh(); /* XXX */
-#endif
 	simple_lock(&q->q_lock);
 	q->q_savedipl = s;
 }
