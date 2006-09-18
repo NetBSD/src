@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.219 2006/09/18 08:18:47 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.220 2006/09/18 20:36:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -861,51 +861,48 @@ ufast_DMMU_protection:			! 06c = fast data access MMU protection
 TABLE(uspill):
 	SPILL64(uspill8,ASI_AIUS)	! 0x080 spill_0_normal -- used to save user windows in user mode
 	SPILL32(uspill4,ASI_AIUS)	! 0x084 spill_1_normal
-	SPILLBOTH(uspill8,uspill4,ASI_AIUS)		! 0x088 spill_2_normal
-#ifdef DEBUG
-	sir
-#endif
-	UTRAP(0x08c); TA32	! 0x08c spill_3_normal
+	SPILLBOTH(uspill8,uspill4,ASI_AIUS)	 ! 0x088 spill_2_normal
+	UTRAP(0x08c); TA32		! 0x08c spill_3_normal
 TABLE(kspill):
-	SPILL64(kspill8,ASI_N)	! 0x090 spill_4_normal -- used to save supervisor windows
-	SPILL32(kspill4,ASI_N)	! 0x094 spill_5_normal
-	SPILLBOTH(kspill8,kspill4,ASI_N)	! 0x098 spill_6_normal
-	UTRAP(0x09c); TA32	! 0x09c spill_7_normal
+	SPILL64(kspill8,ASI_N)		! 0x090 spill_4_normal -- used to save supervisor windows
+	SPILL32(kspill4,ASI_N)		! 0x094 spill_5_normal
+	SPILLBOTH(kspill8,kspill4,ASI_N) ! 0x098 spill_6_normal
+	UTRAP(0x09c); TA32		! 0x09c spill_7_normal
 TABLE(uspillk):
 	SPILL64(uspillk8,ASI_AIUS)	! 0x0a0 spill_0_other -- used to save user windows in supervisor mode
 	SPILL32(uspillk4,ASI_AIUS)	! 0x0a4 spill_1_other
-	SPILLBOTH(uspillk8,uspillk4,ASI_AIUS)	! 0x0a8 spill_2_other
-	UTRAP(0x0ac); TA32	! 0x0ac spill_3_other
-	UTRAP(0x0b0); TA32	! 0x0b0 spill_4_other
-	UTRAP(0x0b4); TA32	! 0x0b4 spill_5_other
-	UTRAP(0x0b8); TA32	! 0x0b8 spill_6_other
-	UTRAP(0x0bc); TA32	! 0x0bc spill_7_other
+	SPILLBOTH(uspillk8,uspillk4,ASI_AIUS) ! 0x0a8 spill_2_other
+	UTRAP(0x0ac); TA32		! 0x0ac spill_3_other
+	UTRAP(0x0b0); TA32		! 0x0b0 spill_4_other
+	UTRAP(0x0b4); TA32		! 0x0b4 spill_5_other
+	UTRAP(0x0b8); TA32		! 0x0b8 spill_6_other
+	UTRAP(0x0bc); TA32		! 0x0bc spill_7_other
 TABLE(ufill):
-	FILL64(ufill8,ASI_AIUS) ! 0x0c0 fill_0_normal -- used to fill windows when running user mode
-	FILL32(ufill4,ASI_AIUS)	! 0x0c4 fill_1_normal
-	FILLBOTH(ufill8,ufill4,ASI_AIUS)	! 0x0c8 fill_2_normal
-	UTRAP(0x0cc); TA32	! 0x0cc fill_3_normal
+	FILL64(ufill8,ASI_AIUS)		! 0x0c0 fill_0_normal -- used to fill windows when running user mode
+	FILL32(ufill4,ASI_AIUS)		! 0x0c4 fill_1_normal
+	FILLBOTH(ufill8,ufill4,ASI_AIUS) ! 0x0c8 fill_2_normal
+	UTRAP(0x0cc); TA32		! 0x0cc fill_3_normal
 TABLE(kfill):
-	FILL64(kfill8,ASI_N)	! 0x0d0 fill_4_normal -- used to fill windows when running supervisor mode
-	FILL32(kfill4,ASI_N)	! 0x0d4 fill_5_normal
+	FILL64(kfill8,ASI_N)		! 0x0d0 fill_4_normal -- used to fill windows when running supervisor mode
+	FILL32(kfill4,ASI_N)		! 0x0d4 fill_5_normal
 	FILLBOTH(kfill8,kfill4,ASI_N)	! 0x0d8 fill_6_normal
-	UTRAP(0x0dc); TA32	! 0x0dc fill_7_normal
+	UTRAP(0x0dc); TA32		! 0x0dc fill_7_normal
 TABLE(ufillk):
 	FILL64(ufillk8,ASI_AIUS)	! 0x0e0 fill_0_other
 	FILL32(ufillk4,ASI_AIUS)	! 0x0e4 fill_1_other
-	FILLBOTH(ufillk8,ufillk4,ASI_AIUS)	! 0x0e8 fill_2_other
-	UTRAP(0x0ec); TA32	! 0x0ec fill_3_other
-	UTRAP(0x0f0); TA32	! 0x0f0 fill_4_other
-	UTRAP(0x0f4); TA32	! 0x0f4 fill_5_other
-	UTRAP(0x0f8); TA32	! 0x0f8 fill_6_other
-	UTRAP(0x0fc); TA32	! 0x0fc fill_7_other
+	FILLBOTH(ufillk8,ufillk4,ASI_AIUS) ! 0x0e8 fill_2_other
+	UTRAP(0x0ec); TA32		! 0x0ec fill_3_other
+	UTRAP(0x0f0); TA32		! 0x0f0 fill_4_other
+	UTRAP(0x0f4); TA32		! 0x0f4 fill_5_other
+	UTRAP(0x0f8); TA32		! 0x0f8 fill_6_other
+	UTRAP(0x0fc); TA32		! 0x0fc fill_7_other
 TABLE(syscall):
-	SYSCALL			! 0x100 = sun syscall
-	BPT			! 0x101 = pseudo breakpoint instruction
+	SYSCALL				! 0x100 = sun syscall
+	BPT				! 0x101 = pseudo breakpoint instruction
 	STRAP(0x102); STRAP(0x103); STRAP(0x104); STRAP(0x105); STRAP(0x106); STRAP(0x107)
-	SYSCALL			! 0x108 = svr4 syscall
-	SYSCALL			! 0x109 = bsd syscall
-	BPT_KGDB_EXEC		! 0x10a = enter kernel gdb on kernel startup
+	SYSCALL				! 0x108 = svr4 syscall
+	SYSCALL				! 0x109 = bsd syscall
+	BPT_KGDB_EXEC			! 0x10a = enter kernel gdb on kernel startup
 	STRAP(0x10b); STRAP(0x10c); STRAP(0x10d); STRAP(0x10e); STRAP(0x10f);
 	STRAP(0x110); STRAP(0x111); STRAP(0x112); STRAP(0x113); STRAP(0x114); STRAP(0x115); STRAP(0x116); STRAP(0x117)
 	STRAP(0x118); STRAP(0x119); STRAP(0x11a); STRAP(0x11b); STRAP(0x11c); STRAP(0x11d); STRAP(0x11e); STRAP(0x11f)
@@ -913,10 +910,10 @@ TABLE(syscall):
 	STRAP(0x128); STRAP(0x129); STRAP(0x12a); STRAP(0x12b); STRAP(0x12c); STRAP(0x12d); STRAP(0x12e); STRAP(0x12f)
 	STRAP(0x130); STRAP(0x131); STRAP(0x132); STRAP(0x133); STRAP(0x134); STRAP(0x135); STRAP(0x136); STRAP(0x137)
 	STRAP(0x138); STRAP(0x139); STRAP(0x13a); STRAP(0x13b); STRAP(0x13c); STRAP(0x13d); STRAP(0x13e); STRAP(0x13f)
-	SYSCALL			! 0x140 SVID syscall (Solaris 2.7)
-	SYSCALL			! 0x141 SPARC International syscall
-	SYSCALL			! 0x142	OS Vendor syscall
-	SYSCALL			! 0x143 HW OEM syscall
+	SYSCALL				! 0x140 SVID syscall (Solaris 2.7)
+	SYSCALL				! 0x141 SPARC International syscall
+	SYSCALL				! 0x142	OS Vendor syscall
+	SYSCALL				! 0x143 HW OEM syscall
 	STRAP(0x144); STRAP(0x145); STRAP(0x146); STRAP(0x147)
 	STRAP(0x148); STRAP(0x149); STRAP(0x14a); STRAP(0x14b); STRAP(0x14c); STRAP(0x14d); STRAP(0x14e); STRAP(0x14f)
 	STRAP(0x150); STRAP(0x151); STRAP(0x152); STRAP(0x153); STRAP(0x154); STRAP(0x155); STRAP(0x156); STRAP(0x157)
@@ -951,13 +948,13 @@ TABLE(syscall):
 #define	TABLE(name)	nucleus_/**/name
 #endif
 trapbase_priv:
-	UTRAP(0x000)		! 000 = reserved -- Use it to boot
+	UTRAP(0x000)			! 000 = reserved -- Use it to boot
 	/* We should not get the next 5 traps */
-	UTRAP(0x001)		! 001 = POR Reset -- ROM should get this
-	UTRAP(0x002)		! 002 = WDR Watchdog -- ROM should get this
-	UTRAP(0x003)		! 003 = XIR -- ROM should get this
-	UTRAP(0x004)		! 004 = SIR -- ROM should get this
-	UTRAP(0x005)		! 005 = RED state exception
+	UTRAP(0x001)			! 001 = POR Reset -- ROM should get this
+	UTRAP(0x002)			! 002 = WDR Watchdog -- ROM should get this
+	UTRAP(0x003)			! 003 = XIR -- ROM should get this
+	UTRAP(0x004)			! 004 = SIR -- ROM should get this
+	UTRAP(0x005)			! 005 = RED state exception
 	UTRAP(0x006); UTRAP(0x007)
 ktextfault:
 	VTRAP(T_INST_EXCEPT, textfault)	! 008 = instr. access exept
@@ -972,8 +969,8 @@ ktextfault:
 	UTRAP(0x019); UTRAP(0x01a); UTRAP(0x01b); UTRAP(0x01c); UTRAP(0x01d)
 	UTRAP(0x01e); UTRAP(0x01f)
 	TRAP(T_FPDISABLED)		! 020 = fp instr, but EF bit off in psr
-	VTRAP(T_FP_IEEE_754, fp_exception)	! 021 = ieee 754 exception
-	VTRAP(T_FP_OTHER, fp_exception)		! 022 = other fp exception
+	VTRAP(T_FP_IEEE_754, fp_exception) ! 021 = ieee 754 exception
+	VTRAP(T_FP_OTHER, fp_exception)	! 022 = other fp exception
 	TRAP(T_TAGOF)			! 023 = tag overflow
 	TRACEWIN			! DEBUG
 	clr	%l0
@@ -982,7 +979,7 @@ ktextfault:
 #endif
 	mov %l0, %l1; mov %l0, %l2	! 024-027 = clean window trap
 	rdpr %cleanwin, %o7		!	This handler is in-lined and cannot fault
-	inc %o7; mov %l0, %l3	!       Nucleus (trap&IRQ) code does not need clean windows
+	inc %o7; mov %l0, %l3		!       Nucleus (trap&IRQ) code does not need clean windows
 	wrpr %g0, %o7, %cleanwin	!	Clear out %l0-%l8 and %o0-%o8 and inc %cleanwin and done
 #ifdef NOT_DEBUG
 	!!
@@ -1102,50 +1099,50 @@ kfast_DMMU_protection:			! 06c = fast data access MMU protection
 	UTRAP(0x077); UTRAP(0x078); UTRAP(0x079); UTRAP(0x07a); UTRAP(0x07b); UTRAP(0x07c)
 	UTRAP(0x07d); UTRAP(0x07e); UTRAP(0x07f)
 TABLE(uspill):
-	SPILL64(1,ASI_AIUS)	! 0x080 spill_0_normal -- used to save user windows
-	SPILL32(2,ASI_AIUS)	! 0x084 spill_1_normal
+	SPILL64(1,ASI_AIUS)		! 0x080 spill_0_normal -- used to save user windows
+	SPILL32(2,ASI_AIUS)		! 0x084 spill_1_normal
 	SPILLBOTH(1b,2b,ASI_AIUS)	! 0x088 spill_2_normal
-	UTRAP(0x08c); TA32	! 0x08c spill_3_normal
+	UTRAP(0x08c); TA32		! 0x08c spill_3_normal
 TABLE(kspill):
-	SPILL64(1,ASI_N)	! 0x090 spill_4_normal -- used to save supervisor windows
-	SPILL32(2,ASI_N)	! 0x094 spill_5_normal
-	SPILLBOTH(1b,2b,ASI_N)	! 0x098 spill_6_normal
-	UTRAP(0x09c); TA32	! 0x09c spill_7_normal
+	SPILL64(1,ASI_N)		! 0x090 spill_4_normal -- used to save supervisor windows
+	SPILL32(2,ASI_N)		! 0x094 spill_5_normal
+	SPILLBOTH(1b,2b,ASI_N)		! 0x098 spill_6_normal
+	UTRAP(0x09c); TA32		! 0x09c spill_7_normal
 TABLE(uspillk):
-	SPILL64(1,ASI_AIUS)	! 0x0a0 spill_0_other -- used to save user windows in nucleus mode
-	SPILL32(2,ASI_AIUS)	! 0x0a4 spill_1_other
+	SPILL64(1,ASI_AIUS)		! 0x0a0 spill_0_other -- used to save user windows in nucleus mode
+	SPILL32(2,ASI_AIUS)		! 0x0a4 spill_1_other
 	SPILLBOTH(1b,2b,ASI_AIUS)	! 0x0a8 spill_2_other
-	UTRAP(0x0ac); TA32	! 0x0ac spill_3_other
-	UTRAP(0x0b0); TA32	! 0x0b0 spill_4_other
-	UTRAP(0x0b4); TA32	! 0x0b4 spill_5_other
-	UTRAP(0x0b8); TA32	! 0x0b8 spill_6_other
-	UTRAP(0x0bc); TA32	! 0x0bc spill_7_other
+	UTRAP(0x0ac); TA32		! 0x0ac spill_3_other
+	UTRAP(0x0b0); TA32		! 0x0b0 spill_4_other
+	UTRAP(0x0b4); TA32		! 0x0b4 spill_5_other
+	UTRAP(0x0b8); TA32		! 0x0b8 spill_6_other
+	UTRAP(0x0bc); TA32		! 0x0bc spill_7_other
 TABLE(ufill):
-	FILL64(1,ASI_AIUS)	! 0x0c0 fill_0_normal -- used to fill windows when running nucleus mode from user
-	FILL32(2,ASI_AIUS)	! 0x0c4 fill_1_normal
-	FILLBOTH(1b,2b,ASI_AIUS)	! 0x0c8 fill_2_normal
-	UTRAP(0x0cc); TA32	! 0x0cc fill_3_normal
+	FILL64(nufill8,ASI_AIUS)	! 0x0c0 fill_0_normal -- used to fill windows when running nucleus mode from user
+	FILL32(nufill4,ASI_AIUS)	! 0x0c4 fill_1_normal
+	FILLBOTH(nufill8,nufill4,ASI_AIUS) ! 0x0c8 fill_2_normal
+	UTRAP(0x0cc); TA32		! 0x0cc fill_3_normal
 TABLE(sfill):
-	FILL64(1,ASI_N)		! 0x0d0 fill_4_normal -- used to fill windows when running nucleus mode from supervisor
-	FILL32(2,ASI_N)		! 0x0d4 fill_5_normal
-	FILLBOTH(1b,2b,ASI_N)	! 0x0d8 fill_6_normal
-	UTRAP(0x0dc); TA32	! 0x0dc fill_7_normal
+	FILL64(sfill8,ASI_N)		! 0x0d0 fill_4_normal -- used to fill windows when running nucleus mode from supervisor
+	FILL32(sfill4,ASI_N)		! 0x0d4 fill_5_normal
+	FILLBOTH(sfill8,sfill4,ASI_N)	! 0x0d8 fill_6_normal
+	UTRAP(0x0dc); TA32		! 0x0dc fill_7_normal
 TABLE(kfill):
-	FILL64(1,ASI_AIUS)	! 0x0e0 fill_0_other -- used to fill user windows when running nucleus mode -- will we ever use this?
-	FILL32(2,ASI_AIUS)	! 0x0e4 fill_1_other
-	FILLBOTH(1b,2b,ASI_AIUS)! 0x0e8 fill_2_other
-	UTRAP(0x0ec); TA32	! 0x0ec fill_3_other
-	UTRAP(0x0f0); TA32	! 0x0f0 fill_4_other
-	UTRAP(0x0f4); TA32	! 0x0f4 fill_5_other
-	UTRAP(0x0f8); TA32	! 0x0f8 fill_6_other
-	UTRAP(0x0fc); TA32	! 0x0fc fill_7_other
+	FILL64(nkfill8,ASI_AIUS)	! 0x0e0 fill_0_other -- used to fill user windows when running nucleus mode -- will we ever use this?
+	FILL32(nkfill4,ASI_AIUS)	! 0x0e4 fill_1_other
+	FILLBOTH(nkfill8,nkfill4,ASI_AIUS)! 0x0e8 fill_2_other
+	UTRAP(0x0ec); TA32		! 0x0ec fill_3_other
+	UTRAP(0x0f0); TA32		! 0x0f0 fill_4_other
+	UTRAP(0x0f4); TA32		! 0x0f4 fill_5_other
+	UTRAP(0x0f8); TA32		! 0x0f8 fill_6_other
+	UTRAP(0x0fc); TA32		! 0x0fc fill_7_other
 TABLE(syscall):
-	SYSCALL			! 0x100 = sun syscall
-	BPT			! 0x101 = pseudo breakpoint instruction
+	SYSCALL				! 0x100 = sun syscall
+	BPT				! 0x101 = pseudo breakpoint instruction
 	STRAP(0x102); STRAP(0x103); STRAP(0x104); STRAP(0x105); STRAP(0x106); STRAP(0x107)
-	SYSCALL			! 0x108 = svr4 syscall
-	SYSCALL			! 0x109 = bsd syscall
-	BPT_KGDB_EXEC		! 0x10a = enter kernel gdb on kernel startup
+	SYSCALL				! 0x108 = svr4 syscall
+	SYSCALL				! 0x109 = bsd syscall
+	BPT_KGDB_EXEC			! 0x10a = enter kernel gdb on kernel startup
 	STRAP(0x10b); STRAP(0x10c); STRAP(0x10d); STRAP(0x10e); STRAP(0x10f);
 	STRAP(0x110); STRAP(0x111); STRAP(0x112); STRAP(0x113); STRAP(0x114); STRAP(0x115); STRAP(0x116); STRAP(0x117)
 	STRAP(0x118); STRAP(0x119); STRAP(0x11a); STRAP(0x11b); STRAP(0x11c); STRAP(0x11d); STRAP(0x11e); STRAP(0x11f)
@@ -2130,8 +2127,8 @@ winfix:
 	!!
 	!! Double data fault -- bad stack?
 	!!
-	wrpr	%g2, %tl	! Restore trap level.
-	sir			! Just issue a reset and don't try to recover.
+	wrpr	%g2, %tl		! Restore trap level.
+	sir				! Just issue a reset and don't try to recover.
 	mov	%fp, %l6		! Save the frame pointer
 	set	EINTSTACK+USPACE+CC64FSZ-STKB, %fp ! Set the frame pointer to the middle of the idle stack
 	add	%fp, -CC64FSZ, %sp	! Create a stackframe
@@ -6887,8 +6884,6 @@ Lsw_panic_srun:
 1:	.asciz	"switch rq"
 2:	.asciz	"switch wchan"
 3:	.asciz	"switch LSRUN %p %x"
-idlemsg:	.asciz	"idle %x %x %x %x"
-idlemsg1:	.asciz	" %x %x %x\r\n"
 	_ALIGN
 	.text
 
