@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.5 2006/09/13 11:35:53 mrg Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.6 2006/09/18 18:47:24 mrg Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.5 2006/09/13 11:35:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.6 2006/09/18 18:47:24 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -55,8 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.5 2006/09/13 11:35:53 mrg Exp $");
 
 extern int db_active;
 
-typedef void (* ipifunc_t)(void *);
-
 /* CPU sets containing halted, paused and resumed cpus */
 static volatile cpuset_t cpus_halted;
 static volatile cpuset_t cpus_paused;
@@ -67,16 +65,6 @@ volatile struct ipi_tlb_args ipi_tlb_args;
 /* IPI handlers. */
 static int	sparc64_ipi_wait(cpuset_t volatile *, cpuset_t);
 static void	sparc64_ipi_error(const char *, cpuset_t, cpuset_t);
-
-/*
- * Call a function on other cpus:
- *	multicast - send to everyone in the cpuset_t
- *	broadcast - send to to all cpus but ourselves
- *	send - send to just this cpu
- */
-static	void	sparc64_multicast_ipi (cpuset_t, ipifunc_t);
-static	void	sparc64_broadcast_ipi (ipifunc_t);
-static	void	sparc64_send_ipi (int, ipifunc_t);
 
 /*
  * This must be locked around all message transactions to ensure only
@@ -169,7 +157,7 @@ sparc64_ipi_init()
 /*
  * Send an IPI to all in the list but ourselves.
  */
-static void
+void
 sparc64_multicast_ipi(cpuset_t cpuset, ipifunc_t func)
 {
 	struct cpu_info *ci;
@@ -189,7 +177,7 @@ sparc64_multicast_ipi(cpuset_t cpuset, ipifunc_t func)
 /*
  * Broadcast an IPI to all but ourselves.
  */
-static void
+void
 sparc64_broadcast_ipi(ipifunc_t func)
 {
 
@@ -199,7 +187,7 @@ sparc64_broadcast_ipi(ipifunc_t func)
 /*
  * Send an interprocessor interrupt.
  */
-static void
+void
 sparc64_send_ipi(int upaid, ipifunc_t func)
 {
 	int i, ik;
