@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.h,v 1.6 2003/08/07 11:14:38 agc Exp $	*/
+/*	$NetBSD: glob.h,v 1.7 2006/09/18 19:46:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)glob.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: glob.h,v 1.6 2003/08/07 11:14:38 agc Exp $
+ *	$NetBSD: glob.h,v 1.7 2006/09/18 19:46:21 christos Exp $
  */
 
 /*
@@ -44,6 +44,7 @@
 EXTERN int	msgCount;			/* Count of messages read in */
 EXTERN int	rcvmode;			/* True if receiving mail */
 EXTERN int	sawcom;				/* Set after first command */
+EXTERN int	Bflag;				/* -B do not output a To: line */
 EXTERN char	*Tflag;				/* -T temp file for netnews */
 EXTERN int	senderr;			/* An error while checking */
 EXTERN int	edit;				/* Indicates editing a file */

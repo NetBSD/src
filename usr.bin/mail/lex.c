@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.25 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.26 2006/09/18 19:46:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,12 +34,16 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.25 2005/07/19 23:07:10 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.26 2006/09/18 19:46:21 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
 #include "extern.h"
+
+#ifdef USE_READLINE
+#include "complete.h"
+#endif
 
 /*
  * Mail -- a mail program
@@ -226,7 +230,9 @@ commands(void)
 			if ((value("autoinc") != NULL) && (incfile() > 0))
 				(void)printf("New mail has arrived.\n");
 			reset_on_stop = 1;
+#ifndef USE_READLINE
 			(void)printf("%s", prompt);
+#endif
 		}
 		(void)fflush(stdout);
 		sreset();
@@ -236,10 +242,36 @@ commands(void)
 		 */
 		n = 0;
 		for (;;) {
+#ifdef USE_READLINE
+			if (!sourcing) {
+				char *line;
+
+				if ((line = rl_gets(prompt)) == NULL) {
+					if (n == 0)
+						n = -1;
+					break;
+				}
+				strncpy(linebuf, line, LINESIZE);
+			}
+			else {
+				if (readline(input, &linebuf[n], LINESIZE - n) < 0) {
+					if (n == 0)
+						n = -1;
+					break;
+				}
+			}
+#else /* USE_READLINE */
 			if (readline(input, &linebuf[n], LINESIZE - n) < 0) {
 				if (n == 0)
 					n = -1;
 				break;
+			}
+#endif /* USE_READLINE */
+
+			if (sourcing) {  /* allow comments in source files */
+				char *ptr = strchr(linebuf, '#');
+				if (ptr)
+					*ptr = '\0';
 			}
 			if ((n = strlen(linebuf)) == 0)
 				break;
@@ -257,12 +289,24 @@ commands(void)
 				(void)unstack();
 				continue;
 			}
+#ifdef USE_READLINE
+			{
+				char *p;
+				if (value("interactive") != NULL &&
+				    (p=value("ignoreeof")) != NULL &&
+				    ++eofloop < (*p==0 ? 25 : atoi(p))) {
+					(void)printf("Use \"quit\" to quit.\n");
+					continue;
+				}
+			}
+#else
 			if (value("interactive") != NULL &&
 			    value("ignoreeof") != NULL &&
 			    ++eofloop < 25) {
 				(void)printf("Use \"quit\" to quit.\n");
 				continue;
 			}
+#endif
 			break;
 		}
 		eofloop = 0;

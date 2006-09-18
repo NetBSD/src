@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.32 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: collect.c,v 1.33 2006/09/18 19:46:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.32 2005/07/19 23:07:10 christos Exp $");
+__RCSID("$NetBSD: collect.c,v 1.33 2006/09/18 19:46:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,29 @@ static	int	hadintr;		/* Have seen one SIGINT so far */
 static	jmp_buf	colljmp;		/* To get back to work */
 static	int	colljmp_p;		/* whether to long jump */
 static	jmp_buf	collabort;		/* To end collection with error */
+
+#if 0
+static void show_name(const char *prefix, struct name *np)
+{
+	int i = 0;
+
+	for (/* EMPTY */; np ; np = np->n_flink) {
+		printf("%s[%d]: %s\n", prefix, i, np->n_name);
+		i++;
+	}
+}
+
+void show_header(struct header *hp);
+void show_header(struct header *hp)
+{
+	show_name("TO", hp->h_to);
+	printf("SUBJECT: %s\n", hp->h_subject);
+	show_name("CC", hp->h_cc);
+	show_name("BCC", hp->h_bcc);
+	show_name("SMOPTS", hp->h_smopts);
+}
+#endif
+
 
 FILE *
 collect(struct header *hp, int printheaders)
@@ -134,7 +157,7 @@ collect(struct header *hp, int printheaders)
 	 * refrain from printing a newline after
 	 * the headers (since some people mind).
 	 */
-	t = GTO|GSUBJECT|GCC|GNL;
+	t = GTO|GSUBJECT|GCC|GNL|GSMOPTS;
 	getsub = 0;
 	if (hp->h_subject == NULL && value("interactive") != NULL &&
 	    (value("ask") != NULL || value("asksub") != NULL))
@@ -175,6 +198,18 @@ cont:
 		colljmp_p = 1;
 		c = readline(stdin, linebuf, LINESIZE);
 		colljmp_p = 0;
+#ifdef USE_READLINE
+		if (c < 0) {
+			char *p;
+			if (value("interactive") != NULL &&
+			    (p = value("ignoreeof")) != NULL &&
+			    ++eofcount < (*p == 0 ? 25 : atoi(p))) {
+				(void)printf("Use \".\" to terminate letter\n");
+				continue;
+			}
+			break;
+		}
+#else
 		if (c < 0) {
 			if (value("interactive") != NULL &&
 			    value("ignoreeof") != NULL && ++eofcount < 25) {
@@ -183,6 +218,7 @@ cont:
 			}
 			break;
 		}
+#endif
 		lastlong = longline;
 		longline = c == LINESIZE-1;
 		eofcount = 0;
@@ -254,7 +290,7 @@ cont:
 			/*
 			 * Grab a bunch of headers.
 			 */
-			(void)grabh(hp, GTO|GSUBJECT|GCC|GBCC);
+			(void)grabh(hp, GTO|GSUBJECT|GCC|GBCC|GSMOPTS);
 			goto cont;
 		case 't':
 			/*
