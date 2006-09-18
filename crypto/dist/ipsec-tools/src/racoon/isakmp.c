@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.12 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.13 2006/09/18 08:05:48 manu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -801,12 +801,15 @@ ph1_main(iph1, msg)
 #endif
 	}
 
+#ifndef ENABLE_FRAG
 	/* free resend buffer */
 	if (iph1->sendbuf == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"no buffer found as sendbuf\n"); 
 		return -1;
 	}
+#endif
+
 	VPTRINIT(iph1->sendbuf);
 
 	/* turn off schedule */
@@ -1187,6 +1190,9 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 	gettimeofday(&iph1->start, NULL);
 	gettimeofday(&start, NULL);
 #endif
+
+#ifndef ENABLE_FRAG
+
 	/* start exchange */
 	if ((ph1exchange[etypesw1(iph1->etype)]
 	                [iph1->side]
@@ -1200,6 +1206,7 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 		delph1(iph1);
 		return -1;
 	}
+
 #ifdef ENABLE_STATS
 	gettimeofday(&end, NULL);
 	syslog(LOG_NOTICE, "%s(%s): %8.6f",
@@ -1209,6 +1216,17 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 #endif
 
 	return 0;
+
+#else /* ENABLE_FRAG */
+
+	/* now that we have a phase1 handle, feed back into our
+	 * main receive function to catch fragmented packets
+	 */
+
+	return isakmp_main(msg, remote, local);
+
+#endif /* ENABLE_FRAG */
+
 }
 
 /* new negotiation of phase 2 for initiator */
