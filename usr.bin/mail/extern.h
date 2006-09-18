@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.23 2006/03/03 13:36:27 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.24 2006/09/18 19:46:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.23 2006/03/03 13:36:27 christos Exp $
+ *	$NetBSD: extern.h,v 1.24 2006/09/18 19:46:21 christos Exp $
  */
 
 struct name;
@@ -39,6 +39,7 @@ struct name *elide(struct name *);
 struct name *extract(char [], int);
 struct grouphead;
 struct name *gexpand(struct name *, struct grouphead *, int, int);
+struct name *lexpand(char *, int);
 struct name *nalloc(char [], int);
 struct header;
 struct name *outof(struct name *, FILE *, struct header *);
@@ -189,6 +190,7 @@ struct headline;
 void	 parse(const char [], struct headline *, char []);
 int	 pcmdlist(void *);
 int	 pdot(void *);
+int	 pipecmd(void *);
 void	 prepare_child(sigset_t *, int, int);
 int	 preserve(void *);
 void	 prettyprint(struct name *);
@@ -214,7 +216,7 @@ int	 Save(void *);
 int	 save1(char [], int, const char *, struct ignoretab *);
 void	 savedeadletter(FILE *);
 int	 saveigfield(void *);
-int	 savemail(const char [], FILE *);
+int	 savemail(const char [], FILE *, struct name *);
 int	 saveretfield(void *);
 int	 scan(char **);
 void	 scaninit(void);
@@ -230,6 +232,7 @@ void	 setmsize(int);
 void	 setptr(FILE *, off_t);
 void	 setscreensize(void);
 int	 shell(void *);
+int	 show(void *);
 void	 sigchild(int);
 void	 sort(char **);
 int	 source(void *);

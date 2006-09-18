@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2006/05/01 23:12:24 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2006/09/18 19:46:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.21 2006/05/01 23:12:24 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 2006/09/18 19:46:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,10 @@ __RCSID("$NetBSD: main.c,v 1.21 2006/05/01 23:12:24 christos Exp $");
 #undef EXTERN
 
 #include "extern.h"
+
+#ifdef USE_READLINE
+#include "complete.h"
+#endif
 
 int	main(int, char **);
 
@@ -58,6 +62,40 @@ int	main(int, char **);
  */
 
 jmp_buf	hdrjmp;
+
+
+/*
+ * Break up a white-space or comma delimited name list so that aliases
+ * can get expanded.  Without this, the CC: or BCC: list is broken too
+ * late for alias expansion to occur.
+ */
+struct name *
+lexpand(char *str, int ntype)
+{
+	char *list;
+	struct name *np = NULL;
+	char *word, *p;
+
+	list = strdup(str);
+	if (list == NULL)
+		err(EXIT_FAILURE, "strdup failed: %s", str);
+
+	word = list;
+	for (word = list ; *word ; word = p) {
+		while (*word == ' ' || *word == '\t')
+			continue;
+		for (p = word;
+		     *p && *p != ' ' && *p != '\t' && *p != ',';
+		      p++ )
+			continue;
+		if (*p)
+			*p++ = '\0';
+		np = cat(np, nalloc(word, ntype));
+	}
+
+	free(list);
+	return np;
+}
 
 int
 main(int argc, char *argv[])
@@ -92,7 +130,9 @@ main(int argc, char *argv[])
 	bcc = NULL;
 	smopts = NULL;
 	subject = NULL;
-	while ((i = getopt(argc, argv, "~EINT:b:c:dfins:u:v")) != -1) {
+	Bflag = 0;
+	while ((i = getopt(argc, argv, "~BEINT:b:c:dfins:u:v")) != -1)
+	{
 		switch (i) {
 		case 'T':
 			/*
@@ -174,13 +214,21 @@ main(int argc, char *argv[])
 			/*
 			 * Get Carbon Copy Recipient list
 			 */
-			cc = cat(cc, nalloc(optarg, GCC));
+			cc = cat(cc, lexpand(optarg, GCC));
 			break;
 		case 'b':
 			/*
 			 * Get Blind Carbon Copy Recipient list
 			 */
-			bcc = cat(bcc, nalloc(optarg, GBCC));
+			bcc = cat(bcc, lexpand(optarg, GBCC));
+
+			break;
+		case 'B':
+			/*
+			 * Suppress the output of the "To:" line to allow
+			 * sendmail to apply the NoRecipientAction option.
+			 */
+			Bflag = 1;
 			break;
 		case 'E':
 			/*
@@ -201,7 +249,7 @@ Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 	for (i = optind; (argv[i]) && (*argv[i] != '-'); i++)
 		to = cat(to, nalloc(argv[i], GTO));
 	for (; argv[i]; i++)
-		smopts = cat(smopts, nalloc(argv[i], 0));
+		smopts = cat(smopts, nalloc(argv[i], GSMOPTS));
 	/*
 	 * Check for inconsistent arguments.
 	 */
@@ -224,6 +272,12 @@ Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 	if ((rc = getenv("MAILRC")) == 0)
 		rc = "~/.mailrc";
 	load(expand(rc));
+
+#ifdef USE_READLINE
+	/* this is after loading the MAILRC so we can use value() */
+	init_readline();
+#endif
+
 	if (!rcvmode) {
 		(void)mail(to, cc, bcc, smopts, subject);
 		/*
