@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.77 2006/09/12 10:57:47 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.78 2006/09/18 15:15:25 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -880,4 +880,11 @@ sys/dev/pci/pcidevs_data.h			regen
 	ago, we have little existing stuff in the tree, and this will make it
 	easier to keep certain network drivers in sync with other OSes.
 	[riz, ticket #10693]
+
+xfree/xc/lib/font/Type1/afm.c			1.2
+xfree/xc/lib/font/Type1/scanfont.c		1.2
+xfree/xc/lib/font/Type1/util.c			1.2
+
+	Fix vulnerability in Adobe Type 1 font handling.
+	[adrianp, ticket #10694]
 
