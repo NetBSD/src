@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.336 2006/09/14 13:01:31 pavel Exp $
+#	$NetBSD: Makefile,v 1.337 2006/09/18 22:39:37 hubertf Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -291,7 +291,6 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 		${BINOWN} operator	600	/etc/skeykeys \
 		root wheel		600	/var/at/at.deny \
 		nobody ${BINGRP}	664	/var/db/locate.database \
-		uucp dialer		640	/var/log/aculog \
 		${BINOWN} ${BINGRP}	600	/var/log/authlog \
 		root wheel		600	/var/log/cron \
 		${BINOWN} ${UTMPGRP}	664	/var/log/lastlog \
