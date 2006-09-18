@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.26 2006/09/09 16:22:10 manu Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.27 2006/09/18 20:32:40 manu Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -615,14 +615,17 @@ Any proposal will be accepted, and the attribute(s) will be not proposed to
 the peer if you do not specify it (them).
 They can be individually specified in each proposal.
 .\"
-.It Ic ike_frag (on | off) ;
+.It Ic ike_frag (on | off | force) ;
 Enable receiver-side IKE fragmentation, if
 .Xr racoon 8
-has been built with this feature.
-This extension is there to work around
-broken firewalls that do not work with fragmented UDP packets.
-IKE fragmentation is always enabled on the sender-side, and
-it is used if the peer advertises itself as IKE fragmentation capable.
+has been built with this feature. If set to on, racoon will advertise
+itself as being capable of receiving packets split by IKE fragmentation.
+This extension is there to work around broken firewalls that do not
+work with fragmented UDP packets. IKE fragmentation is always enabled
+on the sender-side, and it is used if the peer advertises itself as
+IKE fragmentation capable. By selecting force, IKE Fragmentation will
+be used when racoon is acting as the initiator even before the remote
+peer has advertised itself as IKE fragmentation capable.
 .\"
 .It Ic esp_frag Ar fraglen ;
 This option is only relevant if you use NAT traversal in tunnel mode.
