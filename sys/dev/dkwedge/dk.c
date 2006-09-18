@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.17 2006/08/24 21:57:11 dbj Exp $	*/
+/*	$NetBSD: dk.c,v 1.18 2006/09/18 07:47:13 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.17 2006/08/24 21:57:11 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.18 2006/09/18 07:47:13 uebayasi Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -679,7 +679,7 @@ dkwedge_set_bootwedge(struct device *parent, daddr_t startblk, uint64_t nblks)
 }
 
 /*
- * We need a dummy objet to stuff into the dkwedge discovery method link
+ * We need a dummy object to stuff into the dkwedge discovery method link
  * set to ensure that there is always at least one object in the set.
  */
 static struct dkwedge_discovery_method dummy_discovery_method;
