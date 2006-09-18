@@ -1,8 +1,10 @@
 2006-09-18  Yvan Vanhullebus  <vanhu@NetBSD.org>
 	* src/racoon/cf[parse|token].c: removed those files from the CVS,
 	  as they are generated during the build.
-	* src/racoon/prsa_par.c: removed that files from the CVS,
-	  as it is generated during the build.
+	* src/racoon/prsa_[par|tok].c: removed those files from the CVS,
+	  as they are generated during the build.
+	* rpm/suse/ipsec-tools.spec: removed those files from the CVS,
+	  as they are generated during the build.
 
 2006-09-18  Emmanuel Dreyfus  <manu@netbsd.org>
 
