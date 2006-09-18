@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 2006/09/13 11:35:53 mrg Exp $ */
+/*	$NetBSD: intr.h,v 1.15 2006/09/18 08:18:47 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,10 +63,14 @@
 #define	IPL_LPT		PIL_LPT
 #define	IPL_IPI		PIL_HIGH
 
+void save_and_clear_fpstate(struct lwp *);
+
 #if defined(MULTIPROCESSOR)
 void	sparc64_ipi_init (void);
 int	sparc64_ipi_halt_thiscpu (void *);
 int	sparc64_ipi_pause_thiscpu (void *);
+void	sparc64_ipi_drop_fpstate (void *);
+void	sparc64_ipi_save_fpstate (void *);
 void	mp_halt_cpus (void);
 void	mp_pause_cpus (void);
 void	mp_resume_cpus (void);
