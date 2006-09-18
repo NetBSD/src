@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.21 2006/07/04 00:30:22 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.21.6.1 2006/09/18 10:00:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -179,10 +179,28 @@ spllower(int nlevel)
  * Miscellaneous
  */
 #define	spl0()		spllower(IPL_NONE)
-#define splraiseipl(x) 	splraise(x)
 #define	splx(x)		spllower(x)
 
-#include <sys/spl.h>
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t cookie)
+{
+
+	return splraise(cookie._ipl);
+}
+
+#include <sys/spl2.h>
 
 /*
  * Software interrupt registration
