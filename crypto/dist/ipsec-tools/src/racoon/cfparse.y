@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.13 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.14 2006/09/18 20:32:40 manu Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -82,6 +82,8 @@
 #include "isakmp_var.h"
 #include "handler.h"
 #include "isakmp.h"
+#include "nattraversal.h"
+#include "isakmp_frag.h"
 #ifdef ENABLE_HYBRID
 #include "resolv.h"
 #include "isakmp_unity.h"
@@ -221,7 +223,7 @@ static int fix_lifebyte __P((u_long));
 %token PEERS_IDENTIFIER VERIFY_IDENTIFIER
 %token DNSSEC CERT_X509 CERT_PLAINRSA
 %token NONCE_SIZE DH_GROUP KEEPALIVE PASSIVE INITIAL_CONTACT
-%token NAT_TRAVERSAL NAT_TRAVERSAL_LEVEL
+%token NAT_TRAVERSAL REMOTE_FORCE_LEVEL
 %token PROPOSAL_CHECK PROPOSAL_CHECK_LEVEL
 %token GENERATE_POLICY GENERATE_LEVEL SUPPORT_PROXY
 %token PROPOSAL
@@ -249,7 +251,7 @@ static int fix_lifebyte __P((u_long));
 %type <num> PREFIX prefix PORT port ike_port
 %type <num> ul_proto UL_PROTO
 %type <num> EXCHANGETYPE DOITYPE SITUATIONTYPE
-%type <num> CERTTYPE CERT_X509 CERT_PLAINRSA PROPOSAL_CHECK_LEVEL NAT_TRAVERSAL_LEVEL GENERATE_LEVEL
+%type <num> CERTTYPE CERT_X509 CERT_PLAINRSA PROPOSAL_CHECK_LEVEL REMOTE_FORCE_LEVEL GENERATE_LEVEL
 %type <num> unittype_time unittype_byte
 %type <val> QUOTEDSTRING HEXSTRING ADDRSTRING ADDRRANGE sainfo_id
 %type <val> identifierstring
@@ -1800,6 +1802,7 @@ remote_spec
 		dh_group_num EOS
 	|	PASSIVE SWITCH { cur_rmconf->passive = $2; } EOS
 	|	IKE_FRAG SWITCH { cur_rmconf->ike_frag = $2; } EOS
+	|	IKE_FRAG REMOTE_FORCE_LEVEL { cur_rmconf->ike_frag = ISAKMP_FRAG_FORCE; } EOS
 	|	ESP_FRAG NUMBER { 
 #ifdef SADB_X_EXT_NAT_T_FRAG
 			cur_rmconf->esp_frag = $2; 
@@ -1837,10 +1840,10 @@ remote_spec
 			yyerror("NAT-T support not compiled in.");
 #endif
 		} EOS
-	|	NAT_TRAVERSAL NAT_TRAVERSAL_LEVEL
+	|	NAT_TRAVERSAL REMOTE_FORCE_LEVEL
 		{
 #ifdef ENABLE_NATT
-			cur_rmconf->nat_traversal = $2;
+			cur_rmconf->nat_traversal = NATT_FORCE;
 #else
 			yyerror("NAT-T support not compiled in.");
 #endif
