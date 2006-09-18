@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.177 2006/09/14 13:01:32 pavel Exp $
+# $NetBSD: mi,v 1.178 2006/09/18 22:39:38 hubertf Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -308,7 +308,6 @@
 ./var/games/snake.log				etc-games-scores
 ./var/games/snakerawscores			etc-games-scores
 ./var/games/tetris.scores			etc-games-scores
-./var/log/aculog				etc-uucp-log
 ./var/log/authlog				etc-sys-log
 ./var/log/cron					etc-cron-log
 ./var/log/lastlog				etc-sys-log
