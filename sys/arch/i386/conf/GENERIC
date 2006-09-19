@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.781 2006/09/10 15:45:56 plunky Exp $
+# $NetBSD: GENERIC,v 1.782 2006/09/19 13:58:55 jmmv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.781 $"
+#ident 		"GENERIC-$Revision: 1.782 $"
 
 maxusers	32		# estimated number of users
 
@@ -47,7 +47,7 @@ options 	ENHANCED_SPEEDSTEP
 options 	POWERNOW_K7
 
 # AMD PowerNow! and Cool`n'Quiet technology
-options         POWERNOW_K8
+options 	POWERNOW_K8
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
