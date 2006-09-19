@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.12 2006/09/18 19:46:21 christos Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.13 2006/09/19 18:01:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.12 2006/09/18 19:46:21 christos Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.13 2006/09/19 18:01:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,8 +88,8 @@ const struct cmd cmdtab[] = {
 	{ "save",	save,		CMP(F)	STRLIST,	0,		0 },
 	{ "source",	source,		CMP(F)	M|RAWLIST,	1,		1 },
 	{ "set",	set,		CMP(sF)	M|RAWLIST,	0,		1000 },
-	{ "show",	show,		CMP(S)	M|RAWLIST,	0,		1000 },
 	{ "shell",	dosh,		CMP(n)	I|NOLIST,	0,		0 },
+	{ "show",	show,		CMP(S)	M|RAWLIST,	0,		1000 },
 	{ "version",	pversion,	CMP(n)	M|NOLIST,	0,		0 },
 	{ "group",	group,		CMP(a)	M|RAWLIST,	0,		1000 },
 	{ "write",	swrite,		CMP(F)	STRLIST,	0,		0 },
