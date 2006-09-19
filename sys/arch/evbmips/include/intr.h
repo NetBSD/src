@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2006/04/06 06:17:32 simonb Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.10.1 2006/09/19 12:43:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -106,7 +106,24 @@ extern int		_clrsoftintr(int);
 
 #define	spllowersoftclock() _spllower(ipl_sr_bits[IPL_SOFTCLOCK])
 
-#define	splraiseipl(x)	_splraise(ipl_sr_bits[x])
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(ipl_sr_bits[icookie._ipl]);
+}
 
 #include <sys/spl.h>
 
