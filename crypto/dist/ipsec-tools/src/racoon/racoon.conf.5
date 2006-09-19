@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.27 2006/09/18 20:32:40 manu Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.28 2006/09/19 18:53:12 wiz Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -136,12 +136,12 @@ to operate with an unprivileged instance doing most of the work, while
 a privileged instance takes care of performing the following operations
 as root: reading PSK and private keys, launching hook scripts, and
 validating passwords against system databases or against PAM. Please
-note that using privilege separation makes changes to the 
+note that using privilege separation makes changes to the
 .Ar listen
 and
 .Ar paths
 sections ignored upon configuration reloads. A
-.Xr racoon 8 
+.Xr racoon 8
 restart is required if you want such changes to be taken into account.
 .Pp
 .Bl -tag -width Ds -compact
@@ -302,11 +302,11 @@ There is no default.
 require that all addresses for ISAKMP must be bound.
 This statement will be ignored if you do not specify any address.
 .El
-When running in privilege separation mode, you need to restart 
+When running in privilege separation mode, you need to restart
 .Xr racoon 8
 to have changes to the
 .Ar listen
-section taken into account. 
+section taken into account.
 .Pp
 The
 .Ar listen
@@ -1162,7 +1162,7 @@ is used, everything will pass through the tunnel but those destinations.
 The default DNS domain to send.
 .It Ic split_dns Ar "domain", ...
 The split dns configuration to send, in quoted domain name strings. This list can
-be used to describe a list of domain names for which a peer should query a modecfg 
+be used to describe a list of domain names for which a peer should query a modecfg
 assigned dns server. DNS queries for all other domains would be handled locally.
 (Cisco VPN client only).
 .It Ic banner Ar path ;
