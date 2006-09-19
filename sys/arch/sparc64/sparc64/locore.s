@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.224 2006/09/19 18:00:27 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.225 2006/09/19 18:42:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -64,6 +64,7 @@
 #undef	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
 #undef	NO_TSB			/* Don't use TSB */
 #undef	SCHED_DEBUG
+#define	USE_BLOCK_STORE_LOAD	/* enable block load/store ops */
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -321,11 +322,11 @@
 	clr	%l3;				/* NULL fpstate */			     \
 	brz,pt	%l2, 1f;			/* fplwp == NULL? */			     \
 	 add	%l0, -STKB-CC64FSZ-(siz), %sp;	/* Set proper %sp */			     \
-	LDPTR	[%l2 + L_FPSTATE], %l3;						     \
+	LDPTR	[%l2 + L_FPSTATE], %l3;						    	     \
 	brz,pn	%l3, 1f;			/* Make sure we have an fpstate */	     \
 	 mov	%l3, %o0;								     \
 	call	_C_LABEL(savefpstate);		/* Save the old fpstate */		     \
-1:	\
+1:											     \
 	 set	EINTSTACK-STKB, %l4;		/* Are we on intr stack? */		     \
 	cmp	%sp, %l4;								     \
 	bgu,pt	%xcc, 1f;								     \
@@ -339,7 +340,7 @@
 1:											     \
 	sethi	%hi(CURLWP), %l4;		/* Use curlwp */			     \
 	LDPTR	[%l4 + %lo(CURLWP)], %l5;						     \
-	brz,pn	%l5, 0b; nop;			/* If curlwp is NULL need to use lwp0 */   \
+	brz,pn	%l5, 0b; nop;			/* If curlwp is NULL need to use lwp0 */     \
 2:											     \
 	LDPTR	[%l5 + L_FPSTATE], %l6;		/* Save old fpstate */			     \
 	STPTR	%l0, [%l5 + L_FPSTATE];		/* Insert new fpstate */		     \
@@ -8207,11 +8208,11 @@ Lmemcpy_start:
 	 * Plenty of data to copy, so try to do it optimally.
 	 */
 2:
-#if 1
+#ifdef USE_BLOCK_STORE_LOAD
 	! If it is big enough, use VIS instructions
 	bge	Lmemcpy_block
 	 nop
-#endif
+#endif /* USE_BLOCK_STORE_LOAD */
 Lmemcpy_fancy:
 
 	!!
@@ -8574,7 +8575,7 @@ Lmemcpy_complete:
 	ret
 	 restore %i1, %g0, %o0
 
-#if 1
+#ifdef USE_BLOCK_STORE_LOAD
 
 /*
  * Block copy.  Useful for >256 byte copies.
@@ -8645,44 +8646,12 @@ Lmemcpy_block:
  * %o5		last safe fetchable address
  */
 
-#if 1
 	ENABLE_FPU(0)
-#else
-	save	%sp, -(CC64FSZ+FS_SIZE+BLOCK_SIZE), %sp	! Allocate an fpstate
-	sethi	%hi(FPLWP), %l1
-	LDPTR	[%l1 + %lo(FPLWP)], %l2			! Load fplwp
-	add	%sp, (CC64FSZ+STKB+BLOCK_SIZE-1), %l0	! Calculate pointer to fpstate
-	brz,pt	%l2, 1f					! fplwp == NULL?
-	 andn	%l0, BLOCK_ALIGN, %l0			! And make it block aligned
-	LDPTR	[%l2 + L_FPSTATE], %l3
-	brz,pn	%l3, 1f					! Make sure we have an fpstate
-	 mov	%l3, %o0
-	call	_C_LABEL(savefpstate)			! Save the old fpstate
-	 set	EINTSTACK-STKB, %l4			! Are we on intr stack?
-	cmp	%sp, %l4
-	bgu,pt	CCCR, 1f
-	 set	INTSTACK-STKB, %l4
-	cmp	%sp, %l4
-	blu	CCCR, 1f
-0:
-	 sethi	%hi(_C_LABEL(lwp0)), %l4		! Yes, use lwp0
-	ba,pt	%xcc, 2f				! XXXX needs to change to CPUs idle proc
-	 or	%l4, %lo(_C_LABEL(lwp0)), %l5
-1:
-	sethi	%hi(CURLWP), %l4			! Use curlwp
-	LDPTR	[%l4 + %lo(CURLWP)], %l5
-	brz,pn	%l5, 0b					! If curlwp is NULL need to use lwp0
-	 nop
-2:
-	LDPTR	[%l5 + L_FPSTATE], %l6			! Save old fpstate
-	STPTR	%l0, [%l5 + L_FPSTATE]			! Insert new fpstate
-	STPTR	%l5, [%l1 + %lo(FPLWP)]			! Set new fplwp
-	wr	%g0, FPRS_FEF, %fprs			! Enable FPU
-#endif
+
 	mov	%i0, %o0				! Src addr.
 	mov	%i1, %o1				! Store our dest ptr here.
 	mov	%i2, %o2				! Len counter
-#endif
+#endif	/* _KERNEL */
 
 	!!
 	!! First align the output to a 64-bit entity
@@ -9751,32 +9720,13 @@ Lmemcpy_blockfinish:
  * Weve saved our possible fpstate, now disable the fpu
  * and continue with life.
  */
-#if 1
 	RESTORE_FPU
-#else
-#ifdef DEBUG
-	LDPTR	[%l1 + %lo(FPLWP)], %l7
-	cmp	%l7, %l5
-!	tnz	1		! fplwp has changed!
-	LDPTR	[%l5 + L_FPSTATE], %l7
-	cmp	%l7, %l0
-	tnz	1		! fpstate has changed!
-#endif
-	andcc	%l2, %l3, %g0				! If (fplwp && fpstate)
-	STPTR	%l2, [%l1 + %lo(FPLWP)]			! Restore old fproc
-	bz,pt	CCCR, 1f				! Skip if no fpstate
-	 STPTR	%l6, [%l5 + L_FPSTATE]			! Restore old fpstate
-	
-	call	_C_LABEL(loadfpstate)			! Re-load orig fpstate
-	 mov	%l3, %o0
-1:
-#endif
 	ret
 	 restore	%g1, 0, %o0			! Return DEST for memcpy
 #endif
  	retl
 	 mov	%g1, %o0
-#endif
+#endif	/* USE_BLOCK_STORE_LOAD */
 
 	
 #if 1
@@ -9828,11 +9778,11 @@ Lmemset_internal:
 	sllx	%o1, 32, %o3
 	 or	%o1, %o3, %o1
 1:	
-#if 1
+#ifdef USE_BLOCK_STORE_LOAD
 	!! Now we are 64-bit aligned
 	cmp	%o2, 256		! Use block clear if len > 256
 	bge,pt	CCCR, Lmemset_block	! use block store insns
-#endif	
+#endif	/* USE_BLOCK_STORE_LOAD */
 	 deccc	8, %o2
 Lmemset_longs:
 	bl,pn	CCCR, Lmemset_cleanup	! Less than 8 bytes left
@@ -9867,7 +9817,7 @@ Lmemset_done:
 	retl
 	 mov	%o4, %o0		! Restore ponter for memset (ugh)
 
-#if 1
+#ifdef USE_BLOCK_STORE_LOAD
 Lmemset_block:
 	sethi	%hi(block_disable), %o3
 	ldx	[ %o3 + %lo(block_disable) ], %o3
@@ -9906,46 +9856,8 @@ Lmemset_block:
  *
  */
 
-#if 1
 	ENABLE_FPU(0)
-#else
-	!!
-	!! This code will allow us to save the fpstate around this
-	!! routine and nest FP use in the kernel
-	!!
-	save	%sp, -(CC64FSZ+FS_SIZE+BLOCK_SIZE), %sp	! Allocate an fpstate
-	sethi	%hi(FPLWP), %l1
-	LDPTR	[%l1 + %lo(FPLWP)], %l2			! Load fplwp
-	add	%sp, (CC64FSZ+STKB+BLOCK_SIZE-1), %l0	! Calculate pointer to fpstate
-	brz,pt	%l2, 1f					! fplwp == NULL?
-	 andn	%l0, BLOCK_ALIGN, %l0			! And make it block aligned
-	LDPTR	[%l2 + L_FPSTATE], %l3
-	brz,pn	%l3, 1f					! Make sure we have an fpstate
-	 mov	%l3, %o0
-	call	_C_LABEL(savefpstate)			! Save the old fpstate
-	 set	EINTSTACK-STKB, %l4			! Are we on intr stack?
-	cmp	%sp, %l4
-	bgu,pt	CCCR, 1f
-	 set	INTSTACK-STKB, %l4
-	cmp	%sp, %l4
-	blu	CCCR, 1f
-0:
-	 sethi	%hi(_C_LABEL(lwp0)), %l4		! Yes, use lwp0
-	ba,pt	%xcc, 2f				! XXXX needs to change to CPU's idle proc
-	 or	%l4, %lo(_C_LABEL(lwp0)), %l5
-1:
-	sethi	%hi(CURLWP), %l4			! Use curlwp
-	LDPTR	[%l4 + %lo(CURLWP)], %l5
-	brz,pn	%l5, 0b					! If curlwp is NULL need to use lwp0
-2:
-	mov	%i0, %o0
-	mov	%i2, %o2
-	LDPTR	[%l5 + L_FPSTATE], %l6			! Save old fpstate
-	mov	%i3, %o3
-	STPTR	%l0, [%l5 + L_FPSTATE]			! Insert new fpstate
-	STPTR	%l5, [%l1 + %lo(FPLWP)]			! Set new fplwp
-	wr	%g0, FPRS_FEF, %fprs			! Enable FPU
-#endif
+
 	!! We are now 8-byte aligned.  We need to become 64-byte aligned.
 	btst	63, %i0
 	bz,pt	CCCR, 2f
@@ -9994,28 +9906,11 @@ Lmemset_block:
  * We've saved our possible fpstate, now disable the fpu
  * and continue with life.
  */
-#if 1
 	RESTORE_FPU
 	addcc	%i2, 56, %i2				! Restore the count
 	ba,pt	%xcc, Lmemset_longs			! Finish up the remainder
 	 restore
-#else
-#ifdef DEBUG
-	LDPTR	[%l1 + %lo(FPLWP)], %l7
-	cmp	%l7, %l5
-!	tnz	1		! fplwp has changed!
-	LDPTR	[%l5 + L_FPSTATE], %l7
-	cmp	%l7, %l0
-	tnz	1		! fpstate has changed!
-#endif
-	STPTR	%g0, [%l1 + %lo(FPLWP)]			! Clear fplwp
-	STPTR	%l6, [%l5 + L_FPSTATE]			! Restore old fpstate
-	wr	%g0, 0, %fprs				! Disable FPU
-	addcc	%i2, 56, %i2				! Restore the count
-	ba,pt	%xcc, Lmemset_longs			! Finish up the remainder
-	 restore
-#endif
-#endif
+#endif	/* USE_BLOCK_STORE_LOAD */
 #endif
 
 /*
