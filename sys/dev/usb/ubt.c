@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.17 2006/09/19 19:45:48 plunky Exp $	*/
+/*	$NetBSD: ubt.c,v 1.18 2006/09/19 20:34:33 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.17 2006/09/19 19:45:48 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.18 2006/09/19 20:34:33 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -704,6 +704,10 @@ ubt_sysctl_config(SYSCTLFN_ARGS)
 
 	if (t < 0 || t >= sc->sc_alt_config)
 		return EINVAL;
+
+	/* This may not change when the unit is enabled */
+	if (sc->sc_unit.hci_flags & BTF_RUNNING)
+		return EBUSY;
 
 	sc->sc_config = t;
 	return ubt_set_isoc_config(sc);
