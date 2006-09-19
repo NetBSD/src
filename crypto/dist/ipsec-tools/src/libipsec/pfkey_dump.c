@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.13 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.14 2006/09/19 07:51:31 vanhu Exp $	*/
 
 /*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
@@ -79,6 +79,9 @@
 #ifdef SADB_EALG_RC5CBC
 #define SADB_X_EALG_RC5CBC	SADB_EALG_RC5CBC
 #endif
+#endif
+#if defined(SADB_X_EALG_AES) && ! defined(SADB_X_EALG_AESCBC)
+#define SADB_X_EALG_AESCBC  SADB_X_EALG_AES
 #endif
 
 #define GETMSGSTR(str, num) \

@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.9 2006/09/09 16:22:37 manu Exp $	*/
+/*	$NetBSD: token.l,v 1.10 2006/09/19 07:51:32 vanhu Exp $	*/
 
 /*	$KAME: token.l,v 1.44 2003/10/21 07:20:58 itojun Exp $	*/
 
@@ -86,6 +86,9 @@
 #endif
 #ifndef SADB_X_EALG_AESCTR
 #define SADB_X_EALG_AESCTR	(-1)
+#endif
+#if defined(SADB_X_EALG_AES) && ! defined(SADB_X_EALG_AESCBC)
+#define SADB_X_EALG_AESCBC  SADB_X_EALG_AES
 #endif
 %}
 
