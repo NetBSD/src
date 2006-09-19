@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.222 2006/09/19 00:15:47 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.223 2006/09/19 02:08:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3884,7 +3884,6 @@ ENTRY(sparc64_ipi_flush_all)
 
 	! %g1 = loop counter
 	! %g2 = TLB data value
-	! %g3 = saved %pstate
 
 0:
 	ldxa	[%g1] ASI_DMMU_TLB_DATA, %g2		! fetch the TLB data
@@ -6833,7 +6832,25 @@ ENTRY(cpu_exit)
  * idles here waiting for something to come ready.
  * The registers are set up as noted above.
  * We are running on this CPU's idle stack.
+ *
+ * we expect the follow at this point:
+ *	%l4 to be NULL
+ *	%l6 to be %hi(cpcb)
  */
+ENTRY_NOPROFILE(idle_switch)
+	sethi	%hi(IDLE_U), %l1
+	LDPTR	[%l1 + %lo(IDLE_U)], %l1
+
+	STPTR	%l1, [%l6 + %lo(CPCB)]		! cpcb = curcpu()->ci_idle_u
+	set	USPACE - CC64FSZ - 80, %o0	! set new %sp
+	mov	%l1, %l5
+	add	%l1, %o0, %o0
+#ifdef _LP64
+	sub	%o0, BIAS, %sp
+#else
+	mov	%o0, %sp
+#endif
+
 ENTRY_NOPROFILE(idle)
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call	_C_LABEL(sched_unlock_idle)	! Release sched_lock
@@ -6956,6 +6973,12 @@ ENTRY(cpu_switch)
 		 %g2, %g3, %g1, 10, 11, 12)
 	stx	%l4, [%g2 + KTR_PARM1]
 12:
+#endif
+
+#if defined(MULTIPROCESSOR)
+	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
+	brz,pt	%o3, idle_switch
+	 clr	%l4				! lastproc = NULL;
 #endif
 
 Lsw_scan:
