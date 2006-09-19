@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.223 2006/09/19 02:08:14 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.224 2006/09/19 18:00:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -2682,7 +2682,7 @@ Ldatafault_internal:
 	wrpr	%g0, PSTATE_KERN, %pstate		! Get back to normal globals
 
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + (1*8)]	! save g1
-	rdpr	%tt, %o1				! find out what trap brought us here
+	rdpr	%tt, %o1					! find out what trap brought us here
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + (2*8)]	! save g2
 	rdpr	%tstate, %g1
 	stx	%g3, [%sp + CC64FSZ + STKB + TF_G + (3*8)]	! (sneak g3 in here)
@@ -2690,15 +2690,15 @@ Ldatafault_internal:
 	stx	%g4, [%sp + CC64FSZ + STKB + TF_G + (4*8)]	! sneak in g4
 	rdpr	%tnpc, %g3
 	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + (5*8)]	! sneak in g5
-	rd	%y, %g5					! save y
+	mov	%g2, %o7					! Make the fault address look like the return address
 	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + (6*8)]	! sneak in g6
-	mov	%g2, %o7				! Make the fault address look like the return address
+	rd	%y, %g5						! save y
 	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + (7*8)]	! sneak in g7
 
 #ifdef DEBUG
-	set	DATA_START, %g7				! debug
-	set	0x21, %g6				! debug
-	stb	%g6, [%g7 + 0x20]			! debug
+	set	DATA_START, %g7					! debug
+	set	0x21, %g6					! debug
+	stb	%g6, [%g7 + 0x20]				! debug
 #endif
 	sth	%o1, [%sp + CC64FSZ + STKB + TF_TT]
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]		! set tf.tf_psr, tf.tf_pc
