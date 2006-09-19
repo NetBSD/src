@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2006/03/29 08:55:40 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.7.10.1 2006/09/19 08:37:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,22 +41,20 @@
 
 #include <machine/psl.h>
 
-#if defined(_KERNEL) && !defined(_LOCORE)
+/*
+ * These are identical to the values used by hp300, but are not meaningful
+ * to sun3 code at this time.
+ */
+#define	IPL_NONE	0	/* disable only this interrupt */
+#define	IPL_BIO		1	/* disable block I/O interrupts */
+#define	IPL_NET		2	/* disable network interrupts */
+#define	IPL_TTY		3	/* disable terminal interrupts */
+#define	IPL_TTYNOBUF	4	/* IPL_TTY + higher ISR priority */
+#define	IPL_SERIAL	4	/* disable serial interrupts */
+#define	IPL_CLOCK	5	/* disable clock interrupts */
+#define	IPL_HIGH	6	/* disable all interrupts */
 
-#define	IPL_NONE	0
-#define	IPL_SOFTCLOCK	(PSL_S|PSL_IPL1)
-#define	IPL_SOFTNET	(PSL_S|PSL_IPL1)
-#define	IPL_BIO		(PSL_S|PSL_IPL2)
-#define	IPL_NET		(PSL_S|PSL_IPL3)
-#define	IPL_TTY		(PSL_S|PSL_IPL4)
-#define	IPL_VM		(PSL_S|PSL_IPL4)
-/* Intersil clock hardware interrupts (hard-wired at 5) */
-#define	IPL_CLOCK	(PSL_S|PSL_IPL5)
-#define	IPL_STATCLOCK	IPL_CLOCK
-#define	IPL_SCHED	(PSL_S|PSL_IPL7)
-#define	IPL_HIGH	(PSL_S|PSL_IPL7)
-#define	IPL_LOCK	(PSL_S|PSL_IPL7)
-#define	IPL_SERIAL	(PSL_S|PSL_IPL4)
+#if defined(_KERNEL) && !defined(_LOCORE)
 
 /*
  * Define inline functions for PSL manipulation.
@@ -91,10 +89,29 @@ _getsr(void)
 
 /* IPL used by soft interrupts: netintr(), softclock() */
 #define	spllowersoftclock() spl1()
+#define splsoftclock()  splraise1()
+#define splsoftnet()    splraise1()
 
-#define	splraiseipl(x)	_splraise(x)
+/* Highest block device (strategy) IPL. */
+#define splbio()        splraise2()
 
-#include <sys/spl.h>
+/* Highest network interface IPL. */
+#define splnet()        splraise3()
+
+/* Highest tty device IPL. */
+#define spltty()        splraise4()
+
+/* Highest network, tty, or disk IPL. */
+#define splvm()         _splraise(PSL_S|PSL_IPL4)
+
+/* Intersil clock hardware interrupts (hard-wired at 5) */
+#define splclock()      splraise5()
+#define splstatclock()  splclock()
+
+/* Block out all interrupts (except NMI of course). */
+#define splhigh()       spl7()
+#define splsched()      spl7()
+#define spllock()	spl7()
 
 #endif	/* KERNEL && !_LOCORE */
 #endif	/* _SUN3_INTR_H_ */
