@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.101 2006/09/19 10:54:16 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.102 2006/09/19 13:07:19 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -408,8 +408,8 @@ Notes:
 			alpha, i386, xen (yamt)
 
 		compile-tested:
-			sun2, sun3, amd64, sparc
-			sparc64 (GENERIC)
+			sun2, sun3, amd64, sparc, sparc64 (GENERIC),
+			vax, evbarm, evbmips, evbsh3, iyonix, acorn26
 
 		not tested:
 			sparc64 (GENERIC.MP seems to have an unrelated problem)
