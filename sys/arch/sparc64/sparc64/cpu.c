@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.51 2006/09/15 17:29:45 martin Exp $ */
+/*	$NetBSD: cpu.c,v 1.52 2006/09/19 06:43:11 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.51 2006/09/15 17:29:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.52 2006/09/19 06:43:11 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,8 +335,6 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 #if defined(MULTIPROCESSOR)
 vaddr_t cpu_spinup_trampoline;
 
-u_long dump_rtf_info = 0;
-
 /*
  * Start secondary processors in motion.
  */
@@ -398,8 +396,6 @@ cpu_hatch()
 
 	for (i = 0; i < 4*PAGE_SIZE; i += sizeof(long))
 		flush(v + i);
-
-	dump_rtf_info = 1;
 
 	printf("cpu%d fired up.\n", cpu_number());
 	CPUSET_ADD(cpus_active, cpu_number());
