@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.16 2006/09/19 15:34:23 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.17 2006/09/19 22:00:38 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.16 2006/09/19 15:34:23 reinoud Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.17 2006/09/19 22:00:38 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -2825,6 +2825,7 @@ udf_translate_file_extent(struct udf_node *node,
 				translen = overlap;
 				while (overlap && pages && translen) {
 					*map++ = transsec;
+					lb_num++;
 					overlap--; pages--; translen--;
 				}
 				break;
@@ -2838,7 +2839,7 @@ udf_translate_file_extent(struct udf_node *node,
 					return error;
 				while (overlap && pages && translen) {
 					*map++ = transsec;
-					transsec++;
+					lb_num++; transsec++;
 					overlap--; pages--; translen--;
 				}
 				break;
