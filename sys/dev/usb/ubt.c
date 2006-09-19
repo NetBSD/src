@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.16 2006/08/30 19:42:37 plunky Exp $	*/
+/*	$NetBSD: ubt.c,v 1.17 2006/09/19 19:45:48 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.16 2006/08/30 19:42:37 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.17 2006/09/19 19:45:48 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -593,12 +593,12 @@ ubt_set_isoc_config(struct ubt_softc *sc)
 	int err;
 
 	err = usbd_set_interface(sc->sc_iface1, sc->sc_config);
-	if (err) {
+	if (err != USBD_NORMAL_COMPLETION) {
 		aprint_error(
 		    "%s: Could not set config %d on ISOC interface. %s (%d)\n",
 		    USBDEVNAME(sc->sc_dev), sc->sc_config, usbd_errstr(err), err);
 
-		return err;
+		return err == USBD_IN_USE ? EBUSY : EIO;
 	}
 
 	/*
