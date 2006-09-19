@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpentry.h,v 1.3 2006/09/19 14:35:25 hubertf Exp $	*/
+/*	$NetBSD: utmpentry.h,v 1.4 2006/09/19 21:01:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@ struct utmpentry {
 };
 
 extern int maxname, maxline, maxhost;
+extern int etype;
 
 int getutentries(const char *, struct utmpentry **);
 void freeutentries(struct utmpentry *);
