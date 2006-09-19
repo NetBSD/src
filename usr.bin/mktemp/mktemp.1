@@ -1,4 +1,4 @@
-.\" $NetBSD: mktemp.1,v 1.14 2006/05/19 20:03:30 rillig Exp $
+.\" $NetBSD: mktemp.1,v 1.15 2006/09/19 14:22:51 hubertf Exp $
 .\" From: $FreeBSD: src/usr.bin/mktemp/mktemp.1,v 1.5 1999/08/28 01:04:13 peter Exp $
 .\" From: $OpenBSD: mktemp.1,v 1.8 1998/03/19 06:13:37 millert Exp $
 .\"
@@ -41,9 +41,12 @@
 .Nm mktemp
 .Op Fl d
 .Op Fl q
-.Op Fl t Ar prefix
 .Op Fl u
-.Op Ar template ...
+.Bro
+.Fl t Ar Prefix
+.No |
+.Ar template ...
+.Brc
 .Sh DESCRIPTION
 The
 .Nm
@@ -109,10 +112,18 @@ Care should
 be taken to ensure that it is appropriate to use an environment variable
 potentially supplied by the user.
 .Pp
-Any number of temporary files may be created in a single invocation,
-including one based on the internal template resulting from the
+Any number of temporary files may be created in a single invocation
+using multiple
+.Ar template
+arguments, also a single one based on the internal template with the
 .Fl t
-flag.
+option value as filename prefix.
+.Pp
+At least one
+.Ar template
+argument or the
+.Fl t
+option must be present.
 .Pp
 .Nm
 is provided to allow shell scripts to safely use temporary files.
@@ -144,7 +155,14 @@ Generate a template (using the supplied
 .Ar prefix
 and
 .Ev TMPDIR
-if set) to create a filename template.
+if set) to create a filename template. If
+.Fl t Ar prefix
+and
+.Ar template
+are both given,
+.Ar prefix
+will not apply to
+.Ar template.
 .It Fl u
 Operate in
 .Dq unsafe
