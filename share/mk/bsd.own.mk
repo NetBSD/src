@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.473 2006/09/17 04:40:04 tsutsui Exp $
+#	$NetBSD: bsd.own.mk,v 1.474 2006/09/19 04:16:11 simonb Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -54,8 +54,10 @@ TOOLCHAIN_MISSING?=	no
     ${MACHINE_ARCH} == "ia64" || \
     ${MACHINE_ARCH} == "m68000" || \
     ${MACHINE_ARCH} == "m68k" || \
-    ${MACHINE_ARCH} == "mips64el" || \
     ${MACHINE_ARCH} == "mips64eb" || \
+    ${MACHINE_ARCH} == "mips64el" || \
+    ${MACHINE_ARCH} == "mipseb" || \
+    ${MACHINE_ARCH} == "mipsel" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "powerpc64" || \
     ${MACHINE_ARCH} == "sh3eb" || \
@@ -70,9 +72,7 @@ HAVE_GCC?=	4
 
 # These ones work (or mostly work), but aren't switched yet
 .if \
-    ${MACHINE_ARCH} == "hppa" || \
-    ${MACHINE_ARCH} == "mipsel" || \
-    ${MACHINE_ARCH} == "mipseb"
+    ${MACHINE_ARCH} == "hppa"
 #HAVE_GCC?=	4
 .endif
 
