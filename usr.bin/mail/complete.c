@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.1 2006/09/18 19:48:44 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.2 2006/09/19 18:52:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.1 2006/09/18 19:48:44 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.2 2006/09/19 18:52:04 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -1022,12 +1022,12 @@ init_readline(void)
 {
 	HistEvent ev;
 	const char *el_editor;
-	const char *history_size;
-	char *completion;
+	const char *el_history_size;
+	char *el_completion_keys;
 
 	rl_global.hist = history_init();			/* init the builtin history */
-	history_size = value("history_size") ? : "0";
-	if (history(rl_global.hist, &ev, H_SETSIZE, atoi(history_size)))
+	el_history_size = value("el_history_size") ? : "0";
+	if (history(rl_global.hist, &ev, H_SETSIZE, atoi(el_history_size)))
 		printf("history: %s\n", ev.str);
 
 	rl_global.el = el_init(getprogname(), stdin, stdout, stderr);
@@ -1045,10 +1045,10 @@ init_readline(void)
 	 "Context sensitive argument completion",
 	 complete);
 
-	completion = value("completion");
-	if (completion && *completion) {
+	el_completion_keys = value("el_completion_keys");
+	if (el_completion_keys && *el_completion_keys) {
 		struct name *np, *nq;
-		np = lexpand(completion, 0);
+		np = lexpand(el_completion_keys, 0);
 		for (nq = np ; nq ; nq = nq->n_flink)
 			el_set(rl_global.el, EL_BIND, nq->n_name, "mail-complete", NULL);
 	}
