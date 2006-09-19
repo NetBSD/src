@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.6 2006/01/01 14:24:33 yamt Exp $ */
+/* $NetBSD: intr.h,v 1.6.20.1 2006/09/19 13:06:49 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -79,8 +79,6 @@
 /* #define	splsched()	splhigh() */
 #define spllock()	splhigh()
 
-#define	splraiseipl(x)	(((x) == IPL_HIGH) ? splhigh() : raisespl(x))
-
 #define spl0()			lowerspl(IPL_NONE)
 #define spllowersoftclock()	lowerspl(IPL_SOFTCLOCK)
 #define splx(s)			lowerspl(s)
@@ -89,6 +87,26 @@ extern int splhigh(void);
 extern int raisespl(int);
 extern void lowerspl(int);
 extern int hardsplx(int);
+
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t cookie)
+{
+	ipl_t newipl = cookie._ipl;
+
+	return ((newipl) == IPL_HIGH) ? splhigh() : raisespl(newipl);
+}
 
 /*
  * Interrupt sharing types
