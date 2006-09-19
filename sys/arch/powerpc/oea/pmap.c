@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 2006/09/19 20:19:53 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42 2006/09/19 22:15:06 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 2006/09/19 20:19:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42 2006/09/19 22:15:06 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -3472,6 +3472,10 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		extern int etext[], kernel_text[];
 		vaddr_t va, va_etext = (paddr_t) etext;
 		paddr_t pa;
+		register_t sr;
+
+		sr = KERNELN_SEGMENT(kernelstart >> ADDR_SR_SHFT)
+		    |SR_SUKEY|SR_PRKEY;
 
 		va = (vaddr_t) kernel_text;
 
@@ -3484,6 +3488,10 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		     pa += PAGE_SIZE, va += PAGE_SIZE)
 			pmap_enter(pmap_kernel(), va, pa,
 			    VM_PROT_READ|VM_PROT_WRITE, 0);
+
+		pmap_kernel()->pm_sr[kernelstart >> ADDR_SR_SHFT] = sr;
+		__asm volatile ("mtsrin %0,%1"
+ 			      :: "r"(sr), "r"(kernelstart));
 	}
 #endif
 }
