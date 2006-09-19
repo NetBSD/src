@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.66 2006/09/18 08:18:47 martin Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.67 2006/09/19 01:54:56 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.66 2006/09/18 08:18:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.67 2006/09/19 01:54:56 mrg Exp $");
 
 #include "opt_coredump.h"
 
@@ -370,7 +370,6 @@ cpu_lwp_free(l, proc)
 			continue;
 		if (l == ci->ci_fplwp) {
 			/* drop the fplwp from the other fpu */
-			printf("found fplwp %p on cpu%d\n", l, ci->ci_number);
 			sparc64_send_ipi(ci->ci_upaid,
 			    sparc64_ipi_drop_fpstate);
 			break;
