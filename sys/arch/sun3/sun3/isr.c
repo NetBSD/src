@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.50 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: isr.c,v 1.50.22.1 2006/09/19 10:12:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.50 2005/12/11 12:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.50.22.1 2006/09/19 10:12:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,4 +259,39 @@ get_vector_entry(int entry)
 	if ((entry <0) || (entry >= NVECTORS))
 	panic("get_vector_entry: setting vector too high or low");
 	return ((void *) vector_table[entry]);
+}
+
+static const int ipl2psl_table[] = {
+	[IPL_NONE] = PSL_IPL0,
+#if 0
+	[IPL_SOFTCLOCK] = PSL_IPL1,
+	[IPL_SOFTNET] = PSL_IPL1,
+#endif
+	[IPL_BIO] = PSL_IPL2,
+	[IPL_NET] = PSL_IPL3,
+#if 0
+	[IPL_SOFTSERIAL] = PSL_IPL3,
+#endif
+	[IPL_TTY] = PSL_IPL4,
+	[IPL_LPT] = PSL_IPL4,
+	[IPL_VM] = PSL_IPL4,
+#if 0
+	[IPL_AUDIO] =
+#endif
+	[IPL_CLOCK] = PSL_IPL5,
+	[IPL_STATCLOCK] = PSL_IPL5,
+	[IPL_SERIAL] = PSL_IPL6,
+	[IPL_SCHED] = PSL_IPL7,
+	[IPL_HIGH] = PSL_IPL7,
+	[IPL_LOCK] = PSL_IPL7,
+#if 0
+	[IPL_IPI] =
+#endif
+};
+
+ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._psl = ipl2psl_table[ipl] | PSL_S};
 }
