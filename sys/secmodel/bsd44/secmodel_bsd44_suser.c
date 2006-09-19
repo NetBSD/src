@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.2 2006/09/08 21:57:38 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.3 2006/09/19 21:42:30 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.2 2006/09/08 21:57:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.3 2006/09/19 21:42:30 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -254,13 +254,15 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 {
 	boolean_t isroot;
 	int result;
+	enum kauth_network_req req;
 
 	isroot = (kauth_cred_geteuid(cred) == 0);
 	result = KAUTH_RESULT_DENY;
+	req = (enum kauth_network_req)arg0;
 
 	switch (action) {
 	case KAUTH_NETWORK_FIREWALL:
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_NETWORK_FIREWALL_FW:
 		case KAUTH_REQ_NETWORK_FIREWALL_NAT:
 			if (isroot)
@@ -275,7 +277,7 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_NETWORK_ALTQ:
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_NETWORK_ALTQ_AFMAP:
 		case KAUTH_REQ_NETWORK_ALTQ_BLUE:
 		case KAUTH_REQ_NETWORK_ALTQ_CBQ:
@@ -299,7 +301,7 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_NETWORK_SOCKET:
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_NETWORK_SOCKET_RAWSOCK:
 			if (isroot)
 				result = KAUTH_RESULT_ALLOW;
@@ -313,7 +315,7 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_NETWORK_BIND:
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_NETWORK_BIND_PRIVPORT:
 			if (isroot)
 				result = KAUTH_RESULT_ALLOW;
@@ -325,7 +327,7 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_NETWORK_ROUTE:
-		switch (((struct rt_msghdr *)arg0)->rtm_type) {
+		switch (((struct rt_msghdr *)arg1)->rtm_type) {
 		case RTM_GET:
 			result = KAUTH_RESULT_ALLOW;
 			break;
