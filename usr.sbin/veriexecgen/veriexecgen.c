@@ -1,4 +1,4 @@
-/* $NetBSD: veriexecgen.c,v 1.4 2006/09/18 20:53:48 elad Exp $ */
+/* $NetBSD: veriexecgen.c,v 1.5 2006/09/19 20:37:08 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@ add_new_entry(FTSENT *file, struct hash *hash)
 	} else
 		sb = *file->fts_statp;
 
-	if (!aflag && !Dflag && IS_EXEC(sb.st_mode))
+	if (!aflag && !Dflag && !IS_EXEC(sb.st_mode))
 		return;
 
 	e = ecalloc(1UL, sizeof(*e));
