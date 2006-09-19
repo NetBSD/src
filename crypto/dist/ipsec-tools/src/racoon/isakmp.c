@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.14 2006/09/18 20:32:40 manu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.15 2006/09/19 07:51:37 vanhu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -113,6 +113,7 @@
 
 #ifdef ENABLE_NATT
 # include "nattraversal.h"
+#endif
 # ifdef __linux__
 #  include <linux/udp.h>
 #  include <linux/ip.h>
@@ -128,7 +129,6 @@
 #  include <netinet/ip.h>
 #  define SOL_UDP IPPROTO_UDP
 # endif /* __NetBSD__ / __FreeBSD__ */
-#endif
 
 static int nostate1 __P((struct ph1handle *, vchar_t *));
 static int nostate2 __P((struct ph2handle *, vchar_t *));
