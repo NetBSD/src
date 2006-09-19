@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.7 2006/09/19 21:42:30 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.8 2006/09/19 21:49:25 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -199,13 +199,7 @@ void kauth_deregister_scope(kauth_scope_t);
 kauth_listener_t kauth_listen_scope(const char *, kauth_scope_callback_t, void *);
 void kauth_unlisten_scope(kauth_listener_t);
 int kauth_authorize_action(kauth_scope_t, kauth_cred_t, kauth_action_t, void *,
-			   void *, void *, void *);
-
-/* Default callbacks for built-in scopes. */
-int kauth_authorize_cb_generic(kauth_cred_t, kauth_action_t, void *,
-			       void *, void *, void *, void *);
-int kauth_authorize_cb_process(kauth_cred_t, kauth_action_t, void *,
-			       void *, void *, void *, void *);
+    void *, void *, void *);
 
 /* Authorization wrappers. */
 int kauth_authorize_generic(kauth_cred_t, kauth_action_t, void *);
