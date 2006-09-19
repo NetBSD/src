@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.62 2006/09/10 15:45:56 plunky Exp $
+# $NetBSD: ALL,v 1.63 2006/09/19 13:58:55 jmmv Exp $
 # From: NetBSD: GENERIC,v 1.776 2006/08/14 09:34:43 itohy Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.62 $"
+#ident 		"ALL-$Revision: 1.63 $"
 
 maxusers	32		# estimated number of users
 
@@ -42,7 +42,7 @@ options 	EST_FREQ_USERWRITE	# any user can set frequency
 options 	POWERNOW_K7
 
 # AMD PowerNow! and Cool`n'Quiet technology
-options         POWERNOW_K8
+options 	POWERNOW_K8
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
@@ -1369,8 +1369,8 @@ pseudo-device	nsmb			# experimental - SMB requester
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
-options  FILEASSOC   # fileassoc(9) - required for Veriexec 
-options  FILEASSOC_NHOOKS=4  # Default number of storage slots
+options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+options 	FILEASSOC_NHOOKS=4	# Default number of storage slots
 
 # Veriexec
 pseudo-device	veriexec
