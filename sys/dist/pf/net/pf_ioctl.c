@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.23 2006/09/08 20:58:57 elad Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.24 2006/09/19 21:42:29 elad Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.139 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
@@ -1140,7 +1140,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct lwp *l)
 
 	/* XXX keep in sync with switch() below */
 	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_FIREWALL,
-	    (void *)KAUTH_REQ_NETWORK_FIREWALL_FW, NULL, NULL, NULL)) 
+	    KAUTH_REQ_NETWORK_FIREWALL_FW, NULL, NULL, NULL)) 
 		switch (cmd) {
 		case DIOCGETRULES:
 		case DIOCGETRULE:

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.104 2006/09/08 20:58:58 elad Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.105 2006/09/19 21:42:30 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.104 2006/09/08 20:58:58 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.105 2006/09/19 21:42:30 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -269,7 +269,7 @@ in_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 		if (ntohs(lport) < IPPORT_RESERVED &&
 		    (l == 0 || kauth_authorize_network(l->l_cred,
 		    KAUTH_NETWORK_BIND,
-		    (void *)KAUTH_REQ_NETWORK_BIND_PRIVPORT, so, sin,
+		    KAUTH_REQ_NETWORK_BIND_PRIVPORT, so, sin,
 		    NULL)))
 			return (EACCES);
 #endif
@@ -313,7 +313,7 @@ noname:
 #ifndef IPNOPRIVPORTS
 			if (l == 0 || kauth_authorize_network(l->l_cred,
 			    KAUTH_NETWORK_BIND,
-			    (void *)KAUTH_REQ_NETWORK_BIND_PRIVPORT, so,
+			    KAUTH_REQ_NETWORK_BIND_PRIVPORT, so,
 			    sin, NULL))
 				return (EACCES);
 #endif
