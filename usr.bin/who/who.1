@@ -1,4 +1,4 @@
-.\"	$NetBSD: who.1,v 1.17 2006/09/19 14:35:25 hubertf Exp $
+.\"	$NetBSD: who.1,v 1.18 2006/09/19 19:04:52 wiz Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -100,7 +100,9 @@ An alternative
 may be specified which is usually
 .Pa /var/log/wtmpx
 (or
-.Pa /var/log/wtmp
+.Pa /var/log/wtmp ,
+or
+.Pa /var/log/wtmpx.[0-6]
 or
 .Pa /var/log/wtmp.[0-6]
 depending on site policy as
@@ -139,6 +141,7 @@ special characters, see
 .It Pa /var/log/wtmp
 .It Pa /var/log/wtmp.[0-6]
 .It Pa /var/log/wtmpx
+.It Pa /var/log/wtmpx.[0-6]
 .El
 .Sh SEE ALSO
 .Xr last 1 ,
