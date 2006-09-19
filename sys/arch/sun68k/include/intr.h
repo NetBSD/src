@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8.6.1 2006/09/19 08:37:38 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.6.2 2006/09/19 09:56:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -37,24 +37,52 @@
 #include <m68k/psl.h>
 
 /*
- * Interrupt levels.  Right now these correspond to real
- * hardware levels, but I don't think anything counts on
- * that (yet?).
+ * Interrupt levels.
  */
+#define	IPL_NONE	0
+#define	IPL_SOFTCLOCK	1
+#define	IPL_SOFTNET	2
+#define	IPL_BIO		3
+#define	IPL_NET		4
+#define	IPL_SOFTSERIAL	5
+#define	IPL_TTY		6
+#define	IPL_LPT		7
+#define	IPL_VM		8
+#if 0
+#define	IPL_AUDIO	9
+#endif
+#define	IPL_CLOCK	10
+#define	IPL_STATCLOCK	11
+#define	IPL_SERIAL	12
+#define	IPL_SCHED	13
+#define	IPL_HIGH	14
+#define	IPL_LOCK	15
+#if 0
+#define	IPL_IPI		16
+#endif
+
 #define _IPL_SOFT_LEVEL1	1
 #define _IPL_SOFT_LEVEL2	2
 #define _IPL_SOFT_LEVEL3	3
 #define _IPL_SOFT_LEVEL_MIN	1
 #define _IPL_SOFT_LEVEL_MAX	3
-#define IPL_SOFTNET  		_IPL_SOFT_LEVEL1
-#define IPL_SOFTCLOCK		_IPL_SOFT_LEVEL1
-#define IPL_SOFTSERIAL		_IPL_SOFT_LEVEL3
-#define	IPL_BIO			2
-#define	IPL_NET			3
-#define	IPL_CLOCK		5
-#define	IPL_SERIAL		6
 
 #ifdef _KERNEL
+
+typedef int ipl_t;
+typedef struct {
+	int _psl;
+} ipl_cookie_t;
+
+ipl_cookie_t makeiplcookie(ipl_t ipl);
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(icookie._psl);
+}
+
 LIST_HEAD(sh_head, softintr_handler);
 
 struct softintr_head {
