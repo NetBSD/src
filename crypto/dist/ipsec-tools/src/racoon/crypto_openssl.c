@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.8 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.9 2006/09/19 07:51:27 vanhu Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -137,7 +137,7 @@ eay_str2asn1dn(str, len)
 
 	buf = racoon_malloc(len + 1);
 	if (!buf) {
-		printf("failed to allocate buffer\n");
+		plog(LLV_WARNING, LOCATION, NULL,"failed to allocate buffer\n");
 		return NULL;
 	}
 	memcpy(buf, str, len);
@@ -241,7 +241,7 @@ eay_hex2asn1dn(const char *hex, int len)
 	binlen = BN_num_bytes(bn);
 	ret = vmalloc(binlen);
 	if (!ret) {
-		printf("failed to allocate buffer\n");
+		plog(LLV_WARNING, LOCATION, NULL,"failed to allocate buffer\n");
 		return NULL;
 	}
 	binbuf = ret->v;
@@ -490,7 +490,7 @@ eay_check_x509cert(cert, CApath, CAfile, local)
 
 end:
 	if (error)
-		printf("%s\n", eay_strerror());
+		plog(LLV_WARNING, LOCATION, NULL,"%s\n", eay_strerror());
 	if (cert_ctx != NULL)
 		X509_STORE_free(cert_ctx);
 	if (x509 != NULL)
