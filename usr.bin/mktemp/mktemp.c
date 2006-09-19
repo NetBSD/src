@@ -1,4 +1,4 @@
-/* $NetBSD: mktemp.c,v 1.7 2005/07/30 16:19:09 christos Exp $ */
+/* $NetBSD: mktemp.c,v 1.8 2006/09/19 19:01:56 wiz Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1996, 1998 Peter Wemm <peter@netplex.com.au>
@@ -49,7 +49,7 @@
 #include <unistd.h>
 
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: mktemp.c,v 1.7 2005/07/30 16:19:09 christos Exp $");
+__RCSID("$NetBSD: mktemp.c,v 1.8 2006/09/19 19:01:56 wiz Exp $");
 #endif /* !__lint */
 
 static void usage(void) __attribute__((__noreturn__));
@@ -154,7 +154,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-		"Usage: %s [-d] [-q] [-t prefix] [-u] [template ...]\n",
+		"Usage: %s [-dqu] {-t prefix | template ...}\n",
 		getprogname());
 	exit (1);
 }
