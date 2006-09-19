@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.22 2006/09/15 14:28:04 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.23 2006/09/19 21:42:29 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.22 2006/09/15 14:28:04 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.23 2006/09/19 21:42:29 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -779,10 +779,10 @@ kauth_authorize_process(kauth_cred_t cred, kauth_action_t action,
  */
 int
 kauth_authorize_network(kauth_cred_t cred, kauth_action_t action,
-    void *arg0, void *arg1, void *arg2, void *arg3)
+    enum kauth_network_req req, void *arg1, void *arg2, void *arg3)
 {
 	return (kauth_authorize_action(kauth_builtin_scope_network, cred,
-	    action, arg0, arg1, arg2, arg3));
+	    action, (void *)req, arg1, arg2, arg3));
 }
 
 int

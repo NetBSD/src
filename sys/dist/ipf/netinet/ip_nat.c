@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.14 2006/09/13 10:07:42 elad Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.15 2006/09/19 21:42:29 elad Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -626,7 +626,7 @@ int mode;
 #if (BSD >= 199306) && defined(_KERNEL)
 #if (__NetBSD_Version__ >= 399002000)
 	if ((mode & FWRITE) && kauth_authorize_network(curlwp->l_cred,
-	    KAUTH_NETWORK_FIREWALL, (void *)KAUTH_REQ_NETWORK_FIREWALL_NAT,
+	    KAUTH_NETWORK_FIREWALL, KAUTH_REQ_NETWORK_FIREWALL_NAT,
 	    NULL, NULL, NULL))
 #else
 	if ((securelevel >= 2) && (mode & FWRITE))

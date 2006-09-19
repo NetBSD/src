@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.6 2006/09/08 20:58:58 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.7 2006/09/19 21:42:30 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -214,7 +214,7 @@ int kauth_authorize_system(kauth_cred_t, kauth_action_t, enum kauth_system_req,
 int kauth_authorize_process(kauth_cred_t, kauth_action_t, struct proc *,
     void *, void *, void *);
 int kauth_authorize_network(kauth_cred_t, kauth_action_t,
-    void *, void *, void *, void *);
+    enum kauth_network_req, void *, void *, void *);
 int kauth_authorize_machdep(kauth_cred_t, kauth_action_t,
     void *, void *, void *, void *);
 

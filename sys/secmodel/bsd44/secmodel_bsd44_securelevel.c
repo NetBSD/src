@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.4 2006/09/19 16:41:57 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.5 2006/09/19 21:42:30 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.4 2006/09/19 16:41:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.5 2006/09/19 21:42:30 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -140,8 +140,10 @@ secmodel_bsd44_securelevel_system_cb(kauth_cred_t cred, kauth_action_t action,
     void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
 	int result;
+	enum kauth_system_req req;
 
 	result = KAUTH_RESULT_DENY;
+	req = (enum kauth_system_req)arg0;
 
 	switch (action) {
 	case KAUTH_SYSTEM_RAWIO: {
@@ -149,7 +151,7 @@ secmodel_bsd44_securelevel_system_cb(kauth_cred_t cred, kauth_action_t action,
 
 		rw = (u_int)(u_long)arg1;
 
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_SYSTEM_RAWIO_MEMORY: {
 			switch (rw) {
 			case KAUTH_REQ_SYSTEM_RAWIO_READ:
@@ -249,7 +251,7 @@ secmodel_bsd44_securelevel_system_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 	
 	case KAUTH_SYSTEM_TIME:
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_SYSTEM_TIME_BACKWARDS:
 			if (securelevel < 2)
 				result = KAUTH_RESULT_ALLOW;
@@ -271,7 +273,7 @@ secmodel_bsd44_securelevel_system_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_SYSTEM_SYSCTL:
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_SYSTEM_SYSCTL_ADD:
 		case KAUTH_REQ_SYSTEM_SYSCTL_DELETE:
 		case KAUTH_REQ_SYSTEM_SYSCTL_DESC:
@@ -291,7 +293,7 @@ secmodel_bsd44_securelevel_system_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_SYSTEM_DEBUG:
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_SYSTEM_DEBUG_IPKDB:
 			if (securelevel < 1)
 				result = KAUTH_RESULT_ALLOW;
@@ -352,12 +354,14 @@ secmodel_bsd44_securelevel_network_cb(kauth_cred_t cred, kauth_action_t action,
     void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
 	int result;
+	enum kauth_network_req req;
 
 	result = KAUTH_RESULT_DENY;
+	req = (enum kauth_network_req)arg0;
 
 	switch (action) {
 	case KAUTH_NETWORK_FIREWALL:
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_NETWORK_FIREWALL_FW:
 		case KAUTH_REQ_NETWORK_FIREWALL_NAT:
 			if (securelevel < 2)
