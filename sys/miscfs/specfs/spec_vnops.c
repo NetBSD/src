@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.89 2006/09/08 20:58:57 elad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.90 2006/09/19 16:41:57 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.89 2006/09/08 20:58:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.90 2006/09/19 16:41:57 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -262,6 +262,9 @@ spec_open(v)
 		 */
 		if (ap->a_cred != FSCRED) {
 			u_long rw;
+
+			if ((error = vfs_mountedon(vp)) != 0)
+				return (error);
 
 			rw = M2K(ap->a_mode);
 
