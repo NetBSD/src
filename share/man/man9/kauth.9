@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.14 2006/09/19 21:42:29 elad Exp $
+.\" $NetBSD: kauth.9,v 1.15 2006/09/19 22:03:10 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -429,10 +429,10 @@ manages machine-dependent authorization requests in the kernel.
 The authorization wrapper for this scope is declared as
 .Pp
 .Ft int Fn kauth_authorize_machdep "kauth_cred_t cred" "kauth_action_t op" \
-"void *arg0" "void *arg1" "void *arg2" "void *arg3"
+"enum kauth_machdep_req req" "void *arg1" "void *arg2" "void *arg3"
 .Pp
 In this scope,
-.Ar arg0
+.Ar req
 always indicates the machine for the request.
 Below is the list of available request hierarchy.
 .Bl -tag -width "123456"
