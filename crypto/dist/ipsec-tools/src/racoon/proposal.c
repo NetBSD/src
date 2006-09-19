@@ -1,4 +1,4 @@
-/*	$NetBSD: proposal.c,v 1.7 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: proposal.c,v 1.8 2006/09/19 16:02:10 vanhu Exp $	*/
 
 /* Id: proposal.c,v 1.19 2006/04/27 03:41:54 manubsd Exp */
 
@@ -963,7 +963,7 @@ set_proposal_from_policy(iph2, sp_main, sp_sub)
 {
 	struct saprop *newpp;
 	struct ipsecrequest *req;
-	int encmodesv = IPSEC_MODE_TRANSPORT; /* use only when complex_bundle */
+	int encmodesv = IPSECDOI_ATTR_ENC_MODE_TRNS; /* use only when complex_bundle */
 
 	newpp = newsaprop();
 	if (newpp == NULL) {
@@ -985,7 +985,6 @@ set_proposal_from_policy(iph2, sp_main, sp_sub)
 	 * of tunnel mode in the SPD.  otherwise the mode becomes
 	 * transport mode.
 	 */
-	encmodesv = IPSEC_MODE_TRANSPORT;
 	for (req = sp_main->req; req; req = req->next) {
 		if (req->saidx.mode == IPSEC_MODE_TUNNEL) {
 			encmodesv = pfkey2ipsecdoi_mode(req->saidx.mode);
