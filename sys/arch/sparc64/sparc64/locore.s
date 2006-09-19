@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.221 2006/09/18 20:56:44 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.222 2006/09/19 00:15:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3689,9 +3689,7 @@ interrupt_vector:
 12:
 #endif
 
-	sethi	%hi(_C_LABEL(intrlev)), %g3
 	btst	IRSR_BUSY, %g1
-	or	%g3, %lo(_C_LABEL(intrlev)), %g3
 	bz,pn	%icc, 3f		! spurious interrupt
 	 sllx	%g2, PTRSHFT, %g5	! Calculate entry number
 
@@ -3700,34 +3698,17 @@ interrupt_vector:
 
 	mov	IRDR_1H, %g1
 	ldxa	[%g1] ASI_IRDR, %g1	! Get IPI handler address
-	mov	IRDR_2H, %g2
-
 	brz,pn  %g1, ret_from_intr_vector
-	 nop
+	 mov	IRDR_2H, %g2
 
 	jmpl	%g1, %g0
 	 ldxa	[%g2] ASI_IRDR, %g2	! Get IPI handler argument
 
 Lsoftint_regular:
+	sethi	%hi(_C_LABEL(intrlev)), %g3
 	bgeu,pn	%xcc, 3f
-	 nop
+	 or	%g3, %lo(_C_LABEL(intrlev)), %g3
 	LDPTR	[%g3 + %g5], %g5	! We have a pointer to the handler
-#if NOT_DEBUG
-	brnz,pt %g5, 1f
-	 nop
-	STACKFRAME(-CC64FSZ)		! Get a clean register window
-	mov	%g2, %o1
-
-	LOAD_ASCIZ(%o0, "interrupt_vector: vector %lx NULL\r\n")
-	GLOBTOLOC
-	call	prom_printf
-	 clr	%g4
-	LOCTOGLOB
-	restore
-	 nop
-1:	
-#endif
-	
 	brz,pn	%g5, 3f			! NULL means it isn't registered yet.  Skip it.
 	 nop
 
