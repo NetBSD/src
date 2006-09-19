@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.29 2006/09/18 19:46:21 christos Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.30 2006/09/19 20:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.29 2006/09/18 19:46:21 christos Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.30 2006/09/19 20:31:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,14 +201,14 @@ set_smopts(struct message *mp)
 {
 	char *cp;
 	struct name *np = NULL;
-	char *reply_from = value("ReplyFrom");
+	char *reply_as_recipient = value("ReplyAsRecipient");
 
-	if (reply_from &&
+	if (reply_as_recipient &&
 	    (cp = skin(hfield("to", mp))) != NULL &&
-	    extract(cp, GTO)->n_flink == NULL) {  /* check for one recepient */
+	    extract(cp, GTO)->n_flink == NULL) {  /* check for one recipient */
 		char *p, *q;
 		int len = strlen(cp);
-		for (p = q = reply_from ; *p ; p = q) {
+		for (p = q = reply_as_recipient ; *p ; p = q) {
 			while (*q != '\0' && *q != ',' && *q != ' ' && *q != '\t')
 				q++;
 			if (p + len == q && strncmp(cp, p, len) == 0)
