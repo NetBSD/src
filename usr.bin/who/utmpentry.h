@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpentry.h,v 1.2 2003/11/28 23:52:34 wiz Exp $	*/
+/*	$NetBSD: utmpentry.h,v 1.3 2006/09/19 14:35:25 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,11 +36,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(SUPPORT_UTMPX)
+#  define WHO_NAME_LEN		_UTX_USERSIZE
+#  define WHO_LINE_LEN		_UTX_LINESIZE
+#  define WHO_HOST_LEN		_UTX_HOSTSIZE
+#elif defined(SUPPORT_UTMP)
+#  define WHO_NAME_LEN		UT_NAMESIZE
+#  define WHO_LINE_LEN		UT_LINESIZE
+#  define WHO_HOST_LEN		UT_HOSTSIZE
+#else
+#  error Either SUPPORT_UTMPX or SUPPORT_UTMP must be defined!
+#endif
+
+
 struct utmpentry {
-	char name[65];
-	char line[65];
-	char host[257];
+	char name[WHO_NAME_LEN + 1];
+	char line[WHO_LINE_LEN + 1];
+	char host[WHO_HOST_LEN + 1];
 	struct timeval tv;
+	pid_t pid;
+	uint16_t term;
+	uint16_t exit;
+	uint16_t sess;
+	uint16_t type;
 	struct utmpentry *next;
 };
 
