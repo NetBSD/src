@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7.10.1 2006/09/19 08:37:38 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.7.10.2 2006/09/19 10:12:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,20 +41,47 @@
 
 #include <machine/psl.h>
 
-/*
- * These are identical to the values used by hp300, but are not meaningful
- * to sun3 code at this time.
- */
-#define	IPL_NONE	0	/* disable only this interrupt */
-#define	IPL_BIO		1	/* disable block I/O interrupts */
-#define	IPL_NET		2	/* disable network interrupts */
-#define	IPL_TTY		3	/* disable terminal interrupts */
-#define	IPL_TTYNOBUF	4	/* IPL_TTY + higher ISR priority */
-#define	IPL_SERIAL	4	/* disable serial interrupts */
-#define	IPL_CLOCK	5	/* disable clock interrupts */
-#define	IPL_HIGH	6	/* disable all interrupts */
+#define	IPL_NONE	0
+#if 0
+#define	IPL_SOFTCLOCK	
+#define	IPL_SOFTNET	
+#endif
+#define	IPL_BIO		1
+#define	IPL_NET		2
+#if 0
+#define	IPL_SOFTSERIAL	
+#endif
+#define	IPL_TTY		3
+#define	IPL_LPT		4
+#define	IPL_VM		5
+#if 0
+#define	IPL_AUDIO	
+#endif
+#define	IPL_CLOCK	6
+#define	IPL_STATCLOCK	7
+#define	IPL_SERIAL	8
+#define	IPL_SCHED	9
+#define	IPL_HIGH	10
+#define	IPL_LOCK	11
+#if 0
+#define	IPL_IPI		
+#endif
 
 #if defined(_KERNEL) && !defined(_LOCORE)
+
+typedef int ipl_t;
+typedef struct {
+	int _psl;
+} ipl_cookie_t;
+
+ipl_cookie_t makeiplcookie(ipl_t ipl);
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(icookie._psl);
+}
 
 /*
  * Define inline functions for PSL manipulation.
