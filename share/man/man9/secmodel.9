@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel.9,v 1.5 2006/09/17 13:43:26 elad Exp $
+.\" $NetBSD: secmodel.9,v 1.6 2006/09/19 19:22:05 elad Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 17, 2006
+.Dd September 19, 2006
 .Dt SECMODEL 9
 .Os
 .Sh NAME
@@ -361,6 +361,22 @@ To make it easier on developers to write new security models from scratch,
 .Nx
 maintains skeleton listeners that contain every possible request and
 arguments.
+.Ss Available security models
+The following is a list of security models available in the default
+.Nx
+distribution.
+To choose, one should edit
+.Pa /usr/src/sys/conf/std .
+.Bl -tag -hyphen
+.It secmodel_bsd44
+Traditional
+.Nx
+security model, derived from
+.Bx 4.4 .
+.It secmodel_overlay
+Sample overlay security model, sitting on-top of
+.Xr secmodel_bsd44 9 .
+.El
 .Sh FILES
 .Pa /usr/share/examples/secmodel
 .Sh SEE ALSO
