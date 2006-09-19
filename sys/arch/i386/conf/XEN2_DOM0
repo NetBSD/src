@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.7 2006/09/10 02:28:33 riz Exp $
+# $NetBSD: XEN2_DOM0,v 1.8 2006/09/19 13:58:56 jmmv Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -11,7 +11,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 maxusers	32		# estimated number of users
 
 #
-options  	XEN
+options 	XEN
 options 	DOM0OPS
 #making MCLBYTES == PAGE_SIZE avoids a copy when a mbuf cluster is sent
 # do a domU, at the expense of a highter memory usage by the network stack.
