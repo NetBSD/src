@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.28 2006/09/19 18:53:12 wiz Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.29 2006/09/19 18:54:39 wiz Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -135,12 +135,13 @@ When enabled, these enable
 to operate with an unprivileged instance doing most of the work, while
 a privileged instance takes care of performing the following operations
 as root: reading PSK and private keys, launching hook scripts, and
-validating passwords against system databases or against PAM. Please
-note that using privilege separation makes changes to the
+validating passwords against system databases or against PAM.
+Please note that using privilege separation makes changes to the
 .Ar listen
 and
 .Ar paths
-sections ignored upon configuration reloads. A
+sections ignored upon configuration reloads.
+A
 .Xr racoon 8
 restart is required if you want such changes to be taken into account.
 .Pp
@@ -618,12 +619,14 @@ They can be individually specified in each proposal.
 .It Ic ike_frag (on | off | force) ;
 Enable receiver-side IKE fragmentation, if
 .Xr racoon 8
-has been built with this feature. If set to on, racoon will advertise
+has been built with this feature.
+If set to on, racoon will advertise
 itself as being capable of receiving packets split by IKE fragmentation.
 This extension is there to work around broken firewalls that do not
-work with fragmented UDP packets. IKE fragmentation is always enabled
-on the sender-side, and it is used if the peer advertises itself as
-IKE fragmentation capable. By selecting force, IKE Fragmentation will
+work with fragmented UDP packets.
+IKE fragmentation is always enabled on the sender-side, and it is
+used if the peer advertises itself as IKE fragmentation capable.
+By selecting force, IKE Fragmentation will
 be used when racoon is acting as the initiator even before the remote
 peer has advertised itself as IKE fragmentation capable.
 .\"
@@ -907,7 +910,8 @@ instructs to send ID type of SUBNET.
 Otherwise these instructions are identical.
 .Pp
 The group keyword allows an xauth group membership check to be performed
-for this sainfo section. When the mode_cfg auth source is set to system
+for this sainfo section.
+When the mode_cfg auth source is set to system
 or ldap, the xauth user is verified to be a member of the specified group
 before allowing a matching sa to be negotiated.
 .Pp
@@ -1152,7 +1156,8 @@ lines.
 .It Ic nbns4 Ar addresses ;
 A list of IPv4 address for WINS servers.
 .It Ic split_network (include | local_lan) Ar network/mask, ...
-The network configuration to send, in cidr notation (e.g. 192.168.1.0/24).  If
+The network configuration to send, in cidr notation (e.g. 192.168.1.0/24).
+If
 .Ic include
 is specified, the tunnel should be only used to encrypt the indicated
 destinations ; otherwise, if
@@ -1161,9 +1166,10 @@ is used, everything will pass through the tunnel but those destinations.
 .It Ic default_domain Ar domain ;
 The default DNS domain to send.
 .It Ic split_dns Ar "domain", ...
-The split dns configuration to send, in quoted domain name strings. This list can
-be used to describe a list of domain names for which a peer should query a modecfg
-assigned dns server. DNS queries for all other domains would be handled locally.
+The split dns configuration to send, in quoted domain name strings.
+This list can be used to describe a list of domain names for which
+a peer should query a modecfg assigned dns server.
+DNS queries for all other domains would be handled locally.
 (Cisco VPN client only).
 .It Ic banner Ar path ;
 The path of a file displayed on the client at connection time.
@@ -1195,18 +1201,23 @@ authentication.
 The following are valid statements:
 .Bl -tag -width Ds -compact
 .It Ic version (2 | 3) ;
-The ldap protocol version used to communicate with the server. The default is
+The ldap protocol version used to communicate with the server.
+The default is
 .Ic 3 .
 .It Ic host Ar (hostname | address) ;
-The host name or ip address of the ldap server. The default is
+The host name or ip address of the ldap server.
+The default is
 .Ic localhost .
 .It Ic port Ar number;
-The port that the ldap server is configured to listen on. The default is
+The port that the ldap server is configured to listen on.
+The default is
 .Ic 389 .
 .It Ic base Ar distinguished name;
-The ldap search base. This option has no default value.
+The ldap search base.
+This option has no default value.
 .It Ic subtree (on | off) ;
-Use the subtree ldap search scope. Otherwise, use the one level search scope.
+Use the subtree ldap search scope.
+Otherwise, use the one level search scope.
 The default is
 .Ic off .
 .It Ic bind_dn Ar distinguised name;
@@ -1216,20 +1227,24 @@ If this option is not specified, anonymous binds are used.
 The password used when binding as
 .Ic bind_dn .
 .It Ic attr_user Ar attribute name;
-The attribute used to specify a users name in an ldap directory. For example,
+The attribute used to specify a users name in an ldap directory.
+For example,
 if a user dn is "cn=jdoe,dc=my,dc=net" then the attribute would be "cn".
 The default value is
 .Ic cn .
 .It Ic attr_addr Ar attribute name;
 .It Ic attr_mask Ar attribute name;
 The attributes used to specify a users network address and subnet mask in an
-ldap directory. These values are forwarded during mode_cfg negotiation when
-the conf_source is set to ldap. The default values are
+ldap directory.
+These values are forwarded during mode_cfg negotiation when
+the conf_source is set to ldap.
+The default values are
 .Ic racoon-address
 and
 .Ic racoon-netmask .
 .It Ic attr_group Ar attribute name;
-The attribute used to specify a group name in an ldap directory. For example,
+The attribute used to specify a group name in an ldap directory.
+For example,
 if a group dn is "cn=users,dc=my,dc=net" then the attribute would be "cn".
 The default value is
 .Ic cn .
