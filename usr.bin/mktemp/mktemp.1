@@ -1,4 +1,4 @@
-.\" $NetBSD: mktemp.1,v 1.15 2006/09/19 14:22:51 hubertf Exp $
+.\" $NetBSD: mktemp.1,v 1.16 2006/09/19 19:00:17 wiz Exp $
 .\" From: $FreeBSD: src/usr.bin/mktemp/mktemp.1,v 1.5 1999/08/28 01:04:13 peter Exp $
 .\" From: $OpenBSD: mktemp.1,v 1.8 1998/03/19 06:13:37 millert Exp $
 .\"
@@ -39,9 +39,7 @@
 .Nd make temporary file name (unique)
 .Sh SYNOPSIS
 .Nm mktemp
-.Op Fl d
-.Op Fl q
-.Op Fl u
+.Op Fl dqu
 .Bro
 .Fl t Ar Prefix
 .No |
@@ -52,13 +50,10 @@ The
 .Nm
 utility takes each of the given file name templates and overwrites a
 portion of it to create a file name.
-This file name is unique
-and suitable for use by the application.
-The template may be
-any file name with some number of
+This file name is unique and suitable for use by the application.
+The template may be any file name with some number of
 .Ql X Ns s
-appended
-to it, for example
+appended to it, for example
 .Pa /tmp/temp.XXXX .
 The trailing
 .Ql X Ns s
@@ -70,8 +65,7 @@ can return depends on the number of
 .Ql X Ns s
 provided; six
 .Ql X Ns s
-will
-result in
+will result in
 .Nm
 testing roughly 26 ** 6 combinations.
 .Pp
@@ -80,8 +74,7 @@ If
 can successfully generate a unique file name, the file
 is created with mode 0600 (unless the
 .Fl u
-flag is given) and the filename is printed
-to standard output.
+flag is given) and the filename is printed to standard output.
 .Pp
 If the
 .Fl t Ar prefix
@@ -91,7 +84,7 @@ will generate a template string based on the
 .Ar prefix
 and the
 .Ev TMPDIR
-environment variable if set.
+environment variable, if set.
 The default location if
 .Ev TMPDIR
 is not set is
@@ -108,9 +101,8 @@ string will be treated as literal.
 If an additional
 .Ar template
 argument is passed, a second file will be created.
-Care should
-be taken to ensure that it is appropriate to use an environment variable
-potentially supplied by the user.
+Care should be taken to ensure that it is appropriate to use an
+environment variable potentially supplied by the user.
 .Pp
 Any number of temporary files may be created in a single invocation
 using multiple
@@ -129,16 +121,13 @@ option must be present.
 is provided to allow shell scripts to safely use temporary files.
 Traditionally, many shell scripts take the name of the program with
 the pid as a suffix and use that as a temporary file name.
-This
-kind of naming scheme is predictable and the race condition it creates
-is easy for an attacker to win.
+This kind of naming scheme is predictable and the race condition
+it creates is easy for an attacker to win.
 A safer, though still inferior, approach
 is to make a temporary directory using the same naming scheme.
-While
-this does allow one to guarantee that a temporary file will not be
-subverted, it still allows a simple denial of service attack.
-For these
-reasons it is suggested that
+While this does allow one to guarantee that a temporary file will
+not be subverted, it still allows a simple denial of service attack.
+For these reasons it is suggested that
 .Nm
 be used instead.
 .Sh OPTIONS
@@ -155,14 +144,15 @@ Generate a template (using the supplied
 .Ar prefix
 and
 .Ev TMPDIR
-if set) to create a filename template. If
+if set) to create a filename template.
+If
 .Fl t Ar prefix
 and
 .Ar template
 are both given,
 .Ar prefix
 will not apply to
-.Ar template.
+.Ar template .
 .It Fl u
 Operate in
 .Dq unsafe
@@ -173,14 +163,12 @@ exits.
 This is slightly better than
 .Xr mktemp 3
 but still introduces a race condition.
-Use of this
-option is not encouraged.
+Use of this option is not encouraged.
 .El
 .Sh EXIT STATUS
 The
 .Nm
-utility
-exits with a value of 0 on success, and 1 on any failure.
+utility exits with a value of 0 on success, and 1 on any failure.
 .Sh EXAMPLES
 The following
 .Xr sh 1
