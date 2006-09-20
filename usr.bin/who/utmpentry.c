@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpentry.c,v 1.9 2006/09/19 21:01:29 christos Exp $	*/
+/*	$NetBSD: utmpentry.c,v 1.10 2006/09/20 19:43:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utmpentry.c,v 1.9 2006/09/19 21:01:29 christos Exp $");
+__RCSID("$NetBSD: utmpentry.c,v 1.10 2006/09/20 19:43:33 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -284,7 +284,7 @@ getentry(struct utmpentry *e, struct utmp *up)
 	e->term = 0;
 	e->exit = 0;
 	e->sess = 0;
-	e->type = 0;
+	e->type = USER_PROCESS;
 	adjust_size(e);
 }
 #endif
