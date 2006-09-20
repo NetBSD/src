@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.332 2006/09/15 16:01:24 yamt Exp $
+.\"	$NetBSD: options.4,v 1.333 2006/09/20 02:15:42 yamt Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd September 16, 2006
+.Dd September 20, 2006
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -1115,8 +1115,7 @@ Finally, the performance interaction of this option with ffs soft
 dependencies can be subtle, as that mechanism can drastically alter
 the workload for filesystem metadata writes.
 .It Cd options BUFQ_PRIOCSCAN
-Enable another experimental buffer queue strategy for disk I/O,
-Per-priority cyclical scan.
+Enable another buffer queue strategy for disk I/O, Per-priority cyclical scan.
 .It Cd options NEW_BUFQ_STRATEGY
 Synonym of
 .Em BUFQ_READPRIO .
