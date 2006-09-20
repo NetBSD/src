@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.53 2006/09/03 05:03:42 christos Exp $	*/
+/*	$NetBSD: rnd.c,v 1.54 2006/09/20 05:21:37 cube Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.53 2006/09/03 05:03:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.54 2006/09/20 05:21:37 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -813,7 +813,7 @@ rnd_sample_free(rnd_sample_t *c)
  * Add a source to our list of sources.
  */
 void
-rnd_attach_source(rndsource_element_t *rs, char *name, u_int32_t type,
+rnd_attach_source(rndsource_element_t *rs, const char *name, u_int32_t type,
     u_int32_t flags)
 {
 	u_int32_t ts;
