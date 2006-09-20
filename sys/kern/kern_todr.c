@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.22 2006/09/16 00:50:52 gdamore Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.23 2006/09/20 09:37:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.22 2006/09/16 00:50:52 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.23 2006/09/20 09:37:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -266,7 +266,7 @@ todr_debug(const char *prefix, int rv, struct clock_ymdhms *dt,
 	}
 	printf("%s: rv = %d\n", prefix, rv);
 	printf("%s: rtc_offset = %d\n", prefix, rtc_offset);
-	printf("%s: %u/%u/%u %02u:%02u:%02u, (wday %d) (epoch %u.%06u)\n",
+	printf("%s: %4u/%02u/%02u %02u:%02u:%02u, (wday %d) (epoch %u.%06u)\n",
 	    prefix,
 	    dt->dt_year, dt->dt_mon, dt->dt_day,
 	    dt->dt_hour, dt->dt_min, dt->dt_sec,
@@ -293,11 +293,11 @@ todr_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 		if (rv == 0)
 			tvp->tv_sec += rtc_offset * 60;
 #endif
-		todr_debug("TOD-GET-SECS", rv, NULL, tvp);
+		todr_debug("TODR-GET-SECS", rv, NULL, tvp);
 		return rv;
 	} else if (tch->todr_gettime_ymdhms) {
 		rv = tch->todr_gettime_ymdhms(tch, &dt);
-		todr_debug("TOD-GET-YMDHMS", rv, &dt, NULL);
+		todr_debug("TODR-GET-YMDHMS", rv, &dt, NULL);
 		if (rv)
 			return rv;
 
