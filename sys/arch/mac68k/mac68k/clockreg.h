@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.6 2001/06/05 05:19:16 thorpej Exp $	*/
+/*	$NetBSD: clockreg.h,v 1.7 2006/09/20 03:40:51 gdamore Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -62,5 +62,3 @@
 #if !defined(PRF_INTERVAL)
 #define PRF_INTERVAL CLK_INTERVAL
 #endif
-
-#define SECYR 31536000
