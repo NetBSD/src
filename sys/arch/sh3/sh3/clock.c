@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.32 2006/09/05 11:09:36 uwe Exp $	*/
+/*	$NetBSD: clock.c,v 1.33 2006/09/20 00:41:12 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.32 2006/09/05 11:09:36 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33 2006/09/20 00:41:12 uwe Exp $");
 
 #include "opt_pclock.h"
 #include "opt_hz.h"
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.32 2006/09/05 11:09:36 uwe Exp $");
 #ifndef HZ
 #define	HZ		64
 #endif
-#define	MINYEAR		2002	/* "today" */
 #define	SH_RTC_CLOCK	16384	/* Hz */
 
 /*
@@ -79,10 +78,6 @@ struct {
 	uint32_t cpucycle_1us;	/* calibrated loop variable (1 us) */
 	uint32_t tmuclk;	/* source clock of TMU0 (Hz) */
 
-	/* RTC ops holder. default SH RTC module */
-	struct rtc_ops rtc;
-	int rtc_initialized;
-
 	uint32_t pclock;	/* PCLOCK */
 	uint32_t cpuclock;	/* CPU clock */
 	int flags;
@@ -90,12 +85,6 @@ struct {
 #ifdef PCLOCK
 	.pclock = PCLOCK,
 #endif
-	.rtc = {
-		/* SH RTC module to default RTC */
-		.init	= sh_rtc_init,
-		.get	= sh_rtc_get,
-		.set	= sh_rtc_set
-	}
 };
 
 uint32_t maxwdog;
@@ -117,13 +106,11 @@ do {									\
 #define	TMU_ELAPSED(x)							\
 	(0xffffffff - _reg_read_4(SH_(TCNT ## x)))
 void
-sh_clock_init(int flags, struct rtc_ops *rtc)
+sh_clock_init(int flags)
 {
 	uint32_t s, t0, t1 __attribute__((__unused__));
 
 	sh_clock.flags = flags;
-	if (rtc != NULL)
-		sh_clock.rtc = *rtc;	/* structure copy */
 
 	/* Initialize TMU */
 	_reg_write_2(SH_(TCR0), 0);
@@ -148,6 +135,9 @@ sh_clock_init(int flags, struct rtc_ops *rtc)
 		_reg_write_2(SH_(TCR0),
 		    CPU_IS_SH3 ? SH3_TCR_TPSC_RTC : SH4_TCR_TPSC_RTC);
 		sh_clock.tmuclk = SH_RTC_CLOCK;
+
+		/* Make sure RTC oscillator is enabled */
+		_reg_write_1(SH_(RCR2), SH_RCR2_ENABLE);
 	}
 
 	s = _cpu_exception_suspend();
@@ -292,84 +282,7 @@ cpu_initclocks()
 	_reg_write_4(SH_(TCOR1), 0xffffffff);
 	_reg_write_2(SH_(TCR2), TCR_UNIE | TCR_TPSC_P4);
 	_reg_write_4(SH_(TCOR2), 0xffffffff);
-
-	/* Make sure to start RTC */
-	sh_clock.rtc.init(sh_clock.rtc._cookie);
 }
-
-
-#if !defined(__HAVE_GENERIC_TODR)
-
-void
-inittodr(time_t base)
-{
-	struct clock_ymdhms dt;
-	time_t rtc;
-	int s;
-
-	if (!sh_clock.rtc_initialized)
-		sh_clock.rtc_initialized = 1;
-
-	sh_clock.rtc.get(sh_clock.rtc._cookie, base, &dt);
-	rtc = clock_ymdhms_to_secs(&dt);
-
-#ifdef DEBUG
-	printf("inittodr: %d/%d/%d/%d/%d/%d(%d)\n", dt.dt_year,
-	    dt.dt_mon, dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec,
-	    dt.dt_wday);
-#endif
-
-	if (!(sh_clock.flags & SH_CLOCK_NOINITTODR) &&
-	    (rtc < base ||
-		dt.dt_year < MINYEAR || dt.dt_year > 2037 ||
-		dt.dt_mon < 1 || dt.dt_mon > 12 ||
-		dt.dt_wday > 6 ||
-		dt.dt_day < 1 || dt.dt_day > 31 ||
-		dt.dt_hour > 23 || dt.dt_min > 59 || dt.dt_sec > 59)) {
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the RTC.
-		 */
-		s = splclock();
-		time.tv_sec = base;
-		time.tv_usec = 0;
-		splx(s);
-		printf("WARNING: preposterous clock chip time\n");
-		resettodr();
-		printf(" -- CHECK AND RESET THE DATE!\n");
-		return;
-	}
-
-	s = splclock();
-	time.tv_sec = rtc + rtc_offset * 60;
-	time.tv_usec = 0;
-	splx(s);
-
-	return;
-}
-
-void
-resettodr()
-{
-	struct clock_ymdhms dt;
-	int s;
-
-	if (!sh_clock.rtc_initialized)
-		return;
-
-	s = splclock();
-	clock_secs_to_ymdhms(time.tv_sec - rtc_offset * 60, &dt);
-	splx(s);
-
-	sh_clock.rtc.set(sh_clock.rtc._cookie, &dt);
-#ifdef DEBUG
-        printf("%s: %d/%d/%d/%d/%d/%d(%d) rtc_offset %d\n", __FUNCTION__,
-	    dt.dt_year, dt.dt_mon, dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec,
-	    dt.dt_wday, rtc_offset);
-#endif
-}
-
-#endif /* __HAVE_GENERIC_TODR */
 
 
 #ifdef SH3
@@ -412,84 +325,3 @@ sh4_clock_intr(void *arg) /* trap frame */
 	return (1);
 }
 #endif /* SH4 */
-
-/*
- * SH3 RTC module ops.
- */
-
-void
-sh_rtc_init(void *cookie)
-{
-
-	/* Make sure to start RTC */
-	_reg_write_1(SH_(RCR2), SH_RCR2_ENABLE | SH_RCR2_START);
-}
-
-void
-sh_rtc_get(void *cookie, time_t base, struct clock_ymdhms *dt)
-{
-	int retry = 8;
-
-	/* disable carry interrupt */
-	_reg_bclr_1(SH_(RCR1), SH_RCR1_CIE);
-
-	do {
-		uint8_t r = _reg_read_1(SH_(RCR1));
-		r &= ~SH_RCR1_CF;
-		r |= SH_RCR1_AF; /* don't clear alarm flag */
-		_reg_write_1(SH_(RCR1), r);
-
-		if (CPU_IS_SH3)
-			dt->dt_year = FROMBCD(_reg_read_1(SH3_RYRCNT));
-		else
-			dt->dt_year = FROMBCD(_reg_read_2(SH4_RYRCNT) & 0x00ff);
-
-		/* read counter */
-#define	RTCGET(x, y)	dt->dt_ ## x = FROMBCD(_reg_read_1(SH_(R ## y ## CNT)))
-		RTCGET(mon, MON);
-		RTCGET(wday, WK);
-		RTCGET(day, DAY);
-		RTCGET(hour, HR);
-		RTCGET(min, MIN);
-		RTCGET(sec, SEC);
-#undef RTCGET
-	} while ((_reg_read_1(SH_(RCR1)) & SH_RCR1_CF) && --retry > 0);
-
-	if (retry == 0) {
-		printf("rtc_gettime: couldn't read RTC register.\n");
-		memset(dt, 0, sizeof(*dt));
-		return;
-	}
-
-	dt->dt_year = (dt->dt_year % 100) + 1900;
-	if (dt->dt_year < 1970)
-		dt->dt_year += 100;
-}
-
-void
-sh_rtc_set(void *cookie, struct clock_ymdhms *dt)
-{
-	uint8_t r;
-
-	/* stop clock */
-	r = _reg_read_1(SH_(RCR2));
-	r |= SH_RCR2_RESET;
-	r &= ~SH_RCR2_START;
-	_reg_write_1(SH_(RCR2), r);
-
-	/* set time */
-	if (CPU_IS_SH3)
-		_reg_write_1(SH3_RYRCNT, TOBCD(dt->dt_year % 100));
-	else
-		_reg_write_2(SH4_RYRCNT, TOBCD(dt->dt_year % 100));
-#define	RTCSET(x, y)	_reg_write_1(SH_(R ## x ## CNT), TOBCD(dt->dt_ ## y))
-	RTCSET(MON, mon);
-	RTCSET(WK, wday);
-	RTCSET(DAY, day);
-	RTCSET(HR, hour);
-	RTCSET(MIN, min);
-	RTCSET(SEC, sec);
-#undef RTCSET
-	/* start clock */
-	_reg_write_1(SH_(RCR2), r | SH_RCR2_START);
-}
