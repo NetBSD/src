@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpentry.h,v 1.4 2006/09/19 21:01:29 christos Exp $	*/
+/*	$NetBSD: utmpentry.h,v 1.5 2006/09/20 19:39:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,15 +37,17 @@
  */
 
 #if defined(SUPPORT_UTMPX)
-#  define WHO_NAME_LEN		_UTX_USERSIZE
-#  define WHO_LINE_LEN		_UTX_LINESIZE
-#  define WHO_HOST_LEN		_UTX_HOSTSIZE
+# include <utmpx.h>
+# define WHO_NAME_LEN		_UTX_USERSIZE
+# define WHO_LINE_LEN		_UTX_LINESIZE
+# define WHO_HOST_LEN		_UTX_HOSTSIZE
 #elif defined(SUPPORT_UTMP)
-#  define WHO_NAME_LEN		UT_NAMESIZE
-#  define WHO_LINE_LEN		UT_LINESIZE
-#  define WHO_HOST_LEN		UT_HOSTSIZE
+# include <utmp.h>
+# define WHO_NAME_LEN		UT_NAMESIZE
+# define WHO_LINE_LEN		UT_LINESIZE
+# define WHO_HOST_LEN		UT_HOSTSIZE
 #else
-#  error Either SUPPORT_UTMPX or SUPPORT_UTMP must be defined!
+# error Either SUPPORT_UTMPX or SUPPORT_UTMP must be defined!
 #endif
 
 
