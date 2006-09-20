@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.25 2006/06/24 16:34:02 christos Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.26 2006/09/20 08:09:05 manu Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.25 2006/06/24 16:34:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.26 2006/09/20 08:09:05 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,12 +52,16 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.25 2006/06/24 16:34:02 christos E
 #include <sys/tty.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
+#include <sys/conf.h>
 
 #include <miscfs/procfs/procfs.h>
 #include <compat/linux/common/linux_exec.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
+
+extern struct devsw_conv *devsw_conv;
+extern int max_devsw_convs;
 
 #define PGTOB(p)	((unsigned long)(p) << PAGE_SHIFT)
 #define PGTOKB(p)	((unsigned long)(p) << (PAGE_SHIFT - 10))
@@ -105,6 +109,53 @@ procfs_domeminfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		return 0;
 
 	return (uiomove_frombuf(bf, len, uio));
+}
+
+/*
+ * Linux compatible /proc/devices. Only active when the -o linux
+ * mountflag is used.
+ */
+int
+procfs_dodevices(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
+		 struct uio *uio)
+{
+	char bf[4096];
+	int offset = 0;
+	int i;
+
+	offset += snprintf(&bf[offset], sizeof(bf) - offset, 
+	    "Character devices:\n");
+	if (offset >= sizeof(bf))
+		return ENAMETOOLONG;
+
+	for (i = 0; i < max_devsw_convs; i++) {
+		if ((devsw_conv[i].d_name == NULL) || 
+		    (devsw_conv[i].d_cmajor == -1))
+			continue;
+
+		offset += snprintf(&bf[offset], sizeof(bf) - offset, 
+		    "%3d %s\n", devsw_conv[i].d_cmajor, devsw_conv[i].d_name);
+		if (offset >= sizeof(bf))
+			return ENAMETOOLONG;
+	}
+
+	offset += snprintf(&bf[offset], sizeof(bf) - offset, 
+	    "\nBlock devices:\n");
+	if (offset >= sizeof(bf))
+		return ENAMETOOLONG;
+
+	for (i = 0; i < max_devsw_convs; i++) {
+		if ((devsw_conv[i].d_name == NULL) || 
+		    (devsw_conv[i].d_bmajor == -1))
+			continue;
+
+		offset += snprintf(&bf[offset], sizeof(bf) - offset, 
+		    "%3d %s\n", devsw_conv[i].d_bmajor, devsw_conv[i].d_name);
+		if (offset >= sizeof(bf))
+			return ENAMETOOLONG;
+	}
+
+	return (uiomove_frombuf(bf, offset, uio));
 }
 
 /*
