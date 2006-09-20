@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.52 2006/09/19 06:43:11 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.53 2006/09/20 20:09:42 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.52 2006/09/19 06:43:11 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.53 2006/09/20 20:09:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,7 +382,7 @@ cpu_boot_secondary_processors()
 			printf("cpu%d: startup failed\n", ci->ci_upaid);
 		else
 			printf("cpu%d now spinning idle (waited %d iterations)\n",
-			       ci->ci_upaid, i);
+			       ci->ci_number, i);
 	}
 
 	printf("\n");
