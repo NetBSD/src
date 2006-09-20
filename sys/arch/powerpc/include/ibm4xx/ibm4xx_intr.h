@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_intr.h,v 1.12 2006/06/30 17:54:51 freza Exp $	*/
+/*	$NetBSD: ibm4xx_intr.h,v 1.12.6.1 2006/09/20 10:30:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,25 @@ extern volatile u_int 		imask[NIPL];
 extern const int 		mask_clock; 	/* for clock.c */
 
 #define	spllowersoftclock() 	spllower(imask[IPL_SOFTCLOCK])
-#define	splraiseipl(x)		splraise(imask[x])
+
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return splraise(imask[icookie._ipl]);
+}
 
 #include <sys/spl.h>
 
