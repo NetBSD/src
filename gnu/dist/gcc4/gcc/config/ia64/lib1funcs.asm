@@ -781,7 +781,7 @@ __fixunstfti:
 	}
 	.endp __fixunstfti
 #endif
-#if L_floatditf
+#ifdef L_floatditf
 	.align 16
 	.global __floattitf
 	.proc __floattitf
