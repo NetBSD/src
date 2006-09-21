@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.19 2006/08/22 21:47:57 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.20 2006/09/21 20:40:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.19 2006/08/22 21:47:57 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.20 2006/09/21 20:40:16 uwe Exp $")
 
 
 /*
@@ -85,9 +85,7 @@ NENTRY(sh_vector_generic)
 	cmp/hi	r1,	r0
 	bt	1f
 
-	/* tlb_exception(curlwp, trapframe, trunc_page(TEA)); */
-	mov.l	_L.VPN_MASK, r1
-	and	r1,	r6	/* va = trunc_page(va) */
+	/* tlb_exception(curlwp, trapframe, TEA); */
 	__EXCEPTION_UNBLOCK(r0, r1)
 	mov.l	_L.tlb, r0
 	jsr	@r0
@@ -130,7 +128,6 @@ _L.tlb:		.long	_C_LABEL(tlb_exception)
 _L.general:	.long	_C_LABEL(general_exception)
 _L.ast:		.long	_C_LABEL(ast)
 _L.TLB_PROT_ST:	.long	0xc0
-_L.VPN_MASK:	.long	0xfffff000
 
 /* LINTSTUB: Var: char sh_vector_generic_end[1]; */
 VECTOR_END_MARKER(sh_vector_generic_end)
