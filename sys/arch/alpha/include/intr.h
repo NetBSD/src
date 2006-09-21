@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.55.16.2 2006/09/18 10:03:04 yamt Exp $ */
+/* $NetBSD: intr.h,v 1.55.16.3 2006/09/21 12:01:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@ _splraise(int s)
 	return (s > cur ? alpha_pal_swpipl(s) : cur);
 }
 
-#define	splraiseipl(cookie)	_splraise((cookie)._psl)
+#define	splraiseipl(icookie)	_splraise((icookie)._psl)
 
 #include <sys/spl.h>
 
