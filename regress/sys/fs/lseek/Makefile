@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2006/09/21 01:54:15 reinoud Exp $
+#	$NetBSD: Makefile,v 1.3 2006/09/21 17:33:08 reinoud Exp $
 
 NOMAN=	# defined
 
 PROG=	lseek
 
 clean:
-	rm test-file
+	rm -f test-file
 
 regress: ${PROG}
 	@set -e; \
