@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8.10.1 2006/09/19 12:43:37 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.10.2 2006/09/21 14:30:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -108,21 +108,21 @@ extern int		_clrsoftintr(int);
 
 typedef int ipl_t;
 typedef struct {
-	ipl_t _ipl;
+	ipl_t _sr;
 } ipl_cookie_t;
 
 static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 
-	return (ipl_cookie_t){._ipl = ipl};
+	return (ipl_cookie_t){._sr = ipl_sr_bits[ipl]};
 }
 
 static inline int
 splraiseipl(ipl_cookie_t icookie)
 {
 
-	return _splraise(ipl_sr_bits[icookie._ipl]);
+	return _splraise(icookie._sr);
 }
 
 #include <sys/spl.h>
