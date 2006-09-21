@@ -1,4 +1,5 @@
 2006-09-21  Yvan Vanhullebus  <vanhu@NetBSD.org>
+	Reported by Yves-Alexis Perez:
 	* src/libipsec/pfkey.c: use sysdep_sa_len to make it compile on
 	  Linux.
 
