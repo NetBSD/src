@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.12.22.2 2006/09/21 12:53:23 yamt Exp $	*/
+/*	$NetBSD: softintr.c,v 1.12.22.3 2006/09/21 12:57:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.12.22.2 2006/09/21 12:53:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.12.22.3 2006/09/21 12:57:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.12.22.2 2006/09/21 12:53:23 yamt Exp 
 #include <arm/cpufunc.h>
 #include <machine/intr.h>
 
-extern int ipl_to_spl(int);
 void softintr_free(void *);
 void softintr_dispatch(int);
 
