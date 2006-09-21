@@ -1,12 +1,16 @@
-#	$NetBSD: Makefile,v 1.1 2006/09/21 01:27:32 reinoud Exp $
+#	$NetBSD: Makefile,v 1.2 2006/09/21 01:54:15 reinoud Exp $
 
 NOMAN=	# defined
 
 PROG=	lseek
 
+clean:
+	rm test-file
+
 regress: ${PROG}
 	@set -e; \
-	if ./${PROG} /var/log/messages > /dev/null; then \
+	dd if=/dev/zero of=test-file bs=2k count=1000 > /dev/null 2>&1; \
+	if ./${PROG} test-file > /dev/null; then \
 		echo PASSED; exit 0; \
 	else \
 		echo FAILED; exit 1; \
