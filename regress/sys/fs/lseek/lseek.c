@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
+#include <sys/inttypes.h>
 
 int main(int argc, char **argv)
 {
@@ -28,30 +29,17 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	if (st.st_size < 1500) {
-		printf("can't run this test on such a small file\n");
-		return EXIT_FAILURE;
-	}
-
 	printf("get initial position\n");
 	cur = lseek(fd, 0, SEEK_CUR);
-	printf("seek start %d\n", cur);
+	printf("seek start %"PRIi64"\n", cur);
 	if (cur != 0) {
 		printf("seek initial position wrong\n");
 		return EXIT_FAILURE;
 	}
 
-	printf("seek set 1000\n");
-	cur = lseek(fd, 1000, SEEK_SET);
-	printf("seek now %d\n", cur);
-	if (cur != 1000) {
-		printf("seek 1000 went wrong\n");
-		return EXIT_FAILURE;
-	}
-
-	printf("seeking end (filesize = %d)\n", (uint32_t) st.st_size);
+	printf("seeking end (filesize = %"PRIi64")\n", st.st_size);
 	cur = lseek(fd, 0, SEEK_END);
-	printf("seek now %d\n", cur);
+	printf("seek now %"PRIi64"\n", cur);
 	if (cur != st.st_size) {
 		printf("seek to the end went wrong\n");
 		return EXIT_FAILURE;
@@ -59,9 +47,17 @@ int main(int argc, char **argv)
 
 	printf("seeking backwards filesize-150 steps\n");
 	cur = lseek(fd, -(st.st_size - 150), SEEK_CUR);
-	printf("seek now %d\n", cur);
+	printf("seek now %"PRIi64"\n", cur);
 	if (cur != 150) {
 		printf("relative seek from end to 150 failed\n");
+		return EXIT_FAILURE;
+	}
+
+	printf("seek set 1000\n");
+	cur = lseek(fd, 1000, SEEK_SET);
+	printf("seek now %"PRIi64"\n", cur);
+	if (cur != 1000) {
+		printf("seek 1000 went wrong\n");
 		return EXIT_FAILURE;
 	}
 
