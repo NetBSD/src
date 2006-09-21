@@ -1,3 +1,7 @@
+2006-09-21  Yvan Vanhullebus  <vanhu@NetBSD.org>
+	* src/libipsec/pfkey.c: use sysdep_sa_len to make it compile on
+	  Linux.
+
 2006-09-19  Yvan Vanhullebus  <vanhu@NetBSD.org>
 	* src/racoon/isakmp.c: always include some headers, as they are
 	  required even without NAT-T.
