@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4.20.1 2006/09/19 13:03:07 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.20.2 2006/09/21 12:01:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -149,10 +149,10 @@ makeiplcookie(ipl_t ipl)
 }
 
 static inline int
-splraiseipl(ipl_cookie_t cookie)
+splraiseipl(ipl_cookie_t icookie)
 {
 
-	return _splraise(cookie._ipl);
+	return _splraise(icookie._ipl);
 }
 
 #define	spl0()		_spllower(IPL_NONE)

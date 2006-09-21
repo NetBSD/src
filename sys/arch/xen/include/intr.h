@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11.10.1 2006/09/18 10:03:31 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.11.10.2 2006/09/21 12:01:43 yamt Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -187,10 +187,10 @@ makeiplcookie(ipl_t ipl)
 }
 
 static inline int
-splraiseipl(ipl_cookie_t cookie)
+splraiseipl(ipl_cookie_t icookie)
 {
 
-	return splraise(cookie._ipl);
+	return splraise(icookie._ipl);
 }
 
 #include <sys/spl.h>
