@@ -28,6 +28,21 @@ int main(int argc, char **argv)
 		printf("can't stat file\n");
 		return EXIT_FAILURE;
 	}
+	printf("fstat() returns %"PRIi64" as size\n", st.st_size);
+
+	error = stat(argv[1], &st);
+	if (error) {
+		printf("can't stat file\n");
+		return EXIT_FAILURE;
+	}
+	printf("stat()  returns %"PRIi64" as size\n", st.st_size);
+
+	error = lstat(argv[1], &st);
+	if (error) {
+		printf("can't lstat file\n");
+		return EXIT_FAILURE;
+	}
+	printf("lstat() returns %"PRIi64" as size\n", st.st_size);
 
 	printf("get initial position\n");
 	cur = lseek(fd, 0, SEEK_CUR);
