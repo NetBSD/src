@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.10 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: intr.c,v 1.10.22.1 2006/09/21 12:51:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10.22.1 2006/09/21 12:51:06 yamt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -148,7 +148,6 @@ dosoftints(void)
 /* This is interrupt / SPL related */
 
 void    set_spl_masks(void);
-int     ipl_to_spl(int);
 
 int current_spl_level = _SPL_HIGH;
 u_int spl_masks[_SPL_LEVELS + 1];
