@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.17.22.1 2006/09/21 14:30:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -49,10 +49,14 @@
 #define IPL_BIO		5	/* disable block I/O interrupts */
 #define IPL_NET		6	/* disable network interrupts */
 #define IPL_TTY		7	/* disable terminal interrupts */
+#define	IPL_LPT		IPL_TTY
+#define	IPL_VM		IPL_TTY
 #define IPL_SERIAL	7	/* disable serial hardware interrupts */
 #define IPL_CLOCK	8	/* disable clock interrupts */
-#define IPL_STATCLOCK	8	/* disable profiling interrupts */
+#define	IPL_STATCLOCK	IPL_CLOCK
+#define	IPL_SCHED	IPL_CLOCK
 #define IPL_HIGH	8	/* disable all interrupts */
+#define	IPL_LOCK	IPL_HIGH
 
 #define _IPL_NSOFT	4
 #define _IPL_N		9
@@ -85,26 +89,33 @@ extern void _splnone(void);
 extern void _setsoftintr(int);
 extern void _clrsoftintr(int);
 
-#define splhigh()	_splraise(ipl_sr_bits[IPL_HIGH])
 #define spl0()		(void)_spllower(0)
 #define splx(s)		(void)_splset(s)
-#define splbio()	_splraise(ipl_sr_bits[IPL_BIO])
-#define splnet()	_splraise(ipl_sr_bits[IPL_NET])
-#define spltty()	_splraise(ipl_sr_bits[IPL_TTY])
-#define splserial()	_splraise(ipl_sr_bits[IPL_SERIAL])
-#define splvm()		spltty()
-#define splclock()	_splraise(ipl_sr_bits[IPL_CLOCK])
-#define splstatclock()	splclock()
-
-#define splsched()	splclock()
-#define spllock()	splhigh()
 
 #define splsoft()	_splraise(ipl_sr_bits[IPL_SOFT])
-#define splsoftclock()	_splraise(ipl_sr_bits[IPL_SOFTCLOCK])
-#define splsoftnet()	_splraise(ipl_sr_bits[IPL_SOFTNET])
-#define splsoftserial()	_splraise(ipl_sr_bits[IPL_SOFTSERIAL])
 
 #define spllowersoftclock() _spllower(ipl_sr_bits[IPL_SOFTCLOCK])
+
+typedef int ipl_t;
+typedef struct {
+	ipl_t _sr;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._sr = ipl_sr_bits[ipl]};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(icookie._sr);
+}
+
+#include <sys/spl.h>
 
 struct newsmips_intrhand {
 	LIST_ENTRY(newsmips_intrhand) ih_q;
