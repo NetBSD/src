@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.185 2006/08/30 01:30:07 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.186 2006/09/21 00:11:30 jld Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.185 2006/08/30 01:30:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.186 2006/09/21 00:11:30 jld Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -236,8 +236,15 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 			 * used for our initial mount
 			 */
 			ump = VFSTOUFS(mp);
-			if (devvp != ump->um_devvp)
-				error = EINVAL;
+			if (devvp != ump->um_devvp) {
+				if (devvp->v_rdev != ump->um_devvp->v_rdev)
+					error = EINVAL;
+				else {
+					vrele(devvp);
+					devvp = ump->um_devvp;
+					vref(devvp);
+				}
+			}
 		}
 	} else {
 		if (!update) {
