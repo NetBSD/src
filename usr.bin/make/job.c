@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.112 2006/06/29 22:01:17 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.113 2006/09/21 19:56:05 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.112 2006/06/29 22:01:17 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.113 2006/09/21 19:56:05 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.112 2006/06/29 22:01:17 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.113 2006/09/21 19:56:05 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -264,7 +264,7 @@ const char *shellPath = NULL,		  	  /* full pathname of
 static const char *shellArgv = NULL;		  /* Custom shell args */
 
 
-STATIC Lst     	jobs;		/* The structures that describe them */
+STATIC Lst     	job_list;	/* The structures that describe them */
 static Boolean	wantToken;	/* we want a token */
 
 /*
@@ -488,7 +488,7 @@ JobPassSig(int signo)
 	(void)fprintf(stdout, "JobPassSig(%d) called.\n", signo);
 	(void)fflush(stdout);
     }
-    Lst_ForEach(jobs, JobCondPassSig, (ClientData) &signo);
+    Lst_ForEach(job_list, JobCondPassSig, (ClientData) &signo);
 
     /*
      * Deal with proper cleanup based on the signal received. We only run
@@ -535,7 +535,7 @@ JobPassSig(int signo)
     (void)kill(getpid(), signo);
     if (signo != SIGTSTP) {
 	sigcont = SIGCONT;
-	Lst_ForEach(jobs, JobCondPassSig, (ClientData) &sigcont);
+	Lst_ForEach(job_list, JobCondPassSig, (ClientData) &sigcont);
     }
 
     /* Restore handler and signal mask */
@@ -1022,7 +1022,7 @@ JobFinish(Job *job, int *status)
 		}
 	    }
 	    job->flags &= ~JOB_CONTINUING;
- 	    Lst_AtEnd(jobs, (ClientData)job);
+ 	    Lst_AtEnd(job_list, (ClientData)job);
 	    if (DEBUG(JOB)) {
 		(void)fprintf(stdout, "Process %d is continuing.\n",
 			       job->pid);
@@ -1403,7 +1403,7 @@ JobExec(Job *job, char **argv)
 	printf("JobExec(%s): pid %d added to jobs table\n",
 		job->node->name, job->pid);
     }
-    (void)Lst_AtEnd(jobs, (ClientData)job);
+    (void)Lst_AtEnd(job_list, (ClientData)job);
     JobSigUnlock(&mask);
 }
 
@@ -2064,7 +2064,7 @@ Job_CatchChildren(Boolean block)
 	    (void)fflush(stdout);
 	}
 
-	jnode = Lst_Find(jobs, (ClientData)&pid, JobCmpPid);
+	jnode = Lst_Find(job_list, (ClientData)&pid, JobCmpPid);
 	if (jnode == NILLNODE) {
 	    if (WIFSTOPPED(status) && (WSTOPSIG(status) == SIGCONT)) {
 		jnode = Lst_Find(stoppedJobs, (ClientData) &pid, JobCmpPid);
@@ -2080,7 +2080,7 @@ Job_CatchChildren(Boolean block)
 	    }
 	} else {
 	    job = (Job *)Lst_Datum(jnode);
-	    (void)Lst_Remove(jobs, jnode);
+	    (void)Lst_Remove(job_list, jnode);
 	}
 
 	JobFinish(job, &status);
@@ -2127,18 +2127,18 @@ Job_CatchOutput(void)
 	    }
 
 	    JobSigLock(&mask);
-	    if (Lst_Open(jobs) == FAILURE) {
+	    if (Lst_Open(job_list) == FAILURE) {
 		Punt("Cannot open job table");
 	    }
 
-	    while (nready && (ln = Lst_Next(jobs)) != NILLNODE) {
+	    while (nready && (ln = Lst_Next(job_list)) != NILLNODE) {
 		job = (Job *)Lst_Datum(ln);
 		if (readyfd(job)) {
 		    JobDoOutput(job, FALSE);
 		    nready -= 1;
 		}
 	    }
-	    Lst_Close(jobs);
+	    Lst_Close(job_list);
 	    JobSigUnlock(&mask);
 	}
     }
@@ -2216,7 +2216,7 @@ Job_Init(void)
 {
     GNode         *begin;     /* node for commands to do at the very start */
 
-    jobs =  	  Lst_Init(FALSE);
+    job_list = 	  Lst_Init(FALSE);
     stoppedJobs = Lst_Init(FALSE);
     wantToken =	  FALSE;
 
@@ -2560,8 +2560,8 @@ JobInterrupt(int runINTERRUPT, int signo)
 
     JobSigLock(&mask);
 
-    (void)Lst_Open(jobs);
-    while ((ln = Lst_Next(jobs)) != NILLNODE) {
+    (void)Lst_Open(job_list);
+    while ((ln = Lst_Next(job_list)) != NILLNODE) {
 	GNode *gn;
 
 	job = (Job *)Lst_Datum(ln);
@@ -2583,7 +2583,7 @@ JobInterrupt(int runINTERRUPT, int signo)
 	    KILL(job->pid, signo);
 	}
     }
-    Lst_Close(jobs);
+    Lst_Close(job_list);
 
     JobSigUnlock(&mask);
 
@@ -2697,8 +2697,8 @@ Job_AbortAll(void)
     if (jobTokensRunning) {
 
 	JobSigLock(&mask);
-	(void)Lst_Open(jobs);
-	while ((ln = Lst_Next(jobs)) != NILLNODE) {
+	(void)Lst_Open(job_list);
+	while ((ln = Lst_Next(job_list)) != NILLNODE) {
 	    job = (Job *)Lst_Datum(ln);
 
 	    /*
@@ -2708,7 +2708,7 @@ Job_AbortAll(void)
 	    KILL(job->pid, SIGINT);
 	    KILL(job->pid, SIGKILL);
 	}
-	Lst_Close(jobs);
+	Lst_Close(job_list);
 	JobSigUnlock(&mask);
     }
 
