@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.80 2006/08/23 17:19:32 christos Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.81 2006/09/22 04:48:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.80 2006/08/23 17:19:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.81 2006/09/22 04:48:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -223,6 +223,14 @@ disk_detach0(struct disk *diskp)
 	 * Remove from the drivelist.
 	 */
 	iostat_free(diskp->dk_stats);
+
+	/*
+	 * Release the disk-info dictionary.
+	 */
+	if (diskp->dk_info) {
+		prop_object_release(diskp->dk_info);
+		diskp->dk_info = NULL;
+	}
 
 	/*
 	 * Free the space used by the disklabel structures.

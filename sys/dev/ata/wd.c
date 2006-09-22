@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.329 2006/08/27 23:51:31 christos Exp $ */
+/*	$NetBSD: wd.c,v 1.330 2006/09/22 04:48:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.329 2006/08/27 23:51:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.330 2006/09/22 04:48:38 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -104,6 +104,8 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.329 2006/08/27 23:51:31 christos Exp $");
 #include <dev/ic/wdcreg.h>
 #include <sys/ataio.h>
 #include "locators.h"
+
+#include <prop/proplib.h>
 
 #define	LBA48_THRESHOLD		(0xfffffff)	/* 128GB / DEV_BSIZE */
 
@@ -1674,6 +1676,59 @@ bad144intern(struct wd_softc *wd)
 }
 #endif
 
+static void
+wd_params_to_properties(struct wd_softc *wd, struct ataparams *params)
+{
+	prop_dictionary_t disk_info, geom;
+	prop_string_t string;
+	prop_number_t number;
+
+	disk_info = prop_dictionary_create();
+
+	if (strcmp(wd->sc_params.atap_model, "ST506") == 0)
+		string = prop_string_create_cstring_nocopy("ST506");
+	else {
+		/* XXX Should have a case for ATA here, too. */
+		string = prop_string_create_cstring_nocopy("ESDI");
+	}
+	prop_dictionary_set(disk_info, "type", string);
+	prop_object_release(string);
+
+	geom = prop_dictionary_create();
+
+	number = prop_number_create_integer(wd->sc_capacity);
+	prop_dictionary_set(geom, "sectors-per-unit", number);
+	prop_object_release(number);
+
+	number = prop_number_create_integer(DEV_BSIZE /* XXX 512? */);
+	prop_dictionary_set(geom, "sector-size", number);
+	prop_object_release(number);
+
+	number = prop_number_create_integer(wd->sc_params.atap_sectors);
+	prop_dictionary_set(geom, "sectors-per-track", number);
+	prop_object_release(number);
+
+	number = prop_number_create_integer(wd->sc_params.atap_heads);
+	prop_dictionary_set(geom, "tracks-per-cylinder", number);
+	prop_object_release(number);
+
+	number = prop_number_create_integer(
+	    (wd->sc_flags & WDF_LBA) ?
+	        wd->sc_capacity / (wd->sc_params.atap_heads *
+				   wd->sc_params.atap_sectors)
+				     :
+		wd->sc_params.atap_cylinders);
+	prop_dictionary_set(geom, "cylinders-per-unit", number);
+	prop_object_release(number);
+
+	prop_dictionary_set(disk_info, "geometry", geom);
+	prop_object_release(geom);
+
+	prop_dictionary_set(device_properties(&wd->sc_dev),
+			    "disk-info", disk_info);
+	prop_object_release(disk_info);
+}
+
 int
 wd_get_params(struct wd_softc *wd, u_int8_t flags, struct ataparams *params)
 {
@@ -1695,8 +1750,9 @@ wd_get_params(struct wd_softc *wd, u_int8_t flags, struct ataparams *params)
 		params->atap_multi = 1;
 		params->atap_capabilities1 = params->atap_capabilities2 = 0;
 		wd->drvp->ata_vers = -1; /* Mark it as pre-ATA */
-		return 0;
+		/* FALLTHROUGH */
 	case CMD_OK:
+		wd_params_to_properties(wd, params);
 		return 0;
 	default:
 		panic("wd_get_params: bad return code from ata_get_params");

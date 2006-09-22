@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.37 2006/09/13 00:47:03 christos Exp $	*/
+/*	$NetBSD: disk.h,v 1.38 2006/09/22 04:48:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -91,12 +91,77 @@
 #include <sys/queue.h>
 #include <sys/lock.h>
 #include <sys/iostat.h>
+#include <prop/proplib.h>
 
 struct buf;
 struct disk;
 struct disklabel;
 struct cpu_disklabel;
 struct vnode;
+
+/*
+ * Disk information dictionary.
+ *
+ * This contains general infomation for disk devices.
+ *
+ *	<dict>
+ *		<key>type</key>
+ *		<string>...</string>
+ *		<key>geometry</key>
+ *		<dict>
+ *			<!-- See below for disk geometry dictionary
+ *			     contents. -->
+ *		</dict>
+ *
+ *		<!-- optional information -->
+ *		<key>rpm</key>
+ *		<integer>...</integer>
+ *		<key>sector-interleave</key>
+ *		<integer>...</integer>
+ *		<key>track-skew</key>
+ *		<integer>...</integer>
+ *		<key>cylinder-skew</key>
+ *		<integer>...</integer>
+ *		<key>head-switch-usecs</key>
+ *		<integer>...</integer>
+ *		<key>track-seek-usecs</key>
+ *		<integer>...</integer>
+ *		<key>removable</key>
+ *		<false/>
+ *		<key>ecc</key>
+ *		<false/>
+ *		<key>bad-sector-forwarding</key>
+ *		<true/>
+ *		<key>ramdisk</key>
+ *		<false/>
+ *		<key>back-to-back-transfers</key>
+ *		<true/>
+ *
+ *		<!-- additional information for SMD drives -->
+ *		<key>smd-skip-sectoring</key>
+ *		<false/>
+ *		<!-- XXX better names for these properties -->
+ *		<key>smd-mindist</key>
+ *		<integer>...</integer>
+ *		<key>smd-maxdist</key>
+ *		<integer>...</integer>
+ *		<key>smd-sdist</key>
+ *		<integer>...</integer>
+ *
+ *		<!-- additional information for ST506 drives -->
+ *		<!-- XXX better names for these properties -->
+ *		<key>st506-precompcyl</key>
+ *		<integer>...</integer>
+ *		<key>st506-gap3</key>
+ *		<integer>...</integer>
+ *
+ *		<!-- additional information for ATA drives -->
+ *		<!-- XXX -->
+ *
+ *		<!-- additional information for SCSI drives -->
+ *		<!-- XXX -->
+ *	</dict>
+ */
 
 /*
  * dkwedge_info:
@@ -168,10 +233,33 @@ __link_set_add_data(dkwedge_methods, name ## _ddm)
 #define	DKW_PTYPE_NTFS		"ntfs"
 
 /*
- * Disk geometry information.
+ * Disk geometry dictionary.
  *
  * NOTE: Not all geometry information is relevant for every kind of disk.
+ *
+ *	<dict>
+ *		<key>sectors-per-unit</key>
+ *		<integer>...</integer>
+ *		<key>sector-size</key>
+ *		<integer>...</integer>
+ *		<key>sectors-per-track</key>
+ *		<integer>...</integer>
+ *		<key>tracks-per-cylinder</key>
+ *		<integer>...</integer>
+ *		<key>cylinders-per-unit</key>
+ *		<integer>...</integer>
+ *		<key>physical-cylinders-per-unit</key>
+ *		<integer>...</integer>
+ *		<key>spare-sectors-per-track</key>
+ *		<integer>...</integer>
+ *		<key>spare-sectors-per-cylinder</key>
+ *		<integer>...</integer>
+ *		<key>alternative-cylinders</key>
+ *		<integer>...</integer>
+ *	</dict>
+ * NOTE: Not all geometry information is relevant for every kind of disk.
  */
+
 struct disk_geom {
 	int64_t		dg_secperunit;	/* # of data sectors per unit */
 	uint32_t	dg_secsize;	/* # of bytes per sector */
@@ -196,9 +284,128 @@ struct disk_geom {
 	uint32_t	dg_acylinders;
 };
 
+/*
+ * Disk partition dictionary.
+ *
+ * A partition is represented as a dictionary containing generic partition
+ * properties (such as starting block and block count), as well as information
+ * that is specific to individual partition map formats.
+ *
+ *	<dict>
+ *		<key>start-block</key>
+ *		<integer>...</integer>
+ *		<key>block-count</key>
+ *		<integer>...</integer>
+ *		<!-- DKW_PTYPE strings ("" or missing if unknown) -->
+ *		<key>type</type>
+ *		<string>...</string>
+ *		<!-- optional -->
+ *		<key>name</key>
+ *		<string>...</string>
+ *
+ *		<!-- these are valid for GPT partition maps -->
+ *		<key>gpt-type-guid</key>
+ *		<string>...</string>
+ *		<key>gpt-partition-guid</key>
+ *		<string>...</string>
+ *		<key>gpt-platform-required</key>
+ *		<false/>
+ *
+ *		<!-- these are valid for 4.4BSD partition maps -->
+ *		<key>bsd44-partition-type</key>
+ *		<integer>...</integer>
+ *		<key>bsd44-fs-fragment-size</key>
+ *		<integer>...</integer>
+ *		<key>bsd44-iso9660-session-offset</key>
+ *		<integer>...</integer>
+ *		<key>bsd44-ffs-cylinders-per-group</key>
+ *		<integer>...</integer>
+ *		<key>bsd44-lfs-segment-shift</key>
+ *		<integer>...</integer>
+ *
+ *		<!-- these are valid for NeXT partition maps -->
+ *		<key>next-block-size</key>
+ *		<integer>...</integer>
+ *		<key>next-fs-fragment-size</key>
+ *		<integer>...</integer>
+ *		<key>next-fs-optimization</key>
+ *		<string>...</string>	<!-- "space" or "time" -->
+ *		<key>next-fs-cylinders-per-group</key>
+ *		<integer>...</integer>
+ *		<key>next-bytes-per-inode-density</key>
+ *		<integer>...</integer>
+ *		<key>next-minfree-percentage</key>
+ *		<integer>...</integer>
+ *		<key>next-run-newfs-during-init</key>
+ *		<false/>
+ *		<key>next-mount-point</key>
+ *		<string>...</string>
+ *		<key>next-automount</key>
+ *		<true/>
+ *		<key>next-partition-type</key>
+ *		<string>...</string>
+ *
+ *		<!-- these are valid for MBR partition maps -->
+ *		<key>mbr-start-head</key>
+ *		<integer>...</integer>
+ *		<key>mbr-start-sector</key>
+ *		<integer>...</integer>
+ *		<key>mbr-start-cylinder</key>
+ *		<integer>...</integer>
+ *		<key>mbr-partition-type</key>
+ *		<integer>...</integer>
+ *		<key>mbr-end-head</key>
+ *		<integer>...</integer>
+ *		<key>mbr-end-sector</key>
+ *		<integer>...</integer>
+ *		<key>mbr-end-cylinder</key>
+ *		<integer>...</integer>
+ *		<key>mbr-active-partition</key>
+ *		<false/>
+ *
+ *		<!-- these are valid for Apple partition maps -->
+ *		<key>apple-partition-type</key>
+ *		<string>...</string>
+ *		<!-- XXX What else do we need?  wrstuden? -->
+ *
+ *		<!-- these are valid for RISCiX partition maps -->
+ *		<key>riscix-partition-type</key>
+ *		<integer>...</integer>
+ *
+ *		<!-- these are valid for MIPS/SGI partition maps -->
+ *		<key>mips-partition-type</key>
+ *		<integer>...</integer>
+ *
+ *		<!-- SunOS 4 partition maps have no specific
+ *		     additional information.  Note, however,
+ *		     that SunOS 4 partitions must begin on
+ *		     cylinder boundaries. -->
+ *
+ *		<!-- XXX Need Amiga partition map info -->
+ *
+ *		<!-- these are valid for VTOC partition maps -->
+ *		<key>vtoc-tag</key>
+ *		<integer>...</integer>
+ *		<key>vtoc-unmount</key>
+ *		<false/>
+ *		<key>vtoc-read-only</key>
+ *		<false/>
+ *		<!-- XXX is this really part of the partition info? -->
+ *		<key>vtoc-timestamp</key>
+ *		<integer>...</integer>
+ *
+ *		<!-- mvme68k partition maps use 4.4BSD partition
+ *		     info stuffed into two different areas of the
+ *		     disk information label recognized by BUG. -->
+ *
+ *		<!-- XXX What else? -->
+ *	</dict>
+ */
+
 struct disk {
 	TAILQ_ENTRY(disk) dk_link;	/* link in global disklist */
 	char		*dk_name;	/* disk name */
+	prop_dictionary_t dk_info;	/* reference to disk-info dictionary */
 	int		dk_bopenmask;	/* block devices open */
 	int		dk_copenmask;	/* character devices open */
 	int		dk_openmask;	/* composite (bopen|copen) */
