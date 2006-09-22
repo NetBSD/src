@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.113 2006/09/21 19:56:05 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.114 2006/09/22 19:07:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.113 2006/09/21 19:56:05 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.114 2006/09/22 19:07:09 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.113 2006/09/21 19:56:05 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.114 2006/09/22 19:07:09 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -264,7 +264,8 @@ const char *shellPath = NULL,		  	  /* full pathname of
 static const char *shellArgv = NULL;		  /* Custom shell args */
 
 
-STATIC Lst     	job_list;	/* The structures that describe them */
+STATIC Job	*job_table;	/* The structures that describe them */
+STATIC Job	*job_table_end;	/* job_table + maxJobs */
 static Boolean	wantToken;	/* we want a token */
 
 /*
@@ -298,17 +299,6 @@ int	exit_pipe[2] = { -1, -1 }; /* child exit signal pipe. */
 #define MESSAGE(fp, gn) \
 	(void)fprintf(fp, targFmt, gn->name)
 
-/*
- * When make is stopped by SIGTSTP (ie ^Z types) the jobs are sent SIGTSTP.
- * When they report themselves stopped they are moved to syoppedJobs.
- * They all get moved back after SIGCONT.
- * This is all a waste of cpu cycles...
- */
-STATIC Lst	stoppedJobs;	/* Lst of Job structures describing
-				 * jobs that were stopped due to concurrency
-				 * limits or migration home */
-
-
 static sigset_t caught_signals;	/* Set of signals we handle */
 #if defined(USE_PGRP) && defined(SYSV)
 # define KILL(pid, sig)		kill(-(pid), (sig))
@@ -333,13 +323,13 @@ static sigset_t caught_signals;	/* Set of signals we handle */
 #define W_EXITCODE(ret, sig) ((ret << 8) | (sig))
 #endif 
 
-static int JobCondPassSig(ClientData, ClientData);
+static void JobCondPassSig(int);
 static void JobPassSig(int);
 static void JobChildSig(int);
 #ifdef USE_PGRP
 static void JobContinueSig(int);
 #endif
-static int JobCmpPid(ClientData, ClientData);
+static Job *JobCmpPid(int, int);
 static int JobPrintCommand(ClientData, ClientData);
 static int JobSaveCommand(ClientData, ClientData);
 static void JobClose(Job *);
@@ -358,7 +348,19 @@ static void JobSigLock(sigset_t *);
 static void JobSigUnlock(sigset_t *);
 static void JobSigReset(void);
 
+const char *malloc_options="A";
 
+static void
+job_table_dump(const char *where)
+{
+    Job *job;
+
+    fprintf(stderr, "job table @ %s\n", where);
+    for (job = job_table; job < job_table_end; job++) {
+	fprintf(stderr, "job %d, status %d, flags %d, pid %d\n",
+	    job - job_table, job->job_status, job->flags, job->pid);
+    }
+}
 
 /*
  * JobSigLock/JobSigUnlock
@@ -385,31 +387,29 @@ static void JobSigUnlock(sigset_t *omaskp)
  *	Pass a signal to a job if USE_PGRP is defined.
  *
  * Input:
- *	jobp		Job to biff
  *	signop		Signal to send it
- *
- * Results:
- *	=== 0
  *
  * Side Effects:
  *	None, except the job may bite it.
  *
  *-----------------------------------------------------------------------
  */
-static int
-JobCondPassSig(ClientData jobp, ClientData signop)
+static void
+JobCondPassSig(int signo)
 {
-    Job	*job = (Job *)jobp;
-    int	signo = *(int *)signop;
+    Job *job;
 
-    if (DEBUG(JOB)) {
-	(void)fprintf(stdout,
-		       "JobCondPassSig passing signal %d to child %d.\n",
-		       signo, job->pid);
-	(void)fflush(stdout);
+    for (job = job_table; job < job_table_end; job++) {
+	if (job->job_status != JOB_ST_RUNNING)
+	    continue;
+	if (DEBUG(JOB)) {
+	    (void)fprintf(stdout,
+			   "JobCondPassSig passing signal %d to child %d.\n",
+			   signo, job->pid);
+	    (void)fflush(stdout);
+	}
+	KILL(job->pid, signo);
     }
-    KILL(job->pid, signo);
-    return 0;
 }
 
 /*-
@@ -488,7 +488,7 @@ JobPassSig(int signo)
 	(void)fprintf(stdout, "JobPassSig(%d) called.\n", signo);
 	(void)fflush(stdout);
     }
-    Lst_ForEach(job_list, JobCondPassSig, (ClientData) &signo);
+    JobCondPassSig(signo);
 
     /*
      * Deal with proper cleanup based on the signal received. We only run
@@ -535,7 +535,7 @@ JobPassSig(int signo)
     (void)kill(getpid(), signo);
     if (signo != SIGTSTP) {
 	sigcont = SIGCONT;
-	Lst_ForEach(job_list, JobCondPassSig, (ClientData) &sigcont);
+	JobCondPassSig(sigcont);
     }
 
     /* Restore handler and signal mask */
@@ -556,16 +556,26 @@ JobPassSig(int signo)
  *	pid		process id desired
  *
  * Results:
- *	0 if the pid's match
+ *	Job with matching pid
  *
  * Side Effects:
  *	None
  *-----------------------------------------------------------------------
  */
-static int
-JobCmpPid(ClientData job, ClientData pid)
+static Job *
+JobCmpPid(int pid, int status)
 {
-    return *(int *)pid - ((Job *)job)->pid;
+    Job *job;
+
+    for (job = job_table; job < job_table_end; job++) {
+	if (job->job_status != status)
+	    continue;
+	if (job->pid == pid)
+	    return job;
+    }
+    if (DEBUG(JOB))
+	job_table_dump("no pid");
+    return NULL;
 }
 
 /*-
@@ -998,7 +1008,7 @@ JobFinish(Job *job, int *status)
 		    job->node->name, WSTOPSIG(*status));
 	    }
 	    job->flags |= JOB_RESUME;
-	    (void)Lst_AtEnd(stoppedJobs, (ClientData)job);
+	    job->job_status = JOB_ST_STOPPED;
 	    (void)fflush(stdout);
 	    return;
 	} else if (WIFSTOPPED(*status) && WSTOPSIG(*status) == SIGCONT) {
@@ -1022,7 +1032,7 @@ JobFinish(Job *job, int *status)
 		}
 	    }
 	    job->flags &= ~JOB_CONTINUING;
- 	    Lst_AtEnd(job_list, (ClientData)job);
+	    job->job_status = JOB_ST_RUNNING;
 	    if (DEBUG(JOB)) {
 		(void)fprintf(stdout, "Process %d is continuing.\n",
 			       job->pid);
@@ -1068,10 +1078,10 @@ JobFinish(Job *job, int *status)
 	if (!(job->flags & JOB_SPECIAL))
 	    return_job_token = TRUE;
 	Make_Update(job->node);
-	free(job);
+	job->job_status = JOB_ST_FREE;
     } else if (*status != 0) {
 	errors += 1;
-	free(job);
+	job->job_status = JOB_ST_FREE;
     }
 
     /*
@@ -1402,8 +1412,9 @@ JobExec(Job *job, char **argv)
     if (DEBUG(JOB)) {
 	printf("JobExec(%s): pid %d added to jobs table\n",
 		job->node->name, job->pid);
+	job_table_dump("job started");
     }
-    (void)Lst_AtEnd(job_list, (ClientData)job);
+    job->job_status = JOB_ST_RUNNING;
     JobSigUnlock(&mask);
 }
 
@@ -1547,9 +1558,14 @@ JobStart(GNode *gn, int flags)
     Boolean 	  noExec;     /* Set true if we decide not to run the job */
     int		  tfd;	      /* File descriptor to the temp file */
 
-    job = emalloc(sizeof(Job));
-    if (job == NULL)
+    for (job = job_table; job < job_table_end; job++) {
+	if (job->job_status == JOB_ST_FREE)
+	    break;
+    }
+    if (job >= job_table_end)
 	Punt("JobStart out of memory");
+    memset(job, 0, sizeof *job);
+    job->job_status = JOB_ST_SETUP;
     if (gn->type & OP_SPECIAL)
 	flags |= JOB_SPECIAL;
 
@@ -1699,10 +1715,10 @@ JobStart(GNode *gn, int flags)
 		job->node->made = MADE;
 		Make_Update(job->node);
 	    }
-	    free(job);
+	    job->job_status = JOB_ST_FREE;
 	    return(JOB_FINISHED);
 	} else {
-	    free(job);
+	    job->job_status = JOB_ST_FREE;
 	    return(JOB_ERROR);
 	}
     } else {
@@ -2045,7 +2061,6 @@ Job_CatchChildren(Boolean block)
 {
     int    	  pid;	    	/* pid of dead child */
     Job		  *job;	    	/* job descriptor for dead child */
-    LstNode       jnode;    	/* list element for finding job */
     int	  	  status;   	/* Exit/termination status */
 
     /*
@@ -2064,23 +2079,21 @@ Job_CatchChildren(Boolean block)
 	    (void)fflush(stdout);
 	}
 
-	jnode = Lst_Find(job_list, (ClientData)&pid, JobCmpPid);
-	if (jnode == NILLNODE) {
+	job = JobCmpPid(pid, JOB_ST_RUNNING);
+	if (job == NULL) {
 	    if (WIFSTOPPED(status) && (WSTOPSIG(status) == SIGCONT)) {
-		jnode = Lst_Find(stoppedJobs, (ClientData) &pid, JobCmpPid);
-		if (jnode == NILLNODE) {
+		job = JobCmpPid(pid, JOB_ST_STOPPED);
+		if (job == NULL) {
 		    Error("Resumed child (%d) not in table", pid);
 		    continue;
 		}
-		job = (Job *)Lst_Datum(jnode);
-		(void)Lst_Remove(stoppedJobs, jnode);
+		job->job_status = JOB_ST_FINISHED;
 	    } else {
-		Error("Child (%d) not in table?", pid);
+		Error("Child (%d) status %x not in table?", pid, status);
 		continue;
 	    }
 	} else {
-	    job = (Job *)Lst_Datum(jnode);
-	    (void)Lst_Remove(job_list, jnode);
+	    job->job_status = JOB_ST_FINISHED;
 	}
 
 	JobFinish(job, &status);
@@ -2107,7 +2120,6 @@ void
 Job_CatchOutput(void)
 {
     int           	  nready;
-    LstNode		  ln;
     Job  	 	  *job;
 
     (void)fflush(stdout);
@@ -2127,18 +2139,15 @@ Job_CatchOutput(void)
 	    }
 
 	    JobSigLock(&mask);
-	    if (Lst_Open(job_list) == FAILURE) {
-		Punt("Cannot open job table");
-	    }
 
-	    while (nready && (ln = Lst_Next(job_list)) != NILLNODE) {
-		job = (Job *)Lst_Datum(ln);
+	    for (job = job_table; nready && job < job_table_end; job++) {
+		if (job->job_status != JOB_ST_RUNNING)
+		    continue;
 		if (readyfd(job)) {
 		    JobDoOutput(job, FALSE);
 		    nready -= 1;
 		}
 	    }
-	    Lst_Close(job_list);
 	    JobSigUnlock(&mask);
 	}
     }
@@ -2216,8 +2225,10 @@ Job_Init(void)
 {
     GNode         *begin;     /* node for commands to do at the very start */
 
-    job_list = 	  Lst_Init(FALSE);
-    stoppedJobs = Lst_Init(FALSE);
+    /* Allocate space for all the job info */
+    job_table = emalloc(maxJobs * sizeof *job_table);
+    memset(job_table, 0, maxJobs * sizeof *job_table);
+    job_table_end = job_table + maxJobs;
     wantToken =	  FALSE;
 
     aborting = 	  0;
@@ -2551,20 +2562,19 @@ Job_ParseShell(char *line)
 static void
 JobInterrupt(int runINTERRUPT, int signo)
 {
-    LstNode	ln;		/* element in job table */
     Job		*job;		/* job descriptor in that element */
     GNode	*interrupt;	/* the node describing the .INTERRUPT target */
     sigset_t	mask;
+    GNode	*gn;
 
     aborting = ABORT_INTERRUPT;
 
     JobSigLock(&mask);
 
-    (void)Lst_Open(job_list);
-    while ((ln = Lst_Next(job_list)) != NILLNODE) {
-	GNode *gn;
+    for (job = job_table; job < job_table_end; job++) {
+	if (job->job_status != JOB_ST_RUNNING)
+	    continue;
 
-	job = (Job *)Lst_Datum(ln);
 	gn = job->node;
 
 	if ((gn->type & (OP_JOIN|OP_PHONY)) == 0 && !Targ_Precious(gn)) {
@@ -2583,7 +2593,6 @@ JobInterrupt(int runINTERRUPT, int signo)
 	    KILL(job->pid, signo);
 	}
     }
-    Lst_Close(job_list);
 
     JobSigUnlock(&mask);
 
@@ -2687,7 +2696,6 @@ Job_Wait(void)
 void
 Job_AbortAll(void)
 {
-    LstNode	ln;	/* element in job table */
     Job		*job;	/* the job descriptor in that element */
     int		foo;
     sigset_t	mask;
@@ -2697,10 +2705,9 @@ Job_AbortAll(void)
     if (jobTokensRunning) {
 
 	JobSigLock(&mask);
-	(void)Lst_Open(job_list);
-	while ((ln = Lst_Next(job_list)) != NILLNODE) {
-	    job = (Job *)Lst_Datum(ln);
-
+	for (job = job_table; job < job_table_end; job++) {
+	    if (job->job_status != JOB_ST_RUNNING)
+		continue;
 	    /*
 	     * kill the child process with increasingly drastic signals to make
 	     * darn sure it's dead.
@@ -2708,7 +2715,6 @@ Job_AbortAll(void)
 	    KILL(job->pid, SIGINT);
 	    KILL(job->pid, SIGKILL);
 	}
-	Lst_Close(job_list);
 	JobSigUnlock(&mask);
     }
 
@@ -2738,15 +2744,18 @@ Job_AbortAll(void)
 static void
 JobRestartJobs(void)
 {
+    Job *job;
     sigset_t	mask;
 
     JobSigLock(&mask);
-    while (!Lst_IsEmpty(stoppedJobs)) {
+    for (job = job_table; job < job_table_end; job++) {
+	if (job->job_status != JOB_ST_STOPPED)
+	    continue;
 	if (DEBUG(JOB)) {
 	    (void)fprintf(stdout, "Restarting a stopped job.\n");
 	    (void)fflush(stdout);
 	}
-	if (JobRestart((Job *)Lst_DeQueue(stoppedJobs)) != 0)
+	if (JobRestart(job) != 0)
 		break;
     }
     JobSigUnlock(&mask);
