@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.170 2006/07/26 14:28:11 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.171 2006/09/22 22:29:25 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.170 2006/07/26 14:28:11 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.171 2006/09/22 22:29:25 elad Exp $");
 #endif /* not lint */
 
 /*
@@ -612,13 +612,13 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				/* check URL against list of no_proxied sites */
 			no_proxy = getoptionvalue("no_proxy");
 			if (! EMPTYSTRING(no_proxy)) {
-				char *np, *np_copy;
+				char *np, *np_copy, *np_iter;
 				long np_port;
 				size_t hlen, plen;
 
-				np_copy = ftp_strdup(no_proxy);
+				np_iter = np_copy = ftp_strdup(no_proxy);
 				hlen = strlen(host);
-				while ((cp = strsep(&np_copy, " ,")) != NULL) {
+				while ((cp = strsep(&np_iter, " ,")) != NULL) {
 					if (*cp == '\0')
 						continue;
 					if ((np = strrchr(cp, ':')) != NULL) {
