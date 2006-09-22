@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_dictionary_copyin_ioctl.9,v 1.3 2006/07/09 19:08:31 wiz Exp $
+.\"	$NetBSD: prop_dictionary_copyin_ioctl.9,v 1.4 2006/09/22 04:20:23 thorpej Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 3, 2006
+.Dd September 13, 2006
 .Dt PROP_DICTIONARY_COPYIN_IOCTL 9
 .Os
 .Sh NAME
@@ -45,10 +45,10 @@
 .In prop/proplib.h
 .Ft int
 .Fn prop_dictionary_copyin_ioctl "const struct plistref *pref" \
-    "int ioctlflags" "prop_dictionary_t *dictp"
+    "const u_long cmd" "prop_dictionary_t *dictp"
 .Ft int
 .Fn prop_dictionary_copyout_ioctl "struct plistref *pref" \
-    "prop_dictionary_t dict" "int ioctlflags"
+    "const u_long cmd" "prop_dictionary_t dict"
 .Sh DESCRIPTION
 The
 .Nm prop_dictionary_copyin_ioctl
@@ -83,7 +83,7 @@ fooioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
     switch (cmd) {
     case FOOSETPROPS: {
 	const struct plistref *pref = (const struct plistref *) data;
-	error = prop_dictionary_copyin_ioctl(pref, flag, \*[Am]dict);
+	error = prop_dictionary_copyin_ioctl(pref, cmd, \*[Am]dict);
 	if (error)
 		return (error);
 	odict = fooprops;
@@ -94,7 +94,7 @@ fooioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
     case FOOGETPROPS: {
 	struct plistref *pref = (struct plistref *) data;
-	error = prop_dictionary_copyout_ioctl(pref, fooprops, flag);
+	error = prop_dictionary_copyout_ioctl(pref, cmd, fooprops);
 	break;
       }
 

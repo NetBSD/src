@@ -1,4 +1,4 @@
-/*	$NetBSD: proplib.h,v 1.3 2006/08/21 04:13:28 thorpej Exp $	*/
+/*	$NetBSD: proplib.h,v 1.4 2006/09/22 04:20:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  *	boundaries (ioctls, syscalls, etc.).
  */
 struct plistref {
-	const void *pref_plist;		/* plist data */
+	void *pref_plist;		/* plist data */
 	size_t pref_len;		/* total length of plist data */
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.h,v 1.4 2006/08/21 04:13:28 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.h,v 1.5 2006/09/22 04:20:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -94,13 +94,18 @@ int		prop_dictionary_send_ioctl(prop_dictionary_t, int,
 					   unsigned long);
 int		prop_dictionary_recv_ioctl(int, unsigned long,
 					   prop_dictionary_t *);
+int		prop_dictionary_sendrecv_ioctl(prop_dictionary_t,
+					       int, unsigned long,
+					       prop_dictionary_t *);
 #elif defined(_KERNEL)
 struct plistref;
 
-int		prop_dictionary_copyin_ioctl(const struct plistref *, int,
+int		prop_dictionary_copyin_ioctl(const struct plistref *,
+					     const u_long,
 					     prop_dictionary_t *);
 int		prop_dictionary_copyout_ioctl(struct plistref *,
-					      prop_dictionary_t, int);
+					      const u_long,
+					      prop_dictionary_t);
 #endif
 #endif /* __NetBSD__ */
 __END_DECLS
