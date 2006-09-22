@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.654 2006/09/18 08:09:29 dbj Exp $
+# $NetBSD: mi,v 1.655 2006/09/22 23:03:24 christos Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1389,6 +1389,8 @@
 ./usr/share/examples/dhcp			base-dhcpd-examples
 ./usr/share/examples/disktab			base-sys-examples
 ./usr/share/examples/emul			base-sys-examples
+./usr/share/examples/emul/linux			base-sys-examples
+./usr/share/examples/emul/linux/etc		base-sys-examples
 ./usr/share/examples/emul/svr4			base-sys-examples
 ./usr/share/examples/emul/svr4/etc		base-sys-examples
 ./usr/share/examples/emul/ultrix		base-sys-examples
