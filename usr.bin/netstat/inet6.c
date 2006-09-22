@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.39 2006/05/31 13:26:17 rpaulo Exp $	*/
+/*	$NetBSD: inet6.c,v 1.40 2006/09/22 23:21:52 elad Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.39 2006/05/31 13:26:17 rpaulo Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.40 2006/09/22 23:21:52 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -252,7 +252,7 @@ ip6protopr(off, name)
 			if (errno == ENOENT)
 				return;
 
-			err(1, "sysctlnametomib");
+			err(1, "sysctlnametomib: %s", mibname);
 		}
 
 		if (sysctl(mib, sizeof(mib) / sizeof(*mib), NULL, &size,
