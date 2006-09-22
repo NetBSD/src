@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.931 2006/09/22 04:20:23 thorpej Exp $
+#	$NetBSD: mi,v 1.932 2006/09/22 19:45:57 dbj Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -9624,6 +9624,7 @@
 ./usr/share/man/man3/prop_dictionary_recv_ioctl.3 comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_remove.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_remove_keysym.3 comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_send_ioctl.3	comp-c-man	.man
 ./usr/share/man/man3/prop_dictionary_sendrecv_ioctl.3 comp-c-man	.man
 ./usr/share/man/man3/prop_dictionary_set.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_set_keysym.3 comp-c-man		.man
