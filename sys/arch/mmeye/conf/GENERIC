@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.84 2006/08/26 20:26:55 christos Exp $
+# $NetBSD: GENERIC,v 1.85 2006/09/22 09:32:26 uwe Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.84 $"
+#ident 		"GENERIC-$Revision: 1.85 $"
 
 maxusers	16		# estimated number of users
 
@@ -168,6 +168,8 @@ config		netbsd	root on ? type ?
 mainbus0 at root
 
 shb*	at mainbus?
+
+rtc*	at shb?
 
 com0	at mainbus?
 com1	at mainbus?

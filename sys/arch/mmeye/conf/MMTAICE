@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAICE,v 1.37 2006/08/26 20:26:55 christos Exp $
+#	$NetBSD: MMTAICE,v 1.38 2006/09/22 09:32:26 uwe Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -148,6 +148,8 @@ config		netbsd	root on wd0a type ffs
 mainbus0 at root
 
 shb* at mainbus?
+
+rtc*	at shb?
 
 com0	at mainbus?
 com1	at mainbus?
