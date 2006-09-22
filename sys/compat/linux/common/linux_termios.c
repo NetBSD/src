@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.25 2006/02/15 09:31:17 manu Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.26 2006/09/22 15:12:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.25 2006/02/15 09:31:17 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.26 2006/09/22 15:12:02 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptm.h"
@@ -62,6 +62,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.25 2006/02/15 09:31:17 manu Exp 
 #include <compat/linux/common/linux_termios.h>
 
 #include <compat/linux/linux_syscallargs.h>
+
+#ifdef DEBUG_LINUX
+#define DPRINTF(a)	uprintf a
+#else
+#define DPRINTF(a)
+#endif
 
 int
 linux_ioctl_termios(l, uap, retval)
@@ -340,6 +346,15 @@ linux_ioctl_termios(l, uap, retval)
 		}
 #endif /* NO_DEV_PTM */
 #endif /* LINUX_TIOCGPTN */
+#ifdef LINUX_TIOCSPTLCK
+	case LINUX_TIOCSPTLCK:
+			FILE_UNUSE(fp, l);
+			error = copyin(SCARG(uap, data), &idat, sizeof(idat));
+			if (error)
+				return error;
+			DPRINTF(("TIOCSPTLCK %d\n", idat));
+			return 0;
+#endif
 	default:
 		error = EINVAL;
 		goto out;
