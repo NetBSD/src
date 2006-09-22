@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_machdep.c,v 1.3 2005/12/11 12:18:16 christos Exp $	*/
+/*	$NetBSD: clock_machdep.c,v 1.4 2006/09/22 09:32:26 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_machdep.c,v 1.3 2005/12/11 12:18:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_machdep.c,v 1.4 2006/09/22 09:32:26 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,12 +42,12 @@ __KERNEL_RCSID(0, "$NetBSD: clock_machdep.c,v 1.3 2005/12/11 12:18:16 christos E
 #include <sh3/clock.h>
 
 void
-machine_clock_init()
+machine_clock_init(void)
 {
 
 #ifdef INITTODR_ALWAYS_USE_RTC
-	sh_clock_init(SH_CLOCK_NOINITTODR, 0);
+	sh_clock_init(SH_CLOCK_NOINITTODR);
 #else
-	sh_clock_init(0, 0);
+	sh_clock_init(0);
 #endif
 }
