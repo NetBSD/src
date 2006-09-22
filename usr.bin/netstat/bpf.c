@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.5 2005/11/21 22:43:34 rpaulo Exp $	*/
+/*	$NetBSD: bpf.c,v 1.6 2006/09/22 23:21:52 elad Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ bpf_dump(char *interface)
 
 		sz = CTL_MAXNAME;
 		if (sysctlnametomib("net.bpf.peers", &name[0], &sz) == -1)
-			err(1, "sysctlnametomib");
+			err(1, "sysctlnametomib: net.bpf.peers");
 		namelen = sz;
 
 		name[namelen++] = sizeof(*dpe);

@@ -1,4 +1,4 @@
-/*	$NetBSD: unix.c,v 1.26 2006/05/21 21:01:56 liamjfoy Exp $	*/
+/*	$NetBSD: unix.c,v 1.27 2006/09/22 23:21:53 elad Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: unix.c,v 1.26 2006/05/21 21:01:56 liamjfoy Exp $");
+__RCSID("$NetBSD: unix.c,v 1.27 2006/09/22 23:21:53 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -159,7 +159,7 @@ unixpr(off)
 
 		if (sysctlnametomib(mibname, mib,
 				    &namelen) == -1)
-			err(1, "sysctlnametomib");
+			err(1, "sysctlnametomib: %s", mibname);
 
 		if (sysctl(mib, sizeof(mib) / sizeof(*mib), NULL, &size,
 			   NULL, 0) == -1)
