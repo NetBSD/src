@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.2 2006/09/22 04:20:23 thorpej Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.3 2006/09/22 19:46:21 dbj Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -40,11 +40,11 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/mman.h>
 
 #include <prop/proplib.h>
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <sys/mman.h>
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
