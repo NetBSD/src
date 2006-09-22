@@ -1,4 +1,4 @@
-/* 	$NetBSD: lock.h,v 1.9 2005/12/28 19:09:29 perry Exp $	*/
+/* 	$NetBSD: lock.h,v 1.10 2006/09/22 08:31:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -44,22 +44,39 @@
 #ifndef _HPPA_LOCK_H_
 #define	_HPPA_LOCK_H_
 
+static __inline int
+__ldcw(__cpu_simple_lock_t *__ptr)
+{
+	int __val;
+
+	__asm volatile("ldcw 0(%1), %0"
+	    : "=r" (__val) : "r" (__ptr)
+	    : "memory");
+
+	return __val;
+}
+
+static __inline void
+__sync(void)
+{
+
+	__asm volatile("sync\n"
+		: /* no outputs */
+		: /* no inputs */
+		: "memory");
+}
+
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
-	__asm volatile(
-		"	; BEGIN __cpu_simple_lock_init\n"
-		"	stw	%1, %0		\n"
-		"	sync			\n"
-		"	; END __cpu_simple_lock_init"
-		: "=m" (*alp)
-		: "r" (__SIMPLELOCK_UNLOCKED));
+
+	*alp = __SIMPLELOCK_UNLOCKED;
+	__sync();
 }
 
 static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
-	int32_t t0;
 
 	/*
 	 * Note, if we detect that the lock is held when
@@ -68,52 +85,23 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 	 * some work.
 	 */
 
-#if 0
-	__asm volatile(
-		"	; BEGIN __cpu_simple_lock\n"
-		"	ldcw		%1, %0		\n"
-		"	comb,<>,n	%%r0,%0, 2f	\n"
-		"1:	comb,=,n	%%r0,%0, 1b	\n"
-		"	ldw		%1, %0		\n"
-		"	ldcw		%1, %0		\n"
-		"	comb,=,n	%%r0,%0, 1b	\n"
-		"	ldw		%1, %0		\n"
-		"2:	sync				\n"
-		"	; END __cpu_simple_lock\n"
-		: "=r" (t0), "+m" (*alp));
-#else
-	t0 = 1;
-#endif
+	while (__ldcw(alp) == __SIMPLELOCK_LOCKED)
+		while (*alp == __SIMPLELOCK_LOCKED)
+			;
 }
 
 static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
-	int32_t t0;
 
-#if 0
-	__asm volatile(
-		"	; BEGIN __cpu_simple_lock_try\n"
-		"	ldcw		%1, %0		\n"
-		"	sync				\n"
-		"	; END __cpu_simple_lock_try"
-		: "=r" (t0), "+m" (*alp));
-#else
-	t0 = 1;
-#endif
-	return (t0 != 0);
+	return (__ldcw(alp) != __SIMPLELOCK_LOCKED);
 }
 
 static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
-	__asm volatile(
-		"	; BEGIN __cpu_simple_unlock\n"
-		"	sync			\n"
-		"	stw	%1, %0		\n"
-		"	; END __cpu_simple_unlock"
-		: "+m" (*alp)
-		: "r" (__SIMPLELOCK_UNLOCKED));
+	__sync();
+	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
 #endif /* _HPPA_LOCK_H_ */
