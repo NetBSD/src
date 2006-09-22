@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.53.2.1 2006/08/14 13:41:26 tron Exp $
+# $NetBSD: GENERIC.in,v 1.53.2.2 2006/09/22 05:56:52 riz Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.53.2.1 $"
+#ident 		"GENERIC-$Revision: 1.53.2.2 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -634,7 +634,6 @@ pseudo-device	nsmb			# experimental - SMB requester
 ')m4_dnl
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

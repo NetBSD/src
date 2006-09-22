@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.100.2.2 2006/08/25 14:49:56 ghen Exp $
+# $NetBSD: GENERIC,v 1.100.2.3 2006/09/22 05:56:52 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.100.2.2 $"
+#ident 		"GENERIC-$Revision: 1.100.2.3 $"
 
 maxusers	32
 
@@ -367,7 +367,6 @@ pseudo-device	ksyms				# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1
