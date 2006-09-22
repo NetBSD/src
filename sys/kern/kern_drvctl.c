@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.4 2005/12/15 22:01:17 cube Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.5 2006/09/22 04:37:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.4 2005/12/15 22:01:17 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.5 2006/09/22 04:37:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.4 2005/12/15 22:01:17 cube Exp $")
 #include <sys/event.h>
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
+#include <sys/fcntl.h>
 #include <sys/drvctlio.h>
 
 dev_type_ioctl(drvctlioctl);
@@ -49,6 +50,8 @@ const struct cdevsw drvctl_cdevsw = {
 void drvctlattach(int);
 
 #define MAXLOCATORS 100
+
+static int drvctl_command(struct lwp *, struct plistref *, u_long, int flag);
 
 static int
 detachdevbyname(const char *devname)
@@ -162,9 +165,12 @@ drvctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *p)
 		if (locs)
 			free(locs, M_DEVBUF);
 #undef d
-			break;
-		default:
-			return (EPASSTHROUGH);
+		break;
+	case DRVCTLCOMMAND:
+	    	res = drvctl_command(p, (struct plistref *)data, cmd, flag);
+	    	break;
+	default:
+		return (EPASSTHROUGH);
 	}
 	return (res);
 }
@@ -172,4 +178,112 @@ drvctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *p)
 void
 drvctlattach(int arg)
 {
+}
+
+/*****************************************************************************
+ * Driver control command processing engine
+ *****************************************************************************/
+
+static int
+drvctl_command_get_properties(struct lwp *l,
+			      prop_dictionary_t command_dict,
+			      prop_dictionary_t results_dict)
+{
+	prop_dictionary_t args_dict;
+	prop_string_t devname_string;
+	device_t dev;
+	
+	args_dict = prop_dictionary_get(command_dict, "drvctl-arguments");
+	if (args_dict == NULL)
+		return (EINVAL);
+
+	devname_string = prop_dictionary_get(args_dict, "device-name");
+	if (devname_string == NULL)
+		return (EINVAL);
+	
+	TAILQ_FOREACH(dev, &alldevs, dv_list) {
+		if (prop_string_equals_cstring(devname_string,
+					       device_xname(dev)))
+			break;
+	}
+
+	if (dev == NULL)
+		return (ESRCH);
+	
+	prop_dictionary_set(results_dict, "drvctl-result-data",
+			    device_properties(dev));
+	
+	return (0);
+}
+
+struct drvctl_command_desc {
+	const char *dcd_name;		/* command name */
+	int (*dcd_func)(struct lwp *,	/* handler function */
+			prop_dictionary_t,
+			prop_dictionary_t);
+	int dcd_rw;			/* read or write required */
+};
+
+static const struct drvctl_command_desc drvctl_command_table[] = {
+	{ .dcd_name = "get-properties",
+	  .dcd_func = drvctl_command_get_properties,
+	  .dcd_rw   = FREAD,
+	},
+
+	{ .dcd_name = NULL }
+};
+
+static int
+drvctl_command(struct lwp *l, struct plistref *pref, u_long ioctl_cmd,
+	       int fflag)
+{
+	prop_dictionary_t command_dict, results_dict;
+	prop_string_t command_string;
+	prop_number_t error_number;
+	const struct drvctl_command_desc *dcd;
+	int error;
+
+	error = prop_dictionary_copyin_ioctl(pref, ioctl_cmd, &command_dict);
+	if (error)
+		return (error);
+
+	results_dict = prop_dictionary_create();
+	if (results_dict == NULL) {
+		prop_object_release(command_dict);
+		return (ENOMEM);
+	}
+	
+	command_string = prop_dictionary_get(command_dict, "drvctl-command");
+	if (command_string == NULL) {
+		error = EINVAL;
+		goto out;
+	}
+
+	for (dcd = drvctl_command_table; dcd->dcd_name != NULL; dcd++) {
+		if (prop_string_equals_cstring(command_string,
+					       dcd->dcd_name))
+			break;
+	}
+
+	if (dcd->dcd_name == NULL) {
+		error = EINVAL;
+		goto out;
+	}
+
+	if ((fflag & dcd->dcd_rw) == 0) {
+		error = EPERM;
+		goto out;
+	}
+
+	error = (*dcd->dcd_func)(l, command_dict, results_dict);
+
+	error_number = prop_number_create_integer(error);
+	prop_dictionary_set(results_dict, "drvctl-error", error_number);
+	prop_object_release(error_number);
+
+	error = prop_dictionary_copyout_ioctl(pref, ioctl_cmd, results_dict);
+ out:
+	prop_object_release(command_dict);
+	prop_object_release(results_dict);
+	return (error);
 }

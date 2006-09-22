@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.4 2005/06/02 00:00:46 lukem Exp $ */
+/* $NetBSD: drvctl.c,v 1.5 2006/09/22 04:37:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -35,7 +35,11 @@
 #include <sys/ioctl.h>
 #include <sys/drvctlio.h>
 
-#define OPTS "dra:"
+#define OPTS "dra:p"
+
+#define	OPEN_MODE(mode)							\
+	(((mode) == 'd' || (mode) == 'r') ? O_RDWR			\
+					  : O_RDONLY)
 
 static void usage(void);
 
@@ -44,7 +48,9 @@ usage(void)
 {
 
 	fprintf(stderr, "Usage: %s -r [-a attribute] busdevice [locator ...]\n"
-	    "       %s -d device\n", getprogname(), getprogname());
+	    "       %s -d device\n"
+	    "       %s -p device\n",
+	    getprogname(), getprogname(), getprogname());
 	exit(1);
 }
 
@@ -65,6 +71,7 @@ main(int argc, char **argv)
 		switch (c) {
 		case 'd':
 		case 'r':
+		case 'p':
 			mode = c;
 			break;
 		case 'a':
@@ -82,7 +89,7 @@ main(int argc, char **argv)
 	if (argc < 1 || mode == 0)
 		usage();
 
-	fd = open(DRVCTLDEV, O_RDWR, 0);
+	fd = open(DRVCTLDEV, OPEN_MODE(mode), 0);
 	if (fd < 0)
 		err(2, "open %s", DRVCTLDEV);
 
@@ -110,6 +117,53 @@ main(int argc, char **argv)
 		res = ioctl(fd, DRVRESCANBUS, &raa);
 		if (res)
 			err(3, "DRVRESCANBUS");
+	} else if (mode == 'p') {
+		prop_dictionary_t command_dict, args_dict, results_dict,
+				  data_dict;
+		prop_string_t string;
+		prop_number_t number;
+		char *xml;
+
+		command_dict = prop_dictionary_create();
+		args_dict = prop_dictionary_create();
+
+		string = prop_string_create_cstring_nocopy("get-properties");
+		prop_dictionary_set(command_dict, "drvctl-command", string);
+		prop_object_release(string);
+
+		string = prop_string_create_cstring(argv[0]);
+		prop_dictionary_set(args_dict, "device-name", string);
+		prop_object_release(string);
+
+		prop_dictionary_set(command_dict, "drvctl-arguments",
+				    args_dict);
+		prop_object_release(args_dict);
+
+		res = prop_dictionary_sendrecv_ioctl(command_dict, fd,
+						     DRVCTLCOMMAND,
+						     &results_dict);
+		prop_object_release(command_dict);
+		if (res)
+			errx(3, "DRVCTLCOMMAND: %s", strerror(res));
+
+		number = prop_dictionary_get(results_dict, "drvctl-error");
+		if (prop_number_integer_value(number) != 0) {
+			errx(3, "get-properties: %s",
+			    strerror((int)prop_number_integer_value(number)));
+		}
+
+		data_dict = prop_dictionary_get(results_dict,
+						"drvctl-result-data");
+		if (data_dict == NULL) {
+			errx(3, "get-properties: failed to return result data");
+		}
+
+		xml = prop_dictionary_externalize(data_dict);
+		prop_object_release(results_dict);
+
+		printf("Properties for device `%s':\n%s",
+		       argv[0], xml);
+		free(xml);
 	} else
 		errx(4, "unknown command");
 
