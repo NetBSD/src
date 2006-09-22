@@ -1,4 +1,4 @@
-/*	$NetBSD: who.c,v 1.18 2006/09/19 21:01:29 christos Exp $	*/
+/*	$NetBSD: who.c,v 1.19 2006/09/22 21:40:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: who.c,v 1.18 2006/09/19 21:01:29 christos Exp $");
+__RCSID("$NetBSD: who.c,v 1.19 2006/09/22 21:40:12 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -96,6 +96,7 @@ struct ut_type_names {
 #if defined(_NETBSD_SOURCE)
   { ACCOUNTING, "accounting" }, 
   { SIGNATURE, "signature" },
+  { DOWN_TIME, "down time" },
 #endif /* _NETBSD_SOURCE */
 #endif /* SUPPORT_UTMPX */
   { -1, "unknown" }
