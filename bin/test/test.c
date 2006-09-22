@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.28 2006/08/04 19:07:55 christos Exp $ */
+/* $NetBSD: test.c,v 1.29 2006/09/22 22:15:24 hubertf Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.28 2006/08/04 19:07:55 christos Exp $");
+__RCSID("$NetBSD: test.c,v 1.29 2006/09/22 22:15:24 hubertf Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -39,8 +39,8 @@ __RCSID("$NetBSD: test.c,v 1.28 2006/08/04 19:07:55 christos Exp $");
 	unary-operator ::= "-r"|"-w"|"-x"|"-f"|"-d"|"-c"|"-b"|"-p"|
 		"-u"|"-g"|"-k"|"-s"|"-t"|"-z"|"-n"|"-o"|"-O"|"-G"|"-L"|"-S";
 
-	binary-operator ::= "="|"!="|"-eq"|"-ne"|"-ge"|"-gt"|"-le"|"-lt"|
-			"-nt"|"-ot"|"-ef";
+	binary-operator ::= "="|"=="|"!="|"-eq"|"-ne"|"-ge"|"-gt"|"-le"|
+	                "-lt"|"-nt"|"-ot"|"-ef";
 	operand ::= <any legal UNIX file name>
 */
 
@@ -121,6 +121,7 @@ static struct t_op {
 	{"-L",	FILSYM,	UNOP},
 	{"-S",	FILSOCK,UNOP},
 	{"=",	STREQ,	BINOP},
+	{"==",	STREQ,	BINOP},         /* for bash compatibility */
 	{"!=",	STRNE,	BINOP},
 	{"<",	STRLT,	BINOP},
 	{">",	STRGT,	BINOP},
