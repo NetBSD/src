@@ -1,7 +1,5 @@
-/* $NetBSD: cerror.S,v 1.2 2006/09/22 17:59:47 cherry Exp $ */
-	
 /*-
- * Copyright (c) 2000 Doug Rabson
+ * Copyright (c) 2001 Doug Rabson
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,23 +24,21 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
-/* __FBSDID("$FreeBSD: src/lib/libc/ia64/sys/cerror.S,v 1.2 2003/03/03 01:09:46 obrien Exp $"); */
+#include <sys/cdefs.h>
+/* __FBSDID("$FreeBSD: src/lib/libc/ia64/gen/fpsetmask.c,v 1.4 2003/10/22 09:00:07 marcel Exp $"); */
 
+#include <sys/types.h>
+#include <ieeefp.h>
 
-ENTRY(__cerror, 0)
-	alloc	loc0=ar.pfs,0,3,1,0
-	;;
-	mov	loc1=rp
-	mov	loc2=ret0
-	mov	out0=ret0
-	;;
-	br.call.sptk.few rp=__errno
-	st4	[ret0]=loc2
-	;;
-	mov	ret0=-1
-	mov	ar.pfs=loc0
-	mov	rp=loc1
-	;;
-	br.ret.sptk.few rp
-END(__cerror)
+fp_except
+fpsetmask(fp_except mask)
+{
+	int64_t fpsr;
+	int64_t oldmask;
+
+	__asm __volatile("mov %0=ar.fpsr" : "=r" (fpsr));
+	oldmask = ~fpsr & 0x3d;
+	fpsr = (fpsr & ~0x3d) | (~mask & 0x3d);
+	__asm __volatile("mov ar.fpsr=%0" :: "r" (fpsr));
+	return (oldmask);
+}
