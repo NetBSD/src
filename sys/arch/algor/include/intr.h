@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5.10.1 2006/09/21 14:30:50 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.10.2 2006/09/22 17:45:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -44,12 +44,10 @@
 #include <sys/queue.h>
 
 #define	IPL_NONE	0	/* disable only this interrupt */
-
 #define	IPL_SOFT	1	/* generic software interrupts (SI 0) */
 #define	IPL_SOFTCLOCK	2	/* clock software interrupts (SI 0) */
 #define	IPL_SOFTNET	3	/* network software interrupts (SI 1) */
 #define	IPL_SOFTSERIAL	4	/* serial software interrupts (SI 1) */
-
 #define	IPL_BIO		5	/* disable block I/O interrupts */
 #define	IPL_NET		6	/* disable network interrupts */
 #define	IPL_TTY		7	/* disable terminal interrupts */
@@ -62,7 +60,6 @@
 #define	IPL_HIGH	8	/* disable all interrupts */
 #define	IPL_LOCK	IPL_HIGH
 
-#define	_IPL_NSOFT	4
 #define	_IPL_N		9
 
 #define	_IPL_SI0_FIRST	IPL_SOFT
@@ -71,7 +68,14 @@
 #define	_IPL_SI1_FIRST	IPL_SOFTNET
 #define	_IPL_SI1_LAST	IPL_SOFTSERIAL
 
-#define	IPL_SOFTNAMES {							\
+#define	SI_SOFT		0
+#define	SI_SOFTCLOCK	1
+#define	SI_SOFTNET	2
+#define	SI_SOFTSERIAL	3
+
+#define	SI_NQUEUES	4
+
+#define	SI_QUEUENAMES {							\
 	"misc",								\
 	"clock",							\
 	"net",								\
@@ -87,7 +91,6 @@
 #ifdef	_KERNEL
 
 extern const u_int32_t ipl_sr_bits[_IPL_N];
-extern const u_int32_t ipl_si_to_sr[_IPL_NSOFT];
 
 extern int		_splraise(int);
 extern int		_spllower(int);
