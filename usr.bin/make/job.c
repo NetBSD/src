@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.114 2006/09/22 19:07:09 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.115 2006/09/22 21:55:52 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.114 2006/09/22 19:07:09 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.115 2006/09/22 21:55:52 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.114 2006/09/22 19:07:09 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.115 2006/09/22 21:55:52 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -358,7 +358,7 @@ job_table_dump(const char *where)
     fprintf(stderr, "job table @ %s\n", where);
     for (job = job_table; job < job_table_end; job++) {
 	fprintf(stderr, "job %d, status %d, flags %d, pid %d\n",
-	    job - job_table, job->job_status, job->flags, job->pid);
+	    (int)(job - job_table), job->job_status, job->flags, job->pid);
     }
 }
 
@@ -482,7 +482,6 @@ JobPassSig(int signo)
 {
     sigset_t nmask, omask;
     struct sigaction act;
-    int sigcont;
 
     if (DEBUG(JOB)) {
 	(void)fprintf(stdout, "JobPassSig(%d) called.\n", signo);
@@ -533,10 +532,13 @@ JobPassSig(int signo)
     }
 
     (void)kill(getpid(), signo);
-    if (signo != SIGTSTP) {
-	sigcont = SIGCONT;
-	JobCondPassSig(sigcont);
-    }
+
+    /*
+     * If we didn't die, then likely as not all our children are suspended
+     * so loop through and wake them up.
+     */
+    if (signo != SIGTSTP)
+	JobCondPassSig(SIGCONT);
 
     /* Restore handler and signal mask */
     act.sa_handler = JobPassSig;
