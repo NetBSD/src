@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.474 2006/09/19 04:16:11 simonb Exp $
+#	$NetBSD: bsd.own.mk,v 1.475 2006/09/22 13:14:59 skrll Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -50,6 +50,7 @@ TOOLCHAIN_MISSING?=	no
     ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "armeb" || \
+    ${MACHINE_ARCH} == "hppa" || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "ia64" || \
     ${MACHINE_ARCH} == "m68000" || \
@@ -68,12 +69,6 @@ TOOLCHAIN_MISSING?=	no
     ${MACHINE_ARCH} == "vax" || \
     ${MACHINE_ARCH} == "x86_64"
 HAVE_GCC?=	4
-.endif
-
-# These ones work (or mostly work), but aren't switched yet
-.if \
-    ${MACHINE_ARCH} == "hppa"
-#HAVE_GCC?=	4
 .endif
 
 # default to GCC3
