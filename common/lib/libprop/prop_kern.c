@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.3 2006/09/22 19:46:21 dbj Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.4 2006/09/22 23:58:36 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -174,6 +174,7 @@ prop_dictionary_sendrecv_ioctl(prop_dictionary_t dict, int fd,
 
 #if defined(_KERNEL)
 #include <sys/param.h>
+#include <sys/mman.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
