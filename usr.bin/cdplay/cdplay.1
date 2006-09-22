@@ -1,4 +1,4 @@
-.\"	$NetBSD: cdplay.1,v 1.18 2006/01/12 21:00:58 wiz Exp $
+.\"	$NetBSD: cdplay.1,v 1.19 2006/09/22 18:20:53 xtraeme Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" from FreeBSD: cdcontrol.1,v 1.16.2.2 1999/01/31 15:36:01 billf Exp
 .\"
-.Dd January 2, 2006
+.Dd September 22, 2006
 .Dt CDPLAY 1
 .Os
 .Sh NAME
@@ -34,6 +34,7 @@
 .Nd compact disc player
 .Sh SYNOPSIS
 .Nm cdplay
+.Op Fl a Ar audio device
 .Op Fl f Ar device
 .Op Ar command ...
 .Sh DESCRIPTION
@@ -46,6 +47,16 @@ enters interactive mode, reading commands from the standard input.
 .Pp
 The following options are available:
 .Bl -tag -width indent
+.It Fl a Ar audio device
+Specify the audio device to use.
+Used only in digital transfer mode.
+If not specified, the environment variables
+.Ev AUDIODEV
+and
+.Ev SPEAKER
+will be tried (in this order) to find the device; as a last resort,
+.Pa /dev/sound
+will be used.
 .It Fl f Ar device
 Specify the control device to use.
 Both absolute paths and paths relative to
@@ -161,6 +172,18 @@ Play the right subtrack on both left and right channels.
 Print the table of contents.
 .It Cm status
 Display the current audio, media and volume status.
+.It Cm digital Ar n
+Turn on digital transfer mode.
+In this mode,
+.Nm
+reads digital data from disc and sends them to audio device
+along digital path.
+A SCSI or ATAPI CD-ROM is required; and the audio device must
+support CD audio format (44100 Hz sampling rate, 16-bit
+stereo samples).
+Audio data are read and written in groups of 
+.Ar n
+frames (5 by default, or 1/15 seconds).
 .It Cm help
 Print the list of available commands.
 .It Cm reset
@@ -184,7 +207,8 @@ Quit the program.
 The
 .Nm
 command first appeared in
-.Nx 1.5 .
+.Nx 1.5 . Support for digital transfer mode was added in
+.Nx 5.0 .
 .Sh AUTHORS
 .An Jean-Marc Zucconi ,
 .An Andrey A.\ Chernov ,
