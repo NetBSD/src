@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.102.2.2 2006/09/15 11:58:46 tron Exp $
+# $NetBSD: GENERIC,v 1.102.2.3 2006/09/22 05:56:52 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.102.2.2 $"
+#ident 		"GENERIC-$Revision: 1.102.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -895,7 +895,6 @@ pseudo-device	wsfont
 #options	FILEASSOC_NHOOKS=4	# Default number of storage slots
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1
