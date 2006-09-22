@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.81.2.1 2006/08/14 13:41:29 tron Exp $
+# $NetBSD: GENERIC,v 1.81.2.2 2006/09/22 05:56:54 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -326,7 +326,6 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

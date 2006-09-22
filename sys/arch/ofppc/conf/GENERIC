@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.92.2.1 2006/08/14 13:41:28 tron Exp $
+# $NetBSD: GENERIC,v 1.92.2.2 2006/09/22 05:56:52 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.92.2.1 $"
+#ident 		"GENERIC-$Revision: 1.92.2.2 $"
 
 maxusers	32
 
@@ -220,7 +220,6 @@ options	FIREPOWER_MX			# Firepower MX
 options	FIREPOWER_LX			# Firepower LX
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1
