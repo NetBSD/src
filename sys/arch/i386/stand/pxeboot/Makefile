@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2006/06/25 14:12:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2006/09/22 15:05:24 abs Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -57,6 +57,7 @@ CPPFLAGS+= -DSUPPORT_NFS
 #CPPFLAGS+= -DNFS_NOSYMLINK
 
 CPPFLAGS+= -DPASS_MEMMAP
+PPFLAGS+= -DEPIA_HACK
 
 #CFLAGS= -O2 -fomit-frame-pointer -fno-defer-pop
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-main
