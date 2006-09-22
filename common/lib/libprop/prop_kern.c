@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.1 2006/07/05 21:46:10 thorpej Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.2 2006/09/22 04:20:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 
 #include <prop/proplib.h>
 
@@ -47,6 +48,26 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+
+static int
+prop_dictionary_pack_pref(prop_dictionary_t dict, struct plistref *pref,
+			  char **bufp)
+{
+	char *buf;
+
+	buf = prop_dictionary_externalize(dict);
+	if (buf == NULL) {
+		/* Assume we ran out of memory. */
+		return (ENOMEM);
+	}
+	pref->pref_plist = buf;
+	pref->pref_len = strlen(buf) + 1;
+
+	*bufp = buf;
+
+	return (0);
+}
 
 /*
  * prop_dictionary_send_ioctl --
@@ -59,13 +80,9 @@ prop_dictionary_send_ioctl(prop_dictionary_t dict, int fd, unsigned long cmd)
 	char *buf;
 	int error;
 
-	buf = prop_dictionary_externalize(dict);
-	if (buf == NULL) {
-		/* Assume we ran out of memory. */
-		return (ENOMEM);
-	}
-	pref.pref_plist = buf;
-	pref.pref_len = strlen(buf) + 1;
+	error = prop_dictionary_pack_pref(dict, &pref, &buf);
+	if (error)
+		return (error);
 
 	if (ioctl(fd, cmd, &pref) == -1)
 		error = errno;
@@ -77,6 +94,38 @@ prop_dictionary_send_ioctl(prop_dictionary_t dict, int fd, unsigned long cmd)
 	return (error);
 }
 
+static int
+prop_dictionary_unpack_pref(const struct plistref *pref,
+			    prop_dictionary_t *dictp)
+{
+	prop_dictionary_t dict;
+	char *buf;
+	int error;
+
+	if (pref->pref_len == 0) {
+		/*
+		 * This should never happen; we should always get the XML
+		 * for an empty dictionary if it's really empty.
+		 */
+		error = EIO;
+		goto out;
+	} else {
+		buf = pref->pref_plist;
+		buf[pref->pref_len - 1] = '\0';	/* extra insurance */
+		dict = prop_dictionary_internalize(buf);
+		(void) munmap(buf, pref->pref_len);
+		if (dict == NULL)
+			error = EIO;
+		else
+			error = 0;
+	}
+
+ out:
+	if (error == 0)
+		*dictp = dict;
+	return (error);
+}
+
 /*
  * prop_dictionary_recv_ioctl --
  *	Receive a dictionary from the kernel using the specified ioctl.
@@ -85,73 +134,75 @@ int
 prop_dictionary_recv_ioctl(int fd, unsigned long cmd, prop_dictionary_t *dictp)
 {
 	struct plistref pref;
-	prop_dictionary_t dict;
+
+	if (ioctl(fd, cmd, &pref) == -1)
+		return (errno);
+
+	return (prop_dictionary_unpack_pref(&pref, dictp));
+}
+
+/*
+ * prop_dictionary_sendrecv_ioctl --
+ *	Combination send/receive a dictionary to/from the kernel using
+ *	the specified ioctl.
+ */
+int
+prop_dictionary_sendrecv_ioctl(prop_dictionary_t dict, int fd,
+			       unsigned long cmd, prop_dictionary_t *dictp)
+{
+	struct plistref pref;
 	char *buf;
-	size_t len;
 	int error;
 
-	pref.pref_len = 0;
+	error = prop_dictionary_pack_pref(dict, &pref, &buf);
+	if (error)
+		return (error);
 
-	for (;;) {
-		len = pref.pref_len;
-		if (len != 0) {
-			buf = malloc(len);
-			if (buf == NULL)
-				return (ENOMEM);
-		} else
-			buf = NULL;
-		pref.pref_plist = buf;
-		if (ioctl(fd, cmd, &pref) == -1) {
-			error = errno;
-			free(buf);
-			return (error);
-		}
-		
-		/*
-		 * Kernel only copies out the plist if the buffer
-		 * we provided is big enough to hold the entire
-		 * thing.  Kernel provides us the needed size in
-		 * the argument structure.
-		 */
-		if (len >= pref.pref_len)
-			break;
-
-		free(buf);
-	}
+	if (ioctl(fd, cmd, &pref) == -1)
+		error = errno;
+	else
+		error = 0;
 	
-	dict = prop_dictionary_internalize(buf);
 	free(buf);
-	if (dict == NULL)
-		return (EIO);
 
-	*dictp = dict;
-	return (0);
+	if (error)
+		return (error);
+
+	return (prop_dictionary_unpack_pref(&pref, dictp));
 }
 #endif /* !_KERNEL && !_STANDALONE */
 
 #if defined(_KERNEL)
+#include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/resource.h>
+
+#include <uvm/uvm.h>
 
 /*
  * prop_dictionary_copyin_ioctl --
  *	Copy in a dictionary sent with an ioctl.
  */
 int
-prop_dictionary_copyin_ioctl(const struct plistref *pref, int ioctlflags,
+prop_dictionary_copyin_ioctl(const struct plistref *pref, const u_long cmd,
 			     prop_dictionary_t *dictp)
 {
 	prop_dictionary_t dict;
 	char *buf;
 	int error;
 
+	if ((cmd & IOC_IN) == 0)
+		return (EFAULT);
+
 	/*
 	 * Allocate an extra byte so we can guarantee NUL-termination.
 	 * XXX Some sanity check on the size?
 	 */
 	buf = malloc(pref->pref_len + 1, M_TEMP, M_WAITOK);
-	error = ioctl_copyin(ioctlflags, pref->pref_plist, buf, pref->pref_len);
+	error = copyin(pref->pref_plist, buf, pref->pref_len);
 	if (error) {
 		free(buf, M_TEMP);
 		return (error);
@@ -172,24 +223,41 @@ prop_dictionary_copyin_ioctl(const struct plistref *pref, int ioctlflags,
  *	Copy out a dictionary being received with an ioctl.
  */
 int
-prop_dictionary_copyout_ioctl(struct plistref *pref, prop_dictionary_t dict,
-			      int ioctlflags)
+prop_dictionary_copyout_ioctl(struct plistref *pref, const u_long cmd,
+			      prop_dictionary_t dict)
 {
+	struct lwp *l = curlwp;		/* XXX */
+	struct proc *p = l->l_proc;
 	char *buf;
 	size_t len;
 	int error = 0;
+	vaddr_t uaddr;
+
+	if ((cmd & IOC_OUT) == 0)
+		return (EFAULT);
 
 	buf = prop_dictionary_externalize(dict);
 	if (buf == NULL)
 		return (ENOMEM);
-	
+
 	len = strlen(buf) + 1;
-	if (len <= pref->pref_len)
-		error = ioctl_copyout(ioctlflags, buf,
-				      __UNCONST(pref->pref_plist), len);
-	if (error == 0)
-		pref->pref_len = len;
+
+	error = uvm_mmap(&p->p_vmspace->vm_map,
+			 &uaddr, round_page(len),
+			 VM_PROT_READ|VM_PROT_WRITE,
+			 VM_PROT_READ|VM_PROT_WRITE,
+			 MAP_PRIVATE|MAP_ANON,
+			 NULL, 0,
+			 p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 	
+	if (error == 0) {
+		error = copyout(buf, (char *)uaddr, len);
+		if (error == 0) {
+			pref->pref_plist = (char *)uaddr;
+			pref->pref_len   = len;
+		}
+	}
+
 	free(buf, M_TEMP);
 
 	return (error);

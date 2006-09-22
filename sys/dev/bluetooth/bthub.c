@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.3 2006/09/10 15:45:56 plunky Exp $	*/
+/*	$NetBSD: bthub.c,v 1.4 2006/09/22 04:20:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.3 2006/09/10 15:45:56 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.4 2006/09/22 04:20:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -157,7 +157,7 @@ bthubioctl(dev_t devno, unsigned long cmd, caddr_t data, int flag, struct lwp *l
 	case BTDEV_ATTACH:
 	case BTDEV_DETACH:
 		/* load dictionary */
-		err = prop_dictionary_copyin_ioctl((const struct plistref *)data, flag, &dict);
+		err = prop_dictionary_copyin_ioctl((const struct plistref *)data, cmd, &dict);
 		if (err == 0) {
 			err = bthub_pioctl(devno, cmd, dict, flag, l);
 			prop_object_release(dict);

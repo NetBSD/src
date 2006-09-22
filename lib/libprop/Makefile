@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2006/08/21 04:13:28 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 2006/09/22 04:20:23 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -21,6 +21,7 @@ MLINKS+= prop_dictionary_copyin_ioctl.9 prop_dictionary_copyout_ioctl.9
 
 MAN+=	prop_dictionary_send_ioctl.3
 MLINKS+= prop_dictionary_send_ioctl.3 prop_dictionary_recv_ioctl.3
+MLINKS+= prop_dictionary_send_ioctl.3 prop_dictionary_sendrecv_ioctl.3
 
 MLINKS+= prop_array.3 prop_array_add.3
 MLINKS+= prop_array.3 prop_array_capacity.3
