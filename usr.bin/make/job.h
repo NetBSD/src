@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.28 2006/06/29 22:01:17 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.29 2006/09/22 19:07:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -151,6 +151,12 @@ typedef struct Job {
 			     * saved when the job has been run */
     FILE 	*cmdFILE;   /* When creating the shell script, this is
 			     * where the commands go */
+    short       job_status; /* status of the job entry */
+#define JOB_ST_FREE	0	/* Job is available */
+#define JOB_ST_SETUP	1	/* Job is allocated but otherwise invalid */
+#define JOB_ST_RUNNING	2	/* Job is running, pid valid */
+#define JOB_ST_STOPPED	3	/* Job is stopped (ie after ^Z) */
+#define JOB_ST_FINISHED	4	/* Job is done (ie after SIGCHILD) */
     short      	flags;	    /* Flags to control treatment of job */
 #define	JOB_IGNERR	0x001	/* Ignore non-zero exits */
 #define	JOB_SILENT	0x002	/* no output */
