@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.139 2006/08/14 21:35:38 rpaulo Exp $
+# $NetBSD: mi,v 1.140 2006/09/22 15:38:43 christos Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/american			misc-reference-share	share
@@ -492,6 +492,7 @@
 ./usr/share/examples/apm/script			misc-amd-examples	share
 ./usr/share/examples/dhcp/dhcpd.conf		misc-dhcpd-examples	share
 ./usr/share/examples/disktab/disktab		misc-sys-examples	share
+./usr/share/examples/emul/linux/etc/LINUX_MAKEDEV	misc-sys-examples	share
 ./usr/share/examples/emul/svr4/etc/SVR4_MAKEDEV	misc-sys-examples	share
 ./usr/share/examples/emul/svr4/etc/netconfig	misc-sys-examples	share
 ./usr/share/examples/emul/svr4/etc/nsswitch.conf	misc-sys-examples	share
