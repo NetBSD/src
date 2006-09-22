@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.5 2006/09/19 21:42:30 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.6 2006/09/22 15:37:57 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.5 2006/09/19 21:42:30 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.6 2006/09/22 15:37:57 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -399,12 +399,14 @@ secmodel_bsd44_securelevel_machdep_cb(kauth_cred_t cred, kauth_action_t action,
     void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
         int result;
+	enum kauth_machdep_req req;
 
         result = KAUTH_RESULT_DENY;
+	req = (enum kauth_machdep_req)arg0;
 
         switch (action) {
 	case KAUTH_MACHDEP_X86:
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_MACHDEP_X86_IOPL:
 		case KAUTH_REQ_MACHDEP_X86_IOPERM:
 			if (securelevel < 2)
