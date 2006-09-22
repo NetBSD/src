@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16.6.2 2006/09/22 17:45:37 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.16.6.3 2006/09/22 17:54:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -70,6 +70,13 @@
 #define	SI_SOFTSERIAL	3
 
 #define	SI_NQUEUES	4
+
+#define	SI_QUEUENAMES {							\
+	"misc",								\
+	"clock",							\
+	"net",								\
+	"serial",							\
+}
 
 /* Interrupt sharing types. */
 #define IST_NONE	0	/* none */
