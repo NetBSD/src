@@ -1,3 +1,7 @@
-/* $NetBSD: syscall.S,v 1.1 2006/09/10 21:22:34 cherry Exp $ */
+/* $NetBSD: syscall.S,v 1.2 2006/09/22 12:09:25 cherry Exp $ */
 	
-/* XXX:	 Stub */
+#include "SYS.h"
+
+	
+RSYSCALL(syscall)
+
