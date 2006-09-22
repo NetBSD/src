@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.76 2006/09/05 00:29:36 rpaulo Exp $	*/
+/*	$NetBSD: inet.c,v 1.77 2006/09/22 23:21:52 elad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.76 2006/09/05 00:29:36 rpaulo Exp $");
+__RCSID("$NetBSD: inet.c,v 1.77 2006/09/22 23:21:52 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,7 +192,7 @@ protopr(off, name)
 
 		/* get dynamic pcblist node */
 		if (sysctlnametomib(mibname, mib, &namelen) == -1)
-			err(1, "sysctlnametomib");
+			err(1, "sysctlnametomib: %s", mibname);
 
 		if (sysctl(mib, sizeof(mib) / sizeof(*mib), NULL, &size,
 			   NULL, 0) == -1)
