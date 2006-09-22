@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.11 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.12 2006/09/22 15:15:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.11 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.12 2006/09/22 15:15:56 christos Exp $");
 
 #include "opt_ptm.h"
 
@@ -321,8 +321,24 @@ ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	switch(minor(dev)) {
 	case 0:		/* /dev/ptmx */
+	case 2:		/* /emul/linux/dev/ptmx */
 		if ((error = pty_alloc_master(l, &fd, &dev)) != 0)
 			return error;
+		if (minor(dev) == 2) {
+			/*
+			 * Linux ptyfs grants the pty right here.
+			 * Handle this case here, instead of writing
+			 * a new linux module.
+			 */
+			if ((error = pty_grant_slave(l, dev)) != 0) {
+				struct file *fp =
+				    fd_getfile(l->l_proc->p_fd, fd);
+				FILE_UNUSE(fp, l);
+				fdremove(l->l_proc->p_fd, fd);
+				ffree(fp);
+				return error;
+			}
+		}
 		curlwp->l_dupfd = fd;
 		return EMOVEFD;
 	case 1:		/* /dev/ptm */
@@ -369,6 +385,7 @@ ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	}
 bad:
 	fp = fd_getfile(p->p_fd, cfd);
+	FILE_UNUSE(fp, l);
 	fdremove(p->p_fd, cfd);
 	ffree(fp);
 	return error;
