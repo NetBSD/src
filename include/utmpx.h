@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.h,v 1.13 2005/09/13 01:44:32 christos Exp $	 */
+/*	$NetBSD: utmpx.h,v 1.14 2006/09/22 21:31:55 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -73,6 +73,16 @@
 #if defined(_NETBSD_SOURCE)
 #define ACCOUNTING	9
 #define SIGNATURE	10
+#define DOWN_TIME	11
+
+/*
+ * Strings placed in the ut_line field to indicate special type entries
+ */
+#define	RUNLVL_MSG	"run-level %c"
+#define	BOOT_MSG	"system boot"
+#define	OTIME_MSG	"old time"
+#define	NTIME_MSG	"new time"
+#define	DOWN_MSG	"system down"
 #endif
 
 /*
