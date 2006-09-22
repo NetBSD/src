@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.10 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.11 2006/09/22 17:45:21 xtraeme Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.10 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.11 2006/09/22 17:45:21 xtraeme Exp $");
 
 /*
  * kernel include files.
@@ -85,6 +85,34 @@ int fc_bmapcalls;		/* # of times pcbmap was called		 */
 int fc_lmdistance[LMMAX];	/* counters for how far off the last
 				 * cluster mapped entry was. */
 int fc_largedistance;		/* off by more than LMMAX		 */
+int fc_wherefrom, fc_whereto, fc_lastclust;
+int pm_fatblocksize;
+
+#ifdef MSDOSFS_DEBUG
+void print_fat_stats(void);
+
+void
+print_fat_stats(void)
+{
+	int i;
+
+	printf("fc_fileextends=%d fc_lfcempty=%d fc_bmapcalls=%d "
+	    "fc_largedistance=%d [%d->%d=%d] fc_lastclust=%d pm_fatblocksize=%d\n",
+	    fc_fileextends, fc_lfcempty, fc_bmapcalls, fc_largedistance,
+	    fc_wherefrom, fc_whereto, fc_whereto-fc_wherefrom,
+	    fc_lastclust, pm_fatblocksize);
+	
+	fc_fileextends = fc_lfcempty = fc_bmapcalls = 0;
+	fc_wherefrom = fc_whereto = fc_lastclust = 0;
+    
+	for (i = 0; i < LMMAX; i++) {
+		printf("%d:%d ", i, fc_lmdistance[i]);
+	fc_lmdistance[i] = 0;
+	}
+
+	printf("\n");
+}
+#endif
 
 static void fatblock(struct msdosfsmount *, u_long, u_long *, u_long *,
 			  u_long *);
@@ -117,6 +145,8 @@ fatblock(pmp, ofs, bnp, sizep, bop)
 		*sizep = size;
 	if (bop)
 		*bop = ofs % pmp->pm_fatblocksize;
+
+	pm_fatblocksize =  pmp->pm_fatblocksize;
 }
 
 /*
@@ -208,9 +238,12 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 	 */
 	i = 0;
 	fc_lookup(dep, findcn, &i, &cn);
-	if ((bn = findcn - i) >= LMMAX)
+	if ((bn = findcn - i) >= LMMAX) {
 		fc_largedistance++;
-	else
+		fc_wherefrom = i;
+		fc_whereto = findcn;
+		fc_lastclust = dep->de_fc[FC_LASTFC].fc_frcn;
+	} else
 		fc_lmdistance[bn]++;
 
 	/*
@@ -1012,6 +1045,8 @@ extendfile(dep, count, bpp, ncp, flags)
 		if (error != E2BIG)
 			return (error);
 	}
+
+	fc_last_to_nexttolast(dep);
 
 	while (count > 0) {
 
