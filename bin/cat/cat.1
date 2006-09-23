@@ -1,4 +1,4 @@
-.\"	$NetBSD: cat.1,v 1.30 2003/08/27 16:27:35 junyoung Exp $
+.\"	$NetBSD: cat.1,v 1.31 2006/09/23 00:01:39 elad Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)cat.1	8.3 (Berkeley) 5/2/95
 .\"
-.Dd May 2, 1995
+.Dd September 23, 2006
 .Dt CAT 1
 .Os
 .Sh NAME
@@ -115,6 +115,56 @@ Non-ascii characters (with the high bit set) are printed as
 The
 .Nm
 utility exits 0 on success, and \*[Gt]0 if an error occurs.
+.Sh EXAMPLES
+The command:
+.Bd -literal -offset indent
+.Ic cat file1
+.Ed
+.Pp
+will print the contents of
+.Ar file1
+to the standard output.
+.Pp
+The command:
+.Bd -literal -offset indent
+.Ic cat file1 file2 > file3
+.Ed
+.Pp
+will sequentially print the contents of
+.Ar file1
+and
+.Ar file2
+to the file
+.Ar file3 ,
+truncating
+.Ar file3
+if it already exists.
+See the manual page for your shell (i.e.,
+.Xr sh 1 )
+for more information on redirection.
+.Pp
+The command:
+.Bd -literal -offset indent
+.Ic cat file1 - file2 - file3
+.Ed
+.Pp
+will print the contents of
+.Ar file1 ,
+print data it receives from the standard input until it receives an
+.Dv EOF
+.Pq Sq ^D
+character, print the contents of
+.Ar file2 ,
+read and output contents of the standard input again, then finally output
+the contents of
+.Ar file3 .
+Note that if the standard input referred to a file, the second dash
+on the command-line would have no effect, since the entire contents of the file
+would have already been read and printed by
+.Nm
+when it encountered the first
+.Ql \&-
+operand.
 .Sh SEE ALSO
 .Xr head 1 ,
 .Xr hexdump 1 ,
