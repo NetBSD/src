@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.35 2006/07/21 16:48:52 ad Exp $	*/
+/*	$NetBSD: magma.c,v 1.36 2006/09/23 04:45:49 jmcneill Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.35 2006/07/21 16:48:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.36 2006/09/23 04:45:49 jmcneill Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -505,7 +505,7 @@ magma_attach(parent, self, aux)
  *
  *  returns 1 if it handled it, otherwise 0
  *
- *  runs at interrupt priority
+ *  runs at IPL_SERIAL
  */
 int
 magma_hard(arg)
@@ -726,9 +726,7 @@ magma_hard(arg)
 /*
  * magma soft interrupt handler
  *
- *  returns 1 if it handled it, 0 otherwise
- *
- *  runs at spltty()
+ * runs at IPL_SOFTSERIAL
  */
 void
 magma_soft(arg)
@@ -777,7 +775,7 @@ magma_soft(arg)
 			(*tp->t_linesw->l_rint)(data, tp);
 		}
 
-		s = splhigh();	/* block out hard interrupt routine */
+		s = splserial();	/* block out hard interrupt routine */
 		flags = mp->mp_flags;
 		CLR(mp->mp_flags, MTTYF_DONE | MTTYF_CARRIER_CHANGED | MTTYF_RING_OVERFLOW);
 		splx(s);	/* ok */
@@ -814,7 +812,7 @@ chkbpp:
 		if( !ISSET(mp->mp_flags, MBPPF_OPEN) )
 			continue;
 
-		s = splhigh();
+		s = splserial();
 		flags = mp->mp_flags;
 		CLR(mp->mp_flags, MBPPF_WAKEUP);
 		splx(s);
