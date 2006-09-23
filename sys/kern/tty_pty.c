@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.93 2006/08/03 22:06:55 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.94 2006/09/23 15:36:12 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.93 2006/08/03 22:06:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.94 2006/09/23 15:36:12 xtraeme Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.93 2006/08/03 22:06:55 christos Exp $"
 #include <sys/tty.h>
 #include <sys/stat.h>
 #include <sys/file.h>
-#include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
