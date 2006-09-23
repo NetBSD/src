@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.31 2006/09/23 17:17:04 sketch Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.32 2006/09/23 17:38:42 sketch Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000\n\
 Copyright (c) 1991, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.31 2006/09/23 17:17:04 sketch Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.32 2006/09/23 17:38:42 sketch Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -512,14 +512,15 @@ void
 install(const char *from, const char *to)
 {
 	char buf[MAXPATHLEN];
+	char errbuf[BUFSIZ];
 	int sverrno;
 
 	snprintf(buf, sizeof(buf), "%s%s", prefix, to);
 	if (rename(from, buf)) {
 		sverrno = errno;
-		(void)snprintf(buf, sizeof(buf), "%s to %s", from, buf);
+		(void)snprintf(errbuf, sizeof(errbuf), "%s to %s", from, buf);
 		errno = sverrno;
-		error(buf);
+		error(errbuf);
 	}
 }
 
