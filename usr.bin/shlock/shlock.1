@@ -1,4 +1,4 @@
-.\"	$NetBSD: shlock.1,v 1.8 2004/07/13 12:14:07 wiz Exp $
+.\"	$NetBSD: shlock.1,v 1.9 2006/09/23 12:55:22 daniel Exp $
 .\"
 .Dd June 29, 1997
 .Dt SHLOCK 1
@@ -30,7 +30,7 @@ create a new one.
 .Pp
 .Nm
 uses the
-.Xr rename 2
+.Xr link 2
 system call to make the final target lock file, which is an atomic
 operation (i.e. "dot locking", so named for this mechanism's original
 use for locking system mailboxes).
