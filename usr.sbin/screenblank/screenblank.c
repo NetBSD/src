@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.23 2005/11/11 15:14:24 peter Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.24 2006/09/23 20:12:15 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996-2002 \
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.23 2005/11/11 15:14:24 peter Exp $");
+__RCSID("$NetBSD: screenblank.c,v 1.24 2006/09/23 20:12:15 elad Exp $");
 #endif
 
 #include <sys/types.h>
@@ -105,6 +105,7 @@ main(int argc, char *argv[])
 	struct sigaction sa;
 	struct stat st;
 	int ch, change, fflag = 0, kflag = 0, mflag = 0, state;
+	int bflag = 0, uflag = 0;
 	const char *kbd, *mouse, *display;
 
 	LIST_INIT(&ds_list);
@@ -117,8 +118,13 @@ main(int argc, char *argv[])
 	timo_off.tv_sec = 0;
 	timo_off.tv_nsec = 250000000;
 
-	while ((ch = getopt(argc, argv, "d:e:f:i:km")) != -1) {
+	while ((ch = getopt(argc, argv, "bd:e:f:i:kmu")) != -1) {
 		switch (ch) {
+		case 'b':
+			bflag = 1;
+			uflag = 0;
+			break;
+
 		case 'd':
 			cvt_arg(optarg, &timo_on);
 			break;
@@ -146,6 +152,11 @@ main(int argc, char *argv[])
 			if (kflag || mflag)
 				usage();
 			mflag = 1;
+			break;
+
+		case 'u':
+			uflag = 1;
+			bflag = 0;
 			break;
 
 		default:
@@ -188,6 +199,14 @@ main(int argc, char *argv[])
 		display = _PATH_FB;
 	}
 #endif
+
+	/*
+	 * Handle -b and -u modes.
+	 */
+	if (bflag || uflag) {
+		change_state(bflag ? videooff : videoon);
+		exit(0);
+	}
 
 	/*
 	 * Add the keyboard, mouse, and default framebuffer devices
@@ -417,7 +436,7 @@ cvt_arg(char *arg, struct timespec *tvp)
 	tvp->tv_sec = seconds;
 	if (factor > 1)
 		nanoseconds *= factor;
-		
+
 	tvp->tv_nsec = nanoseconds;
 }
 
