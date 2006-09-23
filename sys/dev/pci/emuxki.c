@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.46 2006/08/30 00:51:48 christos Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.47 2006/09/23 01:19:18 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.46 2006/08/30 00:51:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.47 2006/09/23 01:19:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -452,6 +452,7 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 		return;
 	}
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
  /* XXX it's unknown whether APS is made from Audigy as well */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_AUDIGY) {
@@ -479,7 +480,6 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 		emuxki_pci_shutdown(sc);
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 #if 0
 	sc->rsourcectl.dev =
 	    sc->codecif->vtbl->get_portnum_by_name(sc->codec_if, AudioCrecord,
