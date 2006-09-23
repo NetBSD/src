@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.202 2006/09/08 20:58:57 elad Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.203 2006/09/23 22:01:04 manu Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,9 +75,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.202 2006/09/08 20:58:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.203 2006/09/23 22:01:04 manu Exp $");
 
 #include "opt_defcorename.h"
+#include "opt_ktrace.h"
 #include "ksyms.h"
 
 #include <sys/param.h>
@@ -91,6 +92,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.202 2006/09/08 20:58:57 elad Exp $
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
 #include <machine/stdarg.h>
 
 #define	MAXDESCLEN	1024
@@ -178,34 +182,74 @@ char defcorename[MAXPATHLEN] = DEFCORENAME;
  * ********************************************************************
  */
 static inline int
-sysctl_copyin(const struct lwp *l, const void *uaddr, void *kaddr, size_t len)
+sysctl_copyin(struct lwp *l, const void *uaddr, void *kaddr, size_t len)
 {
+	int error;
 
-	if (l != NULL)
-		return (copyin(uaddr, kaddr, len));
-	else
-		return (kcopy(uaddr, kaddr, len));
+	if (l != NULL) {
+		error = copyin(uaddr, kaddr, len);
+#ifdef KTRACE
+		if (!error && KTRPOINT(l->l_proc, KTR_MIB)) {
+			struct iovec iov;
+
+			iov.iov_base = (void *)(vaddr_t)uaddr;
+			iov.iov_len = len;
+			ktrgenio(l, -1, UIO_WRITE, &iov, len, error);
+		}
+#endif
+
+	} else {
+		error = kcopy(uaddr, kaddr, len);
+	}
+
+	return error;
 }
 
 static inline int
-sysctl_copyout(const struct lwp *l, const void *kaddr, void *uaddr, size_t len)
+sysctl_copyout(struct lwp *l, const void *kaddr, void *uaddr, size_t len)
 {
+	int error;
 
-	if (l != NULL)
-		return (copyout(kaddr, uaddr, len));
-	else
-		return (kcopy(kaddr, uaddr, len));
+	if (l != NULL) {
+		error = copyout(kaddr, uaddr, len);
+#ifdef KTRACE
+		if (!error && KTRPOINT(l->l_proc, KTR_MIB)) {
+			struct iovec iov;
+
+			iov.iov_base = (void *)(vaddr_t)uaddr;
+			iov.iov_len = len;
+			ktrgenio(l, -1, UIO_READ, &iov, len, error);
+		}
+#endif
+	} else {
+		error = kcopy(kaddr, uaddr, len);
+	}
+	
+	return error;
 }
 
 static inline int
-sysctl_copyinstr(const struct lwp *l, const void *uaddr, void *kaddr,
+sysctl_copyinstr(struct lwp *l, const void *uaddr, void *kaddr,
 		 size_t len, size_t *done)
 {
+	int error;
 
-	if (l != NULL)
-		return (copyinstr(uaddr, kaddr, len, done));
-	else
-		return (copystr(uaddr, kaddr, len, done));
+	if (l != NULL) {
+		error = copyinstr(uaddr, kaddr, len, done);
+#ifdef KTRACE
+		if (!error && KTRPOINT(l->l_proc, KTR_MIB)) {
+			struct iovec iov;
+
+			iov.iov_base = (void *)(vaddr_t)uaddr;
+			iov.iov_len = len;
+			ktrgenio(l, -1, UIO_WRITE, &iov, len, error);
+		}
+#endif
+	} else {
+		error = copystr(uaddr, kaddr, len, done);
+	}
+
+	return error;
 }
 
 /*
@@ -284,6 +328,10 @@ sys___sysctl(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
+#ifdef KTRACE
+	if (KTRPOINT(l->l_proc, KTR_MIB)) 
+		ktrmib(l, name, SCARG(uap, namelen));
+#endif
 	/*
 	 * wire old so that copyout() is less likely to fail?
 	 */
@@ -379,7 +427,8 @@ sysctl_dispatch(SYSCTLFN_ARGS)
 
 	if (rnode && SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
 		printf("sysctl_dispatch: rnode %p wrong version\n", rnode);
-		return (EINVAL);
+		error = EINVAL;
+		goto out;
 	}
 
 	fn = NULL;
@@ -436,6 +485,7 @@ sysctl_dispatch(SYSCTLFN_ARGS)
 	else if (error == 0)
 		error = EOPNOTSUPP;
 
+out:
 	return (error);
 }
 
