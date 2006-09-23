@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.196.2.2 2006/09/14 21:16:33 riz Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.196.2.3 2006/09/23 23:46:02 snj Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.196.2.2 $"
+#ident 		"GENERIC-$Revision: 1.196.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -31,7 +31,7 @@ options 	ENHANCED_SPEEDSTEP
 options 	POWERNOW_K7
 
 # AMD PowerNow! and Cool`n'Quiet technology
-options         POWERNOW_K8
+options 	POWERNOW_K8
 
 options 	MTRR		# memory-type range register syscall support
 #options 	PERFCTRS	# performance-monitoring counters support
