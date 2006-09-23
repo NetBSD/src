@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.26 2006/07/04 00:30:23 christos Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.27 2006/09/23 17:04:26 fvdl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -333,5 +333,6 @@ struct acpi_quirk {
 #define ACPI_QUIRK_BROKEN	0x00000001	/* totally broken */
 #define ACPI_QUIRK_BADPCI	0x00000002	/* bad PCI hierarchy */
 #define ACPI_QUIRK_BADBBN	0x00000004	/* _BBN broken */
+#define ACPI_QUIRK_IRQ0		0x00000008	/* bad 0->2 irq override */
 
 int acpi_find_quirks(void);
