@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.33 2006/09/23 22:41:25 dyoung Exp $	*/
+/*	$NetBSD: show.c,v 1.34 2006/09/23 23:01:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.33 2006/09/23 22:41:25 dyoung Exp $");
+__RCSID("$NetBSD: show.c,v 1.34 2006/09/23 23:01:01 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -250,7 +250,8 @@ p_rtentry(struct rt_msghdr *rtm)
 	static int masks_done, banner_printed;
 #endif
 	static int old_af;
-	int af = 0, interesting = RTF_UP | RTF_GATEWAY | RTF_HOST | RTF_REJECT;
+	int af = 0, interesting = RTF_UP | RTF_GATEWAY | RTF_HOST |
+	    RTF_REJECT | RTF_LLINFO;
 
 #ifdef notdef
 	/* for the moment, netmasks are skipped over */
