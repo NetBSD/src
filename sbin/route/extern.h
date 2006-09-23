@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 2006/09/07 02:40:31 dogcow Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 2006/09/23 22:41:25 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -33,6 +33,7 @@ struct sockaddr;
 struct sockaddr_x25;
 struct sockaddr_ns;
 
+void parse_show_opts(int, char **, int *, int *, const char **, int);
 /* show.c */
 void show(int, char **);
 

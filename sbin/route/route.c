@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.103 2006/09/23 21:55:47 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.104 2006/09/23 22:41:25 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.103 2006/09/23 21:55:47 dyoung Exp $");
+__RCSID("$NetBSD: route.c,v 1.104 2006/09/23 22:41:25 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -243,43 +243,17 @@ main(int argc, char **argv)
 static int
 flushroutes(int argc, char *argv[], int doall)
 {
+	struct sockaddr *sa;
 	size_t needed;
-	int mib[6], rlen, seqno;
+	int flags, mib[6], rlen, seqno;
 	char *buf, *next, *lim;
+	const char *afname;
 	struct rt_msghdr *rtm;
 
+	flags = 0;
 	af = AF_UNSPEC;
 	shutdown(sock, SHUT_RD); /* Don't want to read back our messages */
-	if (argc > 1) {
-		argv++;
-		if (argc == 2 && **argv == '-') {
-			switch (keyword(*argv + 1)) {
-			case K_INET:
-				af = AF_INET;
-				break;
-#ifdef INET6
-			case K_INET6:
-				af = AF_INET6;
-				break;
-#endif
-#ifndef SMALL
-			case K_ATALK:
-				af = AF_APPLETALK;
-				break;
-			case K_ISO:
-			case K_OSI:
-				af = AF_ISO;
-				break;
-#endif /* SMALL */
-			case K_LINK:
-				af = AF_LINK;
-				break;
-			default:
-				goto bad;
-			}
-		} else
-bad:			usage(*argv);
-	}
+	parse_show_opts(argc, argv, &af, &flags, &afname, 0);
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
 	mib[2] = 0;		/* protocol */
@@ -299,24 +273,23 @@ bad:			usage(*argv);
 	if (verbose) {
 		(void)printf("Examining routing table from sysctl\n");
 		if (af != AF_UNSPEC)
-			printf("(address family %s)\n", (*argv + 1));
+			printf("(address family %s)\n", afname);
 	}
 	if (needed == 0)
 		return 0;
 	seqno = 0;		/* ??? */
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
+		sa = (struct sockaddr *)(rtm + 1);
 		if (verbose)
 			print_rtmsg(rtm, rtm->rtm_msglen);
+		if ((rtm->rtm_flags & flags) != flags)
+			continue;
 		if (!(rtm->rtm_flags & (RTF_GATEWAY | RTF_STATIC |
 					RTF_LLINFO)) && !doall)
 			continue;
-		if (af != AF_UNSPEC) {
-			struct sockaddr *sa = (struct sockaddr *)(rtm + 1);
-
-			if (sa->sa_family != af)
-				continue;
-		}
+		if (af != AF_UNSPEC && sa->sa_family != af)
+			continue;
 		if (debugonly)
 			continue;
 		rtm->rtm_type = RTM_DELETE;
@@ -336,10 +309,10 @@ bad:			usage(*argv);
 		if (verbose)
 			print_rtmsg(rtm, rlen);
 		else {
-			struct sockaddr *sa = (struct sockaddr *)(rtm + 1);
 			(void)printf("%-20.20s ",
 			    routename(sa, NULL, rtm->rtm_flags));
-			sa = (struct sockaddr *)(ROUNDUP(sa->sa_len) + (char *)sa);
+			sa = (struct sockaddr *)(ROUNDUP(sa->sa_len) +
+			    (char *)sa);
 			(void)printf("%-20.20s ",
 			    routename(sa, NULL, RTF_HOST));
 			(void)printf("done\n");
