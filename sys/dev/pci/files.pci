@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.268 2006/09/09 16:17:50 riz Exp $
+#	$NetBSD: files.pci,v 1.269 2006/09/23 05:12:22 macallan Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -763,6 +763,11 @@ attach	radeonfb at pci
 file	dev/pci/radeonfb.c	radeonfb
 file	dev/pci/radeonfb_i2c.c	radeonfb
 file	dev/pci/radeonfb_bios.c	radeonfb
+
+# Chips & Technologies 65550 framebuffer console driver
+device	chipsfb: wsemuldisplaydev, rasops8, vcons, videomode
+attach	chipsfb at pci
+file	dev/pci/chipsfb.c		chipsfb
 
 # 3Com 3c990
 device	txp: ether, ifnet, arp

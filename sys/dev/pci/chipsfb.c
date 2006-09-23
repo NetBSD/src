@@ -1,0 +1,985 @@
+/*	$NetBSD: chipsfb.c,v 1.1 2006/09/23 05:12:22 macallan Exp $	*/
+
+/*
+ * Copyright (c) 2006 Michael Lorenz
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/* 
+ * A console driver for Chips & Technologies 65550 graphics controllers
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.1 2006/09/23 05:12:22 macallan Exp $");
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/device.h>
+#include <sys/malloc.h>
+#include <sys/callout.h>
+#include <sys/lwp.h>
+#include <sys/kauth.h>
+
+#include <uvm/uvm_extern.h>
+
+#if defined(macppc) || defined (sparc64) || defined(ofppc)
+#define HAVE_OPENFIRMWARE
+#endif
+
+#ifdef HAVE_OPENFIRMWARE
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pci.h>
+#endif
+
+#include <dev/videomode/videomode.h>
+
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
+#include <dev/pci/pciio.h>
+#include <dev/pci/chipsfbreg.h>
+
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/wscons/wsconsio.h>
+#include <dev/wsfont/wsfont.h>
+#include <dev/rasops/rasops.h>
+#include <dev/wscons/wsdisplay_vconsvar.h>
+
+#include <dev/i2c/i2cvar.h>
+#include <dev/i2c/i2c_bitbang.h>
+#include <dev/i2c/edidvar.h>
+
+#include "opt_wsemul.h"
+
+struct chipsfb_softc {
+	struct device sc_dev;
+	pci_chipset_tag_t sc_pc;
+	pcitag_t sc_pcitag;
+
+	bus_space_tag_t sc_memt;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_memh;	
+
+	bus_space_tag_t sc_fbt;
+	bus_space_tag_t sc_ioregt;
+	bus_space_handle_t sc_fbh;	
+	bus_space_handle_t sc_ioregh;	
+	bus_addr_t sc_fb, sc_ioreg;
+	bus_size_t sc_fbsize, sc_ioregsize;
+
+	void *sc_ih;
+	
+	size_t memsize;
+
+	int bits_per_pixel;
+	int width, height, linebytes;
+
+	int sc_mode;
+	uint32_t sc_bg;
+		
+	u_char sc_cmap_red[256];
+	u_char sc_cmap_green[256];
+	u_char sc_cmap_blue[256];	
+	int sc_dacw;
+
+	/* I2C stuff */
+	struct i2c_controller sc_i2c;
+	uint8_t sc_edid[1024];
+	int sc_edidbytes;	/* number of bytes read from the monitor */
+
+	struct vcons_data vd;
+};
+
+static struct vcons_screen chipsfb_console_screen;
+
+extern const u_char rasops_cmap[768];
+
+static int	chipsfb_match(struct device *, struct cfdata *, void *);
+static void	chipsfb_attach(struct device *, struct device *, void *);
+
+CFATTACH_DECL(chipsfb, sizeof(struct chipsfb_softc), chipsfb_match, 
+    chipsfb_attach, NULL, NULL);
+
+static int	chipsfb_is_console(struct pci_attach_args *);
+static void 	chipsfb_init(struct chipsfb_softc *);	
+
+static void	chipsfb_cursor(void *, int, int, int);
+static void	chipsfb_copycols(void *, int, int, int, int);
+static void	chipsfb_erasecols(void *, int, int, int, long);
+static void	chipsfb_copyrows(void *, int, int, int);
+static void	chipsfb_eraserows(void *, int, int, long);
+
+#if 0
+static int	chipsfb_allocattr(void *, int, int, int, long *);
+static void	chipsfb_scroll(void *, void *, int);
+static int	chipsfb_load_font(void *, void *, struct wsdisplay_font *);
+#endif
+
+static int	chipsfb_putcmap(struct chipsfb_softc *,
+			    struct wsdisplay_cmap *);
+static int 	chipsfb_getcmap(struct chipsfb_softc *,
+			    struct wsdisplay_cmap *);
+static int 	chipsfb_putpalreg(struct chipsfb_softc *, uint8_t, uint8_t,
+			    uint8_t, uint8_t);
+
+static void	chipsfb_bitblt(struct chipsfb_softc *, int, int, int, int,
+			    int, int, uint8_t);
+static void	chipsfb_rectfill(struct chipsfb_softc *, int, int, int, int,
+			    int);
+#if 0
+static void	chipsfb_putchar(void *, int, int, u_int, long);
+static void	chipsfb_setup_mono(struct chipsfb_softc *, int, int, int,
+			    int, uint32_t, uint32_t); 
+static void	chipsfb_feed_line(struct chipsfb_softc *, int, uint8_t *);
+#endif
+#ifdef chipsfb_DEBUG
+static void	chipsfb_showpal(struct chipsfb_softc *);
+#endif
+static void	chipsfb_restore_palette(struct chipsfb_softc *);
+
+static void	chipsfb_wait_idle(struct chipsfb_softc *);
+
+static int	chipsfb_intr(void *);
+
+struct wsscreen_descr chipsfb_defaultscreen = {
+	"default",
+	0, 0,
+	NULL,
+	8, 16,
+	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
+};
+
+const struct wsscreen_descr *_chipsfb_scrlist[] = {
+	&chipsfb_defaultscreen,
+	/* XXX other formats, graphics screen? */
+};
+
+struct wsscreen_list chipsfb_screenlist = {
+	sizeof(_chipsfb_scrlist) / sizeof(struct wsscreen_descr *), _chipsfb_scrlist
+};
+
+static int	chipsfb_ioctl(void *, void *, u_long, caddr_t, int,
+		    struct lwp *);
+static paddr_t	chipsfb_mmap(void *, void *, off_t, int);
+static void	chipsfb_clearscreen(struct chipsfb_softc *);
+static void	chipsfb_init_screen(void *, struct vcons_screen *, int,
+			    long *);
+
+
+struct wsdisplay_accessops chipsfb_accessops = {
+	chipsfb_ioctl,
+	chipsfb_mmap,
+	NULL,	/* load_font */
+	NULL,	/* polls */
+	NULL,	/* scroll */
+};
+
+/*
+ * Inline functions for getting access to register aperture.
+ */
+static inline void
+chipsfb_write32(struct chipsfb_softc *sc, uint32_t reg, uint32_t val)
+{
+	bus_space_write_4(sc->sc_fbt, sc->sc_fbh, reg, val);
+}
+
+static inline uint32_t
+chipsfb_read32(struct chipsfb_softc *sc, uint32_t reg) 
+{
+	return bus_space_read_4(sc->sc_fbt, sc->sc_fbh, reg);
+}
+
+static inline void
+chipsfb_write_vga(struct chipsfb_softc *sc, uint32_t reg,  uint8_t val)
+{ 
+	bus_space_write_1(sc->sc_iot, sc->sc_ioregh, reg, val); 
+}
+
+static inline uint8_t
+chipsfb_read_vga(struct chipsfb_softc *sc, uint32_t reg)
+{ 
+	return bus_space_read_1(sc->sc_iot, sc->sc_ioregh, reg); 
+}
+
+static inline uint8_t
+chipsfb_read_indexed(struct chipsfb_softc *sc, uint32_t reg, uint8_t index)
+{
+
+	chipsfb_write_vga(sc, reg & 0xfffe, index);
+	return chipsfb_read_vga(sc, reg | 0x0001);
+}
+
+static inline void
+chipsfb_write_indexed(struct chipsfb_softc *sc, uint32_t reg, uint8_t index, 
+    uint8_t val)
+{
+
+	chipsfb_write_vga(sc, reg & 0xfffe, index);
+	chipsfb_write_vga(sc, reg | 0x0001, val);
+}
+
+static void
+chipsfb_wait_idle(struct chipsfb_softc *sc)
+{
+
+	/* spin until the blitter is idle */
+	while ((chipsfb_read32(sc, CT_BLT_CONTROL) & BLT_IS_BUSY) != 0) {
+		delay(1);
+	}
+}
+
+static int
+chipsfb_match(struct device *parent, struct cfdata *match, void *aux)
+{
+	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+
+	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY ||
+	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_DISPLAY_VGA)
+		return 0;
+	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CHIPS) && 
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CHIPS_65550))
+		return 100;
+	return 0;
+}
+
+static void
+chipsfb_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct chipsfb_softc *sc = (void *)self;	
+	struct pci_attach_args *pa = aux;
+	char devinfo[256];
+	struct wsemuldisplaydev_attach_args aa;
+	struct rasops_info *ri;
+	pcireg_t screg;
+	pci_intr_handle_t ih;
+	ulong defattr;
+	const char *intrstr;
+	int console, width, height, node, i, j;
+#ifdef HAVE_OPENFIRMWARE
+	int linebytes, depth;
+#endif
+	uint32_t bg, fg, ul;
+		
+	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
+	node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_pcitag = pa->pa_tag;
+	sc->sc_dacw = -1;
+
+	screg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
+	screg |= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag,PCI_COMMAND_STATUS_REG,screg);
+	
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
+	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+
+	sc->sc_memt = pa->pa_memt;
+	sc->sc_iot = pa->pa_iot;
+
+	/* the framebuffer */
+	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM,
+	    BUS_SPACE_MAP_LINEAR, 
+	    &sc->sc_fbt, &sc->sc_fbh, &sc->sc_fb, &sc->sc_fbsize)) {
+		printf("%s: failed to map the frame buffer.\n", 
+		    sc->sc_dev.dv_xname);
+	}
+
+	/* IO-mapped registers */
+	if (bus_space_map(sc->sc_iot, 0x0, PAGE_SIZE, 0, &sc->sc_ioregh) != 0) {
+		printf("%s: failed to map IO-mapped registers.\n", 
+		    sc->sc_dev.dv_xname);
+	}
+
+	chipsfb_init(sc);
+	
+	/* we should read these from the chip instead of depending on OF */
+	width = height = -1;
+
+	/* detect panel size */
+	width = chipsfb_read_indexed(sc, CT_FP_INDEX, FP_HSIZE_LSB);
+	width |= (chipsfb_read_indexed(sc, CT_FP_INDEX, FP_HORZ_OVERFLOW_1)
+	    & 0x0f) << 8;
+	width = (width + 1) * 8;
+	height = chipsfb_read_indexed(sc, CT_FP_INDEX, FP_VSIZE_LSB);
+	height |= (chipsfb_read_indexed(sc, CT_FP_INDEX, FP_VERT_OVERFLOW_1)
+	    & 0x0f) << 8;
+	height++;
+	printf("Panel size: %d x %d\n", width, height);
+
+#ifdef HAVE_OPENFIRMWARE
+	if (OF_getprop(node, "width", &width, 4) != 4)
+		OF_interpret("screen-width", 1, &width);
+	if (OF_getprop(node, "height", &height, 4) != 4)
+		OF_interpret("screen-height", 1, &height);
+	if (OF_getprop(node, "linebytes", &linebytes, 4) != 4)
+		linebytes = width;			/* XXX */
+	if (OF_getprop(node, "depth", &depth, 4) != 4)
+		depth = 8;				/* XXX */
+
+	if (width == -1 || height == -1)
+		return;
+
+	sc->width = width;
+	sc->height = height;
+	sc->bits_per_pixel = depth;
+	sc->linebytes = linebytes;
+	printf("%s: initial resolution %dx%d, %d bit\n", sc->sc_dev.dv_xname,
+	    sc->width, sc->height, sc->bits_per_pixel);
+#endif
+
+	/* XXX this should at least be configurable via kernel config */
+	//chipsfb_set_videomode(sc, &videomode_list[16]);
+
+	vcons_init(&sc->vd, sc, &chipsfb_defaultscreen, &chipsfb_accessops);
+	sc->vd.init_screen = chipsfb_init_screen;
+
+	console = chipsfb_is_console(pa);
+	
+	ri = &chipsfb_console_screen.scr_ri;
+	if (console) {
+		vcons_init_screen(&sc->vd, &chipsfb_console_screen, 1,
+		    &defattr);
+		chipsfb_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
+
+		chipsfb_defaultscreen.textops = &ri->ri_ops;
+		chipsfb_defaultscreen.capabilities = ri->ri_caps;
+		chipsfb_defaultscreen.nrows = ri->ri_rows;
+		chipsfb_defaultscreen.ncols = ri->ri_cols;
+		wsdisplay_cnattach(&chipsfb_defaultscreen, ri, 0, 0, defattr);
+	} else {
+		/*
+		 * since we're not the console we can postpone the rest
+		 * until someone actually allocates a screen for us
+		 */
+		//chipsfb_set_videomode(sc, &videomode_list[0]);		 
+	}
+
+	rasops_unpack_attr(defattr, &fg, &bg, &ul);
+	sc->sc_bg = ri->ri_devcmap[bg];
+	chipsfb_clearscreen(sc);
+
+	printf("%s: %d MB aperture at 0x%08x\n",
+	    sc->sc_dev.dv_xname, (u_int)(sc->sc_fbsize >> 20),
+	    (u_int)sc->sc_fb);
+#ifdef chipsfb_DEBUG
+	printf("fb: %08lx\n", (ulong)ri->ri_bits);
+#endif
+	
+	j = 0;
+	for (i = 0; i < 256; i++) {
+		chipsfb_putpalreg(sc, i, rasops_cmap[j], rasops_cmap[j + 1], 
+		    rasops_cmap[j + 2]);
+		j += 3;
+	}
+
+	/* Interrupt. We don't use it for anything yet */
+	if (pci_intr_map(pa, &ih)) {
+		printf("%s: failed to map interrupt\n", sc->sc_dev.dv_xname);
+	} else {
+		intrstr = pci_intr_string(sc->sc_pc, ih);
+		sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_NET, 
+		    chipsfb_intr, sc);
+		if (sc->sc_ih == NULL) {
+			printf("%s: failed to establish interrupt",
+			    sc->sc_dev.dv_xname);
+			if (intrstr != NULL)
+				printf(" at %s", intrstr);
+			printf("\n");
+		} else {
+			printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, 
+			    intrstr);
+		}
+	}
+
+	aa.console = console;
+	aa.scrdata = &chipsfb_screenlist;
+	aa.accessops = &chipsfb_accessops;
+	aa.accesscookie = &sc->vd;
+
+	config_found(self, &aa, wsemuldisplaydevprint);
+}
+
+static int
+chipsfb_putpalreg(struct chipsfb_softc *sc, uint8_t index, uint8_t r, 
+    uint8_t g, uint8_t b)
+{
+	
+	sc->sc_cmap_red[index] = r;
+	sc->sc_cmap_green[index] = g;
+	sc->sc_cmap_blue[index] = b;
+
+	chipsfb_write_vga(sc, CT_DACMASK, 0xff);
+	chipsfb_write_vga(sc, CT_WRITEINDEX, index);
+	chipsfb_write_vga(sc, CT_DACDATA, r);
+	chipsfb_write_vga(sc, CT_DACDATA, g);
+	chipsfb_write_vga(sc, CT_DACDATA, b);
+
+	return 0;
+}
+
+static int
+chipsfb_putcmap(struct chipsfb_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_char *r, *g, *b;
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int i, error;
+	u_char rbuf[256], gbuf[256], bbuf[256];
+
+#ifdef chipsfb_DEBUG
+	printf("putcmap: %d %d\n",index, count);
+#endif	
+	if (cm->index >= 256 || cm->count > 256 ||
+	    (cm->index + cm->count) > 256)
+		return EINVAL;
+	error = copyin(cm->red, &rbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->green, &gbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->blue, &bbuf[index], count);
+	if (error)
+		return error;
+
+	memcpy(&sc->sc_cmap_red[index], &rbuf[index], count);
+	memcpy(&sc->sc_cmap_green[index], &gbuf[index], count);
+	memcpy(&sc->sc_cmap_blue[index], &bbuf[index], count);
+
+	r = &sc->sc_cmap_red[index];
+	g = &sc->sc_cmap_green[index];
+	b = &sc->sc_cmap_blue[index];
+	
+	for (i = 0; i < count; i++) {
+		chipsfb_putpalreg(sc, index, *r, *g, *b);
+		index++;
+		r++, g++, b++;
+	}
+	return 0;
+}
+
+static int
+chipsfb_getcmap(struct chipsfb_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int error;
+
+	if (index >= 255 || count > 256 || index + count > 256)
+		return EINVAL;
+	
+	error = copyout(&sc->sc_cmap_red[index],   cm->red,   count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_cmap_green[index], cm->green, count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_cmap_blue[index],  cm->blue,  count);
+	if (error)
+		return error;
+
+	return 0;
+}
+
+static int
+chipsfb_is_console(struct pci_attach_args *pa)
+{
+
+#ifdef HAVE_OPENFIRMWARE
+	/* check if we're the /chosen console device */
+	int chosen, stdout, node, us;
+	
+	us = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
+	chosen = OF_finddevice("/chosen");
+	OF_getprop(chosen, "stdout", &stdout, 4);
+	node = OF_instance_to_package(stdout);
+	return(us == node);
+#else
+	/* XXX how do we know we're console on i386? */
+	return 1;
+#endif
+}
+
+static void
+chipsfb_clearscreen(struct chipsfb_softc *sc)
+{
+	chipsfb_rectfill(sc, 0, 0, sc->width, sc->height, sc->sc_bg);
+}
+
+/*
+ * wsdisplay_emulops
+ */
+
+static void
+chipsfb_cursor(void *cookie, int on, int row, int col)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct chipsfb_softc *sc = scr->scr_cookie;
+	int x, y, wi, he;
+	
+	wi = ri->ri_font->fontwidth;
+	he = ri->ri_font->fontheight;
+	
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+		x = ri->ri_ccol * wi + ri->ri_xorigin;
+		y = ri->ri_crow * he + ri->ri_yorigin;
+		if (ri->ri_flg & RI_CURSOR) {
+			chipsfb_bitblt(sc, x, y, x, y, wi, he, ROP_NOT_DST);
+			ri->ri_flg &= ~RI_CURSOR;
+		}
+		ri->ri_crow = row;
+		ri->ri_ccol = col;
+		if (on) {
+			x = ri->ri_ccol * wi + ri->ri_xorigin;
+			y = ri->ri_crow * he + ri->ri_yorigin;
+			chipsfb_bitblt(sc, x, y, x, y, wi, he, ROP_NOT_DST);
+			ri->ri_flg |= RI_CURSOR;
+		}
+	} else {
+		ri->ri_flg &= ~RI_CURSOR;
+		ri->ri_crow = row;
+		ri->ri_ccol = col;
+	}
+}
+
+#if 0
+int
+chipsfb_mapchar(void *cookie, int uni, u_int *index)
+{
+	return 0;
+}
+#endif
+
+static void
+chipsfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct chipsfb_softc *sc = scr->scr_cookie;
+	int32_t xs, xd, y, width, height;
+	
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
+		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_font->fontwidth * ncols;
+		height = ri->ri_font->fontheight;		
+		chipsfb_bitblt(sc, xs, y, xd, y, width, height, ROP_COPY);
+	}
+}
+
+static void
+chipsfb_erasecols(void *cookie, int row, int startcol, int ncols, 
+    long fillattr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct chipsfb_softc *sc = scr->scr_cookie;
+	int32_t x, y, width, height, fg, bg, ul;
+	
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_font->fontwidth * ncols;
+		height = ri->ri_font->fontheight;		
+		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
+	
+		chipsfb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
+	}
+}
+
+static void
+chipsfb_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct chipsfb_softc *sc = scr->scr_cookie;
+	int32_t x, ys, yd, width, height;
+
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+		x = ri->ri_xorigin;
+		ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
+		yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
+		width = ri->ri_emuwidth;
+		height = ri->ri_font->fontheight * nrows;		
+		chipsfb_bitblt(sc, x, ys, x, yd, width, height, ROP_COPY);
+	}
+}
+
+static void
+chipsfb_eraserows(void *cookie, int row, int nrows, long fillattr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct chipsfb_softc *sc = scr->scr_cookie;
+	int32_t x, y, width, height, fg, bg, ul;
+
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
+		if ((row == 0) && (nrows == ri->ri_rows)) {
+			/* clear the whole screen */
+			chipsfb_rectfill(sc, 0, 0, ri->ri_width,
+			    ri->ri_height, ri->ri_devcmap[bg]);
+		} else {
+			x = ri->ri_xorigin;
+			y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+			width = ri->ri_emuwidth;
+			height = ri->ri_font->fontheight * nrows;		
+			chipsfb_rectfill(sc, x, y, width, height,
+			    ri->ri_devcmap[bg]);
+		}
+	}
+}
+
+static void
+chipsfb_bitblt(struct chipsfb_softc *sc, int xs, int ys, int xd, int yd,
+    int width, int height, uint8_t rop) 
+{
+	uint32_t src, dst, cmd = rop, stride, size;
+
+	cmd |= BLT_PAT_IS_SOLID;
+
+	/* we assume 8 bit for now */
+	src = xs + ys * sc->linebytes;
+	dst = xd + yd * sc->linebytes;
+
+	if (xs < xd) {
+		/* right-to-left operation */
+		cmd |= BLT_START_RIGHT;
+		src += sc->linebytes - 1;
+		dst += sc->linebytes - 1;
+	}
+
+	if (ys < yd) {
+		/* bottom-to-top operation */
+		cmd |= BLT_START_BOTTOM;
+		src += (height - 1) * sc->linebytes;
+		dst += (height - 1) * sc->linebytes;
+	}
+	
+	stride = (sc->linebytes << 16) | sc->linebytes;
+	size = (height << 16) | width;
+	
+	chipsfb_write32(sc, CT_BLT_STRIDE, stride);
+	chipsfb_write32(sc, CT_BLT_SRCADDR, src);
+	chipsfb_write32(sc, CT_BLT_DSTADDR, dst);
+	chipsfb_write32(sc, CT_BLT_CONTROL, cmd);
+	chipsfb_write32(sc, CT_BLT_SIZE, size);
+	chipsfb_wait_idle(sc);
+}
+ 
+static void
+chipsfb_rectfill(struct chipsfb_softc *sc, int x, int y, int width, 
+    int height, int colour) 
+{
+	uint32_t dst, cmd, stride, size;
+
+	cmd = BLT_PAT_IS_SOLID | BLT_PAT_IS_MONO | ROP_PAT;
+
+	/* we assume 8 bit for now */
+	dst = x + y * sc->linebytes;
+
+	stride = (sc->linebytes << 16) | sc->linebytes;
+	size = (height << 16) | width;
+	
+	chipsfb_write32(sc, CT_BLT_STRIDE, stride);
+	chipsfb_write32(sc, CT_BLT_SRCADDR, dst);
+	chipsfb_write32(sc, CT_BLT_DSTADDR, dst);
+	chipsfb_write32(sc, CT_BLT_CONTROL, cmd);
+	chipsfb_write32(sc, CT_BLT_BG, colour);
+	chipsfb_write32(sc, CT_BLT_FG, colour);
+	chipsfb_write32(sc, CT_BLT_SIZE, size);
+	chipsfb_wait_idle(sc);
+
+}
+
+#if 0
+static void
+chipsfb_putchar(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct chipsfb_softc *sc = scr->scr_cookie;
+
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+		uint8_t *data;
+		int fg, bg, uc, i;
+		int x, y, wi, he;
+
+		wi = ri->ri_font->fontwidth;
+		he = ri->ri_font->fontheight;
+
+		if (!CHAR_IN_FONT(c, ri->ri_font))
+			return;
+		bg = (u_char)ri->ri_devcmap[(attr >> 16) & 0xf];
+		fg = (u_char)ri->ri_devcmap[(attr >> 24) & 0xf];
+		x = ri->ri_xorigin + col * wi;
+		y = ri->ri_yorigin + row * he;
+		if (c == 0x20) {
+			chipsfb_rectfill(sc, x, y, wi, he, bg);
+		} else {
+			uc = c-ri->ri_font->firstchar;
+			data = (uint8_t *)ri->ri_font->data + uc * 
+			    ri->ri_fontscale;
+				chipsfb_setup_mono(sc, x, y, wi, he, fg, bg);		
+			for (i = 0; i < he; i++) {
+				chipsfb_feed_line(sc, 
+				    ri->ri_font->stride, data);
+				data += ri->ri_font->stride;
+			}
+		}
+	}
+}
+
+static void 
+chipsfb_setup_mono(struct chipsfb_softc *sc, int xd, int yd, int width,
+    int height, uint32_t fg, uint32_t bg) 
+{
+
+}
+
+static void 
+chipsfb_feed_line(struct chipsfb_softc *sc, int count, uint8_t *data)
+{
+
+}	
+
+#ifdef CHIPSFB_DEBUG
+static void
+chipsfb_showpal(struct chipsfb_softc *sc) 
+{
+	int i, x = 0;
+	
+	for (i = 0; i < 16; i++) {
+		chipsfb_rectfill(sc, x, 0, 64, 64, i);
+		x += 64;
+	}
+}
+#endif
+
+#if 0
+static int
+chipsfb_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
+{
+
+	return 0;
+}
+#endif
+
+#endif
+static void
+chipsfb_restore_palette(struct chipsfb_softc *sc)
+{
+	int i;
+	
+	for (i = 0; i < 256; i++) {
+		chipsfb_putpalreg(sc, 
+		   i, 
+		   sc->sc_cmap_red[i], 
+		   sc->sc_cmap_green[i],
+		   sc->sc_cmap_blue[i]);
+	}
+}
+
+/*
+ * wsdisplay_accessops
+ */
+
+static int
+chipsfb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
+{
+	struct vcons_data *vd = v;
+	struct chipsfb_softc *sc = vd->cookie;
+	struct wsdisplay_fbinfo *wdf;
+	struct vcons_screen *ms = vd->active;
+
+	switch (cmd) {
+		case WSDISPLAYIO_GTYPE:
+			*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
+			return 0;
+
+		case WSDISPLAYIO_GINFO:
+			wdf = (void *)data;
+			wdf->height = ms->scr_ri.ri_height;
+			wdf->width = ms->scr_ri.ri_width;
+			wdf->depth = ms->scr_ri.ri_depth;
+			wdf->cmsize = 256;
+			return 0;
+			
+		case WSDISPLAYIO_GETCMAP:
+			return chipsfb_getcmap(sc,
+			    (struct wsdisplay_cmap *)data);
+
+		case WSDISPLAYIO_PUTCMAP:
+			return chipsfb_putcmap(sc,
+			    (struct wsdisplay_cmap *)data);
+
+		/* PCI config read/write passthrough. */
+		case PCI_IOC_CFGREAD:
+		case PCI_IOC_CFGWRITE:
+			return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
+			    cmd, data, flag, l));
+			    
+		case WSDISPLAYIO_SMODE:
+			{
+				int new_mode = *(int*)data;
+				if (new_mode != sc->sc_mode) {
+					sc->sc_mode = new_mode;
+					if(new_mode == WSDISPLAYIO_MODE_EMUL) {
+						chipsfb_restore_palette(sc);						
+						vcons_redraw_screen(ms);
+					}
+				}
+			}
+			return 0;
+	}
+	return EPASSTHROUGH;
+}
+
+static paddr_t
+chipsfb_mmap(void *v, void *vs, off_t offset, int prot)
+{
+	struct vcons_data *vd = v;
+	struct chipsfb_softc *sc = vd->cookie;
+	struct lwp *me;
+	paddr_t pa;
+		
+	/* 'regular' framebuffer mmap()ing */
+	if (offset < sc->sc_fbsize) {
+		pa = bus_space_mmap(sc->sc_fbt, offset, 0, prot, 
+		    BUS_SPACE_MAP_LINEAR);	
+		return pa;
+	}
+
+	/*
+	 * restrict all other mappings to processes with superuser privileges
+	 * or the kernel itself
+	 */
+	me = curlwp;
+	if (me != NULL) {
+		if (kauth_authorize_generic(me->l_cred, KAUTH_GENERIC_ISSUSER,
+		    NULL) != 0) {
+			printf("%s: mmap() rejected.\n", sc->sc_dev.dv_xname);
+			return -1;
+		}
+	}
+
+	if ((offset >= sc->sc_fb) && (offset < (sc->sc_fb + sc->sc_fbsize))) {
+		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
+		    BUS_SPACE_MAP_LINEAR);	
+		return pa;
+	}
+
+#ifdef macppc
+	/* allow mapping of IO space */
+	if ((offset >= 0xf2000000) && (offset < 0xf2800000)) {
+		pa = bus_space_mmap(sc->sc_iot, offset - 0xf2000000, 0, prot, 
+		    BUS_SPACE_MAP_LINEAR);	
+		return pa;
+	}	
+#endif
+	
+#ifdef OFB_ALLOW_OTHERS
+	if (offset >= 0x80000000) {
+		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
+		    BUS_SPACE_MAP_LINEAR);	
+		return pa;
+	}		
+#endif
+	return -1;
+}
+
+static void
+chipsfb_init_screen(void *cookie, struct vcons_screen *scr,
+    int existing, long *defattr)
+{
+	struct chipsfb_softc *sc = cookie;
+	struct rasops_info *ri = &scr->scr_ri;
+	
+	ri->ri_depth = sc->bits_per_pixel;
+	ri->ri_width = sc->width;
+	ri->ri_height = sc->height;
+	ri->ri_stride = sc->width;
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
+
+	ri->ri_bits = bus_space_vaddr(sc->sc_fbt, sc->sc_fbh);
+
+#ifdef CHIPSFB_DEBUG
+	printf("addr: %08lx\n", (ulong)ri->ri_bits);
+#endif
+	if (existing) {
+		ri->ri_flg |= RI_CLEAR;
+	}
+	
+	rasops_init(ri, sc->height/8, sc->width/8);
+	ri->ri_caps = WSSCREEN_WSCOLORS;
+
+	rasops_reconfig(ri, sc->height / ri->ri_font->fontheight,
+		    sc->width / ri->ri_font->fontwidth);
+
+	ri->ri_hw = scr;
+	ri->ri_ops.copyrows = chipsfb_copyrows;
+	ri->ri_ops.copycols = chipsfb_copycols;
+	ri->ri_ops.eraserows = chipsfb_eraserows;
+	ri->ri_ops.erasecols = chipsfb_erasecols;
+	ri->ri_ops.cursor = chipsfb_cursor;
+#if 0
+	ri->ri_ops.putchar = chipsfb_putchar;
+#endif
+}
+
+#if 0
+int
+chipsfb_load_font(void *v, void *cookie, struct wsdisplay_font *data)
+{
+
+	return 0;
+}
+#endif
+
+static int
+chipsfb_intr(void *arg)
+{
+//	struct chipsfb_softc *sc = arg;
+
+	return 1;
+}
+
+static void
+chipsfb_init(struct chipsfb_softc *sc)
+{
+
+	chipsfb_wait_idle(sc);
+	
+	chipsfb_write_indexed(sc, CT_CONF_INDEX, XR_IO_CONTROL,
+	    ENABLE_CRTC_EXT | ENABLE_ATTR_EXT);
+	chipsfb_write_indexed(sc, CT_CONF_INDEX, XR_ADDR_MAPPING,
+	    ENABLE_LINEAR);
+
+	/* setup the blitter */
+}
