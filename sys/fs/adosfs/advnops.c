@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.20 2006/05/15 01:29:02 christos Exp $	*/
+/*	$NetBSD: advnops.c,v 1.21 2006/09/23 22:47:11 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.20 2006/05/15 01:29:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.21 2006/09/23 22:47:11 aymeric Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.20 2006/05/15 01:29:02 christos Exp $"
 #include <sys/namei.h>
 #include <sys/buf.h>
 #include <sys/dirent.h>
+#include <sys/inttypes.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/stat.h>
@@ -335,7 +336,7 @@ adosfs_read(v)
 			goto reterr;
 		}
 #ifdef ADOSFS_DIAGNOSTIC
-		printf(" %d+%d-%d+%d", lbn, on, lbn, n);
+		printf(" %" PRId64 "+%ld-%" PRId64 "+%ld", lbn, on, lbn, n);
 #endif
 		n = MIN(n, size - bp->b_resid);
 		error = uiomove(bp->b_data + on +
@@ -596,14 +597,6 @@ adosfs_print(v)
 	return(0);
 }
 
-struct adirent {
-	u_long  fileno;
-	u_short reclen;
-	char    type;
-	char    namlen;
-	char    name[ADMAXNAMELEN+2];	/* maxlen plus 2 NUL's */
-};
-
 int
 adosfs_readdir(v)
 	void *v;
@@ -616,53 +609,44 @@ adosfs_readdir(v)
 		off_t **a_cookies;
 		int *a_ncookies;
 	} */ *sp = v;
-	int error, useri, chainc, hashi, scanned, uavail;
-	struct adirent ad, *adp;
-	struct anode *pap, *ap;
-	struct adosfsmount *amp;
-	struct vnode *vp;
-	struct uio *uio;
+	int error, first, useri, chainc, hashi, scanned;
 	u_long nextbn;
-	off_t uoff, *cookies = NULL;
+	struct dirent ad, *adp;
+	struct anode *pap, *ap;
+	struct vnode *vp;
+	struct uio *uio = sp->a_uio;
+	off_t uoff = uio->uio_offset;
+	off_t *cookies = NULL;
 	int ncookies = 0;
 
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
 #endif
+
 	if (sp->a_vp->v_type != VDIR) {
 		error = ENOTDIR;
 		goto reterr;
 	}
 
-	uio = sp->a_uio;
-	uoff = uio->uio_offset;
 	if (uoff < 0) {
 		error = EINVAL;
 		goto reterr;
 	}
 
 	pap = VTOA(sp->a_vp);
-	amp = pap->amp;
 	adp = &ad;
 	error = nextbn = hashi = chainc = scanned = 0;
-	uavail = uio->uio_resid / sizeof(ad);
-	useri = uoff / sizeof(ad);
+	first = useri = uoff / sizeof ad;
 
 	/*
-	 * if no slots available or offset requested is not on a slot boundry
+	 * If offset requested is not on a slot boundary
 	 */
-	if (uavail < 1 || uoff % sizeof(ad)) {
+	if (uoff % sizeof ad) {
 		error = EINVAL;
 		goto reterr;
 	}
 
-	if (sp->a_ncookies) {
-		ncookies = 0;
-		cookies = malloc(sizeof (off_t) * uavail, M_TEMP, M_WAITOK);
-		*sp->a_cookies = cookies;
-	}
-
-	while (uavail) {
+	for (;;) {
 		if (hashi == pap->ntabent) {
 			*sp->a_eofflag = 1;
 			break;
@@ -675,7 +659,7 @@ adosfs_readdir(v)
 			nextbn = pap->tab[hashi];
 
 		/*
-		 * first determine if we can skip this chain
+		 * First determine if we can skip this chain
 		 */
 		if (chainc == 0) {
 			int skip;
@@ -690,11 +674,11 @@ adosfs_readdir(v)
 		}
 
 		/*
-		 * now [continue to] walk the chain
+		 * Now [continue to] walk the chain
 		 */
 		ap = NULL;
 		do {
-			error = VFS_VGET(amp->mp, (ino_t)nextbn, &vp);
+			error = VFS_VGET(pap->amp->mp, (ino_t)nextbn, &vp);
 			if (error)
 				goto reterr;
 			ap = VTOA(vp);
@@ -720,63 +704,67 @@ adosfs_readdir(v)
 		} while (ap == NULL && nextbn != 0);
 
 		/*
-		 * we left the loop but without a result so do main over.
+		 * We left the loop but without a result so do main over.
 		 */
 		if (ap == NULL)
 			continue;
 		/*
 		 * Fill in dirent record
 		 */
-		memset(adp, 0, sizeof(struct adirent));
-		adp->fileno = ap->block;
+		memset(adp, 0, sizeof *adp);
+		adp->d_fileno = ap->block;
 		/*
-		 * this deserves an function in kern/vfs_subr.c
+		 * This deserves a function in kern/vfs_subr.c
 		 */
 		switch (ATOV(ap)->v_type) {
 		case VREG:
-			adp->type = DT_REG;
+			adp->d_type = DT_REG;
 			break;
 		case VDIR:
-			adp->type = DT_DIR;
+			adp->d_type = DT_DIR;
 			break;
 		case VLNK:
-			adp->type = DT_LNK;
+			adp->d_type = DT_LNK;
 			break;
 		default:
-			adp->type = DT_UNKNOWN;
+			adp->d_type = DT_UNKNOWN;
 			break;
 		}
-		adp->reclen = sizeof(struct adirent);
-		adp->namlen = strlen(ap->name);
-		memcpy(adp->name, ap->name, adp->namlen);
+		adp->d_namlen = strlen(ap->name);
+		memcpy(adp->d_name, ap->name, adp->d_namlen);
+		adp->d_reclen = _DIRENT_SIZE(adp);
 		vput(vp);
 
-		error = uiomove(adp, sizeof(struct adirent), uio);
+		if (adp->d_reclen > uio->uio_resid) {
+			if (useri == first)	/* no room for even one entry */
+				error = EINVAL;
+			break;
+		}
+		error = uiomove(adp, adp->d_reclen, uio);
 		if (error)
 			break;
-		if (sp->a_ncookies) {
-			*cookies++ = uoff;
-			ncookies++;
-		}
-		uoff += sizeof(struct adirent);
 		useri++;
-		uavail--;
 	}
-#if doesnt_uiomove_handle_this
-	uio->uio_offset = uoff;
-#endif
+	ncookies = useri - first;
+	uio->uio_offset = uoff + ncookies * sizeof ad;
 reterr:
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d)", error);
 #endif
-	if (sp->a_ncookies) {
-		if (error) {
-			free(*sp->a_cookies, M_TEMP);
-			*sp->a_ncookies = 0;
-			*sp->a_cookies = NULL;
+	if (sp->a_ncookies != NULL) {
+		*sp->a_ncookies = ncookies;
+		if (!error) {
+			*sp->a_cookies = cookies =
+			   malloc(ncookies * sizeof *cookies, M_TEMP, M_WAITOK);
+
+			while (ncookies--) {
+				uoff += sizeof ad;
+				*cookies++ = uoff;
+			}
 		} else
-			*sp->a_ncookies = ncookies;
+			*sp->a_cookies = NULL;
 	}
+
 	return(error);
 }
 
