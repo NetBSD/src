@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.32 2006/09/23 21:11:53 dyoung Exp $	*/
+/*	$NetBSD: show.c,v 1.33 2006/09/23 22:41:25 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.32 2006/09/23 21:11:53 dyoung Exp $");
+__RCSID("$NetBSD: show.c,v 1.33 2006/09/23 22:41:25 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,70 @@ static void pr_family(int);
 static void p_sockaddr(struct sockaddr *, struct sockaddr *, int, int );
 static void p_flags(int);
 
+void
+parse_show_opts(int argc, char **argv, int *afp, int *flagsp,
+    const char **afnamep, int nolink)
+{
+	const char *afname = "unspec";
+	int af, flags;
+
+	flags = 0;
+	af = AF_UNSPEC;
+	for (; argc >= 2; argc--) {
+		if (*argv[argc - 1] != '-')
+			goto bad;
+		switch (keyword(argv[argc - 1] + 1)) {
+		case K_HOST:
+			flags |= RTF_HOST;
+			break;
+		case K_LLINFO:
+			flags |= RTF_LLINFO;
+			break;
+		case K_INET:
+			af = AF_INET;
+			afname = argv[argc - 1] + 1;
+			break;
+#ifdef INET6
+		case K_INET6:
+			af = AF_INET6;
+			afname = argv[argc - 1] + 1;
+			break;
+#endif
+#ifndef SMALL
+		case K_ATALK:
+			af = AF_APPLETALK;
+			afname = argv[argc - 1] + 1;
+			break;
+		case K_ISO:
+		case K_OSI:
+			af = AF_ISO;
+			afname = argv[argc - 1] + 1;
+			break;
+#endif /* SMALL */
+		case K_LINK:
+			if (nolink)
+				goto bad;
+			af = AF_LINK;
+			afname = argv[argc - 1] + 1;
+			break;
+		default:
+			goto bad;
+		}
+	}
+	switch (argc) {
+	case 1:
+	case 0:
+		break;
+	default:
+	bad:
+		usage(argv[argc - 1]);
+	}
+	if (afnamep != NULL)
+		*afnamep = afname;
+	*afp = af;
+	*flagsp = flags;
+}
+
 /*
  * Print routing tables.
  */
@@ -105,38 +169,12 @@ void
 show(int argc, char **argv)
 {
 	size_t needed;
-	int af, mib[6];
+	int af, flags, mib[6];
 	char *buf, *next, *lim;
 	struct rt_msghdr *rtm;
 	struct sockaddr *sa;
 
-	af = AF_UNSPEC;
-	if (argc > 1) {
-		argv++;
-		if (argc == 2 && **argv == '-')
-		    switch (keyword(*argv + 1)) {
-			case K_INET:
-				af = AF_INET;
-				break;
-#ifdef INET6
-			case K_INET6:
-				af = AF_INET6;
-				break;
-#endif
-#ifndef SMALL
-			case K_ATALK:
-				af = AF_APPLETALK;
-				break;
-			case K_ISO:
-			case K_OSI:
-				af = AF_ISO;
-				break;
-#endif /* SMALL */
-			default:
-				goto bad;
-		} else
-bad:			usage(*argv);
-	}
+	parse_show_opts(argc, argv, &af, &flags, NULL, 1);
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
 	mib[2] = 0;
@@ -160,6 +198,8 @@ bad:			usage(*argv);
 		for (next = buf; next < lim; next += rtm->rtm_msglen) {
 			rtm = (struct rt_msghdr *)next;
 			sa = (struct sockaddr *)(rtm + 1);
+			if ((rtm->rtm_flags & flags) != flags)
+				continue;
 			if (af == AF_UNSPEC || af == sa->sa_family)
 				p_rtentry(rtm);
 		}
