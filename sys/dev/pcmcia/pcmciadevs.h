@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.220 2006/07/28 08:57:03 scottr Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.221 2006/09/23 13:21:29 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.217 2006/07/28 08:02:39 scottr Exp
+ *	NetBSD: pcmciadevs,v 1.218 2006/09/23 13:21:01 jmcneill Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -77,6 +77,7 @@
 #define	PCMCIA_VENDOR_DLINK_3	0x0149	/* D-Link */
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys Corporation */
 #define	PCMCIA_VENDOR_NETGEAR	0x0149	/* Netgear */
+#define	PCMCIA_VENDOR_IODATA3	0x0149	/* I-O DATA */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_SYMBOL2	0x014d	/* Symbol */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent Technologies */
@@ -348,6 +349,8 @@
 #define	PCMCIA_PRODUCT_IODATA2_WNB11PCM	0x0002
 #define	PCMCIA_CIS_IODATA2_WCF12	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_IODATA2_WCF12	0x0673
+#define	PCMCIA_CIS_IODATA3_PCETTXR	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_IODATA3_PCETTXR	0x0230
 
 /* Kingston Products */
 #define	PCMCIA_CIS_KINGSTON_KNE2	{ NULL, NULL, NULL, NULL }

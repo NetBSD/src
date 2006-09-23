@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.220 2006/07/28 08:57:03 scottr Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.221 2006/09/23 13:21:29 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.217 2006/07/28 08:02:39 scottr Exp
+ *	NetBSD: pcmciadevs,v 1.218 2006/09/23 13:21:01 jmcneill Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -608,6 +608,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "I-O DATA",
 	    "Wireless CF Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_IODATA3, PCMCIA_PRODUCT_IODATA3_PCETTXR,
+	    PCMCIA_CIS_IODATA3_PCETTXR,
+	    0,
+	    "I-O DATA",
+	    "I-O DATA PCET/TX-R",	}
 	,
 	{
 	    PCMCIA_VENDOR_KINGSTON, PCMCIA_PRODUCT_KINGSTON_KNE2,
@@ -1952,6 +1959,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Netgear",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_IODATA3,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "I-O DATA",
 	    NULL,
 	},
 	{
