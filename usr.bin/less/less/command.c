@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.11 2004/10/30 20:17:19 dsl Exp $	*/
+/*	$NetBSD: command.c,v 1.12 2006/09/23 12:51:18 elad Exp $	*/
 
 /*
  * Copyright (C) 1984-2002  Mark Nudelman
@@ -216,7 +216,7 @@ exec_mca()
 			every_first_cmd = save(cbuf);
 		break;
 	case A_OPT_TOGGLE:
-		toggle_option(optchar, cbuf, optflag);
+		toggle_option((unsigned char)optchar, cbuf, optflag);
 		optchar = '\0';
 		break;
 	case A_F_BRACKET:
