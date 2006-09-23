@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.20 2006/07/22 06:37:27 tsutsui Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.20.2.1 2006/09/23 22:58:33 snj Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.20 2006/07/22 06:37:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.20.2.1 2006/09/23 22:58:33 snj Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -2562,9 +2562,10 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va)
 		if (mmutype == MMU_68040)
 #endif
 		{
-			if (pmap_changebit((paddr_t)pmap->pm_stpa,
-					   PG_CI, ~PG_CCB))
-				DCIS();
+			pt_entry_t	*pte;
+
+			pte = pmap_pte(pmap_kernel(), pmap->pm_stab);
+			*pte = (*pte & ~PG_CMASK) | PG_CI;
 			pmap->pm_stfree = protostfree;
 		}
 #endif
