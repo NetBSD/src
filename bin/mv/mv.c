@@ -1,4 +1,4 @@
-/* $NetBSD: mv.c,v 1.36 2006/08/21 23:09:50 christos Exp $ */
+/* $NetBSD: mv.c,v 1.37 2006/09/23 16:54:13 elad Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.36 2006/08/21 23:09:50 christos Exp $");
+__RCSID("$NetBSD: mv.c,v 1.37 2006/09/23 16:54:13 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,8 +192,11 @@ do_move(char *from, char *to)
 		} else
 			ask = 0;
 		if (ask) {
-			if ((ch = getchar()) != EOF && ch != '\n')
-				while (getchar() != '\n');
+			if ((ch = getchar()) != EOF && ch != '\n') {
+				int ch2;
+				while ((ch2 = getchar()) != EOF && ch2 != '\n')
+					continue;
+			}
 			if (ch != 'y' && ch != 'Y')
 				return (0);
 		}
