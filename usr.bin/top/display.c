@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.14 2005/10/03 05:34:51 christos Exp $	*/
+/*	$NetBSD: display.c,v 1.15 2006/09/23 19:46:57 elad Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -47,7 +47,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: display.c,v 1.14 2005/10/03 05:34:51 christos Exp $");
+__RCSID("$NetBSD: display.c,v 1.15 2006/09/23 19:46:57 elad Exp $");
 #endif
 
 #include "os.h"
@@ -310,7 +310,7 @@ time_t *uptimep;
     }
     else
     {
-	fprintf(stdout, "    %s    ", up);
+	printf("    ");
     }
 #ifdef DEBUG
     {
