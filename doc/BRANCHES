@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.105 2006/09/22 15:58:09 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.106 2006/09/23 10:09:44 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -413,18 +413,21 @@ Notes:
 			hp700, evbppc (marvell, ibm4xx),
 			mac68k, x68k, hpcarm, shark, acorn32,
 			cats, netwinder, algor, arc, ews4800mips, hpcmips,
-			newsmips, luna68k
+			newsmips, luna68k, cobalt
 
 		not tested:
 			sparc64 (GENERIC.MP seems to have an unrelated problem)
 			cesfic (GENERIC fails to build with the following
 			error.  i don't know if it's related to my changes.)
+
       build  compat/libcompat.a
       making sure the 68040 FPSP is up to date...
       netbsd.s: Assembler messages:
       netbsd.s:92: Error: can't resolve `0' {*UND* section} - `LOCAL_SIZE' {*UND* section}
       netbsd.s:125: Error: can't resolve `0' {*UND* section} - `LOCAL_SIZE' {*UND* section}
       netbsd.s:163: Error: can't resolve `0' {.text section} - `LOCAL_SIZE' {*UND* section}
+
+			pmax, sbmips
 		
 		notyet:
 			others
