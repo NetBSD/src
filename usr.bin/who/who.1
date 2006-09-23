@@ -1,4 +1,4 @@
-.\"	$NetBSD: who.1,v 1.19 2006/09/19 21:01:29 christos Exp $
+.\"	$NetBSD: who.1,v 1.20 2006/09/23 10:06:57 wiz Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,15 +52,16 @@ Available options:
 .Pp
 .Bl -tag -width file
 .It Fl a
-Same as -b -d -l -p -r -t -T -u -v.
+Same as
+.Fl -bdlprTtuv .
 .It Fl b
-time of last system boot (unsupported).
+Time of last system boot (unsupported).
 .It Fl d
-print dead processes.
+Print dead processes.
 .It Fl H
 Write column headings above the regular output.
 .It Fl l
-print system login processes (unsupported).
+Print system login processes (unsupported).
 .It Fl m
 Only print information about the current terminal.
 This is the
@@ -69,7 +70,7 @@ way of saying
 .Nm
 .Ar am i .
 .It Fl p
-print active processes spawned by
+Print active processes spawned by
 .Xr init 8
 (unsupported).
 .It Fl q
@@ -77,7 +78,7 @@ print active processes spawned by
 List only the names and the number of users currently logged on.
 When this option is used, all other options are ignored.
 .It Fl r
-print the current runlevel (unsupported).
+Print the current runlevel (unsupported).
 .It Fl s
 List only the name, line and time fields.
 This is the default.
@@ -92,7 +93,7 @@ and
 .Sq \&?
 if a bad line is encountered.
 .It Fl t
-print last system clock change (unsupported).
+Print last system clock change (unsupported).
 .It Fl u
 Print the idle time for each user, and the associated process ID.
 .It Fl v
