@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.151 2006/09/23 00:53:46 elad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.152 2006/09/23 07:54:17 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.151 2006/09/23 00:53:46 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.152 2006/09/23 07:54:17 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -919,8 +919,8 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
  
 			/* set decompressed file size */
 			vattr.va_size =
-			    ((uint64_t)vnd->sc_comp_numoffs - 1) *
-			     (uint64_t)vnd->sc_comp_blksz;
+			    ((u_quad_t)vnd->sc_comp_numoffs - 1) *
+			     (u_quad_t)vnd->sc_comp_blksz;
  
 			/* allocate space for all the compressed offsets */
 			vnd->sc_comp_offsets =
