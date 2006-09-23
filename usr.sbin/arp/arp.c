@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.42 2006/01/31 17:47:04 christos Exp $ */
+/*	$NetBSD: arp.c,v 1.43 2006/09/23 21:11:14 dyoung Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.42 2006/01/31 17:47:04 christos Exp $");
+__RCSID("$NetBSD: arp.c,v 1.43 2006/09/23 21:11:14 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,6 +80,7 @@ __RCSID("$NetBSD: arp.c,v 1.42 2006/01/31 17:47:04 christos Exp $");
 #include <unistd.h>
 #include <ifaddrs.h>
 
+static int is_llinfo(const struct sockaddr_dl *, int);
 int	delete(const char *, const char *);
 void	dump(u_long);
 void	delete_all(void);
@@ -268,13 +269,8 @@ tryagain:
 	sina = (struct sockaddr_inarp *)(rtm + 1);
 	sdl = (struct sockaddr_dl *)(ROUNDUP(sina->sin_len) + (char *)sina);
 	if (sina->sin_addr.s_addr == sin_m.sin_addr.s_addr) {
-		if (sdl->sdl_family == AF_LINK &&
-		    (rtm->rtm_flags & RTF_LLINFO) &&
-		    !(rtm->rtm_flags & RTF_GATEWAY)) switch (sdl->sdl_type) {
-		case IFT_ETHER: case IFT_FDDI: case IFT_ISO88023:
-		case IFT_ISO88024: case IFT_ISO88025: case IFT_ARCNET:
+		if (is_llinfo(sdl, rtm->rtm_flags))
 			goto overwrite;
-		}
 		if (doing_proxy == 0) {
 			(void)printf("set: can only proxy for %s\n", host);
 			return (1);
@@ -322,6 +318,27 @@ get(const char *host)
 	}
 }
 
+
+static int
+is_llinfo(const struct sockaddr_dl *sdl, int rtflags)
+{
+	if (sdl->sdl_family != AF_LINK ||
+	    (rtflags & (RTF_LLINFO|RTF_GATEWAY)) != RTF_LLINFO)
+		return 0;
+
+	switch (sdl->sdl_type) {
+	case IFT_ETHER:
+	case IFT_FDDI:
+	case IFT_ISO88023:
+	case IFT_ISO88024:
+	case IFT_ISO88025:
+	case IFT_ARCNET:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
 /*
  * Delete an arp entry 
  */
@@ -348,15 +365,9 @@ tryagain:
 	}
 	sina = (struct sockaddr_inarp *)(rtm + 1);
 	sdl = (struct sockaddr_dl *)(ROUNDUP(sina->sin_len) + (char *)sina);
-	if (sina->sin_addr.s_addr == sin_m.sin_addr.s_addr) {
-		if (sdl->sdl_family == AF_LINK &&
-		    (rtm->rtm_flags & RTF_LLINFO) &&
-		    !(rtm->rtm_flags & RTF_GATEWAY)) switch (sdl->sdl_type) {
-		case IFT_ETHER: case IFT_FDDI: case IFT_ISO88023:
-		case IFT_ISO88024: case IFT_ISO88025: case IFT_ARCNET:
-			goto delete;
-		}
-	}
+	if (sina->sin_addr.s_addr == sin_m.sin_addr.s_addr &&
+	    is_llinfo(sdl, rtm->rtm_flags))
+		goto delete;
 	if (sin_m.sin_other & SIN_PROXY) {
 		warnx("delete: can't locate %s", host);
 		return (1);
