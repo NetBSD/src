@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.93 2006/08/04 01:44:12 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.93.2.1 2006/09/23 23:05:17 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93 2006/08/04 01:44:12 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93.2.1 2006/09/23 23:05:17 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2417,13 +2417,15 @@ pmap_enter_ptpage(pmap, va)
 #if defined(M68060)
 			stpa = (u_int)pmap->pm_stpa;
 			if (cputype == CPU_68060) {
+				pt_entry_t	*pte;
+
+				pte = pmap_pte(pmap_kernel(), pmap->pm_stab);
 				while (stpa < (u_int)pmap->pm_stpa + 
 				    ATARI_STSIZE) {
-					pmap_changebit(stpa, PG_CCB, 0);
-					pmap_changebit(stpa, PG_CI, 1);
+					*pte = (*pte & ~PG_CMASK) | PG_CI;
+					++pte;
 					stpa += PAGE_SIZE;
 				}
-				DCIS(); /* XXX */
 	 		}
 #endif
 			pmap->pm_stfree = protostfree;
