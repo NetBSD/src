@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.29 2006/09/22 19:07:09 dsl Exp $	*/
+/*	$NetBSD: job.h,v 1.30 2006/09/23 20:51:28 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -151,12 +151,13 @@ typedef struct Job {
 			     * saved when the job has been run */
     FILE 	*cmdFILE;   /* When creating the shell script, this is
 			     * where the commands go */
-    short       job_status; /* status of the job entry */
+    int		exit_status; /* from wait4() in signal handler */
+    char        job_state;  /* status of the job entry */
 #define JOB_ST_FREE	0	/* Job is available */
 #define JOB_ST_SETUP	1	/* Job is allocated but otherwise invalid */
-#define JOB_ST_RUNNING	2	/* Job is running, pid valid */
-#define JOB_ST_STOPPED	3	/* Job is stopped (ie after ^Z) */
+#define JOB_ST_RUNNING	3	/* Job is running, pid valid */
 #define JOB_ST_FINISHED	4	/* Job is done (ie after SIGCHILD) */
+    char        job_suspended;
     short      	flags;	    /* Flags to control treatment of job */
 #define	JOB_IGNERR	0x001	/* Ignore non-zero exits */
 #define	JOB_SILENT	0x002	/* no output */
@@ -164,11 +165,6 @@ typedef struct Job {
 				 * if we can't export it and maxLocal is 0 */
 #define JOB_IGNDOTS	0x008  	/* Ignore "..." lines when processing
 				 * commands */
-#define JOB_RESUME	0x100	/* Job needs to be resumed b/c it stopped,
-				 * for some reason */
-#define JOB_CONTINUING	0x200	/* We are in the process of resuming this job.
-				 * Used to avoid infinite recursion between
-				 * JobFinish and JobRestart */
 #define JOB_TRACED	0x400	/* we've sent 'set -x' */
 
     union {
@@ -280,7 +276,9 @@ void Shell_Init(void);
 const char *Shell_GetNewline(void);
 void Job_Touch(GNode *, Boolean);
 Boolean Job_CheckCommands(GNode *, void (*abortProc )(const char *, ...));
-void Job_CatchChildren(Boolean);
+#define CATCH_BLOCK	1
+#define CATCH_DEFER	2
+void Job_CatchChildren(unsigned int);
 void Job_CatchOutput(void);
 void Job_Make(GNode *);
 void Job_Init(void);
