@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.3 2006/06/18 15:44:49 rpaulo Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.3.8.1 2006/09/23 01:18:31 snj Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.3 2006/06/18 15:44:49 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.3.8.1 2006/09/23 01:18:31 snj Exp $");
 
 #include "bpfilter.h"
 
@@ -507,6 +507,8 @@ rt2560_detach(void *xsc)
 
 	callout_stop(&sc->scan_ch);
 	callout_stop(&sc->rssadapt_ch);
+
+	rt2560_stop(sc);
 
 	ieee80211_ifdetach(&sc->sc_ic);	/* free all nodes */
 	if_detach(ifp);
