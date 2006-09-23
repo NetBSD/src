@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.4 2006/09/11 21:59:09 plunky Exp $	*/
+/*	$NetBSD: btsco.c,v 1.5 2006/09/23 16:08:43 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.4 2006/09/11 21:59:09 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.5 2006/09/23 16:08:43 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -832,7 +832,7 @@ btsco_start_input(void *hdl, void *block, int blksize,
 		device_xname((struct device *)sc), blksize);
 
 	if (sc->sc_sco == NULL)
-		return EINVAL;
+		return ENOTCONN;
 
 	sc->sc_rx_want = blksize;
 	sc->sc_rx_block = block;
