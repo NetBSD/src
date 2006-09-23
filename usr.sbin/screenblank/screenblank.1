@@ -1,4 +1,4 @@
-.\"	$NetBSD: screenblank.1,v 1.13 2006/09/23 20:12:15 elad Exp $
+.\"	$NetBSD: screenblank.1,v 1.14 2006/09/23 20:23:14 wiz Exp $
 .\"
 .\" Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,12 +42,13 @@
 .Nd screen saver daemon for wscons and FBIO machines
 .Sh SYNOPSIS
 .Nm screenblank
-.Op Fl u | Fl b
 .Op Fl k | Fl m
 .Op Fl d Ar inactivity-timeout
 .Op Fl e Ar wakeup-delay
 .Op Fl f Ar framebuffer
 .Op Fl i Ar input-device
+.Nm
+.Brq Fl b | Fl u
 .Sh DESCRIPTION
 .Nm
 disables the framebuffer if the keyboard and mouse are idle for a period
@@ -56,40 +57,45 @@ resumes.
 .Pp
 When killed with a SIGINT, SIGHUP, or SIGTERM,
 .Nm
-will re-enable the framebuffer.  The pid can be found in the file
+will re-enable the framebuffer.
+The pid can be found in the file
 .Pa /var/run/screenblank.pid .
 .Pp
 The options are as follows:
 .Bl -tag -width indent
-.It Fl k
-Do not check the keyboard for activity.
-.It Fl m
-Do not check the mouse for activity.
+.It Fl b
+Overriding the other options, simply try (once) to blank the
+framebuffer, then exit.
 .It Fl d Ar inactivity-timeout
 Wait the number of seconds specified by
 .Ar inactivity-timeout ,
-expressed in the format `xxx.xxx', before disabling the framebuffer due to
-inactivity.  The default is 600 seconds (10 minutes).
+expressed in the format
+.Dq xxx.xxx ,
+before disabling the framebuffer due to inactivity.
+The default is 600 seconds (10 minutes).
 .It Fl e Ar wakeup-delay
 Wait the number of seconds specified by
 .Ar wakeup-delay ,
-expressed in the format `xxx.xxx', before re-enabling the framebuffer once
-activity resumes.  The default is .25 seconds.
+expressed in the format
+.Dq xxx.xxx ,
+before re-enabling the framebuffer once activity resumes.
+The default is .25 seconds.
 .It Fl f Ar framebuffer
 Use the framebuffer device
 .Ar framebuffer
 instead of the default
 .Pa /dev/fb .
-.It Fl u
-Overriding the other options, simply try (once) to unblank the
-framebuffer, then exit.
-.It Fl b
-Overriding the other options, simply try (once) to blank the
-framebuffer, then exit.
 .It Fl i Ar input-device
 Add
 .Ar input-device
 to the list of devices to monitor for activity.
+.It Fl k
+Do not check the keyboard for activity.
+.It Fl m
+Do not check the mouse for activity.
+.It Fl u
+Overriding the other options, simply try (once) to unblank the
+framebuffer, then exit.
 .El
 .Pp
 Note that the
