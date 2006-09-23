@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.60 2006/08/21 19:08:47 christos Exp $	*/
+/*	$NetBSD: ls.c,v 1.61 2006/09/23 19:54:53 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.60 2006/08/21 19:08:47 christos Exp $");
+__RCSID("$NetBSD: ls.c,v 1.61 2006/09/23 19:54:53 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -565,7 +565,7 @@ display(FTSENT *p, FTSENT *list)
 					flen = 0;
 
 				if ((np = malloc(sizeof(NAMES) +
-				    ulen + glen + flen + 3)) == NULL)
+				    ulen + glen + flen + 2)) == NULL)
 					err(EXIT_FAILURE, NULL);
 
 				np->user = &np->data[0];
