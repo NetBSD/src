@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.63 2006/09/23 20:23:09 elad Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.64 2006/09/23 22:24:51 manu Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -278,6 +278,7 @@
 #	systrace syscall tracer
 #	tap*	virtual Ethernet device
 #	tun*	network tunnel driver
+#	twa*	3ware Apache control device
 #	twe	3ware Escalade control interface
 #	uk*	unknown SCSI device
 #	veriexec verified executable fingerprint loader
@@ -1102,6 +1103,11 @@ mlx*)
 mly*)
 	unit=${i#mly}
 	mkdev mly$unit c %mly_chr% $unit
+	;;
+
+twa*)
+	unit=${i#twa}
+	mkdev twa$unit c %twa_chr% $unit
 	;;
 
 twe*)
