@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.4 2006/08/20 15:10:59 christos Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.5 2006/09/23 17:05:33 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.4 2006/08/20 15:10:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.5 2006/09/23 17:05:33 fvdl Exp $");
 
 #include "opt_acpi.h"
 #include <sys/param.h>
@@ -416,7 +416,7 @@ acpi_pci_link_dump(struct acpi_pci_link_softc *sc)
 			printf(" none");
 		else for (j = 0; j < link->l_num_irqs; j++)
 			printf(" %d", link->l_irqs[j]);
-		printf("\n");
+		printf(" polarity %u trigger %u\n", link->l_pol, link->l_trig);
 	}
 	printf("\n");
 }
