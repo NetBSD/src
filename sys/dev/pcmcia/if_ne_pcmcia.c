@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.144 2006/08/30 16:55:06 christos Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.145 2006/09/23 13:21:01 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.144 2006/08/30 16:55:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.145 2006/09/23 13:21:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,6 +275,10 @@ static const struct ne2000dev {
     { PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLATE,
       PCMCIA_CIS_INVALID,
       0, -1, { 0xff, 0xff, 0xff }, 0 },
+
+    { PCMCIA_VENDOR_IODATA3, PCMCIA_PRODUCT_IODATA3_PCETTXR,
+      PCMCIA_CIS_IODATA3_PCETTXR,
+      0, -1, { 0x00, 0xa0, 0xb0 }, NE2000DVF_DL10019 },
 
     /*
      * This entry should be placed after above PCLA-TE entry.

@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.217 2006/07/28 08:02:39 scottr Exp $
+$NetBSD: pcmciadevs,v 1.218 2006/09/23 13:21:01 jmcneill Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -70,6 +70,7 @@ vendor DLINK_2			0x0143	D-Link
 vendor DLINK_3			0x0149	D-Link
 vendor LINKSYS			0x0149	Linksys Corporation
 vendor NETGEAR			0x0149	Netgear
+vendor IODATA3			0x0149	I-O DATA
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor SYMBOL2			0x014d	Symbol
 vendor LUCENT			0x0156	Lucent Technologies
@@ -263,6 +264,7 @@ product INTERSIL ISL37300P	0x7300 Intersil ISL37300P
 product IODATA PCLATE		0x2216 I-O DATA PCLA/TE
 product IODATA2 WNB11PCM	0x0002 I-O DATA WN-B11/PCM
 product IODATA2 WCF12		0x0673 Wireless CF Card
+product IODATA3 PCETTXR		0x0230 I-O DATA PCET/TX-R
 
 /* Kingston Products */
 product KINGSTON KNE2		0x0100 Kingston KNE-PC2 Ethernet
