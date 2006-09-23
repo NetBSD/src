@@ -1,4 +1,4 @@
-/*	$NetBSD: logwtmp.c,v 1.24 2005/06/23 04:20:41 christos Exp $	*/
+/*	$NetBSD: logwtmp.c,v 1.25 2006/09/23 16:03:50 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: logwtmp.c,v 1.24 2005/06/23 04:20:41 christos Exp $");
+__RCSID("$NetBSD: logwtmp.c,v 1.25 2006/09/23 16:03:50 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ ftpd_logwtmp(const char *line, const char *name, const char *host)
 	struct utmp ut;
 	struct stat buf;
 
-	if (fd < 0 && (fd = open(_PATH_WTMP, O_WRONLY|O_APPEND, 0)) < 0)
+	if (fd < 0)
 		return;
 	if (fstat(fd, &buf) == 0) {
 		(void)strncpy(ut.ut_line, line, sizeof(ut.ut_line));
@@ -110,7 +110,7 @@ void
 ftpd_initwtmpx(void)
 {
 	const char *wf = _PATH_WTMPX;
-	if ((fd = open(wf, O_WRONLY|O_APPEND, 0)) == -1)
+	if ((fdx = open(wf, O_WRONLY|O_APPEND, 0)) == -1)
 		syslog(LOG_ERR, "Cannot open `%s' (%m)", wf);
 }
 
