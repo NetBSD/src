@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.100 2006/08/26 15:26:02 matt Exp $	*/
+/*	$NetBSD: route.c,v 1.101 2006/09/23 21:11:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.100 2006/08/26 15:26:02 matt Exp $");
+__RCSID("$NetBSD: route.c,v 1.101 2006/09/23 21:11:53 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -673,22 +673,6 @@ netname(struct sockaddr *sa, struct sockaddr *nm)
 		if (cp)
 			(void)strlcpy(line, cp, sizeof(line));
 		else {
-#if 0	/* XXX - This is silly... */
-#define C(x)	((x) & 0xff)
-			if ((i & 0xffffff) == 0)
-				(void)snprintf(line, sizeof line, "%u",
-				    C(i >> 24));
-			else if ((i & 0xffff) == 0)
-				(void)snprintf(line, sizeof line, "%u.%u",
-				    C(i >> 24), C(i >> 16));
-			else if ((i & 0xff) == 0)
-				(void)snprintf(line, sizeof line, "%u.%u.%u",
-				    C(i >> 24), C(i >> 16), C(i >> 8));
-			else
-				(void)snprintf(line, sizeof line, "%u.%u.%u.%u",
-				    C(i >> 24), C(i >> 16), C(i >> 8), C(i));
-#undef C
-#else /* XXX */
 			if (nml == 0)
 				strlcpy(line, inet_ntoa(in), sizeof(line));
 			else if (nml < 0) {
@@ -699,7 +683,6 @@ netname(struct sockaddr *sa, struct sockaddr *nm)
 				snprintf(line, sizeof(line), "%s/%d",
 				    inet_ntoa(in), nml);
 			}
-#endif /* XXX */
 		}
 		break;
 
