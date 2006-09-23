@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.56 2006/09/10 02:28:33 riz Exp $
+# $NetBSD: INSTALL,v 1.57 2006/09/23 04:37:04 jmcneill Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.56 $"
+#ident 		"INSTALL-$Revision: 1.57 $"
 
 maxusers	32		# estimated number of users
 
@@ -341,6 +341,7 @@ artsata* at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* at pci? dev ? function ?	# Cypress IDE controllers
 hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+iteide*	at pci? dev ? function ?	# IT Express IDE controllers
 optiide* at pci? dev ? function ?	# Opti IDE controllers
 piixide* at pci? dev ? function ?	# Intel IDE controllers
 pdcide* at pci? dev ? function ?	# Promise IDE controllers
