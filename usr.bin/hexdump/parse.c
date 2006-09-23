@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.21 2006/09/05 12:11:27 hira Exp $	*/
+/*	$NetBSD: parse.c,v 1.22 2006/09/23 21:19:34 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.21 2006/09/05 12:11:27 hira Exp $");
+__RCSID("$NetBSD: parse.c,v 1.22 2006/09/23 21:19:34 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -247,10 +247,10 @@ rewrite(FS *fs)
 			if (fu->bcnt) {
 				sokay = USEBCNT;
 				/* Skip to conversion character. */
-				for (++p1; strchr(spec, *p1); ++p1);
+				for (++p1; *p1 && strchr(spec, *p1); ++p1);
 			} else {
 				/* Skip any special chars, field width. */
-				while (strchr(spec + 1, *++p1));
+				while (*++p1 && strchr(spec + 1, *p1));
 				if (*p1 == '.' &&
 				    isdigit((unsigned char)*++p1)) {
 					sokay = USEPREC;
@@ -261,7 +261,7 @@ rewrite(FS *fs)
 					sokay = NOTOKAY;
 			}
 
-			p2 = p1 + 1;		/* Set end pointer. */
+			p2 = *p1 ? p1 + 1 : p1;	/* Set end pointer. */
 			cs[0] = *p1;		/* Set conversion string. */
 			cs[1] = '\0';
 
@@ -426,6 +426,8 @@ isint2:					switch(fu->bcnt) {
 		    !(fu->flags&F_SETREP) && fu->bcnt)
 			fu->reps += (blocksize - fs->bcnt) / fu->bcnt;
 		if (fu->reps > 1) {
+			if (!fu->nextpr)
+				break;
 			for (pr = fu->nextpr;; pr = pr->nextpr)
 				if (!pr->nextpr)
 					break;
@@ -458,6 +460,10 @@ escape(char *p1)
 		}
 		if (*p1 == '\\')
 			switch(*++p1) {
+			case '\0':
+				*p2 = '\\';
+				*++p2 = '\0';
+				return;	/* incomplete escape sequence */
 			case 'a':
 			     /* *p2 = '\a'; */
 				*p2 = '\007';
@@ -484,6 +490,8 @@ escape(char *p1)
 				*p2 = *p1;
 				break;
 			}
+		else
+			*p2 = *p1;
 	}
 }
 
