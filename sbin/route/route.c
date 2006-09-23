@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.101 2006/09/23 21:11:53 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.102 2006/09/23 21:51:05 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.101 2006/09/23 21:11:53 dyoung Exp $");
+__RCSID("$NetBSD: route.c,v 1.102 2006/09/23 21:51:05 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -248,7 +248,7 @@ flushroutes(int argc, char *argv[], int doall)
 	char *buf, *next, *lim;
 	struct rt_msghdr *rtm;
 
-	af = 0;
+	af = AF_UNSPEC;
 	shutdown(sock, SHUT_RD); /* Don't want to read back our messages */
 	if (argc > 1) {
 		argv++;
@@ -300,7 +300,7 @@ bad:			usage(*argv);
 	}
 	if (verbose) {
 		(void)printf("Examining routing table from sysctl\n");
-		if (af)
+		if (af != AF_UNSPEC)
 			printf("(address family %s)\n", (*argv + 1));
 	}
 	if (needed == 0)
@@ -313,7 +313,7 @@ bad:			usage(*argv);
 		if (!(rtm->rtm_flags & (RTF_GATEWAY | RTF_STATIC |
 					RTF_LLINFO)) && !doall)
 			continue;
-		if (af) {
+		if (af != AF_UNSPEC) {
 			struct sockaddr *sa = (struct sockaddr *)(rtm + 1);
 
 			if (sa->sa_family != af)
@@ -799,7 +799,7 @@ newroute(int argc, char **argv)
 	struct hostent *hp = 0;
 
 	cmd = argv[0];
-	af = 0;
+	af = AF_UNSPEC;
 	if (*cmd != 'g')
 		shutdown(sock, SHUT_RD); /* Don't want to read back our messages */
 	while (--argc > 0) {
@@ -1127,7 +1127,7 @@ getaddr(int which, char *s, struct hostent **hpp)
 	char *t;
 	int afamily;  /* local copy of af so we can change it */
 
-	if (af == 0) {
+	if (af == AF_UNSPEC) {
 		af = AF_INET;
 		aflen = sizeof(struct sockaddr_in);
 	}
