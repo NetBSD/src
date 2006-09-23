@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.17 2003/08/07 16:27:59 agc Exp $	*/
+/*	$NetBSD: limits.h,v 1.18 2006/09/23 20:41:20 elad Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #include <sys/featuretest.h>
 
 #define	CHAR_BIT	8		/* number of bits in a char */
-#define	MB_LEN_MAX	32		/* no multibyte characters */
+#define	MB_LEN_MAX	32		/* max multibyte character length */
 
 #define	SCHAR_MAX	0x7f		/* max value for a signed char */
 #define SCHAR_MIN	(-0x7f-1)	/* min value for a signed char */
