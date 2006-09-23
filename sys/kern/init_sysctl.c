@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.85 2006/09/13 10:07:42 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.86 2006/09/23 22:01:04 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.85 2006/09/13 10:07:42 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.86 2006/09/23 22:01:04 manu Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
 #include "opt_posix.h"
 #include "opt_compat_netbsd32.h"
+#include "opt_ktrace.h"
 #include "veriexec.h"
 #include "pty.h"
 #include "rnd.h"
@@ -77,6 +78,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.85 2006/09/13 10:07:42 elad Exp $"
 #endif /* NVERIEXEC > 0 */
 #include <sys/stat.h>
 #include <sys/kauth.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 #include <sys/ipc.h>
@@ -110,6 +114,31 @@ mode_t security_setidcore_mode = (S_IRUSR|S_IWUSR);
 #define KERN_PROCSLOP	(5 * sizeof(struct kinfo_proc))
 #define KERN_LWPSLOP	(5 * sizeof(struct kinfo_lwp))
 
+#ifdef KTRACE
+int dcopyout(struct lwp *, const void *, void *, size_t);
+
+int
+dcopyout(l, kaddr, uaddr, len)
+	struct lwp *l;
+	const void *kaddr;
+	void *uaddr;
+	size_t len;
+{
+	int error;
+
+	error = copyout(kaddr, uaddr, len);
+	if (!error && KTRPOINT(l->l_proc, KTR_MIB)) {
+		struct iovec iov;
+
+		iov.iov_base = uaddr;
+		iov.iov_len = len;
+		ktrgenio(l, -1, UIO_READ, &iov, len, 0);
+	}
+	return error;
+}
+#else /* KTRACE */
+#define dcopyout(l, kaddr, uaddr, len) copyout(l, kaddr, uaddr, len)
+#endif /* KTRACE */
 #ifndef MULTIPROCESSOR
 #define	sysctl_ncpus()	(1)
 #else /* MULTIPROCESSOR */
@@ -1289,13 +1318,13 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 	}
 
 	/*
-	 * first copyout filehead
+	 * first dcopyout filehead
 	 */
 	if (buflen < sizeof(filehead)) {
 		*oldlenp = 0;
 		return (0);
 	}
-	error = copyout(&filehead, where, sizeof(filehead));
+	error = dcopyout(l, &filehead, where, sizeof(filehead));
 	if (error)
 		return (error);
 	buflen -= sizeof(filehead);
@@ -1312,7 +1341,7 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 			*oldlenp = where - start;
 			return (ENOMEM);
 		}
-		error = copyout(fp, where, sizeof(struct file));
+		error = dcopyout(l, fp, where, sizeof(struct file));
 		if (error)
 			return (error);
 		buflen -= sizeof(struct file);
@@ -1409,7 +1438,7 @@ sysctl_msgbuf(SYSCTLFN_ARGS)
 		len = MIN(end - beg, maxlen);
 		if (len == 0)
 			break;
-		error = copyout(&msgbufp->msg_bufc[beg], where, len);
+		error = dcopyout(l, &msgbufp->msg_bufc[beg], where, len);
 		if (error)
 			break;
 		where += len;
@@ -1735,8 +1764,8 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 		}
 	}
 	*sizep -= buflen;
-	error = copyout(bf, start, *sizep);
-	/* If copyout succeeded, use return code set earlier. */
+	error = dcopyout(l, bf, start, *sizep);
+	/* If dcopyout succeeded, use return code set earlier. */
 	if (error == 0)
 		error = ret;
 	if (bf)
@@ -1859,7 +1888,7 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 			 * Copy out elem_size, but not larger than
 			 * the size of a struct kinfo_proc2.
 			 */
-			error = copyout(&klwp, dp,
+			error = dcopyout(l, &klwp, dp,
 			    min(sizeof(klwp), elem_size));
 			if (error)
 				goto cleanup;
@@ -1972,7 +2001,7 @@ sysctl_kern_drivers(SYSCTLFN_ARGS)
 		kd.d_bmajor = devsw_conv[i].d_bmajor;
 		kd.d_cmajor = devsw_conv[i].d_cmajor;
 		strlcpy(kd.d_name, dname, sizeof kd.d_name);
-		error = copyout(&kd, where, sizeof kd);
+		error = dcopyout(l, &kd, where, sizeof kd);
 		if (error != 0)
 			break;
 		buflen -= sizeof kd;
@@ -2029,7 +2058,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 				continue;
 			if (len >= elem_size && elem_count > 0) {
 				fill_file(&kf, fp, NULL, 0);
-				error = copyout(&kf, dp, out_size);
+				error = dcopyout(l, &kf, dp, out_size);
 				if (error)
 					break;
 				dp += elem_size;
@@ -2066,7 +2095,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 				if (len >= elem_size && elem_count > 0) {
 					fill_file(&kf, fd->fd_ofiles[i],
 						  p, i);
-					error = copyout(&kf, dp, out_size);
+					error = dcopyout(l, &kf, dp, out_size);
 					if (error)
 						break;
 					dp += elem_size;
@@ -2263,11 +2292,11 @@ again:
 		if (type == KERN_PROC) {
 			if (buflen >= sizeof(struct kinfo_proc)) {
 				fill_eproc(p, eproc);
-				error = copyout(p, &dp->kp_proc,
+				error = dcopyout(l, p, &dp->kp_proc,
 				    sizeof(struct proc));
 				if (error)
 					goto cleanup;
-				error = copyout(eproc, &dp->kp_eproc,
+				error = dcopyout(l, eproc, &dp->kp_eproc,
 				    sizeof(*eproc));
 				if (error)
 					goto cleanup;
@@ -2282,7 +2311,7 @@ again:
 				 * Copy out elem_size, but not larger than
 				 * the size of a struct kinfo_proc2.
 				 */
-				error = copyout(kproc2, dp2,
+				error = dcopyout(l, kproc2, dp2,
 				    min(sizeof(*kproc2), elem_size));
 				if (error)
 					goto cleanup;
@@ -2451,7 +2480,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 
 	memcpy(&nargv, (char *)&pss + offsetn, sizeof(nargv));
 	if (type == KERN_PROC_NARGV || type == KERN_PROC_NENV) {
-		error = copyout(&nargv, oldp, sizeof(nargv));
+		error = dcopyout(l, &nargv, oldp, sizeof(nargv));
 		*oldlenp = sizeof(nargv);
 		goto done;
 	}
@@ -2544,7 +2573,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 			}
 				
 			/* Copyout the page */
-			error = copyout(arg, (char *)oldp + len, xlen);
+			error = dcopyout(l, arg, (char *)oldp + len, xlen);
 			if (error)
 				goto done;
 
