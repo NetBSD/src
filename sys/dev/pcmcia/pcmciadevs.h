@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.221 2006/09/23 13:21:29 jmcneill Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.222 2006/09/23 15:40:16 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.218 2006/09/23 13:21:01 jmcneill Exp
+ *	NetBSD: pcmciadevs,v 1.219 2006/09/23 15:39:51 jmcneill Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -268,6 +268,8 @@
 /* Edimax Products */
 #define	PCMCIA_CIS_EDIMAX_EP4000A	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_EDIMAX_EP4000A	0x0100
+#define	PCMCIA_CIS_EDIMAX_EP4101	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_EDIMAX_EP4101	0x1090
 
 /* ELSA Products */
 #define	PCMCIA_CIS_ELSA_MC2_IEEE	{ NULL, NULL, NULL, NULL }

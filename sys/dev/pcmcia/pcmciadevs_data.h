@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.221 2006/09/23 13:21:29 jmcneill Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.222 2006/09/23 15:40:16 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.218 2006/09/23 13:21:01 jmcneill Exp
+ *	NetBSD: pcmciadevs,v 1.219 2006/09/23 15:39:51 jmcneill Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -391,6 +391,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Edimax Technology Inc.",
 	    "Edimax EP4000A",	}
+	,
+	{
+	    PCMCIA_VENDOR_EDIMAX, PCMCIA_PRODUCT_EDIMAX_EP4101,
+	    PCMCIA_CIS_EDIMAX_EP4101,
+	    0,
+	    "Edimax Technology Inc.",
+	    "Edimax EP4101",	}
 	,
 	{
 	    PCMCIA_VENDOR_ELSA, PCMCIA_PRODUCT_ELSA_MC2_IEEE,
