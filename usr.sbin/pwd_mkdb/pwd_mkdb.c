@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.30 2005/06/02 09:18:14 lukem Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.31 2006/09/23 17:17:04 sketch Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000\n\
 Copyright (c) 1991, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.30 2005/06/02 09:18:14 lukem Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.31 2006/09/23 17:17:04 sketch Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -162,14 +162,18 @@ main(int argc, char *argv[])
 	found = 0;
 	newuser = 0;
 	dp = NULL;
+	cachesize = 0;
 
-	while ((ch = getopt(argc, argv, "BLd:psu:v")) != -1)
+	while ((ch = getopt(argc, argv, "BLc:d:psu:v")) != -1)
 		switch (ch) {
 		case 'B':			/* big-endian output */
 			lorder = BIG_ENDIAN;
 			break;
 		case 'L':			/* little-endian output */
 			lorder = LITTLE_ENDIAN;
+			break;
+		case 'c':
+			cachesize = atoi(optarg) * 1024 * 1024;
 			break;
 		case 'd':			/* set prefix */
 			strlcpy(prefix, optarg, sizeof(prefix));
@@ -230,13 +234,17 @@ main(int argc, char *argv[])
 	if (fstat(fileno(fp), &st) == -1)
 		error(pname);
 
-	/* Tweak openinfo values for large passwd files. */
-	cachesize = st.st_size * 20;
-	if (cachesize > MAX_CACHESIZE)
-		cachesize = MAX_CACHESIZE;
-	else if (cachesize < MIN_CACHESIZE)
-		cachesize = MIN_CACHESIZE;
-	openinfo.cachesize = cachesize;
+	if (cachesize) {
+		openinfo.cachesize = cachesize;
+	} else {
+		/* Tweak openinfo values for large passwd files. */
+		cachesize = st.st_size * 20;
+		if (cachesize > MAX_CACHESIZE)
+			cachesize = MAX_CACHESIZE;
+		else if (cachesize < MIN_CACHESIZE)
+			cachesize = MIN_CACHESIZE;
+		openinfo.cachesize = cachesize;
+	}
 
 	/* Open the temporary insecure password database. */
 	if (!secureonly) {
@@ -813,6 +821,6 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: pwd_mkdb [-BLps] [-d directory] [-u user] file\n");
+	    "usage: pwd_mkdb [-BLps] [-c cachesize] [-d directory] [-u user] file\n");
 	exit(EXIT_FAILURE);
 }
