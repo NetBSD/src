@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.77 2006/09/22 21:49:21 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.78 2006/09/23 14:04:26 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.77 2006/09/22 21:49:21 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.78 2006/09/23 14:04:26 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -555,13 +555,13 @@ transition(state_t s)
 	if (s == NULL)
 		return;
 	for (;;) {
-#ifndef LETS_GET_SMALL
 #ifdef SUPPORT_UTMPX
+#ifndef LETS_GET_SMALL
 		utmpx_set_runlevel(get_runlevel(current_state),
 		    get_runlevel(s));
 #endif
-#endif
 		current_state = s;
+#endif
 		s = (state_t)(*s)();
 	}
 }
