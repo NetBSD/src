@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.102 2006/09/23 21:51:05 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.103 2006/09/23 21:55:47 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.102 2006/09/23 21:51:05 dyoung Exp $");
+__RCSID("$NetBSD: route.c,v 1.103 2006/09/23 21:55:47 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -266,16 +266,14 @@ flushroutes(int argc, char *argv[], int doall)
 			case K_ATALK:
 				af = AF_APPLETALK;
 				break;
-#endif /* SMALL */
-			case K_LINK:
-				af = AF_LINK;
-				break;
-#ifndef SMALL
 			case K_ISO:
 			case K_OSI:
 				af = AF_ISO;
 				break;
 #endif /* SMALL */
+			case K_LINK:
+				af = AF_LINK;
+				break;
 			default:
 				goto bad;
 			}
