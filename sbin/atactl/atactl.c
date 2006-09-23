@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.42 2006/02/25 02:28:55 wiz Exp $	*/
+/*	$NetBSD: atactl.c,v 1.43 2006/09/23 15:24:24 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.42 2006/02/25 02:28:55 wiz Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.43 2006/09/23 15:24:24 xtraeme Exp $");
 #endif
 
 
@@ -785,6 +785,7 @@ is_smart(void)
 					retval = 1;
 				} else {
 					status = "disabled";
+					retval = 3;
 				}
 			}
 			printf("SMART supported, SMART %s\n", status);
@@ -1077,57 +1078,62 @@ device_smart(int argc, char *argv[])
 
 		is_smart();
 	} else if (strcmp(argv[0], "status") == 0) {
-		if (!is_smart()) {
+		int rv;
+
+		rv = is_smart();
+
+		if (!rv) {
 			fprintf(stderr, "SMART not supported\n");
 			return;
+		} else if (rv == 3)
+			return;
+
+		memset(&inbuf, 0, sizeof(inbuf));
+		memset(&req, 0, sizeof(req));
+
+		req.features = WDSM_STATUS;
+		req.command = WDCC_SMART;
+		req.cylinder = WDSMART_CYL;
+		req.timeout = 1000;
+	
+		ata_command(&req);
+
+		if (req.cylinder != WDSMART_CYL) {
+			fprintf(stderr, "Threshold exceeds condition\n");
 		}
 
-			memset(&inbuf, 0, sizeof(inbuf));
-			memset(&req, 0, sizeof(req));
+		/* WDSM_RD_DATA and WDSM_RD_THRESHOLDS are optional
+		 * features, the following ata_command()'s may error
+		 * and exit().
+		 */
 
-			req.features = WDSM_STATUS;
-			req.command = WDCC_SMART;
-			req.cylinder = WDSMART_CYL;
-			req.timeout = 1000;
+		memset(&inbuf, 0, sizeof(inbuf));
+		memset(&req, 0, sizeof(req));
+
+		req.flags = ATACMD_READ;
+		req.features = WDSM_RD_DATA;
+		req.command = WDCC_SMART;
+		req.databuf = (caddr_t) inbuf;
+		req.datalen = sizeof(inbuf);
+		req.cylinder = WDSMART_CYL;
+		req.timeout = 1000;
 	
-			ata_command(&req);
+		ata_command(&req);
 
-			if (req.cylinder != WDSMART_CYL) {
-				fprintf(stderr, "Threshold exceeds condition\n");
-			}
+		memset(&inbuf2, 0, sizeof(inbuf2));
+		memset(&req, 0, sizeof(req));
 
-			/* WDSM_RD_DATA and WDSM_RD_THRESHOLDS are optional
-			 * features, the following ata_command()'s may error
-			 * and exit().
-			 */
+		req.flags = ATACMD_READ;
+		req.features = WDSM_RD_THRESHOLDS;
+		req.command = WDCC_SMART;
+		req.databuf = (caddr_t) inbuf2;
+		req.datalen = sizeof(inbuf2);
+		req.cylinder = WDSMART_CYL;
+		req.timeout = 1000;
 
-			memset(&inbuf, 0, sizeof(inbuf));
-			memset(&req, 0, sizeof(req));
+		ata_command(&req);
 
-			req.flags = ATACMD_READ;
-			req.features = WDSM_RD_DATA;
-			req.command = WDCC_SMART;
-			req.databuf = (caddr_t) inbuf;
-			req.datalen = sizeof(inbuf);
-			req.cylinder = WDSMART_CYL;
-			req.timeout = 1000;
-	
-			ata_command(&req);
-
-			memset(&inbuf2, 0, sizeof(inbuf2));
-			memset(&req, 0, sizeof(req));
-
-			req.flags = ATACMD_READ;
-			req.features = WDSM_RD_THRESHOLDS;
-			req.command = WDCC_SMART;
-			req.databuf = (caddr_t) inbuf2;
-			req.datalen = sizeof(inbuf2);
-			req.cylinder = WDSMART_CYL;
-			req.timeout = 1000;
-
-			ata_command(&req);
-
-			print_smart_status(inbuf, inbuf2);
+		print_smart_status(inbuf, inbuf2);
 
 	} else if (strcmp(argv[0], "offline") == 0) {
 		if (argc != 2)
