@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.105 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.106 2006/09/23 22:01:04 manu Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.106 2006/09/23 22:01:04 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -763,6 +763,34 @@ ktrsaupcall(struct lwp *l, int type, int nevent, int nint, void *sas,
 
 	kth->ktr_len = len;
 	kte->kte_buf = ktp;
+
+	ktraddentry(l, kte, KTA_WAITOK);
+	p->p_traceflag &= ~KTRFAC_ACTIVE;
+}
+
+void
+ktrmib(l, name, namelen)
+	struct lwp *l;
+	const int *name;
+	u_int namelen;
+{
+	struct proc *p = l->l_proc;
+	struct ktrace_entry *kte;
+	struct ktr_header *kth;
+	int *namep;
+	size_t size;
+
+	p->p_traceflag |= KTRFAC_ACTIVE;
+	kte = pool_get(&kte_pool, PR_WAITOK);
+	kth = &kte->kte_kth;
+	ktrinitheader(kth, l, KTR_MIB);
+
+	size = namelen * sizeof(*name);
+	namep = malloc(size, M_KTRACE, M_WAITOK);
+	(void)memcpy(namep, name, namelen * sizeof(*name));
+
+	kth->ktr_len = size;
+	kte->kte_buf = namep;
 
 	ktraddentry(l, kte, KTA_WAITOK);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;

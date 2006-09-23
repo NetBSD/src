@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.85 2006/04/05 00:50:59 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.86 2006/09/23 22:01:04 manu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.85 2006/04/05 00:50:59 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.86 2006/09/23 22:01:04 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,6 +117,7 @@ static void	ktruser(struct ktr_user *, int);
 static void	ktrmmsg(struct ktr_mmsg *, int);
 static void	ktrmool(struct ktr_mool *, int);
 static void	ktrsaupcall(const struct ktr_saupcall *, int);
+static void	ktrmib(int *, int);
 static void	usage(void) __attribute__((__noreturn__));
 static void	eprint(int);
 static void	rprint(register_t);
@@ -279,6 +280,9 @@ main(int argc, char **argv)
 		case KTR_SAUPCALL:
 			ktrsaupcall(m, ktrlen);
 			break;
+		case KTR_MIB:
+			ktrmib(m, ktrlen);
+			break;
 		default:
 			putchar('\n');
 			hexdump_buf(m, ktrlen, word_size ? word_size : 1);
@@ -353,6 +357,9 @@ dumpheader(struct ktr_header *kth)
 		break;
 	case KTR_SAUPCALL:
 		type = "SAU";
+		break;
+	case KTR_MIB:
+		type = "MIB";
 		break;
 	default:
 		(void)snprintf(unknown, sizeof(unknown), "UNKNOWN(%d)",
@@ -804,7 +811,9 @@ ktrgenio(struct ktr_genio *ktr, int len)
 	int datalen = len - sizeof (struct ktr_genio);
 	char *dp = (char *)ktr + sizeof (struct ktr_genio);
 
-	printf("fd %d %s %d bytes\n", ktr->ktr_fd,
+	if (ktr->ktr_fd != -1)
+		printf("fd %d ", ktr->ktr_fd);
+	printf("%s %d bytes\n", 
 	    ktr->ktr_rw == UIO_READ ? "read" : "wrote", datalen);
 	if (maxdata == 0)
 		return;
@@ -1012,6 +1021,16 @@ ktrmool(struct ktr_mool *mool, int len)
 	    (u_long)size, (u_long)size, mool->uaddr);
 	mool++;
 	hexdump_buf(mool, size, word_size ? word_size : 4);
+}
+
+static void
+ktrmib(int *namep, int len)
+{
+	int i;
+
+	for (i = 0; i < (len / sizeof(*namep)); i++)
+		printf("%s%d", (i == 0) ? "" : ".", namep[i]);
+	printf("\n");
 }
 
 static const char *

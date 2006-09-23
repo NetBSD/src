@@ -1,4 +1,4 @@
-.\"	$NetBSD: ktrace.1,v 1.32 2006/02/07 06:39:47 skrll Exp $
+.\"	$NetBSD: ktrace.1,v 1.33 2006/09/23 22:01:04 manu Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -192,6 +192,8 @@ trace Mach messages when running Mach binaries with COMPAT_MACH
 (currently limited to i386 and powerpc ports).
 .It Cm n
 trace namei translations
+.It Cm S
+trace MIB access (sysctl)
 .It Cm s
 trace signal processing
 .It Cm U
