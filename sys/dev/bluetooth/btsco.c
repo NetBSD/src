@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.5 2006/09/23 16:08:43 plunky Exp $	*/
+/*	$NetBSD: btsco.c,v 1.6 2006/09/23 16:11:07 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.5 2006/09/23 16:08:43 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.6 2006/09/23 16:11:07 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -327,22 +327,20 @@ btsco_detach(struct device *self, int flags)
 
 	DPRINTF("sc=%p\n", sc);
 
+	s = splsoftnet();
 	if (sc->sc_sco != NULL) {
 		DPRINTF("sc_sco=%p\n", sc->sc_sco);
-		s = splsoftnet();
 		sco_disconnect(sc->sc_sco, 0);
 		sco_detach(&sc->sc_sco);
 		sc->sc_sco = NULL;
-		splx(s);
 	}
 
 	if (sc->sc_sco_l != NULL) {
 		DPRINTF("sc_sco_l=%p\n", sc->sc_sco_l);
-		s = splsoftnet();
 		sco_detach(&sc->sc_sco_l);
 		sc->sc_sco_l = NULL;
-		splx(s);
 	}
+	splx(s);
 
 	if (sc->sc_audio != NULL) {
 		DPRINTF("sc_audio=%p\n", sc->sc_audio);
@@ -659,18 +657,16 @@ btsco_close(void *hdl)
 
 	DPRINTF("%s\n", device_xname((struct device *)sc));
 
+	s = splsoftnet();
 	if (sc->sc_sco != NULL) {
-		s = splsoftnet();
 		sco_disconnect(sc->sc_sco, 0);
 		sco_detach(&sc->sc_sco);
-		splx(s);
 	}
 
 	if (sc->sc_sco_l != NULL) {
-		s = splsoftnet();
 		sco_detach(&sc->sc_sco_l);
-		splx(s);
 	}
+	splx(s);
 
 	if (sc->sc_rx_mbuf != NULL) {
 		m_freem(sc->sc_rx_mbuf);
