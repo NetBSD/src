@@ -1,4 +1,4 @@
-.\"	$NetBSD: cdplay.1,v 1.19 2006/09/22 18:20:53 xtraeme Exp $
+.\"	$NetBSD: cdplay.1,v 1.20 2006/09/23 11:21:35 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran.
 .\" All rights reserved.
@@ -176,12 +176,11 @@ Display the current audio, media and volume status.
 Turn on digital transfer mode.
 In this mode,
 .Nm
-reads digital data from disc and sends them to audio device
-along digital path.
+reads digital data from disc and sends it to an audio device.
 A SCSI or ATAPI CD-ROM is required; and the audio device must
 support CD audio format (44100 Hz sampling rate, 16-bit
 stereo samples).
-Audio data are read and written in groups of 
+Audio data are read and written in groups of
 .Ar n
 frames (5 by default, or 1/15 seconds).
 .It Cm help
@@ -207,7 +206,8 @@ Quit the program.
 The
 .Nm
 command first appeared in
-.Nx 1.5 . Support for digital transfer mode was added in
+.Nx 1.5 .
+Support for digital transfer mode was added in
 .Nx 5.0 .
 .Sh AUTHORS
 .An Jean-Marc Zucconi ,
