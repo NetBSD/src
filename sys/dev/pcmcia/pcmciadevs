@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.218 2006/09/23 13:21:01 jmcneill Exp $
+$NetBSD: pcmciadevs,v 1.219 2006/09/23 15:39:51 jmcneill Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -214,6 +214,7 @@ product DUAL NE2000		0x0100 Dual NE2000
 
 /* Edimax Products */
 product EDIMAX	EP4000A		0x0100 Edimax EP4000A
+product EDIMAX	EP4101		0x1090 Edimax EP4101
 
 /* ELSA Products */
 product ELSA MC2_IEEE		0x0001 AirLancer MC-2 IEEE
