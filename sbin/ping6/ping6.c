@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.69 2006/05/18 02:14:22 rpaulo Exp $	*/
+/*	$NetBSD: ping6.c,v 1.70 2006/09/23 16:18:04 elad Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.69 2006/05/18 02:14:22 rpaulo Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.70 2006/09/23 16:18:04 elad Exp $");
 #endif
 #endif
 
@@ -1489,7 +1489,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 				    sizeof(dstsa)));
 			}
 			if (timing)
-				(void)printf(" time=%g ms", triptime);
+				(void)printf(" time=%.3f ms", triptime);
 			if (dupflag)
 				(void)printf("(DUP!)");
 			/* check the data */
