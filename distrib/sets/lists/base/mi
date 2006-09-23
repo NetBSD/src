@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.656 2006/09/23 02:37:45 jmcneill Exp $
+# $NetBSD: mi,v 1.657 2006/09/23 17:37:58 kleink Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -3248,11 +3248,13 @@
 ./usr/share/zoneinfo/America/Argentina/Ushuaia	base-sys-share		share
 ./usr/share/zoneinfo/America/Aruba		base-sys-share		share
 ./usr/share/zoneinfo/America/Asuncion		base-sys-share		share
+./usr/share/zoneinfo/America/Atikokan		base-sys-share		share
 ./usr/share/zoneinfo/America/Atka		base-sys-share		share
 ./usr/share/zoneinfo/America/Bahia		base-sys-share		share
 ./usr/share/zoneinfo/America/Barbados		base-sys-share		share
 ./usr/share/zoneinfo/America/Belem		base-sys-share		share
 ./usr/share/zoneinfo/America/Belize		base-sys-share		share
+./usr/share/zoneinfo/America/Blanc-Sablon	base-sys-share		share
 ./usr/share/zoneinfo/America/Boa_Vista		base-sys-share		share
 ./usr/share/zoneinfo/America/Bogota		base-sys-share		share
 ./usr/share/zoneinfo/America/Boise		base-sys-share		share
@@ -3338,6 +3340,7 @@
 ./usr/share/zoneinfo/America/Noronha		base-sys-share		share
 ./usr/share/zoneinfo/America/North_Dakota	base-sys-share
 ./usr/share/zoneinfo/America/North_Dakota/Center	base-sys-share		share
+./usr/share/zoneinfo/America/North_Dakota/New_Salem	base-sys-share		share
 ./usr/share/zoneinfo/America/Panama		base-sys-share		share
 ./usr/share/zoneinfo/America/Pangnirtung	base-sys-share		share
 ./usr/share/zoneinfo/America/Paramaribo		base-sys-share		share
@@ -3593,8 +3596,12 @@
 ./usr/share/zoneinfo/Europe/Copenhagen		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Dublin		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Gibraltar		base-sys-share		share
+./usr/share/zoneinfo/Europe/Guernsey		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Helsinki		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Istanbul		base-sys-share		share
+./usr/share/zoneinfo/Europe/Istanbul		base-sys-share		share
+./usr/share/zoneinfo/Europe/Isle_of_Man		base-sys-share		share
+./usr/share/zoneinfo/Europe/Jersey		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Kaliningrad		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Kiev		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Kuybyshev		base-obsolete		obsolete
@@ -3629,6 +3636,7 @@
 ./usr/share/zoneinfo/Europe/Vatican		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Vienna		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Vilnius		base-sys-share		share
+./usr/share/zoneinfo/Europe/Volgograd		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Warsaw		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Zagreb		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Zaporozhye		base-sys-share		share
