@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sysctl.c,v 1.4 2005/12/11 12:20:02 christos Exp $	*/
+/*	$NetBSD: freebsd_sysctl.c,v 1.5 2006/09/23 22:11:59 manu Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.4 2005/12/11 12:20:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.5 2006/09/23 22:11:59 manu Exp $");
+
+#include "opt_ktrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.4 2005/12/11 12:20:02 christos 
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/sysctl.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
@@ -95,15 +100,28 @@ freebsd_sys_sysctl(l, v, retval)
 		syscallarg(void *) new;
 		syscallarg(size_t) newlen;
 	} */ *uap = v;
-	int error, *name;
+	int error;
+	int name[CTL_MAXNAME];
 	size_t newlen, *oldlenp;
 	u_int namelen;
 	void *new, *old;
 
-	name = SCARG(uap, name);
 	namelen = SCARG(uap, namelen);
+
+	if ((namelen > CTL_MAXNAME) || (namelen < 1))
+		return EINVAL;
+
+	if ((error = copyin(SCARG(uap, name), name, 
+	    namelen * sizeof(*name))) != 0)
+		return error;
+
 	if (namelen > 0 && name[0] != 0)
 		return(sys___sysctl(l, v, retval));
+
+#ifdef KTRACE
+	if (KTRPOINT(l->l_proc, KTR_MIB))
+		ktrmib(l, name, namelen);
+#endif
 
 	/*
 	 * FreeBSD sysctl uses an undocumented set of special OIDs in it's
@@ -150,6 +168,15 @@ freebsd_sys_sysctl(l, v, retval)
 			free(locnew, M_TEMP);
 			return(error);
 		}
+#ifdef KTRACE
+		if (!error && KTRPOINT(l->l_proc, KTR_MIB)) {
+			struct iovec iov;
+
+			iov.iov_base = new;
+			iov.iov_len = newlen + 1;
+			ktrgenio(l, -1, UIO_WRITE, &iov, newlen + 1, 0);
+		}
+#endif
 
 		error = freebsd_sysctl_name2oid(locnew, oid, &oidlen);
 		sysctl_unlock(l);
@@ -162,6 +189,15 @@ freebsd_sys_sysctl(l, v, retval)
 				MIN(oidlen, *SCARG(uap, oldlenp)));
 		if (error)
 			return(error);
+#ifdef KTRACE
+		if (KTRPOINT(l->l_proc, KTR_MIB)) {
+			struct iovec iov;
+
+			iov.iov_base = SCARG(uap, old);
+			iov.iov_len = MIN(oidlen, *SCARG(uap, oldlenp));
+			ktrgenio(l, -1, UIO_READ, &iov, iov.iov_len, 0);
+		}
+#endif
 		error = copyout(&oidlen, SCARG(uap, oldlenp), sizeof(u_int));
 
 		return(error);

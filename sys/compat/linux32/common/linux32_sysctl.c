@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysctl.c,v 1.2 2006/09/05 17:12:19 manu Exp $ */
+/*	$NetBSD: linux32_sysctl.c,v 1.3 2006/09/23 22:12:00 manu Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.2 2006/09/05 17:12:19 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.3 2006/09/23 22:12:00 manu Exp $");
+
+#include "opt_ktrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.2 2006/09/05 17:12:19 manu Exp 
 #include <sys/sysctl.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
 
 #include <compat/netbsd32/netbsd32.h>
 
@@ -194,19 +199,11 @@ linux32_sys___sysctl(l, v, retval)
 	   ls32.nlen * sizeof(int))) != 0)
 		return error;
 
-#ifdef DEBUG_LINUX
-	{
-		int i = 0;
-
-		printf("linux32_sysctl(%p, %d, %p, %p, %p, %d) [",
-		    NETBSD32PTR64(ls32.name), ls32.nlen, 
-		    NETBSD32PTR64(ls32.oldval), NETBSD32PTR64(ls32.oldlenp), 
-		    NETBSD32PTR64(ls32.newval), ls32.newlen);
-		for (i = 0; i < ls32.nlen; i++)
-			printf("%d ", name[i]);
-		printf("]\n");
-	}
+#ifdef KTRACE
+	if (KTRPOINT(l->l_proc, KTR_MIB))
+		ktrmib(l, name, ls32.nlen);
 #endif
+
 	if ((error = sysctl_lock(l, 
 	    NETBSD32PTR64(ls32.oldval), savelen)) != 0)
 		return error;
