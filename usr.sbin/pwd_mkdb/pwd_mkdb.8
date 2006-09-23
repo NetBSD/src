@@ -1,4 +1,4 @@
-.\"	$NetBSD: pwd_mkdb.8,v 1.21 2005/09/05 03:37:15 hubertf Exp $
+.\"	$NetBSD: pwd_mkdb.8,v 1.22 2006/09/23 17:17:04 sketch Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -64,6 +64,13 @@ The options are as follows:
 Store data in big-endian format.
 .It Fl L
 Store data in little-endian format.
+.It Fl c Ar cachesize
+Specify in megabytes the size of the memory cache used by the hashing
+library.  On systems with a large user base, a small cache size can lead
+to prohibitively long database file rebuild times.  As a rough guide, the
+memory usage of pwd_mkdb in megabytes will be a little bit more than twice
+the figure specified here.  If unspecified, this value will be calculated
+based on the size of the input file up to a maximum of 8 megabytes.
 .It Fl d Ar directory
 Change the root directory of the generated files from
 .Dq Pa /
