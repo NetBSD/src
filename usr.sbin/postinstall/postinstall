@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.27 2006/09/12 01:15:16 dbj Exp $
+# $NetBSD: postinstall,v 1.28 2006/09/23 08:27:52 jmmv Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -670,6 +670,44 @@ do_makedev()
 	    || return 1
 
 	compare_dir $1 ${dir} ${DEST_DIR}/dev 555 MAKEDEV
+}
+
+#
+#	motd
+#
+additem motd "contents of motd"
+do_motd()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_motd  fix|check"
+
+	if grep 'http://www.NetBSD.org/Misc/send-pr.html' ${DEST_DIR}/etc/motd \
+	    >/dev/null 2>&1
+	then
+		tmp1=$(mktemp /tmp/postinstall.motd.XXXXXXXX)
+		tmp2=$(mktemp /tmp/postinstall.motd.XXXXXXXX)
+		sed '1,2d' <${SRC_DIR}/etc/motd >${tmp1}
+		sed '1,2d' <${DEST_DIR}/etc/motd >${tmp2}
+
+		if [ "$1" = check ]; then
+			cmp -s ${tmp1} ${tmp2}
+			result=$?
+			if [ ${result} -ne 0 ]; then
+				msg "bug reporting messages do not seem to" \
+				    "match the installed release"
+			fi
+		else
+			head -n 2 ${DEST_DIR}/etc/motd >${tmp1}
+			sed '1,2d' <${SRC_DIR}/etc/motd >>${tmp1}
+			cp ${tmp1} ${DEST_DIR}/etc/motd
+			result=0
+		fi
+
+		rm -f ${tmp1} ${tmp2}
+	else
+		result=0
+	fi
+
+	return ${result}
 }
 
 #
