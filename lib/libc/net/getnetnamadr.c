@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.33 2006/03/17 15:53:29 ginsbach Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.33.2.1 2006/09/23 23:11:27 snj Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.33 2006/03/17 15:53:29 ginsbach Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.33.2.1 2006/09/23 23:11:27 snj Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -251,12 +251,12 @@ int
 _files_getnetbyaddr(void *rv, void *cb_data, va_list ap)
 {
 	struct netent *p;
-	unsigned long net;
+	uint32_t net;
 	int type;
 
 	_DIAGASSERT(rv != NULL);
 
-	net = va_arg(ap, unsigned long);
+	net = va_arg(ap, uint32_t);
 	type = va_arg(ap, int);
 
 	setnetent(_net_stayopen);
@@ -281,15 +281,15 @@ _dns_getnetbyaddr(void *rv, void *cb_data, va_list ap)
 	int nn, anslen;
 	querybuf *buf;
 	char qbuf[MAXDNAME];
-	unsigned long net2;
+	uint32_t net2;
 	struct netent *np;
-	unsigned long net;
+	uint32_t net;
 	int type;
 	res_state res;
 
 	_DIAGASSERT(rv != NULL);
 
-	net = va_arg(ap, unsigned long);
+	net = va_arg(ap, uint32_t);
 	type = va_arg(ap, int);
 
 	if (type != AF_INET)
@@ -339,7 +339,7 @@ _dns_getnetbyaddr(void *rv, void *cb_data, va_list ap)
 	free(buf);
 	if (np) {
 		/* maybe net should be unsigned? */
-		unsigned long u_net = net;
+		uint32_t u_net = net;
 
 		/* Strip trailing zeros */
 		while ((u_net & 0xff) == 0 && u_net != 0)
@@ -482,12 +482,12 @@ _yp_getnetbyaddr(void *rv, void *cb_data, va_list ap)
 	struct netent *np;
 	char qbuf[MAXDNAME];
 	unsigned int netbr[4];
-	unsigned long net, net2;
+	uint32_t net, net2;
 	int type, r;
 
 	_DIAGASSERT(rv != NULL);
 
-	net = va_arg(ap, unsigned long);
+	net = va_arg(ap, uint32_t);
 	type = va_arg(ap, int);
 
 	if (type != AF_INET)
