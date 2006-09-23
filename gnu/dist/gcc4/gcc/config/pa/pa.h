@@ -1502,7 +1502,7 @@ extern int may_call_alloca;
    There may be more opportunities to improve code with this hook.  */
 #define LEGITIMIZE_RELOAD_ADDRESS(AD, MODE, OPNUM, TYPE, IND, WIN) 	\
 do { 									\
-  long offset, newoffset, mask;						\
+  HOST_WIDE_INT offset, newoffset, mask;				\
   rtx new, temp = NULL_RTX;						\
 									\
   mask = (GET_MODE_CLASS (MODE) == MODE_FLOAT				\
