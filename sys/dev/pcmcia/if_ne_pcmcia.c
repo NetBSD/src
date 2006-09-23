@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.145 2006/09/23 13:21:01 jmcneill Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.146 2006/09/23 15:39:51 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.145 2006/09/23 13:21:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.146 2006/09/23 15:39:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +105,10 @@ static const struct ne2000dev {
     { PCMCIA_VENDOR_EDIMAX, PCMCIA_PRODUCT_EDIMAX_EP4000A,
       PCMCIA_CIS_INVALID,
       0, -1, { 0x00, 0xa0, 0x0c }, 0 },
+
+    { PCMCIA_VENDOR_EDIMAX, PCMCIA_PRODUCT_EDIMAX_EP4101,
+      PCMCIA_CIS_INVALID,
+      0, -1, { 0x00, 0x90, 0xcc }, NE2000DVF_AX88190 },
 
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_SYNERGY21_S21810,
