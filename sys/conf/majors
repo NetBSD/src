@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.27 2006/09/10 15:45:56 plunky Exp $
+# $NetBSD: majors,v 1.28 2006/09/23 21:58:15 manu Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -27,3 +27,4 @@ device-major	utoppy		char 174		utoppy
 device-major	bthub		char 175		bthub
 device-major	amr		char 176		amr
 device-major	lockstat	char 177		lockstat
+device-major	twa		char 187
