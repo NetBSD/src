@@ -1,4 +1,4 @@
-/*	$NetBSD: tags.c,v 1.6 2004/10/30 20:17:19 dsl Exp $	*/
+/*	$NetBSD: tags.c,v 1.7 2006/09/23 12:51:18 elad Exp $	*/
 
 /*
  * Copyright (C) 1984-2002  Mark Nudelman
@@ -500,7 +500,7 @@ findgtag(tag, type)
 #if !HAVE_POPEN
 		return TAG_NOFILE;
 #else
-		char command[512];
+		char *command;
 		char *flag;
 		char *qtag;
 		char *cmd = lgetenv("LESSGLOBALTAGS");
@@ -530,10 +530,13 @@ findgtag(tag, type)
 		qtag = shell_quote(tag);
 		if (qtag == NULL)
 			qtag = tag;
+		command = (char *)ecalloc(strlen(cmd) + strlen(flag) +
+		    strlen(qtag) + 5, sizeof(char));
 		sprintf(command, "%s -x%s %s", cmd, flag, qtag);
 		if (qtag != tag)
 			free(qtag);
 		fp = popen(command, "r");
+		free(command);
 #endif
 	}
 	if (fp != NULL)
@@ -541,6 +544,7 @@ findgtag(tag, type)
 		while (fgets(buf, sizeof(buf), fp))
 		{
 			char *name, *file, *line;
+			size_t len;
 
 			if (sigs)
 			{
@@ -550,8 +554,8 @@ findgtag(tag, type)
 #endif
 				return TAG_INTR;
 			}
-			if (buf[strlen(buf) - 1] == '\n')
-				buf[strlen(buf) - 1] = 0;
+			if ((len = strlen(buf)) && buf[len - 1] == '\n')
+				buf[len - 1] = 0;
 			else
 			{
 				int c;
