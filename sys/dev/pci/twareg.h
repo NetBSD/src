@@ -1,4 +1,4 @@
-/*	$NetBSD: twareg.h,v 1.5 2006/07/28 19:23:53 wrstuden Exp $ */
+/*	$NetBSD: twareg.h,v 1.6 2006/09/23 22:16:35 manu Exp $ */
 /*	$wasabi: twareg.h,v 1.14 2006/07/28 18:29:51 wrstuden Exp $ */
 
 /*-
@@ -256,7 +256,7 @@ struct twa_command_download_firmware {
 	uint8_t		status;
 	uint8_t		flags;
 	uint16_t	param;
-	struct twa_sg	sgl[TWA_MAX_SG_ELEMENTS];
+	uint8_t		sgl[1];
 } __attribute__ ((packed));
 
 
@@ -315,7 +315,7 @@ struct twa_command_param {
 	uint8_t		status;
 	uint8_t		flags;
 	uint16_t	param_count;
-	struct twa_sg	sgl[TWA_MAX_SG_ELEMENTS];
+	uint8_t		sgl[1];
 } __attribute__ ((packed));
 
 
@@ -376,18 +376,37 @@ struct twa_command_generic {
 	uint16_t	count;		/* block count, parameter count, message credits */
 } __attribute__ ((packed));
 
+/* Command packet header. */
+#pragma pack(1)
+struct twa_command_header {
+	uint8_t		sense_data[TWA_SENSE_DATA_LENGTH];
+	struct {
+		int8_t		reserved[4];
+		uint16_t	error;
+		uint8_t		padding;
+		struct {
+			uint8_t		severity:3;
+			uint8_t		reserved:5;
+		} substatus_block;
+	} status_block;
+	uint8_t		err_specific_desc[98];
+	struct {
+		uint8_t		size_header;
+		uint16_t	reserved;
+		uint8_t		size_sense;
+	} header_desc;
+} __attribute__ ((packed));
+#pragma pack()
+
 
 /* Command packet - must be TWA_ALIGNMENT aligned. */
 union twa_command_7k {
 	struct twa_command_init_connect		init_connect;
 	struct twa_command_download_firmware	download_fw;
 	struct twa_command_reset_firmware	reset_fw;
-	struct twa_command_io			io;
-	struct twa_command_hotswap		hotswap;
 	struct twa_command_param		param;
-	struct twa_command_rebuildunit		rebuildunit;
-	struct twa_command_ata			ata;
 	struct twa_command_generic		generic;
+	uint8_t padding[1024 - sizeof(struct twa_command_header)];
 } __attribute__ ((packed));
 
 
@@ -409,27 +428,6 @@ struct twa_command_9k {
 	uint8_t		padding[32];
 } __attribute__ ((packed));
 
-
-/* Command packet header. */
-struct twa_command_header {
-	uint8_t		sense_data[TWA_SENSE_DATA_LENGTH];
-	struct {
-		int8_t		reserved[4];
-		uint16_t	error;
-		uint8_t		padding;
-		struct {
-			uint8_t		severity:3;
-			uint8_t		reserved:5;
-		} substatus_block;
-	} status_block;
-	uint8_t		err_specific_desc[98];
-	struct {
-		uint8_t		size_header;
-		uint16_t	reserved;
-		uint8_t		size_sense;
-	} header_desc;
-	uint8_t		reserved[2];
-} __attribute__ ((packed));
 
 
 /* Full command packet. */
