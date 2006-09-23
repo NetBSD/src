@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.31 2006/09/07 02:40:31 dogcow Exp $	*/
+/*	$NetBSD: show.c,v 1.32 2006/09/23 21:11:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.31 2006/09/07 02:40:31 dogcow Exp $");
+__RCSID("$NetBSD: show.c,v 1.32 2006/09/23 21:11:53 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,14 +127,6 @@ show(int argc, char **argv)
 			case K_ATALK:
 				af = AF_APPLETALK;
 				break;
-#endif /* SMALL */
-#if 0
-			/* XXX Links are never destinations */
-			case K_LINK:
-				af = AF_LINK;
-				break;
-#endif
-#ifndef SMALL
 			case K_ISO:
 			case K_OSI:
 				af = AF_ISO;
