@@ -1,4 +1,4 @@
-.\"	$NetBSD: du.1,v 1.19 2004/05/17 15:36:17 wiz Exp $
+.\"	$NetBSD: du.1,v 1.20 2006/09/23 23:20:20 elad Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)du.1	8.2 (Berkeley) 4/1/94
 .\"
-.Dd May 17, 2004
+.Dd September 24, 2006
 .Dt DU 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl H | Fl L | Fl P
-.Op Fl a | Fl s
+.Op Fl a | Fl d Ar depth | Fl s
 .Op Fl cghkmnrx
 .Op Ar file ...
 .Sh DESCRIPTION
@@ -63,6 +63,10 @@ No symbolic links are followed.
 Display an entry for each file in the file hierarchy.
 .It Fl c
 Display the grand total after all the arguments have been processed.
+.It Fl d
+Display an entry files and directories 
+.Ar depth 
+directories deep.
 .It Fl g
 If the
 .Fl g
