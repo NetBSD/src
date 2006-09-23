@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.39 2006/09/23 17:08:43 fvdl Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.40 2006/09/23 17:16:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.39 2006/09/23 17:08:43 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.40 2006/09/23 17:16:38 fvdl Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -1106,6 +1106,19 @@ mpacpi_findintr_linkdev(struct mp_intr_map *mip)
 	if (irq != line)
 		panic("mpacpi_findintr_linkdev: irq mismatch");
 
+	/*
+	 * Convert ACPICA values to MPS values
+	 */
+	if (pol == ACPI_ACTIVE_LOW)
+		pol = MPS_INTPO_ACTLO;
+	else 
+		pol = MPS_INTPO_ACTHI;
+ 
+	if (trig == ACPI_EDGE_SENSITIVE)
+		trig = MPS_INTTR_EDGE;
+	else
+		trig = MPS_INTTR_LEVEL;
+ 
 	mip->flags = pol | (trig << 2);
 	mip->global_int = irq;
 	pic = intr_findpic(irq);
