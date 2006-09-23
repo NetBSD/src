@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.56 2006/02/20 16:31:02 jschauma Exp $
+.\"	$NetBSD: find.1,v 1.57 2006/09/23 05:03:33 uebayasi Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,20 +32,25 @@
 .\"
 .\"	from: @(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd February 20, 2006
+.Dd September 23, 2006
 .Dt FIND 1
 .Os
 .Sh NAME
 .Nm find
 .Nd walk a file hierarchy
 .Sh SYNOPSIS
-.Nm find
+.Nm
 .Op Fl H | Fl L | Fl P
 .Op Fl dhsXx
-.Op Fl f Ar file
 .Ar file
 .Op Ar file ...
-.Ar expression
+.Op Ar expression
+.Nm
+.Op Fl H | Fl L | Fl P
+.Op Fl dhsXx
+.Fl f Ar file
+.Op Ar file ...
+.Op Ar expression
 .Sh DESCRIPTION
 .Nm
 recursively descends the directory tree for each
@@ -561,11 +566,11 @@ and neither means
 The primaries may be combined using the following operators.
 The operators are listed in order of decreasing precedence.
 .Bl -tag -width (expression)
-.It Cm \&( Ns Ar expression Ns Cm \&)
+.It Cm \&( Ar expression Cm \&)
 This evaluates to true if the parenthesized expression evaluates to
 true.
 .Pp
-.It Cm \&! Ns Ar expression
+.It Cm \&! Ar expression
 This is the unary
 .Tn NOT
 operator.
