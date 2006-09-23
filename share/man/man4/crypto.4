@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypto.4,v 1.9 2006/03/28 20:50:57 riz Exp $
+.\"	$NetBSD: crypto.4,v 1.10 2006/09/23 20:38:51 elad Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Jonathan Stone <jonathan@dsg.stanford.edu>. All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 28, 2006
+.Dd September 23, 2006
 .Dt CRYPTO 4
 .Os
 .Sh NAME
@@ -120,7 +120,7 @@ as symmetric-key hash algorithms with a zero-length key.
 .\"
 .Bl -tag -width CIOCFKEY
 .\"
-.It Dv CRIOCGET Fa int *fd
+.It Dv CRIOGET Fa int *fd
 Clone the fd argument to
 .Xr ioctl 4 ,
 yielding a new file descriptor which can be used to create
@@ -128,7 +128,7 @@ crypto sessions and request crypto operations.
 .\"
 .It Dv CIOCGSESSION Fa struct session_op *sessp
 Persistently bind a file descriptor returned by a previous
-.Dv CRIOCGET
+.Dv CRIOGET
 to a session: that is, to the chosen privacy algorithm, integrity
 algorithm, and keys specified in
 .Fa sessp .
@@ -250,14 +250,20 @@ which in turn is based on code which appeared in
 .Sh BUGS
 Error checking and reporting is weak.
 The values specified for symmetric-key key sizes to
-.Dv CRIOCGSESSION
+.Dv CIOCGSESSION
 must exactly match the values expected by
 .Xr opencrypto 9 .
 The output buffer and MAC buffers supplied to
-.Dv CRIOCRYPT
+.Dv CIOCCRYPT
 must follow whether privacy or integrity algorithms were specified for
 session: if you request a
 .No non- Ns Dv NULL
 algorithm, you must supply a suitably-sized buffer.
 .Pp
 The scheme for passing arguments for asymmetric requests is Baroque.
+.Pp
+The naming inconsistency between
+.Dv CRIOGET
+and the various
+.Dv CIOC Ns \&*
+names is an unfortunate historical artifact.
