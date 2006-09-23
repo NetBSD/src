@@ -1,4 +1,4 @@
-/* $NetBSD: veriexecgen.c,v 1.5 2006/09/19 20:37:08 elad Exp $ */
+/* $NetBSD: veriexecgen.c,v 1.6 2006/09/23 19:08:48 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -63,7 +63,8 @@
 #define DEFAULT_DBFILE  "/etc/signatures"
 #define DEFAULT_HASH    "sha256"
 #define DEFAULT_SYSPATHS { "/bin", "/sbin", "/usr/bin", "/usr/sbin", \
-			   "/usr/lib", NULL }
+			   "/lib", "/usr/lib", "/libexec", "/usr/libexec", \
+			   NULL }
 
 struct fentry {
 	char filename[MAXPATHLEN];
