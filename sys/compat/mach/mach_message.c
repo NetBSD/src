@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.48 2006/08/17 17:11:27 christos Exp $ */
+/*	$NetBSD: mach_message.c,v 1.49 2006/09/23 03:34:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.48 2006/08/17 17:11:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.49 2006/09/23 03:34:19 jmcneill Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -426,7 +426,9 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 	mach_port_t mn;
 {
 	struct mach_port *mp;
+#if defined(DEBUG_MACH_MSG) || defined(KTRACE)
 	struct proc *p = l->l_proc;
+#endif
 	struct mach_message *mm;
 	mach_port_t tmp;
 	struct mach_right *cmr;
