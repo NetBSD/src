@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.15 2006/09/19 22:03:10 elad Exp $
+.\" $NetBSD: kauth.9,v 1.16 2006/09/23 10:07:32 wiz Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -163,7 +163,7 @@ The following requests are available for this scope:
 .It Dv KAUTH_SYSTEM_ACCOUNTING
 Check if enabling/disabling accounting allowed.
 .It Dv KAUTH_SYSTEM_CHROOT
-.Ar req 
+.Ar req
 can be any of the following:
 .Bl -tag -width "123456"
 .It Dv KAUTH_REQ_SYSTEM_CHROOT_CHROOT
@@ -358,7 +358,7 @@ The following operations are available for this scope:
 .It Dv KAUTH_NETWORK_ALTQ
 Checks if an ALTQ operation is allowed.
 .Pp
-.Ar req 
+.Ar req
 indicates the ALTQ subsystem in question, and can be one of the following:
 .Bl -tag -width "123456"
 .It Dv KAUTH_REQ_NETWORK_ALTQ_AFMAP
