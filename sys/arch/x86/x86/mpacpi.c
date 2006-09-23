@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.38 2006/08/12 16:19:13 fvdl Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.39 2006/09/23 17:08:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.38 2006/08/12 16:19:13 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.39 2006/09/23 17:08:43 fvdl Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -170,6 +170,7 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 	MADT_LOCAL_APIC_NMI *lapic_nmi;
 	MADT_INTERRUPT_OVERRIDE *isa_ovr;
 	struct pic *pic;
+	extern struct acpi_softc *acpi_softc;	/* XXX */
 
 	switch (hdrp->Type) {
 	case APIC_NMI:
@@ -219,7 +220,12 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 		break;
 	case APIC_XRUPT_OVERRIDE:
 		isa_ovr = (MADT_INTERRUPT_OVERRIDE *)hdrp;
-		if (isa_ovr->Source > 15 || isa_ovr->Source == 2)
+		if (mp_verbose)
+			printf("mpacpi: ISA interrupt override  %d -> %d\n",
+			    isa_ovr->Source, isa_ovr->Interrupt);
+		if (isa_ovr->Source > 15 || isa_ovr->Source == 2 ||
+		    (isa_ovr->Source == 0 && isa_ovr->Interrupt == 2 &&
+			(acpi_softc->sc_quirks & ACPI_QUIRK_IRQ0)))
 			break;
 		pic = intr_findpic(isa_ovr->Interrupt);
 		if (pic == NULL)
@@ -1099,7 +1105,7 @@ mpacpi_findintr_linkdev(struct mp_intr_map *mip)
 		return ENOENT;
 	if (irq != line)
 		panic("mpacpi_findintr_linkdev: irq mismatch");
-		
+
 	mip->flags = pol | (trig << 2);
 	mip->global_int = irq;
 	pic = intr_findpic(irq);
