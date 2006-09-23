@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.4 2006/08/04 02:21:19 mhitch Exp $	*/
+/*	$NetBSD: installboot.c,v 1.5 2006/09/23 20:10:14 pavel Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -95,7 +95,7 @@ checktargetdev(const char *name)
 		err(1, "%s", name);
 	if (stat(name, &st) < 0)
 		err(1, "%s", name);
-	if ((st.st_mode & S_IFCHR) == 0)
+	if (!S_ISCHR(st.st_mode))
 		errx(1, "%s: not a character special device", name);
 	if (DISKPART(st.st_rdev) > MAXPARTITIONS)
 		errx(1, "%s: invalid device", name);
@@ -121,7 +121,7 @@ checkparttype(const char *name, int force)
 		err(1, "opening %s", name);
 	if (stat(name, &st) < 0)
 		err(1, "%s", name);
-	if ((st.st_mode & S_IFCHR) == 0)
+	if (!S_ISCHR(st.st_mode))
 		errx(1, "%s: not a character special device", name);
 	part = DISKPART(st.st_rdev);
 	if (ioctl(fd, DIOCGDINFO, &label) < 0)
