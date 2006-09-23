@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.54 2006/09/20 05:21:37 cube Exp $	*/
+/*	$NetBSD: rnd.c,v 1.55 2006/09/23 01:13:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.54 2006/09/20 05:21:37 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.55 2006/09/23 01:13:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -899,9 +899,8 @@ rnd_detach_source(rndsource_element_t *rs)
 }
 
 /*
- * Add a value to the entropy pool.  If rs is NULL no entropy estimation
- * will be performed, otherwise it should point to the source-specific
- * source structure.
+ * Add a value to the entropy pool. The rs parameter should point to the
+ * source-specific source structure.
  */
 void
 rnd_add_uint32(rndsource_element_t *rs, u_int32_t val)
