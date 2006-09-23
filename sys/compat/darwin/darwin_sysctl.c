@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.43 2006/08/29 23:57:49 christos Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.44 2006/09/23 22:11:59 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.43 2006/08/29 23:57:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.44 2006/09/23 22:11:59 manu Exp $");
+
+#include "opt_ktrace.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,6 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.43 2006/08/29 23:57:49 christos 
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
 #include <sys/sa.h>
 #include <sys/tty.h>
 #include <sys/kauth.h>
@@ -314,15 +319,9 @@ darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-#ifdef DEBUG_DARWIN
-	if (1) {
-		int i;
-
-		printf("darwin_sys___sysctl: ");
-		for (i = 0; i < SCARG(uap, namelen); i++)
-			printf("%d ", name[i]);
-		printf("\n");
-	}
+#ifdef KTRACE
+	if (KTRPOINT(l->l_proc, KTR_MIB))
+		ktrmib(l, name, SCARG(uap, namelen));
 #endif
 
 	/*
