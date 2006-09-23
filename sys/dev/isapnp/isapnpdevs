@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.61 2006/06/30 13:56:25 chap Exp $
+$NetBSD: isapnpdevs,v 1.62 2006/09/23 00:56:20 jmcneill Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -138,6 +138,7 @@ devlogic	ep	TCM5098		0	3Com 3c509B-8
 devlogic	ess	ESS1868		0	ESS1868
 devlogic	ess	ESS1869		0	ESS1869
 devlogic	ess	ESS1878		0	ESS1878
+devlogic	ess	ESS1879		0	ESS1879
 
 /*
  * fmv
