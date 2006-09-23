@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.101 2006/09/10 15:45:55 plunky Exp $
+#	$NetBSD: special,v 1.102 2006/09/23 09:42:31 elad Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -267,6 +267,7 @@
 ./etc/services			type=file mode=0644
 ./etc/shells			type=file mode=0644
 ./etc/shosts.equiv		type=file mode=0600 optional
+./etc/skel			type=dir  mode=0755 optional
 ./etc/spwd.db			type=file mode=0600 tags=exclude
 ./etc/ssh			type=dir  mode=0755 optional
 ./etc/ssh/ssh_config		type=file mode=0644 optional
