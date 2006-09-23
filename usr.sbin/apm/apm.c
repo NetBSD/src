@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.16 2005/01/23 20:55:57 cube Exp $ */
+/*	$NetBSD: apm.c,v 1.17 2006/09/23 22:06:42 elad Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -279,6 +279,13 @@ main(int argc, char *argv[])
 		switch (action) {
 		case GETSTATUS:
 printval:
+			/*
+			 * default unknown value for minutes_left, from
+			 * sys/dev/acpi/acpi_apm.c
+			 */
+			if (api->minutes_left == 0xffff) 
+				domin = FALSE;
+
 			if (verbose) {
 				if (dobstate)
 					printf("Battery charge state: %s\n",
