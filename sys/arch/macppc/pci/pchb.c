@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.12 2006/08/05 21:26:48 sanjayl Exp $	*/
+/*	$NetBSD: pchb.c,v 1.13 2006/09/24 19:17:28 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.12 2006/08/05 21:26:48 sanjayl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.13 2006/09/24 19:17:28 briggs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,6 +90,9 @@ pchbmatch(parent, cf, aux)
 		case PCI_PRODUCT_APPLE_U3_PPB3:
 		case PCI_PRODUCT_APPLE_U3_PPB4:
 		case PCI_PRODUCT_APPLE_U3_PPB5:
+		case PCI_PRODUCT_APPLE_INTREPID2_AGP:
+		case PCI_PRODUCT_APPLE_INTREPID2_PCI1:
+		case PCI_PRODUCT_APPLE_INTREPID2_PCI2:
 			return 1;
 		}
 		break;
