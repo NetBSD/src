@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.188 2006/07/26 20:50:56 bjh21 Exp $	*/
+/*	$NetBSD: systm.h,v 1.189 2006/09/24 06:51:39 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -320,7 +320,7 @@ void	doshutdownhooks(void);
 /*
  * Power management hooks.
  */
-void	*powerhook_establish(void (*)(int, void *), void *);
+void	*powerhook_establish(const char *, void (*)(int, void *), void *);
 void	powerhook_disestablish(void *);
 void	dopowerhooks(int);
 #define PWR_RESUME	0
