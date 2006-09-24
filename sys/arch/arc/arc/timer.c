@@ -1,4 +1,4 @@
-/* $NetBSD: timer.c,v 1.8 2006/09/09 00:47:54 gdamore Exp $ */
+/* $NetBSD: timer.c,v 1.9 2006/09/24 02:20:48 tsutsui Exp $ */
 /* NetBSD: clock.c,v 1.31 2001/05/27 13:53:24 sommerfeld Exp  */
 
 /*
@@ -79,13 +79,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.8 2006/09/09 00:47:54 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.9 2006/09/24 02:20:48 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 
 #include <mips/locore.h>
+#include <mips/mips3_clock.h>
 
 #include <arc/arc/timervar.h>
 
@@ -153,6 +154,9 @@ cpu_initclocks(void)
 	 * Get the clock started.
 	 */
 	(*timerfns->tf_init)(timerdev);
+
+	/* init timecounter */
+	mips3_init_tc();
 
 #ifdef ENABLE_INT5_STATCLOCK
 	/* enable interrupts including CPU INT 5 */
