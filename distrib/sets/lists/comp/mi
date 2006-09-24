@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.932 2006/09/22 19:45:57 dbj Exp $
+#	$NetBSD: mi,v 1.933 2006/09/24 12:23:03 elad Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1857,6 +1857,7 @@
 ./usr/include/sys/syslimits.h			comp-c-include
 ./usr/include/sys/syslog.h			comp-c-include
 ./usr/include/sys/systm.h			comp-obsolete		obsolete
+./usr/include/sys/systrace.h			comp-c-include
 ./usr/include/sys/tablet.h			comp-obsolete		obsolete
 ./usr/include/sys/tape.h			comp-c-include
 ./usr/include/sys/termios.h			comp-c-include
