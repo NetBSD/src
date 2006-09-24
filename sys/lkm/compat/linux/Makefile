@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2006/08/31 14:00:29 tron Exp $
+#	$NetBSD: Makefile,v 1.29 2006/09/24 14:35:22 xtraeme Exp $
 
 COMPAT_UTIL_OVERRIDE=	linux
 .include "../Makefile.inc"
@@ -22,7 +22,7 @@ SRCS+=	linux_cdrom.c linux_errno.c linux_exec.c linux_file.c \
 	linux_socket.c linux_termios.c linux_time.c linux_uselib.c
 SRCS+=	linux_machdep.c linux_syscalls.c linux_sysent.c
 SRCS+=	linux_fdio.c linux_hdio.c linux_blkio.c linux_sysctl.c
-SRCS+=	linux_sg.c linux_mtio.c
+SRCS+=	linux_sg.c linux_mtio.c linux_ptrace.c
 
 # XXXX - temporary, not applicable for kernel with COMPAT_43, OSSAUDIO
 #.PATH: $S/compat/common $S/compat/ossaudio
