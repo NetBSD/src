@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.30 2005/09/09 20:33:54 wiz Exp $
+.\"	$NetBSD: pmap.9,v 1.31 2006/09/24 01:34:19 tsutsui Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 11, 2005
+.Dd September 24, 2006
 .Dt PMAP 9
 .Os
 .Sh NAME
@@ -114,7 +114,7 @@
 .Ft paddr_t
 .Fn "PMAP_UNMAP_POOLPAGE" "vaddr_t va"
 .Ft void
-.Fn "PMAP_PREFER" "vaddr_t hint" "vaddr_t *va"
+.Fn "PMAP_PREFER" "vaddr_t hint" "vaddr_t *vap" "vsize_t sz" "int td"
 .Sh DESCRIPTION
 The
 .Nm
@@ -1053,7 +1053,7 @@ The following is an example of how to define
 .Pp
 This takes the KSEG0 address of a previously-mapped pool page
 and returns the physical address of that page on a MIPS processor.
-.It void Fn "PMAP_PREFER" "vaddr_t hint" "vaddr_t *vap"
+.It void Fn "PMAP_PREFER" "vaddr_t hint" "vaddr_t *vap" "vsize_t sz" "int td"
 This function is used by
 .Xr uvm_map 9
 to adjust a virtual address being allocated in order to avoid
@@ -1062,8 +1062,11 @@ If necessary, the virtual address pointed by
 .Fa vap
 will be advanced.
 .Fa hint
-is an object offset which will be mapped into the resulting
-virtual address.
+is an object offset which will be mapped into the resulting virtual address, and
+.Fa sz
+is size of the object.
+.Fa td
+indicates if the machine dependent pmap uses the topdown VM.
 .Pp
 The use of
 .Fn PMAP_PREFER
