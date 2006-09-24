@@ -1,4 +1,4 @@
-/*	$NetBSD: eject.c,v 1.19 2004/10/30 17:20:01 dsl Exp $	*/
+/*	$NetBSD: eject.c,v 1.20 2006/09/24 08:42:55 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif				/* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.19 2004/10/30 17:20:01 dsl Exp $");
+__RCSID("$NetBSD: eject.c,v 1.20 2006/09/24 08:42:55 xtraeme Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -74,11 +74,12 @@ struct nicknames_s {
 	/* OR one of the above with one of the below: */
 #define NOTLOADABLE 0x00
 #define LOADABLE 0x01
+#define FLOPPY 0x2
 #define TYPEMASK ((int)~0x01)
 }           nicknames[] = {
-	{ "diskette", "fd", DISK | NOTLOADABLE },
-	{ "floppy", "fd", DISK | NOTLOADABLE },
-	{ "fd", "fd", DISK | NOTLOADABLE },
+	{ "diskette", "fd", DISK | FLOPPY | NOTLOADABLE },
+	{ "floppy", "fd", DISK | FLOPPY | NOTLOADABLE },
+	{ "fd", "fd", DISK | FLOPPY | NOTLOADABLE },
 	{ "sd", "sd", DISK | NOTLOADABLE },
 	{ "cdrom", "cd", DISK | LOADABLE },
 	{ "cd", "cd", DISK | LOADABLE },
@@ -311,7 +312,8 @@ nick2rdev(char *nn)
 			    devnum);
 			if ((nicknames[n].type & TYPEMASK) != TAPE) {
 				strcat(devname, "a");
-				devname[strlen(devname) - 1] += getrawpartition();
+				if ((nicknames[n].type & FLOPPY) != FLOPPY)
+					devname[strlen(devname) - 1] += getrawpartition();
 			}
 			return (devname);
 		}
