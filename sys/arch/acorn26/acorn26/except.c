@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.14 2006/09/24 21:42:06 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.15 2006/09/24 23:38:59 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.14 2006/09/24 21:42:06 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.15 2006/09/24 23:38:59 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -204,7 +204,14 @@ do_fault(struct trapframe *tf, struct lwp *l,
 	if (pmap_fault(map->pmap, va, atype))
 		return;
 
+#ifdef DDB
+	if (current_intr_depth != 0) {
+		db_printf("Data abort in interrupt handler\n");
+		kdb_trap(T_FAULT, tf);
+	}
+#else
 	KASSERT(current_intr_depth == 0);
+#endif
 
 	error = uvm_fault(map, va, atype);
 
@@ -218,6 +225,20 @@ do_fault(struct trapframe *tf, struct lwp *l,
 			    (register_t)cur_pcb->pcb_onfault;
 			return;
 		}
+
+		if ((tf->tf_r15 & R15_MODE) != R15_MODE_USR) {
+#ifdef DDB
+			db_printf("Unhandled data abort in kernel mode\n");
+			kdb_trap(T_FAULT, tf);
+#else
+#ifdef DEBUG
+			printf("Unhandled data abort:\n");
+			printregs(tf);
+#endif
+			panic("unhandled data abort in kernel mode");
+#endif
+		}
+
 		KSI_INIT_TRAP(&ksi);
 
 		if (error == ENOMEM) {
