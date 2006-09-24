@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.36 2006/09/24 03:53:09 jmcneill Exp $ */
+/* $NetBSD: esa.c,v 1.37 2006/09/24 14:26:50 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.36 2006/09/24 03:53:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.37 2006/09/24 14:26:50 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1092,8 +1092,15 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	 *
 	 * So, we will swap the left and right mixer channels to compensate
 	 * for this.
+	 *
+	 * XXX PR# 23620: The Dell C810 channels are not swapped. Match
+	 *     on revision ID for now; this is probably wrong.
 	 */
-	sc->codec_flags = AC97_HOST_SWAPPED_CHANNELS;
+	if (revision == 0x10 && sc->type == ESS_MAESTRO3)
+		sc->codec_flags = 0;
+	else
+		sc->codec_flags = AC97_HOST_SWAPPED_CHANNELS;
+
 
 	/* Attach AC97 host interface */
 	sc->host_if.arg = self;
