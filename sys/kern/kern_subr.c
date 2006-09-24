@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.143 2006/09/02 06:30:53 christos Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.144 2006/09/24 03:54:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.143 2006/09/02 06:30:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.144 2006/09/24 03:54:00 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.143 2006/09/02 06:30:53 christos Exp
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
 #include "opt_systrace.h"
+#include "opt_powerhook.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -672,13 +673,14 @@ struct powerhook_desc {
 	CIRCLEQ_ENTRY(powerhook_desc) sfd_list;
 	void	(*sfd_fn)(int, void *);
 	void	*sfd_arg;
+	char	sfd_name[16];
 };
 
 static CIRCLEQ_HEAD(, powerhook_desc) powerhook_list =
     CIRCLEQ_HEAD_INITIALIZER(powerhook_list);
 
 void *
-powerhook_establish(void (*fn)(int, void *), void *arg)
+powerhook_establish(char *name, void (*fn)(int, void *), void *arg)
 {
 	struct powerhook_desc *ndp;
 
@@ -689,6 +691,7 @@ powerhook_establish(void (*fn)(int, void *), void *arg)
 
 	ndp->sfd_fn = fn;
 	ndp->sfd_arg = arg;
+	strlcpy(ndp->sfd_name, name, sizeof(ndp->sfd_name));
 	CIRCLEQ_INSERT_HEAD(&powerhook_list, ndp, sfd_list);
 
 	return (ndp);
@@ -720,15 +723,47 @@ dopowerhooks(int why)
 {
 	struct powerhook_desc *dp;
 
+#ifdef POWERHOOK_DEBUG
+	printf("dopowerhooks ");
+	switch (why) {
+	case PWR_RESUME:
+		printf("resume");
+		break;
+	case PWR_SOFTRESUME:
+		printf("softresume");
+		break;
+	case PWR_SUSPEND:
+		printf("suspend");
+		break;
+	case PWR_SOFTSUSPEND:
+		printf("softsuspend");
+		break;
+	case PWR_STANDBY:
+		printf("standby");
+		break;
+	}
+	printf(":");
+#endif
+
 	if (why == PWR_RESUME || why == PWR_SOFTRESUME) {
 		CIRCLEQ_FOREACH_REVERSE(dp, &powerhook_list, sfd_list) {
+#ifdef POWERHOOK_DEBUG
+			printf(" %s", dp->sfd_name);
+#endif
 			(*dp->sfd_fn)(why, dp->sfd_arg);
 		}
 	} else {
 		CIRCLEQ_FOREACH(dp, &powerhook_list, sfd_list) {
+#ifdef POWERHOOK_DEBUG
+			printf(" %s", dp->sfd_name);
+#endif
 			(*dp->sfd_fn)(why, dp->sfd_arg);
 		}
 	}
+
+#ifdef POWERHOOK_DEBUG
+	printf(".\n");
+#endif
 }
 
 /*

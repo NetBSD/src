@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.146 2006/08/30 23:31:08 rumble Exp $	*/
+/*	$NetBSD: tulip.c,v 1.147 2006/09/24 03:53:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.146 2006/08/30 23:31:08 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.147 2006/09/24 03:53:08 jmcneill Exp $");
 
 #include "bpfilter.h"
 
@@ -551,7 +551,8 @@ tlp_attach(struct tulip_softc *sc, const u_int8_t *enaddr)
 	 * Add a suspend hook to make sure we come back up after a
 	 * resume.
 	 */
-	sc->sc_powerhook = powerhook_establish(tlp_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    tlp_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);

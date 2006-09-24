@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.76 2006/07/14 13:37:25 seanb Exp $	*/
+/*	$NetBSD: ath.c,v 1.77 2006/09/24 03:53:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.76 2006/07/14 13:37:25 seanb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.77 2006/09/24 03:53:08 jmcneill Exp $");
 #endif
 
 /*
@@ -640,7 +640,8 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 
 #ifdef __NetBSD__
 	sc->sc_flags |= ATH_ATTACHED;
-	sc->sc_powerhook = powerhook_establish(ath_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    ath_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 			sc->sc_dev.dv_xname);

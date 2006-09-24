@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.209 2006/08/27 23:54:50 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.210 2006/09/24 03:53:08 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.209 2006/08/27 23:54:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.210 2006/09/24 03:53:08 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -455,7 +455,8 @@ audioattach(struct device *parent, struct device *self, void *aux)
 		 sc->sc_inports.allports, sc->sc_inports.master,
 		 sc->sc_outports.allports, sc->sc_outports.master));
 
-	sc->sc_powerhook = powerhook_establish(audio_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->dev.dv_xname,
+	    audio_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: can't establish powerhook\n",
 		    sc->dev.dv_xname);

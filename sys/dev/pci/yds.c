@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.34 2006/09/03 21:45:28 christos Exp $	*/
+/*	$NetBSD: yds.c,v 1.35 2006/09/24 03:53:09 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.34 2006/09/03 21:45:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.35 2006/09/24 03:53:09 jmcneill Exp $");
 
 #include "mpu.h"
 
@@ -928,7 +928,7 @@ detected:
 	sc->sc_legacy_iot = pa->pa_iot;
 	config_defer((struct device*) sc, yds_configure_legacy);
 
-	powerhook_establish(yds_powerhook, sc);
+	powerhook_establish(sc->sc_dev.dv_xname, yds_powerhook, sc);
 }
 
 static int

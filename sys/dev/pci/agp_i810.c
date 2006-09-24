@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.32 2006/07/30 04:23:44 simonb Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.33 2006/09/24 03:53:09 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.32 2006/07/30 04:23:44 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.33 2006/09/24 03:53:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,7 +401,8 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	agp_flush_cache();
 
-	isc->sc_powerhook = powerhook_establish(agp_i810_powerhook, sc);
+	isc->sc_powerhook = powerhook_establish(sc->as_dev.dv_xname,
+	    agp_i810_powerhook, sc);
 	if (isc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish PCI power hook\n",
 		    sc->as_dev.dv_xname);

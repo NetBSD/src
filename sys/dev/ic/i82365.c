@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.94 2006/04/14 20:48:53 christos Exp $	*/
+/*	$NetBSD: i82365.c,v 1.95 2006/09/24 03:53:08 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.94 2006/04/14 20:48:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.95 2006/09/24 03:53:08 jmcneill Exp $");
 
 #define	PCICDEBUG
 
@@ -470,7 +470,7 @@ pcic_attach_socket_finish(h)
 	 * (this works around a bug seen in suspend-to-disk on the
 	 * Sony VAIO Z505; on resume, the CSC_INTR state is not preserved).
 	 */
-	powerhook_establish(pcic_power, h);
+	powerhook_establish(h->ph_parent->dv_xname, pcic_power, h);
 
 	/* enable interrupts on card detect, poll for them if no irq avail */
 	reg = PCIC_CSC_INTR_CD_ENABLE;
