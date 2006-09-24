@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.436 2006/09/22 12:43:52 christos Exp $
+$NetBSD: usbdevs,v 1.437 2006/09/24 17:17:17 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -308,6 +308,7 @@ vendor ACCTON		0x083a	Accton Technology
 vendor DIAMOND		0x0841	Diamond
 vendor NETGEAR		0x0846	BayNETGEAR
 vendor ACTIVEWIRE	0x0854	ActiveWire
+vendor BBELECTRONICS    0x0856  B&B Electronics
 vendor PORTGEAR		0x085a	PortGear
 vendor NETGEAR2		0x0864	Netgear
 vendor SYSTEMTALKS	0x086e	System Talks
@@ -400,6 +401,7 @@ vendor PILOTECH		0x0eaf	Pilotech
 vendor EGALAX		0x0eef	eGalax
 vendor AIRPRIME		0x0f3d	AirPrime, Incorporated
 vendor VTECH		0x0f88	VTech
+vendor FALCOM		0x0f94	Falcom Wireless Communications GmbH
 vendor QUALCOMM		0x1004	Qualcomm
 vendor GIGABYTE		0x1044	GIGABYTE
 vendor MOTOROLA		0x1063	Motorola
@@ -643,6 +645,9 @@ product AVERATEC USBWLAN	0x4013	WLAN
 
 /* Avision products */
 product AVISION 1200U		0x0268	1200U scanner
+
+/* B&B Electronics products */
+product BBELECTRONICS USOTL4    0xAC01  uLinks RS-422/485
 
 /* Belkin products */
 /*product BELKIN F5U111		0x????	F5U111 Ethernet adapter*/
@@ -894,6 +899,10 @@ product ETEK 1COM		0x8007	Serial port
 /* Extended Systems products */
 product EXTENDED XTNDACCESS	0x0100	XTNDAccess IrDA
 
+/* Falcom products */
+product FALCOM TWIST            0x0001  Twist GSM/GPRS modem
+product FALCOM SAMBA            0x0005  Samba 55/56 GSM/GPRS modem
+
 /* Freecom products */
 product FREECOM DVD		0xfc01	Connector for DVD drive
 
@@ -901,13 +910,22 @@ product FREECOM DVD		0xfc01	Connector for DVD drive
 product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial converter
 product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
 product FTDI SERIAL_8U100AX	0x8372	8U100AX Serial converter
+product FTDI MHAM_KW            0xeee8  KW
+product FTDI MHAM_YS            0xeee9  YS
+product FTDI MHAM_Y6            0xeeea  Y6
+product FTDI MHAM_Y8            0xeeeb  Y8
+product FTDI MHAM_IC            0xeeec  IC
+product FTDI MHAM_DB9           0xeeed  DB9
+product FTDI MHAM_RS232         0xeeee  RS232
+product FTDI MHAM_Y9            0xeeef  Y9
+product FTDI COASTAL_TNCX       0xf448  Coastal ChipWorks TNC-X
 product FTDI LCD_MX200_USB	0xfa01	Matrix Orbital MX200 Series LCD
 product FTDI LCD_LK202_24_USB	0xfa03	Matrix Orbital LK202-24 LCD
-product FTDI LCD_LK204_24	0xfa04	Matrix Orbital LK204-24 LCD
+product FTDI LCD_LK204_24_USB	0xfa04	Matrix Orbital LK204-24 LCD
 product FTDI LCD_CFA_632	0xfc08  Crystalfontz CFA-632 LCD
 product FTDI LCD_CFA_634	0xfc09  Crystalfontz CFA-634 LCD
 product FTDI LCD_CFA_633	0xfc0b  Crystalfontz CFA-633 LCD
-product FTDI CFA_631		0xfc0c	Crystalfontz CFA-631 LCD
+product FTDI LCD_CFA_631	0xfc0c	Crystalfontz CFA-631 LCD
 product FTDI SEMC_DSS20		0xfc82	SEMC DSS-20 SyncStation
 
 /* Fuji photo products */

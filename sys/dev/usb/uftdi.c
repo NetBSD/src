@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.25 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.26 2006/09/24 17:17:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.25 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.26 2006/09/24 17:17:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,40 @@ struct ucom_methods uftdi_methods = {
 	uftdi_write,
 };
 
+/* 
+ * The devices default to UFTDI_TYPE_8U232AM.
+ * Remember to update USB_ATTACH if it should be UFTDI_TYPE_SIO instead
+ */
+static const struct usb_devno uftdi_devs[] = {
+	{ USB_VENDOR_BBELECTRONICS, USB_PRODUCT_BBELECTRONICS_USOTL4 },
+	{ USB_VENDOR_FALCOM, USB_PRODUCT_FALCOM_TWIST },
+	{ USB_VENDOR_FALCOM, USB_PRODUCT_FALCOM_SAMBA },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_SERIAL_8U100AX },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_SERIAL_8U232AM },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_MHAM_KW },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_MHAM_YS },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_MHAM_Y6 },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_MHAM_Y8 },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_MHAM_IC },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_MHAM_DB9 },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_MHAM_RS232 },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_MHAM_Y9 },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_COASTAL_TNCX },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_SEMC_DSS20 },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_LCD_LK202_24_USB },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_LCD_LK204_24_USB },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_LCD_MX200_USB },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_LCD_CFA_631 },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_LCD_CFA_632 },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_LCD_CFA_633 },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_LCD_CFA_634 },
+	{ USB_VENDOR_INTREPIDCS, USB_PRODUCT_INTREPIDCS_VALUECAN },
+	{ USB_VENDOR_INTREPIDCS, USB_PRODUCT_INTREPIDCS_NEOVI },
+	{ USB_VENDOR_SEALEVEL, USB_PRODUCT_SEALEVEL_USBSERIAL },
+	{ USB_VENDOR_SIIG2, USB_PRODUCT_SIIG2_US2308 },
+};
+#define uftdi_lookup(v, p) usb_lookup(uftdi_devs, v, p)
+
 USB_DECLARE_DRIVER(uftdi);
 
 USB_MATCH(uftdi)
@@ -136,20 +170,8 @@ USB_MATCH(uftdi)
 	DPRINTFN(20,("uftdi: vendor=0x%x, product=0x%x\n",
 		     uaa->vendor, uaa->product));
 
-	if (uaa->vendor == USB_VENDOR_FTDI &&
-	    (uaa->product == USB_PRODUCT_FTDI_SERIAL_8U100AX ||
-	     uaa->product == USB_PRODUCT_FTDI_SERIAL_8U232AM ||
-	     uaa->product == USB_PRODUCT_FTDI_SEMC_DSS20 ||
-	     uaa->product == USB_PRODUCT_FTDI_LCD_LK202_24_USB ||
-	     uaa->product == USB_PRODUCT_FTDI_LCD_MX200_USB ||
-	     uaa->product == USB_PRODUCT_FTDI_CFA_631))
-		return (UMATCH_VENDOR_PRODUCT);
-
-	if (uaa->vendor == USB_VENDOR_SEALEVEL &&
-	    uaa->product == USB_PRODUCT_SEALEVEL_USBSERIAL)
-		return (UMATCH_VENDOR_PRODUCT);
-
-	return (UMATCH_NONE);
+        return (uftdi_lookup(uaa->vendor, uaa->product) != NULL ?
+                UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 USB_ATTACH(uftdi)
@@ -192,24 +214,21 @@ USB_ATTACH(uftdi)
 	sc->sc_udev = dev;
 	sc->sc_iface = iface;
 
-	switch (uaa->product) {
-	case USB_PRODUCT_FTDI_SERIAL_8U100AX:
-		sc->sc_type = UFTDI_TYPE_SIO;
-		sc->sc_hdrlen = 1;
+	switch( uaa->vendor ) {
+	case USB_VENDOR_FTDI:
+		switch (uaa->product) {
+		case USB_PRODUCT_FTDI_SERIAL_8U100AX:
+			sc->sc_type = UFTDI_TYPE_SIO;
+			sc->sc_hdrlen = 1;
+			break;
+		default:		/* Most uftdi devices are 8U232AM */
+			sc->sc_type = UFTDI_TYPE_8U232AM;
+			sc->sc_hdrlen = 0;
+		}
 		break;
-
-	case USB_PRODUCT_FTDI_SEMC_DSS20:
-	case USB_PRODUCT_FTDI_SERIAL_8U232AM:
-	case USB_PRODUCT_FTDI_LCD_LK202_24_USB:
-	case USB_PRODUCT_FTDI_LCD_MX200_USB:
-	case USB_PRODUCT_FTDI_CFA_631:
-	case USB_PRODUCT_SEALEVEL_USBSERIAL:
+	default:		/* Most uftdi devices are 8U232AM */
 		sc->sc_type = UFTDI_TYPE_8U232AM;
 		sc->sc_hdrlen = 0;
-		break;
-
-	default:		/* Can't happen */
-		goto bad;
 	}
 
 	uca.bulkin = uca.bulkout = -1;
