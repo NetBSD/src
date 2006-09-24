@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.12 2006/07/19 21:11:39 ad Exp $ */
+/* $NetBSD: except.c,v 1.13 2006/09/24 20:54:14 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,11 +31,12 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.12 2006/07/19 21:11:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.13 2006/09/24 20:54:14 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/errno.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
@@ -205,14 +206,7 @@ do_fault(struct trapframe *tf, struct lwp *l,
 
 	KASSERT(current_intr_depth == 0);
 
-	for (;;) {
-		error = uvm_fault(map, va, atype);
-		if (error != ENOMEM)
-			break;
-		log(LOG_WARNING, "pid %d.%d: VM shortage, sleeping\n",
-		    l->l_proc->p_pid, l->l_lid);
-		tsleep(&lbolt, PVM, "abtretry", 0);
-	}
+	error = uvm_fault(map, va, atype);
 
 	if (error != 0) {
 		ksiginfo_t ksi;
@@ -225,7 +219,15 @@ do_fault(struct trapframe *tf, struct lwp *l,
 			return;
 		}
 		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGSEGV;
+
+		if (error == ENOMEM) {
+			printf("UVM: pid %d (%s), uid %d killed: "
+			    "out of swap\n",
+			    l->l_proc->p_pid, l->l_proc->p_comm,
+			    l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1);
+			ksi.ksi_signo = SIGKILL;
+		} else
+			ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_code = (error == EPERM) ? SEGV_ACCERR : SEGV_MAPERR;
 		ksi.ksi_addr = (void *) va;
 		trapsignal(l, &ksi);
