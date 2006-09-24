@@ -1,4 +1,4 @@
-.\" $NetBSD: bthub.4,v 1.3 2006/09/10 15:45:56 plunky Exp $
+.\" $NetBSD: bthub.4,v 1.4 2006/09/24 07:17:00 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -67,10 +67,12 @@ The following properties are used by
 .Pp
 .Bl -tag
 .It local-bdaddr
-Local BD_ADDR.
+Local
+.Dv BD_ADDR .
 This required property should be a six byte data blob.
 .It remote-bdaddr
-Remote BD_ADDR.
+Remote
+.Dv BD_ADDR .
 This required property should be a six byte data blob.
 .It device-type
 Device type.
@@ -87,9 +89,8 @@ SCO Audio Device, see
 .El
 .El
 .Pp
-Properties used by the configured device are listed in the appropriate device
-manual page.
-.Pp
+Properties used by the configured device are listed in the appropriate
+device manual page.
 .Sh FILES
 .Bl -tag -compact
 .It Pa /dev/bthub
