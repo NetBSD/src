@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sysctl.c,v 1.5 2006/09/23 22:11:59 manu Exp $	*/
+/*	$NetBSD: freebsd_sysctl.c,v 1.6 2006/09/24 05:48:27 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,9 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.5 2006/09/23 22:11:59 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.6 2006/09/24 05:48:27 dogcow Exp $");
 
+#ifndef _LKM
 #include "opt_ktrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
