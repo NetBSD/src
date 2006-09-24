@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.33 2006/09/20 00:41:12 uwe Exp $	*/
+/*	$NetBSD: clock.c,v 1.34 2006/09/24 00:34:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33 2006/09/20 00:41:12 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.34 2006/09/24 00:34:23 tsutsui Exp $");
 
 #include "opt_pclock.h"
 #include "opt_hz.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33 2006/09/20 00:41:12 uwe Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/timetc.h>
 
 #include <dev/clock_subr.h>
 
@@ -68,9 +69,10 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33 2006/09/20 00:41:12 uwe Exp $");
  * NetBSD/sh3 clock module
  *  + default 64Hz
  *  + use TMU channel 0 as clock interrupt source.
- *  + use TMU channel 1 and 2 as emulated software interrupt soruce.
+ *  + use TMU channel 1 as emulated software interrupt soruce.
+ *  + use TMU channel 2 as freerunning counter for timecounter.
  *  + If RTC module is active, TMU channel 0 input source is RTC output.
- *    (1.6384kHz)
+ *    (16.384kHz)
  */
 struct {
 	/* Hard clock */
@@ -81,6 +83,8 @@ struct {
 	uint32_t pclock;	/* PCLOCK */
 	uint32_t cpuclock;	/* CPU clock */
 	int flags;
+
+	struct timecounter tc;
 } sh_clock = {
 #ifdef PCLOCK
 	.pclock = PCLOCK,
@@ -89,10 +93,14 @@ struct {
 
 uint32_t maxwdog;
 
+struct evcnt sh_hardclock_evcnt =
+    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "tmu0", "hardclock");
+
 /* TMU */
 /* interrupt handler is timing critical. prepared for each. */
 int sh3_clock_intr(void *);
 int sh4_clock_intr(void *);
+u_int sh_timecounter_get(struct timecounter *);
 
 /*
  * Estimate CPU and Peripheral clock.
@@ -198,34 +206,11 @@ setstatclockrate(int newhz)
 	/* XXX not yet */
 }
 
-/*
- * Return the best possible estimate of the time in the timeval to
- * which tv points.
- */
-void
-microtime(struct timeval *tv)
+u_int
+sh_timecounter_get(struct timecounter *tc)
 {
-	static struct timeval lasttime;
-	int s;
 
-	s = splclock();
-	*tv = time;
-	splx(s);
-
-	tv->tv_usec += ((sh_clock.hz_cnt - _reg_read_4(SH_(TCNT0)))
-	    * 1000000) / sh_clock.tmuclk;
-	while (tv->tv_usec >= 1000000) {
-		tv->tv_usec -= 1000000;
-		tv->tv_sec++;
-	}
-
-	if (tv->tv_sec == lasttime.tv_sec &&
-	    tv->tv_usec <= lasttime.tv_usec &&
-	    (tv->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tv->tv_usec -= 1000000;
-		tv->tv_sec++;
-	}
-	lasttime = *tv;
+	return 0xffffffff - _reg_read_4(SH_(TCNT2));
 }
 
 /*
@@ -270,18 +255,35 @@ cpu_initclocks()
 	_reg_write_4(SH_(TCOR0), sh_clock.hz_cnt);
 	_reg_write_4(SH_(TCNT0), sh_clock.hz_cnt);
 
+	evcnt_attach_static(&sh_hardclock_evcnt);
 	intc_intr_establish(SH_INTEVT_TMU0_TUNI0, IST_LEVEL, IPL_CLOCK,
 	    CPU_IS_SH3 ? sh3_clock_intr : sh4_clock_intr, 0);
 	/* start hardclock */
 	_reg_bset_1(SH_(TSTR), TSTR_STR0);
 
 	/*
-	 * TMU channel 1, 2 are one shot timer.
+	 * TMU channel 1 is one shot timer for softintr(9).
 	 */
 	_reg_write_2(SH_(TCR1), TCR_UNIE | TCR_TPSC_P4);
 	_reg_write_4(SH_(TCOR1), 0xffffffff);
-	_reg_write_2(SH_(TCR2), TCR_UNIE | TCR_TPSC_P4);
+
+	/*
+	 * TMU channel 2 is freerunning counter for timecounter(9).
+	 */
+	_reg_write_2(SH_(TCR2), TCR_TPSC_P4);
 	_reg_write_4(SH_(TCOR2), 0xffffffff);
+
+	/*
+	 * Start and initialize timecounter.
+	 */
+	_reg_bset_1(SH_(TSTR), TSTR_STR2);
+
+	sh_clock.tc.tc_get_timecount = sh_timecounter_get;
+	sh_clock.tc.tc_frequency = sh_clock.pclock / 4;
+	sh_clock.tc.tc_name = "tmu_pclock_4";
+	sh_clock.tc.tc_quality = 0;
+	sh_clock.tc.tc_counter_mask = 0xffffffff;
+	tc_init(&sh_clock.tc);
 }
 
 
@@ -297,6 +299,9 @@ sh3_clock_intr(void *arg) /* trap frame */
 		maxwdog = i;
 	wdog_wr_cnt(0);			/* reset to zero */
 #endif
+
+	sh_hardclock_evcnt.ev_count++;
+
 	/* clear underflow status */
 	_reg_bclr_2(SH3_TCR0, TCR_UNF);
 
@@ -317,6 +322,9 @@ sh4_clock_intr(void *arg) /* trap frame */
 		maxwdog = i;
 	wdog_wr_cnt(0);			/* reset to zero */
 #endif
+
+	sh_hardclock_evcnt.ev_count++;
+
 	/* clear underflow status */
 	_reg_bclr_2(SH4_TCR0, TCR_UNF);
 
