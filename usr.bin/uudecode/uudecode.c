@@ -1,4 +1,4 @@
-/*	$NetBSD: uudecode.c,v 1.21 2006/09/24 15:32:48 elad Exp $	*/
+/*	$NetBSD: uudecode.c,v 1.22 2006/09/24 21:43:14 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: uudecode.c,v 1.21 2006/09/24 15:32:48 elad Exp $");
+__RCSID("$NetBSD: uudecode.c,v 1.22 2006/09/24 21:43:14 dbj Exp $");
 #endif /* not lint */
 
 /*
@@ -51,18 +51,21 @@ __RCSID("$NetBSD: uudecode.c,v 1.21 2006/09/24 15:32:48 elad Exp $");
  */
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <netinet/in.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
 #include <locale.h>
-#include <resolv.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifndef NO_BASE64
+#include <netinet/in.h>
+#include <resolv.h>
+#endif
 
 static int decode(void);
 static void usage(void);
@@ -268,7 +271,12 @@ base64_decode(void)
 			warnx("%s: short file.", filename);
 			return (1);
 		}
+#ifdef NO_BASE64
+		warnx("%s: base64 decoding is not supported", filename);
+		return (1);
+#else
 		n = b64_pton(inbuf, outbuf, sizeof(outbuf));
+#endif
 		if (n < 0)
 			break;
 		fwrite(outbuf, 1, n, stdout);
