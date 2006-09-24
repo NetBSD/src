@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.51 2005/04/07 20:23:13 dsl Exp $
+.\"	$NetBSD: fdisk.8,v 1.52 2006/09/24 15:22:01 jmcneill Exp $
 .\"
-.Dd April 7, 2005
+.Dd September 24, 2006
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -284,7 +284,9 @@ is specified for any partition
 .Nm
 will determine whether the installed boot code supports the bootselect code,
 if it doesn't you will be asked whether you want to install the required
-boot code.
+boot code. To remove a
+.Em bootmenu
+label, simply press <space> followed by <return>. 
 .It Fl v
 Be more verbose, specifying
 .Fl v
