@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.706 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.707 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -64,7 +64,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	newsmips: Add timecounter support. From gdamore. [tsutsui 20060913]
 	luna68k: Add timecounter support.  [gdamore 20060914]
 	mipsco: Add timecounter support.  [gdamore 20060915]
-	hpcmips: Add tiemcounter support.  [gdamore 20060915]
+	hpcmips: Add timecounter support.  [gdamore 20060915]
 	sgimips: Add timecounter support.  [gdamore 20060916]
 	veriexec: Add veriexecgen(8), a tool for easy and fast generation
 		  of Veriexec fingerprint files. [elad 20060916]
@@ -79,3 +79,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		Matthew Mondor for the patch. [jmcneill 20060922]
 	sh3: Add timecounter support to all sh3 ports. From gdamore with
 		some fixes by me. [tsutsui 20060924]
+	kernel: Modify powerhook_establish(9) API to accept a name
+		argument. [jmcneill 20060924]
