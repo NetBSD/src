@@ -1,4 +1,4 @@
-.\"	$NetBSD: boggle.6,v 1.8 2005/09/15 02:09:41 wiz Exp $
+.\"	$NetBSD: boggle.6,v 1.9 2006/09/24 01:38:57 jmcneill Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)boggle.6	8.1 (Berkeley) 6/11/93
 .\"
-.Dd April 1, 2001
+.Dd September 23, 2006
 .Dt BOGGLE 6
 .Os
 .Sh NAME
@@ -120,3 +120,8 @@ When using the
 or
 .Ar ++
 options the display of words found in the board doesn't indicate reused cubes.
+.Pp
+The dictionary that
+.Nx
+installs omits many words that belong in the English language, most
+notably inflected forms.
