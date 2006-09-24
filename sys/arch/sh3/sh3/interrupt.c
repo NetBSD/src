@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.18 2006/01/25 00:02:57 uwe Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.19 2006/09/24 00:34:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.18 2006/01/25 00:02:57 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.19 2006/09/24 00:34:23 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -63,10 +63,7 @@ static void intpri_intr_disable(int);
 #endif
 
 static void netintr(void);
-static void tmu1_oneshot(void);
 static int tmu1_intr(void *);
-static void tmu2_oneshot(void);
-static int tmu2_intr(void *);
 
 /*
  * EVTCODE to intc_intrhand mapper.
@@ -597,10 +594,13 @@ softintr_init(void)
 	    (void (*)(void *))netintr, NULL);
 	KDASSERT(softnet_intrhand != NULL);
 
+	/*
+	 * This runs at the lowest soft priority, so that when splx() sets
+	 * a higher priority it blocks all soft interrupts.  Effectively, we
+	 * have only a single soft interrupt level this way.
+	 */
 	intc_intr_establish(SH_INTEVT_TMU1_TUNI1, IST_LEVEL, IPL_SOFT,
 	    tmu1_intr, NULL);
-	intc_intr_establish(SH_INTEVT_TMU2_TUNI2, IST_LEVEL, IPL_SOFTNET,
-	    tmu2_intr, NULL);
 }
 
 void
@@ -629,16 +629,6 @@ softintr_dispatch(int ipl)
 	}
 
 	_cpu_intr_resume(s);
-}
-
-void
-setsoft(int ipl)
-{
-
-	if (ipl < IPL_SOFTNET)
-		tmu1_oneshot();
-	else
-		tmu2_oneshot();
 }
 
 /* Register a software interrupt handler. */
@@ -712,46 +702,43 @@ netintr(void)
 /*
  * Software interrupt is simulated with TMU one-shot timer.
  */
-static void
-tmu1_oneshot(void)
-{
+static volatile u_int softpend;
 
+void
+setsoft(int ipl)
+{
+	int s;
+	s = splsoftserial();
+	softpend |= (1 << ipl);
 	_reg_bclr_1(SH_(TSTR), TSTR_STR1);
 	_reg_write_4(SH_(TCNT1), 0);
 	_reg_bset_1(SH_(TSTR), TSTR_STR1);
+	splx(s);
 }
 
 static int
 tmu1_intr(void *arg)
 {
+	u_int pend;
+	int s;
+
+	s = splhigh();
+	pend = softpend;
+	softpend = 0;
+	splx(s);
 
 	_reg_bclr_1(SH_(TSTR), TSTR_STR1);
 	_reg_bclr_2(SH_(TCR1), TCR_UNF);
 
-	softintr_dispatch(IPL_SOFTCLOCK);
-	softintr_dispatch(IPL_SOFT);
-
+	if (pend & (1 << IPL_SOFTSERIAL))
+		softintr_dispatch(IPL_SOFTSERIAL);
+	if (pend & (1 << IPL_SOFTNET))
+		softintr_dispatch(IPL_SOFTNET);
+	if (pend & (1 << IPL_SOFTCLOCK))
+		softintr_dispatch(IPL_SOFTCLOCK);
+	if (pend & (1 << IPL_SOFT))
+		softintr_dispatch(IPL_SOFT);
+		
 	return (0);
 }
 
-static void
-tmu2_oneshot(void)
-{
-
-	_reg_bclr_1(SH_(TSTR), TSTR_STR2);
-	_reg_write_4(SH_(TCNT2), 0);
-	_reg_bset_1(SH_(TSTR), TSTR_STR2);
-}
-
-static int
-tmu2_intr(void *arg)
-{
-
-	_reg_bclr_1(SH_(TSTR), TSTR_STR2);
-	_reg_bclr_2(SH_(TCR2), TCR_UNF);
-
-	softintr_dispatch(IPL_SOFTSERIAL);
-	softintr_dispatch(IPL_SOFTNET);
-
-	return (0);
-}
