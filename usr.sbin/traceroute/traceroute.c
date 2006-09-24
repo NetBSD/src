@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.65 2006/05/31 20:23:52 rpaulo Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.66 2006/09/24 11:34:35 elad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.65 2006/05/31 20:23:52 rpaulo Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.66 2006/09/24 11:34:35 elad Exp $");
 #endif
 #endif
 
@@ -360,7 +360,7 @@ int Mflag;			/* show MPLS labels if any */
 int as_path;			/* print as numbers for each hop */
 char *as_server = NULL;
 void *asn;
-int useicmp;			/* use icmp echo instead of udp packets */
+int useicmp = 0;		/* use icmp echo instead of udp packets */
 #ifdef CANT_HACK_CKSUM
 int docksum = 0;		/* don't calculate checksums */
 #else
@@ -447,6 +447,29 @@ main(int argc, char **argv)
 	char errbuf[132];
 	int mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
 	size_t size = sizeof(max_ttl);
+
+	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0) {
+		Fprintf(stderr, "%s: icmp socket: %s\n", prog, strerror(errno));
+		exit(1);
+	}
+
+	/*
+	 * XXX 'useicmp' will always be zero here. I think the HP-UX users
+	 * running our traceroute code will forgive us.
+	 */
+#ifndef __hpux
+	sndsock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+#else
+	sndsock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW
+	    useicmp ? IPPROTO_ICMP : IPPROTO_UDP);
+#endif
+	if (sndsock < 0) {
+		Fprintf(stderr, "%s: raw socket: %s\n", prog, strerror(errno));
+		exit(1);
+	}
+
+	/* Revert to non-privileged user after opening sockets */
+	setuid(getuid());
 
 	(void) sysctl(mib, sizeof(mib)/sizeof(mib[0]), &max_ttl, &size,
 	    NULL, 0);
@@ -687,10 +710,6 @@ main(int argc, char **argv)
 		outmark = outudp + 1;
 	}
 
-	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0) {
-		Fprintf(stderr, "%s: icmp socket: %s\n", prog, strerror(errno));
-		exit(1);
-	}
 	if (options & SO_DEBUG)
 		(void)setsockopt(s, SOL_SOCKET, SO_DEBUG, (char *)&on,
 		    sizeof(on));
@@ -727,17 +746,6 @@ main(int argc, char **argv)
 #endif /*IPSEC_POLICY_IPSEC*/
 #endif /*IPSEC*/
 
-#ifndef __hpux
-	sndsock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
-#else
-	sndsock = socket(AF_INET, SOCK_RAW,
-	    useicmp ? IPPROTO_ICMP : IPPROTO_UDP);
-#endif
-	if (sndsock < 0) {
-		Fprintf(stderr, "%s: raw socket: %s\n", prog, strerror(errno));
-		exit(1);
-	}
-
 #ifdef IPSEC
 #ifdef IPSEC_POLICY_IPSEC
 	/*
@@ -770,9 +778,6 @@ main(int argc, char **argv)
     }
 #endif /*IPSEC_POLICY_IPSEC*/
 #endif /*IPSEC*/
-
-	/* Revert to non-privileged user after opening sockets */
-	setuid(getuid());
 
 #if defined(IP_OPTIONS) && !defined(HAVE_RAW_OPTIONS)
 	if (lsrr > 0) {
