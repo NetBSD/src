@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.830 2006/09/07 21:17:32 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.831 2006/09/24 18:36:40 briggs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.831 2006/09/07 21:16:55 riz Exp
+ *	NetBSD: pcidevs,v 1.832 2006/09/24 18:35:34 briggs Exp
  */
 
 /*
@@ -3474,6 +3474,30 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_GMAC,
 	    "GMAC Ethernet",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_AGP,
+	    "Intrepid 2 AGP",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_PCI1,
+	    "Intrepid 2 PCI",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_PCI2,
+	    "Intrepid 2 PCI",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_ATA,
+	    "Intrepid 2 ATA",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_FW,
+	    "Intrepid 2 FireWire",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_GMAC,
+	    "Intrepid 2 GMAC",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
@@ -12300,4 +12324,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2482;
+const int pci_nproducts = 2488;
