@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.21 2006/09/24 05:48:27 dogcow Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.22 2006/09/24 21:44:58 dbj Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,9 +41,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.21 2006/09/24 05:48:27 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.22 2006/09/24 21:44:58 dbj Exp $");
 
-#ifndef _LKM
+#if defined (_KERNEL_OPT)
 #include "opt_ktrace.h"
 #endif
 
