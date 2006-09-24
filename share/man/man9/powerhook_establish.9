@@ -1,4 +1,4 @@
-.\"	$NetBSD: powerhook_establish.9,v 1.7 2006/09/24 07:21:43 wiz Exp $
+.\"	$NetBSD: powerhook_establish.9,v 1.8 2006/09/24 07:27:57 dogcow Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,8 @@
 .Nd add or remove a power change hook
 .Sh SYNOPSIS
 .Ft void *
-.Fn powerhook_establish "char *name" "void (*fn)(int why, void *a)" "void *arg"
+.Fn powerhook_establish "const char *name" "void (*fn)(int why, void *a)" \
+"void *arg"
 .Ft void
 .Fn powerhook_disestablish "void *cookie"
 .Sh DESCRIPTION
