@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.26.22.2 2006/09/24 06:06:36 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.26.22.3 2006/09/24 06:12:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -48,11 +48,12 @@
 #define	IPL_VM		8
 #define	IPL_SERIAL	IPL_TTY	/* disable serial interrupts */
 #define	IPL_CLOCK	9	/* disable clock interrupts */
-#define	IPL_HIGH	IPL_CLOCK /* disable all interrupts */
+#define	IPL_STATCLOCK	10
+#define	IPL_HIGH	IPL_STATCLOCK /* disable all interrupts */
 #define	IPL_SCHED	IPL_HIGH
 #define	IPL_LOCK	IPL_HIGH
 
-#define	_IPL_N		10
+#define	_IPL_N		11
 
 #define	_IPL_SI0_FIRST	IPL_SOFT
 #define	_IPL_SI0_LAST	IPL_SOFTCLOCK
