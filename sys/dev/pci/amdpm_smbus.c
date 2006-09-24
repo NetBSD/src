@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbus.c,v 1.4 2006/06/26 18:21:39 drochner Exp $ */
+/*	$NetBSD: amdpm_smbus.c,v 1.5 2006/09/24 03:40:49 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -32,7 +32,7 @@
  * AMD-8111 HyperTransport I/O Hub
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.4 2006/06/26 18:21:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.5 2006/09/24 03:40:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ amdpm_smbus_attach(struct amdpm_softc *sc)
 {
         struct i2cbus_attach_args iba;
 	
-	// register with iic
+	/* register with iic */
 	sc->sc_i2c.ic_cookie = sc; 
 	sc->sc_i2c.ic_acquire_bus = amdpm_smbus_acquire_bus; 
 	sc->sc_i2c.ic_release_bus = amdpm_smbus_release_bus;
