@@ -1,4 +1,4 @@
-/*	$NetBSD: uudecode.c,v 1.20 2005/06/29 20:35:32 wiz Exp $	*/
+/*	$NetBSD: uudecode.c,v 1.21 2006/09/24 15:32:48 elad Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: uudecode.c,v 1.20 2005/06/29 20:35:32 wiz Exp $");
+__RCSID("$NetBSD: uudecode.c,v 1.21 2006/09/24 15:32:48 elad Exp $");
 #endif /* not lint */
 
 /*
@@ -51,11 +51,13 @@ __RCSID("$NetBSD: uudecode.c,v 1.20 2005/06/29 20:35:32 wiz Exp $");
  */
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <netinet/in.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
 #include <locale.h>
+#include <resolv.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,9 +66,11 @@ __RCSID("$NetBSD: uudecode.c,v 1.20 2005/06/29 20:35:32 wiz Exp $");
 
 static int decode(void);
 static void usage(void);
+static int checkend(const char *, const char *, const char *);
+static int base64_decode(void);
 int main(int, char *[]);
 
-int pflag;
+int base64, pflag;
 char *filename;
 
 int
@@ -78,8 +82,11 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	pflag = 0;
-	while ((ch = getopt(argc, argv, "p")) != -1)
+	while ((ch = getopt(argc, argv, "mp")) != -1)
 		switch (ch) {
+		case 'm':
+			base64 = 1;
+			break;
 		case 'p':
 			pflag = 1;
 			break;
@@ -118,23 +125,37 @@ decode(void)
 	char buf[MAXPATHLEN];
 
 	/* search for header line */
-	do {
+	for (;;) {
 		if (!fgets(buf, sizeof(buf), stdin)) {
-			warnx("%s: no \"begin\" line", filename);
+			warnx("%s: no \"%s\" line", filename, base64 ? 
+					"begin-base64" : "begin");
 			return(1);
 		}
-	} while (strncmp(buf, "begin ", 6));
+		p = buf;
+		if (strncmp(p, "begin-base64", 12) == 0) {
+			base64 = 1;
+			p += 13;
+			break;
+		} else if (strncmp(p, "begin", 5) == 0)  {
+			p += 6;
+			break;
+		} else
+			continue;
+	} 
+
         /* must be followed by an octal mode and a space */
-	mode = strtol(buf + 6, &fn, 8);
-	if (fn == (buf+6) || !isspace((unsigned char)*fn) || mode==LONG_MIN || mode==LONG_MAX)
+	mode = strtol(p, &fn, 8);
+	if (fn == (p) || !isspace((unsigned char)*fn) || mode==LONG_MIN || mode==LONG_MAX)
 	{
-	        warnx("%s: invalid mode on \"begin\" line", filename);
+	        warnx("%s: invalid mode on \"%s\" line", filename,
+			base64 ? "begin-base64" : "begin");
 		return(1);
 	}
 	/* skip whitespace for file name */
 	while (*fn && isspace((unsigned char)*fn)) fn++;
 	if (*fn == 0) {
-                warnx("%s: no filename on \"begin\" line", filename);
+                warnx("%s: no filename on \"%s\" line", filename,
+			base64 ? "begin-base64" : "begin");
 		return(1);
 	}
 	/* zap newline */
@@ -173,54 +194,93 @@ decode(void)
 		return(1);
 	}
 
-	/* for each input line */
-	for (;;) {
-		if (!fgets(p = buf, sizeof(buf), stdin)) {
-			warnx("%s: short file.", filename);
-			return(1);
-		}
-#define	DEC(c)	(((c) - ' ') & 077)		/* single character decode */
-		/*
-		 * `n' is used to avoid writing out all the characters
-		 * at the end of the file.
-		 */
-		if ((n = DEC(*p)) <= 0)
-			break;
-		for (++p; n > 0; p += 4, n -= 3)
-			if (n >= 3) {
-				ch = DEC(p[0]) << 2 | DEC(p[1]) >> 4;
-				putchar(ch);
-				ch = DEC(p[1]) << 4 | DEC(p[2]) >> 2;
-				putchar(ch);
-				ch = DEC(p[2]) << 6 | DEC(p[3]);
-				putchar(ch);
+	if (base64)
+		return base64_decode();
+	else {
+		/* for each input line */
+		for (;;) {
+			if (!fgets(p = buf, sizeof(buf), stdin)) {
+				warnx("%s: short file.", filename);
+				return(1);
 			}
-			else {
-				if (n >= 1) {
+#define	DEC(c)	(((c) - ' ') & 077)		/* single character decode */
+			/*
+		 	* `n' is used to avoid writing out all the characters
+		 	* at the end of the file.
+		 	*/
+			if ((n = DEC(*p)) <= 0)
+				break;
+			for (++p; n > 0; p += 4, n -= 3)
+				if (n >= 3) {
 					ch = DEC(p[0]) << 2 | DEC(p[1]) >> 4;
 					putchar(ch);
-				}
-				if (n >= 2) {
 					ch = DEC(p[1]) << 4 | DEC(p[2]) >> 2;
 					putchar(ch);
-				}
-				if (n >= 3) {
 					ch = DEC(p[2]) << 6 | DEC(p[3]);
 					putchar(ch);
 				}
-			}
+				else {
+					if (n >= 1) {
+						ch = DEC(p[0]) << 2 | DEC(p[1]) >> 4;
+						putchar(ch);
+					}
+					if (n >= 2) {
+						ch = DEC(p[1]) << 4 | DEC(p[2]) >> 2;
+						putchar(ch);
+					}
+					if (n >= 3) {
+						ch = DEC(p[2]) << 6 | DEC(p[3]);
+						putchar(ch);
+					}
+				}
+		}
+		if (!fgets(buf, sizeof(buf), stdin) || strcmp(buf, "end\n")) {
+			warnx("%s: no \"end\" line.", filename);
+			return(1);
+		}
+		return(0);
 	}
-	if (!fgets(buf, sizeof(buf), stdin) || strcmp(buf, "end\n")) {
-		warnx("%s: no \"end\" line.", filename);
-		return(1);
+}
+
+static int
+checkend(const char *ptr, const char *end, const char *msg)
+{
+	size_t n;
+
+	n = strlen(end);
+	if (strncmp(ptr, end, n) != 0 ||
+	    strspn(ptr + n, "\t\r\n") != strlen(ptr + n)) {
+		warnx("%s", msg); 
+		return (1);
 	}
-	return(0);
+	return (0);
+}
+
+static int
+base64_decode(void)
+{
+	int n;
+	char inbuf[MAXPATHLEN];
+	unsigned char outbuf[MAXPATHLEN * 4];
+
+	for (;;) {
+		if (!fgets(inbuf, sizeof(inbuf), stdin)) {
+			warnx("%s: short file.", filename);
+			return (1);
+		}
+		n = b64_pton(inbuf, outbuf, sizeof(outbuf));
+		if (n < 0)
+			break;
+		fwrite(outbuf, 1, n, stdout);
+	}
+	return (checkend(inbuf, "====",
+			"error decoding base64 input stream"));
 }
 
 static void
 usage()
 {
-	(void)fprintf(stderr, "usage: %s [-p] [file ...]\n",
+	(void)fprintf(stderr, "usage: %s [-m | -p] [file ...]\n",
 		      getprogname());
 	exit(1);
 }
