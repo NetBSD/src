@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.4 2006/09/03 07:42:04 xtraeme Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.5 2006/09/24 03:53:09 jmcneill Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.4 2006/09/03 07:42:04 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.5 2006/09/24 03:53:09 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -342,7 +342,8 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	callout_init(&sc->sc_tick_ch);
 	callout_setfunc(&sc->sc_tick_ch, nfe_tick, sc);
 
-	sc->sc_powerhook = powerhook_establish(nfe_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    nfe_power, sc);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.119 2006/08/31 19:24:37 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.120 2006/09/24 03:53:08 jmcneill Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.119 2006/08/31 19:24:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.120 2006/09/24 03:53:08 jmcneill Exp $");
 
 #include "bpfilter.h"
 
@@ -872,7 +872,8 @@ atw_attach(struct atw_softc *sc)
 	 * Add a suspend hook to make sure we come back up after a
 	 * resume.
 	 */
-	sc->sc_powerhook = powerhook_establish(atw_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    atw_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);

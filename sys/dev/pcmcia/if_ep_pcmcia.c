@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.55 2006/07/11 22:49:47 peter Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.56 2006/09/24 03:54:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.55 2006/07/11 22:49:47 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.56 2006/09/24 03:54:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,7 +339,7 @@ ep_pcmcia_attach(parent, self, aux)
 		aprint_error("%s: couldn't configure controller\n",
 		    self->dv_xname);
 
-	psc->sc_powerhook = powerhook_establish(ep_power, sc);
+	psc->sc_powerhook = powerhook_establish(self->dv_xname, ep_power, sc);
 	if (psc->sc_powerhook == NULL)
 		aprint_error("%s: WARNING: unable to establish power hook\n",
 		    self->dv_xname);

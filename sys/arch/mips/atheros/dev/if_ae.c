@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.3 2006/09/04 05:17:26 gdamore Exp $ */
+/* $Id: if_ae.c,v 1.4 2006/09/24 03:53:08 jmcneill Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.3 2006/09/04 05:17:26 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.4 2006/09/24 03:53:08 jmcneill Exp $");
 
 #include "bpfilter.h"
 
@@ -414,7 +414,8 @@ ae_attach(struct device *parent, struct device *self, void *aux)
 	 * Add a suspend hook to make sure we come back up after a
 	 * resume.
 	 */
-	sc->sc_powerhook = powerhook_establish(ae_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    ae_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);

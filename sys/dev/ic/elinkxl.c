@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.88 2006/05/21 23:56:09 christos Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.89 2006/09/24 03:53:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.88 2006/05/21 23:56:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.89 2006/09/24 03:53:08 jmcneill Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -466,7 +466,8 @@ ex_config(sc)
 			sc->sc_dev.dv_xname);
 
 	/* Add a suspend hook to make sure we come back up after a resume. */
-	sc->sc_powerhook = powerhook_establish(ex_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    ex_power, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: WARNING: unable to establish power hook\n",
 			sc->sc_dev.dv_xname);

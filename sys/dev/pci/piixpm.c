@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.7 2006/08/17 17:11:28 christos Exp $ */
+/* $NetBSD: piixpm.c,v 1.8 2006/09/24 03:53:09 jmcneill Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -139,7 +139,8 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Power Management Controller\n");
 
-	sc->sc_powerhook = powerhook_establish(piixpm_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    piixpm_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: can't establish powerhook\n",
 		    sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.28 2006/09/03 21:47:34 christos Exp $	*/
+/*	$NetBSD: ym.c,v 1.29 2006/09/24 03:53:09 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.28 2006/09/03 21:47:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.29 2006/09/24 03:53:09 jmcneill Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -307,7 +307,7 @@ ym_attach(struct ym_softc *sc)
 #endif
 	ym_powerdown_blocks(sc);
 
-	powerhook_establish(ym_power_hook, sc);
+	powerhook_establish(DVNAME(sc), ym_power_hook, sc);
 #endif
 
 	/* Set tone control to the default position. */
