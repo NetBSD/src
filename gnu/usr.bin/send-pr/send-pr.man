@@ -84,6 +84,8 @@ To ensure that a PR is handled promptly, it should contain your (unique)
 problem area.  (Use
 .B `send-pr -L'
 to see a list of categories).
+The PR should also contain a subject header, which is separate to the
+synopsis line.
 NetBSD does not use unique \fIsubmitter-id\fR's - all PR's use the
 default value of
 .B `net'
