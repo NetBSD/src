@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.144 2006/09/24 03:54:00 jmcneill Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.145 2006/09/24 06:51:39 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.144 2006/09/24 03:54:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.145 2006/09/24 06:51:39 dogcow Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -680,7 +680,7 @@ static CIRCLEQ_HEAD(, powerhook_desc) powerhook_list =
     CIRCLEQ_HEAD_INITIALIZER(powerhook_list);
 
 void *
-powerhook_establish(char *name, void (*fn)(int, void *), void *arg)
+powerhook_establish(const char *name, void (*fn)(int, void *), void *arg)
 {
 	struct powerhook_desc *ndp;
 
