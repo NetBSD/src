@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.43 2006/09/23 15:24:24 xtraeme Exp $	*/
+/*	$NetBSD: atactl.c,v 1.44 2006/09/24 08:33:30 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.43 2006/09/23 15:24:24 xtraeme Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.44 2006/09/24 08:33:30 xtraeme Exp $");
 #endif
 
 
@@ -1215,7 +1215,7 @@ device_security(int argc, char *argv[])
 
 	if (strcmp(argv[0], "freeze") == 0) {
 		memset(&req, 0, sizeof(req));
-		req.command = WCDD_SECURITY_FREEZE;
+		req.command = WDCC_SECURITY_FREEZE;
 		req.timeout = 1000;
 		ata_command(&req);
 	} else if (strcmp(argv[0], "status") == 0) {
