@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.707 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.708 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -56,6 +56,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	msk(4): Driver for Marvell Yukon 2 Gigabit Ethernet. [riz 20060909]
 	evbsh5: Add timecounter support.  [gdamore 20060909]
 	hp300: Add timecounter support.  [tsutsui 20060909]
+	ipsec-tools: ipsec-tools CVS is now part of NetBSD. [manu 20060909]
 	iyonix: Add timecounter support.  [gdamore 20060910]
 	next68k: Add timecounter support.  [gdamore 20060911]
 	cats: Add timecounter support.  [gdamore 20060911]
