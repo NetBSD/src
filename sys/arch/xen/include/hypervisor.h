@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.20 2006/03/06 19:54:50 bouyer Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.21 2006/09/24 15:30:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -143,17 +143,24 @@ void hypervisor_set_ipending(u_int32_t, int, int);
  * Assembler stubs for hyper-calls.
  */
 
+#define _hypercall(name, input_const, output_const) \
+	__asm volatile ( \
+	    TRAP_INSTR \
+	    : output_const \
+	    : "0" (name), input_const \
+	    : "memory" )
+
+#define _harg(...) __VA_ARGS__
+	
+
 static __inline int
 HYPERVISOR_set_trap_table(trap_info_t *table)
 {
     int ret;
     unsigned long ign1;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1)
-	: "0" (__HYPERVISOR_set_trap_table), "1" (table)
-	: "memory" );
+	_hypercall(__HYPERVISOR_set_trap_table, _harg("1" (table)),
+	    _harg("=a" (ret), "=b" (ign1)));
 
     return ret;
 }
@@ -164,11 +171,8 @@ HYPERVISOR_set_gdt(unsigned long *frame_list, int entries)
     int ret;
     unsigned long ign1, ign2;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2)
-	: "0" (__HYPERVISOR_set_gdt), "1" (frame_list), "2" (entries)
-	: "memory" );
+    _hypercall(__HYPERVISOR_set_gdt, _harg("1" (frame_list), "2" (entries)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
 
     return ret;
 }
@@ -179,11 +183,8 @@ HYPERVISOR_stack_switch(unsigned long ss, unsigned long esp)
     int ret;
     unsigned long ign1, ign2;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2)
-	: "0" (__HYPERVISOR_stack_switch), "1" (ss), "2" (esp)
-	: "memory" );
+    _hypercall(__HYPERVISOR_stack_switch, _harg("1" (ss), "2" (esp)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
 
     return ret;
 }
@@ -196,12 +197,10 @@ HYPERVISOR_set_callbacks(
     int ret;
     unsigned long ign1, ign2, ign3, ign4;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3), "=S" (ign4)
-	: "0" (__HYPERVISOR_set_callbacks), "1" (event_selector),
-	  "2" (event_address), "3" (failsafe_selector), "4" (failsafe_address)
-	: "memory" );
+    _hypercall(__HYPERVISOR_set_callbacks,
+	_harg("1" (event_selector),"2" (event_address),
+	    "3" (failsafe_selector), "4" (failsafe_address)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3), "=S" (ign4)));
 
     return ret;
 }
@@ -213,11 +212,8 @@ HYPERVISOR_dom0_op(dom0_op_t *dom0_op)
     unsigned long ign1;
 
     dom0_op->interface_version = DOM0_INTERFACE_VERSION;
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1)
-	: "0" (__HYPERVISOR_dom0_op), "1" (dom0_op)
-	: "memory");
+    _hypercall(__HYPERVISOR_dom0_op, _harg("1" (dom0_op)),
+	_harg("=a" (ret), "=b" (ign1)));
 
     return ret;
 }
@@ -228,11 +224,8 @@ HYPERVISOR_set_debugreg(int reg, unsigned long value)
     int ret;
     unsigned long ign1, ign2;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2)
-	: "0" (__HYPERVISOR_set_debugreg), "1" (reg), "2" (value)
-	: "memory" );
+    _hypercall(__HYPERVISOR_set_debugreg, _harg("1" (reg), "2" (value)),
+	 _harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
 
     return ret;
 }
@@ -243,11 +236,8 @@ HYPERVISOR_get_debugreg(int reg)
     unsigned long ret;
     unsigned long ign1;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1)
-	: "0" (__HYPERVISOR_get_debugreg), "1" (reg)
-	: "memory" );
+    _hypercall(__HYPERVISOR_get_debugreg, _harg("1" (reg)),
+	_harg("=a" (ret), "=b" (ign1)));
 
     return ret;
 }
@@ -260,12 +250,9 @@ HYPERVISOR_mmu_update(mmu_update_t *req, int count, int *success_count,
     int ret;
     unsigned long ign1, ign2, ign3, ign4;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3), "=S" (ign4)
-	: "0" (__HYPERVISOR_mmu_update), "1" (req), "2" (count),
-	  "3" (success_count), "4" (domid)
-	: "memory" );
+    _hypercall(__HYPERVISOR_mmu_update,
+	_harg("1" (req), "2" (count), "3" (success_count), "4" (domid)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3), "=S" (ign4)));
 
     return ret;
 }
@@ -277,12 +264,9 @@ HYPERVISOR_mmuext_op(struct mmuext_op *op, int count, int *success_count,
     int ret;
     unsigned long ign1, ign2, ign3, ign4;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3), "=S" (ign4)
-	: "0" (__HYPERVISOR_mmuext_op), "1" (op), "2" (count),
-	  "3" (success_count), "4" (domid)
-	: "memory" );
+    _hypercall(__HYPERVISOR_mmuext_op,
+	_harg("1" (op), "2" (count), "3" (success_count), "4" (domid)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3), "=S" (ign4)));
 
     return ret;
 }
@@ -293,10 +277,9 @@ HYPERVISOR_fpu_taskswitch(int set)
 {
     long ret;
     long ign1;
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1)
-	: "0" (__HYPERVISOR_fpu_taskswitch), "1" (set) : "memory" );
+
+    _hypercall(__HYPERVISOR_fpu_taskswitch, _harg("1" (set)),
+	_harg("=a" (ret), "=b" (ign1)));
 
     return ret;
 }
@@ -307,10 +290,8 @@ HYPERVISOR_fpu_taskswitch(void)
 {
     long ret;
     long ign1;
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1)
-	: "0" (__HYPERVISOR_fpu_taskswitch), "1" (1) : "memory" );
+    _hypercall(__HYPERVISOR_fpu_taskswitch, _harg("1" (1)),
+	_harg("=a" (ret), "=b" (ign1)));
 
     return ret;
 }
@@ -324,12 +305,9 @@ HYPERVISOR_update_descriptor(uint64_t ma, uint32_t word1, uint32_t word2)
     int ma1 = ma & 0xffffffff;
     int ma2 = (ma >> 32) & 0xffffffff;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3), "=S" (ign4)
-	: "0" (__HYPERVISOR_update_descriptor), "1" (ma1), "2" (ma2),
-	  "3" (word1), "4" (word2)
-	: "memory" );
+    _hypercall(__HYPERVISOR_update_descriptor,
+	_harg("1" (ma1), "2" (ma2), "3" (word1), "4" (word2)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3), "=S" (ign4)));
 
     return ret;
 }
@@ -340,11 +318,8 @@ HYPERVISOR_memory_op(unsigned int cmd, void *arg)
     int ret;
     unsigned long ign1, ign2;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2)
-	: "0" (__HYPERVISOR_memory_op), "1" (cmd), "2" (arg)
-	: "memory" );
+    _hypercall(__HYPERVISOR_memory_op, _harg("1" (cmd), "2" (arg)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
 
     return ret;
 }
@@ -356,12 +331,9 @@ HYPERVISOR_update_va_mapping(unsigned long page_nr, unsigned long new_val,
     int ret;
     unsigned long ign1, ign2, ign3, ign4;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3), "=S" (ign4)
-	: "0" (__HYPERVISOR_update_va_mapping), 
-          "1" (page_nr), "2" (new_val), "3" (0), "4" (flags)
-	: "memory" );
+    _hypercall(__HYPERVISOR_update_va_mapping,
+	_harg("1" (page_nr), "2" (new_val), "3" (0), "4" (flags)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3), "=S" (ign4)));
 
 #ifdef notdef
     if (__predict_false(ret < 0))
@@ -378,11 +350,8 @@ HYPERVISOR_xen_version(int cmd, void *arg)
     int ret;
     unsigned long ign1, ign2;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2)
-	: "0" (__HYPERVISOR_xen_version), "1" (cmd), "2" (arg)
-	: "memory" );
+    _hypercall(__HYPERVISOR_xen_version, _harg("1" (cmd), "2" (arg)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
 
     return ret;
 }
@@ -393,11 +362,9 @@ HYPERVISOR_grant_table_op(unsigned int cmd, void *uop, unsigned int count)
     int ret;
     unsigned long ign1, ign2, ign3;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3)
-	: "0" (__HYPERVISOR_grant_table_op), "1" (cmd), "2" (uop), "3" (count)
-	: "memory" );
+    _hypercall(__HYPERVISOR_grant_table_op,
+	_harg("1" (cmd), "2" (uop), "3" (count)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3)));
 
     return ret;
 }
@@ -409,14 +376,11 @@ HYPERVISOR_update_va_mapping_otherdomain(unsigned long page_nr,
     int ret;
     unsigned long ign1, ign2, ign3, ign4, ign5;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3), "=S" (ign4),
-	  "=D" (ign5)
-	: "0" (__HYPERVISOR_update_va_mapping_otherdomain),
-          "1" (page_nr), "2" (new_val), "3" (0), "4" (flags), "5" (domid) :
-        "memory" );
-    
+    _hypercall(__HYPERVISOR_update_va_mapping_otherdomain,
+	_harg("1" (page_nr), "2" (new_val), "3" (0), "4" (flags), "5" (domid)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3), "=S" (ign4),
+	    "=D" (ign5)));
+
     return ret;
 }
 
@@ -426,12 +390,9 @@ HYPERVISOR_vcpu_op(int cmd, int vcpuid, void *extra_args)
     long ret;
     unsigned long ign1, ign2, ign3;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3)
-	: "0" (__HYPERVISOR_vcpu_op),
-          "1" (cmd), "2" (vcpuid), "3" (extra_args)
-	: "memory");
+    _hypercall(__HYPERVISOR_vcpu_op,
+	_harg("1" (cmd), "2" (vcpuid), "3" (extra_args)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3)));
 
     return ret;
 }
@@ -442,11 +403,8 @@ HYPERVISOR_yield(void)
     long ret;
     unsigned long ign1, ign2;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2)
-	: "0" (__HYPERVISOR_sched_op), "1" (SCHEDOP_yield), "2" (0)
-	: "memory" );
+    _hypercall(__HYPERVISOR_sched_op, _harg("1" (SCHEDOP_yield), "2" (0)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
 
     return ret;
 }
@@ -457,11 +415,8 @@ HYPERVISOR_block(void)
     long ret;
     unsigned long ign1, ign2;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2)
-	: "0" (__HYPERVISOR_sched_op), "1" (SCHEDOP_block), "2" (0)
-	: "memory" );
+    _hypercall(__HYPERVISOR_sched_op, _harg("1" (SCHEDOP_block), "2" (0)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
 
     return ret;
 }
@@ -472,12 +427,9 @@ HYPERVISOR_shutdown(void)
     long ret;
     unsigned long ign1, ign2;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2)
-	: "0" (__HYPERVISOR_sched_op),
-	  "1" (SCHEDOP_shutdown), "2" (SHUTDOWN_poweroff)
-        : "memory" );
+    _hypercall(__HYPERVISOR_sched_op,
+	_harg("1" (SCHEDOP_shutdown), "2" (SHUTDOWN_poweroff)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
 
     return ret;
 }
@@ -488,12 +440,9 @@ HYPERVISOR_reboot(void)
     long ret;
     unsigned long ign1, ign2;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2)
-	: "0" (__HYPERVISOR_sched_op),
-	  "1" (SCHEDOP_shutdown), "2" (SHUTDOWN_reboot)
-        : "memory" );
+    _hypercall(__HYPERVISOR_sched_op,
+	_harg("1" (SCHEDOP_shutdown), "2" (SHUTDOWN_reboot)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
 
     return ret;
 }
@@ -504,12 +453,9 @@ HYPERVISOR_suspend(unsigned long srec)
     long ret;
     unsigned long ign1, ign2, ign3;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3)
-	: "0" (__HYPERVISOR_sched_op),
-        "1" (SCHEDOP_shutdown), "2" (SHUTDOWN_suspend), 
-        "3" (srec) : "memory");
+    _hypercall(__HYPERVISOR_sched_op,
+	_harg("1" (SCHEDOP_shutdown), "2" (SHUTDOWN_suspend), "3" (srec)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3)));
 
     return ret;
 }
@@ -522,15 +468,13 @@ HYPERVISOR_set_timer_op(uint64_t timeout)
     unsigned long timeout_lo = (unsigned long)timeout;
     unsigned long ign1, ign2;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2)
-	: "0" (__HYPERVISOR_set_timer_op), "1" (timeout_lo), "2" (timeout_hi)
-	: "memory");
+    _hypercall(__HYPERVISOR_set_timer_op,
+	 _harg("1" (timeout_lo), "2" (timeout_hi)),
+	 _harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
 
     return ret;
 }
-#else /* XEN3 */
+#else /* !XEN3 */
 static __inline int
 HYPERVISOR_mmu_update(mmu_update_t *req, int count, int *success_count)
 {
@@ -781,11 +725,9 @@ HYPERVISOR_multicall(void *call_list, int nr_calls)
     int ret;
     unsigned long ign1, ign2;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2)
-	: "0" (__HYPERVISOR_multicall), "1" (call_list), "2" (nr_calls)
-	: "memory" );
+    _hypercall(__HYPERVISOR_multicall,
+	 _harg("1" (call_list), "2" (nr_calls)),
+	 _harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
 
     return ret;
 }
@@ -797,11 +739,8 @@ HYPERVISOR_event_channel_op(void *op)
     int ret;
     unsigned long ign1;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1)
-	: "0" (__HYPERVISOR_event_channel_op), "1" (op)
-	: "memory" );
+    _hypercall(__HYPERVISOR_event_channel_op, _harg("1" (op)),
+	_harg("=a" (ret), "=b" (ign1)));
 
     return ret;
 }
@@ -812,11 +751,9 @@ HYPERVISOR_console_io(int cmd, int count, char *str)
     int ret;
     unsigned long ign1, ign2, ign3;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3)
-	: "0" (__HYPERVISOR_console_io), "1" (cmd), "2" (count), "3" (str)
-	: "memory" );
+    _hypercall(__HYPERVISOR_console_io,
+	_harg("1" (cmd), "2" (count), "3" (str)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3)));
 
     return ret;
 }
@@ -827,11 +764,8 @@ HYPERVISOR_physdev_op(void *physdev_op)
     int ret;
     unsigned long ign1;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1)
-	: "0" (__HYPERVISOR_physdev_op), "1" (physdev_op)
-	: "memory" );
+    _hypercall(__HYPERVISOR_physdev_op, _harg("1" (physdev_op)),
+	_harg("=a" (ret), "=b" (ign1)));
 
     return ret;
 }
@@ -842,11 +776,8 @@ HYPERVISOR_vm_assist(unsigned int cmd, unsigned int type)
     int ret;
     unsigned long ign1, ign2;
 
-    __asm volatile (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ign1), "=c" (ign2)
-	: "0" (__HYPERVISOR_vm_assist), "1" (cmd), "2" (type)
-	: "memory" );
+    _hypercall(__HYPERVISOR_vm_assist, _harg("1" (cmd), "2" (type)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
 
     return ret;
 }
