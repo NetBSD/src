@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.6 2006/09/23 16:11:07 plunky Exp $	*/
+/*	$NetBSD: btsco.c,v 1.7 2006/09/24 10:16:21 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.6 2006/09/23 16:11:07 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.7 2006/09/24 10:16:21 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -179,8 +179,8 @@ static const struct audio_hw_if btsco_if = {
 	NULL,			/* speaker_ctl */
 	btsco_getdev,		/* getdev */
 	btsco_setfd,		/* setfd */
-	btsco_set_port,	/* set_port */
-	btsco_get_port,	/* get_port */
+	btsco_set_port,		/* set_port */
+	btsco_get_port,		/* get_port */
 	btsco_query_devinfo,	/* query_devinfo */
 	btsco_allocm,		/* allocm */
 	btsco_freem,		/* freem */
