@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.18 2006/06/27 13:58:08 peter Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.19 2006/09/24 15:36:34 peter Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,13 +38,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.18 2006/06/27 13:58:08 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.19 2006/09/24 15:36:34 peter Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
+#include <sys/timetc.h>
 #include <sys/device.h>
 
 #include <machine/bus.h>
@@ -61,7 +62,11 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.18 2006/06/27 13:58:08 peter Exp $"
 static int	saost_match(struct device *, struct cfdata *, void *);
 static void	saost_attach(struct device *, struct device *, void *);
 
-int		gettick(void);
+#ifdef __HAVE_TIMECOUNTER
+static void	saost_tc_init(void);
+#endif /* __HAVE_TIMECOUNTER */
+
+static uint32_t	gettick(void);
 static int	clockintr(void *);
 static int	statintr(void *);
 void		rtcinit(void);
@@ -245,9 +250,35 @@ cpu_initclocks(void)
 
 	/* Zero the counter value */
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_CR, 0);
+
+#ifdef __HAVE_TIMECOUNTER
+	saost_tc_init();
+#endif /* __HAVE_TIMECOUNTER */
 }
 
-int
+#ifdef __HAVE_TIMECOUNTER
+static u_int
+saost_tc_get_timecount(struct timecounter *tc)
+{
+	return (u_int)gettick();
+}
+
+static void
+saost_tc_init(void)
+{
+	static struct timecounter saost_tc = {
+		.tc_get_timecount = saost_tc_get_timecount,
+		.tc_frequency = TIMER_FREQUENCY,
+		.tc_counter_mask = ~0,
+		.tc_name = "saost_count",
+		.tc_quality = 100,
+	};
+
+	tc_init(&saost_tc);
+}
+#endif /* __HAVE_TIMECOUNTER */
+
+static uint32_t
 gettick(void)
 {
 	int counter;
@@ -261,6 +292,7 @@ gettick(void)
 	return counter;
 }
 
+#ifndef __HAVE_TIMECOUNTER
 void
 microtime(struct timeval *tvp)
 {
@@ -300,6 +332,7 @@ microtime(struct timeval *tvp)
 	lasttime = *tvp;
 	splx(s);
 }
+#endif /* !__HAVE_TIMECOUNTER */
 
 void
 delay(u_int usecs)
@@ -335,6 +368,7 @@ delay(u_int usecs)
 	}
 }
 
+#ifndef __HAVE_GENERIC_TODR
 void
 resettodr(void)
 {
@@ -346,3 +380,4 @@ inittodr(time_t base)
 	time.tv_sec = base;
 	time.tv_usec = 0;
 }
+#endif /* !__HAVE_GENERIC_TODR */
