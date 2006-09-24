@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.30 2006/08/05 21:26:48 sanjayl Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.31 2006/09/24 19:17:56 briggs Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.30 2006/08/05 21:26:48 sanjayl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.31 2006/09/24 19:17:56 briggs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -190,7 +190,9 @@ pci_intr_map(pa, ihp)
 	int pin = pa->pa_intrpin;
 	int line = pa->pa_intrline;
 	
+#if DEBUG
 	printf("%s: pin: %d, line: %d\n", __FUNCTION__, pin, line);
+#endif
 
 	if (pin == 0) {
 		/* No IRQ used. */
