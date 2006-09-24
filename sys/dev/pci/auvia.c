@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.55 2006/08/28 00:02:21 christos Exp $	*/
+/*	$NetBSD: auvia.c,v 1.56 2006/09/24 03:53:09 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.55 2006/08/28 00:02:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.56 2006/09/24 03:53:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,7 +454,8 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Watch for power change */
 	sc->sc_suspend = PWR_RESUME;
-	sc->sc_powerhook = powerhook_establish(auvia_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    auvia_powerhook, sc);
 
 	audio_attach_mi(&auvia_hw_if, sc, &sc->sc_dev);
 	sc->codec_if->vtbl->unlock(sc->codec_if);

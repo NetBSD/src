@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.52 2005/12/08 18:06:42 xtraeme Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.53 2006/09/24 03:53:08 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.52 2005/12/08 18:06:42 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.53 2006/09/24 03:53:08 jmcneill Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -772,7 +772,8 @@ rtk_attach(sc)
 	 * Add a suspend hook to make sure we come back up after a
 	 * resume.
 	 */
-	sc->sc_powerhook = powerhook_establish(rtk_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    rtk_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);

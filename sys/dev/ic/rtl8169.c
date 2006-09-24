@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.25 2006/06/18 16:14:10 rpaulo Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.26 2006/09/24 03:53:08 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -808,7 +808,8 @@ re_attach(struct rtk_softc *sc)
 	 * Add a suspend hook to make sure we come back up after a
 	 * resume.
 	 */
-	sc->sc_powerhook = powerhook_establish(re_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    re_power, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.28 2005/12/11 12:23:23 christos Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.29 2006/09/24 03:54:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.28 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.29 2006/09/24 03:54:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ an_pcmcia_attach(parent, self, aux)
 		goto fail2;
 	}
 
-	psc->sc_powerhook = powerhook_establish(an_power, sc);
+	psc->sc_powerhook = powerhook_establish(self->dv_xname, an_power, sc);
 
 	an_pcmcia_disable(sc);
 	sc->sc_enabled = 0;

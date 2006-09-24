@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.109 2006/06/01 02:20:54 jonathan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.110 2006/09/24 03:53:09 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.109 2006/06/01 02:20:54 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.110 2006/09/24 03:53:09 jmcneill Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2659,7 +2659,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(5, ("callout_init\n"));
 	callout_init(&sc->bge_timeout);
 
-	sc->bge_powerhook = powerhook_establish(bge_powerhook, sc);
+	sc->bge_powerhook = powerhook_establish(sc->bge_dev.dv_xname,
+	    bge_powerhook, sc);
 	if (sc->bge_powerhook == NULL)
 		printf("%s: WARNING: unable to establish PCI power hook\n",
 		    sc->bge_dev.dv_xname);

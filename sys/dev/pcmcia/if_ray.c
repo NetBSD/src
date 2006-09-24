@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.60 2006/04/14 17:50:27 christos Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.61 2006/09/24 03:54:00 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.60 2006/04/14 17:50:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.61 2006/09/24 03:54:00 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -614,7 +614,7 @@ ray_attach(parent, self, aux)
 		ifmedia_set(&sc->sc_media, IFM_INFRA);
 
 	sc->sc_sdhook = shutdownhook_establish(ray_shutdown, sc);
-	sc->sc_pwrhook = powerhook_establish(ray_power, sc);
+	sc->sc_pwrhook = powerhook_establish(self->dv_xname, ray_power, sc);
 
 	/* The attach is successful. */
 	sc->sc_attached = 1;

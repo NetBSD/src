@@ -1,4 +1,4 @@
-/* $NetBSD: piixpcib.c,v 1.7 2006/06/22 16:24:34 jmcneill Exp $ */
+/* $NetBSD: piixpcib.c,v 1.8 2006/09/24 03:53:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.7 2006/06/22 16:24:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.8 2006/09/24 03:53:08 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -156,7 +156,8 @@ piixpcibattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_powerhook = powerhook_establish(piixpcib_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    piixpcib_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: can't establish powerhook\n",
 		    sc->sc_dev.dv_xname);

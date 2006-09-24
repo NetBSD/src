@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.16 2006/09/03 21:05:01 christos Exp $ */
+/* $NetBSD: vesafb.c,v 1.17 2006/09/24 03:53:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.16 2006/09/03 21:05:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.17 2006/09/24 03:53:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,8 @@ vesafb_attach(parent, dev, aux)
 
 	sc->sc_isconsole = 1;
 
-	sc->sc_powerhook = powerhook_establish(vesafb_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    vesafb_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: unable to establish powerhook\n",
 		    sc->sc_dev.dv_xname);

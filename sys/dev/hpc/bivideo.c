@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.22 2006/03/29 06:37:35 thorpej Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.23 2006/09/24 03:53:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.22 2006/03/29 06:37:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.23 2006/09/24 03:53:08 jmcneill Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
@@ -174,7 +174,8 @@ bivideoattach(struct device *parent, struct device *self, void *aux)
 
 	/* Add a suspend hook to power saving */
 	sc->sc_powerstate = 0;
-	sc->sc_powerhook = powerhook_establish(bivideo_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    bivideo_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 			sc->sc_dev.dv_xname);

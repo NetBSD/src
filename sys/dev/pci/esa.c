@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.35 2006/09/24 03:39:51 jmcneill Exp $ */
+/* $NetBSD: esa.c,v 1.36 2006/09/24 03:53:09 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.35 2006/09/24 03:39:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.36 2006/09/24 03:53:09 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1130,7 +1130,8 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 		    audio_attach_mi(&esa_hw_if, &sc->voice[i], &sc->sc_dev);
 	}
 
-	sc->powerhook = powerhook_establish(esa_powerhook, sc);
+	sc->powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    esa_powerhook, sc);
 	if (sc->powerhook == NULL)
 		aprint_error("%s: WARNING: unable to establish powerhook\n",
 		    sc->sc_dev.dv_xname);

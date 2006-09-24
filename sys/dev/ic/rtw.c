@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.76 2006/09/03 05:10:24 christos Exp $ */
+/* $NetBSD: rtw.c,v 1.77 2006/09/24 03:53:08 jmcneill Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.76 2006/09/03 05:10:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.77 2006/09/24 03:53:08 jmcneill Exp $");
 
 #include "bpfilter.h"
 
@@ -3843,7 +3843,7 @@ rtw_establish_hooks(struct rtw_hooks *hooks, const char *dvname,
 	 * Add a suspend hook to make sure we come back up after a
 	 * resume.
 	 */
-	hooks->rh_power = powerhook_establish(rtw_power, arg);
+	hooks->rh_power = powerhook_establish(dvname, rtw_power, arg);
 	if (hooks->rh_power == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    dvname);

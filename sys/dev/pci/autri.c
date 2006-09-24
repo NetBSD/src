@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.31 2006/08/28 00:01:36 christos Exp $	*/
+/*	$NetBSD: autri.c,v 1.32 2006/09/24 03:53:09 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.31 2006/08/28 00:01:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.32 2006/09/24 03:53:09 jmcneill Exp $");
 
 #include "midi.h"
 
@@ -598,7 +598,7 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	sc->sc_old_power = PWR_RESUME;
-	powerhook_establish(autri_powerhook, sc);
+	powerhook_establish(sc->sc_dev.dv_xname, autri_powerhook, sc);
 }
 
 CFATTACH_DECL(autri, sizeof(struct autri_softc),

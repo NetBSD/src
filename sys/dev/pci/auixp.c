@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.18 2006/09/24 03:42:41 jmcneill Exp $ */
+/* $NetBSD: auixp.c,v 1.19 2006/09/24 03:53:09 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.18 2006/09/24 03:42:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.19 2006/09/24 03:53:09 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1213,7 +1213,8 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->powerhook = powerhook_establish(auixp_powerhook, sc);
+	sc->powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    auixp_powerhook, sc);
 	if (sc->powerhook == NULL)
 		aprint_error("%s: WARNING: unable to establish powerhook\n",
 		    sc->sc_dev.dv_xname);

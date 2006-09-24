@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.27 2006/08/02 13:58:39 rpaulo Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.28 2006/09/24 03:53:09 jmcneill Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.27 2006/08/02 13:58:39 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.28 2006/09/24 03:53:09 jmcneill Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -346,7 +346,8 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_sdhook == NULL)
 		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
-	sc->sc_powerhook = powerhook_establish(ipw_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    ipw_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.36 2006/08/30 01:10:46 christos Exp $      */
+/*      $NetBSD: esm.c,v 1.37 2006/09/24 03:53:09 jmcneill Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.36 2006/08/30 01:10:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.37 2006/09/24 03:53:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1700,7 +1700,8 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	audio_attach_mi(&esm_hw_if, self, &ess->sc_dev);
 
 	ess->esm_suspend = PWR_RESUME;
-	ess->esm_powerhook = powerhook_establish(esm_powerhook, ess);
+	ess->esm_powerhook = powerhook_establish(ess->sc_dev.dv_xname,
+	    esm_powerhook, ess);
 }
 
 /* Power Hook */

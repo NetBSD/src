@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.2 2006/08/13 03:52:33 oster Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.3 2006/09/24 03:53:09 jmcneill Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.2 2006/08/13 03:52:33 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.3 2006/09/24 03:53:09 jmcneill Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -364,7 +364,7 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	ieee80211_media_init(ic, wpi_media_change, ieee80211_media_status);
 
 	/* set powerhook */
-	sc->powerhook = powerhook_establish(wpi_power, sc);
+	sc->powerhook = powerhook_establish(sc->sc_dev.dv_xname, wpi_power, sc);
 
 #if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11_RADIO,

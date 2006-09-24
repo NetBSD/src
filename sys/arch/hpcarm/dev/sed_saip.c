@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.20 2006/06/27 13:30:19 peter Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.21 2006/09/24 03:53:07 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.20 2006/06/27 13:30:19 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.21 2006/09/24 03:53:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,8 @@ sed1356_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Add a suspend hook to power saving */
 	sc->sc_powerstate = 0;
-	sc->sc_powerhook = powerhook_establish(sed1356_power, sc);
+	sc->sc_powerhook = powerhook_establish(self->dv_xname,
+	    sed1356_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);

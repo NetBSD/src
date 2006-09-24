@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.133 2006/07/08 23:02:55 christos Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.134 2006/09/24 03:53:09 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.133 2006/07/08 23:02:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.134 2006/09/24 03:53:09 jmcneill Exp $");
 
 /*
 #define CBB_DEBUG
@@ -680,7 +680,7 @@ pccbb_pci_callback(self)
 	}
 
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
-	powerhook_establish(pccbb_powerhook, sc);
+	powerhook_establish(sc->sc_dev.dv_xname, pccbb_powerhook, sc);
 
 	{
 		u_int32_t sockstat;

@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.33 2006/05/28 13:17:02 blymn Exp $ */
+/*	$NetBSD: p9100.c,v 1.34 2006/09/24 03:54:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.33 2006/05/28 13:17:02 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.34 2006/09/24 03:54:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,7 +473,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	/* register with power management */
 	sc->sc_video = 1;
 	sc->sc_powerstate = PWR_RESUME;
-	powerhook_establish(p9100_power_hook, sc);
+	powerhook_establish(sc->sc_dev.dv_xname, p9100_power_hook, sc);
 
 #if NTCTRL > 0
 	/* register callback for external monitor status change */

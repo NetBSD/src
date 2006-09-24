@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.111 2006/08/03 03:01:39 bsh Exp $	*/
+/*	$NetBSD: auich.c,v 1.112 2006/09/24 03:53:09 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.111 2006/08/03 03:01:39 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.112 2006/09/24 03:53:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -645,7 +645,8 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Watch for power change */
 	sc->sc_suspend = PWR_RESUME;
-	sc->sc_powerhook = powerhook_establish(auich_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    auich_powerhook, sc);
 
 	config_interrupts(self, auich_finish_attach);
 

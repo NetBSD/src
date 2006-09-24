@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.76 2006/09/07 12:34:42 itohy Exp $      */
+/*      $NetBSD: ata.c,v 1.77 2006/09/24 03:53:08 jmcneill Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.76 2006/09/07 12:34:42 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.77 2006/09/24 03:53:08 jmcneill Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -429,7 +429,8 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 	config_pending_incr();
 	kthread_create(atabus_create_thread, sc);
 
-	sc->sc_powerhook = powerhook_establish(atabus_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    atabus_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);

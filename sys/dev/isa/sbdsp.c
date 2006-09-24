@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.123 2006/09/03 05:16:01 christos Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.124 2006/09/24 03:53:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.123 2006/09/03 05:16:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.124 2006/09/24 03:53:08 jmcneill Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -441,7 +441,7 @@ sbdsp_attach(struct sbdsp_softc *sc)
 		}
 	}
 
-	powerhook_establish (sbdsp_powerhook, sc);
+	powerhook_establish(sc->sc_dev.dv_xname, sbdsp_powerhook, sc);
 }
 
 static void

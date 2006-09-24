@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.12 2006/09/13 00:55:57 christos Exp $ */
+/* $NetBSD: pms.c,v 1.13 2006/09/24 03:54:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -28,7 +28,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.12 2006/09/13 00:55:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.13 2006/09/24 03:54:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +228,7 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 	kthread_create(pms_spawn_reset_thread, sc);
 
 #ifndef PMS_DISABLE_POWERHOOK
-	sc->sc_powerhook = powerhook_establish(pms_power, sc);
+	sc->sc_powerhook = powerhook_establish(self->dv_xname, pms_power, sc);
 	sc->sc_suspended = 0;
 #endif /* !PMS_DISABLE_POWERHOOK */
 }
