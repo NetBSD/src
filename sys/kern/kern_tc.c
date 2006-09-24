@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.12 2006/09/10 08:09:46 tsutsui Exp $ */
+/* $NetBSD: kern_tc.c,v 1.13 2006/09/24 06:39:28 kardel Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.12 2006/09/10 08:09:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.13 2006/09/24 06:39:28 kardel Exp $");
 
 #include "opt_ntp.h"
 
@@ -518,9 +518,10 @@ tc_windup(void)
 	struct timehands *th, *tho;
 	u_int64_t scale;
 	u_int delta, ncount, ogen;
-	int i;
+	int i, s_update;
 	time_t t;
 
+	s_update = 0;
 	/*
 	 * Make the next timehands a copy of the current one, but do not
 	 * overwrite the generation or next pointer.  While we update
@@ -576,6 +577,7 @@ tc_windup(void)
 	for (; i > 0; i--) {
 		t = bt.sec;
 		ntp_update_second(&th->th_adjustment, &bt.sec);
+		s_update = 1;
 		if (bt.sec != t)
 			timebasebin.sec += bt.sec - t;
 	}
@@ -589,6 +591,7 @@ tc_windup(void)
 	if (th->th_counter != timecounter) {
 		th->th_counter = timecounter;
 		th->th_offset_count = ncount;
+		s_update = 1;
 
 		printf("timecounter: selected timecounter \"%s\" frequency %ju Hz quality %d\n",
 		    timecounter->tc_name, (uintmax_t)timecounter->tc_frequency,
@@ -618,11 +621,12 @@ tc_windup(void)
 	 * to the goddess of code clarity.
 	 *
 	 */
-	scale = (u_int64_t)1 << 63;
-	scale += (th->th_adjustment / 1024) * 2199;
-	scale /= th->th_counter->tc_frequency;
-	th->th_scale = scale * 2;
-
+	if (s_update) {
+		scale = (u_int64_t)1 << 63;
+		scale += (th->th_adjustment / 1024) * 2199;
+		scale /= th->th_counter->tc_frequency;
+		th->th_scale = scale * 2;
+	}
 	/*
 	 * Now that the struct timehands is again consistent, set the new
 	 * generation number, making sure to not make it zero.
