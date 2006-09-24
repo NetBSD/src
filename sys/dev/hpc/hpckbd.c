@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.17 2006/03/29 06:37:35 thorpej Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.18 2006/09/24 18:34:41 peter Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.17 2006/03/29 06:37:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.18 2006/09/24 18:34:41 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ int	hpckbd_putevent(struct hpckbd_core *, u_int, int);
 void	hpckbd_keymap_lookup(struct hpckbd_core*);
 void	hpckbd_keymap_setup(struct hpckbd_core *, const keysym_t *, int);
 int	__hpckbd_input(void *, int, int);
-void	__hpckbd_input_hook(void*);
+void	__hpckbd_input_hook(void *);
 
 CFATTACH_DECL(hpckbd, sizeof(struct hpckbd_softc),
     hpckbd_match, hpckbd_attach, NULL, NULL);
@@ -367,9 +367,8 @@ __hpckbd_input(void *arg, int flag, int scancode)
 			return (0);
 
 		if (scancode == hc->hc_special[KEY_SPECIAL_OFF]) {
-#ifdef DEBUG
-			printf("off button\n"); // XXX notyet -uch
-#endif
+			config_hook_call(CONFIG_HOOK_BUTTONEVENT,
+			    CONFIG_HOOK_BUTTONEVENT_POWER, NULL);
 		} else if (scancode == hc->hc_special[KEY_SPECIAL_LIGHT]) {
 			static int onoff; /* XXX -uch */
 			config_hook_call(CONFIG_HOOK_BUTTONEVENT,
