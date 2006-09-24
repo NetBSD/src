@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.6.2.9 2006/08/29 21:30:24 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.6.2.10 2006/09/24 14:14:11 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.6.2.9 2006/08/29 21:30:24 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.6.2.10 2006/09/24 14:14:11 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -651,7 +651,7 @@ wd33c93_sched(struct wd33c93_softc *dev)
 			if (lun < SBIC_NLUN)
 				ti->lun[lun] = li;
 		}
-		li->last_used = time.tv_sec;
+		li->last_used = time_second;
 
 		/*
 		 * We've found a potential command, but is the target/lun busy?
@@ -2279,7 +2279,7 @@ wd33c93_watchdog(void *arg)
 	struct wd33c93_linfo *li;
 	int t, s, l;
 	/* scrub LUN's that have not been used in the last 10min. */
-	time_t old = time.tv_sec - (10 * 60);
+	time_t old = time_second - (10 * 60);
 
 	for (t = 0; t < SBIC_NTARG; t++) {
 		ti = &dev->sc_tinfo[t];
