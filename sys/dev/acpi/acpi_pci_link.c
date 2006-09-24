@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.6 2006/09/24 03:53:08 jmcneill Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.7 2006/09/24 06:03:20 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.6 2006/09/24 03:53:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.7 2006/09/24 06:03:20 dogcow Exp $");
 
 #include "opt_acpi.h"
 #include <sys/param.h>
@@ -1059,6 +1059,7 @@ static void
 acpi_pci_link_init(struct acpi_pci_link_softc *sc)
 {
 	ACPI_BUFFER buf;
+	char acpipcilinkname[] = "acpi_pci_link";
 
 	/*
 	 * If the SCI is an ISA IRQ, add it to the bitmask of known good
@@ -1072,7 +1073,7 @@ acpi_pci_link_init(struct acpi_pci_link_softc *sc)
 	if (AcpiGbl_FADT->SciInt < NUM_ISA_INTERRUPTS)
 		pci_link_bios_isa_irqs |= (1 << AcpiGbl_FADT->SciInt);
 
-        sc->pl_powerhook = powerhook_establish("acpi_pci_link",
+        sc->pl_powerhook = powerhook_establish(acpipcilinkname,
 	    acpi_pci_link_resume, sc);
         if (sc->pl_powerhook == NULL)
                 aprint_normal("can't establish powerhook\n");
