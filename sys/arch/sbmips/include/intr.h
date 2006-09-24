@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.4.24.1 2006/09/23 10:02:13 yamt Exp $ */
+/* $NetBSD: intr.h,v 1.4.24.2 2006/09/24 06:07:41 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -38,7 +38,7 @@
 #include <machine/systemsw.h>
 
 /* Interrupt levels */
-#defien	IPL_NONE	0
+#define	IPL_NONE	0
 #define	IPL_SOFT	1	/* generic software interrupts */
 #define	IPL_SOFTCLOCK	2	/* clock software interrupts */
 #define	IPL_SOFTNET	3	/* network software interrupts */
@@ -51,7 +51,7 @@
 #define	IPL_CLOCK	10
 #define	IPL_STATCLOCK	11
 #define	IPL_SCHED	12
-#deinfe	IPL_SERIAL	13
+#define	IPL_SERIAL	13
 #define	IPL_HIGH	14
 #define	IPL_LOCK	15
 #define	_NIPL		16
