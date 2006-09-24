@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.c,v 1.15 2005/12/24 23:24:02 perry Exp $	*/
+/*	$NetBSD: cache_sh4.c,v 1.16 2006/09/24 00:43:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.15 2005/12/24 23:24:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.16 2006/09/24 00:43:44 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <sh3/cache.h>
 #include <sh3/cache_sh4.h>
+#include <sh3/vmparam.h>
 
 #define	round_line(x)		(((x) + 31) & ~31)
 #define	trunc_line(x)		((x) & ~31)
@@ -134,6 +135,8 @@ sh4_cache_config(void)
 	sh_cache_enable_dcache = (r & SH4_CCR_OCE);
 	sh_cache_ways = ways;
 	sh_cache_line_size = SH4_CACHE_LINESZ;
+	sh_cache_alias_mask = (dcache_size / ways - 1) & ~PAGE_MASK;
+	sh_cache_prefer_mask = (dcache_size / ways - 1);
 	sh_cache_write_through_p0_u0_p3 = (r & SH4_CCR_WT);
 	sh_cache_write_through_p1 = !(r & SH4_CCR_CB);
 	sh_cache_write_through = sh_cache_write_through_p0_u0_p3 &&
