@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.7 2006/09/24 10:16:21 plunky Exp $	*/
+/*	$NetBSD: btsco.c,v 1.8 2006/09/24 10:19:55 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.7 2006/09/24 10:16:21 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.8 2006/09/24 10:19:55 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -197,6 +197,19 @@ static const struct audio_device btsco_device = {
 	"Bluetooth Audio",
 	"",
 	"btsco"
+};
+
+/* Voice_Setting == 0x0060: 8000Hz, mono, 16-bit, slinear_le */
+static const struct audio_format btsco_format = {
+	NULL,				/* driver_data */
+	(AUMODE_PLAY | AUMODE_RECORD),	/* mode */
+	AUDIO_ENCODING_SLINEAR_LE,	/* encoding */
+	16,				/* validbits */
+	16,				/* precision */
+	1,				/* channels */
+	AUFMT_MONAURAL,			/* channel_mask */
+	1,				/* frequency_type */
+	{ 8000 }			/* frequency */
 };
 
 /* bluetooth(9) glue for SCO */
@@ -712,50 +725,33 @@ btsco_set_params(void *hdl, int setmode, int usemode,
 		stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 /*	struct btsco_softc *sc = hdl;	*/
-	audio_params_t hw;
-	int err = 0;
+	const struct audio_format *f;
+	int rv;
 
 	DPRINTF("setmode 0x%x usemode 0x%x\n", setmode, usemode);
 	DPRINTF("rate %d, precision %d, channels %d encoding %d\n",
 		play->sample_rate, play->precision, play->channels, play->encoding);
 
-	if ((play->precision != 16 && play->precision != 8)
-	    || play->sample_rate < 7500
-	    || play->sample_rate > 8500
-	    || play->channels != 1)
-		return EINVAL;
+	/*
+	 * If we had a list of formats, we could check the HCI_Voice_Setting
+	 * and select the appropriate one to use. Currently only one is
+	 * supported: 0x0060 == 8000Hz, mono, 16-bit, slinear_le
+	 */
+	f = &btsco_format;
 
-	play->sample_rate = 8000;
-	hw = *play;
-
-	switch (play->encoding) {
-	case AUDIO_ENCODING_ULAW:
-		hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-		pfil->append(pfil, mulaw_to_linear16, &hw);
-		break;
-
-	case AUDIO_ENCODING_ALAW:
-		hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-		pfil->append(pfil, alaw_to_linear16, &hw);
-		break;
-
-	case AUDIO_ENCODING_SLINEAR_LE:
-		break;
-
-	case AUDIO_ENCODING_SLINEAR_BE:
-		if (play->precision == 16) {
-			hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-			pfil->append(pfil, swap_bytes, &hw);
-		}
-		break;
-
-	case AUDIO_ENCODING_ULINEAR_LE:
-	case AUDIO_ENCODING_ULINEAR_BE:
-	default:
-		err = EINVAL;
+	if (setmode & AUMODE_PLAY) {
+		rv = auconv_set_converter(f, 1, AUMODE_PLAY, play, TRUE, pfil);
+		if (rv < 0)
+			return EINVAL;
 	}
 
-	return err;
+	if (setmode & AUMODE_RECORD) {
+		rv = auconv_set_converter(f, 1, AUMODE_RECORD, rec, TRUE, rfil);
+		if (rv < 0)
+			return EINVAL;
+	}
+
+	return 0;
 }
 
 /*
