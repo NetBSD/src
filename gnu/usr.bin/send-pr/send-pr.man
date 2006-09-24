@@ -339,6 +339,9 @@ installation information.  The Emacs LISP template file is
 .B send-pr-el.in
 and is installed as
 .BR send-pr.el .
+.SH WEB INTERFACE
+An interface to sending PR's is available on the NetBSD website at
+http://www.NetBSD.org/Gnats/.
 .SH INSTALLATION AND CONFIGURATION
 See 
 .B send-pr.info
