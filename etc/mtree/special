@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.102 2006/09/23 09:42:31 elad Exp $
+#	$NetBSD: special,v 1.103 2006/09/24 23:10:47 snj Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -169,6 +169,7 @@
 ./etc/rc.d/btdevctl		type=file mode=0555
 ./etc/rc.d/bthcid		type=file mode=0555
 ./etc/rc.d/ccd			type=file mode=0555
+./etc/rc.d/cgd			type=file mode=0555
 ./etc/rc.d/cleartmp		type=file mode=0555
 ./etc/rc.d/cron			type=file mode=0555
 ./etc/rc.d/dhclient		type=file mode=0555
@@ -178,12 +179,17 @@
 ./etc/rc.d/downinterfaces	type=file mode=0555
 ./etc/rc.d/fixsb		type=file mode=0555
 ./etc/rc.d/fsck			type=file mode=0555
+./etc/rc.d/ftpd			type=file mode=0555
+./etc/rc.d/hostapd		type=file mode=0555
 ./etc/rc.d/identd		type=file mode=0555
+./etc/rc.d/ifwatchd		type=file mode=0555
 ./etc/rc.d/inetd		type=file mode=0555
 ./etc/rc.d/ipfilter		type=file mode=0555
+./etc/rc.d/ipfs			type=file mode=0555
 ./etc/rc.d/ipmon		type=file mode=0555
 ./etc/rc.d/ipnat		type=file mode=0555
 ./etc/rc.d/ipsec		type=file mode=0555
+./etc/rc.d/irdaattach		type=file mode=0555
 ./etc/rc.d/iscsi_target		type=file mode=0555
 ./etc/rc.d/isdnd		type=file mode=0555
 ./etc/rc.d/kdc			type=file mode=0555
@@ -200,6 +206,7 @@
 ./etc/rc.d/mountcritlocal	type=file mode=0555
 ./etc/rc.d/mountcritremote	type=file mode=0555
 ./etc/rc.d/mountd		type=file mode=0555
+./etc/rc.d/moused		type=file mode=0555
 ./etc/rc.d/mrouted		type=file mode=0555
 ./etc/rc.d/named		type=file mode=0555
 ./etc/rc.d/ndbootd		type=file mode=0555
@@ -228,12 +235,14 @@
 ./etc/rc.d/routed		type=file mode=0555
 ./etc/rc.d/rpcbind		type=file mode=0555
 ./etc/rc.d/rtadvd		type=file mode=0555
+./etc/rc.d/rtclocaltime		type=file mode=0555
 ./etc/rc.d/rtsold		type=file mode=0555
 ./etc/rc.d/rwho			type=file mode=0555
 ./etc/rc.d/savecore		type=file mode=0555
 ./etc/rc.d/screenblank		type=file mode=0555
 ./etc/rc.d/sdpd			type=file mode=0555
 ./etc/rc.d/securelevel		type=file mode=0555
+./etc/rc.d/staticroute		type=file mode=0555
 ./etc/rc.d/sshd			type=file mode=0555
 ./etc/rc.d/swap1		type=file mode=0555
 ./etc/rc.d/swap2		type=file mode=0555
@@ -241,6 +250,7 @@
 ./etc/rc.d/sysdb		type=file mode=0555
 ./etc/rc.d/syslogd		type=file mode=0555
 ./etc/rc.d/timed		type=file mode=0555
+./etc/rc.d/tpctl		type=file mode=0555
 ./etc/rc.d/ttys			type=file mode=0555
 ./etc/rc.d/veriexec		type=file mode=0555
 ./etc/rc.d/virecover		type=file mode=0555
