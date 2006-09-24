@@ -1,4 +1,4 @@
-.\" $NetBSD: btsco.4,v 1.5 2006/09/10 15:45:56 plunky Exp $
+.\" $NetBSD: btsco.4,v 1.6 2006/09/24 10:22:17 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -43,8 +43,7 @@ The
 .Nm
 driver provides support for Bluetooth SCO Audio devices through the
 .Xr audio 4
-driver, and only supports playing and recording of 8kHz, 16-bit,
-1 channel, signed linear samples.
+driver.
 .Pp
 The
 .Nm
@@ -131,3 +130,7 @@ was written for
 by
 .An Iain Hibbert
 under the sponsorship of Itronix, Inc.
+.Sh BUGS
+.Nm
+takes no notice of the HCI Voice Setting in the Bluetooth controller, and this
+must be 0x0060 (the default) as alternate values are currently unsupported.
