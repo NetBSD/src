@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.42 2006/08/29 23:53:06 christos Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.43 2006/09/24 03:53:09 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.42 2006/08/29 23:53:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.43 2006/09/24 03:53:09 jmcneill Exp $");
 
 #include "midi.h"
 
@@ -362,7 +362,8 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	sc->sc_suspend = PWR_RESUME;
-	sc->sc_powerhook = powerhook_establish(cs4280_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    cs4280_power, sc);
 }
 
 /* Interrupt handling function */

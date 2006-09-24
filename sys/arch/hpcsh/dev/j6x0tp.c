@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.11 2006/05/23 01:34:49 uwe Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.12 2006/09/24 03:53:07 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.11 2006/05/23 01:34:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.12 2006/09/24 03:53:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -622,6 +622,11 @@ j6x0tp_get_raw_xy(int *rawxp, int *rawyp)
 	delay(10);
 
 	*rawyp = adc_sample_channel(ADC_CHANNEL_TP_Y);
+	printf("[1] rawxp=0x%x\n", *rawxp);
+	*rawyp = adc_sample_channel(ADC_CHANNEL_TP_Y);
+	printf("[1] rawxp=0x%x\n", *rawxp);
+	*rawyp = adc_sample_channel(ADC_CHANNEL_TP_Y);
+	printf("[1] rawxp=0x%x\n", *rawxp);
 
 	/* X axis */
 	scpdr = _reg_read_1(SH7709_SCPDR);

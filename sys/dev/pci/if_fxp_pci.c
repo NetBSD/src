@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.47 2006/07/30 21:09:00 oster Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.48 2006/09/24 03:53:09 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.47 2006/07/30 21:09:00 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.48 2006/09/24 03:53:09 jmcneill Exp $");
 
 #include "rnd.h"
 
@@ -505,7 +505,8 @@ fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 		fxp_disable(sc);
 
 	/* Add a suspend hook to restore PCI config state */
-	psc->psc_powerhook = powerhook_establish(fxp_pci_powerhook, psc);
+	psc->psc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    fxp_pci_powerhook, psc);
 	if (psc->psc_powerhook == NULL)
 		aprint_error(
 		    "%s: WARNING: unable to establish pci power hook\n",

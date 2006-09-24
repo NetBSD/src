@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.15 2006/06/19 10:08:16 jmcneill Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.16 2006/09/24 03:53:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.15 2006/06/19 10:08:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.16 2006/09/24 03:53:08 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -156,7 +156,8 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 	speedstep_configure(sc, pa);
 
 	/* Install powerhook */
-	sc->sc_powerhook = powerhook_establish(lpcib_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    lpcib_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: can't establish powerhook\n",
 		    sc->sc_dev.dv_xname);

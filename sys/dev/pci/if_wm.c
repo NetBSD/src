@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.124 2006/07/05 23:51:50 wrstuden Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.125 2006/09/24 03:53:09 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.124 2006/07/05 23:51:50 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.125 2006/09/24 03:53:09 jmcneill Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1434,7 +1434,8 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
 
-	sc->sc_powerhook = powerhook_establish(wm_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    wm_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: can't establish powerhook\n",
 		    sc->sc_dev.dv_xname);

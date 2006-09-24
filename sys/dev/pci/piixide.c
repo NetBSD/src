@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.29 2006/09/03 18:30:35 xtraeme Exp $	*/
+/*	$NetBSD: piixide.c,v 1.30 2006/09/24 03:53:09 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.29 2006/09/03 18:30:35 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.30 2006/09/24 03:53:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,8 @@ piixide_attach(struct device *parent, struct device *self, void *aux)
 	    pciide_lookup_product(pa->pa_id, pciide_intel_products));
 
 	/* Setup our powerhook */
-	sc->sc_powerhook = powerhook_establish(piixide_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, piixide_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish PCI power hook\n",
 		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);

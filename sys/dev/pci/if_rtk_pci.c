@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.25 2006/09/01 20:28:14 uwe Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.26 2006/09/24 03:53:09 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.25 2006/09/01 20:28:14 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.26 2006/09/24 03:53:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,7 +248,8 @@ rtk_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_flags |= RTK_ENABLED;
 
-	psc->sc_powerhook = powerhook_establish(rtk_pci_powerhook, psc);
+	psc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    rtk_pci_powerhook, psc);
 	if (psc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish pci power hook\n",
 			sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.69 2006/07/28 08:02:39 scottr Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.70 2006/09/24 03:54:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.69 2006/07/28 08:02:39 scottr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.70 2006/09/24 03:54:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,7 +378,8 @@ wi_pcmcia_attach(parent, self, aux)
 	}
 
 	psc->sc_sdhook    = shutdownhook_establish(wi_pcmcia_shutdown, psc);
-	psc->sc_powerhook = powerhook_establish(wi_pcmcia_powerhook, psc);
+	psc->sc_powerhook = powerhook_establish(self->dv_xname,
+	    wi_pcmcia_powerhook, psc);
 
 	wi_pcmcia_disable(sc);
 	psc->sc_state = WI_PCMCIA_ATTACHED;

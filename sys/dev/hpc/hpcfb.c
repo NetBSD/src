@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.36 2006/04/12 19:38:23 jmmv Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.37 2006/09/24 03:53:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,13 +43,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.36 2006/04/12 19:38:23 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.37 2006/09/24 03:53:08 jmcneill Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.36 2006/04/12 19:38:23 jmmv Exp $";
+    "$NetBSD: hpcfb.c,v 1.37 2006/09/24 03:53:08 jmcneill Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,7 +320,8 @@ hpcfbattach(struct device *parent, struct device *self, void *aux)
 	callout_init(&sc->sc_switch_callout);
 
 	/* Add a power hook to power management */
-	sc->sc_powerhook = powerhook_establish(hpcfb_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    hpcfb_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);

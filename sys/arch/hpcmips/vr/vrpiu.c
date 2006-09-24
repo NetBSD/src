@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.36 2006/05/26 12:02:26 blymn Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.37 2006/09/24 03:53:07 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.36 2006/05/26 12:02:26 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.37 2006/09/24 03:53:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,7 +330,11 @@ vrpiu_init(struct vrpiu_softc *sc, void *aux)
 	/*
 	 * power management events
 	 */
-	sc->sc_power_hook = powerhook_establish(vrpiu_power, sc);
+	sc->sc_power_hook = powerhook_establish(sc->sc_dev.dv_xname,
+	    vrpiu_power, sc);
+	if (sc->sc_power_hook == NULL)
+		aprint_error("%s: WARNING: couldn't establish powerhook\n",
+		    sc->sc_dev.dv_xname);
 
 	/*
 	 * init A/D port polling.

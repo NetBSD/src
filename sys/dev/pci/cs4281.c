@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.30 2006/08/29 23:54:10 christos Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.31 2006/09/24 03:53:09 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.30 2006/08/29 23:54:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.31 2006/09/24 03:53:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,7 +289,8 @@ cs4281_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	sc->sc_suspend = PWR_RESUME;
-	sc->sc_powerhook = powerhook_establish(cs4281_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    cs4281_power, sc);
 }
 
 static int

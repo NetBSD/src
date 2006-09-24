@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.12 2006/08/27 23:53:10 christos Exp $	*/
+/*	$NetBSD: auacer.c,v 1.13 2006/09/24 03:53:09 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.12 2006/08/27 23:53:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.13 2006/09/24 03:53:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,7 +351,8 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Watch for power change */
 	sc->sc_suspend = PWR_RESUME;
-	sc->sc_powerhook = powerhook_establish(auacer_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    auacer_powerhook, sc);
 
 	audio_attach_mi(&auacer_hw_if, sc, &sc->sc_dev);
 

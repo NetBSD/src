@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.146 2006/09/23 15:39:51 jmcneill Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.147 2006/09/24 03:54:00 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.146 2006/09/23 15:39:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.147 2006/09/24 03:54:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -732,7 +732,8 @@ found:
 	if (ne2000_attach(nsc, enaddr))
 		goto fail2;
 
-	psc->sc_powerhook = powerhook_establish(ne2000_power, nsc);
+	psc->sc_powerhook = powerhook_establish(self->dv_xname,
+	    ne2000_power, nsc);
 	if (psc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    self->dv_xname);

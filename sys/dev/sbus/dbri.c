@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.5 2006/05/28 13:15:54 blymn Exp $	*/
+/*	$NetBSD: dbri.c,v 1.6 2006/09/24 03:54:00 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.5 2006/05/28 13:15:54 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.6 2006/09/24 03:54:00 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -269,7 +269,7 @@ dbri_attach_sbus(struct device *parent, struct device *self, void *aux)
 		sc->sc_powerstate = 0;
 		printf("\n");
 		dbri_set_power(sc, 1);
-		powerhook_establish(dbri_powerhook, sc);
+		powerhook_establish(self->dv_xname, dbri_powerhook, sc);
 	} else {
 		/* we can't control power so we're always up */
 		sc->sc_have_powerctl = 0;

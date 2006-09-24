@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.38 2005/12/11 12:22:50 christos Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.39 2006/09/24 03:53:09 jmcneill Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.38 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.39 2006/09/24 03:53:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,7 +383,8 @@ wi_pci_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_reset = wi_pci_reset;
 
 	/* Add a suspend hook to restore PCI config state */
-	psc->sc_powerhook = powerhook_establish(wi_pci_powerhook, psc);
+	psc->sc_powerhook = powerhook_establish(self->dv_xname,
+	    wi_pci_powerhook, psc);
 	if (psc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish pci power hook\n",
 		    self->dv_xname);
