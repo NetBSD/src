@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.831 2006/09/07 21:17:32 riz Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.832 2006/09/24 18:36:40 briggs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.831 2006/09/07 21:16:55 riz Exp
+ *	NetBSD: pcidevs,v 1.832 2006/09/24 18:35:34 briggs Exp
  */
 
 /*
@@ -969,6 +969,12 @@
 #define	PCI_PRODUCT_APPLE_U3_PPB5	0x0049		/* U3 PCI-PCI bridge */
 #define	PCI_PRODUCT_APPLE_U3_AGP	0x004b		/* U3 AGP Interface */
 #define	PCI_PRODUCT_APPLE_K2_GMAC	0x004c		/* GMAC Ethernet */
+#define	PCI_PRODUCT_APPLE_INTREPID2_AGP	0x0066		/* Intrepid 2 AGP */
+#define	PCI_PRODUCT_APPLE_INTREPID2_PCI1	0x0067		/* Intrepid 2 PCI */
+#define	PCI_PRODUCT_APPLE_INTREPID2_PCI2	0x0068		/* Intrepid 2 PCI */
+#define	PCI_PRODUCT_APPLE_INTREPID2_ATA	0x0069		/* Intrepid 2 ATA */
+#define	PCI_PRODUCT_APPLE_INTREPID2_FW	0x006a		/* Intrepid 2 FireWire */
+#define	PCI_PRODUCT_APPLE_INTREPID2_GMAC	0x006b		/* Intrepid 2 GMAC */
 
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */
