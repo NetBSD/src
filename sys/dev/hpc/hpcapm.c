@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.8 2006/08/22 01:55:00 uwe Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.9 2006/09/24 19:07:26 peter Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.8 2006/08/22 01:55:00 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.9 2006/09/24 19:07:26 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -177,7 +177,7 @@ hpcapm_hook(void *ctx, int type, long id, void *msg)
 		break;
 	case CONFIG_HOOK_PMEVENT_SUSPENDREQ:
 		if (sc->power_state != APM_SYS_SUSPEND) {
-			DPRINTF(("hpcapm: suspend req\n"));
+			DPRINTF(("hpcapm: suspend request\n"));
 			sc->events |= (1 << APM_USER_SUSPEND_REQ);
 		} else {
 			sc->events |= (1 << APM_NORMAL_RESUME);
@@ -187,20 +187,20 @@ hpcapm_hook(void *ctx, int type, long id, void *msg)
 		switch (message) {
 		case CONFIG_HOOK_BATT_CRITICAL:
 			DPRINTF(("hpcapm: battery state critical\n"));
-			charge = sc->battery_state&APM_BATT_FLAG_CHARGING;
+			charge = sc->battery_state & APM_BATT_FLAG_CHARGING;
 			sc->battery_state = APM_BATT_FLAG_CRITICAL;
 			sc->battery_state |= charge;
 			sc->battery_life = 0;
 			break;
 		case CONFIG_HOOK_BATT_LOW:
 			DPRINTF(("hpcapm: battery state low\n"));
-			charge = sc->battery_state&APM_BATT_FLAG_CHARGING;
+			charge = sc->battery_state & APM_BATT_FLAG_CHARGING;
 			sc->battery_state = APM_BATT_FLAG_LOW;
 			sc->battery_state |= charge;
 			break;
 		case CONFIG_HOOK_BATT_HIGH:
 			DPRINTF(("hpcapm: battery state high\n"));
-			charge = sc->battery_state&APM_BATT_FLAG_CHARGING;
+			charge = sc->battery_state & APM_BATT_FLAG_CHARGING;
 			sc->battery_state = APM_BATT_FLAG_HIGH;
 			sc->battery_state |= charge;
 			break;
@@ -259,7 +259,7 @@ hpcapm_hook(void *ctx, int type, long id, void *msg)
 	case CONFIG_HOOK_PMEVENT_AC:
 		switch (message) {
 		case CONFIG_HOOK_AC_OFF:
-			DPRINTF(("hpcapm: ac not connect\n"));
+			DPRINTF(("hpcapm: ac not connected\n"));
 			sc->battery_state &= ~APM_BATT_FLAG_CHARGING;
 			sc->ac_state = APM_AC_OFF;
 			break;
@@ -269,7 +269,7 @@ hpcapm_hook(void *ctx, int type, long id, void *msg)
 			sc->ac_state = APM_AC_ON;
 			break;
 		case CONFIG_HOOK_AC_ON_NOCHARGE:
-			DPRINTF(("hpcapm: ac connect\n"));
+			DPRINTF(("hpcapm: ac connected\n"));
 			sc->battery_state &= ~APM_BATT_FLAG_CHARGING;
 			sc->ac_state = APM_AC_ON;
 			break;
