@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.39 2006/08/28 00:04:21 christos Exp $	*/
+/*	$NetBSD: azalia.c,v 1.40 2006/09/24 03:43:34 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.39 2006/08/28 00:04:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.40 2006/09/24 03:43:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -738,8 +738,10 @@ azalia_init_rirb(azalia_t *az)
 		return ENOMEM;
 	}
 
-	//rirbctl = AZ_READ_1(az, RIRBCTL);
-	//AZ_WRITE_1(az, RIRBCTL, rirbctl & ~HDA_RIRBCTL_RINTCTL);
+#if notyet
+	rirbctl = AZ_READ_1(az, RIRBCTL);
+	AZ_WRITE_1(az, RIRBCTL, rirbctl & ~HDA_RIRBCTL_RINTCTL);
+#endif
 
 	/* reset the write pointer */
 	rirbwp = AZ_READ_2(az, RIRBWP);
