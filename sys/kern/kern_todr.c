@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.23 2006/09/20 09:37:28 tsutsui Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.24 2006/09/24 18:24:55 peter Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.23 2006/09/20 09:37:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.24 2006/09/24 18:24:55 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -96,11 +96,11 @@ void
 todr_attach(todr_chip_handle_t todr)
 {
 
-        if (todr_handle) {
-                printf("todr_attach: TOD already configured\n");
+	if (todr_handle) {
+		printf("todr_attach: TOD already configured\n");
 		return;
 	}
-        todr_handle = todr;
+	todr_handle = todr;
 }
 
 static int timeset = 0;
@@ -148,9 +148,8 @@ inittodr(time_t base)
 	    (todr_gettime(todr_handle, &tv) != 0) ||
 	    (tv.tv_sec < (25 * SECYR))) {
 
-		if (todr_handle != NULL) {
+		if (todr_handle != NULL)
 			printf("WARNING: preposterous TOD clock time\n");
-		}
 		else
 			printf("WARNING: no TOD clock present\n");
 		badrtc = 1;
@@ -172,8 +171,7 @@ inittodr(time_t base)
 				printf("WARNING: clock lost %d days\n",
 				    deltat / SECDAY);
 				badrtc = 1;
-			}
-			else {
+			} else {
 				printf("WARNING: clock gained %d days\n",
 				    deltat / SECDAY);
 			}
