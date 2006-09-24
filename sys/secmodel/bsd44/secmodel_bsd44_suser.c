@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.4 2006/09/22 15:37:57 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.5 2006/09/24 12:30:32 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.4 2006/09/22 15:37:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.5 2006/09/24 12:30:32 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -126,14 +126,26 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 {
 	boolean_t isroot;
 	int result;
+	enum kauth_system_req req;
 
 	isroot = (kauth_cred_geteuid(cred) == 0);
 	result = KAUTH_RESULT_DENY;
+	req = (enum kauth_system_req)arg0;
 
 	switch (action) {
 	case KAUTH_SYSTEM_TIME:
-		if (isroot)
-			result = KAUTH_RESULT_ALLOW;
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_TIME_ADJTIME:
+		case KAUTH_REQ_SYSTEM_TIME_NTPADJTIME:
+		case KAUTH_REQ_SYSTEM_TIME_SYSTEM:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
 		break;
 
 	case KAUTH_SYSTEM_SYSCTL:
