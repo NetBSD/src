@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.12 2006/08/23 03:25:31 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.13 2006/09/24 03:47:09 jmcneill Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 
 /*-
@@ -1332,13 +1332,15 @@ void snapper_write_mixers(struct snapper_softc *sc)
 #define  SERIAL_DAV	0x00040000
 #define  SERIAL_SILICON	0x00050000
 
-// rate = fs = LRCLK
-// SCLK = 64*LRCLK (I2S)
-// MCLK = 256fs (typ. -- changeable)
-
-// MCLK = clksrc / mdiv
-// SCLK = MCLK / sdiv
-// rate = SCLK / 64    ( = LRCLK = fs)
+/*
+ * rate = fs = LRCLK
+ * SCLK = 64*LRCLK (I2S)
+ * MCLK = 256fs (typ. -- changeable)
+ *
+ * MCLK = clksrc / mdiv
+ * SCLK = MCLK / sdiv
+ * rate = SCLK / 64    ( = LRCLK = fs)
+ */
 
 int
 snapper_set_rate(struct snapper_softc *sc, u_int rate)
@@ -1374,8 +1376,8 @@ snapper_set_rate(struct snapper_softc *sc, u_int rate)
 	}
 
 	MCLK = rate * mclk_fs;
-	mdiv = clksrc / MCLK;			// 4
-	sdiv = mclk_fs / 64;			// 4
+	mdiv = clksrc / MCLK;			/* 4 */
+	sdiv = mclk_fs / 64;			/* 4 */
 
 	switch (mdiv) {
 	case 1:
