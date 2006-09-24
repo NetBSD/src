@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.43 2006/06/27 10:42:41 peter Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.44 2006/09/24 18:34:41 peter Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ const uint8_t tc5165_mobilon_keymap[] = {
 };
 
 const int tc5165_mobilon_special_keymap[] = {
-	[KEY_SPECIAL_OFF]	= 60,
+	[KEY_SPECIAL_OFF]	= -1,	/* 60 */
 	[KEY_SPECIAL_LIGHT]	= 47
 };
 
@@ -691,7 +691,7 @@ const uint8_t hp620lx_intl_keytrans[] = {
 };
 
 const int hp620lx_special_keymap[] = {
-	[KEY_SPECIAL_OFF]	= 88,
+	[KEY_SPECIAL_OFF]	= -1,	/* 88 */
 	[KEY_SPECIAL_LIGHT]	= 120
 };
 
@@ -721,7 +721,7 @@ const uint8_t persona_hpw50pad_jp_keytrans[] = {
 };
 
 const int persona_hpw50pad_special_keymap[] = {
-	[KEY_SPECIAL_OFF]	=  5,
+	[KEY_SPECIAL_OFF]	= -1,	/* 5 */
 	[KEY_SPECIAL_LIGHT]	= -1
 };
 
@@ -763,7 +763,7 @@ const uint8_t persona_hpw200ec_keytrans[] = {
 };
 
 const int persona_hpw200ec_special_keymap[] = {
-	[KEY_SPECIAL_OFF]	=  5,
+	[KEY_SPECIAL_OFF]	= -1,	/* 5 */
 	[KEY_SPECIAL_LIGHT]	= -1
 };
 
