@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.25 2006/09/23 20:26:25 wiz Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.26 2006/09/24 01:57:03 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996-2002 \
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.25 2006/09/23 20:26:25 wiz Exp $");
+__RCSID("$NetBSD: screenblank.c,v 1.26 2006/09/24 01:57:03 uwe Exp $");
 #endif
 
 #include <sys/types.h>
@@ -201,24 +201,28 @@ main(int argc, char *argv[])
 #endif
 
 	/*
-	 * Handle -b and -u modes.
+	 * Add the default framebuffer device if necessary.
+	 * We _always_ check the console device.
+	 */
+	add_dev(_PATH_CONSOLE, 0);
+	if (!fflag)
+		add_dev(display, 1);
+
+	/*
+	 * If this is an one-off blank/unblank request, handle it now.
+	 * We don't need to open keyboard/mouse device for that.
 	 */
 	if (bflag || uflag) {
 		change_state(bflag ? videooff : videoon);
 		exit(0);
 	}
 
-	/*
-	 * Add the keyboard, mouse, and default framebuffer devices
-	 * as necessary.  We _always_ check the console device.
-	 */
-	add_dev(_PATH_CONSOLE, 0);
+
+	/* Add the keyboard and mouse devices as necessary. */
 	if (!kflag)
 		add_dev(kbd, 0);
 	if (!mflag)
 		add_dev(mouse, 0);
-	if (!fflag)
-		add_dev(display, 1);
 
 	/* Ensure that the framebuffer is on. */
 	state = videoon;
