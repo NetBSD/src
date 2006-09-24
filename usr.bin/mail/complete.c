@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.2 2006/09/19 18:52:04 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.3 2006/09/24 14:01:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.2 2006/09/19 18:52:04 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.3 2006/09/24 14:01:48 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -946,7 +946,8 @@ complete(EditLine *el, int ch)
 /* Most of this was originally taken directly from the readline manpage. */
 
 static struct {
-	EditLine *el;		/* editline(3) status structure */
+	EditLine *el;		/* editline(3) with completion and history */
+	EditLine *elo;		/* editline(3) editline only, no completion */
 	History  *hist;		/* editline(3) history structure */
 	const char *prompt;	/* prompt */
 } rl_global = {
@@ -961,7 +962,7 @@ rl_gets(const char *prompt)
 	int cnt;
 	const char *buf;
 	HistEvent ev;
-	static char line[ 2 * MAXPATHLEN ];
+	static char line[LINE_MAX];
 
 	rl_global.prompt = prompt;
 	buf = el_gets(rl_global.el, &cnt);
@@ -986,21 +987,28 @@ rl_gets(const char *prompt)
 }
 
 
+/*
+ * Edit a line containing string, with no history or completion.
+ */
 char *
 rl_getline(const char *prompt, char *string)
 {
-	static char line[ 2 * MAXPATHLEN ];
+	static char line[LINE_MAX];
 	const char *buf;
 	int cnt;
 
 	rl_global.prompt = prompt;
 
 	if (string)
-		el_push(rl_global.el, string);
+		el_push(rl_global.elo, string);
 
-	buf = el_gets(rl_global.el, &cnt);
-	if (buf == NULL || cnt <= 0)
-		return NULL;
+	buf = el_gets(rl_global.elo, &cnt);
+	if (buf == NULL || cnt <= 0) {
+		if (cnt == 0)
+			fputc('\n', stdout);
+	  	line[0] = '\0';
+		return line;
+	}
 
 	cnt--;
 	cnt = MIN(sizeof(line), cnt);
@@ -1024,27 +1032,31 @@ init_readline(void)
 	const char *el_editor;
 	const char *el_history_size;
 	char *el_completion_keys;
-
+	
 	rl_global.hist = history_init();			/* init the builtin history */
 	el_history_size = value("el_history_size") ? : "0";
 	if (history(rl_global.hist, &ev, H_SETSIZE, atoi(el_history_size)))
 		printf("history: %s\n", ev.str);
-
-	rl_global.el = el_init(getprogname(), stdin, stdout, stderr);
-
+	
+	rl_global.el  = el_init(getprogname(), stdin, stdout, stderr);
+	rl_global.elo = el_init(getprogname(), stdin, stdout, stderr);
+	
 	el_editor = value("el_editor");
-	if (el_editor)
+	if (el_editor) {
 		el_set(rl_global.el, EL_EDITOR, el_editor);
+		el_set(rl_global.elo, EL_EDITOR, el_editor);
+	}
 
 	el_set(rl_global.el, EL_PROMPT, show_prompt);
+	el_set(rl_global.elo, EL_PROMPT, show_prompt);
 	el_set(rl_global.el, EL_HIST, history, rl_global.hist);	/* use history */
 	el_source(rl_global.el, NULL);				/* read ~/.editrc */
 
 	/* add local file completion, bind to TAB */
 	el_set(rl_global.el, EL_ADDFN, "mail-complete",
-	 "Context sensitive argument completion",
-	 complete);
-
+	    "Context sensitive argument completion",
+	    complete);
+	
 	el_completion_keys = value("el_completion_keys");
 	if (el_completion_keys && *el_completion_keys) {
 		struct name *np, *nq;
