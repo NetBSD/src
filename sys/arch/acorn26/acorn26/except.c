@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.13 2006/09/24 20:54:14 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.14 2006/09/24 21:42:06 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.13 2006/09/24 20:54:14 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.14 2006/09/24 21:42:06 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -473,8 +473,8 @@ address_exception_handler(struct trapframe *tf)
 	}
 
 	KSI_INIT_TRAP(&ksi);
-	ksi.ksi_signo = SIGBUS;
-	ksi.ksi_code = BUS_ADRERR;
+	ksi.ksi_signo = SIGSEGV;
+	ksi.ksi_code = SEGV_MAPERR;
 	ksi.ksi_addr = (void *) pc;
 	trapsignal(l, &ksi);
 	userret(l);
