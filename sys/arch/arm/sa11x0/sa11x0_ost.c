@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.19 2006/09/24 15:36:34 peter Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.20 2006/09/24 15:40:14 peter Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.19 2006/09/24 15:36:34 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.20 2006/09/24 15:40:14 peter Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,8 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.19 2006/09/24 15:36:34 peter Exp $"
 #include <machine/intr.h>
 
 #include <arm/cpufunc.h>
-
-#include <arm/arm32/katelib.h>
 
 #include <arm/sa11x0/sa11x0_reg.h> 
 #include <arm/sa11x0/sa11x0_var.h>
@@ -69,23 +67,21 @@ static void	saost_tc_init(void);
 static uint32_t	gettick(void);
 static int	clockintr(void *);
 static int	statintr(void *);
-void		rtcinit(void);
 
 struct saost_softc {
 	struct device		sc_dev;
-	bus_addr_t		sc_baseaddr;
+
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
-	uint32_t	sc_clock_count;
-	uint32_t	sc_statclock_count;
-	uint32_t	sc_statclock_step;
+	uint32_t		sc_clock_count;
+	uint32_t		sc_statclock_count;
+	uint32_t		sc_statclock_step;
 };
 
 static struct saost_softc *saost_sc = NULL;
 
 #define TIMER_FREQUENCY         3686400         /* 3.6864MHz */
-#define TICKS_PER_MICROSECOND   (TIMER_FREQUENCY/1000000)
 
 #ifndef STATHZ
 #define STATHZ	64
@@ -101,16 +97,15 @@ saost_match(struct device *parent, struct cfdata *match, void *aux)
 	return 1;
 }
 
-void
+static void
 saost_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct saost_softc *sc = (struct saost_softc*)self;
+	struct saost_softc *sc = (struct saost_softc *)self;
 	struct sa11x0_attach_args *sa = aux;
 
 	printf("\n");
 
 	sc->sc_iot = sa->sa_iot;
-	sc->sc_baseaddr = sa->sa_addr;
 
 	saost_sc = sc;
 
@@ -119,30 +114,28 @@ saost_attach(struct device *parent, struct device *self, void *aux)
 		panic("%s: Cannot map registers", self->dv_xname);
 
 	/* disable all channel and clear interrupt status */
-	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_IR, 0);
-	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_SR, 0xf);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_IR, 0);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_SR, 0xf);
 
-	printf("%s: SA-11x0 OS Timer\n",  sc->sc_dev.dv_xname);
+	printf("%s: SA-11x0 OS Timer\n", sc->sc_dev.dv_xname);
 }
 
 static int
 clockintr(void *arg)
 {
+	struct saost_softc *sc = saost_sc;
 	struct clockframe *frame = arg;
 	uint32_t oscr, nextmatch, oldmatch;
 	int s;
 
-	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh,
-			SAOST_SR, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_SR, 1);
 
 	/* schedule next clock intr */
-	oldmatch = saost_sc->sc_clock_count;
+	oldmatch = sc->sc_clock_count;
 	nextmatch = oldmatch + TIMER_FREQUENCY / hz;
 
-	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_MR0,
-			  nextmatch);
-	oscr = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh,
-				SAOST_CR);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_MR0, nextmatch);
+	oscr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SAOST_CR);
 
 	if ((nextmatch > oldmatch &&
 	     (oscr > nextmatch || oscr < oldmatch)) ||
@@ -154,15 +147,13 @@ clockintr(void *arg)
 		 */
 
 		s = splhigh();
-		oscr = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh,
-					SAOST_CR);
+		oscr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SAOST_CR);
 		nextmatch = oscr + 10;
-		bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh,
-				  SAOST_MR0, nextmatch);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_MR0, nextmatch);
 		splx(s);
 	}
 
-	saost_sc->sc_clock_count = nextmatch;
+	sc->sc_clock_count = nextmatch;
 	hardclock(frame);
 
 	return 1;
@@ -171,21 +162,19 @@ clockintr(void *arg)
 static int
 statintr(void *arg)
 {
+	struct saost_softc *sc = saost_sc;
 	struct clockframe *frame = arg;
 	uint32_t oscr, nextmatch, oldmatch;
 	int s;
 
-	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh,
-			SAOST_SR, 2);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_SR, 2);
 
 	/* schedule next clock intr */
-	oldmatch = saost_sc->sc_statclock_count;
-	nextmatch = oldmatch + saost_sc->sc_statclock_step;
+	oldmatch = sc->sc_statclock_count;
+	nextmatch = oldmatch + sc->sc_statclock_step;
 
-	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_MR1,
-			  nextmatch);
-	oscr = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh,
-				SAOST_CR);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_MR1, nextmatch);
+	oscr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SAOST_CR);
 
 	if ((nextmatch > oldmatch &&
 	     (oscr > nextmatch || oscr < oldmatch)) ||
@@ -197,59 +186,58 @@ statintr(void *arg)
 		 */
 
 		s = splhigh();
-		oscr = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh,
-					SAOST_CR);
+		oscr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SAOST_CR);
 		nextmatch = oscr + 10;
-		bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh,
-				  SAOST_MR1, nextmatch);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_MR1, nextmatch);
 		splx(s);
 	}
 
-	saost_sc->sc_statclock_count = nextmatch;
+	sc->sc_statclock_count = nextmatch;
 	statclock(frame);
 
 	return 1;
 }
 
-
 void
 setstatclockrate(int schz)
 {
+	struct saost_softc *sc = saost_sc;
 	uint32_t count;
 
-	saost_sc->sc_statclock_step = TIMER_FREQUENCY / schz;
-	count = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_CR);
-	count += saost_sc->sc_statclock_step;
-	saost_sc->sc_statclock_count = count;
-	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh,
-			SAOST_MR1, count);
+	sc->sc_statclock_step = TIMER_FREQUENCY / schz;
+	count = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SAOST_CR);
+	count += sc->sc_statclock_step;
+	sc->sc_statclock_count = count;
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_MR1, count);
 }
 
 void
 cpu_initclocks(void)
 {
+	struct saost_softc *sc = saost_sc;
+
 	stathz = STATHZ;
 	profhz = stathz;
-	saost_sc->sc_statclock_step = TIMER_FREQUENCY / stathz;
+	sc->sc_statclock_step = TIMER_FREQUENCY / stathz;
 
 	printf("clock: hz=%d stathz=%d\n", hz, stathz);
 
 	/* Use the channels 0 and 1 for hardclock and statclock, respectively */
-	saost_sc->sc_clock_count = TIMER_FREQUENCY / hz;
-	saost_sc->sc_statclock_count = TIMER_FREQUENCY / stathz;
+	sc->sc_clock_count = TIMER_FREQUENCY / hz;
+	sc->sc_statclock_count = TIMER_FREQUENCY / stathz;
 
 	sa11x0_intr_establish(0, 26, 1, IPL_CLOCK, clockintr, 0);
 	sa11x0_intr_establish(0, 27, 1, IPL_CLOCK, statintr, 0);
 
-	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_SR, 0xf);
-	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_IR, 3);
-	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_MR0,
-			  saost_sc->sc_clock_count);
-	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_MR1,
-			  saost_sc->sc_statclock_count);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_SR, 0xf);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_IR, 3);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_MR0,
+			  sc->sc_clock_count);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_MR1,
+			  sc->sc_statclock_count);
 
 	/* Zero the counter value */
-	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_CR, 0);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_CR, 0);
 
 #ifdef __HAVE_TIMECOUNTER
 	saost_tc_init();
@@ -281,14 +269,14 @@ saost_tc_init(void)
 static uint32_t
 gettick(void)
 {
-	int counter;
-	u_int savedints;
-	savedints = disable_interrupts(I32_bit);
+	struct saost_softc *sc = saost_sc;
+	uint32_t counter;
+	u_int saved_ints;
 
-	counter = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh,
-			SAOST_CR);
+	saved_ints = disable_interrupts(I32_bit);
+	counter = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SAOST_CR);
+	restore_interrupts(saved_ints);
 
-	restore_interrupts(savedints);
 	return counter;
 }
 
@@ -296,24 +284,20 @@ gettick(void)
 void
 microtime(struct timeval *tvp)
 {
+	struct saost_softc *sc = saost_sc;
 	int s, tm, deltatm;
 	static struct timeval lasttime;
 
-	if (saost_sc == NULL) {
+	if (sc == NULL) {
 		tvp->tv_sec = 0;
 		tvp->tv_usec = 0;
 		return;
 	}
 
 	s = splhigh();
-	tm = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh,
-			SAOST_CR);
+	tm = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SAOST_CR);
 
-	deltatm = saost_sc->sc_clock_count - tm;
-
-#ifdef OST_DEBUG
-	printf("deltatm = %d\n",deltatm);
-#endif
+	deltatm = sc->sc_clock_count - tm;
 
 	*tvp = time;
 	tvp->tv_usec++;		/* XXX */
@@ -346,7 +330,7 @@ delay(u_int usecs)
 	usecs = (TIMER_FREQUENCY / 100) * csec
 	    + (TIMER_FREQUENCY / 100) * usec / 10000;
 
-	if (!saost_sc) {
+	if (saost_sc == NULL) {
 		/* clock isn't initialized yet */
 		for (; usecs > 0; usecs--)
 			for (j = 100; j > 0; j--)
