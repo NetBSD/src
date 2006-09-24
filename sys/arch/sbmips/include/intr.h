@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.4.24.2 2006/09/24 06:07:41 yamt Exp $ */
+/* $NetBSD: intr.h,v 1.4.24.3 2006/09/24 06:14:50 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -46,15 +46,14 @@
 #define	IPL_BIO		5
 #define	IPL_NET		6
 #define	IPL_TTY		7
-#define	IPL_SERIAL	8
-#define	IPL_VM		9
-#define	IPL_CLOCK	10
-#define	IPL_STATCLOCK	11
-#define	IPL_SCHED	12
-#define	IPL_SERIAL	13
-#define	IPL_HIGH	14
-#define	IPL_LOCK	15
-#define	_NIPL		16
+#define	IPL_VM		8
+#define	IPL_CLOCK	9
+#define	IPL_STATCLOCK	10
+#define	IPL_SCHED	11
+#define	IPL_SERIAL	12
+#define	IPL_HIGH	13
+#define	IPL_LOCK	14
+#define	_NIPL		15
 
 #define	SI_SOFT		0
 #define	SI_SOFTCLOCK	1
