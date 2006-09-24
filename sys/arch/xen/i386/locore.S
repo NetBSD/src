@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.17 2006/05/22 13:44:53 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.18 2006/09/24 18:14:44 bouyer Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -182,15 +182,26 @@
 #include <machine/i82489reg.h>
 #endif
 
+#include <machine/xen.h>
+
 /*
  * Xen guest identifier and loader selection
  */
 .section __xen_guest
 #ifdef XEN3
 	.ascii	"GUEST_OS=netbsd,GUEST_VER=3.0,XEN_VER=xen-3.0"
+	.ascii  ",VIRT_BASE=0xc0100000" /* KERNTEXTOFF */
+#ifndef XEN_NO_HYPERCALLPAGE
+#ifdef DOM0OPS
+	.ascii  ",HYPERCALL_PAGE=0x00000101"
 #else
+	.ascii  ",HYPERCALL_PAGE=0x00000001"
+		/* (???+HYPERCALL_PAGE_OFFSET)/PAGE_SIZE) */
+#endif 
+#endif /* XEN_NO_HYPERCALLPAGE */
+#else /* !XEN3 */
 	.ascii	"GUEST_OS=netbsd,GUEST_VER=2.0,XEN_VER=2.0"
-#endif
+#endif /* XEN3 */
 	.ascii	",LOADER=generic"
 #if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
 	.ascii	",BSD_SYMTAB"
@@ -256,8 +267,6 @@ _C_LABEL(biosextmem):	.long	0	# extended memory reported by BIOS
 #else
 _C_LABEL(biosextmem):	.long	REALEXTMEM
 #endif
-
-#include <machine/xen.h>
 
 	.space 512
 tmpstk:
@@ -497,6 +506,14 @@ start:
 #endif /* SAFARI_FIFO_HACK */
 
 	call 	_C_LABEL(main)
+
+#if defined(XEN3) && !defined(XEN_NO_HYPERCALLPAGE)
+/* space for the hypercall call page */
+#define HYPERCALL_PAGE_OFFSET 0x1000
+.org HYPERCALL_PAGE_OFFSET
+ENTRY(hypercall_page)
+.skip 0x1000
+#endif
 
 /*
  * void proc_trampoline(void);
@@ -757,9 +774,14 @@ idle_loop:
 	addl	$4,%esp
 	jmp	idle_start
 4:
+#if defined(XEN3) && !defined(XEN_NO_HYPERCALLPAGE)
+	movl    $SCHEDOP_yield,%ebx
+	call	(hypercall_page + (HYPERVISOR_sched_op * 32))
+#else
 	movl	$HYPERVISOR_sched_op,%eax
 	movl	$SCHEDOP_yield,%ebx
 	TRAP_INSTR
+#endif
 NENTRY(mpidle)
 idle_start:
 	CLI(%eax)

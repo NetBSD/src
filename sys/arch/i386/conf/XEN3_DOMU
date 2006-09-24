@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.3 2006/08/26 20:26:45 christos Exp $
+# $NetBSD: XEN3_DOMU,v 1.4 2006/09/24 18:14:44 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -13,6 +13,7 @@ maxusers	32		# estimated number of users
 #
 options 	XEN
 options 	XEN3
+#options 	XEN_NO_HYPERCALLPAGE # use old hypercall method
 options 	MAXPHYS=32768	#xbd doesn't handle 64k transfers
 
 #options 	DOM0OPS

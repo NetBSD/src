@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.46 2006/08/11 13:22:43 yamt Exp $
+#	$NetBSD: files.xen,v 1.47 2006/09/24 18:14:44 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -294,7 +294,7 @@ file	arch/i386/i386/rbus_machdep.c	cardbus
 include	"dev/pcmcia/files.pcmcia"
 
 # Domain-0 operations
-defflag	opt_xen.h			DOM0OPS
+defflag	opt_xen.h			DOM0OPS XEN_NO_HYPERCALLPAGE
 file	arch/xen/xen/privcmd.c		dom0ops
 file 	arch/xen/i386/xen_shm_machdep.c	dom0ops | xen3
 file	arch/xen/xen/xbdback.c		dom0ops & !xen3
