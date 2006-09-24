@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.86 2006/09/23 22:01:04 manu Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.87 2006/09/24 05:46:14 dogcow Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.86 2006/09/23 22:01:04 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.87 2006/09/24 05:46:14 dogcow Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -136,8 +136,8 @@ dcopyout(l, kaddr, uaddr, len)
 	}
 	return error;
 }
-#else /* KTRACE */
-#define dcopyout(l, kaddr, uaddr, len) copyout(l, kaddr, uaddr, len)
+#else /* !KTRACE */
+#define dcopyout(l, kaddr, uaddr, len) copyout(kaddr, uaddr, len)
 #endif /* KTRACE */
 #ifndef MULTIPROCESSOR
 #define	sysctl_ncpus()	(1)
