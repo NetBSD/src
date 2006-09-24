@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.57 2006/09/24 13:28:50 martin Exp $
+.\"	$NetBSD: installboot.8,v 1.58 2006/09/24 13:39:36 wiz Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -509,7 +509,9 @@ Verbosely install the Berkeley Fast File System primary bootstrap on to disk
 Note: the
 .Dq whole disk
 partition (c on some ports, d on others) is used here, since the a partition
-probably is already opened (mounted as /), so
+probably is already opened (mounted as
+.Pa / ) ,
+so
 .Nm
 would not be able to access it.
 .Pp
