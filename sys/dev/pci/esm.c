@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.37 2006/09/24 03:53:09 jmcneill Exp $      */
+/*      $NetBSD: esm.c,v 1.38 2006/09/24 13:24:32 jmcneill Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.37 2006/09/24 03:53:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.38 2006/09/24 13:24:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1759,11 +1759,17 @@ esm_resume(struct esm_softc *ess)
 {
 	int x;
 	int error;
+	uint16_t pcmbar;
 
 	if ((error = pci_set_powerstate(ess->pc, ess->tag, PCI_PMCSR_STATE_D0)))
 		return error;
 	delay(100000);
 	esm_init(ess);
+
+	/* set DMA base address */
+	for (pcmbar = WAVCACHE_PCMBAR; pcmbar < WAVCACHE_PCMBAR + 4; pcmbar++)
+		wc_wrreg(ess, pcmbar,
+		    DMAADDR(&ess->sc_dma) >> WAVCACHE_BASEADDR_SHIFT);
 
 	ess->codec_if->vtbl->restore_ports(ess->codec_if);
 #if 0
