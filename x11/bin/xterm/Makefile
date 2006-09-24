@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2004/06/09 20:37:41 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2006/09/24 07:59:59 xtraeme Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ SRCS=	button.c charproc.c charsets.c cursor.c data.c doublechr.c \
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/xterm \
 		-I${DESTDIR}${X11INCDIR}/freetype2 \
-		-DSCROLLBAR_RIGHT -DOPT_WIDE_CHARS \
+		-DSCROLLBAR_RIGHT -DOPT_WIDE_CHARS -DOPT_LUIT_PROG \
 		-DXRENDERFONT -DXFREE86_FT2 \
 		-DPROJECTROOT=${X11ROOTDIR}
 
