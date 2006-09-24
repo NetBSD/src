@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.17 2006/09/18 15:18:52 reinoud Exp $ */
+/* $NetBSD: auixp.c,v 1.18 2006/09/24 03:42:41 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.17 2006/09/18 15:18:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.18 2006/09/24 03:42:41 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.17 2006/09/18 15:18:52 reinoud Exp $");
 #include <dev/pci/auixpvar.h>
 
 
-//#define DEBUG_AUIXP
+/* #define DEBUG_AUIXP */
 
 
 /* why isn't this base address register not in the headerfile? */
@@ -1801,8 +1801,10 @@ auixp_powerhook(int why, void *hdl)
 		break;
 	case PWR_RESUME:
 		auixp_resume(sc);
-/* XXX fix me XXX */
-//		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+#if notyet
+		/* XXX fix me XXX */
+		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+#endif
 		break;
 	}
 }
