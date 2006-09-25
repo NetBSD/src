@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.16 2006/09/25 05:08:52 manu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.17 2006/09/25 17:42:08 vanhu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -203,7 +203,11 @@ isakmp_handler(so_isakmp)
 		char		buf[sizeof (isakmp) + 4];
 		u_int32_t	non_esp[2];
 		char		lbuf[sizeof(struct udphdr) + 
+#ifdef __linux
+				     sizeof(struct iphdr) + 
+#else
 				     sizeof(struct ip) + 
+#endif
 				     sizeof(isakmp) + 4];
 	} x;
 	struct sockaddr_storage remote;
@@ -242,6 +246,15 @@ isakmp_handler(so_isakmp)
 	/* Lucent IKE in UDP encapsulation */
 	{
 		struct udphdr *udp;
+#ifdef __linux__
+		struct iphdr *ip;
+
+		udp = (struct udphdr *)&x.lbuf[0];
+		if (ntohs(udp->dest) == 501) {
+			ip = (struct iphdr *)(x.lbuf + sizeof(*udp));
+			extralen += sizeof(*udp) + ip->ihl;
+		}
+#else
 		struct ip *ip;
 
 		udp = (struct udphdr *)&x.lbuf[0];
@@ -249,6 +262,7 @@ isakmp_handler(so_isakmp)
 			ip = (struct ip *)(x.lbuf + sizeof(*udp));
 			extralen += sizeof(*udp) + ip->ip_hl;
 		}
+#endif
 	}	
 
 #ifdef ENABLE_NATT
