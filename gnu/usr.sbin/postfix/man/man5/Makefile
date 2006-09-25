@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.10 2006/07/19 02:04:43 rpaulo Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2006/09/25 00:12:01 riz Exp $
 
 .include <bsd.own.mk>
 
 DIST=	${NETBSDSRCDIR}/gnu/dist/postfix/man/man5
 .PATH:	${DIST}
 
-MAN=	access.5 bounce.5 canonical.5 relocated.5 \
+MAN=	access.5 aliases.5 bounce.5 canonical.5 relocated.5 \
 	transport.5 virtual.5 pcre_table.5 regexp_table.5 \
 	cidr_table.5 header_checks.5 master.5  \
 	nisplus_table.5 generic.5
