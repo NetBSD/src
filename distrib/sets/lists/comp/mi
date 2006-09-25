@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.933 2006/09/24 12:23:03 elad Exp $
+#	$NetBSD: mi,v 1.934 2006/09/25 19:23:42 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2332,6 +2332,7 @@
 ./usr/libdata/debug/usr/bin/crontab.debug	comp-cron-debug		debug
 ./usr/libdata/debug/usr/bin/crunchgen.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/crunchide.debug	comp-c-debug		debug
+./usr/libdata/debug/usr/bin/csplit.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/ctags.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/cut.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/cvs.debug		comp-cvs-debug		cvs,debug
