@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2006/09/24 14:35:22 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.30 2006/09/25 10:36:23 xtraeme Exp $
 
 COMPAT_UTIL_OVERRIDE=	linux
 .include "../Makefile.inc"
@@ -22,7 +22,7 @@ SRCS+=	linux_cdrom.c linux_errno.c linux_exec.c linux_file.c \
 	linux_socket.c linux_termios.c linux_time.c linux_uselib.c
 SRCS+=	linux_machdep.c linux_syscalls.c linux_sysent.c
 SRCS+=	linux_fdio.c linux_hdio.c linux_blkio.c linux_sysctl.c
-SRCS+=	linux_sg.c linux_mtio.c linux_ptrace.c
+SRCS+=	linux_sg.c linux_mtio.c
 
 # XXXX - temporary, not applicable for kernel with COMPAT_43, OSSAUDIO
 #.PATH: $S/compat/common $S/compat/ossaudio
@@ -34,7 +34,7 @@ SRCS+=	linux_sg.c linux_mtio.c linux_ptrace.c
 SRCS+=	linux_break.c linux_llseek.c linux_misc_notalpha.c linux_oldolduname.c \
 	linux_oldselect.c linux_sig_notalpha.c linux_socketcall.c \
 	linux_ipccall.c linux_oldmmap.c linux_olduname.c linux_file64.c
-SRCS+=	linux_syscall.c linux_trap.c
+SRCS+=	linux_syscall.c linux_trap.c linux_ptrace.c
 SRCS+=	linux_sigcode.S
 .endif
 
@@ -51,12 +51,16 @@ SRCS+=	linux_olduname.c linux_syscall.c
 SRCS+=	linux_sigcode.s
 .endif
 
+.if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "mips"
+SRCS+=  linux_ptrace.c
+.endif
+
 .if ${MACHINE_ARCH} == "powerpc"
 CPPFLAGS+=	-Dpowerpc
 SRCS+=	linux_ipccall.c linux_misc_notalpha.c linux_sig_notalpha.c	\
 	linux_socketcall.c linux_llseek.c linux_olduname.c linux_file64.c
 SRCS+=	linux_exec_powerpc.c linux_sp_wrap_powerpc.S
-SRCS+=	linux_sigcode.S linux_trap.c
+SRCS+=	linux_sigcode.S linux_trap.c linux_ptrace.c
 .endif
 
 .include <bsd.kmod.mk>
