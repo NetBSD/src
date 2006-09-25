@@ -1,3 +1,7 @@
+2006-09-25  Yvan Vanhullebus  <vanhu@NetBSD.org>
+	Reported by Yves-Alexis Perez:
+	* src/racoon/isakmp.c: struct ip -> struct iphdr for Linux.
+
 2006-09-15  Emmanuel Dreyfus  <manu@netbsd.org>
 	From Matthew Grooms:
 	* src/racoon/ipsec_doi.c: fix double free
