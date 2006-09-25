@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.152 2006/09/23 07:54:17 elad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.153 2006/09/25 13:47:26 cube Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.152 2006/09/23 07:54:17 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.153 2006/09/25 13:47:26 cube Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -904,7 +904,8 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			/* note last offset is the file byte size */
 			vnd->sc_comp_numoffs = ntohl(ch->num_blocks)+1;
 			free(ch, M_TEMP);
-			if(vnd->sc_comp_blksz % DEV_BSIZE !=0) {
+			if (vnd->sc_comp_blksz == 0 ||
+			    vnd->sc_comp_blksz % DEV_BSIZE !=0) {
 				VOP_UNLOCK(nd.ni_vp, 0);
 				error = EINVAL;
 				goto close_and_exit;
