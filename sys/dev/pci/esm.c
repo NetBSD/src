@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.38 2006/09/24 13:24:32 jmcneill Exp $      */
+/*      $NetBSD: esm.c,v 1.39 2006/09/25 23:20:33 jmcneill Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.38 2006/09/24 13:24:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.39 2006/09/25 23:20:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1733,7 +1733,6 @@ int
 esm_suspend(struct esm_softc *ess)
 {
 	int x;
-	int error;
 
 	x = splaudio();
 	wp_stoptimer(ess);
@@ -1748,8 +1747,6 @@ esm_suspend(struct esm_softc *ess)
 	delay(20);
 	bus_space_write_4(ess->st, ess->sh, PORT_RINGBUS_CTRL, 0);
 	delay(1);
-	if ((error = pci_set_powerstate(ess->pc, ess->tag, PCI_PMCSR_STATE_D3)))
-		return error;
 
 	return 0;
 }
@@ -1758,11 +1755,8 @@ int
 esm_resume(struct esm_softc *ess)
 {
 	int x;
-	int error;
 	uint16_t pcmbar;
 
-	if ((error = pci_set_powerstate(ess->pc, ess->tag, PCI_PMCSR_STATE_D0)))
-		return error;
 	delay(100000);
 	esm_init(ess);
 
