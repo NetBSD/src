@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.15 2006/09/16 04:31:38 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.16 2006/09/25 04:49:40 manu Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -1199,9 +1199,6 @@ found:
 				break;
 		if (!x)
 			goto err;	/* XXX */
-
-		if (n != NULL)
-			racoon_free(n);
 
 		n = racoon_calloc(1, sizeof(struct prop_pair));
 		if (n == NULL) {
