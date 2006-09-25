@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.13.12.3 2006/06/09 19:52:35 peter Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.13.12.4 2006/09/25 03:56:59 peter Exp $	*/
 /*	$KAME: altq_red.c,v 1.20 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.13.12.3 2006/06/09 19:52:35 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.13.12.4 2006/09/25 03:56:59 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.13.12.3 2006/06/09 19:52:35 peter Exp
 #include <sys/sockio.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 #ifdef ALTQ_FLOWVALVE
 #include <sys/queue.h>
 #include <sys/time.h>
@@ -1101,7 +1102,7 @@ red_purgeq(rqp)
 
 #define	FV_STATS
 
-#if (__FreeBSD_version > 300000)
+#if (__FreeBSD_version > 300000) || defined(__HAVE_TIMECOUNTER)
 #define	FV_TIMESTAMP(tp)	getmicrotime(tp)
 #else
 #define	FV_TIMESTAMP(tp)	{ (*(tp)) = time; }
