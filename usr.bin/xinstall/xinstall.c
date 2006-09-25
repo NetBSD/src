@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.97 2006/09/25 13:21:19 daniel Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.98 2006/09/25 16:05:44 daniel Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.97 2006/09/25 13:21:19 daniel Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.98 2006/09/25 16:05:44 daniel Exp $");
 #endif
 #endif /* not lint */
 
@@ -310,6 +310,8 @@ main(int argc, char *argv[])
 	if (fflags && !dounpriv) {
 		if (string_to_flags(&fflags, &fileflags, NULL))
 			errx(1, "%s: invalid flag", fflags);
+		/* restore fflags since string_to_flags() changed it */
+		fflags = flags_to_string(fileflags, "-");
 		iflags |= SETFLAGS;
 	}
 #endif
