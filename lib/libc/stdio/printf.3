@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.42 2006/03/19 10:46:21 wiz Exp $
+.\"	$NetBSD: printf.3,v 1.43 2006/09/25 08:55:33 martin Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 17, 2006
+.Dd September 25, 2006
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -678,7 +678,7 @@ Upon successful completion
 and
 .Fn vfprintf
 return the number of characters printed.
-Otherwise \-1 is returned and
+Otherwise a negative value is returned and
 .Dv errno
 is set to indicate the error.
 .Pp
@@ -691,7 +691,7 @@ return the number of characters written to
 excluding the terminating
 .Dv NUL
 character.
-Otherwise \-1 is returned and
+Otherwise a negative value is returned and
 .Dv errno
 is set to indicate the error.
 .Pp
@@ -705,6 +705,9 @@ to a sufficiently sized
 excluding the terminating
 .Dv NUL
 character.
+Otherwise a negative value is returned and
+.Dv errno
+is set to indicate the error.
 .Pp
 Upon successful completion
 .Fn asprintf
