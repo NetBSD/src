@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.103 2006/09/24 23:10:47 snj Exp $
+#	$NetBSD: special,v 1.104 2006/09/25 21:26:27 snj Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -242,8 +242,8 @@
 ./etc/rc.d/screenblank		type=file mode=0555
 ./etc/rc.d/sdpd			type=file mode=0555
 ./etc/rc.d/securelevel		type=file mode=0555
-./etc/rc.d/staticroute		type=file mode=0555
 ./etc/rc.d/sshd			type=file mode=0555
+./etc/rc.d/staticroute		type=file mode=0555
 ./etc/rc.d/swap1		type=file mode=0555
 ./etc/rc.d/swap2		type=file mode=0555
 ./etc/rc.d/sysctl		type=file mode=0555
