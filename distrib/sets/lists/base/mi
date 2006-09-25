@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.657 2006/09/23 17:37:58 kleink Exp $
+# $NetBSD: mi,v 1.658 2006/09/25 19:23:42 christos Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -431,6 +431,7 @@
 ./usr/bin/cpio					base-util-bin
 ./usr/bin/cpp					base-util-bin		gcccmds
 ./usr/bin/crontab				base-cron-bin
+./usr/bin/csplit				base-util-bin
 ./usr/bin/ctags					base-c-bin
 ./usr/bin/cu					base-util-bin
 ./usr/bin/cut					base-util-bin
