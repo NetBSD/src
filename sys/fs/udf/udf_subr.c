@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.11.2.3 2006/09/08 18:50:37 rpaulo Exp $ */
+/* $NetBSD: udf_subr.c,v 1.11.2.4 2006/09/25 00:00:40 riz Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.11.2.3 2006/09/08 18:50:37 rpaulo Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.11.2.4 2006/09/25 00:00:40 riz Exp $");
 #endif /* not lint */
 
 
@@ -1363,10 +1363,12 @@ udf_read_vds_tables(struct udf_mount *ump, struct udf_args *args)
 		case UDF_VTOP_TYPE_SPARABLE :
 			/* load one of the sparable tables */
 			error = udf_read_sparables(ump, mapping);
+			if (error)
+				return ENOENT;
 			break;
 		case UDF_VTOP_TYPE_META :
 			/* TODO load metafile and metabitmapfile FE/EFEs */
-			break;
+			return ENOENT;
 		default:
 			break;
 		}
