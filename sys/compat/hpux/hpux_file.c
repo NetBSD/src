@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.29 2005/12/11 12:20:02 christos Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.30 2006/09/25 16:16:18 pavel Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.29 2005/12/11 12:20:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.30 2006/09/25 16:16:18 pavel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -771,7 +771,7 @@ hpux_sys_mknod(l, v, retval)
 	/*
 	 * BSD handles FIFOs separately.
 	 */
-	if (SCARG(uap, mode) & S_IFIFO) {
+	if (S_ISFIFO(SCARG(uap, mode))) {
 		SCARG(&bma, path) = SCARG(uap, path);
 		SCARG(&bma, mode) = SCARG(uap, mode);
 		return (sys_mkfifo(l, uap, retval));
