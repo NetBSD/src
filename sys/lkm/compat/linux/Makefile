@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2006/09/25 10:36:23 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.31 2006/09/25 10:55:54 xtraeme Exp $
 
 COMPAT_UTIL_OVERRIDE=	linux
 .include "../Makefile.inc"
@@ -34,7 +34,7 @@ SRCS+=	linux_sg.c linux_mtio.c
 SRCS+=	linux_break.c linux_llseek.c linux_misc_notalpha.c linux_oldolduname.c \
 	linux_oldselect.c linux_sig_notalpha.c linux_socketcall.c \
 	linux_ipccall.c linux_oldmmap.c linux_olduname.c linux_file64.c
-SRCS+=	linux_syscall.c linux_trap.c linux_ptrace.c
+SRCS+=	linux_syscall.c linux_trap.c
 SRCS+=	linux_sigcode.S
 .endif
 
@@ -51,16 +51,12 @@ SRCS+=	linux_olduname.c linux_syscall.c
 SRCS+=	linux_sigcode.s
 .endif
 
-.if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "mips"
-SRCS+=  linux_ptrace.c
-.endif
-
 .if ${MACHINE_ARCH} == "powerpc"
 CPPFLAGS+=	-Dpowerpc
 SRCS+=	linux_ipccall.c linux_misc_notalpha.c linux_sig_notalpha.c	\
 	linux_socketcall.c linux_llseek.c linux_olduname.c linux_file64.c
 SRCS+=	linux_exec_powerpc.c linux_sp_wrap_powerpc.S
-SRCS+=	linux_sigcode.S linux_trap.c linux_ptrace.c
+SRCS+=	linux_sigcode.S linux_trap.c
 .endif
 
 .include <bsd.kmod.mk>
