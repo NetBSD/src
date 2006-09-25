@@ -1,3 +1,7 @@
+2006-09-15  Emmanuel Dreyfus  <manu@netbsd.org>
+	From Matthew Grooms:
+	* src/racoon/ipsec_doi.c: fix double free
+
 2006-09-21  Yvan Vanhullebus  <vanhu@NetBSD.org>
 	Reported by Yves-Alexis Perez:
 	* src/libipsec/pfkey.c: use sysdep_sa_len to make it compile on
