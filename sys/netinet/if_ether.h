@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.32 2005/12/10 23:36:23 elad Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.33 2006/09/25 12:24:47 sketch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -65,7 +65,7 @@
  * Ethernet Address Resolution Protocol.
  *
  * See RFC 826 for protocol description.  Structure below is not
- * used by our kernel!!! Only for userland programs which are externelly
+ * used by our kernel!!! Only for userland programs which are externally
  * maintained and need it.
  */
 
