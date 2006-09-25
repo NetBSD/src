@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.932 2006/09/19 20:10:22 wiz Exp $
+# $NetBSD: mi,v 1.933 2006/09/25 19:23:43 christos Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -96,6 +96,7 @@
 ./usr/share/man/cat1/cpp.0			man-util-catman		gcccmds,.cat
 ./usr/share/man/cat1/crontab.0			man-cron-catman		.cat
 ./usr/share/man/cat1/csh.0			man-util-catman		.cat
+./usr/share/man/cat1/csplit.0			man-util-catman		.cat
 ./usr/share/man/cat1/ctags.0			man-c-catman		.cat
 ./usr/share/man/cat1/cu.0			man-util-catman		.cat
 ./usr/share/man/cat1/cut.0			man-util-catman		.cat
@@ -2470,6 +2471,7 @@
 ./usr/share/man/man1/cpp.1			man-util-man		gcccmds,.man
 ./usr/share/man/man1/crontab.1			man-cron-man		.man
 ./usr/share/man/man1/csh.1			man-util-man		.man
+./usr/share/man/man1/csplit.1			man-util-man		.man
 ./usr/share/man/man1/ctags.1			man-c-man		.man
 ./usr/share/man/man1/cu.1			man-util-man		.man
 ./usr/share/man/man1/cut.1			man-util-man		.man
