@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.709 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.710 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -73,6 +73,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	who(1): Change -u behaviour to also print PID of process on 
 		terminal, and add -d to print more information from
 		utmpx. [hubertf 20060919]
+	init(8): Add system boot, login process, runlevel, system down
+		utmpx records [christos 20060919]
 	cdplay(1): Add digital transfer mode support, not enabled by
 		default. Thanks to Sergey Svishchev for the patch.
 		[xtraeme 20060922]
@@ -83,3 +85,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	kernel: Modify powerhook_establish(9) API to accept a name
 		argument. [jmcneill 20060924]
 	twa(4): 3ware's tw_cli management tools now works [manu 20090924]
+	csplit(1): Added from FreeBSD/OpenBSD [christos 20060925]
