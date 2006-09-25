@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.832 2006/09/24 18:35:34 briggs Exp $
+$NetBSD: pcidevs,v 1.833 2006/09/25 23:58:23 heas Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -601,6 +601,7 @@ vendor LINKSYS2		0x17fe	Linksys
 vendor RALINK		0x1814	Ralink Technologies
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
+vendor DATUM		0x12e2	Datum Inc. Bancomm-Timing Division
 vendor HINT		0x3388	HiNT
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
@@ -1516,6 +1517,9 @@ product CYRIX CX5530_SMI	0x0101	Cx5530 I/O Companion (SMI Status and ACPI Timer)
 product CYRIX CX5530_IDE	0x0102	Cx5530 I/O Companion (IDE Controller)
 product CYRIX CX5530_AUDIO	0x0103	Cx5530 I/O Companion (XpressAUDIO)
 product CYRIX CX5530_VIDEO	0x0104	Cx5530 I/O Companion (Video Controller)
+
+/* Datum Inc. Bancomm-Timing Division products */
+product DATUM BC635PCI_U	0x4013	BC635PCI-U TC & FREQ. Processor
 
 /* Davicom Semiconductor products */
 product DAVICOM DM9102	0x9102	DM9102 10/100 Ethernet
