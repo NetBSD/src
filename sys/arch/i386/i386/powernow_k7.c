@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k7.c,v 1.19 2006/09/24 11:12:40 xtraeme Exp $ */
+/*	$NetBSD: powernow_k7.c,v 1.20 2006/09/25 17:39:33 xtraeme Exp $ */
 /*	$OpenBSD: powernow-k7.c,v 1.24 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K7 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.19 2006/09/24 11:12:40 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.20 2006/09/25 17:39:33 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -110,8 +110,8 @@ static struct pnow_cpu_quirk {
 	uint32_t pcpusig;	/* PST cpu signature */
 } pnow_cpu_quirk[] = {
 	{ 0x6a0, 0x781 },	/* Reported by Eric Schnoebelen */
-	{ 0x6a0, 0x7a0 },	/* Reported by Nino Denhe */
-	{ 0, 0}
+	{ 0x6a0, 0x7a0 },	/* Reported by Nino Dehne */
+	{ 0, 0 }
 };
 
 static struct powernow_cpu_state *k7pnow_current_state;
