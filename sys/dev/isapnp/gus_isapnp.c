@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.27 2006/08/30 02:11:42 christos Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.28 2006/09/25 23:26:19 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.27 2006/08/30 02:11:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.28 2006/09/25 23:26:19 jmcneill Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
@@ -185,6 +185,11 @@ gus_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_playdrq != -1) {
 		sc->sc_play_maxsize = isa_dmamaxsize(sc->sc_ic,
 		    sc->sc_playdrq);
+		if (isa_drq_alloc(sc->sc_ic, sc->sc_playdrq) != 0) {
+			printf("%s: can't reserve drq %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_playdrq);
+			return;
+		}
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_playdrq,
 		    sc->sc_play_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 			printf("%s: can't create map for drq %d\n",
@@ -195,6 +200,11 @@ gus_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_recdrq != -1) {
 		sc->sc_rec_maxsize = isa_dmamaxsize(sc->sc_ic,
 		    sc->sc_recdrq);
+		if (isa_drq_alloc(sc->sc_ic, sc->sc_recdrq) != 0) {
+			printf("%s: can't reserve drq %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_recdrq);
+			return;
+		}
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq,
 		    sc->sc_rec_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 			printf("%s: can't create map for drq %d\n",
