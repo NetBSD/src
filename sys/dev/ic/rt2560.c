@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.4 2006/09/17 23:58:51 jmcneill Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.5 2006/09/25 22:14:01 jmcneill Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.4 2006/09/17 23:58:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.5 2006/09/25 22:14:01 jmcneill Exp $");
 
 #include "bpfilter.h"
 
@@ -149,6 +149,7 @@ static void	rt2560_read_eeprom(struct rt2560_softc *);
 static int	rt2560_bbp_init(struct rt2560_softc *);
 static int	rt2560_init(struct ifnet *);
 static void	rt2560_stop(void *);
+static void	rt2560_powerhook(int, void *);
 
 /*
  * Supported rates for 802.11a/b/g modes (in 500Kbps unit).
@@ -400,6 +401,13 @@ rt2560_attach(void *xsc, int id)
 		goto fail5;
 	}
 
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    rt2560_powerhook, sc);
+	if (sc->sc_powerhook == NULL)
+		aprint_error("%s: can't establish powerhook\n",
+		    sc->sc_dev.dv_xname);
+	sc->sc_suspend = PWR_RESUME;
+
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_init = rt2560_init;
@@ -507,6 +515,9 @@ rt2560_detach(void *xsc)
 
 	callout_stop(&sc->scan_ch);
 	callout_stop(&sc->rssadapt_ch);
+
+	if (sc->sc_powerhook != NULL)
+		powerhook_disestablish(sc->sc_powerhook);
 
 	rt2560_stop(sc);
 
@@ -1534,6 +1545,10 @@ rt2560_intr(void *arg)
 
 	/* don't re-enable interrupts if we're shutting down */
 	if (!(ifp->if_flags & IFF_RUNNING))
+		return 0;
+
+	/* if we're suspended, don't bother */
+	if (sc->sc_suspend != PWR_RESUME)
 		return 0;
 
 	r = RAL_READ(sc, RT2560_CSR7);
@@ -2935,4 +2950,42 @@ rt2560_stop(void *priv)
 	rt2560_reset_tx_ring(sc, &sc->bcnq);
 	rt2560_reset_rx_ring(sc, &sc->rxq);
 
+}
+
+static void
+rt2560_powerhook(int why, void *opaque)
+{
+	struct rt2560_softc *sc;
+	struct ifnet *ifp;
+	int s;
+
+	sc = (struct rt2560_softc *)opaque;
+	ifp = &sc->sc_if;
+
+	s = splnet();
+	switch (why) {
+	case PWR_SUSPEND:
+		sc->sc_suspend = why;
+		rt2560_stop(sc);
+		if (sc->sc_power != NULL)
+			(*sc->sc_power)(sc, why);
+		break;
+	case PWR_RESUME:
+		sc->sc_suspend = why;
+		if (ifp->if_flags & IFF_UP) {
+			if (sc->sc_power != NULL)
+				(*sc->sc_power)(sc, why);
+			rt2560_init(ifp);
+			if (ifp->if_flags & IFF_RUNNING)
+				rt2560_start(ifp);
+		}
+		break;
+	case PWR_STANDBY:
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTRESUME:
+		break;
+	}
+	splx(s);
+
+	return;
 }
