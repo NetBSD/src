@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.27 2005/12/03 01:23:23 riz Exp $
+# $NetBSD: Makefile,v 1.27.2.1 2006/09/25 21:48:18 tron Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -136,20 +136,20 @@ MACHINE_ARCH.x68k=	m68k
 ##### Fetched directories from FTP server #####
 
 .if defined(ALL_PORTS) && !empty(ALL_PORTS)
-RSYNC_INCLUDE+=		--include "/shared/"
+RSYNC_INCLUDE+=		--include "/shared"
 RSYNC_EXCLUDE+=		--exclude "/[a-z]*" \
-			--exclude "/shared/[a-z]*/"
+			--exclude "/shared/[a-z]*"
 .endif
 
 RSYNC_ARCHS=
 .for port in ${ALL_PORTS:O:u}			# {
-RSYNC_INCLUDE+=		--include "/${port}/"
+RSYNC_INCLUDE+=		--include "/${port}"
 .if defined(MACHINE_ARCH.${port})
 RSYNC_ARCHS+=		${MACHINE_ARCH.${port}}
 .endif
 .endfor						# }
 .for arch in ${RSYNC_ARCHS:O:u}
-RSYNC_INCLUDE+=		--include "/shared/${arch}/"
+RSYNC_INCLUDE+=		--include "/shared/${arch}"
 .endfor
 
 ##### Boot info and additional options for various platforms #####
