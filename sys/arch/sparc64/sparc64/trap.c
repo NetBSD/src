@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.136 2006/09/18 08:18:47 martin Exp $ */
+/*	$NetBSD: trap.c,v 1.137 2006/09/25 05:52:34 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.136 2006/09/18 08:18:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137 2006/09/25 05:52:34 mrg Exp $");
 
 #define NEW_FPSTATE
 
@@ -1057,7 +1057,8 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 
 #ifdef DEBUG
 	if (lastdouble) {
-		printf("stacked data fault @ %lx (pc %lx);", addr, pc);
+		printf("cpu%d: stacked data fault @ %lx (pc %lx);",
+		       cpu_number(), addr, pc);
 		lastdouble = 0;
 		if (curproc == NULL)
 			printf("NULL proc\n");
@@ -1118,9 +1119,9 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 			rv = uvm_fault(kernel_map, va, access_type);
 #ifdef DEBUG
 			if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW))
-				printf("data_access_fault: kernel "
+				printf("cpu%d: data_access_fault: kernel "
 					"uvm_fault(%p, %lx, %x) "
-					"sez %x -- %s\n",
+					"sez %x -- %s\n", cpu_number(),
 					kernel_map, va, access_type, rv,
 					rv ? "failure" : "success");
 #endif
@@ -1145,8 +1146,8 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 
 #ifdef DEBUG
 	if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW))
-		printf("data_access_fault: %s uvm_fault(%p, %lx, %x) "
-			"sez %x -- %s\n",
+		printf("cpu%d: data_access_fault: %s uvm_fault(%p, %lx, %x) "
+			"sez %x -- %s\n", cpu_number(),
 			&vm->vm_map == kernel_map ? "kernel!!!" : "user",
 			&vm->vm_map, va, access_type, rv,
 			rv ? "failure" : "success");
@@ -1182,8 +1183,8 @@ kfault:
 				/* Disable traptrace for printf */
 				trap_trace_dis = 1;
 				(void) splhigh();
-				printf("data fault: pc=%lx addr=%lx\n",
-				    pc, addr);
+				printf("cpu%d: data fault: pc=%lx addr=%lx\n",
+				    cpu_number(), pc, addr);
 				DEBUGGER(type, tf);
 				panic("kernel fault");
 				/* NOTREACHED */
@@ -1204,8 +1205,8 @@ kfault:
 		if (trapdebug & (TDB_ADDFLT | TDB_STOPSIG)) {
 			extern int trap_trace_dis;
 			trap_trace_dis = 1;
-			printf("data_access_fault at addr %p: "
-			    "sending SIGSEGV\n", (void *)addr);
+			printf("cpu%d: data_access_fault at addr %p: "
+			    "sending SIGSEGV\n", cpu_number(), (void *)addr);
 			printf("%ld: data_access_fault(%p, %x, %p, %p, "
 			       "%lx, %lx) nsaved=%d\n",
 				(long)(curproc ? curproc->p_pid : -1), tf, type,
