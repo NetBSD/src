@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.4.18.2 2006/08/27 01:15:35 riz Exp $ */
+/* $NetBSD: udf.h,v 1.4.18.3 2006/09/25 02:38:48 riz Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -230,6 +230,7 @@ struct udf_node {
 	struct long_ad		 loc;			/* FID/hash loc.     */
 	struct long_ad		 next_loc;		/* strat 4096 loc    */
 	int			 needs_indirect;	/* has missing indr. */
+	uint64_t		 last_diroffset;	/* speeding up lookup*/
 
 	/* TODO support for allocation extents? */
 
