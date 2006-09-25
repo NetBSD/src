@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.27.2.1 2006/09/25 21:48:18 tron Exp $
+# $NetBSD: Makefile,v 1.27.2.2 2006/09/25 21:51:39 tron Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -58,7 +58,7 @@ ALL_PORTS:=		${ALL_PORTS} ${BASE_PORTS.${image}}
 SUBDIR=
 
 .if !empty(ALL_PORTS:Mmacppc)
-SUBDIR+=	macppc_installboot
+SUBDIR+=	macppc_mkboothfs macppc_installboot
 .endif
 
 .if !empty(SUBDIR)
@@ -77,6 +77,7 @@ PMAX_IBOOT?=	${TOOL_INSTALLBOOT} -m pmax -o sunsum,append
 VAX_IBOOT?=	${TOOL_INSTALLBOOT} -m vax -o sunsum,append
 .if !empty(ALL_PORTS:Mmacppc)
 MACPPC_IBOOTDIR!= cd ${.CURDIR}/macppc_installboot && ${PRINTOBJDIR}
+MACPPC_MKBOOTHFSDIR!= cd ${.CURDIR}/macppc_mkboothfs && ${PRINTOBJDIR}
 .endif
 
 RSYNC_SITE?=	rsync://rsync.NetBSD.org/NetBSD/${RELEASENAME}/
@@ -228,7 +229,7 @@ MKISOFS_ARGS.${image}+= -b ${BOOTFILE.amd64} -c boot.catalog
 .if !empty(ports:Mmacppc)
 MKISOFS_ARGS.${image}+=	-hfs -part -hide-hfs-list ${.CURDIR}/hide-hfs.lst \
 	--macbin -map ${.CURDIR}/hfsmap.lst \
-	-boot-hfs-file ${MACPPC_IBOOTDIR}/macppcboot.raw
+	-boot-hfs-file ${MACPPC_MKBOOTHFSDIR}/boothfs
 .elif defined(USE_APPLE_ISO) || !empty(ports:Mmac68k)
 MKISOFS_ARGS.${image}+=	-apple --macbin -map ${.CURDIR}/hfsmap.lst
 .endif
@@ -358,12 +359,11 @@ ${file:C/^.*://}: .PHONY
 # 1. Size the image produced by mkisofs.
 # 2. Add images added by distrib/common/sunbootcd.sh by rounding to a 320k
 #    boundary and adding each Sun image rounded to a 320k boundary.
-# 3. Add 64k if macppc is included (ofwboot munged to one 64k block).
-# 4. Add bootfile sizes rounded up to 512 bytes for pmax and vax.
-# 5. Round up to a 32k boundary, then add another 32k for TAO padding.
+# 3. Add bootfile sizes rounded up to 512 bytes for pmax and vax.
+# 4. Round up to a 32k boundary, then add another 32k for TAO padding.
 
 .if !empty(BASE_PORTS.${image}:Mmacppc)
-size-${image}: all-macppc_installboot
+size-${image}: all-macppc_mkboothfs all-macppc_installboot
 .endif
 .if !empty(BASE_PORTS.${image}:Msgimips) && defined(EXTFILES.sgimips)
 SGIVOLHDR.size= ( fgrep SGI_BOOT_BLOCK_SIZE_VOLHDR \
@@ -374,6 +374,9 @@ SGIVOLHDR.size= echo 0
 .endif
 
 size-${image}: stage-${image} extfileprep fileprep-${image}
+.if !empty(BASE_PORTS.${image}:Mmacppc)
+	${MACPPC_MKBOOTHFSDIR}/macppc_mkboothfs ${MACPPC_MKBOOTHFSDIR}/boothfs
+.endif
 	@size=$$((`cd ${STAGEDIR}/${image} && ${MKISOFS} ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} -print-size . 2>&1 | tee /dev/stderr | sed '/=/!d;s/^[^=]*=//'` * 2048)) && \
 	if [ "${SUN_BOOT_ARGS.${image}}" != "" ]; then \
 		size=$$(($$(($$size + 327679)) / 327680 * 327680)) && \
@@ -382,9 +385,6 @@ size-${image}: stage-${image} extfileprep fileprep-${image}
 			bfsize=`ls -l $$f | awk '{print $$5}'` && \
 			size=$$(($$size + $$(($$(($$bfsize + 327679)) / 327680 * 327680)))); \
 		done; \
-	fi && \
-	if [ "${BASE_PORTS.${image}:Mmacppc}" != "" ]; then \
-		size=$$(($$size + 65536)); \
 	fi && \
 	if [ "${BASE_PORTS.${image}:Mpmax}" != "" ]; then \
 		size=$$(($$size + $$(($$((`ls -l ${BOOTFILE.pmax} | awk '{print $$5}'` + 511)) / 512 * 512)))); \
@@ -416,9 +416,8 @@ ${IMAGEDIR}/${image}.iso: size-${image}
 	    ${.TARGET} ${SUN_BOOT_ARGS.${image}}
 .endif
 .if !empty(BASE_PORTS.${image}:Mmacppc)
-	@blknum=$$((`ls -l $@ | awk '{print $$5}'` / 512)) && \
-	${MACPPC_IBOOTDIR}/macppc_installboot $@ $$blknum 756
-	dd if=${EXTFILEDIR}/macppc.ofwboot bs=64k count=1 conv=sync >>$@ 2>/dev/null
+	${MACPPC_IBOOTDIR}/macppc_installboot \
+	    $@ ${EXTFILEDIR}/macppc.bootxx /ofwboot
 .endif
 .if !empty(BASE_PORTS.${image}:Mpmax)
 	${PMAX_IBOOT} $@ ${BOOTFILE.pmax}

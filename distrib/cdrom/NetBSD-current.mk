@@ -1,4 +1,4 @@
-# $NetBSD: NetBSD-current.mk,v 1.4 2005/12/08 21:12:18 riz Exp $
+# $NetBSD: NetBSD-current.mk,v 1.4.2.1 2006/09/25 21:51:39 tron Exp $
 #
 # Configuration file for NetBSD-current.
 
@@ -23,8 +23,10 @@ BOOTFILE.amd64=		boot.amd64
 INTFILES.amd64=		boot.amd64:amd64/installation/floppy/boot-big.fs,link
 
 # macppc has external bootblock generation tool
-EXTFILES.macppc=	macppc.ofwboot:macppc/binary/sets/base.tgz,./usr/mdec/ofwboot
+EXTFILES.macppc=	macppc.bootxx:macppc/binary/sets/base.tgz,./usr/mdec/bootxx \
+			macppc.ofwboot:macppc/binary/sets/base.tgz,./usr/mdec/ofwboot
 INTFILES.macppc=	ofwboot.xcf:macppc/installation/ofwboot.xcf,link \
+			ofwboot:macppc/binary/sets/base.tgz,./usr/mdec/ofwboot \
 			netbsd.macppc:macppc/binary/kernel/netbsd-INSTALL.gz,link
 
 # BOOTFILE.pmax is absolute
