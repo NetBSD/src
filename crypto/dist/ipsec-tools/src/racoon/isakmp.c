@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.15 2006/09/19 07:51:37 vanhu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.16 2006/09/25 05:08:52 manu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -166,7 +166,7 @@ static int (*ph2exchange[][2][PHASE2ST_MAX])
 	__P((struct ph2handle *, vchar_t *)) = {
  /* error */
  { {}, {}, },
- /* Quick mode for IKE*/
+ /* Quick mode for IKE */
  {
   { nostate2, nostate2, quick_i1prep, nostate2, quick_i1send,
     quick_i2recv, quick_i2send, quick_i3recv, nostate2, nostate2, },
