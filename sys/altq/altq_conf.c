@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_conf.c,v 1.12.12.2 2006/06/09 19:52:35 peter Exp $	*/
+/*	$NetBSD: altq_conf.c,v 1.12.12.3 2006/09/25 03:56:59 peter Exp $	*/
 /*	$KAME: altq_conf.c,v 1.24 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.12.12.2 2006/06/09 19:52:35 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.12.12.3 2006/09/25 03:56:59 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -169,7 +169,7 @@ dev_type_ioctl(altqioctl);
 
 const struct cdevsw altq_cdevsw = {
 	altqopen, altqclose, noread, nowrite, altqioctl,
-	nostop, notty, nopoll, nommap, nokqfilter
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 int
@@ -212,7 +212,6 @@ altqioctl(dev, cmd, addr, flag, l)
 	int flag;
 	struct lwp *l;
 {
-	struct proc *p = l->l_proc;
 	int unit = minor(dev);
 
 	if (unit == 0) {
@@ -230,8 +229,8 @@ altqioctl(dev, cmd, addr, flag, l)
 			if ((error = suser(p)) != 0)
 				return (error);
 #else
-			if ((error = kauth_authorize_generic(p->p_cred,
-			    KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+			if ((error = kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 				return (error);
 #endif
 			break;

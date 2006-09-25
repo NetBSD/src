@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.21.12.1 2006/03/18 14:07:52 peter Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.21.12.2 2006/09/25 04:03:10 peter Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.139 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
@@ -66,6 +66,8 @@
 #include <sys/malloc.h>
 #ifdef __NetBSD__
 #include <sys/conf.h>
+#include <sys/lwp.h>
+#include <sys/kauth.h>
 #endif
 
 #include <net/if.h>
@@ -130,7 +132,7 @@ int			 pf_commit_rules(u_int32_t, int, char *);
 #ifdef __NetBSD__
 const struct cdevsw pf_cdevsw = {
 	pfopen, pfclose, noread, nowrite, pfioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 static int pf_pfil_attach(void);
@@ -1145,7 +1147,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct lwp *l)
 	int			 error = 0;
 
 	/* XXX keep in sync with switch() below */
-	if (securelevel > 1)
+	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_FIREWALL,
+	    KAUTH_REQ_NETWORK_FIREWALL_FW, NULL, NULL, NULL)) 
 		switch (cmd) {
 		case DIOCGETRULES:
 		case DIOCGETRULE:

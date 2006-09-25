@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rio.c,v 1.8.12.2 2006/06/09 19:52:35 peter Exp $	*/
+/*	$NetBSD: altq_rio.c,v 1.8.12.3 2006/09/25 03:56:59 peter Exp $	*/
 /*	$KAME: altq_rio.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.8.12.2 2006/06/09 19:52:35 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.8.12.3 2006/09/25 03:56:59 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.8.12.2 2006/06/09 19:52:35 peter Exp 
 #include <sys/sockio.h>
 #include <sys/kernel.h>
 #endif
+#include <sys/kauth.h>
 
 #include <net/if.h>
 
@@ -511,7 +512,6 @@ rioioctl(dev, cmd, addr, flag, l)
 	rio_queue_t *rqp;
 	struct rio_interface *ifacep;
 	struct ifnet *ifp;
-	struct proc *p = l->l_proc;
 	int	error = 0;
 
 	/* check super-user privilege */
@@ -523,8 +523,8 @@ rioioctl(dev, cmd, addr, flag, l)
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = kauth_authorize_generic(p->p_cred,
-		    KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (error);
 #endif
 		break;
