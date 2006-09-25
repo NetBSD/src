@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.12.12.2 2006/06/09 19:52:35 peter Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.12.12.3 2006/09/25 03:56:59 peter Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.26 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.12.12.2 2006/06/09 19:52:35 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.12.12.3 2006/09/25 03:56:59 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -1910,7 +1910,6 @@ hfscioctl(dev, cmd, addr, flag, l)
 {
 	struct hfsc_if *hif;
 	struct hfsc_interface *ifacep;
-	struct proc* p = l->l_proc;
 	int	error = 0;
 
 	/* check super-user privilege */
@@ -1922,8 +1921,8 @@ hfscioctl(dev, cmd, addr, flag, l)
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = kauth_authorize_generic(p->p_cred,
-		    KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (error);
 #endif
 		break;

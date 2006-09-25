@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_afmap.c,v 1.9.12.2 2006/06/09 19:52:35 peter Exp $	*/
+/*	$NetBSD: altq_afmap.c,v 1.9.12.3 2006/09/25 03:56:59 peter Exp $	*/
 /*	$KAME: altq_afmap.c,v 1.12 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.9.12.2 2006/06/09 19:52:35 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.9.12.3 2006/09/25 03:56:59 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -373,7 +373,6 @@ afmioctl(dev, cmd, addr, flag, l)
 	int	error = 0;
 	struct atm_flowmap *flowmap;
 	struct ifnet *ifp;
-	struct proc *p = l->l_proc;
 
 	/* check cmd for superuser only */
 	switch (cmd) {
@@ -383,8 +382,8 @@ afmioctl(dev, cmd, addr, flag, l)
 #if (__FreeBSD_version > 400000)
 		error = suser(p);
 #else
-		error = kauth_authorize_generic(p->p_cred,
-		    KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 #endif
 		if (error)
 			return (error);
