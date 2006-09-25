@@ -1,23 +1,10 @@
-#	$NetBSD: Makefile,v 1.5 2004/03/19 08:07:28 jmc Exp $
+#	$NetBSD: Makefile,v 1.5.12.1 2006/09/25 21:51:39 tron Exp $
 
+HOSTPROG=	macppc_installboot
+SRCS=		installboot.c cd9660.c cd9660_util.c
 NOMAN=	# defined
 
-.include <bsd.own.mk>
+HOST_CPPFLAGS+=	-I${.CURDIR} -I${NETBSDSRCDIR}/sys
+#HOST_CPPFLAGS+=	-DDEBUG
 
-HOSTPROG=		macppc_installboot
-HOST_CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/arch
-UUDECODE_FILES=	bootxx.raw macppcboot.raw
-
-CLEANFILES+=	mkmacppcboot
-
-all: macppcboot.raw
-
-.include <bsd.files.mk>
 .include <bsd.hostprog.mk>
-
-mkmacppcboot: mkmacppcboot.c
-	${LINK.c} -o ${.TARGET} ${.ALLSRC}
-
-regen: mkmacppcboot bootxx.raw.uue
-	./mkmacppcboot <${.CURDIR}/bootxx.raw | \
-	    uuencode macppcboot.raw > macppcboot.raw.uue
