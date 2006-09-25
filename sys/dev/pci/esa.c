@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.37 2006/09/24 14:26:50 jmcneill Exp $ */
+/* $NetBSD: esa.c,v 1.38 2006/09/25 23:19:39 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.37 2006/09/24 14:26:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.38 2006/09/25 23:19:39 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1662,7 +1662,6 @@ esa_suspend(struct esa_softc *sc)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	int i, index;
-	int error;
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
@@ -1683,10 +1682,6 @@ esa_suspend(struct esa_softc *sc)
 		sc->savemem[index++] = esa_read_assp(sc,
 		    ESA_MEMTYPE_INTERNAL_DATA, i);
 
-	if ((error = pci_set_powerstate(sc->sc_pct, sc->sc_tag,
-	    PCI_PMCSR_STATE_D3)))
-		return error;
-
 	return 0;
 }
 
@@ -1697,15 +1692,11 @@ esa_resume(struct esa_softc *sc)
 	bus_space_handle_t ioh;
 	int i, index;
 	uint8_t reset_state;
-	int error;
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	index = 0;
 
-	if ((error = pci_set_powerstate(sc->sc_pct, sc->sc_tag,
-	    PCI_PMCSR_STATE_D0)))
-		return error;
 	delay(10000);
 
 	esa_config(sc);
