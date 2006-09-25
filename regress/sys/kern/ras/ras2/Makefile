@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/09/18 05:41:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.12.1 2006/09/25 00:10:02 riz Exp $
 
 NOMAN=	#defined
 
@@ -13,3 +13,7 @@ regress:
 	fi
 
 .include <bsd.prog.mk>
+
+.if ${HAVE_GCC} == 4
+CFLAGS+=	-fno-reorder-blocks
+.endif

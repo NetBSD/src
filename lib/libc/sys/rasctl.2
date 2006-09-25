@@ -1,4 +1,4 @@
-.\"     $NetBSD: rasctl.2,v 1.11 2006/01/15 16:35:58 wiz Exp $
+.\"     $NetBSD: rasctl.2,v 1.11.2.1 2006/09/25 00:10:02 riz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 5, 2006
+.Dd September 19, 2006
 .Dt RASCTL 2
 .Os
 .Sh NAME
@@ -99,15 +99,19 @@ argument.
 Possible operations are:
 .Pp
 .Bl -tag -compact -width RAS_PURGE_ALLXXX
-.It RAS_INSTALL
+.It Dv RAS_INSTALL
 Install this sequence.
-.It RAS_PURGE
-Remove the specified registered sequences for this process.
-.It RAS_PURGE_ALL
+.It Dv RAS_PURGE
+Remove the specified registered sequence for this process.
+.It Dv RAS_PURGE_ALL
 Remove all registered sequences for this process.
 .El
 .Pp
-The RAS_PURGE and RAS_PURGE_ALL operations should be considered to have
+The
+.Dv RAS_PURGE
+and
+.Dv RAS_PURGE_ALL
+operations should be considered to have
 undefined behaviour if there are any other runnable threads in the
 address space which might be executing within the restartable atomic
 sequence(s) at the time of the purge.
@@ -154,28 +158,35 @@ Modern compilers reorder instruction sequences to optimize speed.
 The start address and size of a
 .Nm RAS
 need to be protected against this.
-This is done via compiler dependend instructions, abstracted from
-user level code via the following macros:
+One level of protection is created by compiler dependent instructions,
+abstracted from user level code via the following macros:
 .Bl -tag -width RAS_START(name)
-.It RAS_DECL(name)
-is used to declare the start and end labels used internaly by the
+.It Dv RAS_DECL(name)
+Declares the start and end labels used internally by the
 other macros to mark a
 .Nm RAS .
 The name uniquely identifies the
 .Nm RAS .
-.It RAS_START(name)
-is used to mark the start of the code.
+.It Dv RAS_START(name)
+Marks the start of the code.
 Each restart returns to the instruction following this macro.
-.It RAS_END(name)
-is used to mark the end of the restartable code.
-.It RAS_ADDR(name)
-returns the start address of a
+.It Dv RAS_END(name)
+Marks the end of the restartable code.
+.It Dv RAS_ADDR(name)
+Returns the start address of a
 .Nm RAS
 and is used to create the first argument to
 .Nm .
-.It RAS_SIZE(name)
-returns the size of a
+.It Dv RAS_SIZE(name)
+Returns the size of a
 .Nm RAS
 and is used as second argument to
 .Nm .
 .El
+Recent versions of
+.Xr gcc 1
+require the
+.Fl fno-reorder-blocks
+flag to prevent blocks of code wrapped with
+.Dv RAS_START Ns / Ns Dv RAS_END
+being moved outside these labels.
