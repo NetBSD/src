@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.11.2.5 2006/09/25 00:13:53 riz Exp $ */
+/* $NetBSD: udf_subr.c,v 1.11.2.6 2006/09/25 02:38:48 riz Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.11.2.5 2006/09/25 00:13:53 riz Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.11.2.6 2006/09/25 02:38:48 riz Exp $");
 #endif /* not lint */
 
 
@@ -2336,12 +2336,21 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 	fid = malloc(lb_size, M_TEMP, M_WAITOK);
 
 	found = 0;
-	diroffset = 0;
-	while (!found && (diroffset < file_size)) {
+	diroffset = dir_node->last_diroffset;
+	while (!found) {
+		/* if not found in this track, turn trough zero */
+		if (diroffset >= file_size)
+			diroffset = 0;
+
 		/* transfer a new fid/dirent */
 		error = udf_read_fid_stream(vp, &diroffset, fid, &dirent);
 		if (error)
 			break;
+
+		if (diroffset == dir_node->last_diroffset) {
+			/* we have cycled */
+			break;
+		}
 
 		/* skip deleted entries */
 		if (fid->file_char & UDF_FILE_CHAR_DEL)
@@ -2354,6 +2363,7 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 		}
 	}
 	free(fid, M_TEMP);
+	dir_node->last_diroffset = diroffset;
 
 	return found;
 }
