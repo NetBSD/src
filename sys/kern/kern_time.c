@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.106 2006/09/08 20:58:57 elad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.107 2006/09/25 18:28:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.106 2006/09/08 20:58:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.107 2006/09/25 18:28:56 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1471,7 +1471,7 @@ itimerfire(struct ptimer *pt)
 		}
 	} else if (pt->pt_ev.sigev_notify == SIGEV_SA && (p->p_flag & P_SA)) {
 		/* Cause the process to generate an upcall when it returns. */
-
+		signotify(p);
 		if (p->p_userret == NULL) {
 			/*
 			 * XXX stop signals can be processed inside tsleep,
