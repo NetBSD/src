@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.96 2006/09/11 22:24:09 dbj Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.97 2006/09/25 13:21:19 daniel Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.96 2006/09/11 22:24:09 dbj Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.97 2006/09/25 13:21:19 daniel Exp $");
 #endif
 #endif /* not lint */
 
@@ -1003,6 +1003,9 @@ install_dir(char *path, u_int flags)
 					err(1, "%s: mkdir", path);
                                 }
                         }
+			else if (!S_ISDIR(sb.st_mode)) {
+				errx(1, "%s exists but is not a directory", path);
+			}
                         if (!(*p = ch))
 				break;
                 }
