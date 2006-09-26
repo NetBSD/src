@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.120 2006/09/26 09:45:57 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.121 2006/09/26 16:11:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.120 2006/09/26 09:45:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.121 2006/09/26 16:11:02 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -857,6 +857,7 @@ device_setofnode(struct device *dev, int node)
 	if (obj == NULL)
 		return;
 	prop_dictionary_set(props, OFNODEKEY, obj);
+	prop_object_release(obj);
 }
 
 /*
