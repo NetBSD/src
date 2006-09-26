@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.11 2006/09/26 21:06:54 manu Exp $	*/
+/*	$NetBSD: admin.c,v 1.12 2006/09/26 21:10:55 manu Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -107,7 +107,6 @@ admin_handler()
 	socklen_t fromlen = sizeof(from);
 	struct admin_com com;
 	char *combuf = NULL;
-	pid_t pid = -1;
 	int len, error = -1;
 
 	so2 = accept(lcconf->sock_admin, (struct sockaddr *)&from, &fromlen);
@@ -164,10 +163,6 @@ admin_handler()
 	(void)close(so2);
 	if (combuf)
 		racoon_free(combuf);
-
-	/* exit if child's process. */
-	if (pid == 0 && !f_foreground)
-		exit(error);
 
 	return error;
 }
