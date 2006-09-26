@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.21 2006/09/18 19:46:21 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.22 2006/09/26 23:33:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.21 2006/09/18 19:46:21 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.22 2006/09/26 23:33:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,8 +117,12 @@ grabh(struct header *hp, int gflags)
 			warn("TIOCEXT: off");
 	}
 # endif	/* TIOCEXT */
-	if (setjmp(intjmp))
+	if (setjmp(intjmp)) {
+#ifdef USE_READLINE
+		(void)printf("\n(continue)\n");
+#endif /* USE_READLINE */
 		goto out;
+	}
 	saveint = signal(SIGINT, ttyint);
 #endif
 	if (gflags & GTO) {
