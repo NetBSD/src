@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.831 2006/09/24 18:36:40 briggs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.832 2006/09/26 00:09:42 heas Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -2244,6 +2244,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Tekram Technology (2nd PCI Vendor ID)",
 	},
 	{
+	    PCI_VENDOR_DATUM,
+	    "Datum Inc. Bancomm-Timing Division",
+	},
+	{
 	    PCI_VENDOR_HINT,
 	    "HiNT",
 	},
@@ -2368,7 +2372,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 582;
+const int pci_nvendors = 583;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -5334,6 +5338,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_VIDEO,
 	    "Cx5530 I/O Companion (Video Controller)",
+	},
+	{
+	    PCI_VENDOR_DATUM, PCI_PRODUCT_DATUM_BC635PCI_U,
+	    "BC635PCI-U TC & FREQ. Processor",
 	},
 	{
 	    PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9102,
@@ -12324,4 +12332,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2488;
+const int pci_nproducts = 2489;
