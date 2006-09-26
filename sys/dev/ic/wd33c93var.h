@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93var.h,v 1.2 2006/09/26 22:45:25 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93var.h,v 1.3 2006/09/26 23:27:36 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -253,7 +253,6 @@ extern int wd33c93_debug_flags;
 struct buf;
 struct scsipi_xfer;
 
-void wd33c93_minphys (struct buf *);
 void wd33c93_scsi_request (struct scsipi_channel *,
 				scsipi_adapter_req_t, void *);
 void wd33c93_attach (struct wd33c93_softc *);
