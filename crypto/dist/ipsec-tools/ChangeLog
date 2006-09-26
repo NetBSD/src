@@ -1,3 +1,7 @@
+2006-09-26  Emmanuel Dreyfus  <manu@netbsd.org>
+	From Matthew Grooms:
+	* src/racoon/{pfkey.c|proposal.c}: fix SA bundle (e.g.: ESP+IPcomp)
+
 2006-09-25  Yvan Vanhullebus  <vanhu@NetBSD.org>
 	Reported by Yves-Alexis Perez:
 	* src/racoon/isakmp.c: struct ip -> struct iphdr for Linux.
