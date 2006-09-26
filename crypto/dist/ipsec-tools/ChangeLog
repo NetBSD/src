@@ -1,7 +1,8 @@
 2006-09-26  Emmanuel Dreyfus  <manu@netbsd.org>
 	* src/racoon/admin.c: Fix memory leaks in racoonctl (Coverity)
 	* src/racoon/admin.c: Remove dead code (Coverity)
-	* src/racoon/backupsa.c: FIx memory leak (Coverity)
+	* src/racoon/backupsa.c: Fix memory leak (Coverity)
+	* src/racoon/cfparse.y: Fix memory leak (Coverity)
 
 	From Jeff Bailey:
 	* src/racoon/{pfkey.c|proposal.c}: fix SA bundle (e.g.: ESP+IPcomp)
