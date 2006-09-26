@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.475 2006/09/22 13:14:59 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.476 2006/09/26 19:33:02 christos Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -77,7 +77,10 @@ HAVE_GCC?=	3
 #
 # Transitional for toolchain upgrade to GDB6
 #
-#HAVE_GDB?=	6
+.if \
+    ${MACHINE_ARCH} == "i386"
+HAVE_GDB?=	6
+.endif
 
 HAVE_GDB?=	5
 
