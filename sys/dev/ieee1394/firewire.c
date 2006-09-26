@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.8 2006/06/13 02:39:11 christos Exp $	*/
+/*	$NetBSD: firewire.c,v 1.9 2006/09/26 02:50:42 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -602,10 +602,10 @@ firewire_shutdown( device_t dev )
 int
 firewire_print(void *aux, const char *pnp)
 {
-	char *name = aux;
+	struct fw_attach_args *fwa = (struct fw_attach_args *)aux;
 
 	if (pnp)
-		aprint_normal("%s at %s", name, pnp);
+		aprint_normal("%s at %s", fwa->name, pnp);
 
 	return UNCONF;
 }               
