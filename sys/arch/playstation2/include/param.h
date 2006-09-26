@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4 2005/12/11 12:18:36 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.5 2006/09/26 13:11:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,6 +68,9 @@
  * SUCH DAMAGE.
  */
 
+#ifndef	_PLAYSTATION2_PARAM_H_
+#define	_PLAYSTATION2_PARAM_H_
+
 #include <mips/mips_param.h>
 
 #define	_MACHINE_ARCH	mipsel
@@ -120,3 +123,5 @@ extern void delay(unsigned);
 
 #endif	/* _LOCORE */
 #endif	/* _KERNEL */
+
+#endif	/* !_PLAYSTATION2_PARAM_H_ */

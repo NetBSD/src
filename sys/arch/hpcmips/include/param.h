@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.11 2006/09/10 11:12:20 tsutsui Exp $	*/
+/*	$NetBSD: param.h,v 1.12 2006/09/26 13:11:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,6 +80,9 @@
  * Machine-dependent constants (VM, etc) common across MIPS cpus
  */
 
+#ifndef	_HPCMIPS_PARAM_H_
+#define	_HPCMIPS_PARAM_H_
+
 #include <mips/mips_param.h>
 
 /*
@@ -150,3 +153,5 @@ DELAY(int n)
 
 #endif	/* !_LOCORE */
 #endif	/* _KERNEL */
+
+#endif	/* !_HPCMIPS_PARAM_H_ */

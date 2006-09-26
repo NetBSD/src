@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 2006/02/16 20:17:14 perry Exp $	*/
+/*	$NetBSD: param.h,v 1.9 2006/09/26 13:11:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,6 +68,9 @@
  * SUCH DAMAGE.
  */
 
+#ifndef	_SGIMIPS_PARAM_H_
+#define	_SGIMIPS_PARAM_H_
+
 #include <mips/mips_param.h>
 
 #define	_MACHINE_ARCH	mipseb
@@ -119,3 +122,5 @@ __inline extern void	delay(unsigned long);
 
 #endif	/* _LOCORE */
 #endif	/* _KERNEL */
+
+#endif	/* !_SGIMIPS_PARAM_H_ */
