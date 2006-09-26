@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.110 2006/08/25 18:29:17 matt Exp $	*/
+/*	$NetBSD: in6.c,v 1.111 2006/09/26 11:55:41 is Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.110 2006/08/25 18:29:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.111 2006/09/26 11:55:41 is Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -1686,7 +1686,7 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, l)
 }
 
 /*
- * Initialize an interface's intetnet6 address
+ * Initialize an interface's internet6 address
  * and routing table entry.
  */
 static int
