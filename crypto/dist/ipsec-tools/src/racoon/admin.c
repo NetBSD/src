@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.9 2006/09/26 20:51:44 manu Exp $	*/
+/*	$NetBSD: admin.c,v 1.10 2006/09/26 20:58:03 manu Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -529,11 +529,18 @@ admin_process(so2, combuf)
 	if (buf != NULL)
 		vfree(buf);
 
+	if (key != NULL)
+		vfree(key);
+
 	return 0;
 
     bad:
 	if (buf != NULL)
 		vfree(buf);
+
+	if (key != NULL)
+		vfree(key);
+
 	return -1;
 }
 
