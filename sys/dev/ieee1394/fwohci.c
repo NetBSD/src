@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.100 2006/05/28 13:01:46 blymn Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.101 2006/09/26 02:50:42 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -58,7 +58,7 @@
 #include <sys/ktr.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.100 2006/05/28 13:01:46 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.101 2006/09/26 02:50:42 kiyohara Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */
@@ -3117,10 +3117,10 @@ err:
 int
 fwohci_print(void *aux, const char *pnp)
 {
-	char *name = aux;
+	struct fw_attach_args *fwa = (struct fw_attach_args *)aux;
 
 	if (pnp)
-		aprint_normal("%s at %s", name, pnp);
+		aprint_normal("%s at %s", fwa->name, pnp);
 
 	return UNCONF;
 }
