@@ -1,4 +1,4 @@
-/*	$NetBSD: btpin.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: btpin.c,v 1.2 2006/09/26 19:18:19 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: btpin.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: btpin.c,v 1.2 2006/09/26 19:18:19 plunky Exp $");
 
 #include <sys/types.h>
 #include <sys/un.h>
@@ -45,15 +45,13 @@ __RCSID("$NetBSD: btpin.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
 #include <time.h>
 #include <unistd.h>
 
-#include "bthcid.h"
-
 int  main(int, char *[]);
 void usage(void);
 
 int
 main(int ac, char *av[])
 {
-	client_pin_response_t rp;
+	bthcid_pin_response_t rp;
 	struct sockaddr_un un;
 	char *pin = NULL;
 	int ch, s, len;
