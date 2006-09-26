@@ -1,0 +1,83 @@
+#!/bin/sh -
+#
+#	$NetBSD: acadapter,v 1.1 2006/09/26 02:17:38 jmcneill Exp $
+#
+# Generic script for acadapter events.
+#
+# Arguments passed by powerd(8):
+#
+#	device event
+
+case "${2}" in
+pressed)
+	logger -p info "${0}: Full performance mode" >&1
+	# The following turns up brightness on a Sony Vaio laptop
+	/sbin/sysctl -w hw.sony0.brt=8 >/dev/null 2>&1
+	# Enable full performance mode for speedstep CPUs
+	/sbin/sysctl -w machdep.speedstep_state=1 2>&1
+	# Disable power saving mode on all network interfaces
+	for intf in /sbin/ifconfig -l; do
+		/sbin/ifconfig $intf -powersave >/dev/null 2>&1
+	done
+
+	#
+	# If you want to keep your hard disk idle while running on
+	# battery, the following commands will help.
+	#
+
+	# Disk idle timeouts
+	#/sbin/atactl wd0 setidle 300
+	#/sbin/atactl wd0 setstandby 600
+	# Make sure syslogd is running
+	#pkill syslogd
+	#/etc/rc.d/syslogd start
+	# Startup cron daemon when running on power
+	#/etc/rc.d/cron start
+
+	# All finished
+	exit 0
+	;;
+
+released)
+	logger -p info "${0}: Power saving mode" >&1
+	# The following turns down brightness on a Sony Vaio laptop
+	/sbin/sysctl -w hw.sony0.brt=0 >/dev/null 2>&1
+	# Enable power saving mode for speedstep CPUs
+	/sbin/sysctl -w machdep.speedstep_state=0 >/dev/null 2>&1
+
+	# Disable power saving mode on all network interfaces
+	for intf in /sbin/ifconfig -l; do
+		/sbin/ifconfig $intf powersave >/dev/null 2>&1
+	done
+
+	#
+	# When running on battery, we want to keep the disk idle for as long
+	# as possible. Unfortunately, things like cron and syslog make this
+	# very difficult. If you can live without cron or persistent logging,
+	# you can use the commands below to disable cron and syslogd.
+	#
+	# If you still want to see syslog messages, you can create a custom
+	# /etc/syslog.conf.battery that writes messages to /dev/console or
+	# possibly a free wsdisplay screen.
+	#
+
+	# Disk idle timeouts
+	#/sbin/atactl wd0 setidle 30
+	#/sbin/atactl wd0 setstandby 120
+	
+	# Stop the cron daemon
+	#/etc/rc.d/cron stop
+
+	# Restart syslogd using a diskless configuration
+	#pkill syslogd
+	#/usr/sbin/syslogd -s -f /etc/syslog.conf.battery
+
+	# All finished
+	exit 0
+	;;
+
+*)
+	logger -p warning "${0}: unsupported event ${2} on device ${1}" >&1
+	exit 1
+	;;
+esac

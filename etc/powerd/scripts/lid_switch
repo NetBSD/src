@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: lid_switch,v 1.2 2003/10/30 17:42:23 mycroft Exp $
+#	$NetBSD: lid_switch,v 1.3 2006/09/26 02:17:38 jmcneill Exp $
 #
 # Generic script for lid switch events.  We do nothing for now.
 #
@@ -9,8 +9,17 @@
 #	device event
 
 case "${2}" in
-*)
-	logger -p warning "${0}: unsupported event ${2} on device ${1}"
-	exit 1
+pressed)
+	if /etc/rc.d/apmd status >/dev/null ; then
+		/usr/sbin/apm -S
+	else
+		/usr/sbin/apm -d -S
+	fi
+	exit 0
 	;;
+released)
+	;;
+*)
+	logger -p warning "${0}: unsupported event ${2} on device ${1}" >&1
+	exit 1
 esac
