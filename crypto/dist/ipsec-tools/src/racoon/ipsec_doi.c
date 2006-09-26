@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.16 2006/09/25 04:49:40 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.17 2006/09/26 04:44:41 manu Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -4047,9 +4047,9 @@ ipsecdoi_id2sockaddr(buf, saddr, prefixlen, ul_proto)
 			+ alen;
 
 		for (; *p == 0xff; p++) {
+			plen += 8;
 			if (plen >= max)
 				break;
-			plen += 8;
 		}
 
 		if (plen < max) {
@@ -4164,9 +4164,9 @@ ipsecdoi_id2str(id)
 			+ alen;
 
 		for (; *p == 0xff; p++) {
+			plen += 8;
 			if (plen >= max)
 				break;
-			plen += 8;
 		}
 
 		if (plen < max) {
