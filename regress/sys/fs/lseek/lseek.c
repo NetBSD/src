@@ -99,16 +99,22 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	printf( "if seek_data in the middle of a non-sparse file returns "
-		"the current position\n");
+	printf( "if seek_data in the file's last block of a non-sparse file "
+		"returns the current position\n");
 	cur = lseek(fd, st.st_size-50, SEEK_DATA);
 	if (cur != st.st_size - 50) {
 		printf("Seek data didn't give passed seek position back\n");
+		printf("%"PRIi64" should be %"PRIi64"\n", cur, st.st_size-50);
 		return EXIT_FAILURE;
 	}
-	if (errno != ENXIO) {
-		printf( "Seek data on the end of file didn't"
-			" raise ENXIO\n");
+
+	printf( "if seek_data in the middle of the of a non-sparse file "
+		"returns the current position\n");
+	cur = lseek(fd, st.st_size-100*1024, SEEK_DATA);
+	if (cur != st.st_size - 100*1024) {
+		printf("Seek data didn't give passed seek position back\n");
+		printf("%"PRIi64" should be %"PRIi64"\n", cur,
+			st.st_size-100*1024);
 		return EXIT_FAILURE;
 	}
 
