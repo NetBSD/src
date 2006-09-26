@@ -1,4 +1,4 @@
-/* $NetBSD: ar5312.c,v 1.2 2006/09/04 05:17:26 gdamore Exp $ */
+/* $NetBSD: ar5312.c,v 1.3 2006/09/26 06:37:32 gdamore Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -128,23 +128,6 @@ ar531x_cpuname(void)
 	default:
 		return ("Atheros AR531X");
 	}
-}
-
-void
-ar531x_consinit(void)
-{
-	/*
-	 * Everything related to console initialization is done
-	 * in mach_init().
-	 */
-#if NCOM > 0
-	/* Setup polled serial for early console I/O */
-	/* XXX: pass in CONSPEED? */
-	com_arbus_cnattach(AR5312_UART0_BASE, ar531x_bus_freq());
-#else
-	panic("Not configured to use serial console!\n");
-	/* not going to see that message now, are we? */
-#endif
 }
 
 void
@@ -293,6 +276,10 @@ ar531x_device_register(struct device *dev, void *aux)
 			return;
 
 		addprop_data(dev, "mac-addr", enet, ETHER_ADDR_LEN);
+
+		addprop_integer(dev, "wmac-rev",
+		    AR5312_REVISION_WMAC(GETSYSREG(AR5312_SYSREG_REVISION)));
+
 	}
 
 	if (device_is_a(dev, "com")) {
@@ -417,5 +404,4 @@ ar531x_get_devices(void)
 
 	return devices;
 }
-
 

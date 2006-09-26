@@ -1,11 +1,12 @@
-/* $Id: ar531x_board.c,v 1.5 2006/09/08 23:39:27 gdamore Exp $ */
+/* $NetBSD: ar5315_board.c,v 1.1 2006/09/26 06:37:32 gdamore Exp $ */
+
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
  * All rights reserved.
  *
- * This code was written by Garrett D'Amore for the Champaign-Urbana
- * Community Wireless Network Project.
+ * Portions of this code were written by Garrett D'Amore for the
+ * Champaign-Urbana Community Wireless Network Project.
  *
  * Redistribution and use in source and binary forms, with or
  * without modification, are permitted provided that the following
@@ -39,20 +40,40 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar531x_board.c,v 1.5 2006/09/08 23:39:27 gdamore Exp $");
 
+/*
+ * This file provides code to locate board-specific configuration and radio
+ * information data in flash for the AR5315.
+ */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ar5315_board.c,v 1.1 2006/09/26 06:37:32 gdamore Exp $");
+
+#include "opt_ddb.h"
+#include "opt_kgdb.h"
+
+#include "opt_memsize.h"
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/buf.h>
 
-#include <machine/bus.h>
-#include <mips/atheros/include/ar5312reg.h>
+#include <dev/cons.h>
+
+#include <mips/cache.h>
+#include <mips/locore.h>
+#include <mips/cpuregs.h>
+
+#include <net/if.h>
+#include <net/if_ether.h>
+
+#include <contrib/dev/ath/ah_soc.h>	/* XXX really doesn't belong in hal */
+
+#include <mips/atheros/include/ar5315reg.h>
 #include <mips/atheros/include/ar531xvar.h>
+#include <mips/atheros/include/arbusvar.h>
 
-#include <contrib/dev/ath/ah_soc.h>
-
-extern const char *ether_sprintf(const uint8_t *);
+#include <machine/locore.h>
+#include "com.h"
 
 /*
  * Locate the Board Configuration data using heuristics.
@@ -65,49 +86,26 @@ ar531x_board_info(void)
 {
 	static const struct ar531x_boarddata *board = NULL;
 	const uint8_t *ptr, *end;
-	uint32_t fctl;
 
 	if (board == NULL) {
-		/* configure flash bank 0 */
-		fctl = REGVAL(AR5312_FLASHCTL_BASE + AR5312_FLASHCTL_0) & 
-		    AR5312_FLASHCTL_MW_MASK;
-
-		fctl |=
-		    AR5312_FLASHCTL_E |
-		    AR5312_FLASHCTL_RBLE |
-		    AR5312_FLASHCTL_AC_8M |
-		    (1 << AR5312_FLASHCTL_IDCY_SHIFT) |
-		    (7 << AR5312_FLASHCTL_WST1_SHIFT) |
-		    (7 << AR5312_FLASHCTL_WST2_SHIFT);
-
-		REGVAL(AR5312_FLASHCTL_BASE + AR5312_FLASHCTL_0) = fctl;
-
-		REGVAL(AR5312_FLASHCTL_BASE + AR5312_FLASHCTL_1) &=
-		    ~(AR5312_FLASHCTL_E | AR5312_FLASHCTL_AC_MASK);
-
-		REGVAL(AR5312_FLASHCTL_BASE + AR5312_FLASHCTL_2) &=
-		    ~(AR5312_FLASHCTL_E | AR5312_FLASHCTL_AC_MASK);
 
 		/* search backward in the flash looking for the signature */
-		ptr = (const uint8_t *) MIPS_PHYS_TO_KSEG1(AR5312_FLASH_END - 0x1000);
-		end = ptr - (500 * 1024);	/* NB: max 500KB window */
+		ptr = (const uint8_t *) MIPS_PHYS_TO_KSEG1(AR5315_CONFIG_END
+		    - 0x1000);
+		end = (const uint8_t *)AR5315_CONFIG_BASE;
 		/* XXX validate end */
 		for (; ptr > end; ptr -= 0x1000)
 			if (*(const uint32_t *)ptr == AR531X_BD_MAGIC) {
 				board = (const struct ar531x_boarddata *) ptr;
 				break;
 			}
-		printf("enet0: mac: %s\n", ether_sprintf(board->enet0Mac));
-		printf("enet1: mac: %s\n", ether_sprintf(board->enet1Mac));
-		printf("wlan0: mac: %s\n", ether_sprintf(board->wlan0Mac));
-		printf("wlan1: mac: %s\n", ether_sprintf(board->wlan1Mac));
 	}
 	return board;
 }
 
 /*
- * Locate the radio configuration data; it is located relative
- * to the board configuration data.
+ * Locate the radio configuration data; it is located relative to the
+ * board configuration data.
  */
 const void *
 ar531x_radio_info(void)
@@ -116,29 +114,28 @@ ar531x_radio_info(void)
 	const struct ar531x_boarddata *board;
 	const uint8_t *baddr, *ptr, *end;
 
-	if (radio == NULL) {
-		board = ar531x_board_info();
-		if (board == NULL)
-			return NULL;
-		baddr = (const uint8_t *) board;
-		ptr = baddr + 0x1000;
-		end = (const uint8_t *)
-		    MIPS_PHYS_TO_KSEG1(AR5312_FLASH_END-0x1000);
-	again:
-		for (; ptr < end; ptr += 0x1000)
-			if (*(const uint32_t *)ptr != 0xffffffff) {
-				radio = ptr;
-				goto done;
-			}
-		/* sort of an Algol-style for loop ... */
-		if (end == (uint8_t *) MIPS_PHYS_TO_KSEG1(AR5312_FLASH_END)) {
-			/* NB: AR2316 has radio data in a different location */
-			ptr = baddr + 0xf8;
-			end = (const uint8_t *)
-			    MIPS_PHYS_TO_KSEG1(AR5312_FLASH_END-0x1000 + 0xf8);
-			goto again;
+	if (radio)
+		goto done;
+
+	board = ar531x_board_info();
+	if (board == NULL)
+		return NULL;
+	baddr = (const uint8_t *) board;
+	end = (const uint8_t *)MIPS_PHYS_TO_KSEG1(AR5315_RADIO_END);
+
+	for (ptr = baddr + 0x1000; ptr < end; ptr += 0x1000)
+		if (*(const uint32_t *)ptr != 0xffffffffU) {
+			radio = ptr;
+			goto done;
 		}
-	}
+
+	/* AR2316 moves radio data */
+	for (ptr = baddr + 0xf8; ptr < end; ptr += 0x1000)
+		if (*(const uint32_t *)ptr != 0xffffffffU) {
+			radio = ptr;
+			goto done;
+		}
+
 done:
 	return radio;
 }
@@ -153,8 +150,10 @@ ar531x_board_config(struct ar531x_config *config)
 	config->board = ar531x_board_info();
 	if (config->board == NULL)
 		return ENOENT;
+
 	config->radio = ar531x_radio_info();
 	if (config->radio == NULL)
 		return ENOENT;		/* XXX distinct code */
+
 	return 0;
 }

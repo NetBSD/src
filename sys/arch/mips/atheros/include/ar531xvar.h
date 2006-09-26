@@ -1,4 +1,4 @@
-/* $Id: ar531xvar.h,v 1.4 2006/09/04 05:17:26 gdamore Exp $ */
+/* $Id: ar531xvar.h,v 1.5 2006/09/26 06:37:32 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -82,6 +82,7 @@ uint32_t ar531x_bus_freq(void);
 void ar531x_device_register(struct device *, void *);
 int ar531x_enable_device(const struct ar531x_device *);
 const struct ar531x_device *ar531x_get_devices(void);
+void ar531x_early_console(void);
 
 /*
  * Board specific things.
