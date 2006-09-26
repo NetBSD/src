@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.10 2006/09/26 20:58:03 manu Exp $	*/
+/*	$NetBSD: admin.c,v 1.11 2006/09/26 21:06:54 manu Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -185,7 +185,7 @@ admin_process(so2, combuf)
 	vchar_t *id = NULL;
 	vchar_t *key = NULL;
 	int idtype = 0;
-	int error = 0;
+	int error = -1;
 
 	com->ac_errno = 0;
 
@@ -193,7 +193,7 @@ admin_process(so2, combuf)
 	case ADMIN_RELOAD_CONF:
 		/* don't entered because of proccessing it in other place. */
 		plog(LLV_ERROR, LOCATION, NULL, "should never reach here\n");
-		goto bad;
+		goto out;
 
 	case ADMIN_SHOW_SCHED:
 	{
@@ -246,7 +246,7 @@ admin_process(so2, combuf)
 				u_int p;
 				p = admin2pfkey_proto(com->ac_proto);
 				if (p == -1)
-					goto bad;
+					goto out;
 				buf = pfkey_dump_sadb(p);
 				if (buf == NULL)
 					com->ac_errno = -1;
@@ -523,25 +523,21 @@ admin_process(so2, combuf)
 		com->ac_errno = -1;
 	}
 
-	if (admin_reply(so2, com, buf) < 0)
-		goto bad;
+	if ((error = admin_reply(so2, com, buf)) != 0)
+		goto out;
 
+	error = 0;
+out:
 	if (buf != NULL)
 		vfree(buf);
 
 	if (key != NULL)
 		vfree(key);
 
-	return 0;
+	if (id != NULL)
+		vfree(id);
 
-    bad:
-	if (buf != NULL)
-		vfree(buf);
-
-	if (key != NULL)
-		vfree(key);
-
-	return -1;
+	return error;
 }
 
 static int
