@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.8 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: admin.c,v 1.9 2006/09/26 20:51:44 manu Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -211,6 +211,7 @@ admin_process(so2, combuf)
 		}
 
 		memcpy(buf->v, p, len);
+		racoon_free(p);
 	}
 		break;
 
