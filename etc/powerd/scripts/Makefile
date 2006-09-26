@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/05/16 09:53:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2006/09/26 02:18:16 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@
 #	src/etc/mtree/special
 #	src/distrib/sets/lists/etc/mi
 
-CONFIGFILES=	power_button reset_button
+CONFIGFILES=	acadapter lid_switch power_button reset_button sleep_button
 
 FILESDIR=	/etc/powerd/scripts
 FILESMODE=	${BINMODE}
