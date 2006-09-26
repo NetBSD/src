@@ -1,13 +1,16 @@
-#	$NetBSD: files.atheros,v 1.6 2006/09/04 05:17:26 gdamore Exp $
+#	$NetBSD: files.atheros,v 1.7 2006/09/26 06:37:32 gdamore Exp $
 
 defflag	opt_wisoc.h	WISOC_AR5312
 			WISOC_AR5315
 
 file	arch/mips/atheros/ar5312.c		wisoc_ar5312
+file	arch/mips/atheros/ar5312_board.c	wisoc_ar5312
+file	arch/mips/atheros/ar5312_console.c	wisoc_ar5312
 file	arch/mips/atheros/ar5312_intr.c		wisoc_ar5312
-file	arch/mips/atheros/ar531x_board.c	wisoc_ar5312
 
 file	arch/mips/atheros/ar5315.c		wisoc_ar5315
+file	arch/mips/atheros/ar5315_board.c	wisoc_ar5315
+file	arch/mips/atheros/ar5315_console.c	wisoc_ar5315
 file	arch/mips/atheros/ar5315_intr.c		wisoc_ar5315
 
 # Atheros system bus

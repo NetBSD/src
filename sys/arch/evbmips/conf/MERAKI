@@ -1,20 +1,20 @@
-#	$NetBSD: AP30,v 1.6 2006/09/26 06:37:31 gdamore Exp $
+#	$NetBSD: MERAKI,v 1.1 2006/09/26 06:37:32 gdamore Exp $
 
-include 	"arch/evbmips/conf/std.atheros"
+include 	"arch/evbmips/conf/std.meraki"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"AP30-$Revision: 1.6 $"
+#ident 		"AP30-$Revision: 1.1 $"
 
 maxusers	32
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
-makeoptions	ATH_MACHINE_HAL=ap30
+makeoptions	ATH_MACHINE_HAL=ap51
 
 options 	MIPS32
 options 	NOFPU		# No FPU
 options 	SOFTFLOAT	# emulate FPU insn
-options		WISOC_AR5312	# WiSoC select
+options		WISOC_AR5315	# WiSoc select
 
 # Options for necessary to use MD
 #options 	MEMORY_DISK_HOOKS
@@ -103,15 +103,17 @@ options 	INET		# Internet protocols
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
+#options 	NS		# Xerox NS networking
+#options 	NSIP		# Xerox NS tunneling over IP
 #options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
+#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42
@@ -141,7 +143,7 @@ arbus0		at mainbus?
 com*		at arbus? addr ?
 ae*		at arbus? addr ?
 ath*		at arbus? addr ?
-athflash*	at arbus? addr ?
+#athflash*	at arbus? addr ?
 argpio*		at arbus? addr ?
 gpio*		at argpio?
 

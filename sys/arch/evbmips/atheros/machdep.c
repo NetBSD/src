@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.4 2006/08/28 07:21:15 gdamore Exp $ */
+/* $NetBSD: machdep.c,v 1.5 2006/09/26 06:37:32 gdamore Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2006/08/28 07:21:15 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2006/09/26 06:37:32 gdamore Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -232,6 +232,9 @@ mach_init(void)
 	kernend = (caddr_t)mips_round_page(end);
 
 	memset(edata, 0, kernend - (caddr_t)edata);
+
+	/* setup early console */
+	ar531x_early_console();
 
 	/* set CPU model info for sysctl_hw */
 	snprintf(cpu_model, 64, "%s", ar531x_cpuname());
