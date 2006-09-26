@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.2 2004/05/20 23:12:33 christos Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.3 2006/09/26 05:59:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_pton.c,v 1.2.206.1 2004/03/09 08:33:33 marka Exp";
 #else
-__RCSID("$NetBSD: inet_pton.c,v 1.2 2004/05/20 23:12:33 christos Exp $");
+__RCSID("$NetBSD: inet_pton.c,v 1.3 2006/09/26 05:59:18 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -263,7 +263,7 @@ inet_pton6(const char *src, u_char *dst)
 				continue;
 			} else if (*src == '\0')
 				return (0);
-			if (tp + INT16SZ > endp)
+			if (tp + NS_INT16SZ > endp)
 				return (0);
 			*tp++ = (u_char) (val >> 8) & 0xff;
 			*tp++ = (u_char) val & 0xff;
