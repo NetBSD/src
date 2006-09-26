@@ -1,6 +1,9 @@
 2006-09-26  Emmanuel Dreyfus  <manu@netbsd.org>
-	From Matthew Grooms:
+	From Jeff Bailey:
 	* src/racoon/{pfkey.c|proposal.c}: fix SA bundle (e.g.: ESP+IPcomp)
+
+	From Matthew Grooms:
+	* src/racoon/ipsec_doi.c: fix buffer overflow
 
 2006-09-25  Yvan Vanhullebus  <vanhu@NetBSD.org>
 	Reported by Yves-Alexis Perez:
