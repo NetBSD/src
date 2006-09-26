@@ -1,6 +1,6 @@
-/*	$NetBSD: proposal.c,v 1.8 2006/09/19 16:02:10 vanhu Exp $	*/
+/*	$NetBSD: proposal.c,v 1.9 2006/09/26 04:41:26 manu Exp $	*/
 
-/* Id: proposal.c,v 1.19 2006/04/27 03:41:54 manubsd Exp */
+/* $Id: proposal.c,v 1.9 2006/09/26 04:41:26 manu Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1133,53 +1133,58 @@ set_proposal_from_proposal(iph2)
 		pp0->lifebyte = iph2->sainfo->lifebyte;
 		pp0->pfs_group = iph2->sainfo->pfs_group;
 
+
 		if (pp_peer->next != NULL) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"pp_peer is inconsistency, ignore it.\n");
 			/*FALLTHROUGH*/
 		}
 
-		for (pr = pp_peer->head; pr; pr = pr->next) {
-			
+		for (pr = pp_peer->head; pr; pr = pr->next)
+		{
+			struct remoteconf *conf;
+
 			newpr = newsaproto();
-			if (newpr == NULL) {
+			if (newpr == NULL)
+			{
 				plog(LLV_ERROR, LOCATION, NULL,
-				    "failed to allocate saproto.\n");
+					"failed to allocate saproto.\n");
 				goto end;
 			}
 			newpr->proto_id = pr->proto_id;
 			newpr->spisize = pr->spisize;
 			newpr->encmode = pr->encmode;
 			newpr->spi = 0;
-			newpr->spi_p = pr->spi;	/* copy peer's SPI */
-			{
-				struct remoteconf *conf;
-				conf = getrmconf(iph2->dst);
-				if (conf != NULL &&
-					conf->gen_policy == GENERATE_POLICY_UNIQUE){
-					newpr->reqid_in = g_nextreqid ;
-					newpr->reqid_out = g_nextreqid ++;
-					/* XXX there is a (very limited) risk of reusing the same reqid
-					 * as another SP entry for the same peer
-					 */
-					if(g_nextreqid >= IPSEC_MANUAL_REQID_MAX)
-						g_nextreqid = 1;
-				}else{
-					newpr->reqid_in = 0;
-					newpr->reqid_out = 0;
-				}
+			newpr->spi_p = pr->spi;     /* copy peer's SPI */
+			newpr->reqid_in = 0;
+			newpr->reqid_out = 0;
+
+			conf = getrmconf(iph2->dst);
+			if (conf != NULL &&
+				conf->gen_policy == GENERATE_POLICY_UNIQUE){
+				newpr->reqid_in = g_nextreqid ;
+				newpr->reqid_out = g_nextreqid ++;
+				/* XXX there is a (very limited) risk of reusing the same reqid
+				 * as another SP entry for the same peer
+				 */
+				if(g_nextreqid >= IPSEC_MANUAL_REQID_MAX)
+					g_nextreqid = 1;
+			}else{
+				newpr->reqid_in = 0;
+				newpr->reqid_out = 0;
 			}
+ 
+			if (set_satrnsbysainfo(newpr, iph2->sainfo) < 0)
+			{
+				plog(LLV_ERROR, LOCATION, NULL,
+					"failed to get algorithms.\n");
+				goto end;
+			}
+			inssaproto(pp0, newpr);
 		}
 
-		if (set_satrnsbysainfo(newpr, iph2->sainfo) < 0) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"failed to get algorithms.\n");
-			goto end;
-		}
-
-		inssaproto(pp0, newpr);
 		inssaprop(&newpp, pp0);
-	}
+        }
 
 	plog(LLV_DEBUG, LOCATION, NULL, "make a proposal from peer's:\n");
 	printsaprop0(LLV_DEBUG, newpp);  

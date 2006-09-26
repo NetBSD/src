@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.12 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.13 2006/09/26 04:41:26 manu Exp $	*/
 
-/* Id: pfkey.c,v 1.52 2006/08/11 16:07:05 vanhu Exp */
+/* $Id: pfkey.c,v 1.13 2006/09/26 04:41:26 manu Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -320,7 +320,14 @@ pfkey_dump_sadb(satype)
 		}
 
 		if (msg->sadb_msg_type != SADB_DUMP || msg->sadb_msg_pid != pid)
-			continue;
+		{
+		    plog(LLV_DEBUG, LOCATION, NULL,
+			 "discarding non-sadb dump msg %p, our pid=%i\n", msg, pid);
+		    plog(LLV_DEBUG, LOCATION, NULL,
+			 "type %i, pid %i\n", msg->sadb_msg_type, msg->sadb_msg_pid);
+		    continue;
+		}
+		
 
 		ml = msg->sadb_msg_len << 3;
 		bl = buf ? buf->l : 0;
@@ -1989,6 +1996,8 @@ getsadbpolicy(policy0, policylen0, type, iph2)
 	struct sadb_x_policy *xpl;
 	struct sadb_x_ipsecrequest *xisr;
 	struct saproto *pr;
+	struct saproto **pr_rlist;
+	int rlist_len = 0;
 	caddr_t policy, p;
 	int policylen;
 	int xisrlen;
@@ -2010,6 +2019,7 @@ getsadbpolicy(policy0, policylen0, type, iph2)
 
 	/* make policy structure */
 	policy = racoon_malloc(policylen);
+	memset((void*)policy, 0xcd, policylen);
 	if (!policy) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"buffer allocation failed.\n");
@@ -2032,7 +2042,19 @@ getsadbpolicy(policy0, policylen0, type, iph2)
 
 	xisr = (struct sadb_x_ipsecrequest *)(xpl + 1);
 
-	for (pr = iph2->approval->head; pr; pr = pr->next) {
+	/* The order of things is reversed for use in add policy messages */
+	for (pr = iph2->approval->head; pr; pr = pr->next) rlist_len++;
+	pr_rlist = racoon_malloc((rlist_len+1)*sizeof(struct saproto*));
+	if (!pr_rlist) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"buffer allocation failed.\n");
+		return -1;
+	}
+	pr_rlist[rlist_len--] = NULL;
+	for (pr = iph2->approval->head; pr; pr = pr->next) pr_rlist[rlist_len--] = pr;
+	rlist_len = 0;
+
+	for (pr = pr_rlist[rlist_len++]; pr; pr = pr_rlist[rlist_len++]) {
 
 		satype = doi2ipproto(pr->proto_id);
 		if (satype == ~0) {
@@ -2079,7 +2101,10 @@ getsadbpolicy(policy0, policylen0, type, iph2)
 		}
 
 		xisr->sadb_x_ipsecrequest_len = PFKEY_ALIGN8(xisrlen);
+		xisr = (struct sadb_x_ipsecrequest *)p;
+		
 	}
+	racoon_free(pr_rlist);
 
 end:
 	*policy0 = policy;
@@ -2090,6 +2115,7 @@ end:
 err:
 	if (policy)
 		racoon_free(policy);
+	if (pr_rlist) racoon_free(pr_rlist);
 
 	return -1;
 }
@@ -2636,10 +2662,22 @@ pk_recv(so, lenp)
 {
 	struct sadb_msg buf, *newmsg;
 	int reallen;
-
-	*lenp = recv(so, (caddr_t)&buf, sizeof(buf), MSG_PEEK);
+	int retry = 0;
+	
+	*lenp = -1;
+	do
+	{
+	    plog(LLV_DEBUG, LOCATION, NULL, "pk_recv: retry[%d] recv() \n", retry );
+	    *lenp = recv(so, (caddr_t)&buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT);
+	    retry++;
+	}
+	while (*lenp < 0 && errno == EAGAIN && retry < 3);
 	if (*lenp < 0)
-		return NULL;	/*fatal*/
+	{
+	    if ( errno == EAGAIN ) *lenp = 0; /* non-fatal */
+ 	    return NULL;	/*fatal*/
+	}
+	
 	else if (*lenp < sizeof(buf))
 		return NULL;
 
