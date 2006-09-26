@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.14 2006/09/18 20:32:40 manu Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.15 2006/09/26 21:42:55 manu Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -2389,6 +2389,7 @@ expand_isakmpspec(prop_no, trns_no, types,
 	if (new->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB) {
 		if (gssid != NULL) {
 			if ((new->gssid = vmalloc(strlen(gssid))) == NULL) {
+				racoon_free(new);
 				yyerror("failed to allocate gssid");
 				return -1;
 			}
