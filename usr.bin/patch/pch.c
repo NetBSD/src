@@ -1,4 +1,4 @@
-/*	$NetBSD: pch.c,v 1.21 2006/05/24 16:43:35 christos Exp $	*/
+/*	$NetBSD: pch.c,v 1.22 2006/09/26 16:36:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, Larry Wall
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pch.c,v 1.21 2006/05/24 16:43:35 christos Exp $");
+__RCSID("$NetBSD: pch.c,v 1.22 2006/09/26 16:36:07 christos Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -167,7 +167,8 @@ there_is_another_patch(void)
 	while (filearg[0] == NULL) {
 		if (force || batch) {
 			say("No file to patch.  Skipping...\n");
-			filearg[0] = xstrdup(bestguess);
+			if (bestguess)
+				filearg[0] = xstrdup(bestguess);
 			skip_rest_of_patch = TRUE;
 			return TRUE;
 		}
