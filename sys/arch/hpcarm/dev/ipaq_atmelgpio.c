@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_atmelgpio.c,v 1.11 2006/03/25 15:23:49 peter Exp $	*/
+/*	$NetBSD: ipaq_atmelgpio.c,v 1.12 2006/09/26 16:35:26 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.11 2006/03/25 15:23:49 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.12 2006/09/26 16:35:26 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,9 @@ atmelgpio_attach(parent, self, aux)
         }
 
 	atmelgpio_init(sc);
+
+	rxbuf.idx = 0;
+	rxbuf.len = 0;
 
 #if 1  /* this is sample */
 	rxtx_data(sc, STATUS_BATTERY, 0, NULL, &rxbuf); 
