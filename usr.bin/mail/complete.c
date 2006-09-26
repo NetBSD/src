@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.3 2006/09/24 14:01:48 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.4 2006/09/26 23:33:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.3 2006/09/24 14:01:48 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.4 2006/09/26 23:33:56 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -1068,6 +1068,7 @@ init_readline(void)
 	init_complete();
 
 	el_set(rl_global.el, EL_SIGNAL, 1);
+	el_set(rl_global.elo, EL_SIGNAL, 1);
 
 	return;
 }
