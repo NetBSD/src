@@ -22,7 +22,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.297 $"
+#ident 		"GENERIC-$Revision: 1.298 $"
 
 maxusers 32
 
@@ -697,3 +697,5 @@ pseudo-device	ksyms			# /dev/ksyms
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
+
+PAX_MPROTECT=0				# PaX mprotect(2) restrictions

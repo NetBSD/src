@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.235 2006/08/26 20:26:55 christos Exp $
+# $NetBSD: GENERIC,v 1.236 2006/09/26 14:08:19 elad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.235 $"
+#ident 		"GENERIC-$Revision: 1.236 $"
 
 maxusers	32
 
@@ -567,3 +567,5 @@ pseudo-device	nsmb			# SMB requester
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
+
+#PAX_MPROTECT=0				# PaX mprotect(2) restrictions
