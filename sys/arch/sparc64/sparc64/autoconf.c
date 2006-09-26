@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.119 2006/09/12 09:51:38 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.120 2006/09/26 09:45:57 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.119 2006/09/12 09:51:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.120 2006/09/26 09:45:57 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.119 2006/09/12 09:51:38 martin Exp $"
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
 #include <sys/kauth.h>
+#include <prop/proplib.h>
 
 #include <net/if.h>
 
@@ -112,7 +113,7 @@ struct evcnt intr_evcnts[] = {
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev5"),
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev6"),
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev7"),
-	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr",  "lev8"),
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev8"),
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev9"),
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "clock"),
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr", "lev11"),
@@ -122,28 +123,24 @@ struct evcnt intr_evcnts[] = {
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intr",  "lev15")
 };
 
-int printspl = 0;
 void *bootinfo = 0;
 
 #ifdef KGDB
 extern	int kgdb_debug_panic;
 #endif
 
-char	machine_model[100];
+#define	OFPATHLEN	128
+#define	OFNODEKEY	"OFpnode"
 
-static	char *str2hex(register char *, register int *);
+char	machine_model[100];
+char	ofbootpath[OFPATHLEN], *ofboottarget, *ofbootpartition;
+int	ofbootpackage;
+
 static	int mbprint(void *, const char *);
-static	void crazymap(const char *, int *);
-int	st_crazymap(int);
-void	sync_crash(void);
 int	mainbus_match(struct device *, struct cfdata *, void *);
 static	void mainbus_attach(struct device *, struct device *, void *);
 static  void get_ncpus(void);
-
-struct	bootpath bootpath[8];
-int	nbootpath;
-static	void bootpath_build(void);
-static	void bootpath_print(struct bootpath *);
+static	void get_bootpath_from_prom(void);
 
 /*
  * Kernel 4MB mappings.
@@ -176,45 +173,6 @@ int autoconf_debug = 0x0;
 #else
 #define DPRINTF(l, s)
 #endif
-
-/*
- * Most configuration on the SPARC is done by matching OPENPROM Forth
- * device names with our internal names.
- */
-int
-matchbyname(struct device *parent, struct cfdata *cf, void *aux)
-{
-	printf("%s: WARNING: matchbyname\n", cf->cf_name);
-	return (0);
-}
-
-/*
- * Convert hex ASCII string to a value.  Returns updated pointer.
- * Depends on ASCII order (this *is* machine-dependent code, you know).
- */
-static char *
-str2hex(register char *str, register int *vp)
-{
-	register int v, c;
-
-	for (v = 0;; v = v * 16 + c, str++) {
-		c = *(u_char *)str;
-		if (c <= '9') {
-			if ((c -= '0') < 0)
-				break;
-		} else if (c <= 'F') {
-			if ((c -= 'A' - 10) < 10)
-				break;
-		} else if (c <= 'f') {
-			if ((c -= 'a' - 10) < 10)
-				break;
-		} else
-			break;
-	}
-	*vp = v;
-	return (str);
-}
-
 
 static void
 get_ncpus()
@@ -355,66 +313,44 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 }
 
 /*
- * bootpath_build: build a bootpath. Used when booting a generic
- * kernel to find our root device.  Newer proms give us a bootpath,
- * for older proms we have to create one.  An element in a bootpath
- * has 4 fields: name (device name), val[0], val[1], and val[2]. Note that:
- * Interpretation of val[] is device-dependent. Some examples:
- *
- * if (val[0] == -1) {
- *	val[1] is a unit number    (happens most often with old proms)
- * } else {
- *	[sbus device] val[0] is a sbus slot, and val[1] is an sbus offset
- *	[scsi disk] val[0] is target, val[1] is lun, val[2] is partition
- *	[scsi tape] val[0] is target, val[1] is lun, val[2] is file #
- *	[pci device] val[0] is device, val[1] is function, val[2] might be partition
- * }
- *
+ * get_bootpath_from_prom()
+ * fetch the OF settings to identify our boot device during autoconfiguration
  */
 
 static void
-bootpath_build()
+get_bootpath_from_prom()
 {
-	register char *cp, *pp;
-	register struct bootpath *bp;
-	register long chosen;
-	char sbuf[128];
-
-	memset(bootpath, 0, sizeof(bootpath));
-	bp = bootpath;
+	char sbuf[OFPATHLEN], *cp;
+	long chosen;
 
 	/*
 	 * Grab boot path from PROM
 	 */
 	chosen = OF_finddevice("/chosen");
 	OF_getprop(chosen, "bootpath", sbuf, sizeof(sbuf));
-	cp = sbuf;
-	while (cp != NULL && *cp == '/') {
-		/* Step over '/' */
-		++cp;
-		/* Extract name */
-		pp = bp->name;
-		while (*cp != '@' && *cp != '/' && *cp != '\0')
-			*pp++ = *cp++;
-		*pp = '\0';
-		if (*cp == '@') {
-			cp = str2hex(++cp, &bp->val[0]);
-			if (*cp == ',')
-				cp = str2hex(++cp, &bp->val[1]);
-			if (*cp == ':')
-				/* XXX - we handle just one char */
-				bp->val[2] = *++cp - 'a', ++cp;
-		} else {
-			bp->val[0] = -1; /* no #'s: assume unit 0, no
-					    sbus offset/address */
-		}
-		++bp;
-		++nbootpath;
+
+	strcpy(ofbootpath, sbuf);
+	ofbootpackage = prom_finddevice(ofbootpath);
+	/*
+	 * Strip partition or boot protocol
+	 */
+	cp = strrchr(ofbootpath, ':');
+	if (cp) {
+		*cp = '\0';
+		ofbootpartition = cp+1;
 	}
-	bp->name[0] = 0;
-	
-	bootpath_print(bootpath);
-	
+	cp = strrchr(ofbootpath, '@');
+	if (cp)
+		ofboottarget = cp;
+
+	printf("bootpath: %s\n", sbuf);
+	DPRINTF(ACDB_BOOTDEV, ("bootpath phandle: 0x%x\n", ofbootpackage));
+	if (ofboottarget)
+		DPRINTF(ACDB_BOOTDEV, ("boot target: %s\n", ofboottarget));
+	if (ofbootpartition)
+		DPRINTF(ACDB_BOOTDEV, ("boot partition: %s\n",
+		    ofbootpartition));
+
 	/* Setup pointer to boot flags */
 	OF_getprop(chosen, "bootargs", sbuf, sizeof(sbuf));
 	cp = sbuf;
@@ -461,95 +397,6 @@ bootpath_build()
 }
 
 /*
- * print out the bootpath
- * the %x isn't 0x%x because the Sun EPROMs do it this way, and
- * consistency with the EPROMs is probably better here.
- */
-
-static void
-bootpath_print(struct bootpath *bp)
-{
-	printf("bootpath: ");
-	while (bp->name[0]) {
-		if (bp->val[0] == -1)
-			printf("/%s%x", bp->name, bp->val[1]);
-		else
-			printf("/%s@%x,%x", bp->name, bp->val[0], bp->val[1]);
-		if (bp->val[2] != 0)
-			printf(":%c", bp->val[2] + 'a');
-		bp++;
-	}
-	printf("\n");
-}
-
-
-/*
- * save or read a bootpath pointer from the boothpath store.
- *
- * XXX. required because of SCSI... we don't have control over the "sd"
- * device, so we can't set boot device there.   we patch in with
- * dk_establish(), and use this to recover the bootpath.
- */
-struct bootpath *
-bootpath_store(int storep, struct bootpath *bp)
-{
-	static struct bootpath *save;
-	struct bootpath *retval;
-
-	retval = save;
-	if (storep)
-		save = bp;
-
-	return (retval);
-}
-
-/*
- * Set up the sd target mappings for non SUN4 PROMs.
- * Find out about the real SCSI target, given the PROM's idea of the
- * target of the (boot) device (i.e., the value in bp->v0val[0]).
- */
-static void
-crazymap(const char *prop, int *map)
-{
-	int i;
-
-	/*
-	 * Set up the identity mapping for old sun4 monitors
-	 * and v[2-] OpenPROMs. Note: dkestablish() does the
-	 * SCSI-target juggling for sun4 monitors.
-	 */
-	for (i = 0; i < 8; ++i)
-		map[i] = i;
-}
-
-int
-sd_crazymap(int n)
-{
-	static int prom_sd_crazymap[8]; /* static: compute only once! */
-	static int init = 0;
-
-	if (init == 0) {
-		crazymap("sd-targets", prom_sd_crazymap);
-		init = 1;
-	}
-	return prom_sd_crazymap[n];
-}
-
-int
-st_crazymap(int n)
-{
-	static int prom_st_crazymap[8]; /* static: compute only once! */
-	static int init = 0;
-
-	if (init == 0) {
-		crazymap("st-targets", prom_st_crazymap);
-		init = 1;
-	}
-	return prom_st_crazymap[n];
-}
-
-
-/*
  * Determine mass storage and memory configuration for a machine.
  * We get the PROM's root device and make sure we understand it, then
  * attach it as `mainbus0'.  We also set up to handle the PROM `sync'
@@ -559,13 +406,8 @@ void
 cpu_configure()
 {
 
-	/* build the bootpath */
-	bootpath_build();
-
-#if notyet
-        /* FIXME FIXME FIXME  This is probably *WRONG!!!**/
-        OF_set_callback(sync_crash);
-#endif
+	/* fetch boot device settings */
+	get_bootpath_from_prom();
 
 	/* block clock interrupts and anything below */
 	splclock();
@@ -626,8 +468,6 @@ opendisk(struct device *dv)
 void
 cpu_rootconf()
 {
-	struct bootpath *bp;
-	int bootpartition;
 	struct dkwedge_list wl;
 	struct dkwedge_info *wi;
 	struct vnode *vn;
@@ -641,14 +481,6 @@ cpu_rootconf()
 		return;
 	}
 
-	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
-	if (bp == NULL)
-		bootpartition = 0;
-	else if (booted_device != bp->dev)
-		bootpartition = 0;
-	else
-		bootpartition = bp->val[2];
-
 	if ((vn = opendisk(booted_device)) == NULL)
 		goto nowedge;
 
@@ -660,7 +492,7 @@ cpu_rootconf()
 		goto nowedge2;
 
 	snprintf(diskname, sizeof(diskname), "%s%c", booted_device->dv_xname, 
-	    bootpartition + 'a');
+	    booted_partition + 'a');
 
 	for (i = 0; i < wl.dkwl_ncopied; i++) {
 		if (strcmp(wi[i].dkw_wname, diskname) == 0)
@@ -677,18 +509,7 @@ cpu_rootconf()
 nowedge2:
 	free(wi, M_TEMP);
 nowedge:
-	setroot(booted_device, bootpartition);
-}
-
-/*
- * Console `sync' command.  SunOS just does a `panic: zero' so I guess
- * no one really wants anything fancy...
- */
-void
-sync_crash()
-{
-
-	panic("PROM sync command");
+	setroot(booted_device, booted_partition);
 }
 
 char *
@@ -785,9 +606,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		evcnt_attach_static(&intr_evcnts[i]);
 
 	node = findroot();
-
-	/* Establish the first component of the boot path */
-	bootpath_store(1, bootpath);
 
 	/* first early device to be configured is the CPU */
 	for (node = OF_child(node); node; node = OF_peer(node)) {
@@ -919,15 +737,6 @@ romgetcursoraddr(int **rowp, int **colp)
 	return (row == 0UL || col == 0UL);
 }
 
-#if 0
-void callrom()
-{
-
-	__asm volatile("wrpr	%%g0, 0, %%tl" : );
-	OF_enter();
-}
-#endif
-
 /*
  * find a device matching "name" and unit number
  */
@@ -954,389 +763,153 @@ getdevunit(const char *name, int unit)
 	return dev;
 }
 
-
 /*
- * Device registration used to determine the boot device.
- * 
- * Copied from the sparc port.
+ * Match a struct device against the bootpath, by
+ * comparing it's firmware package handle. If they match
+ * exactly, we found the boot device.
  */
-#include <dev/scsipi/scsi_all.h>
-#include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsiconf.h>
-
-#define BUSCLASS_NONE		0
-#define BUSCLASS_MAINBUS	1
-#define BUSCLASS_IOMMU		2
-#define BUSCLASS_OBIO		3
-#define BUSCLASS_SBUS		4
-#define BUSCLASS_VME		5
-#define BUSCLASS_PCI		6
-#define BUSCLASS_XDC		7
-#define BUSCLASS_XYC		8
-#define BUSCLASS_FDC		9
-
-static int bus_class(struct device *);
-static int dev_compatible(struct device *, void *, char *);
-static int instance_match(struct device *, void *, struct bootpath *);
-static void nail_bootdev(struct device *, struct bootpath *);
-
-static struct {
-	const char *name;
-	int	class;
-} bus_class_tab[] = {
-	{ "mainbus",	BUSCLASS_MAINBUS },
-	{ "upa",	BUSCLASS_MAINBUS },
-	{ "psycho",	BUSCLASS_MAINBUS },
-	{ "obio",	BUSCLASS_OBIO },
-	{ "iommu",	BUSCLASS_IOMMU },
-	{ "sbus",	BUSCLASS_SBUS },
-	{ "xbox",	BUSCLASS_SBUS },
-	{ "esp",	BUSCLASS_SBUS },
-	{ "dma",	BUSCLASS_SBUS },
-	{ "espdma",	BUSCLASS_SBUS },
-	{ "ledma",	BUSCLASS_SBUS },
-	{ "simba",	BUSCLASS_PCI },
-	{ "ppb",	BUSCLASS_PCI },
-	{ "isp",	BUSCLASS_PCI },
-	{ "pciide",	BUSCLASS_PCI },
-	{ "cmdide",	BUSCLASS_PCI },
-	{ "aceride",	BUSCLASS_PCI },
-	{ "siop",	BUSCLASS_PCI },
-	{ "esiop",	BUSCLASS_PCI },
-	{ "pci",	BUSCLASS_PCI },
-	{ "fdc",	BUSCLASS_FDC },
-};
-
-/*
- * A list of driver names may have differently named PROM nodes.
- */
-static struct {
-	const char *name;
-	const char *compat[6];
-} dev_compat_tab[] = {
-	{ "dma",	{ "espdma", NULL }},
-	{ "isp",	{ "QLGC,isp", "PTI,isp", "ptiisp", "scsi",
-			  "SUNW,isptwo", NULL }},
-	{ "fdc",	{ "SUNW,fdtwo",	NULL }},
-	{ "psycho",	{ "pci", NULL }},
-	{ "wd",		{ "disk", "ide-disk", NULL }},
-	{ "sd",		{ "disk", NULL }},
-	{ "hme",	{ "SUNW,hme", "network", NULL }},
-	{ "esp",	{ "SUNW,fas", "fas", NULL }},
-	{ "siop",	{ "glm",  "SUNW,glm", NULL }},
-	{ NULL,		{ NULL }},
-};
-
-int
-dev_compatible(struct device *dev, void *aux, char *bpname)
+static void
+dev_path_exact_match(struct device *dev, int ofnode)
 {
-	int i, j;
 
-	/*
-	 * Step 1:
-	 *
-	 * If this is a PCI device, find it's device class and try that.
-	 */
-	if ((bus_class(device_parent(dev))) == BUSCLASS_PCI) {
-		struct pci_attach_args *pa = aux;
+	if (ofnode != ofbootpackage)
+		return;
 
-		DPRINTF(ACDB_BOOTDEV,
-			("\n%s: dev_compatible: checking PCI class %x\n",
-				dev->dv_xname, pa->pa_class));
-
-		switch (PCI_CLASS(pa->pa_class)) {
-			/*
-			 * We can only really have pci-pci bridges,
-			 * disk controllers, or NICs on the bootpath.
-			 */
-		case PCI_CLASS_BRIDGE:
-			if (PCI_SUBCLASS(pa->pa_class) != 
-				PCI_SUBCLASS_BRIDGE_PCI)
-				break;
-			DPRINTF(ACDB_BOOTDEV,
-				("\n%s: dev_compatible: comparing %s with %s\n",
-					dev->dv_xname, bpname, "pci"));
-			if (strcmp(bpname, "pci") == 0)
-				return (0);
-			break;
-		case PCI_CLASS_MASS_STORAGE:
-			if (PCI_SUBCLASS(pa->pa_class) == 
-				PCI_SUBCLASS_MASS_STORAGE_IDE) {
-				DPRINTF(ACDB_BOOTDEV,
-					("\n%s: dev_compatible: "
-						"comparing %s with %s\n",
-						dev->dv_xname, bpname, "ide"));
-				if (strcmp(bpname, "ide") == 0)
-					return (0);
-			}
-			if (PCI_SUBCLASS(pa->pa_class) == 
-				PCI_SUBCLASS_MASS_STORAGE_SCSI) {
-				DPRINTF(ACDB_BOOTDEV,
-					("\n%s: dev_compatible: "
-						"comparing %s with %s\n",
-						dev->dv_xname, bpname, "scsi"));
-				if (strcmp(bpname, "scsi") == 0)
-					return (0);
-			}
-			break;
-		case PCI_CLASS_NETWORK:
-			DPRINTF(ACDB_BOOTDEV,
-				("\n%s: dev_compatible: comparing %s with %s\n",
-					dev->dv_xname, bpname, "network"));
-			if (strcmp(bpname, "network") == 0)
-				return (0);
-			if (strcmp(bpname, "ethernet") == 0)
-				return (0);
-			break;
-		default:
-			break;
-		}
-	}
-
-	/*
-	 * Step 2:
-	 * 
-	 * Look through the list of equivalent names and see if any of them
-	 * match.  This is a nasty O(n^2) operation.
-	 */
-	for (i = 0; dev_compat_tab[i].name != NULL; i++) {
-		if (device_is_a(dev, dev_compat_tab[i].name)) {
-			DPRINTF(ACDB_BOOTDEV,
-				("\n%s: dev_compatible: translating %s\n",
-					dev->dv_xname, dev_compat_tab[i].name));
-			for (j = 0; dev_compat_tab[i].compat[j] != NULL; j++) {
-				DPRINTF(ACDB_BOOTDEV,
-					("\n%s: dev_compatible: "
-						"comparing %s to %s\n",
-						dev->dv_xname, bpname,
-						dev_compat_tab[i].compat[j]));
-				if (strcmp(bpname, 
-					dev_compat_tab[i].compat[j]) == 0)
-					return (0);
-			}
-		}
-	}
-	DPRINTF(ACDB_BOOTDEV,
-		("\n%s: dev_compatible: no match\n",
-			dev->dv_xname));
-	return (1);
+	booted_device = dev;
+	DPRINTF(ACDB_BOOTDEV, ("found bootdevice: %s\n", dev->dv_xname));
 }
 
+/*
+ * Match a struct device against the bootpath, by
+ * comparing it's firmware package handle and calculating
+ * the target/lun suffix and compmaring that against
+ * the bootpath remainder.
+ */
+static void
+dev_path_drive_match(struct device *dev, int ctrlnode, int target, int lun)
+{
+	int child = 0;
+	char buf[OFPATHLEN];
+
+	/*
+	 * The ofbootpackage points to a disk on this controller, so
+	 * iterate over all child nodes and compare.
+	 */
+	for (child = prom_firstchild(ctrlnode); child != 0;
+	    child = prom_nextsibling(child))
+		if (child == ofbootpackage)
+			break;
+
+	if (child == ofbootpackage) {
+		/* boot device is on this controller */
+		DPRINTF(ACDB_BOOTDEV, ("found controller of bootdevice\n"));
+		sprintf(buf, "@%d,%d", target, lun);
+		if (strcmp(buf, ofboottarget) == 0) {
+			booted_device = dev;
+			if (ofbootpartition)
+				booted_partition = *ofbootpartition - 'a';
+			DPRINTF(ACDB_BOOTDEV, ("found boot device: %s"
+			    ", partition %d\n", dev->dv_xname,
+			    booted_partition));
+		}
+	}
+}
+
+/*
+ * Get the firmware package handle from a struct device.
+ * Assuming we have previously stored it in the device properties
+ * dictionary.
+ */
 static int
-bus_class(struct device *dev)
+device_ofnode(struct device *dev)
 {
-	int i, class;
+	prop_dictionary_t props;
+	prop_object_t obj;
 
-	class = BUSCLASS_NONE;
 	if (dev == NULL)
-		return (class);
+		return 0;
+	props = device_properties(dev);
+	if (props == NULL)
+		return 0;
+	obj = prop_dictionary_get(props, OFNODEKEY);
+	if (obj == NULL)
+		return 0;
 
-	for (i = sizeof(bus_class_tab)/sizeof(bus_class_tab[0]); i-- > 0;) {
-		if (device_is_a(dev, bus_class_tab[i].name)) {
-			class = bus_class_tab[i].class;
-			break;
-		}
-	}
-
-	return (class);
+	return prop_number_integer_value(obj);
 }
 
-int
-instance_match(struct device *dev, void *aux, struct bootpath *bp)
+/*
+ * Save the firmware package handle inside the properties dictionary
+ * of a struct device.
+ */
+static void
+device_setofnode(struct device *dev, int node)
 {
-	struct mainbus_attach_args *ma;
-	struct sbus_attach_args *sa;
-	struct pci_attach_args *pa;
+	prop_dictionary_t props;
+	prop_object_t obj;
 
-	/*
-	 * Several devices are represented on bootpaths in one of
-	 * two formats, e.g.:
-	 *	(1) ../sbus@.../esp@<offset>,<slot>/sd@..  (PROM v3 style)
-	 *	(2) /sbus0/esp0/sd@..                      (PROM v2 style)
-	 *
-	 * hence we fall back on a `unit number' check if the bus-specific
-	 * instance parameter check does not produce a match.
-	 *
-	 * For PCI devices, we get:
-	 *	../pci@../xxx@<dev>,<fn>/...
-	 */
-
-	/*
-	 * Rank parent bus so we know which locators to check.
-	 */
-	switch (bus_class(device_parent(dev))) {
-	case BUSCLASS_MAINBUS:
-		ma = aux;
-		DPRINTF(ACDB_BOOTDEV,
-		    ("instance_match: mainbus device, want %#x have %#x\n",
-		    ma->ma_upaid, bp->val[0]));
-		if (bp->val[0] == ma->ma_upaid)
-			return (1);
-		break;
-	case BUSCLASS_SBUS:
-		sa = aux;
-		DPRINTF(ACDB_BOOTDEV, ("instance_match: sbus device, "
-		    "want slot %#x offset %#x have slot %#x offset %#x\n",
-		     bp->val[0], bp->val[1], sa->sa_slot, sa->sa_offset));
-		if (bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset)
-			return (1);
-		break;
-	case BUSCLASS_PCI:
-		pa = aux;
-		DPRINTF(ACDB_BOOTDEV, ("instance_match: pci device, "
-		    "want dev %#x fn %#x have dev %#x fn %#x\n",
-		     bp->val[0], bp->val[1], pa->pa_device, pa->pa_function));
-		if (bp->val[0] == pa->pa_device &&
-		    bp->val[1] == pa->pa_function)
-			return (1);
-		break;
-	default:
-		break;
-	}
-
-	if (bp->val[0] == -1 && bp->val[1] == device_unit(dev))
-		return (1);
-
-	return (0);
+	if (dev == NULL)
+		return;
+	props = device_properties(dev);
+	if (props == NULL)
+		return;
+	obj = prop_number_create_integer(node);
+	if (obj == NULL)
+		return;
+	prop_dictionary_set(props, OFNODEKEY, obj);
 }
 
-void
-nail_bootdev(struct device *dev, struct bootpath *bp)
-{
-
-	if (bp->dev != NULL)
-		panic("device_register: already got a boot device: %s",
-			bp->dev->dv_xname);
-
-	/*
-	 * Mark this bootpath component by linking it to the matched
-	 * device. We pick up the device pointer in cpu_rootconf().
-	 */
-	booted_device = bp->dev = dev;
-
-	/*
-	 * Then clear the current bootpath component, so we don't spuriously
-	 * match similar instances on other busses, e.g. a disk on
-	 * another SCSI bus with the same target.
-	 */
-	bootpath_store(1, NULL);
-}
-
+/*
+ * Called back during autoconfiguration for each device found
+ */
 void
 device_register(struct device *dev, void *aux)
 {
-	struct bootpath *bp = bootpath_store(0, NULL);
-	char *bpname;
+	struct device *busdev = device_parent(dev);
+	int ofnode;
 
 	/*
-	 * If device name does not match current bootpath component
-	 * then there's nothing interesting to consider.
+	 * We don't know the type of 'aux' - it depends on the
+	 * bus this device attaches to. We are only interested in
+	 * certain bus types, this only is used to find the boot
+	 * device.
 	 */
-	if (bp == NULL)
-		return;
-
-	/*
-	 * Translate device name to device class name in case the prom uses
-	 * that.
-	 */
-	bpname = bp->name;
-	DPRINTF(ACDB_BOOTDEV,
-	    ("\n%s: device_register: dvname %s(%s) bpname %s\n",
-	    dev->dv_xname, device_cfdata(dev)->cf_name, dev->dv_xname, bpname));
-
-	/* First, match by name */
-	if (!device_is_a(dev, bpname)) {
-		if (dev_compatible(dev, aux, bpname) != 0)
-			return;
-	}
-
-	if (bus_class(dev) != BUSCLASS_NONE) {
+	if (busdev == NULL) {
 		/*
-		 * A bus or controller device of sorts. Check instance
-		 * parameters and advance boot path on match.
+		 * Ignore mainbus0 itself, it certainly is not a boot
+		 * device.
 		 */
-		if (instance_match(dev, aux, bp) != 0) {
-			bp->dev = dev;
-			bootpath_store(1, bp + 1);
-			DPRINTF(ACDB_BOOTDEV, ("\t-- found bus controller %s\n",
-			    dev->dv_xname));
-			return;
-		}
-	} else if (device_is_a(dev, "le") ||
-		   device_is_a(dev, "hme") ||
-		   device_is_a(dev, "tlp")) {
+	} else if (device_is_a(busdev, "mainbus")) {
+		struct mainbus_attach_args *ma = aux;
 
-		/*
-		 * ethernet devices.
-		 */
-		if (instance_match(dev, aux, bp) != 0) {
-			nail_bootdev(dev, bp);
-			DPRINTF(ACDB_BOOTDEV, ("\t-- found ethernet controller %s\n",
-			    dev->dv_xname));
-			return;
-		}
-	} else if (device_is_a(dev, "sd") ||
-		   device_is_a(dev, "cd")) {
-		/*
-		 * A SCSI disk or cd; retrieve target/lun information
-		 * from parent and match with current bootpath component.
-		 * Note that we also have look back past the `scsibus'
-		 * device to determine whether this target is on the
-		 * correct controller in our boot path.
-		 */
+		device_setofnode(dev, ma->ma_node);
+		dev_path_exact_match(dev, ma->ma_node);
+	} else if (device_is_a(busdev, "pci")) {
+		struct pci_attach_args *pa = aux;
+
+		ofnode = PCITAG_NODE(pa->pa_tag);
+		device_setofnode(dev, ofnode);
+		dev_path_exact_match(dev, ofnode);
+	} else if (device_is_a(busdev, "sbus")) {
+		struct sbus_attach_args *sa = aux;
+
+		ofnode = sa->sa_node;
+		device_setofnode(dev, ofnode);
+		dev_path_exact_match(dev, sa->sa_node);
+	} else if (device_is_a(dev, "sd") || device_is_a(dev, "cd")) {
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
-		struct scsibus_softc *sbsc =
-			(struct scsibus_softc *)device_parent(dev);
-		u_int target = bp->val[0];
-		u_int lun = bp->val[1];
 
-		/* Check the controller that this scsibus is on */
-		if ((bp-1)->dev != device_parent(&sbsc->sc_dev))
-			return;
-
-		/*
-		 * Bounds check: we know the target and lun widths.
-		 */
-		if (target >= periph->periph_channel->chan_ntargets ||
-		    lun >= periph->periph_channel->chan_nluns) {
-			printf("SCSI disk bootpath component not accepted: "
-			       "target %u; lun %u\n", target, lun);
-			return;
-		}
-
-		if (periph->periph_target == target &&
-		    periph->periph_lun == lun) {
-			nail_bootdev(dev, bp);
-			DPRINTF(ACDB_BOOTDEV, ("\t-- found [cs]d disk %s\n",
-			    dev->dv_xname));
-			return;
-		}
-	} else if (device_is_a(dev, "wd")) {
-		/* IDE disks. */
+		ofnode = device_ofnode(
+		    device_parent(device_parent(dev)));
+		dev_path_drive_match(dev, ofnode, periph->periph_target,
+		    periph->periph_lun);
+	} else if (device_is_a(busdev, "wd")) {
 		struct ata_device *adev = aux;
 
-		/*
-		 * The PROM gives you names like "disk@1,0", where the first value
-		 * appears to be both the drive & channel combined (channel * 2 +
-		 * drive), and the second value we don't use (what is it anyway?)
-		 */
-		if ((adev->adev_channel * 2) + adev->adev_drv_data->drive ==
-		    bp->val[0]) {
-			nail_bootdev(dev, bp);
-			DPRINTF(ACDB_BOOTDEV, ("\t-- found wd disk %s\n",
-			    dev->dv_xname));
-			return;
-		}
-	} else {
-		/*
-		 * Generic match procedure.
-		 */
-		if (instance_match(dev, aux, bp) != 0) {
-			nail_bootdev(dev, bp);
-			DPRINTF(ACDB_BOOTDEV, ("\t-- found generic device %s\n",
-			    dev->dv_xname));
-			return;
-		}
+		ofnode = device_ofnode(
+		    device_parent(device_parent(dev)));
+		dev_path_drive_match(dev, ofnode, adev->adev_channel*2+
+		    adev->adev_drv_data->drive, 0);
 	}
 }
