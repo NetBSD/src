@@ -1,4 +1,4 @@
-/* $Id: ar5315reg.h,v 1.1 2006/09/26 06:37:32 gdamore Exp $ */
+/* $Id: ar5315reg.h,v 1.2 2006/09/26 17:09:32 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -156,8 +156,13 @@
 /*
  * SDRAMCTL registers  -- offset relative to SDRAMCTL
  */
-#define	AR531X_SDRAMCTL_MEM_CFG0	0x0000
-#define	AR531X_SDRAMCTL_MEM_CFG1	0x0004
+#define	AR5315_SDRAMCTL_MEM_CFG			0x0000
+#define	AR5315_MEM_CFG_DATA_WIDTH_MASK		0x00000600
+#define	AR5315_MEM_CFG_DATA_WIDTH_SHIFT		13
+#define	AR5315_MEM_CFG_COL_WIDTH_MASK		0x00001E00
+#define	AR5315_MEM_CFG_COL_WIDTH_SHIFT		9
+#define	AR5315_MEM_CFG_ROW_WIDTH_MASK		0x000001E0
+#define	AR5315_MEM_CFG_ROW_WIDTH_SHIFT		5
 
 /* memory config 1 bits */
 #define	AR531X_MEM_CFG1_BANK0_MASK		0x00000700
