@@ -1,4 +1,4 @@
-/* $NetBSD: ar5315.c,v 1.1 2006/09/26 06:37:32 gdamore Exp $ */
+/* $NetBSD: ar5315.c,v 1.2 2006/09/26 17:09:32 gdamore Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -48,7 +48,7 @@
  * family.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.1 2006/09/26 06:37:32 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.2 2006/09/26 17:09:32 gdamore Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -80,26 +80,44 @@ __KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.1 2006/09/26 06:37:32 gdamore Exp $");
 #define	PUTSYSREG(x,v)	(REGVAL((x) + AR5315_SYSREG_BASE)) = (v)
 #define	GETPCIREG(x)	REGVAL((x) + AR5315_PCI_BASE)
 #define	PUTPCIREG(x,v)	(REGVAL((x) + AR5315_PCI_BASE)) = (v)
+#define	GETSDRAMREG(x)	REGVAL((x) + AR5315_SDRAMCTL_BASE)
 
 uint32_t
 ar531x_memsize(void)
 {
-	uint32_t	memsize;
+#ifndef	MEMSIZE
+	uint32_t	memsize = 0;
+	uint32_t	memcfg, cw, rw, dw;
 
 	/*
-	 * Determine the memory size.
-	 *
-	 * NB: we allow compile time override
+	 * Determine the memory size.  We query the board info.
 	 */
-#if defined(MEMSIZE)
-	memsize = MEMSIZE;
-#else
-	/* assume default value, may or may not be reasonable */
-	/* XXX: it would be nice if this could autodetect */
-	memsize = (8 << 20);
+	memcfg = GETSDRAMREG(AR5315_SDRAMCTL_MEM_CFG);
+	cw = (memcfg & AR5315_MEM_CFG_COL_WIDTH_MASK) >>
+	    AR5315_MEM_CFG_COL_WIDTH_SHIFT;
+	cw += 1;
+	rw = (memcfg & AR5315_MEM_CFG_ROW_WIDTH_MASK) >>
+	    AR5315_MEM_CFG_ROW_WIDTH_SHIFT;
+	rw += 1;
+
+	/* XXX: according to redboot, this could be wrong if DDR SDRAM */
+	dw = (memcfg & AR5315_MEM_CFG_DATA_WIDTH_MASK) >>
+	    AR5315_MEM_CFG_DATA_WIDTH_SHIFT;
+	dw += 1;
+	dw *= 8;	/* bits */
+
+	/* not too sure about this math, but it _seems_ to add up */
+	memsize = (1 << cw) * (1 << rw) * dw;
+#if 0
+	printf("SDRAM_MEM_CFG =%x, cw=%d rw=%d dw=%d xmemsize=%d\n", memcfg,
+	    cw, rw, dw, memsize);
 #endif
 
 	return (memsize);
+#else
+	/* compile time value forced */
+	return MEMSIZE;
+#endif
 }
 
 const char *
