@@ -1,4 +1,4 @@
-/*	$NetBSD: bthcid.h,v 1.2 2006/07/26 11:00:07 tron Exp $	*/
+/*	$NetBSD: bthcid.h,v 1.3 2006/09/26 19:18:19 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,35 +32,6 @@
 #ifndef _BTHCID_H_
 #define _BTHCID_H_	1
 
-/*
- * Client PIN Request packet
- */
-typedef struct {
-	bdaddr_t	laddr;			/* local address */
-	bdaddr_t	raddr;			/* remote address */
-	uint8_t		time;			/* validity (seconds) */
-} __attribute__ ((packed)) client_pin_request_t;
-
-/*
- * Client PIN Response packet
- */
-typedef struct {
-	bdaddr_t	laddr;			/* local address */
-	bdaddr_t	raddr;			/* remote address */
-	uint8_t		pin[HCI_PIN_SIZE];	/* PIN */
-} __attribute__ ((packed)) client_pin_response_t;
-
-/*
- * Default socket name
- */
-#define BTHCID_SOCKET_NAME	"/var/run/bthcid"
-
-/*
- * The rest is bthcid daemon internals
- */
-
-#ifdef _BTHCID_
-
 /* config.c */
 uint8_t		*lookup_key		(bdaddr_t *, bdaddr_t *);
 void		 save_key		(bdaddr_t *, bdaddr_t *, uint8_t *);
@@ -74,5 +45,4 @@ uint8_t		*lookup_pin		(bdaddr_t *, bdaddr_t *);
 int		 init_hci		(bdaddr_t *);
 int		 send_pin_code_reply	(int, struct sockaddr_bt *, bdaddr_t *, uint8_t *);
 
-#endif	/* _BTHCID_ */
 #endif	/* _BTHCID_H_ */

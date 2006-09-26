@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.2 2006/07/26 11:00:07 tron Exp $	*/
+/*	$NetBSD: client.c,v 1.3 2006/09/26 19:18:19 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: client.c,v 1.2 2006/07/26 11:00:07 tron Exp $");
+__RCSID("$NetBSD: client.c,v 1.3 2006/09/26 19:18:19 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/queue.h>
@@ -181,7 +181,7 @@ process_control(int sock, short ev, void *arg)
 static void
 process_client(int sock, short ev, void *arg)
 {
-	client_pin_response_t	 rp;
+	bthcid_pin_response_t	 rp;
 	struct timeval		 tv;
 	struct sockaddr_bt	 sa;
 	struct client		*cl = arg;
@@ -250,7 +250,7 @@ newpin:
 int
 send_client_request(bdaddr_t *laddr, bdaddr_t *raddr, int hci)
 {
-	client_pin_request_t	 cp;
+	bthcid_pin_request_t	 cp;
 	struct client		*cl;
 	struct item		*item;
 	int			 n = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.h,v 1.2 2006/07/26 11:11:04 tron Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.3 2006/09/26 19:18:19 plunky Exp $	*/
 
 /*
  * bluetooth.h
@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: bluetooth.h,v 1.2 2006/07/26 11:11:04 tron Exp $
+ * $Id: bluetooth.h,v 1.3 2006/09/26 19:18:19 plunky Exp $
  * $FreeBSD: src/lib/libbluetooth/bluetooth.h,v 1.2 2005/03/17 21:39:44 emax Exp $
  */
 
@@ -66,6 +66,27 @@ int               bt_aton             (char const *, bdaddr_t *);
 
 int               bt_devaddr          (const char *, bdaddr_t *);
 int               bt_devname          (char *, const bdaddr_t *);
+
+/*
+ * bthcid(8) PIN Client API
+ */
+
+/* Client PIN Request packet */
+typedef struct {
+	bdaddr_t	laddr;			/* local address */
+	bdaddr_t	raddr;			/* remote address */
+	uint8_t		time;			/* validity (seconds) */
+} __attribute__ ((packed)) bthcid_pin_request_t;
+
+/* Client PIN Response packet */
+typedef struct {
+	bdaddr_t	laddr;			/* local address */
+	bdaddr_t	raddr;			/* remote address */
+	uint8_t		pin[HCI_PIN_SIZE];	/* PIN */
+} __attribute__ ((packed)) bthcid_pin_response_t;
+
+/* Default socket name */
+#define BTHCID_SOCKET_NAME	"/var/run/bthcid"
 
 #ifdef COMPAT_BLUEZ
 /*
