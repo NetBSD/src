@@ -1,4 +1,4 @@
-/*	$NetBSD: backupsa.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: backupsa.c,v 1.5 2006/09/26 21:25:52 manu Exp $	*/
 
 /*	$KAME: backupsa.c,v 1.16 2001/12/31 20:13:40 thorpej Exp $	*/
 
@@ -212,9 +212,10 @@ backupsa_from_file()
 	time_t created, current;
 	char *p, *q;
         u_int satype, mode;
-        struct sockaddr *src, *dst;
+        struct sockaddr *src = NULL;
+        struct sockaddr *dst = NULL;
+        caddr_t keymat = NULL;
         u_int32_t spi, reqid;
-        caddr_t keymat;
 	size_t keymatlen;
         u_int wsize, e_type, e_keylen, a_type, a_keylen, flags;
         u_int32_t l_alloc;
@@ -246,8 +247,9 @@ backupsa_from_file()
 	err:
 			plog(LLV_ERROR, LOCATION, NULL,
 				"illegal format line#%d in %s: %s\n",
-				line, lcconf->pathinfo[LC_PATHTYPE_BACKUPSA], buf);
-			continue;
+				line, lcconf->pathinfo[LC_PATHTYPE_BACKUPSA], 
+				buf);
+			goto next;
 		}
 		created = mktime(&tm);
 		p++;
@@ -255,32 +257,28 @@ backupsa_from_file()
 		for (q = p; *q != '\0' && !isspace((int)*q); q++)
 			;
 		*q = '\0';
-		src = str2saddr(p, NULL);
-		if (src == NULL)
-			goto err;
+		if ((src = str2saddr(p, NULL)) == NULL)
+			goto next;
 		p = q + 1;
 
 		for (q = p; *q != '\0' && !isspace((int)*q); q++)
 			;
 		*q = '\0';
-		dst = str2saddr(p, NULL);
-		if (dst == NULL) {
-			racoon_free(src);
-			goto err;
-		}
+		if ((dst = str2saddr(p, NULL)) == NULL)
+			goto next;
 		p = q + 1;
 
-#define GETNEXTNUM(value, function) \
-do { \
-	char *y; \
-	for (q = p; *q != '\0' && !isspace((int)*q); q++) \
-		; \
-	*q = '\0'; \
-	(value) = function(p, &y, 10); \
-	if ((value) == 0 && *y != '\0') \
-		goto err; \
-	p = q + 1; \
-} while (0);
+#define GETNEXTNUM(value, function) 				\
+do { 								\
+	char *y; 						\
+	for (q = p; *q != '\0' && !isspace((int)*q); q++) 	\
+		; 						\
+	*q = '\0'; 						\
+	(value) = function(p, &y, 10); 				\
+	if ((value) == 0 && *y != '\0') 			\
+		goto next; 					\
+	p = q + 1; 						\
+} while (/*CONSTCOND*/0);
 
 		GETNEXTNUM(satype, strtoul);
 		GETNEXTNUM(spi, strtoul);
@@ -305,20 +303,16 @@ do { \
 		if (keymat == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"illegal format(keymat) line#%d in %s: %s\n",
-				line, lcconf->pathinfo[LC_PATHTYPE_BACKUPSA], buf);
-			racoon_free(src);
-			racoon_free(dst);
-			continue;
+				line, lcconf->pathinfo[LC_PATHTYPE_BACKUPSA], 
+				buf);
+			goto next;
 		}
 
 		if (created + l_addtime < current) {
 			plog(LLV_DEBUG, LOCATION, NULL,
 				"ignore this line#%d in %s due to expiration\n",
 				line, lcconf->pathinfo[LC_PATHTYPE_BACKUPSA]);
-			racoon_free(src);
-			racoon_free(dst);
-			racoon_free(keymat);
-			continue;
+			goto next;
 		}
 		l_addtime -= current - created;
 
@@ -336,11 +330,23 @@ do { \
 				0, l_bytes, l_addtime, 0, seq) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"restore SA filed line#%d in %s: %s\n",
-				line, lcconf->pathinfo[LC_PATHTYPE_BACKUPSA], ipsec_strerror());
+				line, lcconf->pathinfo[LC_PATHTYPE_BACKUPSA], 
+				ipsec_strerror());
 		}
-		racoon_free(src);
-		racoon_free(dst);
-		racoon_free(keymat);
+
+next:
+	 	if (src != NULL) {
+			racoon_free(src);
+			src = NULL;
+		}
+		if (dst != NULL) {
+			racoon_free(dst);
+			dst = NULL;
+		}
+		if (keymat != NULL) {
+			racoon_free(keymat);
+			keymat = NULL;
+		}
 	}
 
 	fclose(fp);
