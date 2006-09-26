@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.121 2006/09/26 16:11:02 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.122 2006/09/26 19:06:46 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.121 2006/09/26 16:11:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.122 2006/09/26 19:06:46 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -321,13 +321,14 @@ static void
 get_bootpath_from_prom()
 {
 	char sbuf[OFPATHLEN], *cp;
-	long chosen;
+	int chosen;
 
 	/*
 	 * Grab boot path from PROM
 	 */
-	chosen = OF_finddevice("/chosen");
-	OF_getprop(chosen, "bootpath", sbuf, sizeof(sbuf));
+	if ((chosen = OF_finddevice("/chosen")) == -1 ||
+	    OF_getprop(chosen, "bootpath", sbuf, sizeof(sbuf)) < 0)
+		return;
 
 	strcpy(ofbootpath, sbuf);
 	ofbootpackage = prom_finddevice(ofbootpath);
@@ -352,7 +353,9 @@ get_bootpath_from_prom()
 		    ofbootpartition));
 
 	/* Setup pointer to boot flags */
-	OF_getprop(chosen, "bootargs", sbuf, sizeof(sbuf));
+	if (OF_getprop(chosen, "bootargs", sbuf, sizeof(sbuf)) == -1)
+		return;
+
 	cp = sbuf;
 
 	/* Find start of boot flags */
