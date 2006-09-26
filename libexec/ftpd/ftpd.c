@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.176 2006/05/09 20:18:06 mrg Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.177 2006/09/26 06:47:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.176 2006/05/09 20:18:06 mrg Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.177 2006/09/26 06:47:20 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -905,7 +905,9 @@ user(const char *name)
 	permitted = checkuser(_NAME_FTPUSERS, curname, 1, 0, &class);
 
 			/* check user in /etc/ftpchroot */
+#ifdef	LOGIN_CAP
 	lc = login_getpwclass(pw);
+#endif
 	if (checkuser(_NAME_FTPCHROOT, curname, 0, 0, NULL)
 #ifdef	LOGIN_CAP	/* Allow login.conf configuration as well */
 	    || login_getcapbool(lc, "ftp-chroot", 0)
