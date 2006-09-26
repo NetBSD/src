@@ -1,4 +1,4 @@
-/*	$NetBSD: whatis.c,v 1.21 2006/04/10 14:39:06 chuck Exp $	*/
+/*	$NetBSD: whatis.c,v 1.22 2006/09/26 04:16:24 daniel Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: whatis.c,v 1.21 2006/04/10 14:39:06 chuck Exp $");
+__RCSID("$NetBSD: whatis.c,v 1.22 2006/09/26 04:16:24 daniel Exp $");
 #endif
 #endif /* not lint */
 
@@ -205,10 +205,20 @@ match(char *bp, char *str)
 		for (; *bp && *bp != '[' && !isalnum((unsigned char)*bp); ++bp);
 		if (!*bp)
 			break;
-		for (start = bp++;
-		    *bp && (*bp == '_'  || isalnum((unsigned char)*bp)); ++bp);
-		if (bp - start == len && !strncasecmp(start, str, len))
+
+		/* check for word match first */
+		for (start = bp++; *bp && (*bp == '_' ||
+			isalnum((unsigned char) *bp)); ++bp);
+		if (bp - start == len && strncasecmp(start, str, len) == 0) {
 			return(1);
+		} else if (*bp && *bp != ',') {
+			/* check for full string match */
+			for (bp = start; *bp && *bp != ',' && *bp != '(' &&
+				!isspace((unsigned char) *bp); ++bp);
+			if (bp - start == len &&
+				strncasecmp(start, str, len) == 0)
+				return(1);
+		}
 	}
 	return(0);
 }
