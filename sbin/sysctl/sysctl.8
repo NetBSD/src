@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.153 2006/09/05 00:29:35 rpaulo Exp $
+.\"	$NetBSD: sysctl.8,v 1.154 2006/09/26 14:48:40 elad Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd September 5, 2006
+.Dd September 26, 2006
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -554,7 +554,7 @@ privilege can change the value.
 .It proc.\*[Lt]pid\*[Gt].stopfork	int	yes
 .It security.curtain	integer	yes
 .It security.pax.mprotect.enabled	integer	yes
-.It security.pax.mprotect.global_protection	integer	yes
+.It security.pax.mprotect.global	integer	yes
 .It user.bc_base_max	integer	no
 .It user.bc_dim_max	integer	no
 .It user.bc_scale_max	integer	no

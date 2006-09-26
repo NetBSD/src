@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pax.c,v 1.3 2006/05/20 15:45:37 elad Exp $ */
+/* $NetBSD: kern_pax.c,v 1.4 2006/09/26 14:48:40 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -73,7 +73,7 @@ SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &rnode, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "global_protection",
+		       CTLTYPE_INT, "global",
 		       SYSCTL_DESCR("When enabled, unless explicitly "
 				    "specified, apply restrictions to"
 				    "all processes."),
