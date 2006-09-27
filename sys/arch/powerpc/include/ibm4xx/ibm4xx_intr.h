@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_intr.h,v 1.12 2006/06/30 17:54:51 freza Exp $	*/
+/*	$NetBSD: ibm4xx_intr.h,v 1.13 2006/09/27 09:11:47 freza Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,23 +42,23 @@
 #include <powerpc/softintr.h>
 
 /* Interrupt priority `levels'. */
-#define	IPL_NONE	9	/* nothing */
-#define	IPL_SOFTCLOCK	8	/* software clock interrupt */
-#define	IPL_SOFTNET	7	/* software network interrupt */
-#define	IPL_BIO		6	/* block I/O */
-#define	IPL_NET		5	/* network */
-#define	IPL_SOFTSERIAL	4	/* software serial interrupt */
-#define	IPL_TTY		3	/* terminal */
+#define	IPL_NONE	12	/* nothing */
+#define	IPL_SOFTCLOCK	11	/* software clock interrupt */
+#define	IPL_SOFTNET	10	/* software network interrupt */
+#define	IPL_BIO		9	/* block I/O */
+#define	IPL_NET		8	/* network */
+#define	IPL_SOFTSERIAL	7	/* software serial interrupt */
+#define	IPL_TTY		6	/* terminal */
 #define	IPL_LPT		IPL_TTY
-#define	IPL_VM		3	/* memory allocation */
-#define	IPL_AUDIO	2	/* audio */
-#define	IPL_CLOCK	1	/* clock */
-#define	IPL_STATCLOCK	IPL_CLOCK
+#define	IPL_VM		5	/* memory allocation */
+#define	IPL_AUDIO	4	/* audio */
+#define	IPL_CLOCK	3	/* clock */
+#define	IPL_STATCLOCK	2
 #define	IPL_HIGH	1	/* everything */
 #define	IPL_SCHED	IPL_HIGH
 #define	IPL_LOCK	IPL_HIGH
 #define	IPL_SERIAL	0	/* serial */
-#define	NIPL		10
+#define	NIPL		13
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -80,7 +80,8 @@ void 	splx(int);
 void 	softintr(int);
 
 extern volatile u_int 		imask[NIPL];
-extern const int 		mask_clock; 	/* for clock.c */
+extern const int 		mask_clock; 		/* for clock.c */
+extern const int 		mask_statclock; 	/* for clock.c */
 
 #define	spllowersoftclock() 	spllower(imask[IPL_SOFTCLOCK])
 #define	splraiseipl(x)		splraise(imask[x])
