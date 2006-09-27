@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.784 2006/09/26 14:30:26 elad Exp $
+# $NetBSD: GENERIC,v 1.785 2006/09/27 23:58:50 hubertf Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.784 $"
+#ident 		"GENERIC-$Revision: 1.785 $"
 
 maxusers	32		# estimated number of users
 
@@ -265,6 +265,7 @@ options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #options 	WSKBD_EVENT_AUTOREPEAT		# auto repeat in event mode
+#options 	WSKBD_USONLY			# strip off non-US keymaps
 # don't attach pckbd as the console if no PS/2 keyboard is found
 options 	PCKBD_CNATTACH_MAY_FAIL
 # see dev/pckbport/wskbdmap_mfii.c for implemented layouts
