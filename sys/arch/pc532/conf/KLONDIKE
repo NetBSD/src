@@ -1,5 +1,5 @@
 
-#	$NetBSD: KLONDIKE,v 1.39 2006/08/26 20:26:56 christos Exp $
+#	$NetBSD: KLONDIKE,v 1.40 2006/09/27 21:42:06 manu Exp $
 #
 # KLONDIKE: Matthias Pfaller's pc532
 #
@@ -37,6 +37,7 @@ options 	COMPAT_11		# NetBSD 1.1,
 options 	COMPAT_12		# NetBSD 1.2,
 options 	COMPAT_13		# NetBSD 1.3
 options 	COMPAT_14		# NetBSD 1.4,
+options 	COMPAT_15		# NetBSD 1.5,
 options 	COMPAT_16		# NetBSD 1.6,
 options 	COMPAT_20		# NetBSD 2.0,
 options 	COMPAT_30		# NetBSD 3.0 compatibility.

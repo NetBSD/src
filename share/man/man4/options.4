@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.335 2006/09/26 14:48:40 elad Exp $
+.\"	$NetBSD: options.4,v 1.336 2006/09/27 21:42:04 manu Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -310,6 +310,14 @@ to be performed, and allows the
 mode of the
 .Xr nfssvc 2
 system call to be used for compatibility with the deprecated nfsiod program.
+.It Cd options COMPAT_15
+Enable binary compatibility with
+.Nx 1.5 .
+Since there were no API changes from
+.Nx 1.5
+and
+.Nx 1.6 ,
+this option does nothing.
 .It Cd options COMPAT_16
 Enable binary compatibility with
 .Nx 1.6 .

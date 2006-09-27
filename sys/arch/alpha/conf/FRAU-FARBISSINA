@@ -1,4 +1,4 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.50 2006/08/14 06:22:33 skrll Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.51 2006/09/27 21:42:04 manu Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
@@ -7,7 +7,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.50 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.51 $"
 
 maxusers 64
 
@@ -76,6 +76,7 @@ options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
