@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.113 2006/09/15 15:51:13 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.114 2006/09/27 17:18:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.113 2006/09/15 15:51:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.114 2006/09/27 17:18:50 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -972,7 +972,7 @@ uvm_page_recolor(int newncolors)
  * uvm_pagealloc_pgfl: helper routine for uvm_pagealloc_strat
  */
 
-static inline struct vm_page *
+static struct vm_page *
 uvm_pagealloc_pgfl(struct pgfreelist *pgfl, int try1, int try2,
     int *trycolorp)
 {
