@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.130 2006/06/10 14:48:46 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.130.2.1 2006/09/27 12:15:14 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -133,8 +133,10 @@ enum {
 /* All kernels */
 #define SET_KERNEL SET_KERNEL_1, SET_KERNEL_2, SET_KERNEL_3, SET_KERNEL_4, \
 		    SET_KERNEL_5, SET_KERNEL_6, SET_KERNEL_7, SET_KERNEL_8
+/* Core system sets */
+#define SET_CORE SET_BASE, SET_ETC
 /* All system sets */
-#define SET_SYSTEM SET_BASE, SET_ETC, SET_COMPILER, SET_GAMES, \
+#define SET_SYSTEM SET_CORE, SET_COMPILER, SET_GAMES, \
 		    SET_MAN_PAGES, SET_MISC, SET_TEXT_TOOLS
 /* All X11 sets */
 #define SET_X11_NOSERVERS SET_X11_BASE, SET_X11_FONTS, SET_X11_PROG, SET_X11_ETC
@@ -397,7 +399,7 @@ int	check_partitions(void);
 void	set_sizemultname_cyl(void);
 void	set_sizemultname_meg(void);
 int	check_lfs_progs(void);
-void	init_set_status(void);
+void	init_set_status(int);
 void	customise_sets(void);
 void	umount_mnt2(void);
 

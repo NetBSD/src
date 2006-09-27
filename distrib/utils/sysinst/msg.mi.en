@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.145 2006/02/26 10:25:52 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.145.2.1 2006/09/27 12:15:14 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -424,9 +424,9 @@ message distset
 {The NetBSD distribution is broken into a collection of distribution
 sets.  There are some basic sets that are needed by all installations
 and there are some other sets that are not needed by all installations.
-You may choose to install all of them (Full installation) or you
-select from the optional distribution sets.
-}
+You may choose to install a core set (Minimal installation), all of them
+(Full installation) or you select from the optional distribution sets.
+} /* XXX add 'minimal installation' */
 
 message ftpsource
 {The following are the %s site, directory, user, and password that
@@ -895,6 +895,7 @@ message local_fs {Unmounted fs}
 message local_dir {Local directory}
 message Select_your_distribution {Select your distribution}
 message Full_installation {Full installation}
+message Minimal_installation {Minimal installation}
 message Custom_installation {Custom installation}
 message hidden {** hidden **}
 message Host {Host}
