@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.13 2006/07/10 12:52:13 freza Exp $	*/
+/*	$NetBSD: intr.c,v 1.14 2006/09/27 09:11:47 freza Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13 2006/07/10 12:52:13 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.14 2006/09/27 09:11:47 freza Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13 2006/07/10 12:52:13 freza Exp $");
 #define	MASK_SOFTNET	IRQ_TO_MASK(IRQ_SOFTNET)
 #define	MASK_SOFTCLOCK	IRQ_TO_MASK(IRQ_SOFTCLOCK)
 #define	MASK_SOFTSERIAL	IRQ_TO_MASK(IRQ_SOFTSERIAL)
+#define	MASK_STATCLOCK 	IRQ_TO_MASK(IRQ_STATCLOCK)
 #define	MASK_CLOCK	(IRQ_TO_MASK(IRQ_CLOCK) | IRQ_TO_MASK(IRQ_STATCLOCK))
 #define	MASK_SOFTINTR	(MASK_SOFTCLOCK|MASK_SOFTNET|MASK_SOFTSERIAL)
 #define	MASK_HARDINTR 	~(MASK_SOFTINTR|MASK_CLOCK)
@@ -127,6 +128,7 @@ struct intrsrc {
 
 volatile u_int 			imask[NIPL];
 const int 			mask_clock = MASK_CLOCK;
+const int 			mask_statclock = MASK_STATCLOCK;
 
 static struct intrsrc 		intrs[ICU_LEN] = {
 #define DEFINTR(name) 		\
@@ -426,10 +428,10 @@ intr_calculatemasks(void)
 	}
 
 	/*
-	 * IPL_CLOCK should mask clock interrupt even if interrupt handler
-	 * is not registered.
+	 * Not external interrupts, make them block themselves manually.
 	 */
-	imask[IPL_CLOCK] |= MASK_CLOCK;
+	imask[IPL_CLOCK] = MASK_CLOCK;
+	imask[IPL_STATCLOCK] = MASK_STATCLOCK;
 
 	/*
 	 * Initialize the soft interrupt masks to block themselves.
@@ -437,6 +439,12 @@ intr_calculatemasks(void)
 	imask[IPL_SOFTCLOCK] = MASK_SOFTCLOCK;
 	imask[IPL_SOFTNET] = MASK_SOFTNET;
 	imask[IPL_SOFTSERIAL] = MASK_SOFTSERIAL;
+
+	/*
+	 * Enforce hierarchy required by spl(9).
+	 */
+	imask[IPL_SOFTNET] |= imask[IPL_SOFTCLOCK];
+	imask[IPL_SOFTSERIAL] |= imask[IPL_SOFTCLOCK];
 
 	/*
 	 * IPL_NONE is used for hardware interrupts that are never blocked,
@@ -448,8 +456,6 @@ intr_calculatemasks(void)
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
-	imask[IPL_SOFTCLOCK] |= imask[IPL_NONE];
-	imask[IPL_SOFTNET] |= imask[IPL_SOFTCLOCK];
 	imask[IPL_BIO] |= imask[IPL_SOFTNET];
 	imask[IPL_NET] |= imask[IPL_BIO];
 	imask[IPL_SOFTSERIAL] |= imask[IPL_NET];
@@ -470,9 +476,14 @@ intr_calculatemasks(void)
 	imask[IPL_CLOCK] |= imask[IPL_AUDIO];
 
 	/*
+	 * We have separate statclock.
+	 */
+	imask[IPL_STATCLOCK] |= imask[IPL_CLOCK];
+
+	/*
 	 * IPL_HIGH must block everything that can manipulate a run queue.
 	 */
-	imask[IPL_HIGH] |= imask[IPL_CLOCK];
+	imask[IPL_HIGH] |= imask[IPL_STATCLOCK];
 
 	/*
 	 * We need serial drivers to run at the absolute highest priority to
