@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.1 2006/09/23 05:12:22 macallan Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.2 2006/09/27 05:19:23 macallan Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.1 2006/09/23 05:12:22 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.2 2006/09/27 05:19:23 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,20 +149,17 @@ static void	chipsfb_bitblt(struct chipsfb_softc *, int, int, int, int,
 			    int, int, uint8_t);
 static void	chipsfb_rectfill(struct chipsfb_softc *, int, int, int, int,
 			    int);
-#if 0
 static void	chipsfb_putchar(void *, int, int, u_int, long);
 static void	chipsfb_setup_mono(struct chipsfb_softc *, int, int, int,
 			    int, uint32_t, uint32_t); 
-static void	chipsfb_feed_line(struct chipsfb_softc *, int, uint8_t *);
-#endif
+static void	chipsfb_feed(struct chipsfb_softc *, int, uint8_t *);
+
 #ifdef chipsfb_DEBUG
 static void	chipsfb_showpal(struct chipsfb_softc *);
 #endif
 static void	chipsfb_restore_palette(struct chipsfb_softc *);
 
 static void	chipsfb_wait_idle(struct chipsfb_softc *);
-
-static int	chipsfb_intr(void *);
 
 struct wsscreen_descr chipsfb_defaultscreen = {
 	"default",
@@ -274,9 +271,7 @@ chipsfb_attach(struct device *parent, struct device *self, void *aux)
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri;
 	pcireg_t screg;
-	pci_intr_handle_t ih;
 	ulong defattr;
-	const char *intrstr;
 	int console, width, height, node, i, j;
 #ifdef HAVE_OPENFIRMWARE
 	int linebytes, depth;
@@ -350,8 +345,10 @@ chipsfb_attach(struct device *parent, struct device *self, void *aux)
 	    sc->width, sc->height, sc->bits_per_pixel);
 #endif
 
+#ifdef notyet
 	/* XXX this should at least be configurable via kernel config */
-	//chipsfb_set_videomode(sc, &videomode_list[16]);
+	chipsfb_set_videomode(sc, &videomode_list[16]);
+#endif
 
 	vcons_init(&sc->vd, sc, &chipsfb_defaultscreen, &chipsfb_accessops);
 	sc->vd.init_screen = chipsfb_init_screen;
@@ -374,7 +371,9 @@ chipsfb_attach(struct device *parent, struct device *self, void *aux)
 		 * since we're not the console we can postpone the rest
 		 * until someone actually allocates a screen for us
 		 */
-		//chipsfb_set_videomode(sc, &videomode_list[0]);		 
+#ifdef notyet
+		chipsfb_set_videomode(sc, &videomode_list[0]);
+#endif
 	}
 
 	rasops_unpack_attr(defattr, &fg, &bg, &ul);
@@ -393,25 +392,6 @@ chipsfb_attach(struct device *parent, struct device *self, void *aux)
 		chipsfb_putpalreg(sc, i, rasops_cmap[j], rasops_cmap[j + 1], 
 		    rasops_cmap[j + 2]);
 		j += 3;
-	}
-
-	/* Interrupt. We don't use it for anything yet */
-	if (pci_intr_map(pa, &ih)) {
-		printf("%s: failed to map interrupt\n", sc->sc_dev.dv_xname);
-	} else {
-		intrstr = pci_intr_string(sc->sc_pc, ih);
-		sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_NET, 
-		    chipsfb_intr, sc);
-		if (sc->sc_ih == NULL) {
-			printf("%s: failed to establish interrupt",
-			    sc->sc_dev.dv_xname);
-			if (intrstr != NULL)
-				printf(" at %s", intrstr);
-			printf("\n");
-		} else {
-			printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, 
-			    intrstr);
-		}
 	}
 
 	aa.console = console;
@@ -684,12 +664,15 @@ chipsfb_bitblt(struct chipsfb_softc *sc, int xs, int ys, int xd, int yd,
 	stride = (sc->linebytes << 16) | sc->linebytes;
 	size = (height << 16) | width;
 	
+	chipsfb_wait_idle(sc);
 	chipsfb_write32(sc, CT_BLT_STRIDE, stride);
 	chipsfb_write32(sc, CT_BLT_SRCADDR, src);
 	chipsfb_write32(sc, CT_BLT_DSTADDR, dst);
 	chipsfb_write32(sc, CT_BLT_CONTROL, cmd);
 	chipsfb_write32(sc, CT_BLT_SIZE, size);
+#ifdef CHIPSFB_WAIT
 	chipsfb_wait_idle(sc);
+#endif
 }
  
 static void
@@ -706,6 +689,7 @@ chipsfb_rectfill(struct chipsfb_softc *sc, int x, int y, int width,
 	stride = (sc->linebytes << 16) | sc->linebytes;
 	size = (height << 16) | width;
 	
+	chipsfb_wait_idle(sc);
 	chipsfb_write32(sc, CT_BLT_STRIDE, stride);
 	chipsfb_write32(sc, CT_BLT_SRCADDR, dst);
 	chipsfb_write32(sc, CT_BLT_DSTADDR, dst);
@@ -713,11 +697,11 @@ chipsfb_rectfill(struct chipsfb_softc *sc, int x, int y, int width,
 	chipsfb_write32(sc, CT_BLT_BG, colour);
 	chipsfb_write32(sc, CT_BLT_FG, colour);
 	chipsfb_write32(sc, CT_BLT_SIZE, size);
+#ifdef CHIPSFB_WAIT
 	chipsfb_wait_idle(sc);
-
+#endif
 }
 
-#if 0
 static void
 chipsfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 {
@@ -727,7 +711,7 @@ chipsfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		uint8_t *data;
-		int fg, bg, uc, i;
+		int fg, bg, uc;
 		int x, y, wi, he;
 
 		wi = ri->ri_font->fontwidth;
@@ -745,12 +729,8 @@ chipsfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			uc = c-ri->ri_font->firstchar;
 			data = (uint8_t *)ri->ri_font->data + uc * 
 			    ri->ri_fontscale;
-				chipsfb_setup_mono(sc, x, y, wi, he, fg, bg);		
-			for (i = 0; i < he; i++) {
-				chipsfb_feed_line(sc, 
-				    ri->ri_font->stride, data);
-				data += ri->ri_font->stride;
-			}
+			chipsfb_setup_mono(sc, x, y, wi, he, fg, bg);
+			chipsfb_feed(sc, ri->ri_font->stride * he, data);
 		}
 	}
 }
@@ -759,13 +739,57 @@ static void
 chipsfb_setup_mono(struct chipsfb_softc *sc, int xd, int yd, int width,
     int height, uint32_t fg, uint32_t bg) 
 {
+	uint32_t dst, cmd, stride, size;
+
+	cmd = BLT_PAT_IS_SOLID | BLT_SRC_IS_CPU | BLT_SRC_IS_MONO | ROP_COPY;
+
+	/* we assume 8 bit for now */
+	dst = xd + yd * sc->linebytes;
+	
+	stride = (sc->linebytes << 16);
+	size = (height << 16) | width;
+	
+	chipsfb_wait_idle(sc);
+	chipsfb_write32(sc, CT_BLT_STRIDE, stride);
+	chipsfb_write32(sc, CT_BLT_EXPCTL, MONO_SRC_ALIGN_BYTE);
+	chipsfb_write32(sc, CT_BLT_DSTADDR, dst);
+	chipsfb_write32(sc, CT_BLT_SRCADDR, 0);
+	chipsfb_write32(sc, CT_BLT_CONTROL, cmd);
+	chipsfb_write32(sc, CT_BLT_BG, bg);
+	chipsfb_write32(sc, CT_BLT_FG, fg);
+	chipsfb_write32(sc, CT_BLT_SIZE, size);
 
 }
 
 static void 
-chipsfb_feed_line(struct chipsfb_softc *sc, int count, uint8_t *data)
+chipsfb_feed(struct chipsfb_softc *sc, int count, uint8_t *data)
 {
-
+	int i;
+	uint32_t latch = 0, bork;
+	int shift = 0;
+	
+	for (i = 0; i < count; i++) {
+		bork = data[i];
+		latch |= (bork << shift);
+		if (shift == 24) {
+			chipsfb_write32(sc, CT_OFF_DATA, latch);
+			latch = 0;
+			shift = 0;
+		} else
+			shift += 8;
+	}
+	if (shift != 0) {
+		chipsfb_write32(sc, CT_OFF_DATA, latch);
+	} else {
+		/*
+		 * sometimes the chip just sits here waiting for more data - 
+		 * sending one more word gets it going again
+	 	 */
+		chipsfb_write32(sc, CT_OFF_DATA, 0);
+	}
+#ifdef CHIPSFB_WAIT
+	chipsfb_wait_idle(sc);
+#endif
 }	
 
 #ifdef CHIPSFB_DEBUG
@@ -790,7 +814,6 @@ chipsfb_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
 }
 #endif
 
-#endif
 static void
 chipsfb_restore_palette(struct chipsfb_softc *sc)
 {
@@ -948,9 +971,7 @@ chipsfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.eraserows = chipsfb_eraserows;
 	ri->ri_ops.erasecols = chipsfb_erasecols;
 	ri->ri_ops.cursor = chipsfb_cursor;
-#if 0
 	ri->ri_ops.putchar = chipsfb_putchar;
-#endif
 }
 
 #if 0
@@ -961,14 +982,6 @@ chipsfb_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 	return 0;
 }
 #endif
-
-static int
-chipsfb_intr(void *arg)
-{
-//	struct chipsfb_softc *sc = arg;
-
-	return 1;
-}
 
 static void
 chipsfb_init(struct chipsfb_softc *sc)

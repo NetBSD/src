@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfbreg.h,v 1.1 2006/09/23 05:12:22 macallan Exp $	*/
+/*	$NetBSD: chipsfbreg.h,v 1.2 2006/09/27 05:19:23 macallan Exp $	*/
 
 /*
  * Copyright 2006 by Michael Lorenz.
@@ -76,6 +76,13 @@
 	#define LEFT_CLIPPING_MSK	0x0000003f
 	#define MONO_RIGHT_CLIPPING_MSK	0x00003f00
 	#define MONO_INITIAL_DISCARD	0x003f0000
+	#define MONO_SRC_ALIGN_MASK	0x07000000
+	#define MONO_SRC_ALIGN_BIT	0x01000000
+	#define MONO_SRC_ALIGN_BYTE	0x02000000
+	#define MONO_SRC_ALIGN_WORD	0x03000000
+	#define MONO_SRC_ALIGN_LONG	0x04000000
+	#define MONO_SRC_ALIGN_LONGLONG	0x05000000
+	#define MONO_SELECT_ALT_FG_BG	0x08000000 /* use CT_SRC_EXP_* */
 	
 #define CT_BLT_CONTROL	CT_OFF_BITBLT + 0x10
 	#define BLT_ROP_MASK		0x000000ff
