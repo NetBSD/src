@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_subst.c,v 1.17 2005/02/12 12:53:23 aymeric Exp $	*/
+/*	$NetBSD: ex_subst.c,v 1.18 2006/09/27 19:58:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)ex_subst.c	10.37 (Berkeley) 9/15/96";
 #else
-__RCSID("$NetBSD: ex_subst.c,v 1.17 2005/02/12 12:53:23 aymeric Exp $");
+__RCSID("$NetBSD: ex_subst.c,v 1.18 2006/09/27 19:58:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -532,7 +532,8 @@ noargs:	if (F_ISSET(sp, SC_VI) && sp->c_suffix && (lflag || nflag || pflag)) {
 				GET_SPACE_RET(sp, bp, blen, llen);
 			} else
 				ADD_SPACE_RET(sp, bp, blen, llen);
-			memcpy(bp, s, llen);
+			if (bp)
+				memcpy(bp, s, llen);
 			s = bp;
 		}
 
