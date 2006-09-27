@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.55.2.1 2006/09/27 12:15:13 tron Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.55.2.2 2006/09/27 12:20:03 tron Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -38,7 +38,7 @@
  *
  */
 
-/* MI Message catalog -- english, machine independent */
+/* MI Message catalog -- polish, machine independent */
 
 message usage
 {uzycie: sysinst [-r wersja] [-f plik-definicji]
@@ -162,11 +162,11 @@ message layout
 partycji BSD.  Musisz teraz skonfigurowac BSD disklabel.
 Masz kilka mozliwosci. Sa one opisane ponizej. 
 -- Standard: partycje BSD disklabel sa ustawiane przez ten program. 
--- Uzyj istniejacych: Uzywa aktualnych partycji. Musisz je zamountowac.
+-- Uzyj istniejacych: Uzywa aktualnych partycji. Musisz je zamontowac.
 
 Dysk NetBSD to %d Megabajtow. 
 Standard wymaga przynajmniej %d Megabajtow.
-Standard z Xami wymaga przynajmniej %d Megabajtow.
+Standard z X Window System wymaga przynajmniej %d Megabajtow.
 }
 
 message Choose_your_size_specifier
@@ -183,8 +183,8 @@ Wybierz specyfikator rozmiaru}
 message ptnsizes
 {Mozesz teraz zmienic rozmiary partycji systemowych. Domyslne ustawienia
 alokuja cala przestrzen na glowny system plikow, aczkolwiek mozesz zdefiniowac
-osobne partycje /usr (dodatkowe pliki systemowe), /var (logi) lub
-/home (katalogi domowe uzytkownikow).
+osobne partycje /usr (dodatkowe pliki systemowe), /var (dane systemowe i logi) 
+lub /home (katalogi domowe uzytkownikow).
 
 Wolna przestrzen zostanie dodana do partycji oznaczonej '+'.
 }
@@ -195,7 +195,7 @@ message ptnheaders
 }
 
 message askfsmount
-{Punkt montazu?}
+{Punkt montowania?}
 
 message askfssize
 {Rozmiar dla %s w %s?}
@@ -236,12 +236,12 @@ message fspart
 }
 
 message fspart_header	/* XXX abbreviations (or change fspart_row below) */
-{    Rozm %3s  Prze %3s Koniec %3s Typ SP     Ochrona Mount Mountpoint 
+{    Rozm %3s  Prze %3s Koniec %3s Typ SP     Ochrona Montowana Jako
    --------- --------- ---------- ---------- ------- ----- ----------
 }
 
 message fspart_row
-{%9d %9d %10d %-10s %-7s %-5s %s}
+{%9d %9d %10d %-10s %-7s %-9s %s}
 
 message show_all_unused_partitions
 {Pokaz wszystkie nieuzywane partycje}
@@ -286,13 +286,13 @@ message newfs_fmt
 {              newfs: %9s}
 
 message mount_fmt
-{             montaz: %9s}
+{         montowanie: %9s}
 
 message mount_options_fmt
 {   opcje montowania: }
 
 message mountpt_fmt
-{      punkt montazu: %9s}
+{   punkt montowania: %9s}
 
 message toggle
 {Przelacz}
@@ -407,9 +407,9 @@ message distmedium
 dystrybucyjnych. Jak napisano w pliku INSTALL masz terz kilka opcji. Dla
 ftp lub nfs, musisz byc podlaczony do sieci z dostepem do odpowidnich maszyn.
 
-Sets selected %d, processed %d. Next set %s.
+Pakietow wybranych %d, zainstalowanych %d. Nastepnym pakietem jest %s.
 
-}	/* XXX translate last line */
+}
 
 message distset
 {Dystrybucja NetBSD jest rozbita w kolekcje pakietow dystrybucyjnych.
@@ -431,15 +431,16 @@ message dev
 {urzadzenie}
 
 message nfssource
-{Wprowadz hosta nfs oraz katalog gdzie znajduje sie dystrybucja. 
-Pmietaj, ze katalog musi zawierac pliki .tgz oraz, ze musi byc
-dostepny via nfs.
+{Wprowadz hosta NFS oraz katalog gdzie znajduje sie dystrybucja. 
+Pamietaj, ze katalog musi zawierac pliki .tgz oraz, ze musi byc
+dostepny przez NFS.
 
 }
 
-message floppysource	/* XXX translate */
-{Enter the floppy device to be used and transfer directory on the target
-filesystem.  The set files must be in the root directory of the floppies.
+message floppysource
+{Podaj urzadzenie bedace stacja dyskietek oraz katalog pomocniczy
+w docelowym systemie plikow. Pliki z pakietami instalacyjnymi musza
+znajdowac sie w glownym katalogu dyskietki.
 
 }
 
@@ -522,7 +523,7 @@ message netok
 Domena DNS:		%s 
 Nazwa hosta:		%s 
 Podstawowy interfejs:	%s 
-Adres IP:		%s 
+Twoj adres IP:		%s 
 Maska podsieci:		%s 
 Serwer nazw IPv4:	%s 
 Bramka IPv4:		%s 
@@ -530,18 +531,19 @@ Medium sieciowe:	%s
 }
 
 message netok_slip
-{The following are the values you entered.  Are they OK?
+{Ponizej sa wartosci, ktore wprowadziles. Czy sa poprawne?
 
-DNS Domain:		%s
-Host Name:		%s
-Primary Interface:	%s
-Host IP:		%s
-Server IP:		%s
-Netmask:		%s
-IPv4 Nameserver:	%s
-IPv4 Gateway:		%s
-Media type:		%s
+Domena DNS:		%s 
+Nazwa hosta:		%s 
+Podstawowy interfejs:	%s 
+Twoj adres IP:		%s 
+Adres IP serwera:	%s
+Maska podsieci:		%s 
+Serwer nazw IPv4:	%s 
+Bramka IPv4:		%s 
+Medium sieciowe:	%s
 }
+
 message netokv6
 {Autkonfiguracja IPv6:	%s 
 Serwer nazw IPv6:	%s 
@@ -551,7 +553,7 @@ message netok_ok
 {Czy sa poprawne?}
 
 message slattach {
-Enter slattach flags
+Podaja parametry dla polecenia 'slattach'
 }
 
 message netagain
@@ -573,8 +575,8 @@ message realdir
 {Nie moglem przejsc do katalogu %s: %s.  Instalacja przerwana.
 }
 
-message delete_xfer_file	/* XXX translate */
-{Delete after install}
+message delete_xfer_file
+{Usun po zakonczeniu instalacji}
 
 message verboseextract
 {
@@ -676,8 +678,8 @@ message badroot
  Jestes pewien, ze zainstalowales wszystkie wymagane pakiety? 
 }
 
-message fd_type		/* XXX translate */
-{Floppy file system type}
+message fd_type
+{System plikow na dyskietce}
 
 message fdnotfound
 {Nie moglem znalezc pliku na dysku.
@@ -687,11 +689,12 @@ message fdremount
 {Dyskietka nie zostala pomyslnie zamountowana.
 }
 
-message fdmount		/* XXX translate */
+message fdmount	
 {Wloz dyskietke zawierajaca plik "%s.%s".
 
-If the set's has no more disks, select "Set finished" to install the set.
-Select "Abort fetch" to return to the install media selection menu.
+Jezeli nie masz juz wiecej dyskietek, wybierz "Pakiet kompletny"
+aby rozpoczac proces jego instalacji. Wybierz "Przerwij pobieranie"
+zeby wybrac inne zrodlo oprogramowania.
 }
 
 message mntnetconfig
@@ -840,7 +843,7 @@ Nacisnij <enter> aby kontynuowac.
 }
 
 message Pick_an_option {Wybierz opcje aby je wlaczyc lub wylaczyc.}
-message Scripting {Scripting}	/* XXX translate */
+message Scripting {Skrypty}
 message Logging {Logowanie}
 
 message Status  {   Status: }
@@ -896,11 +899,11 @@ message Get_Distribution {Sciagnij Dystrybucje}
 message Continue {Kontynuuj}
 message What_do_you_want_to_do {Co chcesz zrobic?}
 message Try_again {Sprobowac jeszcze raz}
-message Set_finished {Ustawianie zakonczone}
-message Skip_set {Skip set}  /* XXX translate */
-message Skip_group {Skip set group}  /* XXX translate */
-message Abandon {Abandon installation}	/* XXX */
-message Abort_fetch {Abort fetch}	/* XXX */
+message Set_finished {Pakiet kompletny}
+message Skip_set {Pomin pakiet}
+message Skip_group {Pomin grupe pakietow}
+message Abandon {Przerwij instalacje}
+message Abort_fetch {Przerwij pobieranie}
 message Password_cipher {Kodowanie hasel}
 message DES {DES}
 message MD5 {MD5}
