@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.15.2.1 2006/09/27 12:15:14 tron Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.15.2.2 2006/09/27 12:15:25 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -190,7 +190,7 @@ Escoja su especificador de tamaño}
 
 message ptnsizes
 {Ahora puede cambiar los tamaños de las particiones del sistema.  Por
-omisión se asigna todo el espacio al sistema de ficheros raíz, sin embargo
+omisión se asigna todo el espacio al sistema de archivos raíz, sin embargo
 usted podría querer separar /usr (ficheros de sistema adicionales), /var
 (ficheros de registro, etc) o /home (directorios de usuario).
 
@@ -199,7 +199,7 @@ El espacio libre sobrante será añadido a la partición marcada con «+».
 
 message ptnheaders
 {
-       MB         Cilindros	Sectores  Sistema de ficheros
+       MB         Cilindros	Sectores  Sistema de archivos
 }
 
 message askfsmount
@@ -336,10 +336,10 @@ message invalid_sector_number
 }
 
 message Select_file_system_block_size
-{Seleccione el tamaño de bloque del sistema de ficheros}
+{Seleccione el tamaño de bloque del sistema de archivos}
 
 message Select_file_system_fragment_size
-{Seleccione el tamaño de fragmento del sistema de ficheros}
+{Seleccione el tamaño de fragmento del sistema de archivos}
 
 message packname
 {Por favor entroduzca un nombre para el disco NetBSD}
@@ -424,17 +424,18 @@ de la distribución.  Como se apunta en las notas INSTALL, tiene diversas
 opciones.  Para ftp o nfs, tiene que estar conectado a una red con acceso
 a las maquinas apropiadas.
 
-Sets selected %d, processed %d. Next set %s.
+Conjuntos seleccionados: %d, procesados: %d. Siguiente conjunto: %s.
 
-}	/* XXX translate last line */
+}
 
 message distset
 {La distribución NetBSD está dividida en una colección de conjuntos de
 distribución.  Hay algunos conjuntos básicos que son necesarios para todas
 las instalaciones, y otros conjuntos que no son necesarios para todas las
-instalaciones.  Puede escoger para instalar todos ellos (Instalación
-completa) o seleccionar de entre los conjuntos de distribución opcionales.
-} /* XXX add 'minimal installation' */
+instalaciones.  Puede escoger para instalar sólo los conjuntos esenciales
+(instalación mínima); instalar todos ellos (Instalación completa) o
+seleccionar de entre los conjuntos de distribución opcionales.
+}
 
 message ftpsource
 {Lo siguiente son el sitio %s, directorio, usuario y contraseña que se
@@ -455,11 +456,13 @@ debe ser montable por nfs.
 
 }
 
-message floppysource	/* XXX translate */
-{Enter the floppy device to be used and transfer directory on the target
-filesystem.  The set files must be in the root directory of the floppies.
+message floppysource
+{Introduzca el dispositivo de disquete a usar y el directorio destino de la
+transferencia en el sistema de archivos. Los archivos del conjunto han de estar
+en el directorio raíz de los disquetes.
 
 }
+
 message cdromsource
 {Introduzca el dispositivo de CDROM a usar y el directorio del CDROM
 donde se encuentre la distribución.
@@ -481,7 +484,7 @@ Recuerde, el directorio debe contener los archivos .tgz.
 }
 
 message filesys
-{sistema de ficheros}
+{sistema de archivos}
 
 message nonet
 {No se ha podido encontrar ninguna interfaz de red para ser usada por NetBSD.
@@ -589,8 +592,8 @@ message realdir
 interrumpida.
 }
 
-message delete_xfer_file	/* XXX translate */
-{Delete after install}
+message delete_xfer_file
+{A eliminar después de la instalación}
 
 message verboseextract
 {
@@ -688,7 +691,7 @@ message makedev
 }
 
 message badfs
-{Parece que /dev/%s%c no es un sistema de ficheros BSD o el fsck no ha sido
+{Parece que /dev/%s%c no es un sistema de archivos BSD o el fsck no ha sido
 correcto.  La actualización ha sido interrumpida.  (Error número %d.)
 }
 
@@ -697,13 +700,13 @@ message rootmissing
 }
 
 message badroot
-{El nuevo sistema de ficheros raíz no ha pasado la comprobación básica.
+{El nuevo sistema de archivos raíz no ha pasado la comprobación básica.
  ¿Está seguro de que ha instalado todos los conjuntos requeridos? 
 
 }
 
-message fd_type		/* XXX translate */
-{Floppy file system type}
+message fd_type
+{Tipo de sistema de archivos del disquete}
 
 message fdnotfound
 {No se ha encontrado el fichero en el disco.
@@ -713,11 +716,12 @@ message fdremount
 {El disquete no ha sido montado correctamente.
 }
 
-message fdmount		/* XXX translate */
+message fdmount
 {Por favor, inserte el disquete que contiene el fichero «%s.%s».
 
-If the set's has no more disks, select "Set finished" to install the set.
-Select "Abort fetch" to return to the install media selection menu.
+Si el conjunto no está en más discos, seleccione "Conjunto finalizado"
+para instalarlo. Seleccione "Abortar lectura" para regresar al menú
+de selección de medios de instalación.
 }
 
 message mntnetconfig
@@ -862,7 +866,7 @@ omisión es /bin/sh, pero podría preferir otra.}
 
 message no_root_fs
 {
-No hay un sistema de ficheros raíz definido.  Necesitará al menos un punto
+No hay un sistema de archivos raíz definido.  Necesitará al menos un punto
 de montaje con «/».
 
 Presione <return> para continuar.
@@ -911,7 +915,7 @@ message http {HTTP}
 message nfs {NFS}
 message cdrom {CD-ROM / DVD}
 message floppy {Disquete}
-message local_fs {Sistema de ficheros desmontado}
+message local_fs {Sistema de archivos desmontado}
 message local_dir {Directorio Local}
 message Select_your_distribution {Seleccione su distribución}
 message Full_installation {Instalación completa}
@@ -921,7 +925,7 @@ message hidden {** oculto **}
 message Host {Máquina}
 message Base_dir {Directorio base}
 message Set_dir {Directorio de conjuntos}
-message Xfer_dir {Directorio a transferir a} /* XXX translation */
+message Xfer_dir {Directorio a transferir a}
 message User {Usuario}
 message Password {Contraseña}
 message Proxy {Proxy}
@@ -930,17 +934,17 @@ message Continue {Continuar}
 message What_do_you_want_to_do {¿Qué desea hacer?}
 message Try_again {Reintentar}
 message Set_finished {Conjunto finalizado}
-message Skip_set {Skip set}  /* XXX translation */
-message Skip_group {Skip set group}  /* XXX translation */
-message Abandon {Abandon installation}	/* XXX */
-message Abort_fetch {Abort fetch}	/* XXX */
+message Skip_set {Omitir conjunto}
+message Skip_group {Omitir grupo de conjuntos}
+message Abandon {Abandonar instalación}
+message Abort_fetch {Abortar lectura}
 message Password_cipher {Cifrado de las contraseñas}
 message DES {DES}
 message MD5 {MD5}
 message Blowfish_2_7_round {Blowfish 2^7 round}
 message do_not_change {no cambiar}
 message Device {Dispositivo}
-message File_system {Sistema de ficheros}
+message File_system {Sistema de archivos}
 message Select_IPv6_DNS_server {  Seleccione servidor DNS de IPv6}
 message other {otro }
 message Perform_IPv6_autoconfiguration {¿Realizar autoconfiguración IPv6?}
@@ -959,7 +963,7 @@ de nuevo y asegúrese de que ha montado todos los sistemas de ficheros.}
 
 message emulbackup
 {El directorio /emul/aout o /emul de su sistema era un enlace simbólico que
-apuntaba a un sistema de ficheros desmontado.  Se le ha dado la extension
+apuntaba a un sistema de archivos desmontado.  Se le ha dado la extension
 '.old'.  Cuando vuelva a arrancar su sistema actualizado, puede que necesite
 preocuparse de fundir el directorio /emul/aout nuevamente creado con el viejo.
 }
