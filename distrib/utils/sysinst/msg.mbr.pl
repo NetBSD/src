@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.pl,v 1.10 2003/10/19 20:17:32 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.pl,v 1.10.12.1 2006/09/27 12:20:03 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -77,15 +77,16 @@ message part_row_used
 
 message noactivepart
 {Nie zaznaczyles aktywnej partycji. Moze to spowodowac, ze twoj system nie
-uruchomi sie prawidlowo. Czy partycja NetBSD ma zostac zaznaczona jako aktynwa?}
+uruchomi sie prawidlowo. Czy partycja NetBSD ma zostac zaznaczona jako aktywna?}
 
-message setbiosgeom	/* XXX translate */
+message setbiosgeom
 {
-Zostaniesz poproszony o podanie geometrii. 
-Please enter the number of sectors per track (maximum 63)
-and number of heads (maximum 256) that the BIOS uses to access the disk.
-The number of cylinders will be calculated from the disk size.
-
+Zostaniesz poproszony o podanie geometrii dysku:
+Podaj ilosc sektorow na sciezce (maksimum 63) oraz
+ilosc glowic (maksimum 256) ktore BIOS ustalil jako
+wlasciwe parametry dysku.
+Ilosc cylindrow zostanie obliczona automatycznie na
+podstawie podanych danych i rozmiaru dysku.
 }
 
 message nobiosgeom
@@ -110,34 +111,34 @@ nadpisac z NetBSD?
 message Partition_OK
 {Partycje OK}
 
-message ptn_type	/* XXX translate */
+message ptn_type
 {    rodzaj: %s}
-message ptn_start	/* XXX translate */
+message ptn_start
 {  poczatek: %d %s}
-message ptn_size	/* XXX translate */
-{   rozmair: %d %s}
-message ptn_end	/* XXX translate */
-{       end: %d %s}
-message ptn_active	/* XXX translate */
+message ptn_size
+{   rozmiar: %d %s}
+message ptn_end
+{    koniec: %d %s}
+message ptn_active
 {   aktywna: %s}
-message ptn_install	/* XXX translate */
-{   install: %s}
+message ptn_install
+{ do instalacji: %s}
 .if BOOTSEL
-message bootmenu	/* XXX translate */
-{  bootmenu: %s}
-message boot_dflt	/* XXX translate */
-{   default: %s}
+message bootmenu
+{w menu startowym: %s}
+message boot_dflt
+{   domyslna: %s}
 .endif
 
-message get_ptn_size {%ssize (maximum %d %s)}	/* XXX translate */
-message Invalid_numeric {Invalid numeric: }	/* XXX translate */
-message Too_large {Too large: }	/* XXX translate */
-message Space_allocated {Space allocated: }	/* XXX translate */
-message ptn_starts {Space at %d..%d %s (size %d %s)\n}	/* XXX translate */
-message get_ptn_start {%s%sStart (in %s)}	/* XXX translate */
-message get_ptn_id {Partition kind (0..255)}	/* XXX translate */
-message No_free_space {No free space}	/* XXX translate */
-message Only_one_extended_ptn {There can only be one extended partition}	/* XXX translate */
+message get_ptn_size {%swielkosc (maksimum %d %s)}
+message Invalid_numeric {Nieprawidlowa wartosc: }
+message Too_large {Zbyt duza wartosc: }
+message Space_allocated {Wykorzystane miejsce: }
+message ptn_starts {Miejsce od %d..%d %s (rozmiar %d %s)\n}
+message get_ptn_start {%s%sStart (od %s)}
+message get_ptn_id {Typ partycji (0..255)}
+message No_free_space {Brak wolnego miejsca}
+message Only_one_extended_ptn {Moze byc tylko jedna partycja typu rozszerzonego}
 
 
 message editparttable
@@ -146,28 +147,29 @@ message editparttable
 }
 
 message Partition_table_ok
-{Partition table OK}
+{Tablica partycji jest poprawna}
 
 message Delete_partition
-{Delete Partition}	/* XXX translate */
+{Usun partycje}
 message Dont_change
 {Nie zmieniaj}
 message Other_kind 
-{Other, input number}	/* XXX translate */
+{Inny typ, podaj identyfikator liczbowy}
 
 
 message reeditpart	/* XXX translate */
 {
 
-Czy chcesz tablice partycji MBR przekonfigurowac (or abandon the installation)?
+Czy chcesz zmienic tablice partycji (MBR)? Brak zgody przerwie instalacje.
 }
 
 message nobsdpart
 {Nie ma partycji NetBSD w tablicy partycji MBR.}
 
-message multbsdpart	/* XXX translate */
+message multbsdpart	
 {W tablicy partycji MBR znajduje sie kilka partycji NetBSD.
-You should set the 'install' flag on the one you want to use.}
+ Powinienies oznaczyc jedna z nich jako przeznaczona do instalacji.
+}
 
 message dofdisk
 {Konfigurowanie DOSowej tablicy partycji ...
