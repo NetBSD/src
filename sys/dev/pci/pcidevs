@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.833 2006/09/25 23:58:23 heas Exp $
+$NetBSD: pcidevs,v 1.834 2006/09/27 11:48:02 sketch Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3262,7 +3262,8 @@ product TI	PCI72111FW	0x8032	PCI7x21/7x11 IEEE 1394 Host Controller
 product TI	PCI72111FM	0x8033	PCI7x21/7x11 Integrated FlashMedia Controller
 product TI	PCI6515A	0x8036	PCI6515A Cardbus Controller 
 product TI	PCI6515ASM	0x8038	PCI6515A Cardbus Controller (Smart Card mode)
-product TI	ACX100		0x8400	ACX100 802.11b
+product TI	ACX100A		0x8400	ACX100A 802.11b
+product TI	ACX100B		0x8401	ACX100B 802.11b
 product TI	ACX111		0x9066	ACX111 802.11b/g
 product TI	PCI1130		0xac12	PCI1130 PCI-CardBus Bridge
 product TI	PCI1031		0xac13	PCI1031 PCI-PCMCIA Bridge
