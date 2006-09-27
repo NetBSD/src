@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.2 2006/09/10 19:13:54 he Exp $	*/
+/*	$NetBSD: print.c,v 1.3 2006/09/27 22:07:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.2 2006/09/10 19:13:54 he Exp $");
+__RCSID("$NetBSD: print.c,v 1.3 2006/09/27 22:07:20 christos Exp $");
 
 #include <sys/types.h>
 
@@ -86,6 +86,7 @@ void
 cfg_print(prop_dictionary_t dict)
 {
 	prop_object_t obj;
+	char *p;
 
 	obj = prop_dictionary_get(dict, BTDEVladdr);
 	if (prop_object_type(obj) != PROP_TYPE_DATA) {
@@ -104,7 +105,9 @@ cfg_print(prop_dictionary_t dict)
 		printf("No device type!\n");
 		return;
 	}
-	printf("device type: %s\n", prop_string_cstring(obj));
+	p =  prop_string_cstring(obj);
+	printf("device type: %s\n", p);
+	free(p);
 
 	if (prop_string_equals_cstring(obj, "bthidev")) {
 		cfg_bthidev(dict);
