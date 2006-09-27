@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.31 2006/09/24 19:17:56 briggs Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.32 2006/09/27 22:44:18 macallan Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.31 2006/09/24 19:17:56 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.32 2006/09/27 22:44:18 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.31 2006/09/24 19:17:56 briggs Exp 
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_pci.h>
@@ -299,7 +300,7 @@ fixpci(parent, pc)
 {
 	int node;
 	pcitag_t tag;
-	pcireg_t csr, intr;
+	pcireg_t csr, intr, id;
 	int len, i, ilen;
 	int32_t irqs[4];
 	struct {
@@ -381,6 +382,27 @@ fixpci(parent, pc)
 			if (len <= 0)
 				continue;
 		}
+
+		/* 
+		 * For PowerBook 2400, 3400 and original G3:
+		 * check if we have a 2nd ohare PIC - if so frob the built-in 
+		 * tlp's IRQ to 60
+		 * first see if we have something on bus 0 device 13 and if 
+		 * it's a DEC 21041
+		 */
+		id = pci_conf_read(pc, tag, PCI_ID_REG);
+		if ((tag == pci_make_tag(pc, 0, 13, 0)) &&
+		    (PCI_VENDOR(id) == PCI_VENDOR_DEC) && 
+		    (PCI_PRODUCT(id) == PCI_PRODUCT_DEC_21041)) {
+
+			/* now look for the 2nd ohare */
+			if (OF_finddevice("/bandit/pci106b,7") != -1) {
+
+				irqs[0] = 60;
+				printf("\nohare: frobbing tlp IRQ to 60");
+			}
+		}
+
 		intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
 		intr &= ~PCI_INTERRUPT_LINE_MASK;
 		intr |= irqs[0] & PCI_INTERRUPT_LINE_MASK;
