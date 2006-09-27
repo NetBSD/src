@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.6 2006/09/27 15:21:26 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.7 2006/09/27 15:23:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.6 2006/09/27 15:21:26 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.7 2006/09/27 15:23:34 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -1033,8 +1033,10 @@ init_readline(void)
 	const char *el_history_size;
 	char *el_completion_keys;
 	
-	rl_global.hist = history_init();			/* init the builtin history */
-	el_history_size = value("el_history_size") ? : "0";
+	rl_global.hist = history_init();	/* init the builtin history */
+	el_history_size = value("el_history_size");
+	if (el_history_size == NULL)
+		el_history_size = "0";
 	if (history(rl_global.hist, &ev, H_SETSIZE, atoi(el_history_size)))
 		printf("history: %s\n", ev.str);
 	
