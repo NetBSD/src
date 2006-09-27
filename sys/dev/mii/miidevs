@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.66 2006/04/27 16:43:14 jonathan Exp $
+$NetBSD: miidevs,v 1.67 2006/09/27 21:50:00 cube Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -165,6 +165,7 @@ model ICS 1893			0x0004 ICS1893 10/100 media interface
 model xxINTEL I82553		0x0000 i82553 10/100 media interface
 model yyINTEL I82555		0x0015 i82555 10/100 media interface
 model yyINTEL I82562EH		0x0017 i82562EH HomePNA interface
+model yyINTEL I82562G		0x0031 i82562G 10/100 media interface
 model yyINTEL I82562EM		0x0032 i82562EM 10/100 media interface
 model yyINTEL I82562ET		0x0033 i82562ET 10/100 media interface
 model yyINTEL I82553		0x0035 i82553 10/100 media interface
