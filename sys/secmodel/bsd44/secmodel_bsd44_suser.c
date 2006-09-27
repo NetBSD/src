@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.5 2006/09/24 12:30:32 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.6 2006/09/27 05:35:05 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.5 2006/09/24 12:30:32 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.6 2006/09/27 05:35:05 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -273,21 +273,6 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 	req = (enum kauth_network_req)arg0;
 
 	switch (action) {
-	case KAUTH_NETWORK_FIREWALL:
-		switch (req) {
-		case KAUTH_REQ_NETWORK_FIREWALL_FW:
-		case KAUTH_REQ_NETWORK_FIREWALL_NAT:
-			if (isroot)
-				result = KAUTH_RESULT_ALLOW;
-			break;
-
-		default:
-			result = KAUTH_RESULT_DEFER;
-			break;
-		}
-
-		break;
-
 	case KAUTH_NETWORK_ALTQ:
 		switch (req) {
 		case KAUTH_REQ_NETWORK_ALTQ_AFMAP:
