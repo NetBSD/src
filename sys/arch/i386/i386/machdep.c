@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.578 2006/09/24 08:35:00 xtraeme Exp $	*/
+/*	$NetBSD: machdep.c,v 1.579 2006/09/27 17:10:34 cube Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.578 2006/09/24 08:35:00 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.579 2006/09/27 17:10:34 cube Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1406,7 +1406,8 @@ add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 
 	/* XXX XXX XXX */
 	if (mem_cluster_cnt >= VM_PHYSSEG_MAX)
-		panic("init386: too many memory segments");
+		panic("init386: too many memory segments "
+		    "(increase VM_PHYSSEG_MAX)");
 
 	seg_start = round_page(seg_start);
 	seg_end = trunc_page(seg_end);
