@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.38 2006/09/15 08:25:02 gdamore Exp $
+#	$NetBSD: INSTALL,v 1.39 2006/09/27 21:42:05 manu Exp $
 #
 # First try for BEBOX config file
 #
@@ -42,6 +42,7 @@ options 	COMPAT_10
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.sandpoint,v 1.31 2006/09/15 16:03:14 gdamore Exp $
+# $NetBSD: GENERIC.sandpoint,v 1.32 2006/09/27 21:42:06 manu Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.31 $"
+#ident 		"GENERIC-$Revision: 1.32 $"
 
 maxusers	32
 
@@ -52,6 +52,7 @@ options 	COMPAT_10
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.

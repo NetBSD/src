@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.21 2006/02/05 05:01:56 cube Exp $
+# 	$NetBSD: INSTALL,v 1.22 2006/09/27 21:42:05 manu Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -31,6 +31,7 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 #options 	COMPAT_12		# NetBSD 1.2 binary compatibility
 #options 	COMPAT_13		# NetBSD 1.3 binary compatibility
 #options 	COMPAT_14		# NetBSD 1.4 binary compatibility
+#options 	COMPAT_15		# NetBSD 1.5 binary compatibility
 #options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 #options 	EXEC_AOUT		# exec a.out binaries
 #options 	EXEC_ECOFF		# exec ecoff binaries

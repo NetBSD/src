@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.102 2006/09/15 08:25:02 gdamore Exp $
+# $NetBSD: GENERIC,v 1.103 2006/09/27 21:42:05 manu Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.102 $"
+#ident 		"GENERIC-$Revision: 1.103 $"
 
 maxusers	32
 
@@ -56,6 +56,7 @@ options 	COMPAT_10
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
