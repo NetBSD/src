@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.82 2006/07/13 11:51:39 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.83 2006/09/27 19:09:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.82 2006/07/13 11:51:39 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.83 2006/09/27 19:09:14 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -1309,8 +1309,7 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 			if (rv == -1 && !fflag)
 				maybe_warn("can't read %s", file);
 			goto lose;
-		} else if (rv == 0)
-			goto unexpected_EOF;
+		}
 		timestamp = ts[3] << 24 | ts[2] << 16 | ts[1] << 8 | ts[0];
 
 		if (header1[3] & ORIG_NAME) {
