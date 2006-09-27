@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.4 2005/11/24 13:08:34 yamt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.5 2006/09/27 17:10:34 cube Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.4 2005/11/24 13:08:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.5 2006/09/27 17:10:34 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.4 2005/11/24 13:08:34 yamt Exp $");
  * The extent maps are not static!  Machine-dependent ISA and EISA
  * routines need access to them for bus address space allocation.
  */
-static	long ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
-static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+static	long ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
+static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
 struct	extent *ioport_ex;
 struct	extent *iomem_ex;
 static	int ioport_malloc_safe;
