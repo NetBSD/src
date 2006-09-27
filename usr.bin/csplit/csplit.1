@@ -1,4 +1,4 @@
-.\"	$NetBSD: csplit.1,v 1.1 2006/09/25 19:21:42 christos Exp $
+.\"	$NetBSD: csplit.1,v 1.2 2006/09/27 17:41:30 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Tim J. Robbins.
 .\" All rights reserved.
@@ -54,7 +54,7 @@ a dash
 reads from standard input.
 .Pp
 The options are as follows:
-.Bl -tag -width indent
+.Bl -tag -offset indent -width 10n
 .It Fl f Ar prefix
 Give created files names beginning with
 .Ar prefix .
@@ -82,7 +82,7 @@ created.
 The
 .Ar args
 operands may be a combination of the following patterns:
-.Bl -tag -width indent
+.Bl -tag -offset indent -width 10n
 .It Xo
 .Sm off
 .No / Ar regexp No /
@@ -104,7 +104,7 @@ Same as above but a file is not created for the output.
 .It Ar line_no
 Create containing the input from the current line to (but not including)
 the specified line number.
-.It { Ns Ar num Ns }
+.It Brq Ar num
 Repeat the previous pattern the specified number of times.
 If it follows a line number pattern, a new file will be created for each
 .Ar line_no
