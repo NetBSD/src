@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.94.2.2 2006/09/27 12:18:00 tron Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.94.2.3 2006/09/27 12:19:19 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -746,8 +746,8 @@ La vérification de l'intégrité du nouveau système de fichiers a échoué.
 Avez-vous bien installé tous les composants indispensables ?
 }
 
-message fd_type		/* XXX translate */
-{Floppy file system type}
+message fd_type
+{Système de fichiers de la disquette}
 
 message fdnotfound
 {
@@ -989,7 +989,7 @@ message hidden {** caché **}
 message Host {Serveur FTP}
 message Base_dir {Répertoire de base}
 message Set_dir {Répertoire des composants}
-message Xfer_dir {Répertoire de transfer}	/* fix XLAT */
+message Xfer_dir {Répertoire de transfer}
 message User {Utilisateur}
 message Password {Mot de passe}
 message Proxy {Proxy}
