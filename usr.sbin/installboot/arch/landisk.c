@@ -1,4 +1,4 @@
-/*	$NetBSD: landisk.c,v 1.1 2006/09/01 21:47:21 uwe Exp $	*/
+/*	$NetBSD: landisk.c,v 1.2 2006/09/27 21:22:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: landisk.c,v 1.1 2006/09/01 21:47:21 uwe Exp $");
+__RCSID("$NetBSD: landisk.c,v 1.2 2006/09/27 21:22:52 christos Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -177,6 +177,7 @@ landisk_setboot(ib_params *params)
 		}
 	}
 
+#if 0
 	/*
 	 * Copy the BPB and the partition table from the original MBR to the
 	 * temporary buffer so that they're written back to the fs.
@@ -185,8 +186,10 @@ landisk_setboot(ib_params *params)
 		if (params->flags & IB_VERBOSE)
 			printf("Preserving %d (%#x) bytes of the BPB\n",
 			    bpbsize, bpbsize);
-		memcpy(bootstrapbuf + MBR_BPB_OFFSET, &mbr.mbr_bpb, bpbsize);
+		(void)memcpy(bootstrapbuf + MBR_BPB_OFFSET, &mbr.mbr_bpb,
+		    bpbsize);
 	}
+#endif
 	memcpy(bootstrapbuf + MBR_PART_OFFSET, &mbr.mbr_parts,
 	    sizeof(mbr.mbr_parts));
 
