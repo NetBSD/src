@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.5 2006/09/27 15:20:06 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.6 2006/09/27 15:21:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.5 2006/09/27 15:20:06 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.6 2006/09/27 15:21:26 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -980,7 +980,7 @@ rl_gets(const char *prompt)
 
 	cnt--;	/* trash the trailing LF */
 	cnt = MIN(sizeof(line) - 1, cnt);
-	memcpy(line, buf, cnt);
+	(void)memcpy(line, buf, cnt);
 	line[cnt] = '\0';
 
 	return line;
@@ -1011,8 +1011,8 @@ rl_getline(const char *prompt, char *string)
 	}
 
 	cnt--;
-	cnt = MIN(sizeof(line), cnt);
-	memcpy(line, buf, cnt);
+	cnt = MIN(sizeof(line) - 1, cnt);
+	(void)memcpy(line, buf, cnt);
 	line[cnt] = '\0';
 
 	return line;
