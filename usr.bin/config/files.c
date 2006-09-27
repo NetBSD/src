@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.3 2006/08/26 18:17:13 christos Exp $	*/
+/*	$NetBSD: files.c,v 1.4 2006/09/27 19:05:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -358,14 +358,14 @@ fixdevsw(void)
 				       "device-major '%s' is inconsistent: "
 				       "block %d, char %d", dm->dm_name,
 				       dm->dm_bmajor, dm->dm_cmajor);
-				return (1);
+				goto out;
 			} else {
 				xerror(dm->dm_srcfile, dm->dm_srcline,
 				       "device-major '%s' is duplicated: "
 				       "block %d, char %d",
 				       dm->dm_name, dm->dm_bmajor,
 				       dm->dm_cmajor);
-				return (1);
+				goto out;
 			}
 		}
 		if (ht_insert(fixdevmtab, intern(dm->dm_name), dm)) {
@@ -382,14 +382,14 @@ fixdevsw(void)
 				xerror(dm->dm_srcfile, dm->dm_srcline,
 				       "device-major of character device '%s' "
 				       "is already defined", dm->dm_name);
-				return (1);
+				goto out;
 			}
 			(void)snprintf(mstr, sizeof(mstr), "%d", dm->dm_cmajor);
 			if (ht_lookup(cdevmtab, intern(mstr)) != NULL) {
 				xerror(dm->dm_srcfile, dm->dm_srcline,
 				       "device-major of character major '%d' "
 				       "is already defined", dm->dm_cmajor);
-				return (1);
+				goto out;
 			}
 			if (ht_insert(cdevmtab, intern(dm->dm_name), dm) ||
 			    ht_insert(cdevmtab, intern(mstr), dm)) {
@@ -402,14 +402,14 @@ fixdevsw(void)
 				xerror(dm->dm_srcfile, dm->dm_srcline,
 				       "device-major of block device '%s' "
 				       "is already defined", dm->dm_name);
-				return (1);
+				goto out;
 			}
 			(void)snprintf(mstr, sizeof(mstr), "%d", dm->dm_bmajor);
 			if (ht_lookup(bdevmtab, intern(mstr)) != NULL) {
 				xerror(dm->dm_srcfile, dm->dm_srcline,
 				       "device-major of block major '%d' "
 				       "is already defined", dm->dm_bmajor);
-				return (1);
+				goto out;
 			}
 			if (ht_insert(bdevmtab, intern(dm->dm_name), dm) || 
 			    ht_insert(bdevmtab, intern(mstr), dm)) {
@@ -420,6 +420,9 @@ fixdevsw(void)
 	}
 
 	return (0);
+out:
+	ht_free(fixdevmtab);
+	return (1);
 }
 
 /*
