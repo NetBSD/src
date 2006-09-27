@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.60 2006/09/14 20:43:50 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.61 2006/09/27 12:51:43 elad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.60 2006/09/14 20:43:50 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.61 2006/09/27 12:51:43 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -542,7 +542,7 @@ main(argc, argv)
 
 
 	if ((kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf)) == NULL) {
-		if (!use_sysctl)
+		if (!use_sysctl || Pflag)
 			errx(1, "%s", buf);
 	} else
 		use_sysctl = 0;
