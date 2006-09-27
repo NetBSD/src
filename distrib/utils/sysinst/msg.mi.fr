@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.94.2.1 2006/09/27 12:15:14 tron Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.94.2.2 2006/09/27 12:18:00 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,11 +39,11 @@
 /* MI Message catalog -- french, machine independent */
 
 message usage
-{utilisation : sysinst [-r version] [-f fichier de definition]
+{utilisation : sysinst [-r version] [-f fichier de définition]
 }
 
 message sysinst_message_language
-{Messages d'installation en Français}
+{Messages d'installation en français}
 
 message Yes {Oui}
 message No {Non}
@@ -68,11 +68,11 @@ message upgrade
 {mise à jour}
 
 message hello
-{Bienvenue dans sysinst, l'outil d'installation de NetBSD-@@VERSION@@.
+{Bienvenue dans Sysinst, l'outil d'installation de NetBSD-@@VERSION@@.
 Cet utilitaire a été conçu pour vous aider à installer ou mettre à jour
 NetBSD sur votre disque dur avec un minimum de travail.
 Dans les menus suivants, vous pourrez changer de sélection soit en tapant la
-lettre en référence (a, b, c, d,...) ou en utilisant les touches
+lettre en référence (a, b, c, d,...) soit en utilisant les touches
 flèches du clavier.
 La sélection courante est activée en appuyant sur entrée.
 
@@ -84,16 +84,16 @@ message thanks
 
 message installusure
 {Vous avez choisi d'installer NetBSD sur votre disque dur. Ceci va changer les
-informations contenues sur votre disque dur. Vous devriez faire une sauvegarde
-complète de celui ci avant de continuer la procédure d'installation. Cette
-procédure va réaliser les actions suivantes : 
+informations contenues sur ce dernier. Vous devriez faire une sauvegarde
+complète de son contenu avant de poursuivre cette installation. Cette
+procédure va mener les actions suivantes : 
 	a) Partitionner votre disque dur. 
 	b) Créer de nouveaux systèmes de fichier BSD. 
 	c) Installer les différents composants.
 
-(Après avoir indiqué les informations sur les partitions mais avant de
-modifier votre disque, vous aurez la possibilité de quitter cette procédure.)
-On continue ?
+(Une fois le partitionnement configuré, le système d'installation vous
+demandera de confirmer avant de modifier votre disque dur.
+Souhaitez-vous continuer ?
 }
 
 message upgradeusure
@@ -102,18 +102,18 @@ Comme d'habitude, cela va changer les informations contenues
 sur votre disque dur.
 Vous devriez faire une sauvegarde complète de celui-ci avant de
 continuer la procédure de mise à jour.
-Voulez vous vraiment mettre à jour NetBSD ?
+Voulez-vous vraiment mettre à jour NetBSD ?
 (Ceci est le dernier avertissement avant que cette
-procédure ne commence à modifier votre disque.)
+procédure ne modifie votre disque.)
 }
 
 message reinstallusure
 {Décompressons maintenant les composants de NetBSD sur un disque dur
 démarrable.
-Cette procédure se contente de rapatrier et décompater les composants
+Cette procédure va rapatrier et décompresser les composants
 sur un disque démarrable déjà partitionnné.
-Elle n'inscrit pas de label sur le disque,
-n'installe pas de nouveau secteurs d'ammorcage et ne sauve
+Elle n'inscrit pas de "label" sur le disque,
+n'installe pas de nouveau secteurs d'ammorcage et ne modifie
 pas les fichiers de configuration existants
 (Quittez et choisissez `installer' ou `mettre à jour').
 Vous devriez déjà avoir fait une installation
@@ -125,17 +125,17 @@ modifier vos disques.)
 }
 
 message nodisk
-{Je ne peux pas trouver de disque utilisable par NetBSD. Vous allez retourner
+{Nous ne trouvons aucun disque utilisable par NetBSD. Vous allez retourner
 au menu précédent.
 }
 
 message onedisk
-{Je n'ai trouvé qu'un disque : %s. Je suppose donc que vous voulez %s
-NetBSD dessus.
+{Nous ne trouvons qu'un seul disque : %s. Nous supposons que vous souhaitez
+%s NetBSD sur ce dernier.
 }
 
 message ask_disk
-{Sur quel disque voulez vous installer NetBSD ?}
+{Sur quel disque voulez-vous installer NetBSD ?}
 
 message Available_disks
 {Disques disponibles:}
@@ -150,7 +150,7 @@ message fs_isize
 {taille moyenne de fichier (octets)}
 
 message mountpoint
-{point de montage (ou 'none')}
+{point de montage (ou 'aucun')}
 
 message cylname
 {cyl}
@@ -162,15 +162,15 @@ message megname
 {Mo}
 
 message layout
-{NetBSD utilise un disklabel BSD pour diviser la portion du disque réservée à
-NetBSD en de multiples partitions BSD. Vous devez paramétrer le
-disklabel BSD. Vous avez différents choix: 
--- Standard : les partitions sont automatiquement calculées. 
--- Use existing: les partitions déjà existantes seront utilisées. Vous devez toutefois assigner les points de montage.
+{NetBSD utilise un "disklabel" BSD pour diviser la portion du disque réservée à
+NetBSD en de multiples partitions. Vous devez paramétrer ce dernier.
+Deux possibilités: 
+-- Standard : calcul automatique des partitions. 
+-- Use existing: les partitions déjà existantes seront utilisées. Vous devrez toutefois assigner les points de montage.
 
 La taille allouée pour NetBSD sur votre disque est de %d Mo. 
-L'installation standard requière au moins %d Mo. 
-L'installation standard avec X requière au moins %d Mo.
+L'installation standard requiert au moins %d Mo. 
+L'installation standard avec X requiert au moins %d Mo.
 }
 
 message Choose_your_size_specifier
@@ -180,18 +180,18 @@ Si vous choisissez par "Secteurs", vous pourrez choisir précisément
 les tailles.
 Sur les disques modernes, la taille réelle des cylindres est variable
 et il y a peu d'intéret à aligner les partitions sur les cylindres.
-Pour les disques plus ancien, il est plus efficace de choisir des tailles
-de partitions multiples de la taille d'un cylindre.
+Pour les disques plus anciens, il est recommandé de choisir des tailles
+de partitions multiples de la taille des cylindres.
 
 Choisissez votre unité d'espace disque}
 
 message ptnsizes
-{Vous pouvez désormais changer la taille des partitions système.
+{Vous pouvez désormais modifier la taille des partitions système.
 Par défaut, tout l'espace sera alloué à la partition racine principale,
-mais vous pouvez sub-diviser cette partition en plusieurs
+mais vous pouvez sous-diviser celle-ci en plusieurs
 systèmes de fichiers: /usr (fichiers système additionnels),
 /var (fichiers des journaux, etc.)
-et /home (regroupant les répertoires des utilisateurs).
+et /home (regroupant les répertoires utilisateurs).
 
 L'espace libre sera ajouté à la partition marquée par un '+'.
 }
@@ -218,10 +218,10 @@ message Whole_disk_cant_change
 {Totalité du disque}
 
 message Boot_partition_cant_change
-{Partition de démarrer}
+{Partition de démarrage}
 
 message add_another_ptn
-{Ajouter une nouvelle partition manuellement}
+{Ajouter manuellement une nouvelle partition}
 
 message fssizesok
 {Taille de la partition acceptée. Libre: espace %d %s, %d partition}
@@ -255,11 +255,11 @@ message show_all_unused_partitions
 {Afficher les partitions libres}
 
 message partition_sizes_ok
-{Taille et options des partitions correcte}
+{Taille et options des partitions valides}
 
 message edfspart
 {Vous devez d'abord préciser le type de système de fichier (FS),
-et ensuite les autres valeurs.
+puis les autres valeurs.
 
 Les valeurs actuelles pour la partition %c sont :
 
@@ -281,7 +281,7 @@ message end_fmt
 {                        fin: %9u %8u%c %9u}
 
 message bsize_fmt
-{            taille de block: %9d bytes}
+{            taille de bloc: %9d bytes}
 
 message fsize_fmt
 {         taille de fragment: %9d bytes}
@@ -292,7 +292,7 @@ message isize_fmt_dflt
 {  taille moyenne de fichier: 4 fragments}
 
 message newfs_fmt
-{                  formatter: %9s}
+{                  formatage: %9s}
 
 message mount_fmt
 {                    montage: %9s}
@@ -304,10 +304,10 @@ message mountpt_fmt
 {              Pt de montage: %9s}
 
 message toggle
-{Bascule}
+{Basculer}
 
 message restore	
-{Reprendre les valeurs initiales}
+{Revenir aux valeurs initiales}
 
 message Select_the_type
 {Selection du type de système de fichier}
@@ -317,54 +317,55 @@ message other_types
 
 message label_size
 {%s
-Valeurs spéciales pouvant être rentrées pour définir la taille de la partition:
+Valeurs spéciales pouvant être utilisées pour définir la taille de la partition:
     -1: Utiliser jusqu'à la fin de la partie NetBSD du disque
-   a-%c: Terminer cette partition ou la partition X débute
+   a-%c: Terminer cette partition où la partition X débute
 
 taille (%s)}
 
 message label_offset
 {%s
-Valeurs spéciales pouvant être rentrées pour définir la début de la partition:
+Valeurs spéciales pouvant être utilisées pour définir la début de la partition:
     -1: Commencer au début de la partie NetBSD du disque
-   a-%c: Commencer a la suite de la partition précédente (a ... %c)
+   a-%c: Commencer à la suite de la partition précédente (a ... %c)
 
 début (%s)}
 
 message invalid_sector_number
-{nombre de secteur mal indiqué
+{nombre de secteurs invalide
 }
 
 message Select_file_system_block_size
-{Selectionnez la taille de block du système de fichier}
+{Selectionnez la taille de bloc du système de fichiers}
 
 message Select_file_system_fragment_size
-{Selectionnez la taille de fragment du système de fichier}
+{Selectionnez la taille de fragment du système de fichiers}
 
 message packname
-{veuillez donnez un nom à votre disque.}
+{Veuillez donner un nom à votre disque.}
 
 message lastchance
-{Nous sommes prêt à installer NetBSD sur votre disque (%s).
-Rien n'a été écrit pour l'instant.
-C'est votre dernière chance de quitter cette procédure en
-laissant votre disque intact. On continue ?
+{Nous sommes prêts à installer NetBSD sur votre disque (%s).
+Aucune modification n'a été effectuée pour l'instant.
+Ceci est votre dernière opportunité pour quitter cette
+procédure en laissant votre disque intact.
+Souhaitez-vous continuer ?
 }
 
 message disksetupdone
 {La première partie de la procédure est terminée.
-Sysinst a écrit, sur votre disque de destination, un disklabel,
-créé (via newfs) et testé (via fsck) vos nouvelles partitions.
+Sysinst a écrit vos nouvelles partitions sur votre disque,
+puis a procédé à leur vérification d'intégrité (via fsck).
 }
 
 message disksetupdoneupdate
 {La première partie de la procédure est terminée.
-Sysinst a écrit, sur votre disque de destination, un disklabel
-et testé (via fsck) vos nouvelles partitions.
+Sysinst a écrit vos nouvelles partitions sur votre disque,
+puis a procédé à leur vérification d'intégrité (via fsck).
 }
 
 message openfail
-{Je n'ai pas pu ouvrir %s, le message d'erreur était: %s.
+{Nous n'avons pas pu ouvrir %s. Message d'erreur obtenu : %s.
 }
 
 message mountfail
@@ -375,64 +376,65 @@ message extractcomplete
 {L'extraction des composants sélectionnés de NetBSD-@@VERSION@@
 est complète.
 Le système peut désormais démarrer directement depuis le disque.
-Pour compléter l'installation, sysinst va maintenant vous
-permettre de configurer quelques réglages essentiels.
+Pour compléter l'installation, Sysinst va maintenant vous
+permettre d'effectuer quelques réglages essentiels.
 }
 
 message instcomplete
-{L'installation de NetBSD-@@VERSION@@ est terminée. L'ordinateur devrait
-redémarrer depuis le disque dur. Suivez les instructions du document
-d'installation (INSTALL) pour finir de configurer votre ordinateur.
+{L'installation de NetBSD-@@VERSION@@ est terminée. L'ordinateur va
+redémarrer depuis le disque dur. Veuillez consulter le document
+d'installation (INSTALL) pour apprendre à bien configurer votre
+système.
 
-Vous devez au moins entrer un mot de passe pour root et parametrer
-/etc/rc.conf pour vos besoins.
+Nous vous recommandons au minimum de configurer le mot de passe
+du compte root et de paramétrer /etc/rc.conf selon vos besoins.
 }
 
 message unpackcomplete
 {La mise à jour de NetBSD-@@VERSION@@ est terminée.
-Suivez les instructions du document d'installation (INSTALL) pour finir
-de reconfigurer votre ordinateur.
+Veuillez consulter le document d'installation (INSTALL) pour apprendre
+à bien configurer votre système.
 
-Vous devez éditer /etc/rc.conf et ajouter la variable
+Vous devez éditer /etc/rc.conf et ajouter la ligne
 "RC_CONFIGURED=yes" pour redémarrer en mode multi-utilisateur.
 }
 
 message upgrcomplete
 { L'installation de composants de NetBSD-@@VERSION@@ supplémentaires est
 terminée.
-Suivez les instructions du document d'installation (INSTALL) afin de
-reconfigurer votre ordinateur.
+Veuillez consulter le document d'installation (INSTALL) pour apprendre
+à bien configurer votre système.
 
-Vous devez éditer /etc/rc.conf et ajouter la variable
+Vous devez éditer /etc/rc.conf et ajouter la ligne
 "RC_CONFIGURED=yes" pour redémarrer en mode multi-utilisateur.
 }
 
 message distmedium
-{Votre disque est maintenant prêt pour installer un noyau et les
-différents composants.
+{Votre disque est maintenant prêt à recevoir le coeur du système
+et ses différents composants annexes.
 Comme indiqué dans le document d'installation, vous avez
 plusieurs possibilités.
-Pour une installation via nfs ou ftp, vous devez être
-connecté au réseau et avoir accès au bon serveur.
+Pour une installation via NFS ou FTP, vous devez être
+connecté à un réseau et avoir accès au serveur requis.
 
-Sets selected %d, processed %d. Next set %s.
+Composant sélectionné : %d, traité : %d. Prochain composant : %s.
 
-}	/* XXX translate last line */
+}
 
 message distset
-{La distribution de NetBSD est découpée en plusieurs composants.
-Certains sont impératifs, d'autres non.
-Vous pouvez choisir de les installer tous
-(Installation complète) ou bien d'installer séparément les
-composants optionnels.
-} /* XXX add 'minimal installation' */
+{La distribution de NetBSD se compose de plusieurs composants.
+Certains sont indispensables.
+Trois possibilités sont offertes : l'installation complète,
+une installation minimale et personnalisée.
+}
 
 message ftpsource
-{Vous trouverez ci dessous le site %s, le répertoire, le code utilisateur
-et le mot de passe prêt à l'emplois actuellement.
-Si l'utilisateur est ftp, alors le mot de passe n'est pas nécessaire.
-Le répertoire des composants est relatif au répertoire de base, et
-doit contenir les fichiers .tgz.
+{Ci-dessous le nom du site (%s), le répertoire ainsi que le nom
+d'utilisateur et mot de passe actuellement configurés.
+Si vous utilisez le mode FTP, le mot de passe n'est pas requis.
+Le répertoire contenant les composants doit être défini par
+rapport au répertoire de base, et contenir chaque composant sous
+la forme de fichiers .tgz
 
 }
 
@@ -440,43 +442,43 @@ message email
 {adresse e-mail}
 
 message dev
-{device}
+{périphérique}
 
 message nfssource
-{Donnez le nom du serveur nfs et du répertoire sur ce serveur
-où se trouvent les composants. 
-Le répertoire de base doit etre accessible par NFS, le répertoire des
-composants est relatif au répertoire de base et doit contenir les fichiers
-.tgz.
+{Veuillez indiquer le nom du serveur NFS ainsi que le répertoire contenant
+les fichiers d'installation.
+Ce répertoire doit être exporté via NFS, et contenir ces fichiers
+à sa racine même.
 
 }
 
-message floppysource	/* XXX translate */
-{Enter the floppy device to be used and transfer directory on the target
-filesystem.  The set files must be in the root directory of the floppies.
+message floppysource
+{Veuillez spécifier le nom du lecteur de disquette à utiliser.
+Les fichiers d'installation devront se trouver à la racine
+de chaque disquette.
 
 }
 
 message cdromsource
-{Donnez le nom de périphérique du CD-Rom à utiliser ainsi que
-le répertoire qui contient les composants. 
-Rappelez-vous que le répertoire doit contenir les fichiers .tgz .
+{Veuillez spéficier le nom du lecteur CD-Rom à utiliser,
+ainsi que le nom du répertoire contenant les fichiers d'installation.
+Ils doivent être placés à sa racine, sous la forme de fichiers
+tgz.
 
 }
 
 
 message localfssource
-{Donnez le nom du périphérique local (non-monté) à utiliser
-ainsi que le répertoire contenant les composants. 
-Le répertoire des composants est relatif au répertoire de base et doit
-contenir les fichiers .tgz.
+{Veuillez spécifier le nom du périphérique local (qui ne doit pas
+être monté) à utiliser. Ce dernier doit contenir les fichiers
+d''installation à sa racine, sous la forme de fichiers tgz.
 
 }
 
 message localdir
-{Entrez le répertoire local (déjà monté) ou se trouve la
-distribution. 
-Rapellez vous que ce répertoire doit contenir les fichiers .tgz.
+{Veuillez spécificer le nom du répertoire local (déjà monté)
+où se trouvent les fichiers d'installation. Ils doivent se trouver
+à la racine du répertoire, sous la forme de fichiers tgz.
 
 }
 
@@ -484,88 +486,88 @@ message filesys
 {système de fichiers}
 
 message nonet
-{Je ne trouve aucune interface réseau utilisable.
+{Nous ne trouvons aucune interface réseau utilisable.
 Vous allez retourner au menu précédent.
 }
 
 message netup
-{Les interfaces réseau suivantes sont actives: %s
-Est-ce que l'une d'entre elles permet de joindre le serveur ?}
-
+{Les interfaces réseau suivantes sont utilisables : %s
+Quelle interface souhaitez-vous utiliser ?
+}
 
 message asknetdev
-{J'ai trouvé les interfaces réseau suivantes : %s
-\nLa quelle dois je utiliser ?}
+{Les interfaces suivantes sont utilisables : %s
+Quelle interface doit être utilisée ?
+}
 
 message badnet
 {Vous n'avez pas choisi une interface réseau dans la liste.
 Veuillez essayer à nouveau.
-Les interface réseau suivantes sont disponibles : %s
-\nLa quelle dois je utiliser ?}
-
+Les interface réseau suivantes sont utilisables : %s
+\nQuel est votre choix ?}
 
 message netinfo
-{Afin de pouvoir utiliser le réseau, vous devez répondre aux questions
-suivantes :
+{Veuillez répondre aux points suivants afin de pouvoir utiliser
+votre interface réseau :
 
 }
 
 message net_domain
-{Votre domaine (DNS)}
+{Votre nom de domaine}
 
 message net_host
-{Votre nom de machine}
+{Votre nom d'ordinateur}
 
 message net_ip
 {Votre adresse IPv4}
 
 message net_srv_ip
-{Server IPv4 number}
+{Adresse IPv4 du serveur}
 
 message net_mask
 {Votre masque de réseau (IPv4)}
 
 message net_namesrv6
-{L'adresse IPv6 de votre serveur de nom}
+{Adresse IPv6 de votre serveur de nom(DNS)}
 
 message net_namesrv
-{L'adresse IPv4 de votre serveur de nom}
+{Adresse IPv4 de votre serveur de nom(DNS)}
 
 message net_defroute
-{L'adresee IPv4 de votre passerelle}
+{Adresse IPv4 de votre passerelle}
 
 message net_media
 {Type de réseau (media)}
 
 message netok
-{Vous avez spécifié les valeurs suivantes.
+{Vous avez spécifié les valeurs suivantes:
 
-Domaine (DNS):			 %s 
-Nom de machine:			 %s 
-Adapteur de réseau		 %s
-Adresse IPv4			 %s
-Masque de réseau (Netmask):	 %s
+Nom de domaine (DNS):		 %s 
+Nom d'ordinateur:		 %s 
+Interface réseau:		 %s
+Adresse IPv4:			 %s
+Masque de sous-réseau:	 %s
 Adresse IPv4 du serveur de noms: %s
 Adresse IPv4 de la passerelle: 	 %s
-Type de réseau (media):		 %s 
+Type de réseau (media)	 %s 
 }
 
 message netok_slip
-{Vous avez spécifié les valeurs suivantes. Sont-ils d'accord?
+{Vous avez spécifié les valeurs suivantes. Etes-vous d'accord?
 
-Domaine (DNS):			 %s
-Nom de machine:			 %s
-Adapteur de réseau		 %s
-Adresse IPv4			 %s
+Nom de domaine (DNS):		 %s
+Nom d'ordinateur:		 %s
+Interface réseau:		 %s
+Adresse IPv4:			 %s
 Adresse IPv4 du serveur:	 %s
-Masque de réseau (Netmask):	 %s
+Masque de sous-réseau:	 %s
 Adresse IPv4 du serveur de noms: %s
 Adresse IPv4 de la passerelle:	 %s
-Type de réseau (media):		 %s
+Type de réseau (media):	 %s
 }
 
 message netokv6
-{Autoconfiguration IPv6:		 %s 
+{Auto-configuration IPv6:	 %s 
 Adresse du serveur de noms IPv6: %s 
 }
 
@@ -573,122 +575,152 @@ message netok_ok
 {Les valeurs sont-elles correctes ?}
 
 message slattach {
-Enter slattach flags
+Entrez les "flags" slattach
 }
 
 message netagain
-{Veuillez indiquer à nouveau les informations sur votre réseau.
+{
+Veuillez spécifier de nouveau les paramètres réseau.
 }
 
 message wait_network
 {
-Patientez en attendant que l'interface réseau se configure.
+Veuillez patienter pendant la configuration de l'interface...
 }
 
 message resolv
-{Impossible de créer le fichier /etc/resolv.conf.
-L'installation a échoué.
+{
+Impossible de créer le fichier /etc/resolv.conf
+Echec de l'installation.
 }
 
 message realdir
-{Impossible de se déplacer sur le répertoire %s/%s.
-L'installation a échoué.
+{
+Impossible de déplacer le répertoire %s/%s
+Echec de l'installation.
 }
 
-message delete_xfer_file	/* XXX translate */
-{Delete after install}
+message delete_xfer_file
+{
+Effacer après l'installation
+}
 
 message verboseextract
 {
-L'étape suivant consiste a recopier les différents composants. 
+L'étape suivante consiste à installer les composants de
+NetBSD.
 
-Pendant la procédure d'extraction des fichiers,
-voulez-vous voir les noms de fichiers au fur et à mesure ?
-voir pendant qu'ils seront extraits ?
+Souhaitez-vous voir s'afficher les noms de fichiers au fur et
+à mesure de leur installation ?
 }
 
 message notarfile
 {Le composant %s n'existe pas.}
 
 message endtarok
-{Tous les fichiers sont extraits. Veuillez appuyer sur <entrée> pour continuer.}
+{
+Tous les composants sont installés. Veuillez appuyer sur la touche
+Entrée pour continuer.
+}
 
 message endtar
-{Il y a eu des problèmes au décompactage des composants.
-Votre installation est terminée.
+{
+L'installation des composants est terminée. Toutefois, un ou plusieurs
+problèmes sont survenus au cours de leur extraction.
 
-Vous aviez selectionné %d composants. %d n'ont pas été trouvés et
-%d ont été ignorés à cause d'erreurs survenues.
-Sur les %d qui ont été traités,
-%d ont été extrait et %d ont provoqué un erreur.
+Vous avez sélectionné %d composants. %d n'ont pu être installés,
+et %d ont été ignorés à la suite d'erreurs.
 
-La procédure d'installation a échoué. Vérifiez vos composants et
-envisagez une réinstallation des composants depuis le menu principal.}
+Sur les %d composants traités, %d ont pu être installés et
+%d ont provoqués une erreur.
+
+Veuillez vérifier l'intégrité des fichiers d'installation et leur
+emplacement et essayez à nouveau via une réinstallation de composants
+depuis le menu principal.
+}
 
 message abort
-{Vos choix rendent l'installation de NetBSD impossible. L'installation a
-échoué.
+{
+Votre sélection ne permet pas l'installation de NetBSD.
+Annulation de l'installation.
 }
 
 message abortinst
-{La distribution n'a pas été correctement chargée.
-Vous allez devoir terminer à la main. L'installation a échoué.
+{
+L'instalation des composants de NetBSD n'est pas complète.
+Vous allez devoir recommencer, ou terminer à la main.
+Echec de l'installation.
 }
 
 message abortupgr
-{La distribution n'a pas été correctement chargée.
-Vous allez devoir la terminer à la main. La mise à jour a échoué.
+{
+La mise à jour des composants de NetBSD n'est pas complète.
+Vous allez devoir recommencer, ou terminer à la main.
+Echec de l'installation.
 }
 
 message abortunpack
-{Les composants supplémentaires n'ont pu etre décompactées.
-Vous allez devoir procéder à la main, ou choisir une source
-differente pour les composants et essayer à nouveau.
+{
+L'installation des composants supplémentaires n'est pas complète.
+Vous allez devoir recommencer, ou terminer à la main.
+Essayez de choisir une source différente pour les fichiers
+d'installation.
 }
 
 message createfstab
-{Erreur fatale ! Impossible de créer /mnt/etc/fstab.
-Nous devons quitter immédiatement !
+{
+Impossible de créer /mnt/etc/fstab
+Ceci est une erreur majeure : nous ne pouvons continuer.
+Echec de l'installation.
 }
 
 message noetcfstab
-{Erreur fatale ! Il n'y a pas de fichier /etc/fstab sur le disque cible %s.
-Arrêt de la mise à jour.
+{
+Aucun fichier /etc/fstab n'est présent sur le disque cible %s
+Ceci est une erreur majeure : nous ne pouvons continuer.
+Echec de l'installation.
 }
 
 message badetcfstab
-{Erreur fatale ! Impossible de décoder /etc/fstab sur le disque cible %s.
-Arrêt de la mise à jour.
+{
+Impossible de lire le contenu du fichier /etc/fstab présent sur
+le disque cible %s
+Ceci est une erreur majeure : nous ne pouvons continuer.
+Echec de l'installation.
 }
 
 message X_oldexists
-{Je n'ai pas pu sauvegarder /usr/X11R6/bin/X sous /usr/X11R6/bin/X.old car
-le disque de destination contient déjà un /usr/X11R6/bin/X.old.
-Veuillez corriger avant de poursuivre.
-
-Vous pouvez démarrer un shell depuis le menu "Utilitaires" pour
-examiner le disque de destination.
-Si le /usr/X11R6/bin/X.old existant provient d'une ancienne
-mise à jour vous pouvez le supprimer et recommencer.
-Si ce dernier provient d'une mise à jour incomplète,
-vous pouvez effacer /usr/X11R6/bin/X et renommer
+{
+Impossible de sauvegarder /usr/X11R6/bin/X : le disque contient déjà
+un fichier /usr/X11R6/bin/X.old et nous devons renommer l'actuel fichier
+avec ce nom. Veuillez supprimer ou renommer le fichier X.old avant de
+pouvoir recommencer.
+Vous pouvez démarrer un shell depuis le menu "Utilitaires" afin
+de faire cette modification.
+Ce fichier provient probablement d'une ancienne mise à jour et
+il est possible de le supprimer. S'il provient d'une mise à jour
+incomplète, vous pouvez effacer /usr/X11R6/bin/X et renommer
 /usr/X11R6/bin/X.old en /usr/X11R6/bin/X.
 
-Arrêt de la mise à jour}
+Arrêt de la mise à jour.
+}
 
 
 message netnotup
-{Il y'a eu un problème lors de la configuration de votre réseau.
-Votre serveur de noms, ou bien votre passerelle ne peuvent
-être atteints par un ping
-Voulez vous configurer de nouveau votre réseau ?
-(Non arrêtera l'installation)
+{
+Un problème est survenu lors de la configuration de votre interface
+réseau. Votre serveur de noms ou bien votre passerelle ne semblent pas
+répondre aux pings.
+Souhaitez-vous configurer à nouveau les paramètres de votre
+connexion réseau ?
+(un refus provoquera l'arrêt de la procédure d'installation)
 }
 
 message netnotup_continueanyway
-{Voulez-vous poursuivre malgré tout le processus d'installation
-et suppposer que le réseau fonctionne correctement ?
-("Non" arrêtera l'installation)
+{
+Souhaitez-vous poursuivre malgré tout le processus d'installation
+et supposer que le réseau fonctionne correctement ?
+(un refus provoquera l'arrêt de la procédure d'installation)
 }
 
 message makedev
@@ -696,17 +728,21 @@ message makedev
 }
 
 message badfs
-{/dev/%s%c n'est pas un système de fichiers BSD ou bien sa vérification
-par fsck a rencontré un problème.
-La mise à jour a été interrompue avec un code erreur %d.
+{
+/dev/%s%c ne semble pas être un système de fichier BSD ou bien
+la vérification de son intégrité par fsck a échoué.
+
+Interruption de la procédure de mise à jour, code d'erreur %d.
 }
 
 message rootmissing
-{ La racine du système cible %s est introuvable.
+{
+Impossible de trouver la racine du disque cible %s.
 }
 
 message badroot
-{La vérification du nouveau système de fichier a rencontré un problème.
+{
+La vérification de l'intégrité du nouveau système de fichiers a échoué.
 Avez-vous bien installé tous les composants indispensables ?
 }
 
@@ -714,39 +750,46 @@ message fd_type		/* XXX translate */
 {Floppy file system type}
 
 message fdnotfound
-{Impossible de trouver le fichier sur la disquette.
+{
+Impossible de trouver un fichier requis sur la disquette.
 }
 
 message fdremount
-{La disquette n'a pas été montée correctement.
+{
+Impossible de monter la disquette correctement.
 }
 
 message fdmount
-{Veuillez insérer la disquette contenant le fichier "%s.%s".
+{
+Veuillez insérer la disquette contenant le fichier "%s.%s".
 
-If the set's has no more disks, select "Set finished" to install the set.
-Select "Abort fetch" to return to the install media selection menu.
+Si le jeu de disquettes ne comprend aucun autre disque, veuillez
+choisir "Ensemble terminé" pour mettre à terme à ce traitement.
+Sélectionnez "Annuler la récupération" pour revenir au menu
+de sélection du média d'installation.
 }
 
 message mntnetconfig
-{Les informations réseau correspondent-elles à la configuration
-dont vous souhaitez disposer au redémarrage ?}
+{
+Souhaitez-vous conserver les réglages réseaux après le redémarrage
+du système que nous venons d'installer ?
+}
 
 message cur_distsets
-{Vous trouverez ci dessous la liste des composants qui seront installées.
-
+{
+Veuillez trouver ci-dessous la liste des composants disponibles :
 }
 
 message cur_distsets_header
-{      Composant                      Installe?
------------------------------------- ---------
+{      Composant                      Installer?
+------------------------------------ ----------
 }
 
 message set_base
 {Base}
 
 message set_system
-{System (/etc)}
+{Système (/etc)}
 
 message set_compiler
 {Outils de développement}
@@ -785,100 +828,122 @@ message cur_distsets_row
 {%-33s %3s}
 
 message select_all
-{Sélectionner tout les composants}
+{Sélectionner tous les composants}
 
 message select_none
-{Déselectionner tout les composants}
+{Déselectionner tous les composants}
 
 message install_selected_sets
 {Installer les composants sélectionnés}
 
 
 message tarerror
-{Il y a eu des erreurs lors de l'extraction du fichier %s.
-Ceci signifie que certains fichiers n'ont pas étés extraits
-correctement et que votre système n'est pas complet.
+{
+Une erreur est survenue lors de l'installation du fichier %s.
+Certains fichiers n'ayant pu être extraits correctement,
+le système n'est pas complet et pourrait rencontrer un
+dysfonctionnement.
 
-Voulez-vous continuer à extraire les composants ?}
+Souhaitez-vous continuer l'installation des composants ?
+}
 
 message must_be_one_root
-{Il ne doit y avoir qu'une seule partition devant être montée sur '/'.}
+{
+Une seule partition peut être montée en tant que racine, dite "/".
+}
 
 message partitions_overlap
 {Les partitions %c et %c se recouvrent.}
 
 message edit_partitions_again
 {
-Vous pouvez éditer la table des partitions à la main, ou abandonner et
-retourner au menu principal
+Vous pouvez éditer la table de partitions à la main, ou abandonner et
+retourner au menu principal.
 
-Voulez-vous éditer la table des partitions à nouveau ?
+Souhaitez-vous éditer à nouveau la table de partitions ?
 }
 
 message config_open_error
-{Impossible d'ouvrir le fichier de configuration %s.\n}
+{
+Impossible d'ouvrir le fichier de configuration %s.\n
+}
 
 message choose_timezone	
-{Sélectionnez votre zone horaire dans la liste suivante. 
-Appuyez sur ENTREE pour confirmer votre choix. 
-Appuyez sur 'x' puis ENTREE pour quitter la selection de la zone horaire.
+{
+Veuillez sélectionner votre zone horaire dans la liste suivante.
+Appuyez sur Entrée pour confirmer votre choix.
+Appuyez sur "x" puis Entree pour valider la sélection en cours.
 
- Défaut:	%s 
- Séléctionée:	%s 
- Heure Locale:	%s %s
+ Par défaut :		%s
+ Sélection actuelle : %s
+ Heure locale :		%s %s
 }
 
 message tz_back
 { Retour à la liste principale des fuseaux horaires}
 
 message choose_crypt	
-{Sélectionez le type de hachage des mots de passe. NetBSD peut être
-configuré pour utiliser DES, MD5 ou Blowfish.
+{
+Veuillez sélectionner le type de hachage des mots de passe.
+NetBSD supporte le DES, MD et Blowfish.
 
-Le DES est compatible avec la plupart des Systèmes d'exploitation
-de type Unix, mais le mot de passe ne peut dépasser 8 caractères.
-MD5 et Blowfish vous offrent une meilleure sécurité avec une taille de mot de passe bien supérieure.
+Le DES est compatible avec la plupart des systèmes de type Unix
+mais ne permet pas d'utiliser plus de huit caractères en mot de passe.
+MD5 et Blowfish offrent une meileure sécurité grâce aux tailles
+de mot de passe possibles, bien supérieures.
 
-Si vous un réseau et l'intention d'utiliser NIS, vérifier la capacitée des 
-autres machines de votre réseau.
+Si votre réseau comporte NIS, veuillez vérifier la capacité des
+autres machines composant ce dernier.
 
-Si vous mettez a jour et voulez conserver la même configuration
-déjà existante, choisissez "ne rien changer".
+Si vous effectuez une mise à jour et que vous souhaitez conserver la
+configuration déjà existante, veuillez choisir "Ne rien changer".
 }
 
 message swapactive
-{Le disque que vous avez sélectionné a une partition de swap 
-qui peut être en cours d'utilisation si votre système dispose de peut de mémoire.
-Sur le point de repartitionner ce disque, la partition de swap 
-va être désactivée. Prenez garde, cette opération peut entrainer des erreurs de swap.
-Si vous avez ces erreurs, vous devrez redémarrer et tenter à nouveau.}
+{
+Le disque sélectionné dispose d'une partition d'échange (swap) qui
+est peut être en cours d'utilisation, en particulier si votre système
+dispose de peu de mémoire.
+Le repartitionnement de votre disque requiert la désactivation de cette
+partition. Prenez garde ! Cette opération peut entraîner des
+erreurs à ce niveau.
+Vous devrez alors redémarrer et tenter à nouveau.
+}
 
 message swapdelfailed
-{Sysinst n'a pas réussit a désactiver la partition de swap du disque  
-sélectionné pour l'installation. Redémarrez et essayez une nouvelle
-fois.}
+{
+Sysinst n'a pu désactiver la partition d'échange (swap) présente
+sur le disque cible pour l'installation. Vous devez redémarrer et tenter
+à nouveau.
+}
 
 message rootpw	
-{Le mot de passe root du système installé n'a pas encore été
-initialisé et est par consequent vide. Souhaitez vous définir un mot de passe root 
-pour le système maintenant ?}
+{
+Aucun mot de passe pour le compte root n'a été défini.
+Nous vous recommandons de spéficier un mot de passe dès à présent.
+
+Le souhaitez-vous ?
+}
 
 message rootsh	
-{Vous pouvez maintenant choisir quel shell utiliser pour l'utilisateur root.
-Par default il s'agit de /bin/sh}
+{
+Vous pouvez à présent déterminer le shell par défaut qui sera
+utilisé par root. Par défaut, il s'agit de /bin/sh
+}
 
 message no_root_fs
-{Il n'y a pas de partition racine définie. Vous devez définir au moins 
-un point de montage "/".
+{
+Aucune partition racine n'est actuellement définie. Vous devez au moins
+définir le point de montage de cette partition racine, dite "/".
 
-Appuyer sur <entrée> pour continuer.
+Appuyez sur la touche Entrée pour continuer.
 }
 
 message Pick_an_option {Choisissez une option à activer/desactiver}
 message Scripting {Scripting}
-message Logging {Traces}
+message Logging {Journal}
 
-message Status  {    État: }
+message Status  {Statut: }
 message Command {Commande: }
 message Running {En cours d'exécution}
 message Finished {Terminée}
@@ -892,16 +957,16 @@ message Install_NetBSD_to_hard_disk {Installation de NetBSD sur disque dur}
 message Upgrade_NetBSD_on_a_hard_disk {Mise à jour de NetBSD sur disque dur}
 message Re_install_sets_or_install_additional_sets {Réinstaller ou installer de nouveaux composants}
 message Reboot_the_computer {Redémarrer l'ordinateur}
-message Utility_menu {Menu utilitaire}
+message Utility_menu {Utilitaire}
 message NetBSD_VERSION_Utilities {Utilitaires NetBSD-@@VERSION@@}
 message Run_bin_sh {Exécuter /bin/sh}
 message Set_timezone {Configurer le fuseau horaire}
-message Configure_network {Configuration du réseau}
+message Configure_network {Configurer le réseau}
 message Partition_a_disk {Partitioner un disque}
-message Logging_functions {Traces}
+message Logging_functions {Journal}
 message Halt_the_system {Arrêter le système}
 message yes_or_no {oui ou non?}
-message Hit_enter_to_continue {Presser entrée pour continuer}
+message Hit_enter_to_continue {Appuyez sur Entrée pour continuer}
 message Choose_your_installation {Choisissez votre type d'installation}
 message Set_Sizes {Specifier les tailles de partitions NetBSD}
 message Use_Existing {Utiliser les partitions existantes}
@@ -921,51 +986,53 @@ message Full_installation {Installation complète}
 message Minimal_installation {Installation minimale}
 message Custom_installation {Installation personnalisée}
 message hidden {** caché **}
-message Host {Serveur ftp}
+message Host {Serveur FTP}
 message Base_dir {Répertoire de base}
 message Set_dir {Répertoire des composants}
 message Xfer_dir {Répertoire de transfer}	/* fix XLAT */
 message User {Utilisateur}
 message Password {Mot de passe}
 message Proxy {Proxy}
-message Get_Distribution {Récupérer la Distribution}
+message Get_Distribution {Récupérer la distribution}
 message Continue {Continuer}
-message What_do_you_want_to_do {Que voulez vous faire?}
+message What_do_you_want_to_do {Que voulez-vous faire?}
 message Try_again {Réessayer}
 message Set_finished {Extraction terminée}
-message Skip_set {Skip set}  /* XXX translate */
-message Skip_group {Skip set group}  /* XXX translate */
-message Abandon {Abandon installation}	/* XXX */
-message Abort_fetch {Abort fetch}	/* XXX */
-message Password_cipher {Password cipher}
+message Skip_set {Sauter cet ensemble}
+message Skip_group {Sauter ce groupe}
+message Abandon {Abandonner l'installation}
+message Abort_fetch {Annuler la récupération}
+message Password_cipher {Chiffre du mot de passe}
 message DES {DES}
 message MD5 {MD5}
-message Blowfish_2_7_round {Blowfish 2^7 round}
+message Blowfish_2_7_round {Blowfish à 2^7 rondes}
 message do_not_change {ne rien changer}
-message Device {Device}
-message File_system {Système de fichier}
+message Device {Périphérique}
+message File_system {Système de fichiers}
 message Select_IPv6_DNS_server {  Choisissez un serveur de noms IPv6 :}
 message other {autre }
-message Perform_IPv6_autoconfiguration {Faire la configuration automatique IPv6 ?}
-message Perform_DHCP_autoconfiguration {Exécutez la configuration automatique de DHCP?}
-message Root_shell {Interpreteur de commande de root}
-message Select_set_extraction_verbosity {Methode d'indication de l'extraction d'ensemble ?}
+message Perform_IPv6_autoconfiguration {Configurer automatiquement l'IPv6 ?}
+message Perform_DHCP_autoconfiguration {Configurer automatiquement via DHCP ?}
+message Root_shell {Shell du compte root}
+message Select_set_extraction_verbosity {Degré d'information lors des extractions ?}
 message Progress_bar {Barre de progression (recommendeé)}
 message Silent {Silencieux}
-message Verbose {Liste verbeuse des fichiers (lent)}
+message Verbose {Détails maximum d'extraction (plus lent)}
 
 .if AOUT2ELF
 message aoutfail
-{Le répertoire où se situent les anciennes librairies a.out devrait être déplacé.
-Veuillez suivre la procédure de mise a jour et vérifier que vous avez 
-bien monté tous les systèmes de fichiers}
+{
+Le répertoire où se situent les anciennes librairies a.out doit être
+déplacé. Veuillez suivre la procédure de mise à jour et bien
+vérifier que tous les sytèmes de fichiers sont montés.
+}
 
 message emulbackup
-{Ou /emul/aout ou répertoire d' /emul sur votre système était un
-lien symbolique se dirigeant à un file system non-monté. Il
-a été donné une extension d' 'old'. Une fois que vous apportez
-votre copie de sauvegarde améliorée de système, vous
-pouvez devoir prendre soin de fusionner nouvellement
-créé / répertoire d' /emul/aout avec le vieil.
+{
+Le répertoire /emul/aout ou bien /emul est présent au sein de votre
+disque et pointe vers un répertoire non monté. Nous avons renommé
+ce répertoire en lui ajoutant une extension ".old". Lorsque vous aurez
+terminé votre installation ou mise à jour, vous devrez faire fusionner
+manuellement le nouveau répertoire avec l'ancien /emul/aout.
 }
 .endif
