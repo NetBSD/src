@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.36 2006/04/05 16:55:06 garbled Exp $	*/
+/*	$NetBSD: md.c,v 1.36.2.1 2006/09/27 12:12:50 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -175,7 +175,11 @@ md_update(void)
 void
 md_cleanup_install(void)
 {
+	enable_rc_conf();
 
+	run_program(0, "rm -f %s", target_expand("/sysinst"));
+	run_program(0, "rm -f %s", target_expand("/.termcap"));
+	run_program(0, "rm -f %s", target_expand("/.profile"));
 }
 
 int
