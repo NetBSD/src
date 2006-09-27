@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.834 2006/09/27 11:49:04 sketch Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.835 2006/09/27 21:43:26 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.834 2006/09/27 11:48:02 sketch Exp
+ *	NetBSD: pcidevs,v 1.835 2006/09/27 21:41:56 cube Exp
  */
 
 /*
@@ -1954,6 +1954,7 @@
 #define	PCI_PRODUCT_INTEL_82573E	0x108b		/* i82573E Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82573E_IAMT	0x108c		/* i82573E Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_6	0x1092		/* PRO/100 VE Network Controller */
+#define	PCI_PRODUCT_INTEL_PRO_100_VE_7	0x1094		/* PRO/100 VE Network Controller with 82562G PHY */
 #define	PCI_PRODUCT_INTEL_82573L	0x109a		/* i82573L Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER	0x1099		/* PRO/1000MT QP (82546GB) */
 #define	PCI_PRODUCT_INTEL_82572EI	0x10b9		/* PRO/1000PT (82572EI) */
