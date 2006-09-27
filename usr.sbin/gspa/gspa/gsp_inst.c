@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_inst.c,v 1.8 2006/08/26 18:15:37 christos Exp $	*/
+/*	$NetBSD: gsp_inst.c,v 1.9 2006/09/27 21:33:07 christos Exp $	*/
 /*
  * TMS34010 GSP assembler - Instruction encoding
  *
@@ -33,10 +33,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_inst.c,v 1.8 2006/08/26 18:15:37 christos Exp $");
+__RCSID("$NetBSD: gsp_inst.c,v 1.9 2006/09/27 21:33:07 christos Exp $");
 #endif
 
 #include <string.h>
+#include <assert.h>
 #include "gsp_ass.h"
 #include "gsp_code.h"
 
@@ -709,6 +710,7 @@ encode_instr(struct inst *ip, operand ops, int *spec, u_int16_t *iwords)
 	case MOVB:
 	case MOVE:
 		ms = op0 && op0->type == REG? M_REG: op0->mode;
+		assert(op1 != NULL);
 		md = op1->type == REG? M_REG: op1->mode;
 		opc = class == MOVE? move_opc[md][ms]:
 		      class == MOVB? movb_opc[md][ms]: pixt_opc[md][ms];
