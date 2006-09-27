@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.46 2006/08/26 20:26:44 christos Exp $
+#	$NetBSD: MIMORI,v 1.47 2006/09/27 21:42:04 manu Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -49,6 +49,7 @@ options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12	# NetBSD 1.2,
 options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0 compatibility.

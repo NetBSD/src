@@ -1,4 +1,4 @@
-# $NetBSD: KGDB3X,v 1.52 2006/08/26 20:27:08 christos Exp $
+# $NetBSD: KGDB3X,v 1.53 2006/09/27 21:42:06 manu Exp $
 
 # KGDB3X Sun3X (3/80, 3/470)
 # like GENERIC but supports gdb on other machine, i.e.:
@@ -53,6 +53,7 @@ options 	COMPAT_11	# NetBSD 1.1
 options 	COMPAT_12	# NetBSD 1.2
 options 	COMPAT_13	# NetBSD 1.3
 options 	COMPAT_14	# NetBSD 1.4
+options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.

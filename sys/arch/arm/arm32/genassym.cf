@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.28 2005/12/11 12:16:41 christos Exp $
+#	$NetBSD: genassym.cf,v 1.29 2006/09/27 21:42:05 manu Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -157,7 +157,7 @@ ifdef MULTIPROCESSOR
 define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CI_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 endif
-if defined(COMPAT_15) && defined(EXEC_AOUT)
+if defined(EXEC_AOUT)
 define	CI_CTRL			offsetof(struct cpu_info, ci_ctrl)
 endif
 

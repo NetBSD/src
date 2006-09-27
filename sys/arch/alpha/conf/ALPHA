@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.221 2006/09/14 18:08:06 plunky Exp $
+# $NetBSD: ALPHA,v 1.222 2006/09/27 21:42:04 manu Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.221 $"
+ident		"ALPHA-$Revision: 1.222 $"
 
 maxusers 32
 
@@ -114,6 +114,7 @@ options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
