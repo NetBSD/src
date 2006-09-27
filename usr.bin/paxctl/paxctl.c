@@ -1,4 +1,4 @@
-/* $NetBSD: paxctl.c,v 1.2 2006/05/16 02:37:24 dogcow Exp $ */
+/* $NetBSD: paxctl.c,v 1.3 2006/09/27 20:01:50 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -120,7 +120,7 @@ main(int argc, char **argv)
 	Elf_Ehdr eh;
 	Elf_Phdr ph;
 	char *opt = NULL;
-	int fd, i, add_flags = 0, del_flags = 0, list = 0, ok = 0;
+	int fd, i, add_flags = 0, del_flags = 0, list = 0, ok = 0, flagged = 0;
 
 	if (argc < 2)
 		usage();
@@ -186,6 +186,8 @@ main(int argc, char **argv)
 
 				pax_printflags(ph.p_flags);
 
+				flagged = 1;
+
 				break;
 			}
 
@@ -206,6 +208,9 @@ main(int argc, char **argv)
 	if (!ok)
 		errx(1, "Could not find an ELF PT_NOTE section in `%s'",
 		     opt);
+
+	if (list && !flagged)
+		(void)printf("No PaX flags.\n");
 
 	(void)close(fd);
 
