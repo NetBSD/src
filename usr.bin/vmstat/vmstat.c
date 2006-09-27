@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.150 2006/09/15 15:53:42 yamt Exp $ */
+/* $NetBSD: vmstat.c,v 1.151 2006/09/27 12:35:08 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.150 2006/09/15 15:53:42 yamt Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.151 2006/09/27 12:35:08 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -251,9 +251,25 @@ kvm_t *kd;
 #define	HASHLIST	1<<9
 #define	VMTOTAL		1<<10
 
-void	cpustats(void);
+/*
+ * Print single word.  `ovflow' is number of characters didn't fit
+ * on the last word.  `fmt' is a format string to print this word.
+ * It must contain asterisk for field width.  `width' is a width
+ * occupied by this word.  `fixed' is a number of constant chars in
+ * `fmt'.  `val' is a value to be printed using format string `fmt'.
+ */
+#define	PRWORD(ovflw, fmt, width, fixed, val) do {	\
+	(ovflw) += printf((fmt),			\
+	    (width) - (fixed) - (ovflw) > 0 ?		\
+	    (width) - (fixed) - (ovflw) : 0,		\
+	    (val)) - (width);				\
+	if ((ovflw) < 0)				\
+		(ovflw) = 0;				\
+} while (/* CONSTCOND */0)
+
+void	cpustats(int *);
 void	deref_kptr(const void *, void *, size_t, const char *);
-void	drvstats(void);
+void	drvstats(int *);
 void	doevcnt(int verbose);
 void	dohashstat(int, int, const char *);
 void	dointr(int verbose);
@@ -526,7 +542,7 @@ choosedrives(char **argv)
 			break;
 		}
 	}
-	for (i = 0; i < ndrive && ndrives < 3; i++) {
+	for (i = 0; i < ndrive && ndrives < 2; i++) {
 		if (drv_select[i])
 			continue;
 		drv_select[i] = 1;
@@ -632,6 +648,7 @@ dovmstat(struct timespec *interval, int reps)
 	int mib[2];
 	size_t size;
 	int pagesize = getpagesize();
+	int ovflw;
 
 	uptime = getuptime();
 	halfuptime = uptime / 2;
@@ -667,25 +684,34 @@ dovmstat(struct timespec *interval, int reps)
 				memset(&total, 0, sizeof(total));
 			}
 		}
-		(void)printf("%2d %d %d",
-		    total.t_rq - 1, total.t_dw + total.t_pw, total.t_sw);
+		ovflw = 0;
+		PRWORD(ovflw, " %*d", 2, 1, total.t_rq - 1);
+		PRWORD(ovflw, " %*d", 2, 1, total.t_dw + total.t_pw);
+		PRWORD(ovflw, " %*d", 2, 1, total.t_sw);
 #define	pgtok(a) (long)((a) * (pagesize >> 10))
 #define	rate(x)	(u_long)(((x) + halfuptime) / uptime)	/* round */
-		(void)printf(" %6ld %6ld ",
-		    pgtok(total.t_avm), pgtok(total.t_free));
-		(void)printf("%4lu ", rate(uvmexp.faults - ouvmexp.faults));
-		(void)printf("%3lu ", rate(uvmexp.pdreact - ouvmexp.pdreact));
-		(void)printf("%3lu ", rate(uvmexp.pageins - ouvmexp.pageins));
-		(void)printf("%4lu ",
+		PRWORD(ovflw, " %*ld", 7, 1, pgtok(total.t_avm));
+		PRWORD(ovflw, " %*ld", 7, 1, pgtok(total.t_free));
+		PRWORD(ovflw, " %*ld", 5, 1,
+		    rate(uvmexp.faults - ouvmexp.faults));
+		PRWORD(ovflw, " %*ld", 4, 1,
+		    rate(uvmexp.pdreact - ouvmexp.pdreact));
+		PRWORD(ovflw, " %*ld", 4, 1,
+		    rate(uvmexp.pageins - ouvmexp.pageins));
+		PRWORD(ovflw, " %*ld", 5, 1,
 		    rate(uvmexp.pgswapout - ouvmexp.pgswapout));
-		(void)printf("%4lu ", rate(uvmexp.pdfreed - ouvmexp.pdfreed));
-		(void)printf("%4lu ", rate(uvmexp.pdscans - ouvmexp.pdscans));
-		drvstats();
-		(void)printf("%4lu %4lu %3lu ",
-		    rate(uvmexp.intrs - ouvmexp.intrs),
-		    rate(uvmexp.syscalls - ouvmexp.syscalls),
+		PRWORD(ovflw, " %*ld", 5, 1,
+		    rate(uvmexp.pdfreed - ouvmexp.pdfreed));
+		PRWORD(ovflw, " %*ld", 6, 2,
+		    rate(uvmexp.pdscans - ouvmexp.pdscans));
+		drvstats(&ovflw);
+		PRWORD(ovflw, " %*ld", 5, 1,
+		    rate(uvmexp.intrs - ouvmexp.intrs));
+		PRWORD(ovflw, " %*ld", 5, 1,
+		    rate(uvmexp.syscalls - ouvmexp.syscalls));
+		PRWORD(ovflw, " %*ld", 4, 1,
 		    rate(uvmexp.swtch - ouvmexp.swtch));
-		cpustats();
+		cpustats(&ovflw);
 		putchar('\n');
 		(void)fflush(stdout);
 		if (reps >= 0 && --reps <= 0)
@@ -877,10 +903,11 @@ doforkst(void)
 }
 
 void
-drvstats(void)
+drvstats(int *ovflwp)
 {
 	int dn;
 	double etime;
+	int ovflw = *ovflwp;
 
 	/* Calculate disk stat deltas. */
 	cpuswap();
@@ -890,17 +917,20 @@ drvstats(void)
 
 	for (dn = 0; dn < ndrive; ++dn) {
 		if (!drv_select[dn])
-			continue;
-		(void)printf("%2.0f ", (cur.rxfer[dn] + cur.wxfer[dn]) / etime);
+	 		continue;
+		PRWORD(ovflw, " %*.0f", 3, 1,
+		    (cur.rxfer[dn] + cur.wxfer[dn]) / etime);
 	}
+	*ovflwp = ovflw;
 }
 
 void
-cpustats(void)
+cpustats(int *ovflwp)
 {
 	int state;
 	double pcnt, total;
 	double stat_us, stat_sy, stat_id;
+	int ovflw = *ovflwp;
 
 	total = 0;
 	for (state = 0; state < CPUSTATES; ++state)
@@ -912,10 +942,11 @@ cpustats(void)
 	stat_us = (cur.cp_time[CP_USER] + cur.cp_time[CP_NICE]) * pcnt;
 	stat_sy = (cur.cp_time[CP_SYS] + cur.cp_time[CP_INTR]) * pcnt;
 	stat_id = cur.cp_time[CP_IDLE] * pcnt;
-	(void)printf("%*.0f ", ((stat_sy >= 100) ? 1 : 2), stat_us);
-	(void)printf("%*.0f ", ((stat_us >= 100 || stat_id >= 100) ? 1 : 2),
-		     stat_sy);
-	(void)printf("%2.0f", stat_id);
+	PRWORD(ovflw, " %*.0f", ((stat_sy >= 100) ? 2 : 3), 1, stat_us);
+	PRWORD(ovflw, " %*.0f", ((stat_us >= 100 || stat_id >= 100) ? 2 : 3), 1,
+	    stat_sy);
+	PRWORD(ovflw, " %*.0f", 3, 1, stat_id);
+	*ovflwp = ovflw;
 }
 
 void
@@ -1180,21 +1211,6 @@ dopool(int verbose, int wide)
 			snprintf(maxp, sizeof(maxp), "inf");
 		else
 			snprintf(maxp, sizeof(maxp), "%u", pp->pr_maxpages);
-/*
- * Print single word.  `ovflow' is number of characters didn't fit
- * on the last word.  `fmt' is a format string to print this word.
- * It must contain asterisk for field width.  `width' is a width
- * occupied by this word.  `fixed' is a number of constant chars in
- * `fmt'.  `val' is a value to be printed using format string `fmt'.
- */
-#define	PRWORD(ovflw, fmt, width, fixed, val) do {	\
-	(ovflw) += printf((fmt),			\
-	    (width) - (fixed) - (ovflw) > 0 ?		\
-	    (width) - (fixed) - (ovflw) : 0,		\
-	    (val)) - (width);				\
-	if ((ovflw) < 0)				\
-		(ovflw) = 0;				\
-} while (/* CONSTCOND */0)
 		ovflw = 0;
 		PRWORD(ovflw, "%-*s", wide ? 16 : 11, 0, name);
 		PRWORD(ovflw, " %*u", wide ? 6 : 5, 1, pp->pr_size);
