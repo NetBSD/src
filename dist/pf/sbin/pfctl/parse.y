@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.6 2005/07/01 12:43:50 peter Exp $	*/
+/*	$NetBSD: parse.y,v 1.7 2006/09/27 15:35:12 christos Exp $	*/
 /*	$OpenBSD: parse.y,v 1.482 2005/03/07 13:20:03 henning Exp $	*/
 
 /*
@@ -4223,7 +4223,8 @@ expand_queue(struct pf_altq *a, struct node_if *interfaces,
 				    pa.scheduler != tqueue->scheduler) {
 					yyerror("exactly one scheduler type "
 					    "per interface allowed");
-					return (1);
+					errs++;
+					goto out;
 				}
 				pa.scheduler = tqueue->scheduler;
 
@@ -4233,13 +4234,15 @@ expand_queue(struct pf_altq *a, struct node_if *interfaces,
 					if (nqueues != NULL) {
 						yyerror("priq queues cannot "
 						    "have child queues");
-						return (1);
+						errs++;
+						goto out;
 					}
 					if (bwspec.bw_absolute > 0 ||
 					    bwspec.bw_percent < 100) {
 						yyerror("priq doesn't take "
 						    "bandwidth");
-						return (1);
+						errs++;
+						goto out;
 					}
 					break;
 				default:
@@ -4313,6 +4316,7 @@ expand_queue(struct pf_altq *a, struct node_if *interfaces,
 		);
 	);
 
+out:
 	FREE_LIST(struct node_queue, nqueues);
 	FREE_LIST(struct node_if, interfaces);
 
