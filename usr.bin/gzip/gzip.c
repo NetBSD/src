@@ -1,7 +1,7 @@
-/*	$NetBSD: gzip.c,v 1.83 2006/09/27 19:09:14 christos Exp $	*/
+/*	$NetBSD: gzip.c,v 1.84 2006/09/27 21:02:38 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
+ * Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
+__COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.83 2006/09/27 19:09:14 christos Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.84 2006/09/27 21:02:38 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -142,7 +142,7 @@ static suffixes_t suffixes[] = {
 };
 #define NUM_SUFFIXES (sizeof suffixes / sizeof suffixes[0])
 
-static	const char	gzip_version[] = "NetBSD gzip 20040830";
+static	const char	gzip_version[] = "NetBSD gzip 20060927";
 
 static	int	cflag;			/* stdout mode */
 static	int	dflag;			/* decompress mode */
@@ -1306,6 +1306,8 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 
 		if ((rv = pread(fd, ts, sizeof ts, GZIP_TIMESTAMP)) !=
 		    sizeof ts) {
+			if (rv == 0)
+				goto unexpected_EOF;
 			if (rv == -1 && !fflag)
 				maybe_warn("can't read %s", file);
 			goto lose;
