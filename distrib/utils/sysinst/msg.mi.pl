@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.55 2006/02/26 10:25:52 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.55.2.1 2006/09/27 12:15:13 tron Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -416,7 +416,7 @@ message distset
 Czesc z nich to pakiety podstawowe wymagane przez wszystkie instalacje,
 a czesc nie jest przez wszystkie wymagana. Mozesz zainstalowac je
 wszystkie (Pelna instalacja) lub wybrac z opcjonalnych pakietow.
-}
+} /* XXX add 'minimal installation' */
 
 message ftpsource
 {Ponizej masz site %s, katalog, uzytkownika, oraz haslo gotowe do uzycia.
@@ -882,6 +882,7 @@ message local_fs {Niezamontowany SP}
 message local_dir {Lokalny katalog}
 message Select_your_distribution {Wybierz swoja dystrybucje}
 message Full_installation {Pelna instalacja}
+message Minimal_installation {Minimalna instalacja}
 message Custom_installation {Inna instalacja}
 message hidden {** ukryte **}
 message Host {Host}

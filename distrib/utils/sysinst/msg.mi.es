@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.15 2006/02/26 10:25:52 dsl Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.15.2.1 2006/09/27 12:15:14 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -434,7 +434,7 @@ distribución.  Hay algunos conjuntos básicos que son necesarios para todas
 las instalaciones, y otros conjuntos que no son necesarios para todas las
 instalaciones.  Puede escoger para instalar todos ellos (Instalación
 completa) o seleccionar de entre los conjuntos de distribución opcionales.
-}
+} /* XXX add 'minimal installation' */
 
 message ftpsource
 {Lo siguiente son el sitio %s, directorio, usuario y contraseña que se
@@ -915,6 +915,7 @@ message local_fs {Sistema de ficheros desmontado}
 message local_dir {Directorio Local}
 message Select_your_distribution {Seleccione su distribución}
 message Full_installation {Instalación completa}
+message Minimal_installation {Instalación mínima}
 message Custom_installation {Instalación personalizada}
 message hidden {** oculto **}
 message Host {Máquina}

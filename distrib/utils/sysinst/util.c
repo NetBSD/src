@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.143.2.1 2006/09/27 12:13:26 tron Exp $	*/
+/*	$NetBSD: util.c,v 1.143.2.2 2006/09/27 12:15:14 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,6 +56,9 @@
 
 #ifndef MD_SETS_SELECTED
 #define MD_SETS_SELECTED SET_KERNEL_1, SET_SYSTEM, SET_X11, SET_MD
+#endif
+#ifndef MD_SETS_SELECTED_MINIMAL
+#define MD_SETS_SELECTED_MINIMAL SET_KERNEL_1, SET_CORE
 #endif
 #ifndef MD_SETS_VALID
 #define MD_SETS_VALID SET_KERNEL, SET_SYSTEM, SET_X11, SET_MD
@@ -145,12 +148,19 @@ distinfo dist_list[] = {
 static int check_for(unsigned int mode, const char *pathname);
 
 void
-init_set_status(void)
+init_set_status(int minimal)
 {
 	const static uint8_t sets_valid[] = {MD_SETS_VALID};
-	const static uint8_t sets_selected[] = {MD_SETS_SELECTED};
+	const static uint8_t sets_selected_full[] = {MD_SETS_SELECTED};
+	const static uint8_t sets_selected_minimal[] = {MD_SETS_SELECTED_MINIMAL};
+	const static uint8_t *sets_selected;
 	unsigned int i, len;
 	const char *longest;
+
+	if (minimal)
+		sets_selected = sets_selected_minimal;
+	else
+		sets_selected = sets_selected_full;
 
 	for (i = 0; i < nelem(sets_valid); i++)
 		set_status[sets_valid[i]] = SET_VALID;
