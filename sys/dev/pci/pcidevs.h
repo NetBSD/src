@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.833 2006/09/26 00:09:42 heas Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.834 2006/09/27 11:49:04 sketch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.832 2006/09/24 18:35:34 briggs Exp
+ *	NetBSD: pcidevs,v 1.834 2006/09/27 11:48:02 sketch Exp
  */
 
 /*
@@ -3269,7 +3269,8 @@
 #define	PCI_PRODUCT_TI_PCI72111FM	0x8033		/* PCI7x21/7x11 Integrated FlashMedia Controller */
 #define	PCI_PRODUCT_TI_PCI6515A	0x8036		/* PCI6515A Cardbus Controller */
 #define	PCI_PRODUCT_TI_PCI6515ASM	0x8038		/* PCI6515A Cardbus Controller (Smart Card mode) */
-#define	PCI_PRODUCT_TI_ACX100	0x8400		/* ACX100 802.11b */
+#define	PCI_PRODUCT_TI_ACX100A	0x8400		/* ACX100A 802.11b */
+#define	PCI_PRODUCT_TI_ACX100B	0x8401		/* ACX100B 802.11b */
 #define	PCI_PRODUCT_TI_ACX111	0x9066		/* ACX111 802.11b/g */
 #define	PCI_PRODUCT_TI_PCI1130	0xac12		/* PCI1130 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1031	0xac13		/* PCI1031 PCI-PCMCIA Bridge */

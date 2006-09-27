@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.832 2006/09/26 00:09:42 heas Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.833 2006/09/27 11:49:04 sketch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.832 2006/09/24 18:35:34 briggs Exp
+ *	NetBSD: pcidevs,v 1.834 2006/09/27 11:48:02 sketch Exp
  */
 
 /*
@@ -11116,8 +11116,12 @@ static const struct pci_product pci_products[] = {
 	    "PCI6515A Cardbus Controller (Smart Card mode)",
 	},
 	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100,
-	    "ACX100 802.11b",
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100A,
+	    "ACX100A 802.11b",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100B,
+	    "ACX100B 802.11b",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX111,
@@ -12332,4 +12336,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2489;
+const int pci_nproducts = 2490;
