@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.46 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.47 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8357,5 +8357,8 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		SMTP client. [rpaulo 20060801]
 	amd64:	PowerNow/Cool`n'Quiet driver for AMD Athlon64 cpus,
 		adapted from OpenBSD. [xtraeme 20060806]
+	sysinst: Besides full and custom installation, there's now also a
+		minimal installation consisting of just a kernel, base and
+		etc sets. [hubertf 20060904]
 	scan_ffs(8): Add -F file support. Useful to search for partitions
 		on disk images. [xtraeme 20060907]

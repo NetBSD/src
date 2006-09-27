@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.711 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.712 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -35,9 +35,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		drivers, which provides uniform handling across all ports.
 		Not all ports have adopted it yet.  [gdamore 20060902]
 	sun2: Add timecounter support. [gdamore 20060903]
-	sysinst: Besides full and custom installation, there's now also a
-		minimal installation consisting of just a kernel, base and
-		etc sets. [hubertf 20060904]
 	tcp: Add support for Explicit Congestion Notification as defined
 		in RFC 3168. Sponsored by Google SoC. [rpaulo 20060905]
 	prep: Convert prep to MI todr(9) driver. [garbled 20060905]
