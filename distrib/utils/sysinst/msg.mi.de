@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.32 2006/07/21 14:04:26 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.32.2.1 2006/09/27 12:15:13 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -428,17 +428,17 @@ mehrere Optionen.
 Für FTP oder NFS müssen Sie mit einem Netzwerk verbunden sein und
 Zugriff auf die entsprechenden Server haben.
 
-Sets selected %d, processed %d. Next set %s.
+Insgesamt %d Pakete ausgewählt, %d installiert. Nächstes set: %s. 
 
-}	/* XXX translate last line */
+}
 
 message distset
-{Die NetBSD Distribution ist in verschiedene Pakete aufgeteilt.
+{Die NetBSD Distribution ist in verschiedene Pakete (Sets) aufgeteilt.
 Es gibt einige grundlegende Pakete, die auf jeden Fall benötigt werden,
 sowie optionale.
-Es bleibt Ihnen überlassen, ob Sie alle Pakete (volle Installation)
-installieren möchten oder bei den optionalen doch lieber einige auslassen
-wollen.
+Es bleibt Ihnen überlassen ein Basissystem (Minimale Installation) oder
+alle Pakete (volle Installation) zu installieren bzw. einen benutzer-
+definierten Satz auswählen möchten.
 }
 
 message ftpsource
@@ -460,9 +460,10 @@ finden ist.
 
 }
 
-message floppysource	/* XXX translate */
-{Enter the floppy device to be used and transfer directory on the target
-filesystem.  The set files must be in the root directory of the floppies.
+message floppysource
+{Geben Sie das Floppylaufwerk und das Transfer-Verzeichnis auf dem
+Zielfilesystem an. Das Installationspaket muß direkt im obersten
+Verzeichnis der Floppy liegen. 
 
 }
 
@@ -600,8 +601,8 @@ message realdir
 {Konnte nicht in das Verzeichnis %s: %s wechseln. Installation abgebrochen.
 }
 
-message delete_xfer_file	/* XXX translate */
-{Delete after install}
+message delete_xfer_file
+{Nach der Installation löschen}
 
 message verboseextract
 {
@@ -712,10 +713,10 @@ message badroot
 Sind Sie sicher, daß Sie alle benötigten Sets installiert haben? 
 }
 
-message fd_type		/* XXX translate */
-{Floppy file system type}
+message fd_type
+{Floppy Dateisystem-Typ}
 
-message fdnotfound	/* XXX fix translation */
+message fdnotfound
 {Ich konnte die Datei nicht finden.
 }
 
@@ -723,11 +724,13 @@ message fdremount
 {Die Diskette konnte nicht gemountet werden.
 }
 
-message fdmount		/* XXX translate */
-{Please load the floppy containing the file named "%s.%s". 
+message fdmount
+{Bitte legen Sie die Diskette mit der Datei "%s.%s" ein.
 
-If the set's has no more disks, select "Set finished" to install the set.
-Select "Abort fetch" to return to the install media selection menu.
+Falls das Paket keine weiteren Disketten enthält so wählen Sie
+"Paket fertig" um das Paket zu installieren. Wählen Sie
+"Holen abbrechen" um zur Auswahl des Installationsmediums
+zurückzukehren.
 }
 
 .if 0
@@ -947,6 +950,7 @@ message local_fs {Ungemountetes Dateisysytem}
 message local_dir {Lokales Verzeichnis}
 message Select_your_distribution {Wählen Sie Ihre Pakete}
 message Full_installation {Volle Installation}
+message Minimal_installation {Minimale Installation}
 message Custom_installation {Benutzerdefinierte Installation}
 message hidden {** versteckt **}
 message Host {Host}
@@ -961,10 +965,10 @@ message Continue {Weiter}
 message What_do_you_want_to_do {Was möchten Sie tun?}
 message Try_again {Versuchen Sie es erneut}
 message Set_finished {Paket fertig}
-message Skip_set {Paket skip}	/* XXX */
-message Skip_group {Paket skip group}	/* XXX */
-message Abandon {Abandon installation}	/* XXX */
-message Abort_fetch {Abort fetch}	/* XXX */
+message Skip_set {Paket überspringen}
+message Skip_group {Paketgruppe überspringen}
+message Abandon {Installation abbrechen}
+message Abort_fetch {Holen abbrechen}
 message Password_cipher {Passwort Verschlüsselungsverfahren}
 message DES {DES}
 message MD5 {MD5}
