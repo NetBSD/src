@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.21 2006/05/25 15:32:17 christos Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.22 2006/09/27 18:52:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.21 2006/05/25 15:32:17 christos Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.22 2006/09/27 18:52:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -848,8 +848,10 @@ getdiskinfo(int fd, const char *fname, const char *dtype, int oflag,
 		errx(1, "%s: unknown disk type", dtype);
 	}
 	if (NO_SLICE || part != -1) {
+#ifdef __FreeBSD__
 	    if (part == -1)
 		part = RAW_PART;
+#endif
 	    if (part >= lp->d_npartitions ||
 		!lp->d_partitions[part].p_size)
 		errx(1, "%s: partition is unavailable", fname);
