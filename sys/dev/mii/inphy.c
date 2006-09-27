@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.39 2006/03/29 07:05:24 thorpej Exp $	*/
+/*	$NetBSD: inphy.c,v 1.40 2006/09/27 21:51:48 cube Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.39 2006/03/29 07:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.40 2006/09/27 21:51:48 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,9 @@ static const struct mii_phydesc inphys[] = {
 
 	{ MII_OUI_yyINTEL,		MII_MODEL_yyINTEL_I82562ET,
 	  MII_STR_yyINTEL_I82562ET },
+
+	{ MII_OUI_yyINTEL,		MII_MODEL_yyINTEL_I82562G,
+	  MII_STR_yyINTEL_I82562G },
 
 	{ 0,				0,
 	  NULL },
