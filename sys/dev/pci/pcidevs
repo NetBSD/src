@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.834 2006/09/27 11:48:02 sketch Exp $
+$NetBSD: pcidevs,v 1.835 2006/09/27 21:41:56 cube Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1947,6 +1947,7 @@ product INTEL 82546GB_PCIE	0x108a	PRO/1000MT (82546GB)
 product INTEL 82573E		0x108b	i82573E Gigabit Ethernet
 product INTEL 82573E_IAMT	0x108c	i82573E Gigabit Ethernet
 product INTEL PRO_100_VE_6	0x1092	PRO/100 VE Network Controller
+product INTEL PRO_100_VE_7	0x1094	PRO/100 VE Network Controller with 82562G PHY
 product INTEL 82573L		0x109a	i82573L Gigabit Ethernet
 product INTEL 82546GB_QUAD_COPPER 0x1099  PRO/1000MT QP (82546GB)
 product INTEL 82572EI		0x10b9	PRO/1000PT (82572EI)
