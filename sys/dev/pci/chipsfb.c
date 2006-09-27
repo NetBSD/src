@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.2 2006/09/27 05:19:23 macallan Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.3 2006/09/27 06:39:38 macallan Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.2 2006/09/27 05:19:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.3 2006/09/27 06:39:38 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,10 +242,17 @@ static void
 chipsfb_wait_idle(struct chipsfb_softc *sc)
 {
 
+#ifdef CHIPSFB_DEBUG
+	chipsfb_write32(sc, CT_OFF_FB + (800 * 598) - 4, 0);
+#endif
+
 	/* spin until the blitter is idle */
 	while ((chipsfb_read32(sc, CT_BLT_CONTROL) & BLT_IS_BUSY) != 0) {
-		delay(1);
 	}
+
+#ifdef CHIPSFB_DEBUG
+	chipsfb_write32(sc, CT_OFF_FB + (800 * 598) - 4, 0xffffffff);
+#endif
 }
 
 static int
@@ -778,15 +785,15 @@ chipsfb_feed(struct chipsfb_softc *sc, int count, uint8_t *data)
 		} else
 			shift += 8;
 	}
+	
 	if (shift != 0) {
 		chipsfb_write32(sc, CT_OFF_DATA, latch);
-	} else {
-		/*
-		 * sometimes the chip just sits here waiting for more data - 
-		 * sending one more word gets it going again
-	 	 */
-		chipsfb_write32(sc, CT_OFF_DATA, 0);
 	}
+	
+	/* apparently the chip wants 64bit-aligned data or it won't go idle */
+	if ((count + 3) & 0x04) {
+		chipsfb_write32(sc, CT_OFF_DATA, 0);
+	}	
 #ifdef CHIPSFB_WAIT
 	chipsfb_wait_idle(sc);
 #endif
