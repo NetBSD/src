@@ -1,4 +1,4 @@
-#	$NetBSD: BRIQ,v 1.28 2006/08/26 20:26:56 christos Exp $
+#	$NetBSD: BRIQ,v 1.29 2006/09/27 21:42:06 manu Exp $
 #
 #	BRIQ -- Total Impact briQ -- http://www.totalimpact.com
 #
@@ -7,7 +7,7 @@ include "arch/ofppc/conf/std.ofppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.28 $"
+#ident 		"GENERIC-$Revision: 1.29 $"
 
 maxusers	32
 
@@ -54,6 +54,7 @@ options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12	# NetBSD 1.2,
 options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0 compatibility.

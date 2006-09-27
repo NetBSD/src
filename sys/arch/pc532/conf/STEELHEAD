@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.47 2006/08/26 20:26:56 christos Exp $
+#	$NetBSD: STEELHEAD,v 1.48 2006/09/27 21:42:06 manu Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -29,6 +29,7 @@ options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.

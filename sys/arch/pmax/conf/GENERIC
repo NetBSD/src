@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.149 2006/08/26 20:26:56 christos Exp $
+# $NetBSD: GENERIC,v 1.150 2006/09/27 21:42:06 manu Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.149 $"
+#ident		"GENERIC-$Revision: 1.150 $"
 
 maxusers	64
 
@@ -151,6 +151,7 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	COMPAT_12	# NetBSD 1.2 reboot(), EXEC_ELF_NOTELESS
 options 	COMPAT_13	# NetBSD 1.3
 options 	COMPAT_14	# NetBSD 1.4
+options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.

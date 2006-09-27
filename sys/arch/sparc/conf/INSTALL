@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.55 2006/08/26 20:26:56 christos Exp $
+#	$NetBSD: INSTALL,v 1.56 2006/09/27 21:42:06 manu Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -146,6 +146,7 @@ options 	INSECURE
 #options 	COMPAT_12	# NetBSD 1.2 binary compatibility
 #options 	COMPAT_13	# NetBSD 1.3 binary compatibility
 #options 	COMPAT_14	# NetBSD 1.4 binary compatibility
+#options 	COMPAT_15	# NetBSD 1.5 binary compatibility
 #options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 #options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 #options 	COMPAT_30	# NetBSD 3.0 compatibility.

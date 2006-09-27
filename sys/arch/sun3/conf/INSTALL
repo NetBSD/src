@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.36 2006/08/26 20:27:08 christos Exp $
+# $NetBSD: INSTALL,v 1.37 2006/09/27 21:42:06 manu Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -57,6 +57,7 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 #options 	COMPAT_12	# NetBSD 1.2
 options 	COMPAT_13	# NetBSD 1.3
 options 	COMPAT_14	# NetBSD 1.4
+options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.

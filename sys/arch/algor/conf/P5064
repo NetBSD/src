@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.48 2006/08/14 06:22:33 skrll Exp $
+#	$NetBSD: P5064,v 1.49 2006/09/27 21:42:04 manu Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.48 $"
+#ident 		"P5064-$Revision: 1.49 $"
 
 maxusers 32
 
@@ -62,6 +62,7 @@ options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.

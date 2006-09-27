@@ -1,4 +1,4 @@
-#	$NetBSD: MMEYE,v 1.35 2006/09/22 09:32:26 uwe Exp $
+#	$NetBSD: MMEYE,v 1.36 2006/09/27 21:42:05 manu Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -39,6 +39,7 @@ options 	USERCONF	# userconf(4) support
 
 # Compatibility options
 options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0 compatibility.

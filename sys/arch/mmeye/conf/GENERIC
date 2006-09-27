@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.85 2006/09/22 09:32:26 uwe Exp $
+# $NetBSD: GENERIC,v 1.86 2006/09/27 21:42:05 manu Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.85 $"
+#ident 		"GENERIC-$Revision: 1.86 $"
 
 maxusers	16		# estimated number of users
 
@@ -69,6 +69,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Compatibility options
 options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
