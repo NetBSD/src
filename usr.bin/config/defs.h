@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.15 2006/09/04 07:32:50 cube Exp $	*/
+/*	$NetBSD: defs.h,v 1.16 2006/09/27 19:05:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -462,6 +462,7 @@ void	addobject(const char *, struct nvlist *, int);
 
 /* hash.c */
 struct	hashtab *ht_new(void);
+void	ht_free(struct hashtab *);
 int	ht_insrep(struct hashtab *, const char *, void *, int);
 #define	ht_insert(ht, nam, val) ht_insrep(ht, nam, val, 0)
 #define	ht_replace(ht, nam, val) ht_insrep(ht, nam, val, 1)
