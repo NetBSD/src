@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.143 2006/02/26 10:25:52 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.143.2.1 2006/09/27 12:13:26 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1225,11 +1225,9 @@ add_rc_conf(const char *fmt, ...)
 void
 enable_rc_conf(void)
 {
-	const char *tp = target_prefix();
-
-	run_program(0, "sed -an -e 's/^rc_configured=NO/rc_configured=YES/;"
-				    "H;$!d;g;w %s/etc/rc.conf' %s/etc/rc.conf",
-		tp, tp);
+	run_program(RUN_CHROOT,
+		    "sed -an -e 's/^rc_configured=NO/rc_configured=YES/;"
+				    "H;$!d;g;w /etc/rc.conf' /etc/rc.conf");
 }
 
 int
