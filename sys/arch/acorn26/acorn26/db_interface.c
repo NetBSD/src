@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.9 2006/04/06 17:29:49 he Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.10 2006/09/27 21:21:09 bjh21 Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.9 2006/04/06 17:29:49 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.10 2006/09/27 21:21:09 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -169,14 +169,20 @@ kdb_trap(type, regs)
 	return (1);
 }
 
+volatile boolean_t db_validating, db_faulted;
 
 int
 db_validate_address(addr)
 	vm_offset_t addr;
 {
+	volatile uint8_t tmp;
 
-	/* FIXME */
-	return 0;
+	db_faulted = FALSE;
+	db_validating = TRUE;
+	asm("" : : : "r14"); /* Make sure R14 is saved over the page fault */
+	tmp = *(uint8_t *)addr;
+	db_validating = FALSE;
+	return db_faulted;
 }
 
 /*
