@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.111 2006/04/05 16:55:05 garbled Exp $ */
+/*	$NetBSD: md.c,v 1.111.2.1 2006/09/27 12:13:39 tron Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -472,15 +472,17 @@ md_cleanup_install(void)
 	 * Otherwise, run getty on 4 VTs.
 	 */
 	if (get_kernel_set() == SET_KERNEL_TINY)
-		run_program(0, "sed -an -e '/^screen/s/^/#/;/^mux/s/^/#/;"
+		run_program(RUN_CHROOT,
+			    "sed -an -e '/^screen/s/^/#/;/^mux/s/^/#/;"
 			    "H;$!d;g;w %s/etc/wscons.conf' %s/etc/wscons.conf",
-			tp, tp);
+			    tp, tp);
 	else
 #endif
-		run_program(0, "sed -an -e '/^ttyE[1-9]/s/off/on/;"
+		run_program(RUN_CHROOT,
+			    "sed -an -e '/^ttyE[1-9]/s/off/on/;"
 			    "H;$!d;g;w %s/etc/ttys' %s/etc/ttys",
-			tp, tp);
-
+			    tp, tp);
+	
 	run_program(0, "rm -f %s", target_expand("/sysinst"));
 	run_program(0, "rm -f %s", target_expand("/.termcap"));
 	run_program(0, "rm -f %s", target_expand("/.profile"));
