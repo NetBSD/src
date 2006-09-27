@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.local.c,v 1.22 2003/08/07 09:46:45 agc Exp $	*/
+/*	$NetBSD: mail.local.c,v 1.23 2006/09/27 17:15:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mail.local.c	8.22 (Berkeley) 6/21/95";
 #else
-__RCSID("$NetBSD: mail.local.c,v 1.22 2003/08/07 09:46:45 agc Exp $");
+__RCSID("$NetBSD: mail.local.c,v 1.23 2006/09/27 17:15:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,6 +169,8 @@ store(from)
 	(void)fflush(fp);
 	if (ferror(fp))
 		err(FATAL, "temporary file write error");
+	fd = dup(fd);
+	(void)fclose(fp);
 	return(fd);
 }
 
