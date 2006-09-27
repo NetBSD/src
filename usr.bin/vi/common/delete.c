@@ -1,4 +1,4 @@
-/*	$NetBSD: delete.c,v 1.5 2002/04/09 01:47:31 thorpej Exp $	*/
+/*	$NetBSD: delete.c,v 1.6 2006/09/27 20:04:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)delete.c	10.12 (Berkeley) 10/23/96";
 #else
-__RCSID("$NetBSD: delete.c,v 1.5 2002/04/09 01:47:31 thorpej Exp $");
+__RCSID("$NetBSD: delete.c,v 1.6 2006/09/27 20:04:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,8 @@ del(sp, fm, tm, lmode)
 			if (db_get(sp, fm->lno, DBG_FATAL, &p, &len))
 				return (1);
 			GET_SPACE_RET(sp, bp, blen, fm->cno);
-			memcpy(bp, p, fm->cno);
+			if (bp == NULL)
+				goto done;
 			if (db_set(sp, fm->lno, bp, fm->cno))
 				return (1);
 			goto done;
@@ -100,6 +101,8 @@ del(sp, fm, tm, lmode)
 		if (db_get(sp, fm->lno, DBG_FATAL, &p, &len))
 			return (1);
 		GET_SPACE_RET(sp, bp, blen, len);
+		if (bp == NULL)
+			goto done;
 		if (fm->cno != 0)
 			memcpy(bp, p, fm->cno);
 		memcpy(bp + fm->cno, p + (tm->cno + 1), len - (tm->cno + 1));
@@ -118,7 +121,8 @@ del(sp, fm, tm, lmode)
 		if (db_get(sp, fm->lno, DBG_FATAL, &p, NULL))
 			return (1);
 		GET_SPACE_RET(sp, bp, blen, tlen + 256);
-		memcpy(bp, p, tlen);
+		if (bp != NULL)
+			memcpy(bp, p, tlen);
 	}
 
 	/* Copy the end partial line into place. */
@@ -140,6 +144,9 @@ del(sp, fm, tm, lmode)
 			GET_SPACE_RET(sp, bp, blen, nlen);
 		} else
 			ADD_SPACE_RET(sp, bp, blen, nlen);
+
+		if (bp == NULL)
+			goto done;
 
 		memcpy(bp + tlen, p + (tm->cno + 1), len - (tm->cno + 1));
 		tlen += len - (tm->cno + 1);
