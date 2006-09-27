@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.3 2006/09/03 07:45:40 dsl Exp $	*/
+/*	$NetBSD: hash.c,v 1.4 2006/09/27 19:05:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@
 #endif
 
 #include <sys/param.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <util.h>
@@ -203,6 +204,27 @@ ht_new(void)
 	ht = ecalloc(1, sizeof *ht);
 	ht_init(ht, 8);
 	return (ht);
+}
+
+void
+ht_free(struct hashtab *ht)
+{
+	int i;
+	struct hashent *hp;
+	struct hashenthead *hpp;
+
+	for (i = 0; i < ht->ht_mask; i++) {
+		hpp = &ht->ht_tab[i];
+		while ((hp = TAILQ_FIRST(hpp)) != NULL) {
+			TAILQ_REMOVE(hpp, hp, h_next);
+			free(hp);
+			ht->ht_used--;
+		}
+	}
+
+	assert(ht->ht_used == 0);
+	free(ht->ht_tab);
+	free(ht);
 }
 
 /*
