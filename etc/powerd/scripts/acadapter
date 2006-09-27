@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: acadapter,v 1.1 2006/09/26 02:17:38 jmcneill Exp $
+#	$NetBSD: acadapter,v 1.2 2006/09/27 01:41:45 jnemeth Exp $
 #
 # Generic script for acadapter events.
 #
@@ -45,7 +45,7 @@ released)
 	# Enable power saving mode for speedstep CPUs
 	/sbin/sysctl -w machdep.speedstep_state=0 >/dev/null 2>&1
 
-	# Disable power saving mode on all network interfaces
+	# Enable power saving mode on all network interfaces
 	for intf in /sbin/ifconfig -l; do
 		/sbin/ifconfig $intf powersave >/dev/null 2>&1
 	done

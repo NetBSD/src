@@ -1,8 +1,8 @@
 #!/bin/sh -
 #
-#	$NetBSD: lid_switch,v 1.3 2006/09/26 02:17:38 jmcneill Exp $
+#	$NetBSD: lid_switch,v 1.4 2006/09/27 01:41:45 jnemeth Exp $
 #
-# Generic script for lid switch events.  We do nothing for now.
+# Generic script for lid switch events.  We try to put the system to sleep.
 #
 # Arguments passed by powerd(8):
 #
