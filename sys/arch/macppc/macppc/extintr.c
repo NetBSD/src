@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.58 2006/08/14 11:17:59 jmcneill Exp $	*/
+/*	$NetBSD: extintr.c,v 1.59 2006/09/27 22:41:55 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.58 2006/08/14 11:17:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.59 2006/09/27 22:41:55 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -100,19 +100,33 @@ __KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.58 2006/08/14 11:17:59 jmcneill Exp $"
 #define NIRQ 32
 #define HWIRQ_MAX (NIRQ - 4 - 1)
 #define HWIRQ_MASK 0x0fffffff
+#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < NIRQ)
 
-void intr_calculatemasks __P((void));
-int fakeintr __P((void *));
+#if 0
+#define LPIC_DEBUG
+#endif
 
-static inline uint32_t gc_read_irq __P((void));
-static inline int mapirq __P((int));
-static void gc_enable_irq __P((int));
-static void gc_reenable_irq __P((int));
-static void gc_disable_irq __P((int));
+static void		intr_calculatemasks(void);
+static int		fakeintr(void *);
 
-static void do_pending_int __P((void));
-static void ext_intr_openpic __P((void));
-static void legacy_int_init __P((void));
+static inline uint32_t	gc_read_irq(void);
+static inline int	mapirq(uint32_t);
+static void		gc_enable_irq(uint32_t);
+static void		gc_reenable_irq(uint32_t);
+static void		gc_disable_irq(uint32_t);
+
+static int	lpic_add(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
+static uint32_t	lpic_read_events(int);
+static void	lpic_enable_irq(int, uint32_t);
+static void	lpic_disable_irq(int, uint32_t);
+static void	lpic_disable_all(void);
+static void	lpic_clear_all(void);
+static void	lpic_dump(int);
+
+static void	do_pending_int(void);
+static void	legacy_int_init(void);
+
+static void	ext_intr_openpic(void);
 
 int imask[NIPL];
 
@@ -125,42 +139,163 @@ struct intrsource {
 	struct evcnt is_ev;
 	char is_source[16];
 };
-
 static struct intrsource intrsources[NIRQ];
 
 static u_char virq[ICU_LEN];
 static int virq_max = 0;
 
-static u_char *obio_base;
-
 extern u_int *heathrow_FCR;
 
+typedef struct __lpic_regs {
+	uint32_t	lpic_state;
+	uint32_t	lpic_enable;
+	uint32_t	lpic_clear;
+	uint32_t	lpic_level;
+	uint32_t	lpic_level_mask;
+	uint32_t	lpic_enable_mask;
+	uint32_t	lpic_cascade_mask;
+} lpic_regs;
+
+static lpic_regs lpics[4]; 
+
 #define IPI_VECTOR 64
-
-#define interrupt_reg	(obio_base + 0x10)
-
-#define INT_STATE_REG_H  (interrupt_reg + 0x00)
-#define INT_ENABLE_REG_H (interrupt_reg + 0x04)
-#define INT_CLEAR_REG_H  (interrupt_reg + 0x08)
-#define INT_LEVEL_REG_H  (interrupt_reg + 0x0c)
-#define INT_STATE_REG_L  (interrupt_reg + 0x10)
-#define INT_ENABLE_REG_L (interrupt_reg + 0x14)
-#define INT_CLEAR_REG_L  (interrupt_reg + 0x18)
-#define INT_LEVEL_REG_L  (interrupt_reg + 0x1c)
-
 #define have_openpic	(openpic_base != NULL)
 
-static uint32_t		intr_level_mask;
+#define INT_STATE_REG_H		0x10
+#define INT_ENABLE_REG_H	0x14
+#define INT_CLEAR_REG_H		0x18
+#define INT_LEVEL_REG_H		0x1c
+#define INT_STATE_REG_L		0x20
+#define INT_ENABLE_REG_L	0x24
+#define INT_CLEAR_REG_L		0x28
+#define INT_LEVEL_REG_L		0x2c
+
+#define HEATHROW_FCR_OFFSET	0x38		/* XXX should not here */
+
+#define HH_INTR_SECONDARY	0xf80000c0
+#define GC_OBIO_BASE		0xf3000000
+#define GC_IPI_IRQ		30
+
+static uint32_t		num_hw_irqs = 0;
+static uint32_t		num_lpics = 0;
 
 #define INT_LEVEL_MASK_GC	0x3ff00000
-#define INT_LEVEL_MASK_OHARE	0x1ff00000
+#define INT_LEVEL_MASK_OHARE	0x1ff00000	/* also for Heathrow */
 
+static int
+lpic_add(uint32_t state, uint32_t enable, uint32_t clear, uint32_t level, 
+    uint32_t mask)
+{
+	lpic_regs *this;
+	
+	if (num_lpics >= 4)
+		return -1;
+	this = &lpics[num_lpics];
+	this->lpic_state = state;
+	this->lpic_enable = enable;
+	this->lpic_clear = clear;
+	this->lpic_level = level;
+	this->lpic_level_mask = mask;
+	this->lpic_cascade_mask = 0;
+	this->lpic_enable_mask = 0;
+	num_lpics++;
+	num_hw_irqs += 32;
+	return 0;
+}
+
+static inline uint32_t
+lpic_read_events(int num)
+{
+	lpic_regs *this = &lpics[num];
+	uint32_t irqs, levels, events;
+	
+	irqs = in32rb(this->lpic_state);
+	events = irqs & ~this->lpic_level_mask;
+
+	levels = in32rb(this->lpic_level) & this->lpic_enable_mask;
+	events |= levels & this->lpic_level_mask;
+	
+	/* Clear any interrupts that we've read and all level ones */
+	out32rb(this->lpic_clear, events | this->lpic_level_mask);
+
+	/* don't return cascade interrupts */
+	events &= ~this->lpic_cascade_mask;
+#ifdef LPIC_DEBUG
+	printf("lpic %d: %08x %08x %08x ", num, irqs, levels, events);
+#endif
+	return events;
+}
+
+static inline void
+lpic_enable_irq(int num, uint32_t irq)
+{
+	lpic_regs *this = &lpics[num];
+
+#ifdef DIAGNOSTIC	
+	if (irq > 31)
+		printf("bogus irq %d\n", irq);
+#endif
+	this->lpic_enable_mask |= (1 << irq) | this->lpic_cascade_mask;
+	out32rb(this->lpic_enable, this->lpic_enable_mask);	/* unmask */
+#ifdef LPIC_DEBUG
+	printf("enabling %d %d %08x ", num, irq, mask);
+#endif
+}
+
+static void
+lpic_disable_irq(int num, uint32_t irq)
+{
+	lpic_regs *this = &lpics[num];
+
+#ifdef DIAGNOSTIC
+	if (irq > 31)
+		printf("bogus irq %d\n", irq);
+#endif
+	this->lpic_enable_mask &= ~(1 << irq);
+	out32rb(this->lpic_enable, this->lpic_enable_mask);	/* unmask */
+}
+
+#ifdef DIAGNOSTIC
+static void
+lpic_dump(int num)
+{
+	lpic_regs *this = &lpics[num];
+
+	printf("lpic %d:\n", num);
+	printf("state:      %08x\n", in32rb(this->lpic_state));
+	printf("enable:     %08x\n", in32rb(this->lpic_enable));
+	printf("clear:      %08x\n", in32rb(this->lpic_clear));
+	printf("level:      %08x\n", in32rb(this->lpic_level));
+	printf("level_mask: %08x\n", this->lpic_level_mask);
+	printf("cascade:    %08x\n", this->lpic_cascade_mask);
+}
+#endif
+
+static void
+lpic_disable_all(void)
+{
+	int i;
+	
+	for (i = 0; i < num_lpics; i++) {
+		lpics[i].lpic_enable_mask = 0;
+		out32rb(lpics[i].lpic_enable, 0);
+	}
+}
+
+static void
+lpic_clear_all(void)
+{
+	int i;
+	
+	for (i = 0; i < num_lpics; i++)
+		out32rb(lpics[i].lpic_clear, 0xffffffff);
+}
+	
 /*
  * Map 64 irqs into 32 (bits).
  */
-int
-mapirq(irq)
-	int irq;
+static int
+mapirq(uint32_t irq)
 {
 	int v;
 
@@ -177,131 +312,80 @@ mapirq(irq)
 
 	intrsources[v].is_hwirq = irq;
 	virq[irq] = v;
-
+#ifdef LPIC_DEBUG
+	printf("mapping irq %d to virq %d\n", irq, v);
+#endif
 	return v;
 }
 
-uint32_t
-gc_read_irq()
+static uint32_t
+gc_read_irq(void)
 {
 	uint32_t rv = 0;
-	uint32_t int_state;
-	uint32_t events, e;
-	uint32_t levels;
+	uint32_t e;
+	uint32_t events;
+	int i;
 
-	/* Get the internal interrupts */
-	int_state = in32rb(INT_STATE_REG_L);
-	events = int_state & ~intr_level_mask;
-
-	/* Get the enabled external interrupts */
-	levels = in32rb(INT_LEVEL_REG_L) & in32rb(INT_ENABLE_REG_L);
-	events = events | (levels & intr_level_mask);
-
-	/* Clear any interrupts that we've read */
-	out32rb(INT_CLEAR_REG_L, events | int_state);
-	while (events) {
-		e = 31 - cntlzw(events);
-		rv |= 1 << virq[e];
-		events &= ~(1 << e);
-	}
-
-	/* If we're on Heathrow, repeat for the secondary */
-	if (heathrow_FCR) {
-		events = in32rb(INT_STATE_REG_H);
-
-		if (events)
-			out32rb(INT_CLEAR_REG_H, events);
-
+	for (i = 0; i < num_lpics; i++) {
+		events = lpic_read_events(i);
 		while (events) {
 			e = 31 - cntlzw(events);
-			rv |= 1 << virq[e + 32];
+			rv |= 1 << virq[e + (i << 5)];
 			events &= ~(1 << e);
 		}
 	}
 
+#ifdef LPIC_DEBUG
+	printf("rv: %08x ", rv);
+#endif	
 	/* 1 << 0 is invalid because virq will always be at least 1. */
 	return rv & ~1;
 }
 
-void
-gc_reenable_irq(irq)
-	int irq;
+static void
+gc_reenable_irq(uint32_t irq)
 {
+	lpic_regs *this;
 	struct cpu_info *ci = curcpu();
-	u_int levels, vi;
-	u_int mask, irqbit;
+	uint32_t levels, irqbit, vi;
+	uint32_t pic;
 
-	if (irq < 32) {
-		mask = in32rb(INT_ENABLE_REG_L);
-		irqbit = 1 << irq;
+	pic = irq >> 5;
+	this = &lpics[pic];
+	
+	irqbit = 1 << (irq & 0x1f);
 
-		/* Already enabled? */
-		if (mask & irqbit)
-			return;
+	/* Already enabled? */
+	if (this->lpic_enable_mask & irqbit)
+		return;
 
-		mask |= irqbit;
-		out32rb(INT_ENABLE_REG_L, mask);	/* unmask */
-
-		/* look for lost level interrupts */
-		levels = in32rb(INT_LEVEL_REG_L);
-		if (levels & irqbit) {
-			vi = virq[irq];		/* map to virtual irq */
-			ci->ci_ipending |= (1<<vi);	
-			out32rb(INT_CLEAR_REG_L, irqbit);
-		}
-	} else {
-		mask = in32rb(INT_ENABLE_REG_H);
-		irqbit = 1 << (irq - 32);
-
-		/* Already enabled? */
-		if (mask & irqbit)
-			return;
-
-		mask |= irqbit;
-		out32rb(INT_ENABLE_REG_H, mask);	/* unmask */
-
-		/* look for lost level interrupts */
-		levels = in32rb(INT_LEVEL_REG_H);
-		if (levels & irqbit) {
-			vi = virq[irq];		/* map to virtual irq */
-			ci->ci_ipending |= (1<<vi);	
-			out32rb(INT_CLEAR_REG_H, irqbit);
-		}
+	lpic_enable_irq(pic, irq & 0x1f);
+	
+	/* look for lost level interrupts */
+	levels = in32rb(this->lpic_level);
+	if (levels & irqbit) {
+		vi = virq[irq];	/* map to virtual irq */
+		ci->ci_ipending |= (1 << vi);	
+		out32rb(this->lpic_clear, irqbit);
 	}
 }
 
-void
-gc_enable_irq(irq)
-	int irq;
+static void
+gc_enable_irq(uint32_t irq)
 {
-	u_int mask;
-
-	if (irq < 32) {
-		mask = in32rb(INT_ENABLE_REG_L);
-		mask |= 1 << irq;
-		out32rb(INT_ENABLE_REG_L, mask);	/* unmask */
-	} else {
-		mask = in32rb(INT_ENABLE_REG_H);
-		mask |= 1 << (irq - 32);
-		out32rb(INT_ENABLE_REG_H, mask);	/* unmask */
-	}
+	uint32_t pic;
+	
+	pic = (irq >> 5);
+	lpic_enable_irq(pic, irq & 0x1f);
 }
 
-void
-gc_disable_irq(irq)
-	int irq;
+static void
+gc_disable_irq(uint32_t irq)
 {
-	u_int x;
-
-	if (irq < 32) {
-		x = in32rb(INT_ENABLE_REG_L);
-		x &= ~(1 << irq);
-		out32rb(INT_ENABLE_REG_L, x);
-	} else {
-		x = in32rb(INT_ENABLE_REG_H);
-		x &= ~(1 << (irq - 32));
-		out32rb(INT_ENABLE_REG_H, x);
-	}
+	uint32_t pic;
+	
+	pic = (irq >> 5);
+	lpic_disable_irq(pic, irq & 0x1f);
 }
 
 /*
@@ -310,8 +394,8 @@ gc_disable_irq(irq)
  * would be faster, but the code would be nastier, and we don't expect this to
  * happen very much anyway.
  */
-void
-intr_calculatemasks()
+static void
+intr_calculatemasks(void)
 {
 	int irq, level;
 	struct intrsource *is;
@@ -406,9 +490,7 @@ intr_calculatemasks()
 				openpic_enable_irq(is->is_hwirq, is->is_type);
 		}
 	} else {
-		out32rb(INT_ENABLE_REG_L, 0);
-		if (heathrow_FCR)
-			out32rb(INT_ENABLE_REG_H, 0);
+		lpic_disable_all();
 		for (irq = 0, is = intrsources; irq < NIRQ; irq++, is++) {
 			if (is->is_hand)
 				gc_enable_irq(is->is_hwirq);
@@ -416,19 +498,15 @@ intr_calculatemasks()
 	}
 }
 
-int
-fakeintr(arg)
-	void *arg;
+static int
+fakeintr(void *arg)
 {
 
 	return 0;
 }
 
-#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < NIRQ)
-
 const char *
-intr_typename(type)
-	int type;
+intr_typename(int type)
 {
 
 	switch (type) {
@@ -449,12 +527,8 @@ intr_typename(type)
  * Register an interrupt handler.
  */
 void *
-intr_establish(hwirq, type, level, ih_fun, ih_arg)
-	int hwirq;
-	int type;
-	int level;
-	int (*ih_fun) __P((void *));
-	void *ih_arg;
+intr_establish(int hwirq, int type, int level, int (*ih_fun)(void *),
+    void *ih_arg)
 {
 	struct intrhand **p, *q, *ih;
 	struct intrsource *is;
@@ -537,8 +611,7 @@ intr_establish(hwirq, type, level, ih_fun, ih_arg)
  * Deregister an interrupt handler.
  */
 void
-intr_disestablish(arg)
-	void *arg;
+intr_disestablish(void *arg)
 {
 	struct intrhand *ih = arg;
 	int irq = ih->ih_irq;
@@ -568,15 +641,13 @@ intr_disestablish(arg)
 	}
 }
 
-#define HH_INTR_SECONDARY 0xf80000c0
-#define GC_IPI_IRQ	  30
 extern int cpuintr(void *);
 
 /*
  * external interrupt handler
  */
 void
-ext_intr()
+ext_intr(void)
 {
 	int irq;
 	int pcpl, msr, r_imen;
@@ -584,9 +655,8 @@ ext_intr()
 	struct intrsource *is;
 	struct intrhand *ih;
 	uint32_t int_state;
-#if DIAGNOSTIC
-	uint32_t oint_state;
-	int spincount=0;
+#ifdef DIAGNOSTIC
+	int intr_spin = 0;
 #endif
 
 #ifdef MULTIPROCESSOR
@@ -601,38 +671,18 @@ ext_intr()
 	pcpl = ci->ci_cpl;
 	msr = mfmsr();
 
-#if DIAGNOSTIC
-	oint_state = 0;
-#endif
 	while ((int_state = gc_read_irq()) != 0) {
 
-#if DIAGNOSTIC
-		/*
-		 * Paranoia....
-		 */
-		if (int_state == oint_state) {
-			if (spincount++ > 0x80) {
-				uint32_t	stuck;
-				const char	*comma="";
-
-				stuck = int_state;
-				printf("Disabling stuck interrupt(s): ");
-				while (stuck) {
-					irq = 31 - cntlzw(int_state);
-					r_imen = 1 << irq;
-					is = &intrsources[irq];
-					printf("%s%d", comma, is->is_hwirq);
-					gc_disable_irq(is->is_hwirq);
-					ci->ci_ipending &= ~r_imen;
-					stuck &= ~r_imen;
-					comma = ", ";
-				}
-				printf("\n");
-				spincount = 0;
-				continue;
+#ifdef DIAGNOSTIC
+		if (intr_spin > 100) {
+			int i;
+			printf("spinning in ext_intr! %08x\n", int_state);
+			for (i = 0; i < num_lpics; i++) {
+				lpic_dump(i);
 			}
+			panic("stuck interrupt");
+			continue;
 		}
-		oint_state = int_state;
 #endif
 
 #ifdef MULTIPROCESSOR
@@ -688,6 +738,7 @@ ext_intr()
 			uvmexp.intrs++;
 			is->is_ev.ev_count++;
 		}
+		intr_spin++;
 	}
 
 	mtmsr(msr | PSL_EE);
@@ -696,7 +747,7 @@ ext_intr()
 }
 
 void
-ext_intr_openpic()
+ext_intr_openpic(void)
 {
 	struct cpu_info *ci = curcpu();
 	int irq, realirq;
@@ -748,7 +799,7 @@ start:
 	is = &intrsources[irq];
 
 	if ((pcpl & r_imen) != 0) {
-		ci->ci_ipending |= r_imen;	/* Masked! Mark this as pending */
+		ci->ci_ipending |= r_imen; /* Masked! Mark this as pending */
 		openpic_disable_irq(realirq);
 	} else {
 		splraise(is->is_mask);
@@ -779,7 +830,7 @@ start:
 }
 
 static void
-do_pending_int()
+do_pending_int(void)
 {
 	struct cpu_info * const ci = curcpu();
 	struct intrsource *is;
@@ -901,8 +952,7 @@ again:
 }
 
 int
-splraise(ncpl)
-	int ncpl;
+splraise(int ncpl)
 {
 	struct cpu_info *ci = curcpu();
 	int ocpl;
@@ -915,8 +965,7 @@ splraise(ncpl)
 }
 
 void
-splx(ncpl)
-	int ncpl;
+splx(int ncpl)
 {
 
 	struct cpu_info *ci = curcpu();
@@ -928,8 +977,7 @@ splx(ncpl)
 }
 
 int
-spllower(ncpl)
-	int ncpl;
+spllower(int ncpl)
 {
 	struct cpu_info *ci = curcpu();
 	int ocpl;
@@ -946,8 +994,7 @@ spllower(ncpl)
 /* Following code should be implemented with lwarx/stwcx to avoid
  * the disable/enable. i need to read the manual once more.... */
 void
-softintr(ipl)
-	int ipl;
+softintr(int ipl)
 {
 	int msrsave;
 
@@ -958,7 +1005,7 @@ softintr(ipl)
 }
 
 void
-openpic_init()
+openpic_init(void)
 {
 	int irq;
 	u_int x;
@@ -1011,32 +1058,67 @@ openpic_init()
 }
 
 void
-legacy_int_init()
+legacy_int_init(void)
 {
-	int	ohare;
+	uint32_t reg[5];
+	uint32_t obio_base;
+	int	ohare, ohare2;
 
-	out32rb(INT_ENABLE_REG_L, 0);		/* disable all intr. */
-	out32rb(INT_CLEAR_REG_L, 0xffffffff);	/* clear pending intr. */
-	intr_level_mask = INT_LEVEL_MASK_GC;
-	if (heathrow_FCR) {
-		out32rb(INT_ENABLE_REG_H, 0);
-		out32rb(INT_CLEAR_REG_H, 0xffffffff);
-		intr_level_mask = INT_LEVEL_MASK_OHARE;
-	}
 	ohare = OF_finddevice("/bandit/ohare");
 	if (ohare != -1) {
-		intr_level_mask = INT_LEVEL_MASK_OHARE;
+		if (OF_getprop(ohare, "assigned-addresses", reg, sizeof(reg))
+		    == 20) {
+			obio_base = reg[2];
+			printf("found OHare at 0x%08x\n", obio_base);
+			lpic_add(obio_base + INT_STATE_REG_L,
+			    obio_base + INT_ENABLE_REG_L,
+			    obio_base + INT_CLEAR_REG_L,
+			    obio_base + INT_LEVEL_REG_L,
+			    INT_LEVEL_MASK_OHARE);
+		}
+	} else {
+		/* must be Grand Central */
+		printf("found Grand Central at 0x%08x\n", GC_OBIO_BASE);
+		lpic_add(GC_OBIO_BASE + INT_STATE_REG_L,
+		    GC_OBIO_BASE + INT_ENABLE_REG_L,
+		    GC_OBIO_BASE + INT_CLEAR_REG_L,
+		    GC_OBIO_BASE + INT_LEVEL_REG_L,
+		    INT_LEVEL_MASK_GC);
+		return;
 	}
 
+	ohare2 = OF_finddevice("/bandit/pci106b,7");
+	if (ohare2 != -1) {
+		uint32_t irq;
+		
+		if (OF_getprop(ohare2, "assigned-addresses", reg, sizeof(reg))
+		    < 20)
+		    	goto next;
+		if (OF_getprop(ohare2, "AAPL,interrupts", &irq, sizeof(irq))
+		    < 4)
+		    	goto next;
+		obio_base = reg[2];			
+		printf("found OHare2 at 0x%08x, irq %d\n", obio_base, irq);
+		lpic_add(obio_base + INT_STATE_REG_L,
+		    obio_base + INT_ENABLE_REG_L,
+		    obio_base + INT_CLEAR_REG_L,
+		    obio_base + INT_LEVEL_REG_L,
+		    INT_LEVEL_MASK_OHARE);
+		lpics[0].lpic_cascade_mask = 1 << irq;
+	}
+next:	
+	lpic_disable_all();
+	lpic_clear_all();
+	
+	printf("Handling %d interrupts\n", num_hw_irqs);
+	
 	oea_install_extint(ext_intr);
 }
 
-#define HEATHROW_FCR_OFFSET	0x38		/* XXX should not here */
-#define GC_OBIO_BASE		0xf3000000
-
 void
-init_interrupt()
+init_interrupt(void)
 {
+	uint32_t obio_base;
 	int chosen __attribute__((unused));
 	int mac_io, reg[5];
 	int32_t ictlr;
@@ -1054,7 +1136,6 @@ init_interrupt()
 		/*
 		 * No mac-io.  Assume Grand-Central or OHare.
 		 */
-		obio_base = (void *)GC_OBIO_BASE;
 		legacy_int_init();
 		return;
 	}
@@ -1062,11 +1143,10 @@ init_interrupt()
 	if (OF_getprop(mac_io, "assigned-addresses", reg, sizeof(reg)) < 20)
 		goto failed;
 
-	obio_base = (void *)reg[2];
-	printf("obio_base: %p\n", obio_base);
+	obio_base = reg[2];
 
 	heathrow_FCR = (void *)(obio_base + HEATHROW_FCR_OFFSET);
-
+		
 #endif /* MAMBO */
 
 	memset(type, 0, sizeof(type));
@@ -1096,7 +1176,24 @@ init_interrupt()
 		/*
 		 * Not an open-pic.  Must be a Heathrow (compatible).
 		 */
-		legacy_int_init();
+		printf("Found Heathrow at 0x%08x\n", obio_base);
+		lpic_add(obio_base + INT_STATE_REG_L,
+			obio_base + INT_ENABLE_REG_L,
+			obio_base + INT_CLEAR_REG_L,
+			obio_base + INT_LEVEL_REG_L,
+			INT_LEVEL_MASK_OHARE);
+
+		lpic_add(obio_base + INT_STATE_REG_H,
+			obio_base + INT_ENABLE_REG_H,
+			obio_base + INT_CLEAR_REG_H,
+			obio_base + INT_LEVEL_REG_H,
+			0);
+
+		lpic_disable_all();
+		lpic_clear_all();
+		oea_install_extint(ext_intr);
+		printf("Handling %d interrupts\n", num_hw_irqs);
+
 		return;
 	} else {
 		/*
@@ -1113,11 +1210,11 @@ init_interrupt()
 		openpic_base = (void *)(obio_base + reg[0]);
 #elif defined (PPC_OEA64_BRIDGE)
 		/* There is no BAT mapping the OBIO region, use PTEs */
-		openpic_base = (void *)mapiodev((u_int32_t)obio_base + (u_int32_t)reg[0],
-							0x40000);
+		openpic_base = (void *)mapiodev((u_int32_t)obio_base + 
+		    (u_int32_t)reg[0], 0x40000);
 #endif
 		printf("%s: found OpenPIC @ pa 0x%08x, %p\n", __FUNCTION__, 
-				(u_int32_t)obio_base + (u_int32_t)reg[0], openpic_base);
+		    (u_int32_t)obio_base + (u_int32_t)reg[0], openpic_base);
 		openpic_init();
 		return;
 	}
