@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.69 2006/04/27 16:45:04 jonathan Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.70 2006/09/27 21:50:27 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.66 2006/04/27 16:43:14 jonathan Exp
+ *	NetBSD: miidevs,v 1.67 2006/09/27 21:50:00 cube Exp
  */
 
 /*-
@@ -213,6 +213,8 @@
 #define	MII_STR_yyINTEL_I82555	"i82555 10/100 media interface"
 #define	MII_MODEL_yyINTEL_I82562EH	0x0017
 #define	MII_STR_yyINTEL_I82562EH	"i82562EH HomePNA interface"
+#define	MII_MODEL_yyINTEL_I82562G	0x0031
+#define	MII_STR_yyINTEL_I82562G	"i82562G 10/100 media interface"
 #define	MII_MODEL_yyINTEL_I82562EM	0x0032
 #define	MII_STR_yyINTEL_I82562EM	"i82562EM 10/100 media interface"
 #define	MII_MODEL_yyINTEL_I82562ET	0x0033
