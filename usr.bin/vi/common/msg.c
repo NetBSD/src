@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.10 2004/11/05 19:50:12 dsl Exp $	*/
+/*	$NetBSD: msg.c,v 1.11 2006/09/27 21:01:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)msg.c	10.48 (Berkeley) 9/15/96";
 #else
-__RCSID("$NetBSD: msg.c,v 1.10 2004/11/05 19:50:12 dsl Exp $");
+__RCSID("$NetBSD: msg.c,v 1.11 2006/09/27 21:01:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -35,6 +35,7 @@ __RCSID("$NetBSD: msg.c,v 1.10 2004/11/05 19:50:12 dsl Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 
 #ifdef __STDC__
 #include <stdarg.h>
@@ -874,7 +875,7 @@ msg_print(sp, s, needfree)
 {
 	size_t blen, nlen;
 	const char *cp;
-	char *bp, *ep, *p, *t;
+	char *bp = NULL, *ep, *p, *t;
 
 	*needfree = 0;
 
@@ -884,29 +885,25 @@ msg_print(sp, s, needfree)
 	if (*cp == '\0')
 		return ((char *)s);	/* SAFE: needfree set to 0. */
 
+	assert(sp != NULL);
+
 	nlen = 0;
-	if (0) {
-retry:		if (sp == NULL)
-			free(bp);
-		else
-			FREE_SPACE(sp, bp, blen);
-		needfree = 0;
+retry:		
+	if (*needfree) {
+		FREE_SPACE(sp, bp, blen);
+		*needfree = 0;
 	}
 	nlen += 256;
-	if (sp == NULL) {
-		if ((bp = malloc(nlen)) == NULL)
-			goto alloc_err;
-	} else
-		GET_SPACE_GOTO(sp, bp, blen, nlen);
-	if (0) {
-alloc_err:	return ("");
-	}
+	GET_SPACE_GOTO(sp, bp, blen, nlen);
 	*needfree = 1;
 
 	for (p = bp, ep = (bp + blen) - 1, cp = s; *cp != '\0' && p < ep; ++cp)
-		for (t = KEY_NAME(sp, *cp); *t != '\0' && p < ep; *p++ = *t++);
+		for (t = KEY_NAME(sp, *cp); *t != '\0' && p < ep; *p++ = *t++)
+			continue;
 	if (p == ep)
 		goto retry;
 	*p = '\0';
 	return (bp);
+alloc_err:
+	return "";
 }
