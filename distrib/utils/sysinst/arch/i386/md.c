@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.111.2.1 2006/09/27 12:13:39 tron Exp $ */
+/*	$NetBSD: md.c,v 1.111.2.2 2006/09/27 12:14:34 tron Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -460,7 +460,6 @@ md_upgrade_mbrtype(void)
 void
 md_cleanup_install(void)
 {
-	const char *tp = target_prefix();
 
 	enable_rc_conf();
 	
@@ -473,16 +472,14 @@ md_cleanup_install(void)
 	 */
 	if (get_kernel_set() == SET_KERNEL_TINY)
 		run_program(RUN_CHROOT,
-			    "sed -an -e '/^screen/s/^/#/;/^mux/s/^/#/;"
-			    "H;$!d;g;w %s/etc/wscons.conf' %s/etc/wscons.conf",
-			    tp, tp);
+                            "sed -an -e '/^screen/s/^/#/;/^mux/s/^/#/;"
+			    "H;$!d;g;w /etc/wscons.conf' /etc/wscons.conf");
 	else
 #endif
 		run_program(RUN_CHROOT,
 			    "sed -an -e '/^ttyE[1-9]/s/off/on/;"
-			    "H;$!d;g;w %s/etc/ttys' %s/etc/ttys",
-			    tp, tp);
-	
+			    "H;$!d;g;w /etc/ttys' /etc/ttys");
+
 	run_program(0, "rm -f %s", target_expand("/sysinst"));
 	run_program(0, "rm -f %s", target_expand("/.termcap"));
 	run_program(0, "rm -f %s", target_expand("/.profile"));
