@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.477 2006/09/26 22:11:32 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.478 2006/09/27 06:34:07 martin Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -59,7 +59,8 @@ HAVE_GCC?=	4
 #
 .if \
     ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "powerpc"
+    ${MACHINE_ARCH} == "powerpc" || \
+    ${MACHINE_ARCH} == "sparc64"
 HAVE_GDB?=	6
 .endif
 
