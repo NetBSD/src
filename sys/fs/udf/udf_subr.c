@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.18 2006/09/19 23:59:16 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.19 2006/09/28 19:57:26 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.18 2006/09/19 23:59:16 reinoud Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.19 2006/09/28 19:57:26 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -2347,19 +2347,18 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 		if (error)
 			break;
 
+		/* skip deleted entries */
+		if ((fid->file_char & UDF_FILE_CHAR_DEL) == 0) {
+			if ((strlen(dirent.d_name) == namelen) &&
+			    (strncmp(dirent.d_name, name, namelen) == 0)) {
+				found = 1;
+				*icb_loc = fid->icb;
+			}
+		}
+
 		if (diroffset == dir_node->last_diroffset) {
 			/* we have cycled */
 			break;
-		}
-
-		/* skip deleted entries */
-		if (fid->file_char & UDF_FILE_CHAR_DEL)
-			continue;
-
-		if ((strlen(dirent.d_name) == namelen) &&
-		    (strncmp(dirent.d_name, name, namelen) == 0)) {
-			found = 1;
-			*icb_loc = fid->icb;
 		}
 	}
 	free(fid, M_TEMP);
