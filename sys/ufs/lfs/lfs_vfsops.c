@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.220 2006/09/02 06:48:00 christos Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.221 2006/09/28 23:08:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.220 2006/09/02 06:48:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.221 2006/09/28 23:08:23 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -725,6 +725,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	simple_lock_init(&fs->lfs_interlock);
 	lockinit(&fs->lfs_fraglock, PINOD, "lfs_fraglock", 0, 0);
 	lockinit(&fs->lfs_iflock, PINOD, "lfs_iflock", 0, 0);
+	lockinit(&fs->lfs_stoplock, PINOD, "lfs_stoplock", 0, 0);
 
 	/* Set the file system readonly/modify bits. */
 	fs->lfs_ronly = ronly;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.190 2006/09/02 06:46:04 christos Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.191 2006/09/28 23:08:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.190 2006/09/02 06:46:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.191 2006/09/28 23:08:23 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -432,8 +432,8 @@ lfs_vflush(struct vnode *vp)
 				lfs_writefile(fs, sp, vp);
 			}
 #ifdef DEBUG
-			if (++loopcount > 1)
-				printf("lfs_vflush: loopcount=%d\n", loopcount);
+			if (++loopcount > 2)
+				log(LOG_NOTICE, "lfs_vflush: looping count=%d\n", loopcount);
 #endif
 		} while (lfs_writeinode(fs, sp, ip));
 	} while (lfs_writeseg(fs, sp) && ip->i_number == LFS_IFILE_INUM);
@@ -768,8 +768,8 @@ lfs_segwrite(struct mount *mp, int flags)
 			redo += (fs->lfs_flags & LFS_IFDIRTY);
 			simple_unlock(&fs->lfs_interlock);
 #ifdef DEBUG
-			if (++loopcount > 1)
-				printf("lfs_segwrite: loopcount=%d\n",
+			if (++loopcount > 2)
+				log(LOG_NOTICE, "lfs_segwrite: looping count=%d\n",
 					loopcount);
 #endif
 		} while (redo && do_ckp);
@@ -1094,8 +1094,8 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 			sp->idp = NULL;
 		}
 		++count;
-		if (count > 1)
-			printf("lfs_writeinode: looping count=%d\n", count);
+		if (count > 2)
+			log(LOG_NOTICE, "lfs_writeinode: looping count=%d\n", count);
 		lfs_writefile(fs, sp, fs->lfs_ivnode);
 	}
 
