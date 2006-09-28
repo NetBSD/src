@@ -1,4 +1,5 @@
-/*	$NetBSD: progressmeter.c,v 1.1.1.3 2006/02/04 22:22:59 christos Exp $	*/
+/*	$NetBSD: progressmeter.c,v 1.1.1.4 2006/09/28 21:15:15 christos Exp $	*/
+/* $OpenBSD: progressmeter.c,v 1.37 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Nils Nordman.  All rights reserved.
  *
@@ -23,8 +24,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
-RCSID("$OpenBSD: progressmeter.c,v 1.24 2005/06/07 13:25:23 jaredy Exp $");
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/uio.h>
+
+#include <errno.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "progressmeter.h"
 #include "atomicio.h"
@@ -154,7 +163,7 @@ refresh_progress_meter(void)
 			len = 0;
 		if (len >= file_len + 1)
 			len = file_len;
-		for (i = len;  i < file_len; i++ )
+		for (i = len; i < file_len; i++)
 			buf[i] = ' ';
 		buf[file_len] = '\0';
 	}
@@ -215,6 +224,7 @@ refresh_progress_meter(void)
 	last_update = now;
 }
 
+/*ARGSUSED*/
 static void
 update_progress_meter(int ignore)
 {
@@ -269,6 +279,7 @@ stop_progress_meter(void)
 	atomicio(vwrite, STDOUT_FILENO, "\n", 1);
 }
 
+/*ARGSUSED*/
 static void
 sig_winch(int sig)
 {

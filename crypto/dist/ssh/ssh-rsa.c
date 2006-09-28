@@ -1,4 +1,5 @@
-/*	$NetBSD: ssh-rsa.c,v 1.1.1.15 2006/02/04 22:23:13 christos Exp $	*/
+/*	$NetBSD: ssh-rsa.c,v 1.1.1.16 2006/09/28 21:15:27 christos Exp $	*/
+/* $OpenBSD: ssh-rsa.c,v 1.39 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2000, 2003 Markus Friedl <markus@openbsd.org>
  *
@@ -14,16 +15,17 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include "includes.h"
-RCSID("$OpenBSD: ssh-rsa.c,v 1.32 2005/06/17 02:44:33 djm Exp $");
+
+#include <sys/types.h>
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
+#include <string.h>
+
 #include "xmalloc.h"
 #include "log.h"
 #include "buffer.h"
-#include "bufaux.h"
 #include "key.h"
 #include "compat.h"
 #include "ssh.h"
@@ -63,6 +65,7 @@ ssh_rsa_sign(const Key *key, u_char **sigp, u_int *lenp,
 
 	if (ok != 1) {
 		int ecode = ERR_get_error();
+
 		error("ssh_rsa_sign: RSA_sign failed: %s",
 		    ERR_error_string(ecode, NULL));
 		xfree(sig);
@@ -145,7 +148,7 @@ ssh_rsa_verify(const Key *key, const u_char *signature, u_int signaturelen,
 		u_int diff = modlen - len;
 		debug("ssh_rsa_verify: add padding: modlen %u > len %u",
 		    modlen, len);
-		sigblob = xrealloc(sigblob, modlen);
+		sigblob = xrealloc(sigblob, 1, modlen);
 		memmove(sigblob + diff, sigblob, len);
 		memset(sigblob, 0, diff);
 		len = modlen;
@@ -221,7 +224,6 @@ openssh_RSA_verify(int type, u_char *hash, u_int hashlen,
 		break;
 	default:
 		goto done;
-		break;
 	}
 	if (hashlen != hlen) {
 		error("bad hashlen");

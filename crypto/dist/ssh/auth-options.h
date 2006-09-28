@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-options.h,v 1.1.1.8 2006/02/04 22:22:32 christos Exp $	*/
-/*	$OpenBSD: auth-options.h,v 1.13 2005/12/06 22:38:27 reyk Exp $	*/
+/*	$NetBSD: auth-options.h,v 1.1.1.9 2006/09/28 21:14:58 christos Exp $	*/
+/* $OpenBSD: auth-options.h,v 1.16 2006/08/03 03:34:41 deraadt Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

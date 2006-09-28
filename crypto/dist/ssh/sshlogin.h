@@ -1,5 +1,5 @@
-/*	$NetBSD: sshlogin.h,v 1.1.1.4 2002/10/01 13:40:02 itojun Exp $	*/
-/*	$OpenBSD: sshlogin.h,v 1.4 2002/08/29 15:57:25 stevesk Exp $	*/
+/*	$NetBSD: sshlogin.h,v 1.1.1.5 2006/09/28 21:15:34 christos Exp $	*/
+/* $OpenBSD: sshlogin.h,v 1.8 2006/08/03 03:34:42 deraadt Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -12,13 +12,9 @@
  * incompatible with the protocol description in the RFC file, it must be
  * called by a name other than "ssh" or "Secure Shell".
  */
-#ifndef SSHLOGIN_H
-#define SSHLOGIN_H
 
 void
 record_login(pid_t, const char *, const char *, uid_t,
     const char *, struct sockaddr *, socklen_t);
 void	 record_logout(pid_t, const char *);
-u_long	 get_last_login_time(uid_t, const char *, char *, u_int);
-
-#endif
+time_t	 get_last_login_time(uid_t, const char *, char *, size_t);

@@ -1,4 +1,5 @@
-/*	$NetBSD: kexdh.c,v 1.1.1.7 2006/02/04 22:22:45 christos Exp $	*/
+/*	$NetBSD: kexdh.c,v 1.1.1.8 2006/09/28 21:15:09 christos Exp $	*/
+/* $OpenBSD: kexdh.c,v 1.23 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -23,14 +24,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
-RCSID("$OpenBSD: kexdh.c,v 1.20 2005/11/04 05:15:59 djm Exp $");
+#include <sys/types.h>
+
+#include <signal.h>
 
 #include <openssl/evp.h>
 
 #include "buffer.h"
-#include "bufaux.h"
 #include "ssh2.h"
+#include "key.h"
+#include "cipher.h"
 #include "kex.h"
 
 void

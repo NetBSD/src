@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_mm.h,v 1.1.1.1 2002/04/22 07:38:03 itojun Exp $	*/
-/*	$OpenBSD: monitor_mm.h,v 1.2 2002/03/26 03:24:01 stevesk Exp $	*/
+/*	$NetBSD: monitor_mm.h,v 1.1.1.2 2006/09/28 21:15:12 christos Exp $	*/
+/* $OpenBSD: monitor_mm.h,v 1.4 2006/08/03 03:34:42 deraadt Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -28,7 +28,6 @@
 
 #ifndef _MM_H_
 #define _MM_H_
-#include <sys/tree.h>
 
 struct mm_share {
 	RB_ENTRY(mm_share) next;

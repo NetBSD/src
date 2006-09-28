@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-gss.c,v 1.1.1.2 2006/02/04 22:22:33 christos Exp $	*/
-/*	$OpenBSD: auth2-gss.c,v 1.12 2005/10/13 22:24:31 stevesk Exp $	*/
+/*	$NetBSD: auth2-gss.c,v 1.1.1.3 2006/09/28 21:15:00 christos Exp $	*/
+/* $OpenBSD: auth2-gss.c,v 1.15 2006/08/03 03:34:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -25,20 +25,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
+#include <sys/types.h>
 
-#ifdef GSSAPI
-
+#include "xmalloc.h"
+#include "key.h"
+#include "hostfile.h"
 #include "auth.h"
 #include "ssh2.h"
-#include "xmalloc.h"
 #include "log.h"
 #include "dispatch.h"
+#include "buffer.h"
 #include "servconf.h"
 #include "packet.h"
-#include "monitor_wrap.h"
-
 #include "ssh-gss.h"
+#include "monitor_wrap.h"
 
 extern ServerOptions options;
 
@@ -101,6 +101,8 @@ userauth_gssapi(Authctxt *authctxt)
 	}
 
 	if (GSS_ERROR(PRIVSEP(ssh_gssapi_server_ctx(&ctxt, &goid)))) {
+		if (ctxt != NULL)
+			ssh_gssapi_delete_ctx(&ctxt);
 		xfree(doid);
 		return (0);
 	}
@@ -290,5 +292,3 @@ Authmethod method_gssapi = {
 	userauth_gssapi,
 	&options.gss_authentication
 };
-
-#endif /* GSSAPI */

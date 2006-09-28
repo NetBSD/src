@@ -1,4 +1,5 @@
-/*	$NetBSD: auth-chall.c,v 1.1.1.5 2005/02/13 00:52:44 christos Exp $	*/
+/*	$NetBSD: auth-chall.c,v 1.1.1.6 2006/09/28 21:14:58 christos Exp $	*/
+/* $OpenBSD: auth-chall.c,v 1.12 2006/08/03 03:34:41 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -23,12 +24,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
-RCSID("$OpenBSD: auth-chall.c,v 1.9 2003/11/03 09:03:37 djm Exp $");
+#include <sys/types.h>
 
+#include "xmalloc.h"
+#include "key.h"
+#include "hostfile.h"
 #include "auth.h"
 #include "log.h"
-#include "xmalloc.h"
 
 /* limited protocol v1 interface to kbd-interactive authentication */
 

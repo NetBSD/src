@@ -1,5 +1,5 @@
-/*	$NetBSD: compat.h,v 1.1.1.14 2005/04/23 16:28:05 christos Exp $	*/
-/*	$OpenBSD: compat.h,v 1.39 2005/03/01 10:09:52 djm Exp $	*/
+/*	$NetBSD: compat.h,v 1.1.1.15 2006/09/28 21:15:06 christos Exp $	*/
+/* $OpenBSD: compat.h,v 1.40 2006/03/25 22:22:43 djm Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Markus Friedl.  All rights reserved.

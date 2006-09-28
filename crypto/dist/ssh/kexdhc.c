@@ -1,4 +1,5 @@
-/*	$NetBSD: kexdhc.c,v 1.1.1.3 2006/02/04 22:22:45 christos Exp $	*/
+/*	$NetBSD: kexdhc.c,v 1.1.1.4 2006/09/28 21:15:09 christos Exp $	*/
+/* $OpenBSD: kexdhc.c,v 1.9 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -23,11 +24,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
-RCSID("$OpenBSD: kexdhc.c,v 1.3 2005/11/04 05:15:59 djm Exp $");
+#include <sys/types.h>
+
+#include <stdio.h>
+#include <string.h>
+#include <signal.h>
 
 #include "xmalloc.h"
+#include "buffer.h"
 #include "key.h"
+#include "cipher.h"
 #include "kex.h"
 #include "log.h"
 #include "packet.h"
@@ -83,7 +89,7 @@ kexdh_client(Kex *kex)
 	if (kex->verify_host_key(server_host_key) == -1)
 		fatal("server_host_key verification failed");
 
-	/* DH paramter f, server public DH key */
+	/* DH parameter f, server public DH key */
 	if ((dh_server_pub = BN_new()) == NULL)
 		fatal("dh_server_pub == NULL");
 	packet_get_bignum2(dh_server_pub);
