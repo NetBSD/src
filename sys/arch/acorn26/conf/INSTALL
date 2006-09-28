@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.18 2006/08/26 20:26:43 christos Exp $
+# $NetBSD: INSTALL,v 1.19 2006/09/28 23:23:22 bjh21 Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -23,7 +23,7 @@ options 	CPU_ARM3
 ## such that gdb(1) can be used on a kernel coredump.
 #makeoptions	DEBUG="-g"
 
-makeoptions	COPTS="-Os -fno-inline -fomit-frame-pointer -mno-apcs-frame"
+makeoptions	COPTS="-Os -fno-inline"
 
 # File systems
 file-system	FFS		# Fast file system
