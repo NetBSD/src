@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.59 2006/09/27 22:41:55 macallan Exp $	*/
+/*	$NetBSD: extintr.c,v 1.60 2006/09/28 21:34:59 he Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.59 2006/09/27 22:41:55 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.60 2006/09/28 21:34:59 he Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -738,7 +738,9 @@ ext_intr(void)
 			uvmexp.intrs++;
 			is->is_ev.ev_count++;
 		}
+#ifdef DIAGNOSTIC
 		intr_spin++;
+#endif
 	}
 
 	mtmsr(msr | PSL_EE);
