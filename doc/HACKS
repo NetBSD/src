@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.85 2006/09/02 21:32:13 martin Exp $
+# $NetBSD: HACKS,v 1.86 2006/09/28 21:01:21 skrll Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -443,27 +443,6 @@ port	vax
 		Build failure and further details documented in
 		PR#32907.
 	kcah
-
-port	sparc64
-
-	hack	binutil-2.11-sparc64-pltrela
-	mdate	14 Aug 2001
-	who	eeh
-	file	libexec/ld.elf_so/arch/sparc64/mdreloc.c
-	descr
-		The first four PLT entries are reserved.  There is some
-		disagreement whether they should have associated relocation
-		entries.  Both the SPARC 32-bit and 64-bit ELF specifications
-		say that they should have relocation entries, but the 32-bit
-		SPARC binutils do not generate them, and now the 64-bit SPARC
-		binutils have stopped generating them too.
-
-		To provide binary compatibility, we will check the first entry,
-		if it is reserved it should not be of the type JMP_SLOT.  If it
-		is JMP_SLOT, then the 4 reserved entries were not generated and
-		our index is 4 entries too far, so we frob the rela pointer.
-	kcah
-
 
 port	arm
 
