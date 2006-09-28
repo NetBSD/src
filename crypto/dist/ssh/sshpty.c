@@ -1,4 +1,5 @@
-/*	$NetBSD: sshpty.c,v 1.11 2005/02/13 05:57:27 christos Exp $	*/
+/*	$NetBSD: sshpty.c,v 1.12 2006/09/28 21:22:15 christos Exp $	*/
+/* $OpenBSD: sshpty.c,v 1.26 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,10 +14,21 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshpty.c,v 1.12 2004/06/21 17:36:31 avsm Exp $");
-__RCSID("$NetBSD: sshpty.c,v 1.11 2005/02/13 05:57:27 christos Exp $");
-
+__RCSID("$NetBSD: sshpty.c,v 1.12 2006/09/28 21:22:15 christos Exp $");
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <grp.h>
+#include <paths.h>
+#include <pwd.h>
+#include <string.h>
+#include <termios.h>
+#include <unistd.h>
 #include <util.h>
+#include <stdarg.h>
+
 #include "sshpty.h"
 #include "log.h"
 
@@ -37,7 +49,7 @@ __RCSID("$NetBSD: sshpty.c,v 1.11 2005/02/13 05:57:27 christos Exp $");
  */
 
 int
-pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, int namebuflen)
+pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, size_t namebuflen)
 {
 	char buf[64];
 	int i;
@@ -113,11 +125,12 @@ pty_make_controlling_tty(int *ttyfd, const char *tty)
 /* Changes the window size associated with the pty. */
 
 void
-pty_change_window_size(int ptyfd, int row, int col,
-	int xpixel, int ypixel)
+pty_change_window_size(int ptyfd, u_int row, u_int col,
+	u_int xpixel, u_int ypixel)
 {
 	struct winsize w;
 
+	/* may truncate u_int -> u_short */
 	w.ws_row = row;
 	w.ws_col = col;
 	w.ws_xpixel = xpixel;

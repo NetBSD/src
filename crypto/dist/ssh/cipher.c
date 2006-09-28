@@ -1,4 +1,5 @@
-/*	$NetBSD: cipher.c,v 1.18 2006/02/04 22:32:13 christos Exp $	*/
+/*	$NetBSD: cipher.c,v 1.19 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: cipher.c,v 1.81 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,14 +37,17 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: cipher.c,v 1.77 2005/07/16 01:35:24 djm Exp $");
-__RCSID("$NetBSD: cipher.c,v 1.18 2006/02/04 22:32:13 christos Exp $");
+__RCSID("$NetBSD: cipher.c,v 1.19 2006/09/28 21:22:14 christos Exp $");
+#include <sys/types.h>
+
+#include <openssl/md5.h>
+
+#include <string.h>
+#include <stdarg.h>
 
 #include "xmalloc.h"
 #include "log.h"
 #include "cipher.h"
-
-#include <openssl/md5.h>
 
 extern const EVP_CIPHER *evp_ssh1_bf(void);
 extern const EVP_CIPHER *evp_ssh1_3des(void);

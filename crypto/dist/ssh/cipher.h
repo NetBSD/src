@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher.h,v 1.1.1.10 2006/09/28 21:15:05 christos Exp $	*/
+/*	$NetBSD: cipher.h,v 1.2 2006/09/28 21:22:14 christos Exp $	*/
 /* $OpenBSD: cipher.h,v 1.36 2006/03/25 22:22:42 djm Exp $ */
 
 /*

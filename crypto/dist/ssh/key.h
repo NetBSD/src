@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.1.1.12 2006/09/28 21:15:10 christos Exp $	*/
+/*	$NetBSD: key.h,v 1.2 2006/09/28 21:22:14 christos Exp $	*/
 /* $OpenBSD: key.h,v 1.26 2006/08/03 03:34:42 deraadt Exp $ */
 
 /*

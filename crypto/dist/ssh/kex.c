@@ -1,4 +1,5 @@
-/*	$NetBSD: kex.c,v 1.20 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: kex.c,v 1.21 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: kex.c,v 1.76 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
@@ -24,20 +25,24 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: kex.c,v 1.65 2005/11/04 05:15:59 djm Exp $");
-__RCSID("$NetBSD: kex.c,v 1.20 2006/02/04 22:32:14 christos Exp $");
+__RCSID("$NetBSD: kex.c,v 1.21 2006/09/28 21:22:14 christos Exp $");
+#include <sys/param.h>
+
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <openssl/crypto.h>
 
-#include "ssh2.h"
 #include "xmalloc.h"
+#include "ssh2.h"
 #include "buffer.h"
-#include "bufaux.h"
 #include "packet.h"
 #include "compat.h"
 #include "cipher.h"
-#include "kex.h"
 #include "key.h"
+#include "kex.h"
 #include "log.h"
 #include "mac.h"
 #include "match.h"
@@ -45,6 +50,8 @@ __RCSID("$NetBSD: kex.c,v 1.20 2006/02/04 22:32:14 christos Exp $");
 #include "monitor.h"
 
 #define KEX_COOKIE_LEN	16
+
+extern const EVP_MD *evp_ssh_sha256(void);
 
 /* prototype */
 static void kex_kexinit_finish(Kex *);
@@ -77,7 +84,7 @@ kex_buf2prop(Buffer *raw, int *first_kex_follows)
 	int i;
 	char **proposal;
 
-	proposal = xmalloc(PROPOSAL_MAX * sizeof(char *));
+	proposal = xcalloc(PROPOSAL_MAX, sizeof(char *));
 
 	buffer_init(&b);
 	buffer_append(&b, buffer_ptr(raw), buffer_len(raw));
@@ -212,8 +219,7 @@ kex_setup(char *proposal[PROPOSAL_MAX])
 {
 	Kex *kex;
 
-	kex = xmalloc(sizeof(*kex));
-	memset(kex, 0, sizeof(*kex));
+	kex = xcalloc(1, sizeof(*kex));
 	buffer_init(&kex->peer);
 	buffer_init(&kex->my);
 	kex_prop2buf(&kex->my, proposal);
@@ -256,6 +262,7 @@ choose_enc(Enc *enc, char *client, char *server)
 	enc->key_len = cipher_keylen(enc->cipher);
 	enc->block_size = cipher_blocksize(enc->cipher);
 }
+
 static void
 choose_mac(Mac *mac, char *client, char *server)
 {
@@ -271,6 +278,7 @@ choose_mac(Mac *mac, char *client, char *server)
 	mac->key = NULL;
 	mac->enabled = 0;
 }
+
 static void
 choose_comp(Comp *comp, char *client, char *server)
 {
@@ -288,6 +296,7 @@ choose_comp(Comp *comp, char *client, char *server)
 	}
 	comp->name = name;
 }
+
 static void
 choose_kex(Kex *k, char *client, char *server)
 {
@@ -303,6 +312,9 @@ choose_kex(Kex *k, char *client, char *server)
 	} else if (strcmp(k->name, KEX_DHGEX_SHA1) == 0) {
 		k->kex_type = KEX_DH_GEX_SHA1;
 		k->evp_md = EVP_sha1();
+	} else if (strcmp(k->name, KEX_DHGEX_SHA256) == 0) {
+		k->kex_type = KEX_DH_GEX_SHA256;
+		k->evp_md = evp_ssh_sha256();
 	} else
 		fatal("bad kex alg %s", k->name);
 }
@@ -366,8 +378,7 @@ kex_choose_conf(Kex *kex)
 
 	/* Algorithm Negotiation */
 	for (mode = 0; mode < MODE_MAX; mode++) {
-		newkeys = xmalloc(sizeof(*newkeys));
-		memset(newkeys, 0, sizeof(*newkeys));
+		newkeys = xcalloc(1, sizeof(*newkeys));
 		kex->newkeys[mode] = newkeys;
 		ctos = (!kex->server && mode == MODE_OUT) || (kex->server && mode == MODE_IN);
 		nenc  = ctos ? PROPOSAL_ENC_ALGS_CTOS  : PROPOSAL_ENC_ALGS_STOC;
@@ -422,7 +433,7 @@ derive_key(Kex *kex, int id, u_int need, u_char *hash, u_int hashlen,
 
 	if ((mdsz = EVP_MD_size(kex->evp_md)) <= 0)
 		fatal("bad kex md size %d", mdsz);
- 	digest = xmalloc(roundup(need, mdsz));
+	digest = xmalloc(roundup(need, mdsz));
 
 	buffer_init(&b);
 	buffer_put_bignum2(&b, shared_secret);
@@ -475,7 +486,8 @@ kex_derive_keys(Kex *kex, u_char *hash, u_int hashlen, BIGNUM *shared_secret)
 	for (mode = 0; mode < MODE_MAX; mode++) {
 		current_keys[mode] = kex->newkeys[mode];
 		kex->newkeys[mode] = NULL;
-		ctos = (!kex->server && mode == MODE_OUT) || (kex->server && mode == MODE_IN);
+		ctos = (!kex->server && mode == MODE_OUT) ||
+		    (kex->server && mode == MODE_IN);
 		current_keys[mode]->enc.iv  = keys[ctos ? 0 : 1];
 		current_keys[mode]->enc.key = keys[ctos ? 2 : 3];
 		current_keys[mode]->mac.key = keys[ctos ? 4 : 5];

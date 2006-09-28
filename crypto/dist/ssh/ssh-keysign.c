@@ -1,4 +1,5 @@
-/*	$NetBSD: ssh-keysign.c,v 1.11 2006/05/10 21:53:14 mrg Exp $	*/
+/*	$NetBSD: ssh-keysign.c,v 1.12 2006/09/28 21:22:15 christos Exp $	*/
+/* $OpenBSD: ssh-keysign.c,v 1.29 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -23,21 +24,28 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keysign.c,v 1.19 2005/09/13 23:40:07 djm Exp $");
-__RCSID("$NetBSD: ssh-keysign.c,v 1.11 2006/05/10 21:53:14 mrg Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.12 2006/09/28 21:22:15 christos Exp $");
+
+#include <sys/types.h>
 
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
 
+#include <fcntl.h>
+#include <paths.h>
+#include <pwd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "xmalloc.h"
 #include "log.h"
 #include "key.h"
 #include "ssh.h"
 #include "ssh2.h"
 #include "misc.h"
-#include "xmalloc.h"
 #include "buffer.h"
-#include "bufaux.h"
 #include "authfile.h"
 #include "msg.h"
 #include "canohost.h"
@@ -64,9 +72,9 @@ valid_request(struct passwd *pw, char *host, Key **ret, u_char *data,
 	buffer_init(&b);
 	buffer_append(&b, data, datalen);
 
-	/* session id, currently limited to SHA1 (20 bytes) */
+	/* session id, currently limited to SHA1 (20 bytes) or SHA256 (32) */
 	p = buffer_get_string(&b, &len);
-	if (len != 20)
+	if (len != 20 && len != 32)
 		fail++;
 	xfree(p);
 

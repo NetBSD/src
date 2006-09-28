@@ -1,4 +1,5 @@
-/*	$NetBSD: auth1.c,v 1.30 2006/02/04 22:32:13 christos Exp $	*/
+/*	$NetBSD: auth1.c,v 1.31 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: auth1.c,v 1.70 2006/08/03 03:34:41 deraadt Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -11,8 +12,13 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth1.c,v 1.62 2005/07/16 01:35:24 djm Exp $");
-__RCSID("$NetBSD: auth1.c,v 1.30 2006/02/04 22:32:13 christos Exp $");
+__RCSID("$NetBSD: auth1.c,v 1.31 2006/09/28 21:22:14 christos Exp $");
+#include <sys/types.h>
+
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <pwd.h>
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -22,10 +28,15 @@ __RCSID("$NetBSD: auth1.c,v 1.30 2006/02/04 22:32:13 christos Exp $");
 #include "log.h"
 #include "servconf.h"
 #include "compat.h"
+#include "key.h"
+#include "hostfile.h"
 #include "auth.h"
 #include "channels.h"
 #include "session.h"
 #include "uidswap.h"
+#ifdef GSSAPI
+#include "ssh-gss.h"
+#endif
 #include "monitor_wrap.h"
 #include "buffer.h"
 
@@ -88,7 +99,7 @@ static const struct AuthMethod1
 {
 	int i;
 
-	for(i = 0; auth1_methods[i].name != NULL; i++)
+	for (i = 0; auth1_methods[i].name != NULL; i++)
 		if (auth1_methods[i].type == type)
 			return (&(auth1_methods[i]));
 
@@ -107,6 +118,7 @@ get_authname(int type)
 	return (buf);
 }
 
+/*ARGSUSED*/
 static int
 auth1_process_password(Authctxt *authctxt, char *info, size_t infolen)
 {
@@ -131,6 +143,7 @@ auth1_process_password(Authctxt *authctxt, char *info, size_t infolen)
 	return (authenticated);
 }
 
+/*ARGSUSED*/
 static int
 auth1_process_rsa(Authctxt *authctxt, char *info, size_t infolen)
 {
@@ -207,6 +220,7 @@ auth1_process_kerberos(Authctxt *authctxt, char *info, size_t infolen)
 }
 #endif /* KRB4 || KRB5 */
 
+/*ARGSUSED*/
 static int
 auth1_process_rhosts_rsa(Authctxt *authctxt, char *info, size_t infolen)
 {
@@ -247,6 +261,7 @@ auth1_process_rhosts_rsa(Authctxt *authctxt, char *info, size_t infolen)
 	return (authenticated);
 }
 
+/*ARGSUSED*/
 static int
 auth1_process_tis_challenge(Authctxt *authctxt, char *info, size_t infolen)
 {
@@ -265,6 +280,7 @@ auth1_process_tis_challenge(Authctxt *authctxt, char *info, size_t infolen)
 	return (-1);
 }
 
+/*ARGSUSED*/
 static int
 auth1_process_tis_response(Authctxt *authctxt, char *info, size_t infolen)
 {

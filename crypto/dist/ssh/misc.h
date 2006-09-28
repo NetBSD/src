@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.h,v 1.11 2006/02/04 22:32:14 christos Exp $	*/
-/*	$OpenBSD: misc.h,v 1.29 2006/01/31 10:19:02 djm Exp $	*/
+/*	$NetBSD: misc.h,v 1.12 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: misc.h,v 1.36 2006/08/18 10:27:16 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,6 +13,9 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
+#ifndef _MISC_H
+#define _MISC_H
+
 /* misc.c */
 
 char	*chop(char *);
@@ -22,17 +25,14 @@ int	 unset_nonblock(int);
 void	 set_nodelay(int);
 int	 a2port(const char *);
 int	 a2tun(const char *, int *);
+char	*put_host_port(const char *, u_short);
 char	*hpdelim(char **);
 char	*cleanhostname(char *);
 char	*colon(char *);
 long	 convtime(const char *);
 char	*tilde_expand_filename(const char *, uid_t);
-char	*percent_expand(const char *, ...) 
-#ifdef __OpenBSD__
-    __attribute__((__sentinel__))
-#endif
-    ;
-char	*tohex(const u_char *, u_int);
+char	*percent_expand(const char *, ...) __attribute__((__sentinel__));
+char	*tohex(const void *, size_t);
 void	 sanitise_stdfd(void);
 
 struct passwd *pwcopy(struct passwd *);
@@ -51,17 +51,6 @@ void	 replacearg(arglist *, u_int, char *, ...)
 	     __attribute__((format(printf, 3, 4)));
 void	 freeargs(arglist *);
 
-/* readpass.c */
-
-#define RP_ECHO			0x0001
-#define RP_ALLOW_STDIN		0x0002
-#define RP_ALLOW_EOF		0x0004
-#define RP_USE_ASKPASS		0x0008
-
-char	*read_passphrase(const char *, int);
-int	 ask_permission(const char *, ...) __attribute__((format(printf, 1, 2)));
-int	 read_keyfile_line(FILE *, const char *, char *, size_t, u_long *);
-
 int	 tun_open(int, int);
 
 /* Common definitions for ssh tunnel device forwarding */
@@ -74,3 +63,49 @@ int	 tun_open(int, int);
 #define SSH_TUNID_ANY		0x7fffffff
 #define SSH_TUNID_ERR		(SSH_TUNID_ANY - 1)
 #define SSH_TUNID_MAX		(SSH_TUNID_ANY - 2)
+
+/* Functions to extract or store big-endian words of various sizes */
+u_int64_t	get_u64(const void *)
+#ifdef __OpenBSD__
+    __attribute__((__bounded__( __minbytes__, 1, 8)))
+#endif
+	;
+u_int32_t	get_u32(const void *)
+#ifdef __OpenBSD__
+    __attribute__((__bounded__( __minbytes__, 1, 4)))
+#endif
+	;
+u_int16_t	get_u16(const void *)
+#ifdef __OpenBSD__
+    __attribute__((__bounded__( __minbytes__, 1, 2)))
+#endif
+	;
+void		put_u64(void *, u_int64_t)
+#ifdef __OpenBSD__
+    __attribute__((__bounded__( __minbytes__, 1, 8))
+#endif
+	;
+void		put_u32(void *, u_int32_t)
+#ifdef __OpenBSD__
+    __attribute__((__bounded__( __minbytes__, 1, 4)))
+#endif
+	;
+void		put_u16(void *, u_int16_t)
+#ifdef __OpenBSD__
+    __attribute__((__bounded__( __minbytes__, 1, 2)))
+#endif
+	;
+
+
+/* readpass.c */
+
+#define RP_ECHO			0x0001
+#define RP_ALLOW_STDIN		0x0002
+#define RP_ALLOW_EOF		0x0004
+#define RP_USE_ASKPASS		0x0008
+
+char	*read_passphrase(const char *, int);
+int	 ask_permission(const char *, ...) __attribute__((format(printf, 1, 2)));
+int	 read_keyfile_line(FILE *, const char *, char *, size_t, u_long *);
+
+#endif /* _MISC_H */

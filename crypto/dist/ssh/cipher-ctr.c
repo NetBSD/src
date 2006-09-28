@@ -1,4 +1,5 @@
-/*	$NetBSD: cipher-ctr.c,v 1.2 2006/02/04 22:32:13 christos Exp $	*/
+/*	$NetBSD: cipher-ctr.c,v 1.3 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: cipher-ctr.c,v 1.10 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
  *
@@ -14,14 +15,19 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include "includes.h"
-RCSID("$OpenBSD: cipher-ctr.c,v 1.6 2005/07/17 07:17:55 djm Exp $");
+__RCSID("$NetBSD: cipher-ctr.c,v 1.3 2006/09/28 21:22:14 christos Exp $");
+
+#include <sys/types.h>
+
+#include <string.h>
 
 #include <openssl/evp.h>
 #include <openssl/aes.h>
 
-#include "log.h"
 #include "xmalloc.h"
+#include "log.h"
 
 const EVP_CIPHER *evp_aes_128_ctr(void);
 void ssh_aes_ctr_iv(EVP_CIPHER_CTX *, int, u_char *, u_int);

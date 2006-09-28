@@ -1,5 +1,5 @@
-/*	$NetBSD: canohost.h,v 1.4 2001/09/27 03:24:02 itojun Exp $	*/
-/*	$OpenBSD: canohost.h,v 1.8 2001/06/26 17:27:23 markus Exp $	*/
+/*	$NetBSD: canohost.h,v 1.5 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: canohost.h,v 1.9 2006/03/25 22:22:42 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

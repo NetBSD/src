@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.5 2002/05/25 00:29:52 itojun Exp $	*/
+/*	$NetBSD: random.c,v 1.6 2006/09/28 21:22:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,9 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "includes.h"
 #ifndef lint
-__RCSID("$NetBSD: random.c,v 1.5 2002/05/25 00:29:52 itojun Exp $");
+__RCSID("$NetBSD: random.c,v 1.6 2006/09/28 21:22:14 christos Exp $");
 #endif
 
 /*
@@ -52,8 +52,8 @@ __RCSID("$NetBSD: random.c,v 1.5 2002/05/25 00:29:52 itojun Exp $");
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdarg.h>
 
-#include "includes.h"
 #include "pathnames.h"
 #include "random.h"
 #include "log.h"

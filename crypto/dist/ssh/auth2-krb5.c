@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-krb5.c,v 1.7 2005/04/23 16:55:03 christos Exp $	*/
+/*	$NetBSD: auth2-krb5.c,v 1.8 2006/09/28 21:22:14 christos Exp $	*/
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
  *
@@ -24,16 +24,22 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2-krb5.c,v 1.2 2003/05/15 14:09:21 markus Exp $");
-__RCSID("$NetBSD: auth2-krb5.c,v 1.7 2005/04/23 16:55:03 christos Exp $");
+__RCSID("$NetBSD: auth2-krb5.c,v 1.8 2006/09/28 21:22:14 christos Exp $");
 
 #include <krb5.h>
+#include <stdio.h>
 
 #include "ssh2.h"
 #include "xmalloc.h"
 #include "packet.h"
 #include "log.h"
+#include "key.h"
+#include "buffer.h"
+#include "hostfile.h"
 #include "auth.h"
+#ifdef GSSAPI
+#include "ssh-gss.h"
+#endif
 #include "monitor_wrap.h"
 #include "servconf.h"
 
