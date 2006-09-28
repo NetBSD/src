@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.47 2006/09/24 18:14:44 bouyer Exp $
+#	$NetBSD: files.xen,v 1.48 2006/09/28 18:53:15 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -10,6 +10,9 @@ defparam opt_kernbase.h	KERNBASE
 
 # Processor type options.
 defflag	opt_cputype.h	I686_CPU
+
+# options for MP configuration through the MP spec
+defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
 
 # delay before cpu_reset() for reboot.
 defparam		CPURESET_DELAY
@@ -122,7 +125,7 @@ attach	mainbus at root
 file	arch/xen/i386/mainbus.c		mainbus
 
 # Xen hypervisor
-device	hypervisor { }: isabus, pcibus, sysmon_power, xendevbus, acpibus
+device	hypervisor { [apid = -1]}: isabus, pcibus, sysmon_power, xendevbus, acpibus
 attach hypervisor at hypervisorbus
 file	arch/xen/xen/hypervisor.c	hypervisor needs-flag
 file	arch/xen/xen/shutdown_xenbus.c	hypervisor & xen3
@@ -200,11 +203,21 @@ include "dev/apm/files.apm"
 
 include "dev/acpi/files.acpi"
 file	arch/xen/xen/xen_acpi_machdep.c	acpi
+file	arch/x86/x86/mpacpi.c		acpi
 file	arch/x86/x86/acpi_machdep.c	acpi
-file	arch/x86/x86/i8259.c		acpi
+file	arch/x86/x86/i8259.c		xen3
+
+# MP configuration using Intel SMP specification 1.4
+file	arch/x86/x86/mpbios.c		mpbios
 
 file    arch/i386/pci/pci_bus_fixup.c   pci_bus_fixup
 file    arch/i386/pci/pci_addr_fixup.c  pci_addr_fixup
+
+file	arch/x86/x86/apic.c		ioapic
+
+device ioapic
+attach ioapic at cpubus
+file	arch/x86/x86/ioapic.c		ioapic needs-flag
 
 # PCI-Host bridge chipsets
 device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,
@@ -222,7 +235,11 @@ file    arch/xen/xen/pcib.c            pcib
 
 device cpu
 attach cpu at cpubus
-file	arch/xen/i386/cpu.c		cpu
+
+device vcpu
+attach vcpu at xendevbus
+
+file	arch/xen/i386/cpu.c		cpu | vcpu
 
 #
 # Compatibility modules

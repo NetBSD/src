@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.3 2005/12/11 12:19:48 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.4 2006/09/28 18:53:15 bouyer Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3 2005/12/11 12:19:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4 2006/09/28 18:53:15 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -122,6 +122,11 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3 2005/12/11 12:19:48 christos Exp $");
 
 int     cpu_match(struct device *, struct cfdata *, void *);
 void    cpu_attach(struct device *, struct device *, void *);
+#ifdef XEN3
+int     vcpu_match(struct device *, struct cfdata *, void *);
+void    vcpu_attach(struct device *, struct device *, void *);
+#endif
+void    cpu_attach_common(struct device *, struct device *, void *);
 
 struct cpu_softc {
 	struct device sc_dev;		/* device tree glue */
@@ -136,6 +141,10 @@ struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 
 CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
     cpu_match, cpu_attach, NULL, NULL);
+#ifdef XEN3
+CFATTACH_DECL(vcpu, sizeof(struct cpu_softc),
+    vcpu_match, vcpu_attach, NULL, NULL);
+#endif
 
 /*
  * Statically-allocated CPU info for the primary CPU (or the only
@@ -148,6 +157,7 @@ struct cpu_info cpu_info_primary = { 0, &cpu_info_primary, &tlog_primary };
 #else  /* TRAPLOG */
 struct cpu_info cpu_info_primary = { 0, &cpu_info_primary };
 #endif /* !TRAPLOG */
+struct cpu_info phycpu_info_primary = { 0, &phycpu_info_primary};
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 
@@ -157,6 +167,8 @@ static void	cpu_init_tss(struct i386tss *, void *, void *);
 #endif
 
 u_int32_t cpus_attached = 0;
+
+struct cpu_info *phycpu_info[X86_MAXPROCS] = { &cpu_info_primary };
 
 #ifdef MULTIPROCESSOR
 /*
@@ -205,6 +217,95 @@ cpu_match(parent, match, aux)
 	return 0;
 }
 
+void
+cpu_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+#ifdef XEN3
+	struct cpu_softc *sc = (void *) self;
+	struct cpu_attach_args *caa = aux;
+	struct cpu_info *ci;
+	int cpunum = caa->cpu_number;
+
+	/*
+	 * If we're an Application Processor, allocate a cpu_info
+	 * structure, otherwise use the primary's.
+	 */
+	if (caa->cpu_role == CPU_ROLE_AP) {
+		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK | M_ZERO);
+		if (phycpu_info[cpunum] != NULL)
+			panic("cpu at apic id %d already attached?", cpunum);
+		phycpu_info[cpunum] = ci;
+	} else {
+		ci = &phycpu_info_primary;
+		if (cpunum != 0) {
+			phycpu_info[0] = NULL;
+			phycpu_info[cpunum] = ci;
+		}
+	}
+
+	ci->ci_self = ci;
+	sc->sc_info = ci;
+
+	ci->ci_dev = self;
+	ci->ci_apicid = caa->cpu_number;
+	ci->ci_cpuid = ci->ci_apicid;
+
+	printf(": ");
+	switch (caa->cpu_role) {
+	case CPU_ROLE_SP:
+		printf("(uniprocessor)\n");
+		ci->ci_flags |= CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY;
+		break;
+
+	case CPU_ROLE_BP:
+		printf("apid %d (boot processor)\n", caa->cpu_number);
+		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
+#if NIOAPIC > 0
+		ioapic_bsp_id = caa->cpu_number;
+#endif
+		break;
+
+	case CPU_ROLE_AP:
+		/*
+		 * report on an AP
+		 */
+		printf("apid %d (application processor)\n", caa->cpu_number);
+		break;
+
+	default:
+		panic("unknown processor type??\n");
+	}
+	return;
+#else
+	cpu_attach_common(parent, self, aux);
+#endif
+}
+
+#ifdef XEN3
+int
+vcpu_match(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	struct cpu_attach_args *caa = aux;
+
+	if (strcmp(caa->caa_name, match->cf_name) == 0)
+		return 1;
+	return 0;
+}
+
+void
+vcpu_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	cpu_attach_common(parent, self, aux);
+}
+#endif
+
 static void
 cpu_vm_init(struct cpu_info *ci)
 {
@@ -240,9 +341,8 @@ cpu_vm_init(struct cpu_info *ci)
 	uvm_page_recolor(ncolors);
 }
 
-
 void
-cpu_attach(parent, self, aux)
+cpu_attach_common(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -260,8 +360,7 @@ cpu_attach(parent, self, aux)
 	 * structure, otherwise use the primary's.
 	 */
 	if (caa->cpu_role == CPU_ROLE_AP) {
-		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK);
-		memset(ci, 0, sizeof(*ci));
+		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK | M_ZERO);
 #if defined(MULTIPROCESSOR)
 		if (cpu_info[cpunum] != NULL)
 			panic("cpu at apic id %d already attached?", cpunum);
@@ -346,17 +445,6 @@ cpu_attach(parent, self, aux)
 		identifycpu(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
-
-#if NLAPIC > 0
-		/*
-		 * Enable local apic
-		 */
-		lapic_enable();
-		lapic_calibrate_timer(ci);
-#endif
-#if NIOAPIC > 0
-		ioapic_bsp_id = caa->cpu_number;
-#endif
 		break;
 
 	case CPU_ROLE_AP:
@@ -409,15 +497,6 @@ cpu_init(ci)
 	if (ci->cpu_setup != NULL)
 		(*ci->cpu_setup)(ci);
 
-#if !defined(XEN)
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
-	/*
-	 * On a 486 or above, enable ring 0 write protection.
-	 */
-	if (ci->ci_cpu_class >= CPUCLASS_486)
-		lcr0(rcr0() | CR0_WP);
-#endif
-#endif
 #if defined(I686_CPU)
 	/*
 	 * On a P6 or above, enable global TLB caching if the

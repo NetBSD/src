@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8 2006/04/09 19:28:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9 2006/09/28 18:53:15 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -111,7 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8 2006/04/09 19:28:01 bouyer Exp $");
 #include "pci.h"
 
 #include <sys/cdefs.h>
-#include <sys/param.h> 
+#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
@@ -128,11 +128,31 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8 2006/04/09 19:28:01 bouyer Exp $");
 
 #ifdef XEN3
 #include "acpi.h"
-#if NACPI > 0
+#include "ioapic.h"
+#include "opt_mpbios.h"
 /* for x86/i8259.c */
 struct intrstub i8259_stubs[NUM_LEGACY_IRQS] = {{0}};
+#if NIOAPIC > 0
+/* for x86/ioapic.c */
+struct intrstub ioapic_edge_stubs[MAX_INTR_SOURCES] = {{0}};
+struct intrstub ioapic_level_stubs[MAX_INTR_SOURCES] = {{0}};
+
+#include <machine/i82093var.h>
+int irq2vect[256] = {0};
+int vect2irq[256] = {0};
+#endif /* NIOAPIC */
+#if NACPI > 0
+#include <machine/mpacpi.h>
 #endif
+#ifdef MPBIOS
+#include <machine/mpbiosvar.h>
 #endif
+
+#if NPCI > 0
+#include <dev/pci/ppbreg.h>
+#endif
+
+#endif /* XEN3 */
 
 /*
  * Recalculate the interrupt from scratch for an event source.
@@ -248,18 +268,214 @@ intr_establish(int legacy_irq, struct pic *pic, int pin,
     int type, int level, int (*handler)(void *) , void *arg)
 {
 	struct pintrhand *ih;
+	int evtchn;
+	char evname[16];
+#ifdef XEN3
+#ifdef DIAGNOSTIC
+	if (legacy_irq != -1 && (legacy_irq < 0 || legacy_irq > 15))
+		panic("intr_establish: bad legacy IRQ value");
+	if (legacy_irq == -1 && pic == &i8259_pic)
+		panic("intr_establish: non-legacy IRQ on i8259");
+#endif /* DIAGNOSTIC */
+	if (legacy_irq == -1) {
+#if NIOAPIC > 0
+		/* will do interrupts via I/O APIC */
+		legacy_irq = APIC_INT_VIA_APIC;
+		legacy_irq |= pic->pic_apicid << APIC_INT_APIC_SHIFT;
+		legacy_irq |= pin << APIC_INT_PIN_SHIFT;
+		snprintf(evname, sizeof(evname), "%s pin %d",
+		    pic->pic_name, pin);
+#else /* NIOAPIC */
+		return NULL
+#endif /* NIOAPIC */
+	} else
+#endif /* XEN3 */
+		snprintf(evname, sizeof(evname), "irq%d", legacy_irq);
 
-	ih = pirq_establish(legacy_irq, bind_pirq_to_evtch(legacy_irq),
-	    handler, arg, level);
+	evtchn = xen_intr_map(&legacy_irq, type);
+	ih = pirq_establish(legacy_irq & 0xff, evtchn, handler, arg, level,
+	    evname);
 	return ih;
 }
 
-void 
+int
+xen_intr_map(int *pirq, int type)
+{
+	int irq = *pirq;
+#ifdef XEN3
+#if NIOAPIC > 0
+	extern struct cpu_info phycpu_info_primary; /* XXX */
+	/*
+	 * The hypervisor has already allocated vectors and IRQs for the
+	 * devices. Reusing the same IRQ doesn't work because as we bind
+	 * them for each devices, we can't then change the route entry
+	 * of the next device if this one used this IRQ. The easiest is
+	 * to allocate IRQs top-down, starting with a high number.
+	 * 250 and 230 have been tried, but got rejected by Xen.
+	 */
+	static int xen_next_irq = 200;
+	struct ioapic_softc *ioapic = ioapic_find(APIC_IRQ_APIC(*pirq));
+	struct pic *pic = (struct pic *)ioapic;
+	int pin = APIC_IRQ_PIN(*pirq);
+	physdev_op_t op;
+
+	if (*pirq & APIC_INT_VIA_APIC) {
+		irq = vect2irq[ioapic->sc_pins[pin].ip_vector];
+		if (ioapic->sc_pins[pin].ip_vector == 0 || irq == 0) {
+			/* allocate IRQ */
+			irq = xen_next_irq--;
+			/* allocate vector and route interrupt */
+			op.cmd = PHYSDEVOP_ASSIGN_VECTOR;
+			op.u.irq_op.irq = irq;
+			if (HYPERVISOR_physdev_op(&op) < 0)
+				panic("PHYSDEVOP_ASSIGN_VECTOR");
+			irq2vect[irq] = op.u.irq_op.vector;
+			vect2irq[op.u.irq_op.vector] = irq;
+			pic->pic_addroute(pic, &phycpu_info_primary, pin,
+			    op.u.irq_op.vector, type);
+		}
+		*pirq &= ~0xff;
+		*pirq |= irq;
+	}
+#endif /* NIOAPIC */
+#endif /* XEN3 */
+	return bind_pirq_to_evtch(irq);
+}
+
+void
 intr_disestablish(struct intrhand *ih)
 {
 	printf("intr_disestablish irq\n");
 }
+
+#if defined(MPBIOS) || NACPI > 0
+struct pic *
+intr_findpic(int num)
+{
+#if NIOAPIC > 0
+	struct pic *pic;
+
+	pic = (struct pic *)ioapic_find_bybase(num);
+	if (pic != NULL)
+		return pic;
 #endif
+	if (num < NUM_LEGACY_IRQS)
+		return &i8259_pic;
+
+	return NULL;
+}
+#endif
+
+#if NIOAPIC > 0 || NACPI > 0
+struct intr_extra_bus {
+	int bus;
+	pcitag_t *pci_bridge_tag;
+	pci_chipset_tag_t pci_chipset_tag;
+	LIST_ENTRY(intr_extra_bus) list;
+};
+
+LIST_HEAD(, intr_extra_bus) intr_extra_buses =
+    LIST_HEAD_INITIALIZER(intr_extra_buses);
+
+static int intr_scan_bus(int, int, struct xen_intr_handle *);
+
+void
+intr_add_pcibus(struct pcibus_attach_args *pba)
+{
+	struct intr_extra_bus *iebp;
+
+	iebp = malloc(sizeof(struct intr_extra_bus), M_TEMP, M_WAITOK);
+	iebp->bus = pba->pba_bus;
+	iebp->pci_chipset_tag = pba->pba_pc;
+	iebp->pci_bridge_tag = pba->pba_bridgetag;
+	LIST_INSERT_HEAD(&intr_extra_buses, iebp, list);
+}
+
+static int
+intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
+		    pci_chipset_tag_t *pci_chipset_tag)
+{
+	struct intr_extra_bus *iebp;
+	struct mp_bus *mpb;
+
+	if (bus < 0)
+		return ENOENT;
+
+	if (bus < mp_nbus) {
+		mpb = &mp_busses[bus];
+		if (mpb->mb_pci_bridge_tag == NULL)
+			return ENOENT;
+		*pci_bridge_tag = *mpb->mb_pci_bridge_tag;
+		*pci_chipset_tag = mpb->mb_pci_chipset_tag;
+		return 0;
+	}
+
+	LIST_FOREACH(iebp, &intr_extra_buses, list) {
+		if (iebp->bus == bus) {
+			if (iebp->pci_bridge_tag == NULL)
+				return ENOENT;
+			*pci_bridge_tag = *iebp->pci_bridge_tag;
+			*pci_chipset_tag = iebp->pci_chipset_tag;
+			return 0;
+		}
+	}
+	return ENOENT;
+}
+
+int
+intr_find_mpmapping(int bus, int pin, struct xen_intr_handle *handle)
+{
+#if NPCI > 0
+	int dev, func;
+	pcitag_t pci_bridge_tag;
+	pci_chipset_tag_t pci_chipset_tag;
+#endif
+
+#if NPCI > 0
+	while (intr_scan_bus(bus, pin, handle) != 0) {
+		if (intr_find_pcibridge(bus, &pci_bridge_tag,
+		    &pci_chipset_tag) != 0)
+			return ENOENT;
+		dev = pin >> 2;
+		pin = pin & 3;
+		pin = PPB_INTERRUPT_SWIZZLE(pin + 1, dev) - 1;
+		pci_decompose_tag(pci_chipset_tag, pci_bridge_tag, &bus,
+		    &dev, &func);
+		pin |= (dev << 2);
+	}
+	return 0;
+#else
+	return intr_scan_bus(bus, pin, handle);
+#endif
+}
+
+static int
+intr_scan_bus(int bus, int pin, struct xen_intr_handle *handle)
+{
+	struct mp_intr_map *mip, *intrs;
+
+	if (bus < 0 || bus >= mp_nbus)
+		return ENOENT;
+
+	intrs = mp_busses[bus].mb_intrs;
+	if (intrs == NULL)
+		return ENOENT;
+
+	for (mip = intrs; mip != NULL; mip = mip->next) {
+		if (mip->bus_pin == pin) {
+#if NACPI > 0
+			if (mip->linkdev != NULL)
+				if (mpacpi_findintr_linkdev(mip) != 0)
+					continue;
+#endif
+			handle->pirq = mip->ioapic_ih;
+			return 0;
+		}
+	}
+	return ENOENT;
+}
+#endif /* NIOAPIC > 0 || NACPI > 0 */
+#endif /* NPCI > 0 || NISA > 0 */
 
 
 #ifdef INTRDEBUG

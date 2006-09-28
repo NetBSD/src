@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.5 2006/04/09 19:28:01 bouyer Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.6 2006/09/28 18:53:15 bouyer Exp $	*/
 /*	NetBSD intrdefs.h,v 1.3 2003/06/16 20:01:06 thorpej Exp 	*/
 
 #ifndef _XEN_INTRDEFS_H
@@ -60,5 +60,6 @@
 #define	IST_LEVEL	3	/* level-triggered */ 
 
 #define NUM_LEGACY_IRQS	16
+#define MAX_INTR_SOURCES 32
 
 #endif /* _XEN_INTRDEFS_H */

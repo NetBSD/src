@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.5 2006/01/15 22:09:52 bouyer Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.6 2006/09/28 18:53:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.5 2006/01/15 22:09:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.6 2006/09/28 18:53:16 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 	void *arg;
 {
 	struct pintrhand *ih;
+	char evname[8];
 #ifndef XEN3
 	physdev_op_t physdev_op;
 
@@ -73,9 +74,11 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 	if (HYPERVISOR_physdev_op(&physdev_op) < 0)
 		panic("HYPERVISOR_physdev_op(PHYSDEVOP_PCI_INITIALISE_DEVICE)");
 #endif /* !XEN3 */
+	snprintf(evname, sizeof(evname), "irq%d", PCIIDE_COMPAT_IRQ(chan));
 
 	ih = pirq_establish(PCIIDE_COMPAT_IRQ(chan),
-	    bind_pirq_to_evtch(PCIIDE_COMPAT_IRQ(chan)), func, arg, IPL_BIO);
+	    bind_pirq_to_evtch(PCIIDE_COMPAT_IRQ(chan)), func, arg, IPL_BIO,
+	    evname);
 	if (ih == NULL)
 		return NULL;
 

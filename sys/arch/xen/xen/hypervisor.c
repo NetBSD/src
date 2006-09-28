@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.26 2006/08/11 13:22:43 yamt Exp $ */
+/* $NetBSD: hypervisor.c,v 1.27 2006/09/28 18:53:16 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.26 2006/08/11 13:22:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.27 2006/09/28 18:53:16 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.26 2006/08/11 13:22:43 yamt Exp $")
 #include "acpi.h"
 
 #include "opt_xen.h"
+#include "opt_mpbios.h"
 
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
@@ -104,12 +105,17 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.26 2006/08/11 13:22:43 yamt Exp $")
 #endif /* DOM0OPS || XEN3 */
 #ifdef XEN3
 #include <machine/granttables.h>
+#include <machine/cpuvar.h>
 #endif
 #if NPCI > 0
 #include <dev/pci/pcivar.h>
 #if NACPI > 0
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_madt.h>       
+#include <machine/mpacpi.h>       
+#endif
+#ifdef MPBIOS
+#include <machine/mpbiosvar.h>       
 #endif
 #ifdef PCI_BUS_FIXUP
 #include <arch/i386/pci/pci_bus_fixup.h>
@@ -175,9 +181,12 @@ union hypervisor_attach_cookie {
 	struct isabus_attach_args hac_iba;
 #endif
 #if NACPI > 0
-        struct acpibus_attach_args hac_acpi;
+	struct acpibus_attach_args hac_acpi;
 #endif
 #endif /* NPCI */
+#ifdef XEN3
+	struct cpu_attach_args hac_caa;
+#endif
 };
 
 /* 
@@ -233,9 +242,7 @@ hypervisor_attach(parent, self, aux)
 	physdev_op_t physdev_op;
 	int i, j, busnum;
 #endif
-#if NACPI > 0
-	int acpi_present = 0;
-#endif
+
 #ifdef PCI_BUS_FIXUP
 	int pci_maxbus = 0;
 #endif
@@ -244,10 +251,17 @@ hypervisor_attach(parent, self, aux)
 
 	printf("\n");
 
-	init_events();
 #ifdef XEN3
 	xengnt_init();
+
+	memset(&hac.hac_caa, 0, sizeof(hac.hac_caa));
+	hac.hac_caa.caa_name = "vcpu";
+	hac.hac_caa.cpu_number = 0;
+	hac.hac_caa.cpu_role = CPU_ROLE_SP;
+	hac.hac_caa.cpu_func = 0;
+	config_found_ia(self, "xendevbus", &hac.hac_caa, hypervisor_print);
 #endif
+	init_events();
 
 #if NXENBUS > 0
 	hac.hac_xenbus.xa_device = "xenbus";
@@ -271,19 +285,7 @@ hypervisor_attach(parent, self, aux)
 #endif
 #if NPCI > 0
 #ifdef XEN3
-	pci_mode = pci_mode_detect();
-#ifdef PCI_BUS_FIXUP
-	pci_maxbus = pci_bus_fixup(NULL, 0);
-	aprint_debug("PCI bus max, after pci_bus_fixup: %i\n", pci_maxbus);
-#ifdef PCI_ADDR_FIXUP
-	pciaddr.extent_port = NULL;
-	pciaddr.extent_mem = NULL;
-	pci_addr_fixup(NULL, pci_maxbus);
-#endif
-#endif
-
 #if NACPI > 0
-	acpi_present = acpi_probe();
 	if (acpi_present) {
 		hac.hac_acpi.aa_iot = X86_BUS_SPACE_IO;
 		hac.hac_acpi.aa_memt = X86_BUS_SPACE_MEM;
@@ -303,8 +305,22 @@ hypervisor_attach(parent, self, aux)
 	hac.hac_pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
 	hac.hac_pba.pba_bridgetag = NULL;
 	hac.hac_pba.pba_bus = 0;
+#if NACPI > 0 && defined(ACPI_SCANPCI)
+	if (mpacpi_active)
+		mpacpi_scan_pci(self, &hac.hac_pba, pcibusprint);
+	else
+#endif
+#if defined(MPBIOS) && defined(MPBIOS_SCANPCI)
+	if (mpbios_scanned != 0)
+		mpbios_scan_pci(self, &hac.hac_pba, pcibusprint);
+	else
+#endif
 	config_found_ia(self, "pcibus", &hac.hac_pba, pcibusprint);
-#else
+#if NACPI > 0
+	if (mp_verbose)
+		acpi_pci_link_state();
+#endif
+#else /* !XEN3 */
 	physdev_op.cmd = PHYSDEVOP_PCI_PROBE_ROOT_BUSES;
 	if ((i = HYPERVISOR_physdev_op(&physdev_op)) < 0) {
 		printf("hypervisor: PHYSDEVOP_PCI_PROBE_ROOT_BUSES failed with status %d\n", i);

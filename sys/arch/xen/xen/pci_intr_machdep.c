@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_intr_machdep.c,v 1.1 2006/04/09 19:28:01 bouyer Exp $      */
+/*      $NetBSD: pci_intr_machdep.c,v 1.2 2006/09/28 18:53:16 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -44,6 +44,24 @@
 
 #include "locators.h"
 #include "opt_ddb.h"
+#include "ioapic.h"
+#include "acpi.h"
+#include "opt_mpbios.h"
+#include "opt_acpi.h"
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#include <machine/mpconfig.h>
+#include <machine/pic.h>
+#endif
+
+#ifdef MPBIOS
+#include <machine/mpbiosvar.h>
+#endif
+
+#if NACPI > 0
+#include <machine/mpacpi.h>
+#endif
 
 int
 pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
@@ -51,6 +69,12 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	pcireg_t intr;
 	int pin;
 	int line;
+
+#if NIOAPIC > 0
+	int rawpin = pa->pa_rawintrpin;
+	pci_chipset_tag_t pc = pa->pa_pc;
+	int bus, dev, func;
+#endif
 
 #ifndef XEN3
 	physdev_op_t physdev_op;
@@ -76,15 +100,57 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		printf("pci_intr_map: bad interrupt pin %d\n", pin);
 		goto bad;
 	}
+	ihp->pirq = 0;
+
+#if NIOAPIC > 0
+	pci_decompose_tag(pc, pa->pa_tag, &bus, &dev, &func);
+	if (mp_busses != NULL) {
+		if (intr_find_mpmapping(bus, (dev<<2)|(rawpin-1), ihp) == 0) {
+			if ((ihp->pirq & 0xff) == 0)
+				ihp->pirq |= line;
+			goto end;
+		}
+		/*
+		 * No explicit PCI mapping found. This is not fatal,
+		 * we'll try the ISA (or possibly EISA) mappings next.
+		 */
+	}
+#endif
 
 	if (line == 0 || line == X86_PCI_INTERRUPT_LINE_NO_CONNECTION) {
 		printf("pci_intr_map: no mapping for pin %c (line=%02x)\n",
 		    '@' + pin, line);
 		goto bad;
 	}
+#ifdef XEN3
+	if (line >= NUM_LEGACY_IRQS) {
+		printf("pci_intr_map: bad interrupt line %d\n", line);
+		goto bad;
+	}
+	if (line == 2) {
+		printf("pci_intr_map: changed line 2 to line 9\n");
+		line = 9;
+	}
+#if NIOAPIC > 0
+	if (mp_busses != NULL) {
+		if (intr_find_mpmapping(mp_isa_bus, line, ihp) == 0) {
+			if ((ihp->pirq & 0xff) == 0)
+				ihp->pirq |= line;
+			goto end;
+		}
+		printf("pci_intr_map: bus %d dev %d func %d pin %d; line %d\n",
+		    bus, dev, func, pin, line);
+		printf("pci_intr_map: no MP mapping found\n");
+	}
+#endif /* NIOAPIC */
+#endif /* XEN3 */
 
 	ihp->pirq = line;
-	ihp->evtch = bind_pirq_to_evtch(ihp->pirq);
+
+#if NIOAPIC > 0
+end:
+#endif
+	ihp->evtch = xen_intr_map(&ihp->pirq, IST_LEVEL);
 	if (ihp->evtch == -1)
 		goto bad;
 
@@ -95,14 +161,28 @@ bad:
 	ihp->evtch = -1;
 	return 1;
 }
+
 const char
 *pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 	static char buf[64];
+#if NIOAPIC > 0
+	struct pic *pic;
+	if (ih.pirq & APIC_INT_VIA_APIC) {
+		pic = (struct pic *)ioapic_find(APIC_IRQ_APIC(ih.pirq));
+		if (pic == NULL) {
+			printf("pci_intr_string: bad ioapic %d\n",
+			    APIC_IRQ_APIC(ih.pirq));
+			return NULL;
+		}
+		snprintf(buf, 64, "%s pin %d, event channel %d",
+		    pic->pic_name, APIC_IRQ_PIN(ih.pirq), ih.evtch);
+		return buf;
+	}
+#endif
 	snprintf(buf, 64, "irq %d, event channel %d",
 	    ih.pirq, ih.evtch);
 	return buf;
-	
 }
 
 const struct evcnt*
@@ -115,7 +195,24 @@ void *
 pci_intr_establish(pci_chipset_tag_t pcitag, pci_intr_handle_t intrh,
     int level, int (*func)(void *), void *arg)
 {
-	return (void *)pirq_establish(intrh.pirq, intrh.evtch, func, arg, level);
+	char evname[16];
+#if NIOAPIC > 0
+	struct pic *pic;
+	if (intrh.pirq & APIC_INT_VIA_APIC) {
+		pic = (struct pic *)ioapic_find(APIC_IRQ_APIC(intrh.pirq));
+		if (pic == NULL) {
+			printf("pci_intr_establish: bad ioapic %d\n",
+			    APIC_IRQ_APIC(intrh.pirq));
+			return NULL;
+		}
+		snprintf(evname, sizeof(evname), "%s pin %d",
+		    pic->pic_name, APIC_IRQ_PIN(intrh.pirq));
+	} else
+#endif
+		snprintf(evname, sizeof(evname), "irq%d", intrh.pirq);
+
+	return (void *)pirq_establish(intrh.pirq & 0xff,
+	    intrh.evtch, func, arg, level, evname);
 }
 
 void

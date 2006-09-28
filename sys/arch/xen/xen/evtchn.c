@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.18 2006/01/15 22:09:52 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.19 2006/09/28 18:53:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.18 2006/01/15 22:09:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.19 2006/09/28 18:53:16 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -396,18 +396,17 @@ unbind_pirq_from_evtch(int pirq)
 }
 
 struct pintrhand *
-pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level)
+pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
+    const char *evname)
 {
 	struct pintrhand *ih;
 	physdev_op_t physdev_op;
-	char evname[8];
 
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 	if (ih == NULL) {
 		printf("pirq_establish: can't malloc handler info\n");
 		return NULL;
 	}
-	snprintf(evname, sizeof(evname), "irq%d", pirq);
 	if (event_set_handler(evtch, pirq_interrupt, ih, level, evname) != 0) {
 		free(ih, M_DEVBUF);
 		return NULL;
