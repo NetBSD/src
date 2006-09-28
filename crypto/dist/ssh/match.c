@@ -1,4 +1,5 @@
-/*	$NetBSD: match.c,v 1.1.1.9 2006/02/04 22:22:47 christos Exp $	*/
+/*	$NetBSD: match.c,v 1.1.1.10 2006/09/28 21:15:10 christos Exp $	*/
+/* $OpenBSD: match.c,v 1.26 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,11 +36,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
-RCSID("$OpenBSD: match.c,v 1.20 2005/06/17 02:44:32 djm Exp $");
+#include <sys/types.h>
 
-#include "match.h"
+#include <ctype.h>
+#include <string.h>
+
 #include "xmalloc.h"
+#include "match.h"
 
 /*
  * Returns true if the given string matches the pattern (which may contain ?
@@ -137,7 +140,7 @@ match_pattern_list(const char *string, const char *pattern, u_int len,
 		    i < len && subi < sizeof(sub) - 1 && pattern[i] != ',';
 		    subi++, i++)
 			sub[subi] = dolower && isupper(pattern[i]) ?
-			    tolower(pattern[i]) : pattern[i];
+			    (char)tolower(pattern[i]) : pattern[i];
 		/* If subpattern too long, return failure (no match). */
 		if (subi >= sizeof(sub) - 1)
 			return 0;

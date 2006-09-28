@@ -1,4 +1,5 @@
-/*	$NetBSD: hostfile.c,v 1.1.1.12 2006/02/04 22:22:45 christos Exp $	*/
+/*	$NetBSD: hostfile.c,v 1.1.1.13 2006/09/28 21:15:08 christos Exp $	*/
+/* $OpenBSD: hostfile.c,v 1.45 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,19 +37,23 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
-RCSID("$OpenBSD: hostfile.c,v 1.36 2005/11/22 03:36:03 dtucker Exp $");
+#include <sys/types.h>
 
-#include <resolv.h>
+#include <netinet/in.h>
+
 #include <openssl/hmac.h>
 #include <openssl/sha.h>
 
-#include "packet.h"
+#include <resolv.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "xmalloc.h"
 #include "match.h"
 #include "key.h"
 #include "hostfile.h"
 #include "log.h"
-#include "xmalloc.h"
 
 static int
 extract_salt(const char *s, u_int l, char *salt, size_t salt_len)
@@ -255,8 +260,10 @@ check_host_in_hostfile_by_key_or_type(const char *filename,
 
 		if (key == NULL) {
 			/* we found a key of the requested type */
-			if (found->type == keytype)
+			if (found->type == keytype) {
+				fclose(f);
 				return HOST_FOUND;
+			}
 			continue;
 		}
 

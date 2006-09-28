@@ -1,4 +1,5 @@
-/*	$NetBSD: readconf.c,v 1.1.1.18 2006/02/04 22:23:00 christos Exp $	*/
+/*	$NetBSD: readconf.c,v 1.1.1.19 2006/09/28 21:15:16 christos Exp $	*/
+/* $OpenBSD: readconf.c,v 1.159 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,18 +13,31 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-#include "includes.h"
-RCSID("$OpenBSD: readconf.c,v 1.145 2005/12/08 18:34:11 reyk Exp $");
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
 
-#include "ssh.h"
+#include <netinet/in.h>
+
+#include <ctype.h>
+#include <errno.h>
+#include <netdb.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "xmalloc.h"
+#include "ssh.h"
 #include "compat.h"
 #include "cipher.h"
 #include "pathnames.h"
 #include "log.h"
+#include "key.h"
 #include "readconf.h"
 #include "match.h"
 #include "misc.h"
+#include "buffer.h"
 #include "kex.h"
 #include "mac.h"
 
@@ -95,6 +109,7 @@ RCSID("$OpenBSD: readconf.c,v 1.145 2005/12/08 18:34:11 reyk Exp $");
 typedef enum {
 	oBadOption,
 	oForwardAgent, oForwardX11, oForwardX11Trusted, oGatewayPorts,
+	oExitOnForwardFailure,
 	oPasswordAuthentication, oRSAAuthentication,
 	oChallengeResponseAuthentication, oXAuthLocation,
 	oIdentityFile, oHostName, oPort, oCipher, oRemoteForward, oLocalForward,
@@ -125,6 +140,7 @@ static struct {
 	{ "forwardagent", oForwardAgent },
 	{ "forwardx11", oForwardX11 },
 	{ "forwardx11trusted", oForwardX11Trusted },
+	{ "exitonforwardfailure", oExitOnForwardFailure },
 	{ "xauthlocation", oXAuthLocation },
 	{ "gatewayports", oGatewayPorts },
 	{ "useprivilegedport", oUsePrivilegedPort },
@@ -305,7 +321,8 @@ process_config_line(Options *options, const char *host,
 		    int *activep)
 {
 	char *s, **charptr, *endofnumber, *keyword, *arg, *arg2, fwdarg[256];
-	int opcode, *intptr, value, value2;
+	int opcode, *intptr, value, value2, scale;
+	long long orig, val64;
 	size_t len;
 	Forward fwd;
 
@@ -318,7 +335,8 @@ process_config_line(Options *options, const char *host,
 
 	s = line;
 	/* Get the keyword. (Each line is supposed to begin with a keyword). */
-	keyword = strdelim(&s);
+	if ((keyword = strdelim(&s)) == NULL)
+		return 0;
 	/* Ignore leading whitespace. */
 	if (*keyword == '\0')
 		keyword = strdelim(&s);
@@ -373,6 +391,10 @@ parse_flag:
 
 	case oGatewayPorts:
 		intptr = &options->gateway_ports;
+		goto parse_flag;
+
+	case oExitOnForwardFailure:
+		intptr = &options->exit_on_forward_failure;
 		goto parse_flag;
 
 	case oUsePrivilegedPort:
@@ -478,22 +500,36 @@ parse_yesnoask:
 			fatal("%.200s line %d: Missing argument.", filename, linenum);
 		if (arg[0] < '0' || arg[0] > '9')
 			fatal("%.200s line %d: Bad number.", filename, linenum);
-		value = strtol(arg, &endofnumber, 10);
+		orig = val64 = strtoll(arg, &endofnumber, 10);
 		if (arg == endofnumber)
 			fatal("%.200s line %d: Bad number.", filename, linenum);
 		switch (toupper(*endofnumber)) {
+		case '\0':
+			scale = 1;
+			break;
 		case 'K':
-			value *= 1<<10;
+			scale = 1<<10;
 			break;
 		case 'M':
-			value *= 1<<20;
+			scale = 1<<20;
 			break;
 		case 'G':
-			value *= 1<<30;
+			scale = 1<<30;
 			break;
+		default:
+			fatal("%.200s line %d: Invalid RekeyLimit suffix",
+			    filename, linenum);
 		}
+		val64 *= scale;
+		/* detect integer wrap and too-large limits */
+		if ((val64 / scale) != orig || val64 > INT_MAX)
+			fatal("%.200s line %d: RekeyLimit too large",
+			    filename, linenum);
+		if (val64 < 16)
+			fatal("%.200s line %d: RekeyLimit too small",
+			    filename, linenum);
 		if (*activep && *intptr == -1)
-			*intptr = value;
+			*intptr = (int)val64;
 		break;
 
 	case oIdentityFile:
@@ -652,7 +688,7 @@ parse_int:
 		break;
 
 	case oLogLevel:
-		intptr = (int *) &options->log_level;
+		intptr = (int *)(void *)&options->log_level;
 		arg = strdelim(&s);
 		value = log_level_number(arg);
 		if (value == SYSLOG_LEVEL_NOT_SET)
@@ -962,6 +998,7 @@ initialize_options(Options * options)
 	options->forward_agent = -1;
 	options->forward_x11 = -1;
 	options->forward_x11_trusted = -1;
+	options->exit_on_forward_failure = -1;
 	options->xauth_location = NULL;
 	options->gateway_ports = -1;
 	options->use_privileged_port = -1;
@@ -1042,6 +1079,8 @@ fill_default_options(Options * options)
 		options->forward_x11 = 0;
 	if (options->forward_x11_trusted == -1)
 		options->forward_x11_trusted = 0;
+	if (options->exit_on_forward_failure == -1)
+		options->exit_on_forward_failure = 0;
 	if (options->xauth_location == NULL)
 		options->xauth_location = _PATH_XAUTH;
 	if (options->gateway_ports == -1)

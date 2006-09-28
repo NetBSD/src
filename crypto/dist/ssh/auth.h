@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.h,v 1.1.1.16 2006/02/04 22:22:33 christos Exp $	*/
-/*	$OpenBSD: auth.h,v 1.51 2005/06/06 11:20:36 djm Exp $	*/
+/*	$NetBSD: auth.h,v 1.1.1.17 2006/09/28 21:14:59 christos Exp $	*/
+/* $OpenBSD: auth.h,v 1.58 2006/08/18 09:15:20 markus Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -29,8 +29,8 @@
 #ifndef AUTH_H
 #define AUTH_H
 
-#include "key.h"
-#include "hostfile.h"
+#include <signal.h>
+
 #include <openssl/rsa.h>
 
 #ifdef HAVE_LOGIN_CAP
@@ -48,7 +48,8 @@ typedef struct Authmethod Authmethod;
 typedef struct KbdintDevice KbdintDevice;
 
 struct Authctxt {
-	int		 success;
+	sig_atomic_t	 success;
+	int		 authenticated;	/* authenticated and alarms cancelled */
 	int		 postponed;	/* authentication needs another step */
 	int		 valid;		/* user exists and is allowed to login */
 	int		 attempt;

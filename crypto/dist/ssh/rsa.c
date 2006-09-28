@@ -1,4 +1,5 @@
-/*	$NetBSD: rsa.c,v 1.1.1.6 2002/03/08 01:20:59 itojun Exp $	*/
+/*	$NetBSD: rsa.c,v 1.1.1.7 2006/09/28 21:15:16 christos Exp $	*/
+/* $OpenBSD: rsa.c,v 1.28 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -60,12 +61,13 @@
  *     [gone - had to be deleted - what a pity]
  */
 
-#include "includes.h"
-RCSID("$OpenBSD: rsa.c,v 1.24 2001/12/27 18:22:16 markus Exp $");
+#include <sys/types.h>
 
+#include <string.h>
+
+#include "xmalloc.h"
 #include "rsa.h"
 #include "log.h"
-#include "xmalloc.h"
 
 void
 rsa_public_encrypt(BIGNUM *out, BIGNUM *in, RSA *key)

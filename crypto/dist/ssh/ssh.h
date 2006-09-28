@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh.h,v 1.1.1.11 2005/04/23 16:28:27 christos Exp $	*/
-/*	$OpenBSD: ssh.h,v 1.76 2004/12/06 11:41:03 dtucker Exp $	*/
+/*	$NetBSD: ssh.h,v 1.1.1.12 2006/09/28 21:15:28 christos Exp $	*/
+/* $OpenBSD: ssh.h,v 1.78 2006/08/03 03:34:42 deraadt Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -12,9 +12,6 @@
  * incompatible with the protocol description in the RFC file, it must be
  * called by a name other than "ssh" or "Secure Shell".
  */
-
-#ifndef SSH_H
-#define SSH_H
 
 /* Cipher used for encrypting authentication files. */
 #define SSH_AUTHFILE_CIPHER	SSH_CIPHER_3DES
@@ -102,5 +99,3 @@
 
 /* Listen backlog for sshd, ssh-agent and forwarding sockets */
 #define SSH_LISTEN_BACKLOG		128
-
-#endif				/* SSH_H */

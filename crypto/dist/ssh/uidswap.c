@@ -1,4 +1,5 @@
-/*	$NetBSD: uidswap.c,v 1.1.1.11 2005/02/13 00:53:26 christos Exp $	*/
+/*	$NetBSD: uidswap.c,v 1.1.1.12 2006/09/28 21:15:35 christos Exp $	*/
+/* $OpenBSD: uidswap.c,v 1.35 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,8 +13,12 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-#include "includes.h"
-RCSID("$OpenBSD: uidswap.c,v 1.24 2003/05/29 16:58:45 deraadt Exp $");
+#include <sys/param.h>
+#include <errno.h>
+#include <pwd.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdarg.h>
 
 #include "log.h"
 #include "uidswap.h"
@@ -116,12 +121,16 @@ permanently_set_uid(struct passwd *pw)
 		fatal("permanently_set_uid: temporarily_use_uid effective");
 	debug("permanently_set_uid: %u/%u", (u_int)pw->pw_uid,
 	    (u_int)pw->pw_gid);
-	if (setegid(pw->pw_gid) < 0)
-		fatal("setegid %u: %.100s", (u_int)pw->pw_gid, strerror(errno));
-	if (setgid(pw->pw_gid) < 0)
-		fatal("setgid %u: %.100s", (u_int)pw->pw_gid, strerror(errno));
-	if (seteuid(pw->pw_uid) < 0)
-		fatal("seteuid %u: %.100s", (u_int)pw->pw_uid, strerror(errno));
-	if (setuid(pw->pw_uid) < 0)
-		fatal("setuid %u: %.100s", (u_int)pw->pw_uid, strerror(errno));
+	if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) != 0)
+		fatal("setresgid %u: %s", (u_int)pw->pw_gid, strerror(errno));
+	if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) != 0)
+		fatal("setresuid %u: %s", (u_int)pw->pw_uid, strerror(errno));
+}
+
+void
+permanently_drop_suid(uid_t uid)
+{
+	debug("permanently_drop_suid: %u", (u_int)uid);
+	if (setresuid(uid, uid, uid) != 0)
+		fatal("setresuid %u: %s", (u_int)uid, strerror(errno));
 }
