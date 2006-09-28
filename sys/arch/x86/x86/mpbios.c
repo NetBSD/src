@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.28 2006/07/04 00:30:23 christos Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.29 2006/09/28 18:01:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,9 +103,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.28 2006/07/04 00:30:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.29 2006/09/28 18:01:24 bouyer Exp $");
 
 #include "acpi.h"
+#include "lapic.h"
+#include "ioapic.h"
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
 
@@ -513,7 +515,6 @@ mpbios_scan(struct device *self, int *ncpu, int *napic)
 	paddr_t		lapic_base;
 	const struct mpbios_int *iep;
 	struct mpbios_int ie;
-	struct ioapic_softc *sc;
 
 	printf ("%s: Intel MP Specification ", self->dv_xname);
 
@@ -541,7 +542,9 @@ mpbios_scan(struct device *self, int *ncpu, int *napic)
 		if (mp_cth != NULL)
 			lapic_base = (paddr_t)mp_cth->apic_address;
 
+#if NLAPIC > 0
 		lapic_boot_init(lapic_base);
+#endif
 #if NACPI > 0
 	}
 #endif
@@ -551,7 +554,6 @@ mpbios_scan(struct device *self, int *ncpu, int *napic)
 
 		printf("\n%s: MP default configuration %d\n",
 		    self->dv_xname, mp_fps->mpfb1);
-
 #if NACPI > 0
 		if (mpacpi_ncpu == 0)
 #endif
@@ -656,11 +658,15 @@ mpbios_scan(struct device *self, int *ncpu, int *napic)
 				iep = (const struct mpbios_int *)position;
 				ie = *iep;
 				if (iep->dst_apic_id == MPS_ALL_APICS) {
+#if NIOAPIC > 0
+					struct ioapic_softc *sc;
 					for (sc = ioapics ; sc != NULL;
 					     sc = sc->sc_next) {
 						ie.dst_apic_id = sc->sc_apicid;
 						mpbios_int((char *)&ie, type,
-						    &mp_intrs[cur_intr++]);						}
+						    &mp_intrs[cur_intr++]);
+					}
+#endif
 				} else {
 					mpbios_int(position, type,
 					    &mp_intrs[cur_intr++]);
@@ -1018,7 +1024,6 @@ mpbios_ioapic(ent, self)
 	struct device *self;
 {
 	const struct mpbios_ioapic *entry = (const struct mpbios_ioapic *)ent;
-	struct apic_attach_args aaa;
 
 	/* XXX let flags checking happen in ioapic driver.. */
 	if (!(entry->apic_flags & IOAPICENTRY_FLAG_EN))
@@ -1026,6 +1031,9 @@ mpbios_ioapic(ent, self)
 
 	mpbios_nioapic++;
 
+#if NIOAPIC > 0
+	{
+	struct apic_attach_args aaa;
 	aaa.aaa_name   = "ioapic";
 	aaa.apic_id = entry->apic_id;
 	aaa.apic_version = entry->apic_version;
@@ -1034,6 +1042,8 @@ mpbios_ioapic(ent, self)
 	aaa.flags =  (mp_fps->mpfb2 & 0x80) ? IOAPIC_PICMODE : IOAPIC_VWIRE;
 
 	config_found_sm_loc(self, "cpubus", NULL, &aaa, mp_print, mp_submatch);
+	}
+#endif
 }
 
 static const char inttype_fmt[] = "\177\020"
@@ -1097,7 +1107,11 @@ mpbios_int(ent, enttype, mpi)
 	(*mpb->mb_intr_cfg)(entry, &mpi->redir);
 
 	if (enttype == MPS_MCT_IOINT) {
+#if NIOAPIC > 0
 		sc = ioapic_find(id);
+#else
+		sc = NULL;
+#endif
 		if (sc == NULL) {
 			printf("mpbios: can't find ioapic %d\n", id);
 			return;
