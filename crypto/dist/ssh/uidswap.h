@@ -1,5 +1,5 @@
-/*	$NetBSD: uidswap.h,v 1.1.1.4 2001/09/27 02:01:02 itojun Exp $	*/
-/*	$OpenBSD: uidswap.h,v 1.9 2001/06/26 17:27:25 markus Exp $	*/
+/*	$NetBSD: uidswap.h,v 1.1.1.5 2006/09/28 21:15:35 christos Exp $	*/
+/* $OpenBSD: uidswap.h,v 1.13 2006/08/03 03:34:42 deraadt Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,11 +13,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-#ifndef UIDSWAP_H
-#define UIDSWAP_H
-
 void	 temporarily_use_uid(struct passwd *);
 void	 restore_uid(void);
 void	 permanently_set_uid(struct passwd *);
-
-#endif				/* UIDSWAP_H */
+void	 permanently_drop_suid(uid_t);

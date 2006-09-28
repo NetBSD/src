@@ -1,5 +1,5 @@
-/*	$NetBSD: compress.h,v 1.1.1.6 2002/03/08 01:20:43 itojun Exp $	*/
-/*	$OpenBSD: compress.h,v 1.11 2002/03/04 17:27:39 stevesk Exp $	*/
+/*	$NetBSD: compress.h,v 1.1.1.7 2006/09/28 21:15:07 christos Exp $	*/
+/* $OpenBSD: compress.h,v 1.12 2006/03/25 22:22:43 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

@@ -1,5 +1,5 @@
-/*	$NetBSD: dispatch.h,v 1.1.1.5 2002/03/08 01:20:44 itojun Exp $	*/
-/*	$OpenBSD: dispatch.h,v 1.9 2002/01/11 13:39:36 markus Exp $	*/
+/*	$NetBSD: dispatch.h,v 1.1.1.6 2006/09/28 21:15:07 christos Exp $	*/
+/* $OpenBSD: dispatch.h,v 1.11 2006/04/20 09:27:09 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -34,6 +34,6 @@ typedef void dispatch_fn(int, u_int32_t, void *);
 void	 dispatch_init(dispatch_fn *);
 void	 dispatch_set(int, dispatch_fn *);
 void	 dispatch_range(u_int, u_int, dispatch_fn *);
-void	 dispatch_run(int, int *, void *);
+void	 dispatch_run(int, volatile sig_atomic_t *, void *);
 void	 dispatch_protocol_error(int, u_int32_t, void *);
 void	 dispatch_protocol_ignore(int, u_int32_t, void *);
