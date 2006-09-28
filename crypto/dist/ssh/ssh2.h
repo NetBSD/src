@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh2.h,v 1.1.1.6 2005/02/13 00:53:20 christos Exp $	*/
-/*	$OpenBSD: ssh2.h,v 1.9 2003/05/14 00:52:59 markus Exp $	*/
+/*	$NetBSD: ssh2.h,v 1.1.1.7 2006/09/28 21:15:28 christos Exp $	*/
+/* $OpenBSD: ssh2.h,v 1.10 2006/03/25 22:22:43 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
