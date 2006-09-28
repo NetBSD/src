@@ -1,4 +1,4 @@
-/*	$NetBSD: racoonctl.c,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: racoonctl.c,v 1.5 2006/09/28 20:09:36 manu Exp $	*/
 
 /*	Id: racoonctl.c,v 1.11 2006/04/06 17:06:25 manubsd Exp */
 
@@ -338,11 +338,11 @@ evt_poll(void) {
 	if ((sendbuf = f_getevt(0, NULL)) == NULL)
 		errx(1, "Cannot make combuf");
 
+
+	com_init();
 	while (evt_filter & (EVTF_LOOP|EVTF_PURGE)) {
-		com_init();
 		if (com_send(sendbuf) != 0)
 			errx(1, "Cannot send combuf");
-		vfree(sendbuf);
 
 		if (com_recv(&recvbuf) == 0) {
 			handle_recv(recvbuf);
@@ -354,7 +354,7 @@ evt_poll(void) {
 		(void)select(0, NULL, NULL, NULL, &tv);
 	}
 
-	/* NOTREACHED */
+	vfree(sendbuf);
 	return 0;
 }
 
