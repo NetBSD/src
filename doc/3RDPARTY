@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.467 2006/09/25 19:51:36 jnemeth Exp $
+#	$NetBSD: 3RDPARTY,v 1.468 2006/09/28 10:13:39 taca Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -563,7 +563,7 @@ Notes:
 
 Package:	OpenSSH
 Version:	4.3
-Current Vers:	4.3 / portable 4.3p1
+Current Vers:	4.4 / portable 4.4p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
