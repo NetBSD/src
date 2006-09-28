@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.13 2006/07/04 00:30:23 christos Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.14 2006/09/28 18:01:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.13 2006/07/04 00:30:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.14 2006/09/28 18:01:24 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -149,6 +149,7 @@ ioapic_unlock(struct ioapic_softc *sc, u_long flags)
 	write_psl(flags);
 }
 
+#ifndef _IOAPIC_CUSTOM_RW
 /*
  * Register read/write routines.
  */
@@ -170,6 +171,7 @@ ioapic_write_ul(struct ioapic_softc *sc,int regid, u_int32_t val)
 	*(sc->sc_reg) = regid;
 	*(sc->sc_data) = val;
 }
+#endif /* !_IOAPIC_CUSTOM_RW */
 
 static inline u_int32_t
 ioapic_read(struct ioapic_softc *sc, int regid)
@@ -278,7 +280,6 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	struct ioapic_softc *sc = (struct ioapic_softc *)self;  
 	struct apic_attach_args  *aaa = (struct apic_attach_args  *) aux;
 	int apic_id;
-	bus_space_handle_t bh;
 	u_int32_t ver_sz;
 	int i;
 	
@@ -294,8 +295,11 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	ioapic_add(sc);
-	
+
 	printf("%s: pa 0x%lx", sc->sc_pic.pic_dev.dv_xname, aaa->apic_address);
+#ifndef _IOAPIC_CUSTOM_RW
+	{
+	bus_space_handle_t bh;
 
 	if (x86_mem_add_mapping(aaa->apic_address, PAGE_SIZE, 0, &bh) != 0) {
 		printf(": map failed\n");
@@ -303,6 +307,9 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_reg = (volatile u_int32_t *)(bh + IOAPIC_REG);
 	sc->sc_data = (volatile u_int32_t *)(bh + IOAPIC_DATA);	
+	}
+#endif
+	sc->sc_pa = aaa->apic_address;
 
 	sc->sc_pic.pic_type = PIC_IOAPIC;
 	__cpu_simple_lock_init(&sc->sc_pic.pic_lock);
@@ -512,11 +519,11 @@ ioapic_addroute(struct pic *pic, struct cpu_info *ci, int pin,
 	struct ioapic_softc *sc = (struct ioapic_softc *)pic;
 	struct ioapic_pin *pp;
 
+	pp = &sc->sc_pins[pin];
+	pp->ip_type = type;
+	pp->ip_vector = idtvec;
+	pp->ip_cpu = ci;
 	if (ioapic_cold) {
-		pp = &sc->sc_pins[pin];
-		pp->ip_type = type;
-		pp->ip_vector = idtvec;
-		pp->ip_cpu = ci;
 		return;
 	}
 	apic_set_redir(sc, pin, idtvec, ci);
