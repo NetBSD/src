@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XEN3_DOMU,v 1.2 2006/08/26 20:26:45 christos Exp $
+# $NetBSD: INSTALL_XEN3_DOMU,v 1.3 2006/09/28 18:53:15 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -128,9 +128,9 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
-cpu* at mainbus?
-
 hypervisor*	at mainbus?		# Xen hypervisor
+
+vcpu* 		at hypervisor?		# Xen virtaul CPUs
 
 npx0		at hypervisor?		# x86 math coprocessor
 

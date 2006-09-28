@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 2006/04/09 19:28:01 bouyer Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 2006/09/28 18:53:15 bouyer Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2006/04/09 19:28:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2006/09/28 18:53:15 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,16 +41,50 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2006/04/09 19:28:01 bouyer Exp $");
 #include <machine/bus.h>
 
 #include "hypervisor.h"
+#include "pci.h"
 
 #include "opt_xen.h"
+#include "opt_mpbios.h"
+
+#include "acpi.h"
+#include "ioapic.h"
 
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
 
-#ifdef XEN
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
-#endif
+
+#if defined(XEN3) && NPCI > 0
+#include <dev/pci/pcivar.h>
+#if NACPI > 0
+#include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_madt.h>       
+#include <machine/mpacpi.h>       
+#endif /* NACPI > 0 */
+#ifdef MPBIOS
+#include <machine/mpbiosvar.h>       
+#endif /* MPBIOS */
+
+#if defined(MPBIOS) || NACPI > 0
+struct mp_bus *mp_busses;
+int mp_nbus;
+struct mp_intr_map *mp_intrs;
+int mp_nintr;
+ 
+int mp_isa_bus = -1;	    /* XXX */
+int mp_eisa_bus = -1;	   /* XXX */
+
+int acpi_present = 0;
+int mpacpi_active = 0;
+#ifdef MPVERBOSE
+int mp_verbose = 1;
+#else /* MPVERBOSE */
+int mp_verbose = 0;
+#endif /* MPVERBOSE */
+#endif /* defined(MPBIOS) || NACPI > 0 */
+#endif /* defined(XEN3) && NPCI > 0 */
+
 
 int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
@@ -67,45 +101,6 @@ union mainbus_attach_args {
 	struct hypervisor_attach_args mba_haa;
 #endif
 };
-
-#ifndef XEN
-/*
- * This is set when the ISA bus is attached.  If it's not set by the
- * time it's checked below, then mainbus attempts to attach an ISA.
- */
-int	isa_has_been_seen;
-struct x86_isa_chipset x86_isa_chipset;
-#if XXXNISA > 0
-struct isabus_attach_args mba_iba = {
-	"isa",
-	X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM,
-	&isa_bus_dma_tag,
-	&x86_isa_chipset
-};
-#endif /* XXXNISA */
-
-/*
- * Same as above, but for EISA.
- */
-int	eisa_has_been_seen;
-#endif /* !XEN */
-
-#if defined(MPBIOS) || defined(MPACPI)
-struct mp_bus *mp_busses;
-int mp_nbus;
-struct mp_intr_map *mp_intrs;
-int mp_nintr;
- 
-int mp_isa_bus = -1;            /* XXX */
-int mp_eisa_bus = -1;           /* XXX */
-
-#ifdef MPVERBOSE
-int mp_verbose = 1;
-#else
-int mp_verbose = 0;
-#endif
-#endif
-
 
 /*
  * Probe for the mainbus; always succeeds.
@@ -129,15 +124,74 @@ mainbus_attach(parent, self, aux)
 	void *aux;
 {
 	union mainbus_attach_args mba;
+#if defined(DOM0OPS) && defined(XEN3)
+	int numcpus = 0;
+#ifdef MPBIOS
+	int mpbios_present = 0;
+#endif
+#if NACPI > 0 || defined(MPBIOS)
+	int numioapics = 0;     
+#endif
+#endif /* defined(DOM0OPS) && defined(XEN3) */
 
 	printf("\n");
 
+#ifndef XEN3
 	memset(&mba.mba_caa, 0, sizeof(mba.mba_caa));
 	mba.mba_caa.caa_name = "cpu";
 	mba.mba_caa.cpu_number = 0;
 	mba.mba_caa.cpu_role = CPU_ROLE_SP;
 	mba.mba_caa.cpu_func = 0;
 	config_found_ia(self, "cpubus", &mba.mba_caa, mainbus_print);
+#else /* XEN3 */
+#ifdef DOM0OPS
+	if (xen_start_info.flags & SIF_INITDOMAIN) {
+#ifdef MPBIOS
+		mpbios_present = mpbios_probe(self);
+#endif
+#if NPCI > 0
+		/* ACPI needs to be able to access PCI configuration space. */
+		pci_mode = pci_mode_detect();
+#ifdef PCI_BUS_FIXUP
+		pci_maxbus = pci_bus_fixup(NULL, 0);
+		aprint_debug("PCI bus max, after pci_bus_fixup: %i\n",
+		    pci_maxbus);
+#ifdef PCI_ADDR_FIXUP
+		pciaddr.extent_port = NULL;
+		pciaddr.extent_mem = NULL;
+		pci_addr_fixup(NULL, pci_maxbus);
+#endif /* PCI_ADDR_FIXUP */
+#endif /* PCI_BUS_FIXUP */
+#if NACPI > 0
+		acpi_present = acpi_probe();
+		if (acpi_present)
+			mpacpi_active = mpacpi_scan_apics(self,
+			    &numcpus, &numioapics);
+		if (!mpacpi_active)
+#endif
+		{
+#ifdef MPBIOS
+			if (mpbios_present)
+				mpbios_scan(self, &numcpus, &numioapics);       
+			else
+#endif
+			if (numcpus == 0) {
+				memset(&mba.mba_caa, 0, sizeof(mba.mba_caa));
+				mba.mba_caa.caa_name = "cpu";
+				mba.mba_caa.cpu_number = 0;
+				mba.mba_caa.cpu_role = CPU_ROLE_SP;
+				mba.mba_caa.cpu_func = 0;
+				config_found_ia(self, "cpubus",
+				    &mba.mba_caa, mainbus_print);
+			}
+		}
+#if NIOAPIC > 0
+	ioapic_enable();
+#endif
+#endif /* NPCI */
+	}
+#endif /* DOM0OPS */
+#endif /* XEN3 */
 
 #if NHYPERVISOR > 0
 	mba.mba_haa.haa_busname = "hypervisor";
