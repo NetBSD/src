@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.84 2006/09/24 11:17:09 elad Exp $	*/
+/*	$NetBSD: ping.c,v 1.85 2006/09/28 16:01:16 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.84 2006/09/24 11:17:09 elad Exp $");
+__RCSID("$NetBSD: ping.c,v 1.85 2006/09/28 16:01:16 elad Exp $");
 #endif
 
 #include <stdio.h>
@@ -262,7 +262,7 @@ main(int argc, char *argv[])
 		err(1, "Cannot create socket");
 
 	if (setuid(getuid()) == -1)
-		err(1, "seteuid");
+		err(1, "setuid");
 
 	setprogname(argv[0]);
 
