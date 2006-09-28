@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.438 2006/09/24 17:18:02 christos Exp $
+$NetBSD: usbdevs,v 1.439 2006/09/28 16:53:40 joerg Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -294,6 +294,7 @@ vendor ALLIEDTELESYN	0x07c9	Allied Telesyn International
 vendor AVERMEDIA	0x07ca	AVerMedia Technologies
 vendor SIIG		0x07cc	SIIG
 vendor CASIO		0x07cf	CASIO
+vendor DLINK2		0x07d1	D-Link
 vendor APTIO		0x07d2	Aptio Products
 vendor ARASAN		0x07da	Arasan Chip Systems
 vendor ALLIEDCABLE	0x07e6	Allied Cable
@@ -395,6 +396,7 @@ vendor PEN		0x0d7d	Pen Drive
 vendor ACDC		0x0d7e	American Computer & Digital Components
 vendor CMEDIA		0x0d8c	C-Media Electronics Inc.
 vendor MSI		0x0db0	Micro Star
+vendor SITECOMEU	0x0df6	Sitecom Europe
 vendor HAWKING		0x0e66	Hawking
 vendor OTI		0x0ea0	Ours Technology
 vendor PILOTECH		0x0eaf	Pilotech
@@ -419,8 +421,10 @@ vendor CREATIVE2	0x1292	Creative Labs
 vendor BELKIN2		0x1293	Belkin Components
 vendor AINCOMM		0x12fd	Aincomm
 vendor MOBILITY		0x1342	Mobility
+vendor DICKSMITH	0x1371	Dick Smith Electronics
 vendor CISCOLINKSYS	0x13b1	Cisco-Linksys
 vendor SHARK		0x13d2	Shark
+vendor HUAWEI3COM	0x1472	Huawei 3Com
 vendor SILICOM		0x1485	Silicom
 vendor RALINK		0x1485	Ralink Technology
 vendor RALINK_2		0x148f	Ralink Technology
@@ -430,10 +434,14 @@ vendor OQO		0x1557	OQO
 vendor SOHOWARE		0x15e8	SOHOware
 vendor UMAX		0x1606	UMAX Data Systems
 vendor INSIDEOUT	0x1608	Inside Out Networks
+vendor GOODWAY		0x1631	Good Way Technology
 vendor ENTREGA		0x1645	Entrega
 vendor ACTIONTEC	0x1668	Actiontec Electronics
+vendor GIGASET		0x1690	Gigaset
+vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
 vendor DLINK		0x2001	D-Link
+vendor PLANEX2		0x2019	Planex Communications
 vendor ERICSSON		0x2282	Ericsson
 vendor MOTOROLA2	0x22b8	Motorola
 vendor TRIPPLITE	0x2478	Tripp-Lite
@@ -496,6 +504,7 @@ product ABOCOM XX8		0x4102	XX8
 product ABOCOM XX9		0x4104	XX9
 product ABOCOM UFE2000		0x420a	UFE2000 USB2.0 Fast Ethernet Adapter
 product ABOCOM XX10		0xabc1	XX10
+product ABOCOM RT2573		0xb21d	RT2573
 
 /* Accton products */
 product ACCTON USB320_EC	0x1046	USB320-EC Ethernet Adapter
@@ -663,6 +672,8 @@ product BELKIN F5U237		0x0237	F5U237 USB 2.0 7-Port Hub
 product BELKIN UPS		0x0980	UPS
 product BELKIN F5U120		0x1203	F5U120-PC Hub
 product BELKIN F5D7050		0x7050	F5D7050 54g USB Network Adapter
+product BELKIN F5D7050A		0x705a	F5D705A 54g USB Network Adapter
+product BELKIN F5D9050V3	0x905b	F5D9050 ver 3
 
 /* Billionton products */
 product BILLIONTON USB100	0x0986	USB100N 10/100 FastEthernet Adapter
@@ -727,6 +738,9 @@ product CHPRODUCTS PROPEDALS	0x00f2	Pro Pedals
 product CHPRODUCTS FIGHTERSTICK 0x00f3	Fighterstick
 product CHPRODUCTS FLIGHTYOKE	0x00ff	Flight Sim Yoke
 
+/* Cisco-Linksys products */
+product CISCOLINKSYS WUSB54GC	0x0020	WUSB54GC
+
 /* Compaq products */
 product COMPAQ IPAQPOCKETPC	0x0003	iPAQ PocketPC
 product COMPAQ A1500		0x0012	A1500
@@ -741,6 +755,7 @@ product COMPOSITE USBPS2	0x0001	USB to PS2 Adaptor
 
 /* Conceptronic products */
 product CONCEPTRONIC C54RU	0x3c02	C54RU WLAN
+product CONCEPTRONIC C54RU2	0x3c22	C54RU
 
 /* Concord Camera products */
 product CONCORDCAMERA EYE_Q_3X	0x0100	Eye Q 3x
@@ -804,6 +819,10 @@ product DELORME EARTHMATE	0x0100	Earthmate GPS
 /* Diamond products */
 product DIAMOND RIO500USB	0x0001	Rio 500 USB
 
+/* Dick Smith Electronics (really C-Net) products */
+product DICKSMITH RT2573	0x9022	RT2573
+product DICKSMITH CWD854F	0x9032	C-Net CWD-854 rev F
+
 /* Digi International products */
 product DIGI ACCELEPORT2	0x0002	AccelePort USB 2
 product DIGI ACCELEPORT4	0x0004	AccelePort USB 4
@@ -818,6 +837,8 @@ product DLINK DUBE100		0x1a00	10/100 ethernet adapter
 product DLINK DSB650TX4		0x200c	10/100 ethernet adapter
 product DLINK DWL122		0x3700	Wireless DWL122
 product DLINK DWLG122		0x3c00	AirPlus G Wireless USB Adapter
+product DLINK2 DWLG122C1	0x3c03	DWL-G122 rev C1
+product DLINK2 WUA1340		0x3c04	WUA-1340
 product DLINK DSB650C		0x4000	10Mbps ethernet adapter
 product DLINK DSB650TX1		0x4001	10/100 ethernet adapter
 product DLINK DSB650TX		0x4002	10/100 ethernet adapter
@@ -946,9 +967,16 @@ product GENESYS GL641USB2IDE	0x0702	GL641USB USB-IDE Bridge
 
 /* GIGABYTE products */
 product GIGABYTE GNWBKG		0x8007	GN-WBKG
+product GIGABYTE GNWB01GS	0x8008	GN-WB01GS
+
+/* Gigaset products */
+product GIGASET RT2573		0x0722	RT2573
 
 /* GoHubs products */
 product GOHUBS GOCOM232		0x1001	GoCOM232 Serial converter
+
+/* Good Way Technology products */
+product GOODWAY RT2573		0xc019	RT2573
 
 /* Gravis products */
 product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
@@ -1041,6 +1069,9 @@ product HP HN210E		0x811c	Ethernet HN210E
 
 /* HP products */
 product HP2 C500		0x6002	PhotoSmart C500
+
+/* HUAWEI products */
+product HUAWEI3COM RT2573	0x0009	RT2573
 
 /* IBM Corporation */
 product IBM OPTTRAVELMOUSE	0x3107	Optical
@@ -1318,6 +1349,9 @@ product MSI BLUETOOTH		0x1967	Bluetooth USB Adapter
 product MSI MS6861		0x6861	MS-6861
 product MSI MS6865		0x6865	MS-6865
 product MSI MS6869		0x6869	MS-6869
+product MSI RT2573		0x6877	RT2573
+product MSI RT2573_2		0xa861	RT2573
+product MSI RT2573_3		0xa874	RT2573
 
 /* Micronet Communications products */
 product MICRONET SP128AR	0x0003	SP128AR EtherFast
@@ -1548,6 +1582,7 @@ product PILOTECH CRW600		0x0001	CRW-600 6-in-1 Reader
 
 /* Planex Communications products */
 product PLANEX GW_US11H		0x14ea	GW-US11H WLAN
+product PLANEX2 GWUSMM		0xed02	GW-USMM
 
 /* Plantronics products */
 product PLANTRONICS HEADSET	0x0ca1	Platronics DSP-400 Headset
@@ -1603,6 +1638,10 @@ product PROLIFIC PL2303X	0xaaa0	PL2303 Serial adapter (Pharos GPS)
 /* Putercom products */
 product PUTERCOM UPA100		0x047e	USB-1284 BRIDGE
 
+/* Qcom products */
+product QCOM RT2573		0x6196	RT2573
+product QCOM RT2573_2		0x6229	RT2573
+
 /* Qtronix products */
 product QTRONIX 980N		0x2011	Scorpion-980N keyboard
 
@@ -1622,6 +1661,8 @@ product RALINK RT2570		0x1706	RT2570
 product RALINK RT2570_2		0x2570	RT2570
 product RALINK RT2570_3		0x9020	RT2570
 product RALINK_2 RT2570		0x2570	RT2570
+product RALINK RT2573		0x2573	RT2573
+product RALINK RT2671		0x2671	RT2671
 
 /* RATOC Systems products */
 product RATOC REXUSB60		0xb000	USB serial REX-USB60
@@ -1761,6 +1802,11 @@ product SIRIUS ROADSTER		0x0001	NetComm Roadster II 56 USB
 product SITECOM LN029		0x182d	LN029
 product SITECOM CN104		0x2068	CN104 serial
 
+/* Sitecom Europe products */
+product SITECOMEU WL113		0x9071	WL-113
+product SITECOMEU WL172		0x90ac	WL-172
+product SITECOMEU WL113R2	0x9712	WL-113 rev 2
+
 /* SmartBridges products */
 product SMARTBRIDGES SMARTLINK	0x0001	SmartLink USB ethernet adapter
 product SMARTBRIDGES SMARTNIC	0x0003	smartNIC 2 PnP Adapter
@@ -1831,6 +1877,7 @@ product SUN MOUSE		0x0100	Type 6 USB mouse
 
 /* Surecom Technology products */
 product SURECOM EP9001G		0x11f3	EP-9001-g
+product SURECOM RT2573		0x31f3	RT2573
 
 /* Susteen products */
 product SUSTEEN DCU10	0x0528	USB Cable
