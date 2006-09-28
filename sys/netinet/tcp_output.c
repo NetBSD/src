@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.143 2006/09/05 00:29:36 rpaulo Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.144 2006/09/28 04:32:47 dbj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.143 2006/09/05 00:29:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.144 2006/09/28 04:32:47 dbj Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -397,7 +397,8 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 	 * transmit.
 	 */
 	if (so)
-		*txsegsizep = min(so->so_snd.sb_hiwat >> 1, *txsegsizep);
+		*txsegsizep = min((so->so_snd.sb_hiwat - 
+			so->so_snd.sb_lowat + 1) >> 1, *txsegsizep);
 	*rxsegsizep = min(tp->t_ourmss - optlen, size);
 
 	if (*txsegsizep != tp->t_segsz) {
