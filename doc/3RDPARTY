@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.468 2006/09/28 10:13:39 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.469 2006/09/28 21:27:58 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -562,7 +562,7 @@ License:	BSD (3-clause)
 Notes:
 
 Package:	OpenSSH
-Version:	4.3
+Version:	4.4
 Current Vers:	4.4 / portable 4.4p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
@@ -578,7 +578,7 @@ markus is very cooperative about it):
 - default for PermitRootLogin is set to "no"
 - IgnoreRootRhosts added
 - look at login.conf to check valid user/access list
-- krb4 and krb5 support re-added
+- krb5 support re-added
 - hack in cipher.c #ifdef ACCS because we are missing EVP_acss
   when someone imports openssl, we can remove this.
 - uidswap.c changed order of set{e,}{u,g}id so that it works on NetBSD
