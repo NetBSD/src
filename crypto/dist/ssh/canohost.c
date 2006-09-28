@@ -1,4 +1,5 @@
-/*	$NetBSD: canohost.c,v 1.21 2006/02/04 22:32:13 christos Exp $	*/
+/*	$NetBSD: canohost.c,v 1.22 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: canohost.c,v 1.61 2006/08/03 03:34:41 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,11 +14,22 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: canohost.c,v 1.48 2005/12/28 22:46:06 stevesk Exp $");
-__RCSID("$NetBSD: canohost.c,v 1.21 2006/02/04 22:32:13 christos Exp $");
+__RCSID("$NetBSD: canohost.c,v 1.22 2006/09/28 21:22:14 christos Exp $");
+#include <sys/types.h>
+#include <sys/socket.h>
 
-#include "packet.h"
+#include <netinet/in.h>
+
+#include <ctype.h>
+#include <errno.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+
 #include "xmalloc.h"
+#include "packet.h"
 #include "log.h"
 #include "canohost.h"
 
@@ -84,7 +96,7 @@ get_remote_hostname(int sock, int use_dns)
 	 */
 	for (i = 0; name[i]; i++)
 		if (isupper((unsigned char)name[i]))
-			name[i] = tolower((unsigned char)name[i]);
+			name[i] = (char)tolower((unsigned char)name[i]);
 
 	/*
 	 * Map it back to an IP address and check that the given
@@ -100,7 +112,7 @@ get_remote_hostname(int sock, int use_dns)
 	hints.ai_socktype = SOCK_STREAM;
 	if (getaddrinfo(name, NULL, &hints, &aitop) != 0) {
 		logit("reverse mapping checking getaddrinfo for %.700s "
-		    "failed - POSSIBLE BREAK-IN ATTEMPT!", name);
+		    "[%s] failed - POSSIBLE BREAK-IN ATTEMPT!", name, ntop);
 		return xstrdup(ntop);
 	}
 	/* Look for the address from the list of addresses. */

@@ -1,8 +1,8 @@
-/*	$NetBSD: gss-genr.c,v 1.3 2006/03/20 16:36:31 elad Exp $	*/
-/*	$OpenBSD: gss-genr.c,v 1.6 2005/10/13 22:24:31 stevesk Exp $	*/
+/*	$NetBSD: gss-genr.c,v 1.4 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: gss-genr.c,v 1.17 2006/08/29 12:02:30 dtucker Exp $ */
 
 /*
- * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
+ * Copyright (c) 2001-2006 Simon Wilkinson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,12 +25,18 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
-
 #ifdef GSSAPI
+#include "includes.h"
+__RCSID("$NetBSD");
+
+#include <sys/param.h>
+
+#include <string.h>
+#include <unistd.h>
+#include <stdarg.h>
 
 #include "xmalloc.h"
-#include "bufaux.h"
+#include "buffer.h"
 #include "log.h"
 #include "ssh2.h"
 
@@ -136,9 +142,7 @@ ssh_gssapi_last_error(Gssctxt *ctxt, OM_uint32 *major_status,
 void
 ssh_gssapi_build_ctx(Gssctxt **ctx)
 {
-	*ctx = xmalloc(sizeof (Gssctxt));
-	(*ctx)->major = 0;
-	(*ctx)->minor = 0;
+	*ctx = xcalloc(1, sizeof (Gssctxt));
 	(*ctx)->context = GSS_C_NO_CONTEXT;
 	(*ctx)->name = GSS_C_NO_NAME;
 	(*ctx)->oid = GSS_C_NO_OID;
@@ -208,10 +212,11 @@ OM_uint32
 ssh_gssapi_import_name(Gssctxt *ctx, const char *host)
 {
 	gss_buffer_desc gssbuf;
+	char *val;
 
-	gssbuf.length = sizeof("host@") + strlen(host);
-	gssbuf.value = xmalloc(gssbuf.length);
-	snprintf(gssbuf.value, gssbuf.length, "host@%s", host);
+	xasprintf(&val, "host@%s", host);
+	gssbuf.value = val;
+	gssbuf.length = strlen(gssbuf.value);
 
 	if ((ctx->major = gss_import_name(&ctx->minor,
 	    &gssbuf, GSS_C_NT_HOSTBASED_SERVICE, &ctx->name)))
@@ -284,6 +289,36 @@ ssh_gssapi_server_ctx(Gssctxt **ctx, gss_OID oid)
 	ssh_gssapi_build_ctx(ctx);
 	ssh_gssapi_set_oid(*ctx, oid);
 	return (ssh_gssapi_acquire_cred(*ctx));
+}
+
+int
+ssh_gssapi_check_mechanism(Gssctxt **ctx, gss_OID oid, const char *host)
+{
+	gss_buffer_desc token = GSS_C_EMPTY_BUFFER;
+	OM_uint32 major, minor;
+	gss_OID_desc spnego_oid = {6, (void *)"\x2B\x06\x01\x05\x05\x02"};
+
+	/* RFC 4462 says we MUST NOT do SPNEGO */
+	if (oid->length == spnego_oid.length && 
+	    (memcmp(oid->elements, spnego_oid.elements, oid->length) == 0))
+		return 0; /* false */
+
+	ssh_gssapi_build_ctx(ctx);
+	ssh_gssapi_set_oid(*ctx, oid);
+	major = ssh_gssapi_import_name(*ctx, host);
+	if (!GSS_ERROR(major)) {
+		major = ssh_gssapi_init_ctx(*ctx, 0, GSS_C_NO_BUFFER, &token, 
+		    NULL);
+		gss_release_buffer(&minor, &token);
+		if ((*ctx)->context != GSS_C_NO_CONTEXT)
+			gss_delete_sec_context(&minor, &(*ctx)->context,
+			    GSS_C_NO_BUFFER);
+	}
+
+	if (GSS_ERROR(major)) 
+		ssh_gssapi_delete_ctx(ctx);
+
+	return (!GSS_ERROR(major));
 }
 
 #endif /* GSSAPI */

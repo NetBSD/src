@@ -1,4 +1,5 @@
-/*	$NetBSD: msg.c,v 1.11 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: msg.c,v 1.12 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: msg.c,v 1.15 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -23,14 +24,22 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: msg.c,v 1.8 2005/05/24 17:32:43 avsm Exp $");
-__RCSID("$NetBSD: msg.c,v 1.11 2006/02/04 22:32:14 christos Exp $");
+__RCSID("$NetBSD: msg.c,v 1.12 2006/09/28 21:22:14 christos Exp $");
+
+#include <sys/types.h>
+#include <sys/uio.h>
+
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdarg.h>
 
 #include "buffer.h"
-#include "getput.h"
 #include "log.h"
 #include "atomicio.h"
 #include "msg.h"
+#include "misc.h"
 
 int
 ssh_msg_send(int fd, u_char type, Buffer *m)
@@ -40,7 +49,7 @@ ssh_msg_send(int fd, u_char type, Buffer *m)
 
 	debug3("ssh_msg_send: type %u", (unsigned int)type & 0xff);
 
-	PUT_32BIT(buf, mlen + 1);
+	put_u32(buf, mlen + 1);
 	buf[4] = type;		/* 1st byte of payload is mesg-type */
 	if (atomicio(vwrite, fd, buf, sizeof(buf)) != sizeof(buf)) {
 		error("ssh_msg_send: write");
@@ -66,7 +75,7 @@ ssh_msg_recv(int fd, Buffer *m)
 			error("ssh_msg_recv: read: header");
 		return (-1);
 	}
-	msg_len = GET_32BIT(buf);
+	msg_len = get_u32(buf);
 	if (msg_len > 256 * 1024) {
 		error("ssh_msg_recv: read: bad msg_len %u", msg_len);
 		return (-1);

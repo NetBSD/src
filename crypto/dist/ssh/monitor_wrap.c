@@ -1,4 +1,5 @@
-/*	$NetBSD: monitor_wrap.c,v 1.15 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: monitor_wrap.c,v 1.16 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: monitor_wrap.c,v 1.54 2006/08/12 20:46:46 miod Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -26,40 +27,48 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor_wrap.c,v 1.40 2005/05/24 17:32:43 avsm Exp $");
-__RCSID("$NetBSD: monitor_wrap.c,v 1.15 2006/02/04 22:32:14 christos Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.16 2006/09/28 21:22:14 christos Exp $");
+#include <sys/types.h>
+#include <sys/uio.h>
 
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 
+#include <errno.h>
+#include <pwd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "xmalloc.h"
 #include "ssh.h"
 #include "dh.h"
+#include "buffer.h"
+#include "key.h"
+#include "cipher.h"
 #include "kex.h"
+#include "hostfile.h"
 #include "auth.h"
 #include "auth-options.h"
-#include "buffer.h"
-#include "bufaux.h"
 #include "packet.h"
 #include "mac.h"
 #include "log.h"
-#include "zlib.h"
+#include <zlib.h>
 #include "monitor.h"
-#include "monitor_wrap.h"
-#include "xmalloc.h"
-#include "atomicio.h"
-#include "monitor_fdpass.h"
-#include "getput.h"
-#ifdef USE_PAM
-#include "servconf.h"
-#endif
-
-#include "auth.h"
-#include "channels.h"
-#include "session.h"
-
 #ifdef GSSAPI
 #include "ssh-gss.h"
 #endif
+#include "monitor_wrap.h"
+#include "atomicio.h"
+#include "monitor_fdpass.h"
+#ifdef USE_PAM
+#include "servconf.h"
+#endif
+#include "misc.h"
+
+#include "channels.h"
+#include "session.h"
 
 /* Imports */
 extern int compat20;
@@ -91,7 +100,7 @@ mm_request_send(int sock, enum monitor_reqtype type, Buffer *m)
 
 	debug3("%s entering: type %d", __func__, type);
 
-	PUT_32BIT(buf, mlen + 1);
+	put_u32(buf, mlen + 1);
 	buf[4] = (u_char) type;		/* 1st byte of payload is mesg-type */
 	if (atomicio(vwrite, sock, buf, sizeof(buf)) != sizeof(buf))
 		fatal("%s: write: %s", __func__, strerror(errno));
@@ -112,7 +121,7 @@ mm_request_receive(int sock, Buffer *m)
 			cleanup_exit(255);
 		fatal("%s: read: %s", __func__, strerror(errno));
 	}
-	msg_len = GET_32BIT(buf);
+	msg_len = get_u32(buf);
 	if (msg_len > 256 * 1024)
 		fatal("%s: read: bad msg_len %d", __func__, msg_len);
 	buffer_clear(m);
@@ -635,7 +644,7 @@ mm_send_keystate(struct monitor *monitor)
 }
 
 int
-mm_pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, int namebuflen)
+mm_pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, size_t namebuflen)
 {
 	Buffer m;
 	char *p, *msg;
@@ -852,8 +861,8 @@ mm_chall_setup(char **name, char **infotxt, u_int *numprompts,
 	*name = xstrdup("");
 	*infotxt = xstrdup("");
 	*numprompts = 1;
-	*prompts = xmalloc(*numprompts * sizeof(char *));
-	*echo_on = xmalloc(*numprompts * sizeof(u_int));
+	*prompts = xcalloc(*numprompts, sizeof(char *));
+	*echo_on = xcalloc(*numprompts, sizeof(u_int));
 	(*echo_on)[0] = 0;
 }
 
@@ -920,9 +929,8 @@ mm_skey_query(void *ctx, char **name, char **infotxt,
    u_int *numprompts, char ***prompts, u_int **echo_on)
 {
 	Buffer m;
-	int len;
 	u_int success;
-	char *p, *challenge;
+	char *challenge;
 
 	debug3("%s: entering", __func__);
 
@@ -946,11 +954,7 @@ mm_skey_query(void *ctx, char **name, char **infotxt,
 
 	mm_chall_setup(name, infotxt, numprompts, prompts, echo_on);
 
-	len = strlen(challenge) + strlen(SKEY_PROMPT) + 1;
-	p = xmalloc(len);
-	strlcpy(p, challenge, len);
-	strlcat(p, SKEY_PROMPT, len);
-	(*prompts)[0] = p;
+	xasprintf(*prompts, "%s%s", challenge, SKEY_PROMPT);
 	xfree(challenge);
 
 	return (0);

@@ -1,5 +1,5 @@
-/*	$NetBSD: dns.h,v 1.2 2006/02/04 22:32:14 christos Exp $	*/
-/*	$OpenBSD: dns.h,v 1.6 2005/10/17 14:13:35 stevesk Exp $	*/
+/*	$NetBSD: dns.h,v 1.3 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: dns.h,v 1.10 2006/08/03 03:34:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Wesley Griffin. All rights reserved.
@@ -25,8 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "includes.h"
 
 #ifndef DNS_H
 #define DNS_H

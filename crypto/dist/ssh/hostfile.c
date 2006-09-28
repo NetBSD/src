@@ -1,4 +1,5 @@
-/*	$NetBSD: hostfile.c,v 1.17 2006/03/19 16:33:26 elad Exp $	*/
+/*	$NetBSD: hostfile.c,v 1.18 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: hostfile.c,v 1.45 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,19 +38,24 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: hostfile.c,v 1.36 2005/11/22 03:36:03 dtucker Exp $");
-__RCSID("$NetBSD: hostfile.c,v 1.17 2006/03/19 16:33:26 elad Exp $");
+__RCSID("$NetBSD: hostfile.c,v 1.18 2006/09/28 21:22:14 christos Exp $");
+#include <sys/types.h>
 
-#include <resolv.h>
+#include <netinet/in.h>
+
 #include <openssl/hmac.h>
 #include <openssl/sha.h>
 
-#include "packet.h"
+#include <resolv.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "xmalloc.h"
 #include "match.h"
 #include "key.h"
 #include "hostfile.h"
 #include "log.h"
-#include "xmalloc.h"
 
 static int
 extract_salt(const char *s, u_int l, char *salt, size_t salt_len)

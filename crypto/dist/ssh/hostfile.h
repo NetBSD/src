@@ -1,5 +1,5 @@
-/*	$NetBSD: hostfile.h,v 1.10 2005/04/23 16:53:28 christos Exp $	*/
-/*	$OpenBSD: hostfile.h,v 1.15 2005/03/01 10:40:26 djm Exp $	*/
+/*	$NetBSD: hostfile.h,v 1.11 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: hostfile.h,v 1.16 2006/03/25 22:22:43 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
