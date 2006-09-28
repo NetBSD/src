@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.213 2006/08/27 05:07:13 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.214 2006/09/28 02:39:50 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.213 2006/08/27 05:07:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.214 2006/09/28 02:39:50 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2386,6 +2386,9 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 			/* bump the counter */
 			clabel.mod_counter = raidPtr->mod_counter;
 			
+			/* note what unit we are configured as */
+			clabel.last_unit = raidPtr->raidid;
+
 			raidwrite_component_label(
 						  raidPtr->Disks[c].dev,
 						  raidPtr->raid_cinfo[c].ci_vp,
@@ -2434,6 +2437,7 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 			clabel.mod_counter = raidPtr->mod_counter;
 			clabel.column = scol;
 			clabel.status = rf_ds_optimal;
+			clabel.last_unit = raidPtr->raidid;
 
 			raidwrite_component_label(
 				      raidPtr->Disks[sparecol].dev,
