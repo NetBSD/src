@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.10 2006/09/27 21:21:09 bjh21 Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.11 2006/09/28 23:25:01 bjh21 Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.10 2006/09/27 21:21:09 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11 2006/09/28 23:25:01 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -179,7 +179,6 @@ db_validate_address(addr)
 
 	db_faulted = FALSE;
 	db_validating = TRUE;
-	asm("" : : : "r14"); /* Make sure R14 is saved over the page fault */
 	tmp = *(uint8_t *)addr;
 	db_validating = FALSE;
 	return db_faulted;
