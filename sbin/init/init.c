@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.80 2006/09/25 19:42:04 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.81 2006/09/28 15:20:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.80 2006/09/25 19:42:04 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.81 2006/09/28 15:20:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1346,6 +1346,14 @@ static void
 utmpx_set_runlevel(char old, char new)
 {
 	struct utmpx ut;
+
+	/*
+	 * Don't record any transitions until we did the first transition
+	 * to read ttys, which is when we are guaranteed to have a read-write
+	 * /var. Perhaps use a different variable for this?
+	 */
+	if (sessions == NULL)
+		return;
 
 	(void)memset(&ut, 0, sizeof(ut));
 	(void)snprintf(ut.ut_line, sizeof(ut.ut_line), RUNLVL_MSG, new);
