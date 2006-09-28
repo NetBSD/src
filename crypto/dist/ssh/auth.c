@@ -1,4 +1,5 @@
-/*	$NetBSD: auth.c,v 1.23 2006/02/04 22:32:13 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.24 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: auth.c,v 1.75 2006/08/03 03:34:41 deraadt Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,25 +25,37 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth.c,v 1.60 2005/06/17 02:44:32 djm Exp $");
-__RCSID("$NetBSD: auth.c,v 1.23 2006/02/04 22:32:13 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.24 2006/09/28 21:22:14 christos Exp $");
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/param.h>
 
+#include <errno.h>
 #include <libgen.h>
+#include <paths.h>
+#include <pwd.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "xmalloc.h"
 #include "match.h"
 #include "groupaccess.h"
 #include "log.h"
+#include "buffer.h"
 #include "servconf.h"
+#include "key.h"
+#include "hostfile.h"
 #include "auth.h"
 #include "auth-options.h"
 #include "canohost.h"
-#include "buffer.h"
-#include "bufaux.h"
 #include "uidswap.h"
 #include "misc.h"
-#include "bufaux.h"
 #include "packet.h"
+#ifdef GSSAPI
+#include "ssh-gss.h"
+#endif
+#include "monitor_wrap.h"
 
 #ifdef HAVE_LOGIN_CAP
 #include <login_cap.h>
@@ -50,6 +63,7 @@ __RCSID("$NetBSD: auth.c,v 1.23 2006/02/04 22:32:13 christos Exp $");
 
 /* import */
 extern ServerOptions options;
+extern int use_privsep;
 
 /* Debugging messages */
 Buffer auth_debug;
@@ -285,6 +299,9 @@ auth_log(Authctxt *authctxt, int authenticated, char *method, char *info)
 	void (*authlog) (const char *fmt,...) = verbose;
 	char *authmsg;
 
+	if (use_privsep && !mm_is_monitor() && !authctxt->postponed)
+		return;
+
 	/* Raise logging level */
 	if (authenticated == 1 ||
 	    !authctxt->valid ||
@@ -316,7 +333,6 @@ auth_root_allowed(char *method)
 	switch (options.permit_root_login) {
 	case PERMIT_YES:
 		return 1;
-		break;
 	case PERMIT_NO_PASSWD:
 		if (strcmp(method, "password") != 0)
 			return 1;
@@ -343,7 +359,8 @@ auth_root_allowed(char *method)
 static char *
 expand_authorized_keys(const char *filename, struct passwd *pw)
 {
-	char *file, *ret;
+	char *file, ret[MAXPATHLEN];
+	int i;
 
 	file = percent_expand(filename, "h", pw->pw_dir,
 	    "u", pw->pw_name, (char *)NULL);
@@ -355,14 +372,11 @@ expand_authorized_keys(const char *filename, struct passwd *pw)
 	if (*file == '/')
 		return (file);
 
-	ret = xmalloc(MAXPATHLEN);
-	if (strlcpy(ret, pw->pw_dir, MAXPATHLEN) >= MAXPATHLEN ||
-	    strlcat(ret, "/", MAXPATHLEN) >= MAXPATHLEN ||
-	    strlcat(ret, file, MAXPATHLEN) >= MAXPATHLEN)
+	i = snprintf(ret, sizeof(ret), "%s/%s", pw->pw_dir, file);
+	if (i < 0 || (size_t)i >= sizeof(ret))
 		fatal("expand_authorized_keys: path too long");
-
 	xfree(file);
-	return (ret);
+	return (xstrdup(ret));
 }
 
 char *
@@ -503,6 +517,9 @@ getpwnamallow(const char *user)
 #endif
 #endif
 	struct passwd *pw;
+
+	parse_server_match_config(&options, user,
+	    get_canonical_hostname(options.use_dns), get_remote_ipaddr());
 
 	pw = getpwnam(user);
 	if (pw == NULL) {

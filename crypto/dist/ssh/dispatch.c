@@ -1,4 +1,5 @@
-/*	$NetBSD: dispatch.c,v 1.4 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.5 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: dispatch.c,v 1.21 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -23,8 +24,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: dispatch.c,v 1.16 2003/04/08 20:21:28 itojun Exp $");
-__RCSID("$NetBSD: dispatch.c,v 1.4 2005/02/13 05:57:26 christos Exp $");
+__RCSID("$NetBSD: dispatch.c,v 1.5 2006/09/28 21:22:14 christos Exp $");
+
+#include <sys/types.h>
+
+#include <signal.h>
+#include <stdarg.h>
 
 #include "ssh1.h"
 #include "ssh2.h"
@@ -78,7 +83,7 @@ dispatch_set(int type, dispatch_fn *fn)
 	dispatch[type] = fn;
 }
 void
-dispatch_run(int mode, int *done, void *ctxt)
+dispatch_run(int mode, volatile sig_atomic_t *done, void *ctxt)
 {
 	for (;;) {
 		int type;

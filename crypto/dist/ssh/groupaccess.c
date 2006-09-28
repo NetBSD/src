@@ -1,4 +1,5 @@
-/*	$NetBSD: groupaccess.c,v 1.7 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: groupaccess.c,v 1.8 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: groupaccess.c,v 1.12 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Kevin Steves.  All rights reserved.
  *
@@ -24,11 +25,16 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: groupaccess.c,v 1.6 2003/04/08 20:21:28 itojun Exp $");
-__RCSID("$NetBSD: groupaccess.c,v 1.7 2005/02/13 05:57:26 christos Exp $");
+__RCSID("$NetBSD: groupaccess.c,v 1.8 2006/09/28 21:22:14 christos Exp $");
+#include <sys/types.h>
+#include <sys/param.h>
 
-#include "groupaccess.h"
+#include <grp.h>
+#include <unistd.h>
+#include <stdarg.h>
+
 #include "xmalloc.h"
+#include "groupaccess.h"
 #include "match.h"
 #include "log.h"
 

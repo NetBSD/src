@@ -1,4 +1,5 @@
-/*	$NetBSD: sshlogin.c,v 1.16 2006/03/18 21:09:57 elad Exp $	*/
+/*	$NetBSD: sshlogin.c,v 1.17 2006/09/28 21:22:15 christos Exp $	*/
+/* $OpenBSD: sshlogin.c,v 1.25 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -40,9 +41,18 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshlogin.c,v 1.13 2004/08/12 09:18:24 djm Exp $");
-__RCSID("$NetBSD: sshlogin.c,v 1.16 2006/03/18 21:09:57 elad Exp $");
+__RCSID("$NetBSD: sshlogin.c,v 1.17 2006/09/28 21:22:15 christos Exp $");
 
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/socket.h>
+
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 #include <util.h>
 #ifdef SUPPORT_UTMP
 #include <utmp.h>
@@ -50,6 +60,8 @@ __RCSID("$NetBSD: sshlogin.c,v 1.16 2006/03/18 21:09:57 elad Exp $");
 #ifdef SUPPORT_UTMPX
 #include <utmpx.h>
 #endif
+#include <stdarg.h>
+
 #include "sshlogin.h"
 #include "log.h"
 #include "buffer.h"
@@ -63,9 +75,9 @@ extern ServerOptions options;
  * information is not available.  This must be called before record_login.
  * The host the user logged in from will be returned in buf.
  */
-u_long
+time_t
 get_last_login_time(uid_t uid, const char *logname,
-    char *buf, u_int bufsize)
+    char *buf, size_t bufsize)
 {
 #ifdef SUPPORT_UTMPX
 	struct lastlogx llx, *llxp;
@@ -110,7 +122,7 @@ get_last_login_time(uid_t uid, const char *logname,
 		bufsize = sizeof(ll.ll_host) + 1;
 	strncpy(buf, ll.ll_host, bufsize - 1);
 	buf[bufsize - 1] = '\0';
-	return ll.ll_time;
+	return (time_t)ll.ll_time;
 #else
 	return 0;
 #endif
@@ -152,7 +164,7 @@ store_lastlog_message(const char *user, uid_t uid)
  */
 void
 record_login(pid_t pid, const char *tty, const char *user, uid_t uid,
-    const char *host, struct sockaddr * addr, socklen_t addrlen)
+    const char *host, struct sockaddr *addr, socklen_t addrlen)
 {
 #if defined(SUPPORT_UTMP) || defined(SUPPORT_UTMPX)
 	int fd;
