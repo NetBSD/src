@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.713 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.714 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -86,3 +86,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	evbmips: Add AR5315/2315 support, specifically the Meraki Mini,
 		which can be found at http://www.meraki.net/
 		[gdamore 20060925]
+	ssh: Import openssh-4.4 [christos 20060928]
