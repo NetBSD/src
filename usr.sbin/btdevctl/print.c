@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.3 2006/09/27 22:07:20 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.4 2006/09/28 07:44:24 dbj Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.3 2006/09/27 22:07:20 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.4 2006/09/28 07:44:24 dbj Exp $");
 
 #include <sys/types.h>
 
@@ -73,6 +73,7 @@ __RCSID("$NetBSD: print.c,v 1.3 2006/09/27 22:07:20 christos Exp $");
 #include <bluetooth.h>
 #include <err.h>
 #include <usbhid.h>
+#include <stdlib.h>
 
 #include "btdevctl.h"
 
