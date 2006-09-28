@@ -50,15 +50,27 @@
 /*
  * NetBSD local changes
  */
-__RCSID("$NetBSD: auth-pam.c,v 1.6 2006/03/18 10:22:46 jnemeth Exp $");
+__RCSID("$NetBSD: auth-pam.c,v 1.7 2006/09/28 21:22:14 christos Exp $");
 #undef USE_POSIX_THREADS /* Not yet */
+#define HAVE_SECURITY_PAM_APPL_H
 #define HAVE_PAM_GETENVLIST
 #define HAVE_PAM_PUTENV
-#define mysig_t sig_t
+#define sshpam_const	const	/* LinuxPAM, OpenPAM */
 #define PAM_MSG_MEMBER(msg, n, member) ((*(msg))[(n)].member)
+#define mysig_t sig_t
 void sshpam_password_change_required(int);
 /* end NetBSD local changes */
-RCSID("$Id: auth-pam.c,v 1.6 2006/03/18 10:22:46 jnemeth Exp $");
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+
+#include <pwd.h>
+#include <errno.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <string.h>
+#include <unistd.h>
 
 #ifdef USE_PAM
 #if defined(HAVE_SECURITY_PAM_APPL_H)
@@ -67,6 +79,7 @@ RCSID("$Id: auth-pam.c,v 1.6 2006/03/18 10:22:46 jnemeth Exp $");
 #include <pam/pam_appl.h>
 #endif
 
+#ifndef __NetBSD__
 /* OpenGroup RFC86.0 and XSSO specify no "const" on arguments */
 #ifdef PAM_SUN_CODEBASE
 # define sshpam_const		/* Solaris, HP-UX, AIX */
@@ -74,20 +87,32 @@ RCSID("$Id: auth-pam.c,v 1.6 2006/03/18 10:22:46 jnemeth Exp $");
 # define sshpam_const	const	/* LinuxPAM, OpenPAM */
 #endif
 
+/* Ambiguity in spec: is it an array of pointers or a pointer to an array? */
+#ifdef PAM_SUN_CODEBASE
+# define PAM_MSG_MEMBER(msg, n, member) ((*(msg))[(n)].member)
+#else
+# define PAM_MSG_MEMBER(msg, n, member) ((msg)[(n)]->member)
+#endif
+#endif
+
+#include "xmalloc.h"
+#include "buffer.h"
+#include "key.h"
+#include "hostfile.h"
 #include "auth.h"
 #include "auth-pam.h"
-#include "buffer.h"
-#include "bufaux.h"
 #include "canohost.h"
 #include "log.h"
-#include "monitor_wrap.h"
 #include "msg.h"
 #include "packet.h"
 #include "misc.h"
 #include "servconf.h"
 #include "ssh2.h"
-#include "xmalloc.h"
 #include "auth-options.h"
+#ifdef GSSAPI
+#include "ssh-gss.h"
+#endif
+#include "monitor_wrap.h"
 
 extern ServerOptions options;
 extern Buffer loginmsg;
@@ -157,14 +182,16 @@ sshpam_sigchld_handler(int sig)
 		fatal("PAM: authentication thread exited uncleanly");
 }
 
+/* ARGSUSED */
 static void
-pthread_exit(void *value __unused)
+pthread_exit(void *value)
 {
 	_exit(0);
 }
 
+/* ARGSUSED */
 static int
-pthread_create(sp_pthread_t *thread, const void *attr __unused,
+pthread_create(sp_pthread_t *thread, const void *attr,
     void *(*thread_start)(void *), void *arg)
 {
 	pid_t pid;
@@ -196,8 +223,9 @@ pthread_cancel(sp_pthread_t thread)
 	return (kill(thread, SIGTERM));
 }
 
+/* ARGSUSED */
 static int
-pthread_join(sp_pthread_t thread, void **value __unused)
+pthread_join(sp_pthread_t thread, void **value)
 {
 	int status;
 
@@ -295,7 +323,10 @@ import_environments(Buffer *b)
 
 	/* Import environment from subprocess */
 	num_env = buffer_get_int(b);
-	sshpam_env = xmalloc((num_env + 1) * sizeof(*sshpam_env));
+	if (num_env > 1024)
+		fatal("%s: received %u environment variables, expected <= 1024",
+		    __func__, num_env);
+	sshpam_env = xcalloc(num_env + 1, sizeof(*sshpam_env));
 	debug3("PAM: num env strings %d", num_env);
 	for(i = 0; i < num_env; i++)
 		sshpam_env[i] = buffer_get_string(b, NULL);
@@ -342,9 +373,8 @@ sshpam_thread_conv(int n, sshpam_const struct pam_message **msg,
 	if (n <= 0 || n > PAM_MAX_NUM_MSG)
 		return (PAM_CONV_ERR);
 
-	if ((reply = malloc(n * sizeof(*reply))) == NULL)
+	if ((reply = calloc(n, sizeof(*reply))) == NULL)
 		return (PAM_CONV_ERR);
-	memset(reply, 0, n * sizeof(*reply));
 
 	buffer_init(&buffer);
 	for (i = 0; i < n; ++i) {
@@ -423,10 +453,16 @@ sshpam_thread(void *ctxtp)
 	u_int i;
 	const char *pam_user;
 	const char **ptr_pam_user = &pam_user;
+	char *tz = getenv("TZ");
 
 	pam_get_item(sshpam_handle, PAM_USER,
 	    (sshpam_const void **)ptr_pam_user);
+
 	environ[0] = NULL;
+	if (tz != NULL)
+		if (setenv("TZ", tz, 1) == -1)
+			error("PAM: could not set TZ environment: %s",
+			    strerror(errno));
 
 	if (sshpam_authctxt != NULL) {
 		setproctitle("%s [pam]",
@@ -450,8 +486,10 @@ sshpam_thread(void *ctxtp)
 		goto auth_fail;
 
 	if (compat20) {
-		if (!do_pam_account())
+		if (!do_pam_account()) {
+			sshpam_err = PAM_ACCT_EXPIRED;
 			goto auth_fail;
+		}
 		if (sshpam_authctxt->force_pwchange) {
 			sshpam_err = pam_chauthtok(sshpam_handle,
 			    PAM_CHANGE_EXPIRED_AUTHTOK);
@@ -493,7 +531,10 @@ sshpam_thread(void *ctxtp)
 	buffer_put_cstring(&buffer,
 	    pam_strerror(sshpam_handle, sshpam_err));
 	/* XXX - can't do much about an error here */
-	ssh_msg_send(ctxt->pam_csock, PAM_AUTH_ERR, &buffer);
+	if (sshpam_err == PAM_ACCT_EXPIRED)
+		ssh_msg_send(ctxt->pam_csock, PAM_ACCT_EXPIRED, &buffer);
+	else
+		ssh_msg_send(ctxt->pam_csock, PAM_AUTH_ERR, &buffer);
 	buffer_free(&buffer);
 	pthread_exit(NULL);
 
@@ -540,9 +581,8 @@ sshpam_store_conv(int n, sshpam_const struct pam_message **msg,
 	if (n <= 0 || n > PAM_MAX_NUM_MSG)
 		return (PAM_CONV_ERR);
 
-	if ((reply = malloc(n * sizeof(*reply))) == NULL)
+	if ((reply = calloc(n, sizeof(*reply))) == NULL)
 		return (PAM_CONV_ERR);
-	memset(reply, 0, n * sizeof(*reply));
 
 	for (i = 0; i < n; ++i) {
 		switch (PAM_MSG_MEMBER(msg, i, msg_style)) {
@@ -649,8 +689,11 @@ sshpam_init_ctx(Authctxt *authctxt)
 	int socks[2];
 
 	debug3("PAM: %s entering", __func__);
-	/* Refuse to start if we don't have PAM enabled */
-	if (!options.use_pam)
+	/*
+	 * Refuse to start if we don't have PAM enabled or do_pam_account
+	 * has previously failed.
+	 */
+	if (!options.use_pam || sshpam_account_status == 0)
 		return NULL;
 
 	/* Initialize PAM */
@@ -710,7 +753,7 @@ sshpam_query(void *ctx, char **name, char **info,
 		case PAM_PROMPT_ECHO_OFF:
 			*num = 1;
 			len = plen + mlen + 1;
-			**prompts = xrealloc(**prompts, len);
+			**prompts = xrealloc(**prompts, 1, len);
 			strlcpy(**prompts + plen, msg, len - plen);
 			plen += mlen;
 			**echo_on = (type == PAM_PROMPT_ECHO_ON);
@@ -720,15 +763,18 @@ sshpam_query(void *ctx, char **name, char **info,
 		case PAM_TEXT_INFO:
 			/* accumulate messages */
 			len = plen + mlen + 2;
-			**prompts = xrealloc(**prompts, len);
+			**prompts = xrealloc(**prompts, 1, len);
 			strlcpy(**prompts + plen, msg, len - plen);
 			plen += mlen;
 			strlcat(**prompts + plen, "\n", len - plen);
 			plen++;
 			xfree(msg);
 			break;
+		case PAM_ACCT_EXPIRED:
+			sshpam_account_status = 0;
+			/* FALLTHROUGH */
 		case PAM_AUTH_ERR:
-			debug3("PAM: PAM_AUTH_ERR");
+			debug3("PAM: %s", pam_strerror(sshpam_handle, type));
 			if (**prompts != NULL && strlen(**prompts) != 0) {
 				*info = **prompts;
 				**prompts = NULL;
@@ -942,9 +988,8 @@ sshpam_tty_conv(int n, sshpam_const struct pam_message **msg,
 	if (n <= 0 || n > PAM_MAX_NUM_MSG || !isatty(STDIN_FILENO))
 		return (PAM_CONV_ERR);
 
-	if ((reply = malloc(n * sizeof(*reply))) == NULL)
+	if ((reply = calloc(n, sizeof(*reply))) == NULL)
 		return (PAM_CONV_ERR);
-	memset(reply, 0, n * sizeof(*reply));
 
 	for (i = 0; i < n; ++i) {
 		switch (PAM_MSG_MEMBER(msg, i, msg_style)) {

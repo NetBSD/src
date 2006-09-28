@@ -1,4 +1,4 @@
-/*	$NetBSD: getpeereid.c,v 1.2 2003/07/10 01:09:44 lukem Exp $	*/
+/*	$NetBSD: getpeereid.c,v 1.3 2006/09/28 21:22:14 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Damien Miller.  All rights reserved.
@@ -26,16 +26,16 @@
 
 #include "includes.h"
 #include "getpeereid.h"
+#include <unistd.h>
 
-RCSID("Id: bsd-getpeereid.c,v 1.1 2002/09/12 00:33:02 djm Exp");
-__RCSID("$NetBSD: getpeereid.c,v 1.2 2003/07/10 01:09:44 lukem Exp $");
+__RCSID("$NetBSD: getpeereid.c,v 1.3 2006/09/28 21:22:14 christos Exp $");
 
 #if defined(SO_PEERCRED)
 int
 getpeereid(int s, uid_t *euid, gid_t *gid)
 {
 	struct ucred cred;
-	size_t len = sizeof(cred);
+	socklen_t len = sizeof(cred);
 
 	if (getsockopt(s, SOL_SOCKET, SO_PEERCRED, &cred, &len) < 0)
 		return (-1);

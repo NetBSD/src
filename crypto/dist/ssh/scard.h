@@ -1,5 +1,5 @@
-/*	$NetBSD: scard.h,v 1.3 2005/02/13 05:57:26 christos Exp $	*/
-/*	$OpenBSD: scard.h,v 1.12 2003/06/12 19:12:03 markus Exp $	*/
+/*	$NetBSD: scard.h,v 1.4 2006/09/28 21:22:15 christos Exp $	*/
+/* $OpenBSD: scard.h,v 1.14 2006/08/03 03:34:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -27,8 +27,6 @@
 
 #ifndef SCARD_H
 #define SCARD_H
-
-#include "key.h"
 
 #define SCARD_ERROR_FAIL	-1
 #define SCARD_ERROR_NOCARD	-2

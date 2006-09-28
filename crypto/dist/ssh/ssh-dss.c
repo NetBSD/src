@@ -1,4 +1,5 @@
-/*	$NetBSD: ssh-dss.c,v 1.14 2005/02/13 05:57:27 christos Exp $	*/
+/*	$NetBSD: ssh-dss.c,v 1.15 2006/09/28 21:22:15 christos Exp $	*/
+/* $OpenBSD: ssh-dss.c,v 1.23 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,15 +25,16 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-dss.c,v 1.19 2003/11/10 16:23:41 jakob Exp $");
-__RCSID("$NetBSD: ssh-dss.c,v 1.14 2005/02/13 05:57:27 christos Exp $");
+__RCSID("$NetBSD: ssh-dss.c,v 1.15 2006/09/28 21:22:15 christos Exp $");
+#include <sys/types.h>
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 
+#include <string.h>
+
 #include "xmalloc.h"
 #include "buffer.h"
-#include "bufaux.h"
 #include "compat.h"
 #include "log.h"
 #include "key.h"

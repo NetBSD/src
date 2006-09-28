@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.h,v 1.20 2006/02/04 22:32:13 christos Exp $	*/
-/*	$OpenBSD: auth.h,v 1.51 2005/06/06 11:20:36 djm Exp $	*/
+/*	$NetBSD: auth.h,v 1.21 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: auth.h,v 1.58 2006/08/18 09:15:20 markus Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -29,8 +29,8 @@
 #ifndef AUTH_H
 #define AUTH_H
 
-#include "key.h"
-#include "hostfile.h"
+#include <signal.h>
+
 #include <openssl/rsa.h>
 
 #ifdef HAVE_LOGIN_CAP
@@ -48,7 +48,8 @@ typedef struct Authmethod Authmethod;
 typedef struct KbdintDevice KbdintDevice;
 
 struct Authctxt {
-	int		 success;
+	sig_atomic_t	 success;
+	int		 authenticated;	/* authenticated and alarms cancelled */
 	int		 postponed;	/* authentication needs another step */
 	int		 valid;		/* user exists and is allowed to login */
 	int		 attempt;
@@ -198,4 +199,9 @@ struct passwd *fakepw(void);
 #define AUTH_FAIL_MSG "Too many authentication failures for %.100s"
 
 #define SKEY_PROMPT "\nS/Key Password: "
+
+#if defined(KRB5) && !defined(HEIMDAL)
+#include <krb5.h>
+krb5_error_code ssh_krb5_cc_gen(krb5_context, krb5_ccache *);
+#endif
 #endif

@@ -1,4 +1,5 @@
-/*	$NetBSD: sshtty.c,v 1.3 2005/02/13 05:57:27 christos Exp $	*/
+/*	$NetBSD: sshtty.c,v 1.4 2006/09/28 21:22:15 christos Exp $	*/
+/* $OpenBSD: sshtty.c,v 1.12 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,11 +37,13 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshtty.c,v 1.6 2004/05/08 00:01:37 deraadt Exp $");
-__RCSID("$NetBSD: sshtty.c,v 1.3 2005/02/13 05:57:27 christos Exp $");
+__RCSID("$NetBSD: sshtty.c,v 1.4 2006/09/28 21:22:15 christos Exp $");
+#include <sys/types.h>
+#include <stdio.h>
+#include <termios.h>
+#include <pwd.h>
 
 #include "sshpty.h"
-#include "log.h"
 
 static struct termios _saved_tio;
 static int _in_raw_mode = 0;

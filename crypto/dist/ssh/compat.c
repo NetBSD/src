@@ -1,4 +1,5 @@
-/*	$NetBSD: compat.c,v 1.7 2005/04/23 16:53:28 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.8 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: compat.c,v 1.76 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
@@ -24,12 +25,16 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: compat.c,v 1.71 2005/03/01 10:09:52 djm Exp $");
-__RCSID("$NetBSD: compat.c,v 1.7 2005/04/23 16:53:28 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.8 2006/09/28 21:22:14 christos Exp $");
+#include <sys/types.h>
 
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+
+#include "xmalloc.h"
 #include "buffer.h"
 #include "packet.h"
-#include "xmalloc.h"
 #include "compat.h"
 #include "log.h"
 #include "match.h"

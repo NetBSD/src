@@ -1,5 +1,5 @@
-/*	$NetBSD: gss-serv.c,v 1.3 2006/03/20 16:39:05 elad Exp $	*/
-/*	$OpenBSD: gss-serv.c,v 1.13 2005/10/13 22:24:31 stevesk Exp $	*/
+/*	$NetBSD: gss-serv.c,v 1.4 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: gss-serv.c,v 1.20 2006/08/03 03:34:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -26,17 +26,24 @@
  */
 
 #include "includes.h"
+__RCSID("$NetBSD: gss-serv.c,v 1.4 2006/09/28 21:22:14 christos Exp $");
+
+#include <sys/types.h>
 
 #ifdef GSSAPI
 
-#include "bufaux.h"
+#include <string.h>
+#include <unistd.h>
+
+#include "xmalloc.h"
+#include "buffer.h"
+#include "key.h"
+#include "hostfile.h"
 #include "auth.h"
 #include "log.h"
 #include "channels.h"
 #include "session.h"
-#include "servconf.h"
-#include "xmalloc.h"
-#include "getput.h"
+#include "misc.h"
 
 #include "ssh-gss.h"
 
@@ -154,7 +161,7 @@ ssh_gssapi_parse_ename(Gssctxt *ctx, gss_buffer_t ename, gss_buffer_t name)
 	 * second without.
 	 */
 
-	oidl = GET_16BIT(tok+2); /* length including next two bytes */
+	oidl = get_u16(tok+2); /* length including next two bytes */
 	oidl = oidl-2; /* turn it into the _real_ length of the variable OID */
 
 	/*
@@ -171,14 +178,14 @@ ssh_gssapi_parse_ename(Gssctxt *ctx, gss_buffer_t ename, gss_buffer_t name)
 	if (ename->length < offset+4)
 		return GSS_S_FAILURE;
 
-	name->length = GET_32BIT(tok+offset);
+	name->length = get_u32(tok+offset);
 	offset += 4;
 
 	if (ename->length < offset+name->length)
 		return GSS_S_FAILURE;
 
 	name->value = xmalloc(name->length+1);
-	memcpy(name->value, tok+offset,name->length);
+	memcpy(name->value, tok+offset, name->length);
 	((char *)name->value)[name->length] = 0;
 
 	return GSS_S_COMPLETE;
@@ -237,7 +244,8 @@ ssh_gssapi_cleanup_creds(void)
 {
 	if (gssapi_client.store.filename != NULL) {
 		/* Unlink probably isn't sufficient */
-		debug("removing gssapi cred file\"%s\"", gssapi_client.store.filename);
+		debug("removing gssapi cred file\"%s\"",
+		    gssapi_client.store.filename);
 		unlink(gssapi_client.store.filename);
 	}
 }

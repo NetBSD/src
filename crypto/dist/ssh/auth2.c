@@ -1,4 +1,5 @@
-/*	$NetBSD: auth2.c,v 1.27 2006/02/04 22:32:13 christos Exp $	*/
+/*	$NetBSD: auth2.c,v 1.28 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: auth2.c,v 1.113 2006/08/03 03:34:41 deraadt Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,24 +25,33 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.107 2004/07/28 09:40:29 markus Exp $");
-__RCSID("$NetBSD: auth2.c,v 1.27 2006/02/04 22:32:13 christos Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.28 2006/09/28 21:22:14 christos Exp $");
 
-#include "ssh2.h"
+#include <sys/types.h>
+
+#include <pwd.h>
+#include <string.h>
+#include <stdarg.h>
+
 #include "xmalloc.h"
+#include "ssh2.h"
 #include "packet.h"
 #include "log.h"
+#include "buffer.h"
 #include "servconf.h"
 #include "compat.h"
+#include "key.h"
+#include "hostfile.h"
 #include "auth.h"
 #include "dispatch.h"
 #include "pathnames.h"
-#include "monitor_wrap.h"
 #include "buffer.h"
 
 #ifdef GSSAPI
 #include "ssh-gss.h"
 #endif
+
+#include "monitor_wrap.h"
 
 /* import */
 extern ServerOptions options;
@@ -104,6 +114,7 @@ do_authentication2(Authctxt *authctxt)
 	dispatch_run(DISPATCH_BLOCK, &authctxt->success, authctxt);
 }
 
+/*ARGSUSED*/
 static void
 input_service_request(int type, u_int32_t seq, void *ctxt)
 {
@@ -137,6 +148,7 @@ input_service_request(int type, u_int32_t seq, void *ctxt)
 	xfree(service);
 }
 
+/*ARGSUSED*/
 static void
 input_userauth_request(int type, u_int32_t seq, void *ctxt)
 {

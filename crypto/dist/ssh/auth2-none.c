@@ -1,4 +1,5 @@
-/*	$NetBSD: auth2-none.c,v 1.6 2005/05/08 21:15:04 christos Exp $	*/
+/*	$NetBSD: auth2-none.c,v 1.7 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: auth2-none.c,v 1.13 2006/08/05 07:52:52 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,17 +25,28 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2-none.c,v 1.7 2004/05/11 19:01:43 deraadt Exp $");
-__RCSID("$NetBSD: auth2-none.c,v 1.6 2005/05/08 21:15:04 christos Exp $");
+__RCSID("$NetBSD: auth2-none.c,v 1.7 2006/09/28 21:22:14 christos Exp $");
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/uio.h>
 
-#include "auth.h"
+#include <fcntl.h>
+#include <unistd.h>
+
 #include "xmalloc.h"
+#include "key.h"
+#include "hostfile.h"
+#include "auth.h"
 #include "packet.h"
 #include "log.h"
+#include "buffer.h"
 #include "servconf.h"
 #include "atomicio.h"
 #include "compat.h"
 #include "ssh2.h"
+#ifdef GSSAPI
+#include "ssh-gss.h"
+#endif
 #include "monitor_wrap.h"
 
 /* import */

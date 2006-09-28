@@ -1,4 +1,5 @@
-/*	$NetBSD: kexdhs.c,v 1.5 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: kexdhs.c,v 1.6 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: kexdhs.c,v 1.7 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -24,16 +25,24 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: kexdhs.c,v 1.3 2005/11/04 05:15:59 djm Exp $");
-__RCSID("$NetBSD: kexdhs.c,v 1.5 2006/02/04 22:32:14 christos Exp $");
+__RCSID("$NetBSD: kexdhs.c,v 1.6 2006/09/28 21:22:14 christos Exp $");
+
+#include <sys/types.h>
+#include <string.h>
+#include <signal.h>
 
 #include "xmalloc.h"
+#include "buffer.h"
 #include "key.h"
+#include "cipher.h"
 #include "kex.h"
 #include "log.h"
 #include "packet.h"
 #include "dh.h"
 #include "ssh2.h"
+#ifdef GSSAPI
+#include "ssh-gss.h"
+#endif
 #include "monitor_wrap.h"
 
 void

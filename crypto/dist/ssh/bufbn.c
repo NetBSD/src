@@ -1,4 +1,4 @@
-/*	$NetBSD: bufbn.c,v 1.1.1.1 2006/09/28 21:15:01 christos Exp $	*/
+/*	$NetBSD: bufbn.c,v 1.2 2006/09/28 21:22:14 christos Exp $	*/
 /* $OpenBSD: bufbn.c,v 1.3 2006/08/03 03:34:41 deraadt Exp $*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,6 +37,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "includes.h"
+__RCSID("$NetBSD: bufbn.c,v 1.2 2006/09/28 21:22:14 christos Exp $");
 
 #include <sys/types.h>
 

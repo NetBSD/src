@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.16 2006/02/04 22:32:14 christos Exp $	*/
-/*	$OpenBSD: readconf.h,v 1.68 2005/12/06 22:38:27 reyk Exp $	*/
+/*	$NetBSD: readconf.h,v 1.17 2006/09/28 21:22:14 christos Exp $	*/
+/* $OpenBSD: readconf.h,v 1.71 2006/08/03 03:34:42 deraadt Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -17,8 +17,6 @@
 #ifndef READCONF_H
 #define READCONF_H
 
-#include "key.h"
-
 /* Data structure for representing a forwarding request. */
 
 typedef struct {
@@ -35,6 +33,7 @@ typedef struct {
 	int     forward_agent;	/* Forward authentication agent. */
 	int     forward_x11;	/* Forward X11 display. */
 	int     forward_x11_trusted;	/* Trust Forward X11 display. */
+	int     exit_on_forward_failure;	/* Exit if bind(2) fails for -L/-R */
 	char   *xauth_location;	/* Location for xauth program */
 	int     gateway_ports;	/* Allow remote connects to forwarded ports. */
 	int     use_privileged_port;	/* Don't use privileged port if false. */

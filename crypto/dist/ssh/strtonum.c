@@ -1,3 +1,4 @@
+/*	$NetBSD: strtonum.c,v 1.2 2006/09/28 21:22:15 christos Exp $	*/
 /*	$OpenBSD: strtonum.c,v 1.6 2004/08/03 19:38:01 millert Exp $	*/
 
 /*
@@ -20,9 +21,15 @@
 /* OPENBSD ORIGINAL: lib/libc/stdlib/strtonum.c */
 
 #include "includes.h"
-#include "misc.h"
+__RCSID("$NetBSD: strtonum.c,v 1.2 2006/09/28 21:22:15 christos Exp $");
+
 #ifndef HAVE_STRTONUM
+
+#include <stdio.h>
+#include <stdlib.h>
 #include <limits.h>
+#include <errno.h>
+#include "misc.h"
 
 #define INVALID 	1
 #define TOOSMALL 	2

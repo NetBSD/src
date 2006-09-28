@@ -1,4 +1,5 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.23 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: ssh-keyscan.c,v 1.24 2006/09/28 21:22:15 christos Exp $	*/
+/* $OpenBSD: ssh-keyscan.c,v 1.73 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -8,26 +9,37 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.57 2005/10/30 04:01:03 djm Exp $");
-__RCSID("$NetBSD: ssh-keyscan.c,v 1.23 2006/02/04 22:32:14 christos Exp $");
+__RCSID("$NetBSD: ssh-keyscan.c,v 1.24 2006/09/28 21:22:15 christos Exp $");
 
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/queue.h>
-#include <errno.h>
+#include <sys/resource.h>
+#include <sys/time.h>
 
 #include <openssl/bn.h>
 
+#include <errno.h>
+#include <netdb.h>
 #include <setjmp.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "xmalloc.h"
 #include "ssh.h"
 #include "ssh1.h"
+#include "buffer.h"
 #include "key.h"
+#include "cipher.h"
 #include "kex.h"
 #include "compat.h"
 #include "myproposal.h"
 #include "packet.h"
 #include "dispatch.h"
-#include "buffer.h"
-#include "bufaux.h"
 #include "log.h"
 #include "atomicio.h"
 #include "misc.h"
@@ -57,7 +69,7 @@ int maxfd;
 
 extern char *__progname;
 fd_set *read_wait;
-size_t read_wait_size;
+size_t read_wait_nfdset;
 int ncon;
 int nonfatal_fatal = 0;
 jmp_buf kexjmp;
@@ -131,7 +143,7 @@ Linebuf_alloc(const char *filename, void (*errfun) (const char *,...))
 		lb->stream = stdin;
 	}
 
-	if (!(lb->buf = malloc(lb->size = LINEBUF_SIZE))) {
+	if (!(lb->buf = malloc((lb->size = LINEBUF_SIZE)))) {
 		if (errfun)
 			(*errfun) ("linebuf (%s): malloc failed\n", lb->filename);
 		xfree(lb);
@@ -343,6 +355,7 @@ keygrab_ssh2(con *c)
 	c->c_kex->kex[KEX_DH_GRP1_SHA1] = kexdh_client;
 	c->c_kex->kex[KEX_DH_GRP14_SHA1] = kexdh_client;
 	c->c_kex->kex[KEX_DH_GEX_SHA1] = kexgex_client;
+	c->c_kex->kex[KEX_DH_GEX_SHA256] = kexgex_client;
 	c->c_kex->verify_host_key = hostjump;
 
 	if (!(j = setjmp(kexjmp))) {
@@ -595,7 +608,6 @@ conread(int s)
 			keyprint(c, keygrab_ssh1(c));
 			confree(s);
 			return;
-			break;
 		default:
 			fatal("conread: invalid status %d", c->c_status);
 			break;
@@ -627,10 +639,10 @@ conloop(void)
 	} else
 		seltime.tv_sec = seltime.tv_usec = 0;
 
-	r = xmalloc(read_wait_size);
-	memcpy(r, read_wait, read_wait_size);
-	e = xmalloc(read_wait_size);
-	memcpy(e, read_wait, read_wait_size);
+	r = xcalloc(read_wait_nfdset, sizeof(fd_mask));
+	e = xcalloc(read_wait_nfdset, sizeof(fd_mask));
+	memcpy(r, read_wait, read_wait_nfdset * sizeof(fd_mask));
+	memcpy(e, read_wait, read_wait_nfdset * sizeof(fd_mask));
 
 	while (select(maxfd, r, NULL, e, &seltime) == -1 &&
 	    (errno == EAGAIN || errno == EINTR))
@@ -794,12 +806,10 @@ main(int argc, char **argv)
 		fatal("%s: not enough file descriptors", __progname);
 	if (maxfd > fdlim_get(0))
 		fdlim_set(maxfd);
-	fdcon = xmalloc(maxfd * sizeof(con));
-	memset(fdcon, 0, maxfd * sizeof(con));
+	fdcon = xcalloc(maxfd, sizeof(con));
 
-	read_wait_size = howmany(maxfd, NFDBITS) * sizeof(fd_mask);
-	read_wait = xmalloc(read_wait_size);
-	memset(read_wait, 0, read_wait_size);
+	read_wait_nfdset = howmany(maxfd, NFDBITS);
+	read_wait = xcalloc(read_wait_nfdset, sizeof(fd_mask));
 
 	if (fopt_count) {
 		Linebuf *lb;
