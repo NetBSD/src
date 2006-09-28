@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.11 2006/09/28 23:25:01 bjh21 Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.12 2006/09/28 23:54:14 bjh21 Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11 2006/09/28 23:25:01 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.12 2006/09/28 23:54:14 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -58,14 +58,14 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11 2006/09/28 23:25:01 bjh21 Exp 
 #include <ddb/db_extern.h>
 #include <dev/cons.h>
 
-int db_access_und_sp __P((const struct db_variable *, db_expr_t *, int));
-int db_access_abt_sp __P((const struct db_variable *, db_expr_t *, int));
-int db_access_irq_sp __P((const struct db_variable *, db_expr_t *, int));
-u_int db_fetch_reg __P((int, db_regs_t *));
-int db_trapper __P((u_int addr, u_int inst, struct trapframe *frame,
-    int fault_code));
+int db_access_und_sp(const struct db_variable *, db_expr_t *, int);
+int db_access_abt_sp(const struct db_variable *, db_expr_t *, int);
+int db_access_irq_sp(const struct db_variable *, db_expr_t *, int);
+u_int db_fetch_reg(int, db_regs_t *);
+int db_trapper(u_int addr, u_int inst, struct trapframe *frame,
+    int fault_code);
 
-static void db_write_text __P((unsigned char *,	int ch));
+static void db_write_text(unsigned char *, int ch);
 
 const struct db_variable db_regs[] = {
 	{ "spsr", (long *)&DDB_REGS->tf_spsr, FCN_NULL, },
@@ -100,34 +100,31 @@ int	db_active = 0;
 db_regs_t ddb_regs;	/* register state */
 
 #ifdef __PROG32
-int db_access_und_sp(vp, valp, rw)
-	const struct db_variable *vp;
-	db_expr_t *valp;
-	int rw;
+int
+db_access_und_sp(const struct db_variable *vp, db_expr_t *valp, int rw)
 {
+
 	if (rw == DB_VAR_GET)
 		*valp = get_stackptr(PSR_UND32_MODE);
-	return(0);
+	return 0;
 }
 
-int db_access_abt_sp(vp, valp, rw)
-	const struct db_variable *vp;
-	db_expr_t *valp;
-	int rw;
+int
+db_access_abt_sp(const struct db_variable *vp, db_expr_t valp, int rw)
 {
+
 	if (rw == DB_VAR_GET)
 		*valp = get_stackptr(PSR_ABT32_MODE);
-	return(0);
+	return 0;
 }
 
-int db_access_irq_sp(vp, valp, rw)
-	const struct db_variable *vp;
-	db_expr_t *valp;
-	int rw;
+int
+db_access_irq_sp(const struct db_variable *vp, db_expr_t *valp,	int rw)
 {
+
 	if (rw == DB_VAR_GET)
 		*valp = get_stackptr(PSR_IRQ32_MODE);
-	return(0);
+	return 0;
 }
 #endif /* __PROG32 */
 
@@ -135,9 +132,7 @@ int db_access_irq_sp(vp, valp, rw)
  *  kdb_trap - field a TRACE or BPT trap
  */
 int
-kdb_trap(type, regs)
-	int type;
-	db_regs_t *regs;
+kdb_trap(int type, db_regs_t *regs)
 {
 	int s;
 
@@ -166,14 +161,13 @@ kdb_trap(type, regs)
 
 	*regs = ddb_regs;
 
-	return (1);
+	return 1;
 }
 
 volatile boolean_t db_validating, db_faulted;
 
 int
-db_validate_address(addr)
-	vm_offset_t addr;
+db_validate_address(vm_offset_t addr)
 {
 	volatile uint8_t tmp;
 
@@ -188,10 +182,7 @@ db_validate_address(addr)
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
-	size_t	size;
-	char	*data;
+db_read_bytes(vm_offset_t addr,	size_t size, char *data)
 {
 	char	*src;
 
@@ -206,9 +197,7 @@ db_read_bytes(addr, size, data)
 }
 
 static void
-db_write_text(dst, ch)
-	unsigned char *dst;
-	int ch;
+db_write_text(unsigned char *dst, int ch)
 {        
 
 	if (db_validate_address((u_int)dst)) {
@@ -223,10 +212,7 @@ db_write_text(dst, ch)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
-	size_t	size;
-	const char	*data;
+db_write_bytes(vm_offset_t addr, size_t size, const char *data)
 {
 #if 0
 	extern char	_stext_[], _etext[];
@@ -263,12 +249,9 @@ const struct db_command db_machine_command_table[] = {
 };
 
 int
-db_trapper(addr, inst, frame, fault_code)
-	u_int		addr;
-	u_int		inst;
-	trapframe_t	*frame;
-	int		fault_code;
+db_trapper(u_int addr, u_int inst, trapframe_t *frame, int fault_code)
 {
+
 	if (fault_code == 0) {
 		if ((inst & ~INSN_COND_MASK) == (BKPT_INST & ~INSN_COND_MASK))
 			kdb_trap(T_BREAKPOINT, frame);
@@ -297,54 +280,49 @@ db_machine_init()
 }
 
 u_int
-db_fetch_reg(reg, regs)
-	int reg;
-	db_regs_t *regs;
+db_fetch_reg(int reg, db_regs_t *regs)
 {
 
 	switch (reg) {
 	case 0:
-		return (regs->tf_r0);
+		return regs->tf_r0;
 	case 1:
-		return (regs->tf_r1);
+		return regs->tf_r1;
 	case 2:
-		return (regs->tf_r2);
+		return regs->tf_r2;
 	case 3:
-		return (regs->tf_r3);
+		return regs->tf_r3;
 	case 4:
-		return (regs->tf_r4);
+		return regs->tf_r4;
 	case 5:
-		return (regs->tf_r5);
+		return regs->tf_r5;
 	case 6:
-		return (regs->tf_r6);
+		return regs->tf_r6;
 	case 7:
-		return (regs->tf_r7);
+		return regs->tf_r7;
 	case 8:
-		return (regs->tf_r8);
+		return regs->tf_r8;
 	case 9:
-		return (regs->tf_r9);
+		return regs->tf_r9;
 	case 10:
-		return (regs->tf_r10);
+		return regs->tf_r10;
 	case 11:
-		return (regs->tf_r11);
+		return regs->tf_r11;
 	case 12:
-		return (regs->tf_r12);
+		return regs->tf_r12;
 	case 13:
-		return (regs->tf_svc_sp);
+		return regs->tf_svc_sp;
 	case 14:
-		return (regs->tf_svc_lr);
+		return regs->tf_svc_lr;
 	case 15:
-		return (regs->tf_pc);
+		return regs->tf_pc;
 	default:
 		panic("db_fetch_reg: botch");
 	}
 }
 
 u_int
-branch_taken(insn, pc, regs)
-	u_int insn;
-	u_int pc;
-	db_regs_t *regs;
+branch_taken(u_int insn, u_int pc, db_regs_t *regs)
 {
 	u_int addr, nregs;
 
@@ -354,15 +332,15 @@ branch_taken(insn, pc, regs)
 		addr = ((insn << 2) & 0x03ffffff);
 		if (addr & 0x02000000)
 			addr |= 0xfc000000;
-		return (pc + 8 + addr);
+		return pc + 8 + addr;
 	case 0x7:	/* ldr pc, [pc, reg, lsl #2] */
 		addr = db_fetch_reg(insn & 0xf, regs);
 		addr = pc + 8 + (addr << 2);
 		db_read_bytes(addr, 4, (char *)&addr);
-		return (addr);
+		return addr;
 	case 0x1:	/* mov pc, reg */
 		addr = db_fetch_reg(insn & 0xf, regs);
-		return (addr);
+		return addr;
 	case 0x8:	/* ldmxx reg, {..., pc} */
 	case 0x9:
 		addr = db_fetch_reg((insn >> 16) & 0xf, regs);
@@ -385,7 +363,7 @@ branch_taken(insn, pc, regs)
 			break;
 		}
 		db_read_bytes(addr, 4, (char *)&addr);
-		return (addr);
+		return addr;
 	default:
 		panic("branch_taken: botch");
 	}
