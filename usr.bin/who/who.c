@@ -1,4 +1,4 @@
-/*	$NetBSD: who.c,v 1.19 2006/09/22 21:40:12 christos Exp $	*/
+/*	$NetBSD: who.c,v 1.20 2006/09/28 15:24:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: who.c,v 1.19 2006/09/22 21:40:12 christos Exp $");
+__RCSID("$NetBSD: who.c,v 1.20 2006/09/28 15:24:31 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -311,7 +311,10 @@ print(const char *name, const char *line, time_t t, const char *host,
 		(void)printf("\t%6d", pid);
 		
 		if (show_details) {
-			(void)printf("\tterm=%d exit=%d", term, xit);
+			if (type == RUN_LVL)
+				(void)printf("\tnew=%c old=%c", term, xit);
+			else
+				(void)printf("\tterm=%d exit=%d", term, xit);
 			(void)printf(" sess=%d", sess);
 			(void)printf(" type=%s ", types);
 		}
