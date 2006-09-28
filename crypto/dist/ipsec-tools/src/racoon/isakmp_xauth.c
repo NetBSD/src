@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.10 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.11 2006/09/28 20:30:14 manu Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.38 2006/08/22 18:17:17 manubsd Exp */
 
@@ -719,10 +719,12 @@ out:
 #endif
 
 #ifdef HAVE_LIBLDAP
-
-int xauth_ldap_init(void)
+int 
+xauth_ldap_init(void)
 {
 	int tmplen;
+	int error = -1;
+
 	xauth_ldap_config.pver = 3;
 	xauth_ldap_config.host = NULL;
 	xauth_ldap_config.port = LDAP_PORT;
@@ -737,49 +739,54 @@ int xauth_ldap_init(void)
 	xauth_ldap_config.attr_group = NULL;
 	xauth_ldap_config.attr_member = NULL;
 
-	/* set defualt host */
+	/* set default host */
 	tmplen = strlen(LDAP_DFLT_HOST);
 	xauth_ldap_config.host = vmalloc(tmplen);
-	if (xauth_ldap_config.host == NULL )
-		return -1;
+	if (xauth_ldap_config.host == NULL)
+		goto out;
 	memcpy(xauth_ldap_config.host->v, LDAP_DFLT_HOST, tmplen);
 
 	/* set default user naming attribute */
 	tmplen = strlen(LDAP_DFLT_USER);
 	xauth_ldap_config.attr_user = vmalloc(tmplen);
-	if (xauth_ldap_config.attr_user == NULL )
-		return -1;
+	if (xauth_ldap_config.attr_user == NULL)
+		goto out;	
 	memcpy(xauth_ldap_config.attr_user->v, LDAP_DFLT_USER, tmplen);
 
 	/* set default address attribute */
 	tmplen = strlen(LDAP_DFLT_ADDR);
 	xauth_ldap_config.attr_addr = vmalloc(tmplen);
-	if (xauth_ldap_config.attr_addr == NULL )
-		return -1;
+	if (xauth_ldap_config.attr_addr == NULL)
+		goto out;
 	memcpy(xauth_ldap_config.attr_addr->v, LDAP_DFLT_ADDR, tmplen);
 
 	/* set default netmask attribute */
 	tmplen = strlen(LDAP_DFLT_MASK);
 	xauth_ldap_config.attr_mask = vmalloc(tmplen);
-	if (xauth_ldap_config.attr_mask == NULL )
-		return -1;
+	if (xauth_ldap_config.attr_mask == NULL)
+		goto out;
 	memcpy(xauth_ldap_config.attr_mask->v, LDAP_DFLT_MASK, tmplen);
 
 	/* set default group naming attribute */
 	tmplen = strlen(LDAP_DFLT_GROUP);
 	xauth_ldap_config.attr_group = vmalloc(tmplen);
-	if (xauth_ldap_config.attr_group == NULL )
-		return -1;
+	if (xauth_ldap_config.attr_group == NULL)
+		goto out;
 	memcpy(xauth_ldap_config.attr_group->v, LDAP_DFLT_GROUP, tmplen);
 
 	/* set default member attribute */
 	tmplen = strlen(LDAP_DFLT_MEMBER);
 	xauth_ldap_config.attr_member = vmalloc(tmplen);
-	if (xauth_ldap_config.attr_member == NULL )
-		return -1;
+	if (xauth_ldap_config.attr_member == NULL)
+		goto out;
 	memcpy(xauth_ldap_config.attr_member->v, LDAP_DFLT_MEMBER, tmplen);
 
-	return 0;
+	error = 0;
+out:
+	if (error != 0)
+		plog(LLV_ERROR, LOCATION, NULL, "cannot allocate memory\n");
+
+	return error;
 }
 
 int
@@ -1453,7 +1460,11 @@ isakmp_xauth_req(iph1, attr)
 			dlen = ntohs(attr->lorv);
 			if (dlen > 0) {
 				mraw = (char*)(attr + 1);
-				mdata = vmalloc(dlen);
+				if ((mdata = vmalloc(dlen)) == NULL) {
+					plog(LLV_ERROR, LOCATION, iph1->remote,
+					    "Cannot allocate memory\n");
+					return NULL;
+				}
 				memcpy(mdata->v, mraw, mdata->l);
 				plog(LLV_NOTIFY,LOCATION, iph1->remote,
 					"XAUTH Message: '%s'.\n",
@@ -1576,7 +1587,11 @@ isakmp_xauth_set(iph1, attr)
 			dlen = ntohs(attr->lorv);
 			if (dlen > 0) {
 				mraw = (char*)(attr + 1);
-				mdata = vmalloc(dlen);
+				if ((mdata = vmalloc(dlen)) == NULL) {
+					plog(LLV_ERROR, LOCATION, iph1->remote,
+					    "Cannot allocate memory\n");
+					return NULL;
+				}
 				memcpy(mdata->v, mraw, mdata->l);
 				plog(LLV_NOTIFY,LOCATION, iph1->remote,
 					"XAUTH Message: '%s'.\n",

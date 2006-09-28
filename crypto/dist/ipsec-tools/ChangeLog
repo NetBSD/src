@@ -1,5 +1,6 @@
 2006-09-28  Emmanuel Dreyfus  <manu@netbsd.org>
 	* src/racoon/racoonctl.c: Fix access after free (Coverity)
+	* src/racoon/isakmp_xauth.c: Fix unchecked mallocs (Coverity)
 
 2006-09-26  Emmanuel Dreyfus  <manu@netbsd.org>
 	* src/racoon/admin.c: Fix memory leaks in racoonctl (Coverity)
