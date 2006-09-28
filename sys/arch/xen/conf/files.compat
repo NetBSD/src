@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.11 2006/04/09 19:28:00 bouyer Exp $
+#	$NetBSD: files.compat,v 1.12 2006/09/28 18:53:15 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec
@@ -12,7 +12,6 @@ defflag opt_xen.h		XEN XEN3
 
 
 # XXX define fake options to make config create the .h files
-defflag	ioapic.h		XXXIOAPIC
 defflag	lapic.h			XXXLAPIC
 defflag	apm.h			XXXAPM
 defflag	eisa.h			XXXEISA
@@ -27,8 +26,6 @@ defflag	vesabios.h		XXXVESABIOS
 defflag	bioscall.h		XXXBIOSCALL
 defflag	opt_pcibios.h		XXXOPT_PCIBIOS
 defflag	opt_pcifixup.h		XXXOPT_PCIFIXUP
-defflag	opt_mpacpi.h		XXXOPT_MPACPI
-defflag	opt_mpbios.h		XXXOPT_MPBIOS
 
 # VM86 emulation
 defflag	opt_vm86.h			XXXVM86

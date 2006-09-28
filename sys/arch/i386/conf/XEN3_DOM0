@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.3 2006/09/24 18:14:44 bouyer Exp $
+#	$NetBSD: XEN3_DOM0,v 1.4 2006/09/28 18:53:15 bouyer Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -7,10 +7,28 @@ include "arch/i386/conf/XEN2_DOM0"
 options 	XEN3	#Xen 3.x support
 #options 	XEN_NO_HYPERCALLPAGE # use old hypercall method
 
-#acpi0 		at hypervisor?
+vcpu*		at hypervisor?		# Xen virtual CPUs
 xenbus*		at hypervisor?		# Xen virtual bus
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
+
+acpi0 		at hypervisor?
+options		MPBIOS
+options		MPDEBUG
+options		MPVERBOSE
+options 	ACPIVERBOSE
+#options 	 PCI_ADDR_FIXUP		# fixup PCI I/O addresses
+#options 	 PCI_BUS_FIXUP		# fixup PCI bus numbering
+#options 	 PCI_INTR_FIXUP		# fixup PCI interrupt routing
+
+ioapic*		at mainbus? apid ?
+
+# ACPI devices
+acpiacad* 	at acpi?		# ACPI AC Adapter
+acpibat* 	at acpi?		# ACPI Battery
+acpibut* 	at acpi?		# ACPI Button
+acpiec* 	at acpi?		# ACPI Embedded Controller
+acpilid* 	at acpi?		# ACPI Lid Switch
 
 pseudo-device	xvif
 pseudo-device	xbdback
