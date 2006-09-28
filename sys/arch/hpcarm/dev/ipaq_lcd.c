@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_lcd.c,v 1.14 2006/03/25 15:26:51 peter Exp $	*/
+/*	$NetBSD: ipaq_lcd.c,v 1.15 2006/09/28 09:03:46 rjs Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_lcd.c,v 1.14 2006/03/25 15:26:51 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_lcd.c,v 1.15 2006/09/28 09:03:46 rjs Exp $");
 
 #define IPAQ_LCD_DEBUG
 
@@ -78,8 +78,8 @@ static int	ipaqlcd_match(struct device *, struct cfdata *, void *);
 static void	ipaqlcd_attach(struct device *, struct device *, void *);
 static void	ipaqlcd_init(struct ipaqlcd_softc *);
 static int	ipaqlcd_fbinit(struct ipaqlcd_softc *);
-static int	ipaqlcd_ioctl(void *, u_long, caddr_t, int, struct proc *);
-static paddr_t	ipaqlcd_mmap(void *, off_t offset, int);
+static int	ipaqlcd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	ipaqlcd_mmap(void *, off_t, int);
 
 #if defined __mips__ || defined __sh__ || defined __arm__
 #define __BTOP(x)		((paddr_t)(x) >> PGSHIFT)
@@ -97,19 +97,13 @@ struct hpcfb_accessops ipaqlcd_ha = {
 static int console_flag = 0;
 
 static int
-ipaqlcd_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ipaqlcd_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	return (1);
 }
 
 void
-ipaqlcd_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+ipaqlcd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ipaqlcd_softc *sc = (struct ipaqlcd_softc*)self;
 	struct hpcfb_attach_args ha;
@@ -140,8 +134,7 @@ ipaqlcd_attach(parent, self, aux)
 }
 
 void
-ipaqlcd_init(sc)
-	struct ipaqlcd_softc *sc;
+ipaqlcd_init(struct ipaqlcd_softc *sc)
 {
 	/* Initialization of Extended GPIO */
 	sc->sc_parent->ipaq_egpio |= EGPIO_LCD_INIT;
@@ -152,7 +145,7 @@ ipaqlcd_init(sc)
 			  0, &sc->sc_ioh))
                 panic("ipaqlcd_init:Cannot map registers");
 
-	(u_long)bootinfo->fb_addr =
+	bootinfo->fb_addr = (void *)
 		bus_space_read_4(sc->sc_iot, sc->sc_ioh, SALCD_BA1);
 
 	/*
@@ -183,8 +176,7 @@ ipaqlcd_init(sc)
 }
 
 int
-ipaqlcd_fbinit(sc)
-	struct ipaqlcd_softc *sc;
+ipaqlcd_fbinit(struct ipaqlcd_softc *sc)
 {
 	struct hpcfb_fbconf *fb;
 
@@ -279,12 +271,7 @@ ipaqlcd_fbinit(sc)
 }
 
 int
-ipaqlcd_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+ipaqlcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct ipaqlcd_softc *sc = (struct ipaqlcd_softc *)v;
 	struct hpcfb_fbconf *fbconf;
@@ -387,10 +374,7 @@ ipaqlcd_ioctl(v, cmd, data, flag, p)
 }
 
 paddr_t
-ipaqlcd_mmap(ctx, offset, prot)
-	void *ctx;
-	off_t offset;
-	int prot;
+ipaqlcd_mmap(void *ctx, off_t offset, int prot)
 {
 	struct ipaqlcd_softc *sc = (struct ipaqlcd_softc *)ctx;
 
