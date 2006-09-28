@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_atmelgpio.c,v 1.12 2006/09/26 16:35:26 rjs Exp $	*/
+/*	$NetBSD: ipaq_atmelgpio.c,v 1.13 2006/09/28 09:03:46 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.12 2006/09/26 16:35:26 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.13 2006/09/28 09:03:46 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,19 +83,13 @@ CFATTACH_DECL(atmelgpio, sizeof(struct atmelgpio_softc),
     atmelgpio_match, atmelgpio_attach, NULL, NULL);
 
 static int
-atmelgpio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+atmelgpio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	return (1);
 }
 
 static void
-atmelgpio_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+atmelgpio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct atmelgpio_softc *sc = (struct atmelgpio_softc *)self;
 	struct ipaq_softc *psc = (struct ipaq_softc *)parent;
@@ -132,6 +126,8 @@ atmelgpio_attach(parent, self, aux)
 		425 * (rxbuf.data[3] << 8 | rxbuf.data[2]) /1000 - 298);
 #endif
 
+	rxtx_data(sc, READ_IIC, 0, NULL, &rxbuf);
+
 	/*
 	 *  Attach each devices
 	 */
@@ -140,11 +136,8 @@ atmelgpio_attach(parent, self, aux)
 }
 
 static int
-atmelgpio_search(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+atmelgpio_search(struct device *parent, struct cfdata *cf, const int *ldesc,
+		 void *aux)
 {
 	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, atmelgpio_print);
@@ -153,16 +146,13 @@ atmelgpio_search(parent, cf, ldesc, aux)
 
 
 static int
-atmelgpio_print(aux, name)
-	void *aux;
-	const char *name;
+atmelgpio_print(void *aux, const char *name)
 {
 	return (UNCONF);
 }
 
 static void
-atmelgpio_init(sc)
-	struct atmelgpio_softc *sc;
+atmelgpio_init(struct atmelgpio_softc *sc)
 {
 	/* 8 bits no parity 1 stop bit */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SACOM_CR0, CR0_DSS);
@@ -177,11 +167,8 @@ atmelgpio_init(sc)
 }
 
 static void
-rxtx_data(sc, id, size, buf, rxbuf)
-	struct atmelgpio_softc  *sc; 
-	int			id, size;
-	uint8_t			*buf;
-	struct atmel_rx		*rxbuf;
+rxtx_data(struct atmelgpio_softc  *sc, int id, int size, uint8_t *buf,
+	  struct atmel_rx *rxbuf)
 {
 	int 		i, checksum, length, rx_data;
 	uint8_t		data[MAX_SENDSIZE];

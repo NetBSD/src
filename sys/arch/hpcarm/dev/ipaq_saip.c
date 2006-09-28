@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saip.c,v 1.18 2006/04/11 15:21:26 peter Exp $	*/
+/*	$NetBSD: ipaq_saip.c,v 1.19 2006/09/28 09:03:46 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_saip.c,v 1.18 2006/04/11 15:21:26 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_saip.c,v 1.19 2006/09/28 09:03:46 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,31 +68,23 @@ static int 	ipaq_search(struct device *, struct cfdata *,
 static int	ipaq_print(void *, const char *);
 
 /* attach structures */
-CFATTACH_DECL(ipaqbus, sizeof(struct ipaq_softc),
+CFATTACH_DECL(ipaq_saip, sizeof(struct ipaq_softc),
     ipaq_match, ipaq_attach, NULL, NULL);
 
 static int
-ipaq_print(aux, name)
-	void *aux;
-	const char *name;
+ipaq_print(void *aux, const char *name)
 {
         return (UNCONF);
 }
 
 int
-ipaq_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ipaq_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	return (1);
 }
 
 void
-ipaq_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+ipaq_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ipaq_softc *sc = (struct ipaq_softc*)self;
 	struct sa11x0_softc *psc = (struct sa11x0_softc *)parent;
@@ -126,11 +118,8 @@ ipaq_attach(parent, self, aux)
 }
 
 int
-ipaq_search(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+ipaq_search(struct device *parent, struct cfdata *cf, const int *ldesc,
+	    void *aux)
 {
 	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, ipaq_print);
