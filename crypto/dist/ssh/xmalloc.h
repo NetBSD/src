@@ -1,5 +1,5 @@
-/*	$NetBSD: xmalloc.h,v 1.1.1.6 2002/06/24 05:26:09 itojun Exp $	*/
-/*	$OpenBSD: xmalloc.h,v 1.9 2002/06/19 00:27:55 deraadt Exp $	*/
+/*	$NetBSD: xmalloc.h,v 1.1.1.7 2006/09/28 21:15:35 christos Exp $	*/
+/* $OpenBSD: xmalloc.h,v 1.13 2006/08/03 03:34:42 deraadt Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -17,12 +17,11 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-#ifndef XMALLOC_H
-#define XMALLOC_H
-
 void	*xmalloc(size_t);
-void	*xrealloc(void *, size_t);
+void	*xcalloc(size_t, size_t);
+void	*xrealloc(void *, size_t, size_t);
 void     xfree(void *);
 char	*xstrdup(const char *);
-
-#endif				/* XMALLOC_H */
+int	 xasprintf(char **, const char *, ...)
+                __attribute__((__format__ (printf, 2, 3)))
+                __attribute__((__nonnull__ (2)));

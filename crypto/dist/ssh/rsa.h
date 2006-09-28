@@ -1,5 +1,5 @@
-/*	$NetBSD: rsa.h,v 1.1.1.6 2002/03/08 01:20:59 itojun Exp $	*/
-/*	$OpenBSD: rsa.h,v 1.15 2002/03/04 17:27:39 stevesk Exp $	*/
+/*	$NetBSD: rsa.h,v 1.1.1.7 2006/09/28 21:15:16 christos Exp $	*/
+/* $OpenBSD: rsa.h,v 1.16 2006/03/25 22:22:43 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

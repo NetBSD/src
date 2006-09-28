@@ -1,5 +1,5 @@
-/*	$NetBSD: authfd.h,v 1.1.1.11 2005/02/13 00:52:53 christos Exp $	*/
-/*	$OpenBSD: authfd.h,v 1.34 2003/11/21 11:57:03 djm Exp $	*/
+/*	$NetBSD: authfd.h,v 1.1.1.12 2006/09/28 21:15:01 christos Exp $	*/
+/* $OpenBSD: authfd.h,v 1.36 2006/08/03 03:34:41 deraadt Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -16,8 +16,6 @@
 
 #ifndef AUTHFD_H
 #define AUTHFD_H
-
-#include "buffer.h"
 
 /* Messages for the authentication agent connection. */
 #define SSH_AGENTC_REQUEST_RSA_IDENTITIES	1

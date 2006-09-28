@@ -1,5 +1,5 @@
-/*	$NetBSD: authfile.h,v 1.1.1.7 2002/06/24 05:25:43 itojun Exp $	*/
-/*	$OpenBSD: authfile.h,v 1.10 2002/05/23 19:24:30 markus Exp $	*/
+/*	$NetBSD: authfile.h,v 1.1.1.8 2006/09/28 21:15:01 christos Exp $	*/
+/* $OpenBSD: authfile.h,v 1.13 2006/04/25 08:02:27 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -20,7 +20,8 @@ int	 key_save_private(Key *, const char *, const char *, const char *);
 Key	*key_load_public(const char *, char **);
 Key	*key_load_public_type(int, const char *, char **);
 Key	*key_load_private(const char *, const char *, char **);
-Key	*key_load_private_type(int, const char *, const char *, char **);
+Key	*key_load_private_type(int, const char *, const char *, char **, int *);
 Key	*key_load_private_pem(int, int, const char *, char **);
+int	 key_perm_ok(int, const char *);
 
 #endif

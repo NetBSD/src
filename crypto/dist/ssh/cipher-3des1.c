@@ -1,4 +1,5 @@
-/*	$NetBSD: cipher-3des1.c,v 1.1.1.1 2005/02/13 00:52:56 christos Exp $	*/
+/*	$NetBSD: cipher-3des1.c,v 1.1.1.2 2006/09/28 21:15:05 christos Exp $	*/
+/* $OpenBSD: cipher-3des1.c,v 1.6 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
  *
@@ -23,10 +24,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
-RCSID("$OpenBSD: cipher-3des1.c,v 1.2 2003/12/22 20:29:55 markus Exp $");
+#include <sys/types.h>
 
 #include <openssl/evp.h>
+
+#include <string.h>
+
 #include "xmalloc.h"
 #include "log.h"
 
