@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.116 2006/09/15 18:50:49 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.117 2006/09/28 23:08:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -824,6 +824,7 @@ struct lfs {
 	size_t lfs_devbshift;		/* Device block shift */
 	struct lock lfs_fraglock;
 	struct lock lfs_iflock;		/* Ifile lock */
+	struct lock lfs_stoplock;	/* Wrap lock */
 	pid_t lfs_rfpid;		/* Process ID of roll-forward agent */
 	int	  lfs_nadirop;		/* number of active dirop nodes */
 	long	  lfs_ravail;		/* blocks pre-reserved for writing */
