@@ -1,4 +1,4 @@
-/*      $NetBSD: ipaq_pcic.c,v 1.14 2005/12/11 12:17:32 christos Exp $        */
+/*      $NetBSD: ipaq_pcic.c,v 1.15 2006/09/28 09:06:05 rjs Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_pcic.c,v 1.14 2005/12/11 12:17:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_pcic.c,v 1.15 2006/09/28 09:06:05 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,19 +97,13 @@ CFATTACH_DECL(ipaqpcic, sizeof(struct ipaqpcic_softc),
     ipaqpcic_match, ipaqpcic_attach, NULL, NULL);
 
 static int
-ipaqpcic_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ipaqpcic_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	return (1);
 }
 
 static void
-ipaqpcic_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+ipaqpcic_attach(struct device *parent, struct device *self, void *aux)
 {
 	int i;
 	struct pcmciabus_attach_args paa;
@@ -160,16 +154,13 @@ ipaqpcic_attach(parent, self, aux)
 }
 
 static int
-ipaqpcic_print(aux, name)
-	void *aux;
-	const char *name;
+ipaqpcic_print(void *aux, const char *name)
 {
 	return (UNCONF);
 }
 
 static void
-ipaqpcic_init(sc)
-	struct ipaqpcic_softc *sc;
+ipaqpcic_init(struct ipaqpcic_softc *sc)
 {
 	int cr;
 
@@ -188,9 +179,7 @@ ipaqpcic_init(sc)
 }
 
 static int
-ipaqpcic_read(so, reg)
-	struct sapcic_socket *so;
-	int reg;
+ipaqpcic_read(struct sapcic_socket *so, int reg)
 {
 	int cr, bit;
 	struct ipaqpcic_softc *sc = (struct ipaqpcic_softc *)so->sc;
@@ -217,10 +206,7 @@ ipaqpcic_read(so, reg)
 }
 
 static void
-ipaqpcic_write(so, reg, arg)
-	struct sapcic_socket *so;
-	int reg;
-	int arg;
+ipaqpcic_write(struct sapcic_socket *so, int reg, int arg)
 {
 	int s;
 	struct ipaqpcic_softc *sc = (struct ipaqpcic_softc *)so->sc;
@@ -245,9 +231,7 @@ ipaqpcic_write(so, reg, arg)
 }
 		
 static void
-ipaqpcic_set_power(so, arg)
-	struct sapcic_socket *so;
-	int arg;
+ipaqpcic_set_power(struct sapcic_socket *so, int arg)
 {
 	int s;
 	struct ipaqpcic_softc *sc = (struct ipaqpcic_softc *)so->sc;
@@ -272,16 +256,13 @@ ipaqpcic_set_power(so, arg)
 }
 
 static void
-ipaqpcic_clear_intr(arg)
+ipaqpcic_clear_intr(int arg)
 {
 }
 
 static void *
-ipaqpcic_intr_establish(so, level, ih_fun, ih_arg)
-	struct sapcic_socket *so;
-	int level;
-	int (*ih_fun)(void *);
-	void *ih_arg;
+ipaqpcic_intr_establish(struct sapcic_socket *so, int level,
+			int (*ih_fun)(void *), void *ih_arg)
 {
 	int irq;
 
@@ -291,9 +272,7 @@ ipaqpcic_intr_establish(so, level, ih_fun, ih_arg)
 }
 
 static void
-ipaqpcic_intr_disestablish(so, ih)
-	struct sapcic_socket *so;
-	void *ih;
+ipaqpcic_intr_disestablish(struct sapcic_socket *so, void *ih)
 {
 	sa11x0_intr_disestablish((sa11x0_chipset_tag_t)so->pcictag_cookie, ih);
 }
