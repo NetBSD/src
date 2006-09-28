@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.12 2006/06/24 05:28:54 perseant Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.13 2006/09/28 23:23:01 perseant Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.12 2006/06/24 05:28:54 perseant Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.13 2006/09/28 23:23:01 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -386,8 +386,8 @@ lfs_wrap_go(void)
 	if (root_fd < 0)
 		return;
 
+	fcntl(root_fd, LFCNWRAPGO, &waitfor);
 	close(root_fd);
 	root_fd = -1;
-	fcntl(root_fd, LFCNWRAPGO, &waitfor);
 	msg("Re-enabled log wrap on %s\n", wrap_mpname);
 }
