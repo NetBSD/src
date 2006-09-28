@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.5 2005/12/11 12:19:50 christos Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.6 2006/09/28 18:53:16 bouyer Exp $	*/
 /*	NetBSD isa_machdep.c,v 1.11 2004/06/20 18:04:08 thorpej Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.5 2005/12/11 12:19:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6 2006/09/28 18:53:16 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,12 +148,15 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	void *ih_arg;
 {
 	int evtch;
+	char evname[8];
 
 	evtch = bind_pirq_to_evtch(irq);
 	if (evtch == -1)
 		return NULL;
+	snprintf(evname, sizeof(evname), "irq%d", irq);
 
-	return (void *)pirq_establish(irq, evtch, ih_fun, ih_arg, level);
+	return (void *)pirq_establish(irq, evtch, ih_fun, ih_arg, level,
+	    evname);
 }
 
 /*

@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.4 2006/09/24 18:14:44 bouyer Exp $
+# $NetBSD: XEN3_DOMU,v 1.5 2006/09/28 18:53:15 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -170,9 +170,9 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
-cpu* at mainbus?
-
 hypervisor*	at mainbus?		# Xen hypervisor
+
+vcpu* 		at hypervisor?		# Xen virtaul CPUs
 
 npx0		at hypervisor?		# x86 math coprocessor
 
