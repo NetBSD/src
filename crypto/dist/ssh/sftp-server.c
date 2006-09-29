@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-server.c,v 1.23 2006/09/28 21:22:15 christos Exp $	*/
+/*	$NetBSD: sftp-server.c,v 1.24 2006/09/29 14:36:34 he Exp $	*/
 /* $OpenBSD: sftp-server.c,v 1.70 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sftp-server.c,v 1.23 2006/09/28 21:22:15 christos Exp $");
+__RCSID("$NetBSD: sftp-server.c,v 1.24 2006/09/29 14:36:34 he Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -314,7 +314,7 @@ static void
 handle_log_close(int handle, char *emsg)
 {
 	if (handle_is_ok(handle, HANDLE_FILE)) {
-		logit("%s%sclose \"%s\" bytes read %llu written %llu",
+		logit("%s%sclose \"%s\" bytes read %" PRIu64 " written %" PRIu64,
 		    emsg == NULL ? "" : emsg, emsg == NULL ? "" : " ",
 		    handle_to_name(handle),
 		    handle_bytes_read(handle), handle_bytes_write(handle));
@@ -700,7 +700,7 @@ process_setstat(void)
 	a = get_attrib();
 	debug("request %u: setstat name \"%s\"", id, name);
 	if (a->flags & SSH2_FILEXFER_ATTR_SIZE) {
-		logit("set \"%s\" size %llu", name, a->size);
+		logit("set \"%s\" size %" PRIu64 , name, a->size);
 		ret = truncate(name, a->size);
 		if (ret == -1)
 			status = errno_to_portable(errno);
@@ -752,7 +752,7 @@ process_fsetstat(void)
 		char *name = handle_to_name(handle);
 
 		if (a->flags & SSH2_FILEXFER_ATTR_SIZE) {
-			logit("set \"%s\" size %llu", name, a->size);
+			logit("set \"%s\" size %" PRIu64, name, a->size);
 			ret = ftruncate(fd, a->size);
 			if (ret == -1)
 				status = errno_to_portable(errno);
