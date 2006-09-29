@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.54 2006/09/29 08:33:06 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.55 2006/09/29 13:59:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.54 2006/09/29 08:33:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.55 2006/09/29 13:59:40 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1193,9 +1193,6 @@ rtk_txeof(sc)
 
 	ifp = &sc->ethercom.ec_if;
 
-	/* Clear the timeout timer. */
-	ifp->if_timer = 0;
-
 	/*
 	 * Go through our tx list and free mbufs for those
 	 * frames that have been uploaded.
@@ -1245,6 +1242,11 @@ rtk_txeof(sc)
 		SIMPLEQ_INSERT_TAIL(&sc->rtk_tx_free, txd, txd_q);
 		ifp->if_flags &= ~IFF_OACTIVE;
 	}
+
+	/* Clear the timeout timer if there is no pending packet. */
+	if (SIMPLEQ_FIRST(&sc->rtk_tx_dirty) == NULL)
+		ifp->if_timer = 0;
+
 }
 
 int
