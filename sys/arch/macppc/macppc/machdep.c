@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.138 2006/09/01 03:24:50 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.139 2006/09/29 22:20:08 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 2006/09/01 03:24:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 2006/09/29 22:20:08 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 2006/09/01 03:24:50 matt Exp $");
 #include <machine/bus.h>
 #include <machine/fpu.h>
 #include <powerpc/oea/bat.h>
+#include <powerpc/spr.h>
 #ifdef ALTIVEC
 #include <powerpc/altivec.h>
 #endif
@@ -142,6 +143,16 @@ int lcsplx(int);
 int save_ofmap(struct ofw_translations *, int);
 void restore_ofmap(struct ofw_translations *, int);
 static void dumpsys(void);
+static void set_timebase(void);
+
+#ifdef TIMEBASE_FREQ
+u_int timebase_freq = TIMEBASE_FREQ;
+#else
+u_int timebase_freq = 0;
+#endif
+
+extern u_long ticks_per_sec;
+extern u_long ns_per_tick;
 
 void
 initppc(startkernel, endkernel, args)
@@ -237,6 +248,55 @@ initppc(startkernel, endkernel, args)
 #endif /* PPC_OEA64 || PPC_OEA64_BRIDGE */
 
 	restore_ofmap(ofmap, ofmaplen);
+	
+	/* CPU clock stuff */
+	set_timebase();
+}
+
+static void
+set_timebase(void)
+{
+	int qhandle, phandle, ticks_per_intr;
+	char type[32];
+	int msr, scratch;
+	
+	/*
+	 * Get this info during autoconf?				XXX
+	 */
+	if (timebase_freq != 0) {
+		ticks_per_sec = timebase_freq;
+		goto found;
+	}
+
+	for (qhandle = OF_peer(0); qhandle; qhandle = phandle) {
+		if (OF_getprop(qhandle, "device_type", type, sizeof type) > 0
+		    && strcmp(type, "cpu") == 0
+		    && OF_getprop(qhandle, "timebase-frequency",
+			   &ticks_per_sec, sizeof ticks_per_sec) > 0) {
+			goto found;
+		}
+		if ((phandle = OF_child(qhandle)))
+			continue;
+		while (qhandle) {
+			if ((phandle = OF_peer(qhandle)))
+				break;
+			qhandle = OF_parent(qhandle);
+		}
+	}
+	panic("no cpu node");
+
+found:
+	/*
+	 * Should check for correct CPU here?		XXX
+	 */
+	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
+		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
+	ns_per_tick = 1000000000 / ticks_per_sec;
+	ticks_per_intr = ticks_per_sec / hz;
+	cpu_timebase = ticks_per_sec;
+	curcpu()->ci_lasttb = mftbl();
+	mtspr(SPR_DEC, ticks_per_intr);
+	mtmsr(msr);
 }
 
 int
