@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.23 2006/09/27 12:58:33 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.24 2006/09/29 14:59:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.23 2006/09/27 12:58:33 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.24 2006/09/29 14:59:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ static	jmp_buf	intjmp;			/* Place to go when interrupted */
 static	int	ttyset;			/* We must now do erase/kill */
 #endif
 
+
 /*
  * Read all relevant header fields.
  */
@@ -66,17 +67,18 @@ int
 grabh(struct header *hp, int gflags)
 {
 	struct termios ttybuf;
-	static sig_t saveint;
-	static sig_t savetstp;
-	static sig_t savettou;
-	static sig_t savettin;
-	int errs;
+
+	/* The following are declared volatile to avoid longjmp clobbering. */
+	volatile sig_t saveint;
+	volatile sig_t savetstp;
+	volatile sig_t savettou;
+	volatile sig_t savettin;
+	volatile int errs;
 #ifndef TIOCSTI
-	static sig_t savequit;
+	volatile sig_t savequit;
 #else
 # ifdef TIOCEXT
-	static int extproc;
-	int flag;
+	volatile int extproc, flag;
 # endif /* TIOCEXT */
 #endif /* TIOCSTI */
 
@@ -110,10 +112,7 @@ grabh(struct header *hp, int gflags)
 	}
 # endif	/* TIOCEXT */
 	if (setjmp(intjmp)) {
-#ifdef USE_READLINE
-		(void)fputc('\n',stdout);
-		errs = 1;
-#endif /* USE_READLINE */
+		(void)fputc('\n', stdout);
 		goto out;
 	}
 	saveint = signal(SIGINT, ttyint);
@@ -219,15 +218,13 @@ readtty(const char pr[], char src[])
 char *
 readtty(const char pr[], char src[])
 {
+	/* XXX - watch for potential setjmp/longjmp clobbering!
+	 * Currently there appear to be none.
+	 */
 	char ch, canonb[BUFSIZ];
 	int c;
 	char *cp, *cp2;
 	static char empty[] = "";
-#if __GNUC__
-	/* Avoid longjmp clobbering */
-	(void)&c;
-	(void)&cp2;
-#endif
 
 	(void)fputs(pr, stdout);
 	(void)fflush(stdout);
