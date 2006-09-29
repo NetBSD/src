@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.241 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.242 2006/09/29 16:19:50 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.241 2006/07/23 22:06:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.242 2006/09/29 16:19:50 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -700,12 +700,19 @@ nfs_setattr(v)
 			}
  			np->n_vattr->va_size = vap->va_size;
   		}
-  	} else if ((vap->va_mtime.tv_sec != VNOVAL ||
-		vap->va_atime.tv_sec != VNOVAL) &&
-		vp->v_type == VREG &&
-  		(error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
-		 ap->a_l, 1)) == EINTR)
-		return (error);
+  	} else {
+		/*
+		 * flush files before setattr because a later write of
+		 * cached data might change timestamps or reset sugid bits
+		 */
+		if ((vap->va_mtime.tv_sec != VNOVAL ||
+		     vap->va_atime.tv_sec != VNOVAL ||
+		     vap->va_mode != VNOVAL) &&
+		    vp->v_type == VREG &&
+  		    (error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
+		 			   ap->a_l, 1)) == EINTR)
+			return (error);
+	}
 	error = nfs_setattrrpc(vp, vap, ap->a_cred, ap->a_l);
 	if (error && vap->va_size != VNOVAL) {
 		np->n_size = np->n_vattr->va_size = tsize;
