@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.110 2006/09/24 03:53:09 jmcneill Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.111 2006/09/29 14:33:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.110 2006/09/24 03:53:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.111 2006/09/29 14:33:52 christos Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3372,10 +3372,9 @@ bge_compact_dma_runt(struct mbuf *pkt)
 			 */
 
 			/* if we'd make prev a runt, just move all of its data. */
-#ifdef DEBUG
 			KASSERT(prev != NULL /*, ("runt but null PREV")*/);
 			KASSERT(prev->m_len >= 8 /*, ("runt prev")*/);
-#endif
+
 			if ((prev->m_len - shortfall) < 8)
 				shortfall = prev->m_len;
 
