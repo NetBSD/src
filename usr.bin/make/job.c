@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.116 2006/09/23 20:51:28 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.117 2006/09/29 19:38:48 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.116 2006/09/23 20:51:28 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.117 2006/09/29 19:38:48 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.116 2006/09/23 20:51:28 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.117 2006/09/29 19:38:48 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -267,6 +267,7 @@ static const char *shellArgv = NULL;		  /* Custom shell args */
 STATIC Job	*job_table;	/* The structures that describe them */
 STATIC Job	*job_table_end;	/* job_table + maxJobs */
 static Boolean	wantToken;	/* we want a token */
+static int lurking_children = 0;
 
 /*
  * Set of descriptors of pipes connected to
@@ -1994,7 +1995,8 @@ Job_CatchChildren(unsigned int flags)
 
 	job = JobFindPid(pid, JOB_ST_RUNNING);
 	if (job == NULL) {
-	    Error("Child (%d) status %x not in table?", pid, status);
+	    if (!lurking_children)
+		Error("Child (%d) status %x not in table?", pid, status);
 	    continue;
 	}
 	if (WIFSTOPPED(status)) {
@@ -2175,6 +2177,23 @@ Job_Init(void)
 	targFmt = "";
     } else {
 	targFmt = TARG_FMT;
+    }
+
+    /*
+     * There is a non-zero chance that we already have children.
+     * eg after 'make -f- <<EOF'
+     * Since their termination causes a 'Child (pid) not in table' message,
+     * Collect the status of any that are already dead, and suppress the
+     * error message if there are any undead ones.
+     */
+    for (;;) {
+	int rval, status;
+	rval = waitpid((pid_t) -1, &status, WNOHANG);
+	if (rval > 0)
+	    continue;
+	if (rval == 0)
+	    lurking_children = 1;
+	break;
     }
 
     Shell_Init();
