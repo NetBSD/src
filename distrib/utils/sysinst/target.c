@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.49 2006/02/25 13:29:34 dsl Exp $	*/
+/*	$NetBSD: target.c,v 1.50 2006/09/29 09:29:12 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.49 2006/02/25 13:29:34 dsl Exp $");
+__RCSID("$NetBSD: target.c,v 1.50 2006/09/29 09:29:12 martin Exp $");
 #endif
 
 /*
@@ -484,7 +484,7 @@ target_test(unsigned int mode, const char *path)
 	scripting_fprintf(NULL, "if [ $? != 0 ]; then echo \"%s does not exist!\"; fi\n", real_path);
 
 #if defined(DEBUG)
-	printf("target_test(%s %s) returning %d\n", test, real_path, result);
+	printf("target_test(%o, %s) returning %d\n", mode, real_path, result);
 #endif
 	return (result);
 }
