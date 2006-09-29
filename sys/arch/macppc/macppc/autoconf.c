@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.47 2006/02/23 05:49:42 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.48 2006/09/29 22:20:08 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.47 2006/02/23 05:49:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.48 2006/09/29 22:20:08 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -72,7 +72,6 @@ cpu_configure()
 	int msr;
 
 	init_interrupt();
-	calc_delayconst();
 	canonicalize_bootpath();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
