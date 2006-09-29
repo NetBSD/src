@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.57 2006/09/29 16:33:41 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.58 2006/09/29 16:38:16 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.57 2006/09/29 16:33:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.58 2006/09/29 16:38:16 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1244,7 +1244,7 @@ rtk_txeof(sc)
 	}
 
 	/* Clear the timeout timer if there is no pending packet. */
-	if (SIMPLEQ_FIRST(&sc->rtk_tx_dirty) == NULL)
+	if (SIMPLEQ_EMPTY(&sc->rtk_tx_dirty))
 		ifp->if_timer = 0;
 
 }
