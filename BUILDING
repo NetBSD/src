@@ -94,6 +94,18 @@ CONFIGURATION
    Environment variables
      Several environment variables control the behaviour of NetBSD builds.
 
+     HOST_SH           Path name to a POSIX-compliant shell.  If this is not
+                       set explicitly, then the default is set using heuris-
+                       tics dependent on the host platform, or from the shell
+                       under which build.sh is executed (if that can be deter-
+                       mined), or using the first copy of sh found in PATH.
+                       If the host system's /bin/sh is not POSIX-compliant, we
+                       suggest that you build using commands like
+
+                             HOST_SH=/path/to/working/shell
+                             export HOST_SH
+                             ${HOST_SH} build.sh [options]
+
      HOST_CC           Path name to C compiler used to create the toolchain.
 
      HOST_CXX          Path name to C++ compiler used to create the toolchain.
