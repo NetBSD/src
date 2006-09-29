@@ -413,17 +413,17 @@ gentmap: ../common/gentmap.c Makefile targ-vals.def
 targ-vals.def: $(srcdir)/../common/nltvals.def
 	rm -f targ-vals.def tmp-def
 	cat $(srcdir)/../common/nltvals.def > tmp-vals.def
-	$(srcdir)/../../move-if-change tmp-vals.def targ-vals.def
+	$(SHELL) $(srcdir)/../../move-if-change tmp-vals.def targ-vals.def
 
 targ-vals.h: Makefile gentmap $(srcdir)/../../move-if-change
 	rm -f tmp-vals.h
 	./gentmap -h > tmp-vals.h
-	$(srcdir)/../../move-if-change tmp-vals.h targ-vals.h
+	$(SHELL) $(srcdir)/../../move-if-change tmp-vals.h targ-vals.h
 
 targ-map.c: Makefile gentmap $(srcdir)/../../move-if-change
 	rm -f tmp-map.c
 	./gentmap -c > tmp-map.c
-	$(srcdir)/../../move-if-change tmp-map.c targ-map.c
+	$(SHELL) $(srcdir)/../../move-if-change tmp-map.c targ-map.c
 
 callback.o: ../common/callback.c targ-vals.h config.h
 	$(CC) -c $(STD_CFLAGS) -DHAVE_CONFIG_H $<
@@ -443,7 +443,7 @@ options.o: options.c $(BASICS_H) $(CPU_H) $(IDECODE_H) $(INLINE) $(LIB_SRC) $(BU
 
 tmp-defines: config.h Makefile
 	sed -n -e '/^#define HAVE_/s/ 1$$/",/' -e '/^#define HAVE_/s//"HAVE_/p' < config.h > tmp-defines.h
-	$(srcdir)/../../move-if-change tmp-defines.h defines.h
+	$(SHELL) $(srcdir)/../../move-if-change tmp-defines.h defines.h
 	touch tmp-defines
 
 #
@@ -459,8 +459,8 @@ tmp-dgen: dgen ppc-spr-table $(srcdir)/../../move-if-change
 		-r $(srcdir)/ppc-spr-table \
 		-n spreg.h -hp tmp-spreg.h \
 		-n spreg.c -p  tmp-spreg.c
-	$(srcdir)/../../move-if-change tmp-spreg.h spreg.h
-	$(srcdir)/../../move-if-change tmp-spreg.c spreg.c
+	$(SHELL) $(srcdir)/../../move-if-change tmp-spreg.h spreg.h
+	$(SHELL) $(srcdir)/../../move-if-change tmp-spreg.c spreg.c
 	touch tmp-dgen
 
 
@@ -481,18 +481,18 @@ tmp-igen: igen ppc-instructions $(IGEN_OPCODE_RULES) ppc-cache-rules $(srcdir)/.
 		-n model.c     -m  tmp-model.c \
 		-n support.h   -hf tmp-support.h \
 		-n support.c   -f  tmp-support.c
-	$(srcdir)/../../move-if-change tmp-icache.h icache.h
-	$(srcdir)/../../move-if-change tmp-icache.c icache.c
-	$(srcdir)/../../move-if-change tmp-idecode.h idecode.h
-	$(srcdir)/../../move-if-change tmp-idecode.c idecode.c
-	$(srcdir)/../../move-if-change tmp-semantics.h semantics.h
-	$(srcdir)/../../move-if-change tmp-semantics.c semantics.c
-	$(srcdir)/../../move-if-change tmp-itable.h itable.h
-	$(srcdir)/../../move-if-change tmp-itable.c itable.c
-	$(srcdir)/../../move-if-change tmp-model.h model.h
-	$(srcdir)/../../move-if-change tmp-model.c model.c
-	$(srcdir)/../../move-if-change tmp-support.h support.h
-	$(srcdir)/../../move-if-change tmp-support.c support.c
+	$(SHELL) $(srcdir)/../../move-if-change tmp-icache.h icache.h
+	$(SHELL) $(srcdir)/../../move-if-change tmp-icache.c icache.c
+	$(SHELL) $(srcdir)/../../move-if-change tmp-idecode.h idecode.h
+	$(SHELL) $(srcdir)/../../move-if-change tmp-idecode.c idecode.c
+	$(SHELL) $(srcdir)/../../move-if-change tmp-semantics.h semantics.h
+	$(SHELL) $(srcdir)/../../move-if-change tmp-semantics.c semantics.c
+	$(SHELL) $(srcdir)/../../move-if-change tmp-itable.h itable.h
+	$(SHELL) $(srcdir)/../../move-if-change tmp-itable.c itable.c
+	$(SHELL) $(srcdir)/../../move-if-change tmp-model.h model.h
+	$(SHELL) $(srcdir)/../../move-if-change tmp-model.c model.c
+	$(SHELL) $(srcdir)/../../move-if-change tmp-support.h support.h
+	$(SHELL) $(srcdir)/../../move-if-change tmp-support.c support.c
 	touch tmp-igen
 
 # NOTE: Some versions of make don't handle files created as side-effects
@@ -596,8 +596,8 @@ tmp-hw: Makefile $(HW_SRC) $(srcdir)/../../move-if-change
 		-e 's/^/    /' \
 		-e 's/$$/_device_descriptor,/' \
 		> tmp-hw.c
-	$(srcdir)/../../move-if-change tmp-hw.h hw.h
-	$(srcdir)/../../move-if-change tmp-hw.c hw.c
+	$(SHELL) $(srcdir)/../../move-if-change tmp-hw.h hw.h
+	$(SHELL) $(srcdir)/../../move-if-change tmp-hw.c hw.c
 	touch tmp-hw
 
 hw_cpu.o: hw_cpu.c $(DEVICE_TABLE_H) $(CPU_H)
@@ -635,7 +635,7 @@ tmp-pk: Makefile $(PACKAGE_SRC) $(srcdir)/../../move-if-change
 		-e 's/^/extern package_create_instance_callback pk_/' \
 		-e 's/$$/_create_instance;/' \
 		> tmp-pk.h
-	$(srcdir)/../../move-if-change tmp-pk.h pk.h
+	$(SHELL) $(srcdir)/../../move-if-change tmp-pk.h pk.h
 	touch tmp-pk
 
 pk_disklabel.o: pk.h $(DEVICE_TABLE_H)
