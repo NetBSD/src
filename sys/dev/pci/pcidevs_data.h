@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.834 2006/09/27 21:43:26 cube Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.835 2006/09/29 20:49:48 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.835 2006/09/27 21:41:56 cube Exp
+ *	NetBSD: pcidevs,v 1.836 2006/09/29 20:48:41 cube Exp
  */
 
 /*
@@ -9200,6 +9200,10 @@ static const struct pci_product pci_products[] = {
 	    "GeForce 6200TC",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE6200LE,
+	    "GeForce 6200LE",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_MX460,
 	    "GeForce4 MX 460",
 	},
@@ -9480,8 +9484,28 @@ static const struct pci_product pci_products[] = {
 	    "nForce MCP55 SMBus Controller",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_MEM,
+	    "nForce MCP55 Memory Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_MEM2,
+	    "nForce MCP55 Memory Controller",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_IDE,
 	    "nForce MCP55 ATA133 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_OHCI,
+	    "nForce MCP55 OHCI USB Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_EHCI,
+	    "nForce MCP55 EHCI USB Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_PPB,
+	    "nForce MCP55 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_HDA,
@@ -9494,6 +9518,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_LAN2,
 	    "nForce MCP55 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_PCIE,
+	    "nForce MCP55 PCI-Express 16x Port",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SATA,
@@ -12340,4 +12368,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2491;
+const int pci_nproducts = 2498;
