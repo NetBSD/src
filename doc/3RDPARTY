@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.469 2006/09/28 21:27:58 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.470 2006/09/29 01:03:20 uebayasi Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -255,7 +255,7 @@ Notes:
 
 Package:	flex
 Version:	2.5.4
-Current Vers:	2.5.4a/2.5.31
+Current Vers:	2.5.4a/2.5.33
 Maintainer:	Vern Paxson <vern@ee.lbl.gov>
 Archive Site:	ftp://ftp.gnu.org/gnu/non-gnu/flex/
 Home Page:	http://lex.sourceforge.net/
