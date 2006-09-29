@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.24 2006/09/18 19:46:21 christos Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.25 2006/09/29 14:59:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd1.c,v 1.24 2006/09/18 19:46:21 christos Exp $");
+__RCSID("$NetBSD: cmd1.c,v 1.25 2006/09/29 14:59:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -301,12 +301,7 @@ type1(int *msgvec, int doign, int page)
 	struct message *mp;
 	const char *cp;
 	int nlines;
-	FILE *obuf;
-#if __GNUC__
-	/* Avoid longjmp clobbering */
-	(void)&cp;
-	(void)&obuf;
-#endif
+	volatile FILE *obuf;	/* avoid longjmp clobbering */
 
 	obuf = stdout;
 	if (setjmp(pipestop))
@@ -335,8 +330,8 @@ type1(int *msgvec, int doign, int page)
 		touch(mp);
 		dot = mp;
 		if (value("quiet") == NULL)
-			(void)fprintf(obuf, "Message %d:\n", *ip);
-		(void)sendmessage(mp, obuf, doign ? ignore : 0, NULL);
+			(void)fprintf(__UNVOLATILE(obuf), "Message %d:\n", *ip);
+		(void)sendmessage(mp, __UNVOLATILE(obuf), doign ? ignore : 0, NULL);
 	}
 close_pipe:
 	if (obuf != stdout) {
@@ -344,7 +339,7 @@ close_pipe:
 		 * Ignore SIGPIPE so it can't cause a duplicate close.
 		 */
 		(void)signal(SIGPIPE, SIG_IGN);
-		(void)Pclose(obuf);
+		(void)Pclose(__UNVOLATILE(obuf));
 		(void)signal(SIGPIPE, SIG_DFL);
 	}
 	return(0);
@@ -368,11 +363,8 @@ int
 pipecmd(void *v)
 {
 	char *cmd = v;
-	FILE *obuf;
-#if __GNUC__
-	/* Avoid longjmp clobbering */
-	(void)&obuf;
-#endif
+	volatile FILE *obuf;	/* avoid longjmp clobbering */
+
 	if (dot == NULL) {
 		warn("pipcmd: no current message");
 		return 1;
@@ -389,7 +381,7 @@ pipecmd(void *v)
 	} else
 		(void)signal(SIGPIPE, brokpipe);
 
-	(void)sendmessage(dot, obuf, ignoreall, NULL);
+	(void)sendmessage(dot, __UNVOLATILE(obuf), ignoreall, NULL);
 
  close_pipe:
 	if (obuf != stdout) {
@@ -397,7 +389,7 @@ pipecmd(void *v)
 		 * Ignore SIGPIPE so it can't cause a duplicate close.
 		 */
 		(void)signal(SIGPIPE, SIG_IGN);
-		(void)Pclose(obuf);
+		(void)Pclose(__UNVOLATILE(obuf));
 		(void)signal(SIGPIPE, SIG_DFL);
 	}
 	return 0;
