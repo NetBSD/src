@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.59 2006/09/29 16:40:15 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.60 2006/09/29 16:46:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.59 2006/09/29 16:40:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.60 2006/09/29 16:46:49 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1401,6 +1401,11 @@ rtk_start(ifp)
 		CSR_WRITE_4(sc, txd->txd_txaddr,
 		    txd->txd_dmamap->dm_segs[0].ds_addr);
 		CSR_WRITE_4(sc, txd->txd_txstat, RTK_TX_THRESH(sc) | len);
+
+		/*
+		 * Set a timeout in case the chip goes out to lunch.
+		 */
+		ifp->if_timer = 5;
 	}
 
 	/*
@@ -1410,11 +1415,6 @@ rtk_start(ifp)
 	 */
 	if (SIMPLEQ_EMPTY(&sc->rtk_tx_free))
 		ifp->if_flags |= IFF_OACTIVE;
-
-	/*
-	 * Set a timeout in case the chip goes out to lunch.
-	 */
-	ifp->if_timer = 5;
 }
 
 STATIC int
