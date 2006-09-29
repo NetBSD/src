@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 2005/12/11 12:16:36 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.14.22.1 2006/09/29 15:32:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -49,16 +49,23 @@
 #include <amiga/include/mtpr.h>
 #include <m68k/psl.h>
 
-#define IPL_SOFTCLOCK 1
-#define IPL_SOFTSERIAL 1
-#define IPL_SOFTNET 1
-
-/* not used yet, should reflect psl.h */
-#define IPL_BIO		3
-#define IPL_NET		3
-#define IPL_SERIAL	4
-#define IPL_TTY		4
-
+#define	IPL_NONE	0
+#define	IPL_SOFTCLOCK	1
+#define	IPL_SOFTNET	1
+#define	IPL_SOFTSERIAL	1
+#define	IPL_BIO		3
+#define	IPL_NET		4
+#define	IPL_TTY		5
+#define	IPL_SERIAL	6
+#define	IPL_LPT		7
+#define	IPL_VM		8
+#define	IPL_AUDIO	9
+#define	IPL_CLOCK	10
+#define	IPL_STATCLOCK	IPL_CLOCK
+#define	IPL_SCHED	IPL_HIGH
+#define	IPL_HIGH	11
+#define	IPL_LOCK	IPL_HIGH
+#define	_NIPL		12
 
 #ifdef splaudio
 #undef splaudio
@@ -86,13 +93,11 @@
  * drivers which need it (at the present only the coms) raise the variable to
  * their serial interrupt level.
  *
- * serialspl is statically initialized in machdep.c at the moment; should 
- * be some driver independent file.
+ * ipl2spl_table[IPL_SERIAL] is statically initialized in machdep.c
+ * at the moment; should be some driver independent file.
  */
 
-extern uint16_t		amiga_serialspl;
-
-#define splserial()	_splraise(amiga_serialspl)
+#define splserial()	splraiseipl(makeiplcookie[IPL_SERIAL])
 #define spltty()	splraise4()
 #define	splvm()		splraise4()
 
@@ -128,3 +133,24 @@ extern int _spllkm7(void);
 #define splx(s)		_spl(s)
 
 #endif
+
+extern int ipl2spl_table[_NIPL];
+
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(ipl2spl_table[icookie._ipl]);
+}

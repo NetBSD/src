@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.21 2006/07/13 22:56:00 gdamore Exp $ */
+/*	$NetBSD: com_supio.c,v 1.21.6.1 2006/09/29 15:32:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.21 2006/07/13 22:56:00 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.21.6.1 2006/09/29 15:32:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,10 +146,11 @@ com_supio_attach(struct device *parent, struct device *self, void *aux)
 	/* XXX this should be really in the interrupt stuff */
 	needpsl = PSL_S | (supa->supio_ipl << 8);
 
-	if (amiga_serialspl < needpsl) {
-		printf("%s: raising amiga_serialspl from 0x%x to 0x%x\n",
-		    csc->sc_dev.dv_xname, amiga_serialspl, needpsl);
-		amiga_serialspl = needpsl;
+	if (ipl2spl_table[IPL_SERIAL] < needpsl) {
+		printf("%s: raising ipl2spl_table[IPL_SERIAL] from "
+		    "0x%x to 0x%x\n",
+		    csc->sc_dev.dv_xname, ipl2spl_table[IPL_SERIAL], needpsl);
+		ipl2spl_table[IPL_SERIAL] = needpsl;
 	}
 	sc->sc_isr.isr_intr = comintr;
 	sc->sc_isr.isr_arg = csc;
