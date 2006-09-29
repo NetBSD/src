@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.43 2006/01/29 14:03:59 apb Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.44 2006/09/29 19:57:04 apb Exp $
 .\"
 .\" Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -189,6 +189,27 @@ builds.
 .
 .Bl -tag -width "MAKEOBJDIRPREFIX"
 .
+.
+.It Sy HOST_SH
+Path name to a POSIX-compliant shell.
+If this is not set explicitly, then the default is set
+using heuristics dependent on the host platform,
+or from the shell under which
+.Nm build.sh
+is executed (if that can be determined),
+or using the first copy of
+.Pa sh
+found in
+.Sy PATH .
+If the host system's
+.Pa /bin/sh
+is not POSIX-compliant, we suggest that you build using
+commands like
+.Bd -literal -offset indent
+HOST_SH=/path/to/working/shell
+export HOST_SH
+${HOST_SH} build.sh [options]
+.Ed
 .
 .It Sy HOST_CC
 Path name to C compiler used to create the toolchain.
