@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.63 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.64 2006/09/29 19:39:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.63 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.64 2006/09/29 19:39:43 christos Exp $");
 
 #define SYSVSEM
 
@@ -374,6 +374,7 @@ semctl1(struct lwp *l, int semid, int semnum, int cmd, void *v,
 	case IPC_SET:
 		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_M)))
 			return (error);
+		KASSERT(sembuf != NULL);
 		semaptr->sem_perm.uid = sembuf->sem_perm.uid;
 		semaptr->sem_perm.gid = sembuf->sem_perm.gid;
 		semaptr->sem_perm.mode = (semaptr->sem_perm.mode & ~0777) |
@@ -384,6 +385,7 @@ semctl1(struct lwp *l, int semid, int semnum, int cmd, void *v,
 	case IPC_STAT:
 		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
 			return (error);
+		KASSERT(sembuf != NULL);
 		memcpy(sembuf, semaptr, sizeof(struct semid_ds));
 		break;
 
