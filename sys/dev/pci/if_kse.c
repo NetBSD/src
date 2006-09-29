@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.1 2006/06/30 17:17:09 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.2 2006/09/29 08:49:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2006 Tohru Nishimura
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.1 2006/06/30 17:17:09 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.2 2006/09/29 08:49:30 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -160,11 +160,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.1 2006/06/30 17:17:09 nisimura Exp $");
 #define KSE_NEXTRX(x)		(((x) + 1) & KSE_NRXDESC_MASK)
 
 struct tdes {
-	unsigned t0, t1, t2, t3;
+	uint32_t t0, t1, t2, t3;
 };
 
 struct rdes {
-	unsigned r0, r1, r2, r3;
+	uint32_t r0, r1, r2, r3;
 };
 
 struct kse_control_data {
@@ -198,7 +198,7 @@ struct kse_softc {
 
 	struct ifmedia sc_media;	/* ifmedia information */
 	int sc_media_status;		/* PHY */
-	unsigned sc_media_active;	/* PHY */
+	int sc_media_active;		/* PHY */
 	struct callout sc_callout;	/* tick callout */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
@@ -217,9 +217,10 @@ struct kse_softc {
 	int sc_txsdirty;		/* dirty Tx jobs */
 	int sc_rxptr;			/* next ready Rx descriptor/descsoft */
 
-	unsigned sc_txc, sc_rxc;
-	unsigned sc_t1csum, sc_mcsum;
-	unsigned sc_chip;
+	uint32_t sc_txc, sc_rxc;
+	uint32_t sc_t1csum;
+	int sc_mcsum;
+	uint32_t sc_chip;
 };
 
 #define KSE_CDTXADDR(sc, x)	((sc)->sc_cddma + KSE_CDTXOFF((x)))
@@ -270,10 +271,10 @@ do {									\
 	KSE_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (/*CONSTCOND*/0)
 
-unsigned kse_burstsize = 16;	/* DMA burst length tuning knob */
+u_int kse_burstsize = 16;	/* DMA burst length tuning knob */
 
 #ifdef KSEDIAGNOSTIC
-unsigned kse_monitor_rxintr;	/* fragmented UDP csum HW bug hook */
+u_int kse_monitor_rxintr;	/* fragmented UDP csum HW bug hook */
 #endif
 
 static int kse_match(struct device *, struct cfdata *, void *);
@@ -558,7 +559,7 @@ static int
 kse_init(struct ifnet *ifp)
 {
 	struct kse_softc *sc = ifp->if_softc;
-	unsigned paddr;
+	uint32_t paddr;
 	int i, error = 0;
 
 	/* cancel pending I/O */
@@ -976,7 +977,7 @@ static int
 kse_intr(void *arg)
 {
 	struct kse_softc *sc = arg;
-	unsigned isr;
+	uint32_t isr;
 
 	if ((isr = CSR_READ_4(sc, INTST)) == 0)
 		return 0;
@@ -1000,7 +1001,7 @@ rxintr(struct kse_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct kse_rxsoft *rxs;
 	struct mbuf *m;
-	unsigned rxstat;
+	uint32_t rxstat;
 	int i, len;
 
 	for (i = sc->sc_rxptr; /*CONSTCOND*/ 1; i = KSE_NEXTRX(i)) {
@@ -1036,6 +1037,7 @@ rxintr(struct kse_softc *sc)
 		    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 		len = rxstat & R0_FL_MASK;
+		len -= ETHER_CRC_LEN;	/* trim CRC off */
 		m = rxs->rxs_mbuf;
 
 		if (add_rxbuf(sc, i) != 0) {
@@ -1049,7 +1051,6 @@ rxintr(struct kse_softc *sc)
 		}
 
 		ifp->if_ipackets++;
-		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
@@ -1080,7 +1081,7 @@ txreap(struct kse_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct kse_txsoft *txs;
-	unsigned txstat;
+	uint32_t txstat;
 	int i;
 
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1130,7 +1131,7 @@ ifmedia_upd(struct ifnet *ifp)
 {
 	struct kse_softc *sc = ifp->if_softc;
 	struct ifmedia *ifm = &sc->sc_media;
-	unsigned ctl;
+	uint16_t ctl;
 
 	ctl = 0;
 	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO) {
@@ -1158,7 +1159,7 @@ ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct kse_softc *sc = ifp->if_softc;
 	struct ifmedia *ifm = &sc->sc_media;
-	unsigned ctl, sts, result;
+	uint16_t ctl, sts, result;
 
 	ifmr->ifm_status = IFM_AVALID;
 	ifmr->ifm_active = IFM_ETHER;
