@@ -1,17 +1,16 @@
-#	$NetBSD: vchain,v 1.2 1997/02/12 23:35:10 gwr Exp $
+#	$NetBSD: vchain,v 1.3 2006/09/29 15:43:06 pooka Exp $
 
 #	@(#)vchain	8.1 (Berkeley) 6/10/93
 #
 # Given a vnode, follow its mount pointers
 define vchain
-
 	set $num = 0
 
 	set $vp=(struct vnode *)$arg0
 	while ($vp)
-		printf "vp: 0x%x freef: 0x%x usecount: %d flags: 0x%x\n", $vp, $vp->v_freef, $vp->v_usecount, $vp->v_flag
+		printf "vp: 0x%x freelist_next: 0x%x usecount: %d flags: 0x%x\n", $vp, $vp->v_freelist.tqe_next, $vp->v_uobj.uo_refs, $vp->v_flag
 		set $num++
-		set $vp = $vp->v_mountf
+		set $vp = $vp->v_mntvnodes.le_next
 	end
 	printf "Number of vnodes: %d\n", $num
 end
@@ -21,10 +20,23 @@ define vprint
 	set $ip=(struct inode *)$vp->v_data
 end
 
+# print the vnode chain for a given mount point
+define mp_vchain
+	set $mp = (struct mount *)$arg0
+	vchain $mp->mnt_vnodelist.lh_first
+end
+
+# print vnode chains for all mount points
 define vall
-	set $mp=rootfs
+	set $mp=mountlist.cqh_first
 	while ($mp)
-		vchain $mp->mnt_mounth
-		set $mp=$mp->mnt_next
+		printf "\tmount point at 0x%x\n", $mp
+		mp_vchain $mp
+		set $mp=$mp->mnt_list.cqe_next
+
+		# "break"
+		if ((const void *)$mp == (const void *)&mountlist)
+			set $mp = 0
+		end
 	end
 end
