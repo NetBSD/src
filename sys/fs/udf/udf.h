@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.7 2006/09/19 23:59:16 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.8 2006/09/29 01:36:28 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -64,6 +64,13 @@ extern int udf_verbose;
 #define UDF_DEBUG_READ		0x200
 #define UDF_DEBUG_CALL		0x400
 #define UDF_DEBUG_NOTIMPL	UDF_DEBUG_CALL
+
+
+#ifdef DEBUG
+#ifdef SYSCTL_SETUP_PROTO
+SYSCTL_SETUP_PROTO(sysctl_vfs_udf_setup);
+#endif /* SYSCTL_SETUP_PROTO */
+#endif
 
 
 #ifdef DEBUG
