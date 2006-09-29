@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.16 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.17 2006/09/29 19:41:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.16 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.17 2006/09/29 19:41:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -745,10 +745,8 @@ union_close(v)
 	}
 
 #ifdef DIAGNOSTIC
-	if (vp == NULLVP) {
-		vprint("empty union vnode", vp);
-		panic("union_close empty vnode");
-	}
+	if (vp == NULLVP)
+		panic("union_close empty union vnode");
 #endif
 
 	ap->a_vp = vp;
