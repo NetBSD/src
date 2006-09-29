@@ -1093,6 +1093,7 @@ multilib.h: s-mlib; @true
 s-mlib: $(srcdir)/genmultilib Makefile
 	if test @enable_multilib@ = yes \
 	   || test -n "$(MULTILIB_OSDIRNAMES)"; then \
+	  CONFIG_SHELL="$(SHELL)" \
 	  $(SHELL) $(srcdir)/genmultilib \
 	    "$(MULTILIB_OPTIONS)" \
 	    "$(MULTILIB_DIRNAMES)" \
