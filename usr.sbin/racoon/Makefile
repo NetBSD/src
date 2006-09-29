@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2006/09/16 06:19:50 manu Exp $
+# $NetBSD: Makefile,v 1.16 2006/09/29 05:06:34 manu Exp $
 
 WARNS=	0	# Will be fixed later
 
@@ -30,7 +30,7 @@ CPPFLAGS+= -DSYSCONFDIR=\"/etc/racoon\"
 CPPFLAGS+= -DSADB_X_EALG_AESCBC=SADB_X_EALG_AES
 
 LDADD+= -ll -ly -lipsec -lutil
-DPADD+= ${LIBL} ${LIBY} ${LIBCRYPTO}
+DPADD+= ${LIBL} ${LIBY} ${LIBCRYPTO} ${LIBUTIL}
 
 YHEADER=cfparse.h
 
