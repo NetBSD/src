@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.196 2006/06/09 21:29:39 aymeric Exp $	*/
+/*	$NetBSD: machdep.c,v 1.196.8.1 2006/09/29 15:32:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.196 2006/06/09 21:29:39 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.196.8.1 2006/09/29 15:32:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,11 +167,6 @@ void fdintr(int);
 #endif
 
 volatile unsigned int interrupt_depth = 0;
-
-/*
- * patched by some devices at attach time (currently, only the coms)
- */
-u_int16_t amiga_serialspl = PSL_S|PSL_IPL4;
 
 struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
@@ -1618,3 +1613,23 @@ int _spllkm7() {
 #endif
 
 #endif
+
+int ipl2spl_table[_NIPL] = {
+	[IPL_NONE] = PSL_IPL0|PSL_S,
+	[IPL_SOFTCLOCK] = PSL_IPL1|PSL_S,
+	[IPL_BIO] = PSL_IPL3|PSL_S,
+	[IPL_NET] = PSL_IPL3|PSL_S,
+	[IPL_TTY] = PSL_IPL4|PSL_S,
+	[IPL_SERIAL] = PSL_IPL5|PSL_S,
+	[IPL_VM] = PSL_IPL4|PSL_S,
+	[IPL_SERIAL] = PSL_IPL4|PSL_S,	/* patched by some devices at attach
+					   time (currently, only the coms) */
+	[IPL_AUDIO] = PSL_IPL6|PSL_S,
+#if defined(LEV6_DEFER)
+	[IPL_CLOCK] = PSL_IPL4|PSL_S,
+	[IPL_HIGH] = PSL_IPL4|PSL_S,
+#else /* defined(LEV6_DEFER) */
+	[IPL_CLOCK] = PSL_IPL6|PSL_S,
+	[IPL_HIGH] = PSL_IPL7|PSL_S,
+#endif /* defined(LEV6_DEFER) */
+};
