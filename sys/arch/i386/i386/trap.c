@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.213 2006/07/23 22:06:05 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.214 2006/09/29 14:48:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.213 2006/07/23 22:06:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.214 2006/09/29 14:48:15 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -501,6 +501,7 @@ copyfault:
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		uvmexp.softs++;
+		KASSERT(p != NULL);
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
 			KERNEL_PROC_LOCK(l);
@@ -590,6 +591,7 @@ copyfault:
 		extern struct vm_map *kernel_map;
 
 		cr2 = rcr2();
+		KASSERT(l != NULL);
 		KERNEL_PROC_LOCK(l);
 		if (l->l_flag & L_SA) {
 			l->l_savp->savp_faultaddr = (vaddr_t)cr2;
