@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.26 2006/09/18 19:46:21 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.27 2006/09/29 14:59:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.26 2006/09/18 19:46:21 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.27 2006/09/29 14:59:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,13 +203,9 @@ int	reset_on_stop;			/* do a reset() if stopped */
 void
 commands(void)
 {
-	int eofloop = 0;
 	int n;
 	char linebuf[LINESIZE];
-#if __GNUC__
-	/* Avoid longjmp clobbering */
-	(void)&eofloop;
-#endif
+	volatile int eofloop = 0;	/* avoid longjmp clobbering */
 
 	if (!sourcing) {
 		if (signal(SIGINT, SIG_IGN) != SIG_IGN)
@@ -220,7 +216,7 @@ commands(void)
 		(void)signal(SIGTTOU, stop);
 		(void)signal(SIGTTIN, stop);
 	}
-	setexit();
+	setexit();	/* defined as (void)setjmp(srbuf) in def.h */
 	for (;;) {
 		/*
 		 * Print the prompt, if needed.  Clear out
