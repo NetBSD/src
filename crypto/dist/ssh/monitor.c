@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.22 2006/09/28 21:22:14 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.23 2006/09/29 22:47:21 cube Exp $	*/
 /* $OpenBSD: monitor.c,v 1.88 2006/08/12 20:46:46 miod Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.22 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.23 2006/09/29 22:47:21 cube Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -907,6 +907,7 @@ mm_answer_pam_query(int sock, Buffer *m)
 		xfree(prompts);
 	if (echo_on != NULL)
 		xfree(echo_on);
+	auth_method = "keyboard-interactive/pam";
 	mm_request_send(sock, MONITOR_ANS_PAM_QUERY, m);
 	return (0);
 }
@@ -949,6 +950,7 @@ mm_answer_pam_free_ctx(int sock, Buffer *m)
 	(sshpam_device.free_ctx)(sshpam_ctxt);
 	buffer_clear(m);
 	mm_request_send(sock, MONITOR_ANS_PAM_FREE_CTX, m);
+	auth_method = "keyboard-interactive/pam";
 	return (sshpam_authok == sshpam_ctxt);
 }
 #endif
