@@ -1,4 +1,4 @@
-/* $NetBSD: identd.c,v 1.29 2005/06/14 12:17:13 peter Exp $ */
+/* $NetBSD: identd.c,v 1.30 2006/09/29 15:49:29 christos Exp $ */
 
 /*
  * identd.c - TCP/IP Ident protocol server.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: identd.c,v 1.29 2005/06/14 12:17:13 peter Exp $");
+__RCSID("$NetBSD: identd.c,v 1.30 2006/09/29 15:49:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -325,6 +325,7 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 	socklen_t len;
 	uid_t uid;
 	ssize_t n;
+	ssize_t qlen;
 
 	lport = fport = 0;
 
@@ -352,14 +353,26 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 	}
 
 	/* Receive data from the client. */
-	if ((n = recv(fd, buf, sizeof(buf) - 1, 0)) < 0) {
-		fatal("recv");
-	} else if (n == 0) {
-		maybe_syslog(LOG_NOTICE, "recv: EOF");
-		iderror(fd, 0, 0, "UNKNOWN-ERROR");
-		return 1;
+	qlen = 0;
+	for (;;) {
+		if ((n = recv(fd, &buf[qlen], sizeof(buf) - qlen, 0)) < 0) {
+			fatal("recv");
+		} else if (n == 0) {
+			maybe_syslog(LOG_NOTICE, "recv: EOF");
+			iderror(fd, 0, 0, "UNKNOWN-ERROR");
+			return 1;
+		}
+		/*
+		 * 1413 is not clear on what to do if data follows the first
+		 * CRLF before we respond.  We do not consider the query
+		 * complete until we get a CRLF _at the end of the buffer_.
+		 */
+		qlen += n;
+		if ((qlen >= 2) && (buf[qlen - 2] == '\r') &&
+		    (buf[qlen - 1] == '\n'))
+			break;
 	}
-	buf[n] = '\0';
+	buf[qlen - 2] = '\0';
 
 	/* Get local and remote ports from the received data. */
 	p = buf;
