@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.60 2006/09/28 21:34:59 he Exp $	*/
+/*	$NetBSD: extintr.c,v 1.61 2006/09/29 07:37:36 he Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.60 2006/09/28 21:34:59 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.61 2006/09/29 07:37:36 he Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -121,7 +121,9 @@ static void	lpic_enable_irq(int, uint32_t);
 static void	lpic_disable_irq(int, uint32_t);
 static void	lpic_disable_all(void);
 static void	lpic_clear_all(void);
+#ifdef DIAGNOSTIC
 static void	lpic_dump(int);
+#endif
 
 static void	do_pending_int(void);
 static void	legacy_int_init(void);
