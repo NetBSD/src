@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.110 2006/08/19 21:18:40 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.111 2006/09/29 09:56:04 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -516,8 +516,8 @@ config_network(void)
 		/* active interfaces found */
 		msg_display(MSG_netup, net_up);
 		process_menu(MENU_yesno, NULL);
-		if (yesno)
-			return 1;
+		if (!yesno)
+			return 0;
 	}
 
 	if (net_devices == NULL) {
