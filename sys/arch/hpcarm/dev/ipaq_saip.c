@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saip.c,v 1.19 2006/09/28 09:03:46 rjs Exp $	*/
+/*	$NetBSD: ipaq_saip.c,v 1.20 2006/09/29 16:39:27 cube Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_saip.c,v 1.19 2006/09/28 09:03:46 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_saip.c,v 1.20 2006/09/29 16:39:27 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ static int 	ipaq_search(struct device *, struct cfdata *,
 static int	ipaq_print(void *, const char *);
 
 /* attach structures */
-CFATTACH_DECL(ipaq_saip, sizeof(struct ipaq_softc),
+CFATTACH_DECL(ipaqbus, sizeof(struct ipaq_softc),
     ipaq_match, ipaq_attach, NULL, NULL);
 
 static int
