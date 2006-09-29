@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.5 2006/06/29 21:50:16 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.6 2006/09/29 15:44:46 christos Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -75,7 +75,7 @@
 #if 0
 #define RCSID	"Id: auth.c,v 1.112 2006/06/18 11:26:00 paulus Exp"
 #else
-__RCSID("$NetBSD: auth.c,v 1.5 2006/06/29 21:50:16 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.6 2006/09/29 15:44:46 christos Exp $");
 #endif
 #endif
 
@@ -1667,7 +1667,7 @@ plogin(user, passwd, msg)
     logwtmp(tty, user, ifname);		/* Add wtmp login entry */
 #endif
 #ifdef SUPPORT_UTMPX
-    logwtmpx(tty, "", "", 0, DEAD_PROCESS);	/* Wipe out utmp logout entry */
+    logwtmpx(tty, user, ifname, 0, USER_PROCESS);	/* Add wtmpx login entry */
 #endif
 
 #if defined(_PATH_LASTLOG) && !defined(USE_PAM)
@@ -1714,7 +1714,12 @@ plogout()
     tty = devnam;
     if (strncmp(tty, "/dev/", 5) == 0)
 	tty += 5;
+#ifdef SUPPORT_UTMP
     logwtmp(tty, "", "");		/* Wipe out utmp logout entry */
+#endif
+#ifdef SUPPORT_UTMPX
+    logwtmpx(tty, "", "", 0, DEAD_PROCESS);	/* Wipe out utmp logout entry */
+#endif
     logged_in = 0;
 }
 
