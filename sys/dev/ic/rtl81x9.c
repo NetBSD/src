@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.55 2006/09/29 13:59:40 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.56 2006/09/29 14:03:07 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.55 2006/09/29 13:59:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.56 2006/09/29 14:03:07 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -347,9 +347,9 @@ rtk_mii_readreg(sc, frame)
 	/* Check for ack */
 	MII_CLR(RTK_MII_CLK);
 	DELAY(1);
+	ack = CSR_READ_2(sc, RTK_MII) & RTK_MII_DATAIN;
 	MII_SET(RTK_MII_CLK);
 	DELAY(1);
-	ack = CSR_READ_2(sc, RTK_MII) & RTK_MII_DATAIN;
 
 	/*
 	 * Now try reading data bits. If the ack failed, we still
