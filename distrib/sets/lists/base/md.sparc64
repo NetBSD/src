@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.17 2004/01/11 10:24:58 lukem Exp $
+# $NetBSD: md.sparc64,v 1.18 2006/09/29 19:03:11 macallan Exp $
 ./sbin/edlabel					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
 ./usr/lkm/compat_netbsd32.o			base-netbsd32-lkm
@@ -16,3 +16,4 @@
 ./usr/mdec/ofwboot				base-sysutil-bin
 ./usr/mdec/ofwboot.net				base-sysutil-bin
 ./usr/sbin/eeprom				base-sysutil-bin
+./usr/sbin/ofctl				base-sysutil-bin

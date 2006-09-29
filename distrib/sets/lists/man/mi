@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.933 2006/09/25 19:23:43 christos Exp $
+# $NetBSD: mi,v 1.934 2006/09/29 19:03:11 macallan Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2105,6 +2105,7 @@
 ./usr/share/man/cat8/ntpq.0			man-ntp-catman		.cat
 ./usr/share/man/cat8/ntptime.0			man-ntp-catman		.cat
 ./usr/share/man/cat8/ntptrace.0			man-ntp-catman		.cat
+./usr/share/man/cat8/ofctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/ofppc/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/ofppc/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/oqmgr.0			man-postfix-catman	postfix,.cat
@@ -4480,6 +4481,7 @@
 ./usr/share/man/man8/ntpq.8			man-ntp-man		.man
 ./usr/share/man/man8/ntptime.8			man-ntp-man		.man
 ./usr/share/man/man8/ntptrace.8			man-ntp-man		.man
+./usr/share/man/man8/ofctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/ofppc/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/ofppc/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/oqmgr.8			man-postfix-man		postfix,.man
