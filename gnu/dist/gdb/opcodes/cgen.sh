@@ -51,6 +51,7 @@ options=$8
 extrafiles=$9
 
 rootdir=${srcdir}/..
+move_if_change="${CONFIG_SHELL:-/bin/sh} ${rootdir}/move-if-change"
 
 # $arch is $6, as passed on the command line.
 # $ARCH is the same argument but in all uppercase.
@@ -100,41 +101,41 @@ opcodes)
 
 	# Customise generated files for the particular architecture.
 	sed -e "s/@ARCH@/${ARCH}/g" -e "s/@arch@/${arch}/g" < tmp-desc.h1 > tmp-desc.h
-	${rootdir}/move-if-change tmp-desc.h ${srcdir}/${prefix}-desc.h
+	${move_if_change} tmp-desc.h ${srcdir}/${prefix}-desc.h
 
 	sed -e "s/@ARCH@/${ARCH}/g" -e "s/@arch@/${arch}/g" \
 		-e "s/@prefix@/${prefix}/" < tmp-desc.c1 > tmp-desc.c
-	${rootdir}/move-if-change tmp-desc.c ${srcdir}/${prefix}-desc.c
+	${move_if_change} tmp-desc.c ${srcdir}/${prefix}-desc.c
 
 	sed -e "s/@ARCH@/${ARCH}/g" -e "s/@arch@/${arch}/g" < tmp-opc.h1 > tmp-opc.h
-	${rootdir}/move-if-change tmp-opc.h ${srcdir}/${prefix}-opc.h
+	${move_if_change} tmp-opc.h ${srcdir}/${prefix}-opc.h
 
 	sed -e "s/@ARCH@/${ARCH}/g" -e "s/@arch@/${arch}/g" \
 		-e "s/@prefix@/${prefix}/" < tmp-opc.c1 > tmp-opc.c
-	${rootdir}/move-if-change tmp-opc.c ${srcdir}/${prefix}-opc.c
+	${move_if_change} tmp-opc.c ${srcdir}/${prefix}-opc.c
 
 	case $extrafiles in
 	*opinst*)
 	  sed -e "s/@ARCH@/${ARCH}/g" -e "s/@arch@/${arch}/g" \
 		-e "s/@prefix@/${prefix}/" < tmp-opinst.c1 >tmp-opinst.c
-	  ${rootdir}/move-if-change tmp-opinst.c ${srcdir}/${prefix}-opinst.c
+	  ${move_if_change} tmp-opinst.c ${srcdir}/${prefix}-opinst.c
 	  ;;
 	esac
 
 	cat ${srcdir}/cgen-ibld.in tmp-ibld.in1 | \
 	  sed -e "s/@ARCH@/${ARCH}/g" -e "s/@arch@/${arch}/g" \
 		-e "s/@prefix@/${prefix}/" > tmp-ibld.c
-	${rootdir}/move-if-change tmp-ibld.c ${srcdir}/${prefix}-ibld.c
+	${move_if_change} tmp-ibld.c ${srcdir}/${prefix}-ibld.c
 
 	sed -e "/ -- assembler routines/ r tmp-asm.in1" ${srcdir}/cgen-asm.in \
 	  | sed -e "s/@ARCH@/${ARCH}/g" -e "s/@arch@/${arch}/g" \
 		-e "s/@prefix@/${prefix}/" > tmp-asm.c
-	${rootdir}/move-if-change tmp-asm.c ${srcdir}/${prefix}-asm.c
+	${move_if_change} tmp-asm.c ${srcdir}/${prefix}-asm.c
 
 	sed -e "/ -- disassembler routines/ r tmp-dis.in1" ${srcdir}/cgen-dis.in \
 	  | sed -e "s/@ARCH@/${ARCH}/g" -e "s/@arch@/${arch}/g" \
 		-e "s/@prefix@/${prefix}/" > tmp-dis.c
-	${rootdir}/move-if-change tmp-dis.c ${srcdir}/${prefix}-dis.c
+	${move_if_change} tmp-dis.c ${srcdir}/${prefix}-dis.c
 
 	# Remove temporary files.
 	rm -f tmp-desc.h1 tmp-desc.c1
