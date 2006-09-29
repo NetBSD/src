@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.53 2006/08/20 18:52:05 thorpej Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.54 2006/09/29 20:00:15 apb Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -482,9 +482,9 @@ void *setmode(const char *);
 
 /* <paths.h> */
 
-#ifndef _PATH_BSHELL
+/* The host's _PATH_BSHELL might be broken, so override it. */
+#undef _PATH_BSHELL
 #define _PATH_BSHELL PATH_BSHELL
-#endif
 #ifndef _PATH_DEFPATH
 #define _PATH_DEFPATH "/usr/bin:/bin:/usr/local/bin"
 #endif
