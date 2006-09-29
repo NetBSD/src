@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.29 2006/09/14 14:42:37 hubertf Exp $	*/
+/*	$NetBSD: menus.mi,v 1.30 2006/09/29 19:41:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -167,6 +167,7 @@ menu netbsd, title MSG_NetBSD_VERSION_Install_System, y=-1,
 	option MSG_Utility_menu, sub menu utility;
 
 menu utility, title MSG_NetBSD_VERSION_Utilities, exit;
+	display action  { toplevel(); };
 	option MSG_Run_bin_sh,
 		action (endwin) { system("/bin/sh"); };
 	option MSG_Set_timezone, 
