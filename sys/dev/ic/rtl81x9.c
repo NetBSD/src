@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.56 2006/09/29 14:03:07 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.57 2006/09/29 16:33:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.56 2006/09/29 14:03:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.57 2006/09/29 16:33:41 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1101,7 +1101,7 @@ rtk_rxeof(sc)
 		else
 			new_rx = cur_rx + total_len;
 		/* Round up to 32-bit boundary. */
-		new_rx = (new_rx + 3) & ~3;
+		new_rx = ((new_rx + 3) & ~3) % RTK_RXBUFLEN;
 
 		/*
 		 * The RealTek chip includes the CRC with every
@@ -1162,7 +1162,7 @@ rtk_rxeof(sc)
 		    cur_rx, total_len, BUS_DMASYNC_PREREAD);
 
  next_packet:
-		CSR_WRITE_2(sc, RTK_CURRXADDR, new_rx - 16);
+		CSR_WRITE_2(sc, RTK_CURRXADDR, (new_rx - 16) % RTK_RXBUFLEN);
 		cur_rx = new_rx;
 
 		if (m == NULL)
