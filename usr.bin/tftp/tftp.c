@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.26 2006/07/21 17:49:00 jmcneill Exp $	*/
+/*	$NetBSD: tftp.c,v 1.27 2006/09/29 14:42:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.26 2006/07/21 17:49:00 jmcneill Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.27 2006/09/29 14:42:59 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -496,6 +496,8 @@ skip_ack:
 					size = 4;
 					if (mcaddr != INADDR_NONE) {
 						mf = tftp_igmp_join();
+						if (mf < 0) 
+							goto abort;
 						if (mcmasterslave == 0)
 							goto skip_ack;
 					}
@@ -514,7 +516,7 @@ skip_ack:
 abort:						/* ok to ack, since user */
 	ap->th_opcode = htons((u_short)ACK);	/* has seen err msg */
 	ap->th_block = htons((u_short)block);
-	if (mcaddr != INADDR_NONE) {
+	if (mcaddr != INADDR_NONE && mf >= 0) {
 		tftp_igmp_leave(mf);
 		mf = -1;
 	}
