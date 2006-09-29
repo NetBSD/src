@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.31 2006/07/23 22:06:15 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.32 2006/09/29 19:37:11 christos Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.31 2006/07/23 22:06:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.32 2006/09/29 19:37:11 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1520,8 +1520,10 @@ retry:
 			    lockmgr(vp->v_vnlock,
 			      LK_INTERLOCK | LK_EXCLUSIVE | LK_NOWAIT,
 			      VI_MTX(devvp)) != 0) {
+#if 0 /* CID-2949: dead code */
 				if (lbn >= NDADDR)
 					brelse(ibp);
+#endif 
 				vn_lock(vp, LK_EXCLUSIVE | LK_SLEEPFAIL);
 				goto retry;
 			}
