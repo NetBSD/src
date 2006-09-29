@@ -128,7 +128,7 @@ echo "static const char *const multilib_raw[] = {"
 # by creating a temporary shell script which invokes itself.
 rm -f tmpmultilib
 cat >tmpmultilib <<\EOF
-#!/bin/sh
+#!${CONFIG_SHELL:-/bin/sh}
 # This recursive script basically outputs all combinations of its
 # input arguments, handling mutually exclusive sets of options by
 # repetition.  When the script is called, ${initial} is the list of
@@ -167,7 +167,7 @@ rm -f tmpmultilib
 if [ -n "${exceptions}" ]; then
   rm -f tmpmultilib2
   cat >tmpmultilib2 <<\EOF
-#!/bin/sh
+#!${CONFIG_SHELL:-/bin/sh}
 # This recursive script weeds out any combination of multilib
 # switches that should not be generated.  The output looks like
 # a list of subdirectory names with leading and trailing slashes.
@@ -247,7 +247,7 @@ fi
 # In other words, we must output all combinations of matches.
 rm -f tmpmultilib2
 cat >tmpmultilib2 <<\EOF
-#!/bin/sh
+#!${CONFIG_SHELL:-/bin/sh}
 # The positional parameters are a list of matches to consider.
 # ${dirout} is the directory name and ${optout} is the current list of
 # options.
