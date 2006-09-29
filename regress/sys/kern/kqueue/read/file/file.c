@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.3 2002/12/06 02:06:16 thorpej Exp $	*/
+/*	$NetBSD: file.c,v 1.4 2006/09/29 14:18:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -104,6 +104,8 @@ main(int argc, char **argv)
 #endif
 
 		n = read(fd, buffer, 128);
+		if (n < 0)
+			err(1, "read");
 		buffer[n] = '\0';
 		printf("file(%d): %s", num, buffer);
 	}
