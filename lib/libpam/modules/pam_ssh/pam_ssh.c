@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.12 2006/03/19 06:52:26 jnemeth Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.13 2006/09/29 04:56:04 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.12 2006/03/19 06:52:26 jnemeth Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.13 2006/09/29 04:56:04 dogcow Exp $");
 #endif
 
 #include <sys/param.h>
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: pam_ssh.c,v 1.12 2006/03/19 06:52:26 jnemeth Exp $");
 #include <openssl/evp.h>
 
 #include "key.h"
+#include "buffer.h"
 #include "authfd.h"
 #include "authfile.h"
 
