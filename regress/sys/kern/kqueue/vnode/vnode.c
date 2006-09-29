@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.c,v 1.2 2003/10/21 09:42:48 itojun Exp $	*/
+/*	$NetBSD: vnode.c,v 1.3 2006/09/29 14:18:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -139,6 +139,8 @@ main(int argc, char **argv)
 			if (event[0].data < 0)
 				lseek(fd, 0, SEEK_END);
 			n = read(fd, buffer, 128);
+			if (n < 0)
+				err(1, "read");
 			buffer[n] = '\0';
 			printf("[%d] %s", n, buffer);
 		}

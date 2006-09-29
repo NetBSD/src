@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.6 2006/05/10 19:10:09 mrg Exp $	*/
+/*	$NetBSD: inet.c,v 1.7 2006/09/29 14:18:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -273,6 +273,8 @@ printf("ir: match is %d\n", match); /* sleep(1); */
 			continue;
 
 		n = read(fd, buffer, 128);
+		if (n < 0)
+			err(1, "read");
 		buffer[n] = '\0';
 buffer[0] = '\0';
 		printf("[%d] %s", n, buffer);

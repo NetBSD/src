@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe1.c,v 1.1.1.1 2002/10/03 07:46:03 jdolecek Exp $	*/
+/*	$NetBSD: pipe1.c,v 1.2 2006/09/29 14:18:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -82,6 +82,8 @@ main(int argc, char **argv)
 		    n, event[0].flags, event[0].fflags, event[0].data);
 
 	n = read(fds[0], buffer, event[0].data);
+	if (n < 0) 
+		err(1, "read");
 	buffer[n] = '\0';
 	printf("pipe: read '%s'\n", buffer);
 
