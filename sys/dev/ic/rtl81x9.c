@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.61 2006/09/29 18:20:02 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.62 2006/09/29 18:27:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.61 2006/09/29 18:20:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.62 2006/09/29 18:27:51 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -175,9 +175,7 @@ STATIC int rtk_list_tx_init(struct rtk_softc *);
  * Send a read command and address to the EEPROM, check for ACK.
  */
 STATIC void
-rtk_eeprom_putbyte(sc, addr, addr_len)
-	struct rtk_softc	*sc;
-	int			addr, addr_len;
+rtk_eeprom_putbyte(struct rtk_softc *sc, int addr, int addr_len)
 {
 	int			d, i;
 
@@ -204,9 +202,7 @@ rtk_eeprom_putbyte(sc, addr, addr_len)
  * Read a word of data stored in the EEPROM at address 'addr.'
  */
 u_int16_t
-rtk_read_eeprom(sc, addr, addr_len)
-	struct rtk_softc	*sc;
-	int			addr, addr_len;
+rtk_read_eeprom(struct rtk_softc *sc, int addr, int addr_len)
 {
 	u_int16_t		word = 0;
 	int			i;
@@ -257,8 +253,7 @@ rtk_read_eeprom(sc, addr, addr_len)
  * Sync the PHYs by setting data bit and strobing the clock 32 times.
  */
 STATIC void
-rtk_mii_sync(sc)
-	struct rtk_softc	*sc;
+rtk_mii_sync(struct rtk_softc *sc)
 {
 	int			i;
 
@@ -276,10 +271,7 @@ rtk_mii_sync(sc)
  * Clock a series of bits through the MII.
  */
 STATIC void
-rtk_mii_send(sc, bits, cnt)
-	struct rtk_softc	*sc;
-	u_int32_t		bits;
-	int			cnt;
+rtk_mii_send(struct rtk_softc *sc, u_int32_t bits, int cnt)
 {
 	int			i;
 
@@ -302,9 +294,7 @@ rtk_mii_send(sc, bits, cnt)
  * Read an PHY register through the MII.
  */
 STATIC int
-rtk_mii_readreg(sc, frame)
-	struct rtk_softc	*sc;
-	struct rtk_mii_frame	*frame;
+rtk_mii_readreg(struct rtk_softc *sc, struct rtk_mii_frame *frame)
 {
 	int			i, ack, s;
 
@@ -394,9 +384,7 @@ rtk_mii_readreg(sc, frame)
  * Write to a PHY register through the MII.
  */
 STATIC int
-rtk_mii_writereg(sc, frame)
-	struct rtk_softc	*sc;
-	struct rtk_mii_frame	*frame;
+rtk_mii_writereg(struct rtk_softc *sc, struct rtk_mii_frame *frame)
 {
 	int			s;
 
@@ -439,9 +427,7 @@ rtk_mii_writereg(sc, frame)
 }
 
 STATIC int
-rtk_phy_readreg(self, phy, reg)
-	struct device		*self;
-	int			phy, reg;
+rtk_phy_readreg(struct device *self, int phy, int reg)
 {
 	struct rtk_softc	*sc = (void *)self;
 	struct rtk_mii_frame	frame;
@@ -487,10 +473,7 @@ rtk_phy_readreg(self, phy, reg)
 	return (frame.mii_data);
 }
 
-STATIC void rtk_phy_writereg(self, phy, reg, data)
-	struct device		*self;
-	int			phy, reg;
-	int			data;
+STATIC void rtk_phy_writereg(struct device *self, int phy, int reg, int data)
 {
 	struct rtk_softc	*sc = (void *)self;
 	struct rtk_mii_frame	frame;
@@ -536,8 +519,7 @@ STATIC void rtk_phy_writereg(self, phy, reg, data)
 }
 
 STATIC void
-rtk_phy_statchg(v)
-	struct device *v;
+rtk_phy_statchg(struct device *v)
 {
 
 	/* Nothing to do. */
@@ -550,8 +532,7 @@ rtk_phy_statchg(v)
  * Program the 64-bit multicast hash filter.
  */
 void
-rtk_setmulti(sc)
-	struct rtk_softc	*sc;
+rtk_setmulti(struct rtk_softc *sc)
 {
 	struct ifnet		*ifp;
 	int			h = 0;
@@ -608,8 +589,7 @@ allmulti:
 }
 
 void
-rtk_reset(sc)
-	struct rtk_softc	*sc;
+rtk_reset(struct rtk_softc *sc)
 {
 	int			i;
 
@@ -629,8 +609,7 @@ rtk_reset(sc)
  * setup and ethernet/BPF attach.
  */
 void
-rtk_attach(sc)
-	struct rtk_softc *sc;
+rtk_attach(struct rtk_softc *sc)
 {
 	struct ifnet *ifp;
 	struct rtk_tx_desc *txd;
@@ -807,8 +786,7 @@ rtk_attach(sc)
  * Initialize the transmit descriptors.
  */
 STATIC int
-rtk_list_tx_init(sc)
-	struct rtk_softc	*sc;
+rtk_list_tx_init(struct rtk_softc *sc)
 {
 	struct rtk_tx_desc *txd;
 	int i;
@@ -832,9 +810,7 @@ rtk_list_tx_init(sc)
  *     Handle device activation/deactivation requests.
  */
 int
-rtk_activate(self, act)
-	struct device *self;
-	enum devact act;
+rtk_activate(struct device *self, enum devact act)
 {
 	struct rtk_softc *sc = (void *) self;
 	int s, error = 0;
@@ -859,8 +835,7 @@ rtk_activate(self, act)
  *     Detach a rtk interface.
  */
 int
-rtk_detach(sc)
-	struct rtk_softc *sc;
+rtk_detach(struct rtk_softc *sc)
 {
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 	struct rtk_tx_desc *txd;
@@ -909,8 +884,7 @@ rtk_detach(sc)
  *     Enable the RTL81X9 chip.
  */
 int
-rtk_enable(sc)
-	struct rtk_softc *sc;
+rtk_enable(struct rtk_softc *sc)
 {
 
 	if (RTK_IS_ENABLED(sc) == 0 && sc->sc_enable != NULL) {
@@ -929,8 +903,7 @@ rtk_enable(sc)
  *     Disable the RTL81X9 chip.
  */
 void
-rtk_disable(sc)
-	struct rtk_softc *sc;
+rtk_disable(struct rtk_softc *sc)
 {
 
 	if (RTK_IS_ENABLED(sc) && sc->sc_disable != NULL) {
@@ -944,9 +917,7 @@ rtk_disable(sc)
  *     Power management (suspend/resume) hook.
  */
 void
-rtk_power(why, arg)
-	int why;
-	void *arg;
+rtk_power(int why, void *arg)
 {
 	struct rtk_softc *sc = (void *) arg;
 	struct ifnet *ifp = &sc->ethercom.ec_if;
@@ -996,8 +967,7 @@ rtk_power(why, arg)
  * shifted forward 2 bytes.
  */
 STATIC void
-rtk_rxeof(sc)
-	struct rtk_softc	*sc;
+rtk_rxeof(struct rtk_softc *sc)
 {
 	struct mbuf		*m;
 	struct ifnet		*ifp;
@@ -1185,8 +1155,7 @@ rtk_rxeof(sc)
  * the list buffers.
  */
 STATIC void
-rtk_txeof(sc)
-	struct rtk_softc	*sc;
+rtk_txeof(struct rtk_softc *sc)
 {
 	struct ifnet *ifp;
 	struct rtk_tx_desc *txd;
@@ -1251,8 +1220,7 @@ rtk_txeof(sc)
 }
 
 int
-rtk_intr(arg)
-	void			*arg;
+rtk_intr(void *arg)
 {
 	struct rtk_softc	*sc;
 	struct ifnet		*ifp;
@@ -1310,8 +1278,7 @@ rtk_intr(arg)
  */
 
 STATIC void
-rtk_start(ifp)
-	struct ifnet		*ifp;
+rtk_start(struct ifnet *ifp)
 {
 	struct rtk_softc *sc;
 	struct rtk_tx_desc *txd;
@@ -1419,8 +1386,7 @@ rtk_start(ifp)
 }
 
 STATIC int
-rtk_init(ifp)
-	struct ifnet *ifp;
+rtk_init(struct ifnet *ifp)
 {
 	struct rtk_softc	*sc = ifp->if_softc;
 	int			error = 0, i;
@@ -1525,8 +1491,7 @@ rtk_init(ifp)
  * Set media options.
  */
 STATIC int
-rtk_ifmedia_upd(ifp)
-	struct ifnet		*ifp;
+rtk_ifmedia_upd(struct ifnet *ifp)
 {
 	struct rtk_softc	*sc;
 
@@ -1539,9 +1504,7 @@ rtk_ifmedia_upd(ifp)
  * Report current media status.
  */
 STATIC void
-rtk_ifmedia_sts(ifp, ifmr)
-	struct ifnet		*ifp;
-	struct ifmediareq	*ifmr;
+rtk_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct rtk_softc	*sc;
 
@@ -1553,10 +1516,7 @@ rtk_ifmedia_sts(ifp, ifmr)
 }
 
 STATIC int
-rtk_ioctl(ifp, command, data)
-	struct ifnet		*ifp;
-	u_long			command;
-	caddr_t			data;
+rtk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct rtk_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *) data;
@@ -1591,8 +1551,7 @@ rtk_ioctl(ifp, command, data)
 }
 
 STATIC void
-rtk_watchdog(ifp)
-	struct ifnet		*ifp;
+rtk_watchdog(struct ifnet *ifp)
 {
 	struct rtk_softc	*sc;
 
@@ -1610,9 +1569,7 @@ rtk_watchdog(ifp)
  * RX and TX lists.
  */
 STATIC void
-rtk_stop(ifp, disable)
-	struct ifnet *ifp;
-	int disable;
+rtk_stop(struct ifnet *ifp, int disable)
 {
 	struct rtk_softc *sc = ifp->if_softc;
 	struct rtk_tx_desc *txd;
@@ -1647,8 +1604,7 @@ rtk_stop(ifp, disable)
  * get confused by errant DMAs when rebooting.
  */
 STATIC void
-rtk_shutdown(vsc)
-	void			*vsc;
+rtk_shutdown(void *vsc)
 {
 	struct rtk_softc	*sc = (struct rtk_softc *)vsc;
 
@@ -1656,8 +1612,7 @@ rtk_shutdown(vsc)
 }
 
 STATIC void
-rtk_tick(arg)
-	void *arg;
+rtk_tick(void *arg)
 {
 	struct rtk_softc *sc = arg;
 	int s = splnet();
