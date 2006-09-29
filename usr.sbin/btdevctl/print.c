@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.6 2006/09/28 09:13:56 he Exp $	*/
+/*	$NetBSD: print.c,v 1.7 2006/09/29 18:48:17 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.6 2006/09/28 09:13:56 he Exp $");
+__RCSID("$NetBSD: print.c,v 1.7 2006/09/29 18:48:17 plunky Exp $");
 
 #include <sys/types.h>
 
@@ -73,7 +73,6 @@ __RCSID("$NetBSD: print.c,v 1.6 2006/09/28 09:13:56 he Exp $");
 #include <bluetooth.h>
 #include <err.h>
 #include <usbhid.h>
-#include <stdlib.h>
 
 #include "btdevctl.h"
 
@@ -87,7 +86,6 @@ void
 cfg_print(prop_dictionary_t dict)
 {
 	prop_object_t obj;
-	char *p;
 
 	obj = prop_dictionary_get(dict, BTDEVladdr);
 	if (prop_object_type(obj) != PROP_TYPE_DATA) {
@@ -106,9 +104,7 @@ cfg_print(prop_dictionary_t dict)
 		printf("No device type!\n");
 		return;
 	}
-	p =  prop_string_cstring(obj);
-	printf("device type: %s\n", p);
-	free(p);
+	printf("device type: %s\n", prop_string_cstring_nocopy(obj));
 
 	if (prop_string_equals_cstring(obj, "bthidev")) {
 		cfg_bthidev(dict);
