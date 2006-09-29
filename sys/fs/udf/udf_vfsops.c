@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.13 2006/09/05 17:03:04 reinoud Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.14 2006/09/29 01:36:28 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.13 2006/09/05 17:03:04 reinoud Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.14 2006/09/29 01:36:28 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: udf_vfsops.c,v 1.13 2006/09/05 17:03:04 reinoud Exp $");
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/conf.h>
+#include <sys/sysctl.h>
 #include <sys/kauth.h>
 
 #include <fs/udf/ecma167-udf.h>
@@ -744,3 +745,44 @@ udf_snapshot(struct mount *mp, struct vnode *vp, struct timespec *tm)
 	DPRINTF(NOTIMPL, ("udf_snapshot called\n"));
 	return EOPNOTSUPP;
 }
+
+/* --------------------------------------------------------------------- */
+
+/*
+ * If running a DEBUG kernel, provide an easy way to set the debug flags when
+ * running into a problem.
+ */
+
+#ifdef DEBUG
+#define UDF_VERBOSE_SYSCTLOPT 1
+
+SYSCTL_SETUP(sysctl_vfs_udf_setup, "sysctl vfs.udf subtree setup")
+{
+	/*
+	 * XXX the "24" below could be dynamic, thereby eliminating one
+	 * more instance of the "number to vfs" mapping problem, but
+	 * "24" is the order as taken from sys/mount.h
+	 */
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "udf",
+		       SYSCTL_DESCR("OSTA Universal File System"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 24, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "verbose",
+		       SYSCTL_DESCR("Bitmask for filesystem debugging"),
+		       NULL, 0, &udf_verbose, 0,
+		       CTL_VFS, 24, UDF_VERBOSE_SYSCTLOPT, CTL_EOL);
+}
+
+#endif /* DEBUG */
+
