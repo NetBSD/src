@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.13 2006/08/11 13:22:43 yamt Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.14 2006/09/29 14:36:30 christos Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.13 2006/08/11 13:22:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.14 2006/09/29 14:36:30 christos Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -434,8 +434,10 @@ xenbus_probe_backends(void)
 		    &dirid_n, &dirid);
 		DPRINTK("directory backend/%s err %d dirid_n %d",
 		    dirt[type], err, dirid_n);
-		if (err)
+		if (err) {
+			free(dirt, M_DEVBUF); /* to be checked */
 			return err;
+		}
 		for (id = 0; id < dirid_n; id++) {
 			snprintf(path, sizeof(path), "backend/%s/%s",
 			    dirt[type], dirid[id]);
