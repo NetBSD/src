@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.27 2006/07/23 22:06:10 ad Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.28 2006/09/29 18:30:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.27 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.28 2006/09/29 18:30:37 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -312,6 +312,8 @@ filecore_mountfs(devvp, mp, l, argp)
 #endif
 	if (error != 0)
 		goto out;
+
+	KASSERT(bp != NULL);
 	if (filecore_bbchecksum(bp->b_data) != 0) {
 		error = EINVAL;
 		goto out;
