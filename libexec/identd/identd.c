@@ -1,4 +1,4 @@
-/* $NetBSD: identd.c,v 1.30 2006/09/29 15:49:29 christos Exp $ */
+/* $NetBSD: identd.c,v 1.31 2006/09/29 17:02:04 christos Exp $ */
 
 /*
  * identd.c - TCP/IP Ident protocol server.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: identd.c,v 1.30 2006/09/29 15:49:29 christos Exp $");
+__RCSID("$NetBSD: identd.c,v 1.31 2006/09/29 17:02:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -368,6 +368,10 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 		 * complete until we get a CRLF _at the end of the buffer_.
 		 */
 		qlen += n;
+		if (qlen >= sizeof(buf)) {
+			maybe_syslog(LOG_NOTICE, "recv: message too long");
+			exit(0);
+		}
 		if ((qlen >= 2) && (buf[qlen - 2] == '\r') &&
 		    (buf[qlen - 1] == '\n'))
 			break;
