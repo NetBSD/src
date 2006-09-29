@@ -11,7 +11,7 @@
 PACKAGE = @PACKAGE@
 VERSION = @VERSION@
 
-SHELL = /bin/sh
+SHELL = @SHELL@
 @SET_MAKE@
 
 srcdir = @srcdir@

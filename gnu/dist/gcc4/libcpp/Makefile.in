@@ -129,7 +129,7 @@ $(srcdir)/config.in: @MAINT@ $(srcdir)/configure
 localedir.h: localedir.hs; @true
 localedir.hs: Makefile
 	echo "#define LOCALEDIR \"$(localedir)\"" > localedir.new
-	$(srcdir)/../move-if-change localedir.new localedir.h
+	$(SHELL) $(srcdir)/../move-if-change localedir.new localedir.h
 	echo timestamp > localedir.hs
 
 # Installation rules and other phony targets
