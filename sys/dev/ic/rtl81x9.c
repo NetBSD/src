@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.60 2006/09/29 16:46:49 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.61 2006/09/29 18:20:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.60 2006/09/29 16:46:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.61 2006/09/29 18:20:02 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -131,13 +131,13 @@ __KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.60 2006/09/29 16:46:49 tsutsui Exp $")
 #define STATIC static
 #endif
 
-STATIC void rtk_reset		(struct rtk_softc *);
-STATIC void rtk_rxeof		(struct rtk_softc *);
-STATIC void rtk_txeof		(struct rtk_softc *);
-STATIC void rtk_start		(struct ifnet *);
-STATIC int rtk_ioctl		(struct ifnet *, u_long, caddr_t);
-STATIC int rtk_init		(struct ifnet *);
-STATIC void rtk_stop		(struct ifnet *, int);
+STATIC void rtk_reset(struct rtk_softc *);
+STATIC void rtk_rxeof(struct rtk_softc *);
+STATIC void rtk_txeof(struct rtk_softc *);
+STATIC void rtk_start(struct ifnet *);
+STATIC int rtk_ioctl(struct ifnet *, u_long, caddr_t);
+STATIC int rtk_init(struct ifnet *);
+STATIC void rtk_stop(struct ifnet *, int);
 
 STATIC void rtk_watchdog(struct ifnet *);
 STATIC void rtk_shutdown(void *);
@@ -153,11 +153,11 @@ STATIC int rtk_mii_writereg(struct rtk_softc *, struct rtk_mii_frame *);
 STATIC int rtk_phy_readreg(struct device *, int, int);
 STATIC void rtk_phy_writereg(struct device *, int, int, int);
 STATIC void rtk_phy_statchg(struct device *);
-STATIC void rtk_tick		(void *);
+STATIC void rtk_tick(void *);
 
-STATIC int rtk_enable		(struct rtk_softc *);
-STATIC void rtk_disable		(struct rtk_softc *);
-STATIC void rtk_power		(int, void *);
+STATIC int rtk_enable(struct rtk_softc *);
+STATIC void rtk_disable(struct rtk_softc *);
+STATIC void rtk_power(int, void *);
 
 STATIC int rtk_list_tx_init(struct rtk_softc *);
 
@@ -286,11 +286,11 @@ rtk_mii_send(sc, bits, cnt)
 	MII_CLR(RTK_MII_CLK);
 
 	for (i = cnt; i > 0; i--) {
-                if (bits & (1 << (i - 1))) {
+		if (bits & (1 << (i - 1))) {
 			MII_SET(RTK_MII_DATAOUT);
-                } else {
+		} else {
 			MII_CLR(RTK_MII_DATAOUT);
-                }
+		}
 		DELAY(1);
 		MII_CLR(RTK_MII_CLK);
 		DELAY(1);
@@ -321,7 +321,7 @@ rtk_mii_readreg(sc, frame)
 	CSR_WRITE_2(sc, RTK_MII, 0);
 
 	/*
- 	 * Turn on data xmit.
+	 * Turn on data xmit.
 	 */
 	MII_SET(RTK_MII_DIR);
 
@@ -409,7 +409,7 @@ rtk_mii_writereg(sc, frame)
 	frame->mii_turnaround = RTK_MII_TURNAROUND;
 
 	/*
- 	 * Turn on data output.
+	 * Turn on data output.
 	 */
 	MII_SET(RTK_MII_DIR);
 
@@ -666,7 +666,7 @@ rtk_attach(sc)
 	    RTK_RXBUFLEN + 16, PAGE_SIZE, 0, &sc->sc_dmaseg, 1, &sc->sc_dmanseg,
 	    BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't allocate recv buffer, error = %d\n",
-		       sc->sc_dev.dv_xname, error);
+		    sc->sc_dev.dv_xname, error);
 		goto fail_0;
 	}
 
@@ -674,7 +674,7 @@ rtk_attach(sc)
 	    RTK_RXBUFLEN + 16, (caddr_t *)&sc->rtk_rx_buf,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: can't map recv buffer, error = %d\n",
-		       sc->sc_dev.dv_xname, error);
+		    sc->sc_dev.dv_xname, error);
 		goto fail_1;
 	}
 
@@ -682,7 +682,7 @@ rtk_attach(sc)
 	    RTK_RXBUFLEN + 16, 1, RTK_RXBUFLEN + 16, 0, BUS_DMA_NOWAIT,
 	    &sc->recv_dmamap)) != 0) {
 		printf("%s: can't create recv buffer DMA map, error = %d\n",
-		       sc->sc_dev.dv_xname, error);
+		    sc->sc_dev.dv_xname, error);
 		goto fail_2;
 	}
 
@@ -690,7 +690,7 @@ rtk_attach(sc)
 	    sc->rtk_rx_buf, RTK_RXBUFLEN + 16,
 	    NULL, BUS_DMA_READ|BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't load recv buffer DMA map, error = %d\n",
-		       sc->sc_dev.dv_xname, error);
+		    sc->sc_dev.dv_xname, error);
 		goto fail_3;
 	}
 
@@ -743,7 +743,8 @@ rtk_attach(sc)
 	sc->mii.mii_readreg = rtk_phy_readreg;
 	sc->mii.mii_writereg = rtk_phy_writereg;
 	sc->mii.mii_statchg = rtk_phy_statchg;
-	ifmedia_init(&sc->mii.mii_media, IFM_IMASK, rtk_ifmedia_upd, rtk_ifmedia_sts);
+	ifmedia_init(&sc->mii.mii_media, IFM_IMASK, rtk_ifmedia_upd,
+	    rtk_ifmedia_sts);
 	mii_attach(&sc->sc_dev, &sc->mii, 0xffffffff,
 	    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
@@ -998,8 +999,8 @@ STATIC void
 rtk_rxeof(sc)
 	struct rtk_softc	*sc;
 {
-        struct mbuf		*m;
-        struct ifnet		*ifp;
+	struct mbuf		*m;
+	struct ifnet		*ifp;
 	caddr_t			rxbufpos, dst;
 	u_int			total_len, wrap = 0;
 	u_int32_t		rxstat;
@@ -1391,7 +1392,7 @@ rtk_start(ifp)
 
 		/*
 		 * Transmit the frame.
-	 	 */
+		 */
 		bus_dmamap_sync(sc->sc_dmat,
 		    txd->txd_dmamap, 0, txd->txd_dmamap->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
