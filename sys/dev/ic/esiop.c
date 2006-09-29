@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.35 2005/12/24 23:41:33 perry Exp $	*/
+/*	$NetBSD: esiop.c,v 1.36 2006/09/29 14:28:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.35 2005/12/24 23:41:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.36 2006/09/29 14:28:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1752,14 +1752,14 @@ esiop_start(sc, esiop_cmd)
 #ifdef DIAGNOSTIC
 	/* sanity check the tag if needed */
 	if (esiop_cmd->cmd_c.flags & CMDFL_TAG) {
-		if (esiop_lun->tactive[esiop_cmd->cmd_c.tag] != NULL)
-			panic("esiop_start: tag not free");
 		if (esiop_cmd->cmd_c.tag >= ESIOP_NTAG ||
 		    esiop_cmd->cmd_c.tag < 0) {
 			scsipi_printaddr(esiop_cmd->cmd_c.xs->xs_periph);
 			printf(": tag id %d\n", esiop_cmd->cmd_c.tag);
 			panic("esiop_start: invalid tag id");
 		}
+		if (esiop_lun->tactive[esiop_cmd->cmd_c.tag] != NULL)
+			panic("esiop_start: tag not free");
 	}
 #endif
 #ifdef SIOP_DEBUG_SCHED
