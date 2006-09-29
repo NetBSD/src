@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.53 2006/09/24 03:53:08 jmcneill Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.54 2006/09/29 08:33:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.53 2006/09/24 03:53:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.54 2006/09/29 08:33:06 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1040,6 +1040,7 @@ rtk_rxeof(sc)
 			break;
 
 		if ((rxstat & RTK_RXSTAT_RXOK) == 0 ||
+		    total_len < ETHER_MIN_LEN ||
 		    total_len > ETHER_MAX_LEN) {
 			ifp->if_ierrors++;
 
@@ -1103,6 +1104,12 @@ rtk_rxeof(sc)
 		new_rx = (new_rx + 3) & ~3;
 
 		/*
+		 * The RealTek chip includes the CRC with every
+		 * incoming packet; trim it off here.
+		 */
+		total_len -= ETHER_CRC_LEN;
+
+		/*
 		 * Now allocate an mbuf (and possibly a cluster) to hold
 		 * the packet. Note we offset the packet 2 bytes so that
 		 * data after the Ethernet header will be 4-byte aligned.
@@ -1160,12 +1167,6 @@ rtk_rxeof(sc)
 
 		if (m == NULL)
 			continue;
-
-		/*
-		 * The RealTek chip includes the CRC with every
-		 * incoming packet.
-		 */
-		m->m_flags |= M_HASFCS;
 
 		ifp->if_ipackets++;
 
