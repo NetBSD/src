@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.31 2006/07/01 21:42:39 christos Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.32 2006/09/29 14:41:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.31 2006/07/01 21:42:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.32 2006/09/29 14:41:32 christos Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -326,7 +326,8 @@ acpi_md_sleep(int state)
 	struct proc 			*p;
 	struct pmap			*pm;
 	uint32_t			cr3;
-	paddr_t				oldphys;
+	paddr_t				oldphys = 0;
+
 	if (!phys_wakeup) {
 		printf("acpi: can't sleep since wakecode is not installed.\n");
 		return (-1);
