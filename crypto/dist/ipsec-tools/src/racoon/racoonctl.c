@@ -1,4 +1,4 @@
-/*	$NetBSD: racoonctl.c,v 1.5 2006/09/28 20:09:36 manu Exp $	*/
+/*	$NetBSD: racoonctl.c,v 1.6 2006/09/29 21:39:35 manu Exp $	*/
 
 /*	Id: racoonctl.c,v 1.11 2006/04/06 17:06:25 manubsd Exp */
 
@@ -339,8 +339,10 @@ evt_poll(void) {
 		errx(1, "Cannot make combuf");
 
 
-	com_init();
 	while (evt_filter & (EVTF_LOOP|EVTF_PURGE)) {
+		/* handle_recv closes the socket time, so open it each time */
+		com_init();
+
 		if (com_send(sendbuf) != 0)
 			errx(1, "Cannot send combuf");
 
