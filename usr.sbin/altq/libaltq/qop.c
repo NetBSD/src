@@ -1,4 +1,4 @@
-/*	$NetBSD: qop.c,v 1.6 2005/06/07 13:39:37 he Exp $	*/
+/*	$NetBSD: qop.c,v 1.7 2006/09/29 18:40:57 christos Exp $	*/
 /*	$KAME: qop.c,v 1.11 2001/10/26 04:57:59 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -471,7 +471,7 @@ qop_clear(struct ifinfo *ifinfo)
 					qop_delete_cdnr(clinfo);
 					break;
 				}
-			if (root->child == NULL)
+			if (root->child != NULL)
 				qop_delete_class(root);
 		}
 	}
