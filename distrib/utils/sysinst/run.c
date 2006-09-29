@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.62 2006/04/24 19:00:30 snj Exp $	*/
+/*	$NetBSD: run.c,v 1.63 2006/09/29 09:29:12 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,7 +72,7 @@
 /*
  * local prototypes 
  */
-static int log_flip (menudesc *, void *);
+int log_flip (menudesc *, void *);
 static int script_flip (menudesc *, void *);
 
 #define BUFSIZE 4096
@@ -108,7 +108,7 @@ do_logging(void)
 	free_menu(menu_no);
 }
 
-static int
+int
 /*ARGSUSED*/
 log_flip(menudesc *m, void *arg)
 {
