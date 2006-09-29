@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.29 2006/09/28 21:22:15 christos Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.30 2006/09/29 14:34:25 he Exp $	*/
 /* $OpenBSD: sshconnect2.c,v 1.162 2006/08/30 00:06:51 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.29 2006/09/28 21:22:15 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.30 2006/09/29 14:34:25 he Exp $");
 
 #include <sys/queue.h>
 
@@ -187,7 +187,7 @@ struct Authctxt {
 	const char *host;
 	const char *service;
 	Authmethod *method;
-	int success;
+	sig_atomic_t success;
 	char *authlist;
 	/* pubkey */
 	Idlist keys;
