@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.111 2006/09/29 09:56:04 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.112 2006/09/29 10:37:49 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -266,6 +266,16 @@ get_ifconfig_info(void)
 		fl = strtoul(cp + 1, &cp, 16);
 		if (*cp != '<')
 			break;
+
+		for (ignore = ignored_if_names; *ignore != NULL; ignore++) {
+			size_t len = strlen(*ignore);
+			if (strncmp(t, *ignore, len) == 0 &&
+			    isdigit((unsigned char)t[len]))
+				break;
+		}
+		if (*ignore != NULL)
+			continue;
+
 		if (fl & IFF_UP) {
 			/* This interface might be connected to the server */
 			cp = strchr(t, ':');
@@ -276,15 +286,6 @@ get_ifconfig_info(void)
 			free(net_up);
 			net_up = cp;
 		}
-
-		for (ignore = ignored_if_names; *ignore != NULL; ignore++) {
-			size_t len = strlen(*ignore);
-			if (strncmp(t, *ignore, len) == 0 &&
-			    isdigit((unsigned char)t[len]))
-				break;
-		}
-		if (*ignore != NULL)
-			continue;
 
 		cp = strchr(t, ':');
 		if (cp == NULL)
