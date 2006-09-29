@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.3 2006/09/26 19:18:19 plunky Exp $	*/
+/*	$NetBSD: client.c,v 1.4 2006/09/29 20:06:11 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: client.c,v 1.3 2006/09/26 19:18:19 plunky Exp $");
+__RCSID("$NetBSD: client.c,v 1.4 2006/09/29 20:06:11 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/queue.h>
@@ -201,7 +201,7 @@ process_client(int sock, short ev, void *arg)
 		return;
 	}
 
-	syslog(LOG_DEBUG, "New PIN for %s", bt_ntoa(&rp.raddr, NULL));
+	syslog(LOG_DEBUG, "Received PIN for %s", bt_ntoa(&rp.raddr, NULL));
 
 	LIST_FOREACH(item, &item_list, next) {
 		if (bdaddr_same(&rp.laddr, &item->laddr) == 0
@@ -216,6 +216,9 @@ process_client(int sock, short ev, void *arg)
 			bdaddr_copy(&sa.bt_bdaddr, &item->laddr);
 
 			send_pin_code_reply(item->hci, &sa, &item->raddr, rp.pin);
+			LIST_REMOVE(item, next);
+			free(item);
+			return;
 		}
 		goto newpin;
 	}
@@ -233,6 +236,8 @@ process_client(int sock, short ev, void *arg)
 	LIST_INSERT_HEAD(&item_list, item, next);
 
 newpin:
+	syslog(LOG_DEBUG, "Caching PIN for %s", bt_ntoa(&rp.raddr, NULL));
+
 	memcpy(item->pin, rp.pin, HCI_PIN_SIZE);
 	item->hci = -1;
 
@@ -306,8 +311,8 @@ process_item(int fd, short ev, void *arg)
 	struct item *item = arg;
 
 	syslog(LOG_DEBUG, "PIN for %s expired", bt_ntoa(&item->raddr, NULL));
-
 	LIST_REMOVE(item, next);
+	evtimer_del(&item->ev);
 	free(item);
 }
 
@@ -315,6 +320,7 @@ process_item(int fd, short ev, void *arg)
 uint8_t *
 lookup_pin(bdaddr_t *laddr, bdaddr_t *raddr)
 {
+	static uint8_t pin[HCI_PIN_SIZE];
 	struct item *item;
 
 	LIST_FOREACH(item, &item_list, next) {
@@ -329,7 +335,13 @@ lookup_pin(bdaddr_t *laddr, bdaddr_t *raddr)
 			break;
 
 		syslog(LOG_DEBUG, "Matched PIN from cache");
-		return item->pin;
+		memcpy(pin, item->pin, sizeof(pin));
+
+		LIST_REMOVE(item, next);
+		evtimer_del(&item->ev);
+		free(item);
+
+		return pin;
 	}
 
 	return NULL;
