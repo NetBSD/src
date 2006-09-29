@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2006/08/23 19:02:37 bouyer Exp $
+#	$NetBSD: Makefile,v 1.4 2006/09/29 08:20:44 pavel Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -28,6 +28,9 @@ MDSET_RELEASEDIR=	binary/kernel
 # do not strip Xen kernels, there's no space constraints here.
 MDSET_NOSTRIP.netbsd-INSTALL_XEN2_DOMU=
 MDSET_NOSTRIP.netbsd-INSTALL_XEN3_DOMU=
+# do not strip any other kernels, it is done by Makefile.tarfloppy before
+# they are written to a floppy.
+MDSET_NOSTRIP=
 MDSET_NOSYMBOLS.netbsd-INSTALL_XEN2_DOMU=
 MDSET_NOSYMBOLS.netbsd-INSTALL_XEN3_DOMU=
 
