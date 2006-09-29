@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.41 2006/09/28 18:01:24 bouyer Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.42 2006/09/29 11:18:44 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.41 2006/09/28 18:01:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.42 2006/09/29 11:18:44 martin Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.41 2006/09/28 18:01:24 bouyer Exp $");
 
 #include "pci.h"
 #include "ioapic.h"
+#include "lapic.h"
 
 /* XXX room for PCI-to-PCI bus */
 #define BUS_BUFFER (16)
