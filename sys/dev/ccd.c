@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.113 2006/08/27 04:58:40 christos Exp $	*/
+/*	$NetBSD: ccd.c,v 1.114 2006/09/29 14:39:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.113 2006/08/27 04:58:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.114 2006/09/29 14:39:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -431,6 +431,8 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 	ccg->ccg_ncylinders = cs->sc_size / ccg->ccg_nsectors;
 
 	cs->sc_flags |= CCDF_INITED;
+
+	free(tmppath, M_TEMP);
 
 	return (0);
 
