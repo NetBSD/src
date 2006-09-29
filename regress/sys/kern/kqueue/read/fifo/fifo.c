@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo.c,v 1.2 2002/10/29 10:39:36 martin Exp $	*/
+/*	$NetBSD: fifo.c,v 1.3 2006/09/29 14:18:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -115,6 +115,11 @@ main(int argc, char **argv)
 		printf("fifo: incorrect filter, expecting EVFILT_READ\n");
 
 	n = read(fd, buffer, event[0].data);
+	if (n < 0) {
+		warn("read");
+		error = 1;
+		goto out;
+	}
 	buffer[n] = '\0';
 	printf("fifo: read '%s'\n", buffer);
 
