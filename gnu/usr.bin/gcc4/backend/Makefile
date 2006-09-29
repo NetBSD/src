@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2006/06/25 03:08:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2006/09/29 20:14:10 apb Exp $
 
 MKPRIVATELIB=	yes
 
@@ -182,7 +182,10 @@ auto-build.h: Makefile
 	rm -rf .ab && \
 	mkdir .ab && \
 	(cd .ab && \
-		CC=${HOST_CC} ${HOST_SH} ${GNUHOSTDIST}/gcc/configure \
+		CC=${HOST_CC:Q} \
+		MAKE=${MAKE:Q} \
+		CONFIG_SHELL=${HOST_SH:Q} \
+		${HOST_SH} ${GNUHOSTDIST}/gcc/configure \
 			--build=`${HOST_SH} ${.CURDIR}/../../../dist/gcc/config.guess` \
 			--host=`${HOST_SH} ${.CURDIR}/../../../dist/gcc/config.guess` \
 			--target=${MACHINE_GNU_PLATFORM} && \
