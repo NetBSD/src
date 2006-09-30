@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2005/12/11 12:18:34 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.2.22.1 2006/09/30 14:17:18 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -87,6 +87,14 @@ int spltty(void);
 int spl0(void);
 int spllock(void);
 int splx(int);
+
+typedef int ipl_t;
+typedef struct {
+	_pi;
+} ipl_cookie_t;
+int splraiseipl(ipl_cookie_t);
+ipl_cookie_t makeiplcookie(ipl_t);
+
 #if 0
 extern void *softintr_establish(int, void (*)(void *), void *);
 void softintr_schedule(void *arg);
