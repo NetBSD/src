@@ -1,5 +1,8 @@
 2006-09-20  Emmanuel Dreyfus  <manu@netbsd.org>
 	* src/Racoon/admin.c: Do not free id and key, as they are used later
+	* src/racoon/session.c: Reuse existing code for closing IKE sockets,
+	  and avoid screwing things by setting p->sock = -1, which is not
+	  expected (Coverity).
 
 2006-09-29  Emmanuel Dreyfus  <manu@netbsd.org>
 	* src/racoon/racoonctl.c: Fix the previous fix
