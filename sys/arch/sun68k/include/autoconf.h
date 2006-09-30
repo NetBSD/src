@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.7 2005/12/11 12:19:29 christos Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.8 2006/09/30 13:37:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,3 +76,6 @@ struct mainbus_attach_args {
 int sun68k_bus_search(struct device *, struct cfdata *,
 		      const int *, void *);
 int sun68k_bus_print(void *, const char *);
+
+extern struct sun68k_bus_dma_tag mainbus_dma_tag;
+extern struct sun68k_bus_space_tag mainbus_space_tag;
