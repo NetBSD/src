@@ -1,4 +1,4 @@
-/* $NetBSD: iobus.c,v 1.13 2005/12/11 12:16:04 christos Exp $ */
+/* $NetBSD: iobus.c,v 1.14 2006/09/30 16:30:10 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iobus.c,v 1.13 2005/12/11 12:16:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iobus.c,v 1.14 2006/09/30 16:30:10 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -93,7 +93,7 @@ iobus_search_ioc(struct device *parent, struct cfdata *cf,
 {
 	struct iobus_attach_args ioa;
 
-	ioa.ioa_tag = 2;
+	ioa.ioa_tag = &iobus_bs_tag;
 	ioa.ioa_base = (bus_addr_t)MEMC_IO_BASE + cf->cf_loc[IOBUSCF_BASE];
 	if (strcmp(cf->cf_name, "ioc") == 0 &&
 	    config_match(parent, cf, &ioa) > 0)
@@ -108,7 +108,7 @@ iobus_search(struct device *parent, struct cfdata *cf,
 {
 	struct iobus_attach_args ioa;
 	
-	ioa.ioa_tag = 2;
+	ioa.ioa_tag = &iobus_bs_tag;
 	ioa.ioa_base = (bus_addr_t)MEMC_IO_BASE + cf->cf_loc[IOBUSCF_BASE];
 	if (config_match(parent, cf, &ioa) > 0)
 		config_attach(parent, cf, &ioa, iobus_print);
@@ -122,7 +122,7 @@ iobus_print(void *aux, const char *pnp)
 	struct iobus_attach_args *ioa = aux;
 
 	if (ioa->ioa_base != IOBUSCF_BASE_DEFAULT)
-		aprint_normal(" base 0x%06x",
+		aprint_normal(" base 0x%06lx",
 		    ioa->ioa_base - (bus_addr_t)MEMC_IO_BASE);
 	return UNCONF;
 }

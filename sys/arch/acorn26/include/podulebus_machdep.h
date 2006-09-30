@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus_machdep.h,v 1.1 2002/03/24 15:47:08 bjh21 Exp $ */
+/* $NetBSD: podulebus_machdep.h,v 1.2 2006/09/30 16:30:10 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -96,7 +96,7 @@ struct podulebus_attach_args {
 
 /* Set the address-bus shift for a bus_space tag. */
 
-#define podulebus_shift_tag(tag, shift, tagp)	(*(tagp) = (shift))
+#define podulebus_shift_tag(tag, shift, tagp) bus_space_shift(tag, shift, tagp)
 
 #ifdef _KERNEL
 
