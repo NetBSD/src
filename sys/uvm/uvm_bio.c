@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.48 2006/09/03 21:33:33 christos Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.49 2006/09/30 15:37:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.48 2006/09/03 21:33:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.49 2006/09/30 15:37:22 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.48 2006/09/03 21:33:33 christos Exp $"
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm.h>
 
@@ -356,8 +357,9 @@ again:
 		 * is marked as PG_RDONLY.
 		 */
 
-		rdonly = (access_type & VM_PROT_WRITE) == 0 &&
-		    (pg->flags & PG_RDONLY) != 0;
+		rdonly = ((access_type & VM_PROT_WRITE) == 0 &&
+		    (pg->flags & PG_RDONLY) != 0) ||
+		    UVM_OBJ_NEEDS_WRITEFAULT(uobj);
 		KASSERT((pg->flags & PG_RDONLY) == 0 ||
 		    (access_type & VM_PROT_WRITE) == 0 ||
 		    pg->offset < umap->writeoff ||
