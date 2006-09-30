@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.6 2006/09/27 05:35:05 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.7 2006/09/30 20:05:57 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.6 2006/09/27 05:35:05 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.7 2006/09/30 20:05:57 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.6 2006/09/27 05:35:05 ela
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
-
+#include <sys/tty.h>
 #include <net/route.h>
 
 #include <secmodel/bsd44/suser.h>
@@ -72,6 +72,8 @@ secmodel_bsd44_suser_start(void)
 	    secmodel_bsd44_suser_network_cb, NULL);
 	kauth_listen_scope(KAUTH_SCOPE_MACHDEP,
 	    secmodel_bsd44_suser_machdep_cb, NULL);
+	kauth_listen_scope(KAUTH_SCOPE_DEVICE,
+	    secmodel_bsd44_suser_device_cb, NULL);
 }
 
 /*
@@ -390,6 +392,52 @@ secmodel_bsd44_suser_machdep_cb(kauth_cred_t cred, kauth_action_t action,
 			result = KAUTH_RESULT_DEFER;
 			break;
 		}
+		break;
+
+	default:
+		result = KAUTH_RESULT_DEFER;
+		break;
+	}
+
+	return (result);
+}
+
+/*
+ * kauth(9) listener
+ *
+ * Security model: Traditional NetBSD
+ * Scope: Device
+ * Responsibility: Superuser access
+ */
+int
+secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
+    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	struct tty *tty;
+        boolean_t isroot;
+        int result;
+
+        isroot = (kauth_cred_geteuid(cred) == 0);
+        result = KAUTH_RESULT_DENY;
+
+	switch (action) {
+	case KAUTH_DEVICE_TTY_OPEN:
+		tty = arg0;
+
+		if (!(tty->t_state & TS_ISOPEN))
+			result = KAUTH_RESULT_ALLOW;
+		else if (tty->t_state & TS_XCLUDE) {
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+		} else
+			result = KAUTH_RESULT_ALLOW;
+
+		break;
+
+	case KAUTH_DEVICE_TTY_PRIVSET:
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
+
 		break;
 
 	default:
