@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2 2005/12/11 12:18:34 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.2.22.1 2006/09/30 14:17:18 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -258,6 +258,12 @@ ENTRY(spltty)
 
 ENTRY(spl0)		# Unblock everything
 	cono PI,PI_LVLON|PI_ON|PI_ALL
+	popj SP,
+
+ENTRY(splraiseipl)
+	SVPRI
+	move %2,-1(SP)
+	cono PI,%2
 	popj SP,
 
 
