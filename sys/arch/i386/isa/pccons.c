@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.178 2006/07/23 22:06:05 ad Exp $	*/
+/*	$NetBSD: pccons.c,v 1.179 2006/09/30 20:05:57 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.178 2006/07/23 22:06:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.179 2006/09/30 20:05:57 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -838,6 +838,10 @@ pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_oproc = pcstart;
 	tp->t_param = pcparam;
 	tp->t_dev = dev;
+
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tty))
+		return (EBUSY);
+
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -847,10 +851,7 @@ pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		pcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state&TS_XCLUDE &&
-		   kauth_authorize_generic(l->l_cred,
-		   KAUTH_GENERIC_ISSUSER, &l->l_acflag) != 0)
-		return (EBUSY);
+	}
 	tp->t_state |= TS_CARR_ON;
 
 	return ((*tp->t_linesw->l_open)(dev, tp));

@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.16 2006/09/23 10:07:32 wiz Exp $
+.\" $NetBSD: kauth.9,v 1.17 2006/09/30 20:05:57 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 20, 2006
+.Dd September 30, 2006
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -460,6 +460,35 @@ are:
 .It Dv KAUTH_REQ_MACHDEP_X86_64_MTRR_GET
 Check if MTRR values can be retrieved.
 .El
+.El
+.Ss Device Scope
+The device scope,
+.Dq org.netbsd.kauth.device ,
+managed authorization requests related to devices on the system.
+Devices can be, for example, terminals, tape drives, and any other hardware.
+Network devices specifically are handled by the
+.Em network
+scope.
+.Pp
+This scope has an authorization routine per device class on the system.
+.Pp
+.Ft int Fn kauth_authorize_device_tty "kauth_cred_t cred" "kauth_action_t op" \
+"struct tty *tty"
+.Pp
+Authorizes requests for
+.Em terminal devices
+on the system.
+The third argument,
+.Ar tty ,
+is the terminal device in question.
+The second argument is one of the following:
+.Bl -tag
+.It Dv KAUTH_DEVICE_TTY_OPEN
+Open the terminal device pointed to by
+.Ar tty .
+.It Dv KAUTH_DEVICE_TTY_PRIVSET
+Set privileged settings on the terminal device pointed to by
+.Ar tty .
 .El
 .Ss Credentials Accessors and Mutators
 .Nm

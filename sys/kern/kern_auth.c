@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.24 2006/09/19 22:03:11 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.25 2006/09/30 20:05:57 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.24 2006/09/19 22:03:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.25 2006/09/30 20:05:57 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,6 +103,7 @@ static kauth_scope_t kauth_builtin_scope_system;
 static kauth_scope_t kauth_builtin_scope_process;
 static kauth_scope_t kauth_builtin_scope_network;
 static kauth_scope_t kauth_builtin_scope_machdep;
+static kauth_scope_t kauth_builtin_scope_device;
 
 static boolean_t listeners_have_been_loaded = FALSE;
 
@@ -617,6 +618,10 @@ kauth_init(void)
 	/* Register machdep scope. */
 	kauth_builtin_scope_machdep = kauth_register_scope(KAUTH_SCOPE_MACHDEP,
 	    NULL, NULL);
+
+	/* Register device scope. */
+	kauth_builtin_scope_device = kauth_register_scope(KAUTH_SCOPE_DEVICE,
+	    NULL, NULL);
 }
 
 /*
@@ -791,4 +796,12 @@ kauth_authorize_machdep(kauth_cred_t cred, kauth_action_t action,
 {
 	return (kauth_authorize_action(kauth_builtin_scope_machdep, cred,
 	    action, (void *)req, arg1, arg2, arg3));
+}
+
+int
+kauth_authorize_device_tty(kauth_cred_t cred, kauth_action_t action,
+    struct tty *tty)
+{
+	return (kauth_authorize_action(kauth_builtin_scope_device, cred,
+	    action, tty, NULL, NULL, NULL));
 }

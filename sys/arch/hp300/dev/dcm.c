@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.74 2006/09/09 11:09:48 tsutsui Exp $	*/
+/*	$NetBSD: dcm.c,v 1.75 2006/09/30 20:05:57 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.74 2006/09/09 11:09:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.75 2006/09/30 20:05:57 elad Exp $");
 
 #include "opt_kgdb.h"
 
@@ -550,11 +550,8 @@ dcmopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_param = dcmparam;
 	tp->t_dev = dev;
 
-	if ((tp->t_state & TS_ISOPEN) &&
-	    (tp->t_state & TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
-		return EBUSY;
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tty))
+		return (EBUSY);
 
 	s = spltty();
 
@@ -1088,10 +1085,9 @@ dcmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case TIOCSFLAGS: {
 		int userbits;
 
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
-		if (error)
-			return EPERM;
+		if (kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp))
+			return (EPERM);
 
 		userbits = *(int *)data;
 

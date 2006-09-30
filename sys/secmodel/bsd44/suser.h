@@ -1,4 +1,4 @@
-/* $NetBSD: suser.h,v 1.1 2006/09/08 20:58:57 elad Exp $ */
+/* $NetBSD: suser.h,v 1.2 2006/09/30 20:05:57 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -45,6 +45,8 @@ int secmodel_bsd44_suser_process_cb(kauth_cred_t, kauth_action_t, void *,
 int secmodel_bsd44_suser_network_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
 int secmodel_bsd44_suser_machdep_cb(kauth_cred_t, kauth_action_t, void *,
+    void *, void *, void *, void *);
+int secmodel_bsd44_suser_device_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
 
 #endif /* !_SECMODEL_BSD44_SUSER_H_ */
