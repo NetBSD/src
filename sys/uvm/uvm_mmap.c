@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.98 2006/07/21 16:48:53 ad Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.99 2006/09/30 10:56:31 elad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,10 +51,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.98 2006/07/21 16:48:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.99 2006/09/30 10:56:31 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
+#include "veriexec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +69,10 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.98 2006/07/21 16:48:53 ad Exp $");
 #include <sys/vnode.h>
 #include <sys/conf.h>
 #include <sys/stat.h>
+
+#if NVERIEXEC > 0
+#include <sys/verified_exec.h>
+#endif /* NVERIEXEC > 0 */
  
 #ifdef PAX_MPROTECT
 #include <sys/pax.h>
@@ -409,6 +414,19 @@ sys_mmap(l, v, retval)
 			flags |= MAP_ANON;
 			goto is_anon;
 		}
+
+#if NVERIEXEC > 0
+		/*
+		 * If we are mapping the file as executable, we expect to
+		 * have the VERIEXEC_INDIRECT flag set for the entry if it
+		 * exists.
+		 */
+		if (prot & VM_PROT_EXECUTE) {
+			if (veriexec_verify(l, vp, "[mmap]",
+			    VERIEXEC_INDIRECT, NULL) != 0)
+				return (EPERM);
+		}
+#endif /* NVERIEXEC > 0 */
 
 		/*
 		 * Old programs may not select a specific sharing type, so

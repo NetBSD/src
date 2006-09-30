@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.16 2006/09/05 13:02:16 elad Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.17 2006/09/30 10:56:31 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -165,7 +165,7 @@ flag_spec	:	STRING {
 		} else if (strcasecmp($1, "script") == 0) {
 			params.type |= (VERIEXEC_FILE | VERIEXEC_DIRECT);
 		} else if (strcasecmp($1, "library") == 0) {
-			params.type |= VERIEXEC_FILE;
+			params.type |= (VERIEXEC_FILE | VERIEXEC_INDIRECT);
 		} else if (strcasecmp($1, "untrusted") == 0) {
 			params.type |= VERIEXEC_UNTRUSTED;
 		} else {
