@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2006/02/21 04:32:38 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 2006/09/30 13:37:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2006/02/21 04:32:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2006/09/30 13:37:32 tsutsui Exp $");
 
 #include "opt_kgdb.h"
 
@@ -139,9 +139,6 @@ mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 static void 
 mainbus_attach(struct device *parent, struct device *self, void *args)
 {
-extern struct sun68k_bus_dma_tag mainbus_dma_tag;
-extern struct sun68k_bus_space_tag mainbus_space_tag;
-
 	struct mainbus_attach_args ma;
 	const char *const *cpp;
 	static const char *const special[] = {
