@@ -1,5 +1,5 @@
 {-
-/*	$NetBSD: genpat5.hs,v 1.1 2006/09/30 08:48:17 yamt Exp $	*/
+/*	$NetBSD: genpat5.hs,v 1.2 2006/09/30 15:52:39 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -67,11 +67,11 @@ patterns = [acc0, acc1, acc2, acc3, acc4]
 mklist t a b = take t $ tagai a b
 
 main = getArgs >>= \ args ->
-	  let
+	let
 		pat = read (args !! 0)
 		t = read (args !! 1)
 		start = read (args !! 2)
 		n = read (args !! 3)
 		seed = 0
-	  in
-	  mapM_ print $ take t $ (patterns !! pat) seed (start, n)
+	in
+	mapM_ print $ take t $ (patterns !! pat) seed (start, n)
