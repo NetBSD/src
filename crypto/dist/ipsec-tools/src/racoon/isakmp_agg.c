@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_agg.c,v 1.8 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: isakmp_agg.c,v 1.9 2006/09/30 21:49:37 manu Exp $	*/
 
 /* Id: isakmp_agg.c,v 1.28 2006/04/06 16:46:08 manubsd Exp */
 
@@ -994,7 +994,6 @@ agg_r1send(iph1, msg)
 	int need_cr = 0;
 	int need_cert = 0;
 	vchar_t *cr = NULL;
-	vchar_t *vid = NULL;
 	int error = -1;
 #ifdef ENABLE_HYBRID
 	vchar_t *xauth_vid = NULL;
@@ -1150,11 +1149,6 @@ agg_r1send(iph1, msg)
 		plist = isakmp_plist_append(plist, 
 		    iph1->hash, ISAKMP_NPTYPE_HASH);
 
-		/* append vendor id, if needed */
-		if (vid)
-			plist = isakmp_plist_append(plist, 
-			    vid, ISAKMP_NPTYPE_VID);
-
 		/* create isakmp CR payload if needed */
 		if (need_cr)
 			plist = isakmp_plist_append(plist, 
@@ -1203,11 +1197,6 @@ agg_r1send(iph1, msg)
 		/* add SIG payload */
 		plist = isakmp_plist_append(plist, 
 		    iph1->sig, ISAKMP_NPTYPE_SIG);
-
-		/* append vendor id, if needed */
-		if (vid)
-			plist = isakmp_plist_append(plist, 
-			    vid, ISAKMP_NPTYPE_VID);
 
 		/* create isakmp CR payload if needed */
 		if (need_cr)
@@ -1274,10 +1263,6 @@ agg_r1send(iph1, msg)
 			    gsshash, ISAKMP_NPTYPE_HASH);
 
 			/* append vendor id, if needed */
-			if (vid)
-				plist = isakmp_plist_append(plist, 
-				    vid, ISAKMP_NPTYPE_VID);
-
 			break;
 #endif
 	}
@@ -1351,8 +1336,6 @@ agg_r1send(iph1, msg)
 end:
 	if (cr)
 		vfree(cr);
-	if (vid)
-		vfree(vid);
 #ifdef ENABLE_HYBRID
 	if (xauth_vid)
 		vfree(xauth_vid);
