@@ -1,4 +1,4 @@
-/* $NetBSD: iocvar.h,v 1.2 2002/03/24 23:37:44 bjh21 Exp $ */
+/* $NetBSD: iocvar.h,v 1.3 2006/09/30 15:14:21 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999 Ben Harris
  * All rights reserved.
@@ -111,9 +111,7 @@ ioc_ctl_write(struct device *self, u_int value, u_int mask)
 	
 	s = splhigh();
 	sc->sc_ctl = (sc->sc_ctl & ~mask) | (value & mask);
-	bus_space_barrier(bst, bsh, IOC_CTL, 1, BUS_BARRIER_WRITE);
 	bus_space_write_1(bst, bsh, IOC_CTL, sc->sc_ctl);
-	bus_space_barrier(bst, bsh, IOC_CTL, 1, BUS_BARRIER_WRITE);
 	splx(s);
 }
 

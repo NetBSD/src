@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.12 2005/12/11 12:16:04 christos Exp $ */
+/* $NetBSD: ioc.c,v 1.13 2006/09/30 15:14:21 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.12 2005/12/11 12:16:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.13 2006/09/30 15:14:21 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -297,12 +297,9 @@ void ioc_counter_start(struct device *self, int counter, int value)
 	default: panic("%s: ioc_counter_start: bad counter (%d)",
 		       self->dv_xname, counter);
 	}
-	bus_space_barrier(bst, bsh, tlow, tgo - tlow + 1, BUS_BARRIER_WRITE);
 	bus_space_write_1(bst, bsh, tlow, value & 0xff);
 	bus_space_write_1(bst, bsh, thigh, value >> 8 & 0xff);
-	bus_space_barrier(bst, bsh, tlow, tgo - tlow + 1, BUS_BARRIER_WRITE);
 	bus_space_write_1(bst, bsh, tgo, 0);
-	bus_space_barrier(bst, bsh, tlow, tgo - tlow, BUS_BARRIER_WRITE);
 }
 
 /* Cache to save microtime recalculating it */
