@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun68k,v 1.2 2002/11/03 01:12:04 chs Exp $
+#	$NetBSD: files.sun68k,v 1.3 2006/09/30 13:43:08 tsutsui Exp $
 
 #
 # common sun68k configuration info
@@ -8,12 +8,15 @@
 file arch/sun68k/sun68k/autoconf.c
 file arch/sun68k/sun68k/bus.c
 file arch/sun68k/sun68k/ctrlsp.S
-file arch/sun68k/sun68k/disksubr.c
 file arch/sun68k/sun68k/isr.c
 file arch/sun68k/sun68k/stub.c
 file arch/sun68k/sun68k/vector.c
 
 file arch/m68k/m68k/kgdb_machdep.c 		kgdb
+file arch/m68k/m68k/procfs_machdep.c		procfs
+file arch/m68k/m68k/vm_machdep.c
+
+file dev/sun/disksubr.c
 
 #
 # Bus types
