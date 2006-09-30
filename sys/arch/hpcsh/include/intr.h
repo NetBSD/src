@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.22.1 2006/09/30 11:48:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -50,25 +50,36 @@
 #define	IPL_BIO		9	/* block I/O */
 #define	IPL_NET		10	/* network */
 #define	IPL_TTY		11	/* terminal */
+#define	IPL_VM		IPL_TTY
 #define	IPL_SERIAL	11	/* serial */
 #define	IPL_CLOCK	14	/* clock */
+#define	IPL_STATCLOCK	IPL_CLOCK
+#define	IPL_SCHED	IPL_CLOCK
 #define	IPL_HIGH	15	/* everything */
+#define	IPL_LOCK	IPL_HIGH
 
 #include <hpcsh/dev/hd6446x/hd6446xintcvar.h>
 
-#define	splsoftclock()		hd6446x_intr_raise(IPL_SOFTCLOCK << 4)
-#define	splsoftnet()		hd6446x_intr_raise(IPL_SOFTNET << 4)
-#define	splsoftserial()		hd6446x_intr_raise(IPL_SOFTSERIAL << 4)
-#define	splbio()		hd6446x_intr_raise(IPL_BIO << 4)
-#define	splnet()		hd6446x_intr_raise(IPL_NET << 4)
-#define	spltty()		hd6446x_intr_raise(IPL_TTY << 4)
-#define	splvm()			spltty()
-#define	splserial()		hd6446x_intr_raise(IPL_SERIAL << 4)
-#define	splclock()		hd6446x_intr_raise(IPL_CLOCK << 4)
-#define	splstatclock()		splclock()
-#define	splsched()		splclock()
-#define	splhigh()		hd6446x_intr_raise(IPL_HIGH << 4)
-#define	spllock()		splhigh()
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl << 4};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return hd6446x_intr_raise(icookie._ipl);
+}
+
+#include <sys/spl.h>
 
 #define	spl0()			hd6446x_intr_resume(0)
 #define	splx(x)			hd6446x_intr_resume(x)
