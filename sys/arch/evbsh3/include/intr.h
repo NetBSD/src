@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8.22.1 2006/09/19 12:52:15 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.22.2 2006/09/30 14:12:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,14 +62,14 @@ static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 
-	return (ipl_cookie_t){._ipl = ipl};
+	return (ipl_cookie_t){._ipl = ipl << 4};
 }
 
 static inline int
 splraiseipl(ipl_cookie_t icookie)
 {
 
-	return _cpu_intr_raise(icookie._ipl << 4);
+	return _cpu_intr_raise(icookie._ipl);
 }
 
 #include <sys/spl.h>
