@@ -34,6 +34,7 @@ NetBSD)
 	if=`netstat -rn|awk '($1 == "default"){print $7}'`
 	ifconfig ${if} delete ${INTERNAL_ADDR4}
 	route delete default
+	route delete ${REMOTE_ADDR}
 	route add default ${DEFAULT_GW} -ifa ${LOCAL_ADDR}
 	;;
 Linux)
