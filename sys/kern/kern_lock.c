@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.99 2006/09/07 02:06:47 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.100 2006/09/30 11:59:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99 2006/09/07 02:06:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.100 2006/09/30 11:59:37 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1556,7 +1556,17 @@ _kernel_lock_acquire_count(int hold_count)
 void
 _kernel_lock_assert_locked()
 {
+
+	KDASSERT(curcpu()->ci_data.cpu_biglock_count > 0);
 	simple_lock_assert_locked(&kernel_lock, "kernel_lock");
+}
+
+void
+_kernel_lock_assert_unlocked()
+{
+
+	KDASSERT(curcpu()->ci_data.cpu_biglock_count == 0);
+	simple_lock_assert_unlocked(&kernel_lock, "kernel_lock");
 }
 #endif
 
