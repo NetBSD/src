@@ -1,5 +1,5 @@
 {-
-/*	$NetBSD: genpat5.hs,v 1.2 2006/09/30 15:52:39 yamt Exp $	*/
+/*	$NetBSD: genpat5.hs,v 1.3 2006/09/30 16:14:00 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -33,7 +33,7 @@ import List
 import Numeric
 import Random
 
-tagai (x:xs) (y:ys) = x:y:tagai xs ys
+byturns (x:xs) (y:ys) = x:y:byturns xs ys
 
 acc0 _ r1 = cycle [start..(start+n-1)] where
 	(start, n) = r1
@@ -64,7 +64,7 @@ acc4 seed r1 = map g $ zip [1..] $ map f rands where
 
 patterns = [acc0, acc1, acc2, acc3, acc4]
 
-mklist t a b = take t $ tagai a b
+mklist t a b = take t $ byturns a b
 
 main = getArgs >>= \ args ->
 	let
