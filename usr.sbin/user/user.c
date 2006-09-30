@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.113 2006/09/30 10:50:32 pavel Exp $ */
+/* $NetBSD: user.c,v 1.114 2006/09/30 11:47:00 pavel Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.113 2006/09/30 10:50:32 pavel Exp $");
+__RCSID("$NetBSD: user.c,v 1.114 2006/09/30 11:47:00 pavel Exp $");
 #endif
 
 #include <sys/types.h>
@@ -132,7 +132,7 @@ enum {
 #endif
 
 #ifndef DEF_SHELL
-#define DEF_SHELL	"/bin/ksh"
+#define DEF_SHELL	_PATH_CSHELL
 #endif
 
 #ifndef DEF_COMMENT
