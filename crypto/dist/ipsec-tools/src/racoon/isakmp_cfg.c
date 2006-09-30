@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.11 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.12 2006/09/30 21:38:39 manu Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.55 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1048,22 +1048,23 @@ isakmp_cfg_addr4_list(iph1, attr, addr, nbr)
 	in_addr_t *addr;
 	int nbr;
 {
-	vchar_t *buffer;
-	vchar_t *bufone;
+	int error = -1;
+	vchar_t *buffer = NULL;
+	vchar_t *bufone = NULL;
 	struct isakmp_data *new;
 	size_t len;
 	int i;
 
 	len = sizeof(*addr);
-	if((buffer = vmalloc(0)) == NULL ) {
+	if ((buffer = vmalloc(0)) == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL, "Cannot allocate memory\n");
-		return NULL;
+		goto out;
 	}
 	for(i = 0; i < nbr; i++) {
 		if ((bufone = vmalloc(sizeof(*attr) + len)) == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL, 
 			    "Cannot allocate memory\n");
-			return NULL;
+			goto out;
 		}
 		new = (struct isakmp_data *)bufone->v;
 		new->type = attr->type;
@@ -1072,6 +1073,14 @@ isakmp_cfg_addr4_list(iph1, attr, addr, nbr)
 		new += (len + sizeof(*attr));
 		buffer = buffer_cat(buffer, bufone);
 		vfree(bufone);
+	}
+
+	error = 0;
+
+out:
+	if ((error != 0) && (buffer != NULL)) {
+		vfree(buffer);
+		buffer = NULL;
 	}
 
 	return buffer;

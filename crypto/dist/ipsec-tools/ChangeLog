@@ -1,4 +1,5 @@
 2006-09-20  Emmanuel Dreyfus  <manu@netbsd.org>
+	* src/racoon/isakmp_cfg.c: Fix memory leak (Coverity)
 	* src/racoon/samples/roadwarrior/client/{phase1-up.sh|phase1-down.sh}:
 	  update the scripts for wrorking around routing problems on NetBSD
 	* src/racoon/admin.c: Do not free id and key, as they are used later
