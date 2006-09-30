@@ -1,4 +1,4 @@
-/*	$NetBSD: firmload.c,v 1.3 2006/05/14 21:42:26 elad Exp $	*/
+/*	$NetBSD: firmload.c,v 1.4 2006/09/30 12:47:32 elad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.3 2006/05/14 21:42:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.4 2006/09/30 12:47:32 elad Exp $");
 
 /*
  * The firmload API provides an interface for device drivers to access
@@ -258,17 +258,17 @@ firmware_open(const char *drvname, const char *imgname, firmware_handle_t *fhp)
 
 	vp = nd.ni_vp;
 
-	error = VOP_GETATTR(vp, &va, FSCRED, curlwp);
+	error = VOP_GETATTR(vp, &va, kauth_cred_get(), curlwp);
 	if (error) {
 		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD, FSCRED, curlwp);
+		(void)vn_close(vp, FREAD, kauth_cred_get(), curlwp);
 		firmware_handle_free(fh);
 		return (error);
 	}
 
 	if (va.va_type != VREG) {
 		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD, FSCRED, curlwp);
+		(void)vn_close(vp, FREAD, kauth_cred_get(), curlwp);
 		firmware_handle_free(fh);
 		return (EINVAL);
 	}
@@ -294,7 +294,7 @@ firmware_close(firmware_handle_t fh)
 {
 	int error;
 
-	error = vn_close(fh->fh_vp, FREAD, FSCRED, curlwp);
+	error = vn_close(fh->fh_vp, FREAD, kauth_cred_get(), curlwp);
 	firmware_handle_free(fh);
 	return (error);
 }
@@ -322,7 +322,7 @@ firmware_read(firmware_handle_t fh, off_t offset, void *buf, size_t len)
 {
 
 	return (vn_rdwr(UIO_READ, fh->fh_vp, buf, len, offset,
-			UIO_SYSSPACE, 0, FSCRED, NULL, curlwp));
+			UIO_SYSSPACE, 0, kauth_cred_get(), NULL, curlwp));
 }
 
 /*
