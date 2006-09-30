@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.109 2006/09/30 12:58:31 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.110 2006/09/30 14:19:20 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -413,9 +413,11 @@ Notes:
 			hp700, evbppc (marvell, ibm4xx),
 			mac68k, x68k, hpcarm, shark, acorn32,
 			cats, netwinder, algor, arc, ews4800mips, hpcmips,
-			newsmips, luna68k, cobalt, pmax, sbmips, hpcsh
+			newsmips, luna68k, cobalt, pmax, sbmips, hpcsh,
+			landisk
 
 		not tested:
+			pdp10 (i don't know how to build)
 			sparc64 (GENERIC.MP seems to have an unrelated problem)
 			cesfic (GENERIC fails to build with the following
 			error.  i don't know if it's related to my changes.)
