@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.15 2005/11/24 13:08:34 yamt Exp $	*/
+/*	$NetBSD: bus.c,v 1.16 2006/09/30 13:54:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -160,7 +160,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.15 2005/11/24 13:08:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.16 2006/09/30 13:54:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -503,7 +503,7 @@ static paddr_t	sun68k_bus_mmap(bus_space_tag_t, bus_type_t, bus_addr_t, off_t,
 		    int, int);
 static void	*sun68k_mainbus_intr_establish(bus_space_tag_t, int, int, int,
 		    int (*)(void *), void *);
-static void     sun68k_bus_barrier(bus_space_tag_t, bus_space_handle_t,
+static void	sun68k_bus_barrier(bus_space_tag_t, bus_space_handle_t,
 		    bus_size_t, bus_size_t, int);
 static int	sun68k_bus_peek(bus_space_tag_t, bus_space_handle_t,
 		    bus_size_t, size_t, void *);
@@ -661,6 +661,7 @@ int
 sun68k_bus_subregion(bus_space_tag_t tag, bus_space_handle_t handle,
     bus_size_t offset, bus_size_t size, bus_space_handle_t *nhandlep)
 {
+
 	*nhandlep = handle + offset;
 	return (0);
 }
@@ -698,13 +699,16 @@ sun68k_bus_peek(bus_space_tag_t tag, bus_space_handle_t handle,
 	else {
 		switch(size) {
 		case 1:
-			*((uint8_t *) vp) = bus_space_read_1(tag, handle, offset);
+			*((uint8_t *)vp) =
+			    bus_space_read_1(tag, handle, offset);
 			break;
 		case 2:
-			*((uint16_t *) vp) = bus_space_read_2(tag, handle, offset);
+			*((uint16_t *)vp) =
+			    bus_space_read_2(tag, handle, offset);
 			break;
 		case 4:
-			*((uint32_t *) vp) = bus_space_read_4(tag, handle, offset);
+			*((uint32_t *)vp) =
+			    bus_space_read_4(tag, handle, offset);
 			break;
 		default:
 			panic("_bus_space_peek: bad size");
@@ -729,13 +733,13 @@ sun68k_bus_poke(bus_space_tag_t tag, bus_space_handle_t handle,
 	else {
 		switch(size) {
 		case 1:
-			bus_space_write_1(tag, handle, offset, (uint8_t) v);
+			bus_space_write_1(tag, handle, offset, (uint8_t)v);
 			break;
 		case 2:
-			bus_space_write_2(tag, handle, offset, (uint16_t) v);
+			bus_space_write_2(tag, handle, offset, (uint16_t)v);
 			break;
 		case 4:
-			bus_space_write_4(tag, handle, offset, (uint32_t) v);
+			bus_space_write_4(tag, handle, offset, (uint32_t)v);
 			break;
 		default:
 			panic("_bus_space_poke: bad size");
@@ -751,6 +755,7 @@ void *
 sun68k_mainbus_intr_establish(bus_space_tag_t t, int pil, int level, int flags,
     int (*handler)(void *), void *arg)
 {
+
 	isr_add_autovect(handler, arg, pil);
 	return (NULL);
 }
@@ -759,6 +764,7 @@ void
 sun68k_bus_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offset,
     bus_size_t size, int flags)
 {
+
 	/* No default barrier action defined */
 	return;
 }
