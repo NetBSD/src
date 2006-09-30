@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.72 2006/09/07 12:34:42 itohy Exp $	*/
+/*	$NetBSD: atavar.h,v 1.73 2006/09/30 15:56:18 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -34,6 +34,8 @@
 
 #include <sys/lock.h>
 #include <sys/queue.h>
+
+#include <dev/ata/ataconf.h>
 
 /* XXX For scsipi_adapter and scsipi_channel. */
 #include <dev/scsipi/scsipi_all.h>
@@ -146,13 +148,21 @@ struct ata_drive_datas {
 	 * changed later by the controller's code if needed
 	 */
 	u_int8_t PIO_mode;	/* Current setting of drive's PIO mode */
+#if NATA_DMA
 	u_int8_t DMA_mode;	/* Current setting of drive's DMA mode */
+#if NATA_UDMA
 	u_int8_t UDMA_mode;	/* Current setting of drive's UDMA mode */
+#endif
+#endif
 
 	/* Supported modes for this drive */
 	u_int8_t PIO_cap;	/* supported drive's PIO mode */
+#if NATA_DMA
 	u_int8_t DMA_cap;	/* supported drive's DMA mode */
+#if NATA_UDMA
 	u_int8_t UDMA_cap;	/* supported drive's UDMA mode */
+#endif
+#endif
 
 	/*
 	 * Drive state.
@@ -163,6 +173,7 @@ struct ata_drive_datas {
 #define RESET          0
 #define READY          1
 
+#if NATA_DMA
 	/* numbers of xfers and DMA errs. Used by ata_dmaerr() */
 	u_int8_t n_dmaerrs;
 	u_int32_t n_xfers;
@@ -170,6 +181,7 @@ struct ata_drive_datas {
 	/* Downgrade after NERRS_MAX errors in at most NXFER xfers */
 #define NERRS_MAX 4
 #define NXFER 4000
+#endif
 
 	/* Callbacks into the drive's driver. */
 	void	(*drv_done)(void *);	/* transfer is done */
@@ -384,8 +396,12 @@ struct atac_softc {
 #define	ATAC_CAP_RAID	0x4000		/* controller "supports" RAID */
 
 	uint8_t	atac_pio_cap;		/* highest PIO mode supported */
+#if NATA_DMA
 	uint8_t	atac_dma_cap;		/* highest DMA mode supported */
+#if NATA_UDMA
 	uint8_t	atac_udma_cap;		/* highest UDMA mode supported */
+#endif
+#endif
 
 	/* Array of pointers to channel-specific data. */
 	struct ata_channel **atac_channels;
@@ -442,10 +458,14 @@ int	ata_addref(struct ata_channel *);
 void	ata_delref(struct ata_channel *);
 void	atastart(struct ata_channel *);
 void	ata_print_modes(struct ata_channel *);
+#if NATA_DMA
 int	ata_downgrade_mode(struct ata_drive_datas *, int);
+#endif
 void	ata_probe_caps(struct ata_drive_datas *);
 
+#if NATA_DMA
 void	ata_dmaerr(struct ata_drive_datas *, int);
+#endif
 void	ata_queue_idle(struct ata_queue *);
 #endif /* _KERNEL */
 

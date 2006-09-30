@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.101 2006/09/07 12:34:42 itohy Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.102 2006/09/30 15:56:18 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.101 2006/09/07 12:34:42 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.102 2006/09/30 15:56:18 itohy Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -370,16 +370,22 @@ wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 		if (sc_xfer->xs_control & XS_CTL_POLL)
 			xfer->c_flags |= C_POLL;
+#if NATA_DMA
 		if ((atac->atac_channels[channel]->ch_drive[drive].drive_flags &
 		    (DRIVE_DMA | DRIVE_UDMA)) && sc_xfer->datalen > 0)
 			xfer->c_flags |= C_DMA;
+#endif
+#if NATA_DMA && NATA_PIOBM
+		else
+#endif
 #if NATA_PIOBM
-		else if ((atac->atac_cap & ATAC_CAP_PIOBM) &&
+		if ((atac->atac_cap & ATAC_CAP_PIOBM) &&
 		    sc_xfer->datalen > 0)
 			xfer->c_flags |= C_PIOBM;
 #endif
 		xfer->c_drive = drive;
 		xfer->c_flags |= C_ATAPI;
+#if NATA_DMA
 		if (sc_xfer->cmd->opcode == GPCMD_REPORT_KEY ||
 		    sc_xfer->cmd->opcode == GPCMD_SEND_KEY ||
 		    sc_xfer->cmd->opcode == GPCMD_READ_DVD_STRUCTURE) {
@@ -399,6 +405,7 @@ wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		 */
 		if (sc_xfer->datalen < 4 || (sc_xfer->datalen & 0x01))
 			xfer->c_flags &= ~C_DMA;
+#endif	/* NATA_DMA */
 
 		xfer->c_cmd = sc_xfer;
 		xfer->c_databuf = sc_xfer->data;
@@ -438,8 +445,10 @@ wdc_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	ATADEBUG_PRINT(("wdc_atapi_start %s:%d:%d, scsi flags 0x%x \n",
 	    atac->atac_dev.dv_xname, chp->ch_channel, drvp->drive,
 	    sc_xfer->xs_control), DEBUG_XFERS);
+#if NATA_DMA
 	if ((xfer->c_flags & C_DMA) && (drvp->n_xfers <= NXFER))
 		drvp->n_xfers++;
+#endif
 	/* Do control operations specially. */
 	if (__predict_false(drvp->state < READY)) {
 		/* If it's not a polled command, we need the kernel thread */
@@ -490,10 +499,14 @@ wdc_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 			} else
 				goto error;
 		}
+#if NATA_DMA
+#if NATA_UDMA
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 			    0x40 | drvp->UDMA_mode, WDSF_SET_MODE);
-		} else if (drvp->drive_flags & DRIVE_DMA) {
+		} else
+#endif
+		if (drvp->drive_flags & DRIVE_DMA) {
 			wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 			    0x20 | drvp->DMA_mode, WDSF_SET_MODE);
 		} else {
@@ -504,9 +517,12 @@ wdc_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 			goto timeout;
 		if (chp->ch_status & WDCS_ERR) {
 			if (chp->ch_error == WDCE_ABRT) {
+#if NATA_UDMA
 				if (drvp->drive_flags & DRIVE_UDMA)
 					goto error;
-				else {
+				else
+#endif
+				{
 					/*
 					 * The drive rejected our DMA setting.
 					 * Fall back to mode 1.
@@ -522,6 +538,7 @@ wdc_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 			} else
 				goto error;
 		}
+#endif	/* NATA_DMA */
 ready:
 		drvp->state = READY;
 		bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, wd_aux_ctlr,
@@ -562,7 +579,11 @@ ready:
 	wdccommand(chp, xfer->c_drive, ATAPI_PKT_CMD,
 	    xfer->c_bcount <= 0xffff ? xfer->c_bcount : 0xffff,
 	    0, 0, 0,
-	    (xfer->c_flags & C_DMA) ? ATAPI_PKT_CMD_FTRE_DMA : 0);
+#if NATA_DMA
+	    (xfer->c_flags & C_DMA) ? ATAPI_PKT_CMD_FTRE_DMA :
+#endif
+	    0
+	    );
 
 #if NATA_PIOBM
 	if (xfer->c_flags & C_PIOBM) {
@@ -611,10 +632,12 @@ ready:
 		chp->ch_flags |= ATACH_IRQ_WAIT;
 	}
 	if (sc_xfer->xs_control & XS_CTL_POLL) {
+#if NATA_DMA
 		if (chp->ch_flags & ATACH_DMA_WAIT) {
 			wdc_dmawait(chp, xfer, sc_xfer->timeout);
 			chp->ch_flags &= ~ATACH_DMA_WAIT;
 		}
+#endif
 		while ((sc_xfer->xs_status & XS_STS_DONE) == 0) {
 			/* Wait for at last 400ns for status bit to be valid */
 			DELAY(1);
@@ -653,8 +676,13 @@ wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	int len, phase, i, retries=0;
-	int ire, error;
+	int ire;
+#if NATA_DMA
+	int error;
+#endif
+#if NATA_DMA || NATA_PIOBM
 	int dma_flags = 0;
+#endif
 	void *cmd;
 
 	ATADEBUG_PRINT(("wdc_atapi_intr %s:%d:%d\n",
@@ -707,10 +735,12 @@ wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip=%d\n",
 		    atac->atac_dev.dv_xname, chp->ch_channel, xfer->c_drive,
 		    xfer->c_bcount, xfer->c_skip);
+#if NATA_DMA
 		if (xfer->c_flags & C_DMA) {
 			ata_dmaerr(drvp,
 			    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
 		}
+#endif
 		sc_xfer->error = XS_TIMEOUT;
 		wdc_atapi_reset(chp, xfer);
 		return 1;
@@ -718,6 +748,7 @@ wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	if (wdc->irqack)
 		wdc->irqack(chp);
 
+#if NATA_DMA
 	/*
 	 * If we missed an IRQ and were using DMA, flag it as a DMA error
 	 * and reset device.
@@ -728,14 +759,17 @@ wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		wdc_atapi_reset(chp, xfer);
 		return (1);
 	}
+#endif
 	/*
 	 * if the request sense command was aborted, report the short sense
 	 * previously recorded, else continue normal processing
 	 */
 
+#if NATA_DMA || NATA_PIOBM
 	if (xfer->c_flags & (C_DMA | C_PIOBM))
 		dma_flags = (sc_xfer->xs_control & XS_CTL_DATA_IN)
 		    ?  WDC_DMA_READ : 0;
+#endif
 again:
 	len = bus_space_read_1(wdr->cmd_iot, wdr->cmd_iohs[wd_cyl_lo], 0) +
 	    256 * bus_space_read_1(wdr->cmd_iot, wdr->cmd_iohs[wd_cyl_hi], 0);
@@ -749,6 +783,7 @@ again:
 	case PHASE_CMDOUT:
 		cmd = sc_xfer->cmd;
 		ATADEBUG_PRINT(("PHASE_CMDOUT\n"), DEBUG_INTR);
+#if NATA_DMA
 		/* Init the DMA channel if necessary */
 		if (xfer->c_flags & C_DMA) {
 			error = (*wdc->dma_init)(wdc->dma_arg,
@@ -769,17 +804,20 @@ again:
 				}
 			}
 		}
+#endif
 
 		/* send packet command */
 		/* Commands are 12 or 16 bytes long. It's 32-bit aligned */
 		wdc->dataout_pio(chp, drvp->drive_flags, cmd, sc_xfer->cmdlen);
 
+#if NATA_DMA
 		/* Start the DMA channel if necessary */
 		if (xfer->c_flags & C_DMA) {
 			(*wdc->dma_start)(wdc->dma_arg,
 			    chp->ch_channel, xfer->c_drive);
 			chp->ch_flags |= ATACH_DMA_WAIT;
 		}
+#endif
 
 		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0) {
 			chp->ch_flags |= ATACH_IRQ_WAIT;
@@ -789,6 +827,7 @@ again:
 	 case PHASE_DATAOUT:
 		/* write data */
 		ATADEBUG_PRINT(("PHASE_DATAOUT\n"), DEBUG_INTR);
+#if NATA_DMA
 		if ((sc_xfer->xs_control & XS_CTL_DATA_OUT) == 0 ||
 		    (xfer->c_flags & C_DMA) != 0) {
 			printf("wdc_atapi_intr: bad data phase DATAOUT\n");
@@ -800,6 +839,7 @@ again:
 			wdc_atapi_reset(chp, xfer);
 			return 1;
 		}
+#endif
 		xfer->c_lenoff = len - xfer->c_bcount;
 		if (xfer->c_bcount < len) {
 			printf("wdc_atapi_intr: warning: write only "
@@ -838,6 +878,7 @@ again:
 	case PHASE_DATAIN:
 		/* Read data */
 		ATADEBUG_PRINT(("PHASE_DATAIN\n"), DEBUG_INTR);
+#if NATA_DMA
 		if ((sc_xfer->xs_control & XS_CTL_DATA_IN) == 0 ||
 		    (xfer->c_flags & C_DMA) != 0) {
 			printf("wdc_atapi_intr: bad data phase DATAIN\n");
@@ -849,6 +890,7 @@ again:
 			wdc_atapi_reset(chp, xfer);
 			return 1;
 		}
+#endif
 		xfer->c_lenoff = len - xfer->c_bcount;
 		if (xfer->c_bcount < len) {
 			printf("wdc_atapi_intr: warning: reading only "
@@ -886,9 +928,11 @@ again:
 	case PHASE_ABORTED:
 	case PHASE_COMPLETED:
 		ATADEBUG_PRINT(("PHASE_COMPLETED\n"), DEBUG_INTR);
+#if NATA_DMA
 		if (xfer->c_flags & C_DMA) {
 			xfer->c_bcount -= sc_xfer->datalen;
 		}
+#endif
 		sc_xfer->resid = xfer->c_bcount;
 		wdc_atapi_phase_complete(xfer);
 		return(1);
@@ -907,10 +951,12 @@ again:
 			sc_xfer->error = XS_SHORTSENSE;
 			sc_xfer->sense.atapi_sense = chp->ch_error;
 		} else {
+#if NATA_DMA
 			if (xfer->c_flags & C_DMA) {
 				ata_dmaerr(drvp,
 				    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
 			}
+#endif
 			sc_xfer->error = XS_RESET;
 			wdc_atapi_reset(chp, xfer);
 			return (1);
@@ -928,7 +974,9 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = xfer->c_chp;
 	struct atac_softc *atac = chp->ch_atac;
+#if NATA_DMA || NATA_PIOBM
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
+#endif
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 
@@ -977,14 +1025,19 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 			/* ask scsipi to send a REQUEST_SENSE */
 			sc_xfer->error = XS_BUSY;
 			sc_xfer->status = SCSI_CHECK;
-		} else if (wdc->dma_status &
+		}
+#if NATA_DMA || NATA_PIOBM
+		else if (wdc->dma_status &
 		    (WDC_DMAST_NOIRQ | WDC_DMAST_ERR)) {
+#if NATA_DMA
 			ata_dmaerr(drvp,
 			    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
+#endif
 			sc_xfer->error = XS_RESET;
 			wdc_atapi_reset(chp, xfer);
 			return;
 		}
+#endif
 	}
 	if (xfer->c_bcount != 0) {
 		ATADEBUG_PRINT(("wdc_atapi_intr: bcount value is "

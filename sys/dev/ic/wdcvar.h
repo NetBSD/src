@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.85 2006/09/07 12:46:47 itohy Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.86 2006/09/30 15:56:18 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ struct wdc_softc {
 #define WDC_CAPABILITY_PREATA	0x0200	/* ctrl can be a pre-ata one */
 #define WDC_CAPABILITY_WIDEREGS 0x0400  /* Ctrl has wide (16bit) registers  */
 
+#if NATA_DMA || NATA_PIOBM
 	/* if WDC_CAPABILITY_DMA set in 'cap' */
 	void            *dma_arg;
 	int            (*dma_init)(void *, int, int, void *, size_t, int);
@@ -105,6 +106,7 @@ struct wdc_softc {
 #define WDC_DMAST_NOIRQ	0x01	/* missing IRQ */
 #define WDC_DMAST_ERR	0x02	/* DMA error */
 #define WDC_DMAST_UNDER	0x04	/* DMA underrun */
+#endif	/* NATA_DMA || NATA_PIOBM */
 
 	/* Optional callback to select drive. */
 	void		(*select)(struct ata_channel *,int);
