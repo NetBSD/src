@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.9 2006/09/19 22:03:11 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.10 2006/09/30 20:05:58 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -65,6 +65,7 @@ typedef int (*kauth_scope_callback_t)(kauth_cred_t, kauth_action_t,
 #define	KAUTH_SCOPE_PROCESS	"org.netbsd.kauth.process"
 #define	KAUTH_SCOPE_NETWORK	"org.netbsd.kauth.network"
 #define	KAUTH_SCOPE_MACHDEP	"org.netbsd.kauth.machdep"
+#define	KAUTH_SCOPE_DEVICE	"org.netbsd.kauth.device"
 
 /*
  * Generic scope - actions.
@@ -187,6 +188,14 @@ enum kauth_machdep_req {
 	KAUTH_REQ_MACHDEP_X86_MTRR_SET
 };
 
+/*
+ * Device scope - actions.
+ */
+enum {
+	KAUTH_DEVICE_TTY_OPEN=1,
+	KAUTH_DEVICE_TTY_PRIVSET
+};
+
 #define NOCRED ((kauth_cred_t)-1)	/* no credential available */
 #define FSCRED ((kauth_cred_t)-2)	/* filesystem credential */
 
@@ -211,6 +220,7 @@ int kauth_authorize_network(kauth_cred_t, kauth_action_t,
     enum kauth_network_req, void *, void *, void *);
 int kauth_authorize_machdep(kauth_cred_t, kauth_action_t,
     enum kauth_machdep_req, void *, void *, void *);
+int kauth_authorize_device_tty(kauth_cred_t, kauth_action_t, struct tty *);
 
 /* Kauth credentials management routines. */
 kauth_cred_t kauth_cred_alloc(void);
