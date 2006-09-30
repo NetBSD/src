@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.5 2006/09/28 23:54:14 bjh21 Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.6 2006/09/30 16:30:10 bjh21 Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.5 2006/09/28 23:54:14 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.6 2006/09/30 16:30:10 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ db_bus_write_cmd(db_expr_t addr, int have_addr, db_expr_t count,
     const char *modif)
 {
 	db_expr_t datum;
-	bus_space_tag_t iot = 2; /* XXX */
+	bus_space_tag_t iot = &iobus_bs_tag; /* XXX */
 	bus_space_handle_t ioh;
 
 	if (!have_addr)
@@ -100,11 +100,11 @@ db_bus_write_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 	while (db_expression(&datum)) {
 		switch (*modif) {
 		case 'b':
-			bus_space_write_1(2, ioh, 0, datum);
+			bus_space_write_1(iot, ioh, 0, datum);
 			break;
 		case '\0':
 		case 'h':
-			bus_space_write_2(2, ioh, 0, datum);
+			bus_space_write_2(iot, ioh, 0, datum);
 			break;
 		default:
 			db_error("bad modifier");

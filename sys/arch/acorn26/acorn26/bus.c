@@ -1,4 +1,4 @@
-/* $NetBSD: bus.c,v 1.5 2005/12/11 12:16:03 christos Exp $ */
+/* $NetBSD: bus.c,v 1.6 2006/09/30 16:30:10 bjh21 Exp $ */
 /*-
  * Copyright (c) 1999, 2000 Ben Harris
  * All rights reserved.
@@ -30,172 +30,96 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.5 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.6 2006/09/30 16:30:10 bjh21 Exp $");
 
 #include <sys/param.h>
+#include <sys/malloc.h>
 #include <machine/bus.h>
 #include <machine/memcreg.h>
 
 #include <arm/blockio.h>
 
+bs_protos(iobus);
+bs_protos(bs_notimpl);
+
+struct bus_space iobus_bs_tag = {
+	.bs_cookie = (void *)2,
+	.bs_map = iobus_bs_map, .bs_unmap = iobus_bs_unmap,
+	.bs_subregion = iobus_bs_subregion,
+	.bs_alloc = iobus_bs_alloc, .bs_free = iobus_bs_free,
+	.bs_mmap = iobus_bs_mmap,
+	.bs_barrier = iobus_bs_barrier,
+	.bs_r_1  = iobus_bs_r_1,  .bs_r_2  = iobus_bs_r_2,
+	.bs_rm_1 = iobus_bs_rm_1, .bs_rm_2 = iobus_bs_rm_2,
+	.bs_rr_1 = iobus_bs_rr_1, .bs_rr_2 = iobus_bs_rr_2,
+	.bs_w_1  = iobus_bs_w_1,  .bs_w_2  = iobus_bs_w_2,
+	.bs_wm_1 = iobus_bs_wm_1, .bs_wm_2 = iobus_bs_wm_2,
+	.bs_wr_1 = iobus_bs_wr_1, .bs_wr_2 = iobus_bs_wr_2,
+	.bs_sm_1 = iobus_bs_sm_1, .bs_sm_2 = iobus_bs_sm_2,
+	.bs_sr_1 = iobus_bs_sr_1, .bs_sr_2 = iobus_bs_sr_2,
+};	
+
 int
-bus_space_map(bus_space_tag_t bst, bus_addr_t addr, bus_size_t size,
+iobus_bs_map(void *t, bus_addr_t addr, bus_size_t size,
 	      int flags, bus_space_handle_t *bshp)
 {
 
 	if (flags & BUS_SPACE_MAP_LINEAR)
 		return -1;
-	bshp->a1 = bshp->a2 = addr;
+	*bshp = (u_long)addr;
 	return 0;
+}
+
+void
+iobus_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
+{
+
 }
 
 int
-bus_space_subregion(bus_space_tag_t bst, bus_space_handle_t bsh,
-		    bus_size_t offset, bus_size_t size,
-		    bus_space_handle_t *nbshp)
+iobus_bs_alloc(void *t,	bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
+    bus_size_t alignment, bus_size_t boundary, int flags, bus_addr_t *bpap,
+    bus_space_handle_t *bshp)
 {
 
-	nbshp->a1 = bsh.a1 + (offset << bst);
-	nbshp->a2 = bsh.a2 + (offset << bst);
-	return 0;
+	return -1;
+}
+
+void    
+iobus_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
+{
+
 }
 
 int
-bus_space_shift(bus_space_tag_t bst, bus_space_handle_t bsh, int shift,
-		bus_space_tag_t *nbstp, bus_space_handle_t *nbshp)
+iobus_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset,
+    bus_size_t size, bus_space_handle_t *nbshp)
 {
 
-	*nbstp = shift;
-	*nbshp = bsh;
+	*nbshp = bsh + (offset << (int)t);
 	return 0;
 }
 
-void
-bus_space_read_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
-		       bus_size_t offset, u_int16_t *datap, bus_size_t count)
+paddr_t
+iobus_bs_mmap(void *t, bus_addr_t addr, off_t off, int prot, int flags)
 {
-	int i;
 
-	for (i = 0; i < count; i++)
-		datap[i] = bus_space_read_2(bst, bsh, offset);
+	return -1;
 }
 
 void
-bus_space_write_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
-			bus_size_t offset, u_int16_t const *datap,
-			bus_size_t count)
+iobus_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
+    bus_size_t len, int flags)
 {
-	int i;
 
-	for (i = 0; i < count; i++)
-		bus_space_write_2(bst, bsh, offset, datap[i]);
 }
 
-void
-bus_space_set_multi_1(bus_space_tag_t bst, bus_space_handle_t bsh,
-		      bus_size_t offset,  u_int8_t value, bus_size_t count)
+int
+bus_space_shift(bus_space_tag_t bst, int shift, bus_space_tag_t *nbstp)
 {
-	int i;
 
-	for (i = 0; i < count; i++)
-		bus_space_write_1(bst, bsh, offset, value);
+	*nbstp = malloc(sizeof(**nbstp), M_DEVBUF, M_WAITOK);
+	**nbstp = *bst;
+	(*nbstp)->bs_cookie = (void *)shift;
+	return 0;
 }
-
-void
-bus_space_set_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
-		      bus_size_t offset, u_int16_t value, bus_size_t count)
-{
-	int i;
-
-	for (i = 0; i < count; i++)
-		bus_space_write_2(bst, bsh, offset, value);
-}
-
-void
-bus_space_read_region_1(bus_space_tag_t bst, bus_space_handle_t bsh,
-			bus_size_t offset, u_int8_t *datap, bus_size_t count)
-{
-	int i;
-
-	for (i = 0; i < count; i++)
-		datap[i] = bus_space_read_1(bst, bsh, offset + i);
-}
-
-void
-bus_space_read_region_2(bus_space_tag_t bst, bus_space_handle_t bsh,
-			bus_size_t offset, u_int16_t *datap, bus_size_t count)
-{
-	int i;
-
-	for (i = 0; i < count; i++)
-		datap[i] = bus_space_read_2(bst, bsh, offset + i);
-}
-
-void
-bus_space_write_region_1(bus_space_tag_t bst, bus_space_handle_t bsh,
-			 bus_size_t offset, u_int8_t const *datap,
-			 bus_size_t count)
-{
-	int i;
-
-	for (i = 0; i < count; i++)
-		bus_space_write_1(bst, bsh, offset + i, datap[i]);
-}
-
-void
-bus_space_write_region_2(bus_space_tag_t bst, bus_space_handle_t bsh,
-			 bus_size_t offset, u_int16_t const *datap,
-			 bus_size_t count)
-{
-	int i;
-
-	for (i = 0; i < count; i++)
-		bus_space_write_2(bst, bsh, offset + i, datap[i]);
-}
-
-void
-bus_space_set_region_1(bus_space_tag_t bst, bus_space_handle_t bsh,
-		       bus_size_t offset, u_int8_t value, bus_size_t count)
-{
-	int i;
-
-	for (i = 0; i < count; i++)
-		bus_space_write_1(bst, bsh, offset + i, value);
-}
-
-void
-bus_space_set_region_2(bus_space_tag_t bst, bus_space_handle_t bsh,
-		       bus_size_t offset, u_int16_t value, bus_size_t count)
-{
-	int i;
-
-	for (i = 0; i < count; i++)
-		bus_space_write_2(bst, bsh, offset + i, value);
-}
-
-void
-bus_space_copy_region_1(bus_space_tag_t bst,
-		 bus_space_handle_t bsh1, bus_size_t offset1,
-		 bus_space_handle_t bsh2, bus_size_t offset2, bus_size_t count)
-{
-	int i;
-
-	for (i = 0; i < count; i++)
-		bus_space_write_1(bst, bsh2, offset2 + i,
-				  bus_space_read_1(bst, bsh1, offset1 + i));
-}
-
-void
-bus_space_copy_region_2(bus_space_tag_t bst,
-		 bus_space_handle_t bsh1, bus_size_t offset1,
-		 bus_space_handle_t bsh2, bus_size_t offset2, bus_size_t count)
-{
-	int i;
-
-	for (i = 0; i < count; i++)
-		bus_space_write_2(bst, bsh2, offset2 + i,
-				  bus_space_read_2(bst, bsh1, offset1 + i));
-}
-
-
-
