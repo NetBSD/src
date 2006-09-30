@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.91 2006/09/21 09:28:37 jld Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.92 2006/09/30 21:00:13 jld Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.91 2006/09/21 09:28:37 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.92 2006/09/30 21:00:13 jld Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -576,7 +576,7 @@ spec_poll(v)
 	}
 	simple_unlock(&vp->v_interlock);
 	if (dev == NODEV) {
-		return ENXIO;
+		return POLLERR;
 	}
 
 	switch (vp->v_type) {
