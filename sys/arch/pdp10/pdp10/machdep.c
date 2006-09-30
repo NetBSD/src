@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2005/12/11 12:18:34 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8.22.1 2006/09/30 14:17:18 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -40,6 +40,8 @@
 #include <sys/mbuf.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
+
+#include <machine/intr.h>
 
 #include <dev/cons.h>
 
@@ -208,3 +210,11 @@ cpu_switchto (struct lwp *p, struct lwp *op)
 	panic("cpu_switchto");
 }
 
+ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+	ipl_cookie_t icookie;
+
+	icookie._pi = PI_LVLOFF | IPL2PI(ipl);
+	return icookie;
+}
