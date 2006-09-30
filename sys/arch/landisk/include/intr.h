@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.8.1 2006/09/30 14:14:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,23 +45,34 @@
 #define	IPL_BIO		10	/* block I/O */
 #define	IPL_NET		11	/* network */
 #define	IPL_TTY		12	/* terminal */
+#define	IPL_VM		IPL_TTY
 #define	IPL_SERIAL	13	/* serial */
 #define	IPL_CLOCK	14	/* clock */
+#define	IPL_STATCLOCK	IPL_CLOCK
+#define	IPL_SCHED	IPL_CLOCK
 #define	IPL_HIGH	15	/* everything */
+#define	IPL_LOCK	IPL_HIGH
 
-#define	splsoftclock()		_cpu_intr_raise(IPL_SOFTCLOCK << 4)
-#define	splsoftnet()		_cpu_intr_raise(IPL_SOFTNET << 4)
-#define	splsoftserial()		_cpu_intr_raise(IPL_SOFTSERIAL << 4)
-#define	splbio()		_cpu_intr_raise(IPL_BIO << 4)
-#define	splnet()		_cpu_intr_raise(IPL_NET << 4)
-#define	spltty()		_cpu_intr_raise(IPL_TTY << 4)
-#define	splvm()			spltty()
-#define	splserial()		_cpu_intr_raise(IPL_SERIAL << 4)
-#define	splclock()		_cpu_intr_raise(IPL_CLOCK << 4)
-#define	splstatclock()		splclock()
-#define	splsched()		splclock()
-#define	splhigh()		_cpu_intr_raise(IPL_HIGH << 4)
-#define	spllock()		splhigh()
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl << 4};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _cpu_intr_raise(icookie._ipl);
+}
+
+#include <sys/spl.h>
 
 #define	spl0()			_cpu_intr_resume(IPL_NONE << 4)
 #define	splx(x)			_cpu_intr_resume(x)
