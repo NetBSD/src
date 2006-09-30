@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.715 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.716 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -66,6 +66,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	sgimips: Add timecounter support.  [gdamore 20060916]
 	veriexec: Add veriexecgen(8), a tool for easy and fast generation
 		  of Veriexec fingerprint files. [elad 20060916]
+	gcc(1): Switch m68k to GCC4 [tsutsui 20060917]
+	gcc(1): Switch mips to GCC4 [simonb 20060919]
 	x68k: Add timecounter support.  [gdamore 20060919]
 	who(1): Change -u behaviour to also print PID of process on 
 		terminal, and add -d to print more information from
