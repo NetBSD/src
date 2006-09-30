@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.6 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: session.c,v 1.7 2006/09/30 16:14:18 manu Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -250,8 +250,8 @@ close_session()
 }
 
 static void
-check_rtsock(p)
-	void *p;
+check_rtsock(unused)
+	void *unused;
 {
 	isakmp_close();
 	grab_myaddrs();
@@ -388,19 +388,8 @@ static void reload_conf(){
 	 * the IKE listener, as we will not have the right to 
 	 * setsockopt(IP_IPSEC_POLICY). 
 	 */
-	if (geteuid() == 0) {
-		struct myaddrs *p;
-
-		for (p = lcconf->myaddrs; p; p = p->next) {
-			if (!p->addr) {
-				continue;
-			}
-			close(p->sock);
-			p->sock=-1;
-		}
-
-		isakmp_open();
-	}
+	if (geteuid() == 0)
+		check_rtsock(NULL);
 
 	/* Revalidate ph1 / ph2tree !!!
 	 * update ctdtree if removing some ph1 !
