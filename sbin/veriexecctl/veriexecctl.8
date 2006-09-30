@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecctl.8,v 1.27 2006/09/17 13:03:02 elad Exp $
+.\" $NetBSD: veriexecctl.8,v 1.28 2006/09/30 10:56:31 elad Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexecctl.8,v 1.27 2006/09/17 13:03:02 elad Exp $
+.\"	$Id: veriexecctl.8,v 1.28 2006/09/30 10:56:31 elad Exp $
 .\"
-.Dd September 17, 2006
+.Dd September 30, 2006
 .Dt VERIEXECCTL 8
 .Os
 .Sh NAME
@@ -92,9 +92,10 @@ the file.
 The field
 .Em options
 contains the associated options for the file.
-Currently there are seven valid options:
+Currently there are eight valid options, five of which are aliases
+to improve readability of the database files:
 .Pp
-.Bl -tag -width INTERPRETER -compact
+.Bl -tag
 .It Dv DIRECT
 Allow direct execution only.
 .It Dv INDIRECT
@@ -127,9 +128,10 @@ attributes set.
 This option is a shorthand way of setting the options for correct
 operation of scripts.
 .It Dv LIBRARY
-The file is a library, this option is an alias of the
+The file is a library, this option is an alias for
 .Dv FILE
-option.
+and
+.Dv INDIRECT .
 .It Dv UNTRUSTED
 This option is used to indicate that the file is located on
 untrusted storage, and its fingerprint should not be cached,
