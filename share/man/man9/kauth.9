@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.17 2006/09/30 20:05:57 elad Exp $
+.\" $NetBSD: kauth.9,v 1.18 2006/09/30 20:14:53 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -55,7 +55,7 @@ developers in this document.
 Some
 .Nm
 types include the following:
-.Bl -tag -width "123456"
+.Bl -tag
 .It kauth_cred_t
 Representing credentials that can be associated with an object.
 Includes user- and group-ids (real, effective, and save) as well as group
@@ -128,7 +128,7 @@ The authorization wrapper for this scope is declared as
 "void *arg0"
 .Pp
 The following operations are available for this scope:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Dv KAUTH_GENERIC_ISSUSER
 Checks whether the credentials belong to the super-user.
 .Pp
@@ -159,13 +159,13 @@ The authorization wrapper for this scope is declared as
 "void *arg3"
 .Pp
 The following requests are available for this scope:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Dv KAUTH_SYSTEM_ACCOUNTING
 Check if enabling/disabling accounting allowed.
 .It Dv KAUTH_SYSTEM_CHROOT
 .Ar req
 can be any of the following:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Dv KAUTH_REQ_SYSTEM_CHROOT_CHROOT
 Check if calling
 .Xr chroot 2
@@ -179,7 +179,7 @@ is allowed.
 This request concentrates several debugging-related operations.
 .Ar req
 can be any of the following:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Dv KAUTH_REQ_SYSTEM_DEBUG_IPKDB
 Check if using
 .Xr ipkdb 4
@@ -200,7 +200,7 @@ This request groups raw access to system resources.
 .Ar req
 indicates what is the underlying resource being access, and can be one of the
 following:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Dv KAUTH_REQ_SYSTEM_RAWIO_DISK
 The underlying resource is a disk.
 .It Dv KAUTH_REQ_SYSTEM_RAWIO_MEMORY
@@ -209,7 +209,7 @@ The underlying resource is the machine memory.
 .Pp
 .Ar arg1
 indicates the access requested, and can be one of the following:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Dv KAUTH_REQ_SYSTEM_RAWIO_READ
 Read access is requested.
 .It Dv KAUTH_REQ_SYSTEM_RAWIO_RW
@@ -240,7 +240,7 @@ This requests operations related to
 .Xr sysctl 9 .
 .Ar req
 indicates the specific request and can be one of the following:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Dv KAUTH_REQ_SYSTEM_SYSCTL_ADD
 Check if adding a
 .Xr sysctl 9
@@ -262,7 +262,7 @@ nodes is allowed.
 This request groups time-related operations.
 .Ar req
 can be any of the following:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Dv KAUTH_REQ_SYSTEM_TIME_ADJTIME
 Check if changing the time using
 .Xr adjtime 2
@@ -293,7 +293,7 @@ The authorization wrapper for this scope is declared as
 "void *arg3"
 .Pp
 The following operations are available for this scope:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Dv KAUTH_PROCESS_CANSIGNAL
 Checks whether an object with one set of credentials can post signals
 to another process.
@@ -320,7 +320,7 @@ can be changed.
 Groups authorization requests related to resource management.
 .Ar arg0
 indicates the sub-action, and can be one of the following:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Dv KAUTH_REQ_PROCESS_RESOURCE_NICE
 Checks whether the
 .Em nice
@@ -354,13 +354,14 @@ The authorization wrapper for this scope is declared as
 "enum kauth_network_req req" "void *arg1" "void *arg2" "void *arg3"
 .Pp
 The following operations are available for this scope:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Dv KAUTH_NETWORK_ALTQ
 Checks if an ALTQ operation is allowed.
 .Pp
 .Ar req
 indicates the ALTQ subsystem in question, and can be one of the following:
-.Bl -tag -width "123456"
+.Pp
+.Bl -tag -compact
 .It Dv KAUTH_REQ_NETWORK_ALTQ_AFMAP
 .It Dv KAUTH_REQ_NETWORK_ALTQ_BLUE
 .It Dv KAUTH_REQ_NETWORK_ALTQ_CBQ
@@ -382,7 +383,7 @@ request is allowed.
 allows to indicate the type of the request to structure listeners and callers
 easier.
 Supported request types:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Dv KAUTH_REQ_NETWORK_BIND_PRIVPORT
 Checks if binding to a privileged/reserved port is allowed.
 .El
@@ -391,7 +392,7 @@ Checks if firewall-related operations are allowed.
 .Pp
 .Ar req
 indicates the sub-action, and can be one of the following:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Dv KAUTH_REQ_NETWORK_FIREWALL_FW
 Modification of packet filtering rules.
 .It Dv KAUTH_REQ_NETWORK_FIREWALL_NAT
@@ -416,7 +417,7 @@ request is allowed.
 allows to indicate the type of the request to structure listeners and callers
 easier.
 Supported request types:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Dv KAUTH_REQ_NETWORK_SOCKET_RAWSOCK
 Checks if opening a raw socket is allowed.
 .El
@@ -435,14 +436,14 @@ In this scope,
 .Ar req
 always indicates the machine for the request.
 Below is the list of available request hierarchy.
-.Bl -tag -width "123456"
+.Bl -tag
 .It Dv KAUTH_MACHDEP_X86
 The request is x86 specific.
 .Pp
 Available requests as
 .Ar arg1
 are:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Dv KAUTH_REQ_MACHDEP_X86_IOPL
 Checks if IOPL is allowed to be modified.
 .It Dv KAUTH_REQ_MACHDEP_X86_IOPERM
@@ -456,7 +457,7 @@ The request is x86-64 specific.
 Available requests as
 .Ar arg1
 are:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Dv KAUTH_REQ_MACHDEP_X86_64_MTRR_GET
 Check if MTRR values can be retrieved.
 .El
@@ -499,7 +500,7 @@ objects.
 The following routines can be used to access and modify the user- and
 group-ids in a
 .Ft kauth_cred_t :
-.Bl -tag -width "123456"
+.Bl -tag
 .It Ft uid_t Fn kauth_cred_getuid "kauth_cred_t cred"
 Returns the real user-id from
 .Ar cred .
@@ -556,7 +557,7 @@ Return the reference count for
 The following routines can be used to access and modify the group
 list in a
 .Ft kauth_cred_t :
-.Bl -tag -width "123456"
+.Bl -tag
 .It Ft int Fn kauth_cred_ismember_gid "kauth_cred_t cred" "gid_t gid" \
 "int *resultp"
 Checks if the group-id
@@ -626,7 +627,7 @@ To prevent freeing a
 .Ft kauth_cred_t
 while it is still referenced, the following routines are available to maintain
 its reference count:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Ft void Fn kauth_cred_hold "kauth_cred_t cred"
 Increases reference count to
 .Ar cred
@@ -649,7 +650,7 @@ subsystem.
 The
 .Ft kauth_cred_t
 objects have their own memory management routines:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Ft kauth_cred_t Fn kauth_cred_alloc "void"
 Allocates a new
 .Ft kauth_cred_t ,
@@ -668,7 +669,7 @@ to a
 .Ft kauth_cred_t .
 .Pp
 The following routines are available for these cases:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Ft void Fn kauth_cred_topcred "kauth_cred_t cred" "struct pcred *pcred"
 Convert a
 .Ft kauth_cred_t
@@ -723,7 +724,7 @@ the group list.
 Other routines provided by
 .Nm
 are:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Ft void Fn kauth_cred_clone "kauth_cred_t cred1" "kauth_cred_t cred2"
 Clone credentials from
 .Ar cred1
@@ -770,7 +771,7 @@ Note that the built-in scopes, the
 scope and the
 .Dq process
 scope, can't be deleted.
-.Bl -tag -width "123456"
+.Bl -tag
 .It Ft kauth_scope_t Fn kauth_register_scope "const char *id" \
 "kauth_scope_callback_t cb" "void *cookie"
 Register a new scope on the system.
@@ -806,7 +807,7 @@ and in a case where all listeners defer the request -- leaving the decision
 for other listeners -- the request is denied.
 .Pp
 The following KPI is provided for the management of listeners:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Ft kauth_listener_t Fn kauth_listen_scope "const char *id" \
 "kauth_scope_callback_t cb" "void *cookie"
 Create a new listener on the scope with the id
