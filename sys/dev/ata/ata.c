@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.77 2006/09/24 03:53:08 jmcneill Exp $      */
+/*      $NetBSD: ata.c,v 1.78 2006/09/30 15:56:18 itohy Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.77 2006/09/24 03:53:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.78 2006/09/30 15:56:18 itohy Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -674,6 +674,7 @@ ata_set_mode(struct ata_drive_datas *drvp, u_int8_t mode, u_int8_t flags)
 	return CMD_OK;
 }
 
+#if NATA_DMA
 void
 ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 {
@@ -696,6 +697,7 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 		drvp->n_xfers = 1; /* restart counting from this error */
 	}
 }
+#endif	/* NATA_DMA */
 
 /*
  * freeze the queue and wait for the controller to be idle. Caller has to
@@ -1016,8 +1018,10 @@ ata_print_modes(struct ata_channel *chp)
 			drvp->drv_softc->dv_xname,
 			atac->atac_dev.dv_xname,
 			chp->ch_channel, drvp->drive, drvp->PIO_mode);
+#if NATA_DMA
 		if (drvp->drive_flags & DRIVE_DMA)
 			aprint_normal(", DMA mode %d", drvp->DMA_mode);
+#if NATA_UDMA
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			aprint_normal(", Ultra-DMA mode %d", drvp->UDMA_mode);
 			if (drvp->UDMA_mode == 2)
@@ -1029,17 +1033,25 @@ ata_print_modes(struct ata_channel *chp)
 			else if (drvp->UDMA_mode == 6)
 				aprint_normal(" (Ultra/133)");
 		}
-		if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA))
+#endif	/* NATA_UDMA */
+#endif	/* NATA_DMA */
+#if NATA_DMA || NATA_PIOBM
+		if (0
+#if NATA_DMA
+		    || (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA))
+#endif
 #if NATA_PIOBM
 		    /* PIOBM capable controllers use DMA for PIO commands */
 		    || (atac->atac_cap & ATAC_CAP_PIOBM)
 #endif
 		    )
 			aprint_normal(" (using DMA)");
+#endif	/* NATA_DMA || NATA_PIOBM */
 		aprint_normal("\n");
 	}
 }
 
+#if NATA_DMA
 /*
  * downgrade the transfer mode of a drive after an error. return 1 if
  * downgrade was possible, 0 otherwise.
@@ -1064,6 +1076,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	    (cf_flags & ATA_CONFIG_UDMA_SET))
 		return 0;
 
+#if NATA_UDMA
 	/*
 	 * If we were using Ultra-DMA mode, downgrade to the next lower mode.
 	 */
@@ -1072,6 +1085,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 		printf("%s: transfer error, downgrading to Ultra-DMA mode %d\n",
 		    drv_dev->dv_xname, drvp->UDMA_mode);
 	}
+#endif
 
 	/*
 	 * If we were using ultra-DMA, don't downgrade to multiword DMA.
@@ -1090,6 +1104,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	ata_reset_channel(chp, flags | AT_RST_NOCMD);
 	return 1;
 }
+#endif	/* NATA_DMA */
 
 /*
  * Probe drive's capabilities, for use by the controller later
@@ -1212,16 +1227,19 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		for (i = 7; i >= 0; i--) {
 			if ((params.atap_dmamode_supp & (1 << i)) == 0)
 				continue;
+#if NATA_DMA
 			if ((atac->atac_cap & ATAC_CAP_DMA) &&
 			    atac->atac_set_modes != NULL)
 				if (ata_set_mode(drvp, 0x20 | i, AT_WAIT)
 				    != CMD_OK)
 					continue;
+#endif
 			if (!printed) {
 				aprint_normal("%s DMA mode %d", sep, i);
 				sep = ",";
 				printed = 1;
 			}
+#if NATA_DMA
 			if (atac->atac_cap & ATAC_CAP_DMA) {
 				if (atac->atac_set_modes != NULL &&
 				    atac->atac_dma_cap < i)
@@ -1232,6 +1250,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 				drvp->drive_flags |= DRIVE_DMA;
 				splx(s);
 			}
+#endif
 			break;
 		}
 		if (params.atap_extensions & WDC_EXT_UDMA_MODES) {
@@ -1240,11 +1259,13 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 				if ((params.atap_udmamode_supp & (1 << i))
 				    == 0)
 					continue;
+#if NATA_UDMA
 				if (atac->atac_set_modes != NULL &&
 				    (atac->atac_cap & ATAC_CAP_UDMA))
 					if (ata_set_mode(drvp, 0x40 | i,
 					    AT_WAIT) != CMD_OK)
 						continue;
+#endif
 				if (!printed) {
 					aprint_normal("%s Ultra-DMA mode %d",
 					    sep, i);
@@ -1259,6 +1280,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 					sep = ",";
 					printed = 1;
 				}
+#if NATA_UDMA
 				if (atac->atac_cap & ATAC_CAP_UDMA) {
 					if (atac->atac_set_modes != NULL &&
 					    atac->atac_udma_cap < i)
@@ -1269,6 +1291,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 					drvp->drive_flags |= DRIVE_UDMA;
 					splx(s);
 				}
+#endif
 				break;
 			}
 		}
@@ -1288,9 +1311,12 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 
 	/* Try to guess ATA version here, if it didn't get reported */
 	if (drvp->ata_vers == 0) {
+#if NATA_UDMA
 		if (drvp->drive_flags & DRIVE_UDMA)
 			drvp->ata_vers = 4; /* should be at last ATA-4 */
-		else if (drvp->PIO_cap > 2)
+		else
+#endif
+		if (drvp->PIO_cap > 2)
 			drvp->ata_vers = 2; /* should be at last ATA-2 */
 	}
 	cf_flags = device_cfdata(drv_dev)->cf_flags;
@@ -1301,6 +1327,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		drvp->drive_flags |= DRIVE_MODE;
 		splx(s);
 	}
+#if NATA_DMA
 	if ((atac->atac_cap & ATAC_CAP_DMA) == 0) {
 		/* don't care about DMA modes */
 		return;
@@ -1317,6 +1344,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		}
 		splx(s);
 	}
+#if NATA_UDMA
 	if ((atac->atac_cap & ATAC_CAP_UDMA) == 0) {
 		/* don't care about UDMA modes */
 		return;
@@ -1333,6 +1361,8 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		}
 		splx(s);
 	}
+#endif	/* NATA_UDMA */
+#endif	/* NATA_DMA */
 }
 
 /* management of the /dev/atabus* devices */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.237 2006/08/17 17:11:28 christos Exp $ */
+/*	$NetBSD: wdc.c,v 1.238 2006/09/30 15:56:17 itohy Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.237 2006/08/17 17:11:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.238 2006/09/30 15:56:17 itohy Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -280,11 +280,13 @@ wdc_drvprobe(struct ata_channel *chp)
 		chp->ch_drive[i].chnl_softc = chp;
 		chp->ch_drive[i].drive = i;
 
+#if NATA_DMA
 		/*
 		 * Init error counter so that an error withing the first xfers
 		 * will trigger a downgrade
 		 */
 		chp->ch_drive[i].n_dmaerrs = NERRS_MAX-1;
+#endif
 
 		/* If controller can't do 16bit flag the drives as 32bit */
 		if ((atac->atac_cap &
@@ -808,6 +810,7 @@ wdcintr(void *arg)
 		panic("wdcintr: wrong channel");
 	}
 #endif
+#if NATA_DMA || NATA_PIOBM
 	if (chp->ch_flags & ATACH_DMA_WAIT) {
 		wdc->dma_status =
 		    (*wdc->dma_finish)(wdc->dma_arg, chp->ch_channel,
@@ -818,6 +821,7 @@ wdcintr(void *arg)
 		}
 		chp->ch_flags &= ~ATACH_DMA_WAIT;
 	}
+#endif
 	chp->ch_flags &= ~ATACH_IRQ_WAIT;
 	ret = xfer->c_intr(chp, xfer, 1);
 	if (ret == 0) /* irq was not for us, still waiting for irq */
@@ -844,7 +848,9 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 {
 	TAILQ_HEAD(, ata_xfer) reset_xfer;
 	struct ata_xfer *xfer, *next_xfer;
+#if NATA_DMA || NATA_PIOBM
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
+#endif
 
 	TAILQ_INIT(&reset_xfer);
 
@@ -904,6 +910,7 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 				ata_reset_channel(xfer->c_chp, flags);
 			else {
 				callout_stop(&chp->ch_callout);
+#if NATA_DMA || NATA_PIOBM
 				/*
 				 * If we're waiting for DMA, stop the
 				 * DMA engine
@@ -916,6 +923,7 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 					    WDC_DMAEND_ABRT_QUIET);
 					chp->ch_flags &= ~ATACH_DMA_WAIT;
 				}
+#endif
 				chp->ch_queue->active_xfer = NULL;
 				if ((flags & AT_RST_EMERG) == 0)
 					xfer->c_kill_xfer(
@@ -1206,6 +1214,7 @@ wdcwait(struct ata_channel *chp, int mask, int bits, int timeout, int flags)
 }
 
 
+#if NATA_DMA
 /*
  * Busy-wait for DMA to complete
  */
@@ -1228,12 +1237,15 @@ wdc_dmawait(struct ata_channel *chp, struct ata_xfer *xfer, int timeout)
 	    chp->ch_channel, xfer->c_drive, WDC_DMAEND_ABRT);
 	return 1;
 }
+#endif
 
 void
 wdctimeout(void *arg)
 {
 	struct ata_channel *chp = (struct ata_channel *)arg;
+#if NATA_DMA || NATA_PIOBM
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
+#endif
 	struct ata_xfer *xfer = chp->ch_queue->active_xfer;
 	int s;
 
@@ -1246,6 +1258,7 @@ wdctimeout(void *arg)
 		    (xfer->c_flags & C_ATAPI) ?  "atapi" : "ata",
 		    xfer->c_bcount,
 		    xfer->c_skip);
+#if NATA_DMA || NATA_PIOBM
 		if (chp->ch_flags & ATACH_DMA_WAIT) {
 			wdc->dma_status =
 			    (*wdc->dma_finish)(wdc->dma_arg,
@@ -1253,6 +1266,7 @@ wdctimeout(void *arg)
 				WDC_DMAEND_ABRT);
 			chp->ch_flags &= ~ATACH_DMA_WAIT;
 		}
+#endif
 		/*
 		 * Call the interrupt routine. If we just missed an interrupt,
 		 * it will do what's needed. Else, it will take the needed

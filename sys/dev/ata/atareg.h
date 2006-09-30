@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.27 2006/09/24 08:32:17 xtraeme Exp $	*/
+/*	$NetBSD: atareg.h,v 1.28 2006/09/30 15:56:18 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -144,6 +144,8 @@
 #define	WDCC_WRITEDMA_EXT	0x35	/* write 48-bit addressing with DMA */
 
 #ifdef _KERNEL
+#include <dev/ata/ataconf.h>
+
 /* Convert a 32-bit command to a 48-bit command. */
 static __inline int __unused
 atacmd_to48(int cmd32)
@@ -157,10 +159,12 @@ atacmd_to48(int cmd32)
 		return WDCC_READMULTI_EXT;
 	case WDCC_WRITEMULTI:
 		return WDCC_WRITEMULTI_EXT;
+#if NATA_DMA
 	case WDCC_READDMA:
 		return WDCC_READDMA_EXT;
 	case WDCC_WRITEDMA:
 		return WDCC_WRITEDMA_EXT;
+#endif
 	default:
 		panic("atacmd_to48: illegal 32-bit command: %d", cmd32);
 		/* NOTREACHED */
