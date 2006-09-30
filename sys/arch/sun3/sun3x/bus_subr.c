@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.28 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.29 2006/09/30 15:49:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.28 2005/12/11 12:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.29 2006/09/30 15:49:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,5 +190,7 @@ bus_mapout(void *ptr, int sz)
 	sz += off;
 	sz = m68k_round_page(sz);
 
+	pmap_remove(pmap_kernel(), va, va + sz);
+	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, va, sz, UVM_KMF_VAONLY);
 }
