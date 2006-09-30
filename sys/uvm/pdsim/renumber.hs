@@ -1,5 +1,5 @@
 {-
-/*	$NetBSD: renumber.hs,v 1.1 2006/09/30 08:57:17 yamt Exp $	*/
+/*	$NetBSD: renumber.hs,v 1.2 2006/09/30 16:01:19 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -37,4 +37,5 @@ renumber next t (k:ks) = case Map.lookup k t of
 	Nothing -> next:renumber (next + 1) (Map.insert k next t) ks
 renum first = renumber first Map.empty
 
-main = getContents >>= mapM_ print . (renum 0 :: [Int] -> [Int]) . (map read) . lines
+main = getContents >>=
+	mapM_ print . (renum 0 :: [Int] -> [Int]) . (map read) . lines
