@@ -36,6 +36,7 @@ NetBSD)
 	ifconfig ${if} alias ${INTERNAL_ADDR4} netmask ${INTERNAL_NETMASK4}
 	route delete default
 	route add default ${DEFAULT_GW} -ifa ${INTERNAL_ADDR4}
+	route add ${REMOTE_ADDR} ${DEFAULT_GW}
 	;;
 Linux)
 	if=`netstat -rn|awk '($1 == "0.0.0.0"){print $8}'`
