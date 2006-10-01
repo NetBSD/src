@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.18 2006/09/22 12:43:52 christos Exp $ */
+/*	$NetBSD: if_atu.c,v 1.19 2006/10/01 02:06:34 jnemeth Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.18 2006/09/22 12:43:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.19 2006/10/01 02:06:34 jnemeth Exp $");
 
 #include "bpfilter.h"
 
@@ -121,6 +121,9 @@ struct atu_type atu_devs[] = {
 	{ USB_VENDOR_ATMEL,	USB_PRODUCT_ATMEL_AT76C503A,
 	  RadioIntersil,	ATU_NO_QUIRK },
 	{ USB_VENDOR_LEXAR,	USB_PRODUCT_LEXAR_2662WAR,
+	  RadioRFMD,		ATU_NO_QUIRK },
+	/* Belkin F5D6050 */
+	{ USB_VENDOR_SMC3,	USB_PRODUCT_SMC3_2662WUSB,
 	  RadioRFMD,		ATU_NO_QUIRK },
 	{ USB_VENDOR_LINKSYS2,	USB_PRODUCT_LINKSYS2_WUSB11,
 	  RadioRFMD,		ATU_NO_QUIRK },
