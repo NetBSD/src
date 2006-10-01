@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.124 2006/10/01 10:04:13 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.125 2006/10/01 10:15:24 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.124 2006/10/01 10:04:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.125 2006/10/01 10:15:24 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -336,7 +336,9 @@ get_bootpath_from_prom()
 		return;
 
 	strcpy(ofbootpath, sbuf);
+	printf("bootpath: %s\n", ofbootpath);
 	ofbootpackage = prom_finddevice(ofbootpath);
+
 	/*
 	 * Strip partition or boot protocol
 	 */
@@ -349,7 +351,6 @@ get_bootpath_from_prom()
 	if (cp)
 		ofboottarget = cp;
 
-	printf("bootpath: %s\n", ofbootpath);
 	DPRINTF(ACDB_BOOTDEV, ("bootpath phandle: 0x%x\n", ofbootpackage));
 	if (ofboottarget)
 		DPRINTF(ACDB_BOOTDEV, ("boot target: %s\n", ofboottarget));
