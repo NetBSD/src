@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_asm.S,v 1.1 2006/09/30 16:30:10 bjh21 Exp $	*/
+/*	$NetBSD: bus_asm.S,v 1.2 2006/10/01 22:47:18 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2006 Ben Harris
@@ -209,28 +209,65 @@ ENTRY(iobus_bs_rr_1)
 
 	ldmdb	fp, {fp, sp, pc}
 
+	/*
+	 * r0-r7: scratch
+	 * r8: I/O addr
+	 * r9: mem addr
+	 * r10: count
+	 * r12: 0xffff
+	 */
 ENTRY(iobus_bs_rr_2)
 	mov	ip, sp
-	stmfd	sp!, {fp, ip, lr, pc}
+	stmfd	sp!, {r4-r10, fp, ip, lr, pc}
 	sub	fp, ip, #4
-	add	r12, r1, r2, lsl r0
+	add	r8, r1, r2, lsl r0
+	mov	r9, r3
 	mov	r2, #1
 	mov	r0, r2, lsl r0
-	ldr	r2, [sp, #16]
+	ldr	r10, [sp, #44]
+	tst	r9, #3		/* If we're word-aligned */
+	teqeq	r0, #4		/* and registers are every 4 bytes */
+	bne	2f
+	cmp	r10, #8		/* and we're reading >=8 registers */
+	bge	3f		/* do it the fast way. */
 
 	/* Make sure that we have a positive length */
-	cmp	r2, #0x00000000
-	ldmledb	fp, {fp, sp, pc}
+2:	cmp	r10, #0
+	ldmledb	fp, {r4-r10, fp, sp, pc}
 
-1:
-	ldr	r1, [r12], r0
-	strb	r1, [r3], #0x0001
+1:	ldr	r1, [r8], r0
+	strb	r1, [r9], #1
 	mov	r1, r1, lsr #8
-	strb	r1, [r3], #0x0001
-	subs	r2, r2, #0x00000001
+	strb	r1, [r9], #1
+	subs	r10, r10, #1
 	bgt	1b
 
-	ldmdb	fp, {fp, sp, pc}
+	ldmdb	fp, {r4-r10, fp, sp, pc}
+
+	/*
+	 * Fast read_region_2 code.  This is at its best when dealing with
+	 * 16-byte-aligned blocks of memory, which should happen quite
+	 * a lot anyway, but the above code could help.
+	 */
+3:	mov	r12, #0x00ff
+	orr	r12, r12, #0xff00
+	sub	r10, r10, #7
+1:	ldmia	r8!, {r0-r7}
+	subs	r10, r10, #8
+	and	r0, r0, r12
+	and	r2, r2, r12
+	and	r4, r4, r12
+	and	r6, r6, r12
+	orr	r0, r0, r1, lsl #16
+	orr	r2, r2, r3, lsl #16
+	orr	r4, r4, r5, lsl #16
+	orr	r6, r6, r7, lsl #16
+	stmia	r9!, {r0, r2, r4, r6}
+	bgt	1b
+	adds	r10, r10, #7
+	ldmeqdb	fp, {r4-r10, fp, sp, pc}
+	mov	r0, #4
+	b	2b
 
 /*
  * write region
