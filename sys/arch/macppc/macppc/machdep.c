@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.139 2006/09/29 22:20:08 macallan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.140 2006/10/01 20:38:35 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 2006/09/29 22:20:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140 2006/10/01 20:38:35 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -151,8 +151,9 @@ u_int timebase_freq = TIMEBASE_FREQ;
 u_int timebase_freq = 0;
 #endif
 
-extern u_long ticks_per_sec;
-extern u_long ns_per_tick;
+extern uint32_t ticks_per_sec;
+extern uint32_t ns_per_tick;
+extern uint32_t ticks_per_intr;
 
 void
 initppc(startkernel, endkernel, args)
@@ -256,7 +257,7 @@ initppc(startkernel, endkernel, args)
 static void
 set_timebase(void)
 {
-	int qhandle, phandle, ticks_per_intr;
+	int qhandle, phandle;
 	char type[32];
 	int msr, scratch;
 	
