@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.32 2006/10/01 17:21:29 martin Exp $	*/
+/*	$NetBSD: sab.c,v 1.33 2006/10/01 17:31:47 martin Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.32 2006/10/01 17:21:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.33 2006/10/01 17:31:47 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1009,6 +1009,7 @@ sabttyparam(struct sabtty_softc *sc, struct tty *tp, struct termios *t)
 			dafo |= SAB_DAFO_PAR_EVEN;
 	} else
 		dafo |= SAB_DAFO_PAR_NONE;
+	SAB_WRITE(sc, SAB_DAFO, dafo);
 
 	if (ospeed != 0) {
 		SAB_WRITE(sc, SAB_BGR, ospeed & 0xff);
