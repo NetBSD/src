@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk48txx.4,v 1.13 2003/11/02 09:08:16 wiz Exp $
+.\"	$NetBSD: mk48txx.4,v 1.14 2006/10/01 06:01:47 tsutsui Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 1, 2003
+.Dd October 1, 2006
 .Dt MK48TXX 4
 .Os
 .Sh NAME
@@ -65,11 +65,11 @@ function and the mk48txx_softc structure defined as follows:
 .Pp
 .nr nS 1
 .Ft "void"
-.Fn mk48txx_attach "struct mk48txx_softc"
+.Fn mk48txx_attach "struct mk48txx_softc *"
 .Pp
 .Bd -literal
-typedef uint8_t (*mk48txx_nvrd_t)(struct mk48txx_softc, int off);
-typedef void (*mk48txx_nvwr_t)(struct mk48txx_softc, int off,
+typedef uint8_t (*mk48txx_nvrd_t)(struct mk48txx_softc *, int off);
+typedef void (*mk48txx_nvwr_t)(struct mk48txx_softc *, int off,
     uint8_t datum);
 .Ed
 .Bd -literal
