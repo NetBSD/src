@@ -1,4 +1,7 @@
-2006-09-20  Emmanuel Dreyfus  <manu@netbsd.org>
+2006-10-01  Emmanuel Dreyfus  <manu@netbsd.org>
+	* src/racoon/isakmp.c: Avoid using NULL pointer (Coverity)
+
+2006-09-30  Emmanuel Dreyfus  <manu@netbsd.org>
 	* src/racoon/isakmp_agg.c: Remove dead code (Coverity)
 	* src/racoon/isakmp_cfg.c: Fix memory leak (Coverity)
 	* src/racoon/samples/roadwarrior/client/{phase1-up.sh|phase1-down.sh}:
