@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.66 2006/10/01 19:28:44 elad Exp $	*/
+/*	$NetBSD: ucom.c,v 1.67 2006/10/01 20:31:51 elad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.66 2006/10/01 19:28:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.67 2006/10/01 20:31:51 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -655,8 +655,8 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

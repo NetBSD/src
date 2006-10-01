@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.45 2006/10/01 19:28:43 elad Exp $	*/
+/*	$NetBSD: cy.c,v 1.46 2006/10/01 20:31:50 elad Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.45 2006/10/01 19:28:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.46 2006/10/01 20:31:50 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -553,8 +553,8 @@ cyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error != 0)
 			return EPERM;
 

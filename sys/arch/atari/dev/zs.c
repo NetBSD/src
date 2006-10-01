@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.50 2006/10/01 18:56:21 elad Exp $	*/
+/*	$NetBSD: zs.c,v 1.51 2006/10/01 20:31:50 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.50 2006/10/01 18:56:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.51 2006/10/01 20:31:50 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -906,8 +906,8 @@ struct lwp	*l;
 	case TIOCSFLAGS: {
 		int userbits = 0;
 
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if(error != 0)
 			return (EPERM);
 

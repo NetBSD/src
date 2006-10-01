@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.20 2006/07/23 22:06:07 ad Exp $	*/
+/*	$NetBSD: scif.c,v 1.21 2006/10/01 20:31:50 elad Exp $	*/
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.20 2006/07/23 22:06:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.21 2006/10/01 20:31:50 elad Exp $");
 
 #include "opt_kgdb.h"
 
@@ -958,8 +958,8 @@ scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred,
-	 	    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_device_tty(l->l_cred,
+	 	    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

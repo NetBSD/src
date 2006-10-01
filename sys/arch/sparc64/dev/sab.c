@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.34 2006/10/01 18:56:22 elad Exp $	*/
+/*	$NetBSD: sab.c,v 1.35 2006/10/01 20:31:50 elad Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.34 2006/10/01 18:56:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.35 2006/10/01 20:31:50 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -833,8 +833,8 @@ sabioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 		*((int *)data) = sc->sc_openflags;
 		break;
 	case TIOCSFLAGS:
-		if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag))
+		if (kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp))
 			error = EPERM;
 		else
 			sc->sc_openflags = *((int *)data) &

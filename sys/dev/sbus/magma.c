@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.37 2006/10/01 19:28:44 elad Exp $	*/
+/*	$NetBSD: magma.c,v 1.38 2006/10/01 20:31:51 elad Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.37 2006/10/01 19:28:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.38 2006/10/01 20:31:51 elad Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -1161,8 +1161,8 @@ mttyioctl(dev, cmd, data, flags, l)
 		break;
 
 	case TIOCSFLAGS:
-		if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag) )
+		if (kauth_authorize_device_tty(l->l_cred, 
+		    KAUTH_DEVICE_TTY_PRIVSET, tp))
 			error = EPERM;
 		else
 			mp->mp_openflags = *((int *)data) &

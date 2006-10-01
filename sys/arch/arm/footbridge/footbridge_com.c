@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.21 2006/10/01 18:56:21 elad Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.22 2006/10/01 20:31:49 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.21 2006/10/01 18:56:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.22 2006/10/01 20:31:49 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -366,8 +366,8 @@ fcomioctl(dev, cmd, data, flag, l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag); 
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp); 
 		if (error)
 			return (error); 
 		sc->sc_swflags = *(int *)data;

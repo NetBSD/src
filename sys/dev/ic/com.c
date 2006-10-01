@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.253 2006/10/01 19:28:43 elad Exp $	*/
+/*	$NetBSD: com.c,v 1.254 2006/10/01 20:31:50 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.253 2006/10/01 19:28:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.254 2006/10/01 20:31:50 elad Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1020,8 +1020,8 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	error = 0;
 	switch (cmd) {
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		break;
 	default:
 		/* nothing */
