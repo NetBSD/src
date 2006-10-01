@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.16 2006/07/21 16:48:48 ad Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.17 2006/10/01 19:28:43 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.16 2006/07/21 16:48:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.17 2006/10/01 19:28:43 elad Exp $");
 
 #include "biconsdev.h"
 #include <sys/param.h>
@@ -170,6 +170,9 @@ biconsdevopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct tty *tp = &biconsdev_tty[0];
 	int status;
 
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
+
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		/*
 		 * Leave baud rate alone!
@@ -182,10 +185,7 @@ biconsdevopen(dev_t dev, int flag, int mode, struct lwp *l)
 		tp->t_state = TS_ISOPEN | TS_CARR_ON;
 		(void)(*tp->t_param)(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state & TS_XCLUDE &&
-	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
-		return (EBUSY);
+	}
 
 	status = (*tp->t_linesw->l_open)(dev, tp);
 	return status;

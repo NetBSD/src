@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.11 2006/07/21 16:48:53 ad Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.12 2006/10/01 19:28:44 elad Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.11 2006/07/21 16:48:53 ad Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.12 2006/10/01 19:28:44 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,10 +332,7 @@ ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	DPRINTF(("ucycomopen: tp=%p\n", tp));
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();

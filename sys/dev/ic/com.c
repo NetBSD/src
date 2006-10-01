@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.252 2006/09/24 03:53:08 jmcneill Exp $	*/
+/*	$NetBSD: com.c,v 1.253 2006/10/01 19:28:43 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.252 2006/09/24 03:53:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.253 2006/10/01 19:28:43 elad Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -795,10 +795,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	tp = sc->sc_tty;
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-		kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();

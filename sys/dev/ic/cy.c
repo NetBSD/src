@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.44 2006/07/21 16:48:49 ad Exp $	*/
+/*	$NetBSD: cy.c,v 1.45 2006/10/01 19:28:43 elad Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.44 2006/07/21 16:48:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.45 2006/10/01 19:28:43 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -294,6 +294,9 @@ cyopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_param = cyparam;
 	tp->t_dev = dev;
 
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
+
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -365,10 +368,6 @@ cyopen(dev_t dev, int flag, int mode, struct lwp *l)
 			SET(tp->t_state, TS_CARR_ON);
 		else
 			CLR(tp->t_state, TS_CARR_ON);
-	} else if (ISSET(tp->t_state, TS_XCLUDE) &&
-	     kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag) != 0) {
-		return EBUSY;
 	} else {
 		s = spltty();
 	}
