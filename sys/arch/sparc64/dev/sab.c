@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.31 2006/07/28 14:08:11 hannken Exp $	*/
+/*	$NetBSD: sab.c,v 1.32 2006/10/01 17:21:29 martin Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.31 2006/07/28 14:08:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.32 2006/10/01 17:21:29 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -616,7 +616,8 @@ sabtty_softintr(struct sabtty_softc *sc)
 	}
 
 	if (flags & SABTTYF_RINGOVERFLOW)
-		log(LOG_WARNING, "%s: ring overflow\n", sc->sc_dv.dv_xname);
+		log(LOG_WARNING, "%s: ring overflow\n",
+		    device_xname(&sc->sc_dv));
 
 	if (flags & SABTTYF_DONE) {
 		ndflush(&tp->t_outq, sc->sc_txp - tp->t_outq.c_cf);
