@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.3 2006/08/17 17:11:28 christos Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.4 2006/10/01 10:13:54 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.3 2006/08/17 17:11:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.4 2006/10/01 10:13:54 plunky Exp $");
 
 #include "opt_bluetooth.h"
 #ifdef BLUETOOTH_DEBUG
@@ -83,133 +83,92 @@ int hci_sendspace = HCI_CMD_PKT_SIZE;
 int hci_recvspace = 4096;
 
 /*
- * Security filter routines
- *	The security mask is an bit array.
- *	If the bit is set, the opcode/event is permitted.
- *	I only allocate the security mask if needed, and give it back
- *      if requested as its quite a chunk. This could no doubt be made
- *	somewhat bit more memory efficient given that most OGF/OCF's are
- *	not used, but this way is quick.
+ * Security filter routines for unprivileged users.
+ *	Allow all but a few critical events, and only permit read commands.
  */
-#define HCI_OPCODE_MASK_SIZE	0x800
 
-uint32_t *hci_event_mask = NULL;
-uint32_t *hci_opcode_mask = NULL;
-
-static __inline int
+static int
 hci_security_check_opcode(uint16_t opcode)
 {
 
-	return (hci_opcode_mask[opcode >> 5] & (1 << (opcode & 0x1f)));
-}
+	switch (opcode) {
+	/* Link control */
+	case HCI_CMD_INQUIRY:
+	case HCI_CMD_REMOTE_NAME_REQ:
+	case HCI_CMD_READ_REMOTE_FEATURES:
+	case HCI_CMD_READ_REMOTE_EXTENDED_FEATURES:
+	case HCI_CMD_READ_REMOTE_VER_INFO:
+	case HCI_CMD_READ_CLOCK_OFFSET:
+	case HCI_CMD_READ_LMP_HANDLE:
 
-static __inline int
-hci_security_check_event(uint8_t event)
-{
+	/* Link policy */
+	case HCI_CMD_ROLE_DISCOVERY:
+	case HCI_CMD_READ_LINK_POLICY_SETTINGS:
+	case HCI_CMD_READ_DEFAULT_LINK_POLICY_SETTINGS:
 
-	return (hci_event_mask[event >> 5] & (1 << (event & 0x1f)));
-}
+	/* Host controller and baseband */
+	case HCI_CMD_READ_PIN_TYPE:
+	case HCI_CMD_READ_LOCAL_NAME:
+	case HCI_CMD_READ_CON_ACCEPT_TIMEOUT:
+	case HCI_CMD_READ_PAGE_TIMEOUT:
+	case HCI_CMD_READ_SCAN_ENABLE:
+	case HCI_CMD_READ_PAGE_SCAN_ACTIVITY:
+	case HCI_CMD_READ_INQUIRY_SCAN_ACTIVITY:
+	case HCI_CMD_READ_AUTH_ENABLE:
+	case HCI_CMD_READ_ENCRYPTION_MODE:
+	case HCI_CMD_READ_UNIT_CLASS:
+	case HCI_CMD_READ_VOICE_SETTING:
+	case HCI_CMD_READ_AUTO_FLUSH_TIMEOUT:
+	case HCI_CMD_READ_NUM_BROADCAST_RETRANS:
+	case HCI_CMD_READ_HOLD_MODE_ACTIVITY:
+	case HCI_CMD_READ_XMIT_LEVEL:
+	case HCI_CMD_READ_SCO_FLOW_CONTROL:
+	case HCI_CMD_READ_LINK_SUPERVISION_TIMEOUT:
+	case HCI_CMD_READ_NUM_SUPPORTED_IAC:
+	case HCI_CMD_READ_IAC_LAP:
+	case HCI_CMD_READ_PAGE_SCAN_PERIOD:
+	case HCI_CMD_READ_PAGE_SCAN:
+	case HCI_CMD_READ_INQUIRY_SCAN_TYPE:
+	case HCI_CMD_READ_INQUIRY_MODE:
+	case HCI_CMD_READ_PAGE_SCAN_TYPE:
+	case HCI_CMD_READ_AFH_ASSESSMENT:
 
-static __inline void
-hci_security_set_opcode(uint16_t opcode)
-{
+	/* Informational */
+	case HCI_CMD_READ_LOCAL_VER:
+	case HCI_CMD_READ_LOCAL_COMMANDS:
+	case HCI_CMD_READ_LOCAL_FEATURES:
+	case HCI_CMD_READ_LOCAL_EXTENDED_FEATURES:
+	case HCI_CMD_READ_BUFFER_SIZE:
+	case HCI_CMD_READ_COUNTRY_CODE:
+	case HCI_CMD_READ_BDADDR:
 
-	hci_opcode_mask[opcode >> 5] |= (1 << (opcode & 0x1f));
-}
+	/* Status */
+	case HCI_CMD_READ_FAILED_CONTACT_CNTR:
+	case HCI_CMD_READ_LINK_QUALITY:
+	case HCI_CMD_READ_RSSI:
+	case HCI_CMD_READ_AFH_CHANNEL_MAP:
+	case HCI_CMD_READ_CLOCK:
 
-static __inline void
-hci_security_clr_event(uint8_t event)
-{
+	/* Testing */
+	case HCI_CMD_READ_LOOPBACK_MODE:
+		return 1;
+	}
 
-	hci_event_mask[event >> 5] &= ~(1 << (event & 0x1f));
+	return 0;
 }
 
 static int
-hci_security_init(void)
+hci_security_check_event(uint8_t event)
 {
 
-	if (hci_event_mask)
+	switch (event) {
+	case HCI_EVENT_RETURN_LINK_KEYS:
+	case HCI_EVENT_LINK_KEY_NOTIFICATION:
+	case HCI_EVENT_VENDOR:
 		return 0;
-
-	// XXX could wait?
-	hci_event_mask = malloc(HCI_EVENT_MASK_SIZE + HCI_OPCODE_MASK_SIZE,
-				M_BLUETOOTH, M_NOWAIT | M_ZERO);
-	if (hci_event_mask == NULL) {
-		DPRINTF("no memory\n");
-		return ENOMEM;
 	}
 
-	hci_opcode_mask = hci_event_mask + HCI_EVENT_MASK_SIZE;
-
-	/* Events */
-	/* enable all but a few critical events */
-	memset(hci_event_mask, 0xff,
-		HCI_EVENT_MASK_SIZE * sizeof(*hci_event_mask));
-	hci_security_clr_event(HCI_EVENT_RETURN_LINK_KEYS);
-	hci_security_clr_event(HCI_EVENT_LINK_KEY_NOTIFICATION);
-	hci_security_clr_event(HCI_EVENT_VENDOR);
-
-	/* Commands - Link control */
-	hci_security_set_opcode(HCI_CMD_INQUIRY);
-	hci_security_set_opcode(HCI_CMD_REMOTE_NAME_REQ);
-	hci_security_set_opcode(HCI_CMD_READ_REMOTE_FEATURES);
-	hci_security_set_opcode(HCI_CMD_READ_REMOTE_EXTENDED_FEATURES);
-	hci_security_set_opcode(HCI_CMD_READ_REMOTE_VER_INFO);
-	hci_security_set_opcode(HCI_CMD_READ_CLOCK_OFFSET);
-	hci_security_set_opcode(HCI_CMD_READ_LMP_HANDLE);
-
-	/* Commands - Link policy */
-	hci_security_set_opcode(HCI_CMD_ROLE_DISCOVERY);
-	hci_security_set_opcode(HCI_CMD_READ_LINK_POLICY_SETTINGS);
-	hci_security_set_opcode(HCI_CMD_READ_DEFAULT_LINK_POLICY_SETTINGS);
-
-	/* Commands - Host controller and baseband */
-	hci_security_set_opcode(HCI_CMD_READ_PIN_TYPE);
-	hci_security_set_opcode(HCI_CMD_READ_LOCAL_NAME);
-	hci_security_set_opcode(HCI_CMD_READ_CON_ACCEPT_TIMEOUT);
-	hci_security_set_opcode(HCI_CMD_READ_PAGE_TIMEOUT);
-	hci_security_set_opcode(HCI_CMD_READ_SCAN_ENABLE);
-	hci_security_set_opcode(HCI_CMD_READ_PAGE_SCAN_ACTIVITY);
-	hci_security_set_opcode(HCI_CMD_READ_INQUIRY_SCAN_ACTIVITY);
-	hci_security_set_opcode(HCI_CMD_READ_AUTH_ENABLE);
-	hci_security_set_opcode(HCI_CMD_READ_ENCRYPTION_MODE);
-	hci_security_set_opcode(HCI_CMD_READ_UNIT_CLASS);
-	hci_security_set_opcode(HCI_CMD_READ_VOICE_SETTING);
-	hci_security_set_opcode(HCI_CMD_READ_AUTO_FLUSH_TIMEOUT);
-	hci_security_set_opcode(HCI_CMD_READ_NUM_BROADCAST_RETRANS);
-	hci_security_set_opcode(HCI_CMD_READ_HOLD_MODE_ACTIVITY);
-	hci_security_set_opcode(HCI_CMD_READ_XMIT_LEVEL);
-	hci_security_set_opcode(HCI_CMD_READ_SCO_FLOW_CONTROL);
-	hci_security_set_opcode(HCI_CMD_READ_LINK_SUPERVISION_TIMEOUT);
-	hci_security_set_opcode(HCI_CMD_READ_NUM_SUPPORTED_IAC);
-	hci_security_set_opcode(HCI_CMD_READ_IAC_LAP);
-	hci_security_set_opcode(HCI_CMD_READ_PAGE_SCAN_PERIOD);
-	hci_security_set_opcode(HCI_CMD_READ_PAGE_SCAN);
-	hci_security_set_opcode(HCI_CMD_READ_INQUIRY_SCAN_TYPE);
-	hci_security_set_opcode(HCI_CMD_READ_INQUIRY_MODE);
-	hci_security_set_opcode(HCI_CMD_READ_PAGE_SCAN_TYPE);
-	hci_security_set_opcode(HCI_CMD_READ_AFH_ASSESSMENT);
-
-	/* Commands - Informational */
-	hci_security_set_opcode(HCI_CMD_READ_LOCAL_VER);
-	hci_security_set_opcode(HCI_CMD_READ_LOCAL_COMMANDS);
-	hci_security_set_opcode(HCI_CMD_READ_LOCAL_FEATURES);
-	hci_security_set_opcode(HCI_CMD_READ_LOCAL_EXTENDED_FEATURES);
-	hci_security_set_opcode(HCI_CMD_READ_BUFFER_SIZE);
-	hci_security_set_opcode(HCI_CMD_READ_COUNTRY_CODE);
-	hci_security_set_opcode(HCI_CMD_READ_BDADDR);
-
-	/* Commands - Status */
-	hci_security_set_opcode(HCI_CMD_READ_FAILED_CONTACT_CNTR);
-	hci_security_set_opcode(HCI_CMD_READ_LINK_QUALITY);
-	hci_security_set_opcode(HCI_CMD_READ_RSSI);
-	hci_security_set_opcode(HCI_CMD_READ_AFH_CHANNEL_MAP);
-	hci_security_set_opcode(HCI_CMD_READ_CLOCK);
-
-	/* Commands - Testing */
-	hci_security_set_opcode(HCI_CMD_READ_LOOPBACK_MODE);
-
-	return 0;
+	return 1;
 }
 
 /*
@@ -348,7 +307,7 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 {
 	struct hci_pcb *pcb = (struct hci_pcb *)up->so_pcb;
 	struct sockaddr_bt *sa;
-	int err = 0, flags;
+	int err = 0;
 
 	DPRINTFN(2, "%s\n", prurequests[req]);
 
@@ -363,16 +322,6 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 		if (pcb)
 			return EINVAL;
 
-		flags = 0;
-		if (l != NULL && kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) {
-			err = hci_security_init();
-			if (err)
-				return err;
-		} else {
-			flags = HCI_PRIVILEGED;
-		}
-
 		err = soreserve(up, hci_sendspace, hci_recvspace);
 		if (err)
 			return err;
@@ -383,7 +332,12 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 
 		up->so_pcb = pcb;
 		pcb->hp_socket = up;
-		pcb->hp_flags = flags;
+
+		if (l == NULL
+		    || kauth_authorize_generic(l->l_cred,
+						KAUTH_GENERIC_ISSUSER,
+						&l->l_acflag) == 0)
+			pcb->hp_flags |= HCI_PRIVILEGED;
 
 		/*
 		 * Set default user filter. By default, socket only passes
@@ -542,33 +496,6 @@ release:
 	if (ctl)
 		m_freem(ctl);
 	return err;
-}
-
-/*
- * System is short on memory.
- */
-void
-hci_drain(void)
-{
-
-	/*
-	 * We can give the security masks back, if there
-	 * are no unprivileged sockets in operation..
-	 */
-	if (hci_event_mask) {
-		struct hci_pcb *pcb;
-
-		LIST_FOREACH(pcb, &hci_pcb, hp_next) {
-			if ((pcb->hp_flags & HCI_PRIVILEGED) == 0)
-				break;
-		}
-
-		if (pcb == NULL) {
-			free(hci_event_mask, M_BLUETOOTH);
-			hci_event_mask = NULL;
-			hci_opcode_mask = NULL;
-		}
-	}
 }
 
 /*
