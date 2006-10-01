@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txxvar.h,v 1.2 2005/12/11 12:21:27 christos Exp $ */
+/*	$NetBSD: mk48txxvar.h,v 1.3 2006/10/01 06:02:54 tsutsui Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,8 +37,8 @@
 
 struct mk48txx_softc;
 
-typedef u_int8_t (*mk48txx_nvrd_t)(struct mk48txx_softc *, int);
-typedef void (*mk48txx_nvwr_t)(struct mk48txx_softc *, int, u_int8_t);
+typedef uint8_t (*mk48txx_nvrd_t)(struct mk48txx_softc *, int);
+typedef void (*mk48txx_nvwr_t)(struct mk48txx_softc *, int, uint8_t);
 
 struct mk48txx_softc {
 	struct device	sc_dev;
