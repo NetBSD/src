@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.26 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: obio.c,v 1.27 2006/10/01 03:53:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.26 2005/12/11 12:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.27 2006/10/01 03:53:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.26 2005/12/11 12:19:27 christos Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/mon.h>
 #include <machine/pte.h>
 
@@ -58,17 +59,49 @@ static int	obio_print(void *, const char *);
 static int	obio_submatch(struct device *, struct cfdata *,
 			      const int *, void *);
 
-CFATTACH_DECL(obio, sizeof(struct device),
+struct obio_softc {
+	struct device	sc_dev;
+	bus_space_tag_t	sc_bustag;
+	bus_dma_tag_t	sc_dmatag;
+};
+CFATTACH_DECL(obio, sizeof(struct obio_softc),
     obio_match, obio_attach, NULL, NULL);
+
+static int obio_attached;
+
+static int obio_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t, bus_size_t,
+    int, vaddr_t, bus_space_handle_t *);
+static paddr_t obio_bus_mmap(bus_space_tag_t, bus_type_t, bus_addr_t,
+    off_t, int, int);
+
+static struct sun68k_bus_space_tag obio_space_tag = {
+	NULL,				/* cookie */
+	NULL,				/* parent bus space tag */
+	obio_bus_map,			/* bus_space_map */
+	NULL,				/* bus_space_unmap */
+	NULL,				/* bus_space_subregion */
+	NULL,				/* bus_space_barrier */
+	obio_bus_mmap,			/* bus_space_mmap */
+	NULL,				/* bus_intr_establish */
+	NULL,				/* bus_space_peek_N */
+	NULL				/* bus_space_poke_N */
+};
 
 static int 
 obio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
+	if (obio_attached)
+		return 0;
+
 	if (ca->ca_bustype != BUS_OBIO)
-		return (0);
-	return(1);
+		return 0;
+
+	if (ca->ca_name != NULL && strcmp(cf->cf_name, ca->ca_name) != 0)
+		return 0;
+
+	return 1;
 }
 
 /*
@@ -80,7 +113,7 @@ obio_match(struct device *parent, struct cfdata *cf, void *aux)
  * In general, anything not already shown here should
  * be added at or near the end.
  */
-static int obio_alist[] = {
+static paddr_t obio_alist[] = {
 
 	/* This is used by the Ethernet and SCSI drivers. */
 	OBIO_IOMMU,
@@ -130,19 +163,32 @@ static void
 obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
-	int	i;
+	struct obio_softc *sc = (void *)self;
+	struct confargs oba;
+	int i;
+
+	obio_attached = 1;
 
 	printf("\n");
+
+	sc->sc_bustag = ca->ca_bustag;
+	sc->sc_dmatag = ca->ca_dmatag;
+
+	obio_space_tag.cookie = sc;
+	obio_space_tag.parent = sc->sc_bustag;
+
+	oba = *ca;
+	oba.ca_bustag = &obio_space_tag;
 
 	/* Configure these in the order listed above. */
 	for (i = 0; i < OBIO_ALIST_LEN; i++) {
 		/* Our parent set ca->ca_bustype already. */
-		ca->ca_paddr = obio_alist[i];
+		oba.ca_paddr = obio_alist[i];
 		/* These are filled-in by obio_submatch. */
-		ca->ca_intpri = -1;
-		ca->ca_intvec = -1;
-		(void) config_found_sm_loc(self, "obio", NULL, ca, obio_print,
-					   obio_submatch);
+		oba.ca_intpri = -1;
+		oba.ca_intvec = -1;
+		(void)config_found_sm_loc(self, "obio", NULL, &oba, obio_print,
+		    obio_submatch);
 	}
 }
 
@@ -253,6 +299,34 @@ obio_find_mapping(paddr_t pa, psize_t sz)
 }
 
 /*
+ * The similar function with the above but used by bus_space(9)
+ */
+int
+find_prom_map(bus_addr_t pa, bus_type_t iospace, int sz,
+    bus_space_handle_t *hp)
+{
+	int i;
+	vsize_t off;
+
+	off = pa & PGOFSET;
+	pa -= off;
+	sz += off;
+
+	/* The saved mappings are all one page long. */
+	if (sz > PAGE_SIZE)
+		return EINVAL;
+
+	/* Linear search for it.  The list is short. */
+	for (i = 0; i < PROM_MAP_CNT; i++) {
+		if (pa == prom_mappings[i].pa) {
+			*hp = prom_mappings[i].va + off;
+			return 0;
+		}
+	}
+	return ENOENT;
+}
+
+/*
  * Search the PROM page tables for OBIO mappings that
  * we would like to borrow.
  */
@@ -336,4 +410,24 @@ obio_init(void)
 	 * would poll the zs and toggle some LEDs...
 	 */
 	intreg_init();
+}
+
+int
+obio_bus_map(bus_space_tag_t t, bus_type_t btype, bus_addr_t paddr,
+    bus_size_t size, int flags, vaddr_t vaddr, bus_space_handle_t *hp)
+{
+	struct obio_softc *sc = t->cookie;
+
+	return bus_space_map2(sc->sc_bustag, PMAP_OBIO, paddr, size,
+	    flags | _SUN68K_BUS_MAP_USE_PROM, vaddr, hp);
+}
+
+paddr_t
+obio_bus_mmap(bus_space_tag_t t, bus_type_t btype, bus_addr_t paddr, off_t off,
+    int prot, int flags)
+{
+	struct obio_softc *sc = t->cookie;
+
+	return bus_space_mmap2(sc->sc_bustag, PMAP_OBIO, paddr, off, prot,
+	    flags);
 }

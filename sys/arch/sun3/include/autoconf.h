@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.22 2005/12/11 12:19:21 christos Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.23 2006/10/01 03:53:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
  * (machdep parts of driver/kernel interface)
  */
 
+#include <machine/bus.h>
+
 /*
  * These are the "bus" types, in attach order.
  * Note tables in bus_subr.c and vme.c that
@@ -60,11 +62,17 @@
  * This is the "args" parameter to the bus match/attach functions.
  */
 struct confargs {
+	bus_space_tag_t ca_bustag;
+	bus_dma_tag_t ca_dmatag;
+	const char *ca_name;	
 	int ca_bustype;		/* BUS_OBIO, ... */
-	int ca_paddr;		/* physical address */
+	paddr_t ca_paddr;	/* physical address */
 	int ca_intpri;		/* interrupt priority level */
 	int ca_intvec;		/* interrupt vector index */
 };
+
+extern struct sun68k_bus_dma_tag mainbus_dma_tag;
+extern struct sun68k_bus_space_tag mainbus_space_tag;
 
 /* Locator aliases */
 #define cf_paddr	cf_loc[0]

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_any.c,v 1.14 2006/03/28 17:38:28 thorpej Exp $	*/
+/*	$NetBSD: zs_any.c,v 1.15 2006/10/01 03:53:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_any.c,v 1.14 2006/03/28 17:38:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_any.c,v 1.15 2006/10/01 03:53:27 tsutsui Exp $");
 
 #include "opt_kgdb.h"
 
@@ -180,9 +180,6 @@ zs_console_flags(int promunit, int node, int channel)
 }
 
 #ifdef	KGDB
-extern	int sun68k_find_prom_map(bus_addr_t, bus_type_t, int,
-	    bus_space_handle_t *);
-
 /*
  * Find a zs mapped by the PROM.  Currently this only works to find
  * zs0 on obio.
@@ -200,7 +197,7 @@ zs_find_prom(int unit)
 	 * The physical address of zs0 is model-dependent.
 	 */
 	zs0_phys = (cpu_machine_id == ID_SUN2_120 ? 0x002000 : 0x7f2000);
-	if (sun68k_find_prom_map(zs0_phys, PMAP_OBIO, sizeof(struct zsdevice),
+	if (find_prom_map(zs0_phys, PMAP_OBIO, sizeof(struct zsdevice),
 	    &bh))
 		return (NULL);
 

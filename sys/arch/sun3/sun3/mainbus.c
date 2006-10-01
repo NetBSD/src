@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.14 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.15 2006/10/01 03:53:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14 2005/12/11 12:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15 2006/10/01 03:53:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,13 @@ main_attach(struct device *parent, struct device *self, void *args)
 	int i;
 
 	printf("\n");
+
+	ca.ca_bustag = &mainbus_space_tag;
+	ca.ca_dmatag = &mainbus_dma_tag;
+	ca.ca_name = NULL;
+	ca.ca_paddr = -1;
+	ca.ca_intpri = -1;
+	ca.ca_intvec = -1;
 
 	for (i = 0; i < BUS__NTYPES; i++) {
 		ca.ca_bustype = i;

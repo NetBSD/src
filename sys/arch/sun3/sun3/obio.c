@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.49 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: obio.c,v 1.50 2006/10/01 03:53:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.49 2005/12/11 12:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.50 2006/10/01 03:53:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.49 2005/12/11 12:19:27 christos Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/mon.h>
 #include <machine/pte.h>
 
@@ -59,17 +60,50 @@ static int	obio_print(void *, const char *);
 static int	obio_submatch(struct device *, struct cfdata *,
 			      const int *, void *);
 
-CFATTACH_DECL(obio, sizeof(struct device),
+struct obio_softc {
+	struct device	sc_dev;
+	bus_space_tag_t	sc_bustag;
+	bus_dma_tag_t	sc_dmatag;
+};
+
+CFATTACH_DECL(obio, sizeof(struct obio_softc),
     obio_match, obio_attach, NULL, NULL);
+
+static int obio_attached;
+
+static int obio_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t, bus_size_t,
+    int, vaddr_t, bus_space_handle_t *);
+static paddr_t obio_bus_mmap(bus_space_tag_t, bus_type_t, bus_addr_t,
+    off_t, int, int);
+
+static struct sun68k_bus_space_tag obio_space_tag = {
+	NULL,				/* cookie */
+	NULL,				/* parent bus space tag */
+	obio_bus_map,			/* bus_space_map */
+	NULL,				/* bus_space_unmap */
+	NULL,				/* bus_space_subregion */
+	NULL,				/* bus_space_barrier */
+	obio_bus_mmap,			/* bus_space_mmap */
+	NULL,				/* bus_intr_establish */
+	NULL,				/* bus_space_peek_N */
+	NULL				/* bus_space_poke_N */
+};
 
 static int 
 obio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
+	if (obio_attached)
+		return 0;
+
 	if (ca->ca_bustype != BUS_OBIO)
-		return (0);
-	return(1);
+		return 0;
+
+	if (ca->ca_name != NULL && strcmp(cf->cf_name, ca->ca_name) != 0)
+		return 0;
+
+	return 1;
 }
 
 /*
@@ -85,19 +119,29 @@ static void
 obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
-	int	addr;
+	struct obio_softc *sc = (void *)self;
+	struct confargs oba;
+	int addr;
+
+	obio_attached = 1;
 
 	printf("\n");
+
+	sc->sc_bustag = ca->ca_bustag;
+	sc->sc_dmatag = ca->ca_dmatag;
+
+	oba = *ca;
+	oba.ca_bustag = &obio_space_tag;
 
 	/* Configure these in order of address. */
 	for (addr = 0; addr < OBIO_END; addr += OBIO_INCR) {
 		/* Our parent set ca->ca_bustype already. */
-		ca->ca_paddr = addr;
+		oba.ca_paddr = addr;
 		/* These are filled-in by obio_submatch. */
-		ca->ca_intpri = -1;
-		ca->ca_intvec = -1;
-		(void) config_found_sm_loc(self, "obio", NULL, ca, obio_print,
-					   obio_submatch);
+		oba.ca_intpri = -1;
+		oba.ca_intvec = -1;
+		(void)config_found_sm_loc(self, "obio", NULL, &oba, obio_print,
+		    obio_submatch);
 	}
 }
 
@@ -228,6 +272,38 @@ obio_find_mapping(paddr_t pa, psize_t sz)
 }
 
 /*
+ * The similar function with the above but used by bus_space(9)
+ */
+int
+find_prom_map(bus_addr_t pa, bus_type_t iospace, int sz,
+    bus_space_handle_t *hp)
+{
+	vsize_t off;
+	vaddr_t va;
+
+	off = pa & PGOFSET;
+	pa -= off;
+	sz += off;
+
+	/* The saved mappings are all one page long. */
+	if (sz > PAGE_SIZE)
+		return EINVAL;
+
+	/* Within our table? */
+	if (pa >= SAVE_LAST)
+		return ENOENT;
+
+	/* Do we have this one? */
+	va = (vaddr_t)prom_mappings[pa >> SAVE_SHIFT];
+	if (va == 0)
+		return ENOENT;
+
+	/* Found it! */
+	*hp = va + off;
+	return 0;
+}
+
+/*
  * This defines the permission bits to put in our PTEs.
  * Device space is never cached, and the PROM appears to
  * leave off the "no-cache" bit, so we can do the same.
@@ -337,4 +413,24 @@ obio_init(void)
 	 * would poll the zs and toggle some LEDs...
 	 */
 	intreg_init();
+}
+
+int
+obio_bus_map(bus_space_tag_t t, bus_type_t btype, bus_addr_t paddr,
+    bus_size_t size, int flags, vaddr_t vaddr, bus_space_handle_t *hp)
+{
+	struct obio_softc *sc = t->cookie;
+
+	return bus_space_map2(sc->sc_bustag, PMAP_OBIO, paddr, size,
+	    flags | _SUN68K_BUS_MAP_USE_PROM, vaddr, hp);
+}
+
+paddr_t
+obio_bus_mmap(bus_space_tag_t t, bus_type_t btype, bus_addr_t paddr, off_t off,
+    int prot, int flags)
+{
+	struct obio_softc *sc = t->cookie;
+
+	return bus_space_mmap2(sc->sc_bustag, PMAP_OBIO, paddr, off, prot,
+	    flags);
 }

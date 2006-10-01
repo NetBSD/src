@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.28 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: dvma.c,v 1.29 2006/10/01 03:53:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.28 2005/12/11 12:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.29 2006/10/01 03:53:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.28 2005/12/11 12:19:27 christos Exp $");
 
 #include <uvm/uvm.h> /* XXX: not _extern ... need uvm_map_create */
 
+#define _SUN68K_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/dvma.h>
 #include <machine/pmap.h>
@@ -278,4 +280,27 @@ dvma_mapout(void *dma, int len)
 		panic("dvma_mapout: unable to free 0x%lx,0x%lx",
 		    seg_dma, seg_len);
 	splx(s);
+}
+
+int 
+_bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
+    int nsegs, bus_size_t size, int flags)
+{
+
+	panic("_bus_dmamap_load_raw(): not implemented yet.");
+}
+
+int
+_bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
+{
+
+	panic("_bus_dmamap_load(): not implemented yet.");
+}
+
+void 
+_bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
+{
+
+	panic("_bus_dmamap_unload(): not implemented yet.");
 }

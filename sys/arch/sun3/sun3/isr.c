@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.50 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: isr.c,v 1.51 2006/10/01 03:53:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.50 2005/12/11 12:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.51 2006/10/01 03:53:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.50 2005/12/11 12:19:27 christos Exp $");
 #include <machine/mon.h>
 
 #include <sun3/sun3/machdep.h>
-#include <sun3/sun3/vector.h>
+#include <sun68k/sun68k/vector.h>
 
 extern int intrcnt[];	/* statistics */
 

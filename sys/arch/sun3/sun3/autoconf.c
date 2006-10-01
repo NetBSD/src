@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.67 2006/02/21 04:32:38 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.68 2006/10/01 03:53:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.67 2006/02/21 04:32:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.68 2006/10/01 03:53:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ bus_print(void *args, const char *name)
 		aprint_normal("%s:", name);
 
 	if (ca->ca_paddr != -1)
-		aprint_normal(" addr 0x%x", ca->ca_paddr);
+		aprint_normal(" addr 0x%lx", ca->ca_paddr);
 	if (ca->ca_intpri != -1)
 		aprint_normal(" ipl %d", ca->ca_intpri);
 	if (ca->ca_intvec != -1)
