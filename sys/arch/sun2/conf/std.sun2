@@ -1,8 +1,11 @@
-# $NetBSD: std.sun2,v 1.5 2005/12/11 12:19:16 christos Exp $
+# $NetBSD: std.sun2,v 1.6 2006/10/01 03:53:27 tsutsui Exp $
 
 # Standard information for Sun2 machines.
 machine	sun2 m68k sun68k
 include		"conf/std"	# MI standard options
+
+# XXX temporary option until sun3 port migrates to all sun68k stuff
+options 	_SUN2_
 
 # Standard defines
 options 	EXEC_ELF32, EXEC_SCRIPT
