@@ -1,4 +1,4 @@
-/*	$Id: ninjaata32.c,v 1.1 2006/09/07 14:22:07 itohy Exp $	*/
+/*	$Id: ninjaata32.c,v 1.2 2006/10/01 09:53:09 itohy Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi <itohy@NetBSD.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.1 2006/09/07 14:22:07 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.2 2006/10/01 09:53:09 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -94,7 +94,7 @@ njata32_init(sc, nosleep)
 
 	/* initial transfer speed */
 	bus_space_write_1(NJATA32_REGT(sc), NJATA32_REGH(sc),
-	    NJATA32_REG_TIMING, NJATA32_TIMING_PIO0);
+	    NJATA32_REG_TIMING, NJATA32_TIMING_PIO0 + sc->sc_atawait);
 
 	/* setup busmaster mode */
 	bus_space_write_1(NJATA32_REGT(sc), NJATA32_REGH(sc), NJATA32_REG_IOBM,
@@ -224,11 +224,10 @@ njata32_attach(sc)
 	sc->sc_flags |= NJATA32_CMDPG_MAPPED;
 
 	/* use flags value as busmaster wait */
-	if ((sc->sc_bmwait =
-	    device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
-	    (NJATA32_BM_WAIT_MASK >> NJATA32_BM_WAIT_SHIFT)) > 0)
-		aprint_normal("%s: busmaster wait = %d\n",
-		    NJATA32NAME(sc), sc->sc_bmwait);
+	if ((sc->sc_atawait =
+	    (uint8_t)device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags))
+		aprint_normal("%s: ATA wait = %#x\n",
+		    NJATA32NAME(sc), sc->sc_atawait);
 
 	njata32_init(sc, cold);
 
@@ -284,7 +283,7 @@ njata32_irqack(chp)
 
 	/* disable busmaster */
 	bus_space_write_1(NJATA32_REGT(sc), NJATA32_REGH(sc),
-	    NJATA32_REG_BM, (sc->sc_bmwait << NJATA32_BM_WAIT_SHIFT));
+	    NJATA32_REG_BM, NJATA32_BM_WAIT0);
 }
 
 static void
@@ -359,6 +358,8 @@ njata32_setup_channel(chp)
 		if (sc->sc_timing_pio < njata32_timing_pio[mode])
 			sc->sc_timing_pio = njata32_timing_pio[mode];
 	}
+
+	sc->sc_timing_pio += sc->sc_atawait;
 
 	/* set timing for PIO */
 	bus_space_write_1(NJATA32_REGT(sc), NJATA32_REGH(sc),
@@ -514,8 +515,7 @@ njata32_piobm_start(v, channel, drive, skip, xferlen, flags)
 	}
 
 	/* enable scatter/gather busmaster transfer */
-	bmreg = NJATA32_BM_EN | NJATA32_BM_SG |
-	    (sc->sc_bmwait << NJATA32_BM_WAIT_SHIFT) |
+	bmreg = NJATA32_BM_EN | NJATA32_BM_SG | NJATA32_BM_WAIT0 |
 	    ((dev->d_flags & NJATA32_DEV_DMA_READ) ? NJATA32_BM_RD : 0);
 	bus_space_write_1(NJATA32_REGT(sc), NJATA32_REGH(sc), NJATA32_REG_BM,
 	    bmreg);
@@ -593,13 +593,20 @@ njata32_dma_finish(v, channel, drive, force)
 	 * For unknown reason, PIOBM transfer sometimes fails in the middle,
 	 * in which case the bit #7 of BM register becomes 0.
 	 * Increasing the wait value seems to improve the situation.
+	 *
+	 * XXX
+	 * PIO transfer may also fail, but it seems it can't be detected.
 	 */
 	if ((bm & NJATA32_BM_DONE) == 0) {
 		error |= WDC_DMAST_ERR;
 		printf("%s: busmaster error", NJATA32NAME(sc));
-		if (sc->sc_bmwait < 1 /* XXX */) {
-			sc->sc_bmwait++;
-			printf(", new busmaster wait = %d", sc->sc_bmwait);
+		if (sc->sc_atawait < 0x11) {
+			if ((sc->sc_atawait & 0xf) == 0)
+				sc->sc_atawait++;
+			else
+				sc->sc_atawait += 0x10;
+			printf(", new ATA wait = %#x", sc->sc_atawait);
+			njata32_setup_channel(&sc->sc_ch[0].ch_ata_channel);
 		}
 		printf("\n");
 	}
@@ -608,7 +615,7 @@ njata32_dma_finish(v, channel, drive, force)
 	bus_space_write_1(NJATA32_REGT(sc), NJATA32_REGH(sc), NJATA32_REG_AS,
 	    NJATA32_AS_WAIT0);
 	bus_space_write_1(NJATA32_REGT(sc), NJATA32_REGH(sc), NJATA32_REG_BM,
-	    (sc->sc_bmwait << NJATA32_BM_WAIT_SHIFT));
+	    NJATA32_BM_WAIT0);
 
 	/* set timing for PIO */
 	bus_space_write_1(NJATA32_REGT(sc), NJATA32_REGH(sc),
@@ -701,7 +708,7 @@ njata32_intr(arg)
 		 * transfer done, wait for device interrupt
 		 */
 		bus_space_write_1(NJATA32_REGT(sc), NJATA32_REGH(sc),
-		    NJATA32_REG_BM, (sc->sc_bmwait << NJATA32_BM_WAIT_SHIFT));
+		    NJATA32_REG_BM, NJATA32_BM_WAIT0);
 		return 1;
 	}
 
