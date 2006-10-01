@@ -1,7 +1,12 @@
-# $NetBSD: files.podulebus,v 1.16 2005/12/11 12:23:28 christos Exp $
+# $NetBSD: files.podulebus,v 1.17 2006/10/01 12:39:35 bjh21 Exp $
 
 device	podulebus { [slot = -1] }
 define	podloader
+
+# Acorn SCSI Expansion Card (SEC)
+device	sec: scsi, wd33c93, podloader
+attach	sec at podulebus
+file	dev/podulebus/sec.c			sec
 
 # Oak SCSI
 device	oak: scsi, ncr5380sbc, podloader
