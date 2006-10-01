@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.17 2006/09/25 17:42:08 vanhu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.18 2006/10/01 19:23:57 manu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -3120,18 +3120,24 @@ script_hook(iph1, script)
 	}
 
 	/* Peer address */
-	sin = (struct sockaddr_in *)iph1->remote;
-	inet_ntop(sin->sin_family, &sin->sin_addr, addrstr, IP_MAX);
-	snprintf(portstr, PORT_MAX, "%d", ntohs(sin->sin_port));
+	if (iph1->remote != NULL) {
+		sin = (struct sockaddr_in *)iph1->remote;
+		inet_ntop(sin->sin_family, &sin->sin_addr, addrstr, IP_MAX);
+		snprintf(portstr, PORT_MAX, "%d", ntohs(sin->sin_port));
 
-	if (script_env_append(&envp, &envc, "REMOTE_ADDR", addrstr) != 0) {
-		plog(LLV_ERROR, LOCATION, NULL, "Cannot set REMOTE_ADDR\n");
-		goto out;
-	}
+		if (script_env_append(&envp, &envc, 
+		    "REMOTE_ADDR", addrstr) != 0) {
+			plog(LLV_ERROR, LOCATION, NULL, 
+			    "Cannot set REMOTE_ADDR\n");
+			goto out;
+		}
 
-	if (script_env_append(&envp, &envc, "REMOTE_PORT", portstr) != 0) {
-		plog(LLV_ERROR, LOCATION, NULL, "Cannot set REMOTEL_PORT\n");
-		goto out;
+		if (script_env_append(&envp, &envc, 
+		    "REMOTE_PORT", portstr) != 0) {
+			plog(LLV_ERROR, LOCATION, NULL, 
+			    "Cannot set REMOTEL_PORT\n");
+			goto out;
+		}
 	}
 
 	if (privsep_script_exec(iph1->rmconf->script[script]->v, 
