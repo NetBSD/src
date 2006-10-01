@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.68 2006/09/26 14:30:27 elad Exp $
+# $NetBSD: GENERIC,v 1.69 2006/10/01 09:53:09 itohy Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.68 $"
+#ident 		"GENERIC-$Revision: 1.69 $"
 
 maxusers	64
 
@@ -721,7 +721,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #njs*	at cardbus? function ?	# Workbit NinjaSCSI-32
 
 # CardBus IDE controllers
-#njata*  at cardbus? function ? flags 0	# Workbit NinjaATA-32
+#njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
 
 # CardBus network interfaces
 #ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.207 2006/09/19 13:58:56 jmmv Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.208 2006/10/01 09:53:08 itohy Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.207 $"
+#ident 		"GENERIC-$Revision: 1.208 $"
 
 maxusers	32		# estimated number of users
 
@@ -547,7 +547,7 @@ wdc*	at isapnp?
 wdc*	at pcmcia? function ?
 
 # CardBus IDE controllers
-njata*  at cardbus? function ? flags 0		# Workbit NinjaATA-32
+njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
 
 # ISA ST506, ESDI, and IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
