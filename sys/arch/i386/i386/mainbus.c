@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.64 2006/07/08 20:30:00 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.65 2006/10/01 18:37:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.64 2006/07/08 20:30:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.65 2006/10/01 18:37:54 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.64 2006/07/08 20:30:00 christos Exp $"
 #include "pnpbios.h"
 #include "acpi.h"
 #include "vesabios.h"
+#include "ipmi.h"
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -83,6 +84,10 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.64 2006/07/08 20:30:00 christos Exp $"
 
 #if NVESABIOS > 0
 #include <arch/i386/bios/vesabios.h>
+#endif
+
+#if NIPMI > 0
+#include <x86/ipmivar.h>
 #endif
 
 #if NPCI > 0
@@ -117,6 +122,9 @@ union mainbus_attach_args {
 	struct apic_attach_args aaa_caa;
 #if NACPI > 0
 	struct acpibus_attach_args mba_acpi;
+#endif
+#if NIPMI > 0
+	struct ipmi_attach_args mba_ipmi;
 #endif
 };
 
@@ -293,6 +301,13 @@ mainbus_attach(parent, self, aux)
 	}
 #endif
 
+#if NIPMI > 0
+	memset(&mba.mba_ipmi, 0, sizeof(mba.mba_ipmi));
+	mba.mba_ipmi.iaa_iot = X86_BUS_SPACE_IO;
+	mba.mba_ipmi.iaa_memt = X86_BUS_SPACE_MEM;
+	if (ipmi_probe(&mba.mba_ipmi))
+		config_found_ia(self, "ipmibus", &mba.mba_ipmi, 0);
+#endif
 	/*
 	 * XXX Note also that the presence of a PCI bus should
 	 * XXX _always_ be checked, and if present the bus should be
