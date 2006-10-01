@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.29 2006/09/29 22:20:08 macallan Exp $	*/
+/*	$NetBSD: clock.c,v 1.30 2006/10/01 20:38:35 macallan Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.29 2006/09/29 22:20:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.30 2006/10/01 20:38:35 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -49,16 +49,16 @@ void decr_intr(struct clockframe *);
 void init_macppc_tc(void);
 static u_int get_macppc_timecount(struct timecounter *);
 
-u_long ticks_per_sec;
-u_long ns_per_tick;
-static long ticks_per_intr;
+uint32_t ticks_per_sec;
+uint32_t ns_per_tick;
+uint32_t ticks_per_intr;
 
 static struct timecounter macppc_timecounter = {
 	get_macppc_timecount,	/* get_timecount */
 	0,			/* no poll_pps */
 	0x7fffffff,		/* counter_mask */
 	0,			/* frequency */
-	"macppc_mftb",		/* name */
+	"mftb",			/* name */
 	0			/* quality */
 };
 
