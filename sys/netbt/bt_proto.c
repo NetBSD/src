@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_proto.c,v 1.3 2006/08/28 00:13:44 christos Exp $	*/
+/*	$NetBSD: bt_proto.c,v 1.4 2006/10/01 10:13:54 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.3 2006/08/28 00:13:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.4 2006/10/01 10:13:54 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -56,7 +56,7 @@ const struct protosw btsw[] = {
 	BTPROTO_HCI,	PR_ADDR | PR_ATOMIC,
 	NULL,		NULL,		NULL,		hci_ctloutput,
 	hci_usrreq,	NULL,		NULL,		NULL,
-	hci_drain,
+	NULL,
     },
     {	/* HCI SCO data (audio) */
 	SOCK_SEQPACKET,	&btdomain,
