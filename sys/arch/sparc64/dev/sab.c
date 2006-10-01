@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.33 2006/10/01 17:31:47 martin Exp $	*/
+/*	$NetBSD: sab.c,v 1.34 2006/10/01 18:56:22 elad Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.33 2006/10/01 17:31:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.34 2006/10/01 18:56:22 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -642,6 +642,9 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 	tp->t_dev = dev;
 	p = l->l_proc;
 
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
+
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -685,10 +688,6 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 			tp->t_state |= TS_CARR_ON;
 		else
 			tp->t_state &= ~TS_CARR_ON;
-	} else if ((tp->t_state & TS_XCLUDE) &&
-	    (!kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag))) {
-		return (EBUSY);
 	} else {
 		s = spltty();
 	}

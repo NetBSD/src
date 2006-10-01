@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.18 2006/07/23 22:06:06 ad Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.19 2006/10/01 18:56:22 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.18 2006/07/23 22:06:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.19 2006/10/01 18:56:22 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -136,6 +136,8 @@ ofcopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_oproc = ofcstart;
 	tp->t_param = ofcparam;
 	tp->t_dev = dev;
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
 	if (!(tp->t_state & TS_ISOPEN)) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -145,10 +147,7 @@ ofcopen(dev_t dev, int flag, int mode, struct lwp *l)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		ofcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state&TS_XCLUDE) &&
-		   kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		   &l->l_acflag))
-		return EBUSY;
+	}
 	tp->t_state |= TS_CARR_ON;
 	
 	return (*tp->t_linesw->l_open)(dev, tp);

@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.18 2006/07/23 22:06:05 ad Exp $ */
+/* $NetBSD: siotty.c,v 1.19 2006/10/01 18:56:22 elad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.18 2006/07/23 22:06:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.19 2006/10/01 18:56:22 elad Exp $");
 
 #include "opt_ddb.h"
 
@@ -379,15 +379,15 @@ sioopen(dev, flag, mode, l)
 		tp = sc->sc_tty = ttymalloc();
 		tty_attach(tp);
 	}		
-	else if ((tp->t_state & TS_ISOPEN) && (tp->t_state & TS_XCLUDE)
-	    && kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
-		return EBUSY;
 
 	tp->t_oproc = siostart;
 	tp->t_param = sioparam;
 	tp->t_hwiflow = NULL /* XXX siohwiflow XXX */;
 	tp->t_dev = dev;
+
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
+
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		struct termios t;
 

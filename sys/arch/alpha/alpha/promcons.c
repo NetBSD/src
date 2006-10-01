@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.28 2006/07/23 22:06:04 ad Exp $ */
+/* $NetBSD: promcons.c,v 1.29 2006/10/01 18:56:21 elad Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.28 2006/07/23 22:06:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.29 2006/10/01 18:56:21 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,10 @@ promopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_oproc = promstart;
 	tp->t_param = promparam;
 	tp->t_dev = dev;
+
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
+
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_CARR_ON;
 		ttychars(tp);
@@ -112,11 +116,6 @@ promopen(dev_t dev, int flag, int mode, struct lwp *l)
 		ttsetwater(tp);
 
 		setuptimeout = 1;
-	} else if (tp->t_state&TS_XCLUDE &&
-	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0) {
-		splx(s);
-		return EBUSY;
 	}
 
 	splx(s);
