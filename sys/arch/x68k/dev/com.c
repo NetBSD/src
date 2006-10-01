@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.41 2006/10/01 19:28:43 elad Exp $	*/
+/*	$NetBSD: com.c,v 1.42 2006/10/01 20:31:50 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.41 2006/10/01 19:28:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.42 2006/10/01 20:31:50 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -681,8 +681,8 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case TIOCSFLAGS: {
 		int userbits, driverbits = 0;
 
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag); 
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error != 0)
 			return(EPERM); 
 

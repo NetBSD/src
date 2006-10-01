@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.12 2006/10/01 19:28:44 elad Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.13 2006/10/01 20:31:51 elad Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.12 2006/10/01 19:28:44 elad Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.13 2006/10/01 20:31:51 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -768,8 +768,8 @@ ucycomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		err = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		err = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (err)
 			break;
 		sc->sc_swflags = *(int *)data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.8 2006/10/01 19:28:44 elad Exp $	*/
+/*	$NetBSD: spif.c,v 1.9 2006/10/01 20:31:51 elad Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.8 2006/10/01 19:28:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.9 2006/10/01 20:31:51 elad Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -497,8 +497,8 @@ stty_ioctl(dev, cmd, data, flags, l)
 		*((int *)data) = sp->sp_openflags;
 		break;
 	case TIOCSFLAGS:
-		if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag) )
+		if (kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp))
 			error = EPERM;
 		else
 			sp->sp_openflags = *((int *)data) &
