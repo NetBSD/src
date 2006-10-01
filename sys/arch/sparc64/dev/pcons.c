@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.22 2006/07/23 22:06:07 ad Exp $	*/
+/*	$NetBSD: pcons.c,v 1.23 2006/10/01 18:56:22 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.22 2006/07/23 22:06:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.23 2006/10/01 18:56:22 elad Exp $");
 
 #include "opt_ddb.h"
 
@@ -138,6 +138,8 @@ pconsopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_param = pconsparam;
 	tp->t_dev = dev;
 	cn_tab->cn_dev = dev;
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
 	if (!(tp->t_state & TS_ISOPEN)) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -147,10 +149,7 @@ pconsopen(dev_t dev, int flag, int mode, struct lwp *l)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		pconsparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state&TS_XCLUDE) &&
-		   kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		   &l->l_acflag))
-		return EBUSY;
+	}
 	tp->t_state |= TS_CARR_ON;
 	
 	if (!(sc->of_flags & OFPOLL)) {

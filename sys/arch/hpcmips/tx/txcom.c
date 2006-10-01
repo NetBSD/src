@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.31 2006/07/23 22:06:05 ad Exp $ */
+/*	$NetBSD: txcom.c,v 1.32 2006/10/01 18:56:22 elad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.31 2006/07/23 22:06:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.32 2006/10/01 18:56:22 elad Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -795,10 +795,7 @@ txcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	chip = sc->sc_chip;
 	tp = sc->sc_tty;
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();
