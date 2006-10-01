@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.122 2006/09/26 19:06:46 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.123 2006/10/01 10:02:28 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.122 2006/09/26 19:06:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.123 2006/10/01 10:02:28 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.122 2006/09/26 19:06:46 martin Exp $"
 #include <net/if.h>
 
 #include <dev/cons.h>
+#include <sparc64/dev/cons.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -96,6 +97,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.122 2006/09/26 19:06:46 martin Exp $"
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#endif
+#ifdef KGDB
+#include <machine/cpu.h>
 #endif
 
 #ifdef RASTERCONSOLE
@@ -127,6 +131,7 @@ void *bootinfo = 0;
 
 #ifdef KGDB
 extern	int kgdb_debug_panic;
+int kgdb_break_at_attach;
 #endif
 
 #define	OFPATHLEN	128
@@ -383,8 +388,7 @@ get_bootpath_from_prom()
 		/* specialties */
 		if (*cp == 'd') {
 #if defined(KGDB)
-			kgdb_debug_panic = 1;
-			kgdb_connect(1);
+			kgdb_break_at_attach = 1;
 #elif defined(DDB)
 			Debugger();
 #else
@@ -437,7 +441,7 @@ opendisk(struct device *dv)
 	/*
 	 * Lookup major number for disk block device.
 	 */
-	bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
+	bmajor = devsw_name2blk(device_xname(dv), NULL, 0);
 	if (bmajor == -1)
 		return NULL;
 	
@@ -449,7 +453,8 @@ opendisk(struct device *dv)
 	dev = device_is_a(dv, "dk") ? makedev(bmajor, bminor) :
 	    MAKEDISKDEV(bmajor, bminor, RAW_PART);
 	if (bdevvp(dev, &tmpvn))
-		panic("%s: can't alloc vnode for %s", __func__, dv->dv_xname);
+		panic("%s: can't alloc vnode for %s", __func__,
+		    device_xname(dv));
 	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
 	if (error) {
 #ifndef DEBUG
@@ -460,7 +465,7 @@ opendisk(struct device *dv)
 		if (error != ENXIO && error != ENODEV)
 #endif
 			printf("%s: can't open dev %s (%d)\n",
-			    __func__, dv->dv_xname, error);
+			    __func__, device_xname(dv), error);
 		vput(tmpvn);
 		return NULL;
 	}
@@ -494,7 +499,8 @@ cpu_rootconf()
 	if (error)
 		goto nowedge2;
 
-	snprintf(diskname, sizeof(diskname), "%s%c", booted_device->dv_xname, 
+	snprintf(diskname, sizeof(diskname), "%s%c",
+	    device_xname(booted_device),
 	    booted_partition + 'a');
 
 	for (i = 0; i < wl.dkwl_ncopied; i++) {
@@ -759,7 +765,7 @@ getdevunit(const char *name, int unit)
 	strcpy(fullname, name);
 	strcat(fullname, num);
 
-	while (strcmp(dev->dv_xname, fullname) != 0) {
+	while (strcmp(device_xname(dev), fullname) != 0) {
 		if ((dev = dev->dv_list.tqe_next) == NULL)
 			return NULL;
 	}
@@ -779,7 +785,7 @@ dev_path_exact_match(struct device *dev, int ofnode)
 		return;
 
 	booted_device = dev;
-	DPRINTF(ACDB_BOOTDEV, ("found bootdevice: %s\n", dev->dv_xname));
+	DPRINTF(ACDB_BOOTDEV, ("found bootdevice: %s\n", device_xname(dev)));
 }
 
 /*
@@ -812,7 +818,7 @@ dev_path_drive_match(struct device *dev, int ctrlnode, int target, int lun)
 			if (ofbootpartition)
 				booted_partition = *ofbootpartition - 'a';
 			DPRINTF(ACDB_BOOTDEV, ("found boot device: %s"
-			    ", partition %d\n", dev->dv_xname,
+			    ", partition %d\n", device_xname(dev),
 			    booted_partition));
 		}
 	}
@@ -916,4 +922,16 @@ device_register(struct device *dev, void *aux)
 		dev_path_drive_match(dev, ofnode, adev->adev_channel*2+
 		    adev->adev_drv_data->drive, 0);
 	}
+
+#ifdef KGDB
+#ifndef	KGDB_DEVNAME
+#error you need to add options KGDB_DEVNAME
+#endif
+	if (kgdb_break_at_attach &&
+	    strcmp(device_xname(dev), KGDB_DEVNAME) == 0) {
+		kgdb_debug_panic = 1;
+		kgdb_port_init(dev, aux);
+		kgdb_connect(1);
+	}
+#endif
 }
