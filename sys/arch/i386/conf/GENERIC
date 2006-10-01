@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.786 2006/10/01 09:53:08 itohy Exp $
+# $NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.786 $"
+#ident 		"GENERIC-$Revision: 1.787 $"
 
 maxusers	32		# estimated number of users
 
@@ -315,6 +315,9 @@ cpu* at mainbus?
 
 
 # Basic Bus Support
+
+#IPMI support
+#ipmi0		at mainbus?
 
 # Advanced Configuration and Power Interface
 
