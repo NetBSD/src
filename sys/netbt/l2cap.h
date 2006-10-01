@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap.h,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: l2cap.h,v 1.2 2006/10/01 06:08:08 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: l2cap.h,v 1.1 2006/06/19 15:44:45 gdamore Exp $
+ * $Id: l2cap.h,v 1.2 2006/10/01 06:08:08 plunky Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/l2cap.h,v 1.4 2005/08/31 18:13:23 emax Exp $
  */
 
@@ -68,6 +68,8 @@
 
 #ifndef _NETBT_L2CAP_H_
 #define _NETBT_L2CAP_H_
+
+#include <sys/types.h>
 
 /**************************************************************************
  **************************************************************************
