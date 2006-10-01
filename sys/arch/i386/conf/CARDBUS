@@ -1,4 +1,4 @@
-# $NetBSD: CARDBUS,v 1.77 2006/09/07 14:23:44 itohy Exp $
+# $NetBSD: CARDBUS,v 1.78 2006/10/01 09:53:08 itohy Exp $
 #
 #	CARDBUS: GENERIC + CardBus support
 
@@ -41,7 +41,7 @@ ahc*	at cardbus? function ?	# Adaptec ADP-1480
 njs*	at cardbus? function ?	# Workbit NinjaSCSI-32
  
 # CardBus IDE controllers
-njata*  at cardbus? function ? flags 0	# Workbit NinjaATA-32
+njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
 
 # CardBus network cards
 ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11

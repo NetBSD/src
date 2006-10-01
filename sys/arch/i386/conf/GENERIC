@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.785 2006/09/27 23:58:50 hubertf Exp $
+# $NetBSD: GENERIC,v 1.786 2006/10/01 09:53:08 itohy Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.785 $"
+#ident 		"GENERIC-$Revision: 1.786 $"
 
 maxusers	32		# estimated number of users
 
@@ -756,7 +756,7 @@ wdc*	at isapnp?
 wdc*	at pcmcia? function ?
 
 # CardBus IDE controllers
-#njata*  at cardbus? function ? flags 0		# Workbit NinjaATA-32
+#njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
 
 # ISA ST506, ESDI, and IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
