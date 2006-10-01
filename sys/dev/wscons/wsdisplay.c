@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.100 2006/07/21 16:48:53 ad Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.101 2006/10/01 19:28:44 elad Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.100 2006/07/21 16:48:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.101 2006/10/01 19:28:44 elad Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -747,6 +747,11 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct lwp *l)
 		tp->t_param = wsdisplayparam;
 		tp->t_dev = dev;
 		newopen = (tp->t_state & TS_ISOPEN) == 0;
+
+		if (kauth_authorize_device_tty(l->l_cred,
+			KAUTH_DEVICE_TTY_OPEN, tp))
+			return (EBUSY);
+
 		if (newopen) {
 			ttychars(tp);
 			tp->t_iflag = TTYDEF_IFLAG;
@@ -756,10 +761,7 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct lwp *l)
 			tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 			wsdisplayparam(tp, &tp->t_termios);
 			ttsetwater(tp);
-		} else if ((tp->t_state & TS_XCLUDE) != 0 &&
-		    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag) != 0)
-			return EBUSY;
+		}
 		tp->t_state |= TS_CARR_ON;
 
 		error = ((*tp->t_linesw->l_open)(dev, tp));

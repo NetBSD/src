@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.42 2006/10/01 18:56:21 elad Exp $ */
+/*	$NetBSD: mfc.c,v 1.43 2006/10/01 19:28:43 elad Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.42 2006/10/01 18:56:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.43 2006/10/01 19:28:43 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -505,8 +505,10 @@ mfcsopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_dev = dev;
 	tp->t_hwiflow = mfcshwiflow;
 
-	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp)) {
+		splx(s);
 		return (EBUSY);
+	}
 
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);

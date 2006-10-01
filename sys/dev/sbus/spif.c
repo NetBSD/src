@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.7 2006/07/21 16:48:52 ad Exp $	*/
+/*	$NetBSD: spif.c,v 1.8 2006/10/01 19:28:44 elad Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.7 2006/07/21 16:48:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.8 2006/10/01 19:28:44 elad Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -352,6 +352,9 @@ stty_open(dev, flags, mode, l)
 	tp = sp->sp_tty;
 	tp->t_dev = dev;
 
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
+
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -384,11 +387,6 @@ stty_open(dev, flags, mode, l)
 			SET(tp->t_state, TS_CARR_ON);
 		else
 			CLR(tp->t_state, TS_CARR_ON);
-	}
-	else if (ISSET(tp->t_state, TS_XCLUDE) &&
-		kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		     &l->l_acflag) != 0) {
-		return (EBUSY);
 	} else {
 		s = spltty();
 	}
