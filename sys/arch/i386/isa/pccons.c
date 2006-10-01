@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.179 2006/09/30 20:05:57 elad Exp $	*/
+/*	$NetBSD: pccons.c,v 1.180 2006/10/01 16:50:11 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.179 2006/09/30 20:05:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.180 2006/10/01 16:50:11 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -839,7 +839,7 @@ pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_param = pcparam;
 	tp->t_dev = dev;
 
-	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tty))
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {

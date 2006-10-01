@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.75 2006/09/30 20:05:57 elad Exp $	*/
+/*	$NetBSD: dcm.c,v 1.76 2006/10/01 16:50:11 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.75 2006/09/30 20:05:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.76 2006/10/01 16:50:11 elad Exp $");
 
 #include "opt_kgdb.h"
 
@@ -550,7 +550,7 @@ dcmopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_param = dcmparam;
 	tp->t_dev = dev;
 
-	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tty))
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();
