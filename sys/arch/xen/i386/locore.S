@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.18 2006/09/24 18:14:44 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.19 2006/10/01 21:36:11 bouyer Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -434,7 +434,17 @@ start:
 	orl	$(PG_V|PG_RW), %eax;
 	movl	%eax, (%ebx)
 	addl	$4,%ebx
+	jmp	2f
 1:
+#endif
+#if defined(XEN3) || defined (DOM0OPS)
+	/* map ISA hole */
+	movl    $(IOM_BEGIN|PG_V|PG_KW/*|PG_N*/),%eax   # having these bits set
+	movl    $(IOM_SIZE>>PGSHIFT),%ecx               # for this many pte s,
+	fillkpt
+#endif
+#ifdef XEN3
+2:
 #endif
 
 /*

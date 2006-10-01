@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.12 2006/09/28 18:53:15 bouyer Exp $
+#	$NetBSD: files.compat,v 1.13 2006/10/01 21:36:11 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec
@@ -20,7 +20,6 @@ defflag	mca.h			XXXMCA
 defflag	ega.h			XXXEGA
 defflag	pcdisplay.h		XXXPCDISPLAY
 defflag	pc.h			XXXPC
-defflag	bios32.h		XXXBIOS32
 defflag	pnpbios.h		XXXPNPBIOS
 defflag	vesabios.h		XXXVESABIOS
 defflag	bioscall.h		XXXBIOSCALL
