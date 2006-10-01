@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.49 2006/08/04 01:45:05 mhitch Exp $	*/
+/*	$NetBSD: zs.c,v 1.50 2006/10/01 18:56:21 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.49 2006/08/04 01:45:05 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.50 2006/10/01 18:56:21 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,10 +401,7 @@ struct lwp	*l;
 		tp->t_param = zsparam;
 	}
 
-	if ((tp->t_state & TS_ISOPEN) &&
-	    (tp->t_state & TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s  = spltty();

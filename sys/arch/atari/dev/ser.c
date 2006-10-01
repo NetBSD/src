@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.30 2006/07/23 22:06:04 ad Exp $	*/
+/*	$NetBSD: ser.c,v 1.31 2006/10/01 18:56:21 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.30 2006/07/23 22:06:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.31 2006/10/01 18:56:21 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -391,10 +391,7 @@ seropen(dev, flag, mode, l)
 	} else
 		tp = sc->sc_tty;
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();
