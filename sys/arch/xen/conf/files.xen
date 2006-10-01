@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.48 2006/09/28 18:53:15 bouyer Exp $
+#	$NetBSD: files.xen,v 1.49 2006/10/01 21:36:11 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -108,6 +108,10 @@ file	arch/x86/x86/x86_machdep.c
 
 include	"arch/xen/conf/files.compat"
 
+# BIOS32 routines
+define  bios32
+file	arch/xen/i386/bios32.c		bios32 needs-flag
+
 # i386 specific mainbus attributes
 define cpubus { [apid = -1] }
 define apmbus {}
@@ -115,12 +119,13 @@ define pnpbiosbus {}
 define vesabiosbus {}  
 define hypervisorbus {}
 define xendevbus {}
+define ipmibus {}
 
 #
 # System bus types
 #
 
-device mainbus: cpubus, hypervisorbus
+device mainbus: cpubus, hypervisorbus, bios32, ipmibus
 attach	mainbus at root
 file	arch/xen/i386/mainbus.c		mainbus
 
@@ -218,6 +223,11 @@ file	arch/x86/x86/apic.c		ioapic
 device ioapic
 attach ioapic at cpubus
 file	arch/x86/x86/ioapic.c		ioapic needs-flag
+
+#IPMI device
+device ipmi : sysmon_envsys, sysmon_wdog
+attach ipmi at ipmibus
+file	arch/x86/x86/ipmi.c		ipmi needs-flag
 
 # PCI-Host bridge chipsets
 device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,

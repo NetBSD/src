@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.8 2006/09/19 13:58:56 jmmv Exp $
+# $NetBSD: XEN2_DOM0,v 1.9 2006/10/01 21:36:11 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -189,6 +189,9 @@ config		netbsd	root on ? type ?
 mainbus0 at root
 
 cpu* at mainbus?
+
+#IPMI support
+#ipmi0		at mainbus?
 
 hypervisor*	at mainbus?		# Xen hypervisor
 

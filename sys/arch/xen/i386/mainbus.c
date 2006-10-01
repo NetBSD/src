@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9 2006/09/28 18:53:15 bouyer Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10 2006/10/01 21:36:11 bouyer Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2006/09/28 18:53:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2006/10/01 21:36:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,11 +49,17 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2006/09/28 18:53:15 bouyer Exp $");
 #include "acpi.h"
 #include "ioapic.h"
 
+#include "ipmi.h"
+
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
 
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
+
+#if NIPMI > 0
+#include <x86/ipmivar.h>
+#endif
 
 #if defined(XEN3) && NPCI > 0
 #include <dev/pci/pcivar.h>
@@ -99,6 +105,9 @@ union mainbus_attach_args {
 	struct cpu_attach_args mba_caa;
 #if NHYPERVISOR > 0
 	struct hypervisor_attach_args mba_haa;
+#endif
+#if NIPMI > 0
+	struct ipmi_attach_args mba_ipmi;
 #endif
 };
 
@@ -192,6 +201,14 @@ mainbus_attach(parent, self, aux)
 	}
 #endif /* DOM0OPS */
 #endif /* XEN3 */
+
+#if NIPMI > 0
+	memset(&mba.mba_ipmi, 0, sizeof(mba.mba_ipmi));
+	mba.mba_ipmi.iaa_iot = X86_BUS_SPACE_IO;
+	mba.mba_ipmi.iaa_memt = X86_BUS_SPACE_MEM;
+	if (ipmi_probe(&mba.mba_ipmi))
+		config_found_ia(self, "ipmibus", &mba.mba_ipmi, 0);
+#endif
 
 #if NHYPERVISOR > 0
 	mba.mba_haa.haa_busname = "hypervisor";
