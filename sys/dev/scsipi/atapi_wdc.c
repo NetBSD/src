@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.102 2006/09/30 15:56:18 itohy Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.103 2006/10/01 20:10:31 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.102 2006/09/30 15:56:18 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.103 2006/10/01 20:10:31 reinoud Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -400,9 +400,13 @@ wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		 * 2 bytes. It's a bug to request such transfers for ATAPI
 		 * but as the request can come from userland, we have to
 		 * protect against it.
-		 * Also some devices seems to not handle DMA xfers of less than
+		 * Some devices can't cope with unaligned DMA xfers. These are
+		 * normally only small structures since bulkdata is aligned.
+		 * Also some devices seem to not handle DMA xfers of less than
 		 * 4 bytes.
 		 */
+		if (((uintptr_t) sc_xfer->data) & 0x01)
+			xfer->c_flags &= ~C_DMA;
 		if (sc_xfer->datalen < 4 || (sc_xfer->datalen & 0x01))
 			xfer->c_flags &= ~C_DMA;
 #endif	/* NATA_DMA */
