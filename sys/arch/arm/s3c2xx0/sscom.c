@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.19 2006/07/23 22:06:04 ad Exp $ */
+/*	$NetBSD: sscom.c,v 1.20 2006/10/01 18:56:21 elad Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.19 2006/07/23 22:06:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.20 2006/10/01 18:56:21 elad Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -630,11 +630,8 @@ sscomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	tp = sc->sc_tty;
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
-		return EBUSY;
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
 
 	s = spltty();
 

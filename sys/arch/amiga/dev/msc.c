@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.34 2006/07/23 22:06:04 ad Exp $ */
+/*	$NetBSD: msc.c,v 1.35 2006/10/01 18:56:21 elad Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.34 2006/07/23 22:06:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.35 2006/10/01 18:56:21 elad Exp $");
 
 #include "msc.h"
 
@@ -377,6 +377,11 @@ mscopen(dev_t dev, int flag, int mode, struct lwp *l)
 		msc->closing = FALSE;
 	}
 
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp)) {
+		splx(s);	
+		return (EBUSY);
+	}
+
 	/* initialize tty */
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
@@ -407,13 +412,6 @@ mscopen(dev_t dev, int flag, int mode, struct lwp *l)
 		else
 			tp->t_state &= ~TS_CARR_ON;
 
-	} else {
-		if (tp->t_state & TS_XCLUDE &&
-		    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag) != 0) {
-			splx(s);
-			return (EBUSY);
-		}
 	}
 
 	/*
