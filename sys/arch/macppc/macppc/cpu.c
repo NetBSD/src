@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.42 2005/12/24 22:45:35 perry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.43 2006/10/01 20:38:35 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.42 2005/12/24 22:45:35 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43 2006/10/01 20:38:35 macallan Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -79,6 +79,8 @@ extern struct cfdriver cpu_cd;
 #define HH_INTR_SECONDARY	0xf80000c0
 #define HH_INTR_PRIMARY		0xf3019000
 #define GC_IPI_IRQ		30
+
+extern uint32_t ticks_per_intr;
 
 int
 cpumatch(parent, cf, aux)
@@ -181,7 +183,7 @@ cpuattach(parent, self, aux)
 void
 ohare_init()
 {
-	u_int *cache_reg, x;
+	volatile uint32_t *cache_reg, x;
 
 	/* enable L2 cache */
 	cache_reg = mapiodev(CACHE_REG, PAGE_SIZE);
@@ -358,7 +360,6 @@ cpu_spinup(self, ci)
 }
 
 volatile static int start_secondary_cpu;
-extern long ticks_per_intr;
 
 void
 cpu_hatch()
