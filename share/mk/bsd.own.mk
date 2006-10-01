@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.478 2006/09/27 06:34:07 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.479 2006/10/01 05:06:20 tsutsui Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -44,10 +44,10 @@ TOOLCHAIN_MISSING?=	no
 # Transitional for toolchain upgrade to GCC4.1
 #
 # not working:
-#	sh5
+#	ns32k
 #
 .if \
-    ${MACHINE_ARCH} == "pc532"
+    ${MACHINE_ARCH} == "ns32k"
 HAVE_GCC?=	3
 .endif
 
