@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcictl.8,v 1.3 2003/08/18 16:12:58 yyamano Exp $
+.\"	$NetBSD: pcictl.8,v 1.4 2006/10/01 00:13:28 hubertf Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 12, 2001
+.Dd October 1, 2006
 .Os
 .Dt PCICTL 8
 .Sh NAME
@@ -55,11 +55,15 @@ on a PCI bus.
 The following commands are available:
 .Pp
 .Nm list
+.Op Fl n
 .Op Fl b Ar bus
 .Op Fl d Ar device
 .Op Fl f Ar function
 .Pp
-List the devices in the PCI domain.  The bus, device, and function
+List the devices in the PCI domain, either as names or if
+.Fl n
+is given as numbers. 
+The bus, device, and function
 numbers may be specified by flags.  If the bus is not
 specified, it defaults to the bus number of the PCI bus specified
 on the command line.  Any other locator not specified defaults
