@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.19 2006/08/07 20:58:23 xtraeme Exp $
+#	$NetBSD: files.x86,v 1.20 2006/10/01 18:37:54 bouyer Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -14,6 +14,7 @@ defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
 defflag opt_powernow_k8.h	POWERNOW_K8
 
 define  cpubus { [apid = -1] }
+define  ipmibus {}
 
 file	arch/x86/x86/apic.c		ioapic | lapic
 file	arch/x86/x86/bus_dma.c
@@ -54,3 +55,8 @@ file	arch/x86/pci/pciide_machdep.c	pciide_common
 # Powernow common functions
 file	arch/x86/x86/powernow_k8.c	powernow_k8
 file	arch/x86/x86/powernow_common.c	powernow_k8 | powernow_k7
+
+#IPMI device
+device ipmi : sysmon_envsys, sysmon_wdog
+attach ipmi at ipmibus
+file	arch/x86/x86/ipmi.c		ipmi needs-flag
