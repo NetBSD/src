@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.111 2006/10/01 19:28:43 elad Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.112 2006/10/01 20:31:50 elad Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.111 2006/10/01 19:28:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.112 2006/10/01 20:31:50 elad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -836,8 +836,8 @@ zsioctl(dev, cmd, data, flag, l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag);
+		error = kauth_authorize_device_tty(l->l_cred, 
+			KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error)
 			break;
 		zst->zst_swflags = *(int *)data;

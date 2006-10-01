@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.35 2006/10/01 18:56:21 elad Exp $ */
+/*	$NetBSD: msc.c,v 1.36 2006/10/01 20:31:49 elad Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.35 2006/10/01 18:56:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.36 2006/10/01 20:31:49 elad Exp $");
 
 #include "msc.h"
 
@@ -861,8 +861,8 @@ mscioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			break;
 
 		case TIOCSFLAGS:
-			error = kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+			error = kauth_authorize_device_tty(l->l_cred,
+			    KAUTH_DEVICE_TTY_PRIVSET, tp);
 			if (error != 0)
 				return(EPERM);
 			msc->openflags = *(int *)data;

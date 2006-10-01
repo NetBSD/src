@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.18 2006/09/15 07:51:17 skrll Exp $	*/
+/*	$NetBSD: pdc.c,v 1.19 2006/10/01 20:31:50 elad Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.18 2006/09/15 07:51:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.19 2006/10/01 20:31:50 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,6 +198,12 @@ pdcopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_oproc = pdcstart;
 	tp->t_param = pdcparam;
 	tp->t_dev = dev;
+
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp)) {
+		splx(s);
+		return (EBUSY);
+	}
+
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_CARR_ON;
 		ttychars(tp);
@@ -209,11 +215,6 @@ pdcopen(dev_t dev, int flag, int mode, struct lwp *l)
 		ttsetwater(tp);
 
 		setuptimeout = 1;
-	} else if ((tp->t_state&TS_XCLUDE) &&
-		    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag)) {
-		splx(s);
-		return EBUSY;
 	} else
 		setuptimeout = 0;
 	tp->t_state |= TS_CARR_ON;
