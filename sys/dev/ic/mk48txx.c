@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.20 2006/09/07 05:02:16 gdamore Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.21 2006/10/01 06:02:53 tsutsui Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.20 2006/09/07 05:02:16 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.21 2006/10/01 06:02:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,8 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.20 2006/09/07 05:02:16 gdamore Exp $")
 
 int mk48txx_gettime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
 int mk48txx_settime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
-u_int8_t mk48txx_def_nvrd(struct mk48txx_softc *, int);
-void mk48txx_def_nvwr(struct mk48txx_softc *, int, u_int8_t);
+uint8_t mk48txx_def_nvrd(struct mk48txx_softc *, int);
+void mk48txx_def_nvwr(struct mk48txx_softc *, int, uint8_t);
 
 struct {
 	const char *name;
@@ -113,7 +113,7 @@ mk48txx_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 	struct mk48txx_softc *sc;
 	bus_size_t clkoff;
 	int year;
-	u_int8_t csr;
+	uint8_t csr;
 
 	sc = handle->cookie;
 	clkoff = sc->sc_clkoffset;
@@ -158,7 +158,7 @@ mk48txx_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
 	struct mk48txx_softc *sc;
 	bus_size_t clkoff;
-	u_int8_t csr;
+	uint8_t csr;
 	int year;
 
 	sc = handle->cookie;
@@ -201,7 +201,7 @@ mk48txx_get_nvram_size(todr_chip_handle_t handle, bus_size_t *vp)
 	return 0;
 }
 
-u_int8_t
+uint8_t
 mk48txx_def_nvrd(struct mk48txx_softc *sc, int off)
 {
 
@@ -209,7 +209,7 @@ mk48txx_def_nvrd(struct mk48txx_softc *sc, int off)
 }
 
 void
-mk48txx_def_nvwr(struct mk48txx_softc *sc, int off, u_int8_t v)
+mk48txx_def_nvwr(struct mk48txx_softc *sc, int off, uint8_t v)
 {
 
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh, off, v);
