@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.8 2006/09/26 22:45:25 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.9 2006/10/01 22:02:55 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.8 2006/09/26 22:45:25 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.9 2006/10/01 22:02:55 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -1912,7 +1912,7 @@ wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr
 			wd33c93_dma_setup(dev, datain);
 
 			SET_SBIC_control(dev, SBIC_CTL_EDI | SBIC_CTL_IDI |
-			    SBIC_CTL_DMA);
+			    dev->sc_dmamode);
 
 			SBIC_DEBUG(DMA, ("DMA xfer: %d(%p:%zx)\n", dev->target,
 				       dev->sc_daddr, dev->sc_dleft));

@@ -1,4 +1,4 @@
-/* $NetBSD: sec.c,v 1.1 2006/10/01 12:39:35 bjh21 Exp $ */
+/* $NetBSD: sec.c,v 1.2 2006/10/01 22:02:55 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2006 Ben Harris
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.1 2006/10/01 12:39:35 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.2 2006/10/01 22:02:55 bjh21 Exp $");
 
 #include <sys/param.h>
 
@@ -88,7 +88,7 @@ struct sec_softc {
 
 #define SEC_DMABLK	16384
 #define SEC_NBLKS	3
-#define SEC_DMAMODE	MODE_TMODE_SGL
+#define SEC_DMAMODE	MODE_TMODE_DMD
 
 /* autoconfiguration glue */
 static int sec_match(struct device *, struct cfdata *, void *);
@@ -180,6 +180,7 @@ sec_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_sbic.sc_id = 7;
 	sc->sc_sbic.sc_clkfreq = SEC_CLKFREQ;
+	sc->sc_sbic.sc_dmamode = SBIC_CTL_BURST_DMA;
 
 	sc->sc_sbic.sc_adapter.adapt_request = wd33c93_scsi_request;
 	sc->sc_sbic.sc_adapter.adapt_minphys = minphys;

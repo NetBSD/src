@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93var.h,v 1.3 2006/09/26 23:27:36 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93var.h,v 1.4 2006/10/01 22:02:55 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -161,9 +161,12 @@ struct wd33c93_softc {
 	u_char	sc_imsglen;
 	u_char	sc_omsglen;
 
-	/* Static hardware attributes */
+	/* Static hardware attributes supplied by attachment */
 	int	sc_id;			/* SCSI ID for controller */
 	int	sc_clkfreq;		/* wd33c93 clk freq * 10 MHz */
+	uint8_t	sc_dmamode;		/* One of SBIC_CTL_*DMA */
+
+	/* Static hardware attributes derived by wd33c93_attach() */
 	int	sc_chip;		/* Chip variation */
 	int	sc_rev;			/* Chip revision */
 	int	sc_cfflags;		/* Copy of config flags */

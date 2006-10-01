@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.16 2006/08/26 22:06:37 bjh21 Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.17 2006/10/01 22:02:55 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.16 2006/08/26 22:06:37 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.17 2006/10/01 22:02:55 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,6 +148,7 @@ wdsc_attach(struct device *pdp, struct device *dp, void *auxp)
 
 	sc->sc_id = 0;					/* Host ID = 0 */
 	sc->sc_clkfreq = wsc->sc_hpcdma.hpc->clk_freq;
+	sc->sc_dmamode = SBIC_CTL_DMA;
 
 	evcnt_attach_dynamic(&wsc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 			     sc->sc_dev.dv_xname, "intr");
