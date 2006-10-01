@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.50 2006/10/01 03:53:27 tsutsui Exp $	*/
+/*	$NetBSD: obio.c,v 1.51 2006/10/01 06:26:01 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.50 2006/10/01 03:53:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.51 2006/10/01 06:26:01 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,6 +129,9 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_bustag = ca->ca_bustag;
 	sc->sc_dmatag = ca->ca_dmatag;
+
+	obio_space_tag.cookie = sc;
+	obio_space_tag.parent = sc->sc_bustag;
 
 	oba = *ca;
 	oba.ca_bustag = &obio_space_tag;
