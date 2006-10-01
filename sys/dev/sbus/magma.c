@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.36 2006/09/23 04:45:49 jmcneill Exp $	*/
+/*	$NetBSD: magma.c,v 1.37 2006/10/01 19:28:44 elad Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.36 2006/09/23 04:45:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.37 2006/10/01 19:28:44 elad Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -923,10 +923,7 @@ mttyopen(dev, flags, mode, l)
 	tp = mp->mp_tty;
 	tp->t_dev = dev;
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();

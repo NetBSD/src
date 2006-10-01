@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.32 2006/10/01 18:56:22 elad Exp $ */
+/*	$NetBSD: txcom.c,v 1.33 2006/10/01 19:28:43 elad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.32 2006/10/01 18:56:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.33 2006/10/01 19:28:43 elad Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -787,7 +787,6 @@ txcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct txcom_chip *chip;
 	struct tty *tp;
 	int s, err = ENXIO;
-;
 
 	if (!sc)
 		return err;

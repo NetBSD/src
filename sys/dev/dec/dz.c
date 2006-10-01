@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.22 2006/07/29 18:48:14 ad Exp $	*/
+/*	$NetBSD: dz.c,v 1.23 2006/10/01 19:28:43 elad Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.22 2006/07/29 18:48:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.23 2006/10/01 19:28:43 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -347,6 +347,10 @@ dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_oproc   = dzstart;
 	tp->t_param   = dzparam;
 	tp->t_dev = dev;
+
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
+
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
 		if (tp->t_ispeed == 0) {
@@ -358,10 +362,6 @@ dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 		}
 		(void) dzparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state & TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
-		return (EBUSY);
 	/* Use DMBIS and *not* DMSET or else we clobber incoming bits */
 	if (dzmctl(sc, line, DML_DTR, DMBIS) & DML_DCD)
 		tp->t_state |= TS_CARR_ON;

@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.36 2006/07/21 16:48:51 ad Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.37 2006/10/01 19:28:43 elad Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.36 2006/07/21 16:48:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.37 2006/10/01 19:28:43 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -223,8 +223,8 @@ irframetopen(dev_t dev, struct tty *tp)
 
 	DPRINTF(("%s\n", __FUNCTION__));
 
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_device_tty(l->l_cred, 
+		KAUTH_DEVICE_TTY_OPEN, tp)))
 		return (error);
 
 	s = spltty();
