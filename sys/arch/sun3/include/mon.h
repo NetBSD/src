@@ -1,4 +1,4 @@
-/*	$NetBSD: mon.h,v 1.27 2005/12/11 12:19:21 christos Exp $	*/
+/*	$NetBSD: mon.h,v 1.28 2006/10/01 03:53:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -381,6 +381,11 @@ struct sunromvec {
 #define SUN3_MONSHORTPAGE	0x0FFFE000
 #define SUN3_MONSHORTSEG	0x0FFE0000
 
+#ifdef	_SUN3_	/* XXX */
+#define SUN_MONSTART		SUN3_MONSTART
+#define SUN_MONEND		SUN3_MONEND
+#endif /* _SUN3_ */
+
 /*
  * Sun3X specific stuff...
  */
@@ -413,6 +418,11 @@ struct sunromvec {
 #define SUN3X_MONDATA     	0xFEF72000
 #define SUN3X_PROM_BASE   	0xFEFE0000
 #define SUN3X_MONEND      	0xFF000000
+
+#ifdef	_SUN3X_	/* XXX */
+#define SUN_MONSTART		SUN3X_MONSTART
+#define SUN_MONEND		SUN3X_MONEND
+#endif /* _SUN3X_ */
 
 /*
  * These define the CPU virtual address range mapped by the

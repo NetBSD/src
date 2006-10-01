@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.31 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: locore2.c,v 1.32 2006/10/01 03:53:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.31 2005/12/11 12:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.32 2006/10/01 03:53:27 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.31 2005/12/11 12:19:27 christos Exp $"
 
 #include <sun3/sun3/interreg.h>
 #include <sun3/sun3/machdep.h>
-#include <sun3/sun3/vector.h>
+#include <sun68k/sun68k/vector.h>
 
 /* This is defined in locore.s */
 extern char kernel_text[];

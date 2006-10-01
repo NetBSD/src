@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.16 2006/09/30 13:54:53 tsutsui Exp $	*/
+/*	$NetBSD: bus.c,v 1.17 2006/10/01 03:53:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -160,7 +160,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.16 2006/09/30 13:54:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.17 2006/10/01 03:53:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,6 +176,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.16 2006/09/30 13:54:53 tsutsui Exp $");
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/mon.h>
 #include <machine/pmap.h>
 
 #include <sun68k/sun68k/control.h>
@@ -491,8 +492,6 @@ struct sun68k_bus_dma_tag mainbus_dma_tag = {
 /*
  * Base bus space handlers.
  */
-int		sun68k_find_prom_map(bus_addr_t, bus_type_t, int,
-		    bus_space_handle_t *);
 static int	sun68k_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t,
 		    bus_size_t, int, vaddr_t, bus_space_handle_t *);
 static int	sun68k_bus_unmap(bus_space_tag_t, bus_space_handle_t,
@@ -510,69 +509,6 @@ static int	sun68k_bus_peek(bus_space_tag_t, bus_space_handle_t,
 static int	sun68k_bus_poke(bus_space_tag_t, bus_space_handle_t,
 		    bus_size_t, size_t, uint32_t);
 
-/*
- * If we can find a mapping that was established by the PROM, use it.
- */
-int
-sun68k_find_prom_map(bus_addr_t pa, bus_type_t iospace, int len,
-    bus_space_handle_t *hp)
-{
-	u_long	pf;
-	int	pgtype;
-	u_long	va, eva;
-	int	sme;
-	u_long	pte;
-	int	saved_ctx;
-
-	/*
-	 * The mapping must fit entirely within one page.
-	 */
-	if ((((u_long)pa & PGOFSET) + len) > PAGE_SIZE)
-		return (EINVAL);
-
-	pf = PA_PGNUM(pa);
-	pgtype = iospace << PG_MOD_SHIFT;
-	saved_ctx = kernel_context();
-
-	/*
-	 * Walk the PROM address space, looking for a page with the
-	 * mapping we want.
-	 */
-	for (va = SUN_MONSTART; va < SUN_MONEND; ) {
-
-		/*
-		 * Make sure this segment is mapped.
-		 */
-		sme = get_segmap(va);
-		if (sme == SEGINV) {
-			va += NBSG;
-			continue;			/* next segment */
-		}
-
-		/*
-		 * Walk the pages of this segment.
-		 */
-		for(eva = va + NBSG; va < eva; va += PAGE_SIZE) {
-			pte = get_pte(va);
-
-			if ((pte & (PG_VALID | PG_TYPE)) ==
-				(PG_VALID | pgtype) &&
-			    PG_PFNUM(pte) == pf)
-			{
-				/* 
-				 * Found the PROM mapping.
-				 * note: preserve page offset
-				 */
-				*hp = (bus_space_handle_t)(va | ((u_long)pa & PGOFSET));
-				restore_context(saved_ctx);
-				return (0);
-			}
-		}
-	}
-	restore_context(saved_ctx);
-	return (ENOENT);
-}
-
 int
 sun68k_bus_map(bus_space_tag_t t, bus_type_t iospace, bus_addr_t addr,
     bus_size_t size, int flags, vaddr_t vaddr, bus_space_handle_t *hp)
@@ -585,7 +521,7 @@ sun68k_bus_map(bus_space_tag_t t, bus_type_t iospace, bus_addr_t addr,
 	 * and use a PROM mapping.
 	 */
 	if ((flags & _SUN68K_BUS_MAP_USE_PROM) != 0 &&
-	     sun68k_find_prom_map(addr, iospace, size, hp) == 0)
+	     find_prom_map(addr, iospace, size, hp) == 0)
 		return (0);
 
 	/*
