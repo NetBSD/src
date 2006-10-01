@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.54 2006/05/09 20:18:10 mrg Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.55 2006/10/01 19:43:15 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.54 2006/05/09 20:18:10 mrg Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.55 2006/10/01 19:43:15 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -774,7 +774,7 @@ nag_servers(struct _dom_binding *ypdb)
 
 		if (sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bindsin,
 			   sizeof bindsin) == -1)
-			yp_log(LOG_WARNING, "broadcast: sendto: %m");
+			yp_log(LOG_WARNING, "nag_servers: sendto: %m");
 	}
 
 	switch (ypbindmode) {
