@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.39 2006/10/01 19:28:44 elad Exp $	*/
+/*	$NetBSD: cz.c,v 1.40 2006/10/01 20:31:51 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.39 2006/10/01 19:28:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.40 2006/10/01 20:31:51 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1166,8 +1166,8 @@ czttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

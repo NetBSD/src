@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.17 2006/10/01 19:28:43 elad Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.18 2006/10/01 20:31:50 elad Exp $	*/
 
 /* XXXad does this even compile? */
 
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.17 2006/10/01 19:28:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.18 2006/10/01 20:31:50 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -652,8 +652,8 @@ cdttyioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error)
 			return (error);
 		port->p_swflags = *(int *)data;
