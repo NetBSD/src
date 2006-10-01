@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.23 2006/05/14 03:40:02 christos Exp $	*/
+/*	$NetBSD: pf.c,v 1.24 2006/10/01 12:52:24 pavel Exp $	*/
 /*	$OpenBSD: pf.c,v 1.483 2005/03/15 17:38:43 dhartmei Exp $ */
 
 /*
@@ -1515,7 +1515,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 		}
 		m_tag_prepend(m, mtag);
 	}
-#ifdef ALTQ
+#ifdef ALTQ_NEW
 	if (r != NULL && r->qid) {
 		struct m_tag	*mtag;
 		struct altq_tag *atag;
@@ -1530,7 +1530,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 			m_tag_prepend(m, mtag);
 		}
 	}
-#endif /* ALTQ */
+#endif /* ALTQ_NEW */
 	m->m_data += max_linkhdr;
 	m->m_pkthdr.len = m->m_len = len;
 	m->m_pkthdr.rcvif = NULL;
@@ -1666,7 +1666,7 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
 	}
 	m_tag_prepend(m0, mtag);
 
-#ifdef ALTQ
+#ifdef ALTQ_NEW
 	if (r->qid) {
 		struct altq_tag *atag;
 
@@ -1680,7 +1680,7 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
 			m_tag_prepend(m0, mtag);
 		}
 	}
-#endif /* ALTQ */
+#endif /* ALTQ_NEW */
 
 	switch (af) {
 #ifdef INET
@@ -6056,7 +6056,7 @@ done:
 	if (s && s->tag)
 		pf_tag_packet(m, pf_get_tag(m), s->tag);
 
-#ifdef ALTQ
+#ifdef ALTQ_NEW
 	if (action == PF_PASS && r->qid) {
 		struct m_tag	*mtag;
 		struct altq_tag	*atag;
@@ -6074,7 +6074,7 @@ done:
 			m_tag_prepend(m, mtag);
 		}
 	}
-#endif /* ALTQ */
+#endif /* ALTQ_NEW */
 
 	/*
 	 * connections redirected to loopback should not match sockets
@@ -6397,7 +6397,7 @@ done:
 	if (s && s->tag)
 		pf_tag_packet(m, pf_get_tag(m), s->tag);
 
-#ifdef ALTQ
+#ifdef ALTQ_NEW
 	if (action == PF_PASS && r->qid) {
 		struct m_tag	*mtag;
 		struct altq_tag	*atag;
@@ -6415,7 +6415,7 @@ done:
 			m_tag_prepend(m, mtag);
 		}
 	}
-#endif /* ALTQ */
+#endif /* ALTQ_NEW */
 
 	if (dir == PF_IN && action == PF_PASS && (pd.proto == IPPROTO_TCP ||
 	    pd.proto == IPPROTO_UDP) && s != NULL && s->nat_rule.ptr != NULL &&
