@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.8 2006/05/10 21:53:15 mrg Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.9 2006/10/01 10:29:21 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.24 2005/04/16 22:36:51 das Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.8 2006/05/10 21:53:15 mrg Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.9 2006/10/01 10:29:21 tnozaki Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -135,7 +135,13 @@ __sbprintf(FILE *fp, const wchar_t *fmt, va_list ap)
 {
 	int ret;
 	FILE fake;
+	struct __sfileext fakeext;
 	unsigned char buf[BUFSIZ];
+
+	_DIAGASSERT(fp != NULL);
+	_DIAGASSERT(fmt != NULL);
+
+	_FILEEXT_SETUP(&fake, &fakeext);
 
 	/* copy the important variables */
 	fake._flags = fp->_flags & ~__SNBF;
