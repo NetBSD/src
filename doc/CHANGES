@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.720 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.721 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -100,3 +100,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	sun3: Add initial bus_space(9) support. [tsutsui 20061001]
 	sec(4): New driver for Acorn SCSI Expansion Card, intended to replace
 		acorn32 asc(4).  [bjh21 20061001]
+	ipmi(4): added driver from OpenBSD [bouyer 20061001]
