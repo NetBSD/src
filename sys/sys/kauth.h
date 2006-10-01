@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.10 2006/09/30 20:05:58 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.11 2006/10/01 09:06:41 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -42,6 +42,7 @@ struct uucred;
 struct ucred;
 struct pcred;
 struct proc;
+struct tty;
 
 /* Types. */
 typedef struct kauth_scope     *kauth_scope_t;
