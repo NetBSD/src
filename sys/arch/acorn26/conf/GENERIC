@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.47 2006/08/26 20:26:43 christos Exp $
+# $NetBSD: GENERIC,v 1.48 2006/10/01 12:39:35 bjh21 Exp $
 #
 # GENERIC machine description file
 # 
@@ -194,6 +194,9 @@ atabus* 	at dtide? channel ?	# ATA bus
 
 hcide*		at podulebus0 slot ?	# HCCS IDE interface
 atabus* 	at hcide? channel ?	# ATA bus
+
+sec*		at podulebus0 slot ?	# Acorn SCSI interface
+scsibus*	at sec?
 
 hcsc*		at podulebus0 slot ?	# HCCS 8-bit SCSI interface
 scsibus*	at hcsc?
