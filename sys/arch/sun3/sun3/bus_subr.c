@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.14 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.15 2006/10/01 03:53:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.14 2005/12/11 12:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.15 2006/10/01 03:53:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,6 @@ extern vaddr_t tmp_vpages[];
 extern int tmp_vpages_inuse;
 
 #define OBIO_MASK 0xFFffff
-#define PMAP_OBMEM 0
 
 static const struct {
 	int  type;

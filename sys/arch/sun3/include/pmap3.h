@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.41 2006/02/16 20:17:15 perry Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.42 2006/10/01 03:53:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
  * Physical map structures exported to the VM code.
  * XXX - Does user-level code really see this struct?
  */
+
+#include <sys/lock.h>
 
 struct pmap {
 	unsigned char   	*pm_segmap; 	/* soft copy of segmap */
@@ -96,6 +98,7 @@ pmap_remove_all(struct pmap *pmap)
  * The values below must agree with pte.h such that:
  *	(PMAP_OBIO << PG_MOD_SHIFT) == PGT_OBIO
  */
+#define	PMAP_OBMEM	0x00	/* unused */
 #define	PMAP_OBIO	0x04	/* tells pmap_enter to use PG_OBIO */
 #define	PMAP_VME16	0x08	/* etc */
 #define	PMAP_VME32	0x0C	/* etc */
