@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.718 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.719 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -97,3 +97,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		Written by Matt Thomas. [macallan 20060929]
 	pcictl(8): Add "list -n" to print ID and class numerical, instead
 		of resolving to strings [hubertf 20061001]
+	sun3: Add initial bus_space(9) support. [tsutsui 20061001]
