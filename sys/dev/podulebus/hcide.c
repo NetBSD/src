@@ -1,4 +1,4 @@
-/*	$NetBSD: hcide.c,v 1.19 2006/03/29 07:12:56 thorpej Exp $	*/
+/*	$NetBSD: hcide.c,v 1.20 2006/10/01 21:34:30 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.19 2006/03/29 07:12:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.20 2006/10/01 21:34:30 bjh21 Exp $");
 
 #include <sys/param.h>
 
@@ -89,8 +89,6 @@ hcide_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_wdc.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_NOIRQ;
 	sc->sc_wdc.sc_atac.atac_pio_cap = 0; /* XXX correct? */
-	sc->sc_wdc.sc_atac.atac_dma_cap = 0; /* XXX correct? */
-	sc->sc_wdc.sc_atac.atac_udma_cap = 0;
 	sc->sc_wdc.sc_atac.atac_nchannels = HCIDE_NCHANNELS;
 	sc->sc_wdc.sc_atac.atac_channels = sc->sc_chp;
 	printf("\n");
