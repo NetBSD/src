@@ -1,4 +1,4 @@
-/*	$Id: ninjaata32var.h,v 1.2 2006/10/01 09:53:09 itohy Exp $	*/
+/*	$NetBSD: ninjaata32var.h,v 1.3 2006/10/01 12:11:52 itohy Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi <itohy@NetBSD.org>.
