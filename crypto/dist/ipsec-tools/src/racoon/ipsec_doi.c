@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.18 2006/10/01 22:04:03 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.19 2006/10/02 11:59:40 manu Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -751,7 +751,8 @@ t2isakmpsa(trns, sa)
 #ifdef HAVE_GSSAPI
 		case OAKLEY_ATTR_GSS_ID:
 		{
-			iconv_t cd;
+			int error = -1;
+			iconv_t cd = -1;
 			size_t srcleft, dstleft, rv;
 			__iconv_const char *src;
 			char *dst;
@@ -764,12 +765,19 @@ t2isakmpsa(trns, sa)
 			 * compatible with this behavior.
 			 */
 			if (lcconf->gss_id_enc == LC_GSSENC_LATIN1) {
-				sa->gssid = vmalloc(len);
+				if ((sa->gssid = vmalloc(len)) == NULL) {
+					plog(LLV_ERROR, LOCATION, NULL,
+					    "failed to allocate memory\n");
+					goto out;
+				}
 				memcpy(sa->gssid->v, d + 1, len);
 				plog(LLV_DEBUG, LOCATION, NULL,
-				  "received old-style gss id '%.*s' (len %zu)\n",
-				  (int)sa->gssid->l, sa->gssid->v, sa->gssid->l);
-				break;
+				    "received old-style gss "
+				    "id '%.*s' (len %zu)\n",
+				    (int)sa->gssid->l, sa->gssid->v, 
+				    sa->gssid->l);
+				error = 0;
+				goto out;
 			}
 
 			/*
@@ -786,10 +794,14 @@ t2isakmpsa(trns, sa)
 				    "unable to initialize utf-16le -> latin1 "
 				    "conversion descriptor: %s\n",
 				    strerror(errno));
-				break;
+				goto out;
 			}
 
-			sa->gssid = vmalloc(len / 2);
+			if ((sa->gssid = vmalloc(len / 2)) == NULL) {
+				plog(LLV_ERROR, LOCATION, NULL,
+				    "failed to allocate memory\n");
+				goto out;
+			}
 
 			src = (__iconv_const char *)(d + 1);
 			srcleft = len;
@@ -811,12 +823,8 @@ t2isakmpsa(trns, sa)
 					    "be represented in latin1\n",
 					    rv, rv == 1 ? "" : "s");
 				}
-				(void) iconv_close(cd);
-				vfree(sa->gssid);
-				sa->gssid = NULL;
-				break;
+				goto out;
 			}
-			(void) iconv_close(cd);
 
 			/* XXX dstleft should always be 0; assert it? */
 			sa->gssid->l = (len / 2) - dstleft;
@@ -824,6 +832,16 @@ t2isakmpsa(trns, sa)
 			plog(LLV_DEBUG, LOCATION, NULL,
 			    "received gss id '%.*s' (len %zu)\n",
 			    (int)sa->gssid->l, sa->gssid->v, sa->gssid->l);
+
+			error = 0;
+out:
+			if (cd != (iconv_t)-1)
+				(void)iconv_close(cd);
+
+			if ((error != 0) && (sa->gssid != NULL)) {
+				vfree(sa->gssid);
+				sa->gssid = NULL;
+			}
 			break;
 		}
 #endif /* HAVE_GSSAPI */
