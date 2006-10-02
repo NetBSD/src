@@ -1,4 +1,4 @@
-/* $NetBSD: dbau1550reg.h,v 1.4 2006/02/23 03:51:40 gdamore Exp $ */
+/* $NetBSD: dbau1550reg.h,v 1.5 2006/10/02 08:13:53 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -81,7 +81,7 @@
 /*
  * DBAU1550_BOARD_SPECIFIC
  */
-#define	DBAU1550_PCI_SPI_DEV_SEL		(1 << 13)
+#define	DBAU1550_SPI_DEV_SEL			(1 << 13)
 #define	DBAU1550_PCI_CFG_HOST			(1 << 12)
 #define	DBAU1550_PCI_EN_GPIO200_RST		(1 << 10)
 #define	DBAU1550_PCI_M33			(1 << 8)

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.30 2006/09/09 03:58:46 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.31 2006/10/02 08:13:53 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2006/09/09 03:58:46 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2006/10/02 08:13:53 gdamore Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -148,6 +148,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2006/09/09 03:58:46 simonb Exp $");
 #include <evbmips/alchemy/board.h>
 #include <mips/alchemy/dev/aupcivar.h>
 #include <mips/alchemy/dev/aupcmciavar.h>
+#include <mips/alchemy/dev/auspivar.h>
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>
 #include <mips/alchemy/include/aubusvar.h>
@@ -555,4 +556,15 @@ aupcmcia_machdep(void)
 
 	board = board_info();
 	return (board->ab_pcmcia);
+}
+
+const struct auspi_machdep *
+auspi_machdep(bus_addr_t ba)
+{
+	const struct alchemy_board *board;
+
+	board = board_info();
+	if (board->ab_spi != NULL)
+		return (board->ab_spi(ba));
+	return NULL;
 }
