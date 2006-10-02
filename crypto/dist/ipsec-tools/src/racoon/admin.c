@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.15 2006/10/02 21:19:43 manu Exp $	*/
+/*	$NetBSD: admin.c,v 1.16 2006/10/02 21:27:08 manu Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -192,23 +192,24 @@ admin_process(so2, combuf)
 
 	case ADMIN_SHOW_SCHED:
 	{
-		caddr_t p;
+		caddr_t p = NULL;
 		int len;
-		if (sched_dump(&p, &len) == -1) {
-			com->ac_errno = -1;
-			break;
-		}
 
-		buf = vmalloc(len);
-		if (buf == NULL) {
-			com->ac_errno = -1;
-			break;
-		}
+		com->ac_errno = -1;
+
+		if (sched_dump(&p, &len) == -1)
+			goto out2;
+
+		if ((buf = vmalloc(len)) == NULL)
+			goto out2;
 
 		memcpy(buf->v, p, len);
+
+		com->ac_errno = 0;
+out2:
 		racoon_free(p);
-	}
 		break;
+	}
 
 	case ADMIN_SHOW_EVT:
 		/* It's not really an error, don't force racoonctl to quit */
