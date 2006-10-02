@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.123 2006/10/02 00:02:04 elad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.124 2006/10/02 09:22:34 elad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.123 2006/10/02 00:02:04 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.124 2006/10/02 09:22:34 elad Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -722,6 +722,8 @@ sodisconnect(struct socket *so)
 	int	s, error;
 
 	s = splsoftnet();
+	if (so->so_cred != NULL)
+		kauth_cred_free(so->so_cred);
 	if ((so->so_state & SS_ISCONNECTED) == 0) {
 		error = ENOTCONN;
 		goto bad;
@@ -730,8 +732,6 @@ sodisconnect(struct socket *so)
 		error = EALREADY;
 		goto bad;
 	}
-	if (so->so_cred != NULL)
-		kauth_cred_free(so->so_cred);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_DISCONNECT,
 	    (struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0,
 	    (struct lwp *)0);
