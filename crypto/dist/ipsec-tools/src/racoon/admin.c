@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.13 2006/09/30 15:51:42 manu Exp $	*/
+/*	$NetBSD: admin.c,v 1.14 2006/10/02 20:52:17 manu Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -385,6 +385,7 @@ admin_process(so2, combuf)
 			    "cannot allocate memory: %s\n", 
 			    strerror(errno));
 			vfree(id);
+			id = NULL;
 			break;
 		}
 		data = (char *)(data + acp->id_len);
