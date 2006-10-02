@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.18 2006/10/01 19:23:57 manu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.19 2006/10/02 12:04:53 manu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -2910,7 +2910,7 @@ copy_ph1addresses(iph1, rmconf, remote, local)
 		port = &((struct sockaddr_in *)iph1->local)->sin_port;
 		if (*port)
 			break;
-		*port = ((struct sockaddr_in *)local)->sin_port;
+		*port = ((struct sockaddr_in *)iph1->local)->sin_port;
 		if (*port)
 			break;
 		*port = getmyaddrsport(iph1->local);
@@ -2920,7 +2920,7 @@ copy_ph1addresses(iph1, rmconf, remote, local)
 		port = &((struct sockaddr_in6 *)iph1->local)->sin6_port;
 		if (*port)
 			break;
-		*port = ((struct sockaddr_in6 *)local)->sin6_port;
+		*port = ((struct sockaddr_in6 *)iph1->local)->sin6_port;
 		if (*port)
 			break;
 		*port = getmyaddrsport(iph1->local);
