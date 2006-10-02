@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.74 2006/08/26 20:27:08 christos Exp $
+#	$NetBSD: INSTALL,v 1.75 2006/10/02 03:28:32 chs Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.74 $"
+#ident 		"INSTALL-$Revision: 1.75 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -80,7 +80,6 @@ options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 ## NFS boot options; not supported currently: needs nfsboot program
 #options 	NFS_BOOT_BOOTPARAM

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.37 2006/09/27 21:42:06 manu Exp $
+# $NetBSD: INSTALL,v 1.38 2006/10/02 03:28:31 chs Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -31,7 +31,6 @@ maxusers	2
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Which kernel debugger?  Uncomment either this:
 #options 	DDB

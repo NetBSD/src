@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.62 2006/09/27 21:42:05 manu Exp $
+#	$NetBSD: INSTALL,v 1.63 2006/10/02 03:28:29 chs Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -124,7 +124,6 @@ options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation

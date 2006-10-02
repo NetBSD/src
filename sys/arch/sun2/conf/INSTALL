@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.29 2006/08/26 20:27:08 christos Exp $
+# $NetBSD: INSTALL,v 1.30 2006/10/02 03:28:31 chs Exp $
 
 # INSTALL Sun2 (2/120, 2/170, 2/50, ...)
 
@@ -6,7 +6,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.29 $"
+#ident 		"INSTALL-$Revision: 1.30 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -24,7 +24,6 @@ maxusers	2
 #options 	INSECURE	# disable kernel security level
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Which kernel debugger?  Uncomment either this:
 #options 	DDB

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.1 2006/06/20 17:29:07 garbled Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.2 2006/10/02 03:28:31 chs Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -46,7 +46,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 options		NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 
 # Networking options

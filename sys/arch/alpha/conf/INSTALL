@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.89 2006/02/05 05:01:48 cube Exp $
+# $NetBSD: INSTALL,v 1.90 2006/10/02 03:28:29 chs Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -76,7 +76,6 @@ options 	INSECURE		# disable `kernel security level'
 options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 options 	FONT_GALLANT12x22	# Console font for TC devices
 
 # The Alpha console firmware network boots using the BOOTP

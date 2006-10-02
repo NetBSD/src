@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.32 2006/07/20 13:21:38 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.33 2006/10/02 03:28:30 chs Exp $
 #
 # INSTALL machine description file
 #
@@ -20,7 +20,6 @@ options 	NFS_DEFAULT_NIOTHREADS=1
 options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Support for various CPU types
 options 	HP320

@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.4 2006/08/28 13:53:04 tsutsui Exp $
+# 	$NetBSD: RAMDISK,v 1.5 2006/10/02 03:28:30 chs Exp $
 #
 # kernel config file with memory disk for installation
 #
@@ -14,7 +14,6 @@ options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=6144	# size of memory disk, in blocks
 
 options 	PIPE_SOCKETPAIR
-options 	MALLOC_NOINLINE
 options 	NFS_V2_ONLY
 options 	FFS_NO_SNAPSHOT
 options 	NO_DEV_PTM

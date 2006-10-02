@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.56 2006/08/26 20:26:44 christos Exp $
+# $NetBSD: GENERIC.in,v 1.57 2006/10/02 03:28:29 chs Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.56 $"
+#ident 		"GENERIC-$Revision: 1.57 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -235,7 +235,6 @@ options 	USERCONF	# userconf(4) support
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 ', `m4_dnl
 options 	NTP		# NTP phase/frequency locked loop
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

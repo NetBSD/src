@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.45 2006/02/05 05:02:06 cube Exp $
+#	$NetBSD: INSTALL,v 1.46 2006/10/02 03:28:32 chs Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -104,7 +104,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Kernel(s) to compile
 config		netbsd root on ? type ?
