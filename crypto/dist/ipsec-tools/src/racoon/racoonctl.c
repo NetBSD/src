@@ -1,4 +1,4 @@
-/*	$NetBSD: racoonctl.c,v 1.6 2006/09/29 21:39:35 manu Exp $	*/
+/*	$NetBSD: racoonctl.c,v 1.7 2006/10/02 07:12:26 manu Exp $	*/
 
 /*	Id: racoonctl.c,v 1.11 2006/04/06 17:06:25 manubsd Exp */
 
@@ -1037,6 +1037,8 @@ get_comindex(str, name, port, pref)
 				*p = '\0';
 			}
 		} else if (*p == '[') {
+			if (*pref == NULL)
+				goto bad;
 			*p = '\0';
 			*port = racoon_strdup(p + 1);
 			STRDUP_FATAL(*port);
