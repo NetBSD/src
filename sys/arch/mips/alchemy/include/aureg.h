@@ -1,4 +1,4 @@
-/* $NetBSD: aureg.h,v 1.17 2006/04/10 14:20:48 simonb Exp $ */
+/* $NetBSD: aureg.h,v 1.18 2006/10/02 06:44:00 gdamore Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -313,6 +313,55 @@
 #define  SCS_CUH		(1<<10)		/* USB Host clock select */
 #define  SCS_DUD		(1<<6)		/* USB Device clock divider select */
 #define  SCS_CUD		(1<<5)		/* USB Device clock select */
+/*
+ * Au1550 bits, needed for PSCs. Note that some bits collide with
+ * earlier parts.  On Au1550, USB clocks (both device and host) are
+ * shared with PSC2, and must be configured for 48MHz.  DBAU1550 YAMON
+ * does this by default.  Also, EXTCLK0 is shared with PSC3.  DBAU1550
+ * YAMON does not configure any clocks besides PSC2.
+ */
+#define  SCS_MP3(n)		(n<<22)		/* psc3_intclock mux */
+#define	 SCS_DP3		(1<<21)		/* psc3_intclock divider */
+#define	 SCS_CP3		(1<<20)		/* psc3_intclock select */
+#define  SCS_MP1(n)		(n<<12)		/* psc1_intclock mux */
+#define	 SCS_DP1		(1<<11)		/* psc1_intclock divider */
+#define	 SCS_CP1		(1<<10)		/* psc1_intclock select */
+#define	 SCS_MP0(n)		(n<<7)		/* psc0_intclock mux */
+#define  SCS_DP0		(1<<6)		/* psc0_intclock divider */
+#define	 SCS_CP0		(1<<5)		/* psc0_intclock seelct */
+#define	 SCS_MP2(n)		(n<<2)		/* psc2_intclock mux */
+#define	 SCS_DP2		(1<<1)		/* psc2_intclock divider */
+#define	 SCS_CP2		(1<<0)		/* psc2_intclock select */
+
+/************************************************************************/
+/***************************  PIN Function  *****************************/
+/************************************************************************/
+
+#define	SYS_PINFUNC		(SYS_BASE + 0x2c)
+#define	 SPF_PSC3_MASK		(7<<20)
+#define	 SPF_PSC3_AC97		(0<<17)		/* select AC97/SPI */
+#define	 SPF_PSC3_I2S		(1<<17)		/* select I2S */
+#define	 SPF_PSC3_SMBUS		(3<<17)		/* select SMbus */
+#define	 SPF_PSC3_GPIO		(7<<17)		/* select gpio215:211 */
+#define  SPF_PSC2_MASK		(7<<17)
+#define	 SPF_PSC2_AC97		(0<<17)		/* select AC97/SPI */
+#define	 SPF_PSC2_I2S		(1<<17)		/* select I2S */
+#define	 SPF_PSC2_SMBUS		(3<<17)		/* select SMbus */
+#define	 SPF_PSC2_GPIO		(7<<17)		/* select gpio210:206*/
+#define	 SPF_CS			(1<<16)		/* extclk0 or 32kHz osc */
+#define	 SPF_USB		(1<<15)		/* host or device usb otg */
+#define	 SPF_U3T		(1<<14)		/* uart3 tx or gpio23 */
+#define	 SPF_U1R		(1<<13)		/* uart1 rx or gpio22 */
+#define	 SPF_U1T		(1<<12)		/* uart1 tx or gpio21 */
+#define	 SPF_EX1		(1<<10)		/* gpio3 or extclk1 */
+#define	 SPF_EX0		(1<<9)		/* gpio2 or extclk0/32kHz osc*/
+#define	 SPF_U3			(1<<7)		/* gpio14:9 or uart3 */
+#define	 SPF_MBSa		(1<<5)		/* must be set */
+#define	 SPF_NI2		(1<<4)		/* enet1 or gpio28:24 */
+#define	 SPF_U0			(1<<3)		/* uart0 or gpio20 */
+#define	 SPF_MBSb		(1<<2)		/* must be set */
+#define	 SPF_S1			(1<<1)		/* gpio17 or psc1_sync1 */
+#define	 SPF_S0			(1<<0)		/* gpio16 or psc0_sync1 */
 
 /************************************************************************/
 /***************************   PLL Control  *****************************/
