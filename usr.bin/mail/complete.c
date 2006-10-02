@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.7 2006/09/27 15:23:34 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.8 2006/10/02 16:43:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.7 2006/09/27 15:23:34 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.8 2006/10/02 16:43:31 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -745,7 +745,8 @@ S1:
 
 	default:
 		/* the first arg (command) is special - see execute() in lex.c */
-		if (margc == 0 && index(" \t0123456789$^.:/-+*'\"", *sb))
+		if (margc == 0 && got_one &&
+		    strchr(" \t0123456789$^.:/-+*'\"", *sb))
 			goto OUT;
 
 		*ap = *sb;	/* add character to token */
