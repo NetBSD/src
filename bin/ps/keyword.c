@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.47 2006/10/02 17:54:35 apb Exp $	*/
+/*	$NetBSD: keyword.c,v 1.48 2006/10/02 18:43:13 apb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.47 2006/10/02 17:54:35 apb Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.48 2006/10/02 18:43:13 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -376,7 +376,6 @@ findvar(const char *p)
 			err(1, NULL);
 		memcpy(newvar, v, sizeof(struct var));
 		newvar->header = newheader;
-		v = newvar;
 
 		/*
 		 * According to P1003.1-2004, if the header text is null,
@@ -384,7 +383,9 @@ findvar(const char *p)
 		 * wide as the default header text.
 		 */
 		if (*hp == '\0')
-			v->width = strlen(v->header);
+			newvar->width = strlen(v->header);
+
+		v = newvar;
 	}
 	return v;
 }
