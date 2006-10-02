@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.4 2006/09/28 18:53:15 bouyer Exp $
+#	$NetBSD: XEN3_DOM0,v 1.5 2006/10/02 19:36:41 bouyer Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -6,6 +6,9 @@ include "arch/i386/conf/XEN2_DOM0"
 
 options 	XEN3	#Xen 3.x support
 #options 	XEN_NO_HYPERCALLPAGE # use old hypercall method
+
+# boot messages with MPBIOS, acpi and ioapic can be quite large
+options		MSGBUFSIZE=24576
 
 vcpu*		at hypervisor?		# Xen virtual CPUs
 xenbus*		at hypervisor?		# Xen virtual bus
