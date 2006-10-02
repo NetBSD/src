@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.837 2006/10/02 12:50:23 cube Exp $
+$NetBSD: pcidevs,v 1.838 2006/10/02 13:08:45 cube Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2746,7 +2746,7 @@ product NVIDIA	GF_FX5900XT	0x0332	GeForce FX 5900XT
 product NVIDIA	GF_FX5950U	0x0333	GeForce FX 5950 Ultra
 product NVIDIA	QUADRO_FX_3000	0x0338	Quadro FX 3000
 product NVIDIA	GF_FX5700_LE	0x0343	GeForce FX 5700 LE
-product NVIDIA	MCP65_ISA	0x0362	nForce MCP55 PCI-ISA Bridge
+product NVIDIA	MCP55_ISA	0x0362	nForce MCP55 PCI-ISA Bridge
 product NVIDIA	MCP55_SMB	0x0368	nForce MCP55 SMBus Controller
 product NVIDIA	MCP55_MEM	0x0369	nForce MCP55 Memory Controller
 product NVIDIA	MCP55_MEM2	0x036a	nForce MCP55 Memory Controller
