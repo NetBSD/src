@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.57 2006/09/18 08:18:47 martin Exp $ */
+/*	$NetBSD: cpu.h,v 1.58 2006/10/02 23:22:52 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -352,25 +352,6 @@ void kgdb_panic(void);
 /* emul.c */
 int	fixalign(struct lwp *, struct trapframe64 *);
 int	emulinstr(vaddr_t, struct trapframe64 *);
-
-/*
- *
- * The SPARC has a Trap Base Register (TBR) which holds the upper 20 bits
- * of the trap vector table.  The next eight bits are supplied by the
- * hardware when the trap occurs, and the bottom four bits are always
- * zero (so that we can shove up to 16 bytes of executable code---exactly
- * four instructions---into each trap vector).
- *
- * The hardware allocates half the trap vectors to hardware and half to
- * software.
- *
- * Traps have priorities assigned (lower number => higher priority).
- */
-
-struct trapvec {
-	int	tv_instr[8];		/* the eight instructions */
-};
-extern struct trapvec *trapbase;	/* the 256 vectors */
 
 #endif /* _KERNEL */
 #endif /* _CPU_H_ */
