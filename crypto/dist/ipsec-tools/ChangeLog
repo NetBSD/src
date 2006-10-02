@@ -7,6 +7,8 @@
 	* src/racoon/isakmp.c: don't use NULL pointer (Coverity)
 	* src/racoon/oakley.c: don't use NULL pointer (Coverity)
 	* src/racoon/admin.c: avoid reusing free'd pointer (Coverity)
+	* src/racoon/{admin.c|sockmisc.c}: Fix memory leak (Coverity), refactor
+	  the code to use port get/set function
 	
 2006-10-01  Emmanuel Dreyfus  <manu@netbsd.org>
 	* src/racoon/isakmp.c: Avoid using NULL pointer (Coverity)
