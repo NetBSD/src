@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.277 2006/09/08 20:58:57 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.278 2006/10/02 16:29:57 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.277 2006/09/08 20:58:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.278 2006/10/02 16:29:57 elad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -304,6 +304,9 @@ main(void)
 	ntp_init();
 #endif /* __HAVE_TIMECOUNTER */
 
+	/* Initialize kauth. */
+	kauth_init();
+
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
 
@@ -331,9 +334,6 @@ main(void)
 	/* Initialize posix semaphores */
 	ksem_init();
 #endif
-
-	/* Initialize kauth. */
-	kauth_init();
 
 	/* Initialize default security model. */
 	secmodel_start();
