@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.102 2006/07/21 10:08:41 yamt Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.103 2006/10/02 02:59:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.102 2006/07/21 10:08:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.103 2006/10/02 02:59:38 chs Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -113,9 +113,61 @@ int	nkmempages = NKMEMPAGES;
 #include "opt_malloclog.h"
 #include "opt_malloc_debug.h"
 
+#define	MINALLOCSIZE	(1 << MINBUCKET)
+#define	BUCKETINDX(size) \
+	((size) <= (MINALLOCSIZE * 128) \
+		? (size) <= (MINALLOCSIZE * 8) \
+			? (size) <= (MINALLOCSIZE * 2) \
+				? (size) <= (MINALLOCSIZE * 1) \
+					? (MINBUCKET + 0) \
+					: (MINBUCKET + 1) \
+				: (size) <= (MINALLOCSIZE * 4) \
+					? (MINBUCKET + 2) \
+					: (MINBUCKET + 3) \
+			: (size) <= (MINALLOCSIZE* 32) \
+				? (size) <= (MINALLOCSIZE * 16) \
+					? (MINBUCKET + 4) \
+					: (MINBUCKET + 5) \
+				: (size) <= (MINALLOCSIZE * 64) \
+					? (MINBUCKET + 6) \
+					: (MINBUCKET + 7) \
+		: (size) <= (MINALLOCSIZE * 2048) \
+			? (size) <= (MINALLOCSIZE * 512) \
+				? (size) <= (MINALLOCSIZE * 256) \
+					? (MINBUCKET + 8) \
+					: (MINBUCKET + 9) \
+				: (size) <= (MINALLOCSIZE * 1024) \
+					? (MINBUCKET + 10) \
+					: (MINBUCKET + 11) \
+			: (size) <= (MINALLOCSIZE * 8192) \
+				? (size) <= (MINALLOCSIZE * 4096) \
+					? (MINBUCKET + 12) \
+					: (MINBUCKET + 13) \
+				: (size) <= (MINALLOCSIZE * 16384) \
+					? (MINBUCKET + 14) \
+					: (MINBUCKET + 15))
+
+/*
+ * Array of descriptors that describe the contents of each page
+ */
+struct kmemusage {
+	short ku_indx;		/* bucket index */
+	union {
+		u_short freecnt;/* for small allocations, free pieces in page */
+		u_short pagecnt;/* for large allocations, pages alloced */
+	} ku_un;
+};
+#define	ku_freecnt ku_un.freecnt
+#define	ku_pagecnt ku_un.pagecnt
+
 struct kmembuckets kmembuckets[MINBUCKET + 16];
 struct kmemusage *kmemusage;
 char *kmembase, *kmemlimit;
+
+/*
+ * Turn virtual addresses into kmem map indicies
+ */
+#define	btokup(addr)	(&kmemusage[((caddr_t)(addr) - kmembase) >> PGSHIFT])
 
 struct malloc_type *kmemstatistics;
 
