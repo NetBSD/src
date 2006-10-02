@@ -1,4 +1,4 @@
-/* $NetBSD: sec.c,v 1.2 2006/10/01 22:02:55 bjh21 Exp $ */
+/* $NetBSD: sec.c,v 1.3 2006/10/02 22:10:55 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2006 Ben Harris
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.2 2006/10/01 22:02:55 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.3 2006/10/02 22:10:55 bjh21 Exp $");
 
 #include <sys/param.h>
 
@@ -321,8 +321,6 @@ sec_dmablk(struct sec_softc *sc, int blk)
 	KASSERT(blk * SEC_DMABLK < sc->sc_dmalen);
 	off = (blk % SEC_NBLKS) * SEC_DMABLK + sc->sc_dmaoff;
 	len = MIN(SEC_DMABLK, sc->sc_dmalen - (blk * SEC_DMABLK));
-	if (!sc->sc_dmain)
-		sec_copyout(sc, sc->sc_dmaaddr + (blk * SEC_DMABLK), off, len);
 	dmac_write(sc, NEC71071_ADDRLO, off & 0xff);
 	dmac_write(sc, NEC71071_ADDRMID, off >> 8);
 	dmac_write(sc, NEC71071_ADDRHI, 0);
@@ -337,17 +335,31 @@ sec_dmablk(struct sec_softc *sc, int blk)
 }
 
 static void
-sec_dmablkdone(struct sec_softc *sc, int blk)
+sec_copyoutblk(struct sec_softc *sc, int blk)
 {
 	int off;
 	size_t len;
 
 	KASSERT(blk >= 0);
 	KASSERT(blk * SEC_DMABLK < sc->sc_dmalen);
+	KASSERT(!sc->sc_dmain);
 	off = (blk % SEC_NBLKS) * SEC_DMABLK + sc->sc_dmaoff;
 	len = MIN(SEC_DMABLK, sc->sc_dmalen - (blk * SEC_DMABLK));
-	if (sc->sc_dmain)
-		sec_copyin(sc, sc->sc_dmaaddr + (blk * SEC_DMABLK), off, len);
+	sec_copyout(sc, sc->sc_dmaaddr + (blk * SEC_DMABLK), off, len);
+}
+
+static void
+sec_copyinblk(struct sec_softc *sc, int blk)
+{
+	int off;
+	size_t len;
+
+	KASSERT(blk >= 0);
+	KASSERT(blk * SEC_DMABLK < sc->sc_dmalen);
+	KASSERT(sc->sc_dmain);
+	off = (blk % SEC_NBLKS) * SEC_DMABLK + sc->sc_dmaoff;
+	len = MIN(SEC_DMABLK, sc->sc_dmalen - (blk * SEC_DMABLK));
+	sec_copyin(sc, sc->sc_dmaaddr + (blk * SEC_DMABLK), off, len);
 }
 
 static int
@@ -365,12 +377,9 @@ sec_dmasetup(struct wd33c93_softc *sc_sbic, caddr_t *addr, size_t *len,
 	mode = SEC_DMAMODE | (datain ? MODE_TDIR_IOTM : MODE_TDIR_MTIO);
 	/* Program first block into DMAC and queue up second. */
 	dmac_write(sc, NEC71071_CHANNEL, 0);
+	if (!sc->sc_dmain)
+		sec_copyoutblk(sc, 0);
 	sec_dmablk(sc, 0);
-	if (sc->sc_dmalen > SEC_DMABLK) {
-		dmac_write(sc, NEC71071_CHANNEL, 0 | CHANNEL_WBASE);
-		sec_dmablk(sc, 1);
-		mode |= MODE_AUTI;
-	}
 	/* Mode control register */
 	dmac_write(sc, NEC71071_MODE, mode);
 	return sc->sc_dmalen;
@@ -383,6 +392,8 @@ sec_dmago(struct wd33c93_softc *sc_sbic)
 
 	dmac_write(sc, NEC71071_MASK, 0xe);
 	sc->sc_dmaactive = TRUE;
+	if (!sc->sc_dmain && sc->sc_dmalen > SEC_DMABLK)
+		sec_copyoutblk(sc, 1);
 	return sc->sc_dmalen;
 }
 
@@ -392,8 +403,8 @@ sec_dmastop(struct wd33c93_softc *sc_sbic)
 	struct sec_softc *sc = (struct sec_softc *)sc_sbic;
 
 	dmac_write(sc, NEC71071_MASK, 0xf);
-	if (sc->sc_dmaactive)
-		sec_dmablkdone(sc, sc->sc_dmablk);
+	if (sc->sc_dmaactive && sc->sc_dmain)
+		sec_copyinblk(sc, sc->sc_dmablk);
 	sc->sc_dmaactive = FALSE;
 }
 
@@ -443,19 +454,19 @@ sec_dmatc(struct sec_softc *sc)
 	sec_cli(sc);
 	/* DMAC finished block n-1 and is now working on block n */
 	sc->sc_dmablk++;
-	if (sc->sc_dmalen > (sc->sc_dmablk + 1) * SEC_DMABLK) {
-		/* Queue up another block */
-		dmac_write(sc, NEC71071_CHANNEL, 0 | CHANNEL_WBASE);
-		sec_dmablk(sc, sc->sc_dmablk + 1);
-	} else if (sc->sc_dmalen > sc->sc_dmablk * SEC_DMABLK) {
-		/* No more blocks to queue -- cancel autoinitialize mode */
-		dmac_write(sc, NEC71071_MODE, SEC_DMAMODE |
-		    (sc->sc_dmain ? MODE_TDIR_IOTM : MODE_TDIR_MTIO));
+	if (sc->sc_dmalen > sc->sc_dmablk * SEC_DMABLK) {
+		dmac_write(sc, NEC71071_CHANNEL, 0);
+		sec_dmablk(sc, sc->sc_dmablk);
+		dmac_write(sc, NEC71071_MASK, 0xe);
+		if (!sc->sc_dmain &&
+		    sc->sc_dmalen > (sc->sc_dmablk + 1) * SEC_DMABLK)
+			sec_copyoutblk(sc, sc->sc_dmablk + 1);
 	} else {
 		/* All blocks fully processed. */
 		sc->sc_dmaactive = FALSE;
 	}
-	sec_dmablkdone(sc, sc->sc_dmablk - 1);
+	if (sc->sc_dmain)
+		sec_copyinblk(sc, sc->sc_dmablk - 1);
 	return 1;
 }
 
