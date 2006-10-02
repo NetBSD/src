@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.19 2006/10/02 11:59:40 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.20 2006/10/02 12:44:40 dogcow Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -752,7 +752,7 @@ t2isakmpsa(trns, sa)
 		case OAKLEY_ATTR_GSS_ID:
 		{
 			int error = -1;
-			iconv_t cd = -1;
+			iconv_t cd = (iconv_t) -1;
 			size_t srcleft, dstleft, rv;
 			__iconv_const char *src;
 			char *dst;
