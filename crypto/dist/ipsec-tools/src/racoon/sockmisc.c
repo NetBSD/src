@@ -1,4 +1,4 @@
-/*	$NetBSD: sockmisc.c,v 1.5 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: sockmisc.c,v 1.6 2006/10/02 07:08:25 manu Exp $	*/
 
 /* Id: sockmisc.c,v 1.24 2006/05/07 21:32:59 manubsd Exp */
 
@@ -777,10 +777,11 @@ newsaddr(len)
 {
 	struct sockaddr *new;
 
-	new = racoon_calloc(1, len);
-	if (new == NULL)
+	if ((new = racoon_calloc(1, len)) == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"%s\n", strerror(errno)); 
+		goto out;
+	}
 
 #ifdef __linux__
 	if (len == sizeof (struct sockaddr_in6))
@@ -791,7 +792,7 @@ newsaddr(len)
 	/* initial */
 	new->sa_len = len;
 #endif
-
+out:
 	return new;
 }
 
