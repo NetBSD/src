@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.25 2006/09/30 20:05:57 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.26 2006/10/02 16:29:57 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.25 2006/09/30 20:05:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.26 2006/10/02 16:29:57 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -716,15 +716,14 @@ kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
 	simple_lock_only_held(NULL, "kauth_authorize_action");
 #endif
 
-	/* Sanitize input */
-	if (scope == NULL || cred == NULL)
-		return (EFAULT);
-	if (!action)
-		return (EINVAL);
+	KASSERT(cred != NULL);
+	KASSERT(action != 0);
 
 	/* Short-circuit requests coming from the kernel. */
 	if (cred == NOCRED || cred == FSCRED)
 		return (0);
+
+	KASSERT(scope != NULL);
 
 	if (!listeners_have_been_loaded) {
 		KASSERT(SIMPLEQ_EMPTY(&scope->listenq));
