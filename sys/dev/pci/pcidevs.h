@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.836 2006/09/29 20:49:48 cube Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.837 2006/10/02 12:51:02 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.836 2006/09/29 20:48:41 cube Exp
+ *	NetBSD: pcidevs,v 1.837 2006/10/02 12:50:23 cube Exp
  */
 
 /*
@@ -2753,6 +2753,7 @@
 #define	PCI_PRODUCT_NVIDIA_GF_FX5950U	0x0333		/* GeForce FX 5950 Ultra */
 #define	PCI_PRODUCT_NVIDIA_QUADRO_FX_3000	0x0338		/* Quadro FX 3000 */
 #define	PCI_PRODUCT_NVIDIA_GF_FX5700_LE	0x0343		/* GeForce FX 5700 LE */
+#define	PCI_PRODUCT_NVIDIA_MCP65_ISA	0x0362		/* nForce MCP55 PCI-ISA Bridge */
 #define	PCI_PRODUCT_NVIDIA_MCP55_SMB	0x0368		/* nForce MCP55 SMBus Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP55_MEM	0x0369		/* nForce MCP55 Memory Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP55_MEM2	0x036a		/* nForce MCP55 Memory Controller */
