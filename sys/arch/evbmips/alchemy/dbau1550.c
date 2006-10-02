@@ -1,4 +1,4 @@
-/* $NetBSD: dbau1550.c,v 1.6 2006/03/25 07:28:20 gdamore Exp $ */
+/* $NetBSD: dbau1550.c,v 1.7 2006/10/02 08:13:53 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.6 2006/03/25 07:28:20 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.7 2006/10/02 08:13:53 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -45,9 +45,12 @@ __KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.6 2006/03/25 07:28:20 gdamore Exp $")
 #include <mips/alchemy/dev/aupcmciavar.h>
 #include <mips/alchemy/dev/aupcmciareg.h>
 #include <mips/alchemy/dev/augpioreg.h>
+#include <mips/alchemy/dev/auspivar.h>
 #include <evbmips/alchemy/obiovar.h>
 #include <evbmips/alchemy/board.h>
 #include <evbmips/alchemy/dbau1550reg.h>
+
+#include "auspi.h"
 
 /*
  * This should be converted to use bus_space routines.
@@ -72,13 +75,9 @@ static void dbau1550_slot_enable(int);
 static void dbau1550_slot_disable(int);
 static int dbau1550_slot_status(int);
 static const char *dbau1550_slot_name(int);
+static const struct auspi_machdep *dbau1550_spi(bus_addr_t);
 
 static const struct obiodev dbau1550_devices[] = {
-#if 0
-	{ "aupsc", -1, -1 },
-	{ "aupsc", -1, -1 },
-	{ "aupsc", -1, -1 },
-#endif
 	{ NULL },
 };
 
@@ -93,13 +92,14 @@ static struct aupcmcia_machdep dbau1550_pcmcia = {
 };
 
 static struct alchemy_board dbau1550_info = {
-	"AMD Alchemy DBAu1550",
-	dbau1550_devices,
-	dbau1550_init,
-	dbau1550_pci_intr_map,
-	dbau1550_reboot,
-	dbau1550_poweroff,
-	&dbau1550_pcmcia,
+	.ab_name = "AMD Alchemy DBAu1550",
+	.ab_devices = dbau1550_devices,
+	.ab_init = dbau1550_init,
+	.ab_pci_intr_map =dbau1550_pci_intr_map,
+	.ab_reboot = dbau1550_reboot,
+	.ab_poweroff = dbau1550_poweroff,
+	.ab_pcmcia = &dbau1550_pcmcia,
+	.ab_spi = dbau1550_spi,
 };
 
 const struct alchemy_board *
@@ -113,6 +113,8 @@ void
 dbau1550_init(void)
 {
 	uint16_t		whoami;
+	uint32_t		sysclk;
+	uint32_t		pinfunc;
 
 	if (MIPS_PRID_COPTS(cpu_id) != MIPS_AU1550)
 		panic("dbau1550: CPU not Au1550");
@@ -133,6 +135,35 @@ dbau1550_init(void)
 		printf("no daughtercard\n");
 
 	/* leave console and clocks alone -- YAMON should have got it right! */
+
+	/*
+	 * Initialize PSC clocks.
+	 *
+	 * PSC0 is SPI.   Use 48MHz FREQ1.
+	 * PSC1 is AC97.
+	 * PSC2 is SMBus, and must be 48MHz.  (Configured by YAMON)
+	 * PSC3 is I2S.
+	 *
+	 * FREQ2 is 48MHz for USBH/USBD.
+	 */
+	sysclk = GET32(SYS_CLKSRC);
+	sysclk &= ~(SCS_MP0(7) | SCS_DP0 | SCS_CP0);
+	sysclk |= SCS_MP0(3);
+	PUT32(SYS_CLKSRC, sysclk);
+
+	/*
+	 * Configure pin function for PSC devices.
+	 */
+	pinfunc = GET32(SYS_PINFUNC);
+	/* configure PSC0 SYNC1 */
+	pinfunc |= SPF_S0;
+	/* configure PSC2 for SMBus (YAMON default) */
+	pinfunc &= ~SPF_PSC2_MASK;
+	pinfunc |= SPF_PSC2_SMBUS;
+	/* configure PSC3 for I2S (YAMON default) */
+	pinfunc &= ~SPF_PSC3_MASK;
+	pinfunc |= SPF_PSC3_I2S;
+	PUT32(SYS_PINFUNC, pinfunc);
 }
 
 int
@@ -337,3 +368,40 @@ dbau1550_slot_name(int slot)
 		return "???";
 	}
 }
+
+#if NAUSPI > 0
+
+static int
+dbau1550_spi_select(void *arg, int slave)
+{
+	uint16_t	status;
+	if ((slave < 0) || (slave > 1))
+		return EINVAL;
+	status = GET16(DBAU1550_BOARD_SPECIFIC);
+
+	if (slave) {
+		status |= DBAU1550_SPI_DEV_SEL;
+	} else {
+		status &= ~DBAU1550_SPI_DEV_SEL;
+	}
+	PUT16(DBAU1550_BOARD_SPECIFIC, status);
+	return 0;
+}
+
+const struct auspi_machdep *
+dbau1550_spi(bus_addr_t ba)
+{
+	static const struct auspi_machdep md = {
+		.am_nslaves = 2,
+		.am_cookie = NULL,
+		.am_select = dbau1550_spi_select,
+	};
+	
+	/* DBAU1550 only has SPI on PSC0 */
+	if (ba != PSC0_BASE)
+		return NULL;
+
+	return &md;
+}
+
+#endif	/* NAUSPI > 0 */
