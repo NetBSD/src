@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.22.22.1 2006/10/02 10:28:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,10 +51,14 @@
 #define	IPL_NET		5	/* network */
 #define	IPL_SOFTSERIAL	4	/* serial */
 #define	IPL_TTY		3	/* terminal */
+#define	IPL_LPT		IPL_TTY
 #define	IPL_VM		3	/* memory allocation */
 #define	IPL_AUDIO	2	/* audio */
 #define	IPL_CLOCK	1	/* clock */
+#define	IPL_STATCLOCK	IPL_CLOCK
 #define	IPL_HIGH	1	/* everything */
+#define	IPL_SCHED	IPL_HIGH
+#define	IPL_LOCK	IPL_HIGH
 #define	IPL_SERIAL	0	/* serial */
 #define	NIPL		10
 
@@ -101,41 +105,42 @@ extern int imask[];
 #define SPL_CLOCK	31
 
 /*
- * Hardware interrupt masks
- */
-#define splbio()	splraise(imask[IPL_BIO])
-#define splnet()	splraise(imask[IPL_NET])
-#define spltty()	splraise(imask[IPL_TTY])
-#define	splaudio()	splraise(imask[IPL_AUDIO])
-#define splclock()	splraise(imask[IPL_CLOCK])
-#define splstatclock()	splclock()
-#define	splserial()	splraise(imask[IPL_SERIAL])
-
-#define spllpt()	spltty()
-
-/*
  * Software interrupt masks
  *
  * NOTE: splsoftclock() is used by hardclock() to lower the priority from
  * clock to softclock before it calls softclock().
  */
 #define	spllowersoftclock() spllower(imask[IPL_SOFTCLOCK])
-#define	splsoftclock()	splraise(imask[IPL_SOFTCLOCK])
-#define	splsoftnet()	splraise(imask[IPL_SOFTNET])
-#define	splsoftserial()	splraise(imask[IPL_SOFTSERIAL])
 
 /*
  * Miscellaneous
  */
-#define splvm()		splraise(imask[IPL_VM])
-#define	splhigh()	splraise(imask[IPL_HIGH])
-#define	splsched()	splhigh()
-#define	spllock()	splhigh()
 #define	spl0()		spllower(0)
 
 #define	setsoftclock()	softintr(SIR_CLOCK)
 #define	setsoftnet()	softintr(SIR_NET)
 #define	setsoftserial()	softintr(SIR_SERIAL)
+
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return splraise(imask[icookie._ipl]);
+}
+
+#include <sys/spl.h>
 
 #ifdef MULTIPROCESSOR
 #define MACPPC_IPI_HALT		0x0001
