@@ -10,6 +10,7 @@
 	* src/racoon/{admin.c|sockmisc.c}: Fix memory leak (Coverity), refactor
 	  the code to use port get/set function
 	* src/racoon/admin.c: fix memory leak (Coverity)
+	* src/racoon/algorithm.c: fix array overrun (Coverity)
 	
 2006-10-01  Emmanuel Dreyfus  <manu@netbsd.org>
 	* src/racoon/isakmp.c: Avoid using NULL pointer (Coverity)
