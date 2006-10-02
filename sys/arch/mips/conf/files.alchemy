@@ -1,4 +1,4 @@
-#	$NetBSD: files.alchemy,v 1.12 2006/07/13 22:56:01 gdamore Exp $
+#	$NetBSD: files.alchemy,v 1.13 2006/10/02 08:00:07 gdamore Exp $
 
 defflag opt_alchemy.h		ALCHEMY_AU1000
 				ALCHEMY_AU1100
@@ -65,6 +65,11 @@ file	arch/mips/alchemy/dev/aupsc.c		aupsc
 device	ausmbus: i2cbus, i2c_bitbang
 attach	ausmbus at aupsc
 file	arch/mips/alchemy/dev/ausmbus_psc.c	ausmbus
+
+# On-chip PSC SPI Protocol
+device	auspi: spibus
+attach	auspi at aupsc
+file	arch/mips/alchemy/dev/auspi.c		auspi	needs-flag
 
 # On-chip PCMCIA
 #
