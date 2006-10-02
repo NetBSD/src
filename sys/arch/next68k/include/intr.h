@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15 2005/12/24 20:07:24 perry Exp $	*/
+/*	$NetBSD: intr.h,v 1.15.22.1 2006/10/02 10:04:56 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -44,18 +44,41 @@
 
 /****************************************************************/
 
-#define splhigh()       spl7()
-#define splserial()     _splraise(PSL_S|PSL_IPL5)
-#define splsched()      spl7()
-#define spllock()	spl7()
-#define splclock()      _splraise(PSL_S|PSL_IPL3)
-#define splstatclock()  splclock()
-#define splvm()         _splraise(PSL_S|PSL_IPL6)
-#define spltty()        _splraise(PSL_S|PSL_IPL3)
-#define splbio()        _splraise(PSL_S|PSL_IPL3)
-#define splnet()        _splraise(PSL_S|PSL_IPL3)
-#define splsoftnet()    _splraise(PSL_S|PSL_IPL2)
-#define	splsoftclock()	splraise1()
+#define	IPL_HIGH	(PSL_S|PSL_IPL7)
+#define	IPL_SERIAL	(PSL_S|PSL_IPL5)
+#define	IPL_SCHED	(PSL_S|PSL_IPL7)
+#define	IPL_LOCK	(PSL_S|PSL_IPL7)
+#define	IPL_CLOCK	(PSL_S|PSL_IPL3)
+#define	IPL_STATCLOCK	IPL_CLOCK
+#define	IPL_VM		(PSL_S|PSL_IPL6)
+#define	IPL_TTY		(PSL_S|PSL_IPL3)
+#define	IPL_BIO		(PSL_S|PSL_IPL3)
+#define	IPL_NET		(PSL_S|PSL_IPL3)
+#define	IPL_SOFTNET	(PSL_S|PSL_IPL2)
+#define	IPL_SOFTCLOCK	(PSL_S|PSL_IPL1)
+#define	IPL_NONE	0
+
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(icookie._ipl);
+}
+
+#include <sys/spl.h>
+
 #define spllowersoftclock() spl1()
 
 #define spldma()        _splraise(PSL_S|PSL_IPL6)
