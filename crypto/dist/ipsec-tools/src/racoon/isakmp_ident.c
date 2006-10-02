@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_ident.c,v 1.5 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: isakmp_ident.c,v 1.6 2006/10/02 21:41:59 manu Exp $	*/
 
 /* Id: isakmp_ident.c,v 1.21 2006/04/06 16:46:08 manubsd Exp */
 
@@ -1015,7 +1015,6 @@ ident_r1send(iph1, msg)
 #ifdef HAVE_GSSAPI
 	int free_gss_sa = 0;
 #endif
-	vchar_t *vid = NULL;
 #ifdef ENABLE_NATT
 	vchar_t *vid_natt = NULL;
 #endif
@@ -1051,10 +1050,6 @@ ident_r1send(iph1, msg)
 
 	/* set SA payload to reply */
 	plist = isakmp_plist_append(plist, gss_sa, ISAKMP_NPTYPE_SA);
-
-	/* Set Vendor ID, if necessary. */
-	if (vid)
-		plist = isakmp_plist_append(plist, vid, ISAKMP_NPTYPE_VID);
 
 #ifdef ENABLE_HYBRID
 	if (iph1->mode_cfg->flags & ISAKMP_CFG_VENDORID_XAUTH) {
@@ -1137,9 +1132,6 @@ end:
 	if (free_gss_sa)
 		vfree(gss_sa);
 #endif
-	if (vid)
-		vfree(vid);
-
 #ifdef ENABLE_NATT
 	if (vid_natt)
 		vfree(vid_natt);
