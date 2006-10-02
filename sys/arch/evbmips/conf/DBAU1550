@@ -1,4 +1,4 @@
-#	$NetBSD: DBAU1550,v 1.8 2006/04/04 04:30:28 gdamore Exp $
+#	$NetBSD: DBAU1550,v 1.9 2006/10/02 08:13:53 gdamore Exp $
 #
 # Kernel config for the AMD Alchemy DBAu1550 evaluation board.
 
@@ -57,3 +57,17 @@ atapibus*	at atabus?
 cd*		at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*		at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 uk*		at atapibus? drive ? flags 0x0000	# ATAPI unknown
+
+# Alchemy On-chip Programmable Serial Controllers
+aupsc0		at aubus0 addr 0x11a00000
+aupsc1		at aubus0 addr 0x11b00000
+aupsc2		at aubus0 addr 0x10a00000
+aupsc3		at aubus0 addr 0x10b00000
+
+# Serial Peripheral Interface
+auspi0		at aupsc0
+spi0		at auspi0
+tmp121temp*	at spi0 slave 0
+
+#ausmbus0	at aupsc2
+#iic0		at ausmbus0
