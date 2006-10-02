@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.122 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.123 2006/10/02 00:02:04 elad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.122 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.123 2006/10/02 00:02:04 elad Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -506,8 +506,11 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l)
 #endif
 	if (l != NULL) {
 		uid = kauth_cred_geteuid(l->l_cred);
+		kauth_cred_hold(l->l_cred);
+		so->so_cred = l->l_cred;
 	} else {
 		uid = 0;
+		so->so_cred = NULL;
 	}
 	so->so_uidinfo = uid_find(uid);
 	error = (*prp->pr_usrreq)(so, PRU_ATTACH, (struct mbuf *)0,
@@ -727,6 +730,8 @@ sodisconnect(struct socket *so)
 		error = EALREADY;
 		goto bad;
 	}
+	if (so->so_cred != NULL)
+		kauth_cred_free(so->so_cred);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_DISCONNECT,
 	    (struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0,
 	    (struct lwp *)0);
