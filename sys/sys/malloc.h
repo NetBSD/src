@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.95 2006/03/17 23:27:12 christos Exp $	*/
+/*	$NetBSD: malloc.h,v 1.96 2006/10/02 02:59:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -78,19 +78,6 @@ MALLOC_DECLARE(M_1394DATA);
 #endif /* _KERNEL */
 
 /*
- * Array of descriptors that describe the contents of each page
- */
-struct kmemusage {
-	short ku_indx;		/* bucket index */
-	union {
-		u_short freecnt;/* for small allocations, free pieces in page */
-		u_short pagecnt;/* for large allocations, pages alloced */
-	} ku_un;
-};
-#define	ku_freecnt ku_un.freecnt
-#define	ku_pagecnt ku_un.pagecnt
-
-/*
  * Set of buckets for each size of memory block that is retained
  */
 struct kmembuckets {
@@ -105,108 +92,9 @@ struct kmembuckets {
 };
 
 #ifdef _KERNEL
-#define	MINALLOCSIZE	(1 << MINBUCKET)
-#define	BUCKETINDX(size) \
-	((size) <= (MINALLOCSIZE * 128) \
-		? (size) <= (MINALLOCSIZE * 8) \
-			? (size) <= (MINALLOCSIZE * 2) \
-				? (size) <= (MINALLOCSIZE * 1) \
-					? (MINBUCKET + 0) \
-					: (MINBUCKET + 1) \
-				: (size) <= (MINALLOCSIZE * 4) \
-					? (MINBUCKET + 2) \
-					: (MINBUCKET + 3) \
-			: (size) <= (MINALLOCSIZE* 32) \
-				? (size) <= (MINALLOCSIZE * 16) \
-					? (MINBUCKET + 4) \
-					: (MINBUCKET + 5) \
-				: (size) <= (MINALLOCSIZE * 64) \
-					? (MINBUCKET + 6) \
-					: (MINBUCKET + 7) \
-		: (size) <= (MINALLOCSIZE * 2048) \
-			? (size) <= (MINALLOCSIZE * 512) \
-				? (size) <= (MINALLOCSIZE * 256) \
-					? (MINBUCKET + 8) \
-					: (MINBUCKET + 9) \
-				: (size) <= (MINALLOCSIZE * 1024) \
-					? (MINBUCKET + 10) \
-					: (MINBUCKET + 11) \
-			: (size) <= (MINALLOCSIZE * 8192) \
-				? (size) <= (MINALLOCSIZE * 4096) \
-					? (MINBUCKET + 12) \
-					: (MINBUCKET + 13) \
-				: (size) <= (MINALLOCSIZE * 16384) \
-					? (MINBUCKET + 14) \
-					: (MINBUCKET + 15))
-
-/*
- * Turn virtual addresses into kmem map indicies
- */
-#define	kmemxtob(alloc)	(kmembase + (alloc) * NBPG)
-#define	btokmemx(addr)	(((caddr_t)(addr) - kmembase) / NBPG)
-#define	btokup(addr)	(&kmemusage[((caddr_t)(addr) - kmembase) >> PGSHIFT])
-
-extern struct simplelock malloc_slock;
-
-/*
- * Macro versions for the usual cases of malloc/free
- */
-#if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(_LKM) || \
-    defined(MALLOCLOG) || defined(LOCKDEBUG) || defined(MALLOC_NOINLINE)
 #define	MALLOC(space, cast, size, type, flags) \
 	(space) = (cast)malloc((u_long)(size), (type), (flags))
 #define	FREE(addr, type) free((caddr_t)(addr), (type))
-
-#else /* do not collect statistics */
-#define	MALLOC(space, cast, size, type, flags)				\
-do {									\
-	unsigned long __size = (unsigned long)(size);			\
-	struct kmembuckets *__kbp = &kmembuckets[BUCKETINDX(__size)];	\
-	int __s = splvm();						\
-	switch (__size) {						\
-	case size:	/* fail to compile if size is not const */	\
-		break;							\
-	}								\
-	simple_lock(&malloc_slock);					\
-	if (__kbp->kb_next == NULL) {					\
-		simple_unlock(&malloc_slock);				\
-		(space) = (cast)malloc(__size, (type), (flags));	\
-		splx(__s);						\
-	} else {							\
-		(space) = (cast)__kbp->kb_next;				\
-		__kbp->kb_next = *(caddr_t *)(space);			\
-		simple_unlock(&malloc_slock);				\
-		splx(__s);						\
-		if ((flags) & M_ZERO)					\
-			memset((space), 0, __size);			\
-	}								\
-} while (/* CONSTCOND */ 0)
-
-#define	FREE(addr, type)						\
-do {									\
-	struct kmembuckets *__kbp;					\
-	struct kmemusage *__kup = btokup((addr));			\
-	int __s = splvm();						\
-	if (1 << __kup->ku_indx > MAXALLOCSAVE) {			\
-		free((caddr_t)(addr), (type));				\
-	} else {							\
-		simple_lock(&malloc_slock);				\
-		__kbp = &kmembuckets[__kup->ku_indx];			\
-		if (__kbp->kb_next == NULL)				\
-			__kbp->kb_next = (caddr_t)(addr);		\
-		else							\
-			*(caddr_t *)(__kbp->kb_last) = (caddr_t)(addr);	\
-		*(caddr_t *)(addr) = NULL;				\
-		__kbp->kb_last = (caddr_t)(addr);			\
-		simple_unlock(&malloc_slock);				\
-	}								\
-	splx(__s);							\
-} while(/* CONSTCOND */ 0)
-#endif /* do not collect statistics */
-
-extern struct kmemusage		*kmemusage;
-extern char			*kmembase;
-extern struct kmembuckets	kmembuckets[];
 
 #ifdef MALLOCLOG
 void	*_malloc(unsigned long, struct malloc_type *, int, const char *, long);
