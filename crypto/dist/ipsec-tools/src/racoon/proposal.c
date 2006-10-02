@@ -1,6 +1,6 @@
-/*	$NetBSD: proposal.c,v 1.9 2006/09/26 04:41:26 manu Exp $	*/
+/*	$NetBSD: proposal.c,v 1.10 2006/10/02 07:15:09 manu Exp $	*/
 
-/* $Id: proposal.c,v 1.9 2006/09/26 04:41:26 manu Exp $ */
+/* $Id: proposal.c,v 1.10 2006/10/02 07:15:09 manu Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1199,6 +1199,7 @@ end:
 
 	if (pp_peer)
 		flushsaprop(pp_peer);
-	free_proppair(pair);
+	if (pair)
+		free_proppair(pair);
 	return error;
 }
