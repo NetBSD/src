@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.46 2006/03/18 05:33:31 christos Exp $	*/
+/*	$NetBSD: keyword.c,v 1.47 2006/10/02 17:54:35 apb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.46 2006/03/18 05:33:31 christos Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.47 2006/10/02 17:54:35 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,6 +90,10 @@ static int  vcmp(const void *, const void *);
 /* NB: table must be sorted, in vi use:
  *	:/^VAR/,/end_sort/! sort -t\" +1
  * breaking long lines just makes the sort harder
+ *
+ * We support all the fields required by P1003.1-2004 (SUSv3), with
+ * the correct default headers, except for the "tty" field, where the
+ * standard says the header should be "TT", but we have "TTY".
  */
 VAR var[] = {
 	{"%cpu", "%CPU", 0, pcpu, 0, PCPU},
@@ -224,14 +228,28 @@ showkey(void)
 	(void)printf("\n");
 }
 
+/*
+ * Parse the string pp, and insert or append entries to the list
+ * referenced by listptr.  If pos in non-null and *pos is non-null, then
+ * *pos specifies where to insert (instead of appending).  If pos is
+ * non-null, then a new value is returned through *pos referring to the
+ * last item inserted.
+ */
 static void
-parsevarlist(const char *pp, struct varent **head, struct varent **tail)
+parsevarlist(const char *pp, struct varlist *listptr, struct varent **pos)
 {
-	char *p, *sp;
+	char *p, *sp, *equalsp;
 
-	/* dup to avoid zapping arguments, can't free because it
-	   might contain a header. */
-	sp = p = strdup(pp);
+	/* dup to avoid zapping arguments.  We will free sp later. */
+	p = sp = strdup(pp);
+
+	/*
+	 * Everything after the first '=' is part of a custom header.
+	 * Temporarily replace it with '\0' to simplify other code.
+	 */
+	equalsp = strchr(p, '=');
+	if (equalsp)
+	    *equalsp = '\0';
 
 #define	FMTSEP	" \t,\n"
 	while (p && *p) {
@@ -239,39 +257,86 @@ parsevarlist(const char *pp, struct varent **head, struct varent **tail)
 		VAR *v;
 		struct varent *vent;
 
-		while ((cp = strsep(&p, FMTSEP)) != NULL && *cp == '\0')
-			/* void */;
-		if (cp == NULL || !(v = findvar(cp)))
+		/*
+		 * skip separators before the first keyword, and
+		 * look for the separator after the keyword.
+		 */
+		for (cp = p; *cp != '\0'; cp++) {
+		    p = strpbrk(cp, FMTSEP);
+		    if (p != cp)
+			break;
+		}
+		if (*cp == '\0')
+		    break;
+		/*
+		 * Now cp points to the start of a keyword,
+		 * and p is NULL or points past the end of the keyword.
+		 *
+		 * Terminate the keyword with '\0', or reinstate the
+		 * '=' that was removed earlier, if appropriate.
+		 */
+		if (p) {
+			*p = '\0';
+			p++;
+		} else if (equalsp) {
+			*equalsp = '=';
+		}
+
+		/*
+		 * If findvar() likes the keyword or keyword=header,
+		 * add it to our list.  If findvar() doesn't like it,
+		 * it will print a warning, so we ignore it.
+		 */
+		if ((v = findvar(cp)) == NULL)
 			continue;
 		if ((vent = malloc(sizeof(struct varent))) == NULL)
 			err(1, NULL);
 		vent->var = v;
-		vent->next = NULL;
-		if (*head == NULL)
-			*head = vent;
-		else
-			(*tail)->next = vent;
-		*tail = vent;
+		if (pos && *pos)
+		    SIMPLEQ_INSERT_AFTER(listptr, *pos, vent, next);
+		else {
+		    SIMPLEQ_INSERT_TAIL(listptr, vent, next);
+		}
+		if (pos)
+		    *pos = vent;
 	}
-	free(sp);
-	if (!*head)
+ 	free(sp);
+	if (SIMPLEQ_EMPTY(listptr))
 		errx(1, "no valid keywords");
 }
 
 void
 parsefmt(const char *p)
 {
-	static struct varent *vtail;
 
-	parsevarlist(p, &vhead, &vtail);
+	parsevarlist(p, &displaylist, NULL);
+}
+
+void
+parsefmt_insert(const char *p, struct varent **pos)
+{
+
+	parsevarlist(p, &displaylist, pos);
 }
 
 void
 parsesort(const char *p)
 {
-	static struct varent *sorttail;
 
-	parsevarlist(p, &sorthead, &sorttail);
+	parsevarlist(p, &sortlist, NULL);
+}
+
+/* Search through a list for an entry with a specified name. */
+struct varent *
+varlist_find(struct varlist *list, const char *name)
+{
+	struct varent *vent;
+
+	SIMPLEQ_FOREACH(vent, list, next) {
+		if (strcmp(vent->var->name, name) == 0)
+			break;
+	}
+	return vent;
 }
 
 static VAR *
@@ -293,8 +358,34 @@ findvar(const char *p)
 		return NULL;
 	}
 
-	if (v && hp)
-		v->header = hp;
+	if (v && hp) {
+		/*
+		 * Override the header.
+		 *
+		 * We need to copy the entry first, and override the
+		 * header in the copy, because the same field might be
+		 * used multiple times with different headers.  We also
+		 * need to strdup the header.
+		 */
+		struct var *newvar;
+		char *newheader;
+
+		if ((newvar = malloc(sizeof(struct var))) == NULL)
+			err(1, NULL);
+		if ((newheader = strdup(hp)) == NULL)
+			err(1, NULL);
+		memcpy(newvar, v, sizeof(struct var));
+		newvar->header = newheader;
+		v = newvar;
+
+		/*
+		 * According to P1003.1-2004, if the header text is null,
+		 * such as -o user=, the field width will be at least as
+		 * wide as the default header text.
+		 */
+		if (*hp == '\0')
+			v->width = strlen(v->header);
+	}
 	return v;
 }
 
