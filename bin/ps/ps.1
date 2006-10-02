@@ -1,4 +1,4 @@
-.\"	$NetBSD: ps.1,v 1.72 2005/11/11 17:06:22 chs Exp $
+.\"	$NetBSD: ps.1,v 1.73 2006/10/02 17:57:01 apb Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ps.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd November 11, 2005
+.Dd October 1, 2006
 .Dt PS 1
 .Os
 .Sh NAME
@@ -115,23 +115,23 @@ Repeat the information header as often as necessary to guarantee one
 header per page of information.
 .It Fl j
 Print information associated with the following keywords:
-user, pid, ppid, pgid, sess, jobc, state, tt, time, and command.
+.Ar user , pid , ppid , pgid , sess , jobc , state , tt , time ,
+.No and Ar command .
 .It Fl k
 Sort the output using the space or comma separated list of keywords.
 .It Fl L
 List the set of available keywords.
 .It Fl l
 Display information associated with the following keywords:
-uid, pid, ppid, cpu, pri, nice, vsz, rss, wchan, state, tt, time,
-and command.
+.Ar uid , pid , ppid , cpu , pri , nice , vsz , rss , wchan , state ,
+.Ar tt , time , No and Ar command .
 .It Fl M
 Extract values from the specified core file instead of the running system.
 .It Fl m
 Sort by memory usage, instead of by process
 .Tn ID ,
 equivalent to
-.Fl k
-.Ar vsz .
+.Fl k Ar vsz .
 .It Fl N
 Extract the name list from the specified system instead of the default
 .Dq Pa /netbsd .
@@ -139,24 +139,57 @@ Ignored unless
 .Fl M
 is specified.
 .It Fl O
-Add the information associated with the space or comma separated list
-of keywords specified, after the process
-.Tn ID ,
-in the default information
-display.
-Keywords may be appended with an equals
-.Pq Dq =
-sign and a string.
-This causes the printed header to use the specified string instead of
-the standard header.
+Display information associated with the space or comma separated list
+of keywords specified.
+The
+.Fl O
+option does not suppress the default display;
+it inserts additional keywords just after the
+pid keyword in the default display,
+or after the pid keyword (if any)
+in a non-default display specified before the first use of the
+.Fl O
+flag.
+Keywords inserted by multiple
+.Fl O
+options will be adjacent.
+.Pp
+An equals sign
+.Pq Dq \&=
+followed by a customised header string may be appended to a keyword,
+as described in more detail under the
+.Fl o
+option.
 .It Fl o
 Display information associated with the space or comma separated list
 of keywords specified.
-Keywords may be appended with an equals
-.Pq Dq =
-sign and a string.
+Use of the
+.Fl o
+option suppresses the set of keywords that would be displayed by default,
+or appends to the set of keywords specified by other options.
+.Pp
+An equals sign
+.Pq Dq \&=
+followed by a customised header string may be appended to a keyword.
 This causes the printed header to use the specified string instead of
-the standard header.
+the default header associated with the keyword.
+.Pp
+Everything after the first equals sign is part of the customised
+header text, and this may include embedded spaces
+.Pq Dq " " ,
+commas
+.Pq Dq \&, ,
+or equals signs
+.Pq Dq \&= .
+To specify multiple keywords with customised headers, use multiple
+.Fl o
+or
+.Fl O
+options.
+.Pp
+If all the keywords to be displayed have customised headers,
+and all the customised headers are entirely empty,
+then the header line is not printed at all.
 .It Fl p
 Display information associated with the specified process
 .Tn ID .
@@ -164,16 +197,15 @@ Display information associated with the specified process
 Sort by current CPU usage, instead of by process
 .Tn ID ,
 equivalent to
-.Fl k
-.Ar %cpu .
+.Fl k Ar %cpu .
 .It Fl S
 Change the way the process time is calculated by summing all exited
 children to their parent process.
 .It Fl s
 Display one line for each LWP, rather than one line for each process,
 and display information associated with the following keywords:
-uid, pid, ppid, cpu, lid, nlwp, pri, nice, vsz, rss, wchan, lstate, tt, time
-and command.
+.Ar uid , pid , ppid , cpu , lid , nlwp , pri , nice , vsz , rss ,
+.Ar wchan , lstate , tt , time , No and Ar command .
 .It Fl T
 Display information about processes attached to the device associated
 with the standard input.
@@ -194,7 +226,8 @@ been given to the
 switch.
 .It Fl u
 Display information associated with the following keywords:
-user, pid, %cpu, %mem, vsz, rss, tt, state, start, time, and command.
+.Ar user , pid , %cpu , %mem , vsz , rss , tt , state , start , time ,
+.No and Ar command .
 The
 .Fl u
 option implies the
@@ -202,8 +235,8 @@ option implies the
 option.
 .It Fl v
 Display information associated with the following keywords:
-pid, state, time, sl, re, pagein, vsz, rss, lim, tsiz,
-%cpu, %mem, and command.
+.Ar pid , state , time , sl , re , pagein , vsz , rss , lim , tsiz ,
+.Ar %cpu , %mem , No and Ar command .
 The
 .Fl v
 option implies the
@@ -231,16 +264,16 @@ Also display information about processes without controlling terminals.
 A complete list of the available keywords are listed below.
 Some of these keywords are further specified as follows:
 .Bl -tag -width indent
-.It %cpu
+.It Ar %cpu
 The CPU utilization of the process; this is a decaying average over up to
 a minute of previous (real) time.
 Since the time base over which this is computed varies (since processes may
 be very young) it is possible for the sum of all
 .Tn %CPU
 fields to exceed 100%.
-.It %mem
+.It Ar %mem
 The percentage of real memory used by this process.
-.It flags
+.It Ar flags
 The flags (in hexadecimal) associated with the process as in
 the include file
 .Aq Pa sys/proc.h :
@@ -272,20 +305,20 @@ when children stop
 .It Dv "P_INEXEC" Ta No "0x00100000	process is exec'ing and cannot be traced"
 .It Dv "P_SYSTRACE" Ta No "0x00200000	process system call tracing active"
 .El
-.It lim
+.It Ar lim
 The soft limit on memory used, specified via a call to
 .Xr setrlimit 2 .
-.It lstart
+.It Ar lstart
 The exact time the command started, using the
 .Dq %C
 format described in
 .Xr strftime 3 .
-.It nice
+.It Ar nice
 The process scheduling increment (see
 .Xr setpriority 2 ) .
-.It rss
+.It Ar rss
 the real memory (resident set) size of the process (in 1024 byte units).
-.It start
+.It Ar start
 The time the command started.
 If the command started less than 24 hours ago, the start time is
 displayed using the
@@ -299,7 +332,7 @@ format.
 Otherwise, the start time is displayed using the
 .Dq %e%b%y
 format.
-.It state
+.It Ar state
 The state is given by a sequence of letters, for example,
 .Dq Tn RWNA .
 The first letter indicates the run state of the process:
@@ -382,7 +415,7 @@ The process is being traced or debugged.
 The process is running under
 .Xr systrace 1 .
 .El
-.It tt
+.It Ar tt
 An abbreviation for the pathname of the controlling terminal, if any.
 The abbreviation consists of the two letters following
 .Dq Pa /dev/tty ,
@@ -392,7 +425,7 @@ This is followed by a
 .Dq \&-
 if the process can no longer reach that
 controlling terminal (i.e., it has been revoked).
-.It wchan
+.It Ar wchan
 The event (an address in the system) on which a process waits.
 When printed numerically, the initial part of the address is
 trimmed off and the result is printed in hex, for example, 0x80324000 prints
@@ -453,189 +486,208 @@ meanings.
 Several of them have aliases (keywords which are synonyms).
 .Pp
 .Bl -tag -width groupnames -compact
-.It %cpu
-percentage CPU usage (alias pcpu)
-.It %mem
-percentage memory usage (alias pmem)
-.It acflag
-accounting flag (alias acflg)
-.It comm
+.It Ar %cpu
+percentage CPU usage (alias
+.Ar pcpu )
+.It Ar %mem
+percentage memory usage (alias 
+.Ar pmem )
+.It Ar acflag
+accounting flag (alias 
+.Ar acflg )
+.It Ar comm
 command (the argv[0] value)
-.It command
-command and arguments (alias args)
-.It cpu
+.It Ar command
+command and arguments (alias 
+.Ar args )
+.It Ar cpu
 short-term CPU usage factor (for scheduling)
-.It ctime
+.It Ar ctime
 accumulated CPU time of all children that have exited
-.It egid
+.It Ar egid
 effective group id
-.It egroup
+.It Ar egroup
 group name (from egid)
-.It etime
+.It Ar etime
 elapsed time since the process was started, in the form
 .Li [[dd-]hh:]mm:ss
-.It euid
+.It Ar euid
 effective user id
-.It euser
+.It Ar euser
 user name (from euid)
-.It flags
-the process flags, in hexadecimal (alias f)
-.It gid
+.It Ar flags
+the process flags, in hexadecimal (alias 
+.Ar f )
+.It Ar gid
 effective group id
-.It group
+.It Ar group
 group name (from gid)
-.It groups
+.It Ar groups
 group access list
-.It groupnames
+.It Ar groupnames
 group names (from group access list)
-.It holdcnt
+.It Ar holdcnt
 number of holds on the process (if non-zero, process can't be swapped)
-.It inblk
-total blocks read (alias inblock)
-.It jobc
+.It Ar inblk
+total blocks read (alias 
+.Ar inblock )
+.It Ar jobc
 job control count
-.It ktrace
+.It Ar ktrace
 tracing flags
-.It ktracep
+.It Ar ktracep
 tracing vnode
-.It laddr
+.It Ar laddr
 kernel virtual address of the
 .Tn "struct lwp"
 belonging to the LWP.
-.It lid
+.It Ar lid
 ID of the LWP
-.It lim
+.It Ar lim
 memory use limit
-.It logname
-login name of user who started the process (alias login)
-.It lstart
+.It Ar logname
+login name of user who started the process (alias 
+.Ar login )
+.It Ar lstart
 time started
-.It lstate
+.It Ar lstate
 symbolic LWP state
-.It majflt
+.It Ar majflt
 total page faults
-.It minflt
+.It Ar minflt
 total page reclaims
-.It msgrcv
+.It Ar msgrcv
 total messages received (reads from pipes/sockets)
-.It msgsnd
+.It Ar msgsnd
 total messages sent (writes on pipes/sockets)
-.It nice
-nice value (alias ni)
-.It nivcsw
+.It Ar nice
+nice value (alias 
+.Ar ni )
+.It Ar nivcsw
 total involuntary context switches
-.It nlwp
+.It Ar nlwp
 number of LWPs in the process
-.It nsigs
-total signals taken (alias nsignals)
-.It nswap
+.It Ar nsigs
+total signals taken (alias 
+.Ar nsignals )
+.It Ar nswap
 total swaps in/out
-.It nvcsw
+.It Ar nvcsw
 total voluntary context switches
-.It nwchan
+.It Ar nwchan
 wait channel (as an address)
-.It oublk
-total blocks written (alias oublock)
-.It p_ru
+.It Ar oublk
+total blocks written (alias 
+.Ar oublock )
+.It Ar p_ru
 resource usage pointer (valid only for zombie)
-.It paddr
+.It Ar paddr
 kernel virtual address of the
 .Tn "struct proc"
 belonging to the process.
-.It pagein
+.It Ar pagein
 pageins (same as majflt)
-.It pgid
+.It Ar pgid
 process group number
-.It pid
+.It Ar pid
 process
 .Tn ID
-.It ppid
+.It Ar ppid
 parent process
 .Tn ID
-.It pri
+.It Ar pri
 scheduling priority
-.It re
+.It Ar re
 core residency time (in seconds; 127 = infinity)
-.It rgid
+.It Ar rgid
 real group
 .Tn ID
-.It rlink
+.It Ar rlink
 reverse link on run queue, or 0
-.It rlwp
+.It Ar rlwp
 Number of LWPs on a processor or run queue
-.It rss
+.It Ar rss
 resident set size
-.It rsz
-resident set size + (text size / text use count) (alias rssize)
-.It ruid
+.It Ar rsz
+resident set size + (text size / text use count) (alias 
+.Ar rssize )
+.It Ar ruid
 real user
 .Tn ID
-.It ruser
+.It Ar ruser
 user name (from ruid)
-.It sess
+.It Ar sess
 session pointer
-.It sid
+.It Ar sid
 session
 .Tn ID
-.It sig
-pending signals (alias pending)
-.It sigcatch
-caught signals (alias caught)
-.It sigignore
-ignored signals (alias ignored)
-.It sigmask
-blocked signals (alias blocked)
-.It sl
+.It Ar sig
+pending signals (alias 
+.Ar pending )
+.It Ar sigcatch
+caught signals (alias 
+.Ar caught )
+.It Ar sigignore
+ignored signals (alias 
+.Ar ignored )
+.It Ar sigmask
+blocked signals (alias 
+.Ar blocked )
+.It Ar sl
 sleep time (in seconds; 127 = infinity)
-.It start
+.It Ar start
 time started
-.It state
-symbolic process state (alias stat)
-.It stime
+.It Ar state
+symbolic process state (alias
+.Ar stat )
+.It Ar stime
 accumulated system CPU time
-.It svgid
+.It Ar svgid
 saved gid from a setgid executable
-.It svgroup
+.It Ar svgroup
 group name (from svgid)
-.It svuid
+.It Ar svuid
 saved uid from a setuid executable
-.It svuser
+.It Ar svuser
 user name (from svuid)
-.It tdev
+.It Ar tdev
 control terminal device number
-.It time
-accumulated CPU time, user + system (alias cputime)
-.It tpgid
+.It Ar time
+accumulated CPU time, user + system (alias
+.Ar cputime )
+.It Ar tpgid
 control terminal process group
 .Tn ID
-.It tsess
+.It Ar tsess
 control terminal session pointer
-.It tsiz
+.It Ar tsiz
 text size (in Kbytes)
-.It tt
+.It Ar tt
 control terminal name (two letter abbreviation)
-.It tty
+.It Ar tty
 full name of control terminal
-.It uaddr
+.It Ar uaddr
 kernel virtual address of the
 .Tn "struct user"
 belonging to the LWP.
-.It ucomm
+.It Ar ucomm
 name to be used for accounting
-.It uid
+.It Ar uid
 effective user
 .Tn ID
-.It upr
-scheduling priority on return from system call (alias usrpri)
-.It user
+.It Ar upr
+scheduling priority on return from system call (alias
+.Ar usrpri )
+.It Ar user
 user name (from uid)
-.It utime
+.It Ar utime
 accumulated user CPU time
-.It vsz
-virtual size in Kbytes (alias vsize)
-.It wchan
+.It Ar vsz
+virtual size in Kbytes (alias
+.Ar vsize )
+.It Ar wchan
 wait channel (as a symbolic name)
-.It xstat
+.It Ar xstat
 exit or stop status (valid only for stopped or zombie process)
 .El
 .Sh FILES
