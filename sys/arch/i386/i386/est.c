@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.28 2006/09/09 09:39:35 mlelstv Exp $	*/
+/*	$NetBSD: est.c,v 1.29 2006/10/02 20:01:11 xtraeme Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.28 2006/09/09 09:39:35 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.29 2006/10/02 20:01:11 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -903,7 +903,7 @@ est_init(struct cpu_info *ci, int vendor)
 	char			*freq_names, *cpuname = ci->ci_dev->dv_xname;
 
 	if (bus_clock == 0) {
-		printf("%s: unknown system bus clock\n", __func__);
+		aprint_debug("%s: unknown system bus clock\n", __func__);
 		return;
 	}
 
@@ -914,7 +914,7 @@ est_init(struct cpu_info *ci, int vendor)
 	if (idhi == 0 || idlo == 0 || cur == 0 ||
 	    ((cur >> 8) & 0xff) < ((idlo >> 8) & 0xff) ||
 	    ((cur >> 8) & 0xff) > ((idhi >> 8) & 0xff)) {
-		printf("%s: strange msr value 0x%016llx\n", __func__, msr);
+		aprint_debug("%s: strange msr value 0x%016llx\n", __func__, msr);
 		return;
 	}
 
