@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.c,v 1.8 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: oakley.c,v 1.9 2006/10/02 18:54:46 manu Exp $	*/
 
 /* Id: oakley.c,v 1.32 2006/05/26 12:19:46 manubsd Exp */
 
@@ -1738,28 +1738,39 @@ get_plainrsa_fromlocal(iph1, my)
 	int error = -1;
 
 	iph1->rsa_candidates = rsa_lookup_keys(iph1, my);
-	if (!iph1->rsa_candidates || rsa_list_count(iph1->rsa_candidates) == 0) {
+	if (!iph1->rsa_candidates || 
+	    rsa_list_count(iph1->rsa_candidates) == 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"%s RSA key not found for %s\n",
 			my ? "Private" : "Public",
-			saddr2str_fromto("%s <-> %s", iph1->local, iph1->remote));
+			saddr2str_fromto("%s <-> %s", 
+			iph1->local, iph1->remote));
 		goto end;
 	}
 
 	if (my && rsa_list_count(iph1->rsa_candidates) > 1) {
 		plog(LLV_WARNING, LOCATION, NULL,
-			"More than one (=%lu) private PlainRSA key found for %s\n",
+			"More than one (=%lu) private "
+			"PlainRSA key found for %s\n",
 			rsa_list_count(iph1->rsa_candidates),
-			saddr2str_fromto("%s <-> %s", iph1->local, iph1->remote));
+			saddr2str_fromto("%s <-> %s", 
+			iph1->local, iph1->remote));
 		plog(LLV_WARNING, LOCATION, NULL,
-			"This may have unpredictable results, i.e. wrong key could be used!\n");
+			"This may have unpredictable results, "
+			"i.e. wrong key could be used!\n");
 		plog(LLV_WARNING, LOCATION, NULL,
-			"Consider using only one single private key for all peers...\n");
+			"Consider using only one single private "
+			"key for all peers...\n");
 	}
 	if (my) {
-		iph1->rsa = ((struct rsa_key *)genlist_next(iph1->rsa_candidates, NULL))->rsa;
+		iph1->rsa = ((struct rsa_key *)
+		    genlist_next(iph1->rsa_candidates, NULL))->rsa;
+
 		genlist_free(iph1->rsa_candidates, NULL);
 		iph1->rsa_candidates = NULL;
+
+		if (iph1->rsa == NULL)
+			goto end;
 	}
 
 	error = 0;
