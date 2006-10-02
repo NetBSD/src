@@ -1,4 +1,4 @@
-/*	$NetBSD: algorithm.c,v 1.6 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: algorithm.c,v 1.7 2006/10/02 21:33:14 manu Exp $	*/
 
 /* Id: algorithm.c,v 1.15 2006/05/23 20:23:09 manubsd Exp */
 
@@ -620,7 +620,7 @@ alg_ipsec_hmacdef(doi)
 	for (i = 0; i < ARRAYLEN(ipsec_hmacdef); i++)
 		if (doi == ipsec_hmacdef[i].doi) {
 			plog(LLV_DEBUG, LOCATION, NULL, "hmac(%s)\n",
-				oakley_hmacdef[i].name);
+				ipsec_hmacdef[i].name);
 			return &ipsec_hmacdef[i];
 		}
 	return NULL;
