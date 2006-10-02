@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.100 2006/09/25 23:09:42 jmcneill Exp $	*/
+/*	$NetBSD: pci.c,v 1.101 2006/10/02 21:23:44 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.100 2006/09/25 23:09:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.101 2006/10/02 21:23:44 jmcneill Exp $");
 
 #include "opt_pci.h"
 
@@ -274,7 +274,7 @@ do {									\
 
 	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
 	    pci_powerhook, sc);
-	if (sc->sc_powerhook != NULL)
+	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: can't establish powerhook\n",
 		    sc->sc_dev.dv_xname);
 
