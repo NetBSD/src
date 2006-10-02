@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.30 2006/08/26 20:27:08 christos Exp $
+# $NetBSD: DISKLESS,v 1.31 2006/10/02 03:28:31 chs Exp $
 
 # DISKLESS Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, ec0
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DISKLESS-$Revision: 1.30 $"
+#ident 		"DISKLESS-$Revision: 1.31 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -26,7 +26,6 @@ options 	SYSVSHM		# System V shared memory
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-#options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Which kernel debugger?  Uncomment either this:
 options 	DDB

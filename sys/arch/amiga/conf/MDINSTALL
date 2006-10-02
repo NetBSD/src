@@ -1,4 +1,4 @@
-#	$NetBSD: MDINSTALL,v 1.25 2006/02/05 05:01:49 cube Exp $
+#	$NetBSD: MDINSTALL,v 1.26 2006/10/02 03:28:29 chs Exp $
 
 #
 # INSTALL kernel for ramdisk installation
@@ -61,7 +61,6 @@ options 	NTP		# NTP phase/frequency locked loop
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 #
 # Misc. debugging options
