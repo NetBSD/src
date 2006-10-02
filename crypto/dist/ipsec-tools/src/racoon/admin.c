@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.14 2006/10/02 20:52:17 manu Exp $	*/
+/*	$NetBSD: admin.c,v 1.15 2006/10/02 21:19:43 manu Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -404,11 +404,13 @@ admin_process(so2, combuf)
 			    ((caddr_t)com + sizeof(*com)))->dst;
 
 		switch (com->ac_proto) {
-		case ADMIN_PROTO_ISAKMP:
-		    {
+		case ADMIN_PROTO_ISAKMP: {
 			struct remoteconf *rmconf;
-			struct sockaddr *remote;
-			struct sockaddr *local;
+			struct sockaddr *remote = NULL;
+			struct sockaddr *local = NULL;
+			u_int16_t port;
+
+			com->ac_errno = -1;
 
 			/* search appropreate configuration */
 			rmconf = getrmconf(dst);
@@ -416,67 +418,29 @@ admin_process(so2, combuf)
 				plog(LLV_ERROR, LOCATION, NULL,
 					"no configuration found "
 					"for %s\n", saddrwop2str(dst));
-				com->ac_errno = -1;
-				break;
+				goto out1;
 			}
 
 			/* get remote IP address and port number. */
-			remote = dupsaddr(dst);
-			if (remote == NULL) {
-				com->ac_errno = -1;
-				break;
-			}
-			switch (remote->sa_family) {
-			case AF_INET:
-				((struct sockaddr_in *)remote)->sin_port =
-					((struct sockaddr_in *)rmconf->remote)->sin_port;
-				break;
-#ifdef INET6
-			case AF_INET6:
-				((struct sockaddr_in6 *)remote)->sin6_port =
-					((struct sockaddr_in6 *)rmconf->remote)->sin6_port;
-				break;
-#endif
-			default:
-				plog(LLV_ERROR, LOCATION, NULL,
-					"invalid family: %d\n",
-					remote->sa_family);
-				com->ac_errno = -1;
-				break;
-			}
+			if ((remote = dupsaddr(dst)) == NULL)
+				goto out1;
+
+			port = extract_port(rmconf->remote);
+			if (set_port(remote, port) == NULL)
+				goto out1;
 
 			/* get local address */
-			local = dupsaddr(src);
-			if (local == NULL) {
-				com->ac_errno = -1;
-				break;
-			}
-			switch (local->sa_family) {
-			case AF_INET:
-				((struct sockaddr_in *)local)->sin_port =
-					getmyaddrsport(local);
-				break;
-#ifdef INET6
-			case AF_INET6:
-				((struct sockaddr_in6 *)local)->sin6_port =
-					getmyaddrsport(local);
-				break;
-#endif
-			default:
-				plog(LLV_ERROR, LOCATION, NULL,
-					"invalid family: %d\n",
-					local->sa_family);
-				com->ac_errno = -1;
-				break;
-			}
+			if ((local = dupsaddr(src)) == NULL)
+				goto out1;
+
+			if (set_port(local, getmyaddrsport(local)) == NULL)
+				goto out1;
 
 #ifdef ENABLE_HYBRID
 			/* Set the id and key */
 			if (id && key) {
-				if (xauth_rmconf_used(&rmconf->xauth) == -1) {
-					com->ac_errno = -1;
-					break;
-				}
+				if (xauth_rmconf_used(&rmconf->xauth) == -1)
+					goto out1;
 
 				if (rmconf->xauth->login != NULL) {
 					vfree(rmconf->xauth->login);
@@ -497,12 +461,17 @@ admin_process(so2, combuf)
 				"%s\n", saddrwop2str(remote));
 
 			/* begin ident mode */
-			if (isakmp_ph1begin_i(rmconf, remote, local) < 0) {
-				com->ac_errno = -1;
-				break;
-			}
-		    }
+			if (isakmp_ph1begin_i(rmconf, remote, local) < 0)
+				goto out1;
+
+			com->ac_errno = 0;
+out1:
+			if (local != NULL)
+				racoon_free(local);
+			if (remote != NULL)
+				racoon_free(remote);
 			break;
+		}
 		case ADMIN_PROTO_AH:
 		case ADMIN_PROTO_ESP:
 			break;
