@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.28 2005/06/26 19:10:49 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.29 2006/10/02 17:54:35 apb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -31,10 +31,10 @@
  *	@(#)extern.h	8.3 (Berkeley) 4/2/94
  */
 
-struct kinfo;
-struct nlist;
-struct var;
-struct varent;
+/* 
+ * We expect to be included by ps.h, which will already have
+ * defined the types we use.
+ */
 
 extern double ccpu;
 extern int eval, fscale, mempages, nlistread, rawcpu, maxslp, uspace;
@@ -43,8 +43,8 @@ extern int needenv, needcomm, commandonly;
 extern uid_t myuid;
 extern kvm_t *kd;
 extern VAR var[];
-extern VARENT *vhead;
-extern VARENT *sorthead;
+extern VARLIST displaylist;
+extern VARLIST sortlist;
 
 void	 command(void *, VARENT *, int);
 void	 cputime(void *, VARENT *, int);
@@ -67,7 +67,9 @@ void	 nlisterr(struct nlist *);
 void	 p_rssize(void *, VARENT *, int);
 void	 pagein(void *, VARENT *, int);
 void	 parsefmt(const char *);
+void	 parsefmt_insert(const char *, VARENT **);
 void	 parsesort(const char *);
+VARENT * varlist_find(VARLIST *, const char *);
 void	 pcpu(void *, VARENT *, int);
 void	 pmem(void *, VARENT *, int);
 void	 pnice(void *, VARENT *, int);
