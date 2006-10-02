@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.220 2006/10/02 08:19:22 gdamore Exp $
+#	$NetBSD: DEVNAMES,v 1.221 2006/10/02 19:30:31 bouyer Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -622,6 +622,8 @@ iopsp			MI
 ipaqbus			hpcarm
 ipaqlcd			hpcarm
 ipaqpcic		hpcarm
+ipmi			i386
+ipmi			xen
 ippp			MI
 ipw			MI
 irdasir			MI		Attribute
