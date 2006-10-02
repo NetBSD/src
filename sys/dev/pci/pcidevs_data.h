@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.836 2006/10/02 12:51:02 cube Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.837 2006/10/02 13:09:10 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.837 2006/10/02 12:50:23 cube Exp
+ *	NetBSD: pcidevs,v 1.838 2006/10/02 13:08:45 cube Exp
  */
 
 /*
@@ -9480,7 +9480,7 @@ static const struct pci_product pci_products[] = {
 	    "GeForce FX 5700 LE",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_ISA,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_ISA,
 	    "nForce MCP55 PCI-ISA Bridge",
 	},
 	{
