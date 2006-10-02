@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.42 2006/09/09 03:32:17 dogcow Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.43 2006/10/02 19:59:24 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.42 2006/09/09 03:32:17 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.43 2006/10/02 19:59:24 xtraeme Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -956,7 +956,7 @@ p3_get_bus_clock(struct cpu_info *ci)
 			bus_clock = 13333;
 			break;
 		default:
-			aprint_normal("%s: unknown Pentium M FSB_FREQ "
+			aprint_debug("%s: unknown Pentium M FSB_FREQ "
 			    "value %d", cpuname, bus);
 			goto print_msr;
 		}
@@ -979,7 +979,7 @@ p3_get_bus_clock(struct cpu_info *ci)
 			bus_clock = 33333;
 			break;
 		default:
-			aprint_normal("%s: unknown Core FSB_FREQ value %d",
+			aprint_debug("%s: unknown Core FSB_FREQ value %d",
 			    cpuname, bus);
 			goto print_msr;
 		}
@@ -1005,20 +1005,20 @@ p3_get_bus_clock(struct cpu_info *ci)
 			bus_clock = 10000;
 			break;
 		default:
-			aprint_normal("%s: unknown i686 EBL_CR_POWERON "
+			aprint_debug("%s: unknown i686 EBL_CR_POWERON "
 			    "value %d ", cpuname, bus);
 			goto print_msr;
 		}
 		break;
 	default:
-		aprint_normal("%s: unknown i686 model %d, can't get bus clock",
+		aprint_debug("%s: unknown i686 model %d, can't get bus clock",
 		    cpuname, model);
 print_msr:
 		/*
 		 * Show the EBL_CR_POWERON MSR, so we'll at least have
 		 * some extra information, such as clock ratio, etc.
 		 */
-		aprint_normal(" (0x%llx)\n", rdmsr(MSR_EBL_CR_POWERON));
+		aprint_debug(" (0x%llx)\n", rdmsr(MSR_EBL_CR_POWERON));
 		break;
 	}
 }
@@ -1042,7 +1042,7 @@ p4_get_bus_clock(struct cpu_info *ci)
 			bus_clock = 13333;
 			break;
 		default:
-			aprint_normal("%s: unknown Pentium 4 (model %d) "
+			aprint_debug("%s: unknown Pentium 4 (model %d) "
 			    "EBC_FREQUENCY_ID value %d\n",
 			    cpuname, model, bus);
 			break;
@@ -1063,7 +1063,7 @@ p4_get_bus_clock(struct cpu_info *ci)
 			bus_clock = 16666;
 			break;
 		default:
-			aprint_normal("%s: unknown Pentium 4 (model %d) "
+			aprint_debug("%s: unknown Pentium 4 (model %d) "
 			    "EBC_FREQUENCY_ID value %d\n",
 			    cpuname, model, bus);
 			break;
