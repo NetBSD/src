@@ -12,6 +12,7 @@
 	* src/racoon/admin.c: fix memory leak (Coverity)
 	* src/racoon/algorithm.c: fix array overrun (Coverity)
 	* src/racoon/isakmp_ident.c: Remove dead code (Coverity)
+	* src/racoon/isakmp_inf.c: Check for NULL pointer (Coverity)
 	
 2006-10-01  Emmanuel Dreyfus  <manu@netbsd.org>
 	* src/racoon/isakmp.c: Avoid using NULL pointer (Coverity)
