@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.37 2006/08/26 20:26:55 christos Exp $
+# 	$NetBSD: INSTALL,v 1.38 2006/10/02 03:28:31 chs Exp $
 
 #	config for bootable floppy kernel
 #
@@ -30,7 +30,6 @@ options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44 Megabytes
 options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Debugging options
 #options 	DDB			# kernel dynamic debugger

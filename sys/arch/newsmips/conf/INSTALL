@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.30 2006/09/27 21:42:05 manu Exp $
+# 	$NetBSD: INSTALL,v 1.31 2006/10/02 03:28:31 chs Exp $
 #
 #	INSTALL kernel for RISC-NEWS
 
@@ -25,7 +25,6 @@ options 	CPU_SINGLE		# no I/O processor
 options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Compatibility options
 #options 	COMPAT_43		# compatibility with 4.3BSD binaries
