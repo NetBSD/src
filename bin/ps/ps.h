@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.h,v 1.25 2005/06/26 19:10:49 christos Exp $	*/
+/*	$NetBSD: ps.h,v 1.26 2006/10/02 17:54:35 apb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -31,6 +31,8 @@
  *	@(#)ps.h	8.1 (Berkeley) 5/31/93
  */
 
+#include <sys/queue.h>
+
 #define	UNLIMITED	0	/* unlimited terminal width */
 
 #define	PRINTMODE	0	/* print values */
@@ -44,14 +46,16 @@ enum type {
 };
 
 /* Variables. */
+typedef SIMPLEQ_HEAD(varlist, varent) VARLIST;
+
 typedef struct varent {
-	struct varent *next;
+	SIMPLEQ_ENTRY(varent) next;
 	struct var *var;
 } VARENT;
 
 typedef struct var {
 	const char *name;	/* name(s) of variable */
-	const char *header;	/* default header */
+	const char *header;	/* header, possibly changed from default */
 #define	COMM	0x01		/* needs exec arguments and environment (XXX) */
 #define	ARGV0	0x02		/* only print argv[0] */
 #define	LJUST	0x04		/* left adjust on output (trailing blanks) */
