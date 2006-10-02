@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_base.c,v 1.6 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: isakmp_base.c,v 1.7 2006/10/02 21:51:33 manu Exp $	*/
 
 /*	$KAME: isakmp_base.c,v 1.49 2003/11/13 02:30:20 sakane Exp $	*/
 
@@ -1074,8 +1074,10 @@ base_r1send(iph1, msg)
 
 	/* send the packet, add to the schedule to resend */
 	iph1->retry_counter = iph1->rmconf->retry_counter;
-	if (isakmp_ph1resend(iph1) == -1)
+	if (isakmp_ph1resend(iph1) == -1) {
+		iph1 = NULL;
 		goto end;
+	}
 
 	/* the sending message is added to the received-list. */
 	if (add_recvdpkt(iph1->remote, iph1->local, iph1->sendbuf, msg) == -1) {
@@ -1108,7 +1110,8 @@ end:
 		vfree(vid_dpd);
 #endif
 
-	VPTRINIT(iph1->sa_ret);
+	if (iph1 != NULL)
+		VPTRINIT(iph1->sa_ret);
 
 	return error;
 }
