@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.94 2005/06/27 00:46:04 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.95 2006/10/02 17:54:35 apb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.94 2005/06/27 00:46:04 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.95 2006/10/02 17:54:35 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,8 +141,27 @@ printheader(void)
 	VAR *v;
 	struct varent *vent;
 	static int firsttime = 1;
+	static int noheader = 0;
 
-	for (vent = vhead; vent; vent = vent->next) {
+	/*
+	 * If all the columns have user-specified null headers,
+	 * don't print the blank header line at all.
+	 */
+	if (firsttime) {
+		SIMPLEQ_FOREACH(vent, &displaylist, next) {
+			if (vent->var->header[0])
+				break;
+		}
+		if (vent == NULL) {
+			noheader = 1;
+			firsttime = 0;
+		}
+
+	}
+	if (noheader)
+		return;
+
+	SIMPLEQ_FOREACH(vent, &displaylist, next) {
 		v = vent->var;
 		if (firsttime) {
 			len = strlen(v->header);
@@ -151,14 +170,14 @@ printheader(void)
 			totwidth += v->width + 1;	/* +1 for space */
 		}
 		if (v->flag & LJUST) {
-			if (vent->next == NULL)	/* last one */
+			if (SIMPLEQ_NEXT(vent, next) == NULL)	/* last one */
 				(void)printf("%s", v->header);
 			else
 				(void)printf("%-*s", v->width,
 				    v->header);
 		} else
 			(void)printf("%*s", v->width, v->header);
-		if (vent->next != NULL)
+		if (SIMPLEQ_NEXT(vent, next) != NULL)
 			(void)putchar(' ');
 	}
 	(void)putchar('\n');
@@ -278,8 +297,8 @@ command(void *arg, VARENT *ve, int mode)
 
 	ki = arg;
 	v = ve->var;
-	if (ve->next != NULL || termwidth != UNLIMITED) {
-		if (ve->next == NULL) {
+	if (SIMPLEQ_NEXT(ve, next) != NULL || termwidth != UNLIMITED) {
+		if (SIMPLEQ_NEXT(ve, next) == NULL) {
 			left = termwidth - (totwidth - v->width);
 			if (left < 1) /* already wrapped, just use std width */
 				left = v->width;
@@ -342,7 +361,7 @@ command(void *arg, VARENT *ve, int mode)
 			fmt_puts(name, &left);
 		}
 	}
-	if (ve->next && left > 0)
+	if (SIMPLEQ_NEXT(ve, next) != NULL && left > 0)
 		(void)printf("%*s", left, "");
 }
 
@@ -359,8 +378,8 @@ groups(void *arg, VARENT *ve, int mode)
 
 	ki = arg;
 	v = ve->var;
-	if (ve->next != NULL || termwidth != UNLIMITED) {
-		if (ve->next == NULL) {
+	if (SIMPLEQ_NEXT(ve, next) != NULL || termwidth != UNLIMITED) {
+		if (SIMPLEQ_NEXT(ve, next) == NULL) {
 			left = termwidth - (totwidth - v->width);
 			if (left < 1) /* already wrapped, just use std width */
 				left = v->width;
@@ -382,7 +401,7 @@ groups(void *arg, VARENT *ve, int mode)
 			fmt_putc(*p, &left);
 	}
 
-	if (ve->next && left > 0)
+	if (SIMPLEQ_NEXT(ve, next) != NULL && left > 0)
 		(void)printf("%*s", left, "");
 }
 
@@ -399,8 +418,8 @@ groupnames(void *arg, VARENT *ve, int mode)
 
 	ki = arg;
 	v = ve->var;
-	if (ve->next != NULL || termwidth != UNLIMITED) {
-		if (ve->next == NULL) {
+	if (SIMPLEQ_NEXT(ve, next) != NULL || termwidth != UNLIMITED) {
+		if (SIMPLEQ_NEXT(ve, next) == NULL) {
 			left = termwidth - (totwidth - v->width);
 			if (left < 1) /* already wrapped, just use std width */
 				left = v->width;
@@ -421,7 +440,7 @@ groupnames(void *arg, VARENT *ve, int mode)
 			fmt_putc(*p, &left);
 	}
 
-	if (ve->next && left > 0)
+	if (SIMPLEQ_NEXT(ve, next) != NULL && left > 0)
 		(void)printf("%*s", left, "");
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.60 2006/09/02 20:00:09 christos Exp $	*/
+/*	$NetBSD: ps.c,v 1.61 2006/10/02 17:54:35 apb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.60 2006/09/02 20:00:09 christos Exp $");
+__RCSID("$NetBSD: ps.c,v 1.61 2006/10/02 17:54:35 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,8 @@ __RCSID("$NetBSD: ps.c,v 1.60 2006/09/02 20:00:09 christos Exp $");
 #define	ARGOPTS		"kMNOopUW"
 
 struct kinfo_proc2 *kinfo;
-struct varent *vhead, *sorthead;
+struct varlist displaylist = SIMPLEQ_HEAD_INITIALIZER(displaylist);
+struct varlist sortlist = SIMPLEQ_HEAD_INITIALIZER(sortlist);
 
 int	eval;			/* exit value */
 int	rawcpu;			/* -C */
@@ -140,12 +141,12 @@ int		 main(int, char *[]);
 char dfmt[] = "pid tt state time command";
 char jfmt[] = "user pid ppid pgid sess jobc state tt time command";
 char lfmt[] = "uid pid ppid cpu pri nice vsz rss wchan state tt time command";
-char   o1[] = "pid";
-char   o2[] = "tt state time command";
 char sfmt[] = "uid pid ppid cpu lid nlwp pri nice vsz rss wchan lstate tt "
 		"time command";
 char ufmt[] = "user pid %cpu %mem vsz rss tt state start time command";
 char vfmt[] = "pid state time sl re pagein vsz rss lim tsiz %cpu %mem command";
+
+struct varent *Opos = NULL; /* -O flag inserts after this point */
 
 kvm_t *kd;
 
@@ -225,10 +226,23 @@ main(int argc, char *argv[])
 			nlistf = optarg;
 			break;
 		case 'O':
-			parsefmt(o1);
-			parsefmt(optarg);
-			parsefmt(o2);
-			o1[0] = o2[0] = '\0';
+			/*
+			 * If this is not the first -O option, insert
+			 * just after the previous one.
+			 *
+			 * If there is no format yet, start with the default
+			 * format, and insert after the pid column.
+			 *
+			 * If there is already a format, insert after
+			 * the pid column, or at the end if there's no
+			 * pid column.
+			 */
+			if (!Opos) {
+				if (!fmt)
+					parsefmt(dfmt);
+				Opos = varlist_find(&displaylist, "pid");
+			}
+			parsefmt_insert(optarg, &Opos);
 			fmt = 1;
 			break;
 		case 'o':
@@ -363,7 +377,7 @@ main(int argc, char *argv[])
 
 	/* Add default sort criteria */
 	parsesort("tdev,pid");
-	for (vent = sorthead; vent; vent = vent->next) {
+	SIMPLEQ_FOREACH(vent, &sortlist, next) {
 		if (vent->var->flag & LWP || vent->var->type == UNSPECIFIED)
 			warnx("Cannot sort on %s, sort key ignored\n",
 				vent->var->name);
@@ -406,14 +420,14 @@ main(int argc, char *argv[])
 				nlwps = 0;
 			if (showlwps == 0) {
 				l = pick_representative_lwp(ki, kl, nlwps);
-				for (vent = vhead; vent; vent = vent->next)
+				SIMPLEQ_FOREACH(vent, &displaylist, next)
 					OUTPUT(vent, ki, l, WIDTHMODE);
 			} else {
 				/* The printing is done with the loops
 				 * reversed, but here we don't need that,
 				 * and this improves the code locality a bit.
 				 */
-				for (vent = vhead; vent; vent = vent->next)
+				SIMPLEQ_FOREACH(vent, &displaylist, next)
 					for (j = 0; j < nlwps; j++)
 						OUTPUT(vent, ki, &kl[j],
 						    WIDTHMODE);
@@ -441,9 +455,9 @@ main(int argc, char *argv[])
 			nlwps = 0;
 		if (showlwps == 0) {
 			l = pick_representative_lwp(ki, kl, nlwps);
-			for (vent = vhead; vent; vent = vent->next) {
+			SIMPLEQ_FOREACH(vent, &displaylist, next) {
 				OUTPUT(vent, ki, l, mode);
-				if (vent->next != NULL)
+				if (SIMPLEQ_NEXT(vent, next) != NULL)
 					(void)putchar(' ');
 			}
 			(void)putchar('\n');
@@ -454,9 +468,9 @@ main(int argc, char *argv[])
 			}
 		} else {
 			for (j = 0; j < nlwps; j++) {
-				for (vent = vhead; vent; vent = vent->next) {
+				SIMPLEQ_FOREACH(vent, &displaylist, next) {
 					OUTPUT(vent, ki, &kl[j], mode);
-					if (vent->next != NULL)
+					if (SIMPLEQ_NEXT(vent, next) != NULL)
 						(void)putchar(' ');
 				}
 				(void)putchar('\n');
@@ -545,7 +559,7 @@ scanvars(void)
 	struct varent *vent;
 	VAR *v;
 
-	for (vent = vhead; vent; vent = vent->next) {
+	SIMPLEQ_FOREACH(vent, &displaylist, next) {
 		v = vent->var;
 		if (v->flag & COMM) {
 			needcomm = 1;
@@ -575,7 +589,7 @@ pscomp(const void *a, const void *b)
 
 #define	RDIFF(type) RDIFF_N(type, 0); continue
 
-	for (ve = sorthead; ve != NULL; ve = ve->next) {
+	SIMPLEQ_FOREACH(ve, &sortlist, next) {
 		v = ve->var;
 		if (v->flag & LWP)
 			/* LWP structure not available (yet) */
