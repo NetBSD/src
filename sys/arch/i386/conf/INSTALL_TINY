@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.103 2006/08/26 20:26:45 christos Exp $
+#	$NetBSD: INSTALL_TINY,v 1.104 2006/10/02 03:28:30 chs Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -66,7 +66,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 no options	EXEC_AOUT	# we don't a.out support
 
 # Diagnostic/debugging support options

@@ -1,10 +1,10 @@
-#	$NetBSD: MERAKI,v 1.1 2006/09/26 06:37:32 gdamore Exp $
+#	$NetBSD: MERAKI,v 1.2 2006/10/02 03:28:29 chs Exp $
 
 include 	"arch/evbmips/conf/std.meraki"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"AP30-$Revision: 1.1 $"
+#ident 		"AP30-$Revision: 1.2 $"
 
 maxusers	32
 
@@ -25,7 +25,6 @@ options		WISOC_AR5315	# WiSoc select
 #options		MEMORY_DISK_ROOT_SIZE=7300
 
 # Size reduction options
-options 	MALLOC_NOINLINE
 options 	VNODE_OP_NOINLINE
 options		PIPE_SOCKETPAIR
 options		SOSEND_NO_LOAN

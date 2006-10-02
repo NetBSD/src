@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.53 2006/08/26 20:26:55 christos Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.54 2006/10/02 03:28:31 chs Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,7 @@ include		"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.53 $"
+#ident 		"GENERIC_TINY-$Revision: 1.54 $"
 
 maxusers	4
 
@@ -32,7 +32,6 @@ options 	LKM			# loadable kernel modules
 options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
