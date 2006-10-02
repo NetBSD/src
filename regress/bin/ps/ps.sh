@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ps.sh,v 1.1 2006/10/02 17:59:00 apb Exp $
+# $NetBSD: ps.sh,v 1.2 2006/10/02 19:18:30 apb Exp $
 #
 # Test ps(1)
 
@@ -298,6 +298,19 @@ check_override_heading_some_null()
 		'^ * PPP$'
 	check_heading_regexp '-o comm,pid=' \
 		'^'"${head_regexp_comm}"' *$'
+	# A field with a null custom heading retains a minimum width
+	# derived from the default heading.  This does not apply
+	# to a field with a very short (non-null) custom heading.
+	#
+	# We choose "holdcnt" as a column whose width is likely to be
+	# determined entirely by the header width, because the values
+	# are likely to be very small.
+	check_heading_regexp '-o holdcnt -o holdcnt -o holdcnt' \
+		'^HOLDCNT HOLDCNT HOLDCNT$'
+	check_heading_regexp '-o holdcnt -o holdcnt= -o holdcnt' \
+		'^HOLDCNT         HOLDCNT$'
+	check_heading_regexp '-o holdcnt -o holdcnt=HH -o holdcnt' \
+		'^HOLDCNT HH HOLDCNT$'
 }
 
 #
