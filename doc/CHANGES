@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.721 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.722 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -101,3 +101,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	sec(4): New driver for Acorn SCSI Expansion Card, intended to replace
 		acorn32 asc(4).  [bjh21 20061001]
 	ipmi(4): added driver from OpenBSD [bouyer 20061001]
+	spi(4): initial import of new machine-independent SPI bus framework,
+		including a sample driver for the TI TMP121 sensor.
+		[gdamore 20061002]
