@@ -1,4 +1,4 @@
-/* $NetBSD: aupscreg.h,v 1.2 2006/03/06 17:10:46 shige Exp $ */
+/* $NetBSD: aupscreg.h,v 1.3 2006/10/02 07:32:16 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -78,6 +78,19 @@
 
 /* 0x0008 - 0x002F: Protocol-specific registers */
 
+/* psc_stat: PSC status
+ *  DI [1]
+ *    1 = Device interrupt
+ *  DR [1]
+ *    1 = Device ready
+ *  SR [0]
+ *    1 = PSC ready
+ *  all other bits a are protocol specific
+ */
+#define AUPSC_STAT			0x14
+#  define	AUPSC_STAT_SR		1
+#  define	AUPSC_STAT_DR		2
+#  define	AUPSC_STAT_DI		4
 /* PSC registers size */
 #define	AUPSC_SIZE			0x2f
 

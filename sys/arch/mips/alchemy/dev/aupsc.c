@@ -1,4 +1,4 @@
-/* $NetBSD: aupsc.c,v 1.4 2006/03/06 23:06:17 shige Exp $ */
+/* $NetBSD: aupsc.c,v 1.5 2006/10/02 07:32:16 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupsc.c,v 1.4 2006/03/06 23:06:17 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupsc.c,v 1.5 2006/10/02 07:32:16 gdamore Exp $");
 
 #include "locators.h"
 
@@ -61,16 +61,14 @@ struct aupsc_softc {
 const struct aupsc_proto {
 	const char *name;
 	int protocol;
-	int statreg;
-	int statbit;
 } aupsc_protos [] = {
-	{ "ausmbus", AUPSC_SEL_SMBUS, AUPSC_SMBSTAT, SMBUS_STAT_SR },
+	{ "ausmbus", AUPSC_SEL_SMBUS },
+	{ "auspi", AUPSC_SEL_SPI },
 #if 0
 	{ "auaudio" },
 	{ "aui2s" },
-	{ "auspi" },
 #endif
-	{ NULL, AUPSC_SEL_DISABLE, 0, 0 }
+	{ NULL, AUPSC_SEL_DISABLE }
 };
 
 static int	aupsc_match(struct device *, struct cfdata *, void *);
@@ -132,6 +130,8 @@ aupsc_attach(struct device *parent, struct device *self, void *aux)
 	ctrl.psc_disable = aupsc_disable;
 	ctrl.psc_suspend = aupsc_suspend;
 	pa.aupsc_ctrl = ctrl;
+	pa.aupsc_addr = aa->aa_addr;
+	pa.aupsc_irq = aa->aa_irq[0];
 
 	for (i = 0 ; aupsc_protos[i].name != NULL ; i++) {
 		struct aupsc_protocol_device p;
@@ -143,11 +143,10 @@ aupsc_attach(struct device *parent, struct device *self, void *aux)
 		p.sc_ctrl = ctrl;
 
 		aupsc_enable(&p, aupsc_protos[i].protocol);
-		s = bus_space_read_4(sc->sc_bust, sc->sc_bush,
-			aupsc_protos[i].statreg);
+		s = bus_space_read_4(sc->sc_bust, sc->sc_bush, AUPSC_STAT);
 		aupsc_disable(&p);
 
-		if (s & aupsc_protos[i].statbit) {
+		if (s & AUPSC_STAT_SR) {
 			(void) config_found_sm_loc(self, "aupsc", NULL,
 				&pa, aupsc_print, aupsc_submatch);
 		}
@@ -165,18 +164,31 @@ aupsc_submatch(struct device *parent, struct cfdata *cf,
 static int
 aupsc_print(void *aux, const char *pnp)
 {
-	struct aupsc_attach_args *pa = aux;
+	/*
+	 * By default we don't want to print anything, because
+	 * otherwise we see complaints about protocols that aren't
+	 * configured on every port.  (E.g. each PSC can support 4
+	 * protocols, but on a typical design, only one protocol can
+	 * be configured per board.)
+	 *
+	 * Basically, this whole thing should be replaced with an
+	 * indirect configuration mechanism.  Direct configuration
+	 * doesn't make sense when we absolutely require kernel
+	 * configuration to operate.
+	 *
+	 * Alternatively, a board-specific configuration mechanism
+	 * could determine this, and provide direct configuration as
+	 * we do for PCMCIA.
+	 */
 
-	if (pnp)
-		aprint_normal("%s at %s", pa->aupsc_name, pnp);
-
-	return UNCONF;
+	return QUIET;
 }
 
 static void
 aupsc_enable(void *arg, int proto)
 {
 	struct aupsc_protocol_device *sc = arg;
+	int i;
 
 	/* XXX: (TODO) setting clock AUPSC_SEL_CLK */
 	switch (proto) {
@@ -204,7 +216,14 @@ aupsc_enable(void *arg, int proto)
 			AUPSC_SEL, AUPSC_SEL_PS(proto));
 	bus_space_write_4(sc->sc_ctrl.psc_bust, sc->sc_ctrl.psc_bush,
 			AUPSC_CTRL, AUPSC_CTRL_ENA(AUPSC_CTRL_ENABLE));
-	delay(1);
+
+	/* wait up to a whole second, but test every 10us */
+	for (i = 1000000; i; i -= 10) {
+		if (bus_space_read_4(sc->sc_ctrl.psc_bust,
+			sc->sc_ctrl.psc_bush, AUPSC_STAT) & AUPSC_STAT_SR)
+			return;
+		delay(10);
+	}
 }
 
 static void
