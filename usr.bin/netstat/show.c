@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.4 2006/09/16 12:25:11 elad Exp $	*/
+/*	$NetBSD: show.c,v 1.5 2006/10/03 08:30:12 mlelstv Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -536,8 +536,10 @@ netname6(struct sockaddr_in6 *sa6, struct sockaddr_in6 *mask)
 	masklen = 0;
 	if (mask) {
 		lim = mask->sin6_len - offsetof(struct sockaddr_in6, sin6_addr);
-		lim = lim < sizeof(struct in6_addr) ?
-		    lim : sizeof(struct in6_addr);
+		if (lim < 0)
+			lim = 0;
+		else if (lim > sizeof(struct in6_addr))
+			lim = sizeof(struct in6_addr);
 		for (p = (u_char *)&mask->sin6_addr, i = 0; i < lim; p++) {
 			if (final && *p) {
 				illegal++;
