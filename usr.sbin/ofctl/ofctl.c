@@ -1,4 +1,4 @@
-/*	$NetBSD: ofctl.c,v 1.1 2006/09/29 19:03:11 macallan Exp $	*/
+/*	$NetBSD: ofctl.c,v 1.2 2006/10/03 02:03:33 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -416,9 +416,9 @@ main(int argc, char **argv)
 	}
 	if (errflag)
 #if 0
-		errx(1, "usage: ofdump [-f file] [-l] [-p] [node...]\n");
+		errx(1, "usage: ofctl [-lp] [-f file] [node...]\n");
 #else
-		errx(1, "usage: ofdump [-f file] [-p] [node...]\n");
+		errx(1, "usage: ofctl [-p] [-f file] [node...]\n");
 #endif
 	fd = open(file, O_RDONLY);
 	if (fd < 0)
