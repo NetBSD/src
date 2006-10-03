@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.68 2006/05/14 21:33:39 elad Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.69 2006/10/03 18:24:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.68 2006/05/14 21:33:39 elad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.69 2006/10/03 18:24:48 christos Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -389,6 +389,7 @@ WRITE(void *v)
 		 * XXXUBC simplistic async flushing.
 		 */
 
+#ifndef LFS_READWRITE
 		if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
 			simple_lock(&vp->v_interlock);
 			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
@@ -396,6 +397,7 @@ WRITE(void *v)
 			if (error)
 				break;
 		}
+#endif
 	}
 	if (error == 0 && ioflag & IO_SYNC) {
 		simple_lock(&vp->v_interlock);
