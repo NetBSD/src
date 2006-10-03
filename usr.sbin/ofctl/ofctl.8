@@ -1,4 +1,4 @@
-.\"	$NetBSD: ofctl.8,v 1.1 2006/09/29 19:03:11 macallan Exp $
+.\"	$NetBSD: ofctl.8,v 1.2 2006/10/03 02:02:02 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,15 +38,14 @@
 .Nd display the OpenPROM or OpenFirmware device tree
 .Sh SYNOPSIS
 .Nm
-.Op Fl f Ar file
 .Op Fl p
-.Oo
-.Ar node
-.Oc
+.Op Fl f Ar file
+.Op Ar node
 .Sh DESCRIPTION
 .Nm
-provides an interface for displaying the OpenPROM or OpenFirmware device tree
-and node properties.  Without any arguments,
+provides an interface for displaying the OpenPROM or OpenFirmware
+device tree and node properties.
+Without any arguments,
 .Nm
 will dump the full tree.
 When given the name of a specific node,
@@ -54,7 +53,7 @@ When given the name of a specific node,
 will display that node and its child nodes.
 .Pp
 The options are as follows:
-.Bl -tag -width indent
+.Bl -tag -offset indent -width 8n
 .It Fl f Ar file
 On systems with OpenPROM, use
 .Ar file
@@ -65,10 +64,8 @@ On systems with OpenFirmware, use
 instead of the default
 .Pa /dev/openfirm .
 .It Fl p
-.Nm
-will display each node's properties.
+Display each node's properties.
 .El
-.Pp
 .Sh FILES
 .Bl -tag -width "/dev/openprom "
 .It /dev/openprom
