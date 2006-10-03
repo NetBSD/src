@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.76 2006/07/23 22:06:15 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.77 2006/10/03 18:59:22 christos Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.76 2006/07/23 22:06:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.77 2006/10/03 18:59:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1903,6 +1903,7 @@ setup_allocindir_phase2(bp, ip, aip)
 				free_allocindir(oldaip, NULL);
 			}
 			LIST_INSERT_HEAD(&indirdep->ir_deplisthd, aip, ai_next);
+			KASSERT(indirdep->ir_savebp != NULL);
 			if (ip->i_ump->um_fstype == UFS1)
 				((int32_t *)indirdep->ir_savebp->b_data)
 				    [aip->ai_offset] = aip->ai_oldblkno;
