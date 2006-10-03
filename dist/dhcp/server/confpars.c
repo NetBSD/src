@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.8 2005/08/11 17:13:30 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.9 2006/10/03 19:06:05 christos Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -898,8 +898,9 @@ void parse_failover_peer (cfile, group, type)
 			if (!peer -> hba) {
 				dfree (peer -> name, MDL);
 				dfree (peer, MDL);
-			}
+			} else {
 			memcpy (peer -> hba, hba, 32);
+			}
 			break;
 
 		      case SPLIT:
