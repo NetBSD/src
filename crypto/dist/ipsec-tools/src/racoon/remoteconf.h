@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.h,v 1.6 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: remoteconf.h,v 1.7 2006/10/03 08:01:56 vanhu Exp $	*/
 
 /* Id: remoteconf.h,v 1.26 2006/05/06 15:52:44 manubsd Exp */
 
@@ -109,6 +109,8 @@ struct remoteconf {
 	int dpd_retry;			/* in seconds */
 	int dpd_interval;		/* in seconds */
 	int dpd_maxfails; 
+
+	int ph1id; /* ph1id to be matched with sainfo sections */
 
 	int weak_phase1_check;		/* act on unencrypted deletions ? */
 
