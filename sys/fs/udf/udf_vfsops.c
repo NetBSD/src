@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.14 2006/09/29 01:36:28 reinoud Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.15 2006/10/03 15:54:03 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.14 2006/09/29 01:36:28 reinoud Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.15 2006/10/03 15:54:03 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -212,14 +212,18 @@ free_udf_mountinfo(struct mount *mp)
 	struct udf_mount *ump;
 	int i;
 
+	if (!mp)
+		return;
+
 	ump = VFSTOUDF(mp);
 	if (ump) {
 		/* dispose of our descriptor pool */
-		if (ump->desc_pool)
+		if (ump->desc_pool) {
 			pool_destroy(ump->desc_pool);
+			free(ump->desc_pool, M_UDFMNT);
+		}
 
 		/* clear our data */
-		mp->mnt_data = NULL;
 		for (i = 0; i < UDF_ANCHORS; i++)
 			MPFREE(ump->anchors[i], M_UDFVOLD);
 		MPFREE(ump->primary_vol,      M_UDFVOLD);
@@ -265,7 +269,7 @@ udf_mount(struct mount *mp, const char *path,
 		return EOPNOTSUPP;
 	}
 
-	/* OK, so we are asked to mount the device/file! */
+	/* OK, so we are asked to mount the device */
 	error = copyin(data, &args, sizeof(struct udf_args));
 	if (error)
 		return error;
@@ -454,12 +458,12 @@ udf_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	ump->devvp->v_specmountpoint = NULL;
 	vput(ump->devvp);
 
-	/* free ump struct */
-	mp->mnt_data = NULL;
-	mp->mnt_flag &= ~MNT_LOCAL;
-
 	/* free up umt structure */
 	free_udf_mountinfo(mp);
+
+	/* free ump struct reference */
+	mp->mnt_data = NULL;
+	mp->mnt_flag &= ~MNT_LOCAL;
 
 	DPRINTF(VOLUMES, ("Fin unmount\n"));
 	return error;

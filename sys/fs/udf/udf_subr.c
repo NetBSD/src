@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.19 2006/09/28 19:57:26 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.20 2006/10/03 15:54:03 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.19 2006/09/28 19:57:26 reinoud Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.20 2006/10/03 15:54:03 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -751,8 +751,10 @@ udf_process_vds_descriptor(struct udf_mount *ump, union dscrptr *dscr)
 
 		/* check partnr boundaries */
 		partnr = udf_rw16(dscr->pd.part_num);
-		if (partnr >= UDF_PARTITIONS)
+		if (partnr >= UDF_PARTITIONS) {
+			free(dscr, M_UDFVOLD);
 			return EINVAL;
+		}
 
 		UDF_UPDATE_DSCR(ump->partitions[partnr], &dscr->pd);
 		break;
@@ -793,8 +795,10 @@ udf_read_vds_extent(struct udf_mount *ump, uint32_t loc, uint32_t len)
 			return 0;
 
 		/* TERM descriptor is a terminator */
-		if (udf_rw16(dscr->tag.id) == TAGID_TERM)
+		if (udf_rw16(dscr->tag.id) == TAGID_TERM) {
+			free(dscr, M_UDFVOLD);
 			return 0;
+		}
 
 		/* process all others */
 		dscr_size = udf_tagsize(dscr, sector_size);
