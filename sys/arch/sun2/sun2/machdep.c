@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 2006/10/01 03:53:27 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 2006/10/03 13:02:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -160,7 +160,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2006/10/01 03:53:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2006/10/03 13:02:32 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1139,12 +1139,11 @@ vmebus_translate(vme_am_t mod, vme_addr_t addr, bus_type_t *btp,
  * If we can find a mapping that was established by the PROM, use it.
  */
 int
-find_prom_map(bus_addr_t pa, bus_type_t iospace, int len,
-    bus_space_handle_t *hp)
+find_prom_map(paddr_t pa, bus_type_t iospace, int len, vaddr_t *vap)
 {
 	u_long	pf;
 	int	pgtype;
-	u_long	va, eva;
+	vaddr_t	va, eva;
 	int	sme;
 	u_long	pte;
 	int	saved_ctx;
@@ -1188,8 +1187,7 @@ find_prom_map(bus_addr_t pa, bus_type_t iospace, int len,
 				 * Found the PROM mapping.
 				 * note: preserve page offset
 				 */
-				*hp = (bus_space_handle_t)(va |
-				    ((u_long)pa & PGOFSET));
+				*vap = (va | ((vaddr_t)pa & PGOFSET));
 				restore_context(saved_ctx);
 				return 0;
 			}
