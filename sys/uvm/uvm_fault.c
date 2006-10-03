@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.112 2006/09/15 15:51:13 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.113 2006/10/03 18:26:03 christos Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.112 2006/09/15 15:51:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.113 2006/10/03 18:26:03 christos Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1816,6 +1816,7 @@ Case2:
 			 * clear its clean flag now.
 			 */
 
+			KASSERT(uobj != NULL);
 			pg->flags &= ~(PG_CLEAN);
 			uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
 		}
