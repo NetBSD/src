@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.30 2006/09/19 18:55:11 wiz Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.31 2006/10/03 08:03:59 vanhu Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -791,6 +791,11 @@ Racoon can send any value although
 RFC2409 specifies that the value MUST be between 8 and 256 bytes.
 The default size is 16 bytes.
 .\"
+.It Ic ph1id Ar number ;
+An optionnal number to identify the remote proposal and to link it
+only with sainfos who have the same number.
+Defaults to 0.
+.\"
 .It Xo
 .Ic proposal { Ar sub-substatements Ic }
 .Xc
@@ -935,6 +940,11 @@ the peer if you do not specify it(them).
 See the
 .Ic proposal_check
 directive.
+.\"
+.It Ic remoteid Ar number ;
+Sainfos will only be used if their remoteid matches the ph1id of the
+remote section used for phase 1.
+Defaults to 0, which is also the default for ph1id.
 .\"
 .It Ic my_identifier Ar idtype ... ;
 is obsolete.
