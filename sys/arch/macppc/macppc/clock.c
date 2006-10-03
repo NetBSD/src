@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.30 2006/10/01 20:38:35 macallan Exp $	*/
+/*	$NetBSD: clock.c,v 1.31 2006/10/03 02:07:37 macallan Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.30 2006/10/01 20:38:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.31 2006/10/03 02:07:37 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -51,7 +51,7 @@ static u_int get_macppc_timecount(struct timecounter *);
 
 uint32_t ticks_per_sec;
 uint32_t ns_per_tick;
-uint32_t ticks_per_intr;
+uint32_t ticks_per_intr = 0;
 
 static struct timecounter macppc_timecounter = {
 	get_macppc_timecount,	/* get_timecount */
@@ -107,9 +107,9 @@ decr_intr(struct clockframe *frame)
 	/*
 	 * Check whether we are initialized.
 	 */
-	if (!ticks_per_intr)
+	if (cold)
 		return;
-
+		
 	/*
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
