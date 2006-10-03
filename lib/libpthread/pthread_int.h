@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.33 2005/10/19 02:15:03 chs Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.34 2006/10/03 09:37:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -237,7 +237,6 @@ extern	vaddr_t		pthread_stackmask;
 #define PT_ALARMTIMER_MAGIC	0x88880010
 #define PT_RRTIMER_MAGIC	0x88880020
 #define NIDLETHREADS	4
-#define IDLESPINS	1000
 
 /* Flag to be used in a ucontext_t's uc_flags indicating that
  * the saved register state is "user" state only, not full
