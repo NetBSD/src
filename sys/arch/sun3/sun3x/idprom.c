@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.12 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: idprom.c,v 1.13 2006/10/03 13:02:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,12 +41,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idprom.c,v 1.12 2005/12/11 12:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idprom.c,v 1.13 2006/10/03 13:02:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/idprom.h>
@@ -144,18 +146,18 @@ static void
 idprom_get(u_char *dst)
 {
 	u_char *src;
-	caddr_t va;
+	vaddr_t va;
 	int len;
 
 	/* First, probe for a separate IDPROM (3/470). */
-	va = obio_find_mapping(OBIO_IDPROM1, IDPROM_SIZE);
-	if (peek_byte(va) == -1) {
+	find_prom_map(OBIO_IDPROM1, PMAP_OBIO, IDPROM_SIZE, &va);
+	if (peek_byte((caddr_t)va) == -1) {
 		/* IDPROM is in the EEPROM */
-		va = obio_find_mapping(OBIO_IDPROM2, IDPROM_SIZE);
+		find_prom_map(OBIO_IDPROM2, PMAP_OBIO, IDPROM_SIZE, &va);
 	}
 
 	/* Copy the IDPROM contents and do the checksum. */
-	src = (u_char *) va;
+	src = (void *)va;
 	len = IDPROM_SIZE;
 	do {
 		*dst++ = *src++;

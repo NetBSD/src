@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.51 2006/10/01 06:26:01 tsutsui Exp $	*/
+/*	$NetBSD: obio.c,v 1.52 2006/10/03 13:02:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.51 2006/10/01 06:26:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.52 2006/10/03 13:02:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,47 +239,16 @@ obio_submatch(struct device *parent, struct cfdata *cf,
  *     (array_index * SAVE_INCR)
  * and the length of the mapping is one page.
  */
-static caddr_t prom_mappings[SAVE_SLOTS];
+static vaddr_t prom_mappings[SAVE_SLOTS];
 
 /*
  * Find a virtual address for a device at physical address 'pa'.
  * If one is found among the mappings already made by the PROM
- * at power-up time, use it.  Otherwise return 0 as a sign that
- * a mapping will have to be created.
- */
-caddr_t
-obio_find_mapping(paddr_t pa, psize_t sz)
-{
-	vsize_t off;
-	vaddr_t va;
-
-	off = pa & PGOFSET;
-	pa -= off;
-	sz += off;
-
-	/* The saved mappings are all one page long. */
-	if (sz > PAGE_SIZE)
-		return (caddr_t)0;
-
-	/* Within our table? */
-	if (pa >= SAVE_LAST)
-		return (caddr_t)0;
-
-	/* Do we have this one? */
-	va = (vaddr_t)prom_mappings[pa >> SAVE_SHIFT];
-	if (va == 0)
-		return (caddr_t)0;
-
-	/* Found it! */
-	return ((caddr_t)(va + off));
-}
-
-/*
- * The similar function with the above but used by bus_space(9)
+ * at power-up time, use it and return 0. Otherwise return errno
+ * as a sign that a mapping will have to be created.
  */
 int
-find_prom_map(bus_addr_t pa, bus_type_t iospace, int sz,
-    bus_space_handle_t *hp)
+find_prom_map(paddr_t pa, bus_type_t iospace, int sz, vaddr_t *vap)
 {
 	vsize_t off;
 	vaddr_t va;
@@ -297,12 +266,12 @@ find_prom_map(bus_addr_t pa, bus_type_t iospace, int sz,
 		return ENOENT;
 
 	/* Do we have this one? */
-	va = (vaddr_t)prom_mappings[pa >> SAVE_SHIFT];
+	va = prom_mappings[pa >> SAVE_SHIFT];
 	if (va == 0)
 		return ENOENT;
 
 	/* Found it! */
-	*hp = va + off;
+	*vap = va + off;
 	return 0;
 }
 
@@ -345,8 +314,8 @@ save_prom_mappings(void)
 					((pa & SAVE_MASK) == 0))
 				{
 					i = pa >> SAVE_SHIFT;
-					if (prom_mappings[i] == NULL) {
-						prom_mappings[i] = (caddr_t)pgva;
+					if (prom_mappings[i] == 0) {
+						prom_mappings[i] = pgva;
 					}
 				}
 				/* Make sure it has the right permissions. */
@@ -379,10 +348,11 @@ static void
 make_required_mappings(void)
 {
 	paddr_t *rmp;
+	vaddr_t va;
 
 	rmp = required_mappings;
 	while (*rmp != (paddr_t)-1) {
-		if (!obio_find_mapping(*rmp, PAGE_SIZE)) {
+		if (find_prom_map(*rmp, PMAP_OBIO, PAGE_SIZE, &va) != 0) {
 			/*
 			 * XXX - Ack! Need to create one!
 			 * I don't think this can happen, but if

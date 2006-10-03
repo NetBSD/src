@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_any.c,v 1.15 2006/10/01 03:53:27 tsutsui Exp $	*/
+/*	$NetBSD: zs_any.c,v 1.16 2006/10/03 13:02:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_any.c,v 1.15 2006/10/01 03:53:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_any.c,v 1.16 2006/10/03 13:02:32 tsutsui Exp $");
 
 #include "opt_kgdb.h"
 
@@ -188,7 +188,7 @@ void *
 zs_find_prom(int unit)
 {
 	bus_addr_t zs0_phys;
-	bus_space_handle_t bh;
+	vaddr_t va;
 
 	if (unit != 0)
 		return (NULL);
@@ -197,10 +197,9 @@ zs_find_prom(int unit)
 	 * The physical address of zs0 is model-dependent.
 	 */
 	zs0_phys = (cpu_machine_id == ID_SUN2_120 ? 0x002000 : 0x7f2000);
-	if (find_prom_map(zs0_phys, PMAP_OBIO, sizeof(struct zsdevice),
-	    &bh))
+	if (find_prom_map(zs0_phys, PMAP_OBIO, sizeof(struct zsdevice), &va))
 		return (NULL);
 
-	return (bh);
+	return (void *)va;
 }
 #endif	/* KGDB */
