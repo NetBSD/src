@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.196.2.2 2005/05/01 11:23:38 tron Exp $	*/
+/*	$NetBSD: locore.s,v 1.196.2.3 2006/10/03 12:47:26 tron Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3022,7 +3022,7 @@ Ldatafault_internal:
 	stx	%g4, [%sp + CC64FSZ + STKB + TF_G + (4*8)]	! sneak in g4
 	rdpr	%tnpc, %g3
 	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + (5*8)]	! sneak in g5
-	rd	%y, %g4					! save y
+	rd	%y, %g5					! save y
 	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + (6*8)]	! sneak in g6
 	mov	%g2, %o7				! Make the fault address look like the return address
 	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + (7*8)]	! sneak in g7
@@ -3037,9 +3037,9 @@ Ldatafault_internal:
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_PC]		! set tf.tf_npc
 	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]
 
-	rdpr	%pil, %g5
-	stb	%g5, [%sp + CC64FSZ + STKB + TF_PIL]
-	stb	%g5, [%sp + CC64FSZ + STKB + TF_OLDPIL]
+	rdpr	%pil, %g4
+	stb	%g4, [%sp + CC64FSZ + STKB + TF_PIL]
+	stb	%g4, [%sp + CC64FSZ + STKB + TF_OLDPIL]
 
 #if 1
 	rdpr	%tl, %g7
@@ -3087,7 +3087,7 @@ Ldatafault_internal:
 	 */
 
 	cmp	%o1, T_DATA_ERROR
-	st	%g4, [%sp + CC64FSZ + STKB + TF_Y]
+	st	%g5, [%sp + CC64FSZ + STKB + TF_Y]
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Restore default ASI
 	be,pn	%icc, data_error
 	 wrpr	%g0, PSTATE_INTR, %pstate	! reenable interrupts
@@ -3287,7 +3287,7 @@ textfault:
 	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + (6*8)]	! sneak in g6
 	rdpr	%tnpc, %g3
 	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + (7*8)]	! sneak in g7
-	rd	%y, %g7					! save y
+	rd	%y, %g5						! save y
 
 	/* Finish stackframe, call C trap handler */
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]		! set tf.tf_psr, tf.tf_pc
@@ -3296,9 +3296,9 @@ textfault:
 	stx	%o2, [%sp + CC64FSZ + STKB + TF_PC]
 	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]		! set tf.tf_npc
 
-	rdpr	%pil, %g5
-	stb	%g5, [%sp + CC64FSZ + STKB + TF_PIL]
-	stb	%g5, [%sp + CC64FSZ + STKB + TF_OLDPIL]
+	rdpr	%pil, %g4
+	stb	%g4, [%sp + CC64FSZ + STKB + TF_PIL]
+	stb	%g4, [%sp + CC64FSZ + STKB + TF_OLDPIL]
 
 	rdpr	%tl, %g7
 	dec	%g7
@@ -3316,7 +3316,7 @@ textfault:
 	/* Use trap type to see what handler to call */
 	cmp	%o1, T_INST_ERROR
 	be,pn	%xcc, text_error
-	 st	%g7, [%sp + CC64FSZ + STKB + TF_Y]		! set tf.tf_y
+	 st	%g5, [%sp + CC64FSZ + STKB + TF_Y]		! set tf.tf_y
 
 	wrpr	%g0, PSTATE_INTR, %pstate	! reenable interrupts
 	call	_C_LABEL(text_access_fault)	! mem_access_fault(&tf, type, pc, sfsr)
@@ -6815,6 +6815,7 @@ ENTRY_NOPROFILE(sigcode)
 	lduw	[%fp + BIAS + 128 + 4], %o1	! code
 	call	%g1			! (*sa->sa_handler)(sig,code,scp)
 	 add	%fp, BIAS + 128 + 8, %o2	! scp
+	wr	%l1, %g0, %y		! in any case, restore %y
 
 	/*
 	 * Now that the handler has returned, re-establish all the state
@@ -6834,7 +6835,7 @@ ENTRY_NOPROFILE(sigcode)
 	ldda	[%l0] ASI_BLK_P, %f16
 1:
 	bz,pt	%icc, 2f
-	 wr	%l1, %g0, %y		! in any case, restore %y
+	 nop
 	add	%sp, BIAS+CC64FSZ+BLOCK_SIZE, %l0	! Generate a pointer so we can
 	andn	%l0, BLOCK_ALIGN, %l0	! do a block load
 	inc	2*BLOCK_SIZE, %l0	! and skip what we already loaded
