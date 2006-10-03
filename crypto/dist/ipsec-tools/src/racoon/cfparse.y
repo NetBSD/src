@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.15 2006/09/26 21:42:55 manu Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.16 2006/10/03 08:03:33 vanhu Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -231,10 +231,11 @@ static int fix_lifebyte __P((u_long));
 %token GSS_ID GSS_ID_ENC GSS_ID_ENCTYPE
 %token COMPLEX_BUNDLE
 %token DPD DPD_DELAY DPD_RETRY DPD_MAXFAIL
+%token PH1ID
 %token XAUTH_LOGIN WEAK_PHASE1_CHECK
 
 %token PREFIX PORT PORTANY UL_PROTO ANY IKE_FRAG ESP_FRAG MODE_CFG
-%token PFS_GROUP LIFETIME LIFETYPE_TIME LIFETYPE_BYTE STRENGTH
+%token PFS_GROUP LIFETIME LIFETYPE_TIME LIFETYPE_BYTE STRENGTH REMOTEID
 
 %token SCRIPT PHASE1_UP PHASE1_DOWN
 
@@ -1152,7 +1153,8 @@ sainfo_statement
 			/* duplicate check */
 			check = getsainfo(cur_sainfo->idsrc,
 					  cur_sainfo->iddst,
-					  cur_sainfo->id_i);
+					  cur_sainfo->id_i,
+					  cur_sainfo->remoteid);
 			if (check && (!check->idsrc && !cur_sainfo->idsrc)) {
 				yyerror("duplicated sainfo: %s",
 					sainfo2str(cur_sainfo));
@@ -1381,6 +1383,11 @@ sainfo_spec
 	:	PFS_GROUP dh_group_num
 		{
 			cur_sainfo->pfs_group = $2;
+		}
+		EOS
+	|	REMOTEID NUMBER
+		{
+			cur_sainfo->remoteid = $2;
 		}
 		EOS
 	|	LIFETIME LIFETYPE_TIME NUMBER unittype_time
@@ -1881,6 +1888,11 @@ remote_spec
 #else
 			yyerror("DPD support not compiled in.");
 #endif
+		}
+		EOS
+	|	PH1ID NUMBER
+		{
+			cur_rmconf->ph1id = $2;
 		}
 		EOS
 	|	LIFETIME LIFETYPE_TIME NUMBER unittype_time
