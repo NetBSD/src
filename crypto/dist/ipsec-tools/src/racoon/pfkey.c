@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.14 2006/10/02 07:17:57 manu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.15 2006/10/03 08:02:51 vanhu Exp $	*/
 
-/* $Id: pfkey.c,v 1.14 2006/10/02 07:17:57 manu Exp $ */
+/* $Id: pfkey.c,v 1.15 2006/10/03 08:02:51 vanhu Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1671,6 +1671,7 @@ pk_recvacquire(mhp)
 	struct ph2handle *iph2[MAXNESTEDSA];
 	struct sockaddr *src, *dst;
 	int n;	/* # of phase 2 handler */
+	int remoteid=0;
 
 	/* ignore this message because of local test mode. */
 	if (f_local)
@@ -1853,7 +1854,17 @@ pk_recvacquire(mhp)
 		delph2(iph2[n]);
 		return -1;
 	}
-	iph2[n]->sainfo = getsainfo(idsrc, iddst, NULL);
+	{
+		struct remoteconf *conf;
+		conf = getrmconf(iph2[n]->dst);
+		if (conf != NULL)
+			remoteid=conf->ph1id;
+		else{
+			plog(LLV_DEBUG, LOCATION, NULL, "Warning: no valid rmconf !\n");
+			remoteid=0;
+		}
+	}
+	iph2[n]->sainfo = getsainfo(idsrc, iddst, NULL, remoteid);
 	vfree(idsrc);
 	vfree(iddst);
 	if (iph2[n]->sainfo == NULL) {
