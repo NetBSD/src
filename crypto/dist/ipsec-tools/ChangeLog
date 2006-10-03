@@ -1,3 +1,6 @@
+2006-10-03  Emmanuel Dreyfus  <manu@netbsd.org>
+	* src/racoon/admin.c: fix endianness issue introduced yesterday
+
 2006-10-03  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/{remoteconf.h|sainfo.h}: Added remoteid/ph1id values.
 	* src/racoon/{handler.c|isakmp_quick.c|pfkey.c|sainfo.c}: Uses

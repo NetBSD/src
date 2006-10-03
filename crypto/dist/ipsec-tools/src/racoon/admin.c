@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.16 2006/10/02 21:27:08 manu Exp $	*/
+/*	$NetBSD: admin.c,v 1.17 2006/10/03 20:43:10 manu Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -434,7 +434,8 @@ out2:
 			if ((local = dupsaddr(src)) == NULL)
 				goto out1;
 
-			if (set_port(local, getmyaddrsport(local)) == NULL)
+			port = ntohs(getmyaddrsport(local));
+			if (set_port(local, port) == NULL)
 				goto out1;
 
 #ifdef ENABLE_HYBRID
