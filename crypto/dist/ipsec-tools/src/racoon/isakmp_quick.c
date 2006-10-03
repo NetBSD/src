@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.9 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.10 2006/10/03 08:02:51 vanhu Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.29 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1806,6 +1806,7 @@ get_sainfo_r(iph2)
 	vchar_t *idsrc = NULL, *iddst = NULL;
 	int prefixlen;
 	int error = ISAKMP_INTERNAL_ERROR;
+	int remoteid = 0;
 
 	if (iph2->id == NULL) {
 		switch (iph2->src->sa_family) {
@@ -1855,7 +1856,19 @@ get_sainfo_r(iph2)
 		goto end;
 	}
 
-	iph2->sainfo = getsainfo(idsrc, iddst, iph2->ph1->id_p);
+	{
+		struct remoteconf *conf;
+		conf = getrmconf(iph2->dst);
+		if (conf != NULL)
+			remoteid=conf->ph1id;
+		else{
+			plog(LLV_DEBUG, LOCATION, NULL, "Warning: no valid rmconf !\n");
+			remoteid=0;
+		}
+		
+	}
+
+	iph2->sainfo = getsainfo(idsrc, iddst, iph2->ph1->id_p, remoteid);
 	if (iph2->sainfo == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get sainfo.\n");
