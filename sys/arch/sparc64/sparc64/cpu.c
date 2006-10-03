@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.53 2006/09/20 20:09:42 martin Exp $ */
+/*	$NetBSD: cpu.c,v 1.54 2006/10/03 21:05:22 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.53 2006/09/20 20:09:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.54 2006/10/03 21:05:22 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,8 +358,9 @@ cpu_boot_secondary_processors()
 		membar_sync();
 
 #ifdef DEBUG
-		printf("node %x, cpuinfo %lx, initstack %p\n",
-		       cpu_args->cb_node, cpu_args->cb_cpuinfo,
+		printf("node %x, cpuinfo %llx, initstack %p\n",
+		       cpu_args->cb_node,
+		       (unsigned long long)cpu_args->cb_cpuinfo,
 		       cpu_args->cb_initstack);
 #endif
 
