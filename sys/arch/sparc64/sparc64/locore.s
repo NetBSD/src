@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.227 2006/10/03 23:05:53 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.228 2006/10/03 23:34:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -1511,57 +1511,64 @@ intr_setup_msg:
 	_ALIGN
 	.text
 
-#ifdef _LP64
 #ifdef DEBUG
 	/* Only save a snapshot of locals and ins in DEBUG kernels */
 #define	SAVE_LOCALS_INS	\
-	stx	%l0, [%g6 + CC64FSZ + STKB + TF_L + (0*8)];		/* Save local registers to trap frame */ \
+	/* Save local registers to trap frame */ \
+	stx	%l0, [%g6 + CC64FSZ + STKB + TF_L + (0*8)]; \
 	stx	%l1, [%g6 + CC64FSZ + STKB + TF_L + (1*8)]; \
 	stx	%l2, [%g6 + CC64FSZ + STKB + TF_L + (2*8)]; \
 	stx	%l3, [%g6 + CC64FSZ + STKB + TF_L + (3*8)]; \
 	stx	%l4, [%g6 + CC64FSZ + STKB + TF_L + (4*8)]; \
 	stx	%l5, [%g6 + CC64FSZ + STKB + TF_L + (5*8)]; \
 	stx	%l6, [%g6 + CC64FSZ + STKB + TF_L + (6*8)]; \
-\
 	stx	%l7, [%g6 + CC64FSZ + STKB + TF_L + (7*8)]; \
-	stx	%i0, [%g6 + CC64FSZ + STKB + TF_I + (0*8)];		/* Save in registers to trap frame */ \
+\
+	/* Save in registers to trap frame */ \
+	stx	%i0, [%g6 + CC64FSZ + STKB + TF_I + (0*8)]; \
 	stx	%i1, [%g6 + CC64FSZ + STKB + TF_I + (1*8)]; \
 	stx	%i2, [%g6 + CC64FSZ + STKB + TF_I + (2*8)]; \
 	stx	%i3, [%g6 + CC64FSZ + STKB + TF_I + (3*8)]; \
 	stx	%i4, [%g6 + CC64FSZ + STKB + TF_I + (4*8)]; \
 	stx	%i5, [%g6 + CC64FSZ + STKB + TF_I + (5*8)]; \
 	stx	%i6, [%g6 + CC64FSZ + STKB + TF_I + (6*8)]; \
+	stx	%i7, [%g6 + CC64FSZ + STKB + TF_I + (7*8)]; \
 \
-	stx	%i7, [%g6 + CC64FSZ + STKB + TF_I + (7*8)];
+	stx	%g1, [%g6 + CC64FSZ + STKB + TF_FAULT];
 #else
 #define	SAVE_LOCALS_INS
 #endif
+
+#ifdef _LP64
+#define	FIXUP_TRAP_STACK \
+	btst	1, %g6;						/* Fixup 64-bit stack if necessary */ \
+	bnz,pt	%icc, 1f; \
+	 add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
+	inc	-BIAS, %g6; \
+1:
+#else
+#define	FIXUP_TRAP_STACK \
+	srl	%g6, 0, %g6;					/* truncate at 32-bits */ \
+	btst	1, %g6;						/* Fixup 64-bit stack if necessary */ \
+	add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
+	add	%g6, BIAS, %g5; \
+	movne	%icc, %g5, %g6;
+#endif
+
+#ifdef _LP64
 #define	TRAP_SETUP(stackspace) \
 	sethi	%hi(CPCB), %g6; \
 	sethi	%hi((stackspace)), %g5; \
-	\
-	ldx	[%g6 + %lo(CPCB)], %g6; \
+	LDPTR	[%g6 + %lo(CPCB)], %g6; \
 	sethi	%hi(USPACE), %g7;				/* Always multiple of page size */ \
 	or	%g5, %lo((stackspace)), %g5; \
-	\
-	sra	%g5, 0, %g5;					/* Sign extend the damn thing */ \
-	\
 	add	%g6, %g7, %g6; \
 	rdpr	%wstate, %g7;					/* Find if we're from user mode */ \
+	sra	%g5, 0, %g5;					/* Sign extend the damn thing */ \
 	\
 	sub	%g7, WSTATE_KERN, %g7;				/* Compare & leave in register */ \
-	\
 	movrz	%g7, %sp, %g6;					/* Select old (kernel) stack or base of kernel stack */ \
-	\
-	btst	1, %g6;						/* Fixup 64-bit stack if necessary */ \
-	bnz,pt	%icc, 1f; \
-	\
-	 add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
-	\
-	inc	-BIAS, %g6; \
-	nop; \
-	nop; \
-1:\
+	FIXUP_TRAP_STACK \
 	SAVE_LOCALS_INS	\
 	save	%g6, 0, %sp;					/* If we fault we should come right back here */ \
 	stx	%i0, [%sp + CC64FSZ + BIAS + TF_O + (0*8)];		/* Save out registers to trap frame */ \
@@ -1575,14 +1582,10 @@ intr_setup_msg:
 	brz,pt	%g7, 1f;					/* If we were in kernel mode start saving globals */ \
 	 stx	%i7, [%sp + CC64FSZ + BIAS + TF_O + (7*8)]; \
 	mov	CTX_PRIMARY, %g7; \
-	\
 	/* came from user mode -- switch to kernel mode stack */ \
 	rdpr	%canrestore, %g5;				/* Fixup register window state registers */ \
-	\
 	wrpr	%g0, 0, %canrestore; \
-	\
 	wrpr	%g0, %g5, %otherwin; \
-	\
 	wrpr	%g0, WSTATE_KERN, %wstate;			/* Enable kernel mode window traps -- now we can trap again */ \
 \
 	stxa	%g0, [%g7] ASI_DMMU; 				/* Switch MMU to kernel primary context */ \
@@ -1662,37 +1665,13 @@ intr_setup_msg:
 	flush	%g5;						/* Some convenient address that won't trap */ \
 1:
 	
-#else
-#ifdef DEBUG
-#define	SAVE_LOCALS_INS	\
-	stx	%g1, [%g6 + CC64FSZ + STKB + TF_FAULT]; \
-	stx	%l0, [%g6 + CC64FSZ + STKB + TF_L + (0*8)];		/* Save local registers to trap frame */ \
-	stx	%l1, [%g6 + CC64FSZ + STKB + TF_L + (1*8)]; \
-	stx	%l2, [%g6 + CC64FSZ + STKB + TF_L + (2*8)]; \
-	stx	%l3, [%g6 + CC64FSZ + STKB + TF_L + (3*8)]; \
-	stx	%l4, [%g6 + CC64FSZ + STKB + TF_L + (4*8)]; \
-	stx	%l5, [%g6 + CC64FSZ + STKB + TF_L + (5*8)]; \
-	stx	%l6, [%g6 + CC64FSZ + STKB + TF_L + (6*8)]; \
-	\
-	stx	%l7, [%g6 + CC64FSZ + STKB + TF_L + (7*8)]; \
-	stx	%i0, [%g6 + CC64FSZ + STKB + TF_I + (0*8)];		/* Save in registers to trap frame */ \
-	stx	%i1, [%g6 + CC64FSZ + STKB + TF_I + (1*8)]; \
-	stx	%i2, [%g6 + CC64FSZ + STKB + TF_I + (2*8)]; \
-	stx	%i3, [%g6 + CC64FSZ + STKB + TF_I + (3*8)]; \
-	stx	%i4, [%g6 + CC64FSZ + STKB + TF_I + (4*8)]; \
-	stx	%i5, [%g6 + CC64FSZ + STKB + TF_I + (5*8)]; \
-	stx	%i6, [%g6 + CC64FSZ + STKB + TF_I + (6*8)]; \
-	\
-	stx	%i7, [%g6 + CC64FSZ + STKB + TF_I + (7*8)];
-#else
-#define	SAVE_LOCALS_INS
-#endif
+#else /* _LP64 */
+
 #define	TRAP_SETUP(stackspace) \
-	sethi	%hi(USPACE), %g7; \
 	sethi	%hi(CPCB), %g6; \
-	or	%g7, %lo(USPACE), %g7; \
 	sethi	%hi((stackspace)), %g5; \
-	lduw	[%g6 + %lo(CPCB)], %g6; \
+	LDPTR	[%g6 + %lo(CPCB)], %g6; \
+	sethi	%hi(USPACE), %g7; \
 	or	%g5, %lo((stackspace)), %g5; \
 	add	%g6, %g7, %g6; \
 	rdpr	%wstate, %g7;					/* Find if we're from user mode */ \
@@ -1700,12 +1679,7 @@ intr_setup_msg:
 	sra	%g5, 0, %g5;					/* Sign extend the damn thing */ \
 	subcc	%g7, WSTATE_KERN, %g7;				/* Compare & leave in register */ \
 	movz	%icc, %sp, %g6;					/* Select old (kernel) stack or base of kernel stack */ \
-	srl	%g6, 0, %g6;					/* truncate at 32-bits */ \
-	btst	1, %g6;						/* Fixup 64-bit stack if necessary */ \
-	add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
-	add	%g6, BIAS, %g5; \
-	movne	%icc, %g5, %g6; \
-	\
+	FIXUP_TRAP_STACK \
 	SAVE_LOCALS_INS \
 	save	%g6, 0, %sp;					/* If we fault we should come right back here */ \
 	stx	%i0, [%sp + CC64FSZ + STKB + TF_O + (0*8)];		/* Save out registers to trap frame */ \
@@ -1714,16 +1688,15 @@ intr_setup_msg:
 	stx	%i3, [%sp + CC64FSZ + STKB + TF_O + (3*8)]; \
 	stx	%i4, [%sp + CC64FSZ + STKB + TF_O + (4*8)]; \
 	stx	%i5, [%sp + CC64FSZ + STKB + TF_O + (5*8)]; \
-	stx	%i6, [%sp + CC64FSZ + STKB + TF_O + (6*8)]; \
 	\
-	stx	%i7, [%sp + CC64FSZ + STKB + TF_O + (7*8)]; \
-/*	rdpr	%wstate, %g7; sub %g7, WSTATE_KERN, %g7; /* DEBUG */ \
+	stx	%i6, [%sp + CC64FSZ + STKB + TF_O + (6*8)]; \
 	brz,pn	%g7, 1f;					/* If we were in kernel mode start saving globals */ \
-	 rdpr	%canrestore, %g5;				/* Fixup register window state registers */ \
+	 stx	%i7, [%sp + CC64FSZ + STKB + TF_O + (7*8)]; \
+	mov	CTX_PRIMARY, %g7; \
 	/* came from user mode -- switch to kernel mode stack */ \
+	rdpr	%canrestore, %g5;				/* Fixup register window state registers */ \
 	wrpr	%g0, 0, %canrestore; \
 	wrpr	%g0, %g5, %otherwin; \
-	mov	CTX_PRIMARY, %g7; \
 	wrpr	%g0, WSTATE_KERN, %wstate;			/* Enable kernel mode window traps -- now we can trap again */ \
 	\
 	stxa	%g0, [%g7] ASI_DMMU; 				/* Switch MMU to kernel primary context */ \
