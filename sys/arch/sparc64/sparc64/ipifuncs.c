@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.6 2006/09/18 18:47:24 mrg Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.7 2006/10/03 22:37:51 mrg Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.6 2006/09/18 18:47:24 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.7 2006/10/03 22:37:51 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -112,7 +112,7 @@ sparc64_ipi_pause_thiscpu(void *arg)
 	if (tf) {
 		/* Initialise local dbregs storage from trap frame */
 		dbregs.db_tf = *tf;
-		dbregs.db_fr = *(struct frame64 *)tf->tf_out[6];
+		dbregs.db_fr = *(struct frame64 *)(u_long)tf->tf_out[6];
 
 		curcpu()->ci_ddb_regs = &dbregs;
 	}
