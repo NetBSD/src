@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.90 2006/10/02 00:02:04 elad Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.91 2006/10/03 11:15:03 elad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -133,8 +133,6 @@ struct socket {
 					struct mbuf **, int *);
 	struct mowner	*so_mowner;	/* who owns mbufs for this socket */
 	struct uidinfo	*so_uidinfo;	/* who opened the socket */
-
-	kauth_cred_t	 so_cred;	/* socket owner credentials */
 };
 
 #define	SB_EMPTY_FIXUP(sb)						\
