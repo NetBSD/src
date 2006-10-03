@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.225 2006/09/19 18:42:35 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.226 2006/10/03 20:01:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -1513,24 +1513,24 @@ intr_setup_msg:
 #ifdef DEBUG
 	/* Only save a snapshot of locals and ins in DEBUG kernels */
 #define	SAVE_LOCALS_INS	\
-	stx	%l0, [%g6 + CC64FSZ + BIAS + TF_L + (0*8)];		/* Save local registers to trap frame */ \
-	stx	%l1, [%g6 + CC64FSZ + BIAS + TF_L + (1*8)]; \
-	stx	%l2, [%g6 + CC64FSZ + BIAS + TF_L + (2*8)]; \
-	stx	%l3, [%g6 + CC64FSZ + BIAS + TF_L + (3*8)]; \
-	stx	%l4, [%g6 + CC64FSZ + BIAS + TF_L + (4*8)]; \
-	stx	%l5, [%g6 + CC64FSZ + BIAS + TF_L + (5*8)]; \
-	stx	%l6, [%g6 + CC64FSZ + BIAS + TF_L + (6*8)]; \
+	stx	%l0, [%g6 + CC64FSZ + STKB + TF_L + (0*8)];		/* Save local registers to trap frame */ \
+	stx	%l1, [%g6 + CC64FSZ + STKB + TF_L + (1*8)]; \
+	stx	%l2, [%g6 + CC64FSZ + STKB + TF_L + (2*8)]; \
+	stx	%l3, [%g6 + CC64FSZ + STKB + TF_L + (3*8)]; \
+	stx	%l4, [%g6 + CC64FSZ + STKB + TF_L + (4*8)]; \
+	stx	%l5, [%g6 + CC64FSZ + STKB + TF_L + (5*8)]; \
+	stx	%l6, [%g6 + CC64FSZ + STKB + TF_L + (6*8)]; \
 \
-	stx	%l7, [%g6 + CC64FSZ + BIAS + TF_L + (7*8)]; \
-	stx	%i0, [%g6 + CC64FSZ + BIAS + TF_I + (0*8)];		/* Save in registers to trap frame */ \
-	stx	%i1, [%g6 + CC64FSZ + BIAS + TF_I + (1*8)]; \
-	stx	%i2, [%g6 + CC64FSZ + BIAS + TF_I + (2*8)]; \
-	stx	%i3, [%g6 + CC64FSZ + BIAS + TF_I + (3*8)]; \
-	stx	%i4, [%g6 + CC64FSZ + BIAS + TF_I + (4*8)]; \
-	stx	%i5, [%g6 + CC64FSZ + BIAS + TF_I + (5*8)]; \
-	stx	%i6, [%g6 + CC64FSZ + BIAS + TF_I + (6*8)]; \
+	stx	%l7, [%g6 + CC64FSZ + STKB + TF_L + (7*8)]; \
+	stx	%i0, [%g6 + CC64FSZ + STKB + TF_I + (0*8)];		/* Save in registers to trap frame */ \
+	stx	%i1, [%g6 + CC64FSZ + STKB + TF_I + (1*8)]; \
+	stx	%i2, [%g6 + CC64FSZ + STKB + TF_I + (2*8)]; \
+	stx	%i3, [%g6 + CC64FSZ + STKB + TF_I + (3*8)]; \
+	stx	%i4, [%g6 + CC64FSZ + STKB + TF_I + (4*8)]; \
+	stx	%i5, [%g6 + CC64FSZ + STKB + TF_I + (5*8)]; \
+	stx	%i6, [%g6 + CC64FSZ + STKB + TF_I + (6*8)]; \
 \
-	stx	%i7, [%g6 + CC64FSZ + BIAS + TF_I + (7*8)];
+	stx	%i7, [%g6 + CC64FSZ + STKB + TF_I + (7*8)];
 #else
 #define	SAVE_LOCALS_INS
 #endif
