@@ -1,4 +1,4 @@
-.\"	$NetBSD: njata.4,v 1.3 2006/10/01 09:53:09 itohy Exp $
+.\"	$NetBSD: njata.4,v 1.4 2006/10/03 02:09:36 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,9 +78,9 @@ In this case try adding wait values like
 .Tn flags 0x01
 or
 .Tn flags 0x11
-(wait parameter is composed of two 4bit values).
+(the wait parameter is composed of two 4bit values).
 Smaller wait values should be faster.
-Too long waits may cause transfer error.
+Too long waits may cause transfer errors.
 .Sh SEE ALSO
 .Xr ata 4 ,
 .Xr atapi 4 ,
