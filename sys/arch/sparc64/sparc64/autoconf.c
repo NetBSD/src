@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.125 2006/10/01 10:15:24 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.126 2006/10/03 21:04:47 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.125 2006/10/01 10:15:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.126 2006/10/03 21:04:47 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -180,8 +180,9 @@ int autoconf_debug = 0x0;
 #endif
 
 static void
-get_ncpus()
+get_ncpus(void)
 {
+#ifdef MULTIPROCESSOR
 	int node;
 	char sbuf[32];
 
@@ -195,6 +196,9 @@ get_ncpus()
 			continue;
 		sparc_ncpus++;
 	}
+#else
+	sparc_ncpus = 1;
+#endif
 }
 
 /*
@@ -323,7 +327,7 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
  */
 
 static void
-get_bootpath_from_prom()
+get_bootpath_from_prom(void)
 {
 	char sbuf[OFPATHLEN], *cp;
 	int chosen;
@@ -411,7 +415,7 @@ get_bootpath_from_prom()
  * command.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	/* fetch boot device settings */
@@ -475,7 +479,7 @@ opendisk(struct device *dv)
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	struct dkwedge_list wl;
 	struct dkwedge_info *wi;
