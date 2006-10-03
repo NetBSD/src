@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.87 2006/09/24 05:46:14 dogcow Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.88 2006/10/03 11:23:32 elad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.87 2006/09/24 05:46:14 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.88 2006/10/03 11:23:32 elad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2927,6 +2927,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	ki->p_eflag = 0;
 	ki->p_exitsig = p->p_exitsig;
 	ki->p_flag = p->p_flag;
+	ki->p_flag2 = p->p_flag2;
 
 	ki->p_pid = p->p_pid;
 	if (p->p_pptr)
