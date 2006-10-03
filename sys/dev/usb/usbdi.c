@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.110 2005/12/24 20:27:52 perry Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.111 2006/10/03 18:20:57 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.110 2005/12/24 20:27:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.111 2006/10/03 18:20:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -762,8 +762,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 	int sync = xfer->flags & USBD_SYNCHRONOUS;
 	int erred = xfer->status == USBD_CANCELLED ||
 	    xfer->status == USBD_TIMEOUT;
-	int repeat = pipe->repeat;
-	int polling;
+	int repeat, polling;
 
 	SPLUSBCHECK;
 
@@ -783,6 +782,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 		return;
 	}
 #endif
+	repeat = pipe->repeat;
 	polling = pipe->device->bus->use_polling;
 	/* XXXX */
 	if (polling)
