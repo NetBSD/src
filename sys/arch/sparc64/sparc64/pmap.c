@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.174 2006/09/18 23:56:54 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.175 2006/10/03 22:36:21 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.174 2006/09/18 23:56:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175 2006/10/03 22:36:21 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -443,8 +443,9 @@ pmap_mp_init(void)
 				1, /* valid */
 				0 /* ie */);
 		tp[i].data |= TLB_L | TLB_CV;
-		printf("xtlb[%d]: Tag: %p Data: %p\n",
-				i, (void*)tp[i].tag, (void*)tp[i].data);
+		printf("xtlb[%d]: Tag: %llx Data: %llx\n",
+				i, tp[i].tag,
+				   tp[i].data);
 	}
 
 	for (i = 0; i < PAGE_SIZE; i += sizeof(long))
@@ -725,10 +726,11 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	 * Here's a quick in-lined reverse bubble sort.  It gets rid of
 	 * any translations inside the kernel data VA range.
 	 */
-	for(i = 0; i < prom_map_size; i++) {
-		for(j = i; j < prom_map_size; j++) {
+	for (i = 0; i < prom_map_size; i++) {
+		for (j = i; j < prom_map_size; j++) {
 			if (prom_map[j].vstart > prom_map[i].vstart) {
 				struct prom_map tmp;
+
 				tmp = prom_map[i];
 				prom_map[i] = prom_map[j];
 				prom_map[j] = tmp;
@@ -750,10 +752,11 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 #endif
 
 	/*
-	 * Allocate a 64MB page for the cpu_info structure now.
+	 * Allocate a ncpu*64MB page for the cpu_info structure now.
 	 */
-	if ((cpu0paddr = prom_alloc_phys(8 * PAGE_SIZE * sparc_ncpus, 8 * PAGE_SIZE)) == 0 ) {
-		prom_printf("Cannot allocate new cpu_info\n");
+	cpu0paddr = prom_alloc_phys(8 * PAGE_SIZE * sparc_ncpus, 8 * PAGE_SIZE);
+	if (cpu0paddr == 0) {
+		prom_printf("Cannot allocate cpu_infos\n");
 		prom_halt();
 	}
 
@@ -1053,7 +1056,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		BDPRINTF(PDB_BOOT1,
 			("Inserting cpu_info into pmap_kernel() at %p\n",
 				 cpus));
-		/* Now map in all 8 pages of cpu_info */
+		/* Now map in all 8 pages of interrupt stack/cpu_info */
 		pa = cpu0paddr;
 		prom_map_phys(pa, 64*KB, vmmap, -1);
 
@@ -1235,7 +1238,7 @@ pmap_growkernel(maxkvaddr)
 			    ("pmap_growkernel: extending %lx\n", kbreak));
 			pa = 0;
 			if (!pmap_get_page(&pa))
-				panic("pmap_grow_kernel: no pages");
+				panic("pmap_growkernel: no pages");
 			ENTER_STAT(ptpneeded);
 		}
 	}
