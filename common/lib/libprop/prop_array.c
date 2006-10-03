@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.c,v 1.6 2006/08/22 21:21:23 thorpej Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.7 2006/10/03 15:45:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 
 struct _prop_array {
 	struct _prop_object	pa_obj;
+	_PROP_RWLOCK_DECL(pa_rwlock)
 	prop_object_t *		pa_array;
 	unsigned int		pa_capacity;
 	unsigned int		pa_count;
@@ -104,6 +105,8 @@ _prop_array_free(void *v)
 	if (pa->pa_array != NULL)
 		_PROP_FREE(pa->pa_array, M_PROP_ARRAY);
 
+	_PROP_RWLOCK_DESTROY(pa->pa_rwlock);
+
 	_PROP_POOL_PUT(_prop_array_pool, pa);
 }
 
@@ -115,18 +118,23 @@ _prop_array_externalize(struct _prop_object_externalize_context *ctx,
 	struct _prop_object *po;
 	prop_object_iterator_t pi;
 	unsigned int i;
+	boolean_t rv = FALSE;
 
-	if (pa->pa_count == 0)
+	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
+
+	if (pa->pa_count == 0) {
+		_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
 		return (_prop_object_externalize_empty_tag(ctx, "array"));
+	}
 	
 	/* XXXJRT Hint "count" for the internalize step? */
 	if (_prop_object_externalize_start_tag(ctx, "array") == FALSE ||
 	    _prop_object_externalize_append_char(ctx, '\n') == FALSE)
-		return (FALSE);
+		goto out;
 
 	pi = prop_array_iterator(pa);
 	if (pi == NULL)
-		return (FALSE);
+		goto out;
 	
 	ctx->poec_depth++;
 	_PROP_ASSERT(ctx->poec_depth != 0);
@@ -134,7 +142,7 @@ _prop_array_externalize(struct _prop_object_externalize_context *ctx,
 	while ((po = prop_object_iterator_next(pi)) != NULL) {
 		if ((*po->po_type->pot_extern)(ctx, po) == FALSE) {
 			prop_object_iterator_release(pi);
-			return (FALSE);
+			goto out;
 		}
 	}
 
@@ -143,12 +151,16 @@ _prop_array_externalize(struct _prop_object_externalize_context *ctx,
 	ctx->poec_depth--;
 	for (i = 0; i < ctx->poec_depth; i++) {
 		if (_prop_object_externalize_append_char(ctx, '\t') == FALSE)
-			return (FALSE);
+			goto out;
 	}
 	if (_prop_object_externalize_end_tag(ctx, "array") == FALSE)
-		return (FALSE);
+		goto out;
+
+	rv = TRUE;
 	
-	return (TRUE);
+ out:
+ 	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
+	return (rv);
 }
 
 static boolean_t
@@ -157,6 +169,7 @@ _prop_array_equals(void *v1, void *v2)
 	prop_array_t array1 = v1;
 	prop_array_t array2 = v2;
 	unsigned int idx;
+	boolean_t rv = FALSE;
 
 	if (! (prop_object_is_array(array1) &&
 	       prop_object_is_array(array2)))
@@ -164,16 +177,30 @@ _prop_array_equals(void *v1, void *v2)
 
 	if (array1 == array2)
 		return (TRUE);
+
+	if ((uintptr_t)array1 < (uintptr_t)array2) {
+		_PROP_RWLOCK_RDLOCK(array1->pa_rwlock);
+		_PROP_RWLOCK_RDLOCK(array2->pa_rwlock);
+	} else {
+		_PROP_RWLOCK_RDLOCK(array2->pa_rwlock);
+		_PROP_RWLOCK_RDLOCK(array1->pa_rwlock);
+	}
+
 	if (array1->pa_count != array2->pa_count)
-		return (FALSE);
+		goto out;
 	
 	for (idx = 0; idx < array1->pa_count; idx++) {
 		if (prop_object_equals(array1->pa_array[idx],
 				       array2->pa_array[idx]) == FALSE)
-			return (FALSE);
+			goto out;
 	}
 
-	return (TRUE);
+	rv = TRUE;
+
+ out:
+	_PROP_RWLOCK_UNLOCK(array1->pa_rwlock);
+	_PROP_RWLOCK_UNLOCK(array2->pa_rwlock);
+	return (rv);
 }
 
 static prop_array_t
@@ -196,6 +223,7 @@ _prop_array_alloc(unsigned int capacity)
 		_prop_object_init(&pa->pa_obj, &_prop_object_type_array);
 		pa->pa_obj.po_type = &_prop_object_type_array;
 
+		_PROP_RWLOCK_INIT(pa->pa_rwlock);
 		pa->pa_array = array;
 		pa->pa_capacity = capacity;
 		pa->pa_count = 0;
@@ -212,6 +240,10 @@ static boolean_t
 _prop_array_expand(prop_array_t pa, unsigned int capacity)
 {
 	prop_object_t *array, *oarray;
+
+	/*
+	 * Array must be WRITE-LOCKED.
+	 */
 
 	oarray = pa->pa_array;
 
@@ -234,21 +266,25 @@ _prop_array_iterator_next_object(void *v)
 {
 	struct _prop_array_iterator *pai = v;
 	prop_array_t pa = pai->pai_base.pi_obj;
-	prop_object_t po;
+	prop_object_t po = NULL;
 
 	_PROP_ASSERT(prop_object_is_array(pa));
 
+	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
+
 	if (pa->pa_version != pai->pai_base.pi_version)
-		return (NULL);	/* array changed during iteration */
+		goto out;	/* array changed during iteration */
 	
 	_PROP_ASSERT(pai->pai_index <= pa->pa_count);
 
 	if (pai->pai_index == pa->pa_count)
-		return (NULL);	/* we've iterated all objects */
+		goto out;	/* we've iterated all objects */
 	
 	po = pa->pa_array[pai->pai_index];
 	pai->pai_index++;
 
+ out:
+	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
 	return (po);
 }
 
@@ -260,8 +296,12 @@ _prop_array_iterator_reset(void *v)
 
 	_PROP_ASSERT(prop_object_is_array(pa));
 
+	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
+
 	pai->pai_index = 0;
 	pai->pai_base.pi_version = pa->pa_version;
+
+	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
 }
 
 /*
@@ -303,6 +343,8 @@ prop_array_copy(prop_array_t opa)
 	if (! prop_object_is_array(opa))
 		return (NULL);
 
+	_PROP_RWLOCK_RDLOCK(opa->pa_rwlock);
+
 	pa = _prop_array_alloc(opa->pa_count);
 	if (pa != NULL) {
 		for (idx = 0; idx < opa->pa_count; idx++) {
@@ -313,6 +355,7 @@ prop_array_copy(prop_array_t opa)
 		pa->pa_count = opa->pa_count;
 		pa->pa_flags = opa->pa_flags;
 	}
+	_PROP_RWLOCK_UNLOCK(opa->pa_rwlock);
 	return (pa);
 }
 
@@ -339,11 +382,16 @@ prop_array_copy_mutable(prop_array_t opa)
 unsigned int
 prop_array_capacity(prop_array_t pa)
 {
+	unsigned int rv;
 
 	if (! prop_object_is_array(pa))
 		return (0);
 
-	return (pa->pa_capacity);
+	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
+	rv = pa->pa_capacity;
+	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
+
+	return (rv);
 }
 
 /*
@@ -353,11 +401,16 @@ prop_array_capacity(prop_array_t pa)
 unsigned int
 prop_array_count(prop_array_t pa)
 {
+	unsigned int rv;
 
 	if (! prop_object_is_array(pa))
 		return (0);
 
-	return (pa->pa_count);
+	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
+	rv = pa->pa_count;
+	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
+
+	return (rv);
 }
 
 /*
@@ -369,13 +422,19 @@ prop_array_count(prop_array_t pa)
 boolean_t
 prop_array_ensure_capacity(prop_array_t pa, unsigned int capacity)
 {
+	boolean_t rv;
 
 	if (! prop_object_is_array(pa))
 		return (FALSE);
 
+	_PROP_RWLOCK_WRLOCK(pa->pa_rwlock);
 	if (capacity > pa->pa_capacity)
-		return (_prop_array_expand(pa, capacity));
-	return (TRUE);
+		rv = _prop_array_expand(pa, capacity);
+	else
+		rv = TRUE;
+	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
+
+	return (rv);
 }
 
 /*
@@ -398,8 +457,6 @@ prop_array_iterator(prop_array_t pa)
 	pai->pai_base.pi_reset = _prop_array_iterator_reset;
 	prop_object_retain(pa);
 	pai->pai_base.pi_obj = pa;
-	pai->pai_base.pi_version = pa->pa_version;
-	
 	_prop_array_iterator_reset(pai);
 
 	return (&pai->pai_base);
@@ -413,8 +470,10 @@ void
 prop_array_make_immutable(prop_array_t pa)
 {
 
+	_PROP_RWLOCK_WRLOCK(pa->pa_rwlock);
 	if (prop_array_is_immutable(pa) == FALSE)
 		pa->pa_flags |= PA_F_IMMUTABLE;
+	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
 }
 
 /*
@@ -424,8 +483,13 @@ prop_array_make_immutable(prop_array_t pa)
 boolean_t
 prop_array_mutable(prop_array_t pa)
 {
+	boolean_t rv;
 
-	return (prop_array_is_immutable(pa) == FALSE);
+	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
+	rv = prop_array_is_immutable(pa) == FALSE;
+	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
+
+	return (rv);
 }
 
 /*
@@ -435,64 +499,28 @@ prop_array_mutable(prop_array_t pa)
 prop_object_t
 prop_array_get(prop_array_t pa, unsigned int idx)
 {
-	prop_object_t po;
+	prop_object_t po = NULL;
 
 	if (! prop_object_is_array(pa))
 		return (NULL);
 
+	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
 	if (idx >= pa->pa_count)
-		return (NULL);
+		goto out;
 	po = pa->pa_array[idx];
 	_PROP_ASSERT(po != NULL);
+ out:
+	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
 	return (po);
 }
 
-/*
- * prop_array_set --
- *	Store a reference to an object at the specified array index.
- *	This method is not allowed to create holes in the array; the
- *	caller must either be setting the object just beyond the existing
- *	count or replacing an already existing object reference.
- */
-boolean_t
-prop_array_set(prop_array_t pa, unsigned int idx, prop_object_t po)
-{
-	prop_object_t opo;
-
-	if (! prop_object_is_array(pa))
-		return (FALSE);
-
-	if (prop_array_is_immutable(pa))
-		return (FALSE);
-	
-	if (idx == pa->pa_count)
-		return (prop_array_add(pa, po));
-	
-	_PROP_ASSERT(idx < pa->pa_count);
-
-	opo = pa->pa_array[idx];
-	_PROP_ASSERT(opo != NULL);
-	
-	prop_object_retain(po);
-	pa->pa_array[idx] = po;
-	pa->pa_version++;
-
-	prop_object_release(opo);
-
-	return (TRUE);
-}
-
-/*
- * prop_array_add --
- *	Add a refrerence to an object to the specified array, appending
- *	to the end and growing the array's capacity, if necessary.
- */
-boolean_t
-prop_array_add(prop_array_t pa, prop_object_t po)
+static boolean_t
+_prop_array_add(prop_array_t pa, prop_object_t po)
 {
 
-	if (! prop_object_is_array(pa))
-		return (FALSE);
+	/*
+	 * Array must be WRITE-LOCKED.
+	 */
 
 	_PROP_ASSERT(pa->pa_count <= pa->pa_capacity);
 
@@ -509,6 +537,70 @@ prop_array_add(prop_array_t pa, prop_object_t po)
 }
 
 /*
+ * prop_array_set --
+ *	Store a reference to an object at the specified array index.
+ *	This method is not allowed to create holes in the array; the
+ *	caller must either be setting the object just beyond the existing
+ *	count or replacing an already existing object reference.
+ */
+boolean_t
+prop_array_set(prop_array_t pa, unsigned int idx, prop_object_t po)
+{
+	prop_object_t opo;
+	boolean_t rv = FALSE;
+
+	if (! prop_object_is_array(pa))
+		return (FALSE);
+
+	_PROP_RWLOCK_WRLOCK(pa->pa_rwlock);
+
+	if (prop_array_is_immutable(pa))
+		goto out;
+	
+	if (idx == pa->pa_count) {
+		rv = _prop_array_add(pa, po);
+		goto out;
+	}
+	
+	_PROP_ASSERT(idx < pa->pa_count);
+
+	opo = pa->pa_array[idx];
+	_PROP_ASSERT(opo != NULL);
+	
+	prop_object_retain(po);
+	pa->pa_array[idx] = po;
+	pa->pa_version++;
+
+	prop_object_release(opo);
+
+	rv = TRUE;
+
+ out:
+	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
+	return (rv);
+}
+
+/*
+ * prop_array_add --
+ *	Add a refrerence to an object to the specified array, appending
+ *	to the end and growing the array's capacity, if necessary.
+ */
+boolean_t
+prop_array_add(prop_array_t pa, prop_object_t po)
+{
+	boolean_t rv;
+
+	if (! prop_object_is_array(pa))
+		return (FALSE);
+
+	_PROP_RWLOCK_WRLOCK(pa->pa_rwlock);
+	rv = _prop_array_add(pa, po);
+	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
+
+	return (rv);
+}
+
+/*
  * prop_array_remove --
  *	Remove the reference to an object from an array at the specified
  *	index.  The array will be compacted following the removal.
@@ -521,11 +613,15 @@ prop_array_remove(prop_array_t pa, unsigned int idx)
 	if (! prop_object_is_array(pa))
 		return;
 
+	_PROP_RWLOCK_WRLOCK(pa->pa_rwlock);
+
 	_PROP_ASSERT(idx < pa->pa_count);
 
 	/* XXX Should this be a _PROP_ASSERT()? */
-	if (prop_array_is_immutable(pa))
+	if (prop_array_is_immutable(pa)) {
+		_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
 		return;
+	}
 
 	po = pa->pa_array[idx];
 	_PROP_ASSERT(po != NULL);
@@ -534,6 +630,8 @@ prop_array_remove(prop_array_t pa, unsigned int idx)
 		pa->pa_array[idx - 1] = pa->pa_array[idx];
 	pa->pa_count--;
 	pa->pa_version++;
+
+	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
 	
 	prop_object_release(po);
 }
