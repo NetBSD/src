@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.68 2006/10/03 18:54:08 christos Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.69 2006/10/03 19:01:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.68 2006/10/03 18:54:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.69 2006/10/03 19:01:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -963,6 +963,7 @@ abortit:
 		 * and ".." set to point to the new parent.
 		 */
 		if (doingdirectory && newparent) {
+			KASSERT(dp != NULL);
 			dp->i_e2fs_nlink--;
 			dp->i_flag |= IN_CHANGE;
 			error = vn_rdwr(UIO_READ, fvp, (caddr_t)&dirbuf,
@@ -1000,7 +1001,8 @@ abortit:
 	vput(fdvp);
 	if (xp)
 		vput(fvp);
-	vrele(ap->a_fvp);
+	if (dp)
+		vrele(ap->a_fvp);
 	return (error);
 
 bad:
