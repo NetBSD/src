@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.46 2006/09/18 15:17:44 tron Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.47 2006/10/03 12:47:52 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -375,4 +375,9 @@ xfree/xc/lib/font/Type1/util.c			1.2
 
 	Fix vulnerability in Adobe Type 1 font handling.
 	[adrianp, ticket #10694]
+
+sys/arch/sparc64/sparc64/locore.s		1.217-1.218 via patch
+
+	Fix a couple of %y register save/restore errors.
+	[nakayama, ticket #10695]
 
