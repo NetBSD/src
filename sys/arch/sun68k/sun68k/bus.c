@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.17 2006/10/01 03:53:28 tsutsui Exp $	*/
+/*	$NetBSD: bus.c,v 1.18 2006/10/03 13:02:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -160,7 +160,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.17 2006/10/01 03:53:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.18 2006/10/03 13:02:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -521,8 +521,10 @@ sun68k_bus_map(bus_space_tag_t t, bus_type_t iospace, bus_addr_t addr,
 	 * and use a PROM mapping.
 	 */
 	if ((flags & _SUN68K_BUS_MAP_USE_PROM) != 0 &&
-	     find_prom_map(addr, iospace, size, hp) == 0)
+	     find_prom_map(addr, iospace, size, &v) == 0) {
+		*hp = (bus_space_handle_t)v;
 		return (0);
+	}
 
 	/*
 	 * Adjust the user's request to be page-aligned.

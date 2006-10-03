@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.27 2006/10/01 03:53:27 tsutsui Exp $	*/
+/*	$NetBSD: obio.c,v 1.28 2006/10/03 13:02:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.27 2006/10/01 03:53:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.28 2006/10/03 13:02:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,38 +272,11 @@ static struct prom_map {
 /*
  * Find a virtual address for a device at physical address 'pa'.
  * If one is found among the mappings already made by the PROM
- * at power-up time, use it.  Otherwise return 0 as a sign that
- * a mapping will have to be created.
- */
-caddr_t
-obio_find_mapping(paddr_t pa, psize_t sz)
-{
-	int i;
-	vsize_t off;
-
-	off = pa & PGOFSET;
-	pa -= off;
-	sz += off;
-
-	/* The saved mappings are all one page long. */
-	if (sz > PAGE_SIZE)
-		return (caddr_t)0;
-
-	/* Linear search for it.  The list is short. */
-	for (i = 0; i < PROM_MAP_CNT; i++) {
-		if (pa == prom_mappings[i].pa) {
-			return ((caddr_t)(prom_mappings[i].va + off));
-		}
-	}
-	return (caddr_t)0;
-}
-
-/*
- * The similar function with the above but used by bus_space(9)
+ * at power-up time, use it and return 0. Otherwise return errno
+ * as a sign that a mapping will have to be created.
  */
 int
-find_prom_map(bus_addr_t pa, bus_type_t iospace, int sz,
-    bus_space_handle_t *hp)
+find_prom_map(paddr_t pa, bus_type_t iospace, int sz, vaddr_t *vap)
 {
 	int i;
 	vsize_t off;
@@ -319,7 +292,7 @@ find_prom_map(bus_addr_t pa, bus_type_t iospace, int sz,
 	/* Linear search for it.  The list is short. */
 	for (i = 0; i < PROM_MAP_CNT; i++) {
 		if (pa == prom_mappings[i].pa) {
-			*hp = prom_mappings[i].va + off;
+			*vap = prom_mappings[i].va + off;
 			return 0;
 		}
 	}
