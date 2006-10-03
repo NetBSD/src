@@ -2031,6 +2031,9 @@ void *ptr;
 	frentry_t *fr;
 	ipfobj_t obj;
 
+	if (ptr == NULL)
+		return;
+
 	fr = ptr;
 	add = 0;
 	del = 0;
@@ -2060,10 +2063,10 @@ void *ptr;
 		fr->fr_flags |= FR_OUTQUE;
 	if (fr->fr_hits)
 		fr->fr_hits--;
-	if (fr && (opts & OPT_VERBOSE))
+	if ((opts & OPT_VERBOSE) != 0)
 		printfr(fr, ioctlfunc);
 
-	if (opts & OPT_DEBUG) {
+	if ((opts & OPT_DEBUG) != 0) {
 		binprint(fr, sizeof(*fr));
 		if (fr->fr_data != NULL)
 			binprint(fr->fr_data, fr->fr_dsize);
