@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.5 2006/08/27 22:31:55 christos Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.6 2006/10/03 15:45:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -917,7 +917,7 @@ _prop_object_internalize_unmap_file(
  * could be contention, but it probably won't cost that much unless the program
  * makes heavy use of property lists.
  */
-_PROP_MUTEX_DECL(_prop_refcnt_mutex)
+_PROP_MUTEX_DECL_STATIC(_prop_refcnt_mutex)
 #define	_PROP_REFCNT_LOCK()	_PROP_MUTEX_LOCK(_prop_refcnt_mutex)
 #define	_PROP_REFCNT_UNLOCK()	_PROP_MUTEX_UNLOCK(_prop_refcnt_mutex)
 
