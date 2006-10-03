@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_asm.S,v 1.3 2006/10/03 22:27:02 bjh21 Exp $	*/
+/*	$NetBSD: bus_asm.S,v 1.4 2006/10/03 23:15:18 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2006 Ben Harris
@@ -303,27 +303,72 @@ ENTRY(iobus_bs_wr_1)
 
 ENTRY(iobus_bs_wr_2)
 	mov	ip, sp
-	stmfd	sp!, {r4, fp, ip, lr, pc}
+	stmfd	sp!, {r4-r10, fp, ip, lr, pc}
 	sub	fp, ip, #4
-	add	r12, r1, r2, lsl r0
+	add	r8, r1, r2, lsl r0
+	mov	r9, r3
 	mov	r2, #1
 	mov	r0, r2, lsl r0
-	ldr	r2, [sp, #20]
+	ldr	r10, [sp, #44]
+
+	teq	r0, #4			/* Is the step 4? */
+	movne	r7, r10			/* If not, do the whole lot slowly. */
+	rsbeq	r7, r9, #0		/* Otherwise, go slowly to a */
+	andeq	r7, r7, #15		/* 16-byte boundary. */
+	moveq	r7, r7, lsr #1		/* Convert to uint16_ts */
+	sub	r10, r10, r7		/* Adjust fast transfer len to match */
+	cmp	r10, #8
+	addlt	r7, r7, r10		/* If remaining fast xfer is <8 */
+	movlt	r10, #0			/* make it zero and correct r7. */
 
 	/* Make sure that we have a positive length */
-	cmp	r2, #0x00000000
-	ldmledb	fp, {fp, sp, pc}
+	teq	r7, #0
+	beq	2f
 
-1:
-	ldrb	r1, [r3], #0x0001
-	ldrb	r4, [r3], #1
+1:	ldrb	r1, [r9], #0x0001
+	ldrb	r4, [r9], #1
 	orr	r1, r1, r4, lsl #8
 	orr	r1, r1, r1, lsl #16
-	str	r1, [r12], r0
-	subs	r2, r2, #0x00000001
+	str	r1, [r8], r0
+	subs	r7, r7, #1
 	bgt	1b
 
-	ldmdb	fp, {r4, fp, sp, pc}
+2:	teq	r10, #0
+	ldmeqdb	fp, {r4-r10, fp, sp, pc}
+
+	/*
+	 * Fast write_region_2 code.  This is at its best when dealing with
+	 * 16-byte-aligned blocks of memory, which is arranged by the code
+	 * above.
+	 *
+	 * The EOR trick goes:
+	 *				rH = (H)(L)
+	 * eor	rL, rH, rH, lsl #16	rL = (H^L)(L)
+	 * eor	rH, rH, rL, lsr #16	rH = (H)(L^H^L) = (H)(H)
+	 * eor	rL, rL, rH, lsl #16	rL = (H^L^H)(L) = (L)(L)
+	 */
+	sub	r10, r10, #7
+2:	ldmia	r9!, {r1, r3, r5, r7}
+	subs	r10, r10, #8
+	eor	r0, r1, r1, lsl #16
+	eor	r2, r3, r3, lsl #16
+	eor	r4, r5, r5, lsl #16
+	eor	r6, r7, r7, lsl #16
+	eor	r1, r1, r0, lsr #16
+	eor	r3, r3, r2, lsr #16
+	eor	r5, r5, r4, lsr #16
+	eor	r7, r7, r6, lsr #16
+	eor	r0, r0, r1, lsl #16
+	eor	r2, r2, r3, lsl #16
+	eor	r4, r4, r5, lsl #16
+	eor	r6, r6, r7, lsl #16
+	stmia	r8!, {r0-r7}
+	bgt	2b
+	adds	r7, r10, #7
+	ldmeqdb	fp, {r4-r10, fp, sp, pc}
+	mov	r0, #4
+	mov	r10, #0
+	b	1b
 
 /*
  * set multiple
