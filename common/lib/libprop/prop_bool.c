@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_bool.c,v 1.5 2006/08/22 21:21:23 thorpej Exp $	*/
+/*	$NetBSD: prop_bool.c,v 1.6 2006/10/03 15:45:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ struct _prop_bool {
 static struct _prop_bool _prop_bool_true;
 static struct _prop_bool _prop_bool_false;
 
-_PROP_MUTEX_DECL(_prop_bool_initialized_mutex)
+_PROP_MUTEX_DECL_STATIC(_prop_bool_initialized_mutex)
 static boolean_t	_prop_bool_initialized;
 
 static void		_prop_bool_free(void *);

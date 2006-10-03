@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.6 2006/09/09 06:59:28 thorpej Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.7 2006/10/03 15:45:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ static const struct rb_tree_ops _prop_number_rb_tree_ops = {
 static struct rb_tree _prop_number_tree;
 static boolean_t _prop_number_tree_initialized;
 
-_PROP_MUTEX_DECL(_prop_number_tree_mutex)
+_PROP_MUTEX_DECL_STATIC(_prop_number_tree_mutex)
 
 static void
 _prop_number_free(void *v)
