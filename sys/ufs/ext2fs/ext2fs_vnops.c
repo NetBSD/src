@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.67 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.68 2006/10/03 18:54:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.67 2006/07/23 22:06:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.68 2006/10/03 18:54:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -997,8 +997,7 @@ abortit:
 		xp->i_flag &= ~IN_RENAME;
 	}
 	VN_KNOTE(fvp, NOTE_RENAME);
-	if (dp)
-		vput(fdvp);
+	vput(fdvp);
 	if (xp)
 		vput(fvp);
 	vrele(ap->a_fvp);
