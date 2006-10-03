@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.15 2006/10/01 03:53:27 tsutsui Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.16 2006/10/03 13:02:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.15 2006/10/01 03:53:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.16 2006/10/03 13:02:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,8 +152,7 @@ bus_mapin(int bustype, int pa, int sz)
 
 	/* Borrow PROM mappings if we can. */
 	if (bustype == BUS_OBIO) {
-		va = (vaddr_t) obio_find_mapping(pa, sz);
-		if (va != 0)
+		if (find_prom_map(pa, PMAP_OBIO, sz, &va) == 0)
 			goto done;
 	}
 
