@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.83 2006/06/26 10:21:59 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.84 2006/10/03 09:38:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.83 2006/06/26 10:21:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.84 2006/10/03 09:38:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1109,6 +1109,8 @@ sa_switchcall(void *arg)
 			SCHED_LOCK(s);
 			sa_putcachelwp(p, l2); /* sets L_SA */
 			vp->savp_lwp = l;
+			l->l_flag &= ~L_SA_BLOCKING;
+			p->p_nrlwps--;
 			mi_switch(l2, NULL);
 			/* mostly NOTREACHED */
 			SCHED_ASSERT_UNLOCKED();
