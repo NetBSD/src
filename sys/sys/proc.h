@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.225 2006/07/30 21:58:11 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.226 2006/10/03 11:23:32 elad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -185,6 +185,7 @@ struct proc {
 
 	int		p_exitsig;	/* signal to send to parent on exit */
 	int		p_flag;		/* P_* flags. */
+	int		p_flag2;	/* second batch of P_* flags. */
 	char		p_stat;		/* S* process status. */
 	char		p_pad1[3];
 

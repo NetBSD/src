@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.157 2006/09/08 20:58:58 elad Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.158 2006/10/03 11:23:32 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -561,6 +561,9 @@ struct kinfo_proc2 {
 	uint64_t p_realstat;		/* LONG: non-LWP process status */
 	uint32_t p_svuid;		/* UID_T: saved user id */
 	uint32_t p_svgid;		/* GID_T: saved group id */
+
+	int32_t p_flag2;		/* INT: second batch of P_* flags */
+	int32_t p_pad;			/* INT: unused, free for use */
 };
 
 /*
