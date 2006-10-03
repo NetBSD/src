@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.226 2006/10/03 20:01:19 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.227 2006/10/03 23:05:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -137,7 +137,8 @@
 #define LNGSHFT		3
 #define PTRSZ		8
 #define PTRSHFT		3
-#define	POINTER		.xword
+#define POINTER		.xword
+#define ULONG		.xword
 /* Now instructions to load/store pointers & long ints */
 #define LDLNG		ldx
 #define LDULNG		ldx
@@ -158,6 +159,7 @@
 #define PTRSZ		4
 #define PTRSHFT		2
 #define POINTER		.word
+#define ULONG		.word
 /* Instructions to load/store pointers & long ints */
 #define LDLNG		ldsw
 #define LDULNG		lduw
@@ -3954,28 +3956,28 @@ ENTRY(sparc64_ipi_flush_all)
 	jmpl	%l1, %g0
 	 nop
 
-	.align 8
-4:	.xword	0x0
-5:	.xword	0x0
-7:	.xword	0x0
+	.align PTRSZ
+4:	ULONG	0x0
+5:	ULONG	0x0
+7:	ULONG	0x0
 6:
 
 #define DATA(name) \
         .data ; \
-        .align 8 ; \
+        .align PTRSZ ; \
         .globl  name ; \
 name:
 
 DATA(mp_tramp_code)
-	.xword	1b
+	POINTER	1b
 DATA(mp_tramp_code_len)
-	.xword	6b-1b
+	ULONG	6b-1b
 DATA(mp_tramp_tlb_slots)
-	.xword	4b-1b
+	ULONG	4b-1b
 DATA(mp_tramp_func)
-	.xword	5b-1b
+	ULONG	5b-1b
 DATA(mp_tramp_ci)
-	.xword	7b-1b
+	ULONG	7b-1b
 
 	.text
 	.align 32
