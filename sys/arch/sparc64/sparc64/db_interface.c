@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.89 2006/09/14 22:43:27 he Exp $ */
+/*	$NetBSD: db_interface.c,v 1.90 2006/10/03 21:05:46 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.89 2006/09/14 22:43:27 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.90 2006/10/03 21:05:46 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -305,7 +305,7 @@ struct cpu_info *ddb_cpuinfo;
 
 static int db_suspend_others(void);
 static void db_resume_others(void);
-static void ddb_suspend(struct trapframe *);
+static void ddb_suspend(struct trapframe64 *);
 
 __cpu_simple_lock_t db_lock;
 int ddb_cpu = NOCPU;
@@ -343,7 +343,7 @@ db_resume_others(void)
 }
 
 static void
-ddb_suspend(struct trapframe *tf)
+ddb_suspend(struct trapframe64 *tf)
 {
 
 	sparc64_ipi_pause_thiscpu(tf);
