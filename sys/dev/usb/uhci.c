@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.201 2006/09/25 22:15:15 jmcneill Exp $	*/
+/*	$NetBSD: uhci.c,v 1.202 2006/10/03 18:21:53 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.201 2006/09/25 22:15:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.202 2006/10/03 18:21:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1806,6 +1806,7 @@ uhci_alloc_std_chain(struct uhci_pipe *upipe, uhci_softc_t *sc, int len,
 	for (i = ntd; i >= 0; i--) {
 		p = uhci_alloc_std(sc);
 		if (p == NULL) {
+			KASSERT(lastp != NULL);
 			uhci_free_std_chain(sc, lastp, NULL);
 			return (USBD_NOMEM);
 		}
