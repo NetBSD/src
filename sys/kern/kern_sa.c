@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.84 2006/10/03 09:38:29 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.85 2006/10/03 18:16:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.84 2006/10/03 09:38:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.85 2006/10/03 18:16:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1259,6 +1259,7 @@ sa_unblock_userret(struct lwp *l)
 			lwp_exit(l);
 		}
 
+		KDASSERT(l2 != NULL);
 		PHOLD(l2);
 
 		KDASSERT(sast != NULL);
