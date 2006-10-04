@@ -1,4 +1,4 @@
-.\" $NetBSD: bthidev.4,v 1.5 2006/09/10 15:45:56 plunky Exp $
+.\" $NetBSD: bthidev.4,v 1.6 2006/10/04 19:23:59 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -64,10 +64,12 @@ driver during autoconfiguration:
 Local device address.
 .It remote-bdaddr
 Remote device address.
-.It device-type
-Should be
-.Sq bthidev ,
-indicating a Human Interface Device.
+.It service-name
+The
+.Nm
+driver matches the
+.Sq HID
+service.
 .It control-psm
 This, if set, will indicate the PSM to use for the Control channel.
 If not set,

@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.4 2006/09/12 18:18:01 plunky Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.5 2006/10/04 19:23:59 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.4 2006/09/12 18:18:01 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.5 2006/10/04 19:23:59 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -116,9 +116,6 @@ static int  bthidev_print(void *, const char *);
 CFATTACH_DECL(bthidev, sizeof(struct bthidev_softc),
     bthidev_match, bthidev_attach, bthidev_detach, NULL);
 
-/* btdev identity matcher */
-static int bthidev_identify(struct btdev *, prop_dictionary_t);
-
 /* bluetooth(9) protocol methods for L2CAP */
 static void  bthidev_connecting(void *);
 static void  bthidev_ctl_connected(void *);
@@ -159,8 +156,11 @@ bthidev_match(struct device *self, struct cfdata *cfdata, void *aux)
 	prop_dictionary_t dict = aux;
 	prop_object_t obj;
 
-	obj = prop_dictionary_get(dict, BTDEVtype);
-	return prop_string_equals_cstring(obj, "bthidev");
+	obj = prop_dictionary_get(dict, BTDEVservice);
+	if (prop_string_equals_cstring(obj, "HID"))
+		return 1;
+
+	return 0;
 }
 
 static void
@@ -187,8 +187,6 @@ bthidev_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_flags = BTHID_CONNECTING;
 	sc->sc_ctlpsm = L2CAP_PSM_HID_CNTL;
 	sc->sc_intpsm = L2CAP_PSM_HID_INTR;
-
-	sc->sc_btdev.sc_identify = bthidev_identify;
 
 	/*
 	 * extract config from proplist
@@ -356,38 +354,6 @@ bthidev_print(void *aux, const char *pnp)
 		aprint_normal(" reportid %d", ba->ba_id);
 
 	return UNCONF;
-}
-
-/*
- * btdev identity matcher
- */
-static int
-bthidev_identify(struct btdev *dev, prop_dictionary_t dict)
-{
-	struct bthidev_softc *sc = (struct bthidev_softc *)dev;
-	prop_object_t obj;
-
-	obj = prop_dictionary_get(dict, BTDEVtype);
-	if (!prop_string_equals_cstring(obj, "bthidev"))
-		return 0;
-
-	obj = prop_dictionary_get(dict, BTDEVladdr);
-	if (!prop_data_equals_data(obj, &sc->sc_laddr, sizeof(bdaddr_t)))
-		return 0;
-
-	obj = prop_dictionary_get(dict, BTDEVraddr);
-	if (!prop_data_equals_data(obj, &sc->sc_raddr, sizeof(bdaddr_t)))
-		return 0;
-
-	obj = prop_dictionary_get(dict, BTHIDEVcontrolpsm);
-	if (!prop_number_equals_integer(obj, sc->sc_ctlpsm))
-		return 0;
-
-	obj = prop_dictionary_get(dict, BTHIDEVinterruptpsm);
-	if (!prop_number_equals_integer(obj, sc->sc_intpsm))
-		return 0;
-
-	return 1;
 }
 
 /*****************************************************************************
