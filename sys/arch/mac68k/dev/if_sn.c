@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.39 2005/12/24 23:24:00 perry Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.40 2006/10/04 21:30:05 christos Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.39 2005/12/24 23:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.40 2006/10/04 21:30:05 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -104,9 +104,7 @@ int sndebug = 0;
  * SONIC buffers need to be aligned 16 or 32 bit aligned.
  * These macros calculate and verify alignment.
  */
-#define	ROUNDUP(p, N)	(((int) p + N - 1) & ~(N - 1))
-
-#define SOALIGN(m, array)	(m ? (ROUNDUP(array, 4)) : (ROUNDUP(array, 2)))
+#define SOALIGN(m, array)	(m ? (roundup(array, 4)) : (roundup(array, 2)))
 
 #define LOWER(x) ((unsigned)(x) & 0xffff)
 #define UPPER(x) ((unsigned)(x) >> 16)
@@ -156,7 +154,7 @@ snsetup(struct sn_softc	*sc, u_int8_t *lladdr)
 	 * around problems near the end of 64k !!
 	 */
 	p = sc->space;
-	pp = (u_char *)ROUNDUP ((int)p, PAGE_SIZE);
+	pp = (u_char *)roundup((int)p, PAGE_SIZE);
 	p = pp;
 
 	/*
