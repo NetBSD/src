@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.242 2006/09/25 20:28:47 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.243 2006/10/04 14:23:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -259,6 +259,7 @@
 #define	howmany(x, y)	(((x)+((y)-1))/(y))
 #endif
 #define	roundup(x, y)	((((x)+((y)-1))/(y))*(y))
+#define rounddown(x,y)	(((x)/(y))*(y))
 #define	powerof2(x)	((((x)-1)&(x))==0)
 
 /* Macros for min/max. */
