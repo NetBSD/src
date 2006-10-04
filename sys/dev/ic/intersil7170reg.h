@@ -1,4 +1,4 @@
-/*	$NetBSD: intersil7170.h,v 1.4 2000/11/11 11:18:07 pk Exp $	*/
+/*	$NetBSD: intersil7170reg.h,v 1.1 2006/10/04 15:04:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_INTERSIL7170_H
-#define	_INTERSIL7170_H
+#ifndef	_INTERSIL7170REG_H_
+#define	_INTERSIL7170REG_H_
 
 /*
  * Driver support for the intersil7170 used in sun[34]s to provide
@@ -54,22 +54,22 @@
  * manipulating the TOD.
  */
 
-struct intersil_dt {		       /* from p. 7 of 10 */
-    u_int8_t dt_csec;
-    u_int8_t dt_hour;
-    u_int8_t dt_min;
-    u_int8_t dt_sec;
-    u_int8_t dt_month;
-    u_int8_t dt_day;
-    u_int8_t dt_year;
-    u_int8_t dt_dow;
-};
+struct intersil_dt {		/* from p. 7 of 10 */
+	uint8_t dt_csec;   
+	uint8_t dt_hour;   
+	uint8_t dt_min;
+	uint8_t dt_sec;
+	uint8_t dt_month;
+	uint8_t dt_day;
+	uint8_t dt_year;   
+	uint8_t dt_dow;
+};  
 
 struct intersil7170 {
-    struct intersil_dt counters;
-    struct intersil_dt clk_ram;	/* should be ok as both are word aligned */
-    u_int8_t clk_intr_reg;
-    u_int8_t clk_cmd_reg;
+	struct intersil_dt counters; 
+	struct intersil_dt clk_ram; /* should be ok as both are word aligned */
+	uint8_t clk_intr_reg;
+	uint8_t clk_cmd_reg;
 };
 
 /* Indices to time-of-day clock registers */
@@ -103,6 +103,10 @@ struct intersil7170 {
 #define INTERSIL_CMD_TEST_MODE      0x20
 #define INTERSIL_CMD_NORMAL_MODE    0x0
 
+#define INTERSIL_COMMAND(run, interrupt)				\
+        ((run) | (interrupt) | INTERSIL_CMD_FREQ_32K |			\
+	INTERSIL_CMD_24HR_MODE | INTERSIL_CMD_NORMAL_MODE)
+   
 /* bit assignments for interrupt register r/w, p 7 of 10 */
 
 #define INTERSIL_INTER_ALARM       0x1 /* r/w */
@@ -114,9 +118,7 @@ struct intersil7170 {
 #define INTERSIL_INTER_DAYS       0x40 /* r/w */
 #define INTERSIL_INTER_PENDING    0x80 /* read-only */
 
-#define INTERSIL_INTER_BITS "\20\10PENDING\7DAYS\6HRS\5MIN\4SCDS\3DSEC\2CSEC\1ALARM"
+#define INTERSIL_INTER_BITS	\
+	"\20\10PENDING\7DAYS\6HRS\5MIN\4SCDS\3DSEC\2CSEC\1ALARM"
 
-#ifndef sun3 /* XXX sun3 does not use MI driver, which needs bus_space(9) */
-todr_chip_handle_t intersil7170_attach(bus_space_tag_t, bus_space_handle_t, int);
-#endif
-#endif	/* _INTERSIL7170_H */
+#endif	/* _INTERSIL7170REG_H_ */
