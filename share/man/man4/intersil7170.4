@@ -1,4 +1,4 @@
-.\"	$NetBSD: intersil7170.4,v 1.9 2003/06/27 18:32:02 wiz Exp $
+.\"	$NetBSD: intersil7170.4,v 1.10 2006/10/04 15:07:03 tsutsui Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,22 +34,23 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 20, 2000
+.Dd October 1, 2006
 .Dt INTERSIL7170 4
 .Os
 .Sh NAME
 .Nm intersil7170
 .Nd
-.Tn Intersil time-of-day clock driver
+.Tn Intersil ICM7170 time-of-day clock driver
 .Sh SYNOPSIS
-.In dev/ic/intersil7170.h
+.In dev/ic/intersil7170reg.h
+.In dev/ic/intersil7170var.h
 .Cd "define intersil7170"
 .Cd "file   dev/ic/intersil7170.c    intersil7170"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides access to the
-.Tn Intersil 7170
+.Tn Intersil ICM7170
 time-of-day clock chip.
 Access methods to retrieve and set date and time
 are provided through the
@@ -57,18 +58,39 @@ are provided through the
 interface defined in
 .Xr todr 9 .
 .Pp
-To tie an instance of this device to the system, use
+To tie an instance of this device to the system, use the
+.Fn intersil7170_attach
+function and the
+.Fa intersil7170_softc
+structure defined as follows:
 .Pp
-.Ft "todr_chip_handle_t"
-.Fn intersil7170_attach "bus_space_tag_t bus_tag" \
-"bus_space_handle_t bus_handle" "int year0"
+.nr nS 1
+.Ft "void"
+.Fn intersil7170_attach "struct intersil7170_softc *"
+.Pp
+.Bd -literal
+struct intersil7170_softc {
+	struct device	sc_dev;
+	bus_space_tag_t	sc_bst;
+	bus_space_handle_t sc_bsh;
+	struct todr_chip_handle sc_handle;
+	u_int		sc_year0;
+	u_int		sc_flag;
+};
+.Ed
 .Pp
 .Bl -tag -width Dv -offset indent
 .It Fa bus_tag
 .It Fa bus_handle
 Specify bus space access to the chip's non-volatile memory
 .Pq including the clock registers .
-.It Fa year0
+.It Fa sc_handle
+TODR handle passed to the
+.Fn todr_attach
+function to register
+.Xr todr 9
+interface.
+.It Fa sc_year0
 The actual year represented by the clock's
 .Sq year
 counter.
@@ -76,14 +98,17 @@ This is generally dependent on the system configuration in which
 the clock device is mounted.
 For instance, on Sun Microsystems machines
 the convention is to have clock's two-digit year represent the year 1968.
+.It Fa sc_flag
+This flag is used to specify machine-dependent features.
 .El
 .Pp
 Note that if the resulting date retrieved with the todr_gettime() method
 is earlier that January 1, 1970, the driver will assume that the chip's
 year counter actually represents a year in the 21st century.
-This behaviour can be overridden by setting the global variable
-.Va intersil7170_auto_century_adjust
-to zero.
+This behaviour can be overridden by setting the
+.Va INTERSIL7170_NO_CENT_ADJUST
+flag in
+.Fa sc_flag .
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr todr 9
