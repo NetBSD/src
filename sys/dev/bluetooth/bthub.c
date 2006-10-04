@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.4 2006/09/22 04:20:24 thorpej Exp $	*/
+/*	$NetBSD: bthub.c,v 1.5 2006/10/04 15:38:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.4 2006/09/22 04:20:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.5 2006/10/04 15:38:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -76,7 +76,7 @@ dev_type_ioctl(bthubioctl);
 
 const struct cdevsw bthub_cdevsw = {
 	nullopen, nullclose, noread, nowrite, bthubioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 /* bthub functions */
