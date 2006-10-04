@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.120 2006/06/07 22:33:36 kardel Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.121 2006/10/04 15:59:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.120 2006/06/07 22:33:36 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.121 2006/10/04 15:59:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1147,10 +1147,11 @@ ncr53c9x_sched(sc)
 			sc->sc_nexus = ecb;
 			ncr53c9x_select(sc, ecb);
 			break;
-		} else
+		} else {
 			NCR_TRACE(("%d:%d busy\n",
 			    periph->periph_target,
 			    periph->periph_lun));
+		}
 	}
 }
 
