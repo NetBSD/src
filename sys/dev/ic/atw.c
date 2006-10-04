@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.120 2006/09/24 03:53:08 jmcneill Exp $  */
+/*	$NetBSD: atw.c,v 1.121 2006/10/04 15:03:25 christos Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.120 2006/09/24 03:53:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.121 2006/10/04 15:03:25 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -2880,13 +2880,15 @@ atw_intr(void *arg)
 			/* Sweep up transmit descriptors. */
 			atw_txintr(sc);
 
-			if (txstatus & ATW_INTR_TLT)
+			if (txstatus & ATW_INTR_TLT) {
 				DPRINTF(sc, ("%s: tx lifetime exceeded\n",
 				    sc->sc_dev.dv_xname));
+			}
 
-			if (txstatus & ATW_INTR_TRT)
+			if (txstatus & ATW_INTR_TRT) {
 				DPRINTF(sc, ("%s: tx retry limit exceeded\n",
 				    sc->sc_dev.dv_xname));
+			}
 
 			/* If Tx under-run, increase our transmit threshold
 			 * if another is available.
