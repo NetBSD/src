@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.40 2006/04/05 16:55:01 garbled Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.41 2006/10/04 21:27:27 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -336,9 +336,9 @@ set_ptn_size(menudesc *m, void *arg)
 			 * but keep cylinder alignment
 			 */
 			if (f < 0)
-				f = -ROUNDUP(-f, dlcylsize);
+				f = -roundup(-f, dlcylsize);
 			else
-				f = ROUNDDOWN(f, dlcylsize);
+				f = rounddown(f, dlcylsize);
 			size += f;
 			if (size != 0) {
 				pi->free_space -= f;
@@ -429,7 +429,7 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 
 		/* Steal space from swap to make things fit.. */
 		if (pi.free_space < 0) {
-			i = ROUNDUP(-pi.free_space, dlcylsize);
+			i = roundup(-pi.free_space, dlcylsize);
 			if (i > pi.ptn_sizes[PI_SWAP].size)
 				i = pi.ptn_sizes[PI_SWAP].size;
 			pi.ptn_sizes[PI_SWAP].size -= i;
@@ -438,7 +438,7 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 
 		/* Add space for 2 system dumps to / (traditional) */
 		i = get_ramsize() * sm;
-		i = ROUNDUP(i, dlcylsize);
+		i = roundup(i, dlcylsize);
 		if (pi.free_space > i * 2)
 			i *= 2;
 		if (pi.free_space > i) {
@@ -502,7 +502,7 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 	for (p = pi.ptn_sizes; p->mount[0]; p++, part_start += size) {
 		size = p->size;
 		if (p == pi.pool_part) {
-			size += ROUNDDOWN(pi.free_space, dlcylsize);
+			size += rounddown(pi.free_space, dlcylsize);
 			if (p->limit != 0 && size > p->limit)
 				size = p->limit;
 		}

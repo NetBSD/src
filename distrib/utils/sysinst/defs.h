@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.131 2006/09/04 02:20:40 hubertf Exp $	*/
+/*	$NetBSD: defs.h,v 1.132 2006/10/04 21:27:27 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -149,12 +149,9 @@ enum {
 #define nelem(x) (sizeof (x) / sizeof *(x))
 
 /* Round up to the next full cylinder size */
-#define ROUNDDOWN(n,d) (((n)/(d)) * (d))
-#define DIVUP(n,d) (((n) + (d) - 1) / (d))
-#define ROUNDUP(n,d) (DIVUP((n), (d)) * (d))
 #define NUMSEC(size, sizemult, cylsize) \
 	((size) == -1 ? -1 : (sizemult) == 1 ? (size) : \
-	 ROUNDUP((size) * (sizemult), (cylsize)))
+	 roundup((size) * (sizemult), (cylsize)))
 
 /* What FS type? */
 #define PI_ISBSDFS(p) ((p)->pi_fstype == FS_BSDLFS || \
