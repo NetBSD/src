@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.32 2006/01/02 19:10:33 garbled Exp $	*/
+/*	$NetBSD: error.c,v 1.33 2006/10/04 15:00:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: error.c,v 1.32 2006/01/02 19:10:33 garbled Exp $");
+__RCSID("$NetBSD: error.c,v 1.33 2006/10/04 15:00:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,6 +134,8 @@ exvwarning(int sv_errno, const char *msg, va_list ap)
 		flushout(&output);
 	if (commandname)
 		outfmt(&errout, "%s: ", commandname);
+	else
+		outfmt(&errout, "%s: ", getprogname());
 	if (msg != NULL) {
 		doformat(&errout, msg, ap);
 		if (sv_errno >= 0)
