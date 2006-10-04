@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.68 2006/09/07 02:40:32 dogcow Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.69 2006/10/04 15:51:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.68 2006/09/07 02:40:32 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.69 2006/10/04 15:51:49 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -894,8 +894,9 @@ egioctl(ifp, cmd, data)
 		} else {
 			sc->eg_pcb[0] = EG_CMD_GETSTATS;
 			sc->eg_pcb[1] = 0;
-			if (egwritePCB(sc->sc_iot, sc->sc_ioh, sc->eg_pcb) != 0)
+			if (egwritePCB(sc->sc_iot, sc->sc_ioh, sc->eg_pcb) != 0) {
 				DPRINTF(("write error\n"));
+			}
 			/*
 			 * XXX deal with flags changes:
 			 * IFF_MULTICAST, IFF_PROMISC,
