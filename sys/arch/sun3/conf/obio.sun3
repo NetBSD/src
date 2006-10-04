@@ -1,4 +1,4 @@
-# $NetBSD: obio.sun3,v 1.3 2001/11/20 12:56:41 lukem Exp $
+# $NetBSD: obio.sun3,v 1.4 2006/10/04 15:14:49 tsutsui Exp $
 
 # On-board I/O space (required)
 obio0 at mainbus?
@@ -7,6 +7,6 @@ obio0 at mainbus?
 zsc0	at obio0 addr 0x000000
 zsc1	at obio0 addr 0x020000
 eeprom0	at obio0 addr 0x040000
-clock0	at obio0 addr 0x060000
+oclock0	at obio0 addr 0x060000
 memerr0	at obio0 addr 0x080000
 intreg0	at obio0 addr 0x0A0000

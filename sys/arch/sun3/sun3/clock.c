@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.56 2006/09/05 06:45:05 gdamore Exp $	*/
+/*	$NetBSD: clock.c,v 1.57 2006/10/04 15:14:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.56 2006/09/05 06:45:05 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.57 2006/10/04 15:14:49 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.56 2006/09/05 06:45:05 gdamore Exp $");
 #include <m68k/asm_single.h>
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/leds.h>
 
@@ -104,7 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.56 2006/09/05 06:45:05 gdamore Exp $");
 #include <sun3/sun3/machdep.h>
 
 #include <dev/clock_subr.h>
-#include <dev/ic/intersil7170.h>
+#include <dev/ic/intersil7170reg.h>
+#include <dev/ic/intersil7170var.h>
 
 extern int intrcnt[];
 
@@ -113,63 +115,54 @@ extern int intrcnt[];
 
 void _isr_clock(void);	/* in locore.s */
 void clock_intr(struct clockframe);
-static int clk_get_secs(todr_chip_handle_t, volatile struct timeval *);
-static int clk_set_secs(todr_chip_handle_t, volatile struct timeval *);
-static struct todr_chip_handle clk_hdl = {
-	.todr_gettime = clk_get_secs,
-	.todr_settime = clk_set_secs,
-};
 
 static volatile void *intersil_va;
 
-#define intersil_clock ((volatile struct intersil7170 *) intersil_va)
-
-#define intersil_command(run, interrupt) \
-	(run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
-	 INTERSIL_CMD_NORMAL_MODE)
+#define intersil_clock ((volatile struct intersil7170 *)intersil_va)
 
 #define intersil_clear() (void)intersil_clock->clk_intr_reg
 
-static int  clock_match(struct device *, struct cfdata *, void *);
-static void clock_attach(struct device *, struct device *, void *);
+static int  oclock_match(struct device *, struct cfdata *, void *);
+static void oclock_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(clock, sizeof(struct device),
-    clock_match, clock_attach, NULL, NULL);
+CFATTACH_DECL(oclock, sizeof(struct intersil7170_softc),
+    oclock_match, oclock_attach, NULL, NULL);
 
 static int 
-clock_match(struct device *parent, struct cfdata *cf, void *args)
+oclock_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct confargs *ca = args;
+	struct confargs *ca = aux;
 
 	/* This driver only supports one unit. */
 	if (intersil_va)
-		return (0);
+		return 0;
 
 	/* Make sure there is something there... */
 	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
-		return (0);
+		return 0;
 
 	/* Default interrupt priority. */
 	if (ca->ca_intpri == -1)
 		ca->ca_intpri = CLOCK_PRI;
 
-	return (1);
+	return 1;
 }
 
 static void 
-clock_attach(struct device *parent, struct device *self, void *args)
+oclock_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct confargs *ca = args;
-	caddr_t va;
-
-	printf("\n");
+	struct confargs *ca = aux;
+	struct intersil7170_softc *sc = (void *)self;
 
 	/* Get a mapping for it. */
-	va = bus_mapin(ca->ca_bustype,
-	    ca->ca_paddr, sizeof(struct intersil7170));
-	if (!va)
-		panic("clock_attach");
-	intersil_va = va;
+	sc->sc_bst = ca->ca_bustag;
+	if (bus_space_map(sc->sc_bst, ca->ca_paddr, sizeof(struct intersil7170),
+	    0, &sc->sc_bsh) != 0) {
+		printf(": can't map registers\n");
+		return;
+	}
+
+	intersil_va = bus_space_vaddr(sc->sc_bst, sc->sc_bsh);
 
 	/*
 	 * Set the clock to the correct interrupt rate, but
@@ -178,12 +171,20 @@ clock_attach(struct device *parent, struct device *self, void *args)
 	 * at this point, so the clock interrupts should not
 	 * affect us, but we need to set the rate...
 	 */
-	intersil_clock->clk_cmd_reg =
-	    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
-	intersil_clear();
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, INTERSIL_ICMD,
+	    INTERSIL_COMMAND(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE));
+	(void)bus_space_read_1(sc->sc_bst, sc->sc_bsh, INTERSIL_IINTR);
 
 	/* Set the clock to 100 Hz, but do not enable it yet. */
-	intersil_clock->clk_intr_reg = INTERSIL_INTER_CSECONDS;
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh,
+	    INTERSIL_IINTR, INTERSIL_INTER_CSECONDS);
+
+	sc->sc_year0 = 1968;
+	intersil7170_attach(sc);
+
+	printf("\n");
+
+	todr_attach(&sc->sc_handle);
 
 	/*
 	 * Can not hook up the ISR until cpu_initclocks()
@@ -191,7 +192,6 @@ clock_attach(struct device *parent, struct device *self, void *args)
 	 * For now, the handler is _isr_autovec(), which
 	 * will complain if it gets clock interrupts.
 	 */
-	todr_attach(&clk_hdl);
 }
 
 /*
@@ -245,7 +245,7 @@ set_clk_mode(u_char on, u_char off, int enable_clk)
 		 * interrupt register to clear any pending signals there.
 		 */
 		intersil_clock->clk_cmd_reg =
-		    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
+		    INTERSIL_COMMAND(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
 		intersil_clear();
 	}
 
@@ -255,7 +255,7 @@ set_clk_mode(u_char on, u_char off, int enable_clk)
 	/* Turn the clock back on (maybe) */
 	if (intersil_va && enable_clk)
 		intersil_clock->clk_cmd_reg =
-		    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+		    INTERSIL_COMMAND(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 
 	/* Finally, turn the "master" enable back on. */
 	single_inst_bset_b(*interrupt_reg, IREG_ALL_ENAB);
@@ -328,114 +328,4 @@ clock_intr(struct clockframe cf)
 
 	/* Call common clock interrupt handler. */
 	hardclock(&cf);
-}
-
-/*
- * Machine-dependent clock routines.
- *
- * Inittodr initializes the time of day hardware which provides
- * date functions.
- *
- * Resettodr restores the time of day hardware after a time change.
- */
-
-/*
- * Now routines to get and set clock as POSIX time.
- * Our clock keeps "years since 1/1/1968".
- */
-#define	CLOCK_BASE_YEAR 1968
-static void intersil_get_dt(struct clock_ymdhms *);
-static void intersil_set_dt(struct clock_ymdhms *);
-
-static int
-clk_get_secs(todr_chip_handle_t tch, volatile struct timeval *tvp)
-{
-	struct clock_ymdhms dt;
-
-	intersil_get_dt(&dt);
-
-	if ((dt.dt_hour > 24) ||
-	    (dt.dt_day  > 31) ||
-	    (dt.dt_mon  > 12))
-		return -1;
-
-	dt.dt_year += CLOCK_BASE_YEAR;
-	tvp->tv_sec = clock_ymdhms_to_secs(&dt);
-	return 0;
-}
-
-static int
-clk_set_secs(todr_chip_handle_t tch, volatile struct timeval *tvp)
-{
-	struct clock_ymdhms dt;
-
-	clock_secs_to_ymdhms(tvp->tv_sec, &dt);
-	dt.dt_year -= CLOCK_BASE_YEAR;
-
-	intersil_set_dt(&dt);
-	return 0;
-}
-
-
-/*
- * Routines to copy state into and out of the clock.
- * The intersil registers have to be read or written
- * in sequential order (or so it appears). -gwr
- */
-static void
-intersil_get_dt(struct clock_ymdhms *dt)
-{
-	volatile struct intersil_dt *isdt;
-	int s;
-
-	isdt = &intersil_clock->counters;
-	s = splhigh();
-
-	/* Enable read (stop time) */
-	intersil_clock->clk_cmd_reg =
-	    intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
-
-	/* Copy the info.  Careful about the order! */
-	dt->dt_sec  = isdt->dt_csec;  /* throw-away */
-	dt->dt_hour = isdt->dt_hour;
-	dt->dt_min  = isdt->dt_min;
-	dt->dt_sec  = isdt->dt_sec;
-	dt->dt_mon  = isdt->dt_month;
-	dt->dt_day  = isdt->dt_day;
-	dt->dt_year = isdt->dt_year;
-	dt->dt_wday = isdt->dt_dow;
-
-	/* Done reading (time wears on) */
-	intersil_clock->clk_cmd_reg =
-	    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
-	splx(s);
-}
-
-static void
-intersil_set_dt(struct clock_ymdhms *dt)
-{
-	volatile struct intersil_dt *isdt;
-	int s;
-
-	isdt = &intersil_clock->counters;
-	s = splhigh();
-
-	/* Enable write (stop time) */
-	intersil_clock->clk_cmd_reg =
-	    intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
-
-	/* Copy the info.  Careful about the order! */
-	isdt->dt_csec = 0;
-	isdt->dt_hour = dt->dt_hour;
-	isdt->dt_min  = dt->dt_min;
-	isdt->dt_sec  = dt->dt_sec;
-	isdt->dt_month= dt->dt_mon;
-	isdt->dt_day  = dt->dt_day;
-	isdt->dt_year = dt->dt_year;
-	isdt->dt_dow  = dt->dt_wday;
-
-	/* Done writing (time wears on) */
-	intersil_clock->clk_cmd_reg =
-	    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
-	splx(s);
 }

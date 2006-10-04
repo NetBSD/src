@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.75 2006/10/01 03:53:27 tsutsui Exp $
+#	$NetBSD: files.sun3,v 1.76 2006/10/04 15:14:49 tsutsui Exp $
 
 #
 # sun3-specific configuration info
@@ -116,9 +116,9 @@ file arch/sun3/dev/zs.c 		zsc needs-flag
 file dev/ic/z8530sc.c			zsc
 
 # Intersil or Mostek clock
-device clock
+device clock: mk48txx
 attach clock at obio
-device oclock
+device oclock: intersil7170
 attach oclock at obio
 file arch/sun3/sun3/clock.c		_sun3_
 file arch/sun3/sun3x/clock.c		_sun3x_
