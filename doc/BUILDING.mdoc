@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.44 2006/09/29 19:57:04 apb Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.45 2006/10/04 22:28:24 apb Exp $
 .\"
 .\" Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -205,10 +205,10 @@ If the host system's
 .Pa /bin/sh
 is not POSIX-compliant, we suggest that you build using
 commands like
-.Bd -literal -offset indent
-HOST_SH=/path/to/working/shell
-export HOST_SH
-${HOST_SH} build.sh [options]
+.Bd -unfilled -offset indent
+.Li HOST_SH= Ns Va /path/to/working/shell
+.Li export HOST_SH
+.Li ${HOST_SH} build.sh Op Ar options
 .Ed
 .
 .It Sy HOST_CC
