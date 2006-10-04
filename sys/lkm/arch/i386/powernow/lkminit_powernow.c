@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_powernow.c,v 1.6 2006/08/27 10:10:55 xtraeme Exp $	*/
+/*	$NetBSD: lkminit_powernow.c,v 1.7 2006/10/04 21:47:29 cube Exp $	*/
 
 /*
  * Derived from:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.6 2006/08/27 10:10:55 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.7 2006/10/04 21:47:29 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,8 @@ int powernow_lkmentry(struct lkm_table *, int, int);
 static int powernow_mod_handle(struct lkm_table *, int);
 
 MOD_MISC("powernow");
+
+uint32_t pn_family = 0;
 
 /*
  * This function is called each time the module is loaded or unloaded.
@@ -64,12 +66,8 @@ MOD_MISC("powernow");
 static int
 powernow_mod_handle(struct lkm_table *lkmtp, int cmd)
 {
-	uint32_t rval;
-	int featflags;
 	struct cpu_info *ci;
 	int err = 0;	/* default = success */
-
-	rval = 0;
 
 	switch (cmd) {
 	case LKM_E_LOAD:
@@ -81,29 +79,22 @@ powernow_mod_handle(struct lkm_table *lkmtp, int cmd)
 	
 		ci = curcpu();
 
-		/* Test for Athlon M first... */
-		rval = powernow_probe(ci, 0x600);
-		if (!rval)
-			/* not found... try Athlon 64 now */
-			rval = powernow_probe(ci, 0xf00);
-
-		DPRINTF(("%s: rval=%d\n", __func__, rval));
-
-		if (rval != 0) {
-			featflags = powernow_extflags(ci, rval);
-			if (featflags) {
-				if (rval == 6) /* Athlon M */
-					k7_powernow_init();
-				else if (rval == 15) /* Athlon 64 */
-					k8_powernow_init();
-			}
-		}
+		if (powernow_probe(ci)) {
+			pn_family = CPUID2FAMILY(ci->ci_signature);
+			if (pn_family == 6)
+				k7_powernow_init();
+			else if (pn_family == 15)
+				k8_powernow_init();
+			else
+				err = ENODEV;
+		} else
+			err = ENODEV;
 		break;		/* Success */
 
 	case LKM_E_UNLOAD:
-		if (rval == 6)
+		if (pn_family == 6)
 			k7_powernow_destroy();
-		else if (rval == 15)
+		else if (pn_family == 15)
 			k8_powernow_destroy();
 
 		break;		/* Success */
