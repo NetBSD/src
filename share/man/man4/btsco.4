@@ -1,4 +1,4 @@
-.\" $NetBSD: btsco.4,v 1.7 2006/09/24 11:09:45 wiz Exp $
+.\" $NetBSD: btsco.4,v 1.8 2006/10/04 19:23:59 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -59,12 +59,17 @@ driver during autoconfiguration:
 Local device address.
 .It remote-bdaddr
 Remote device address.
-.It device-type
-Should be
-.Sq btsco ,
-indicating an SCO Audio device.
-.It listen
-If this boolean value exists and is true, the
+.It service-name
+The
+.Nm
+driver matches the
+.Sq HF
+and
+.Sq HSET
+services.
+For the
+.Sq HF
+service, the
 .Nm
 device will, on
 .Xr open 2 ,
