@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.6 2006/08/07 20:58:23 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.7 2006/10/04 13:18:10 cube Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.6 2006/08/07 20:58:23 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.7 2006/10/04 13:18:10 cube Exp $");
 
 #include "opt_powernow_k8.h"
 
@@ -103,17 +103,10 @@ identifycpu(struct cpu_info *ci)
 	x86_print_cacheinfo(ci);
 
 #ifdef POWERNOW_K8
-	if (cpu_model[0] == 'A' || cpu_model[0] == 'O') {
-		uint32_t rval;
-		uint8_t featflag;
-		
-		rval = powernow_probe(ci, 0xf00);
-		if (rval) {
-			featflag = powernow_extflags(ci, rval);
-			if (featflag)
-				k8_powernow_init();
-		}
-	}
+	if (CPUID2FAMILY(ci->ci_signature) == 15 &&
+	    (cpu_model[0] == 'A' || cpu_model[0] == 'O') &&
+	    powernow_probe(ci))
+		k8_powernow_init();
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.43 2006/10/02 19:59:24 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.44 2006/10/04 13:18:10 cube Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.43 2006/10/02 19:59:24 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.44 2006/10/04 13:18:10 cube Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -1603,26 +1603,20 @@ identifycpu(struct cpu_info *ci)
 #endif /* ENHANCED_SPEEDSTEP */
 
 #if defined(POWERNOW_K7) || defined(POWERNOW_K8)
-	if (vendor == CPUVENDOR_AMD) {
-		uint32_t rval;
-		uint8_t featflag;
-
-		rval = powernow_probe(ci, 0x600);
-		if (rval) {
-			featflag = powernow_extflags(ci, rval);
+	if (vendor == CPUVENDOR_AMD && powernow_probe(ci)) {
+		switch (CPUID2FAMILY(ci->ci_signature)) {
 #ifdef POWERNOW_K7
-			if (featflag)
-				k7_powernow_init();
+		case 6:
+			k7_powernow_init();
+			break;
 #endif
-		}
-
-		rval = powernow_probe(ci, 0xf00);
-		if (rval) {
-			featflag = powernow_extflags(ci, rval);
 #ifdef POWERNOW_K8
-			if (featflag)
-				k8_powernow_init();
+		case 15:
+			k8_powernow_init();
+			break;
 #endif
+		default:
+			break;
 		}
 	}
 #endif /* POWERNOW_K7 || POWERNOW_K8 */

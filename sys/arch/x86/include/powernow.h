@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow.h,v 1.5 2006/08/27 10:10:55 xtraeme Exp $	*/
+/*	$NetBSD: powernow.h,v 1.6 2006/10/04 13:18:10 cube Exp $	*/
 
 /*-
  * Copyright (c) 2004 Martin Végiard.
@@ -175,8 +175,7 @@ struct powernow_pst_s {
 	uint8_t n_states;
 };
 
-uint32_t	powernow_probe(struct cpu_info *, uint32_t);
-int		powernow_extflags(struct cpu_info *, uint32_t);
+int	powernow_probe(struct cpu_info *);
 
 /* i386/i386/powernow_k7.c */
 void k7_powernow_init(void);
