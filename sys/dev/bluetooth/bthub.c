@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.5 2006/10/04 15:38:14 christos Exp $	*/
+/*	$NetBSD: bthub.c,v 1.6 2006/10/04 19:23:59 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.5 2006/10/04 15:38:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.6 2006/10/04 19:23:59 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -177,17 +177,15 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict, int flag, s
 {
 	struct bthub_softc *sc;
 	struct btdev *dev;
+	prop_data_t laddr, raddr;
+	prop_string_t service;
+	prop_dictionary_t prop;
 	prop_object_t obj;
 	int unit;
 
-	/* validate device type */
-	obj = prop_dictionary_get(dict, BTDEVtype);
-	if (prop_object_type(obj) != PROP_TYPE_STRING)
-		return EINVAL;
-
 	/* validate local address */
-	obj = prop_dictionary_get(dict, BTDEVladdr);
-	if (prop_data_size(obj) != sizeof(bdaddr_t))
+	laddr = prop_dictionary_get(dict, BTDEVladdr);
+	if (prop_data_size(laddr) != sizeof(bdaddr_t))
 		return EINVAL;
 
 	/* locate the relevant bthub */
@@ -199,20 +197,36 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict, int flag, s
 		if (sc == NULL)
 			continue;
 		
-		if (prop_data_equals(obj, prop_dictionary_get(device_properties(&sc->sc_dev), BTDEVladdr)))
+		prop = device_properties(&sc->sc_dev);
+		obj = prop_dictionary_get(prop, BTDEVladdr);
+		if (prop_data_equals(laddr, obj))
 			break;
 	}
 
 	/* validate remote address */
-	obj = prop_dictionary_get(dict, BTDEVraddr);
-	if (prop_data_size(obj) != sizeof(bdaddr_t)
-	    || bdaddr_any(prop_data_data_nocopy(obj))) 
+	raddr = prop_dictionary_get(dict, BTDEVraddr);
+	if (prop_data_size(raddr) != sizeof(bdaddr_t)
+	    || bdaddr_any(prop_data_data_nocopy(raddr))) 
 		return EINVAL;
 
-	/* check for existing child device */
+	/* validate service name */
+	service = prop_dictionary_get(dict, BTDEVservice);
+	if (prop_object_type(service) != PROP_TYPE_STRING)
+		return EINVAL;
+
+	/* locate matching child device, if any */
 	LIST_FOREACH(dev, &sc->sc_list, sc_next) {
-		if ((*dev->sc_identify)(dev, dict))
-			break;
+		prop = device_properties(&dev->sc_dev);
+
+		obj = prop_dictionary_get(prop, BTDEVraddr);
+		if (!prop_object_equals(raddr, obj))
+			continue;
+
+		obj = prop_dictionary_get(prop, BTDEVservice);
+		if (!prop_object_equals(service, obj))
+			continue;
+
+		break;
 	}
 
 	switch (cmd) {
@@ -225,7 +239,11 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict, int flag, s
 		if (dev == NULL) 
 			return ENXIO;
 
-		KASSERT(dev->sc_identify != NULL);
+		prop = device_properties(&dev->sc_dev);
+		prop_dictionary_set(prop, BTDEVladdr, laddr);
+		prop_dictionary_set(prop, BTDEVraddr, raddr);
+		prop_dictionary_set(prop, BTDEVservice, service);
+
 		LIST_INSERT_HEAD(&sc->sc_list, dev, sc_next);
 		break;
 

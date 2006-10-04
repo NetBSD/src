@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.8 2006/09/24 10:19:55 plunky Exp $	*/
+/*	$NetBSD: btsco.c,v 1.9 2006/10/04 19:23:59 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.8 2006/09/24 10:19:55 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.9 2006/10/04 19:23:59 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -137,9 +137,6 @@ static int  btsco_detach(struct device *, int);
 
 CFATTACH_DECL(btsco, sizeof(struct btsco_softc),
     btsco_match, btsco_attach, btsco_detach, NULL);
-
-/* btdev identity matching */
-static int btsco_identify(struct btdev *, prop_dictionary_t);
 
 /* audio(9) glue */
 static int btsco_open(void *, int);
@@ -262,8 +259,14 @@ btsco_match(struct device *self, struct cfdata *cfdata, void *aux)
 	prop_dictionary_t dict = aux;
 	prop_object_t obj;
 
-	obj = prop_dictionary_get(dict, BTDEVtype);
-	return prop_string_equals_cstring(obj, "btsco");
+	obj = prop_dictionary_get(dict, BTDEVservice);
+	if (prop_string_equals_cstring(obj, "HSET"))
+		return 1;
+
+	if (prop_string_equals_cstring(obj, "HF"))
+		return 1;
+
+	return 0;
 }
 
 static void
@@ -280,8 +283,6 @@ btsco_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_vgm = 200;
 	sc->sc_state = BTSCO_CLOSED;
 
-	sc->sc_btdev.sc_identify = btsco_identify;
-
 	/*
 	 * copy in our configuration info
 	 */
@@ -291,8 +292,8 @@ btsco_attach(struct device *parent, struct device *self, void *aux)
 	obj = prop_dictionary_get(dict, BTDEVraddr);
 	bdaddr_copy(&sc->sc_raddr, prop_data_data_nocopy(obj));
 
-	obj = prop_dictionary_get(dict, BTSCOlisten);
-	if (prop_bool_true(obj)) {
+	obj = prop_dictionary_get(dict, BTDEVservice);
+	if (prop_string_equals_cstring(obj, "HF")) {
 		sc->sc_flags |= BTSCO_LISTEN;
 		aprint_verbose(" listen mode");
 	}
@@ -380,30 +381,6 @@ btsco_detach(struct device *self, int flags)
 	}
 
 	return 0;
-}
-
-/*
- * btdev identity matching
- */
-static int
-btsco_identify(struct btdev *dev, prop_dictionary_t dict)
-{
-	struct btsco_softc *sc = (struct btsco_softc *)dev;
-	prop_object_t obj;
-
-	obj = prop_dictionary_get(dict, BTDEVtype);
-	if (!prop_string_equals_cstring(obj, "btsco"))
-		return 0;
-
-	obj = prop_dictionary_get(dict, BTDEVladdr);
-	if (!prop_data_equals_data(obj, &sc->sc_laddr, sizeof(bdaddr_t)))
-		return 0;
-
-	obj = prop_dictionary_get(dict, BTDEVraddr);
-	if (!prop_data_equals_data(obj, &sc->sc_raddr, sizeof(bdaddr_t)))
-		return 0;
-
-	return 1;
 }
 
 /*****************************************************************************

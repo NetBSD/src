@@ -1,4 +1,4 @@
-.\" $NetBSD: bthub.4,v 1.4 2006/09/24 07:17:00 wiz Exp $
+.\" $NetBSD: bthub.4,v 1.5 2006/10/04 19:23:59 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -74,17 +74,20 @@ This required property should be a six byte data blob.
 Remote
 .Dv BD_ADDR .
 This required property should be a six byte data blob.
-.It device-type
-Device type.
+.It service-name
+Service name.
 This required property should be a string indicating the
-device type, and may be one of the following:
+service to configure, and may be one of the following:
 .Pp
 .Bl -tag -compact
-.It bthidev
+.It HF
+Handsfree, see
+.Xr btsco 4 .
+.It HID
 Human Interface Device, see
 .Xr bthidev 4 .
-.It btsco
-SCO Audio Device, see
+.It HSET
+Headset, see
 .Xr btsco 4 .
 .El
 .El
