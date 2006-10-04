@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.26 2006/05/11 17:19:15 mrg Exp $	*/
+/*	$NetBSD: gmon.c,v 1.27 2006/10/04 20:22:14 dogcow Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.26 2006/05/11 17:19:15 mrg Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.27 2006/10/04 20:22:14 dogcow Exp $");
 #endif
 #endif
 
@@ -78,6 +78,7 @@ __RCSID("$NetBSD: gmon.c,v 1.26 2006/05/11 17:19:15 mrg Exp $");
 #include <sys/time.h>
 #include <sys/gmon.h>
 #include <sys/mman.h>
+#include <sys/param.h>
 #include <sys/sysctl.h>
 
 #include <stdio.h>
@@ -131,8 +132,8 @@ monstartup(lowpc, highpc)
 	 * round lowpc and highpc to multiples of the density we're using
 	 * so the rest of the scaling (here and in gprof) stays in ints.
 	 */
-	p->lowpc = ROUNDDOWN(lowpc, HISTFRACTION * sizeof(HISTCOUNTER));
-	p->highpc = ROUNDUP(highpc, HISTFRACTION * sizeof(HISTCOUNTER));
+	p->lowpc = rounddown(lowpc, HISTFRACTION * sizeof(HISTCOUNTER));
+	p->highpc = roundup(highpc, HISTFRACTION * sizeof(HISTCOUNTER));
 	p->textsize = p->highpc - p->lowpc;
 	p->kcountsize = p->textsize / HISTFRACTION;
 	p->hashfraction = HASHFRACTION;
