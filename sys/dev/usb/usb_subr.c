@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.135 2006/06/11 16:00:08 christos Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.136 2006/10/04 16:02:06 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.135 2006/06/11 16:00:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.136 2006/10/04 16:02:06 christos Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -591,9 +591,10 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 		/* We are unconfiguring the device, so leave unallocated. */
 		DPRINTF(("usbd_set_config_index: set config 0\n"));
 		err = usbd_set_config(dev, USB_UNCONFIG_NO);
-		if (err)
+		if (err) {
 			DPRINTF(("usbd_set_config_index: setting config=0 "
 				 "failed, error=%s\n", usbd_errstr(err)));
+		}
 		return (err);
 	}
 
