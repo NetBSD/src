@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.17 2006/09/24 03:53:08 jmcneill Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.18 2006/10/04 15:48:36 christos Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -1075,7 +1075,9 @@ typedef struct scsipi_inquiry_data sbp_scsi_inquiry_data;
 #define splsoftvm()	splbio()
 
 #define roundup2(x, y) roundup((x), (y))
+#ifndef rounddown
 #define rounddown(x, y) ((x) / (y) * (y))
+#endif
 
 #define timevalcmp(tv1, tv2, op)	timercmp((tv1), (tv2), op)
 #define timevalsub(tv1, tv2)		timersub((tv1), (tv2), (tv1))
