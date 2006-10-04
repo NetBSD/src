@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.9 2006/10/01 21:36:11 bouyer Exp $
+# $NetBSD: XEN2_DOM0,v 1.10 2006/10/04 17:34:40 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -14,7 +14,7 @@ maxusers	32		# estimated number of users
 options 	XEN
 options 	DOM0OPS
 #making MCLBYTES == PAGE_SIZE avoids a copy when a mbuf cluster is sent
-# do a domU, at the expense of a highter memory usage by the network stack.
+# to a domU, at the expense of a highter memory usage by the network stack.
 #options 	MCLSHIFT=12
 
 options 	I686_CPU
