@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.h,v 1.12 2006/09/28 21:22:14 christos Exp $	*/
+/*	$NetBSD: misc.h,v 1.13 2006/10/04 14:31:55 christos Exp $	*/
 /* $OpenBSD: misc.h,v 1.36 2006/08/18 10:27:16 djm Exp $ */
 
 /*
@@ -31,7 +31,11 @@ char	*cleanhostname(char *);
 char	*colon(char *);
 long	 convtime(const char *);
 char	*tilde_expand_filename(const char *, uid_t);
-char	*percent_expand(const char *, ...) __attribute__((__sentinel__));
+char	*percent_expand(const char *, ...)
+#if __GNUC_PREREQ__(4, 0)
+    __attribute__((__sentinel__))
+#endif
+    ;
 char	*tohex(const void *, size_t);
 void	 sanitise_stdfd(void);
 
