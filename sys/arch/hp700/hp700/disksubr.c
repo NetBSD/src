@@ -1,8 +1,10 @@
-/*	$NetBSD: disksubr.c,v 1.16 2006/06/26 19:48:41 mrg Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.17 2006/10/04 07:28:00 skrll Exp $	*/
 
 /*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
 /*
+ * Copyright (c) 1999 Michael Shalayeff
+ * Copyright (c) 1997 Niklas Hallqvist
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
  * All rights reserved.
  *
@@ -58,55 +60,15 @@
  */
 
 /*
- * Copyright (c) 1999 Michael Shalayeff
- * Copyright (c) 1997 Niklas Hallqvist
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- */
-
-/*
  * This disksubr.c module started to take it's present form on OpenBSD/alpha
  * but it was always thought it should be made completely MI and not need to
  * be in that alpha-specific tree at all.
- *
- * XXX The DOS partitioning code is not endian-independent, only native
- * endian DOS partition tables can be parsed yet.
- *
- * XXX Amiga RDB partitioning is not understood yet.
  *
  * XXX HPUX disklabel is not understood yet.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16 2006/06/26 19:48:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17 2006/10/04 07:28:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,73 +81,18 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16 2006/06/26 19:48:41 mrg Exp $");
 const char *readliflabel(struct buf *, void (*)(struct buf *),
     struct disklabel *, struct cpu_disklabel *, int *, int *, int);
 const char *readbsdlabel(struct buf *, void (*)(struct buf *), int, 
-    int, int, int, struct disklabel *, int);
-void swapdisklabel(struct disklabel *);
-
-/*
- * Byteswap all the fields that might be swapped.
- */
-void
-swapdisklabel(struct disklabel *dlp)
-{
-	int i;
-	struct partition *pp;
-
-#define	swap32(x) x = bswap32(x)
-#define	swap16(x) x = bswap16(x)
-	swap32(dlp->d_magic);
-	swap16(dlp->d_type);
-	swap16(dlp->d_subtype);
-	swap32(dlp->d_secsize);
-	swap32(dlp->d_nsectors);
-	swap32(dlp->d_ntracks);
-	swap32(dlp->d_ncylinders);
-	swap32(dlp->d_secpercyl);
-	swap32(dlp->d_secperunit);
-	swap16(dlp->d_sparespertrack);
-	swap16(dlp->d_sparespercyl);
-	swap32(dlp->d_acylinders);
-	swap16(dlp->d_rpm);
-	swap16(dlp->d_interleave);
-	swap16(dlp->d_trackskew);
-	swap16(dlp->d_cylskew);
-	swap32(dlp->d_headswitch);
-	swap32(dlp->d_trkseek);
-	swap32(dlp->d_flags);
-	for (i = 0; i < NDDATA; i++)
-		swap32(dlp->d_drivedata[i]);
-	for (i = 0; i < NSPARE; i++)
-		swap32(dlp->d_spare[i]);
-	swap32(dlp->d_magic2);
-	swap16(dlp->d_checksum);
-	swap16(dlp->d_npartitions);
-	swap32(dlp->d_bbsize);
-	swap32(dlp->d_sbsize);
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		pp = &dlp->d_partitions[i];
-		swap32(pp->p_size);
-		swap32(pp->p_offset);
-		swap32(pp->p_fsize);
-		swap16(pp->p_cpg);
-	}
-#undef	swap32
-#undef	swap16
-}
+    int, int, struct disklabel *, int);
 
 /*
  * Try to read a standard BSD disklabel at a certain sector.
  */
 const char *
 readbsdlabel(struct buf *bp, void (*strat)(struct buf *), int cyl, int sec,
-    int off, int endian, struct disklabel *lp, int spoofonly)
+    int off, struct disklabel *lp, int spoofonly)
 {
 	struct disklabel *dlp;
 	const char *msg = NULL;
 	u_int16_t cksum;
-	u_int32_t magic;
-
-	if (endian != LITTLE_ENDIAN && endian != BIG_ENDIAN)
-		panic("readbsdlabel: unsupported byteorder %d", endian);
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
@@ -204,8 +111,6 @@ readbsdlabel(struct buf *bp, void (*strat)(struct buf *), int cyl, int sec,
 		return (msg);
 	}
 
-	magic = endian == BIG_ENDIAN ? htobe32(DISKMAGIC) : htole32(DISKMAGIC);
-
 	/*
 	 * If off is negative, search until the end of the sector for
 	 * the label, otherwise, just look at the specific location
@@ -213,25 +118,15 @@ readbsdlabel(struct buf *bp, void (*strat)(struct buf *), int cyl, int sec,
 	 */
 	dlp = (struct disklabel *)(bp->b_data + (off >= 0 ? off : 0));
 	do {
-		if (dlp->d_magic != magic || dlp->d_magic2 != magic) {
+		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
 				msg = "no disk label";
 		} else {
 			cksum = dkcksum(dlp);
-			if (endian != BYTE_ORDER)
-				swapdisklabel(dlp);
 			if (dlp->d_npartitions > MAXPARTITIONS || cksum != 0) {
 				msg = "disk label corrupted";
-				/* swap back if necessary.  */
-				if (off < 0 && endian != BYTE_ORDER)
-					swapdisklabel(dlp);
 			} else {
 				*lp = *dlp;
-				/* Recalc magic on foreign labels */
-				if (endian != BYTE_ORDER) {
-					lp->d_checksum = 0;
-					lp->d_checksum = dkcksum(lp);
-				}
 				msg = NULL;
 				break;
 			}
@@ -264,7 +159,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	int i;
 	struct disklabel minilabel, fallbacklabel;
 
-	/* minimal requirements for archtypal disk label */
+	/* minimal requirements for archetypal disk label */
 	if (lp->d_secsize == 0)
 		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)
@@ -330,22 +225,32 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	if (osdep->lifvol.vol_id != HP700_LIF_VOL_ID) {
 		fsoff = 0;
 	} else {
+		struct buf *dbp;
 		struct hp700_lifdir *p;
 
-		/* read LIF directory */
-		bp->b_blkno = btodb(HP700_LIF_DIRSTART);
-		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylinder = (HP700_LIF_DIRSTART) / lp->d_secpercyl;
-		(*strat)(bp);
+		dbp = geteblk(HP700_LIF_DIRSIZE);
+		dbp->b_dev = bp->b_dev;
 
-		if (biowait(bp)) {
+		/* read LIF directory */
+		dbp->b_blkno = btodb(HP700_LIF_DIRSTART);
+		dbp->b_bcount = lp->d_secsize;
+		dbp->b_flags = B_BUSY | B_READ;
+		dbp->b_cylinder = (HP700_LIF_DIRSTART) / lp->d_secpercyl;
+
+		(*strat)(dbp);
+
+		if (biowait(dbp)) {
 			if (partoffp)
 				*partoffp = -1;
+			dbp->b_flags |= B_INVAL;
+			brelse(dbp);
+
 			return "LIF directory I/O error";
 		}
 
-		memcpy(osdep->lifdir, bp->b_data, HP700_LIF_DIRSIZE);
+		memcpy(osdep->lifdir, dbp->b_data, HP700_LIF_DIRSIZE);
+		dbp->b_flags |= B_INVAL;
+		brelse(dbp);
 		/* scan for LIF_DIR_FS dir entry */
 		for (fsoff = -1,  p = &osdep->lifdir[0];
 		     fsoff < 0 && p < &osdep->lifdir[HP700_LIF_NUMDIR]; p++)
@@ -361,7 +266,7 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 		*partoffp = fsoff;
 
 	return readbsdlabel(bp, strat, 0,  fsoff + LABELSECTOR, LABELOFFSET, 
-	    BIG_ENDIAN, lp, spoofonly);
+	    lp, spoofonly);
 }
 
 /*
@@ -438,7 +343,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	struct buf *bp;
 	struct disklabel dl;
 	struct cpu_disklabel cdl;
-	int labeloffset, error, endian, partoff = 0, cyl = 0;
+	int labeloffset, error, partoff = 0, cyl = 0;
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
@@ -450,14 +355,9 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	 * think it might be useful to reprobe if someone has written
 	 * a newer disklabel of another type with disklabel(8) and -r.
 	 */
-	labeloffset = -1;
-	endian = BIG_ENDIAN;
+	dl = *lp;
 	msg = readliflabel(bp, strat, &dl, &cdl, &partoff, &cyl, 0);
 	labeloffset = LABELOFFSET;
-	endian = BIG_ENDIAN;
-	if (labeloffset == -1) {
-		return EINVAL;
-	}
 
 	if (msg) {
 		if (partoff == -1)
@@ -465,17 +365,9 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 
 		/* Write it in the regular place with native byte order. */
 		labeloffset = LABELOFFSET;
-		endian = BYTE_ORDER;
 		bp->b_blkno = partoff + LABELSECTOR;
 		bp->b_cylinder = cyl;
 		bp->b_bcount = lp->d_secsize;
-	}
-
-	if (endian != BYTE_ORDER) {
-		swapdisklabel(lp);
-		/* recalc checksum */
-		lp->d_checksum = 0;
-		lp->d_checksum = dkcksum(lp);
 	}
 
 	*(struct disklabel *)(bp->b_data + labeloffset) = *lp;
