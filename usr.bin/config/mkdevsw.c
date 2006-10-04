@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdevsw.c,v 1.2 2005/07/30 06:40:30 yamt Exp $	*/
+/*	$NetBSD: mkdevsw.c,v 1.3 2006/10/04 20:34:48 dsl Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,10 +46,10 @@
 
 #include "defs.h"
 
-static int emitconv(FILE *);
-static int emitdev(FILE *);
-static int emitdevm(FILE *);
-static int emitheader(FILE *);
+static void emitconv(FILE *);
+static void emitdev(FILE *);
+static void emitdevm(FILE *);
+static void emitheader(FILE *);
 
 int
 mkdevsw(void)
@@ -62,11 +62,17 @@ mkdevsw(void)
 		return (1);
 	}
 
-	if (emitheader(fp) || emitdevm(fp) || emitconv(fp) || emitdev(fp)) {
+	emitheader(fp);
+	emitdevm(fp);
+	emitconv(fp);
+	emitdev(fp);
+
+	fflush(fp);
+	if (ferror(fp)) {
 		(void)fprintf(stderr, "config: error writing devsw.c: %s\n",
 			      strerror(errno));
-		(void)fclose(fp);
-		return (1);
+		fclose(fp);
+		return 1;
 	}
 
 	(void)fclose(fp);
@@ -80,160 +86,126 @@ mkdevsw(void)
 	return (0);
 }
 
-static int
+static void
 emitheader(FILE *fp)
 {
-	if (fprintf(fp, "/*\n * MACHINE GENERATED: DO NOT EDIT\n *\n"
-		    " * devsw.c, from \"%s\"\n */\n\n", conffile) < 0) {
-		return (1);
-	}
+	fprintf(fp, "/*\n * MACHINE GENERATED: DO NOT EDIT\n *\n"
+		    " * devsw.c, from \"%s\"\n */\n\n", conffile);
 
-	if (fputs("#include <sys/param.h>\n"
+	fputs("#include <sys/param.h>\n"
 		  "#include <sys/conf.h>\n"
 		  "\n#define\tDEVSW_ARRAY_SIZE(x)\t"
-		  "(sizeof((x))/sizeof((x)[0]))\n", fp) < 0) {
-		return (1);
-	}
-
-	return (0);
+		  "(sizeof((x))/sizeof((x)[0]))\n", fp);
 }
 
 /*
  * Emit device switch table for character/block device.
  */
-static int
+static void
 emitdevm(FILE *fp)
 {
 	struct devm *dm;
 	char mstr[16];
 	int i;
 
-	if (fputs("\n/* device switch table for block device */\n", fp) < 0)
-		return (1);
+	fputs("\n/* device switch table for block device */\n", fp);
 
 	for (i = 0 ; i <= maxbdevm ; i++) {
 		(void)snprintf(mstr, sizeof(mstr), "%d", i);
 		if ((dm = ht_lookup(bdevmtab, intern(mstr))) == NULL)
 			continue;
 
-		if (fprintf(fp, "extern const struct bdevsw %s_bdevsw;\n",
-			    dm->dm_name) < 0)
-			return (1);
+		fprintf(fp, "extern const struct bdevsw %s_bdevsw;\n",
+			    dm->dm_name);
 	}
 
-	if (fputs("\nconst struct bdevsw *bdevsw0[] = {\n", fp) < 0)
-		return (1);
+	fputs("\nconst struct bdevsw *bdevsw0[] = {\n", fp);
 
 	for (i = 0 ; i <= maxbdevm ; i++) {
 		(void)snprintf(mstr, sizeof(mstr), "%d", i);
 		if ((dm = ht_lookup(bdevmtab, intern(mstr))) == NULL) {
-			if (fprintf(fp, "\tNULL,\n") < 0)
-				return (1);
+			fprintf(fp, "\tNULL,\n");
 		} else {
-			if (fprintf(fp, "\t&%s_bdevsw,\n", dm->dm_name) < 0)
-				return (1);
+			fprintf(fp, "\t&%s_bdevsw,\n", dm->dm_name);
 		}
 	}
 
-	if (fputs("};\n\nconst struct bdevsw **bdevsw = bdevsw0;\n", fp) < 0)
-		return (1);
+	fputs("};\n\nconst struct bdevsw **bdevsw = bdevsw0;\n", fp);
 
-	if (fputs("const int sys_bdevsws = DEVSW_ARRAY_SIZE(bdevsw0);\n"
-		  "int max_bdevsws = DEVSW_ARRAY_SIZE(bdevsw0);\n", fp) < 0)
-		return (1);
+	fputs("const int sys_bdevsws = DEVSW_ARRAY_SIZE(bdevsw0);\n"
+		  "int max_bdevsws = DEVSW_ARRAY_SIZE(bdevsw0);\n", fp);
 
-	if (fputs("\n/* device switch table for character device */\n", fp) < 0)
-		return (1);
+	fputs("\n/* device switch table for character device */\n", fp);
 
 	for (i = 0 ; i <= maxcdevm ; i++) {
 		(void)snprintf(mstr, sizeof(mstr), "%d", i);
 		if ((dm = ht_lookup(cdevmtab, intern(mstr))) == NULL)
 			continue;
 
-		if (fprintf(fp, "extern const struct cdevsw %s_cdevsw;\n",
-			    dm->dm_name) < 0)
-			return (1);
+		fprintf(fp, "extern const struct cdevsw %s_cdevsw;\n",
+			    dm->dm_name);
 	}
 
-	if (fputs("\nconst struct cdevsw *cdevsw0[] = {\n", fp) < 0)
-		return (1);
+	fputs("\nconst struct cdevsw *cdevsw0[] = {\n", fp);
 
 	for (i = 0 ; i <= maxcdevm ; i++) {
 		(void)snprintf(mstr, sizeof(mstr), "%d", i);
 		if ((dm = ht_lookup(cdevmtab, intern(mstr))) == NULL) {
-			if (fprintf(fp, "\tNULL,\n") < 0)
-				return (1);
+			fprintf(fp, "\tNULL,\n");
 		} else {
-			if (fprintf(fp, "\t&%s_cdevsw,\n", dm->dm_name) < 0)
-				return (1);
+			fprintf(fp, "\t&%s_cdevsw,\n", dm->dm_name);
 		}
 	}
 
-	if (fputs("};\n\nconst struct cdevsw **cdevsw = cdevsw0;\n", fp) < 0)
-		return (1);
+	fputs("};\n\nconst struct cdevsw **cdevsw = cdevsw0;\n", fp);
 
-	if (fputs("const int sys_cdevsws = DEVSW_ARRAY_SIZE(cdevsw0);\n"
-		  "int max_cdevsws = DEVSW_ARRAY_SIZE(cdevsw0);\n", fp) < 0)
-		return (1);
-
-	return (0);
+	fputs("const int sys_cdevsws = DEVSW_ARRAY_SIZE(cdevsw0);\n"
+		  "int max_cdevsws = DEVSW_ARRAY_SIZE(cdevsw0);\n", fp);
 }
 
 /*
  * Emit device major conversion table.
  */
-static int
+static void
 emitconv(FILE *fp)
 {
 	struct devm *dm;
 
-	if (fputs("\n/* device conversion table */\n"
-		  "struct devsw_conv devsw_conv0[] = {\n", fp) < 0)
-		return (-1);
+	fputs("\n/* device conversion table */\n"
+		  "struct devsw_conv devsw_conv0[] = {\n", fp);
 	TAILQ_FOREACH(dm, &alldevms, dm_next) {
-		if (fprintf(fp, "\t{ \"%s\", %d, %d },\n", dm->dm_name,
-			    dm->dm_bmajor, dm->dm_cmajor) < 0)
-			return (1);
+		fprintf(fp, "\t{ \"%s\", %d, %d },\n", dm->dm_name,
+			    dm->dm_bmajor, dm->dm_cmajor);
 	}
-	if (fputs("};\n\n"
+	fputs("};\n\n"
 		  "struct devsw_conv *devsw_conv = devsw_conv0;\n"
 		  "int max_devsw_convs = DEVSW_ARRAY_SIZE(devsw_conv0);\n",
-		  fp) < 0)
-		return (1);
-
-	return (0);
+		  fp);
 }
 
 /*
  * Emit specific device major informations.
  */
-static int
+static void
 emitdev(FILE *fp)
 {
 	struct devm *dm;
 	char mstr[16];
 
-	if (fputs("\n", fp) < 0)
-		return (1);
+	fputs("\n", fp);
 
 	(void)strlcpy(mstr, "swap", sizeof(mstr));
 	if ((dm = ht_lookup(bdevmtab, intern(mstr))) != NULL) {
-		if (fprintf(fp, "const dev_t swapdev = makedev(%d, 0);\n",
-			    dm->dm_bmajor) < 0)
-			return (1);
+		fprintf(fp, "const dev_t swapdev = makedev(%d, 0);\n",
+			    dm->dm_bmajor);
 	}
 
 	(void)strlcpy(mstr, "mem", sizeof(mstr));
 	if ((dm = ht_lookup(cdevmtab, intern(mstr))) == NULL)
 		panic("memory device is not configured");
-	if (fprintf(fp, "const dev_t zerodev = makedev(%d, DEV_ZERO);\n",
-		    dm->dm_cmajor) < 0)
-		return (1);
+	fprintf(fp, "const dev_t zerodev = makedev(%d, DEV_ZERO);\n",
+		    dm->dm_cmajor);
 
-	if (fputs("\n/* mem_no is only used in iskmemdev() */\n", fp) < 0)
-		return (1);
-	if (fprintf(fp, "const int mem_no = %d;\n", dm->dm_cmajor) < 0)
-		return (1);
-
-	return (0);
+	fputs("\n/* mem_no is only used in iskmemdev() */\n", fp);
+	fprintf(fp, "const int mem_no = %d;\n", dm->dm_cmajor);
 }
