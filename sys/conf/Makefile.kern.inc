@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.86 2006/09/11 03:12:48 matt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.87 2006/10/04 16:03:01 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -62,9 +62,9 @@ COPTS?=		${DEFCOPTS}
 DBG=		# might contain unwanted -Ofoo
 DEFWARNINGS?=	yes
 .if (${DEFWARNINGS} == "yes")
-.if !defined(NOGCCERROR)
+. if !defined(NOGCCERROR)
 CWARNFLAGS+=	-Werror
-.endif
+. endif
 CWARNFLAGS+=	-Wall -Wno-main -Wno-format-zero-length -Wpointer-arith
 CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
 CWARNFLAGS+=	-Wswitch -Wshadow
@@ -74,6 +74,9 @@ CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 CWARNFLAGS+=	-Wno-sign-compare
 . if ${HAVE_GCC} > 3
 CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
+.  if ${MACHINE} == "i386"
+CWARNFLAGS+=	-Wextra -Wno-unused
+.  endif
 . endif
 .endif
 
@@ -97,9 +100,9 @@ CFLAGS.kern_synch.c+=	-fno-reorder-blocks
 # files that match the shell patterns given in ${DEBUGLIST}
 #
 .for i in ${DEBUGLIST}
-.for j in ${CFILES:T:M$i.c}
+. for j in ${CFILES:T:M$i.c}
 COPTS.${j}+=-g
-.endfor
+. endfor
 .endfor
 
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
