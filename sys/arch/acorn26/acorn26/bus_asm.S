@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_asm.S,v 1.4 2006/10/03 23:15:18 bjh21 Exp $	*/
+/*	$NetBSD: bus_asm.S,v 1.5 2006/10/04 20:14:44 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2006 Ben Harris
@@ -59,6 +59,7 @@
  */
 
 #include <machine/asm.h>
+RCSID("$NetBSD: bus_asm.S,v 1.5 2006/10/04 20:14:44 bjh21 Exp $")
 
 /*
  * bus_space I/O functions for podulebus
