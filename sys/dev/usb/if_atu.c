@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.19 2006/10/01 02:06:34 jnemeth Exp $ */
+/*	$NetBSD: if_atu.c,v 1.20 2006/10/04 15:50:51 christos Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.19 2006/10/01 02:06:34 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.20 2006/10/04 15:50:51 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -1991,9 +1991,10 @@ atu_init(struct ifnet *ifp)
 	/* XXX the following HAS to be replaced */
 	s = splnet();
 	err = ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
-	if (err)
+	if (err) {
 		DPRINTFN(1, ("%s: atu_init: error calling "
 		    "ieee80211_net_state", USBDEVNAME(sc->atu_dev)));
+	}
 	splx(s);
 
 	return 0;
