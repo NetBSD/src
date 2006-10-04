@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.26 2006/04/25 01:45:17 rtr Exp $
+.\"     $NetBSD: vfsops.9,v 1.27 2006/10/04 11:35:47 pooka Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 20, 2005
+.Dd October 4, 2006
 .Dt VFSOPS 9
 .Os
 .Sh NAME
@@ -70,7 +70,7 @@
 .Ft int
 .Fn VFS_STATVFS "struct mount *mp" "struct statvfs *sbp" "struct lwp *l"
 .Ft int
-.Fn VFS_SYNC "struct mount *mp" "int waitfor" "struct ucred *cred" \
+.Fn VFS_SYNC "struct mount *mp" "int waitfor" "kauth_cred_t cred" \
 "struct lwp *l"
 .Ft int
 .Fn VFS_VGET "struct mount *mp" "ino_t ino" "struct vnode **vpp"
@@ -284,10 +284,10 @@ The
 argument indicates whether a partial flush or complete flush should be
 performed.
 The arguments
-.Fa p
+.Fa l
 and
 .Fa cred
-specific the calling process and its credentials respectively.
+specific the calling lwp and its credentials, respectively.
 .Fn VFS_SYNC
 does not provide any return value since the operation can never fail.
 .It Fn VFS_VGET "mp" "ino" "vpp"

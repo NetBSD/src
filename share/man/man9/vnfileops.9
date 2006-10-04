@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnfileops.9,v 1.10 2006/01/29 03:09:19 rpaulo Exp $
+.\"     $NetBSD: vnfileops.9,v 1.11 2006/10/04 11:35:47 pooka Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 29, 2006
+.Dd October 4, 2006
 .Dt VNFILEOPS 9
 .Os
 .Sh NAME
@@ -58,13 +58,13 @@
 .Ft int
 .Fn vn_ioctl "struct file *fp" "u_long com" "void *data" "struct lwp *l"
 .Ft int
-.Fn vn_read "struct file *fp" "off_t *offset" "struct uio *uio" "struct ucred *cred" "int flags"
+.Fn vn_read "struct file *fp" "off_t *offset" "struct uio *uio" "kauth_cred_t cred" "int flags"
 .Ft int
 .Fn vn_poll "struct file *fp" "int events" "struct lwp *l"
 .Ft int
 .Fn vn_statfile "struct file *fp" "struct stat *sb" "struct lwp *l"
 .Ft int
-.Fn vn_write "struct file *fp" "off_t *offset" "struct uio *uio" "struct ucred *cred" "int flags"
+.Fn vn_write "struct file *fp" "off_t *offset" "struct uio *uio" "kauth_cred_t cred" "int flags"
 .Sh DESCRIPTION
 The functions described in this page are the vnode-specific file
 descriptor operations.
