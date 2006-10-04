@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.7 2006/08/28 01:45:41 christos Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.8 2006/10/04 20:34:48 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@
 #endif
 
 #include <sys/param.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,16 +57,16 @@
  */
 static int cf_locators_print(const char *, void *, void *);
 static int cforder(const void *, const void *);
-static int emitcfdata(FILE *);
-static int emitcfdrivers(FILE *);
-static int emitexterns(FILE *);
-static int emitcfattachinit(FILE *);
-static int emithdr(FILE *);
-static int emitloc(FILE *);
-static int emitpseudo(FILE *);
-static int emitparents(FILE *);
-static int emitroots(FILE *);
-static int emitname2blk(FILE *);
+static void emitcfdata(FILE *);
+static void emitcfdrivers(FILE *);
+static void emitexterns(FILE *);
+static void emitcfattachinit(FILE *);
+static void emithdr(FILE *);
+static void emitloc(FILE *);
+static void emitpseudo(FILE *);
+static void emitparents(FILE *);
+static void emitroots(FILE *);
+static void emitname2blk(FILE *);
 
 #define	SEP(pos, max)	(((u_int)(pos) % (max)) == 0 ? "\n\t" : " ")
 
@@ -75,13 +76,12 @@ static int emitname2blk(FILE *);
  * NEWLINE can only be used in the emitXXX functions.
  * In most cases it can be subsumed into an fprintf.
  */
-#define	NEWLINE		if (putc('\n', fp) < 0) return (1)
+#define	NEWLINE		putc('\n', fp)
 
 int
 mkioconf(void)
 {
 	FILE *fp;
-	int v;
 
 	qsort(packed, npacked, sizeof *packed, cforder);
 	if ((fp = fopen("ioconf.c.tmp", "w")) == NULL) {
@@ -89,19 +89,29 @@ mkioconf(void)
 		    strerror(errno));
 		return (1);
 	}
-	v = emithdr(fp);
-	if (v != 0 || emitcfdrivers(fp) || emitexterns(fp) ||
-	    emitcfattachinit(fp) || emitloc(fp) || emitparents(fp) ||
-	    emitcfdata(fp) || emitroots(fp) || emitpseudo(fp) ||
-	    (do_devsw ? 0 : emitname2blk(fp))) {
-		if (v >= 0)
-			(void)fprintf(stderr,
-			    "config: error writing ioconf.c: %s\n",
-			    strerror(errno));
+
+	emithdr(fp);
+	emitcfdrivers(fp);
+	emitexterns(fp);
+	emitcfattachinit(fp);
+	emitloc(fp);
+	emitparents(fp);
+	emitcfdata(fp);
+	emitroots(fp);
+	emitpseudo(fp);
+	if (!do_devsw)
+		emitname2blk(fp);
+
+	fflush(fp);
+	if (ferror(fp)) {
+		(void)fprintf(stderr,
+		    "config: error writing ioconf.c: %s\n",
+		    strerror(errno));
 		(void)fclose(fp);
 		/* (void)unlink("ioconf.c.tmp"); */
 		return (1);
 	}
+
 	(void)fclose(fp);
 	if (moveifchanged("ioconf.c.tmp", "ioconf.c") != 0) {
 		(void)fprintf(stderr, "config: error renaming ioconf.c: %s\n",
@@ -121,48 +131,36 @@ cforder(const void *a, const void *b)
 	return (n1 - n2);
 }
 
-static int
+static void
 emithdr(FILE *ofp)
 {
 	FILE *ifp;
-	int n, rv;
+	int n;
 	char ifnbuf[200], buf[BUFSIZ];
 	char *ifn;
 
-	if (fprintf(ofp, "\
-/*\n\
- * MACHINE GENERATED: DO NOT EDIT\n\
- *\n\
- * ioconf.c, from \"%s\"\n\
- */\n\n", conffile) < 0)
-		return (1);
+	fprintf(ofp, "/*\n"
+		    " * MACHINE GENERATED: DO NOT EDIT\n"
+		    " *\n"
+		    " * ioconf.c, from \"%s\"\n"
+		    " */\n\n", conffile);
 
-	rv = 0;
 	(void)snprintf(ifnbuf, sizeof(ifnbuf), "arch/%s/conf/ioconf.incl.%s",
 	    machine, machine);
 	ifn = sourcepath(ifnbuf);
 	if ((ifp = fopen(ifn, "r")) != NULL) {
 		while ((n = fread(buf, 1, sizeof(buf), ifp)) > 0)
-			if (fwrite(buf, 1, n, ofp) != n) {
-				rv = 1;
-				break;
-			}
-		if (rv == 0 && ferror(ifp)) {
-			(void)fprintf(stderr, "config: error reading %s: %s\n",
-			    ifn, strerror(errno));
-			rv = -1;
-		}
+			fwrite(buf, 1, n, ofp);
+		if (ferror(ifp))
+			err(EXIT_FAILURE, "error reading %s", ifn);
 		(void)fclose(ifp);
 	} else {
-		if (fputs("\
-#include <sys/param.h>\n\
-#include <sys/conf.h>\n\
-#include <sys/device.h>\n\
-#include <sys/mount.h>\n", ofp) < 0)
-			rv = 1;
+		fputs("#include <sys/param.h>\n"
+			"#include <sys/conf.h>\n"
+			"#include <sys/device.h>\n"
+			"#include <sys/mount.h>\n", ofp);
 	}
 	free(ifn);
-	return (rv);
 }
 
 /*
@@ -181,28 +179,27 @@ cf_locators_print(const char *name, void *value, void *arg)
 		return (0);
 
 	if (a->a_locs) {
-		if (fprintf(fp,
+		fprintf(fp,
 		    "static const struct cfiattrdata %scf_iattrdata = {\n",
-			    name) < 0)
-			return (1);
-		if (fprintf(fp, "\t\"%s\", %d,\n\t{\n", name, a->a_loclen) < 0)
-			return (1);
+			    name);
+		fprintf(fp, "\t\"%s\", %d,\n\t{\n", name, a->a_loclen);
 		for (nv = a->a_locs; nv; nv = nv->nv_next)
-			if (fprintf(fp, "\t\t{\"%s\", \"%s\", %s},\n",
+			fprintf(fp, "\t\t{\"%s\", \"%s\", %s},\n",
 				nv->nv_name,
 				(nv->nv_str ? nv->nv_str : "NULL"),
-				(nv->nv_str ? nv->nv_str : "0")) < 0)
-				return (1);
-		if (fprintf(fp, "\t}\n};\n") < 0)
-			return (1);
-	} else if (fprintf(fp,
-	    "static const struct cfiattrdata %scf_iattrdata = {\n"
-	    "\t\"%s\", 0, {\n\t\t{ NULL, NULL, 0 },\n\t}\n};\n", name, name) < 0)
-		return (1);
+				(nv->nv_str ? nv->nv_str : "0"));
+		fprintf(fp, "\t}\n};\n");
+	} else {
+		fprintf(fp,
+		    "static const struct cfiattrdata %scf_iattrdata = {\n"
+		    "\t\"%s\", 0, {\n\t\t{ NULL, NULL, 0 },\n\t}\n};\n",
+		    name, name);
+	}
+
 	return 0;
 }
 
-static int
+static void
 emitcfdrivers(FILE *fp)
 {
 	struct devbase *d;
@@ -211,8 +208,7 @@ emitcfdrivers(FILE *fp)
 	int has_iattrs;
 
 	NEWLINE;
-	if (ht_enumerate(attrtab, cf_locators_print, fp))
-		return (1);
+	ht_enumerate(attrtab, cf_locators_print, fp);
 
 	NEWLINE;
 	TAILQ_FOREACH(d, &allbases, d_next) {
@@ -223,46 +219,36 @@ emitcfdrivers(FILE *fp)
 			a = nv->nv_ptr;
 			if (a->a_iattr == 0)
 				continue;
-			if (has_iattrs == 0 &&
-			    fprintf(fp,
+			if (has_iattrs == 0)
+				fprintf(fp,
 			    	    "static const struct cfiattrdata * const %s_attrs[] = { ",
-			    	    d->d_name) < 0)
-				return (1);
+			    	    d->d_name);
 			has_iattrs = 1;
-			if (fprintf(fp, "&%scf_iattrdata, ", a->a_name) < 0)
-				return (1);
+			fprintf(fp, "&%scf_iattrdata, ", a->a_name);
 		}
-		if (has_iattrs && fprintf(fp, "NULL };\n") < 0)
-			return (1);
-		if (fprintf(fp, "CFDRIVER_DECL(%s, %s, ", d->d_name, /* ) */
+		if (has_iattrs)
+			fprintf(fp, "NULL };\n");
+		fprintf(fp, "CFDRIVER_DECL(%s, %s, ", d->d_name, /* ) */
 		    d->d_classattr != NULL ? d->d_classattr->a_devclass
-					   : "DV_DULL") < 0)
-			return (1);
-		if (has_iattrs && fprintf(fp, "%s_attrs", d->d_name) < 0)
-			return (1);
-		else if (has_iattrs == 0 && fprintf(fp, "NULL") < 0)
-			return (1);
-		if (fprintf(fp, /* ( */ ");\n\n") < 0)
-			return (1);
+					   : "DV_DULL");
+		if (has_iattrs)
+			fprintf(fp, "%s_attrs", d->d_name);
+		else
+			fprintf(fp, "NULL");
+		fprintf(fp, /* ( */ ");\n\n");
 	}
 
 	NEWLINE;
-	if (fprintf(fp,
-		  "struct cfdriver * const cfdriver_list_initial[] = {\n") < 0)
-		return (1);
+	fprintf(fp, "struct cfdriver * const cfdriver_list_initial[] = {\n");
 	TAILQ_FOREACH(d, &allbases, d_next) {
 		if (!devbase_has_instances(d, WILD))
 			continue;
-		if (fprintf(fp, "\t&%s_cd,\n", d->d_name) < 0)
-			return (1);
+		fprintf(fp, "\t&%s_cd,\n", d->d_name);
 	}
-	if (fprintf(fp, "\tNULL\n};\n") < 0)
-		return (1);
-
-	return (0);
+	fprintf(fp, "\tNULL\n};\n");
 }
 
-static int
+static void
 emitexterns(FILE *fp)
 {
 	struct deva *da;
@@ -271,14 +257,12 @@ emitexterns(FILE *fp)
 	TAILQ_FOREACH(da, &alldevas, d_next) {
 		if (!deva_has_instances(da, WILD))
 			continue;
-		if (fprintf(fp, "extern struct cfattach %s_ca;\n",
-			    da->d_name) < 0)
-			return (1);
+		fprintf(fp, "extern struct cfattach %s_ca;\n",
+			    da->d_name);
 	}
-	return (0);
 }
 
-static int
+static void
 emitcfattachinit(FILE *fp)
 {
 	struct devbase *d;
@@ -291,24 +275,19 @@ emitcfattachinit(FILE *fp)
 		if (d->d_ahead == NULL)
 			continue;
 
-		if (fprintf(fp,
-"static struct cfattach * const %s_cfattachinit[] = {\n\t",
-			    d->d_name) < 0)
-			return (1);
+		fprintf(fp,
+		    "static struct cfattach * const %s_cfattachinit[] = {\n\t",
+			    d->d_name);
 		for (da = d->d_ahead; da != NULL; da = da->d_bsame) {
 			if (!deva_has_instances(da, WILD))
 				continue;
-			if (fprintf(fp, "&%s_ca, ", da->d_name) < 0)
-				return (1);
+			fprintf(fp, "&%s_ca, ", da->d_name);
 		}
-		if (fprintf(fp, "NULL\n};\n") < 0)
-			return (1);
+		fprintf(fp, "NULL\n};\n");
 	}
 
 	NEWLINE;
-	if (fprintf(fp,
-"const struct cfattachinit cfattachinit[] = {\n") < 0)
-		return (1);
+	fprintf(fp, "const struct cfattachinit cfattachinit[] = {\n");
 
 	TAILQ_FOREACH(d, &allbases, d_next) {
 		if (!devbase_has_instances(d, WILD))
@@ -316,46 +295,35 @@ emitcfattachinit(FILE *fp)
 		if (d->d_ahead == NULL)
 			continue;
 
-		if (fprintf(fp, "\t{ \"%s\", %s_cfattachinit },\n",
-			    d->d_name, d->d_name) < 0)
-			return (1);
+		fprintf(fp, "\t{ \"%s\", %s_cfattachinit },\n",
+			    d->d_name, d->d_name);
 	}
 
-	if (fprintf(fp, "\t{ NULL, NULL }\n};\n") < 0)
-		return (1);
-
-	return (0);
+	fprintf(fp, "\t{ NULL, NULL }\n};\n");
 }
 
-static int
+static void
 emitloc(FILE *fp)
 {
 	int i;
 
 	if (locators.used != 0) {
-		if (fprintf(fp, "\n/* locators */\n\
-static int loc[%d] = {", locators.used) < 0)
-			return (1);
+		fprintf(fp, "\n/* locators */\n"
+			"static int loc[%d] = {", locators.used);
 		for (i = 0; i < locators.used; i++)
-			if (fprintf(fp, "%s%s,", SEP(i, 8),
-			    locators.vec[i]) < 0)
-				return (1);
-		if (fprintf(fp, "\n};\n") < 0)
-			return (1);
+			fprintf(fp, "%s%s,", SEP(i, 8), locators.vec[i]);
+		fprintf(fp, "\n};\n");
 	} else if (*packed != NULL) {
 		/* We need to have *something*. */
-		if (fprintf(fp, "\n/* locators */\n\
-static int loc[1] = { -1 };\n") < 0)
-			return (1);
+		fprintf(fp, "\n/* locators */\n"
+			"static int loc[1] = { -1 };\n");
 	}
-
-	return (0);
 }
 
 /*
  * Emit static parent data.
  */
-static int
+static void
 emitparents(FILE *fp)
 {
 	struct pspec *p;
@@ -364,33 +332,25 @@ emitparents(FILE *fp)
 	TAILQ_FOREACH(p, &allpspecs, p_list) {
 		if (p->p_devs == NULL || p->p_active != DEVI_ACTIVE)
 			continue;
-		if (fprintf(fp,
-"static const struct cfparent pspec%d = {\n", p->p_inst) < 0)
-			return (1);
-		if (fprintf(fp, "\t\"%s\", ", p->p_iattr->a_name) < 0)
-			return (1);
+		fprintf(fp,
+		    "static const struct cfparent pspec%d = {\n", p->p_inst);
+		fprintf(fp, "\t\"%s\", ", p->p_iattr->a_name);
 		if (p->p_atdev != NULL) {
-			if (fprintf(fp, "\"%s\", ", p->p_atdev->d_name) < 0)
-				return (1);
-			if (p->p_atunit == WILD &&
-			    fprintf(fp, "DVUNIT_ANY") < 0)
-				return (1);
-			else if (p->p_atunit != WILD &&
-				 fprintf(fp, "%d", p->p_atunit) < 0)
-				return (1);
-		} else if (fprintf(fp, "NULL, 0") < 0)
-			return (1);
-		if (fprintf(fp, "\n};\n") < 0)
-			return (1);
+			fprintf(fp, "\"%s\", ", p->p_atdev->d_name);
+			if (p->p_atunit == WILD)
+				fprintf(fp, "DVUNIT_ANY");
+			else
+				fprintf(fp, "%d", p->p_atunit);
+		} else
+			fprintf(fp, "NULL, 0");
+		fprintf(fp, "\n};\n");
 	}
-
-	return (0);
 }
 
 /*
  * Emit the cfdata array.
  */
-static int
+static void
 emitcfdata(FILE *fp)
 {
 	struct devi **p, *i;
@@ -403,54 +363,46 @@ emitcfdata(FILE *fp)
 	char locbuf[20];
 	const char *lastname = "";
 
-	if (fprintf(fp, "\n\
-#define NORM FSTATE_NOTFOUND\n\
-#define STAR FSTATE_STAR\n\
-\n\
-struct cfdata cfdata[] = {\n\
-    /* driver           attachment    unit state loc   flags pspec */\n") < 0)
-		return (1);
+	fprintf(fp, "\n"
+		"#define NORM FSTATE_NOTFOUND\n"
+		"#define STAR FSTATE_STAR\n"
+		"\n"
+		"struct cfdata cfdata[] = {\n"
+		"    /* driver           attachment    unit state "
+		"loc   flags pspec */\n");
 	for (p = packed; (i = *p) != NULL; p++) {
 		/* the description */
-		if (fprintf(fp, "/*%3d: %s at ", i->i_cfindex, i->i_name) < 0)
-			return (1);
+		fprintf(fp, "/*%3d: %s at ", i->i_cfindex, i->i_name);
 		if ((ps = i->i_pspec) != NULL) {
 			if (ps->p_atdev != NULL &&
 			    ps->p_atunit != WILD) {
-				if (fprintf(fp, "%s%d", ps->p_atdev->d_name,
-					    ps->p_atunit) < 0)
-					return (1);
+				fprintf(fp, "%s%d", ps->p_atdev->d_name,
+					    ps->p_atunit);
 			} else if (ps->p_atdev != NULL) {
-				if (fprintf(fp, "%s?", ps->p_atdev->d_name) < 0)
-					return (1);
+				fprintf(fp, "%s?", ps->p_atdev->d_name);
 			} else {
-				if (fprintf(fp, "%s?", ps->p_iattr->a_name) < 0)
-					return (1);
+				fprintf(fp, "%s?", ps->p_iattr->a_name);
 			}
 
 			a = ps->p_iattr;
 			for (nv = a->a_locs, v = 0; nv != NULL;
 			     nv = nv->nv_next, v++) {
 				if (ARRNAME(nv->nv_name, lastname)) {
-					if (fprintf(fp, " %s %s",
-					    nv->nv_name, i->i_locs[v]) < 0)
-						return (1);
+					fprintf(fp, " %s %s",
+					    nv->nv_name, i->i_locs[v]);
 				} else {
-					if (fprintf(fp, " %s %s",
+					fprintf(fp, " %s %s",
 						    nv->nv_name,
-						    i->i_locs[v]) < 0)
-						return (1);
+						    i->i_locs[v]);
 					lastname = nv->nv_name;
 				}
 			}
 		} else {
 			a = NULL;
-			if (fputs("root", fp) < 0)
-				return (1);
+			fputs("root", fp);
 		}
 
-		if (fputs(" */\n", fp) < 0)
-			return (-1);
+		fputs(" */\n", fp);
 
 		/* then the actual defining line */
 		basename = i->i_base->d_name;
@@ -468,35 +420,30 @@ struct cfdata cfdata[] = {\n\
 			loc = locbuf;
 		} else
 			loc = "loc";
-		if (fprintf(fp, "    {\"%s\",%s\"%s\",%s%2d, %s, %7s, %#6x, ",
+		fprintf(fp, "    {\"%s\",%s\"%s\",%s%2d, %s, %7s, %#6x, ",
 			    basename, strlen(basename) < 8 ? "\t\t"
 			    				   : "\t",
 			    attachment, strlen(attachment) < 5 ? "\t\t"
 			    				       : "\t",
-			    unit, state, loc, i->i_cfflags) < 0)
-			return (1);
-		if (ps != NULL) {
-			if (fprintf(fp, "&pspec%d},\n", ps->p_inst) < 0)
-				return (1);
-		} else if (fputs("NULL},\n", fp) < 0)
-			return (1);
+			    unit, state, loc, i->i_cfflags);
+		if (ps != NULL)
+			fprintf(fp, "&pspec%d},\n", ps->p_inst);
+		else
+			fputs("NULL},\n", fp);
 	}
-	if (fprintf(fp, "    {%s,%s%s,%s%2d, %s, %7s, %#6x, %s}\n};\n",
-	    "NULL", "\t\t", "NULL", "\t\t", 0, "0", "NULL", 0, "NULL") < 0)
-	    return (1);
-	return (0);
+	fprintf(fp, "    {%s,%s%s,%s%2d, %s, %7s, %#6x, %s}\n};\n",
+	    "NULL", "\t\t", "NULL", "\t\t", 0, "0", "NULL", 0, "NULL");
 }
 
 /*
  * Emit the table of potential roots.
  */
-static int
+static void
 emitroots(FILE *fp)
 {
 	struct devi **p, *i;
 
-	if (fputs("\nconst short cfroots[] = {\n", fp) < 0)
-		return (1);
+	fputs("\nconst short cfroots[] = {\n", fp);
 	for (p = packed; (i = *p) != NULL; p++) {
 		if (i->i_at != NULL)
 			continue;
@@ -505,64 +452,53 @@ emitroots(FILE *fp)
 			(void)fprintf(stderr,
 			    "config: warning: `%s at root' is not unit 0\n",
 			    i->i_name);
-		if (fprintf(fp, "\t%2d /* %s */,\n",
-		    i->i_cfindex, i->i_name) < 0)
-			return (1);
+		fprintf(fp, "\t%2d /* %s */,\n",
+		    i->i_cfindex, i->i_name);
 	}
-	return (fputs("\t-1\n};\n", fp) < 0);
+	fputs("\t-1\n};\n", fp);
 }
 
 /*
  * Emit pseudo-device initialization.
  */
-static int
+static void
 emitpseudo(FILE *fp)
 {
 	struct devi *i;
 	struct devbase *d;
 
-	if (fputs("\n/* pseudo-devices */\n", fp) < 0)
-		return (1);
+	fputs("\n/* pseudo-devices */\n", fp);
 	TAILQ_FOREACH(i, &allpseudo, i_next) {
-		if (fprintf(fp, "void %sattach(int);\n",
-		    i->i_base->d_name) < 0)
-			return (1);
+		fprintf(fp, "void %sattach(int);\n",
+		    i->i_base->d_name);
 	}
-	if (fputs("\nstruct pdevinit pdevinit[] = {\n", fp) < 0)
-		return (1);
+	fputs("\nstruct pdevinit pdevinit[] = {\n", fp);
 	TAILQ_FOREACH(i, &allpseudo, i_next) {
 		d = i->i_base;
-		if (fprintf(fp, "\t{ %sattach, %d },\n",
-		    d->d_name, d->d_umax) < 0)
-			return (1);
+		fprintf(fp, "\t{ %sattach, %d },\n",
+		    d->d_name, d->d_umax);
 	}
-	return (fputs("\t{ 0, 0 }\n};\n", fp) < 0);
+	fputs("\t{ 0, 0 }\n};\n", fp);
 }
 
 /*
  * Emit name to major block number table.
  */
-int
+void
 emitname2blk(FILE *fp)
 {
 	struct devbase *dev;
 
-	if (fputs("\n/* device name to major block number */\n", fp) < 0)
-		return (1);
+	fputs("\n/* device name to major block number */\n", fp);
 
-	if (fprintf(fp, "struct devnametobdevmaj dev_name2blk[] = {\n") < 0)
-		return (1);
+	fprintf(fp, "struct devnametobdevmaj dev_name2blk[] = {\n");
 
 	TAILQ_FOREACH(dev, &allbases, d_next) {
 		if (dev->d_major == NODEV)
 			continue;
 
-		if (fprintf(fp, "\t{ \"%s\", %d },\n",
-			    dev->d_name, dev->d_major) < 0)
-			return (1);
+		fprintf(fp, "\t{ \"%s\", %d },\n",
+			    dev->d_name, dev->d_major);
 	}
-	if (fprintf(fp, "\t{ NULL, 0 }\n};\n") < 0)
-		return (1);
-
-	return (0);
+	fprintf(fp, "\t{ NULL, 0 }\n};\n");
 }
