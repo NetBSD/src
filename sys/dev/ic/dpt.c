@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.50 2006/08/30 00:40:56 christos Exp $	*/
+/*	$NetBSD: dpt.c,v 1.51 2006/10/04 15:41:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.50 2006/08/30 00:40:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.51 2006/10/04 15:41:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1371,16 +1371,18 @@ dpt_passthrough(struct dpt_softc *sc, struct eata_ucp *ucp, struct lwp *l)
 
 	if (ucp->ucp_stataddr != NULL) {
 		rv = copyout(&sp, ucp->ucp_stataddr, sizeof(sp));
-		if (rv != 0)
+		if (rv != 0) {
 			DPRINTF(("%s: sp copyout() failed\n",
 			    sc->sc_dv.dv_xname));
+		}
 	}
 	if (rv == 0 && ucp->ucp_senseaddr != NULL) {
 		i = min(uslen, sizeof(ccb->ccb_sense));
 		rv = copyout(&ccb->ccb_sense, ucp->ucp_senseaddr, i);
-		if (rv != 0)
+		if (rv != 0) {
 			DPRINTF(("%s: sense copyout() failed\n",
 			    sc->sc_dv.dv_xname));
+		}
 	}
 
 	ucp->ucp_hstatus = (u_int8_t)ccb->ccb_hba_status;

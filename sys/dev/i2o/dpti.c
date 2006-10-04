@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.26 2006/08/30 00:41:46 christos Exp $	*/
+/*	$NetBSD: dpti.c,v 1.27 2006/10/04 15:42:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.26 2006/08/30 00:41:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.27 2006/10/04 15:42:12 christos Exp $");
 
 #include "opt_i2o.h"
 
@@ -713,9 +713,10 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 	/*
 	 * Copy out the reply frame.
 	 */
-	if ((rv = copyout(rbtmp, data + msgsize, repsize)) != 0)
+	if ((rv = copyout(rbtmp, data + msgsize, repsize)) != 0) {
 		DPRINTF(("%s: reply copyout() failed\n",
 		    sc->sc_dv.dv_xname));
+	}
 
  bad:
 	/*
