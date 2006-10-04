@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.33 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.34 2006/10/04 21:34:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.33 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.34 2006/10/04 21:34:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,9 +72,9 @@ kmstartup(void)
 	 * Round lowpc and highpc to multiples of the density we're using
 	 * so the rest of the scaling (here and in gprof) stays in ints.
 	 */
-	p->lowpc = ROUNDDOWN(((u_long)kernel_text),
+	p->lowpc = rounddown(((u_long)kernel_text),
 		HISTFRACTION * sizeof(HISTCOUNTER));
-	p->highpc = ROUNDUP((u_long)etext,
+	p->highpc = roundup((u_long)etext,
 		HISTFRACTION * sizeof(HISTCOUNTER));
 	p->textsize = p->highpc - p->lowpc;
 	printf("Profiling kernel, textsize=%ld [%lx..%lx]\n",
