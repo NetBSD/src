@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.57 2006/08/30 17:07:33 christos Exp $	*/
+/*	$NetBSD: iop.c,v 1.58 2006/10/04 15:52:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.57 2006/08/30 17:07:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.58 2006/10/04 15:52:35 christos Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -753,8 +753,9 @@ iop_reconfigure(struct iop_softc *sc, u_int chgind)
 	 */
 	iop_configure_devices(sc, IC_CONFIGURE | IC_PRIORITY,
 	    IC_CONFIGURE | IC_PRIORITY);
-	if ((rv = iop_lct_get(sc)) != 0)
+	if ((rv = iop_lct_get(sc)) != 0) {
 		DPRINTF(("iop_reconfigure: unable to re-read LCT\n"));
+	}
 	iop_configure_devices(sc, IC_CONFIGURE | IC_PRIORITY,
 	    IC_CONFIGURE);
 
