@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.13 2006/10/01 20:31:51 elad Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.14 2006/10/04 16:01:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.13 2006/10/01 20:31:51 elad Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.14 2006/10/04 16:01:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -567,8 +567,9 @@ ucycomstart(struct tty *tp)
 #endif
 	err = uhidev_write(sc->sc_hdev.sc_parent, sc->sc_obuf, sc->sc_olen);
 
-	if (err)
+	if (err) {
 		DPRINTF(("ucycomstart: error doing uhidev_write = %d\n", err));
+	}
 
 #ifdef UCYCOM_DEBUG
 	ucycom_get_cfg(sc);
@@ -1029,8 +1030,9 @@ ucycom_set_status(struct ucycom_softc *sc)
 	sc->sc_obuf[0] = sc->sc_mcr;
 
 	err = uhidev_write(sc->sc_hdev.sc_parent, sc->sc_obuf, sc->sc_olen);
-	if (err)
+	if (err) {
 		DPRINTF(("ucycom_set_status: err=%d\n", err));
+	}
 }
 
 #ifdef UCYCOM_DEBUG

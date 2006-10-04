@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.42 2006/09/02 09:26:47 xtraeme Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.43 2006/10/04 15:57:45 christos Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.42 2006/09/02 09:26:47 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.43 2006/10/04 15:57:45 christos Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -812,9 +812,10 @@ spc_sched(struct spc_softc *sc)
 			sc->sc_nexus = acb;
 			spc_select(sc, acb);
 			return;
-		} else
+		} else {
 			SPC_MISC(("%d:%d busy\n",
 			    periph->periph_target, periph->periph_lun));
+		}
 	}
 	SPC_MISC(("idle  "));
 	/* Nothing to start; just enable reselections and wait. */

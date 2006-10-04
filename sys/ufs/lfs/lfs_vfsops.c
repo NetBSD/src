@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.221 2006/09/28 23:08:23 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.222 2006/10/04 15:56:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.221 2006/09/28 23:08:23 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.222 2006/10/04 15:56:46 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -254,17 +254,21 @@ lfs_writerd(void *arg)
 			locked_queue_bytes > LFS_MAX_BYTES ||
 			lfs_subsys_pages > LFS_MAX_PAGES) {
 
-			if (lfs_do_flush)
+			if (lfs_do_flush) {
 				DLOG((DLOG_FLUSH, "daemon: lfs_do_flush\n"));
-			if (locked_queue_count > LFS_MAX_BUFS)
+			}
+			if (locked_queue_count > LFS_MAX_BUFS) {
 				DLOG((DLOG_FLUSH, "daemon: lqc = %d, max %d\n",
 				      locked_queue_count, LFS_MAX_BUFS));
-			if (locked_queue_bytes > LFS_MAX_BYTES)
+			}
+			if (locked_queue_bytes > LFS_MAX_BYTES) {
 				DLOG((DLOG_FLUSH, "daemon: lqb = %ld, max %ld\n",
 				      locked_queue_bytes, LFS_MAX_BYTES));
-			if (lfs_subsys_pages > LFS_MAX_PAGES)
+			}
+			if (lfs_subsys_pages > LFS_MAX_PAGES) {
 				DLOG((DLOG_FLUSH, "daemon: lssp = %d, max %d\n",
 				      lfs_subsys_pages, LFS_MAX_PAGES));
+			}
 
 			lfs_flush(NULL, SEGM_WRITERD, 0);
 			lfs_do_flush = 0;
@@ -1754,18 +1758,19 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	simple_lock(&vp->v_interlock);
 
 	/* Tell why we're here, if we know */
-	if (ip->i_lfs_iflags & LFSI_NO_GOP_WRITE)
+	if (ip->i_lfs_iflags & LFSI_NO_GOP_WRITE) {
 		DLOG((DLOG_PAGE, "lfs_gop_write: clean pages dirtied\n"));
-	else if ((pgs[0]->offset & fs->lfs_bmask) != 0)
+	} else if ((pgs[0]->offset & fs->lfs_bmask) != 0) {
 		DLOG((DLOG_PAGE, "lfs_gop_write: not on block boundary\n"));
-	else if (haveeof && startoffset >= eof)
+	} else if (haveeof && startoffset >= eof) {
 		DLOG((DLOG_PAGE, "lfs_gop_write: ino %d start 0x%" PRIx64
 		      " eof 0x%" PRIx64 " npages=%d\n", VTOI(vp)->i_number,
 		      pgs[0]->offset, eof, npages));
-	else if (LFS_STARVED_FOR_SEGS(fs))
+	} else if (LFS_STARVED_FOR_SEGS(fs)) {
 		DLOG((DLOG_PAGE, "lfs_gop_write: avail too low\n"));
-	else
+	} else {
 		DLOG((DLOG_PAGE, "lfs_gop_write: seglock not held\n"));
+	}
 
 	uvm_lock_pageq();
 	for (i = 0; i < npages; i++) {
