@@ -1,4 +1,4 @@
-/*	$NetBSD: oclock.c,v 1.13 2006/09/03 22:27:45 gdamore Exp $ */
+/*	$NetBSD: oclock.c,v 1.14 2006/10/04 15:04:43 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.13 2006/09/03 22:27:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.14 2006/10/04 15:04:43 tsutsui Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -58,7 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.13 2006/09/03 22:27:45 gdamore Exp $");
 #include <machine/autoconf.h>
 
 #include <dev/clock_subr.h>
-#include <dev/ic/intersil7170.h>
+#include <dev/ic/intersil7170reg.h>
+#include <dev/ic/intersil7170var.h>
 
 /* Imported from clock.c: */
 extern int oldclk;
@@ -69,24 +70,20 @@ extern void (*timer_init)(void);
 static int oclockmatch(struct device *, struct cfdata *, void *);
 static void oclockattach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(oclock, sizeof(struct device),
+CFATTACH_DECL(oclock, sizeof(struct intersil7170_softc),
     oclockmatch, oclockattach, NULL, NULL);
 
 #if defined(SUN4)
 static bus_space_tag_t i7_bt;
 static bus_space_handle_t i7_bh;
 
-#define intersil_command(run, interrupt) \
-    (run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
-     INTERSIL_CMD_NORMAL_MODE)
+#define intersil_disable()						\
+	bus_space_write_1(i7_bt, i7_bh, INTERSIL_ICMD,			\
+	    INTERSIL_COMMAND(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE));
 
-#define intersil_disable() \
-	bus_space_write_1(i7_bt, i7_bh, INTERSIL_ICMD, \
-		  intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE));
-
-#define intersil_enable() \
-	bus_space_write_1(i7_bt, i7_bh, INTERSIL_ICMD, \
-		  intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE));
+#define intersil_enable()						\
+	bus_space_write_1(i7_bt, i7_bh, INTERSIL_ICMD,			\
+	    INTERSIL_COMMAND(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE));
 
 #define intersil_clear() bus_space_read_1(i7_bt, i7_bh, INTERSIL_IINTR)
 
@@ -129,22 +126,21 @@ oclockattach(struct device *parent, struct device *self, void *aux)
 #if defined(SUN4)
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
-	bus_space_tag_t bt = oba->oba_bustag;
-	bus_space_handle_t bh;
-	todr_chip_handle_t tch;
+	struct intersil7170_softc *sc = (void *)self;
 
 	oldclk = 1;  /* we've got an oldie! */
 
-	if (bus_space_map(bt,
+	sc->sc_bst = oba->oba_bustag;
+	if (bus_space_map(sc->sc_bst,
 			  oba->oba_paddr,
 			  sizeof(struct intersil7170),
 			  BUS_SPACE_MAP_LINEAR,	/* flags */
-			  &bh) != 0) {
+			  &sc->sc_bsh) != 0) {
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
 	}
-	i7_bt = bt;
-	i7_bh = bh;
+	i7_bt = sc->sc_bst;
+	i7_bh = sc->sc_bsh;
 
 	/*
 	 * calibrate delay()
@@ -154,8 +150,8 @@ oclockattach(struct device *parent, struct device *self, void *aux)
 		int ival;
 
 		/* Set to 1/100 second interval */
-		bus_space_write_1(bt, bh, INTERSIL_IINTR,
-				  INTERSIL_INTER_CSECONDS);
+		bus_space_write_1(sc->sc_bst, sc->sc_bsh, INTERSIL_IINTR,
+		    INTERSIL_INTER_CSECONDS);
 
 		/* enable clock */
 		intersil_enable();
@@ -192,10 +188,11 @@ oclockattach(struct device *parent, struct device *self, void *aux)
 	intr_establish(10, 0, &level10, NULL);
 
 	/* Our TOD clock year 0 represents 1968 */
-	if ((tch = intersil7170_attach(bt, bh, 1968)) == NULL)
-		panic("Can't attach tod clock");
+	sc->sc_year0 = 1968;
+	intersil7170_attach(sc);
+
 	printf("\n");
-	todr_attach(tch);
+	todr_attach(&sc->sc_handle);
 #endif /* SUN4 */
 }
 
