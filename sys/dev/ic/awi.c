@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.72 2006/09/24 03:53:08 jmcneill Exp $	*/
+/*	$NetBSD: awi.c,v 1.73 2006/10/04 15:36:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.72 2006/09/24 03:53:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.73 2006/10/04 15:36:23 christos Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $");
@@ -1593,9 +1593,10 @@ awi_mib(struct awi_softc *sc, u_int8_t cmd, u_int8_t mib, int wflag)
 	}
 	if (sc->sc_cmd_inprog) {
 		if ((error = awi_cmd_wait(sc)) != 0) {
-			if (error == EWOULDBLOCK)
+			if (error == EWOULDBLOCK) {
 				DPRINTF(("awi_mib: cmd %d inprog",
 				    sc->sc_cmd_inprog));
+			}
 			return error;
 		}
 	}
