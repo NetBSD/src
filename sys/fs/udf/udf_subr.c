@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.20 2006/10/03 15:54:03 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.21 2006/10/04 13:03:17 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.20 2006/10/03 15:54:03 reinoud Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.21 2006/10/04 13:03:17 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1182,7 +1182,7 @@ udf_check_for_vat(struct udf_node *vat_node)
 
 	/* try to allocate the space */
 	ump->vat_table_alloc_length = alloc_length;
-	ump->vat_table = malloc(alloc_length, M_UDFMNT, M_CANFAIL | M_WAITOK);
+	ump->vat_table = malloc(alloc_length, M_UDFVOLD, M_CANFAIL | M_WAITOK);
 	if (!ump->vat_table)
 		return ENOMEM;		/* impossible to allocate */
 	DPRINTF(VOLUMES, ("\talloced fine\n"));
@@ -1193,7 +1193,7 @@ udf_check_for_vat(struct udf_node *vat_node)
 	if (error) {
 		DPRINTF(VOLUMES, ("\tread failed : %d\n", error));
 		/* not completely readable... :( bomb out */
-		free(ump->vat_table, M_UDFMNT);
+		free(ump->vat_table, M_UDFVOLD);
 		ump->vat_table = NULL;
 		return error;
 	}
@@ -1218,7 +1218,7 @@ udf_check_for_vat(struct udf_node *vat_node)
 		error = strncmp(regid_name, "*UDF Virtual Alloc Tbl", 22);
 		if (error) {
 			DPRINTF(VOLUMES, ("VAT format 1.50 rejected\n"));
-			free(ump->vat_table, M_UDFMNT);
+			free(ump->vat_table, M_UDFVOLD);
 			ump->vat_table = NULL;
 			return ENOENT;
 		}
