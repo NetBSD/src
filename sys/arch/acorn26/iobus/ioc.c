@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.13 2006/09/30 15:14:21 bjh21 Exp $ */
+/* $NetBSD: ioc.c,v 1.14 2006/10/04 20:29:51 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.13 2006/09/30 15:14:21 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.14 2006/10/04 20:29:51 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -326,7 +326,7 @@ cpu_initclocks(void)
 	stathz = hz; /* XXX what _should_ it be? */
 
 	if (hz == 0 || IOC_TIMER_RATE % hz != 0 ||
-	    (t0_count = IOC_TIMER_RATE / hz) > 65535)
+	    (t0_count = IOC_TIMER_RATE / hz - 1) > 65535)
 		panic("ioc_initclocks: Impossible clock rate: %d Hz", hz);
 	ioc_counter_start(the_ioc, 0, t0_count);
 	evcnt_attach_dynamic(&sc->sc_clkev, EVCNT_TYPE_INTR, NULL,
@@ -341,7 +341,7 @@ cpu_initclocks(void)
 		profhz = stathz; /* Makes life simpler */
 		
 		if (stathz == 0 || IOC_TIMER_RATE % stathz != 0 ||
-		    (statint = IOC_TIMER_RATE / stathz) > 65535)
+		    (statint = IOC_TIMER_RATE / stathz - 1) > 65535)
 			panic("Impossible statclock rate: %d Hz", stathz);
 
 		minint = statint / 2 + 100;
