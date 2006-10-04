@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.70 2006/08/30 01:24:40 christos Exp $	*/
+/*	$NetBSD: ess.c,v 1.71 2006/10/04 15:48:47 christos Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.70 2006/08/30 01:24:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.71 2006/10/04 15:48:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2546,8 +2546,9 @@ ess_read_x_reg(struct ess_softc *sc, u_char reg)
 
 	if ((error = ess_wdsp(sc, 0xC0)) == 0)
 		error = ess_wdsp(sc, reg);
-	if (error)
+	if (error) {
 		DPRINTF(("Error reading extended register 0x%02x\n", reg));
+	}
 /* REVISIT: what if an error is returned above? */
 	val = ess_rdsp(sc);
 	DPRINTFN(2,("ess_read_x_reg: %02x=%02x\n", reg, val));
@@ -2557,17 +2558,19 @@ ess_read_x_reg(struct ess_softc *sc, u_char reg)
 void
 ess_clear_xreg_bits(struct ess_softc *sc, u_char reg, u_char mask)
 {
-	if (ess_write_x_reg(sc, reg, ess_read_x_reg(sc, reg) & ~mask) == -1)
+	if (ess_write_x_reg(sc, reg, ess_read_x_reg(sc, reg) & ~mask) == -1) {
 		DPRINTF(("Error clearing bits in extended register 0x%02x\n",
 			 reg));
+	}
 }
 
 void
 ess_set_xreg_bits(struct ess_softc *sc, u_char reg, u_char mask)
 {
-	if (ess_write_x_reg(sc, reg, ess_read_x_reg(sc, reg) | mask) == -1)
+	if (ess_write_x_reg(sc, reg, ess_read_x_reg(sc, reg) | mask) == -1) {
 		DPRINTF(("Error setting bits in extended register 0x%02x\n",
 			 reg));
+	}
 }
 
 
