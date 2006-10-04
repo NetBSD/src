@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.3 2006/05/27 17:56:39 he Exp $	*/
+/*	$NetBSD: ciss.c,v 1.4 2006/10/04 15:39:24 christos Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.3 2006/05/27 17:56:39 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.4 2006/10/04 15:39:24 christos Exp $");
 
 /* #define CISS_DEBUG */
 
@@ -448,9 +448,10 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 			    htole32((u_int64_t)sgd->ds_addr >> 32);
 			cmd->sgl[i].len = htole32(sgd->ds_len);
 			cmd->sgl[i].flags = htole32(0);
-			if (i)
+			if (i) {
 				CISS_DPRINTF(CISS_D_DMA,
 				    (",0x%lx/%lu", sgd->ds_addr, sgd->ds_len));
+			}
 		}
 
 		CISS_DPRINTF(CISS_D_DMA, ("> "));
