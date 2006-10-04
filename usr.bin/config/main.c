@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2006/08/30 15:03:56 he Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2006/10/04 20:34:48 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,6 +62,7 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #include <sys/mman.h>
 #include <paths.h>
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -1256,7 +1257,9 @@ mkident(void)
 	}
 	if (vflag)
 		(void)printf("using ident '%s'\n", ident);
-	if (fprintf(fp, "%s\n", ident) < 0)
+	fprintf(fp, "%s\n", ident);
+	fflush(fp);
+	if (ferror(fp))
 		error = 1;
 	(void)fclose(fp);
 
@@ -1402,6 +1405,9 @@ logconfig_end(void)
 	(void)fprintf(cfg, "#endif /* %s || %s */\n",
 	    LOGCONFIG_LARGE, LOGCONFIG_SMALL);
 	(void)fprintf(cfg, "#endif /* CONFIG_FILE */\n");
+	fflush(cfg);
+	if (ferror(cfg))
+		err(EXIT_FAILURE, "write to temporary file for config.h failed");
 	rewind(cfg);
 
 	if (stat("config_file.h", &st) != -1) {
@@ -1412,14 +1418,14 @@ logconfig_end(void)
 	}
 
 	fp = fopen("config_file.h", "w");
-	if(!fp) {
-		(void)fprintf(stderr,
-		    "config: cannot write to \"config_file.h\"\n");
-		exit(1);
-	}
+	if (!fp)
+		err(EXIT_FAILURE, "cannot open \"config.h\"");
 
 	while (fgets(line, sizeof(line), cfg) != NULL)
 		fputs(line, fp);
+	fflush(fp);
+	if (ferror(fp))
+		err(EXIT_FAILURE, "write to \"config.h\" failed");
 	fclose(fp);
 	fclose(cfg);
 }

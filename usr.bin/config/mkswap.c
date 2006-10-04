@@ -1,4 +1,4 @@
-/*	$NetBSD: mkswap.c,v 1.1 2005/06/05 18:19:53 thorpej Exp $	*/
+/*	$NetBSD: mkswap.c,v 1.2 2006/10/04 20:34:48 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,11 +98,8 @@ mkoneswap(struct config *cf)
 		    fname, strerror(errno));
 		return (1);
 	}
-	if (fputs("\
-#include <sys/param.h>\n\
-#include <sys/conf.h>\n\n", fp) < 0)
-		goto wrerror;
-
+	fputs("#include <sys/param.h>\n"
+		"#include <sys/conf.h>\n\n", fp);
 	/*
 	 * Emit the root device.
 	 */
@@ -112,12 +109,10 @@ mkoneswap(struct config *cf)
 	else
 		snprintf(specinfo, sizeof(specinfo), "\"%s\"",
 		    cf->cf_root->nv_str);
-	if (fprintf(fp, "const char *rootspec = %s;\n", specinfo) < 0)
-		goto wrerror;
-	if (fprintf(fp, "dev_t\trootdev = %s;\t/* %s */\n\n",
-	    mkdevstr(nv->nv_int),
-	    nv->nv_str == s_qmark ? "wildcarded" : nv->nv_str) < 0)
-		goto wrerror;
+	fprintf(fp, "const char *rootspec = %s;\n", specinfo);
+	fprintf(fp, "dev_t\trootdev = %s;\t/* %s */\n\n",
+		mkdevstr(nv->nv_int),
+		nv->nv_str == s_qmark ? "wildcarded" : nv->nv_str);
 
 	/*
 	 * Emit the dump device.
@@ -127,12 +122,10 @@ mkoneswap(struct config *cf)
 		strlcpy(specinfo, "NULL", sizeof(specinfo));
 	else
 		snprintf(specinfo, sizeof(specinfo), "\"%s\"", cf->cf_dump->nv_str);
-	if (fprintf(fp, "const char *dumpspec = %s;\n", specinfo) < 0)
-		goto wrerror;
-	if (fprintf(fp, "dev_t\tdumpdev = %s;\t/* %s */\n\n",
-	    nv ? mkdevstr(nv->nv_int) : "NODEV",
-	    nv ? nv->nv_str : "unspecified") < 0)
-		goto wrerror;
+	fprintf(fp, "const char *dumpspec = %s;\n", specinfo);
+	fprintf(fp, "dev_t\tdumpdev = %s;\t/* %s */\n\n",
+		nv ? mkdevstr(nv->nv_int) : "NODEV",
+		nv ? nv->nv_str : "unspecified");
 
 	/*
 	 * Emit the root file system.
@@ -142,10 +135,12 @@ mkoneswap(struct config *cf)
 	else {
 		snprintf(specinfo, sizeof(specinfo), "%s_mountroot",
 		    cf->cf_fstype);
-		if (fprintf(fp, "int %s(void);\n", specinfo) < 0)
-			goto wrerror;
+		fprintf(fp, "int %s(void);\n", specinfo);
 	}
-	if (fprintf(fp, "int (*mountroot)(void) = %s;\n", specinfo) < 0)
+	fprintf(fp, "int (*mountroot)(void) = %s;\n", specinfo);
+
+	fflush(fp);
+	if (ferror(fp))
 		goto wrerror;
 
 	if (fclose(fp)) {
@@ -158,6 +153,7 @@ mkoneswap(struct config *cf)
 		return (1);
 	}
 	return (0);
+
  wrerror:
 	(void)fprintf(stderr, "config: error writing %s: %s\n",
 	    fname, strerror(errno));
