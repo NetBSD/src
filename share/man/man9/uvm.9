@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.74 2006/06/13 13:23:59 yamt Exp $
+.\"	$NetBSD: uvm.9,v 1.75 2006/10/04 11:27:45 pooka Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 27, 2006
+.Dd October 4, 2006
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -908,10 +908,6 @@ and should match what was used for previous call to
 .br
 .Fn uvm_grow "struct proc *p" "vaddr_t sp" ;
 .Pp
-.Ft int
-.br
-.Fn uvm_coredump "struct proc *p" "struct vnode *vp" "struct ucred *cred" "struct core *chdr" ;
-.Pp
 .Ft void
 .br
 .Fn uvn_findpages "struct uvm_object *uobj" "voff_t offset" "int *npagesp" "struct vm_page **pps" "int flags" ;
@@ -995,16 +991,6 @@ increases the stack segment of process
 .Fa p
 to include
 .Fa sp .
-.Pp
-.Fn uvm_coredump
-generates a coredump on vnode
-.Fa vp
-for process
-.Fa p
-with credentials
-.Fa cred
-and core header description in
-.Fa chdr .
 .Pp
 .Fn uvn_findpages
 looks up or creates pages in

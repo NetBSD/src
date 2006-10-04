@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.214 2006/09/17 21:46:39 wiz Exp $
+#       $NetBSD: Makefile,v 1.215 2006/10/04 11:27:45 pooka Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -546,7 +546,7 @@ MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uao_detach.9 uvm.9 uao_reference.9 uvm.9 uvm_chgkprot.9 \
 	uvm.9 uvm_kernacc.9 uvm.9 uvm_vslock.9 \
 	uvm.9 uvm_vsunlock.9 uvm.9 uvm_meter.9 \
-	uvm.9 uvm_fork.9 uvm.9 uvm_grow.9 uvm.9 uvm_coredump.9 \
+	uvm.9 uvm_fork.9 uvm.9 uvm_grow.9 uvm.9 \
 	uvm.9 ubc_alloc.9 \
 	uvm.9 ubc_release.9 \
 	uvm.9 uvn_findpages.9 \
