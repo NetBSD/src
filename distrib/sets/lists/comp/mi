@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.934 2006/09/25 19:23:42 christos Exp $
+#	$NetBSD: mi,v 1.935 2006/10/04 11:29:35 pooka Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7191,7 +7191,7 @@
 ./usr/share/man/cat9/userret.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_chgkprot.0		comp-sys-catman		.cat
-./usr/share/man/cat9/uvm_coredump.0		comp-sys-catman		.cat
+./usr/share/man/cat9/uvm_coredump.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/uvm_deallocate.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_fault.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_fork.0			comp-sys-catman		.cat
@@ -11380,7 +11380,7 @@
 ./usr/share/man/man9/userret.9			comp-sys-man		.man
 ./usr/share/man/man9/uvm.9			comp-sys-man		.man
 ./usr/share/man/man9/uvm_chgkprot.9		comp-sys-man		.man
-./usr/share/man/man9/uvm_coredump.9		comp-sys-man		.man
+./usr/share/man/man9/uvm_coredump.9		comp-obsolete		obsolete
 ./usr/share/man/man9/uvm_deallocate.9		comp-sys-man		.man
 ./usr/share/man/man9/uvm_fault.9		comp-sys-man		.man
 ./usr/share/man/man9/uvm_fork.9			comp-sys-man		.man
