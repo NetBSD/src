@@ -1,4 +1,4 @@
-/* $NetBSD: iocvar.h,v 1.3 2006/09/30 15:14:21 bjh21 Exp $ */
+/* $NetBSD: iocvar.h,v 1.4 2006/10/04 23:40:00 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999 Ben Harris
  * All rights reserved.
@@ -32,6 +32,7 @@
 #ifndef _ARM26_IOCVAR_H
 #define _ARM26_IOCVAR_H
 
+#include <sys/timetc.h>
 #include <machine/irq.h>
 
 /* Structure passed to children of an IOC */
@@ -58,6 +59,8 @@ struct ioc_softc {
 	struct evcnt		sc_clkev;
 	struct irq_handler	*sc_sclkirq;
 	struct evcnt		sc_sclkev;
+	struct timecounter	sc_tc;
+	u_int			sc_tcbase;
 	u_int8_t		sc_ctl;
 };
 
