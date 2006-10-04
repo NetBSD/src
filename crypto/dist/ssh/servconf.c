@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.36 2006/09/28 21:22:15 christos Exp $	*/
+/*	$NetBSD: servconf.c,v 1.37 2006/10/04 14:26:31 christos Exp $	*/
 /* $OpenBSD: servconf.c,v 1.165 2006/08/14 12:40:25 dtucker Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: servconf.c,v 1.36 2006/09/28 21:22:15 christos Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.37 2006/10/04 14:26:31 christos Exp $");
 
 #ifdef KRB4
 #include <krb.h>
@@ -387,6 +387,7 @@ static struct {
 	{ "printmotd", sPrintMotd, SSHCFG_GLOBAL },
 	{ "printlastlog", sPrintLastLog, SSHCFG_GLOBAL },
 	{ "ignorerhosts", sIgnoreRhosts, SSHCFG_GLOBAL },
+	{ "ignorerootrhosts", sIgnoreRootRhosts, SSHCFG_GLOBAL },
 	{ "ignoreuserknownhosts", sIgnoreUserKnownHosts, SSHCFG_GLOBAL },
 	{ "x11forwarding", sX11Forwarding, SSHCFG_ALL },
 	{ "x11displayoffset", sX11DisplayOffset, SSHCFG_ALL },
