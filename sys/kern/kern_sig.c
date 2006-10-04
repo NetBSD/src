@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.228 2006/09/02 06:29:13 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.229 2006/10/04 23:10:42 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228 2006/09/02 06:29:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.229 2006/10/04 23:10:42 dogcow Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ktrace.h"
@@ -1033,10 +1033,11 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 		panic("psignal signal number %d", signum);
 
 	/* XXXSMP: works, but icky */
-	if (dolock)
+	if (dolock) {
 		SCHED_ASSERT_UNLOCKED();
-	else
+	} else {
 		SCHED_ASSERT_LOCKED();
+	}
 #endif
 
 	/*
