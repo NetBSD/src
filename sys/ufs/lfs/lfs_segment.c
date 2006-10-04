@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.191 2006/09/28 23:08:23 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.192 2006/10/04 15:54:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.191 2006/09/28 23:08:23 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.192 2006/10/04 15:54:43 christos Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1243,10 +1243,11 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 			     IN_UPDATE | IN_MODIFY);
 		if (ip->i_lfs_effnblks == ip->i_ffs1_blocks)
 			LFS_CLR_UINO(ip, IN_MODIFIED);
-		else
-			DLOG((DLOG_VNODE, "lfs_writeinode: ino %d: real blks=%d, "
-			      "eff=%d\n", ip->i_number, ip->i_ffs1_blocks,
-			      ip->i_lfs_effnblks));
+		else {
+			DLOG((DLOG_VNODE, "lfs_writeinode: ino %d: real "
+			    "blks=%d, eff=%d\n", ip->i_number,
+			    ip->i_ffs1_blocks, ip->i_lfs_effnblks));
+		}
 	}
 
 	if (ip->i_number == LFS_IFILE_INUM) {
