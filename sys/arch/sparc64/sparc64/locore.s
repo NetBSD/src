@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.228 2006/10/03 23:34:52 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.229 2006/10/04 05:00:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -5243,25 +5243,17 @@ ENTRY(cpu_mp_startup)
 	 */
 	wrpr	%g0, WSTATE_KERN, %wstate
 
-	set	_C_LABEL(cpu_hatch), %l1
-	jmpl	%l1, %o7
+	call	_C_LABEL(cpu_hatch)
 	 clr %g4
 
 	/* set up state required by idle */
-	set	_C_LABEL(sched_lock_idle), %l1	! Acquire sched_lock
-	jmpl	%l1, %o7
-	 nop
-
 	sethi	%hi(_C_LABEL(sched_whichqs)), %l2
 	sethi	%hi(CURLWP), %l7
 	sethi	%hi(CPCB), %l6
-	LDPTR	[%l7 + %lo(CURLWP)], %l4
 	LDPTR	[%l6 + %lo(CPCB)], %l5
 
-	set	_C_LABEL(idle), %l1
-	jmpl	%l1, %g0
+	b	_C_LABEL(idle_nolock)
 	 clr	%l4
-/*	 nop*/
 
 	NOTREACHED
 
@@ -6812,6 +6804,7 @@ ENTRY(cpu_exit)
  * we expect the follow at this point:
  *	%l4 to be NULL
  *	%l6 to be %hi(cpcb)
+ *	%l7 to be %hi(curlwp)
  */
 ENTRY_NOPROFILE(idle_switch)
 	sethi	%hi(IDLE_U), %l1
@@ -6831,6 +6824,7 @@ ENTRY_NOPROFILE(idle)
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call	_C_LABEL(sched_unlock_idle)	! Release sched_lock
 #endif
+idle_nolock:
 	 STPTR	%g0, [%l7 + %lo(CURLWP)] ! curlwp = NULL;
 
 #if KTR_COMPILE & KTR_PROC
