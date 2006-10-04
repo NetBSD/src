@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.75 2006/06/10 14:48:46 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.76 2006/10/04 21:27:28 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -732,8 +732,8 @@ edit_mbr_size(menudesc *m, void *arg)
 			/* Round end to cylinder boundary */
 			if (sizemult != 1) {
 				new *= sizemult;
-				new += ROUNDDOWN(start,current_cylsize);
-				new = ROUNDUP(new, current_cylsize);
+				new += rounddown(start, current_cylsize);
+				new = roundup(new, current_cylsize);
 				new -= start;
 				while (new <= 0)
 					new += current_cylsize;
