@@ -1,4 +1,4 @@
-/*	 $NetBSD: wcsftime.c,v 1.1 2005/03/30 03:47:12 christos Exp $	*/
+/*	 $NetBSD: wcsftime.c,v 1.2 2006/10/04 14:19:16 tnozaki Exp $	*/
 /*-
  * Copyright (c) 2002 Tim J. Robbins
  * All rights reserved.
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/locale/wcsftime.c,v 1.4 2004/04/07 09:47:56 tjr Exp $");
 #else
-__RCSID("$NetBSD: wcsftime.c,v 1.1 2005/03/30 03:47:12 christos Exp $");
+__RCSID("$NetBSD: wcsftime.c,v 1.2 2006/10/04 14:19:16 tnozaki Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,8 +57,6 @@ size_t
 wcsftime(wchar_t *wcs, size_t maxsize,
     const wchar_t *format, const struct tm *timeptr)
 {
-	static const mbstate_t initial;
-	mbstate_t mbs;
 	char *dst, *dstp, *sformat;
 	size_t n, sflen;
 	int sverrno;
@@ -69,14 +67,12 @@ wcsftime(wchar_t *wcs, size_t maxsize,
 	 * Convert the supplied format string to a multibyte representation
 	 * for strftime(), which only handles single-byte characters.
 	 */
-	mbs = initial;
-	sflen = wcsrtombs(NULL, &format, 0, &mbs);
+	sflen = wcstombs(NULL, format, 0);
 	if (sflen == (size_t)-1)
 		goto error;
 	if ((sformat = malloc(sflen + 1)) == NULL)
 		goto error;
-	mbs = initial;
-	wcsrtombs(sformat, &format, sflen + 1, &mbs);
+	wcstombs(sformat, format, sflen + 1);
 
 	/*
 	 * Allocate memory for longest multibyte sequence that will fit
@@ -89,14 +85,14 @@ wcsftime(wchar_t *wcs, size_t maxsize,
 		errno = EINVAL;
 		goto error;
 	}
-	if ((dst = malloc(maxsize * MB_CUR_MAX)) == NULL)
+	dst = malloc(maxsize * MB_CUR_MAX);
+	if (dst == NULL)
 		goto error;
 	if (strftime(dst, maxsize, sformat, timeptr) == 0)
 		goto error;
 	dstp = dst;
-	mbs = initial;
-	n = mbsrtowcs(wcs, (const char **)&dstp, maxsize, &mbs);
-	if (n == (size_t)-2 || n == (size_t)-1 || dstp != NULL)
+	n = mbstowcs(wcs, dstp, maxsize);
+	if (n == (size_t)-2 || n == (size_t)-1)
 		goto error;
 
 	free(sformat);
