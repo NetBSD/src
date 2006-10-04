@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_powernow.c,v 1.7 2006/10/04 21:47:29 cube Exp $	*/
+/*	$NetBSD: lkminit_powernow.c,v 1.8 2006/10/04 21:47:56 cube Exp $	*/
 
 /*
  * Derived from:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.7 2006/10/04 21:47:29 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.8 2006/10/04 21:47:56 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ static int powernow_mod_handle(struct lkm_table *, int);
 
 MOD_MISC("powernow");
 
-uint32_t pn_family = 0;
+static uint32_t pn_family = 0;
 
 /*
  * This function is called each time the module is loaded or unloaded.
