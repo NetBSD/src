@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.111 2006/10/03 18:20:57 christos Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.112 2006/10/04 23:55:22 dogcow Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.111 2006/10/03 18:20:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.112 2006/10/04 23:55:22 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -964,7 +964,7 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 	xfer->pipe = pipe;
 	err = usbd_sync_transfer(xfer);
 #if defined(USB_DEBUG) || defined(DIAGNOSTIC)
-	if (xfer->actlen > xfer->length)
+	if (xfer->actlen > xfer->length) {
 		DPRINTF(("usbd_do_request: overrun addr=%d type=0x%02x req=0x"
 			 "%02x val=%d index=%d rlen=%d length=%d actlen=%d\n",
 			 dev->address, xfer->request.bmRequestType,
@@ -972,6 +972,7 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 			 UGETW(xfer->request.wIndex),
 			 UGETW(xfer->request.wLength),
 			 xfer->length, xfer->actlen));
+	}
 #endif
 	if (actlen != NULL)
 		*actlen = xfer->actlen;
@@ -1023,7 +1024,7 @@ usbd_do_request_async_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 			 usbd_status status)
 {
 #if defined(USB_DEBUG) || defined(DIAGNOSTIC)
-	if (xfer->actlen > xfer->length)
+	if (xfer->actlen > xfer->length) {
 		DPRINTF(("usbd_do_request: overrun addr=%d type=0x%02x req=0x"
 			 "%02x val=%d index=%d rlen=%d length=%d actlen=%d\n",
 			 xfer->pipe->device->address,
@@ -1032,6 +1033,7 @@ usbd_do_request_async_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 			 UGETW(xfer->request.wIndex),
 			 UGETW(xfer->request.wLength),
 			 xfer->length, xfer->actlen));
+	}
 #endif
 	usbd_free_xfer(xfer);
 }
