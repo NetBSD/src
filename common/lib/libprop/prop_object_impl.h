@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.6 2006/10/03 15:45:04 thorpej Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.7 2006/10/04 09:43:45 dbj Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -267,7 +267,7 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_RWLOCK_RDLOCK(x)	/* nothing */
 #define	_PROP_RWLOCK_WRLOCK(x)	/* nothing */
 #define	_PROP_RWLOCK_UNLOCK(x)	/* nothing */
-#define	_PROP_RWLOCK_UNLOCK(x)	/* nothing */
+#define	_PROP_RWLOCK_DESTROY(x)	/* nothing */
 
 #else
 
