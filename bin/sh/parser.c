@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.61 2006/06/20 15:57:44 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.62 2006/10/04 15:00:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.61 2006/06/20 15:57:44 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.62 2006/10/04 15:00:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1618,6 +1618,8 @@ synerror(const char *msg)
 {
 	if (commandname)
 		outfmt(&errout, "%s: %d: ", commandname, startlinno);
+	else
+		outfmt(&errout, "%s: ", getprogname());
 	outfmt(&errout, "Syntax error: %s\n", msg);
 	error((char *)NULL);
 	/* NOTREACHED */
