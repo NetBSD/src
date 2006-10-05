@@ -1,4 +1,4 @@
-.\"	$NetBSD: open.2,v 1.35 2006/09/23 15:29:09 wiz Exp $
+.\"	$NetBSD: open.2,v 1.36 2006/10/05 14:48:32 chs Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -117,18 +117,31 @@ with
 .Dv O_DSYNC
 only, or specifying it without any other synchronized I/O integrity
 completion flag set, has no further effect.
-.It O_ALT_IO
+.It Dv O_ALT_IO
 Alternate I/O semantics will be used for read and write operations
 on the file descriptor.
 Alternate semantics are defined by the underlying layers and will not
 have any alternate effect in most cases.
-.It O_NOCTTY
+.It Dv O_NOCTTY
 If the file is a terminal device, the opened device is not
 made the controlling terminal for the session.
 This flag has no effect on
 .Nx ,
 since the system defaults to the abovementioned behaviour.
 The flag is present only for standards conformance.
+.It Dv O_DIRECT
+If set on a regular file, data I/O operations will not buffer the data
+being transferred in the kernel's cache, but rather transfer the data
+directly between user memory and the underlying device driver if possible.
+This flag is advisory; the request may be performed in the normal
+buffered fashion if certain conditions are not met, eg. if the request
+is not sufficiently aligned or if the file is mapped.
+.Pp
+To meet the alignment requirements for direct I/O, the file offset,
+the length of the I/O and the address of the buffer in memory must all
+be multiples of DEV_BSIZE (512 bytes).  If the I/O request is made
+using an interface that supports scatter/gather via struct iovec, each
+element of the request must meet the above alignment constraints.
 .El
 .Pp
 Opening a file with

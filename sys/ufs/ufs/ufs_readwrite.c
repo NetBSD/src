@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.69 2006/10/03 18:24:48 christos Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.70 2006/10/05 14:48:33 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.69 2006/10/03 18:24:48 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.70 2006/10/05 14:48:33 chs Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -78,13 +78,14 @@ READ(void *v)
 	daddr_t lbn, nextlbn;
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
-	int error, flags;
+	int error, flags, ioflag;
 	boolean_t usepc = FALSE;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	ump = ip->i_ump;
 	uio = ap->a_uio;
+	ioflag = ap->a_ioflag;
 	error = 0;
 
 #ifdef DIAGNOSTIC
@@ -115,6 +116,9 @@ READ(void *v)
 		const int advice = IO_ADV_DECODE(ap->a_ioflag);
 
 		while (uio->uio_resid > 0) {
+			if (ioflag & IO_DIRECT) {
+				genfs_directio(vp, uio, ioflag);
+			}
 			bytelen = MIN(ip->i_size - uio->uio_offset,
 			    uio->uio_resid);
 			if (bytelen == 0)
@@ -319,9 +323,16 @@ WRITE(void *v)
 		boolean_t extending; /* if we're extending a whole block */
 		off_t newoff;
 
+		if (ioflag & IO_DIRECT) {
+			genfs_directio(vp, uio, ioflag);
+		}
+
 		oldoff = uio->uio_offset;
 		blkoffset = blkoff(fs, uio->uio_offset);
 		bytelen = MIN(fs->fs_bsize - blkoffset, uio->uio_resid);
+		if (bytelen == 0) {
+			break;
+		}
 
 		/*
 		 * if we're filling in a hole, allocate the blocks now and

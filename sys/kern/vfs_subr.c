@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.269 2006/08/24 01:08:00 jld Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.270 2006/10/05 14:48:32 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.269 2006/08/24 01:08:00 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.270 2006/10/05 14:48:32 chs Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1250,7 +1250,7 @@ vput(struct vnode *vp)
 		uvmexp.execpages -= vp->v_uobj.uo_npages;
 		uvmexp.filepages += vp->v_uobj.uo_npages;
 	}
-	vp->v_flag &= ~(VTEXT|VEXECMAP|VWRITEMAP);
+	vp->v_flag &= ~(VTEXT|VEXECMAP|VWRITEMAP|VMAPPED);
 	simple_unlock(&vp->v_interlock);
 	VOP_INACTIVE(vp, l);
 }
@@ -1293,7 +1293,7 @@ vrele(struct vnode *vp)
 		uvmexp.execpages -= vp->v_uobj.uo_npages;
 		uvmexp.filepages += vp->v_uobj.uo_npages;
 	}
-	vp->v_flag &= ~(VTEXT|VEXECMAP|VWRITEMAP);
+	vp->v_flag &= ~(VTEXT|VEXECMAP|VWRITEMAP|VMAPPED);
 	if (vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK) == 0)
 		VOP_INACTIVE(vp, l);
 }
