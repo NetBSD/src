@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.72 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.73 2006/10/05 17:35:20 tls Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.72 2006/07/23 22:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.73 2006/10/05 17:35:20 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -153,7 +153,9 @@ in6_pcballoc(so, v)
 	int error;
 #endif
 
+	s = splnet();
 	in6p = pool_get(&in6pcb_pool, PR_NOWAIT);
+	splx(s);
 	if (in6p == NULL)
 		return (ENOBUFS);
 	bzero((caddr_t)in6p, sizeof(*in6p));
@@ -165,7 +167,9 @@ in6_pcballoc(so, v)
 #if defined(IPSEC) || defined(FAST_IPSEC)
 	error = ipsec_init_pcbpolicy(so, &in6p->in6p_sp);
 	if (error != 0) {
+		s = splnet();
 		pool_put(&in6pcb_pool, in6p);
+		splx(s);
 		return error;
 	}
 #endif /* IPSEC */
@@ -524,8 +528,8 @@ in6_pcbdetach(in6p)
 	LIST_REMOVE(&in6p->in6p_head, inph_lhash);
 	CIRCLEQ_REMOVE(&in6p->in6p_table->inpt_queue, &in6p->in6p_head,
 	    inph_queue);
-	splx(s);
 	pool_put(&in6pcb_pool, in6p);
+	splx(s);
 }
 
 void
