@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.33 2005/11/29 22:52:02 yamt Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.34 2006/10/05 14:48:33 chs Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -106,6 +106,7 @@
 
 #if defined(_NETBSD_SOURCE)
 #define	O_ALT_IO	0x00040000	/* use alternate i/o semantics */
+#define	O_DIRECT	0x00080000	/* direct I/O hint */
 #endif
 
 /* defined by POSIX 1003.1; BSD default, but required to be bitwise distinct */
@@ -119,17 +120,17 @@
 /* all bits settable during open(2) */
 #define	O_MASK		(O_ACCMODE|O_NONBLOCK|O_APPEND|O_SHLOCK|O_EXLOCK|\
 			 O_ASYNC|O_SYNC|O_CREAT|O_TRUNC|O_EXCL|O_DSYNC|\
-			 O_RSYNC|O_NOCTTY|O_ALT_IO|O_NOFOLLOW)
+			 O_RSYNC|O_NOCTTY|O_ALT_IO|O_NOFOLLOW|O_DIRECT)
 
 #define	FMARK		0x00001000	/* mark during gc() */
 #define	FDEFER		0x00002000	/* defer for next gc pass */
 #define	FHASLOCK	0x00004000	/* descriptor holds advisory lock */
 #define	FKIOCTL		0x80000000	/* kernel originated ioctl */
-/* bits to save after open(2) */
-#define	FMASK		(FREAD|FWRITE|FAPPEND|FASYNC|FFSYNC|FNONBLOCK|FDSYNC|\
-			 FRSYNC|FALTIO)
 /* bits settable by fcntl(F_SETFL, ...) */
-#define	FCNTLFLAGS	(FAPPEND|FASYNC|FFSYNC|FNONBLOCK|FDSYNC|FRSYNC|FALTIO)
+#define	FCNTLFLAGS	(FAPPEND|FASYNC|FFSYNC|FNONBLOCK|FDSYNC|FRSYNC|FALTIO|\
+			 FDIRECT)
+/* bits to save after open(2) */
+#define	FMASK		(FREAD|FWRITE|FCNTLFLAGS)
 #endif /* _KERNEL */
 
 /*
@@ -150,6 +151,7 @@
 #define	FDSYNC		O_DSYNC		/* kernel */
 #define	FRSYNC		O_RSYNC		/* kernel */
 #define	FALTIO		O_ALT_IO	/* kernel */
+#define	FDIRECT		O_DIRECT	/* kernel */
 #endif
 
 /*

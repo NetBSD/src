@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.190 2006/09/13 11:35:53 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.191 2006/10/05 14:48:32 chs Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.190 2006/09/13 11:35:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.191 2006/10/05 14:48:32 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1210,7 +1210,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		 *    in the transfer.
 		 */
 		PHOLD(p);
-		if (__predict_false(uvm_vslock(p, vaddr, buflen,
+		if (__predict_false(uvm_vslock(p->p_vmspace, vaddr, buflen,
 			    (uio->uio_rw == UIO_WRITE) ?
 			    VM_PROT_WRITE : VM_PROT_READ) != 0)) {
 				goto after_vsunlock;
@@ -1242,7 +1242,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 			segs[i]._ds_mlist = NULL;
 			i++;
 		}
-		uvm_vsunlock(p, bp->b_data, todo);
+		uvm_vsunlock(p->p_vmspace, bp->b_data, todo);
 		PRELE(p);
  		if (buflen > 0 && i >= MAX_DMA_SEGS) 
 			/* Exceeded the size of our dmamap */

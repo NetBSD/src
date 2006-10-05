@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.124 2006/09/12 08:23:51 elad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.125 2006/10/05 14:48:32 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.124 2006/09/12 08:23:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.125 2006/10/05 14:48:32 chs Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -491,6 +491,8 @@ vn_read(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		ioflag |= IO_SYNC;
 	if (fp->f_flag & FALTIO)
 		ioflag |= IO_ALTSEMANTICS;
+	if (fp->f_flag & FDIRECT)
+		ioflag |= IO_DIRECT;
 	vn_lock(vp, LK_SHARED | LK_RETRY);
 	uio->uio_offset = *offset;
 	count = uio->uio_resid;
@@ -524,6 +526,8 @@ vn_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		ioflag |= IO_DSYNC;
 	if (fp->f_flag & FALTIO)
 		ioflag |= IO_ALTSEMANTICS;
+	if (fp->f_flag & FDIRECT)
+		ioflag |= IO_DIRECT;
 	mp = NULL;
 	if (vp->v_type != VCHR &&
 	    (error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH)) != 0)

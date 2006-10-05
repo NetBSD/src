@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.54 2006/10/04 12:32:53 reinoud Exp $
+.\"     $NetBSD: vnodeops.9,v 1.55 2006/10/05 14:48:32 chs Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -672,6 +672,8 @@ use alternate I/O semantics
 operate on regular data
 .It IO_EXT
 operate on extended attributes
+.It IO_DIRECT
+do not buffer data in the kernel
 .El
 .Pp
 Zero is returned on success, otherwise an error is returned.

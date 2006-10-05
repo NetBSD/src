@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.203 2006/09/23 22:01:04 manu Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.204 2006/10/05 14:48:32 chs Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.203 2006/09/23 22:01:04 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.204 2006/10/05 14:48:32 chs Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_ktrace.h"
@@ -392,15 +392,18 @@ sysctl_lock(struct lwp *l, void *oldp, size_t savelen)
 		return (error);
 
 	if (l != NULL && oldp != NULL && savelen) {
+
 		/*
 		 * be lazy - memory is locked for short time only, so
 		 * just do a basic check against system limit
 		 */
+
 		if (uvmexp.wired + atop(savelen) > uvmexp.wiredmax) {
 			lockmgr(&sysctl_treelock, LK_RELEASE, NULL);
 			return (ENOMEM);
 		}
-		error = uvm_vslock(l->l_proc, oldp, savelen, VM_PROT_WRITE);
+		error = uvm_vslock(l->l_proc->p_vmspace, oldp, savelen,
+				   VM_PROT_WRITE);
 		if (error) {
 			(void) lockmgr(&sysctl_treelock, LK_RELEASE, NULL);
 			return (error);
@@ -502,7 +505,8 @@ sysctl_unlock(struct lwp *l)
 {
 
 	if (l != NULL && sysctl_memsize != 0) {
-		uvm_vsunlock(l->l_proc, sysctl_memaddr, sysctl_memsize);
+		uvm_vsunlock(l->l_proc->p_vmspace, sysctl_memaddr,
+			     sysctl_memsize);
 		sysctl_memsize = 0;
 	}
 
