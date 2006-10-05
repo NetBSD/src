@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.10 2006/10/04 17:34:40 bouyer Exp $
+# $NetBSD: XEN2_DOM0,v 1.11 2006/10/05 08:24:32 jnemeth Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -13,8 +13,8 @@ maxusers	32		# estimated number of users
 #
 options 	XEN
 options 	DOM0OPS
-#making MCLBYTES == PAGE_SIZE avoids a copy when a mbuf cluster is sent
-# to a domU, at the expense of a highter memory usage by the network stack.
+# making MCLBYTES = PAGE_SIZE avoids a copy when a mbuf cluster is sent
+# to a domU, at the expense of a higher memory usage by the network stack.
 #options 	MCLSHIFT=12
 
 options 	I686_CPU
@@ -190,7 +190,7 @@ mainbus0 at root
 
 cpu* at mainbus?
 
-#IPMI support
+# IPMI support
 #ipmi0		at mainbus?
 
 hypervisor*	at mainbus?		# Xen hypervisor
@@ -708,5 +708,5 @@ pseudo-device	nsmb			# experimental - SMB requester
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
-#xen pseudo-devices
+# xen pseudo-devices
 pseudo-device	xenevt
