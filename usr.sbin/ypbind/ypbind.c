@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.55 2006/10/01 19:43:15 elad Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.56 2006/10/05 09:18:11 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.55 2006/10/01 19:43:15 elad Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.56 2006/10/05 09:18:11 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -395,6 +395,7 @@ ypbindprog_2(struct svc_req *rqstp, register SVCXPRT *transp)
 	union {
 		char ypbindproc_domain_2_arg[YPMAXDOMAIN + 1];
 		struct ypbind_setdom ypbindproc_setdom_2_arg;
+		void *alignment;
 	} argument;
 	struct authunix_parms *creds;
 	char *result;
