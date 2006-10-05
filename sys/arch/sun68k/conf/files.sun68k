@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun68k,v 1.4 2006/10/01 03:53:28 tsutsui Exp $
+#	$NetBSD: files.sun68k,v 1.5 2006/10/05 14:46:12 tsutsui Exp $
 
 #
 # common sun68k configuration info
@@ -8,7 +8,7 @@
 file arch/sun68k/sun68k/autoconf.c		_sun2_	# XXX not yet merged
 file arch/sun68k/sun68k/bus.c
 file arch/sun68k/sun68k/ctrlsp.S		!_sun3x_
-file arch/sun68k/sun68k/isr.c			_sun2_	# XXX not yet merged
+file arch/sun68k/sun68k/isr.c
 file arch/sun68k/sun68k/stub.c
 file arch/sun68k/sun68k/vector.c
 
