@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.110 2006/09/23 20:54:07 elad Exp $	*/
+/*	$NetBSD: in.c,v 1.111 2006/10/05 17:35:19 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.110 2006/09/23 20:54:07 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.111 2006/10/05 17:35:19 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -580,7 +580,7 @@ in_purgeaddr(struct ifaddr *ifa, struct ifnet *ifp)
 }
 
 void
-in_purgeif(struct ifnet *ifp)
+in_purgeif(struct ifnet *ifp)		/* MUST be called at splsoftnet() */
 {
 	struct ifaddr *ifa, *nifa;
 
@@ -591,7 +591,7 @@ in_purgeif(struct ifnet *ifp)
 		in_purgeaddr(ifa, ifp);
 	}
 
-	igmp_purgeif(ifp);
+	igmp_purgeif(ifp);		/* manipulates pools */
 #ifdef MROUTING
 	ip_mrouter_detach(ifp);
 #endif

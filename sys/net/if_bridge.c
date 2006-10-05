@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.40 2006/07/23 22:06:12 ad Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.41 2006/10/05 17:35:19 tls Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.40 2006/07/23 22:06:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.41 2006/10/05 17:35:19 tls Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -1644,7 +1644,7 @@ bridge_rtupdate(struct bridge_softc *sc, const uint8_t *dst,
     struct ifnet *dst_if, int setflags, uint8_t flags)
 {
 	struct bridge_rtnode *brt;
-	int error;
+	int error, s;
 
 	/*
 	 * A route for this destination might already exist.  If so,
@@ -1659,7 +1659,9 @@ bridge_rtupdate(struct bridge_softc *sc, const uint8_t *dst,
 		 * initialize the expiration time and Ethernet
 		 * address.
 		 */
+		s = splnet();
 		brt = pool_get(&bridge_rtnode_pool, PR_NOWAIT);
+		splx(s);
 		if (brt == NULL)
 			return (ENOMEM);
 
@@ -1669,7 +1671,9 @@ bridge_rtupdate(struct bridge_softc *sc, const uint8_t *dst,
 		memcpy(brt->brt_addr, dst, ETHER_ADDR_LEN);
 
 		if ((error = bridge_rtnode_insert(sc, brt)) != 0) {
+			s = splnet();
 			pool_put(&bridge_rtnode_pool, brt);
+			splx(s);
 			return (error);
 		}
 	}
@@ -1975,12 +1979,15 @@ bridge_rtnode_insert(struct bridge_softc *sc, struct bridge_rtnode *brt)
 static void
 bridge_rtnode_destroy(struct bridge_softc *sc, struct bridge_rtnode *brt)
 {
+	int s = splnet();
 
 	LIST_REMOVE(brt, brt_hash);
 
 	LIST_REMOVE(brt, brt_list);
 	sc->sc_brtcnt--;
 	pool_put(&bridge_rtnode_pool, brt);
+
+	splx(s);
 }
 
 #if defined(BRIDGE_IPF) && defined(PFIL_HOOKS)

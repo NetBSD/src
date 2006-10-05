@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.105 2006/09/19 21:42:30 elad Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.106 2006/10/05 17:35:19 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.105 2006/09/19 21:42:30 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.106 2006/10/05 17:35:19 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -185,7 +185,9 @@ in_pcballoc(struct socket *so, void *v)
 	int error;
 #endif
 
+	s = splnet();
 	inp = pool_get(&inpcb_pool, PR_NOWAIT);
+	splx(s);
 	if (inp == NULL)
 		return (ENOBUFS);
 	bzero((caddr_t)inp, sizeof(*inp));
@@ -196,7 +198,9 @@ in_pcballoc(struct socket *so, void *v)
 #if defined(IPSEC) || defined(FAST_IPSEC)
 	error = ipsec_init_pcbpolicy(so, &inp->inp_sp);
 	if (error != 0) {
+		s = splnet();
 		pool_put(&inpcb_pool, inp);
+		splx(s);
 		return error;
 	}
 #endif
@@ -499,8 +503,8 @@ in_pcbdetach(void *v)
 	LIST_REMOVE(&inp->inp_head, inph_lhash);
 	CIRCLEQ_REMOVE(&inp->inp_table->inpt_queue, &inp->inp_head,
 	    inph_queue);
-	splx(s);
 	pool_put(&inpcb_pool, inp);
+	splx(s);
 }
 
 void

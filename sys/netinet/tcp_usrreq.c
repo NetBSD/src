@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.122 2006/09/13 10:07:42 elad Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.123 2006/10/05 17:35:19 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.122 2006/09/13 10:07:42 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.123 2006/10/05 17:35:19 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -203,6 +203,8 @@ tcp_usrreq(struct socket *so, int req,
 		}
 	}
 
+	s = splsoftnet();
+
 	if (req == PRU_PURGEIF) {
 		switch (family) {
 #ifdef INET
@@ -220,12 +222,13 @@ tcp_usrreq(struct socket *so, int req,
 			break;
 #endif
 		default:
+			splx(s);
 			return (EAFNOSUPPORT);
 		}
+		splx(s);
 		return (0);
 	}
 
-	s = splsoftnet();
 	switch (family) {
 #ifdef INET
 	case PF_INET:

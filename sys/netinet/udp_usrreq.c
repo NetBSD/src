@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.148 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.149 2006/10/05 17:35:19 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.148 2006/07/23 22:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.149 2006/10/05 17:35:19 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1186,14 +1186,16 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		return (in_control(so, (long)m, (caddr_t)nam,
 		    (struct ifnet *)control, l));
 
+	s = splsoftnet();
+
 	if (req == PRU_PURGEIF) {
 		in_pcbpurgeif0(&udbtable, (struct ifnet *)control);
 		in_purgeif((struct ifnet *)control);
 		in_pcbpurgeif(&udbtable, (struct ifnet *)control);
+		splx(s);
 		return (0);
 	}
 
-	s = splsoftnet();
 	inp = sotoinpcb(so);
 #ifdef DIAGNOSTIC
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)

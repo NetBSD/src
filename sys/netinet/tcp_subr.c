@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.199 2006/09/05 00:29:36 rpaulo Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.200 2006/10/05 17:35:19 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.199 2006/09/05 00:29:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.200 2006/10/05 17:35:19 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -979,7 +979,7 @@ tcp_newtcpcb(int family, void *aux)
 	int i;
 
 	/* XXX Consider using a pool_cache for speed. */
-	tp = pool_get(&tcpcb_pool, PR_NOWAIT);
+	tp = pool_get(&tcpcb_pool, PR_NOWAIT);	/* splsoftnet via tcp_usrreq */
 	if (tp == NULL)
 		return (NULL);
 	memcpy(tp, &tcpcb_template, sizeof(*tp));
@@ -1022,7 +1022,7 @@ tcp_newtcpcb(int family, void *aux)
 	    }
 #endif /* INET6 */
 	default:
-		pool_put(&tcpcb_pool, tp);
+		pool_put(&tcpcb_pool, tp);	/* splsoftnet via tcp_usrreq */
 		return (NULL);
 	}
 
@@ -1095,7 +1095,7 @@ tcp_isdead(struct tcpcb *tp)
 				/* not quite there yet -- count separately? */
 			return dead;
 		tcpstat.tcps_delayed_free++;
-		pool_put(&tcpcb_pool, tp);
+		pool_put(&tcpcb_pool, tp);	/* splsoftnet via tcp_timer.c */
 	}
 	return dead;
 }
@@ -1118,6 +1118,7 @@ tcp_close(struct tcpcb *tp)
 	struct rtentry *rt;
 #endif
 	struct route *ro;
+	int s;
 
 	inp = tp->t_inpcb;
 #ifdef INET6
@@ -1223,7 +1224,11 @@ tcp_close(struct tcpcb *tp)
 	if (tcp_timers_invoking(tp))
 		tp->t_flags |= TF_DEAD;
 	else
+	{
+		s = splsoftnet(); /* do we trust all callers of tcp_close()? */
 		pool_put(&tcpcb_pool, tp);
+		splx(s);
+	}
 
 	if (inp) {
 		inp->inp_ppcb = 0;

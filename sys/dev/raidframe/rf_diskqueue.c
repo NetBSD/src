@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.45 2006/01/08 21:53:26 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.46 2006/10/05 17:35:19 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.45 2006/01/08 21:53:26 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.46 2006/10/05 17:35:19 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -449,8 +449,11 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 		       int waitflag)
 {
 	RF_DiskQueueData_t *p;
+	int s;
 
+	s = splbio();
 	p = pool_get(&rf_pools.dqd, waitflag);
+	splx(s);
 	if (p == NULL)
 		return (NULL);
 
@@ -462,7 +465,9 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 	}
 	if (p->bp == NULL) {
 		/* no memory for the buffer!?!? */
+		s = splbio();
 		pool_put(&rf_pools.dqd, p);
+		splx(s);
 		return (NULL);
 	}
 
@@ -486,7 +491,9 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 void
 rf_FreeDiskQueueData(RF_DiskQueueData_t *p)
 {
-
+	int s;
+	s = splbio();		/* XXX protect only pool_put, or neither? */
 	putiobuf(p->bp);
 	pool_put(&rf_pools.dqd, p);
+	splx(s);
 }

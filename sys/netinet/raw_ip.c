@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.92 2006/09/19 21:42:30 elad Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.93 2006/10/05 17:35:19 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.92 2006/09/19 21:42:30 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.93 2006/10/05 17:35:19 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -516,14 +516,16 @@ rip_usrreq(struct socket *so, int req,
 		return (in_control(so, (long)m, (caddr_t)nam,
 		    (struct ifnet *)control, l));
 
+	s = splsoftnet();
+
 	if (req == PRU_PURGEIF) {
 		in_pcbpurgeif0(&rawcbtable, (struct ifnet *)control);
 		in_purgeif((struct ifnet *)control);
 		in_pcbpurgeif(&rawcbtable, (struct ifnet *)control);
+		splx(s);
 		return (0);
 	}
 
-	s = splsoftnet();
 	inp = sotoinpcb(so);
 #ifdef DIAGNOSTIC
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)

@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.42 2005/12/11 12:24:57 christos Exp $	*/
+/*	$NetBSD: igmp.c,v 1.43 2006/10/05 17:35:19 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.42 2005/12/11 12:24:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.43 2006/10/05 17:35:19 tls Exp $");
 
 #include "opt_mrouting.h"
 
@@ -80,6 +80,7 @@ rti_fill(struct in_multi *inm)
 {
 	struct router_info *rti;
 
+	/* this function is called at splsoftnet() */
 	LIST_FOREACH(rti, &rti_head, rti_link) {
 		if (rti->rti_ifp == inm->inm_ifp) {
 			inm->inm_rti = rti;
@@ -104,6 +105,7 @@ static struct router_info *
 rti_find(struct ifnet *ifp)
 {
 	struct router_info *rti;
+	int s = splsoftnet();
 
 	LIST_FOREACH(rti, &rti_head, rti_link) {
 		if (rti->rti_ifp == ifp)
@@ -111,16 +113,19 @@ rti_find(struct ifnet *ifp)
 	}
 
 	rti = pool_get(&igmp_rti_pool, PR_NOWAIT);
-	if (rti == NULL)
+	if (rti == NULL) {
+		splx(s);
 		return NULL;
+	}
 	rti->rti_ifp = ifp;
 	rti->rti_type = IGMP_v2_ROUTER;
 	LIST_INSERT_HEAD(&rti_head, rti, rti_link);
+	splx(s);
 	return (rti);
 }
 
 static void
-rti_delete(struct ifnet *ifp)
+rti_delete(struct ifnet *ifp)	/* MUST be called at splsoftnet */
 {
 	struct router_info *rti;
 
@@ -572,8 +577,7 @@ igmp_sendpkt(struct in_multi *inm, int type)
 }
 
 void
-igmp_purgeif(struct ifnet *ifp)
+igmp_purgeif(struct ifnet *ifp)	/* MUST be called at splsoftnet() */
 {
-
-	rti_delete(ifp);
+	rti_delete(ifp);	/* manipulates pools */
 }

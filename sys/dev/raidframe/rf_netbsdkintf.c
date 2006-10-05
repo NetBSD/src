@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.214 2006/09/28 02:39:50 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.215 2006/10/05 17:35:19 tls Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.214 2006/09/28 02:39:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.215 2006/10/05 17:35:19 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1858,6 +1858,7 @@ int
 rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 {
 	int     op = (req->type == RF_IO_TYPE_READ) ? B_READ : B_WRITE;
+	int	s;
 	struct buf *bp;
 
 	req->queue = queue;
