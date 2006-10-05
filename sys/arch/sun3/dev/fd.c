@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.49 2006/09/01 03:22:26 matt Exp $	*/
+/*	$NetBSD: fd.c,v 1.50 2006/10/05 14:46:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.49 2006/09/01 03:22:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.50 2006/10/05 14:46:11 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -179,6 +179,7 @@ struct fdc_softc {
 #define sc_nstat	sc_io.fdcio_nstat
 #define sc_status	sc_io.fdcio_status
 #define sc_intrcnt	sc_io.fdcio_intrcnt
+	void		*sc_si;			/* softintr cookie */
 };
 
 /* controller driver configuration */
@@ -302,7 +303,7 @@ void	fdc_reset(struct fdc_softc *);
 void	fdctimeout(void *);
 void	fdcpseudointr(void *);
 int	fdchwintr(void *);
-int	fdcswintr(void *);
+void	fdcswintr(void *);
 int	fdcstate(struct fdc_softc *);
 void	fdcretry(struct fdc_softc *);
 void	fdfinish(struct fd_softc *, struct buf *);
@@ -311,11 +312,9 @@ void	fd_do_eject(struct fdc_softc *, int);
 void	fd_mountroot_hook(struct device *);
 static void fdconf(struct fdc_softc *);
 
-static int fdc_softpend = 0;
-#ifndef	FDC_SOFTPRI
+#define IPL_SOFTFD	IPL_SOFT_LEVEL2
 #define	FDC_SOFTPRI	2
-#endif
-#define FD_SET_SWINTR()	{ fdc_softpend = 1; isr_soft_request(FDC_SOFTPRI); }
+#define FD_SET_SWINTR()	softintr_schedule(fdc->sc_si);
 
 /*
  * The Floppy Control Register on the sun3x, not to be confused with the
@@ -430,7 +429,6 @@ fdcattach(struct device *parent, struct device *self, void *aux)
 			+ FDC_FVR_OFFSET;
 	}
 
-	isr_add_autovect(fdcswintr, fdc, FDC_SOFTPRI);
 	pri = ca->ca_intpri;
 	vec = ca->ca_intvec;
 	if (vec == -1) {
@@ -443,6 +441,7 @@ fdcattach(struct device *parent, struct device *self, void *aux)
 	}
 	*fdc->sc_reg_fvr = vec;	/* Program controller w/ interrupt vector */
 
+	fdc->sc_si = softintr_establish(IPL_SOFTFD, fdcswintr, fdc);
 	printf(": (softpri %d) chip 8207%c\n", FDC_SOFTPRI, code);
 
 #ifdef FD_DEBUG
@@ -1080,26 +1079,20 @@ fdchwintr(void *arg)
 	return (1);
 }
 
-int 
+void 
 fdcswintr(void *arg)
 {
 	struct fdc_softc *fdc = arg;
 	int s;
 
-	if (fdc_softpend == 0)
-		return (0);
-
-	isr_soft_clear(FDC_SOFTPRI);
-	fdc_softpend = 0;
-
 	if (fdc->sc_istate != ISTATE_DONE)
-		return (0);
+		return;
 
 	fdc->sc_istate = ISTATE_IDLE;
 	s = splbio();
 	fdcstate(fdc);
 	splx(s);
-	return (1);
+	return;
 }
 
 int 

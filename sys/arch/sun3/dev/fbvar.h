@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.10 2005/12/11 12:19:20 christos Exp $	*/
+/*	$NetBSD: fbvar.h,v 1.11 2006/10/05 14:46:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,6 @@ int 	fbioctlfb(struct fbdevice *, u_long, caddr_t);
 
 void	fb_attach(struct fbdevice *, int);
 int 	fb_noioctl(struct fbdevice *, void *);
-void	fb_unblank(void);
 
 void	fb_eeprom_setsize (struct fbdevice *);
 

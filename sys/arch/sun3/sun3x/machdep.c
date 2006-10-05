@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 2006/10/05 14:46:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 2005/12/11 12:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 2006/10/05 14:46:12 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -149,8 +149,6 @@ caddr_t	msgbufaddr;
 
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
-
-union sun3sir sun3sir;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
