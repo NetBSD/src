@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2006/08/07 23:29:38 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.9 2006/10/05 14:24:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -82,9 +82,13 @@ struct softintr_handler {
 	int sh_pending;
 };
 
-extern void softintr_init(void);
-extern void *softintr_establish(int, void (*)(void *), void *);
-extern void softintr_disestablish(void *);
+void softintr_init(void);
+void *softintr_establish(int, void (*)(void *), void *);
+void softintr_disestablish(void *);
+
+/* These control the software interrupt register. */
+void isr_soft_request(int);
+void isr_soft_clear(int);
 
 static __inline void
 softintr_schedule(void *arg)
@@ -96,11 +100,14 @@ softintr_schedule(void *arg)
 	}
 }
 
+extern void *softnet_cookie;
+#define setsoftnet()	softintr_schedule(softnet_cookie)
+
 /* These connect interrupt handlers. */
 typedef int (*isr_func_t)(void *);
-extern void isr_add_autovect(isr_func_t, void *, int);
-extern void isr_add_vectored(isr_func_t, void *, int, int);
-extern void isr_add_custom(int, void *);
+void isr_add_autovect(isr_func_t, void *, int);
+void isr_add_vectored(isr_func_t, void *, int, int);
+void isr_add_custom(int, void *);
 
 /*
  * Define inline functions for PSL manipulation.
