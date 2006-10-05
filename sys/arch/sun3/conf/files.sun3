@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.76 2006/10/04 15:14:49 tsutsui Exp $
+#	$NetBSD: files.sun3,v 1.77 2006/10/05 14:46:11 tsutsui Exp $
 
 #
 # sun3-specific configuration info
@@ -34,7 +34,6 @@ file arch/sun3/sun3/autoconf.c
 file arch/sun3/sun3/db_machdep.c		ddb
 file arch/sun3/sun3/db_memrw.c			ddb | kgdb
 file arch/sun3/sun3/fpu.c
-file arch/sun3/sun3/isr.c
 file arch/sun3/sun3/leds.c
 file arch/sun3/sun3/sunmon.c
 file arch/sun3/sun3/sys_machdep.c
