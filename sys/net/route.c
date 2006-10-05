@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.71 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: route.c,v 1.72 2006/10/05 17:35:19 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.71 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.72 2006/10/05 17:35:19 tls Exp $");
 
 
 #include <sys/param.h>
@@ -607,6 +607,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			senderr(error);
 		ifa = info->rti_ifa;
 	makeroute:
+		/* Already at splsoftnet() so pool_get/pool_put are safe */
 		rt = pool_get(&rtentry_pool, PR_NOWAIT);
 		if (rt == NULL)
 			senderr(ENOBUFS);
@@ -880,6 +881,7 @@ rt_timer_queue_remove_all(struct rttimer_queue *rtq, int destroy)
 		TAILQ_REMOVE(&rtq->rtq_head, r, rtt_next);
 		if (destroy)
 			RTTIMER_CALLOUT(r);
+		/* we are already at splsoftnet */
 		pool_put(&rttimer_pool, r);
 		if (rtq->rtq_count > 0)
 			rtq->rtq_count--;
@@ -922,6 +924,7 @@ rt_timer_remove_all(struct rtentry *rt, int destroy)
 			r->rtt_queue->rtq_count--;
 		else
 			printf("rt_timer_remove_all: rtq_count reached 0\n");
+		/* we are already at splsoftnet */
 		pool_put(&rttimer_pool, r);
 	}
 }
@@ -932,6 +935,7 @@ rt_timer_add(struct rtentry *rt,
 	struct rttimer_queue *queue)
 {
 	struct rttimer *r;
+	int s;
 
 	/*
 	 * If there's already a timer with this action, destroy it before
@@ -946,12 +950,16 @@ rt_timer_add(struct rtentry *rt,
 				r->rtt_queue->rtq_count--;
 			else
 				printf("rt_timer_add: rtq_count reached 0\n");
+			s = splsoftnet();
 			pool_put(&rttimer_pool, r);
+			splx(s);
 			break;  /* only one per list, so we can quit... */
 		}
 	}
 
+	s = splsoftnet();
 	r = pool_get(&rttimer_pool, PR_NOWAIT);
+	splx(s);
 	if (r == NULL)
 		return (ENOBUFS);
 	Bzero(r, sizeof(*r));
