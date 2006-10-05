@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.935 2006/10/04 11:29:35 pooka Exp $
+#	$NetBSD: mi,v 1.936 2006/10/05 18:17:04 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1744,6 +1744,7 @@
 ./usr/include/sys/disk.h			comp-c-include
 ./usr/include/sys/disklabel.h			comp-c-include
 ./usr/include/sys/disklabel_acorn.h		comp-c-include
+./usr/include/sys/disklabel_gpt.h		comp-c-include
 ./usr/include/sys/disklabel_mbr.h		comp-obsolete		obsolete
 ./usr/include/sys/dkbad.h			comp-c-include
 ./usr/include/sys/dkio.h			comp-c-include
