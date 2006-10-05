@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.17 2006/10/04 07:28:00 skrll Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.18 2006/10/05 07:02:21 skrll Exp $	*/
 
 /*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17 2006/10/04 07:28:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.18 2006/10/05 07:02:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,7 +289,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
 	 * XXX Nice thought, but it doesn't work, if the intention was to
 	 * force a reread at the next *readdisklabel call.  That does not
 	 * happen.  There's still some use for it though as you can pseudo-
-	 * partitition the disk.
+	 * partition the disk.
 	 *
 	 * Special case to allow disklabel to be invalidated.
 	 */
