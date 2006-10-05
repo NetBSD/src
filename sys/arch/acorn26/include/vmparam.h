@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.6 2005/12/11 12:16:04 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.7 2006/10/05 00:25:50 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -32,6 +32,8 @@
 #ifndef	_ARM26_VMPARAM_H_
 #define	_ARM26_VMPARAM_H_
 
+#define __USE_TOPDOWN_VM
+
 /*
  * Page size on the 26-bit ARM CPUs is not variable in the traditional
  * sense.  We override the PAGE_* definitions to compile-time constants.
@@ -44,10 +46,10 @@
 
 #define	MAXTSIZ		(0x007f8000)		/* max text size */
 #ifndef	DFLDSIZ
-#define	DFLDSIZ		(0x00800000)		/* initial data size limit */
+#define	DFLDSIZ		(0x01800000)		/* initial data size limit */
 #endif
 #ifndef	MAXDSIZ
-#define	MAXDSIZ		(0x00800000)		/* max data size */
+#define	MAXDSIZ		(0x01800000)		/* max data size */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(512*1024)		/* initial stack size limit */
