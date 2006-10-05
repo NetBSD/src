@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.49 2006/06/10 14:48:46 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.50 2006/10/05 16:25:38 he Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.49 2006/06/10 14:48:46 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.50 2006/10/05 16:25:38 he Exp $");
 #endif
 
 #include <sys/types.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: label.c,v 1.49 2006/06/10 14:48:46 dsl Exp $");
 #include <util.h>
 #include <unistd.h>
 #include <sys/dkio.h>
+#include <sys/param.h>
 #include <ufs/ffs/fs.h>
 
 #include "defs.h"
