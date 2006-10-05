@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.155 2006/06/23 14:13:02 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.156 2006/10/05 14:48:33 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -154,7 +154,7 @@ struct vnode {
 #define	VSYSTEM		0x0004	/* vnode being used by kernel */
 	/* VISTTY used when reading dead vnodes */
 #define	VISTTY		0x0008	/* vnode represents a tty */
-#define	VEXECMAP	0x0010	/* vnode has PROT_EXEC mappings */
+#define	VEXECMAP	0x0010	/* vnode might have PROT_EXEC mappings */
 #define	VWRITEMAP	0x0020	/* might have PROT_WRITE user mappings */
 #define	VWRITEMAPDIRTY	0x0040	/* might have dirty pages due to VWRITEMAP */
 #define	VLOCKSWORK	0x0080	/* FS supports locking discipline */
@@ -166,11 +166,12 @@ struct vnode {
 #define	VLAYER		0x2000	/* vnode is on a layer filesystem */
 #define	VONWORKLST	0x4000	/* On syncer work-list */
 #define	VFREEING	0x8000	/* vnode is being freed */
+#define	VMAPPED		0x10000	/* vnode might have user mappings */
 
 #define VNODE_FLAGBITS \
     "\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\5EXECMAP\6WRITEMAP\7WRITEMAPDIRTY" \
     "\10LOCKSWORK\11XLOCK\12XWANT\13BWAIT\14ALIASED" \
-    "\15DIROP\16LAYER\17ONWORKLIST\20FREEING"
+    "\15DIROP\16LAYER\17ONWORKLIST\20FREEING\21MAPPED"
 
 #define	VSIZENOTSET	((voff_t)-1)
 
@@ -233,6 +234,7 @@ struct vattr {
 #define	IO_ALTSEMANTICS	0x00400		/* use alternate i/o semantics */
 #define	IO_NORMAL	0x00800		/* operate on regular data */
 #define	IO_EXT		0x01000		/* operate on extended attributes */
+#define	IO_DIRECT	0x02000		/* direct I/O hint */
 #define	IO_ADV_MASK	0x00003		/* access pattern hint */
 
 #define	IO_ADV_SHIFT	0
