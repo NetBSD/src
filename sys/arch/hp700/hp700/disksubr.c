@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.18 2006/10/05 07:02:21 skrll Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.19 2006/10/05 07:04:31 skrll Exp $	*/
 
 /*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.18 2006/10/05 07:02:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.19 2006/10/05 07:04:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,10 +164,9 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
-	if (lp->d_secpercyl == 0) {
-		msg = "invalid geometry";
-		goto done;
-	}
+	if (lp->d_secpercyl == 0)
+		return "invalid geometry";
+
 	lp->d_npartitions = RAW_PART + 1;
 	for (i = 0; i < RAW_PART; i++) {
 		lp->d_partitions[i].p_size = 0;
@@ -193,7 +192,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	if (msg)
 		*lp = fallbacklabel;
 
-done:
 	if (bp) {
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
