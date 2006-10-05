@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.36 2006/07/23 22:06:06 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.37 2006/10/05 14:48:32 chs Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.36 2006/07/23 22:06:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.37 2006/10/05 14:48:32 chs Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -490,7 +490,7 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 	 * Stolen from physio():
 	 */
 	PHOLD(l);
-	error = uvm_vslock(p, __UNCONST(udaddr), len, VM_PROT_READ);
+	error = uvm_vslock(p->p_vmspace, __UNCONST(udaddr), len, VM_PROT_READ);
 	if (error) {
 		PRELE(l);
 		return EFAULT;
@@ -499,7 +499,7 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 
 	memcpy(kp, up, len);
 	vunmaprange((vaddr_t)up, len);
-	uvm_vsunlock(p, __UNCONST(udaddr), len);
+	uvm_vsunlock(p->p_vmspace, __UNCONST(udaddr), len);
 	PRELE(l);
 
 	return 0;
@@ -571,7 +571,7 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 	 * Stolen from physio():
 	 */
 	PHOLD(l);
-	error = uvm_vslock(p, udaddr, len, VM_PROT_WRITE);
+	error = uvm_vslock(p->p_vmspace, udaddr, len, VM_PROT_WRITE);
 	if (error) {
 		PRELE(l);
 		return EFAULT;
@@ -581,7 +581,7 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 
 	memcpy(up, kp, len);
 	vunmaprange((vaddr_t)up, len);
-	uvm_vsunlock(p, udaddr, len);
+	uvm_vsunlock(p->p_vmspace, udaddr, len);
 	PRELE(l);
 
 	return 0;

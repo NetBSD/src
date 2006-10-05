@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.56 2006/09/07 02:40:32 dogcow Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.57 2006/10/05 14:48:32 chs Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.56 2006/09/07 02:40:32 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.57 2006/10/05 14:48:32 chs Exp $");
 
 #include "opt_inet.h"
 
@@ -1043,13 +1043,13 @@ esh_fpread(dev, uio, ioflag)
 	/* Lock down the pages */
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		error = uvm_vslock(p, iovp->iov_base, iovp->iov_len,
+		error = uvm_vslock(p->p_vmspace, iovp->iov_base, iovp->iov_len,
 		    VM_PROT_WRITE);
 		if (error) {
 			/* Unlock what we've locked so far. */
 			for (--i; i >= 0; i--) {
 				iovp = &uio->uio_iov[i];
-				uvm_vsunlock(p, iovp->iov_base,
+				uvm_vsunlock(p->p_vmspace, iovp->iov_base,
 				    iovp->iov_len);
 			}
 			goto fpread_done;
@@ -1139,7 +1139,7 @@ esh_fpread(dev, uio, ioflag)
 	uio->uio_resid -= di->ed_read_len;
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		uvm_vsunlock(p, iovp->iov_base, iovp->iov_len);
+		uvm_vsunlock(p->p_vmspace, iovp->iov_base, iovp->iov_len);
 	}
 
 	PRELE(l);	/* Release process info */
@@ -1204,13 +1204,13 @@ esh_fpwrite(dev, uio, ioflag)
 	/* Lock down the pages */
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		error = uvm_vslock(p, iovp->iov_base, iovp->iov_len,
+		error = uvm_vslock(p->p_vmspace, iovp->iov_base, iovp->iov_len,
 		    VM_PROT_READ);
 		if (error) {
 			/* Unlock what we've locked so far. */
 			for (--i; i >= 0; i--) {
 				iovp = &uio->uio_iov[i];
-				uvm_vsunlock(p, iovp->iov_base,
+				uvm_vsunlock(p->p_vmspace, iovp->iov_base,
 				    iovp->iov_len);
 			}
 			goto fpwrite_done;
@@ -1296,7 +1296,7 @@ esh_fpwrite(dev, uio, ioflag)
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		uvm_vsunlock(p, iovp->iov_base, iovp->iov_len);
+		uvm_vsunlock(p->p_vmspace, iovp->iov_base, iovp->iov_len);
 	}
 
 	PRELE(l);	/* Release process info */
