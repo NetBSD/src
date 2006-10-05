@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.126 2006/10/03 21:04:47 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.127 2006/10/05 22:41:31 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.126 2006/10/03 21:04:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.127 2006/10/05 22:41:31 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -500,6 +500,7 @@ cpu_rootconf(void)
 	wl.dkwl_bufsize = sizeof(*wi) * 16;
 	wl.dkwl_buf = wi = malloc(wl.dkwl_bufsize, M_TEMP, M_WAITOK);
 	error = VOP_IOCTL(vn, DIOCLWEDGES, &wl, FREAD, NOCRED, 0);
+	VOP_CLOSE(vn, FREAD, NOCRED, 0);
 	vput(vn);
 	if (error)
 		goto nowedge2;
