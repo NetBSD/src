@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.47 2006/10/01 18:56:22 elad Exp $	*/
+/*	$NetBSD: kd.c,v 1.48 2006/10/05 14:46:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.47 2006/10/01 18:56:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.48 2006/10/05 14:46:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.47 2006/10/01 18:56:22 elad Exp $");
 #include <sys/kauth.h>
 
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
 #include <machine/mon.h>
 #include <machine/psl.h>
 
@@ -69,8 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.47 2006/10/01 18:56:22 elad Exp $");
 #include <sun3/dev/zs_cons.h>
 
 #include "fb.h"
-
-extern void fb_unblank(void); /* XXX */
 
 #define PUT_WSIZE	64
 

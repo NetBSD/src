@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.23 2006/10/01 03:53:27 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.24 2006/10/05 14:46:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -86,16 +86,6 @@ void * bus_mapin(int, int, int);
 void bus_mapout(void *, int);
 void * bus_tmapin(int, int);
 void bus_tmapout(void *);
-
-/* These are how drivers connect interrupt handlers. */
-typedef int (*isr_func_t)(void *);
-void isr_add_autovect(isr_func_t, void *, int);
-void isr_add_vectored(isr_func_t, void *, int, int);
-void isr_add_custom(int, void *);
-
-/* These control the software interrupt register. */
-void isr_soft_request(int);
-void isr_soft_clear(int);
 
 /* Bus-error tolerant access to mapped address. */
 int 	peek_byte(caddr_t);

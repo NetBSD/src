@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.68 2006/10/01 03:53:27 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.69 2006/10/05 14:46:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.68 2006/10/01 03:53:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.69 2006/10/05 14:46:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,12 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.68 2006/10/01 03:53:27 tsutsui Exp $"
 void 
 cpu_configure(void)
 {
+
+	/*
+	 * Install handlers for our "soft" interrupts.
+	 * There might be a better place to do this?
+	 */
+	softintr_init();
 
 	/* General device autoconfiguration. */
 	if (config_rootfound("mainbus", NULL) == NULL)

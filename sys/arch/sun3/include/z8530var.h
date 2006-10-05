@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.11 2005/12/11 12:19:21 christos Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.12 2006/10/05 14:46:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,8 @@ struct zsc_softc {
 	struct	device zsc_dev;		/* required first: base device */
 	struct	zs_chanstate *zsc_cs[2];	/* channel A and B soft state */
 	/* Machine-dependent part follows... */
-	struct zs_chanstate  zsc_cs_store[2];
+	struct	zs_chanstate  zsc_cs_store[2];
+	void	*zs_si;			/* softintr cookie */
 };
 
 /*
