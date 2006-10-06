@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.10 2006/09/19 07:51:32 vanhu Exp $	*/
+/*	$NetBSD: token.l,v 1.11 2006/10/06 12:02:27 manu Exp $	*/
 
 /*	$KAME: token.l,v 1.44 2003/10/21 07:20:58 itojun Exp $	*/
 
@@ -219,6 +219,11 @@ tcp		{
 #endif
 }
 <S_ENCALG>aes-ctr	{ yylval.num = SADB_X_EALG_AESCTR; BEGIN INITIAL; return(ALG_ENC); }
+<S_ENCALG>camellia-cbc	{ 
+#ifdef SADB_X_EALG_CAMELLIACBC
+	yylval.num = SADB_X_EALG_CAMELLIACBC; BEGIN INITIAL; return(ALG_ENC); 
+#endif
+}
 
 	/* compression algorithms */
 {hyphen}C	{ return(F_COMP); }

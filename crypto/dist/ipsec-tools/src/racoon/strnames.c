@@ -1,4 +1,4 @@
-/*	$NetBSD: strnames.c,v 1.6 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: strnames.c,v 1.7 2006/10/06 12:02:27 manu Exp $	*/
 
 /*	$KAME: strnames.c,v 1.25 2003/11/13 10:53:26 itojun Exp $	*/
 
@@ -474,6 +474,7 @@ static struct ksmap name_ipsecdoi_trns_esp[] = {
 { IPSECDOI_ESP_NULL,		"NULL",		NULL },
 { IPSECDOI_ESP_AES,		"AES",		NULL },
 { IPSECDOI_ESP_TWOFISH,		"TWOFISH",	NULL },
+{ IPSECDOI_ESP_CAMELLIA,	"CAMELLIA",	NULL },
 };
 
 char *

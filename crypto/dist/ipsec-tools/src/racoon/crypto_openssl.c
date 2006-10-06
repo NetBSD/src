@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.9 2006/09/19 07:51:27 vanhu Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.10 2006/10/06 12:02:27 manu Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -78,6 +78,9 @@
 #include <openssl/rijndael.h>
 #else
 #include "crypto/rijndael/rijndael-api-fst.h"
+#endif
+#if defined(HAVE_OPENSSL_CAMELLIA_H)
+#include <openssl/camellia.h>
 #endif
 #ifdef WITH_SHA2
 #ifdef HAVE_OPENSSL_SHA2_H
@@ -1633,6 +1636,62 @@ eay_aes_keylen(len)
 		return -1;
 	return len;
 }
+
+#if defined(HAVE_OPENSSL_CAMELLIA_H)
+/*
+ * CAMELLIA-CBC
+ */
+static inline const EVP_CIPHER *
+camellia_evp_by_keylen(int keylen)
+{
+	switch(keylen) {
+		case 16:
+		case 128:
+			return EVP_camellia_128_cbc();
+		case 24:
+		case 192:
+			return EVP_camellia_192_cbc();
+		case 32:
+		case 256:
+			return EVP_camellia_256_cbc();
+		default:
+			return NULL;
+	}
+}
+
+vchar_t *
+eay_camellia_encrypt(data, key, iv)
+       vchar_t *data, *key, *iv;
+{
+	return evp_crypt(data, key, iv, camellia_evp_by_keylen(key->l), 1);
+}
+
+vchar_t *
+eay_camellia_decrypt(data, key, iv)
+       vchar_t *data, *key, *iv;
+{
+	return evp_crypt(data, key, iv, camellia_evp_by_keylen(key->l), 0);
+}
+
+int
+eay_camellia_weakkey(key)
+	vchar_t *key;
+{
+	return 0;
+}
+
+int
+eay_camellia_keylen(len)
+	int len;
+{
+	if (len == 0)
+		return 128;
+	if (len != 128 && len != 192 && len != 256)
+		return -1;
+	return len;
+}
+
+#endif
 
 /* for ipsec part */
 int

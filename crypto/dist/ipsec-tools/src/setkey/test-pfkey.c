@@ -1,4 +1,4 @@
-/*	$NetBSD: test-pfkey.c,v 1.6 2006/09/09 16:22:37 manu Exp $	*/
+/*	$NetBSD: test-pfkey.c,v 1.7 2006/10/06 12:02:27 manu Exp $	*/
 
 /*	$KAME: test-pfkey.c,v 1.4 2000/06/07 00:29:14 itojun Exp $	*/
 
@@ -308,7 +308,7 @@ key_setsadbprop()
 	struct sadb_prop m_prop;
 	struct sadb_comb *m_comb;
 	u_char buf[256];
-#if defined(SADB_X_EALG_AESCBC) && defined(SADB_X_AALG_SHA2_256)
+#if (defined(SADB_X_EALG_AESCBC) || defined(SADB_X_EALG_CAMELLIACBC)) && defined(SADB_X_AALG_SHA2_256)
 	u_int len = sizeof(m_prop) + sizeof(m_comb) * 3;
 #else
 	u_int len = sizeof(m_prop) + sizeof(m_comb) * 2;
@@ -370,6 +370,30 @@ key_setsadbprop()
  	m_comb = (struct sadb_comb *)(buf + sizeof(*m_comb));
  	m_comb->sadb_comb_auth = SADB_X_AALG_SHA2_256;
  	m_comb->sadb_comb_encrypt = SADB_X_EALG_AESCBC;
+ 	m_comb->sadb_comb_flags = 0;
+ 	m_comb->sadb_comb_auth_minbits = 8;
+ 	m_comb->sadb_comb_auth_maxbits = 96;
+ 	m_comb->sadb_comb_encrypt_minbits = 128;
+ 	m_comb->sadb_comb_encrypt_maxbits = 128;
+ 	m_comb->sadb_comb_reserved = 0;
+ 	m_comb->sadb_comb_soft_allocations = 0;
+ 	m_comb->sadb_comb_hard_allocations = 0;
+ 	m_comb->sadb_comb_soft_bytes = 0;
+ 	m_comb->sadb_comb_hard_bytes = 0;
+ 	m_comb->sadb_comb_soft_addtime = 0;
+ 	m_comb->sadb_comb_hard_addtime = 0;
+ 	m_comb->sadb_comb_soft_usetime = 0;
+ 	m_comb->sadb_comb_hard_usetime = 0;
+ 
+ 	key_setsadbextbuf(m_buf, m_len,
+ 			(caddr_t)&m_prop, sizeof(struct sadb_prop),
+ 			buf, sizeof(*m_comb) * 3);
+ 	m_len += len;
+ #elif defined(SADB_X_EALG_CAMELLIACBC) && defined(SADB_X_AALG_SHA2_256)
+ 	/* the 3rd is ESP CAMELLIA-CBC and AH HMAC-SHA256 */
+ 	m_comb = (struct sadb_comb *)(buf + sizeof(*m_comb));
+ 	m_comb->sadb_comb_auth = SADB_X_AALG_SHA2_256;
+ 	m_comb->sadb_comb_encrypt = SADB_X_EALG_CAMELLIACBC;
  	m_comb->sadb_comb_flags = 0;
  	m_comb->sadb_comb_auth_minbits = 8;
  	m_comb->sadb_comb_auth_maxbits = 96;

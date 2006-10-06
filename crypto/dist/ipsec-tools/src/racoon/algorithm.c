@@ -1,4 +1,4 @@
-/*	$NetBSD: algorithm.c,v 1.7 2006/10/02 21:33:14 manu Exp $	*/
+/*	$NetBSD: algorithm.c,v 1.8 2006/10/06 12:02:27 manu Exp $	*/
 
 /* Id: algorithm.c,v 1.15 2006/05/23 20:23:09 manubsd Exp */
 
@@ -128,6 +128,11 @@ static struct enc_algorithm oakley_encdef[] = {
 { "aes",	algtype_aes,	OAKLEY_ATTR_ENC_ALG_AES,	16,
 		eay_aes_encrypt,	eay_aes_decrypt,
 		eay_aes_weakkey,	eay_aes_keylen, },
+#ifdef HAVE_OPENSSL_CAMELLIA_H
+{ "camellia",	algtype_camellia,	OAKLEY_ATTR_ENC_ALG_CAMELLIA,	16,
+		eay_camellia_encrypt,	eay_camellia_decrypt,
+		eay_camellia_weakkey,	eay_camellia_keylen, },
+#endif
 };
 
 static struct enc_algorithm ipsec_encdef[] = {
@@ -174,6 +179,11 @@ static struct enc_algorithm ipsec_encdef[] = {
 { "rc4",	algtype_rc4,		IPSECDOI_ESP_RC4,		8,
 		NULL,			NULL,
 		NULL,			NULL, },
+#ifdef HAVE_OPENSSL_CAMELLIA_H
+{ "camellia",	algtype_camellia,	IPSECDOI_ESP_CAMELLIA,		16,
+		NULL,			NULL,
+		NULL,			eay_camellia_keylen, },
+#endif
 };
 
 static struct hmac_algorithm ipsec_hmacdef[] = {
@@ -789,6 +799,7 @@ default_keylen(class, type)
 	case algtype_cast128:
 	case algtype_aes:
 	case algtype_twofish:
+	case algtype_camellia:
 		return 128;
 	default:
 		return 0;
@@ -824,6 +835,7 @@ check_keylen(class, type, len)
 	case algtype_cast128:
 	case algtype_aes:
 	case algtype_twofish:
+	case algtype_camellia:
 		if (len % 8 != 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"key length %d is not multiple of 8\n", len);
@@ -853,6 +865,10 @@ check_keylen(class, type, len)
 		break;
 	case algtype_twofish:
 		if (len < 40 || 256 < len)
+			badrange++;
+		break;
+	case algtype_camellia:
+		if (!(len == 128 || len == 192 || len == 256))
 			badrange++;
 		break;
 	default:
