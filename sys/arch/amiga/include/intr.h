@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14.22.1 2006/09/29 15:32:05 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.14.22.2 2006/10/06 19:02:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,8 +42,8 @@
  * include files.
  */
 
-#ifndef _MACHINE_INTR_H_
-#define _MACHINE_INTR_H_
+#ifndef _AMIGA_INTR_H_
+#define _AMIGA_INTR_H_
 
 #include <amiga/amiga/isr.h>
 #include <amiga/include/mtpr.h>
@@ -67,10 +67,31 @@
 #define	IPL_LOCK	IPL_HIGH
 #define	_NIPL		12
 
+extern int ipl2spl_table[_NIPL];
+
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(ipl2spl_table[icookie._ipl]);
+}
+
 #ifdef splaudio
 #undef splaudio
-#define splaudio spl6
 #endif
+#define splaudio spl6
 
 #define spllpt()	spl6()
 
@@ -97,7 +118,7 @@
  * at the moment; should be some driver independent file.
  */
 
-#define splserial()	splraiseipl(makeiplcookie[IPL_SERIAL])
+#define splserial()	_splraise(ipl2spl_table[IPL_SERIAL])
 #define spltty()	splraise4()
 #define	splvm()		splraise4()
 
@@ -132,25 +153,4 @@ extern int _spllkm7(void);
 
 #define splx(s)		_spl(s)
 
-#endif
-
-extern int ipl2spl_table[_NIPL];
-
-typedef int ipl_t;
-typedef struct {
-	ipl_t _ipl;
-} ipl_cookie_t;
-
-static inline ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._ipl = ipl};
-}
-
-static inline int
-splraiseipl(ipl_cookie_t icookie)
-{
-
-	return _splraise(ipl2spl_table[icookie._ipl]);
-}
+#endif	/* !_AMIGA_INTR_H_ */
