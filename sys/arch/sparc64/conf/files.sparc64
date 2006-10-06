@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.103 2006/09/14 16:05:18 martin Exp $
+#	$NetBSD: files.sparc64,v 1.104 2006/10/06 08:44:59 jnemeth Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -77,12 +77,11 @@ attach	lpt at ebus with lpt_ebus
 file	arch/sparc64/dev/lpt_ebus.c		lpt_ebus
 
 device fdc {}
-attach fdc at mainbus, sbus, ebus
-# attach fdc at ebus
+attach fdc at sbus with fdc_sbus
+attach fdc at ebus with fdc_ebus
 device fd: disk
 attach fd at fdc
-file	dev/sun/fd.c				fdc | fd needs-flag
-file	arch/sparc64/sparc64/bsd_fdintr.s	fdc
+file	arch/sparc64/dev/fdc.c			fdc | fd needs-flag
 
 attach	audiocs at ebus with audiocs_ebus
 file	dev/ebus/cs4231_ebus.c			audiocs_ebus
