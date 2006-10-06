@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.31 2006/10/03 08:03:59 vanhu Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.32 2006/10/06 12:02:27 manu Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -806,7 +806,7 @@ specify the encryption algorithm used for the phase 1 negotiation.
 This directive must be defined.
 .Ar algorithm
 is one of following:
-.Ic des, 3des, blowfish, cast128, aes
+.Ic des, 3des, blowfish, cast128, aes, camellia
 .\".Ic rc5 , idea
 for Oakley.
 For other transforms, this statement should not be used.
@@ -984,7 +984,7 @@ Note that the kernel may not support the algorithm you have specified.
 .Ic des , 3des , des_iv64 , des_iv32 ,
 .Ic rc5 , rc4 , idea , 3idea ,
 .Ic cast128 , blowfish , null_enc ,
-.Ic twofish , rijndael , aes
+.Ic twofish , rijndael , aes , camellia
 .Pq used with ESP
 .\"
 .It Ic authentication_algorithm Ar algorithms ;

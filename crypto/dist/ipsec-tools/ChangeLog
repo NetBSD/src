@@ -1,3 +1,7 @@
+2006-10-06  Emmanuel Dreyfus  <manu@netbsd.org>
+	From Tomoyuki Okazaki <okazaki@kick.gr.jp>
+	* Camelia cipher support (RFC 4312)
+
 2006-10-03  Emmanuel Dreyfus  <manu@netbsd.org>
 	* src/racoon/admin.c: fix endianness issue introduced yesterday
 
