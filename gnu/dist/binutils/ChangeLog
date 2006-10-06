@@ -1,3 +1,44 @@
+2005-02-17  Alan Modra  <amodra@bigpond.net.au>
+
+	* tc.h (struct relax_type, relax_typeS): Move from here..
+	* as.h: ..to here.  Make rlx_forward and rlx_backward an offsetT.
+	* ecoff.c (ecoff_new_file): Add appfile param.
+	* ecoff.h (ecoff_new_file): Likewise.
+	* itbl-lex.h: New file.
+	* itbl-lex.l: Include itbl-lex.h.
+	* itbl-parse.y: Likewise.
+	(insntbl_line, yyparse, yylex): Move to itbl-lex.h.
+	* read.c (s_app_file_string): Mark appfile possibly unused.
+	* subsegs.c (seg_not_empty_p): Make sec possibly unused.
+	* subsegs.h (struct seg_info_trash): Delete.
+	(seg_info): Use segment_info_type instead.
+	* config/obj-coff.c (struct filename_list): Make filename const char *.
+	* config/obj-ecoff.h (obj_app_file): Pass app to ecoff_new_file.
+	* config/obj-elf.c (elf_file_symbol): Similarly.
+	* config/tc-a29k.c (md_apply_fix3): Make val a valueT.  Don't use
+	signed right shift.
+	* config/tc-arc.c (md_operand): Warning fix.
+	* config/tc-arm.c (arm_parse_reloc): Only define when OBJ_ELF.
+	(md_begin): Rearrange #if defined OBJ_COFF || defined OBJ_ELF.
+	* config/tc-cris.h (TC_IMPLICIT_LCOMM_ALIGNMENT): Use do while.
+	* config/tc-frv.c (frv_force_relocation): Warning fix.
+	* config/tc-m68k.c (md_parse_option): Delete unused var.
+	* config/tc-mcore.c (mylog2): Rename from log2 throughout.
+	* config/tc-sparc.c: Likewise.
+	(s_common): Warning fix.
+	* config/tc-mips.c (append_insn): Use unsigned long long expressions.
+	* config/tc-mmix.c (PUSHJSTUB_MAX, PUSHJSTUB_MIN): Define from
+	addressT.
+	* config/tc-s390.c (s390_insn): Delete test of unsigned >= 0.
+	* config/tc-sh.c (sh_cfi_frame_initial_instructions,
+	sh_regname_to_dw2regnum): Only define for OBJ_ELF.
+	* config/tc-tic4x.c (tic4x_insert_reg): Use ISLOWER.
+	(tic4x_do_align): Use TIC_NOP_OPCODE.
+	* config/tc-tic4x.h (TIC_NOP_OPCODE): Rename from NOP_OPCODE.
+	* config/tc-vax.c: Include netinet/in.h.
+	(tc_headers_hook): Formatting.
+	* config/tc-xstormy16.c (md_pcrel_from_section): Correct parens.
+
 2004-05-06  Daniel Jacobowitz  <dan@debian.org>
 
 	* src-release (do-tar): Add directories to the tar file.
