@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.112 2006/10/06 13:48:57 tsutsui Exp $
+#	$NetBSD: BRANCHES,v 1.113 2006/10/06 19:18:49 tsutsui Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -406,7 +406,7 @@ Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
 		tested:
 			alpha, i386, xen (yamt)
-			sun2, sun3, sun3x (tsutsui)
+			hp300, news68k, sun2, sun3, sun3x (tsutsui)
 
 		compile-tested:
 			amd64, sparc, sparc64 (GENERIC),
