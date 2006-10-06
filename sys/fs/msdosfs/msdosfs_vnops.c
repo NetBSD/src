@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.14.2.2 2005/11/06 13:32:22 tron Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.14.2.3 2006/10/06 19:42:51 ghen Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.14.2.2 2005/11/06 13:32:22 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.14.2.3 2006/10/06 19:42:51 ghen Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -638,9 +638,7 @@ msdosfs_write(v)
 		if ((error = extendfile(dep, count, NULL, NULL, 0)) &&
 		    (error != ENOSPC || (ioflag & IO_UNIT)))
 			goto errexit;
-	}
 
-	if (dep->de_FileSize < uio->uio_offset + resid) {
 		dep->de_FileSize = uio->uio_offset + resid;
 		uvm_vnp_setsize(vp, dep->de_FileSize);
 		extended = 1;
