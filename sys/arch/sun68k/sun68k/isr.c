@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.9.6.2 2006/09/19 09:56:14 yamt Exp $	*/
+/*	$NetBSD: isr.c,v 1.9.6.3 2006/10/06 13:30:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.9.6.2 2006/09/19 09:56:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.9.6.3 2006/10/06 13:30:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,6 +306,9 @@ ipl2si(ipl_t ipl)
 	case IPL_SOFTNET:
 	case IPL_SOFTCLOCK:
 		si = _IPL_SOFT_LEVEL1;
+		break;
+	case IPL_BIO:	/* used by fd(4), which uses ipl 6 for hwintr */
+		si = _IPL_SOFT_LEVEL2;
 		break;
 	case IPL_SOFTSERIAL:
 		si = _IPL_SOFT_LEVEL3;
