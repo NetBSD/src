@@ -1,4 +1,4 @@
-/*	$NetBSD: auxioreg.h,v 1.4 2001/10/22 07:31:41 mrg Exp $	*/
+/*	$NetBSD: auxioreg.h,v 1.5 2006/10/06 08:44:59 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -45,8 +45,14 @@
 #define	AUXIO_POWER_SYSTEM_OFF		0x0
 #define	AUXIO_POWER_COURTESY_OFF	0x1
 
-#define	AUXIO_LED			0x00726000
-#define	AUXIO_LED_LED			1
+#define	AUXIO_LED                       0x00726000
+/* XXX: these may be useless on Ebus2 auxio! find out! */
+#define	AUXIO_LED_LED           0x01    /* front panel LED */
+#define	AUXIO_LED_FTC           0x02    /* floppy: drives Terminal Count pin */
+#define	AUXIO_LED_MMUX          0x04    /* Monitor/Mouse MUX; what is it? */
+#define	AUXIO_LED_LTE           0x08    /* link-test enable */
+#define	AUXIO_LED_FHD           0x20    /* floppy: high density (unreliable?)*/
+#define	AUXIO_LED_FLOPPY_MASK           (AUXIO_LED_FTC)
 
 #define	AUXIO_PCI			0x00728000
 #define	AUXIO_PCI_SLOT0			0x0	/* two bits each */
