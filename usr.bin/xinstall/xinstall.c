@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.98 2006/09/25 16:05:44 daniel Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.99 2006/10/06 20:22:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.98 2006/09/25 16:05:44 daniel Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.99 2006/10/06 20:22:59 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -336,8 +336,11 @@ main(int argc, char *argv[])
 	}
 
 	/* can't do file1 file2 directory/file */
-	if (argc != 2)
-		usage();
+	if (argc != 2) {
+		errx(EXIT_FAILURE, "the last argument (%s) "
+		    "must name an existing directory", argv[argc - 1]);
+		/* NOTREACHED */
+	}
 
 	if (!no_target) {
 		/* makelink() handles checks for links */
