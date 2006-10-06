@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.11 2006/02/16 20:17:15 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.11.16.1 2006/10/06 13:27:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -315,6 +315,15 @@ int	bus_space_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t,
 	    bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
 void	bus_space_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 #endif
+
+/*
+ *	void *bus_space_vaddr(bus_space_tag_t, bus_space_handle_t);
+ *
+ * Get the kernel virtual address for the mapped bus space.
+ * Only allowed for regions mapped with BUS_SPACE_MAP_LINEAR.
+ *  (XXX not enforced)
+ */
+#define bus_space_vaddr(t, h)	((void)(t), (void *)(h))
 
 /* flags for bus space map functions */
 #define BUS_SPACE_MAP_CACHEABLE	0x0001
@@ -788,6 +797,8 @@ bus_space_copy_region_8(bus_space_tag_t t, bus_space_handle_t h1, bus_size_t o1,
 	    ((void)t, w16copy((a), (uint8_t *)((h) + (o)), (c)))
 
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
+
+int find_prom_map(paddr_t, bus_type_t, int, vaddr_t *);
 
 /*--------------------------------*/
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun2,v 1.16 2005/12/11 12:19:16 christos Exp $
+#	$NetBSD: files.sun2,v 1.16.22.1 2006/10/06 13:27:04 tsutsui Exp $
 
 #
 # sun2-specific configuration info
@@ -22,8 +22,6 @@ file arch/sun2/sun2/idprom.c
 file arch/sun2/sun2/promlib.c
 file arch/sun2/sun2/sys_machdep.c
 file arch/sun2/sun2/trap.c
-file arch/m68k/m68k/procfs_machdep.c		procfs
-file arch/m68k/m68k/vm_machdep.c
 
 include "arch/m68k/fpe/files.fpe"
 
@@ -35,7 +33,14 @@ file dev/cons.c
 # Bus types
 #
 
-# mainbus and VME support brought in by arch/sun68k
+device mainbus {}
+attach mainbus at root
+
+# VME support (these should be moved into arch/sun68k)
+include "dev/vme/files.vme"
+device sun68kvme: vmebus
+attach sun68kvme at mainbus
+file arch/sun68k/sun68k/vme_sun68k.c           sun68kvme
 
 # On-board I/O space (required).
 device obio {addr = -1, [ipl = -1], [vect = -1]}

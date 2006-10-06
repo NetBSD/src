@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.74 2006/05/30 19:19:36 he Exp $
+#	$NetBSD: files.sun3,v 1.74.8.1 2006/10/06 13:27:05 tsutsui Exp $
 
 #
 # sun3-specific configuration info
@@ -13,7 +13,6 @@ maxusers 2 8 64
 file arch/sun3/sun3/bus_subr.c			_sun3_
 file arch/sun3/sun3/cache.c			_sun3_ & havecache
 file arch/sun3/sun3/control.c			_sun3_
-file arch/sun3/sun3/ctrlsp.S			_sun3_
 file arch/sun3/sun3/dvma.c			_sun3_
 file arch/sun3/sun3/enable.c			_sun3_
 file arch/sun3/sun3/locore2.c			_sun3_
@@ -35,18 +34,11 @@ file arch/sun3/sun3/autoconf.c
 file arch/sun3/sun3/db_machdep.c		ddb
 file arch/sun3/sun3/db_memrw.c			ddb | kgdb
 file arch/sun3/sun3/fpu.c
-file arch/sun3/sun3/isr.c
 file arch/sun3/sun3/leds.c
-file arch/sun3/sun3/stub.c
 file arch/sun3/sun3/sunmon.c
 file arch/sun3/sun3/sys_machdep.c
 file arch/sun3/sun3/trap.c
-file arch/sun3/sun3/vector.c
 file arch/m68k/m68k/cacheops.c			_sun3x_
-file arch/m68k/m68k/kgdb_machdep.c 		kgdb
-file arch/m68k/m68k/procfs_machdep.c		procfs
-file arch/m68k/m68k/vm_machdep.c
-file dev/sun/disksubr.c
 
 include "arch/m68k/fpe/files.fpe"
 
@@ -123,9 +115,9 @@ file arch/sun3/dev/zs.c 		zsc needs-flag
 file dev/ic/z8530sc.c			zsc
 
 # Intersil or Mostek clock
-device clock
+device clock: mk48txx
 attach clock at obio
-device oclock
+device oclock: intersil7170
 attach oclock at obio
 file arch/sun3/sun3/clock.c		_sun3_
 file arch/sun3/sun3x/clock.c		_sun3x_

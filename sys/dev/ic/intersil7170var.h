@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrlsp.S,v 1.5 2001/02/22 07:11:12 chs Exp $	*/
+/*	$NetBSD: intersil7170var.h,v 1.1.2.2 2006/10/06 13:27:04 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,61 +36,28 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * This is shared with stand/libsa
- * XXX - can not include cpu.h there...
- */
-
-#include <machine/asm.h>
-#define FC_CONTROL 3	/* from cpu.h */
-
-/*	
- * unsigned char get_control_byte (char *addr)
- */	
-ENTRY(get_control_byte)
-	movc	%sfc,%d1		| save sfc
-	moveq	#FC_CONTROL,%d0		| sfc = FC_CONTROL
-	movec	%d0,%sfc
-	movl	%sp@(4),%a0		| src addr
-	moveq	#0,%d0			| get byte
-	movsb	%a0@,%d0
-	movc	%d1,%sfc		| restore sfc
-	rts
+#ifndef	_INTERSIL7170VAR_H_
+#define	_INTERSIL7170VAR_H_
 
 /*
- * unsigned int get_control_word (char *addr)
- */	
-ENTRY(get_control_word)
-	movc	%sfc,%d1		| save sfc
-	moveq	#FC_CONTROL,%d0		| sfc = FC_CONTROL
-	movec	%d0,%sfc
-	movl	%sp@(4),%a0		| src addr
-	movsl	%a0@,%d0		| get long
-	movc	%d1,%sfc		| restore sfc
-	rts
-
-/*	
- * void set_control_byte (char *addr, int value)
+ * Driver support for the intersil7170 used in sun[34]s to provide
+ * real time clock and time-of-day support.
  */
-ENTRY(set_control_byte)
-	movc	%dfc,%d1		| save dfc
-	moveq	#FC_CONTROL,%d0		| dfc = FC_CONTROL
-	movc	%d0,%dfc
-	movl	%sp@(4),%a0		| addr
-	movl	%sp@(8),%d0		| value
-	movsb	%d0,%a0@		| set byte
-	movc	%d1,%dfc		| restore dfc
-	rts
 
-/*
- * void set_control_word (char *addr, int value)
- */
-ENTRY(set_control_word)
-	movc	%dfc,%d1		| save dfc
-	moveq	#FC_CONTROL, %d0	| dfc = FC_CONTROL
-	movc	%d0,%dfc
-	movl	%sp@(4),%a0		| addr
-	movl	%sp@(8),%d0		| value
-	movsl	%d0,%a0@		| set long
-	movc	%d1,%dfc		| restore dfc
-	rts
+struct intersil7170_softc {
+	struct device	sc_dev;
+
+	bus_space_tag_t	sc_bst;			/* bus_space(9) tag */
+	bus_space_handle_t sc_bsh;		/* bus_space(9) handle */
+	struct todr_chip_handle sc_handle;	/* todr(9) handle */
+	u_int		sc_year0;		/* what year is represented on
+						   the system by the chip's
+						   year counter at 0 */
+	u_int		sc_flag;
+#define INTERSIL7170_NO_CENT_ADJUST	0x0001
+};
+
+/* common attach function */
+void intersil7170_attach(struct intersil7170_softc *);
+
+#endif	/* _INTERSIL7170VAR_H_ */
