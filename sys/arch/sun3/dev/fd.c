@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.50 2006/10/05 14:46:11 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.51 2006/10/06 12:54:14 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.50 2006/10/05 14:46:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.51 2006/10/06 12:54:14 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -312,7 +312,7 @@ void	fd_do_eject(struct fdc_softc *, int);
 void	fd_mountroot_hook(struct device *);
 static void fdconf(struct fdc_softc *);
 
-#define IPL_SOFTFD	IPL_SOFT_LEVEL2
+#define IPL_SOFTFD	IPL_BIO
 #define	FDC_SOFTPRI	2
 #define FD_SET_SWINTR()	softintr_schedule(fdc->sc_si);
 
