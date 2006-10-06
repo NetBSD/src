@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.29 2006/09/28 18:01:24 bouyer Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.30 2006/10/06 03:52:53 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.29 2006/09/28 18:01:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.30 2006/10/06 03:52:53 dogcow Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -473,21 +473,21 @@ static struct mp_bus extint_bus = {
 	-1,
 	mp_print_special_intr,
 	mp_cfg_special_intr,
-	0
+	NULL, 0, 0, NULL, 0
 };
 static struct mp_bus smi_bus = {
 	"SMI",
 	-1,
 	mp_print_special_intr,
 	mp_cfg_special_intr,
-	0
+	NULL, 0, 0, NULL, 0
 };
 static struct mp_bus nmi_bus = {
 	"NMI",
 	-1,
 	mp_print_special_intr,
 	mp_cfg_special_intr,
-	0
+	NULL, 0, 0, NULL, 0
 };
 
 
