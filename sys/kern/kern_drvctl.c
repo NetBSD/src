@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.5 2006/09/22 04:37:37 thorpej Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.6 2006/10/06 17:54:05 gdt Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.5 2006/09/22 04:37:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.6 2006/10/06 17:54:05 gdt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ dev_type_ioctl(drvctlioctl);
 
 const struct cdevsw drvctl_cdevsw = {
 	nullopen, nullclose, nullread, nullwrite, drvctlioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 void drvctlattach(int);
