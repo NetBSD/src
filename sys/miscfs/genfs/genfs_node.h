@@ -1,4 +1,4 @@
-/* $NetBSD: genfs_node.h,v 1.12 2006/10/05 14:48:32 chs Exp $ */
+/* $NetBSD: genfs_node.h,v 1.13 2006/10/06 02:17:25 dogcow Exp $ */
 
 /*
  * Copyright (c) 2001 Chuck Silvers.
@@ -35,6 +35,7 @@
 
 struct vm_page;
 struct kauth_cred;
+struct uio;
 
 struct genfs_ops {
 	void	(*gop_size)(struct vnode *, off_t, off_t *, int);
