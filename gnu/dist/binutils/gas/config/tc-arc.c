@@ -1655,50 +1655,52 @@ md_operand (expressionP)
 {
   char *p = input_line_pointer;
 
-  if (*p == '%')
-    if (strncmp (p, "%st(", 4) == 0)
-      {
-	input_line_pointer += 4;
-	expression (expressionP);
-	if (*input_line_pointer != ')')
-	  {
-	    as_bad ("missing ')' in %%-op");
-	    return;
-	  }
-	++input_line_pointer;
-	arc_code_symbol (expressionP);
-      }
-    else
-      {
-	/* It could be a register.  */
-	int i, l;
-	struct arc_ext_operand_value *ext_oper = arc_ext_operands;
-	p++;
+  if (*p != '%')
+    return;
 
-	while (ext_oper)
-	  {
-	    l = strlen (ext_oper->operand.name);
-	    if (!strncmp (p, ext_oper->operand.name, l) && !ISALNUM (*(p + l)))
-	      {
-		input_line_pointer += l + 1;
-		expressionP->X_op = O_register;
-		expressionP->X_add_number = (int) &ext_oper->operand;
-		return;
-	      }
-	    ext_oper = ext_oper->next;
-	  }
-	for (i = 0; i < arc_reg_names_count; i++)
-	  {
-	    l = strlen (arc_reg_names[i].name);
-	    if (!strncmp (p, arc_reg_names[i].name, l) && !ISALNUM (*(p + l)))
-	      {
-		input_line_pointer += l + 1;
-		expressionP->X_op = O_register;
-		expressionP->X_add_number = (int) &arc_reg_names[i];
-		break;
-	      }
-	  }
-      }
+  if (strncmp (p, "%st(", 4) == 0)
+    {
+      input_line_pointer += 4;
+      expression (expressionP);
+      if (*input_line_pointer != ')')
+	{
+	  as_bad ("missing ')' in %%-op");
+	  return;
+	}
+      ++input_line_pointer;
+      arc_code_symbol (expressionP);
+    }
+  else
+    {
+      /* It could be a register.  */
+      int i, l;
+      struct arc_ext_operand_value *ext_oper = arc_ext_operands;
+      p++;
+
+      while (ext_oper)
+	{
+	  l = strlen (ext_oper->operand.name);
+	  if (!strncmp (p, ext_oper->operand.name, l) && !ISALNUM (*(p + l)))
+	    {
+	      input_line_pointer += l + 1;
+	      expressionP->X_op = O_register;
+	      expressionP->X_add_number = (int) &ext_oper->operand;
+	      return;
+	    }
+	  ext_oper = ext_oper->next;
+	}
+      for (i = 0; i < arc_reg_names_count; i++)
+	{
+	  l = strlen (arc_reg_names[i].name);
+	  if (!strncmp (p, arc_reg_names[i].name, l) && !ISALNUM (*(p + l)))
+	    {
+	      input_line_pointer += l + 1;
+	      expressionP->X_op = O_register;
+	      expressionP->X_add_number = (int) &arc_reg_names[i];
+	      break;
+	    }
+	}
+    }
 }
 
 /* We have no need to default values of symbols.

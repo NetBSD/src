@@ -148,8 +148,6 @@ typedef enum isa_attr {
 
 /* Ifield support.  */
 
-extern const struct cgen_ifld ip2k_cgen_ifld_table[];
-
 /* Ifield attribute indices.  */
 
 /* Enum declaration for cgen_ifld attrs.  */
@@ -235,6 +233,8 @@ typedef enum cgen_insn_attr {
 
 /* cgen.h uses things we just defined.  */
 #include "opcode/cgen.h"
+
+extern const struct cgen_ifld ip2k_cgen_ifld_table[];
 
 /* Attributes.  */
 extern const CGEN_ATTR_TABLE ip2k_cgen_hardware_attr_table[];

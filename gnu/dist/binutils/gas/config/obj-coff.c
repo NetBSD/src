@@ -1,6 +1,6 @@
 /* coff object file format
    Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002
+   1999, 2000, 2001, 2002, 2005
    Free Software Foundation, Inc.
 
    This file is part of GAS.
@@ -1724,7 +1724,7 @@ int function_lineoff = -1;	/* Offset in line#s where the last function
    into the string table.  */
 struct filename_list
 {
-  char *filename;
+  const char *filename;
   struct filename_list *next;
 };
 

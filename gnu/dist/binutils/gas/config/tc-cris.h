@@ -1,5 +1,6 @@
 /* tc-cris.h -- Header file for tc-cris.c, the CRIS GAS port.
-   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2003, 2004, 2005
+   Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB, Lund, Sweden.
    Originally written for GAS 1.38.1 by Mikael Asker.
@@ -152,7 +153,7 @@ extern void tc_cris_check_adjusted_broken_word PARAMS ((offsetT,
  tc_cris_check_adjusted_broken_word ((offsetT) (new_offset), brokw)
 
 /* We don't want any implicit alignment, so we do nothing.  */
-#define TC_IMPLICIT_LCOMM_ALIGNMENT(SIZE, P2VAR)
+#define TC_IMPLICIT_LCOMM_ALIGNMENT(SIZE, P2VAR) do { } while (0)
 
 /* CRIS instructions, with operands and prefixes included, are a multiple
    of two bytes long.  */

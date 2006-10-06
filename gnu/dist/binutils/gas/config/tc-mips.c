@@ -1,6 +1,6 @@
 /* tc-mips.c -- assemble code for a MIPS chip.
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004 Free Software Foundation, Inc.
+   2003, 2004, 2005 Free Software Foundation, Inc.
    Contributed by the OSF and Ralph Campbell.
    Written by Keith Knowles and Ralph Campbell, working independently.
    Modified for ECOFF and R4000 support by Ian Lance Taylor of Cygnus
@@ -2085,7 +2085,7 @@ append_insn (struct mips_cl_insn *ip, expressionS *address_expr,
     {
       if (address_expr->X_op == O_constant)
 	{
-	  valueT tmp;
+	  unsigned int tmp;
 
 	  switch (*reloc_type)
 	    {
@@ -2094,20 +2094,18 @@ append_insn (struct mips_cl_insn *ip, expressionS *address_expr,
 	      break;
 
 	    case BFD_RELOC_MIPS_HIGHEST:
-	      tmp = (address_expr->X_add_number
-		     + ((valueT) 0x8000 << 32) + 0x80008000) >> 16;
-	      tmp >>= 16;
-	      ip->insn_opcode |= (tmp >> 16) & 0xffff;
+	      tmp = (address_expr->X_add_number + 0x800080008000ull) >> 48;
+	      ip->insn_opcode |= tmp & 0xffff;
 	      break;
 
 	    case BFD_RELOC_MIPS_HIGHER:
-	      tmp = (address_expr->X_add_number + 0x80008000) >> 16;
-	      ip->insn_opcode |= (tmp >> 16) & 0xffff;
+	      tmp = (address_expr->X_add_number + 0x80008000ull) >> 32;
+	      ip->insn_opcode |= tmp & 0xffff;
 	      break;
 
 	    case BFD_RELOC_HI16_S:
-	      ip->insn_opcode |= ((address_expr->X_add_number + 0x8000)
-				  >> 16) & 0xffff;
+	      tmp = (address_expr->X_add_number + 0x8000) >> 16;
+	      ip->insn_opcode |= tmp & 0xffff;
 	      break;
 
 	    case BFD_RELOC_HI16:
