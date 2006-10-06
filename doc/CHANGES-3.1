@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.164 2006/10/06 11:17:44 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.165 2006/10/06 21:33:29 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4650,4 +4650,100 @@ crypto/dist/openssl/ssl/ssl_lib.c		patch
 	Fix security issues reported in CVE-2006-2937, CVE-2006-2940,
 	CVE-2006-3738 and CVE-2006-4343.
 	[ghen, ticket #1537]
+
+dist/ipf/ip_lookup.c				1.2
+
+	Userland equivalent of #1501.
+	[christos, ticket #1520]
+
+dist/pppd/pppd/options.c			1.4 via patch
+
+	Fix regression with active-filter functions introduced with pppd 2.4.3
+	[heinz, ticket #1521]
+
+lib/libc/net/getnetnamadr.c			1.34
+
+	Fix amd(8) coredumps on LP64 platforms when /etc/nsswitch.conf has
+	more than one source for netgroups.
+	[tsutsui, ticket #1522]
+
+sys/fs/msdosfs/denode.h				1.14
+sys/fs/msdosfs/msdosfs_fat.c			1.11
+sys/fs/msdosfs/msdosfs_vnops.c			1.31
+
+	Add a third entry to the FAT cache for msdosfs, which keeps the end
+	position from just before extending a file.  This keeps write speed
+	of large files constant.
+	[xtraeme, ticket #1525]
+
+sys/compat/linux/common/linux_sg.c		1.6
+
+	Fix COMPAT_LINUX on m86k.
+	[tsutsui, ticket #1526]
+
+gnu/dist/binutils/ChangeLog			patch
+gnu/dist/binutils/bfd/coff-alpha.c		patch
+gnu/dist/binutils/bfd/elf32-iq2000.c		patch
+gnu/dist/binutils/bfd/pdp11.c			patch
+gnu/dist/binutils/gas/as.h			patch
+gnu/dist/binutils/gas/itbl-lex.l		patch
+gnu/dist/binutils/gas/itbl-parse.y		patch
+gnu/dist/binutils/gas/subsegs.h			patch
+gnu/dist/binutils/gas/tc.h			patch
+gnu/dist/binutils/gas/config/obj-coff.c		patch
+gnu/dist/binutils/gas/config/obj-ecoff.h	patch
+gnu/dist/binutils/gas/config/tc-arc.c		patch
+gnu/dist/binutils/gas/config/tc-arm.c		patch
+gnu/dist/binutils/gas/config/tc-cris.h		patch
+gnu/dist/binutils/gas/config/tc-frv.c		patch
+gnu/dist/binutils/gas/config/tc-mcore.c		patch
+gnu/dist/binutils/gas/config/tc-mips.c		patch
+gnu/dist/binutils/gas/config/tc-mmix.c		patch
+gnu/dist/binutils/gas/config/tc-s390.c		patch
+gnu/dist/binutils/gas/config/tc-sh.c		patch
+gnu/dist/binutils/gas/config/tc-sparc.c		patch
+gnu/dist/binutils/gas/config/tc-tic4x.c		patch
+gnu/dist/binutils/gas/config/tc-tic4x.h		patch
+gnu/dist/binutils/gas/config/tc-vax.c		patch
+gnu/dist/binutils/gas/config/tc-xstormy16.c	patch
+gnu/dist/binutils/opcodes/fr30-desc.h		patch
+gnu/dist/binutils/opcodes/frv-desc.h		patch
+gnu/dist/binutils/opcodes/ip2k-desc.h		patch
+gnu/dist/binutils/opcodes/iq2000-asm.c		patch
+gnu/dist/gcc/gcc/cp/decl.c			patch
+gnu/dist/gcc/include/obstack.h			patch
+gnu/dist/gdb/include/obstack.h			patch
+gnu/dist/groff/src/preproc/eqn/box.h		patch
+gnu/dist/groff/src/roff/troff/div.h		patch
+gnu/dist/groff/src/roff/troff/env.h		patch
+gnu/dist/groff/src/roff/troff/input.cpp		patch
+usr.bin/mkesdb/ldef.h				patch
+usr.sbin/makefs/ffs/ffs_alloc.c			patch
+usr.sbin/makefs/ffs/ufs_inode.h			patch
+
+	Fix cross-building NetBSD 3.x binutils with GCC 4.x.
+	[skrll, ticket #1529]
+
+sys/dev/isapnp/gus_isapnp.c			1.28
+
+	Call isa_drq_alloc to reserve DMA channel(s) for ISA devices.
+	Fixes the gus(4) audio driver.
+	[jmcneill, ticket #1531]
+
+etc/security					1.100
+
+	Improve security check for "/etc/exports":
+	1.) Properly handle line continuation and network exports.
+	2.) Make the report more compact.
+	[tron, ticket #1532]
+
+sys/arch/acorn32/podulebus/simide.c		1.24
+
+	Fix a panic on boot on acorn32 systems with simide(4) card.
+	[bjh21, ticket #1534]
+
+sys/arch/i386/conf/XEN2_DOM0			1.10
+
+	Fix typo.
+	[bouyer, ticket #1535]
 
