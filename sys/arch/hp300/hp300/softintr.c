@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.9 2006/07/21 10:01:40 tsutsui Exp $	*/
+/*	$NetBSD: softintr.c,v 1.9.6.1 2006/10/06 19:16:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.9 2006/07/21 10:01:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.9.6.1 2006/10/06 19:16:15 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,6 +129,29 @@ softintr_dispatch(void)
 	} while (handled);
 }
 
+static int
+ipl2si(ipl_t ipl)
+{
+	int si;
+
+	switch (ipl) {
+	case IPL_SOFTNET:
+		si = _IPL_SOFTNET;
+		break;
+	case IPL_SOFTCLOCK:
+		si = _IPL_SOFTCLOCK;
+		break;
+	case IPL_SOFTSERIAL:
+		si = _IPL_SOFTSERIAL;
+		break;
+	default:
+		si = _IPL_SOFT;
+		break;
+	}
+
+	return si;
+}
+
 /*
  * softintr_establish()		[interface]
  *
@@ -141,10 +164,10 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 	struct hp300_soft_intrhand *sih;
 	int s;
 
-	if (__predict_false(ipl >= IPL_NSOFT || ipl < 0 || func == NULL))
+	if (__predict_false(ipl >= NIPL || ipl < 0 || func == NULL))
 		panic("softintr_establish");
 
-	hsi = &hp300_soft_intrs[ipl];
+	hsi = &hp300_soft_intrs[ipl2si(ipl)];
 
 	sih = malloc(sizeof(struct hp300_soft_intrhand), M_DEVBUF, M_NOWAIT);
 	if (__predict_true(sih != NULL)) {
