@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.15.22.1 2006/10/06 19:16:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -46,24 +46,33 @@
 /*
  * Interrupt "levels".  These are a more abstract representation
  * of interrupt levels, and do not have the same meaning as m68k
- * CPU interrupt levels.  They serve two purposes:
+ * CPU interrupt levels.  They serve the following purposes:
  *
  *	- properly order ISRs in the list for that CPU ipl
  *	- compute CPU PSL values for the spl*() calls.
+ *	- used to create cookie for the splraiseipl().
  */
-#define	IPL_NONE	0	/* disable only this interrupt */
-#define	IPL_BIO		1	/* disable block I/O interrupts */
-#define	IPL_NET		2	/* disable network interrupts */
-#define	IPL_TTY		3	/* disable terminal interrupts */
-#define	IPL_TTYNOBUF	4	/* IPL_TTY + higher ISR priority */
-#define	IPL_CLOCK	5	/* disable clock interrupts */
-#define	IPL_HIGH	6	/* disable all interrupts */
+#define	IPL_NONE	0
+#define	IPL_SOFTCLOCK	1
+#define	IPL_SOFTNET	2
+#define	IPL_SOFTSERIAL	3
+#define	IPL_SOFT	4	/* disable all software interrupts */
+#define	IPL_BIO		5
+#define	IPL_NET		6
+#define	IPL_TTY		7
+#define	IPL_TTYNOBUF	8	/* IPL_TTY + higher ISR priority */
+#define	IPL_VM		9
+#define	IPL_CLOCK	10
+#define	IPL_STATCLOCK	IPL_CLOCK
+#define	IPL_HIGH	11
+#define	IPL_SCHED	IPL_HIGH
+#define	IPL_LOCK	IPL_HIGH
+#define	NIPL		12
 
-/* Copied from alpha/include/intr.h */
-#define	IPL_SOFTSERIAL	0	/* serial software interrupts */
-#define	IPL_SOFTNET	1	/* network software interrupts */
-#define	IPL_SOFTCLOCK	2	/* clock software interrupts */
-#define	IPL_SOFT	3	/* other software interrupts */
+#define	_IPL_SOFTSERIAL	0	/* serial software interrupts */
+#define	_IPL_SOFTNET	1	/* network software interrupts */
+#define	_IPL_SOFTCLOCK	2	/* clock software interrupts */
+#define	_IPL_SOFT	3	/* other software interrupts */
 #define	IPL_NSOFT	4
 
 #define	IPL_SOFTNAMES {							\
@@ -74,26 +83,34 @@
 }
 
 /*
- * Convert PSL values to CPU IPLs and vice-versa.
+ * Convert PSL values to m68k CPU IPLs and vice-versa.
+ * Note: CPU IPL values are different from IPL_* used by splraiseipl().
  */
 #define	PSLTOIPL(x)	(((x) >> 8) & 0xf)
 #define	IPLTOPSL(x)	((((x) & 0xf) << 8) | PSL_S)
 
 #ifdef _KERNEL
-/*
- * This array contains the appropriate PSL_S|PSL_IPL? values
- * to raise interrupt priority to the requested level.
- */
-extern unsigned short hp300_ipls[];
 
-#define	HP300_IPL_SOFT		0
-#define	HP300_IPL_BIO		1
-#define	HP300_IPL_NET		2
-#define	HP300_IPL_TTY		3
-#define	HP300_IPL_VM		4
-#define	HP300_IPL_CLOCK		5
-#define	HP300_IPL_HIGH		6
-#define	HP300_NIPLS		7
+extern u_short hp300_ipl2psl[];
+
+typedef int ipl_t;
+typedef struct {
+	int _psl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._psl = hp300_ipl2psl[ipl]};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(icookie._psl);
+}
 
 /* These spl calls are _not_ to be used by machine-independent code. */
 #define	splhil()	splraise1()
@@ -105,12 +122,12 @@ extern unsigned short hp300_ipls[];
 #define	splsoft()	splraise1()
 #define	splsoftclock()	splsoft()
 #define	splsoftnet()	splsoft()
-#define splsoftserial	splsoft()
-#define	splbio()	_splraise(hp300_ipls[HP300_IPL_BIO])
-#define	splnet()	_splraise(hp300_ipls[HP300_IPL_NET])
-#define	spltty()	_splraise(hp300_ipls[HP300_IPL_TTY])
-#define	splserial()	_splraise(hp300_ipls[HP300_IPL_TTY])
-#define	splvm()		_splraise(hp300_ipls[HP300_IPL_VM])
+#define	splsoftserial	splsoft()
+#define	splbio()	_splraise(hp300_ipl2psl[IPL_BIO])
+#define	splnet()	_splraise(hp300_ipl2psl[IPL_NET])
+#define	spltty()	_splraise(hp300_ipl2psl[IPL_TTY])
+#define	splserial()	_splraise(hp300_ipl2psl[IPL_TTY])
+#define	splvm()		_splraise(hp300_ipl2psl[IPL_VM])
 #define	splclock()	spl6()
 #define	splstatclock()	splclock()
 #define	splhigh()	spl7()
