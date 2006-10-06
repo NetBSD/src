@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.163 2006/09/16 19:29:53 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.164 2006/10/06 11:17:44 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4632,4 +4632,22 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
 
 	Welcome to NetBSD 3.1_RC3.
+
+crypto/dist/openssl/crypto/asn1/tasn_dec.c	patch
+crypto/dist/openssl/crypto/dh/dh.h		patch
+crypto/dist/openssl/crypto/dh/dh_err.c		patch
+crypto/dist/openssl/crypto/dh/dh_key.c		patch
+crypto/dist/openssl/crypto/dsa/dsa.h		patch
+crypto/dist/openssl/crypto/dsa/dsa_err.c	patch
+crypto/dist/openssl/crypto/dsa/dsa_ossl.c	patch
+crypto/dist/openssl/crypto/rsa/rsa.h		patch
+crypto/dist/openssl/crypto/rsa/rsa_eay.c	patch
+crypto/dist/openssl/crypto/rsa/rsa_err.c	patch
+crypto/dist/openssl/ssl/s2_clnt.c		patch
+crypto/dist/openssl/ssl/s3_srvr.c		patch
+crypto/dist/openssl/ssl/ssl_lib.c		patch
+
+	Fix security issues reported in CVE-2006-2937, CVE-2006-2940,
+	CVE-2006-3738 and CVE-2006-4343.
+	[ghen, ticket #1537]
 
