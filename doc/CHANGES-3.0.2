@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.2,v 1.1.2.24 2006/09/16 16:57:51 riz Exp $
+#	$NetBSD: CHANGES-3.0.2,v 1.1.2.25 2006/10/06 11:18:04 tron Exp $
 
 A complete list of changes from the NetBSD 3.0.1 release to the NetBSD 3.0.2
 release:
@@ -164,4 +164,22 @@ xfree/xc/lib/font/Type1/util.c			1.2
 
 	Fix vulnerability in Adobe Type 1 font handling.
 	[adrianp, ticket #1516]
+
+crypto/dist/openssl/crypto/asn1/tasn_dec.c	patch
+crypto/dist/openssl/crypto/dh/dh.h		patch
+crypto/dist/openssl/crypto/dh/dh_err.c		patch
+crypto/dist/openssl/crypto/dh/dh_key.c		patch
+crypto/dist/openssl/crypto/dsa/dsa.h		patch
+crypto/dist/openssl/crypto/dsa/dsa_err.c	patch
+crypto/dist/openssl/crypto/dsa/dsa_ossl.c	patch
+crypto/dist/openssl/crypto/rsa/rsa.h		patch
+crypto/dist/openssl/crypto/rsa/rsa_eay.c	patch
+crypto/dist/openssl/crypto/rsa/rsa_err.c	patch
+crypto/dist/openssl/ssl/s2_clnt.c		patch
+crypto/dist/openssl/ssl/s3_srvr.c		patch
+crypto/dist/openssl/ssl/ssl_lib.c		patch
+
+	Fix security issues reported in CVE-2006-2937, CVE-2006-2940,
+	CVE-2006-3738 and CVE-2006-4343.
+	[ghen, ticket #1537]
 
