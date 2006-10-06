@@ -232,6 +232,10 @@ AC_CHECK_HEADER(openssl/sha2.h, [], [
 ])
 AC_SUBST(CRYPTOBJS)
 
+# checking camellia
+AC_CHECK_HEADERS([openssl/camellia.h])
+
+
 # Option --enable-adminport 
 AC_MSG_CHECKING(if --enable-adminport option is specified)
 AC_ARG_ENABLE(adminport,

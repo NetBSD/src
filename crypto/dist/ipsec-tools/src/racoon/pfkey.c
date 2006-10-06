@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.15 2006/10/03 08:02:51 vanhu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.16 2006/10/06 12:02:27 manu Exp $	*/
 
-/* $Id: pfkey.c,v 1.15 2006/10/03 08:02:51 vanhu Exp $ */
+/* $Id: pfkey.c,v 1.16 2006/10/06 12:02:27 manu Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -533,6 +533,10 @@ ipsecdoi2pfkey_ealg(t_id)
 #ifdef SADB_X_EALG_TWOFISHCBC
 	case IPSECDOI_ESP_TWOFISH:
 		return SADB_X_EALG_TWOFISHCBC;
+#endif
+#ifdef SADB_X_EALG_CAMELLIACBC
+	case IPSECDOI_ESP_CAMELLIA:
+		return SADB_X_EALG_CAMELLIACBC;
 #endif
 
 	/* not supported */

@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.h,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: oakley.h,v 1.5 2006/10/06 12:02:27 manu Exp $	*/
 
 /* Id: oakley.h,v 1.13 2005/05/30 20:12:43 fredsen Exp */
 
@@ -47,6 +47,7 @@
 #define   OAKLEY_ATTR_ENC_ALG_3DES		5
 #define   OAKLEY_ATTR_ENC_ALG_CAST		6
 #define   OAKLEY_ATTR_ENC_ALG_AES		7
+#define   OAKLEY_ATTR_ENC_ALG_CAMELLIA		8	
 					/*	65001 - 65535 Private Use */
 #define OAKLEY_ATTR_HASH_ALG		2 /* B */
 #define   OAKLEY_ATTR_HASH_ALG_MD5		1
