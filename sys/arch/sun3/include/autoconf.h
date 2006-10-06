@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.22 2005/12/11 12:19:21 christos Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.22.22.1 2006/10/06 13:27:04 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
  * (machdep parts of driver/kernel interface)
  */
 
+#include <machine/bus.h>
+
 /*
  * These are the "bus" types, in attach order.
  * Note tables in bus_subr.c and vme.c that
@@ -60,11 +62,17 @@
  * This is the "args" parameter to the bus match/attach functions.
  */
 struct confargs {
+	bus_space_tag_t ca_bustag;
+	bus_dma_tag_t ca_dmatag;
+	const char *ca_name;	
 	int ca_bustype;		/* BUS_OBIO, ... */
-	int ca_paddr;		/* physical address */
+	paddr_t ca_paddr;	/* physical address */
 	int ca_intpri;		/* interrupt priority level */
 	int ca_intvec;		/* interrupt vector index */
 };
+
+extern struct sun68k_bus_dma_tag mainbus_dma_tag;
+extern struct sun68k_bus_space_tag mainbus_space_tag;
 
 /* Locator aliases */
 #define cf_paddr	cf_loc[0]
@@ -78,16 +86,6 @@ void * bus_mapin(int, int, int);
 void bus_mapout(void *, int);
 void * bus_tmapin(int, int);
 void bus_tmapout(void *);
-
-/* These are how drivers connect interrupt handlers. */
-typedef int (*isr_func_t)(void *);
-void isr_add_autovect(isr_func_t, void *, int);
-void isr_add_vectored(isr_func_t, void *, int, int);
-void isr_add_custom(int, void *);
-
-/* These control the software interrupt register. */
-void isr_soft_request(int);
-void isr_soft_clear(int);
 
 /* Bus-error tolerant access to mapped address. */
 int 	peek_byte(caddr_t);

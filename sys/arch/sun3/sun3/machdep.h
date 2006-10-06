@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.35 2006/06/28 09:55:08 tsutsui Exp $	*/
+/*	$NetBSD: machdep.h,v 1.35.6.1 2006/10/06 13:27:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -132,7 +132,6 @@ void	m68881_restore(struct fpframe *);
 
 void	netintr(void);
 
-caddr_t	obio_find_mapping(paddr_t, psize_t);
 void	obio_init(void);
 
 void	setvbr(void **);

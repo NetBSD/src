@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pvt.h,v 1.13 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: pmap_pvt.h,v 1.13.22.1 2006/10/06 13:27:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -166,46 +166,7 @@ struct pmap_physmem_struct {
 	struct pmap_physmem_struct *pmem_next; /* Next block of memory */
 };
 
-/* Internal function definitions. */
-a_tmgr_t *get_a_table(void);
-b_tmgr_t *get_b_table(void);
-c_tmgr_t *get_c_table(void);
-int    free_a_table(a_tmgr_t *, boolean_t);
-int    free_b_table(b_tmgr_t *, boolean_t);
-int    free_c_table(c_tmgr_t *, boolean_t);
-void   pmap_bootstrap_aalign(int);
-void   pmap_alloc_usermmu(void);
-void   pmap_alloc_usertmgr(void);
-void   pmap_alloc_pv(void);
-void   pmap_init_a_tables(void);
-void   pmap_init_b_tables(void);
-void   pmap_init_c_tables(void);
-void   pmap_init_pv(void);
-void   pmap_clear_pv(paddr_t, int);
-boolean_t pmap_remove_a(a_tmgr_t *, vaddr_t, vaddr_t);
-boolean_t pmap_remove_b(b_tmgr_t *, vaddr_t, vaddr_t);
-boolean_t pmap_remove_c(c_tmgr_t *, vaddr_t, vaddr_t);
-void   pmap_remove_pte(mmu_short_pte_t *);
-void   pmap_enter_kernel(vaddr_t, paddr_t, vm_prot_t);
-void   pmap_remove_kernel(vaddr_t, vaddr_t);
-void   pmap_protect_kernel(vaddr_t, vaddr_t, vm_prot_t);
-boolean_t pmap_extract_kernel(vaddr_t, paddr_t *);
-vaddr_t pmap_get_pteinfo(u_int, pmap_t *, c_tmgr_t **);
-void   pmap_pinit(pmap_t);
-int    pmap_dereference(pmap_t);
-boolean_t is_managed(paddr_t);
-boolean_t pmap_stroll(pmap_t, vaddr_t, a_tmgr_t **, b_tmgr_t **, c_tmgr_t **,
-	mmu_short_pte_t **, int *, int *, int *);
-void  pmap_bootstrap_copyprom(void);
-void  pmap_takeover_mmu(void);
-void  pmap_bootstrap_setprom(void);
-
-#ifdef PMAP_DEBUG
-/* Debugging function definitions */
-void  pv_list(paddr_t, int);
-#endif /* PMAP_DEBUG */
-
 /* These are defined in pmap.c */
 extern struct pmap_physmem_struct avail_mem[];
 
-#endif /* _SUN3X_MYPMAP_H */
+#endif /* _SUN3X_PMAPPVT_H */
