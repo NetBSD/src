@@ -1,4 +1,4 @@
-.\"	$NetBSD: termios.4,v 1.29 2004/09/18 11:41:08 wiz Exp $
+.\"	$NetBSD: termios.4,v 1.30 2006/10/06 22:07:44 elad Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)termios.4	8.4 (Berkeley) 4/19/94
 .\"
-.Dd February 13, 1998
+.Dd October 7, 2006
 .Dt TERMIOS 4
 .Os
 .Sh NAME
@@ -1155,8 +1155,9 @@ specified are supported by all hardware.
 .Dv CTS
 flow control of output */
 .It Dv CRTSCTS
-/* same as
-.Dv CCTS_OFLOW
+/* logically the same as
+.Dv CCTS_OFLOW \&|
+.Dv CCTS_IFLOW
 */
 .It Dv CRTS_IFLOW
 /* RTS flow control of input */
@@ -1228,15 +1229,44 @@ has been set, the
 .Xr open 2
 function returns immediately without waiting for the connection.
 .Pp
+If the
+.Xr tty 4
+.Dv TIOCFLAG_CLOCAL
+flag has been set on the port then the
+.Dv CLOCAL
+flag will automatically be set on every open.
+.Pp
 The
 .Dv CCTS_OFLOW
-.Pf ( Dv CRTSCTS )
-flag is currently unused.
+and
+.Dv CRTS_IFLOW
+flags are currently unused.  Only
+.Dv CRTSCTS ,
+which has the combined effect, is implemented.
+Note that
+.Dv CRTSCTS
+support is hardware and driver dependent.
+ Check the specific port driver manual page to see if hardware flow control
+is supported on the port you are using.
+.Pp
+If the
+.Xr tty 4
+.Dv TIOCFLAG_CRTSCTS
+flag has been set on the port then the
+.Dv CRTSCTS
+flag will automatically be set on every open.
 .Pp
 If
 .Dv MDMBUF
 is set then output flow control is controlled by the state
 of Carrier Detect.
+.Pp
+If the
+.Xr tty 4
+.Dv TIOCFLAG_MDMBUF
+flag has been set on the port then the
+.Dv MDMBUF
+flag will automatically be set on every open.
 .Pp
 If the object for which the control modes are set is not an asynchronous
 serial connection, some of the modes may be ignored; for example, if an
