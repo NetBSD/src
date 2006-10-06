@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.35 2006/10/05 17:35:19 tls Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.36 2006/10/06 03:20:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.35 2006/10/05 17:35:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.36 2006/10/06 03:20:47 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -385,7 +385,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 		if (ipflow_inuse >= ip_maxflows) {
 			ipf = ipflow_reap(1);
 		} else {
-			s = splnet()
+			s = splnet();
 			ipf = pool_get(&ipflow_pool, PR_NOWAIT);
 			splx(s);
 			if (ipf == NULL)
