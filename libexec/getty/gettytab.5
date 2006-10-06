@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettytab.5,v 1.32 2005/05/21 17:18:51 christos Exp $
+.\"	$NetBSD: gettytab.5,v 1.33 2006/10/06 22:07:44 elad Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)gettytab.5	8.4 (Berkeley) 4/19/94
 .\"
-.Dd May 21, 2005
+.Dd October 7, 2006
 .Dt GETTYTAB 5
 .Os
 .Sh NAME
@@ -66,6 +66,18 @@ that is used to set global defaults for all other classes.
 .Em default
 entry is read, then the entry for the class required
 is used to override particular settings.)
+The
+.Em default
+entry is also normally read by other programs that present login prompts
+to the user, such as
+.Xr telnetd 8 ,
+in order to retrieve the values of the
+.Em he ,
+.Em hn ,
+.Em im ,
+and
+.EM if
+capabilities.
 .Sh CAPABILITIES
 Refer to
 .Xr termcap 5
@@ -78,6 +90,7 @@ no entry in the table obtained, nor one in the special
 table.
 .Bl -column Namexx /usr/bin/login Default
 .It Sy Name	Type	Default	Description
+.It "ab	bool	false	Auto-baud speed select mechanism for the Micom 600 portselector. Selection is done by looking at how the character `\er' is garbled at 300, 1200, 4800, and 9600 baud."
 .It "al	str	NULL	user to auto-login instead of prompting"
 .It "ap	bool	false	terminal uses any parity"
 .It "bk	str	0377	alternative end of line character (input break)"
@@ -90,7 +103,7 @@ table.
 .It "cl	str" Ta Dv NULL Ta
 .No "screen clear sequence"
 .It "co	bool	false	console - add"
-.Ql \en
+.Ql \er\en
 after login prompt
 .It "cs	bool	false	clear screen based on terminal type in /etc/ttys"
 .It "ds	str" Ta So Li ^Y Sc Ta
@@ -381,6 +394,7 @@ calls.
 .Xr login 1 ,
 .Xr gethostname 3 ,
 .Xr uname 3 ,
+.Xr telnetd 8 ,
 .Xr termcap 5 ,
 .Xr ttys 5 ,
 .Xr getty 8 ,

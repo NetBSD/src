@@ -1,4 +1,4 @@
-.\"	$NetBSD: ttys.5,v 1.16 2003/08/07 09:46:42 agc Exp $
+.\"	$NetBSD: ttys.5,v 1.17 2006/10/06 22:07:44 elad Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)ttys.5	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd October 7, 2006
 .Dt TTYS 5
 .Os
 .Sh NAME
@@ -105,31 +105,38 @@ is specified, allows users with a uid of 0
 .Pq e.g. Qq root
 to login on this line.
 .It Sy local
-Sets
-.Dv CLOCAL
-.Xr termios 4
+Sets the
+.Dv TIOCFLAG_CLOCAL
+.Xr tty 4
 flag for the device.
-Tells device to ignore modem control signal lines.
-.It Sy softcar
-Causes the driver to ignore hardware carrier on the line.
-.It Sy rtscts
-Sets
-.Dv CRTSCTS
+This will cause the
 .Xr termios 4
+.Dv CLOCAL
+flag to be set on every open and thus modem control signal lines will be
+ignored by default.
+.It Sy softcar
+Causes the driver to ignore hardware carrier on the line (by setting the
+.Dv TIOCFLAG_SOFTCAR
+.Xr tty 4
+flag).
+.It Sy rtscts
+Sets the
+.Dv TIOCFLAG_CRTSCTS
+.Xr tty 4
 flag for the device to enable
 .Tn RTS /
 .Tn CTS
 .Qq hardware
-flow control.
+flow control by default.
 .It Sy mdmbuf
-Sets
-.Dv MDMBUF
-.Xr termios 4
+Sets the
+.Dv TIOCFLAG_MDMBUF
+.Xr tty 4
 flag for the device to enable
 .Tn DTR /
 .Tn DCD
 .Qq hardware
-flow control.
+flow control by default.
 .El
 .Pp
 The flags
@@ -179,7 +186,7 @@ to
 does
 .Em not
 change the state of the various
-.Xr termios 4
+.Xr tty 4
 device flags listed above; the
 .Xr ttyflags 8
 program must be run for changes in those flags to take effect on the devices.
@@ -207,6 +214,7 @@ ttyp1	none	network	off
 .Xr login 1 ,
 .Xr getttyent 3 ,
 .Xr ttyslot 3 ,
+.Xr tty 4 ,
 .Xr gettytab 5 ,
 .Xr termcap 5 ,
 .Xr getty 8 ,
