@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.15 2005/11/24 13:08:34 yamt Exp $	*/
+/*	$NetBSD: bus.c,v 1.15.22.1 2006/10/06 13:27:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -160,7 +160,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.15 2005/11/24 13:08:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.15.22.1 2006/10/06 13:27:04 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,6 +176,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.15 2005/11/24 13:08:34 yamt Exp $");
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/mon.h>
 #include <machine/pmap.h>
 
 #include <sun68k/sun68k/control.h>
@@ -491,8 +492,6 @@ struct sun68k_bus_dma_tag mainbus_dma_tag = {
 /*
  * Base bus space handlers.
  */
-int		sun68k_find_prom_map(bus_addr_t, bus_type_t, int,
-		    bus_space_handle_t *);
 static int	sun68k_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t,
 		    bus_size_t, int, vaddr_t, bus_space_handle_t *);
 static int	sun68k_bus_unmap(bus_space_tag_t, bus_space_handle_t,
@@ -503,75 +502,12 @@ static paddr_t	sun68k_bus_mmap(bus_space_tag_t, bus_type_t, bus_addr_t, off_t,
 		    int, int);
 static void	*sun68k_mainbus_intr_establish(bus_space_tag_t, int, int, int,
 		    int (*)(void *), void *);
-static void     sun68k_bus_barrier(bus_space_tag_t, bus_space_handle_t,
+static void	sun68k_bus_barrier(bus_space_tag_t, bus_space_handle_t,
 		    bus_size_t, bus_size_t, int);
 static int	sun68k_bus_peek(bus_space_tag_t, bus_space_handle_t,
 		    bus_size_t, size_t, void *);
 static int	sun68k_bus_poke(bus_space_tag_t, bus_space_handle_t,
 		    bus_size_t, size_t, uint32_t);
-
-/*
- * If we can find a mapping that was established by the PROM, use it.
- */
-int
-sun68k_find_prom_map(bus_addr_t pa, bus_type_t iospace, int len,
-    bus_space_handle_t *hp)
-{
-	u_long	pf;
-	int	pgtype;
-	u_long	va, eva;
-	int	sme;
-	u_long	pte;
-	int	saved_ctx;
-
-	/*
-	 * The mapping must fit entirely within one page.
-	 */
-	if ((((u_long)pa & PGOFSET) + len) > PAGE_SIZE)
-		return (EINVAL);
-
-	pf = PA_PGNUM(pa);
-	pgtype = iospace << PG_MOD_SHIFT;
-	saved_ctx = kernel_context();
-
-	/*
-	 * Walk the PROM address space, looking for a page with the
-	 * mapping we want.
-	 */
-	for (va = SUN_MONSTART; va < SUN_MONEND; ) {
-
-		/*
-		 * Make sure this segment is mapped.
-		 */
-		sme = get_segmap(va);
-		if (sme == SEGINV) {
-			va += NBSG;
-			continue;			/* next segment */
-		}
-
-		/*
-		 * Walk the pages of this segment.
-		 */
-		for(eva = va + NBSG; va < eva; va += PAGE_SIZE) {
-			pte = get_pte(va);
-
-			if ((pte & (PG_VALID | PG_TYPE)) ==
-				(PG_VALID | pgtype) &&
-			    PG_PFNUM(pte) == pf)
-			{
-				/* 
-				 * Found the PROM mapping.
-				 * note: preserve page offset
-				 */
-				*hp = (bus_space_handle_t)(va | ((u_long)pa & PGOFSET));
-				restore_context(saved_ctx);
-				return (0);
-			}
-		}
-	}
-	restore_context(saved_ctx);
-	return (ENOENT);
-}
 
 int
 sun68k_bus_map(bus_space_tag_t t, bus_type_t iospace, bus_addr_t addr,
@@ -585,8 +521,10 @@ sun68k_bus_map(bus_space_tag_t t, bus_type_t iospace, bus_addr_t addr,
 	 * and use a PROM mapping.
 	 */
 	if ((flags & _SUN68K_BUS_MAP_USE_PROM) != 0 &&
-	     sun68k_find_prom_map(addr, iospace, size, hp) == 0)
+	     find_prom_map(addr, iospace, size, &v) == 0) {
+		*hp = (bus_space_handle_t)v;
 		return (0);
+	}
 
 	/*
 	 * Adjust the user's request to be page-aligned.
@@ -661,6 +599,7 @@ int
 sun68k_bus_subregion(bus_space_tag_t tag, bus_space_handle_t handle,
     bus_size_t offset, bus_size_t size, bus_space_handle_t *nhandlep)
 {
+
 	*nhandlep = handle + offset;
 	return (0);
 }
@@ -698,13 +637,16 @@ sun68k_bus_peek(bus_space_tag_t tag, bus_space_handle_t handle,
 	else {
 		switch(size) {
 		case 1:
-			*((uint8_t *) vp) = bus_space_read_1(tag, handle, offset);
+			*((uint8_t *)vp) =
+			    bus_space_read_1(tag, handle, offset);
 			break;
 		case 2:
-			*((uint16_t *) vp) = bus_space_read_2(tag, handle, offset);
+			*((uint16_t *)vp) =
+			    bus_space_read_2(tag, handle, offset);
 			break;
 		case 4:
-			*((uint32_t *) vp) = bus_space_read_4(tag, handle, offset);
+			*((uint32_t *)vp) =
+			    bus_space_read_4(tag, handle, offset);
 			break;
 		default:
 			panic("_bus_space_peek: bad size");
@@ -729,13 +671,13 @@ sun68k_bus_poke(bus_space_tag_t tag, bus_space_handle_t handle,
 	else {
 		switch(size) {
 		case 1:
-			bus_space_write_1(tag, handle, offset, (uint8_t) v);
+			bus_space_write_1(tag, handle, offset, (uint8_t)v);
 			break;
 		case 2:
-			bus_space_write_2(tag, handle, offset, (uint16_t) v);
+			bus_space_write_2(tag, handle, offset, (uint16_t)v);
 			break;
 		case 4:
-			bus_space_write_4(tag, handle, offset, (uint32_t) v);
+			bus_space_write_4(tag, handle, offset, (uint32_t)v);
 			break;
 		default:
 			panic("_bus_space_poke: bad size");
@@ -751,6 +693,7 @@ void *
 sun68k_mainbus_intr_establish(bus_space_tag_t t, int pil, int level, int flags,
     int (*handler)(void *), void *arg)
 {
+
 	isr_add_autovect(handler, arg, pil);
 	return (NULL);
 }
@@ -759,6 +702,7 @@ void
 sun68k_bus_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offset,
     bus_size_t size, int flags)
 {
+
 	/* No default barrier action defined */
 	return;
 }

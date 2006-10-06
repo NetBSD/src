@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.23 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: intreg.c,v 1.23.22.1 2006/10/06 13:27:04 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intreg.c,v 1.23 2005/12/11 12:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intreg.c,v 1.23.22.1 2006/10/06 13:27:04 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,6 @@ struct intreg_softc {
 
 static int  intreg_match(struct device *, struct cfdata *, void *);
 static void intreg_attach(struct device *, struct device *, void *);
-static int soft1intr(void *);
 
 CFATTACH_DECL(intreg, sizeof(struct intreg_softc),
     intreg_match, intreg_attach, NULL, NULL);
@@ -79,11 +78,14 @@ int intreg_attached;
 void 
 intreg_init(void)
 {
-	interrupt_reg = obio_find_mapping(IREG_ADDR, 1);
-	if (!interrupt_reg) {
+	vaddr_t va;
+
+	if (find_prom_map(IREG_ADDR, PMAP_OBIO, 1, &va) != 0) {
 		mon_printf("intreg_init\n");
 		sunmon_abort();
 	}
+	interrupt_reg = (void *)va;
+
 	/* Turn off all interrupts until clock_attach */
 	*interrupt_reg = 0;
 }
@@ -115,51 +117,7 @@ intreg_attach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_reg = interrupt_reg;
 
-	/* Install handler for our "soft" interrupt. */
-	isr_add_autovect(soft1intr, (void *)sc, 1);
 	intreg_attached = 1;
-}
-
-
-/*
- * Level 1 software interrupt.
- * Possible reasons:
- *	Network software interrupt
- *	Soft clock interrupt
- */
-static int 
-soft1intr(void *arg)
-{
-	union sun3sir sir;
-	int s;
-
-	s = splhigh();
-	sir.sir_any = sun3sir.sir_any;
-	sun3sir.sir_any = 0;
-	isr_soft_clear(1);
-	splx(s);
-
-	if (sir.sir_any) {
-		uvmexp.softs++;
-		if (sir.sir_which[SIR_NET]) {
-			sir.sir_which[SIR_NET] = 0;
-			netintr();
-		}
-		if (sir.sir_which[SIR_CLOCK]) {
-			sir.sir_which[SIR_CLOCK] = 0;
-			softclock(NULL);
-		}
-		if (sir.sir_which[SIR_SPARE2]) {
-			sir.sir_which[SIR_SPARE2] = 0;
-			/* spare2intr(); */
-		}
-		if (sir.sir_which[SIR_SPARE3]) {
-			sir.sir_which[SIR_SPARE3] = 0;
-			/* spare3intr(); */
-		}
-		return (1);
-	}
-	return(0);
 }
 
 
