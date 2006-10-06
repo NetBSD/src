@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.69 2006/10/01 09:53:09 itohy Exp $
+# $NetBSD: GENERIC,v 1.70 2006/10/06 08:44:59 jnemeth Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.69 $"
+#ident 		"GENERIC-$Revision: 1.70 $"
 
 maxusers	64
 
@@ -412,9 +412,9 @@ ld*	at mlx? unit ?
 # need share with the sparc, and everyone else.  needs to use auxio.
 # actually, the ebus version has (will have) direct access to it's AUXIO
 # register space (it is mapped in to fdthree not auxio).
-#fdc0	at sbus? slot ? offset ?		# SUNW,fdtwo
-#fdc0	at ebus?				# fdthree
-#fd*	at fdc0 	 			# the drive itself
+fdc0	at sbus? slot ? offset ?		# SUNW,fdtwo
+#fdc0	at ebus?				# fdthree, EXPERIMENTAL
+fd*	at fdc0 	 			# the drive itself
 
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
