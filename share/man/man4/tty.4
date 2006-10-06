@@ -1,4 +1,4 @@
-.\"	$NetBSD: tty.4,v 1.22 2003/08/07 10:31:04 agc Exp $
+.\"	$NetBSD: tty.4,v 1.23 2006/10/06 22:07:44 elad Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)tty.4	8.3 (Berkeley) 4/19/94
 .\"
-.Dd August 14, 1992
+.Dd October 7, 2006
 .Dt TTY 4
 .Os
 .Sh NAME
@@ -334,8 +334,8 @@ to a particular window.
 .It Dv TIOCMSET Fa int *state
 The integer pointed to by
 .Fa state
-contains bits that correspond to modem state.  Following is a list
-of defined variables and the modem state they represent:
+contains bits that correspond to modem state.
+Following is a list of defined variables and the modem state they represent:
 .Pp
 .Bl -tag -width TIOCMXCTS -compact
 .It TIOCM_LE
@@ -384,18 +384,28 @@ is cleared in the terminal.
 .It Dv TIOCSFLAGS Fa int *state
 The bits in the integer pointed to by
 .Fa state
-contain bits that correspond to serial port state. Following is a list
-of defined variables and the serial port state they represent:
+contain bits that correspond to serial port state.
+Following is a list of defined flag values and the serial port state they
+represent:
 .Pp
 .Bl -tag -width TIOCFLAG_SOFTCAR -compact
 .It TIOCFLAG_SOFTCAR
 Ignore hardware carrier.
 .It TIOCFLAG_CLOCAL
-Set clocal on open.
+Set the
+.Xr termios 4
+.Dv CLOCAL
+flag on open.
 .It TIOCFLAG_CRTSCTS
-Set crtscts on open.
+Set the
+.Xr termios 4
+.Dv CRTSCTS
+flag on open.
 .It TIOCFLAG_MDMBUF
-Set mdmbuf on open.
+Set the
+.Xr termios 4
+.Dv MDMBUF
+flag on open.
 .El
 .Pp
 This call sets the serial port state to that represented by
@@ -442,7 +452,9 @@ Return the current line discipline in the integer pointed to by
 .Xr tcsetattr 3 ,
 .Xr pty 4 ,
 .Xr termios 4 ,
+.Xr ttys 5 ,
 .Xr getty 8 ,
+.Xr ttyaction 8 ,
 .Xr linedisc 9
 .Sh HISTORY
 Separate dial-out device files were implemented in SunOS 4.  They were cloned
