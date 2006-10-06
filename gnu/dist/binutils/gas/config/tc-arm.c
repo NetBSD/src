@@ -14104,6 +14104,7 @@ armelf_frob_symbol (symp, puntp)
   elf_frob_symbol (symp, puntp);
 }
 
+#ifdef OBJ_ELF
 static bfd_reloc_code_real_type
 arm_parse_reloc ()
 {
@@ -14141,6 +14142,7 @@ arm_parse_reloc ()
 
   return reloc_map[i].reloc;
 }
+#endif
 
 static void
 s_arm_elf_cons (nbytes)

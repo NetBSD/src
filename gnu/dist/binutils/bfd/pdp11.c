@@ -341,11 +341,6 @@ DESCRIPTION
 
 #define RELOC_SIZE 2
 
-struct pdp11_aout_reloc_external
-{
-  bfd_byte e_reloc_entry[2];
-};
-
 #define RELFLG		0x0001	/* pc-relative flag */
 #define RTYPE		0x000e	/* type mask */
 #define RIDXMASK	0xfff0	/* index mask */
@@ -368,9 +363,9 @@ static void adjust_z_magic PARAMS ((bfd *, struct internal_exec *));
 static void adjust_n_magic PARAMS ((bfd *, struct internal_exec *));
 
 static int pdp11_aout_write_headers PARAMS ((bfd *, struct internal_exec *));
-void pdp11_aout_swap_reloc_out PARAMS  ((bfd *, arelent *, struct pdp11_aout_reloc_external *));
+void pdp11_aout_swap_reloc_out PARAMS  ((bfd *, arelent *, bfd_byte *));
 void pdp11_aout_swap_reloc_in
-PARAMS ((bfd *, struct pdp11_aout_reloc_external *, arelent *,
+PARAMS ((bfd *, bfd_byte *, arelent *,
 	 bfd_size_type, asymbol **, bfd_size_type));
 
 /*
@@ -2034,7 +2029,7 @@ void
 pdp11_aout_swap_reloc_out (abfd, g, natptr)
      bfd *abfd;
      arelent *g;
-     register struct pdp11_aout_reloc_external *natptr;
+     bfd_byte *natptr;
 {
   int r_index;
   int r_pcrel;
@@ -2096,7 +2091,7 @@ pdp11_aout_swap_reloc_out (abfd, g, natptr)
 
   reloc_entry = r_index << 4 | r_type | r_pcrel;
 
-  PUT_WORD (abfd, reloc_entry, natptr->e_reloc_entry);
+  PUT_WORD (abfd, reloc_entry, natptr);
 }
 
 /* BFD deals internally with all things based from the section they're
@@ -2149,7 +2144,7 @@ void
 pdp11_aout_swap_reloc_in (abfd, bytes, cache_ptr, offset,
 			  symbols, symcount)
      bfd *abfd;
-     struct pdp11_aout_reloc_external *bytes;
+     bfd_byte *bytes;
      arelent *cache_ptr;
      bfd_size_type offset;
      asymbol **symbols;
@@ -2196,7 +2191,7 @@ NAME(aout,slurp_reloc_table) (abfd, asect, symbols)
      sec_ptr asect;
      asymbol **symbols;
 {
-  struct pdp11_aout_reloc_external *rptr;
+  bfd_byte *rptr;
   bfd_size_type count;
   bfd_size_type reloc_size;
   PTR relocs;
@@ -2262,16 +2257,14 @@ NAME(aout,slurp_reloc_table) (abfd, asect, symbols)
 
   cache_ptr = reloc_cache;
 
-  rptr = (struct pdp11_aout_reloc_external *) relocs;
+  rptr = relocs;
   for (counter = 0;
        counter < count;
-       counter++, ((char *)rptr) += RELOC_SIZE, cache_ptr++)
+       counter++, rptr += RELOC_SIZE, cache_ptr++)
     {
       while (GET_WORD (abfd, (PTR)rptr) == 0)
 	{
-	  rptr =
-	    (struct pdp11_aout_reloc_external *)
-	    ((char *) rptr + RELOC_SIZE);
+	  rptr += RELOC_SIZE;
 	  if ((char *) rptr >= (char *) relocs + reloc_size)
 	    goto done;
 	}
@@ -2324,10 +2317,9 @@ NAME(aout,squirt_out_relocs) (abfd, section)
     {
       while (count > 0)
 	{
-	  struct pdp11_aout_reloc_external *r;
+	  bfd_byte *r;
 
-	  r = (struct pdp11_aout_reloc_external *)
-	    (native + (*generic)->address);
+	  r = native + (*generic)->address;
 	  pdp11_aout_swap_reloc_out (abfd, *generic, r);
 	  count--;
 	  generic++;
@@ -3356,7 +3348,7 @@ static bfd_boolean pdp11_aout_link_input_section
   PARAMS ((struct aout_final_link_info *finfo,
 	   bfd *input_bfd,
 	   asection *input_section,
-	   struct pdp11_aout_reloc_external *relocs,
+	   bfd_byte *relocs,
 	   bfd_size_type rel_size,
 	   bfd_byte *contents));
 
@@ -4447,7 +4439,7 @@ aout_link_input_section (finfo, input_bfd, input_section, reloff_ptr,
 
   /* Relocate the section contents.  */
   if (! pdp11_aout_link_input_section (finfo, input_bfd, input_section,
-				       (struct pdp11_aout_reloc_external *) relocs,
+				       (bfd_byte *) relocs,
 				       rel_size, finfo->contents))
     return FALSE;
 
@@ -4511,7 +4503,7 @@ pdp11_aout_link_input_section (finfo, input_bfd, input_section, relocs,
      struct aout_final_link_info *finfo;
      bfd *input_bfd;
      asection *input_section;
-     struct pdp11_aout_reloc_external *relocs;
+     bfd_byte *relocs;
      bfd_size_type rel_size;
      bfd_byte *contents;
 {
@@ -4526,8 +4518,8 @@ pdp11_aout_link_input_section (finfo, input_bfd, input_section, relocs,
   struct aout_link_hash_entry **sym_hashes;
   int *symbol_map;
   bfd_size_type reloc_count;
-  register struct pdp11_aout_reloc_external *rel;
-  struct pdp11_aout_reloc_external *rel_end;
+  bfd_byte *rel;
+  bfd_byte *rel_end;
 
   output_bfd = finfo->output_bfd;
   check_dynamic_reloc = aout_backend_info (output_bfd)->check_dynamic_reloc;
@@ -4544,8 +4536,8 @@ pdp11_aout_link_input_section (finfo, input_bfd, input_section, relocs,
 
   reloc_count = rel_size / RELOC_SIZE;
   rel = relocs;
-  rel_end = (struct pdp11_aout_reloc_external *)(((char *)rel) + rel_size);
-  for (; rel < rel_end; ((char *)rel) += RELOC_SIZE)
+  rel_end = rel + rel_size;
+  for (; rel < rel_end; rel += RELOC_SIZE)
     {
       bfd_vma r_addr;
       int r_index;
@@ -4653,10 +4645,10 @@ pdp11_aout_link_input_section (finfo, input_bfd, input_section, relocs,
 		}
 
 	      /* Write out the new r_index value.  */
-	      reloc_entry = GET_WORD (input_bfd, rel->e_reloc_entry);
+	      reloc_entry = GET_WORD (input_bfd, rel);
 	      reloc_entry &= RIDXMASK;
 	      reloc_entry |= r_index << 4;
-	      PUT_WORD (input_bfd, reloc_entry, rel->e_reloc_entry);
+	      PUT_WORD (input_bfd, reloc_entry, rel);
 	    }
 	  else
 	    {
