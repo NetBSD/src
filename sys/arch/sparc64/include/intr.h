@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15 2006/09/18 08:18:47 martin Exp $ */
+/*	$NetBSD: intr.h,v 1.16 2006/10/06 08:44:59 jnemeth Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@
 #define	IPL_PAUSE	13		/* pause cpu */
 #define	IPL_LPT		PIL_LPT
 #define	IPL_IPI		PIL_HIGH
+#define	IPL_FDSOFT	PIL_FDSOFT	/* floppy */
 
 void save_and_clear_fpstate(struct lwp *);
 
