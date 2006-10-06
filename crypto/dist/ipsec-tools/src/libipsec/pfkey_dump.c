@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.14 2006/09/19 07:51:31 vanhu Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.15 2006/10/06 12:02:27 manu Exp $	*/
 
 /*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
@@ -200,6 +200,9 @@ static struct val2str str_alg_enc[] = {
 #endif
 #ifdef SADB_X_EALG_AESCTR
 	{ SADB_X_EALG_AESCTR, "aes-ctr", },
+#endif
+#ifdef SADB_X_EALG_CAMELLIACBC
+	{ SADB_X_EALG_CAMELLIACBC, "camellia-cbc", },
 #endif
 	{ -1, NULL, },
 };
