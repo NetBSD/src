@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.20 2006/06/07 09:24:26 jnemeth Exp $	*/
+/*	$NetBSD: input.c,v 1.21 2006/10/07 18:29:02 elad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: input.c,v 1.20 2006/06/07 09:24:26 jnemeth Exp $");
+__RCSID("$NetBSD: input.c,v 1.21 2006/10/07 18:29:02 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -517,28 +517,40 @@ descend(int c __attribute__((__unused__)))
 const char *
 setalt(int c)
 {
-	if ((p.altitude == c - '0') && (p.new_altitude == p.altitude))
+	int newalt = c - '0';
+	if ((p.altitude == newalt) && (p.new_altitude == p.altitude))
 		return ("Already at that altitude");
-	p.new_altitude = c - '0';
+	if (p.new_altitude == newalt) {
+		return ("Already going to that altitude");
+	}
+	p.new_altitude = newalt;
 	return (NULL);
 }
 
 const char *
 setrelalt(int c)
 {
+	int newalt;
+
 	if (c == 0)
 		return ("altitude not changed");
 
 	switch (dir) {
 	case D_UP:
-		p.new_altitude = p.altitude + c - '0';
+		newalt = p.altitude + c - '0';
 		break;
 	case D_DOWN:
-		p.new_altitude = p.altitude - (c - '0');
+		newalt = p.altitude - (c - '0');
 		break;
 	default:
 		return ("Unknown case in setrelalt!  Get help!");
 	}
+
+	if (p.new_altitude == newalt)
+		return ("Already going to that altitude");
+
+	p.new_altitude = newalt;
+
 	if (p.new_altitude < 0)
 		return ("Altitude would be too low");
 	else if (p.new_altitude > 9)
