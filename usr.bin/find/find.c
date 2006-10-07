@@ -1,4 +1,4 @@
-/*	$NetBSD: find.c,v 1.21 2006/02/20 16:31:02 jschauma Exp $	*/
+/*	$NetBSD: find.c,v 1.22 2006/10/07 17:04:02 apb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)find.c	8.5 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: find.c,v 1.21 2006/02/20 16:31:02 jschauma Exp $");
+__RCSID("$NetBSD: find.c,v 1.22 2006/10/07 17:04:02 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,7 +189,7 @@ find_execute(plan, paths)
 	char **paths;		/* array of pathnames to traverse */
 {
 	PLAN *p;
-	int rval, cval;
+	int r, rval, cval;
 	sigset_t s;
 
 	cval = 1;
@@ -242,5 +242,49 @@ find_execute(plan, paths)
 	if (errno)
 		err(1, "fts_read");
 	(void)fts_close(tree);
+
+	/*
+	 * Cleanup any plans with leftover state.
+	 * Keep the last non-zero return value.
+	 */
+	if ((r = find_traverse(plan, plan_cleanup, NULL)) != 0)
+		rval = r;
+
 	return (rval);
+}
+
+/*
+ * find_traverse --
+ *	traverse the plan tree and execute func() on all plans.  This
+ *	does not evaluate each plan's eval() function; it is intended
+ *	for operations that must run on all plans, such as state
+ *	cleanup.
+ *
+ *	If any func() returns non-zero, then so will find_traverse().
+ */
+int
+find_traverse(plan, func, arg)
+	PLAN *plan;
+	int (*func) __P((PLAN *, void *));
+	void *arg;
+{
+	PLAN *p;
+	int r, rval;
+
+	rval = 0;
+	for (p = plan; p; p = p->next) {
+		if ((r = func(p, arg)) != 0)
+			rval = r;
+		if (p->type == N_EXPR || p->type == N_OR) {
+			if (p->p_data[0])
+				if ((r = find_traverse(p->p_data[0],
+					    func, arg)) != 0)
+					rval = r;
+			if (p->p_data[1])
+				if ((r = find_traverse(p->p_data[1],
+					    func, arg)) != 0)
+					rval = r;
+		}
+	}
+	return rval;
 }
