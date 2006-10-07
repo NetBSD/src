@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.81 2006/10/07 13:50:16 peter Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.82 2006/10/07 13:53:24 peter Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -33,24 +33,20 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * RiscBSD kernel project
- *
- * machdep.c
- *
- * Machine dependant functions for kernel setup
- *
- * This file needs a lot of work. 
- *
- * Created      : 17/09/94
+ */
+
+/*
+ * Machine dependent functions for kernel setup.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.81 2006/10/07 13:50:16 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.82 2006/10/07 13:53:24 peter Exp $");
 
 #include "opt_ddb.h"
+#include "opt_ipkdb.h"
 #include "opt_pmap_debug.h"
 #include "fs_nfs.h"
+#include "ksyms.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,10 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.81 2006/10/07 13:50:16 peter Exp $
 #include <sys/exec.h>
 #include <sys/ksyms.h>
 #include <sys/boot_flag.h>
-
-#include <dev/cons.h>
-
-#include "ksyms.h"
+#include <sys/conf.h>	/* XXX for consinit related hacks */
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 #include <machine/db_machdep.h>
@@ -79,28 +72,23 @@ __KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.81 2006/10/07 13:50:16 peter Exp $
 
 #include <uvm/uvm.h>
 
-#include <machine/signal.h>
-#include <machine/frame.h>
-#include <machine/bootconfig.h>
-#include <machine/cpu.h>
-#include <machine/io.h>
-#include <machine/intr.h>
-#include <arm/arm32/katelib.h>
-#include <machine/bootinfo.h>
+#include <arm/sa11x0/sa11x0_reg.h>
 #include <arm/cpuconf.h>
 #include <arm/undefined.h>
-#include <machine/rtc.h>
+
+#include <machine/bootconfig.h>
+#include <machine/bootinfo.h>
+#include <machine/cpu.h>
+#include <machine/frame.h>
+#include <machine/intr.h>
+#include <machine/io.h>
 #include <machine/platid.h>
+#include <machine/rtc.h>
+#include <machine/signal.h>
 
-#include <arm/sa11x0/sa11x0_reg.h>
-
+#include <dev/cons.h>
 #include <dev/hpc/apm/apmvar.h>
 #include <dev/hpc/bicons.h>
-
-#include "opt_ipkdb.h"
-
-/* XXX for consinit related hacks */
-#include <sys/conf.h>
 
 #ifdef NFS
 #include <sys/mount.h>
@@ -108,19 +96,18 @@ __KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.81 2006/10/07 13:50:16 peter Exp $
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
-#endif
+#endif /* NFS */
 
 /* Kernel text starts 256K in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00040000)
-#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x00c00000)
+#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x00C00000)
 #define	KERNEL_VM_SIZE		0x05000000
 
 /*
  * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependant as it varies depending
+ * This is machine architecture dependent as it varies depending
  * on where the ROM appears when you turn the MMU off.
  */
-
 u_int cpu_reset_address = 0;
 
 /* Define various stack sizes in pages */
@@ -145,7 +132,7 @@ int physmem = 0;
 
 #ifndef PMAP_STATIC_L1S
 int max_processes = 64;			/* Default number */
-#endif	/* !PMAP_STATIC_L1S */
+#endif /* !PMAP_STATIC_L1S */
 
 
 /* Physical and virtual addresses for some global pages */
@@ -167,7 +154,7 @@ extern int end;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;
-#endif	/* PMAP_DEBUG */
+#endif /* PMAP_DEBUG */
 
 #define	KERNEL_PT_VMEM		0	/* Page table for mapping video memory */
 #define	KERNEL_PT_SYS		1	/* Page table for mapping proc0 zero page */
@@ -186,35 +173,29 @@ extern unsigned int sa1_cache_clean_addr;
 extern unsigned int sa1_cache_clean_size;
 static vaddr_t sa1_cc_base;
 
-/* Non-buffered non-cachable memory needed to enter idle mode */
-extern vaddr_t sa11x0_idle_mem;
-
 /* Mode dependent sleep function holder */
 void (*__sleep_func)(void *);
 void *__sleep_ctx;
 
+/* Non-buffered non-cacheable memory needed to enter idle mode */
+extern vaddr_t sa11x0_idle_mem;
+
 /* Prototypes */
+void		data_abort_handler(trapframe_t *);
+void		prefetch_abort_handler(trapframe_t *);
+void		undefinedinstruction_bounce(trapframe_t *);
+void		dumpsys(void);
+u_int		cpu_get_control(void);
 
-void physcon_display_base(u_int addr);
-void consinit(void);
-
-void data_abort_handler(trapframe_t *);
-void prefetch_abort_handler(trapframe_t *);
-void undefinedinstruction_bounce(trapframe_t *);
-
-u_int cpu_get_control(void);
+u_int		initarm(int, char **, struct bootinfo *);
 
 #ifdef DEBUG_BEFOREMMU
-static void fakecninit(void);
+static void	fakecninit(void);
 #endif
 
 #ifdef BOOT_DUMP
-void dumppages(char *, int);
+static void	dumppages(char *, int);
 #endif
-
-u_int initarm(int, char **, struct bootinfo *);
-extern void dump_spl_masks(void);
-extern void dumpsys(void);
 
 /*
  * Reboots the system.
@@ -237,14 +218,14 @@ cpu_reboot(int howto, char *bootstr)
 		cngetc();
 		printf("rebooting...\n");
 		cpu_reset();
-		/*NOTREACHED*/
+		/* NOTREACHED */
 	}
 
 	/* Reset the sleep function. */
 	__sleep_func = NULL;
 	__sleep_ctx = NULL;
 
-	/* Disable console buffering */
+	/* Disable console buffering. */
 	cnpollc(1);
 
 	/*
@@ -257,18 +238,17 @@ cpu_reboot(int howto, char *bootstr)
 	if (!(howto & RB_NOSYNC))
 		bootsync();
 
-	/* Say NO to interrupts */
-	splhigh();
+	/* Say NO to interrupts. */
+	(void)splhigh();
 
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
 
-
-	/* Run any shutdown hooks */
+	/* Run any shutdown hooks. */
 	doshutdownhooks();
 
-	/* Make sure IRQs are disabled */
+	/* Make sure IRQs are disabled. */
 	IRQdisable;
 
 	if (howto & RB_HALT) {
@@ -279,7 +259,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	printf("rebooting...\n");
 	cpu_reset();
-	/*NOTREACHED*/
+	/* NOTREACHED */
 }
 
 /* Number of DRAM pages which are installed */
@@ -312,18 +292,18 @@ static const struct pmap_devmap sa11x0_devmap[] = {
  * in place when main is called.
  * This includes:
  *   Taking a copy of the boot configuration structure.
- *   Initialising the physical console so characters can be printed.
+ *   Initializing the physical console so characters can be printed.
  *   Setting up page tables for the kernel.
  */
 u_int
 initarm(int argc, char **argv, struct bootinfo *bi)
 {
-	int loop;
 	u_int kerneldatasize, symbolsize;
 	u_int l1pagetable;
 	vaddr_t freemempos;
 	pv_addr_t kernel_l1pt;
 	vsize_t pt_size;
+	int loop, i;
 #if NKSYMS || defined(DDB) || defined(LKM)
 	Elf_Shdr *sh;
 #endif
@@ -332,7 +312,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	__sleep_ctx = NULL;
 
 	/*
-	 * Heads up ... Setup the CPU / MMU / TLB functions
+	 * Heads up ... Setup the CPU / MMU / TLB functions.
 	 */
 	set_cpufuncs();
 
@@ -352,7 +332,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	bootconfig.dram[0].address = 0xc0000000;
 	bootconfig.dram[0].pages = DRAM_PAGES;
 	bootconfig.dramblocks = 1;
-	kerneldatasize = (u_int32_t)&end - (u_int32_t)KERNEL_TEXT_BASE;
+	kerneldatasize = (uint32_t)&end - (uint32_t)KERNEL_TEXT_BASE;
 
 	symbolsize = 0;
 #if NKSYMS || defined(DDB) || defined(LKM)
@@ -374,26 +354,29 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	/* parse kernel args */
 	boothowto = 0;
 	boot_file[0] = '\0';
-	strncpy(booted_kernel_storage, *argv, sizeof(booted_kernel_storage));
-	for (argc--, argv++; argc; argc--, argv++)
-		switch (**argv) {
+	strncpy(booted_kernel_storage, argv[0], sizeof(booted_kernel_storage));
+	for (i = 1; i < argc; i++) {
+		char *cp = argv[i];
+
+		switch (*cp) {
 		case 'b':
 			/* boot device: -b=sd0 etc. */
+			cp = cp + 2;
 #ifdef NFS
-			if (strcmp(*argv + 2, "nfs") == 0)
+			if (strcmp(cp, "nfs") == 0)
 				mountroot = nfs_mountroot;
 			else
-				strncpy(boot_file, *argv + 2,
-				    sizeof(boot_file));
-#else /* NFS */
-			strncpy(boot_file, *argv + 2, sizeof(boot_file));
-#endif /* NFS */
+				strncpy(boot_file, cp, sizeof(boot_file));
+#else /* !NFS */
+			strncpy(boot_file, cp, sizeof(boot_file));
+#endif /* !NFS */
 			break;
 		default:
-			BOOT_FLAG(**argv, boothowto);
+			BOOT_FLAG(*cp, boothowto);
 			break;
 		}
-		
+	}
+
 	/* copy bootinfo into known kernel space */
 	bootinfo_storage = *bi;
 	bootinfo = &bootinfo_storage;
@@ -411,7 +394,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	 */
 
 	/*
-	 * Set up the variables that define the availablilty of physcial
+	 * Set up the variables that define the availability of physcial
 	 * memory.
 	 */
 	physical_start = bootconfig.dram[0].address;
@@ -514,7 +497,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	 */
 	for (;;) {
 		alloc_pages(sa1_cc_base, 1);
-		if (! (sa1_cc_base & (CPU_SA110_CACHE_CLEAN_SIZE - 1)))
+		if (!(sa1_cc_base & (CPU_SA110_CACHE_CLEAN_SIZE - 1)))
 			break;
 	}
 	{
@@ -557,7 +540,6 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 #define SAIPIO_BASE		0xd0000000		/* XXX XXX */
 	pmap_link_l2pt(l1pagetable, SAIPIO_BASE,
 	    &kernel_pt_table[KERNEL_PT_IO]);
-
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping kernel\n");
@@ -646,14 +628,14 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	if (pmap_debug_level >= 0)
 		printf("kstack V%08lx P%08lx\n", kernelstack.pv_va,
 		    kernelstack.pv_pa);
-#endif	/* PMAP_DEBUG */
+#endif /* PMAP_DEBUG */
 
 	/*
 	 * Well we should set a data abort handler.
 	 * Once things get going this will change as we will need a proper
 	 * handler. Until then we will use a handler that just panics but
 	 * tells us why.
-	 * Initialisation of the vectors will just panic on a data abort.
+	 * Initialization of the vectors will just panic on a data abort.
 	 * This just fills in a slightly better one.
 	 */
 	printf("vectors ");
@@ -663,7 +645,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	printf("%08x %08x %08x\n", data_abort_handler_address,
 	    prefetch_abort_handler_address, undefined_handler_address); 
 
-	/* Initialise the undefined instruction handlers */
+	/* Initialize the undefined instruction handlers */
 	printf("undefined ");
 	undefined_init();
 
@@ -717,15 +699,14 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
 #ifdef IPKDB
-	/* Initialise ipkdb */
+	/* Initialize ipkdb */
 	ipkdb_init();
 	if (boothowto & RB_KDB)
 		ipkdb_connect(0);
-#endif	/* NIPKDB */
+#endif /* IPKDB */
 
 #ifdef BOOT_DUMP
 	dumppages((char *)kernel_l1pt.pv_va, 16);
-	dumppages((char *)PTE_BASE, 16);
 #endif
 
 #ifdef DDB
@@ -741,7 +722,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
-#endif	/* DDB */
+#endif /* DDB */
 
 	if (bootinfo->magic == BOOTINFO_MAGIC) {
 		platid.dw.dw0 = bootinfo->platid_cpu;
@@ -750,6 +731,20 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 
 	/* We return the new stack pointer address */
 	return (kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+}
+
+void
+machine_sleep(void)
+{
+
+	if (__sleep_func != NULL)
+		__sleep_func(__sleep_ctx);
+}
+
+void
+machine_standby(void)
+{
+
 }
 
 void
@@ -771,23 +766,10 @@ consinit(void)
 	}
 }
 
-void
-machine_sleep(void)
-{
-
-	if (__sleep_func != NULL)
-		__sleep_func(__sleep_ctx);
-}
-
-void
-machine_standby(void)
-{
-
-}
-
 #ifdef DEBUG_BEFOREMMU
 cons_decl(sacom);
-void
+
+static void
 fakecninit(void)
 {
 	static struct consdev fakecntab = cons_init(sacom);
@@ -799,7 +781,8 @@ fakecninit(void)
 #endif
 
 #ifdef BOOT_DUMP
-void dumppages(char *start, int nbytes)
+static void
+dumppages(char *start, int nbytes)
 {
 	char *p = start;
 	char *p1;
@@ -820,5 +803,3 @@ void dumppages(char *start, int nbytes)
 	}
 }
 #endif
-
-/* End of machdep.c */
