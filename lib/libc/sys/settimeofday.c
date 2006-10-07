@@ -1,4 +1,4 @@
-/*	$NetBSD: settimeofday.c,v 1.9 2006/08/17 09:59:55 jnemeth Exp $ */
+/*	$NetBSD: settimeofday.c,v 1.10 2006/10/07 20:02:01 kardel Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: settimeofday.c,v 1.9 2006/08/17 09:59:55 jnemeth Exp $");
+__RCSID("$NetBSD: settimeofday.c,v 1.10 2006/10/07 20:02:01 kardel Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: settimeofday.c,v 1.9 2006/08/17 09:59:55 jnemeth Exp $");
 __weak_alias(settimeofday,_settimeofday)
 #endif 
 
-int __clockctl_fd = -2;
+int __clockctl_fd = -1;
 
 int
 settimeofday(tv, tzp)
@@ -63,16 +63,14 @@ settimeofday(tv, tzp)
 	const void *tzp;
 {
 	struct clockctl_settimeofday args;
-	int error;
 	quad_t q;
 	int rv;
 
 	/*
-	 * if __clockctl_fd == -1, then this is not our first time, 
-	 * and we know root is the calling user. We use the system call
+	 * try syscal first and attempt to switch to clockctl
+	 * if that fails with EPERM
 	 */
 	if (__clockctl_fd == -1) {
-try_syscall:
 		q = __syscall((quad_t)SYS_settimeofday, tv, tzp);
 		if (/* LINTED constant */ sizeof (quad_t) == sizeof (register_t)
 		    || /* LINTED constant */ BYTE_ORDER == LITTLE_ENDIAN)
@@ -81,41 +79,21 @@ try_syscall:
 			rv = (int)((u_quad_t)q >> 32); 
 	
 		/*
-		 * If credentials changed from root to an unprivilegied 
-		 * user, and we already had __clockctl_fd = -1, then we 
-		 * tried the system call as a non root user, it failed 
-		 * with EPERM, and we will try clockctl unless the user
- 		 * is root which means they probably tried to set the
-		 * clock backwards and are not allowed to do so because
-		 * of the securelevel.
+		 * switch to clockctl if we fail with EPERM, this
+		 * may be cause by an attempt to set the time backwards
+		 * but we should leave the access permission checking
+		 * entirely to the kernel
 		 */
-		if (rv != -1 || errno != EPERM || geteuid() == 0)
+		if (rv != -1 || errno != EPERM)
 			return rv;
-		__clockctl_fd = -2;
-	}
 
-	/*
-	 * If __clockctl_fd = -2 then this is our first time here, 
-	 * or credentials have changed (the calling process dropped root 
-	 * root privilege). Check if root is the calling user. If it is,
-	 * we try the system call, if it is not, we try clockctl.
-	 */
-	if (__clockctl_fd == -2) {
-		/* 
-		 * Root always uses the syscall
-		 */
-		if (geteuid() == 0) {
-			__clockctl_fd = -1;
-			goto try_syscall;
+		__clockctl_fd = open(_PATH_CLOCKCTL, O_WRONLY, 0);
+		if (__clockctl_fd == -1) {
+			/* original error was EPERM - don't leak open errors */
+			errno = EPERM;
+			return -1;
 		}
 
-		/*
-		 * If this fails, it means that we are not root
-		 * and we cannot open clockctl. This is a failure.
-		 */
-		__clockctl_fd = open(_PATH_CLOCKCTL, O_WRONLY, 0);
-		if (__clockctl_fd == -1)
-			return -1;
 		(void) fcntl(__clockctl_fd, F_SETFD, FD_CLOEXEC);
 	}
 
@@ -125,6 +103,5 @@ try_syscall:
 	 */
 	args.tv = tv;
 	args.tzp = tzp;
-	error = ioctl(__clockctl_fd, CLOCKCTL_SETTIMEOFDAY, &args);
-	return error;
+	return ioctl(__clockctl_fd, CLOCKCTL_SETTIMEOFDAY, &args);
 }
