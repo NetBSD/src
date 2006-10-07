@@ -1,8 +1,9 @@
-/* $NetBSD: user.c,v 1.114 2006/09/30 11:47:00 pavel Exp $ */
+/* $NetBSD: user.c,v 1.115 2006/10/07 09:20:07 elad Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
  * Copyright (c) 2005 Liam J. Foy.  All rights reserved.
+ * Copyright (c) 2005 Hubert Feyrer <hubert@feyrer.de>. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.114 2006/09/30 11:47:00 pavel Exp $");
+__RCSID("$NetBSD: user.c,v 1.115 2006/10/07 09:20:07 elad Exp $");
 #endif
 
 #include <sys/types.h>
@@ -78,6 +79,7 @@ typedef struct user_t {
 	char	       *u_password;		/* encrypted password */
 	char	       *u_comment;		/* comment field */
 	char	       *u_home;			/* home directory */
+	mode_t		u_homeperm;		/* permissions of home dir */
 	char	       *u_primgrp;		/* primary group */
 	int		u_groupc;		/* # of secondary groups */
 	const char     *u_groupv[NGROUPS_MAX];	/* secondary groups */
@@ -165,6 +167,10 @@ enum {
 
 #ifndef NOBODY_UID
 #define NOBODY_UID	32767
+#endif
+
+#ifndef DEF_HOMEPERM
+#define	DEF_HOMEPERM	0755
 #endif
 
 /* some useful constants */
@@ -313,7 +319,7 @@ checkeuid(void)
 
 /* copy any dot files into the user's home directory */
 static int
-copydotfiles(char *skeldir, int uid, int gid, char *dir)
+copydotfiles(char *skeldir, int uid, int gid, char *dir, mode_t homeperm)
 {
 	struct dirent	*dp;
 	DIR		*dirp;
@@ -339,6 +345,9 @@ copydotfiles(char *skeldir, int uid, int gid, char *dir)
 	}
 	(void)asystem("%s -R -h %d:%d %s", CHOWN, uid, gid, dir);
 	(void)asystem("%s -R u+w %s", CHMOD, dir);
+#ifdef EXTENSIONS
+	(void)asystem("%s 0%o %s", CHMOD, homeperm, dir);
+#endif
 	return n;
 }
 
@@ -738,6 +747,7 @@ setdefaults(user_t *up)
 	    fprintf(fp, "shell\t\t%s\n", up->u_shell) <= 0 ||
 #ifdef EXTENSIONS
 	    fprintf(fp, "class\t\t%s\n", up->u_class) <= 0 ||
+	    fprintf(fp, "homeperm\t0%o\n", up->u_homeperm) <= 0 ||
 #endif
 	    fprintf(fp, "inactive\t%s\n", (up->u_inactive == NULL) ?
 		UNSET_INACTIVE : up->u_inactive) <= 0 ||
@@ -817,6 +827,13 @@ read_defaults(user_t *up)
 				cp = skipspace(s + 5);
 				memsave(&up->u_class, cp, strlen(cp));
 #endif
+#ifdef EXTENSIONS
+			} else if (strncmp(s, "homeperm", 8) == 0) {
+				for (cp = s + 8; *cp &&
+				     isspace((unsigned char)*cp); cp++)
+					;
+				up->u_homeperm = strtoul(cp, NULL, 8);
+#endif
 			} else if (strncmp(s, "inactive", 8) == 0) {
 				cp = skipspace(s + 8);
 				if (strcmp(cp, UNSET_INACTIVE) == 0) {
@@ -860,6 +877,7 @@ read_defaults(user_t *up)
 		up->u_rc += 1;
 	}
 	up->u_defrc = up->u_rc;
+	up->u_homeperm = DEF_HOMEPERM;
 }
 
 /* return the next valid unused uid */
@@ -1213,7 +1231,8 @@ adduser(char *login_name, user_t *up)
 				errx(EXIT_FAILURE, "Can't add user `%s': "
 				    "can't mkdir `%s'", login_name, home);
 			}
-			(void)copydotfiles(up->u_skeldir, up->u_uid, gid, home);
+			(void)copydotfiles(up->u_skeldir, up->u_uid, gid, home,
+			    up->u_homeperm);
 		}
 	}
 	if (strcmp(up->u_primgrp, "=uid") == 0 &&
@@ -1734,11 +1753,11 @@ usermgmt_usage(const char *prog)
 		(void)fprintf(stderr, "usage: %s -D [-F] [-b base-dir] "
 		    "[-e expiry-time] [-f inactive-time]\n"
 		    "\t[-g gid | name | =uid] [-k skel-dir] [-L login-class]\n"
-		    "\t[-r lowuid..highuid] [-s shell]\n", prog);
+		    "\t[-r lowuid..highuid] [-M homeperm] [-s shell]\n", prog);
 		(void)fprintf(stderr, "usage: %s [-moSv] [-b base-dir] "
 		    "[-c comment] [-d home-dir] [-e expiry-time]\n"
 		    "\t[-f inactive-time] [-G secondary-group] "
-		    "[-g gid | name | =uid]\n"
+		    "[-g gid | name | =uid] [-M homeperm]\n"
 		    "\t[-k skeletondir] [-L login-class] [-p password] "
 		    "[-r lowuid..highuid]\n"
 		    "\t[-s shell] [-u uid] user\n",
@@ -1780,7 +1799,7 @@ usermgmt_usage(const char *prog)
 }
 
 #ifdef EXTENSIONS
-#define ADD_OPT_EXTENSIONS	"p:r:vL:S"
+#define ADD_OPT_EXTENSIONS	"M:p:r:vL:S"
 #else
 #define ADD_OPT_EXTENSIONS
 #endif
@@ -1868,6 +1887,12 @@ useradd(int argc, char **argv)
 		case 'm':
 			u.u_flags |= F_MKDIR;
 			break;
+#ifdef EXTENSIONS
+		case 'M':
+			defaultfield = 1;
+			u.u_homeperm = strtoul(optarg, NULL, 8);
+			break;
+#endif
 		case 'o':
 			u.u_flags |= F_DUPUID;
 			break;
@@ -1911,6 +1936,7 @@ useradd(int argc, char **argv)
 		(void)printf("shell\t\t%s\n", u.u_shell);
 #ifdef EXTENSIONS
 		(void)printf("class\t\t%s\n", u.u_class);
+		(void)printf("homeperm\t0%o\n", u.u_homeperm);
 #endif
 		(void)printf("inactive\t%s\n", (u.u_inactive == NULL) ?
 		    UNSET_INACTIVE : u.u_inactive);
