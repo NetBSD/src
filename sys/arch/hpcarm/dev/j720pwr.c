@@ -1,4 +1,4 @@
-/*	$NetBSD: j720pwr.c,v 1.2 2006/06/27 14:36:50 peter Exp $	*/
+/*	$NetBSD: j720pwr.c,v 1.3 2006/10/07 14:02:09 peter Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* Jornada 720 power management. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720pwr.c,v 1.2 2006/06/27 14:36:50 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720pwr.c,v 1.3 2006/10/07 14:02:09 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,11 +72,18 @@ struct j720pwr_softc {
 	struct device		sc_dev;
 
 	struct j720ssp_softc	*sc_ssp;
+
+	volatile int		sc_state;
+#define J720PWR_POWEROFF	0x01
+#define J720PWR_SLEEPING	0x02
 };
 
 static int	j720pwr_match(struct device *, struct cfdata *, void *);
 static void	j720pwr_attach(struct device *, struct device *, void *);
 
+static void	j720pwr_sleep(void *);
+static int	j720pwr_suspend_hook(void *, int, long, void *);
+static int	j720pwr_event_hook(void *, int, long, void *);
 static int	j720pwr_apm_getpower_hook(void *, int, long, void *);
 static int	j720pwr_get_battery(struct j720pwr_softc *);
 static int	j720pwr_get_ac_status(struct j720pwr_softc *);
@@ -120,10 +127,17 @@ static void
 j720pwr_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct j720pwr_softc *sc = (struct j720pwr_softc *)self;
+	extern void (*__sleep_func)(void *);
+	extern void *__sleep_ctx;
 
 	printf("\n");
 
 	sc->sc_ssp = (struct j720ssp_softc *)parent;
+	sc->sc_state = 0;
+
+	/* Register apm sleep function. */
+	__sleep_func = j720pwr_sleep;
+	__sleep_ctx = sc;
 
 	/* Battery status query hook. */
 	config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_BATTERYVAL,
@@ -137,8 +151,92 @@ j720pwr_attach(struct device *parent, struct device *self, void *aux)
 	config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_ACADAPTER,
 		    CONFIG_HOOK_EXCLUSIVE, j720pwr_apm_getpower_hook, sc);
 
+	/* Suspend/resume button hook. */
+	config_hook(CONFIG_HOOK_BUTTONEVENT,
+		    CONFIG_HOOK_BUTTONEVENT_POWER,
+		    CONFIG_HOOK_SHARE, j720pwr_suspend_hook, sc);
+
+	/* Receive suspend/resume events. */
+	config_hook(CONFIG_HOOK_PMEVENT,
+		    CONFIG_HOOK_PMEVENT_HARDPOWER,
+		    CONFIG_HOOK_SHARE, j720pwr_event_hook, sc);
+
 	/* Attach hpcapm. */
 	config_found_ia(self, "hpcapmif", NULL, NULL);
+}
+
+static void
+j720pwr_sleep(void *ctx)
+{
+	struct j720pwr_softc *sc = ctx;
+	struct j720ssp_softc *ssp = sc->sc_ssp;
+	uint32_t oldfer;
+
+	/* Disable falling-edge detect on all GPIO ports, except keyboard. */
+	oldfer = bus_space_read_4(ssp->sc_iot, ssp->sc_gpioh, SAGPIO_FER);
+	bus_space_write_4(ssp->sc_iot, ssp->sc_gpioh, SAGPIO_FER, 1 << 0);
+
+	while (sc->sc_state & J720PWR_POWEROFF) {
+		/*
+		 * Just sleep here until the poweroff bit gets unset.
+		 * We need to wait here because when machine_sleep() returns
+		 * hpcapm(4) assumes that we are "resuming".
+		 */
+		(void)tsleep(&sc->sc_state, PWAIT, "j720slp", 0);
+	}
+
+	/* Restore previous FER value. */
+	bus_space_write_4(ssp->sc_iot, ssp->sc_gpioh, SAGPIO_FER, oldfer);
+}
+
+static int
+j720pwr_suspend_hook(void *ctx, int type, long id, void *msg)
+{
+	struct j720pwr_softc *sc = ctx;
+
+	if (type != CONFIG_HOOK_BUTTONEVENT ||
+	    id != CONFIG_HOOK_BUTTONEVENT_POWER)
+		return EINVAL;
+
+	if ((sc->sc_state & (J720PWR_POWEROFF | J720PWR_SLEEPING)) == 0) {
+		sc->sc_state |= J720PWR_POWEROFF;
+	} else if ((sc->sc_state & (J720PWR_POWEROFF | J720PWR_SLEEPING)) ==
+	    (J720PWR_POWEROFF | J720PWR_SLEEPING)) {
+		sc->sc_state &= ~J720PWR_POWEROFF;
+		wakeup(&sc->sc_state);
+	} else {
+		DPRINTF(("j720pwr_suspend_hook: busy\n"));
+		return EBUSY;
+	}
+
+	config_hook_call(CONFIG_HOOK_PMEVENT,
+		         CONFIG_HOOK_PMEVENT_SUSPENDREQ, NULL);
+
+	return 0;
+}
+
+static int
+j720pwr_event_hook(void *ctx, int type, long id, void *msg)
+{
+	struct j720pwr_softc *sc = ctx;
+	int event = (int)msg;
+
+	if (type != CONFIG_HOOK_PMEVENT ||
+	    id != CONFIG_HOOK_PMEVENT_HARDPOWER)
+		return EINVAL;
+
+	switch (event) {
+	case PWR_SUSPEND:
+		sc->sc_state |= (J720PWR_SLEEPING | J720PWR_POWEROFF);
+		break;
+	case PWR_RESUME:
+		sc->sc_state &= ~(J720PWR_SLEEPING | J720PWR_POWEROFF);
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
 }
 
 static int
