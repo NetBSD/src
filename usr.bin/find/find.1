@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.58 2006/10/07 16:34:06 apb Exp $
+.\"	$NetBSD: find.1,v 1.59 2006/10/07 17:06:28 apb Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd September 23, 2006
+.Dd October 7, 2006
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -206,37 +206,69 @@ was started, rounded up to the next full 24-hour period, is
 24-hour periods.
 .It Ic -empty
 True if the current file or directory is empty.
-.It Xo Ic -exec Ar utility Op argument ...
-.No ;
-.Xc
-True if the program named
+.\" The ".sp" below is probably not the right way to get the desired effect.
+.It Ic -exec Ar utility Oo argument ... Oc No ; 
+.sp -1l
+.It Ic -exec Ar utility Oo argument ... Oc No {} +
+Execute the specified
 .Ar utility
-returns a zero value as its exit status.
-Optional arguments may be passed to the utility.
-The expression must be terminated by a semicolon
-.Pq Dq \&; .
-If the string
-.Dq {}
-appears anywhere in the utility name or the
-arguments it is replaced by the pathname of the current file.
-.Ar Utility
+with the specified arguments.
+The list of arguments is terminated by
+.Dq Li \&;
+or
+.Dq Li \&+ .
+.Ar utility
 will be executed from the directory from which
 .Nm
 was executed.
-.It Xo Ic -execdir Ar utility Op argument ...
-.No ;
-.Xc
+.Pp
+If terminated by a semicolon
+.Pq Dq \&; ,
+the
+.Ar utility
+is invoked once per path.
+If the string
+.Dq {}
+appears anywhere in the utility name or the arguments,
+it is replaced by the pathname of the current file.
+.Pp
+If terminated by a plus sign
+.Pq Dq \&+ ,
+the pathnames for which the
+primary is evaluated are aggregated into sets, and
+.Ar utility
+will be invoked once per set, similar to
+.Xr xargs 1 .
+If any invocation exits with non-zero exit status, then
+.Nm
+will eventually do so as well, but this does not cause
+.Nm
+to exit early.
+The string
+.Dq {}
+must appear, and must appear last.
+Each set is limitted to no more than 5,000 pathnames,
+and is also limitted such that the invokation of
+.Ar utility
+does not exceed
+.Dv ARG_MAX .
+.It Ic -execdir Ar utility Oo argument ... Oc No ;
 The
 .Ic -execdir
-primary is identical to the
+primary is similar to the semicolon-terminated
+.Pq Dq \&;
+variant of the
 .Ic -exec
-primary with the exception that
-.Ar Utility
+primary, with the exception that
+.Ar utility
 will be executed from the directory that holds
 the current file.
 The filename substituted for the string
 .Dq {}
 is not qualified.
+Set aggregation
+.Pq Do \&+ Dc termination
+is not supported.
 .It Ic -exit Op Ar n
 This primary causes
 .Nm
@@ -254,10 +286,7 @@ This can be useful after using a
 primary so it can continue to the next expression (using an
 .Cm -or
 operator, for example).
-.It Xo
-.Ic -flags
-.Oo Fl Oc Ns Ar flags
-.Xc
+.It Ic -flags Oo Fl Oc Ns Ar flags
 If
 .Ar flags
 are preceded by a dash
@@ -368,23 +397,25 @@ True if the difference between the file last modification time and the time
 was started, rounded up to the next full 24-hour period, is
 .Ar n
 24-hour periods.
-.It Xo Ic -ok Ar utility Op argument ...
-.No ;
-.Xc
+.It Ic -ok Ar utility Oo argument ... Oc No ;
 The
 .Ic -ok
-primary is identical to the
+primary is similar to the semicolon-terminated
+.Pq Dq \&;
+variant of the
 .Ic -exec
-primary with the exception that
+primary, with the exception that
 .Nm
 requests user affirmation for the execution of the utility by printing
 a message to the terminal and reading a response.
 If the response is other than
-.Dq y
+.Dq y ,
 the command is not executed and the
-value of the
-.Ar \&ok
-expression is false.
+.Ar -ok
+primary evaluates to false.
+Set aggregation
+.Pq Do \&+ Dc termination
+is not supported.
 .It Ic -name Ar pattern
 True if the last component of the pathname being examined matches
 .Ar pattern  .
@@ -427,10 +458,7 @@ Slashes
 .Pq Dq /
 are treated as normal characters and do not have to be
 matched explicitly.
-.It Xo
-.Ic -perm
-.Oo Fl Oc Ns Ar mode
-.Xc
+.It Ic -perm Oo Fl Oc Ns Ar mode
 The
 .Ar mode
 may be either symbolic (see
@@ -604,6 +632,16 @@ All operands and primaries must be separate arguments to
 Primaries which themselves take arguments expect each argument
 to be a separate argument to
 .Nm  .
+.Sh EXIT STATUS
+The
+.Nm
+utility normally exits 0 on success, and exits with 1 under certain
+internal error conditions.
+If any invokations of
+.Dq Ic -exec Ar ... No +
+primaries return non-zero exit-status, then
+.Nm
+will do so as well.
 .Sh EXAMPLES
 The following examples are shown as given to the shell:
 .Bl -tag -width findx
@@ -640,6 +678,7 @@ with a value of 1.
 .Xr chflags 1 ,
 .Xr chmod 1 ,
 .Xr locate 1 ,
+.Xr xargs 1 ,
 .Xr stat 2 ,
 .Xr fts 3 ,
 .Xr getgrent 3 ,
@@ -717,6 +756,13 @@ in the utility name or the
 utility arguments if it had preceding or following non-whitespace characters.
 This version replaces it no matter where in the utility name or arguments
 it appears.
+.Pp
+Support for
+.Dq Ic -exec Ar ... No +
+is consistent with
+.Em IEEE PASC Interpretation 1003.2 #210 ,
+though the feature originated in
+.Tn SVR4 .
 .Sh HISTORY
 A much simpler
 .Nm find
