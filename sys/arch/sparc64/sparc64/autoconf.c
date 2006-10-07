@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.127 2006/10/05 22:41:31 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.128 2006/10/07 18:14:42 rjs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.127 2006/10/05 22:41:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.128 2006/10/07 18:14:42 rjs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -936,7 +936,6 @@ device_register(struct device *dev, void *aux)
 	if (kgdb_break_at_attach &&
 	    strcmp(device_xname(dev), KGDB_DEVNAME) == 0) {
 		kgdb_debug_panic = 1;
-		kgdb_port_init(dev, aux);
 		kgdb_connect(1);
 	}
 #endif
