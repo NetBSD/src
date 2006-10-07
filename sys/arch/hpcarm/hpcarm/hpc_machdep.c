@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.79 2006/04/11 15:08:10 peter Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.80 2006/10/07 13:42:17 peter Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.79 2006/04/11 15:08:10 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.80 2006/10/07 13:42:17 peter Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -199,8 +199,6 @@ void prefetch_abort_handler(trapframe_t *);
 void undefinedinstruction_bounce(trapframe_t *);
 
 u_int cpu_get_control(void);
-
-void rpc_sa110_cc_setup(void);
 
 #ifdef DEBUG_BEFOREMMU
 static void fakecninit(void);
@@ -707,9 +705,6 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
 	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
-	if (cputype == CPU_ID_SA110)
-		rpc_sa110_cc_setup();	
-
 #ifdef IPKDB
 	/* Initialise ipkdb */
 	ipkdb_init();
@@ -788,33 +783,6 @@ void
 machine_standby(void)
 {
 
-}
-
-/*
- * For optimal cache cleaning we need two 16K banks of
- * virtual address space that NOTHING else will access
- * and then we alternate the cache cleaning between the
- * two banks.
- * The cache cleaning code requires requires 2 banks aligned
- * on total size boundary so the banks can be alternated by
- * eorring the size bit (assumes the bank size is a power of 2)
- */
-void
-rpc_sa110_cc_setup(void)
-{
-	int loop;
-	paddr_t kaddr;
-	pt_entry_t *pte;
-
-	(void) pmap_extract(pmap_kernel(), KERNEL_TEXT_BASE, &kaddr);
-	for (loop = 0; loop < CPU_SA110_CACHE_CLEAN_SIZE; loop += PAGE_SIZE) {
-		pte = vtopte(sa1_cc_base + loop);
-		*pte = L2_S_PROTO | kaddr |
-		    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_l2_s_cache_mode;
-		PTE_SYNC(pte);
-	}
-	sa1_cache_clean_addr = sa1_cc_base;
-	sa1_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;
 }
 
 #ifdef BOOT_DUMP
