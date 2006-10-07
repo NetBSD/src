@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.11 2006/05/09 20:18:06 mrg Exp $	*/
+/*	$NetBSD: driver.c,v 1.12 2006/10/07 17:27:57 elad Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.11 2006/05/09 20:18:06 mrg Exp $");
+__RCSID("$NetBSD: driver.c,v 1.12 2006/10/07 17:27:57 elad Exp $");
 #endif /* not lint */
 
 # include	<sys/ioctl.h>
@@ -135,9 +135,9 @@ again:
 		{
 			if (errno != EINTR)
 # ifdef LOG
-				syslog(LOG_WARNING, "select: %m");
+				syslog(LOG_WARNING, "poll: %m");
 # else
-				warn("select");
+				warn("poll");
 # endif
 			errno = 0;
 		}
@@ -378,7 +378,7 @@ init()
 # endif
 
 	/*
-	 * Initialize minimal select mask
+	 * Initialize minimal poll mask
 	 */
 	fdset[0].fd = Socket;
 	fdset[0].events = POLLIN;

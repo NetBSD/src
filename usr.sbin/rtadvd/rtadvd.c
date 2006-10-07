@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.32 2006/08/02 13:44:53 tron Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.33 2006/10/07 17:27:57 elad Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -272,7 +272,7 @@ main(argc, argv)
 		    timeout->tv_usec / 1000) : INFTIM)) < 0) {
 			/* EINTR would occur upon SIGUSR1 for status dump */
 			if (errno != EINTR)
-				syslog(LOG_ERR, "<%s> select: %s",
+				syslog(LOG_ERR, "<%s> poll: %s",
 				    __func__, strerror(errno));
 			continue;
 		}

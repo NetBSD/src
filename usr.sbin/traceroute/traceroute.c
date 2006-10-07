@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.67 2006/10/07 10:23:33 elad Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.68 2006/10/07 17:27:57 elad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.67 2006/10/07 10:23:33 elad Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.68 2006/10/07 17:27:57 elad Exp $");
 #endif
 #endif
 
@@ -1103,7 +1103,7 @@ wait_for_reply(int sock, struct sockaddr_in *fromp, struct timeval *tp)
 	retval = poll(set, 1, wait.tv_sec * 1000 + wait.tv_usec / 1000);
 	if (retval < 0)  {
 		/* If we continue, we probably just flood the remote host. */
-		Fprintf(stderr, "%s: select: %s\n", prog, strerror(errno));
+		Fprintf(stderr, "%s: poll: %s\n", prog, strerror(errno));
 		exit(1);
 	}
 	if (retval > 0)  {

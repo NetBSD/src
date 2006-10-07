@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.21 2005/02/06 20:39:35 dsl Exp $	*/
+/*	$NetBSD: utilities.c,v 1.22 2006/10/07 17:27:57 elad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.21 2005/02/06 20:39:35 dsl Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.22 2006/10/07 17:27:57 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -860,7 +860,7 @@ printsub(
 
 /* EmptyTerminal - called to make sure that the terminal buffer is empty.
  *			Note that we consider the buffer to run all the
- *			way to the kernel (thus the select).
+ *			way to the kernel (thus the poll).
  */
 
 void
