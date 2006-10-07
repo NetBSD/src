@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.145 2006/10/01 22:29:20 dbj Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.146 2006/10/07 16:16:42 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.145 2006/10/01 22:29:20 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.146 2006/10/07 16:16:42 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -795,13 +795,7 @@ again:
 		}
 	}
 
-	if (!TCP_SACK_ENABLED(tp)) {
-		if (win < so->so_snd.sb_cc) {
-			len = win - off;
-			flags &= ~TH_FIN;
-		} else
-			len = so->so_snd.sb_cc - off;
-	} else if (sack_rxmit == 0) {
+	if (sack_rxmit == 0) {
 		if (sack_bytes_rxmt != 0) {
 			long cwin;
 
@@ -828,8 +822,8 @@ again:
 			 */
 			if (len > 0) {
 				cwin = tp->snd_cwnd - 
-						(tp->snd_nxt - tp->sack_newdata) -
-						sack_bytes_rxmt;
+				    (tp->snd_nxt - tp->sack_newdata) -
+				    sack_bytes_rxmt;
 				if (cwin < 0)
 					cwin = 0;
 				if (cwin < len) {
@@ -840,8 +834,9 @@ again:
 		} else if (win < so->so_snd.sb_cc) {
 			len = win - off;
 			flags &= ~TH_FIN;
-		} else
+		} else {
 			len = so->so_snd.sb_cc - off;
+		}
 	}
 
 	if (len < 0) {
