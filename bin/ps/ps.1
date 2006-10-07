@@ -1,4 +1,4 @@
-.\"	$NetBSD: ps.1,v 1.75 2006/10/03 02:15:16 wiz Exp $
+.\"	$NetBSD: ps.1,v 1.76 2006/10/07 10:22:21 apb Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ps.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd October 1, 2006
+.Dd October 7, 2006
 .Dt PS 1
 .Os
 .Sh NAME
@@ -75,8 +75,10 @@ The default sort order of controlling terminal and
 (among processes with the same controlling terminal) process
 .Tn ID
 may be changed using the
-.Fl k
-option.
+.Fl k , Fl m ,
+or
+.Fl r
+options.
 .Pp
 The information displayed is selected based on a set of keywords (see the
 .Fl L
@@ -120,6 +122,13 @@ and
 .Ar command .
 .It Fl k
 Sort the output using the space or comma separated list of keywords.
+Multiple sort keys may be specified, using any of the
+.Fl k , Fl m ,
+or
+.Fl r
+options.
+The default sort order is equivalent to
+.Fl k Ar tdev,pid .
 .It Fl L
 List the set of available keywords.
 .It Fl l
@@ -131,8 +140,7 @@ and
 .It Fl M
 Extract values from the specified core file instead of the running system.
 .It Fl m
-Sort by memory usage, instead of by process
-.Tn ID ,
+Sort by memory usage,
 equivalent to
 .Fl k Ar vsz .
 .It Fl N
@@ -199,8 +207,8 @@ then the header line is not printed at all.
 Display information associated with the specified process
 .Tn ID .
 .It Fl r
-Sort by current CPU usage, instead of by process
-.Tn ID ,
+Sort by current CPU usage.
+This is equivalent to
 equivalent to
 .Fl k Ar %cpu .
 .It Fl S
