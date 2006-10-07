@@ -1,4 +1,4 @@
-/* $NetBSD: ln.c,v 1.30 2005/06/26 19:10:49 christos Exp $ */
+/* $NetBSD: ln.c,v 1.31 2006/10/07 10:05:25 elad Exp $ */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-__RCSID("$NetBSD: ln.c,v 1.30 2005/06/26 19:10:49 christos Exp $");
+__RCSID("$NetBSD: ln.c,v 1.31 2006/10/07 10:05:25 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: ln.c,v 1.30 2005/06/26 19:10:49 christos Exp $");
 
 int	fflag;				/* Unlink existing files. */
 int	hflag;				/* Check new name for symlink first. */
+int	iflag;				/* Interactive mode. */
 int	sflag;				/* Symbolic, not hard, link. */
 int	vflag;                          /* Verbose output */
 
@@ -74,14 +75,19 @@ main(int argc, char *argv[])
 	char *sourcedir;
 
 	setprogname(argv[0]);
-	while ((ch = getopt(argc, argv, "fhnsv")) != -1)
+	while ((ch = getopt(argc, argv, "fhinsv")) != -1)
 		switch (ch) {
 		case 'f':
 			fflag = 1;
+			iflag = 0;
 			break;
 		case 'h':
 		case 'n':
 			hflag = 1;
+			break;
+		case 'i':
+			iflag = 1;
+			fflag = 0;
 			break;
 		case 's':
 			sflag = 1;
@@ -147,6 +153,7 @@ linkit(const char *target, const char *source, int isdir)
 	struct stat sb;
 	const char *p;
 	char path[MAXPATHLEN];
+	int ch, exists, first;
 
 	if (!sflag) {
 		/* If target doesn't exist, quit now. */
@@ -169,12 +176,37 @@ linkit(const char *target, const char *source, int isdir)
 		source = path;
 	}
 
+	exists = !lstat(source, &sb);
+
 	/*
-	 * If the file exists, and -f was specified, unlink it.
-	 * Attempt the link.
+	 * If the file exists, then unlink it forcibly if -f was specified
+	 * and interactively if -i was specified.
 	 */
-	if ((fflag && unlink(source) < 0 && errno != ENOENT) ||
-	    (*linkf)(target, source)) {
+	if (fflag && exists) {
+		if (unlink(source)) {
+			warn("%s", source);
+			return (1);
+		}
+	} else if (iflag && exists) {
+		fflush(stdout);
+		(void)fprintf(stderr, "replace %s? ", source);
+
+		first = ch = getchar();
+		while (ch != '\n' && ch != EOF)
+			ch = getchar();
+		if (first != 'y' && first != 'Y') {
+			(void)fprintf(stderr, "not replaced\n");
+			return (1);
+		}
+
+		if (unlink(source)) {
+			warn("%s", source);
+			return (1);
+		}
+	}
+
+	/* Attempt the link. */
+	if ((*linkf)(target, source)) {
 		warn("%s", source);
 		return (1);
 	}
