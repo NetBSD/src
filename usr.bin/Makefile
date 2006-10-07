@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.153 2006/09/25 19:21:42 christos Exp $
+#	$NetBSD: Makefile,v 1.154 2006/10/07 08:48:03 elad Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -19,7 +19,8 @@ SUBDIR= apply apropos asa at audio awk banner basename biff bthset btpin \
 	netgroup netstat newsyslog nfsstat nice nl nohup \
 	pagesize passwd paste patch pathchk paxctl pkill pmap pmc pr \
 	printenv printf progress pwhash qsubst quota radioctl rdist \
-	renice rev rfcomm_sppd rlogin rpcgen rpcinfo rs rsh rup ruptime \
+	renice rev revoke rfcomm_sppd rlogin rpcgen rpcinfo rs rsh rup
+	ruptime \
 	rusers rwall rwho script sdpquery sed seq shar shlock showmount \
 	shuffle sockstat soelim sort spell split stat su systat tail talk \
 	tcopy tee telnet tftp time tip tn3270 top touch tput \
