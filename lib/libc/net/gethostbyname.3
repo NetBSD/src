@@ -1,4 +1,4 @@
-.\"	$NetBSD: gethostbyname.3,v 1.27 2004/08/17 13:45:14 wiz Exp $
+.\"	$NetBSD: gethostbyname.3,v 1.28 2006/10/07 21:30:39 apb Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)gethostbyname.3   8.4 (Berkeley) 5/25/95
 .\"
-.Dd August 17, 2004
+.Dd October 7, 2006
 .Dt GETHOSTBYNAME 3
 .Os
 .Sh NAME
@@ -71,19 +71,7 @@ and
 .Fn gethostbyaddr
 functions
 each return a pointer to an object with the
-following structure describing an internet host
-referenced by name or by address, respectively.
-This structure contains either the information obtained from the name server,
-.Xr named 8 ,
-broken-out fields from a line in
-.Pa /etc/hosts ,
-or database entries supplied by the
-.Xr yp 8
-system.
-The order of the lookups is controlled by the
-.Sq hosts
-entry in
-.Xr nsswitch.conf 5 .
+following structure describing an internet host.
 .Bd -literal
 struct	hostent {
 	char	*h_name;	/* official name of host */
@@ -115,7 +103,33 @@ The first address in
 this is for backward compatibility.
 .El
 .Pp
-When using the nameserver,
+In the case of
+.Fn gethostbyname
+and
+.Fn gethostbyname2 ,
+the host is specified by name,
+or using a string representation of a numeric address.
+In the case of
+.Fn gethostbyaddr ,
+the host is specified using a binary representation of an address.
+.Pp
+The returned
+.Ft "struct hostent"
+structure may contain
+the result of a simple string to binary conversion,
+information obtained from the domain name resolver (see
+.Xr resolver 3 ) ,
+broken-out fields from a line in
+.Pa /etc/hosts ,
+or database entries supplied by the
+.Xr yp 8
+system.
+The order of the lookups is controlled by the
+.Sq hosts
+entry in
+.Xr nsswitch.conf 5 .
+.Pp
+When using the domain name resolver,
 .Fn gethostbyname
 and
 .Fn gethostbyname2
