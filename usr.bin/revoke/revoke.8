@@ -1,0 +1,30 @@
+.\" $NetBSD: revoke.8,v 1.1 2006/10/07 08:48:03 elad Exp $
+.Dd October 7, 2006
+.Dt REVOKE 8
+.Os
+.Sh NAME
+.Nm revoke
+.Nd
+call
+.Xr revoke 2
+.Sh SYNOPSIS
+.Nm
+.Ar file
+.Sh DESCRIPTION
+The
+.Nm
+utility performs the system call
+.Fn revoke file .
+.Pp
+.Ar file
+must be the pathname of an existing file.
+.Sh EXIT STATUS
+The
+.Nm
+utility returns
+.Dq EXIT_SUCCESS
+on success and
+.Dq EXIT_FAILURE
+if an error occurs.
+.Sh SEE ALSO
+.Xr revoke 2

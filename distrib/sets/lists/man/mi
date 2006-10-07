@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.936 2006/10/01 18:43:11 bouyer Exp $
+# $NetBSD: mi,v 1.937 2006/10/07 08:48:03 elad Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2205,6 +2205,7 @@
 ./usr/share/man/cat8/rdump_lfs.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/reboot.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/renice.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/revoke.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/repquota.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/resize_lfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/restore.0			man-sysutil-catman	.cat
@@ -4583,6 +4584,7 @@
 ./usr/share/man/man8/rdump_lfs.8		man-netutil-man		.man
 ./usr/share/man/man8/reboot.8			man-sysutil-man		.man
 ./usr/share/man/man8/renice.8			man-sysutil-man		.man
+./usr/share/man/man8/revoke.8			man-sysutil-man		.man
 ./usr/share/man/man8/repquota.8			man-sysutil-man		.man
 ./usr/share/man/man8/resize_lfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/restore.8			man-sysutil-man		.man

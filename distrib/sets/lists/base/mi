@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.658 2006/09/25 19:23:42 christos Exp $
+# $NetBSD: mi,v 1.659 2006/10/07 08:48:03 elad Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -594,6 +594,7 @@
 ./usr/bin/renice				base-util-bin
 ./usr/bin/reset					base-util-bin
 ./usr/bin/rev					base-util-bin
+./usr/bin/revoke				base-util-bin
 ./usr/bin/rfcomm_sppd				base-util-bin
 ./usr/bin/rlog					base-rcs-bin
 ./usr/bin/rlogin				base-netutil-bin
