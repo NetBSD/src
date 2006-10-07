@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.7 2006/10/07 20:51:47 bjh21 Exp $ */
+/* $NetBSD: intr.h,v 1.8 2006/10/07 20:58:00 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -104,13 +104,14 @@ extern int hardsplx(int);
  * Soft Interrupts
  */
 
-/* Old-fashioned soft interrupts */
-extern void setsoftnet(void);
-
 /* New-fangled generic soft interrupts */
 extern void *softintr_establish(int, void (*)(void *), void *);
 extern void softintr_disestablish(void *);
 extern void softintr_schedule(void *);
+
+/* Old-fashioned soft interrupts */
+extern void *sh_softnet;
+#define setsoftnet() softintr_schedule(sh_softnet)
 
 /* Machine-dependent soft-interrupt servicing routines */
 extern void softintr_init(void);
