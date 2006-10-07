@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.13 2006/08/20 18:52:05 thorpej Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.14 2006/10/07 22:00:22 apb Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -330,6 +330,9 @@
 
 /* Define to 1 if you have the `strlcpy' function. */
 #undef HAVE_STRLCPY
+
+/* Define to 1 if you have the `strmode' function. */
+#undef HAVE_STRMODE
 
 /* Define to 1 if you have the `strsep' function. */
 #undef HAVE_STRSEP
