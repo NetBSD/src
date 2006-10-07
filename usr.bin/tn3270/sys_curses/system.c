@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.20 2006/05/11 00:27:27 mrg Exp $	*/
+/*	$NetBSD: system.c,v 1.21 2006/10/07 17:27:57 elad Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	4.5 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: system.c,v 1.20 2006/05/11 00:27:27 mrg Exp $");
+__RCSID("$NetBSD: system.c,v 1.21 2006/10/07 17:27:57 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -479,7 +479,7 @@ doconnect()
 	    if (errno == EINTR) {
 		continue;
 	    } else {
-		perror("in select waiting for API connection");
+		perror("in poll waiting for API connection");
 		return -1;
 	    }
 	} else {
