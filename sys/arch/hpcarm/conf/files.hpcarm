@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.58 2006/05/10 13:36:28 rjs Exp $
+#	$NetBSD: files.hpcarm,v 1.59 2006/10/07 14:09:07 peter Exp $
 #
 # hpcarm specific configuration info
 #
@@ -29,7 +29,7 @@ file	arch/hpcarm/hpcarm/hpc_machdep.c
 # Include hpcarm/StrongARM config definitions.
 include "arch/arm/conf/files.sa11x0"
 
-# SA11[01]1 companion chips
+# SA-11[01]1 companion chips
 file	arch/hpcarm/dev/sacc_hpcarm.c		sacc
 
 # Jornada 720 dependent part of PCMCIA support.
@@ -77,10 +77,14 @@ attach j720kbd at j720ssp
 file	arch/hpcarm/dev/j720kbd.c		j720kbd
 
 # Jornada 720 touch-panel
-device	j720tp: hpctpanel, wsmousedev
+device	j720tp: hpctpanel, wsmousedev, wskbddev
 attach	j720tp at j720ssp
 file	arch/hpcarm/dev/j720tp.c		j720tp
 defflag	opt_j720tp.h		J720TP_DEBUG
+defparam opt_j720tp.h		J720TP_SETTINGS_ICON_KEYSYM
+				J720TP_BACKUP_ICON_KEYSYM
+				J720TP_DIALUP_ICON_KEYSYM
+				J720TP_MEDIA_ICON_KEYSYM
 
 # Jornada 720 LCD screen
 device	j720lcd
@@ -91,6 +95,11 @@ file	arch/hpcarm/dev/j720lcd.c		j720lcd
 device	j720pwr: hpcapmif
 attach	j720pwr at j720ssp
 file	arch/hpcarm/dev/j720pwr.c		j720pwr
+
+# Jornada 720 audio
+device	j720audio: audiobus, auconv, mulaw, sac
+attach	j720audio at sacc
+file	arch/hpcarm/dev/j720audio.c		j720audio
 
 # Atmel microcontroller
 device	atmelgpioif {}
