@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.38 2006/06/28 15:05:54 drochner Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.39 2006/10/07 00:47:18 elad Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -69,7 +69,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.");
-__RCSID("$NetBSD: wiconfig.c,v 1.38 2006/06/28 15:05:54 drochner Exp $");
+__RCSID("$NetBSD: wiconfig.c,v 1.39 2006/10/07 00:47:18 elad Exp $");
 #endif
 
 struct wi_table {
@@ -101,7 +101,7 @@ static void wi_apscan		__P((char *));
 static int  get_if_flags	__P((int, const char *));
 static int  set_if_flags	__P((int, const char *, int));
 #endif
-static void wi_getval		__P((char *, struct wi_req *));
+static int  wi_getval		__P((char *, struct wi_req *));
 static void wi_setval		__P((char *, struct wi_req *));
 static void wi_printstr		__P((struct wi_req *));
 static void wi_setstr		__P((char *, int, char *));
@@ -284,13 +284,14 @@ static void wi_apscan(iface)
 }
 #endif
 
-static void wi_getval(iface, wreq)
+static int wi_getval(iface, wreq)
 	char			*iface;
 	struct wi_req		*wreq;
 {
 	struct ifreq		ifr;
-	int			s;
+	int			s, error;
 
+	error = 0;
 	bzero((char *)&ifr, sizeof(ifr));
 
 	strncpy(ifr.ifr_name, iface, sizeof(ifr.ifr_name));
@@ -301,12 +302,14 @@ static void wi_getval(iface, wreq)
 	if (s == -1)
 		err(1, "socket");
 
-	if (ioctl(s, SIOCGWAVELAN, &ifr) == -1)
-		err(1, "SIOCGWAVELAN(wreq %04x)", wreq->wi_type);
+	if (ioctl(s, SIOCGWAVELAN, &ifr) == -1) {
+		warn("SIOCGWAVELAN(wreq %04x)", wreq->wi_type);
+		error = 1;
+	}
 
 	close(s);
 
-	return;
+	return error;
 }
 
 static void wi_setval(iface, wreq)
@@ -658,8 +661,11 @@ static void wi_dumpinfo(iface)
 		wreq.wi_len = WI_MAX_DATALEN;
 		wreq.wi_type = w[i].wi_type;
 
-		wi_getval(iface, &wreq);
 		printf("%s", w[i].wi_label);
+		if (wi_getval(iface, &wreq)) {
+			printf("[ Unknown ]\n");
+			continue;
+		}
 		switch (w[i].wi_code) {
 		case WI_STRING:
 			wi_printstr(&wreq);
