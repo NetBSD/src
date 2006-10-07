@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 2006/07/10 16:28:44 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 2006/10/07 14:59:53 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2006/07/10 16:28:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2006/10/07 14:59:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -68,8 +68,8 @@ cpu_configure(void)
 	if (config_rootfound("plb", &local_plb_devs) == NULL)
 		panic("configure: plb not configured");
 
-	printf("biomask %x netmask %x ttymask %x\n", (u_short)imask[IPL_BIO],
-	    (u_short)imask[IPL_NET], (u_short)imask[IPL_TTY]);
+	printf("biomask %x netmask %x ttymask %x\n",
+	    imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY]);
 	
 	(void)spl0();
 
