@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# $NetBSD: wpa_supplicant,v 1.1 2006/10/07 20:52:52 rpaulo Exp $
+#
+
+# PROVIDE: wpa_supplicant
+# REQUIRE: network mountcritlocal
+# BEFORE:  NETWORKING dhclient
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="wpa_supplicant"
+rcvar=$name
+command="/usr/sbin/wpa_supplicant"
+
+load_rc_config $name
+run_rc_command "$1"
