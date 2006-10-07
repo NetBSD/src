@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.48 2006/08/25 11:59:30 hubertf Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.49 2006/10/07 17:27:57 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.48 2006/08/25 11:59:30 hubertf Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.49 2006/10/07 17:27:57 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -615,7 +615,7 @@ main(argc, argv)
 	 */
 	for (;;) {
 		if (poll(set, 4, INFTIM) < 1) {
-			syslog(LOG_ERR, "select failed: %m");
+			syslog(LOG_ERR, "poll failed: %m");
 			exit(1);
 		}
 

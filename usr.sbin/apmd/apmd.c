@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.29 2006/05/09 20:18:09 mrg Exp $	*/
+/*	$NetBSD: apmd.c,v 1.30 2006/10/07 17:27:57 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -526,7 +526,7 @@ main(int argc, char *argv[])
 	    }
 	}
     }
-    syslog(LOG_ERR, "select failed: %m");
+    syslog(LOG_ERR, "poll failed: %m");
     exit(1);
 }
 

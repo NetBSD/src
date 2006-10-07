@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.58 2006/05/25 02:40:58 rpaulo Exp $	*/
+/*	$NetBSD: route6d.c,v 1.59 2006/10/07 17:27:57 elad Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.58 2006/05/25 02:40:58 rpaulo Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.59 2006/10/07 17:27:57 elad Exp $");
 #endif
 
 #include <stdio.h>
@@ -455,7 +455,7 @@ main(int argc, char **argv)
 		{
 		case -1:
 			if (errno != EINTR) {
-				fatal("select");
+				fatal("poll");
 				/*NOTREACHED*/
 			}
 			continue;

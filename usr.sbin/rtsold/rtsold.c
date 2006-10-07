@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.32 2006/05/11 08:38:38 mrg Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.33 2006/10/07 17:27:57 elad Exp $	*/
 /*	$KAME: rtsold.c,v 1.77 2004/01/03 01:35:13 itojun Exp $	*/
 
 /*
@@ -296,7 +296,7 @@ main(int argc, char **argv)
 		e = poll(set, 2, timeout ? (timeout->tv_sec * 1000 + timeout->tv_usec / 1000) : INFTIM);
 		if (e < 1) {
 			if (e < 0 && errno != EINTR) {
-				warnmsg(LOG_ERR, __func__, "select: %s",
+				warnmsg(LOG_ERR, __func__, "poll: %s",
 				    strerror(errno));
 			}
 			continue;

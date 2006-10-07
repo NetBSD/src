@@ -1,4 +1,4 @@
-/*	$NetBSD: tn3270.c,v 1.21 2003/08/07 11:16:12 agc Exp $	*/
+/*	$NetBSD: tn3270.c,v 1.22 2006/10/07 17:27:57 elad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tn3270.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: tn3270.c,v 1.21 2003/08/07 11:16:12 agc Exp $");
+__RCSID("$NetBSD: tn3270.c,v 1.22 2006/10/07 17:27:57 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -186,7 +186,7 @@ outputPurge(void)
  * DataToTerminal - queue up some data to go to terminal.
  *
  * Note: there are people who call us and depend on our processing
- * *all* the data at one time (thus the select).
+ * *all* the data at one time (thus the poll).
  */
 
 int
