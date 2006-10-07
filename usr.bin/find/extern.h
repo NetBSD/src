@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.24 2006/08/26 18:17:42 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.25 2006/10/07 17:04:02 apb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,10 +37,12 @@ void	 brace_subst __P((char *, char **, char *, int *));
 PLAN	*find_create __P((char ***));
 int	 find_execute __P((PLAN *, char **));
 PLAN	*find_formplan __P((char **));
+int	 find_traverse __P((PLAN *, int (*)(PLAN *, void *), void *));
 int	 f_expr __P((PLAN *, FTSENT *));
 PLAN	*not_squish __P((PLAN *));
 PLAN	*or_squish __P((PLAN *));
 PLAN	*paren_squish __P((PLAN *));
+int	 plan_cleanup(PLAN *, void *);
 void	 printlong __P((char *, char *, struct stat *));
 int	 queryuser __P((char **));
 void	 show_path __P((int));

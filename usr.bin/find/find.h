@@ -1,4 +1,4 @@
-/*	$NetBSD: find.h,v 1.21 2006/02/20 16:31:02 jschauma Exp $	*/
+/*	$NetBSD: find.h,v 1.22 2006/10/07 17:04:02 apb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -57,6 +57,7 @@ typedef struct _plandata {
 #define	F_LESSTHAN	2
 #define	F_GREATER	3
 #define	F_NEEDOK	1			/* exec ok */
+#define	F_PLUSSET	2			/* -exec ... {} + */
 #define	F_MTFLAG	1			/* fstype */
 #define	F_MTTYPE	2
 #define	F_ATLEAST	1			/* perm */
@@ -77,6 +78,13 @@ typedef struct _plandata {
 			char **_e_argv;		/* argv array */
 			char **_e_orig;		/* original strings */
 			int *_e_len;		/* allocated length */
+			char **_ep_bxp;		/* ptr to 1st addt'l arg */
+			char *_ep_p;		/* current buffer pointer */
+			char *_ep_bbp;		/* begin buffer pointer */
+			char *_ep_ebp;		/* end buffer pointer */
+			int _ep_maxargs;	/* max #args */
+			int _ep_narg;		/* # addt'l args */
+			int _ep_rval;		/* return value */
 		} ex;
 		char *_a_data[2];		/* array of char pointers */
 		char *_c_data;			/* char pointer */
@@ -102,6 +110,15 @@ typedef struct _plandata {
 #define	e_argv		p_un.ex._e_argv
 #define	e_orig		p_un.ex._e_orig
 #define	e_len		p_un.ex._e_len
+#define	ep_p		p_un.ex._ep_p
+#define	ep_bbp		p_un.ex._ep_bbp
+#define	ep_ebp		p_un.ex._ep_ebp
+#define	ep_bxp		p_un.ex._ep_bxp
+#define	ep_cnt		p_un.ex._ep_cnt
+#define	ep_maxargs	p_un.ex._ep_maxargs
+#define	ep_nline	p_un.ex._ep_nline
+#define	ep_narg		p_un.ex._ep_narg
+#define	ep_rval		p_un.ex._ep_rval
 #define	exit_val	p_un._exit_val
 #define	max_data	p_un._max_data
 #define	min_data	p_un._min_data
