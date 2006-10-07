@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.937 2006/10/07 08:48:03 elad Exp $
+# $NetBSD: mi,v 1.938 2006/10/07 14:15:36 peter Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -905,6 +905,9 @@
 ./usr/share/man/cat4/hp700/phantomas.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/wax.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcarm/intro.0		man-sys-catman		.cat
+./usr/share/man/cat4/hpcarm/j720kbd.0		man-sys-catman		.cat
+./usr/share/man/cat4/hpcarm/j720lcd.0		man-sys-catman		.cat
+./usr/share/man/cat4/hpcarm/j720tp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcmips/teliosio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcsh/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcsh/j6x0lcd.0		man-sys-catman		.cat
@@ -3284,6 +3287,9 @@
 ./usr/share/man/man4/hp700/phantomas.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/wax.4		man-sys-man		.man
 ./usr/share/man/man4/hpcarm/intro.4		man-sys-man		.man
+./usr/share/man/man4/hpcarm/j720kbd.4		man-sys-man		.man
+./usr/share/man/man4/hpcarm/j720lcd.4		man-sys-man		.man
+./usr/share/man/man4/hpcarm/j720tp.4		man-sys-man		.man
 ./usr/share/man/man4/hpcmips/teliosio.4		man-sys-man		.man
 ./usr/share/man/man4/hpcsh/intro.4		man-sys-man		.man
 ./usr/share/man/man4/hpcsh/j6x0lcd.4		man-sys-man		.man
