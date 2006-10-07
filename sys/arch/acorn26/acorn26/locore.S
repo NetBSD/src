@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.9 2005/12/11 12:16:03 christos Exp $ */
+/* $NetBSD: locore.S,v 1.10 2006/10/07 13:36:31 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -187,6 +187,9 @@ Lastpending:
 	.word	_C_LABEL(astpending)
 	.global	reset_entry
 reset_entry:
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
 	adr	r0, Lreset_panicmsg
 	bl	_C_LABEL(panic)
 	/* NOTREACHED */
@@ -438,4 +441,4 @@ ENTRY(cpu_Debugger)
 	ldmfd	r13!, {pc}
 #endif
 
-RCSID("$NetBSD: locore.S,v 1.9 2005/12/11 12:16:03 christos Exp $")
+RCSID("$NetBSD: locore.S,v 1.10 2006/10/07 13:36:31 bjh21 Exp $")
