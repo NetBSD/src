@@ -1,4 +1,4 @@
-/*	$NetBSD: 4xx_locore.S,v 1.5 2005/12/11 12:18:42 christos Exp $	*/
+/*	$NetBSD: 4xx_locore.S,v 1.6 2006/10/07 14:44:22 tsutsui Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -90,7 +90,7 @@
 	.globl	_C_LABEL(ppc4xx_reset)
 _C_LABEL(ppc4xx_reset):
 	mfspr	%r3,SPR_DBCR0
-	oris	%r3,%r13,DBCR0_RST_SYSTEM@h
+	oris	%r3,%r3,DBCR0_RST_SYSTEM@h
 	mtspr	SPR_DBCR0,%r3
 	ba	0
 
