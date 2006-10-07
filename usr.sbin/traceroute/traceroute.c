@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.66 2006/09/24 11:34:35 elad Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.67 2006/10/07 10:23:33 elad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.66 2006/09/24 11:34:35 elad Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.67 2006/10/07 10:23:33 elad Exp $");
 #endif
 #endif
 
@@ -964,6 +964,8 @@ again:
 			struct timeval t1, t2;
 			struct ip *ip;
 			(void)gettimeofday(&t1, NULL);
+			if (!useicmp && htons(port + seq + 1) == 0)
+				seq++;
 			send_probe(++seq, ttl, &t1);
 			while ((cc = wait_for_reply(s, from, &t1)) != 0) {
 				(void)gettimeofday(&t2, NULL);
