@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.80 2006/10/07 13:42:17 peter Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.81 2006/10/07 13:50:16 peter Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.80 2006/10/07 13:42:17 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.81 2006/10/07 13:50:16 peter Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -189,6 +189,10 @@ static vaddr_t sa1_cc_base;
 /* Non-buffered non-cachable memory needed to enter idle mode */
 extern vaddr_t sa11x0_idle_mem;
 
+/* Mode dependent sleep function holder */
+void (*__sleep_func)(void *);
+void *__sleep_ctx;
+
 /* Prototypes */
 
 void physcon_display_base(u_int addr);
@@ -235,6 +239,10 @@ cpu_reboot(int howto, char *bootstr)
 		cpu_reset();
 		/*NOTREACHED*/
 	}
+
+	/* Reset the sleep function. */
+	__sleep_func = NULL;
+	__sleep_ctx = NULL;
 
 	/* Disable console buffering */
 	cnpollc(1);
@@ -319,6 +327,9 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 #if NKSYMS || defined(DDB) || defined(LKM)
 	Elf_Shdr *sh;
 #endif
+
+	__sleep_func = NULL;
+	__sleep_ctx = NULL;
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
@@ -760,6 +771,20 @@ consinit(void)
 	}
 }
 
+void
+machine_sleep(void)
+{
+
+	if (__sleep_func != NULL)
+		__sleep_func(__sleep_ctx);
+}
+
+void
+machine_standby(void)
+{
+
+}
+
 #ifdef DEBUG_BEFOREMMU
 cons_decl(sacom);
 void
@@ -772,18 +797,6 @@ fakecninit(void)
 	cn_tab->cn_pri = CN_REMOTE;
 }
 #endif
-
-void
-machine_sleep(void)
-{
-
-}
-
-void
-machine_standby(void)
-{
-
-}
 
 #ifdef BOOT_DUMP
 void dumppages(char *start, int nbytes)
