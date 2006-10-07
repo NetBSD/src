@@ -1,4 +1,4 @@
-/*	$NetBSD: strmode.c,v 1.17 2006/10/07 16:19:35 elad Exp $	*/
+/*	$NetBSD: strmode.c,v 1.18 2006/10/07 22:04:18 apb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -29,12 +29,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)strmode.c	8.3 (Berkeley) 8/15/94";
 #else
-__RCSID("$NetBSD: strmode.c,v 1.17 2006/10/07 16:19:35 elad Exp $");
+__RCSID("$NetBSD: strmode.c,v 1.18 2006/10/07 22:04:18 apb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
