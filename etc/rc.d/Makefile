@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.61 2006/08/13 09:03:23 plunky Exp $
+# $NetBSD: Makefile,v 1.62 2006/10/07 16:50:34 rpaulo Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,7 @@ CONFIGFILES=\
 		savecore screenblank sdpd securelevel sshd \
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \
-		veriexec virecover wdogctl wscons wsmoused \
+		veriexec virecover wdogctl wpa_supplicant wscons wsmoused \
 		xdm xfs \
 		ypbind yppasswdd ypserv
 FILESDIR=	/etc/rc.d

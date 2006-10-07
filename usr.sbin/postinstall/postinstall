@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.28 2006/09/23 08:27:52 jmmv Exp $
+# $NetBSD: postinstall,v 1.29 2006/10/07 16:50:34 rpaulo Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -827,7 +827,7 @@ do_rc()
 		savecore screenblank sdpd securelevel sshd \
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \
-		veriexec virecover wdogctl wscons wsmoused \
+		veriexec virecover wdogctl wpa_supplicant wscons wsmoused \
 		xdm xfs \
 		ypbind yppasswdd ypserv
 	failed=$(( ${failed} + $? ))
