@@ -1,4 +1,4 @@
-/* $NetBSD: ar5315.c,v 1.2 2006/09/26 17:09:32 gdamore Exp $ */
+/* $NetBSD: ar5315.c,v 1.3 2006/10/07 07:18:02 gdamore Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -48,7 +48,7 @@
  * family.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.2 2006/09/26 17:09:32 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.3 2006/10/07 07:18:02 gdamore Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -344,6 +344,12 @@ ar531x_get_devices(void)
 			"ath",
 			AR5315_WLAN_BASE, 0x100000,
 			AR5315_CPU_IRQ_WLAN, -1,
+			0, 0, 0
+		},
+		{
+			"arspi",
+			AR5315_SPI_BASE, 0x10,
+			AR5315_CPU_IRQ_MISC, AR5315_MISC_IRQ_SPI,
 			0, 0, 0
 		},
 		{ NULL }
