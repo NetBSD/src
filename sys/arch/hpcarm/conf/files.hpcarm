@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.59 2006/10/07 14:09:07 peter Exp $
+#	$NetBSD: files.hpcarm,v 1.60 2006/10/07 14:27:54 peter Exp $
 #
 # hpcarm specific configuration info
 #
@@ -95,11 +95,6 @@ file	arch/hpcarm/dev/j720lcd.c		j720lcd
 device	j720pwr: hpcapmif
 attach	j720pwr at j720ssp
 file	arch/hpcarm/dev/j720pwr.c		j720pwr
-
-# Jornada 720 audio
-device	j720audio: audiobus, auconv, mulaw, sac
-attach	j720audio at sacc
-file	arch/hpcarm/dev/j720audio.c		j720audio
 
 # Atmel microcontroller
 device	atmelgpioif {}
