@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.20 2006/10/04 21:31:50 christos Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.21 2006/10/07 21:05:46 he Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.20 2006/10/04 21:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.21 2006/10/07 21:05:46 he Exp $");
 
 #include "opt_inet.h"
 
@@ -109,7 +109,8 @@ int sndebug = 0;
  * SONIC buffers need to be aligned 16 or 32 bit aligned.
  * These macros calculate and verify alignment.
  */
-#define SOALIGN(m, array)	(m ? (roundup(array, 4)) : (roundup(array, 2)))
+#define SOALIGN(m, array)	(m ? (roundup((int)array, 4)) : \
+				     (roundup((int)array, 2)))
 
 #define LOWER(x) ((unsigned)(x) & 0xffff)
 #define UPPER(x) ((unsigned)(x) >> 16)
