@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.140 2006/05/10 21:53:20 mrg Exp $	*/
+/*	$NetBSD: ftp.c,v 1.141 2006/10/07 10:49:14 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.140 2006/05/10 21:53:20 mrg Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.141 2006/10/07 10:49:14 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -402,7 +402,8 @@ getreply(int expecteof)
 	for (line = 0 ;; line++) {
 		dig = n = code = 0;
 		cp = current_line;
-		while (alarmtimer(60),((c = getc(cin)) != '\n')) {
+		while (alarmtimer(quit_time ? quit_time : 60),
+		       ((c = getc(cin)) != '\n')) {
 			if (c == IAC) {     /* handle telnet commands */
 				switch (c = getc(cin)) {
 				case WILL:
