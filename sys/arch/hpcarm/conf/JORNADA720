@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.60 2006/09/27 21:42:05 manu Exp $
+#	$NetBSD: JORNADA720,v 1.61 2006/10/07 14:09:07 peter Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.60 $"
+#ident 		"GENERIC-$Revision: 1.61 $"
 
 # estimated number of users
 maxusers	32
@@ -19,7 +19,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # CPU options
 
-options 	CPU_SA1110	# Support the SA1110 core
+options 	CPU_SA1110	# Support the SA-1110 core
 
 # Architecture options
 
@@ -147,7 +147,7 @@ sacom*	at saip? addr 0x80050000 size 0x24	intr 17
 # OS Timer
 saost*	at saip? addr 0x90000000 size 0x20
 
-# SA1111 companion chip
+# SA-1111 companion chip
 sacc0	at saip? addr 0x40000000 size 0x2000
 
 # PCMCIA bus support
@@ -236,6 +236,7 @@ wskbd0		at hpckbd? mux 1
 # Touch-panel
 j720tp*		at j720ssp?		# touch-panel
 wsmouse*	at j720tp? mux 0	# - as a pointing device
+#wskbd1		at j720tp? mux 1	# - "hard icons" as keys
 
 # LCD screen control
 j720lcd*	at j720ssp?
