@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.49 2006/02/11 11:04:57 dsl Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.50 2006/10/07 09:53:20 elad Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.49 2006/02/11 11:04:57 dsl Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.50 2006/10/07 09:53:20 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -867,7 +867,18 @@ append(void)
 	/*
 	 * go to the writing phase to add the new members
 	 */
-	return wr_archive(arcn, 1);
+	res = wr_archive(arcn, 1);
+	if (res == 1) {
+		/*
+		 * wr_archive failed in some way, but before any files were
+		 * added. These are the only steps needed to cleanup (and
+		 * not truncate the archive).
+		 */
+		wr_fin();
+		(void)sigprocmask(SIG_BLOCK, &s_mask, (sigset_t *)NULL);
+		ar_close();
+	}
+	return res;
 }
 
 /*
