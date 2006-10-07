@@ -1,4 +1,4 @@
-/*	$NetBSD: strmode.c,v 1.16 2004/06/20 22:20:15 jmc Exp $	*/
+/*	$NetBSD: strmode.c,v 1.17 2006/10/07 16:19:35 elad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)strmode.c	8.3 (Berkeley) 8/15/94";
 #else
-__RCSID("$NetBSD: strmode.c,v 1.16 2004/06/20 22:20:15 jmc Exp $");
+__RCSID("$NetBSD: strmode.c,v 1.17 2006/10/07 16:19:35 elad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: strmode.c,v 1.16 2004/06/20 22:20:15 jmc Exp $");
 #include <assert.h>
 #include <unistd.h>
 
+#if !HAVE_STRMODE
 void
 strmode(mode, p)
 	mode_t mode;
@@ -176,3 +177,4 @@ strmode(mode, p)
 	*p++ = ' ';		/* will be a '+' if ACL's implemented */
 	*p = '\0';
 }
+#endif /* !HAVE_STRMODE */
