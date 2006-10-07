@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a500.c,v 1.14 2006/02/25 17:32:43 thorpej Exp $ */
+/* $NetBSD: dec_2100_a500.c,v 1.15 2006/10/07 18:04:38 elad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2100_a500.c,v 1.14 2006/02/25 17:32:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2100_a500.c,v 1.15 2006/10/07 18:04:38 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,8 @@ dec_2100_a500_device_register(struct device *dev, void *aux)
 
 	if (!initted) {
 		diskboot = (strcasecmp(b->protocol, "SCSI") == 0);
-		netboot = (strcasecmp(b->protocol, "BOOTP") == 0);
+		netboot = (strcasecmp(b->protocol, "BOOTP") == 0) ||
+		    (strcasecmp(b->protocol, "MOP") == 0);
 #if 0
 		printf("diskboot = %d, netboot = %d\n", diskboot, netboot);
 #endif
