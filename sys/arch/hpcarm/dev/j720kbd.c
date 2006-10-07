@@ -1,4 +1,4 @@
-/*	$NetBSD: j720kbd.c,v 1.3 2006/06/27 14:36:50 peter Exp $	*/
+/*	$NetBSD: j720kbd.c,v 1.4 2006/10/07 14:04:09 peter Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* Jornada 720 keyboard driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720kbd.c,v 1.3 2006/06/27 14:36:50 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720kbd.c,v 1.4 2006/10/07 14:04:09 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: j720kbd.c,v 1.3 2006/06/27 14:36:50 peter Exp $");
 #include <dev/hpc/hpckbdvar.h>
 
 #include <hpcarm/dev/j720sspvar.h>
-#include <hpcarm/dev/sed1356var.h>
 
 #ifdef DEBUG
 #define DPRINTF(arg)	printf arg
@@ -93,7 +92,6 @@ static int	j720kbd_input_establish(void *, struct hpckbd_if *);
 static int	j720kbd_intr(void *);
 static int	j720kbd_poll(void *);
 static void	j720kbd_read(struct j720kbd_chip *, char *);
-static int	j720kbd_button_event(void *, int, long, void *);
 
 CFATTACH_DECL(j720kbd, sizeof(struct j720kbd_softc),
     j720kbd_match, j720kbd_attach, NULL, NULL);
@@ -131,11 +129,6 @@ j720kbd_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Install interrupt handler. */
 	sa11x0_intr_establish(0, 0, 1, IPL_TTY, j720kbd_intr, sc);
-
-	/* Add config hook for light button event. */
-	config_hook(CONFIG_HOOK_BUTTONEVENT,
-		    CONFIG_HOOK_BUTTONEVENT_LIGHT,
-		    CONFIG_HOOK_SHARE, j720kbd_button_event, sc);
 
 	/* Attach hpckbd. */
 	haa.haa_ic = &sc->sc_chip->scc_if;
@@ -252,17 +245,4 @@ out:
 	bus_space_write_4(ssp->sc_iot, ssp->sc_ssph, SASSP_CR0, 0x387);
 
 	DPRINTF(("j720kbd_read: error %x\n", data));
-}
-
-static int
-j720kbd_button_event(void *ctx, int type, long id, void *msg)
-{
-
-	if (type != CONFIG_HOOK_BUTTONEVENT ||
-	    id != CONFIG_HOOK_BUTTONEVENT_LIGHT)
-		return 0;
-
-	sed1356_toggle_lcdlight();
-
-	return 1;
 }
