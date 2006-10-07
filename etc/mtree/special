@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.105 2006/09/26 02:19:56 jmcneill Exp $
+#	$NetBSD: special,v 1.106 2006/10/07 16:50:34 rpaulo Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -258,6 +258,7 @@
 ./etc/rc.d/veriexec		type=file mode=0555
 ./etc/rc.d/virecover		type=file mode=0555
 ./etc/rc.d/wdogctl		type=file mode=0555
+./etc/rc.d/wpa_supplicant	type=file mode=0555
 ./etc/rc.d/wscons		type=file mode=0555
 ./etc/rc.d/wsmoused		type=file mode=0555
 ./etc/rc.d/xdm			type=file mode=0555
