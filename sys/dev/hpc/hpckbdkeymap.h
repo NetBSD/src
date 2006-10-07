@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.44 2006/09/24 18:34:41 peter Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.45 2006/10/07 14:03:12 peter Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -835,8 +835,8 @@ const uint8_t jornada7xx_intl_keytrans[] = {
 };
 
 const int jornada7xx_special_keymap[] = {
-	[KEY_SPECIAL_OFF]	= -1,
-	[KEY_SPECIAL_LIGHT]	= 127
+	[KEY_SPECIAL_OFF]	= 127,
+	[KEY_SPECIAL_LIGHT]	= -1
 };
 #endif /* hpcarm */
 
