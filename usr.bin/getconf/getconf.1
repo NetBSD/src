@@ -1,4 +1,4 @@
-.\"	$NetBSD: getconf.1,v 1.9 2004/11/10 13:43:39 wiz Exp $
+.\"	$NetBSD: getconf.1,v 1.10 2006/10/07 15:20:44 elad Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 10, 2004
+.Dd October 7, 2006
 .Dt GETCONF 1
 .Os
 .Sh NAME
@@ -44,7 +44,12 @@
 .Nm
 .Ar system_var
 .Nm
+.Fl a
+.Nm
 .Ar path_var
+.Ar pathname
+.Nm
+.Fl a
 .Ar pathname
 .Sh DESCRIPTION
 The
@@ -71,6 +76,17 @@ The names of the pathname variables are from
 with the leading
 .Dq Li _PC_
 removed.
+.Pp
+When invoked with the option
+.Fl a ,
+.Nm
+writes a list of all applicable variables and their values to the
+standard output, in the format
+.Do
+.Va name
+=
+.Va value
+.Dc .
 .Sh EXIT STATUS
 The
 .Nm
