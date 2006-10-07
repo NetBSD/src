@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_adjtime.c,v 1.7 2006/03/09 23:44:43 christos Exp $ */
+/*	$NetBSD: ntp_adjtime.c,v 1.8 2006/10/07 20:02:01 kardel Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ntp_adjtime.c,v 1.7 2006/03/09 23:44:43 christos Exp $");
+__RCSID("$NetBSD: ntp_adjtime.c,v 1.8 2006/10/07 20:02:01 kardel Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -70,11 +70,12 @@ ntp_adjtime(tp)
 	int rv;
 
 	/*
-	 * if __clockctl_fd == -1, then this is not our first time, 
-	 * and we know root is the calling user. We use the system call
+	 * we always attempt to use the syscall unless we had to
+	 * use the clockctl device before
+	 *
+	 * ntp_adjtime() is callable for mortals if tp->modes == 0 !
 	 */
 	if (__clockctl_fd == -1) {
-try_syscall:
 		q = __syscall((quad_t)SYS_ntp_adjtime, tp);
 		if (/* LINTED constant */ sizeof (quad_t) == sizeof (register_t)
 		    || /* LINTED constant */ BYTE_ORDER == LITTLE_ENDIAN)
@@ -83,38 +84,23 @@ try_syscall:
 			rv = (int)((u_quad_t)q >> 32); 
 	
 		/*
-		 * If credentials changed from root to an unprivilegied 
-		 * user, and we already had __clockctl_fd = -1, then we 
-		 * tried the system call as a non root user, it failed 
-		 * with EPERM, and we will try clockctl.
+		 * if we fail with EPERM we try the clockctl device
 		 */
 		if (rv != -1 || errno != EPERM)
 			return rv;
-		__clockctl_fd = -2;
-	}
-
-	/*
-	 * If __clockctl_fd = -2 then this is our first time here, 
-	 * or credentials have changed (the calling process dropped root 
-	 * root privilege). Check if root is the calling user. If it is,
-	 * we try the system call, if it is not, we try clockctl.
-	 */
-	if (__clockctl_fd == -2) {
-		/* 
-		 * Root always uses the syscall
-		 */
-		if (geteuid() == 0) {
-			__clockctl_fd = -1;
-			goto try_syscall;
-		}
 
 		/*
 		 * If this fails, it means that we are not root
-		 * and we cannot open clockctl. This is a failure.
+		 * and we cannot open clockctl. This is a true 
+		 * failure.
 		 */
 		__clockctl_fd = open(_PATH_CLOCKCTL, O_WRONLY, 0);
-		if (__clockctl_fd == -1)
+		if (__clockctl_fd == -1) {
+			/* original error was EPERM - don't leak open errors */
+			errno = EPERM;
 			return -1;
+		}
+
 		(void) fcntl(__clockctl_fd, F_SETFD, FD_CLOEXEC);
 	}
 
@@ -133,6 +119,6 @@ try_syscall:
 		rv = (int)args.retval;
 		return rv;
 	}
-	return error;
 
+	return error;
 }
