@@ -1,4 +1,4 @@
-/* $NetBSD: softintr.c,v 1.4 2005/12/11 12:16:03 christos Exp $ */
+/* $NetBSD: softintr.c,v 1.5 2006/10/07 20:58:00 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1999 Ben Harris.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.4 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.5 2006/10/07 20:58:00 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -65,7 +65,7 @@ LIST_HEAD(sh_head, softintr_handler);
 
 static struct sh_head sh_head;
 
-static struct softintr_handler *sh_softnet;
+void *sh_softnet;
 
 static void dosoftnet(void *);
 
@@ -77,13 +77,6 @@ softintr_init()
 
 	LIST_INIT(&sh_head);
 	sh_softnet = softintr_establish(IPL_SOFTNET, dosoftnet, NULL);
-}
-
-void
-setsoftnet()
-{
-
-	softintr_schedule(sh_softnet);
 }
 
 /* Handle software interrupts */
