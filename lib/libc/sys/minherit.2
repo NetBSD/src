@@ -1,4 +1,4 @@
-.\"	$NetBSD: minherit.2,v 1.16 2003/11/19 16:50:09 wiz Exp $
+.\"	$NetBSD: minherit.2,v 1.17 2006/10/07 21:03:51 elad Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)minherit.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd November 19, 2003
+.Dd October 7, 2006
 .Dt MINHERIT 2
 .Os
 .Sh NAME
@@ -73,6 +73,13 @@ are shared between the address spaces, while pages or regions marked
 will be unmapped in the child.
 .Sh RETURN VALUES
 .Rv -std minherit
+.Sh ERRORS
+.Xr minherit 2
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+An invalid region was specified, or invalid parameters.
+.El
 .Sh SEE ALSO
 .Xr fork 2 ,
 .Xr madvise 2 ,
@@ -86,7 +93,7 @@ The
 function first appeared in
 .Ox .
 .Sh BUGS
-If the a particular port does not support page-granularity
+If a particular port does not support page-granularity
 inheritance, there's no way to figure out how large a region is
 actually affected by
 .Fn minherit .
