@@ -1,4 +1,4 @@
-/*	$NetBSD: mtpr.h,v 1.17 2005/12/11 12:16:36 christos Exp $	*/
+/*	$NetBSD: mtpr.h,v 1.18 2006/10/07 17:31:44 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -89,9 +89,9 @@
  * <amiga/amiga/mtpr.h> ?
  */
 #include <amiga/amiga/custom.h>
+#include <m68k/include/asm_single.h>
 #ifdef DRACO
 #include <amiga/amiga/drcustom.h>
-#include <m68k/include/asm_single.h>
 #endif
 
 extern unsigned char ssir;
@@ -116,8 +116,8 @@ extern unsigned char ssir;
 #define clrsoftint()	do {custom.intreq = INTF_SOFTINT;} while (0)
 #endif
 
-#define setsoftnet()	do {ssir |= SIR_NET; setsoftint(); } while (0)
-#define setsoftcback()	do {ssir |= SIR_CBACK; setsoftint(); } while (0)
+#define setsoftnet()	do {single_inst_bset_b(ssir, SIR_NET); setsoftint(); } while (0)
+#define setsoftcback()	do {single_inst_bset_b(ssir, SIR_CBACK); setsoftint(); } while (0)
 
 void softintr_schedule __P((void *));
 void *softintr_establish __P((int,  void (*)(void *), void *));
