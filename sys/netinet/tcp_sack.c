@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.15 2006/10/05 17:35:19 tls Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.16 2006/10/07 19:26:07 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.15 2006/10/05 17:35:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.16 2006/10/07 19:26:07 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -416,7 +416,6 @@ tcp_del_sackholes(struct tcpcb *tp, struct tcphdr *th)
 			break;
 		} else
 			break;
-
 	}
 
 	splx(s);
