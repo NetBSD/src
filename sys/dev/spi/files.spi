@@ -1,4 +1,4 @@
-#	$NetBSD: files.spi,v 1.1 2006/10/02 07:18:19 gdamore Exp $
+#	$NetBSD: files.spi,v 1.2 2006/10/07 07:21:13 gdamore Exp $
 
 define	spibus { }
 
@@ -9,6 +9,17 @@ file	dev/spi/spi.c			spi | spibus
 #
 # SPI client devices
 #
+
+# Common SPI flash support
+define	spiflashbus { }
+device	spiflash: disk
+attach	spiflash at spiflashbus
+file	dev/spi/spiflash.c		spiflash | spiflashbus
+
+# STMicro M25P SPI flash
+device	m25p: spiflashbus
+attach	m25p at spi
+file	dev/spi/m25p.c			m25p
 
 # TI TMP121 digital temperature sensor
 device	tmp121temp: sysmon_envsys
