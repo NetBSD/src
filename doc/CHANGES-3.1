@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.165 2006/10/06 21:33:29 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.166 2006/10/07 22:09:34 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4746,4 +4746,23 @@ sys/arch/i386/conf/XEN2_DOM0			1.10
 
 	Fix typo.
 	[bouyer, ticket #1535]
+
+sbin/mount/mount.8				1.53 via patch, 1.54
+
+	Add a DIAGNOSTICS section, specifically to address the "Operation not
+	supported by device" error. Reference options(4). Bump date.
+	[tron, ticket #1540]
+
+dist/dhcp/client/dhclient.c			1.18 via patch
+
+	Teach dhclient(8) to exit gracefully if another instance is already
+	running instead of overwriten the PID file, removing IPv4 address from
+	the network interface(s) and leaving the system in a broken state.
+	[tron, ticket #1541]
+
+etc/rc.d/fsck					1.6
+
+	Trap SIGINT so that if fsck is interrupted by ^C, we drop into
+	single-user mode.
+	[riz, ticket #1542]
 
