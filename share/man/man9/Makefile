@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.216 2006/10/04 12:39:05 pooka Exp $
+#       $NetBSD: Makefile,v 1.217 2006/10/07 17:26:24 cube Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -61,18 +61,23 @@ MAN+=	KASSERT.9
 MLINKS+=KASSERT.9 KDASSERT.9
 
 MLINKS+=arp.9 arp_ifinit.9 arp.9 arpresolve.9 arp.9 arpintr.9
-MLINKS+=autoconf.9 config_search.9 \
+MLINKS+=autoconf.9 config_search_loc.9 \
+	autoconf.9 config_search_ia.9 \
 	autoconf.9 config_found_sm.9 \
+	autoconf.9 config_found_ia.9 \
 	autoconf.9 config_found.9 \
 	autoconf.9 config_match.9 \
+	autoconf.9 config_attach_loc.9 \
 	autoconf.9 config_attach.9 \
+	autoconf.9 config_attach_pseudo.9 \
 	autoconf.9 config_detach.9 \
 	autoconf.9 config_activate.9 \
 	autoconf.9 config_deactivate.9 \
 	autoconf.9 config_defer.9 \
 	autoconf.9 config_interrupts.9 \
 	autoconf.9 config_pending_incr.9 \
-	autoconf.9 config_pending_decr.9
+	autoconf.9 config_pending_decr.9 \
+	autoconf.9 config_finalize_register.9
 MLINKS+=bcdtobin.9 bintobcd.9
 MLINKS+=buffercache.9 bread.9 \
 	buffercache.9 breada.9 \
