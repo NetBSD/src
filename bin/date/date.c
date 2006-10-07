@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.44 2006/08/17 10:03:53 jnemeth Exp $ */
+/* $NetBSD: date.c,v 1.45 2006/10/07 09:34:46 elad Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.44 2006/08/17 10:03:53 jnemeth Exp $");
+__RCSID("$NetBSD: date.c,v 1.45 2006/10/07 09:34:46 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ int retval;
 
 static void badformat(void);
 static void badtime(void);
+static void badvalue(const char *);
 static void setthetime(const char *);
 static void usage(void);
 
@@ -150,6 +151,13 @@ badtime(void)
 	/* NOTREACHED */
 }
 
+static void
+badvalue(const char *param)
+{
+	warnx("invalid %s supplied", param);
+	usage();
+}
+
 #define ATOI2(s) ((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
 
 static void
@@ -181,6 +189,8 @@ setthetime(const char *p)
 			badformat();
 		++dot;
 		lt->tm_sec = ATOI2(dot);
+		if (lt->tm_sec > 61)
+			badvalue("seconds");
 	} else {
 		len = 0;
 		lt->tm_sec = 0;
@@ -190,6 +200,8 @@ setthetime(const char *p)
 	switch (strlen(p) - len) {
 	case 12:				/* cc */
 		lt->tm_year = ATOI2(p) * 100 - TM_YEAR_BASE;
+		if (lt->tm_year < 0)
+			badtime();
 		yearset = 1;
 		/* FALLTHROUGH */
 	case 10:				/* yy */
@@ -205,16 +217,50 @@ setthetime(const char *p)
 		/* FALLTHROUGH */
 	case 8:					/* mm */
 		lt->tm_mon = ATOI2(p);
+		if (lt->tm_mon > 12 || lt->tm_mon == 0)
+			badvalue("month");
 		--lt->tm_mon;			/* time struct is 0 - 11 */
 		/* FALLTHROUGH */
 	case 6:					/* dd */
 		lt->tm_mday = ATOI2(p);
+		switch (lt->tm_mon) {
+		case 0:
+		case 2:
+		case 4:
+		case 6:
+		case 7:
+		case 9:
+		case 11:
+			if (lt->tm_mday > 31 || lt->tm_mday == 0)
+				badvalue("day of month");
+			break;
+		case 3:
+		case 5:
+		case 8:
+		case 10:
+			if (lt->tm_mday > 30 || lt->tm_mday == 0)
+				badvalue("day of month");
+			break;
+		case 1:
+			if (lt->tm_mday > 29 || lt->tm_mday == 0 ||
+			    (lt->tm_mday == 29 &&
+			     !isleap(lt->tm_year + TM_YEAR_BASE)))
+				badvalue("day of month");
+			break;
+		default:
+			badvalue("month");
+			break;
+		}
 		/* FALLTHROUGH */
 	case 4:					/* hh */
 		lt->tm_hour = ATOI2(p);
+		if (lt->tm_hour > 23)
+			badvalue("hour");
 		/* FALLTHROUGH */
 	case 2:					/* mm */
 		lt->tm_min = ATOI2(p);
+		if (lt->tm_min > 59)
+			badvalue("minute");
 		break;
 	case 0:					/* was just .sss */
 		if (len != 0)
