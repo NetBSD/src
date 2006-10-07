@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.20 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: system.c,v 1.21 2006/10/07 22:16:19 elad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: system.c,v 1.20 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: system.c,v 1.21 2006/10/07 22:16:19 elad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,13 +73,18 @@ system(command)
 
 	if (sigaction(SIGINT, &sa, &intsa) == -1)
 		return -1;
-	if (sigaction(SIGQUIT, &sa, &quitsa) == -1)
+	if (sigaction(SIGQUIT, &sa, &quitsa) == -1) {
+		sigaction(SIGINT, &intsa, NULL);
 		return -1;
+	}
 
 	sigemptyset(&nmask);
 	sigaddset(&nmask, SIGCHLD);
-	if (sigprocmask(SIG_BLOCK, &nmask, &omask) == -1)
+	if (sigprocmask(SIG_BLOCK, &nmask, &omask) == -1) {
+		sigaction(SIGINT, &intsa, NULL);
+		sigaction(SIGQUIT, &quitsa, NULL);
 		return -1;
+	}
 
 	rwlock_rdlock(&__environ_lock);
 	switch(pid = vfork()) {
