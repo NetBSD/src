@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.54 2006/09/29 20:00:15 apb Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.55 2006/10/07 22:00:22 apb Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -366,6 +366,10 @@ size_t strlcat(char *, const char *, size_t);
 
 #if !HAVE_STRLCPY
 size_t strlcpy(char *, const char *, size_t);
+#endif
+
+#if !HAVE_STRMODE
+void strmode(mode_t, char *);
 #endif
 
 #if !HAVE_STRSEP || defined(__NetBSD__)
