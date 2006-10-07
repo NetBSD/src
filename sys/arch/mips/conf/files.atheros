@@ -1,4 +1,4 @@
-#	$NetBSD: files.atheros,v 1.7 2006/09/26 06:37:32 gdamore Exp $
+#	$NetBSD: files.atheros,v 1.8 2006/10/07 07:18:02 gdamore Exp $
 
 defflag	opt_wisoc.h	WISOC_AR5312
 			WISOC_AR5315
@@ -41,3 +41,8 @@ file	arch/mips/atheros/dev/athflash.c	athflash
 device	argpio: gpiobus, sysmon_power, sysmon_taskq
 attach	argpio at arbus
 file	arch/mips/atheros/dev/argpio.c		argpio
+
+# On-board SPI controller
+device	arspi: spibus
+attach	arspi at arbus
+file	arch/mips/atheros/dev/arspi.c		arspi
