@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: fsck,v 1.5 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: fsck,v 1.6 2006/10/07 04:11:23 riz Exp $
 #
 
 # PROVIDE: fsck
@@ -28,8 +28,8 @@ fsck_start()
 	if [ -e /fastboot ]; then
 		echo "Fast boot: skipping disk checks."
 	else
-					# During fsck ignore SIGQUIT
-		trap : 3
+		trap : 2		# Ignore SIGINT, SIGQUIT, so we
+		trap : 3		# enter single-user mode on failure.
 
 		echo "Starting file system checks:"
 		fsck $fsck_flags
