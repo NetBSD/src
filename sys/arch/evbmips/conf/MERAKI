@@ -1,10 +1,10 @@
-#	$NetBSD: MERAKI,v 1.2 2006/10/02 03:28:29 chs Exp $
+#	$NetBSD: MERAKI,v 1.3 2006/10/07 07:24:23 gdamore Exp $
 
 include 	"arch/evbmips/conf/std.meraki"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"AP30-$Revision: 1.2 $"
+#ident 		"AP30-$Revision: 1.3 $"
 
 maxusers	32
 
@@ -145,6 +145,12 @@ ath*		at arbus? addr ?
 #athflash*	at arbus? addr ?
 argpio*		at arbus? addr ?
 gpio*		at argpio?
+
+# SPI Flash 
+arspi*		at arbus? addr ?
+spi*		at arspi?
+spiflash*	at spiflashbus?
+m25p*		at spi? slave 0
 
 # no RTC!  so fake with a stub (required to prevent evbmips panic)
 
