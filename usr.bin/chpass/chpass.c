@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.30 2005/06/02 01:41:38 lukem Exp $	*/
+/*	$NetBSD: chpass.c,v 1.31 2006/10/07 20:09:09 elad Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: chpass.c,v 1.30 2005/06/02 01:41:38 lukem Exp $");
+__RCSID("$NetBSD: chpass.c,v 1.31 2006/10/07 20:09:09 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,11 +58,12 @@ __RCSID("$NetBSD: chpass.c,v 1.30 2005/06/02 01:41:38 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+#include <libgen.h>
 
 #include "chpass.h"
 #include "pathnames.h"
 
-static char tempname[] = "/etc/pw.XXXXXX";
+static char tempname[] = "/tmp/pw.XXXXXX";
 uid_t uid;
 int use_yp;
 
@@ -221,6 +222,8 @@ main(int argc, char **argv)
 
 	/* Edit the user passwd information if requested. */
 	if (op == EDITENTRY) {
+		struct stat sb;
+
 		dfd = mkstemp(tempname);
 		if (dfd < 0 || fcntl(dfd, F_SETFD, 1) < 0)
 			(*Pw_error)(tempname, 1, 1);
@@ -228,6 +231,12 @@ main(int argc, char **argv)
 			cleanup();
 			errx(1, "couldn't register cleanup");
 		}
+		if (stat(dirname(tempname), &sb) == -1)
+			err(1, "couldn't stat `%s'", dirname(tempname));
+		if (!(sb.st_mode & S_ISTXT))
+			errx(1, "temporary directory `%s' is not sticky",
+			    dirname(tempname));
+
 		display(tempname, dfd, pw);
 		edit(tempname, pw);
 	}
