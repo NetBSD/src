@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.16 2006/10/07 19:26:07 yamt Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.17 2006/10/07 19:26:45 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.16 2006/10/07 19:26:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.17 2006/10/07 19:26:45 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -514,7 +514,7 @@ tcp_sack_output(struct tcpcb *tp, int *sack_bytes_rexmt)
 {
 	struct sackhole *cur = NULL;
 
-	if(!TCP_SACK_ENABLED(tp))
+	if (!TCP_SACK_ENABLED(tp))
 		return (NULL);
 
 	*sack_bytes_rexmt = 0;
