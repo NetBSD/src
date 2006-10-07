@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.yp,v 1.20 2004/12/29 13:08:24 grant Exp $
+#	$NetBSD: Makefile.yp,v 1.21 2006/10/07 16:54:38 elad Exp $
 #
 # This is the YP Makefile, used to create and push YP maps.
 #
@@ -138,9 +138,11 @@ passwd.time: ${DIR}/master.passwd
 shadow.time: ${DIR}/master.passwd
 	-@if [ -f ${.ALLSRC} ]; then \
 		umask 077 ; \
-		${CAT} ${.ALLSRC} | ${CUT} -d: -f1-2 | \
-		${AWK} 'BEGIN { FS=":"; OFS="\t"; } /^[a-zA-Z0-9_]/ \
-		{ print $$1, $$0":10779:0:99999:7:::" }' - | \
+		${CAT} ${.ALLSRC} | ${CUT} -d: -f1-3 | \
+		${AWK} -v minuid=${MINUID} \
+		'BEGIN { FS=":"; OFS="\t"; } /^[a-zA-Z0-9_]/ \
+		{ if (minuid <= $$3) \
+		print $$1, $$1":"$$2":10779:0:99999:7:::" }' - | \
 		${SORT} | ${MAKEDBM_S} - shadow.byname; \
 		${TOUCH} ${.TARGET}; \
 		${ECHO} "updated shadow"; \
