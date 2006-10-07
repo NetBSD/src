@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.8 2006/09/13 11:35:53 mrg Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.9 2006/10/07 18:14:42 rjs Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.8 2006/09/13 11:35:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.9 2006/10/07 18:14:42 rjs Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
@@ -223,8 +223,7 @@ static void
 kgdb_suspend()
 {
 
-	while (cpuinfo.flags & CPUFLG_PAUSED)
-		cpuinfo.cache_flush((caddr_t)&cpuinfo.flags, sizeof(cpuinfo.flags));
+	sparc64_ipi_pause_thiscpu(NULL);
 }
 #endif	/* MULTIPROCESSOR */
 

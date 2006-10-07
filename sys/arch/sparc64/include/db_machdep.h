@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.20 2006/09/13 11:35:53 mrg Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.21 2006/10/07 18:14:42 rjs Exp $ */
 
 /*
  * Mach Operating System
@@ -73,11 +73,7 @@ void	db_dump_fpstate(db_expr_t, int, db_expr_t, const char *);
 void	db_dump_window(db_expr_t, int, db_expr_t, const char *);
 void	db_dump_stack(db_expr_t, int, db_expr_t, const char *);
 
-#if defined(lint)
 #define	PC_REGS(regs)	((regs)->db_tf.tf_pc)
-#else
-#define	PC_REGS(regs)	((db_addr_t)(regs)->db_tf.tf_pc)
-#endif
 #define	PC_ADVANCE(regs) do {				\
 	vaddr_t n = (regs)->db_tf.tf_npc;		\
 	(regs)->db_tf.tf_pc = n;			\
