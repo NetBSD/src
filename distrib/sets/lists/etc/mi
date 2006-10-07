@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.181 2006/09/30 22:50:41 hubertf Exp $
+# $NetBSD: mi,v 1.182 2006/10/07 16:50:34 rpaulo Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -246,6 +246,7 @@
 ./etc/rc.d/veriexec				etc-sys-rc
 ./etc/rc.d/virecover				etc-sys-rc
 ./etc/rc.d/wdogctl				etc-sysutil-rc
+./etc/rc.d/wpa_supplicant			etc-net-rc
 ./etc/rc.d/wscons				etc-sys-rc
 ./etc/rc.d/wsmoused				etc-sys-rc
 ./etc/rc.d/xdm					etc-x11-rc
