@@ -1,4 +1,4 @@
-/* $NetBSD: softintr.c,v 1.5 2006/10/07 20:58:00 bjh21 Exp $ */
+/* $NetBSD: softintr.c,v 1.6 2006/10/07 21:12:00 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1999 Ben Harris.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.5 2006/10/07 20:58:00 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.6 2006/10/07 21:12:00 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -68,8 +68,6 @@ static struct sh_head sh_head;
 void *sh_softnet;
 
 static void dosoftnet(void *);
-
-extern int hardsplx(int); /* XXX should be in a header somewhere */
 
 void
 softintr_init()
