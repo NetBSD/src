@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.57 2006/09/23 05:03:33 uebayasi Exp $
+.\"	$NetBSD: find.1,v 1.58 2006/10/07 16:34:06 apb Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -645,7 +645,8 @@ with a value of 1.
 .Xr getgrent 3 ,
 .Xr getpwent 3 ,
 .Xr strmode 3 ,
-.Xr symlink 7
+.Xr symlink 7 ,
+.Xr sysctl 8
 .Sh STANDARDS
 The
 .Nm
@@ -659,6 +660,7 @@ The options and the
 .Ic -cmin ,
 .Ic -cnewer ,
 .Ic -empty ,
+.Ic -execdir ,
 .Ic -follow ,
 .Ic -fstype ,
 .Ic -iname ,
@@ -670,7 +672,8 @@ The options and the
 .Ic -mindepth ,
 .Ic -mmin ,
 .Ic -path ,
-.Ic -print0
+.Ic -print0 ,
+.Ic -printx ,
 and
 .Ic -regex
 primaries are extensions to
@@ -678,7 +681,7 @@ primaries are extensions to
 .Pp
 Historically, the
 .Fl d ,
-.Fl h
+.Fl h ,
 and
 .Fl x
 options were implemented using the primaries
@@ -732,7 +735,7 @@ In particular, the characters
 .Dq \&( ,
 .Dq \&) ,
 .Dq \&! ,
-.Dq \e
+.Dq \e ,
 and
 .Dq \&;
 may have to be escaped from the shell.
