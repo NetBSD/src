@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.1 2006/10/02 07:18:19 gdamore Exp $ */
+/* $NetBSD: spivar.h,v 1.2 2006/10/07 07:21:13 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -109,10 +109,14 @@ struct spi_transfer {
 	void		*st_private;
 	void		(*st_done)(struct spi_transfer *);
 	struct simplelock	st_lock;
+	void		*st_busprivate;
 };
 
 /* declare a list of transfers */
 SIMPLEQ_HEAD(spi_transq, spi_transfer);
+
+#define	spi_transq_init(q)	\
+	SIMPLEQ_INIT(q)
 
 #define	spi_transq_enqueue(q, trans)	\
 	SIMPLEQ_INSERT_TAIL(q, trans, st_chain)

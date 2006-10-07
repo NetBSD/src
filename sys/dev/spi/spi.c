@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.1 2006/10/02 07:18:19 gdamore Exp $ */
+/* $NetBSD: spi.c,v 1.2 2006/10/07 07:21:13 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.1 2006/10/02 07:18:19 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.2 2006/10/07 07:21:13 gdamore Exp $");
 
 #include "locators.h"
 
@@ -149,6 +149,7 @@ spi_attach(struct device *parent, struct device *self, void *aux)
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	sc->sc_speed = 0;
+	sc->sc_mode = -1;
 
 	/*
 	 * Initialize slave handles
