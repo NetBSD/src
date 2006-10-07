@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.200 2006/10/05 17:35:19 tls Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.201 2006/10/07 19:53:42 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.200 2006/10/05 17:35:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.201 2006/10/07 19:53:42 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1118,7 +1118,6 @@ tcp_close(struct tcpcb *tp)
 	struct rtentry *rt;
 #endif
 	struct route *ro;
-	int s;
 
 	inp = tp->t_inpcb;
 #ifdef INET6
@@ -1224,11 +1223,7 @@ tcp_close(struct tcpcb *tp)
 	if (tcp_timers_invoking(tp))
 		tp->t_flags |= TF_DEAD;
 	else
-	{
-		s = splsoftnet(); /* do we trust all callers of tcp_close()? */
 		pool_put(&tcpcb_pool, tp);
-		splx(s);
-	}
 
 	if (inp) {
 		inp->inp_ppcb = 0;
