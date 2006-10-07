@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.13 2004/05/06 09:07:54 itojun Exp $ Copyright (c) 1995-2002 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.13.2.1 2006/10/07 21:59:07 ghen Exp $ Copyright (c) 1995-2002 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -126,6 +126,9 @@ int main (argc, argv, envp)
 	int no_dhclient_pid = 0;
 	int no_dhclient_script = 0;
 	char *s;
+	FILE *pidfd;
+	long pidfd_pid;
+	int e;
 
 	/* Make sure we have stdin, stdout and stderr. */
 	i = open ("/dev/null", O_RDWR);
@@ -266,17 +269,18 @@ int main (argc, argv, envp)
 		path_dhclient_script = s;
 	}
 
-	/* first kill of any currently running client */
-	if (release_mode) {
-	        /* XXX inelegant hack to prove concept */
-		char command[1024];
+	if ((pidfd = fopen(path_dhclient_pid, "r")) != NULL) {
+		e = fscanf(pidfd, "%ld\n", &pidfd_pid);
+		fclose(pidfd);
 
-#if !defined (NO_SNPRINTF)
-		snprintf (command, 1024, "kill `cat %s`", path_dhclient_pid);
-#else
-		sprintf (command, "kill `cat %s`", path_dhclient_pid);
-#endif
-		system (command);
+		if (e != 0 && e != EOF && pidfd_pid) {
+			if (release_mode) {
+				if (kill((pid_t)pidfd_pid, SIGTERM) == 0)
+					unlink(path_dhclient_pid);
+			} else if (kill((pid_t)pidfd_pid, 0) == 0)
+				log_fatal("dhclient[%li] is already running",
+					 pidfd_pid);
+		}
 	}
 
 	/* This isn't the final pid, but it may be needed so that
