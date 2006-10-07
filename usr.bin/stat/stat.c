@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.23 2005/06/23 03:13:24 atatat Exp $ */
+/*	$NetBSD: stat.c,v 1.24 2006/10/07 10:41:50 elad Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.23 2005/06/23 03:13:24 atatat Exp $");
+__RCSID("$NetBSD: stat.c,v 1.24 2006/10/07 10:41:50 elad Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -159,6 +159,7 @@ __RCSID("$NetBSD: stat.c,v 1.23 2005/06/23 03:13:24 atatat Exp $");
 #define MIDDLE_PIECE	'M'
 #define LOW_PIECE	'L'
 
+#define	SHOW_realpath	'R'
 #define SHOW_st_dev	'd'
 #define SHOW_st_ino	'i'
 #define SHOW_st_mode	'p'
@@ -219,8 +220,8 @@ main(int argc, char *argv[])
 
 	if (strcmp(getprogname(), "readlink") == 0) {
 		am_readlink = 1;
-		options = "n";
-		synopsis = "[-n] [file ...]";
+		options = "fn";
+		synopsis = "[-fn] [file ...]";
 		statfmt = "%Y";
 		fmtchar = 'f';
 		quiet = 1;
@@ -244,6 +245,10 @@ main(int argc, char *argv[])
 			quiet = 1;
 			break;
 		case 'f':
+			if (am_readlink) {
+				statfmt = "%R";
+				break;
+			}
 			statfmt = optarg;
 			/* FALLTHROUGH */
 		case 'l':
@@ -494,6 +499,7 @@ output(const struct stat *st, const char *file,
 		}
 
 		switch (*statfmt) {
+			fmtcase(what, SHOW_realpath);
 			fmtcase(what, SHOW_st_dev);
 			fmtcase(what, SHOW_st_ino);
 			fmtcase(what, SHOW_st_mode);
@@ -784,6 +790,21 @@ format1(const struct stat *st,
 			ofmt = FMTF_UNSIGNED;
 		break;
 #endif /* HAVE_STRUCT_STAT_ST_GEN */
+	case SHOW_realpath:
+		small = 0;
+		data = 0;
+		snprintf(path, sizeof(path), " -> ");
+		if (realpath(file, path + 4) == NULL) {
+			linkfail = 1;
+			l = 0;
+			path[0] = '\0';
+		}
+		sdata = path + (ofmt == FMT_STRING ? 0: 4);
+
+		formats = FMTF_STRING;
+		if (ofmt == 0)
+			ofmt = FMTF_STRING;
+		break;
 	case SHOW_symlink:
 		small = 0;
 		data = 0;
