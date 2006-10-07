@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.7 2006/10/03 22:37:51 mrg Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.7 2006/10/03 22:37:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $");
 
 #include "opt_ddb.h"
 
@@ -53,7 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.7 2006/10/03 22:37:51 mrg Exp $");
 
 #define	sparc64_ipi_sleep()	delay(1000)
 
+#if defined(DDB) || defined(KGDB)
 extern int db_active;
+#endif
 
 /* CPU sets containing halted, paused and resumed cpus */
 static volatile cpuset_t cpus_halted;
