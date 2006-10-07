@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.17 2006/10/07 19:26:45 yamt Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.18 2006/10/07 19:56:14 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.17 2006/10/07 19:26:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.18 2006/10/07 19:56:14 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -190,7 +190,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 	struct sackhole *cur = NULL;
 	struct sackhole *tmp = NULL;
 	u_int32_t *lp = (u_int32_t *) (cp + 2);
-	int i, j, num_sack_blks, s;
+	int i, j, num_sack_blks;
 	tcp_seq left, right, acked;
 
 	/*
@@ -246,9 +246,6 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 		t_sack_block[j].right = right;
 	}
 
-	/* XXX: Investigate making this a bit more fine-grained. */
-	s = splsoftnet();
-
 	/* Update the scoreboard. */
 	cur = TAILQ_FIRST(&tp->snd_holes);
 	for (i = 0; i < num_sack_blks; i++) {
@@ -263,14 +260,12 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 		if (TAILQ_EMPTY(&tp->snd_holes)) {
 			/* First hole. */
 			if (tcp_sack_globalholes >= tcp_sack_globalmaxholes) {
-				splx(s);
 				return;
 			}
 			cur = (struct sackhole *)
 			    pool_get(&sackhole_pool, PR_NOWAIT);
 			if (cur == NULL) {
 				/* ENOBUFS, bail out*/
-				splx(s);
 				return;
 			}
 			cur->start = th->th_ack;
@@ -333,14 +328,12 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 						tcp_sack_globalmaxholes ||
 						tp->snd_numholes >=
 						tcp_sack_tp_maxholes) {
-					splx(s);
 					return;
 				}
 				tmp = (struct sackhole *)
 				    pool_get(&sackhole_pool, PR_NOWAIT);
 				if (tmp == NULL) {
 					/* ENOBUFS, bail out. */
-					splx(s);
 					return;
 				}
 				tmp->start = sack->right;
@@ -366,7 +359,6 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 					tcp_sack_globalmaxholes ||
 					tp->snd_numholes >=
 					tcp_sack_tp_maxholes) {
-				splx(s);
 				return;
 			}
 			tmp = (struct sackhole *)
@@ -385,8 +377,6 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			tp->rcv_lastsack = sack->right;
 		}
 	}
-
-	splx(s);
 }
 
 void
@@ -397,9 +387,6 @@ tcp_del_sackholes(struct tcpcb *tp, struct tcphdr *th)
 		th->th_ack : tp->snd_una;
 	struct sackhole *cur = TAILQ_FIRST(&tp->snd_holes);
 	struct sackhole *tmp;
-	int s;
-
-	s = splsoftnet();
 
 	while (cur) {
 		if (SEQ_LEQ(cur->end, lastack)) {
@@ -417,17 +404,12 @@ tcp_del_sackholes(struct tcpcb *tp, struct tcphdr *th)
 		} else
 			break;
 	}
-
-	splx(s);
 }
 
 void
 tcp_free_sackholes(struct tcpcb *tp)
 {
 	struct sackhole *sack;
-	int s;
-
-	s = splsoftnet();
 
 	/* Free up the SACK hole list. */
 	while (!TAILQ_EMPTY(&tp->snd_holes)) {
@@ -438,8 +420,6 @@ tcp_free_sackholes(struct tcpcb *tp)
 	}
 
 	tp->snd_numholes = 0;
-
-	splx(s);
 }
 
 /*
