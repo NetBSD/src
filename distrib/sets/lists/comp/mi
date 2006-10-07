@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.936 2006/10/05 18:17:04 christos Exp $
+#	$NetBSD: mi,v 1.937 2006/10/07 17:26:24 cube Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -6556,16 +6556,22 @@
 ./usr/share/man/cat9/config.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/config_activate.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/config_attach.0		comp-sys-catman		.cat
+./usr/share/man/cat9/config_attach_loc.0	comp-sys-catman		.cat
+./usr/share/man/cat9/config_attach_pseudo.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/config_deactivate.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/config_defer.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/config_detach.0		comp-sys-catman		.cat
+./usr/share/man/cat9/config_finalize_register.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/config_found.0		comp-sys-catman		.cat
+./usr/share/man/cat9/config_found_ia.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/config_found_sm.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/config_interrupts.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/config_match.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/config_pending_decr.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/config_pending_incr.0	comp-sys-catman		.cat
-./usr/share/man/cat9/config_search.0		comp-sys-catman		.cat
+./usr/share/man/cat9/config_search.0		comp-obsolete		obsolete
+./usr/share/man/cat9/config_search_ia.0		comp-sys-catman		.cat
+./usr/share/man/cat9/config_search_loc.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/cons.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/copy.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/copyin.0			comp-sys-catman		.cat
@@ -10745,16 +10751,22 @@
 ./usr/share/man/man9/config.9			comp-sys-man		.man
 ./usr/share/man/man9/config_activate.9		comp-sys-man		.man
 ./usr/share/man/man9/config_attach.9		comp-sys-man		.man
+./usr/share/man/man9/config_attach_loc.9	comp-sys-man		.man
+./usr/share/man/man9/config_attach_pseudo.9	comp-sys-man		.man
 ./usr/share/man/man9/config_deactivate.9	comp-sys-man		.man
 ./usr/share/man/man9/config_defer.9		comp-sys-man		.man
 ./usr/share/man/man9/config_detach.9		comp-sys-man		.man
+./usr/share/man/man9/config_finalize_resgiter.9	comp-sys-man		.man
 ./usr/share/man/man9/config_found.9		comp-sys-man		.man
 ./usr/share/man/man9/config_found_sm.9		comp-sys-man		.man
+./usr/share/man/man9/config_found_ia.9		comp-sys-man		.man
 ./usr/share/man/man9/config_interrupts.9	comp-sys-man		.man
 ./usr/share/man/man9/config_match.9		comp-sys-man		.man
 ./usr/share/man/man9/config_pending_decr.9	comp-sys-man		.man
 ./usr/share/man/man9/config_pending_incr.9	comp-sys-man		.man
-./usr/share/man/man9/config_search.9		comp-sys-man		.man
+./usr/share/man/man9/config_search.9		comp-obsolete		obsolete
+./usr/share/man/man9/config_search_ia.9		comp-sys-man		.man
+./usr/share/man/man9/config_search_loc.9	comp-sys-man		.man
 ./usr/share/man/man9/cons.9			comp-sys-man		.man
 ./usr/share/man/man9/copy.9			comp-sys-man		.man
 ./usr/share/man/man9/copyin.9			comp-sys-man		.man
