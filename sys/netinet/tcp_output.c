@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.146 2006/10/07 16:16:42 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.147 2006/10/08 11:01:46 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.146 2006/10/07 16:16:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.147 2006/10/08 11:01:46 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -676,11 +676,19 @@ again:
 	TCP_REASS_LOCK(tp);
 	sack_numblks = tcp_sack_numblks(tp);
 	if (sack_numblks) {
-		if ((tp->rcv_sack_flags & TCPSACK_HAVED) != 0) {
-			/* don't duplicate D-SACK. */
-			use_tso = 0;
+		int sackoptlen;
+
+		sackoptlen = TCP_SACK_OPTLEN(sack_numblks);
+		if (sackoptlen > txsegsize_nosack) {
+			sack_numblks = 0; /* give up SACK */
+			txsegsize = txsegsize_nosack;
+		} else {
+			if ((tp->rcv_sack_flags & TCPSACK_HAVED) != 0) {
+				/* don't duplicate D-SACK. */
+				use_tso = 0;
+			}
+			txsegsize = txsegsize_nosack - sackoptlen;
 		}
-		txsegsize = txsegsize_nosack - TCP_SACK_OPTLEN(sack_numblks);
 	} else {
 		txsegsize = txsegsize_nosack;
 	}
