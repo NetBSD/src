@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.216 2006/10/05 17:59:36 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.217 2006/10/08 02:39:01 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.216 2006/10/05 17:59:36 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.217 2006/10/08 02:39:01 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -214,6 +214,9 @@ static void InitBP(struct buf *, struct vnode *, unsigned,
 static void raidinit(RF_Raid_t *);
 
 void raidattach(int);
+static int raid_match(struct device *, struct cfdata *, void *);
+static void raid_attach(struct device *, struct device *, void *);
+static int raid_detach(struct device *, int);
 
 dev_type_open(raidopen);
 dev_type_close(raidclose);
@@ -239,6 +242,7 @@ const struct cdevsw raid_cdevsw = {
 */
 
 struct raid_softc {
+	struct device *sc_dev;
 	int     sc_flags;	/* flags */
 	int     sc_cflags;	/* configuration flags */
 	uint64_t sc_size;	/* size of the raid device */
@@ -257,6 +261,8 @@ struct raid_softc {
 int numraid = 0;
 
 extern struct cfdriver raid_cd;
+CFATTACH_DECL(raid, sizeof(struct raid_softc),
+    raid_match, raid_attach, raid_detach, NULL);
 
 /*
  * Allow RAIDOUTSTANDING number of simultaneous IO's to this RAID device.
@@ -294,8 +300,6 @@ static int raidlock(struct raid_softc *);
 static void raidunlock(struct raid_softc *);
 
 static void rf_markalldirty(RF_Raid_t *);
-
-struct device *raidrootdev;
 
 void rf_ReconThread(struct rf_recon_req *);
 void rf_RewriteParityThread(RF_Raid_t *raidPtr);
@@ -376,28 +380,8 @@ raidattach(int num)
 
 	memset(raid_softc, 0, num * sizeof(struct raid_softc));
 
-	raidrootdev = (struct device *)malloc(num * sizeof(struct device),
-					      M_RAIDFRAME, M_NOWAIT);
-	if (raidrootdev == NULL) {
-		panic("No memory for RAIDframe driver!!?!?!");
-	}
-
 	for (raidID = 0; raidID < num; raidID++) {
 		bufq_alloc(&raid_softc[raidID].buf_queue, "fcfs", 0);
-		pseudo_disk_init(&raid_softc[raidID].sc_dkdev);
-
-		/* XXXJRT Should use config_attach_pseudo() */
-
-		raidrootdev[raidID].dv_class  = DV_DISK;
-		raidrootdev[raidID].dv_cfdata = NULL;
-		raidrootdev[raidID].dv_unit   = raidID;
-		raidrootdev[raidID].dv_parent = NULL;
-		raidrootdev[raidID].dv_flags  = 0;
-		raidrootdev[raidID].dv_cfdriver = &raid_cd;
-		snprintf(raidrootdev[raidID].dv_xname,
-		    sizeof(raidrootdev[raidID].dv_xname), "raid%d", raidID);
-		raid_softc[raidID].sc_dkdev.dk_name = 
-		    raidrootdev[raidID].dv_xname;
 
 		RF_Malloc(raidPtrs[raidID], sizeof(RF_Raid_t),
 			  (RF_Raid_t *));
@@ -406,6 +390,10 @@ raidattach(int num)
 			numraid = raidID;
 			return;
 		}
+	}
+
+	if (config_cfattach_attach(raid_cd.cd_name, &raid_ca)) {
+		printf("config_cfattach_attach failed?\n");
 	}
 
 #ifdef RAID_AUTOCONFIG
@@ -504,7 +492,7 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 	/* we found something bootable... */
 
 	if (num_root == 1) {
-		booted_device = &raidrootdev[rootID];
+		booted_device = raid_softc[rootID].sc_dev;
 	} else if (num_root > 1) {
 		/* we can't guess.. require the user to answer... */
 		boothowto |= RB_ASKNAME;
@@ -637,6 +625,7 @@ int
 raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int     unit = raidunit(dev);
+	struct cfdata *cf;
 	struct raid_softc *rs;
 	int     error = 0;
 	int     part;
@@ -680,6 +669,12 @@ raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 			/* It's no longer initialized... */
 			rs->sc_flags &= ~RAIDF_INITED;
 
+			/* detach the device */
+			
+			cf = device_cfdata(rs->sc_dev);
+			error = config_detach(rs->sc_dev, DETACH_QUIET);
+			free(cf, M_RAIDFRAME);
+			
 			/* Detach the disk. */
 			pseudo_disk_detach(&rs->sc_dkdev);
 		}
@@ -805,6 +800,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	int     unit = raidunit(dev);
 	int     error = 0;
 	int     part, pmask;
+	struct cfdata *cf;
 	struct raid_softc *rs;
 	RF_Config_t *k_cfg, *u_cfg;
 	RF_Raid_t *raidPtr;
@@ -1017,6 +1013,14 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 		/* It's no longer initialized... */
 		rs->sc_flags &= ~RAIDF_INITED;
+
+		/* free the pseudo device attach bits */
+
+		cf = device_cfdata(rs->sc_dev);
+		/* XXX this causes us to not return any errors
+		   from the above call to rf_Shutdown() */
+		retcode = config_detach(rs->sc_dev, DETACH_QUIET);
+		free(cf, M_RAIDFRAME);
 
 		/* Detach the disk. */
 		pseudo_disk_detach(&rs->sc_dkdev);
@@ -1655,6 +1659,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 static void
 raidinit(RF_Raid_t *raidPtr)
 {
+	struct cfdata *cf;
 	struct raid_softc *rs;
 	int     unit;
 
@@ -1669,6 +1674,20 @@ raidinit(RF_Raid_t *raidPtr)
 	snprintf(rs->sc_xname, sizeof(rs->sc_xname), "raid%d", unit);
 
 	rs->sc_dkdev.dk_name = rs->sc_xname;
+
+	/* attach the pseudo device */
+	cf = malloc(sizeof(*cf), M_RAIDFRAME, M_WAITOK);
+	cf->cf_name = raid_cd.cd_name;
+	cf->cf_atname = raid_cd.cd_name;
+	cf->cf_unit = unit;
+	cf->cf_fstate = FSTATE_STAR;
+
+	rs->sc_dev = config_attach_pseudo(cf);
+
+	if (rs->sc_dev==NULL) {
+		printf("raid%d: config_attach_pseudo failed\n",
+		       raidPtr->raidid);
+	}
 
 	/* disk_attach actually creates space for the CPU disklabel, among
 	 * other things, so it's critical to call this *BEFORE* we try putzing
@@ -3394,3 +3413,31 @@ rf_getdisksize(struct vnode *vp, struct lwp *l, RF_RaidDisk_t *diskPtr)
 	}
 	return error;
 }
+
+static int
+raid_match(struct device *self, struct cfdata *cfdata, void *aux)
+{
+	return 1;
+}
+
+static void
+raid_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct raid_softc *rs = (struct raid_softc *)self;
+
+	pseudo_disk_init(&rs->sc_dkdev);
+}
+
+
+static int
+raid_detach(struct device *self, int flags)
+{
+	struct raid_softc *rs = (struct raid_softc *)self;
+
+	if (rs->sc_flags & RAIDF_INITED)
+		return EBUSY;
+
+	return 0;
+}
+
+
