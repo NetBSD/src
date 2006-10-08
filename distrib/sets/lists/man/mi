@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.939 2006/10/07 22:36:57 elad Exp $
+# $NetBSD: mi,v 1.940 2006/10/08 14:19:17 elad Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2374,6 +2374,7 @@
 ./usr/share/man/cat8/verify_krb5_conf.0		man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/vinum.0			man-obsolete		obsolete
 ./usr/share/man/cat8/vipw.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/virecover.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/virtual.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/vmstat.0			man-obsolete		obsolete
 ./usr/share/man/cat8/vnconfig.0			man-sysutil-catman	.cat
@@ -4757,6 +4758,7 @@
 ./usr/share/man/man8/verify_krb5_conf.8		man-krb5-man		kerberos,.man
 ./usr/share/man/man8/vinum.8			man-obsolete		obsolete
 ./usr/share/man/man8/vipw.8			man-sysutil-man		.man
+./usr/share/man/man8/virecover.8		man-sysutil-man		.man
 ./usr/share/man/man8/virtual.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/vmstat.8			man-obsolete		obsolete
 ./usr/share/man/man8/vnconfig.8			man-sysutil-man		.man
