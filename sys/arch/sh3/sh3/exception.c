@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.33 2006/10/08 18:20:42 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.33 2006/10/08 18:20:42 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -148,9 +148,13 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 {
 	int expevt = tf->tf_expevt;
 	boolean_t usermode = !KERNELMODE(tf->tf_ssr);
+	int ipl;
 	ksiginfo_t ksi;
 
 	uvmexp.traps++;
+
+	ipl = tf->tf_ssr & PSL_IMASK;
+	splx(ipl);
 
 	if (l == NULL)
  		goto do_panic;
