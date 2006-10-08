@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.42 2006/10/08 04:28:44 thorpej Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.43 2006/10/08 22:57:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -204,6 +204,7 @@ void	lwp_update_creds(struct lwp *);
 
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
 void	lwp_specific_key_delete(specificdata_key_t);
+void 	lwp_initspecific(struct lwp *);
 void *	lwp_getspecific(struct lwp *, specificdata_key_t);
 void	lwp_setspecific(struct lwp *, specificdata_key_t, void *);
 #endif	/* _KERNEL */
