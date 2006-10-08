@@ -1,4 +1,4 @@
-.\"	$NetBSD: unix.4,v 1.13 2003/08/07 10:31:04 agc Exp $
+.\"	$NetBSD: unix.4,v 1.14 2006/10/08 13:08:33 pooka Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)unix.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd May 15, 2003
+.Dd October 8, 2006
 .Dt UNIX 4
 .Os
 .Sh NAME
@@ -97,6 +97,13 @@ field must be terminated by a NUL character to be used with
 but the terminating NUL is
 .Em not
 part of the address.
+Example:
+.Bd -literal -offset indent
+memset(&sunx, 0, sizeof(sunx));
+sunx.sun_family = AF_LOCAL;
+strlcpy(sunx.sun_path, THE_PATH, sizeof(sunx.sun_path));
+rv = bind(s, (struct sockaddr *)&sunx, SUN_LEN(&sunx));
+.Ed
 .Pp
 The
 .Tn UNIX Ns -domain
