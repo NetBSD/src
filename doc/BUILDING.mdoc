@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.45 2006/10/04 22:28:24 apb Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.46 2006/10/08 17:54:30 apb Exp $
 .\"
 .\" Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -237,6 +237,8 @@ with.
 Directory to use as the
 .Sy .OBJDIR
 for the current directory.
+The value is subjected to variable expansion by
+.Xr make 1 .
 Used only if
 .Sy MAKEOBJDIRPREFIX
 is not defined.
@@ -248,6 +250,7 @@ flag of
 .
 .It Sy MAKEOBJDIRPREFIX
 Top level directory of the object directory tree.
+If specified, must be an absolute path.
 If this is defined,
 ${MAKEOBJDIRPREFIX}/${.CURDIR}
 is used as the
@@ -313,13 +316,15 @@ If set, special options are passed to the compilation tools to
 prevent their default use of the host system's
 .Sy /usr/include , /usr/lib ,
 and so forth.
-This pathname should
+This pathname must be an absolute path, and should
 .Em not
 end with a slash
 .Pq /
-character (for installation into the system's root directory, set
+character.
+(For installation into the system's root directory, set
 .Sy DESTDIR
-to an empty string).
+to an empty string, not to
+.Dq / ) .
 The directory must reside on a file system which supports long file
 names and hard links.
 .DFLT
@@ -529,6 +534,7 @@ Indicates whether X11R6 is built from
 .
 .It Sy TOOLDIR
 Directory to hold the host tools, once built.
+If specified, must be an absolute path.
 This directory should be unique to a given host system and
 .Nx
 source tree.
@@ -586,6 +592,7 @@ include files).
 .
 .It Sy X11SRCDIR
 Directory containing the X11R6 source.
+If specified, must be an absolute path.
 The main X11R6 source is found in
 .Sy X11SRCDIR Ns Pa /xfree/xc .
 .DFLT
@@ -606,6 +613,7 @@ source code.
 Location for the
 .Dq make installworld
 target to install to.
+If specified, must be an absolute path.
 .DFLT
 .Dq /
 .
@@ -678,6 +686,7 @@ If set, specifies the directory to which a
 .Xr release 7
 layout will be written at the end of a
 .Dq make release .
+If specified, must be an absolute path.
 .DFLTu
 .Pp
 .Em Note :
@@ -1117,6 +1126,8 @@ Set the value of
 .Sy DESTDIR
 to
 .Ar dest .
+If a relative path is specified, it will be converted to an
+absolute path before being used.
 .
 .It Fl E
 Set
@@ -1149,6 +1160,8 @@ Set
 .Sy MAKEOBJDIRPREFIX
 to
 .Ar obj .
+If a relative path is specified, it will be converted to an
+absolute path before being used.
 Unsets
 .Sy MAKEOBJDIR .
 .
@@ -1213,6 +1226,8 @@ Create an appropriate transform macro for
 .Sy MAKEOBJDIR
 that will place the built object files under
 .Ar obj .
+If a relative path is specified, it will be converted to an
+absolute path before being used.
 For instance, a setting of
 .Sy /usr/obj
 will place build-time files under
@@ -1237,6 +1252,8 @@ Set the value of
 .Sy RELEASEDIR
 to
 .Ar rel .
+If a relative path is specified, it will be converted to an
+absolute path before being used.
 .
 .It Fl r
 Remove the contents of
@@ -1253,6 +1270,8 @@ Set the value of
 .Sy TOOLDIR
 to
 .Ar tools .
+If a relative path is specified, it will be converted to an
+absolute path before being used.
 If set, the bootstrap
 .Dq make
 will only be rebuilt as needed (when the source files for
@@ -1295,12 +1314,16 @@ automatically.
 Note that
 .Ar wrapper
 is the full name of the file, not just a directory name.
+If a relative path is specified, it will be converted to an
+absolute path before being used.
 .
 .It Fl X Ar x11src
 Set the value of
 .Sy X11SRCDIR
 to
 .Ar x11src .
+If a relative path is specified, it will be converted to an
+absolute path before being used.
 .
 .It Fl x
 Set
