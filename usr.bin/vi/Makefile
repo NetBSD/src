@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.11 2001/05/29 21:25:23 kleink Exp $
+#	$NetBSD: Makefile,v 1.12 2006/10/08 21:47:21 dogcow Exp $
 
 .include <bsd.own.mk>
 
 .if ${MKSHARE} != "no"
-SUBDIR+= catalog
+SUBDIR+= catalog recover
 .endif
 
 SUBDIR+= build
