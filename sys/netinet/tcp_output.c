@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.147 2006/10/08 11:01:46 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.148 2006/10/08 11:10:59 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.147 2006/10/08 11:01:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.148 2006/10/08 11:10:59 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -673,6 +673,10 @@ tcp_output(struct tcpcb *tp)
 	txsegsize_nosack = txsegsize;
 again:
 	use_tso = has_tso;
+	if ((tp->t_flags & (TF_ECN_SND_CWR|TF_ECN_SND_ECE)) != 0) {
+		/* don't duplicate CWR/ECE. */
+		use_tso = 0;
+	}
 	TCP_REASS_LOCK(tp);
 	sack_numblks = tcp_sack_numblks(tp);
 	if (sack_numblks) {
