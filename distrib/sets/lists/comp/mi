@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.939 2006/10/08 04:21:54 thorpej Exp $
+#	$NetBSD: mi,v 1.940 2006/10/08 21:28:08 apb Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3230,6 +3230,7 @@
 ./usr/share/man/cat1/objdump.0			comp-util-catman	bfd,.cat
 ./usr/share/man/cat1/openssl_ocsp.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat1/ranlib.0			comp-util-catman	bfd,.cat
+./usr/share/man/cat1/rcs2log.0			comp-cvs-catman		.cat
 ./usr/share/man/cat1/readelf.0			comp-util-catman	bfd,.cat
 ./usr/share/man/cat1/rpcgen.0			comp-c-catman		.cat
 ./usr/share/man/cat1/size.0			comp-util-catman	bfd,.cat
@@ -7434,6 +7435,7 @@
 ./usr/share/man/man1/objdump.1			comp-util-man		bfd,.man
 ./usr/share/man/man1/openssl_ocsp.1		comp-c-man		crypto,.man
 ./usr/share/man/man1/ranlib.1			comp-util-man		bfd,.man
+./usr/share/man/man1/rcs2log.1			comp-cvs-man		.man
 ./usr/share/man/man1/readelf.1			comp-util-man		bfd,.man
 ./usr/share/man/man1/rpcgen.1			comp-c-man		.man
 ./usr/share/man/man1/size.1			comp-util-man		bfd,.man
