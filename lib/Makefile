@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.107 2006/08/30 17:23:36 christos Exp $
+#	$NetBSD: Makefile,v 1.108 2006/10/08 13:43:01 tron Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
 
 SUBDIR=	csu libc .WAIT libarch libbsdmalloc libbluetooth libbz2 \
 	libcompat libcrypt \
-	libcurses libevent libform libintl libkvm libl libm libmagic \
+	libcurses libevent libform libintl libkvm libl libm \
 	libmenu libossaudio libpcap libpci libpmc libposix libprop libpthread \
 	libpthread_dbg libresolv librmt librpcsvc libsdp librt libterm \
 	libusbhid libutil libwrap liby libz
@@ -57,6 +57,8 @@ SUBDIR+=	i18n_module
 SUBDIR+=	.WAIT
 
 SUBDIR+=	libedit		# depends on libterm
+
+SUBDIR+=	libmagic	# depends on libz
 
 SUBDIR+=	libradius	# depends on libcrypto - only if ${MKCRYPTO}
 
