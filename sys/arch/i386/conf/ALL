@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.64 2006/10/01 09:53:08 itohy Exp $
+# $NetBSD: ALL,v 1.65 2006/10/08 16:56:18 rpaulo Exp $
 # From: NetBSD: GENERIC,v 1.776 2006/08/14 09:34:43 itohy Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.64 $"
+#ident 		"ALL-$Revision: 1.65 $"
 
 maxusers	32		# estimated number of users
 
@@ -1349,6 +1349,7 @@ pseudo-device	bridge			# simple inter-network bridging
 options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	pf			# PF packet filter
 pseudo-device	pflog			# PF log if
+pseudo-device	kttcp
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
