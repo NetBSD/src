@@ -1,4 +1,4 @@
-/*	$NetBSD: bad144.c,v 1.23 2006/05/24 21:39:33 christos Exp $	*/
+/*	$NetBSD: bad144.c,v 1.24 2006/10/08 14:52:14 elad Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)bad144.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: bad144.c,v 1.23 2006/05/24 21:39:33 christos Exp $");
+__RCSID("$NetBSD: bad144.c,v 1.24 2006/10/08 14:52:14 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ struct	dkbad curbad, oldbad;
 daddr_t	size;
 struct	disklabel *dp;
 struct	disklabel label;
-char	name[BUFSIZ];
+char	diskname[MAXPATHLEN];
 
 daddr_t	badsn(const struct bt_bad *);
 int	blkcopy(int, daddr_t, daddr_t);
@@ -112,7 +112,6 @@ main(int argc, char *argv[])
 	struct bt_bad *bt;
 	daddr_t	sn, bn[NBT_BAD];
 	int i, f, nbad, new, bad, errs, ch;
-	char diskname[MAXPATHLEN];
 
 	while ((ch = getopt(argc, argv, OPTSTRING)) != -1) {
 		switch (ch) {
@@ -342,7 +341,7 @@ getold(int f, struct dkbad *bad)
 		if (badfile != -1)
 			break;
 	}
-	errx(1, "%s: can't read bad block info", name);
+	errx(1, "%s: can't read bad block info", diskname);
 	/*NOTREACHED*/
 }
 
@@ -356,11 +355,11 @@ checkold(void)
 
 	lsn = 0;
 	if (oldbad.bt_flag != DKBAD_MAGIC) {
-		warnx("%s: bad flag in bad-sector table", name);
+		warnx("%s: bad flag in bad-sector table", diskname);
 		errors++;
 	}
 	if (oldbad.bt_mbz != 0) {
-		warnx("%s: bad magic number", name);
+		warnx("%s: bad magic number", diskname);
 		errors++;
 	}
 	bt = oldbad.bt_bad;
