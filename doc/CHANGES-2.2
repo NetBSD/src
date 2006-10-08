@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.79 2006/10/03 12:46:32 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.80 2006/10/08 11:26:36 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -892,4 +892,11 @@ sys/arch/sparc64/sparc64/locore.s		1.217-1.218 via patch
 
 	Fix a couple of %y register save/restore errors.
 	[nakayama, ticket #10695]
+
+etc/rc.d/fsck					1.6
+
+Trap SIGINT so that if fsck is interrupted by ^C, we drop into single-user
+mode.  Fixes misc/29822 from der Mouse, fix from Arnaud Lacombe with
+comment rework by me.
+[riz, ticket #10704]
 
