@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.46 2005/12/24 21:42:02 perry Exp $	*/
+/*	$NetBSD: malloc.c,v 1.47 2006/10/08 16:25:15 elad Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -70,7 +70,7 @@ void utrace(struct ut *, int);
 #   define UTRACE_LABEL "malloc",
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: malloc.c,v 1.46 2005/12/24 21:42:02 perry Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.47 2006/10/08 16:25:15 elad Exp $");
 #endif /* LIBC_SCCS and not lint */
 #include <sys/types.h>
 int utrace(const char *, void *, size_t);
@@ -990,10 +990,11 @@ free_pages(void *ptr, size_t idx, struct pginfo *info)
 	malloc_brk = pf->end;
 
 	idx = ptr2idx(pf->end);
-	last_idx = idx - 1;
 
 	for(i=idx;i <= last_idx;)
 	    page_dir[i++] = MALLOC_NOT_MINE;
+
+	last_idx = idx - 1;
 
 	/* XXX: We could realloc/shrink the pagedir here I guess. */
     }
