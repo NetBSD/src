@@ -119,15 +119,17 @@ CONFIGURATION
      MAKEFLAGS         Flags to invoke make(1) with.
 
      MAKEOBJDIR        Directory to use as the .OBJDIR for the current direc-
-                       tory.  Used only if MAKEOBJDIRPREFIX is not defined.
+                       tory.  The value is subjected to variable expansion by
+                       make(1).  Used only if MAKEOBJDIRPREFIX is not defined.
                        MAKEOBJDIR can only be provided in the environment or
                        via the -O flag of build.sh.
 
      MAKEOBJDIRPREFIX  Top level directory of the object directory tree.  If
-                       this is defined, ${MAKEOBJDIRPREFIX}/${.CURDIR} is used
-                       as the .OBJDIR for the current directory.  The current
-                       directory may be read only.  MAKEOBJDIRPREFIX can only
-                       be provided in the environment or via the -M flag of
+                       specified, must be an absolute path.  If this is
+                       defined, ${MAKEOBJDIRPREFIX}/${.CURDIR} is used as the
+                       .OBJDIR for the current directory.  The current direc-
+                       tory may be read only.  MAKEOBJDIRPREFIX can only be
+                       provided in the environment or via the -M flag of
                        build.sh.
 
    "make" variables
@@ -143,11 +145,11 @@ CONFIGURATION
      DESTDIR     Directory to contain the built NetBSD system.  If set, spe-
                  cial options are passed to the compilation tools to prevent
                  their default use of the host system's /usr/include,
-                 /usr/lib, and so forth.  This pathname should not end with a
-                 slash (/) character (for installation into the system's root
-                 directory, set DESTDIR to an empty string).  The directory
-                 must reside on a file system which supports long file names
-                 and hard links.
+                 /usr/lib, and so forth.  This pathname must be an absolute
+                 path, and should not end with a slash (/) character.  (For
+                 installation into the system's root directory, set DESTDIR to
+                 an empty string, not to ``/'').  The directory must reside on
+                 a file system which supports long file names and hard links.
 
                  Default: Empty string if USETOOLS is ``yes''; unset other-
                  wise.
@@ -293,12 +295,13 @@ CONFIGURATION
 
                  Default: ``no''
 
-     TOOLDIR     Directory to hold the host tools, once built.  This directory
-                 should be unique to a given host system and NetBSD source
-                 tree.  (However, multiple targets may share the same TOOLDIR;
-                 the target-dependent files have unique names.)  If unset, a
-                 default based on the uname(1) information of the host plat-
-                 form will be created in the .OBJDIR of src.
+     TOOLDIR     Directory to hold the host tools, once built.  If specified,
+                 must be an absolute path.  This directory should be unique to
+                 a given host system and NetBSD source tree.  (However, multi-
+                 ple targets may share the same TOOLDIR; the target-dependent
+                 files have unique names.)  If unset, a default based on the
+                 uname(1) information of the host platform will be created in
+                 the .OBJDIR of src.
 
                  Default: Unset.
 
@@ -325,8 +328,9 @@ CONFIGURATION
                  preserve traditional semantics of the <bsd.*.mk> make(1)
                  include files).
 
-     X11SRCDIR   Directory containing the X11R6 source.  The main X11R6 source
-                 is found in X11SRCDIR/xfree/xc.
+     X11SRCDIR   Directory containing the X11R6 source.  If specified, must be
+                 an absolute path.  The main X11R6 source is found in
+                 X11SRCDIR/xfree/xc.
 
                  Default: ``/usr/xsrc''
 
@@ -335,7 +339,7 @@ CONFIGURATION
      manually building subtrees of the NetBSD source code.
 
      INSTALLWORLDDIR  Location for the ``make installworld'' target to install
-                      to.
+                      to.  If specified, must be an absolute path.
 
                       Default: ``/''
 
@@ -384,6 +388,7 @@ CONFIGURATION
 
      RELEASEDIR       If set, specifies the directory to which a release(7)
                       layout will be written at the end of a ``make release''.
+                      If specified, must be an absolute path.
 
                       Default: Unset.
 
@@ -588,7 +593,9 @@ BUILDING
                that the resulting name is of the form
                ``nbmake-MACHINE-BUILDID''.
 
-     -D dest   Set the value of DESTDIR to dest.
+     -D dest   Set the value of DESTDIR to dest.  If a relative path is speci-
+               fied, it will be converted to an absolute path before being
+               used.
 
      -E        Set `expert' mode.  This overrides various sanity checks, and
                allows: DESTDIR does not have to be set to a non-root path for
@@ -605,7 +612,9 @@ BUILDING
                If you see build failures with -j, please save complete build
                logs so the failures can be analyzed.
 
-     -M obj    Set MAKEOBJDIRPREFIX to obj.  Unsets MAKEOBJDIR.
+     -M obj    Set MAKEOBJDIRPREFIX to obj.  If a relative path is specified,
+               it will be converted to an absolute path before being used.
+               Unsets MAKEOBJDIR.
 
      -m mach   Set the value of MACHINE to mach.  This will also override any
                value of MACHINE_ARCH in the process environment with a value
@@ -638,24 +647,28 @@ BUILDING
                -n''.
 
      -O obj    Create an appropriate transform macro for MAKEOBJDIR that will
-               place the built object files under obj.  For instance, a set-
-               ting of /usr/obj will place build-time files under
-               /usr/obj/bin, /usr/obj/lib, /usr/obj/usr.bin, and so forth.
-               Unsets MAKEOBJDIRPREFIX.
+               place the built object files under obj.  If a relative path is
+               specified, it will be converted to an absolute path before
+               being used.  For instance, a setting of /usr/obj will place
+               build-time files under /usr/obj/bin, /usr/obj/lib,
+               /usr/obj/usr.bin, and so forth.  Unsets MAKEOBJDIRPREFIX.
 
      -o        Set the value of MKOBJDIRS to ``no''.  Otherwise, it will be
                automatically set to ``yes'' (which is opposite to the default
                behaviour).
 
-     -R rel    Set the value of RELEASEDIR to rel.
+     -R rel    Set the value of RELEASEDIR to rel.  If a relative path is
+               specified, it will be converted to an absolute path before
+               being used.
 
      -r        Remove the contents of DESTDIR and TOOLDIR before building
                (provides a clean starting point).  This will skip deleting
                DESTDIR if building on a native system to the root directory.
 
-     -T tools  Set the value of TOOLDIR to tools.  If set, the bootstrap
-               ``make'' will only be rebuilt as needed (when the source files
-               for make(1) change).
+     -T tools  Set the value of TOOLDIR to tools.  If a relative path is spec-
+               ified, it will be converted to an absolute path before being
+               used.  If set, the bootstrap ``make'' will only be rebuilt as
+               needed (when the source files for make(1) change).
 
      -U        Set MKUNPRIVED=yes.
 
@@ -669,10 +682,14 @@ BUILDING
                Create the nbmake wrapper script (see below) in a custom loca-
                tion, specified by wrapper.  This allows, for instance, to
                place the wrapper in PATH automatically.  Note that wrapper is
-               the full name of the file, not just a directory name.
+               the full name of the file, not just a directory name.  If a
+               relative path is specified, it will be converted to an absolute
+               path before being used.
 
      -X x11src
-               Set the value of X11SRCDIR to x11src.
+               Set the value of X11SRCDIR to x11src.  If a relative path is
+               specified, it will be converted to an absolute path before
+               being used.
 
      -x        Set MKX11=yes.
 
