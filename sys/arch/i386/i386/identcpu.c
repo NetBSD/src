@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.45 2006/10/08 15:50:42 cube Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.46 2006/10/08 23:58:14 cube Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.45 2006/10/08 15:50:42 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.46 2006/10/08 23:58:14 cube Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -1461,7 +1461,7 @@ identifycpu(struct cpu_info *ci)
 
 	x86_print_cacheinfo(ci);
 
-	if (cpu_feature & CPUID_TM) {
+	if (vendor != CPUVENDOR_AMD && (cpu_feature & CPUID_TM)) {
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 3)) {
 			if ((cpu_feature2 & CPUID2_TM2) &&
 			    (rdmsr(MSR_THERM2_CTL) & (1 << 16)))
