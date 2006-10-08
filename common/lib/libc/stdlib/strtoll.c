@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoll.c,v 1.7 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: strtoll.c,v 1.1 2006/10/08 03:14:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,12 +33,13 @@
 #include "nbtool_config.h"
 #endif
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "from: @(#)strtoq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoll.c,v 1.7 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: strtoll.c,v 1.1 2006/10/08 03:14:55 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,6 +57,15 @@ __RCSID("$NetBSD: strtoll.c,v 1.7 2005/11/29 03:12:00 christos Exp $");
 #ifdef __weak_alias
 __weak_alias(strtoll, _strtoll)
 #endif
+#endif
+
+#else /* !_KERNEL && !_STANDALONE */
+#include <sys/param.h>
+#include <lib/libkern/libkern.h>
+#define	isspace(x) ((x) == ' ' || (x) == '\t' || (x) == '\n' || (x) == '\r')
+#define	isdigit(x) ((x) >= '0' && (x) <= '9')
+#define	isalpha(x) (((x) >= 'a' && (x) <= 'z') || ((x) >= 'A' && (x) <= 'Z'))
+#define	toupper(x) ((x) & ~0x20)
 #endif
 
 #if !HAVE_STRTOLL
@@ -147,9 +157,13 @@ strtoll(nptr, endptr, base)
 	for (acc = 0, any = 0;; c = (unsigned char) *s++) {
 		if (isdigit(c))
 			c -= '0';
-		else if (isalpha(c))
+		else if (isalpha(c)) {
+#if defined(_KERNEL) || defined(_STANDALONE)
+			c = toupper(c) - 'A' + 10;
+#else
 			c -= isupper(c) ? 'A' - 10 : 'a' - 10;
-		else
+#endif
+		} else
 			break;
 		if (c >= base)
 			break;
@@ -157,9 +171,15 @@ strtoll(nptr, endptr, base)
 			continue;
 		if (neg) {
 			if (acc < cutoff || (acc == cutoff && c > cutlim)) {
+#if defined(_KERNEL) || defined(_STANDALONE)
+				if (endptr)	
+					*endptr = __UNCONST(nptr);
+				return (LLONG_MIN);
+#else
 				any = -1;
 				acc = LLONG_MIN;
 				errno = ERANGE;
+#endif
 			} else {
 				any = 1;
 				acc *= base;
@@ -167,9 +187,15 @@ strtoll(nptr, endptr, base)
 			}
 		} else {
 			if (acc > cutoff || (acc == cutoff && c > cutlim)) {
+#if defined(_KERNEL) || defined(_STANDALONE)
+				if (endptr)
+					*endptr = __UNCONST(nptr);
+				return (LLONG_MAX);
+#else
 				any = -1;
 				acc = LLONG_MAX;
 				errno = ERANGE;
+#endif
 			} else {
 				any = 1;
 				acc *= base;

@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoull.c,v 1.6 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: strtoull.c,v 1.1 2006/10/08 03:14:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -29,12 +29,13 @@
  * SUCH DAMAGE.
  */
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "from: @(#)strtoul.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoull.c,v 1.6 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: strtoull.c,v 1.1 2006/10/08 03:14:55 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +48,15 @@ __RCSID("$NetBSD: strtoull.c,v 1.6 2005/11/29 03:12:00 christos Exp $");
 
 #ifdef __weak_alias
 __weak_alias(strtoull, _strtoull)
+#endif
+
+#else /* !_KERNEL && !_STANDALONE */
+#include <sys/param.h>
+#include <lib/libkern/libkern.h>
+#define	isspace(x) ((x) == ' ' || (x) == '\t' || (x) == '\n' || (x) == '\r')
+#define	isdigit(x) ((x) >= '0' && (x) <= '9')
+#define	isalpha(x) (((x) >= 'a' && (x) <= 'z') || ((x) >= 'A' && (x) <= 'Z'))
+#define	toupper(x) ((x) & ~0x20)
 #endif
 
 /*
@@ -102,18 +112,28 @@ strtoull(nptr, endptr, base)
 	for (acc = 0, any = 0;; c = (unsigned char) *s++) {
 		if (isdigit(c))
 			c -= '0';
-		else if (isalpha(c))
+		else if (isalpha(c)) {
+#if defined(_KERNEL) || defined(_STANDALONE)
+			c = toupper(c) - 'A' + 10;
+#else
 			c -= isupper(c) ? 'A' - 10 : 'a' - 10;
-		else
+#endif
+		} else
 			break;
 		if (c >= base)
 			break;
 		if (any < 0)
 			continue;
 		if (acc > cutoff || (acc == cutoff && c > cutlim)) {
+#if defined(_KERNEL) || defined(_STANDALONE)
+			if (endptr)
+				*endptr = __UNCONST(nptr);
+			return (ULLONG_MAX);
+#else
 			any = -1;
 			acc = ULLONG_MAX;
 			errno = ERANGE;
+#endif
 		} else {
 			any = 1;
 			/* LONGLONG */
