@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcireg.h,v 1.17 2006/03/10 17:18:54 jmcneill Exp $	*/
+/*	$NetBSD: uhcireg.h,v 1.18 2006/10/08 11:52:48 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcireg.h,v 1.12 1999/11/17 22:33:42 n_hibma Exp $ */
 
 /*
@@ -151,8 +151,8 @@ typedef u_int32_t uhci_physaddr_t;
  */
 
 typedef struct {
-	uhci_physaddr_t td_link;
-	u_int32_t td_status;
+	volatile uhci_physaddr_t td_link;
+	volatile u_int32_t td_status;
 #define UHCI_TD_GET_ACTLEN(s)	(((s) + 1) & 0x3ff)
 #define UHCI_TD_ZERO_ACTLEN(t)	((t) | 0x3ff)
 #define UHCI_TD_BITSTUFF	0x00020000
@@ -168,7 +168,7 @@ typedef struct {
 #define UHCI_TD_GET_ERRCNT(s)	(((s) >> 27) & 3)
 #define UHCI_TD_SET_ERRCNT(n)	((n) << 27)
 #define UHCI_TD_SPD		0x20000000
-	u_int32_t td_token;
+	volatile u_int32_t td_token;
 #define UHCI_TD_PID_IN		0x00000069
 #define UHCI_TD_PID_OUT		0x000000e1
 #define UHCI_TD_PID_SETUP	0x0000002d
@@ -182,7 +182,7 @@ typedef struct {
 #define UHCI_TD_SET_MAXLEN(l)	(((l)-1) << 21)
 #define UHCI_TD_GET_MAXLEN(s)	((((s) >> 21) + 1) & 0x7ff)
 #define UHCI_TD_MAXLEN_MASK	0xffe00000
-	u_int32_t td_buffer;
+	volatile u_int32_t td_buffer;
 } uhci_td_t;
 
 #define UHCI_TD_ERROR (UHCI_TD_BITSTUFF|UHCI_TD_CRCTO|UHCI_TD_BABBLE|UHCI_TD_DBUFFER|UHCI_TD_STALLED)
@@ -197,8 +197,8 @@ typedef struct {
      UHCI_TD_SET_DT(dt))
 
 typedef struct {
-	uhci_physaddr_t qh_hlink;
-	uhci_physaddr_t qh_elink;
+	volatile uhci_physaddr_t qh_hlink;
+	volatile uhci_physaddr_t qh_elink;
 } uhci_qh_t;
 
 #endif /* _DEV_PCI_UHCIREG_H_ */
