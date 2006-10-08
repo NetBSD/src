@@ -1,4 +1,4 @@
-/*	$Id: shutdown_xenbus.c,v 1.1 2006/08/11 13:22:43 yamt Exp $	*/
+/*	$Id: shutdown_xenbus.c,v 1.2 2006/10/08 22:16:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shutdown_xenbus.c,v 1.1 2006/08/11 13:22:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shutdown_xenbus.c,v 1.2 2006/10/08 22:16:27 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -126,10 +126,12 @@ again:
 	}
 	if (strcmp(reqstr, "poweroff") == 0) {
 		sysmon_pswitch_event(&xenbus_power, PSWITCH_EVENT_PRESSED);
+	} else if (reqstr, "halt") == 0) { /* XXX eventually halt without -p */
+		sysmon_pswitch_event(&xenbus_power, PSWITCH_EVENT_PRESSED);
 	} else if (strcmp(reqstr, "reboot") == 0) {
 		sysmon_pswitch_event(&xenbus_reset, PSWITCH_EVENT_PRESSED);
 	} else {
-		/* XXX halt, suspend */
+		/* XXX suspend */
 		printf("ignore shutdown request: %s\n", reqstr);
 	}
 	free(reqstr, M_DEVBUF);
