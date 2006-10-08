@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.12 2006/09/22 15:15:56 christos Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.13 2006/10/08 23:54:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.12 2006/09/22 15:15:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.13 2006/10/08 23:54:19 christos Exp $");
 
 #include "opt_ptm.h"
 
@@ -153,13 +153,17 @@ retry:
 		goto bad;
 	}
 	if (ptm == NULL) {
+		DPRINTF(("no ptm\n"));
 		error = EOPNOTSUPP;
 		goto bad;
 	}
-	if ((error = (*ptm->allocvp)(ptm, l, &vp, *dev, 'p')) != 0)
+	if ((error = (*ptm->allocvp)(ptm, l, &vp, *dev, 'p')) != 0) {
+		DPRINTF(("pty_allocvp %d\n", error));
 		goto bad;
+	}
 
 	if ((error = pty_vn_open(vp, l)) != 0) {
+		DPRINTF(("pty_vn_open %d\n", error));
 		/*
 		 * Check if the master open failed because we lost
 		 * the race to grab it.
@@ -167,6 +171,7 @@ retry:
 		if (error != EIO)
 			goto bad;
 		error = !pty_isfree(md, 1);
+		DPRINTF(("pty_isfree %d\n", error));
 		if (error)
 			goto retry;
 		else
@@ -204,7 +209,6 @@ pty_grant_slave(struct lwp *l, dev_t dev)
 	 */
 	if (ptm == NULL)
 		return EOPNOTSUPP;
-
 	if ((error = (*ptm->allocvp)(ptm, l, &vp, dev, 't')) != 0)
 		return error;
 
@@ -318,11 +322,12 @@ ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int error;
 	int fd;
+	dev_t ttydev;
 
 	switch(minor(dev)) {
 	case 0:		/* /dev/ptmx */
 	case 2:		/* /emul/linux/dev/ptmx */
-		if ((error = pty_alloc_master(l, &fd, &dev)) != 0)
+		if ((error = pty_alloc_master(l, &fd, &ttydev)) != 0)
 			return error;
 		if (minor(dev) == 2) {
 			/*
@@ -330,7 +335,7 @@ ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
 			 * Handle this case here, instead of writing
 			 * a new linux module.
 			 */
-			if ((error = pty_grant_slave(l, dev)) != 0) {
+			if ((error = pty_grant_slave(l, ttydev)) != 0) {
 				struct file *fp =
 				    fd_getfile(l->l_proc->p_fd, fd);
 				FILE_UNUSE(fp, l);
