@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.55 2006/10/05 14:48:32 chs Exp $
+.\"     $NetBSD: vnodeops.9,v 1.56 2006/10/08 08:13:56 pooka Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 4, 2006
+.Dd October 8, 2006
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -856,7 +856,7 @@ Both
 .Fa dvp
 and
 .Fa vp
-should be locked on entry and remain locked on return.
+are locked on entry and are to be unlocked before returning.
 .It Fn VOP_LINK "dvp" "vp" "cnp"
 Link to a file.
 The argument
