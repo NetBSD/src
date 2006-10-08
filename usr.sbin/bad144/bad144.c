@@ -1,4 +1,4 @@
-/*	$NetBSD: bad144.c,v 1.24 2006/10/08 14:52:14 elad Exp $	*/
+/*	$NetBSD: bad144.c,v 1.25 2006/10/08 18:00:30 apb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)bad144.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: bad144.c,v 1.24 2006/10/08 14:52:14 elad Exp $");
+__RCSID("$NetBSD: bad144.c,v 1.25 2006/10/08 18:00:30 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -181,7 +181,7 @@ main(int argc, char *argv[])
 	if (argc == 0) {
 		sn = getold(f, &oldbad);
 		printf("bad block information at sector %lld in %s:\n",
-		    (long long)sn, name);
+		    (long long)sn, diskname);
 		printf("cartridge serial number: %d(10)\n", oldbad.bt_csn);
 		switch (oldbad.bt_flag) {
 
