@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.217 2006/10/08 02:39:01 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.218 2006/10/08 22:57:51 christos Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.217 2006/10/08 02:39:01 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.218 2006/10/08 22:57:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -211,7 +211,7 @@ static void KernelWakeupFunc(struct buf *);
 static void InitBP(struct buf *, struct vnode *, unsigned,
     dev_t, RF_SectorNum_t, RF_SectorCount_t, caddr_t, void (*) (struct buf *),
     void *, int, struct proc *);
-static void raidinit(RF_Raid_t *);
+static void raidinit(RF_Raid_t *, int);
 
 void raidattach(int);
 static int raid_match(struct device *, struct cfdata *, void *);
@@ -978,7 +978,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			   this RAID device */
 			raidPtr->openings = RAIDOUTSTANDING;
 
-			raidinit(raidPtr);
+			raidinit(raidPtr, 0);
 			rf_markalldirty(raidPtr);
 		}
 		/* free the buffers.  No return code here. */
@@ -1657,7 +1657,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 
 static void
-raidinit(RF_Raid_t *raidPtr)
+raidinit(RF_Raid_t *raidPtr, int autoconf)
 {
 	struct cfdata *cf;
 	struct raid_softc *rs;
@@ -1692,6 +1692,8 @@ raidinit(RF_Raid_t *raidPtr)
 	/* disk_attach actually creates space for the CPU disklabel, among
 	 * other things, so it's critical to call this *BEFORE* we try putzing
 	 * with disklabels. */
+	if (autoconf)
+		pseudo_disk_init(&rs->sc_dkdev);
 
 	pseudo_disk_attach(&rs->sc_dkdev);
 
@@ -3329,7 +3331,7 @@ rf_auto_config_set(RF_ConfigSet_t *cset, int *unit)
 
 	if (retcode == 0) {
 
-		raidinit(raidPtrs[raidID]);
+		raidinit(raidPtrs[raidID], 1);
 
 		rf_markalldirty(raidPtrs[raidID]);
 		raidPtrs[raidID]->autoconfigure = 1; /* XXX do this here? */
