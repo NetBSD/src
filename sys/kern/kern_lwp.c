@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.40 2006/08/14 14:11:21 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.41 2006/10/08 04:28:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40 2006/08/14 14:11:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.41 2006/10/08 04:28:44 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -57,6 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40 2006/08/14 14:11:21 ad Exp $");
 
 #include <uvm/uvm_extern.h>
 
+POOL_INIT(lwp_pool, sizeof(struct lwp), 0, 0, 0, "lwppl",
+    &pool_allocator_nointr);
+POOL_INIT(lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
+    &pool_allocator_nointr);
+
+static specificdata_domain_t lwp_specificdata_domain;
+
 struct lwplist alllwp;
 
 #define LWP_DEBUG
@@ -67,6 +74,15 @@ int lwp_debug = 0;
 #else
 #define DPRINTF(x)
 #endif
+
+void
+lwpinit(void)
+{
+
+	lwp_specificdata_domain = specificdata_domain_create();
+	KASSERT(lwp_specificdata_domain != NULL);
+}
+
 /* ARGSUSED */
 int
 sys__lwp_create(struct lwp *l, void *v, register_t *retval)
@@ -419,6 +435,8 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 			simple_unlock(&p->p_lock);
 			/* XXX decrement limits */
 
+			specificdata_fini(lwp_specificdata_domain,
+					  &l->l_specdataref);
 			pool_put(&lwp_pool, l2);
 
 			return (0);
@@ -473,13 +491,16 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
     void (*func)(void *), void *arg, struct lwp **rnewlwpp)
 {
 	struct lwp *l2;
-	int s;
+	int s, error;
 
 	l2 = pool_get(&lwp_pool, PR_WAITOK);
 
 	l2->l_stat = LSIDL;
 	l2->l_forw = l2->l_back = NULL;
 	l2->l_proc = p2;
+
+	error = specificdata_init(lwp_specificdata_domain, &l2->l_specdataref);
+	KASSERT(error == 0);
 
 	memset(&l2->l_startzero, 0,
 	       (unsigned) ((caddr_t)&l2->l_endzero -
@@ -630,6 +651,7 @@ lwp_exit2(struct lwp *l)
 
 	if (l->l_flag & L_DETACHED) {
 		/* Nobody waits for detached LWPs. */
+		specificdata_fini(lwp_specificdata_domain, &l->l_specdataref);
 		pool_put(&lwp_pool, l);
 		KERNEL_UNLOCK();
 	} else {
@@ -741,4 +763,58 @@ lwp_update_creds(struct lwp *l)
 	simple_unlock(&p->p_lock);
 	if (oc != NULL)
 		kauth_cred_free(oc);
+}
+
+/*
+ * lwp_specific_key_create --
+ *	Create a key for subsystem lwp-specific data.
+ */
+int
+lwp_specific_key_create(specificdata_key_t *keyp, specificdata_dtor_t dtor)
+{
+
+	return (specificdata_key_create(lwp_specificdata_domain,
+					keyp, dtor));
+}
+
+/*
+ * lwp_specific_key_delete --
+ *	Delete a key for subsystem lwp-specific data.
+ */
+void
+lwp_specific_key_delete(specificdata_key_t key)
+{
+
+	specificdata_key_delete(lwp_specificdata_domain, key);
+}
+
+/*
+ * lwp_getspecific --
+ *	Return lwp-specific data corresponding to the specified key.
+ *
+ *	Note: LWP specific data is NOT INTERLOCKED.  An LWP should access
+ *	only its OWN SPECIFIC DATA.  If it is necessary to access another
+ *	LWP's specifc data, care must be taken to ensure that doing so
+ *	would not cause internal data structure inconsistency (i.e. caller
+ *	can guarantee that the target LWP is not inside an lwp_getspecific()
+ *	or lwp_setspecific() call).
+ */
+void *
+lwp_getspecific(struct lwp *l, specificdata_key_t key)
+{
+
+	return (specificdata_getspecific_unlocked(lwp_specificdata_domain,
+						  &l->l_specdataref, key));
+}
+
+/*
+ * lwp_setspecific --
+ *	Set lwp-specific data corresponding to the specified key.
+ */
+void
+lwp_setspecific(struct lwp *l, specificdata_key_t key, void *data)
+{
+
+	specificdata_setspecific(lwp_specificdata_domain,
+				 &l->l_specdataref, key, data);
 }

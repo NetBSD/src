@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.227 2006/10/03 16:07:12 elad Exp $	*/
+/*	$NetBSD: proc.h,v 1.228 2006/10/08 04:28:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -53,6 +53,7 @@
 #include <sys/signalvar.h>
 #include <sys/siginfo.h>
 #include <sys/event.h>
+#include <sys/specificdata.h>
 
 #ifndef _KERNEL
 #include <sys/time.h>
@@ -180,8 +181,10 @@ struct proc {
 	struct vmspace	*p_vmspace;	/* Address space */
 	struct sigacts	*p_sigacts;	/* Process sigactions (state is below)*/
 
-	void		*p_ksems;	/* p1003.1b semaphores */
 #define	p_rlimit	p_limit->pl_rlimit
+
+	specificdata_reference
+			p_specdataref;	/* subsystem proc-specific data */
 
 	int		p_exitsig;	/* signal to send to parent on exit */
 	int		p_flag;		/* P_* flags. */
@@ -513,6 +516,11 @@ void	p_sugid(struct proc *);
 int	proc_vmspace_getref(struct proc *, struct vmspace **);
 void	proc_crmod_leave(struct proc *, kauth_cred_t, kauth_cred_t);
 void	proc_crmod_enter(struct proc *);
+
+int	proc_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
+void	proc_specific_key_delete(specificdata_key_t);
+void *	proc_getspecific(struct proc *, specificdata_key_t);
+void	proc_setspecific(struct proc *, specificdata_key_t, void *);
 
 int	proclist_foreach_call(struct proclist *,
     int (*)(struct proc *, void *arg), void *);

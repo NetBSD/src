@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.278 2006/10/02 16:29:57 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.279 2006/10/08 04:28:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.278 2006/10/02 16:29:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.279 2006/10/08 04:28:44 thorpej Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -271,6 +271,7 @@ main(void)
 
 	/* Initialize process and pgrp structures. */
 	procinit();
+	lwpinit();
 
 	/* Initialize signal-related data structures. */
 	signal_init();
