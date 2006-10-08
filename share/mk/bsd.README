@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.184 2006/07/23 11:41:27 lukem Exp $
+#	$NetBSD: bsd.README,v 1.185 2006/10/08 17:16:51 elad Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -1385,17 +1385,6 @@ WARNS		Crank up gcc warning options; the distinct levels are:
 			WARNS=2
 			WARNS=3
 			WARNS=4
-
-FORMAT_AUDIT	If FORMAT_AUDIT is set, and WFORMAT is set and > 1, turn on
-WFORMAT 	-Wnetbsd-format-audit for extra-stringent format checking.
-		WFORMAT belongs in individual makefiles and/or
-		Makefile.inc files.  (set WFORMAT=1 in individual
-		makefiles if a program is not security critical and is
-		doing bizarre things with format strings which would
-		be even uglier if rewritten) FORMAT_AUDIT should go in
-		mk.conf if you're doing format-string auditing.
-		FORMAT_AUDIT may go away in time.
-
 
 =-=-=-=-=   bsd.x11.mk   =-=-=-=-=
 
