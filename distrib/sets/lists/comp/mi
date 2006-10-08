@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.937 2006/10/07 17:26:24 cube Exp $
+#	$NetBSD: mi,v 1.938 2006/10/08 02:56:52 dogcow Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -10756,7 +10756,7 @@
 ./usr/share/man/man9/config_deactivate.9	comp-sys-man		.man
 ./usr/share/man/man9/config_defer.9		comp-sys-man		.man
 ./usr/share/man/man9/config_detach.9		comp-sys-man		.man
-./usr/share/man/man9/config_finalize_resgiter.9	comp-sys-man		.man
+./usr/share/man/man9/config_finalize_register.9	comp-sys-man		.man
 ./usr/share/man/man9/config_found.9		comp-sys-man		.man
 ./usr/share/man/man9/config_found_sm.9		comp-sys-man		.man
 ./usr/share/man/man9/config_found_ia.9		comp-sys-man		.man
