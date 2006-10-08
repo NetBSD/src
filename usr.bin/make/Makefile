@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2006/08/29 16:54:03 christos Exp $
+#	$NetBSD: Makefile,v 1.39 2006/10/08 17:52:29 peter Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -11,7 +11,6 @@ SRCS+=	lstAppend.c lstAtEnd.c lstAtFront.c lstClose.c lstConcat.c \
 	lstMember.c lstNext.c lstOpen.c lstRemove.c lstReplace.c lstSucc.c
 .PATH:	${.CURDIR}/lst.lib
 WARNS=3
-WFORMAT= 1
 .if make(install)
 SUBDIR=	PSD.doc
 .endif

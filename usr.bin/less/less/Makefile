@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/03/05 12:28:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2006/10/08 17:52:29 peter Exp $
 #	from: @(#)Makefile	5.6 (Berkeley) 3/12/91
 
 PROG=	less
@@ -12,6 +12,5 @@ LDADD+=	-ltermcap
 DPADD+=	${LIBTERM}
 MLINKS=	less.1 more.1 less.1 page.1
 LINKS=	${BINDIR}/less ${BINDIR}/more ${BINDIR}/less ${BINDIR}/page
-WFORMAT=1
 
 .include <bsd.prog.mk>
