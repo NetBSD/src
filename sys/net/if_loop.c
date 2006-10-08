@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.58 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.59 2006/10/08 23:19:32 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.58 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.59 2006/10/08 23:19:32 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -172,7 +172,7 @@ loop_clone_create(struct if_clone *ifc, int unit)
 
 	sc->sc_if.if_softc = sc;
 	sc->sc_if.if_mtu = LOMTU;
-	sc->sc_if.if_flags = IFF_LOOPBACK | IFF_MULTICAST;
+	sc->sc_if.if_flags = IFF_LOOPBACK | IFF_MULTICAST | IFF_RUNNING;
 	sc->sc_if.if_ioctl = loioctl;
 	sc->sc_if.if_output = looutput;
 #ifdef ALTQ
