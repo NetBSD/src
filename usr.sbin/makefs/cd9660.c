@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.13 2006/06/01 21:06:37 hubertf Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.14 2006/10/08 16:25:18 dbj Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.13 2006/06/01 21:06:37 hubertf Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.14 2006/10/08 16:25:18 dbj Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -150,7 +150,7 @@ static cd9660node *cd9660_rrip_move_directory(cd9660node *);
 static int cd9660_add_dot_records(cd9660node *);
 
 static void cd9660_convert_structure(fsnode *, cd9660node *, int,
-    int *, int *);
+    int *, int *, fsinfo_t *);
 static void cd9660_free_structure(cd9660node *);
 static int cd9660_generate_path_table(void);
 static int cd9660_level1_convert_filename(const char *, char *, int);
@@ -490,7 +490,7 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 	real_root->type = CD9660_TYPE_DIR;
 	error = 0;
 	real_root->node = root;
-	cd9660_convert_structure(root, real_root, 1, &numDirectories, &error);
+	cd9660_convert_structure(root, real_root, 1, &numDirectories, &error, fsopts);
 
 	if (TAILQ_EMPTY(&real_root->cn_children)) {
 		errx(1, "cd9660_makefs: converted directory is empty. "
@@ -1325,7 +1325,7 @@ cd9660_add_dot_records(cd9660node *root)
  */
 static void
 cd9660_convert_structure(fsnode *root, cd9660node *parent_node, int level,
-			 int *numDirectories, int *error)
+			 int *numDirectories, int *error, fsinfo_t *fsopts)
 {
 	fsnode *iterator = root;
 	cd9660node *this_node;
@@ -1358,6 +1358,14 @@ cd9660_convert_structure(fsnode *root, cd9660node *parent_node, int level,
 	 * the next pointers to the right.
 	 */
 	while (iterator != NULL) {
+
+		if (FSNODE_EXCLUDE_P(fsopts, iterator)) {
+			if (diskStructure.verbose_level > 0)
+				printf("cd9660_makefs: excluding %s\n", iterator->name);
+			iterator = iterator->next;
+			continue;
+		}
+
 		add = 1;
 		/*
 		 * Increment the directory count if this is a directory
@@ -1416,7 +1424,7 @@ cd9660_convert_structure(fsnode *root, cd9660node *parent_node, int level,
 					cd9660_convert_structure(
 					    iterator->child, this_node,
 						working_level,
-						numDirectories, error);
+						numDirectories, error, fsopts);
 
 					if ((*error) == 1) {
 						warnx("%s: Error on recursive "
