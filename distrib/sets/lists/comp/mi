@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.938 2006/10/08 02:56:52 dogcow Exp $
+#	$NetBSD: mi,v 1.939 2006/10/08 04:21:54 thorpej Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1848,6 +1848,7 @@
 ./usr/include/sys/socketvar.h			comp-c-include
 ./usr/include/sys/sockio.h			comp-c-include
 ./usr/include/sys/soundcard.h			comp-c-include
+./usr/include/sys/specificdata.h		comp-c-include
 ./usr/include/sys/stat.h			comp-c-include
 ./usr/include/sys/statvfs.h			comp-c-include
 ./usr/include/sys/stdint.h			comp-c-include
