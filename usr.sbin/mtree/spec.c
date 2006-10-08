@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.62 2006/04/12 19:49:59 dsl Exp $	*/
+/*	$NetBSD: spec.c,v 1.63 2006/10/08 18:09:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.62 2006/04/12 19:49:59 dsl Exp $");
+__RCSID("$NetBSD: spec.c,v 1.63 2006/10/08 18:09:47 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ spec(FILE *fp)
 	memset(&ginfo, 0, sizeof(ginfo));
 	for (mtree_lineno = 0;
 	    (buf = fparseln(fp, NULL, &mtree_lineno, NULL,
-		FPARSELN_UNESCCOMM | FPARSELN_UNESCCONT | FPARSELN_UNESCESC));
+		FPARSELN_UNESCCOMM));
 	    free(buf)) {
 		/* Skip leading whitespace. */
 		for (p = buf; *p && isspace((unsigned char)*p); ++p)
