@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.18 2006/05/18 18:45:48 mrg Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.19 2006/10/08 16:53:43 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.18 2006/05/18 18:45:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.19 2006/10/08 16:53:43 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -99,7 +99,7 @@ dev_type_ioctl(kttcpioctl);
 
 const struct cdevsw kttcp_cdevsw = {
 	nullopen, nullclose, noread, nowrite, kttcpioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 void
