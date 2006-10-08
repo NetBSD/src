@@ -1,11 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: dhclient-script,v 1.11 2006/09/23 22:54:43 dyoung Exp $
+# $NetBSD: dhclient-script,v 1.12 2006/10/08 17:09:32 riz Exp $
 
 ENTERHOOKS=/etc/dhclient-enter-hooks
 EXITHOOKS=/etc/dhclient-exit-hooks
 RESOLV=/etc/resolv.conf
-SIGNATURE="# Created by dhclient"
+SIGNATURE="# Created by dhclient from"
+INTSIG="$SIGNATURE $interface"
 
 make_resolv_conf() {
 	if [ ! -z "$new_domain_name_servers" ]; then
@@ -21,7 +22,7 @@ make_resolv_conf() {
 				break
 			done < $RESOLV
 		fi
-		echo "$SIGNATURE" > $RESOLV
+		echo "$INTSIG" > $RESOLV
 		if [ ! -z "$new_domain_name" ]
 		then
 			echo search $new_domain_name >> $RESOLV
@@ -37,7 +38,7 @@ restore_resolv_conf() {
 	then
 		while read line; do
 			case $line in
-			"$SIGNATURE"*)
+			"$INTSIG"*)
 				mv $RESOLV.save $RESOLV;;
 			esac
 			break
