@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtsold.8,v 1.25 2005/10/31 15:30:44 wiz Exp $
+.\"	$NetBSD: rtsold.8,v 1.26 2006/10/08 19:36:05 elad Exp $
 .\"	$KAME: rtsold.8,v 1.17 2001/07/09 22:30:37 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 31, 2005
+.Dd October 8, 2006
 .Dt RTSOLD 8
 .Os
 .\"
@@ -216,11 +216,5 @@ In such a case,
 .Nm
 should be killed and restarted.
 .Pp
-The IPv6 autoconfiguration specification assumes a single-interface host.
 You may see kernel error messages if you try to autoconfigure a host with
 multiple interfaces.
-Also, it seems contradictory for
-.Nm
-to accept multiple
-.Ar interface
-arguments.
