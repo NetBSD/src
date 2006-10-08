@@ -1,4 +1,4 @@
-/*	$NetBSD: usleep.c,v 1.17 2000/01/22 22:19:13 mycroft Exp $	*/
+/*	$NetBSD: usleep.c,v 1.18 2006/10/08 15:25:28 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: usleep.c,v 1.17 2000/01/22 22:19:13 mycroft Exp $");
+__RCSID("$NetBSD: usleep.c,v 1.18 2006/10/08 15:25:28 elad Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -55,6 +55,9 @@ usleep(useconds)
 	useconds_t useconds;
 {
 	struct timespec ts;
+
+	if (useconds == 0)
+		return (0);
 
 	if (useconds >= 1000000) {
 		errno = EINVAL;
