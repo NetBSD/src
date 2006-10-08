@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.41 2006/10/08 04:28:44 thorpej Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.42 2006/10/08 22:57:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.41 2006/10/08 04:28:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.42 2006/10/08 22:57:11 christos Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -499,8 +499,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	l2->l_forw = l2->l_back = NULL;
 	l2->l_proc = p2;
 
-	error = specificdata_init(lwp_specificdata_domain, &l2->l_specdataref);
-	KASSERT(error == 0);
+	lwp_initspecific(l2);
 
 	memset(&l2->l_startzero, 0,
 	       (unsigned) ((caddr_t)&l2->l_endzero -
@@ -786,6 +785,14 @@ lwp_specific_key_delete(specificdata_key_t key)
 {
 
 	specificdata_key_delete(lwp_specificdata_domain, key);
+}
+
+void
+lwp_initspecific(struct lwp *l)
+{
+	int error;
+	error = specificdata_init(lwp_specificdata_domain, &l->l_specdataref);
+	KASSERT(error == 0);
 }
 
 /*

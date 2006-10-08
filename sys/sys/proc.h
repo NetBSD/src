@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.228 2006/10/08 04:28:44 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.229 2006/10/08 22:57:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -519,6 +519,7 @@ void	proc_crmod_enter(struct proc *);
 
 int	proc_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
 void	proc_specific_key_delete(specificdata_key_t);
+void 	proc_initspecific(struct proc *);
 void *	proc_getspecific(struct proc *, specificdata_key_t);
 void	proc_setspecific(struct proc *, specificdata_key_t, void *);
 

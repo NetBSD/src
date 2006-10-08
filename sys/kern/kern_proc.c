@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.95 2006/10/08 04:28:44 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.96 2006/10/08 22:57:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.95 2006/10/08 04:28:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.96 2006/10/08 22:57:11 christos Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -377,6 +377,9 @@ proc0_init(void)
 	/* Initialize signal state for proc0. */
 	p->p_sigacts = &sigacts0;
 	siginit(p);
+
+	proc_initspecific(p);
+	lwp_initspecific(l);
 }
 
 /*
@@ -615,9 +618,7 @@ proc_alloc(void)
 	p = pool_get(&proc_pool, PR_WAITOK);
 	p->p_stat = SIDL;			/* protect against others */
 
-	error = specificdata_init(proc_specificdata_domain, &p->p_specdataref);
-	KASSERT(error == 0);
-
+	proc_initspecific(p);
 	/* allocate next free pid */
 
 	for (;;expand_pid_table()) {
@@ -1307,6 +1308,14 @@ proc_specific_key_delete(specificdata_key_t key)
 {
 
 	specificdata_key_delete(proc_specificdata_domain, key);
+}
+
+void
+proc_initspecific(struct proc *p)
+{
+	int error;
+	error = specificdata_init(proc_specificdata_domain, &p->p_specdataref);
+	KASSERT(error == 0);
 }
 
 /*
