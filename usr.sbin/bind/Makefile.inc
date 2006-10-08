@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.24 2006/08/28 15:37:05 jdc Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2006/10/08 17:52:29 peter Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
 
 WARNS?=	1
-WFORMAT?=2
 
 .include <bsd.own.mk>
 

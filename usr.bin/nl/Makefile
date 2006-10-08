@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2000/10/11 14:46:15 is Exp $
+#	$NetBSD: Makefile,v 1.3 2006/10/08 17:52:29 peter Exp $
 
 PROG=	nl
-WFORMAT= 1
+
 .include <bsd.prog.mk>
