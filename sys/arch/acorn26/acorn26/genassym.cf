@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.6 2005/12/11 12:16:03 christos Exp $
+# $NetBSD: genassym.cf,v 1.7 2006/10/08 12:22:35 bjh21 Exp $
 #
 # Copyright (c) 1999 Ben Harris
 # All rights reserved.
@@ -43,6 +43,8 @@ include <machine/pcb.h>
 if NECA > 0
 include <arch/acorn26/ioc/if_ecavar.h>
 endif
+
+define	__PROG26	1
 
 define	U_PCB		offsetof(struct user, u_pcb)
 define	PCB_ONFAULT	offsetof(struct pcb, pcb_onfault)
