@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_specificdata.c,v 1.1 2006/10/08 04:21:54 thorpej Exp $	*/
+/*	$NetBSD: subr_specificdata.c,v 1.2 2006/10/08 22:55:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.1 2006/10/08 04:21:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.2 2006/10/08 22:55:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -307,7 +307,10 @@ specificdata_fini(specificdata_domain_t sd, specificdata_reference *ref)
 	specificdata_container_t sc;
 	specificdata_key_t key;
 
+#ifdef notyet
+	/* Called from lwp_exit2(), which is broken */
 	ASSERT_SLEEPABLE(NULL, __func__);
+#endif
 
 	sc = ref->specdataref_container;
 	if (sc == NULL)
