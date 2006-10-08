@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.135 2006/09/09 03:53:19 simonb Exp $
+#	$NetBSD: bsd.sys.mk,v 1.136 2006/10/08 17:16:51 elad Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -30,12 +30,6 @@ CXXFLAGS+=	-Wctor-dtor-privacy -Wnon-virtual-dtor -Wreorder \
 .endif
 .if ${WARNS} > 3 && ${HAVE_GCC} >= 3
 CFLAGS+=	-std=gnu99
-.endif
-.endif
-
-.if defined(WFORMAT) && defined(FORMAT_AUDIT)
-.if ${WFORMAT} > 1
-CFLAGS+=	-Wnetbsd-format-audit -Wno-format-extra-args
 .endif
 .endif
 
