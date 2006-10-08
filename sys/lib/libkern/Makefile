@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.81 2006/08/28 13:34:18 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.82 2006/10/08 03:14:55 thorpej Exp $
 
 LIB=		kern
 NOPIC=		# defined
@@ -50,7 +50,7 @@ SRCS+=	_que.c arc4random.c bcd.c mcount.c
 
 SRCS+=	strstr.c strlcpy.c strlcat.c
 
-SRCS+=	strtoumax.c
+SRCS+=	strtoll.c strtoull.c strtoumax.c
 
 SRCS+=	xlat_mbr_fstype.c
 
