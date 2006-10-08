@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.23 2005/11/20 18:36:20 augustss Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.24 2006/10/08 11:52:48 scw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -194,14 +194,14 @@ typedef u_int32_t ehci_physaddr_t;
 
 /* Isochronous Transfer Descriptor */
 typedef struct {
-	ehci_link_t	itd_next;
+	volatile ehci_link_t	itd_next;
 	/* XXX many more */
 } ehci_itd_t;
 #define EHCI_ITD_ALIGN 32
 
 /* Split Transaction Isochronous Transfer Descriptor */
 typedef struct {
-	ehci_link_t	sitd_next;
+	volatile ehci_link_t	sitd_next;
 	/* XXX many more */
 } ehci_sitd_t;
 #define EHCI_SITD_ALIGN 32
@@ -209,9 +209,9 @@ typedef struct {
 /* Queue Element Transfer Descriptor */
 #define EHCI_QTD_NBUFFERS 5
 typedef struct {
-	ehci_link_t	qtd_next;
-	ehci_link_t	qtd_altnext;
-	u_int32_t	qtd_status;
+	volatile ehci_link_t	qtd_next;
+	volatile ehci_link_t	qtd_altnext;
+	volatile u_int32_t	qtd_status;
 #define EHCI_QTD_GET_STATUS(x)	(((x) >>  0) & 0xff)
 #define EHCI_QTD_SET_STATUS(x)	((x) <<  0)
 #define  EHCI_QTD_ACTIVE	0x80
@@ -239,15 +239,15 @@ typedef struct {
 #define EHCI_QTD_GET_TOGGLE(x)	(((x) >> 31) &  0x1)
 #define	EHCI_QTD_SET_TOGGLE(x)	((x) << 31)
 #define EHCI_QTD_TOGGLE_MASK	0x80000000
-	ehci_physaddr_t	qtd_buffer[EHCI_QTD_NBUFFERS];
-	ehci_physaddr_t qtd_buffer_hi[EHCI_QTD_NBUFFERS];
+	volatile ehci_physaddr_t qtd_buffer[EHCI_QTD_NBUFFERS];
+	volatile ehci_physaddr_t qtd_buffer_hi[EHCI_QTD_NBUFFERS];
 } ehci_qtd_t;
 #define EHCI_QTD_ALIGN 32
 
 /* Queue Head */
 typedef struct {
-	ehci_link_t	qh_link;
-	u_int32_t	qh_endp;
+	volatile ehci_link_t	qh_link;
+	volatile u_int32_t	qh_endp;
 #define EHCI_QH_GET_ADDR(x)	(((x) >>  0) & 0x7f) /* endpoint addr */
 #define EHCI_QH_SET_ADDR(x)	(x)
 #define EHCI_QH_ADDRMASK	0x0000007f
@@ -271,7 +271,7 @@ typedef struct {
 #define EHCI_QH_CTL		0x08000000
 #define EHCI_QH_GET_NRL(x)	(((x) >> 28) & 0x0f) /* NAK reload */
 #define EHCI_QH_SET_NRL(x)	((x) << 28)
-	u_int32_t	qh_endphub;
+	volatile u_int32_t	qh_endphub;
 #define EHCI_QH_GET_SMASK(x)	(((x) >>  0) & 0xff) /* intr sched mask */
 #define EHCI_QH_SET_SMASK(x)	((x) <<  0)
 #define EHCI_QH_GET_CMASK(x)	(((x) >>  8) & 0xff) /* split completion mask */
@@ -282,15 +282,15 @@ typedef struct {
 #define EHCI_QH_SET_PORT(x)	((x) << 23)
 #define EHCI_QH_GET_MULT(x)	(((x) >> 30) & 0x03) /* pipe multiplier */
 #define EHCI_QH_SET_MULT(x)	((x) << 30)
-	ehci_link_t	qh_curqtd;
-	ehci_qtd_t	qh_qtd;
+	volatile ehci_link_t	qh_curqtd;
+	volatile ehci_qtd_t	qh_qtd;
 } ehci_qh_t;
 #define EHCI_QH_ALIGN 32
 
 /* Periodic Frame Span Traversal Node */
 typedef struct {
-	ehci_link_t	fstn_link;
-	ehci_link_t	fstn_back;
+	volatile ehci_link_t	fstn_link;
+	volatile ehci_link_t	fstn_back;
 } ehci_fstn_t;
 #define EHCI_FSTN_ALIGN 32
 
