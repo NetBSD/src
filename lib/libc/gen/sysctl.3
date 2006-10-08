@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.183 2006/09/26 14:48:40 elad Exp $
+.\"	$NetBSD: sysctl.3,v 1.184 2006/10/08 15:56:50 elad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd September 26, 2006
+.Dd October 8, 2006
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -1973,7 +1973,7 @@ from other types of memory usage to store anonymous application data.
 The percentage of physical memory which will be always be available for
 anonymous application data.
 .It Li VM_BUFCACHE
-The percentage of kernel memory which will be available
+The percentage of physical memory which will be available
 for the buffer cache.
 .It Li VM_BUFMEM
 The amount of kernel memory that is being used by the buffer cache.
