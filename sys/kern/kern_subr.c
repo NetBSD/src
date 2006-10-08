@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.145 2006/09/24 06:51:39 dogcow Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.146 2006/10/08 02:39:01 oster Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.145 2006/09/24 06:51:39 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.146 2006/10/08 02:39:01 oster Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -784,16 +784,6 @@ extern struct cfdriver md_cd;
 #define BOOT_FROM_MEMORY_HOOKS 1
 #endif
 
-#include "raid.h"
-#if NRAID == 1
-#define BOOT_FROM_RAID_HOOKS 1
-#endif
-
-#ifdef BOOT_FROM_RAID_HOOKS
-extern int numraid;
-extern struct device *raidrootdev;
-#endif
-
 /*
  * The device and wedge that we booted from.  If booted_wedge is NULL,
  * the we might consult booted_partition.
@@ -1151,18 +1141,9 @@ static struct device *
 finddevice(const char *name)
 {
 	struct device *dv;
-#if defined(BOOT_FROM_RAID_HOOKS) || defined(BOOT_FROM_MEMORY_HOOKS)
+#if defined(BOOT_FROM_MEMORY_HOOKS)
 	int j;
-#endif /* BOOT_FROM_RAID_HOOKS || BOOT_FROM_MEMORY_HOOKS */
-
-#ifdef BOOT_FROM_RAID_HOOKS
-	for (j = 0; j < numraid; j++) {
-		if (strcmp(name, raidrootdev[j].dv_xname) == 0) {
-			dv = &raidrootdev[j];
-			return (dv);
-		}
-	}
-#endif /* BOOT_FROM_RAID_HOOKS */
+#endif /* BOOT_FROM_MEMORY_HOOKS */
 
 #ifdef BOOT_FROM_MEMORY_HOOKS
 	for (j = 0; j < NMD; j++) {
@@ -1187,9 +1168,6 @@ getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 #ifdef MEMORY_DISK_HOOKS
 	int		i;
 #endif
-#ifdef BOOT_FROM_RAID_HOOKS
-	int 		j;
-#endif
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
@@ -1197,12 +1175,6 @@ getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 		if (isdump == 0)
 			for (i = 0; i < NMD; i++)
 				printf(" %s[a-%c]", fakemdrootdev[i].dv_xname,
-				    'a' + MAXPARTITIONS - 1);
-#endif
-#ifdef BOOT_FROM_RAID_HOOKS
-		if (isdump == 0)
-			for (j = 0; j < numraid; j++)
-				printf(" %s[a-%c]", raidrootdev[j].dv_xname,
 				    'a' + MAXPARTITIONS - 1);
 #endif
 		TAILQ_FOREACH(dv, &alldevs, dv_list) {
