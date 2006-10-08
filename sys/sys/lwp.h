@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.41 2006/07/30 21:58:11 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.42 2006/10/08 04:28:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
 #include <sys/queue.h>
 #include <sys/callout.h>
+#include <sys/specificdata.h>
 
 struct	lwp {
 	struct	lwp *l_forw;		/* Doubly-linked run/sleep queue. */
@@ -58,6 +59,9 @@ struct	lwp {
 
 	struct cpu_info * volatile l_cpu; /* CPU we're running on if
 					       SONPROC */
+	specificdata_reference
+		l_specdataref;	/* subsystem lwp-specific data */
+
 	int	l_flag;
 	int	l_stat;
 	lwpid_t	l_lid;		/* LWP identifier; local to process. */
@@ -107,7 +111,6 @@ LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 #ifdef _KERNEL
 extern struct lwplist alllwp;		/* List of all LWPs. */
 
-extern struct pool lwp_pool;		/* memory pool for LWPs */
 extern struct pool lwp_uc_pool;		/* memory pool for LWP startup args */
 
 extern struct lwp lwp0;			/* LWP for proc0 */
@@ -186,6 +189,7 @@ int newlwp(struct lwp *, struct proc *, vaddr_t, int /* XXX boolean_t */, int,
 
 /* Flags for _lwp_wait1 */
 #define LWPWAIT_EXITCONTROL	0x00000001
+void	lwpinit(void);
 int 	lwp_wait1(struct lwp *, lwpid_t, lwpid_t *, int);
 void	lwp_continue(struct lwp *);
 void	cpu_setfunc(struct lwp *, void (*)(void *), void *);
@@ -197,6 +201,11 @@ struct lwp *proc_representative_lwp(struct proc *);
 __inline int lwp_suspend(struct lwp *, struct lwp *);
 int	lwp_create1(struct lwp *, const void *, size_t, u_long, lwpid_t *);
 void	lwp_update_creds(struct lwp *);
+
+int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
+void	lwp_specific_key_delete(specificdata_key_t);
+void *	lwp_getspecific(struct lwp *, specificdata_key_t);
+void	lwp_setspecific(struct lwp *, specificdata_key_t, void *);
 #endif	/* _KERNEL */
 
 /* Flags for _lwp_create(), as per Solaris. */
