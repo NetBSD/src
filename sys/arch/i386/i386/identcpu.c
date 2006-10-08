@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.44 2006/10/04 13:18:10 cube Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.45 2006/10/08 15:50:42 cube Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.44 2006/10/04 13:18:10 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.45 2006/10/08 15:50:42 cube Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -340,8 +340,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Unknown K7 (Athlon)"	/* Default */
 			},
 			NULL,
-			NULL,
-			NULL,
+			amd_family6_probe,
+			amd_cpu_cacheinfo,
 		} }
 	},
 	{
