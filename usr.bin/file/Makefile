@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.51 2006/09/29 20:20:47 apb Exp $
+#	$NetBSD: Makefile,v 1.52 2006/10/08 17:52:28 peter Exp $
 
 .include <bsd.own.mk>
 
 DIST=		${NETBSDSRCDIR}/dist/file
 .PATH:		${DIST}/src ${DIST}/doc
 
-WFORMAT=	1
 MFILESDIR=	/usr/share/misc
 MFILES=		magic magic.mgc ${DIST}/magic/magic.mime magic.mime.mgc
 MAGIC=		${MFILESDIR}/magic

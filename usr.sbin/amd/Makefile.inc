@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.19 2003/04/11 22:47:32 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2006/10/08 17:52:29 peter Exp $
 
 WARNS?=	1
-WFORMAT=2
 
 .include <bsd.own.mk>
 

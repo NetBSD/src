@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2005/04/07 16:28:40 christos Exp $
+#	$NetBSD: Makefile,v 1.36 2006/10/08 17:52:29 peter Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,6 @@ CPPFLAGS+=	-DTARGET_OBJFMT_ELF
 .endif
 
 LINTFLAGS=	-aehpz
-WFORMAT=1		#hopeless
 BINDIR=		/usr/libexec
 
 CLEANFILES+=	${MAN}
