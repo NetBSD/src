@@ -1,8 +1,8 @@
-#	$NetBSD: printcap,v 1.12 2006/01/20 08:41:29 garbled Exp $
+#	$NetBSD: printcap,v 1.13 2006/10/08 15:28:49 elad Exp $
 #	from: @(#)printcap	8.1 (Berkeley) 6/9/93
 
 #lp|local line printer:\
-#	:sh:lp=/dev/lp:sd=/var/spool/output/lp:lf=/var/log/lpd-errs:
+#	:sh:lp=/dev/lp:sd=/var/spool/output/lpd:lf=/var/log/lpd-errs:
 
 # DecWriter over a tty line.
 #decwriter|LA-180 DecWriter III:\
