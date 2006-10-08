@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum_arm.S,v 1.7 2006/10/08 12:28:24 bjh21 Exp $	*/
+/*	$NetBSD: in_cksum_arm.S,v 1.8 2006/10/08 12:41:51 bjh21 Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -42,6 +42,8 @@
 #include "opt_inet.h"
 
 #include <machine/asm.h>
+RCSID("$NetBSD: in_cksum_arm.S,v 1.8 2006/10/08 12:41:51 bjh21 Exp $")
+	
 #include "assym.h"
 
 
