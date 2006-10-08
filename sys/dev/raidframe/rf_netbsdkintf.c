@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.218 2006/10/08 22:57:51 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.219 2006/10/08 23:22:26 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.218 2006/10/08 22:57:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.219 2006/10/08 23:22:26 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -211,7 +211,7 @@ static void KernelWakeupFunc(struct buf *);
 static void InitBP(struct buf *, struct vnode *, unsigned,
     dev_t, RF_SectorNum_t, RF_SectorCount_t, caddr_t, void (*) (struct buf *),
     void *, int, struct proc *);
-static void raidinit(RF_Raid_t *, int);
+static void raidinit(RF_Raid_t *);
 
 void raidattach(int);
 static int raid_match(struct device *, struct cfdata *, void *);
@@ -978,7 +978,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			   this RAID device */
 			raidPtr->openings = RAIDOUTSTANDING;
 
-			raidinit(raidPtr, 0);
+			raidinit(raidPtr);
 			rf_markalldirty(raidPtr);
 		}
 		/* free the buffers.  No return code here. */
@@ -1657,7 +1657,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 
 static void
-raidinit(RF_Raid_t *raidPtr, int autoconf)
+raidinit(RF_Raid_t *raidPtr)
 {
 	struct cfdata *cf;
 	struct raid_softc *rs;
@@ -1692,10 +1692,8 @@ raidinit(RF_Raid_t *raidPtr, int autoconf)
 	/* disk_attach actually creates space for the CPU disklabel, among
 	 * other things, so it's critical to call this *BEFORE* we try putzing
 	 * with disklabels. */
-	if (autoconf)
-		pseudo_disk_init(&rs->sc_dkdev);
 
-	pseudo_disk_attach(&rs->sc_dkdev);
+	disk_attach(&rs->sc_dkdev);
 
 	/* XXX There may be a weird interaction here between this, and
 	 * protectedSectors, as used in RAIDframe.  */
@@ -3331,7 +3329,7 @@ rf_auto_config_set(RF_ConfigSet_t *cset, int *unit)
 
 	if (retcode == 0) {
 
-		raidinit(raidPtrs[raidID], 1);
+		raidinit(raidPtrs[raidID]);
 
 		rf_markalldirty(raidPtrs[raidID]);
 		raidPtrs[raidID]->autoconfigure = 1; /* XXX do this here? */
@@ -3427,7 +3425,6 @@ raid_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct raid_softc *rs = (struct raid_softc *)self;
 
-	pseudo_disk_init(&rs->sc_dkdev);
 }
 
 
