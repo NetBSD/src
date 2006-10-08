@@ -1,11 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: accounting,v 1.8 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: accounting,v 1.9 2006/10/08 18:08:39 elad Exp $
 #
 
 # PROVIDE: accounting
 # REQUIRE: mountall
 # BEFORE:  DAEMON
+# KEYWORD: shutdown
 
 $_rc_subr_loaded . /etc/rc.subr
 
