@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.82 2006/04/16 23:29:29 rpaulo Exp $
+#	$NetBSD: services,v 1.83 2006/10/08 14:30:26 elad Exp $
 #
 # Network services, Internet style
 #
@@ -39,6 +39,8 @@ time		37/udp		timserver
 rlp		39/udp		resource	# resource location
 nameserver	42/tcp		name		# IEN 116
 whois		43/tcp		nicname
+tacacs		49/tcp		# Login Host Protocol (TACACS)
+tacacs		49/udp		# Login Host Protocol (TACACS)
 domain		53/tcp		# name-domain server
 domain		53/udp
 mtp		57/tcp				# deprecated
