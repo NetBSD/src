@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.129 2006/10/09 07:36:09 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.130 2006/10/09 22:16:33 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.129 2006/10/09 07:36:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.130 2006/10/09 22:16:33 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -355,12 +355,14 @@ get_bootpath_from_prom(void)
 	if (cp)
 		ofboottarget = cp;
 
+#ifdef DEBUG
 	DPRINTF(ACDB_BOOTDEV, ("bootpath phandle: 0x%x\n", ofbootpackage));
 	if (ofboottarget)
 		DPRINTF(ACDB_BOOTDEV, ("boot target: %s\n", ofboottarget));
 	if (ofbootpartition)
 		DPRINTF(ACDB_BOOTDEV, ("boot partition: %s\n",
 		    ofbootpartition));
+#endif
 
 	/* Setup pointer to boot flags */
 	if (OF_getprop(chosen, "bootargs", sbuf, sizeof(sbuf)) == -1)
@@ -806,6 +808,9 @@ dev_path_drive_match(struct device *dev, int ctrlnode, int target, int lun)
 	int child = 0;
 	char buf[OFPATHLEN];
 
+	DPRINTF(ACDB_BOOTDEV, ("dev_path_drive_match: %s, controller %x, "
+	    "target %d lun %d\n", device_xname(dev), ctrlnode, target, lun));
+
 	/*
 	 * The ofbootpackage points to a disk on this controller, so
 	 * iterate over all child nodes and compare.
@@ -922,11 +927,10 @@ device_register(struct device *dev, void *aux)
 		    device_parent(device_parent(dev)));
 		dev_path_drive_match(dev, ofnode, periph->periph_target,
 		    periph->periph_lun);
-	} else if (device_is_a(busdev, "wd")) {
+	} else if (device_is_a(dev, "wd")) {
 		struct ata_device *adev = aux;
 
-		ofnode = device_ofnode(
-		    device_parent(device_parent(dev)));
+		ofnode = device_ofnode(device_parent(busdev));
 		dev_path_drive_match(dev, ofnode, adev->adev_channel*2+
 		    adev->adev_drv_data->drive, 0);
 	}
