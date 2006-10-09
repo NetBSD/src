@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.24 2006/10/08 11:52:48 scw Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.25 2006/10/09 11:38:54 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -283,7 +283,7 @@ typedef struct {
 #define EHCI_QH_GET_MULT(x)	(((x) >> 30) & 0x03) /* pipe multiplier */
 #define EHCI_QH_SET_MULT(x)	((x) << 30)
 	volatile ehci_link_t	qh_curqtd;
-	volatile ehci_qtd_t	qh_qtd;
+	ehci_qtd_t		qh_qtd;
 } ehci_qh_t;
 #define EHCI_QH_ALIGN 32
 
