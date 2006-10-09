@@ -967,14 +967,14 @@ if test x"$BSHELL" = x; then
 echo "$as_me: error: sh must be somewhere on \$PATH" >&2;}
    { (exit 1); exit 1; }; }
 fi
-cat >>confdefs.h <<EOF
-#define _PATH_BSHELL "$BSHELL"
-EOF
 
-# Make wants to know what directory to find sh in.
-nb_path_defshelldir=`echo $BSHELL | sed 's,/sh$,,'`
+# Make wants to get the directory name and the basename
+# for the default shell in two separate variables.
+nb_path_defshelldir="${BSHELL%/*}"
+nb_basename_defshell="${BSHELL##*/}"
 cat >>confdefs.h <<EOF
 #define _PATH_DEFSHELLDIR "$nb_path_defshelldir"
+#define _BASENAME_DEFSHELL "$nb_basename_defshell"
 EOF
 
 # Make sure we have POSIX regex ability.

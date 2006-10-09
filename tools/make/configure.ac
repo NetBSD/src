@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.6 2003/07/26 20:24:01 salo Exp $
+#	$NetBSD: configure.ac,v 1.7 2006/10/09 20:51:05 apb Exp $
 #
 # Autoconf definition file for make.
 #
@@ -10,10 +10,12 @@ AC_PATH_PROG(BSHELL, sh)
 if test x"$BSHELL" = x; then
 	AC_MSG_ERROR([sh must be somewhere on \$PATH])
 fi
-AC_DEFINE_UNQUOTED(_PATH_BSHELL, "$BSHELL")
-# Make wants to know what directory to find sh in.
-nb_path_defshelldir=`echo $BSHELL | sed 's,/sh$,,'`
+# Make wants to get the directory name and the basename
+# for the default shell in two separate variables.
+nb_path_defshelldir="${BSHELL%/*}"
+nb_basename_defshell="${BSHELL##*/}"
 AC_DEFINE_UNQUOTED(_PATH_DEFSHELLDIR, "$nb_path_defshelldir")
+AC_DEFINE_UNQUOTED(_BASENAME_DEFSHELL, "$nb_basename_defshell")
 
 # Make sure we have POSIX regex ability.
 AC_CHECK_HEADER(regex.h,, AC_MSG_ERROR([POSIX regex.h is required]))
