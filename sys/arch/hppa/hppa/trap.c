@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.37 2006/08/25 07:21:07 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.38 2006/10/09 21:32:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.37 2006/08/25 07:21:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.38 2006/10/09 21:32:29 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -924,7 +924,9 @@ void
 child_return(void *arg)
 {
 	struct lwp *l = arg;
+#ifdef KTRACE
 	struct proc *p = l->l_proc;
+#endif
 
 	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 #ifdef KTRACE
