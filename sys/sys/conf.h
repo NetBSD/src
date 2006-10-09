@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.123 2006/08/27 23:21:58 christos Exp $	*/
+/*	$NetBSD: conf.h,v 1.124 2006/10/09 07:56:33 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -86,7 +86,7 @@ struct cdevsw {
 	struct tty *	(*d_tty)(dev_t);
 	int		(*d_poll)(dev_t, int, struct lwp *);
 	paddr_t		(*d_mmap)(dev_t, off_t, int);
-	int		(*d_kqfilter)(dev_t dev, struct knote *kn);
+	int		(*d_kqfilter)(dev_t, struct knote *);
 	int		d_type;
 };
 
