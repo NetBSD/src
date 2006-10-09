@@ -1,5 +1,5 @@
 {-
-/*	$NetBSD: lfu.hs,v 1.1 2006/09/30 08:50:32 yamt Exp $	*/
+/*	$NetBSD: lru.hs,v 1.1 2006/10/09 12:32:46 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -32,42 +32,25 @@ import System.Environment
 import System.IO
 import List
 import Maybe
-import Monad
 
-pgmatch idx pg = idx == fst pg
+contain x xs = isJust $ find (== x) xs
 
-pglookup :: Eq a => a -> [(a,b)] -> Maybe (a,b)
-pglookup x = find (pgmatch x)
-
-pgdequeue :: Eq a => a -> [a] -> [a]
-pgdequeue = delete
-
-victim :: Ord b => [(a,b)] -> (a,b)
-victim = minimumBy p where
-	p x y = compare (snd x) (snd y)
-
-do_lfu1 npg n q qlen [] = (reverse n, q)
-do_lfu1 npg n q qlen rs@(r:rs2) =
-	let
-		p = pglookup r q
-	in
-	if isJust p then
+do_lru1 npg n q qlen [] = (reverse n, q)
+do_lru1 npg n q qlen rs@(r:rs2) =
+	if contain r q then
 		let
-			opg = fromJust p
-			nq = pgdequeue opg q
-			pg = (fst opg, snd opg + 1)
+			nq = delete r q
 		in
-		do_lfu1 npg n (pg:nq) qlen rs2
+		do_lru1 npg n (r:nq) qlen rs2
 	else if qlen < npg then
-		do_lfu1 npg (r:n) ((r,1):q) (qlen+1) rs2
+		do_lru1 npg (r:n) (r:q) (qlen+1) rs2
 	else
 		let
-			opg = victim q
-			nq = pgdequeue opg q
+			nq = take (qlen-1) q
 		in
-		do_lfu1 npg (r:n) ((r,1):nq) qlen rs2
+		do_lru1 npg (r:n) (r:nq) qlen rs2
 
-do_lfu npg rs = fst $ do_lfu1 npg [] [] 0 rs
+do_lru npg rs = fst $ do_lru1 npg [] [] 0 rs
 
 main = do
 	xs <- getContents
@@ -78,4 +61,4 @@ main = do
 		npgs = read $ args !! 0
 		pgs::[Int]
 		pgs = map read ls
-	mapM_ print $ do_lfu npgs pgs
+	mapM_ print $ do_lru npgs pgs
