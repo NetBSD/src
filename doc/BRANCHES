@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.114 2006/10/07 02:53:57 tsutsui Exp $
+#	$NetBSD: BRANCHES,v 1.115 2006/10/09 10:12:55 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -421,29 +421,6 @@ Notes:
 		not tested:
 			pdp10 (i don't know how to build)
 			sparc64 (GENERIC.MP seems to have an unrelated problem)
-			cesfic (GENERIC fails to build with the following
-			error.  i don't know if it's related to my changes.)
-
-      build  compat/libcompat.a
-      making sure the 68040 FPSP is up to date...
-      netbsd.s: Assembler messages:
-      netbsd.s:92: Error: can't resolve `0' {*UND* section} - `LOCAL_SIZE' {*UND* section}
-      netbsd.s:125: Error: can't resolve `0' {*UND* section} - `LOCAL_SIZE' {*UND* section}
-      netbsd.s:163: Error: can't resolve `0' {.text section} - `LOCAL_SIZE' {*UND* section}
-
-			amiga (GENERIC fails with the following error.)
-
-`libcompat.a' is up to date.
-making sure the 68040 FPSP is up to date...
-do_func.s: Assembler messages:
-do_func.s:564: Error: undefined symbol `neg_mask' in operation
-do_func.s:564: Error: undefined symbol `inf_mask' in operation
-do_func.s:591: Error: undefined symbol `neg_mask' in operation
-do_func.s:591: Error: undefined symbol `z_mask' in operation
-
-*** Failed target:  do_func.o
-*** Failed command: /exports/abhome/tools/bin/m68k--netbsdelf-gcc -x assembler-with-cpp -m68040 -Damiga -DFPCOPROC -I../../. -I/exports/nbsd/src/sys/../common/include -I/exports/nbsd/src/sys/arch -I/exports/nbsd/src/sys -nostdinc -DDRACO -DM68060 -DM68040 -DM68030 -DM68020 -DLKM -DMAXUSERS=8 -D_KERNEL -D_KERNEL_OPT -I/exports/nbsd/src/sys/lib/libkern/../../../common/lib/libc/quad -I/exports/nbsd/src/sys/lib/libkern/../../../common/lib/libc/string -I/exports/nbsd/src/sys/lib/libkern/../../../common/lib/libc/arch/m68k/string -I/exports/nbsd/src/sys/dist/ipf -c -o do_func.o do_func.s
-*** Error code 1
 
 		notyet:
 			others
