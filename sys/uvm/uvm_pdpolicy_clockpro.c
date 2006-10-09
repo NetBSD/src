@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.2 2006/09/15 15:51:13 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.3 2006/10/09 12:50:39 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.2 2006/09/15 15:51:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.3 2006/10/09 12:50:39 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -281,7 +281,7 @@ clockpro_insert_tail(struct clockpro_state *s, int qidx, struct vm_page *pg)
 	pageq_insert_tail(q, pg);
 }
 
-static void
+static void __unused
 clockpro_insert_head(struct clockpro_state *s, int qidx, struct vm_page *pg)
 {
 	pageq_t *q = clockpro_queue(s, qidx);
@@ -935,7 +935,9 @@ handcold_advance(void)
 	struct vm_page *pg;
 
 	for (;;) {
+#if defined(LISTQ)
 		pageq_t *listq = clockpro_queue(s, CLOCKPRO_LISTQ);
+#endif /* defined(LISTQ) */
 		pageq_t *coldq;
 
 		clockpro_newqrotate();
@@ -1345,6 +1347,7 @@ clockpro_dump(void)
 #endif /* defined(DDB) */
 
 #if defined(PDSIM)
+#if defined(DEBUG)
 static void
 pdsim_dumpq(int qidx)
 {
@@ -1364,6 +1367,7 @@ pdsim_dumpq(int qidx)
 		    );
 	}
 }
+#endif /* defined(DEBUG) */
 
 void
 pdsim_dump(const char *id)
