@@ -1,5 +1,6 @@
 2006-10-09  Emmanuel Dreyfus  <manu@netbsd.org>
 	* src/racoon/isakmp_unity.c: correctly check read() return (Coverity)
+	* src/racoon/proposal.c: Fix memory leak (Coverity)
 
 2006-10-06  Emmanuel Dreyfus  <manu@netbsd.org>
 	From Tomoyuki Okazaki <okazaki@kick.gr.jp>
