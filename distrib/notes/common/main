@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.33 2006/09/16 17:57:27 ghen Exp $
+.\"	$NetBSD: main,v 1.278.2.34 2006/10/09 16:38:39 ghen Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -516,6 +516,10 @@ added support for HPT368 IDE controller.
 .
 .(bullet
 Enabled SSL support in BIND.
+.It
+A second
+.Xr dhclient 8
+instance now exists gracefully instead of leaving the system in a broken state.
 .bullet)
 .
 .Ss2 File system
@@ -527,6 +531,11 @@ Added
 .Xr scan_ffs 4
 from OpenBSD (modified to also support FFSv2 and LFS), a utility to recover
 lost disklabels.
+.It
+Write performance of large files to msdos filesystems has been improved.
+.It
+We now drop into single-user mode when /etc/rc.d/fsck is interrupted by ^C at
+boot-time.
 .bullet)
 .
 .Ss2 Libraries
@@ -558,6 +567,9 @@ Fixed a RSA signature forgery in
 .Xr openssl 1 .
 .It
 X11: fixed a vulnerability in Adobe Type 1 font handling.
+.It
+Fixed a number of DoS vulnerabilities in
+.Xr openssl 1 .
 .bullet)
 .
 .Ss2 Miscellaneous
