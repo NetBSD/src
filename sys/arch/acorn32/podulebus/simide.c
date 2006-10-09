@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.18 2004/01/03 22:56:52 thorpej Exp $	*/
+/*	$NetBSD: simide.c,v 1.18.6.1 2006/10/09 21:42:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.18 2004/01/03 22:56:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.18.6.1 2006/10/09 21:42:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,7 @@ simide_attach(parent, self, aux)
 		    simide_info[channel].drive_registers,
 		    DRIVE_REGISTERS_SPACE, 0, &cp->cmd_baseioh)) 
 			continue;
-		for (i = 0; i < DRIVE_REGISTERS_SPACE; i++) {
+		for (i = 0; i < WDC_NREG; i++) {
 			if (bus_space_subregion(cp->cmd_iot, cp->cmd_baseioh,
 				i, i == 0 ? 4 : 1, &cp->cmd_iohs[i]) != 0) {
 				bus_space_unmap(cp->cmd_iot, cp->cmd_baseioh,
