@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.245 2006/10/05 17:35:19 tls Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.246 2006/10/09 16:27:07 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.245 2006/10/05 17:35:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.246 2006/10/09 16:27:07 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -214,6 +214,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.245 2006/10/05 17:35:19 tls Exp $");
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>
+#include <netinet/tcp_congctl.h>
 #include <netinet/tcp_debug.h>
 
 #include <machine/stdarg.h>
@@ -237,8 +238,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.245 2006/10/05 17:35:19 tls Exp $");
 #include <netipsec/ipsec6.h>
 #endif
 #endif	/* FAST_IPSEC*/
-
-static inline void tcp_congestion_exp(struct tcpcb *);
 
 int	tcprexmtthresh = 3;
 int	tcp_log_refused;
@@ -407,28 +406,6 @@ tcpipqent_free(struct ipqent *ipqe)
 	s = splvm();
 	pool_put(&tcpipqent_pool, ipqe);
 	splx(s);
-}
-
-/*
- * Halve the congestion window and reduce the
- * slow start threshold.
- *
- * Optionally, mark the packet.
- */
-static inline void
-tcp_congestion_exp(struct tcpcb *tp)
-{
-	u_int win;
-
-	win = min(tp->snd_wnd, tp->snd_cwnd) / 2 / tp->t_segsz;
-	if (win < 2)
-		win = 2;
-
-	tp->snd_ssthresh = win * tp->t_segsz;
-	tp->snd_recover = tp->snd_max;
-	tp->snd_cwnd = tp->snd_ssthresh;
-	if (TCP_ECN_ALLOWED(tp))
-		tp->t_flags |= TF_ECN_SND_CWR;
 }
 
 int
@@ -1638,7 +1615,7 @@ after_listen:
 		 * Ignore if we are already trying to recover.
 		 */
 		if ((tiflags & TH_ECE) && SEQ_GEQ(tp->snd_una, tp->snd_recover))
-			tcp_congestion_exp(tp);
+			tcp_reno_congestion_exp(tp);
 	}
 
 	if (opti.ts_present && opti.ts_ecr) {
@@ -2278,39 +2255,15 @@ after_listen:
 				else if (tp->t_partialacks < 0 &&
 					 (++tp->t_dupacks == tcprexmtthresh ||
 					 TCP_FACK_FASTRECOV(tp))) {
-					tcp_seq onxt;
-
-					if ((tcp_do_newreno || tcp_do_ecn) &&
-					    SEQ_LT(th->th_ack, tp->snd_high)) {
-						/*
-						 * False fast retransmit after
-						 * timeout.  Do not enter fast
-						 * recovery.
-						 */
-						tp->t_dupacks = 0;
+					/*
+					 * Do the fast retransmit, and adjust
+					 * congestion control paramenters.
+					 */
+					if (tp->t_congctl->fast_retransmit(tp, th)) {
+						/* False fast retransmit */
 						break;
-					}
-
-					onxt = tp->snd_nxt;
-					tcp_congestion_exp(tp);
-					tp->t_partialacks = 0;
-					TCP_TIMER_DISARM(tp, TCPT_REXMT);
-					tp->t_rtttime = 0;
-					if (TCP_SACK_ENABLED(tp)) {
-						tp->t_dupacks = tcprexmtthresh;
-						tp->sack_newdata = tp->snd_nxt;
-						tp->snd_cwnd = tp->t_segsz;
-						(void) tcp_output(tp);
+					} else
 						goto drop;
-					}
-					tp->snd_nxt = th->th_ack;
-					tp->snd_cwnd = tp->t_segsz;
-					(void) tcp_output(tp);
-					tp->snd_cwnd = tp->snd_ssthresh +
-					       tp->t_segsz * tp->t_dupacks;
-					if (SEQ_GT(onxt, tp->snd_nxt))
-						tp->snd_nxt = onxt;
-					goto drop;
 				} else if (tp->t_dupacks > tcprexmtthresh) {
 					tp->snd_cwnd += tp->t_segsz;
 					(void) tcp_output(tp);
@@ -2336,12 +2289,12 @@ after_listen:
 		 * If the congestion window was inflated to account
 		 * for the other side's cached packets, retract it.
 		 */
+		/* XXX: make SACK have his own congestion control
+		 * struct -- rpaulo */
 		if (TCP_SACK_ENABLED(tp))
 			tcp_sack_newack(tp, th);
-		else if (tcp_do_newreno)
-			tcp_newreno_newack(tp, th);
 		else
-			tcp_reno_newack(tp, th);
+			tp->t_congctl->fast_retransmit_newack(tp, th);
 		if (SEQ_GT(th->th_ack, tp->snd_max)) {
 			tcpstat.tcps_rcvacktoomuch++;
 			goto dropafterack;
@@ -2375,26 +2328,12 @@ after_listen:
 			needoutput = 1;
 		} else if (TCP_TIMER_ISARMED(tp, TCPT_PERSIST) == 0)
 			TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
-		/*
-		 * When new data is acked, open the congestion window.
-		 * If the window gives us less than ssthresh packets
-		 * in flight, open exponentially (segsz per packet).
-		 * Otherwise open linearly: segsz per window
-		 * (segsz^2 / cwnd per packet).
-		 *
-		 * If we are still in fast recovery (meaning we are using
-		 * NewReno and we have only received partial acks), do not
-		 * inflate the window yet.
-		 */
-		if (tp->t_partialacks < 0) {
-			u_int cw = tp->snd_cwnd;
-			u_int incr = tp->t_segsz;
 
-			if (cw >= tp->snd_ssthresh)
-				incr = incr * incr / cw;
-			tp->snd_cwnd = min(cw + incr,
-			    TCP_MAXWIN << tp->snd_scale);
-		}
+		/*
+		 * New data has been acked, adjust the congestion window.
+		 */
+		tp->t_congctl->newack(tp, th);
+
 		ND6_HINT(tp);
 		if (acked > so->so_snd.sb_cc) {
 			tp->snd_wnd -= so->so_snd.sb_cc;
@@ -3218,93 +3157,6 @@ tcp_xmit_timer(struct tcpcb *tp, uint32_t rtt)
 	 * and the return path might not be symmetrical).
 	 */
 	tp->t_softerror = 0;
-}
-
-void
-tcp_reno_newack(struct tcpcb *tp, struct tcphdr *th)
-{
-	if (tp->t_partialacks < 0) {
-		/*
-		 * We were not in fast recovery.  Reset the duplicate ack
-		 * counter.
-		 */
-		tp->t_dupacks = 0;
-	} else {
-		/*
-		 * Clamp the congestion window to the crossover point and
-		 * exit fast recovery.
-		 */
-		if (tp->snd_cwnd > tp->snd_ssthresh)
-			tp->snd_cwnd = tp->snd_ssthresh;
-		tp->t_partialacks = -1;
-		tp->t_dupacks = 0;
-	}
-}
-
-/*
- * Implement the NewReno response to a new ack, checking for partial acks in
- * fast recovery.
- */
-void
-tcp_newreno_newack(struct tcpcb *tp, struct tcphdr *th)
-{
-	if (tp->t_partialacks < 0) {
-		/*
-		 * We were not in fast recovery.  Reset the duplicate ack
-		 * counter.
-		 */
-		tp->t_dupacks = 0;
-	} else if (SEQ_LT(th->th_ack, tp->snd_recover)) {
-		/*
-		 * This is a partial ack.  Retransmit the first unacknowledged
-		 * segment and deflate the congestion window by the amount of
-		 * acknowledged data.  Do not exit fast recovery.
-		 */
-		tcp_seq onxt = tp->snd_nxt;
-		u_long ocwnd = tp->snd_cwnd;
-
-		/*
-		 * snd_una has not yet been updated and the socket's send
-		 * buffer has not yet drained off the ACK'd data, so we
-		 * have to leave snd_una as it was to get the correct data
-		 * offset in tcp_output().
-		 */
-		if (++tp->t_partialacks == 1)
-			TCP_TIMER_DISARM(tp, TCPT_REXMT);
-		tp->t_rtttime = 0;
-		tp->snd_nxt = th->th_ack;
-		/*
-		 * Set snd_cwnd to one segment beyond ACK'd offset.  snd_una
-		 * is not yet updated when we're called.
-		 */
-		tp->snd_cwnd = tp->t_segsz + (th->th_ack - tp->snd_una);
-		(void) tcp_output(tp);
-		tp->snd_cwnd = ocwnd;
-		if (SEQ_GT(onxt, tp->snd_nxt))
-			tp->snd_nxt = onxt;
-		/*
-		 * Partial window deflation.  Relies on fact that tp->snd_una
-		 * not updated yet.
-		 */
-		tp->snd_cwnd -= (th->th_ack - tp->snd_una - tp->t_segsz);
-	} else {
-		/*
-		 * Complete ack.  Inflate the congestion window to ssthresh
-		 * and exit fast recovery.
-		 *
-		 * Window inflation should have left us with approx.
-		 * snd_ssthresh outstanding data.  But in case we
-		 * would be inclined to send a burst, better to do
-		 * it via the slow start mechanism.
-		 */
-		if (SEQ_SUB(tp->snd_max, th->th_ack) < tp->snd_ssthresh)
-			tp->snd_cwnd = SEQ_SUB(tp->snd_max, th->th_ack)
-			    + tp->t_segsz;
-		else
-			tp->snd_cwnd = tp->snd_ssthresh;
-		tp->t_partialacks = -1;
-		tp->t_dupacks = 0;
-	}
 }
 
 

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.940 2006/10/08 21:28:08 apb Exp $
+#	$NetBSD: mi,v 1.941 2006/10/09 16:27:07 rpaulo Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -11363,6 +11363,7 @@
 ./usr/share/man/man9/tc_mb.9			comp-sys-man		.man
 ./usr/share/man/man9/tc_syncbus.9		comp-sys-man		.man
 ./usr/share/man/man9/tc_wmb.9			comp-sys-man		.man
+./usr/share/man/man9/tcp_congctl.9		comp-sys-man		.man
 ./usr/share/man/man9/time.9			comp-obsolete		obsolete
 ./usr/share/man/man9/time_second.9		comp-sys-man		.man
 ./usr/share/man/man9/time_uptime.9		comp-sys-man		.man
