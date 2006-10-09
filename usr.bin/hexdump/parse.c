@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.23 2006/10/09 11:37:31 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.24 2006/10/09 14:27:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.23 2006/10/09 11:37:31 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.24 2006/10/09 14:27:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -227,8 +227,7 @@ rewrite(FS *fs)
 		 */
 		nextpr = &fu->nextpr;
 		for (nconv = 0, fmtp = fu->fmt; *fmtp; nextpr = &pr->nextpr) {
-			pr = emalloc(sizeof *pr);
-			memset(pr, 0, sizeof *pr);
+			pr = ecalloc(1, sizeof(*pr));
 			*nextpr = pr;
 
 			/* Skip preceding text and up to the next % sign. */
