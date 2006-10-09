@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 2006/07/10 16:28:44 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31.6.1 2006/10/09 11:30:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31 2006/07/10 16:28:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31.6.1 2006/10/09 11:30:25 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -78,8 +78,8 @@ cpu_configure()
 	(*platform.bus_reset)();
 
 	printf("biomask %02x netmask %02x ttymask %02x clockmask %02x\n",
-	    splmasks[IPL_BIO] >> 8, splmasks[IPL_NET] >> 8, 
-	    splmasks[IPL_TTY] >> 8, splmasks[IPL_CLOCK] >> 8);
+	    ipl2spl_table[IPL_BIO] >> 8, ipl2spl_table[IPL_NET] >> 8, 
+	    ipl2spl_table[IPL_TTY] >> 8, ipl2spl_table[IPL_CLOCK] >> 8);
 
 	_splnone();
 }

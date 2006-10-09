@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98 2006/09/16 08:50:27 gdamore Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98.2.1 2006/10/09 11:30:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2006/09/16 08:50:27 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.2.1 2006/10/09 11:30:25 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -105,11 +105,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2006/09/16 08:50:27 gdamore Exp $")
 
 struct sgimips_intrhand intrtab[NINTR];
 
-const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
+	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_1,
+	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1,
 };
 
 /* Our exported CPU info; we can have only one. */
@@ -130,7 +130,46 @@ int arcsmem;		/* Memory used by the ARCS firmware */
 int ncpus;
 
 /* CPU interrupt masks */
-u_int32_t splmasks[IPL_CLOCK+1];
+const int *ipl2spl_table;
+
+#define	IPL2SPL_TABLE_COMMON \
+	[IPL_SOFT] = MIPS_SOFT_INT_MASK_1, \
+	[IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_1, \
+	[IPL_SOFTNET] = MIPS_SOFT_INT_MASK_1, \
+	[IPL_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1, \
+	[IPL_HIGH] = MIPS_INT_MASK,
+
+#if defined(MIPS1)
+static const int sgi_ip12_ipl2spl_table[] = {
+	IPL2SPL_TABLE_COMMON
+	[IPL_BIO] = MIPS_INT_MASK_1|MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_0,
+	[IPL_NET] = MIPS_INT_MASK_1|MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_0,
+	[IPL_TTY] = MIPS_INT_MASK_2|MIPS_INT_MASK_1|MIPS_INT_MASK_0|
+	    MIPS_SOFT_INT_MASK_0,
+	[IPL_CLOCK] = MIPS_INT_MASK_4|MIPS_INT_MASK_3|MIPS_INT_MASK_2|
+	    MIPS_INT_MASK_1|MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_0,
+};
+#endif /* defined(MIPS1) */
+#if defined(MIPS3)
+static const int sgi_ip2x_ipl2spl_table[] = {
+	IPL2SPL_TABLE_COMMON
+	[IPL_BIO] = MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+	[IPL_NET] = MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+	[IPL_TTY] = MIPS_INT_MASK_1|MIPS_INT_MASK_0|
+	    MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+	[IPL_CLOCK] = MIPS_INT_MASK_5|MIPS_INT_MASK_3|MIPS_INT_MASK_2|
+	    MIPS_INT_MASK_1|MIPS_INT_MASK_0|
+	    MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+};
+static const int sgi_ip3x_ipl2spl_table[] = {
+	IPL2SPL_TABLE_COMMON
+	[IPL_BIO] = MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+	[IPL_NET] = MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+	[IPL_TTY] = MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+	[IPL_CLOCK] = MIPS_INT_MASK_5|MIPS_INT_MASK_0|
+	    MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+};
+#endif /* defined(MIPS3) */
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
@@ -408,10 +447,7 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 				mach_subtype = MACH_SGI_IP12_HPLC;
                 }
 
-		splmasks[IPL_BIO] = 0x0b00;
-		splmasks[IPL_NET] = 0x0b00;
-		splmasks[IPL_TTY] = 0x1b00;
-		splmasks[IPL_CLOCK] = 0x7f00;
+		ipl2spl_table = sgi_ip12_ipl2spl_table;
 		platform.intr3 = mips1_clock_intr;
 		break;
 #endif /* MIPS1 */
@@ -420,32 +456,19 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	case MACH_SGI_IP20:
 		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
 		mach_boardrev = (i & 0x7000) >> 12;
-
-		splmasks[IPL_BIO] = 0x0700;
-		splmasks[IPL_NET] = 0x0700;
-		splmasks[IPL_TTY] = 0x0f00;
-		splmasks[IPL_CLOCK] = 0xbf00;
+		ipl2spl_table = sgi_ip2x_ipl2spl_table;
 		platform.intr5 = mips3_clock_intr;
 		break;
 	case MACH_SGI_IP22:
-		splmasks[IPL_BIO] = 0x0700;
-		splmasks[IPL_NET] = 0x0700;
-		splmasks[IPL_TTY] = 0x0f00;
-		splmasks[IPL_CLOCK] = 0xbf00;
+		ipl2spl_table = sgi_ip2x_ipl2spl_table;
 		platform.intr5 = mips3_clock_intr;
 		break;
 	case MACH_SGI_IP30:
-		splmasks[IPL_BIO] = 0x0700;
-		splmasks[IPL_NET] = 0x0700;
-		splmasks[IPL_TTY] = 0x0700;
-		splmasks[IPL_CLOCK] = 0x8700;
+		ipl2spl_table = sgi_ip3x_ipl2spl_table;
 		platform.intr5 = mips3_clock_intr;
 		break;
 	case MACH_SGI_IP32:
-		splmasks[IPL_BIO] = 0x0700;
-		splmasks[IPL_NET] = 0x0700;
-		splmasks[IPL_TTY] = 0x0700;
-		splmasks[IPL_CLOCK] = 0x8700;
+		ipl2spl_table = sgi_ip3x_ipl2spl_table;
 		platform.intr5 = mips3_clock_intr;
 		break;
 #endif /* MIPS3 */
@@ -853,4 +876,11 @@ mips_machdep_find_l2cache(struct arcbios_component *comp, struct arcbios_treewal
 		mips_sdcache_ways = 1;
 		break;
 	}
+}
+
+ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._spl = ipl2spl_table[ipl]};
 }
