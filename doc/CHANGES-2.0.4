@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.47 2006/10/03 12:47:52 tron Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.48 2006/10/09 21:45:17 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -381,3 +381,9 @@ sys/arch/sparc64/sparc64/locore.s		1.217-1.218 via patch
 	Fix a couple of %y register save/restore errors.
 	[nakayama, ticket #10695]
 
+sys/arch/acorn32/podulebus/simide.c		1.24 via patch
+
+	PR 23783: the correct number of elements to insert into cmd_iohs is
+	WDC_NREG, not DRIVE_REGISTERS_SPACE.  The latter is much bigger and
+	causes a buffer overrun and panic.  Patch supplied by Mike Pumford.
+	[bjh21, ticket #10703]
