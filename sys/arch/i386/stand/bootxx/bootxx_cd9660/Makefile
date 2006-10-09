@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.8 2006/06/29 06:39:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2006/10/09 00:00:34 martin Exp $
 
 S=		${.CURDIR}/../../../../..
+
+.include <bsd.own.mk>
 
 NOMAN=		# defined
 STRIPFLAG=	# nothing
@@ -12,8 +14,6 @@ LIBC=		# nothing
 
 PRIMARY_LOAD_ADDRESS=	0x600
 SECONDARY_LOAD_ADDRESS=	0x10000
-
-.include <bsd.own.mk>
 
 PROG=		bootxx_cd9660
 SRCS?=		cdboot.S
