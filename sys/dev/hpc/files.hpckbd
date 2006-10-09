@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpckbd,v 1.6 2005/12/11 12:21:22 christos Exp $
+#	$NetBSD: files.hpckbd,v 1.7 2006/10/09 10:33:42 peter Exp $
 #	H/PC keyboard interface for wskbd
 
 defparam	PCKBD_LAYOUT
@@ -11,6 +11,8 @@ file dev/hpc/hpckbd.c			hpckbd
 device btnmgr: wskbddev
 attach btnmgr at mainbus
 file	dev/hpc/btnmgr.c		btnmgr
+defflag	opt_btnmgr.h		BTNMGRDEBUG
+defparam opt_btnmgr.h		BTNMGRDEBUG_CONF
 
 defpseudo hpf1275a: wskbddev
 file	dev/hpc/hpf1275a_tty.c		hpf1275a
