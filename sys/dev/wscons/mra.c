@@ -1,4 +1,4 @@
-/*	$NetBSD: mra.c,v 1.3 2005/12/11 12:24:12 christos Exp $	*/
+/*	$NetBSD: mra.c,v 1.4 2006/10/09 10:43:01 peter Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -13,10 +13,10 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mra.c,v 1.3 2005/12/11 12:24:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mra.c,v 1.4 2006/10/09 10:43:01 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
