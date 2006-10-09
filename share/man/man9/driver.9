@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.16 2006/10/08 15:44:25 elad Exp $
+.\"     $NetBSD: driver.9,v 1.17 2006/10/09 07:52:59 uebayasi Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -140,7 +140,7 @@ const struct cdevsw foo_cdevsw {
 	struct tty *(*d_tty)(dev_t);
 	int (*d_poll)(dev_t, int, struct lwp *);
 	paddr_t (*d_mmap)(dev_t, off_t, int);
-	int (*d_kqfilter)(dev_t dev, struct knote *kn);
+	int (*d_kqfilter)(dev_t, struct knote *);
 	int d_type;
 };
 .Ed
