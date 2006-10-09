@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 2006/10/09 00:00:34 martin Exp $
+#	$NetBSD: Makefile,v 1.10 2006/10/09 11:25:03 dsl Exp $
 
 S=		${.CURDIR}/../../../../..
 
+NOMAN=		# defined
 .include <bsd.own.mk>
 
-NOMAN=		# defined
 STRIPFLAG=	# nothing
 
 LIBCRT0=	# nothing
