@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.185 2006/10/08 17:16:51 elad Exp $
+#	$NetBSD: bsd.README,v 1.186 2006/10/09 08:32:11 mrg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -142,7 +142,7 @@ MKDYNAMICROOT	If "no", build programs in /bin and /sbin statically,
 		Default: yes
 
 MKGCC		If "no", don't build gcc(1) or any of the gcc-related
-		libraries (libg2c, libgcc, libobjc, libstdc++).
+		libraries (libgcc, libobjc, libstdc++).
 		Default: yes
 
 MKGCCCMDS	If "no", don't build gcc(1).
@@ -1006,7 +1006,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBBZ2?=	${DESTDIR}/usr/lib/libbz2.a
 		LIBC?=		${DESTDIR}/usr/lib/libc.a
 		LIBC_PIC?=	${DESTDIR}/usr/lib/libc_pic.a
-		LIBCDK?=	${DESTDIR}/usr/lib/libcdk.a
 		LIBCOM_ERR?=	${DESTDIR}/usr/lib/libcom_err.a
 		LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
 		LIBCRYPT?=	${DESTDIR}/usr/lib/libcrypt.a
@@ -1020,7 +1019,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 		LIBEVENT?=	${DESTDIR}/usr/lib/libevent.a
 		LIBFORM?=	${DESTDIR}/usr/lib/libform.a
-		LIBG2C?=	${DESTDIR}/usr/lib/libg2c.a
 		LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
 		LIBGNUMALLOC?=	${DESTDIR}/usr/lib/libgnumalloc.a
 		LIBGSSAPI?=	${DESTDIR}/usr/lib/libgssapi.a
@@ -1057,6 +1055,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBSSH?=	${DESTDIR}/usr/lib/libssh.a
 		LIBSSL?=	${DESTDIR}/usr/lib/libssl.a
 		LIBSTDCXX?=	${DESTDIR}/usr/lib/libstdc++.a
+		LIBSUPCXX?=	${DESTDIR}/usr/lib/libsupc++.a
 		LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
 		LIBUSBHID?=	${DESTDIR}/usr/lib/libusbhid.a
 		LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
@@ -1089,10 +1088,6 @@ FILES		See description of <bsd.files.mk>.
 
 SHLINKDIR	Target directory for shared linker.  See description of
 		<bsd.own.mk> for additional information about this variable.
-
-USE_LIBSTDCXX	If "no", the support libraries needed for C++ programs
-		are set to `-lsupc++ -lm', rather than `-lstdc++ -lm'.
-		Default: yes
 
 The include file <bsd.prog.mk> includes the file named "../Makefile.inc"
 if it exists, as well as the include file <bsd.man.mk>.

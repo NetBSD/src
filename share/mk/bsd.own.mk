@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.479 2006/10/01 05:06:20 tsutsui Exp $
+#	$NetBSD: bsd.own.mk,v 1.480 2006/10/09 08:32:11 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -706,22 +706,16 @@ USE_${var}?= yes
 #
 # USE_* options which default to "yes".
 #
-.for var in LIBSTDCXX
-USE_${var}?= yes
-.endfor
+#.for var in 
+#USE_${var}?= yes
+#.endfor
 
 #
 # USE_* options which default to "no".
 #
-.for var in GCC4
-USE_${var}?= no
-.endfor
-
-#
-# Because XFree86 3.3.6 was EOLed all ports use XFree86 4.x now.
-# We keep this definition for backwards compatiblity.
-#
-USE_XF86_4=	yes
+#.for var in
+#USE_${var}?= no
+#.endfor
 
 #
 # Where X11R6 sources are and where it is installed to.

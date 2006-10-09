@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.215 2006/07/23 11:41:27 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.216 2006/10/09 08:32:11 mrg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -97,9 +97,15 @@ PAM_STATIC_LDADD=
 PAM_STATIC_DPADD=
 .endif
 
+# These need + -> X transformations
 .ifndef LIBSTDCXX
 LIBSTDCXX=	${DESTDIR}/usr/lib/libstdc++.a
 .MADE:		${LIBSTDCXX}
+.endif
+
+.ifndef LIBSUPCXX
+LIBSUPCXX=	${DESTDIR}/usr/lib/libsupc++.a
+.MADE:		${LIBSUPCXX}
 .endif
 
 .for _lib in \
@@ -172,11 +178,6 @@ _PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR}:${DESTDIR}/usr/lib \
 
 .if defined(PROG_CXX)
 _CCLINK=	${CXX}
-.if ${USE_LIBSTDCXX} == "no"
-_SUPCXX=	-lsupc++ -lm
-.else
-_SUPCXX=	-lstdc++ -lm
-.endif
 .else
 _CCLINK=	${CC}
 .endif
