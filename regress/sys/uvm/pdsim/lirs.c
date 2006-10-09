@@ -1,4 +1,4 @@
-/*	$NetBSD: lirs.c,v 1.1 2006/10/09 12:32:46 yamt Exp $	*/
+/*	$NetBSD: lirs.c,v 1.2 2006/10/09 12:40:00 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -31,6 +31,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #if defined(DEBUG)
 #define	DFPRINTF(...)	fprintf(__VA_ARGS__)
