@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.5.22.1 2006/09/22 15:54:30 yamt Exp $	*/
+/*	$NetBSD: isr.c,v 1.5.22.2 2006/10/09 10:13:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.5.22.1 2006/09/22 15:54:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.5.22.2 2006/10/09 10:13:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,13 +103,13 @@ isrcomputeipl()
 				break;
 
 			case ISRPRI_NET:
-				if (ipl > PSLTOIPL(cesfic_netspl))
+				if (ipl > PSLTOIPL(netspl))
 					netspl = IPLTOPSL(ipl);
 				break;
 
 			case ISRPRI_TTY:
 			case ISRPRI_TTYNOBUF:
-				if (ipl > PSLTOIPL(cesfic_ttyspl))
+				if (ipl > PSLTOIPL(ttyspl))
 					ttyspl = IPLTOPSL(ipl);
 				break;
 
