@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.42 2006/10/08 22:57:11 christos Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.43 2006/10/09 00:39:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.42 2006/10/08 22:57:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.43 2006/10/09 00:39:06 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -491,7 +491,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
     void (*func)(void *), void *arg, struct lwp **rnewlwpp)
 {
 	struct lwp *l2;
-	int s, error;
+	int s;
 
 	l2 = pool_get(&lwp_pool, PR_WAITOK);
 
