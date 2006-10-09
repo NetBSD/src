@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.130 2006/08/26 22:19:03 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.131 2006/10/09 14:36:41 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.130 2006/08/26 22:19:03 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.131 2006/10/09 14:36:41 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.130 2006/08/26 22:19:03 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.131 2006/10/09 14:36:41 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -164,7 +164,6 @@ Boolean			noRecursiveExecute;	/* -N flag */
 Boolean			keepgoing;	/* -k flag */
 Boolean			queryFlag;	/* -q flag */
 Boolean			touchFlag;	/* -t flag */
-Boolean			usePipes;	/* !-P flag */
 Boolean			ignoreErrors;	/* -i flag */
 Boolean			beSilent;	/* -s flag */
 Boolean			oldVars;	/* variable substitution style */
@@ -213,7 +212,7 @@ MainParseArgs(int argc, char **argv)
 	Boolean inOption, dashDash = FALSE;
 	char found_path[MAXPATHLEN + 1];	/* for searching for sys.mk */
 
-#define OPTFLAGS "BD:I:J:NPST:V:WXd:ef:ij:km:nqrst"
+#define OPTFLAGS "BD:I:J:NST:V:WXd:ef:ij:km:nqrst"
 /* Can't actually use getopt(3) because rescanning is not portable */
 
 	getopt_def = OPTFLAGS;
@@ -306,10 +305,6 @@ rearg:
 			noExecute = TRUE;
 			noRecursiveExecute = TRUE;
 			Var_Append(MAKEFLAGS, "-N", VAR_GLOBAL);
-			break;
-		case 'P':
-			usePipes = FALSE;
-			Var_Append(MAKEFLAGS, "-P", VAR_GLOBAL);
 			break;
 		case 'S':
 			keepgoing = FALSE;
@@ -791,7 +786,6 @@ main(int argc, char **argv)
 	queryFlag = FALSE;		/* This is not just a check-run */
 	noBuiltins = FALSE;		/* Read the built-in rules */
 	touchFlag = FALSE;		/* Actually update targets */
-	usePipes = TRUE;		/* Catch child output in pipes */
 	debug = 0;			/* No debug verbosity, please. */
 	jobsRunning = FALSE;
 
