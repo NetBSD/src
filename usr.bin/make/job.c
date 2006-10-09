@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.118 2006/10/09 13:40:11 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.119 2006/10/09 13:49:59 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.118 2006/10/09 13:40:11 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.119 2006/10/09 13:49:59 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.118 2006/10/09 13:40:11 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.119 2006/10/09 13:49:59 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -302,33 +302,14 @@ int	exit_pipe[2] = { -1, -1 }; /* child exit signal pipe. */
 	(void)fprintf(fp, targFmt, gn->name)
 
 static sigset_t caught_signals;	/* Set of signals we handle */
-#if defined(USE_PGRP) && defined(SYSV)
-# define KILLPG(pid, sig)		kill(-(pid), (sig))
+#if defined(SYSV)
+#define KILLPG(pid, sig)	kill(-(pid), (sig))
 #else
-# if defined(USE_PGRP)
-#  define KILLPG(pid, sig)	killpg((pid), (sig))
-# else
-#  define KILLPG(pid, sig)	kill((pid), (sig))
-# endif
+#define KILLPG(pid, sig)	killpg((pid), (sig))
 #endif
-
-/*
- * Grmpf... There is no way to set bits of the wait structure
- * anymore with the stupid W*() macros. I liked the union wait
- * stuff much more. So, we devise our own macros... This is
- * really ugly, use dramamine sparingly. You have been warned.
- */
-#ifndef W_STOPCODE
-#define W_STOPCODE(sig) (((sig) << 8) | 0177)
-#endif
-#ifndef W_EXITCODE
-#define W_EXITCODE(ret, sig) ((ret << 8) | (sig))
-#endif 
 
 static void JobChildSig(int);
-#ifdef USE_PGRP
 static void JobContinueSig(int);
-#endif
 static Job *JobFindPid(int, int);
 static int JobPrintCommand(ClientData, ClientData);
 static int JobSaveCommand(ClientData, ClientData);
@@ -382,7 +363,7 @@ static void JobSigUnlock(sigset_t *omaskp)
 /*-
  *-----------------------------------------------------------------------
  * JobCondPassSig --
- *	Pass a signal to a job if USE_PGRP is defined.
+ *	Pass a signal to a job
  *
  * Input:
  *	signop		Signal to send it
@@ -439,7 +420,6 @@ JobChildSig(int signo __unused)
 }
 
 
-#ifdef USE_PGRP
 /*-
  *-----------------------------------------------------------------------
  * JobContinueSig --
@@ -465,13 +445,11 @@ JobContinueSig(int signo __unused)
      */
     write(exit_pipe[1], DO_JOB_RESUME, 1);
 }
-#endif
 
 /*-
  *-----------------------------------------------------------------------
  * JobPassSig --
- *	Pass a signal on to all local jobs if
- *	USE_PGRP is defined, then resend to ourselves.
+ *	Pass a signal on to all jobs, then resend to ourselves.
  *
  * Input:
  *	signo		The signal number we've received
@@ -1330,18 +1308,17 @@ JobExec(Job *job, char **argv)
 	    _exit(1);
 	}
 
-#ifdef USE_PGRP
 	/*
 	 * We want to switch the child into a different process family so
 	 * we can kill it and all its descendants in one fell swoop,
 	 * by killing its process family, but not commit suicide.
 	 */
-# if defined(SYSV)
+#if defined(SYSV)
+	/* XXX: dsl - I'm sure this should be setpgrp()... */
 	(void)setsid();
-# else
+#else
 	(void)setpgid(0, getpid());
-# endif
-#endif /* USE_PGRP */
+#endif
 
 	(void)execv(shellPath, argv);
 	execError("exec", shellPath);
@@ -2211,13 +2188,11 @@ Job_Init(void)
      * we're giving each job its own process group (since then it won't get
      * signals from the terminal driver as we own the terminal)
      */
-#if defined(USE_PGRP)
     ADDSIG(SIGTSTP, JobPassSig_suspend)
     ADDSIG(SIGTTOU, JobPassSig_suspend)
     ADDSIG(SIGTTIN, JobPassSig_suspend)
     ADDSIG(SIGWINCH, JobCondPassSig)
     ADDSIG(SIGCONT, JobContinueSig)
-#endif
 #undef ADDSIG
 
     begin = Targ_FindNode(".BEGIN", TARG_NOCREATE);
@@ -2243,13 +2218,11 @@ static void JobSigReset(void)
     DELSIG(SIGHUP)
     DELSIG(SIGQUIT)
     DELSIG(SIGTERM)
-#if defined(USE_PGRP)
     DELSIG(SIGTSTP)
     DELSIG(SIGTTOU)
     DELSIG(SIGTTIN)
     DELSIG(SIGWINCH)
     DELSIG(SIGCONT)
-#endif
 #undef DELSIG
     (void)signal(SIGCHLD, SIG_DFL);
 }
