@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.30 2006/09/23 20:51:28 dsl Exp $	*/
+/*	$NetBSD: job.h,v 1.31 2006/10/09 13:40:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -277,7 +277,6 @@ const char *Shell_GetNewline(void);
 void Job_Touch(GNode *, Boolean);
 Boolean Job_CheckCommands(GNode *, void (*abortProc )(const char *, ...));
 #define CATCH_BLOCK	1
-#define CATCH_DEFER	2
 void Job_CatchChildren(unsigned int);
 void Job_CatchOutput(void);
 void Job_Make(GNode *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.117 2006/09/29 19:38:48 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.118 2006/10/09 13:40:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.117 2006/09/29 19:38:48 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.118 2006/10/09 13:40:11 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.117 2006/09/29 19:38:48 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.118 2006/10/09 13:40:11 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -268,6 +268,7 @@ STATIC Job	*job_table;	/* The structures that describe them */
 STATIC Job	*job_table_end;	/* job_table + maxJobs */
 static Boolean	wantToken;	/* we want a token */
 static int lurking_children = 0;
+static int make_suspended = 0;	/* non-zero if we've seen a SIGTSTP (etc) */
 
 /*
  * Set of descriptors of pipes connected to
@@ -459,7 +460,7 @@ static void
 JobContinueSig(int signo __unused)
 {
     /*
-     * Defer sending to SIGCONT to out stopped children until we return
+     * Defer sending to SIGCONT to our stopped children until we return
      * from the signal handler.
      */
     write(exit_pipe[1], DO_JOB_RESUME, 1);
@@ -502,20 +503,12 @@ JobPassSig_suspend(int signo)
 {
     sigset_t nmask, omask;
     struct sigaction act;
-    int sigcount;
+
+    /* Suppress job started/continued messages */
+    make_suspended = 1;
 
     /* Pass the signal onto every job */
     JobCondPassSig(signo);
-
-    if (signo == SIGTSTP) {
-	/* Give children a short chance to run and suspend themselves */
-	for (sigcount = maxJobs; sigcount != 0; sigcount--) {
-	    if (poll(0, 0, 1) != -1 || errno != EINTR)
-		break;
-	}
-	/* Then report any that have... (gets messages sequenced properly) */
-	Job_CatchChildren(CATCH_DEFER);
-    }
 
     /*
      * Send ourselves the signal now we've given the message to everyone else.
@@ -544,7 +537,7 @@ JobPassSig_suspend(int signo)
      * We've been continued.
      *
      * A whole host of signals continue to happen!
-     * Any SIGCHLD for the suspends that we didn't catch above.
+     * SIGCHLD for any processes that actually suspended themselves.
      * SIGCHLD for any processes that exited while we were alseep.
      * The SIGCONT that actually caused us to wakeup.
      *
@@ -1597,6 +1590,8 @@ JobStart(GNode *gn, int flags)
     	Job_Touch(gn, job->flags&JOB_SILENT);
 	noExec = TRUE;
     }
+    /* Just in case it isn't already... */
+    (void)fflush(job->cmdFILE);
 
     /*
      * If we're not supposed to execute a shell, don't.
@@ -1612,32 +1607,23 @@ JobStart(GNode *gn, int flags)
 		(void)fclose(job->cmdFILE);
 		job->cmdFILE = NULL;
 	    }
-	} else {
-	     (void)fflush(stdout);
 	}
 
 	/*
 	 * We only want to work our way up the graph if we aren't here because
 	 * the commands for the job were no good.
 	 */
-	if (cmdsOK) {
-	    if (aborting == 0) {
-		if (job->tailCmds != NILLNODE) {
-		    Lst_ForEachFrom(job->node->commands, job->tailCmds,
-				    JobSaveCommand,
-				   (ClientData)job->node);
-		}
-		job->node->made = MADE;
-		Make_Update(job->node);
+	if (cmdsOK && aborting == 0) {
+	    if (job->tailCmds != NILLNODE) {
+		Lst_ForEachFrom(job->node->commands, job->tailCmds,
+				JobSaveCommand,
+			       (ClientData)job->node);
 	    }
-	    job->job_state = JOB_ST_FREE;
-	    return(JOB_FINISHED);
-	} else {
-	    job->job_state = JOB_ST_FREE;
-	    return(JOB_ERROR);
+	    job->node->made = MADE;
+	    Make_Update(job->node);
 	}
-    } else {
-	(void)fflush(job->cmdFILE);
+	job->job_state = JOB_ST_FREE;
+	return cmdsOK ? JOB_FINISHED : JOB_ERROR;
     }
 
     /*
@@ -1966,8 +1952,7 @@ JobRun(GNode *targ)
  * Notes:
  *	We do waits, blocking or not, according to the wisdom of our
  *	caller, until there are no more children to report. For each
- *	job, call JobFinish to finish things off. This will take care of
- *	putting jobs on the stoppedJobs queue.
+ *	job, call JobFinish to finish things off.
  *
  *-----------------------------------------------------------------------
  */
@@ -2005,18 +1990,20 @@ Job_CatchChildren(unsigned int flags)
 				job->pid, job->node->name);
 		(void)fflush(stdout);
 	    }
-	    switch (WSTOPSIG(status)) {
-	    case SIGTSTP:
-		(void)printf("*** [%s] Suspended\n", job->node->name);
-		break;
-	    case SIGSTOP:
-		(void)printf("*** [%s] Stopped\n", job->node->name);
-		break;
-	    default:
-		(void)printf("*** [%s] Stopped -- signal %d\n",
-		    job->node->name, WSTOPSIG(status));
+	    if (!make_suspended) {
+		    switch (WSTOPSIG(status)) {
+		    case SIGTSTP:
+			(void)printf("*** [%s] Suspended\n", job->node->name);
+			break;
+		    case SIGSTOP:
+			(void)printf("*** [%s] Stopped\n", job->node->name);
+			break;
+		    default:
+			(void)printf("*** [%s] Stopped -- signal %d\n",
+			    job->node->name, WSTOPSIG(status));
+		    }
+		    job->job_suspended = 1;
 	    }
-	    job->job_suspended = 1;
 	    (void)fflush(stdout);
 	    continue;
 	}
@@ -2024,11 +2011,7 @@ Job_CatchChildren(unsigned int flags)
 	job->job_state = JOB_ST_FINISHED;
 	job->exit_status = status;
 
-	if (flags & CATCH_DEFER)
-	    /* We don't want to process the termination now... */
-	    write(exit_pipe[1], DO_JOB_RESUME, 1);
-	else
-	    JobFinish(job, status);
+	JobFinish(job, status);
     }
 }
 
@@ -2060,8 +2043,6 @@ Job_CatchOutput(void)
 	  		   (wantToken ? nfds : (nfds - 1)), POLL_MSEC)) <= 0) {
 	    return;
 	} else {
-	    sigset_t	mask;
-
 	    if (readyfd(&childExitJob)) {
 		char token = 0;
 		nready -= 1;
@@ -2071,8 +2052,6 @@ Job_CatchOutput(void)
 		    JobRestartJobs();
 	    }
 
-	    JobSigLock(&mask);
-
 	    for (job = job_table; nready && job < job_table_end; job++) {
 		if (job->job_state != JOB_ST_RUNNING)
 		    continue;
@@ -2081,7 +2060,6 @@ Job_CatchOutput(void)
 		    nready -= 1;
 		}
 	    }
-	    JobSigUnlock(&mask);
 	}
     }
 }
@@ -2648,13 +2626,10 @@ Job_AbortAll(void)
 {
     Job		*job;	/* the job descriptor in that element */
     int		foo;
-    sigset_t	mask;
 
     aborting = ABORT_ERROR;
 
     if (jobTokensRunning) {
-
-	JobSigLock(&mask);
 	for (job = job_table; job < job_table_end; job++) {
 	    if (job->job_state != JOB_ST_RUNNING)
 		continue;
@@ -2665,7 +2640,6 @@ Job_AbortAll(void)
 	    KILLPG(job->pid, SIGINT);
 	    KILLPG(job->pid, SIGKILL);
 	}
-	JobSigUnlock(&mask);
     }
 
     /*
@@ -2680,8 +2654,7 @@ Job_AbortAll(void)
  *-----------------------------------------------------------------------
  * JobRestartJobs --
  *	Tries to restart stopped jobs if there are slots available.
- *	Note that this tries to restart them regardless of pending errors.
- *	It's not good to leave stopped jobs lying around!
+ *	Called in process context in response to a SIGCONT.
  *
  * Results:
  *	None.
@@ -2695,19 +2668,20 @@ static void
 JobRestartJobs(void)
 {
     Job *job;
-    sigset_t	mask;
 
-    JobSigLock(&mask);
     for (job = job_table; job < job_table_end; job++) {
-	if (job->job_state == JOB_ST_RUNNING && job->job_suspended) {
-	    job->job_suspended = 0;
+	if (job->job_state == JOB_ST_RUNNING &&
+		(make_suspended || job->job_suspended)) {
 	    if (DEBUG(JOB)) {
 		(void)fprintf(stdout, "Restarting stopped job pid %d.\n",
 			job->pid);
 		(void)fflush(stdout);
 	    }
-	    (void)printf("*** [%s] Continued\n", job->node->name);
-	    (void)fflush(stdout);
+	    if (job->job_suspended) {
+		    (void)printf("*** [%s] Continued\n", job->node->name);
+		    (void)fflush(stdout);
+	    }
+	    job->job_suspended = 0;
 	    if (KILLPG(job->pid, SIGCONT) != 0 && DEBUG(JOB)) {
 		fprintf(stdout, "Failed to send SIGCONT to %d\n", job->pid);
 		(void)fflush(stdout);
@@ -2717,7 +2691,7 @@ JobRestartJobs(void)
 	    /* Job exit deferred after calling waitpid() in a signal handler */
 	    JobFinish(job, job->exit_status);
     }
-    JobSigUnlock(&mask);
+    make_suspended = 0;
 }
 
 static void
