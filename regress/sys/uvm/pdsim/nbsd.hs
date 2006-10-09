@@ -1,5 +1,5 @@
 {-
-/*	$NetBSD: nbsd.hs,v 1.1 2006/09/30 08:50:32 yamt Exp $	*/
+/*	$NetBSD: nbsd.hs,v 1.1 2006/10/09 12:32:46 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
