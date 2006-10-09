@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.65 2006/09/07 02:40:33 dogcow Exp $ */
+/*	$NetBSD: if_gre.c,v 1.66 2006/10/09 17:54:23 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.65 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.66 2006/10/09 17:54:23 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -469,7 +469,7 @@ gre_thread1(struct gre_softc *sc, struct lwp *l)
 		gre_upcall_remove(so);
 		FILE_UNUSE(sp.sp_fp, NULL);
 		sp.sp_fp = NULL;
-	} else
+	} else if (so != NULL)
 		gre_sodestroy(&so);
 out:
 	GRE_DPRINTF(sc, "%s: stopping\n", __func__);
