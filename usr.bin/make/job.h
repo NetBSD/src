@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.31 2006/10/09 13:40:11 dsl Exp $	*/
+/*	$NetBSD: job.h,v 1.32 2006/10/09 14:36:41 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -122,14 +122,10 @@ emul_poll(struct pollfd *fd, int nfd, int timeout);
  *	   commands.
  *	4) An FILE* for writing out the commands. This is only
  *	   used before the job is actually started.
- *	5) A union of things used for handling the shell's output. Different
- *	   parts of the union are used based on the value of the usePipes
- *	   flag. If it is true, the output is being caught via a pipe and
+ *	5) The output is being caught via a pipe and
  *	   the descriptors of our pipe, an array in which output is line
  *	   buffered and the current position in that buffer are all
- *	   maintained for each job. If, on the other hand, usePipes is false,
- *	   the output is routed to a temporary file and all that is kept
- *	   is the name of the file and the descriptor open to the file.
+ *	   maintained for each job.
  *	6) A word of flags which determine how the module handles errors,
  *	   echoing, etc. for the job
  *
@@ -167,40 +163,16 @@ typedef struct Job {
 				 * commands */
 #define JOB_TRACED	0x400	/* we've sent 'set -x' */
 
-    union {
-	struct {
-	    int	  	op_inPipe;	/* Input side of pipe associated
-					 * with job's output channel */
-	    struct pollfd *op_inPollfd;	/* pollfd associated with inPipe */
-	    int   	op_outPipe;	/* Output side of pipe associated with
-					 * job's output channel */
-	    char  	op_outBuf[JOB_BUFSIZE + 1];
-	    	  	    	    	/* Buffer for storing the output of the
-					 * job, line by line */
-	    int   	op_curPos;	/* Current position in op_outBuf */
-	}   	    o_pipe;	    /* data used when catching the output via
-				     * a pipe */
-	struct {
-	    char  	of_outFile[sizeof(TMPPAT)+2];
-	    	  	    	    	/* Name of file to which shell output
-					 * was rerouted */
-	    int	    	of_outFd;	/* Stream open to the output
-					 * file. Used to funnel all
-					 * from a single job to one file
-					 * while still allowing
-					 * multiple shell invocations */
-	}   	    o_file;	    /* Data used when catching the output in
-				     * a temporary file */
-    }       	output;	    /* Data for tracking a shell's output */
+    int	  	inPipe;		/* Input side of pipe associated
+				 * with job's output channel */
+    struct pollfd *inPollfd;	/* pollfd associated with inPipe */
+    int   	outPipe;	/* Output side of pipe associated with
+				 * job's output channel */
+    char  	outBuf[JOB_BUFSIZE + 1];
+				/* Buffer for storing the output of the
+				 * job, line by line */
+    int   	curPos;	/* Current position in op_outBuf */
 } Job;
-
-#define outPipe	  	output.o_pipe.op_outPipe
-#define inPipe	  	output.o_pipe.op_inPipe
-#define inPollfd	output.o_pipe.op_inPollfd
-#define outBuf		output.o_pipe.op_outBuf
-#define curPos		output.o_pipe.op_curPos
-#define outFile		output.o_file.of_outFile
-#define outFd	  	output.o_file.of_outFd
 
 
 /*-
@@ -277,7 +249,7 @@ const char *Shell_GetNewline(void);
 void Job_Touch(GNode *, Boolean);
 Boolean Job_CheckCommands(GNode *, void (*abortProc )(const char *, ...));
 #define CATCH_BLOCK	1
-void Job_CatchChildren(unsigned int);
+void Job_CatchChildren(void);
 void Job_CatchOutput(void);
 void Job_Make(GNode *);
 void Job_Init(void);

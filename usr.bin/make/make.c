@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.63 2006/09/23 20:51:28 dsl Exp $	*/
+/*	$NetBSD: make.c,v 1.64 2006/10/09 14:36:41 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.63 2006/09/23 20:51:28 dsl Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.64 2006/10/09 14:36:41 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.63 2006/09/23 20:51:28 dsl Exp $");
+__RCSID("$NetBSD: make.c,v 1.64 2006/10/09 14:36:41 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1230,7 +1230,7 @@ Make_Run(Lst targs)
      */
     while (!Lst_IsEmpty(toBeMade) || jobTokensRunning > 0) {
 	Job_CatchOutput();
-	Job_CatchChildren(usePipes ? 0 : CATCH_BLOCK);
+	Job_CatchChildren();
 	(void)MakeStartJobs();
     }
 
