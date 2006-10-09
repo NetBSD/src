@@ -1,8 +1,8 @@
 {-
-/*	$NetBSD: rand.hs,v 1.1 2006/09/30 08:50:32 yamt Exp $	*/
+/*	$NetBSD: opt.hs,v 1.1 2006/10/09 12:32:46 yamt Exp $	*/
 
 /*-
- * Copyright (c)2005 YAMAMOTO Takashi,
+ * Copyright (c)2006 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,30 +32,31 @@ import System.Environment
 import System.IO
 import List
 import Maybe
-import Random
+import qualified Data.Set as Set
 
-contain x xs = isJust $ find (== x) xs
+ff s [] = head $ Set.elems s
+ff s (y:ys) =
+	if Set.size s == 1 then head $ Set.elems s else
+	if Set.member y s then
+		ff (Set.delete y s) ys
+	else
+		ff s ys
 
-deleteAt 0 (_:xs) = xs
-deleteAt at (x:xs) = x:deleteAt (at-1) xs
-
-do_rand1 rg npg n q qlen [] = (reverse n, q)
-do_rand1 rg npg n q qlen rs@(r:rs2) =
-	if contain r q then
-		do_rand1 rg npg n q qlen rs2
-	else if qlen < npg then
-		do_rand1 rg npg (r:n) (r:q) (qlen+1) rs2
+do_opt1 npg n q [] = (reverse n, q)
+do_opt1 npg n q rs@(r:rs2) =
+	if Set.member r q then
+		do_opt1 npg n q rs2
+	else if Set.size q < npg then
+		do_opt1 npg (r:n) (Set.insert r q) rs2
 	else
 		let
-			(i, nrg) = next rg
-			at = i `mod` npg
-			nq = deleteAt at q
+			c = ff q rs2
+			nq = Set.delete c q
 		in
-		do_rand1 nrg npg (r:n) (r:nq) qlen rs2
+		do_opt1 npg (r:n) (Set.insert r nq) rs2
 
-do_rand npg rs = fst $ do_rand1 rg npg [] [] 0 rs
-	where
-		rg = mkStdGen 0
+do_opt npg rs = fst $ do_opt1 npg [] Set.empty rs
+do_opt_dbg npg rs = do_opt1 npg [] Set.empty rs
 
 main = do
 	xs <- getContents
@@ -66,4 +67,4 @@ main = do
 		npgs = read $ args !! 0
 		pgs::[Int]
 		pgs = map read ls
-	mapM_ print $ do_rand npgs pgs
+	mapM_ print $ do_opt npgs pgs

@@ -1,5 +1,5 @@
 {-
-/*	$NetBSD: renumber.hs,v 1.2 2006/09/30 16:01:19 yamt Exp $	*/
+/*	$NetBSD: renumber.hs,v 1.1 2006/10/09 12:32:46 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,

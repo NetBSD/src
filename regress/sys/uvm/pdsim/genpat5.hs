@@ -1,5 +1,5 @@
 {-
-/*	$NetBSD: genpat5.hs,v 1.3 2006/09/30 16:14:00 yamt Exp $	*/
+/*	$NetBSD: genpat5.hs,v 1.1 2006/10/09 12:32:46 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,

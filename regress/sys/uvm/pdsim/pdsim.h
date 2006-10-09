@@ -1,4 +1,4 @@
-/*	$NetBSD: pdsim.h,v 1.1 2006/09/30 08:47:39 yamt Exp $	*/
+/*	$NetBSD: pdsim.h,v 1.1 2006/10/09 12:32:46 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
