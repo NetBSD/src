@@ -1,4 +1,4 @@
-/*	$NetBSD: lirs.c,v 1.2 2006/10/09 12:40:00 yamt Exp $	*/
+/*	$NetBSD: lirs.c,v 1.3 2006/10/09 12:43:32 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -125,7 +125,7 @@ reclaim()
 
 	bp = TAILQ_FIRST(&q_q);
 	buf_print(bp, ": reclaim\n");
-	assert(bp->b_type == B_H | B_R);
+	assert(bp->b_type == (B_H | B_R));
 	TAILQ_REMOVE(&q_q, bp, b_q);
 	bp->b_type &= ~B_R;
 	nbufs--;
