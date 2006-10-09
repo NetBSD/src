@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.34 2006/01/31 22:27:15 rpaulo Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.35 2006/10/09 10:46:00 peter Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.34 2006/01/31 22:27:15 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.35 2006/10/09 10:46:00 peter Exp $");
 
 #include "opt_inet.h"
 
@@ -83,19 +83,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.34 2006/01/31 22:27:15 rpaulo Exp $")
 
 #include <net/net_osdep.h>
 
-struct faith_softc {
-	struct ifnet sc_if;	/* must be first */
-	LIST_ENTRY(faith_softc) sc_list;
-};
-
 static int	faithioctl(struct ifnet *, u_long, caddr_t);
 static int	faithoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 			    struct rtentry *);
 static void	faithrtrequest(int, struct rtentry *, struct rt_addrinfo *);
 
 void	faithattach(int);
-
-static LIST_HEAD(, faith_softc) faith_softc_list;
 
 static int	faith_clone_create(struct if_clone *, int);
 static int	faith_clone_destroy(struct ifnet *);
@@ -110,50 +103,45 @@ void
 faithattach(int count)
 {
 
-	LIST_INIT(&faith_softc_list);
 	if_clone_attach(&faith_cloner);
 }
 
 static int
 faith_clone_create(struct if_clone *ifc, int unit)
 {
-	struct faith_softc *sc;
+	struct ifnet *ifp;
 
-	sc = malloc(sizeof(struct faith_softc), M_DEVBUF, M_WAITOK);
-	memset(sc, 0, sizeof(struct faith_softc));
+	ifp = malloc(sizeof(*ifp), M_DEVBUF, M_WAITOK | M_ZERO);
 
-	snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname), "%s%d",
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
 	    ifc->ifc_name, unit);
 
-	sc->sc_if.if_mtu = FAITHMTU;
+	ifp->if_mtu = FAITHMTU;
 	/* Change to BROADCAST experimentaly to announce its prefix. */
-	sc->sc_if.if_flags = /* IFF_LOOPBACK */ IFF_BROADCAST | IFF_MULTICAST;
-	sc->sc_if.if_ioctl = faithioctl;
-	sc->sc_if.if_output = faithoutput;
-	sc->sc_if.if_type = IFT_FAITH;
-	sc->sc_if.if_hdrlen = 0;
-	sc->sc_if.if_addrlen = 0;
-	sc->sc_if.if_dlt = DLT_NULL;
-	if_attach(&sc->sc_if);
-	if_alloc_sadl(&sc->sc_if);
+	ifp->if_flags = /* IFF_LOOPBACK */ IFF_BROADCAST | IFF_MULTICAST;
+	ifp->if_ioctl = faithioctl;
+	ifp->if_output = faithoutput;
+	ifp->if_type = IFT_FAITH;
+	ifp->if_hdrlen = 0;
+	ifp->if_addrlen = 0;
+	ifp->if_dlt = DLT_NULL;
+	if_attach(ifp);
+	if_alloc_sadl(ifp);
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int));
+	bpfattach(ifp, DLT_NULL, sizeof(u_int));
 #endif
-	LIST_INSERT_HEAD(&faith_softc_list, sc, sc_list);
 	return (0);
 }
 
 int
 faith_clone_destroy(struct ifnet *ifp)
 {
-	struct faith_softc *sc = (void *) ifp;
 
-	LIST_REMOVE(sc, sc_list);
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
 	if_detach(ifp);
-	free(sc, M_DEVBUF);
+	free(ifp, M_DEVBUF);
 
 	return (0);
 }
