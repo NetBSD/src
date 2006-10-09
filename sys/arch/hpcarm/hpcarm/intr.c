@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.10.22.3 2006/09/21 12:57:12 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.10.22.4 2006/10/09 11:44:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10.22.3 2006/09/21 12:57:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10.22.4 2006/10/09 11:44:56 yamt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -191,6 +191,8 @@ ipl_to_spl(int ipl)
 {
 
 	switch (ipl) {
+	case IPL_NONE:
+		return _SPL_0;
 	case IPL_SOFTCLOCK:
 		return _SPL_SOFTCLOCK;
 	case IPL_SOFTNET:
