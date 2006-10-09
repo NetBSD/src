@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.120 2006/10/09 14:36:41 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.121 2006/10/09 20:44:35 apb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.120 2006/10/09 14:36:41 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.121 2006/10/09 20:44:35 apb Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.120 2006/10/09 14:36:41 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.121 2006/10/09 20:44:35 apb Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -203,28 +203,41 @@ static int     	  numCommands; 	    /* The number of commands actually printed
 
 /*
  * Descriptions for various shells.
+ *
+ * DEFSHELL in config.h is usually 0, so shells[0] describes the
+ * default shell.  If _BASENAME_DEFSHELL is not defined, then shells[0]
+ * describes "sh".  If _BASENAME_DEFSHELL is defined, then shells[0]
+ * decsribes whatever shell is named by _BASENAME_DEFSHELL, but this
+ * shell is assumed to be sh-compatible.
  */
 static Shell    shells[] = {
+#ifdef _BASENAME_DEFSHELL
     /*
-     * CSH description. The csh can do echo control by playing
-     * with the setting of the 'echo' shell variable. Sadly,
-     * however, it is unable to do error control nicely.
+     * An sh-compatible shell with a non-standard name.
+     *
+     * Keep this in sync with the "sh" description below, but avoid
+     * non-portable features that might not be supplied by all
+     * sh-compatible shells.
      */
 {
-    "csh",
-    TRUE, "unset verbose", "set verbose", "unset verbose", 10,
-    FALSE, "echo \"%s\"\n", "csh -c \"%s || exit 0\"\n", "", "'\\\n'", '#',
-    "v", "e",
+    _BASENAME_DEFSHELL,
+    FALSE, "", "", "", 0,
+    FALSE, "echo \"%s\"\n", "%s\n", "{ %s \n} || exit $?\n", "'\n'", '#',
+    "",
+    "",
 },
+#endif /* _BASENAME_DEFSHELL */
     /*
      * SH description. Echo control is also possible and, under
      * sun UNIX anyway, one can even control error checking.
+     *
+     * This entry will be shells[0] if _BASENAME_DEFSHELL is not defined.
      */
 {
     "sh",
     FALSE, "", "", "", 0,
     FALSE, "echo \"%s\"\n", "%s\n", "{ %s \n} || exit $?\n", "'\n'", '#',
-#ifdef __NetBSD__
+#if defined(MAKE_NATIVE) && defined(__NetBSD__)
     "q",
 #else
     "",
@@ -240,6 +253,17 @@ static Shell    shells[] = {
     FALSE, "echo \"%s\"\n", "%s\n", "{ %s \n} || exit $?\n", "'\n'", '#',
     "v",
     "",
+},
+    /*
+     * CSH description. The csh can do echo control by playing
+     * with the setting of the 'echo' shell variable. Sadly,
+     * however, it is unable to do error control nicely.
+     */
+{
+    "csh",
+    TRUE, "unset verbose", "set verbose", "unset verbose", 10,
+    FALSE, "echo \"%s\"\n", "csh -c \"%s || exit 0\"\n", "", "'\\\n'", '#',
+    "v", "e",
 },
     /*
      * UNKNOWN.
