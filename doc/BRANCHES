@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.115 2006/10/09 10:12:55 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.116 2006/10/09 10:17:17 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -416,7 +416,7 @@ Notes:
 			mac68k, x68k, hpcarm, shark, acorn32,
 			cats, netwinder, algor, arc, ews4800mips, hpcmips,
 			newsmips, luna68k, cobalt, pmax, sbmips, hpcsh,
-			landisk, next68k, macppc
+			landisk, next68k, macppc, amiga, cesfic
 
 		not tested:
 			pdp10 (i don't know how to build)
