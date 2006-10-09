@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.219 2006/10/08 23:22:26 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.220 2006/10/09 02:43:28 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.219 2006/10/08 23:22:26 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.220 2006/10/09 02:43:28 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -3423,7 +3423,6 @@ raid_match(struct device *self, struct cfdata *cfdata, void *aux)
 static void
 raid_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct raid_softc *rs = (struct raid_softc *)self;
 
 }
 
