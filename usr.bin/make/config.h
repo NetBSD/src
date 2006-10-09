@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.17 2004/05/07 00:04:38 ross Exp $	*/
+/*	$NetBSD: config.h,v 1.18 2006/10/09 13:49:59 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -144,13 +144,6 @@
  *				# of ${VAR}
  */
 #define SUNSHCMD
-
-/*
- * USE_PGRP
- *	Kill the process group of the job so that all the progeny of the
- *	current job dies, instead of just the one forked.
- */
-#define USE_PGRP
 
 /*
  * USE_IOVEC
