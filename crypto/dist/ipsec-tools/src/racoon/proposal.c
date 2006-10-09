@@ -1,6 +1,6 @@
-/*	$NetBSD: proposal.c,v 1.10 2006/10/02 07:15:09 manu Exp $	*/
+/*	$NetBSD: proposal.c,v 1.11 2006/10/09 06:32:59 manu Exp $	*/
 
-/* $Id: proposal.c,v 1.10 2006/10/02 07:15:09 manu Exp $ */
+/* $Id: proposal.c,v 1.11 2006/10/09 06:32:59 manu Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -747,8 +747,10 @@ aproppair2saprop(p0)
 				goto err;
 			}
 
-			if (ipsecdoi_t2satrns(t->trns, newpp, newpr, newtr) < 0) {
+			if (ipsecdoi_t2satrns(t->trns, 
+			    newpp, newpr, newtr) < 0) {
 				flushsaprop(newpp);
+				racoon_free(newtr);
 				return NULL;
 			}
 
@@ -1036,7 +1038,8 @@ set_proposal_from_policy(iph2, sp_main, sp_sub)
 			newpr->encmode = pfkey2ipsecdoi_mode(req->saidx.mode);
 #ifdef ENABLE_NATT
 			if (iph2->ph1 && (iph2->ph1->natt_flags & NAT_DETECTED))
-				newpr->encmode += iph2->ph1->natt_options->mode_udp_diff;
+				newpr->encmode += 
+				    iph2->ph1->natt_options->mode_udp_diff;
 #endif
 		}
 		else
@@ -1050,6 +1053,7 @@ set_proposal_from_policy(iph2, sp_main, sp_sub)
 		if (set_satrnsbysainfo(newpr, iph2->sainfo) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"failed to get algorithms.\n");
+			racoon_free(newpr);
 			goto err;
 		}
 
@@ -1164,7 +1168,9 @@ set_proposal_from_proposal(iph2)
 				conf->gen_policy == GENERATE_POLICY_UNIQUE){
 				newpr->reqid_in = g_nextreqid ;
 				newpr->reqid_out = g_nextreqid ++;
-				/* XXX there is a (very limited) risk of reusing the same reqid
+				/* 
+				 * XXX there is a (very limited) 
+				 * risk of reusing the same reqid
 				 * as another SP entry for the same peer
 				 */
 				if(g_nextreqid >= IPSEC_MANUAL_REQID_MAX)
@@ -1178,6 +1184,7 @@ set_proposal_from_proposal(iph2)
 			{
 				plog(LLV_ERROR, LOCATION, NULL,
 					"failed to get algorithms.\n");
+				racoon_free(newpr);
 				goto end;
 			}
 			inssaproto(pp0, newpr);
