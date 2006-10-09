@@ -1,4 +1,4 @@
-.\"	$NetBSD: ps.1,v 1.76 2006/10/07 10:22:21 apb Exp $
+.\"	$NetBSD: ps.1,v 1.77 2006/10/09 21:31:29 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -209,7 +209,6 @@ Display information associated with the specified process
 .It Fl r
 Sort by current CPU usage.
 This is equivalent to
-equivalent to
 .Fl k Ar %cpu .
 .It Fl S
 Change the way the process time is calculated by summing all exited
@@ -513,15 +512,15 @@ Several of them have aliases (keywords which are synonyms).
 percentage CPU usage (alias
 .Ar pcpu )
 .It Ar %mem
-percentage memory usage (alias 
+percentage memory usage (alias
 .Ar pmem )
 .It Ar acflag
-accounting flag (alias 
+accounting flag (alias
 .Ar acflg )
 .It Ar comm
 command (the argv[0] value)
 .It Ar command
-command and arguments (alias 
+command and arguments (alias
 .Ar args )
 .It Ar cpu
 short-term CPU usage factor (for scheduling)
@@ -539,7 +538,7 @@ effective user id
 .It Ar euser
 user name (from euid)
 .It Ar flags
-the process flags, in hexadecimal (alias 
+the process flags, in hexadecimal (alias
 .Ar f )
 .It Ar gid
 effective group id
@@ -552,7 +551,7 @@ group names (from group access list)
 .It Ar holdcnt
 number of holds on the process (if non-zero, process can't be swapped)
 .It Ar inblk
-total blocks read (alias 
+total blocks read (alias
 .Ar inblock )
 .It Ar jobc
 job control count
@@ -569,7 +568,7 @@ ID of the LWP
 .It Ar lim
 memory use limit
 .It Ar logname
-login name of user who started the process (alias 
+login name of user who started the process (alias
 .Ar login )
 .It Ar lstart
 time started
@@ -584,14 +583,14 @@ total messages received (reads from pipes/sockets)
 .It Ar msgsnd
 total messages sent (writes on pipes/sockets)
 .It Ar nice
-nice value (alias 
+nice value (alias
 .Ar ni )
 .It Ar nivcsw
 total involuntary context switches
 .It Ar nlwp
 number of LWPs in the process
 .It Ar nsigs
-total signals taken (alias 
+total signals taken (alias
 .Ar nsignals )
 .It Ar nswap
 total swaps in/out
@@ -600,7 +599,7 @@ total voluntary context switches
 .It Ar nwchan
 wait channel (as an address)
 .It Ar oublk
-total blocks written (alias 
+total blocks written (alias
 .Ar oublock )
 .It Ar p_ru
 resource usage pointer (valid only for zombie)
@@ -632,7 +631,7 @@ Number of LWPs on a processor or run queue
 .It Ar rss
 resident set size
 .It Ar rsz
-resident set size + (text size / text use count) (alias 
+resident set size + (text size / text use count) (alias
 .Ar rssize )
 .It Ar ruid
 real user
@@ -645,16 +644,16 @@ session pointer
 session
 .Tn ID
 .It Ar sig
-pending signals (alias 
+pending signals (alias
 .Ar pending )
 .It Ar sigcatch
-caught signals (alias 
+caught signals (alias
 .Ar caught )
 .It Ar sigignore
-ignored signals (alias 
+ignored signals (alias
 .Ar ignored )
 .It Ar sigmask
-blocked signals (alias 
+blocked signals (alias
 .Ar blocked )
 .It Ar sl
 sleep time (in seconds; 127 = infinity)
