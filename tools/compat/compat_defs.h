@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.55 2006/10/07 22:00:22 apb Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.56 2006/10/09 14:59:05 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -227,6 +227,19 @@ void err(int, const char *, ...);
 void errx(int, const char *, ...);
 void warn(const char *, ...);
 void warnx(const char *, ...);
+#endif
+
+#if !HAVE_ESETFUNC
+void (*esetfunc(void (*)(int, const char *, ...)))(int, const char *, ...);
+size_t estrlcpy(char *, const char *, size_t);
+size_t estrlcat(char *, const char *, size_t);
+char *estrdup(const char *);
+void *ecalloc(size_t, size_t);
+void *emalloc(size_t);
+void *erealloc(void *, size_t);
+FILE *efopen(const char *, const char *);
+int easprintf(char **, const char *, ...);
+int evasprintf(char **, const char *, va_list);
 #endif
 
 #if !HAVE_FGETLN || defined(__NetBSD__)
