@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.8 2003/06/23 13:05:53 agc Exp $	*/
+/*	$NetBSD: screen.c,v 1.9 2006/10/09 19:49:51 apb Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: screen.c,v 1.8 2003/06/23 13:05:53 agc Exp $");
+__RCSID("$NetBSD: screen.c,v 1.9 2006/10/09 19:49:51 apb Exp $");
 #endif
 
 #include "os.h"
@@ -174,21 +174,30 @@ int interactive;
 	return;
     }
 
-    /* set up common terminal capabilities */
-    if ((screen_length = t_getnum(info, "li")) <= 0)
+    /* set screen_width and screen_length from an ioctl, if possible. */
+    get_screensize();
+
+    /* get size from terminal capabilities if not yet set properly. */
+    /* screen_width is a little different */
+    if (screen_width < 0)
     {
-	screen_length = smart_terminal = 0;
-	return;
+	if ((screen_width = t_getnum(info, "co")) == -1)
+	{
+	    screen_width = 79;
+	}
+	else
+	{
+	    screen_width -= 1;
+	}
     }
 
-    /* screen_width is a little different */
-    if ((screen_width = t_getnum(info, "co")) == -1)
+    if (screen_length <= 0)
     {
-	screen_width = 79;
-    }
-    else
-    {
-	screen_width -= 1;
+	if ((screen_length = t_getnum(info, "li")) <= 0)
+	{
+	    screen_length = smart_terminal = 0;
+	    return;
+	}
     }
 
     /* terminals that overstrike need special attention */
@@ -221,12 +230,8 @@ int interactive;
     /* set convenience strings */
     home[0] = '\0';
     t_goto(info, cursor_motion, 0, 0, home, 14);
-    /* (lower_left is set in get_screensize) */
-
-    /* get the actual screen size with an ioctl, if needed */
-    /* This may change screen_width and screen_length, and it always
-       sets lower_left. */
-    get_screensize();
+    lower_left[0] = '\0';
+    t_goto(info, cursor_motion, 0, screen_length - 1, lower_left, 14);
 
     /* if stdout is not a terminal, pretend we are a dumb terminal */
 #ifdef SGTTY
@@ -439,8 +444,6 @@ get_screensize()
 
 #endif /* TIOCGSIZE */
 #endif /* TIOCGWINSZ */
-    lower_left[0] = '\0';
-    t_goto(info, cursor_motion, 0, screen_length - 1, lower_left, 14);
 }
 
 void
