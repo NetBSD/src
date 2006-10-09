@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.61 2006/04/22 18:43:06 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.62 2006/10/09 20:46:33 apb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.61 2006/04/22 18:43:06 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.62 2006/10/09 20:46:33 apb Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.61 2006/04/22 18:43:06 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.62 2006/10/09 20:46:33 apb Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -220,6 +220,8 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 				 * dynamically allocated */
     Boolean 	  local;    	/* TRUE if command should be executed
 				 * locally */
+    Boolean 	  useShell;    	/* TRUE if command should be executed
+				 * using a shell */
     char	  *cmd = (char *)cmdp;
     GNode	  *gn = (GNode *)gnp;
 
@@ -283,6 +285,15 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
     while (isspace((unsigned char)*cmd))
 	cmd++;
 
+#if !defined(MAKE_NATIVE)
+    /*
+     * In a non-native build, the host environment might be weird enough
+     * that it's necessary to go through a shell to get the correct
+     * behaviour.  Or perhaps the shell has been replaced with something
+     * that does extra logging, and that should not be bypassed.
+     */
+    useShell = TRUE;
+#else
     /*
      * Search for meta characters in the command. If there are no meta
      * characters, there's no need to execute a shell to execute the
@@ -291,6 +302,8 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
     for (cp = cmd; !meta[(unsigned char)*cp]; cp++) {
 	continue;
     }
+    useShell = (*cp != '\0');
+#endif
 
     /*
      * Print the command before echoing if we're not supposed to be quiet for
@@ -309,10 +322,10 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 	return (0);
     }
 
-    if (*cp != '\0') {
+    if (useShell) {
 	/*
-	 * If *cp isn't the null character, we hit a "meta" character and
-	 * need to pass the command off to the shell. 
+	 * We need to pass the command off to the shell, typically
+	 * because the command contains a "meta" character.
 	 */
 	static const char *shargv[4];
 
