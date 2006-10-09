@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.123 2006/10/05 17:35:19 tls Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.124 2006/10/09 16:27:07 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.123 2006/10/05 17:35:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.124 2006/10/09 16:27:07 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -149,6 +149,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.123 2006/10/05 17:35:19 tls Exp $")
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+#include <netinet/tcp_congctl.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 
@@ -719,6 +720,13 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 			else
 				error = EINVAL;
 			break;
+#ifdef notyet
+		case TCP_CONGCTL:
+			if (m == NULL)
+				error = EINVAL;
+			error = tcp_congctl_select(tp, mtod(m, char *));
+#endif
+			break;
 
 		default:
 			error = ENOPROTOOPT;
@@ -745,6 +753,10 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 		case TCP_MAXSEG:
 			*mtod(m, int *) = tp->t_peermss;
 			break;
+#ifdef notyet
+		case TCP_CONGCTL:
+			break;
+#endif
 		default:
 			error = ENOPROTOOPT;
 			break;
@@ -1383,6 +1395,32 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 	return (error);
 }
 
+static int
+sysctl_tcp_congctl(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error, r;
+	char newname[TCPCC_MAXLEN];
+
+	strlcpy(newname, tcp_congctl_global_name, sizeof(newname) - 1);
+	
+	node = *rnode;
+	node.sysctl_data = newname;
+	node.sysctl_size = sizeof(newname);
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	
+	if (error || 
+	    newp == NULL ||
+	    strncmp(newname, tcp_congctl_global_name, sizeof(newname)) == 0)
+		return error;
+
+	if ((r = tcp_congctl_select(NULL, newname)))
+		return r;
+	
+	return error;
+}
+
 /*
  * this (second stage) setup routine is a replacement for tcp_sysctl()
  * (which is currently used for ipv4 and ipv6)
@@ -1391,7 +1429,7 @@ static void
 sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 			   const char *tcpname)
 {
-	int ecn_node;
+	int ecn_node, congctl_node;
 	const struct sysctlnode *sack_node, *node;
 #ifdef TCP_DEBUG
 	extern struct tcp_debug tcp_debug[TCP_NDEBUG];
@@ -1490,6 +1528,28 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 	    	       NULL, 0, NULL, 0,
 		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
 	ecn_node = node->sysctl_num;
+	sysctl_createv(clog, 0, NULL, &node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "congctl",
+		       SYSCTL_DESCR("TCP Congestion Control"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	congctl_node = node->sysctl_num;
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "available",
+		       SYSCTL_DESCR("Available Congestion Control Mechanisms"),
+		       NULL, 0, &tcp_congctl_avail, 0,
+		       CTL_NET, pf, IPPROTO_TCP, congctl_node,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRING, "selected",
+		       SYSCTL_DESCR("Selected Congestion Control Mechanism"),
+		       sysctl_tcp_congctl, 0, NULL, TCPCC_MAXLEN,
+		       CTL_NET, pf, IPPROTO_TCP, congctl_node,
+		       CTL_CREATE, CTL_EOL);
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "win_scale",
@@ -1555,12 +1615,6 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       SYSCTL_DESCR("Keepalive ticks per second"),
 		       NULL, PR_SLOWHZ, NULL, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SLOWHZ, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "newreno",
-		       SYSCTL_DESCR("NewReno congestion control algorithm"),
-		       NULL, 0, &tcp_do_newreno, 0,
-		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_NEWRENO, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "log_refused",

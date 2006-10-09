@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.75 2006/05/14 21:19:34 elad Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.76 2006/10/09 16:27:07 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.75 2006/05/14 21:19:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.76 2006/10/09 16:27:07 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -138,6 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.75 2006/05/14 21:19:34 elad Exp $");
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+#include <netinet/tcp_congctl.h>
 #include <netinet/tcpip.h>
 #ifdef TCP_DEBUG
 #include <netinet/tcp_debug.h>
@@ -416,40 +417,12 @@ tcp_timer_rexmt(void *arg)
 	 */
 	if (tp->t_state == TCPS_SYN_SENT)
 		tp->t_flags |= TF_SYN_REXMT;
+
 	/*
-	 * Close the congestion window down to one segment
-	 * (we'll open it by one segment for each ack we get).
-	 * Since we probably have a window's worth of unacked
-	 * data accumulated, this "slow start" keeps us from
-	 * dumping all that data as back-to-back packets (which
-	 * might overwhelm an intermediate gateway).
-	 *
-	 * There are two phases to the opening: Initially we
-	 * open by one mss on each ack.  This makes the window
-	 * size increase exponentially with time.  If the
-	 * window is larger than the path can handle, this
-	 * exponential growth results in dropped packet(s)
-	 * almost immediately.  To get more time between
-	 * drops but still "push" the network to take advantage
-	 * of improving conditions, we switch from exponential
-	 * to linear window opening at some threshhold size.
-	 * For a threshhold, we use half the current window
-	 * size, truncated to a multiple of the mss.
-	 *
-	 * (the minimum cwnd that will give us exponential
-	 * growth is 2 mss.  We don't allow the threshhold
-	 * to go below this.)
+	 * Adjust congestion control parameters.
 	 */
-	{
-	u_int win = min(tp->snd_wnd, tp->snd_cwnd) / 2 / tp->t_segsz;
-	if (win < 2)
-		win = 2;
-	/* Loss Window MUST be one segment. */
-	tp->snd_cwnd = tp->t_segsz;
-	tp->snd_ssthresh = win * tp->t_segsz;
-	tp->t_partialacks = -1;
-	tp->t_dupacks = 0;
-	}
+	tp->t_congctl->slow_retransmit(tp);
+
 	(void) tcp_output(tp);
 
  out:

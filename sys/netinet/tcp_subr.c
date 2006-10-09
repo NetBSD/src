@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.201 2006/10/07 19:53:42 yamt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.202 2006/10/09 16:27:07 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.201 2006/10/07 19:53:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.202 2006/10/09 16:27:07 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -151,6 +151,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.201 2006/10/07 19:53:42 yamt Exp $");
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+#include <netinet/tcp_congctl.h>
 #include <netinet/tcpip.h>
 
 #ifdef IPSEC
@@ -182,7 +183,6 @@ int	tcp_do_rfc1948 = 0;	/* ISS by cryptographic hash */
 int	tcp_do_sack = 1;	/* selective acknowledgement */
 int	tcp_do_win_scale = 1;	/* RFC1323 window scaling */
 int	tcp_do_timestamps = 1;	/* RFC1323 timestamps */
-int	tcp_do_newreno = 1;	/* Use the New Reno algorithms */
 int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
 int	tcp_do_ecn = 0;		/* Explicit Congestion Notification */
 #ifndef TCP_INIT_WIN
@@ -206,7 +206,6 @@ int	tcp_sack_tp_maxholes = 32;
 int	tcp_sack_globalmaxholes = 1024;
 int	tcp_sack_globalholes = 0;
 int	tcp_ecn_maxretries = 1;
-
 
 /* tcb hash */
 #ifndef TCBHASHSIZE
@@ -401,6 +400,9 @@ tcp_init(void)
 
 	/* Initialize the compressed state engine. */
 	syn_cache_init();
+
+	/* Initialize the congestion control algorithms. */
+	tcp_congctl_init();
 
 	MOWNER_ATTACH(&tcp_tx_mowner);
 	MOWNER_ATTACH(&tcp_rx_mowner);
@@ -1034,7 +1036,10 @@ tcp_newtcpcb(int family, void *aux)
 	 * and thus how many TCP sequence increments have occurred.
 	 */
 	tp->ts_timebase = tcp_now;
-
+	
+	tp->t_congctl = tcp_congctl_global;
+	tp->t_congctl->refcnt++;
+	
 	return (tp);
 }
 
@@ -1211,6 +1216,8 @@ tcp_close(struct tcpcb *tp)
 
 	/* free the SACK holes list. */
 	tcp_free_sackholes(tp);
+	
+	tp->t_congctl->refcnt--;
 
 	tcp_canceltimers(tp);
 	TCP_CLEAR_DELACK(tp);

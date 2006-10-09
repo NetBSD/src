@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.137 2006/09/05 00:29:36 rpaulo Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.138 2006/10/09 16:27:07 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -325,6 +325,8 @@ struct tcpcb {
 	u_short	t_pmtud_ip_hl;		/* IP header length from ICMP payload */
 
 	uint8_t t_ecn_retries;		/* # of ECN setup retries */
+	
+	struct tcp_congctl *t_congctl;	/* per TCB congctl algorithm */
 };
 
 /*
@@ -714,7 +716,7 @@ struct	tcpstat {
 	{ "keepintvl",	CTLTYPE_INT }, \
 	{ "keepcnt",	CTLTYPE_INT }, \
 	{ "slowhz",	CTLTYPE_INT }, \
-	{ "newreno",	CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "log_refused",CTLTYPE_INT }, \
 	{ 0, 0 }, \
 	{ "rstppslimit", CTLTYPE_INT }, \
@@ -736,7 +738,6 @@ extern	int tcp_do_rfc1323;	/* enabled/disabled? */
 extern	int tcp_do_sack;	/* SACK enabled/disabled? */
 extern	int tcp_do_win_scale;	/* RFC1323 window scaling enabled/disabled? */
 extern	int tcp_do_timestamps;	/* RFC1323 timestamps enabled/disabled? */
-extern	int tcp_do_newreno;	/* Use the New Reno algorithms */
 extern	int tcp_mssdflt;	/* default seg size */
 extern	int tcp_init_win;	/* initial window */
 extern	int tcp_init_win_local;	/* initial window for local nets */
@@ -789,7 +790,7 @@ extern	struct mowner tcp_mowner;
 	{ 1, 0, &tcp_keepintvl },		\
 	{ 1, 0, &tcp_keepcnt },			\
 	{ 1, 1, 0, PR_SLOWHZ },			\
-	{ 1, 0, &tcp_do_newreno },		\
+	{ 0 },					\
 	{ 1, 0, &tcp_log_refused },		\
 	{ 0 },					\
 	{ 1, 0, &tcp_rst_ppslim },		\
@@ -908,9 +909,6 @@ void	 syn_cache_reset(struct sockaddr *, struct sockaddr *,
 int	 syn_cache_respond(struct syn_cache *, struct mbuf *);
 void	 syn_cache_timer(void *);
 void	 syn_cache_cleanup(struct tcpcb *);
-
-void	 tcp_reno_newack(struct tcpcb *, struct tcphdr *);
-void	 tcp_newreno_newack(struct tcpcb *, struct tcphdr *);
 
 int	 tcp_input_checksum(int, struct mbuf *, const struct tcphdr *, int, int,
     int);
