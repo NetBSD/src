@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.81 2006/10/08 11:30:35 bouyer Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.82 2006/10/09 21:44:35 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -900,3 +900,9 @@ etc/rc.d/fsck					1.6
 	Lacombe with comment rework by me.
 	[riz, ticket #10704]
 
+sys/arch/acorn32/podulebus/simide.c		1.24 via patch
+
+	PR 23783: the correct number of elements to insert into cmd_iohs is
+	WDC_NREG, not DRIVE_REGISTERS_SPACE.  The latter is much bigger and
+	causes a buffer overrun and panic.  Patch supplied by Mike Pumford.
+	[bjh21, ticket #10703]
