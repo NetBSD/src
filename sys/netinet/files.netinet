@@ -1,4 +1,4 @@
-#	$NetBSD: files.netinet,v 1.11 2005/12/11 12:24:57 christos Exp $
+#	$NetBSD: files.netinet,v 1.12 2006/10/09 16:27:07 rpaulo Exp $
 
 defflag opt_tcp_debug.h		TCP_DEBUG
 defparam opt_tcp_debug.h	TCP_NDEBUG
@@ -14,6 +14,8 @@ defparam opt_tcp_space.h	TCP_RECVSPACE TCP_SENDSPACE
 
 defflag opt_inet_csum.h		INET_CSUM_COUNTERS TCP_CSUM_COUNTERS
 				UDP_CSUM_COUNTERS
+
+defparam opt_tcp_congctl.h	TCP_CONGCTL_DEFAULT
 
 file	netinet/igmp.c		inet
 file	netinet/in.c		inet
@@ -34,5 +36,6 @@ file	netinet/tcp_sack.c	inet | inet6
 file	netinet/tcp_subr.c	inet | inet6
 file	netinet/tcp_timer.c	inet | inet6
 file	netinet/tcp_usrreq.c	inet | inet6
+file	netinet/tcp_congctl.c	inet | inet6
 
 file	netinet/udp_usrreq.c	inet | inet6
