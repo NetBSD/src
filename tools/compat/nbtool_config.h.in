@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.14 2006/10/07 22:00:22 apb Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.15 2006/10/09 14:59:41 christos Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -150,6 +150,9 @@
 
 /* Define to 1 if you have the <err.h> header file. */
 #undef HAVE_ERR_H
+
+/* Define to 1 if you have the `esetfunc' function. */
+#undef HAVE_ESETFUNC
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
