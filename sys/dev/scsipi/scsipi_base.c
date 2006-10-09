@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.137 2006/09/11 19:43:55 reinoud Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.138 2006/10/09 21:29:14 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.137 2006/09/11 19:43:55 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.138 2006/10/09 21:29:14 scw Exp $");
 
 #include "opt_scsi.h"
 
@@ -1025,7 +1025,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
  *	Find out from the device what its capacity is.
  */
 u_int64_t
-scsipi_size(struct scsipi_periph *periph, int flags)
+scsipi_size(struct scsipi_periph *periph, int *secsize, int flags)
 {
 	union {
 		struct scsipi_read_capacity_10 cmd;
@@ -1048,8 +1048,11 @@ scsipi_size(struct scsipi_periph *periph, int flags)
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
 		return (0);
 
-	if (_4btol(data.data.addr) != 0xffffffff)
+	if (_4btol(data.data.addr) != 0xffffffff) {
+		if (secsize)
+			*secsize = _4btol(data.data.length);
 		return (_4btol(data.data.addr) + 1);
+	}
 
 	/*
 	 * Device is larger than can be reflected by READ CAPACITY (10).
@@ -1067,6 +1070,8 @@ scsipi_size(struct scsipi_periph *periph, int flags)
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
 		return (0);
 
+	if (secsize)
+		*secsize = _4btol(data.data16.length);
 	return (_8btol(data.data16.addr) + 1);
 }
 
