@@ -3,7 +3,12 @@
 
 2006-10-06  Emmanuel Dreyfus  <manu@netbsd.org>
 	From Tomoyuki Okazaki <okazaki@kick.gr.jp>
-	* Camelia cipher support (RFC 4312)
+	* configure.ac src/libipsec/pfkey_dump.c
+	  src/racoon/{algorithm.c|algorithm.h|cftoken.l|crypto_openssl.c}
+	  src/racoon/{crypto_openssl.h|eaytest.c|ipsec_doi.c|ipsec_doi.h}
+	  src/racoon/{oakley.h|pfkey.c|racoon.conf.5|strnames.c}
+	  src/setkey/{setkey.8|test-pfkey.c|token.l}: Camelia cipher 
+	  support (RFC 4312)
 
 2006-10-03  Emmanuel Dreyfus  <manu@netbsd.org>
 	* src/racoon/admin.c: fix endianness issue introduced yesterday
