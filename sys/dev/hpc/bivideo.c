@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.23 2006/09/24 03:53:08 jmcneill Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.24 2006/10/09 10:33:42 peter Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,11 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.23 2006/09/24 03:53:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.24 2006/10/09 10:33:42 peter Exp $");
 
-#define FBDEBUG
-static const char _copyright[] __attribute__ ((unused)) =
-    "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
+#ifdef _KERNEL_OPT
+#include "opt_hpcfb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,11 @@ static const char _copyright[] __attribute__ ((unused)) =
 #include <dev/hpc/bivideovar.h>
 #include <dev/hpc/hpccmapvar.h>
 
-#define VPRINTF(arg)	do { if (bootverbose) printf arg; } while(0);
+#ifdef FBDEBUG
+#define VPRINTF(arg)	do { if (bootverbose) printf arg; } while (0)
+#else
+#define VPRINTF(arg)	/* nothing */
+#endif
 
 /*
  *  global variables

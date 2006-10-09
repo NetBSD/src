@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.17 2006/06/27 10:56:16 peter Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.18 2006/10/09 10:33:42 peter Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,9 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.17 2006/06/27 10:56:16 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.18 2006/10/09 10:33:42 peter Exp $");
 
-#define BTNMGRDEBUG
+#ifdef _KERNEL_OPT
+#include "opt_btnmgr.h"
+#include "opt_wsdisplay_compat.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.17 2006/06/27 10:56:16 peter Exp $");
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 
-#include "opt_wsdisplay_compat.h"
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>

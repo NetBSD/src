@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.37 2006/09/24 03:53:08 jmcneill Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.38 2006/10/09 10:33:42 peter Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,13 +43,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.37 2006/09/24 03:53:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.38 2006/10/09 10:33:42 peter Exp $");
 
-#define FBDEBUG
-static const char _copyright[] __attribute__ ((unused)) =
-    "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
-static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.37 2006/09/24 03:53:08 jmcneill Exp $";
+#ifdef _KERNEL_OPT
+#include "opt_hpcfb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

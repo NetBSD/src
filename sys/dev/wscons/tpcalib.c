@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalib.c,v 1.6 2005/12/11 12:24:12 christos Exp $	*/
+/*	$NetBSD: tpcalib.c,v 1.7 2006/10/09 10:33:42 peter Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -28,7 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.6 2005/12/11 12:24:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.7 2006/10/09 10:33:42 peter Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_tpcalib.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.6 2005/12/11 12:24:12 christos Exp $")
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/tpcalibvar.h>
 
-#define TPCALIBDEBUG
 #ifdef TPCALIBDEBUG
 int	tpcalib_debug = 0;
 #define	DPRINTF(arg) if (tpcalib_debug) printf arg;

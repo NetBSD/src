@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.6 2006/09/05 21:59:51 gdamore Exp $ */
+/*	$NetBSD: apmdev.c,v 1.7 2006/10/09 10:33:42 peter Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,9 +40,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.6 2006/09/05 21:59:51 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.7 2006/10/09 10:33:42 peter Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_apmdev.h"
+#endif
 
 #ifdef APM_NOIDLE
 #error APM_NOIDLE option deprecated; use APM_NO_IDLE instead
@@ -72,7 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.6 2006/09/05 21:59:51 gdamore Exp $");
 
 #include <machine/stdarg.h>
 
-#define	APMDEBUG
 #if defined(APMDEBUG)
 #define	DPRINTF(f, x)		do { if (apmdebug & (f)) printf x; } while (0)
 

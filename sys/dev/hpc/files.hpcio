@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcio,v 1.5 2005/12/11 12:21:22 christos Exp $
+#	$NetBSD: files.hpcio,v 1.6 2006/10/09 10:33:42 peter Exp $
 #	H/PC GPIO interface
 
 #  platform:
@@ -38,6 +38,8 @@ file dev/hpc/hpcout.c		hpcout
 device pwctl
 attach pwctl at hpcioif
 file dev/hpc/pwctl.c		pwctl
+defflag	opt_pwctl.h	PWCTLDEBUG
+defparam opt_pwctl.h	PWCTLDEBUG_CONF
 
 device button
 attach button at hpcioif
