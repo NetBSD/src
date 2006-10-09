@@ -1,4 +1,4 @@
-/* $NetBSD: wskbdvar.h,v 1.12 2005/12/11 12:24:12 christos Exp $ */
+/* $NetBSD: wskbdvar.h,v 1.13 2006/10/09 11:03:43 peter Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -43,8 +43,7 @@
 struct wskbd_accessops {
 	int	(*enable)(void *, int);
 	void    (*set_leds)(void *, int);
-	int     (*ioctl)(void *v, u_long cmd, caddr_t data, int flag,
-			      struct lwp *l);
+	int     (*ioctl)(void *, u_long, caddr_t, int, struct lwp *);
 };
 
 /*
@@ -89,13 +88,13 @@ int	wskbddevprint(void *, const char *);
 /*
  * Callbacks from the keyboard driver to the wskbd interface driver.
  */
-void	wskbd_input(struct device *kbddev, u_int type, int value);
+void	wskbd_input(struct device *, u_int, int);
 /* for WSDISPLAY_COMPAT_RAWKBD */
 void	wskbd_rawinput(struct device *, u_char *, int);
 
 /*
  * Console interface.
  */
-int	wskbd_cngetc(dev_t dev);
-void	wskbd_cnpollc(dev_t dev, int poll);
+int	wskbd_cngetc(dev_t);
+void	wskbd_cnpollc(dev_t, int);
 void	wskbd_cnbell(dev_t, u_int, u_int, u_int);

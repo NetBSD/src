@@ -1,4 +1,4 @@
-/* $NetBSD: wsemulvar.h,v 1.12 2005/12/11 12:24:12 christos Exp $ */
+/* $NetBSD: wsemulvar.h,v 1.13 2006/10/09 11:03:43 peter Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -46,9 +46,9 @@ struct wsemul_ops {
 				  int, int, long);
 	void	*(*attach)(int console, const struct wsscreen_descr *, void *,
 				int, int, void *, long);
-	void	(*output)(void *cookie, const u_char *data, u_int count, int);
+	void	(*output)(void *, const u_char *, u_int, int);
 	int	(*translate)(void *, keysym_t, const char **);
-	void	(*detach)(void *cookie, u_int *crow, u_int *ccol);
+	void	(*detach)(void *, u_int *, u_int *);
 	void    (*reset)(void *, enum wsemul_resetops);
 	void	(*getmsgattrs)(void *, struct wsdisplay_msgattrs *);
 	void	(*setmsgattrs)(void *, const struct wsscreen_descr *,
@@ -74,5 +74,5 @@ const struct wsemul_ops *wsemul_pick(const char *);
 /*
  * Callbacks from the emulation code to the display interface driver.
  */
-void	wsdisplay_emulbell(void *v);
-void	wsdisplay_emulinput(void *v, const u_char *, u_int);
+void	wsdisplay_emulbell(void *);
+void	wsdisplay_emulinput(void *, const u_char *, u_int);
