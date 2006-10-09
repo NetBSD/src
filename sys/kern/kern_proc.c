@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.96 2006/10/08 22:57:11 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.97 2006/10/09 00:39:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.96 2006/10/08 22:57:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.97 2006/10/09 00:39:06 martin Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -611,7 +611,7 @@ struct proc *
 proc_alloc(void)
 {
 	struct proc *p;
-	int s, nxt, error;
+	int s, nxt;
 	pid_t pid;
 	struct pid_table *pt;
 
