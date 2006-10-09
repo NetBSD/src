@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.81 2006/10/09 03:34:56 mrg Exp $ */
+/*	$NetBSD: clock.c,v 1.82 2006/10/09 21:50:27 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.81 2006/10/09 03:34:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.82 2006/10/09 21:50:27 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -116,10 +116,10 @@ int timerok;
 static long tick_increment;
 int schedintr(void *);
 
-static struct intrhand level10 = { clockintr };
-static struct intrhand level0 = { tickintr };
-static struct intrhand level14 = { statintr };
-static struct intrhand schedint = { schedintr };
+static struct intrhand level10 = { .ih_fun = clockintr };
+static struct intrhand level0 = { .ih_fun = tickintr };
+static struct intrhand level14 = { .ih_fun = statintr };
+static struct intrhand schedint = { .ih_fun = schedintr };
 
 /*
  * clock (eeprom) attaches at the sbus or the ebus (PCI)
@@ -320,7 +320,8 @@ static struct timecounter counter_timecounter = {
 	0,                      /* frequency - set at initialisation */
 	"tick-counter",		/* name */
 	100,			/* quality */
-	0			/* private reference - UNUSED */
+	0,			/* private reference - UNUSED */
+	NULL			/* next timecounter */
 };
 
 /*
