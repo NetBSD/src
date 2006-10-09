@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_unity.c,v 1.6 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: isakmp_unity.c,v 1.7 2006/10/09 06:17:20 manu Exp $	*/
 
 /* Id: isakmp_unity.c,v 1.10 2006/07/31 04:49:23 manubsd Exp */
 
@@ -124,7 +124,7 @@ isakmp_unity_req(iph1, attr)
 		char buf[MAXMOTD + 1];
 		int fd;
 		char *filename = &isakmp_cfg_config.motd[0];
-		size_t len;
+		int len;
 
 		if ((fd = open(filename, O_RDONLY, 0)) == -1) {
 			plog(LLV_ERROR, LOCATION, NULL, 
