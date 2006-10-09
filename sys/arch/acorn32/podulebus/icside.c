@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.25 2006/01/16 20:30:18 bouyer Exp $	*/
+/*	$NetBSD: icside.c,v 1.26 2006/10/09 21:12:44 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.25 2006/01/16 20:30:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.26 2006/10/09 21:12:44 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -280,7 +280,7 @@ icside_attach(struct device *parent, struct device *self, void *aux)
 		if (bus_space_map(iot, iobase + ide->ideregs[channel],
 		    IDE_REGISTER_SPACE, 0, &wdr->cmd_baseioh))
 			return;
-		for (i = 0; i < IDE_REGISTER_SPACE; i++) {
+		for (i = 0; i < WDC_NREG; i++) {
 			if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 				i, i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0)
 				return;
