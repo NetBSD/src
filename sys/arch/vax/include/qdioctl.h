@@ -1,4 +1,4 @@
-/*	$NetBSD: qdioctl.h,v 1.3 2005/12/11 12:19:34 christos Exp $	*/
+/*	$NetBSD: qdioctl.h,v 1.4 2006/10/09 17:04:36 christos Exp $	*/
 /*-
  * Copyright (c) 1982, 1986
  *	The Regents of the University of California.  All rights reserved.
@@ -87,6 +87,8 @@
 #else
 #include <sys/ioctl.h>
 #endif
+#include <machine/qevent.h>	/* struct _vs_event, _vs_cursor */
+#include <machine/qduser.h>	/* struct prgkbd, qdmap, prg_cursor */
 
 
 #define QD_GETEVENT	_IOR('g', 1, struct _vs_event) /* get oldest event */
