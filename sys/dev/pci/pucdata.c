@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.46 2006/09/03 05:01:32 christos Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.47 2006/10/09 20:33:04 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.46 2006/09/03 05:01:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.47 2006/10/09 20:33:04 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -946,6 +946,16 @@ const struct puc_device_description puc_devices[] = {
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
 		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
+	    },
+	},
+
+	/* NetMos 2S PCI NM9835 : 2S */
+	{   "NetMos NM9835 Dual UART",
+	    {	0x9710, 0x9835, 0x1000, 0x0002	},
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 	    },
 	},
 
