@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.44 2006/09/07 02:40:32 dogcow Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.45 2006/10/09 20:45:19 jkunz Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.44 2006/09/07 02:40:32 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.45 2006/10/09 20:45:19 jkunz Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -571,7 +571,11 @@ pdq_os_memalloc_contig(
     not_ok = bus_dmamem_alloc(sc->sc_dmatag,
 			 sizeof(*pdq->pdq_dbp), sizeof(*pdq->pdq_dbp),
 			 sizeof(*pdq->pdq_dbp), db_segs, 1, &db_nsegs,
-			 BUS_DMA_NOWAIT);
+#if defined(__sparc__) || defined(__sparc64__)
+			BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
+#else
+			BUS_DMA_NOWAIT);
+#endif
     if (!not_ok) {
 	steps = 1;
 	not_ok = bus_dmamem_map(sc->sc_dmatag, db_segs, db_nsegs,
@@ -621,10 +625,15 @@ pdq_os_memalloc_contig(
 	cb_segs[0] = db_segs[0];
 	cb_segs[0].ds_addr += offsetof(pdq_descriptor_block_t, pdqdb_consumer);
 	cb_segs[0].ds_len = sizeof(pdq_consumer_block_t);
+#if defined(__sparc__) || defined(__sparc64__)
+	pdq->pdq_cbp = (pdq_consumer_block_t*)((unsigned long int)pdq->pdq_dbp +
+	    (unsigned long int)offsetof(pdq_descriptor_block_t,pdqdb_consumer));
+#else
 	not_ok = bus_dmamem_map(sc->sc_dmatag, cb_segs, 1,
 				sizeof(*pdq->pdq_cbp),
 				(caddr_t *)&pdq->pdq_cbp,
 				BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+#endif
     }
     if (!not_ok) {
 	steps = 9;
