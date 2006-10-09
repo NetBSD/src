@@ -1,4 +1,4 @@
-/*	$Id: shutdown_xenbus.c,v 1.2 2006/10/08 22:16:27 bouyer Exp $	*/
+/*	$Id: shutdown_xenbus.c,v 1.3 2006/10/09 12:53:39 dsl Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shutdown_xenbus.c,v 1.2 2006/10/08 22:16:27 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shutdown_xenbus.c,v 1.3 2006/10/09 12:53:39 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -126,7 +126,7 @@ again:
 	}
 	if (strcmp(reqstr, "poweroff") == 0) {
 		sysmon_pswitch_event(&xenbus_power, PSWITCH_EVENT_PRESSED);
-	} else if (reqstr, "halt") == 0) { /* XXX eventually halt without -p */
+	} else if (strcmp(reqstr, "halt") == 0) { /* XXX eventually halt without -p */
 		sysmon_pswitch_event(&xenbus_power, PSWITCH_EVENT_PRESSED);
 	} else if (strcmp(reqstr, "reboot") == 0) {
 		sysmon_pswitch_event(&xenbus_reset, PSWITCH_EVENT_PRESSED);
