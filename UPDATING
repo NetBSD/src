@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.150 2006/08/15 20:48:01 bjh21 Exp $
+$NetBSD: UPDATING,v 1.151 2006/10/09 18:57:30 rpaulo Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,10 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20061009:
+	The sysctl variables net.inet{,6}.tcp{,6}.newreno are no longer
+	available. Use net.inet{,6}.tcp{,6}.congctl.selected instead.
 
 20060814:
 	The vt, vidcconsole, kbd, and rpckbd drivers on acorn32 have been
