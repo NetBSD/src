@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.105 2006/09/13 10:07:42 elad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.106 2006/10/10 10:02:34 elad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.105 2006/09/13 10:07:42 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.106 2006/10/10 10:02:34 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -659,7 +659,8 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 		goto done;
 	}
 
-	if (securelevel > 1)
+	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CORENAME,
+	    l->l_proc, NULL, NULL, NULL) != 0)
 		return (EPERM);
 
 	/*
