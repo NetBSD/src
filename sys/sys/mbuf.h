@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.130 2006/08/27 23:50:00 christos Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.131 2006/10/10 21:49:15 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ struct mowner {
 	u_long mo_ext_releases;		/* # of M_EXT mbuf released */
 };
 
-#define MOWNER_INIT { "", "", { NULL, NULL }, 0, 0, 0, 0, 0, 0 }
+#define MOWNER_INIT(x, y) { x, y, { NULL, NULL }, 0, 0, 0, 0, 0, 0 }
 
 /*
  * Macros for type conversion

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.138 2006/09/02 13:30:08 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.139 2006/10/10 21:49:15 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.138 2006/09/02 13:30:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.139 2006/10/10 21:49:15 dogcow Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.138 2006/09/02 13:30:08 yamt Exp $"
 
 MALLOC_DEFINE(M_NFSREQ, "NFS req", "NFS request header");
 #ifdef MBUFTRACE
-struct mowner nfs_mowner = { "nfs" };
+struct mowner nfs_mowner = MOWNER_INIT("nfs","");
 #endif
 
 /*

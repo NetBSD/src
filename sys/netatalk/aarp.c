@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.18 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: aarp.c,v 1.19 2006/10/10 21:49:14 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.18 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.19 2006/10/10 21:49:14 dogcow Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -96,7 +96,7 @@ const u_char aarp_org_code[3] = {
 
 struct callout aarptimer_callout;
 #ifdef MBUFTRACE
-struct mowner aarp_mowner = { "atalk", "arp" };
+struct mowner aarp_mowner = MOWNER_INIT("atalk", "arp");
 #endif
 
 /*ARGSUSED*/

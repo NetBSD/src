@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.17 2006/07/23 22:06:13 ad Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.18 2006/10/10 21:49:14 dogcow Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.17 2006/07/23 22:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.18 2006/10/10 21:49:14 dogcow Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -68,8 +68,8 @@ u_long ddp_sendspace = DDP_MAXSZ;	/* Max ddp size + 1 (ddp_type) */
 u_long ddp_recvspace = 25 * (587 + sizeof(struct sockaddr_at));
 
 #ifdef MBUFTRACE
-struct mowner atalk_rx_mowner = { "atalk", "rx" };
-struct mowner atalk_tx_mowner = { "atalk", "tx" };
+struct mowner atalk_rx_mowner = MOWNER_INIT("atalk", "rx");
+struct mowner atalk_tx_mowner = MOWNER_INIT("atalk", "tx");
 #endif
 
 /* ARGSUSED */

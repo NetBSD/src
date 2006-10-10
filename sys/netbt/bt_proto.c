@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_proto.c,v 1.4 2006/10/01 10:13:54 plunky Exp $	*/
+/*	$NetBSD: bt_proto.c,v 1.5 2006/10/10 21:49:14 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.4 2006/10/01 10:13:54 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.5 2006/10/10 21:49:14 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -112,5 +112,5 @@ struct domain btdomain = {
 	NULL,				/* detach af-data */
 	{ NULL, NULL },			/* queues */
 	{ NULL },			/* link */
-	MOWNER_INIT			/* owner */
+	MOWNER_INIT("","")		/* owner */
 };
