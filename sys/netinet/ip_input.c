@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.233 2006/10/05 17:35:19 tls Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.234 2006/10/10 21:49:14 dogcow Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.233 2006/10/05 17:35:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.234 2006/10/10 21:49:14 dogcow Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -377,8 +377,8 @@ static	struct ip_srcrt {
 static void save_rte(u_char *, struct in_addr);
 
 #ifdef MBUFTRACE
-struct mowner ip_rx_mowner = { "internet", "rx" };
-struct mowner ip_tx_mowner = { "internet", "tx" };
+struct mowner ip_rx_mowner = MOWNER_INIT("internet", "rx");
+struct mowner ip_tx_mowner = MOWNER_INIT("internet", "tx");
 #endif
 
 /*
