@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.130 2006/10/09 22:16:33 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.131 2006/10/10 12:41:56 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.130 2006/10/09 22:16:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.131 2006/10/10 12:41:56 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -355,14 +355,11 @@ get_bootpath_from_prom(void)
 	if (cp)
 		ofboottarget = cp;
 
-#ifdef DEBUG
 	DPRINTF(ACDB_BOOTDEV, ("bootpath phandle: 0x%x\n", ofbootpackage));
-	if (ofboottarget)
-		DPRINTF(ACDB_BOOTDEV, ("boot target: %s\n", ofboottarget));
-	if (ofbootpartition)
-		DPRINTF(ACDB_BOOTDEV, ("boot partition: %s\n",
-		    ofbootpartition));
-#endif
+	DPRINTF(ACDB_BOOTDEV, ("boot target: %s\n",
+	    ofboottarget ? ofboottarget : "<none>"));
+	DPRINTF(ACDB_BOOTDEV, ("boot partition: %s\n",
+	    ofbootpartition ? ofbootpartition : "<none>"));
 
 	/* Setup pointer to boot flags */
 	if (OF_getprop(chosen, "bootargs", sbuf, sizeof(sbuf)) == -1)
