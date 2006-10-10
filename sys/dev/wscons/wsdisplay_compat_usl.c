@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.33 2006/07/21 16:48:53 ad Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.34 2006/10/10 10:23:58 elad Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.33 2006/07/21 16:48:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.34 2006/10/10 10:23:58 elad Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -405,9 +405,13 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 #undef d
 
 	    case KDENABIO:
-		if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag) || securelevel > 1)
+#if defined(__i386__)
+#if defined(COMPAT_10) || defined(COMPAT_11) || defined(COMPAT_FREEBSD)
+		if (kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
+		    KAUTH_REQ_MACHDEP_X86_IOPL, NULL, NULL, NULL) != 0)
 			return (EPERM);
+#endif
+#endif
 		/* FALLTHRU */
 	    case KDDISABIO:
 #if defined(__i386__)
