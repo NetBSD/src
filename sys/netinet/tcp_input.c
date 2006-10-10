@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.246 2006/10/09 16:27:07 rpaulo Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.247 2006/10/10 09:19:40 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.246 2006/10/09 16:27:07 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.247 2006/10/10 09:19:40 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2332,7 +2332,9 @@ after_listen:
 		/*
 		 * New data has been acked, adjust the congestion window.
 		 */
-		tp->t_congctl->newack(tp, th);
+		if (tp->t_partialacks < 0) {
+			tp->t_congctl->newack(tp, th);
+		}
 
 		ND6_HINT(tp);
 		if (acked > so->so_snd.sb_cc) {
