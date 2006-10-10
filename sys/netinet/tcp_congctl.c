@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.2 2006/10/10 08:31:02 yamt Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.3 2006/10/10 09:19:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.2 2006/10/10 08:31:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.3 2006/10/10 09:19:13 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -499,9 +499,7 @@ tcp_reno_newack(struct tcpcb *tp, struct tcphdr *th)
 	 * If the window gives us less than ssthresh packets
 	 * in flight, open exponentially (segsz per packet).
 	 * Otherwise open linearly: segsz per window
-	 * (segsz^2 / cwnd per packet), plus a constant
-	 * fraction of a packet (segsz/8) to help larger windows
-	 * open quickly enough.
+	 * (segsz^2 / cwnd per packet).
 	 */
 	cw = tp->snd_cwnd;
 	incr = tp->t_segsz;
@@ -618,9 +616,7 @@ tcp_newreno_newack(struct tcpcb *tp, struct tcphdr *th)
 	 * If the window gives us less than ssthresh packets
 	 * in flight, open exponentially (segsz per packet).
 	 * Otherwise open linearly: segsz per window
-	 * (segsz^2 / cwnd per packet), plus a constant
-	 * fraction of a packet (segsz/8) to help larger windows
-	 * open quickly enough.
+	 * (segsz^2 / cwnd per packet).
 	 */
 	cw = tp->snd_cwnd;
 	incr = tp->t_segsz;
