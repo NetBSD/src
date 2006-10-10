@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.105 2006/10/09 03:34:56 mrg Exp $
+#	$NetBSD: files.sparc64,v 1.106 2006/10/10 12:43:11 tsutsui Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -41,7 +41,7 @@ attach ebus at pci
 file	arch/sparc64/dev/ebus.c			ebus
 
 device clock: mk48txx
-attach clock at mainbus, sbus with clock_sbus
+attach clock at sbus with clock_sbus
 attach clock at ebus with clock_ebus
 
 device rtc: mc146818
@@ -54,10 +54,6 @@ file	arch/sparc64/dev/psm.c			psm
 
 device timer
 attach timer at mainbus, sbus
-
-device eeprom
-attach eeprom at sbus, ebus
-file	arch/sparc64/sparc64/clock.c
 
 device power
 attach power at sbus, ebus
@@ -173,6 +169,7 @@ file	arch/sparc/fpu/fpu_subr.c
 
 file	arch/sparc/sparc/promlib.c
 file	arch/sparc64/sparc64/autoconf.c
+file	arch/sparc64/sparc64/clock.c
 file	arch/sparc64/sparc64/emul.c
 file	arch/sparc64/sparc64/in_cksum.S
 file	arch/sparc64/sparc64/in4_cksum.c	inet
