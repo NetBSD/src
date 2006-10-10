@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.19 2006/09/24 00:34:23 tsutsui Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.20 2006/10/10 00:40:47 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.19 2006/09/24 00:34:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.20 2006/10/10 00:40:47 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -704,16 +704,18 @@ netintr(void)
  */
 static volatile u_int softpend;
 
+
+/*
+ * Called by softintr_schedule() with interrupts blocked.
+ */
 void
 setsoft(int ipl)
 {
-	int s;
-	s = splsoftserial();
+
 	softpend |= (1 << ipl);
 	_reg_bclr_1(SH_(TSTR), TSTR_STR1);
 	_reg_write_4(SH_(TCNT1), 0);
 	_reg_bset_1(SH_(TSTR), TSTR_STR1);
-	splx(s);
 }
 
 static int
