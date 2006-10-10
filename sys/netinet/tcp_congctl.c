@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.1 2006/10/09 16:27:07 rpaulo Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.2 2006/10/10 08:31:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.1 2006/10/09 16:27:07 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.2 2006/10/10 08:31:02 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -626,6 +626,7 @@ tcp_newreno_newack(struct tcpcb *tp, struct tcphdr *th)
 	incr = tp->t_segsz;
 	if (cw > tp->snd_ssthresh)
 		incr = incr * incr / cw;
+	tp->snd_cwnd = min(cw + incr, TCP_MAXWIN << tp->snd_scale);
 }
 
 
