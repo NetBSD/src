@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.22 2006/10/10 01:46:49 dbj Exp $	*/
+/*	$NetBSD: walk.c,v 1.23 2006/10/10 01:55:45 dbj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.22 2006/10/10 01:46:49 dbj Exp $");
+__RCSID("$NetBSD: walk.c,v 1.23 2006/10/10 01:55:45 dbj Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: walk.c,v 1.22 2006/10/10 01:46:49 dbj Exp $");
 #include "makefs.h"
 #include "mtree.h"
 
-static	void	 apply_specdir(const char *, NODE *, fsnode *);
+static	void	 apply_specdir(const char *, NODE *, fsnode *, int);
 static	void	 apply_specentry(const char *, NODE *, fsnode *);
 static	fsnode	*create_fsnode(const char *, struct stat *);
 static	fsinode	*link_check(fsinode *);
@@ -228,7 +228,7 @@ free_fsnodes(fsnode *node)
  *	entries will be added.
  */
 void
-apply_specfile(const char *specfile, const char *dir, fsnode *parent)
+apply_specfile(const char *specfile, const char *dir, fsnode *parent, int speconly)
 {
 	struct timeval	 start;
 	FILE	*fp;
@@ -256,13 +256,13 @@ apply_specfile(const char *specfile, const char *dir, fsnode *parent)
 	assert(root->type == F_DIR);
 
 				/* merge in the changes */
-	apply_specdir(dir, root, parent);
+	apply_specdir(dir, root, parent, speconly);
 
 	free_nodes(root);
 }
 
 static void
-apply_specdir(const char *dir, NODE *specnode, fsnode *dirnode)
+apply_specdir(const char *dir, NODE *specnode, fsnode *dirnode, int speconly)
 {
 	char	 path[MAXPATHLEN + 1];
 	NODE	*curnode;
@@ -282,6 +282,30 @@ apply_specdir(const char *dir, NODE *specnode, fsnode *dirnode)
 		    dir, dirnode->name);
 
 	apply_specentry(dir, specnode, dirnode);
+
+	/* Remove any filesystem nodes not found in specfile */
+	/* XXX inefficient.  This is O^2 in each dir and it would
+	 * have been better never to have walked this part of the tree
+	 * to begin with
+	 */
+	if (speconly) {
+		fsnode *next;
+		assert(dirnode->name[0] == '.' && dirnode->name[1] == '\0');
+		for (curfsnode = dirnode->next; curfsnode != NULL; curfsnode = next) {
+			next = curfsnode->next;
+			for (curnode = specnode->child; curnode != NULL;
+			     curnode = curnode->next) {
+				if (strcmp(curnode->name, curfsnode->name) == 0)
+					break;
+			}
+			if (curnode == NULL) {
+				if (debug & DEBUG_APPLY_SPECONLY) {
+					printf("apply_specdir: trimming %s/%s %p\n", dir, curfsnode->name, curfsnode);
+				}
+				free_fsnodes(curfsnode);
+			}
+		}
+	}
 
 			/* now walk specnode->child matching up with dirnode */
 	for (curnode = specnode->child; curnode != NULL;
@@ -366,7 +390,7 @@ apply_specdir(const char *dir, NODE *specnode, fsnode *dirnode)
 			if (curfsnode->type != S_IFDIR)
 				errx(1, "`%s' is not a directory", path);
 			assert (curfsnode->child != NULL);
-			apply_specdir(path, curnode, curfsnode->child);
+			apply_specdir(path, curnode, curfsnode->child, speconly);
 		}
 	}
 }
