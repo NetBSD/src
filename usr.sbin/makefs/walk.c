@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.20 2006/10/10 01:39:10 dbj Exp $	*/
+/*	$NetBSD: walk.c,v 1.21 2006/10/10 01:41:14 dbj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.20 2006/10/10 01:39:10 dbj Exp $");
+__RCSID("$NetBSD: walk.c,v 1.21 2006/10/10 01:41:14 dbj Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -210,6 +210,8 @@ apply_specfile(const char *specfile, const char *dir, fsnode *parent)
 
 				/* merge in the changes */
 	apply_specdir(dir, root, parent);
+
+	free_nodes(root);
 }
 
 static void
