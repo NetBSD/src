@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.25 2006/10/05 14:46:11 tsutsui Exp $	*/
+/*	$NetBSD: intreg.c,v 1.26 2006/10/10 17:45:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intreg.c,v 1.25 2006/10/05 14:46:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intreg.c,v 1.26 2006/10/10 17:45:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ isr_soft_request(int level)
 {
 	u_char bit;
 
-	if ((level < 1) || (level > 3))
+	if ((level < _IPL_SOFT_LEVEL_MIN) || (level > _IPL_SOFT_LEVEL_MAX))
 		return;
 
 	bit = 1 << level;
@@ -138,7 +138,7 @@ isr_soft_clear(int level)
 {
 	u_char bit;
 
-	if ((level < 1) || (level > 3))
+	if ((level < _IPL_SOFT_LEVEL_MIN) || (level > _IPL_SOFT_LEVEL_MAX))
 		return;
 
 	bit = 1 << level;
