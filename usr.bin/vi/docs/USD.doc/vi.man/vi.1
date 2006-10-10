@@ -1,4 +1,4 @@
-.\"	$NetBSD: vi.1,v 1.12 2004/03/17 10:13:10 wiz Exp $
+.\"	$NetBSD: vi.1,v 1.13 2006/10/10 03:27:05 reed Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -140,6 +140,9 @@ If no recoverable files by the specified name exist,
 the file is edited as if the
 .B \-r
 option had not been specified.
+(Also see
+.IR virecover (8)
+for more information.)
 .TP
 .B \-S
 Run with the
@@ -1581,6 +1584,7 @@ $HOME/.exrc
 .IR more (3),
 .IR curses (3),
 .IR dbopen (3)
+.IR virecover (8).
 .sp
 The ``Vi Quick Reference'' card.
 .sp
