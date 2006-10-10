@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.21 2006/10/10 01:41:14 dbj Exp $	*/
+/*	$NetBSD: walk.c,v 1.22 2006/10/10 01:46:49 dbj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.21 2006/10/10 01:41:14 dbj Exp $");
+__RCSID("$NetBSD: walk.c,v 1.22 2006/10/10 01:46:49 dbj Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -171,6 +171,53 @@ create_fsnode(const char *name, struct stat *stbuf)
 	cur->inode->nlink = 1;
 	cur->inode->st = *stbuf;
 	return (cur);
+}
+
+/*
+ * free_fsnodes --
+ *	Removes node from tree and frees it and all of
+ *   its decendents.
+ */
+void
+free_fsnodes(fsnode *node)
+{
+	fsnode	*cur, *next;
+
+	assert(node != NULL);
+
+	/* for ".", start with actual parent node */
+	if (node->first == node) {
+		assert(node->name[0] == '.' && node->name[1] == '\0');
+		if (node->parent) {
+			assert(node->parent->child == node);
+			node = node->parent;
+		}
+	}
+
+	/* Find ourselves in our sibling list and unlink */
+	if (node->first != node) {
+		for (cur = node->first; cur->next; cur = cur->next) {
+			if (cur->next == node) {
+				cur->next = node->next;
+				node->next = NULL;
+				break;
+			}
+		}
+	}
+
+	for (cur = node; cur != NULL; cur = next) {
+		next = cur->next;
+		if (cur->child) {
+			cur->child->parent = NULL;
+			free_fsnodes(cur->child);
+		}
+		if (cur->inode->nlink-- == 1)
+			free(cur->inode);
+		if (cur->symlink)
+			free(cur->symlink);
+		free(cur->name);
+		free(cur);
+	}
 }
 
 /*

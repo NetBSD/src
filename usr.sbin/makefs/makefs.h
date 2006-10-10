@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.17 2005/08/13 01:53:01 fvdl Exp $	*/
+/*	$NetBSD: makefs.h,v 1.18 2006/10/10 01:46:49 dbj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -158,6 +158,7 @@ void		dump_fsnodes(const char *, fsnode *);
 const char *	inode_type(mode_t);
 int		set_option(option_t *, const char *, const char *);
 fsnode *	walk_dir(const char *, fsnode *);
+void		free_fsnodes(fsnode *);
 
 void		ffs_prep_opts(fsinfo_t *);
 int		ffs_parse_opts(const char *, fsinfo_t *);
