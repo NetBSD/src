@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.82 2006/10/09 21:50:27 martin Exp $ */
+/*	$NetBSD: clock.c,v 1.83 2006/10/10 12:43:11 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.82 2006/10/09 21:50:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.83 2006/10/10 12:43:11 tsutsui Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -691,16 +691,4 @@ schedintr(void *arg)
 	if (curlwp)
 		schedclock(curlwp);
 	return (1);
-}
-
-/*
- * XXX: these may actually belong somewhere else, but since the
- * EEPROM is so closely tied to the clock on some models, perhaps
- * it needs to stay here...
- */
-int
-eeprom_uio(uio)
-	struct uio *uio;
-{
-	return (ENODEV);
 }
