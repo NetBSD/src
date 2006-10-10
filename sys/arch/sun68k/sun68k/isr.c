@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.9.6.3 2006/10/06 13:30:27 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.9.6.4 2006/10/10 17:39:04 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.9.6.3 2006/10/06 13:30:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.9.6.4 2006/10/10 17:39:04 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,8 +269,8 @@ softintr_handler(void *arg)
 	/* Dispatch any pending handlers. */
 	for(sh = LIST_FIRST(&shd->shd_intrs); sh != NULL; sh = LIST_NEXT(sh, sh_link)) {
 		if (sh->sh_pending) {
-			(*sh->sh_func)(sh->sh_arg);
 			sh->sh_pending = 0;
+			(*sh->sh_func)(sh->sh_arg);
 		}
 	}
 
