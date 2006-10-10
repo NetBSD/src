@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.22 2005/08/13 01:53:01 fvdl Exp $	*/
+/*	$NetBSD: makefs.c,v 1.23 2006/10/10 01:32:42 dbj Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.22 2005/08/13 01:53:01 fvdl Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.23 2006/10/10 01:32:42 dbj Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -151,8 +151,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'd':
-			debug =
-			    (int)strsuftoll("debug mask", optarg, 0, UINT_MAX);
+			debug = strtoll(optarg, NULL, 0);
 			break;
 
 		case 'f':
