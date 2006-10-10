@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.19 2006/02/01 22:19:34 dyoung Exp $	*/
+/*	$NetBSD: walk.c,v 1.20 2006/10/10 01:39:10 dbj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -35,49 +35,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * The function link_check() was inspired from NetBSD's usr.bin/du/du.c,
- * which has the following copyright notice:
- *
- *
- * Copyright (c) 1989, 1993, 1994
- *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Chris Newcomb.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
-
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.19 2006/02/01 22:19:34 dyoung Exp $");
+__RCSID("$NetBSD: walk.c,v 1.20 2006/10/10 01:39:10 dbj Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -169,6 +133,10 @@ walk_dir(const char *dir, fsnode *parent)
 				free(cur->inode);
 				cur->inode = curino;
 				cur->inode->nlink++;
+				if (debug & DEBUG_WALK_DIR_LINKCHECK)
+					printf("link_check: found [%u, %llu]\n",
+					    curino->st.st_dev,
+					    (unsigned long long)curino->st.st_ino);
 			}
 		}
 		if (S_ISLNK(cur->type)) {
@@ -494,49 +462,78 @@ inode_type(mode_t mode)
 
 /*
  * link_check --
- *	return pointer to fsnode matching `entry's st_ino & st_dev if it exists,
+ *	return pointer to fsinode matching `entry's st_ino & st_dev if it exists,
  *	otherwise add `entry' to table and return NULL
+ */
+/* This was borrowed from du.c and tweaked to keep an fsnode 
+ * pointer instead. -- dbj@netbsd.org
  */
 static fsinode *
 link_check(fsinode *entry)
 {
-	static	struct dupnode {
-		uint32_t	dev;
-		uint64_t	ino;
-		fsinode		*dup;
-	} *dups, *newdups;
-	static	int	ndups, maxdups;
+	static struct entry {
+		fsinode *data;
+	} *htable;
+	static int htshift;  /* log(allocated size) */
+	static int htmask;   /* allocated size - 1 */
+	static int htused;   /* 2*number of insertions */
+	int h, h2;
+	uint64_t tmp;
+	/* this constant is (1<<64)/((1+sqrt(5))/2)
+	 * aka (word size)/(golden ratio)
+	 */
+	const uint64_t HTCONST = 11400714819323198485ULL;
+	const int HTBITS = 64;
+	
+	/* Never store zero in hashtable */
+	assert(entry);
 
-	int	i;
+	/* Extend hash table if necessary, keep load under 0.5 */
+	if (htused<<1 >= htmask) {
+		struct entry *ohtable;
 
-	assert (entry != NULL);
+		if (!htable)
+			htshift = 10;   /* starting hashtable size */
+		else
+			htshift++;   /* exponential hashtable growth */
 
-		/* XXX; maybe traverse in reverse for speed? */
-	for (i = 0; i < ndups; i++) {
-		if (dups[i].dev == entry->st.st_dev &&
-		    dups[i].ino == entry->st.st_ino) {
-			if (debug & DEBUG_WALK_DIR_LINKCHECK)
-				printf("link_check: found [%u, %llu]\n",
-				    entry->st.st_dev,
-				    (unsigned long long)entry->st.st_ino);
-			return (dups[i].dup);
+		htmask  = (1 << htshift) - 1;
+		htused = 0;
+
+		ohtable = htable;
+		htable = calloc(htmask+1, sizeof(*htable));
+		if (!htable)
+			err(1, "Memory allocation error");
+
+		/* populate newly allocated hashtable */
+		if (ohtable) {
+			int i;
+			for (i = 0; i <= htmask>>1; i++)
+				if (ohtable[i].data)
+					link_check(ohtable[i].data);
+			free(ohtable);
 		}
 	}
 
-	if (debug & DEBUG_WALK_DIR_LINKCHECK)
-		printf("link_check: no match for [%u, %llu]\n",
-		    entry->st.st_dev, (unsigned long long)entry->st.st_ino);
-	if (ndups == maxdups) {
-		if ((newdups = realloc(dups, sizeof(struct dupnode) * (maxdups + 128)))
-		    == NULL)
-			err(1, "Memory allocation error");
-		dups = newdups;
-		maxdups += 128;
+	/* multiplicative hashing */
+	tmp = entry->st.st_dev;
+	tmp <<= HTBITS>>1;
+	tmp |=  entry->st.st_ino;
+	tmp *= HTCONST;
+	h  = tmp >> (HTBITS - htshift);
+	h2 = 1 | ( tmp >> (HTBITS - (htshift<<1) - 1)); /* must be odd */
+	
+	/* open address hashtable search with double hash probing */
+	while (htable[h].data) {
+		if ((htable[h].data->st.st_ino == entry->st.st_ino) &&
+		    (htable[h].data->st.st_dev == entry->st.st_dev)) {
+			return htable[h].data;
+		}
+		h = (h + h2) & htmask;
 	}
-	dups[ndups].dev = entry->st.st_dev;
-	dups[ndups].ino = entry->st.st_ino;
-	dups[ndups].dup = entry;
-	ndups++;
 
-	return (NULL);
+	/* Insert the current entry into hashtable */
+	htable[h].data = entry;
+	htused++;
+	return NULL;
 }
