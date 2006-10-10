@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.76 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.77 2006/10/10 21:49:14 dogcow Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.76 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.77 2006/10/10 21:49:14 dogcow Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -302,7 +302,7 @@ struct domain inetdomain = {
     rn_inithead, 32, sizeof(struct sockaddr_in), 0, 0,
     { &ipintrq, NULL },
     { NULL },
-    MOWNER_INIT,
+    MOWNER_INIT("",""),
 };
 
 u_char	ip_protox[IPPROTO_MAX];

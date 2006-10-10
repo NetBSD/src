@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.202 2006/10/09 16:27:07 rpaulo Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.203 2006/10/10 21:49:15 dogcow Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.202 2006/10/09 16:27:07 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.203 2006/10/10 21:49:15 dogcow Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -360,9 +360,9 @@ EVCNT_ATTACH_STATIC(tcp_reass_fragdup);
 #endif /* TCP_REASS_COUNTERS */
 
 #ifdef MBUFTRACE
-struct mowner tcp_mowner = { "tcp" };
-struct mowner tcp_rx_mowner = { "tcp", "rx" };
-struct mowner tcp_tx_mowner = { "tcp", "tx" };
+struct mowner tcp_mowner = MOWNER_INIT("tcp", "");
+struct mowner tcp_rx_mowner = MOWNER_INIT("tcp", "rx");
+struct mowner tcp_tx_mowner = MOWNER_INIT("tcp", "tx");
 #endif
 
 /*

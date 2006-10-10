@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.149 2006/10/05 17:35:19 tls Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.150 2006/10/10 21:49:15 dogcow Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.149 2006/10/05 17:35:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.150 2006/10/10 21:49:15 dogcow Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -177,9 +177,9 @@ static	void udp_notify (struct inpcb *, int);
 int	udbhashsize = UDBHASHSIZE;
 
 #ifdef MBUFTRACE
-struct mowner udp_mowner = { "udp" };
-struct mowner udp_rx_mowner = { "udp", "rx" };
-struct mowner udp_tx_mowner = { "udp", "tx" };
+struct mowner udp_mowner = MOWNER_INIT("udp", "");
+struct mowner udp_rx_mowner = MOWNER_INIT("udp", "rx");
+struct mowner udp_tx_mowner = MOWNER_INIT("udp", "tx");
 #endif
 
 #ifdef UDP_CSUM_COUNTERS

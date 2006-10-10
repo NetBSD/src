@@ -1,4 +1,4 @@
-/*	$NetBSD: at_proto.c,v 1.9 2006/08/27 23:49:33 christos Exp $	*/
+/*	$NetBSD: at_proto.c,v 1.10 2006/10/10 21:49:14 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.9 2006/08/27 23:49:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.10 2006/10/10 21:49:14 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,5 +79,5 @@ struct domain		atalkdomain = {
     NULL, NULL,
     { &atintrq1, &atintrq2 },
     { NULL },
-    MOWNER_INIT
+    MOWNER_INIT("","")
 };

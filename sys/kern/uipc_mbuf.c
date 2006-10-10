@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.113 2006/09/03 21:12:14 christos Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.114 2006/10/10 21:49:14 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.113 2006/09/03 21:12:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.114 2006/10/10 21:49:14 dogcow Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -133,16 +133,16 @@ MALLOC_DEFINE(M_MBUF, "mbuf", "mbuf");
 #ifdef MBUFTRACE
 struct mownerhead mowners = LIST_HEAD_INITIALIZER(mowners);
 struct mowner unknown_mowners[] = {
-	{ "unknown", "free" },
-	{ "unknown", "data" },
-	{ "unknown", "header" },
-	{ "unknown", "soname" },
-	{ "unknown", "soopts" },
-	{ "unknown", "ftable" },
-	{ "unknown", "control" },
-	{ "unknown", "oobdata" },
+	MOWNER_INIT("unknown", "free"),
+	MOWNER_INIT("unknown", "data"),
+	MOWNER_INIT("unknown", "header"),
+	MOWNER_INIT("unknown", "soname"),
+	MOWNER_INIT("unknown", "soopts"),
+	MOWNER_INIT("unknown", "ftable"),
+	MOWNER_INIT("unknown", "control"),
+	MOWNER_INIT("unknown", "oobdata"),
 };
-struct mowner revoked_mowner = { "revoked", "" };
+struct mowner revoked_mowner = MOWNER_INIT("revoked", "");
 #endif
 
 /*
