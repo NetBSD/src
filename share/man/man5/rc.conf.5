@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.107 2006/09/10 15:45:56 plunky Exp $
+.\"	$NetBSD: rc.conf.5,v 1.108 2006/10/10 03:24:51 reed Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -360,11 +360,9 @@ or
 .Sq NO .
 Send notification mail to users if any recoverable files exist in
 .Pa /var/tmp/vi.recover .
-See
-.Fl r
-option in
-.Xr vi 1
-for details.
+Read
+.Xr virecover 8
+for more information.
 .El
 .Ss System security setting
 .Bl -tag -width net_interfaces
