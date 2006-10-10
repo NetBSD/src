@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.3 2006/10/10 09:19:13 yamt Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.4 2006/10/10 11:12:39 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.3 2006/10/10 09:19:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.4 2006/10/10 11:12:39 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -491,9 +491,6 @@ tcp_reno_fast_retransmit_newack(struct tcpcb *tp, struct tcphdr *th)
 static void
 tcp_reno_newack(struct tcpcb *tp, struct tcphdr *th)
 {
-	u_int cw;
-	u_int incr;
-	
 	/*
 	 * When new data is acked, open the congestion window.
 	 * If the window gives us less than ssthresh packets
@@ -501,12 +498,14 @@ tcp_reno_newack(struct tcpcb *tp, struct tcphdr *th)
 	 * Otherwise open linearly: segsz per window
 	 * (segsz^2 / cwnd per packet).
 	 */
-	cw = tp->snd_cwnd;
-	incr = tp->t_segsz;
-	if (cw > tp->snd_ssthresh)
+
+	u_int cw = tp->snd_cwnd;
+	u_int incr = tp->t_segsz;
+
+	if (cw >= tp->snd_ssthresh)
 		incr = incr * incr / cw;
-	if (SEQ_GEQ(th->th_ack, tp->snd_recover))
-		tp->snd_cwnd = min(cw + incr, TCP_MAXWIN << tp->snd_scale);
+
+	tp->snd_cwnd = min(cw + incr, TCP_MAXWIN << tp->snd_scale);
 }
 
 struct tcp_congctl tcp_reno_ctl = {
@@ -608,21 +607,13 @@ tcp_newreno_fast_retransmit_newack(struct tcpcb *tp, struct tcphdr *th)
 static void
 tcp_newreno_newack(struct tcpcb *tp, struct tcphdr *th)
 {
-	u_int cw;
-	u_int incr;
-	
 	/*
-	 * When new data is acked, open the congestion window.
-	 * If the window gives us less than ssthresh packets
-	 * in flight, open exponentially (segsz per packet).
-	 * Otherwise open linearly: segsz per window
-	 * (segsz^2 / cwnd per packet).
+	 * If we are still in fast recovery (meaning we are using
+	 * NewReno and we have only received partial acks), do not
+	 * inflate the window yet.
 	 */
-	cw = tp->snd_cwnd;
-	incr = tp->t_segsz;
-	if (cw > tp->snd_ssthresh)
-		incr = incr * incr / cw;
-	tp->snd_cwnd = min(cw + incr, TCP_MAXWIN << tp->snd_scale);
+	if (tp->t_partialacks < 0)
+		tcp_reno_newack(tp, th);
 }
 
 
