@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.24 2006/10/10 01:46:49 dbj Exp $	*/
+/*	$NetBSD: makefs.c,v 1.25 2006/10/10 01:55:45 dbj Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.24 2006/10/10 01:46:49 dbj Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.25 2006/10/10 01:55:45 dbj Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -257,7 +257,7 @@ main(int argc, char *argv[])
 
 	if (specfile) {		/* apply a specfile */
 		TIMER_START(start);
-		apply_specfile(specfile, argv[1], root);
+		apply_specfile(specfile, argv[1], root, fsoptions.onlyspec);
 		TIMER_RESULTS(start, "apply_specfile");
 	}
 
