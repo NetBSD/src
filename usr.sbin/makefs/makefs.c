@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.23 2006/10/10 01:32:42 dbj Exp $	*/
+/*	$NetBSD: makefs.c,v 1.24 2006/10/10 01:46:49 dbj Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.23 2006/10/10 01:32:42 dbj Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.24 2006/10/10 01:46:49 dbj Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -271,6 +271,8 @@ main(int argc, char *argv[])
 	TIMER_START(start);
 	fstype->make_fs(argv[0], argv[1], root, &fsoptions);
 	TIMER_RESULTS(start, "make_fs");
+
+	free_fsnodes(root);
 
 	exit(0);
 	/* NOTREACHED */
