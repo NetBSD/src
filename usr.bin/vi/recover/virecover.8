@@ -1,4 +1,4 @@
-.\" $NetBSD: virecover.8,v 1.1 2006/10/08 14:19:18 elad Exp $
+.\" $NetBSD: virecover.8,v 1.2 2006/10/10 03:30:42 reed Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 7, 2006
+.Dd October 9, 2006
 .Dt VIRECOVER 8
 .Os
 .Sh NAME
@@ -51,11 +51,16 @@ recovery files.
 .Pp
 This email gives the name of the file that was
 saved for recovery and instructions for recovering
-most, if not all, of the changes to the file
-(by using the
+most, if not all, of the changes to the file.
+This is done by using the
 .Fl r
 option with
-.Xr vi 1 ).
+.Xr vi 1 .
+See the
+.Fl r
+option in
+.Xr vi 1
+for details.
 .Pp
 If the backup files have the execute bit set or are zero length,
 then they have not been modified, so
@@ -64,6 +69,10 @@ deletes them to clean up.
 .Nm
 also removes recovery files that are corrupted, zero length
 or do not have a corresponding backup file.
+.Pp
+.Nm
+is normally ran automatically at boot time using
+.Pa /etc/rc.d/virecover .
 .Sh FILES
 .Bl -tag -width "/var/tmp/vi.recover/recover.*" -compact
 .It Pa /var/tmp/vi.recover/recover.*
@@ -74,16 +83,14 @@ recovery files
 editor backup files
 .El
 .Sh SEE ALSO
+.Xr rc.conf 5 ,
 .Xr vi 1
 .Sh HISTORY
-The
-.Xr vi 1
-recovery was originally done at boot time in
-.Xr rc 8 .
 This script, previously known as
 .Nm recover.script ,
 is from nvi and was added to
 .Nx
-in 2006.
+in 1996.
+It was renamed in 2001.
 .Sh AUTHORS
 .An Jeremy C. Reed Aq reed@reedmedia.net
