@@ -1,4 +1,4 @@
-/*	$NetBSD: a34kbbc.c,v 1.19 2006/09/11 17:18:00 gdamore Exp $ */
+/*	$NetBSD: a34kbbc.c,v 1.20 2006/10/10 17:24:23 mhitch Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.19 2006/09/11 17:18:00 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.20 2006/10/10 17:24:23 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -108,6 +108,7 @@ static struct todr_chip_handle a34ktodr;
 int
 a34kbbc_match(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
+	struct clock_ymdhms dt;
 	static int a34kbbc_matched = 0;
 
 	if (!matchname("a34kbbc", auxp))
@@ -121,7 +122,7 @@ a34kbbc_match(struct device *pdp, struct cfdata *cfp, void *auxp)
 		return(0);
 
 	a34kclockaddr = (void *)__UNVOLATILE(ztwomap(0xdc0000));
-	if (a34kugettod(&a34ktodr, 0) != 0)
+	if (a34kugettod(&a34ktodr, &dt) != 0)
 		return(0);
 
 	a34kbbc_matched = 1;
