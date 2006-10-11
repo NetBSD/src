@@ -1,4 +1,4 @@
-/*	$NetBSD: option.c,v 1.23 2006/02/20 16:31:03 jschauma Exp $	*/
+/*	$NetBSD: option.c,v 1.24 2006/10/11 19:51:10 apb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)option.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: option.c,v 1.23 2006/02/20 16:31:03 jschauma Exp $");
+__RCSID("$NetBSD: option.c,v 1.24 2006/10/11 19:51:10 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,8 +52,8 @@ __RCSID("$NetBSD: option.c,v 1.23 2006/02/20 16:31:03 jschauma Exp $");
 
 #include "find.h"
 
-int typecompare __P((const void *, const void *));
-static OPTION *option __P((char *));
+int typecompare(const void *, const void *);
+static OPTION *option(char *);
 
 /* NB: the following table must be sorted lexically. */
 static OPTION const options[] = {
@@ -117,8 +117,7 @@ static OPTION const options[] = {
  *	this switch stuff.
  */
 PLAN *
-find_create(argvp)
-	char ***argvp;
+find_create(char ***argvp)
 {
 	OPTION *p;
 	PLAN *new;
@@ -139,8 +138,7 @@ find_create(argvp)
 }
 
 static OPTION *
-option(name)
-	char *name;
+option(char *name)
 {
 	OPTION tmp;
 
@@ -150,9 +148,8 @@ option(name)
 }
 
 int
-typecompare(a, b)
-	const void *a, *b;
+typecompare(const void *a, const void *b)
 {
 
-	return (strcmp(((OPTION *)a)->name, ((OPTION *)b)->name));
+	return (strcmp(((const OPTION *)a)->name, ((const OPTION *)b)->name));
 }
