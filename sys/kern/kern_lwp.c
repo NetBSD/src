@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.43 2006/10/09 00:39:06 martin Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.44 2006/10/11 03:46:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.43 2006/10/09 00:39:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.44 2006/10/11 03:46:42 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -807,11 +807,11 @@ lwp_initspecific(struct lwp *l)
  *	or lwp_setspecific() call).
  */
 void *
-lwp_getspecific(struct lwp *l, specificdata_key_t key)
+lwp_getspecific(specificdata_key_t key)
 {
 
 	return (specificdata_getspecific_unlocked(lwp_specificdata_domain,
-						  &l->l_specdataref, key));
+						  &curlwp->l_specdataref, key));
 }
 
 /*
@@ -823,5 +823,5 @@ lwp_setspecific(struct lwp *l, specificdata_key_t key, void *data)
 {
 
 	specificdata_setspecific(lwp_specificdata_domain,
-				 &l->l_specdataref, key, data);
+				 &curlwp->l_specdataref, key, data);
 }
