@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_specificdata.c,v 1.2 2006/10/08 22:55:48 christos Exp $	*/
+/*	$NetBSD: subr_specificdata.c,v 1.3 2006/10/11 05:37:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.2 2006/10/08 22:55:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.3 2006/10/11 05:37:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -113,6 +113,13 @@ specificdata_domain_lock(specificdata_domain_t sd)
 
 	ASSERT_SLEEPABLE(NULL, __func__);
 	lockmgr(&sd->sd_lock, LK_EXCLUSIVE, 0);
+}
+
+static int
+specificdata_domain_trylock(specificdata_domain_t sd)
+{
+
+	return (lockmgr(&sd->sd_lock, LK_EXCLUSIVE|LK_NOWAIT, 0));
 }
 
 static void
@@ -307,10 +314,7 @@ specificdata_fini(specificdata_domain_t sd, specificdata_reference *ref)
 	specificdata_container_t sc;
 	specificdata_key_t key;
 
-#ifdef notyet
-	/* Called from lwp_exit2(), which is broken */
 	ASSERT_SLEEPABLE(NULL, __func__);
-#endif
 
 	sc = ref->specdataref_container;
 	if (sc == NULL)
@@ -378,16 +382,15 @@ specificdata_getspecific_unlocked(specificdata_domain_t sd,
 	return (NULL);
 }
 
-/*
- * specificdata_setspecific --
- *	Put a datum into a container.
- */
-void
-specificdata_setspecific(specificdata_domain_t sd, specificdata_reference *ref,
-			 specificdata_key_t key, void *data)
+static int
+specificdata_setspecific_internal(specificdata_domain_t sd,
+				  specificdata_reference *ref,
+				  specificdata_key_t key, void *data,
+				  boolean_t waitok)
 {
 	specificdata_container_t sc, newsc;
 	size_t newnkey, sz;
+	int error;
 
 	ASSERT_SLEEPABLE(NULL, __func__);
 
@@ -397,7 +400,7 @@ specificdata_setspecific(specificdata_domain_t sd, specificdata_reference *ref,
 	if (__predict_true(sc != NULL && key < sc->sc_nkey)) {
 		sc->sc_data[key] = data;
 		specdataref_unlock(ref);
-		return;
+		return (0);
 	}
 
 	specdataref_unlock(ref);
@@ -406,15 +409,26 @@ specificdata_setspecific(specificdata_domain_t sd, specificdata_reference *ref,
 	 * Slow path: need to resize.
 	 */
 	
-	specificdata_domain_lock(sd);
+	if (waitok)
+		specificdata_domain_lock(sd);
+	else {
+		error = specificdata_domain_trylock(sd);
+		if (error)
+			return (error);
+	}
 	newnkey = sd->sd_nkey;
 	if (key >= newnkey) {
 		specificdata_domain_unlock(sd);
 		panic("specificdata_setspecific");
 	}
 	sz = SPECIFICDATA_CONTAINER_BYTESIZE(newnkey);
-	newsc = kmem_zalloc(sz, KM_SLEEP);
-	KASSERT(newsc != NULL);
+	newsc = kmem_zalloc(sz, waitok ? KM_SLEEP : KM_NOSLEEP);
+	if (waitok) {
+		KASSERT(newsc != NULL);
+	} else if (newsc == NULL) {
+		specificdata_domain_unlock(sd);
+		return (EWOULDBLOCK);
+	}
 	newsc->sc_nkey = newnkey;
 
 	specdataref_lock(ref);
@@ -430,7 +444,7 @@ specificdata_setspecific(specificdata_domain_t sd, specificdata_reference *ref,
 			specdataref_unlock(ref);
 			specificdata_domain_unlock(sd);
 			kmem_free(newsc, sz);
-			return;
+			return (0);
 		}
 		specificdata_container_unlink(sd, sc);
 		memcpy(newsc->sc_data, sc->sc_data,
@@ -445,4 +459,35 @@ specificdata_setspecific(specificdata_domain_t sd, specificdata_reference *ref,
 
 	if (sc != NULL)
 		kmem_free(sc, SPECIFICDATA_CONTAINER_BYTESIZE(sc->sc_nkey));
+
+	return (0);
+}
+
+/*
+ * specificdata_setspecific --
+ *	Put a datum into a container.
+ */
+void
+specificdata_setspecific(specificdata_domain_t sd, specificdata_reference *ref,
+			 specificdata_key_t key, void *data)
+{
+	int rv;
+
+	rv = specificdata_setspecific_internal(sd, ref, key, data, TRUE);
+	KASSERT(rv == 0);
+}
+
+/*
+ * specificdata_setspecific_nowait --
+ *	Put a datum into a container.  Caller has indicated that it does
+ *	not want to sleep.
+ */
+int
+specificdata_setspecific_nowait(specificdata_domain_t sd,
+				specificdata_reference *ref,
+				specificdata_key_t key, void *data)
+{
+	int rv;
+
+	return (specificdata_setspecific_internal(sd, ref, key, data, FALSE));
 }

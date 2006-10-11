@@ -1,4 +1,4 @@
-/*	$NetBSD: specificdata.h,v 1.1 2006/10/08 04:21:53 thorpej Exp $	*/
+/*	$NetBSD: specificdata.h,v 1.2 2006/10/11 05:37:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -69,5 +69,8 @@ void *	specificdata_getspecific_unlocked(specificdata_domain_t,
 void	specificdata_setspecific(specificdata_domain_t,
 				 specificdata_reference *, specificdata_key_t,
 				 void *);
+int	specificdata_setspecific_nowait(specificdata_domain_t,
+					specificdata_reference *,
+					specificdata_key_t, void *);
 
 #endif /* _SYS_SPECIFICDATA_H_ */
