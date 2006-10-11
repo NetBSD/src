@@ -1,4 +1,4 @@
-.\"     $NetBSD: ath.4,v 1.14 2006/10/07 21:46:50 elad Exp $
+.\"     $NetBSD: ath.4,v 1.15 2006/10/11 14:39:58 gdt Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
 .\" All rights reserved.
@@ -54,7 +54,7 @@
 The
 .Nm
 driver provides support for wireless network adapters based on
-the Atheros AR5210, AR5211, and AR5212 chips.
+the Atheros AR5210, AR5211, AR5212, and AR5213 chips.
 Chip-specific support is provided by the Atheros Hardware Access Layer
 (HAL), which is currently available only in binary form for selected
 architectures.
@@ -77,8 +77,8 @@ AR5211-based devices support 802.11a and 802.11b operation with transmit
 speeds as above for 802.11a operation and
 1Mbps, 2Mbps, 5.5 Mbps and 11Mbps for 802.11b operation.
 .Pp
-AR5212-based devices support 802.11a, 802.11b, and 802.11g operation
-with transmit speeds appropriate to each.
+AR5212-based and AR5213-based devices support 802.11a, 802.11b, and
+802.11g operation with transmit speeds appropriate to each.
 .Pp
 All chips also support an Atheros Turbo Mode (TM) that operates in the
 802.11a frequency range with 2x the transmit speeds.
@@ -165,6 +165,7 @@ SMC SMC2735W	AR5210	CardBus	a
 Sony PCWA-C700	AR5212	CardBus	a/b
 Sony PCWA-C300S	AR5212	CardBus	b/g
 Sony PCWA-C500	AR5210	CardBus	a
+Ubiquiti SRC	AR5213	CardBus	a/b/g
 3Com 3CRPAG175	AR5212	CardBus	a/b/g
 .El
 .Pp
