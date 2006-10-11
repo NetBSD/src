@@ -1,4 +1,4 @@
-/*	$NetBSD: find.c,v 1.22 2006/10/07 17:04:02 apb Exp $	*/
+/*	$NetBSD: find.c,v 1.23 2006/10/11 19:51:10 apb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)find.c	8.5 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: find.c,v 1.22 2006/10/07 17:04:02 apb Exp $");
+__RCSID("$NetBSD: find.c,v 1.23 2006/10/11 19:51:10 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,10 +54,10 @@ __RCSID("$NetBSD: find.c,v 1.22 2006/10/07 17:04:02 apb Exp $");
 
 #include "find.h"
 
-static int ftscompare __P((const FTSENT **, const FTSENT **));
+static int ftscompare(const FTSENT **, const FTSENT **);
 
-static void sig_lock __P((sigset_t *));
-static void sig_unlock __P((const sigset_t *));
+static void sig_lock(sigset_t *);
+static void sig_unlock(const sigset_t *);
 
 /*
  * find_formplan --
@@ -65,8 +65,7 @@ static void sig_unlock __P((const sigset_t *));
  *	command arguments.
  */
 PLAN *
-find_formplan(argv)
-	char **argv;
+find_formplan(char **argv)
 {
 	PLAN *plan, *tail, *new;
 
@@ -149,16 +148,14 @@ find_formplan(argv)
 }
 
 static int
-ftscompare(e1, e2)
-	const FTSENT **e1, **e2;
+ftscompare(const FTSENT **e1, const FTSENT **e2)
 {
 
 	return (strcoll((*e1)->fts_name, (*e2)->fts_name));
 }
 
 static void
-sig_lock(s)
-	sigset_t *s;
+sig_lock(sigset_t *s)
 {
 	sigset_t new;
 
@@ -168,8 +165,7 @@ sig_lock(s)
 }
 
 static void
-sig_unlock(s)
-	const sigset_t *s;
+sig_unlock(const sigset_t *s)
 {
 
 	sigprocmask(SIG_SETMASK, s, NULL);
@@ -184,9 +180,7 @@ FTSENT *g_entry;		/* shared with SIGINFO handler */
  *	over all FTSENT's returned for the given search paths.
  */
 int
-find_execute(plan, paths)
-	PLAN *plan;		/* search plan */
-	char **paths;		/* array of pathnames to traverse */
+find_execute(PLAN *plan, char **paths)
 {
 	PLAN *p;
 	int r, rval, cval;
@@ -265,7 +259,7 @@ find_execute(plan, paths)
 int
 find_traverse(plan, func, arg)
 	PLAN *plan;
-	int (*func) __P((PLAN *, void *));
+	int (*func)(PLAN *, void *);
 	void *arg;
 {
 	PLAN *p;
