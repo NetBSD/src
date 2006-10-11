@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.97 2006/10/09 00:39:06 martin Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.98 2006/10/11 04:51:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.97 2006/10/09 00:39:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.98 2006/10/11 04:51:06 thorpej Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -663,8 +663,6 @@ proc_free_mem(struct proc *p)
 	int s;
 	pid_t pid = p->p_pid;
 	struct pid_table *pt;
-
-	specificdata_fini(proc_specificdata_domain, &p->p_specdataref);
 
 	s = proclist_lock_write();
 
@@ -1295,8 +1293,7 @@ int
 proc_specific_key_create(specificdata_key_t *keyp, specificdata_dtor_t dtor)
 {
 
-	return (specificdata_key_create(proc_specificdata_domain,
-					keyp, dtor));
+	return (specificdata_key_create(proc_specificdata_domain, keyp, dtor));
 }
 
 /*
@@ -1310,12 +1307,28 @@ proc_specific_key_delete(specificdata_key_t key)
 	specificdata_key_delete(proc_specificdata_domain, key);
 }
 
+/*
+ * proc_initspecific --
+ *	Initialize a proc's specificdata container.
+ */
 void
 proc_initspecific(struct proc *p)
 {
 	int error;
+
 	error = specificdata_init(proc_specificdata_domain, &p->p_specdataref);
 	KASSERT(error == 0);
+}
+
+/*
+ * proc_finispecific --
+ *	Finalize a proc's specificdata container.
+ */
+void
+proc_finispecific(struct proc *p)
+{
+
+	specificdata_fini(proc_specificdata_domain, &p->p_specdataref);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.159 2006/09/23 15:36:12 xtraeme Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.160 2006/10/11 04:51:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.159 2006/09/23 15:36:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.160 2006/10/11 04:51:06 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -341,6 +341,13 @@ exit1(struct lwp *l, int rv)
 	p->p_xstat = rv;
 	if (p->p_emul->e_proc_exit)
 		(*p->p_emul->e_proc_exit)(p);
+
+	/*
+	 * Finalize the last LWP's specificdata, as well as the
+	 * specificdata for the proc itself.
+	 */
+	lwp_finispecific(l);
+	proc_finispecific(p);
 
 	/*
 	 * Free the VM resources we're still holding on to.
