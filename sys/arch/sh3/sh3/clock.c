@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.34 2006/09/24 00:34:23 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.35 2006/10/11 02:31:19 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.34 2006/09/24 00:34:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.35 2006/10/11 02:31:19 uwe Exp $");
 
 #include "opt_pclock.h"
 #include "opt_hz.h"
@@ -111,12 +111,14 @@ do {									\
 	_reg_write_4(SH_(TCNT ## x), 0xffffffff);			\
 	_reg_bset_1(SH_(TSTR), TSTR_STR##x);				\
 } while (/*CONSTCOND*/0)
+
 #define	TMU_ELAPSED(x)							\
 	(0xffffffff - _reg_read_4(SH_(TCNT ## x)))
+
 void
 sh_clock_init(int flags)
 {
-	uint32_t s, t0, t1 __attribute__((__unused__));
+	uint32_t s, t0;
 
 	sh_clock.flags = flags;
 
@@ -155,7 +157,8 @@ sh_clock_init(int flags)
 	t0 = TMU_ELAPSED(0);
 	_cpu_exception_resume(s);
 
-	sh_clock.cpuclock = ((10000000 * 10) / t0) * sh_clock.tmuclk;
+	sh_clock.cpuclock
+	    = ((uint64_t)sh_clock.tmuclk * 10000000 * 10 + t0/2) / t0;
 	sh_clock.cpucycle_1us = (sh_clock.tmuclk * 10) / t0;
 
 	if (CPU_IS_SH4)
@@ -165,18 +168,21 @@ sh_clock_init(int flags)
 	 * Estimate PCLOCK
 	 */
 	if (sh_clock.pclock == 0) {
+		uint32_t t1;
+
 		/* set TMU channel 1 source to PCLOCK / 4 */
 		_reg_write_2(SH_(TCR1), TCR_TPSC_P4);
 		s = _cpu_exception_suspend();
 		_cpu_spin(1);	/* load function on cache. */
 		TMU_START(0);
 		TMU_START(1);
-		_cpu_spin(sh_clock.cpucycle_1us * 1000000);	/* 1 sec. */
+		_cpu_spin(sh_clock.cpuclock); /* 1 sec. */
 		t0 = TMU_ELAPSED(0);
 		t1 = TMU_ELAPSED(1);
 		_cpu_exception_resume(s);
 
-		sh_clock.pclock = ((t1 * 4)/ t0) * SH_RTC_CLOCK;
+		sh_clock.pclock
+		    = ((uint64_t)t1 * 4 * SH_RTC_CLOCK + t0/2) / t0;
 	}
 
 	/* Stop all counter */
