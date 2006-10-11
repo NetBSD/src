@@ -1,4 +1,4 @@
-/*	$NetBSD: find.h,v 1.22 2006/10/07 17:04:02 apb Exp $	*/
+/*	$NetBSD: find.h,v 1.23 2006/10/11 19:51:10 apb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,8 +51,8 @@ enum ntype {
 /* node definition */
 typedef struct _plandata {
 	struct _plandata *next;			/* next node */
-	int (*eval)				/* node evaluation function */
-	    __P((struct _plandata *, FTSENT *));
+	int (*eval)(struct _plandata *, FTSENT *);
+						/* node evaluation function */
 #define	F_EQUAL		1			/* [acm]time inum links size */
 #define	F_LESSTHAN	2
 #define	F_GREATER	3
@@ -126,10 +126,9 @@ typedef struct _plandata {
 #define	fprint_file	p_un._fprint_file
 
 typedef struct _option {
-	char *name;			/* option name */
+	const char *name;		/* option name */
 	enum ntype token;		/* token type */
-	PLAN *(*create)			/* create function */
-		__P((char ***, int));
+	PLAN *(*create)(char ***, int);	/* create function */
 	int arg;			/* function needs arg */
 } OPTION;
 
