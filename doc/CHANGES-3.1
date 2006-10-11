@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.170 2006/10/11 14:36:45 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.171 2006/10/11 16:17:31 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4676,11 +4676,6 @@ sys/fs/msdosfs/msdosfs_vnops.c			1.31
 	of large files constant.
 	[xtraeme, ticket #1525]
 
-sys/compat/linux/common/linux_sg.c		1.6
-
-	Fix COMPAT_LINUX on m86k.
-	[tsutsui, ticket #1526]
-
 gnu/dist/binutils/ChangeLog			patch
 gnu/dist/binutils/bfd/coff-alpha.c		patch
 gnu/dist/binutils/bfd/elf32-iq2000.c		patch
@@ -4777,4 +4772,9 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
 
 	Welcome to NetBSD 3.1_RC4.
+
+sys/compat/linux/common/linux_sg.c		1.6
+
+	Fix COMPAT_LINUX on m86k.
+	[tsutsui, ticket #1526]
 
