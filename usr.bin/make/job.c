@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.121 2006/10/09 20:44:35 apb Exp $	*/
+/*	$NetBSD: job.c,v 1.122 2006/10/11 07:01:44 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.121 2006/10/09 20:44:35 apb Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.122 2006/10/11 07:01:44 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.121 2006/10/09 20:44:35 apb Exp $");
+__RCSID("$NetBSD: job.c,v 1.122 2006/10/11 07:01:44 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -197,9 +197,6 @@ static int     	  numCommands; 	    /* The number of commands actually printed
 #define JOB_RUNNING	0   	/* Job is running */
 #define JOB_ERROR 	1   	/* Error in starting the job */
 #define JOB_FINISHED	2   	/* The job is already finished */
-#define JOB_STOPPED	3   	/* The job is stopped */
-
-
 
 /*
  * Descriptions for various shells.
@@ -299,12 +296,9 @@ static int make_suspended = 0;	/* non-zero if we've seen a SIGTSTP (etc) */
 static struct pollfd *fds = NULL;
 static Job **jobfds = NULL;
 static int nfds = 0;
-static int maxfds = 0;
 static void watchfd(Job *);
 static void clearfd(Job *);
 static int readyfd(Job *);
-#define JBSTART 256
-#define JBFACTOR 2
 
 STATIC GNode   	*lastNode;	/* The node for which output was most recently
 				 * produced. */
@@ -312,10 +306,8 @@ STATIC const char *targFmt;   	/* Format string to use to head output from a
 				 * job when it's not the most-recent job heard
 				 * from */
 static Job tokenWaitJob;	/* token wait pseudo-job */
-int	job_pipe[2] = { -1, -1 }; /* job server pipes. */
 
 static Job childExitJob;	/* child exit pseudo-job */
-int	exit_pipe[2] = { -1, -1 }; /* child exit signal pipe. */
 #define	CHILD_EXIT	"."
 #define	DO_JOB_RESUME	"R"
 
@@ -382,6 +374,37 @@ static void JobSigUnlock(sigset_t *omaskp)
 	(void)sigprocmask(SIG_SETMASK, omaskp, NULL);
 }
 
+static void
+JobCreatePipe(Job *job, int minfd)
+{
+    int i, fd;
+
+    if (pipe(job->jobPipe) == -1)
+	Punt("Cannot create pipe: %s", strerror(errno));
+
+    /* Set close-on-exec flag for both */
+    (void)fcntl(job->jobPipe[0], F_SETFD, 1);
+    (void)fcntl(job->jobPipe[1], F_SETFD, 1);
+
+    /*
+     * We mark the input side of the pipe non-blocking; we poll(2) the
+     * pipe when we're waiting for a job token, but we might lose the
+     * race for the token when a new one becomes available, so the read 
+     * from the pipe should not block.
+     */
+    fcntl(job->jobPipe[0], F_SETFL, 
+	fcntl(job->jobPipe[0], F_GETFL, 0) | O_NONBLOCK);
+
+    for (i = 0; i < 2; i++) {
+       /* Avoid using low numbered fds */
+       fd = fcntl(job->jobPipe[i], F_DUPFD, minfd);
+       if (fd != -1) {
+	   close(job->jobPipe[i]);
+	   job->jobPipe[i] = fd;
+       }
+    }
+}
+
 /*-
  *-----------------------------------------------------------------------
  * JobCondPassSig --
@@ -438,7 +461,7 @@ JobCondPassSig(int signo)
 static void
 JobChildSig(int signo __unused)
 {
-    write(exit_pipe[1], CHILD_EXIT, 1);
+    write(childExitJob.outPipe, CHILD_EXIT, 1);
 }
 
 
@@ -465,7 +488,7 @@ JobContinueSig(int signo __unused)
      * Defer sending to SIGCONT to our stopped children until we return
      * from the signal handler.
      */
-    write(exit_pipe[1], DO_JOB_RESUME, 1);
+    write(childExitJob.outPipe, DO_JOB_RESUME, 1);
 }
 
 /*-
@@ -880,10 +903,9 @@ static void
 JobClose(Job *job)
 {
     clearfd(job);
-    if (job->outPipe != job->inPipe) {
-	(void)close(job->outPipe);
-	job->outPipe = -1;
-    }
+    (void)close(job->outPipe);
+    job->outPipe = -1;
+
     JobDoOutput(job, TRUE);
     (void)close(job->inPipe);
     job->inPipe = -1;
@@ -1291,8 +1313,8 @@ JobExec(Job *job, char **argv)
 		/*
 		 * Pass job token pipe to submakes.
 		 */
-		fcntl(job_pipe[0], F_SETFD, 0);
-		fcntl(job_pipe[1], F_SETFD, 0);		
+		fcntl(tokenWaitJob.inPipe, F_SETFD, 0);
+		fcntl(tokenWaitJob.outPipe, F_SETFD, 0);		
 	}
 	
 	/*
@@ -1437,6 +1459,7 @@ JobMakeArgv(Job *job, char **argv)
  *
  * NB: I'm fairly sure that this code is never called with JOB_SPECIAL set
  *     JOB_IGNDOTS is never set (dsl)
+ *     Also the return value is ignored by everyone.
  *-----------------------------------------------------------------------
  */
 static int
@@ -1453,7 +1476,8 @@ JobStart(GNode *gn, int flags)
 	    break;
     }
     if (job >= job_table_end)
-	Punt("JobStart out of memory");
+	Punt("JobStart no job slots vacant");
+
     memset(job, 0, sizeof *job);
     job->job_state = JOB_ST_SETUP;
     if (gn->type & OP_SPECIAL)
@@ -1490,7 +1514,7 @@ JobStart(GNode *gn, int flags)
      * we just set the file to be stdout. Cute, huh?
      */
     if (((gn->type & OP_MAKE) && !(noRecursiveExecute)) ||
-	(!noExecute && !touchFlag)) {
+	    (!noExecute && !touchFlag)) {
 	/*
 	 * tfile is the name of a file into which all shell commands are
 	 * put. It is used over by removing it before the child shell is
@@ -1614,18 +1638,8 @@ JobStart(GNode *gn, int flags)
      */
     JobMakeArgv(job, argv);
 
-    /*
-     * If we're using pipes to catch output, create the pipe by which we'll
-     * get the shell's output. If we're using files, print out that we're
-     * starting a job and then set up its temporary-file name.
-     */
-    int fd[2];
-    if (pipe(fd) == -1)
-	Punt("Cannot create pipe: %s", strerror(errno));
-    job->inPipe = fd[0];
-    job->outPipe = fd[1];
-    (void)fcntl(job->inPipe, F_SETFD, 1);
-    (void)fcntl(job->outPipe, F_SETFD, 1);
+    /* Create the pipe by which we'll get the shell's output.  */
+    JobCreatePipe(job, 3);
 
     JobExec(job, argv);
     return(JOB_RUNNING);
@@ -1726,6 +1740,8 @@ end_loop:
     nRead = read(job->inPipe, &job->outBuf[job->curPos],
 		     JOB_BUFSIZE - job->curPos);
     if (nRead < 0) {
+	if (errno == EAGAIN)
+	    return;
 	if (DEBUG(JOB)) {
 	    perror("JobDoOutput(piperead)");
 	}
@@ -1850,7 +1866,6 @@ JobRun(GNode *targ)
     JobStart(targ, JOB_SPECIAL);
     while (jobTokensRunning) {
 	Job_CatchOutput();
-	Job_CatchChildren();
     }
 #else
     Compat_Make(targ, targ);
@@ -1959,32 +1974,38 @@ Job_CatchChildren(void)
 void
 Job_CatchOutput(void)
 {
-    int           	  nready;
-    Job  	 	  *job;
+    int nready;
+    Job *job;
+    int i;
 
     (void)fflush(stdout);
 
     /* The first fd in the list is the job token pipe */
-    nready = poll(fds + 1 - wantToken, nfds + 1 - wantToken, POLL_MSEC);
-    if (nready <= 0)
-	return;
+    nready = poll(fds + 1 - wantToken, nfds - 1 + wantToken, POLL_MSEC);
 
-    if (readyfd(&childExitJob)) {
+    if (nready < 0 || readyfd(&childExitJob)) {
 	char token = 0;
 	nready -= 1;
 	(void)read(childExitJob.inPipe, &token, 1);
 	if (token == DO_JOB_RESUME[0])
 	    /* Complete relay requested from our SIGCONT handler */
 	    JobRestartJobs();
+	Job_CatchChildren();
     }
 
-    for (job = job_table; nready && job < job_table_end; job++) {
+    if (nready <= 0)
+	return;
+
+    if (wantToken && readyfd(&tokenWaitJob))
+	nready--;
+
+    for (i = 2; i < nfds; i++) {
+	if (!fds[i].revents)
+	    continue;
+	job = jobfds[i];
 	if (job->job_state != JOB_ST_RUNNING)
 	    continue;
-	if (readyfd(job)) {
-	    JobDoOutput(job, FALSE);
-	    nready -= 1;
-	}
+	JobDoOutput(job, FALSE);
     }
 }
 
@@ -2100,12 +2121,15 @@ Job_Init(void)
 
     Shell_Init();
 
-    if (pipe(exit_pipe) < 0)
-	Fatal("error in pipe: %s", strerror(errno));
-    fcntl(exit_pipe[0], F_SETFD, 1);
-    fcntl(exit_pipe[1], F_SETFD, 1);
+    JobCreatePipe(&childExitJob, 3);
 
-    childExitJob.inPipe = exit_pipe[0];
+    /* We can only need to wait for tokens, children and output from each job */
+    fds = emalloc(sizeof (*fds) * (2 + maxJobs));
+    jobfds = emalloc(sizeof (*jobfds) * (2 + maxJobs));
+
+    /* These are permanent entries and take slots 0 and 1 */
+    watchfd(&tokenWaitJob);
+    watchfd(&childExitJob);
 
     sigemptyset(&caught_signals);
     /*
@@ -2522,7 +2546,6 @@ Job_Wait(void)
     aborting = ABORT_WAIT;
     while (jobTokensRunning != 0) {
 	Job_CatchOutput();
-	Job_CatchChildren();
     }
     aborting = 0;
 }
@@ -2617,32 +2640,8 @@ JobRestartJobs(void)
 static void
 watchfd(Job *job)
 {
-    int i;
     if (job->inPollfd != NULL)
 	Punt("Watching watched job");
-    if (fds == NULL) {
-	maxfds = JBSTART;
-	fds = emalloc(sizeof(struct pollfd) * maxfds);
-	jobfds = emalloc(sizeof(Job **) * maxfds);
-
-	fds[0].fd = job_pipe[0];
-	fds[0].events = POLLIN;
-	jobfds[0] = &tokenWaitJob;
-	tokenWaitJob.inPollfd = &fds[0];
-	nfds++;
-
-	fds[1].fd = exit_pipe[0];
-	fds[1].events = POLLIN;
-	jobfds[1] = &childExitJob;
-	childExitJob.inPollfd = &fds[1];
-	nfds++;
-    } else if (nfds == maxfds) {
-	maxfds *= JBFACTOR;
-	fds = erealloc(fds, sizeof(struct pollfd) * maxfds);
-	jobfds = erealloc(jobfds, sizeof(Job **) * maxfds);
-	for (i = 0; i < nfds; i++)
-	    jobfds[i]->inPollfd = &fds[i];
-    }
 
     fds[nfds].fd = job->inPipe;
     fds[nfds].events = POLLIN;
@@ -2696,13 +2695,13 @@ JobTokenAdd(void)
     char tok = JOB_TOKENS[aborting], tok1;
 
     /* If we are depositing an error token flush everything else */
-    while (tok != '+' && read(job_pipe[0], &tok1, 1) == 1)
+    while (tok != '+' && read(tokenWaitJob.inPipe, &tok1, 1) == 1)
 	continue;
 
     if (DEBUG(JOB))
 	printf("(%d) aborting %d, deposit token %c\n",
 	    getpid(), aborting, JOB_TOKENS[aborting]);
-    write(job_pipe[1], &tok, 1);
+    write(tokenWaitJob.outPipe, &tok, 1);
 }
 
 /*-
@@ -2714,54 +2713,35 @@ JobTokenAdd(void)
  */
 
 void
-Job_ServerStart(void)
+Job_ServerStart(int max_tokens, int jp_0, int jp_1)
 {
-    int i, fd, flags;
+    int i;
     char jobarg[64];
     
-    if (pipe(job_pipe) < 0)
-	Fatal("error in pipe: %s", strerror(errno));
-
-    for (i = 0; i < 2; i++) {
-       /* Avoid using low numbered fds */
-       fd = fcntl(job_pipe[i], F_DUPFD, 15);
-       if (fd != -1) {
-	   close(job_pipe[i]);
-	   job_pipe[i] = fd;
-       }
+    if (jp_0 >= 0 && jp_1 >= 0) {
+	/* Pipe passed in from parent */
+	tokenWaitJob.inPipe = jp_0;
+	tokenWaitJob.outPipe = jp_1;
+	return;
     }
 
-    /*
-     * We mark the input side of the pipe non-blocking; we poll(2) the
-     * pipe when we're waiting for a job token, but we might lose the
-     * race for the token when a new one becomes available, so the read 
-     * from the pipe should not block.
-     */
-    flags = fcntl(job_pipe[0], F_GETFL, 0);
-    flags |= O_NONBLOCK;
-    fcntl(job_pipe[0], F_SETFL, flags);
+    JobCreatePipe(&tokenWaitJob, 15);
 
-    /*
-     * Mark job pipes as close-on-exec.
-     * Note that we will clear this when executing submakes.
-     */
-    fcntl(job_pipe[0], F_SETFD, 1);
-    fcntl(job_pipe[1], F_SETFD, 1);
-
-    snprintf(jobarg, sizeof(jobarg), "%d,%d", job_pipe[0], job_pipe[1]);
+    snprintf(jobarg, sizeof(jobarg), "%d,%d",
+	    tokenWaitJob.inPipe, tokenWaitJob.outPipe);
 
     Var_Append(MAKEFLAGS, "-J", VAR_GLOBAL);
     Var_Append(MAKEFLAGS, jobarg, VAR_GLOBAL);			
 
     /*
-     * Preload job_pipe with one token per job, save the one
+     * Preload the job pipe with one token per job, save the one
      * "extra" token for the primary job.
      * 
-     * XXX should clip maxJobs against PIPE_BUF -- if maxJobTokens is
+     * XXX should clip maxJobs against PIPE_BUF -- if max_tokens is
      * larger than the write buffer size of the pipe, we will
      * deadlock here.
      */
-    for (i=1; i < maxJobTokens; i++)
+    for (i = 1; i < max_tokens; i++)
 	JobTokenAdd();
 }
 
@@ -2814,7 +2794,7 @@ Job_TokenWithdraw(void)
     if (aborting || (jobTokensRunning >= maxJobs))
 	return FALSE;
 
-    count = read(job_pipe[0], &tok, 1);
+    count = read(tokenWaitJob.inPipe, &tok, 1);
     if (count == 0)
 	Fatal("eof on job pipe!");
     if (count < 0 && jobTokensRunning != 0) {
@@ -2831,16 +2811,16 @@ Job_TokenWithdraw(void)
 	/* make being abvorted - remove any other job tokens */
 	if (DEBUG(JOB))
 	    printf("(%d) aborted by token %c\n", getpid(), tok);
-	while (read(job_pipe[0], &tok1, 1) == 1)
+	while (read(tokenWaitJob.inPipe, &tok1, 1) == 1)
 	    continue;
 	/* And put the stopper back */
-	write(job_pipe[1], &tok, 1);
+	write(tokenWaitJob.outPipe, &tok, 1);
 	Fatal("A failure has been detected in another branch of the parallel make");
     }
 
     if (count == 1 && jobTokensRunning == 0)
 	/* We didn't want the token really */
-	write(job_pipe[1], &tok, 1);
+	write(tokenWaitJob.outPipe, &tok, 1);
 
     jobTokensRunning++;
     if (DEBUG(JOB))
