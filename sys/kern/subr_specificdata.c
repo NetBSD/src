@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_specificdata.c,v 1.3 2006/10/11 05:37:32 thorpej Exp $	*/
+/*	$NetBSD: subr_specificdata.c,v 1.4 2006/10/11 09:04:16 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.3 2006/10/11 05:37:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.4 2006/10/11 09:04:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -487,7 +487,6 @@ specificdata_setspecific_nowait(specificdata_domain_t sd,
 				specificdata_reference *ref,
 				specificdata_key_t key, void *data)
 {
-	int rv;
 
 	return (specificdata_setspecific_internal(sd, ref, key, data, FALSE));
 }
