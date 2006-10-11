@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.13 2006/09/23 22:16:35 manu Exp $ */
+/*	$NetBSD: twa.c,v 1.14 2006/10/11 05:12:06 jmcneill Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.13 2006/09/23 22:16:35 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.14 2006/10/11 05:12:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1937,7 +1937,7 @@ twa_flash_firmware(struct twa_softc *sc)
 
 		remaining_img_size -= this_chunk_size;
 
-		memset(tr->tr_data, fw_img_chunk_size, 0);
+		memset(tr->tr_data, 0, fw_img_chunk_size);
 
 		memcpy(tr->tr_data, twa_fw_img + (i * fw_img_chunk_size),
 			this_chunk_size);
