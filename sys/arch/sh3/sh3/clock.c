@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.35 2006/10/11 02:31:19 uwe Exp $	*/
+/*	$NetBSD: clock.c,v 1.36 2006/10/11 03:20:01 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.35 2006/10/11 02:31:19 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.36 2006/10/11 03:20:01 uwe Exp $");
 
 #include "opt_pclock.h"
 #include "opt_hz.h"
@@ -118,7 +118,7 @@ do {									\
 void
 sh_clock_init(int flags)
 {
-	uint32_t s, t0;
+	uint32_t s, t0, cnt_1s;
 
 	sh_clock.flags = flags;
 
@@ -157,12 +157,13 @@ sh_clock_init(int flags)
 	t0 = TMU_ELAPSED(0);
 	_cpu_exception_resume(s);
 
-	sh_clock.cpuclock
-	    = ((uint64_t)sh_clock.tmuclk * 10000000 * 10 + t0/2) / t0;
 	sh_clock.cpucycle_1us = (sh_clock.tmuclk * 10) / t0;
 
+	cnt_1s = ((uint64_t)sh_clock.tmuclk * 10000000 * 10 + t0/2) / t0;
 	if (CPU_IS_SH4)
-		sh_clock.cpuclock >>= 1;	/* two-issue */
+		sh_clock.cpuclock = cnt_1s / 2; /* two-issue */
+	else
+		sh_clock.cpuclock = cnt_1s;
 
 	/*
 	 * Estimate PCLOCK
@@ -176,7 +177,7 @@ sh_clock_init(int flags)
 		_cpu_spin(1);	/* load function on cache. */
 		TMU_START(0);
 		TMU_START(1);
-		_cpu_spin(sh_clock.cpuclock); /* 1 sec. */
+		_cpu_spin(cnt_1s); /* 1 sec. */
 		t0 = TMU_ELAPSED(0);
 		t1 = TMU_ELAPSED(1);
 		_cpu_exception_resume(s);
