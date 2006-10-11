@@ -1,4 +1,4 @@
-.\" $NetBSD: ugensa.4,v 1.2 2006/07/05 16:44:54 wiz Exp $
+.\" $NetBSD: ugensa.4,v 1.3 2006/10/11 14:33:51 gdt Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,11 +46,15 @@
 .Sh HARDWARE
 The
 .Nm
-driver supports the following adapters:
+driver supports the following adapters (or their USB device portion,
+for adaptors that contain a USB host controller, hub and a USB
+device):
 .Pp
 .Bl -tag -width Dv -offset indent -compact
 .It Airprime PC5220
-.It Qualcom K CDMA MSM K
+.It Novatel FlexPak GPS receiver
+.It Qualcom CDMA MSM (found in Kyocera KPC650 EVDO interface)
+.It Sierra Aircard 580
 .El
 .Sh DESCRIPTION
 The
