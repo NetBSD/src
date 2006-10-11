@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.440 2006/10/08 08:14:24 xtraeme Exp $
+$NetBSD: usbdevs,v 1.441 2006/10/11 13:02:58 gdt Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -351,6 +351,7 @@ vendor ALTIUS		0x09b3	Altius Solutions
 vendor ARRIS		0x09c1	Arris Interactive
 vendor ACTIVCARD	0x09c3	ACTIVCARD
 vendor ACTISYS		0x09c4	ACTiSYS
+vendor NOVATEL		0x09d7	NovAtel
 vendor AFOURTECH	0x09da	A-FOUR TECH
 vendor AIMEX		0x09dc	AIMEX
 vendor ADDONICS		0x09df	Addonics Technologies
@@ -414,6 +415,7 @@ vendor JRC		0x1145	Japan Radio Company
 vendor SERVERWORKS	0x1166	ServerWorks
 vendor DELORME		0x1163	DeLorme
 vendor ACERCM		0x1189	Acer Communications & Multimedia
+vendor SIERRA		0x1199	Sierra Wireless
 vendor TOPFIELD		0x11db	Topfield Co., Ltd
 vendor TSUNAMI		0x1241	Tsunami
 vendor TARGUS		0x1267	Targus
@@ -1492,6 +1494,9 @@ product NHJ CAM2		0x9120	Camera
 /* Nokia products */
 product NOKIA CA42		0x0802	Mobile Phone adapter
 
+/* NovAtel products */
+product NOVATEL FLEXPACKGPS	0x0100	NovAtel FlexPack GPS receiver
+
 /* Olympus products */
 product OLYMPUS C1		0x0102	C-1 Digital Camera
 product OLYMPUS C700		0x0105	C-700 Ultra Zoom
@@ -1777,6 +1782,9 @@ product SIEMENS SPEEDSTREAM22	0x1022	SpeedStream USB 1022
 
 /* Siemens Info products */
 product SIEMENS2 MC75		0x0034	Wireless Modules MC75
+
+/* Sierra Wireless products */
+product SIERRA AIRCARD580	0x0112	Sierra Wireless AirCard 580
 
 /* Sigmatel products */
 product SIGMATEL IRDA		0x4200	IrDA
