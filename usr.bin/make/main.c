@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.131 2006/10/09 14:36:41 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.132 2006/10/11 07:01:44 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.131 2006/10/09 14:36:41 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.132 2006/10/11 07:01:44 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.131 2006/10/09 14:36:41 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.132 2006/10/11 07:01:44 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -156,7 +156,7 @@ static Lst		makefiles;	/* ordered list of makefiles to read */
 static Boolean		printVars;	/* print value of one or more vars */
 static Lst		variables;	/* list of variables to print */
 int			maxJobs;	/* -j argument */
-int			maxJobTokens;	/* -j argument */
+static int		maxJobTokens;	/* -j argument */
 Boolean			compatMake;	/* -B argument */
 int			debug;		/* -d argument */
 Boolean			noExecute;	/* -n flag */
@@ -170,6 +170,7 @@ Boolean			oldVars;	/* variable substitution style */
 Boolean			checkEnvFirst;	/* -e flag */
 Boolean			parseWarnFatal;	/* -W flag */
 Boolean			jobServer; 	/* -J flag */
+static int jp_0 = -1, jp_1 = -1;	/* ends of parent job pipe */
 Boolean			varNoExportEnv;	/* -X flag */
 static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
 static const char *	tracefile;
@@ -277,23 +278,22 @@ rearg:
 			break;
 		case 'J':
 			if (argvalue == NULL) goto noarg;
-			if (sscanf(argvalue, "%d,%d", &job_pipe[0], &job_pipe[1]) != 2) {
-			    /* backslash to avoid trigraph ??) */
+			if (sscanf(argvalue, "%d,%d", &jp_0, &jp_1) != 2) {
 			    (void)fprintf(stderr,
-				"%s: internal error -- J option malformed (%s?\?)\n",
+				"%s: internal error -- J option malformed (%s)\n",
 				progname, argvalue);
 				usage();
 			}
-			if ((fcntl(job_pipe[0], F_GETFD, 0) < 0) ||
-			    (fcntl(job_pipe[1], F_GETFD, 0) < 0)) {
+			if ((fcntl(jp_0, F_GETFD, 0) < 0) ||
+			    (fcntl(jp_1, F_GETFD, 0) < 0)) {
 #if 0
 			    (void)fprintf(stderr,
 				"%s: ###### warning -- J descriptors were closed!\n",
 				progname);
 			    exit(2);
 #endif
-			    job_pipe[0] = -1;
-			    job_pipe[1] = -1;
+			    jp_0 = -1;
+			    jp_1 = -1;
 			    compatMake = TRUE;
 			} else {
 			    Var_Append(MAKEFLAGS, "-J", VAR_GLOBAL);
@@ -933,11 +933,11 @@ main(int argc, char **argv)
 	if (p1)
 	    free(p1);
 
-	if (!jobServer && !compatMake)
-	    Job_ServerStart();
+	if (!compatMake)
+	    Job_ServerStart(maxJobTokens, jp_0, jp_1);
 	if (DEBUG(JOB))
 	    printf("job_pipe %d %d, maxjobs %d, tokens %d, compat %d\n",
-		job_pipe[0], job_pipe[1], maxJobs, maxJobTokens, compatMake);
+		jp_0, jp_1, maxJobs, maxJobTokens, compatMake);
 
 	Main_ExportMAKEFLAGS(TRUE);	/* initial export */
 
