@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.32 2006/10/09 14:36:41 dsl Exp $	*/
+/*	$NetBSD: job.h,v 1.33 2006/10/11 07:01:44 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -129,10 +129,6 @@ emul_poll(struct pollfd *fd, int nfd, int timeout);
  *	6) A word of flags which determine how the module handles errors,
  *	   echoing, etc. for the job
  *
- * The job "table" is kept as a linked Lst in 'jobs', with the number of
- * active jobs maintained in the 'nJobs' variable. At no time will this
- * exceed the value of 'maxJobs', initialized by the Job_Init function.
- *
  * When a job is finished, the Make_Update function is called on each of the
  * parents of the node which was just remade. This takes care of the upward
  * traversal of the dependency graph.
@@ -163,16 +159,16 @@ typedef struct Job {
 				 * commands */
 #define JOB_TRACED	0x400	/* we've sent 'set -x' */
 
-    int	  	inPipe;		/* Input side of pipe associated
-				 * with job's output channel */
+    int	  	 jobPipe[2];	/* Pipe for readind output from job */
     struct pollfd *inPollfd;	/* pollfd associated with inPipe */
-    int   	outPipe;	/* Output side of pipe associated with
-				 * job's output channel */
     char  	outBuf[JOB_BUFSIZE + 1];
 				/* Buffer for storing the output of the
 				 * job, line by line */
     int   	curPos;	/* Current position in op_outBuf */
 } Job;
+
+#define inPipe jobPipe[0]
+#define outPipe jobPipe[1]
 
 
 /*-
@@ -239,10 +235,8 @@ typedef struct Shell {
 extern const char *shellPath;
 extern const char *shellName;
 
-extern int	job_pipe[2];	/* token pipe for jobs. */
 extern int	jobTokensRunning; /* tokens currently "out" */
 extern int	maxJobs;	/* Max jobs we can run */
-extern int	maxJobTokens;	/* Number of token for the job pipe */
 
 void Shell_Init(void);
 const char *Shell_GetNewline(void);
@@ -263,6 +257,6 @@ void Job_AbortAll(void);
 void JobFlagForMigration(int);
 void Job_TokenReturn(void);
 Boolean Job_TokenWithdraw(void);
-void Job_ServerStart(void);
+void Job_ServerStart(int, int, int);
 
 #endif /* _JOB_H_ */
