@@ -1,4 +1,4 @@
-.\"	$NetBSD: unix.4,v 1.14 2006/10/08 13:08:33 pooka Exp $
+.\"	$NetBSD: unix.4,v 1.15 2006/10/11 11:16:09 pooka Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)unix.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd October 8, 2006
+.Dd October 11, 2006
 .Dt UNIX 4
 .Os
 .Sh NAME
@@ -97,7 +97,12 @@ field must be terminated by a NUL character to be used with
 but the terminating NUL is
 .Em not
 part of the address.
-Example:
+The
+.Nx
+kernel ignores any user-set value in the
+.Va sun_len
+member of the structure.
+Usage example:
 .Bd -literal -offset indent
 memset(&sunx, 0, sizeof(sunx));
 sunx.sun_family = AF_LOCAL;
