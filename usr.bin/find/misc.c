@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.13 2006/08/26 18:17:42 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.14 2006/10/11 19:51:10 apb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)misc.c	8.2 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.13 2006/08/26 18:17:42 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.14 2006/10/11 19:51:10 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,16 +53,14 @@ __RCSID("$NetBSD: misc.c,v 1.13 2006/08/26 18:17:42 christos Exp $");
 #include <unistd.h>
 
 #include "find.h"
- 
+
 /*
  * brace_subst --
  *	Replace occurrences of {} in orig with path, and place it in a malloced
  *      area of memory set in store.
  */
 void
-brace_subst(orig, store, path, len)
-	char *orig, **store, *path;
-	int *len;
+brace_subst(char *orig, char **store, char *path, int *len)
 {
 	int nlen, plen, rest;
 	char ch, *p, *ostore;
@@ -98,8 +96,7 @@ brace_subst(orig, store, path, len)
  *	input. If the input is 'y' then 1 is returned.
  */
 int
-queryuser(argv)
-	char **argv;
+queryuser(char **argv)
 {
 	int ch, first, nl;
 
@@ -126,15 +123,14 @@ queryuser(argv)
 	}
         return (first == 'y');
 }
- 
+
 /*
  * show_path --
  *	called on SIGINFO
  */
 /* ARGSUSED */
 void
-show_path(sig)
-	int sig;
+show_path(int sig)
 {
 	extern FTSENT *g_entry;
 	int errno_bak;

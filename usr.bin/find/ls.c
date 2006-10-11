@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.18 2003/08/07 11:13:42 agc Exp $	*/
+/*	$NetBSD: ls.c,v 1.19 2006/10/11 19:51:10 apb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ls.c,v 1.18 2003/08/07 11:13:42 agc Exp $");
+__RCSID("$NetBSD: ls.c,v 1.19 2006/10/11 19:51:10 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,14 +57,13 @@ __RCSID("$NetBSD: ls.c,v 1.18 2003/08/07 11:13:42 agc Exp $");
 
 /* Derived from the print routines in the ls(1) source code. */
 
-static void printlink __P((char *));
-static void printtime __P((time_t));
+static void printlink(char *);
+static void printtime(time_t);
 
 void
-printlong(name, accpath, sb)
-	char *name;			/* filename to print */
-	char *accpath;			/* current valid path to filename */
-	struct stat *sb;		/* stat buffer */
+printlong(char *name,			/* filename to print */
+	char *accpath,			/* current valid path to filename */
+	struct stat *sb)		/* stat buffer */
 {
 	char modep[15];
 
@@ -88,8 +87,7 @@ printlong(name, accpath, sb)
 }
 
 static void
-printtime(ftime)
-	time_t ftime;
+printtime(time_t ftime)
 {
 	int i;
 	char *longstring;
@@ -111,8 +109,7 @@ printtime(ftime)
 }
 
 static void
-printlink(name)
-	char *name;
+printlink(char *name)
 {
 	int lnklen;
 	char path[MAXPATHLEN + 1];
