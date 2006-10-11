@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.43 2006/10/08 22:57:11 christos Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.44 2006/10/11 03:46:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -205,8 +205,8 @@ void	lwp_update_creds(struct lwp *);
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
 void	lwp_specific_key_delete(specificdata_key_t);
 void 	lwp_initspecific(struct lwp *);
-void *	lwp_getspecific(struct lwp *, specificdata_key_t);
-void	lwp_setspecific(struct lwp *, specificdata_key_t, void *);
+void *	lwp_getspecific(specificdata_key_t);
+void	lwp_setspecific(specificdata_key_t, void *);
 #endif	/* _KERNEL */
 
 /* Flags for _lwp_create(), as per Solaris. */
