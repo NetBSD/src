@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_apm.c,v 1.4 2006/08/06 15:47:51 christos Exp $	*/
+/*	$NetBSD: acpi_apm.c,v 1.5 2006/10/11 19:00:12 gdt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.4 2006/08/06 15:47:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.5 2006/10/11 19:00:12 gdt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,17 +273,23 @@ acpiapm_get_powstat(void *opaque, u_int batteryid, struct apm_power_info *pinfo)
 				      APM_BATT_FLAG_LOW |		      \
 				      APM_BATT_FLAG_HIGH)
 	int i, curcap, lowcap, warncap, cap, descap, lastcap, discharge;
+	int cap_valid, lastcap_valid;
 	envsys_tre_data_t etds;
 	envsys_basic_info_t ebis;
 
-	curcap = lowcap = warncap = cap = descap = lastcap = discharge = -1;
+	/* Denote most variables as unitialized. */
+	curcap = lowcap = warncap = descap = discharge = -1;
+
+	/* Prepare to aggregate these two variables over all batteries. */
+	cap = lastcap = 0;
+	cap_valid = lastcap_valid = 0;
 
 	(void)memset(pinfo, 0, sizeof(*pinfo));
 	pinfo->ac_state = APM_AC_UNKNOWN;
 	pinfo->minutes_valid = 0;
 	pinfo->minutes_left = 0xffff; /* unknown */
 	pinfo->batteryid = 0;
-	pinfo->nbattery = 1;
+	pinfo->nbattery = 0;	/* to be incremented as batteries are found */
 	pinfo->battery_flags = 0;
 	pinfo->battery_state = APM_BATT_UNKNOWN; /* ignored */
 	pinfo->battery_life = APM_BATT_LIFE_UNKNOWN;
@@ -320,18 +326,23 @@ acpiapm_get_powstat(void *opaque, u_int batteryid, struct apm_power_info *pinfo)
 			warncap = data / 1000;
 		else if (strstr(desc, " low cap"))
 			lowcap = data / 1000;
-		else if (strstr(desc, " last full cap"))
-			lastcap = data / 1000;
+		else if (strstr(desc, " last full cap")) {
+			lastcap += data / 1000;
+			lastcap_valid = 1;
+		}
 		else if (strstr(desc, " design cap"))
 			descap = data / 1000;
 		else if (strstr(desc, " charge") &&
-		    strstr(desc, " charge rate") == NULL)
-			cap = data / 1000;
+		    strstr(desc, " charge rate") == NULL) {
+			cap += data / 1000;
+			cap_valid = 1;
+			pinfo->nbattery++;
+		}
 		else if (strstr(desc, " discharge rate"))
 			discharge = data / 1000;
 	}
 
-	if (cap != -1)  {
+	if (cap_valid > 0)  {
 		if (warncap != -1 && cap < warncap)
 			pinfo->battery_flags |= APM_BATT_FLAG_CRITICAL;
 		else if (lowcap != -1) {
@@ -340,7 +351,7 @@ acpiapm_get_powstat(void *opaque, u_int batteryid, struct apm_power_info *pinfo)
 			else
 				pinfo->battery_flags |= APM_BATT_FLAG_HIGH;
 		}
-		if (lastcap != -1 && lastcap != 0)
+		if (lastcap_valid > 0 && lastcap != 0)
 			pinfo->battery_life = 100 * cap / lastcap;
 		else if (descap != -1 && descap != 0)
 			pinfo->battery_life = 100 * cap / descap;
