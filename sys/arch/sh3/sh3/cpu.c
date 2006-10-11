@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.8 2006/01/02 23:16:20 uwe Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9 2006/10/11 01:08:48 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.8 2006/01/02 23:16:20 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2006/10/11 01:08:48 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,16 +46,19 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.8 2006/01/02 23:16:20 uwe Exp $");
 
 #include <machine/autoconf.h>
 
-int cpu_match(struct device *, struct cfdata *, void *);
-void cpu_attach(struct device *, struct device *, void *);
+
+extern struct cfdriver cpu_cd;
+
+static int cpu_match(struct device *, struct cfdata *, void *);
+static void cpu_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cpu, sizeof (struct device),
     cpu_match, cpu_attach, NULL, NULL);
 
-int
+
+static int
 cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	extern struct cfdriver cpu_cd;
 	struct mainbus_attach_args *ma = aux;
 
 	if (strcmp(ma->ma_name, cpu_cd.cd_name) != 0)
@@ -64,15 +67,19 @@ cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (1);
 }
 
-void
+static void
 cpu_attach(struct device *parent, struct device *self, void *aux)
 {
 
 #define	MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
+
 	printf(": HITACHI SH%d %d.%02d MHz PCLOCK %d.%02d MHz\n",
-	    CPU_IS_SH3 ? 3 : 4, MHZ(sh_clock_get_cpuclock()),
-	    MHZ(sh_clock_get_pclock()));
+	       CPU_IS_SH3 ? 3 : 4,
+	       MHZ(sh_clock_get_cpuclock()),
+	       MHZ(sh_clock_get_pclock()));
+
 #undef MHZ
+
 	sh_cache_information();
 	sh_mmu_information();
 }
