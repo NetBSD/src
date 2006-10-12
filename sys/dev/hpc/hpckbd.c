@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.18 2006/09/24 18:34:41 peter Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.19 2006/10/12 21:19:13 uwe Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.18 2006/09/24 18:34:41 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.19 2006/10/12 21:19:13 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,6 +134,7 @@ const struct wskbd_accessops hpckbd_accessops = {
 const struct wskbd_consops hpckbd_consops = {
 	hpckbd_cngetc,
 	hpckbd_cnpollc,
+	NULL,
 };
 
 struct wskbd_mapdata hpckbd_keymapdata = {
@@ -146,13 +147,14 @@ struct wskbd_mapdata hpckbd_keymapdata = {
 };
 
 int
-hpckbd_match(struct device *parent, struct cfdata *cf, void *aux)
+hpckbd_match(struct device *parent __unused,
+	     struct cfdata *cf __unused, void *aux __unused)
 {
 	return (1);
 }
 
 void
-hpckbd_attach(struct device *parent, struct device *self, void *aux)
+hpckbd_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct hpckbd_attach_args *haa = aux;
 	struct hpckbd_softc *sc = device_private(self);
@@ -191,7 +193,7 @@ hpckbd_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-hpckbd_print(void *aux, const char *pnp)
+hpckbd_print(void *aux __unused, const char *pnp)
 {
 	return (pnp ? QUIET : UNCONF);
 }
@@ -262,7 +264,8 @@ hpckbd_getevent(struct hpckbd_core* hc, u_int *type, int *data)
 }
 
 void
-hpckbd_keymap_setup(struct hpckbd_core *hc, const keysym_t *map, int mapsize)
+hpckbd_keymap_setup(struct hpckbd_core *hc __unused,
+		    const keysym_t *map, int mapsize)
 {
 	int i;
 	struct wscons_keydesc *desc;
@@ -325,7 +328,7 @@ hpckbd_keymap_lookup(struct hpckbd_core *hc)
 }
 
 void
-__hpckbd_input_hook(void *arg)
+__hpckbd_input_hook(void *arg __unused)
 {
 #if 0
 	struct hpckbd_core *hc = arg;
@@ -459,13 +462,14 @@ hpckbd_enable(void *arg, int on)
 }
 
 void
-hpckbd_set_leds(void *arg, int leds)
+hpckbd_set_leds(void *arg __unused, int leds __unused)
 {
 	/* Can you find any LED which tells you about keyboard? */
 }
 
 int
-hpckbd_ioctl(void *arg, u_long cmd, caddr_t data, int flag, struct lwp *l)
+hpckbd_ioctl(void *arg, u_long cmd, caddr_t data, int flag __unused,
+	     struct lwp *l __unused)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	struct hpckbd_core *hc = arg;
