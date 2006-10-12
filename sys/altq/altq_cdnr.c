@@ -1,8 +1,8 @@
-/*	$NetBSD: altq_cdnr.c,v 1.15 2006/10/12 01:30:42 christos Exp $	*/
-/*	$KAME: altq_cdnr.c,v 1.8 2000/12/14 08:12:45 thorpej Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.16 2006/10/12 19:59:08 peter Exp $	*/
+/*	$KAME: altq_cdnr.c,v 1.15 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
- * Copyright (C) 1999-2000
+ * Copyright (C) 1999-2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,17 +28,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.15 2006/10/12 01:30:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.16 2006/10/12 19:59:08 peter Exp $");
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#ifdef _KERNEL_OPT
 #include "opt_altq.h"
-#if (__FreeBSD__ != 2)
 #include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
 #endif
-#endif
-#endif /* __FreeBSD__ || __NetBSD__ */
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -65,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.15 2006/10/12 01:30:42 christos Exp 
 #include <altq/altq_conf.h>
 #include <altq/altq_cdnr.h>
 
+#ifdef ALTQ3_COMPAT
 /*
  * diffserv traffic conditioning module
  */
@@ -77,71 +73,63 @@ int altq_cdnr_enabled = 0;
 /* cdnr_list keeps all cdnr's allocated. */
 static LIST_HEAD(, top_cdnr) tcb_list;
 
-int cdnropen __P((dev_t, int, int, struct lwp *));
-int cdnrclose __P((dev_t, int, int, struct lwp *));
-int cdnrioctl __P((dev_t, ioctlcmd_t, caddr_t, int, struct lwp *));
+static int altq_cdnr_input(struct mbuf *, int);
+static struct top_cdnr *tcb_lookup(char *ifname);
+static struct cdnr_block *cdnr_handle2cb(u_long);
+static u_long cdnr_cb2handle(struct cdnr_block *);
+static void *cdnr_cballoc(struct top_cdnr *, int,
+       struct tc_action *(*)(struct cdnr_block *, struct cdnr_pktinfo *));
+static void cdnr_cbdestroy(void *);
+static int tca_verify_action(struct tc_action *);
+static void tca_import_action(struct tc_action *, struct tc_action *);
+static void tca_invalidate_action(struct tc_action *);
 
-static int altq_cdnr_input __P((struct mbuf *, int));
-static struct top_cdnr *tcb_lookup __P((char *ifname));
-static struct cdnr_block *cdnr_handle2cb __P((u_long));
-static u_long cdnr_cb2handle __P((struct cdnr_block *));
-static void *cdnr_cballoc __P((struct top_cdnr *, int,
-       struct tc_action *(*)(struct cdnr_block *, struct cdnr_pktinfo *)));
-static void cdnr_cbdestroy __P((void *));
-static int tca_verify_action __P((struct tc_action *));
-static void tca_import_action __P((struct tc_action *, struct tc_action *));
-static void tca_invalidate_action __P((struct tc_action *));
-
-static int generic_element_destroy __P((struct cdnr_block *));
-static struct top_cdnr *top_create __P((struct ifaltq *));
-static int top_destroy __P((struct top_cdnr *));
-static struct cdnr_block *element_create __P((struct top_cdnr *,
-					      struct tc_action *));
-static int element_destroy __P((struct cdnr_block *));
-static void tb_import_profile __P((struct tbe *, struct tb_profile *));
-static struct tbmeter *tbm_create __P((struct top_cdnr *, struct tb_profile *,
-			   struct tc_action *, struct tc_action *));
-static int tbm_destroy __P((struct tbmeter *));
-static struct tc_action *tbm_input __P((struct cdnr_block *,
-					struct cdnr_pktinfo *));
-static struct trtcm *trtcm_create __P((struct top_cdnr *,
+static int generic_element_destroy(struct cdnr_block *);
+static struct top_cdnr *top_create(struct ifaltq *);
+static int top_destroy(struct top_cdnr *);
+static struct cdnr_block *element_create(struct top_cdnr *, struct tc_action *);
+static int element_destroy(struct cdnr_block *);
+static void tb_import_profile(struct tbe *, struct tb_profile *);
+static struct tbmeter *tbm_create(struct top_cdnr *, struct tb_profile *,
+				  struct tc_action *, struct tc_action *);
+static int tbm_destroy(struct tbmeter *);
+static struct tc_action *tbm_input(struct cdnr_block *, struct cdnr_pktinfo *);
+static struct trtcm *trtcm_create(struct top_cdnr *,
 		  struct tb_profile *, struct tb_profile *,
 		  struct tc_action *, struct tc_action *, struct tc_action *,
-		  int));
-static int trtcm_destroy __P((struct trtcm *));
-static struct tc_action *trtcm_input __P((struct cdnr_block *,
-					  struct cdnr_pktinfo *));
-static struct tswtcm *tswtcm_create __P((struct top_cdnr *,
+		  int);
+static int trtcm_destroy(struct trtcm *);
+static struct tc_action *trtcm_input(struct cdnr_block *, struct cdnr_pktinfo *);
+static struct tswtcm *tswtcm_create(struct top_cdnr *,
 		  u_int32_t, u_int32_t, u_int32_t,
-		  struct tc_action *, struct tc_action *, struct tc_action *));
-static int tswtcm_destroy __P((struct tswtcm *));
-static struct tc_action *tswtcm_input __P((struct cdnr_block *,
-					   struct cdnr_pktinfo *));
+		  struct tc_action *, struct tc_action *, struct tc_action *);
+static int tswtcm_destroy(struct tswtcm *);
+static struct tc_action *tswtcm_input(struct cdnr_block *, struct cdnr_pktinfo *);
 
-static int cdnrcmd_if_attach __P((char *));
-static int cdnrcmd_if_detach __P((char *));
-static int cdnrcmd_add_element __P((struct cdnr_add_element *));
-static int cdnrcmd_delete_element __P((struct cdnr_delete_element *));
-static int cdnrcmd_add_filter __P((struct cdnr_add_filter *));
-static int cdnrcmd_delete_filter __P((struct cdnr_delete_filter *));
-static int cdnrcmd_add_tbm __P((struct cdnr_add_tbmeter *));
-static int cdnrcmd_modify_tbm __P((struct cdnr_modify_tbmeter *));
-static int cdnrcmd_tbm_stats __P((struct cdnr_tbmeter_stats *));
-static int cdnrcmd_add_trtcm __P((struct cdnr_add_trtcm *));
-static int cdnrcmd_modify_trtcm __P((struct cdnr_modify_trtcm *));
-static int cdnrcmd_tcm_stats __P((struct cdnr_tcm_stats *));
-static int cdnrcmd_add_tswtcm __P((struct cdnr_add_tswtcm *));
-static int cdnrcmd_modify_tswtcm __P((struct cdnr_modify_tswtcm *));
-static int cdnrcmd_get_stats __P((struct cdnr_get_stats *));
+static int cdnrcmd_if_attach(char *);
+static int cdnrcmd_if_detach(char *);
+static int cdnrcmd_add_element(struct cdnr_add_element *);
+static int cdnrcmd_delete_element(struct cdnr_delete_element *);
+static int cdnrcmd_add_filter(struct cdnr_add_filter *);
+static int cdnrcmd_delete_filter(struct cdnr_delete_filter *);
+static int cdnrcmd_add_tbm(struct cdnr_add_tbmeter *);
+static int cdnrcmd_modify_tbm(struct cdnr_modify_tbmeter *);
+static int cdnrcmd_tbm_stats(struct cdnr_tbmeter_stats *);
+static int cdnrcmd_add_trtcm(struct cdnr_add_trtcm *);
+static int cdnrcmd_modify_trtcm(struct cdnr_modify_trtcm *);
+static int cdnrcmd_tcm_stats(struct cdnr_tcm_stats *);
+static int cdnrcmd_add_tswtcm(struct cdnr_add_tswtcm *);
+static int cdnrcmd_modify_tswtcm(struct cdnr_modify_tswtcm *);
+static int cdnrcmd_get_stats(struct cdnr_get_stats *);
+
+altqdev_decl(cdnr);
 
 /*
  * top level input function called from ip_input.
  * should be called before converting header fields to host-byte-order.
  */
 int
-altq_cdnr_input(m, af)
-	struct mbuf	*m;
-	int		af;	/* address family */
+altq_cdnr_input(struct mbuf *m, int af)
 {
 	struct ifnet		*ifp;
 	struct ip		*ip;
@@ -216,8 +204,7 @@ altq_cdnr_input(m, af)
 }
 
 static struct top_cdnr *
-tcb_lookup(ifname)
-	char *ifname;
+tcb_lookup(char *ifname)
 {
 	struct top_cdnr *top;
 	struct ifnet *ifp;
@@ -230,8 +217,7 @@ tcb_lookup(ifname)
 }
 
 static struct cdnr_block *
-cdnr_handle2cb(handle)
-	u_long handle;
+cdnr_handle2cb(u_long handle)
 {
 	struct cdnr_block *cb;
 
@@ -245,18 +231,14 @@ cdnr_handle2cb(handle)
 }
 
 static u_long
-cdnr_cb2handle(cb)
-	struct cdnr_block *cb;
+cdnr_cb2handle(struct cdnr_block *cb)
 {
 	return (cb->cb_handle);
 }
 
 static void *
-cdnr_cballoc(top, type, input_func)
-	struct top_cdnr *top;
-	int type;
-	struct tc_action *(*input_func)(struct cdnr_block *,
-					struct cdnr_pktinfo *);
+cdnr_cballoc(struct top_cdnr *top, int type, struct tc_action *(*input_func)(
+    struct cdnr_block *, struct cdnr_pktinfo *))
 {
 	struct cdnr_block *cb;
 	int size;
@@ -313,8 +295,7 @@ cdnr_cballoc(top, type, input_func)
 }
 
 static void
-cdnr_cbdestroy(cblock)
-	void *cblock;
+cdnr_cbdestroy(void *cblock)
 {
 	struct cdnr_block *cb = cblock;
 
@@ -332,8 +313,7 @@ cdnr_cbdestroy(cblock)
  * conditioner common destroy routine
  */
 static int
-generic_element_destroy(cb)
-	struct cdnr_block *cb;
+generic_element_destroy(struct cdnr_block *cb)
 {
 	int error = 0;
 
@@ -360,8 +340,7 @@ generic_element_destroy(cb)
 }
 
 static int
-tca_verify_action(utca)
-	struct tc_action *utca;
+tca_verify_action(struct tc_action *utca)
 {
 	switch (utca->tca_code) {
 	case TCACODE_PASS:
@@ -387,8 +366,7 @@ tca_verify_action(utca)
 }
 
 static void
-tca_import_action(ktca, utca)
-	struct tc_action *ktca, *utca;
+tca_import_action(struct tc_action *ktca, struct tc_action *utca)
 {
 	struct cdnr_block *cb;
 
@@ -409,8 +387,7 @@ tca_import_action(ktca, utca)
 }
 
 static void
-tca_invalidate_action(tca)
-	struct tc_action *tca;
+tca_invalidate_action(struct tc_action *tca)
 {
 	struct cdnr_block *cb;
 
@@ -427,8 +404,7 @@ tca_invalidate_action(tca)
  * top level traffic conditioner
  */
 static struct top_cdnr *
-top_create(ifq)
-	struct ifaltq *ifq;
+top_create(struct ifaltq *ifq)
 {
 	struct top_cdnr *top;
 
@@ -447,8 +423,7 @@ top_create(ifq)
 }
 
 static int
-top_destroy(top)
-	struct top_cdnr *top;
+top_destroy(struct top_cdnr *top)
 {
 	struct cdnr_block *cb;
 
@@ -486,9 +461,7 @@ top_destroy(top)
  * simple tc elements without input function (e.g., dropper and makers).
  */
 static struct cdnr_block *
-element_create(top, action)
-	struct top_cdnr *top;
-	struct tc_action *action;
+element_create(struct top_cdnr *top, struct tc_action *action)
 {
 	struct cdnr_block *cb;
 
@@ -504,8 +477,7 @@ element_create(top, action)
 }
 
 static int
-element_destroy(cb)
-	struct cdnr_block *cb;
+element_destroy(struct cdnr_block *cb)
 {
 	if (cb->cb_ref > 0)
 		return (EBUSY);
@@ -528,9 +500,7 @@ element_destroy(cb)
 #define	TB_UNSCALE(x)	((x) >> TB_SHIFT)
 
 static void
-tb_import_profile(tb, profile)
-	struct tbe *tb;
-	struct tb_profile *profile;
+tb_import_profile(struct tbe *tb, struct tb_profile *profile)
 {
 	tb->rate = TB_SCALE(profile->rate / 8) / machclk_freq;
 	tb->depth = TB_SCALE(profile->depth);
@@ -546,10 +516,8 @@ tb_import_profile(tb, profile)
  * simple token bucket meter
  */
 static struct tbmeter *
-tbm_create(top, profile, in_action, out_action)
-	struct top_cdnr *top;
-	struct tb_profile *profile;
-	struct tc_action *in_action, *out_action;
+tbm_create(struct top_cdnr *top, struct tb_profile *profile,
+    struct tc_action *in_action, struct tc_action *out_action)
 {
 	struct tbmeter *tbm = NULL;
 
@@ -570,8 +538,7 @@ tbm_create(top, profile, in_action, out_action)
 }
 
 static int
-tbm_destroy(tbm)
-	struct tbmeter *tbm;
+tbm_destroy(struct tbmeter *tbm)
 {
 	if (tbm->cdnrblk.cb_ref > 0)
 		return (EBUSY);
@@ -584,9 +551,7 @@ tbm_destroy(tbm)
 }
 
 static struct tc_action *
-tbm_input(cb, pktinfo)
-	struct cdnr_block *cb;
-	struct cdnr_pktinfo *pktinfo;
+tbm_input(struct cdnr_block *cb, struct cdnr_pktinfo *pktinfo)
 {
 	struct tbmeter *tbm = (struct tbmeter *)cb;
 	u_int64_t	len;
@@ -622,12 +587,10 @@ tbm_input(cb, pktinfo)
  * as described in draft-heinanen-diffserv-trtcm-01.txt
  */
 static struct trtcm *
-trtcm_create(top, cmtd_profile, peak_profile,
-	     green_action, yellow_action, red_action, coloraware)
-	struct top_cdnr *top;
-	struct tb_profile *cmtd_profile, *peak_profile;
-	struct tc_action *green_action, *yellow_action, *red_action;
-	int	coloraware;
+trtcm_create(struct top_cdnr *top, struct tb_profile *cmtd_profile,
+    struct tb_profile *peak_profile, struct tc_action *green_action,
+    struct tc_action *yellow_action, struct tc_action *red_action,
+    int coloraware)
 {
 	struct trtcm *tcm = NULL;
 
@@ -667,8 +630,7 @@ trtcm_create(top, cmtd_profile, peak_profile,
 }
 
 static int
-trtcm_destroy(tcm)
-	struct trtcm *tcm;
+trtcm_destroy(struct trtcm *tcm)
 {
 	if (tcm->cdnrblk.cb_ref > 0)
 		return (EBUSY);
@@ -682,9 +644,7 @@ trtcm_destroy(tcm)
 }
 
 static struct tc_action *
-trtcm_input(cb, pktinfo)
-	struct cdnr_block *cb;
-	struct cdnr_pktinfo *pktinfo;
+trtcm_input(struct cdnr_block *cb, struct cdnr_pktinfo *pktinfo)
 {
 	struct trtcm *tcm = (struct trtcm *)cb;
 	u_int64_t	len;
@@ -750,11 +710,9 @@ trtcm_input(cb, pktinfo)
  * as described in draft-fang-diffserv-tc-tswtcm-00.txt
  */
 static struct tswtcm *
-tswtcm_create(top, cmtd_rate, peak_rate, avg_interval,
-	      green_action, yellow_action, red_action)
-	struct top_cdnr *top;
-	u_int32_t	cmtd_rate, peak_rate, avg_interval;
-	struct tc_action *green_action, *yellow_action, *red_action;
+tswtcm_create(struct top_cdnr *top, u_int32_t cmtd_rate, u_int32_t peak_rate,
+    u_int32_t avg_interval, struct tc_action *green_action,
+    struct tc_action *yellow_action, struct tc_action *red_action)
 {
 	struct tswtcm *tsw;
 
@@ -797,8 +755,7 @@ tswtcm_create(top, cmtd_rate, peak_rate, avg_interval,
 }
 
 static int
-tswtcm_destroy(tsw)
-	struct tswtcm *tsw;
+tswtcm_destroy(struct tswtcm *tsw)
 {
 	if (tsw->cdnrblk.cb_ref > 0)
 		return (EBUSY);
@@ -812,9 +769,7 @@ tswtcm_destroy(tsw)
 }
 
 static struct tc_action *
-tswtcm_input(cb, pktinfo)
-	struct cdnr_block *cb;
-	struct cdnr_pktinfo *pktinfo;
+tswtcm_input(struct cdnr_block *cb, struct cdnr_pktinfo *pktinfo)
 {
 	struct tswtcm	*tsw = (struct tswtcm *)cb;
 	int		len;
@@ -846,7 +801,7 @@ tswtcm_input(cb, pktinfo)
 	 * marker
 	 */
 	if (avg_rate > tsw->cmtd_rate) {
-		u_int32_t randval = random() % avg_rate;
+		u_int32_t randval = arc4random() % avg_rate;
 
 		if (avg_rate > tsw->peak_rate) {
 			if (randval < avg_rate - tsw->peak_rate) {
@@ -877,8 +832,7 @@ tswtcm_input(cb, pktinfo)
  * ioctl requests
  */
 static int
-cdnrcmd_if_attach(ifname)
-	char *ifname;
+cdnrcmd_if_attach(char *ifname)
 {
 	struct ifnet *ifp;
 	struct top_cdnr *top;
@@ -895,8 +849,7 @@ cdnrcmd_if_attach(ifname)
 }
 
 static int
-cdnrcmd_if_detach(ifname)
-	char *ifname;
+cdnrcmd_if_detach(char *ifname)
 {
 	struct top_cdnr *top;
 
@@ -907,8 +860,7 @@ cdnrcmd_if_detach(ifname)
 }
 
 static int
-cdnrcmd_add_element(ap)
-	struct cdnr_add_element *ap;
+cdnrcmd_add_element(struct cdnr_add_element *ap)
 {
 	struct top_cdnr *top;
 	struct cdnr_block *cb;
@@ -925,8 +877,7 @@ cdnrcmd_add_element(ap)
 }
 
 static int
-cdnrcmd_delete_element(ap)
-	struct cdnr_delete_element *ap;
+cdnrcmd_delete_element(struct cdnr_delete_element *ap)
 {
 	struct top_cdnr *top;
 	struct cdnr_block *cb;
@@ -944,8 +895,7 @@ cdnrcmd_delete_element(ap)
 }
 
 static int
-cdnrcmd_add_filter(ap)
-	struct cdnr_add_filter *ap;
+cdnrcmd_add_filter(struct cdnr_add_filter *ap)
 {
 	struct top_cdnr *top;
 	struct cdnr_block *cb;
@@ -961,8 +911,7 @@ cdnrcmd_add_filter(ap)
 }
 
 static int
-cdnrcmd_delete_filter(ap)
-	struct cdnr_delete_filter *ap;
+cdnrcmd_delete_filter(struct cdnr_delete_filter *ap)
 {
 	struct top_cdnr *top;
 
@@ -973,8 +922,7 @@ cdnrcmd_delete_filter(ap)
 }
 
 static int
-cdnrcmd_add_tbm(ap)
-	struct cdnr_add_tbmeter *ap;
+cdnrcmd_add_tbm(struct cdnr_add_tbmeter *ap)
 {
 	struct top_cdnr *top;
 	struct tbmeter *tbm;
@@ -991,8 +939,7 @@ cdnrcmd_add_tbm(ap)
 }
 
 static int
-cdnrcmd_modify_tbm(ap)
-	struct cdnr_modify_tbmeter *ap;
+cdnrcmd_modify_tbm(struct cdnr_modify_tbmeter *ap)
 {
 	struct tbmeter *tbm;
 
@@ -1005,8 +952,7 @@ cdnrcmd_modify_tbm(ap)
 }
 
 static int
-cdnrcmd_tbm_stats(ap)
-	struct cdnr_tbmeter_stats *ap;
+cdnrcmd_tbm_stats(struct cdnr_tbmeter_stats *ap)
 {
 	struct tbmeter *tbm;
 
@@ -1020,8 +966,7 @@ cdnrcmd_tbm_stats(ap)
 }
 
 static int
-cdnrcmd_add_trtcm(ap)
-	struct cdnr_add_trtcm *ap;
+cdnrcmd_add_trtcm(struct cdnr_add_trtcm *ap)
 {
 	struct top_cdnr *top;
 	struct trtcm *tcm;
@@ -1041,8 +986,7 @@ cdnrcmd_add_trtcm(ap)
 }
 
 static int
-cdnrcmd_modify_trtcm(ap)
-	struct cdnr_modify_trtcm *ap;
+cdnrcmd_modify_trtcm(struct cdnr_modify_trtcm *ap)
 {
 	struct trtcm *tcm;
 
@@ -1056,8 +1000,7 @@ cdnrcmd_modify_trtcm(ap)
 }
 
 static int
-cdnrcmd_tcm_stats(ap)
-	struct cdnr_tcm_stats *ap;
+cdnrcmd_tcm_stats(struct cdnr_tcm_stats *ap)
 {
 	struct cdnr_block *cb;
 
@@ -1065,26 +1008,25 @@ cdnrcmd_tcm_stats(ap)
 		return (EINVAL);
 
 	if (cb->cb_type == TCETYPE_TRTCM) {
-	    struct trtcm *tcm = (struct trtcm *)cb;
+		struct trtcm *tcm = (struct trtcm *)cb;
 
-	    ap->green_cnt = tcm->green_cnt;
-	    ap->yellow_cnt = tcm->yellow_cnt;
-	    ap->red_cnt = tcm->red_cnt;
+		ap->green_cnt = tcm->green_cnt;
+		ap->yellow_cnt = tcm->yellow_cnt;
+		ap->red_cnt = tcm->red_cnt;
 	} else if (cb->cb_type == TCETYPE_TSWTCM) {
-	    struct tswtcm *tsw = (struct tswtcm *)cb;
+		struct tswtcm *tsw = (struct tswtcm *)cb;
 
-	    ap->green_cnt = tsw->green_cnt;
-	    ap->yellow_cnt = tsw->yellow_cnt;
-	    ap->red_cnt = tsw->red_cnt;
+		ap->green_cnt = tsw->green_cnt;
+		ap->yellow_cnt = tsw->yellow_cnt;
+		ap->red_cnt = tsw->red_cnt;
 	} else
-	    return (EINVAL);
+		return (EINVAL);
 
 	return (0);
 }
 
 static int
-cdnrcmd_add_tswtcm(ap)
-	struct cdnr_add_tswtcm *ap;
+cdnrcmd_add_tswtcm(struct cdnr_add_tswtcm *ap)
 {
 	struct top_cdnr *top;
 	struct tswtcm *tsw;
@@ -1099,7 +1041,7 @@ cdnrcmd_add_tswtcm(ap)
 			    ap->avg_interval, &ap->green_action,
 			    &ap->yellow_action, &ap->red_action);
 	if (tsw == NULL)
-	    return (EINVAL);
+		return (EINVAL);
 
 	/* return a class handle to the user */
 	ap->cdnr_handle = cdnr_cb2handle(&tsw->cdnrblk);
@@ -1107,8 +1049,7 @@ cdnrcmd_add_tswtcm(ap)
 }
 
 static int
-cdnrcmd_modify_tswtcm(ap)
-	struct cdnr_modify_tswtcm *ap;
+cdnrcmd_modify_tswtcm(struct cdnr_modify_tswtcm *ap)
 {
 	struct tswtcm *tsw;
 
@@ -1130,8 +1071,7 @@ cdnrcmd_modify_tswtcm(ap)
 }
 
 static int
-cdnrcmd_get_stats(ap)
-	struct cdnr_get_stats *ap;
+cdnrcmd_get_stats(struct cdnr_get_stats *ap)
 {
 	struct top_cdnr *top;
 	struct cdnr_block *cb;
@@ -1368,4 +1308,5 @@ ALTQ_MODULE(altq_cdnr, ALTQT_CDNR, &cdnr_sw);
 
 #endif /* KLD_MODULE */
 
+#endif /* ALTQ3_COMPAT */
 #endif /* ALTQ_CDNR */

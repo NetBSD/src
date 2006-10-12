@@ -1,5 +1,5 @@
-/*	$NetBSD: qdisc_priq.c,v 1.4 2003/01/06 15:23:11 christos Exp $	*/
-/*	$KAME: qdisc_priq.c,v 1.2 2001/08/15 12:51:59 kjc Exp $	*/
+/*	$NetBSD: qdisc_priq.c,v 1.5 2006/10/12 19:59:13 peter Exp $	*/
+/*	$KAME: qdisc_priq.c,v 1.6 2003/07/10 12:09:38 kjc Exp $	*/
 /*
  * Copyright (C) 2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -39,7 +39,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <math.h>
+#include <signal.h>
 #include <errno.h>
 #include <err.h>
 
@@ -49,14 +49,15 @@
 void
 priq_stat_loop(int fd, const char *ifname, int count, int interval)
 {
-	struct priq_basic_class_stats stats1[PRIQ_MAXPRI], stats2[PRIQ_MAXPRI];
+	struct priq_classstats stats1[PRIQ_MAXPRI], stats2[PRIQ_MAXPRI];
 	char clnames[PRIQ_MAXPRI][128];
 	struct priq_class_stats	get_stats;
-	struct priq_basic_class_stats	*sp, *lp, *new, *last, *tmp;
+	struct priq_classstats	*sp, *lp, *new, *last, *tmp;
 	struct timeval		cur_time, last_time;
 	int			i;
 	double			sec;
 	int			cnt = count;
+	sigset_t		omask;
 	
 	strlcpy(get_stats.iface.ifname, ifname,
 		sizeof(get_stats.iface.ifname));
@@ -91,7 +92,7 @@ priq_stat_loop(int fd, const char *ifname, int count, int interval)
 				continue;
 			}
 
-			printf("[%s] handle:%#lx pri:%d\n",
+			printf("[%s] handle:%#x pri:%d\n",
 			       clnames[i], sp->class_handle, i);
 			printf("  measured: %sbps qlen:%2d period:%u\n",
 			       rate2str(calc_rate(sp->xmitcnt.bytes,
@@ -113,6 +114,9 @@ priq_stat_loop(int fd, const char *ifname, int count, int interval)
 		new = tmp;
 
 		last_time = cur_time;
-		sleep(interval);
+
+		/* wait for alarm signal */
+		if (sigprocmask(SIG_BLOCK, NULL, &omask) == 0)
+			sigsuspend(&omask);
 	}
 }

@@ -1,8 +1,8 @@
-/*	$NetBSD: altq_rio.h,v 1.4 2005/12/11 12:16:03 christos Exp $	*/
-/*	$KAME: altq_rio.h,v 1.5 2000/12/14 08:12:46 thorpej Exp $	*/
+/*	$NetBSD: altq_rio.h,v 1.5 2006/10/12 19:59:08 peter Exp $	*/
+/*	$KAME: altq_rio.h,v 1.9 2003/07/10 12:07:49 kjc Exp $	*/
 
 /*
- * Copyright (C) 1998-2000
+ * Copyright (C) 1998-2003
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@
  */
 #define	RIO_NDROPPREC	3	/* number of drop precedence values */
 
+#ifdef ALTQ3_COMPAT
 struct rio_interface {
 	char	rio_ifname[IFNAMSIZ];
 };
@@ -62,6 +63,7 @@ struct rio_conf {
 	int rio_pkttime;	/* average packet time in usec */
 	int rio_flags;		/* see below */
 };
+#endif /* ALTQ3_COMPAT */
 
 /* rio flags */
 #define	RIOF_ECN4	0x01	/* use packet marking for IPv4 packets */
@@ -69,6 +71,7 @@ struct rio_conf {
 #define	RIOF_ECN	(RIOF_ECN4 | RIOF_ECN6)
 #define	RIOF_CLEARDSCP	0x200	/* clear diffserv codepoint */
 
+#ifdef ALTQ3_COMPAT
 /*
  * IOCTLs for RIO
  */
@@ -79,6 +82,7 @@ struct rio_conf {
 #define	RIO_CONFIG		_IOWR('Q', 6, struct rio_conf)
 #define	RIO_GETSTATS		_IOWR('Q', 12, struct rio_stats)
 #define	RIO_SETDEFAULTS		_IOW('Q', 30, struct redparams[RIO_NDROPPREC])
+#endif /* ALTQ3_COMPAT */
 
 #ifdef _KERNEL
 
@@ -86,54 +90,55 @@ typedef struct rio {
 	/* per drop precedence structure */
 	struct dropprec_state {
 		/* red parameters */
-		int inv_pmax;	/* inverse of max drop probability */
-		int th_min;	/* red min threshold */
-		int th_max;	/* red max threshold */
+		int	inv_pmax;	/* inverse of max drop probability */
+		int	th_min;		/* red min threshold */
+		int	th_max;		/* red max threshold */
 
 		/* variables for internal use */
-		int th_min_s;	/* th_min scaled by avgshift */
-		int th_max_s;	/* th_max scaled by avgshift */
-		int probd;	/* drop probability denominator */
+		int	th_min_s;	/* th_min scaled by avgshift */
+		int	th_max_s;	/* th_max scaled by avgshift */
+		int	probd;		/* drop probability denominator */
 
-		int qlen;	/* queue length */
-		int avg;	/* (scaled) queue length average */
-		int count; 	/* packet count since the last dropped/marked
-				   packet */
-		int idle;	/* queue was empty */
-		int old;	/* avg is above th_min */
-		struct timeval last;  /* timestamp when queue becomes idle */
+		int	qlen;		/* queue length */
+		int	avg;		/* (scaled) queue length average */
+		int	count;		/* packet count since the last dropped/
+					   marked packet */
+		int	idle;		/* queue was empty */
+		int	old;		/* avg is above th_min */
+		struct timeval	last;	/* timestamp when queue becomes idle */
 	} rio_precstate[RIO_NDROPPREC];
 
-	int rio_wshift;		/* log(red_weight) */
-	int rio_weight;		/* weight for EWMA */
-	struct wtab *rio_wtab;	/* weight table */
+	int		 rio_wshift;	/* log(red_weight) */
+	int		 rio_weight;	/* weight for EWMA */
+	struct wtab	*rio_wtab;	/* weight table */
 
-	int rio_pkttime; 	/* average packet time in micro sec
-				   used for idle calibration */
-	int rio_flags;		/* rio flags */
+	int		 rio_pkttime;	/* average packet time in micro sec
+					   used for idle calibration */
+	int		 rio_flags;	/* rio flags */
 
-	u_int8_t rio_codepoint;		/* codepoint value to tag packets */
-	u_int8_t rio_codepointmask;	/* codepoint mask bits */
+	u_int8_t	 rio_codepoint;	/* codepoint value to tag packets */
+	u_int8_t	 rio_codepointmask;	/* codepoint mask bits */
 
 	struct redstats q_stats[RIO_NDROPPREC];	/* statistics */
 } rio_t;
 
+#ifdef ALTQ3_COMPAT
 typedef struct rio_queue {
-	struct rio_queue *rq_next;	/* next red_state in the list */
-	struct ifaltq *rq_ifq;		/* backpointer to ifaltq */
+	struct rio_queue	*rq_next;	/* next red_state in the list */
+	struct ifaltq		*rq_ifq;	/* backpointer to ifaltq */
 
-	class_queue_t *rq_q;
+	class_queue_t		*rq_q;
 
-	rio_t *rq_rio;
+	rio_t			*rq_rio;
 } rio_queue_t;
+#endif /* ALTQ3_COMPAT */
 
-extern rio_t *rio_alloc __P((int, struct redparams *, int, int));
-extern void rio_destroy __P((rio_t *));
-extern void rio_getstats __P((rio_t *, struct redstats *));
-extern int rio_addq __P((rio_t *, class_queue_t *, struct mbuf *,
-			 struct altq_pktattr *));
-extern struct mbuf *rio_getq __P((rio_t *, class_queue_t *));
-extern int rio_set_meter __P((rio_t *, int, int, int));
+extern rio_t		*rio_alloc(int, struct redparams *, int, int);
+extern void		 rio_destroy(rio_t *);
+extern void		 rio_getstats(rio_t *, struct redstats *);
+extern int		 rio_addq(rio_t *, class_queue_t *, struct mbuf *,
+			     struct altq_pktattr *);
+extern struct mbuf	*rio_getq(rio_t *, class_queue_t *);
 
 #endif /* _KERNEL */
 

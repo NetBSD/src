@@ -1,8 +1,8 @@
-/*	$NetBSD: altq_wfq.h,v 1.4 2005/12/11 12:16:03 christos Exp $	*/
-/*	$KAME: altq_wfq.h,v 1.5 2000/12/14 08:12:46 thorpej Exp $	*/
+/*	$NetBSD: altq_wfq.h,v 1.5 2006/10/12 19:59:08 peter Exp $	*/
+/*	$KAME: altq_wfq.h,v 1.8 2003/07/10 12:07:49 kjc Exp $	*/
 
 /*
- * Copyright (C) 1997-2000
+ * Copyright (C) 1997-2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,9 @@ struct wfq_interface{
 
 struct wfq_getqid{
 	struct wfq_interface 	iface;
+#ifdef ALTQ3_CLFIER_COMPAT
 	struct flowinfo 	flow;
+#endif
 	u_long			qid;
 };
 
@@ -116,7 +118,9 @@ typedef struct wfqstate {
 	int bytes;			/* total bytes in all the queues */
 	wfq *rrp;			/* round robin pointer */
 	wfq *queue;			/* pointer to queue list */
+#ifdef ALTQ3_CLFIER_COMPAT
 	u_long (*hash_func)(struct flowinfo *, int);
+#endif
 	u_int32_t fbmask;		/* filter bitmask */
 } wfq_state_t;
 

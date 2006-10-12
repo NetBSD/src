@@ -1,8 +1,8 @@
-/*	$NetBSD: altq_conf.c,v 1.16 2006/09/03 04:28:16 christos Exp $	*/
-/*	$KAME: altq_conf.c,v 1.13 2002/01/29 10:16:01 kjc Exp $	*/
+/*	$NetBSD: altq_conf.c,v 1.17 2006/10/12 19:59:08 peter Exp $	*/
+/*	$KAME: altq_conf.c,v 1.24 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
- * Copyright (C) 1997-2000
+ * Copyright (C) 1997-2003
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,17 +28,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.16 2006/09/03 04:28:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.17 2006/10/12 19:59:08 peter Exp $");
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#ifdef _KERNEL_OPT
 #include "opt_altq.h"
-#if (__FreeBSD__ != 2)
 #include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
 #endif
-#endif
-#endif /* __FreeBSD__ || __NetBSD__ */
 
 /*
  * altq device interface.
@@ -50,14 +45,14 @@ __KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.16 2006/09/03 04:28:16 christos Exp 
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/kauth.h>
-#if defined(__FreeBSD__) && (__FreeBSD_version < 400000) && defined(DEVFS)
-#include <sys/devfsext.h>
-#endif /*DEVFS*/
+
 #include <net/if.h>
 
 #include <altq/altq.h>
 #include <altq/altqconf.h>
 #include <altq/altq_conf.h>
+
+#ifdef ALTQ3_COMPAT
 
 #ifdef ALTQ_CBQ
 altqdev_decl(cbq);
@@ -92,12 +87,15 @@ altqdev_decl(blue);
 #ifdef ALTQ_PRIQ
 altqdev_decl(priq);
 #endif
+#ifdef ALTQ_JOBS
+altqdev_decl(jobs);
+#endif
 
 /*
  * altq minor device (discipline) table
  */
 static struct altqsw altqsw[] = {				/* minor */
-	{"noq",	noopen,		noclose,	noioctl},  /* 0 (reserved) */
+	{"altq", noopen,	noclose,	noioctl},  /* 0 (reserved) */
 #ifdef ALTQ_CBQ
 	{"cbq",	cbqopen,	cbqclose,	cbqioctl},	/* 1 */
 #else
@@ -153,6 +151,11 @@ static struct altqsw altqsw[] = {				/* minor */
 #else
 	{"noq",	noopen,		noclose,	noioctl},	/* 11 */
 #endif
+#ifdef ALTQ_JOBS
+	{"jobs",jobsopen,	jobsclose,	jobsioctl},	/* 12 */
+#else
+	{"noq", noopen,		noclose,	noioctl},	/* 12 */
+#endif
 };
 
 /*
@@ -160,63 +163,17 @@ static struct altqsw altqsw[] = {				/* minor */
  */
 int	naltqsw = sizeof (altqsw) / sizeof (altqsw[0]);
 
-#if defined(__NetBSD__)
 dev_type_open(altqopen);
 dev_type_close(altqclose);
 dev_type_ioctl(altqioctl);
-#endif
-#if defined(__OpenBSD__)
-static	d_open_t	altqopen;
-static	d_close_t	altqclose;
-static	d_ioctl_t	altqioctl;
-#endif
-#ifdef __FreeBSD__
-static void altq_drvinit __P((void *));
-#else
-void	altqattach __P((int));
-#endif
 
-#if defined(__FreeBSD__)
-#define	CDEV_MAJOR 96		/* FreeBSD official number */
-#elif defined(__OpenBSD__)
-#if defined(__i386__)
-#define	CDEV_MAJOR 74		/* OpenBSD i386 (official) */
-#elif defined(__alpha__)
-#define	CDEV_MAJOR 53		/* OpenBSD alpha (official) */
-#else
-#error arch not supported
-#endif
-#endif
-
-#if defined(__FreeBSD__)
-#if (__FreeBSD_version < 400000)
-static struct cdevsw altq_cdevsw =
-        { altqopen,	altqclose,	noread,	        nowrite,
-	  altqioctl,	nostop,		nullreset,	nodevtotty,
- 	  seltrue,	nommap,		NULL,	"altq",	NULL,	  -1 };
-#else
-static struct cdevsw altq_cdevsw =
-        { altqopen,	altqclose,	noread,	        nowrite,
-	  altqioctl,	seltrue,	nommap,		nostrategy,
-	  "altq",	CDEV_MAJOR,	nodump,		nopsize,  0,  -1 };
-#endif
-#endif
-
-#if defined(__NetBSD__)
 const struct cdevsw altq_cdevsw = {
 	altqopen, altqclose, noread, nowrite, altqioctl,
 	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
-#endif
 
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
-static
-#endif
 int
-altqopen(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+altqopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int unit = minor(dev);
 
@@ -228,14 +185,8 @@ altqopen(dev, flag, fmt, l)
 	return ENXIO;
 }
 
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
-static
-#endif
 int
-altqclose(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+altqclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int unit = minor(dev);
 
@@ -247,16 +198,8 @@ altqclose(dev, flag, fmt, l)
 	return ENXIO;
 }
 
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
-static
-#endif
 int
-altqioctl(dev, cmd, addr, flag, l)
-	dev_t dev;
-	ioctlcmd_t cmd;
-	caddr_t addr;
-	int flag;
-	struct lwp *l;
+altqioctl(dev_t dev, ioctlcmd_t cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	int unit = minor(dev);
 
@@ -309,75 +252,50 @@ altqioctl(dev, cmd, addr, flag, l)
 	return ENXIO;
 }
 
-#if !defined(__NetBSD__)
+#ifdef __FreeBSD__
 static int altq_devsw_installed = 0;
 #endif
 
 #ifdef __FreeBSD__
-#if (__FreeBSD_version < 400000)
-#ifdef DEVFS
-static	void *altq_devfs_token[sizeof (altqsw) / sizeof (altqsw[0])];
-#endif
-
 static void
-altq_drvinit(unused)
-	void *unused;
-{
-	dev_t dev;
-#ifdef DEVFS
-	int i;
-#endif
-
-	if (!altq_devsw_installed) {
-		dev = makedev(CDEV_MAJOR,0);
-		cdevsw_add(&dev,&altq_cdevsw,NULL);
-		altq_devsw_installed = 1;
-#ifdef DEVFS
-		for (i=0; i<naltqsw; i++)
-			altq_devfs_token[i] =
-				devfs_add_devswf(&altq_cdevsw, i, DV_CHR,
-						 0, 0, 0644, altqsw[i].d_name);
-#endif
-		printf("altq: major number is %d\n", CDEV_MAJOR);
-	}
-}
-
-#else /* FreeBSD 4.x */
-
-static void
-altq_drvinit(unused)
-	void *unused;
+altq_drvinit(void *unused)
 {
 	int unit;
 
-	cdevsw_add(&altq_cdevsw);
+#if 0
+	mtx_init(&altq_mtx, "altq global lock", MTX_DEF);
+#endif
 	altq_devsw_installed = 1;
-	printf("altq: major number is %d\n", CDEV_MAJOR);
+	printf("altq: attached. Major number assigned automatically.\n");
 
 	/* create minor devices */
-	for (unit = 0; unit < naltqsw; unit++)
-		make_dev(&altq_cdevsw, unit, 0, 0, 0644,
-			 altqsw[unit].d_name);
+	for (unit = 0; unit < naltqsw; unit++) {
+		if (unit == 0 || altqsw[unit].d_open != NULL)
+			altqsw[unit].dev = make_dev(&altq_cdevsw, unit,
+			    UID_ROOT, GID_WHEEL, 0644, "altq/%s",
+			    altqsw[unit].d_name);
+	}
 }
-
-#endif /* FreeBSD 4.x */
 
 SYSINIT(altqdev,SI_SUB_DRIVERS,SI_ORDER_MIDDLE+CDEV_MAJOR,altq_drvinit,NULL)
 
-#endif
+#endif /* FreeBSD */
 
 #ifdef ALTQ_KLD
 /*
  * KLD support
  */
-static int altq_module_register __P((struct altq_module_data *));
-static int altq_module_deregister __P((struct altq_module_data *));
+static int altq_module_register(struct altq_module_data *);
+static int altq_module_deregister(struct altq_module_data *);
 
 static struct altq_module_data *altq_modules[ALTQT_MAX];
+#if __FreeBSD_version < 502103
 static struct altqsw noqdisc = {"noq", noopen, noclose, noioctl};
+#else
+static struct altqsw noqdisc = {"noq"};
+#endif
 
-void altq_module_incref(type)
-	int type;
+void altq_module_incref(int type)
 {
 	if (type < 0 || type >= ALTQT_MAX || altq_modules[type] == NULL)
 		return;
@@ -385,8 +303,7 @@ void altq_module_incref(type)
 	altq_modules[type]->ref++;
 }
 
-void altq_module_declref(type)
-	int type;
+void altq_module_declref(int type)
 {
 	if (type < 0 || type >= ALTQT_MAX || altq_modules[type] == NULL)
 		return;
@@ -395,23 +312,32 @@ void altq_module_declref(type)
 }
 
 static int
-altq_module_register(mdata)
-	struct altq_module_data *mdata;
+altq_module_register(struct altq_module_data *mdata)
 {
 	int type = mdata->type;
 
 	if (type < 0 || type >= ALTQT_MAX)
 		return (EINVAL);
+#if (__FreeBSD_version < 502103)
 	if (altqsw[type].d_open != noopen)
+#else
+	if (altqsw[type].d_open != NULL)
+#endif
 		return (EBUSY);
 	altqsw[type] = *mdata->altqsw;	/* set discipline functions */
 	altq_modules[type] = mdata;	/* save module data pointer */
+#if (__FreeBSD_version < 502103)
+	make_dev(&altq_cdevsw, type, UID_ROOT, GID_WHEEL, 0644,
+		 "altq/%s", altqsw[type].d_name);
+#else
+	altqsw[type].dev = make_dev(&altq_cdevsw, type, UID_ROOT, GID_WHEEL,
+	    0644, "altq/%s", altqsw[type].d_name);
+#endif
 	return (0);
 }
 
 static int
-altq_module_deregister(mdata)
-	struct altq_module_data *mdata;
+altq_module_deregister(struct altq_module_data *mdata)
 {
 	int type = mdata->type;
 
@@ -421,16 +347,18 @@ altq_module_deregister(mdata)
 		return (EINVAL);
 	if (altq_modules[type]->ref > 0)
 		return (EBUSY);
+#if (__FreeBSD_version < 502103)
+	destroy_dev(makedev(CDEV_MAJOR, type));
+#else
+	destroy_dev(altqsw[type].dev);
+#endif
 	altqsw[type] = noqdisc;
 	altq_modules[type] = NULL;
 	return (0);
 }
 
 int
-altq_module_handler(mod, cmd, arg)
-    module_t	mod;
-    int cmd;
-    void * arg;
+altq_module_handler(module_t mod, int cmd, void *arg)
 {
 	struct altq_module_data *data = (struct altq_module_data *)arg;
 	int	error = 0;
@@ -449,7 +377,8 @@ altq_module_handler(mod, cmd, arg)
 		break;
 	}
 
-	return(error);
+	return (error);
 }
 
 #endif  /* ALTQ_KLD */
+#endif /* ALTQ3_COMPAT */

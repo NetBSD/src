@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.943 2006/10/12 04:46:57 thorpej Exp $
+#	$NetBSD: mi,v 1.944 2006/10/12 19:59:07 peter Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -82,6 +82,7 @@
 ./usr/include/altq/altq_fifoq.h			comp-c-include
 ./usr/include/altq/altq_flowvalve.h		comp-c-include
 ./usr/include/altq/altq_hfsc.h			comp-c-include
+./usr/include/altq/altq_jobs.h			comp-c-include
 ./usr/include/altq/altq_priq.h			comp-c-include
 ./usr/include/altq/altq_red.h			comp-c-include
 ./usr/include/altq/altq_rio.h			comp-c-include
