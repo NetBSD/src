@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_jobs.h,v 1.2 2006/10/12 19:59:08 peter Exp $	*/
+/*	$NetBSD: altq_jobs.h,v 1.3 2006/10/12 21:13:53 peter Exp $	*/
 /*	$KAME: altq_jobs.h,v 1.6 2003/07/10 12:07:48 kjc Exp $	*/
 /*
  * Copyright (c) 2001, Rector and Visitors of the University of 
@@ -270,7 +270,7 @@ struct jobs_class_stats {
 #define	JOBS_IF_DETACH		_IOW('Q', 2, struct jobs_interface)
 #define	JOBS_ENABLE		_IOW('Q', 3, struct jobs_interface)
 #define	JOBS_DISABLE		_IOW('Q', 4, struct jobs_interface)
-#define	JOBS_CLEAR		_IOW('Q', 5, struct jobs_interface)
+#define	JOBS_CLEAR		_IOW('Q', 6, struct jobs_interface)
 #define	JOBS_ADD_CLASS		_IOWR('Q', 7, struct jobs_add_class)
 #define	JOBS_DEL_CLASS		_IOW('Q', 8, struct jobs_delete_class)
 #define	JOBS_MOD_CLASS		_IOW('Q', 9, struct jobs_modify_class)
