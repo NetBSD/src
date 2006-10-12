@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.30 2006/10/06 03:52:53 dogcow Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.31 2006/10/12 19:28:47 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.30 2006/10/06 03:52:53 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.31 2006/10/12 19:28:47 dogcow Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -177,35 +177,34 @@ struct mp_map
 	int		psize;
 };
 
-int mp_print __P((void *, const char *));
-int mp_submatch __P((struct device *, struct cfdata *,
-	const int *, void *));
-static const void *mpbios_search __P((struct device *, paddr_t, int,
-    struct mp_map *));
-static inline int mpbios_cksum __P((const void *,int));
+int mp_print(void *, const char *);
+int mp_submatch(struct device *, struct cfdata *, const int *, void *);
+static const void *mpbios_search(struct device *, paddr_t, int,
+    struct mp_map *);
+static inline int mpbios_cksum(const void *,int);
 
-static void mp_cfg_special_intr __P((const struct mpbios_int *, uint32_t *));
+static void mp_cfg_special_intr(const struct mpbios_int *, uint32_t *);
 static void mp_print_special_intr (int intr);
 
-static void mp_cfg_pci_intr __P((const struct mpbios_int *, uint32_t *));
+static void mp_cfg_pci_intr(const struct mpbios_int *, uint32_t *);
 static void mp_print_pci_intr (int intr);
 
 #ifdef X86_MPBIOS_SUPPORT_EISA
 static void mp_print_eisa_intr (int intr);
-static void mp_cfg_eisa_intr __P((const struct mpbios_int *, uint32_t *));
+static void mp_cfg_eisa_intr(const struct mpbios_int *, uint32_t *);
 #endif
 
-static void mp_cfg_isa_intr __P((const struct mpbios_int *, uint32_t *));
-static void mp_print_isa_intr (int intr);
+static void mp_cfg_isa_intr(const struct mpbios_int *, uint32_t *);
+static void mp_print_isa_intr(int intr);
 
-static void mpbios_cpus __P((struct device *));
-static void mpbios_cpu __P((const uint8_t *, struct device *));
-static void mpbios_bus __P((const uint8_t *, struct device *));
-static void mpbios_ioapic __P((const uint8_t *, struct device *));
-static void mpbios_int __P((const uint8_t *, int, struct mp_intr_map *));
+static void mpbios_cpus(struct device *);
+static void mpbios_cpu(const uint8_t *, struct device *);
+static void mpbios_bus(const uint8_t *, struct device *);
+static void mpbios_ioapic(const uint8_t *, struct device *);
+static void mpbios_int(const uint8_t *, int, struct mp_intr_map *);
 
-static const void *mpbios_map __P((paddr_t, int, struct mp_map *));
-static void mpbios_unmap __P((struct mp_map *));
+static const void *mpbios_map(paddr_t, int, struct mp_map *);
+static void mpbios_unmap(struct mp_map *);
 
 /*
  * globals to help us bounce our way through parsing the config table.
@@ -219,9 +218,7 @@ const struct mpbios_fps	*mp_fps;
 int mpbios_scanned;
 
 int
-mp_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+mp_print(void *aux, const char *pnp)
 {
 	struct cpu_attach_args * caa = (struct cpu_attach_args *) aux;
 	if (pnp)
@@ -230,11 +227,8 @@ mp_print(aux, pnp)
 }
 
 int
-mp_submatch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+mp_submatch(struct device *parent, struct cfdata *cf,
+	    const int *ldesc __unused, void *aux)
 {
 	struct cpu_attach_args * caa = (struct cpu_attach_args *) aux;
 	if (strcmp(caa->caa_name, cf->cf_name))
@@ -249,10 +243,7 @@ mp_submatch(parent, cf, ldesc, aux)
  */
 
 static const void *
-mpbios_map (pa, len, handle)
-	paddr_t pa;
-	int len;
-	struct mp_map *handle;
+mpbios_map(paddr_t pa, int len, struct mp_map *handle)
 {
 	paddr_t pgpa = x86_trunc_page(pa);
 	paddr_t endpa = x86_round_page(pa + len);
@@ -275,8 +266,7 @@ mpbios_map (pa, len, handle)
 }
 
 inline static void
-mpbios_unmap (handle)
-	struct mp_map *handle;
+mpbios_unmap(struct mp_map *handle)
 {
 	pmap_kremove (handle->baseva, handle->vsize);
 	uvm_km_free (kernel_map, handle->baseva, handle->vsize, UVM_KMF_VAONLY);
@@ -286,8 +276,7 @@ mpbios_unmap (handle)
  * Look for an Intel MP spec table, indicating SMP capable hardware.
  */
 int
-mpbios_probe(self)
-	struct device *self;
+mpbios_probe(struct device *self)
 {
 	paddr_t  	ebda, memtop;
 
@@ -397,9 +386,7 @@ mpbios_probe(self)
  */
 
 inline static int
-mpbios_cksum (start, len)
-	const void *start;
-	int len;
+mpbios_cksum(const void *start, int len)
 {
 	unsigned char res=0;
 	const char *p = start;
@@ -421,11 +408,8 @@ mpbios_cksum (start, len)
  */
 
 const void *
-mpbios_search (self, start, count, map)
-	struct device *self;
-	paddr_t start;
-	int count;
-	struct mp_map *map;
+mpbios_search(struct device *self, paddr_t start, int count,
+	      struct mp_map *map)
 {
 	struct mp_map t;
 
@@ -705,9 +689,7 @@ mpbios_scan(struct device *self, int *ncpu, int *napic)
 }
 
 static void
-mpbios_cpu(ent, self)
-	const uint8_t *ent;
-	struct device *self;
+mpbios_cpu(const uint8_t *ent, struct device *self)
 {
 	const struct mpbios_proc *entry = (const struct mpbios_proc *)ent;
 	struct cpu_attach_args caa;
@@ -756,9 +738,8 @@ mpbios_cpus(struct device *self)
  *
  * Fill in: trigger mode, polarity, and possibly delivery mode.
  */
-static void mp_cfg_special_intr (entry, redir)
-	const struct mpbios_int *entry;
-	uint32_t *redir;
+static void
+mp_cfg_special_intr(const struct mpbios_int *entry, uint32_t *redir)
 {
 
 	/*
@@ -793,9 +774,8 @@ static void mp_cfg_special_intr (entry, redir)
 
 /* XXX too much duplicated code here. */
 
-static void mp_cfg_pci_intr (entry, redir)
-	const struct mpbios_int *entry;
-	uint32_t *redir;
+static void
+mp_cfg_pci_intr(const struct mpbios_int *entry, uint32_t *redir)
 {
 	int mpspo = entry->int_flags & 0x03; /* XXX magic */
 	int mpstrig = (entry->int_flags >> 2) & 0x03; /* XXX magic */
@@ -833,9 +813,8 @@ static void mp_cfg_pci_intr (entry, redir)
 }
 
 #ifdef X86_MPBIOS_SUPPORT_EISA
-static void mp_cfg_eisa_intr (entry, redir)
-	const struct mpbios_int *entry;
-	uint32_t *redir;
+static void
+mp_cfg_eisa_intr(const struct mpbios_int *entry, uint32_t *redir)
 {
 	int mpspo = entry->int_flags & 0x03; /* XXX magic */
 	int mpstrig = (entry->int_flags >> 2) & 0x03; /* XXX magic */
@@ -885,9 +864,8 @@ static void mp_cfg_eisa_intr (entry, redir)
 #endif
 
 
-static void mp_cfg_isa_intr (entry, redir)
-	const struct mpbios_int *entry;
-	uint32_t *redir;
+static void
+mp_cfg_isa_intr(const struct mpbios_int *entry, uint32_t *redir)
 {
 	int mpspo = entry->int_flags & 0x03; /* XXX magic */
 	int mpstrig = (entry->int_flags >> 2) & 0x03; /* XXX magic */
@@ -925,26 +903,26 @@ static void mp_cfg_isa_intr (entry, redir)
 }
 
 
-static void mp_print_special_intr (intr)
-	int intr;
+static void
+mp_print_special_intr(int intr __unused)
 {
 }
 
-static void mp_print_pci_intr (intr)
-	int intr;
+static void
+mp_print_pci_intr(int intr)
 {
 	printf(" device %d INT_%c", (intr>>2)&0x1f, 'A' + (intr & 0x3));
 }
 
-static void mp_print_isa_intr (intr)
-	int intr;
+static void
+mp_print_isa_intr(int intr)
 {
 	printf(" irq %d", intr);
 }
 
 #ifdef X86_MPBIOS_SUPPORT_EISA
-static void mp_print_eisa_intr (intr)
-	int intr;
+static void
+mp_print_eisa_intr(int intr)
 {
 	printf(" EISA irq %d", intr);
 }
@@ -959,9 +937,7 @@ static void mp_print_eisa_intr (intr)
 #define EXTEND_TAB(a,u)	(!(_TAB_ROUND(a,u) == _TAB_ROUND((a+1),u)))
 
 static void
-mpbios_bus(ent, self)
-	const uint8_t *ent;
-	struct device *self;
+mpbios_bus(const uint8_t *ent, struct device *self)
 {
 	const struct mpbios_bus *entry = (const struct mpbios_bus *)ent;
 	int bus_id = entry->bus_id;
@@ -1019,9 +995,7 @@ mpbios_bus(ent, self)
 
 
 static void
-mpbios_ioapic(ent, self)
-	const uint8_t *ent;
-	struct device *self;
+mpbios_ioapic(const uint8_t *ent, struct device *self)
 {
 	const struct mpbios_ioapic *entry = (const struct mpbios_ioapic *)ent;
 
@@ -1054,10 +1028,7 @@ static const char flagtype_fmt[] = "\177\020"
 		"f\2\2trig\0" "=\1Edge\0" "=\3Level\0";
 
 static void
-mpbios_int(ent, enttype, mpi)
-	const uint8_t *ent;
-	int enttype;
-	struct mp_intr_map *mpi;
+mpbios_int(const uint8_t *ent, int enttype, struct mp_intr_map *mpi)
 {
 	const struct mpbios_int *entry = (const struct mpbios_int *)ent;
 	struct ioapic_softc *sc = NULL, *sc2;
@@ -1183,7 +1154,7 @@ mpbios_int(ent, enttype, mpi)
 
 #if NPCI > 0
 int
-mpbios_pci_attach_hook(struct device *parent, struct device *self,
+mpbios_pci_attach_hook(struct device *parent, struct device *self __unused,
 		       struct pcibus_attach_args *pba)
 {
 	struct mp_bus *mpb;
