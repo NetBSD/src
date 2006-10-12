@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.131 2006/10/12 01:32:26 christos Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.132 2006/10/12 04:25:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.131 2006/10/12 01:32:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.132 2006/10/12 04:25:43 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -397,6 +397,7 @@ genfs_lease_check(void *v)
 	    NQLOCALSLP, ap->a_l, (struct mbuf *)0, &cache, &frev, ap->a_cred);
 	return (0);
 #else
+	(void) v;
 	return (0);
 #endif /* NFSSERVER */
 }
