@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.6 2006/10/03 15:45:04 thorpej Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.7 2006/10/12 04:41:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -99,6 +99,7 @@ void
 _prop_object_fini(struct _prop_object *po)
 {
 	/* Nothing to do, currently. */
+	(void) po;
 }
 
 /*
