@@ -1,4 +1,4 @@
-/* $NetBSD: viapcib.c,v 1.4 2006/10/12 01:30:44 christos Exp $ */
+/* $NetBSD: viapcib.c,v 1.5 2006/10/12 06:56:48 xtraeme Exp $ */
 /* $FreeBSD: src/sys/pci/viapm.c,v 1.10 2005/05/29 04:42:29 nyan Exp $ */
 
 /*-
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.4 2006/10/12 01:30:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.5 2006/10/12 06:56:48 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -286,7 +286,7 @@ viapcib_busy(struct viapcib_softc *sc)
 }
 
 static int
-viapcib_acquire_bus(void *opaque, int flags)
+viapcib_acquire_bus(void *opaque, int flags __unused)
 {
 	struct viapcib_softc *sc;
 
@@ -300,7 +300,7 @@ viapcib_acquire_bus(void *opaque, int flags)
 }
 
 static void
-viapcib_release_bus(void *opaque, int flags)
+viapcib_release_bus(void *opaque, int flags __unused)
 {
 	struct viapcib_softc *sc;
 
@@ -315,7 +315,7 @@ viapcib_release_bus(void *opaque, int flags)
 
 static int
 viapcib_exec(void *opaque, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
-    size_t cmdlen, void *vbuf, size_t buflen, int flags)
+    size_t cmdlen, void *vbuf, size_t buflen, int flags __unused)
 {
 	struct viapcib_softc *sc;
 	uint8_t cmd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_apm.c,v 1.6 2006/10/11 19:14:29 gdt Exp $	*/
+/*	$NetBSD: acpi_apm.c,v 1.7 2006/10/12 06:56:48 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.6 2006/10/11 19:14:29 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.7 2006/10/12 06:56:48 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,14 +114,15 @@ CFATTACH_DECL(acpiapm, sizeof(struct apm_softc),
 
 static int
 /*ARGSUSED*/
-acpiapm_match(struct device *parent, struct cfdata *match, void *aux)
+acpiapm_match(struct device *parent __unused,
+	struct cfdata *match __unused, void *aux __unused)
 {
 	return apm_match();
 }
 
 static void
 /*ARGSUSED*/
-acpiapm_attach(struct device *parent, struct device *self, void *aux)
+acpiapm_attach(struct device *parent, struct device *self, void *aux __unused)
 {
 	struct apm_softc *sc = (struct apm_softc *)self;
 
@@ -223,14 +224,14 @@ SYSCTL_SETUP(sysctl_acpiapm_setup, "sysctl machdep.acpiapm subtree setup")
 
 static void
 /*ARGSUSED*/
-acpiapm_disconnect(void *opaque)
+acpiapm_disconnect(void *opaque __unused)
 {
 	return;
 }
 
 static void
 /*ARGSUSED*/
-acpiapm_enable(void *opaque, int onoff)
+acpiapm_enable(void *opaque __unused, int onoff __unused)
 {
 	return;
 }
@@ -267,7 +268,8 @@ acpiapm_set_powstate(void *opaque, u_int devid, u_int powstat)
 
 static int
 /*ARGSUSED*/
-acpiapm_get_powstat(void *opaque, u_int batteryid, struct apm_power_info *pinfo)
+acpiapm_get_powstat(void *opaque __unused, u_int batteryid __unused,
+	struct apm_power_info *pinfo)
 {
 #define APM_BATT_FLAG_WATERMARK_MASK (APM_BATT_FLAG_CRITICAL |		      \
 				      APM_BATT_FLAG_LOW |		      \
@@ -381,7 +383,7 @@ acpiapm_get_powstat(void *opaque, u_int batteryid, struct apm_power_info *pinfo)
 
 static int
 /*ARGSUSED*/
-acpiapm_get_event(void *opaque, u_int *event_type, u_int *event_info)
+acpiapm_get_event(void *opaque __unused, u_int *event_type, u_int *event_info)
 {
 	if (capability_changed) {
 		capability_changed = 0;
@@ -401,21 +403,22 @@ acpiapm_get_event(void *opaque, u_int *event_type, u_int *event_info)
 
 static void
 /*ARGSUSED*/
-acpiapm_cpu_busy(void *opaque)
+acpiapm_cpu_busy(void *opaque __unused)
 {
 	return;
 }
 
 static void
 /*ARGSUSED*/
-acpiapm_cpu_idle(void *opaque)
+acpiapm_cpu_idle(void *opaque __unused)
 {
 	return;
 }
 
 static void
 /*ARGSUSED*/
-acpiapm_get_capabilities(void *opaque, u_int *numbatts, u_int *capflags)
+acpiapm_get_capabilities(void *opaque __unused, u_int *numbatts,
+	u_int *capflags)
 {
 	*numbatts = 1;
 	*capflags = capabilities;
