@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.26 2006/10/12 01:32:10 christos Exp $	*/
+/*	$NetBSD: pf.c,v 1.27 2006/10/12 19:59:08 peter Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -1520,7 +1520,7 @@ pf_send_tcp(const struct pf_rule *r __unused, sa_family_t af,
 			m_freem(m);
 			return;
 		}
-#ifdef ALTQ_NEW
+#ifdef ALTQ
 	if (r != NULL && r->qid) {
 		struct m_tag	*mtag;
 		struct altq_tag *atag;
@@ -1535,7 +1535,7 @@ pf_send_tcp(const struct pf_rule *r __unused, sa_family_t af,
 			m_tag_prepend(m, mtag);
 		}
 	}
-#endif /* ALTQ_NEW */
+#endif /* ALTQ */
 	m->m_data += max_linkhdr;
 	m->m_pkthdr.len = m->m_len = len;
 	m->m_pkthdr.rcvif = NULL;
@@ -1671,7 +1671,7 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
 	}
 	m_tag_prepend(m0, mtag);
 
-#ifdef ALTQ_NEW
+#ifdef ALTQ
 	if (r->qid) {
 		struct altq_tag *atag;
 
@@ -1685,7 +1685,7 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
 			m_tag_prepend(m0, mtag);
 		}
 	}
-#endif /* ALTQ_NEW */
+#endif /* ALTQ */
 
 	switch (af) {
 #ifdef INET
@@ -6064,7 +6064,7 @@ done:
 	if (s && s->tag)
 		pf_tag_packet(m, pf_get_tag(m), s->tag);
 
-#ifdef ALTQ_NEW
+#ifdef ALTQ
 	if (action == PF_PASS && r->qid) {
 		struct m_tag	*mtag;
 		struct altq_tag	*atag;
@@ -6082,7 +6082,7 @@ done:
 			m_tag_prepend(m, mtag);
 		}
 	}
-#endif /* ALTQ_NEW */
+#endif /* ALTQ */
 
 	/*
 	 * connections redirected to loopback should not match sockets
@@ -6186,7 +6186,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	struct pfi_kif		*kif;
 	u_short			 action, reason = 0, log = 0;
 	struct mbuf		*m = *m0;
-	struct ip6_hdr		*h;
+	struct ip6_hdr		*h = NULL;
 	struct pf_rule		*a = NULL, *r = &pf_default_rule, *tr, *nr;
 	struct pf_state		*s = NULL;
 	struct pf_ruleset	*ruleset = NULL;
@@ -6405,7 +6405,7 @@ done:
 	if (s && s->tag)
 		pf_tag_packet(m, pf_get_tag(m), s->tag);
 
-#ifdef ALTQ_NEW
+#ifdef ALTQ
 	if (action == PF_PASS && r->qid) {
 		struct m_tag	*mtag;
 		struct altq_tag	*atag;
@@ -6423,7 +6423,7 @@ done:
 			m_tag_prepend(m, mtag);
 		}
 	}
-#endif /* ALTQ_NEW */
+#endif /* ALTQ */
 
 	if (dir == PF_IN && action == PF_PASS && (pd.proto == IPPROTO_TCP ||
 	    pd.proto == IPPROTO_UDP) && s != NULL && s->nat_rule.ptr != NULL &&

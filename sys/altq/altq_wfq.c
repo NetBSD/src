@@ -1,8 +1,8 @@
-/*	$NetBSD: altq_wfq.c,v 1.14 2006/10/12 01:30:42 christos Exp $	*/
-/*	$KAME: altq_wfq.c,v 1.7 2000/12/14 08:12:46 thorpej Exp $	*/
+/*	$NetBSD: altq_wfq.c,v 1.15 2006/10/12 19:59:08 peter Exp $	*/
+/*	$KAME: altq_wfq.c,v 1.14 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
- * Copyright (C) 1997-2000
+ * Copyright (C) 1997-2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,17 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.14 2006/10/12 01:30:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.15 2006/10/12 19:59:08 peter Exp $");
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#ifdef _KERNEL_OPT
 #include "opt_altq.h"
-#if (__FreeBSD__ != 2)
 #include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
 #endif
-#endif
-#endif /* __FreeBSD__ || __NetBSD__ */
+
 #ifdef ALTQ_WFQ
 
 #include <sys/param.h>
@@ -65,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.14 2006/10/12 01:30:42 christos Exp $
 #include <altq/altq_conf.h>
 #include <altq/altq_wfq.h>
 
+#ifdef ALTQ3_COMPAT
 /*
 #define	WFQ_DEBUG
 */
@@ -83,7 +80,7 @@ static int		wfq_getqid(struct wfq_getqid *);
 static int		wfq_setweight(struct wfq_setweight *);
 static int		wfq_getstats(struct wfq_getstats *);
 static int		wfq_config(struct wfq_conf *);
-static int		wfq_request __P((struct ifaltq *, int, void *));
+static int		wfq_request(struct ifaltq *, int, void *);
 static int		wfq_flush(struct ifaltq *);
 static void		*wfq_classify(void *, struct mbuf *, int);
 
@@ -91,9 +88,7 @@ static void		*wfq_classify(void *, struct mbuf *, int);
 static wfq_state_t *wfq_list = NULL;
 
 static int
-wfq_setenable(ifacep, flag)
-	struct wfq_interface *ifacep;
-	int flag;
+wfq_setenable(struct wfq_interface *ifacep, int flag)
 {
 	wfq_state_t *wfqp;
 	int error = 0;
@@ -114,8 +109,7 @@ wfq_setenable(ifacep, flag)
 
 
 static int
-wfq_ifattach(ifacep)
-	struct wfq_interface *ifacep;
+wfq_ifattach(struct wfq_interface *ifacep)
 {
 	int error = 0, i;
 	struct ifnet *ifp;
@@ -140,6 +134,7 @@ wfq_ifattach(ifacep)
 	new_wfqp = malloc(sizeof(wfq_state_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (new_wfqp == NULL)
 		return (ENOMEM);
+
 	queue = malloc(sizeof(wfq) * DEFAULT_QSIZE, M_DEVBUF, M_WAITOK|M_ZERO);
 	if (queue == NULL) {
 		free(new_wfqp, M_DEVBUF);
@@ -182,8 +177,7 @@ wfq_ifattach(ifacep)
 
 
 static int
-wfq_ifdetach(ifacep)
-	struct wfq_interface *ifacep;
+wfq_ifdetach(struct wfq_interface *ifacep)
 {
 	int		error = 0;
 	wfq_state_t	*wfqp;
@@ -232,8 +226,7 @@ wfq_request(struct ifaltq *ifq, int req, void *arg __unused)
 
 
 static int
-wfq_flush(ifq)
-	struct ifaltq *ifq;
+wfq_flush(struct ifaltq *ifq)
 {
 	struct mbuf *mp;
 
@@ -245,10 +238,7 @@ wfq_flush(ifq)
 }
 
 static void *
-wfq_classify(clfier, m, af)
-	void *clfier;
-	struct mbuf *m;
-	int af;
+wfq_classify(void *clfier, struct mbuf *m, int af)
 {
 	wfq_state_t *wfqp = (wfq_state_t *)clfier;
 	struct flowinfo flow;
@@ -258,10 +248,7 @@ wfq_classify(clfier, m, af)
 }
 
 static int
-wfq_ifenqueue(ifq, mp, pktattr)
-	struct ifaltq *ifq;
-	struct mbuf *mp;
-	struct altq_pktattr *pktattr;
+wfq_ifenqueue(struct ifaltq *ifq, struct mbuf *mp, struct altq_pktattr *pktattr)
 {
 	wfq_state_t *wfqp;
 	wfq *queue;
@@ -324,10 +311,8 @@ wfq_ifenqueue(ifq, mp, pktattr)
 	return error;
 }
 
-
-static u_long wfq_hash(flow, n)
-	struct flowinfo *flow;
-	int n;
+static u_long
+wfq_hash(struct flowinfo *flow, int n)
 {
 	u_long val = 0;
 
@@ -354,10 +339,8 @@ static u_long wfq_hash(flow, n)
 	return (val % n);
 }
 
-
-static inline u_long wfq_hashbydstaddr(flow, n)
-	struct flowinfo *flow;
-	int n;
+static inline u_long
+wfq_hashbydstaddr(struct flowinfo *flow, int n)
 {
 	u_long val = 0;
 
@@ -380,9 +363,8 @@ static inline u_long wfq_hashbydstaddr(flow, n)
 	return (val % n);
 }
 
-static inline u_long wfq_hashbysrcport(flow, n)
-	struct flowinfo *flow;
-	int n;
+static inline u_long
+wfq_hashbysrcport(struct flowinfo *flow, int n)
 {
 	u_long val = 0;
 
@@ -405,8 +387,8 @@ static inline u_long wfq_hashbysrcport(flow, n)
 	return (val % n);
 }
 
-static wfq *wfq_maxqueue(wfqp)
-	wfq_state_t *wfqp;
+static wfq *
+wfq_maxqueue(wfq_state_t *wfqp)
 {
 	int byte, max_byte = 0;
 	wfq *queue, *max_queue = NULL;
@@ -426,9 +408,7 @@ static wfq *wfq_maxqueue(wfqp)
 
 
 static struct mbuf *
-wfq_ifdequeue(ifq, op)
-	struct ifaltq *ifq;
-	int op;
+wfq_ifdequeue(struct ifaltq *ifq, int op)
 {
 	wfq_state_t *wfqp;
 	wfq *queue;
@@ -494,8 +474,7 @@ wfq_ifdequeue(ifq, op)
 }
 
 static int
-wfq_getqid(gqidp)
-	struct wfq_getqid *gqidp;
+wfq_getqid(struct wfq_getqid *gqidp)
 {
 	wfq_state_t *wfqp;
 
@@ -508,8 +487,7 @@ wfq_getqid(gqidp)
 }
 
 static int
-wfq_setweight(swp)
-	struct wfq_setweight *swp;
+wfq_setweight(struct wfq_setweight *swp)
 {
 	wfq_state_t	*wfqp;
 	wfq *queue;
@@ -532,8 +510,7 @@ wfq_setweight(swp)
 
 
 static int
-wfq_getstats(gsp)
-	struct wfq_getstats *gsp;
+wfq_getstats(struct wfq_getstats *gsp)
 {
 	wfq_state_t	*wfqp;
 	wfq *queue;
@@ -558,8 +535,7 @@ wfq_getstats(gsp)
 
 
 static int
-wfq_config(cf)
-	struct wfq_conf *cf;
+wfq_config(struct wfq_conf *cf)
 {
 	wfq_state_t	*wfqp;
 	wfq		*queue;
@@ -650,12 +626,7 @@ wfqclose(dev_t dev __unused, int flag __unused, int fmt __unused,
 	s = splnet();
 	while ((wfqp = wfq_list) != NULL) {
 		ifp = wfqp->ifq->altq_ifp;
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 		sprintf(iface.wfq_ifacename, "%s", ifp->if_xname);
-#else
-		sprintf(iface.wfq_ifacename, "%s%d",
-			ifp->if_name, ifp->if_unit);
-#endif
 		wfq_ifdetach(&iface);
 	}
 	splx(s);
@@ -737,4 +708,5 @@ ALTQ_MODULE(altq_wfq, ALTQT_WFQ, &wfq_sw);
 
 #endif /* KLD_MODULE */
 
+#endif /* ALTQ3_COMPAT */
 #endif /* ALTQ_WFQ */

@@ -1,5 +1,5 @@
-/*	$NetBSD: altqstat.h,v 1.4 2001/08/22 08:52:36 itojun Exp $	*/
-/*	$KAME: altqstat.h,v 1.4 2001/08/16 07:43:14 itojun Exp $	*/
+/*	$NetBSD: altqstat.h,v 1.5 2006/10/12 19:59:13 peter Exp $	*/
+/*	$KAME: altqstat.h,v 1.5 2002/10/26 06:59:54 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -50,6 +50,7 @@ stat_loop_t red_stat_loop;
 stat_loop_t rio_stat_loop;
 stat_loop_t blue_stat_loop;
 stat_loop_t priq_stat_loop;
+stat_loop_t jobs_stat_loop;
 
 struct redstats;
 

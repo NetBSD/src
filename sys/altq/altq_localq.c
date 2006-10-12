@@ -1,16 +1,17 @@
-/*	$NetBSD: altq_localq.c,v 1.7 2006/10/12 01:30:42 christos Exp $	*/
-/*	$KAME: altq_localq.c,v 1.4 2001/08/16 11:28:25 kjc Exp $	*/
+/*	$NetBSD: altq_localq.c,v 1.8 2006/10/12 19:59:08 peter Exp $	*/
+/*	$KAME: altq_localq.c,v 1.7 2003/07/10 12:07:48 kjc Exp $	*/
 /*
  * a skeleton file for implementing a new queueing discipline.
  * this file is in the public domain.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_localq.c,v 1.7 2006/10/12 01:30:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_localq.c,v 1.8 2006/10/12 19:59:08 peter Exp $");
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#ifdef _KERNEL_OPT
 #include "opt_altq.h"
-#endif /* __FreeBSD__ || __NetBSD__ */
+#endif
+
 #ifdef ALTQ_LOCALQ  /* localq is enabled by ALTQ_LOCALQ option in opt_altq.h */
 
 #include <sys/param.h>
@@ -24,6 +25,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_localq.c,v 1.7 2006/10/12 01:30:42 christos Exp
 #include <altq/altq.h>
 #include <altq/altq_conf.h>
 
+#ifdef ALTQ3_COMPAT
 /*
  * localq device interface
  */
@@ -64,4 +66,5 @@ ALTQ_MODULE(altq_localq, ALTQT_LOCALQ, &localq_sw);
 
 #endif /* KLD_MODULE */
 
+#endif /* ALTQ3_COMPAT */
 #endif /* ALTQ_LOCALQ */

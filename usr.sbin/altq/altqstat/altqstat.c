@@ -1,5 +1,5 @@
-/*	$NetBSD: altqstat.c,v 1.5 2002/03/05 04:11:52 itojun Exp $	*/
-/*	$KAME: altqstat.c,v 1.7 2001/11/19 09:14:22 kjc Exp $	*/
+/*	$NetBSD: altqstat.c,v 1.6 2006/10/12 19:59:13 peter Exp $	*/
+/*	$KAME: altqstat.c,v 1.8 2002/10/27 03:19:35 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -48,7 +48,7 @@
 
 int qdiscfd = -1;
 int show_config = 0;
-int interval = 5;
+double ival = 5.0;
 int no_server = 0;
 char *interface = NULL;
 char *qdisc_name = NULL;
@@ -56,6 +56,7 @@ char *qdisc_name = NULL;
 stat_loop_t *stat_loop;
 
 static void sig_handler(int);
+static void alrm_handler(int);
 static void usage(void);
 
 static void
@@ -74,6 +75,12 @@ sig_handler(int sig)
 	_exit(0);
 }
 
+static void
+alrm_handler(int sig)
+{
+	/* nothing */
+}
+
 static void 
 usage(void)
 {
@@ -85,8 +92,9 @@ int
 main (int argc, char **argv)
 {
 	int ch, raw_mode = 0;
-	int qtype;
+	int qtype, interval;
 	int count = 0;
+	struct itimerval it;
 	char device[64], qname[64], input[32];
 
 	while ((ch = getopt(argc, argv, "I:c:ei:nrsw:")) != -1) {
@@ -115,7 +123,7 @@ main (int argc, char **argv)
 			show_config = 1;
 			break;
 		case 'w':
-			interval = atoi(optarg);
+			ival = strtod(optarg, NULL);
 			break;
 		default:
 			usage();
@@ -126,6 +134,7 @@ main (int argc, char **argv)
 	signal(SIGINT, sig_handler);
 	signal(SIGTERM, sig_handler);
 	signal(SIGPIPE, sig_handler);
+	signal(SIGALRM, alrm_handler);
 
 	if (no_server == 0) {
 		if (quip_openserver() < 0 && interface == NULL)
@@ -167,8 +176,13 @@ main (int argc, char **argv)
 	if ((qdiscfd = open(device, O_RDONLY)) < 0)
 		err(1, "can't open %s", device);
 
-	(*stat_loop)(qdiscfd, interface, count, interval);
-	/* never returns */
+	interval = (int)(ival * 1000.0);
+	it.it_interval.tv_sec = interval / 1000;
+	it.it_interval.tv_usec = interval % 1000 * 1000;
+	it.it_value = it.it_interval;
+	setitimer(ITIMER_REAL, &it, NULL);
+
+	(*stat_loop)(qdiscfd, interface, count, (int)ival);
 
 	exit(0);
 }
@@ -223,6 +237,6 @@ rate2str(double rate)
 	else if (rate >= 1000000.0)
 		snprintf(buf, RATESTR_MAX, "%.2fM", rate / 1000000.0);
 	else
-		snprintf(buf, RATESTR_MAX, "%.2fK", rate / 1000.0);
+		snprintf(buf, RATESTR_MAX, "%.2fk", rate / 1000.0);
 	return (buf);
 }
