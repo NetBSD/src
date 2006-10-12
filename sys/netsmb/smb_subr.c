@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.27 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.28 2006/10/12 01:32:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.27 2006/07/23 22:06:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.28 2006/10/12 01:32:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ smb_copy_iconv(struct mbchain *mbp, const char *src, char *dst, size_t len)
 
 int
 smb_put_dmem(struct mbchain *mbp, struct smb_vc *vcp, const char *src,
-	int size, int caseopt)
+	int size, int caseopt __unused)
 {
 	struct iconv_drv *dp = vcp->vc_toserver;
 

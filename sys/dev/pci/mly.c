@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.29 2006/09/02 07:10:51 christos Exp $	*/
+/*	$NetBSD: mly.c,v 1.30 2006/10/12 01:31:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.29 2006/09/02 07:10:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.30 2006/10/12 01:31:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,7 +264,8 @@ mly_find_ident(struct pci_attach_args *pa)
  * Match a supported board.
  */
 static int
-mly_match(struct device *parent, struct cfdata *cfdata, void *aux)
+mly_match(struct device *parent __unused, struct cfdata *cfdata __unused,
+    void *aux)
 {
 
 	return (mly_find_ident(aux) != NULL);
@@ -274,7 +275,7 @@ mly_match(struct device *parent, struct cfdata *cfdata, void *aux)
  * Attach a supported board.
  */
 static void
-mly_attach(struct device *parent, struct device *self, void *aux)
+mly_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct mly_softc *mly;
@@ -588,7 +589,7 @@ mly_scan_channel(struct mly_softc *mly, int bus)
  * Shut down all configured `mly' devices.
  */
 static void
-mly_shutdown(void *cookie)
+mly_shutdown(void *cookie __unused)
 {
 	struct mly_softc *mly;
 	int i;
@@ -2086,8 +2087,8 @@ mly_get_xfer_mode(struct mly_softc *mly, int bus, struct scsipi_xfer_mode *xm)
  * ioctl hook; used here only to initiate low-level rescans.
  */
 static int
-mly_scsipi_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t data,
-		 int flag, struct proc *p)
+mly_scsipi_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t data __unused,
+    int flag __unused, struct proc *p __unused)
 {
 	struct mly_softc *mly;
 	int rv;
@@ -2273,7 +2274,7 @@ mly_dmamem_free(struct mly_softc *mly, int size, bus_dmamap_t dmamap,
  * Accept an open operation on the control device.
  */
 int
-mlyopen(dev_t dev, int flag, int mode, struct lwp *l)
+mlyopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
 {
 	struct mly_softc *mly;
 
@@ -2292,7 +2293,8 @@ mlyopen(dev_t dev, int flag, int mode, struct lwp *l)
  * Accept the last close on the control device.
  */
 int
-mlyclose(dev_t dev, int flag, int mode, struct lwp *l)
+mlyclose(dev_t dev, int flag __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	struct mly_softc *mly;
 
@@ -2305,7 +2307,8 @@ mlyclose(dev_t dev, int flag, int mode, struct lwp *l)
  * Handle control operations.
  */
 int
-mlyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mlyioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
+    struct lwp *l __unused)
 {
 	struct mly_softc *mly;
 	int rv;

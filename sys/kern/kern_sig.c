@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.229 2006/10/04 23:10:42 dogcow Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.230 2006/10/12 01:32:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.229 2006/10/04 23:10:42 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.230 2006/10/12 01:32:17 christos Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ktrace.h"
@@ -103,7 +103,7 @@ struct pool	sigacts_pool;	/* memory pool for sigacts structures */
  */
 
 static void *
-sigacts_poolpage_alloc(struct pool *pp, int flags)
+sigacts_poolpage_alloc(struct pool *pp __unused, int flags)
 {
 
 	return (void *)uvm_km_alloc(kernel_map,
@@ -113,7 +113,7 @@ sigacts_poolpage_alloc(struct pool *pp, int flags)
 }
 
 static void
-sigacts_poolpage_free(struct pool *pp, void *v)
+sigacts_poolpage_free(struct pool *pp __unused, void *v)
 {
         uvm_km_free(kernel_map, (vaddr_t)v, (PAGE_SIZE)*2, UVM_KMF_WIRED);
 }
@@ -205,7 +205,7 @@ out:
  * free all pending ksiginfo on exit
  */
 static void
-ksiginfo_exithook(struct proc *p, void *v)
+ksiginfo_exithook(struct proc *p, void *v __unused)
 {
 	int s;
 
@@ -406,7 +406,7 @@ sigaction1(struct proc *p, int signum, const struct sigaction *nsa,
 #ifdef COMPAT_16
 /* ARGSUSED */
 int
-compat_16_sys___sigaction14(struct lwp *l, void *v, register_t *retval)
+compat_16_sys___sigaction14(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct compat_16_sys___sigaction14_args /* {
 		syscallarg(int)				signum;
@@ -439,7 +439,7 @@ compat_16_sys___sigaction14(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys___sigaction_sigtramp(struct lwp *l, void *v, register_t *retval)
+sys___sigaction_sigtramp(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys___sigaction_sigtramp_args /* {
 		syscallarg(int)				signum;
@@ -602,7 +602,7 @@ sigprocmask1(struct proc *p, int how, const sigset_t *nss, sigset_t *oss)
  * the library stub does the rest.
  */
 int
-sys___sigprocmask14(struct lwp *l, void *v, register_t *retval)
+sys___sigprocmask14(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys___sigprocmask14_args /* {
 		syscallarg(int)			how;
@@ -641,7 +641,7 @@ sigpending1(struct proc *p, sigset_t *ss)
 
 /* ARGSUSED */
 int
-sys___sigpending14(struct lwp *l, void *v, register_t *retval)
+sys___sigpending14(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys___sigpending14_args /* {
 		syscallarg(sigset_t *)	set;
@@ -691,7 +691,7 @@ sigsuspend1(struct proc *p, const sigset_t *ss)
  */
 /* ARGSUSED */
 int
-sys___sigsuspend14(struct lwp *l, void *v, register_t *retval)
+sys___sigsuspend14(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys___sigsuspend14_args /* {
 		syscallarg(const sigset_t *)	set;
@@ -737,7 +737,7 @@ sigaltstack1(struct proc *p, const struct sigaltstack *nss,
 
 /* ARGSUSED */
 int
-sys___sigaltstack14(struct lwp *l, void *v, register_t *retval)
+sys___sigaltstack14(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys___sigaltstack14_args /* {
 		syscallarg(const struct sigaltstack *)	nss;
@@ -767,7 +767,7 @@ sys___sigaltstack14(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_kill(struct lwp *l, void *v, register_t *retval)
+sys_kill(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_kill_args /* {
 		syscallarg(int)	pid;
@@ -1975,7 +1975,7 @@ static	const char lognocoredump[] =
 
 /* Wrapper function for use in p_userret */
 static void
-lwp_coredump_hook(struct lwp *l, void *arg)
+lwp_coredump_hook(struct lwp *l, void *arg __unused)
 {
 	int s;
 
@@ -2221,7 +2221,7 @@ __weak_alias(sys_ptrace, sys_nosys);
 
 /* ARGSUSED */
 int
-sys_nosys(struct lwp *l, void *v, register_t *retval)
+sys_nosys(struct lwp *l, void *v __unused, register_t *retval __unused)
 {
 	struct proc 	*p;
 
@@ -2306,7 +2306,7 @@ getucontext(struct lwp *l, ucontext_t *ucp)
 
 /* ARGSUSED */
 int
-sys_getcontext(struct lwp *l, void *v, register_t *retval)
+sys_getcontext(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_getcontext_args /* {
 		syscallarg(struct __ucontext *) ucp;
@@ -2348,7 +2348,7 @@ setucontext(struct lwp *l, const ucontext_t *ucp)
 
 /* ARGSUSED */
 int
-sys_setcontext(struct lwp *l, void *v, register_t *retval)
+sys_setcontext(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_setcontext_args /* {
 		syscallarg(const ucontext_t *) ucp;
@@ -2379,7 +2379,7 @@ sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-__sigtimedwait1(struct lwp *l, void *v, register_t *retval,
+__sigtimedwait1(struct lwp *l, void *v, register_t *retval __unused,
     copyout_t put_info, copyin_t fetch_timeout, copyout_t put_timeout)
 {
 	struct sys___sigtimedwait_args /* {

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.138 2006/10/09 21:29:14 scw Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.139 2006/10/12 01:31:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.138 2006/10/09 21:29:14 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.139 2006/10/12 01:31:57 christos Exp $");
 
 #include "opt_scsi.h"
 
@@ -196,7 +196,8 @@ scsipi_insert_periph(struct scsipi_channel *chan, struct scsipi_periph *periph)
  *	Remove a periph from the channel.
  */
 void
-scsipi_remove_periph(struct scsipi_channel *chan, struct scsipi_periph *periph)
+scsipi_remove_periph(struct scsipi_channel *chan __unused,
+    struct scsipi_periph *periph)
 {
 	int s;
 

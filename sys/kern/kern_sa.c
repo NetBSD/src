@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.85 2006/10/03 18:16:31 christos Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.86 2006/10/12 01:32:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.85 2006/10/03 18:16:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.86 2006/10/12 01:32:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ sa_newsavp(struct sadata *sa)
 }
 
 int
-sys_sa_register(struct lwp *l, void *v, register_t *retval)
+sys_sa_register(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_sa_register_args /* {
 		syscallarg(sa_upcall_t) new;
@@ -462,7 +462,7 @@ sa_stacks1(struct lwp *l, register_t *retval, int num, stack_t *stacks,
 
 
 int
-sys_sa_enable(struct lwp *l, void *v, register_t *retval)
+sys_sa_enable(struct lwp *l, void *v __unused, register_t *retval __unused)
 {
 	struct proc *p = l->l_proc;
 	struct sadata *sa = p->p_sa;
@@ -648,7 +648,7 @@ sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_sa_yield(struct lwp *l, void *v, register_t *retval)
+sys_sa_yield(struct lwp *l, void *v __unused, register_t *retval __unused)
 {
 	struct proc *p = l->l_proc;
 
@@ -740,7 +740,8 @@ sa_yield(struct lwp *l)
 
 
 int
-sys_sa_preempt(struct lwp *l, void *v, register_t *retval)
+sys_sa_preempt(struct lwp *l __unused, void *v __unused,
+    register_t *retval __unused)
 {
 
 	/* XXX Implement me. */

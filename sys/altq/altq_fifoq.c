@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_fifoq.c,v 1.11 2006/07/21 16:48:45 ad Exp $	*/
+/*	$NetBSD: altq_fifoq.c,v 1.12 2006/10/12 01:30:42 christos Exp $	*/
 /*	$KAME: altq_fifoq.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.11 2006/07/21 16:48:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.12 2006/10/12 01:30:42 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -78,10 +78,8 @@ static void 		fifoq_purge __P((fifoq_state_t *));
 altqdev_decl(fifoq);
 
 int
-fifoqopen(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+fifoqopen(dev_t dev __unused, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
 	/* everything will be done when the queueing scheme is attached. */
 	return 0;
@@ -99,10 +97,8 @@ fifoqopen(dev, flag, fmt, l)
  *       is removed (only once with multiple simultaneous references.)
  */
 int
-fifoqclose(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+fifoqclose(dev_t dev __unused, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
 	fifoq_state_t *q;
 	int err, error = 0;
@@ -118,12 +114,8 @@ fifoqclose(dev, flag, fmt, l)
 }
 
 int
-fifoqioctl(dev, cmd, addr, flag, l)
-	dev_t dev;
-	ioctlcmd_t cmd;
-	caddr_t addr;
-	int flag;
-	struct lwp *l;
+fifoqioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
+    struct lwp *l)
 {
 	fifoq_state_t *q;
 	struct fifoq_interface *ifacep;
@@ -268,10 +260,8 @@ fifoqioctl(dev, cmd, addr, flag, l)
  *		 ENOBUFS when drop occurs.
  */
 static int
-fifoq_enqueue(ifq, m, pktattr)
-	struct ifaltq *ifq;
-	struct mbuf *m;
-	struct altq_pktattr *pktattr;
+fifoq_enqueue(struct ifaltq *ifq, struct mbuf *m,
+    struct altq_pktattr *pktattr __unused)
 {
 	fifoq_state_t *q = (fifoq_state_t *)ifq->altq_disc;
 
@@ -339,10 +329,7 @@ fifoq_dequeue(ifq, op)
 }
 
 static int
-fifoq_request(ifq, req, arg)
-	struct ifaltq *ifq;
-	int req;
-	void *arg;
+fifoq_request(struct ifaltq *ifq, int req, void *arg __unused)
 {
 	fifoq_state_t *q = (fifoq_state_t *)ifq->altq_disc;
 

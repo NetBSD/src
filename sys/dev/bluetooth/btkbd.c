@@ -1,4 +1,4 @@
-/*	$NetBSD: btkbd.c,v 1.3 2006/09/05 18:14:57 plunky Exp $	*/
+/*	$NetBSD: btkbd.c,v 1.4 2006/10/12 01:30:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.3 2006/09/05 18:14:57 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.4 2006/10/12 01:30:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -164,7 +164,8 @@ static void btkbd_repeat(void *);
  */
 
 static int
-btkbd_match(struct device *self, struct cfdata *cfdata, void *aux)
+btkbd_match(struct device *self __unused, struct cfdata *cfdata __unused,
+    void *aux)
 {
 	struct bthidev_attach_args *ba = aux;
 
@@ -176,7 +177,7 @@ btkbd_match(struct device *self, struct cfdata *cfdata, void *aux)
 }
 
 static void
-btkbd_attach(struct device *parent, struct device *self, void *aux)
+btkbd_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct btkbd_softc *sc = (struct btkbd_softc *)self;
 	struct bthidev_attach_args *ba = aux;
@@ -336,7 +337,8 @@ btkbd_set_leds(void *self, int leds)
 }
 
 static int
-btkbd_ioctl(void *self, unsigned long cmd, caddr_t data, int flag, struct lwp *l)
+btkbd_ioctl(void *self, unsigned long cmd, caddr_t data, int flag __unused,
+    struct lwp *l __unused)
 {
 	struct btkbd_softc *sc = (struct btkbd_softc *)self;
 
@@ -427,7 +429,7 @@ static const u_int8_t btkbd_trtab[256] = {
 #define REP_DELAYN	100
 
 static void
-btkbd_input(struct bthidev *self, uint8_t *data, int len)
+btkbd_input(struct bthidev *self, uint8_t *data, int len __unused)
 {
 	struct btkbd_softc *sc = (struct btkbd_softc *)self;
 	struct btkbd_data *ud = &sc->sc_ndata;

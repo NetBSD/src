@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu.c,v 1.12 2005/12/24 20:27:30 perry Exp $	*/
+/*	$NetBSD: mpu.c,v 1.13 2006/10/12 01:31:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu.c,v 1.12 2005/12/24 20:27:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu.c,v 1.13 2006/10/12 01:31:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,12 +162,8 @@ mpu_reset(sc)
 }
 
 int
-mpu_open(addr, flags, iintr, ointr, arg)
-	void *addr;
-	int flags;
-	void (*iintr)(void *, int);
-	void (*ointr)(void *);
-	void *arg;
+mpu_open(void *addr, int flags __unused, void (*iintr)(void *, int),
+    void (*ointr)(void *) __unused, void *arg)
 {
 	struct mpu_softc *sc = addr;
 

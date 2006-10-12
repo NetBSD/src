@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.c,v 1.18 2006/05/14 21:24:49 elad Exp $	*/
+/*	$NetBSD: coda_namecache.c,v 1.19 2006/10/12 01:30:47 christos Exp $	*/
 
 /*
  *
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.18 2006/05/14 21:24:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.19 2006/10/12 01:30:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -456,7 +456,8 @@ coda_nc_zapfid(CodaFid *fid, enum dc_status dcstat)
  * Remove all entries which match the fid and the cred
  */
 void
-coda_nc_zapvnode(CodaFid *fid, kauth_cred_t cred, enum dc_status dcstat)
+coda_nc_zapvnode(CodaFid *fid, kauth_cred_t cred,
+    enum dc_status dcstat __unused)
 {
 	/* See comment for zapfid. I don't think that one would ever
 	   want to zap a file with a specific cred from the kernel.

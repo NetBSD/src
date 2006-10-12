@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.28 2006/02/19 14:59:22 thorpej Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.29 2006/10/12 01:30:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.28 2006/02/19 14:59:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.29 2006/10/12 01:30:43 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -161,7 +161,7 @@ static bus_space_handle_t dmaiot, dmacmdh, dmaexech;
  * Map the MCA DMA controller registers.
  */
 void
-mca_attach_hook(struct device *parent, struct device *self,
+mca_attach_hook(struct device *parent __unused, struct device *self __unused,
     struct mcabus_attach_args *mba)
 {
 	dmaiot = mba->mba_iot;
@@ -176,7 +176,7 @@ mca_attach_hook(struct device *parent, struct device *self,
  */
 
 int
-mca_conf_read(mca_chipset_tag_t mc, int slot, int reg)
+mca_conf_read(mca_chipset_tag_t mc __unused, int slot, int reg)
 {
 	int	data;
 
@@ -194,7 +194,7 @@ mca_conf_read(mca_chipset_tag_t mc, int slot, int reg)
  */
 
 void
-mca_conf_write(mca_chipset_tag_t mc, int slot, int reg, int data)
+mca_conf_write(mca_chipset_tag_t mc __unused, int slot, int reg, int data)
 {
 	slot&=7;	/* slot must be in range 0-7 */	
 	outb(MCA_MB_SETUP_REG, 0xff); /* ensure m/board setup is disabled */
@@ -218,7 +218,7 @@ mca_intr_establish(mca_chipset_tag_t mc, mca_intr_handle_t ih)
 #endif
 
 void *
-mca_intr_establish(mca_chipset_tag_t mc, mca_intr_handle_t ih,
+mca_intr_establish(mca_chipset_tag_t mc __unused, mca_intr_handle_t ih,
     int level, int (*func)(void *), void *arg)
 {
 	if (ih == 0 || ih >= NUM_LEGACY_IRQS || ih == 2)
@@ -229,7 +229,7 @@ mca_intr_establish(mca_chipset_tag_t mc, mca_intr_handle_t ih,
 }
 
 void
-mca_intr_disestablish(mca_chipset_tag_t mc, void *cookie)
+mca_intr_disestablish(mca_chipset_tag_t mc __unused, void *cookie)
 {
 	isa_intr_disestablish(NULL, cookie);
 }

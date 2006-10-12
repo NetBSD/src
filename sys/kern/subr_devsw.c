@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.8 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.9 2006/10/12 01:32:18 christos Exp $	*/
 /*-
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.8 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.9 2006/10/12 01:32:18 christos Exp $");
 
 /*
  * New device switch framework is developing.
@@ -159,7 +159,8 @@ devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
 }
 
 static int
-bdevsw_attach(const char *devname, const struct bdevsw *devsw, int *devmajor)
+bdevsw_attach(const char *devname __unused, const struct bdevsw *devsw,
+    int *devmajor)
 {
 	int bmajor, i;
 
@@ -216,7 +217,8 @@ bdevsw_attach(const char *devname, const struct bdevsw *devsw, int *devmajor)
 }
 
 static int
-cdevsw_attach(const char *devname, const struct cdevsw *devsw, int *devmajor)
+cdevsw_attach(const char *devname __unused, const struct cdevsw *devsw,
+    int *devmajor)
 {
 	int cmajor, i;
 

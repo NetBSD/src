@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.13 2006/10/08 23:54:19 christos Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.14 2006/10/12 01:32:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.13 2006/10/08 23:54:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.14 2006/10/12 01:32:19 christos Exp $");
 
 #include "opt_ptm.h"
 
@@ -303,7 +303,7 @@ pty_fill_ptmget(struct lwp *l, dev_t dev, int cfd, int sfd, void *data)
 
 void
 /*ARGSUSED*/
-ptmattach(int n)
+ptmattach(int n __unused)
 {
 	extern const struct cdevsw pts_cdevsw, ptc_cdevsw;
 	/* find the major and minor of the pty devices */
@@ -318,7 +318,7 @@ ptmattach(int n)
 
 static int
 /*ARGSUSED*/
-ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
+ptmopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l)
 {
 	int error;
 	int fd;
@@ -355,14 +355,16 @@ ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 static int
 /*ARGSUSED*/
-ptmclose(dev_t dev, int flag, int mode, struct lwp *l)
+ptmclose(dev_t dev __unused, int flag __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	return (0);
 }
 
 static int
 /*ARGSUSED*/
-ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ptmioctl(dev_t dev __unused, u_long cmd, caddr_t data, int flag __unused,
+    struct lwp *l)
 {
 	int error;
 	dev_t newdev;

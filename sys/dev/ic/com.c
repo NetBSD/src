@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.254 2006/10/01 20:31:50 elad Exp $	*/
+/*	$NetBSD: com.c,v 1.255 2006/10/12 01:31:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.254 2006/10/01 20:31:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.255 2006/10/12 01:31:00 christos Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -290,7 +290,7 @@ const bus_size_t com_std_map[16] = COM_REG_16550;
 
 /*ARGSUSED*/
 int
-comspeed(long speed, long frequency, int type)
+comspeed(long speed, long frequency, int type __unused)
 {
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
 
@@ -628,7 +628,7 @@ com_config(struct com_softc *sc)
 }
 
 int
-com_detach(struct device *self, int flags)
+com_detach(struct device *self, int flags __unused)
 {
 	struct com_softc *sc = (struct com_softc *)self;
 	int maj, mn;
@@ -770,7 +770,7 @@ com_shutdown(struct com_softc *sc)
 }
 
 int
-comopen(dev_t dev, int flag, int mode, struct lwp *l)
+comopen(dev_t dev, int flag, int mode __unused, struct lwp *l)
 {
 	struct com_softc *sc;
 	struct tty *tp;
@@ -926,7 +926,7 @@ bad:
 }
 
 int
-comclose(dev_t dev, int flag, int mode, struct lwp *l)
+comclose(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
 {
 	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -1770,7 +1770,7 @@ out:
  * Stop output on a line.
  */
 void
-comstop(struct tty *tp, int flag)
+comstop(struct tty *tp, int flag __unused)
 {
 	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
 	int s;
@@ -2485,7 +2485,7 @@ comcnputc(dev_t dev, int c)
 }
 
 void
-comcnpollc(dev_t dev, int on)
+comcnpollc(dev_t dev __unused, int on __unused)
 {
 
 }
@@ -2543,7 +2543,7 @@ com_kgdb_attach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
 
 /* ARGSUSED */
 int
-com_kgdb_getc(void *arg)
+com_kgdb_getc(void *arg __unused)
 {
 
 	return (com_common_getc(NODEV, &comkgdbregs));
@@ -2551,7 +2551,7 @@ com_kgdb_getc(void *arg)
 
 /* ARGSUSED */
 void
-com_kgdb_putc(void *arg, int c)
+com_kgdb_putc(void *arg __unused, int c)
 {
 
 	com_common_putc(NODEV, &comkgdbregs, c);

@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmresrcl.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmresrcl.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
 
 #include "acpi.h"
 #include "acdisasm.h"
@@ -775,7 +775,7 @@ AcpiDmQwordDescriptor (
 void
 AcpiDmExtendedDescriptor (
     AML_RESOURCE            *Resource,
-    UINT32                  Length,
+    UINT32                  Length __unused,
     UINT32                  Level)
 {
 
@@ -818,7 +818,7 @@ AcpiDmExtendedDescriptor (
 void
 AcpiDmMemory24Descriptor (
     AML_RESOURCE            *Resource,
-    UINT32                  Length,
+    UINT32                  Length __unused,
     UINT32                  Level)
 {
 
@@ -854,7 +854,7 @@ AcpiDmMemory24Descriptor (
 void
 AcpiDmMemory32Descriptor (
     AML_RESOURCE            *Resource,
-    UINT32                  Length,
+    UINT32                  Length __unused,
     UINT32                  Level)
 {
 
@@ -890,7 +890,7 @@ AcpiDmMemory32Descriptor (
 void
 AcpiDmFixedMemory32Descriptor (
     AML_RESOURCE            *Resource,
-    UINT32                  Length,
+    UINT32                  Length __unused,
     UINT32                  Level)
 {
 
@@ -928,7 +928,7 @@ AcpiDmFixedMemory32Descriptor (
 void
 AcpiDmGenericRegisterDescriptor (
     AML_RESOURCE            *Resource,
-    UINT32                  Length,
+    UINT32                  Length __unused,
     UINT32                  Level)
 {
 
@@ -977,7 +977,7 @@ AcpiDmGenericRegisterDescriptor (
 void
 AcpiDmInterruptDescriptor (
     AML_RESOURCE            *Resource,
-    UINT32                  Length,
+    UINT32                  Length __unused,
     UINT32                  Level)
 {
     UINT32                  i;

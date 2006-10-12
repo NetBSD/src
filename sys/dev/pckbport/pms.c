@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.13 2006/09/24 03:54:00 jmcneill Exp $ */
+/* $NetBSD: pms.c,v 1.14 2006/10/12 01:31:49 christos Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -28,7 +28,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.13 2006/09/24 03:54:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.14 2006/10/12 01:31:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,8 @@ pms_protocol(pckbport_tag_t tag, pckbport_slot_t slot)
 }
 
 int
-pmsprobe(struct device *parent, struct cfdata *match, void *aux)
+pmsprobe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pckbport_attach_args *pa = aux;
 	u_char cmd[1], resp[2];
@@ -168,7 +169,7 @@ pmsprobe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-pmsattach(struct device *parent, struct device *self, void *aux)
+pmsattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pms_softc *sc = device_private(self);
 	struct pckbport_attach_args *pa = aux;
@@ -371,7 +372,8 @@ pms_power(int why, void *v)
 #endif /* !PMS_DISABLE_POWERHOOK */
 
 int
-pms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+pms_ioctl(void *v, u_long cmd, caddr_t data, int flag __unused,
+    struct lwp *l __unused)
 {
 	struct pms_softc *sc = v;
 	u_char kbcmd[2];

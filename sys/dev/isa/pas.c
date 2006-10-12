@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.63 2006/09/03 06:46:22 christos Exp $	*/
+/*	$NetBSD: pas.c,v 1.64 2006/10/12 01:31:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.63 2006/09/03 06:46:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.64 2006/10/12 01:31:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ pasprobe(struct device *parent, struct cfdata *match, void *aux)
  * Probe for the soundblaster hardware.
  */
 static int
-pasfind(struct device *parent, struct pas_softc *sc,
+pasfind(struct device *parent __unused, struct pas_softc *sc,
     struct isa_attach_args *ia, int probing)
 {
 	int iobase;
@@ -492,7 +492,7 @@ pasattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-pas_getdev(void *addr, struct audio_device *retp)
+pas_getdev(void *addr __unused, struct audio_device *retp)
 {
 
 	*retp = pas_device;

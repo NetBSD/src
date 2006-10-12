@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec_elf32.c,v 1.9 2005/12/11 12:20:26 christos Exp $	 */
+/*	$NetBSD: svr4_exec_elf32.c,v 1.10 2006/10/12 01:30:49 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_exec_elf32.c,v 1.9 2005/12/11 12:20:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_exec_elf32.c,v 1.10 2006/10/12 01:30:49 christos Exp $");
 
 #define	ELFSIZE		32				/* XXX should die */
 
@@ -62,12 +62,13 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_exec_elf32.c,v 1.9 2005/12/11 12:20:26 christos
 #include <compat/svr4/svr4_errno.h>
 
 int
-svr4_elf32_probe(l, epp, eh, itp, pos)
-	struct lwp *l;
-	struct exec_package *epp;
-	void *eh;
-	char *itp;
-	vaddr_t *pos;
+svr4_elf32_probe(
+    struct lwp *l,
+    struct exec_package *epp,
+    void *eh __unused,
+    char *itp,
+    vaddr_t *pos
+)
 {
 	struct proc *p = l->l_proc;
 	int error;

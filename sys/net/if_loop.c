@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.60 2006/10/09 10:46:00 peter Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.61 2006/10/12 01:32:28 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.60 2006/10/09 10:46:00 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.61 2006/10/12 01:32:28 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -145,7 +145,7 @@ static struct if_clone loop_cloner =
     IF_CLONE_INITIALIZER("lo", loop_clone_create, loop_clone_destroy);
 
 void
-loopattach(int n)
+loopattach(int n __unused)
 {
 
 	(void)loop_clone_create(&loop_cloner, 0);	/* lo0 always exists */
@@ -397,7 +397,8 @@ lostart(struct ifnet *ifp)
 
 /* ARGSUSED */
 void
-lortrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
+lortrequest(int cmd __unused, struct rtentry *rt,
+    struct rt_addrinfo *info __unused)
 {
 
 	if (rt)

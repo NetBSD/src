@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.19 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: aceride.c,v 1.20 2006/10/12 01:31:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.19 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.20 2006/10/12 01:31:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,8 @@ static const struct pciide_product_desc pciide_acer_products[] =  {
 };
 
 static int
-aceride_match(struct device *parent, struct cfdata *match, void *aux)
+aceride_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -86,7 +87,7 @@ aceride_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-aceride_attach(struct device *parent, struct device *self, void *aux)
+aceride_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;

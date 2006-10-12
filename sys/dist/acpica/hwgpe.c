@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwgpe.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwgpe.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
 
 #include "acpi.h"
 #include "acevents.h"
@@ -300,7 +300,7 @@ UnlockAndExit:
 
 ACPI_STATUS
 AcpiHwDisableGpeBlock (
-    ACPI_GPE_XRUPT_INFO     *GpeXruptInfo,
+    ACPI_GPE_XRUPT_INFO     *GpeXruptInfo __unused,
     ACPI_GPE_BLOCK_INFO     *GpeBlock)
 {
     UINT32                  i;
@@ -340,7 +340,7 @@ AcpiHwDisableGpeBlock (
 
 ACPI_STATUS
 AcpiHwClearGpeBlock (
-    ACPI_GPE_XRUPT_INFO     *GpeXruptInfo,
+    ACPI_GPE_XRUPT_INFO     *GpeXruptInfo __unused,
     ACPI_GPE_BLOCK_INFO     *GpeBlock)
 {
     UINT32                  i;
@@ -381,7 +381,7 @@ AcpiHwClearGpeBlock (
 
 ACPI_STATUS
 AcpiHwEnableRuntimeGpeBlock (
-    ACPI_GPE_XRUPT_INFO     *GpeXruptInfo,
+    ACPI_GPE_XRUPT_INFO     *GpeXruptInfo __unused,
     ACPI_GPE_BLOCK_INFO     *GpeBlock)
 {
     UINT32                  i;
@@ -429,7 +429,7 @@ AcpiHwEnableRuntimeGpeBlock (
 
 static ACPI_STATUS
 AcpiHwEnableWakeupGpeBlock (
-    ACPI_GPE_XRUPT_INFO     *GpeXruptInfo,
+    ACPI_GPE_XRUPT_INFO     *GpeXruptInfo __unused,
     ACPI_GPE_BLOCK_INFO     *GpeBlock)
 {
     UINT32                  i;

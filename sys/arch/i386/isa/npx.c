@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.112 2006/04/19 17:19:48 christos Exp $	*/
+/*	$NetBSD: npx.c,v 1.113 2006/10/12 01:30:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.112 2006/04/19 17:19:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.113 2006/10/12 01:30:43 christos Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -174,7 +174,7 @@ fpu_save(union savefpu *addr)
 }
 
 static int
-npxdna_empty(struct cpu_info *ci)
+npxdna_empty(struct cpu_info *ci __unused)
 {
 
 	/* raise a DNA TRAP, math_emulate would take over eventually */
@@ -341,7 +341,7 @@ npxattach(struct npx_softc *sc)
  * IRQ13 exception handling makes exceptions even less precise than usual.
  */
 int
-npxintr(void *arg, struct intrframe iframe)
+npxintr(void *arg __unused, struct intrframe iframe)
 {
 	struct cpu_info *ci = curcpu();
 	struct lwp *l = ci->ci_fpcurlwp;

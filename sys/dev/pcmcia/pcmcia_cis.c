@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.48 2006/09/02 18:59:46 christos Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.49 2006/10/12 01:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.48 2006/09/02 18:59:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.49 2006/10/12 01:31:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -760,7 +760,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 }
 
 static void
-decode_end(struct pcmcia_tuple *tuple, struct cis_state *state)
+decode_end(struct pcmcia_tuple *tuple __unused, struct cis_state *state)
 {
 	/* if we've seen a LONGLINK_MFC, and this is the first
 	 * END after it, reset the function list.
@@ -782,7 +782,8 @@ decode_end(struct pcmcia_tuple *tuple, struct cis_state *state)
 }
 
 static void
-decode_longlink_mfc(struct pcmcia_tuple *tuple, struct cis_state *state)
+decode_longlink_mfc(struct pcmcia_tuple *tuple __unused,
+    struct cis_state *state)
 {
 	/*
 	 * this tuple's structure was dealt with in scan_cis.  here,
@@ -798,7 +799,8 @@ decode_longlink_mfc(struct pcmcia_tuple *tuple, struct cis_state *state)
 }
 
 static void
-decode_device(struct pcmcia_tuple *tuple, struct cis_state *state)
+decode_device(struct pcmcia_tuple *tuple __unused,
+    struct cis_state *state __unused)
 {
 #ifdef PCMCIACISDEBUG
 	u_int reg, dtype, dspeed;

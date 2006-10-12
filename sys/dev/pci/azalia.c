@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.40 2006/09/24 03:43:34 jmcneill Exp $	*/
+/*	$NetBSD: azalia.c,v 1.41 2006/10/12 01:31:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.40 2006/09/24 03:43:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.41 2006/10/12 01:31:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -276,7 +276,8 @@ static const char *pin_devices[16] = {
 #define PCIID_VT8237A		PCI_ID_CODE0(VIATECH, VT8237A_HDA)
 
 static int
-azalia_pci_match(struct device *parent, struct cfdata *match, void *aux)
+azalia_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -288,7 +289,8 @@ azalia_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-azalia_pci_attach(struct device *parent, struct device *self, void *aux)
+azalia_pci_attach(struct device *parent __unused, struct device *self,
+    void *aux)
 {
 	azalia_t *sc;
 	struct pci_attach_args *pa;
@@ -1859,7 +1861,7 @@ azalia_stream_intr(stream_t *this, uint32_t intsts)
  * ================================================================ */
 
 static int
-azalia_open(void *v, int flags)
+azalia_open(void *v, int flags __unused)
 {
 	azalia_t *az;
 	codec_t *codec;
@@ -1895,7 +1897,7 @@ azalia_query_encoding(void *v, audio_encoding_t *enc)
 }
 
 static int
-azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
+azalia_set_params(void *v, int smode, int umode __unused, audio_params_t *p,
     audio_params_t *r, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	azalia_t *az;
@@ -1920,7 +1922,8 @@ azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
 }
 
 static int
-azalia_round_blocksize(void *v, int blk, int mode, const audio_params_t *param)
+azalia_round_blocksize(void *v, int blk, int mode,
+    const audio_params_t *param __unused)
 {
 	azalia_t *az;
 	size_t size;
@@ -2016,7 +2019,8 @@ azalia_query_devinfo(void *v, mixer_devinfo_t *mdev)
 }
 
 static void *
-azalia_allocm(void *v, int dir, size_t size, struct malloc_type *pool, int flags)
+azalia_allocm(void *v, int dir, size_t size, struct malloc_type *pool __unused,
+    int flags __unused)
 {
 	azalia_t *az;
 	stream_t *stream;
@@ -2031,7 +2035,7 @@ azalia_allocm(void *v, int dir, size_t size, struct malloc_type *pool, int flags
 }
 
 static void
-azalia_freem(void *v, void *addr, struct malloc_type *pool)
+azalia_freem(void *v, void *addr, struct malloc_type *pool __unused)
 {
 	azalia_t *az;
 	stream_t *stream;
@@ -2048,7 +2052,7 @@ azalia_freem(void *v, void *addr, struct malloc_type *pool)
 }
 
 static size_t
-azalia_round_buffersize(void *v, int dir, size_t size)
+azalia_round_buffersize(void *v __unused, int dir __unused, size_t size)
 {
 	size &= ~0x7f;		/* must be multiple of 128 */
 	if (size <= 0)
@@ -2057,7 +2061,7 @@ azalia_round_buffersize(void *v, int dir, size_t size)
 }
 
 static int
-azalia_get_props(void *v)
+azalia_get_props(void *v __unused)
 {
 	return AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }

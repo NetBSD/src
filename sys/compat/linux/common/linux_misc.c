@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.162 2006/09/13 19:55:49 manu Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.163 2006/10/12 01:30:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.162 2006/09/13 19:55:49 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.163 2006/10/12 01:30:48 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -456,10 +456,7 @@ out:
  * long, and an extra domainname field.
  */
 int
-linux_sys_uname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_uname(struct lwp *l __unused, void *v, register_t *retval __unused)
 {
 	struct linux_sys_uname_args /* {
 		syscallarg(struct linux_utsname *) up;
@@ -696,10 +693,7 @@ linux_sys_msync(l, v, retval)
 }
 
 int
-linux_sys_mprotect(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_mprotect(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct linux_sys_mprotect_args /* {
 		syscallarg(const void *) start;
@@ -1125,10 +1119,7 @@ linux_sys_getpgid(l, v, retval)
  * ELF binaries run in Linux mode, not SVR4 mode.
  */
 int
-linux_sys_personality(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_personality(struct lwp *l __unused, void *v, register_t *retval)
 {
 	struct linux_sys_personality_args /* {
 		syscallarg(int) per;
@@ -1377,10 +1368,7 @@ linux_sys_getfsuid(l, v, retval)
 # endif
 
 int
-linux_sys_setresuid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_setresuid(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct linux_sys_setresuid_args /* {
 		syscallarg(uid_t) ruid;
@@ -1402,10 +1390,7 @@ linux_sys_setresuid(l, v, retval)
 }
 
 int
-linux_sys_getresuid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_getresuid(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct linux_sys_getresuid_args /* {
 		syscallarg(uid_t *) ruid;
@@ -1599,10 +1584,7 @@ linux_sys_swapoff(l, v, retval)
  */
 /* ARGSUSED */
 int
-linux_sys_setdomainname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_setdomainname(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct linux_sys_setdomainname_args /* {
 		syscallarg(char *) domainname;
@@ -1621,10 +1603,7 @@ linux_sys_setdomainname(l, v, retval)
  */
 /* ARGSUSED */
 int
-linux_sys_sysinfo(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_sysinfo(struct lwp *l __unused, void *v, register_t *retval __unused)
 {
 	struct linux_sys_sysinfo_args /* {
 		syscallarg(struct linux_sysinfo *) arg;
@@ -1747,10 +1726,8 @@ linux_sys_ugetrlimit(l, v, retval)
  * This is the way Linux does it and glibc depends on this behaviour.
  */
 int
-linux_sys_nosys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_nosys(struct lwp *l __unused, void *v __unused,
+    register_t *retval __unused)
 {
 	return (ENOSYS);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.48 2006/09/04 15:39:39 martin Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.49 2006/10/12 01:32:00 christos Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.48 2006/09/04 15:39:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.49 2006/10/12 01:32:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -519,7 +519,7 @@ uplcom_set_line_state(struct uplcom_softc *sc)
 }
 
 void
-uplcom_set(void *addr, int portno, int reg, int onoff)
+uplcom_set(void *addr, int portno __unused, int reg, int onoff)
 {
 	struct uplcom_softc *sc = addr;
 
@@ -642,7 +642,7 @@ uplcom_set_line_coding(struct uplcom_softc *sc, usb_cdc_line_state_t *state)
 }
 
 int
-uplcom_param(void *addr, int portno, struct termios *t)
+uplcom_param(void *addr, int portno __unused, struct termios *t)
 {
 	struct uplcom_softc *sc = addr;
 	usbd_status err;
@@ -720,7 +720,7 @@ uplcom_vendor_control_write(usbd_device_handle dev, u_int16_t value, u_int16_t i
 }
 
 int
-uplcom_open(void *addr, int portno)
+uplcom_open(void *addr, int portno __unused)
 {
 	struct uplcom_softc *sc = addr;
 	usbd_status err;
@@ -753,7 +753,7 @@ uplcom_open(void *addr, int portno)
 }
 
 void
-uplcom_close(void *addr, int portno)
+uplcom_close(void *addr, int portno __unused)
 {
 	struct uplcom_softc *sc = addr;
 	int err;
@@ -778,7 +778,8 @@ uplcom_close(void *addr, int portno)
 }
 
 void
-uplcom_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+uplcom_intr(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct uplcom_softc *sc = priv;
 	u_char *buf = sc->sc_intr_buf;
@@ -809,7 +810,7 @@ uplcom_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 }
 
 void
-uplcom_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
+uplcom_get_status(void *addr, int portno __unused, u_char *lsr, u_char *msr)
 {
 	struct uplcom_softc *sc = addr;
 

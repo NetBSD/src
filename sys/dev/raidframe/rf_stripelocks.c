@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.27 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.28 2006/10/12 01:31:52 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.27 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.28 2006/10/12 01:31:52 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -158,7 +158,7 @@ static void rf_ShutdownStripeLockFreeList(void *);
 static void rf_RaidShutdownStripeLocks(void *);
 
 static void
-rf_ShutdownStripeLockFreeList(void *ignored)
+rf_ShutdownStripeLockFreeList(void *ignored __unused)
 {
 	pool_destroy(&rf_pools.stripelock);
 }
@@ -220,7 +220,7 @@ rf_RaidShutdownStripeLocks(void *arg)
 
 int
 rf_ConfigureStripeLocks(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
-			RF_Config_t *cfgPtr)
+			RF_Config_t *cfgPtr __unused)
 {
 
 	raidPtr->lockTable = rf_MakeLockTable();

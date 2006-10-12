@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityloggingdags.c,v 1.16 2006/08/17 17:11:28 christos Exp $	*/
+/*	$NetBSD: rf_parityloggingdags.c,v 1.17 2006/10/12 01:31:52 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.16 2006/08/17 17:11:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.17 2006/10/12 01:31:52 christos Exp $");
 
 #include "rf_archs.h"
 #include "opt_raid_diagnostic.h"
@@ -75,10 +75,10 @@ rf_CommonCreateParityLoggingLargeWriteDAG(
     RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap,
     RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
+    void *bp __unused,
+    RF_RaidAccessFlags_t flags __unused,
     RF_AllocListElem_t * allocList,
-    int nfaults,
+    int nfaults __unused,
     int (*redFunc) (RF_DagNode_t *))
 {
 	RF_DagNode_t *nodes, *wndNodes, *rodNodes = NULL, *syncNode, *xorNode,
@@ -320,8 +320,8 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
     RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap,
     RF_DagHeader_t * dag_h,
-    void *bp,
-    RF_RaidAccessFlags_t flags,
+    void *bp __unused,
+    RF_RaidAccessFlags_t flags __unused,
     RF_AllocListElem_t * allocList,
     const RF_RedFuncs_t * pfuncs,
     const RF_RedFuncs_t * qfuncs)
@@ -626,8 +626,8 @@ rf_CreateParityLoggingSmallWriteDAG(
     void *bp,
     RF_RaidAccessFlags_t flags,
     RF_AllocListElem_t * allocList,
-    const RF_RedFuncs_t * pfuncs,
-    const RF_RedFuncs_t * qfuncs)
+    const RF_RedFuncs_t * pfuncs __unused,
+    const RF_RedFuncs_t * qfuncs __unused)
 {
 	dag_h->creator = "ParityLoggingSmallWriteDAG";
 	rf_CommonCreateParityLoggingSmallWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList, &rf_xorFuncs, NULL);
@@ -642,8 +642,8 @@ rf_CreateParityLoggingLargeWriteDAG(
     void *bp,
     RF_RaidAccessFlags_t flags,
     RF_AllocListElem_t * allocList,
-    int nfaults,
-    int (*redFunc) (RF_DagNode_t *))
+    int nfaults __unused,
+    int (*redFunc) (RF_DagNode_t *) __unused)
 {
 	dag_h->creator = "ParityLoggingSmallWriteDAG";
 	rf_CommonCreateParityLoggingLargeWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList, 1, rf_RegularXorFunc);

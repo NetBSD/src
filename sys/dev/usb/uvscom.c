@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.17 2006/08/17 17:11:28 christos Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.18 2006/10/12 01:32:00 christos Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.17 2006/08/17 17:11:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.18 2006/10/12 01:32:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -508,7 +508,7 @@ uvscom_shutdown(struct uvscom_softc *sc)
 }
 
 Static usbd_status
-uvscom_reset(struct uvscom_softc *sc)
+uvscom_reset(struct uvscom_softc *sc __unused)
 {
 	DPRINTF(("%s: uvscom_reset\n", USBDEVNAME(sc->sc_dev)));
 
@@ -516,7 +516,7 @@ uvscom_reset(struct uvscom_softc *sc)
 }
 
 Static usbd_status
-uvscom_set_crtscts(struct uvscom_softc *sc)
+uvscom_set_crtscts(struct uvscom_softc *sc __unused)
 {
 	DPRINTF(("%s: uvscom_set_crtscts\n", USBDEVNAME(sc->sc_dev)));
 
@@ -635,7 +635,7 @@ uvscom_break(struct uvscom_softc *sc, int onoff)
 }
 
 Static void
-uvscom_set(void *addr, int portno, int reg, int onoff)
+uvscom_set(void *addr, int portno __unused, int reg, int onoff)
 {
 	struct uvscom_softc *sc = addr;
 
@@ -655,7 +655,7 @@ uvscom_set(void *addr, int portno, int reg, int onoff)
 }
 
 Static int
-uvscom_param(void *addr, int portno, struct termios *t)
+uvscom_param(void *addr, int portno __unused, struct termios *t)
 {
 	struct uvscom_softc *sc = addr;
 	usbd_status err;
@@ -749,7 +749,7 @@ uvscom_param(void *addr, int portno, struct termios *t)
 }
 
 Static int
-uvscom_open(void *addr, int portno)
+uvscom_open(void *addr, int portno __unused)
 {
 	struct uvscom_softc *sc = addr;
 	int err;
@@ -818,7 +818,7 @@ uvscom_open(void *addr, int portno)
 }
 
 Static void
-uvscom_close(void *addr, int portno)
+uvscom_close(void *addr, int portno __unused)
 {
 	struct uvscom_softc *sc = addr;
 	int err;
@@ -847,7 +847,8 @@ uvscom_close(void *addr, int portno)
 }
 
 Static void
-uvscom_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+uvscom_intr(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct uvscom_softc *sc = priv;
 	u_char *buf = sc->sc_intr_buf;
@@ -891,7 +892,7 @@ uvscom_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 }
 
 Static void
-uvscom_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
+uvscom_get_status(void *addr, int portno __unused, u_char *lsr, u_char *msr)
 {
 	struct uvscom_softc *sc = addr;
 

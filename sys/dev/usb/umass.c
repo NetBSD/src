@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.120 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: umass.c,v 1.121 2006/10/12 01:32:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.120 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.121 2006/10/12 01:32:00 christos Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -1378,7 +1378,7 @@ umass_cbi_reset(struct umass_softc *sc, int status)
 }
 
 Static void
-umass_cbi_transfer(struct umass_softc *sc, int lun,
+umass_cbi_transfer(struct umass_softc *sc, int lun __unused,
 		   void *cmd, int cmdlen, void *data, int datalen, int dir,
 		   u_int timeout, umass_callback cb, void *priv)
 {

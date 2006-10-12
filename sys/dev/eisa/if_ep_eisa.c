@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.33 2006/09/07 02:40:32 dogcow Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.34 2006/10/12 01:30:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.33 2006/09/07 02:40:32 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.34 2006/10/12 01:30:57 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -193,7 +193,8 @@ ep_eisa_lookup(const struct eisa_attach_args *ea)
 }
 
 static int
-ep_eisa_match(struct device *parent, struct cfdata *match, void *aux)
+ep_eisa_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 
@@ -205,7 +206,7 @@ ep_eisa_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-ep_eisa_attach(struct device *parent, struct device *self, void *aux)
+ep_eisa_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct ep_softc *sc = device_private(self);
 	struct eisa_attach_args *ea = aux;

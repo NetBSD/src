@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.38 2006/08/30 01:08:43 christos Exp $	*/
+/*	$NetBSD: esis.c,v 1.39 2006/10/12 01:32:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.38 2006/08/30 01:08:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.39 2006/10/12 01:32:46 christos Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -827,7 +827,7 @@ bad:	;	/* Needed by ESIS_NEXT_OPTION */
  */
 /*ARGSUSED*/
 void
-esis_config(void *v)
+esis_config(void *v __unused)
 {
 	struct ifnet *ifp;
 
@@ -1178,9 +1178,9 @@ release:
  */
 void *
 esis_ctlinput(
-	int    req,		/* request: we handle only PRC_IFDOWN */
-	struct sockaddr *siso,	/* address of ifp */
-	void *dummy)
+    int    req,			/* request: we handle only PRC_IFDOWN */
+    struct sockaddr *siso,	/* address of ifp */
+    void *dummy __unused)
 {
 	struct iso_ifaddr *ia;	/* scan through interface addresses */
 

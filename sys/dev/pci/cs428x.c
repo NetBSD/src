@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.c,v 1.11 2006/04/15 21:20:47 jmcneill Exp $	*/
+/*	$NetBSD: cs428x.c,v 1.12 2006/10/12 01:31:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -33,7 +33,7 @@
 /* Common functions for CS4280 and CS4281 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.11 2006/04/15 21:20:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.12 2006/10/12 01:31:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ int cs428x_debug = 0;
 
 int
 cs428x_round_blocksize(void *addr, int blk,
-		       int mode, const audio_params_t *param)
+    int mode __unused, const audio_params_t *param __unused)
 {
 	struct cs428x_softc *sc;
 	int retval;
@@ -113,7 +113,7 @@ cs428x_query_devinfo(void *addr, mixer_devinfo_t *dip)
 }
 
 void *
-cs428x_malloc(void *addr, int direction, size_t size,
+cs428x_malloc(void *addr, int direction __unused, size_t size,
     struct malloc_type *pool, int flags)
 {
 	struct cs428x_softc *sc;
@@ -160,7 +160,8 @@ cs428x_free(void *addr, void *ptr, struct malloc_type *pool)
 }
 
 size_t
-cs428x_round_buffersize(void *addr, int direction, size_t size)
+cs428x_round_buffersize(void *addr __unused, int direction __unused,
+    size_t size)
 {
 	/* The real DMA buffersize are 4KB for CS4280
 	 * and 64kB/MAX_CHANNELS for CS4281.
@@ -195,7 +196,7 @@ cs428x_mappage(void *addr, void *mem, off_t off, int prot)
 }
 
 int
-cs428x_get_props(void *addr)
+cs428x_get_props(void *addr __unused)
 {
 	int retval;
 

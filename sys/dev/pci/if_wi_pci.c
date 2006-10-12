@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.39 2006/09/24 03:53:09 jmcneill Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.40 2006/10/12 01:31:30 christos Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.39 2006/09/24 03:53:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.40 2006/10/12 01:31:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,8 @@ wi_pci_lookup(struct pci_attach_args *pa)
 }
 
 static int
-wi_pci_match(struct device *parent, struct cfdata *match, void *aux)
+wi_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -222,7 +223,7 @@ wi_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-wi_pci_attach(struct device *parent, struct device *self, void *aux)
+wi_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct wi_pci_softc *psc = (struct wi_pci_softc *)self;
 	struct wi_softc *sc = &psc->psc_wi;

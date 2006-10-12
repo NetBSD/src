@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.32 2006/03/01 12:38:12 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.33 2006/10/12 01:30:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.32 2006/03/01 12:38:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.33 2006/10/12 01:30:47 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -106,7 +106,7 @@ cvtstat(st, ost)
  */
 /* ARGSUSED */
 int
-compat_43_sys_stat(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_stat(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct compat_43_sys_stat_args /* {
 		syscallarg(char *) path;
@@ -135,7 +135,7 @@ compat_43_sys_stat(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-compat_43_sys_lstat(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_lstat(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct compat_43_sys_lstat_args /* {
 		syscallarg(char *) path;
@@ -206,7 +206,7 @@ again:
  */
 /* ARGSUSED */
 int
-compat_43_sys_fstat(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_fstat(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct compat_43_sys_fstat_args /* {
 		syscallarg(int) fd;
@@ -336,7 +336,8 @@ compat_43_sys_creat(struct lwp *l, void *v, register_t *retval)
 
 /*ARGSUSED*/
 int
-compat_43_sys_quota(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_quota(struct lwp *l __unused, void *v __unused,
+    register_t *retval __unused)
 {
 
 	return (ENOSYS);

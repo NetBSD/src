@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.21 2006/05/14 21:42:27 elad Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.22 2006/10/12 01:31:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.21 2006/05/14 21:42:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.22 2006/10/12 01:31:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ wss_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static int
-wssfind(struct device *parent, struct wss_softc *sc, int probing,
+wssfind(struct device *parent __unused, struct wss_softc *sc, int probing,
     struct isa_attach_args *ia)
 {
 	static u_char interrupt_bits[12] = {

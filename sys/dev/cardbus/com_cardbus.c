@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.18 2006/07/13 22:56:02 gdamore Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.19 2006/10/12 01:30:55 christos Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.18 2006/07/13 22:56:02 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.19 2006/10/12 01:30:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,8 @@ find_csdev(struct cardbus_attach_args *ca)
 }
 
 static int
-com_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
+com_cardbus_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
@@ -203,7 +204,8 @@ gofigure(struct cardbus_attach_args *ca, struct com_cardbus_softc *csc)
 }
 
 static void
-com_cardbus_attach (struct device *parent, struct device *self, void *aux)
+com_cardbus_attach (struct device *parent __unused, struct device *self,
+    void *aux)
 {
 	struct com_softc *sc = device_private(self);
 	struct com_cardbus_softc *csc = device_private(self);

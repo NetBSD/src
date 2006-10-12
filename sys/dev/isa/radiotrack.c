@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack.c,v 1.12 2005/12/11 12:22:03 christos Exp $ */
+/* $NetBSD: radiotrack.c,v 1.13 2006/10/12 01:31:17 christos Exp $ */
 /* $OpenBSD: radiotrack.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack.c,v 1.3 2001/10/18 16:51:36 pva Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radiotrack.c,v 1.12 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radiotrack.c,v 1.13 2006/10/12 01:31:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ u_int8_t	rt_conv_vol(u_int8_t);
 u_int8_t	rt_unconv_vol(u_int8_t);
 
 int
-rt_probe(struct device *parent, struct cfdata *cf, void *aux)
+rt_probe(struct device *parent __unused, struct cfdata *cf __unused, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -174,7 +174,7 @@ rt_probe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-rt_attach(struct device *parent, struct device *self, void *aux)
+rt_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct rt_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;
@@ -373,8 +373,8 @@ rt_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 }
 
 void
-rt_lm700x_init(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
-		u_int32_t data)
+rt_lm700x_init(bus_space_tag_t iot __unused, bus_space_handle_t ioh __unused,
+    bus_size_t off __unused, u_int32_t data __unused)
 {
 	/* Do nothing */
 	return;

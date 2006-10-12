@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.26 2006/02/19 14:59:22 thorpej Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.27 2006/10/12 01:30:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.26 2006/02/19 14:59:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.27 2006/10/12 01:30:42 christos Exp $");
 
 #include "ioapic.h"
 
@@ -121,8 +121,8 @@ struct x86_bus_dma_tag eisa_bus_dma_tag = {
 };
 
 void
-eisa_attach_hook(struct device *parent, struct device *self,
-    struct eisabus_attach_args *eba)
+eisa_attach_hook(struct device *parent __unused, struct device *self __unused,
+    struct eisabus_attach_args *eba __unused)
 {
 	extern int eisa_has_been_seen; 
 
@@ -136,7 +136,7 @@ eisa_attach_hook(struct device *parent, struct device *self,
 }
 
 int
-eisa_maxslots(eisa_chipset_tag_t ec)
+eisa_maxslots(eisa_chipset_tag_t ec __unused)
 {
 
 	/*
@@ -146,7 +146,8 @@ eisa_maxslots(eisa_chipset_tag_t ec)
 }
 
 int
-eisa_intr_map(eisa_chipset_tag_t ec, u_int irq, eisa_intr_handle_t *ihp)
+eisa_intr_map(eisa_chipset_tag_t ec __unused, u_int irq,
+    eisa_intr_handle_t *ihp)
 {
 	if (irq >= NUM_LEGACY_IRQS) {
 		aprint_error("eisa_intr_map: bad IRQ %d\n", irq);
@@ -174,7 +175,7 @@ eisa_intr_map(eisa_chipset_tag_t ec, u_int irq, eisa_intr_handle_t *ihp)
 }
 
 const char *
-eisa_intr_string(eisa_chipset_tag_t ec, eisa_intr_handle_t ih)
+eisa_intr_string(eisa_chipset_tag_t ec __unused, eisa_intr_handle_t ih)
 {
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
@@ -197,7 +198,7 @@ eisa_intr_string(eisa_chipset_tag_t ec, eisa_intr_handle_t ih)
 }
 
 const struct evcnt *
-eisa_intr_evcnt(eisa_chipset_tag_t ec, eisa_intr_handle_t ih)
+eisa_intr_evcnt(eisa_chipset_tag_t ec __unused, eisa_intr_handle_t ih __unused)
 {
 
 	/* XXX for now, no evcnt parent reported */
@@ -205,7 +206,7 @@ eisa_intr_evcnt(eisa_chipset_tag_t ec, eisa_intr_handle_t ih)
 }
 
 void *
-eisa_intr_establish(eisa_chipset_tag_t ec, eisa_intr_handle_t ih,
+eisa_intr_establish(eisa_chipset_tag_t ec __unused, eisa_intr_handle_t ih,
     int type, int level, int (*func)(void *), void *arg)
 {
 	int pin, irq;
@@ -233,7 +234,7 @@ eisa_intr_establish(eisa_chipset_tag_t ec, eisa_intr_handle_t ih,
 }
 
 void
-eisa_intr_disestablish(eisa_chipset_tag_t ec, void *cookie)
+eisa_intr_disestablish(eisa_chipset_tag_t ec __unused, void *cookie)
 {
 
 	intr_disestablish(cookie);
@@ -261,8 +262,8 @@ eisa_mem_free(bus_space_tag_t t, bus_space_handle_t bah, bus_size_t size)
 }
 
 int
-eisa_conf_read_mem(eisa_chipset_tag_t ec, int slot, int func, int entry,
-    struct eisa_cfg_mem *ecm)
+eisa_conf_read_mem(eisa_chipset_tag_t ec __unused, int slot __unused,
+    int func __unused, int entry __unused, struct eisa_cfg_mem *ecm __unused)
 {
 
 	/* XXX XXX XXX */
@@ -270,8 +271,8 @@ eisa_conf_read_mem(eisa_chipset_tag_t ec, int slot, int func, int entry,
 }
 
 int
-eisa_conf_read_irq(eisa_chipset_tag_t ec, int slot, int func, int entry,
-    struct eisa_cfg_irq *eci)
+eisa_conf_read_irq(eisa_chipset_tag_t ec __unused, int slot __unused,
+    int func __unused, int entry __unused, struct eisa_cfg_irq *eci __unused)
 {
 
 	/* XXX XXX XXX */
@@ -279,8 +280,8 @@ eisa_conf_read_irq(eisa_chipset_tag_t ec, int slot, int func, int entry,
 }
 
 int
-eisa_conf_read_dma(eisa_chipset_tag_t ec, int slot, int func, int entry,
-    struct eisa_cfg_dma *ecd)
+eisa_conf_read_dma(eisa_chipset_tag_t ec __unused, int slot __unused,
+    int func __unused, int entry __unused, struct eisa_cfg_dma *ecd __unused)
 {
 
 	/* XXX XXX XXX */
@@ -288,8 +289,8 @@ eisa_conf_read_dma(eisa_chipset_tag_t ec, int slot, int func, int entry,
 }
 
 int
-eisa_conf_read_io(eisa_chipset_tag_t ec, int slot, int func, int entry,
-    struct eisa_cfg_io *ecio)
+eisa_conf_read_io(eisa_chipset_tag_t ec __unused, int slot __unused,
+    int func __unused, int entry __unused, struct eisa_cfg_io *ecio __unused)
 {
 
 	/* XXX XXX XXX */

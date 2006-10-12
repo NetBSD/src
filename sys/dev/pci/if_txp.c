@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.15 2006/04/14 18:45:53 christos Exp $ */
+/* $NetBSD: if_txp.c,v 1.16 2006/10/12 01:31:30 christos Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.15 2006/04/14 18:45:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.16 2006/10/12 01:31:30 christos Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -176,10 +176,8 @@ txp_pcilookup(id)
 }
 
 int
-txp_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+txp_probe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -189,9 +187,7 @@ txp_probe(parent, match, aux)
 }
 
 void
-txp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+txp_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct txp_softc *sc = (struct txp_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -1806,8 +1802,7 @@ txp_stop(sc)
 }
 
 void
-txp_watchdog(ifp)
-	struct ifnet *ifp;
+txp_watchdog(struct ifnet *ifp __unused)
 {
 }
 

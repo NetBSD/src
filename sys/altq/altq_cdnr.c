@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.14 2006/07/21 16:48:45 ad Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.15 2006/10/12 01:30:42 christos Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.8 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.14 2006/07/21 16:48:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.15 2006/10/12 01:30:42 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -1202,10 +1202,8 @@ cdnrcmd_get_stats(ap)
  * conditioner device interface
  */
 int
-cdnropen(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+cdnropen(dev_t dev __unused, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
 	if (machclk_freq == 0)
 		init_machclk();
@@ -1220,10 +1218,8 @@ cdnropen(dev, flag, fmt, l)
 }
 
 int
-cdnrclose(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+cdnrclose(dev_t dev __unused, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
 	struct top_cdnr *top;
 	int err, error = 0;
@@ -1240,12 +1236,8 @@ cdnrclose(dev, flag, fmt, l)
 }
 
 int
-cdnrioctl(dev, cmd, addr, flag, l)
-	dev_t dev;
-	ioctlcmd_t cmd;
-	caddr_t addr;
-	int flag;
-	struct lwp *l;
+cdnrioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
+    struct lwp *l)
 {
 	struct top_cdnr *top;
 	struct cdnr_interface *ifacep;

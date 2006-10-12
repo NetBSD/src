@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_none.c,v 1.5 2005/06/10 16:11:24 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_none.c,v 1.5 2006/03/16 15:59:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_none.c,v 1.6 2006/10/12 01:32:30 christos Exp $");
 #endif
 
 /*
@@ -76,7 +76,7 @@ const struct ieee80211_cipher ieee80211_cipher_none = {
 };
 
 static void *
-none_attach(struct ieee80211com *ic, struct ieee80211_key *k)
+none_attach(struct ieee80211com *ic, struct ieee80211_key *k __unused)
 {
 	return ic;		/* for diagnostics+stats */
 }
@@ -114,7 +114,7 @@ none_encap(struct ieee80211_key *k, struct mbuf *m, u_int8_t keyid)
 }
 
 static int
-none_decap(struct ieee80211_key *k, struct mbuf *m, int hdrlen)
+none_decap(struct ieee80211_key *k, struct mbuf *m, int hdrlen __unused)
 {
 	struct ieee80211com *ic = k->wk_private;
 #ifdef IEEE80211_DEBUG
@@ -135,7 +135,7 @@ none_decap(struct ieee80211_key *k, struct mbuf *m, int hdrlen)
 }
 
 static int
-none_enmic(struct ieee80211_key *k, struct mbuf *m, int force)
+none_enmic(struct ieee80211_key *k, struct mbuf *m __unused, int force __unused)
 {
 	struct ieee80211com *ic = k->wk_private;
 
@@ -144,7 +144,7 @@ none_enmic(struct ieee80211_key *k, struct mbuf *m, int force)
 }
 
 static int
-none_demic(struct ieee80211_key *k, struct mbuf *m, int force)
+none_demic(struct ieee80211_key *k, struct mbuf *m __unused, int force __unused)
 {
 	struct ieee80211com *ic = k->wk_private;
 

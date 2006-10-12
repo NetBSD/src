@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.17 2006/02/20 12:17:49 kochi Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.18 2006/10/12 01:30:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.17 2006/02/20 12:17:49 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.18 2006/10/12 01:30:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,8 @@ static const char * const pckbc_acpi_ids_ms[] = {
  * pckbc_acpi_match: autoconf(9) match routine
  */
 static int
-pckbc_acpi_match(struct device *parent, struct cfdata *match, void *aux)
+pckbc_acpi_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 	int rv;
@@ -135,8 +136,7 @@ pckbc_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-pckbc_acpi_attach(struct device *parent,
-    struct device *self,
+pckbc_acpi_attach(struct device *parent __unused, struct device *self,
     void *aux)
 {
 	struct pckbc_acpi_softc *psc = (void *) self;

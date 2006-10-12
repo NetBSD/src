@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.45 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: boca.c,v 1.46 2006/10/12 01:31:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.45 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.46 2006/10/12 01:31:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,10 +76,8 @@ CFATTACH_DECL(boca, sizeof(struct boca_softc),
     bocaprobe, bocaattach, NULL, NULL);
 
 int
-bocaprobe(parent, self, aux)
-	struct device *parent;
-	struct cfdata *self;
-	void *aux;
+bocaprobe(struct device *parent __unused, struct cfdata *self __unused,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -150,9 +148,7 @@ out:
 }
 
 void
-bocaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+bocaattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct boca_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

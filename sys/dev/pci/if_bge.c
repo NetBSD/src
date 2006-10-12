@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.111 2006/09/29 14:33:52 christos Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.112 2006/10/12 01:31:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.111 2006/09/29 14:33:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.112 2006/10/12 01:31:29 christos Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -669,7 +669,7 @@ bge_update_all_threshes(int lvl)
  * Handle events that have triggered interrupts.
  */
 static void
-bge_handle_events(struct bge_softc *sc)
+bge_handle_events(struct bge_softc *sc __unused)
 {
 
 	return;
@@ -794,7 +794,7 @@ bge_jalloc(struct bge_softc *sc)
  * Release a jumbo buffer.
  */
 static void
-bge_jfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
+bge_jfree(struct mbuf *m, caddr_t buf, size_t size __unused, void *arg)
 {
 	struct bge_jpool_entry *entry;
 	struct bge_softc *sc;
@@ -2229,7 +2229,7 @@ bge_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-bge_setpowerstate(struct bge_softc *sc, int powerlevel)
+bge_setpowerstate(struct bge_softc *sc __unused, int powerlevel __unused)
 {
 #ifdef NOTYET
 	u_int32_t pm_ctl = 0;
@@ -2284,7 +2284,7 @@ bge_setpowerstate(struct bge_softc *sc, int powerlevel)
  * we'll always announce the right product name.
  */
 static int
-bge_probe(device_t parent, cfdata_t match, void *aux)
+bge_probe(device_t parent __unused, cfdata_t match __unused, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -2295,7 +2295,7 @@ bge_probe(device_t parent, cfdata_t match, void *aux)
 }
 
 static void
-bge_attach(device_t parent, device_t self, void *aux)
+bge_attach(device_t parent __unused, device_t self, void *aux)
 {
 	struct bge_softc	*sc = (struct bge_softc *)self;
 	struct pci_attach_args	*pa = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpide.c,v 1.6 2006/06/30 16:28:40 xtraeme Exp $	*/
+/*	$NetBSD: ixpide.c,v 1.7 2006/10/12 01:31:31 christos Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.6 2006/06/30 16:28:40 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.7 2006/10/12 01:31:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,8 @@ static const struct pciide_product_desc pciide_ixpide_products[] = {
 };
 
 static int
-ixpide_match(struct device *parent, struct cfdata *cfdata, void *aux)
+ixpide_match(struct device *parent __unused, struct cfdata *cfdata __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -85,7 +86,7 @@ ixpide_match(struct device *parent, struct cfdata *cfdata, void *aux)
 }
 
 static void
-ixpide_attach(struct device *parent, struct device *self, void *aux)
+ixpide_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;

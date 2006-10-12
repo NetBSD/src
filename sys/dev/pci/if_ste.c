@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.23 2006/06/17 23:34:27 christos Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.24 2006/10/12 01:31:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.23 2006/06/17 23:34:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.24 2006/10/12 01:31:30 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -290,7 +290,7 @@ ste_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-ste_match(struct device *parent, struct cfdata *cf, void *aux)
+ste_match(struct device *parent __unused, struct cfdata *cf __unused, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -301,7 +301,7 @@ ste_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-ste_attach(struct device *parent, struct device *self, void *aux)
+ste_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct ste_softc *sc = (struct ste_softc *) self;
 	struct pci_attach_args *pa = aux;

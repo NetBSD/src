@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.2 2006/09/11 22:08:38 plunky Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.3 2006/10/12 01:32:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.2 2006/09/11 22:08:38 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.3 2006/10/12 01:32:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -321,7 +321,7 @@ rfcomm_session_timeout(void *arg)
  */
 
 static void
-rfcomm_session_connecting(void *arg)
+rfcomm_session_connecting(void *arg __unused)
 {
 	//struct rfcomm_session *rs = arg;
 
@@ -1296,7 +1296,8 @@ close:
  * process Non Supported Command command/response
  */
 static void
-rfcomm_session_recv_mcc_nsc(struct rfcomm_session *rs, int cr, struct mbuf *m)
+rfcomm_session_recv_mcc_nsc(struct rfcomm_session *rs,
+    int cr __unused, struct mbuf *m __unused)
 {
 	struct rfcomm_dlc *dlc, *next;
 

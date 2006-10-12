@@ -1,4 +1,4 @@
-/* $NetBSD: onewire_subr.c,v 1.3 2006/04/14 18:38:50 riz Exp $ */
+/* $NetBSD: onewire_subr.c,v 1.4 2006/10/12 01:31:27 christos Exp $ */
 /*	$OpenBSD: onewire_subr.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ onewire_crc(const void *buf, int len)
 }
 
 const char *
-onewire_famname(int type)
+onewire_famname(int type __unused)
 {
 #ifdef ONEWIREVERBOSE
 	const struct onewire_family *of;

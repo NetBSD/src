@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.45 2006/09/03 06:23:27 christos Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.46 2006/10/12 01:31:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.45 2006/09/03 06:23:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.46 2006/10/12 01:31:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ scanjet_attach(struct ss_softc *ss, struct scsipibus_attach_args *sa)
 }
 
 static int
-scanjet_get_params(struct ss_softc *ss)
+scanjet_get_params(struct ss_softc *ss __unused)
 {
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.19 2006/08/27 23:27:44 christos Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.20 2006/10/12 01:31:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.19 2006/08/27 23:27:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.20 2006/10/12 01:31:28 christos Exp $");
 
 #include "opt_amdpm.h"
 
@@ -70,7 +70,8 @@ static void	amdpm_rnd_callout(void *);
 #endif
 
 static int
-amdpm_match(struct device *parent, struct cfdata *match, void *aux)
+amdpm_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -87,7 +88,7 @@ amdpm_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-amdpm_attach(struct device *parent, struct device *self, void *aux)
+amdpm_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct amdpm_softc *sc = (struct amdpm_softc *) self;
 	struct pci_attach_args *pa = aux;

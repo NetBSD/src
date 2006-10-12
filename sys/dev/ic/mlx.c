@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.45 2006/09/02 07:07:33 christos Exp $	*/
+/*	$NetBSD: mlx.c,v 1.46 2006/10/12 01:31:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.45 2006/09/02 07:07:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.46 2006/10/12 01:31:01 christos Exp $");
 
 #include "ld.h"
 
@@ -657,7 +657,7 @@ mlx_print(void *aux, const char *pnp)
  * Shut down all configured `mlx' devices.
  */
 static void
-mlx_shutdown(void *cookie)
+mlx_shutdown(void *cookie __unused)
 {
 	struct mlx_softc *mlx;
 	int i;
@@ -692,7 +692,7 @@ mlx_adjqparam(struct mlx_softc *mlx, int mpu, int slop)
  * Accept an open operation on the control device.
  */
 int
-mlxopen(dev_t dev, int flag, int mode, struct lwp *l)
+mlxopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
 {
 	struct mlx_softc *mlx;
 
@@ -711,7 +711,8 @@ mlxopen(dev_t dev, int flag, int mode, struct lwp *l)
  * Accept the last close on the control device.
  */
 int
-mlxclose(dev_t dev, int flag, int mode, struct lwp *l)
+mlxclose(dev_t dev, int flag __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	struct mlx_softc *mlx;
 
@@ -724,7 +725,8 @@ mlxclose(dev_t dev, int flag, int mode, struct lwp *l)
  * Handle control operations.
  */
 int
-mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
+    struct lwp *l __unused)
 {
 	struct mlx_softc *mlx;
 	struct mlx_rebuild_request *rb;
@@ -947,7 +949,7 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
  * Check for commands that have timed out.
  */
 static void
-mlx_periodic_create(void *cookie)
+mlx_periodic_create(void *cookie __unused)
 {
 	int rv;
 
@@ -960,7 +962,7 @@ mlx_periodic_create(void *cookie)
 }
 
 static void
-mlx_periodic_thread(void *cookie)
+mlx_periodic_thread(void *cookie __unused)
 {
 	struct mlx_softc *mlx;
 	int i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.63 2006/09/29 18:56:29 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.64 2006/10/12 01:31:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.63 2006/09/29 18:56:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.64 2006/10/12 01:31:01 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -520,7 +520,7 @@ STATIC void rtk_phy_writereg(struct device *self, int phy, int reg, int data)
 }
 
 STATIC void
-rtk_phy_statchg(struct device *v)
+rtk_phy_statchg(struct device *v __unused)
 {
 
 	/* Nothing to do. */

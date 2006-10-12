@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.6 2006/09/02 07:16:41 christos Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.7 2006/10/12 01:30:44 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.6 2006/09/02 07:16:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.7 2006/10/12 01:30:44 christos Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -153,7 +153,7 @@ i686_mtrr_dump(const char *tag)
  */
 
 static void
-i686_mtrr_reload(int synch)
+i686_mtrr_reload(int synch __unused)
 {
 	int i;
 	uint32_t cr0, cr3, cr4;
@@ -285,7 +285,7 @@ i686_mtrr_reload(int synch)
 }
 
 static void
-i686_mtrr_reload_cpu(struct cpu_info *ci)
+i686_mtrr_reload_cpu(struct cpu_info *ci __unused)
 {
 	i686_mtrr_reload(1);
 }
@@ -430,7 +430,7 @@ i686_soft2raw(void)
 }
 
 static void
-i686_mtrr_init_cpu(struct cpu_info *ci)
+i686_mtrr_init_cpu(struct cpu_info *ci __unused)
 {
 	i686_mtrr_reload(0);
 #if 0
@@ -672,7 +672,7 @@ i686_mtrr_set(struct mtrr *mtrrp, int *n, struct proc *p, int flags)
 }
 
 static int
-i686_mtrr_get(struct mtrr *mtrrp, int *n, struct proc *p, int flags)
+i686_mtrr_get(struct mtrr *mtrrp, int *n, struct proc *p __unused, int flags)
 {
 	int idx, i, error;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.50 2006/08/29 23:45:23 christos Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.51 2006/10/12 01:30:47 christos Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.50 2006/08/29 23:45:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.51 2006/10/12 01:30:47 christos Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -149,10 +149,10 @@ coda_vfsopstats_init(void)
 /*ARGSUSED*/
 int
 coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
-	const char *path,	/* path covered: ignored by the fs-layer */
-	void *data,		/* Need to define a data type for this in netbsd? */
-	struct nameidata *ndp,	/* Clobber this to lookup the device name */
-	struct lwp *l)		/* The ever-famous lwp pointer */
+    const char *path __unused,	/* path covered: ignored by the fs-layer */
+    void *data,		/* Need to define a data type for this in netbsd? */
+    struct nameidata *ndp,	/* Clobber this to lookup the device name */
+    struct lwp *l)		/* The ever-famous lwp pointer */
 {
     struct vnode *dvp;
     struct cnode *cp;
@@ -272,7 +272,7 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
 }
 
 int
-coda_start(struct mount *vfsp, int flags, struct lwp *l)
+coda_start(struct mount *vfsp, int flags __unused, struct lwp *l __unused)
 {
     ENTRY;
     vftomi(vfsp)->mi_started = 1;
@@ -280,7 +280,7 @@ coda_start(struct mount *vfsp, int flags, struct lwp *l)
 }
 
 int
-coda_unmount(struct mount *vfsp, int mntflags, struct lwp *l)
+coda_unmount(struct mount *vfsp, int mntflags __unused, struct lwp *l __unused)
 {
     struct coda_mntinfo *mi = vftomi(vfsp);
     int active, error = 0;
@@ -398,8 +398,8 @@ coda_root(struct mount *vfsp, struct vnode **vpp)
 }
 
 int
-coda_quotactl(struct mount *vfsp, int cmd, uid_t uid, void *arg,
-	struct lwp *l)
+coda_quotactl(struct mount *vfsp __unused, int cmd __unused, uid_t uid __unused,
+    void *arg __unused, struct lwp *l __unused)
 {
     ENTRY;
     return (EOPNOTSUPP);
@@ -452,7 +452,8 @@ coda_nb_statvfs(struct mount *vfsp, struct statvfs *sbp, struct lwp *l)
  * Flush any pending I/O.
  */
 int
-coda_sync(struct mount *vfsp, int waitfor, kauth_cred_t cred, struct lwp *l)
+coda_sync(struct mount *vfsp __unused, int waitfor __unused,
+    kauth_cred_t cred __unused, struct lwp *l __unused)
 {
     ENTRY;
     MARK_ENTRY(CODA_SYNC_STATS);
@@ -461,7 +462,8 @@ coda_sync(struct mount *vfsp, int waitfor, kauth_cred_t cred, struct lwp *l)
 }
 
 int
-coda_vget(struct mount *vfsp, ino_t ino, struct vnode **vpp)
+coda_vget(struct mount *vfsp __unused, ino_t ino __unused,
+    struct vnode **vpp __unused)
 {
     ENTRY;
     return (EOPNOTSUPP);
@@ -473,8 +475,9 @@ coda_vget(struct mount *vfsp, ino_t ino, struct vnode **vpp)
  * a type-specific fid.
  */
 int
-coda_fhtovp(struct mount *vfsp, struct fid *fhp, struct mbuf *nam,
-	struct vnode **vpp, int *exflagsp, kauth_cred_t *creadanonp)
+coda_fhtovp(struct mount *vfsp, struct fid *fhp, struct mbuf *nam __unused,
+    struct vnode **vpp, int *exflagsp __unused,
+    kauth_cred_t *creadanonp __unused)
 {
     struct cfid *cfid = (struct cfid *)fhp;
     struct cnode *cp = 0;
@@ -511,7 +514,7 @@ coda_fhtovp(struct mount *vfsp, struct fid *fhp, struct mbuf *nam,
 }
 
 int
-coda_vptofh(struct vnode *vnp, struct fid *fidp)
+coda_vptofh(struct vnode *vnp __unused, struct fid *fidp __unused)
 {
     ENTRY;
     return (EOPNOTSUPP);

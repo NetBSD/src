@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.108 2006/06/07 22:34:03 kardel Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.109 2006/10/12 01:32:39 christos Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.108 2006/06/07 22:34:03 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.109 2006/10/12 01:32:39 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -842,11 +842,8 @@ ipsec6_getpolicybyaddr(m, dir, flag, error)
  *	other:	failure, and set errno.
  */
 int
-ipsec_setspidx_mbuf(spidx, family, m, needport)
-	struct secpolicyindex *spidx;
-	int family;
-	struct mbuf *m;
-	int needport;
+ipsec_setspidx_mbuf(struct secpolicyindex *spidx, int family __unused,
+    struct mbuf *m, int needport)
 {
 	int error;
 
@@ -1353,12 +1350,8 @@ fail:
 
 /* set policy and ipsec request if present. */
 static int
-ipsec_set_policy(spp, optname, request, len, priv)
-	struct secpolicy **spp;
-	int optname;
-	caddr_t request;
-	size_t len;
-	int priv;
+ipsec_set_policy(struct secpolicy **spp, int optname __unused, caddr_t request,
+    size_t len, int priv)
 {
 	struct sadb_x_policy *xpl;
 	struct secpolicy *newsp = NULL;
@@ -2626,10 +2619,8 @@ ipsec4_checksa(isr, state)
  * IPsec output logic for IPv4.
  */
 int
-ipsec4_output(state, sp, flags)
-	struct ipsec_output_state *state;
-	struct secpolicy *sp;
-	int flags;
+ipsec4_output(struct ipsec_output_state *state, struct secpolicy *sp,
+    int flags __unused)
 {
 	struct ip *ip = NULL;
 	struct ipsecrequest *isr = NULL;
@@ -2886,13 +2877,8 @@ ipsec6_checksa(isr, state, tunnel)
  * IPsec output logic for IPv6, transport mode.
  */
 int
-ipsec6_output_trans(state, nexthdrp, mprev, sp, flags, tun)
-	struct ipsec_output_state *state;
-	u_char *nexthdrp;
-	struct mbuf *mprev;
-	struct secpolicy *sp;
-	int flags;
-	int *tun;
+ipsec6_output_trans(struct ipsec_output_state *state, u_char *nexthdrp,
+    struct mbuf *mprev, struct secpolicy *sp, int flags __unused, int *tun)
 {
 	struct ip6_hdr *ip6;
 	struct ipsecrequest *isr = NULL;
@@ -3030,10 +3016,8 @@ bad:
  * IPsec output logic for IPv6, tunnel mode.
  */
 int
-ipsec6_output_tunnel(state, sp, flags)
-	struct ipsec_output_state *state;
-	struct secpolicy *sp;
-	int flags;
+ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
+    int flags __unused)
 {
 	struct ip6_hdr *ip6;
 	struct ipsecrequest *isr = NULL;
@@ -3535,10 +3519,7 @@ ipsec_optaux(m, mtag)
 }
 
 int
-ipsec_addhist(m, proto, spi)
-	struct mbuf *m;
-	int proto;
-	u_int32_t spi;
+ipsec_addhist(struct mbuf *m, int proto __unused, u_int32_t spi __unused)
 {
 	struct m_tag *mtag;
 	struct ipsecaux *aux;
@@ -3566,9 +3547,7 @@ ipsec_getnhist(m)
 }
 
 struct ipsec_history *
-ipsec_gethist(m, lenp)
-	struct mbuf *m;
-	int *lenp;
+ipsec_gethist(struct mbuf *m __unused, int *lenp __unused)
 {
 
 	panic("ipsec_gethist: obsolete API");

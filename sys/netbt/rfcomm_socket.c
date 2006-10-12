@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.2 2006/10/12 01:32:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.2 2006/10/12 01:32:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -94,7 +94,7 @@ int rfcomm_recvspace = 4096;
  */
 int
 rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
-		struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
+		struct mbuf *nam, struct mbuf *ctl, struct lwp *l __unused)
 {
 	struct rfcomm_dlc *pcb = up->so_pcb;
 	struct sockaddr_bt *sa;
@@ -295,7 +295,7 @@ rfcomm_ctloutput(int req, struct socket *so, int level,
  */
 
 static void
-rfcomm_connecting(void *arg)
+rfcomm_connecting(void *arg __unused)
 {
 	/* struct socket *so = arg; */
 
@@ -326,7 +326,8 @@ rfcomm_disconnected(void *arg, int err)
 }
 
 static void *
-rfcomm_newconn(void *arg, struct sockaddr_bt *laddr, struct sockaddr_bt *raddr)
+rfcomm_newconn(void *arg, struct sockaddr_bt *laddr __unused,
+    struct sockaddr_bt *raddr __unused)
 {
 	struct socket *so = arg;
 

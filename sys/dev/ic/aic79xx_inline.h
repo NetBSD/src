@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_inline.h,v 1.13 2006/02/16 20:17:16 perry Exp $	*/
+/*	$NetBSD: aic79xx_inline.h,v 1.14 2006/10/12 01:30:58 christos Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -85,13 +85,13 @@ ahd_known_modes(struct ahd_softc *ahd, ahd_mode src, ahd_mode dst)
 }
 
 static __inline ahd_mode_state
-ahd_build_mode_state(struct ahd_softc *ahd, ahd_mode src, ahd_mode dst)
+ahd_build_mode_state(struct ahd_softc *ahd __unused, ahd_mode src, ahd_mode dst)
 {
 	return ((src << SRC_MODE_SHIFT) | (dst << DST_MODE_SHIFT));
 }
 
 static __inline void
-ahd_extract_mode_state(struct ahd_softc *ahd, ahd_mode_state state,
+ahd_extract_mode_state(struct ahd_softc *ahd __unused, ahd_mode_state state,
 		       ahd_mode *src, ahd_mode *dst)
 {
 	*src = (state & SRC_MODE) >> SRC_MODE_SHIFT;
@@ -133,8 +133,8 @@ ahd_update_modes(struct ahd_softc *ahd)
 }
 
 static __inline void
-ahd_assert_modes(struct ahd_softc *ahd, ahd_mode srcmode,
-		 ahd_mode dstmode, const char *file, int line)
+ahd_assert_modes(struct ahd_softc *ahd __unused, ahd_mode srcmode __unused,
+     ahd_mode dstmode __unused, const char *file __unused, int line __unused)
 {
 #ifdef AHD_DEBUG
 	if ((srcmode & AHD_MK_MSK(ahd->src_mode)) == 0
@@ -260,7 +260,7 @@ ahd_sg_setup(struct ahd_softc *ahd, struct scb *scb,
 }
 
 static __inline void
-ahd_setup_scb_common(struct ahd_softc *ahd, struct scb *scb)
+ahd_setup_scb_common(struct ahd_softc *ahd __unused, struct scb *scb)
 {
 	/* XXX Handle target mode SCBs. */
 	scb->crc_retry_count = 0;
@@ -318,7 +318,7 @@ ahd_setup_data_scb(struct ahd_softc *ahd, struct scb *scb)
 }
 
 static __inline void
-ahd_setup_noxfer_scb(struct ahd_softc *ahd, struct scb *scb)
+ahd_setup_noxfer_scb(struct ahd_softc *ahd __unused, struct scb *scb)
 {
 	scb->hscb->sgptr = ahd_htole32(SG_LIST_NULL);
 	scb->hscb->dataptr = 0;
@@ -803,13 +803,13 @@ ahd_queue_scb(struct ahd_softc *ahd, struct scb *scb)
 }
 
 static __inline uint8_t *
-ahd_get_sense_buf(struct ahd_softc *ahd, struct scb *scb)
+ahd_get_sense_buf(struct ahd_softc *ahd __unused, struct scb *scb)
 {
 	return (scb->sense_data);
 }
 
 static __inline uint32_t
-ahd_get_sense_bufaddr(struct ahd_softc *ahd, struct scb *scb)
+ahd_get_sense_bufaddr(struct ahd_softc *ahd __unused, struct scb *scb)
 {
 	return (scb->sense_busaddr);
 }
@@ -829,7 +829,7 @@ ahd_sync_qoutfifo(struct ahd_softc *ahd, int op)
 }
 
 static __inline void
-ahd_sync_tqinfifo(struct ahd_softc *ahd, int op)
+ahd_sync_tqinfifo(struct ahd_softc *ahd __unused, int op __unused)
 {
 #ifdef AHD_TARGET_MODE
 	if ((ahd->flags & AHD_TARGETROLE) != 0) {

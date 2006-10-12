@@ -1,4 +1,4 @@
-/*	$NetBSD: geodewdg.c,v 1.3 2006/08/31 19:24:37 dyoung Exp $	*/
+/*	$NetBSD: geodewdg.c,v 1.4 2006/10/12 01:30:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: geodewdg.c,v 1.3 2006/08/31 19:24:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodewdg.c,v 1.4 2006/10/12 01:30:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,13 +218,15 @@ geode_wdog_setmode(struct sysmon_wdog *smw)
 }
 
 static int
-geode_wdog_match(struct device *parent, struct cfdata *match, void *aux)
+geode_wdog_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux __unused)
 {
 	return !attached;
 }
 
 static void
-geode_wdog_attach(struct device *parent, struct device *self, void *aux)
+geode_wdog_attach(struct device *parent, struct device *self,
+    void *aux __unused)
 {
 	struct geode_wdog_softc *sc = (void *) self;
 	uint8_t wdsts;

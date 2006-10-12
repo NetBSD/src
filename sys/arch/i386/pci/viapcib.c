@@ -1,4 +1,4 @@
-/* $NetBSD: viapcib.c,v 1.3 2006/06/26 18:21:38 drochner Exp $ */
+/* $NetBSD: viapcib.c,v 1.4 2006/10/12 01:30:44 christos Exp $ */
 /* $FreeBSD: src/sys/pci/viapm.c,v 1.10 2005/05/29 04:42:29 nyan Exp $ */
 
 /*-
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.3 2006/06/26 18:21:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.4 2006/10/12 01:30:44 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -138,7 +138,8 @@ CFATTACH_DECL(viapcib, sizeof(struct viapcib_softc), viapcib_match,
     viapcib_attach, NULL, NULL);
 
 static int
-viapcib_match(struct device *parent, struct cfdata *match, void *opaque)
+viapcib_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *opaque)
 {
 	struct pci_attach_args *pa;
 

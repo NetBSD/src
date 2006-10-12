@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.38 2006/08/27 23:31:15 christos Exp $	*/
+/*	$NetBSD: amr.c,v 1.39 2006/10/12 01:31:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.38 2006/08/27 23:31:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.39 2006/10/12 01:31:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +228,8 @@ amr_outl(struct amr_softc *amr, int off, u_int32_t val)
  * Match a supported device.
  */
 static int
-amr_match(struct device *parent, struct cfdata *match, void *aux)
+amr_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 	pcireg_t s;
@@ -262,7 +263,7 @@ amr_match(struct device *parent, struct cfdata *match, void *aux)
  * Attach a supported device.
  */
 static void
-amr_attach(struct device *parent, struct device *self, void *aux)
+amr_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct amr_attach_args amra;
@@ -730,7 +731,7 @@ amr_init(struct amr_softc *amr, const char *intrstr,
  * shutdown time.
  */
 static void
-amr_shutdown(void *cookie)
+amr_shutdown(void *cookie __unused)
 {
 	extern struct cfdriver amr_cd;
 	struct amr_softc *amr;
@@ -1330,7 +1331,7 @@ amr_ccb_dump(struct amr_softc *amr, struct amr_ccb *ac)
 }
 
 static int
-amropen(dev_t dev, int flag, int mode, struct lwp *l)
+amropen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
 {
 	struct amr_softc *amr;
 	 
@@ -1344,7 +1345,7 @@ amropen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 static int
-amrclose(dev_t dev, int flag, int mode, struct lwp *l)
+amrclose(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
 {
 	struct amr_softc *amr;
 
@@ -1354,7 +1355,8 @@ amrclose(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 static int
-amrioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+amrioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
+    struct lwp *l __unused)
 {
 	struct amr_softc *amr;
 	struct amr_user_ioctl *au;

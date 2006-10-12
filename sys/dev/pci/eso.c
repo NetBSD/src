@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.43 2006/08/30 01:14:24 christos Exp $	*/
+/*	$NetBSD: eso.c,v 1.44 2006/10/12 01:31:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.43 2006/08/30 01:14:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.44 2006/10/12 01:31:29 christos Exp $");
 
 #include "mpu.h"
 
@@ -208,7 +208,8 @@ static void	eso_freemem(struct eso_dma *);
 
 
 static int
-eso_match(struct device *parent, struct cfdata *match, void *aux)
+eso_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -221,7 +222,7 @@ eso_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-eso_attach(struct device *parent, struct device *self, void *aux)
+eso_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct eso_softc *sc;
 	struct pci_attach_args *pa;
@@ -462,7 +463,7 @@ eso_defer(struct device *self)
 
 /* ARGSUSED */
 static int
-eso_print(void *aux, const char *pnp)
+eso_print(void *aux __unused, const char *pnp)
 {
 
 	/* Only joys can attach via this; easy. */
@@ -656,7 +657,7 @@ eso_reset(struct eso_softc *sc)
 }
 
 static int
-eso_query_encoding(void *hdl, struct audio_encoding *fp)
+eso_query_encoding(void *hdl __unused, struct audio_encoding *fp)
 {
 
 	switch (fp->index) {
@@ -716,8 +717,9 @@ eso_query_encoding(void *hdl, struct audio_encoding *fp)
 }
 
 static int
-eso_set_params(void *hdl, int setmode, int usemode, audio_params_t *play,
-    audio_params_t *rec, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+eso_set_params(void *hdl, int setmode, int usemode __unused,
+    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	struct eso_softc *sc;
 	struct audio_params *p;
@@ -786,7 +788,8 @@ eso_set_params(void *hdl, int setmode, int usemode, audio_params_t *play,
 }
 
 static int
-eso_round_blocksize(void *hdl, int blk, int mode, const audio_params_t *param)
+eso_round_blocksize(void *hdl __unused, int blk, int mode __unused,
+    const audio_params_t *param __unused)
 {
 
 	return blk & -32;	/* keep good alignment; at least 16 req'd */
@@ -1167,7 +1170,7 @@ eso_get_port(void *hdl, mixer_ctrl_t *cp)
 }
 
 static int
-eso_query_devinfo(void *hdl, mixer_devinfo_t *dip)
+eso_query_devinfo(void *hdl __unused, mixer_devinfo_t *dip)
 {
 
 	switch (dip->index) {
@@ -1455,8 +1458,8 @@ eso_query_devinfo(void *hdl, mixer_devinfo_t *dip)
 }
 
 static int
-eso_allocmem(struct eso_softc *sc, size_t size, size_t align, size_t boundary,
-    int flags, int direction, struct eso_dma *ed)
+eso_allocmem(struct eso_softc *sc __unused, size_t size, size_t align,
+    size_t boundary, int flags, int direction, struct eso_dma *ed)
 {
 	int error, wait;
 
@@ -1582,7 +1585,7 @@ eso_freem(void *hdl, void *addr, struct malloc_type *type)
 }
 
 static size_t
-eso_round_buffersize(void *hdl, int direction, size_t bufsize)
+eso_round_buffersize(void *hdl __unused, int direction, size_t bufsize)
 {
 	size_t maxsize;
 
@@ -1625,7 +1628,7 @@ eso_mappage(void *hdl, void *addr, off_t offs, int prot)
 
 /* ARGSUSED */
 static int
-eso_get_props(void *hdl)
+eso_get_props(void *hdl __unused)
 {
 
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.22 2006/08/30 15:14:11 christos Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.23 2006/10/12 01:31:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.22 2006/08/30 15:14:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.23 2006/10/12 01:31:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,10 +88,8 @@ static struct pcmcia_chip_functions pcic_pci_functions = {
 static void pcic_pci_callback(struct device *);
 
 int
-pcic_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata  *match;
-	void *aux;
+pcic_pci_match(struct device *parent __unused, struct cfdata  *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -113,9 +111,7 @@ pcic_pci_match(parent, match, aux)
 void pcic_isa_config_interrupts(struct device *);
 
 void
-pcic_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcic_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pcic_softc *sc = (void *) self;
 	struct pcic_pci_softc *psc = (void *) self;

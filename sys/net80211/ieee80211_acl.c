@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_acl.c,v 1.4 2005/08/13 17:31:48 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_acl.c,v 1.5 2006/03/17 23:29:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_acl.c,v 1.6 2006/10/12 01:32:30 christos Exp $");
 #endif
 
 /*
@@ -268,7 +268,8 @@ acl_getpolicy(struct ieee80211com *ic)
 }
 
 static int
-acl_setioctl(struct ieee80211com *ic, struct ieee80211req *ireq)
+acl_setioctl(struct ieee80211com *ic __unused,
+    struct ieee80211req *ireq __unused)
 {
 
 	return EINVAL;

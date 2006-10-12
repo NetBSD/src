@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.43 2006/09/03 06:29:03 christos Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.44 2006/10/12 01:30:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.43 2006/09/03 06:29:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.44 2006/10/12 01:30:49 christos Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -119,19 +119,14 @@ static const struct fileops svr4_netops = {
  * Used by new config, but we don't need it.
  */
 int
-svr4_netattach(n)
-	int n;
+svr4_netattach(int n __unused)
 {
 	return 0;
 }
 
 
 int
-svr4_netopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct lwp *l;
+svr4_netopen(dev_t dev, int flag, int mode __unused, struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 	int type, protocol;

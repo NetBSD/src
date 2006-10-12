@@ -1,4 +1,4 @@
-/*	$NetBSD: iteide.c,v 1.5 2006/06/30 17:01:32 xtraeme Exp $	*/
+/*	$NetBSD: iteide.c,v 1.6 2006/10/12 01:31:31 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iteide.c,v 1.5 2006/06/30 17:01:32 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iteide.c,v 1.6 2006/10/12 01:31:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,8 @@ static const struct pciide_product_desc pciide_ite_products[] =  {
 };
 
 static int
-iteide_match(struct device *parent, struct cfdata *match, void *aux)
+iteide_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ITE &&
@@ -82,7 +83,7 @@ iteide_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-iteide_attach(struct device *parent, struct device *self, void *aux)
+iteide_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.22 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.23 2006/10/12 01:31:52 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.22 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.23 2006/10/12 01:31:52 christos Exp $");
 
 #include <sys/errno.h>
 
@@ -52,7 +52,7 @@ static void rf_ShutdownReconEvent(void *);
 static RF_ReconEvent_t *
 GetReconEventDesc(RF_RowCol_t col, void *arg, RF_Revent_t type);
 
-static void rf_ShutdownReconEvent(void *ignored)
+static void rf_ShutdownReconEvent(void *ignored __unused)
 {
 	pool_destroy(&rf_pools.revent);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_sb.c,v 1.9 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: mpu_sb.c,v 1.10 2006/10/12 01:31:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_sb.c,v 1.9 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_sb.c,v 1.10 2006/10/12 01:31:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,10 +64,8 @@ CFATTACH_DECL(mpu_sb, sizeof(struct mpu_softc),
     mpu_sb_match, mpu_sb_attach, NULL, NULL);
 
 int
-mpu_sb_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mpu_sb_match(struct device *parent, struct cfdata *match __unused,
+    void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 	struct sbdsp_softc *ssc = (struct sbdsp_softc *)parent;
@@ -82,10 +80,7 @@ mpu_sb_match(parent, match, aux)
 }
 
 void
-mpu_sb_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mpu_sb_attach(struct device *parent, struct device *self, void *aux __unused)
 {
 	struct sbdsp_softc *ssc = (struct sbdsp_softc *)parent;
 	struct mpu_softc *sc = (struct mpu_softc *)self;

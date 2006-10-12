@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.46 2006/10/05 17:35:19 tls Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.47 2006/10/12 01:31:50 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.46 2006/10/05 17:35:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.47 2006/10/12 01:31:50 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -179,7 +179,7 @@ rf_ConfigureDiskQueue(RF_Raid_t *raidPtr, RF_DiskQueue_t *diskqueue,
 }
 
 static void
-rf_ShutdownDiskQueueSystem(void *ignored)
+rf_ShutdownDiskQueueSystem(void *ignored __unused)
 {
 	pool_destroy(&rf_pools.dqd);
 }

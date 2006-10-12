@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.202 2006/10/03 18:21:53 christos Exp $	*/
+/*	$NetBSD: uhci.c,v 1.203 2006/10/12 01:31:59 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.202 2006/10/03 18:21:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.203 2006/10/12 01:31:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1045,12 +1045,12 @@ uhci_poll_hub(void *addr)
 }
 
 void
-uhci_root_intr_done(usbd_xfer_handle xfer)
+uhci_root_intr_done(usbd_xfer_handle xfer __unused)
 {
 }
 
 void
-uhci_root_ctrl_done(usbd_xfer_handle xfer)
+uhci_root_ctrl_done(usbd_xfer_handle xfer __unused)
 {
 }
 
@@ -1348,7 +1348,7 @@ uhci_softintr(void *v)
 
 /* Check for an interrupt. */
 void
-uhci_check_intr(uhci_softc_t *sc, uhci_intr_info_t *ii)
+uhci_check_intr(uhci_softc_t *sc __unused, uhci_intr_info_t *ii)
 {
 	uhci_soft_td_t *std, *lstd;
 	u_int32_t status;
@@ -1843,7 +1843,7 @@ uhci_device_clear_toggle(usbd_pipe_handle pipe)
 }
 
 void
-uhci_noop(usbd_pipe_handle pipe)
+uhci_noop(usbd_pipe_handle pipe __unused)
 {
 }
 
@@ -2210,7 +2210,7 @@ uhci_device_ctrl_abort(usbd_xfer_handle xfer)
 
 /* Close a device control pipe. */
 void
-uhci_device_ctrl_close(usbd_pipe_handle pipe)
+uhci_device_ctrl_close(usbd_pipe_handle pipe __unused)
 {
 }
 
@@ -3517,14 +3517,14 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 
 /* Abort a root control request. */
 void
-uhci_root_ctrl_abort(usbd_xfer_handle xfer)
+uhci_root_ctrl_abort(usbd_xfer_handle xfer __unused)
 {
 	/* Nothing to do, all transfers are synchronous. */
 }
 
 /* Close the root pipe. */
 void
-uhci_root_ctrl_close(usbd_pipe_handle pipe)
+uhci_root_ctrl_close(usbd_pipe_handle pipe __unused)
 {
 	DPRINTF(("uhci_root_ctrl_close\n"));
 }

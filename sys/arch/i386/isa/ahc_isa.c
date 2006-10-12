@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.30 2006/03/28 17:38:25 thorpej Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.31 2006/10/12 01:30:43 christos Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.30 2006/03/28 17:38:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.31 2006/10/12 01:30:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,7 @@ ahc_isa_match(struct isa_attach_args *ia, bus_addr_t iobase)
  * the actual probe routine to check it out.
  */
 int
-ahc_isa_probe(struct device *parent, struct cfdata *match, void *aux)
+ahc_isa_probe(struct device *parent, struct cfdata *match __unused, void *aux)
 {       
 	struct isa_attach_args *ia = aux;
 	struct ahc_isa_slot *as;
@@ -367,7 +367,7 @@ ahc_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-ahc_isa_attach(struct device *parent, struct device *self, void *aux)
+ahc_isa_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct ahc_softc *ahc = (void *)self;
 	struct isa_attach_args *ia = aux;

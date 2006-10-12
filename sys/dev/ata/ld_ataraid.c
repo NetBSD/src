@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.16 2006/05/14 21:42:26 elad Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.17 2006/10/12 01:30:55 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.16 2006/05/14 21:42:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.17 2006/10/12 01:30:55 christos Exp $");
 
 #include "rnd.h"
 
@@ -113,14 +113,16 @@ struct cbuf {
 #define	CBUF_PUT(cbp)	pool_put(&ld_ataraid_cbufpl, (cbp))
 
 static int
-ld_ataraid_match(struct device *parent, struct cfdata *match, void *aux)
+ld_ataraid_match(struct device *parent __unused,
+    struct cfdata *match __unused, void *aux __unused)
 {
 
 	return (1);
 }
 
 static void
-ld_ataraid_attach(struct device *parent, struct device *self, void *aux)
+ld_ataraid_attach(struct device *parent __unused, struct device *self,
+    void *aux)
 {
 	struct ld_ataraid_softc *sc = (void *) self;
 	struct ld_softc *ld = &sc->sc_ld;
@@ -523,7 +525,8 @@ out:
 }
 
 static int
-ld_ataraid_dump(struct ld_softc *sc, void *data, int blkno, int blkcnt)
+ld_ataraid_dump(struct ld_softc *sc __unused, void *data __unused,
+    int blkno __unused, int blkcnt __unused)
 {
 
 	return (EIO);

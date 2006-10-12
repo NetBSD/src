@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.92 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.93 2006/10/12 01:32:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.92 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.93 2006/10/12 01:32:29 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -102,7 +102,7 @@ const struct cdevsw tun_cdevsw = {
 };
 
 void
-tunattach(int unused)
+tunattach(int unused __unused)
 {
 
 	simple_lock_init(&tun_softc_lock);
@@ -268,7 +268,7 @@ tun_clone_destroy(struct ifnet *ifp)
  * configured in
  */
 static int
-tunopen(dev_t dev, int flag, int mode, struct lwp *l)
+tunopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l)
 {
 	struct ifnet	*ifp;
 	struct tun_softc *tp;
@@ -310,7 +310,8 @@ out_nolock:
  * routing info
  */
 int
-tunclose(dev_t dev, int flag, int mode, struct lwp *l)
+tunclose(dev_t dev, int flag __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	int	s;
 	struct tun_softc *tp;
@@ -487,7 +488,7 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
  */
 static int
 tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
-    struct rtentry *rt)
+    struct rtentry *rt __unused)
 {
 	struct tun_softc *tp = ifp->if_softc;
 	int		s;
@@ -598,7 +599,7 @@ out:
  * the cdevsw interface is now pretty minimal.
  */
 int
-tunioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+tunioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused, struct lwp *l)
 {
 	struct tun_softc *tp;
 	int s, error = 0;
@@ -706,7 +707,7 @@ out_nolock:
  * least as much of a packet as can be read.
  */
 int
-tunread(dev_t dev, struct uio *uio, int ioflag)
+tunread(dev_t dev, struct uio *uio, int ioflag __unused)
 {
 	struct tun_softc *tp;
 	struct ifnet	*ifp;
@@ -798,7 +799,7 @@ out_nolock:
  * the cdevsw write interface - an atomic write is a packet - or else!
  */
 int
-tunwrite(dev_t dev, struct uio *uio, int ioflag)
+tunwrite(dev_t dev, struct uio *uio, int ioflag __unused)
 {
 	struct tun_softc *tp;
 	struct ifnet	*ifp;
@@ -1033,7 +1034,7 @@ filt_tunrdetach(struct knote *kn)
 }
 
 static int
-filt_tunread(struct knote *kn, long hint)
+filt_tunread(struct knote *kn, long hint __unused)
 {
 	struct tun_softc *tp = kn->kn_hook;
 	struct ifnet *ifp = &tp->tun_if;

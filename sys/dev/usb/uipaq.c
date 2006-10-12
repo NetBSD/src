@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.2 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.3 2006/10/12 01:32:00 christos Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -331,7 +331,7 @@ uipaq_break(struct uipaq_softc* sc, int onoff)
 
 
 void
-uipaq_set(void *addr, int portno, int reg, int onoff)
+uipaq_set(void *addr, int portno __unused, int reg, int onoff)
 {
 	struct uipaq_softc* sc = addr;
 

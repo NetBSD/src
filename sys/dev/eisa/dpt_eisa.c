@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_eisa.c,v 1.14 2006/03/29 06:32:36 thorpej Exp $	*/
+/*	$NetBSD: dpt_eisa.c,v 1.15 2006/10/12 01:30:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.14 2006/03/29 06:32:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.15 2006/10/12 01:30:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,8 @@ dpt_eisa_irq(bus_space_tag_t iot, bus_space_handle_t ioh, int *irq)
 }
 
 static int
-dpt_eisa_match(struct device *parent, struct cfdata *match, void *aux)
+dpt_eisa_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct eisa_attach_args *ea;
 	int i;
@@ -118,7 +119,7 @@ dpt_eisa_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-dpt_eisa_attach(struct device *parent, struct device *self, void *aux)
+dpt_eisa_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct eisa_attach_args *ea;
 	bus_space_handle_t ioh;

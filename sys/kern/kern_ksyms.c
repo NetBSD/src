@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.27 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.28 2006/10/12 01:32:15 christos Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -281,7 +281,7 @@ findsym(const char *name, struct symtab *table)
  */
 void ksymsattach(int);
 void
-ksymsattach(int arg)
+ksymsattach(int arg __unused)
 {
 
 #ifdef USE_PTREE
@@ -416,7 +416,7 @@ addsymtab(const char *name, Elf_Ehdr *ehdr, struct symtab *tab)
  * Setup the kernel symbol table stuff.
  */
 void
-ksyms_init(int symsize, void *start, void *end)
+ksyms_init(int symsize, void *start, void *end __unused)
 {
 	Elf_Ehdr *ehdr;
 
@@ -682,7 +682,7 @@ specialsym(const char *symname)
 
 int
 ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
-    char *strstart, vsize_t strsize)
+    char *strstart, vsize_t strsize __unused)
 {
 	Elf_Sym *sym = symstart;
 	struct symtab *st;
@@ -1009,7 +1009,8 @@ ksyms_hdr_init(caddr_t hdraddr)
 };
 
 static int
-ksymsopen(dev_t dev, int oflags, int devtype, struct lwp *l)
+ksymsopen(dev_t dev, int oflags __unused, int devtype __unused,
+    struct lwp *l __unused)
 {
 
 	if (minor(dev))
@@ -1032,7 +1033,8 @@ ksymsopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 }
 
 static int
-ksymsclose(dev_t dev, int oflags, int devtype, struct lwp *l)
+ksymsclose(dev_t dev __unused, int oflags __unused, int devtype __unused,
+    struct lwp *l __unused)
 {
 
 #ifdef KSYMS_DEBUG
@@ -1048,7 +1050,7 @@ ksymsclose(dev_t dev, int oflags, int devtype, struct lwp *l)
 #define	HDRSIZ	sizeof(struct ksyms_hdr)
 
 static int
-ksymsread(dev_t dev, struct uio *uio, int ioflag)
+ksymsread(dev_t dev __unused, struct uio *uio, int ioflag __unused)
 {
 	struct symtab *st;
 	size_t filepos, inpos, off;
@@ -1103,13 +1105,14 @@ ksymsread(dev_t dev, struct uio *uio, int ioflag)
 }
 
 static int
-ksymswrite(dev_t dev, struct uio *uio, int ioflag)
+ksymswrite(dev_t dev __unused, struct uio *uio __unused, int ioflag __unused)
 {
 	return EROFS;
 }
 
 static int
-ksymsioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct lwp *l)
+ksymsioctl(dev_t dev __unused, u_long cmd, caddr_t data, int fflag __unused,
+    struct lwp *l __unused)
 {
 	struct ksyms_gsymbol *kg = (struct ksyms_gsymbol *)data;
 	struct symtab *st;

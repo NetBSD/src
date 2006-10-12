@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.23 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.24 2006/10/12 01:31:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.23 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.24 2006/10/12 01:31:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,9 +135,7 @@ ai_reset(sc, why)
 }
 
 static void
-ai_atten(sc, why)
-	struct ie_softc *sc;
-	int why;
+ai_atten(struct ie_softc *sc, int why __unused)
 {
     struct ai_softc* asc = (struct ai_softc *) sc;
     bus_space_write_1(asc->sc_regt, asc->sc_regh, AI_ATTN, 0);
@@ -232,10 +230,7 @@ ai_write_24 (sc, offset, addr)
 }
 
 int
-ai_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ai_match(struct device *parent __unused, struct cfdata *cf __unused, void *aux)
 {
 	int rv = 0;
 	u_int8_t val, type;
@@ -331,10 +326,7 @@ out:
 }
 
 void
-ai_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void   *aux;
+ai_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct ai_softc *asc = (void *)self;
 	struct ie_softc *sc = &asc->sc_ie;

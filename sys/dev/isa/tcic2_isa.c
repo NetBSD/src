@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.15 2006/09/03 06:46:22 christos Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.16 2006/10/12 01:31:17 christos Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.15 2006/09/03 06:46:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.16 2006/10/12 01:31:17 christos Exp $");
 
 #undef	TCICISADEBUG
 
@@ -142,10 +142,8 @@ static struct pcmcia_chip_functions tcic_isa_functions = {
 };
 
 int
-tcic_isa_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+tcic_isa_probe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -219,9 +217,7 @@ tcic_isa_probe(parent, match, aux)
 }
 
 void
-tcic_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tcic_isa_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct tcic_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.112 2006/10/04 23:55:22 dogcow Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.113 2006/10/12 01:32:00 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.112 2006/10/04 23:55:22 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.113 2006/10/12 01:32:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1020,8 +1020,8 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 }
 
 void
-usbd_do_request_async_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
-			 usbd_status status)
+usbd_do_request_async_cb(usbd_xfer_handle xfer,
+    usbd_private_handle priv __unused, usbd_status status __unused)
 {
 #if defined(USB_DEBUG) || defined(DIAGNOSTIC)
 	if (xfer->actlen > xfer->length) {

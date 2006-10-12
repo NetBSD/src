@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.125 2006/06/23 20:54:21 christos Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.126 2006/10/12 01:32:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.125 2006/06/23 20:54:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.126 2006/10/12 01:32:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -915,8 +915,7 @@ kernfs_getattr(v)
 
 /*ARGSUSED*/
 int
-kernfs_setattr(v)
-	void *v;
+kernfs_setattr(void *v __unused)
 {
 
 	/*
@@ -1519,8 +1518,7 @@ kernfs_pathconf(v)
  */
 /* ARGSUSED */
 int
-kernfs_print(v)
-	void *v;
+kernfs_print(void *v __unused)
 {
 
 	printf("tag VT_KERNFS, kernfs vnode\n");

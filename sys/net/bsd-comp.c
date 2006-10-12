@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd-comp.c,v 1.14 2005/12/11 23:05:24 thorpej Exp $	*/
+/*	$NetBSD: bsd-comp.c,v 1.15 2006/10/12 01:32:27 christos Exp $	*/
 /*	Id: bsd-comp.c,v 1.6 1996/08/28 06:31:58 paulus Exp 	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bsd-comp.c,v 1.14 2005/12/11 23:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bsd-comp.c,v 1.15 2006/10/12 01:32:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,7 +392,7 @@ bsd_decomp_alloc(u_char *options, int opt_len)
  */
 static int
 bsd_init(struct bsd_db *db, u_char *options, int opt_len, int unit, int hdrlen,
-         int mru, int debug, int decomp)
+    int mru, int debug __unused, int decomp)
 {
     int i;
 

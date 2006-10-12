@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.40 2006/04/26 17:08:48 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.41 2006/10/12 01:31:51 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.40 2006/04/26 17:08:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.41 2006/10/12 01:31:51 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -339,7 +339,7 @@ rf_MarkFailuresInASMList(RF_Raid_t *raidPtr,
    release all the free lists */
 static void rf_ShutdownMapModule(void *);
 static void
-rf_ShutdownMapModule(void *ignored)
+rf_ShutdownMapModule(void *ignored __unused)
 {
 	pool_destroy(&rf_pools.asm_hdr);
 	pool_destroy(&rf_pools.asmap);

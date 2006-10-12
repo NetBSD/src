@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.27 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.28 2006/10/12 01:31:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.27 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.28 2006/10/12 01:31:30 christos Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -179,7 +179,8 @@ ne_pci_lookup(const struct pci_attach_args *pa)
 #define PCI_CBIO	0x10		/* Configuration Base IO Address */
 
 static int
-ne_pci_match(struct device *parent, struct cfdata *match, void *aux)
+ne_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -190,7 +191,7 @@ ne_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-ne_pci_attach(struct device *parent, struct device *self, void *aux)
+ne_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct ne_pci_softc *psc = (struct ne_pci_softc *)self;
 	struct ne2000_softc *nsc = &psc->sc_ne2000;

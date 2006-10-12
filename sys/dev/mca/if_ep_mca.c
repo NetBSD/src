@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.15 2006/03/29 06:58:14 thorpej Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.16 2006/10/12 01:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.15 2006/03/29 06:58:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.16 2006/10/12 01:31:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,10 +142,8 @@ ep_mca_lookup(ma)
 }
 
 int
-ep_mca_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ep_mca_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct mca_attach_args *ma = (struct mca_attach_args *) aux;
 
@@ -156,9 +154,7 @@ ep_mca_match(parent, match, aux)
 }
 
 void
-ep_mca_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ep_mca_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct ep_softc *sc = device_private(self);
 	struct mca_attach_args *ma = aux;

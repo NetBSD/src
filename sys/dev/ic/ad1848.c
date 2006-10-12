@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.23 2006/09/03 04:27:11 christos Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.24 2006/10/12 01:30:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.23 2006/09/03 04:27:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.24 2006/10/12 01:30:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -861,8 +861,9 @@ ad1848_query_encoding(void *addr, struct audio_encoding *fp)
 }
 
 int
-ad1848_set_params(void *addr, int setmode, int usemode, audio_params_t *p,
-    audio_params_t *r, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+ad1848_set_params(void *addr, int setmode __unused, int usemode __unused,
+    audio_params_t *p, audio_params_t *r, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	audio_params_t phw, rhw;
 	struct ad1848_softc *sc;
@@ -1020,8 +1021,8 @@ ad1848_get_rec_port(struct ad1848_softc *sc)
 }
 
 int
-ad1848_round_blocksize(void *addr, int blk,
-    int mode, const audio_params_t *param)
+ad1848_round_blocksize(void *addr __unused, int blk,
+    int mode __unused, const audio_params_t *param __unused)
 {
 
 	/* Round to a multiple of the biggest sample size. */

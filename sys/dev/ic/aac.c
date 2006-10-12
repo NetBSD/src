@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.27 2006/03/04 20:44:11 thorpej Exp $	*/
+/*	$NetBSD: aac.c,v 1.28 2006/10/12 01:30:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.27 2006/03/04 20:44:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.28 2006/10/12 01:30:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -693,7 +693,7 @@ aac_startup(struct aac_softc *sc)
 }
 
 static void
-aac_shutdown(void *cookie)
+aac_shutdown(void *cookie __unused)
 {
 	struct aac_softc *sc;
 	struct aac_close_command cc;
@@ -1292,7 +1292,8 @@ aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
  * Print a FIB
  */
 static void
-aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, const char *caller)
+aac_print_fib(struct aac_softc *sc __unused, struct aac_fib *fib,
+    const char *caller)
 {
 	struct aac_blockread *br;
 	struct aac_blockwrite *bw;

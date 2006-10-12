@@ -1,4 +1,4 @@
-/*	$NetBSD: geodecntr.c,v 1.2 2006/06/07 22:37:59 kardel Exp $	*/
+/*	$NetBSD: geodecntr.c,v 1.3 2006/10/12 01:30:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodecntr.c,v 1.2 2006/06/07 22:37:59 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodecntr.c,v 1.3 2006/10/12 01:30:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,8 @@ static unsigned geode_get_timecount(struct timecounter *);
 static int attached = 0;
 
 static int
-geodecntr_match(struct device *parent, struct cfdata *match, void *aux)
+geodecntr_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux __unused)
 {
 	return !attached;
 }
@@ -69,7 +70,7 @@ geodecntr_match(struct device *parent, struct cfdata *match, void *aux)
  * attach time counter
  */
 static void
-geodecntr_attach(struct device *parent, struct device *self, void *aux)
+geodecntr_attach(struct device *parent, struct device *self, void *aux __unused)
 {
 	struct geodecntr_softc *sc = (struct geodecntr_softc *) self;
 

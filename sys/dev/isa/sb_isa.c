@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.32 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.33 2006/10/12 01:31:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.32 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.33 2006/10/12 01:31:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,11 +102,8 @@ sb_isa_match(parent, match, aux)
 }
 
 static int
-sbfind(parent, sc, probing, ia)
-	struct device *parent;
-	struct sbdsp_softc *sc;
-	int probing;
-	struct isa_attach_args *ia;
+sbfind(struct device *parent __unused, struct sbdsp_softc *sc, int probing,
+    struct isa_attach_args *ia)
 {
 	int rc = 0;
 

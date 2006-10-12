@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.21 2006/03/28 17:38:34 thorpej Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.22 2006/10/12 01:31:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.21 2006/03/28 17:38:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.22 2006/10/12 01:31:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,9 +200,7 @@ ef_reset(sc, why)
 }
 
 static void
-ef_atten(sc, why)
-	struct ie_softc *sc;
-	int why;
+ef_atten(struct ie_softc *sc, int why __unused)
 {
 	struct ef_softc* esc = (struct ef_softc *) sc;
 	bus_space_write_1(esc->sc_regt, esc->sc_regh, EF_ATTN, 1);
@@ -351,10 +349,7 @@ ef_mediastatus(sc, ifmr)
 }
 
 int
-ef_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ef_match(struct device *parent, struct cfdata *cf __unused, void *aux)
 {
 	struct isa_attach_args * const ia = aux;
 

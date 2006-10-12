@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.102 2006/09/02 06:21:32 christos Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.103 2006/10/12 01:32:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.102 2006/09/02 06:21:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.103 2006/10/12 01:32:14 christos Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -373,7 +373,7 @@ static struct timecounter intr_timecounter = {
 };
 
 static u_int
-get_intr_timecount(struct timecounter *tc)
+get_intr_timecount(struct timecounter *tc __unused)
 {
 	return (u_int)hardclock_ticks;
 }

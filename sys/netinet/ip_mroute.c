@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.98 2006/08/30 19:00:22 christos Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.99 2006/10/12 01:32:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.98 2006/08/30 19:00:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.99 2006/10/12 01:32:38 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1637,7 +1637,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 
 /*ARGSUSED*/
 static void
-expire_upcalls(void *v)
+expire_upcalls(void *v __unused)
 {
 	int i;
 	int s;
@@ -2264,7 +2264,7 @@ tbf_update_tokens(struct vif *vifp)
 }
 
 static int
-priority(struct vif *vifp, struct ip *ip)
+priority(struct vif *vifp __unused, struct ip *ip)
 {
 	int prio = 50;	/* the lowest priority -- default case */
 
@@ -3084,7 +3084,7 @@ bw_meter_process(void)
  * A periodic function for sending all upcalls that are pending delivery
  */
 static void
-expire_bw_upcalls_send(void *unused)
+expire_bw_upcalls_send(void *unused __unused)
 {
     int s;
 
@@ -3101,7 +3101,7 @@ expire_bw_upcalls_send(void *unused)
  * table for processing all "<=" bw_meter entries.
  */
 static void
-expire_bw_meter_process(void *unused)
+expire_bw_meter_process(void *unused __unused)
 {
     if (mrt_api_config & MRT_MFC_BW_UPCALL)
 	bw_meter_process();
@@ -3207,7 +3207,7 @@ pim_register_prepare(struct ip *ip, struct mbuf *m)
  */
 static int
 pim_register_send_upcall(struct ip *ip, struct vif *vifp,
-	struct mbuf *mb_copy, struct mfc *rt)
+    struct mbuf *mb_copy, struct mfc *rt __unused)
 {
     struct mbuf *mb_first;
     int len = ntohs(ip->ip_len);

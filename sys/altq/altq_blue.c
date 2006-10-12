@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_blue.c,v 1.17 2006/07/21 16:48:45 ad Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.18 2006/10/12 01:30:42 christos Exp $	*/
 /*	$KAME: altq_blue.c,v 1.8 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.17 2006/07/21 16:48:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.18 2006/10/12 01:30:42 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -127,20 +127,16 @@ static int blue_request __P((struct ifaltq *, int, void *));
 altqdev_decl(blue);
 
 int
-blueopen(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+blueopen(dev_t dev __unused, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
 	/* everything will be done when the queueing scheme is attached. */
 	return 0;
 }
 
 int
-blueclose(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+blueclose(dev_t dev __unused, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
 	blue_queue_t *rqp;
 	int err, error = 0;
@@ -156,12 +152,8 @@ blueclose(dev, flag, fmt, l)
 }
 
 int
-blueioctl(dev, cmd, addr, flag, l)
-	dev_t dev;
-	ioctlcmd_t cmd;
-	caddr_t addr;
-	int flag;
-	struct lwp *l;
+blueioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
+    struct lwp *l)
 {
 	blue_queue_t *rqp;
 	struct blue_interface *ifacep;
@@ -670,10 +662,7 @@ struct mbuf *blue_getq(rp, q)
 }
 
 static int
-blue_request(ifq, req, arg)
-	struct ifaltq *ifq;
-	int req;
-	void *arg;
+blue_request(struct ifaltq *ifq, int req, void *arg __unused)
 {
 	blue_queue_t *rqp = (blue_queue_t *)ifq->altq_disc;
 

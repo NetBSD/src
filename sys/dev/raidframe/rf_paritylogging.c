@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.25 2006/04/26 17:08:48 oster Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.26 2006/10/12 01:31:52 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.25 2006/04/26 17:08:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.26 2006/10/12 01:31:52 christos Exp $");
 
 #include "rf_archs.h"
 
@@ -74,7 +74,7 @@ int
 rf_ConfigureParityLogging(
     RF_ShutdownList_t ** listp,
     RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr)
+    RF_Config_t * cfgPtr __unused)
 {
 	int     i, j, startdisk, rc;
 	RF_SectorCount_t totalLogCapacity, fragmentation, lastRegionCapacity;
@@ -518,7 +518,7 @@ FreeRegionInfo(
 
 static void
 FreeParityLogQueue(
-    RF_Raid_t * raidPtr,
+    RF_Raid_t * raidPtr __unused,
     RF_ParityLogQueue_t * queue)
 {
 	RF_ParityLog_t *l1, *l2;
@@ -677,13 +677,13 @@ rf_ShutdownParityLogging(RF_ThreadArg_t arg)
 }
 
 int
-rf_GetDefaultNumFloatingReconBuffersParityLogging(RF_Raid_t * raidPtr)
+rf_GetDefaultNumFloatingReconBuffersParityLogging(RF_Raid_t * raidPtr __unused)
 {
 	return (20);
 }
 
 RF_HeadSepLimit_t
-rf_GetDefaultHeadSepLimitParityLogging(RF_Raid_t * raidPtr)
+rf_GetDefaultHeadSepLimitParityLogging(RF_Raid_t * raidPtr __unused)
 {
 	return (10);
 }
@@ -716,7 +716,7 @@ rf_MapSectorParityLogging(
     RF_RaidAddr_t raidSector,
     RF_RowCol_t * col,
     RF_SectorNum_t * diskSector,
-    int remap)
+    int remap __unused)
 {
 	RF_StripeNum_t SUID = raidSector /
 		raidPtr->Layout.sectorsPerStripeUnit;
@@ -736,7 +736,7 @@ rf_MapParityParityLogging(
     RF_RaidAddr_t raidSector,
     RF_RowCol_t * col,
     RF_SectorNum_t * diskSector,
-    int remap)
+    int remap __unused)
 {
 	RF_StripeNum_t SUID = raidSector /
 		raidPtr->Layout.sectorsPerStripeUnit;
@@ -799,7 +799,7 @@ rf_IdentifyStripeParityLogging(
 
 void
 rf_MapSIDToPSIDParityLogging(
-    RF_RaidLayout_t * layoutPtr,
+    RF_RaidLayout_t * layoutPtr __unused,
     RF_StripeNum_t stripeID,
     RF_StripeNum_t * psID,
     RF_ReconUnitNum_t * which_ru)

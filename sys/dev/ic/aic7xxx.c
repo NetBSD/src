@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.121 2006/05/21 23:56:09 christos Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.122 2006/10/12 01:30:58 christos Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.121 2006/05/21 23:56:09 christos Exp $
+ * $Id: aic7xxx.c,v 1.122 2006/10/12 01:30:58 christos Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.121 2006/05/21 23:56:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.122 2006/10/12 01:30:58 christos Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -963,7 +963,7 @@ unpause:
 }
 
 void
-ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
+ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat __unused)
 {
 	u_int	scb_index;
 	u_int	status0;
@@ -1888,8 +1888,8 @@ ahc_update_neg_request(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
  */
 void
 ahc_set_syncrate(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
-		 struct ahc_syncrate *syncrate, u_int period,
-		 u_int offset, u_int ppr_options, u_int type, int paused)
+    struct ahc_syncrate *syncrate, u_int period,
+    u_int offset, u_int ppr_options, u_int type, int paused __unused)
 {
 	struct	ahc_initiator_tinfo *tinfo;
 	struct	ahc_tmode_tstate *tstate;
@@ -2015,7 +2015,7 @@ ahc_set_syncrate(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
  */
 void
 ahc_set_width(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
-	      u_int width, u_int type, int paused)
+    u_int width, u_int type, int paused __unused)
 {
 	struct	ahc_initiator_tinfo *tinfo;
 	struct	ahc_tmode_tstate *tstate;
@@ -3557,7 +3557,8 @@ ahc_handle_msg_reject(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
  * Process an ingnore wide residue message.
  */
 static void
-ahc_handle_ign_wide_residue(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
+ahc_handle_ign_wide_residue(struct ahc_softc *ahc,
+    struct ahc_devinfo *devinfo __unused)
 {
 	u_int scb_index;
 	struct scb *scb;
@@ -5181,7 +5182,7 @@ ahc_busy_tcl(struct ahc_softc *ahc, u_int tcl, u_int scbid)
 /************************** SCB and SCB queue management **********************/
 int
 ahc_match_scb(struct ahc_softc *ahc, struct scb *scb, int target,
-	      char channel, int lun, u_int tag, role_t role)
+    char channel, int lun, u_int tag __unused, role_t role __unused)
 {
 	int targ = SCB_GET_TARGET(ahc, scb);
 	char chan = SCB_GET_CHANNEL(ahc, scb);
@@ -5497,9 +5498,9 @@ ahc_search_qinfifo(struct ahc_softc *ahc, int target, char channel,
 }
 
 int
-ahc_search_untagged_queues(struct ahc_softc *ahc, struct scsipi_xfer *xs, /*ahc_io_ctx_t ctx,*/
-			   int target, char channel, int lun, uint32_t status,
-			   ahc_search_action action)
+ahc_search_untagged_queues(struct ahc_softc *ahc,
+    struct scsipi_xfer *xs __unused, int target, char channel, int lun,
+    uint32_t status, ahc_search_action action)
 {
 	struct	scb *scb;
 	int	maxtarget;
@@ -6076,7 +6077,7 @@ ahc_reset_channel(struct ahc_softc *ahc, char channel, int initiate_reset)
  * Calculate the residual for a just completed SCB.
  */
 void
-ahc_calc_residual(struct ahc_softc *ahc, struct scb *scb)
+ahc_calc_residual(struct ahc_softc *ahc __unused, struct scb *scb)
 {
 	struct hardware_scb *hscb;
 	struct status_pkt *spkt;
@@ -6536,8 +6537,8 @@ ahc_download_instr(struct ahc_softc *ahc, u_int instrptr, uint8_t *dconsts)
 
 int
 ahc_print_register(ahc_reg_parse_entry_t *table, u_int num_entries,
-		   const char *name, u_int address, u_int value,
-		   u_int *cur_column, u_int wrap_point)
+    const char *name, u_int address __unused, u_int value,
+    u_int *cur_column, u_int wrap_point)
 {
 	int	printed;
 	u_int	printed_mask;

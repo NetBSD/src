@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.19 2006/09/24 03:53:09 jmcneill Exp $ */
+/* $NetBSD: auixp.c,v 1.20 2006/10/12 01:31:28 christos Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.19 2006/09/24 03:53:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.20 2006/10/12 01:31:28 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -382,9 +382,9 @@ auixp_commit_settings(void *hdl)
 
 /* set audio properties in desired setting */
 static int
-auixp_set_params(void *hdl, int setmode, int usemode, audio_params_t *play,
-		 audio_params_t *rec, stream_filter_list_t *pfil,
-		 stream_filter_list_t *rfil)
+auixp_set_params(void *hdl, int setmode, int usemode __unused,
+    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	struct auixp_codec *co;
 	struct auixp_softc *sc;
@@ -444,7 +444,8 @@ auixp_set_params(void *hdl, int setmode, int usemode, audio_params_t *play,
 
 /* called to translate a requested blocksize to a hw-possible one */
 static int
-auixp_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
+auixp_round_blocksize(void *hdl __unused, int bs, int mode __unused,
+    const audio_params_t *param __unused)
 {
 	uint32_t new_bs;
 
@@ -465,7 +466,7 @@ auixp_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
  * kernel virtual address we return here as a reference to the mapping.
  */
 static void *
-auixp_malloc(void *hdl, int direction, size_t size,
+auixp_malloc(void *hdl, int direction __unused, size_t size,
 	     struct malloc_type *type, int flags)
 {
 	struct auixp_codec *co;
@@ -526,7 +527,7 @@ auixp_free(void *hdl, void *addr, struct malloc_type *type)
 
 
 static int
-auixp_getdev(void *hdl, struct audio_device *ret)
+auixp_getdev(void *hdl __unused, struct audio_device *ret)
 {
 
 	*ret = auixp_device;
@@ -567,7 +568,8 @@ auixp_query_devinfo(void *hdl, mixer_devinfo_t *di)
 
 
 static size_t
-auixp_round_buffersize(void *hdl, int direction, size_t bufsize)
+auixp_round_buffersize(void *hdl __unused, int direction __unused,
+    size_t bufsize)
 {
 
 	/* XXX force maximum? i.e. 256 kb? */
@@ -576,7 +578,7 @@ auixp_round_buffersize(void *hdl, int direction, size_t bufsize)
 
 
 static int
-auixp_get_props(void *hdl)
+auixp_get_props(void *hdl __unused)
 {
 
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
@@ -707,9 +709,9 @@ auixp_dma_update(struct auixp_softc *sc, struct auixp_dma *dma)
 
 	/* be very paranoid */
 	if (!dma)
-		panic("auixp: update: dma = NULL");
+		panic("%s: update: dma = NULL", sc->sc_dev.dv_xname);
 	if (!dma->intr)
-		panic("auixp: update: dma->intr = NULL");
+		panic("%s: update: dma->intr = NULL", sc->sc_dev.dv_xname);
 
 	/* request more input from upper layer */
 	(*dma->intr)(dma->intrarg);
@@ -751,7 +753,7 @@ auixp_update_busbusy(struct auixp_softc *sc)
 /* XXX allmost literaly a copy of trigger-input; could be factorised XXX */
 static int
 auixp_trigger_output(void *hdl, void *start, void *end, int blksize,
-		void (*intr)(void *), void *intrarg, const audio_params_t *param)
+    void (*intr)(void *), void *intrarg, const audio_params_t *param __unused)
 {
 	struct auixp_codec *co;
 	struct auixp_softc *sc;
@@ -826,7 +828,7 @@ auixp_halt_output(void *hdl)
 /* XXX allmost literaly a copy of trigger-output; could be factorised XXX */
 static int
 auixp_trigger_input(void *hdl, void *start, void *end, int blksize,
-		void (*intr)(void *), void *intrarg, const audio_params_t *param)
+    void (*intr)(void *), void *intrarg, const audio_params_t *param __unused)
 {
 	struct auixp_codec *co;
 	struct auixp_softc *sc;
@@ -1072,7 +1074,8 @@ auixp_mappage(void *hdl, void *mem, off_t off, int prot)
 
 /* Is it my hardware? */
 static int
-auixp_match(struct device *dev, struct cfdata *match, void *aux)
+auixp_match(struct device *dev __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -1093,7 +1096,7 @@ auixp_match(struct device *dev, struct cfdata *match, void *aux)
 
 /* it is... now hook up and set up the resources we need */
 static void
-auixp_attach(struct device *parent, struct device *self, void *aux)
+auixp_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct auixp_softc *sc;
 	struct pci_attach_args *pa;
@@ -1500,7 +1503,7 @@ auixp_write_codec(void *aux, uint8_t reg, uint16_t data)
 
 
 static int
-auixp_reset_codec(void *aux)
+auixp_reset_codec(void *aux __unused)
 {
 
 	/* nothing to be done? */

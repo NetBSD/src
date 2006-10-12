@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_core.c,v 1.21 2006/08/30 19:15:05 christos Exp $	*/
+/*	$NetBSD: ipcomp_core.c,v 1.22 2006/10/12 01:32:39 christos Exp $	*/
 /*	$KAME: ipcomp_core.c,v 1.25 2001/07/26 06:53:17 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_core.c,v 1.21 2006/08/30 19:15:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_core.c,v 1.22 2006/10/12 01:32:39 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -97,10 +97,7 @@ ipcomp_algorithm_lookup(idx)
 }
 
 static void *
-deflate_alloc(aux, items, siz)
-	void *aux;
-	u_int items;
-	u_int siz;
+deflate_alloc(void *aux __unused, u_int items, u_int siz)
 {
 	void *ptr;
 	ptr = malloc(items * siz, M_TEMP, M_NOWAIT);
@@ -108,9 +105,7 @@ deflate_alloc(aux, items, siz)
 }
 
 static void
-deflate_free(aux, ptr)
-	void *aux;
-	void *ptr;
+deflate_free(void *aux __unused, void *ptr)
 {
 	free(ptr, M_TEMP);
 }

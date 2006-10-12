@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.227 2006/07/30 21:58:11 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.228 2006/10/12 01:32:14 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227 2006/07/30 21:58:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.228 2006/10/12 01:32:14 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -240,7 +240,7 @@ static void link_es(struct execsw_entry **, const struct execsw *);
  */
 int
 /*ARGSUSED*/
-check_exec(struct lwp *l, struct exec_package *epp, int flag)
+check_exec(struct lwp *l, struct exec_package *epp, int flag __unused)
 {
 	int		error, i;
 	struct vnode	*vp;
@@ -385,7 +385,7 @@ execve_fetch_element(char * const *array, size_t index, char **value)
  */
 /* ARGSUSED */
 int
-sys_execve(struct lwp *l, void *v, register_t *retval)
+sys_execve(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_execve_args /* {
 		syscallarg(const char *)	path;
@@ -992,8 +992,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 
 int
-copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
-    char **stackp, void *argp)
+copyargs(struct lwp *l __unused, struct exec_package *pack,
+    struct ps_strings *arginfo, char **stackp, void *argp)
 {
 	char	**cpp, *dp, *sp;
 	size_t	len;

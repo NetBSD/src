@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.50 2006/01/16 21:45:38 yamt Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.51 2006/10/12 01:32:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.50 2006/01/16 21:45:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.51 2006/10/12 01:32:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,12 +153,10 @@ do {								\
  */
 /*ARGSUSED*/
 int
-ttynullioctl(struct tty *tp, u_long cmd, char *data, int flags, struct lwp *l)
+ttynullioctl(struct tty *tp __unused, u_long cmd __unused, char *data __unused,
+    int flags __unused, struct lwp *l __unused)
 {
 
-#ifdef lint
-	tp = tp; data = data; flags = flags; l = l;
-#endif
 	return (EPASSTHROUGH);
 }
 
@@ -168,12 +166,9 @@ ttynullioctl(struct tty *tp, u_long cmd, char *data, int flags, struct lwp *l)
  */
 /*ARGSUSED*/
 int
-ttyerrpoll(struct tty *tp, int events, struct lwp *l)
+ttyerrpoll(struct tty *tp __unused, int events __unused, struct lwp *l __unused)
 {
 
-#ifdef lint
-	tp = tp; events = events; l = l;
-#endif
 	return (POLLERR);
 }
 

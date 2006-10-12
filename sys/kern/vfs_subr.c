@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.270 2006/10/05 14:48:32 chs Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.271 2006/10/12 01:32:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.270 2006/10/05 14:48:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.271 2006/10/12 01:32:19 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2595,7 +2595,7 @@ vfs_timestamp(struct timespec *ts)
 static const char buf_flagbits[] = BUF_FLAGBITS;
 
 void
-vfs_buf_print(struct buf *bp, int full, void (*pr)(const char *, ...))
+vfs_buf_print(struct buf *bp, int full __unused, void (*pr)(const char *, ...))
 {
 	char bf[1024];
 

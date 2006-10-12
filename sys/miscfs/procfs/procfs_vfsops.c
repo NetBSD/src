@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.65 2006/09/03 04:57:26 christos Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.66 2006/10/12 01:32:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.65 2006/09/03 04:57:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.66 2006/10/12 01:32:27 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -121,12 +121,13 @@ int	procfs_vget(struct mount *, ino_t, struct vnode **);
  */
 /* ARGSUSED */
 int
-procfs_mount(mp, path, data, ndp, l)
-	struct mount *mp;
-	const char *path;
-	void *data;
-	struct nameidata *ndp;
-	struct lwp *l;
+procfs_mount(
+    struct mount *mp,
+    const char *path,
+    void *data,
+    struct nameidata *ndp __unused,
+    struct lwp *l
+)
 {
 	struct procfsmount *pmnt;
 	struct procfs_args args;
@@ -179,10 +180,7 @@ procfs_mount(mp, path, data, ndp, l)
  * unmount system call
  */
 int
-procfs_unmount(mp, mntflags, l)
-	struct mount *mp;
-	int mntflags;
-	struct lwp *l;
+procfs_unmount(struct mount *mp, int mntflags, struct lwp *l __unused)
 {
 	int error;
 	int flags = 0;
@@ -212,10 +210,8 @@ procfs_root(mp, vpp)
 
 /* ARGSUSED */
 int
-procfs_start(mp, flags, l)
-	struct mount *mp;
-	int flags;
-	struct lwp *l;
+procfs_start(struct mount *mp __unused, int flags __unused,
+    struct lwp *l __unused)
 {
 
 	return (0);
@@ -225,10 +221,7 @@ procfs_start(mp, flags, l)
  * Get file system statistics.
  */
 int
-procfs_statvfs(mp, sbp, l)
-	struct mount *mp;
-	struct statvfs *sbp;
-	struct lwp *l;
+procfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l __unused)
 {
 
 	sbp->f_bsize = PAGE_SIZE;
@@ -248,12 +241,13 @@ procfs_statvfs(mp, sbp, l)
 
 /*ARGSUSED*/
 int
-procfs_quotactl(mp, cmds, uid, arg, l)
-	struct mount *mp;
-	int cmds;
-	uid_t uid;
-	void *arg;
-	struct lwp *l;
+procfs_quotactl(
+    struct mount *mp __unused,
+    int cmds __unused,
+    uid_t uid __unused,
+    void *arg __unused,
+    struct lwp *l __unused
+)
 {
 
 	return (EOPNOTSUPP);
@@ -261,11 +255,12 @@ procfs_quotactl(mp, cmds, uid, arg, l)
 
 /*ARGSUSED*/
 int
-procfs_sync(mp, waitfor, uc, l)
-	struct mount *mp;
-	int waitfor;
-	kauth_cred_t uc;
-	struct lwp *l;
+procfs_sync(
+    struct mount *mp __unused,
+    int waitfor __unused,
+    kauth_cred_t uc __unused,
+    struct lwp *l __unused
+)
 {
 
 	return (0);
@@ -273,10 +268,8 @@ procfs_sync(mp, waitfor, uc, l)
 
 /*ARGSUSED*/
 int
-procfs_vget(mp, ino, vpp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
+procfs_vget(struct mount *mp __unused, ino_t ino __unused,
+    struct vnode **vpp __unused)
 {
 	return (EOPNOTSUPP);
 }

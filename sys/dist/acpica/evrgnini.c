@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evrgnini.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evrgnini.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
 
 #define __EVRGNINI_C__
 
@@ -147,7 +147,7 @@ ACPI_STATUS
 AcpiEvSystemMemoryRegionSetup (
     ACPI_HANDLE             Handle,
     UINT32                  Function,
-    void                    *HandlerContext,
+    void                    *HandlerContext __unused,
     void                    **RegionContext)
 {
     ACPI_OPERAND_OBJECT     *RegionDesc = (ACPI_OPERAND_OBJECT *) Handle;
@@ -202,7 +202,7 @@ AcpiEvSystemMemoryRegionSetup (
 
 ACPI_STATUS
 AcpiEvIoSpaceRegionSetup (
-    ACPI_HANDLE             Handle,
+    ACPI_HANDLE             Handle __unused,
     UINT32                  Function,
     void                    *HandlerContext,
     void                    **RegionContext)
@@ -244,7 +244,7 @@ ACPI_STATUS
 AcpiEvPciConfigRegionSetup (
     ACPI_HANDLE             Handle,
     UINT32                  Function,
-    void                    *HandlerContext,
+    void                    *HandlerContext __unused,
     void                    **RegionContext)
 {
     ACPI_STATUS             Status = AE_OK;
@@ -435,10 +435,10 @@ AcpiEvPciConfigRegionSetup (
 
 ACPI_STATUS
 AcpiEvPciBarRegionSetup (
-    ACPI_HANDLE             Handle,
-    UINT32                  Function,
-    void                    *HandlerContext,
-    void                    **RegionContext)
+    ACPI_HANDLE             Handle __unused,
+    UINT32                  Function __unused,
+    void                    *HandlerContext __unused,
+    void                    **RegionContext __unused)
 {
     ACPI_FUNCTION_TRACE ("EvPciBarRegionSetup");
 
@@ -466,10 +466,10 @@ AcpiEvPciBarRegionSetup (
 
 ACPI_STATUS
 AcpiEvCmosRegionSetup (
-    ACPI_HANDLE             Handle,
-    UINT32                  Function,
-    void                    *HandlerContext,
-    void                    **RegionContext)
+    ACPI_HANDLE             Handle __unused,
+    UINT32                  Function __unused,
+    void                    *HandlerContext __unused,
+    void                    **RegionContext __unused)
 {
     ACPI_FUNCTION_TRACE ("EvCmosRegionSetup");
 
@@ -495,7 +495,7 @@ AcpiEvCmosRegionSetup (
 
 ACPI_STATUS
 AcpiEvDefaultRegionSetup (
-    ACPI_HANDLE             Handle,
+    ACPI_HANDLE             Handle __unused,
     UINT32                  Function,
     void                    *HandlerContext,
     void                    **RegionContext)

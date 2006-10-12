@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.29 2006/01/26 20:30:13 rpaulo Exp $	*/
+/*	$NetBSD: frag6.c,v 1.30 2006/10/12 01:32:38 christos Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.29 2006/01/26 20:30:13 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.30 2006/10/12 01:32:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,9 +175,7 @@ frag6_init()
  * Fragment input
  */
 int
-frag6_input(mp, offp, proto)
-	struct mbuf **mp;
-	int *offp, proto;
+frag6_input(struct mbuf **mp, int *offp, int proto __unused)
 {
 	struct mbuf *m = *mp, *t;
 	struct ip6_hdr *ip6;

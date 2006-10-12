@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_acctrace.c,v 1.21 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_acctrace.c,v 1.22 2006/10/12 01:31:50 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.21 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.22 2006/10/12 01:31:50 christos Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -55,7 +55,7 @@ static long numTracesSoFar;
 RF_DECLARE_MUTEX(rf_tracing_mutex)
 
 int
-rf_ConfigureAccessTrace(RF_ShutdownList_t **listp)
+rf_ConfigureAccessTrace(RF_ShutdownList_t **listp __unused)
 {
 	numTracesSoFar = 0;
 	rf_mutex_init(&rf_tracing_mutex);

@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.94 2006/08/30 02:10:38 christos Exp $	*/
+/*	$NetBSD: gus.c,v 1.95 2006/10/12 01:31:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.94 2006/08/30 02:10:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.95 2006/10/12 01:31:16 christos Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -660,7 +660,8 @@ struct audio_device gus_device = {
 
 
 int
-gusprobe(struct device *parent, struct cfdata *match, void *aux)
+gusprobe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct isa_attach_args *ia;
 	int iobase, recdrq;
@@ -820,7 +821,7 @@ bad1:
  */
 
 void
-gusattach(struct device *parent, struct device *self, void *aux)
+gusattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct gus_softc *sc;
 	struct isa_attach_args *ia;
@@ -2277,10 +2278,10 @@ gusmax_set_params(void *addr, int setmode, int usemode, audio_params_t *p,
 
 int
 gus_set_params(
-	void *addr,
-	int setmode, int usemode,
-	audio_params_t *p, audio_params_t *r,
-	stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+    void *addr,
+    int setmode, int usemode __unused,
+    audio_params_t *p, audio_params_t *r __unused,
+    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	audio_params_t hw;
 	struct gus_softc *sc;
@@ -2375,7 +2376,7 @@ gusmax_round_blocksize(void * addr, int blocksize,
 
 int
 gus_round_blocksize(void * addr, int blocksize,
-		    int mode, const audio_params_t *param)
+    int mode __unused, const audio_params_t *param __unused)
 {
 	struct gus_softc *sc;
 
@@ -2996,7 +2997,7 @@ gus_init_cs4231(struct gus_softc *sc)
  * Return info about the audio device, for the AUDIO_GETINFO ioctl
  */
 int
-gus_getdev(void * addr, struct audio_device *dev)
+gus_getdev(void *addr __unused, struct audio_device *dev)
 {
 
 	*dev = gus_device;
@@ -3008,7 +3009,8 @@ gus_getdev(void * addr, struct audio_device *dev)
  */
 
 int
-gus_set_in_gain(caddr_t addr, u_int gain, u_char balance)
+gus_set_in_gain(caddr_t addr __unused, u_int gain __unused,
+    u_char balance __unused)
 {
 
 	DPRINTF(("gus_set_in_gain called\n"));
@@ -3016,7 +3018,7 @@ gus_set_in_gain(caddr_t addr, u_int gain, u_char balance)
 }
 
 int
-gus_get_in_gain(caddr_t addr)
+gus_get_in_gain(caddr_t addr __unused)
 {
 
 	DPRINTF(("gus_get_in_gain called\n"));
@@ -3656,7 +3658,7 @@ gusmax_get_props(void *addr)
 }
 
 STATIC int
-gusmax_mixer_query_devinfo(void *addr, mixer_devinfo_t *dip)
+gusmax_mixer_query_devinfo(void *addr __unused, mixer_devinfo_t *dip)
 {
 
 	DPRINTF(("gusmax_query_devinfo: index=%d\n", dip->index));
@@ -4001,7 +4003,7 @@ mute:
 }
 
 STATIC int
-gus_query_encoding(void *addr, struct audio_encoding *fp)
+gus_query_encoding(void *addr __unused, struct audio_encoding *fp)
 {
 
 	switch (fp->index) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.h,v 1.10 2006/02/16 20:17:16 perry Exp $	*/
+/*	$NetBSD: aic79xx_osm.h,v 1.11 2006/10/12 01:30:58 christos Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -32,9 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: aic79xx_osm.h,v 1.10 2006/02/16 20:17:16 perry Exp $
+ * $NetBSD: aic79xx_osm.h,v 1.11 2006/10/12 01:30:58 christos Exp $
  *
- * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.10 2006/02/16 20:17:16 perry Exp $
+ * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.11 2006/10/12 01:30:58 christos Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.h,v 1.9 2003/05/26 21:43:29 gibbs Exp $
  */
@@ -260,35 +260,35 @@ static __inline void ahd_list_lock(unsigned long *);
 static __inline void ahd_list_unlock(unsigned long *);
 
 static __inline void
-ahd_lockinit(struct ahd_softc *ahd)
+ahd_lockinit(struct ahd_softc *ahd __unused)
 {
 }
 
 static __inline void
-ahd_lock(struct ahd_softc *ahd, int *flags)
+ahd_lock(struct ahd_softc *ahd __unused, int *flags)
 {
 	*flags = splbio();
 }
 
 static __inline void
-ahd_unlock(struct ahd_softc *ahd, int *flags)
+ahd_unlock(struct ahd_softc *ahd __unused, int *flags)
 {
 	splx(*flags);
 }
 
 /* Lock held during command completion to the upper layer */
 static __inline void
-ahd_done_lockinit(struct ahd_softc *ahd)
+ahd_done_lockinit(struct ahd_softc *ahd __unused)
 {
 }
 
 static __inline void
-ahd_done_lock(struct ahd_softc *ahd, unsigned long *flags)
+ahd_done_lock(struct ahd_softc *ahd __unused, unsigned long *flags __unused)
 {
 }
 
 static __inline void
-ahd_done_unlock(struct ahd_softc *ahd, unsigned long *flags)
+ahd_done_unlock(struct ahd_softc *ahd __unused, unsigned long *flags __unused)
 {
 }
 
@@ -299,12 +299,12 @@ ahd_list_lockinit(void)
 }
 
 static __inline void
-ahd_list_lock(unsigned long *flags)
+ahd_list_lock(unsigned long *flags __unused)
 {
 }
 
 static __inline void
-ahd_list_unlock(unsigned long *flags)
+ahd_list_unlock(unsigned long *flags __unused)
 {
 }
 /****************************** OS Primitives *********************************/
@@ -362,7 +362,7 @@ uint32_t ahd_get_scsi_status(struct scb *scb)
 }
 
 static __inline
-void ahd_set_transaction_tag(struct scb *scb, int enabled, u_int type)
+void ahd_set_transaction_tag(struct scb *scb, int enabled __unused, u_int type)
 {
 	scb->xs->xs_tag_type = type;
 }
@@ -387,7 +387,7 @@ void ahd_set_residual(struct scb *scb, u_long resid)
 
 
 static __inline
-void ahd_set_sense_residual(struct scb *scb, u_long resid)
+void ahd_set_sense_residual(struct scb *scb __unused, u_long resid __unused)
 {
   //scb->xs->sense.scsi_sense.extra_len = resid; /* ??? */
 }
@@ -406,19 +406,19 @@ int ahd_perform_autosense(struct scb *scb)
 }
 
 static __inline uint32_t
-ahd_get_sense_bufsize(struct ahd_softc *ahd, struct scb *scb)
+ahd_get_sense_bufsize(struct ahd_softc *ahd __unused, struct scb *scb __unused)
 {
 	return (sizeof(struct scsi_sense_data));
 }
 
 static __inline void
-ahd_freeze_simq(struct ahd_softc *ahd)
+ahd_freeze_simq(struct ahd_softc *ahd __unused)
 {
 	/* do nothing for now */
 }
 
 static __inline void
-ahd_release_simq(struct ahd_softc *ahd)
+ahd_release_simq(struct ahd_softc *ahd __unused)
 {
 	/* do nothing for now */
 }
@@ -435,24 +435,24 @@ ahd_freeze_scb(struct scb *scb)
 }
 
 static __inline void
-ahd_platform_freeze_devq(struct ahd_softc *ahd, struct scb *scb)
+ahd_platform_freeze_devq(struct ahd_softc *ahd __unused, struct scb *scb __unused)
 {
 	/* Nothing to do here for NetBSD */
 }
 
 static __inline int
-ahd_platform_abort_scbs(struct ahd_softc *ahd, int target,
-			char channel, int lun, u_int tag,
-			role_t role, uint32_t status)
+ahd_platform_abort_scbs(struct ahd_softc *ahd __unused, int target __unused,
+    char channel __unused, int lun __unused, u_int tag __unused,
+    role_t role __unused, uint32_t status __unused)
 {
 	/* Nothing to do here for NetBSD */
 	return (0);
 }
 
 static __inline void
-ahd_platform_scb_free(struct ahd_softc *ahd, struct scb *scb)
+ahd_platform_scb_free(struct ahd_softc *ahd __unused, struct scb *scb __unused)
 {
-#ifdef _FreeBSD_
+#ifdef __FreeBSD__
 	/* What do we do to generically handle driver resource shortages??? */
 	if ((ahd->flags & AHD_RESOURCE_SHORTAGE) != 0
 	 && scb->io_ctx != NULL
@@ -526,13 +526,13 @@ int aic7770_map_int(struct ahd_softc *, int);
 static __inline void	ahd_print_path(struct ahd_softc *, struct scb *);
 static __inline void	ahd_platform_dump_card_state(struct ahd_softc *);
 static __inline void
-ahd_print_path(struct ahd_softc *ahd, struct scb *scb)
+ahd_print_path(struct ahd_softc *ahd, struct scb *scb __unused)
 {
 	printf("%s:", ahd->sc_dev.dv_xname);
 }
 
 static __inline void
-ahd_platform_dump_card_state(struct ahd_softc *ahd)
+ahd_platform_dump_card_state(struct ahd_softc *ahd __unused)
 {
 	/* Nothing to do here for NetBSD */
 }
@@ -556,7 +556,7 @@ int 	  ahd_detach(struct device *, int);
 void			ahd_platform_intr(void *);
 static __inline void	ahd_platform_flushwork(struct ahd_softc *);
 static __inline void
-ahd_platform_flushwork(struct ahd_softc *ahd)
+ahd_platform_flushwork(struct ahd_softc *ahd __unused)
 {
 	/* Nothing to do here for NetBSD */
 }

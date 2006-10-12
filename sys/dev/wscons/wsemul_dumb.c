@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_dumb.c,v 1.12 2006/08/28 21:37:37 christos Exp $ */
+/* $NetBSD: wsemul_dumb.c,v 1.13 2006/10/12 01:32:06 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_dumb.c,v 1.12 2006/08/28 21:37:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_dumb.c,v 1.13 2006/10/12 01:32:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ wsemul_dumb_attach(int console, const struct wsscreen_descr *type,
 
 void
 wsemul_dumb_output(void *cookie, const u_char *data, u_int count,
-	int kernel /* ignored */)
+    int kernel __unused)
 {
 	struct wsemul_dumb_emuldata *edp = cookie;
 	u_char c;
@@ -200,7 +200,8 @@ wsemul_dumb_output(void *cookie, const u_char *data, u_int count,
 }
 
 int
-wsemul_dumb_translate(void *cookie, keysym_t in, const char **out)
+wsemul_dumb_translate(void *cookie __unused, keysym_t in __unused,
+    const char **out __unused)
 {
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.3 2006/02/19 14:59:22 thorpej Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.4 2006/10/12 01:30:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.3 2006/02/19 14:59:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.4 2006/10/12 01:30:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,8 @@ CFATTACH_DECL(sony_acpi, sizeof(struct sony_acpi_softc),
     sony_acpi_match, sony_acpi_attach, NULL, NULL);
 
 static int
-sony_acpi_match(struct device *parent, struct cfdata *match, void *aux)
+sony_acpi_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -127,7 +128,8 @@ sony_sysctl_helper(SYSCTLFN_ARGS)
 }
 
 static ACPI_STATUS
-sony_walk_cb(ACPI_HANDLE hnd, UINT32 v, void *context, void **status)
+sony_walk_cb(ACPI_HANDLE hnd, UINT32 v __unused, void *context,
+    void **status __unused)
 {
 	struct sony_acpi_softc *sc = (void*)context;
 	const struct sysctlnode *node, *snode;
@@ -210,7 +212,7 @@ sony_acpi_eval_set_integer(ACPI_HANDLE handle, const char *path,
 }
 
 static void
-sony_acpi_attach(struct device *parent, struct device *self, void *aux)
+sony_acpi_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct sony_acpi_softc *sc = (void *)self;
 	struct acpi_attach_args *aa = aux;

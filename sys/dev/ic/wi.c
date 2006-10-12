@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.215 2006/07/21 16:48:49 ad Exp $	*/
+/*	$NetBSD: wi.c,v 1.216 2006/10/12 01:31:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.215 2006/07/21 16:48:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.216 2006/10/12 01:31:02 christos Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1514,7 +1514,7 @@ wi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 }
 
 STATIC struct ieee80211_node *
-wi_node_alloc(struct ieee80211_node_table *nt)
+wi_node_alloc(struct ieee80211_node_table *nt __unused)
 {
 	struct wi_node *wn =
 	    malloc(sizeof(struct wi_node), M_DEVBUF, M_NOWAIT | M_ZERO);
@@ -1569,7 +1569,7 @@ wi_sync_bssid(struct wi_softc *sc, u_int8_t new_bssid[IEEE80211_ADDR_LEN])
 
 static inline void
 wi_rssadapt_input(struct ieee80211com *ic, struct ieee80211_node *ni,
-    struct ieee80211_frame *wh, int rssi)
+    struct ieee80211_frame *wh __unused, int rssi)
 {
 	struct wi_node *wn;
 
@@ -2536,7 +2536,7 @@ wi_key_delete(struct ieee80211com *ic, const struct ieee80211_key *k)
 
 static int
 wi_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
-	const u_int8_t mac[IEEE80211_ADDR_LEN])
+	const u_int8_t mac[IEEE80211_ADDR_LEN] __unused)
 {
 	struct wi_softc *sc = ic->ic_ifp->if_softc;
 
@@ -2551,7 +2551,7 @@ wi_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
 }
 
 STATIC void
-wi_key_update_begin(struct ieee80211com *ic)
+wi_key_update_begin(struct ieee80211com *ic __unused)
 {
 	DPRINTF(("%s:\n", __func__));
 }
@@ -3042,7 +3042,7 @@ wi_write_rid(struct wi_softc *sc, int rid, void *buf, int buflen)
 }
 
 STATIC void
-wi_rssadapt_updatestats_cb(void *arg, struct ieee80211_node *ni)
+wi_rssadapt_updatestats_cb(void *arg __unused, struct ieee80211_node *ni)
 {
 	struct wi_node *wn = (void*)ni;
 	ieee80211_rssadapt_updatestats(&wn->wn_rssadapt);

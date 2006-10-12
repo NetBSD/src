@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.10 2006/02/20 16:50:37 thorpej Exp $ */
+/* $NetBSD: mtd803.c,v 1.11 2006/10/12 01:31:01 christos Exp $ */
 
 /*-
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.10 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.11 2006/10/12 01:31:01 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -414,8 +414,7 @@ mtd_init_desc(sc)
 
 
 void
-mtd_mii_statchg(self)
-	struct device *self;
+mtd_mii_statchg(struct device *self __unused)
 {
 	/*struct mtd_softc *sc = (void *)self;*/
 
@@ -424,9 +423,7 @@ mtd_mii_statchg(self)
 
 
 int
-mtd_mii_readreg(self, phy, reg)
-	struct device *self;
-	int phy, reg;
+mtd_mii_readreg(struct device *self, int phy __unused, int reg)
 {
 	struct mtd_softc *sc = (void *)self;
 
@@ -435,9 +432,7 @@ mtd_mii_readreg(self, phy, reg)
 
 
 void
-mtd_mii_writereg(self, phy, reg, val)
-	struct device *self;
-	int phy, reg, val;
+mtd_mii_writereg(struct device *self, int phy __unused, int reg, int val)
 {
 	struct mtd_softc *sc = (void *)self;
 

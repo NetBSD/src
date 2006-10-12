@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigaction.c,v 1.27 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_sigaction.c,v 1.28 2006/10/12 01:30:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sigaction.c,v 1.27 2005/12/11 12:20:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sigaction.c,v 1.28 2006/10/12 01:30:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,10 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sigaction.c,v 1.27 2005/12/11 12:20:19 christo
  * and just call sigaction().
  */
 int
-linux_sys_sigaction(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_sigaction(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct linux_sys_sigaction_args /* {
 		syscallarg(int) signum;

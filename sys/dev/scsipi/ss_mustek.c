@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.33 2006/09/03 06:22:05 christos Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.34 2006/10/12 01:31:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.33 2006/09/03 06:22:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.34 2006/10/12 01:31:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -148,7 +148,7 @@ mustek_attach(struct ss_softc *ss, struct scsipibus_attach_args *sa)
 }
 
 static int
-mustek_get_params (struct ss_softc *ss)
+mustek_get_params (struct ss_softc *ss __unused)
 {
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate-sample.c,v 1.10 2006/04/14 20:31:28 christos Exp $ */
+/*	$NetBSD: athrate-sample.c,v 1.11 2006/10/12 01:30:59 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 John Bicket
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/sample/sample.c,v 1.9 2005/07/22 16:50:17 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.10 2006/04/14 20:31:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.11 2006/10/12 01:30:59 christos Exp $");
 #endif
 
 
@@ -148,14 +148,14 @@ rate_to_ndx(struct sample_node *sn, int rate) {
 }
 
 void
-ath_rate_node_init(struct ath_softc *sc, struct ath_node *an)
+ath_rate_node_init(struct ath_softc *sc, struct ath_node *an __unused)
 {
 	DPRINTF(sc, "%s:\n", __func__);
 	/* NB: assumed to be zero'd by caller */
 }
 
 void
-ath_rate_node_cleanup(struct ath_softc *sc, struct ath_node *an)
+ath_rate_node_cleanup(struct ath_softc *sc, struct ath_node *an __unused)
 {
 	DPRINTF(sc, "%s:\n", __func__);
 }
@@ -363,7 +363,7 @@ ath_rate_findrate(struct ath_softc *sc, struct ath_node *an,
 
 void
 ath_rate_setupxtxdesc(struct ath_softc *sc, struct ath_node *an,
-		      struct ath_desc *ds, int shortPreamble, u_int8_t rix)
+    struct ath_desc *ds, int shortPreamble, u_int8_t rix __unused)
 {
 	struct sample_node *sn = ATH_NODE_SAMPLE(an);
 	int rateCode = -1;

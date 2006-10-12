@@ -1,4 +1,4 @@
-/*	$NetBSD: amd756.c,v 1.5 2005/12/11 12:17:43 christos Exp $	*/
+/*	$NetBSD: amd756.c,v 1.6 2006/10/12 01:30:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amd756.c,v 1.5 2005/12/11 12:17:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd756.c,v 1.6 2006/10/12 01:30:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ amd756_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
 }
 
 int
-amd756_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
+amd756_getclink(pciintr_icu_handle_t v __unused, int link, int *clinkp)
 {
 	if (AMD756_LEGAL_LINK(link - 1) == 0)
 		return (1);

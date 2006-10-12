@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.34 2006/09/03 05:19:38 christos Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.35 2006/10/12 01:30:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.34 2006/09/03 05:19:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.35 2006/10/12 01:30:51 christos Exp $");
 
 #include "sequencer.h"
 
@@ -148,7 +148,7 @@ sequencerattach(int n)
 }
 
 static int
-sequenceropen(dev_t dev, int flags, int ifmt, struct lwp *l)
+sequenceropen(dev_t dev, int flags, int ifmt __unused, struct lwp *l __unused)
 {
 	int unit = SEQUENCERUNIT(dev);
 	struct sequencer_softc *sc;
@@ -284,7 +284,8 @@ seq_startoutput(struct sequencer_softc *sc)
 }
 
 static int
-sequencerclose(dev_t dev, int flags, int ifmt, struct lwp *l)
+sequencerclose(dev_t dev, int flags __unused, int ifmt __unused,
+    struct lwp *l __unused)
 {
 	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
 	int n, s;
@@ -435,7 +436,8 @@ sequencerwrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 static int
-sequencerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+sequencerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag __unused,
+    struct lwp *l)
 {
 	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
 	struct synth_info *si;
@@ -640,7 +642,7 @@ filt_sequencerrdetach(struct knote *kn)
 }
 
 static int
-filt_sequencerread(struct knote *kn, long hint)
+filt_sequencerread(struct knote *kn, long hint __unused)
 {
 	struct sequencer_softc *sc = kn->kn_hook;
 
@@ -667,7 +669,7 @@ filt_sequencerwdetach(struct knote *kn)
 }
 
 static int
-filt_sequencerwrite(struct knote *kn, long hint)
+filt_sequencerwrite(struct knote *kn, long hint __unused)
 {
 	struct sequencer_softc *sc = kn->kn_hook;
 
@@ -836,7 +838,7 @@ seq_do_chncommon(struct sequencer_softc *sc, seq_event_t *b)
 }
 
 static int
-seq_do_local(struct sequencer_softc *sc, seq_event_t *b)
+seq_do_local(struct sequencer_softc *sc __unused, seq_event_t *b __unused)
 {
 	return (EINVAL);
 }
@@ -1093,7 +1095,7 @@ seq_to_new(seq_event_t *ev, struct uio *uio)
 /**********************************************/
 
 void
-midiseq_in(struct midi_dev *md, u_char *msg, int len)
+midiseq_in(struct midi_dev *md, u_char *msg, int len __unused)
 {
 	int unit = md->unit;
 	seq_event_t ev;
@@ -1184,14 +1186,14 @@ midiseq_close(struct midi_dev *md)
 }
 
 static void
-midiseq_reset(struct midi_dev *md)
+midiseq_reset(struct midi_dev *md __unused)
 {
 	/* XXX send GM reset? */
 	DPRINTFN(3, ("midiseq_reset: %d\n", md->unit));
 }
 
 static int
-midiseq_out(struct midi_dev *md, u_char *bf, u_int cc, int chk)
+midiseq_out(struct midi_dev *md, u_char *bf, u_int cc, int chk __unused)
 {
 	DPRINTFN(5, ("midiseq_out: m=%p, unit=%d, bf[0]=0x%02x, cc=%d\n",
 		     md->msc, md->unit, bf[0], cc));

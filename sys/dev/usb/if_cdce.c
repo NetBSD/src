@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.10 2006/09/07 02:40:33 dogcow Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.11 2006/10/12 01:31:59 christos Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.10 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.11 2006/10/12 01:31:59 christos Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -727,7 +727,8 @@ done:
 }
 
 Static void
-cdce_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+cdce_txeof(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct cdce_chain	*c = priv;
 	struct cdce_softc	*sc = c->cdce_sc;

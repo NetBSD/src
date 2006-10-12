@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.121 2006/10/04 15:59:08 christos Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.122 2006/10/12 01:31:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.121 2006/10/04 15:59:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.122 2006/10/12 01:31:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -792,9 +792,8 @@ ncr53c9x_select(sc, ecb)
 }
 
 void
-ncr53c9x_free_ecb(sc, ecb)
-	struct ncr53c9x_softc *sc;
-	struct ncr53c9x_ecb *ecb;
+ncr53c9x_free_ecb(struct ncr53c9x_softc *sc __unused,
+    struct ncr53c9x_ecb *ecb)
 {
 	int s;
 
@@ -806,9 +805,7 @@ ncr53c9x_free_ecb(sc, ecb)
 }
 
 struct ncr53c9x_ecb *
-ncr53c9x_get_ecb(sc, flags)
-	struct ncr53c9x_softc *sc;
-	int flags;
+ncr53c9x_get_ecb(struct ncr53c9x_softc *sc __unused, int flags __unused)
 {
 	struct ncr53c9x_ecb *ecb;
 	int s;
@@ -1021,12 +1018,8 @@ ncr53c9x_poll(sc, xs, count)
 }
 
 int
-ncr53c9x_ioctl(chan, cmd, arg, flag, p)
-	struct scsipi_channel *chan;
-	u_long cmd;
-	caddr_t arg;
-	int flag;
-	struct proc *p;
+ncr53c9x_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t arg __unused,
+    int flag __unused, struct proc *p __unused)
 {
 	struct ncr53c9x_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	int s, error = 0;

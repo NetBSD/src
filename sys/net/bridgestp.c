@@ -1,4 +1,4 @@
-/*	$NetBSD: bridgestp.c,v 1.8 2006/04/15 02:38:19 christos Exp $	*/
+/*	$NetBSD: bridgestp.c,v 1.9 2006/10/12 01:32:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.8 2006/04/15 02:38:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.9 2006/10/12 01:32:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,7 +309,7 @@ bstp_supersedes_port_info(struct bridge_softc *sc, struct bridge_iflist *bif,
 }
 
 void
-bstp_record_config_information(struct bridge_softc *sc,
+bstp_record_config_information(struct bridge_softc *sc __unused,
     struct bridge_iflist *bif, struct bstp_config_unit *cu)
 {
 	bif->bif_designated_root = cu->cu_rootid;
@@ -520,7 +520,8 @@ bstp_port_state_selection(struct bridge_softc *sc)
 }
 
 void
-bstp_make_forwarding(struct bridge_softc *sc, struct bridge_iflist *bif)
+bstp_make_forwarding(struct bridge_softc *sc __unused,
+    struct bridge_iflist *bif)
 {
 	if (bif->bif_state == BSTP_IFSTATE_BLOCKING) {
 		bstp_set_port_state(bif, BSTP_IFSTATE_LISTENING);
@@ -713,7 +714,7 @@ bstp_received_config_bpdu(struct bridge_softc *sc, struct bridge_iflist *bif,
 
 void
 bstp_received_tcn_bpdu(struct bridge_softc *sc, struct bridge_iflist *bif,
-    struct bstp_tcn_unit *tcn)
+    struct bstp_tcn_unit *tcn __unused)
 {
 	if (bif->bif_state != BSTP_IFSTATE_DISABLED &&
 	    bstp_designated_port(sc, bif)) {

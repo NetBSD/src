@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.43 2006/10/04 15:57:45 christos Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.44 2006/10/12 01:31:01 christos Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.43 2006/10/04 15:57:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.44 2006/10/12 01:31:01 christos Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -457,7 +457,7 @@ spc_init(struct spc_softc *sc, int bus_reset)
 }
 
 void
-spc_free_acb(struct spc_softc *sc, struct spc_acb *acb, int flags)
+spc_free_acb(struct spc_softc *sc, struct spc_acb *acb, int flags __unused)
 {
 	int s;
 
@@ -650,7 +650,7 @@ spc_sched_msgout(struct spc_softc *sc, u_char m)
  * Set synchronous transfer offset and period.
  */
 integrate void
-spc_setsync(struct spc_softc *sc, struct spc_tinfo *ti)
+spc_setsync(struct spc_softc *sc __unused, struct spc_tinfo *ti __unused)
 {
 #if SPC_USE_SYNCHRONOUS
 	bus_space_tag_t iot = sc->sc_iot;

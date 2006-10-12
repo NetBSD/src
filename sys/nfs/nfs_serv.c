@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.117 2006/09/02 12:40:36 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.118 2006/10/12 01:32:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.117 2006/09/02 12:40:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.118 2006/10/12 01:32:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3433,11 +3433,12 @@ nfsrv_pathconf(nfsd, slp, lwp, mrq)
  */
 /* ARGSUSED */
 int
-nfsrv_null(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_null(
+    struct nfsrv_descript *nfsd,
+    struct nfssvc_sock *slp,
+    struct lwp *lwp __unused,
+    struct mbuf **mrq
+)
 {
 	struct mbuf *mrep = nfsd->nd_mrep;
 	caddr_t bpos;
@@ -3454,11 +3455,12 @@ nfsrv_null(nfsd, slp, lwp, mrq)
  */
 /* ARGSUSED */
 int
-nfsrv_noop(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nfsrv_noop(
+    struct nfsrv_descript *nfsd,
+    struct nfssvc_sock *slp,
+    struct lwp *lwp __unused,
+    struct mbuf **mrq
+)
 {
 	struct mbuf *mrep = nfsd->nd_mrep;
 	caddr_t bpos;

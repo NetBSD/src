@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.100 2006/10/05 14:48:33 chs Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.101 2006/10/12 01:32:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.100 2006/10/05 14:48:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.101 2006/10/12 01:32:53 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -100,10 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.100 2006/10/05 14:48:33 chs Exp $");
 
 /* ARGSUSED */
 int
-sys_sbrk(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_sbrk(struct lwp *l __unused, void *v __unused, register_t *retval __unused)
 {
 #if 0
 	struct sys_sbrk_args /* {
@@ -120,10 +117,7 @@ sys_sbrk(l, v, retval)
 
 /* ARGSUSED */
 int
-sys_sstk(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_sstk(struct lwp *l __unused, void *v __unused, register_t *retval __unused)
 {
 #if 0
 	struct sys_sstk_args /* {
@@ -140,10 +134,7 @@ sys_sstk(l, v, retval)
 
 /* ARGSUSED */
 int
-sys_mincore(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_mincore(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_mincore_args /* {
 		syscallarg(void *) addr;
@@ -546,10 +537,7 @@ sys_mmap(l, v, retval)
  */
 
 int
-sys___msync13(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys___msync13(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys___msync13_args /* {
 		syscallarg(caddr_t) addr;
@@ -641,10 +629,7 @@ sys___msync13(l, v, retval)
  */
 
 int
-sys_munmap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_munmap(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_munmap_args /* {
 		syscallarg(caddr_t) addr;
@@ -714,10 +699,7 @@ sys_munmap(l, v, retval)
  */
 
 int
-sys_mprotect(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_mprotect(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_mprotect_args /* {
 		syscallarg(caddr_t) addr;
@@ -757,10 +739,7 @@ sys_mprotect(l, v, retval)
  */
 
 int
-sys_minherit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_minherit(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_minherit_args /* {
 		syscallarg(caddr_t) addr;
@@ -799,10 +778,7 @@ sys_minherit(l, v, retval)
 
 /* ARGSUSED */
 int
-sys_madvise(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_madvise(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_madvise_args /* {
 		syscallarg(caddr_t) addr;
@@ -903,10 +879,7 @@ sys_madvise(l, v, retval)
  */
 
 int
-sys_mlock(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_mlock(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_mlock_args /* {
 		syscallarg(const void *) addr;
@@ -956,10 +929,7 @@ sys_mlock(l, v, retval)
  */
 
 int
-sys_munlock(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_munlock(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_munlock_args /* {
 		syscallarg(const void *) addr;
@@ -1002,10 +972,7 @@ sys_munlock(l, v, retval)
  */
 
 int
-sys_mlockall(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_mlockall(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_mlockall_args /* {
 		syscallarg(int) flags;
@@ -1029,10 +996,7 @@ sys_mlockall(l, v, retval)
  */
 
 int
-sys_munlockall(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_munlockall(struct lwp *l, void *v __unused, register_t *retval __unused)
 {
 	struct proc *p = l->l_proc;
 
@@ -1258,7 +1222,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 }
 
 vaddr_t
-uvm_default_mapaddr(struct proc *p, vaddr_t base, vsize_t sz)
+uvm_default_mapaddr(struct proc *p __unused, vaddr_t base __unused, vsize_t sz)
 {
 	return VM_DEFAULT_ADDRESS(base, sz);
 }

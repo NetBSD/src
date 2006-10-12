@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.24 2006/03/30 16:09:28 thorpej Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.25 2006/10/12 01:31:58 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.24 2006/03/30 16:09:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.25 2006/10/12 01:31:58 christos Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -91,7 +91,8 @@ static const struct scsipi_inquiry_pattern st_scsibus_patterns[] = {
 };
 
 static int
-st_scsibus_match(struct device *parent, struct cfdata *match, void *aux)
+st_scsibus_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	int priority;

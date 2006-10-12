@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.40 2006/09/27 21:51:48 cube Exp $	*/
+/*	$NetBSD: inphy.c,v 1.41 2006/10/12 01:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.40 2006/09/27 21:51:48 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.41 2006/10/12 01:31:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,8 @@ static const struct mii_phydesc inphys[] = {
 };
 
 static int
-inphymatch(struct device *parent, struct cfdata *match, void *aux)
+inphymatch(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -135,7 +136,7 @@ inphymatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-inphyattach(struct device *parent, struct device *self, void *aux)
+inphyattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;

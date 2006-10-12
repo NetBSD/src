@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.53 2005/12/26 19:24:00 perry Exp $ */
+/* $NetBSD: pnpbios.c,v 1.54 2006/10/12 01:30:44 christos Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.53 2005/12/26 19:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.54 2006/10/12 01:30:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,7 +245,8 @@ pnpbios_probe(void)
 }
 
 static int
-pnpbios_match(struct device *parent, struct cfdata *match, void *aux)
+pnpbios_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux __unused)
 {
 
 	/* There can be only one! */
@@ -276,7 +277,7 @@ pnpbios_mapit(u_long addr, u_long len, int prot)
 }
 
 static void
-pnpbios_attach(struct device *parent, struct device *self, void *aux)
+pnpbios_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pnpbios_softc *sc = (struct pnpbios_softc *)self;
 	struct pnpbios_attach_args *paa = aux;
@@ -1143,7 +1144,7 @@ pnp_newirq(struct pnpresources *r, const void *vres, size_t len)
 }
 
 static int
-pnp_newdma(struct pnpresources *r, const void *vres, size_t len)
+pnp_newdma(struct pnpresources *r, const void *vres, size_t len __unused)
 {
 	const struct pnpdmares *res;
 	struct pnp_dma *dma;
@@ -1165,7 +1166,7 @@ pnp_newdma(struct pnpresources *r, const void *vres, size_t len)
 }
 
 static int
-pnp_newioport(struct pnpresources *r, const void *vres, size_t len)
+pnp_newioport(struct pnpresources *r, const void *vres, size_t len __unused)
 {
 	const struct pnpportres *res;
 	struct pnp_io *io;
@@ -1192,7 +1193,8 @@ pnp_newioport(struct pnpresources *r, const void *vres, size_t len)
 }
 
 static int
-pnp_newfixedioport(struct pnpresources *r, const void *vres, size_t len)
+pnp_newfixedioport(struct pnpresources *r, const void *vres,
+    size_t len __unused)
 {
 	const struct pnpfixedportres *res;
 	struct pnp_io *io;
@@ -1217,7 +1219,7 @@ pnp_newfixedioport(struct pnpresources *r, const void *vres, size_t len)
 }
 
 static int
-pnp_compatid(struct pnpresources *r, const void *vres, size_t len)
+pnp_compatid(struct pnpresources *r, const void *vres, size_t len __unused)
 {
 	const struct pnpcompatres *res;
 	struct pnp_compatid *id;
@@ -1235,7 +1237,7 @@ pnp_compatid(struct pnpresources *r, const void *vres, size_t len)
 
 #ifdef PNPBIOSDEBUG
 static int
-pnp_debugdump(struct pnpresources *r, const void *vres, size_t len)
+pnp_debugdump(struct pnpresources *r __unused, const void *vres, size_t len)
 {
 	const uint8_t *res = vres;
 	int type, i;
@@ -1258,7 +1260,7 @@ pnp_debugdump(struct pnpresources *r, const void *vres, size_t len)
 #endif
 
 int
-pnpbios_io_map(pnpbios_tag_t pbt, struct pnpresources *resc,
+pnpbios_io_map(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
     int idx, bus_space_tag_t *tagp, bus_space_handle_t *hdlp)
 {
 	struct pnp_io *io;
@@ -1276,7 +1278,7 @@ pnpbios_io_map(pnpbios_tag_t pbt, struct pnpresources *resc,
 }
 
 void
-pnpbios_io_unmap(pnpbios_tag_t pbt, struct pnpresources *resc,
+pnpbios_io_unmap(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
     int idx, bus_space_tag_t tag, bus_space_handle_t hdl)
 {
 	struct pnp_io *io;
@@ -1292,7 +1294,7 @@ pnpbios_io_unmap(pnpbios_tag_t pbt, struct pnpresources *resc,
 }
 
 int
-pnpbios_getiobase(pnpbios_tag_t pbt, struct pnpresources *resc,
+pnpbios_getiobase(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
     int idx, bus_space_tag_t *tagp, int *basep)
 {
 	struct pnp_io *io;
@@ -1312,7 +1314,7 @@ pnpbios_getiobase(pnpbios_tag_t pbt, struct pnpresources *resc,
 }
 
 int
-pnpbios_getiosize(pnpbios_tag_t pbt, struct pnpresources *resc,
+pnpbios_getiosize(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
     int idx, int *sizep)
 {
         struct pnp_io *io;
@@ -1329,7 +1331,7 @@ pnpbios_getiosize(pnpbios_tag_t pbt, struct pnpresources *resc,
 }
 
 void *
-pnpbios_intr_establish(pnpbios_tag_t pbt, struct pnpresources *resc,
+pnpbios_intr_establish(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
     int idx, int level, int (*fcn)(void *), void *arg)
 {
 	struct pnp_irq *irq;
@@ -1349,7 +1351,7 @@ pnpbios_intr_establish(pnpbios_tag_t pbt, struct pnpresources *resc,
 }
 
 int
-pnpbios_getirqnum(pnpbios_tag_t pbt, struct pnpresources *resc,
+pnpbios_getirqnum(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
     int idx, int *irqp, int *istp)
 {
 	struct pnp_irq *irq;
@@ -1369,7 +1371,7 @@ pnpbios_getirqnum(pnpbios_tag_t pbt, struct pnpresources *resc,
 }
 
 int
-pnpbios_getdmachan(pnpbios_tag_t pbt, struct pnpresources *resc,
+pnpbios_getdmachan(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
     int idx, int *chanp)
 {
 	struct pnp_dma *dma;

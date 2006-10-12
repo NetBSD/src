@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.47 2006/09/03 21:05:01 christos Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.48 2006/10/12 01:30:42 christos Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.47 2006/09/03 21:05:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.48 2006/10/12 01:30:42 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -276,7 +276,7 @@ cpu_Debugger()
  * that the effect is as if the arguments were passed call by reference.
  */
 void
-ddb_ipi(int cpl, struct trapframe frame)
+ddb_ipi(int cpl __unused, struct trapframe frame)
 {
 
 	ddb_suspend(&frame);
@@ -340,11 +340,11 @@ ddb_suspend(struct trapframe *frame)
 extern void cpu_debug_dump(void); /* XXX */
 
 void
-db_mach_cpu(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	const char *	modif;
+db_mach_cpu(
+	db_expr_t	addr,
+	int		have_addr,
+	db_expr_t	count __unused,
+	const char *	modif __unused)
 {
 	struct cpu_info *ci;
 	if (!have_addr) {

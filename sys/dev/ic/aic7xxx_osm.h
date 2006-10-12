@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.h,v 1.15 2006/05/21 23:56:09 christos Exp $	*/
+/*	$NetBSD: aic7xxx_osm.h,v 1.16 2006/10/12 01:30:59 christos Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -263,35 +263,35 @@ static __inline void ahc_list_lock(unsigned long *);
 static __inline void ahc_list_unlock(unsigned long *);
 
 static __inline void
-ahc_lockinit(struct ahc_softc *ahc)
+ahc_lockinit(struct ahc_softc *ahc __unused)
 {
 }
 
 static __inline void
-ahc_lock(struct ahc_softc *ahc, unsigned long *flags)
+ahc_lock(struct ahc_softc *ahc __unused, unsigned long *flags)
 {
 	*flags = splbio();
 }
 
 static __inline void
-ahc_unlock(struct ahc_softc *ahc, unsigned long *flags)
+ahc_unlock(struct ahc_softc *ahc __unused, unsigned long *flags)
 {
 	splx(*flags);
 }
 
 /* Lock held during command completion to the upper layer */
 static __inline void
-ahc_done_lockinit(struct ahc_softc *ahc)
+ahc_done_lockinit(struct ahc_softc *ahc __unused)
 {
 }
 
 static __inline void
-ahc_done_lock(struct ahc_softc *ahc, unsigned long *flags)
+ahc_done_lock(struct ahc_softc *ahc __unused, unsigned long *flags __unused)
 {
 }
 
 static __inline void
-ahc_done_unlock(struct ahc_softc *ahc, unsigned long *flags)
+ahc_done_unlock(struct ahc_softc *ahc __unused, unsigned long *flags __unused)
 {
 }
 
@@ -302,12 +302,12 @@ ahc_list_lockinit()
 }
 
 static __inline void
-ahc_list_lock(unsigned long *flags)
+ahc_list_lock(unsigned long *flags __unused)
 {
 }
 
 static __inline void
-ahc_list_unlock(unsigned long *flags)
+ahc_list_unlock(unsigned long *flags __unused)
 {
 }
 /****************************** OS Primitives *********************************/
@@ -357,7 +357,7 @@ uint32_t ahc_get_scsi_status(struct scb *scb)
 }
 
 static __inline
-void ahc_set_transaction_tag(struct scb *scb, int enabled, u_int type)
+void ahc_set_transaction_tag(struct scb *scb, int enabled __unused, u_int type)
 {
 	scb->xs->xs_tag_type = type;
 }
@@ -381,9 +381,11 @@ void ahc_set_residual(struct scb *scb, u_long resid)
 }
 
 static __inline
-void ahc_set_sense_residual(struct scb *scb, u_long resid)
+void ahc_set_sense_residual(struct scb *scb __unused, u_long resid __unused)
 {
-  //scb->io_ctx->csio.sense_resid = resid;
+#ifdef notdef
+    scb->io_ctx->csio.sense_resid = resid;
+#endif
 }
 
 static __inline
@@ -399,7 +401,7 @@ int ahc_perform_autosense(struct scb *scb)
 }
 
 static __inline uint32_t
-ahc_get_sense_bufsize(struct ahc_softc *ahc, struct scb *scb)
+ahc_get_sense_bufsize(struct ahc_softc *ahc __unused, struct scb *scb __unused)
 {
 	return (sizeof(struct scsi_sense_data));
 }
@@ -416,22 +418,22 @@ ahc_freeze_scb(struct scb *scb)
 }
 
 static __inline void
-ahc_platform_freeze_devq(struct ahc_softc *ahc, struct scb *scb)
+ahc_platform_freeze_devq(struct ahc_softc *ahc __unused, struct scb *scb __unused)
 {
 }
 
 static __inline int
-ahc_platform_abort_scbs(struct ahc_softc *ahc, int target,
-			char channel, int lun, u_int tag,
-			role_t role, uint32_t status)
+ahc_platform_abort_scbs(struct ahc_softc *ahc __unused, int target __unused,
+    char channel __unused, int lun __unused, u_int tag __unused,
+    role_t role __unused, uint32_t status __unused)
 {
 	return (0);
 }
 
 static __inline void
-ahc_platform_scb_free(struct ahc_softc *ahc, struct scb *scb)
+ahc_platform_scb_free(struct ahc_softc *ahc __unused, struct scb *scb __unused)
 {
-#ifdef _FreeBSD_
+#ifdef __FreeBSD__
 	/* What do we do to generically handle driver resource shortages??? */
 	if ((ahc->flags & AHC_RESOURCE_SHORTAGE) != 0
 	 && scb->io_ctx != NULL
@@ -504,13 +506,13 @@ static __inline void	ahc_print_path(struct ahc_softc *, struct scb *);
 static __inline void	ahc_platform_dump_card_state(struct ahc_softc *);
 
 static __inline void
-ahc_print_path(struct ahc_softc *ahc, struct scb *scb)
+ahc_print_path(struct ahc_softc *ahc, struct scb *scb __unused)
 {
 	printf("%s:", ahc->sc_dev.dv_xname);
 }
 
 static __inline void
-ahc_platform_dump_card_state(struct ahc_softc *ahc)
+ahc_platform_dump_card_state(struct ahc_softc *ahc __unused)
 {
 }
 /**************************** Transfer Settings *******************************/
@@ -530,7 +532,7 @@ int	  ahc_detach(struct device *, int);
 void			ahc_platform_intr(void *);
 static __inline void	ahc_platform_flushwork(struct ahc_softc *);
 static __inline void
-ahc_platform_flushwork(struct ahc_softc *ahc)
+ahc_platform_flushwork(struct ahc_softc *ahc __unused)
 {
 }
 

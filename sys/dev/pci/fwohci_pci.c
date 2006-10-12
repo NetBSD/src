@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.23 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.24 2006/10/12 01:31:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.23 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.24 2006/10/12 01:31:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,8 @@ CFATTACH_DECL(fwohci_pci, sizeof(struct fwohci_pci_softc),
     fwohci_pci_match, fwohci_pci_attach, NULL, NULL);
 
 static int
-fwohci_pci_match(struct device *parent, struct cfdata *match, void *aux)
+fwohci_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -83,7 +84,8 @@ fwohci_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-fwohci_pci_attach(struct device *parent, struct device *self, void *aux)
+fwohci_pci_attach(struct device *parent __unused, struct device *self,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 	struct fwohci_pci_softc *psc = (struct fwohci_pci_softc *) self;

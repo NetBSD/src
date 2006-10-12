@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.c,v 1.10 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: smbfs_subr.c,v 1.11 2006/10/12 01:32:14 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.10 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.11 2006/10/12 01:32:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,13 +134,13 @@ static const int64_t DIFF1970TO1601 = 11644473600ULL;
  * Time from server comes as UTC, so no need to use tz
  */
 void
-smb_time_NT2local(int64_t nsec, int tzoff, struct timespec *tsp)
+smb_time_NT2local(int64_t nsec, int tzoff __unused, struct timespec *tsp)
 {
 	smb_time_server2local(nsec / 10000000 - DIFF1970TO1601, 0, tsp);
 }
 
 void
-smb_time_local2NT(struct timespec *tsp, int tzoff, int64_t *nsec)
+smb_time_local2NT(struct timespec *tsp, int tzoff __unused, int64_t *nsec)
 {
 	u_long seconds;
 
@@ -318,7 +318,8 @@ smbfs_fullpath(struct mbchain *mbp, struct smb_vc *vcp, struct smbnode *dnp,
 }
 
 int
-smbfs_fname_tolocal(struct smb_vc *vcp, char *name, int nmlen, int caseopt)
+smbfs_fname_tolocal(struct smb_vc *vcp, char *name, int nmlen,
+    int caseopt __unused)
 {
 /*	if (caseopt & SMB_CS_UPPER)
 		iconv_convmem(vcp->vc_toupper, name, name, nmlen);

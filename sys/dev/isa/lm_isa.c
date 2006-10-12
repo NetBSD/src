@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa.c,v 1.11 2005/12/11 12:22:03 christos Exp $ */
+/*	$NetBSD: lm_isa.c,v 1.12 2006/10/12 01:31:17 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.11 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.12 2006/10/12 01:31:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,10 +77,8 @@ CFATTACH_DECL(lm_isa, sizeof(struct lm_softc),
 
 
 int
-lm_isa_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+lm_isa_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -124,9 +122,7 @@ lm_isa_match(parent, match, aux)
 
 
 void
-lm_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lm_isa_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct lm_softc *lmsc = (void *)self;
 	int iobase;

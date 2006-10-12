@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_audit.c,v 1.3 2005/12/11 12:19:56 christos Exp $ */
+/*	$NetBSD: darwin_audit.c,v 1.4 2006/10/12 01:30:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_audit.c,v 1.3 2005/12/11 12:19:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_audit.c,v 1.4 2006/10/12 01:30:47 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,10 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_audit.c,v 1.3 2005/12/11 12:19:56 christos Ex
 #include <compat/darwin/darwin_syscallargs.h>
 
 int
-darwin_sys_audit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_audit(struct lwp *l __unused, void *v, register_t *retval __unused)
 {
 	struct darwin_sys_audit_args /* {
 		syscallarg(void *) record;
@@ -74,10 +71,7 @@ darwin_sys_audit(l, v, retval)
 }
 
 int
-darwin_sys_auditon(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_auditon(struct lwp *l __unused, void *v, register_t *retval __unused)
 {
 	struct darwin_sys_auditon_args /* {
 		syscallarg(int) cmd;
@@ -92,10 +86,7 @@ darwin_sys_auditon(l, v, retval)
 }
 
 int
-darwin_sys_getauid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_getauid(struct lwp *l __unused, void *v, register_t *retval __unused)
 {
 	struct darwin_sys_getauid_args /* {
 		syscallarg(darwin_au_id_t *) auid;
@@ -108,10 +99,7 @@ darwin_sys_getauid(l, v, retval)
 }
 
 int
-darwin_sys_setauid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_setauid(struct lwp *l __unused, void *v, register_t *retval __unused)
 {
 	struct darwin_sys_setauid_args /* {
 		syscallarg(darwin_au_id_t *) auid;
@@ -124,10 +112,8 @@ darwin_sys_setauid(l, v, retval)
 }
 
 int
-darwin_sys_getauditinfo(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_getauditinfo(struct lwp *l __unused, void *v,
+    register_t *retval __unused)
 {
 	struct darwin_sys_getauditinfo_args /* {
 		syscallarg(struct darwin_auditinfo *) auditinfo;
@@ -140,10 +126,8 @@ darwin_sys_getauditinfo(l, v, retval)
 }
 
 int
-darwin_sys_setauditinfo(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_setauditinfo(struct lwp *l __unused, void *v,
+    register_t *retval __unused)
 {
 	struct darwin_sys_setauditinfo_args /* {
 		syscallarg(struct darwin_auditinfo *) auditinfo;
@@ -156,10 +140,8 @@ darwin_sys_setauditinfo(l, v, retval)
 }
 
 int
-darwin_sys_getaudit_addr(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_getaudit_addr(struct lwp *l __unused, void *v,
+    register_t *retval __unused)
 {
 	struct darwin_sys_getaudit_addr_args /* {
 		syscallarg(struct darwin_audit_addr *) auditinfo_addr;
@@ -173,10 +155,8 @@ darwin_sys_getaudit_addr(l, v, retval)
 }
 
 int
-darwin_sys_setaudit_addr(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_setaudit_addr(struct lwp *l __unused, void *v,
+    register_t *retval __unused)
 {
 	struct darwin_sys_setaudit_addr_args /* {
 		syscallarg(struct darwin_audit_addr *) auditinfo_addr;
@@ -190,10 +170,8 @@ darwin_sys_setaudit_addr(l, v, retval)
 }
 
 int
-darwin_sys_auditctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_auditctl(struct lwp *l __unused, void *v,
+    register_t *retval __unused)
 {
 	struct darwin_sys_auditctl_args /* {
 		syscallarg(char *) path;

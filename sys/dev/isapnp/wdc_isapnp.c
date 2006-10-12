@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.34 2006/03/29 06:51:47 thorpej Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.35 2006/10/12 01:31:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.34 2006/03/29 06:51:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.35 2006/10/12 01:31:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,8 @@ static void	wdc_isapnp_dma_finish(void *);
 #endif
 
 static int
-wdc_isapnp_probe(struct device *parent, struct cfdata *match, void *aux)
+wdc_isapnp_probe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	int pri, variant;
 
@@ -93,7 +94,8 @@ wdc_isapnp_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-wdc_isapnp_attach(struct device *parent, struct device *self, void *aux)
+wdc_isapnp_attach(struct device *parent __unused, struct device *self,
+    void *aux)
 {
 	struct wdc_isapnp_softc *sc = device_private(self);
 	struct wdc_regs *wdr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.122 2006/09/03 06:25:19 christos Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.123 2006/10/12 01:32:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.122 2006/09/03 06:25:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.123 2006/10/12 01:32:18 christos Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -484,7 +484,8 @@ pa_starved_p(struct pool_allocator *pa)
 }
 
 static int
-pool_reclaim_callback(struct callback_entry *ce, void *obj, void *arg)
+pool_reclaim_callback(struct callback_entry *ce __unused, void *obj,
+    void *arg __unused)
 {
 	struct pool *pp = obj;
 	struct pool_allocator *pa = pp->pr_alloc;
@@ -1619,7 +1620,7 @@ pool_reclaim(struct pool *pp)
  * Note, we must never be called from an interrupt context.
  */
 void
-pool_drain(void *arg)
+pool_drain(void *arg __unused)
 {
 	struct pool *pp;
 	int s;
@@ -1703,7 +1704,7 @@ pool_printit(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 }
 
 static void
-pool_print_pagelist(struct pool *pp, struct pool_pagelist *pl,
+pool_print_pagelist(struct pool *pp __unused, struct pool_pagelist *pl,
     void (*pr)(const char *, ...))
 {
 	struct pool_item_header *ph;
@@ -2353,7 +2354,7 @@ pool_allocator_free(struct pool *pp, void *v)
 }
 
 void *
-pool_page_alloc(struct pool *pp, int flags)
+pool_page_alloc(struct pool *pp __unused, int flags)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
@@ -2361,14 +2362,14 @@ pool_page_alloc(struct pool *pp, int flags)
 }
 
 void
-pool_page_free(struct pool *pp, void *v)
+pool_page_free(struct pool *pp __unused, void *v)
 {
 
 	uvm_km_free_poolpage_cache(kmem_map, (vaddr_t) v);
 }
 
 static void *
-pool_page_alloc_meta(struct pool *pp, int flags)
+pool_page_alloc_meta(struct pool *pp __unused, int flags)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
@@ -2376,7 +2377,7 @@ pool_page_alloc_meta(struct pool *pp, int flags)
 }
 
 static void
-pool_page_free_meta(struct pool *pp, void *v)
+pool_page_free_meta(struct pool *pp __unused, void *v)
 {
 
 	uvm_km_free_poolpage(kmem_map, (vaddr_t) v);
@@ -2420,7 +2421,7 @@ pool_subpage_free_nointr(struct pool *pp, void *v)
 }
 #endif /* POOL_SUBPAGE */
 void *
-pool_page_alloc_nointr(struct pool *pp, int flags)
+pool_page_alloc_nointr(struct pool *pp __unused, int flags)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
@@ -2428,7 +2429,7 @@ pool_page_alloc_nointr(struct pool *pp, int flags)
 }
 
 void
-pool_page_free_nointr(struct pool *pp, void *v)
+pool_page_free_nointr(struct pool *pp __unused, void *v)
 {
 
 	uvm_km_free_poolpage_cache(kernel_map, (vaddr_t) v);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.111 2006/10/07 17:42:53 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.112 2006/10/12 01:31:51 christos Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.111 2006/10/07 17:42:53 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.112 2006/10/12 01:31:51 christos Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -522,7 +522,7 @@ rf_FreeEmergBuffers(RF_Raid_t *raidPtr)
 
 
 static void
-rf_ShutdownRDFreeList(void *ignored)
+rf_ShutdownRDFreeList(void *ignored __unused)
 {
 	pool_destroy(&rf_pools.rad);
 }

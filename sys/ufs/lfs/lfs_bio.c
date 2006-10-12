@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.96 2006/10/04 15:53:24 christos Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.97 2006/10/12 01:32:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.96 2006/10/04 15:53:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.97 2006/10/12 01:32:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,8 +150,8 @@ lfs_fits_buf(struct lfs *fs, int n, int bytes)
 
 /* ARGSUSED */
 int
-lfs_reservebuf(struct lfs *fs, struct vnode *vp, struct vnode *vp2,
-    int n, int bytes)
+lfs_reservebuf(struct lfs *fs, struct vnode *vp __unused,
+    struct vnode *vp2 __unused, int n, int bytes)
 {
 	ASSERT_MAYBE_SEGLOCK(fs);
 	KASSERT(locked_queue_rcount >= 0);
@@ -199,7 +199,8 @@ lfs_reservebuf(struct lfs *fs, struct vnode *vp, struct vnode *vp2,
  * vnode re-using strategies.
  */
 int
-lfs_reserveavail(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
+lfs_reserveavail(struct lfs *fs, struct vnode *vp __unused,
+    struct vnode *vp2 __unused, int fsb)
 {
 	CLEANERINFO *cip;
 	struct buf *bp;
@@ -617,7 +618,7 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
  * flush buffers if needed.
  */
 int
-lfs_check(struct vnode *vp, daddr_t blkno, int flags)
+lfs_check(struct vnode *vp, daddr_t blkno __unused, int flags)
 {
 	int error;
 	struct lfs *fs;
@@ -809,7 +810,7 @@ extern struct simplelock bqueue_slock;
  * Don't count malloced buffers, since they don't detract from the total.
  */
 void
-lfs_countlocked(int *count, long *bytes, const char *msg)
+lfs_countlocked(int *count, long *bytes, const char *msg __unused)
 {
 	struct buf *bp;
 	int n = 0;

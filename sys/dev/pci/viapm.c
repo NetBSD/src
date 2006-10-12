@@ -1,4 +1,4 @@
-/*	$NetBSD: viapm.c,v 1.14 2005/12/11 12:22:51 christos Exp $	*/
+/*	$NetBSD: viapm.c,v 1.15 2006/10/12 01:31:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapm.c,v 1.14 2005/12/11 12:22:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapm.c,v 1.15 2006/10/12 01:31:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,8 @@ struct viapm_softc {
 };
 
 static int
-viapm_match(struct device * parent, struct cfdata * match, void *aux)
+viapm_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -107,7 +108,7 @@ viapm_print(void *aux, const char *pnp)
 }
 
 static void
-viapm_attach(struct device * parent, struct device * self, void *aux)
+viapm_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct viapm_softc *sc = (struct viapm_softc *) self;
 	struct pci_attach_args *pa = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tra_mca.c,v 1.5 2006/08/30 16:59:34 christos Exp $	*/
+/*	$NetBSD: if_tra_mca.c,v 1.6 2006/10/12 01:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.5 2006/08/30 16:59:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.6 2006/10/12 01:31:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,10 +105,8 @@ tiara_mca_lookup(id)
 }
 
 int
-tiara_mca_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+tiara_mca_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct mca_attach_args *ma = (struct mca_attach_args *) aux;
 
@@ -130,9 +128,7 @@ static const int smc_irq[] = {
 };
 
 void
-tiara_mca_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tiara_mca_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct tiara_softc *isc = device_private(self);
 	struct mb86950_softc *sc = &isc->sc_mb86950;

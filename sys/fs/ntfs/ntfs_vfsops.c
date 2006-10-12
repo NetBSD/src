@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.45 2006/09/13 00:54:00 christos Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.46 2006/10/12 01:32:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.45 2006/09/13 00:54:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.46 2006/10/12 01:32:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -589,9 +589,9 @@ out:
 
 static int
 ntfs_start (
-	struct mount *mp,
-	int flags,
-	struct lwp *l )
+	struct mount *mp __unused,
+	int flags __unused,
+	struct lwp *l __unused)
 {
 	return (0);
 }
@@ -689,11 +689,11 @@ ntfs_root(
 /* ARGSUSED */
 static int
 ntfs_quotactl (
-	struct mount *mp,
-	int cmds,
-	uid_t uid,
-	void *arg,
-	struct lwp *l)
+	struct mount *mp __unused,
+	int cmds __unused,
+	uid_t uid __unused,
+	void *arg __unused,
+	struct lwp *l __unused)
 {
 
 	return EOPNOTSUPP;
@@ -735,7 +735,7 @@ static int
 ntfs_statvfs(
 	struct mount *mp,
 	struct statvfs *sbp,
-	struct lwp *l)
+	struct lwp *l __unused)
 {
 	struct ntfsmount *ntmp = VFSTONTFS(mp);
 	u_int64_t mftallocated;
@@ -763,10 +763,10 @@ ntfs_statvfs(
 
 static int
 ntfs_sync (
-	struct mount *mp,
-	int waitfor,
-	kauth_cred_t cred,
-	struct lwp *l)
+	struct mount *mp __unused,
+	int waitfor __unused,
+	kauth_cred_t cred __unused,
+	struct lwp *l __unused)
 {
 	/*dprintf(("ntfs_sync():\n"));*/
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.6 2006/07/31 20:59:07 mrg Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.7 2006/10/12 01:30:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.6 2006/07/31 20:59:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.7 2006/10/12 01:30:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -713,7 +713,7 @@ setup_memory(struct multiboot_info *mi)
  * are if copy_syms() found them.
  */
 static void
-setup_syms(struct multiboot_info *mi)
+setup_syms(struct multiboot_info *mi __unused)
 {
 	struct btinfo_symtab bi;
 	struct symbols_image *si;

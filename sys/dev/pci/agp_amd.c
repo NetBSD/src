@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_amd.c,v 1.15 2006/04/11 16:19:39 rpaulo Exp $	*/
+/*	$NetBSD: agp_amd.c,v 1.16 2006/10/12 01:31:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.15 2006/04/11 16:19:39 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.16 2006/10/12 01:31:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ agp_amd_match(const struct pci_attach_args *pa)
 }
 
 int
-agp_amd_attach(struct device *parent, struct device *self, void *aux)
+agp_amd_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct agp_softc *sc = (void *)self;
 	struct agp_amd_softc *asc;

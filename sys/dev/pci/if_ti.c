@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.71 2006/09/07 02:40:33 dogcow Exp $ */
+/* $NetBSD: if_ti.c,v 1.72 2006/10/12 01:31:30 christos Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.71 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.72 2006/10/12 01:31:30 christos Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -673,11 +673,8 @@ static void *ti_jalloc(sc)
 /*
  * Release a jumbo buffer.
  */
-static void ti_jfree(m, tbuf, size, arg)
-	struct mbuf		*m;
-	caddr_t			tbuf;
-	size_t			size;
-	void *arg;
+static void ti_jfree(struct mbuf *m, caddr_t tbuf, size_t size __unused,
+    void *arg)
 {
 	struct ti_softc		*sc;
 	int		        i, s;
@@ -1631,10 +1628,9 @@ ti_type_match(pa)
  * Probe for a Tigon chip. Check the PCI vendor and device IDs
  * against our list and return its name if we find a match.
  */
-static int ti_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+ti_probe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct ti_type		*t;
@@ -1644,9 +1640,8 @@ static int ti_probe(parent, match, aux)
 	return((t == NULL) ? 0 : 1);
 }
 
-static void ti_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+ti_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	u_int32_t		command;
 	struct ifnet		*ifp;

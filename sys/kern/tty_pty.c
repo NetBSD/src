@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.94 2006/09/23 15:36:12 xtraeme Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.95 2006/10/12 01:32:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.94 2006/09/23 15:36:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.95 2006/10/12 01:32:19 christos Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -306,10 +306,7 @@ ptyattach(n)
 
 /*ARGSUSED*/
 int
-ptsopen(dev, flag, devtype, l)
-	dev_t dev;
-	int flag, devtype;
-	struct lwp *l;
+ptsopen(dev_t dev, int flag, int devtype __unused, struct lwp *l)
 {
 	struct pt_softc *pti;
 	struct tty *tp;
@@ -360,10 +357,7 @@ ptsopen(dev, flag, devtype, l)
 }
 
 int
-ptsclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+ptsclose(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -554,10 +548,8 @@ ptcwakeup(tp, flag)
 
 /*ARGSUSED*/
 int
-ptcopen(dev, flag, devtype, l)
-	dev_t dev;
-	int flag, devtype;
-	struct lwp *l;
+ptcopen(dev_t dev, int flag __unused, int devtype __unused,
+    struct lwp *l __unused)
 {
 	struct pt_softc *pti;
 	struct tty *tp;
@@ -591,10 +583,8 @@ ptcopen(dev, flag, devtype, l)
 
 /*ARGSUSED*/
 int
-ptcclose(dev, flag, devtype, l)
-	dev_t dev;
-	int flag, devtype;
-	struct lwp *l;
+ptcclose(dev_t dev, int flag __unused, int devtype __unused,
+    struct lwp *l __unused)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -900,7 +890,7 @@ filt_ptcrdetach(struct knote *kn)
 }
 
 static int
-filt_ptcread(struct knote *kn, long hint)
+filt_ptcread(struct knote *kn, long hint __unused)
 {
 	struct pt_softc *pti;
 	struct tty	*tp;
@@ -942,7 +932,7 @@ filt_ptcwdetach(struct knote *kn)
 }
 
 static int
-filt_ptcwrite(struct knote *kn, long hint)
+filt_ptcwrite(struct knote *kn, long hint __unused)
 {
 	struct pt_softc *pti;
 	struct tty	*tp;

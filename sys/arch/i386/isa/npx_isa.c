@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_isa.c,v 1.11 2006/02/19 14:59:22 thorpej Exp $	*/
+/*	$NetBSD: npx_isa.c,v 1.12 2006/10/12 01:30:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.11 2006/02/19 14:59:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.12 2006/10/12 01:30:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,8 @@ CFATTACH_DECL(npx_isa, sizeof(struct npx_softc),
     npx_isa_probe, npx_isa_attach, NULL, NULL);
 
 int
-npx_isa_probe(struct device *parent, struct cfdata *match, void *aux)
+npx_isa_probe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
@@ -136,7 +137,7 @@ npx_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-npx_isa_attach(struct device *parent, struct device *self, void *aux)
+npx_isa_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct npx_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

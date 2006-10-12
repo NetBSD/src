@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.76 2006/09/19 22:03:10 elad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.77 2006/10/12 01:30:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.76 2006/09/19 22:03:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.77 2006/10/12 01:30:43 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -345,10 +345,7 @@ out:
 #endif	/* USER_LDT */
 
 int
-i386_iopl(l, args, retval)
-	struct lwp *l;
-	void *args;
-	register_t *retval;
+i386_iopl(struct lwp *l, void *args, register_t *retval __unused)
 {
 	int error;
 	struct trapframe *tf = l->l_md.md_regs;
@@ -371,10 +368,7 @@ i386_iopl(l, args, retval)
 }
 
 int
-i386_get_ioperm(l, args, retval)
-	struct lwp *l;
-	void *args;
-	register_t *retval;
+i386_get_ioperm(struct lwp *l, void *args, register_t *retval __unused)
 {
 	int error;
 	struct pcb *pcb = &l->l_addr->u_pcb;
@@ -387,10 +381,7 @@ i386_get_ioperm(l, args, retval)
 }
 
 int
-i386_set_ioperm(l, args, retval)
-	struct lwp *l;
-	void *args;
-	register_t *retval;
+i386_set_ioperm(struct lwp *l, void *args, register_t *retval __unused)
 {
 	int error;
 	struct pcb *pcb = &l->l_addr->u_pcb;
@@ -409,7 +400,7 @@ i386_set_ioperm(l, args, retval)
 
 #ifdef MTRR
 int
-i386_get_mtrr(struct lwp *l, void *args, register_t *retval)
+i386_get_mtrr(struct lwp *l, void *args, register_t *retval __unused)
 {
 	struct i386_get_mtrr_args ua;
 	int error, n;
@@ -433,7 +424,7 @@ i386_get_mtrr(struct lwp *l, void *args, register_t *retval)
 }
 
 int
-i386_set_mtrr(struct lwp *l, void *args, register_t *retval)
+i386_set_mtrr(struct lwp *l, void *args, register_t *retval __unused)
 {
 	int error, n;
 	struct i386_set_mtrr_args ua;

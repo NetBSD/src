@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.102 2006/08/22 13:39:48 seanb Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.103 2006/10/12 01:32:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.102 2006/08/22 13:39:48 seanb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.103 2006/10/12 01:32:19 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -106,7 +106,7 @@ sys___socket30(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_bind(struct lwp *l, void *v, register_t *retval)
+sys_bind(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_bind_args /* {
 		syscallarg(int)				s;
@@ -137,7 +137,7 @@ sys_bind(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_listen(struct lwp *l, void *v, register_t *retval)
+sys_listen(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_listen_args /* {
 		syscallarg(int)	s;
@@ -261,7 +261,7 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_connect(struct lwp *l, void *v, register_t *retval)
+sys_connect(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_connect_args /* {
 		syscallarg(int)				s;
@@ -324,7 +324,7 @@ sys_connect(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_socketpair(struct lwp *l, void *v, register_t *retval)
+sys_socketpair(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_socketpair_args /* {
 		syscallarg(int)		domain;
@@ -804,7 +804,7 @@ recvit(struct lwp *l, int s, struct msghdr *mp, caddr_t namelenp,
 
 /* ARGSUSED */
 int
-sys_shutdown(struct lwp *l, void *v, register_t *retval)
+sys_shutdown(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_shutdown_args /* {
 		syscallarg(int)	s;
@@ -825,7 +825,7 @@ sys_shutdown(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_setsockopt(struct lwp *l, void *v, register_t *retval)
+sys_setsockopt(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_setsockopt_args /* {
 		syscallarg(int)			s;
@@ -872,7 +872,7 @@ sys_setsockopt(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_getsockopt(struct lwp *l, void *v, register_t *retval)
+sys_getsockopt(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_getsockopt_args /* {
 		syscallarg(int)			s;
@@ -923,7 +923,7 @@ sys_getsockopt(struct lwp *l, void *v, register_t *retval)
 #ifdef PIPE_SOCKETPAIR
 /* ARGSUSED */
 int
-sys_pipe(struct lwp *l, void *v, register_t *retval)
+sys_pipe(struct lwp *l, void *v __unused, register_t *retval)
 {
 	struct filedesc	*fdp;
 	struct file	*rf, *wf;
@@ -981,7 +981,7 @@ sys_pipe(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_getsockname(struct lwp *l, void *v, register_t *retval)
+sys_getsockname(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_getsockname_args /* {
 		syscallarg(int)			fdes;
@@ -1027,7 +1027,7 @@ sys_getsockname(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_getpeername(struct lwp *l, void *v, register_t *retval)
+sys_getpeername(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_getpeername_args /* {
 		syscallarg(int)			fdes;

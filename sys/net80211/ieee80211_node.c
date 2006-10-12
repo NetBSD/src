@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.57 2006/06/30 06:17:10 tacha Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.58 2006/10/12 01:32:31 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.57 2006/06/30 06:17:10 tacha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.58 2006/10/12 01:32:31 christos Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -911,7 +911,7 @@ no_rate:
 }
 
 static struct ieee80211_node *
-node_alloc(struct ieee80211_node_table *nt)
+node_alloc(struct ieee80211_node_table *nt __unused)
 {
 	struct ieee80211_node *ni;
 
@@ -1563,7 +1563,7 @@ ieee80211_find_node_with_channel(struct ieee80211_node_table *nt,
 }
 
 struct ieee80211_node *
-ieee80211_refine_node_for_beacon(struct ieee80211com *ic,
+ieee80211_refine_node_for_beacon(struct ieee80211com *ic __unused,
 	struct ieee80211_node *ni0, struct ieee80211_channel *chan,
 	const u_int8_t *ssid)
 {
@@ -2064,7 +2064,8 @@ restart:
 }
 
 void
-ieee80211_dump_node(struct ieee80211_node_table *nt, struct ieee80211_node *ni)
+ieee80211_dump_node(struct ieee80211_node_table *nt __unused,
+    struct ieee80211_node *ni)
 {
 	printf("0x%p: mac %s refcnt %d\n", ni,
 		ether_sprintf(ni->ni_macaddr), ieee80211_node_refcnt(ni));

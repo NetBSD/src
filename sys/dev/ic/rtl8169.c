@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.26 2006/09/24 03:53:08 jmcneill Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.27 2006/10/12 01:31:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -220,7 +220,7 @@ re_gmii_readreg(struct device *self, int phy, int reg)
 }
 
 static void
-re_gmii_writereg(struct device *dev, int phy, int reg, int data)
+re_gmii_writereg(struct device *dev, int phy __unused, int reg, int data)
 {
 	struct rtk_softc	*sc = (void *)dev;
 	u_int32_t		rval;
@@ -359,7 +359,7 @@ re_miibus_writereg(struct device *dev, int phy, int reg, int data)
 }
 
 static void
-re_miibus_statchg(struct device *dev)
+re_miibus_statchg(struct device *dev __unused)
 {
 
 	return;

@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.37 2006/07/21 16:48:47 ad Exp $ */
+/* $NetBSD: cgd.c,v 1.38 2006/10/12 01:30:50 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.37 2006/07/21 16:48:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.38 2006/10/12 01:30:50 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -580,7 +580,7 @@ bail:
 
 /* ARGSUSED */
 static int
-cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct lwp *l)
+cgd_ioctl_clr(struct cgd_softc *cs, void *data __unused, struct lwp *l)
 {
 	int	s;
 

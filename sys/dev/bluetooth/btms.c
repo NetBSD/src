@@ -1,4 +1,4 @@
-/*	$NetBSD: btms.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: btms.c,v 1.2 2006/10/12 01:30:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.2 2006/10/12 01:30:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -110,7 +110,8 @@ static void btms_input(struct bthidev *, uint8_t *, int);
  */
 
 static int
-btms_match(struct device *parent, struct cfdata *match, void *aux)
+btms_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct bthidev_attach_args *ba = aux;
 
@@ -122,7 +123,7 @@ btms_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-btms_attach(struct device *parent, struct device *self, void *aux)
+btms_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct btms_softc *sc = (struct btms_softc *)self;
 	struct bthidev_attach_args *ba = aux;
@@ -263,7 +264,8 @@ btms_wsmouse_enable(void *self)
 }
 
 static int
-btms_wsmouse_ioctl(void *self, unsigned long cmd, caddr_t data, int flag, struct lwp *l)
+btms_wsmouse_ioctl(void *self __unused, unsigned long cmd, caddr_t data,
+    int flag __unused, struct lwp *l __unused)
 {
 	/* struct btms_softc *sc = (struct btms_softc *)self; */
 
@@ -293,7 +295,7 @@ btms_wsmouse_disable(void *self)
  */
 
 static void
-btms_input(struct bthidev *self, uint8_t *data, int len)
+btms_input(struct bthidev *self, uint8_t *data, int len __unused)
 {
 	struct btms_softc *sc = (struct btms_softc *)self;
 	int dx, dy, dz, dw;

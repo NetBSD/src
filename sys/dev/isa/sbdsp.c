@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.124 2006/09/24 03:53:08 jmcneill Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.125 2006/10/12 01:31:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.124 2006/09/24 03:53:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.125 2006/10/12 01:31:17 christos Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -915,17 +915,14 @@ sbdsp_speaker_ctl(void *addr, int newstate)
 }
 
 int
-sbdsp_round_blocksize(
-	void *addr,
-	int blk,
-	int mode,
-	const audio_params_t *param)
+sbdsp_round_blocksize(void *addr __unused, int blk, int mode __unused,
+    const audio_params_t *param __unused)
 {
 	return blk & -4;	/* round to biggest sample size */
 }
 
 int
-sbdsp_open(void *addr, int flags)
+sbdsp_open(void *addr, int flags __unused)
 {
 	struct sbdsp_softc *sc;
 	int error, state;
@@ -1097,7 +1094,7 @@ sbdsp_rdsp(struct sbdsp_softc *sc)
 }
 
 void
-sbdsp_pause(struct sbdsp_softc *sc)
+sbdsp_pause(struct sbdsp_softc *sc __unused)
 {
 
 	(void) tsleep(sbdsp_pause, PWAIT, "sbpause", hz / 8);
@@ -2283,8 +2280,8 @@ sbdsp_mixer_query_devinfo(void *addr, mixer_devinfo_t *dip)
 }
 
 void *
-sb_malloc(void *addr, int direction, size_t size,
-	  struct malloc_type *pool, int flags)
+sb_malloc(void *addr, int direction __unused, size_t size,
+    struct malloc_type *pool, int flags)
 {
 	struct sbdsp_softc *sc;
 	int drq;
@@ -2298,14 +2295,14 @@ sb_malloc(void *addr, int direction, size_t size,
 }
 
 void
-sb_free(void *addr, void *ptr, struct malloc_type *pool)
+sb_free(void *addr __unused, void *ptr, struct malloc_type *pool)
 {
 
 	isa_free(ptr, pool);
 }
 
 size_t
-sb_round_buffersize(void *addr, int direction, size_t size)
+sb_round_buffersize(void *addr, int direction __unused, size_t size)
 {
 	struct sbdsp_softc *sc;
 	bus_size_t maxsize;
@@ -2322,7 +2319,7 @@ sb_round_buffersize(void *addr, int direction, size_t size)
 }
 
 paddr_t
-sb_mappage(void *addr, void *mem, off_t off, int prot)
+sb_mappage(void *addr __unused, void *mem, off_t off, int prot)
 {
 
 	return isa_mappage(mem, off, prot);
@@ -2344,8 +2341,8 @@ sbdsp_get_props(void *addr)
  */
 
 int
-sbdsp_midi_open(void *addr, int flags, void (*iintr)(void *, int),
-		void (*ointr)(void *), void *arg)
+sbdsp_midi_open(void *addr, int flags __unused, void (*iintr)(void *, int),
+    void (*ointr)(void *) __unused, void *arg)
 {
 	struct sbdsp_softc *sc;
 

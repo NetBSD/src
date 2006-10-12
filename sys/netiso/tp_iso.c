@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.22 2006/09/03 06:53:08 christos Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.23 2006/10/12 01:32:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.22 2006/09/03 06:53:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.23 2006/10/12 01:32:46 christos Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -570,7 +570,7 @@ tpclnp_input(struct mbuf *m, ...)
 
 /*ARGSUSED*/
 void
-iso_rtchange(struct isopcb *pcb)
+iso_rtchange(struct isopcb *pcb __unused)
 {
 
 }
@@ -610,7 +610,7 @@ tpiso_quench(struct isopcb *isop)
  * 	(siso) is the address of the guy who sent the ER CLNPDU
  */
 void *
-tpclnp_ctlinput(int cmd, struct sockaddr *saddr, void *dummy)
+tpclnp_ctlinput(int cmd, struct sockaddr *saddr, void *dummy __unused)
 {
 	struct sockaddr_iso *siso = (struct sockaddr_iso *) saddr;
 

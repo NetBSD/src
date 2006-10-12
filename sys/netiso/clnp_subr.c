@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.19 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.20 2006/10/12 01:32:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.19 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.20 2006/10/12 01:32:46 christos Exp $");
 
 #include "opt_iso.h"
 
@@ -622,11 +622,11 @@ clnp_srcroute(
  */
 int
 clnp_echoreply(
-	struct mbuf    *ec_m,		/* echo request */
-	int             ec_len,		/* length of ec */
-	struct sockaddr_iso *ec_src,	/* src of ec */
-	struct sockaddr_iso *ec_dst,	/* destination of ec (i.e., us) */
-	struct clnp_optidx *ec_oidxp)	/* options index to ec packet */
+    struct mbuf    *ec_m,		/* echo request */
+    int             ec_len,		/* length of ec */
+    struct sockaddr_iso *ec_src,	/* src of ec */
+    struct sockaddr_iso *ec_dst,	/* destination of ec (i.e., us) */
+    struct clnp_optidx *ec_oidxp __unused) /* options index to ec packet */
 {
 	struct isopcb   isopcb;
 	int             flags = CLNP_NOCACHE | CLNP_ECHOR;

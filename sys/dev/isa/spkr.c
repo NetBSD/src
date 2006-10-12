@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.21 2006/09/11 03:37:12 matt Exp $	*/
+/*	$NetBSD: spkr.c,v 1.22 2006/10/12 01:31:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.21 2006/09/11 03:37:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.22 2006/10/12 01:31:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -407,19 +407,15 @@ static void *spkr_inbuf;
 static int spkr_attached = 0;
 
 int
-spkrprobe (parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+spkrprobe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux __unused)
 {
 	return (!spkr_attached);
 }
 
 void
-spkrattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+spkrattach(struct device *parent __unused, struct device *self __unused,
+    void *aux)
 {
 	printf("\n");
 	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;
@@ -427,11 +423,8 @@ spkrattach(parent, self, aux)
 }
 
 int
-spkropen(dev, flags, mode, l)
-    dev_t dev;
-    int	flags;
-    int mode;
-    struct lwp *l;
+spkropen(dev_t dev, int	flags __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 #ifdef SPKRDEBUG
     printf("spkropen: entering with dev = %x\n", dev);
@@ -451,10 +444,7 @@ spkropen(dev, flags, mode, l)
 }
 
 int
-spkrwrite(dev, uio, flags)
-    dev_t dev;
-    struct uio *uio;
-    int flags;
+spkrwrite(dev_t dev, struct uio *uio, int flags __unused)
 {
     int n;
     int error;
@@ -475,11 +465,8 @@ spkrwrite(dev, uio, flags)
     }
 }
 
-int spkrclose(dev, flags, mode, l)
-    dev_t	dev;
-    int flags;
-    int mode;
-    struct lwp *l;
+int spkrclose(dev_t dev, int flags __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 #ifdef SPKRDEBUG
     printf("spkrclose: entering with dev = %x\n", dev);
@@ -496,12 +483,8 @@ int spkrclose(dev, flags, mode, l)
     return(0);
 }
 
-int spkrioctl(dev, cmd, data, flag, l)
-    dev_t dev;
-    u_long cmd;
-    caddr_t data;
-    int	flag;
-    struct lwp *l;
+int spkrioctl(dev_t dev, u_long cmd, caddr_t data, int	flag __unused,
+    struct lwp *l __unused)
 {
 #ifdef SPKRDEBUG
     printf("spkrioctl: entering with dev = %x, cmd = %lx\n", dev, cmd);

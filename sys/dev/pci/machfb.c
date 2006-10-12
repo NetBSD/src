@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.46 2006/09/02 06:59:20 christos Exp $	*/
+/*	$NetBSD: machfb.c,v 1.47 2006/10/12 01:31:31 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.46 2006/09/02 06:59:20 christos Exp $");
+	"$NetBSD: machfb.c,v 1.47 2006/10/12 01:31:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -467,7 +467,8 @@ wait_for_idle(struct mach64_softc *sc)
 }
 
 static int
-mach64_match(struct device *parent, struct cfdata *match, void *aux)
+mach64_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	int i;
@@ -487,7 +488,7 @@ mach64_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-mach64_attach(struct device *parent, struct device *self, void *aux)
+mach64_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct mach64_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;
@@ -672,7 +673,7 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 
 static void
 mach64_init_screen(void *cookie, struct vcons_screen *scr, int existing,
-    long *defattr)
+    long *defattr __unused)
 {
 	struct mach64_softc *sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
@@ -1266,7 +1267,7 @@ mach64_set_screentype(struct mach64_softc *sc, const struct wsscreen_descr *des)
 }
 
 static int
-mach64_is_console(struct pci_attach_args *pa)
+mach64_is_console(struct pci_attach_args *pa __unused)
 {
 #ifdef __sparc__
 	int node;
@@ -1567,7 +1568,7 @@ mach64_showpal(struct mach64_softc *sc)
 #endif
 
 static int
-mach64_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
+mach64_allocattr(void *cookie __unused, int fg, int bg, int flags, long *attrp)
 {
 	if ((fg == 0) && (bg == 0))
 	{
@@ -1583,7 +1584,7 @@ mach64_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
  */
 
 static int
-mach64_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+mach64_ioctl(void *v, void *vs __unused, u_long cmd, caddr_t data, int flag,
 	struct lwp *l)
 {
 	struct vcons_data *vd = v;
@@ -1640,7 +1641,7 @@ mach64_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
 }
 
 static paddr_t
-mach64_mmap(void *v, void *vs, off_t offset, int prot)
+mach64_mmap(void *v, void *vs __unused, off_t offset, int prot)
 {
 	struct vcons_data *vd = v;
 	struct mach64_softc *sc = vd->cookie;

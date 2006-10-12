@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.25 2006/09/04 22:51:42 dan Exp $ */
+/* $NetBSD: dksubr.c,v 1.26 2006/10/12 01:30:50 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.25 2006/09/04 22:51:42 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.26 2006/10/12 01:30:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ dk_sc_init(struct dk_softc *dksc, void *osc, char *xname)
 /* ARGSUSED */
 int
 dk_open(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
-	   int flags, int fmt, struct lwp *l)
+    int flags __unused, int fmt, struct lwp *l __unused)
 {
 	struct	disklabel *lp = dksc->sc_dkdev.dk_label;
 	int	part = DISKPART(dev);
@@ -155,8 +155,8 @@ done:
 
 /* ARGSUSED */
 int
-dk_close(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
-	    int flags, int fmt, struct lwp *l)
+dk_close(struct dk_intf *di __unused, struct dk_softc *dksc, dev_t dev,
+    int flags __unused, int fmt, struct lwp *l __unused)
 {
 	int	part = DISKPART(dev);
 	int	pmask = 1 << part;
@@ -515,8 +515,8 @@ static volatile int	dk_dumping = 0;
 
 /* ARGSUSED */
 int
-dk_dump(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
-	   daddr_t blkno, caddr_t va, size_t size)
+dk_dump(struct dk_intf *di __unused, struct dk_softc *dksc, dev_t dev __unused,
+    daddr_t blkno __unused, caddr_t va __unused, size_t size __unused)
 {
 
 	/*
@@ -613,7 +613,7 @@ dk_getdisklabel(struct dk_intf *di, struct dk_softc *dksc, dev_t dev)
 
 /* ARGSUSED */
 static void
-dk_makedisklabel(struct dk_intf *di, struct dk_softc *dksc)
+dk_makedisklabel(struct dk_intf *di __unused, struct dk_softc *dksc)
 {
 	struct	disklabel *lp = dksc->sc_dkdev.dk_label;
 

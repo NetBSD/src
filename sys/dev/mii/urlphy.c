@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.15 2006/03/29 07:05:24 thorpej Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.16 2006/10/12 01:31:25 christos Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.15 2006/03/29 07:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.16 2006/10/12 01:31:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ static const struct mii_phy_funcs urlphy_funcs = {
 };
 
 static int
-urlphy_match(struct device *parent, struct cfdata *match, void *aux)
+urlphy_match(struct device *parent, struct cfdata *match __unused, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -94,7 +94,7 @@ urlphy_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-urlphy_attach(struct device *parent, struct device *self, void *aux)
+urlphy_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.24 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.25 2006/10/12 01:30:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.24 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.25 2006/10/12 01:30:51 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -262,8 +262,8 @@ static const uint8_t lintoalaw[256] = {
 static int \
 name##_fetch_to(stream_fetcher_t *, audio_stream_t *, int); \
 stream_filter_t * \
-name(struct audio_softc *sc, const audio_params_t *from, \
-     const audio_params_t *to) \
+name(struct audio_softc *sc __unused, const audio_params_t *from __unused, \
+     const audio_params_t *to __unused) \
 { \
 	DPRINTF(("Construct '%s' filter.\n", __func__)); \
 	return auconv_nocontext_filter_factory(name##_fetch_to); \

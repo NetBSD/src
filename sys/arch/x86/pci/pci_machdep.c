@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.16 2006/07/04 00:30:23 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.17 2006/10/12 01:30:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16 2006/07/04 00:30:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.17 2006/10/12 01:30:44 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -233,9 +233,8 @@ struct x86_bus_dma_tag pci_bus_dma64_tag = {
 #endif
 
 void
-pci_attach_hook(parent, self, pba)
-	struct device *parent, *self;
-	struct pcibus_attach_args *pba;
+pci_attach_hook(struct device *parent __unused, struct device *self __unused,
+    struct pcibus_attach_args *pba)
 {
 
 	if (pba->pba_bus == 0)
@@ -249,9 +248,7 @@ pci_attach_hook(parent, self, pba)
 }
 
 int
-pci_bus_maxdevs(pc, busno)
-	pci_chipset_tag_t pc;
-	int busno;
+pci_bus_maxdevs(pci_chipset_tag_t pc __unused, int busno __unused)
 {
 
 	/*
@@ -267,9 +264,7 @@ pci_bus_maxdevs(pc, busno)
 }
 
 pcitag_t
-pci_make_tag(pc, bus, device, function)
-	pci_chipset_tag_t pc;
-	int bus, device, function;
+pci_make_tag(pci_chipset_tag_t pc __unused, int bus, int device, int function)
 {
 	pcitag_t tag;
 
@@ -311,10 +306,8 @@ mode2:
 }
 
 void
-pci_decompose_tag(pc, tag, bp, dp, fp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+pci_decompose_tag(pci_chipset_tag_t pc __unused, pcitag_t tag,
+    int *bp, int *dp, int *fp)
 {
 
 #ifndef PCI_CONF_MODE
@@ -355,10 +348,8 @@ mode2:
 }
 
 pcireg_t
-pci_conf_read(pc, tag, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
+pci_conf_read( pci_chipset_tag_t pc __unused, pcitag_t tag __unused,
+    int reg __unused)
 {
 	pcireg_t data;
 	int s;
@@ -401,11 +392,8 @@ mode2:
 }
 
 void
-pci_conf_write(pc, tag, reg, data)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t data;
+pci_conf_write(pci_chipset_tag_t pc __unused, pcitag_t tag, int reg,
+    pcireg_t data)
 {
 	int s;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_pci.c,v 1.11 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: icp_pci.c,v 1.12 2006/10/12 01:31:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.11 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.12 2006/10/12 01:31:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,8 @@ icp_pci_find_class(struct pci_attach_args *pa)
 }
 
 int
-icp_pci_match(struct device *parent, struct cfdata *match, void *aux)
+icp_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -242,7 +243,7 @@ icp_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-icp_pci_attach(struct device *parent, struct device *self, void *aux)
+icp_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct icp_softc *icp;
@@ -632,14 +633,14 @@ icp_pci_enable_intr(struct icp_softc *icp)
  */
 
 void
-icp_pci_copy_cmd(struct icp_softc *icp, struct icp_ccb *ccb)
+icp_pci_copy_cmd(struct icp_softc *icp __unused, struct icp_ccb *ccb __unused)
 {
 
 	/* XXX Not yet implemented */
 }
 
 u_int8_t
-icp_pci_get_status(struct icp_softc *icp)
+icp_pci_get_status(struct icp_softc *icp __unused)
 {
 
 	/* XXX Not yet implemented */
@@ -647,14 +648,15 @@ icp_pci_get_status(struct icp_softc *icp)
 }
 
 void
-icp_pci_intr(struct icp_softc *icp, struct icp_intr_ctx *ctx)
+icp_pci_intr(struct icp_softc *icp __unused, struct icp_intr_ctx *ctx __unused)
 {
 
 	/* XXX Not yet implemented */
 }
 
 void
-icp_pci_release_event(struct icp_softc *icp, struct icp_ccb *ccb)
+icp_pci_release_event(struct icp_softc *icp __unused,
+    struct icp_ccb *ccb __unused)
 {
 
 	/* XXX Not yet implemented */
@@ -668,7 +670,7 @@ icp_pci_set_sema0(struct icp_softc *icp)
 }
 
 int
-icp_pci_test_busy(struct icp_softc *icp)
+icp_pci_test_busy(struct icp_softc *icp __unused)
 {
 
 	/* XXX Not yet implemented */
@@ -680,14 +682,15 @@ icp_pci_test_busy(struct icp_softc *icp)
  */
 
 void
-icp_pcinew_copy_cmd(struct icp_softc *icp, struct icp_ccb *ccb)
+icp_pcinew_copy_cmd(struct icp_softc *icp __unused,
+    struct icp_ccb *ccb __unused)
 {
 
 	/* XXX Not yet implemented */
 }
 
 u_int8_t
-icp_pcinew_get_status(struct icp_softc *icp)
+icp_pcinew_get_status(struct icp_softc *icp __unused)
 {
 
 	/* XXX Not yet implemented */
@@ -695,14 +698,16 @@ icp_pcinew_get_status(struct icp_softc *icp)
 }
 
 void
-icp_pcinew_intr(struct icp_softc *icp, struct icp_intr_ctx *ctx)
+icp_pcinew_intr(struct icp_softc *icp __unused,
+    struct icp_intr_ctx *ctx __unused)
 {
 
 	/* XXX Not yet implemented */
 }
 
 void
-icp_pcinew_release_event(struct icp_softc *icp, struct icp_ccb *ccb)
+icp_pcinew_release_event(struct icp_softc *icp __unused,
+    struct icp_ccb *ccb __unused)
 {
 
 	/* XXX Not yet implemented */
@@ -716,7 +721,7 @@ icp_pcinew_set_sema0(struct icp_softc *icp)
 }
 
 int
-icp_pcinew_test_busy(struct icp_softc *icp)
+icp_pcinew_test_busy(struct icp_softc *icp __unused)
 {
 
 	/* XXX Not yet implemented */
@@ -793,7 +798,7 @@ icp_mpr_intr(struct icp_softc *icp, struct icp_intr_ctx *ctx)
 }
 
 void
-icp_mpr_release_event(struct icp_softc *icp, struct icp_ccb *ic)
+icp_mpr_release_event(struct icp_softc *icp, struct icp_ccb *ic __unused)
 {
 
 	bus_space_write_1(icp->icp_dpmemt, icp->icp_dpmemh, ICP_MPR_LDOOR, 1);

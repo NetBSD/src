@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.31 2006/03/29 04:16:50 thorpej Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.32 2006/10/12 01:31:33 christos Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.31 2006/03/29 04:16:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.32 2006/10/12 01:31:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -694,9 +694,7 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 }
 
 void
-pciide_dma_start(v, channel, drive)
-	void *v;
-	int channel, drive;
+pciide_dma_start(void *v, int channel, int drive __unused)
 {
 	struct pciide_softc *sc = v;
 	struct pciide_channel *cp = &sc->pciide_channels[channel];

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.31 2006/09/30 02:39:18 seanb Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.32 2006/10/12 01:32:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.31 2006/09/30 02:39:18 seanb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.32 2006/10/12 01:32:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,7 +351,7 @@ filt_kqdetach(struct knote *kn)
  */
 /*ARGSUSED*/
 static int
-filt_kqueue(struct knote *kn, long hint)
+filt_kqueue(struct knote *kn, long hint __unused)
 {
 	struct kqueue *kq;
 
@@ -553,7 +553,7 @@ filt_timerdetach(struct knote *kn)
 }
 
 static int
-filt_timer(struct knote *kn, long hint)
+filt_timer(struct knote *kn, long hint __unused)
 {
 	return (kn->kn_data != 0);
 }
@@ -564,7 +564,7 @@ filt_timer(struct knote *kn, long hint)
  *	This filter "event" routine simulates seltrue().
  */
 int
-filt_seltrue(struct knote *kn, long hint)
+filt_seltrue(struct knote *kn, long hint __unused)
 {
 
 	/*
@@ -581,7 +581,7 @@ filt_seltrue(struct knote *kn, long hint)
  * has same effect as filter using filt_seltrue() as filter method.
  */
 static void
-filt_seltruedetach(struct knote *kn)
+filt_seltruedetach(struct knote *kn __unused)
 {
 	/* Nothing to do */
 }
@@ -590,7 +590,7 @@ static const struct filterops seltrue_filtops =
 	{ 1, NULL, filt_seltruedetach, filt_seltrue };
 
 int
-seltrue_kqfilter(dev_t dev, struct knote *kn)
+seltrue_kqfilter(dev_t dev __unused, struct knote *kn)
 {
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -609,7 +609,7 @@ seltrue_kqfilter(dev_t dev, struct knote *kn)
  * kqueue(2) system call.
  */
 int
-sys_kqueue(struct lwp *l, void *v, register_t *retval)
+sys_kqueue(struct lwp *l, void *v __unused, register_t *retval)
 {
 	struct filedesc	*fdp;
 	struct kqueue	*kq;
@@ -641,14 +641,14 @@ sys_kqueue(struct lwp *l, void *v, register_t *retval)
  * kevent(2) system call.
  */
 static int
-kevent_fetch_changes(void *private, const struct kevent *changelist,
+kevent_fetch_changes(void *private __unused, const struct kevent *changelist,
     struct kevent *changes, size_t index, int n)
 {
 	return copyin(changelist + index, changes, n * sizeof(*changes));
 }
 
 static int
-kevent_put_events(void *private, struct kevent *events,
+kevent_put_events(void *private __unused, struct kevent *events,
     struct kevent *eventlist, size_t index, int n)
 {
 	return copyout(events, eventlist + index, n * sizeof(*events));
@@ -1069,8 +1069,8 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
  */
 /*ARGSUSED*/
 static int
-kqueue_read(struct file *fp, off_t *offset, struct uio *uio,
-	kauth_cred_t cred, int flags)
+kqueue_read(struct file *fp __unused, off_t *offset __unused,
+    struct uio *uio __unused, kauth_cred_t cred __unused, int flags __unused)
 {
 
 	return (ENXIO);
@@ -1082,8 +1082,8 @@ kqueue_read(struct file *fp, off_t *offset, struct uio *uio,
  */
 /*ARGSUSED*/
 static int
-kqueue_write(struct file *fp, off_t *offset, struct uio *uio,
-	kauth_cred_t cred, int flags)
+kqueue_write(struct file *fp __unused, off_t *offset __unused,
+    struct uio *uio __unused, kauth_cred_t cred __unused, int flags __unused)
 {
 
 	return (ENXIO);
@@ -1099,7 +1099,8 @@ kqueue_write(struct file *fp, off_t *offset, struct uio *uio,
  */
 /*ARGSUSED*/
 static int
-kqueue_ioctl(struct file *fp, u_long com, void *data, struct lwp *l)
+kqueue_ioctl(struct file *fp __unused, u_long com, void *data,
+    struct lwp *l __unused)
 {
 	struct kfilter_mapping	*km;
 	const struct kfilter	*kfilter;
@@ -1147,7 +1148,8 @@ kqueue_ioctl(struct file *fp, u_long com, void *data, struct lwp *l)
  */
 /*ARGSUSED*/
 static int
-kqueue_fcntl(struct file *fp, u_int com, void *data, struct lwp *l)
+kqueue_fcntl(struct file *fp __unused, u_int com __unused, void *data __unused,
+    struct lwp *l __unused)
 {
 
 	return (ENOTTY);
@@ -1180,7 +1182,7 @@ kqueue_poll(struct file *fp, int events, struct lwp *l)
  * Returns dummy info, with st_size being number of events pending.
  */
 static int
-kqueue_stat(struct file *fp, struct stat *st, struct lwp *l)
+kqueue_stat(struct file *fp, struct stat *st, struct lwp *l __unused)
 {
 	struct kqueue	*kq;
 
@@ -1274,7 +1276,7 @@ kqueue_wakeup(struct kqueue *kq)
  */
 /*ARGSUSED*/
 static int
-kqueue_kqfilter(struct file *fp, struct knote *kn)
+kqueue_kqfilter(struct file *fp __unused, struct knote *kn)
 {
 	struct kqueue *kq;
 

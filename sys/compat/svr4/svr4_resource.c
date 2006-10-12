@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_resource.c,v 1.10 2006/07/23 22:06:10 ad Exp $	 */
+/*	$NetBSD: svr4_resource.c,v 1.11 2006/10/12 01:30:49 christos Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_resource.c,v 1.10 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_resource.c,v 1.11 2006/10/12 01:30:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,10 +95,7 @@ svr4_to_native_rl(rl)
 	((svr4_rlim64_t)(l)) != SVR4_RLIM64_SAVED_MAX)
 
 int
-svr4_sys_getrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_getrlimit(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct svr4_sys_getrlimit_args *uap = v;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
@@ -143,10 +140,7 @@ svr4_sys_getrlimit(l, v, retval)
 
 
 int
-svr4_sys_setrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_setrlimit(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct svr4_sys_setrlimit_args *uap = v;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
@@ -194,10 +188,7 @@ svr4_sys_setrlimit(l, v, retval)
 
 
 int
-svr4_sys_getrlimit64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_getrlimit64(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct svr4_sys_getrlimit64_args *uap = v;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
@@ -242,10 +233,7 @@ svr4_sys_getrlimit64(l, v, retval)
 
 
 int
-svr4_sys_setrlimit64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_setrlimit64(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct svr4_sys_setrlimit64_args *uap = v;
 	int rl = svr4_to_native_rl(SCARG(uap, which));

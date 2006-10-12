@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.150 2006/10/10 21:49:15 dogcow Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.151 2006/10/12 01:32:38 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.150 2006/10/10 21:49:15 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.151 2006/10/12 01:32:38 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -511,7 +511,7 @@ bad:
 }
 
 int
-udp6_input(struct mbuf **mp, int *offp, int proto)
+udp6_input(struct mbuf **mp, int *offp, int proto __unused)
 {
 	struct mbuf *m = *mp;
 	int off = *offp;
@@ -1421,11 +1421,8 @@ SYSCTL_SETUP(sysctl_net_inet_udp_setup, "sysctl net.inet.udp subtree setup")
  * -1 if an error occurent and m was freed
  */
 static int
-udp4_espinudp(mp, off, src, so)
-	struct mbuf **mp;
-	int off;
-	struct sockaddr *src;
-	struct socket *so;
+udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src __unused,
+    struct socket *so)
 {
 	size_t len;
 	caddr_t data;

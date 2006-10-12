@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid0.c,v 1.13 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_raid0.c,v 1.14 2006/10/12 01:31:52 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid0.c,v 1.13 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid0.c,v 1.14 2006/10/12 01:31:52 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -52,8 +52,8 @@ typedef struct RF_Raid0ConfigInfo_s {
 }       RF_Raid0ConfigInfo_t;
 
 int
-rf_ConfigureRAID0(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
-		  RF_Config_t *cfgPtr)
+rf_ConfigureRAID0(RF_ShutdownList_t **listp __unused, RF_Raid_t *raidPtr,
+		  RF_Config_t *cfgPtr __unused)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_Raid0ConfigInfo_t *info;
@@ -81,7 +81,7 @@ rf_ConfigureRAID0(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 
 void
 rf_MapSectorRAID0(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
+	      RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap __unused)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 	*col = SUID % raidPtr->numCol;
@@ -90,15 +90,16 @@ rf_MapSectorRAID0(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 }
 
 void
-rf_MapParityRAID0(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
+rf_MapParityRAID0(RF_Raid_t *raidPtr __unused,
+    RF_RaidAddr_t raidSector __unused, RF_RowCol_t *col,
+    RF_SectorNum_t *diskSector, int remap __unused)
 {
 	*col = 0;
 	*diskSector = 0;
 }
 
 void
-rf_IdentifyStripeRAID0(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
+rf_IdentifyStripeRAID0(RF_Raid_t *raidPtr, RF_RaidAddr_t addr __unused,
 		       RF_RowCol_t **diskids)
 {
 	RF_Raid0ConfigInfo_t *info;
@@ -108,8 +109,8 @@ rf_IdentifyStripeRAID0(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 }
 
 void
-rf_MapSIDToPSIDRAID0(RF_RaidLayout_t *layoutPtr, RF_StripeNum_t stripeID,
-		     RF_StripeNum_t *psID, RF_ReconUnitNum_t *which_ru)
+rf_MapSIDToPSIDRAID0(RF_RaidLayout_t *layoutPtr __unused,
+    RF_StripeNum_t stripeID, RF_StripeNum_t *psID, RF_ReconUnitNum_t *which_ru)
 {
 	*which_ru = 0;
 	*psID = stripeID;
@@ -119,7 +120,7 @@ void
 rf_RAID0DagSelect(
     RF_Raid_t * raidPtr,
     RF_IoType_t type,
-    RF_AccessStripeMap_t * asmap,
+    RF_AccessStripeMap_t * asmap __unused,
     RF_VoidFuncPtr * createFunc)
 {
 	if (raidPtr->numFailures > 0) {
@@ -131,9 +132,9 @@ rf_RAID0DagSelect(
 }
 
 int
-rf_VerifyParityRAID0(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
-		     RF_PhysDiskAddr_t *parityPDA, int correct_it,
-		     RF_RaidAccessFlags_t flags)
+rf_VerifyParityRAID0(RF_Raid_t *raidPtr __unused,
+    RF_RaidAddr_t raidAddr __unused, RF_PhysDiskAddr_t *parityPDA __unused,
+    int correct_it __unused, RF_RaidAccessFlags_t flags __unused)
 {
 	/*
          * No parity is always okay.

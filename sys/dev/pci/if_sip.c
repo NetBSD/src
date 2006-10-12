@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.108 2006/06/17 23:34:27 christos Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.109 2006/10/12 01:31:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.108 2006/06/17 23:34:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.109 2006/10/12 01:31:30 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -637,7 +637,8 @@ SIP_DECL(check_64bit)(const struct pci_attach_args *pa)
 #endif /* DP83820 */
 
 static int
-SIP_DECL(match)(struct device *parent, struct cfdata *cf, void *aux)
+SIP_DECL(match)(struct device *parent __unused, struct cfdata *cf __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -648,7 +649,7 @@ SIP_DECL(match)(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
+SIP_DECL(attach)(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct sip_softc *sc = (struct sip_softc *) self;
 	struct pci_attach_args *pa = aux;
@@ -3529,7 +3530,7 @@ SIP_DECL(dp83815_mii_statchg)(struct device *self)
 #if defined(DP83820)
 static void
 SIP_DECL(dp83820_read_macaddr)(struct sip_softc *sc,
-    const struct pci_attach_args *pa, u_int8_t *enaddr)
+    const struct pci_attach_args *pa __unused, u_int8_t *enaddr)
 {
 	u_int16_t eeprom_data[SIP_DP83820_EEPROM_LENGTH / 2];
 	u_int8_t cksum, *e, match;
@@ -3578,7 +3579,7 @@ SIP_DECL(sis900_eeprom_delay)(struct sip_softc *sc)
 
 static void
 SIP_DECL(sis900_read_macaddr)(struct sip_softc *sc,
-    const struct pci_attach_args *pa, u_int8_t *enaddr)
+    const struct pci_attach_args *pa __unused, u_int8_t *enaddr)
 {
 	u_int16_t myea[ETHER_ADDR_LEN / 2];
 
@@ -3683,7 +3684,7 @@ static const u_int8_t bbr4[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
 
 static void
 SIP_DECL(dp83815_read_macaddr)(struct sip_softc *sc,
-    const struct pci_attach_args *pa, u_int8_t *enaddr)
+    const struct pci_attach_args *pa __unused, u_int8_t *enaddr)
 {
 	u_int16_t eeprom_data[SIP_DP83815_EEPROM_LENGTH / 2], *ea;
 	u_int8_t cksum, *e, match;

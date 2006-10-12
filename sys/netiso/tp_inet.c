@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.29 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.30 2006/10/12 01:32:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,7 +73,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.29 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.30 2006/10/12 01:32:46 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -158,7 +158,7 @@ in_getsufx(void	*v, u_short *lenp, caddr_t data_out, int which)
  */
 /* ARGSUSED */
 void
-in_putsufx(void *v, caddr_t sufxloc, int sufxlen, int which)
+in_putsufx(void *v, caddr_t sufxloc, int sufxlen __unused, int which)
 {
 	struct inpcb   *inp = v;
 	if (which == TP_FOREIGN) {
@@ -599,7 +599,7 @@ discard:
  */
 
 void
-tpin_quench(struct inpcb *inp, int dummy)
+tpin_quench(struct inpcb *inp, int dummy __unused)
 {
 	tp_quench((struct inpcb *) inp->inp_socket->so_pcb, PRC_QUENCH);
 }
@@ -625,7 +625,7 @@ tpin_quench(struct inpcb *inp, int dummy)
  * NOTES:
  */
 void *
-tpip_ctlinput(int cmd, struct sockaddr *sa, void *dummy)
+tpip_ctlinput(int cmd, struct sockaddr *sa, void *dummy __unused)
 {
 	void            (*notify)(struct inpcb *, int);
 	int             errno;
@@ -690,7 +690,7 @@ tpip_ctlinput(int cmd, struct sockaddr *sa, void *dummy)
  */
 
 void
-tpin_abort(struct inpcb *inp, int n)
+tpin_abort(struct inpcb *inp, int n __unused)
 {
 	struct tp_event e;
 

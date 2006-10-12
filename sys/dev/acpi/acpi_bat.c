@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.43 2006/02/20 12:17:49 kochi Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.44 2006/10/12 01:30:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.43 2006/02/20 12:17:49 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.44 2006/10/12 01:30:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,8 @@ static int acpibat_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
  *	Autoconfiguration `match' routine.
  */
 static int
-acpibat_match(struct device *parent, struct cfdata *match, void *aux)
+acpibat_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -256,7 +257,7 @@ acpibat_match(struct device *parent, struct cfdata *match, void *aux)
  *	Autoconfiguration `attach' routine.
  */
 static void
-acpibat_attach(struct device *parent, struct device *self, void *aux)
+acpibat_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct acpibat_softc *sc = (void *) self;
 	struct acpi_attach_args *aa = aux;
@@ -659,7 +660,8 @@ acpibat_update(void *arg)
  *	Callback from ACPI interrupt handler to notify us of an event.
  */
 static void
-acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
+acpibat_notify_handler(ACPI_HANDLE handle __unused, UINT32 notify,
+    void *context)
 {
 	struct acpibat_softc *sc = context;
 	int rv, s;
@@ -781,7 +783,8 @@ acpibat_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 }
 
 static int
-acpibat_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
+acpibat_streinfo(struct sysmon_envsys *sme __unused,
+    struct envsys_basic_info *binfo)
 {
 
 	/* XXX Not implemented */

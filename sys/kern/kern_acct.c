@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.67 2006/09/08 20:58:57 elad Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.68 2006/10/12 01:32:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.67 2006/09/08 20:58:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.68 2006/10/12 01:32:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ acct_stop(void)
  * system containing the accounting file has been forcibly unmounted.
  */
 static void
-acctwatch(void *arg)
+acctwatch(void *arg __unused)
 {
 	int error;
 
@@ -290,7 +290,7 @@ acct_init(void)
  * previous implementation done by Mark Tinguely.
  */
 int
-sys_acct(struct lwp *l, void *v, register_t *retval)
+sys_acct(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_acct_args /* {
 		syscallarg(const char *) path;

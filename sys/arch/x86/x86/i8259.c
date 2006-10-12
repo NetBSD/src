@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.8 2006/07/04 00:30:23 christos Exp $	*/
+/*	$NetBSD: i8259.c,v 1.9 2006/10/12 01:30:44 christos Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.8 2006/07/04 00:30:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.9 2006/10/12 01:30:44 christos Exp $");
 
 #include <sys/param.h> 
 #include <sys/systm.h>
@@ -190,7 +190,7 @@ i8259_default_setup(void)
 }
 
 static void
-i8259_hwmask(struct pic *pic, int pin)
+i8259_hwmask(struct pic *pic __unused, int pin)
 {
 	unsigned port;
 	u_int8_t byte;
@@ -210,7 +210,7 @@ i8259_hwmask(struct pic *pic, int pin)
 }
 
 static void
-i8259_hwunmask(struct pic *pic, int pin)
+i8259_hwunmask(struct pic *pic __unused, int pin)
 {
 	unsigned port;
 	u_int8_t byte;
@@ -250,7 +250,8 @@ i8259_reinit_irqs(void)
 }
 
 static void
-i8259_setup(struct pic *pic, struct cpu_info *ci, int pin, int idtvec, int type)
+i8259_setup(struct pic *pic __unused, struct cpu_info *ci __unused,
+    int pin __unused, int idtvec __unused, int type __unused)
 {
 	if (CPU_IS_PRIMARY(ci))
 		i8259_reinit_irqs();

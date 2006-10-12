@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.18 2006/02/20 12:17:49 kochi Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.19 2006/10/12 01:30:54 christos Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.18 2006/02/20 12:17:49 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.19 2006/10/12 01:30:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,8 @@ CFATTACH_DECL(acpitz, sizeof(struct acpitz_softc), acpitz_match,
  * acpitz_match: autoconf(9) match routine
  */
 static int
-acpitz_match(struct device *parent, struct cfdata *match, void *aux)
+acpitz_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -160,7 +161,7 @@ acpitz_match(struct device *parent, struct cfdata *match, void *aux)
  * acpitz_attach: autoconf(9) attach routine
  */
 static void
-acpitz_attach(struct device *parent, struct device *self, void *aux)
+acpitz_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct acpitz_softc *sc = (struct acpitz_softc *)self;
 	struct acpi_attach_args *aa = aux;
@@ -506,7 +507,7 @@ acpitz_get_zone(void *opaque, int verbose)
 
 
 static void
-acpitz_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
+acpitz_notify_handler(ACPI_HANDLE hdl __unused, UINT32 notify, void *opaque)
 {
 	struct acpitz_softc *sc = opaque;
 	ACPI_OSD_EXEC_CALLBACK func = NULL;
@@ -630,7 +631,8 @@ acpitz_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 }
 
 static int
-acpitz_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
+acpitz_streinfo(struct sysmon_envsys *sme __unused,
+    struct envsys_basic_info *binfo)
 {
 
 	/* XXX not implemented */

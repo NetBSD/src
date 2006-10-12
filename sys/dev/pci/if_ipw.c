@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.29 2006/09/29 14:38:04 christos Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.30 2006/10/12 01:31:30 christos Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.29 2006/09/29 14:38:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.30 2006/10/12 01:31:30 christos Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -160,7 +160,8 @@ CFATTACH_DECL(ipw, sizeof (struct ipw_softc), ipw_match, ipw_attach,
     ipw_detach, NULL);
 
 static int
-ipw_match(struct device *parent, struct cfdata *match, void *aux)
+ipw_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -175,7 +176,7 @@ ipw_match(struct device *parent, struct cfdata *match, void *aux)
 #define IPW_PCI_BAR0	0x10
 
 static void
-ipw_attach(struct device *parent, struct device *self, void *aux)
+ipw_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct ipw_softc *sc = (struct ipw_softc *)self;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -360,7 +361,7 @@ fail:	ipw_detach(self, 0);
 }
 
 static int
-ipw_detach(struct device* self, int flags)
+ipw_detach(struct device* self, int flags __unused)
 {
 	struct ipw_softc *sc = (struct ipw_softc *)self;
 	struct ifnet *ifp = &sc->sc_if;
@@ -890,7 +891,8 @@ ipw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 }
 
 static int
-ipw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
+ipw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
+    int arg __unused)
 {
 	struct ifnet *ifp = ic->ic_ifp;
 	struct ipw_softc *sc = ifp->if_softc;
@@ -2338,7 +2340,7 @@ fail:	ifp->if_flags &= ~IFF_UP;
 }
 
 static void
-ipw_stop(struct ifnet *ifp, int disable)
+ipw_stop(struct ifnet *ifp, int disable __unused)
 {
 	struct ipw_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;

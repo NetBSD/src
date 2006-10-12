@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.145 2006/09/02 06:22:45 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.146 2006/10/12 01:32:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.145 2006/09/02 06:22:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.146 2006/10/12 01:32:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -693,7 +693,7 @@ badf:
  */
 /* ARGSUSED */
 int
-sys_close(struct lwp *l, void *v, register_t *retval)
+sys_close(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_close_args /* {
 		syscallarg(int)	fd;
@@ -719,7 +719,7 @@ sys_close(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys___fstat30(struct lwp *l, void *v, register_t *retval)
+sys___fstat30(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys___fstat30_args /* {
 		syscallarg(int)			fd;
@@ -1113,7 +1113,7 @@ cwdfree(struct cwdinfo *cwdi)
  * directories as p.
  */
 struct filedesc *
-fdinit(struct proc *p)
+fdinit(struct proc *p __unused)
 {
 	struct filedesc0 *newfdp;
 
@@ -1483,7 +1483,7 @@ closef(struct file *fp, struct lwp *l)
  */
 /* ARGSUSED */
 int
-sys_flock(struct lwp *l, void *v, register_t *retval)
+sys_flock(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_flock_args /* {
 		syscallarg(int)	fd;
@@ -1619,7 +1619,7 @@ out:
  */
 /* ARGSUSED */
 static int
-filedescopen(dev_t dev, int mode, int type, struct lwp *l)
+filedescopen(dev_t dev, int mode __unused, int type __unused, struct lwp *l)
 {
 
 	/*
@@ -1864,7 +1864,7 @@ fsetown(struct proc *p, pid_t *pgid, int cmd, const void *data)
  * needs the sign removed before use.
  */
 int
-fgetown(struct proc *p, pid_t pgid, int cmd, void *data)
+fgetown(struct proc *p __unused, pid_t pgid, int cmd, void *data)
 {
 	switch (cmd) {
 	case TIOCGPGRP:
@@ -1915,7 +1915,8 @@ fdclone(struct lwp *l, struct file *fp, int fd, int flag,
 
 /* ARGSUSED */
 int
-fnullop_fcntl(struct file *fp, u_int cmd, void *data, struct lwp *l)
+fnullop_fcntl(struct file *fp __unused, u_int cmd, void *data __unused,
+    struct lwp *l __unused)
 {
 	if (cmd == F_SETFL)
 		return 0;
@@ -1925,7 +1926,8 @@ fnullop_fcntl(struct file *fp, u_int cmd, void *data, struct lwp *l)
 
 /* ARGSUSED */
 int
-fnullop_poll(struct file *fp, int which, struct lwp *l)
+fnullop_poll(struct file *fp __unused, int which __unused,
+    struct lwp *l __unused)
 {
 	return 0;
 }
@@ -1933,7 +1935,7 @@ fnullop_poll(struct file *fp, int which, struct lwp *l)
 
 /* ARGSUSED */
 int
-fnullop_kqfilter(struct file *fp, struct knote *kn)
+fnullop_kqfilter(struct file *fp __unused, struct knote *kn __unused)
 {
 
 	return 0;
@@ -1941,7 +1943,8 @@ fnullop_kqfilter(struct file *fp, struct knote *kn)
 
 /* ARGSUSED */
 int
-fbadop_stat(struct file *fp, struct stat *sb, struct lwp *l)
+fbadop_stat(struct file *fp __unused, struct stat *sb __unused,
+    struct lwp *l __unused)
 {
 	return EOPNOTSUPP;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSynch.c,v 1.1 2006/03/23 13:41:13 kochi Exp $	*/
+/*	$NetBSD: OsdSynch.c,v 1.2 2006/10/12 01:30:55 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.1 2006/03/23 13:41:13 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.2 2006/10/12 01:30:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -322,7 +322,7 @@ AcpiOsAcquireLock(ACPI_HANDLE Handle)
  *	Release a lock.
  */
 void
-AcpiOsReleaseLock(ACPI_HANDLE Handle, ACPI_NATIVE_UINT Flags)
+AcpiOsReleaseLock(ACPI_HANDLE Handle, ACPI_NATIVE_UINT Flags __unused)
 {
 	struct acpi_lock *al = (void *) Handle;
 

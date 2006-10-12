@@ -1,4 +1,4 @@
-/*	$NetBSD: weasel_pci.c,v 1.7 2005/12/11 12:22:51 christos Exp $	*/
+/*	$NetBSD: weasel_pci.c,v 1.8 2006/10/12 01:31:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: weasel_pci.c,v 1.7 2005/12/11 12:22:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: weasel_pci.c,v 1.8 2006/10/12 01:31:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,8 @@ static int	weasel_pci_wdog_disarm(struct weasel_softc *);
 static int	weasel_pci_wdog_query_state(struct weasel_softc *);
 
 static int
-weasel_pci_match(struct device *parent, struct cfdata *cf, void *aux)
+weasel_pci_match(struct device *parent __unused, struct cfdata *cf __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -103,7 +104,8 @@ weasel_pci_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-weasel_pci_attach(struct device *parent, struct device *self, void *aux)
+weasel_pci_attach(struct device *parent __unused, struct device *self,
+    void *aux)
 {
 	struct weasel_softc *sc = (void *) self;
 	struct pci_attach_args *pa = aux;

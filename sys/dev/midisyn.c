@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.18 2006/06/30 13:56:25 chap Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.19 2006/10/12 01:30:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.18 2006/06/30 13:56:25 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.19 2006/10/12 01:30:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -131,8 +131,8 @@ struct channelstate { /* dyamically allocated in open() on account of size */
 };
 
 int
-midisyn_open(void *addr, int flags, void (*iintr)(void *, int),
-	     void (*ointr)(void *), void *arg)
+midisyn_open(void *addr, int flags, void (*iintr)(void *, int) __unused,
+    void (*ointr)(void *) __unused, void *arg __unused)
 {
 	midisyn *ms = addr;
 	int rslt;
@@ -306,12 +306,13 @@ midisyn_attackv_vel(midisyn *ms, uint_fast16_t voice, midipitch_t mp,
 }
 
 int
-midisyn_sysrt(void *addr, int b)
+midisyn_sysrt(void *addr __unused, int b __unused)
 {
 	return 0;
 }
 
-int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf, int len)
+int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf,
+    int len __unused)
 {
 	midisyn *ms = addr;
 	int voice = 0;		/* initialize to keep gcc quiet */
@@ -399,12 +400,13 @@ int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf, int len)
 	return 0;
 }
 
-int midisyn_commonmsg(void *addr, int status, u_char *buf, int len)
+int midisyn_commonmsg(void *addr __unused, int status __unused,
+    u_char *buf __unused, int len __unused)
 {
 	return 0;
 }
 
-int midisyn_sysex(void *addr, u_char *buf, int len)
+int midisyn_sysex(void *addr __unused, u_char *buf __unused, int len __unused)
 {
 	/*
 	 * unimplemented by existing drivers. it is surely more sensible

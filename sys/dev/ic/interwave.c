@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.28 2006/03/08 23:46:24 lukem Exp $	*/
+/*	$NetBSD: interwave.c,v 1.29 2006/10/12 01:31:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.28 2006/03/08 23:46:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.29 2006/10/12 01:31:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ iwattach(struct iw_softc *sc)
 }
 
 int
-iwopen(struct iw_softc *sc, int flags)
+iwopen(struct iw_softc *sc, int flags __unused)
 {
 
 	DPRINTF(("iwopen: sc %p\n", sc));
@@ -234,7 +234,7 @@ iwopen(struct iw_softc *sc, int flags)
 }
 
 void
-iwclose(void *addr)
+iwclose(void *addr __unused)
 {
 
 	DPRINTF(("iwclose sc %p\n", addr));
@@ -578,7 +578,7 @@ iw_set_speed(struct iw_softc *sc, u_long freq, char in)
 
 /* Encoding. */
 int
-iw_query_encoding(void *addr, audio_encoding_t *fp)
+iw_query_encoding(void *addr __unused, audio_encoding_t *fp)
 {
 	/*
 	 * LINEAR, ALAW, ULAW, ADPCM in HW, we'll use linear unsigned
@@ -698,7 +698,7 @@ iw_set_format(struct iw_softc *sc, u_long precision, int in)
 }
 
 int
-iw_set_params(void *addr, int setmode, int usemode, audio_params_t *p,
+iw_set_params(void *addr, int setmode, int usemode __unused, audio_params_t *p,
     audio_params_t *q, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	audio_params_t phw, rhw;
@@ -778,7 +778,8 @@ iw_set_params(void *addr, int setmode, int usemode, audio_params_t *p,
 
 
 int
-iw_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
+iw_round_blocksize(void *addr __unused, int blk, int mode __unused,
+    const audio_params_t *param __unused)
 {
 
 	/* Round to a multiple of the biggest sample size. */
@@ -881,7 +882,7 @@ iw_mixer_line_level(struct iw_softc *sc, int line, int levl, int levr)
 }
 
 int
-iw_commit_settings(void *addr)
+iw_commit_settings(void *addr __unused)
 {
 
 	return 0;
@@ -1110,7 +1111,7 @@ iw_speaker_ctl(void *addr, int newstate)
 }
 
 int
-iw_getdev(void *addr, struct audio_device *retp)
+iw_getdev(void *addr __unused, struct audio_device *retp)
 {
 
 	*retp = iw_device;
@@ -1118,7 +1119,7 @@ iw_getdev(void *addr, struct audio_device *retp)
 }
 
 int
-iw_setfd(void *addr, int flag)
+iw_setfd(void *addr __unused, int flag __unused)
 {
 
 	return 0;
@@ -1369,7 +1370,7 @@ iw_get_port(void *addr, mixer_ctrl_t *cp)
 
 
 int
-iw_query_devinfo(void *addr, mixer_devinfo_t *dip)
+iw_query_devinfo(void *addr __unused, mixer_devinfo_t *dip)
 {
 
 	switch (dip->index) {
@@ -1514,7 +1515,7 @@ iw_malloc(void *addr, int direction, size_t size,
 }
 
 void
-iw_free(void *addr, void *ptr, struct malloc_type *pool)
+iw_free(void *addr __unused, void *ptr, struct malloc_type *pool)
 {
 	isa_free(ptr, pool);
 }
@@ -1537,7 +1538,7 @@ iw_round_buffersize(void *addr, int direction, size_t size)
 }
 
 paddr_t
-iw_mappage(void *addr, void *mem, off_t off, int prot)
+iw_mappage(void *addr __unused, void *mem, off_t off, int prot)
 {
 
 	return isa_mappage(mem, off, prot);

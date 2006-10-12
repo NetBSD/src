@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.37 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.38 2006/10/12 01:30:50 christos Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_aout.c,v 1.37 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_aout.c,v 1.38 2006/10/12 01:30:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,8 +234,8 @@ db_aout_search_symbol(db_symtab_t *symtab, db_addr_t off,
  * Return the name and value for a symbol.
  */
 static void
-db_aout_symbol_values(db_symtab_t *symtab, db_sym_t sym, const char **namep,
-    db_expr_t *valuep)
+db_aout_symbol_values(db_symtab_t *symtab __unused, db_sym_t sym,
+    const char **namep, db_expr_t *valuep)
 {
 	struct nlist *sp;
 
@@ -248,8 +248,8 @@ db_aout_symbol_values(db_symtab_t *symtab, db_sym_t sym, const char **namep,
 
 
 static boolean_t
-db_aout_line_at_pc(db_symtab_t *symtab, db_sym_t cursym, char **filename,
-    int *linenum, db_expr_t off)
+db_aout_line_at_pc(db_symtab_t *symtab, db_sym_t cursym __unused,
+    char **filename, int *linenum, db_expr_t off)
 {
 	struct nlist	*sp, *ep;
 	unsigned long		sodiff = -1UL, lndiff = -1UL, ln = 0;

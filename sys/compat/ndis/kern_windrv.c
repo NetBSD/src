@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_windrv.c,v 1.3.2.2 2005/03/31 04:24:35 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_windrv.c,v 1.3 2006/05/29 20:49:03 rittera Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_windrv.c,v 1.4 2006/10/12 01:30:49 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -194,10 +194,7 @@ windrv_lookup(img, name)
  */
 
 int
-windrv_unload(mod, img, len)
-	module_t		mod;
-	vm_offset_t		img;
-	int			len;
+windrv_unload(module_t mod __unused, vm_offset_t img, int len __unused)
 {
 	struct drvdb_ent	*d, *r = NULL;
 	driver_object		*drv;
@@ -249,10 +246,7 @@ windrv_unload(mod, img, len)
  */
 
 int
-windrv_load(mod, img, len)
-	module_t		mod;
-	vm_offset_t		img;
-	int			len;
+windrv_load(module_t mod __unused, vm_offset_t img, int len)
 {
 	image_import_descriptor	imp_desc;
 	image_optional_header	opt_hdr;
@@ -526,8 +520,7 @@ windrv_wrap(func, wrap)
 }
 
 int
-windrv_unwrap(func)
-	funcptr			func;
+windrv_unwrap(funcptr func __unused)
 {
 #ifdef __amd64__
 	free(func, M_DEVBUF);

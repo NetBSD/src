@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.65 2006/09/03 05:01:32 christos Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.66 2006/10/12 01:31:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.65 2006/09/03 05:01:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.66 2006/10/12 01:31:32 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -438,7 +438,7 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 static void
 pci_conf_print_common(
 #ifdef _KERNEL
-    pci_chipset_tag_t pc, pcitag_t tag,
+    pci_chipset_tag_t pc __unused, pcitag_t tag __unused,
 #endif
     const pcireg_t *regs)
 {
@@ -779,7 +779,7 @@ pci_conf_print_type0(
 static void
 pci_conf_print_caplist(
 #ifdef _KERNEL
-    pci_chipset_tag_t pc, pcitag_t tag,
+    pci_chipset_tag_t pc __unused, pcitag_t tag __unused,
 #endif
     const pcireg_t *regs, int capoff)
 {

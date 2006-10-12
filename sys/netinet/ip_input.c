@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.234 2006/10/10 21:49:14 dogcow Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.235 2006/10/12 01:32:38 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.234 2006/10/10 21:49:14 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.235 2006/10/12 01:32:38 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1794,7 +1794,7 @@ ip_srcroute(void)
  * XXX should be deleted; last arg currently ignored.
  */
 void
-ip_stripoptions(struct mbuf *m, struct mbuf *mopt)
+ip_stripoptions(struct mbuf *m, struct mbuf *mopt __unused)
 {
 	int i;
 	struct ip *ip = mtod(m, struct ip *);

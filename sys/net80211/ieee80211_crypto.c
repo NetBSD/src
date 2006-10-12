@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.c,v 1.12 2006/02/27 00:55:46 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_crypto.c,v 1.13 2006/10/12 01:32:30 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.12 2005/08/08 18:46:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.12 2006/02/27 00:55:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.13 2006/10/12 01:32:30 christos Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -106,17 +106,19 @@ null_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k,
 	return 1;
 }
 static int
-null_key_delete(struct ieee80211com *ic, const struct ieee80211_key *k)
+null_key_delete(struct ieee80211com *ic __unused,
+    const struct ieee80211_key *k __unused)
 {
 	return 1;
 }
 static 	int
-null_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
-	     const u_int8_t mac[IEEE80211_ADDR_LEN])
+null_key_set(struct ieee80211com *ic __unused,
+    const struct ieee80211_key *k __unused,
+    const u_int8_t mac[IEEE80211_ADDR_LEN] __unused)
 {
 	return 1;
 }
-static void null_key_update(struct ieee80211com *ic) {}
+static void null_key_update(struct ieee80211com *ic __unused) {}
 
 /*
  * Write-arounds for common operations.

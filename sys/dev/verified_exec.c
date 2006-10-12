@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.43 2006/09/05 13:02:16 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.44 2006/10/12 01:30:51 christos Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.43 2006/09/05 13:02:16 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.44 2006/10/12 01:30:51 christos Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.43 2006/09/05 13:02:16 elad Exp $\n$NetBSD: verified_exec.c,v 1.43 2006/09/05 13:02:16 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.44 2006/10/12 01:30:51 christos Exp $\n$NetBSD: verified_exec.c,v 1.44 2006/10/12 01:30:51 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -115,7 +115,8 @@ int     veriexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
 		       struct lwp *l);
 
 void
-veriexecattach(DEVPORT_DEVICE *parent, DEVPORT_DEVICE *self, void *aux)
+veriexecattach(DEVPORT_DEVICE *parent __unused, DEVPORT_DEVICE *self __unused,
+    void *aux __unused)
 {
 	veriexec_dev_usage = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.41 2006/01/14 17:41:16 yamt Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.42 2006/10/12 01:32:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.41 2006/01/14 17:41:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.42 2006/10/12 01:32:51 christos Exp $");
 
 #include <sys/param.h>
 
@@ -119,7 +119,7 @@ ffs_load_inode(struct buf *bp, struct inode *ip, struct fs *fs, ino_t ino)
  */
 void
 ffs_fragacct(struct fs *fs, int fragmap, int32_t fraglist[], int cnt,
-    int needswap)
+    int needswap __unused)
 {
 	int inblk;
 	int field, subfield;

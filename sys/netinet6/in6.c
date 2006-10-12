@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.111 2006/09/26 11:55:41 is Exp $	*/
+/*	$NetBSD: in6.c,v 1.112 2006/10/12 01:32:39 christos Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.111 2006/09/26 11:55:41 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.112 2006/10/12 01:32:39 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -2218,9 +2218,7 @@ in6_domifattach(ifp)
 }
 
 void
-in6_domifdetach(ifp, aux)
-	struct ifnet *ifp;
-	void *aux;
+in6_domifdetach(struct ifnet *ifp __unused, void *aux)
 {
 	struct in6_ifextra *ext = (struct in6_ifextra *)aux;
 

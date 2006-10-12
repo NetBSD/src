@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.4 2006/07/04 18:46:42 christos Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.5 2006/10/12 01:30:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.4 2006/07/04 18:46:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.5 2006/10/12 01:30:44 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -214,18 +214,14 @@ bad:
 }
 
 const char *
-pci_intr_string(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
+pci_intr_string(pci_chipset_tag_t pc __unused, pci_intr_handle_t ih)
 {
 	return intr_string(ih);
 }
 
 
 const struct evcnt *
-pci_intr_evcnt(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
+pci_intr_evcnt(pci_chipset_tag_t pc __unused, pci_intr_handle_t ih __unused)
 {
 
 	/* XXX for now, no evcnt parent reported */
@@ -233,11 +229,8 @@ pci_intr_evcnt(pc, ih)
 }
 
 void *
-pci_intr_establish(pc, ih, level, func, arg)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
-	int level, (*func) __P((void *));
-	void *arg;
+pci_intr_establish(pci_chipset_tag_t pc __unused, pci_intr_handle_t ih,
+    int level, int (*func)(void *), void *arg)
 {
 	int pin, irq;
 	struct pic *pic;
@@ -264,9 +257,7 @@ pci_intr_establish(pc, ih, level, func, arg)
 }
 
 void
-pci_intr_disestablish(pc, cookie)
-	pci_chipset_tag_t pc;
-	void *cookie;
+pci_intr_disestablish(pci_chipset_tag_t pc __unused, void *cookie)
 {
 
 	intr_disestablish(cookie);

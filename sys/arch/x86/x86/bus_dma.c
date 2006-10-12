@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.30 2006/08/28 19:58:57 bouyer Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.31 2006/10/12 01:30:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.30 2006/08/28 19:58:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.31 2006/10/12 01:30:44 christos Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -157,9 +157,9 @@ static inline int _bus_dmamap_load_busaddr(bus_dma_tag_t, bus_dmamap_t,
  * Called by DMA-safe memory allocation methods.
  */
 int
-_bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
-    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
-    int flags, bus_addr_t low, bus_addr_t high)
+_bus_dmamem_alloc_range(bus_dma_tag_t t __unused, bus_size_t size,
+    bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs,
+    int nsegs, int *rsegs, int flags, bus_addr_t low, bus_addr_t high)
 {
 	paddr_t curaddr, lastaddr;
 	struct vm_page *m;
@@ -392,7 +392,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 }
 
 static inline int
-_bus_dmamap_load_busaddr(bus_dma_tag_t t, bus_dmamap_t map,
+_bus_dmamap_load_busaddr(bus_dma_tag_t t __unused, bus_dmamap_t map,
     bus_addr_t addr, int size)
 {
 	bus_dma_segment_t * const segs = map->dm_segs;
@@ -673,8 +673,9 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
  * bus_dmamem_alloc().
  */
 int
-_bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
-    int nsegs, bus_size_t size, int flags)
+_bus_dmamap_load_raw(bus_dma_tag_t t __unused, bus_dmamap_t map __unused,
+    bus_dma_segment_t *segs __unused, int nsegs __unused,
+    bus_size_t size __unused, int flags __unused)
 {
 
 	panic("_bus_dmamap_load_raw: not implemented");
@@ -684,7 +685,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
  * Unload a DMA map.
  */
 void
-_bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
+_bus_dmamap_unload(bus_dma_tag_t t __unused, bus_dmamap_t map)
 {
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
 
@@ -705,7 +706,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
  * Synchronize a DMA map.
  */
 void
-_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+_bus_dmamap_sync(bus_dma_tag_t t __unused, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
@@ -979,7 +980,7 @@ _bus_dma_uiomove(void *buf, struct uio *uio, size_t n, int direction)
  * bus-specific DMA memory free functions.
  */
 void
-_bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
+_bus_dmamem_free(bus_dma_tag_t t __unused, bus_dma_segment_t *segs, int nsegs)
 {
 	struct vm_page *m;
 	bus_addr_t addr;
@@ -1008,7 +1009,7 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
  * This supports BUS_DMA_NOCACHE.
  */
 int
-_bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
+_bus_dmamem_map(bus_dma_tag_t t __unused, bus_dma_segment_t *segs, int nsegs,
     size_t size, caddr_t *kvap, int flags)
 {
 	vaddr_t va;
@@ -1069,7 +1070,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
  */
 
 void
-_bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
+_bus_dmamem_unmap(bus_dma_tag_t t __unused, caddr_t kva, size_t size)
 {
 	pt_entry_t *pte;
 	vaddr_t va, endva;
@@ -1109,8 +1110,8 @@ _bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
  * bus-specific DMA mmap(2)'ing functions.
  */
 paddr_t
-_bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
-    off_t off, int prot, int flags)
+_bus_dmamem_mmap(bus_dma_tag_t t __unused, bus_dma_segment_t *segs, int nsegs,
+    off_t off, int prot __unused, int flags __unused)
 {
 	int i;
 
@@ -1145,7 +1146,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
  */
 static int
 _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
-    bus_size_t buflen, struct vmspace *vm, int flags)
+    bus_size_t buflen, struct vmspace *vm, int flags __unused)
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr;

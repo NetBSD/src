@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.121 2006/09/05 16:11:26 dyoung Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.122 2006/10/12 01:32:38 christos Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.121 2006/09/05 16:11:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.122 2006/10/12 01:32:38 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -444,9 +444,7 @@ icmp6_error(m, type, code, param)
  * Process a received ICMP6 message.
  */
 int
-icmp6_input(mp, offp, proto)
-	struct mbuf **mp;
-	int *offp, proto;
+icmp6_input(struct mbuf **mp, int *offp, int proto __unused)
 {
 	struct mbuf *m = *mp, *n;
 	struct ip6_hdr *ip6, *nip6;
@@ -1619,11 +1617,8 @@ ni6_dnsmatch(a, alen, b, blen)
  * calculate the number of addresses to be returned in the node info reply.
  */
 static int
-ni6_addrs(ni6, m, ifpp, subj)
-	struct icmp6_nodeinfo *ni6;
-	struct mbuf *m;
-	struct ifnet **ifpp;
-	char *subj;
+ni6_addrs(struct icmp6_nodeinfo *ni6, struct mbuf *m __unused,
+    struct ifnet **ifpp, char *subj)
 {
 	struct ifnet *ifp;
 	struct in6_ifaddr *ifa6;
@@ -2699,10 +2694,10 @@ icmp6_ctloutput(op, so, level, optname, mp)
  * XXX per-destination/type check necessary?
  */
 static int
-icmp6_ratelimit(dst, type, code)
-	const struct in6_addr *dst;	/* not used at this moment */
-	const int type;			/* not used at this moment */
-	const int code;			/* not used at this moment */
+icmp6_ratelimit(
+	const struct in6_addr *dst __unused,	/* not used at this moment */
+	const int type __unused,		/* not used at this moment */
+	const int code __unused)		/* not used at this moment */
 {
 	int ret;
 
@@ -2756,9 +2751,7 @@ icmp6_mtudisc_clone(dst)
 }
 
 static void
-icmp6_mtudisc_timeout(rt, r)
-	struct rtentry *rt;
-	struct rttimer *r;
+icmp6_mtudisc_timeout(struct rtentry *rt, struct rttimer *r __unused)
 {
 	if (rt == NULL)
 		panic("icmp6_mtudisc_timeout: bad route to timeout");
@@ -2773,9 +2766,7 @@ icmp6_mtudisc_timeout(rt, r)
 }
 
 static void
-icmp6_redirect_timeout(rt, r)
-	struct rtentry *rt;
-	struct rttimer *r;
+icmp6_redirect_timeout(struct rtentry *rt, struct rttimer *r __unused)
 {
 	if (rt == NULL)
 		panic("icmp6_redirect_timeout: bad route to timeout");
@@ -2792,6 +2783,9 @@ icmp6_redirect_timeout(rt, r)
 static int
 sysctl_net_inet6_icmp6_nd6(SYSCTLFN_ARGS)
 {
+	(void)&name;
+	(void)&l;
+	(void)&oname;
 
 	if (namelen != 0)
 		return (EINVAL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.3 2006/03/29 04:16:50 thorpej Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.4 2006/10/12 01:31:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.3 2006/03/29 04:16:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.4 2006/10/12 01:31:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,8 @@ static const struct pciide_product_desc pciide_svwsata_products[] =  {
 };
 
 static int
-svwsata_match(struct device *parent, struct cfdata *match, void *aux)
+svwsata_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -84,7 +85,7 @@ svwsata_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-svwsata_attach(struct device *parent, struct device *self, void *aux)
+svwsata_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (void *)self;

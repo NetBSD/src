@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7463.c,v 1.4 2006/04/30 18:54:20 xtraeme Exp $ */
+/*	$NetBSD: adt7463.c,v 1.5 2006/10/12 01:30:57 christos Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.4 2006/04/30 18:54:20 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.5 2006/10/12 01:30:57 christos Exp $");
 
 /* Fan speed control added by Hanns Hartman */
 #include <sys/param.h>
@@ -71,7 +71,8 @@ CFATTACH_DECL(adt7463c, sizeof(struct adt7463c_softc),
     adt7463c_match, adt7463c_attach, NULL, NULL);
 
 static int
-adt7463c_match(struct device *parent, struct cfdata *cf, void *aux)
+adt7463c_match(struct device *parent __unused, struct cfdata *cf __unused,
+    void *aux)
 {
         struct i2c_attach_args *ia = aux;
 	struct adt7463c_softc sc;
@@ -85,7 +86,7 @@ adt7463c_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-adt7463c_attach(struct device *parent, struct device *self, void *aux)
+adt7463c_attach(struct device *parent __unused, struct device *self, void *aux)
 {
         struct adt7463c_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
@@ -185,7 +186,7 @@ adt7463c_verify(struct adt7463c_softc *sc)
 }
 
 static void
-adt7463c_setup_volt(struct adt7463c_softc *sc, int start, int tot)
+adt7463c_setup_volt(struct adt7463c_softc *sc, int start, int tot __unused)
 {  
         sc->sc_sensor[start+0].units = sc->sc_info[start+0].units = ENVSYS_SVOLTS_DC;
 	snprintf(sc->sc_info[start+0].desc, sizeof(sc->sc_info[start+0].desc), "2.5V");
@@ -206,7 +207,7 @@ adt7463c_setup_volt(struct adt7463c_softc *sc, int start, int tot)
 
 
 static void
-adt7463c_setup_temp(struct adt7463c_softc *sc,  int start, int tot)
+adt7463c_setup_temp(struct adt7463c_softc *sc,  int start, int tot __unused)
 {
        sc->sc_sensor[start+0].units = sc->sc_info[start+0].units = ENVSYS_STEMP;
        snprintf(sc->sc_info[start + 0].desc,
@@ -223,7 +224,7 @@ adt7463c_setup_temp(struct adt7463c_softc *sc,  int start, int tot)
 }
 
 static void
-adt7463c_setup_fan(struct adt7463c_softc *sc,  int start, int tot)
+adt7463c_setup_fan(struct adt7463c_softc *sc,  int start, int tot __unused)
 {
         sc->sc_sensor[start + 0].units = ENVSYS_SFANRPM;
 	sc->sc_info[start + 0].units = ENVSYS_SFANRPM;

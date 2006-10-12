@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate_mca.c,v 1.15 2006/08/30 16:38:23 christos Exp $	*/
+/*	$NetBSD: if_ate_mca.c,v 1.16 2006/10/12 01:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.15 2006/08/30 16:38:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.16 2006/10/12 01:31:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,10 +107,8 @@ ate_mca_lookup(id)
 }
 
 int
-ate_mca_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ate_mca_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct mca_attach_args *ma = (struct mca_attach_args *) aux;
 
@@ -129,9 +127,8 @@ static const int ats_irq[] = {
 };
 
 void
-ate_mca_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ate_mca_attach(struct device *parent __unused, struct device *self,
+    void *aux)
 {
 	struct ate_softc *isc = device_private(self);
 	struct mb86960_softc *sc = &isc->sc_mb86960;

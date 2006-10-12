@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.35 2006/08/28 00:35:22 christos Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.36 2006/10/12 01:32:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.35 2006/08/28 00:35:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.36 2006/10/12 01:32:10 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -514,10 +514,8 @@ out:
  */
 /* ARGSUSED */
 int
-cd9660_start(mp, flags, l)
-	struct mount *mp;
-	int flags;
-	struct lwp *l;
+cd9660_start(struct mount *mp __unused, int flags __unused,
+    struct lwp *l __unused)
 {
 	return 0;
 }
@@ -589,12 +587,12 @@ cd9660_root(mp, vpp)
  */
 /* ARGSUSED */
 int
-cd9660_quotactl(mp, cmd, uid, arg, l)
-	struct mount *mp;
-	int cmd;
-	uid_t uid;
-	void *arg;
-	struct lwp *l;
+cd9660_quotactl(
+    struct mount *mp __unused,
+    int cmd __unused,
+    uid_t uid __unused,
+    void *arg __unused,
+    struct lwp *l __unused)
 {
 
 	return (EOPNOTSUPP);
@@ -604,10 +602,10 @@ cd9660_quotactl(mp, cmd, uid, arg, l)
  * Get file system statistics.
  */
 int
-cd9660_statvfs(mp, sbp, l)
-	struct mount *mp;
-	struct statvfs *sbp;
-	struct lwp *l;
+cd9660_statvfs(
+    struct mount *mp,
+    struct statvfs *sbp,
+    struct lwp *l __unused)
 {
 	struct iso_mnt *isomp;
 
@@ -632,11 +630,11 @@ cd9660_statvfs(mp, sbp, l)
 
 /* ARGSUSED */
 int
-cd9660_sync(mp, waitfor, cred, l)
-	struct mount *mp;
-	int waitfor;
-	kauth_cred_t cred;
-	struct lwp *l;
+cd9660_sync(
+    struct mount *mp __unused,
+    int waitfor __unused,
+    kauth_cred_t cred __unused,
+    struct lwp *l __unused)
 {
 	return (0);
 }

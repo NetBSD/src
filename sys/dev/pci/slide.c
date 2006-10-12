@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.13 2006/09/03 05:24:47 christos Exp $	*/
+/*	$NetBSD: slide.c,v 1.14 2006/10/12 01:31:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.13 2006/09/03 05:24:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.14 2006/10/12 01:31:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,8 @@ static const struct pciide_product_desc pciide_winbond_products[] =  {
 };
 
 static int
-slide_match(struct device *parent, struct cfdata *match, void *aux)
+slide_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -100,7 +101,7 @@ slide_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-slide_attach(struct device *parent, struct device *self, void *aux)
+slide_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;

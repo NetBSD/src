@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.92 2006/09/03 21:17:54 christos Exp $        */
+/*      $NetBSD: ukbd.c,v 1.93 2006/10/12 01:32:00 christos Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.92 2006/09/03 21:17:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.93 2006/10/12 01:32:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,7 +278,8 @@ const struct wskbd_mapdata ukbd_keymapdata = {
 USB_DECLARE_DRIVER(ukbd);
 
 int
-ukbd_match(struct device *parent, struct cfdata *match, void *aux)
+ukbd_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 	int size;
@@ -293,7 +294,7 @@ ukbd_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-ukbd_attach(struct device *parent, struct device *self, void *aux)
+ukbd_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct ukbd_softc *sc = (struct ukbd_softc *)self;
 	struct uhidev_attach_arg *uha = aux;
@@ -457,7 +458,7 @@ ukbd_detach(struct device *self, int flags)
 }
 
 void
-ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
+ukbd_intr(struct uhidev *addr, void *ibuf, u_int len __unused)
 {
 	struct ukbd_softc *sc = (struct ukbd_softc *)addr;
 	struct ukbd_data *ud = &sc->sc_ndata;
@@ -696,7 +697,8 @@ ukbd_rawrepeat(void *v)
 #endif /* defined(WSDISPLAY_COMPAT_RAWKBD) && defined(UKBD_REPEAT) */
 
 int
-ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag __unused,
+    struct lwp *l __unused)
 {
 	struct ukbd_softc *sc = v;
 

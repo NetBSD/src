@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.39 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.40 2006/10/12 01:32:38 christos Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.39 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.40 2006/10/12 01:32:38 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -529,9 +529,7 @@ esp4_ctlinput(cmd, sa, v)
 
 #ifdef INET6
 int
-esp6_input(mp, offp, proto)
-	struct mbuf **mp;
-	int *offp, proto;
+esp6_input(struct mbuf **mp, int *offp, int proto __unused)
 {
 	struct mbuf *m = *mp;
 	int off = *offp;

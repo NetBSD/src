@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_cardbus.c,v 1.3 2005/12/11 12:21:15 christos Exp $	*/
+/*	$NetBSD: njs_cardbus.c,v 1.4 2006/10/12 01:30:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.3 2005/12/11 12:21:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.4 2006/10/12 01:30:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,8 @@ njs_cardbus_lookup(const struct cardbus_attach_args *ca)
 }
 
 static int
-njs_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
+njs_cardbus_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
@@ -125,7 +126,8 @@ njs_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-njs_cardbus_attach(struct device *parent, struct device *self, void *aux)
+njs_cardbus_attach(struct device *parent __unused, struct device *self,
+    void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 	struct njsc32_cardbus_softc *csc = (void *) self;

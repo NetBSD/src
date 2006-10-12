@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.96 2006/09/15 11:22:21 is Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.97 2006/10/12 01:31:59 christos Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.96 2006/09/15 11:22:21 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.97 2006/10/12 01:31:59 christos Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -1048,7 +1048,8 @@ aue_tx_list_init(struct aue_softc *sc)
 }
 
 Static void
-aue_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+aue_intr(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct aue_softc	*sc = priv;
 	struct ifnet		*ifp = GET_IFP(sc);
@@ -1193,7 +1194,8 @@ aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
  */
 
 Static void
-aue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+aue_txeof(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct aue_chain	*c = priv;
 	struct aue_softc	*sc = c->aue_sc;

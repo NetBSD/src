@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.18 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: acardide.c,v 1.19 2006/10/12 01:31:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.18 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.19 2006/10/12 01:31:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,8 @@ static const struct pciide_product_desc pciide_acard_products[] =  {
 };
 
 static int
-acardide_match(struct device *parent, struct cfdata *match, void *aux)
+acardide_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -96,7 +97,7 @@ acardide_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-acardide_attach(struct device *parent, struct device *self, void *aux)
+acardide_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;

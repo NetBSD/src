@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.54 2006/09/03 05:28:40 christos Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.55 2006/10/12 01:32:14 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.54 2006/09/03 05:28:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.55 2006/10/12 01:32:14 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -146,7 +146,7 @@ VFS_ATTACH(smbfs_vfsops);
 
 int
 smbfs_mount(struct mount *mp, const char *path, void *data,
-	struct nameidata *ndp, struct lwp *l)
+    struct nameidata *ndp __unused, struct lwp *l)
 {
 	struct smbfs_args args; 	  /* will hold data from mount request */
 	struct smbmount *smp = NULL;
@@ -338,7 +338,8 @@ smbfs_root(struct mount *mp, struct vnode **vpp)
  */
 /* ARGSUSED */
 int
-smbfs_start(struct mount *mp, int flags, struct lwp *l)
+smbfs_start(struct mount *mp __unused, int flags __unused,
+    struct lwp *l __unused)
 {
 	SMBVDEBUG("flags=%04x\n", flags);
 	return 0;
@@ -349,12 +350,8 @@ smbfs_start(struct mount *mp, int flags, struct lwp *l)
  */
 /* ARGSUSED */
 int
-smbfs_quotactl(mp, cmd, uid, arg, l)
-	struct mount *mp;
-	int cmd;
-	uid_t uid;
-	void *arg;
-	struct lwp *l;
+smbfs_quotactl(struct mount *mp __unused, int cmd __unused, uid_t uid __unused,
+    void *arg __unused, struct lwp *l __unused)
 {
 	SMBVDEBUG("return EOPNOTSUPP\n");
 	return EOPNOTSUPP;
@@ -477,10 +474,8 @@ loop:
  * smbfs flat namespace lookup. Unsupported.
  */
 /* ARGSUSED */
-int smbfs_vget(mp, ino, vpp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
+int smbfs_vget(struct mount *mp __unused, ino_t ino __unused,
+    struct vnode **vpp __unused)
 {
 	return (EOPNOTSUPP);
 }

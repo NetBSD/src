@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.30 2006/06/07 22:34:18 kardel Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.31 2006/10/12 01:32:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.30 2006/06/07 22:34:18 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.31 2006/10/12 01:32:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,8 +113,8 @@ static daddr_t	ext2fs_mapsearch(struct m_ext2fs *, char *, daddr_t);
  *	  available block is located.
  */
 int
-ext2fs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, kauth_cred_t cred,
-		daddr_t *bnp)
+ext2fs_alloc(struct inode *ip, daddr_t lbn __unused, daddr_t bpref,
+    kauth_cred_t cred, daddr_t *bnp)
 {
 	struct m_ext2fs *fs;
 	daddr_t bno;
@@ -348,7 +348,7 @@ ext2fs_hashalloc(struct inode *ip, int cg, long pref, int size,
  */
 
 static daddr_t
-ext2fs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
+ext2fs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size __unused)
 {
 	struct m_ext2fs *fs;
 	char *bbp;

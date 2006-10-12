@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.11 2006/07/04 23:05:11 rpaulo Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.12 2006/10/12 01:31:01 christos Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.11 2006/07/04 23:05:11 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.12 2006/10/12 01:31:01 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -842,7 +842,7 @@ rt2661_free_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring)
 }
 
 static struct ieee80211_node *
-rt2661_node_alloc(struct ieee80211_node_table *nt)
+rt2661_node_alloc(struct ieee80211_node_table *nt __unused)
 {
 	struct rt2661_node *rn;
 
@@ -885,7 +885,7 @@ rt2661_next_scan(void *arg)
  * This function is called for each neighbor node.
  */
 static void
-rt2661_iter_func(void *arg, struct ieee80211_node *ni)
+rt2661_iter_func(void *arg __unused, struct ieee80211_node *ni)
 {
 	struct rt2661_node *rn = (struct rt2661_node *)ni;
 
@@ -1294,7 +1294,7 @@ skip:		desc->flags |= htole32(RT2661_RX_BUSY);
 
 /* ARGSUSED */
 static void
-rt2661_mcu_beacon_expire(struct rt2661_softc *sc)
+rt2661_mcu_beacon_expire(struct rt2661_softc *sc __unused)
 {
 	/* do nothing */
 }

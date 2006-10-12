@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.22 2006/09/24 21:44:58 dbj Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.23 2006/10/12 01:30:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.22 2006/09/24 21:44:58 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.23 2006/10/12 01:30:48 christos Exp $");
 
 #if defined (_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -122,7 +122,7 @@ SYSCTL_SETUP(linux_sysctl_setup, "linux emulated sysctl subtree setup")
  * linux sysctl system call
  */
 int
-linux_sys___sysctl(struct lwp *l, void *v, register_t *retval)
+linux_sys___sysctl(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct linux_sys___sysctl_args *uap = v;
 	struct linux___sysctl ls;

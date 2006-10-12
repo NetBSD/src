@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsinit.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsinit.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
 
 #define __NSXFINIT_C__
 
@@ -289,9 +289,9 @@ AcpiNsInitializeDevices (
 static ACPI_STATUS
 AcpiNsInitOneObject (
     ACPI_HANDLE             ObjHandle,
-    UINT32                  Level,
+    UINT32                  Level __unused,
     void                    *Context,
-    void                    **ReturnValue)
+    void                    **ReturnValue __unused)
 {
     ACPI_OBJECT_TYPE        Type;
     ACPI_STATUS             Status;
@@ -434,9 +434,9 @@ AcpiNsInitOneObject (
 static ACPI_STATUS
 AcpiNsInitOneDevice (
     ACPI_HANDLE             ObjHandle,
-    UINT32                  NestingLevel,
+    UINT32                  NestingLevel __unused,
     void                    *Context,
-    void                    **ReturnValue)
+    void                    **ReturnValue __unused)
 {
     ACPI_DEVICE_WALK_INFO  *Info = (ACPI_DEVICE_WALK_INFO *) Context;
     ACPI_PARAMETER_INFO     Pinfo;

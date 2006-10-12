@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.52 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.53 2006/10/12 01:30:50 christos Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.52 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.53 2006/10/12 01:30:50 christos Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -137,8 +137,8 @@ struct db_sift_args {
  * criteria.
  */
 static void
-db_sift(db_symtab_t *stab, db_sym_t sym, char *name, char *suffix, int prefix,
-    void *arg)
+db_sift(db_symtab_t *stab __unused, db_sym_t sym __unused, char *name,
+    char *suffix, int prefix __unused, void *arg)
 {
 	char c, sc;
 	char *find, *p;

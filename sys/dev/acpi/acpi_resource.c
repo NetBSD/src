@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.19 2006/01/29 03:12:22 kochi Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.20 2006/10/12 01:30:54 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.19 2006/01/29 03:12:22 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.20 2006/10/12 01:30:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -564,7 +564,7 @@ const struct acpi_resource_parse_ops acpi_resource_parse_ops_default = {
 };
 
 static void
-acpi_res_parse_init(struct device *dev, void *arg, void **contextp)
+acpi_res_parse_init(struct device *dev __unused, void *arg, void **contextp)
 {
 	struct acpi_resources *res = arg;
 
@@ -755,7 +755,8 @@ acpi_res_parse_drq(struct device *dev, void *context, uint32_t drq)
 }
 
 static void
-acpi_res_parse_start_dep(struct device *dev, void *context, int preference)
+acpi_res_parse_start_dep(struct device *dev, void *context __unused,
+    int preference __unused)
 {
 
 	printf("%s: ACPI: dependant functions not supported\n",
@@ -763,7 +764,7 @@ acpi_res_parse_start_dep(struct device *dev, void *context, int preference)
 }
 
 static void
-acpi_res_parse_end_dep(struct device *dev, void *context)
+acpi_res_parse_end_dep(struct device *dev __unused, void *context __unused)
 {
 
 	/* Nothing to do. */

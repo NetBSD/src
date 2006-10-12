@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.13 2006/07/21 16:48:45 ad Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.14 2006/10/12 01:30:42 christos Exp $	*/
 /*	$KAME: altq_priq.c,v 1.2 2001/10/26 04:56:11 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.13 2006/07/21 16:48:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.14 2006/10/12 01:30:42 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -170,10 +170,7 @@ priq_clear_interface(pif)
 }
 
 static int
-priq_request(ifq, req, arg)
-	struct ifaltq *ifq;
-	int req;
-	void *arg;
+priq_request(struct ifaltq *ifq, int req, void *arg __unused)
 {
 	struct priq_if	*pif = (struct priq_if *)ifq->altq_disc;
 
@@ -495,20 +492,16 @@ priq_purgeq(cl)
  * priq device interface
  */
 int
-priqopen(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+priqopen(dev_t dev __unused, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
 	/* everything will be done when the queueing scheme is attached. */
 	return 0;
 }
 
 int
-priqclose(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+priqclose(dev_t dev __unused, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
 	struct priq_if *pif;
 	int err, error = 0;
@@ -529,12 +522,8 @@ priqclose(dev, flag, fmt, l)
 }
 
 int
-priqioctl(dev, cmd, addr, flag, l)
-	dev_t dev;
-	ioctlcmd_t cmd;
-	caddr_t addr;
-	int flag;
-	struct lwp *l;
+priqioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
+    struct lwp *l)
 {
 	struct priq_if *pif;
 	struct priq_interface *ifacep;

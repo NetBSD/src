@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.126 2006/07/17 15:29:06 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.127 2006/10/12 01:32:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.126 2006/07/17 15:29:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.127 2006/10/12 01:32:15 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -118,7 +118,7 @@ int	forkfsleep = 0;
 
 /*ARGSUSED*/
 int
-sys_fork(struct lwp *l, void *v, register_t *retval)
+sys_fork(struct lwp *l, void *v __unused, register_t *retval)
 {
 
 	return (fork1(l, 0, SIGCHLD, NULL, 0, NULL, NULL, retval, NULL));
@@ -130,7 +130,7 @@ sys_fork(struct lwp *l, void *v, register_t *retval)
  */
 /*ARGSUSED*/
 int
-sys_vfork(struct lwp *l, void *v, register_t *retval)
+sys_vfork(struct lwp *l, void *v __unused, register_t *retval)
 {
 
 	return (fork1(l, FORK_PPWAIT, SIGCHLD, NULL, 0, NULL, NULL,
@@ -143,7 +143,7 @@ sys_vfork(struct lwp *l, void *v, register_t *retval)
  */
 /*ARGSUSED*/
 int
-sys___vfork14(struct lwp *l, void *v, register_t *retval)
+sys___vfork14(struct lwp *l, void *v __unused, register_t *retval)
 {
 
 	return (fork1(l, FORK_PPWAIT|FORK_SHAREVM, SIGCHLD, NULL, 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tribm_isa.c,v 1.8 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: if_tribm_isa.c,v 1.9 2006/10/12 01:31:16 christos Exp $	*/
 
 /* XXXJRT changes isa_attach_args too early */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tribm_isa.c,v 1.8 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tribm_isa.c,v 1.9 2006/10/12 01:31:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,10 +64,8 @@ void	tr_isa_unmap_io(struct isa_attach_args *, bus_space_handle_t,
 	    bus_space_handle_t);
 
 int
-tribm_isa_probe(parent, match, aux)
-	struct device	*parent;
-	struct cfdata	*match;
-	void	*aux;
+tribm_isa_probe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	static int irq_f[4] = { 9, 3, 6, 7 };

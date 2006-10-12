@@ -1,4 +1,4 @@
-/*	$NetBSD: ax88190.c,v 1.5 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: ax88190.c,v 1.6 2006/10/12 01:31:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.5 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.6 2006/10/12 01:31:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,8 +186,7 @@ ax88190_mii_writereg(self, phy, reg, val)
 }
 
 static void
-ax88190_mii_statchg(self)
-	struct device *self;
+ax88190_mii_statchg(struct device *self __unused)
 {
 
 	/* XXX */

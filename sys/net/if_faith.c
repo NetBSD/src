@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.35 2006/10/09 10:46:00 peter Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.36 2006/10/12 01:32:27 christos Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.35 2006/10/09 10:46:00 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.36 2006/10/12 01:32:27 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -100,7 +100,7 @@ static struct if_clone faith_cloner =
 
 /* ARGSUSED */
 void
-faithattach(int count)
+faithattach(int count __unused)
 {
 
 	if_clone_attach(&faith_cloner);
@@ -213,7 +213,8 @@ faithoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 /* ARGSUSED */
 static void
-faithrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
+faithrtrequest(int cmd __unused, struct rtentry *rt,
+    struct rt_addrinfo *info __unused)
 {
 	if (rt)
 		rt->rt_rmx.rmx_mtu = rt->rt_ifp->if_mtu; /* for ISO */

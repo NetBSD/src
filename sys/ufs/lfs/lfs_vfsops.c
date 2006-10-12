@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.222 2006/10/04 15:56:46 christos Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.223 2006/10/12 01:32:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.222 2006/10/04 15:56:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.223 2006/10/12 01:32:51 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -196,7 +196,7 @@ POOL_INIT(lfs_lbnentry_pool, sizeof(struct lbnentry), 0, 0, 0, "lfslbnpool",
  * crosses the (user-defined) threshhold LFS_MAX_PAGES.
  */
 static void
-lfs_writerd(void *arg)
+lfs_writerd(void *arg __unused)
 {
 	struct mount *mp, *nmp;
 	struct lfs *fs;
@@ -987,7 +987,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
  * really that important if we get it wrong.
  */
 int
-lfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+lfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l __unused)
 {
 	struct lfs *fs;
 	struct ufsmount *ump;
@@ -1031,7 +1031,8 @@ lfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
  * Note: we are always called with the filesystem marked `MPBUSY'.
  */
 int
-lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
+lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred __unused,
+    struct lwp *l __unused)
 {
 	int error;
 	struct lfs *fs;
@@ -1463,7 +1464,7 @@ SYSCTL_SETUP(sysctl_vfs_lfs_setup, "sysctl vfs.lfs subtree setup")
  * we don't care about current daddr of them.
  */
 static boolean_t
-lfs_issequential_hole(const struct ufsmount *ump,
+lfs_issequential_hole(const struct ufsmount *ump __unused,
     daddr_t daddr0, daddr_t daddr1)
 {
 	daddr0 = (daddr_t)((int32_t)daddr0); /* XXX ondisk32 */
@@ -1505,7 +1506,8 @@ lfs_issequential_hole(const struct ufsmount *ump,
  *     now have clusters of clusters, ick.)
  */
 static int
-lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
+lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
+    int flags __unused)
 {
 	int i, s, error, run, haveeof = 0;
 	int fs_bshift;

@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.89 2006/09/13 01:01:20 christos Exp $ */
+/* $NetBSD: vga.c,v 1.90 2006/10/12 01:31:02 christos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 #include "opt_wsmsgattrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.89 2006/09/13 01:01:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.90 2006/10/12 01:31:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -852,7 +852,7 @@ vga_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 static paddr_t
-vga_mmap(void *v, void *vs, off_t offset, int prot)
+vga_mmap(void *v, void *vs __unused, off_t offset, int prot)
 {
 	struct vga_config *vc = v;
 	const struct vga_funcs *vf = vc->vc_funcs;
@@ -902,7 +902,7 @@ vga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 }
 
 void
-vga_free_screen(void *v, void *cookie)
+vga_free_screen(void *v __unused, void *cookie)
 {
 	struct vgascreen *vs = cookie;
 	struct vga_config *vc = vs->cfg;
@@ -982,7 +982,7 @@ vga_setfont(struct vga_config *vc, struct vgascreen *scr)
 }
 
 int
-vga_show_screen(void *v, void *cookie, int waitok,
+vga_show_screen(void *v __unused, void *cookie, int waitok __unused,
 		void (*cb)(void *, int, int), void *cbarg)
 {
 	struct vgascreen *scr = cookie, *oldscr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.26 2006/09/01 09:47:47 mrg Exp $	*/
+/*	$NetBSD: fil.c,v 1.27 2006/10/12 01:32:10 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -140,7 +140,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.26 2006/09/01 09:47:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.27 2006/10/12 01:32:10 christos Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.78 2006/03/29 11:19:54 darrenr Exp";
@@ -6353,9 +6353,7 @@ int v;
 /* NOTE: This SHOULD ONLY be used with IPFilter structures that have an     */
 /*       array for the name that is LIFNAMSIZ bytes (at least) in length.   */
 /* ------------------------------------------------------------------------ */
-void *fr_resolvenic(name, v)
-char *name;
-int v;
+void *fr_resolvenic(char *name, int v __unused)
 {
 	void *nic;
 

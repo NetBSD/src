@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.13 2006/04/23 06:46:40 christos Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.14 2006/10/12 01:30:42 christos Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.9 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.13 2006/04/23 06:46:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.14 2006/10/12 01:30:42 christos Exp $");
 
 #ident "@(#)rm_class.c  1.48     97/12/05 SMI"
 
@@ -352,14 +352,14 @@ rmc_newclass(pri, ifd, nsecPerByte, action, maxq, parent, borrow,
 }
 
 int
-rmc_modclass(cl, nsecPerByte, maxq, maxidle, minidle, offtime, pktsize)
-	struct rm_class *cl;
-	u_int		nsecPerByte;
-	int		maxq;
-	u_int		maxidle;
-	int		minidle;
-	u_int		offtime;
-	int		pktsize;
+rmc_modclass(
+	struct rm_class *cl,
+	u_int		nsecPerByte,
+	int		maxq,
+	u_int		maxidle,
+	int		minidle,
+	u_int		offtime,
+	int		pktsize __unused)
 {
 	struct rm_ifdat	*ifd;
 	u_int old_allotment;
@@ -1513,8 +1513,7 @@ hzto(tv)
  */
 
 void
-rmc_delay_action(cl, borrow)
-	struct rm_class *cl, *borrow;
+rmc_delay_action(struct rm_class *cl, struct rm_class *borrow __unused)
 {
 	int	nowdelay, t, extradelay;
 
@@ -1620,8 +1619,8 @@ rmc_restart(cl)
  */
 
 static void
-rmc_root_overlimit(cl, borrow)
-	struct rm_class *cl, *borrow;
+rmc_root_overlimit(struct rm_class *cl __unused,
+    struct rm_class *borrow __unused)
 {
     panic("rmc_root_overlimit");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.95 2006/09/26 01:50:43 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.96 2006/10/12 01:30:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.95 2006/09/26 01:50:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.96 2006/10/12 01:30:54 christos Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -268,7 +268,8 @@ acpi_OsGetRootPointer(UINT32 Flags, ACPI_POINTER *PhysicalAddress)
  *	Autoconfiguration `match' routine.
  */
 static int
-acpi_match(struct device *parent, struct cfdata *match, void *aux)
+acpi_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux __unused)
 {
 	/*
 	 * XXX Check other locators?  Hard to know -- machine
@@ -288,7 +289,7 @@ acpi_match(struct device *parent, struct cfdata *match, void *aux)
  *	and enable the ACPI subsystem.
  */
 static void
-acpi_attach(struct device *parent, struct device *self, void *aux)
+acpi_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct acpi_softc *sc = (void *) self;
 	struct acpibus_attach_args *aa = aux;
@@ -404,7 +405,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
  *	might confuse us.
  */
 static void
-acpi_shutdown(void *arg)
+acpi_shutdown(void *arg __unused)
 {
 	/* nothing */
 }
@@ -567,7 +568,7 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
  */
 static ACPI_STATUS
 acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
-    void **status)
+    void **status __unused)
 {
 	struct acpi_make_devnode_state *state = context;
 #if defined(ACPI_DEBUG) || defined(ACPI_EXTRA_DEBUG)
@@ -1030,7 +1031,7 @@ acpi_set_wake_gpe(ACPI_HANDLE handle)
  *****************************************************************************/
 
 static int
-is_available_state(struct acpi_softc *sc, int state)
+is_available_state(struct acpi_softc *sc __unused, int state)
 {
 	UINT8 type_a, type_b;
 

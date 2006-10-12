@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_pcmcia.c,v 1.12 2005/12/11 12:23:23 christos Exp $ */
+/* $NetBSD: if_cs_pcmcia.c,v 1.13 2006/10/12 01:31:50 christos Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.12 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.13 2006/10/12 01:31:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,8 @@ CFATTACH_DECL(cs_pcmcia, sizeof(struct cs_pcmcia_softc),
     cs_pcmcia_match, cs_pcmcia_attach, cs_pcmcia_detach, cs_activate);
 
 static int
-cs_pcmcia_match(struct device *parent, struct cfdata *match, void *aux)
+cs_pcmcia_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -100,7 +101,7 @@ cs_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 }
 
 static void
-cs_pcmcia_attach(struct device *parent, struct device *self, void *aux)
+cs_pcmcia_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct cs_pcmcia_softc *psc = (void *)self;
 	struct cs_softc *sc = (void *)&psc->sc_cs;
@@ -153,7 +154,7 @@ fail:
 }
 
 static int
-cs_pcmcia_detach(struct device *self, int flags)
+cs_pcmcia_detach(struct device *self, int flags __unused)
 {
 	struct cs_pcmcia_softc *psc = (void *)self;
 	struct cs_softc *sc = &psc->sc_cs;

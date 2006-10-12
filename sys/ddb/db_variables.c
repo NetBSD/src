@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.36 2006/08/30 00:00:15 christos Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.37 2006/10/12 01:30:50 christos Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.36 2006/08/30 00:00:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.37 2006/10/12 01:30:50 christos Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -252,7 +252,8 @@ db_write_variable(const struct db_variable *vp, db_expr_t *valuep)
 
 /*ARGSUSED*/
 void
-db_set_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_set_cmd(db_expr_t addr __unused, int have_addr __unused,
+    db_expr_t count __unused, const char *modif __unused)
 {
 	db_expr_t	value;
 	db_expr_t	old_value;
