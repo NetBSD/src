@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.7 2006/10/03 15:45:04 thorpej Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.8 2006/10/12 04:46:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -53,7 +53,16 @@
 struct _prop_number {
 	struct _prop_object	pn_obj;
 	struct rb_node		pn_link;
-	uint64_t		pn_number;
+	struct _prop_number_value {
+		union {
+			int64_t  pnu_signed;
+			uint64_t pnu_unsigned;
+		} pnv_un;
+#define	pnv_signed	pnv_un.pnu_signed
+#define	pnv_unsigned	pnv_un.pnu_unsigned
+		unsigned int	pnv_is_unsigned	:1,
+						:31;
+	} pn_value;
 };
 
 #define	RBNODE_TO_PN(n)							\
@@ -85,17 +94,39 @@ static const struct _prop_object_type _prop_object_type_number = {
  */
 
 static int
+_prop_number_compare_values(const struct _prop_number_value *pnv1,
+			    const struct _prop_number_value *pnv2)
+{
+
+	/* Signed numbers are sorted before unsigned numbers. */
+
+	if (pnv1->pnv_is_unsigned) {
+		if (! pnv2->pnv_is_unsigned)
+			return (1);
+		if (pnv1->pnv_unsigned < pnv2->pnv_unsigned)
+			return (-1);
+		if (pnv1->pnv_unsigned > pnv2->pnv_unsigned)
+			return (1);
+		return (0);
+	}
+
+	if (pnv2->pnv_is_unsigned)
+		return (-1);
+	if (pnv1->pnv_signed < pnv2->pnv_signed)
+		return (-1);
+	if (pnv1->pnv_signed > pnv2->pnv_signed)
+		return (1);
+	return (0);
+}
+
+static int
 _prop_number_rb_compare_nodes(const struct rb_node *n1,
 			      const struct rb_node *n2)
 {
 	const prop_number_t pn1 = RBNODE_TO_PN(n1);
 	const prop_number_t pn2 = RBNODE_TO_PN(n2);
 
-	if (pn1->pn_number < pn2->pn_number)
-		return (-1);
-	if (pn1->pn_number > pn2->pn_number)
-		return (1);
-	return (0);
+	return (_prop_number_compare_values(&pn1->pn_value, &pn2->pn_value));
 }
 
 static int
@@ -103,13 +134,9 @@ _prop_number_rb_compare_key(const struct rb_node *n,
 			    const void *v)
 {
 	const prop_number_t pn = RBNODE_TO_PN(n);
-	const uint64_t *valp = v;
+	const struct _prop_number_value *pnv = v;
 
-	if (pn->pn_number < *valp)
-		return (-1);
-	if (pn->pn_number > *valp)
-		return (1);
-	return (0);
+	return (_prop_number_compare_values(&pn->pn_value, pnv));
 }
 
 static const struct rb_tree_ops _prop_number_rb_tree_ops = {
@@ -141,7 +168,14 @@ _prop_number_externalize(struct _prop_object_externalize_context *ctx,
 	prop_number_t pn = v;
 	char tmpstr[32];
 
-	sprintf(tmpstr, "0x%" PRIx64, pn->pn_number);
+	/*
+	 * For unsigned numbers, we output in hex.  For signed numbers,
+	 * we output in decimal.
+	 */
+	if (pn->pn_value.pnv_is_unsigned)
+		sprintf(tmpstr, "0x%" PRIx64, pn->pn_value.pnv_unsigned);
+	else
+		sprintf(tmpstr, "%" PRIi64, pn->pn_value.pnv_signed);
 
 	if (_prop_object_externalize_start_tag(ctx, "integer") == FALSE ||
 	    _prop_object_externalize_append_cstring(ctx, tmpstr) == FALSE ||
@@ -163,13 +197,50 @@ _prop_number_equals(void *v1, void *v2)
 
 	/*
 	 * There is only ever one copy of a number object at any given
-	 * time, so we can reduce this to a simple pointer equality check.
+	 * time, so we can reduce this to a simple pointer equality check
+	 * in the common case.
 	 */
-	return (num1 == num2);
+	if (num1 == num2)
+		return (TRUE);
+
+	/*
+	 * If the numbers are the same signed-ness, then we know they
+	 * cannot be equal because they would have had pointer equality.
+	 */
+	if (num1->pn_value.pnv_is_unsigned == num2->pn_value.pnv_is_unsigned)
+		return (FALSE);
+
+	/*
+	 * We now have one signed value and one unsigned value.  We can
+	 * compare them iff:
+	 *	- The unsigned value is not larger than the signed value
+	 *	  can represent.
+	 *	- The signed value is not smaller than the unsigned value
+	 *	  can represent.
+	 */
+	if (num1->pn_value.pnv_is_unsigned) {
+		/*
+		 * num1 is unsigned and num2 is signed.
+		 */
+		if (num1->pn_value.pnv_unsigned > INT64_MAX)
+			return (FALSE);
+		if (num2->pn_value.pnv_signed < 0)
+			return (FALSE);
+	} else {
+		/*
+		 * num1 is signed and num2 is unsigned.
+		 */
+		if (num1->pn_value.pnv_signed < 0)
+			return (FALSE);
+		if (num2->pn_value.pnv_unsigned > INT64_MAX)
+			return (FALSE);
+	}
+
+	return (num1->pn_value.pnv_signed == num2->pn_value.pnv_signed);
 }
 
 static prop_number_t
-_prop_number_alloc(uint64_t val)
+_prop_number_alloc(const struct _prop_number_value *pnv)
 {
 	prop_number_t opn, pn;
 	struct rb_node *n;
@@ -184,7 +255,7 @@ _prop_number_alloc(uint64_t val)
 				   &_prop_number_rb_tree_ops);
 		_prop_number_tree_initialized = TRUE;
 	} else {
-		n = _prop_rb_tree_find(&_prop_number_tree, &val);
+		n = _prop_rb_tree_find(&_prop_number_tree, pnv);
 		if (n != NULL) {
 			opn = RBNODE_TO_PN(n);
 			prop_object_retain(opn);
@@ -204,14 +275,14 @@ _prop_number_alloc(uint64_t val)
 
 	_prop_object_init(&pn->pn_obj, &_prop_object_type_number);
 
-	pn->pn_number = val;
+	pn->pn_value = *pnv;
 
 	/*
 	 * We dropped the mutex when we allocated the new object, so
 	 * we have to check again if it is in the tree.
 	 */
 	_PROP_MUTEX_LOCK(_prop_number_tree_mutex);
-	n = _prop_rb_tree_find(&_prop_number_tree, &val);
+	n = _prop_rb_tree_find(&_prop_number_tree, pnv);
 	if (n != NULL) {
 		opn = RBNODE_TO_PN(n);
 		prop_object_retain(opn);
@@ -230,10 +301,30 @@ _prop_number_alloc(uint64_t val)
  *	provided integer value.
  */
 prop_number_t
-prop_number_create_integer(uint64_t val)
+prop_number_create_integer(int64_t val)
 {
+	const struct _prop_number_value pnv = {
+		.pnv_signed = val,
+		.pnv_is_unsigned = FALSE,
+	};
 
-	return (_prop_number_alloc(val));
+	return (_prop_number_alloc(&pnv));
+}
+
+/*
+ * prop_number_create_unsigned_integer --
+ *	Create a prop_number_t and initialize it with the
+ *	provided unsigned integer value.
+ */
+prop_number_t
+prop_number_create_unsigned_integer(uint64_t val)
+{
+	const struct _prop_number_value pnv = {
+		.pnv_unsigned = val,
+		.pnv_is_unsigned = TRUE,
+	};
+
+	return (_prop_number_alloc(&pnv));
 }
 
 /*
@@ -256,6 +347,17 @@ prop_number_copy(prop_number_t opn)
 }
 
 /*
+ * prop_number_unsigned --
+ *	Returns TRUE if the prop_number_t has an unsigned value.
+ */
+boolean_t
+prop_number_unsigned(prop_number_t pn)
+{
+
+	return (pn->pn_value.pnv_is_unsigned);
+}
+
+/*
  * prop_number_size --
  *	Return the size, in bits, required to hold the value of
  *	the specified number.
@@ -263,15 +365,28 @@ prop_number_copy(prop_number_t opn)
 int
 prop_number_size(prop_number_t pn)
 {
+	struct _prop_number_value *pnv;
 
 	if (! prop_object_is_number(pn))
 		return (0);
 
-	if (pn->pn_number > UINT32_MAX)
-		return (64);
-	if (pn->pn_number > UINT16_MAX)
+	pnv = &pn->pn_value;
+
+	if (pnv->pnv_is_unsigned) {
+		if (pnv->pnv_unsigned > UINT32_MAX)
+			return (64);
+		if (pnv->pnv_unsigned > UINT16_MAX)
+			return (32);
+		if (pnv->pnv_unsigned > UINT8_MAX)
+			return (16);
+		return (8);
+	}
+
+	if (pnv->pnv_signed > INT32_MAX || pnv->pnv_signed < INT32_MIN)
+	    	return (64);
+	if (pnv->pnv_signed > INT16_MAX || pnv->pnv_signed < INT16_MIN)
 		return (32);
-	if (pn->pn_number > UINT8_MAX)
+	if (pnv->pnv_signed > INT8_MAX  || pnv->pnv_signed < INT8_MIN)
 		return (16);
 	return (8);
 }
@@ -280,7 +395,7 @@ prop_number_size(prop_number_t pn)
  * prop_number_integer_value --
  *	Get the integer value of a prop_number_t.
  */
-uint64_t
+int64_t
 prop_number_integer_value(prop_number_t pn)
 {
 
@@ -291,7 +406,25 @@ prop_number_integer_value(prop_number_t pn)
 	if (! prop_object_is_number(pn))
 		return (0);
 
-	return (pn->pn_number);
+	return (pn->pn_value.pnv_signed);
+}
+
+/*
+ * prop_number_unsigned_integer_value --
+ *	Get the unsigned integer value of a prop_number_t.
+ */
+uint64_t
+prop_number_unsigned_integer_value(prop_number_t pn)
+{
+
+	/*
+	 * XXX Impossible to distinguish between "not a prop_number_t"
+	 * XXX and "prop_number_t has a value of 0".
+	 */
+	if (! prop_object_is_number(pn))
+		return (0);
+
+	return (pn->pn_value.pnv_unsigned);
 }
 
 /*
@@ -310,13 +443,81 @@ prop_number_equals(prop_number_t num1, prop_number_t num2)
  *	Return TRUE if the number is equivalent to the specified integer.
  */
 boolean_t
-prop_number_equals_integer(prop_number_t pn, uint64_t val)
+prop_number_equals_integer(prop_number_t pn, int64_t val)
 {
 
 	if (! prop_object_is_number(pn))
 		return (FALSE);
 
-	return (pn->pn_number == val);
+	if (pn->pn_value.pnv_is_unsigned &&
+	    (pn->pn_value.pnv_unsigned > INT64_MAX || val < 0))
+		return (FALSE);
+	
+	return (pn->pn_value.pnv_signed == val);
+}
+
+/*
+ * prop_number_equals_unsigned_integer --
+ *	Return TRUE if the number is equivalent to the specified
+ *	unsigned integer.
+ */
+boolean_t
+prop_number_equals_unsigned_integer(prop_number_t pn, uint64_t val)
+{
+
+	if (! prop_object_is_number(pn))
+		return (FALSE);
+	
+	if (! pn->pn_value.pnv_is_unsigned &&
+	    (pn->pn_value.pnv_signed < 0 || val > INT64_MAX))
+		return (FALSE);
+	
+	return (pn->pn_value.pnv_unsigned == val);
+}
+
+static boolean_t
+_prop_number_internalize_unsigned(struct _prop_object_internalize_context *ctx,
+				  struct _prop_number_value *pnv)
+{
+	char *cp;
+
+	_PROP_ASSERT(sizeof(unsigned long long) == sizeof(uint64_t));
+
+#ifndef _KERNEL
+	errno = 0;
+#endif
+	pnv->pnv_unsigned = (uint64_t) strtoull(ctx->poic_cp, &cp, 0);
+#ifndef _KERNEL		/* XXX can't check for ERANGE in the kernel */
+	if (pnv->pnv_unsigned == UINT64_MAX && errno == ERANGE)
+		return (FALSE);
+#endif
+	pnv->pnv_is_unsigned = TRUE;
+	ctx->poic_cp = cp;
+
+	return (TRUE);
+}
+
+static boolean_t
+_prop_number_internalize_signed(struct _prop_object_internalize_context *ctx,
+				struct _prop_number_value *pnv)
+{
+	char *cp;
+
+	_PROP_ASSERT(sizeof(long long) == sizeof(int64_t));
+
+#ifndef _KERNEL
+	errno = 0;
+#endif
+	pnv->pnv_signed = (int64_t) strtoll(ctx->poic_cp, &cp, 0);
+#ifndef _KERNEL		/* XXX can't check for ERANGE in the kernel */
+	if ((pnv->pnv_signed == INT64_MAX || pnv->pnv_signed == INT64_MIN) &&
+	    errno == ERANGE)
+	    	return (FALSE);
+#endif
+	pnv->pnv_is_unsigned = FALSE;
+	ctx->poic_cp = cp;
+
+	return (TRUE);
 }
 
 /*
@@ -327,26 +528,37 @@ prop_number_equals_integer(prop_number_t pn, uint64_t val)
 prop_object_t
 _prop_number_internalize(struct _prop_object_internalize_context *ctx)
 {
-	uint64_t val = 0;
-	char *cp;
+	struct _prop_number_value pnv = {
+		.pnv_unsigned = 0,
+		.pnv_is_unsigned = FALSE,
+	};
 
 	/* No attributes, no empty elements. */
 	if (ctx->poic_tagattr != NULL || ctx->poic_is_empty_element)
 		return (NULL);
 
-#ifndef _KERNEL
-	errno = 0;
-#endif
-	val = strtoumax(ctx->poic_cp, &cp, 0);
-#ifndef _KERNEL		/* XXX can't check for ERANGE in the kernel */
-	if (val == UINTMAX_MAX && errno == ERANGE)
-		return (NULL);
-#endif
-	ctx->poic_cp = cp;
-	
+	/*
+	 * If the first character is '-', then we treat as signed.
+	 * If the first two characters are "0x" (i.e. the number is
+	 * in hex), then we treat as unsigned.  Otherwise, we try
+	 * signed first, and if that fails (presumably due to ERANGE),
+	 * then we switch to unsigned.
+	 */
+	if (ctx->poic_cp[0] == '-') {
+		if (_prop_number_internalize_signed(ctx, &pnv) == FALSE)
+			return (NULL);
+	} else if (ctx->poic_cp[0] == '0' && ctx->poic_cp[1] == 'x') {
+		if (_prop_number_internalize_unsigned(ctx, &pnv) == FALSE)
+			return (NULL);
+	} else {
+		if (_prop_number_internalize_signed(ctx, &pnv) == FALSE &&
+		    _prop_number_internalize_unsigned(ctx, &pnv) == FALSE)
+		    	return (NULL);
+	}
+
 	if (_prop_object_internalize_find_tag(ctx, "integer",
 					      _PROP_TAG_TYPE_END) == FALSE)
 		return (NULL);
 
-	return (_prop_number_alloc(val));
+	return (_prop_number_alloc(&pnv));
 }

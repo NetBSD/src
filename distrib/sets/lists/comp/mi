@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.942 2006/10/09 19:33:22 ghen Exp $
+#	$NetBSD: mi,v 1.943 2006/10/12 04:46:57 thorpej Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5449,9 +5449,12 @@
 ./usr/share/man/cat3/prop_number.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_number_copy.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_number_create_integer.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_number_create_unsigned_integer.0 comp-c-catman .cat
 ./usr/share/man/cat3/prop_number_equals.0	comp-c-catman		.cat
-./usr/share/man/cat3/prop_number_equals_integer.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_number_equals_unsigned_integer.0 comp-c-catman .cat
 ./usr/share/man/cat3/prop_number_integer_value.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_number_unsigned.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_number_unsigned_integer_value.0 comp-c-catman	.cat
 ./usr/share/man/cat3/prop_number_size.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_object.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_object_equals.0	comp-c-catman		.cat
@@ -9651,9 +9654,13 @@
 ./usr/share/man/man3/prop_number.3		comp-c-man		.man
 ./usr/share/man/man3/prop_number_copy.3		comp-c-man		.man
 ./usr/share/man/man3/prop_number_create_integer.3 comp-c-man		.man
+./usr/share/man/man3/prop_number_create_unsigned_integer.3 comp-c-man	.man
 ./usr/share/man/man3/prop_number_equals.3	comp-c-man		.man
 ./usr/share/man/man3/prop_number_equals_integer.3 comp-c-man		.man
+./usr/share/man/man3/prop_number_equals_unsigned_integer.3 comp-c-man	.man
 ./usr/share/man/man3/prop_number_integer_value.3 comp-c-man		.man
+./usr/share/man/man3/prop_number_unsigned.3	comp-c-man		.man
+./usr/share/man/man3/prop_number_unsigned_integer_value.3 comp-c-man	.man
 ./usr/share/man/man3/prop_number_size.3		comp-c-man		.man
 ./usr/share/man/man3/prop_object.3		comp-c-man		.man
 ./usr/share/man/man3/prop_object_equals.3	comp-c-man		.man

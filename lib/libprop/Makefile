@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2006/09/22 04:20:23 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 2006/10/12 04:46:56 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -90,10 +90,14 @@ MLINKS+= prop_ingest.3 prop_dictionary_ingest.3
 
 MLINKS+= prop_number.3 prop_number_copy.3
 MLINKS+= prop_number.3 prop_number_create_integer.3
+MLINKS+= prop_number.3 prop_number_create_unsigned_integer.3
 MLINKS+= prop_number.3 prop_number_equals.3
 MLINKS+= prop_number.3 prop_number_equals_integer.3
+MLINKS+= prop_number.3 prop_number_equals_unsigned_integer.3
 MLINKS+= prop_number.3 prop_number_size.3
+MLINKS+= prop_number.3 prop_number_unsigned.3
 MLINKS+= prop_number.3 prop_number_integer_value.3
+MLINKS+= prop_number.3 prop_number_unsigned_integer_value.3
 
 MLINKS+= prop_object.3 prop_object_equals.3
 MLINKS+= prop_object.3 prop_object_iterator_next.3
