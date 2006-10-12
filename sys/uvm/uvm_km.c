@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.90 2006/10/12 01:32:52 christos Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.91 2006/10/12 21:35:00 uwe Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.90 2006/10/12 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.91 2006/10/12 21:35:00 uwe Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -245,7 +245,8 @@ uvm_km_vacache_init(struct vm_map *map, const char *name, size_t size)
 #else /* !defined(PMAP_MAP_POOLPAGE) */
 
 void
-uvm_km_vacache_init(struct vm_map *map, const char *name, size_t size)
+uvm_km_vacache_init(struct vm_map *map __unused, const char *name __unused,
+		    size_t size __unused)
 {
 
 	/* nothing */
