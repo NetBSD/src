@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_rb.c,v 1.2 2006/09/09 15:19:18 thorpej Exp $	*/
+/*	$NetBSD: prop_rb.c,v 1.3 2006/10/12 04:43:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,6 +54,10 @@
 #define	true		TRUE
 #undef false
 #define	false		FALSE
+
+#ifndef __predict_false
+#define	__predict_false(x)	(x)
+#endif
 
 static void rb_tree_reparent_nodes(struct rb_tree *, struct rb_node *,
 				   unsigned int);
@@ -121,6 +125,8 @@ rb_tree_reparent_nodes(struct rb_tree *rbt, struct rb_node *old_father,
 	struct rb_node * const new_father = old_child;
 	struct rb_node * const new_child = old_father;
 	unsigned int properties;
+
+	(void) rbt;
 
 	KASSERT(which == RB_NODE_LEFT || which == RB_NODE_RIGHT);
 
@@ -541,6 +547,8 @@ rb_tree_prune_blackred_branch(struct rb_tree *rbt, struct rb_node *self,
 {
 	struct rb_node *parent = self->rb_parent;
 	struct rb_node *child = self->rb_nodes[which];
+
+	(void) rbt;
 
 	KASSERT(which == RB_NODE_LEFT || which == RB_NODE_RIGHT);
 	KASSERT(RB_BLACK_P(self) && RB_RED_P(child));
