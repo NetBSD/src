@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.45 2006/10/07 14:03:12 peter Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.46 2006/10/12 21:19:13 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -1277,5 +1277,6 @@ const struct hpckbd_keymap_table {
 		CMDMAP(jornada_es_keydesc),
 		KB_ES },
 #endif /* hpcarm */
-	{ NULL } /* end mark */
+
+	{ .ht_platform = NULL } /* end mark */
 };
