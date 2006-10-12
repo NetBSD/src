@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.70 2006/07/14 13:54:50 wiz Exp $
+$NetBSD: acronyms.comp,v 1.71 2006/10/12 20:47:55 salo Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -88,6 +88,7 @@ DTE	dumb terminal emulator
 DVD	digital versatile disc
 DVI	digital visual interface
 E-XER	extended XML encoding rules
+EAP	extensible authentication protocol
 ECP	enhanced capability port
 EDID	extended display identification data
 EDO	extended data out
@@ -234,6 +235,7 @@ PPPOA	point-to-point protocol over ATM
 PPPOE	point-to-point protocol over ethernet
 PRML	partial response, maximum likelihood
 PROM	programmable read only memory
+PSK	pre-shared key
 PSTN	public switched telephone network
 PTE	page table entry
 PTLA	pseudo top level aggregator
@@ -321,7 +323,9 @@ VPN	virtual private network
 VRAM	video random access memory
 WAN	wide area network
 WAP	wireless application protocol
+WEP	wired equivalent privacy
 WLAN	wireless local area network
+WPA	wi-fi protected access
 WRAM	window random access memory
 WWW	world wide web
 XER	XML encoding rules
