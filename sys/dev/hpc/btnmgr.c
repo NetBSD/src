@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.18 2006/10/09 10:33:42 peter Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.19 2006/10/12 21:19:13 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.18 2006/10/09 10:33:42 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.19 2006/10/12 21:19:13 uwe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_btnmgr.h"
@@ -173,7 +173,7 @@ struct wskbd_mapdata btnmgr_keymapdata = {
  *  function bodies
  */
 int
-btnmgrmatch(struct device *parent, struct cfdata *match, void *aux)
+btnmgrmatch(struct device *parent __unused, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -184,7 +184,8 @@ btnmgrmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-btnmgrattach(struct device *parent, struct device *self, void *aux)
+btnmgrattach(struct device *parent __unused,
+	     struct device *self, void *aux __unused)
 {
 	int id;
 	struct btnmgr_softc *sc = device_private(self);
@@ -213,7 +214,7 @@ btnmgrattach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-btnmgr_hook(void *ctx, int type, long id, void *msg)
+btnmgr_hook(void *ctx, int type __unused, long id, void *msg)
 {
 	struct btnmgr_softc *sc = ctx;
 
@@ -270,7 +271,7 @@ btnmgr_wskbd_enable(void *scx, int on)
 }
 
 void
-btnmgr_wskbd_set_leds(void *scx, int leds)
+btnmgr_wskbd_set_leds(void *scx __unused, int leds __unused)
 {
 	/*
 	 * We have nothing to do.
@@ -278,8 +279,8 @@ btnmgr_wskbd_set_leds(void *scx, int leds)
 }
 
 int
-btnmgr_wskbd_ioctl(void *scx, u_long cmd, caddr_t data, int flag,
-    struct lwp *l)
+btnmgr_wskbd_ioctl(void *scx, u_long cmd, caddr_t data, int flag __unused,
+		   struct lwp *l __unused)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	struct btnmgr_softc *sc = scx;
