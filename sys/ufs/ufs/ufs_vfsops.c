@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.29 2006/10/12 01:32:52 christos Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.30 2006/10/12 04:24:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.29 2006/10/12 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.30 2006/10/12 04:24:40 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -104,6 +104,11 @@ ufs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg, struct lwp *l)
 {
 
 #ifndef QUOTA
+	(void) mp;
+	(void) cmds;
+	(void) uid;
+	(void) arg;
+	(void) l;
 	return (EOPNOTSUPP);
 #else
 	int cmd, type, error;
