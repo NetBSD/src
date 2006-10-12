@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.21 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.22 2006/10/12 10:14:20 yamt Exp $	*/
 
 /*
  *
@@ -84,12 +84,10 @@ extern struct uvm_pagerops aobj_pager;
 	((uobj)->pgops == &uvm_deviceops)
 
 #define	UVM_OBJ_IS_VTEXT(uobj)						\
-	((uobj)->pgops == &uvm_vnodeops &&				\
-	 ((struct vnode *)uobj)->v_flag & VEXECMAP)
+	(UVM_OBJ_IS_VNODE(uobj) && uvn_text_p(uobj))
 
 #define	UVM_OBJ_IS_CLEAN(uobj)						\
-	(UVM_OBJ_IS_VNODE(uobj) && 					\
-	 (((struct vnode *)uobj)->v_flag & VONWORKLST) == 0)
+	(UVM_OBJ_IS_VNODE(uobj) && uvn_clean_p(uobj))
 
 /*
  * UVM_OBJ_NEEDS_WRITEFAULT: true if the uobj needs to detect modification.
@@ -99,10 +97,7 @@ extern struct uvm_pagerops aobj_pager;
  */
 
 #define	UVM_OBJ_NEEDS_WRITEFAULT(uobj)					\
-	(UVM_OBJ_IS_VNODE(uobj) && 					\
-	 ((((struct vnode *)uobj)->v_flag & VONWORKLST) == 0 ||		\
-	 (((struct vnode *)uobj)->v_flag & (VWRITEMAP|VWRITEMAPDIRTY))	\
-	 == VWRITEMAP))
+	(UVM_OBJ_IS_VNODE(uobj) && uvn_needs_writefault_p(uobj))
 
 #define	UVM_OBJ_IS_AOBJ(uobj)						\
 	((uobj)->pgops == &aobj_pager)

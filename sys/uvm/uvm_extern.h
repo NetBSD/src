@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.120 2006/10/12 10:11:57 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.121 2006/10/12 10:14:20 yamt Exp $	*/
 
 /*
  *
@@ -705,6 +705,9 @@ struct uvm_object	*uvn_attach(void *, vm_prot_t);
 int			uvn_findpages(struct uvm_object *, voff_t,
 			    int *, struct vm_page **, int);
 void			uvm_vnp_zerorange(struct vnode *, off_t, size_t);
+boolean_t		uvn_text_p(struct uvm_object *);
+boolean_t		uvn_clean_p(struct uvm_object *);
+boolean_t		uvn_needs_writefault_p(struct uvm_object *);
 
 /* kern_malloc.c */
 void			kmeminit_nkmempages(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.51 2006/10/12 01:32:52 christos Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.52 2006/10/12 10:14:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.51 2006/10/12 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.52 2006/10/12 10:14:20 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.51 2006/10/12 01:32:52 christos Exp $"
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/vnode.h>
 
 #include <uvm/uvm.h>
 
