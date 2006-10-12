@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.64 2006/10/12 01:30:42 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.65 2006/10/12 04:31:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.64 2006/10/12 01:30:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.65 2006/10/12 04:31:03 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -126,6 +126,8 @@ mmopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
 			fp->tf_eflags |= PSL_IOPL;
 		}
 		break;
+#else
+	(void) flag;
 #endif
 
 	default:
