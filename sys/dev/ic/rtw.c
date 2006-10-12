@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.78 2006/10/12 01:31:01 christos Exp $ */
+/* $NetBSD: rtw.c,v 1.79 2006/10/12 07:43:39 xtraeme Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.78 2006/10/12 01:31:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.79 2006/10/12 07:43:39 xtraeme Exp $");
 
 #include "bpfilter.h"
 
@@ -606,7 +606,7 @@ rtw_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
 }
 
 static void
-rtw_key_update_begin(struct ieee80211com *ic)
+rtw_key_update_begin(struct ieee80211com *ic __unused)
 {
 #ifdef RTW_DEBUG
 	struct ifnet *ifp = ic->ic_ifp;
@@ -1030,7 +1030,7 @@ rtw_srom_read(struct rtw_regs *regs, uint32_t flags, struct rtw_srom *sr,
 
 static void
 rtw_set_rfprog(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
-    const char *dvname)
+    const char *dvname __unused)
 {
 	uint8_t cfg4;
 	const char *method;
@@ -1362,7 +1362,7 @@ rtw_rxsoft_init_all(bus_dma_tag_t dmat, struct rtw_rxsoft *desc,
 
 static inline void
 rtw_rxdesc_init(struct rtw_rxdesc_blk *rdb, struct rtw_rxsoft *rs,
-    int idx, int kick)
+    int idx, int kick __unused)
 {
 	int is_last = (idx == rdb->rdb_ndesc - 1);
 	uint32_t ctl, octl, obuf;
