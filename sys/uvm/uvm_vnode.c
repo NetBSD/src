@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.74 2006/10/12 01:32:54 christos Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.75 2006/10/12 10:14:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.74 2006/10/12 01:32:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.75 2006/10/12 10:14:20 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -500,4 +500,29 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 		off += bytelen;
 		len -= bytelen;
 	}
+}
+
+boolean_t
+uvn_text_p(struct uvm_object *uobj)
+{
+	struct vnode *vp = (struct vnode *)uobj;
+
+	return (vp->v_flag & VEXECMAP) != 0;
+}
+
+boolean_t
+uvn_clean_p(struct uvm_object *uobj)
+{
+	struct vnode *vp = (struct vnode *)uobj;
+
+	return (vp->v_flag & VONWORKLST) == 0;
+}
+
+boolean_t
+uvn_needs_writefault_p(struct uvm_object *uobj)
+{
+	struct vnode *vp = (struct vnode *)uobj;
+
+	return uvn_clean_p(uobj) ||
+	    (vp->v_flag & (VWRITEMAP|VWRITEMAPDIRTY)) == VWRITEMAP;
 }
