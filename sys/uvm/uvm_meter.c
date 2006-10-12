@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.41 2006/09/15 15:51:13 yamt Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.42 2006/10/12 20:18:19 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.41 2006/09/15 15:51:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.42 2006/10/12 20:18:19 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -466,7 +466,7 @@ uvm_pctparam_init(struct uvm_pctparam *pct, int val,
 
 int
 uvm_pctparam_createsysctlnode(struct uvm_pctparam *pct, const char *name,
-    const char *desc)
+    const char *desc __unused)
 {
 
 	return sysctl_createv(NULL, 0, NULL, NULL,
