@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.c,v 1.3 2006/07/17 21:04:17 salo Exp $ */
+/*	$NetBSD: apmbios.c,v 1.4 2006/10/12 19:45:32 dogcow Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.3 2006/07/17 21:04:17 salo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.4 2006/10/12 19:45:32 dogcow Exp $");
 
 #include "opt_apm.h"
 #include "opt_compat_mach.h"	/* Needed to get the right segment def */
@@ -329,7 +329,7 @@ apm_devpowmgt_enable(int onoff, u_int dev)
 
 
 static int
-apm_get_ver(struct apm_softc *self)
+apm_get_ver(struct apm_softc *self __unused)
 {
 	struct bioscallregs regs;
 
@@ -349,7 +349,7 @@ apm_get_ver(struct apm_softc *self)
 }
 
 static int
-apm_get_powstat(void *c, u_int batteryid, struct apm_power_info *pi)
+apm_get_powstat(void *c __unused, u_int batteryid, struct apm_power_info *pi)
 {
 	struct bioscallregs regs;
 	int error;
@@ -435,7 +435,8 @@ apm_busprobe(void)
 }
 
 static int
-apmbiosmatch(struct device *parent, struct cfdata *match, void *aux)
+apmbiosmatch(struct device *parent __unused, struct cfdata *match __unused,
+	     void *aux __unused)
 {
 	/* There can be only one! */
 	if (apm_inited)
@@ -467,7 +468,8 @@ apmbiosmatch(struct device *parent, struct cfdata *match, void *aux)
 	    (bits), sizeof(bits)), (regs).ESI, (regs).EDI))
 
 static void
-apmbiosattach(struct device *parent, struct device *self, void *aux)
+apmbiosattach(struct device *parent __unused, struct device *self,
+	      void *aux __unused)
 {
 	struct apm_softc *apmsc = (void *)self;
 	struct bioscallregs regs;
@@ -843,7 +845,7 @@ bail_disconnected:
 }
 
 static void
-apm_enable(void *sc, int on)
+apm_enable(void *sc __unused, int on)
 {
 	/*
 	 * XXX some bogus APM BIOSes don't set the disabled bit in
@@ -888,7 +890,7 @@ apm_disconnect(void *arg)
 }
 
 static int
-apm_get_event(void *sc, u_int *event_code, u_int *event_info)
+apm_get_event(void *sc __unused, u_int *event_code, u_int *event_info)
 {
 	int error;
 	struct bioscallregs regs;
@@ -901,7 +903,7 @@ apm_get_event(void *sc, u_int *event_code, u_int *event_info)
 }
 
 int
-apm_set_powstate(void *sc, u_int dev, u_int state)
+apm_set_powstate(void *sc __unused, u_int dev, u_int state)
 {
 	struct bioscallregs regs;
 	if (!apm_inited || (apm_minver == 0 && state > APM_SYS_OFF))
@@ -917,7 +919,7 @@ apm_set_powstate(void *sc, u_int dev, u_int state)
 }
 
 static void
-apm_cpu_busy(void *sc)
+apm_cpu_busy(void *sc __unused)
 {
 	struct bioscallregs regs;
 
@@ -936,7 +938,7 @@ apm_cpu_busy(void *sc)
 }
 
 static void
-apm_cpu_idle(void *sc)
+apm_cpu_idle(void *sc __unused)
 {
 	struct bioscallregs regs;
 
@@ -955,7 +957,7 @@ apm_cpu_idle(void *sc)
 
 /* V1.2 */
 static void
-apm_get_capabilities(void *sc, u_int *numbatts, u_int *capflags)
+apm_get_capabilities(void *sc __unused, u_int *numbatts, u_int *capflags)
 {
 	struct bioscallregs regs;
 	int error;
