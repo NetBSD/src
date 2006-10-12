@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.249 2006/10/12 01:32:38 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.250 2006/10/12 11:46:30 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.249 2006/10/12 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.250 2006/10/12 11:46:30 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1447,7 +1447,25 @@ findpcb:
 			} else {
 				/*
 				 * Received a SYN.
+				 *
+				 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
 				 */
+				if (m->m_flags & (M_BCAST|M_MCAST))
+					goto drop;
+
+				switch (af) {
+#ifdef INET6
+				case AF_INET6:
+					if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
+						goto drop;
+					break;
+#endif /* INET6 */
+				case AF_INET:
+					if (IN_MULTICAST(ip->ip_dst.s_addr) ||
+					    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif))
+						goto drop;
+				break;
+				}
 
 #ifdef INET6
 				/*
@@ -1791,27 +1809,6 @@ after_listen:
 	}
 
 	switch (tp->t_state) {
-	case TCPS_LISTEN:
-		/*
-		 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
-		 */
-		if (m->m_flags & (M_BCAST|M_MCAST))
-			goto drop;
-		switch (af) {
-#ifdef INET6
-		case AF_INET6:
-			if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
-				goto drop;
-			break;
-#endif /* INET6 */
-		case AF_INET:
-			if (IN_MULTICAST(ip->ip_dst.s_addr) ||
-			    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif))
-				goto drop;
-			break;
-		}
-		break;
-
 	/*
 	 * If the state is SYN_SENT:
 	 *	if seg contains an ACK, but not for our SYN, drop the input.
