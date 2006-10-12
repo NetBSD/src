@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.38 2006/10/09 10:33:42 peter Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.39 2006/10/12 21:19:13 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.38 2006/10/09 10:33:42 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.39 2006/10/12 21:19:13 uwe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -84,9 +84,9 @@ __KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.38 2006/10/09 10:33:42 peter Exp $");
 
 #ifdef FBDEBUG
 int	hpcfb_debug = 0;
-#define	DPRINTF(arg) if (hpcfb_debug) printf arg;
+#define	DPRINTF(arg)	if (hpcfb_debug) printf arg
 #else
-#define	DPRINTF(arg)
+#define	DPRINTF(arg)	do {} while (/* CONSTCOND */ 0)
 #endif
 
 #ifndef HPCFB_MAX_COLUMN
@@ -220,14 +220,15 @@ void	hpcfb_check_update(void *);
 #endif /* HPCFB_JUMP */
 
 struct wsdisplay_emulops hpcfb_emulops = {
-	hpcfb_cursor,
-	hpcfb_mapchar,
-	hpcfb_putchar,
-	hpcfb_copycols,
-	hpcfb_erasecols,
-	hpcfb_copyrows,
-	hpcfb_eraserows,
-	hpcfb_allocattr
+	.cursor		= hpcfb_cursor,
+	.mapchar	= hpcfb_mapchar,
+	.putchar	= hpcfb_putchar,
+	.copycols	= hpcfb_copycols,
+	.erasecols	= hpcfb_erasecols,
+	.copyrows	= hpcfb_copyrows,
+	.eraserows	= hpcfb_eraserows,
+	.allocattr	= hpcfb_allocattr,
+	.replaceattr	= NULL,
 };
 
 /*
@@ -237,11 +238,10 @@ CFATTACH_DECL(hpcfb, sizeof(struct hpcfb_softc),
     hpcfbmatch, hpcfbattach, NULL, NULL);
 
 struct wsscreen_descr hpcfb_stdscreen = {
-	"std",
-	0, 0,	/* will be filled in -- XXX shouldn't, it's global */
-	&hpcfb_emulops,	/* XXX */
-	0, 0,
-	WSSCREEN_REVERSE
+	.name		= "std",
+	.textops	= &hpcfb_emulops, /* XXX */
+	.capabilities	= WSSCREEN_REVERSE,
+	/* XXX: ncols/nrows will be filled in -- shouldn't, they are global */
 };
 
 const struct wsscreen_descr *_hpcfb_scrlist[] = {
@@ -250,18 +250,19 @@ const struct wsscreen_descr *_hpcfb_scrlist[] = {
 };
 
 struct wsscreen_list hpcfb_screenlist = {
-	sizeof(_hpcfb_scrlist) / sizeof(struct wsscreen_descr *),
-	_hpcfb_scrlist
+	.nscreens = __arraycount(_hpcfb_scrlist),
+	.screens = _hpcfb_scrlist,
 };
 
 struct wsdisplay_accessops hpcfb_accessops = {
-	hpcfb_ioctl,
-	hpcfb_mmap,
-	hpcfb_alloc_screen,
-	hpcfb_free_screen,
-	hpcfb_show_screen,
-	0 /* load_font */,
-	hpcfb_pollc
+	.ioctl		= hpcfb_ioctl,
+	.mmap		= hpcfb_mmap,
+	.alloc_screen	= hpcfb_alloc_screen,
+	.free_screen	= hpcfb_free_screen,
+	.show_screen	= hpcfb_show_screen,
+	.load_font	= NULL,
+	.pollc		= hpcfb_pollc,
+	.scroll		= NULL,
 };
 
 void    hpcfb_tv_putchar(struct hpcfb_devconfig *, int, int, u_int, long);
@@ -282,13 +283,15 @@ struct hpcfb_tvrow hpcfb_console_tvram[HPCFB_MAX_ROW];
  */
 
 int
-hpcfbmatch(struct device *parent, struct cfdata *match, void *aux)
+hpcfbmatch(struct device *parent __unused,
+	   struct cfdata *match __unused, void *aux __unused)
 {
 	return (1);
 }
 
 void
-hpcfbattach(struct device *parent, struct device *self, void *aux)
+hpcfbattach(struct device *parent __unused,
+	    struct device *self, void *aux)
 {
 	struct hpcfb_softc *sc = device_private(self);
 	struct hpcfb_attach_args *ha = aux;
@@ -379,7 +382,7 @@ hpcfb_thread(void *arg)
 
 /* Print function (for parent devices). */
 int
-hpcfbprint(void *aux, const char *pnp)
+hpcfbprint(void *aux __unused, const char *pnp)
 {
 	if (pnp)
 		aprint_normal("hpcfb at %s", pnp);
@@ -390,12 +393,14 @@ hpcfbprint(void *aux, const char *pnp)
 int
 hpcfb_cnattach(struct hpcfb_fbconf *fbconf)
 {
-	struct hpcfb_fbconf __fbconf __attribute__((__unused__));
+#if NBIVIDEO > 0
+	struct hpcfb_fbconf __fbconf;
+#endif
 	long defattr;
 
 	DPRINTF(("%s(%d): hpcfb_cnattach()\n", __FILE__, __LINE__));
 #if NBIVIDEO > 0
-	if (fbconf == 0) {
+	if (fbconf == NULL) {
 		memset(&__fbconf, 0, sizeof(struct hpcfb_fbconf));
 		if (bivideo_getcnfb(&__fbconf) != 0)
 			return (ENXIO);
@@ -549,7 +554,7 @@ hpcfb_cmap_reorder(struct hpcfb_fbconf *fbconf, struct hpcfb_devconfig *dc)
 }
 
 int
-hpcfb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+hpcfb_ioctl(void *v, void *vs __unused, u_long cmd, caddr_t data, int flag,
 	struct lwp *l)
 {
 	struct hpcfb_softc *sc = v;
@@ -624,7 +629,7 @@ hpcfb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
 }
 
 paddr_t
-hpcfb_mmap(void *v, void *vs, off_t offset, int prot)
+hpcfb_mmap(void *v, void *vs __unused, off_t offset, int prot)
 {
 	struct hpcfb_softc *sc = v;
 
@@ -701,8 +706,8 @@ hpcfb_refresh_screen(struct hpcfb_softc *sc)
 }
 
 static int
-hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *curxp, int *curyp, long *attrp)
+hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type __unused,
+		   void **cookiep, int *curxp, int *curyp, long *attrp)
 {
 	struct hpcfb_softc *sc = v;
 	struct hpcfb_devconfig *dc;
@@ -762,7 +767,7 @@ hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 }
 
 static void
-hpcfb_free_screen(void *v, void *cookie)
+hpcfb_free_screen(void *v __unused, void *cookie)
 {
 	struct hpcfb_devconfig *dc = cookie;
 
@@ -777,7 +782,7 @@ hpcfb_free_screen(void *v, void *cookie)
 }
 
 static int
-hpcfb_show_screen(void *v, void *cookie, int waitok,
+hpcfb_show_screen(void *v, void *cookie, int waitok __unused,
     void (*cb)(void *, int, int), void *cbarg)
 {
 	struct hpcfb_softc *sc = v;
@@ -1120,8 +1125,8 @@ hpcfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
  * erasecols
  */
 void
-hpcfb_tv_erasecols(struct hpcfb_devconfig *dc, int row, int startcol,
-    int ncols, long attr)
+hpcfb_tv_erasecols(struct hpcfb_devconfig *dc,
+		   int row, int startcol, int ncols, long attr __unused)
 {
 	struct hpcfb_tvrow *vscn = dc->dc_tvram;
 
@@ -1443,7 +1448,8 @@ hpcfb_copyrows(void *cookie, int src, int dst, int num)
  * eraserows
  */
 void
-hpcfb_tv_eraserows(struct hpcfb_devconfig *dc, int row, int nrow, long attr)
+hpcfb_tv_eraserows(struct hpcfb_devconfig *dc,
+		   int row, int nrow, long attr __unused)
 {
 	struct hpcfb_tvrow *vscn = dc->dc_tvram;
 	int cols;
