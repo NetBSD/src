@@ -1,5 +1,5 @@
-/*	$NetBSD: qdisc_cdnr.c,v 1.3 2001/08/16 07:48:10 itojun Exp $	*/
-/*	$KAME: qdisc_cdnr.c,v 1.4 2001/08/15 12:51:58 kjc Exp $	*/
+/*	$NetBSD: qdisc_cdnr.c,v 1.4 2006/10/12 19:59:13 peter Exp $	*/
+/*	$KAME: qdisc_cdnr.c,v 1.6 2002/11/08 06:36:18 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -39,7 +39,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <math.h>
+#include <signal.h>
 #include <errno.h>
 #include <err.h>
 
@@ -66,6 +66,7 @@ cdnr_stat_loop(int fd, const char *ifname, int count, int interval)
 	char			**profile_names, _ifname[32];
 	int			i, j, nprofile;
 	int cnt = count;
+	sigset_t		omask;
 
 	if (ifname[0] == '_')
 		ifname++;
@@ -149,6 +150,9 @@ cdnr_stat_loop(int fd, const char *ifname, int count, int interval)
 		new = tmp;
 
 		last_time = cur_time;
-		sleep(interval);
+
+		/* wait for alarm signal */
+		if (sigprocmask(SIG_BLOCK, NULL, &omask) == 0)
+			sigsuspend(&omask);
 	}
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.117 2006/10/09 11:30:53 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.118 2006/10/12 19:59:07 peter Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -308,21 +308,6 @@ Notes:		As per the newlock branch, however given the amount of time
 		- Implement new locking primitives on most-used ports.
 		- Minor locking improvements.
 		- Remove spinlockmgr().
-
-Branch:		peter-altq
-Description:	New ALTQ framework:
-		- sync with KAME sources
-		- share mtag/name mapping functions
-		- separate altq + pf attachment 
-Status:		Active
-Start Date:	March 16, 2006
-End Date:
-Base Tag:	peter-altq-base
-Maintainer:	Peter Postma <peter@NetBSD.org>,
-		Martin Husemann <martin@NetBSD.org>,
-		Matthias Scheler <tron@NetBSD.org>
-Scope:		dist/pf dist/ipf distrib/sets/lists sys usr.sbin/altq
-Notes:
 
 Branch:	  	pkgviews
 Description:  	package views, enabling multiple conflicting packages to co-exist
@@ -689,6 +674,22 @@ Maintainer:	Konrad Schroder <perseant@NetBSD.org>
 Scope:		basesrc/{sbin/*lfs,libexec/lfs_cleanerd,usr.sbin/dumplfs}, syssrc/sys/ufs
 Notes:		This branch should be short-lived, I expect to merge as soon
 		as the data structures required for unremove are in and tested.
+
+Branch:		peter-altq
+Description:	New ALTQ framework:
+		- sync with KAME sources
+		- share mtag/name mapping functions
+		- separate altq + pf attachment
+Status:		Terminated; merged to -current
+Start Date:	March 16, 2006
+End Date:	October 12, 2006
+Base Tag:	peter-altq-base
+Maintainer:	Peter Postma <peter@NetBSD.org>,
+		Martin Husemann <martin@NetBSD.org>,
+		Matthias Scheler <tron@NetBSD.org>
+Scope:		dist/pf dist/ipf distrib/sets/lists sys usr.sbin/altq
+Notes:		Only the first item in the description was finished
+		in this branch.
 
 Branch:		sommerfeld_i386mp_1
 Description:	Multiprocessor support for i386 using Intel MP BIOS.

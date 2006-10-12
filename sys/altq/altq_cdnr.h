@@ -1,8 +1,8 @@
-/*	$NetBSD: altq_cdnr.h,v 1.4 2005/12/11 12:16:03 christos Exp $	*/
-/*	$KAME: altq_cdnr.h,v 1.6 2000/12/14 08:12:45 thorpej Exp $	*/
+/*	$NetBSD: altq_cdnr.h,v 1.5 2006/10/12 19:59:08 peter Exp $	*/
+/*	$KAME: altq_cdnr.h,v 1.9 2003/07/10 12:07:48 kjc Exp $	*/
 
 /*
- * Copyright (C) 1999-2000
+ * Copyright (C) 1999-2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -166,8 +166,9 @@ struct cdnr_modify_tswtcm {
 struct cdnr_add_filter {
 	struct cdnr_interface	iface;
 	u_long			cdnr_handle;
+#ifdef ALTQ3_CLFIER_COMPAT
 	struct flow_filter	filter;
-
+#endif
 	u_long			filter_handle;	/* return value */
 };
 
@@ -266,8 +267,9 @@ struct top_cdnr {
 	struct ifaltq		*tc_ifq;
 
 	LIST_HEAD(, cdnr_block) tc_elements;
+#ifdef ALTQ3_CLFIER_COMPAT
 	struct acc_classifier	tc_classifier;
-
+#endif
 	struct pktcntr		tc_cnts[TCACODE_MAX+1];
 };
 

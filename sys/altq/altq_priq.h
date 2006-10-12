@@ -1,7 +1,7 @@
-/*	$NetBSD: altq_priq.h,v 1.6 2005/12/11 12:16:03 christos Exp $	*/
-/*	$KAME: altq_priq.h,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
+/*	$NetBSD: altq_priq.h,v 1.7 2006/10/12 19:59:08 peter Exp $	*/
+/*	$KAME: altq_priq.h,v 1.7 2003/10/03 05:05:15 kjc Exp $	*/
 /*
- * Copyright (C) 2000
+ * Copyright (C) 2000-2003
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@ extern "C" {
 
 #define	PRIQ_MAXPRI	16	/* upper limit of the number of priorities */
 
+#ifdef ALTQ3_COMPAT
 struct priq_interface {
 	char	ifname[IFNAMSIZ];	/* interface name (e.g., fxp0) */
 	u_long	arg;			/* request-specific argument */
@@ -51,8 +52,9 @@ struct priq_add_class {
 	int			qlimit;	/* queue size limit */
 	int			flags;	/* misc flags (see below) */
 
-	u_long			class_handle;  /* return value */
+	u_int32_t		class_handle;  /* return value */
 };
+#endif /* ALTQ3_COMPAT */
 
 /* priq class flags */
 #define	PRCF_RED		0x0001	/* use RED */
@@ -64,14 +66,15 @@ struct priq_add_class {
 /* special class handles */
 #define	PRIQ_NULLCLASS_HANDLE	0
 
+#ifdef ALTQ3_COMPAT
 struct priq_delete_class {
 	struct priq_interface	iface;
-	u_long			class_handle;
+	u_int32_t		class_handle;
 };
 
 struct priq_modify_class {
 	struct priq_interface	iface;
-	u_long			class_handle;
+	u_int32_t		class_handle;
 	int			pri;
 	int			qlimit;
 	int			flags;
@@ -79,7 +82,7 @@ struct priq_modify_class {
 
 struct priq_add_filter {
 	struct priq_interface	iface;
-	u_long			class_handle;
+	u_int32_t		class_handle;
 	struct flow_filter	filter;
 
 	u_long			filter_handle;  /* return value */
@@ -89,25 +92,28 @@ struct priq_delete_filter {
 	struct priq_interface	iface;
 	u_long			filter_handle;
 };
+#endif /* ALTQ3_COMPAT */
 
-struct priq_basic_class_stats {
-	u_long			class_handle;
+struct priq_classstats {
+	u_int32_t		class_handle;
 
 	u_int			qlength;
-	u_int 			period;
+	u_int			qlimit;
+	u_int			period;
 	struct pktcntr		xmitcnt;  /* transmitted packet counter */
 	struct pktcntr		dropcnt;  /* dropped packet counter */
 
 	/* red and rio related info */
-	int		qtype;
-	struct redstats	red[3];		/* rio has 3 red stats */
+	int			qtype;
+	struct redstats		red[3];	/* rio has 3 red stats */
 };
 
+#ifdef ALTQ3_COMPAT
 struct priq_class_stats {
 	struct priq_interface	iface;
 	int			maxpri;	  /* in/out */
 
-	struct priq_basic_class_stats	*stats;   /* pointer to stats array */
+	struct priq_classstats	*stats;   /* pointer to stats array */
 };
 
 #define	PRIQ_IF_ATTACH		_IOW('Q', 1, struct priq_interface)
@@ -122,10 +128,12 @@ struct priq_class_stats {
 #define	PRIQ_DEL_FILTER		_IOW('Q', 11, struct priq_delete_filter)
 #define	PRIQ_GETSTATS		_IOWR('Q', 12, struct priq_class_stats)
 
+#endif /* ALTQ3_COMPAT */
+
 #ifdef _KERNEL
 
 struct priq_class {
-	u_long		cl_handle;	/* class handle */
+	u_int32_t	cl_handle;	/* class handle */
 	class_queue_t	*cl_q;		/* class queue structure */
 	struct red	*cl_red;	/* RED state */
 	int		cl_pri;		/* priority */
@@ -149,7 +157,9 @@ struct priq_if {
 	int			pif_maxpri;	/* max priority in use */
 	struct priq_class	*pif_default;	/* default class */
 	struct priq_class	*pif_classes[PRIQ_MAXPRI]; /* classes */
+#ifdef ALTQ3_CLFIER_COMPAT
 	struct acc_classifier	pif_classifier;	/* classifier */
+#endif
 };
 
 #endif /* _KERNEL */

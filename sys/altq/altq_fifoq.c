@@ -1,8 +1,8 @@
-/*	$NetBSD: altq_fifoq.c,v 1.12 2006/10/12 01:30:42 christos Exp $	*/
-/*	$KAME: altq_fifoq.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
+/*	$NetBSD: altq_fifoq.c,v 1.13 2006/10/12 19:59:08 peter Exp $	*/
+/*	$KAME: altq_fifoq.c,v 1.12 2003/07/10 12:07:48 kjc Exp $	*/
 
 /*
- * Copyright (C) 1997-2000
+ * Copyright (C) 1997-2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,11 +28,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.12 2006/10/12 01:30:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.13 2006/10/12 19:59:08 peter Exp $");
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#ifdef _KERNEL_OPT
 #include "opt_altq.h"
-#endif /* __FreeBSD__ || __NetBSD__ */
+#endif
+
 #ifdef ALTQ_FIFOQ  /* fifoq is enabled by ALTQ_FIFOQ option in opt_altq.h */
 
 /*
@@ -61,16 +62,20 @@ __KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.12 2006/10/12 01:30:42 christos Exp
 #include <altq/altq_conf.h>
 #include <altq/altq_fifoq.h>
 
+#ifdef ALTQ3_COMPAT
+
+#define	FIFOQ_STATS	/* collect statistics */
+
 /* fifoq_list keeps all fifoq_state_t's allocated. */
 static fifoq_state_t *fifoq_list = NULL;
 
 /* internal function prototypes */
-static int		fifoq_enqueue __P((struct ifaltq *, struct mbuf *,
-					   struct altq_pktattr *));
-static struct mbuf 	*fifoq_dequeue __P((struct ifaltq *, int));
-static int 		fifoq_detach __P((fifoq_state_t *));
-static int		fifoq_request __P((struct ifaltq *, int, void *));
-static void 		fifoq_purge __P((fifoq_state_t *));
+static int		fifoq_enqueue(struct ifaltq *, struct mbuf *,
+				      struct altq_pktattr *);
+static struct mbuf 	*fifoq_dequeue(struct ifaltq *, int);
+static int 		fifoq_detach(fifoq_state_t *);
+static int		fifoq_request(struct ifaltq *, int, void *);
+static void 		fifoq_purge(fifoq_state_t *);
 
 /*
  * fifoq device interface
@@ -220,7 +225,7 @@ fifoqioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
 			q_stats->xmit_cnt	= q->q_stats.xmit_cnt;
 			q_stats->drop_cnt 	= q->q_stats.drop_cnt;
 			q_stats->period   	= q->q_stats.period;
-		} while (0);
+		} while (/*CONSTCOND*/ 0);
 		break;
 
 	case FIFOQ_CONFIG:
@@ -239,7 +244,7 @@ fifoqioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
 				limit = 0;
 			q->q_limit = limit;
 			fc->fifoq_limit = limit;
-		} while (0);
+		} while (/*CONSTCOND*/ 0);
 		break;
 
 	default:
@@ -302,9 +307,7 @@ fifoq_enqueue(struct ifaltq *ifq, struct mbuf *m,
  * operation, the same packet should be returned.
  */
 static struct mbuf *
-fifoq_dequeue(ifq, op)
-	struct ifaltq *ifq;
-	int op;
+fifoq_dequeue(struct ifaltq *ifq, int op)
 {
 	fifoq_state_t *q = (fifoq_state_t *)ifq->altq_disc;
 	struct mbuf *m = NULL;
@@ -342,8 +345,8 @@ fifoq_request(struct ifaltq *ifq, int req, void *arg __unused)
 }
 
 
-static int fifoq_detach(q)
-	fifoq_state_t *q;
+static int
+fifoq_detach(fifoq_state_t *q)
 {
 	fifoq_state_t *tmp;
 	int error = 0;
@@ -376,8 +379,8 @@ static int fifoq_detach(q)
  * fifoq_purge
  * should be called in splnet or after disabling the fifoq.
  */
-static void fifoq_purge(q)
-	fifoq_state_t *q;
+static void
+fifoq_purge(fifoq_state_t *q)
 {
 	struct mbuf *m;
 
@@ -400,4 +403,5 @@ ALTQ_MODULE(altq_fifoq, ALTQT_FIFOQ, &fifoq_sw);
 
 #endif /* KLD_MODULE */
 
+#endif /* ALTQ3_COMPAT */
 #endif /* ALTQ_FIFOQ */
