@@ -4314,7 +4314,6 @@ sh_parse_name (char const *name, expressionS *exprP, char *nextcharP)
 
   return 1;
 }
-#endif
 
 void
 sh_cfi_frame_initial_instructions (void)
@@ -4364,4 +4363,5 @@ sh_regname_to_dw2regnum (const char *regname)
     }
   return regnum;
 }
+#endif /* OBJ_ELF */
 #endif /* BFD_ASSEMBLER */

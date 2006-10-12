@@ -1,4 +1,4 @@
-/*	$NetBSD: box.h,v 1.1.1.2 2004/07/30 14:45:00 wiz Exp $	*/
+/*	$NetBSD: box.h,v 1.1.1.2.4.1 2006/10/12 09:49:57 ghen Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 1989, 1990, 1991, 1992, 2004 Free Software Foundation, Inc.
@@ -63,6 +63,11 @@ public:
   void list_debug_print(const char *sep);
   friend class list_box;
 };
+
+// declarations to avoid friend name injection problems
+box *make_script_box(box *, box *, box *);
+box *make_mark_box(box *);
+box *make_lineup_box(box *);
 
 class list_box : public box {
   int is_script;
