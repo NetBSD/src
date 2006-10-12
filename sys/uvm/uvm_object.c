@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.1 2006/10/12 10:12:38 yamt Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.2 2006/10/12 10:13:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.1 2006/10/12 10:12:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.2 2006/10/12 10:13:35 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -164,4 +164,3 @@ uobj_unwirepages(struct uvm_object *uobj, off_t start, off_t end)
 	uvm_unlock_pageq();
 	simple_unlock(&uobj->vmobjlock);
 }
-
