@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.132 2006/10/12 04:25:43 thorpej Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.133 2006/10/12 10:10:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.132 2006/10/12 04:25:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.133 2006/10/12 10:10:48 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -1340,7 +1340,8 @@ genfs_putpages(void *v)
 				pg = tpg;
 			if (tpg->offset < startoff || tpg->offset >= endoff)
 				continue;
-			if (flags & PGO_DEACTIVATE && tpg->wire_count == 0) {
+			if (flags & PGO_DEACTIVATE && tpg->wire_count == 0
+			    && tpg->loan_count == 0) {
 				(void) pmap_clear_reference(tpg);
 				uvm_pagedeactivate(tpg);
 			} else if (flags & PGO_FREE) {
