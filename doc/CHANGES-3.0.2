@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.2,v 1.1.2.25 2006/10/06 11:18:04 tron Exp $
+#	$NetBSD: CHANGES-3.0.2,v 1.1.2.26 2006/10/12 09:50:19 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0.1 release to the NetBSD 3.0.2
 release:
@@ -182,4 +182,48 @@ crypto/dist/openssl/ssl/ssl_lib.c		patch
 	Fix security issues reported in CVE-2006-2937, CVE-2006-2940,
 	CVE-2006-3738 and CVE-2006-4343.
 	[ghen, ticket #1537]
+
+gnu/dist/binutils/ChangeLog			patch
+gnu/dist/binutils/bfd/coff-alpha.c		patch
+gnu/dist/binutils/bfd/elf32-iq2000.c		patch
+gnu/dist/binutils/bfd/pdp11.c			patch
+gnu/dist/binutils/gas/as.h			patch
+gnu/dist/binutils/gas/itbl-lex.h		patch
+gnu/dist/binutils/gas/itbl-lex.l		patch
+gnu/dist/binutils/gas/itbl-parse.y		patch
+gnu/dist/binutils/gas/subsegs.h			patch
+gnu/dist/binutils/gas/tc.h			patch
+gnu/dist/binutils/gas/config/obj-coff.c		patch
+gnu/dist/binutils/gas/config/obj-ecoff.h	patch
+gnu/dist/binutils/gas/config/tc-arc.c		patch
+gnu/dist/binutils/gas/config/tc-arm.c		patch
+gnu/dist/binutils/gas/config/tc-cris.h		patch
+gnu/dist/binutils/gas/config/tc-frv.c		patch
+gnu/dist/binutils/gas/config/tc-mcore.c		patch
+gnu/dist/binutils/gas/config/tc-mips.c		patch
+gnu/dist/binutils/gas/config/tc-mmix.c		patch
+gnu/dist/binutils/gas/config/tc-s390.c		patch
+gnu/dist/binutils/gas/config/tc-sh.c		patch
+gnu/dist/binutils/gas/config/tc-sparc.c		patch
+gnu/dist/binutils/gas/config/tc-tic4x.c		patch
+gnu/dist/binutils/gas/config/tc-tic4x.h		patch
+gnu/dist/binutils/gas/config/tc-vax.c		patch
+gnu/dist/binutils/gas/config/tc-xstormy16.c	patch
+gnu/dist/binutils/opcodes/fr30-desc.h		patch
+gnu/dist/binutils/opcodes/frv-desc.h		patch
+gnu/dist/binutils/opcodes/ip2k-desc.h		patch
+gnu/dist/binutils/opcodes/iq2000-asm.c		patch
+gnu/dist/gcc/gcc/cp/decl.c			patch
+gnu/dist/gcc/include/obstack.h			patch
+gnu/dist/gdb/include/obstack.h			patch
+gnu/dist/groff/src/preproc/eqn/box.h		patch
+gnu/dist/groff/src/roff/troff/div.h		patch
+gnu/dist/groff/src/roff/troff/env.h		patch
+gnu/dist/groff/src/roff/troff/input.cpp		patch
+usr.bin/mkesdb/ldef.h				patch
+usr.sbin/makefs/ffs/ffs_alloc.c			patch
+usr.sbin/makefs/ffs/ufs_inode.h			patch
+
+	Fix cross-building NetBSD 3.x binutils with GCC 4.x.
+	[skrll, ticket #1529]
 
