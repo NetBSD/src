@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.57 2006/10/11 19:51:10 apb Exp $	*/
+/*	$NetBSD: function.c,v 1.58 2006/10/12 08:46:18 tacha Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.57 2006/10/11 19:51:10 apb Exp $");
+__RCSID("$NetBSD: function.c,v 1.58 2006/10/12 08:46:18 tacha Exp $");
 #endif
 #endif /* not lint */
 
@@ -1824,9 +1824,8 @@ palloc(enum ntype t, int (*f)(PLAN *, FTSENT *))
 
 	if ((new = malloc(sizeof(PLAN))) == NULL)
 		err(1, NULL);
+	memset(new, 0, sizeof(PLAN));
 	new->type = t;
 	new->eval = f;
-	new->flags = 0;
-	new->next = NULL;
 	return (new);
 }
