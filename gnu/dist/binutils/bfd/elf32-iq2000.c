@@ -512,7 +512,7 @@ iq2000_elf_check_relocs (abfd, info, sec, relocs)
   if (changed)
     /* Note that we've changed relocs, otherwise if !info->keep_memory
        we'll free the relocs and lose our changes.  */
-    (const Elf_Internal_Rela *) (elf_section_data (sec)->relocs) = relocs;
+    elf_section_data (sec)->relocs = (Elf_Internal_Rela *) relocs;
 
   return TRUE;
 }

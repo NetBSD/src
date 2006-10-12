@@ -1,5 +1,5 @@
 /* tc-xstormy16.c -- Assembler for the Sanyo XSTORMY16.
-   Copyright 2000, 2001, 2002, 2003 Free Software Foundation.
+   Copyright 2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -328,10 +328,10 @@ md_pcrel_from_section (fixP, sec)
      fixS * fixP;
      segT   sec;
 {
-  if (fixP->fx_addsy != (symbolS *) NULL
-      && (! S_IS_DEFINED (fixP->fx_addsy)
-	  || S_GET_SEGMENT (fixP->fx_addsy) != sec)
-          || xstormy16_force_relocation (fixP))
+  if ((fixP->fx_addsy != (symbolS *) NULL
+       && (! S_IS_DEFINED (fixP->fx_addsy)
+	   || S_GET_SEGMENT (fixP->fx_addsy) != sec))
+      || xstormy16_force_relocation (fixP))
     /* The symbol is undefined,
        or it is defined but not in this section,
        or the relocation will be relative to this symbol not the section symbol.	 

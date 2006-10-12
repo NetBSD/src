@@ -48,6 +48,8 @@ static const char * parse_insn_normal
 /* -- assembler routines inserted here.  */
 
 /* -- asm.c */
+#include "safe-ctype.h"
+
 static const char * parse_mimm PARAMS ((CGEN_CPU_DESC, const char **, int, long *));
 static const char * parse_imm  PARAMS ((CGEN_CPU_DESC, const char **, int, unsigned long *));
 static const char * parse_hi16 PARAMS ((CGEN_CPU_DESC, const char **, int, unsigned long *));

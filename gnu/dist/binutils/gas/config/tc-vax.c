@@ -1,5 +1,6 @@
 /* tc-vax.c - vax-specific -
-   Copyright 1987, 1991, 1992, 1993, 1994, 1995, 1998, 2000, 2001, 2002, 2003
+   Copyright 1987, 1991, 1992, 1993, 1994, 1995, 1998, 2000, 2001, 2002,
+   2003, 2004, 2005
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -27,6 +28,10 @@
 
 #ifdef OBJ_ELF
 #include "elf/vax.h"
+#endif
+
+#if defined (OBJ_AOUT) && !defined (BFD_ASSEMBLER) && defined (TE_NetBSD)
+#include <netinet/in.h>
 #endif
 
 /* These chars start a comment anywhere in a source file (except inside
@@ -3454,7 +3459,7 @@ tc_headers_hook(headers)
 {
 #ifdef TE_NetBSD
   N_SET_INFO(headers->header, OMAGIC, M_VAX4K_NETBSD, 0);
-  headers->header.a_info = htonl(headers->header.a_info);
+  headers->header.a_info = htonl (headers->header.a_info);
 #endif
 }
 #endif /* !BFD_ASSEMBLER */

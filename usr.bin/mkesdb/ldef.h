@@ -1,4 +1,4 @@
-/*	$NetBSD: ldef.h,v 1.1 2003/06/26 06:30:17 tshiozak Exp $	*/
+/*	$NetBSD: ldef.h,v 1.1.10.1 2006/10/12 09:49:57 ghen Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -27,7 +27,6 @@
  */
 
 extern int	line_number;
-extern int	debug;
 extern FILE	*yyin;
 extern int	yyparse(void);
 extern int	yylex(void);

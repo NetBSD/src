@@ -1,5 +1,5 @@
 /* tc-tic4x.c -- Assemble for the Texas Instruments TMS320C[34]x.
-   Copyright (C) 1997,1998, 2002, 2003 Free Software Foundation.
+   Copyright (C) 1997,1998, 2002, 2003, 2005 Free Software Foundation.
 
    Contributed by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
 
@@ -708,7 +708,7 @@ tic4x_insert_reg (regname, regnum)
   symbol_table_insert (symbol_new (regname, reg_section, (valueT) regnum,
 				   &zero_address_frag));
   for (i = 0; regname[i]; i++)
-    buf[i] = islower (regname[i]) ? TOUPPER (regname[i]) : regname[i];
+    buf[i] = ISLOWER (regname[i]) ? TOUPPER (regname[i]) : regname[i];
   buf[i] = '\0';
 
   symbol_table_insert (symbol_new (buf, reg_section, (valueT) regnum,
@@ -3090,7 +3090,7 @@ tic4x_do_align (alignment, fill, len, max)
      int len ATTRIBUTE_UNUSED;
      int max ATTRIBUTE_UNUSED;
 {
-  unsigned long nop = NOP_OPCODE;
+  unsigned long nop = TIC_NOP_OPCODE;
 
   /* Because we are talking lwords, not bytes, adjust alignment to do words */
   alignment += 2;

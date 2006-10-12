@@ -1,4 +1,4 @@
-/*	$NetBSD: input.cpp,v 1.1.1.2 2004/07/30 14:44:56 wiz Exp $	*/
+/*	$NetBSD: input.cpp,v 1.1.1.2.4.1 2006/10/12 09:49:57 ghen Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003, 2004
@@ -155,6 +155,9 @@ static void trapping_blank_line();
 class input_iterator;
 input_iterator *make_temp_iterator(const char *);
 const char *input_char_description(int);
+
+void process_input_stack();
+void chop_macro();		// declare to avoid friend name injection
 
 
 void set_escape_char()
