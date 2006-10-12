@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.3 2006/08/28 08:19:53 plunky Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.4 2006/10/12 01:32:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.3 2006/08/28 08:19:53 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.4 2006/10/12 01:32:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -88,7 +88,7 @@ int sco_recvspace = 4096;
  */
 int
 sco_usrreq(struct socket *up, int req, struct mbuf *m,
-		struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
+    struct mbuf *nam, struct mbuf *ctl, struct lwp *l __unused)
 {
 	struct sco_pcb *pcb = (struct sco_pcb *)up->so_pcb;
 	struct sockaddr_bt *sa;
@@ -315,7 +315,8 @@ sco_disconnected(void *arg, int err)
 }
 
 static void *
-sco_newconn(void *arg, struct sockaddr_bt *laddr, struct sockaddr_bt *raddr)
+sco_newconn(void *arg, struct sockaddr_bt *laddr __unused,
+    struct sockaddr_bt *raddr __unused)
 {
 	struct socket *so = arg;
 

@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evregion.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evregion.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
 
 #define __EVREGION_C__
 
@@ -700,7 +700,7 @@ ACPI_STATUS
 AcpiEvAttachRegion (
     ACPI_OPERAND_OBJECT     *HandlerObj,
     ACPI_OPERAND_OBJECT     *RegionObj,
-    BOOLEAN                 AcpiNsIsLocked)
+    BOOLEAN                 AcpiNsIsLocked __unused)
 {
 
     ACPI_FUNCTION_TRACE ("EvAttachRegion");
@@ -751,9 +751,9 @@ AcpiEvAttachRegion (
 static ACPI_STATUS
 AcpiEvInstallHandler (
     ACPI_HANDLE             ObjHandle,
-    UINT32                  Level,
+    UINT32                  Level __unused,
     void                    *Context,
-    void                    **ReturnValue)
+    void                    **ReturnValue __unused)
 {
     ACPI_OPERAND_OBJECT     *HandlerObj;
     ACPI_OPERAND_OBJECT     *NextHandlerObj;
@@ -1165,9 +1165,9 @@ AcpiEvExecuteRegMethods (
 static ACPI_STATUS
 AcpiEvRegRun (
     ACPI_HANDLE             ObjHandle,
-    UINT32                  Level,
+    UINT32                  Level __unused,
     void                    *Context,
-    void                    **ReturnValue)
+    void                    **ReturnValue __unused)
 {
     ACPI_OPERAND_OBJECT     *ObjDesc;
     ACPI_NAMESPACE_NODE     *Node;

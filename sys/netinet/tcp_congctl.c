@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.4 2006/10/10 11:12:39 rpaulo Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.5 2006/10/12 01:32:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.4 2006/10/10 11:12:39 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.5 2006/10/12 01:32:38 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -468,7 +468,7 @@ tcp_reno_slow_retransmit(struct tcpcb *tp)
 }
 
 static void
-tcp_reno_fast_retransmit_newack(struct tcpcb *tp, struct tcphdr *th)
+tcp_reno_fast_retransmit_newack(struct tcpcb *tp, struct tcphdr *th __unused)
 {
 	if (tp->t_partialacks < 0) {
 		/*
@@ -489,7 +489,7 @@ tcp_reno_fast_retransmit_newack(struct tcpcb *tp, struct tcphdr *th)
 }
 
 static void
-tcp_reno_newack(struct tcpcb *tp, struct tcphdr *th)
+tcp_reno_newack(struct tcpcb *tp, struct tcphdr *th __unused)
 {
 	/*
 	 * When new data is acked, open the congestion window.

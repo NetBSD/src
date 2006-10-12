@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.58 2006/05/14 05:28:45 christos Exp $ */
+/*	$NetBSD: mach_port.c,v 1.59 2006/10/12 01:30:49 christos Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.58 2006/05/14 05:28:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.59 2006/10/12 01:30:49 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,10 +75,7 @@ struct mach_port *mach_io_master_port;
 struct mach_port *mach_saved_bootstrap_port;
 
 int
-mach_sys_reply_port(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+mach_sys_reply_port(struct lwp *l, void *v __unused, register_t *retval)
 {
 	struct mach_right *mr;
 
@@ -89,10 +86,7 @@ mach_sys_reply_port(l, v, retval)
 }
 
 int
-mach_sys_thread_self_trap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+mach_sys_thread_self_trap(struct lwp *l, void *v __unused, register_t *retval)
 {
 	struct mach_lwp_emuldata *mle;
 	struct mach_right *mr;
@@ -106,10 +100,7 @@ mach_sys_thread_self_trap(l, v, retval)
 
 
 int
-mach_sys_task_self_trap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+mach_sys_task_self_trap(struct lwp *l, void *v __unused, register_t *retval)
 {
 	struct mach_emuldata *med;
 	struct mach_right *mr;
@@ -123,10 +114,7 @@ mach_sys_task_self_trap(l, v, retval)
 
 
 int
-mach_sys_host_self_trap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+mach_sys_host_self_trap(struct lwp *l, void *v __unused, register_t *retval)
 {
 	struct mach_emuldata *med;
 	struct mach_right *mr;

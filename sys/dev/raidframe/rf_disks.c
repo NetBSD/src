@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.62 2006/08/27 05:07:12 christos Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.63 2006/10/12 01:31:50 christos Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.62 2006/08/27 05:07:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.63 2006/10/12 01:31:50 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -111,7 +111,7 @@ static int rf_check_label_vitals( RF_Raid_t *, int, int, char *,
  **************************************************************************/
 
 int
-rf_ConfigureDisks(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+rf_ConfigureDisks(RF_ShutdownList_t **listp __unused, RF_Raid_t *raidPtr,
 		  RF_Config_t *cfgPtr)
 {
 	RF_RaidDisk_t *disks;
@@ -235,7 +235,7 @@ fail:
  * in row zero, which is specially expanded to hold them.
  ****************************************************************************/
 int
-rf_ConfigureSpareDisks(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+rf_ConfigureSpareDisks(RF_ShutdownList_t **listp __unused, RF_Raid_t *raidPtr,
 		       RF_Config_t *cfgPtr)
 {
 	int     i, ret;
@@ -316,7 +316,7 @@ fail:
 }
 
 static int
-rf_AllocDiskStructures(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
+rf_AllocDiskStructures(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr __unused)
 {
 	int ret;
 
@@ -1102,7 +1102,8 @@ rf_delete_component(RF_Raid_t *raidPtr, RF_SingleComponent_t *component)
 }
 
 int
-rf_incorporate_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *component)
+rf_incorporate_hot_spare(RF_Raid_t *raidPtr __unused,
+    RF_SingleComponent_t *component __unused)
 {
 
 	/* Issues here include how to 'move' this in if there is IO

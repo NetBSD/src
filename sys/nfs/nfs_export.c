@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.16 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.17 2006/10/12 01:32:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.16 2006/07/23 22:06:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.17 2006/10/12 01:32:47 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -406,7 +406,7 @@ netexport_check(const fsid_t *fsid, struct mbuf *mb, struct mount **mpp,
  * Otherwise, returns 0 on success or an appropriate error code otherwise.
  */
 int
-nfs_update_exports_30(struct mount *mp, const char *path, void *data,
+nfs_update_exports_30(struct mount *mp __unused, const char *path, void *data,
     struct lwp *l)
 {
 	int error;
@@ -722,7 +722,7 @@ export(struct netexport *nep, const struct export_args *argp)
  * one public filesystem is possible in the spec (RFC 2054 and 2055)
  */
 static int
-setpublicfs(struct mount *mp, struct netexport *nep,
+setpublicfs(struct mount *mp, struct netexport *nep __unused,
     const struct export_args *argp)
 {
 	char *cp;

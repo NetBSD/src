@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.64 2006/09/29 19:39:43 christos Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.65 2006/10/12 01:32:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.64 2006/09/29 19:39:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.65 2006/10/12 01:32:18 christos Exp $");
 
 #define SYSVSEM
 
@@ -116,7 +116,7 @@ seminit(void)
  */
 
 int
-sys_semconfig(struct lwp *l, void *v, register_t *retval)
+sys_semconfig(struct lwp *l __unused, void *v __unused, register_t *retval)
 {
 
 	*retval = 0;
@@ -820,7 +820,7 @@ out:
  */
 /*ARGSUSED*/
 void
-semexit(struct proc *p, void *v)
+semexit(struct proc *p, void *v __unused)
 {
 	struct sem_undo *suptr;
 	struct sem_undo **supptr;

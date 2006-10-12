@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.5 2006/09/24 03:53:09 jmcneill Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.6 2006/10/12 01:31:30 christos Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.5 2006/09/24 03:53:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.6 2006/10/12 01:31:30 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -177,7 +177,7 @@ const struct nfe_product {
 };
 
 int
-nfe_match(struct device *dev, struct cfdata *match, void *aux)
+nfe_match(struct device *dev __unused, struct cfdata *match __unused, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct nfe_product *np;
@@ -193,7 +193,7 @@ nfe_match(struct device *dev, struct cfdata *match, void *aux)
 }
 
 void
-nfe_attach(struct device *parent, struct device *self, void *aux)
+nfe_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct nfe_softc *sc = (struct nfe_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -1189,7 +1189,7 @@ nfe_init(struct ifnet *ifp)
 }
 
 void
-nfe_stop(struct ifnet *ifp, int disable)
+nfe_stop(struct ifnet *ifp, int disable __unused)
 {
 	struct nfe_softc *sc = ifp->if_softc;
 
@@ -1433,7 +1433,7 @@ nfe_jalloc(struct nfe_softc *sc)
  * freed.
  */
 void
-nfe_jfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
+nfe_jfree(struct mbuf *m, caddr_t buf, size_t size __unused, void *arg)
 {
 	struct nfe_softc *sc = arg;
 	struct nfe_jbuf *jbuf;

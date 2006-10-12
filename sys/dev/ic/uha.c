@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.36 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: uha.c,v 1.37 2006/10/12 01:31:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.36 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.37 2006/10/12 01:31:01 christos Exp $");
 
 #undef UHADEBUG
 #ifdef DDB
@@ -208,9 +208,7 @@ uha_attach(sc, upd)
 }
 
 integrate void
-uha_reset_mscp(sc, mscp)
-	struct uha_softc *sc;
-	struct uha_mscp *mscp;
+uha_reset_mscp(struct uha_softc *sc __unused, struct uha_mscp *mscp)
 {
 
 	mscp->flags = 0;

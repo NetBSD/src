@@ -1,4 +1,4 @@
-/*	$NetBSD: firmload.c,v 1.4 2006/09/30 12:47:32 elad Exp $	*/
+/*	$NetBSD: firmload.c,v 1.5 2006/10/12 01:30:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.4 2006/09/30 12:47:32 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.5 2006/10/12 01:30:50 christos Exp $");
 
 /*
  * The firmload API provides an interface for device drivers to access
@@ -346,7 +346,7 @@ firmware_malloc(size_t size)
  */
 /*ARGSUSED*/
 void
-firmware_free(void *v, size_t size)
+firmware_free(void *v, size_t size __unused)
 {
 
 	free(v, M_DEVFIRM);

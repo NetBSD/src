@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.47 2006/09/02 07:04:46 christos Exp $	*/
+/*	$NetBSD: midi.c,v 1.48 2006/10/12 01:30:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.47 2006/09/02 07:04:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.48 2006/10/12 01:30:51 christos Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -130,7 +130,8 @@ CFATTACH_DECL(midi, sizeof(struct midi_softc),
 extern struct cfdriver midi_cd;
 
 int
-midiprobe(struct device *parent, struct cfdata *match, void *aux)
+midiprobe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct audio_attach_args *sa = aux;
 
@@ -182,7 +183,7 @@ midiactivate(struct device *self, enum devact act)
 }
 
 int
-mididetach(struct device *self, int flags)
+mididetach(struct device *self, int flags __unused)
 {
 	struct midi_softc *sc = (struct midi_softc *)self;
 	int maj, mn;
@@ -761,7 +762,7 @@ midi_out(void *addr)
 }
 
 int
-midiopen(dev_t dev, int flags, int ifmt, struct lwp *l)
+midiopen(dev_t dev, int flags, int ifmt __unused, struct lwp *l __unused)
 {
 	struct midi_softc *sc;
 	const struct midi_hw_if *hw;
@@ -826,7 +827,8 @@ midiopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 }
 
 int
-midiclose(dev_t dev, int flags, int ifmt, struct lwp *l)
+midiclose(dev_t dev, int flags __unused, int ifmt __unused,
+    struct lwp *l __unused)
 {
 	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
@@ -1650,7 +1652,7 @@ filt_midirdetach(struct knote *kn)
 }
 
 static int
-filt_midiread(struct knote *kn, long hint)
+filt_midiread(struct knote *kn, long hint __unused)
 {
 	struct midi_softc *sc = kn->kn_hook;
 	int s;
@@ -1680,7 +1682,7 @@ filt_midiwdetach(struct knote *kn)
 }
 
 static int
-filt_midiwrite(struct knote *kn, long hint)
+filt_midiwrite(struct knote *kn, long hint __unused)
 {
 	struct midi_softc *sc = kn->kn_hook;
 	int s;

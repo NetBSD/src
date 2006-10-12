@@ -1,4 +1,4 @@
-/* $NetBSD: aztech.c,v 1.10 2005/12/11 12:22:02 christos Exp $ */
+/* $NetBSD: aztech.c,v 1.11 2006/10/12 01:31:16 christos Exp $ */
 /* $OpenBSD: aztech.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: aztech.c,v 1.11 2001/10/20 13:23:47 pva Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aztech.c,v 1.10 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aztech.c,v 1.11 2006/10/12 01:31:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ u_int8_t	az_conv_vol(u_int8_t);
 u_int8_t	az_unconv_vol(u_int8_t);
 
 int
-az_probe(struct device *parent, struct cfdata *cf, void *aux)
+az_probe(struct device *parent __unused, struct cfdata *cf __unused, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -161,7 +161,7 @@ az_probe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-az_attach(struct device *parent, struct device *self, void *aux)
+az_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct az_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -310,8 +310,8 @@ az_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 }
 
 void
-az_lm700x_init(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
-		u_int32_t data)
+az_lm700x_init(bus_space_tag_t iot __unused, bus_space_handle_t ioh __unused,
+    bus_size_t off __unused, u_int32_t data __unused)
 {
 	/* Do nothing */
 	return;

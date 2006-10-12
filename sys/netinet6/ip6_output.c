@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.102 2006/08/30 17:15:22 christos Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.103 2006/10/12 01:32:39 christos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.102 2006/08/30 17:15:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.103 2006/10/12 01:32:39 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -154,14 +154,15 @@ static int ip6_pcbopts __P((struct ip6_pktopts **, struct mbuf *,
  * which is rt_rmx.rmx_mtu.
  */
 int
-ip6_output(m0, opt, ro, flags, im6o, so, ifpp)
-	struct mbuf *m0;
-	struct ip6_pktopts *opt;
-	struct route_in6 *ro;
-	int flags;
-	struct ip6_moptions *im6o;
-	struct socket *so;
-	struct ifnet **ifpp;		/* XXX: just for statistics */
+ip6_output(
+    struct mbuf *m0,
+    struct ip6_pktopts *opt,
+    struct route_in6 *ro,
+    int flags,
+    struct ip6_moptions *im6o,
+    struct socket *so __unused,
+    struct ifnet **ifpp		/* XXX: just for statistics */
+)
 {
 	struct ip6_hdr *ip6, *mhip6;
 	struct ifnet *ifp, *origifp;

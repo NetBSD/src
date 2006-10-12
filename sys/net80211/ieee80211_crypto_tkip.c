@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_tkip.c,v 1.10 2005/08/08 18:46:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.5 2006/03/16 15:59:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.6 2006/10/12 01:32:30 christos Exp $");
 #endif
 
 /*
@@ -112,7 +112,7 @@ static	int tkip_decrypt(struct tkip_ctx *, struct ieee80211_key *,
 		struct mbuf *, int hdr_len);
 
 static void *
-tkip_attach(struct ieee80211com *ic, struct ieee80211_key *k)
+tkip_attach(struct ieee80211com *ic, struct ieee80211_key *k __unused)
 {
 	struct tkip_ctx *ctx;
 
@@ -795,7 +795,7 @@ michael_mic_hdr(const struct ieee80211_frame *wh0, uint8_t hdr[16])
 }
 
 static void
-michael_mic(struct tkip_ctx *ctx, const u8 *key,
+michael_mic(struct tkip_ctx *ctx __unused, const u8 *key,
 	struct mbuf *m, u_int off, size_t data_len,
 	u8 mic[IEEE80211_WEP_MICLEN])
 {

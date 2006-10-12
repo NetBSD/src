@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.8 2006/08/21 09:05:22 martin Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.9 2006/10/12 01:32:18 christos Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.8 2006/08/21 09:05:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.9 2006/10/12 01:32:18 christos Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -222,7 +222,7 @@ static POOL_INIT(bt_pool, sizeof(bt_t), 0, 0, 0, "vmembtpl", NULL);
 #endif /* defined(_KERNEL) */
 
 static bt_t *
-bt_alloc(vmem_t *vm, vm_flag_t flags)
+bt_alloc(vmem_t *vm __unused, vm_flag_t flags)
 {
 	bt_t *bt;
 
@@ -238,7 +238,7 @@ bt_alloc(vmem_t *vm, vm_flag_t flags)
 }
 
 static void
-bt_free(vmem_t *vm, bt_t *bt)
+bt_free(vmem_t *vm __unused, bt_t *bt)
 {
 
 #if defined(_KERNEL)
@@ -370,7 +370,7 @@ bt_insseg_tail(vmem_t *vm, bt_t *bt)
 }
 
 static void
-bt_remfree(vmem_t *vm, bt_t *bt)
+bt_remfree(vmem_t *vm __unused, bt_t *bt)
 {
 
 	KASSERT(bt->bt_type == BT_TYPE_FREE);

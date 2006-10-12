@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.95 2006/09/24 03:53:08 jmcneill Exp $	*/
+/*	$NetBSD: i82365.c,v 1.96 2006/10/12 01:31:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.95 2006/09/24 03:53:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.96 2006/10/12 01:31:00 christos Exp $");
 
 #define	PCICDEBUG
 
@@ -1129,9 +1129,8 @@ pcic_chip_io_alloc(pch, start, size, align, pcihp)
 }
 
 void
-pcic_chip_io_free(pch, pcihp)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_io_handle *pcihp;
+pcic_chip_io_free(pcmcia_chipset_handle_t pch __unused,
+    struct pcmcia_io_handle *pcihp)
 {
 	bus_space_tag_t iot = pcihp->iot;
 	bus_space_handle_t ioh = pcihp->ioh;

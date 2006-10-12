@@ -1,4 +1,4 @@
-/*	$NetBSD: spic.c,v 1.3 2006/06/20 15:35:11 jmcneill Exp $	*/
+/*	$NetBSD: spic.c,v 1.4 2006/10/12 01:31:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.3 2006/06/20 15:35:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.4 2006/10/12 01:31:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,7 +330,8 @@ spic_disable(void *v)
 }
 
 static int
-spic_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+spic_ioctl(void *v __unused, u_long cmd, caddr_t data __unused,
+    int flag __unused, struct lwp *l __unused)
 {
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:

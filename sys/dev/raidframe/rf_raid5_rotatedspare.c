@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid5_rotatedspare.c,v 1.10 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_raid5_rotatedspare.c,v 1.11 2006/10/12 01:31:52 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid5_rotatedspare.c,v 1.10 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid5_rotatedspare.c,v 1.11 2006/10/12 01:31:52 christos Exp $");
 
 #include "rf_archs.h"
 
@@ -55,9 +55,9 @@ typedef struct RF_Raid5RSConfigInfo_s {
 
 int
 rf_ConfigureRAID5_RS(
-    RF_ShutdownList_t ** listp,
+    RF_ShutdownList_t ** listp __unused,
     RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr)
+    RF_Config_t * cfgPtr __unused)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_Raid5RSConfigInfo_t *info;
@@ -158,7 +158,7 @@ rf_IdentifyStripeRAID5_RS(
 
 void
 rf_MapSIDToPSIDRAID5_RS(
-    RF_RaidLayout_t * layoutPtr,
+    RF_RaidLayout_t * layoutPtr __unused,
     RF_StripeNum_t stripeID,
     RF_StripeNum_t * psID,
     RF_ReconUnitNum_t * which_ru)

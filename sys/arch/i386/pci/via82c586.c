@@ -1,4 +1,4 @@
-/*	$NetBSD: via82c586.c,v 1.8 2006/06/18 09:55:11 xtraeme Exp $	*/
+/*	$NetBSD: via82c586.c,v 1.9 2006/10/12 01:30:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via82c586.c,v 1.8 2006/06/18 09:55:11 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via82c586.c,v 1.9 2006/10/12 01:30:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ via82c586_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
 }
 
 int
-via82c586_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
+via82c586_getclink(pciintr_icu_handle_t v __unused, int link, int *clinkp)
 {
 
 	if (VP3_LEGAL_LINK(link - 1)) {

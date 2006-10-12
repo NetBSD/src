@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_norm.c,v 1.13 2006/05/11 01:08:19 mrg Exp $	*/
+/*	$NetBSD: pf_norm.c,v 1.14 2006/10/12 01:32:10 christos Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.97 2004/09/21 16:59:12 aaron Exp $ */
 
 /*
@@ -1052,7 +1052,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 #ifdef INET6
 int
 pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
-    u_short *reason, struct pf_pdesc *pd)
+    u_short *reason, struct pf_pdesc *pd __unused)
 {
 	struct mbuf		*m = *m0;
 	struct pf_rule		*r;
@@ -1226,8 +1226,8 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 #endif /* INET6 */
 
 int
-pf_normalize_tcp(int dir, struct pfi_kif *kif, struct mbuf *m, int ipoff,
-    int off, void *h, struct pf_pdesc *pd)
+pf_normalize_tcp(int dir, struct pfi_kif *kif, struct mbuf *m,
+    int ipoff __unused, int off, void *h __unused, struct pf_pdesc *pd)
 {
 	struct pf_rule	*r, *rm = NULL;
 	struct tcphdr	*th = pd->hdr.tcp;
@@ -1339,7 +1339,8 @@ pf_normalize_tcp(int dir, struct pfi_kif *kif, struct mbuf *m, int ipoff,
 
 int
 pf_normalize_tcp_init(struct mbuf *m, int off, struct pf_pdesc *pd,
-    struct tcphdr *th, struct pf_state_peer *src, struct pf_state_peer *dst)
+    struct tcphdr *th, struct pf_state_peer *src,
+    struct pf_state_peer *dst __unused)
 {
 	u_int32_t tsval, tsecr;
 	u_int8_t hdr[60];

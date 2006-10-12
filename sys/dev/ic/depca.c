@@ -1,4 +1,4 @@
-/*	$NetBSD: depca.c,v 1.12 2006/03/25 23:10:12 thorpej Exp $	*/
+/*	$NetBSD: depca.c,v 1.13 2006/10/12 01:31:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.12 2006/03/25 23:10:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.13 2006/10/12 01:31:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,7 @@ found:
 }
 
 int
-le_depca_match(struct device *parent, struct cfdata *match, void *aux)
+le_depca_match(struct device *parent __unused, struct cfdata *match, void *aux)
 {
 	struct depca_attach_args *da = aux;
 
@@ -243,7 +243,7 @@ le_depca_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-le_depca_attach(struct device *parent, struct device *self, void *aux)
+le_depca_attach(struct device *parent, struct device *self, void *aux __unused)
 {
 	struct depca_softc *dsc = (void *) parent;
 	struct le_depca_softc *lesc = (void *) self;

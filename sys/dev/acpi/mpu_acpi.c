@@ -1,4 +1,4 @@
-/* $NetBSD: mpu_acpi.c,v 1.3 2006/02/20 12:17:49 kochi Exp $ */
+/* $NetBSD: mpu_acpi.c,v 1.4 2006/10/12 01:30:55 christos Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_acpi.c,v 1.3 2006/02/20 12:17:49 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_acpi.c,v 1.4 2006/10/12 01:30:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,8 @@ static const char * const mpu_acpi_ids[] = {
  * mpu_acpi_match: autoconf(9) match routine
  */
 static int
-mpu_acpi_match(struct device *parent, struct cfdata *match, void *aux)
+mpu_acpi_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -124,7 +125,7 @@ mpu_acpi_match(struct device *parent, struct cfdata *match, void *aux)
  * mpu_acpi_attach: autoconf(9) attach routine
  */
 static void
-mpu_acpi_attach(struct device *parent, struct device *self, void *aux)
+mpu_acpi_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct mpu_acpi_softc *asc = (struct mpu_acpi_softc *)self;
 	struct mpu_softc *sc = &asc->sc_mpu;

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_inline.h,v 1.27 2005/12/11 12:21:27 christos Exp $ */
+/* $NetBSD: isp_inline.h,v 1.28 2006/10/12 01:31:00 christos Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -620,7 +620,7 @@ isp_get_rio2(struct ispsoftc *isp, isp_rio2_t *r2src, isp_rio2_t *r2dst)
 }
 
 static INLINE void
-isp_put_icb(struct ispsoftc *isp, isp_icb_t *Is, isp_icb_t *Id)
+isp_put_icb(struct ispsoftc *isp __unused, isp_icb_t *Is, isp_icb_t *Id)
 {
 	int i;
 	ISP_SWAP8(Is->icb_version, Is->_reserved0);
@@ -666,7 +666,7 @@ isp_put_icb(struct ispsoftc *isp, isp_icb_t *Is, isp_icb_t *Id)
 }
 
 static INLINE void
-isp_get_pdb(struct ispsoftc *isp, isp_pdb_t *src, isp_pdb_t *dst)
+isp_get_pdb(struct ispsoftc *isp __unused, isp_pdb_t *src, isp_pdb_t *dst)
 {
 	int i;
 	ISP_IOXGET_16(isp, &src->pdb_options, dst->pdb_options);
@@ -724,7 +724,7 @@ isp_get_pdb(struct ispsoftc *isp, isp_pdb_t *src, isp_pdb_t *dst)
  * CT_HDR canonicalization- only needed for SNS responses
  */
 static INLINE void
-isp_get_ct_hdr(struct ispsoftc *isp, ct_hdr_t *src, ct_hdr_t *dst)
+isp_get_ct_hdr(struct ispsoftc *isp __unused, ct_hdr_t *src, ct_hdr_t *dst)
 {
 	ISP_IOXGET_8(isp, &src->ct_revision, dst->ct_revision);
 	ISP_IOXGET_8(isp, &src->ct_portid[0], dst->ct_portid[0]);
@@ -749,7 +749,8 @@ isp_get_ct_hdr(struct ispsoftc *isp, ct_hdr_t *src, ct_hdr_t *dst)
  * isn't always 16 bit words.
  */
 static INLINE void
-isp_put_sns_request(struct ispsoftc *isp, sns_screq_t *src, sns_screq_t *dst)
+isp_put_sns_request(struct ispsoftc *isp __unused, sns_screq_t *src,
+    sns_screq_t *dst)
 {
 	int i, nw = (int) src->snscb_sblen;
 	ISP_IOXPUT_16(isp, src->snscb_rblen, &dst->snscb_rblen);
@@ -764,7 +765,7 @@ isp_put_sns_request(struct ispsoftc *isp, sns_screq_t *src, sns_screq_t *dst)
 }
 
 static INLINE void
-isp_put_gid_ft_request(struct ispsoftc *isp, sns_gid_ft_req_t *src,
+isp_put_gid_ft_request(struct ispsoftc *isp __unused, sns_gid_ft_req_t *src,
     sns_gid_ft_req_t *dst)
 {
 	ISP_IOXPUT_16(isp, src->snscb_rblen, &dst->snscb_rblen);
@@ -782,7 +783,7 @@ isp_put_gid_ft_request(struct ispsoftc *isp, sns_gid_ft_req_t *src,
 }
 
 static INLINE void
-isp_put_gxn_id_request(struct ispsoftc *isp, sns_gxn_id_req_t *src,
+isp_put_gxn_id_request(struct ispsoftc *isp __unused, sns_gxn_id_req_t *src,
     sns_gxn_id_req_t *dst)
 {
 	ISP_IOXPUT_16(isp, src->snscb_rblen, &dst->snscb_rblen);

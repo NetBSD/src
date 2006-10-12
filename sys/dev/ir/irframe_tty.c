@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.38 2006/10/07 14:31:53 peter Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.39 2006/10/12 01:31:16 christos Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.38 2006/10/07 14:31:53 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.39 2006/10/12 01:31:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -202,7 +202,7 @@ static struct linesw irframet_disc = {
 };
 
 void
-irframettyattach(int n)
+irframettyattach(int n __unused)
 {
 
 	(void) ttyldisc_attach(&irframet_disc);
@@ -215,7 +215,7 @@ irframettyattach(int n)
  */
 /* ARGSUSED */
 int
-irframetopen(dev_t dev, struct tty *tp)
+irframetopen(dev_t dev __unused, struct tty *tp)
 {
 	struct lwp *l = curlwp;		/* XXX */
 	struct irframet_softc *sc;
@@ -266,7 +266,7 @@ irframetopen(dev_t dev, struct tty *tp)
  * Mimics part of ttyclose().
  */
 int
-irframetclose(struct tty *tp, int flag)
+irframetclose(struct tty *tp, int flag __unused)
 {
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	int s;
@@ -296,8 +296,8 @@ irframetclose(struct tty *tp, int flag)
  */
 /* ARGSUSED */
 int
-irframetioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
-	     struct lwp *l)
+irframetioctl(struct tty *tp, u_long cmd, caddr_t data, int flag __unused,
+    struct lwp *l __unused)
 {
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	int error;
@@ -471,7 +471,8 @@ irframetinput(int c, struct tty *tp)
 /*** irframe methods ***/
 
 int
-irframet_open(void *h, int flag, int mode, struct lwp *l)
+irframet_open(void *h, int flag __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	struct tty *tp = h;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
@@ -492,7 +493,8 @@ irframet_open(void *h, int flag, int mode, struct lwp *l)
 }
 
 int
-irframet_close(void *h, int flag, int mode, struct lwp *l)
+irframet_close(void *h, int flag __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	struct tty *tp = h;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
@@ -607,7 +609,7 @@ irt_putc(struct tty *tp, int c)
 }
 
 int
-irframet_write(void *h, struct uio *uio, int flag)
+irframet_write(void *h, struct uio *uio, int flag __unused)
 {
 	struct tty *tp = h;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
@@ -692,7 +694,7 @@ filt_irframetrdetach(struct knote *kn)
 }
 
 static int
-filt_irframetread(struct knote *kn, long hint)
+filt_irframetread(struct knote *kn, long hint __unused)
 {
 	struct tty *tp = kn->kn_hook;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
@@ -714,7 +716,7 @@ filt_irframetwdetach(struct knote *kn)
 }
 
 static int
-filt_irframetwrite(struct knote *kn, long hint)
+filt_irframetwrite(struct knote *kn, long hint __unused)
 {
 	struct tty *tp = kn->kn_hook;
 
@@ -880,7 +882,7 @@ irt_setline(struct tty *tp, u_int line)
 }
 
 void
-irt_delay(struct tty *tp, u_int ms)
+irt_delay(struct tty *tp __unused, u_int ms)
 {
 	if (cold)
 		delay(ms * 1000);

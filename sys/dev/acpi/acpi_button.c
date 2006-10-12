@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.20 2006/02/20 12:17:49 kochi Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.21 2006/10/12 01:30:54 christos Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.20 2006/02/20 12:17:49 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.21 2006/10/12 01:30:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,8 @@ static void	acpibut_notify_handler(ACPI_HANDLE, UINT32, void *);
  *	Autoconfiguration `match' routine.
  */
 static int
-acpibut_match(struct device *parent, struct cfdata *match, void *aux)
+acpibut_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -108,7 +109,7 @@ acpibut_match(struct device *parent, struct cfdata *match, void *aux)
  *	Autoconfiguration `attach' routine.
  */
 static void
-acpibut_attach(struct device *parent, struct device *self, void *aux)
+acpibut_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct acpibut_softc *sc = (void *) self;
 	struct acpi_attach_args *aa = aux;
@@ -177,7 +178,8 @@ acpibut_pressed_event(void *arg)
  *	Callback from ACPI interrupt handler to notify us of an event.
  */
 static void
-acpibut_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
+acpibut_notify_handler(ACPI_HANDLE handle __unused, UINT32 notify,
+    void *context)
 {
 	struct acpibut_softc *sc = context;
 	int rv;

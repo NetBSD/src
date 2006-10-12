@@ -1,4 +1,4 @@
-/*	$NetBSD: amhphy.c,v 1.12 2006/03/29 07:05:24 thorpej Exp $	*/
+/*	$NetBSD: amhphy.c,v 1.13 2006/10/12 01:31:25 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amhphy.c,v 1.12 2006/03/29 07:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amhphy.c,v 1.13 2006/10/12 01:31:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,8 @@ static const struct mii_phydesc amhphys[] = {
 };
 
 static int
-amhphymatch(struct device *parent, struct cfdata *match, void *aux)
+amhphymatch(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -91,7 +92,7 @@ amhphymatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-amhphyattach(struct device *parent, struct device *self, void *aux)
+amhphyattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;

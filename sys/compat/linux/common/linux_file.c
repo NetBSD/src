@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.74 2006/09/25 16:16:18 pavel Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.75 2006/10/12 01:30:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.74 2006/09/25 16:16:18 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.75 2006/10/12 01:30:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1095,110 +1095,25 @@ linux_sys_pwrite(l, v, retval)
 	return sys_pwrite(l, &pra, retval);
 }
 
-int
-linux_sys_setxattr(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	return EOPNOTSUPP;
+#define LINUX_NOT_SUPPORTED(fun) \
+int \
+fun(struct lwp *l __unused, void *v __unused, register_t *retval __unused) \
+{ \
+	return EOPNOTSUPP; \
 }
 
-int
-linux_sys_lsetxattr(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	return EOPNOTSUPP;
-}
+LINUX_NOT_SUPPORTED(linux_sys_setxattr)
+LINUX_NOT_SUPPORTED(linux_sys_lsetxattr)
+LINUX_NOT_SUPPORTED(linux_sys_fsetxattr)
 
-int
-linux_sys_fsetxattr(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	return EOPNOTSUPP;
-}
+LINUX_NOT_SUPPORTED(linux_sys_getxattr)
+LINUX_NOT_SUPPORTED(linux_sys_lgetxattr)
+LINUX_NOT_SUPPORTED(linux_sys_fgetxattr)
 
-int
-linux_sys_getxattr(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	return EOPNOTSUPP;
-}
+LINUX_NOT_SUPPORTED(linux_sys_listxattr)
+LINUX_NOT_SUPPORTED(linux_sys_llistxattr)
+LINUX_NOT_SUPPORTED(linux_sys_flistxattr)
 
-int
-linux_sys_lgetxattr(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	return EOPNOTSUPP;
-}
-
-int
-linux_sys_fgetxattr(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	return EOPNOTSUPP;
-}
-
-int
-linux_sys_listxattr(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	return EOPNOTSUPP;
-}
-
-int
-linux_sys_llistxattr(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	return EOPNOTSUPP;
-}
-
-int
-linux_sys_flistxattr(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	return EOPNOTSUPP;
-}
-
-int
-linux_sys_removexattr(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	return EOPNOTSUPP;
-}
-
-int
-linux_sys_lremovexattr(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	return EOPNOTSUPP;
-}
-
-int
-linux_sys_fremovexattr(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	return EOPNOTSUPP;
-}
+LINUX_NOT_SUPPORTED(linux_sys_removexattr)
+LINUX_NOT_SUPPORTED(linux_sys_lremovexattr)
+LINUX_NOT_SUPPORTED(linux_sys_fremovexattr)

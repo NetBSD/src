@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.5 2005/12/11 12:23:56 christos Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.6 2006/10/12 01:31:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.5 2005/12/11 12:23:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.6 2006/10/12 01:31:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -137,7 +137,7 @@ sysmon_task_queue_fini(void)
  *	Create the sysmon task queue execution thread.
  */
 static void
-sysmon_task_queue_create_thread(void *arg)
+sysmon_task_queue_create_thread(void *arg __unused)
 {
 	int error;
 
@@ -157,7 +157,7 @@ sysmon_task_queue_create_thread(void *arg)
  *	have been queued for us.
  */
 static void
-sysmon_task_queue_thread(void *arg)
+sysmon_task_queue_thread(void *arg __unused)
 {
 	struct sysmon_task *st;
 	int s;

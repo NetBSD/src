@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.27 2006/10/04 15:42:12 christos Exp $	*/
+/*	$NetBSD: dpti.c,v 1.28 2006/10/12 01:30:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.27 2006/10/04 15:42:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.28 2006/10/12 01:30:58 christos Exp $");
 
 #include "opt_i2o.h"
 
@@ -156,7 +156,7 @@ CFATTACH_DECL(dpti, sizeof(struct dpti_softc),
     dpti_match, dpti_attach, NULL, NULL);
 
 int
-dpti_match(struct device *parent, struct cfdata *match, void *aux)
+dpti_match(struct device *parent, struct cfdata *match __unused, void *aux)
 {
 	struct iop_attach_args *ia;
 	struct iop_softc *iop;
@@ -174,7 +174,7 @@ dpti_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-dpti_attach(struct device *parent, struct device *self, void *aux)
+dpti_attach(struct device *parent, struct device *self, void *aux __unused)
 {
 	struct iop_softc *iop;
 	struct dpti_softc *sc;
@@ -206,7 +206,8 @@ dpti_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-dptiopen(dev_t dev, int flag, int mode, struct lwp *l)
+dptiopen(dev_t dev, int flag __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 
 	if (device_lookup(&dpti_cd, minor(dev)) == NULL)
@@ -216,7 +217,7 @@ dptiopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused, struct lwp *l)
 {
 	struct iop_softc *iop;
 	struct dpti_softc *sc;
@@ -363,7 +364,7 @@ dpti_ctlrinfo(struct dpti_softc *sc, int size, caddr_t data)
 }
 
 int
-dpti_sysinfo(struct dpti_softc *sc, int size, caddr_t data)
+dpti_sysinfo(struct dpti_softc *sc __unused, int size, caddr_t data)
 {
 	struct dpt_sysinfo info;
 	int rv;

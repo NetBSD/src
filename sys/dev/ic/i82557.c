@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.98 2006/09/24 03:53:08 jmcneill Exp $	*/
+/*	$NetBSD: i82557.c,v 1.99 2006/10/12 01:31:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.98 2006/09/24 03:53:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.99 2006/10/12 01:31:00 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2003,7 +2003,7 @@ fxp_mii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 
 int
-fxp_80c24_mediachange(struct ifnet *ifp)
+fxp_80c24_mediachange(struct ifnet *ifp __unused)
 {
 
 	/* Nothing to do here. */
@@ -2089,7 +2089,7 @@ fxp_mdi_read(struct device *self, int phy, int reg)
 }
 
 void
-fxp_statchg(struct device *self)
+fxp_statchg(struct device *self __unused)
 {
 
 	/* Nothing to do. */

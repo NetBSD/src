@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_ioctl.c,v 1.10 2006/08/30 15:25:58 christos Exp $	*/
+/*	$NetBSD: icp_ioctl.c,v 1.11 2006/10/12 01:31:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.10 2006/08/30 15:25:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.11 2006/10/12 01:31:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ static struct lock icp_ioctl_mutex =
     LOCK_INITIALIZER(PRIBIO|PCATCH, "icplk", 0, 0);
 
 static int
-icpopen(dev_t dev, int flag, int mode, struct lwp *l)
+icpopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
 {
 
 	if (device_lookup(&icp_cd, minor(dev)) == NULL)
@@ -119,7 +119,8 @@ icpopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 static int
-icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
+    struct lwp *l __unused)
 {
 	int error;
 

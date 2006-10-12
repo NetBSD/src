@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.47 2006/08/28 21:33:16 christos Exp $ */
+/* $NetBSD: wsmouse.c,v 1.48 2006/10/12 01:32:06 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.47 2006/08/28 21:33:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.48 2006/10/12 01:32:06 christos Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -224,7 +224,7 @@ struct wssrcops wsmouse_srcops = {
  * Print function (for parent devices).
  */
 int
-wsmousedevprint(void *aux, const char *pnp)
+wsmousedevprint(void *aux __unused, const char *pnp)
 {
 
 	if (pnp)
@@ -233,13 +233,14 @@ wsmousedevprint(void *aux, const char *pnp)
 }
 
 int
-wsmouse_match(struct device *parent, struct cfdata *match, void *aux)
+wsmouse_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux __unused)
 {
 	return (1);
 }
 
 void
-wsmouse_attach(struct device *parent, struct device *self, void *aux)
+wsmouse_attach(struct device *parent __unused, struct device *self, void *aux)
 {
         struct wsmouse_softc *sc = (struct wsmouse_softc *)self;
 	struct wsmousedev_attach_args *ap = aux;
@@ -293,7 +294,7 @@ wsmouse_activate(struct device *self, enum devact act)
  * vnode and return (which will deallocate the softc).
  */
 int
-wsmouse_detach(struct device  *self, int flags)
+wsmouse_detach(struct device  *self, int flags __unused)
 {
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)self;
 	struct wseventvar *evar;
@@ -558,7 +559,7 @@ wsmouse_repeat(void *v)
 }
 
 int
-wsmouseopen(dev_t dev, int flags, int mode, struct lwp *l)
+wsmouseopen(dev_t dev, int flags, int mode __unused, struct lwp *l)
 {
 	struct wsmouse_softc *sc;
 	struct wseventvar *evar;
@@ -599,7 +600,8 @@ wsmouseopen(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 int
-wsmouseclose(dev_t dev, int flags, int mode, struct lwp *l)
+wsmouseclose(dev_t dev, int flags __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	struct wsmouse_softc *sc =
 	    (struct wsmouse_softc *)wsmouse_cd.cd_devs[minor(dev)];

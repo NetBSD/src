@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbexec.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbexec.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -343,9 +343,9 @@ AcpiDbGetOutstandingAllocations (
 static ACPI_STATUS
 AcpiDbExecutionWalk (
     ACPI_HANDLE             ObjHandle,
-    UINT32                  NestingLevel,
-    void                    *Context,
-    void                    **ReturnValue)
+    UINT32                  NestingLevel __unused,
+    void                    *Context __unused,
+    void                    **ReturnValue __unused)
 {
     ACPI_OPERAND_OBJECT     *ObjDesc;
     ACPI_NAMESPACE_NODE     *Node = (ACPI_NAMESPACE_NODE *) ObjHandle;

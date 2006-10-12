@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.20 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: if_url.c,v 1.21 2006/10/12 01:31:59 christos Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.20 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.21 2006/10/12 01:31:59 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -941,7 +941,8 @@ url_send(struct url_softc *sc, struct mbuf *m, int idx)
 }
 
 Static void
-url_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+url_txeof(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct url_chain *c = priv;
 	struct url_softc *sc = c->url_sc;
@@ -1159,7 +1160,7 @@ url_stop_task(struct url_softc *sc)
 
 /* Stop the adapter and free any mbufs allocated to the RX and TX lists. */
 Static void
-url_stop(struct ifnet *ifp, int disable)
+url_stop(struct ifnet *ifp, int disable __unused)
 {
 	struct url_softc *sc = ifp->if_softc;
 	usbd_status err;
@@ -1514,7 +1515,7 @@ url_int_miibus_writereg(device_ptr_t dev, int phy, int reg, int data)
 }
 
 Static void
-url_miibus_statchg(device_ptr_t dev)
+url_miibus_statchg(device_ptr_t dev __unused)
 {
 #ifdef URL_DEBUG
 	struct url_softc *sc;

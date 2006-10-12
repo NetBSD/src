@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.44 2006/08/28 21:33:16 christos Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.45 2006/10/12 01:32:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.44 2006/08/28 21:33:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.45 2006/10/12 01:32:06 christos Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -140,7 +140,7 @@ struct wssrcops wsmux_srcops = {
 
 /* From upper level */
 void
-wsmuxattach(int n)
+wsmuxattach(int n __unused)
 {
 }
 
@@ -191,7 +191,7 @@ wsmux_getmux(int n)
  * open() of the pseudo device from device table.
  */
 int
-wsmuxopen(dev_t dev, int flags, int mode, struct lwp *l)
+wsmuxopen(dev_t dev, int flags, int mode __unused, struct lwp *l)
 {
 	struct wsmux_softc *sc;
 	struct wseventvar *evar;
@@ -299,7 +299,8 @@ wsmux_do_open(struct wsmux_softc *sc, struct wseventvar *evar)
  * close() of the pseudo device from device table.
  */
 int
-wsmuxclose(dev_t dev, int flags, int mode, struct lwp *l)
+wsmuxclose(dev_t dev, int flags __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	int minr = minor(dev);
 	struct wsmux_softc *sc = wsmuxdevs[WSMUXDEV(minr)];

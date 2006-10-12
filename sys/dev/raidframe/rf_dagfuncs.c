@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.26 2006/01/09 01:33:27 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.27 2006/10/12 01:31:50 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.26 2006/01/09 01:33:27 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.27 2006/10/12 01:31:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -83,7 +83,7 @@ int     (*rf_RecoveryXorUndoFunc) (RF_DagNode_t *);
  * main (only) configuration routine for this module
  ****************************************************************************/
 int
-rf_ConfigureDAGFuncs(RF_ShutdownList_t **listp)
+rf_ConfigureDAGFuncs(RF_ShutdownList_t **listp __unused)
 {
 	RF_ASSERT(((sizeof(long) == 8) && RF_LONGSHIFT == 3) ||
 		  ((sizeof(long) == 4) && RF_LONGSHIFT == 2));
@@ -111,7 +111,7 @@ rf_TerminateFunc(RF_DagNode_t *node)
 }
 
 int
-rf_TerminateUndoFunc(RF_DagNode_t *node)
+rf_TerminateUndoFunc(RF_DagNode_t *node __unused)
 {
 	return (0);
 }
@@ -153,7 +153,7 @@ rf_DiskReadMirrorPartitionFunc(RF_DagNode_t *node)
 #endif
 
 int
-rf_DiskReadMirrorUndoFunc(RF_DagNode_t *node)
+rf_DiskReadMirrorUndoFunc(RF_DagNode_t *node __unused)
 {
 	return (0);
 }
@@ -234,13 +234,13 @@ rf_ParityLogOverwriteFunc(RF_DagNode_t *node)
 }
 
 int
-rf_ParityLogUpdateUndoFunc(RF_DagNode_t *node)
+rf_ParityLogUpdateUndoFunc(RF_DagNode_t *node __unused)
 {
 	return (0);
 }
 
 int
-rf_ParityLogOverwriteUndoFunc(RF_DagNode_t *node)
+rf_ParityLogOverwriteUndoFunc(RF_DagNode_t *node __unused)
 {
 	return (0);
 }

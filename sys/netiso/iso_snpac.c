@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.38 2006/08/30 19:20:48 christos Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.39 2006/10/12 01:32:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.38 2006/08/30 19:20:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.39 2006/10/12 01:32:46 christos Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -530,7 +530,7 @@ snpac_fixdstandmask(int nsellength)
  */
 int
 snpac_ioctl(
-	struct socket *so,
+	struct socket *so __unused,
 	u_long cmd,		/* ioctl to process */
 	caddr_t data,		/* data for the cmd */
 	struct lwp *l)
@@ -635,7 +635,7 @@ snpac_logdefis(struct rtentry *sc)
  */
 /*ARGSUSED*/
 void
-snpac_age(void *v)
+snpac_age(void *v __unused)
 {
 	struct llinfo_llc *lc, *nlc;
 	struct rtentry *rt;
@@ -762,8 +762,8 @@ snpac_rtrequest(int req, struct iso_addr *host, struct iso_addr *gateway,
  *			the existing route before adding a new one.
  */
 void
-snpac_addrt(struct ifnet *ifp, struct iso_addr *host, struct iso_addr *gateway,
-	struct iso_addr *netmask)
+snpac_addrt(struct ifnet *ifp __unused, struct iso_addr *host,
+    struct iso_addr *gateway, struct iso_addr *netmask)
 {
 	struct iso_addr *r;
 

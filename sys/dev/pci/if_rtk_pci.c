@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.26 2006/09/24 03:53:09 jmcneill Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.27 2006/10/12 01:31:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.26 2006/09/24 03:53:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.27 2006/10/12 01:31:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,8 @@ rtk_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-rtk_pci_match(struct device *parent, struct cfdata *match, void *aux)
+rtk_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -158,7 +159,7 @@ rtk_pci_match(struct device *parent, struct cfdata *match, void *aux)
  * setup and ethernet/BPF attach.
  */
 static void
-rtk_pci_attach(struct device *parent, struct device *self, void *aux)
+rtk_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct rtk_pci_softc *psc = (struct rtk_pci_softc *)self;
 	struct rtk_softc *sc = &psc->sc_rtk;

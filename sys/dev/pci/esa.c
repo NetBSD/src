@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.38 2006/09/25 23:19:39 jmcneill Exp $ */
+/* $NetBSD: esa.c,v 1.39 2006/10/12 01:31:28 christos Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.38 2006/09/25 23:19:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.39 2006/10/12 01:31:28 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -235,7 +235,7 @@ CFATTACH_DECL(esa, sizeof(struct esa_softc), esa_match, esa_attach,
  */
 
 static int
-esa_query_encoding(void *hdl, struct audio_encoding *ae)
+esa_query_encoding(void *hdl __unused, struct audio_encoding *ae)
 {
 
 	if (ae->index < 0 || ae->index >= ESA_NENCODINGS)
@@ -246,9 +246,9 @@ esa_query_encoding(void *hdl, struct audio_encoding *ae)
 }
 
 static int
-esa_set_params(void *hdl, int setmode, int usemode,
-	       audio_params_t *play, audio_params_t *rec,
-	       stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+esa_set_params(void *hdl, int setmode, int usemode __unused,
+    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	struct esa_voice *vc;
 	struct esa_channel *ch;
@@ -363,7 +363,8 @@ esa_commit_settings(void *hdl)
 };
 
 static int
-esa_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
+esa_round_blocksize(void *hdl __unused, int bs, int mode __unused,
+    const audio_params_t *param __unused)
 {
 
 	return bs & ~0x20;	/* Be conservative; align to 32 bytes */
@@ -455,8 +456,8 @@ esa_halt_input(void *hdl)
 }
 
 static void *
-esa_malloc(void *hdl, int direction, size_t size, struct malloc_type *type,
-    int flags)
+esa_malloc(void *hdl, int direction __unused, size_t size,
+    struct malloc_type *type, int flags)
 {
 	struct esa_voice *vc;
 	struct esa_softc *sc;
@@ -501,7 +502,7 @@ esa_free(void *hdl, void *addr, struct malloc_type *type)
 }
 
 static int
-esa_getdev(void *hdl, struct audio_device *ret)
+esa_getdev(void *hdl __unused, struct audio_device *ret)
 {
 
 	*ret = esa_device;
@@ -542,14 +543,14 @@ esa_query_devinfo(void *hdl, mixer_devinfo_t *di)
 }
 
 static size_t
-esa_round_buffersize(void *hdl, int direction, size_t bufsize)
+esa_round_buffersize(void *hdl __unused, int direction __unused, size_t bufsize)
 {
 
 	return bufsize;
 }
 
 static int
-esa_get_props(void *hdl)
+esa_get_props(void *hdl __unused)
 {
 
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
@@ -557,8 +558,7 @@ esa_get_props(void *hdl)
 
 static int
 esa_trigger_output(void *hdl, void *start, void *end, int blksize,
-		   void (*intr)(void *), void *intrarg,
-		   const audio_params_t *param)
+    void (*intr)(void *), void *intrarg, const audio_params_t *param __unused)
 {
 	struct esa_voice *vc;
 	struct esa_softc *sc;
@@ -692,8 +692,7 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 
 static int
 esa_trigger_input(void *hdl, void *start, void *end, int blksize,
-		  void (*intr)(void *), void *intrarg,
-		  const audio_params_t *param)
+    void (*intr)(void *), void *intrarg, const audio_params_t *param __unused)
 {
 	struct esa_voice *vc;
 	struct esa_softc *sc;
@@ -972,7 +971,7 @@ esa_freemem(struct esa_softc *sc, struct esa_dma *p)
  */
 
 static int
-esa_match(struct device *dev, struct cfdata *match, void *aux)
+esa_match(struct device *dev __unused, struct cfdata *match __unused, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -991,7 +990,7 @@ esa_match(struct device *dev, struct cfdata *match, void *aux)
 }
 
 static void
-esa_attach(struct device *parent, struct device *self, void *aux)
+esa_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct esa_softc *sc;
 	struct pci_attach_args *pa;
@@ -1270,7 +1269,7 @@ esa_write_codec(void *aux, uint8_t reg, uint16_t data)
 }
 
 static int
-esa_reset_codec(void *aux)
+esa_reset_codec(void *aux __unused)
 {
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.43 2006/09/24 03:53:09 jmcneill Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.44 2006/10/12 01:31:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.43 2006/09/24 03:53:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.44 2006/10/12 01:31:28 christos Exp $");
 
 #include "midi.h"
 
@@ -218,7 +218,8 @@ static struct audio_device cs4280_device = {
 
 
 static int
-cs4280_match(struct device *parent, struct cfdata *match, void *aux)
+cs4280_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -235,7 +236,7 @@ cs4280_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-cs4280_attach(struct device *parent, struct device *self, void *aux)
+cs4280_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct cs428x_softc *sc;
 	struct pci_attach_args *pa;
@@ -547,7 +548,7 @@ cs4280_intr(void *p)
 }
 
 static int
-cs4280_query_encoding(void *addr, struct audio_encoding *fp)
+cs4280_query_encoding(void *addr __unused, struct audio_encoding *fp)
 {
 	switch (fp->index) {
 	case 0:
@@ -605,9 +606,9 @@ cs4280_query_encoding(void *addr, struct audio_encoding *fp)
 }
 
 static int
-cs4280_set_params(void *addr, int setmode, int usemode,
-		  audio_params_t *play, audio_params_t *rec,
-		  stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+cs4280_set_params(void *addr, int setmode, int usemode __unused,
+    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	audio_params_t hw;
 	struct cs428x_softc *sc;
@@ -739,7 +740,7 @@ cs4280_halt_input(void *addr)
 }
 
 static int
-cs4280_getdev(void *addr, struct audio_device *retp)
+cs4280_getdev(void *addr __unused, struct audio_device *retp)
 {
 
 	*retp = cs4280_device;
@@ -1592,7 +1593,7 @@ cs4280_clear_fifos(struct cs428x_softc *sc)
 
 #if NMIDI > 0
 static int
-cs4280_midi_open(void *addr, int flags, void (*iintr)(void *, int),
+cs4280_midi_open(void *addr, int flags __unused, void (*iintr)(void *, int),
 		 void (*ointr)(void *), void *arg)
 {
 	struct cs428x_softc *sc;
@@ -1664,7 +1665,7 @@ cs4280_midi_output(void *addr, int d)
 }
 
 static void
-cs4280_midi_getinfo(void *addr, struct midi_info *mi)
+cs4280_midi_getinfo(void *addr __unused, struct midi_info *mi)
 {
 
 	mi->name = "CS4280 MIDI UART";

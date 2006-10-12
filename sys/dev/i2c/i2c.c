@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.8 2006/06/26 18:19:40 drochner Exp $	*/
+/*	$NetBSD: i2c.c,v 1.9 2006/10/12 01:30:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@ struct iic_softc {
 };
 
 int
-iicbus_print(void *aux, const char *pnp)
+iicbus_print(void *aux __unused, const char *pnp)
 {
 
 	if (pnp != NULL)
@@ -62,7 +62,7 @@ iicbus_print(void *aux, const char *pnp)
 }
 
 static int
-iic_print(void *aux, const char *pnp)
+iic_print(void *aux, const char *pnp __unused)
 {
 	struct i2c_attach_args *ia = aux;
 
@@ -74,7 +74,7 @@ iic_print(void *aux, const char *pnp)
 
 static int
 iic_search(struct device *parent, struct cfdata *cf,
-	   const int *ldesc, void *aux)
+    const int *ldesc __unused, void *aux __unused)
 {
 	struct iic_softc *sc = (void *) parent;
 	struct i2c_attach_args ia;
@@ -91,14 +91,15 @@ iic_search(struct device *parent, struct cfdata *cf,
 }
 
 static int
-iic_match(struct device *parent, struct cfdata *cf, void *aux)
+iic_match(struct device *parent __unused, struct cfdata *cf __unused,
+    void *aux __unused)
 {
 
 	return (1);
 }
 
 static void
-iic_attach(struct device *parent, struct device *self, void *aux)
+iic_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct iic_softc *sc = device_private(self);
 	struct i2cbus_attach_args *iba = aux;

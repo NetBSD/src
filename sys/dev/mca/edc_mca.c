@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.33 2006/03/29 06:58:14 thorpej Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.34 2006/10/12 01:31:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.33 2006/03/29 06:58:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.34 2006/10/12 01:31:25 christos Exp $");
 
 #include "rnd.h"
 
@@ -135,10 +135,8 @@ static void	edcworker(void *);
 static void	edc_spawn_worker(void *);
 
 int
-edc_mca_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+edc_mca_probe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct mca_attach_args *ma = aux;
 
@@ -152,9 +150,7 @@ edc_mca_probe(parent, match, aux)
 }
 
 void
-edc_mca_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+edc_mca_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct edc_mca_softc *sc = device_private(self);
 	struct mca_attach_args *ma = aux;
@@ -349,16 +345,13 @@ edc_mca_attach(parent, self, aux)
 }
 
 void
-edc_add_disk(sc, ed)
-	struct edc_mca_softc *sc;
-	struct ed_softc *ed;
+edc_add_disk(struct edc_mca_softc *sc, struct ed_softc *ed)
 {
 	sc->sc_ed[ed->sc_devno] = ed;
 }
 
 static int
-edc_intr(arg)
-	void *arg;
+edc_intr(void *arg)
 {
 	struct edc_mca_softc *sc = arg;
 	u_int8_t isr, intr_id;
@@ -504,9 +497,7 @@ edc_intr(arg)
  * written in DASD Storage Interface Specification MC (Rev 2.2).
  */
 static int
-edc_do_attn(sc, attn_type, devno, intr_id)
-	struct edc_mca_softc *sc;
-	int attn_type, devno, intr_id;
+edc_do_attn(struct edc_mca_softc *sc, int attn_type, int devno, int intr_id)
 {
 	int tries;
 
@@ -557,9 +548,7 @@ edc_do_attn(sc, attn_type, devno, intr_id)
  * interval.
  */
 static void
-edc_cmd_wait(sc, secs, poll)
-	struct edc_mca_softc *sc;
-	int secs, poll;
+edc_cmd_wait(struct edc_mca_softc *sc, int secs, int poll)
 {
 	int val;
 
@@ -587,12 +576,8 @@ edc_cmd_wait(sc, secs, poll)
  * Command controller to execute specified command on a device.
  */
 int
-edc_run_cmd(sc, cmd, devno, cmd_args, cmd_len, poll)
-	struct edc_mca_softc *sc;
-	int cmd;
-	int devno;
-	u_int16_t cmd_args[];
-	int cmd_len, poll;
+edc_run_cmd(struct edc_mca_softc *sc, int cmd, int devno,
+    u_int16_t cmd_args[], int cmd_len, int poll)
 {
 	int i, error, tries;
 	u_int16_t cmd0;
@@ -753,10 +738,8 @@ static const char * const edc_dev_errors[] = {
 #endif /* EDC_DEBUG */
 
 static void
-edc_dump_status_block(sc, status_block, intr_id)
-	struct edc_mca_softc *sc;
-	u_int16_t *status_block;
-	int intr_id;
+edc_dump_status_block(struct edc_mca_softc *sc, u_int16_t *status_block,
+    int intr_id)
 {
 #ifdef EDC_DEBUG
 	printf("%s: Command: %s, Status: %s (intr %d)\n",
@@ -820,8 +803,7 @@ edc_dump_status_block(sc, status_block, intr_id)
 }
 
 static void
-edc_spawn_worker(arg)
-	void *arg;
+edc_spawn_worker(void *arg)
 {
 	struct edc_mca_softc *sc = (struct edc_mca_softc *) arg;
 	int error;
@@ -840,8 +822,7 @@ edc_spawn_worker(arg)
  * Main worker thread function.
  */
 void
-edcworker(arg)
-	void *arg;
+edcworker(void *arg)
 {
 	struct edc_mca_softc *sc = (struct edc_mca_softc *) arg;
 	struct ed_softc *ed;

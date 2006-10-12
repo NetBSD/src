@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.18 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: xirc.c,v 1.19 2006/10/12 01:31:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.18 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.19 2006/10/12 01:31:50 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -152,10 +152,8 @@ void	xirc_disable(struct xirc_softc *, int, int);
 int	xirc_intr(void *);
 
 int
-xirc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+xirc_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -589,10 +587,8 @@ int	com_xirc_enable(struct com_softc *);
 void	com_xirc_disable(struct com_softc *);
 
 int
-com_xirc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+com_xirc_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	extern struct cfdriver com_cd;
 	const char *name = aux;
@@ -604,9 +600,7 @@ com_xirc_match(parent, match, aux)
 }
 
 void
-com_xirc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_xirc_attach(struct device *parent, struct device *self, void *aux __unused)
 {
 	struct com_softc *sc = (void *)self;
 	struct xirc_softc *msc = (void *)parent;
@@ -669,10 +663,8 @@ void	xi_xirc_disable(struct xi_softc *);
 int	xi_xirc_lan_nid_ciscallback(struct pcmcia_tuple *, void *);
 
 int
-xi_xirc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+xi_xirc_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	extern struct cfdriver xi_cd;
 	const char *name = aux;
@@ -684,9 +676,7 @@ xi_xirc_match(parent, match, aux)
 }
 
 void
-xi_xirc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+xi_xirc_attach(struct device *parent, struct device *self, void *aux __unused)
 {
 	struct xi_softc *sc = (void *)self;
 	struct xirc_softc *msc = (void *)parent;

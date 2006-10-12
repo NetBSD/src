@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.15 2006/04/10 22:32:56 bouyer Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.16 2006/10/12 01:30:58 christos Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.15 2006/04/10 22:32:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.16 2006/10/12 01:30:58 christos Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic7xxx_cam.h>
@@ -111,7 +111,7 @@ ahd_attach(struct ahd_softc *ahd)
 
 static int
 ahd_ioctl(struct scsipi_channel *channel, u_long cmd,
-	  caddr_t addr, int flag, struct proc *p)
+	  caddr_t addr __unused, int flag __unused, struct proc *p __unused)
 {
         struct ahd_softc *ahd = (void *)channel->chan_adapter->adapt_dev;
         int s, ret = ENOTTY;
@@ -732,7 +732,7 @@ ahd_timeout(void *arg)
 }
 
 int
-ahd_platform_alloc(struct ahd_softc *ahd, void *platform_arg)
+ahd_platform_alloc(struct ahd_softc *ahd, void *platform_arg __unused)
 {
 	ahd->platform_data = malloc(sizeof(struct ahd_platform_data), M_DEVBUF,
 				    M_NOWAIT /*| M_ZERO*/);
@@ -751,7 +751,7 @@ ahd_platform_free(struct ahd_softc *ahd)
 }
 
 int
-ahd_softc_comp(struct ahd_softc *lahd, struct ahd_softc *rahd)
+ahd_softc_comp(struct ahd_softc *lahd __unused, struct ahd_softc *rahd __unused)
 {
 	/* We don't sort softcs under NetBSD so report equal always */
 	return (0);
@@ -791,7 +791,7 @@ ahd_platform_set_tags(struct ahd_softc *ahd,
 
 void
 ahd_send_async(struct ahd_softc *ahc, char channel, u_int target, u_int lun,
-	       ac_code code, void *opt_arg)
+	       ac_code code, void *opt_arg __unused)
 {
 	struct ahd_tmode_tstate *tstate;
 	struct ahd_initiator_tinfo *tinfo;

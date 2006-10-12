@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_card.c,v 1.3 2003/03/11 23:11:21 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_card.c,v 1.21 2005/12/06 23:43:57 wiz Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.22 2006/10/12 01:31:49 christos Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.21 2005/12/06 23:43:57 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.22 2006/10/12 01:31:49 christos Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -376,7 +376,8 @@ struct bt848_card_sig bt848_card_signature[1]= {
  * implemented.
  */
 int
-writeEEProm(bktr_ptr_t bktr, int offset, int count, u_char *data)
+writeEEProm(bktr_ptr_t bktr __unused, int offset __unused, int count __unused,
+    u_char *data __unused)
 {
         return(-1);
 }
@@ -428,7 +429,7 @@ readEEProm(bktr_ptr_t bktr, int offset, int count, u_char *data)
  * XXX FIXME: use offset & count args
  */
 int
-signCard(bktr_ptr_t bktr, int offset, int count, u_char* sig)
+signCard(bktr_ptr_t bktr, int offset __unused, int count, u_char* sig)
 {
 	int	x;
 
@@ -566,7 +567,7 @@ static int locate_eeprom_address(bktr_ptr_t bktr) {
 #define MODEL_TERRATVALUE_1134	0x1134
 
 void
-probeCard(bktr_ptr_t bktr, int verbose, int unit)
+probeCard(bktr_ptr_t bktr, int verbose, int unit __unused)
 {
 	int		card, i,j, card_found;
 	int		status;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.77 2006/09/15 15:51:13 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.78 2006/10/12 01:32:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.77 2006/09/15 15:51:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.78 2006/10/12 01:32:53 christos Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -217,7 +217,7 @@ uvmpd_tune(void)
  */
 
 void
-uvm_pageout(void *arg)
+uvm_pageout(void *arg __unused)
 {
 	int bufcnt, npages = 0;
 	int extrapages = 0;
@@ -320,7 +320,7 @@ uvm_pageout(void *arg)
  */
 
 void
-uvm_aiodone_daemon(void *arg)
+uvm_aiodone_daemon(void *arg __unused)
 {
 	int s, free;
 	struct buf *bp, *nbp;

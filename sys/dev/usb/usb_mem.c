@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.29 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.30 2006/10/12 01:32:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.29 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.30 2006/10/12 01:32:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,7 @@ usb_allocmem(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p)
 }
 
 void
-usb_freemem(usbd_bus_handle bus, usb_dma_t *p)
+usb_freemem(usbd_bus_handle bus __unused, usb_dma_t *p)
 {
 	struct usb_frag_dma *f;
 	int s;

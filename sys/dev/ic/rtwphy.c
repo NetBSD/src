@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphy.c,v 1.10 2006/08/31 19:24:38 dyoung Exp $ */
+/* $NetBSD: rtwphy.c,v 1.11 2006/10/12 01:31:01 christos Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.10 2006/08/31 19:24:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.11 2006/10/12 01:31:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -531,7 +531,7 @@ err:
 
 static int
 rtw_grf5101_init(struct rtw_rf *rf, u_int freq, uint8_t opaque_txpower,
-    enum rtw_pwrstate power)
+    enum rtw_pwrstate power __unused)
 {
 	int rc;
 	struct rtw_grf5101 *gr = (struct rtw_grf5101 *)rf;
@@ -586,7 +586,8 @@ rtw_grf5101_destroy(struct rtw_rf *rf)
 }
 
 struct rtw_rf *
-rtw_grf5101_create(struct rtw_regs *regs, rtw_rf_write_t rf_write, int digphy)
+rtw_grf5101_create(struct rtw_regs *regs, rtw_rf_write_t rf_write,
+    int digphy __unused)
 {
 	struct rtw_grf5101 *gr;
 	struct rtw_rfbus *bus;
@@ -650,7 +651,7 @@ rtw_max2820_destroy(struct rtw_rf *rf)
 }
 
 static int
-rtw_max2820_init(struct rtw_rf *rf, u_int freq, uint8_t opaque_txpower,
+rtw_max2820_init(struct rtw_rf *rf, u_int freq, uint8_t opaque_txpower __unused,
     enum rtw_pwrstate power)
 {
 	struct rtw_max2820 *mx = (struct rtw_max2820 *)rf;
@@ -693,7 +694,7 @@ rtw_max2820_init(struct rtw_rf *rf, u_int freq, uint8_t opaque_txpower,
 }
 
 static int
-rtw_max2820_txpower(struct rtw_rf *rf, uint8_t opaque_txpower)
+rtw_max2820_txpower(struct rtw_rf *rf __unused, uint8_t opaque_txpower __unused)
 {
 	/* TBD */
 	return 0;

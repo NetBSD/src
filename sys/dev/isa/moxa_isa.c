@@ -1,4 +1,4 @@
-/*	$NetBSD: moxa_isa.c,v 1.12 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: moxa_isa.c,v 1.13 2006/10/12 01:31:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.12 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.13 2006/10/12 01:31:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,10 +72,8 @@ CFATTACH_DECL(moxa_isa, sizeof(struct moxa_isa_softc),
     moxa_isaprobe, moxa_isaattach, NULL, NULL);
 
 int
-moxa_isaprobe(parent, self, aux)
-	struct device *parent;
-	struct cfdata *self;
-	void *aux;
+moxa_isaprobe(struct device *parent __unused, struct cfdata *self __unused,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -144,9 +142,7 @@ out:
 }
 
 void
-moxa_isaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+moxa_isaattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct moxa_isa_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

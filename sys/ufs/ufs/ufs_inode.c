@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.59 2006/05/14 21:33:39 elad Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.60 2006/10/12 01:32:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.59 2006/05/14 21:33:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.60 2006/10/12 01:32:52 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -149,7 +149,7 @@ out:
  * Reclaim an inode so that it can be used for other purposes.
  */
 int
-ufs_reclaim(struct vnode *vp, struct lwp *l)
+ufs_reclaim(struct vnode *vp, struct lwp *l __unused)
 {
 	struct inode *ip = VTOI(vp);
 	struct mount *mp;

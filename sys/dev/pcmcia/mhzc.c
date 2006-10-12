@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.37 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.38 2006/10/12 01:31:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.37 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.38 2006/10/12 01:31:50 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -172,10 +172,8 @@ void	mhzc_disable(struct mhzc_softc *, int);
 int	mhzc_intr(void *);
 
 int
-mhzc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mhzc_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -186,9 +184,7 @@ mhzc_match(parent, match, aux)
 }
 
 void
-mhzc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mhzc_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct mhzc_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
@@ -667,10 +663,8 @@ int	com_mhzc_enable(struct com_softc *);
 void	com_mhzc_disable(struct com_softc *);
 
 int
-com_mhzc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+com_mhzc_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	extern struct cfdriver com_cd;
 	const char *name = aux;
@@ -683,9 +677,7 @@ com_mhzc_match(parent, match, aux)
 }
 
 void
-com_mhzc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_mhzc_attach(struct device *parent, struct device *self, void *aux __unused)
 {
 	struct com_softc *sc = (void *)self;
 	struct mhzc_softc *msc = (void *)parent;
@@ -745,10 +737,8 @@ int	sm_mhzc_enable(struct smc91cxx_softc *);
 void	sm_mhzc_disable(struct smc91cxx_softc *);
 
 int
-sm_mhzc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+sm_mhzc_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	extern struct cfdriver sm_cd;
 	const char *name = aux;
@@ -761,9 +751,7 @@ sm_mhzc_match(parent, match, aux)
 }
 
 void
-sm_mhzc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sm_mhzc_attach(struct device *parent, struct device *self, void *aux __unused)
 {
 	struct smc91cxx_softc *sc = (void *)self;
 	struct mhzc_softc *msc = (void *)parent;

@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.13 2006/09/24 06:39:28 kardel Exp $ */
+/* $NetBSD: kern_tc.c,v 1.14 2006/10/12 01:32:17 christos Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.13 2006/09/24 06:39:28 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.14 2006/10/12 01:32:17 christos Exp $");
 
 #include "opt_ntp.h"
 
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.13 2006/09/24 06:39:28 kardel Exp $");
  */
 
 static u_int
-dummy_get_timecount(struct timecounter *tc)
+dummy_get_timecount(struct timecounter *tc __unused)
 {
 	static u_int now;
 

@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exdump.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exdump.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
 
 #define __EXDUMP_C__
 
@@ -898,7 +898,7 @@ AcpiExDumpOperand (
 void
 AcpiExDumpOperands (
     ACPI_OPERAND_OBJECT     **Operands,
-    ACPI_INTERPRETER_MODE   InterpreterMode,
+    ACPI_INTERPRETER_MODE   InterpreterMode __unused,
     const char              *Ident,
     UINT32                  NumLevels,
     const char              *Note,

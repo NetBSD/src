@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_fms.c,v 1.11 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: mpu_fms.c,v 1.12 2006/10/12 01:31:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_fms.c,v 1.11 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_fms.c,v 1.12 2006/10/12 01:31:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_fms.c,v 1.11 2005/12/11 12:22:50 christos Exp $"
 #include <dev/pci/fmsvar.h>
 
 static int
-mpu_fms_match(struct device *parent, struct cfdata *match, void *aux)
+mpu_fms_match(struct device *parent, struct cfdata *match __unused, void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 	struct fms_softc *ssc = (struct fms_softc *)parent;
@@ -77,7 +77,7 @@ mpu_fms_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-mpu_fms_attach(struct device *parent, struct device *self, void *aux)
+mpu_fms_attach(struct device *parent, struct device *self, void *aux __unused)
 {
 	struct fms_softc *ssc = (struct fms_softc *)parent;
 	struct mpu_softc *sc = (struct mpu_softc *)self;

@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.11 2006/06/26 17:55:49 xtraeme Exp $	*/
+/*	$NetBSD: artsata.c,v 1.12 2006/10/12 01:31:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_pciide.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.11 2006/06/26 17:55:49 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.12 2006/10/12 01:31:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,8 @@ CFATTACH_DECL(artsata, sizeof(struct pciide_softc),
     artsata_match, artsata_attach, NULL, NULL);
 
 static int
-artsata_match(struct device *parent, struct cfdata *match, void *aux)
+artsata_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -112,7 +113,7 @@ artsata_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-artsata_attach(struct device *parent, struct device *self, void *aux)
+artsata_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
@@ -219,7 +220,8 @@ artisea_drv_probe(struct ata_channel *chp)
 
 static void
 artisea_mapregs(struct pci_attach_args *pa, struct pciide_channel *cp,
-	bus_size_t *cmdsizep, bus_size_t *ctlsizep, int (*pci_intr)(void *))
+    bus_size_t *cmdsizep __unused, bus_size_t *ctlsizep __unused,
+    int (*pci_intr)(void *))
 {
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(&cp->ata_channel);
 	struct ata_channel *wdc_cp = &cp->ata_channel;
@@ -295,7 +297,8 @@ bad:
 }
 
 static int
-artisea_chansetup(struct pciide_softc *sc, int channel, pcireg_t interface)
+artisea_chansetup(struct pciide_softc *sc, int channel,
+    pcireg_t interface __unused)
 {
 	struct pciide_channel *cp = &sc->pciide_channels[channel];
 	sc->wdc_chanarray[channel] = &cp->ata_channel;

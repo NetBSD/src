@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.106 2006/10/10 10:02:34 elad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.107 2006/10/12 01:32:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.106 2006/10/10 10:02:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.107 2006/10/12 01:32:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ sys_getpriority(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_setpriority(struct lwp *l, void *v, register_t *retval)
+sys_setpriority(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_setpriority_args /* {
 		syscallarg(int) which;
@@ -219,7 +219,7 @@ donice(struct lwp *l, struct proc *chgp, int n)
 
 /* ARGSUSED */
 int
-sys_setrlimit(struct lwp *l, void *v, register_t *retval)
+sys_setrlimit(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_setrlimit_args /* {
 		syscallarg(int) which;
@@ -352,7 +352,7 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 
 /* ARGSUSED */
 int
-sys_getrlimit(struct lwp *l, void *v, register_t *retval)
+sys_getrlimit(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_getrlimit_args /* {
 		syscallarg(int) which;
@@ -434,7 +434,7 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 
 /* ARGSUSED */
 int
-sys_getrusage(struct lwp *l, void *v, register_t *retval)
+sys_getrusage(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_getrusage_args /* {
 		syscallarg(int) who;

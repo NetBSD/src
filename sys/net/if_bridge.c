@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.41 2006/10/05 17:35:19 tls Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.42 2006/10/12 01:32:27 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.41 2006/10/05 17:35:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.42 2006/10/12 01:32:27 christos Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -341,7 +341,7 @@ static struct if_clone bridge_cloner =
  *	Pseudo-device attach routine.
  */
 void
-bridgeattach(int n)
+bridgeattach(int n __unused)
 {
 
 	pool_init(&bridge_rtnode_pool, sizeof(struct bridge_rtnode),
@@ -1116,7 +1116,7 @@ bridge_init(struct ifnet *ifp)
  *	Stop the bridge interface.
  */
 static void
-bridge_stop(struct ifnet *ifp, int disable)
+bridge_stop(struct ifnet *ifp, int disable __unused)
 {
 	struct bridge_softc *sc = ifp->if_softc;
 
@@ -1214,8 +1214,8 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
  *	enqueue or free the mbuf before returning.
  */
 int
-bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
-    struct rtentry *rt)
+bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa __unused,
+    struct rtentry *rt __unused)
 {
 	struct ether_header *eh;
 	struct ifnet *dst_if;
@@ -2000,7 +2000,7 @@ extern struct pfil_head inet6_pfil_hook;                /* XXX */
  * question.)
  */
 static int
-bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+bridge_ipf(void *arg __unused, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
 	int snap, error;
 	struct ether_header *eh1, eh2;

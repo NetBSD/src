@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.c,v 1.5 2006/03/17 23:29:11 christos Exp $ */
+/*	$NetBSD: deflate.c,v 1.6 2006/10/12 01:32:47 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.c,v 1.3 2001/08/20 02:45:22 hugh Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.5 2006/03/17 23:29:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.6 2006/10/12 01:32:47 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -55,7 +55,7 @@ int window_deflate = -12;
  */
 
 static void *
-ocf_zalloc(void *nil, u_int type, u_int size)
+ocf_zalloc(void *nil __unused, u_int type, u_int size)
 {
 	void *ptr;
 
@@ -64,7 +64,7 @@ ocf_zalloc(void *nil, u_int type, u_int size)
 }
 
 static void
-ocf_zfree(void *nil, void *ptr)
+ocf_zfree(void *nil __unused, void *ptr)
 {
 	free(ptr, M_CRYPTO_DATA);
 }

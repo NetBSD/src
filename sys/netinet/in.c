@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.111 2006/10/05 17:35:19 tls Exp $	*/
+/*	$NetBSD: in.c,v 1.112 2006/10/12 01:32:37 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.111 2006/10/05 17:35:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.112 2006/10/12 01:32:37 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -784,7 +784,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
  * Delete any existing route for an interface.
  */
 void
-in_ifscrub(struct ifnet *ifp, struct in_ifaddr *ia)
+in_ifscrub(struct ifnet *ifp __unused, struct in_ifaddr *ia)
 {
 
 	in_scrubprefix(ia);

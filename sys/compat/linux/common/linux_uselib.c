@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.16 2006/07/23 22:06:09 ad Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.17 2006/10/12 01:30:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.16 2006/07/23 22:06:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.17 2006/10/12 01:30:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,10 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.16 2006/07/23 22:06:09 ad Exp $")
  */
 
 int
-linux_sys_uselib(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_uselib(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct linux_sys_uselib_args /* {
 		syscallarg(const char *) path;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.47 2006/03/29 17:18:55 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.48 2006/10/12 01:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.47 2006/03/29 17:18:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.48 2006/10/12 01:31:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,8 @@ static const struct mii_phydesc tlphys[] = {
 };
 
 static int
-tlphymatch(struct device *parent, struct cfdata *match, void *aux)
+tlphymatch(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -138,7 +139,7 @@ tlphymatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-tlphyattach(struct device *parent, struct device *self, void *aux)
+tlphyattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct tlphy_softc *sc = device_private(self);
 	struct tl_softc *tlsc = device_private(device_parent(self));

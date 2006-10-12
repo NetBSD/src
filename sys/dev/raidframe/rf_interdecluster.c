@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_interdecluster.c,v 1.12 2006/04/26 17:08:48 oster Exp $	*/
+/*	$NetBSD: rf_interdecluster.c,v 1.13 2006/10/12 01:31:51 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_interdecluster.c,v 1.12 2006/04/26 17:08:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_interdecluster.c,v 1.13 2006/10/12 01:31:51 christos Exp $");
 
 #include "rf_archs.h"
 
@@ -63,9 +63,9 @@ typedef struct RF_InterdeclusterConfigInfo_s {
 
 int
 rf_ConfigureInterDecluster(
-    RF_ShutdownList_t ** listp,
+    RF_ShutdownList_t ** listp __unused,
     RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr)
+    RF_Config_t * cfgPtr __unused)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_StripeCount_t num_used_stripeUnitsPerDisk;
@@ -121,7 +121,7 @@ rf_ConfigureInterDecluster(
 }
 
 int
-rf_GetDefaultNumFloatingReconBuffersInterDecluster(RF_Raid_t * raidPtr)
+rf_GetDefaultNumFloatingReconBuffersInterDecluster(RF_Raid_t * raidPtr __unused)
 {
 	return (30);
 }
@@ -233,7 +233,7 @@ rf_IdentifyStripeInterDecluster(
 
 void
 rf_MapSIDToPSIDInterDecluster(
-    RF_RaidLayout_t * layoutPtr,
+    RF_RaidLayout_t * layoutPtr __unused,
     RF_StripeNum_t stripeID,
     RF_StripeNum_t * psID,
     RF_ReconUnitNum_t * which_ru)
@@ -252,7 +252,7 @@ rf_MapSIDToPSIDInterDecluster(
 
 void
 rf_RAIDIDagSelect(
-    RF_Raid_t * raidPtr,
+    RF_Raid_t * raidPtr __unused,
     RF_IoType_t type,
     RF_AccessStripeMap_t * asmap,
     RF_VoidFuncPtr * createFunc)

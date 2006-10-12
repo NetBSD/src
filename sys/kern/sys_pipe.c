@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.75 2006/09/23 15:36:12 xtraeme Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.76 2006/10/12 01:32:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.75 2006/09/23 15:36:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.76 2006/10/12 01:32:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,7 @@ static POOL_INIT(pipe_pool, sizeof(struct pipe), 0, 0, 0, "pipepl",
 
 /* ARGSUSED */
 int
-sys_pipe(struct lwp *l, void *v, register_t *retval)
+sys_pipe(struct lwp *l, void *v __unused, register_t *retval)
 {
 	struct file *rf, *wf;
 	struct pipe *rpipe, *wpipe;
@@ -401,8 +401,8 @@ pipeselwakeup(struct pipe *selp, struct pipe *sigp, int code)
 
 /* ARGSUSED */
 static int
-pipe_read(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
-    int flags)
+pipe_read(struct file *fp, off_t *offset __unused, struct uio *uio,
+    kauth_cred_t cred __unused, int flags __unused)
 {
 	struct pipe *rpipe = (struct pipe *) fp->f_data;
 	struct pipebuf *bp = &rpipe->pipe_buffer;
@@ -633,7 +633,8 @@ pipe_loan_free(struct pipe *wpipe)
  * Called with the long-term pipe lock held.
  */
 static int
-pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
+pipe_direct_write(struct file *fp __unused,  struct pipe *wpipe,
+    struct uio *uio)
 {
 	int error, npages, j;
 	struct vm_page **pgs;
@@ -780,8 +781,8 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 #endif /* !PIPE_NODIRECT */
 
 static int
-pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
-    int flags)
+pipe_write(struct file *fp, off_t *offset __unused, struct uio *uio,
+    kauth_cred_t cred __unused, int flags __unused)
 {
 	struct pipe *wpipe, *rpipe;
 	struct pipebuf *bp;
@@ -1189,7 +1190,7 @@ retry:
 }
 
 static int
-pipe_stat(struct file *fp, struct stat *ub, struct lwp *l)
+pipe_stat(struct file *fp, struct stat *ub, struct lwp *l __unused)
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
 
@@ -1214,7 +1215,7 @@ pipe_stat(struct file *fp, struct stat *ub, struct lwp *l)
 
 /* ARGSUSED */
 static int
-pipe_close(struct file *fp, struct lwp *l)
+pipe_close(struct file *fp, struct lwp *l __unused)
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
 
@@ -1251,7 +1252,7 @@ pipe_free_kmem(struct pipe *pipe)
  * shutdown the pipe
  */
 static void
-pipeclose(struct file *fp, struct pipe *pipe)
+pipeclose(struct file *fp __unused, struct pipe *pipe)
 {
 	struct pipe *ppipe;
 
@@ -1392,7 +1393,7 @@ static const struct filterops pipe_wfiltops =
 
 /*ARGSUSED*/
 static int
-pipe_kqfilter(struct file *fp, struct knote *kn)
+pipe_kqfilter(struct file *fp __unused, struct knote *kn)
 {
 	struct pipe *pipe;
 

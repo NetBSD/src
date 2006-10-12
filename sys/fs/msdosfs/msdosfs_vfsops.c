@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.35 2006/09/02 07:12:11 christos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.36 2006/10/12 01:32:11 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.35 2006/09/02 07:12:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.36 2006/10/12 01:32:11 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -767,10 +767,8 @@ error_exit:;
 }
 
 int
-msdosfs_start(mp, flags, l)
-	struct mount *mp;
-	int flags;
-	struct lwp *l;
+msdosfs_start(struct mount *mp __unused, int flags __unused,
+    struct lwp *l __unused)
 {
 
 	return (0);
@@ -850,26 +848,15 @@ msdosfs_root(mp, vpp)
 }
 
 int
-msdosfs_quotactl(mp, cmds, uid, arg, l)
-	struct mount *mp;
-	int cmds;
-	uid_t uid;
-	void *arg;
-	struct lwp *l;
+msdosfs_quotactl(struct mount *mp __unused, int cmds __unused,
+    uid_t uid __unused, void *arg __unused, struct lwp *l __unused)
 {
 
-#ifdef QUOTA
 	return (EOPNOTSUPP);
-#else
-	return (EOPNOTSUPP);
-#endif
 }
 
 int
-msdosfs_statvfs(mp, sbp, l)
-	struct mount *mp;
-	struct statvfs *sbp;
-	struct lwp *l;
+msdosfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l __unused)
 {
 	struct msdosfsmount *pmp;
 
@@ -1011,10 +998,8 @@ msdosfs_vptofh(vp, fhp, fh_size)
 }
 
 int
-msdosfs_vget(mp, ino, vpp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
+msdosfs_vget(struct mount *mp __unused, ino_t ino __unused,
+    struct vnode **vpp __unused)
 {
 
 	return (EOPNOTSUPP);

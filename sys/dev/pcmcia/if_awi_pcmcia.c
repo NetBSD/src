@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.35 2005/12/11 12:23:23 christos Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.36 2006/10/12 01:31:50 christos Exp $ */
 
 /*-
  * Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.35 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.36 2006/10/12 01:31:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,10 +159,8 @@ awi_pcmcia_disable(sc)
 }
 
 static int
-awi_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+awi_pcmcia_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -190,9 +188,8 @@ awi_pcmcia_validate_config(cfe)
 }
 
 static void
-awi_pcmcia_attach(parent, self, aux)
-	struct device  *parent, *self;
-	void           *aux;
+awi_pcmcia_attach(struct device *parent __unused, struct device *self,
+    void *aux)
 {
 	struct awi_pcmcia_softc *psc = (void *)self;
 	struct awi_softc *sc = &psc->sc_awi;
@@ -252,9 +249,7 @@ fail:
 }
 
 static int
-awi_pcmcia_detach(self, flags)
-	struct device *self;
-	int flags;
+awi_pcmcia_detach(struct device *self, int flags __unused)
 {
 	struct awi_pcmcia_softc *psc = (struct awi_pcmcia_softc *)self;
 	int error;

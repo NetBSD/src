@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.69 2006/09/02 12:40:36 yamt Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.70 2006/10/12 01:32:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.69 2006/09/02 12:40:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.70 2006/10/12 01:32:47 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -760,11 +760,12 @@ nqnfsrv_getlease(nfsd, slp, lwp, mrq)
  * client. Find the entry and expire it.
  */
 int
-nqnfsrv_vacated(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nqnfsrv_vacated(
+    struct nfsrv_descript *nfsd,
+    struct nfssvc_sock *slp,
+    struct lwp *lwp __unused,
+    struct mbuf **mrq
+)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -932,7 +933,7 @@ nfsmout:
  */
 static int
 nqnfs_callback1(struct nfsmount *nmp, struct mbuf *mrep, struct mbuf *md,
-    caddr_t dpos, struct lwp *l, struct nfsrv_descript *nfsd)
+    caddr_t dpos, struct lwp *l __unused, struct nfsrv_descript *nfsd)
 {
 	struct vnode *vp;
 	u_int32_t *tl;

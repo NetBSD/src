@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sf_pci.c,v 1.10 2006/06/17 23:34:27 christos Exp $	*/
+/*	$NetBSD: if_sf_pci.c,v 1.11 2006/10/12 01:31:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sf_pci.c,v 1.10 2006/06/17 23:34:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sf_pci.c,v 1.11 2006/10/12 01:31:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,8 @@ sf_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-sf_pci_match(struct device *parent, struct cfdata *match, void *aux)
+sf_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -171,7 +172,7 @@ sf_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-sf_pci_attach(struct device *parent, struct device *self, void *aux)
+sf_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct sf_pci_softc *psc = (void *) self;
 	struct sf_softc *sc = &psc->sc_starfire;

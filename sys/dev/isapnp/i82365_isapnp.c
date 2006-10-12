@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.21 2006/08/30 02:15:33 christos Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.22 2006/10/12 01:31:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.21 2006/08/30 02:15:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.22 2006/10/12 01:31:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,10 +92,8 @@ static struct pcmcia_chip_functions pcic_isa_functions = {
 };
 
 int
-pcic_isapnp_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pcic_isapnp_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	int pri, variant;
 
@@ -106,9 +104,8 @@ pcic_isapnp_match(parent, match, aux)
 }
 
 void
-pcic_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcic_isapnp_attach(struct device *parent __unused, struct device *self,
+    void *aux)
 {
 	struct pcic_softc *sc = device_private(self);
 	struct pcic_isa_softc *isc = device_private(self);

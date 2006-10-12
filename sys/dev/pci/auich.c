@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.113 2006/09/25 23:11:07 jmcneill Exp $	*/
+/*	$NetBSD: auich.c,v 1.114 2006/10/12 01:31:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.113 2006/09/25 23:11:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.114 2006/10/12 01:31:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -436,7 +436,8 @@ auich_lookup(struct pci_attach_args *pa, const struct auich_devtype *auich_devic
 }
 
 static int
-auich_match(struct device *parent, struct cfdata *match, void *aux)
+auich_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -450,7 +451,7 @@ auich_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-auich_attach(struct device *parent, struct device *self, void *aux)
+auich_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct auich_softc *sc;
 	struct pci_attach_args *pa;
@@ -919,7 +920,7 @@ auich_spdif_event(void *addr, boolean_t flag)
 }
 
 static int
-auich_open(void *addr, int flags)
+auich_open(void *addr, int flags __unused)
 {
 	struct auich_softc *sc;
 
@@ -974,8 +975,9 @@ auich_set_rate(struct auich_softc *sc, int mode, u_long srate)
 }
 
 static int
-auich_set_params(void *v, int setmode, int usemode, audio_params_t *play,
-    audio_params_t *rec, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+auich_set_params(void *v, int setmode, int usemode __unused,
+    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	struct auich_softc *sc;
 	audio_params_t *p;
@@ -1047,7 +1049,8 @@ auich_set_params(void *v, int setmode, int usemode, audio_params_t *play,
 }
 
 static int
-auich_round_blocksize(void *v, int blk, int mode, const audio_params_t *param)
+auich_round_blocksize(void *v __unused, int blk, int mode __unused,
+    const audio_params_t *param __unused)
 {
 
 	return blk & ~0x3f;		/* keep good alignment */
@@ -1140,8 +1143,8 @@ auich_query_devinfo(void *v, mixer_devinfo_t *dp)
 }
 
 static void *
-auich_allocm(void *v, int direction, size_t size, struct malloc_type *pool,
-    int flags)
+auich_allocm(void *v, int direction __unused, size_t size,
+    struct malloc_type *pool, int flags)
 {
 	struct auich_softc *sc;
 	struct auich_dma *p;
@@ -1185,7 +1188,7 @@ auich_freem(void *v, void *ptr, struct malloc_type *pool)
 }
 
 static size_t
-auich_round_buffersize(void *v, int direction, size_t size)
+auich_round_buffersize(void *v __unused, int direction __unused, size_t size)
 {
 
 	if (size > (ICH_DMALIST_MAX * ICH_DMASEG_MAX))
@@ -1401,7 +1404,7 @@ auich_intr_pipe(struct auich_softc *sc, int pipe, struct auich_ring *ring)
 
 static int
 auich_trigger_output(void *v, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, const audio_params_t *param)
+    void (*intr)(void *), void *arg, const audio_params_t *param __unused)
 {
 	struct auich_softc *sc;
 	struct auich_dma *p;
@@ -1437,7 +1440,7 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 
 static int
 auich_trigger_input(void *v, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, const audio_params_t *param)
+    void (*intr)(void *), void *arg, const audio_params_t *param __unused)
 {
 	struct auich_softc *sc;
 	struct auich_dma *p;
@@ -1472,7 +1475,7 @@ auich_trigger_input(void *v, void *start, void *end, int blksize,
 }
 
 static int
-auich_powerstate(void *v, int state)
+auich_powerstate(void *v __unused, int state __unused)
 {
 #if notyet
 	struct auich_softc *sc;

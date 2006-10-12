@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.7 2006/05/14 21:47:00 elad Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.8 2006/10/12 01:32:06 christos Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.7 2006/05/14 21:47:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.8 2006/10/12 01:32:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,8 +164,9 @@ vcons_unlock(struct vcons_screen *scr)
 }
 
 static void
-vcons_dummy_init_screen(void *cookie, struct vcons_screen *scr, int exists, 
-	    long *defattr)
+vcons_dummy_init_screen(void *cookie __unused,
+    struct vcons_screen *scr __unused, int exists __unused,
+    long *defattr __unused)
 {
 
 	/*
@@ -459,7 +460,7 @@ vcons_free_screen(void *v, void *cookie)
 }
 
 static int
-vcons_show_screen(void *v, void *cookie, int waitok,
+vcons_show_screen(void *v, void *cookie, int waitok __unused,
     void (*cb)(void *, int, int), void *cb_arg)
 {
 	struct vcons_data *vd = v;

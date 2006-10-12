@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.18 2006/09/18 07:47:13 uebayasi Exp $	*/
+/*	$NetBSD: dk.c,v 1.19 2006/10/12 01:30:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.18 2006/09/18 07:47:13 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.19 2006/10/12 01:30:57 christos Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -135,7 +135,8 @@ static struct lock dkwedge_discovery_methods_lock =
  *	Autoconfiguration match function for pseudo-device glue.
  */
 static int
-dkwedge_match(struct device *parent, struct cfdata *match, void *aux)
+dkwedge_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux __unused)
 {
 
 	/* Pseudo-device; always present. */
@@ -148,7 +149,8 @@ dkwedge_match(struct device *parent, struct cfdata *match, void *aux)
  *	Autoconfiguration attach function for pseudo-device glue.
  */
 static void
-dkwedge_attach(struct device *parent, struct device *self, void *aux)
+dkwedge_attach(struct device *parent __unused, struct device *self __unused,
+    void *aux __unused)
 {
 
 	/* Nothing to do. */
@@ -160,7 +162,7 @@ dkwedge_attach(struct device *parent, struct device *self, void *aux)
  *	Autoconfiguration detach function for pseudo-device glue.
  */
 static int
-dkwedge_detach(struct device *self, int flags)
+dkwedge_detach(struct device *self __unused, int flags __unused)
 {
 
 	/* Always succeeds. */
@@ -837,8 +839,8 @@ dkwedge_discover(struct disk *pdk)
  *	partition discovery.
  */
 int
-dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno, void *tbuf,
-    size_t len)
+dkwedge_read(struct disk *pdk __unused, struct vnode *vp, daddr_t blkno,
+    void *tbuf, size_t len)
 {
 	struct buf b;
 
@@ -880,7 +882,7 @@ dkwedge_lookup(dev_t dev)
  *	Open a wedge.
  */
 static int
-dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
+dkopen(dev_t dev, int flags __unused, int fmt, struct lwp *l __unused)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	struct vnode *vp;
@@ -941,7 +943,7 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
  *	Close a wedge.
  */
 static int
-dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
+dkclose(dev_t dev, int flags __unused, int fmt, struct lwp *l)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	int error = 0;
@@ -1131,7 +1133,7 @@ dkrestart(void *v)
  *	Read from a wedge.
  */
 static int
-dkread(dev_t dev, struct uio *uio, int flags)
+dkread(dev_t dev, struct uio *uio, int flags __unused)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 
@@ -1148,7 +1150,7 @@ dkread(dev_t dev, struct uio *uio, int flags)
  *	Write to a wedge.
  */
 static int
-dkwrite(dev_t dev, struct uio *uio, int flags)
+dkwrite(dev_t dev, struct uio *uio, int flags __unused)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 
@@ -1251,7 +1253,8 @@ dksize(dev_t dev)
  *	Perform a crash dump to a wedge.
  */
 static int
-dkdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+dkdump(dev_t dev __unused, daddr_t blkno __unused, caddr_t va __unused,
+    size_t size __unused)
 {
 
 	/* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.330 2006/09/22 04:48:38 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.331 2006/10/12 01:30:55 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.330 2006/09/22 04:48:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.331 2006/10/12 01:30:55 christos Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -276,7 +276,7 @@ wd_lookup_quirks(const char *name)
 }
 
 int
-wdprobe(struct device *parent, struct cfdata *match, void *aux)
+wdprobe(struct device *parent __unused, struct cfdata *match, void *aux)
 {
 	struct ata_device *adev = aux;
 
@@ -292,7 +292,7 @@ wdprobe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-wdattach(struct device *parent, struct device *self, void *aux)
+wdattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct wd_softc *wd = (void *)self;
 	struct ata_device *adev= aux;
@@ -426,7 +426,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-wdactivate(struct device *self, enum devact act)
+wdactivate(struct device *self __unused, enum devact act)
 {
 	int rv = 0;
 
@@ -445,7 +445,7 @@ wdactivate(struct device *self, enum devact act)
 }
 
 int
-wddetach(struct device *self, int flags)
+wddetach(struct device *self, int flags __unused)
 {
 	struct wd_softc *sc = (struct wd_softc *)self;
 	int s, bmaj, cmaj, i, mn;
@@ -872,7 +872,7 @@ wdrestart(void *v)
 }
 
 int
-wdread(dev_t dev, struct uio *uio, int flags)
+wdread(dev_t dev, struct uio *uio, int flags __unused)
 {
 
 	ATADEBUG_PRINT(("wdread\n"), DEBUG_XFERS);
@@ -880,7 +880,7 @@ wdread(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-wdwrite(dev_t dev, struct uio *uio, int flags)
+wdwrite(dev_t dev, struct uio *uio, int flags __unused)
 {
 
 	ATADEBUG_PRINT(("wdwrite\n"), DEBUG_XFERS);
@@ -888,7 +888,7 @@ wdwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
+wdopen(dev_t dev, int flag __unused, int fmt, struct lwp *l __unused)
 {
 	struct wd_softc *wd;
 	int part, error;
@@ -976,7 +976,7 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 }
 
 int
-wdclose(dev_t dev, int flag, int fmt, struct lwp *l)
+wdclose(dev_t dev, int flag __unused, int fmt, struct lwp *l __unused)
 {
 	struct wd_softc *wd = device_lookup(&wd_cd, WDUNIT(dev));
 	int part = WDPART(dev);
@@ -1677,7 +1677,7 @@ bad144intern(struct wd_softc *wd)
 #endif
 
 static void
-wd_params_to_properties(struct wd_softc *wd, struct ataparams *params)
+wd_params_to_properties(struct wd_softc *wd, struct ataparams *params __unused)
 {
 	prop_dictionary_t disk_info, geom;
 	prop_string_t string;

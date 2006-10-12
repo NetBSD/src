@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.104 2006/09/02 07:22:44 christos Exp $	*/
+/*	$NetBSD: nd6.c,v 1.105 2006/10/12 01:32:39 christos Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.104 2006/09/02 07:22:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.105 2006/10/12 01:32:39 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -527,8 +527,7 @@ nd6_llinfo_timer(arg)
  * ND6 timer routine to expire default route list and prefix list
  */
 void
-nd6_timer(ignored_arg)
-	void	*ignored_arg;
+nd6_timer(void *ignored_arg __unused)
 {
 	int s;
 	struct nd_defrouter *dr;
@@ -1146,10 +1145,7 @@ nd6_nud_hint(rt, dst6, force)
 }
 
 void
-nd6_rtrequest(req, rt, info)
-	int	req;
-	struct rtentry *rt;
-	struct rt_addrinfo *info; /* xxx unused */
+nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info __unused)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
@@ -1633,13 +1629,14 @@ nd6_ioctl(cmd, data, ifp)
  * on reception of inbound ND6 packets.  (RS/RA/NS/redirect)
  */
 struct rtentry *
-nd6_cache_lladdr(ifp, from, lladdr, lladdrlen, type, code)
-	struct ifnet *ifp;
-	struct in6_addr *from;
-	char *lladdr;
-	int lladdrlen;
-	int type;	/* ICMP6 type */
-	int code;	/* type dependent information */
+nd6_cache_lladdr(
+    struct ifnet *ifp,
+    struct in6_addr *from,
+    char *lladdr,
+    int lladdrlen __unused,
+    int type,	/* ICMP6 type */
+    int code	/* type dependent information */
+)
 {
 	struct rtentry *rt = NULL;
 	struct llinfo_nd6 *ln = NULL;
@@ -1879,8 +1876,7 @@ fail:
 }
 
 static void
-nd6_slowtimo(ignored_arg)
-    void *ignored_arg;
+nd6_slowtimo(void *ignored_arg __unused)
 {
 	int s = splsoftnet();
 	struct nd_ifinfo *nd6if;
@@ -2208,12 +2204,13 @@ clear_llinfo_pqueue(ln)
 }
  
 int
-nd6_sysctl(name, oldp, oldlenp, newp, newlen)
-	int name;
-	void *oldp;	/* syscall arg, need copyout */
-	size_t *oldlenp;
-	void *newp;	/* syscall arg, need copyin */
-	size_t newlen;
+nd6_sysctl(
+    int name,
+    void *oldp,	/* syscall arg, need copyout */
+    size_t *oldlenp,
+    void *newp,	/* syscall arg, need copyin */
+    size_t newlen __unused
+)
 {
 	void *p;
 	size_t ol;

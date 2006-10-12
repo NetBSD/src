@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.45 2006/08/30 15:46:58 christos Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.46 2006/10/12 01:31:16 christos Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.45 2006/08/30 15:46:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.46 2006/10/12 01:31:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,8 @@ static int const ate_iomap[8] = {
  * Determine if the device is present.
  */
 int
-ate_match(struct device *parent, struct cfdata *match, void *aux)
+ate_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -344,7 +345,7 @@ ate_detect(bus_space_tag_t iot, bus_space_handle_t ioh,
 }
 
 void
-ate_attach(struct device *parent, struct device *self, void *aux)
+ate_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct ate_softc *isc = (struct ate_softc *)self;
 	struct mb86960_softc *sc = &isc->sc_mb86960;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.24 2006/08/30 16:45:40 christos Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.25 2006/10/12 01:31:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.24 2006/08/30 16:45:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.25 2006/10/12 01:31:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,9 +137,7 @@ ix_reset(sc, why)
 }
 
 static void
-ix_atten(sc, why)
-	struct ie_softc *sc;
-	int why;
+ix_atten(struct ie_softc *sc, int why __unused)
 {
 	struct ix_softc* isc = (struct ix_softc *) sc;
 	bus_space_write_1(isc->sc_regt, isc->sc_regh, IX_ATTN, 0);
@@ -513,10 +511,7 @@ ix_mediastatus(sc, ifmr)
 }
 
 int
-ix_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ix_match(struct device *parent __unused, struct cfdata *cf __unused, void *aux)
 {
 	int i;
 	int rv = 0;
@@ -720,10 +715,7 @@ out:
 }
 
 void
-ix_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void   *aux;
+ix_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct ix_softc *isc = (void *)self;
 	struct ie_softc *sc = &isc->sc_ie;
