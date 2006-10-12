@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.48 2006/08/04 05:30:13 mhitch Exp $ */
+/*	$NetBSD: md.c,v 1.49 2006/10/12 12:46:18 pavel Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1030,6 +1030,7 @@ md_make_bsd_partitions(void)
 		    case UFS_PART:
 			bsdlabel[pl].pi_fstype = FS_BSDFFS;
 			strcpy (bsdlabel[pl].pi_mount, (char *)bzb->mount_point);
+			bsdlabel[pl].pi_flags |= PIF_NEWFS | PIF_MOUNT;
 			break;
 		    case SWAP_PART:
 			bsdlabel[pl].pi_fstype = FS_SWAP;
