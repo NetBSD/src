@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.7 2006/09/22 15:39:09 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.8 2006/10/12 00:19:10 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.7 2006/09/22 15:39:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.8 2006/10/12 00:19:10 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -176,8 +176,25 @@ secmodel_bsd44_securelevel_system_cb(kauth_cred_t cred, kauth_action_t action,
 			struct vnode *vp = arg2;
 			dev_t dev = (dev_t)(u_long)arg3;
 
-			if (vp == NULL || dev == NODEV)
+			if (vp == NULL || dev == NODEV) {
+				switch (rw) {
+				case KAUTH_REQ_SYSTEM_RAWIO_READ:
+					result = KAUTH_RESULT_ALLOW;
+					break;
+
+				case KAUTH_REQ_SYSTEM_RAWIO_RW:
+				case KAUTH_REQ_SYSTEM_RAWIO_WRITE:
+					if (securelevel < 1)
+						result = KAUTH_RESULT_ALLOW;
+					break;
+
+				default:
+					result = KAUTH_RESULT_DEFER;
+					break;
+				}
+
 				break;
+			}
 
 			switch (vp->v_type) {
 			case VCHR: {
