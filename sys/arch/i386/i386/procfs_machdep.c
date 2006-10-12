@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.23 2005/12/26 19:23:59 perry Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.24 2006/10/12 01:30:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.23 2005/12/26 19:23:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.24 2006/10/12 01:30:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,8 @@ procfs_machdep_rw(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 }
 
 int
-procfs_machdep_getattr(struct vnode *vp, struct vattr *vap, struct proc *procp)
+procfs_machdep_getattr(struct vnode *vp, struct vattr *vap,
+    struct proc *procp __unused)
 {
 	struct pfsnode *pfs = VTOPFS(vp);
 
@@ -245,14 +246,14 @@ procfs_machdep_getattr(struct vnode *vp, struct vattr *vap, struct proc *procp)
 
 int
 procfs_machdep_doxmmregs(struct lwp *curl, struct lwp *l,
-    struct pfsnode *pfs, struct uio *uio)
+    struct pfsnode *pfs __unused, struct uio *uio)
 {
 
 	return (process_machdep_doxmmregs(curl, l, uio));
 }
 
 int
-procfs_machdep_validxmmregs(struct lwp *l, struct mount *mp)
+procfs_machdep_validxmmregs(struct lwp *l, struct mount *mp __unused)
 {
 
 	return (process_machdep_validxmmregs(l->l_proc));

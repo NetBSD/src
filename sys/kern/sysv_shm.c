@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.89 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.90 2006/10/12 01:32:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.89 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.90 2006/10/12 01:32:18 christos Exp $");
 
 #define SYSVSHM
 
@@ -266,7 +266,7 @@ shm_find_mapping(struct shmmap_state *map, vaddr_t va)
 }
 
 int
-sys_shmdt(struct lwp *l, void *v, register_t *retval)
+sys_shmdt(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_shmdt_args /* {
 		syscallarg(const void *) shmaddr;
@@ -375,7 +375,7 @@ sys_shmat(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys___shmctl13(struct lwp *l, void *v, register_t *retval)
+sys___shmctl13(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys___shmctl13_args /* {
 		syscallarg(int) shmid;

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.134 2006/09/20 08:09:05 manu Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.135 2006/10/12 01:32:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.134 2006/09/20 08:09:05 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.135 2006/10/12 01:32:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -786,8 +786,7 @@ procfs_getattr(v)
 
 /*ARGSUSED*/
 int
-procfs_setattr(v)
-	void *v;
+procfs_setattr(void *v __unused)
 {
 	/*
 	 * just fake out attribute setting
@@ -1052,9 +1051,7 @@ procfs_lookup(v)
 }
 
 int
-procfs_validfile(l, mp)
-	struct lwp *l;
-	struct mount *mp;
+procfs_validfile(struct lwp *l, struct mount *mp __unused)
 {
 	return (l->l_proc->p_textvp != NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.20 2006/06/07 22:33:35 kardel Exp $	*/
+/*	$NetBSD: icp.c,v 1.21 2006/10/12 01:31:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.20 2006/06/07 22:33:35 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.21 2006/10/12 01:31:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1307,7 +1307,7 @@ static int icp_event_oldidx;
 static int icp_event_lastidx;
 
 gdt_evt_str *
-icp_store_event(struct icp_softc *icp, u_int16_t source, u_int16_t idx,
+icp_store_event(struct icp_softc *icp __unused, u_int16_t source, u_int16_t idx,
     gdt_evt_data *evt)
 {
 	gdt_evt_str *e;
@@ -1348,7 +1348,7 @@ icp_store_event(struct icp_softc *icp, u_int16_t source, u_int16_t idx,
 }
 
 int
-icp_read_event(struct icp_softc *icp, int handle, gdt_evt_str *estr)
+icp_read_event(struct icp_softc *icp __unused, int handle, gdt_evt_str *estr)
 {
 	gdt_evt_str *e;
 	int eindex, s;
@@ -1384,7 +1384,7 @@ icp_read_event(struct icp_softc *icp, int handle, gdt_evt_str *estr)
 }
 
 void
-icp_readapp_event(struct icp_softc *icp, u_int8_t application,
+icp_readapp_event(struct icp_softc *icp __unused, u_int8_t application,
     gdt_evt_str *estr)
 {
 	gdt_evt_str *e;
@@ -1417,7 +1417,7 @@ icp_readapp_event(struct icp_softc *icp, u_int8_t application,
 }
 
 void
-icp_clear_events(struct icp_softc *icp)
+icp_clear_events(struct icp_softc *icp __unused)
 {
 	int s;
 

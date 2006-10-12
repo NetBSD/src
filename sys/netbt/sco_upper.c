@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_upper.c,v 1.2 2006/08/27 11:41:58 plunky Exp $	*/
+/*	$NetBSD: sco_upper.c,v 1.3 2006/10/12 01:32:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.2 2006/08/27 11:41:58 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.3 2006/10/12 01:32:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -319,7 +319,7 @@ sco_send(struct sco_pcb *pcb, struct mbuf *m)
  *	Set SCO pcb options
  */
 int
-sco_setopt(struct sco_pcb *pcb, int opt, void *addr)
+sco_setopt(struct sco_pcb *pcb __unused, int opt, void *addr __unused)
 {
 	int err = 0;
 

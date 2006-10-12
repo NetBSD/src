@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.23 2006/09/03 21:42:09 christos Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.24 2006/10/12 01:31:02 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.23 2006/09/03 21:42:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.24 2006/10/12 01:31:02 christos Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -525,7 +525,8 @@ vga_raster_init_screen(struct vga_config *vc, struct vgascreen *scr,
 
 void
 vga_common_attach(struct vga_softc *sc, bus_space_tag_t iot,
-    bus_space_tag_t memt, int type, int quirks, const struct vga_funcs *vf)
+    bus_space_tag_t memt, int type, int quirks __unused,
+    const struct vga_funcs *vf)
 {
 	int console;
 	struct vga_config *vc;
@@ -598,7 +599,7 @@ vga_set_video(struct vga_config *vc, int state)
 }
 
 int
-vga_raster_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+vga_raster_ioctl(void *v, void *vs __unused, u_long cmd, caddr_t data, int flag,
 	struct lwp *l)
 {
 	struct vga_config *vc = v;
@@ -647,7 +648,7 @@ vga_raster_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
 }
 
 static paddr_t
-vga_raster_mmap(void *v, void *vs, off_t offset, int prot)
+vga_raster_mmap(void *v, void *vs __unused, off_t offset, int prot)
 {
 	struct vga_config *vc = v;
 	const struct vga_funcs *vf = vc->vc_funcs;
@@ -693,7 +694,7 @@ vga_raster_alloc_screen(void *v, const struct wsscreen_descr *type,
 }
 
 void
-vga_raster_free_screen(void *v, void *cookie)
+vga_raster_free_screen(void *v __unused, void *cookie)
 {
 	struct vgascreen *vs = cookie;
 	struct vga_config *vc = vs->cfg;
@@ -710,7 +711,7 @@ vga_raster_free_screen(void *v, void *cookie)
 }
 
 int
-vga_raster_show_screen(void *v, void *cookie, int waitok,
+vga_raster_show_screen(void *v __unused, void *cookie, int waitok __unused,
     void (*cb)(void *, int, int), void *cbarg)
 {
 	struct vgascreen *scr = cookie, *oldscr;
@@ -797,7 +798,8 @@ vga_switch_screen(struct vga_config *vc)
 }
 
 static int
-vga_raster_load_font(void *v, void *id, struct wsdisplay_font *data)
+vga_raster_load_font(void *v __unused, void *id __unused,
+    struct wsdisplay_font *data __unused)
 {
 	/* XXX */
 	printf("vga_raster_load_font: called\n");

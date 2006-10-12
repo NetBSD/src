@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.45 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.46 2006/10/12 01:32:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.45 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.46 2006/10/12 01:32:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,8 +427,8 @@ usbd_get_config(usbd_device_handle dev, u_int8_t *conf)
 Static void usbd_bulk_transfer_cb(usbd_xfer_handle xfer,
 				  usbd_private_handle priv, usbd_status status);
 Static void
-usbd_bulk_transfer_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
-		      usbd_status status)
+usbd_bulk_transfer_cb(usbd_xfer_handle xfer, usbd_private_handle priv __unused,
+		      usbd_status status __unused)
 {
 	wakeup(xfer);
 }
@@ -469,8 +469,8 @@ usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 Static void usbd_intr_transfer_cb(usbd_xfer_handle xfer,
 				  usbd_private_handle priv, usbd_status status);
 Static void
-usbd_intr_transfer_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
-		      usbd_status status)
+usbd_intr_transfer_cb(usbd_xfer_handle xfer, usbd_private_handle priv __unused,
+		      usbd_status status __unused)
 {
 	wakeup(xfer);
 }

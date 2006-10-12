@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.7 2006/03/29 07:05:24 thorpej Exp $	*/
+/*	$NetBSD: igphy.c,v 1.8 2006/10/12 01:31:25 christos Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.7 2006/03/29 07:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.8 2006/10/12 01:31:25 christos Exp $");
 
 #include "opt_mii.h"
 
@@ -128,7 +128,8 @@ static const struct mii_phydesc igphys[] = {
 };
 
 static int
-igphymatch(struct device *parent, struct cfdata *match, void *aux)
+igphymatch(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -139,7 +140,7 @@ igphymatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-igphyattach(struct device *parent, struct device *self, void *aux)
+igphyattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;

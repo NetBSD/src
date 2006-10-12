@@ -1,4 +1,4 @@
-/*	$NetBSD: pceb.c,v 1.17 2006/02/19 14:59:23 thorpej Exp $	*/
+/*	$NetBSD: pceb.c,v 1.18 2006/10/12 01:30:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.17 2006/02/19 14:59:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.18 2006/10/12 01:30:43 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,7 +72,8 @@ union pceb_attach_args {
 };
 
 int
-pcebmatch(struct device *parent, struct cfdata *match, void *aux)
+pcebmatch(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -101,7 +102,7 @@ pcebmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-pcebattach(struct device *parent, struct device *self, void *aux)
+pcebattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];

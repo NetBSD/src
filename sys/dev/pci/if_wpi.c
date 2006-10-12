@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.3 2006/09/24 03:53:09 jmcneill Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.4 2006/10/12 01:31:31 christos Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.3 2006/09/24 03:53:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.4 2006/10/12 01:31:31 christos Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -160,7 +160,8 @@ CFATTACH_DECL(wpi, sizeof (struct wpi_softc), wpi_match, wpi_attach,
 	wpi_detach, NULL);
 
 static int
-wpi_match(struct device *parent, struct cfdata *match, void *aux)
+wpi_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -178,7 +179,7 @@ wpi_match(struct device *parent, struct cfdata *match, void *aux)
 #define WPI_PCI_BAR0	0x10
 
 static void
-wpi_attach(struct device *parent, struct device *self, void *aux)
+wpi_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct wpi_softc *sc = (struct wpi_softc *)self;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -392,7 +393,7 @@ fail1:  while (--ac >= 0)
 }
 
 static int
-wpi_detach(struct device* self, int flags)
+wpi_detach(struct device* self, int flags __unused)
 {
 	struct wpi_softc *sc = (struct wpi_softc *)self;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
@@ -772,7 +773,7 @@ wpi_free_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring)
 
 /*ARGUSED*/
 static struct ieee80211_node *
-wpi_node_alloc(struct ieee80211_node_table *ic)
+wpi_node_alloc(struct ieee80211_node_table *ic __unused)
 {
 	struct wpi_amrr *amrr;
 
@@ -2758,7 +2759,7 @@ fail1:	wpi_stop(ifp, 1);
 
 
 static void
-wpi_stop(struct ifnet *ifp, int disable)
+wpi_stop(struct ifnet *ifp, int disable __unused)
 {
 	struct wpi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2865,7 +2866,7 @@ wpi_amrr_timeout(void *arg)
 
 /* ARGSUSED */
 static void
-wpi_amrr_ratectl(void *arg, struct ieee80211_node *ni)
+wpi_amrr_ratectl(void *arg __unused, struct ieee80211_node *ni)
 {
 	struct wpi_amrr *amrr = (struct wpi_amrr *)ni;
 	int need_change = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.30 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.31 2006/10/12 01:30:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.30 2005/12/11 12:20:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.31 2006/10/12 01:30:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,10 +103,8 @@ linux_sys_signal(l, v, retval)
 
 /* ARGSUSED */
 int
-linux_sys_siggetmask(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_siggetmask(struct lwp *l, void *v __unused,
+    register_t *retval __unused)
 {
 	struct proc *p = l->l_proc;
 	sigset_t bss;
@@ -151,10 +149,7 @@ linux_sys_sigsetmask(l, v, retval)
 }
 
 int
-linux_sys_sigprocmask(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_sigprocmask(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct linux_sys_sigprocmask_args /* {
 		syscallarg(int) how;
@@ -173,10 +168,7 @@ linux_sys_sigprocmask(l, v, retval)
  * of sigsuspend(2).
  */
 int
-linux_sys_pause(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_pause(struct lwp *l, void *v __unused, register_t *retval __unused)
 {
 	struct proc *p = l->l_proc;
 

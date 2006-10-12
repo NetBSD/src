@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.49 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.50 2006/10/12 01:32:38 christos Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.49 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.50 2006/10/12 01:32:38 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -563,9 +563,7 @@ ah4_ctlinput(cmd, sa, v)
 
 #ifdef INET6
 int
-ah6_input(mp, offp, proto)
-	struct mbuf **mp;
-	int *offp, proto;
+ah6_input(struct mbuf **mp, int *offp, int proto __unused)
 {
 	struct mbuf *m = *mp;
 	int off = *offp;

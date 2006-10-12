@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.19 2006/07/21 16:48:45 ad Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.20 2006/10/12 01:30:42 christos Exp $	*/
 /*	$KAME: altq_red.c,v 1.9 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.19 2006/07/21 16:48:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.20 2006/10/12 01:30:42 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -222,20 +222,16 @@ static void fv_dropbyred __P((struct flowvalve *fv, struct altq_pktattr *,
 altqdev_decl(red);
 
 int
-redopen(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+redopen(dev_t dev __unused, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
 	/* everything will be done when the queueing scheme is attached. */
 	return 0;
 }
 
 int
-redclose(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+redclose(dev_t dev __unused, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
 	red_queue_t *rqp;
 	int err, error = 0;
@@ -251,12 +247,8 @@ redclose(dev, flag, fmt, l)
 }
 
 int
-redioctl(dev, cmd, addr, flag, l)
-	dev_t dev;
-	ioctlcmd_t cmd;
-	caddr_t addr;
-	int flag;
-	struct lwp *l;
+redioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
+    struct lwp *l)
 {
 	red_queue_t *rqp;
 	struct red_interface *ifacep;
@@ -954,10 +946,7 @@ red_getq(rp, q)
 }
 
 static int
-red_request(ifq, req, arg)
-	struct ifaltq *ifq;
-	int req;
-	void *arg;
+red_request(struct ifaltq *ifq, int req, void *arg __unused)
 {
 	red_queue_t *rqp = (red_queue_t *)ifq->altq_disc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.58 2006/05/14 03:40:54 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.59 2006/10/12 01:30:49 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.58 2006/05/14 03:40:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.59 2006/10/12 01:30:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -440,11 +440,8 @@ getparm(fp, pa)
 
 
 static int
-si_ogetudata(fp, fd, ioc, l)
-	struct file		*fp;
-	int 			 fd;
-	struct svr4_strioctl	*ioc;
-	struct lwp		*l;
+si_ogetudata(struct file *fp, int fd __unused, struct svr4_strioctl *ioc,
+    struct lwp *l __unused)
 {
 	int error;
 	struct svr4_si_oudata ud;
@@ -498,11 +495,8 @@ si_ogetudata(fp, fd, ioc, l)
 
 
 static int
-si_sockparams(fp, fd, ioc, l)
-	struct file		*fp;
-	int 			 fd;
-	struct svr4_strioctl	*ioc;
-	struct lwp		*l;
+si_sockparams(struct file *fp, int fd __unused, struct svr4_strioctl *ioc,
+    struct lwp *l __unused)
 {
 	struct svr4_si_sockparms pa;
 
@@ -580,11 +574,8 @@ si_listen(fp, fd, ioc, l)
 
 
 static int
-si_getudata(fp, fd, ioc, l)
-	struct file		*fp;
-	int 			 fd;
-	struct svr4_strioctl	*ioc;
-	struct lwp		*l;
+si_getudata(struct file *fp, int fd __unused, struct svr4_strioctl *ioc,
+    struct lwp *l __unused)
 {
 	int error;
 	struct svr4_si_udata ud;
@@ -637,11 +628,8 @@ si_getudata(fp, fd, ioc, l)
 
 
 static int
-si_shutdown(fp, fd, ioc, l)
-	struct file		*fp;
-	int 			 fd;
-	struct svr4_strioctl	*ioc;
-	struct lwp		*l;
+si_shutdown(struct file *fp __unused, int fd, struct svr4_strioctl *ioc,
+    struct lwp *l)
 {
 	int error;
 	struct sys_shutdown_args ap;
@@ -719,11 +707,8 @@ sockmod(fp, fd, ioc, l)
 
 
 static int
-ti_getinfo(fp, fd, ioc, l)
-	struct file		*fp;
-	int 			 fd;
-	struct svr4_strioctl	*ioc;
-	struct lwp		*l;
+ti_getinfo(struct file *fp __unused, int fd __unused, struct svr4_strioctl *ioc,
+    struct lwp *l __unused)
 {
 	int error;
 	struct svr4_infocmd info;
@@ -1042,13 +1027,8 @@ svr4_stream_ti_ioctl(fp, l, retval, fd, cmd, dat)
 
 
 static int
-i_nread(fp, l, retval, fd, cmd, dat)
-	struct file *fp;
-	struct lwp *l;
-	register_t *retval;
-	int fd;
-	u_long cmd;
-	caddr_t dat;
+i_nread(struct file *fp, struct lwp *l, register_t *retval, int fd __unused,
+    u_long cmd __unused, caddr_t dat)
 {
 	int error;
 	int nread = 0;
@@ -1073,13 +1053,8 @@ i_nread(fp, l, retval, fd, cmd, dat)
 }
 
 static int
-i_fdinsert(fp, l, retval, fd, cmd, dat)
-	struct file *fp;
-	struct lwp *l;
-	register_t *retval;
-	int fd;
-	u_long cmd;
-	caddr_t dat;
+i_fdinsert(struct file *fp, struct lwp *l, register_t *retval, int fd __unused,
+    u_long cmd __unused, caddr_t dat)
 {
 	/*
 	 * Major hack again here. We assume that we are using this to
@@ -1135,13 +1110,8 @@ i_fdinsert(fp, l, retval, fd, cmd, dat)
 
 
 static int
-_i_bind_rsvd(fp, l, retval, fd, cmd, dat)
-	struct file *fp;
-	struct lwp *l;
-	register_t *retval;
-	int fd;
-	u_long cmd;
-	caddr_t dat;
+_i_bind_rsvd(struct file *fp __unused, struct lwp *l, register_t *retval,
+    int fd __unused, u_long cmd __unused, caddr_t dat)
 {
 	struct sys_mknod_args ap;
 
@@ -1159,13 +1129,8 @@ _i_bind_rsvd(fp, l, retval, fd, cmd, dat)
 }
 
 static int
-_i_rele_rsvd(fp, l, retval, fd, cmd, dat)
-	struct file *fp;
-	struct lwp *l;
-	register_t *retval;
-	int fd;
-	u_long cmd;
-	caddr_t dat;
+_i_rele_rsvd(struct file *fp __unused, struct lwp *l, register_t *retval,
+    int fd __unused, u_long cmd __unused, caddr_t dat)
 {
 	struct sys_unlink_args ap;
 
@@ -1179,13 +1144,8 @@ _i_rele_rsvd(fp, l, retval, fd, cmd, dat)
 }
 
 static int
-i_str(fp, l, retval, fd, cmd, dat)
-	struct file *fp;
-	struct lwp *l;
-	register_t *retval;
-	int fd;
-	u_long cmd;
-	caddr_t dat;
+i_str(struct file *fp, struct lwp *l, register_t *retval __unused, int fd,
+    u_long cmd __unused, caddr_t dat)
 {
 	int			 error;
 	struct svr4_strioctl	 ioc;
@@ -1229,13 +1189,8 @@ i_str(fp, l, retval, fd, cmd, dat)
 }
 
 static int
-i_setsig(fp, l, retval, fd, cmd, dat)
-	struct file *fp;
-	struct lwp *l;
-	register_t *retval;
-	int fd;
-	u_long cmd;
-	caddr_t dat;
+i_setsig(struct file *fp, struct lwp *l, register_t *retval __unused, int fd,
+    u_long cmd __unused, caddr_t dat)
 {
 	/*
 	 * This is the best we can do for now; we cannot generate
@@ -1296,13 +1251,8 @@ i_setsig(fp, l, retval, fd, cmd, dat)
 }
 
 static int
-i_getsig(fp, l, retval, fd, cmd, dat)
-	struct file *fp;
-	struct lwp *l;
-	register_t *retval;
-	int fd;
-	u_long cmd;
-	caddr_t dat;
+i_getsig(struct file *fp, struct lwp *l __unused, register_t *retval __unused,
+    int fd __unused, u_long cmd __unused, caddr_t dat)
 {
 	int error;
 

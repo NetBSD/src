@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.25 2006/09/03 05:27:28 christos Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.26 2006/10/12 01:32:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.25 2006/09/03 05:27:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.26 2006/10/12 01:32:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ static int  nbssn_recv(struct nbpcb *nbp, struct mbuf **mpp, int *lenp,
 static int  smb_nbst_disconnect(struct smb_vc *vcp, struct lwp *l);
 
 static int
-nb_setsockopt_int(struct socket *so, int level, int name, int val)
+nb_setsockopt_int(struct socket *so, int level, int name, int val __unused)
 {
 #ifdef __NetBSD__
 	return sosetopt(so, level, name, NULL); /* XXX */
@@ -208,13 +208,13 @@ done:
 }
 
 static int
-nb_intr(struct nbpcb *nbp, struct lwp *l)
+nb_intr(struct nbpcb *nbp __unused, struct lwp *l __unused)
 {
 	return 0;
 }
 
 static void
-nb_upcall(struct socket *so, caddr_t arg, int waitflag)
+nb_upcall(struct socket *so __unused, caddr_t arg, int waitflag __unused)
 {
 	struct nbpcb *nbp = (void *)arg;
 
@@ -391,7 +391,7 @@ nbssn_rq_request(struct nbpcb *nbp, struct lwp *l)
 
 static int
 nbssn_recvhdr(struct nbpcb *nbp, int *lenp,
-	u_int8_t *rpcodep, int flags, struct lwp *l)
+    u_int8_t *rpcodep, int flags, struct lwp *l __unused)
 {
 	struct socket *so = nbp->nbp_tso;
 	struct uio auio;
@@ -563,7 +563,7 @@ out:
  * SMB transport interface
  */
 static int
-smb_nbst_create(struct smb_vc *vcp, struct lwp *l)
+smb_nbst_create(struct smb_vc *vcp, struct lwp *l __unused)
 {
 	struct nbpcb *nbp;
 
@@ -592,7 +592,7 @@ smb_nbst_done(struct smb_vc *vcp, struct lwp *l)
 }
 
 static int
-smb_nbst_bind(struct smb_vc *vcp, struct sockaddr *sap, struct lwp *l)
+smb_nbst_bind(struct smb_vc *vcp, struct sockaddr *sap, struct lwp *l __unused)
 {
 	struct nbpcb *nbp = vcp->vc_tdata;
 	struct sockaddr_nb *snb;
@@ -659,7 +659,7 @@ smb_nbst_connect(struct smb_vc *vcp, struct sockaddr *sap, struct lwp *l)
 }
 
 static int
-smb_nbst_disconnect(struct smb_vc *vcp, struct lwp *l)
+smb_nbst_disconnect(struct smb_vc *vcp, struct lwp *l __unused)
 {
 	struct nbpcb *nbp = vcp->vc_tdata;
 	struct socket *so;
@@ -715,7 +715,7 @@ smb_nbst_recv(struct smb_vc *vcp, struct mbuf **mpp, struct lwp *l)
 }
 
 static void
-smb_nbst_timo(struct smb_vc *vcp)
+smb_nbst_timo(struct smb_vc *vcp __unused)
 {
 
 	/* Nothing */
@@ -733,7 +733,7 @@ smb_nbst_intr(struct smb_vc *vcp)
 }
 
 static int
-smb_nbst_getparam(struct smb_vc *vcp, int param, void *data)
+smb_nbst_getparam(struct smb_vc *vcp __unused, int param, void *data)
 {
 	switch (param) {
 	case SMBTP_SNDSZ:
@@ -770,7 +770,7 @@ smb_nbst_setparam(struct smb_vc *vcp, int param, void *data)
  * Check for fatal errors
  */
 static int
-smb_nbst_fatal(struct smb_vc *vcp, int error)
+smb_nbst_fatal(struct smb_vc *vcp __unused, int error)
 {
 	switch (error) {
 	    case ENOTCONN:

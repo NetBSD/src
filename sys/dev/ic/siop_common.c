@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.39 2006/09/03 05:23:59 christos Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.40 2006/10/12 01:31:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.39 2006/09/03 05:23:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.40 2006/10/12 01:31:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -708,12 +708,8 @@ siop_minphys(bp)
 }
 
 int
-siop_ioctl(chan, cmd, arg, flag, p)
-	struct scsipi_channel *chan;
-	u_long cmd;
-	caddr_t arg;
-	int flag;
-	struct proc *p;
+siop_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t arg __unused,
+    int flag __unused, struct proc *p __unused)
 {
 	struct siop_common_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.12 2005/12/11 12:22:49 christos Exp $ */
+/*	$NetBSD: if_dge.c,v 1.13 2006/10/12 01:31:29 christos Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.12 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.13 2006/10/12 01:31:29 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -583,7 +583,7 @@ dge_getbuf(struct dge_softc *sc)
  * Release a jumbo buffer.
  */
 static void
-dge_freebuf(struct mbuf *m, caddr_t buf, size_t size, void *arg)
+dge_freebuf(struct mbuf *m, caddr_t buf, size_t size __unused, void *arg)
 {
 	struct rxbugentry *entry;
 	struct dge_softc *sc;
@@ -655,7 +655,7 @@ static char (*dge_txseg_evcnt_names)[DGE_NTXSEGS][8 /* "txseg00" + \0 */];
 #endif /* DGE_EVENT_COUNTERS */
 
 static int
-dge_match(struct device *parent, struct cfdata *cf, void *aux)
+dge_match(struct device *parent __unused, struct cfdata *cf __unused, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -667,7 +667,7 @@ dge_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-dge_attach(struct device *parent, struct device *self, void *aux)
+dge_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct dge_softc *sc = (void *) self;
 	struct pci_attach_args *pa = aux;
@@ -2419,7 +2419,7 @@ dge_xgmii_reset(struct dge_softc *sc)
 }
 
 static int
-dge_xgmii_mediachange(struct ifnet *ifp)
+dge_xgmii_mediachange(struct ifnet *ifp __unused)
 {
 	return 0;
 }

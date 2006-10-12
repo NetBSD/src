@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.73 2006/09/15 15:51:13 yamt Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.74 2006/10/12 01:32:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.73 2006/09/15 15:51:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.74 2006/10/12 01:32:54 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -120,7 +120,7 @@ struct uvm_pagerops uvm_vnodeops = {
  */
 
 struct uvm_object *
-uvn_attach(void *arg, vm_prot_t accessprot)
+uvn_attach(void *arg, vm_prot_t accessprot __unused)
 {
 	struct vnode *vp = arg;
 	struct uvm_object *uobj = &vp->v_uobj;

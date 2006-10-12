@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.67 2006/09/03 05:30:48 christos Exp $	*/
+/*	$NetBSD: ss.c,v 1.68 2006/10/12 01:31:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.67 2006/09/03 05:30:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.68 2006/10/12 01:31:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,8 @@ static const struct scsipi_inquiry_pattern ss_patterns[] = {
 };
 
 static int
-ssmatch(struct device *parent, struct cfdata *match, void *aux)
+ssmatch(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
@@ -141,7 +142,7 @@ ssmatch(struct device *parent, struct cfdata *match, void *aux)
  * special handlers into the ss_softc structure
  */
 static void
-ssattach(struct device *parent, struct device *self, void *aux)
+ssattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct ss_softc *ss = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
@@ -185,7 +186,7 @@ ssattach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-ssdetach(struct device *self, int flags)
+ssdetach(struct device *self, int flags __unused)
 {
 	struct ss_softc *ss = device_private(self);
 	int s, cmaj, mn;
@@ -216,7 +217,7 @@ ssdetach(struct device *self, int flags)
 }
 
 static int
-ssactivate(struct device *self, enum devact act)
+ssactivate(struct device *self __unused, enum devact act)
 {
 	int rv = 0;
 
@@ -238,7 +239,7 @@ ssactivate(struct device *self, enum devact act)
  * open the device.
  */
 static int
-ssopen(dev_t dev, int flag, int mode, struct lwp *l)
+ssopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
 {
 	int unit;
 	u_int ssmode;
@@ -310,7 +311,7 @@ bad:
  * occurence of an open device
  */
 static int
-ssclose(dev_t dev, int flag, int mode, struct lwp *l)
+ssclose(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	struct scsipi_periph *periph = ss->sc_periph;
@@ -370,7 +371,7 @@ ssminphys(struct buf *bp)
  * via physio for the actual transfer.
  */
 static int
-ssread(dev_t dev, struct uio *uio, int flag)
+ssread(dev_t dev, struct uio *uio, int flag __unused)
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	int error;

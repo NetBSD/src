@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.114 2006/09/29 14:39:09 christos Exp $	*/
+/*	$NetBSD: ccd.c,v 1.115 2006/10/12 01:30:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.114 2006/09/29 14:39:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.115 2006/10/12 01:30:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -548,7 +548,7 @@ ccdinterleave(struct ccd_softc *cs)
 
 /* ARGSUSED */
 static int
-ccdopen(dev_t dev, int flags, int fmt, struct lwp *l)
+ccdopen(dev_t dev, int flags __unused, int fmt, struct lwp *l __unused)
 {
 	int unit = ccdunit(dev);
 	struct ccd_softc *cs;
@@ -611,7 +611,7 @@ ccdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 
 /* ARGSUSED */
 static int
-ccdclose(dev_t dev, int flags, int fmt, struct lwp *l)
+ccdclose(dev_t dev, int flags __unused, int fmt, struct lwp *l __unused)
 {
 	int unit = ccdunit(dev);
 	struct ccd_softc *cs;
@@ -946,7 +946,7 @@ ccdiodone(struct buf *vbp)
 
 /* ARGSUSED */
 static int
-ccdread(dev_t dev, struct uio *uio, int flags)
+ccdread(dev_t dev, struct uio *uio, int flags __unused)
 {
 	int unit = ccdunit(dev);
 	struct ccd_softc *cs;
@@ -967,7 +967,7 @@ ccdread(dev_t dev, struct uio *uio, int flags)
 
 /* ARGSUSED */
 static int
-ccdwrite(dev_t dev, struct uio *uio, int flags)
+ccdwrite(dev_t dev, struct uio *uio, int flags __unused)
 {
 	int unit = ccdunit(dev);
 	struct ccd_softc *cs;
@@ -1348,7 +1348,8 @@ ccdsize(dev_t dev)
 }
 
 static int
-ccddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+ccddump(dev_t dev __unused, daddr_t blkno __unused, caddr_t va __unused,
+    size_t size __unused)
 {
 
 	/* Not implemented. */

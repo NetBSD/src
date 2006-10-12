@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.44 2006/05/14 21:32:21 elad Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.45 2006/10/12 01:32:51 christos Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.44 2006/05/14 21:32:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.45 2006/10/12 01:32:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -913,7 +913,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp, struct componentname *cnp)
  * to the size of the previous entry.
  */
 int
-ext2fs_dirremove(struct vnode *dvp, struct componentname *cnp)
+ext2fs_dirremove(struct vnode *dvp, struct componentname *cnp __unused)
 {
 	struct inode *dp;
 	struct ext2fs_direct *ep;
@@ -954,7 +954,7 @@ ext2fs_dirremove(struct vnode *dvp, struct componentname *cnp)
  */
 int
 ext2fs_dirrewrite(struct inode *dp, struct inode *ip,
-	struct componentname *cnp)
+    struct componentname *cnp __unused)
 {
 	struct buf *bp;
 	struct ext2fs_direct *ep;

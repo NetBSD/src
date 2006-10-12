@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.9 2006/08/17 17:11:28 christos Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.10 2006/10/12 01:31:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.9 2006/08/17 17:11:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.10 2006/10/12 01:31:01 christos Exp $");
 
 #include "opt_slhci.h"
 
@@ -495,13 +495,13 @@ slhci_open(usbd_pipe_handle pipe)
 }
 
 void
-slhci_softintr(void *arg)
+slhci_softintr(void *arg __unused)
 {
 	DPRINTF(D_TRACE, ("%s()", __FUNCTION__));
 }
 
 void
-slhci_poll(struct usbd_bus *bus)
+slhci_poll(struct usbd_bus *bus __unused)
 {
 	DPRINTF(D_TRACE, ("%s()", __FUNCTION__));
 }
@@ -610,7 +610,7 @@ slhci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 }
 
 void
-slhci_noop(usbd_pipe_handle pipe)
+slhci_noop(usbd_pipe_handle pipe __unused)
 {
 	DPRINTF(D_TRACE, ("%s()", __FUNCTION__));
 }
@@ -1053,19 +1053,19 @@ slhci_root_ctrl_start(usbd_xfer_handle xfer)
 }
 
 void
-slhci_root_ctrl_abort(usbd_xfer_handle xfer)
+slhci_root_ctrl_abort(usbd_xfer_handle xfer __unused)
 {
 	DPRINTF(D_TRACE, ("SLRCabort "));
 }
 
 void
-slhci_root_ctrl_close(usbd_pipe_handle pipe)
+slhci_root_ctrl_close(usbd_pipe_handle pipe __unused)
 {
 	DPRINTF(D_TRACE, ("SLRCclose "));
 }
 
 void
-slhci_root_ctrl_done(usbd_xfer_handle xfer)
+slhci_root_ctrl_done(usbd_xfer_handle xfer __unused)
 {
 	DPRINTF(D_TRACE, ("SLRCdone\n"));
 }
@@ -1104,7 +1104,7 @@ slhci_root_intr_start(usbd_xfer_handle xfer)
 }
 
 static void
-slhci_root_intr_abort(usbd_xfer_handle xfer)
+slhci_root_intr_abort(usbd_xfer_handle xfer __unused)
 {
 	DPRINTF(D_TRACE, ("SLRIabort "));
 }
@@ -1121,7 +1121,7 @@ slhci_root_intr_close(usbd_pipe_handle pipe)
 }
 
 static void
-slhci_root_intr_done(usbd_xfer_handle xfer)
+slhci_root_intr_done(usbd_xfer_handle xfer __unused)
 {
 	//DPRINTF(D_XFER, ("RIdn "));
 }
@@ -1218,13 +1218,13 @@ slhci_device_ctrl_abort(usbd_xfer_handle xfer)
 }
 
 static void
-slhci_device_ctrl_close(usbd_pipe_handle pipe)
+slhci_device_ctrl_close(usbd_pipe_handle pipe __unused)
 {
 	DPRINTF(D_TRACE, ("Ccl "));
 }
 
 static void
-slhci_device_ctrl_done(usbd_xfer_handle xfer)
+slhci_device_ctrl_done(usbd_xfer_handle xfer __unused)
 {
 	DPRINTF(D_TRACE, ("Cdn "));
 }
@@ -1330,77 +1330,77 @@ slhci_device_intr_abort(usbd_xfer_handle xfer)
 }
 
 static void
-slhci_device_intr_close(usbd_pipe_handle pipe)
+slhci_device_intr_close(usbd_pipe_handle pipe __unused)
 {
 	DPRINTF(D_TRACE, ("INTRclose "));
 }
 
 static void
-slhci_device_intr_done(usbd_xfer_handle xfer)
+slhci_device_intr_done(usbd_xfer_handle xfer __unused)
 {
 	DPRINTF(D_TRACE, ("INTRdone "));
 }
 
 static usbd_status
-slhci_device_isoc_transfer(usbd_xfer_handle xfer)
+slhci_device_isoc_transfer(usbd_xfer_handle xfer __unused)
 {
 	DPRINTF(D_TRACE, ("S"));
 	return USBD_NORMAL_COMPLETION;
 }
 
 static usbd_status
-slhci_device_isoc_start(usbd_xfer_handle xfer)
+slhci_device_isoc_start(usbd_xfer_handle xfer __unused)
 {
 	DPRINTF(D_TRACE, ("st "));
 	return USBD_NORMAL_COMPLETION;
 }
 
 static void
-slhci_device_isoc_abort(usbd_xfer_handle xfer)
+slhci_device_isoc_abort(usbd_xfer_handle xfer __unused)
 {
 	DPRINTF(D_TRACE, ("Sab "));
 }
 
 static void
-slhci_device_isoc_close(usbd_pipe_handle pipe)
+slhci_device_isoc_close(usbd_pipe_handle pipe __unused)
 {
 	DPRINTF(D_TRACE, ("Scl "));
 }
 
 static void
-slhci_device_isoc_done(usbd_xfer_handle xfer)
+slhci_device_isoc_done(usbd_xfer_handle xfer __unused)
 {
 	DPRINTF(D_TRACE, ("Sdn "));
 }
 
 static usbd_status
-slhci_device_bulk_transfer(usbd_xfer_handle xfer)
+slhci_device_bulk_transfer(usbd_xfer_handle xfer __unused)
 {
 	DPRINTF(D_TRACE, ("B"));
 	return USBD_NORMAL_COMPLETION;
 }
 
 static usbd_status
-slhci_device_bulk_start(usbd_xfer_handle xfer)
+slhci_device_bulk_start(usbd_xfer_handle xfer __unused)
 {
 	DPRINTF(D_TRACE, ("st "));
 	return USBD_NORMAL_COMPLETION;
 }
 
 static void
-slhci_device_bulk_abort(usbd_xfer_handle xfer)
+slhci_device_bulk_abort(usbd_xfer_handle xfer __unused)
 {
 	DPRINTF(D_TRACE, ("Bab "));
 }
 
 static void
-slhci_device_bulk_close(usbd_pipe_handle pipe)
+slhci_device_bulk_close(usbd_pipe_handle pipe __unused)
 {
 	DPRINTF(D_TRACE, ("Bcl "));
 }
 
 static void
-slhci_device_bulk_done(usbd_xfer_handle xfer)
+slhci_device_bulk_done(usbd_xfer_handle xfer __unused)
 {
 	DPRINTF(D_TRACE, ("Bdn "));
 }
@@ -1526,7 +1526,7 @@ slhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 }
 
 void
-slhci_device_clear_toggle(usbd_pipe_handle pipe)
+slhci_device_clear_toggle(usbd_pipe_handle pipe __unused)
 {
 	DPRINTF(D_TRACE, ("SLdevice_clear_toggle "));
 }

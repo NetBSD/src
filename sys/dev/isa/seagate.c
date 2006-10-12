@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.59 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: seagate.c,v 1.60 2006/10/12 01:31:17 christos Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.59 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.60 2006/10/12 01:31:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,10 +327,8 @@ sea_queue_length(sea)
  * Returns 1 if card recognized, 0 if errors.
  */
 int
-seaprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+seaprobe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	int i, type = 0;
@@ -388,9 +386,7 @@ seaprobe(parent, match, aux)
  * Attach all sub-devices we can find
  */
 void
-seaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+seaattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct sea_softc *sea = (void *)self;
@@ -665,9 +661,7 @@ sea_scsipi_request(chan, req, arg)
  * put it in the hash table too; otherwise return an error or sleep.
  */
 struct sea_scb *
-sea_get_scb(sea, flags)
-	struct sea_softc *sea;
-	int flags;
+sea_get_scb(struct sea_softc *sea, int flags __unused)
 {
 	int s;
 	struct sea_scb *scb;
@@ -827,10 +821,7 @@ sea_grow_scb(sea)
 	sea->sc_adapter.adapt_openings++;
 }
 void
-sea_free_scb(sea, scb, flags)
-	struct sea_softc *sea;
-	struct sea_scb *scb;
-	int flags;
+sea_free_scb(struct sea_softc *sea, struct sea_scb *scb, int flags __unused)
 {
 	int s;
 
@@ -1251,10 +1242,7 @@ sea_done(sea, scb)
  * Wait for completion of command in polled mode.
  */
 int
-sea_poll(sea, xs, count)
-	struct sea_softc *sea;
-	struct scsipi_xfer *xs;
-	int count;
+sea_poll(struct sea_softc *sea __unused, struct scsipi_xfer *xs, int count)
 {
 	int s;
 

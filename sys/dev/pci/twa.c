@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.14 2006/10/11 05:12:06 jmcneill Exp $ */
+/*	$NetBSD: twa.c,v 1.15 2006/10/12 01:31:33 christos Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.14 2006/10/11 05:12:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.15 2006/10/12 01:31:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,7 +439,8 @@ twa_request_wait_handler(struct twa_request *tr)
 }
 
 static int
-twa_match(struct device *parent, struct cfdata *cfdata, void *aux)
+twa_match(struct device *parent __unused, struct cfdata *cfdata __unused,
+    void *aux)
 {
 	int i;
 	struct pci_attach_args *pa = aux;
@@ -1526,7 +1527,7 @@ twa_setup(struct twa_softc *sc)
 void *twa_sdh;
 
 static void
-twa_attach(struct device *parent, struct device *self, void *aux)
+twa_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct twa_softc *sc;
@@ -1635,7 +1636,7 @@ twa_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-twa_shutdown(void *arg)
+twa_shutdown(void *arg __unused)
 {
 	extern struct cfdriver twa_cd;
 	struct twa_softc *sc;
@@ -2114,7 +2115,7 @@ bail:
  * Accept an open operation on the control device.
  */
 static int
-twaopen(dev_t dev, int flag, int mode, struct lwp *l)
+twaopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
 {
 	struct twa_softc *twa;
 
@@ -2130,7 +2131,8 @@ twaopen(dev_t dev, int flag, int mode, struct lwp *l)
  * Accept the last close on the control device.
  */
 static int
-twaclose(dev_t dev, int flag, int mode, struct lwp *l)
+twaclose(dev_t dev, int flag __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	struct twa_softc *twa;
 
@@ -2153,7 +2155,8 @@ twaclose(dev_t dev, int flag, int mode, struct lwp *l)
  *			non-zero-- failure
  */
 static int
-twaioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+twaioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
+    struct lwp *l __unused)
 {
 	struct twa_softc *sc;
 	struct twa_ioctl_9k	*user_buf = (struct twa_ioctl_9k *)data;
@@ -2685,7 +2688,7 @@ static int
 twa_init_connection(struct twa_softc *sc, uint16_t message_credits,
     uint32_t set_features, uint16_t current_fw_srl,
     uint16_t current_fw_arch_id, uint16_t current_fw_branch,
-    uint16_t current_fw_build, uint16_t *fw_on_ctlr_srl,
+    uint16_t current_fw_build __unused, uint16_t *fw_on_ctlr_srl,
     uint16_t *fw_on_ctlr_arch_id, uint16_t *fw_on_ctlr_branch,
     uint16_t *fw_on_ctlr_build, uint32_t *init_connect_result)
 {

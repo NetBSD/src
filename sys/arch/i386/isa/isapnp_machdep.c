@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.c,v 1.10 2005/12/11 12:17:43 christos Exp $	*/
+/*	$NetBSD: isapnp_machdep.c,v 1.11 2006/10/12 01:30:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.10 2005/12/11 12:17:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.11 2006/10/12 01:30:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ isapnp_map(struct isapnp_softc *sc)
  *	Unmap I/O regions used by PnP
  */
 void
-isapnp_unmap(struct isapnp_softc *sc)
+isapnp_unmap(struct isapnp_softc *sc __unused)
 {
 
 	/* Do nothing. */
@@ -131,7 +131,7 @@ isapnp_map_readport(struct isapnp_softc *sc)
  *	Pretend to unmap a previously mapped `read port'.
  */
 void
-isapnp_unmap_readport(struct isapnp_softc *sc)
+isapnp_unmap_readport(struct isapnp_softc *sc __unused)
 {
 
 	/* Do nothing */

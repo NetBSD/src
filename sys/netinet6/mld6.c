@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.32 2006/03/06 20:33:52 rpaulo Exp $	*/
+/*	$NetBSD: mld6.c,v 1.33 2006/10/12 01:32:39 christos Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.32 2006/03/06 20:33:52 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.33 2006/10/12 01:32:39 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -571,11 +571,8 @@ mld_sendpkt(in6m, type, dst)
 }
 
 static struct mld_hdr *
-mld_allocbuf(mh, len, in6m, type)
-	struct mbuf **mh;
-	int len;
-	struct in6_multi *in6m;
-	int type;
+mld_allocbuf(struct mbuf **mh, int len, struct in6_multi *in6m __unused,
+    int type)
 {
 	struct mbuf *md;
 	struct mld_hdr *mldh;

@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.94 2006/08/28 21:33:16 christos Exp $ */
+/* $NetBSD: wskbd.c,v 1.95 2006/10/12 01:32:06 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.94 2006/08/28 21:33:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.95 2006/10/12 01:32:06 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -342,7 +342,7 @@ wskbd_update_layout(struct wskbd_internal *id, kbd_t enc)
  * Print function (for parent devices).
  */
 int
-wskbddevprint(void *aux, const char *pnp)
+wskbddevprint(void *aux __unused, const char *pnp)
 {
 #if 0
 	struct wskbddev_attach_args *ap = aux;
@@ -358,7 +358,7 @@ wskbddevprint(void *aux, const char *pnp)
 }
 
 int
-wskbd_match(struct device *parent, struct cfdata *match, void *aux)
+wskbd_match(struct device *parent __unused, struct cfdata *match, void *aux)
 {
 	struct wskbddev_attach_args *ap = aux;
 
@@ -378,7 +378,7 @@ wskbd_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-wskbd_attach(struct device *parent, struct device *self, void *aux)
+wskbd_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)self;
 	struct wskbddev_attach_args *ap = aux;
@@ -555,7 +555,7 @@ wskbd_activate(struct device *self, enum devact act)
  * vnode and return (which will deallocate the softc).
  */
 int
-wskbd_detach(struct device  *self, int flags)
+wskbd_detach(struct device  *self, int flags __unused)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)self;
 	struct wseventvar *evar;
@@ -782,7 +782,7 @@ wskbd_mux_open(struct wsevsrc *me, struct wseventvar *evp)
 #endif
 
 int
-wskbdopen(dev_t dev, int flags, int mode, struct lwp *l)
+wskbdopen(dev_t dev, int flags, int mode __unused, struct lwp *l)
 {
 	struct wskbd_softc *sc;
 	struct wseventvar *evar;
@@ -839,7 +839,8 @@ wskbd_do_open(struct wskbd_softc *sc, struct wseventvar *evp)
 }
 
 int
-wskbdclose(dev_t dev, int flags, int mode, struct lwp *l)
+wskbdclose(dev_t dev, int flags __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	struct wskbd_softc *sc =
 	    (struct wskbd_softc *)wskbd_cd.cd_devs[minor(dev)];
@@ -1301,7 +1302,7 @@ wskbd_add_mux(int unit, struct wsmux_softc *muxsc)
  * Console interface.
  */
 int
-wskbd_cngetc(dev_t dev)
+wskbd_cngetc(dev_t dev __unused)
 {
 	static int num = 0;
 	static int pos;
@@ -1343,7 +1344,7 @@ wskbd_cngetc(dev_t dev)
 }
 
 void
-wskbd_cnpollc(dev_t dev, int poll)
+wskbd_cnpollc(dev_t dev __unused, int poll)
 {
 
 	if (!wskbd_console_initted)
@@ -1358,7 +1359,7 @@ wskbd_cnpollc(dev_t dev, int poll)
 }
 
 void
-wskbd_cnbell(dev_t dev, u_int pitch, u_int period, u_int volume)
+wskbd_cnbell(dev_t dev __unused, u_int pitch, u_int period, u_int volume)
 {
 
 	if (!wskbd_console_initted)

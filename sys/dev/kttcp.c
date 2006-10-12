@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.19 2006/10/08 16:53:43 rpaulo Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.20 2006/10/12 01:30:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.19 2006/10/08 16:53:43 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.20 2006/10/12 01:30:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -103,13 +103,14 @@ const struct cdevsw kttcp_cdevsw = {
 };
 
 void
-kttcpattach(int count)
+kttcpattach(int count __unused)
 {
 	/* Do nothing. */
 }
 
 int
-kttcpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+kttcpioctl(dev_t dev __unused, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	int error;
 
@@ -382,7 +383,7 @@ nopages:
 
 static int
 kttcp_soreceive(struct socket *so, unsigned long long slen,
-		unsigned long long *done, struct lwp *l, int *flagsp)
+    unsigned long long *done, struct lwp *l __unused, int *flagsp)
 {
 	struct mbuf *m, **mp;
 	int flags, len, error, s, offset, moff, type;

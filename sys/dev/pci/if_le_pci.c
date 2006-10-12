@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.43 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.44 2006/10/12 01:31:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.43 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.44 2006/10/12 01:31:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,8 @@ le_pci_mediachange(struct lance_softc *sc)
 }
 
 static int
-le_pci_match(struct device *parent, struct cfdata *match, void *aux)
+le_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -229,7 +230,7 @@ le_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-le_pci_attach(struct device *parent, struct device *self, void *aux)
+le_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct le_softc *lesc = (void *)self;
 	struct lance_softc *sc = &lesc->sc_am79900.lsc;

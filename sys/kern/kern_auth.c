@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.26 2006/10/02 16:29:57 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.27 2006/10/12 01:32:14 christos Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.26 2006/10/02 16:29:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.27 2006/10/12 01:32:14 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -354,7 +354,8 @@ kauth_cred_group(kauth_cred_t cred, u_int idx)
 
 /* XXX elad: gmuid is unused for now. */
 int
-kauth_cred_setgroups(kauth_cred_t cred, gid_t *grbuf, size_t len, uid_t gmuid)
+kauth_cred_setgroups(kauth_cred_t cred, gid_t *grbuf, size_t len,
+    uid_t gmuid __unused)
 {
 	KASSERT(cred != NULL);
 	KASSERT(cred->cr_refcnt == 1);
@@ -648,7 +649,7 @@ kauth_deregister_scope(kauth_scope_t scope)
  */
 kauth_listener_t
 kauth_listen_scope(const char *id, kauth_scope_callback_t callback,
-		   void *cookie)
+    void *cookie __unused)
 {
 	kauth_scope_t scope;
 	kauth_listener_t listener;

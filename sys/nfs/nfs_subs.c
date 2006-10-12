@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.170 2006/09/04 08:38:16 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.171 2006/10/12 01:32:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.170 2006/09/04 08:38:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.171 2006/10/12 01:32:47 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1299,9 +1299,7 @@ nfs_putdircache(np, ndp)
 }
 
 static void
-nfs_putdircache_unlocked(np, ndp)
-	struct nfsnode *np;
-	struct nfsdircache *ndp;
+nfs_putdircache_unlocked(struct nfsnode *np __unused, struct nfsdircache *ndp)
 {
 	int ref;
 
@@ -1385,11 +1383,8 @@ nfs_searchdircache(vp, off, do32, hashent)
 
 
 struct nfsdircache *
-nfs_enterdircache(vp, off, blkoff, en, blkno)
-	struct vnode *vp;
-	off_t off, blkoff;
-	int en;
-	daddr_t blkno;
+nfs_enterdircache(struct vnode *vp, off_t off, off_t blkoff, int en,
+    daddr_t blkno __unused)
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsdirhashhead *ndhp;
@@ -2523,16 +2518,17 @@ nfsm_srvfattr(nfsd, vap, fp)
  *	- if not lockflag unlock it with VOP_UNLOCK()
  */
 int
-nfsrv_fhtovp(nsfh, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
-	nfsrvfh_t *nsfh;
-	int lockflag;
-	struct vnode **vpp;
-	kauth_cred_t cred;
-	struct nfssvc_sock *slp;
-	struct mbuf *nam;
-	int *rdonlyp;
-	int kerbflag;
-	int pubflag;
+nfsrv_fhtovp(
+    nfsrvfh_t *nsfh,
+    int lockflag,
+    struct vnode **vpp,
+    kauth_cred_t cred,
+    struct nfssvc_sock *slp __unused,
+    struct mbuf *nam,
+    int *rdonlyp,
+    int kerbflag,
+    int pubflag
+)
 {
 	struct mount *mp;
 	kauth_cred_t credanon;

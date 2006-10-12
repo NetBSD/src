@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.12 2006/06/08 04:23:34 freza Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.13 2006/10/12 01:31:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.12 2006/06/08 04:23:34 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.13 2006/10/12 01:31:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -146,7 +146,8 @@ sysmon_power_event_queue_flush(void)
  *	Open the system monitor device.
  */
 int
-sysmonopen_power(dev_t dev, int flag, int mode, struct lwp *l)
+sysmonopen_power(dev_t dev __unused, int flag __unused, int mode __unused,
+    struct lwp *l)
 {
 	int error = 0;
 
@@ -168,7 +169,8 @@ sysmonopen_power(dev_t dev, int flag, int mode, struct lwp *l)
  *	Close the system monitor device.
  */
 int
-sysmonclose_power(dev_t dev, int flag, int mode, struct lwp *l)
+sysmonclose_power(dev_t dev __unused, int flag __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	int count;
 
@@ -191,7 +193,7 @@ sysmonclose_power(dev_t dev, int flag, int mode, struct lwp *l)
  *	Read the system monitor device.
  */
 int
-sysmonread_power(dev_t dev, struct uio *uio, int flags)
+sysmonread_power(dev_t dev __unused, struct uio *uio, int flags)
 {
 	power_event_t pev;
 	int error;
@@ -228,7 +230,7 @@ sysmonread_power(dev_t dev, struct uio *uio, int flags)
  *	Poll the system monitor device.
  */
 int
-sysmonpoll_power(dev_t dev, int events, struct lwp *l)
+sysmonpoll_power(dev_t dev __unused, int events, struct lwp *l)
 {
 	int revents;
 
@@ -259,7 +261,7 @@ filt_sysmon_power_rdetach(struct knote *kn)
 }
 
 static int
-filt_sysmon_power_read(struct knote *kn, long hint)
+filt_sysmon_power_read(struct knote *kn, long hint __unused)
 {
 
 	simple_lock(&sysmon_power_event_queue_slock);
@@ -281,7 +283,7 @@ static const struct filterops sysmon_power_write_filtops =
  *	Kqueue filter for the system monitor device.
  */
 int
-sysmonkqfilter_power(dev_t dev, struct knote *kn)
+sysmonkqfilter_power(dev_t dev __unused, struct knote *kn)
 {
 	struct klist *klist;
 
@@ -313,7 +315,8 @@ sysmonkqfilter_power(dev_t dev, struct knote *kn)
  *	Perform a power managmenet control request.
  */
 int
-sysmonioctl_power(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+sysmonioctl_power(dev_t dev __unused, u_long cmd, caddr_t data,
+    int flag __unused, struct lwp *l __unused)
 {
 	int error = 0;
 

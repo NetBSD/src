@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.11 2006/09/03 05:01:32 christos Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.12 2006/10/12 01:31:33 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.11 2006/09/03 05:01:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.12 2006/10/12 01:31:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -56,7 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.11 2006/09/03 05:01:32 christos Exp
 #include <dev/pci/pciio.h>
 
 static int
-pciopen(dev_t dev, int flags, int mode, struct lwp *l)
+pciopen(dev_t dev, int flags __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	struct pci_softc *sc;
 	int unit;
@@ -70,7 +71,7 @@ pciopen(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 static int
-pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l __unused)
 {
 	struct pci_softc *sc = device_lookup(&pci_cd, minor(dev));
 	struct pciio_bdf_cfgreg *bdfr = (void *) data;
@@ -109,7 +110,7 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 static paddr_t
-pcimmap(dev_t dev, off_t offset, int prot)
+pcimmap(dev_t dev __unused, off_t offset __unused, int prot __unused)
 {
 #if 0
 	struct pci_softc *sc = device_lookup(&pci_cd, minor(dev));
@@ -140,7 +141,7 @@ const struct cdevsw pci_cdevsw = {
  */
 int
 pci_devioctl(pci_chipset_tag_t pc, pcitag_t tag, u_long cmd, caddr_t data,
-    int flag, struct lwp *l)
+    int flag, struct lwp *l __unused)
 {
 	struct pciio_cfgreg *r = (void *) data;
 

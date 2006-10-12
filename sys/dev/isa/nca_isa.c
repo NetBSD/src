@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_isa.c,v 1.16 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: nca_isa.c,v 1.17 2006/10/12 01:31:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nca_isa.c,v 1.16 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nca_isa.c,v 1.17 2006/10/12 01:31:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,10 +252,8 @@ nca_isa_find(iot, ioh, max_offset, epd)
  * If so, call the real probe to see what it is.
  */
 int
-nca_isa_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+nca_isa_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -314,9 +312,7 @@ nca_isa_match(parent, match, aux)
  * Attach this instance, and then all the sub-devices
  */
 void
-nca_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+nca_isa_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct nca_isa_softc *esc = (void *)self;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.16 2005/12/11 12:22:42 christos Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.17 2006/10/12 01:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.16 2005/12/11 12:22:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.17 2006/10/12 01:31:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,8 @@ static const struct mii_phydesc gphyters[] = {
 };
 
 static int
-gphytermatch(struct device *parent, struct cfdata *match, void *aux)
+gphytermatch(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -129,7 +130,7 @@ gphytermatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-gphyterattach(struct device *parent, struct device *self, void *aux)
+gphyterattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;

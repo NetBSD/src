@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.43 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.44 2006/10/12 01:32:30 christos Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.43 2006/07/23 22:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.44 2006/10/12 01:32:30 christos Exp $");
 
 #include "ppp.h"
 
@@ -202,7 +202,7 @@ static void	pppdumpframe(struct ppp_softc *sc, struct mbuf* m, int xmit);
  */
 /* ARGSUSED */
 static int
-pppopen(dev_t dev, struct tty *tp)
+pppopen(dev_t dev __unused, struct tty *tp)
 {
     struct lwp *l = curlwp;		/* XXX */
     struct ppp_softc *sc;
@@ -264,7 +264,7 @@ pppopen(dev_t dev, struct tty *tp)
  * Mimics part of ttyclose().
  */
 static int
-pppclose(struct tty *tp, int flag)
+pppclose(struct tty *tp, int flag __unused)
 {
     struct ppp_softc *sc;
     int s;
@@ -374,7 +374,7 @@ pppread(struct tty *tp, struct uio *uio, int flag)
  * Line specific (tty) write routine.
  */
 static int
-pppwrite(struct tty *tp, struct uio *uio, int flag)
+pppwrite(struct tty *tp, struct uio *uio, int flag __unused)
 {
     struct ppp_softc *sc = (struct ppp_softc *)tp->t_sc;
     struct mbuf *m, *m0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.24 2006/09/19 21:42:29 elad Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.25 2006/10/12 01:32:10 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -140,11 +140,9 @@ const struct cdevsw ipl_cdevsw = {
 
 static int fr_check_wrapper(void *, struct mbuf **, struct ifnet *, int );
 
-static int fr_check_wrapper(arg, mp, ifp, dir)
-void *arg;
-struct mbuf **mp;
-struct ifnet *ifp;
-int dir;
+static int
+fr_check_wrapper(void *arg __unused, struct mbuf **mp, struct ifnet *ifp,
+    int dir)
 {
 	struct ip *ip;
 	int rv, hlen;
@@ -211,11 +209,9 @@ int dir;
 
 static int fr_check_wrapper6(void *, struct mbuf **, struct ifnet *, int );
 
-static int fr_check_wrapper6(arg, mp, ifp, dir)
-void *arg;
-struct mbuf **mp;
-struct ifnet *ifp;
-int dir;
+static int
+fr_check_wrapper6(void *arg __unused, struct mbuf **mp, struct ifnet *ifp,
+    int dir)
 {
 #if defined(INET6)
 #  if defined(M_CSUM_TCPv6) && (__NetBSD_Version__ > 200000000)
@@ -243,11 +239,8 @@ int dir;
 # if defined(PFIL_TYPE_IFNET) && defined(PFIL_IFNET)
 static int ipf_pfilsync(void *, struct mbuf **, struct ifnet *, int);
 
-static int ipf_pfilsync(hdr, mp, ifp, dir)
-void *hdr;
-struct mbuf **mp;
-struct ifnet *ifp;
-int dir;
+static int ipf_pfilsync(void *hdr __unused, struct mbuf **mp __unused,
+    struct ifnet *ifp __unused, int dir __unused)
 {
 	/*
 	 * The interface pointer is useless for create (we have nothing to
@@ -280,8 +273,7 @@ char *s;
  */
 #if defined(PFIL_HOOKS)
 void
-ipfilterattach(count)
-int count;
+ipfilterattach(int count __unused)
 {
 # if 0
 	if (iplattach() != 0)
@@ -734,20 +726,18 @@ void *ifp;
 /*
  * routines below for saving IP headers to buffer
  */
-int iplopen(dev, flags
+int iplopen(
+    dev_t dev __unused,
+    int flags __unused,
 #if (NetBSD >= 199511)
-, devtype, p)
-int devtype;
-# if  (__NetBSD_Version__ >= 399001400)
-struct lwp *p;
-# else
-struct proc *p;
-# endif
-#else
-)
+    int devtype __unused,
 #endif
-dev_t dev;
-int flags;
+# if  (__NetBSD_Version__ >= 399001400)
+    struct lwp *p __unused
+# else
+    struct proc *p __unused
+# endif
+)
 {
 	u_int xmin = GET_MINOR(dev);
 
@@ -759,20 +749,18 @@ int flags;
 }
 
 
-int iplclose(dev, flags
+int iplclose(
+    dev_t dev __unused,
+    int flags __unused,
 #if (NetBSD >= 199511)
-, devtype, p)
-int devtype;
-# if  (__NetBSD_Version__ >= 399001400)
-struct lwp *p;
-# else
-struct proc *p;
-# endif
-#else
-)
+    int devtype __unused,
 #endif
-dev_t dev;
-int flags;
+# if  (__NetBSD_Version__ >= 399001400)
+    struct lwp *p __unused
+# else
+    struct proc *p __unused
+# endif
+)
 {
 	u_int	xmin = GET_MINOR(dev);
 
@@ -789,14 +777,13 @@ int flags;
  * called during packet processing and cause an inconsistancy to appear in
  * the filter lists.
  */
+int iplread(
+    dev_t dev,
+    struct uio *uio,
 #if (BSD >= 199306)
-int iplread(dev, uio, ioflag)
-int ioflag;
-#else
-int iplread(dev, uio)
+    int ioflag __unused
 #endif
-dev_t dev;
-register struct uio *uio;
+)
 {
 
 # ifdef	IPFILTER_SYNC
@@ -818,14 +805,13 @@ register struct uio *uio;
  * called during packet processing and cause an inconsistancy to appear in
  * the filter lists.
  */
+int iplwrite(
+    dev_t dev __unused,
+    struct uio *uio __unused,
 #if (BSD >= 199306)
-int iplwrite(dev, uio, ioflag)
-int ioflag;
-#else
-int iplwrite(dev, uio)
+    int ioflag __unused
 #endif
-dev_t dev;
-register struct uio *uio;
+)
 {
 
 #ifdef	IPFILTER_SYNC
@@ -1691,8 +1677,7 @@ fr_info_t *fin;
 /*                                                                          */
 /* Returns the next IPv4 ID to use for this packet.                         */
 /* ------------------------------------------------------------------------ */
-u_short fr_nextipid(fin)
-fr_info_t *fin;
+u_short fr_nextipid(fr_info_t *fin __unused)
 {
 	static u_short ipid = 0;
 	u_short id;

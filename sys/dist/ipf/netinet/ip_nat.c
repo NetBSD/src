@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.15 2006/09/19 21:42:29 elad Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.16 2006/10/12 01:32:10 christos Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -2410,13 +2410,14 @@ done:
 /* for both IPv4 and IPv6.                                                  */
 /* ------------------------------------------------------------------------ */
 /*ARGSUSED*/
-static int nat_finalise(fin, nat, ni, tcp, natsave, direction)
-fr_info_t *fin;
-nat_t *nat;
-natinfo_t *ni;
-tcphdr_t *tcp;
-nat_t **natsave;
-int direction;
+static int nat_finalise(
+    fr_info_t *fin,
+    nat_t *nat,
+    natinfo_t *ni,
+    tcphdr_t *tcp __unused,
+    nat_t **natsave,
+    int direction
+)
 {
 	frentry_t *fr;
 	ipnat_t *np;

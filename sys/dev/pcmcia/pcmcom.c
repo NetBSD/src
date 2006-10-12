@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.27 2006/07/13 22:56:02 gdamore Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.28 2006/10/12 01:31:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.27 2006/07/13 22:56:02 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.28 2006/10/12 01:31:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,10 +119,8 @@ void	pcmcom_disable(struct pcmcom_softc *);
 int	pcmcom_intr(void *);
 
 int
-pcmcom_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+pcmcom_match(struct device *parent __unused, struct cfdata *cf __unused,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -143,9 +141,7 @@ pcmcom_validate_config(cfe)
 }
 
 void
-pcmcom_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcmcom_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pcmcom_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
@@ -343,10 +339,8 @@ int	com_pcmcom_enable(struct com_softc *);
 void	com_pcmcom_disable(struct com_softc *);
 
 int
-com_pcmcom_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+com_pcmcom_match(struct device *parent __unused, struct cfdata *cf __unused,
+    void *aux __unused)
 {
 
 	/* Device is always present. */
@@ -354,9 +348,8 @@ com_pcmcom_match(parent, cf, aux)
 }
 
 void
-com_pcmcom_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_pcmcom_attach(struct device *parent __unused, struct device *self,
+    void *aux)
 {
 	struct com_softc *sc = (struct com_softc *)self;
 	struct pcmcom_attach_args *pca = aux;

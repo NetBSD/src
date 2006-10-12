@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphyter.c,v 1.23 2006/02/18 14:17:52 thorpej Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.24 2006/10/12 01:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.23 2006/02/18 14:17:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.24 2006/10/12 01:31:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,8 @@ static const struct mii_phydesc nsphyters[] = {
 };
 
 static int
-nsphytermatch(struct device *parent, struct cfdata *match, void *aux)
+nsphytermatch(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -132,7 +133,7 @@ nsphytermatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-nsphyterattach(struct device *parent, struct device *self, void *aux)
+nsphyterattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;

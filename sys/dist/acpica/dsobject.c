@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsobject.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsobject.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
 
 #define __DSOBJECT_C__
 
@@ -256,7 +256,7 @@ AcpiDsBuildInternalObject (
 
 ACPI_STATUS
 AcpiDsBuildInternalBufferObj (
-    ACPI_WALK_STATE         *WalkState,
+    ACPI_WALK_STATE         *WalkState __unused,
     ACPI_PARSE_OBJECT       *Op,
     UINT32                  BufferLength,
     ACPI_OPERAND_OBJECT     **ObjDescPtr)

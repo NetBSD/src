@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.31 2006/03/29 06:22:38 thorpej Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.32 2006/10/12 01:30:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.31 2006/03/29 06:22:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.32 2006/10/12 01:30:55 christos Exp $");
 
 #include "opt_cardslot.h"
 
@@ -80,10 +80,8 @@ CFATTACH_DECL(cardslot, sizeof(struct cardslot_softc),
     cardslotmatch, cardslotattach, NULL, NULL);
 
 STATIC int
-cardslotmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cardslotmatch(struct device *parent __unused, struct cfdata *cf __unused,
+    void *aux)
 {
 	struct cardslot_attach_args *caa = aux;
 
@@ -98,10 +96,8 @@ cardslotmatch(parent, cf, aux)
 
 
 STATIC void
-cardslotattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+cardslotattach(struct device *parent __unused, struct device *self,
+    void *aux)
 {
 	struct cardslot_softc *sc = device_private(self);
 	struct cardslot_attach_args *caa = aux;
@@ -185,11 +181,8 @@ cardslot_cb_print(aux, pnp)
 
 
 static int
-cardslot_16_submatch(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+cardslot_16_submatch(struct device *parent, struct cfdata *cf,
+    const int *ldesc __unused, void *aux)
 {
 
 	if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] != PCMCIABUSCF_CONTROLLER_DEFAULT
@@ -207,9 +200,7 @@ cardslot_16_submatch(parent, cf, ldesc, aux)
 
 
 static int
-cardslot_16_print(arg, pnp)
-	void *arg;
-	const char *pnp;
+cardslot_16_print(void *arg __unused, const char *pnp)
 {
 
 	if (pnp) {

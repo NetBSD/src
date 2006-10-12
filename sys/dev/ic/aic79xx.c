@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.34 2006/03/08 23:46:24 lukem Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.35 2006/10/12 01:30:58 christos Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.34 2006/03/08 23:46:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.35 2006/10/12 01:30:58 christos Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -871,7 +871,7 @@ ahd_handle_hwerrint(struct ahd_softc *ahd)
 }
 
 void
-ahd_handle_seqint(struct ahd_softc *ahd, u_int intstat)
+ahd_handle_seqint(struct ahd_softc *ahd, u_int intstat __unused)
 {
 	u_int seqintcode;
 
@@ -1494,7 +1494,7 @@ ahd_handle_seqint(struct ahd_softc *ahd, u_int intstat)
 }
 
 void
-ahd_handle_scsiint(struct ahd_softc *ahd, u_int intstat)
+ahd_handle_scsiint(struct ahd_softc *ahd, u_int intstat __unused)
 {
 	struct scb	*scb;
 	u_int		 status0;
@@ -2693,7 +2693,7 @@ ahd_dump_sglist(struct scb *scb)
  * transfer negotiation data structures.
  */
 static struct ahd_tmode_tstate *
-ahd_alloc_tstate(struct ahd_softc *ahd, u_int scsi_id, char channel)
+ahd_alloc_tstate(struct ahd_softc *ahd, u_int scsi_id, char channel __unused)
 {
 	struct ahd_tmode_tstate *master_tstate;
 	struct ahd_tmode_tstate *tstate;
@@ -2810,7 +2810,7 @@ ahd_devlimited_syncrate(struct ahd_softc *ahd,
  * if this was the beginning of an SDTR.
  */
 void
-ahd_find_syncrate(struct ahd_softc *ahd, u_int *period,
+ahd_find_syncrate(struct ahd_softc *ahd __unused, u_int *period,
 		  u_int *ppr_options, u_int maxsync)
 {
 	if (*period < maxsync)
@@ -2851,7 +2851,7 @@ ahd_find_syncrate(struct ahd_softc *ahd, u_int *period,
 void
 ahd_validate_offset(struct ahd_softc *ahd,
 		    struct ahd_initiator_tinfo *tinfo,
-		    u_int period, u_int *offset, int wide,
+		    u_int period, u_int *offset, int wide __unused,
 		    role_t role)
 {
 	u_int maxoffset;
@@ -3424,7 +3424,7 @@ ahd_compile_devinfo(struct ahd_devinfo *devinfo, u_int our_id, u_int target,
 }
 
 static void
-ahd_scb_devinfo(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
+ahd_scb_devinfo(struct ahd_softc *ahd __unused, struct ahd_devinfo *devinfo,
 		struct scb *scb)
 {
 	role_t	role;
@@ -4747,7 +4747,8 @@ ahd_handle_msg_reject(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
  * Process an ignore wide residue message.
  */
 static void
-ahd_handle_ign_wide_residue(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
+ahd_handle_ign_wide_residue(struct ahd_softc *ahd,
+    struct ahd_devinfo *devinfo __unused)
 {
 	u_int scb_index;
 	struct scb *scb;
@@ -6950,8 +6951,8 @@ ahd_busy_tcl(struct ahd_softc *ahd, u_int tcl, u_int scbid)
 
 /************************** SCB and SCB queue management **********************/
 int
-ahd_match_scb(struct ahd_softc *ahd, struct scb *scb, int target,
-	      char channel, int lun, u_int tag, role_t role)
+ahd_match_scb(struct ahd_softc *ahd __unused, struct scb *scb, int target,
+	      char channel, int lun, u_int tag, role_t role __unused)
 {
 	int targ = SCB_GET_TARGET(ahd, scb);
 	char chan = SCB_GET_CHANNEL(ahd, scb);
@@ -7277,7 +7278,7 @@ ahd_search_qinfifo(struct ahd_softc *ahd, int target, char channel,
 
 static int
 ahd_search_scb_list(struct ahd_softc *ahd, int target, char channel,
-		    int lun, u_int tag, role_t role, uint32_t status,
+		    int lun, u_int tag __unused, role_t role, uint32_t status,
 		    ahd_search_action action, u_int *list_head, u_int tid)
 {
 	struct	scb *scb;
@@ -7418,14 +7419,16 @@ ahd_rem_wscb(struct ahd_softc *ahd, u_int scbid,
  * performing SCB paging.
  */
 static void
-ahd_add_scb_to_free_list(struct ahd_softc *ahd, u_int scbid)
+ahd_add_scb_to_free_list(struct ahd_softc *ahd __unused, u_int scbid __unused)
 {
+#ifdef notdef
 /* XXX Need some other mechanism to designate "free". */
 	/*
 	 * Invalidate the tag so that our abort
 	 * routines don't think it's active.
-	ahd_outb(ahd, SCB_TAG, SCB_LIST_NULL);
 	 */
+	ahd_outb(ahd, SCB_TAG, SCB_LIST_NULL);
+#endif
 }
 
 /******************************** Error Handling ******************************/
@@ -8572,7 +8575,7 @@ ahd_dump_all_cards_state(void)
 
 int
 ahd_print_register(ahd_reg_parse_entry_t *table, u_int num_entries,
-		   const char *name, u_int address, u_int value,
+		   const char *name, u_int address __unused, u_int value,
 		   u_int *cur_column, u_int wrap_point)
 {
 	int	printed;
@@ -9061,7 +9064,7 @@ ahd_verify_cksum(struct seeprom_config *sc)
 }
 
 int
-ahd_acquire_seeprom(struct ahd_softc *ahd)
+ahd_acquire_seeprom(struct ahd_softc *ahd __unused)
 {
 	/*
 	 * We should be able to determine the SEEPROM type
@@ -9085,7 +9088,7 @@ ahd_acquire_seeprom(struct ahd_softc *ahd)
 }
 
 void
-ahd_release_seeprom(struct ahd_softc *ahd)
+ahd_release_seeprom(struct ahd_softc *ahd __unused)
 {
 	/* Currently a no-op */
 }

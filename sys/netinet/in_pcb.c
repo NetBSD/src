@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.106 2006/10/05 17:35:19 tls Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.107 2006/10/12 01:32:37 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.106 2006/10/05 17:35:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.107 2006/10/12 01:32:37 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -699,7 +699,7 @@ in_losing(struct inpcb *inp)
  * and allocate a (hopefully) better one.
  */
 void
-in_rtchange(struct inpcb *inp, int errno)
+in_rtchange(struct inpcb *inp, int errno __unused)
 {
 
 	if (inp->inp_af != AF_INET)

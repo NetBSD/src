@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evxfevnt.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evxfevnt.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
 
 #define __EVXFEVNT_C__
 
@@ -250,7 +250,7 @@ AcpiDisable (
 ACPI_STATUS
 AcpiEnableEvent (
     UINT32                  Event,
-    UINT32                  Flags)
+    UINT32                  Flags __unused)
 {
     ACPI_STATUS             Status = AE_OK;
     UINT32                  Value;
@@ -483,7 +483,7 @@ UnlockAndExit:
 ACPI_STATUS
 AcpiDisableEvent (
     UINT32                  Event,
-    UINT32                  Flags)
+    UINT32                  Flags __unused)
 {
     ACPI_STATUS             Status = AE_OK;
     UINT32                  Value;

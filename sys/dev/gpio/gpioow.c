@@ -1,4 +1,4 @@
-/* $NetBSD: gpioow.c,v 1.1 2006/04/07 18:55:21 riz Exp $ */
+/* $NetBSD: gpioow.c,v 1.2 2006/10/12 01:30:57 christos Exp $ */
 /*	$OpenBSD: gpioow.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.1 2006/04/07 18:55:21 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.2 2006/10/12 01:30:57 christos Exp $");
 
 /*
  * 1-Wire bus bit-banging through GPIO pin.
@@ -76,13 +76,14 @@ static const struct onewire_bbops gpioow_bbops = {
 };
 
 int
-gpioow_match(struct device *parent, struct cfdata *cf, void *aux)
+gpioow_match(struct device *parent __unused, struct cfdata *cf __unused,
+    void *aux __unused)
 {
 	return 1;
 }
 
 void
-gpioow_attach(struct device *parent, struct device *self, void *aux)
+gpioow_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct gpioow_softc *sc = device_private(self);
 	struct gpio_attach_args *ga = aux;

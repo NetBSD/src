@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.48 2006/01/09 01:33:27 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.49 2006/10/12 01:31:50 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.48 2006/01/09 01:33:27 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.49 2006/10/12 01:31:50 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -225,7 +225,7 @@ rf_FreeDAG(RF_DagHeader_t *dag_h)
 
 static void rf_ShutdownDAGs(void *);
 static void
-rf_ShutdownDAGs(void *ignored)
+rf_ShutdownDAGs(void *ignored __unused)
 {
 	pool_destroy(&rf_pools.dagh);
 	pool_destroy(&rf_pools.dagnode);
@@ -346,7 +346,8 @@ rf_FreeFuncList(RF_FuncList_t *funcList)
 */
 
 void *
-rf_AllocStripeBuffer(RF_Raid_t *raidPtr, RF_DagHeader_t *dag_h, int size)
+rf_AllocStripeBuffer(RF_Raid_t *raidPtr, RF_DagHeader_t *dag_h,
+    int size __unused)
 {
 	RF_VoidPointerListElem_t *vple;
 	void *p;
@@ -425,7 +426,7 @@ rf_AllocBuffer(RF_Raid_t *raidPtr, RF_DagHeader_t *dag_h, int size)
 }
 
 void *
-rf_AllocIOBuffer(RF_Raid_t *raidPtr, int size)
+rf_AllocIOBuffer(RF_Raid_t *raidPtr, int size __unused)
 {
 	RF_VoidPointerListElem_t *vple;
 	void *p;
@@ -992,7 +993,7 @@ rf_MapUnaccessedPortionOfStripe(RF_Raid_t *raidPtr,
 				RF_AccessStripeMapHeader_t **new_asm_h,
 				int *nRodNodes,
 				char **sosBuffer, char **eosBuffer,
-				RF_AllocListElem_t *allocList)
+				RF_AllocListElem_t *allocList __unused)
 {
 	RF_RaidAddr_t sosRaidAddress, eosRaidAddress;
 	RF_SectorNum_t sosNumSector, eosNumSector;
@@ -1085,7 +1086,7 @@ rf_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			    RF_AccessStripeMapHeader_t **new_asm_h,
 			    int *nXorBufs, char **rpBufPtr,
 			    char *overlappingPDAs,
-			    RF_AllocListElem_t *allocList)
+			    RF_AllocListElem_t *allocList __unused)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 

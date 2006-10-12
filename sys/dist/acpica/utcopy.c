@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utcopy.c,v 1.1 2006/03/23 13:36:32 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utcopy.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
 
 #define __UTCOPY_C__
 
@@ -873,7 +873,7 @@ AcpiUtCopyIelementToIelement (
     UINT8                   ObjectType,
     ACPI_OPERAND_OBJECT     *SourceObject,
     ACPI_GENERIC_STATE      *State,
-    void                    *Context)
+    void                    *Context __unused)
 {
     ACPI_STATUS             Status = AE_OK;
     UINT32                  ThisIndex;

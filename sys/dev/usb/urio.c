@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.24 2006/09/03 21:30:24 christos Exp $	*/
+/*	$NetBSD: urio.c,v 1.25 2006/10/12 01:32:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.24 2006/09/03 21:30:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.25 2006/10/12 01:32:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ urio_activate(device_ptr_t self, enum devact act)
 #endif
 
 int
-urioopen(dev_t dev, int flag, int mode, struct lwp *l)
+urioopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
 {
 	struct urio_softc *sc;
 	usbd_status err;
@@ -345,7 +345,8 @@ urioopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-urioclose(dev_t dev, int flag, int mode, struct lwp *l)
+urioclose(dev_t dev, int flag __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	struct urio_softc *sc;
 	USB_GET_SC(urio, URIOUNIT(dev), sc);
@@ -368,7 +369,7 @@ urioclose(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-urioread(dev_t dev, struct uio *uio, int flag)
+urioread(dev_t dev, struct uio *uio, int flag __unused)
 {
 	struct urio_softc *sc;
 	usbd_xfer_handle xfer;
@@ -425,7 +426,7 @@ urioread(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-uriowrite(dev_t dev, struct uio *uio, int flag)
+uriowrite(dev_t dev, struct uio *uio, int flag __unused)
 {
 	struct urio_softc *sc;
 	usbd_xfer_handle xfer;

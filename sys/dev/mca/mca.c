@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.20 2005/12/11 12:22:18 christos Exp $	*/
+/*	$NetBSD: mca.c,v 1.21 2006/10/12 01:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.20 2005/12/11 12:22:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.21 2006/10/12 01:31:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,10 +65,7 @@ CFATTACH_DECL(mca, sizeof(struct device),
 int	mca_print(void *, const char *);
 
 int
-mca_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mca_match(struct device *parent __unused, struct cfdata *cf __unused, void *aux)
 {
 	struct mcabus_attach_args *mba = aux;
 

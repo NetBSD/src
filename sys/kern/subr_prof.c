@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.34 2006/10/04 21:34:15 christos Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.35 2006/10/12 01:32:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.34 2006/10/04 21:34:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.35 2006/10/12 01:32:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ SYSCTL_SETUP(sysctl_kern_gprof_setup, "sysctl kern.profiling subtree setup")
  */
 /* ARGSUSED */
 int
-sys_profil(struct lwp *l, void *v, register_t *retval)
+sys_profil(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_profil_args /* {
 		syscallarg(caddr_t) samples;

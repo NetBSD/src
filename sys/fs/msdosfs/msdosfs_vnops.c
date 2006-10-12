@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.31 2006/09/22 17:45:21 xtraeme Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.32 2006/10/12 01:32:11 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.31 2006/09/22 17:45:21 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.32 2006/10/12 01:32:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,8 +188,7 @@ msdosfs_mknod(v)
 }
 
 int
-msdosfs_open(v)
-	void *v;
+msdosfs_open(void *v __unused)
 {
 #if 0
 	struct vop_open_args /* {
@@ -1665,8 +1664,7 @@ out:
  * DOS filesystems don't know what symlinks are.
  */
 int
-msdosfs_readlink(v)
-	void *v;
+msdosfs_readlink(void *v __unused)
 {
 #if 0
 	struct vop_readlink_args /* {

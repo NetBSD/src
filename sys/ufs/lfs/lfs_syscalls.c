@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.116 2006/09/01 19:41:28 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.117 2006/10/12 01:32:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.116 2006/09/01 19:41:28 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.117 2006/10/12 01:32:51 christos Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -154,7 +154,7 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 }
 #else
 int
-sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
+sys_lfs_markv(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_lfs_markv_args /* {
 		syscallarg(fsid_t *) fsidp;
@@ -222,7 +222,8 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 #define	LFS_MARKV_MAX_BLOCKS	(LFS_MAX_BUFS)
 
 int
-lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
+lfs_markv(struct proc *p __unused, fsid_t *fsidp, BLOCK_INFO *blkiov,
+    int blkcnt)
 {
 	BLOCK_INFO *blkp;
 	IFILE *ifp;
@@ -591,7 +592,7 @@ sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
 }
 #else
 int
-sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
+sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_lfs_bmapv_args /* {
 		syscallarg(fsid_t *) fsidp;
@@ -827,7 +828,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
  * -1/errno is return on error.
  */
 int
-sys_lfs_segclean(struct lwp *l, void *v, register_t *retval)
+sys_lfs_segclean(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_lfs_segclean_args /* {
 		syscallarg(fsid_t *) fsidp;
@@ -967,7 +968,7 @@ lfs_segwait(fsid_t *fsidp, struct timeval *tv)
  * -1/errno is return on error.
  */
 int
-sys_lfs_segwait(struct lwp *l, void *v, register_t *retval)
+sys_lfs_segwait(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_lfs_segwait_args /* {
 		syscallarg(fsid_t *) fsidp;

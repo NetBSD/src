@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.22 2006/04/10 22:35:28 bouyer Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.23 2006/10/12 01:30:59 christos Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.22 2006/04/10 22:35:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.23 2006/10/12 01:30:59 christos Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -243,8 +243,8 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 }
 
 static int
-ahc_ioctl(struct scsipi_channel *channel, u_long cmd, caddr_t addr, int flag,
-	  struct proc *p)
+ahc_ioctl(struct scsipi_channel *channel, u_long cmd, caddr_t addr __unused,
+    int flag __unused, struct proc *p __unused)
 {
 	struct ahc_softc *ahc = (void *)channel->chan_adapter->adapt_dev;
 	int s, ret = ENOTTY;
@@ -1010,7 +1010,7 @@ ahc_platform_set_tags(struct ahc_softc *ahc,
 }
 
 int
-ahc_platform_alloc(struct ahc_softc *ahc, void *platform_arg)
+ahc_platform_alloc(struct ahc_softc *ahc, void *platform_arg __unused)
 {
 	if (sizeof(struct ahc_platform_data) == 0)
 		return 0;
@@ -1030,7 +1030,7 @@ ahc_platform_free(struct ahc_softc *ahc)
 }
 
 int
-ahc_softc_comp(struct ahc_softc *lahc, struct ahc_softc *rahc)
+ahc_softc_comp(struct ahc_softc *lahc __unused, struct ahc_softc *rahc __unused)
 {
 	return (0);
 }
@@ -1058,7 +1058,7 @@ ahc_detach(struct device *self, int flags)
 
 void
 ahc_send_async(struct ahc_softc *ahc, char channel, u_int target, u_int lun,
-	       ac_code code, void *opt_arg)
+	       ac_code code, void *opt_arg __unused)
 {
 	struct ahc_tmode_tstate *tstate;
 	struct ahc_initiator_tinfo *tinfo;

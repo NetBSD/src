@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.28 2006/03/29 06:51:47 thorpej Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.29 2006/10/12 01:31:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.28 2006/03/29 06:51:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.29 2006/10/12 01:31:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,10 +166,8 @@ le_isapnp_rdcsr(sc, port)
 }
 
 int
-le_isapnp_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+le_isapnp_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	int pri, variant;
 
@@ -180,9 +178,7 @@ le_isapnp_match(parent, match, aux)
 }
 
 void
-le_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+le_isapnp_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct le_isapnp_softc *lesc = device_private(self);
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;

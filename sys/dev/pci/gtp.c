@@ -1,4 +1,4 @@
-/* $NetBSD: gtp.c,v 1.11 2006/03/29 04:16:50 thorpej Exp $ */
+/* $NetBSD: gtp.c,v 1.12 2006/10/12 01:31:29 christos Exp $ */
 /*	$OpenBSD: gtp.c,v 1.1 2002/06/03 16:13:21 mickey Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
 /* Gemtek PCI Radio Card Device Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.11 2006/03/29 04:16:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.12 2006/10/12 01:31:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ static uint32_t	gtp_hardware_read(bus_space_tag_t, bus_space_handle_t,
 				  bus_size_t);
 
 static int
-gtp_match(struct device *parent, struct cfdata *cf, void *aux)
+gtp_match(struct device *parent __unused, struct cfdata *cf __unused, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	/* FIXME:
@@ -139,7 +139,7 @@ gtp_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-gtp_attach(struct device *parent, struct device *self, void *aux)
+gtp_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct gtp_softc *sc = (struct gtp_softc *) self;
 	struct pci_attach_args *pa = aux;
@@ -255,19 +255,22 @@ gtp_write_bit(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
 }
 
 static void
-gtp_init(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off, u_int32_t d)
+gtp_init(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
+    u_int32_t d __unused)
 {
 	bus_space_write_1(iot, ioh, off, GTP_WREN_ON | GTP_DATA_ON | GTP_CLCK_OFF);
 }
 
 static void
-gtp_rset(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off, u_int32_t d)
+gtp_rset(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
+    u_int32_t d __unused)
 {
 	bus_space_write_1(iot, ioh, off, GEMTEK_PCI_RSET);
 }
 
 static uint32_t
-gtp_hardware_read(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off)
+gtp_hardware_read(bus_space_tag_t iot __unused, bus_space_handle_t ioh __unused,
+    bus_size_t off __unused)
 {
 	/* UNSUPPORTED */
 	return 0;

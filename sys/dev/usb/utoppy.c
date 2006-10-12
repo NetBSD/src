@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.6 2006/09/03 21:33:10 christos Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.7 2006/10/12 01:32:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.6 2006/09/03 21:33:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.7 2006/10/12 01:32:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -511,8 +511,9 @@ utoppy_dump_packet(const void *b, size_t len)
  * Very much like usbd_bulk_transfer(), except don't catch signals
  */
 static void
-utoppy_bulk_transfer_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
-    usbd_status status)
+utoppy_bulk_transfer_cb(usbd_xfer_handle xfer,
+    usbd_private_handle priv __unused,
+    usbd_status status __unused)
 {
 
 	wakeup(xfer);
@@ -1331,7 +1332,8 @@ utoppy_readfile_next(struct utoppy_softc *sc)
 }
 
 int
-utoppyopen(dev_t dev, int flag, int mode, struct lwp *l)
+utoppyopen(dev_t dev, int flag __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	struct utoppy_softc *sc;
 	int error = 0;
@@ -1415,7 +1417,8 @@ utoppyopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-utoppyclose(dev_t dev, int flag, int mode, struct lwp *l)
+utoppyclose(dev_t dev, int flag __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	struct utoppy_softc *sc;
 	usbd_status err;
@@ -1471,7 +1474,7 @@ utoppyclose(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-utoppyread(dev_t dev, struct uio *uio, int flags)
+utoppyread(dev_t dev, struct uio *uio, int flags __unused)
 {
 	struct utoppy_softc *sc;
 	struct utoppy_dirent ud;
@@ -1552,7 +1555,7 @@ utoppyread(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-utoppywrite(dev_t dev, struct uio *uio, int flags)
+utoppywrite(dev_t dev, struct uio *uio, int flags __unused)
 {
 	struct utoppy_softc *sc;
 	uint16_t resp;
@@ -1655,7 +1658,8 @@ utoppywrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-utoppyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+utoppyioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
+    struct lwp *l __unused)
 {
 	struct utoppy_softc *sc;
 	struct utoppy_rename *ur;

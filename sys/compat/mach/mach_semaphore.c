@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_semaphore.c,v 1.12 2005/12/11 12:20:20 christos Exp $ */
+/*	$NetBSD: mach_semaphore.c,v 1.13 2006/10/12 01:30:49 christos Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.12 2005/12/11 12:20:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.13 2006/10/12 01:30:49 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,10 +72,8 @@ static void mach_waiting_lwp_put
     (struct mach_waiting_lwp *, struct mach_semaphore *, int);
 
 int
-mach_sys_semaphore_wait_trap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+mach_sys_semaphore_wait_trap(struct lwp *l, void *v,
+    register_t *retval __unused)
 {
 	struct mach_sys_semaphore_wait_trap_args /* {
 		syscallarg(mach_port_name_t) wait_name;
@@ -111,10 +109,8 @@ mach_sys_semaphore_wait_trap(l, v, retval)
 }
 
 int
-mach_sys_semaphore_signal_trap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+mach_sys_semaphore_signal_trap(struct lwp *l, void *v,
+    register_t *retval __unused)
 {
 	struct mach_sys_semaphore_signal_trap_args /* {
 		syscallarg(mach_port_name_t) signal_name;
@@ -355,10 +351,8 @@ mach_sys_semaphore_wait_signal_trap(l, v, retval)
 
 
 int
-mach_sys_semaphore_signal_thread_trap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+mach_sys_semaphore_signal_thread_trap(struct lwp *l, void *v,
+    register_t *retval __unused)
 {
 	struct mach_sys_semaphore_signal_thread_trap_args /* {
 		syscallarg(mach_port_name_t) signal_name;
@@ -427,10 +421,8 @@ mach_sys_semaphore_signal_thread_trap(l, v, retval)
 
 
 int
-mach_sys_semaphore_signal_all_trap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+mach_sys_semaphore_signal_all_trap(struct lwp *l, void *v,
+    register_t *retval __unused)
 {
 	struct mach_sys_semaphore_signal_all_trap_args /* {
 		syscallarg(mach_port_name_t) signal_name;

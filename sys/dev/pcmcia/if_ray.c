@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.61 2006/09/24 03:54:00 jmcneill Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.62 2006/10/12 01:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.61 2006/09/24 03:54:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.62 2006/10/12 01:31:50 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -475,10 +475,8 @@ CFATTACH_DECL(ray, sizeof(struct ray_softc),
  */
 
 static int
-ray_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ray_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -507,9 +505,7 @@ ray_validate_config(cfe)
 }
 
 static void
-ray_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ray_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct ray_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
@@ -654,9 +650,7 @@ ray_activate(dev, act)
 }
 
 static int
-ray_detach(self, flags)
-	struct device *self;
-	int flags;
+ray_detach(struct device *self, int flags __unused)
 {
 	struct ray_softc *sc;
 	struct ifnet *ifp;
@@ -885,9 +879,7 @@ ray_reset_resetloop(arg)
 }
 
 void
-ray_power(why, arg)
-	int why;
-	void *arg;
+ray_power(int why __unused, void *arg __unused)
 {
 #if 0
 	struct ray_softc *sc;

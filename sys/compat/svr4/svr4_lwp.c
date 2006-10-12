@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_lwp.c,v 1.11 2006/05/11 01:00:43 mrg Exp $	*/
+/*	$NetBSD: svr4_lwp.c,v 1.12 2006/10/12 01:30:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.11 2006/05/11 01:00:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.12 2006/10/12 01:30:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -124,10 +124,7 @@ svr4_sys__lwp_kill(l, v, retval)
 }
 
 int
-svr4_sys__lwp_info(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys__lwp_info(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct svr4_sys__lwp_info_args *uap = v;
 	struct svr4_lwpinfo lwpinfo;
@@ -144,10 +141,7 @@ svr4_sys__lwp_info(l, v, retval)
 }
 
 int
-svr4_sys__lwp_exit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys__lwp_exit(struct lwp *l, void *v __unused, register_t *retval)
 {
 
 	return sys__lwp_exit(l, NULL, retval);
@@ -198,10 +192,7 @@ svr4_sys__lwp_continue(l, v, retval)
 }
 
 int
-svr4_sys__lwp_getprivate(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys__lwp_getprivate(struct lwp *l, void *v __unused, register_t *retval)
 {
 	/* XXX NJWLWP: Replace with call to native version if we ever
 	 * implement that. */
@@ -211,10 +202,7 @@ svr4_sys__lwp_getprivate(l, v, retval)
 }
 
 int
-svr4_sys__lwp_setprivate(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys__lwp_setprivate(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct svr4_sys__lwp_setprivate_args *uap = v;
 

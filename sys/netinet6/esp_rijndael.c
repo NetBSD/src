@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_rijndael.c,v 1.18 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: esp_rijndael.c,v 1.19 2006/10/12 01:32:38 christos Exp $	*/
 /*	$KAME: esp_rijndael.c,v 1.4 2001/03/02 05:53:05 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.18 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.19 2006/10/12 01:32:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,17 +51,15 @@ __KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.18 2005/12/11 12:25:02 christos E
 #include <net/net_osdep.h>
 
 size_t
-esp_rijndael_schedlen(algo)
-	const struct esp_algorithm *algo;
+esp_rijndael_schedlen(const struct esp_algorithm *algo __unused)
 {
 
 	return sizeof(rijndael_ctx);
 }
 
 int
-esp_rijndael_schedule(algo, sav)
-	const struct esp_algorithm *algo;
-	struct secasvar *sav;
+esp_rijndael_schedule(const struct esp_algorithm *algo __unused,
+    struct secasvar *sav)
 {
 	rijndael_ctx *ctx;
 
@@ -72,11 +70,8 @@ esp_rijndael_schedule(algo, sav)
 }
 
 int
-esp_rijndael_blockdecrypt(algo, sav, s, d)
-	const struct esp_algorithm *algo;
-	struct secasvar *sav;
-	u_int8_t *s;
-	u_int8_t *d;
+esp_rijndael_blockdecrypt(const struct esp_algorithm *algo __unused,
+    struct secasvar *sav, u_int8_t *s, u_int8_t *d)
 {
 	rijndael_ctx *ctx;
 
@@ -86,11 +81,8 @@ esp_rijndael_blockdecrypt(algo, sav, s, d)
 }
 
 int
-esp_rijndael_blockencrypt(algo, sav, s, d)
-	const struct esp_algorithm *algo;
-	struct secasvar *sav;
-	u_int8_t *s;
-	u_int8_t *d;
+esp_rijndael_blockencrypt(const struct esp_algorithm *algo __unused,
+    struct secasvar *sav, u_int8_t *s, u_int8_t *d)
 {
 	rijndael_ctx *ctx;
 

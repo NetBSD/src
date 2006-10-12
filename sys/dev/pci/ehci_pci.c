@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.24 2006/09/24 03:53:09 jmcneill Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.25 2006/10/12 01:31:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.24 2006/09/24 03:53:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.25 2006/10/12 01:31:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,8 @@ struct ehci_pci_softc {
 #define EHCI_MAX_BIOS_WAIT		1000 /* ms */
 
 static int
-ehci_pci_match(struct device *parent, struct cfdata *match, void *aux)
+ehci_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -97,7 +98,7 @@ ehci_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-ehci_pci_attach(struct device *parent, struct device *self, void *aux)
+ehci_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct ehci_pci_softc *sc = (struct ehci_pci_softc *)self;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;

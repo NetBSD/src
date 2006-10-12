@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_eso.c,v 1.9 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: joy_eso.c,v 1.10 2006/10/12 01:31:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_eso.c,v 1.9 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_eso.c,v 1.10 2006/10/12 01:31:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: joy_eso.c,v 1.9 2005/12/11 12:22:50 christos Exp $")
 #include <dev/ic/joyvar.h>
 
 static int
-joy_eso_match(struct device *parent, struct cfdata *match, void *aux)
+joy_eso_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 
@@ -72,7 +73,7 @@ joy_eso_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-joy_eso_attach(struct device *parent, struct device *self, void *aux)
+joy_eso_attach(struct device *parent, struct device *self, void *aux __unused)
 {
 	struct eso_softc *esc = (struct eso_softc *)parent;
 	struct joy_softc *sc = (struct joy_softc *)self;

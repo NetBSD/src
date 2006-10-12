@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_usr.c,v 1.11 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: smb_usr.c,v 1.12 2006/10/12 01:32:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_usr.c,v 1.11 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_usr.c,v 1.12 2006/10/12 01:32:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -167,7 +167,7 @@ out:
  */
 int
 smb_usr_opensession(struct smbioc_ossn *dp, struct smb_cred *scred,
-	struct smb_vc **vcpp)
+	struct smb_vc **vcpp __unused)
 {
 	struct smb_vc *vcp = NULL;
 	struct smb_vcspec vspec;

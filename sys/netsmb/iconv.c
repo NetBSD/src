@@ -1,9 +1,9 @@
-/*	$NetBSD: iconv.c,v 1.10 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: iconv.c,v 1.11 2006/10/12 01:32:46 christos Exp $	*/
 
 /* Public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iconv.c,v 1.10 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iconv.c,v 1.11 2006/10/12 01:32:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -14,20 +14,21 @@ __KERNEL_RCSID(0, "$NetBSD: iconv.c,v 1.10 2005/12/11 12:25:16 christos Exp $");
 #include <netsmb/iconv.h>
 
 int
-iconv_open(const char *to, const char *from, void **handle)
+iconv_open(const char *to __unused, const char *from __unused,
+    void **handle __unused)
 {
 	return 0;
 }
 
 int
-iconv_close(void *handle)
+iconv_close(void *handle __unused)
 {
 	return 0;
 }
 
 int
-iconv_conv(void *handle, const char **inbuf,
-	size_t *inbytesleft, char **outbuf, size_t *outbytesleft)
+iconv_conv(void *handle __unused, const char **inbuf,
+    size_t *inbytesleft, char **outbuf, size_t *outbytesleft)
 {
 	if (*inbytesleft > *outbytesleft)
 		return(E2BIG);

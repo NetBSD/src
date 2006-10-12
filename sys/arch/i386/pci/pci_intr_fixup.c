@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.43 2006/09/03 21:05:01 christos Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.44 2006/10/12 01:30:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.43 2006/09/03 21:05:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.44 2006/10/12 01:30:43 christos Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -666,7 +666,8 @@ pciintr_header_fixup(pci_chipset_tag_t pc)
 }
 
 void
-pciintr_do_header_fixup(pci_chipset_tag_t pc, pcitag_t tag, void *context)
+pciintr_do_header_fixup(pci_chipset_tag_t pc, pcitag_t tag,
+    void *context __unused)
 {
 	struct pcibios_intr_routing *pir;
 	struct pciintr_link_map *l;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cnmagic.c,v 1.7 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: cnmagic.c,v 1.8 2006/10/12 01:32:14 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Eduardo Horvath
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.7 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.8 2006/10/12 01:32:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ cn_set_magic(const char *magic)
  * a magic string.
  */
 int
-cn_get_magic(char *magic, size_t maglen)
+cn_get_magic(char *magic, size_t maglen __unused)
 {
 	size_t i, c;
 

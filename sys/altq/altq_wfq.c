@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.c,v 1.13 2006/07/21 16:48:46 ad Exp $	*/
+/*	$NetBSD: altq_wfq.c,v 1.14 2006/10/12 01:30:42 christos Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.7 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.13 2006/07/21 16:48:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.14 2006/10/12 01:30:42 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -218,10 +218,7 @@ wfq_ifdetach(ifacep)
 }
 
 static int
-wfq_request(ifq, req, arg)
-	struct ifaltq *ifq;
-	int req;
-	void *arg;
+wfq_request(struct ifaltq *ifq, int req, void *arg __unused)
 {
 	wfq_state_t *wfqp = (wfq_state_t *)ifq->altq_disc;
 
@@ -635,19 +632,15 @@ wfq_config(cf)
 altqdev_decl(wfq);
 
 int
-wfqopen(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+wfqopen(dev_t dev __unused, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
 	return 0;
 }
 
 int
-wfqclose(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+wfqclose(dev_t dev __unused, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
 	struct ifnet *ifp;
 	struct wfq_interface iface;
@@ -670,12 +663,8 @@ wfqclose(dev, flag, fmt, l)
 }
 
 int
-wfqioctl(dev, cmd, addr, flag, l)
-	dev_t dev;
-	ioctlcmd_t cmd;
-	caddr_t addr;
-	int flag;
-	struct lwp *l;
+wfqioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
+    struct lwp *l)
 {
 	int	error = 0;
 	int 	s;

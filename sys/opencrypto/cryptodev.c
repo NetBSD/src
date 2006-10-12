@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.23 2006/08/29 23:52:06 christos Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.24 2006/10/12 01:32:47 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.23 2006/08/29 23:52:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.24 2006/10/12 01:32:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,16 +138,16 @@ static int	cryptodevkey_cb(void *);
 
 /* ARGSUSED */
 int
-cryptof_read(struct file *fp, off_t *poff, struct uio *uio,
-	     kauth_cred_t cred, int flags)
+cryptof_read(struct file *fp __unused, off_t *poff __unused,
+    struct uio *uio __unused, kauth_cred_t cred __unused, int flags __unused)
 {
 	return (EIO);
 }
 
 /* ARGSUSED */
 int
-cryptof_write(struct file *fp, off_t *poff, struct uio *uio,
-	      kauth_cred_t cred, int flags)
+cryptof_write(struct file *fp __unused, off_t *poff __unused,
+    struct uio *uio __unused, kauth_cred_t cred __unused, int flags __unused)
 {
 	return (EIO);
 }
@@ -343,7 +343,7 @@ bail:
 }
 
 static int
-cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
+cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l __unused)
 {
 	struct cryptop *crp = NULL;
 	struct cryptodesc *crde = NULL, *crda = NULL;
@@ -609,7 +609,7 @@ fail:
 
 /* ARGSUSED */
 static int
-cryptof_close(struct file *fp, struct lwp *l)
+cryptof_close(struct file *fp, struct lwp *l __unused)
 {
 	struct fcrypt *fcr = (struct fcrypt *)fp->f_data;
 	struct csession *cse;
@@ -703,7 +703,8 @@ csefree(struct csession *cse)
 }
 
 static int
-cryptoopen(dev_t dev, int flag, int mode, struct lwp *l)
+cryptoopen(dev_t dev __unused, int flag __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	if (crypto_usercrypto == 0)
 		return (ENXIO);
@@ -711,19 +712,20 @@ cryptoopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 static int
-cryptoread(dev_t dev, struct uio *uio, int ioflag)
+cryptoread(dev_t dev __unused, struct uio *uio __unused, int ioflag __unused)
 {
 	return (EIO);
 }
 
 static int
-cryptowrite(dev_t dev, struct uio *uio, int ioflag)
+cryptowrite(dev_t dev __unused, struct uio *uio __unused, int ioflag __unused)
 {
 	return (EIO);
 }
 
 static int
-cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+cryptoioctl(dev_t dev __unused, u_long cmd, caddr_t data, int flag __unused,
+    struct lwp *l)
 {
 	struct file *f;
 	struct fcrypt *fcr;
@@ -757,7 +759,7 @@ cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 int
-cryptoselect(dev_t dev, int rw, struct lwp *l)
+cryptoselect(dev_t dev __unused, int rw __unused, struct lwp *l __unused)
 {
 	return (0);
 }
@@ -784,7 +786,7 @@ struct cdevsw crypto_cdevsw = {
 void	cryptoattach(int);
 
 void
-cryptoattach(int num)
+cryptoattach(int num __unused)
 {
 
 	/* nothing to do */

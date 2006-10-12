@@ -435,8 +435,8 @@ typedef struct image_patch_table image_patch_table;
 #define	__stdcall __attribute__((__stdcall__))
 #define __regcall __attribute__((__regparm__(3)))
 #define __fastcall __stdcall __regcall
-#define REGARGS1(decl1)		int dummy1, int dummy2, decl1
-#define REGARGS2(decl1, decl2)	int dummy1, decl2, decl1
+#define REGARGS1(decl1)		int dummy1 __unused, int dummy2 __unused, decl1
+#define REGARGS2(decl1, decl2)	int dummy1 __unused, decl2, decl1
 #define REGCALL1(arg1)		0, 0, arg1
 #define REGCALL2(arg1, arg2)	0, arg2, arg1
 #endif

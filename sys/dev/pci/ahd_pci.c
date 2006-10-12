@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.23 2006/06/17 23:34:26 christos Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.24 2006/10/12 01:31:28 christos Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.23 2006/06/17 23:34:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.24 2006/10/12 01:31:28 christos Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -286,7 +286,8 @@ ahd_find_pci_device(pcireg_t id, pcireg_t subid)
 }
 
 static int
-ahd_pci_probe(struct device *parent, struct cfdata *match, void *aux)
+ahd_pci_probe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct	   ahd_pci_identity *entry;
@@ -298,7 +299,7 @@ ahd_pci_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-ahd_pci_attach(struct device *parent, struct device *self, void *aux)
+ahd_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pci_attach_args	*pa = aux;
 	struct ahd_softc       	*ahd = (void *)self;
@@ -1010,7 +1011,7 @@ ahd_pci_intr(struct ahd_softc *ahd)
 }
 
 static void
-ahd_pci_split_intr(struct ahd_softc *ahd, u_int intstat)
+ahd_pci_split_intr(struct ahd_softc *ahd, u_int intstat __unused)
 {
 	uint8_t			split_status[4];
 	uint8_t			split_status1[4];

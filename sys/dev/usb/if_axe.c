@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.14 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.15 2006/10/12 01:31:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.14 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.15 2006/10/12 01:31:59 christos Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -898,7 +898,8 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
  */
 
 Static void
-axe_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+axe_txeof(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct axe_softc	*sc;
 	struct axe_chain	*c;
