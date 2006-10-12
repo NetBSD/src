@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.107 2006/10/12 01:32:54 christos Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.108 2006/10/12 04:35:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.107 2006/10/12 01:32:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.108 2006/10/12 04:35:40 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -727,6 +727,9 @@ uvm_swap_stats_locked(int cmd, struct swapent *sep, int sec, register_t *retval)
 			    sizeof(struct oswapent));
 
 			/* now copy out the path if necessary */
+#if !defined(COMPAT_13)
+			(void) cmd;
+#endif
 #if defined(COMPAT_13)
 			if (cmd == SWAP_STATS)
 #endif
