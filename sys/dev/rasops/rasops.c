@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.52 2006/02/27 12:19:29 jmcneill Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.53 2006/10/12 01:31:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.52 2006/02/27 12:19:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.53 2006/10/12 01:31:56 christos Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -383,10 +383,8 @@ rasops_mapchar(cookie, c, cp)
  * Allocate a color attribute.
  */
 static int
-rasops_allocattr_color(cookie, fg, bg, flg, attr)
-	void *cookie;
-	int fg, bg, flg;
-	long *attr;
+rasops_allocattr_color(void *cookie __unused, int fg, int bg, int flg,
+    long *attr)
 {
 	int swap;
 
@@ -435,10 +433,8 @@ rasops_allocattr_color(cookie, fg, bg, flg, attr)
  * Allocate a mono attribute.
  */
 static int
-rasops_allocattr_mono(cookie, fg, bg, flg, attr)
-	void *cookie;
-	int fg, bg, flg;
-	long *attr;
+rasops_allocattr_mono(void *cookie __unused, int fg, int bg, int flg,
+    long *attr)
 {
 	int swap;
 

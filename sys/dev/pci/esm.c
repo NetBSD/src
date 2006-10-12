@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.39 2006/09/25 23:20:33 jmcneill Exp $      */
+/*      $NetBSD: esm.c,v 1.40 2006/10/12 01:31:29 christos Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.39 2006/09/25 23:20:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.40 2006/10/12 01:31:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -545,7 +545,7 @@ esm_attach_codec(void *sc, struct ac97_codec_if *codec_if)
 }
 
 int
-esm_reset_codec(void *sc)
+esm_reset_codec(void *sc __unused)
 {
 
 	return 0;
@@ -678,7 +678,7 @@ esm_init(struct esm_softc *ess)
 /* Channel controller. */
 
 int
-esm_init_output (void *sc, void *start, int size)
+esm_init_output (void *sc, void *start, int size __unused)
 {
 	struct esm_softc *ess;
 	struct esm_dma *p;
@@ -700,7 +700,7 @@ esm_init_output (void *sc, void *start, int size)
 }
 
 int
-esm_init_input (void *sc, void *start, int size)
+esm_init_input (void *sc, void *start, int size __unused)
 {
 	struct esm_softc *ess;
 	struct esm_dma *p;
@@ -730,7 +730,7 @@ esm_init_input (void *sc, void *start, int size)
 
 int
 esm_trigger_output(void *sc, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, const audio_params_t *param)
+    void (*intr)(void *), void *arg, const audio_params_t *param __unused)
 {
 	size_t size;
 	struct esm_softc *ess;
@@ -844,7 +844,7 @@ esm_trigger_output(void *sc, void *start, void *end, int blksize,
 
 int
 esm_trigger_input(void *sc, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, const audio_params_t *param)
+    void (*intr)(void *), void *arg, const audio_params_t *param __unused)
 {
 	size_t size;
 	size_t mixsize;
@@ -1195,7 +1195,7 @@ esmch_combine_input(struct esm_softc *ess, struct esm_chinfo *ch)
  */
 
 int
-esm_getdev (void *sc, struct audio_device *adp)
+esm_getdev (void *sc __unused, struct audio_device *adp)
 {
 
 	*adp = esm_device;
@@ -1203,7 +1203,8 @@ esm_getdev (void *sc, struct audio_device *adp)
 }
 
 int
-esm_round_blocksize(void *sc, int blk, int mode, const audio_params_t *param)
+esm_round_blocksize(void *sc __unused, int blk, int mode __unused,
+    const audio_params_t *param __unused)
 {
 
 	DPRINTF(ESM_DEBUG_PARAM,
@@ -1217,7 +1218,7 @@ esm_round_blocksize(void *sc, int blk, int mode, const audio_params_t *param)
 }
 
 int
-esm_query_encoding(void *sc, struct audio_encoding *fp)
+esm_query_encoding(void *sc __unused, struct audio_encoding *fp)
 {
 
 	DPRINTF(ESM_DEBUG_PARAM,
@@ -1231,7 +1232,7 @@ esm_query_encoding(void *sc, struct audio_encoding *fp)
 }
 
 int
-esm_set_params(void *sc, int setmode, int usemode,
+esm_set_params(void *sc, int setmode, int usemode __unused,
 	audio_params_t *play, audio_params_t *rec,
 	stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
@@ -1309,8 +1310,8 @@ esm_query_devinfo(void *sc, mixer_devinfo_t *dip)
 }
 
 void *
-esm_malloc(void *sc, int direction, size_t size, struct malloc_type *pool,
-    int flags)
+esm_malloc(void *sc, int direction, size_t size __unused,
+    struct malloc_type *pool __unused, int flags __unused)
 {
 	struct esm_softc *ess;
 	int off;
@@ -1341,7 +1342,7 @@ esm_malloc(void *sc, int direction, size_t size, struct malloc_type *pool,
 }
 
 void
-esm_free(void *sc, void *ptr, struct malloc_type *pool)
+esm_free(void *sc, void *ptr, struct malloc_type *pool __unused)
 {
 	struct esm_softc *ess;
 
@@ -1356,7 +1357,7 @@ esm_free(void *sc, void *ptr, struct malloc_type *pool)
 }
 
 size_t
-esm_round_buffersize(void *sc, int direction, size_t size)
+esm_round_buffersize(void *sc __unused, int direction __unused, size_t size)
 {
 
 	if (size > MAESTRO_PLAYBUF_SZ)
@@ -1389,7 +1390,7 @@ esm_mappage(void *sc, void *mem, off_t off, int prot)
 }
 
 int
-esm_get_props(void *sc)
+esm_get_props(void *sc __unused)
 {
 
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
@@ -1533,7 +1534,7 @@ esm_allocmem(struct esm_softc *sc, size_t size, size_t align,
 }
 
 int
-esm_match(struct device *dev, struct cfdata *match, void *aux)
+esm_match(struct device *dev __unused, struct cfdata *match __unused, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -1557,7 +1558,7 @@ esm_match(struct device *dev, struct cfdata *match, void *aux)
 }
 
 void
-esm_attach(struct device *parent, struct device *self, void *aux)
+esm_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	char devinfo[256];
 	struct esm_softc *ess;

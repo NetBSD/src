@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.134 2006/09/24 03:53:09 jmcneill Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.135 2006/10/12 01:31:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.134 2006/09/24 03:53:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.135 2006/10/12 01:31:32 christos Exp $");
 
 /*
 #define CBB_DEBUG
@@ -280,10 +280,8 @@ static struct cardbus_functions pccbb_funcs = {
 #endif
 
 int
-pcicbbmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pcicbbmatch(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -422,10 +420,7 @@ pccbb_shutdown(void *arg)
 }
 
 void
-pccbbattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+pccbbattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pccbb_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;
@@ -1586,17 +1581,15 @@ cb_detect_voltage(sc)
 }
 
 STATIC int
-cbbprint(aux, pcic)
-	void *aux;
-	const char *pcic;
+cbbprint(void *aux __unused, const char *pcic __unused)
 {
-/*
-  struct cbslot_attach_args *cba = aux;
+#if 0
+	struct cbslot_attach_args *cba = aux;
 
-  if (cba->cba_slot >= 0) {
-    aprint_normal(" slot %d", cba->cba_slot);
-  }
-*/
+	if (cba->cba_slot >= 0) {
+		aprint_normal(" slot %d", cba->cba_slot);
+	}
+#endif
 	return UNCONF;
 }
 
@@ -1836,11 +1829,8 @@ pccbb_intr_route(sc)
  *   The arguments irq is not used because pccbb selects intr vector.
  */
 static void *
-pccbb_intr_establish(sc, irq, level, func, arg)
-	struct pccbb_softc *sc;
-	int irq, level;
-	int (*func)(void *);
-	void *arg;
+pccbb_intr_establish(struct pccbb_softc *sc, int irq __unused, int level,
+    int (*func)(void *), void *arg)
 {
 	struct pccbb_intrhand_list *pil, *newpil;
 
@@ -2006,9 +1996,7 @@ pccbb_make_tag(cc, busno, function)
 }
 
 static void
-pccbb_free_tag(cc, tag)
-	cardbus_chipset_tag_t cc;
-	cardbustag_t tag;
+pccbb_free_tag(cardbus_chipset_tag_t cc __unused, cardbustag_t tag __unused)
 {
 }
 
@@ -2405,10 +2393,11 @@ pccbb_pcmcia_wait_ready(ph)
  * Perform long (msec order) delay.
  */
 static void
-pccbb_pcmcia_delay(ph, timo, wmesg)
-	struct pcic_handle *ph;
-	int timo;                       /* in ms.  must not be zero */
-	const char *wmesg;
+pccbb_pcmcia_delay(
+    struct pcic_handle *ph __unused,
+    int timo,                       /* in ms.  must not be zero */
+    const char *wmesg
+)
 {
 #ifdef DIAGNOSTIC
 	if (timo <= 0)

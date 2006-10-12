@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_options.c,v 1.15 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: clnp_options.c,v 1.16 2006/10/12 01:32:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_options.c,v 1.15 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_options.c,v 1.16 2006/10/12 01:32:46 christos Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -149,10 +149,10 @@ clnp_update_srcrt(
  */
 void
 clnp_dooptions(
-	struct mbuf *options,		/* ptr to options mbuf */
-	struct clnp_optidx *oidx,	/* ptr to option index */
-	struct ifnet *ifp,		/* ptr to interface pkt is leaving on */
-	struct iso_addr *isoa)		/* ptr to our address for this ifp */
+    struct mbuf *options,		/* ptr to options mbuf */
+    struct clnp_optidx *oidx,		/* ptr to option index */
+    struct ifnet *ifp __unused,		/* ptr to interface pkt is leaving on */
+    struct iso_addr *isoa)		/* ptr to our address for this ifp */
 {
 	/*
 	 *	If record route is specified, move all

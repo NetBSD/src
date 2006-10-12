@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.106 2006/09/23 22:01:04 manu Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.107 2006/10/12 01:32:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.106 2006/09/23 22:01:04 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.107 2006/10/12 01:32:15 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -947,7 +947,7 @@ done:
  */
 /* ARGSUSED */
 int
-sys_fktrace(struct lwp *l, void *v, register_t *retval)
+sys_fktrace(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_fktrace_args /* {
 		syscallarg(int) fd;
@@ -981,7 +981,7 @@ sys_fktrace(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_ktrace(struct lwp *l, void *v, register_t *retval)
+sys_ktrace(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_ktrace_args /* {
 		syscallarg(const char *) fname;
@@ -1307,7 +1307,7 @@ ktrcanset(struct lwp *calll, struct proc *targetp)
  * Put user defined entry to ktrace records.
  */
 int
-sys_utrace(struct lwp *l, void *v, register_t *retval)
+sys_utrace(struct lwp *l, void *v, register_t *retval __unused)
 {
 #ifdef KTRACE
 	struct sys_utrace_args /* {

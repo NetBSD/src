@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.77 2006/09/24 03:53:08 jmcneill Exp $	*/
+/*	$NetBSD: ath.c,v 1.78 2006/10/12 01:30:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.77 2006/09/24 03:53:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.78 2006/10/12 01:30:59 christos Exp $");
 #endif
 
 /*
@@ -892,7 +892,7 @@ ath_intr(void *arg)
  * function.
  */
 static inline void
-ath_desc_swap(struct ath_desc *ds)
+ath_desc_swap(struct ath_desc *ds __unused)
 {
 #ifdef AH_NEED_DESC_SWAP
 	ds->ds_link = htole32(ds->ds_link);
@@ -905,7 +905,7 @@ ath_desc_swap(struct ath_desc *ds)
 }
 
 static void
-ath_fatal_proc(void *arg, int pending)
+ath_fatal_proc(void *arg, int pending __unused)
 {
 	struct ath_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_if;
@@ -915,7 +915,7 @@ ath_fatal_proc(void *arg, int pending)
 }
 
 static void
-ath_rxorn_proc(void *arg, int pending)
+ath_rxorn_proc(void *arg, int pending __unused)
 {
 	struct ath_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_if;
@@ -959,7 +959,7 @@ ath_bmiss_proc(void *arg, int pending)
 }
 
 static void
-ath_radar_proc(void *arg, int pending)
+ath_radar_proc(void *arg, int pending __unused)
 {
 	struct ath_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_if;
@@ -2270,7 +2270,7 @@ ath_beacon_proc(void *arg, int pending)
  * Reset the hardware after detecting beacons have stopped.
  */
 static void
-ath_bstuck_proc(void *arg, int pending)
+ath_bstuck_proc(void *arg, int pending __unused)
 {
 	struct ath_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_if;
@@ -4000,7 +4000,7 @@ txqactive(struct ath_hal *ah, int qnum)
  * for a single hardware transmit queue (e.g. 5210 and 5211).
  */
 static void
-ath_tx_proc_q0(void *arg, int npending)
+ath_tx_proc_q0(void *arg, int npending __unused)
 {
 	struct ath_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_if;
@@ -4023,7 +4023,7 @@ ath_tx_proc_q0(void *arg, int npending)
  * for four hardware queues, 0-3 (e.g. 5212 w/ WME support).
  */
 static void
-ath_tx_proc_q0123(void *arg, int npending)
+ath_tx_proc_q0123(void *arg, int npending __unused)
 {
 	struct ath_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_if;
@@ -4060,7 +4060,7 @@ ath_tx_proc_q0123(void *arg, int npending)
  * Deferred processing of transmit interrupt.
  */
 static void
-ath_tx_proc(void *arg, int npending)
+ath_tx_proc(void *arg, int npending __unused)
 {
 	struct ath_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_if;

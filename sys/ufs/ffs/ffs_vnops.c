@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.81 2006/07/23 22:06:15 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.82 2006/10/12 01:32:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.81 2006/07/23 22:06:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.82 2006/10/12 01:32:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -541,7 +541,7 @@ ffs_getpages(void *v)
  */
 
 void
-ffs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
+ffs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags __unused)
 {
 	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;

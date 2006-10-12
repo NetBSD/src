@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.27 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.28 2006/10/12 01:31:52 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.27 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.28 2006/10/12 01:31:52 christos Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -58,8 +58,8 @@ typedef struct RF_Raid1ConfigInfo_s {
 }       RF_Raid1ConfigInfo_t;
 /* start of day code specific to RAID level 1 */
 int
-rf_ConfigureRAID1(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
-		  RF_Config_t *cfgPtr)
+rf_ConfigureRAID1(RF_ShutdownList_t **listp __unused, RF_Raid_t *raidPtr,
+		  RF_Config_t *cfgPtr __unused)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_Raid1ConfigInfo_t *info;
@@ -96,7 +96,8 @@ rf_ConfigureRAID1(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 /* returns the physical disk location of the primary copy in the mirror pair */
 void
 rf_MapSectorRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
+		  RF_RowCol_t *col, RF_SectorNum_t *diskSector,
+		  int remap __unused)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 	RF_RowCol_t mirrorPair = SUID % (raidPtr->numCol / 2);
@@ -113,7 +114,8 @@ rf_MapSectorRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
  */
 void
 rf_MapParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
+		  RF_RowCol_t *col, RF_SectorNum_t *diskSector,
+		  int remap __unused)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 	RF_RowCol_t mirrorPair = SUID % (raidPtr->numCol / 2);
@@ -146,7 +148,8 @@ rf_IdentifyStripeRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
  * maps a logical stripe to a stripe in the redundant array
  */
 void
-rf_MapSIDToPSIDRAID1(RF_RaidLayout_t *layoutPtr, RF_StripeNum_t stripeID,
+rf_MapSIDToPSIDRAID1(RF_RaidLayout_t *layoutPtr __unused,
+		     RF_StripeNum_t stripeID,
 		     RF_StripeNum_t *psID, RF_ReconUnitNum_t *which_ru)
 {
 	*which_ru = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iop_pci.c,v 1.16 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: iop_pci.c,v 1.17 2006/10/12 01:31:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.16 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.17 2006/10/12 01:31:31 christos Exp $");
 
 #include "opt_i2o.h"
 
@@ -73,7 +73,8 @@ CFATTACH_DECL(iop_pci, sizeof(struct iop_softc),
     iop_pci_match, iop_pci_attach, NULL, NULL);
 
 static int
-iop_pci_match(struct device *parent, struct cfdata *match, void *aux)
+iop_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 	u_int product, vendor;
@@ -114,7 +115,7 @@ iop_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-iop_pci_attach(struct device *parent, struct device *self, void *aux)
+iop_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct iop_softc *sc;

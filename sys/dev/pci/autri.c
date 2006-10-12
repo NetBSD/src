@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.32 2006/09/24 03:53:09 jmcneill Exp $	*/
+/*	$NetBSD: autri.c,v 1.33 2006/10/12 01:31:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.32 2006/09/24 03:53:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.33 2006/10/12 01:31:28 christos Exp $");
 
 #include "midi.h"
 
@@ -463,7 +463,7 @@ autri_reset_codec(void *sc_)
 }
 
 static enum ac97_host_flags
-autri_flags_codec(void *sc_)
+autri_flags_codec(void *sc __unused)
 {
 	return AC97_HOST_DONT_READ;
 }
@@ -473,7 +473,8 @@ autri_flags_codec(void *sc_)
  */
 
 static int
-autri_match(struct device *parent, struct cfdata *match, void *aux)
+autri_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -511,7 +512,7 @@ autri_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-autri_attach(struct device *parent, struct device *self, void *aux)
+autri_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct autri_softc *sc;
 	struct pci_attach_args *pa;
@@ -896,7 +897,7 @@ autri_freemem(struct autri_softc *sc, struct autri_dma *p)
 }
 
 static int
-autri_open(void *addr, int flags)
+autri_open(void *addr __unused, int flags __unused)
 {
 	DPRINTF(("autri_open()\n"));
 	DPRINTFN(5,("MISCINT    : 0x%08X\n",
@@ -907,7 +908,7 @@ autri_open(void *addr, int flags)
 }
 
 static int
-autri_query_encoding(void *addr, struct audio_encoding *fp)
+autri_query_encoding(void *addr __unused, struct audio_encoding *fp)
 {
 
 	switch (fp->index) {
@@ -967,9 +968,9 @@ autri_query_encoding(void *addr, struct audio_encoding *fp)
 }
 
 static int
-autri_set_params(void *addr, int setmode, int usemode,
-		 audio_params_t *play, audio_params_t *rec,
-		 stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+autri_set_params(void *addr __unused, int setmode, int usemode __unused,
+    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	if (setmode & AUMODE_RECORD) {
 		if (auconv_set_converter(autri_formats, AUTRI_NFORMATS,
@@ -985,8 +986,8 @@ autri_set_params(void *addr, int setmode, int usemode,
 }
 
 static int
-autri_round_blocksize(void *addr, int block,
-		      int mode, const audio_params_t *param)
+autri_round_blocksize(void *addr __unused, int block,
+    int mode __unused, const audio_params_t *param __unused)
 {
 	return block & -4;
 }
@@ -1081,7 +1082,7 @@ autri_query_devinfo(void *addr, mixer_devinfo_t *dip)
 }
 
 static void *
-autri_malloc(void *addr, int direction, size_t size,
+autri_malloc(void *addr, int direction __unused, size_t size,
     struct malloc_type *pool, int flags)
 {
 	struct autri_softc *sc;
@@ -1135,7 +1136,7 @@ autri_find_dma(struct autri_softc *sc, void *addr)
 }
 
 static size_t
-autri_round_buffersize(void *addr, int direction, size_t size)
+autri_round_buffersize(void *addr __unused, int direction __unused, size_t size)
 {
 
 	return size;
@@ -1159,7 +1160,7 @@ autri_mappage(void *addr, void *mem, off_t off, int prot)
 }
 
 static int
-autri_get_props(void *addr)
+autri_get_props(void *addr __unused)
 {
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
 	    AUDIO_PROP_FULLDUPLEX;
@@ -1488,7 +1489,7 @@ autri_midi_close(void *addr)
 }
 
 static int
-autri_midi_output(void *addr, int d)
+autri_midi_output(void *addr __unused, int d)
 {
 	struct autri_softc *sc;
 	int x;
@@ -1505,7 +1506,7 @@ autri_midi_output(void *addr, int d)
 }
 
 static void
-autri_midi_getinfo(void *addr, struct midi_info *mi)
+autri_midi_getinfo(void *addr __unused, struct midi_info *mi)
 {
 
 	mi->name = "4DWAVE MIDI UART";

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.15 2006/08/04 16:58:27 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.16 2006/10/12 01:30:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.15 2006/08/04 16:58:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.16 2006/10/12 01:30:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ cvtstat(struct stat13 *ost, const struct stat *st)
  */
 /* ARGSUSED */
 int
-compat_30_sys___stat13(struct lwp *l, void *v, register_t *retval)
+compat_30_sys___stat13(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct compat_30_sys___stat13_args /* {
 		syscallarg(const char *) path;
@@ -124,7 +124,7 @@ compat_30_sys___stat13(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-compat_30_sys___lstat13(struct lwp *l, void *v, register_t *retval)
+compat_30_sys___lstat13(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct compat_30_sys___lstat13_args /* {
 		syscallarg(const char *) path;
@@ -150,7 +150,7 @@ compat_30_sys___lstat13(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-compat_30_sys_fhstat(struct lwp *l, void *v, register_t *retval)
+compat_30_sys_fhstat(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct compat_30_sys_fhstat_args /* {
 		syscallarg(const struct compat_30_fhandle *) fhp;
@@ -193,7 +193,7 @@ compat_30_sys_fhstat(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-compat_30_sys___fstat13(struct lwp *l, void *v, register_t *retval)
+compat_30_sys___fstat13(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct compat_30_sys___fstat13_args /* {
 		syscallarg(int) fd;
@@ -355,7 +355,7 @@ out1:
  * Get file handle system call
  */
 int
-compat_30_sys_getfh(struct lwp *l, void *v, register_t *retval)
+compat_30_sys_getfh(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct compat_30_sys_getfh_args /* {
 		syscallarg(char *) fname;

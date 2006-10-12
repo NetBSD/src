@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.32 2006/08/29 23:42:18 christos Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.33 2006/10/12 01:31:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.32 2006/08/29 23:42:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.33 2006/10/12 01:31:28 christos Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -359,7 +359,8 @@ cmpci_index_to_divider(int index)
  * interface to configure the device.
  */
 static int
-cmpci_match(struct device *parent, struct cfdata *match, void *aux)
+cmpci_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -375,7 +376,7 @@ cmpci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-cmpci_attach(struct device *parent, struct device *self, void *aux)
+cmpci_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct cmpci_softc *sc;
 	struct pci_attach_args *pa;
@@ -569,7 +570,7 @@ cmpci_intr(void *handle)
 }
 
 static int
-cmpci_query_encoding(void *handle, struct audio_encoding *fp)
+cmpci_query_encoding(void *handle __unused, struct audio_encoding *fp)
 {
 
 	switch (fp->index) {
@@ -629,9 +630,9 @@ cmpci_query_encoding(void *handle, struct audio_encoding *fp)
 
 
 static int
-cmpci_set_params(void *handle, int setmode, int usemode,
-		 audio_params_t *play, audio_params_t *rec,
-		 stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+cmpci_set_params(void *handle, int setmode, int usemode __unused,
+    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	int i;
 	struct cmpci_softc *sc;
@@ -709,8 +710,8 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 
 /* ARGSUSED */
 static int
-cmpci_round_blocksize(void *handle, int block,
-		      int mode, const audio_params_t *param)
+cmpci_round_blocksize(void *handle __unused, int block,
+    int mode __unused, const audio_params_t *param __unused)
 {
 
 	return block & -4;
@@ -1109,7 +1110,7 @@ cmpci_print_dmamem(struct cmpci_dmanode *p)
 #endif /* DEBUG */
 
 static void *
-cmpci_allocm(void *handle, int direction, size_t size,
+cmpci_allocm(void *handle, int direction __unused, size_t size,
 	     struct malloc_type *type, int flags)
 {
 	caddr_t addr;
@@ -1636,7 +1637,8 @@ cmpci_get_port(void *handle, mixer_ctrl_t *cp)
 
 /* ARGSUSED */
 static size_t
-cmpci_round_buffersize(void *handle, int direction, size_t bufsize)
+cmpci_round_buffersize(void *handle __unused, int direction __unused,
+    size_t bufsize)
 {
 
 	if (bufsize > 0x10000)
@@ -1660,7 +1662,7 @@ cmpci_mappage(void *handle, void *addr, off_t offset, int prot)
 
 /* ARGSUSED */
 static int
-cmpci_get_props(void *handle)
+cmpci_get_props(void *handle __unused)
 {
 
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;

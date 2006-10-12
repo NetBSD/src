@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.72 2006/10/05 17:35:19 tls Exp $	*/
+/*	$NetBSD: route.c,v 1.73 2006/10/12 01:32:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.72 2006/10/05 17:35:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.73 2006/10/12 01:32:30 christos Exp $");
 
 
 #include <sys/param.h>
@@ -423,7 +423,7 @@ rtflushclone(struct radix_node_head *rnh, struct rtentry *parent)
  * Routing table ioctl interface.
  */
 int
-rtioctl(u_long req, caddr_t data, struct lwp *l)
+rtioctl(u_long req __unused, caddr_t data __unused, struct lwp *l __unused)
 {
 	return (EOPNOTSUPP);
 }
@@ -977,7 +977,7 @@ rt_timer_add(struct rtentry *rt,
 
 /* ARGSUSED */
 void
-rt_timer_timer(void *arg)
+rt_timer_timer(void *arg __unused)
 {
 	struct rttimer_queue *rtq;
 	struct rttimer *r;

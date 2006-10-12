@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcmds.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcmds.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
 
 #include "acpi.h"
 #include "acdispat.h"
@@ -337,9 +337,9 @@ AcpiDbSleep (
 static ACPI_STATUS
 AcpiDbWalkForReferences (
     ACPI_HANDLE             ObjHandle,
-    UINT32                  NestingLevel,
+    UINT32                  NestingLevel __unused,
     void                    *Context,
-    void                    **ReturnValue)
+    void                    **ReturnValue __unused)
 {
     ACPI_OPERAND_OBJECT     *ObjDesc = (ACPI_OPERAND_OBJECT  *) Context;
     ACPI_NAMESPACE_NODE     *Node = (ACPI_NAMESPACE_NODE *) ObjHandle;
@@ -438,7 +438,7 @@ AcpiDbDisplayLocks (
 
 void
 AcpiDbDisplayTableInfo (
-    char                    *TableArg)
+    char                    *TableArg __unused)
 {
     UINT32                  i;
     ACPI_TABLE_DESC         *TableDesc;
@@ -486,7 +486,7 @@ AcpiDbDisplayTableInfo (
 void
 AcpiDbUnloadAcpiTable (
     char                    *TableArg,
-    char                    *InstanceArg)
+    char                    *InstanceArg __unused)
 {
     UINT32                  i;
     ACPI_STATUS             Status;
@@ -1005,7 +1005,7 @@ AcpiDbWalkForSpecificObjects (
     ACPI_HANDLE             ObjHandle,
     UINT32                  NestingLevel,
     void                    *Context,
-    void                    **ReturnValue)
+    void                    **ReturnValue __unused)
 {
     ACPI_WALK_INFO          *Info = (ACPI_WALK_INFO *) Context;
     ACPI_BUFFER             Buffer;
@@ -1050,7 +1050,7 @@ AcpiDbWalkForSpecificObjects (
 ACPI_STATUS
 AcpiDbDisplayObjects (
     const char              *ObjTypeArg,
-    char                    *DisplayCountArg)
+    char                    *DisplayCountArg __unused)
 {
     ACPI_WALK_INFO          Info;
     ACPI_OBJECT_TYPE        Type;
@@ -1109,7 +1109,7 @@ AcpiDbWalkAndMatchName (
     ACPI_HANDLE             ObjHandle,
     UINT32                  NestingLevel,
     void                    *Context,
-    void                    **ReturnValue)
+    void                    **ReturnValue __unused)
 {
     ACPI_STATUS             Status;
     char                    *RequestedName = (char *) Context;
@@ -1604,9 +1604,9 @@ Cleanup:
 static ACPI_STATUS
 AcpiDbIntegrityWalk (
     ACPI_HANDLE             ObjHandle,
-    UINT32                  NestingLevel,
+    UINT32                  NestingLevel __unused,
     void                    *Context,
-    void                    **ReturnValue)
+    void                    **ReturnValue __unused)
 {
     ACPI_INTEGRITY_INFO     *Info = (ACPI_INTEGRITY_INFO *) Context;
     ACPI_NAMESPACE_NODE     *Node = (ACPI_NAMESPACE_NODE *) ObjHandle;
@@ -1730,9 +1730,9 @@ AcpiDbGenerateGpe (
 static ACPI_STATUS
 AcpiDbBusWalk (
     ACPI_HANDLE             ObjHandle,
-    UINT32                  NestingLevel,
-    void                    *Context,
-    void                    **ReturnValue)
+    UINT32                  NestingLevel __unused,
+    void                    *Context __unused,
+    void                    **ReturnValue __unused)
 {
     ACPI_NAMESPACE_NODE     *Node = (ACPI_NAMESPACE_NODE *) ObjHandle;
     ACPI_STATUS             Status;

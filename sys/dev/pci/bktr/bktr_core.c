@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.38 2006/09/03 19:06:32 bouyer Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.39 2006/10/12 01:31:49 christos Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.38 2006/09/03 19:06:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.39 2006/10/12 01:31:49 christos Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -1177,7 +1177,8 @@ vbi_close(bktr_ptr_t bktr)
  *
  */
 int
-video_read(bktr_ptr_t bktr, int unit, dev_t dev, struct uio *uio)
+video_read(bktr_ptr_t bktr, int unit __unused, dev_t dev __unused,
+    struct uio *uio)
 {
         int             status;
         int             count;
@@ -1292,7 +1293,8 @@ int
 video_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct thread* td)
 #else
 int
-video_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct lwp* l)
+video_ioctl(bktr_ptr_t bktr, int unit __unused, ioctl_cmd_t cmd, caddr_t arg,
+    struct lwp* l)
 #endif
 {
 	volatile u_char		c_temp;
@@ -1914,7 +1916,8 @@ int
 tuner_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct thread* td)
 #else
 int
-tuner_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct lwp* l)
+tuner_ioctl(bktr_ptr_t bktr, int unit __unused, ioctl_cmd_t cmd, caddr_t arg,
+    struct lwp* l __unused)
 #endif
 {
 	int		tmp_int;

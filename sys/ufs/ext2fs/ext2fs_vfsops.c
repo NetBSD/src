@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.101 2006/08/30 01:26:47 christos Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.102 2006/10/12 01:32:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.101 2006/08/30 01:26:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.102 2006/10/12 01:32:51 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -756,7 +756,7 @@ ext2fs_unmount(struct mount *mp, int mntflags, struct lwp *l)
  * Flush out all the files in a filesystem.
  */
 int
-ext2fs_flushfiles(struct mount *mp, int flags, struct lwp *l)
+ext2fs_flushfiles(struct mount *mp, int flags, struct lwp *l __unused)
 {
 	extern int doforce;
 	int error;
@@ -771,7 +771,7 @@ ext2fs_flushfiles(struct mount *mp, int flags, struct lwp *l)
  * Get file system statistics.
  */
 int
-ext2fs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+ext2fs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l __unused)
 {
 	struct ufsmount *ump;
 	struct m_ext2fs *fs;

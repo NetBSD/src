@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_isa.c,v 1.15 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: dpt_isa.c,v 1.16 2006/10/12 01:31:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.15 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.16 2006/10/12 01:31:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,8 @@ dpt_isa_wait(bus_space_handle_t ioh, bus_space_tag_t iot, u_int8_t mask,
  * Match a supported board.
  */
 static int
-dpt_isa_match(struct device *parent, struct cfdata *match, void *aux)
+dpt_isa_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	int i;
@@ -252,7 +253,7 @@ dpt_isa_probe(struct isa_attach_args *ia, int iobase)
  * Attach a matched board.
  */
 static void
-dpt_isa_attach(struct device *parent, struct device *self, void *aux)
+dpt_isa_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia;
 	isa_chipset_tag_t ic;

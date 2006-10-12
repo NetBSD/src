@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.33 2006/09/10 18:39:27 riz Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.34 2006/10/12 01:31:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -548,7 +548,7 @@ sk_marv_miibus_writereg(struct device *dev, int phy, int reg, int val)
 }
 
 void
-sk_marv_miibus_statchg(struct device *dev)
+sk_marv_miibus_statchg(struct device *dev __unused)
 {
 	DPRINTFN(9, ("sk_marv_miibus_statchg: gpcr=%x\n",
 		     SK_YU_READ_2(((struct sk_if_softc *)dev), YUKON_GPCR)));
@@ -932,7 +932,7 @@ sk_jalloc(struct sk_if_softc *sc_if)
  * Release a jumbo buffer.
  */
 void
-sk_jfree(struct mbuf *m, caddr_t buf, size_t size, void	*arg)
+sk_jfree(struct mbuf *m, caddr_t buf, size_t size __unused, void *arg)
 {
 	struct sk_jpool_entry *entry;
 	struct sk_if_softc *sc;
@@ -1135,7 +1135,8 @@ sk_lookup(const struct pci_attach_args *pa)
  */
 
 int
-skc_probe(struct device *parent, struct cfdata *match, void *aux)
+skc_probe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	const struct sk_product *psk;
@@ -1194,7 +1195,8 @@ void sk_reset(struct sk_softc *sc)
 }
 
 int
-sk_probe(struct device *parent, struct cfdata *match, void *aux)
+sk_probe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct skc_attach_args *sa = aux;
 
@@ -1491,7 +1493,7 @@ skcprint(void *aux, const char *pnp)
  * setup and ethernet/BPF attach.
  */
 void
-skc_attach(struct device *parent, struct device *self, void *aux)
+skc_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct sk_softc *sc = (struct sk_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -2855,7 +2857,7 @@ sk_init(struct ifnet *ifp)
 }
 
 void
-sk_stop(struct ifnet *ifp, int disable)
+sk_stop(struct ifnet *ifp, int disable __unused)
 {
         struct sk_if_softc	*sc_if = ifp->if_softc;
 	struct sk_softc		*sc = sc_if->sk_softc;

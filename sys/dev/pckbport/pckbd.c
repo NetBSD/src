@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.12 2006/09/24 03:54:00 jmcneill Exp $ */
+/* $NetBSD: pckbd.c,v 1.13 2006/10/12 01:31:49 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.12 2006/09/24 03:54:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.13 2006/10/12 01:31:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,7 +304,7 @@ pckbd_powerhook(int why, void *opaque)
  * these are both bad jokes
  */
 int
-pckbdprobe(struct device *parent, struct cfdata *cf, void *aux)
+pckbdprobe(struct device *parent __unused, struct cfdata *cf, void *aux)
 {
 	struct pckbport_attach_args *pa = aux;
 	int res;
@@ -356,7 +356,7 @@ pckbdprobe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-pckbdattach(struct device *parent, struct device *self, void *aux)
+pckbdattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pckbd_softc *sc = device_private(self);
 	struct pckbport_attach_args *pa = aux;
@@ -596,7 +596,8 @@ pckbd_input(void *vsc, int data)
 }
 
 int
-pckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+pckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag __unused,
+    struct lwp *l __unused)
 {
 	struct pckbd_softc *sc = v;
 
@@ -706,7 +707,7 @@ pckbd_cnpollc(void *v, int on)
 }
 
 void
-pckbd_cnbell(void *v, u_int pitch, u_int period, u_int volume)
+pckbd_cnbell(void *v __unused, u_int pitch, u_int period, u_int volume)
 {
 
 	pckbd_bell(pitch, period, volume, 1);

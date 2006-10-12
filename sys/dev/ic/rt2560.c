@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.5 2006/09/25 22:14:01 jmcneill Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.6 2006/10/12 01:31:01 christos Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.5 2006/09/25 22:14:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.6 2006/10/12 01:31:01 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -338,7 +338,7 @@ static const struct {
 };
 
 int
-rt2560_attach(void *xsc, int id)
+rt2560_attach(void *xsc, int id __unused)
 {
 	struct rt2560_softc *sc = xsc;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -842,7 +842,7 @@ rt2560_free_rx_ring(struct rt2560_softc *sc, struct rt2560_rx_ring *ring)
 }
 
 struct ieee80211_node *
-rt2560_node_alloc(struct ieee80211_node_table *nt)
+rt2560_node_alloc(struct ieee80211_node_table *nt __unused)
 {
 	struct rt2560_node *rn;
 
@@ -885,7 +885,7 @@ rt2560_next_scan(void *arg)
  * This function is called for each neighbor node.
  */
 void
-rt2560_iter_func(void *arg, struct ieee80211_node *ni)
+rt2560_iter_func(void *arg __unused, struct ieee80211_node *ni)
 {
 	struct rt2560_node *rn = (struct rt2560_node *)ni;
 
@@ -1528,7 +1528,7 @@ rt2560_beacon_expire(struct rt2560_softc *sc)
 }
 
 static void
-rt2560_wakeup_expire(struct rt2560_softc *sc)
+rt2560_wakeup_expire(struct rt2560_softc *sc __unused)
 {
 	DPRINTFN(15, ("wakeup expired\n"));
 }

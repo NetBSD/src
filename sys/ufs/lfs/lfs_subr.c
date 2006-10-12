@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.63 2006/10/04 15:55:27 christos Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.64 2006/10/12 01:32:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.63 2006/10/04 15:55:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.64 2006/10/12 01:32:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,7 +248,7 @@ lfs_malloc(struct lfs *fs, size_t size, int type)
 }
 
 void
-lfs_free(struct lfs *fs, void *p, int type)
+lfs_free(struct lfs *fs, void *p, int type __unused)
 {
 	int s;
 	unsigned int h;

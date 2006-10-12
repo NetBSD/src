@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.23 2006/07/23 22:06:08 ad Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.24 2006/10/12 01:30:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.23 2006/07/23 22:06:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.24 2006/10/12 01:30:47 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -189,7 +189,7 @@ compat_43_sys_sigsetmask(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-compat_43_sys_sigstack(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_sigstack(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct compat_43_sys_sigstack_args /* {
 		syscallarg(struct sigstack *) nss;
@@ -224,7 +224,7 @@ compat_43_sys_sigstack(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-compat_43_sys_sigvec(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_sigvec(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct compat_43_sys_sigvec_args /* {
 		syscallarg(int) signum;
@@ -259,7 +259,7 @@ compat_43_sys_sigvec(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-compat_43_sys_killpg(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_killpg(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct compat_43_sys_killpg_args /* {
 		syscallarg(int) pgid;

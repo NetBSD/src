@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.86 2006/08/30 00:42:41 christos Exp $	*/
+/*	$NetBSD: eap.c,v 1.87 2006/10/12 01:31:28 christos Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.86 2006/08/30 00:42:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.87 2006/10/12 01:31:28 christos Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -329,7 +329,8 @@ static const struct audio_format eap_formats[EAP_NFORMATS] = {
 };
 
 static int
-eap_match(struct device *parent, struct cfdata *match, void *aux)
+eap_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -377,7 +378,7 @@ eap1370_write_codec(struct eap_softc *sc, int a, int d)
  */
 
 static inline void
-eap1371_ready_codec(struct eap_softc *sc, uint8_t a, uint32_t wd)
+eap1371_ready_codec(struct eap_softc *sc, uint8_t a __unused, uint32_t wd)
 {
 	int to, s;
 	uint32_t src, t;
@@ -598,7 +599,7 @@ eap1371_set_dac_rate(struct eap_instance *ei, int rate)
 }
 
 static void
-eap_attach(struct device *parent, struct device *self, void *aux)
+eap_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct eap_softc *sc;
 	struct pci_attach_args *pa;
@@ -818,7 +819,7 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-eap_detach(struct device *self, int flags)
+eap_detach(struct device *self, int flags __unused)
 {
 	struct eap_softc *sc;
 	int res;
@@ -1031,7 +1032,7 @@ eap_open(void *addr, int flags)
 }
 
 static int
-eap_query_encoding(void *addr, struct audio_encoding *fp)
+eap_query_encoding(void *addr __unused, struct audio_encoding *fp)
 {
 
 	switch (fp->index) {
@@ -1195,7 +1196,8 @@ eap_set_params(void *addr, int setmode, int usemode,
 }
 
 static int
-eap_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
+eap_round_blocksize(void *addr __unused, int blk, int mode __unused,
+    const audio_params_t *param __unused)
 {
 
 	return blk & -32;	/* keep good alignment */
@@ -1410,7 +1412,7 @@ eap_halt_input(void *addr)
 }
 
 static int
-eap_getdev(void *addr, struct audio_device *retp)
+eap_getdev(void *addr __unused, struct audio_device *retp)
 {
 
 	*retp = eap_device;
@@ -1648,7 +1650,7 @@ eap1370_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 }
 
 static int
-eap1370_query_devinfo(void *addr, mixer_devinfo_t *dip)
+eap1370_query_devinfo(void *addr __unused, mixer_devinfo_t *dip)
 {
 
 	switch (dip->index) {
@@ -1794,7 +1796,7 @@ eap1370_query_devinfo(void *addr, mixer_devinfo_t *dip)
 }
 
 static void *
-eap_malloc(void *addr, int direction, size_t size,
+eap_malloc(void *addr, int direction __unused, size_t size,
     struct malloc_type *pool, int flags)
 {
 	struct eap_instance *ei;
@@ -1837,7 +1839,7 @@ eap_free(void *addr, void *ptr, struct malloc_type *pool)
 }
 
 static size_t
-eap_round_buffersize(void *addr, int direction, size_t size)
+eap_round_buffersize(void *addr __unused, int direction __unused, size_t size)
 {
 
 	return size;
@@ -1863,7 +1865,7 @@ eap_mappage(void *addr, void *mem, off_t off, int prot)
 }
 
 static int
-eap_get_props(void *addr)
+eap_get_props(void *addr __unused)
 {
 
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
@@ -1935,7 +1937,7 @@ eap_midi_output(void *addr, int d)
 }
 
 static void
-eap_midi_getinfo(void *addr, struct midi_info *mi)
+eap_midi_getinfo(void *addr __unused, struct midi_info *mi)
 {
 	mi->name = "AudioPCI MIDI UART";
 	mi->props = MIDI_PROP_CAN_INPUT | MIDI_PROP_OUT_INTR;

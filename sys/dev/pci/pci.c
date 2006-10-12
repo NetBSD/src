@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.101 2006/10/02 21:23:44 jmcneill Exp $	*/
+/*	$NetBSD: pci.c,v 1.102 2006/10/12 01:31:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.101 2006/10/02 21:23:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.102 2006/10/12 01:31:32 christos Exp $");
 
 #include "opt_pci.h"
 
@@ -94,7 +94,7 @@ int pci_enumerate_bus(struct pci_softc *, const int *,
  */
 
 static int
-pcirescan(struct device *sc, const char *ifattr, const int *locators)
+pcirescan(struct device *sc, const char *ifattr __unused, const int *locators)
 {
 
 	KASSERT(ifattr && !strcmp(ifattr, "pci"));
@@ -105,7 +105,7 @@ pcirescan(struct device *sc, const char *ifattr, const int *locators)
 }
 
 static int
-pcimatch(struct device *parent, struct cfdata *cf, void *aux)
+pcimatch(struct device *parent __unused, struct cfdata *cf, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
 
@@ -666,7 +666,7 @@ pci_vpd_write(pci_chipset_tag_t pc, pcitag_t tag, int offset, int count,
 }
 
 int
-pci_dma64_available(struct pci_attach_args *pa)
+pci_dma64_available(struct pci_attach_args *pa __unused)
 {
 #ifdef _PCI_HAVE_DMA64
 	if (BUS_DMA_TAG_VALID(pa->pa_dmat64) &&
@@ -815,7 +815,8 @@ pci_activate(pci_chipset_tag_t pc, pcitag_t tag, void *sc,
 }
 
 int
-pci_activate_null(pci_chipset_tag_t pc, pcitag_t tag, void *sc, pcireg_t state)
+pci_activate_null(pci_chipset_tag_t pc __unused, pcitag_t tag __unused,
+    void *sc __unused, pcireg_t state __unused)
 {
 	return 0;
 }

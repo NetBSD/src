@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.14 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.15 2006/10/12 01:32:11 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.14 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.15 2006/10/12 01:32:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -386,12 +386,8 @@ deupdat(dep, waitfor)
  * Truncate the file described by dep to the length specified by length.
  */
 int
-detrunc(dep, length, flags, cred, l)
-	struct denode *dep;
-	u_long length;
-	int flags;
-	kauth_cred_t cred;
-	struct lwp *l;
+detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred,
+    struct lwp *l __unused)
 {
 	int error;
 	int allerror;
@@ -691,8 +687,8 @@ out:
 }
 
 int
-msdosfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
-    kauth_cred_t cred)
+msdosfs_gop_alloc(struct vnode *vp __unused, off_t off __unused,
+    off_t len __unused, int flags __unused, kauth_cred_t cred __unused)
 {
 	return 0;
 }

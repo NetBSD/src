@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.31 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.32 2006/10/12 01:32:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.31 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.32 2006/10/12 01:32:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -469,7 +469,7 @@ uvisor_init(struct uvisor_softc *sc, struct uvisor_connection_info *ci,
 }
 
 void
-uvisor_close(void *addr, int portno)
+uvisor_close(void *addr, int portno __unused)
 {
 	struct uvisor_softc *sc = addr;
 	usb_device_request_t req;

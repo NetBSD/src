@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.67 2006/07/23 22:06:12 ad Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.68 2006/10/12 01:32:28 christos Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.67 2006/07/23 22:06:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.68 2006/10/12 01:32:28 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -473,7 +473,7 @@ stripinit(struct strip_softc *sc)
  */
 /* ARGSUSED */
 int
-stripopen(dev_t dev, struct tty *tp)
+stripopen(dev_t dev __unused, struct tty *tp)
 {
 	struct lwp *l = curlwp;		/* XXX */
 	struct strip_softc *sc;
@@ -558,7 +558,7 @@ stripopen(dev_t dev, struct tty *tp)
  * Detach the tty from the strip unit.
  */
 static int
-stripclose(struct tty *tp, int flag)
+stripclose(struct tty *tp, int flag __unused)
 {
 	struct strip_softc *sc;
 	int s;
@@ -627,7 +627,8 @@ stripclose(struct tty *tp, int flag)
  */
 /* ARGSUSED */
 int
-striptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
+striptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag __unused,
+    struct lwp *l __unused)
 {
 	struct strip_softc *sc = (struct strip_softc *)tp->t_sc;
 

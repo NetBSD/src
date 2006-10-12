@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap.c,v 1.9 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: uyap.c,v 1.10 2006/10/12 01:32:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.9 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.10 2006/10/12 01:32:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ USB_DETACH(uyap)
 }
 
 int
-uyap_activate(device_ptr_t self, enum devact act)
+uyap_activate(device_ptr_t self __unused, enum devact act __unused)
 {
 	return 0;
 }

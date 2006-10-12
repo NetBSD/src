@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.4 2006/07/23 22:06:08 ad Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.5 2006/10/12 01:30:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.4 2006/07/23 22:06:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.5 2006/10/12 01:30:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -57,10 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.4 2006/07/23 22:06:08 ad Exp $")
 #include <compat/freebsd/freebsd_sched.h>
 
 int
-freebsd_sys_yield(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_yield(struct lwp *l __unused, void *v __unused,
+    register_t *retval __unused)
 {
 
 	yield();
@@ -68,10 +66,7 @@ freebsd_sys_yield(l, v, retval)
 }
 
 int
-freebsd_sys_sched_setparam(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_sched_setparam(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct freebsd_sys_sched_setparam_args /* {
 		syscallarg(pid_t) pid;
@@ -109,10 +104,7 @@ freebsd_sys_sched_setparam(l, v, retval)
 }
 
 int
-freebsd_sys_sched_getparam(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_sched_getparam(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct freebsd_sys_sched_getparam_args /* {
 		syscallarg(pid_t) pid;
@@ -147,10 +139,8 @@ freebsd_sys_sched_getparam(l, v, retval)
 }
 
 int
-freebsd_sys_sched_setscheduler(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_sched_setscheduler(struct lwp *l, void *v,
+    register_t *retval __unused)
 {
 	struct freebsd_sys_sched_setscheduler_args /* {
 		syscallarg(pid_t) pid;
@@ -232,10 +222,8 @@ freebsd_sys_sched_getscheduler(l, v, retval)
 }
 
 int
-freebsd_sys_sched_yield(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_sched_yield(struct lwp *l __unused, void *v __unused,
+    register_t *retval __unused)
 {
 
 	yield();
@@ -243,10 +231,8 @@ freebsd_sys_sched_yield(l, v, retval)
 }
 
 int
-freebsd_sys_sched_get_priority_max(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_sched_get_priority_max(struct lwp *l __unused, void *v,
+    register_t *retval)
 {
 	struct freebsd_sys_sched_get_priority_max_args /* {
 		syscallarg(int) policy;
@@ -265,10 +251,8 @@ freebsd_sys_sched_get_priority_max(l, v, retval)
 }
 
 int
-freebsd_sys_sched_get_priority_min(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_sched_get_priority_min(struct lwp *l __unused, void *v,
+    register_t *retval)
 {
 	struct freebsd_sys_sched_get_priority_min_args /* {
 		syscallarg(int) policy;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.97 2006/09/07 02:40:33 dogcow Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.98 2006/10/12 01:32:28 christos Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.97 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.98 2006/10/12 01:32:28 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -457,7 +457,7 @@ static const struct cp *cps[IDX_COUNT] = {
 void spppattach(int);
 void
 /*ARGSUSED*/
-spppattach(int count)
+spppattach(int count __unused)
 {
 }
 
@@ -676,7 +676,7 @@ queue_pkt:
  */
 static int
 sppp_output(struct ifnet *ifp, struct mbuf *m,
-	    struct sockaddr *dst, struct rtentry *rt)
+    struct sockaddr *dst, struct rtentry *rt __unused)
 {
 	struct sppp *sp = (struct sppp *) ifp;
 	struct ppp_header *h = NULL;
@@ -3175,7 +3175,7 @@ sppp_ipcp_tlu(struct sppp *sp)
 }
 
 static void
-sppp_ipcp_tld(struct sppp *sp)
+sppp_ipcp_tld(struct sppp *sp __unused)
 {
 }
 
@@ -3664,7 +3664,7 @@ sppp_ipv6cp_tlu(struct sppp *sp)
 }
 
 static void
-sppp_ipv6cp_tld(struct sppp *sp)
+sppp_ipv6cp_tld(struct sppp *sp __unused)
 {
 }
 
@@ -4719,7 +4719,7 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
  * Send keepalive packets, every 10 seconds.
  */
 static void
-sppp_keepalive(void *dummy)
+sppp_keepalive(void *dummy __unused)
 {
 	struct sppp *sp;
 	int s;
@@ -5516,7 +5516,7 @@ sppp_dotted_quad(u_int32_t addr)
 
 /* a dummy, used to drop uninteresting events */
 static void
-sppp_null(struct sppp *unused)
+sppp_null(struct sppp *unused __unused)
 {
 	/* do just nothing */
 }

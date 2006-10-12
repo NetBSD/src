@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.31 2006/02/14 01:13:33 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.32 2006/10/12 01:31:52 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.31 2006/02/14 01:13:33 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.32 2006/10/12 01:31:52 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -67,7 +67,7 @@ RealPrintPSStatusTable(RF_Raid_t * raidPtr,
 static void rf_ShutdownPSStatus(void *);
 
 static void
-rf_ShutdownPSStatus(void *arg)
+rf_ShutdownPSStatus(void *arg __unused)
 {
 
 	pool_destroy(&rf_pools.pss);
@@ -112,7 +112,7 @@ rf_MakeParityStripeStatusTable(RF_Raid_t *raidPtr)
 }
 
 void
-rf_FreeParityStripeStatusTable(RF_Raid_t *raidPtr,
+rf_FreeParityStripeStatusTable(RF_Raid_t *raidPtr __unused,
 			       RF_PSStatusHeader_t *pssTable)
 {
 #if RF_DEBUG_PSS
@@ -262,7 +262,7 @@ rf_RemoveFromActiveReconTable(RF_Raid_t *raidPtr, RF_StripeNum_t psid,
 }
 
 RF_ReconParityStripeStatus_t *
-rf_AllocPSStatus(RF_Raid_t *raidPtr)
+rf_AllocPSStatus(RF_Raid_t *raidPtr __unused)
 {
 	RF_ReconParityStripeStatus_t *p;
 
@@ -272,7 +272,7 @@ rf_AllocPSStatus(RF_Raid_t *raidPtr)
 }
 
 void
-rf_FreePSStatus(RF_Raid_t *raidPtr, RF_ReconParityStripeStatus_t *p)
+rf_FreePSStatus(RF_Raid_t *raidPtr __unused, RF_ReconParityStripeStatus_t *p)
 {
 	RF_ASSERT(p->procWaitList == NULL);
 	RF_ASSERT(p->blockWaitList == NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.14 2006/06/07 22:34:18 kardel Exp $ */
+/*	$NetBSD: crypto.c,v 1.15 2006/10/12 01:32:47 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.14 2006/06/07 22:34:18 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.15 2006/10/12 01:32:47 christos Exp $");
 
 /* XXX FIXME: should be defopt'ed */
 #define CRYPTO_TIMING			/* enable cryptop timing stuff */
@@ -1221,7 +1221,7 @@ cryptoret(void)
 }
 
 static void
-deferred_crypto_thread(void *arg)
+deferred_crypto_thread(void *arg __unused)
 {
 	int error;
 

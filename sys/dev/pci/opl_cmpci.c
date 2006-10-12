@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_cmpci.c,v 1.10 2006/06/09 21:55:34 christos Exp $	*/
+/*	$NetBSD: opl_cmpci.c,v 1.11 2006/10/12 01:31:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_cmpci.c,v 1.10 2006/06/09 21:55:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_cmpci.c,v 1.11 2006/10/12 01:31:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: opl_cmpci.c,v 1.10 2006/06/09 21:55:34 christos Exp 
 #include <dev/pci/cmpcivar.h>
 
 static int
-opl_cmpci_match(struct device *parent, struct cfdata *match, void *aux)
+opl_cmpci_match(struct device *parent, struct cfdata *match __unused, void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 	struct cmpci_softc *ssc = (struct cmpci_softc *)parent;
@@ -75,7 +75,7 @@ opl_cmpci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-opl_cmpci_attach(struct device *parent, struct device *self, void *aux)
+opl_cmpci_attach(struct device *parent, struct device *self, void *aux __unused)
 {
 	struct cmpci_softc *ssc = (struct cmpci_softc *)parent;
 	struct opl_softc *sc = (struct opl_softc *)self;

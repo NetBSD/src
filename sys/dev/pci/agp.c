@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.41 2006/08/27 23:21:35 christos Exp $	*/
+/*	$NetBSD: agp.c,v 1.42 2006/10/12 01:31:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.41 2006/08/27 23:21:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.42 2006/10/12 01:31:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,8 @@ agp_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-agpmatch(struct device *parent, struct cfdata *match, void *aux)
+agpmatch(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct agpbus_attach_args *apa = aux;
 	struct pci_attach_args *pa = &apa->apa_pci_args;
@@ -791,7 +792,8 @@ agp_unbind_user(struct agp_softc *sc, agp_unbind *unbind)
 }
 
 static int
-agpopen(dev_t dev, int oflags, int devtype, struct lwp *l)
+agpopen(dev_t dev, int oflags __unused, int devtype __unused,
+    struct lwp *l __unused)
 {
 	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
 
@@ -810,7 +812,8 @@ agpopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 }
 
 static int
-agpclose(dev_t dev, int fflag, int devtype, struct lwp *l)
+agpclose(dev_t dev, int fflag __unused, int devtype __unused,
+    struct lwp *l __unused)
 {
 	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
 	struct agp_memory *mem;
@@ -844,7 +847,7 @@ agpclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 }
 
 static int
-agpioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct lwp *l)
+agpioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct lwp *l __unused)
 {
 	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
 
@@ -979,7 +982,8 @@ int agp_unbind_memory(void *dev, void *handle)
 	return AGP_UNBIND_MEMORY(sc, mem);
 }
 
-void agp_memory_info(void *dev, void *handle, struct agp_memory_info *mi)
+void agp_memory_info(void *dev __unused, void *handle,
+    struct agp_memory_info *mi)
 {
 	struct agp_memory *mem = (struct agp_memory *) handle;
 

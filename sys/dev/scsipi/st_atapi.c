@@ -1,4 +1,4 @@
-/*	$NetBSD: st_atapi.c,v 1.18 2006/03/30 16:09:28 thorpej Exp $ */
+/*	$NetBSD: st_atapi.c,v 1.19 2006/10/12 01:31:58 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.18 2006/03/30 16:09:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.19 2006/10/12 01:31:58 christos Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -62,7 +62,8 @@ static const struct scsipi_inquiry_pattern st_atapibus_patterns[] = {
 };
 
 static int
-st_atapibus_match(struct device *parent, struct cfdata *match, void *aux)
+st_atapibus_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
@@ -177,7 +178,7 @@ st_atapibus_mode_sense(struct st_softc *st, int flags)
 }
 
 static int
-st_atapibus_mode_select(struct st_softc *st, int flags)
+st_atapibus_mode_select(struct st_softc *st __unused, int flags __unused)
 {
 	return ENODEV; /* for now ... */
 }

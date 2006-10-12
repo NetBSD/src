@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.31 2006/06/17 23:34:27 christos Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.32 2006/10/12 01:31:30 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 #include "opt_pcn.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.31 2006/06/17 23:34:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.32 2006/10/12 01:31:30 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -526,7 +526,7 @@ pcn_lookup_variant(uint16_t chipid)
 }
 
 static int
-pcn_match(struct device *parent, struct cfdata *cf, void *aux)
+pcn_match(struct device *parent __unused, struct cfdata *cf __unused, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -555,7 +555,7 @@ pcn_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-pcn_attach(struct device *parent, struct device *self, void *aux)
+pcn_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pcn_softc *sc = (struct pcn_softc *) self;
 	struct pci_attach_args *pa = aux;

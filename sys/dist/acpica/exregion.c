@@ -117,7 +117,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exregion.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exregion.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
 
 #define __EXREGION_C__
 
@@ -153,7 +153,7 @@ AcpiExSystemMemorySpaceHandler (
     ACPI_PHYSICAL_ADDRESS   Address,
     UINT32                  BitWidth,
     ACPI_INTEGER            *Value,
-    void                    *HandlerContext,
+    void                    *HandlerContext __unused,
     void                    *RegionContext)
 {
     ACPI_STATUS             Status = AE_OK;
@@ -371,8 +371,8 @@ AcpiExSystemIoSpaceHandler (
     ACPI_PHYSICAL_ADDRESS   Address,
     UINT32                  BitWidth,
     ACPI_INTEGER            *Value,
-    void                    *HandlerContext,
-    void                    *RegionContext)
+    void                    *HandlerContext __unused,
+    void                    *RegionContext __unused)
 {
     ACPI_STATUS             Status = AE_OK;
     UINT32                  Value32;
@@ -435,7 +435,7 @@ AcpiExPciConfigSpaceHandler (
     ACPI_PHYSICAL_ADDRESS   Address,
     UINT32                  BitWidth,
     ACPI_INTEGER            *Value,
-    void                    *HandlerContext,
+    void                    *HandlerContext __unused,
     void                    *RegionContext)
 {
     ACPI_STATUS             Status = AE_OK;
@@ -511,12 +511,12 @@ AcpiExPciConfigSpaceHandler (
 
 ACPI_STATUS
 AcpiExCmosSpaceHandler (
-    UINT32                  Function,
-    ACPI_PHYSICAL_ADDRESS   Address,
-    UINT32                  BitWidth,
-    ACPI_INTEGER            *Value,
-    void                    *HandlerContext,
-    void                    *RegionContext)
+    UINT32                  Function __unused,
+    ACPI_PHYSICAL_ADDRESS   Address __unused,
+    UINT32                  BitWidth __unused,
+    ACPI_INTEGER            *Value __unused,
+    void                    *HandlerContext __unused,
+    void                    *RegionContext __unused)
 {
     ACPI_STATUS             Status = AE_OK;
 
@@ -548,12 +548,12 @@ AcpiExCmosSpaceHandler (
 
 ACPI_STATUS
 AcpiExPciBarSpaceHandler (
-    UINT32                  Function,
-    ACPI_PHYSICAL_ADDRESS   Address,
-    UINT32                  BitWidth,
-    ACPI_INTEGER            *Value,
-    void                    *HandlerContext,
-    void                    *RegionContext)
+    UINT32                  Function __unused,
+    ACPI_PHYSICAL_ADDRESS   Address __unused,
+    UINT32                  BitWidth __unused,
+    ACPI_INTEGER            *Value __unused,
+    void                    *HandlerContext __unused,
+    void                    *RegionContext __unused)
 {
     ACPI_STATUS             Status = AE_OK;
 
@@ -589,8 +589,8 @@ AcpiExDataTableSpaceHandler (
     ACPI_PHYSICAL_ADDRESS   Address,
     UINT32                  BitWidth,
     ACPI_INTEGER            *Value,
-    void                    *HandlerContext,
-    void                    *RegionContext)
+    void                    *HandlerContext __unused,
+    void                    *RegionContext __unused)
 {
     ACPI_STATUS             Status = AE_OK;
     UINT32                  ByteWidth = ACPI_DIV_8 (BitWidth);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.6 2006/10/04 15:49:59 christos Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.7 2006/10/12 01:32:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.6 2006/10/04 15:49:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.7 2006/10/12 01:32:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -691,7 +691,7 @@ bad:
 }
 
 void
-hci_sco_start(struct hci_link *link)
+hci_sco_start(struct hci_link *link __unused)
 {
 }
 

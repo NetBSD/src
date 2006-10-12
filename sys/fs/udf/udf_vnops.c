@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.6 2006/06/12 00:20:21 christos Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.7 2006/10/12 01:32:14 christos Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vnops.c,v 1.6 2006/06/12 00:20:21 christos Exp $");
+__RCSID("$NetBSD: udf_vnops.c,v 1.7 2006/10/12 01:32:14 christos Exp $");
 #endif /* not lint */
 
 
@@ -830,7 +830,7 @@ udf_open(void *v)
 		int a_mode;
 		kauth_cred_t a_cred;
 		struct proc *a_p;
-	} */ *ap;
+	} */ *ap = v;
 
 	DPRINTF(CALL, ("udf_open called\n"));
 	ap = 0;		/* XXX gcc */

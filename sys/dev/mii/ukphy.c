@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.27 2006/03/29 07:05:24 thorpej Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.28 2006/10/12 01:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.27 2006/03/29 07:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.28 2006/10/12 01:31:25 christos Exp $");
 
 #include "opt_mii.h"
 
@@ -111,7 +111,8 @@ static const struct mii_phy_funcs ukphy_funcs = {
 };
 
 static int
-ukphymatch(struct device *parent, struct cfdata *match, void *aux)
+ukphymatch(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux __unused)
 {
 
 	/*
@@ -121,7 +122,7 @@ ukphymatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-ukphyattach(struct device *parent, struct device *self, void *aux)
+ukphyattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;

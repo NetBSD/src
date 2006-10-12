@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.20 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: uirda.c,v 1.21 2006/10/12 01:32:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.20 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.21 2006/10/12 01:32:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -441,7 +441,8 @@ uirda_activate(device_ptr_t self, enum devact act)
 }
 
 int
-uirda_open(void *h, int flag, int mode, struct lwp *l)
+uirda_open(void *h, int flag __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	struct uirda_softc *sc = h;
 	int error;
@@ -510,7 +511,8 @@ bad1:
 }
 
 int
-uirda_close(void *h, int flag, int mode, struct lwp *l)
+uirda_close(void *h, int flag __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	struct uirda_softc *sc = h;
 
@@ -541,7 +543,7 @@ uirda_close(void *h, int flag, int mode, struct lwp *l)
 }
 
 int
-uirda_read(void *h, struct uio *uio, int flag)
+uirda_read(void *h, struct uio *uio, int flag __unused)
 {
 	struct uirda_softc *sc = h;
 	usbd_status err;
@@ -603,7 +605,7 @@ uirda_read(void *h, struct uio *uio, int flag)
 }
 
 int
-uirda_write(void *h, struct uio *uio, int flag)
+uirda_write(void *h, struct uio *uio, int flag __unused)
 {
 	struct uirda_softc *sc = h;
 	usbd_status err;
@@ -694,7 +696,7 @@ filt_uirdardetach(struct knote *kn)
 }
 
 static int
-filt_uirdaread(struct knote *kn, long hint)
+filt_uirdaread(struct knote *kn, long hint __unused)
 {
 	struct uirda_softc *sc = kn->kn_hook;
 
@@ -719,7 +721,7 @@ static const struct filterops uirdawrite_filtops =
 	{ 1, NULL, filt_uirdawdetach, filt_seltrue };
 
 int
-uirda_kqfilter(void *h, struct knote *kn)
+uirda_kqfilter(void *h __unused, struct knote *kn)
 {
 	struct uirda_softc *sc = kn->kn_hook;
 	struct klist *klist;

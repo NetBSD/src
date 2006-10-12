@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.23 2006/06/07 22:33:42 kardel Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.24 2006/10/12 01:32:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.23 2006/06/07 22:33:42 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.24 2006/10/12 01:32:28 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -309,7 +309,7 @@ hippi_input(struct ifnet *ifp, struct mbuf *m)
 
 #ifdef INET
 void
-hippi_ip_input(struct ifnet *ifp, struct mbuf *m)
+hippi_ip_input(struct ifnet *ifp __unused, struct mbuf *m)
 {
 	struct ifqueue *inq;
 	int s;

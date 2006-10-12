@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.204 2006/10/05 14:48:32 chs Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.205 2006/10/12 01:32:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.204 2006/10/05 14:48:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.205 2006/10/12 01:32:17 christos Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_ktrace.h"
@@ -292,7 +292,7 @@ sysctl_init(void)
  * ********************************************************************
  */
 int
-sys___sysctl(struct lwp *l, void *v, register_t *retval)
+sys___sysctl(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys___sysctl_args /* {
 		syscallarg(const int *) name;

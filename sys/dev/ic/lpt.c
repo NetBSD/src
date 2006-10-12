@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.66 2006/09/02 06:54:18 christos Exp $	*/
+/*	$NetBSD: lpt.c,v 1.67 2006/10/12 01:31:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.66 2006/09/02 06:54:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.67 2006/10/12 01:31:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,11 +127,7 @@ lpt_attach_subr(sc)
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-lptopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct lwp *l;
+lptopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
 {
 	u_char flags = LPTFLAGS(dev);
 	struct lpt_softc *sc;
@@ -252,11 +248,8 @@ lptwakeup(arg)
  * Close the device, and free the local line buffer.
  */
 int
-lptclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct lwp *l;
+lptclose(dev_t dev, int flag __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	struct lpt_softc *sc = device_lookup(&lpt_cd, LPTUNIT(dev));
 	bus_space_tag_t iot = sc->sc_iot;
@@ -349,10 +342,7 @@ lptpushbytes(sc)
  * chars moved to the output queue.
  */
 int
-lptwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+lptwrite(dev_t dev, struct uio *uio, int flags __unused)
 {
 	struct lpt_softc *sc = device_lookup(&lpt_cd, LPTUNIT(dev));
 	size_t n;
@@ -419,19 +409,8 @@ lptintr(arg)
 }
 
 int
-lptioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+lptioctl(dev_t dev __unused, u_long cmd __unused, caddr_t data __unused,
+    int flag __unused, struct lwp *l __unused)
 {
-	int error = 0;
-
-	switch (cmd) {
-	default:
-		error = ENODEV;
-	}
-
-	return error;
+	return ENODEV;
 }

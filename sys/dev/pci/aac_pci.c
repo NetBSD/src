@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.17 2006/08/28 00:00:23 christos Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.18 2006/10/12 01:31:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.17 2006/08/28 00:00:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.18 2006/10/12 01:31:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,7 +375,8 @@ aac_find_ident(struct pci_attach_args *pa)
 }
 
 static int
-aac_pci_match(struct device *parent, struct cfdata *match, void *aux)
+aac_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -388,7 +389,7 @@ aac_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-aac_pci_attach(struct device *parent, struct device *self, void *aux)
+aac_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
 	pci_chipset_tag_t pc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.125 2006/09/24 03:53:09 jmcneill Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.126 2006/10/12 01:31:30 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.125 2006/09/24 03:53:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.126 2006/10/12 01:31:30 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -760,7 +760,7 @@ wm_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-wm_match(struct device *parent, struct cfdata *cf, void *aux)
+wm_match(struct device *parent __unused, struct cfdata *cf __unused, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -771,7 +771,7 @@ wm_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-wm_attach(struct device *parent, struct device *self, void *aux)
+wm_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct wm_softc *sc = (void *) self;
 	struct pci_attach_args *pa = aux;

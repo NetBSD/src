@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_eisa.c,v 1.13 2006/08/28 00:18:30 christos Exp $	*/
+/*	$NetBSD: cac_eisa.c,v 1.14 2006/10/12 01:30:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.13 2006/08/28 00:18:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.14 2006/10/12 01:30:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,8 @@ static struct cac_eisa_type {
 };
 
 static int
-cac_eisa_match(struct device *parent, struct cfdata *match, void *aux)
+cac_eisa_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct eisa_attach_args *ea;
 	int i;
@@ -135,7 +136,7 @@ cac_eisa_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-cac_eisa_attach(struct device *parent, struct device *self, void *aux)
+cac_eisa_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct eisa_attach_args *ea;
 	bus_space_handle_t ioh;

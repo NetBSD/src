@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.253 2006/10/10 23:35:29 riz Exp $	*/
+/*	$NetBSD: cd.c,v 1.254 2006/10/12 01:31:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.253 2006/10/10 23:35:29 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.254 2006/10/12 01:31:57 christos Exp $");
 
 #include "rnd.h"
 
@@ -217,7 +217,8 @@ static const struct scsipi_periphsw cd_switch = {
  * A device suitable for this driver
  */
 static int
-cdmatch(struct device *parent, struct cfdata *match, void *aux)
+cdmatch(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
@@ -230,7 +231,7 @@ cdmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-cdattach(struct device *parent, struct device *self, void *aux)
+cdattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct cd_softc *cd = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
@@ -281,7 +282,7 @@ cdattach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-cdactivate(struct device *self, enum devact act)
+cdactivate(struct device *self __unused, enum devact act)
 {
 	int rv = 0;
 
@@ -300,7 +301,7 @@ cdactivate(struct device *self, enum devact act)
 }
 
 static int
-cddetach(struct device *self, int flags)
+cddetach(struct device *self, int flags __unused)
 {
 	struct cd_softc *cd = device_private(self);
 	int s, bmaj, cmaj, i, mn;
@@ -354,7 +355,7 @@ cddetach(struct device *self, int flags)
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
 static int
-cdopen(dev_t dev, int flag, int fmt, struct lwp *l)
+cdopen(dev_t dev, int flag __unused, int fmt, struct lwp *l __unused)
 {
 	struct cd_softc *cd;
 	struct scsipi_periph *periph;
@@ -516,7 +517,7 @@ bad4:
  * occurence of an open device
  */
 static int
-cdclose(dev_t dev, int flag, int fmt, struct lwp *l)
+cdclose(dev_t dev, int flag __unused, int fmt, struct lwp *l __unused)
 {
 	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
 	struct scsipi_periph *periph = cd->sc_periph;
@@ -1060,13 +1061,13 @@ cdminphys(struct buf *bp)
 }
 
 static int
-cdread(dev_t dev, struct uio *uio, int ioflag)
+cdread(dev_t dev, struct uio *uio, int ioflag __unused)
 {
 	return (physio(cdstrategy, NULL, dev, B_READ, cdminphys, uio));
 }
 
 static int
-cdwrite(dev_t dev, struct uio *uio, int ioflag)
+cdwrite(dev_t dev, struct uio *uio, int ioflag __unused)
 {
 	return (physio(cdstrategy, NULL, dev, B_WRITE, cdminphys, uio));
 }
@@ -1728,7 +1729,7 @@ read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *size)
  * Find out from the device what it's capacity is
  */
 static u_long
-cd_size(struct cd_softc *cd, int flags)
+cd_size(struct cd_softc *cd, int flags __unused)
 {
 	u_int blksize;
 	u_long size;
@@ -1778,8 +1779,8 @@ cd_play(struct cd_softc *cd, int blkno, int nblks)
  * Get scsi driver to send a "start playing" command
  */
 static int
-cd_play_tracks(struct cd_softc *cd, int strack, int sindex, int etrack,
-    int eindex)
+cd_play_tracks(struct cd_softc *cd, int strack, int sindex __unused, int etrack,
+    int eindex __unused)
 {
 	struct cd_formatted_toc toc;
 	int error;
@@ -1949,7 +1950,7 @@ cd_get_parms(struct cd_softc *cd, int flags)
 }
 
 static int
-cdsize(dev_t dev)
+cdsize(dev_t dev __unused)
 {
 
 	/* CD-ROMs are read-only. */
@@ -1957,7 +1958,8 @@ cdsize(dev_t dev)
 }
 
 static int
-cddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+cddump(dev_t dev __unused, daddr_t blkno __unused, caddr_t va __unused,
+    size_t size __unused)
 {
 
 	/* Not implemented. */

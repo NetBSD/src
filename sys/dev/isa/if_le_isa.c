@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.41 2005/12/24 20:27:41 perry Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.42 2006/10/12 01:31:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.41 2005/12/24 20:27:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.42 2006/10/12 01:31:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,19 +187,14 @@ le_isa_rdcsr(sc, port)
 }
 
 int
-ne2100_isa_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ne2100_isa_probe(struct device *parent __unused, struct cfdata *match,
+    void *aux)
 {
 	return (lance_isa_probe(aux, &ne2100_params, match->cf_flags));
 }
 
 int
-bicc_isa_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+bicc_isa_probe(struct device *parent __unused, struct cfdata *match, void *aux)
 {
 	return (lance_isa_probe(aux, &bicc_params, match->cf_flags));
 }
@@ -277,9 +272,8 @@ bad:
 }
 
 void
-le_dummyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+le_dummyattach(struct device *parent __unused, struct device *self,
+    void *aux)
 {
 	printf("\n");
 
@@ -287,10 +281,8 @@ le_dummyattach(parent, self, aux)
 }
 
 int
-le_dummyprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+le_dummyprobe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux __unused)
 {
 	return (1);
 }
@@ -312,11 +304,8 @@ le_bicc_attach(parent, self, aux)
 }
 
 void
-le_isa_attach(parent, lesc, ia, p)
-	struct device *parent;
-	struct le_softc *lesc;
-	struct isa_attach_args *ia;
-	struct le_isa_params *p;
+le_isa_attach(struct device *parent __unused, struct le_softc *lesc,
+    struct isa_attach_args *ia, struct le_isa_params *p)
 {
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	bus_space_tag_t iot = ia->ia_iot;

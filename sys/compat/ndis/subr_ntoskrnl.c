@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.3 2006/03/31 00:03:57 rittera Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.4 2006/10/12 01:30:49 christos Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -407,10 +407,10 @@ RtlAnsiStringToUnicodeString(dest, src, allocate)
 }
 
 __stdcall void *
-ExAllocatePoolWithTag(pooltype, len, tag)
-	uint32_t		pooltype;
-	size_t			len;
-	uint32_t		tag;
+ExAllocatePoolWithTag(
+	uint32_t		pooltype __unused,
+	size_t			len,
+	uint32_t		tag __unused)
 {
 	void			*buf;
 
@@ -475,14 +475,14 @@ IoGetDriverObjectExtension(drv, clid)
 
 
 __stdcall uint32_t
-IoCreateDevice(drv, devextlen, devname, devtype, devchars, exclusive, newdev)
-	driver_object		*drv;
-	uint32_t		devextlen;
-	unicode_string		*devname;
-	uint32_t		devtype;
-	uint32_t		devchars;
-	uint8_t			exclusive;
-	device_object		**newdev;
+IoCreateDevice(
+	driver_object		*drv,
+	uint32_t		devextlen,
+	unicode_string		*devname __unused,
+	uint32_t		devtype,
+	uint32_t		devchars,
+	uint8_t			exclusive __unused,
+	device_object		**newdev)
 {
 	device_object		*dev;
 	
@@ -803,9 +803,9 @@ IoBuildDeviceIoControlRequest(iocode, dobj, ibuf, ilen, obuf, olen,
 }
 
 __stdcall static irp *
-IoAllocateIrp(stsize, chargequota)
-	uint8_t			stsize;
-	uint8_t			chargequota;
+IoAllocateIrp(
+	uint8_t			stsize,
+	uint8_t			chargequota __unused)
 {
 	irp			*i;
 
@@ -1208,12 +1208,12 @@ ntoskrnl_time(tval)
  */
 
 __stdcall uint32_t
-KeWaitForSingleObject(obj, reason, mode, alertable, duetime)
-	nt_dispatch_header	*obj;
-	uint32_t		reason;
-	uint32_t		mode;
-	uint8_t			alertable;
-	int64_t			*duetime;
+KeWaitForSingleObject(
+	nt_dispatch_header	*obj,
+	uint32_t		reason __unused,
+	uint32_t		mode __unused,
+	uint8_t			alertable __unused,
+	int64_t			*duetime)
 {
 #ifdef __FreeBSD__
 	struct thread		*td = curthread;
@@ -1367,16 +1367,15 @@ KeWaitForSingleObject(obj, reason, mode, alertable, duetime)
 }
 
 __stdcall static uint32_t
-KeWaitForMultipleObjects(cnt, obj, wtype, reason, mode,
-	alertable, duetime, wb_array)
-	uint32_t		cnt;
-	nt_dispatch_header	*obj[];
-	uint32_t		wtype;
-	uint32_t		reason;
-	uint32_t		mode;
-	uint8_t			alertable;
-	int64_t			*duetime;
-	wait_block		*wb_array;
+KeWaitForMultipleObjects(
+	uint32_t		cnt,
+	nt_dispatch_header	*obj[],
+	uint32_t		wtype,
+	uint32_t		reason __unused,
+	uint32_t		mode __unused,
+	uint8_t			alertable __unused,
+	int64_t			*duetime,
+	wait_block		*wb_array)
 {
 #ifdef __FreeBSD__
 	struct thread		*td = curthread;
@@ -1758,15 +1757,14 @@ ntoskrnl_findwrap(func)
 }
 
 __stdcall static void
-ExInitializePagedLookasideList(lookaside, allocfunc, freefunc,
-    flags, size, tag, depth)
-	paged_lookaside_list	*lookaside;
-	lookaside_alloc_func	*allocfunc;
-	lookaside_free_func	*freefunc;
-	uint32_t		flags;
-	size_t			size;
-	uint32_t		tag;
-	uint16_t		depth;
+ExInitializePagedLookasideList(
+	paged_lookaside_list	*lookaside,
+	lookaside_alloc_func	*allocfunc,
+	lookaside_free_func	*freefunc,
+	uint32_t		flags __unused,
+	size_t			size,
+	uint32_t		tag,
+	uint16_t		depth)
 {
 	bzero((char *)lookaside, sizeof(paged_lookaside_list));
 
@@ -1813,15 +1811,14 @@ ExDeletePagedLookasideList(lookaside)
 }
 
 __stdcall static void
-ExInitializeNPagedLookasideList(lookaside, allocfunc, freefunc,
-    flags, size, tag, depth)
-	npaged_lookaside_list	*lookaside;
-	lookaside_alloc_func	*allocfunc;
-	lookaside_free_func	*freefunc;
-	uint32_t		flags;
-	size_t			size;
-	uint32_t		tag;
-	uint16_t		depth;
+ExInitializeNPagedLookasideList(
+	npaged_lookaside_list	*lookaside,
+	lookaside_alloc_func	*allocfunc,
+	lookaside_free_func	*freefunc,
+	uint32_t		flags __unused,
+	size_t			size,
+	uint32_t		tag,
+	uint16_t		depth)
 {
 	bzero((char *)lookaside, sizeof(npaged_lookaside_list));
 
@@ -2061,12 +2058,12 @@ ExInterlockedAddLargeStatistic(REGARGS2(uint64_t *addend, uint32_t inc))
 };
 
 __stdcall mdl *
-IoAllocateMdl(vaddr, len, secondarybuf, chargequota, iopkt)
-	void			*vaddr;
-	uint32_t		len;
-	uint8_t			secondarybuf;
-	uint8_t			chargequota;
-	irp			*iopkt;
+IoAllocateMdl(
+	void			*vaddr,
+	uint32_t		len,
+	uint8_t			secondarybuf,
+	uint8_t			chargequota __unused,
+	irp			*iopkt)
 {
 	mdl			*m;
 	int			zone = 0;
@@ -2177,31 +2174,30 @@ MmBuildMdlForNonPagedPool(m)
 }
 
 __stdcall static void *
-MmMapLockedPages(buf, accessmode)
-	mdl			*buf;
-	uint8_t			accessmode;
+MmMapLockedPages(
+	mdl			*buf,
+	uint8_t			accessmode __unused)
 {
 	buf->mdl_flags |= MDL_MAPPED_TO_SYSTEM_VA;
 	return(MmGetMdlVirtualAddress(buf));
 }
 
 __stdcall static void *
-MmMapLockedPagesSpecifyCache(buf, accessmode, cachetype, vaddr,
-    bugcheck, prio)
-	mdl			*buf;
-	uint8_t			accessmode;
-	uint32_t		cachetype;
-	void			*vaddr;
-	uint32_t		bugcheck;
-	uint32_t		prio;
+MmMapLockedPagesSpecifyCache(
+	mdl			*buf,
+	uint8_t			accessmode,
+	uint32_t		cachetype __unused,
+	void			*vaddr __unused,
+	uint32_t		bugcheck __unused,
+	uint32_t		prio __unused)
 {
 	return(MmMapLockedPages(buf, accessmode));
 }
 
 __stdcall static void
-MmUnmapLockedPages(vaddr, buf)
-	void			*vaddr;
-	mdl			*buf;
+MmUnmapLockedPages(
+	void			*vaddr __unused,
+	mdl			*buf)
 {
 	buf->mdl_flags &= ~MDL_MAPPED_TO_SYSTEM_VA;
 	return;
@@ -2386,8 +2382,8 @@ atol(str)
  */
 
 #ifdef __NetBSD__
-void srandom(int arg);
-void srandom(int arg) {return;}
+void srandom(int);
+void srandom(int arg __unused) {return;}
 #endif
 
 
@@ -2420,12 +2416,12 @@ IoIsWdmVersionAvailable(major, minor)
 }
 
 __stdcall static ndis_status
-IoGetDeviceProperty(devobj, regprop, buflen, prop, reslen)
-	device_object		*devobj;
-	uint32_t		regprop;
-	uint32_t		buflen;
-	void			*prop;
-	uint32_t		*reslen;
+IoGetDeviceProperty(
+	device_object		*devobj,
+	uint32_t		regprop,
+	uint32_t		buflen __unused,
+	void			*prop,
+	uint32_t		*reslen)
 {
 	driver_object		*drv;
 	uint16_t		**name;
@@ -2447,9 +2443,9 @@ IoGetDeviceProperty(devobj, regprop, buflen, prop, reslen)
 }
 
 __stdcall static void
-KeInitializeMutex(kmutex, level)
-	kmutant			*kmutex;
-	uint32_t		level;
+KeInitializeMutex(
+	kmutant			*kmutex,
+	uint32_t		level __unused)
 {
 	INIT_LIST_HEAD((&kmutex->km_header.dh_waitlisthead));
 	kmutex->km_abandoned = FALSE;
@@ -2463,9 +2459,9 @@ KeInitializeMutex(kmutex, level)
 }
 
 __stdcall static uint32_t
-KeReleaseMutex(kmutex, kwait)
-	kmutant			*kmutex;
-	uint8_t			kwait;
+KeReleaseMutex(
+	kmutant			*kmutex,
+	uint8_t			kwait __unused)
 {
 #ifdef __NetBSD__
 	int			s;
@@ -2552,10 +2548,10 @@ KeResetEvent(kevent)
 }
 
 __stdcall uint32_t
-KeSetEvent(kevent, increment, kwait)
-	nt_kevent		*kevent;
-	uint32_t		increment;
-	uint8_t			kwait;
+KeSetEvent(
+	nt_kevent		*kevent,
+	uint32_t		increment __unused,
+	uint8_t			kwait __unused)
 {
 	uint32_t		prevstate;
 #ifdef __NetBSD__
@@ -2596,14 +2592,13 @@ KeReadStateEvent(kevent)
 }
 
 __stdcall static ndis_status
-ObReferenceObjectByHandle(handle, reqaccess, otype,
-    accessmode, object, handleinfo)
-	ndis_handle		handle;
-	uint32_t		reqaccess;
-	void			*otype;
-	uint8_t			accessmode;
-	void			**object;
-	void			**handleinfo;
+ObReferenceObjectByHandle(
+	ndis_handle		handle,
+	uint32_t		reqaccess __unused,
+	void			*otype __unused,
+	uint8_t			accessmode __unused,
+	void			**object,
+	void			**handleinfo __unused)
 {
 	nt_objref		*nr;
 
@@ -2633,8 +2628,7 @@ ObfDereferenceObject(REGARGS1(void *object))
 }
 
 __stdcall static uint32_t
-ZwClose(handle)
-	ndis_handle		handle;
+ZwClose(ndis_handle handle __unused)
 {
 	return(STATUS_SUCCESS);
 }
@@ -2664,15 +2658,14 @@ ntoskrnl_thrfunc(arg)
 }
 
 __stdcall static ndis_status
-PsCreateSystemThread(handle, reqaccess, objattrs, phandle,
-	clientid, thrfunc, thrctx)
-	ndis_handle		*handle;
-	uint32_t		reqaccess;
-	void			*objattrs;
-	ndis_handle		phandle;
-	void			*clientid;
-	void			*thrfunc;
-	void			*thrctx;
+PsCreateSystemThread(
+	ndis_handle		*handle,
+	uint32_t		reqaccess __unused,
+	void			*objattrs __unused,
+	ndis_handle		phandle __unused,
+	void			*clientid __unused,
+	void			*thrfunc,
+	void			*thrctx)
 {
 	int			error;
 	char			tname[128];
@@ -2710,8 +2703,7 @@ PsCreateSystemThread(handle, reqaccess, objattrs, phandle,
  * them.
  */
 __stdcall static ndis_status
-PsTerminateSystemThread(status)
-	ndis_status		status;
+PsTerminateSystemThread(ndis_status status __unused)
 {
 	struct nt_objref	*nr;
 #ifdef __NetBSD__
@@ -2753,7 +2745,7 @@ PsTerminateSystemThread(status)
 }
 
 static uint32_t
-DbgPrint(char *fmt, ...)
+DbgPrint(char *fmt __unused, ...)
 {
 	//va_list			ap;
 

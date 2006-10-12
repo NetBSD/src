@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.19 2006/07/23 22:06:10 ad Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.20 2006/10/12 01:32:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.19 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.20 2006/10/12 01:32:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1142,9 +1142,7 @@ union_dircache_r(vp, vppp, cntp)
 }
 
 struct vnode *
-union_dircache(vp, l)
-	struct vnode *vp;
-	struct lwp *l;
+union_dircache(struct vnode *vp, struct lwp *l __unused)
 {
 	int cnt;
 	struct vnode *nvp = NULLVP;

@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.14 2006/09/28 18:01:24 bouyer Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.15 2006/10/12 01:30:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.14 2006/09/28 18:01:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.15 2006/10/12 01:30:44 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -262,7 +262,7 @@ CFATTACH_DECL(ioapic, sizeof(struct ioapic_softc),
     ioapic_match, ioapic_attach, NULL, NULL);
 
 int
-ioapic_match(struct device *parent, struct cfdata *match, void *aux)
+ioapic_match(struct device *parent __unused, struct cfdata *match, void *aux)
 {
 	struct apic_attach_args *aaa = (struct apic_attach_args *) aux;
 
@@ -275,7 +275,7 @@ ioapic_match(struct device *parent, struct cfdata *match, void *aux)
  * can't use bus_space_xxx as we don't have a bus handle ...
  */
 void 
-ioapic_attach(struct device *parent, struct device *self, void *aux)
+ioapic_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct ioapic_softc *sc = (struct ioapic_softc *)self;  
 	struct apic_attach_args  *aaa = (struct apic_attach_args  *) aux;
@@ -530,8 +530,8 @@ ioapic_addroute(struct pic *pic, struct cpu_info *ci, int pin,
 }
 
 static void
-ioapic_delroute(struct pic *pic, struct cpu_info *ci, int pin,
-		int idtvec, int type)
+ioapic_delroute(struct pic *pic, struct cpu_info *ci __unused, int pin,
+    int idtvec __unused, int type __unused)
 {
 	struct ioapic_softc *sc = (struct ioapic_softc *)pic;
 	struct ioapic_pin *pp;

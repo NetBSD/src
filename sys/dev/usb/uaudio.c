@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.105 2006/10/04 16:00:15 christos Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.106 2006/10/12 01:31:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.105 2006/10/04 16:00:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.106 2006/10/12 01:31:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -616,7 +616,8 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 }
 
 Static char *
-uaudio_id_name(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
+uaudio_id_name(struct uaudio_softc *sc __unused,
+    const struct io_terminal *iot __unused, int id)
 {
 	static char tbuf[32];
 
@@ -722,7 +723,8 @@ uaudio_add_input(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 }
 
 Static void
-uaudio_add_output(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
+uaudio_add_output(struct uaudio_softc *sc __unused,
+    const struct io_terminal *iot __unused, int id __unused)
 {
 #ifdef UAUDIO_DEBUG
 	const struct usb_audio_output_terminal *d;
@@ -2159,7 +2161,7 @@ uaudio_open(void *addr, int flags)
  * Close function is called at splaudio().
  */
 Static void
-uaudio_close(void *addr)
+uaudio_close(void *addr __unused)
 {
 }
 
@@ -2270,7 +2272,7 @@ uaudio_round_blocksize(void *addr, int blk,
 }
 
 Static int
-uaudio_get_props(void *addr)
+uaudio_get_props(void *addr __unused)
 {
 	return AUDIO_PROP_FULLDUPLEX | AUDIO_PROP_INDEPENDENT;
 
@@ -2509,7 +2511,7 @@ uaudio_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 Static int
 uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 		     void (*intr)(void *), void *arg,
-		     const audio_params_t *param)
+		     const audio_params_t *param __unused)
 {
 	struct uaudio_softc *sc;
 	struct chan *ch;
@@ -2552,7 +2554,7 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 Static int
 uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 		      void (*intr)(void *), void *arg,
-		      const audio_params_t *param)
+		      const audio_params_t *param __unused)
 {
 	struct uaudio_softc *sc;
 	struct chan *ch;
@@ -2692,7 +2694,7 @@ bad:
 }
 
 Static void
-uaudio_chan_free_buffers(struct uaudio_softc *sc, struct chan *ch)
+uaudio_chan_free_buffers(struct uaudio_softc *sc __unused, struct chan *ch)
 {
 	int i;
 

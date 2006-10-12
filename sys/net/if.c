@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.168 2006/08/25 19:33:50 matt Exp $	*/
+/*	$NetBSD: if.c,v 1.169 2006/10/12 01:32:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.168 2006/08/25 19:33:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.169 2006/10/12 01:32:27 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -204,57 +204,57 @@ ifinit(void)
  */
 
 int
-if_nulloutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *so,
-    struct rtentry *rt)
+if_nulloutput(struct ifnet *ifp __unused, struct mbuf *m __unused,
+    struct sockaddr *so __unused, struct rtentry *rt __unused)
 {
 
 	return (ENXIO);
 }
 
 void
-if_nullinput(struct ifnet *ifp, struct mbuf *m)
+if_nullinput(struct ifnet *ifp __unused, struct mbuf *m __unused)
 {
 
 	/* Nothing. */
 }
 
 void
-if_nullstart(struct ifnet *ifp)
+if_nullstart(struct ifnet *ifp __unused)
 {
 
 	/* Nothing. */
 }
 
 int
-if_nullioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+if_nullioctl(struct ifnet *ifp __unused, u_long cmd __unused, caddr_t data __unused)
 {
 
 	return (ENXIO);
 }
 
 int
-if_nullinit(struct ifnet *ifp)
+if_nullinit(struct ifnet *ifp __unused)
 {
 
 	return (ENXIO);
 }
 
 void
-if_nullstop(struct ifnet *ifp, int disable)
+if_nullstop(struct ifnet *ifp __unused, int disable __unused)
 {
 
 	/* Nothing. */
 }
 
 void
-if_nullwatchdog(struct ifnet *ifp)
+if_nullwatchdog(struct ifnet *ifp __unused)
 {
 
 	/* Nothing. */
 }
 
 void
-if_nulldrain(struct ifnet *ifp)
+if_nulldrain(struct ifnet *ifp __unused)
 {
 
 	/* Nothing. */
@@ -1214,7 +1214,7 @@ if_up(struct ifnet *ifp)
  * call the appropriate interface routine on expiration.
  */
 void
-if_slowtimo(void *arg)
+if_slowtimo(void *arg __unused)
 {
 	struct ifnet *ifp;
 	int s = splnet();

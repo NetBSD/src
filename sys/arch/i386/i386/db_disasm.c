@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.31 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.32 2006/10/12 01:30:42 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.31 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.32 2006/10/12 01:30:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -990,12 +990,12 @@ db_print_address(seg, size, addrp)
  * and return updated location.
  */
 db_addr_t
-db_disasm_esc(loc, inst, short_addr, size, seg)
-	db_addr_t	loc;
-	int		inst;
-	int		short_addr;
-	int		size;
-	const char *	seg;
+db_disasm_esc(
+    db_addr_t	loc,
+    int		inst,
+    int		short_addr,
+    int		size __unused,
+    const char *seg)
 {
 	int		regmodrm;
 	const struct finst	*fp;
@@ -1075,9 +1075,9 @@ db_disasm_esc(loc, inst, short_addr, size, seg)
  * next instruction.
  */
 db_addr_t
-db_disasm(loc, altfmt)
-	db_addr_t	loc;
-	boolean_t	altfmt;
+db_disasm(
+    db_addr_t	loc,
+    boolean_t	altfmt __unused)
 {
 	int	inst;
 	int	size;

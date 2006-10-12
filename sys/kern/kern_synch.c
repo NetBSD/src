@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.167 2006/09/07 18:41:28 mrg Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.168 2006/10/12 01:32:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.167 2006/09/07 18:41:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.168 2006/10/12 01:32:17 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -308,7 +308,7 @@ fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
  */
 /* ARGSUSED */
 void
-schedcpu(void *arg)
+schedcpu(void *arg __unused)
 {
 	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
 	struct lwp *l;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.94 2006/09/02 07:01:20 christos Exp $	*/
+/*	$NetBSD: mcd.c,v 1.95 2006/10/12 01:31:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.94 2006/09/02 07:01:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.95 2006/10/12 01:31:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,9 +233,7 @@ struct dkdriver mcddkdriver = { mcdstrategy, NULL, };
 #define DELAY_GETREPLY		100000	/* 100000 * 25us */
 
 void
-mcdattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mcdattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct mcd_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -290,10 +288,7 @@ mcdattach(parent, self, aux)
 }
 
 int
-mcdopen(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+mcdopen(dev_t dev, int flag __unused, int fmt, struct lwp *l __unused)
 {
 	int error, part;
 	struct mcd_softc *sc;
@@ -392,10 +387,7 @@ bad3:
 }
 
 int
-mcdclose(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+mcdclose(dev_t dev, int flag __unused, int fmt, struct lwp *l __unused)
 {
 	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
 	int part = MCDPART(dev);
@@ -546,32 +538,21 @@ loop:
 }
 
 int
-mcdread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mcdread(dev_t dev, struct uio *uio, int flags __unused)
 {
 
 	return (physio(mcdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-mcdwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mcdwrite(dev_t dev, struct uio *uio, int flags __unused)
 {
 
 	return (physio(mcdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 int
-mcdioctl(dev, cmd, addr, flag, l)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct lwp *l;
+mcdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l __unused)
 {
 	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
 	int error;
@@ -587,14 +568,6 @@ mcdioctl(dev, cmd, addr, flag, l)
 
 	part = MCDPART(dev);
 	switch (cmd) {
-        case DIOCGMEDIASIZE:
-		*(off_t *)addr = (off_t)sc->disksize * sc->blksize;
-		return 0;
-
-	case DIOCGSECTORSIZE:
-		*(u_int *)addr = sc->blksize;
-		return 0;
-
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(sc->sc_dk.dk_label);
 		return 0;
@@ -819,8 +792,7 @@ mcd_get_parms(sc)
 }
 
 int
-mcdsize(dev)
-	dev_t dev;
+mcdsize(dev_t dev __unused)
 {
 
 	/* CD-ROMs are read-only. */
@@ -828,11 +800,8 @@ mcdsize(dev)
 }
 
 int
-mcddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
+mcddump(dev_t dev __unused, daddr_t blkno __unused, caddr_t va __unused,
+    size_t size __unused)
 {
 
 	/* Not implemented. */
@@ -924,10 +893,8 @@ mcd_find(iot, ioh, sc)
 }
 
 int
-mcdprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mcdprobe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct mcd_softc sc;

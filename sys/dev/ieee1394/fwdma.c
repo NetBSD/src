@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdma.c,v 1.5 2006/04/30 14:18:41 kiyohara Exp $	*/
+/*	$NetBSD: fwdma.c,v 1.6 2006/10/12 01:31:15 christos Exp $	*/
 /*-
  * Copyright (c) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -83,7 +83,7 @@ __FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwdma.c,v 1.7 2005/01/0
 #endif
 
 static void
-fwdma_map_cb(void *arg, bus_dma_segment_t *segs, int nseg, int error)
+fwdma_map_cb(void *arg, bus_dma_segment_t *segs, int nseg __unused, int error)
 {
 	bus_addr_t *baddr;
 
@@ -140,7 +140,7 @@ fwdma_malloc(struct firewire_comm *fc, int alignment, bus_size_t size,
 }
 
 void
-fwdma_free(struct firewire_comm *fc, struct fwdma_alloc *dma)
+fwdma_free(struct firewire_comm *fc __unused, struct fwdma_alloc *dma)
 {
         fw_bus_dmamap_unload(dma->fw_dma_tag, dma->dma_map);
 	fw_bus_dmamem_free(dma->fw_dma_tag, dma->v_addr, dma->dma_map);
@@ -168,8 +168,8 @@ fwdma_malloc_size(fw_bus_dma_tag_t dmat, bus_dmamap_t *dmamap,
 }
 
 void
-fwdma_free_size(fw_bus_dma_tag_t dmat, bus_dmamap_t dmamap,
-		void *vaddr, bus_size_t size)
+fwdma_free_size(fw_bus_dma_tag_t dmat, bus_dmamap_t dmamap, void *vaddr,
+    bus_size_t size __unused)
 {
 	fw_bus_dmamap_unload(dmat, dmamap);
 	fw_bus_dmamem_free(dmat, vaddr, dmamap);

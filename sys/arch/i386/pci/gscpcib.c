@@ -1,4 +1,4 @@
-/* $NetBSD: gscpcib.c,v 1.6 2006/09/24 03:33:30 jmcneill Exp $ */
+/* $NetBSD: gscpcib.c,v 1.7 2006/10/12 01:30:43 christos Exp $ */
 /*	$OpenBSD: gscpcib.c,v 1.3 2004/10/05 19:02:33 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -64,7 +64,8 @@ CFATTACH_DECL(gscpcib, sizeof(struct gscpcib_softc),
 extern struct cfdriver gscpcib_cd;
 
 int
-gscpcib_match(struct device *parent, struct cfdata *match, void *aux)
+gscpcib_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

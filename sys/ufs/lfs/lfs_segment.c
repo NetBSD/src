@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.192 2006/10/04 15:54:43 christos Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.193 2006/10/12 01:32:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.192 2006/10/04 15:54:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.193 2006/10/12 01:32:51 christos Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1436,8 +1436,8 @@ loop:
  * called with sp == NULL by roll-forwarding code.
  */
 void
-lfs_update_single(struct lfs *fs, struct segment *sp, struct vnode *vp,
-    daddr_t lbn, int32_t ndaddr, int size)
+lfs_update_single(struct lfs *fs, struct segment *sp __unused,
+    struct vnode *vp, daddr_t lbn, int32_t ndaddr, int size)
 {
 	SEGUSE *sup;
 	struct buf *bp;
@@ -1926,7 +1926,8 @@ lfs_newseg(struct lfs *fs)
 }
 
 static struct buf *
-lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr, int n)
+lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr,
+    int n __unused)
 {
 	struct lfs_cluster *cl;
 	struct buf **bpp, *bp;

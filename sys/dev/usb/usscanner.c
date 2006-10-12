@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.18 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.19 2006/10/12 01:32:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.18 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.19 2006/10/12 01:32:00 christos Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -453,8 +453,8 @@ usscanner_sense(struct usscanner_softc *sc)
 }
 
 Static void
-usscanner_intr_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
-		 usbd_status status)
+usscanner_intr_cb(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+		 usbd_status status __unused)
 {
 	struct usscanner_softc *sc = priv;
 	int s;
@@ -576,8 +576,8 @@ usscanner_done(struct usscanner_softc *sc)
 }
 
 Static void
-usscanner_sensecmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
-		      usbd_status status)
+usscanner_sensecmd_cb(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+		      usbd_status status __unused)
 {
 	struct usscanner_softc *sc = priv;
 	struct scsipi_xfer *xs = sc->sc_xs;
@@ -621,7 +621,7 @@ usscanner_sensecmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 Static void
-usscanner_cmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
+usscanner_cmd_cb(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
 		 usbd_status status)
 {
 	struct usscanner_softc *sc = priv;

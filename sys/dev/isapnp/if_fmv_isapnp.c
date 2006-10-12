@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv_isapnp.c,v 1.6 2006/03/29 06:51:47 thorpej Exp $	*/
+/*	$NetBSD: if_fmv_isapnp.c,v 1.7 2006/10/12 01:31:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv_isapnp.c,v 1.6 2006/03/29 06:51:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv_isapnp.c,v 1.7 2006/10/12 01:31:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,8 @@ CFATTACH_DECL(fmv_isapnp, sizeof(struct fmv_isapnp_softc),
     fmv_isapnp_match, fmv_isapnp_attach, NULL, NULL);
 
 int
-fmv_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
+fmv_isapnp_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	int pri, variant;
 
@@ -87,7 +88,8 @@ fmv_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-fmv_isapnp_attach(struct device *parent, struct device *self, void *aux)
+fmv_isapnp_attach(struct device *parent __unused, struct device *self,
+    void *aux)
 {
 	struct fmv_isapnp_softc *isc = device_private(self);
 	struct mb86960_softc *sc = &isc->sc_mb86960;

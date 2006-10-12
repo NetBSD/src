@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.15 2006/09/07 02:40:32 dogcow Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.16 2006/10/12 01:30:55 christos Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.15 2006/09/07 02:40:32 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.16 2006/10/12 01:30:55 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -163,7 +163,8 @@ atw_cardbus_lookup(const struct cardbus_attach_args *ca)
 }
 
 int
-atw_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
+atw_cardbus_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
@@ -174,7 +175,8 @@ atw_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-atw_cardbus_attach(struct device *parent, struct device *self, void *aux)
+atw_cardbus_attach(struct device *parent __unused, struct device *self,
+    void *aux)
 {
 	struct atw_cardbus_softc *csc = device_private(self);
 	struct atw_softc *sc = &csc->sc_atw;
@@ -294,7 +296,7 @@ atw_cardbus_intr_ack(struct atw_softc *sc)
 }
 
 int
-atw_cardbus_detach(struct device *self, int flags)
+atw_cardbus_detach(struct device *self, int flags __unused)
 {
 	struct atw_cardbus_softc *csc = device_private(self);
 	struct atw_softc *sc = &csc->sc_atw;

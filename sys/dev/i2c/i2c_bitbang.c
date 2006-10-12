@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_bitbang.c,v 1.4 2006/07/14 17:25:17 gdamore Exp $	*/
+/*	$NetBSD: i2c_bitbang.c,v 1.5 2006/10/12 01:30:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
 
 /*ARGSUSED*/
 int
-i2c_bitbang_send_start(void *v, int flags, i2c_bitbang_ops_t ops)
+i2c_bitbang_send_start(void *v, int flags __unused, i2c_bitbang_ops_t ops)
 {
 
 	DIR(OUTPUT);
@@ -72,7 +72,7 @@ i2c_bitbang_send_start(void *v, int flags, i2c_bitbang_ops_t ops)
 
 /*ARGSUSED*/
 int
-i2c_bitbang_send_stop(void *v, int flags, i2c_bitbang_ops_t ops)
+i2c_bitbang_send_stop(void *v, int flags __unused, i2c_bitbang_ops_t ops)
 {
 
 	DIR(OUTPUT);

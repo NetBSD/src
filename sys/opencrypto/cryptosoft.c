@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.13 2006/04/02 18:29:12 dsl Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.14 2006/10/12 01:32:47 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.13 2006/04/02 18:29:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.14 2006/10/12 01:32:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -703,7 +703,7 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
  * Generate a new software session.
  */
 static int
-swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
+swcr_newsession(void *arg __unused, u_int32_t *sid, struct cryptoini *cri)
 {
 	struct swcr_data **swd;
 	const struct swcr_auth_hash *axf;
@@ -925,7 +925,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
  * Free a session.
  */
 static int
-swcr_freesession(void *arg, u_int64_t tid)
+swcr_freesession(void *arg __unused, u_int64_t tid)
 {
 	struct swcr_data *swd;
 	const struct swcr_enc_xform *txf;
@@ -1011,7 +1011,7 @@ swcr_freesession(void *arg, u_int64_t tid)
  * Process a software request.
  */
 static int
-swcr_process(void *arg, struct cryptop *crp, int hint)
+swcr_process(void *arg __unused, struct cryptop *crp, int hint __unused)
 {
 	struct cryptodesc *crd;
 	struct swcr_data *sw;
@@ -1156,7 +1156,7 @@ SYSINIT(cryptosoft_init, SI_SUB_PSEUDO, SI_ORDER_ANY, swcr_init, NULL)
 void	swcryptoattach(int);
 
 void
-swcryptoattach(int num)
+swcryptoattach(int num __unused)
 {
 
 	swcr_init();

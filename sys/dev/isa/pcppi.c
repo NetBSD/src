@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.17 2005/12/11 12:22:03 christos Exp $ */
+/* $NetBSD: pcppi.c,v 1.18 2006/10/12 01:31:17 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.17 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.18 2006/10/12 01:31:17 christos Exp $");
 
 #include "attimer.h"
 
@@ -71,7 +71,8 @@ static void pcppi_attach_speaker(struct device *);
 #define PCPPIPRI (PZERO - 1)
 
 int
-pcppi_match(struct device *parent, struct cfdata *match, void *aux)
+pcppi_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ppi_ioh;
@@ -149,7 +150,7 @@ lose:
 }
 
 void
-pcppi_isa_attach(struct device *parent, struct device *self, void *aux)
+pcppi_isa_attach(struct device *parent __unused, struct device *self, void *aux)
 {
         struct pcppi_softc *sc = (struct pcppi_softc *)self;
         struct isa_attach_args *ia = aux;
@@ -271,7 +272,8 @@ pcppi_bell_stop(void *arg)
 
 #if NPCKBD > 0
 void
-pcppi_pckbd_bell(void *arg, u_int pitch, u_int period, u_int volume, int poll)
+pcppi_pckbd_bell(void *arg, u_int pitch, u_int period, u_int volume __unused,
+    int poll)
 {
 
 	/*

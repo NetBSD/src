@@ -1,4 +1,4 @@
-/*	$NetBSD: tqphy.c,v 1.28 2006/03/29 07:05:24 thorpej Exp $	*/
+/*	$NetBSD: tqphy.c,v 1.29 2006/10/12 01:31:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.28 2006/03/29 07:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.29 2006/10/12 01:31:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,8 @@ static const struct mii_phydesc tqphys[] = {
 };
 
 static int
-tqphymatch(struct device *parent, struct cfdata *match, void *aux)
+tqphymatch(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -131,7 +132,7 @@ tqphymatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-tqphyattach(struct device *parent, struct device *self, void *aux)
+tqphyattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;

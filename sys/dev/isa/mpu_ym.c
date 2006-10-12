@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_ym.c,v 1.10 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: mpu_ym.c,v 1.11 2006/10/12 01:31:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_ym.c,v 1.10 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_ym.c,v 1.11 2006/10/12 01:31:17 christos Exp $");
 
 #define NMPU_YM 1
 
@@ -72,10 +72,7 @@ CFATTACH_DECL(mpu_ym, sizeof(struct mpu_softc),
     mpu_ym_match, mpu_ym_attach, NULL, NULL);
 
 int
-mpu_ym_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mpu_ym_match(struct device *parent, struct cfdata *match __unused, void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 	struct ym_softc *ssc = (struct ym_softc *)parent;
@@ -90,10 +87,7 @@ mpu_ym_match(parent, match, aux)
 }
 
 void
-mpu_ym_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mpu_ym_attach(struct device *parent, struct device *self, void *aux __unused)
 {
 	struct ym_softc *ssc = (struct ym_softc *)parent;
 	struct mpu_softc *sc = (struct mpu_softc *)self;

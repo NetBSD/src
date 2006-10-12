@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.43 2006/02/19 07:52:43 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.44 2006/10/12 01:32:31 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.43 2006/02/19 07:52:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.44 2006/10/12 01:32:31 christos Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -499,7 +499,8 @@ ieee80211_crypto_getucastkey(struct ieee80211com *ic, struct ieee80211_node *ni)
  * the default tx key.
  */ 
 static __inline struct ieee80211_key *
-ieee80211_crypto_getmcastkey(struct ieee80211com *ic, struct ieee80211_node *ni)
+ieee80211_crypto_getmcastkey(struct ieee80211com *ic,
+    struct ieee80211_node *ni __unused)
 {
 	if (ic->ic_def_txkey == IEEE80211_KEYIX_NONE ||
 	    IEEE80211_KEY_UNDEFINED(ic->ic_nw_keys[ic->ic_def_txkey]))
@@ -1118,7 +1119,7 @@ ieee80211_add_wpa(u_int8_t *frm, struct ieee80211com *ic)
  * Add a WME information element to a frame.
  */
 static u_int8_t *
-ieee80211_add_wme_info(u_int8_t *frm, struct ieee80211_wme_state *wme)
+ieee80211_add_wme_info(u_int8_t *frm, struct ieee80211_wme_state *wme __unused)
 {
 	static const struct ieee80211_wme_info info = {
 		.wme_id		= IEEE80211_ELEMID_VENDOR,
@@ -1741,7 +1742,7 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni,
  */
 int
 ieee80211_beacon_update(struct ieee80211com *ic, struct ieee80211_node *ni,
-	struct ieee80211_beacon_offsets *bo, struct mbuf *m, int mcast)
+    struct ieee80211_beacon_offsets *bo, struct mbuf *m __unused, int mcast)
 {
 	int len_changed = 0;
 	u_int16_t capinfo;

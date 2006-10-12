@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.93 2006/08/27 05:07:13 christos Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.94 2006/10/12 01:31:52 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.93 2006/08/27 05:07:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.94 2006/10/12 01:31:52 christos Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -142,7 +142,7 @@ struct RF_ReconDoneProc_s {
  *
  **************************************************************************/
 static void
-rf_ShutdownReconstruction(void *ignored)
+rf_ShutdownReconstruction(void *ignored __unused)
 {
 	pool_destroy(&rf_pools.reconbuffer);
 }
@@ -1464,7 +1464,7 @@ ReconWriteDoneProc(void *arg, int status)
  * be woken as a result
  */
 static void
-CheckForNewMinHeadSep(RF_Raid_t *raidPtr, RF_HeadSepLimit_t hsCtr)
+CheckForNewMinHeadSep(RF_Raid_t *raidPtr, RF_HeadSepLimit_t hsCtr __unused)
 {
 	RF_ReconCtrl_t *reconCtrlPtr = raidPtr->reconControl;
 	RF_HeadSepLimit_t new_min;
@@ -1522,8 +1522,8 @@ CheckForNewMinHeadSep(RF_Raid_t *raidPtr, RF_HeadSepLimit_t hsCtr)
  */
 static int
 CheckHeadSeparation(RF_Raid_t *raidPtr, RF_PerDiskReconCtrl_t *ctrl,
-		    RF_RowCol_t col, RF_HeadSepLimit_t hsCtr,
-		    RF_ReconUnitNum_t which_ru)
+		    RF_RowCol_t col, RF_HeadSepLimit_t hsCtr __unused,
+		    RF_ReconUnitNum_t which_ru __unused)
 {
 	RF_ReconCtrl_t *reconCtrlPtr = raidPtr->reconControl;
 	RF_CallbackDesc_t *cb, *p, *pt;
@@ -1590,11 +1590,12 @@ CheckHeadSeparation(RF_Raid_t *raidPtr, RF_PerDiskReconCtrl_t *ctrl,
  * ASSUMES THE PSS MUTEX IS LOCKED UPON ENTRY
  */
 static int
-CheckForcedOrBlockedReconstruction(RF_Raid_t *raidPtr,
+CheckForcedOrBlockedReconstruction(RF_Raid_t *raidPtr __unused,
 				   RF_ReconParityStripeStatus_t *pssPtr,
-				   RF_PerDiskReconCtrl_t *ctrl,
-				   RF_RowCol_t col, RF_StripeNum_t psid,
-				   RF_ReconUnitNum_t which_ru)
+				   RF_PerDiskReconCtrl_t *ctrl __unused,
+				   RF_RowCol_t col,
+				   RF_StripeNum_t psid __unused,
+				   RF_ReconUnitNum_t which_ru __unused)
 {
 	RF_CallbackDesc_t *cb;
 	int     retcode = 0;

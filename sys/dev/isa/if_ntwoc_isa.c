@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.13 2006/04/22 23:56:39 christos Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.14 2006/10/12 01:31:16 christos Exp $	*/
 /*
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.13 2006/04/22 23:56:39 christos Exp $
+ * $Id: if_ntwoc_isa.c,v 1.14 2006/10/12 01:31:16 christos Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.13 2006/04/22 23:56:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.14 2006/10/12 01:31:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ ntwoc_isa_set_off(struct sca_softc *sca)
 }
 
 static int
-ntwoc_isa_probe(struct device *parent, struct cfdata *match, void *aux)
+ntwoc_isa_probe(struct device *parent __unused, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia;
 	bus_space_tag_t iot, memt;
@@ -381,7 +381,7 @@ out:
  * we win! attach the card
  */
 static void
-ntwoc_isa_attach(struct device *parent, struct device *self, void *aux)
+ntwoc_isa_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct ntwoc_isa_softc *sc;
 	struct isa_attach_args *ia;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.27 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.28 2006/10/12 01:31:52 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.27 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.28 2006/10/12 01:31:52 christos Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -200,7 +200,7 @@ rf_ReconMapUpdate(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr,
  *-------------------------------------------------------------------------*/
 
 static void
-compact_stat_entry(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr, int i)
+compact_stat_entry(RF_Raid_t *raidPtr __unused, RF_ReconMap_t *mapPtr, int i)
 {
 	RF_SectorCount_t sectorsPerReconUnit = mapPtr->sectorsPerReconUnit;
 	RF_ReconMapListElem_t *p = mapPtr->status[i];

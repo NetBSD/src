@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.85 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.86 2006/10/12 01:31:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.85 2005/12/11 12:23:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.86 2006/10/12 01:31:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,6 @@ scsi_print_addr(struct scsipi_periph *periph)
  * Must be called at splbio().
  */
 void
-scsi_kill_pending(struct scsipi_periph *periph)
+scsi_kill_pending(struct scsipi_periph *periph __unused)
 {
 }

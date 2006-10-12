@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.579 2006/09/27 17:10:34 cube Exp $	*/
+/*	$NetBSD: machdep.c,v 1.580 2006/10/12 01:30:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.579 2006/09/27 17:10:34 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.580 2006/10/12 01:30:42 christos Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -321,7 +321,7 @@ void	native_loader(int, int, struct bootinfo_source *, paddr_t, int, int);
  *        can be obtained using the RELOC macro.
  */
 void
-native_loader(int bl_boothowto, int bl_bootdev,
+native_loader(int bl_boothowto, int bl_bootdev __unused,
     struct bootinfo_source *bl_bootinfo, paddr_t bl_esym,
     int bl_biosextmem, int bl_biosbasemem)
 {
@@ -841,7 +841,7 @@ int	waittime = -1;
 struct pcb dumppcb;
 
 void
-cpu_reboot(int howto, char *bootstr)
+cpu_reboot(int howto, char *bootstr __unused)
 {
 
 	if (cold) {

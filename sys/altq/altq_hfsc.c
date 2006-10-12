@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.17 2006/07/21 16:48:45 ad Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.18 2006/10/12 01:30:42 christos Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.9 2001/10/26 04:56:11 kjc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.17 2006/07/21 16:48:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.18 2006/10/12 01:30:42 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -256,10 +256,7 @@ hfsc_clear_interface(hif)
 }
 
 static int
-hfsc_request(ifq, req, arg)
-	struct ifaltq *ifq;
-	int req;
-	void *arg;
+hfsc_request(struct ifaltq *ifq, int req, void *arg __unused)
 {
 	struct hfsc_if	*hif = (struct hfsc_if *)ifq->altq_disc;
 
@@ -847,9 +844,7 @@ update_d(cl, next_len)
 }
 
 static void
-init_v(cl, len)
-	struct hfsc_class *cl;
-	int len;
+init_v(struct hfsc_class *cl, int len __unused)
 {
 	struct hfsc_class *min_cl, *max_cl;
 
@@ -1393,10 +1388,8 @@ rtsc_min(rtsc, isc, x, y)
  * hfsc device interface
  */
 int
-hfscopen(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+hfscopen(dev_t dev __unused, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
 	if (machclk_freq == 0)
 		init_machclk();
@@ -1411,10 +1404,8 @@ hfscopen(dev, flag, fmt, l)
 }
 
 int
-hfscclose(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+hfscclose(dev_t dev __unused, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
 	struct hfsc_if *hif;
 	int err, error = 0;
@@ -1435,12 +1426,8 @@ hfscclose(dev, flag, fmt, l)
 }
 
 int
-hfscioctl(dev, cmd, addr, flag, l)
-	dev_t dev;
-	ioctlcmd_t cmd;
-	caddr_t addr;
-	int flag;
-	struct lwp *l;
+hfscioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
+    struct lwp *l)
 {
 	struct hfsc_if *hif;
 	struct hfsc_interface *ifacep;

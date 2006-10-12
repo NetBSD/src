@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.72 2006/08/30 16:57:59 christos Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.73 2006/10/12 01:32:28 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.72 2006/08/30 16:57:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.73 2006/10/12 01:32:28 christos Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -215,7 +215,7 @@ static struct if_clone pppoe_cloner =
 
 /* ARGSUSED */
 void
-pppoeattach(int count)
+pppoeattach(int count __unused)
 {
 	LIST_INIT(&pppoe_softc_list);
 	if_clone_attach(&pppoe_cloner);
@@ -226,7 +226,7 @@ pppoeattach(int count)
 }
 
 static int
-pppoe_clone_create(struct if_clone *ifc, int unit)
+pppoe_clone_create(struct if_clone *ifc __unused, int unit)
 {
 	struct pppoe_softc *sc;
 
@@ -366,7 +366,7 @@ pppoe_find_softc_by_hunique(u_int8_t *token, size_t len, struct ifnet *rcvif)
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 static void
-pppoe_softintr_handler(void *dummy)
+pppoe_softintr_handler(void *dummy __unused)
 {
 	/* called at splsoftnet() */
 	pppoe_input();
@@ -1447,7 +1447,8 @@ pppoe_start(struct ifnet *ifp)
 
 #ifdef PFIL_HOOKS
 static int
-pppoe_ifattach_hook(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+pppoe_ifattach_hook(void *arg __unused, struct mbuf **mp, struct ifnet *ifp,
+    int dir __unused)
 {
 	struct pppoe_softc *sc;
 	int s;

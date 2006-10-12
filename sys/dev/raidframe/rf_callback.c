@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.c,v 1.18 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_callback.c,v 1.19 2006/10/12 01:31:50 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.18 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.19 2006/10/12 01:31:50 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include <sys/pool.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.18 2005/12/11 12:23:37 christos Ex
 
 static void rf_ShutdownCallback(void *);
 static void
-rf_ShutdownCallback(void *ignored)
+rf_ShutdownCallback(void *ignored __unused)
 {
 	pool_destroy(&rf_pools.callback);
 }
