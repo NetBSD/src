@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9 2006/09/28 18:53:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10 2006/10/12 09:01:02 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -286,7 +286,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin,
 		snprintf(evname, sizeof(evname), "%s pin %d",
 		    pic->pic_name, pin);
 #else /* NIOAPIC */
-		return NULL
+		return NULL;
 #endif /* NIOAPIC */
 	} else
 #endif /* XEN3 */
