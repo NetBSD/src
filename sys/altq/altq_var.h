@@ -1,8 +1,8 @@
-/*	$NetBSD: altq_var.h,v 1.8 2006/02/16 20:17:12 perry Exp $	*/
-/*	$KAME: altq_var.h,v 1.7 2000/12/14 08:12:46 thorpej Exp $	*/
+/*	$NetBSD: altq_var.h,v 1.9 2006/10/12 19:59:08 peter Exp $	*/
+/*	$KAME: altq_var.h,v 1.18 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
- * Copyright (C) 1998-2000
+ * Copyright (C) 1998-2003
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@
 #include <sys/kernel.h>
 #include <sys/queue.h>
 
+#ifdef ALTQ3_CLFIER_COMPAT
 /*
  * filter structure for altq common classifier
  */
@@ -63,9 +64,25 @@ struct acc_filter {
 #endif
 #define	ACC_GET_HINDEX(handle) ((handle) >> 20)
 
+#if (__FreeBSD_version > 500000)
+#define ACC_LOCK_INIT(ac)	mtx_init(&(ac)->acc_mtx, "classifier", MTX_DEF)
+#define ACC_LOCK_DESTROY(ac)	mtx_destroy(&(ac)->acc_mtx)
+#define ACC_LOCK(ac)		mtx_lock(&(ac)->acc_mtx)
+#define ACC_UNLOCK(ac)		mtx_unlock(&(ac)->acc_mtx)
+#else
+#define ACC_LOCK_INIT(ac)
+#define ACC_LOCK_DESTROY(ac)
+#define ACC_LOCK(ac)
+#define ACC_UNLOCK(ac)
+#endif
+
 struct acc_classifier {
 	u_int32_t			acc_fbmask;
 	LIST_HEAD(filt, acc_filter)	acc_filters[ACC_FILTER_TABLESIZE];
+
+#if (__FreeBSD_version > 500000)
+	struct	mtx acc_mtx;
+#endif
 };
 
 /*
@@ -95,52 +112,17 @@ struct acc_classifier {
 
 #define	FIMB4_PORTS	(FIMB4_DPORT|FIMB4_SPORT|FIMB4_GPI)
 #define	FIMB6_PORTS	(FIMB6_DPORT|FIMB6_SPORT|FIMB6_GPI)
+#endif /* ALTQ3_CLFIER_COMPAT */
 
 /*
  * machine dependent clock
  * a 64bit high resolution time counter.
  */
+extern int machclk_usepcc;
 extern u_int32_t machclk_freq;
 extern u_int32_t machclk_per_tick;
 extern void init_machclk(void);
-
-#if defined(__i386__) && !defined(I586_CPU) && !defined(I686_CPU)
-#ifndef ALTQ_NOPCC
-#define	ALTQ_NOPCC	/* TSC is not available, ALTQ_NOPCC needed */
-#endif
-#endif
-
-#if defined(__i386__) && !defined(ALTQ_NOPCC)
-/* for pentium tsc */
-#include <machine/cpufunc.h>
-
-#define	read_machclk()		rdtsc()
-#ifdef __OpenBSD__
-static __inline u_int64_t
-rdtsc(void)
-{
-	u_int64_t rv;
-	__asm volatile(".byte 0x0f, 0x31" : "=A" (rv));
-	return (rv);
-}
-#endif /* __OpenBSD__ */
-
-#elif defined(__alpha__) && !defined(ALTQ_NOPCC)
-/* for alpha rpcc */
 extern u_int64_t read_machclk(void);
-
-#else /* !i386 && !alpha */
-/* emulate 256MHz using microtime() */
-#define	MACHCLK_SHIFT	8
-static __inline u_int64_t
-read_machclk(void)
-{
-	struct timeval tv;
-	microtime(&tv);
-	return (((u_int64_t)(tv.tv_sec - boottime.tv_sec) * 1000000
-		 + tv.tv_usec) << MACHCLK_SHIFT);
-}
-#endif /* !i386 && !alpha */
 
 /*
  * debug support
@@ -159,11 +141,7 @@ read_machclk(void)
  * misc stuff for compatibility
  */
 /* ioctl cmd type */
-#if defined(__FreeBSD__) && (__FreeBSD__ < 3)
-typedef int ioctlcmd_t;
-#else
 typedef u_long ioctlcmd_t;
-#endif
 
 /*
  * queue macros:
@@ -187,25 +165,39 @@ typedef u_long ioctlcmd_t;
 /* use callout */
 #include <sys/callout.h>
 
+#if (__FreeBSD_version > 500000)
+#define	CALLOUT_INIT(c)		callout_init((c), 0)
+#else
 #define	CALLOUT_INIT(c)		callout_init((c))
+#endif
 #define	CALLOUT_RESET(c,t,f,a)	callout_reset((c),(t),(f),(a))
 #define	CALLOUT_STOP(c)		callout_stop((c))
 #ifndef CALLOUT_INITIALIZER
 #define	CALLOUT_INITIALIZER	{ { { NULL } }, 0, NULL, NULL, 0 }
 #endif
+#elif defined(__OpenBSD__)
+#include <sys/timeout.h>
+/* callout structure as a wrapper of struct timeout */
+struct callout {
+	struct timeout	c_to;
+};
+#define	CALLOUT_INIT(c)		do { (void)memset((c), 0, sizeof(*(c))); } while (/*CONSTCOND*/ 0)
+#define	CALLOUT_RESET(c,t,f,a)	do { if (!timeout_initialized(&(c)->c_to))  \
+					 timeout_set(&(c)->c_to, (f), (a)); \
+				     timeout_add(&(c)->c_to, (t)); } while (/*CONSTCOND*/ 0)
+#define	CALLOUT_STOP(c)		timeout_del(&(c)->c_to)
+#define	CALLOUT_INITIALIZER	{ { { NULL }, NULL, NULL, 0, 0 } }
 #else
 /* use old-style timeout/untimeout */
 /* dummy callout structure */
 struct callout {
 	void		*c_arg;			/* function argument */
-	void		(*c_func) __P((void *));/* functiuon to call */
+	void		(*c_func)(void *);	/* functiuon to call */
 };
-#define	CALLOUT_INIT(c)		do {	(void)memset((c), 0, sizeof(*(c))); \
-				} while (/*CONSTCOND*/ 0)
+#define	CALLOUT_INIT(c)		do { (void)memset((c), 0, sizeof(*(c))); } while (/*CONSTCOND*/ 0)
 #define	CALLOUT_RESET(c,t,f,a)	do {	(c)->c_arg = (a);	\
 					(c)->c_func = (f);	\
-					timeout((f),(a),(t));	\
-				} while (/*CONSTCOND*/ 0)
+					timeout((f),(a),(t)); } while (/*CONSTCOND*/ 0)
 #define	CALLOUT_STOP(c)		untimeout((c)->c_func,(c)->c_arg)
 #define	CALLOUT_INITIALIZER	{ NULL, NULL }
 #endif
@@ -215,20 +207,57 @@ typedef void (timeout_t)(void *);
 
 #define	m_pktlen(m)		((m)->m_pkthdr.len)
 
-struct ifnet; struct mbuf; struct flowinfo;
+extern int pfaltq_running;
 
-void *altq_lookup __P((char *, int));
-int altq_extractflow __P((struct mbuf *, int, struct flowinfo *, u_int32_t));
-int acc_add_filter __P((struct acc_classifier *, struct flow_filter *,
-			   void *, u_long *));
-int acc_delete_filter __P((struct acc_classifier *, u_long));
-int acc_discard_filters __P((struct acc_classifier *, void *, int));
-void *acc_classify __P((void *, struct mbuf *, int));
-u_int8_t read_dsfield __P((struct mbuf *, struct altq_pktattr *));
-void write_dsfield __P((struct mbuf *, struct altq_pktattr *, u_int8_t));
-void altq_assert __P((const char *, int, const char *));
-int tbr_set __P((struct ifaltq *, struct tb_profile *));
-int tbr_get __P((struct ifaltq *, struct tb_profile *));
+struct ifnet; struct mbuf;
+struct pf_altq;
+#ifdef ALTQ3_CLFIER_COMPAT
+struct flowinfo;
+#endif
+
+void	*altq_lookup(char *, int);
+#ifdef ALTQ3_CLFIER_COMPAT
+int	altq_extractflow(struct mbuf *, int, struct flowinfo *, u_int32_t);
+int	acc_add_filter(struct acc_classifier *, struct flow_filter *,
+	    void *, u_long *);
+int	acc_delete_filter(struct acc_classifier *, u_long);
+int	acc_discard_filters(struct acc_classifier *, void *, int);
+void	*acc_classify(void *, struct mbuf *, int);
+#endif
+u_int8_t read_dsfield(struct mbuf *, struct altq_pktattr *);
+void	write_dsfield(struct mbuf *, struct altq_pktattr *, u_int8_t);
+void	altq_assert(const char *, int, const char *);
+int	tbr_set(struct ifaltq *, struct tb_profile *);
+int	tbr_get(struct ifaltq *, struct tb_profile *);
+
+int	altq_pfattach(struct pf_altq *);
+int	altq_pfdetach(struct pf_altq *);
+int	altq_add(struct pf_altq *);
+int	altq_remove(struct pf_altq *);
+int	altq_add_queue(struct pf_altq *);
+int	altq_remove_queue(struct pf_altq *);
+int	altq_getqstats(struct pf_altq *, void *, int *);
+
+int	cbq_pfattach(struct pf_altq *);
+int	cbq_add_altq(struct pf_altq *);
+int	cbq_remove_altq(struct pf_altq *);
+int	cbq_add_queue(struct pf_altq *);
+int	cbq_remove_queue(struct pf_altq *);
+int	cbq_getqstats(struct pf_altq *, void *, int *);
+
+int	priq_pfattach(struct pf_altq *);
+int	priq_add_altq(struct pf_altq *);
+int	priq_remove_altq(struct pf_altq *);
+int	priq_add_queue(struct pf_altq *);
+int	priq_remove_queue(struct pf_altq *);
+int	priq_getqstats(struct pf_altq *, void *, int *);
+
+int	hfsc_pfattach(struct pf_altq *);
+int	hfsc_add_altq(struct pf_altq *);
+int	hfsc_remove_altq(struct pf_altq *);
+int	hfsc_add_queue(struct pf_altq *);
+int	hfsc_remove_queue(struct pf_altq *);
+int	hfsc_getqstats(struct pf_altq *, void *, int *);
 
 #endif /* _KERNEL */
 #endif /* _ALTQ_ALTQ_VAR_H_ */

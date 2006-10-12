@@ -1,5 +1,5 @@
-/*	$NetBSD: qop_hfsc.h,v 1.2 2001/08/16 07:48:14 itojun Exp $	*/
-/*	$KAME: qop_hfsc.h,v 1.2 2000/10/18 09:15:19 kjc Exp $	*/
+/*	$NetBSD: qop_hfsc.h,v 1.3 2006/10/12 19:59:13 peter Exp $	*/
+/*	$KAME: qop_hfsc.h,v 1.3 2002/11/08 06:35:00 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -52,6 +52,7 @@ struct hfsc_ifinfo {
 struct hfsc_classinfo {
 	struct service_curve rsc;	/* real-time service curve */
 	struct service_curve fsc;	/* fair service curve */
+	struct service_curve usc;	/* upper limit service curve */
 	gsc_head_t	gen_rsc;	/* generalized real-time sc */
 	gsc_head_t	gen_fsc;	/* generalized fsc */
 	int		qlimit;

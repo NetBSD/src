@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_altq.c,v 1.6 2006/03/21 20:49:54 christos Exp $	*/
+/*	$NetBSD: pfctl_altq.c,v 1.7 2006/10/12 19:59:08 peter Exp $	*/
 /*	$OpenBSD: pfctl_altq.c,v 1.86 2005/02/28 14:04:51 henning Exp $	*/
 
 /*
@@ -1102,6 +1102,7 @@ rate2str(double rate)
 u_int32_t
 getifspeed(char *ifname)
 {
+#ifdef __OpenBSD__
 	int		s;
 	struct ifreq	ifr;
 	struct if_data	ifrdat;
@@ -1117,9 +1118,29 @@ getifspeed(char *ifname)
 		err(1, "SIOCGIFDATA");
 	if (shutdown(s, SHUT_RDWR) == -1)
 		err(1, "shutdown");
-	if (close(s))
+	if (close(s) == -1)
 		err(1, "close");
 	return ((u_int32_t)ifrdat.ifi_baudrate);
+#else
+	int			 s;
+	struct ifdatareq	 ifdr;
+	struct if_data		*ifrdat;
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+		err(1, "getifspeed: socket");
+	memset(&ifdr, 0, sizeof(ifdr));
+	if (strlcpy(ifdr.ifdr_name, ifname, sizeof(ifdr.ifdr_name)) >=
+	    sizeof(ifdr.ifdr_name))
+		errx(1, "getifspeed: strlcpy");
+	if (ioctl(s, SIOCGIFDATA, &ifdr) == -1)
+		err(1, "getifspeed: SIOCGIFDATA");
+	ifrdat = &ifdr.ifdr_data;
+	if (shutdown(s, SHUT_RDWR) == -1)
+		err(1, "getifspeed: shutdown");
+	if (close(s) == -1)
+		err(1, "getifspeed: close");
+	return ((u_int32_t)ifrdat->ifi_baudrate);
+#endif
 }
 
 u_long
@@ -1138,7 +1159,7 @@ getifmtu(char *ifname)
 		err(1, "SIOCGIFMTU");
 	if (shutdown(s, SHUT_RDWR) == -1)
 		err(1, "shutdown");
-	if (close(s))
+	if (close(s) == -1)
 		err(1, "close");
 	if (ifr.ifr_mtu > 0)
 		return (ifr.ifr_mtu);

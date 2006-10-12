@@ -1,5 +1,5 @@
-/*	$NetBSD: altq_rmclass.h,v 1.6 2005/12/11 12:16:03 christos Exp $	*/
-/*	$KAME: altq_rmclass.h,v 1.7 2002/01/11 07:32:54 kjc Exp $	*/
+/*	$NetBSD: altq_rmclass.h,v 1.7 2006/10/12 19:59:08 peter Exp $	*/
+/*	$KAME: altq_rmclass.h,v 1.10 2003/08/20 23:30:23 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991-1997 Regents of the University of California.
@@ -241,23 +241,22 @@ struct rm_ifdat {
 
 #define	is_a_parent_class(cl)	((cl)->children_ != NULL)
 
-extern rm_class_t *rmc_newclass __P((int, struct rm_ifdat *, u_int,
-				     void (*)(struct rm_class *,
-					      struct rm_class *),
-				     int, struct rm_class *, struct rm_class *,
-				     u_int, int, u_int, int, int));
-extern void	rmc_delete_class __P((struct rm_ifdat *, struct rm_class *));
-extern int 	rmc_modclass __P((struct rm_class *, u_int, int,
-				  u_int, int, u_int, int));
-extern void	rmc_init __P((struct ifaltq *, struct rm_ifdat *, u_int,
-			      void (*)(struct ifaltq *),
-			      int, int, u_int, int, u_int, int));
-extern int	rmc_queue_packet __P((struct rm_class *, mbuf_t *));
-extern mbuf_t	*rmc_dequeue_next __P((struct rm_ifdat *, int));
-extern void	rmc_update_class_util __P((struct rm_ifdat *));
-extern void	rmc_delay_action __P((struct rm_class *, struct rm_class *));
-extern void	rmc_dropall __P((struct rm_class *));
-extern int	rmc_get_weight __P((struct rm_ifdat *, int));
+extern rm_class_t *rmc_newclass(int, struct rm_ifdat *, u_int,
+				void (*)(struct rm_class *, struct rm_class *),
+				int, struct rm_class *, struct rm_class *,
+				u_int, int, u_int, int, int);
+extern void	rmc_delete_class(struct rm_ifdat *, struct rm_class *);
+extern int 	rmc_modclass(struct rm_class *, u_int, int,
+			     u_int, int, u_int, int);
+extern void	rmc_init(struct ifaltq *, struct rm_ifdat *, u_int,
+			 void (*)(struct ifaltq *),
+			 int, int, u_int, int, u_int, int);
+extern int	rmc_queue_packet(struct rm_class *, mbuf_t *);
+extern mbuf_t	*rmc_dequeue_next(struct rm_ifdat *, int);
+extern void	rmc_update_class_util(struct rm_ifdat *);
+extern void	rmc_delay_action(struct rm_class *, struct rm_class *);
+extern void	rmc_dropall(struct rm_class *);
+extern int	rmc_get_weight(struct rm_ifdat *, int);
 
 #endif /* _KERNEL */
 

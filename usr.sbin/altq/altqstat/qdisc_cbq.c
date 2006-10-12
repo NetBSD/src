@@ -1,5 +1,5 @@
-/*	$NetBSD: qdisc_cbq.c,v 1.5 2002/03/05 04:11:52 itojun Exp $	*/
-/*	$KAME: qdisc_cbq.c,v 1.5 2001/11/07 04:56:08 kjc Exp $	*/
+/*	$NetBSD: qdisc_cbq.c,v 1.6 2006/10/12 19:59:13 peter Exp $	*/
+/*	$KAME: qdisc_cbq.c,v 1.7 2003/09/17 14:27:37 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -39,6 +39,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 #include <math.h>
 #include <errno.h>
 #include <err.h>
@@ -67,6 +68,7 @@ cbq_stat_loop(int fd, const char *ifname, int count, int interval)
 	int			i;
 	double			flow_bps, sec;
 	int cnt = count;
+	sigset_t		omask;
 
 	strlcpy(get_stats.iface.cbq_ifacename, ifname,
 		sizeof(get_stats.iface.cbq_ifacename));
@@ -96,24 +98,8 @@ cbq_stat_loop(int fd, const char *ifname, int count, int interval)
 				continue;
 			}
 
-			switch (sp->handle) {
-			case ROOT_CLASS_HANDLE:
-				printf("Root Class for Interface %s: %s\n",
-				       ifname, clnames[i]);
-				break;
-			case DEFAULT_CLASS_HANDLE:
-				printf("Default Class for Interface %s: %s\n",
-				       ifname, clnames[i]);
-				break;
-			case CTL_CLASS_HANDLE:
-				printf("Ctl Class for Interface %s: %s\n",
-				       ifname, clnames[i]);
-				break;
-			default:
-				printf("Class %d on Interface %s: %s\n",
-				       sp->handle, ifname, clnames[i]);
-				break;
-			}
+			printf("Class %d on Interface %s: %s\n",
+			    sp->handle, ifname, clnames[i]);
 
 			flow_bps = 8.0 / (double)sp->ns_per_byte
 			    * 1000*1000*1000;
@@ -156,6 +142,9 @@ cbq_stat_loop(int fd, const char *ifname, int count, int interval)
 		new = tmp;
 
 		last_time = cur_time;
-		sleep(interval);
+
+		/* wait for alarm signal */
+		if (sigprocmask(SIG_BLOCK, NULL, &omask) == 0)
+			sigsuspend(&omask);
 	}
 }

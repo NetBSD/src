@@ -1,5 +1,5 @@
-/*	$NetBSD: qop_conf.c,v 1.2 2001/08/16 07:48:13 itojun Exp $	*/
-/*	$KAME: qop_conf.c,v 1.2 2000/10/18 09:15:19 kjc Exp $	*/
+/*	$NetBSD: qop_conf.c,v 1.3 2006/10/12 19:59:13 peter Exp $	*/
+/*	$KAME: qop_conf.c,v 1.3 2002/10/26 06:59:53 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -51,6 +51,8 @@ extern interface_parser_t	wfq_interface_parser;
 extern interface_parser_t	fifoq_interface_parser;
 extern interface_parser_t	priq_interface_parser;
 extern class_parser_t		priq_class_parser;
+extern interface_parser_t	jobs_interface_parser;
+extern class_parser_t		jobs_class_parser;
 
 struct qdisc_parser qdisc_parser[] = {
 	{"null",	null_interface_parser,	null_class_parser},
@@ -62,6 +64,7 @@ struct qdisc_parser qdisc_parser[] = {
 	{"wfq",		wfq_interface_parser,	NULL},
 	{"fifoq",	fifoq_interface_parser,	NULL},
 	{"priq",	priq_interface_parser,	priq_class_parser},
+	{"jobs",	jobs_interface_parser,	jobs_class_parser},
 	{NULL, NULL, NULL}
 };
 

@@ -1,5 +1,5 @@
-/*	$NetBSD: quip_client.c,v 1.8 2005/05/20 18:01:46 kleink Exp $	*/
-/*	$KAME: quip_client.c,v 1.7 2001/12/28 00:50:28 itojun Exp $	*/
+/*	$NetBSD: quip_client.c,v 1.9 2006/10/12 19:59:13 peter Exp $	*/
+/*	$KAME: quip_client.c,v 1.9 2003/05/17 05:59:00 itojun Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -210,7 +210,7 @@ quip_recvresponse(FILE *fp, char *header, char *body, int *blen)
 				if (buf[0] == '\n') {
 					/* ignore blank lines */
 				}
-				/* sizeof(version) == 1024 */
+				/* XXX sizeof(version) == 1024 */
 				else if (sscanf(buf, "%1023s %d",
 						version, &code) != 2) {
 					/* can't get result code */
@@ -359,7 +359,7 @@ quip_selectqdisc(char *ifname, char *qdisc_name)
 	if (result_code != 200)
 		errx(1, "can't get qdisc info");
 
-	if (sscanf(buf, "%63s", qdisc) != 1)
+	if (sscanf(buf, "%s", qdisc) != 1)
 		errx(1, "can't get qdisc name");
 
 	if (qdisc_name != NULL && strcmp(qdisc, qdisc_name) != 0)
@@ -426,6 +426,11 @@ quip_printfilter(const char *ifname, const u_long handle)
 	char buf[BODY_MAXSIZE], req[REQ_MAXSIZE], *cp;
 	int result_code, len;
 
+	if (server == NULL) {
+		printf("No server available!\n");
+		return;
+	}
+
 	/* get qdisc info from the server */
 	snprintf(req, sizeof(req), "GET filter?%s::%#lx\n", ifname, handle);
 	quip_sendrequest(server, req);
@@ -463,6 +468,11 @@ quip_printconfig(void)
 	int result_code, len;
 	enum nametype type;
 	u_long handle;
+
+	if (server == NULL) {
+		printf("No server available!\n");
+		return;
+	}
 
 	/* get a total list from the server */
 	quip_sendrequest(server, "GET list\n");

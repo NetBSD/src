@@ -1,8 +1,8 @@
-/*	$NetBSD: if_altq.h,v 1.10 2005/12/11 12:16:03 christos Exp $	*/
-/*	$KAME: if_altq.h,v 1.7 2002/02/19 06:37:39 kjc Exp $	*/
+/*	$NetBSD: if_altq.h,v 1.11 2006/10/12 19:59:08 peter Exp $	*/
+/*	$KAME: if_altq.h,v 1.12 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
- * Copyright (C) 1997-2000
+ * Copyright (C) 1997-2003
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,9 @@ struct	ifaltq {
 	int	ifq_len;
 	int	ifq_maxlen;
 	int	ifq_drops;
+#ifdef __FreeBSD__
+	struct	mtx ifq_mtx;
+#endif
 
 	/* alternate queueing related fields */
 	int	altq_type;		/* discipline type */
@@ -52,14 +55,14 @@ struct	ifaltq {
 	void	*altq_disc;		/* for discipline-specific use */
 	struct	ifnet *altq_ifp;	/* back pointer to interface */
 
-	int	(*altq_enqueue) __P((struct ifaltq *, struct mbuf *,
-				     struct altq_pktattr *));
-	struct	mbuf *(*altq_dequeue) __P((struct ifaltq *, int));
-	int	(*altq_request) __P((struct ifaltq *, int, void *));
+	int	(*altq_enqueue)(struct ifaltq *, struct mbuf *,
+				struct altq_pktattr *);
+	struct	mbuf *(*altq_dequeue)(struct ifaltq *, int);
+	int	(*altq_request)(struct ifaltq *, int, void *);
 
 	/* classifier fields */
 	void	*altq_clfier;		/* classifier-specific use */
-	void	*(*altq_classify) __P((void *, struct mbuf *, int));
+	void	*(*altq_classify)(void *, struct mbuf *, int);
 
 	/* token bucket regulator */
 	struct	tb_regulator *altq_tbr;
@@ -86,6 +89,16 @@ struct altq_pktattr {
 	void	*pattr_class;		/* sched class set by classifier */
 	int	pattr_af;		/* address family */
 	caddr_t	pattr_hdr;		/* saved header position in mbuf */
+};
+
+/*
+ * mbuf tag to carry a queue id (and hints for ECN).
+ */
+struct altq_tag {
+	u_int32_t	qid;		/* queue id */
+	/* hints for ecn */
+	int		af;		/* address family */
+	void		*hdr;		/* saved header position in mbuf */
 };
 
 /*
@@ -146,20 +159,21 @@ struct tb_regulator {
 #define	ALTQ_IS_EMPTY(ifq)		((ifq)->ifq_len == 0)
 #define	TBR_IS_ENABLED(ifq)		((ifq)->altq_tbr != NULL)
 
-extern int altq_attach __P((struct ifaltq *, int, void *,
-			    int (*)(struct ifaltq *, struct mbuf *,
-				    struct altq_pktattr *),
-			    struct mbuf *(*)(struct ifaltq *, int),
-			    int (*)(struct ifaltq *, int, void *),
-			    void *,
-			    void *(*)(void *, struct mbuf *, int)));
-extern int altq_detach __P((struct ifaltq *));
-extern int altq_enable __P((struct ifaltq *));
-extern int altq_disable __P((struct ifaltq *));
-extern struct mbuf *tbr_dequeue __P((struct ifaltq *, int));
-extern int (*altq_input) __P((struct mbuf *, int));
-void altq_etherclassify __P((struct ifaltq *, struct mbuf *,
-			     struct altq_pktattr *));
+extern int altq_attach(struct ifaltq *, int, void *,
+		       int (*)(struct ifaltq *, struct mbuf *,
+			       struct altq_pktattr *),
+		       struct mbuf *(*)(struct ifaltq *, int),
+		       int (*)(struct ifaltq *, int, void *),
+		       void *,
+		       void *(*)(void *, struct mbuf *, int));
+extern int altq_detach(struct ifaltq *);
+extern int altq_enable(struct ifaltq *);
+extern int altq_disable(struct ifaltq *);
+extern struct mbuf *tbr_dequeue(struct ifaltq *, int);
+extern int (*altq_input)(struct mbuf *, int);
+#if 1 /* ALTQ3_CLFIER_COMPAT */
+void altq_etherclassify(struct ifaltq *, struct mbuf *, struct altq_pktattr *);
+#endif
 #endif /* _KERNEL */
 
 #endif /* _ALTQ_IF_ALTQ_H_ */

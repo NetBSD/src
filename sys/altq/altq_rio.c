@@ -1,8 +1,8 @@
-/*	$NetBSD: altq_rio.c,v 1.13 2006/10/12 01:30:42 christos Exp $	*/
-/*	$KAME: altq_rio.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
+/*	$NetBSD: altq_rio.c,v 1.14 2006/10/12 19:59:08 peter Exp $	*/
+/*	$KAME: altq_rio.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
- * Copyright (C) 1998-2000
+ * Copyright (C) 1998-2003
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -60,32 +60,30 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.13 2006/10/12 01:30:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.14 2006/10/12 19:59:08 peter Exp $");
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#ifdef _KERNEL_OPT
 #include "opt_altq.h"
-#if (__FreeBSD__ != 2)
 #include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
 #endif
-#endif
-#endif /* __FreeBSD__ || __NetBSD__ */
+
 #ifdef ALTQ_RIO	/* rio is enabled by ALTQ_RIO option in opt_altq.h */
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/sockio.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/errno.h>
+#include <sys/kauth.h>
+#if 1 /* ALTQ3_COMPAT */
+#include <sys/proc.h>
+#include <sys/sockio.h>
 #include <sys/kernel.h>
+#endif
 #include <sys/kauth.h>
 
 #include <net/if.h>
-#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -94,11 +92,14 @@ __KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.13 2006/10/12 01:30:42 christos Exp $
 #include <netinet/ip6.h>
 #endif
 
+#include <net/pfvar.h>
 #include <altq/altq.h>
-#include <altq/altq_conf.h>
 #include <altq/altq_cdnr.h>
 #include <altq/altq_red.h>
 #include <altq/altq_rio.h>
+#ifdef ALTQ3_COMPAT
+#include <altq/altq_conf.h>
+#endif
 
 /*
  * RIO: RED with IN/OUT bit
@@ -127,7 +128,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.13 2006/10/12 01:30:42 christos Exp $
  *
  *    low drop prec:    01
  *    medium drop prec: 10
- *    high drop prec:   01
+ *    high drop prec:   11
  */
 
 /* normal red parameters */
@@ -150,7 +151,8 @@ __KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.13 2006/10/12 01:30:42 christos Exp $
 #define	TH_MIN		 5	/* min threshold */
 #define	TH_MAX		15	/* max threshold */
 
-#define	RIO_LIMIT	60	/* default max queue length */
+#define	RIO_LIMIT	60	/* default max queue lenght */
+#define	RIO_STATS		/* collect statistics */
 
 #define	TV_DELTA(a, b, delta) {					\
 	register int	xxs;					\
@@ -158,7 +160,6 @@ __KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.13 2006/10/12 01:30:42 christos Exp $
 	delta = (a)->tv_usec - (b)->tv_usec; 			\
 	if ((xxs = (a)->tv_sec - (b)->tv_sec) != 0) { 		\
 		if (xxs < 0) { 					\
-			printf("rm_class: bogus time values");	\
 			delta = 60000000;			\
 		} else if (xxs > 4)  {				\
 			if (xxs > 60)				\
@@ -172,8 +173,10 @@ __KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.13 2006/10/12 01:30:42 christos Exp $
 	}							\
 }
 
+#ifdef ALTQ3_COMPAT
 /* rio_list keeps all rio_queue_t's allocated. */
 static rio_queue_t *rio_list = NULL;
+#endif
 /* default rio parameter values */
 static struct redparams default_rio_params[RIO_NDROPPREC] = {
   /* th_min,		 th_max,     inv_pmax */
@@ -183,18 +186,292 @@ static struct redparams default_rio_params[RIO_NDROPPREC] = {
 };
 
 /* internal function prototypes */
-static int rio_enqueue __P((struct ifaltq *, struct mbuf *,
-			    struct altq_pktattr *));
-static struct mbuf *rio_dequeue __P((struct ifaltq *, int));
-static int rio_request __P((struct ifaltq *, int, void *));
-static int rio_detach __P((rio_queue_t *));
-static int dscp2index __P((u_int8_t));
+static int dscp2index(u_int8_t);
+#ifdef ALTQ3_COMPAT
+static int rio_enqueue(struct ifaltq *, struct mbuf *, struct altq_pktattr *);
+static struct mbuf *rio_dequeue(struct ifaltq *, int);
+static int rio_request(struct ifaltq *, int, void *);
+static int rio_detach(rio_queue_t *);
 
 /*
  * rio device interface
  */
 altqdev_decl(rio);
 
+#endif /* ALTQ3_COMPAT */
+
+rio_t *
+rio_alloc(int weight, struct redparams *params, int flags, int pkttime)
+{
+	rio_t	*rp;
+	int	 w, i;
+	int	 npkts_per_sec;
+
+	rp = malloc(sizeof(rio_t), M_DEVBUF, M_WAITOK|M_ZERO);
+	if (rp == NULL)
+		return (NULL);
+
+	rp->rio_flags = flags;
+	if (pkttime == 0)
+		/* default packet time: 1000 bytes / 10Mbps * 8 * 1000000 */
+		rp->rio_pkttime = 800;
+	else
+		rp->rio_pkttime = pkttime;
+
+	if (weight != 0)
+		rp->rio_weight = weight;
+	else {
+		/* use default */
+		rp->rio_weight = W_WEIGHT;
+
+		/* when the link is very slow, adjust red parameters */
+		npkts_per_sec = 1000000 / rp->rio_pkttime;
+		if (npkts_per_sec < 50) {
+			/* up to about 400Kbps */
+			rp->rio_weight = W_WEIGHT_2;
+		} else if (npkts_per_sec < 300) {
+			/* up to about 2.4Mbps */
+			rp->rio_weight = W_WEIGHT_1;
+		}
+	}
+
+	/* calculate wshift.  weight must be power of 2 */
+	w = rp->rio_weight;
+	for (i = 0; w > 1; i++)
+		w = w >> 1;
+	rp->rio_wshift = i;
+	w = 1 << rp->rio_wshift;
+	if (w != rp->rio_weight) {
+		printf("invalid weight value %d for red! use %d\n",
+		       rp->rio_weight, w);
+		rp->rio_weight = w;
+	}
+
+	/* allocate weight table */
+	rp->rio_wtab = wtab_alloc(rp->rio_weight);
+
+	for (i = 0; i < RIO_NDROPPREC; i++) {
+		struct dropprec_state *prec = &rp->rio_precstate[i];
+
+		prec->avg = 0;
+		prec->idle = 1;
+
+		if (params == NULL || params[i].inv_pmax == 0)
+			prec->inv_pmax = default_rio_params[i].inv_pmax;
+		else
+			prec->inv_pmax = params[i].inv_pmax;
+		if (params == NULL || params[i].th_min == 0)
+			prec->th_min = default_rio_params[i].th_min;
+		else
+			prec->th_min = params[i].th_min;
+		if (params == NULL || params[i].th_max == 0)
+			prec->th_max = default_rio_params[i].th_max;
+		else
+			prec->th_max = params[i].th_max;
+
+		/*
+		 * th_min_s and th_max_s are scaled versions of th_min
+		 * and th_max to be compared with avg.
+		 */
+		prec->th_min_s = prec->th_min << (rp->rio_wshift + FP_SHIFT);
+		prec->th_max_s = prec->th_max << (rp->rio_wshift + FP_SHIFT);
+
+		/*
+		 * precompute probability denominator
+		 *  probd = (2 * (TH_MAX-TH_MIN) / pmax) in fixed-point
+		 */
+		prec->probd = (2 * (prec->th_max - prec->th_min)
+			       * prec->inv_pmax) << FP_SHIFT;
+
+		microtime(&prec->last);
+	}
+
+	return (rp);
+}
+
+void
+rio_destroy(rio_t *rp)
+{
+	wtab_destroy(rp->rio_wtab);
+	free(rp, M_DEVBUF);
+}
+
+void
+rio_getstats(rio_t *rp, struct redstats *sp)
+{
+	int	i;
+
+	for (i = 0; i < RIO_NDROPPREC; i++) {
+		bcopy(&rp->q_stats[i], sp, sizeof(struct redstats));
+		sp->q_avg = rp->rio_precstate[i].avg >> rp->rio_wshift;
+		sp++;
+	}
+}
+
+#if (RIO_NDROPPREC == 3)
+/*
+ * internally, a drop precedence value is converted to an index
+ * starting from 0.
+ */
+static int
+dscp2index(u_int8_t dscp)
+{
+	int	dpindex = dscp & AF_DROPPRECMASK;
+
+	if (dpindex == 0)
+		return (0);
+	return ((dpindex >> 3) - 1);
+}
+#endif
+
+#if 1
+/*
+ * kludge: when a packet is dequeued, we need to know its drop precedence
+ * in order to keep the queue length of each drop precedence.
+ * use m_pkthdr.rcvif to pass this info.
+ */
+#define	RIOM_SET_PRECINDEX(m, idx)	\
+	do { (m)->m_pkthdr.rcvif = (struct ifnet *)((long)(idx)); } while (0)
+#define	RIOM_GET_PRECINDEX(m)	\
+	({ long idx; idx = (long)((m)->m_pkthdr.rcvif); \
+	(m)->m_pkthdr.rcvif = NULL; idx; })
+#endif
+
+int
+rio_addq(rio_t *rp, class_queue_t *q, struct mbuf *m,
+    struct altq_pktattr *pktattr)
+{
+	int			 avg, droptype;
+	u_int8_t		 dsfield, odsfield;
+	int			 dpindex, i, n, t;
+	struct timeval		 now;
+	struct dropprec_state	*prec;
+
+	dsfield = odsfield = read_dsfield(m, pktattr);
+	dpindex = dscp2index(dsfield);
+
+	/*
+	 * update avg of the precedence states whose drop precedence
+	 * is larger than or equal to the drop precedence of the packet
+	 */
+	now.tv_sec = 0;
+	for (i = dpindex; i < RIO_NDROPPREC; i++) {
+		prec = &rp->rio_precstate[i];
+		avg = prec->avg;
+		if (prec->idle) {
+			prec->idle = 0;
+			if (now.tv_sec == 0)
+				microtime(&now);
+			t = (now.tv_sec - prec->last.tv_sec);
+			if (t > 60)
+				avg = 0;
+			else {
+				t = t * 1000000 +
+					(now.tv_usec - prec->last.tv_usec);
+				n = t / rp->rio_pkttime;
+				/* calculate (avg = (1 - Wq)^n * avg) */
+				if (n > 0)
+					avg = (avg >> FP_SHIFT) *
+						pow_w(rp->rio_wtab, n);
+			}
+		}
+
+		/* run estimator. (avg is scaled by WEIGHT in fixed-point) */
+		avg += (prec->qlen << FP_SHIFT) - (avg >> rp->rio_wshift);
+		prec->avg = avg;		/* save the new value */
+		/*
+		 * count keeps a tally of arriving traffic that has not
+		 * been dropped.
+		 */
+		prec->count++;
+	}
+
+	prec = &rp->rio_precstate[dpindex];
+	avg = prec->avg;
+
+	/* see if we drop early */
+	droptype = DTYPE_NODROP;
+	if (avg >= prec->th_min_s && prec->qlen > 1) {
+		if (avg >= prec->th_max_s) {
+			/* avg >= th_max: forced drop */
+			droptype = DTYPE_FORCED;
+		} else if (prec->old == 0) {
+			/* first exceeds th_min */
+			prec->count = 1;
+			prec->old = 1;
+		} else if (drop_early((avg - prec->th_min_s) >> rp->rio_wshift,
+				      prec->probd, prec->count)) {
+			/* unforced drop by red */
+			droptype = DTYPE_EARLY;
+		}
+	} else {
+		/* avg < th_min */
+		prec->old = 0;
+	}
+
+	/*
+	 * if the queue length hits the hard limit, it's a forced drop.
+	 */
+	if (droptype == DTYPE_NODROP && qlen(q) >= qlimit(q))
+		droptype = DTYPE_FORCED;
+
+	if (droptype != DTYPE_NODROP) {
+		/* always drop incoming packet (as opposed to randomdrop) */
+		for (i = dpindex; i < RIO_NDROPPREC; i++)
+			rp->rio_precstate[i].count = 0;
+#ifdef RIO_STATS
+		if (droptype == DTYPE_EARLY)
+			rp->q_stats[dpindex].drop_unforced++;
+		else
+			rp->q_stats[dpindex].drop_forced++;
+		PKTCNTR_ADD(&rp->q_stats[dpindex].drop_cnt, m_pktlen(m));
+#endif
+		m_freem(m);
+		return (-1);
+	}
+
+	for (i = dpindex; i < RIO_NDROPPREC; i++)
+		rp->rio_precstate[i].qlen++;
+
+	/* save drop precedence index in mbuf hdr */
+	RIOM_SET_PRECINDEX(m, dpindex);
+
+	if (rp->rio_flags & RIOF_CLEARDSCP)
+		dsfield &= ~DSCP_MASK;
+
+	if (dsfield != odsfield)
+		write_dsfield(m, pktattr, dsfield);
+
+	_addq(q, m);
+
+#ifdef RIO_STATS
+	PKTCNTR_ADD(&rp->q_stats[dpindex].xmit_cnt, m_pktlen(m));
+#endif
+	return (0);
+}
+
+struct mbuf *
+rio_getq(rio_t *rp, class_queue_t *q)
+{
+	struct mbuf	*m;
+	int		 dpindex, i;
+
+	if ((m = _getq(q)) == NULL)
+		return NULL;
+
+	dpindex = RIOM_GET_PRECINDEX(m);
+	for (i = dpindex; i < RIO_NDROPPREC; i++) {
+		if (--rp->rio_precstate[i].qlen == 0) {
+			if (rp->rio_precstate[i].idle == 0) {
+				rp->rio_precstate[i].idle = 1;
+				microtime(&rp->rio_precstate[i].last);
+			}
+		}
+	}
+	return (m);
+}
+
+#ifdef ALTQ3_COMPAT
 int
 rioopen(dev_t dev __unused, int flag __unused, int fmt __unused,
     struct lwp *l __unused)
@@ -349,8 +626,8 @@ rioioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
 
 			for (i = 0; i < RIO_NDROPPREC; i++) {
 				q_stats->q_len[i] = rp->rio_precstate[i].qlen;
-				(void)memcpy(&q_stats->q_stats[i],
-				    &rp->q_stats[i], sizeof(struct redstats));
+				bcopy(&rp->q_stats[i], &q_stats->q_stats[i],
+				      sizeof(struct redstats));
 				q_stats->q_stats[i].q_avg =
 				    rp->rio_precstate[i].avg >> rp->rio_wshift;
 
@@ -361,7 +638,7 @@ rioioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
 				q_stats->q_params[i].th_max
 					= rp->rio_precstate[i].th_max;
 			}
-		} while (0);
+		} while (/*CONSTCOND*/ 0);
 		break;
 
 	case RIO_CONFIG:
@@ -406,7 +683,7 @@ rioioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
 				fc->q_params[i].th_max =
 					rqp->rq_rio->rio_precstate[i].th_max;
 			}
-		} while (0);
+		} while (/*CONSTCOND*/ 0);
 		break;
 
 	case RIO_SETDEFAULTS:
@@ -417,7 +694,7 @@ rioioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
 			rp = (struct redparams *)addr;
 			for (i = 0; i < RIO_NDROPPREC; i++)
 				default_rio_params[i] = rp[i];
-		} while (0);
+		} while (/*CONSTCOND*/ 0);
 		break;
 
 	default:
@@ -429,8 +706,7 @@ rioioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
 }
 
 static int
-rio_detach(rqp)
-	rio_queue_t *rqp;
+rio_detach(rio_queue_t *rqp)
 {
 	rio_queue_t *tmp;
 	int error = 0;
@@ -477,121 +753,6 @@ rio_request(struct ifaltq *ifq, int req, void *arg __unused)
 	return (0);
 }
 
-
-rio_t *
-rio_alloc(weight, params, flags, pkttime)
-	int	weight;
-	struct redparams *params;
-	int	flags, pkttime;
-{
-	rio_t 	*rp;
-	int	w, i;
-	int	npkts_per_sec;
-
-	rp = malloc(sizeof(rio_t), M_DEVBUF, M_WAITOK|M_ZERO);
-	if (rp == NULL)
-		return (NULL);
-
-	rp->rio_flags = flags;
-	if (pkttime == 0)
-		/* default packet time: 1000 bytes / 10Mbps * 8 * 1000000 */
-		rp->rio_pkttime = 800;
-	else
-		rp->rio_pkttime = pkttime;
-
-	if (weight != 0)
-		rp->rio_weight = weight;
-	else {
-		/* use derfault */
-		rp->rio_weight = W_WEIGHT;
-
-		/* when the link is very slow, adjust red parameters */
-		npkts_per_sec = 1000000 / rp->rio_pkttime;
-		if (npkts_per_sec < 50) {
-			/* up to about 400Kbps */
-			rp->rio_weight = W_WEIGHT_2;
-		} else if (npkts_per_sec < 300) {
-			/* up to about 2.4Mbps */
-			rp->rio_weight = W_WEIGHT_1;
-		}
-	}
-
-	/* calculate wshift.  weight must be power of 2 */
-	w = rp->rio_weight;
-	for (i = 0; w > 1; i++)
-		w = w >> 1;
-	rp->rio_wshift = i;
-	w = 1 << rp->rio_wshift;
-	if (w != rp->rio_weight) {
-		printf("invalid weight value %d for red! use %d\n",
-		       rp->rio_weight, w);
-		rp->rio_weight = w;
-	}
-
-	/* allocate weight table */
-	rp->rio_wtab = wtab_alloc(rp->rio_weight);
-
-	for (i = 0; i < RIO_NDROPPREC; i++) {
-		struct dropprec_state *prec = &rp->rio_precstate[i];
-
-		prec->avg = 0;
-		prec->idle = 1;
-
-		if (params == NULL || params[i].inv_pmax == 0)
-			prec->inv_pmax = default_rio_params[i].inv_pmax;
-		else
-			prec->inv_pmax = params[i].inv_pmax;
-		if (params == NULL || params[i].th_min == 0)
-			prec->th_min = default_rio_params[i].th_min;
-		else
-			prec->th_min = params[i].th_min;
-		if (params == NULL || params[i].th_max == 0)
-			prec->th_max = default_rio_params[i].th_max;
-		else
-			prec->th_max = params[i].th_max;
-
-		/*
-		 * th_min_s and th_max_s are scaled versions of th_min
-		 * and th_max to be compared with avg.
-		 */
-		prec->th_min_s = prec->th_min << (rp->rio_wshift + FP_SHIFT);
-		prec->th_max_s = prec->th_max << (rp->rio_wshift + FP_SHIFT);
-
-		/*
-		 * precompute probability denominator
-		 *  probd = (2 * (TH_MAX-TH_MIN) / pmax) in fixed-point
-		 */
-		prec->probd = (2 * (prec->th_max - prec->th_min)
-			       * prec->inv_pmax) << FP_SHIFT;
-
-		microtime(&prec->last);
-	}
-
-	return (rp);
-}
-
-void
-rio_destroy(rp)
-	rio_t *rp;
-{
-	wtab_destroy(rp->rio_wtab);
-	free(rp, M_DEVBUF);
-}
-
-void
-rio_getstats(rp, sp)
-	rio_t *rp;
-	struct redstats *sp;
-{
-	int i;
-
-	for (i = 0; i < RIO_NDROPPREC; i++) {
-		(void)memcpy(sp, &rp->q_stats[i], sizeof(struct redstats));
-		sp->q_avg = rp->rio_precstate[i].avg >> rp->rio_wshift;
-		sp++;
-	}
-}
-
 /*
  * enqueue routine:
  *
@@ -599,10 +760,7 @@ rio_getstats(rp, sp)
  *		 ENOBUFS when drop occurs.
  */
 static int
-rio_enqueue(ifq, m, pktattr)
-	struct ifaltq *ifq;
-	struct mbuf *m;
-	struct altq_pktattr *pktattr;
+rio_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 {
 	rio_queue_t *rqp = (rio_queue_t *)ifq->altq_disc;
 	int error = 0;
@@ -614,151 +772,6 @@ rio_enqueue(ifq, m, pktattr)
 	return error;
 }
 
-#if (RIO_NDROPPREC == 3)
-/*
- * internally, a drop precedence value is converted to an index
- * starting from 0.
- */
-static int
-dscp2index(u_int8_t dscp)
-{
-	int dpindex = dscp & AF_DROPPRECMASK;
-
-	if (dpindex == 0)
-		return (0);
-	return ((dpindex >> 3) - 1);
-}
-#endif
-
-#if 1
-/*
- * kludge: when a packet is dequeued, we need to know its drop precedence
- * in order to keep the queue length of each drop precedence.
- * use m_pkthdr.rcvif to pass this info.
- */
-#define	RIOM_SET_PRECINDEX(m, idx)	\
-	do { (m)->m_pkthdr.rcvif = (struct ifnet *)((long)(idx)); } while (0)
-#define	RIOM_GET_PRECINDEX(m)	\
-	({ long idx; idx = (long)((m)->m_pkthdr.rcvif); \
-	(m)->m_pkthdr.rcvif = NULL; idx; })
-#endif
-
-int
-rio_addq(rp, q, m, pktattr)
-	rio_t *rp;
-	class_queue_t *q;
-	struct mbuf *m;
-	struct altq_pktattr *pktattr;
-{
-	int avg, droptype;
-	u_int8_t dsfield, odsfield;
-	int dpindex, i, n, t;
-	struct timeval now;
-	struct dropprec_state *prec;
-
-	dsfield = odsfield = read_dsfield(m, pktattr);
-	dpindex = dscp2index(dsfield);
-
-	/*
-	 * update avg of the precedence states whose drop precedence
-	 * is larger than or equal to the drop precedence of the packet
-	 */
-	now.tv_sec = 0;
-	for (i = dpindex; i < RIO_NDROPPREC; i++) {
-		prec = &rp->rio_precstate[i];
-		avg = prec->avg;
-		if (prec->idle) {
-			prec->idle = 0;
-			if (now.tv_sec == 0)
-				microtime(&now);
-			t = (now.tv_sec - prec->last.tv_sec);
-			if (t > 60)
-				avg = 0;
-			else {
-				t = t * 1000000 +
-					(now.tv_usec - prec->last.tv_usec);
-				n = t / rp->rio_pkttime;
-				/* calculate (avg = (1 - Wq)^n * avg) */
-				if (n > 0)
-					avg = (avg >> FP_SHIFT) *
-						pow_w(rp->rio_wtab, n);
-			}
-		}
-
-		/* run estimator. (avg is scaled by WEIGHT in fixed-point) */
-		avg += (prec->qlen << FP_SHIFT) - (avg >> rp->rio_wshift);
-		prec->avg = avg;		/* save the new value */
-		/*
-		 * count keeps a tally of arriving traffic that has not
-		 * been dropped.
-		 */
-		prec->count++;
-	}
-
-	prec = &rp->rio_precstate[dpindex];
-	avg = prec->avg;
-
-	/* see if we drop early */
-	droptype = DTYPE_NODROP;
-	if (avg >= prec->th_min_s && prec->qlen > 1) {
-		if (avg >= prec->th_max_s) {
-			/* avg >= th_max: forced drop */
-			droptype = DTYPE_FORCED;
-		} else if (prec->old == 0) {
-			/* first exceeds th_min */
-			prec->count = 1;
-			prec->old = 1;
-		} else if (drop_early((avg - prec->th_min_s) >> rp->rio_wshift,
-				      prec->probd, prec->count)) {
-			/* unforced drop by red */
-			droptype = DTYPE_EARLY;
-		}
-	} else {
-		/* avg < th_min */
-		prec->old = 0;
-	}
-
-	/*
-	 * if the queue length hits the hard limit, it's a forced drop.
-	 */
-	if (droptype == DTYPE_NODROP && qlen(q) >= qlimit(q))
-		droptype = DTYPE_FORCED;
-
-	if (droptype != DTYPE_NODROP) {
-		/* always drop incoming packet (as opposed to randomdrop) */
-		for (i = dpindex; i < RIO_NDROPPREC; i++)
-			rp->rio_precstate[i].count = 0;
-#ifdef RIO_STATS
-		if (droptype == DTYPE_EARLY)
-			rp->q_stats[dpindex].drop_unforced++;
-		else
-			rp->q_stats[dpindex].drop_forced++;
-		PKTCNTR_ADD(&rp->q_stats[dpindex].drop_cnt, m_pktlen(m));
-#endif
-		m_freem(m);
-		return (-1);
-	}
-
-	for (i = dpindex; i < RIO_NDROPPREC; i++)
-		rp->rio_precstate[i].qlen++;
-
-	/* save drop precedence index in mbuf hdr */
-	RIOM_SET_PRECINDEX(m, dpindex);
-
-	if (rp->rio_flags & RIOF_CLEARDSCP)
-		dsfield &= ~DSCP_MASK;
-
-	if (dsfield != odsfield)
-		write_dsfield(m, pktattr, dsfield);
-
-	_addq(q, m);
-
-#ifdef RIO_STATS
-	PKTCNTR_ADD(&rp->q_stats[dpindex].xmit_cnt, m_pktlen(m));
-#endif
-	return (0);
-}
-
 /*
  * dequeue routine:
  *	must be called in splnet.
@@ -768,9 +781,7 @@ rio_addq(rp, q, m, pktattr)
  */
 
 static struct mbuf *
-rio_dequeue(ifq, op)
-	struct ifaltq *ifq;
-	int op;
+rio_dequeue(struct ifaltq *ifq, int op)
 {
 	rio_queue_t *rqp = (rio_queue_t *)ifq->altq_disc;
 	struct mbuf *m = NULL;
@@ -784,36 +795,16 @@ rio_dequeue(ifq, op)
 	return m;
 }
 
-struct mbuf *
-rio_getq(rp, q)
-	rio_t *rp;
-	class_queue_t *q;
-{
-	struct mbuf *m;
-	int dpindex, i;
-
-	if ((m = _getq(q)) == NULL)
-		return NULL;
-
-	dpindex = RIOM_GET_PRECINDEX(m);
-	for (i = dpindex; i < RIO_NDROPPREC; i++) {
-		if (--rp->rio_precstate[i].qlen == 0) {
-			if (rp->rio_precstate[i].idle == 0) {
-				rp->rio_precstate[i].idle = 1;
-				microtime(&rp->rio_precstate[i].last);
-			}
-		}
-	}
-	return (m);
-}
-
 #ifdef KLD_MODULE
 
 static struct altqsw rio_sw =
 	{"rio", rioopen, rioclose, rioioctl};
 
 ALTQ_MODULE(altq_rio, ALTQT_RIO, &rio_sw);
+MODULE_VERSION(altq_rio, 1);
+MODULE_DEPEND(altq_rio, altq_red, 1, 1, 1);
 
 #endif /* KLD_MODULE */
+#endif /* ALTQ3_COMPAT */
 
 #endif /* ALTQ_RIO */

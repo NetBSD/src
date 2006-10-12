@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.336 2006/09/27 21:42:04 manu Exp $
+.\"	$NetBSD: options.4,v 1.337 2006/10/12 19:59:08 peter Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1741,7 +1741,10 @@ Include support for IPsec in IPv4 ALTQ.
 This option assumes
 .Em ALTQ .
 .It Cd options ALTQ_JOBS
-Undocumented at this time.
+Include support for ALTQ-implemented JoBS (Joint Buffer Management
+and Scheduling).
+This option assumes
+.Em ALTQ .
 .It Cd options ALTQ_AFMAP
 Include support for an undocumented ALTQ feature that is used to map an IP
 flow to an ATM VC (Virtual Circuit).

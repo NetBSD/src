@@ -1,8 +1,8 @@
-/*	$NetBSD: altq_blue.h,v 1.4 2005/12/11 12:16:03 christos Exp $	*/
-/*	$KAME: altq_blue.h,v 1.5 2000/12/14 08:12:45 thorpej Exp $	*/
+/*	$NetBSD: altq_blue.h,v 1.5 2006/10/12 19:59:08 peter Exp $	*/
+/*	$KAME: altq_blue.h,v 1.7 2002/11/29 04:36:22 kjc Exp $	*/
 
 /*
- * Copyright (C) 1997-2000
+ * Copyright (C) 1997-2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -109,10 +109,10 @@ typedef struct blue_queue {
 	blue_t *rq_blue;
 } blue_queue_t;
 
-extern int blue_init __P((blue_t *, int, int, int, int));
-extern int blue_addq __P((blue_t *, class_queue_t *, struct mbuf *,
-			 struct altq_pktattr *));
-extern struct mbuf *blue_getq __P((blue_t *, class_queue_t *));
+extern int blue_init(blue_t *, int, int, int, int);
+extern int blue_addq(blue_t *, class_queue_t *, struct mbuf *,
+		     struct altq_pktattr *);
+extern struct mbuf *blue_getq(blue_t *, class_queue_t *);
 
 #endif /* _KERNEL */
 

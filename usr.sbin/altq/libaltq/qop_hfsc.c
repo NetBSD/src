@@ -1,5 +1,5 @@
-/*	$NetBSD: qop_hfsc.c,v 1.7 2003/10/26 08:08:06 lukem Exp $	*/
-/*	$KAME: qop_hfsc.c,v 1.8 2002/09/08 09:08:13 kjc Exp $	*/
+/*	$NetBSD: qop_hfsc.c,v 1.8 2006/10/12 19:59:13 peter Exp $	*/
+/*	$KAME: qop_hfsc.c,v 1.12 2005/01/05 04:53:47 itojun Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -142,12 +142,12 @@ int
 hfsc_class_parser(const char *ifname, const char *class_name,
 		  const char *parent_name, int argc, char **argv)
 {
-	u_int	m1, d, m2, rm1, rd, rm2, fm1, fd, fm2;
+	u_int	m1, d, m2, rm1, rd, rm2, fm1, fd, fm2, um1, ud, um2;
 	int	qlimit = 50;
 	int	flags = 0, admission = 0;
 	int	type = 0, error;
 
-	rm1 = rd = rm2 = fm1 = fd = fm2 = 0;
+	rm1 = rd = rm2 = fm1 = fd = fm2 = um1 = ud = um2 = 0;
 	while (argc > 0) {
 		if (*argv[0] == '[') {
 			if (read_sc(&argc, &argv, &type, &m1, &d, &m2) != 0) {
@@ -161,6 +161,15 @@ hfsc_class_parser(const char *ifname, const char *class_name,
 			}
 			if (type & HFSC_LINKSHARINGSC) {
 				fm1 = m1; fd = d; fm2 = m2;
+			}
+			if (type & HFSC_UPPERLIMITSC) {
+				um1 = m1; ud = d; um2 = m2;
+			}
+		} else if (EQUAL(*argv, "ulimit")) {
+			argc--; argv++;
+			if (argc > 0) {
+				um2 = atobps(*argv);
+				type |= HFSC_UPPERLIMITSC;
 			}
 		} else if (EQUAL(*argv, "pshare")) {
 			argc--; argv++;
@@ -179,6 +188,12 @@ hfsc_class_parser(const char *ifname, const char *class_name,
 			if (argc > 0) {
 				rm2 = atobps(*argv);
 				type |= HFSC_REALTIMESC;
+			}
+		} else if (EQUAL(*argv, "bandwidth")) {
+			argc--; argv++;
+			if (argc > 0) {
+				rm2 = fm2 = atobps(*argv);
+				type |= (HFSC_REALTIMESC | HFSC_LINKSHARINGSC);
 			}
 		} else if (EQUAL(*argv, "qlimit")) {
 			argc--; argv++;
@@ -252,6 +267,11 @@ hfsc_class_parser(const char *ifname, const char *class_name,
 					       m1, d, m2, type);
 	}
 
+	if (error == 0 && (um1 != 0 || um2 != 0)) {
+		error = qcmd_hfsc_modify_class(ifname, class_name,
+		    um1, ud, um2, HFSC_UPPERLIMITSC);
+	}
+
 	if (error == 0 && admission) {
 		/* this is a special class for rsvp */
 		struct ifinfo *ifinfo = ifname2ifinfo(ifname);
@@ -277,7 +297,7 @@ hfsc_class_parser(const char *ifname, const char *class_name,
 /*
  * read service curve parameters
  * '[' <type> <m1> <d> <m2> ']'
- *  type := "sc", "rt", or "ls"
+ *  type := "sc", "rt", "ls", or "ul"
  */
 static int
 read_sc(int *argcp, char ***argvp, int *type, u_int *m1, u_int *d, u_int *m2)
@@ -298,6 +318,8 @@ read_sc(int *argcp, char ***argvp, int *type, u_int *m1, u_int *d, u_int *m2)
 		*type = HFSC_REALTIMESC;
 	else if (*cp == 'l' || *cp == 'L')
 		*type = HFSC_LINKSHARINGSC;
+	else if (*cp == 'u' || *cp == 'U')
+		*type = HFSC_UPPERLIMITSC;
 	else
 		return (-1);
 	cp = *++argv; --argc;
@@ -323,7 +345,7 @@ int
 qcmd_hfsc_add_if(const char *ifname, u_int bandwidth, int flags)
 {
 	int error;
-	
+
 	error = qop_hfsc_add_if(NULL, ifname, bandwidth, flags);
 	if (error != 0)
 		LOG(LOG_ERR, errno, "%s: can't add hfsc on interface '%s'",
@@ -379,7 +401,7 @@ qcmd_hfsc_modify_class(const char *ifname, const char *class_name,
 	sc.m1 = m1;
 	sc.d = d;
 	sc.m2 = m2;
-	
+
 	return qop_hfsc_modify_class(clinfo, &sc, sctype);
 }
 
@@ -406,7 +428,7 @@ qop_hfsc_add_if(struct ifinfo **rp, const char *ifname,
 	/* set enable hook */
 	ifinfo->enable_hook = qop_hfsc_enable_hook;
 
-	/* create a dummy root class */
+	/* create root class */
 	sc.m1 = bandwidth;
 	sc.d = 0;
 	sc.m2 = bandwidth;
@@ -465,7 +487,7 @@ qop_hfsc_add_class(struct classinfo **rp, const char *class_name,
 			goto err_ret;
 		}
 	}
-		
+
 	if ((hfsc_clinfo = calloc(1, sizeof(*hfsc_clinfo))) == NULL) {
 		error = QOPERR_NOMEM;
 		goto err_ret;
@@ -484,7 +506,7 @@ qop_hfsc_add_class(struct classinfo **rp, const char *class_name,
 
 	/* set delete hook */
 	clinfo->delete_hook = qop_hfsc_delete_class_hook;
-	
+
 	if (flags & HFCF_DEFAULTCLASS)
 		hfsc_ifinfo->default_class = clinfo;
 
@@ -516,7 +538,7 @@ qop_hfsc_add_class(struct classinfo **rp, const char *class_name,
 		free(hfsc_clinfo);
 		clinfo->private = NULL;
 	}
-	
+
 	return (error);
 }
 
@@ -530,7 +552,7 @@ qop_hfsc_delete_class_hook(struct classinfo *clinfo)
 	struct hfsc_classinfo *hfsc_clinfo, *parent_clinfo;
 
 	hfsc_clinfo = clinfo->private;
-	
+
 	/* cancel admission control */
 	if (clinfo->parent != NULL) {
 		parent_clinfo = clinfo->parent->private;
@@ -549,7 +571,7 @@ qop_hfsc_modify_class(struct classinfo *clinfo,
 		      struct service_curve *sc, int sctype)
 {
 	struct hfsc_classinfo *hfsc_clinfo, *parent_clinfo;
-	struct service_curve rsc, fsc;
+	struct service_curve rsc, fsc, usc;
 	int error;
 
 	if (validate_sc(sc) != 0)
@@ -563,14 +585,28 @@ qop_hfsc_modify_class(struct classinfo *clinfo,
 	/* save old service curves */
 	rsc = hfsc_clinfo->rsc;
 	fsc = hfsc_clinfo->fsc;
+	usc = hfsc_clinfo->usc;
 
 	/* admission control */
 	if (sctype & HFSC_REALTIMESC) {
+		/* if the class has usc, rsc should be smaller than usc */
+		if (!is_sc_null(&hfsc_clinfo->usc)) {
+			gsc_head_t tmp_gen_rsc =
+			    LIST_HEAD_INITIALIZER(tmp_gen_rsc);
+
+			gsc_add_sc(&tmp_gen_rsc, sc);
+			if (!is_gsc_under_sc(&tmp_gen_rsc, &hfsc_clinfo->usc)) {
+				gsc_destroy(&tmp_gen_rsc);
+				return (QOPERR_ADMISSION);
+			}
+			gsc_destroy(&tmp_gen_rsc);
+		}
+
 		if (!is_gsc_under_sc(&hfsc_clinfo->gen_rsc, sc)) {
 			/* admission control failure */
 			return (QOPERR_ADMISSION);
 		}
-		
+
 		gsc_sub_sc(&parent_clinfo->gen_rsc, &hfsc_clinfo->rsc);
 		gsc_add_sc(&parent_clinfo->gen_rsc, sc);
 		if (!is_gsc_under_sc(&parent_clinfo->gen_rsc,
@@ -587,7 +623,7 @@ qop_hfsc_modify_class(struct classinfo *clinfo,
 			/* admission control failure */
 			return (QOPERR_ADMISSION);
 		}
-		
+
 		gsc_sub_sc(&parent_clinfo->gen_fsc, &hfsc_clinfo->fsc);
 		gsc_add_sc(&parent_clinfo->gen_fsc, sc);
 		if (!is_gsc_under_sc(&parent_clinfo->gen_fsc,
@@ -598,6 +634,47 @@ qop_hfsc_modify_class(struct classinfo *clinfo,
 			return (QOPERR_ADMISSION_NOBW);
 		}
 		hfsc_clinfo->fsc = *sc;
+	}
+	if (sctype & HFSC_UPPERLIMITSC) {
+		if (!is_sc_null(sc)) {
+			/* usc must be smaller than interface bandwidth */
+			struct classinfo *root_clinfo =
+			    clname2clinfo(clinfo->ifinfo, "root");
+			if (root_clinfo != NULL) {
+				struct hfsc_classinfo *root_hfsc_clinfo =
+				    root_clinfo->private;
+				if (!is_sc_null(&root_hfsc_clinfo->rsc)) {
+					gsc_head_t tmp_gen_usc =
+					    LIST_HEAD_INITIALIZER(tmp_gen_usc);
+					gsc_add_sc(&tmp_gen_usc, sc);
+					if (!is_gsc_under_sc(&tmp_gen_usc,
+					    &root_hfsc_clinfo->fsc)) {
+						/* illegal attempt to set
+						   upper limit curve to be
+						   greater than the interface
+						   bandwidth */
+						gsc_destroy(&tmp_gen_usc);
+						return (QOPERR_ADMISSION);
+					}
+					gsc_destroy(&tmp_gen_usc);
+				}
+			}
+			/* if this class has rsc, check that usc >= rsc */
+			if (!is_sc_null(&hfsc_clinfo->rsc)) {
+				gsc_head_t tmp_gen_rsc =
+				    LIST_HEAD_INITIALIZER(tmp_gen_rsc);
+				gsc_add_sc(&tmp_gen_rsc, &hfsc_clinfo->rsc);
+				if (!is_gsc_under_sc(&tmp_gen_rsc, sc)) {
+					/* illegal attempt to set upper limit
+					   curve to be under the real-time
+					   service curve */
+					gsc_destroy(&tmp_gen_rsc);
+					return (QOPERR_ADMISSION);
+				}
+				gsc_destroy(&tmp_gen_rsc);
+			}
+		}
+		hfsc_clinfo->usc = *sc;
 	}
 
 	error = qop_modify_class(clinfo, (void *)((long)sctype));
@@ -615,6 +692,9 @@ qop_hfsc_modify_class(struct classinfo *clinfo,
 		gsc_add_sc(&parent_clinfo->gen_fsc, &fsc);
 		hfsc_clinfo->fsc = fsc;
 	}
+	if (sctype & HFSC_UPPERLIMITSC) {
+		hfsc_clinfo->usc = usc;
+	}
 	return (error);
 }
 
@@ -631,7 +711,7 @@ qop_hfsc_enable_hook(struct ifinfo *ifinfo)
 {
 	struct hfsc_ifinfo *hfsc_ifinfo;
 	struct classinfo *clinfo;
-	
+
 	hfsc_ifinfo = ifinfo->private;
 	if (hfsc_ifinfo->default_class == NULL) {
 		LOG(LOG_ERR, 0, "hfsc: no default class on interface %s!",
@@ -663,12 +743,19 @@ validate_sc(struct service_curve *sc)
 		LOG(LOG_ERR, 0, "m1 must be 0 for convex!");
 		return (-1);
 	}
+	if (sc->m1 > sc->m2 && sc->m2 == 0) {
+		LOG(LOG_ERR, 0, "m2 must be nonzero for concave!");
+		return (-1);
+	}
 	return (0);
 }
 
 /*
  * admission control using generalized service curve
  */
+#ifndef INFINITY
+#define	INFINITY	HUGE_VAL  /* positive infinity defined in <math.h> */
+#endif
 
 /* add a new service curve to a generilized service curve */
 static void
@@ -678,7 +765,7 @@ gsc_add_sc(struct gen_sc *gsc, struct service_curve *sc)
 		return;
 	if (sc->d != 0)
 		gsc_add_seg(gsc, 0, 0, (double)sc->d, (double)sc->m1);
-	gsc_add_seg(gsc, (double)sc->d, 0, HUGE_VAL, (double)sc->m2);
+	gsc_add_seg(gsc, (double)sc->d, 0, INFINITY, (double)sc->m2);
 }
 
 /* subtract a service curve from a generilized service curve */
@@ -689,7 +776,7 @@ gsc_sub_sc(struct gen_sc *gsc, struct service_curve *sc)
 		return;
 	if (sc->d != 0)
 		gsc_sub_seg(gsc, 0, 0, (double)sc->d, (double)sc->m1);
-	gsc_sub_seg(gsc, (double)sc->d, 0, HUGE_VAL, (double)sc->m2);
+	gsc_sub_seg(gsc, (double)sc->d, 0, INFINITY, (double)sc->m2);
 }
 
 /*
@@ -713,10 +800,10 @@ is_gsc_under_sc(struct gen_sc *gsc, struct service_curve *sc)
 		return (1);
 	}
 	/*
-	 * gsc has a dummy entry at the end with x = HUGE_VAL.
+	 * gsc has a dummy entry at the end with x = INFINITY.
 	 * loop through up to this dummy entry.
 	 */
-	end = gsc_getentry(gsc, HUGE_VAL);
+	end = gsc_getentry(gsc, INFINITY);
 	if (end == NULL)
 		return (1);
 	last = NULL;
@@ -773,10 +860,10 @@ gsc_getentry(struct gen_sc *gsc, double x)
 		return (NULL);
 
 	new->x = x;
-	if (x == HUGE_VAL || s == NULL)
+	if (x == INFINITY || s == NULL)
 		new->d = 0;
-	else if (s->x == HUGE_VAL)
-		new->d = HUGE_VAL;
+	else if (s->x == INFINITY)
+		new->d = INFINITY;
 	else
 		new->d = s->x - x;
 	if (prev == NULL) {
@@ -789,12 +876,12 @@ gsc_getentry(struct gen_sc *gsc, double x)
 		 * the start point intersects with the segment pointed by
 		 * prev.  divide prev into 2 segments
 		 */
-		if (x == HUGE_VAL) {
-			prev->d = HUGE_VAL;
+		if (x == INFINITY) {
+			prev->d = INFINITY;
 			if (prev->m == 0)
 				new->y = prev->y;
 			else
-				new->y = HUGE_VAL;
+				new->y = INFINITY;
 		} else {
 			prev->d = x - prev->x;
 			new->y = prev->d * prev->m + prev->y;
@@ -812,8 +899,8 @@ gsc_add_seg(struct gen_sc *gsc, double x, double y, double d, double m)
 	struct segment *start, *end, *s;
 	double x2;
 
-	if (d == HUGE_VAL)
-		x2 = HUGE_VAL;
+	if (d == INFINITY)
+		x2 = INFINITY;
 	else
 		x2 = x + d;
 	start = gsc_getentry(gsc, x);
@@ -826,7 +913,7 @@ gsc_add_seg(struct gen_sc *gsc, double x, double y, double d, double m)
 		s->y += y + (s->x - x) * m;
 	}
 
-	end = gsc_getentry(gsc, HUGE_VAL);
+	end = gsc_getentry(gsc, INFINITY);
 	for (; s != end; s = LIST_NEXT(s, _next)) {
 		s->y += m * d;
 	}
@@ -875,7 +962,7 @@ gsc_compress(struct gen_sc *gsc)
 			goto again;
 		} else if (s->m == next->m) {
 			/* join the two entries */
-			if (s->d != HUGE_VAL && next->d != HUGE_VAL)
+			if (s->d != INFINITY && next->d != INFINITY)
 				s->d += next->d;
 			LIST_REMOVE(next, _next);
 			free(next);
@@ -929,7 +1016,7 @@ static int
 hfsc_detach(struct ifinfo *ifinfo)
 {
 	struct hfsc_interface iface;
-	
+
 	memset(&iface, 0, sizeof(iface));
 	strncpy(iface.hfsc_ifname, ifinfo->ifname, IFNAMSIZ);
 
@@ -989,24 +1076,21 @@ hfsc_add_class(struct classinfo *clinfo)
 	struct hfsc_classinfo *hfsc_clinfo;
 	struct hfsc_ifinfo *hfsc_ifinfo;
 
-	/* root class is a dummy class */
-	if (clinfo->parent == NULL) {
-		clinfo->handle = HFSC_ROOTCLASS_HANDLE;
-		return (0);
-	}
-	
 	hfsc_ifinfo = clinfo->ifinfo->private;
 	hfsc_clinfo = clinfo->private;
-	
+
 	memset(&class_add, 0, sizeof(class_add));
 	strncpy(class_add.iface.hfsc_ifname, clinfo->ifinfo->ifname, IFNAMSIZ);
-	if (clinfo->parent == hfsc_ifinfo->root_class)
-		class_add.parent_handle = HFSC_ROOTCLASS_HANDLE;
+
+	if (clinfo->parent == NULL)
+		class_add.parent_handle = HFSC_NULLCLASS_HANDLE;
 	else
 		class_add.parent_handle = clinfo->parent->handle;
+
 	class_add.service_curve = hfsc_clinfo->rsc;
 	class_add.qlimit = hfsc_clinfo->qlimit;
 	class_add.flags = hfsc_clinfo->flags;
+
 	if (ioctl(hfsc_fd, HFSC_ADD_CLASS, &class_add) < 0) {
 		clinfo->handle = HFSC_NULLCLASS_HANDLE;
 		return (QOPERR_SYSCALL);
@@ -1032,6 +1116,8 @@ hfsc_modify_class(struct classinfo *clinfo, void *arg)
 		class_mod.service_curve = hfsc_clinfo->rsc;
 	else if (sctype & HFSC_LINKSHARINGSC)
 		class_mod.service_curve = hfsc_clinfo->fsc;
+	else if (sctype & HFSC_UPPERLIMITSC)
+		class_mod.service_curve = hfsc_clinfo->usc;
 	else
 		return (QOPERR_INVAL);
 	class_mod.sctype = sctype;
@@ -1046,8 +1132,7 @@ hfsc_delete_class(struct classinfo *clinfo)
 {
 	struct hfsc_delete_class class_delete;
 
-	if (clinfo->handle == HFSC_NULLCLASS_HANDLE ||
-	    clinfo->handle == HFSC_ROOTCLASS_HANDLE)
+	if (clinfo->handle == HFSC_NULLCLASS_HANDLE)
 		return (0);
 
 	memset(&class_delete, 0, sizeof(class_delete));
@@ -1064,7 +1149,7 @@ static int
 hfsc_add_filter(struct fltrinfo *fltrinfo)
 {
 	struct hfsc_add_filter fltr_add;
-	
+
 	memset(&fltr_add, 0, sizeof(fltr_add));
 	strncpy(fltr_add.iface.hfsc_ifname, fltrinfo->clinfo->ifinfo->ifname,
 		IFNAMSIZ);
@@ -1091,5 +1176,3 @@ hfsc_delete_filter(struct fltrinfo *fltrinfo)
 		return (QOPERR_SYSCALL);
 	return (0);
 }
-
-

@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.727 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.728 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -113,3 +113,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		net.inet.tcp.congctl.selected instead. [rpaulo 20061009]
 	proplib(3): prop_number_t can now handle both signed and unsigned
 		integers.  [thorpej 20061011]
+	pf(4): Added support for ALTQ. [peter 20061012]
