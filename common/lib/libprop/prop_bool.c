@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_bool.c,v 1.6 2006/10/03 15:45:04 thorpej Exp $	*/
+/*	$NetBSD: prop_bool.c,v 1.7 2006/10/12 04:41:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@ _prop_bool_free(void *v)
 	 * This should never happen as we "leak" our initial reference
 	 * count.
 	 */
+	(void) v;
 	/* XXX forced assertion failure? */
 }
 
