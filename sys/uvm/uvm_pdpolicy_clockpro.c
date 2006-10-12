@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.3 2006/10/09 12:50:39 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.4 2006/10/12 10:14:43 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.3 2006/10/09 12:50:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.4 2006/10/12 10:14:43 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.3 2006/10/09 12:50:39 ya
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/vnode.h>
 #include <sys/hash.h>
 
 #include <uvm/uvm.h>

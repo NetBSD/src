@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.34 2006/10/12 01:32:54 christos Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.35 2006/10/12 10:14:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.34 2006/10/12 01:32:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.35 2006/10/12 10:14:43 yamt Exp $");
 
 #include "opt_pax.h"
 
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.34 2006/10/12 01:32:54 christos Exp $
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
-#include <sys/vnode.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
