@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.8 2006/10/12 04:46:56 thorpej Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.9 2006/10/12 18:52:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -303,10 +303,11 @@ _prop_number_alloc(const struct _prop_number_value *pnv)
 prop_number_t
 prop_number_create_integer(int64_t val)
 {
-	const struct _prop_number_value pnv = {
-		.pnv_signed = val,
-		.pnv_is_unsigned = FALSE,
-	};
+	struct _prop_number_value pnv;
+
+	memset(&pnv, 0, sizeof(pnv));
+	pnv.pnv_signed = val;
+	pnv.pnv_is_unsigned = FALSE;
 
 	return (_prop_number_alloc(&pnv));
 }
@@ -319,10 +320,11 @@ prop_number_create_integer(int64_t val)
 prop_number_t
 prop_number_create_unsigned_integer(uint64_t val)
 {
-	const struct _prop_number_value pnv = {
-		.pnv_unsigned = val,
-		.pnv_is_unsigned = TRUE,
-	};
+	struct _prop_number_value pnv;
+
+	memset(&pnv, 0, sizeof(pnv));
+	pnv.pnv_unsigned = val;
+	pnv.pnv_is_unsigned = TRUE;
 
 	return (_prop_number_alloc(&pnv));
 }
@@ -481,7 +483,8 @@ _prop_number_internalize_unsigned(struct _prop_object_internalize_context *ctx,
 {
 	char *cp;
 
-	_PROP_ASSERT(sizeof(unsigned long long) == sizeof(uint64_t));
+	_PROP_ASSERT(/*CONSTCOND*/sizeof(unsigned long long) ==
+		     sizeof(uint64_t));
 
 #ifndef _KERNEL
 	errno = 0;
@@ -503,7 +506,7 @@ _prop_number_internalize_signed(struct _prop_object_internalize_context *ctx,
 {
 	char *cp;
 
-	_PROP_ASSERT(sizeof(long long) == sizeof(int64_t));
+	_PROP_ASSERT(/*CONSTCOND*/sizeof(long long) == sizeof(int64_t));
 
 #ifndef _KERNEL
 	errno = 0;
@@ -528,10 +531,9 @@ _prop_number_internalize_signed(struct _prop_object_internalize_context *ctx,
 prop_object_t
 _prop_number_internalize(struct _prop_object_internalize_context *ctx)
 {
-	struct _prop_number_value pnv = {
-		.pnv_unsigned = 0,
-		.pnv_is_unsigned = FALSE,
-	};
+	struct _prop_number_value pnv;
+
+	memset(&pnv, 0, sizeof(pnv));
 
 	/* No attributes, no empty elements. */
 	if (ctx->poic_tagattr != NULL || ctx->poic_is_empty_element)
