@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.66 2006/10/12 01:30:42 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.67 2006/10/12 15:28:30 cube Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.66 2006/10/12 01:30:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.67 2006/10/12 15:28:30 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,13 +212,15 @@ mainbus_attach( struct device *parent __unused, struct device *self __unused,
 	 */
 	pci_mode = pci_mode_detect();
 #if defined(PCI_BUS_FIXUP)
-	pci_maxbus = pci_bus_fixup(NULL, 0);
-	aprint_debug("PCI bus max, after pci_bus_fixup: %i\n", pci_maxbus);
+	if (pci_mode != 0) {
+		pci_maxbus = pci_bus_fixup(NULL, 0);
+		aprint_debug("PCI bus max, after pci_bus_fixup: %i\n", pci_maxbus);
 #if defined(PCI_ADDR_FIXUP)
-	pciaddr.extent_port = NULL;
-	pciaddr.extent_mem = NULL;
-	pci_addr_fixup(NULL, pci_maxbus);
+		pciaddr.extent_port = NULL;
+		pciaddr.extent_mem = NULL;
+		pci_addr_fixup(NULL, pci_maxbus);
 #endif
+	}
 #endif
 #endif
 
