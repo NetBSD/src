@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 2006/10/12 01:30:44 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 2006/10/13 10:09:36 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2006/10/12 01:30:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2006/10/13 10:09:36 hannken Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -583,7 +583,7 @@ sysbeepattach(struct device *parent __unused, struct device *self __unused,
 #endif
 
 void
-sysbeep(int pitch, int period)
+sysbeep(int pitch __unused, int period __unused)
 {
 #if (NPCPPI > 0)
 	if (ppi_attached)
