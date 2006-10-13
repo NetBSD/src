@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.98 2006/10/12 01:32:28 christos Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.99 2006/10/13 16:53:36 dogcow Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.98 2006/10/12 01:32:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.99 2006/10/13 16:53:36 dogcow Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -3711,61 +3711,77 @@ sppp_ipv6cp_scr(struct sppp *sp)
 	sppp_cp_send(sp, PPP_IPV6CP, CONF_REQ, sp->confid[IDX_IPV6CP], i, &opt);
 }
 #else /*INET6*/
-static void sppp_ipv6cp_init(struct sppp *sp)
+static void
+sppp_ipv6cp_init(struct sppp *sp __unused)
 {
 }
 
-static void sppp_ipv6cp_up(struct sppp *sp)
+static void
+sppp_ipv6cp_up(struct sppp *sp __unused)
 {
 }
 
-static void sppp_ipv6cp_down(struct sppp *sp)
+static void
+sppp_ipv6cp_down(struct sppp *sp __unused)
 {
 }
 
-
-static void sppp_ipv6cp_open(struct sppp *sp)
+static void
+sppp_ipv6cp_open(struct sppp *sp __unused)
 {
 }
 
-static void sppp_ipv6cp_close(struct sppp *sp)
+static void
+sppp_ipv6cp_close(struct sppp *sp __unused)
 {
 }
 
-static void sppp_ipv6cp_TO(void *sp)
+static void
+sppp_ipv6cp_TO(void *sp __unused)
 {
 }
 
-static int sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
+static int
+sppp_ipv6cp_RCR(struct sppp *sp __unused, struct lcp_header *h __unused,
+		int len __unused)
 {
 	return 0;
 }
 
-static void sppp_ipv6cp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
+static void
+sppp_ipv6cp_RCN_rej(struct sppp *sp __unused, struct lcp_header *h __unused,
+		    int len __unused)
 {
 }
 
-static void sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
+static void
+sppp_ipv6cp_RCN_nak(struct sppp *sp __unused, struct lcp_header *h __unused,
+		    int len __unused)
 {
 }
 
-static void sppp_ipv6cp_tlu(struct sppp *sp)
+static void
+sppp_ipv6cp_tlu(struct sppp *sp __unused)
 {
 }
 
-static void sppp_ipv6cp_tld(struct sppp *sp)
+static void
+sppp_ipv6cp_tld(struct sppp *sp __unused)
 {
 }
 
-static void sppp_ipv6cp_tls(struct sppp *sp)
+static void
+sppp_ipv6cp_tls(struct sppp *sp __unused)
 {
 }
 
-static void sppp_ipv6cp_tlf(struct sppp *sp)
+static void
+sppp_ipv6cp_tlf(struct sppp *sp __unused)
 {
 }
 
-static void sppp_ipv6cp_scr(struct sppp *sp)
+static void
+sppp_ipv6cp_scr(struct sppp *sp __unused)
 {
 }
 #endif /*INET6*/
