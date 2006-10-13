@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcp_congctl.9,v 1.1 2006/10/09 16:27:07 rpaulo Exp $
+.\"	$NetBSD: tcp_congctl.9,v 1.2 2006/10/13 21:14:46 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,8 @@ on-the-fly and to modularize them.
 It includes basically two functions:
 .Bl -tag -width "xxxxx"
 .It Fn tcp_congctl_register "const char *" "struct tcp_congctl *"
-Registers a new congestion control algorithm. The
+Registers a new congestion control algorithm.
+The
 .Fa struct tcp_congctl
 argument must contain a list of callbacks like the following:
 .Bd -literal -offset indent
@@ -79,22 +80,22 @@ If found, unregister the selected TCP congestion control algorithm.
 and
 .Fn tcp_congctl_unregister
 both return
-.Dv 0 
+.Dv 0
 when there is no error.
 If the name is already registered,
 .Fn tcp_congctl_register
 will return
-.Dv EEXIST .
+.Er EEXIST .
 .Fn tcp_congctl_unregister
 can return
-.Dv ENOENT
+.Er ENOENT
 if there is no congestion control algorithm by that name and can return
-.Dv EBUSY
+.Er EBUSY
 if the matched algorithm is being used by userspace applications.
-.Sh SEE ALSO
-.Xr tcp 4
 .Sh FILES
 Implementation is in
 .Pa sys/netinet/tcp_congctl.c
 and the interface is in
 .Pa sys/netinet/tcp_congctl.h .
+.Sh SEE ALSO
+.Xr tcp 4
