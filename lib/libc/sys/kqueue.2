@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.19 2003/12/09 19:49:53 augustss Exp $
+.\"	$NetBSD: kqueue.2,v 1.20 2006/10/13 20:58:50 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -48,7 +48,7 @@
 .Fn kqueue "void"
 .Ft int
 .Fn kevent "int kq" "const struct kevent *changelist" "size_t nchanges" "struct kevent *eventlist" "size_t nevents" "const struct timespec *timeout"
-.Fn EV_SET "&kev" ident filter flags fflags data udata
+.Fn EV_SET "\*[Am]kev" ident filter flags fflags data udata
 .Sh DESCRIPTION
 .Fn kqueue
 provides a generic method of notifying the user when an event
