@@ -1,4 +1,4 @@
-# $NetBSD: TODO.i18n,v 1.7 2006/06/03 04:36:45 tnozaki Exp $
+# $NetBSD: TODO.i18n,v 1.8 2006/10/13 17:28:09 tnozaki Exp $
 
 NetBSD I18N support status / TODO
 
@@ -61,7 +61,7 @@ wcrtomb        sm
 wcscat         sm
 wcschr         sm
 wcscmp         sm
-wcscoll        i                        LC_COLLATE not supported.
+wcscoll        im                       LC_COLLATE not supported.
 wcscpy         sm
 wcscspn        sm
 wcsftime       sm
@@ -82,9 +82,9 @@ wcstold        sm       SUSv3
 wcstoll        sm       SUSv3
 wcstoul        sm
 wcstoull       sm       SUSv3
-wcswcs         s        SUSv3
+wcswcs         sm       SUSv3
 wcswidth       sm       SUSv3
-wcsxfrm        i                        LC_COLLATE not supported.
+wcsxfrm        im                       LC_COLLATE not supported.
 wctob          sm
 wcwidth        sm       SUSv3
 wmemchr        sm
