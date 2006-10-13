@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rio.c,v 1.14 2006/10/12 19:59:08 peter Exp $	*/
+/*	$NetBSD: altq_rio.c,v 1.15 2006/10/13 09:57:28 peter Exp $	*/
 /*	$KAME: altq_rio.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -60,11 +60,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.14 2006/10/12 19:59:08 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.15 2006/10/13 09:57:28 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
 #include "opt_inet.h"
+#include "pf.h"
 #endif
 
 #ifdef ALTQ_RIO	/* rio is enabled by ALTQ_RIO option in opt_altq.h */
@@ -92,7 +93,9 @@ __KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.14 2006/10/12 19:59:08 peter Exp $");
 #include <netinet/ip6.h>
 #endif
 
+#if NPF > 0
 #include <net/pfvar.h>
+#endif
 #include <altq/altq.h>
 #include <altq/altq_cdnr.h>
 #include <altq/altq_red.h>
