@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.71 2006/10/13 18:28:07 dogcow Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.72 2006/10/13 20:53:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.71 2006/10/13 18:28:07 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.72 2006/10/13 20:53:59 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1007,13 +1007,14 @@ nqnfs_callback(struct nfsmount *nmp, struct mbuf *mrep, struct mbuf *md,
  * the list asynchronously.
  */
 int
-nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
-	struct nfsmount *nmp;
-	kauth_cred_t cred;
-	struct nfsd_cargs *ncd;
-	int flag;
-	caddr_t argp;
-	struct lwp *l;
+nqnfs_clientd(
+    struct nfsmount *nmp,
+    kauth_cred_t cred __unused,
+    struct nfsd_cargs *ncd,
+    int flag,
+    caddr_t argp,
+    struct lwp *l
+)
 {
 #ifndef NFS_V2_ONLY
 	struct nfsnode *np;

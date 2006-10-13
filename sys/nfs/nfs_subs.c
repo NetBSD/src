@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.172 2006/10/13 18:28:07 dogcow Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.173 2006/10/13 20:53:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.172 2006/10/13 18:28:07 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.173 2006/10/13 20:53:59 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -589,11 +589,12 @@ int nfs_webnamei __P((struct nameidata *, struct vnode *, struct proc *));
  * (just used to decide if a cluster is a good idea)
  */
 struct mbuf *
-nfsm_reqh(np, procid, hsiz, bposp)
-	struct nfsnode *np;
-	u_long procid;
-	int hsiz;
-	caddr_t *bposp;
+nfsm_reqh(
+    struct nfsnode *np __unused,
+    u_long procid __unused,
+    int hsiz,
+    caddr_t *bposp
+)
 {
 	struct mbuf *mb;
 	caddr_t bpos;
@@ -1925,8 +1926,12 @@ nfs_delayedtruncate(vp)
  */
 
 int
-nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
-    struct timespec *mtime, boolean_t docheck)
+nfs_check_wccdata(
+    struct nfsnode *np __unused,
+    const struct timespec *ctime __unused,
+    struct timespec *mtime __unused,
+    boolean_t docheck __unused
+)
 {
 	int error = 0;
 
