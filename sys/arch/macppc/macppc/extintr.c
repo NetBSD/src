@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.61 2006/09/29 07:37:36 he Exp $	*/
+/*	$NetBSD: extintr.c,v 1.62 2006/10/13 19:48:41 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.61 2006/09/29 07:37:36 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.62 2006/10/13 19:48:41 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -217,8 +217,8 @@ lpic_read_events(int num)
 	levels = in32rb(this->lpic_level) & this->lpic_enable_mask;
 	events |= levels & this->lpic_level_mask;
 	
-	/* Clear any interrupts that we've read and all level ones */
-	out32rb(this->lpic_clear, events | this->lpic_level_mask);
+	/* Clear any interrupts that we've read */
+	out32rb(this->lpic_clear, events | irqs);
 
 	/* don't return cascade interrupts */
 	events &= ~this->lpic_cascade_mask;
