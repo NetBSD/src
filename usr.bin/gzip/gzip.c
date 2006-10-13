@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.86 2006/10/13 20:16:32 mlelstv Exp $	*/
+/*	$NetBSD: gzip.c,v 1.87 2006/10/13 20:17:46 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.86 2006/10/13 20:16:32 mlelstv Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.87 2006/10/13 20:17:46 mlelstv Exp $");
 #endif /* not lint */
 
 /*
@@ -753,6 +753,10 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 		switch (state) {
 		case GZSTATE_MAGIC0:
 			if (*z.next_in != GZIP_MAGIC0) {
+				if (in_tot > 0) {
+					maybe_warnx("%s: trailing garbage ignored", filename);
+					goto stop;
+				}
 				maybe_warnx("input not gziped (MAGIC0)");
 				goto stop_and_fail;
 			}
