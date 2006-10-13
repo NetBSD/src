@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.16 2006/10/12 19:59:08 peter Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.17 2006/10/13 09:57:28 peter Exp $	*/
 /*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -28,11 +28,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.16 2006/10/12 19:59:08 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.17 2006/10/13 09:57:28 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
 #include "opt_inet.h"
+#include "pf.h"
 #endif
 
 #include <sys/param.h>
@@ -61,7 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.16 2006/10/12 19:59:08 peter Exp $")
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
+#if NPF > 0
 #include <net/pfvar.h>
+#endif
 #include <altq/altq.h>
 #ifdef ALTQ3_COMPAT
 #include <altq/altq_conf.h>
@@ -90,7 +93,9 @@ int (*altq_input)(struct mbuf *, int) = NULL;
 static int tbr_timer = 0;	/* token bucket regulator timer */
 static struct callout tbr_callout = CALLOUT_INITIALIZER;
 
+#if NPF > 0
 int pfaltq_running;	/* keep track of running state */
+#endif
 
 #ifdef ALTQ3_CLFIER_COMPAT
 static int 	extract_ports4(struct mbuf *, struct ip *, struct flowinfo_in *);
@@ -417,6 +422,7 @@ tbr_get(struct ifaltq *ifq, struct tb_profile *profile)
 	return (0);
 }
 
+#if NPF > 0
 /*
  * attach a discipline to the interface.  if one already exists, it is
  * overridden.
@@ -663,6 +669,7 @@ altq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 
 	return (error);
 }
+#endif /* NPF > 0 */
 
 /*
  * read and write diffserv field in IPv4 or IPv6 header

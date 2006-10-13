@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.15 2006/10/12 19:59:08 peter Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.16 2006/10/13 09:57:28 peter Exp $	*/
 /*	$KAME: altq_priq.c,v 1.13 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (C) 2000-2003
@@ -31,11 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.15 2006/10/12 19:59:08 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.16 2006/10/13 09:57:28 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
 #include "opt_inet.h"
+#include "pf.h"
 #endif
 
 #ifdef ALTQ_PRIQ  /* priq is enabled by ALTQ_PRIQ option in opt_altq.h */
@@ -55,7 +56,9 @@ __KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.15 2006/10/12 19:59:08 peter Exp $")
 #include <net/if.h>
 #include <netinet/in.h>
 
+#if NPF > 0
 #include <net/pfvar.h>
+#endif
 #include <altq/altq.h>
 #include <altq/altq_conf.h>
 #include <altq/altq_priq.h>
@@ -102,6 +105,7 @@ altqdev_decl(priq);
 static struct priq_if *pif_list = NULL;
 #endif /* ALTQ3_COMPAT */
 
+#if NPF > 0
 int
 priq_pfattach(struct pf_altq *a)
 {
@@ -222,6 +226,7 @@ priq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 	*nbytes = sizeof(stats);
 	return (0);
 }
+#endif /* NPF > 0 */
 
 /*
  * bring the interface back to the initial state by discarding
