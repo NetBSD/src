@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.28 2006/10/13 11:02:38 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.29 2006/10/13 11:06:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1693,6 +1693,7 @@ re_start(struct ifnet *ifp)
 {
 	struct rtk_softc	*sc;
 	int			idx;
+	boolean_t		done = FALSE;
 
 	sc = ifp->if_softc;
 
@@ -1734,9 +1735,11 @@ re_start(struct ifnet *ifp)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
+
+		done = TRUE;
 	}
 
-	if (sc->rtk_ldata.rtk_txq_prodidx == idx) {
+	if (!done) {
 		return;
 	}
 	sc->rtk_ldata.rtk_txq_prodidx = idx;
