@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_example.c,v 1.1 2006/09/15 15:49:29 elad Exp $ */
+/* $NetBSD: secmodel_example.c,v 1.2 2006/10/13 15:39:18 elad Exp $ */
 
 /*
  * This file is placed in the public domain.
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.1 2006/09/15 15:49:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.2 2006/10/13 15:39:18 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -330,6 +330,7 @@ secmodel_example_network_cb(kauth_cred_t cred, kauth_action_t action,
                 switch((u_long)arg0) {
                 case KAUTH_REQ_NETWORK_SOCKET_ATTACH:
                 case KAUTH_REQ_NETWORK_SOCKET_RAWSOCK:
+		case KAUTH_REQ_NETWORK_SOCKET_CANSEE:
                 default:
                         result = KAUTH_RESULT_DEFER;
                         break;

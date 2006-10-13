@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.11 2006/10/01 09:06:41 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.12 2006/10/13 15:39:18 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -168,7 +168,8 @@ enum kauth_network_req {
 	KAUTH_REQ_NETWORK_FIREWALL_FW,
 	KAUTH_REQ_NETWORK_FIREWALL_NAT,
 	KAUTH_REQ_NETWORK_SOCKET_ATTACH,
-	KAUTH_REQ_NETWORK_SOCKET_RAWSOCK
+	KAUTH_REQ_NETWORK_SOCKET_RAWSOCK,
+	KAUTH_REQ_NETWORK_SOCKET_CANSEE
 };
 
 /*
