@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.27 2006/10/12 01:31:01 christos Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.28 2006/10/13 11:02:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1316,6 +1316,7 @@ re_txeof(struct rtk_softc *sc)
 {
 	struct ifnet		*ifp;
 	int			idx;
+	boolean_t		done = FALSE;
 
 	ifp = &sc->ethercom.ec_if;
 	idx = sc->rtk_ldata.rtk_txq_considx;
@@ -1358,11 +1359,12 @@ re_txeof(struct rtk_softc *sc)
 			ifp->if_opackets++;
 
 		idx = (idx + 1) % RTK_TX_QLEN;
+		done = TRUE;
 	}
 
 	/* No changes made to the TX ring, so no flush needed */
 
-	if (idx != sc->rtk_ldata.rtk_txq_considx) {
+	if (done) {
 		sc->rtk_ldata.rtk_txq_considx = idx;
 		ifp->if_flags &= ~IFF_OACTIVE;
 		ifp->if_timer = 0;
