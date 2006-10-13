@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.61 2006/09/27 12:51:43 elad Exp $	*/
+/*	$NetBSD: main.c,v 1.62 2006/10/13 16:33:57 elad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.61 2006/09/27 12:51:43 elad Exp $");
+__RCSID("$NetBSD: main.c,v 1.62 2006/10/13 16:33:57 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -369,8 +369,50 @@ static void print_softintrq __P((void));
 static void usage __P((void));
 static struct protox *name2protox __P((char *));
 static struct protox *knownname __P((char *));
+static void prepare(char *, char *);
 
 kvm_t *kvmd;
+gid_t egid;
+
+void
+prepare(char *nlistf, char *memf)
+{
+	char buf[_POSIX2_LINE_MAX];
+
+	/*
+	 * Try to figure out if we can use sysctl or not.
+	 */
+	if (nlistf != NULL && memf != NULL) {
+		/* If we have -M and -N, we're not dealing with live memory. */
+		use_sysctl = 0;
+	} else if (qflag ||
+		   rflag ||
+		   iflag ||
+		   gflag ||
+		   Pflag) {
+		/* These flags are not yet supported via sysctl(3). */
+		use_sysctl = 0;
+	} else {
+		/* We can use sysctl(3). */
+		use_sysctl = 1;
+	}
+
+	if (!use_sysctl) {
+		(void)setegid(egid);
+		kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf);
+		(void)setgid(getgid());
+		if (kvmd == NULL)
+			err(1, "kvm error: %s", buf);
+	
+		if (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0) {
+			if (nlistf)
+				errx(1, "%s: no namelist", nlistf);
+			else
+				errx(1, "no namelist");
+		}
+	} else
+		(void)setgid(getgid());
+}
 
 int
 main(argc, argv)
@@ -381,10 +423,10 @@ main(argc, argv)
 	struct protox *tp;	/* for printing cblocks & stats */
 	int ch;
 	char *nlistf = NULL, *memf = NULL;
-	char buf[_POSIX2_LINE_MAX], *cp;
+	char *cp;
 	u_long pcbaddr;
-	gid_t egid = getegid();
 
+	egid = getegid();
 	(void)setegid(getgid());
 	tp = NULL;
 	af = AF_UNSPEC;
@@ -528,28 +570,7 @@ main(argc, argv)
 	}
 #endif
 
-	/*
-	 * Discard setgid privileges.  If not the running kernel, we toss
-	 * them away totally so that bad guys can't print interesting stuff
-	 * from kernel memory, otherwise switch back to kmem for the
-	 * duration of the kvm_openfiles() call.
-	 */
-	use_sysctl = (nlistf == NULL && memf == NULL);
-	if (!use_sysctl || Pflag)
-		(void)setgid(getgid());
-	else
-		(void)setegid(egid);
-
-
-	if ((kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf)) == NULL) {
-		if (!use_sysctl || Pflag)
-			errx(1, "%s", buf);
-	} else
-		use_sysctl = 0;
-
-	/* do this now anyway */
-	if (use_sysctl)
-		(void)setgid(getgid());
+	prepare(nlistf, memf);
 
 #ifndef SMALL
 	if (Bflag) {
@@ -561,12 +582,6 @@ main(argc, argv)
 	}
 #endif
 
-	if (kvmd && (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0) && !use_sysctl) {
-		if (nlistf)
-			errx(1, "%s: no namelist", nlistf);
-		else
-			errx(1, "no namelist");
-	}
 	if (mflag) {
 		mbpr(nl[N_MBSTAT].n_value,  nl[N_MSIZE].n_value,
 		    nl[N_MCLBYTES].n_value, nl[N_MBPOOL].n_value,
