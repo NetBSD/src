@@ -1,4 +1,4 @@
-.\"	$NetBSD: unix.4,v 1.15 2006/10/11 11:16:09 pooka Exp $
+.\"	$NetBSD: unix.4,v 1.16 2006/10/13 21:03:22 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -104,10 +104,10 @@ kernel ignores any user-set value in the
 member of the structure.
 Usage example:
 .Bd -literal -offset indent
-memset(&sunx, 0, sizeof(sunx));
+memset(\*[Am]sunx, 0, sizeof(sunx));
 sunx.sun_family = AF_LOCAL;
 strlcpy(sunx.sun_path, THE_PATH, sizeof(sunx.sun_path));
-rv = bind(s, (struct sockaddr *)&sunx, SUN_LEN(&sunx));
+rv = bind(s, (struct sockaddr *)\*[Am]sunx, SUN_LEN(\*[Am]sunx));
 .Ed
 .Pp
 The
@@ -193,7 +193,7 @@ receive the credentials of the process as a
 control message.  The msg_control field in the msghdr structure points
 to a buffer that contains a cmsghdr structure followed by a variable
 length sockcred structure, defined in
-.Pa \*[Lt]sys/socket.h\*[Gt]
+.Aq Pa sys/socket.h
 as follows:
 .Bd -literal
 struct sockcred {
