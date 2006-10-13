@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.945 2006/10/13 05:03:50 he Exp $
+#	$NetBSD: mi,v 1.946 2006/10/13 17:28:09 tnozaki Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -6157,6 +6157,7 @@
 ./usr/share/man/cat3/wcscat.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcschr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcscmp.0			comp-c-catman		.cat
+./usr/share/man/cat3/wcscoll.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcscpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcscspn.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcsdup.0			comp-c-catman		.cat
@@ -6184,7 +6185,9 @@
 ./usr/share/man/cat3/wcstoul.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcstoull.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcstoumax.0		comp-c-catman		.cat
+./usr/share/man/cat3/wcswcs.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcswidth.0			comp-c-catman		.cat
+./usr/share/man/cat3/wcsxfrm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wctob.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wctomb.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wctrans.0			comp-c-catman		.cat
@@ -10359,6 +10362,7 @@
 ./usr/share/man/man3/wcscat.3			comp-c-man		.man
 ./usr/share/man/man3/wcschr.3			comp-c-man		.man
 ./usr/share/man/man3/wcscmp.3			comp-c-man		.man
+./usr/share/man/man3/wcscoll.3			comp-c-man		.man
 ./usr/share/man/man3/wcscpy.3			comp-c-man		.man
 ./usr/share/man/man3/wcscspn.3			comp-c-man		.man
 ./usr/share/man/man3/wcsdup.3			comp-c-man		.man
@@ -10386,7 +10390,9 @@
 ./usr/share/man/man3/wcstoul.3			comp-c-man		.man
 ./usr/share/man/man3/wcstoull.3			comp-c-man		.man
 ./usr/share/man/man3/wcstoumax.3		comp-c-man		.man
+./usr/share/man/man3/wcswcs.3			comp-c-man		.man
 ./usr/share/man/man3/wcswidth.3			comp-c-man		.man
+./usr/share/man/man3/wcsxfrm.3			comp-c-man		.man
 ./usr/share/man/man3/wctob.3			comp-c-man		.man
 ./usr/share/man/man3/wctomb.3			comp-c-man		.man
 ./usr/share/man/man3/wctrans.3			comp-c-man		.man
