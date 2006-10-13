@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.169 2006/10/12 01:32:27 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.170 2006/10/13 10:29:41 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.169 2006/10/12 01:32:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.170 2006/10/13 10:29:41 hannken Exp $");
 
 #include "opt_inet.h"
 
@@ -1594,7 +1594,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
  */
 /*ARGSUSED*/
 int
-ifconf(u_long cmd, caddr_t data)
+ifconf(u_long cmd __unused, caddr_t data)
 {
 	struct ifconf *ifc = (struct ifconf *)data;
 	struct ifnet *ifp;
