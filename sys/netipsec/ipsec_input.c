@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.11 2005/12/11 12:25:05 christos Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.12 2006/10/13 20:53:59 christos Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.11 2005/12/11 12:25:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.12 2006/10/13 20:53:59 christos Exp $");
 
 /*
  * IPsec input processing.
@@ -252,7 +252,7 @@ ipsec4_common_input(struct mbuf *m, ...)
  */
 int
 ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
-			int skip, int protoff, struct m_tag *mt)
+    int skip, int protoff __unused, struct m_tag *mt)
 {
 	int prot, af, sproto;
 	struct ip *ip;
