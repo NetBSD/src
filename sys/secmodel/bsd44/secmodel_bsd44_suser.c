@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.8 2006/10/12 01:32:51 christos Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.9 2006/10/13 15:39:18 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.8 2006/10/12 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.9 2006/10/13 15:39:18 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.8 2006/10/12 01:32:51 chr
 #include <sys/acct.h>
 #include <sys/ktrace.h>
 #include <sys/mount.h>
-#include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/sysctl.h>
 #include <sys/tty.h>
 #include <net/route.h>
@@ -306,6 +306,19 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 		switch (req) {
 		case KAUTH_REQ_NETWORK_SOCKET_RAWSOCK:
 			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+
+		case KAUTH_REQ_NETWORK_SOCKET_CANSEE:
+			if (secmodel_bsd44_curtain) {
+				uid_t so_uid;
+
+				so_uid =
+				    ((struct socket *)arg1)->so_uidinfo->ui_uid;
+				if (isroot ||
+				    kauth_cred_geteuid(cred) == so_uid)
+					result = KAUTH_RESULT_ALLOW;
+			} else
 				result = KAUTH_RESULT_ALLOW;
 			break;
 
