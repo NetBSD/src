@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.65 2006/08/27 07:09:04 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.66 2006/10/13 17:28:09 tnozaki Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
@@ -81,5 +81,5 @@ MLINKS+=wmemchr.3 wmemcmp.3 wmemchr.3 wmemcpy.3 \
 	wmemchr.3 wcsncat.3 wmemchr.3 wcsncmp.3 \
 	wmemchr.3 wcsncpy.3 wmemchr.3 wcspbrk.3 \
 	wmemchr.3 wcsrchr.3 wmemchr.3 wcsspn.3 \
-	wmemchr.3 wcsstr.3
+	wmemchr.3 wcsstr.3 wmemchr.3 wcswcs.3
 MLINKS+=wcscasecmp.3 wcsncasecmp.3
