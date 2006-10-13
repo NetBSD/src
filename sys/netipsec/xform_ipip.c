@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.12 2005/12/11 12:25:06 christos Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.13 2006/10/13 20:53:59 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.12 2005/12/11 12:25:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.13 2006/10/13 20:53:59 christos Exp $");
 
 /*
  * IP-inside-IP processing
@@ -138,7 +138,7 @@ static void _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp);
  * Really only a wrapper for ipip_input(), for use with IPv6.
  */
 int
-ip4_input6(struct mbuf **m, int *offp, int proto)
+ip4_input6(struct mbuf **m, int *offp, int proto __unused)
 {
 #if 0
 	/* If we do not accept IP-in-IP explicitly, drop.  */
@@ -189,7 +189,7 @@ ip4_input(struct mbuf *m, ...)
  */
 
 static void
-_ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
+_ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp __unused)
 {
 	register struct sockaddr_in *sin;
 	register struct ifnet *ifp;
@@ -422,11 +422,11 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 
 int
 ipip_output(
-	struct mbuf *m,
-	struct ipsecrequest *isr,
-	struct mbuf **mp,
-	int skip,
-	int protoff
+    struct mbuf *m,
+    struct ipsecrequest *isr,
+    struct mbuf **mp,
+    int skip __unused,
+    int protoff __unused
 )
 {
 	struct secasvar *sav;
@@ -666,7 +666,12 @@ ipe4_zeroize(struct secasvar *sav)
 }
 
 static int
-ipe4_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
+ipe4_input(
+    struct mbuf *m,
+    struct secasvar *sav __unused,
+    int skip __unused,
+    int protoff __unused
+)
 {
 	/* This is a rather serious mistake, so no conditional printing. */
 	printf("ipe4_input: should never be called\n");
@@ -678,6 +683,7 @@ ipe4_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 static struct xformsw ipe4_xformsw = {
 	XF_IP4,		0,		"IPv4 Simple Encapsulation",
 	ipe4_init,	ipe4_zeroize,	ipe4_input,	ipip_output,
+	NULL,
 };
 
 extern struct domain inetdomain;
@@ -700,7 +706,11 @@ static struct ipprotosw ipe4_protosw[] = {
  * Check the encapsulated packet to see if we want it
  */
 static int
-ipe4_encapcheck(struct mbuf *m, int off, int proto, void *arg)
+ipe4_encapcheck(struct mbuf *m,
+    int off __unused,
+    int proto __unused,
+    void *arg __unused
+)
 {
 	/*
 	 * Only take packets coming from IPSEC tunnels; the rest

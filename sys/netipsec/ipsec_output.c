@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.14 2005/12/11 12:25:05 christos Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.15 2006/10/13 20:53:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.14 2005/12/11 12:25:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.15 2006/10/13 20:53:59 christos Exp $");
 
 /*
  * IPsec output processing.
@@ -347,10 +347,11 @@ bad:
  */
 int
 ipsec4_process_packet(
-	struct mbuf *m,
-	struct ipsecrequest *isr,
-	int flags,
-	int tunalready)
+    struct mbuf *m,
+    struct ipsecrequest *isr,
+    int flags __unused,
+    int tunalready
+)
 {
 	struct secasindex saidx;
 	struct secasvar *sav;
@@ -539,12 +540,13 @@ ipsec6_splithdr(struct mbuf *m)
  */
 int
 ipsec6_output_trans(
-	struct ipsec_output_state *state,
-	u_char *nexthdrp,
-	struct mbuf *mprev,
-	struct secpolicy *sp,
-	int flags,
-	int *tun)
+    struct ipsec_output_state *state,
+    u_char *nexthdrp __unused,
+    struct mbuf *mprev __unused,
+    struct secpolicy *sp,
+    int flags __unused,
+    int *tun
+)
 {
 	struct ipsecrequest *isr;
 	struct secasindex saidx;
@@ -671,7 +673,11 @@ ipsec6_encapsulate(struct mbuf *m, struct secasvar *sav)
  * IPsec output logic for IPv6, tunnel mode.
  */
 int
-ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp, int flags)
+ipsec6_output_tunnel(
+    struct ipsec_output_state *state,
+    struct secpolicy *sp,
+    int flags __unused
+)
 {
 	struct ip6_hdr *ip6;
 	struct ipsecrequest *isr;

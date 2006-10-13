@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.67 2006/10/13 18:28:06 dogcow Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.68 2006/10/13 20:53:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.67 2006/10/13 18:28:06 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.68 2006/10/13 20:53:59 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -312,7 +312,7 @@ struct pci_product {
 #endif /* PCIVERBOSE */
 
 const char *
-pci_findvendor(pcireg_t id_reg)
+pci_findvendor(pcireg_t id_reg __unused)
 {
 #ifdef PCIVERBOSE
 	pci_vendor_id_t vendor = PCI_VENDOR(id_reg);
@@ -328,7 +328,7 @@ pci_findvendor(pcireg_t id_reg)
 }
 
 const char *
-pci_findproduct(pcireg_t id_reg)
+pci_findproduct(pcireg_t id_reg __unused)
 {
 #ifdef PCIVERBOSE
 	pci_vendor_id_t vendor = PCI_VENDOR(id_reg);

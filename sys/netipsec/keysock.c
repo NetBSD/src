@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.10 2006/08/31 23:21:54 matt Exp $	*/
+/*	$NetBSD: keysock.c,v 1.11 2006/10/13 20:53:59 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.10 2006/08/31 23:21:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.11 2006/10/13 20:53:59 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -72,8 +72,14 @@ struct key_cb {
 };
 static struct key_cb key_cb;
 
-static struct sockaddr key_dst = { 2, PF_KEY, };
-static struct sockaddr key_src = { 2, PF_KEY, };
+static struct sockaddr key_dst = {
+    .sa_len = 2,
+    .sa_family = PF_KEY,
+};
+static struct sockaddr key_src = {
+    .sa_len = 2,
+    .sa_family = PF_KEY,
+};
 
 
 static int key_sendup0 __P((struct rawcb *, struct mbuf *, int, int));
@@ -153,10 +159,12 @@ end:
  * send message to the socket.
  */
 static int
-key_sendup0(rp, m, promisc, sbprio)
-	struct rawcb *rp;
-	struct mbuf *m;
-	int promisc;
+key_sendup0(
+    struct rawcb *rp,
+    struct mbuf *m,
+    int promisc,
+    int sbprio
+)
 {
 	int error;
 	int ok;
