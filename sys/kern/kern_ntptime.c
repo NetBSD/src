@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.38 2006/10/12 01:32:16 christos Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.39 2006/10/13 16:53:36 dogcow Exp $	*/
 #include <sys/types.h> 	/* XXX to get __HAVE_TIMECOUNTER, remove
 			   after all ports are converted. */
 #ifdef __HAVE_TIMECOUNTER
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.38 2006/10/12 01:32:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.39 2006/10/13 16:53:36 dogcow Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -503,6 +503,7 @@ ntp_update_second(int64_t *adjustment, time_t *newsec)
 		time_status &= ~STA_PPSSIGNAL;
 #endif /* PPS_SYNC */
 #else  /* !NTP */
+	do { if (&newsec) {} } while (/* CONSTCOND */ 0); /* quiet -Wunused */
 	L_CLR(time_adj);
 #endif /* !NTP */
 
@@ -904,7 +905,7 @@ hardpps(struct timespec *tsp,		/* time at PPS */
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.38 2006/10/12 01:32:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.39 2006/10/13 16:53:36 dogcow Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -1231,9 +1232,9 @@ SYSCTL_SETUP(sysctl_kern_ntptime_setup, "sysctl kern.ntptime node setup")
 
 int
 sys___ntp_gettime30(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+	struct lwp *l __unused;
+	void *v __unused;
+	register_t *retval __unused;
 {
 
 	return(ENOSYS);
@@ -1242,9 +1243,9 @@ sys___ntp_gettime30(l, v, retval)
 #ifdef COMPAT_30
 int
 compat_30_sys_ntp_gettime(l, v, retval)
- 	struct lwp *l;
- 	void *v;
- 	register_t *retval;
+ 	struct lwp *l __unused;
+ 	void *v __unused;
+ 	register_t *retval __unused;
 {
 
  	return(ENOSYS);

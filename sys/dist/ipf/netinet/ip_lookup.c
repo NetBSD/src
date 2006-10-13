@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.5 2006/09/17 13:43:15 yamt Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.6 2006/10/13 16:53:36 dogcow Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed.
@@ -533,9 +533,9 @@ void *ptr;
 
 /*ARGSUSED*/
 int ip_lookup_ioctl(data, cmd, mode)
-caddr_t data;
-ioctlcmd_t cmd;
-int mode;
+caddr_t data __unused;
+ioctlcmd_t cmd __unused;
+int mode __unused;
 {
 	return EIO;
 }

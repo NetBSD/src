@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.42 2006/10/12 01:32:27 christos Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.43 2006/10/13 16:53:36 dogcow Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.42 2006/10/12 01:32:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.43 2006/10/13 16:53:36 dogcow Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -1164,6 +1164,8 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 		if (m == NULL)
 			return;
 	}
+#else
+	do { if (&runfilt) {} } while (/* CONSTCOND */ 0); /* quiet -Wunused */
 #endif /* PFIL_HOOKS */
 
 #ifdef ALTQ
