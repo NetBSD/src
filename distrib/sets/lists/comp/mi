@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.944 2006/10/12 19:59:07 peter Exp $
+#	$NetBSD: mi,v 1.945 2006/10/13 05:03:50 he Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5452,6 +5452,7 @@
 ./usr/share/man/cat3/prop_number_create_integer.0 comp-c-catman		.cat
 ./usr/share/man/cat3/prop_number_create_unsigned_integer.0 comp-c-catman .cat
 ./usr/share/man/cat3/prop_number_equals.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_number_equals_integer.0 comp-c-catman		.cat
 ./usr/share/man/cat3/prop_number_equals_unsigned_integer.0 comp-c-catman .cat
 ./usr/share/man/cat3/prop_number_integer_value.0 comp-c-catman		.cat
 ./usr/share/man/cat3/prop_number_unsigned.0	comp-c-catman		.cat
