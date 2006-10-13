@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.102 2006/10/12 01:32:06 christos Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.103 2006/10/13 16:53:35 dogcow Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.102 2006/10/12 01:32:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.103 2006/10/13 16:53:35 dogcow Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -839,6 +839,8 @@ wsdisplayclose(dev_t dev, int flag, int mode __unused, struct lwp *l)
 		(void)wsdisplay_internal_ioctl(sc, scr, WSKBDIO_SETMODE,
 					       (caddr_t)&kbmode, 0, l);
 	}
+#else
+	do { if (&l) {} } while (/* CONSTCOND */ 0); /* shut up -Wunused */
 #endif
 
 	scr->scr_flags &= ~SCR_OPEN;

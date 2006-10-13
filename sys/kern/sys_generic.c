@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.93 2006/10/12 01:32:18 christos Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.94 2006/10/13 16:53:36 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.93 2006/10/12 01:32:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.94 2006/10/13 16:53:36 dogcow Exp $");
 
 #include "opt_ktrace.h"
 
@@ -116,6 +116,8 @@ dofileread(struct lwp *l, int fd, struct file *fp, void *buf, size_t nbyte,
 	int error;
 #ifdef KTRACE
 	struct iovec	ktriov = { .iov_base = NULL, };
+#else
+	do { if (&fd) {} } while (/* CONSTCOND */ 0); /* shut up -Wunused */
 #endif
 	p = l->l_proc;
 
@@ -215,6 +217,8 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	u_int		iovlen;
 #ifdef KTRACE
 	struct iovec	*ktriov;
+#else
+	do { if (&fd) {} } while (/* CONSTCOND */ 0); /* shut up -Wunused */
 #endif
 
 	p = l->l_proc;
@@ -344,6 +348,8 @@ dofilewrite(struct lwp *l, int fd, struct file *fp, const void *buf,
 	int error;
 #ifdef KTRACE
 	struct iovec	ktriov = { .iov_base = NULL, };
+#else
+	do { if (&fd) {} } while (/* CONSTCOND */ 0); /* shut up -Wunused */
 #endif
 
 	p = l->l_proc;
@@ -445,6 +451,8 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	u_int		iovlen;
 #ifdef KTRACE
 	struct iovec	*ktriov;
+#else
+	do { if (&fd) {} } while (/* CONSTCOND */ 0); /* shut up -Wunused */
 #endif
 
 	p = l->l_proc;
