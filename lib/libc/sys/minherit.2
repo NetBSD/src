@@ -1,4 +1,4 @@
-.\"	$NetBSD: minherit.2,v 1.17 2006/10/07 21:03:51 elad Exp $
+.\"	$NetBSD: minherit.2,v 1.18 2006/10/13 20:52:57 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -74,11 +74,11 @@ will be unmapped in the child.
 .Sh RETURN VALUES
 .Rv -std minherit
 .Sh ERRORS
-.Xr minherit 2
+.Fn minherit
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
-An invalid region was specified, or invalid parameters.
+An invalid region or invalid parameters were specified.
 .El
 .Sh SEE ALSO
 .Xr fork 2 ,
