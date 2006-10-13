@@ -1,4 +1,4 @@
-.\" $NetBSD: virecover.8,v 1.2 2006/10/10 03:30:42 reed Exp $
+.\" $NetBSD: virecover.8,v 1.3 2006/10/13 21:06:01 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm virecover
 .Nd report recovered vi edit sessions
 .Sh SYNOPSIS
-.Em /usr/libexec/virecover
+.Pa /usr/libexec/virecover
 .Sh DESCRIPTION
 The
 .Nm
@@ -67,11 +67,11 @@ then they have not been modified, so
 .Nm
 deletes them to clean up.
 .Nm
-also removes recovery files that are corrupted, zero length
+also removes recovery files that are corrupted, zero length,
 or do not have a corresponding backup file.
 .Pp
 .Nm
-is normally ran automatically at boot time using
+is normally run automatically at boot time using
 .Pa /etc/rc.d/virecover .
 .Sh FILES
 .Bl -tag -width "/var/tmp/vi.recover/recover.*" -compact
@@ -83,8 +83,8 @@ recovery files
 editor backup files
 .El
 .Sh SEE ALSO
-.Xr rc.conf 5 ,
-.Xr vi 1
+.Xr vi 1 ,
+.Xr rc.conf 5
 .Sh HISTORY
 This script, previously known as
 .Nm recover.script ,
@@ -93,4 +93,5 @@ is from nvi and was added to
 in 1996.
 It was renamed in 2001.
 .Sh AUTHORS
-.An Jeremy C. Reed Aq reed@reedmedia.net
+This man page was written by
+.An Jeremy C. Reed Aq reed@reedmedia.net .
