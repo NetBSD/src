@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.17 2006/10/09 07:52:59 uebayasi Exp $
+.\"     $NetBSD: driver.9,v 1.18 2006/10/13 21:06:51 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -365,7 +365,7 @@ foo*	at bar?
 For device interfaces of a driver to be compiled into the kernel,
 .Xr config 1
 must be aware of its existence.
-This is done by including an entry in majors.<arch>.
+This is done by including an entry in majors.\*[Lt]arch\*[Gt].
 For example, the driver
 .Dq foo
 with character device interfaces, a character major device number
