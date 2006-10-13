@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.31 2006/10/03 02:07:37 macallan Exp $	*/
+/*	$NetBSD: clock.c,v 1.32 2006/10/13 14:17:37 tsutsui Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.31 2006/10/03 02:07:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.32 2006/10/13 14:17:37 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,7 +59,7 @@ static struct timecounter macppc_timecounter = {
 	0x7fffffff,		/* counter_mask */
 	0,			/* frequency */
 	"mftb",			/* name */
-	0			/* quality */
+	100			/* quality */
 };
 
 /*

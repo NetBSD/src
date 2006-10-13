@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.18 2006/09/05 06:32:22 garbled Exp $	*/
+/*	$NetBSD: clock.c,v 1.19 2006/10/13 14:17:37 tsutsui Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18 2006/09/05 06:32:22 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.19 2006/10/13 14:17:37 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,7 +59,7 @@ static struct timecounter prep_timecounter = {
 	0x7fffffff,		/* counter_mask */
 	0,			/* frequency */
 	"prep_mftb",		/* name */
-	0			/* quality */
+	100			/* quality */
 };
 
 /*
