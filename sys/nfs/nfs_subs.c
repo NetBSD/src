@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.171 2006/10/12 01:32:47 christos Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.172 2006/10/13 18:28:07 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.171 2006/10/12 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.172 2006/10/13 18:28:07 dogcow Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -601,6 +601,9 @@ nfsm_reqh(np, procid, hsiz, bposp)
 	struct nfsmount *nmp;
 	u_int32_t *tl;
 	int nqflag;
+#else
+	do { if (&np) {} } while (/* CONSTCOND */ 0); /* for -Wunused */
+	do { if (&procid) {} } while (/* CONSTCOND */ 0); /* for -Wunused */
 #endif
 
 	mb = m_get(M_WAIT, MT_DATA);
@@ -1996,6 +1999,11 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 		}
 	}
 
+#else
+	do { if (&np) {} } while (/* CONSTCOND */ 0); /* for -Wunused */
+	do { if (&ctime) {} } while (/* CONSTCOND */ 0);
+	do { if (&mtime) {} } while (/* CONSTCOND */ 0);
+	do { if (&docheck) {} } while (/* CONSTCOND */ 0);
 #endif /* !defined(NFS_V2_ONLY) */
 
 	return error;

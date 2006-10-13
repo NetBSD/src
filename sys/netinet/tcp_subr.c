@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.204 2006/10/12 01:32:38 christos Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.205 2006/10/13 18:28:06 dogcow Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.204 2006/10/12 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.205 2006/10/13 18:28:06 dogcow Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2166,6 +2166,13 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 		printf("new ISS 0x%08x\n", tcp_iss);
 #endif
 	} else
+#else
+		 /* for -Wunused */
+		do { if (&laddr) {} } while (/* CONSTCOND */ 0);
+		do { if (&faddr) {} } while (/* CONSTCOND */ 0);
+		do { if (&lport) {} } while (/* CONSTCOND */ 0);
+		do { if (&fport) {} } while (/* CONSTCOND */ 0);
+		do { if (&addrsz) {} } while (/* CONSTCOND */ 0);
 #endif /* NRND > 0 */
 	{
 		/*
