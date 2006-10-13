@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.85 2006/09/27 22:20:31 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.86 2006/10/13 20:16:32 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.85 2006/09/27 22:20:31 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.86 2006/10/13 20:16:32 mlelstv Exp $");
 #endif /* not lint */
 
 /*
@@ -743,9 +743,11 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 			in_tot += in_size;
 		}
 		if (z.avail_in == 0) {
-			if (done_reading && state != GZSTATE_MAGIC0)
+			if (done_reading && state != GZSTATE_MAGIC0) {
 				maybe_warnx("%s: unexpected end of file",
 					    filename);
+				goto stop_and_fail;
+			}
 			goto stop;
 		}
 		switch (state) {
