@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.124 2006/08/30 15:34:31 cube Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.125 2006/10/13 16:53:35 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.124 2006/08/30 15:34:31 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.125 2006/10/13 16:53:35 dogcow Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -225,6 +225,8 @@ cpu_swapin(struct lwp *l)
 {
 #ifndef NOREDZONE
 	setredzone(l);
+#else
+	do { if (&l) {} } while (/* CONSTCOND */ 0); /* shut up -Wunused */
 #endif
 }
 
@@ -237,6 +239,8 @@ cpu_swapout(struct lwp *l)
 	 * Make sure we save the FP state before the user area vanishes.
 	 */
 	npxsave_lwp(l, 1);
+#else
+	do { if (&l) {} } while (/* CONSTCOND */ 0); /* shut up -Wunused */
 #endif
 }
 
@@ -258,6 +262,8 @@ cpu_lwp_free(struct lwp *l, int proc)
 #ifdef MTRR
 	if (proc && l->l_proc->p_md.md_flags & MDP_USEDMTRR)
 		mtrr_clean(l->l_proc);
+#else
+	do { if (&proc) {} } while (/* CONSTCOND */ 0); /* shut up -Wunused */
 #endif
 
 	/* Nuke the TSS. */

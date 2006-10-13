@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.25 2006/10/12 01:32:10 christos Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.26 2006/10/13 16:53:36 dogcow Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -794,6 +794,8 @@ int iplread(
 #ifdef IPFILTER_LOG
 	return ipflog_read(GET_MINOR(dev), uio);
 #else
+	do { if (&dev) {} } while (/* CONSTCOND */ 0); /* make -Wunused */
+	do { if (&uio) {} } while (/* CONSTCOND */ 0); /* not complain */
 	return ENXIO;
 #endif
 }

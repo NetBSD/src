@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_mca.c,v 1.12 2006/03/29 06:58:14 thorpej Exp $	*/
+/*	$NetBSD: esp_mca.c,v 1.13 2006/10/13 16:53:36 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.12 2006/03/29 06:58:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.13 2006/10/13 16:53:36 dogcow Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -128,8 +128,8 @@ static struct ncr53c9x_glue esp_glue = {
 
 static int
 esp_mca_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
+	struct device *parent __unused;
+	struct cfdata *cf __unused;
 	void *aux;
 {
 	struct mca_attach_args *ma = aux;
@@ -144,7 +144,8 @@ esp_mca_match(parent, cf, aux)
 
 static void
 esp_mca_attach(parent, self, aux)
-	struct device *parent, *self;
+	struct device *parent __unused;
+	struct device *self;
 	void *aux;
 {
 	struct mca_attach_args *ma = aux;
@@ -374,7 +375,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 	caddr_t *addr;
 	size_t *len;
 	int datain;
-	size_t *dmasize;
+	size_t *dmasize __unused;
 {
 	struct esp_softc *esc = (struct esp_softc *) sc;
 	int error;
