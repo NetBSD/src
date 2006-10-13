@@ -1,4 +1,4 @@
-.\"	$NetBSD: spi.4,v 1.2 2006/10/13 21:15:19 wiz Exp $
+.\"	$NetBSD: spi.4,v 1.3 2006/10/13 21:17:57 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Urbana-Champaign Independent Media Center.
 .\" Copyright (c) 2006 Garrett D'Amore.
@@ -62,14 +62,14 @@ machine-independent
 .Tn SPI
 device drivers.
 .Pp
-Your system may support additional machine-dependent SPI devices.  Consult
-your system's
+Your system may support additional machine-dependent SPI devices.
+Consult your system's
 .Xr intro 4
 for additional information.
 .Pp
 .Tn SPI
-is a 4-wire synchronous full-duplex serial bus.  Some systems provide
-support for
+is a 4-wire synchronous full-duplex serial bus.
+Some systems provide support for
 .Tn Microwire ,
 which is
 .Tn Philips'
@@ -83,7 +83,7 @@ framework.
 Note that when referencing
 .Tn SPI
 devices in a
-.Xr config 8
+.Xr config 1
 file, the
 .Sq slave
 must be provided, as
