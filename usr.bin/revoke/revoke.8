@@ -1,4 +1,4 @@
-.\" $NetBSD: revoke.8,v 1.2 2006/10/07 09:40:03 elad Exp $
+.\" $NetBSD: revoke.8,v 1.3 2006/10/13 20:33:31 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,8 +39,7 @@
 .Os
 .Sh NAME
 .Nm revoke
-.Nd
-call
+.Nd call
 .Xr revoke 2
 .Sh SYNOPSIS
 .Nm
@@ -57,9 +56,9 @@ must be the pathname of an existing file.
 The
 .Nm
 utility returns
-.Dq EXIT_SUCCESS
+.Dv EXIT_SUCCESS
 on success and
-.Dq EXIT_FAILURE
+.Dv EXIT_FAILURE
 if an error occurs.
 .Sh SEE ALSO
 .Xr revoke 2
