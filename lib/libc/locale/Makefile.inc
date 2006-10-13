@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.49 2006/06/03 04:36:45 tnozaki Exp $
+#	$NetBSD: Makefile.inc,v 1.50 2006/10/13 17:28:09 tnozaki Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
@@ -9,7 +9,7 @@ SRCS+=	_def_messages.c _def_monetary.c _def_numeric.c _def_time.c \
 	setlocale32.c __mb_cur_max.c wcscoll.c wcsftime.c \
 	wcstol.c wcstoll.c wcstoimax.c wcstoul.c wcstoull.c wcstoumax.c \
 	wcsxfrm.c aliasname.c
-MAN+=	nl_langinfo.3 setlocale.3 wcstol.3
+MAN+=	nl_langinfo.3 setlocale.3 wcstol.3 wcscoll.3 wcsxfrm.3
 
 SRCS+=	wcstod.c wcstof.c wcstold.c
 MAN+=	wcstod.3
