@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.19 2006/10/12 19:59:08 peter Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.20 2006/10/13 09:57:28 peter Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.26 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -43,11 +43,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.19 2006/10/12 19:59:08 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.20 2006/10/13 09:57:28 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
 #include "opt_inet.h"
+#include "pf.h"
 #endif
 
 #ifdef ALTQ_HFSC  /* hfsc is enabled by ALTQ_HFSC option in opt_altq.h */
@@ -69,7 +70,9 @@ __KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.19 2006/10/12 19:59:08 peter Exp $")
 #include <net/if.h>
 #include <netinet/in.h>
 
+#if NPF > 0
 #include <net/pfvar.h>
+#endif
 #include <altq/altq.h>
 #include <altq/altq_hfsc.h>
 #ifdef ALTQ3_COMPAT
@@ -171,6 +174,7 @@ altqdev_decl(hfsc);
 static struct hfsc_if *hif_list = NULL;
 #endif /* ALTQ3_COMPAT */
 
+#if NPF > 0
 int
 hfsc_pfattach(struct pf_altq *a)
 {
@@ -316,6 +320,7 @@ hfsc_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 	*nbytes = sizeof(stats);
 	return (0);
 }
+#endif /* NPF > 0 */
 
 /*
  * bring the interface back to the initial state by discarding
