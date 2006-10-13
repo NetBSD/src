@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.124 2006/10/09 16:27:07 rpaulo Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.125 2006/10/13 15:39:19 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.124 2006/10/09 16:27:07 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.125 2006/10/13 15:39:19 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1272,13 +1272,9 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 		if (inph->inph_af != pf)
 			continue;
 
-#ifdef notyet
-		if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_CANSEE,
-		    inph->inph_socket->so_cred))
-#endif
-		if (kauth_cred_geteuid(l->l_cred) != 0 &&
-		    kauth_cred_geteuid(l->l_cred) !=
-		    inph->inph_socket->so_uidinfo->ui_uid)
+		if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_SOCKET,
+		    KAUTH_REQ_NETWORK_SOCKET_CANSEE, inph->inph_socket, NULL,
+		    NULL) != 0)
 			continue;
 
 		memset(&pcb, 0, sizeof(pcb));
