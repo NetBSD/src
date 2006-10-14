@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.144 2006/10/14 18:59:57 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.145 2006/10/14 21:05:40 smb Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.144 2006/10/14 18:59:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.145 2006/10/14 21:05:40 smb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -749,9 +749,9 @@ key_do_allocsa_policy(sah, state)
 struct secasvar *
 key_allocsa(
     u_int family,
-    u_int proto,
     caddr_t src,
     caddr_t dst,
+    u_int proto,
     u_int32_t spi,
     u_int16_t sport __unused,
     u_int16_t dport __unused
