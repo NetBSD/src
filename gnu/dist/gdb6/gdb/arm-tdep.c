@@ -1056,7 +1056,7 @@ arm_unwind_pc (struct gdbarch *gdbarch, struct frame_info *this_frame)
 {
   CORE_ADDR pc;
   pc = frame_unwind_register_unsigned (this_frame, ARM_PC_REGNUM);
-  return IS_THUMB_ADDR (pc) ? UNMAKE_THUMB_ADDR (pc) : pc;
+  return ADDR_BITS_REMOVE (pc);
 }
 
 static CORE_ADDR
