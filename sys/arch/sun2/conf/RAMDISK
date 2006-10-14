@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.32 2006/08/26 20:27:08 christos Exp $
+# $NetBSD: RAMDISK,v 1.33 2006/10/14 02:07:57 tsutsui Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -231,8 +231,7 @@ pseudo-device	sl			# CSLIP
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
-# rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty		4	# pseudo-terminals
 #pseudo-device	vnd			# paging to files
