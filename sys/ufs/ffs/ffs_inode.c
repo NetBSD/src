@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.83 2006/06/23 14:13:02 yamt Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.84 2006/10/14 09:17:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.83 2006/06/23 14:13:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.84 2006/10/14 09:17:26 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -167,7 +167,6 @@ int
 ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
     struct lwp *l)
 {
-	struct genfs_node *gp = VTOG(ovp);
 	daddr_t lastblock;
 	struct inode *oip = VTOI(ovp);
 	daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
@@ -290,7 +289,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 		}
 	}
 
-	lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
+	genfs_node_wrlock(ovp);
 
 	if (DOINGSOFTDEP(ovp)) {
 		if (length > 0) {
@@ -305,7 +304,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 			 */
 			if ((error = VOP_FSYNC(ovp, cred, FSYNC_WAIT,
 			    0, 0, l)) != 0) {
-				lockmgr(&gp->g_glock, LK_RELEASE, NULL);
+				genfs_node_unlock(ovp);
 				return (error);
 			}
 			if (oip->i_flag & IN_SPACECOUNTED)
@@ -317,7 +316,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 #endif
 			softdep_setup_freeblocks(oip, length, 0);
 			(void) vinvalbuf(ovp, 0, cred, l, 0, 0);
-			lockmgr(&gp->g_glock, LK_RELEASE, NULL);
+			genfs_node_unlock(ovp);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
 			return (ffs_update(ovp, NULL, NULL, 0));
 		}
@@ -488,7 +487,7 @@ done:
 	oip->i_size = length;
 	DIP_ASSIGN(oip, size, length);
 	DIP_ADD(oip, blocks, -blocksreleased);
-	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
+	genfs_node_unlock(ovp);
 	oip->i_flag |= IN_CHANGE;
 #ifdef QUOTA
 	(void) chkdq(oip, -blocksreleased, NOCRED, 0);
