@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.59 2006/08/26 20:27:08 christos Exp $
+# $NetBSD: GENERIC,v 1.60 2006/10/14 02:04:34 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun2/conf/std.sun2"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.59 $"
+#ident 		"GENERIC-$Revision: 1.60 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -277,7 +277,7 @@ pseudo-device	loop		1	# network loopback
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 
-pseudo-device	pty		32	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd			# paging to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd		4	# concatenated disks
