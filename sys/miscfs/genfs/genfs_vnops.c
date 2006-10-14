@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.134 2006/10/14 08:31:14 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.135 2006/10/14 09:15:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.134 2006/10/14 08:31:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.135 2006/10/14 09:15:52 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.134 2006/10/14 08:31:14 yamt Exp $
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/poll.h>
 #include <sys/mman.h>
 #include <sys/file.h>
@@ -608,8 +608,7 @@ startover:
 	pgs_size = sizeof(struct vm_page *) *
 	    ((endoffset - startoffset) >> PAGE_SHIFT);
 	if (pgs_size > sizeof(pgs_onstack)) {
-		pgs = malloc(pgs_size, M_DEVBUF,
-		    (async ? M_NOWAIT : M_WAITOK) | M_ZERO);
+		pgs = kmem_zalloc(pgs_size, async ? KM_NOSLEEP : KM_SLEEP);
 		if (pgs == NULL) {
 			return (ENOMEM);
 		}
@@ -635,7 +634,7 @@ startover:
 	if (vp->v_size < origvsize) {
 		lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 		if (pgs != pgs_onstack)
-			free(pgs, M_DEVBUF);
+			kmem_free(pgs, pgs_size);
 		goto startover;
 	}
 
@@ -646,7 +645,7 @@ startover:
 		genfs_rel_pages(&pgs[ridx], orignpages);
 		simple_unlock(&uobj->vmobjlock);
 		if (pgs != pgs_onstack)
-			free(pgs, M_DEVBUF);
+			kmem_free(pgs, pgs_size);
 		return (EBUSY);
 	}
 
@@ -714,7 +713,7 @@ startover:
 			genfs_rel_pages(pgs, npages);
 			simple_unlock(&uobj->vmobjlock);
 			if (pgs != pgs_onstack)
-				free(pgs, M_DEVBUF);
+				kmem_free(pgs, pgs_size);
 			return (EBUSY);
 		}
 	}
@@ -886,7 +885,7 @@ loopdone:
 		UVMHIST_LOG(ubchist, "returning 0 (async)",0,0,0,0);
 		lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 		if (pgs != pgs_onstack)
-			free(pgs, M_DEVBUF);
+			kmem_free(pgs, pgs_size);
 		return (0);
 	}
 	if (bp != NULL) {
@@ -946,7 +945,7 @@ loopdone:
 		simple_unlock(&uobj->vmobjlock);
 		UVMHIST_LOG(ubchist, "returning error %d", error,0,0,0);
 		if (pgs != pgs_onstack)
-			free(pgs, M_DEVBUF);
+			kmem_free(pgs, pgs_size);
 		return (error);
 	}
 
@@ -991,7 +990,7 @@ out:
 		    orignpages * sizeof(struct vm_page *));
 	}
 	if (pgs != pgs_onstack)
-		free(pgs, M_DEVBUF);
+		kmem_free(pgs, pgs_size);
 	return (0);
 }
 
