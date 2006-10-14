@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2006/10/14 23:51:17 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,13 +72,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2006/10/14 23:51:17 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_kloader.h"
 #include "opt_kloader_kernel_path.h"
 #include "opt_memsize.h"
+#include "fs_mfs.h"
 
 #include "ksyms.h"
 #include "scif.h"
@@ -201,6 +202,7 @@ landisk_startup(int howto, void *bi)
 	/* Initialize console */
 	consinit();
 
+#ifdef MFS
 	/*
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
@@ -213,6 +215,7 @@ landisk_startup(int howto, void *bi)
 #endif
 		kernend += fssz;
 	}
+#endif /* MFS */
 
 #ifdef KLOADER
 	/* copy boot parameter for kloader */
