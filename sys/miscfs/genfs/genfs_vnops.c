@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.133 2006/10/12 10:10:48 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.134 2006/10/14 08:31:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.133 2006/10/12 10:10:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.134 2006/10/14 08:31:14 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -1605,7 +1605,9 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	}
 	UVMHIST_LOG(ubchist, "waiting for mbp %p", mbp,0,0,0);
 	error = biowait(mbp);
+	s = splbio();
 	(*iodone)(mbp);
+	splx(s);
 	UVMHIST_LOG(ubchist, "returning, error %d", error,0,0,0);
 	return (error);
 }
