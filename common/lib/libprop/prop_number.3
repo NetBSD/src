@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_number.3,v 1.4 2006/10/12 04:46:56 thorpej Exp $
+.\"	$NetBSD: prop_number.3,v 1.5 2006/10/14 07:30:16 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -141,8 +141,8 @@ Returns 8, 16, 32, or 64, representing the number of bits required to
 hold the value of the object.
 .It Fn prop_number_unsigned "prop_number_t number"
 Returns
-.Dv
-TRUE if the numeric value object has an unsigned value.
+.Dv TRUE
+if the numeric value object has an unsigned value.
 .It Fn prop_number_integer_value "prop_number_t number"
 Returns the signed integer value of the numeric value object.
 .It Fn prop_number_unsigned_integer_value "prop_number_t number"
