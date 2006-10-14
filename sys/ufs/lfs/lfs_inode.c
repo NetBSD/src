@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.105 2006/05/14 21:32:45 elad Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.106 2006/10/14 09:17:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.105 2006/05/14 21:32:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.106 2006/10/14 09:17:26 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -206,7 +206,6 @@ int
 lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
     kauth_cred_t cred, struct lwp *l)
 {
-	struct genfs_node *gp = VTOG(ovp);
 	daddr_t lastblock;
 	struct inode *oip = VTOI(ovp);
 	daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
@@ -417,7 +416,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
 		}
 	}
 
-	lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
+	genfs_node_wrlock(ovp);
 
 	oip->i_size = oip->i_ffs1_size = length;
 	uvm_vnp_setsize(ovp, length);
@@ -597,7 +596,7 @@ done:
 #endif
 	lfs_reserve(fs, ovp, NULL,
 	    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
-	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
+	genfs_node_unlock(ovp);
   errout:
 	oip->i_lfs_hiblk = lblkno(fs, oip->i_size + fs->lfs_bsize - 1) - 1;
 	if (ovp != fs->lfs_ivnode)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.70 2006/10/05 14:48:33 chs Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.71 2006/10/14 09:17:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.70 2006/10/05 14:48:33 chs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.71 2006/10/14 09:17:26 yamt Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -201,7 +201,6 @@ WRITE(void *v)
 	struct vnode *vp;
 	struct uio *uio;
 	struct inode *ip;
-	struct genfs_node *gp;
 	FS *fs;
 	struct buf *bp;
 	struct lwp *l;
@@ -226,7 +225,6 @@ WRITE(void *v)
 	uio = ap->a_uio;
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	gp = VTOG(vp);
 	ump = ip->i_ump;
 
 	KASSERT(vp->v_size == ip->i_size);
@@ -351,10 +349,10 @@ WRITE(void *v)
 				break;
 			ubc_alloc_flags &= ~UBC_FAULTBUSY;
 		} else {
-			lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
+			genfs_node_wrlock(vp);
 			error = GOP_ALLOC(vp, uio->uio_offset, bytelen,
 			    aflag, cred);
-			lockmgr(&gp->g_glock, LK_RELEASE, NULL);
+			genfs_node_unlock(vp);
 			if (error)
 				break;
 			ubc_alloc_flags |= UBC_FAULTBUSY;
