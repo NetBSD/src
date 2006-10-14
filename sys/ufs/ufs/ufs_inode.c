@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.60 2006/10/12 01:32:52 christos Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.61 2006/10/14 09:17:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.60 2006/10/12 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.61 2006/10/14 09:17:26 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -207,7 +207,6 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	off_t pagestart; /* starting offset of range covered by pgs */
 	off_t eob;	/* offset next to allocated blocks */
 	struct uvm_object *uobj;
-	struct genfs_node *gp = VTOG(vp);
 	int i, delta, error, npages;
 	int bshift = vp->v_mount->mnt_fs_bshift;
 	int bsize = 1 << bshift;
@@ -264,9 +263,9 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	 * now allocate the range.
 	 */
 
-	lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
+	genfs_node_wrlock(vp);
 	error = GOP_ALLOC(vp, off, len, flags, cred);
-	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
+	genfs_node_unlock(vp);
 
 	/*
 	 * clear PG_RDONLY on any pages we are holding
