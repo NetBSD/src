@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.13 2006/09/10 20:28:52 wiz Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.14 2006/10/14 13:22:34 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -62,22 +62,13 @@
  */
 
 /*
- * Currently it can detect:
- * 	o FFSv1 fsize/bsize: 512/4096, 1024/8192, 2048/16384.
- *	o FFSv2 fsize/bsize: 512/4096, 1024/8192, 2048/16384,
- *	  		     4096/32768, 8192/65536.
- *	o LFSv[12] fsize/bsize: 512/4096, 1024/8192, 2048/16384,
- *				4096/32768, 8192/65536.
- *
- * TODO:
- *	o Detect FFSv1 partitions with fsize/bsize > 2048/16384.
- *
- *	-- xtraeme --
+ * Currently it can detect FFS and LFS partitions (version 1 or 2)
+ * up to 8192/65536 fragsize/blocksize.
  */
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.13 2006/09/10 20:28:52 wiz Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.14 2006/10/14 13:22:34 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -140,6 +131,8 @@ __RCSID("$NetBSD: scan_ffs.c,v 1.13 2006/09/10 20:28:52 wiz Exp $");
 #include <err.h>
 #include <util.h>
 
+#define BLK_CNT		(blk + (n / 512))
+
 /* common struct for FFS/LFS */
 struct sblockinfo {
 	struct lfs	*lfs;
@@ -148,14 +141,14 @@ struct sblockinfo {
 	uint64_t	ffs_off;
 	char		lfs_path[MAXMNTLEN];
 	char		ffs_path[MAXMNTLEN];
-} sbinfo;
+};
 
 static daddr_t	blk, lastblk;
 
 static int	eflag = 0;
 static int	fflag = 0;
 static int	flags = 0;
-static int 	sbaddr = 0; /* counter for the LFS superblocks */
+static int	sbaddr = 0; /* counter for the LFS superblocks */
 
 static char	device[MAXPATHLEN];
 static const char *fstypes[] = { "NONE", "FFSv1", "FFSv2", "LFS" };
@@ -179,23 +172,23 @@ static const char *fstypes[] = { "NONE", "FFSv1", "FFSv2", "LFS" };
 enum { NADA, VERBOSE, LABELS };
 
 /* FFS functions */
-static void	ffs_printpart(int, size_t, int);
-static void	ffs_scan(int);
-static int	ffs_checkver(void);
+static void	ffs_printpart(struct sblockinfo *, int, size_t, int);
+static void	ffs_scan(struct sblockinfo *, int);
+static int	ffs_checkver(struct sblockinfo *);
 /* LFS functions */
-static void	lfs_printpart(int, int, struct sblockinfo *);
-static void	lfs_scan(int);
+static void	lfs_printpart(struct sblockinfo *, int, int);
+static void	lfs_scan(struct sblockinfo *, int);
 /* common functions */
 static void	usage(void) __attribute__((__noreturn__));
 static int	scan_disk(int, daddr_t, daddr_t, int);
 
 static int
-ffs_checkver(void)
+ffs_checkver(struct sblockinfo *sbi)
 {
-	switch (sbinfo.ffs->fs_magic) {
+	switch (sbi->ffs->fs_magic) {
 		case FS_UFS1_MAGIC:
 		case FS_UFS1_MAGIC_SWAPPED:
-			sbinfo.ffs->fs_size = sbinfo.ffs->fs_old_size;
+			sbi->ffs->fs_size = sbi->ffs->fs_old_size;
 			return FSTYPE_FFSV1;
 		case FS_UFS2_MAGIC:
 		case FS_UFS2_MAGIC_SWAPPED:
@@ -206,84 +199,103 @@ ffs_checkver(void)
 }
 
 static void
-ffs_printpart(int flag, size_t ffsize, int n)
+ffs_printpart(struct sblockinfo *sbi, int flag, size_t ffsize, int n)
 {
 	
-	int fstype = ffs_checkver();
+	int fstype = ffs_checkver(sbi);
 
 	switch (flag) {
 	case VERBOSE:
-		(void)printf("block: %" PRIu64 " id %x,%x size %" PRIu64 "\n",
-			blk + (n / 512),
-			sbinfo.ffs->fs_id[0],
-			sbinfo.ffs->fs_id[1], sbinfo.ffs->fs_size);
+		switch (fstype) {
+		case FSTYPE_FFSV1:
+			(void)printf("offset: %" PRIu64 " n: %d "
+			    "id %x,%x size: %" PRIu64 "\n",
+			    BLK_CNT - (2 * SBLOCKSIZE / 512), n,
+			    sbi->ffs->fs_id[0], sbi->ffs->fs_id[1],
+			    (uint64_t)(off_t)sbi->ffs->fs_size *
+			    sbi->ffs->fs_fsize / 512);
+			break;
+		case FSTYPE_FFSV2:
+			(void)printf("offset: %" PRIu64 " n: %d "
+			    "id %x,%x size: %" PRIu64 "\n",
+			    BLK_CNT - (ffsize * SBLOCKSIZE / 512+128),
+			    n, sbi->ffs->fs_id[0], sbi->ffs->fs_id[1],
+			    (uint64_t)(off_t)sbi->ffs->fs_size *
+			    sbi->ffs->fs_fsize / 512);
+			break;
+		default:
+			break;
+		}
 		break;
 	case LABELS:
 		(void)printf("X:  %9" PRIu64,
-			(uint64_t)((off_t)sbinfo.ffs->fs_size *
-			sbinfo.ffs->fs_fsize / 512));
+			(uint64_t)((off_t)sbi->ffs->fs_size *
+			sbi->ffs->fs_fsize / 512));
 		switch (fstype) {
 		case FSTYPE_FFSV1:
 			(void)printf(" %9" PRIu64,
-			    blk + (n / 512) - (2 * SBLOCKSIZE / 512));
+			    BLK_CNT - (ffsize * SBLOCKSIZE / 512));
 			break;
 		case FSTYPE_FFSV2:
 			(void)printf(" %9" PRIu64,
-			    blk + (n / 512) - 
-			    (ffsize * SBLOCKSIZE / 512 + 128));
+			    BLK_CNT - (ffsize * SBLOCKSIZE / 512 + 128)); 
 			break;
 		default:
 			break;
 		}
 		(void)printf(" 4.2BSD %6d %5d %7d # %s [%s]\n",
-			sbinfo.ffs->fs_fsize, sbinfo.ffs->fs_bsize,
-			sbinfo.ffs->fs_old_cpg, 
-			sbinfo.ffs_path, fstypes[fstype]);
+			sbi->ffs->fs_fsize, sbi->ffs->fs_bsize,
+			sbi->ffs->fs_old_cpg, 
+			sbi->ffs_path, fstypes[fstype]);
 		break;
 	default:
 		(void)printf("%s ", fstypes[fstype]);
 		switch (fstype) {
 		case FSTYPE_FFSV1:
 			(void)printf("at %" PRIu64,
-			    blk + (n / 512) - (2 * SBLOCKSIZE / 512));
+			    BLK_CNT - (2 * SBLOCKSIZE / 512));
 			break;
 		case FSTYPE_FFSV2:
 			(void)printf("at %" PRIu64,
-			    blk + (n / 512) -
-			    (ffsize * SBLOCKSIZE / 512 + 128));
+			    BLK_CNT - (ffsize * SBLOCKSIZE / 512 + 128));
 			break;
 		default:
 			break;
 		}
 		(void)printf(" size %" PRIu64 ", last mounted on %s\n",
-			(uint64_t)((off_t)sbinfo.ffs->fs_size *
-			sbinfo.ffs->fs_fsize / 512), sbinfo.ffs_path);
+			(uint64_t)((off_t)sbi->ffs->fs_size *
+			sbi->ffs->fs_fsize / 512), sbi->ffs_path);
 		break;
 	}
 }
 
 static void
-ffs_scan(int n)
+ffs_scan(struct sblockinfo *sbi, int n)
 {
-	int fstype = ffs_checkver();
-	size_t i;
+	int fstype = ffs_checkver(sbi);
+	size_t i = 0;
 
-	/* 
-	 * XXX:
-	 * It cannot find FFSv1 partitions with fsize/bsize > 2048/16384,
-	 * same problem found in the original program that comes from
-	 * OpenBSD (scan_ffs(8)).
-	 */
 	if (flags & VERBOSE)
-		ffs_printpart(VERBOSE, NADA, n);
+		ffs_printpart(sbi, VERBOSE, NADA, n);
 	switch (fstype) {
 	case FSTYPE_FFSV1:
-		if (((blk + (n / 512)) - lastblk) == (SBLOCKSIZE / 512)) {
-			if (flags & LABELS)
-				ffs_printpart(LABELS, NADA, n);
-			else
-				ffs_printpart(NADA, NADA, n);
-		}
+		/* fsize/bsize > 512/4096 and < 4096/32768. */
+		if ((BLK_CNT - lastblk) == (SBLOCKSIZE / 512)) {
+			i = 2;
+		/* fsize/bsize 4096/32768. */
+		} else if ((BLK_CNT - lastblk) == (SBLOCKSIZE / 170)) {
+			i = 4;
+		/* fsize/bsize 8192/65536 */
+		} else if ((BLK_CNT - lastblk) == (SBLOCKSIZE / 73)) {
+			i = 8;
+		} else
+			break;
+
+		if (flags & LABELS)
+			ffs_printpart(sbi, LABELS, i, n);
+		else
+			ffs_printpart(sbi, NADA, i, n);
+
 		break;
 	case FSTYPE_FFSV2:
 		/*
@@ -292,23 +304,22 @@ ffs_scan(int n)
 		 * Really enough for now.
 		 */
 		for (i = 1; i < 16; i <<= 1)
-			if (((blk + (n / 512)) - lastblk) ==
-			    (i * SBLOCKSIZE / 512)) {
+			if ((BLK_CNT - lastblk) == (i * SBLOCKSIZE / 512)) {
 				if (flags & LABELS)
-					ffs_printpart(LABELS, i, n);
+					ffs_printpart(sbi, LABELS, i, n);
 				else
-					ffs_printpart(NADA, i, n);
+					ffs_printpart(sbi, NADA, i, n);
 			}
 		break;
 	}
 }
 
 static void
-lfs_printpart(int flag, int n, struct sblockinfo *sbi)
+lfs_printpart(struct sblockinfo *sbi, int flag, int n)
 {
 	if (flags & VERBOSE)
-               	(void)printf("block: %" PRIu64 " size %" PRIu32 "\n",
-                	blk + (n / 512), sbi->lfs->lfs_size);
+               	(void)printf("offset: %" PRIu64 " size %" PRIu32 "\n",
+                	sbi->lfs_off, sbi->lfs->lfs_size);
 	switch (flag) {
 	case LABELS:
 		(void)printf("X:  %9" PRIu64,
@@ -321,20 +332,20 @@ lfs_printpart(int flag, int n, struct sblockinfo *sbi)
 			sbi->lfs->lfs_version);
 		break;
 	default:
-		(void)printf("LFSv%d ", sbinfo.lfs->lfs_version);
-		(void)printf("at %" PRIu64, sbinfo.lfs_off);
+		(void)printf("LFSv%d ", sbi->lfs->lfs_version);
+		(void)printf("at %" PRIu64, sbi->lfs_off);
 		(void)printf(" size %" PRIu64 ", last mounted on %s\n",
-			(uint64_t)((off_t)sbinfo.lfs->lfs_size *
-			sbinfo.lfs->lfs_fsize / 512), sbinfo.lfs_path);
+			(uint64_t)((off_t)sbi->lfs->lfs_size *
+			sbi->lfs->lfs_fsize / 512), sbi->lfs_path);
 		break;
 	}
 }
 
 static void
-lfs_scan(int n)
+lfs_scan(struct sblockinfo *sbi, int n)
 {
 	/* backup offset */
-	lastblk = blk + (n / 512) - (LFS_SBPAD / 512);
+	lastblk = BLK_CNT - (LFS_SBPAD / 512);
 	/* increment counter */
         ++sbaddr;
 
@@ -345,20 +356,19 @@ lfs_scan(int n)
 	 */
 	case FIRST_SBLOCK_ADDRESS:
 		/* copy partition offset */
-		if (sbinfo.lfs_off != lastblk)
-			sbinfo.lfs_off = blk + (n / 512) - (LFS_SBPAD / 512);
+		if (sbi->lfs_off != lastblk)
+			sbi->lfs_off = BLK_CNT - (LFS_SBPAD / 512);
 		break;
 	case SECOND_SBLOCK_ADDRESS:
 		/* copy the path of last mount */
-		(void)memcpy(sbinfo.lfs_path,
-			sbinfo.lfs->lfs_fsmnt, MAXMNTLEN);
+		(void)memcpy(sbi->lfs_path, sbi->lfs->lfs_fsmnt, MAXMNTLEN);
 		/* print now that we have the info */
 		if (flags & LABELS)
-			lfs_printpart(LABELS, n, &sbinfo);
+			lfs_printpart(sbi, LABELS, n);
 		else
-			lfs_printpart(NADA, n, &sbinfo);
+			lfs_printpart(sbi, NADA, n);
 		/* clear our struct */
-		(void)memset(&sbinfo, 0, sizeof(sbinfo));
+		(void)memset(sbi, 0, sizeof(*sbi));
 		break;
 	case MAX_SBLOCK_ADDRESS:
 		/*
@@ -375,6 +385,7 @@ lfs_scan(int n)
 static int
 scan_disk(int fd, daddr_t beg, daddr_t end, int fflags)
 {
+	struct sblockinfo sbinfo;
 	uint8_t buf[SBLOCKSIZE * SBCOUNT];
 	int n, fstype;
 
@@ -389,7 +400,7 @@ scan_disk(int fd, daddr_t beg, daddr_t end, int fflags)
 		    "#        size    offset fstype [fsize bsize cpg/sgs]\n");
 
 	for (blk = beg; blk <= ((end < 0) ? blk: end); blk += SBPASS) {
-		(void)memset(buf, 0, sizeof(buf));
+		(void)memset(&buf, 0, sizeof(buf));
 
 		if (pread(fd, buf, sizeof(buf), (off_t)blk * 512) == (off_t)-1)
 			err(1, "pread");
@@ -397,19 +408,19 @@ scan_disk(int fd, daddr_t beg, daddr_t end, int fflags)
 		for (n = 0; n < (SBLOCKSIZE * SBCOUNT); n += 512) {
 			sbinfo.ffs = (struct fs *)(void *)&buf[n];
 			sbinfo.lfs = (struct lfs *)(void *)&buf[n];
-			fstype = ffs_checkver();
+			fstype = ffs_checkver(&sbinfo);
 			switch (fstype) {
 			case FSTYPE_FFSV1:
 			case FSTYPE_FFSV2:
-				ffs_scan(n);
-				lastblk = blk + (n / 512);
+				ffs_scan(&sbinfo, n);
+				lastblk = BLK_CNT;
 				(void)memcpy(sbinfo.ffs_path,
 					sbinfo.ffs->fs_fsmnt, MAXMNTLEN);
 				break;
 			case FSTYPE_NONE:
 				/* maybe LFS? */
 				if (sbinfo.lfs->lfs_magic == LFS_MAGIC)
-					lfs_scan(n);
+					lfs_scan(&sbinfo, n);
 				break;
 			default:
 				break;
