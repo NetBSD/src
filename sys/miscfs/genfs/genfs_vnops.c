@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.135 2006/10/14 09:15:52 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.136 2006/10/14 09:16:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.135 2006/10/14 09:15:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.136 2006/10/14 09:16:28 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -2074,4 +2074,28 @@ genfs_kqfilter(void *v)
 	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
 
 	return (0);
+}
+
+void
+genfs_node_wrlock(struct vnode *vp)
+{
+	struct genfs_node *gp = VTOG(vp);
+
+	lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
+}
+
+void
+genfs_node_rdlock(struct vnode *vp)
+{
+	struct genfs_node *gp = VTOG(vp);
+
+	lockmgr(&gp->g_glock, LK_SHARED, NULL);
+}
+
+void
+genfs_node_unlock(struct vnode *vp)
+{
+	struct genfs_node *gp = VTOG(vp);
+
+	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 }
