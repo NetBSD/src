@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.85 2006/07/19 13:16:12 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.86 2006/10/14 21:45:29 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.85 2006/07/19 13:16:12 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.86 2006/10/14 21:45:29 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -353,6 +353,7 @@ getaddrinfo(const char *hostname, const char *servname,
 
 	memset(&sentinel, 0, sizeof(sentinel));
 	cur = &sentinel;
+	memset(&ai, 0, sizeof(ai));
 	pai = &ai;
 	pai->ai_flags = 0;
 	pai->ai_family = PF_UNSPEC;
@@ -857,9 +858,6 @@ get_ai(const struct addrinfo *pai, const struct afd *afd, const char *addr)
 	memset(ai->ai_addr, 0, (size_t)afd->a_socklen);
 	ai->ai_addr->sa_len = afd->a_socklen;
 	ai->ai_addrlen = afd->a_socklen;
-#if defined (__alpha__) || (defined(__i386__) && defined(_LP64)) || defined(__sparc64__)
-	ai->__ai_pad0 = 0;
-#endif
 	ai->ai_addr->sa_family = ai->ai_family = afd->a_af;
 	p = (char *)(void *)(ai->ai_addr);
 	memcpy(p + afd->a_off, addr, (size_t)afd->a_addrlen);
