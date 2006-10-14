@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.h,v 1.24 2005/09/02 17:12:38 elad Exp $	*/
+/*	$NetBSD: mtree.h,v 1.25 2006/10/14 21:14:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -100,6 +100,7 @@ typedef struct _node {
 #define	F_FILE	0x010				/* regular file */
 #define	F_LINK	0x020				/* symbolic link */
 #define	F_SOCK	0x040				/* socket */
+#define	F_DOOR	0x080				/* door */
 	int	type;				/* file type */
 
 	char	name[1];			/* file name (must be last) */
