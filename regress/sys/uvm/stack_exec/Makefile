@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.1 2003/12/10 13:24:59 drochner Exp $
+# $NetBSD: Makefile,v 1.2 2006/10/14 20:57:10 bjh21 Exp $
 
 NOMAN=	#
 PROG=	tramptest
 LDADD=	-lpthread
 
-regress:
+regress: ${PROG}
 	@if ./tramptest; then \
 		echo "PASSED"; \
 	else \

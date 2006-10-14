@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2004/02/19 16:55:30 drochner Exp $
+# $NetBSD: Makefile,v 1.3 2006/10/14 20:57:10 bjh21 Exp $
 
 NOMAN=	#
 
@@ -11,7 +11,7 @@ GCCTRAMP_ARCHS= alpha arm i386 m68k mips sparc sparc64 vax x86_64
 
 .if !empty(GCCTRAMP_ARCHS:M${MACHINE_GNU_ARCH})
 PROG=	tramptest
-regress:
+regress: ${PROG}
 	@if ./tramptest; then \
 		echo "PASSED"; \
 	else \
