@@ -32,10 +32,6 @@
  * $FreeBSD: src/sys/dev/vge/if_vgevar.h,v 1.2 2005/01/06 01:43:31 imp Exp $
  */
 
-#ifndef __NO_STRICT_ALIGNMENT 
-#define VGE_FIXUP_RX
-#endif
-
 #define VGE_JUMBO_MTU	9000
 
 #define VGE_IFQ_MAXLEN 64
@@ -55,7 +51,7 @@
 				 VGE_RDSTS_BUFSIZ) >> 16)
 #define VGE_MIN_FRAMELEN	60
 
-#ifdef VGE_FIXUP_RX
+#ifdef __NO_STRICT_ALIGNMENT 
 #define VGE_ETHER_ALIGN		sizeof(uint32_t)
 #else
 #define VGE_ETHER_ALIGN		0
@@ -88,10 +84,8 @@ struct vge_list_data {
 	bus_dmamap_t		vge_rx_dmamap[VGE_RX_DESC_CNT];
 	bus_dmamap_t		vge_rx_list_map;
 	struct vge_rx_desc	*vge_rx_list;
-	bus_addr_t		vge_rx_list_addr;
 	bus_dmamap_t		vge_tx_list_map;
 	struct vge_tx_desc	*vge_tx_list;
-	bus_addr_t		vge_tx_list_addr;
 };
 
 struct vge_softc {
@@ -149,9 +143,7 @@ struct vge_softc {
  * receive so the upper layers get the IP header properly aligned
  * past the 14-byte Ethernet header.
  */
-#ifndef ETHER_ALIGN
-#  define	ETHER_ALIGN	2
-#endif
+#define	ETHER_ALIGN	2
 
 #define	VGE_POWER_MANAGEMENT	0	/* disabled for now */
 
