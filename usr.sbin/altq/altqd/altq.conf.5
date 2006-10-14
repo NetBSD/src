@@ -1,4 +1,4 @@
-.\"	$NetBSD: altq.conf.5,v 1.9 2006/10/12 19:59:13 peter Exp $
+.\"	$NetBSD: altq.conf.5,v 1.10 2006/10/14 07:39:40 wiz Exp $
 .\"	$KAME: altq.conf.5,v 1.15 2002/11/17 02:51:49 kjc Exp $
 .\"
 .\" Copyright (C) 2000
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 28, 1999
+.Dd October 12, 2006
 .Dt ALTQ.CONF 5
 .Os
 .\"
@@ -420,7 +420,7 @@ It's the parameter to help compute offtime for the class.
 Offtime is the amount of time a class is to wait between packets.
 Default is 2.
 .It Cm maxdelay
-The maxdelay is specified in milli-seconds and used to obtain the max
+The maxdelay is specified in milliseconds and used to obtain the max
 queue size of the class.
 If not specified, the default max queue size (30 packets) is used.
 .It Cm packetsize
@@ -513,7 +513,7 @@ Service curves are specified by
 .Bq Ar type Ar m1 d m2 .
 .Ar type
 should be either
-.Cm sc, rt, ls
+.Cm sc , rt , ls ,
 or
 .Cm ul .
 .Cm sc
@@ -530,7 +530,7 @@ link-sharing.
 is the slope of the first segment specified in bits-per-second.
 .Ar d
 is the x-projection of the intersection point of the 2 segments
-specified in milli-seconds.
+specified in milliseconds.
 .Ar m2
 is the slope of the second segment specified in bits-per-second.
 .Bl -tag -width 8n -offset indent
@@ -709,7 +709,8 @@ must be
 .Cm wfq
 for WFQ.
 .It Cm nqueues
-The number of queues in WFQ.  Default value is 256.
+The number of queues in WFQ.
+Default value is 256.
 .It Cm qsize
 The size of each queue in number of bytes.
 Default value is 64K bytes.
@@ -843,7 +844,8 @@ packets.
 Thus, RIO can be used to provide a service that statistically assures
 capacity allocated for users.
 This mechanism can be extended to support an arbitrary number of drop
-precedence levels.  ALTQ supports 3 drop precedence levels.
+precedence levels.
+ALTQ supports 3 drop precedence levels.
 .Bl -tag -width rio -offset indent
 .It Cm rio
 .Ar low_min_th
@@ -953,7 +955,8 @@ for BLUE.
 The maximum queue size in number of packets.
 Default value is 60.
 .It Cm packetsize
-The average packet size in number of bytes.  Default value is 1000.
+The average packet size in number of bytes.
+Default value is 1000.
 .It Cm maxpmark
 specifies the precision of marking probability.
 .It Cm holdtime
@@ -992,7 +995,8 @@ command has the following syntax.
 .Pp
 .Bl -tag -width 10n -offset indent
 .It Ar if_name
-Interface name. Must correspond to name in interface specification.
+Interface name.
+Must correspond to name in interface specification.
 .It Ar cdnr_name
 Arbitrary name for this conditioner.
 Must be unique for this interface.
@@ -1090,7 +1094,7 @@ profile, tswtcm takes yellow_action.
 Otherwise, tswtcm takes red_action.
 cmtd_rate and peak_rate are specified in bits per second.
 avg_interval provides the size of time window for averaging incoming
-rate, and is specified in milli-seconds.
+rate, and is specified in milliseconds.
 500 msec is ok for normal settings.
 .El
 .El
@@ -1098,8 +1102,9 @@ rate, and is specified in milli-seconds.
 JoBS (Joint Buffer Management and Scheduling) is a queuing discipline
 that can enforce any feasible mix of absolute and proportional guarantees
 on packet losses, packet delays, and throughput, for classes of traffic,
-on a per-hop basis. No admission control is performed, thus if the set of
-service guarantees becomes infeasible, some service guarantees may be
+on a per-hop basis.
+No admission control is performed, thus if the set of service
+guarantees becomes infeasible, some service guarantees may be
 relaxed.
 .Bl -tag -width interface -offset indent
 .It Cm interface
@@ -1119,9 +1124,9 @@ specifies the interface bandwidth in bits per second.
 .It Cm qlimit
 specifies the maximum queue size in number of packets.
 .It Cm separate
-specifies that classes have independent buffers. The
-default is to have a shared buffer for all classes. If
-this option is specified, qlimit applies to each independent
+specifies that classes have independent buffers.
+The default is to have a shared buffer for all classes.
+If this option is specified, qlimit applies to each independent
 buffer.
 .It Cm tbrsize
 specifies the bucket size of a token bucket regulator in bytes.
@@ -1152,55 +1157,65 @@ must be
 .Cm jobs
 for a JoBS class.
 .It Ar if_name
-Interface name. Must correspond to name in interface specification.
+Interface name.
+Must correspond to name in interface specification.
 .It Ar class_name
-Arbitrary name for this class.  Must be unique for this interface.
+Arbitrary name for this class.
+Must be unique for this interface.
 .It Ar parent_name
-Parent class must be ``NULL'' for JoBS.
+Parent class must be
+.Dv NULL
+for JoBS.
 .It Cm priority
 Priority index used for proportional differentiation.
-Max value is 15 and Min value is 0.  Default is 0.
+Max value is 15 and Min value is 0.
+Default is 0.
 Priority must be unique for the interface.
 .It Cm default
-Specify the default class.  When this keyword is present, all packets
-that do not match some classification criteria are assigned to this
-class.  Must be exactly one class on each interface defined as the
+Specify the default class.
+When this keyword is present, all packets that do not match some
+classification criteria are assigned to this class.
+Must be exactly one class on each interface defined as the
 default class.
 .It Cm adc
 Specifies an upper bound on delays for that class (in microseconds).
-A value of -1 will indicate the absence of delay bound. By default,
-no delay bound is offered.
+A value of \-1 will indicate the absence of delay bound.
+By default, no delay bound is offered.
 .It Cm alc
 Specifies a upper bound on loss rate for that class (in fraction of 1,
 for instance a 1% loss rate bound will be expressed as 0.01).
-A value of -1 will indicate the absence of loss rate bound. By default,
-no loss rate bound is offered.
+A value of \-1 will indicate the absence of loss rate bound.
+By default, no loss rate bound is offered.
 .It Cm arc
 Specifies a lower bound
 on the throughput received by that class (in bits per second).
 A value of
--1 will indicate the absence of throughput bound.
+\-1 will indicate the absence of throughput bound.
 By default, no throughput bound is offered.
 .It Cm rdc
 Specifies a proportional delay differentiation factor between that class
 and the class with the successive priority index.
 For instance, for priority 1, an rdc of 2 specifies that the delays of
 packets marked as class 2 will roughly be twice the delays of packets
-marked as class 1. A value of
--1 indicates the absence of proportional differentiation on that class.
+marked as class 1.
+A value of
+\-1 indicates the absence of proportional differentiation on that class.
 Note that class N if N is the maximum priority should have a dummy
-coefficient different from -1 if proportional delay differentiation is desired
-on Class N. By default, no proportional delay differentiation is offered.
+coefficient different from \-1 if proportional delay differentiation is desired
+on Class N.
+By default, no proportional delay differentiation is offered.
 .It Cm rlc
 Specifies a proportional loss differentiation factor between that class
 and the class with the successive priority index.
 For instance, for priority 1, an rlc of 2 specifies that the loss rate of
 packets marked as class 2 will roughly be twice the loss rate of packets
-marked as class 1. A value of
--1 indicates the absence of proportional differentiation on that class.
+marked as class 1.
+A value of
+\-1 indicates the absence of proportional differentiation on that class.
 Note that class N if N is the maximum priority should have a dummy
-coefficient different from -1 if proportional loss differentiation is desired
-on Class N. By default, no proportional loss differentiation is offered.
+coefficient different from \-1 if proportional loss differentiation is desired
+on Class N.
+By default, no proportional loss differentiation is offered.
 .El
 .El
 .Sh EXAMPLES
@@ -1337,4 +1352,5 @@ conditioner fxp0 af1x_cdnr \*[Lt]trtcm 3M 32K 10M 64K \*[Lt]mark 0x28\*[Gt]\*[Lt
 .Sh SEE ALSO
 .Xr altqd 8
 .Sh BUGS
-This man page is incomplete. For more information read the source.
+This man page is incomplete.
+For more information read the source.
