@@ -1,4 +1,4 @@
-.\" $NetBSD: wcscoll.3,v 1.1 2006/10/13 17:28:09 tnozaki Exp $
+.\" $NetBSD: wcscoll.3,v 1.2 2006/10/14 07:44:58 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,7 +54,7 @@
 .Sh DESCRIPTION
 The
 .Fn wcscoll
-function compares the null-terminated strings
+function compares the nul-terminated strings
 .Fa s1
 and
 .Fa s2
@@ -68,9 +68,8 @@ is equivalent to
 .Sh RETURN VALUES
 The
 .Fn wcscoll
-function
-returns an integer greater than, equal to, or less than 0,
-if
+function returns an integer greater than, equal to, or less than
+0, if
 .Fa s1
 is greater than, equal to, or less than
 .Fa s2 .
@@ -101,8 +100,7 @@ Cannot allocate enough memory for temporary buffers.
 .Sh STANDARDS
 The
 .Fn wcscoll
-function
-conforms to
+function conforms to
 .St -isoC-99 .
 .Sh BUGS
 The current implementation of
