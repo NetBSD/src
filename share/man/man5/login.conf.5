@@ -1,4 +1,4 @@
-.\"	$NetBSD: login.conf.5,v 1.19 2006/06/17 04:58:14 reed Exp $
+.\"	$NetBSD: login.conf.5,v 1.20 2006/10/14 18:52:39 christos Exp $
 .\"
 .\" Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\" BSDI login.conf.5,v 2.19 1998/02/19 23:39:39 prb Exp
 .\"
-.Dd April 19, 2004
+.Dd October 14, 2006
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -226,6 +226,7 @@ Maximum socket buffer size limit.
 .sp
 .It Sy setenv Ta list Ta "" Ta
 Comma separated list of environment variables and values to be set.
+Commas and whitespace can be escaped using \e\e.
 .\"
 .sp
 .It Sy shell Ta program Ta "" Ta
