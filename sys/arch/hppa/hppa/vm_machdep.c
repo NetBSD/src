@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.19 2005/12/11 12:17:37 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.20 2006/10/14 09:09:34 skrll Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.19 2005/12/11 12:17:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.20 2006/10/14 09:09:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * Build a stack frame for the cpu_switch & co.
 	 */
 	osp = sp;
-	sp += HPPA_FRAME_SIZE + 16*4; /* std frame + calee-save registers */
+
+	/* std frame + callee-save registers */
+	sp += HPPA_FRAME_SIZE + 16*4;
 	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
 	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
 	*(register_t*)(sp + HPPA_FRAME_PSP) = osp;
