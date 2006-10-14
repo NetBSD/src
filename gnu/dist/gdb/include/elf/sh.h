@@ -35,6 +35,10 @@
 #define EF_SH4		   9
 
 /* New flags from binutils 2.16 */
+#define EF_SH2E            11
+#define EF_SH4A		   12
+#define EF_SH2A            13
+
 #define EF_SH4_NOFPU	   16
 #define EF_SH4A_NOFPU	   17
 #define EF_SH4_NOMMU_NOFPU 18

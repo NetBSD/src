@@ -74,6 +74,7 @@ nbsd_sh_elf_set_mach_from_flags (abfd)
       bfd_default_set_arch_mach (abfd, bfd_arch_sh, bfd_mach_sh3);
       break;
 
+    case EF_SH2E:
     case EF_SH2A_SH3E:
       bfd_default_set_arch_mach (abfd, bfd_arch_sh, bfd_mach_sh3e);
       break;
