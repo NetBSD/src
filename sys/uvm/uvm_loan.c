@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.60 2006/10/12 01:32:52 christos Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.61 2006/10/14 09:23:56 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.60 2006/10/12 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.61 2006/10/14 09:23:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1138,16 +1138,25 @@ uvm_loanbreak(struct vm_page *uobjpage)
 
 	/*
 	 * copy the data from the old page to the new
-	 * one and clear the fake/clean flags on the
-	 * new page (keep it busy).  force a reload
-	 * of the old page by clearing it from all
-	 * pmaps.  then lock the page queues to
-	 * rename the pages.
+	 * one and clear the fake flags on the new page (keep it busy).
+	 * force a reload of the old page by clearing it from all
+	 * pmaps.
+	 * transfer dirtiness of the old page to the new page.
+	 * then lock the page queues to rename the pages.
 	 */
 
 	uvm_pagecopy(uobjpage, pg);	/* old -> new */
-	pg->flags &= ~(PG_FAKE|PG_CLEAN);
+	pg->flags &= ~PG_FAKE;
 	pmap_page_protect(uobjpage, VM_PROT_NONE);
+	if ((uobjpage->flags & PG_CLEAN) != 0 && !pmap_clear_modify(uobjpage)) {
+		pmap_clear_modify(pg);
+		pg->flags |= PG_CLEAN;
+	} else {
+		/* uvm_pagecopy marked it dirty */
+		KASSERT((pg->flags & PG_CLEAN) == 0);
+		/* a object with a dirty page should be dirty. */
+		KASSERT(!UVM_OBJ_IS_CLEAN(uobj));
+	}
 	if (uobjpage->flags & PG_WANTED)
 		wakeup(uobjpage);
 	/* uobj still locked */
