@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.32 2006/10/14 02:04:34 tsutsui Exp $
+# $NetBSD: DISKLESS,v 1.33 2006/10/14 02:07:57 tsutsui Exp $
 
 # DISKLESS Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, ec0
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DISKLESS-$Revision: 1.32 $"
+#ident 		"DISKLESS-$Revision: 1.33 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -223,8 +223,7 @@ pseudo-device	loop		1	# network loopback
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
-# rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd			# paging to files

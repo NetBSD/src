@@ -1,4 +1,4 @@
-# $NetBSD: VME,v 1.27 2006/10/14 02:04:34 tsutsui Exp $
+# $NetBSD: VME,v 1.28 2006/10/14 02:07:57 tsutsui Exp $
 
 # VME Sun2 (2/50, 2/130, 2/160...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VME-$Revision: 1.27 $"
+#ident 		"VME-$Revision: 1.28 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -230,8 +230,7 @@ pseudo-device	loop		1	# network loopback
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
-# rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd			# paging to files
