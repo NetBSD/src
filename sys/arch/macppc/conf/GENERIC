@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.239 2006/09/28 07:57:49 dyoung Exp $
+# $NetBSD: GENERIC,v 1.240 2006/10/14 20:08:07 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.239 $"
+#ident 		"GENERIC-$Revision: 1.240 $"
 
 maxusers	32
 
@@ -252,6 +252,7 @@ stge*	at pci? dev ? function ?	# Sundance/Tamarack TC9021 Gigabit
 #ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+vge*	at pci? dev ? function ?	# VIA VT612x Gigabit Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 wm*	at pci? dev ? function ?	# Intel 82543/82544 gigabit
@@ -296,6 +297,7 @@ acphy*	at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
 amhphy*	at mii? phy ?			# AMD 79c901 Ethernet PHYs
 bmtphy*	at mii? phy ?			# Broadcom BCM5201/BCM5202 PHYs
 brgphy*	at mii? phy ?			# Broadcom BCM5400 PHYs
+ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
 dmphy*	at mii? phy ?                   # Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs

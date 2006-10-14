@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.98 2006/10/02 03:28:30 chs Exp $
+#	$NetBSD: INSTALL,v 1.99 2006/10/14 20:08:07 tsutsui Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -85,6 +85,7 @@ ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900/7016 Ethernet
+vge*	at pci? dev ? function ?	# VIA VT612X Gigabit Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
@@ -116,6 +117,7 @@ tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
 bmtphy*	at mii? phy ?			# Broadcom BCM5201/BCM5202 PHYs
 brgphy*	at mii? phy ?			# Broadcom BCM5400 PHYs
+ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
