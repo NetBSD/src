@@ -1,4 +1,4 @@
-/*	$NetBSD: pdsim.c,v 1.1 2006/10/09 12:32:46 yamt Exp $	*/
+/*	$NetBSD: pdsim.c,v 1.2 2006/10/14 04:43:41 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -267,6 +267,7 @@ test(void)
 	}
 }
 
+#if defined(DEBUG)
 static void
 dumpstats(void)
 {
@@ -279,6 +280,7 @@ dumpstats(void)
 		    stats[i].hit, stats[i].fault, irr[i]);
 	}
 }
+#endif /* defined(DEBUG) */
 
 int
 main(int argc, char *argv[])
