@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.116 2006/10/12 01:30:48 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.117 2006/10/14 18:57:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.116 2006/10/12 01:30:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.117 2006/10/14 18:57:06 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -700,10 +700,8 @@ linux_write_ldt(l, uap, retval)
 #endif /* USER_LDT */
 
 int
-linux_sys_modify_ldt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_modify_ldt(struct lwp *l __unused, void *v,
+    register_t *retval __unused)
 {
 	struct linux_sys_modify_ldt_args /* {
 		syscallarg(int) func;
