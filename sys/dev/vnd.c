@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.154 2006/10/12 01:30:51 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.155 2006/10/14 01:49:20 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.154 2006/10/12 01:30:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.155 2006/10/14 01:49:20 dogcow Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1347,6 +1347,8 @@ vndthrottle(struct vnd_softc *vnd, struct vnode *vp)
 	if (vp->v_op == nfsv2_vnodeop_p)
 		vnd->sc_maxactive = 2;
 	else
+#else
+	do { if (&vp) {} } while (/* CONSTCOND */ 0);
 #endif
 		vnd->sc_maxactive = 8;
 
