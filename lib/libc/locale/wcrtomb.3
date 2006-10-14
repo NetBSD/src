@@ -1,4 +1,4 @@
-.\" $NetBSD: wcrtomb.3,v 1.6 2004/09/27 07:07:04 yamt Exp $
+.\" $NetBSD: wcrtomb.3,v 1.7 2006/10/14 07:51:01 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -49,7 +49,9 @@ pointed to by
 .Fa s
 unless
 .Fa s
-is a null pointer.
+is a
+.Dv NULL
+pointer.
 This function will modify the first at most
 .Dv MB_CUR_MAX
 bytes of the array pointed to by
@@ -66,7 +68,7 @@ These are the special cases:
 .It "wc == 0"
 For state-dependent encodings,
 .Fn wcrtomb
-stores a null byte preceded by special byte sequence (if any)
+stores a nul byte preceded by special byte sequence (if any)
 to return to an initial state in the array pointed to by
 .Fa s ,
 and the state object pointed to by

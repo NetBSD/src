@@ -1,4 +1,4 @@
-.\" $NetBSD: wcsrtombs.3,v 1.10 2006/08/08 17:32:56 wiz Exp $
+.\" $NetBSD: wcsrtombs.3,v 1.11 2006/10/14 07:51:01 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -45,7 +45,7 @@
 .Sh DESCRIPTION
 The
 .Fn wcsrtombs
-converts the null-terminated wide character string indirectly pointed
+converts the nul-terminated wide character string indirectly pointed
 to by
 .Fa pwcs
 to the corresponding multibyte character string,
@@ -54,8 +54,8 @@ and stores it in the array pointed to by
 The conversion stops due to the following reasons:
 .Bl -bullet
 .It
-The conversion reaches a null wide character.
-In this case, the null wide character is also converted.
+The conversion reaches a nul wide character.
+In this case, the nul wide character is also converted.
 .It
 The
 .Fn wcsrtombs
@@ -82,7 +82,7 @@ pointer, the pointer object pointed to by
 .Fa pwcs
 is a
 .Dv NULL
-pointer (if the conversion is stopped due to reaching a null wide character)
+pointer (if the conversion is stopped due to reaching a nul wide character)
 or the first byte of the character just after the last character converted.
 .Pp
 If
@@ -90,7 +90,7 @@ If
 is not a
 .Dv NULL
 pointer and the conversion is stopped due to reaching
-a null wide character,
+a nul wide character,
 .Fn wcsrtombs
 places the state object pointed to by
 .Fa ps
@@ -109,7 +109,7 @@ These are the special cases:
 returns the number of bytes to store the whole multibyte character string
 corresponding to the wide character string pointed to by
 .Fa pwcs ,
-not including the terminating null byte.
+not including the terminating nul byte.
 In this case,
 .Fa n
 is ignored.
@@ -137,17 +137,19 @@ returns:
 .It 0 or positive
 Number of bytes stored in the array pointed to by
 .Fa s ,
-except for a null byte.
+except for a nul byte.
 There are no cases that the value returned is greater than
 .Fa n
 (unless
 .Fa s
-is a null pointer).
+is a
+.Dv NULL
+pointer).
 If the return value is equal to
 .Fa n ,
 the string pointed to by
 .Fa s
-will not be null-terminated.
+will not be nul-terminated.
 .It (size_t)-1
 .Fa pwcs
 points to a string containing an invalid wide character.
