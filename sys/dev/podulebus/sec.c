@@ -1,4 +1,4 @@
-/* $NetBSD: sec.c,v 1.3 2006/10/02 22:10:55 bjh21 Exp $ */
+/* $NetBSD: sec.c,v 1.4 2006/10/14 21:47:11 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2006 Ben Harris
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.3 2006/10/02 22:10:55 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.4 2006/10/14 21:47:11 bjh21 Exp $");
 
 #include <sys/param.h>
 
@@ -93,6 +93,9 @@ struct sec_softc {
 /* autoconfiguration glue */
 static int sec_match(struct device *, struct cfdata *, void *);
 static void sec_attach(struct device *, struct device *, void *);
+
+/* shutdown hook */
+static void sec_shutdown(void *);
 
 /* callbacks from MI WD33C93 driver */
 static int sec_dmasetup(struct wd33c93_softc *, caddr_t *, size_t *, int,
@@ -208,6 +211,19 @@ sec_attach(struct device *parent, struct device *self, void *aux)
 	sec_cli(sc);
 	sc->sc_mpr |= SEC_MPR_IE;
 	bus_space_write_1(sc->sc_pod_t, sc->sc_pod_h, SEC_MPR, sc->sc_mpr);
+	shutdownhook_establish(sec_shutdown, sc);
+}
+
+/*
+ * Before reboot, reset the page register to 0 so that RISC OS can see
+ * the podule ROM.
+ */
+static void
+sec_shutdown(void *cookie)
+{
+	struct sec_softc *sc = cookie;
+
+	sec_setpage(sc, 0);
 }
 
 static void
