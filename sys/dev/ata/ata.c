@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.79 2006/10/12 01:30:55 christos Exp $      */
+/*      $NetBSD: ata.c,v 1.80 2006/10/14 23:54:14 itohy Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.79 2006/10/12 01:30:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.80 2006/10/14 23:54:14 itohy Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -573,11 +573,8 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	struct ata_command ata_c;
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
-
-#if BYTE_ORDER == LITTLE_ENDIAN
 	int i;
 	u_int16_t *p;
-#endif
 
 	ATADEBUG_PRINT(("ata_get_parms\n"), DEBUG_FUNCS);
 
@@ -619,31 +616,42 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 			return CMD_ERR;
 		/* Read in parameter block. */
 		memcpy(prms, tb, sizeof(struct ataparams));
-#if BYTE_ORDER == LITTLE_ENDIAN
+
 		/*
 		 * Shuffle string byte order.
-		 * ATAPI Mitsumi and NEC drives don't need this.
+		 * ATAPI NEC, Mitsumi and Pioneer drives and
+		 * old ATA TDK CompactFlash cards
+		 * have different byte order.
 		 */
-		if ((prms->atap_config & WDC_CFG_ATAPI_MASK) ==
-		    WDC_CFG_ATAPI &&
-		    ((prms->atap_model[0] == 'N' &&
-			prms->atap_model[1] == 'E') ||
-		     (prms->atap_model[0] == 'F' &&
-			 prms->atap_model[1] == 'X')))
-			return 0;
+#if BYTE_ORDER == BIG_ENDIAN
+# define M(n)	prms->atap_model[(n) ^ 1]
+#else
+# define M(n)	prms->atap_model[n]
+#endif
+		if (
+#if BYTE_ORDER == BIG_ENDIAN
+		    !
+#endif
+		    ((drvp->drive_flags & DRIVE_ATAPI) ?
+		     ((M(0) == 'N' && M(1) == 'E') ||
+		      (M(0) == 'F' && M(1) == 'X') ||
+		      (M(0) == 'P' && M(1) == 'i')) :
+		     ((M(0) == 'T' && M(1) == 'D' && M(2) == 'K'))))
+			return CMD_OK;
+#undef M
 		for (i = 0; i < sizeof(prms->atap_model); i += 2) {
-			p = (u_short *)(prms->atap_model + i);
-			*p = ntohs(*p);
+			p = (u_int16_t *)(prms->atap_model + i);
+			*p = bswap16(*p);
 		}
 		for (i = 0; i < sizeof(prms->atap_serial); i += 2) {
-			p = (u_short *)(prms->atap_serial + i);
-			*p = ntohs(*p);
+			p = (u_int16_t *)(prms->atap_serial + i);
+			*p = bswap16(*p);
 		}
 		for (i = 0; i < sizeof(prms->atap_revision); i += 2) {
-			p = (u_short *)(prms->atap_revision + i);
-			*p = ntohs(*p);
+			p = (u_int16_t *)(prms->atap_revision + i);
+			*p = bswap16(*p);
 		}
-#endif
+
 		return CMD_OK;
 	}
 }
