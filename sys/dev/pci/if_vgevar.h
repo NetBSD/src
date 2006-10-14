@@ -46,9 +46,6 @@
 #define VGE_ADDR_LO(y)		((u_int64_t) (y) & 0xFFFFFFFF)
 #define VGE_ADDR_HI(y)		((u_int64_t) (y) >> 32)
 #define VGE_BUFLEN(y)		((y) & 0x7FFF)
-#define VGE_OWN(x)		(le32toh((x)->vge_sts) & VGE_RDSTS_OWN)
-#define VGE_RXBYTES(x)		((le32toh((x)->vge_sts) & \
-				 VGE_RDSTS_BUFSIZ) >> 16)
 #define VGE_MIN_FRAMELEN	60
 
 #ifdef __NO_STRICT_ALIGNMENT 
@@ -57,21 +54,7 @@
 #define VGE_ETHER_ALIGN		0
 #endif
 
-struct vge_type {
-	uint16_t		vge_vid;
-	uint16_t		vge_did;
-	char			*vge_name;
-};
-
 struct vge_softc;
-
-struct vge_dmaload_arg {
-	struct vge_softc	*sc;
-	int			vge_idx;
-	int			vge_maxsegs;
-	struct mbuf		*vge_m0;
-	u_int32_t		vge_flags;
-};
 
 struct vge_list_data {
 	struct mbuf		*vge_tx_mbuf[VGE_TX_DESC_CNT];
@@ -127,6 +110,26 @@ struct vge_softc {
 	u_int8_t		saved_lattimer;
 };
 
+#define VGE_TXDESCSYNC(sc, idx, ops)					\
+	bus_dmamap_sync((sc)->vge_dmat,					\
+	    (sc)->vge_ldata.vge_tx_dmamap[(idx)],			\
+	    sizeof(struct vge_tx_desc) * (idx),				\
+	    offsetof(struct vge_tx_desc, vge_frag[0]),			\
+	    (ops))
+#define VGE_TXFRAGSYNC(sc, idx, nsegs, ops)				\
+	bus_dmamap_sync((sc)->vge_dmat,					\
+	    (sc)->vge_ldata.vge_tx_dmamap[(idx)],			\
+	    sizeof(struct vge_tx_desc) * (idx) +			\
+	    offsetof(struct vge_tx_desc, vge_frag[0]),			\
+	    sizeof(struct vge_tx_frag) * (nsegs),			\
+	    (ops))
+#define VGE_RXDESCSYNC(sc, idx, ops)					\
+	bus_dmamap_sync((sc)->vge_dmat,					\
+	    (sc)->vge_ldata.vge_rx_dmamap[(idx)],			\
+	    sizeof(struct vge_rx_desc) * (idx),				\
+	    sizeof(struct vge_rx_desc),					\
+	    (ops))
+
 #ifdef __FreeBSD__
 #define	VGE_LOCK(_sc)		mtx_lock(&(_sc)->vge_mtx)
 #define	VGE_UNLOCK(_sc)		mtx_unlock(&(_sc)->vge_mtx)
@@ -150,8 +153,6 @@ struct vge_softc {
 /*
  * register space access macros
  */
-#define CSR_WRITE_STREAM_4(sc, reg, val)	\
-	bus_space_write_stream_4(sc->vge_btag, sc->vge_bhandle, reg, val)
 #define CSR_WRITE_4(sc, reg, val)	\
 	bus_space_write_4(sc->vge_btag, sc->vge_bhandle, reg, val)
 #define CSR_WRITE_2(sc, reg, val)	\
@@ -181,4 +182,3 @@ struct vge_softc {
 	CSR_WRITE_4(sc, reg, CSR_READ_4(sc, reg) & ~(x))
 
 #define VGE_TIMEOUT		10000
-
