@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.12 2006/10/14 15:53:23 tsutsui Exp $ */
+/* $NetBSD: if_vge.c,v 1.13 2006/10/14 16:45:46 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.12 2006/10/14 15:53:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.13 2006/10/14 16:45:46 tsutsui Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -126,7 +126,7 @@ static int vge_allocmem		(struct vge_softc *);
 static int vge_newbuf		(struct vge_softc *, int, struct mbuf *);
 static int vge_rx_list_init	(struct vge_softc *);
 static int vge_tx_list_init	(struct vge_softc *);
-#ifdef VGE_FIXUP_RX
+#ifndef __NO_STRICT_ALIGNMENT
 static inline void vge_fixup_rx
 				(struct mbuf *);
 #endif
@@ -728,8 +728,7 @@ vge_allocmem(sc)
 	 * Allocate map for TX descriptor list.
 	 */
 	error = bus_dmamap_create(sc->vge_dmat,
-	    round_page(VGE_TX_LIST_SZ), 1, round_page(VGE_TX_LIST_SZ),
-	    0, BUS_DMA_ALLOCNOW|BUS_DMA_NOWAIT,
+	    VGE_TX_LIST_SZ, 1, VGE_TX_LIST_SZ, 0, BUS_DMA_NOWAIT,
 	    &sc->vge_ldata.vge_tx_list_map);
 	if (error) {
 		printf("%s: could not allocate TX dma list map\n",
@@ -751,8 +750,8 @@ vge_allocmem(sc)
 
 	/* Map the memory to kernel VA space */
 
-	error = bus_dmamem_map(sc->vge_dmat, &seg, nseg, seg.ds_len,
-	     (caddr_t *) &sc->vge_ldata.vge_tx_list, BUS_DMA_NOWAIT);
+	error = bus_dmamem_map(sc->vge_dmat, &seg, nseg, VGE_TX_LIST_SZ,
+	     (caddr_t *)&sc->vge_ldata.vge_tx_list, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: could not map TX ring dma memory\n",
 		    sc->sc_dev.dv_xname);
@@ -761,15 +760,12 @@ vge_allocmem(sc)
 
 	/* Load the map for the TX ring. */
 	error = bus_dmamap_load(sc->vge_dmat, sc->vge_ldata.vge_tx_list_map,
-	    sc->vge_ldata.vge_tx_list, seg.ds_len, NULL, BUS_DMA_NOWAIT);
+	    sc->vge_ldata.vge_tx_list, VGE_TX_LIST_SZ, NULL, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: could not load TX ring dma memory\n",
 		    sc->sc_dev.dv_xname);
 		return (ENOMEM);
 	}
-
-	sc->vge_ldata.vge_tx_list_addr =
-		sc->vge_ldata.vge_tx_list_map->dm_segs[0].ds_addr;
 
 	/* Create DMA maps for TX buffers */
 
@@ -789,8 +785,7 @@ vge_allocmem(sc)
 	 * Allocate map for RX descriptor list.
 	 */
 	error = bus_dmamap_create(sc->vge_dmat,
-	    round_page(VGE_RX_LIST_SZ), 1, round_page(VGE_RX_LIST_SZ),
-	    0, BUS_DMA_ALLOCNOW|BUS_DMA_NOWAIT,
+	    VGE_RX_LIST_SZ, 1, VGE_RX_LIST_SZ, 0, BUS_DMA_NOWAIT,
 	    &sc->vge_ldata.vge_rx_list_map);
 	if (error) {
 		printf("%s: could not allocate RX dma list map\n",
@@ -807,22 +802,19 @@ vge_allocmem(sc)
 
 	/* Map the memory to kernel VA space */
 
-	error = bus_dmamem_map(sc->vge_dmat, &seg, nseg, seg.ds_len,
-	     (caddr_t *) &sc->vge_ldata.vge_rx_list, BUS_DMA_NOWAIT);
+	error = bus_dmamem_map(sc->vge_dmat, &seg, nseg, VGE_RX_LIST_SZ,
+	     (caddr_t *)&sc->vge_ldata.vge_rx_list, BUS_DMA_NOWAIT);
 	if (error)
 		return (ENOMEM);
 
 	/* Load the map for the RX ring. */
 	error = bus_dmamap_load(sc->vge_dmat, sc->vge_ldata.vge_rx_list_map,
-	    sc->vge_ldata.vge_rx_list, seg.ds_len, NULL, BUS_DMA_NOWAIT);
+	    sc->vge_ldata.vge_rx_list, VGE_RX_LIST_SZ, NULL, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: could not load RX ring dma memory\n",
 		    sc->sc_dev.dv_xname);
 		return (ENOMEM);
 	}
-
-	sc->vge_ldata.vge_rx_list_addr =
-		sc->vge_ldata.vge_rx_list_map->dm_segs[0].ds_addr;
 
 	/* Create DMA maps for RX buffers */
 
@@ -1018,7 +1010,7 @@ vge_newbuf(sc, idx, m)
 		m->m_data = m->m_ext.ext_buf;
 
 
-#ifdef VGE_FIXUP_RX
+#ifndef __NO_STRICT_ALIGNMENT
 	/*
 	 * This is part of an evil trick to deal with non-x86 platforms.
 	 * The VIA chip requires RX buffers to be aligned on 32-bit
@@ -1122,7 +1114,7 @@ vge_rx_list_init(sc)
 	return (0);
 }
 
-#ifdef VGE_FIXUP_RX
+#ifndef __NO_STRICT_ALIGNMENT
 static inline void
 vge_fixup_rx(m)
 	struct mbuf		*m;
@@ -1280,7 +1272,7 @@ vge_rxeof(sc)
 			m->m_pkthdr.len = m->m_len =
 			    (total_len - ETHER_CRC_LEN);
 
-#ifdef VGE_FIXUP_RX
+#ifndef __NO_STRICT_ALIGNMENT
 		vge_fixup_rx(m);
 #endif
 		ifp->if_ipackets++;
@@ -1837,11 +1829,11 @@ vge_init(ifp)
 	 */
 
 	CSR_WRITE_4(sc, VGE_TXDESC_ADDR_LO0,
-	    VGE_ADDR_LO(sc->vge_ldata.vge_tx_list_addr));
+	    VGE_ADDR_LO(sc->vge_ldata.vge_tx_list_map->dm_segs[0].ds_addr));
 	CSR_WRITE_2(sc, VGE_TXDESCNUM, VGE_TX_DESC_CNT - 1);
 
 	CSR_WRITE_4(sc, VGE_RXDESC_ADDR_LO,
-	    VGE_ADDR_LO(sc->vge_ldata.vge_rx_list_addr));
+	    VGE_ADDR_LO(sc->vge_ldata.vge_rx_list_map->dm_segs[0].ds_addr));
 	CSR_WRITE_2(sc, VGE_RXDESCNUM, VGE_RX_DESC_CNT - 1);
 	CSR_WRITE_2(sc, VGE_RXDESC_RESIDUECNT, VGE_RX_DESC_CNT);
 
