@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.75 2006/10/12 10:14:20 yamt Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.76 2006/10/14 09:20:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.75 2006/10/12 10:14:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.76 2006/10/14 09:20:35 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -466,12 +466,12 @@ uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 	 */
 
 	oldsize = vp->v_size;
-	vp->v_size = newsize;
 	if (oldsize > pgend && oldsize != VSIZENOTSET) {
 		(void) uvn_put(uobj, pgend, 0, PGO_FREE | PGO_SYNCIO);
-	} else {
-		simple_unlock(&uobj->vmobjlock);
+		simple_lock(&uobj->vmobjlock);
 	}
+	vp->v_size = newsize;
+	simple_unlock(&uobj->vmobjlock);
 }
 
 /*
