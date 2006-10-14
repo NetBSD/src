@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.51 2006/10/06 12:54:14 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.52 2006/10/14 08:11:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.51 2006/10/06 12:54:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.52 2006/10/14 08:11:16 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -658,8 +658,8 @@ fdstrategy(struct buf *bp			/* IO operation to perform */)
 
 #ifdef FD_DEBUG
 	if (fdc_debug > 1)
-	    printf("fdstrategy: b_blkno %d b_bcount %ld blkno %d cylin %ld\n",
-		    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylinder);
+	    printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d\n",
+		    (int)bp->b_blkno, bp->b_bcount, (int)fd->sc_blkno, bp->b_cylinder);
 #endif
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
@@ -1346,7 +1346,7 @@ loop:
 					bp->b_flags & B_READ
 					? "read failed" : "write failed");
 				printf("blkno %d nblks %d tc %d\n",
-				       fd->sc_blkno, fd->sc_nblks, fdc->sc_tc);
+				       (int)fd->sc_blkno, fd->sc_nblks, fdc->sc_tc);
 			}
 #endif
 			if (fdc->sc_nstat == 7 &&
@@ -1792,8 +1792,8 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 
 #ifdef FD_DEBUG
 	if (fdc_debug)
-		printf("fdformat: blkno %x count %ld\n",
-			bp->b_blkno, bp->b_bcount);
+		printf("fdformat: blkno %x count %d\n",
+			(int)bp->b_blkno, bp->b_bcount);
 #endif
 
 	/* now do the format */
