@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.143 2006/10/12 01:32:46 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.144 2006/10/14 18:59:57 christos Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.143 2006/10/12 01:32:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.144 2006/10/14 18:59:57 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -747,11 +747,15 @@ key_do_allocsa_policy(sah, state)
  * sport and dport are used for NAT-T. network order is always used.
  */
 struct secasvar *
-key_allocsa(family, src, dst, proto, spi, sport, dport)
-	u_int family, proto;
-	caddr_t src, dst;
-	u_int32_t spi;
-	u_int16_t sport, dport;
+key_allocsa(
+    u_int family,
+    u_int proto,
+    caddr_t src,
+    caddr_t dst,
+    u_int32_t spi,
+    u_int16_t sport __unused,
+    u_int16_t dport __unused
+)
 {
 	struct secasvar *sav, *match;
 	u_int stateidx, state, tmpidx, matchidx;
