@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/02/15 12:20:26 yamt Exp $
+#	$NetBSD: Makefile,v 1.2 2006/10/14 20:57:10 bjh21 Exp $
 
 NOMAN=		# defined
 
@@ -7,7 +7,7 @@ TESTFILE=	XXX
 DEVZERO=	/dev/zero
 CLEANFILES+=	${TESTFILE}
 
-regress:
+regress: ${PROG}
 	@dd if=/dev/zero of=${TESTFILE} bs=1024 seek=256 count=1
 	@if ./loan1 ${TESTFILE}; then \
 		echo "PASSED1"; \
