@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.16 2006/09/27 21:21:09 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.17 2006/10/14 20:39:21 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.16 2006/09/27 21:21:09 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.17 2006/10/14 20:39:21 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -341,7 +341,7 @@ data_abort_address(struct trapframe *tf, vsize_t *vsp)
 			/* immediate shift */
 			shift = (insn & 0x00000f80) >> 7;
 		else
-			goto croak; /* register shifts can't happen in ARMv2 */
+			goto croak; /* Undefined instruction */
 		switch ((insn & 0x00000060) >> 5) {
 		case 0: /* Logical left */
 			offset = (int)(((u_int)offset) << shift);
@@ -354,9 +354,13 @@ data_abort_address(struct trapframe *tf, vsize_t *vsp)
 			if (shift == 0) shift = 32;
 			offset = (int)(((int)offset) >> shift);
 			break;
-		case 3: /* Rotate right -- FIXME support this*/
-		default: /* help GCC */
-			goto croak;
+		case 3:
+			if (shift == 0) /* Rotate Right Extended */
+				offset = (int)((tf->tf_r15 & R15_FLAG_C) << 2 |
+				    ((u_int)offset) >> 1);
+			else /* Rotate Right */
+				offset = (int)((u_int)offset >> shift |
+				    (u_int)offset << (32 - shift));
 		}
 		if (u == 0)
 			return base - offset;
