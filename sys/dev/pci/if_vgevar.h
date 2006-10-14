@@ -32,9 +32,9 @@
  * $FreeBSD: src/sys/dev/vge/if_vgevar.h,v 1.2 2005/01/06 01:43:31 imp Exp $
  */
 
-#define VGE_JUMBO_MTU	9000
+#define VGE_JUMBO_MTU		9000
 
-#define VGE_IFQ_MAXLEN 64
+#define VGE_IFQ_MAXLEN		64
 
 #define VGE_TX_DESC_CNT		256
 #define VGE_RX_DESC_CNT		256	/* Must be a multiple of 4!! */
@@ -43,8 +43,8 @@
 #define VGE_TX_LIST_SZ		(VGE_TX_DESC_CNT * sizeof(struct vge_tx_desc))
 #define VGE_TX_DESC_INC(x)	(x = (x + 1) % VGE_TX_DESC_CNT)
 #define VGE_RX_DESC_INC(x)	(x = (x + 1) % VGE_RX_DESC_CNT)
-#define VGE_ADDR_LO(y)		((u_int64_t) (y) & 0xFFFFFFFF)
-#define VGE_ADDR_HI(y)		((u_int64_t) (y) >> 32)
+#define VGE_ADDR_LO(y)		((uint64_t)(y) & 0xFFFFFFFF)
+#define VGE_ADDR_HI(y)		((uint64_t)(y) >> 32)
 #define VGE_BUFLEN(y)		((y) & 0x7FFF)
 #define VGE_MIN_FRAMELEN	60
 
@@ -74,7 +74,7 @@ struct vge_list_data {
 struct vge_softc {
 	struct device		sc_dev;
 	struct ethercom		sc_ethercom;	/* interface info */
-	u_int8_t		vge_eaddr[ETHER_ADDR_LEN];
+	uint8_t			vge_eaddr[ETHER_ADDR_LEN];
 
 	bus_space_handle_t	vge_bhandle;	/* bus space handle */
 	bus_space_tag_t		vge_btag;	/* bus space tag */
@@ -83,7 +83,7 @@ struct vge_softc {
 	void			*vge_intrhand;
 	struct mii_data		sc_mii;
 	bus_dma_tag_t		vge_dmat;
-	u_int8_t		vge_type;
+	uint8_t			vge_type;
 	int			vge_if_flags;
 	int			vge_rx_consumed;
 	int			vge_link;
@@ -103,11 +103,11 @@ struct vge_softc {
 	int			rxcycles;
 #endif
 
-	u_int32_t		saved_maps[5];	/* pci data */
-	u_int32_t		saved_biosaddr;
-	u_int8_t		saved_intline;
-	u_int8_t		saved_cachelnsz;
-	u_int8_t		saved_lattimer;
+	uint32_t		saved_maps[5];	/* pci data */
+	uint32_t		saved_biosaddr;
+	uint8_t			saved_intline;
+	uint8_t			saved_cachelnsz;
+	uint8_t			saved_lattimer;
 };
 
 #define VGE_TXDESCSYNC(sc, idx, ops)					\
