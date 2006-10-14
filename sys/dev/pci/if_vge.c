@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.11 2006/10/14 11:29:15 tsutsui Exp $ */
+/* $NetBSD: if_vge.c,v 1.12 2006/10/14 15:53:23 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.11 2006/10/14 11:29:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.12 2006/10/14 15:53:23 tsutsui Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -847,7 +847,7 @@ vge_allocmem(sc)
 static void
 vge_attach(struct device *parent __unused, struct device *self, void *aux)
 {
-	u_char			eaddr[ETHER_ADDR_LEN];
+	uint8_t			*eaddr;
 	struct vge_softc	*sc = (struct vge_softc *)self;
 	struct ifnet		*ifp;
 	struct pci_attach_args *pa = aux;
@@ -901,6 +901,7 @@ vge_attach(struct device *parent __unused, struct device *self, void *aux)
 	/*
 	 * Get station address from the EEPROM.
 	 */
+	eaddr = sc->vge_eaddr;
 	val = vge_read_eeprom(sc, VGE_EE_EADDR + 0);
 	eaddr[0] = val & 0xff;
 	eaddr[1] = val >> 8;
