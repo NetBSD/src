@@ -1,4 +1,4 @@
-# $NetBSD: VME,v 1.28 2006/10/14 02:07:57 tsutsui Exp $
+# $NetBSD: VME,v 1.29 2006/10/14 07:23:20 tsutsui Exp $
 
 # VME Sun2 (2/50, 2/130, 2/160...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VME-$Revision: 1.28 $"
+#ident 		"VME-$Revision: 1.29 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -207,6 +207,8 @@ ie1	at vme0 addr 0xe88000,0xe00000 len -1,0x40000 irq 3 vect 0x75
 ## 3Com Ethernet (Multibus only)
 #ec0	at mbmem0 addr 0xe0000 ipl 3
 #ec1	at mbmem0 addr 0xe2000 ipl 3
+# limit NFS R/W size for poor ec(4) interfaces
+#options 	NFS_RSIZE=1024,NFS_WSIZE=1024
 
 ## Frame buffers.
 
