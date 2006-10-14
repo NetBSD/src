@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.173 2006/10/13 20:53:59 christos Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.174 2006/10/14 09:18:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.173 2006/10/13 20:53:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.174 2006/10/14 09:18:57 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1832,11 +1832,13 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 				if (flags & NAC_NOTRUNC) {
 					np->n_flag |= NTRUNCDELAYED;
 				} else {
+					genfs_node_wrlock(vp);
 					simple_lock(&vp->v_interlock);
 					(void)VOP_PUTPAGES(vp, 0,
 					    0, PGO_SYNCIO | PGO_CLEANIT |
 					    PGO_FREE | PGO_ALLPAGES);
 					uvm_vnp_setsize(vp, np->n_size);
+					genfs_node_unlock(vp);
 				}
 			}
 		}
@@ -1884,7 +1886,9 @@ nfs_getattrcache(vp, vaper)
 					np->n_size = vap->va_size;
 			} else
 				np->n_size = vap->va_size;
+			genfs_node_wrlock(vp);
 			uvm_vnp_setsize(vp, np->n_size);
+			genfs_node_unlock(vp);
 		} else
 			np->n_size = vap->va_size;
 	}
@@ -1906,10 +1910,12 @@ nfs_delayedtruncate(vp)
 
 	if (np->n_flag & NTRUNCDELAYED) {
 		np->n_flag &= ~NTRUNCDELAYED;
+		genfs_node_wrlock(vp);
 		simple_lock(&vp->v_interlock);
 		(void)VOP_PUTPAGES(vp, 0,
 		    0, PGO_SYNCIO | PGO_CLEANIT | PGO_FREE | PGO_ALLPAGES);
 		uvm_vnp_setsize(vp, np->n_size);
+		genfs_node_unlock(vp);
 	}
 }
 
