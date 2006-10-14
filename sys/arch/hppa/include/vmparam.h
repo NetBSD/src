@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.7 2005/12/11 12:17:37 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.8 2006/10/14 09:07:01 skrll Exp $	*/
 
 /*	$OpenBSD: vmparam.h,v 1.17 2001/09/22 18:00:09 miod Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 /*
- * We use 4K pages on the HP PHA.  Override the PAGE_* definitions
+ * We use 4K pages on the HP PA.  Override the PAGE_* definitions
  * to be compile-time constants.
  */
 #define	PAGE_SHIFT	12
