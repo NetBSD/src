@@ -1,4 +1,4 @@
-.\" $NetBSD: mbrtowc.3,v 1.6 2004/01/24 16:58:54 wiz Exp $
+.\" $NetBSD: mbrtowc.3,v 1.7 2006/10/14 07:51:01 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -51,7 +51,7 @@ to the wchar_t object pointed to by
 .Fa pwc
 if
 .Fa pwc
-is non-null and
+is non-NULL and
 .Fa s
 points to a valid character.
 The conversion happens in accordance with, and changes the conversion
@@ -64,7 +64,7 @@ bytes of the array beginning from
 .Pp
 If
 .Fa s
-points to a valid character and the character corresponds to a null wide
+points to a valid character and the character corresponds to a nul wide
 character, then the
 .Fn mbrtowc
 places the mbstate_t object pointed to by
@@ -139,7 +139,7 @@ returns:
 .It 0
 The next bytes pointed to by
 .Fa s
-form a null character.
+form a nul character.
 .It positive
 If
 .Fa s

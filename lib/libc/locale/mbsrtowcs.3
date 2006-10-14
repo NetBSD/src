@@ -1,4 +1,4 @@
-.\" $NetBSD: mbsrtowcs.3,v 1.8 2004/01/24 16:58:54 wiz Exp $
+.\" $NetBSD: mbsrtowcs.3,v 1.9 2006/10/14 07:51:01 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -53,8 +53,8 @@ array pointed to by
 The conversion stops due to the following reasons:
 .Bl -bullet
 .It
-The conversion reaches a null byte.
-In this case, the null byte is also converted.
+The conversion reaches a nul byte.
+In this case, the nul byte is also converted.
 .It
 The
 .Fn mbsrtowcs
@@ -79,7 +79,7 @@ the pointer object pointed to by
 .Fa s
 is a
 .Dv NULL
-pointer (if the conversion is stopped due to reaching a null byte)
+pointer (if the conversion is stopped due to reaching a nul byte)
 or the first byte of the character just after the last character converted.
 .Pp
 If
@@ -87,7 +87,7 @@ If
 is not a
 .Dv NULL
 pointer and the conversion is stopped due to reaching
-a null byte, the
+a nul byte, the
 .Fn mbsrtowcs
 places the state object pointed to by
 .Fa ps
@@ -134,18 +134,22 @@ returns:
 The value returned is the number of elements stored in the array
 pointed to by
 .Fa pwcs ,
-except for a terminating null wide character (if any).
+except for a terminating nul wide character (if any).
 If
 .Fa pwcs
-is not null and the value returned is equal to
+is not
+NULL
+and the value returned is equal to
 .Fa n ,
 the wide character string pointed to by
 .Fa pwcs
-is not null terminated.
+is not nul terminated.
 If
 .Fa pwcs
-is a null pointer, the value returned is the number of elements to contain
-the whole string converted, except for a terminating null wide character.
+is a
+.Dv NULL
+pointer, the value returned is the number of elements to contain
+the whole string converted, except for a terminating nul wide character.
 .It (size_t)-1
 The array indirectly pointed to by
 .Fa s

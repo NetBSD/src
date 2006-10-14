@@ -1,4 +1,4 @@
-.\" $NetBSD: mbstowcs.3,v 1.8 2004/01/24 16:58:54 wiz Exp $
+.\" $NetBSD: mbstowcs.3,v 1.9 2006/10/14 07:51:01 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .\" ----------------------------------------------------------------------
 .Sh DESCRIPTION
 .Fn mbstowcs
-converts a null-terminated multibyte character string pointed to by
+converts a nul-terminated multibyte character string pointed to by
 .Fa s
 to the corresponding wide character string and stores it in the array
 pointed to by
@@ -88,14 +88,14 @@ There are no cases that the value returned is greater than
 .Fa n
 (unless
 .Fa pwcs
-is a null pointer) or the value of the
+is a NULL pointer) or the value of the
 .Dv MB_CUR_MAX
 macro.
 If the return value is equal to
 .Fa n ,
 the string pointed to by
 .Fa pwcs
-will not be null-terminated.
+will not be nul-terminated.
 .It (size_t)-1
 .Fa s
 points to a string containing an invalid or incomplete multibyte character.

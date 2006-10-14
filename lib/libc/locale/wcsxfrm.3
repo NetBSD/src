@@ -1,4 +1,4 @@
-.\" $NetBSD: wcsxfrm.3,v 1.1 2006/10/13 17:28:09 tnozaki Exp $
+.\" $NetBSD: wcsxfrm.3,v 1.2 2006/10/14 07:51:01 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,22 +54,20 @@
 .Sh DESCRIPTION
 The
 .Fn wcsxfrm
-function transforms a null-terminated wide character string pointed to by
+function transforms a nul-terminated wide character string pointed to by
 .Fa src
-according to the current locale collation order
-then copies the transformed string
-into
+according to the current locale collation order then copies the
+transformed string into
 .Fa dst .
 No more than
 .Fa n
 wide characters are copied into
 .Fa dst ,
-including the terminating null character added.
+including the terminating nul character added.
 If
 .Fa n
 is set to 0
-(it helps to determine an actual size needed
-for transformation),
+(it helps to determine an actual size needed for transformation),
 .Fa dst
 is permitted to be a
 .Dv NULL
@@ -79,14 +77,13 @@ Comparing two strings using
 .Fn wcscmp
 after
 .Fn wcsxfrm
-is equivalent to comparing
-two original strings with
+is equivalent to comparing two original strings with
 .Fn wcscoll .
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn wcsxfrm
 returns the length of the transformed string not including
-the terminating null character.
+the terminating nul character.
 If this value is
 .Fa n
 or more, the contents of
@@ -100,8 +97,7 @@ are indeterminate.
 .Sh STANDARDS
 The
 .Fn wcsxfrm
-function
-conforms to
+function conforms to
 .St -isoC-99 .
 .Sh BUGS
 The current implementation of

@@ -1,4 +1,4 @@
-.\" $NetBSD: wcstombs.3,v 1.9 2006/08/08 17:32:56 wiz Exp $
+.\" $NetBSD: wcstombs.3,v 1.10 2006/10/14 07:51:01 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .\" ----------------------------------------------------------------------
 .Sh DESCRIPTION
 .Fn wcstombs
-converts the null-terminated wide character string pointed to by
+converts the nul-terminated wide character string pointed to by
 .Fa pwcs
 to the corresponding multibyte character string,
 and stores it in the array pointed to by
@@ -95,12 +95,14 @@ There are no cases that the value returned is greater than
 .Fa n
 (unless
 .Fa s
-is a null pointer).
+is a
+.Dv NULL
+pointer).
 If the return value is equal to
 .Fa n ,
 the string pointed to by
 .Fa s
-will not be null-terminated.
+will not be nul-terminated.
 .It (size_t)-1
 .Fa pwcs
 points to a string containing an invalid wide character.
