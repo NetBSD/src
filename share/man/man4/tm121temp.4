@@ -1,4 +1,4 @@
-.\"	$NetBSD: tm121temp.4,v 1.3 2006/10/13 21:19:08 wiz Exp $
+.\"	$NetBSD: tm121temp.4,v 1.4 2006/10/14 07:53:38 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Garrett D'Amore
 .\" All rights reserved.
@@ -66,8 +66,7 @@ SPI mode 0.
 .Pp
 The device reports itself with
 .Xr envsys 4
-using the device name as determined by
-.Xr device_xname 9 .
+using the generic device name.
 This name can be overridden, by specifying an alternate name in the device
 property
 .It envsys-description .
