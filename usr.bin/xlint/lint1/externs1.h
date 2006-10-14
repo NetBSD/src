@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.21 2005/04/07 16:28:40 christos Exp $	*/
+/*	$NetBSD: externs1.h,v 1.22 2006/10/14 21:08:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -286,3 +286,8 @@ extern	void	outsym(sym_t *, scl_t, def_t);
 extern	void	outfdef(sym_t *, pos_t *, int, int, sym_t *);
 extern	void	outcall(tnode_t *, int, int);
 extern	void	outusg(sym_t *);
+
+/*
+ * print.c
+ */
+extern	char	*prtnode(char *, size_t, const tnode_t *);
