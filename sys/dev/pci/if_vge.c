@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.10 2006/10/12 01:31:30 christos Exp $ */
+/* $NetBSD: if_vge.c,v 1.11 2006/10/14 11:29:15 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.10 2006/10/12 01:31:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.11 2006/10/14 11:29:15 tsutsui Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -147,8 +147,7 @@ static void vge_shutdown	(void *);
 static int vge_ifmedia_upd	(struct ifnet *);
 static void vge_ifmedia_sts	(struct ifnet *, struct ifmediareq *);
 
-static void vge_eeprom_getword	(struct vge_softc *, int, u_int16_t *);
-static void vge_read_eeprom	(struct vge_softc *, caddr_t, int, int, int);
+static uint16_t vge_read_eeprom	(struct vge_softc *, int);
 
 static void vge_miipoll_start	(struct vge_softc *);
 static void vge_miipoll_stop	(struct vge_softc *);
@@ -228,14 +227,11 @@ vge_m_defrag(struct mbuf *mold, int flags)
 /*
  * Read a word of data stored in the EEPROM at address 'addr.'
  */
-static void
-vge_eeprom_getword(sc, addr, dest)
-	struct vge_softc	*sc;
-	int			addr;
-	u_int16_t		*dest;
+static uint16_t
+vge_read_eeprom(struct vge_softc *sc, int addr)
 {
-	register int		i;
-	u_int16_t		word = 0;
+	int i;
+	uint16_t word = 0;
 
 	/*
 	 * Enter EEPROM embedded programming mode. In order to
@@ -259,8 +255,7 @@ vge_eeprom_getword(sc, addr, dest)
 
 	if (i == VGE_TIMEOUT) {
 		printf("%s: EEPROM read timed out\n", sc->sc_dev.dv_xname);
-		*dest = 0;
-		return;
+		return 0;
 	}
 
 	/* Read the result */
@@ -270,33 +265,7 @@ vge_eeprom_getword(sc, addr, dest)
 	CSR_CLRBIT_1(sc, VGE_EECSR, VGE_EECSR_EMBP/*|VGE_EECSR_ECS*/);
 	CSR_CLRBIT_1(sc, VGE_CHIPCFG2, VGE_CHIPCFG2_EELOAD);
 
-	*dest = word;
-
-	return;
-}
-
-/*
- * Read a sequence of words from the EEPROM.
- */
-static void
-vge_read_eeprom(sc, dest, off, cnt, swap)
-	struct vge_softc	*sc;
-	caddr_t			dest;
-	int			off;
-	int			cnt;
-	int			swap;
-{
-	int			i;
-	u_int16_t		word = 0, *ptr;
-
-	for (i = 0; i < cnt; i++) {
-		vge_eeprom_getword(sc, off + i, &word);
-		ptr = (u_int16_t *)(dest + (i * 2));
-		if (swap)
-			*ptr = ntohs(word);
-		else
-			*ptr = word;
-	}
+	return word;
 }
 
 static void
@@ -739,11 +708,11 @@ vge_dma_map_tx_desc(sc, m0, idx, flags)
 	 */
 	i++;
 
-	d->vge_sts = sz << 16;
-	d->vge_ctl = flags|(i << 28)|VGE_TD_LS_NORM;
+	d->vge_sts = htole32(sz << 16);
+	d->vge_ctl = htole32(flags|(i << 28)|VGE_TD_LS_NORM);
 
 	if (sz > ETHERMTU + ETHER_HDR_LEN)
-		d->vge_ctl |= VGE_TDCTL_JUMBO;
+		d->vge_ctl |= htole32(VGE_TDCTL_JUMBO);
 }
 
 static int
@@ -885,6 +854,7 @@ vge_attach(struct device *parent __unused, struct device *self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	const char *intrstr;
 	pci_intr_handle_t ih;
+	uint16_t val;
 
 	aprint_normal(": VIA VT612X Gigabit Ethernet (rev. %#x)\n",
 		PCI_REVISION(pa->pa_class));
@@ -931,8 +901,15 @@ vge_attach(struct device *parent __unused, struct device *self, void *aux)
 	/*
 	 * Get station address from the EEPROM.
 	 */
-	vge_read_eeprom(sc, (caddr_t)eaddr, VGE_EE_EADDR, 3, 0);
-	bcopy(eaddr, (char *)&sc->vge_eaddr, ETHER_ADDR_LEN);
+	val = vge_read_eeprom(sc, VGE_EE_EADDR + 0);
+	eaddr[0] = val & 0xff;
+	eaddr[1] = val >> 8;
+	val = vge_read_eeprom(sc, VGE_EE_EADDR + 1);
+	eaddr[2] = val & 0xff;
+	eaddr[3] = val >> 8;
+	val = vge_read_eeprom(sc, VGE_EE_EADDR + 2);
+	eaddr[4] = val & 0xff;
+	eaddr[5] = val >> 8;
 
 	printf("%s: Ethernet address: %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(eaddr));
