@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.41 2006/10/01 18:56:22 elad Exp $	*/
+/*	$NetBSD: kd.c,v 1.42 2006/10/15 20:57:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.41 2006/10/01 18:56:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.42 2006/10/15 20:57:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -455,12 +455,11 @@ static void kdcnpollc(dev_t, int);
 /* The keyboard driver uses cn_hw to access the real console driver */
 extern struct consdev consdev_prom;
 struct consdev consdev_kd = {
-	kdcnprobe,
-	kdcninit,
-	kdcngetc,
-	kdcnputc,
-	kdcnpollc,
-	NULL,
+	.cn_probe = kdcnprobe,
+	.cn_init = kdcninit,
+	.cn_getc = kdcngetc,
+	.cn_putc = kdcnputc,
+	.cn_pollc = kdcnpollc,
 };
 struct consdev *cn_hw = &consdev_kd;
 
