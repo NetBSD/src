@@ -1,4 +1,4 @@
-/* $NetBSD: netmask.c,v 1.5 2006/05/27 16:00:05 agc Exp $ */
+/* $NetBSD: netmask.c,v 1.6 2006/10/15 19:52:40 christos Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -66,7 +66,7 @@ static magic_t	magics[] = {
 	{	"any",	"0/0"	},
 	{	"all",	"0/0"	},
 	{	"none",	"0/32"	},
-	{	NULL,	}
+	{	NULL,	NULL	},
 };
 
 #ifndef ISCSI_HTONL
