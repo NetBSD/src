@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.80 2006/10/14 23:54:14 itohy Exp $      */
+/*	$NetBSD: ata.c,v 1.81 2006/10/15 00:00:00 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.80 2006/10/14 23:54:14 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.81 2006/10/15 00:00:00 itohy Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.80 2006/10/14 23:54:14 itohy Exp $");
 #ifdef ATADEBUG
 int atadebug_mask = 0;
 #define ATADEBUG_PRINT(args, level) \
-        if (atadebug_mask & (level)) \
+	if (atadebug_mask & (level)) \
 		printf args
 #else
 #define ATADEBUG_PRINT(args, level)
@@ -287,12 +287,12 @@ atabusconfig(struct atabus_softc *atabus_sc)
 		}
 		simple_unlock(&atabus_interlock);
 	}
-        simple_lock(&atabus_interlock);
-        TAILQ_REMOVE(&atabus_initq_head, atabus_initq, atabus_initq);
-        simple_unlock(&atabus_interlock);
+	simple_lock(&atabus_interlock);
+	TAILQ_REMOVE(&atabus_initq_head, atabus_initq, atabus_initq);
+	simple_unlock(&atabus_interlock);
 
-        free(atabus_initq, M_DEVBUF);
-        wakeup(&atabus_initq_head);
+	free(atabus_initq, M_DEVBUF);
+	wakeup(&atabus_initq_head);
 
 	ata_delref(chp);
 
@@ -398,7 +398,7 @@ atabus_match(struct device *parent __unused, struct cfdata *cf, void *aux)
 
 	if (cf->cf_loc[ATACF_CHANNEL] != chp->ch_channel &&
 	    cf->cf_loc[ATACF_CHANNEL] != ATACF_CHANNEL_DEFAULT)
-	    	return (0);
+		return (0);
 
 	return (1);
 }
@@ -420,8 +420,8 @@ atabus_attach(struct device *parent __unused, struct device *self, void *aux)
 	aprint_normal("\n");
 	aprint_naive("\n");
 
-        if (ata_addref(chp))
-                return;
+	if (ata_addref(chp))
+		return;
 
 	initq = malloc(sizeof(*initq), M_DEVBUF, M_WAITOK);
 	initq->atabus_sc = sc;
@@ -517,7 +517,7 @@ atabus_detach(struct device *self, int flags)
 
 	/* power hook */
 	if (sc->sc_powerhook)
-	      powerhook_disestablish(sc->sc_powerhook);
+		powerhook_disestablish(sc->sc_powerhook);
 
 	/*
 	 * Detach atapibus and its children.
@@ -1378,22 +1378,22 @@ int
 atabusopen(dev_t dev, int flag __unused, int fmt __unused,
     struct lwp *l __unused)
 {
-        struct atabus_softc *sc;
-        int error, unit = minor(dev);
+	struct atabus_softc *sc;
+	int error, unit = minor(dev);
 
-        if (unit >= atabus_cd.cd_ndevs ||
-            (sc = atabus_cd.cd_devs[unit]) == NULL)
-                return (ENXIO);
+	if (unit >= atabus_cd.cd_ndevs ||
+	    (sc = atabus_cd.cd_devs[unit]) == NULL)
+		return (ENXIO);
 
-        if (sc->sc_flags & ATABUSCF_OPEN)
-                return (EBUSY);
+	if (sc->sc_flags & ATABUSCF_OPEN)
+		return (EBUSY);
 
-        if ((error = ata_addref(sc->sc_chan)) != 0)
-                return (error);
+	if ((error = ata_addref(sc->sc_chan)) != 0)
+		return (error);
 
-        sc->sc_flags |= ATABUSCF_OPEN;
+	sc->sc_flags |= ATABUSCF_OPEN;
 
-        return (0);
+	return (0);
 }
 
 
@@ -1401,40 +1401,40 @@ int
 atabusclose(dev_t dev, int flag __unused, int fmt __unused,
     struct lwp *l __unused)
 {
-        struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
+	struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
 
-        ata_delref(sc->sc_chan);
+	ata_delref(sc->sc_chan);
 
-        sc->sc_flags &= ~ATABUSCF_OPEN;
+	sc->sc_flags &= ~ATABUSCF_OPEN;
 
-        return (0);
+	return (0);
 }
 
 int
 atabusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
     struct lwp *l __unused)
 {
-        struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
+	struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
 	struct ata_channel *chp = sc->sc_chan;
 	int min_drive, max_drive, drive;
-        int error;
+	int error;
 	int s;
 
-        /*
-         * Enforce write permission for ioctls that change the
-         * state of the bus.  Host adapter specific ioctls must
-         * be checked by the adapter driver.
-         */
-        switch (cmd) {
-        case ATABUSIOSCAN:
-        case ATABUSIODETACH:
-        case ATABUSIORESET:
-                if ((flag & FWRITE) == 0)
-                        return (EBADF);
-        }
+	/*
+	 * Enforce write permission for ioctls that change the
+	 * state of the bus.  Host adapter specific ioctls must
+	 * be checked by the adapter driver.
+	 */
+	switch (cmd) {
+	case ATABUSIOSCAN:
+	case ATABUSIODETACH:
+	case ATABUSIORESET:
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+	}
 
-        switch (cmd) {
-        case ATABUSIORESET:
+	switch (cmd) {
+	case ATABUSIORESET:
 		s = splbio();
 		ata_reset_channel(sc->sc_chan, AT_WAIT | AT_POLL);
 		splx(s);
