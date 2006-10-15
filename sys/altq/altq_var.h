@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_var.h,v 1.9 2006/10/12 19:59:08 peter Exp $	*/
+/*	$NetBSD: altq_var.h,v 1.10 2006/10/15 13:17:13 peter Exp $	*/
 /*	$KAME: altq_var.h,v 1.18 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -206,8 +206,6 @@ typedef void (timeout_t)(void *);
 #endif
 
 #define	m_pktlen(m)		((m)->m_pkthdr.len)
-
-extern int pfaltq_running;
 
 struct ifnet; struct mbuf;
 struct pf_altq;

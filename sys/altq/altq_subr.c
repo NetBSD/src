@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.17 2006/10/13 09:57:28 peter Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.18 2006/10/15 13:17:13 peter Exp $	*/
 /*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.17 2006/10/13 09:57:28 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.18 2006/10/15 13:17:13 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -92,10 +92,6 @@ static void	tbr_timeout(void *);
 int (*altq_input)(struct mbuf *, int) = NULL;
 static int tbr_timer = 0;	/* token bucket regulator timer */
 static struct callout tbr_callout = CALLOUT_INITIALIZER;
-
-#if NPF > 0
-int pfaltq_running;	/* keep track of running state */
-#endif
 
 #ifdef ALTQ3_CLFIER_COMPAT
 static int 	extract_ports4(struct mbuf *, struct ip *, struct flowinfo_in *);
@@ -430,9 +426,7 @@ tbr_get(struct ifaltq *ifq, struct tb_profile *profile)
 int
 altq_pfattach(struct pf_altq *a)
 {
-	struct ifnet *ifp;
-	struct tb_profile tb;
-	int s, error = 0;
+	int error = 0;
 
 	switch (a->scheduler) {
 	case ALTQT_NONE:
@@ -454,23 +448,6 @@ altq_pfattach(struct pf_altq *a)
 #endif
 	default:
 		error = ENXIO;
-	}
-
-	ifp = ifunit(a->ifname);
-
-	/* if the state is running, enable altq */
-	if (error == 0 && pfaltq_running &&
-	    ifp != NULL && ifp->if_snd.altq_type != ALTQT_NONE &&
-	    !ALTQ_IS_ENABLED(&ifp->if_snd))
-			error = altq_enable(&ifp->if_snd);
-
-	/* if altq is already enabled, reset set tokenbucket regulator */
-	if (error == 0 && ifp != NULL && ALTQ_IS_ENABLED(&ifp->if_snd)) {
-		tb.rate = a->ifbandwidth;
-		tb.depth = a->tbrsize;
-		s = splnet();
-		error = tbr_set(&ifp->if_snd, &tb);
-		splx(s);
 	}
 
 	return (error);
