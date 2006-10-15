@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_bool.c,v 1.7 2006/10/12 04:41:13 thorpej Exp $	*/
+/*	$NetBSD: prop_bool.c,v 1.8 2006/10/15 19:08:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -67,14 +67,14 @@ static const struct _prop_object_type _prop_object_type_bool = {
 	((x) != NULL && (x)->pb_obj.po_type == &_prop_object_type_bool)
 
 static void
-_prop_bool_free(void *v)
+/*ARGSUSED*/
+_prop_bool_free(void *v __unused)
 {
 
 	/*
 	 * This should never happen as we "leak" our initial reference
 	 * count.
 	 */
-	(void) v;
 	/* XXX forced assertion failure? */
 }
 
