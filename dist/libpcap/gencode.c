@@ -21,7 +21,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/gencode.c,v 1.3 2006/04/26 09:24:33 tron Exp $ (LBL)";
+    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/gencode.c,v 1.4 2006/10/15 19:27:21 christos Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -351,6 +351,7 @@ pcap_compile(pcap_t *p, struct bpf_program *program,
 	     const char *buf, int optimize, bpf_u_int32 mask)
 {
 	extern int n_errors;
+	const char * volatile xbuf = buf;
 	int len;
 
 	no_optimize = 0;
@@ -372,7 +373,7 @@ pcap_compile(pcap_t *p, struct bpf_program *program,
 		return -1;
 	}
 
-	lex_init(buf ? buf : "");
+	lex_init(xbuf ? xbuf : "");
 	init_linktype(p);
 	(void)pcap_parse();
 
