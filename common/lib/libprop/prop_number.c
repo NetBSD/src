@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.10 2006/10/15 19:08:48 christos Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.11 2006/10/15 19:11:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -483,7 +483,6 @@ _prop_number_internalize_unsigned(struct _prop_object_internalize_context *ctx,
 {
 	char *cp;
 
-/*###486 [lint] warning expression has null effect [129]%%%*/
 	_PROP_ASSERT(/*CONSTCOND*/sizeof(unsigned long long) ==
 		     sizeof(uint64_t));
 
@@ -507,7 +506,6 @@ _prop_number_internalize_signed(struct _prop_object_internalize_context *ctx,
 {
 	char *cp;
 
-/*###509 [lint] warning expression has null effect [129]%%%*/
 	_PROP_ASSERT(/*CONSTCOND*/sizeof(long long) == sizeof(int64_t));
 
 #ifndef _KERNEL
