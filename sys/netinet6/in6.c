@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.112 2006/10/12 01:32:39 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.113 2006/10/15 07:00:44 dyoung Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.112 2006/10/12 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.113 2006/10/15 07:00:44 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -1560,6 +1560,8 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, l)
 		ifra.ifra_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
 		in6_prefixlen2mask(&ifra.ifra_prefixmask.sin6_addr, prefixlen);
 
+		ifra.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
+		ifra.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
 		ifra.ifra_flags = iflr->flags & ~IFLR_PREFIX;
 		return in6_control(so, SIOCAIFADDR_IN6, (caddr_t)&ifra, ifp, l);
 	    }
