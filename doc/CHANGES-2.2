@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.85 2006/10/15 15:55:53 bouyer Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.86 2006/10/15 16:01:29 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -929,4 +929,11 @@ usr.sbin/user/user.c				1.112
 	of any secondary groups, buf is completely uninitialized and userinfo
 	adds garbage to the list of groups printed.
 	[pavel, ticket #10718]
+
+sys/arch/acorn26/acorn26/cpuswitch.c		1.8
+
+	When processing RASes, only pay attention to, and change, the PC parts
+	of R15, leaving the PSR bits alone.  Necessary to make
+	regress/sys/kern/ras/ras1 pass.
+	[bjh21, ticket #10717]
 
