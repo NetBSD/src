@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.65 2006/03/29 04:16:50 thorpej Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.66 2006/10/15 20:50:29 martin Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.65 2006/03/29 04:16:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.66 2006/10/15 20:50:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,9 @@ static struct ispmdvec mdvec = {
 	NULL,
 	isp_sbus_reset1,
 	NULL,
-	ISP_1000_RISC_CODE
+	ISP_1000_RISC_CODE,
+	0,
+	0
 };
 
 struct isp_sbussoftc {
