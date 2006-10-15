@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_parse.c,v 1.2 2004/05/20 20:35:05 christos Exp $	*/
+/*	$NetBSD: ns_parse.c,v 1.3 2006/10/15 16:13:12 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_parse.c,v 1.3.2.1.4.1 2004/03/09 08:33:44 marka Exp";
 #else
-__RCSID("$NetBSD: ns_parse.c,v 1.2 2004/05/20 20:35:05 christos Exp $");
+__RCSID("$NetBSD: ns_parse.c,v 1.3 2006/10/15 16:13:12 christos Exp $");
 #endif
 #endif
 
@@ -141,7 +141,7 @@ ns_parserr(ns_msg *handle, ns_sect section, int rrnum, ns_rr *rr) {
 	int b;
 
 	/* Make section right. */
-	if (section < 0 || section >= ns_s_max)
+	if (/* section < 0 || */ section >= ns_s_max)
 		RETERR(ENODEV);
 	if (section != handle->_sect)
 		setsection(handle, section);
