@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.1 2006/10/14 21:08:50 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.2 2006/10/15 01:16:31 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,8 +35,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.1 2006/10/14 21:08:50 christos Exp $");
+#ifndef lint
+__RCSID("$NetBSD: print.c,v 1.2 2006/10/15 01:16:31 dogcow Exp $");
+#endif
 
 #include <stdio.h>
 
