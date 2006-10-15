@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.730 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.731 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -122,3 +122,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	pf(4): Added support for ALTQ. [peter 20061012]
 	vge(4): Make this driver work on big endian machines
 		(at least on macppc). [tsutsui 20061014]
+	gpt(8): Added from FreeBSD [christos 20061015]
