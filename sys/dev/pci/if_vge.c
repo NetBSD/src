@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.17 2006/10/15 10:54:15 tsutsui Exp $ */
+/* $NetBSD: if_vge.c,v 1.18 2006/10/15 11:52:36 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.17 2006/10/15 10:54:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.18 2006/10/15 11:52:36 tsutsui Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -927,7 +927,7 @@ vge_newbuf(struct vge_softc *sc, int idx, struct mbuf *m)
 	 * discarding the old buffer.
 	 */
 	m->m_len = m->m_pkthdr.len = MCLBYTES - VGE_ETHER_ALIGN;
-	m_adj(m, VGE_ETHER_ALIGN);
+	m->m_data += VGE_ETHER_ALIGN;
 #else
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
 #endif
