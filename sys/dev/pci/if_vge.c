@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.16 2006/10/15 10:33:25 tsutsui Exp $ */
+/* $NetBSD: if_vge.c,v 1.17 2006/10/15 10:54:15 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.16 2006/10/15 10:33:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.17 2006/10/15 10:54:15 tsutsui Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -246,7 +246,6 @@ vge_read_eeprom(struct vge_softc *sc, int addr)
 
 	/* Wait for the done bit to be set. */
 	for (i = 0; i < VGE_TIMEOUT; i++) {
-		DELAY(5);
 		if (CSR_READ_1(sc, VGE_EECMD) & VGE_EECMD_EDONE)
 			break;
 	}
