@@ -112,20 +112,20 @@ struct vge_softc {
 
 #define VGE_TXDESCSYNC(sc, idx, ops)					\
 	bus_dmamap_sync((sc)->vge_dmat,					\
-	    (sc)->vge_ldata.vge_tx_dmamap[(idx)],			\
+	    (sc)->vge_ldata.vge_tx_list_map,				\
 	    sizeof(struct vge_tx_desc) * (idx),				\
 	    offsetof(struct vge_tx_desc, vge_frag[0]),			\
 	    (ops))
 #define VGE_TXFRAGSYNC(sc, idx, nsegs, ops)				\
 	bus_dmamap_sync((sc)->vge_dmat,					\
-	    (sc)->vge_ldata.vge_tx_dmamap[(idx)],			\
+	    (sc)->vge_ldata.vge_tx_list_map,				\
 	    sizeof(struct vge_tx_desc) * (idx) +			\
 	    offsetof(struct vge_tx_desc, vge_frag[0]),			\
 	    sizeof(struct vge_tx_frag) * (nsegs),			\
 	    (ops))
 #define VGE_RXDESCSYNC(sc, idx, ops)					\
 	bus_dmamap_sync((sc)->vge_dmat,					\
-	    (sc)->vge_ldata.vge_rx_dmamap[(idx)],			\
+	    (sc)->vge_ldata.vge_rx_list_map,				\
 	    sizeof(struct vge_rx_desc) * (idx),				\
 	    sizeof(struct vge_rx_desc),					\
 	    (ops))
