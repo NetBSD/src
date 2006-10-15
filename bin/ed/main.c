@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2006/06/11 16:15:20 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2006/10/16 00:00:48 christos Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
    for the ed line editor. */
@@ -39,7 +39,7 @@ __COPYRIGHT(
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.18 2006/06/11 16:15:20 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 2006/10/16 00:00:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,14 +108,12 @@ const char *usage = "usage: %s [-] [-sxE] [-p string] [name]\n";
 
 /* ed: line editor */
 int
-main(int argc, char *argv[])
+main(int ac, char *av[])
 {
 	int c, n;
 	long status = 0;
-#ifdef __GNUC__
-	(void) &argc;
-	(void) &argv;
-#endif
+	volatile int argc = ac;
+	char ** volatile argv = av;
 
 	red = (n = strlen(argv[0])) > 2 && argv[0][n - 3] == 'r';
 top:
