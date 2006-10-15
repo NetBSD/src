@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ttl.c,v 1.2 2004/05/20 20:35:05 christos Exp $	*/
+/*	$NetBSD: ns_ttl.c,v 1.3 2006/10/15 16:14:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_ttl.c,v 1.1.206.1 2004/03/09 08:33:45 marka Exp";
 #else
-__RCSID("$NetBSD: ns_ttl.c,v 1.2 2004/05/20 20:35:05 christos Exp $");
+__RCSID("$NetBSD: ns_ttl.c,v 1.3 2006/10/15 16:14:08 christos Exp $");
 #endif
 #endif
 
@@ -51,7 +51,7 @@ static int	fmt1(int t, char s, char **buf, size_t *buflen);
 
 /* Macros. */
 
-#define T(x) if ((x) < 0) return (-1); else
+#define T(x) if ((x) < 0) return (-1)
 
 /* Public. */
 
