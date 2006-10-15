@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.7 2004/01/04 11:33:29 jdolecek Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.7.6.1 2006/10/15 13:09:02 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.7 2004/01/04 11:33:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.7.6.1 2006/10/15 13:09:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -128,6 +128,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		bzero(tf, sizeof(*tf));
 	else
 		*tf = *l1->l_addr->u_pcb.pcb_tf;
+	/* If specified, give the child a different stack. */
+	if (stack != NULL)
+		tf->tf_usr_sp = (u_int)stack + stacksize;
 	l2->l_addr->u_pcb.pcb_tf = tf;
 	/* Fabricate a new switchframe */
 	bzero(sf, sizeof(*sf));
