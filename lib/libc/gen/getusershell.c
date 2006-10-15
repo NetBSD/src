@@ -1,4 +1,4 @@
-/*	$NetBSD: getusershell.c,v 1.25 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.26 2006/10/15 16:14:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2005 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getusershell.c,v 1.25 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: getusershell.c,v 1.26 2006/10/15 16:14:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -481,7 +481,7 @@ endusershell(void)
 		NS_FILES_CB(_files_endusershell, NULL)
 		NS_DNS_CB(_dns_endusershell, NULL)
 		NS_NIS_CB(_nis_endusershell, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	mutex_lock(&__shellmutex);
@@ -505,7 +505,7 @@ getusershell(void)
 		NS_FILES_CB(_files_getusershell, NULL)
 		NS_DNS_CB(_dns_getusershell, NULL)
 		NS_NIS_CB(_nis_getusershell, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	mutex_lock(&__shellmutex);
@@ -538,7 +538,7 @@ setusershell(void)
 		NS_FILES_CB(_files_setusershell, NULL)
 		NS_DNS_CB(_dns_setusershell, NULL)
 		NS_NIS_CB(_nis_setusershell, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	mutex_lock(&__shellmutex);

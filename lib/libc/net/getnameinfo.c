@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.44 2006/08/24 15:39:11 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.45 2006/10/15 16:14:46 christos Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.44 2006/08/24 15:39:11 christos Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.45 2006/10/15 16:14:46 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -85,7 +85,7 @@ static const struct afd {
 #endif
 	{PF_INET, sizeof(struct in_addr), sizeof(struct sockaddr_in),
 		offsetof(struct sockaddr_in, sin_addr)},
-	{0, 0, 0},
+	{0, 0, 0, 0},
 };
 
 struct sockinet {

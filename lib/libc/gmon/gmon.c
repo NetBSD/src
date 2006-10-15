@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.28 2006/10/04 21:23:56 christos Exp $	*/
+/*	$NetBSD: gmon.c,v 1.29 2006/10/15 16:14:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.28 2006/10/04 21:23:56 christos Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.29 2006/10/15 16:14:46 christos Exp $");
 #endif
 #endif
 
@@ -90,7 +90,7 @@ __RCSID("$NetBSD: gmon.c,v 1.28 2006/10/04 21:23:56 christos Exp $");
 #include "extern.h"
 #include "reentrant.h"
 
-struct gmonparam _gmonparam = { GMON_PROF_OFF };
+struct gmonparam _gmonparam = { .state = GMON_PROF_OFF };
 
 #ifdef _REENTRANT
 struct gmonparam *_gmonfree;
