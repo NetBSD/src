@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.946 2006/10/13 17:28:09 tnozaki Exp $
+#	$NetBSD: mi,v 1.947 2006/10/15 20:44:21 dbj Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2517,6 +2517,7 @@
 ./usr/libdata/debug/usr/bin/refer.debug		comp-groff-debug	debug
 ./usr/libdata/debug/usr/bin/renice.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rev.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/revoke.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rfcomm_sppd.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rlog.debug		comp-rcs-debug		debug
 ./usr/libdata/debug/usr/bin/rlogin.debug	comp-netutil-debug	debug
