@@ -1,4 +1,4 @@
-/*	$NetBSD: nsswitch.h,v 1.18 2005/11/29 03:12:58 christos Exp $	*/
+/*	$NetBSD: nsswitch.h,v 1.19 2006/10/15 16:10:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -144,6 +144,7 @@ typedef struct {
 #else
 #   define NS_NIS_CB(F,C)
 #endif
+#define	NS_NULL_CB		{ .src = NULL },
 
 /*
  * ns_src - `nsswitch source'
