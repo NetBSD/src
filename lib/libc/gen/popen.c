@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.28 2003/09/15 22:30:38 cl Exp $	*/
+/*	$NetBSD: popen.c,v 1.29 2006/10/15 16:12:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: popen.c,v 1.28 2003/09/15 22:30:38 cl Exp $");
+__RCSID("$NetBSD: popen.c,v 1.29 2006/10/15 16:12:02 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -79,29 +79,25 @@ static rwlock_t pidlist_lock = RWLOCK_INITIALIZER;
 #endif
 
 FILE *
-popen(command, type)
-	const char *command, *type;
+popen(const char *command, const char *type)
 {
 	struct pid *cur, *old;
 	FILE *iop;
-	int pdes[2], pid, twoway, serrno;
+	const char * volatile xtype = type;
+	int pdes[2], pid, serrno;
+	volatile int twoway;
 
 	_DIAGASSERT(command != NULL);
-	_DIAGASSERT(type != NULL);
+	_DIAGASSERT(xtype != NULL);
 
-#ifdef __GNUC__
-	/* This outrageous construct just to shut up a GCC warning. */
-	(void) &cur; (void) &twoway; (void) &type;
-#endif
-
-	if (strchr(type, '+')) {
+	if (strchr(xtype, '+')) {
 		twoway = 1;
 		type = "r+";
 		if (socketpair(AF_LOCAL, SOCK_STREAM, 0, pdes) < 0)
 			return (NULL);
 	} else  {
 		twoway = 0;
-		if ((*type != 'r' && *type != 'w') || type[1] ||
+		if ((*xtype != 'r' && *xtype != 'w') || xtype[1] ||
 		    (pipe(pdes) < 0)) {
 			errno = EINVAL;
 			return (NULL);
@@ -139,7 +135,7 @@ popen(command, type)
 			close(fileno(old->fp)); /* don't allow a flush */
 #endif
 
-		if (*type == 'r') {
+		if (*xtype == 'r') {
 			(void)close(pdes[0]);
 			if (pdes[1] != STDOUT_FILENO) {
 				(void)dup2(pdes[1], STDOUT_FILENO);
@@ -162,14 +158,14 @@ popen(command, type)
 	rwlock_unlock(&__environ_lock);
 
 	/* Parent; assume fdopen can't fail. */
-	if (*type == 'r') {
-		iop = fdopen(pdes[0], type);
+	if (*xtype == 'r') {
+		iop = fdopen(pdes[0], xtype);
 #ifdef _REENTRANT
 		cur->fd = pdes[0];
 #endif
 		(void)close(pdes[1]);
 	} else {
-		iop = fdopen(pdes[1], type);
+		iop = fdopen(pdes[1], xtype);
 #ifdef _REENTRANT
 		cur->fd = pdes[1];
 #endif
