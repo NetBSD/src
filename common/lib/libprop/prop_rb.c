@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_rb.c,v 1.4 2006/10/15 19:04:28 martin Exp $	*/
+/*	$NetBSD: prop_rb.c,v 1.5 2006/10/15 19:08:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -87,17 +87,12 @@ static bool rb_tree_check_node(const struct rb_tree *, const struct rb_node *,
  * it to be const, that on some architectures trying to write to it will
  * cause a fault.
  */
-#ifdef __lint__
-/* XXX Work around for bug in lint. */
-static const struct rb_node sentinel_node = { 0 };
-#else
 static const struct rb_node sentinel_node = {
 	.rb_nodes = { RBUNCONST(&sentinel_node),
 		      RBUNCONST(&sentinel_node),
 		      NULL },
-	.rb_u.u_s = { .s_sentinel = 1, }
+	.rb_u = { .u_s = { .s_sentinel = 1 } },
 };
-#endif /* __lint__ */
 
 void
 _prop_rb_tree_init(struct rb_tree *rbt, const struct rb_tree_ops *ops)
@@ -116,7 +111,7 @@ _prop_rb_tree_init(struct rb_tree *rbt, const struct rb_tree_ops *ops)
  */
 /*ARGSUSED*/
 static void
-rb_tree_reparent_nodes(struct rb_tree *rbt, struct rb_node *old_father,
+rb_tree_reparent_nodes(struct rb_tree *rbt __unused, struct rb_node *old_father,
     unsigned int which)
 {
 	const unsigned int other = which ^ RB_NODE_OTHER;
@@ -125,8 +120,6 @@ rb_tree_reparent_nodes(struct rb_tree *rbt, struct rb_node *old_father,
 	struct rb_node * const new_father = old_child;
 	struct rb_node * const new_child = old_father;
 	unsigned int properties;
-
-	(void) rbt;
 
 	KASSERT(which == RB_NODE_LEFT || which == RB_NODE_RIGHT);
 
@@ -542,13 +535,11 @@ rb_tree_swap_prune_and_rebalance(struct rb_tree *rbt, struct rb_node *self,
  */
 /*ARGSUSED*/
 static void
-rb_tree_prune_blackred_branch(struct rb_tree *rbt, struct rb_node *self,
-	unsigned int which)
+rb_tree_prune_blackred_branch(struct rb_tree *rbt __unused,
+    struct rb_node *self, unsigned int which)
 {
 	struct rb_node *parent = self->rb_parent;
 	struct rb_node *child = self->rb_nodes[which];
-
-	(void) rbt;
 
 	KASSERT(which == RB_NODE_LEFT || which == RB_NODE_RIGHT);
 	KASSERT(RB_BLACK_P(self) && RB_RED_P(child));
