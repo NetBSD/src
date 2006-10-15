@@ -25,7 +25,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FBSDID
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
+#endif
+#ifdef __RCSID
+__RCSID("$NetBSD: migrate.c,v 1.2 2006/10/15 22:36:29 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
@@ -100,21 +105,21 @@ migrate_disklabel(int fd, off_t start, struct gpt_ent *ent)
 		case FS_SWAP: {
 			uuid_t swap = GPT_ENT_TYPE_FREEBSD_SWAP;
 			le_uuid_enc(&ent->ent_type, &swap);
-			utf8_to_utf16("FreeBSD swap partition",
+			utf8_to_utf16((const uint8_t *)"FreeBSD swap partition",
 			    ent->ent_name, 36);
 			break;
 		}
 		case FS_BSDFFS: {
 			uuid_t ufs = GPT_ENT_TYPE_FREEBSD_UFS;
 			le_uuid_enc(&ent->ent_type, &ufs);
-			utf8_to_utf16("FreeBSD UFS partition",
+			utf8_to_utf16((const uint8_t *)"FreeBSD UFS partition",
 			    ent->ent_name, 36);
 			break;
 		}
 		case FS_VINUM: {
 			uuid_t vinum = GPT_ENT_TYPE_FREEBSD_VINUM;
 			le_uuid_enc(&ent->ent_type, &vinum);
-			utf8_to_utf16("FreeBSD vinum partition",
+			utf8_to_utf16((const uint8_t *)"FreeBSD vinum partition",
 			    ent->ent_name, 36);
 			break;
 		}
@@ -220,7 +225,7 @@ migrate(int fd)
 	 * XXX struct gpt_hdr is not a multiple of 8 bytes in size and thus
 	 * contains padding we must not include in the size.
 	 */
-	hdr->hdr_size = htole32(offsetof(struct gpt_hdr, padding));
+	hdr->hdr_size = htole32(GPT_SIZE);
 	hdr->hdr_lba_self = htole64(gpt->map_start);
 	hdr->hdr_lba_alt = htole64(tpg->map_start);
 	hdr->hdr_lba_start = htole64(tbl->map_start + blocks);
@@ -255,7 +260,7 @@ migrate(int fd)
 				le_uuid_enc(&ent->ent_type, &freebsd);
 				ent->ent_lba_start = htole64((uint64_t)start);
 				ent->ent_lba_end = htole64(start + size - 1LL);
-				utf8_to_utf16("FreeBSD disklabel partition",
+				utf8_to_utf16((const uint8_t *)"FreeBSD disklabel partition",
 				    ent->ent_name, 36);
 				ent++;
 			} else
@@ -267,7 +272,7 @@ migrate(int fd)
 			le_uuid_enc(&ent->ent_type, &efi_slice);
 			ent->ent_lba_start = htole64((uint64_t)start);
 			ent->ent_lba_end = htole64(start + size - 1LL);
-			utf8_to_utf16("EFI system partition",
+			utf8_to_utf16((const uint8_t *)"EFI system partition",
 			    ent->ent_name, 36);
 			ent++;
 			break;
