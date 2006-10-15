@@ -25,7 +25,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FBSDID
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
+#endif
+#ifdef __RCSID
+__RCSID("$NetBSD: show.c,v 1.2 2006/10/15 22:36:29 christos Exp $");
+#endif
 
 #include <sys/types.h>
 

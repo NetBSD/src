@@ -27,12 +27,18 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FBSDID
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
+#endif
+#ifdef __RCSID
+__RCSID("$NetBSD: gpt.c,v 1.2 2006/10/15 22:36:29 christos Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/disk.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 
 #include <err.h>
 #include <errno.h>
@@ -43,6 +49,12 @@ __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $")
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef __NetBSD__
+#include <util.h>
+#include <ctype.h>
+#include <prop/proplib.h>
+#include <sys/drvctlio.h>
+#endif
 
 #include "map.h"
 #include "gpt.h"
@@ -169,7 +181,7 @@ void
 utf8_to_utf16(const uint8_t *s8, uint16_t *s16, size_t s16len)
 {
 	size_t s16idx, s8idx, s8len;
-	uint32_t utfchar;
+	uint32_t utfchar = 0;
 	unsigned int c, utfbytes;
 
 	s8len = 0;
@@ -433,6 +445,88 @@ gpt_mbr(int fd, off_t lba)
 	return (0);
 }
 
+#ifdef __NetBSD__
+static int
+drvctl(const char *name, u_int *sector_size, off_t *media_size)
+{
+	prop_dictionary_t command_dict, args_dict, results_dict, data_dict,
+	    disk_info, geometry;
+	prop_string_t string;
+	prop_number_t number;
+	int dfd, res;
+	char *dname, *p;
+
+	if ((dfd = open("/dev/drvctl", O_RDONLY)) == -1)
+		return -1;
+
+	command_dict = prop_dictionary_create();
+	args_dict = prop_dictionary_create();
+
+	string = prop_string_create_cstring_nocopy("get-properties");
+	prop_dictionary_set(command_dict, "drvctl-command", string);
+	prop_object_release(string);
+
+	if ((dname = strdup(name[0] == 'r' ? name + 1 : name)) == NULL) {
+		(void)close(dfd);
+		return -1;
+	}
+	for (p = dname; *p; p++)
+		continue;
+	for (--p; p >= dname && !isdigit((unsigned char)*p); *p-- = '\0')
+		continue;
+
+	string = prop_string_create_cstring(dname);
+	free(dname);
+	prop_dictionary_set(args_dict, "device-name", string);
+	prop_object_release(string);
+
+	prop_dictionary_set(command_dict, "drvctl-arguments", args_dict);
+	prop_object_release(args_dict);
+
+	res = prop_dictionary_sendrecv_ioctl(command_dict, dfd, DRVCTLCOMMAND,
+	    &results_dict);
+	(void)close(dfd);
+	prop_object_release(command_dict);
+	if (res) {
+		errno = res;
+		return -1;
+	}
+
+	number = prop_dictionary_get(results_dict, "drvctl-error");
+	if ((errno = prop_number_integer_value(number)) != 0)
+		return -1;
+
+	data_dict = prop_dictionary_get(results_dict, "drvctl-result-data");
+	if (data_dict == NULL)
+		goto out;
+
+	disk_info = prop_dictionary_get(data_dict, "disk-info");
+	if (disk_info == NULL)
+		goto out;
+
+	geometry = prop_dictionary_get(disk_info, "geometry");
+	if (geometry == NULL)
+		goto out;
+
+	number = prop_dictionary_get(geometry, "sector-size");
+	if (number == NULL)
+		goto out;
+
+	*sector_size = prop_number_integer_value(number);
+
+	number = prop_dictionary_get(geometry, "sectors-per-unit");
+	if (number == NULL)
+		goto out;
+
+	*media_size = prop_number_integer_value(number) * *sector_size;
+
+	return 0;
+out:
+	errno = EINVAL;
+	return -1;
+}
+#endif
+
 static int
 gpt_gpt(int fd, off_t lba)
 {
@@ -497,7 +591,7 @@ gpt_gpt(int fd, off_t lba)
 
 	for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
 		ent = (void*)(p + i * le32toh(hdr->hdr_entsz));
-		if (uuid_is_nil(&ent->ent_type, NULL))
+		if (uuid_is_nil((uuid_t *)&ent->ent_type, NULL))
 			continue;
 
 		size = le64toh(ent->ent_lba_end) - le64toh(ent->ent_lba_start) +
@@ -535,9 +629,9 @@ gpt_open(const char *dev)
 
 	mode = readonly ? O_RDONLY : O_RDWR|O_EXCL;
 
-	strlcpy(device_path, dev, sizeof(device_path));
 	device_name = device_path;
-
+#ifdef __FreeBSD__
+	strlcpy(device_path, dev, sizeof(device_path));
 	if ((fd = open(device_path, mode)) != -1)
 		goto found;
 
@@ -545,17 +639,29 @@ gpt_open(const char *dev)
 	device_name = device_path + strlen(_PATH_DEV);
 	if ((fd = open(device_path, mode)) != -1)
 		goto found;
-
 	return (-1);
-
  found:
+#endif
+#ifdef __NetBSD__
+	fd = opendisk(dev, mode, device_path, sizeof(device_path), 0);
+	if (fd == -1)
+		return -1;
+	device_name = device_path + strlen(_PATH_DEV);
+#endif
+
 	if (fstat(fd, &sb) == -1)
 		goto close;
 
 	if ((sb.st_mode & S_IFMT) != S_IFREG) {
+#ifdef DIOCGSECTORSIZE
 		if (ioctl(fd, DIOCGSECTORSIZE, &secsz) == -1 ||
 		    ioctl(fd, DIOCGMEDIASIZE, &mediasz) == -1)
 			goto close;
+#endif
+#ifdef __NetBSD__
+		if (drvctl(device_name, &secsz, &mediasz) == -1)
+			goto close;
+#endif
 	} else {
 		secsz = 512;	/* Fixed size for files. */
 		if (sb.st_size % secsz) {

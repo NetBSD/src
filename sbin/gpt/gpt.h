@@ -30,7 +30,20 @@
 #define	_GPT_H_
 
 #include <sys/endian.h>
+#ifdef __FreeBSD__
 #include <sys/gpt.h>
+/*
+ * XXX struct gpt_hdr is not a multiple of 8 bytes in size and thus
+ * contains padding we must not include in the size.
+ */
+#define GPT_SIZE offsetof(struct gpt_hdr, padding)
+#endif
+#ifdef __NetBSD__
+#include <sys/disklabel_gpt.h>
+#define GPT_SIZE sizeof(struct gpt_hdr)
+#define hdr_uuid hdr_guid
+#define ent_uuid ent_guid
+#endif
 
 #include <uuid.h>
 

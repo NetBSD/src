@@ -25,7 +25,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FBSDID
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
+#endif
+#ifdef __RCSID
+__RCSID("$NetBSD: label.c,v 1.2 2006/10/15 22:36:29 christos Exp $");
+#endif
 
 #include <sys/types.h>
 
@@ -136,7 +141,13 @@ label(int fd)
 		gpt_write(fd, lbt);
 		gpt_write(fd, tpg);
 
+#ifdef __FreeBSD__
 		printf("%sp%u labeled\n", device_name, m->map_index);
+#endif
+#ifdef __NetBSD__
+		printf("parition %d on %s labeled %s\n", m->map_index,
+		    device_name, name);
+#endif
 	}
 }
 
