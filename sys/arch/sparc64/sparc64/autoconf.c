@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.131 2006/10/10 12:41:56 tsutsui Exp $ */
+/*	$NetBSD: autoconf.c,v 1.132 2006/10/15 19:22:59 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.131 2006/10/10 12:41:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.132 2006/10/15 19:22:59 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -560,7 +560,8 @@ mbprint(void *aux, const char *name)
 }
 
 int
-mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+mainbus_match(struct device * parent __unused, struct cfdata * cf __unused,
+	void * aux __unused)
 {
 
 	return (1);
@@ -574,7 +575,8 @@ mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
  * We also record the `node id' of the default frame buffer, if any.
  */
 static void
-mainbus_attach(struct device *parent, struct device *dev, void *aux)
+mainbus_attach(struct device * parent __unused, struct device *dev,
+	void * aux __unused)
 {
 extern struct sparc_bus_dma_tag mainbus_dma_tag;
 extern struct sparc_bus_space_tag mainbus_space_tag;
