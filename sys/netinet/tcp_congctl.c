@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.5 2006/10/12 01:32:38 christos Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.6 2006/10/15 17:45:06 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.5 2006/10/12 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.6 2006/10/15 17:45:06 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -205,6 +205,7 @@ static int  tcp_reno_fast_retransmit(struct tcpcb *, struct tcphdr *);
 static void tcp_reno_slow_retransmit(struct tcpcb *);
 static void tcp_reno_fast_retransmit_newack(struct tcpcb *, struct tcphdr *);
 static void tcp_reno_newack(struct tcpcb *, struct tcphdr *);
+static void tcp_reno_congestion_exp(struct tcpcb *tp);
 
 static int  tcp_newreno_fast_retransmit(struct tcpcb *, struct tcphdr *);
 static void tcp_newreno_fast_retransmit_newack(struct tcpcb *,
@@ -375,7 +376,10 @@ tcp_congctl_fillnames(void)
 
 /* ------------------------------------------------------------------------ */
 
-inline void
+/*
+ * TCP/Reno congestion control.
+ */
+static void
 tcp_reno_congestion_exp(struct tcpcb *tp)
 {
 	u_int win;
@@ -397,9 +401,7 @@ tcp_reno_congestion_exp(struct tcpcb *tp)
 }
 
 
-/*
- * TCP/Reno congestion control.
- */
+
 static int
 tcp_reno_fast_retransmit(struct tcpcb *tp, struct tcphdr *th)
 {
@@ -513,6 +515,7 @@ struct tcp_congctl tcp_reno_ctl = {
 	.slow_retransmit = tcp_reno_slow_retransmit,
 	.fast_retransmit_newack = tcp_reno_fast_retransmit_newack,
 	.newack = tcp_reno_newack,
+	.cong_exp = tcp_reno_congestion_exp,
 };
 
 /*
@@ -622,6 +625,7 @@ struct tcp_congctl tcp_newreno_ctl = {
 	.slow_retransmit = tcp_reno_slow_retransmit,
 	.fast_retransmit_newack = tcp_newreno_fast_retransmit_newack,
 	.newack = tcp_newreno_newack,
+	.cong_exp = tcp_reno_congestion_exp,
 };
 
 
