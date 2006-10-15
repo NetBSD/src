@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.117 2006/07/30 19:53:20 elad Exp $ */
+/*	$NetBSD: sysctl.c,v 1.118 2006/10/15 21:33:34 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.117 2006/07/30 19:53:20 elad Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.118 2006/10/15 21:33:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -166,6 +166,7 @@ static void kern_boottime(HANDLER_PROTO);
 static void kern_consdev(HANDLER_PROTO);
 static void kern_cp_time(HANDLER_PROTO);
 static void kern_cp_id(HANDLER_PROTO);
+static void kern_drivers(HANDLER_PROTO);
 static void vm_loadavg(HANDLER_PROTO);
 static void proc_limit(HANDLER_PROTO);
 #ifdef CPU_DISKINFO
@@ -179,24 +180,25 @@ static const struct handlespec {
 	void (*ps_w)(HANDLER_PROTO);
 	const void *ps_d;
 } handlers[] = {
-	{ "/kern/clockrate",			kern_clockrate },
+	{ "/kern/clockrate",			kern_clockrate, NULL, NULL },
 	{ "/kern/vnode",			printother, NULL, "pstat" },
 	{ "/kern/proc(2|_args)?",		printother, NULL, "ps" },
 	{ "/kern/file2?",			printother, NULL, "pstat" },
 	{ "/kern/ntptime",			printother, NULL,
 						"ntpdc -c kerninfo" },
 	{ "/kern/msgbuf",			printother, NULL, "dmesg" },
-	{ "/kern/boottime",			kern_boottime },
-	{ "/kern/consdev",			kern_consdev },
-	{ "/kern/cp_time(/[0-9]+)?",		kern_cp_time },
+	{ "/kern/boottime",			kern_boottime, NULL, NULL },
+	{ "/kern/consdev",			kern_consdev, NULL, NULL },
+	{ "/kern/cp_time(/[0-9]+)?",		kern_cp_time, NULL, NULL },
 	{ "/kern/sysvipc_info",			printother, NULL, "ipcs" },
-	{ "/kern/cp_id(/[0-9]+)?",		kern_cp_id },
+	{ "/kern/cp_id(/[0-9]+)?",		kern_cp_id, NULL, NULL },
 
-	{ "/kern/coredump/setid/mode",		mode_bits, mode_bits },
+	{ "/kern/coredump/setid/mode",		mode_bits, mode_bits, NULL },
+	{ "/kern/drivers",			kern_drivers, NULL, NULL },
 
 	{ "/vm/vmmeter",			printother, NULL,
 						"vmstat' or 'systat" },
-	{ "/vm/loadavg",			vm_loadavg },
+	{ "/vm/loadavg",			vm_loadavg, NULL, NULL },
 	{ "/vm/uvmexp2?",			printother, NULL,
 						"vmstat' or 'systat" },
 
@@ -217,13 +219,13 @@ static const struct handlespec {
 	{ "/hw/diskstats",			printother, NULL, "iostat" },
 
 #ifdef CPU_CONSDEV
-	{ "/machdep/consdev",			kern_consdev },
+	{ "/machdep/consdev",			kern_consdev, NULL, NULL },
 #endif /* CPU_CONSDEV */
 #ifdef CPU_DISKINFO
-	{ "/machdep/diskinfo",			machdep_diskinfo },
+	{ "/machdep/diskinfo",			machdep_diskinfo, NULL, NULL },
 #endif /* CPU_CONSDEV */
 
-	{ "/proc/[^/]+/rlimit/[^/]+/[^/]+",	proc_limit, proc_limit },
+	{ "/proc/[^/]+/rlimit/[^/]+/[^/]+",	proc_limit, proc_limit, NULL },
 
 	/*
 	 * these will only be called when the given node has no children
@@ -233,18 +235,14 @@ static const struct handlespec {
 	{ "/ddb",				printother, NULL, NULL },
 	{ "/vendor",				printother, NULL, NULL },
 
-	{ NULL },
+	{ NULL,					NULL, NULL, NULL },
 };
 
 struct sysctlnode my_root = {
-#if defined(lint)
-	0
-#else /* defined(lint) */
 	.sysctl_flags = SYSCTL_VERSION|CTLFLAG_ROOT|CTLTYPE_NODE,
 	sysc_init_field(_sysctl_size, sizeof(struct sysctlnode)),
 	.sysctl_num = 0,
 	.sysctl_name = "(prog_root)",
-#endif /* defined(lint) */
 };
 
 int	Aflag, aflag, dflag, Mflag, nflag, qflag, rflag, wflag, xflag;
@@ -2211,6 +2209,46 @@ kern_cp_time(HANDLER_ARGS)
 	}
 
 	free(cp_time);
+}
+
+/*ARGSUSED*/
+static void
+kern_drivers(HANDLER_ARGS)
+{
+	struct kinfo_drivers *kd;
+	size_t sz, i;
+	int rc;
+	const char *comma;
+
+	rc = sysctl(name, namelen, NULL, &sz, NULL, 0);
+	if (rc == -1) {
+		sysctlerror(1);
+		return;
+	}
+
+	if (sz % sizeof(*kd))
+		err(1, "bad size %zu for kern.drivers", sz);
+
+	kd = malloc(sz);
+	if (kd == NULL) {
+		sysctlerror(1);
+		return;
+	}
+
+	rc = sysctl(name, namelen, kd, &sz, NULL, 0);
+	if (rc == -1) {
+		sysctlerror(1);
+		return;
+	}
+
+	comma = "";
+	for (i = 0, sz /= sizeof(*kd); i < sz; i++) {
+		(void)printf("%s[%d %d %s]", comma, kd[i].d_cmajor,
+		    kd[i].d_bmajor, kd[i].d_name);
+		comma = ", ";
+	}
+	(void)printf("\n");
+	free(kd);
 }
 
 /*ARGSUSED*/
