@@ -25,7 +25,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FBSDID
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
+#endif
+#ifdef __RCSID
+__RCSID("$NetBSD: remove.c,v 1.2 2006/10/15 22:36:29 christos Exp $");
+#endif
 
 #include <sys/types.h>
 
@@ -109,7 +114,7 @@ rem(int fd)
 			continue;
 
 		/* Remove the primary entry by clearing the partition type. */
-		uuid_create_nil(&ent->ent_type, NULL);
+		uuid_create_nil((uuid_t *)&ent->ent_type, NULL);
 
 		hdr->hdr_crc_table = htole32(crc32(tbl->map_data,
 		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
@@ -124,7 +129,7 @@ rem(int fd)
 		    le32toh(hdr->hdr_entsz));
 
 		/* Remove the secundary entry. */
-		uuid_create_nil(&ent->ent_type, NULL);
+		uuid_create_nil((uuid_t *)&ent->ent_type, NULL);
 
 		hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
 		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
@@ -133,8 +138,13 @@ rem(int fd)
 
 		gpt_write(fd, lbt);
 		gpt_write(fd, tpg);
-
+#ifdef __FreeBSD__
 		printf("%sp%u removed\n", device_name, m->map_index);
+#endif
+#ifdef __NetBSD__
+		printf("partition %d removed from %s\n", m->map_index,
+		    device_name);
+#endif
 	}
 }
 

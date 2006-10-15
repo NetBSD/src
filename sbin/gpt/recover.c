@@ -25,7 +25,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FBSDID
 __FBSDID("$FreeBSD: src/sbin/gpt/recover.c,v 1.8 2005/08/31 01:47:19 marcel Exp $");
+#endif
+#ifdef __RCSID
+__RCSID("$NetBSD: recover.c,v 1.2 2006/10/15 22:36:29 christos Exp $");
+#endif
 
 #include <sys/types.h>
 
