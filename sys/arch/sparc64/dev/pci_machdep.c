@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.51 2006/02/11 17:57:31 cdi Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.52 2006/10/15 21:04:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.51 2006/02/11 17:57:31 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.52 2006/10/15 21:04:14 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,7 +73,7 @@ int sparc_pci_debug = 0x0;
 
 /* this is a base to be copied */
 struct sparc_pci_chipset _sparc_pci_chipset = {
-	NULL,
+	.cookie = NULL,
 };
 
 static int pci_find_ino(struct pci_attach_args *, pci_intr_handle_t *);
