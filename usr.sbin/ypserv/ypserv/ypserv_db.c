@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.17 2006/05/20 20:03:28 christos Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.18 2006/10/15 01:10:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_db.c,v 1.17 2006/05/20 20:03:28 christos Exp $");
+__RCSID("$NetBSD: ypserv_db.c,v 1.18 2006/10/15 01:10:00 christos Exp $");
 #endif
 
 /*
@@ -591,7 +591,7 @@ ypdb_get_record(const char *domain, const char *map, datum key, int ypprivate)
 			return (res);
 
 		/* note: lookup_host needs null terminated string */
-		(void)strlcpy(keystr, key.dptr, (size_t)key.dsize);
+		(void)strlcpy(keystr, key.dptr, (size_t)key.dsize + 1);
 		res.status = lookup_host((hn == 0) ? TRUE : FALSE,
 		    host_lookup, db, keystr, &res);
 	} else {
@@ -714,7 +714,7 @@ ypdb_get_order(const char *domain, const char *map)
 		if (v.dptr == NULL)
 			res.status = YP_NOKEY;
 		else {
-			(void)strlcpy(order, v.dptr, (size_t)v.dsize);
+			(void)strlcpy(order, v.dptr, (size_t)v.dsize + 1);
 			res.ordernum = (u_int) atol(order);
 		}
 	}
@@ -746,7 +746,7 @@ ypdb_get_master(const char *domain, const char *map)
 		if (v.dptr == NULL)
 			res.status = YP_NOKEY;
 		else {
-			(void)strlcpy(master, v.dptr, (size_t)v.dsize);
+			(void)strlcpy(master, v.dptr, (size_t)v.dsize + 1);
 			res.master = &master[0];
 		}
 	}
