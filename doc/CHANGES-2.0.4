@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.48 2006/10/09 21:45:17 bouyer Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.49 2006/10/15 15:43:47 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -387,3 +387,13 @@ sys/arch/acorn32/podulebus/simide.c		1.24 via patch
 	WDC_NREG, not DRIVE_REGISTERS_SPACE.  The latter is much bigger and
 	causes a buffer overrun and panic.  Patch supplied by Mike Pumford.
 	[bjh21, ticket #10703]
+
+crypto/dist/ssh/sshd_config			1.25 via patch
+
+	Change the default sshd configuration file so that only protocol
+	version 2 is enabled by default.  Users can manually add back support
+	for protocol version 1 in their sshd_config if they have a specific
+	need for it.
+	Suggested by perry@ and ghen@. Ok'ed security-officer@ and christos@
+	[adrianp, ticket #10719]
+
