@@ -25,7 +25,12 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.15 2006/10/04 18:20:25 marcel Exp $");
+#ifdef __FBSDID
+__FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
+#endif
+#ifdef __RCSID
+__RCSID("$NetBSD: add.c,v 1.2 2006/10/15 22:36:29 christos Exp $");
+#endif
 
 #include <sys/types.h>
 
@@ -35,6 +40,7 @@ __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.15 2006/10/04 18:20:25 marcel Exp $")
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <inttypes.h>
 
 #include "map.h"
 #include "gpt.h"
@@ -95,7 +101,7 @@ add(int fd)
 		i = entry - 1;
 		ent = (void*)((char*)tbl->map_data + i *
 		    le32toh(hdr->hdr_entsz));
-		if (!uuid_is_nil(&ent->ent_type, NULL)) {
+		if (!uuid_is_nil((uuid_t *)&ent->ent_type, NULL)) {
 			warnx("%s: error: entry at index %u is not free",
 			    device_name, entry);
 			return;
@@ -105,7 +111,7 @@ add(int fd)
 		for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
 			ent = (void*)((char*)tbl->map_data + i *
 			    le32toh(hdr->hdr_entsz));
-			if (uuid_is_nil(&ent->ent_type, NULL))
+			if (uuid_is_nil((uuid_t *)&ent->ent_type, NULL))
 				break;
 		}
 		if (i == le32toh(hdr->hdr_entries)) {
@@ -121,7 +127,7 @@ add(int fd)
 		return;
 	}
 
-	le_uuid_enc(&ent->ent_type, &type);
+	le_uuid_enc((uuid_t *)&ent->ent_type, &type);
 	ent->ent_lba_start = htole64(map->map_start);
 	ent->ent_lba_end = htole64(map->map_start + map->map_size - 1LL);
 
@@ -148,7 +154,15 @@ add(int fd)
 	gpt_write(fd, lbt);
 	gpt_write(fd, tpg);
 
+#ifdef __FreeBSD__
 	printf("%sp%u added\n", device_name, i + 1);
+#endif
+#ifdef __NetBSD__
+	printf("Partition added, use:\n");
+	printf("\tdkctl %s addwedge dk<N> %" PRIu64 " %" PRIu64 " <type>\n",
+	    device_name, map->map_start, map->map_size);
+	printf("to create a wedge for it\n");
+#endif
 }
 
 int
@@ -163,7 +177,7 @@ cmd_add(int argc, char *argv[])
 		case 'b':
 			if (block > 0)
 				usage_add();
-			block = strtoll(optarg, &p, 10);
+			block = strtol(optarg, &p, 10);
 			if (*p != 0 || block < 1)
 				usage_add();
 			break;
@@ -177,7 +191,7 @@ cmd_add(int argc, char *argv[])
 		case 's':
 			if (size > 0)
 				usage_add();
-			size = strtoll(optarg, &p, 10);
+			size = strtol(optarg, &p, 10);
 			if (*p != 0 || size < 1)
 				usage_add();
 			break;
