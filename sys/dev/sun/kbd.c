@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.56 2006/06/07 22:33:38 kardel Exp $	*/
+/*	$NetBSD: kbd.c,v 1.57 2006/10/15 20:54:49 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.56 2006/06/07 22:33:38 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.57 2006/10/15 20:54:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ dev_type_kqfilter(kbdkqfilter);
 
 const struct cdevsw kbd_cdevsw = {
 	kbdopen, kbdclose, kbdread, nowrite, kbdioctl,
-	nostop, notty, kbdpoll, nommap, kbdkqfilter
+	nostop, notty, kbdpoll, nommap, kbdkqfilter, D_OTHER
 };
 
 #if NWSKBD > 0
