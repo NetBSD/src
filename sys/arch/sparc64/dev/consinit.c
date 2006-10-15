@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.21 2006/02/13 21:47:11 cdi Exp $	*/
+/*	$NetBSD: consinit.c,v 1.22 2006/10/15 19:38:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.21 2006/02/13 21:47:11 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.22 2006/10/15 19:38:45 martin Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -74,12 +74,11 @@ static void prom_cnpollc(dev_t, int);
  * is called to select a real console.
  */
 struct consdev consdev_prom = {
-	prom_cnprobe,
-	prom_cninit,
-	prom_cngetc,
-	prom_cnputc,
-	prom_cnpollc,
-	NULL,
+	.cn_probe = prom_cnprobe,
+	.cn_init = prom_cninit,
+	.cn_getc = prom_cngetc,
+	.cn_putc = prom_cnputc,
+	.cn_pollc = prom_cnpollc,
 };
 
 /*
