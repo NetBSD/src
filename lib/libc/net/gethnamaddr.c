@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.70 2006/03/22 00:03:51 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.71 2006/10/15 16:14:46 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.70 2006/03/22 00:03:51 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.71 2006/10/15 16:14:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -168,7 +168,7 @@ static struct hostent *gethostbyname_internal(const char *, int, res_state);
 static const ns_src default_dns_files[] = {
 	{ NSSRC_FILES, 	NS_SUCCESS },
 	{ NSSRC_DNS, 	NS_SUCCESS },
-	{ 0 }
+	{ 0, 0 }
 };
 
 
@@ -455,9 +455,10 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 				continue;
 			}
 			if (hap >= &h_addr_ptrs[MAXADDRS-1]) {
-				if (!toobig++)
+				if (!toobig++) {
 					dprintf("Too many addresses (%d)\n",
 						res, MAXADDRS);
+				}
 				cp += n;
 				continue;
 			}
@@ -550,7 +551,7 @@ gethostbyname_internal(const char *name, int af, res_state res)
 		NS_FILES_CB(_gethtbyname, NULL)
 		{ NSSRC_DNS, _dns_gethtbyname, NULL },	/* force -DHESIOD */
 		NS_NIS_CB(_yp_gethtbyname, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	_DIAGASSERT(name != NULL);
@@ -669,7 +670,7 @@ gethostbyaddr(const char *addr,	/* XXX should have been def'd as u_char! */
 		NS_FILES_CB(_gethtbyaddr, NULL)
 		{ NSSRC_DNS, _dns_gethtbyaddr, NULL },	/* force -DHESIOD */
 		NS_NIS_CB(_yp_gethtbyaddr, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 	
 	_DIAGASSERT(addr != NULL);
