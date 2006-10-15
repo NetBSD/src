@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.24 2005/12/11 12:19:08 christos Exp $ */
+/*	$NetBSD: openprom.c,v 1.25 2006/10/15 21:02:12 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openprom.c,v 1.24 2005/12/11 12:19:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openprom.c,v 1.25 2006/10/15 21:02:12 martin Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -64,7 +64,7 @@ dev_type_ioctl(openpromioctl);
 
 const struct cdevsw openprom_cdevsw = {
 	openpromopen, nullclose, noread, nowrite, openpromioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 static	int lastnode;			/* speed hack */
