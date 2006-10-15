@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.20 2006/10/15 15:08:20 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.21 2006/10/15 18:18:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.20 2006/10/15 15:08:20 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.21 2006/10/15 18:18:54 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -353,6 +353,7 @@ again:
 				istk->i_subt = m->s_type;
 			}
 			istk->i_namedmem = 1;
+			istk->i_brace = 1;
 			memberpop();
 			cnt = istk->i_type->t_tspec == STRUCT ? 2 : 1;
 		}
