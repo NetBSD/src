@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10 2006/10/12 09:01:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11 2006/10/15 13:31:18 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -142,6 +142,7 @@ int irq2vect[256] = {0};
 int vect2irq[256] = {0};
 #endif /* NIOAPIC */
 #if NACPI > 0
+#include <machine/mpconfig.h>
 #include <machine/mpacpi.h>
 #endif
 #ifdef MPBIOS
