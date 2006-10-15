@@ -1,4 +1,4 @@
-/*	$NetBSD: getgroupmembership.c,v 1.1 2005/01/06 15:10:45 lukem Exp $	*/
+/*	$NetBSD: getgroupmembership.c,v 1.2 2006/10/15 16:14:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getgroupmembership.c,v 1.1 2005/01/06 15:10:45 lukem Exp $");
+__RCSID("$NetBSD: getgroupmembership.c,v 1.2 2006/10/15 16:14:46 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -302,7 +302,7 @@ _compat_ggm_search(void *cookie, struct group **groupres)
 		NS_DNS_CB(_dns_getgroupmembership, NULL)
 		NS_NIS_CB(_nis_getgroupmembership, NULL)
 		NS_COMPAT_CB(__grbad_compat, "compat")
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	*groupres = NULL;	/* we don't care about this */
@@ -383,7 +383,7 @@ getgroupmembership(const char *uname, gid_t agroup,
 		NS_DNS_CB(_dns_getgroupmembership, NULL)
 		NS_NIS_CB(_nis_getgroupmembership, NULL)
 		NS_COMPAT_CB(_compat_getgroupmembership, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	_DIAGASSERT(uname != NULL);

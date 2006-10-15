@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.30 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.31 2006/10/15 16:14:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.30 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.31 2006/10/15 16:14:46 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -110,37 +110,37 @@ __weak_alias(nsdispatch,_nsdispatch)
  */
 const ns_src __nsdefaultsrc[] = {
 	{ NSSRC_FILES,	NS_SUCCESS },
-	{ 0 },
+	{ 0, 0 },
 };
 
 const ns_src __nsdefaultcompat[] = {
 	{ NSSRC_COMPAT,	NS_SUCCESS },
-	{ 0 }
+	{ 0, 0 }
 };
 
 const ns_src __nsdefaultcompat_forceall[] = {
 	{ NSSRC_COMPAT,	NS_SUCCESS | NS_FORCEALL },
-	{ 0 }
+	{ 0, 0 }
 };
 
 const ns_src __nsdefaultfiles[] = {
 	{ NSSRC_FILES,	NS_SUCCESS },
-	{ 0 },
+	{ 0, 0 },
 };
 
 const ns_src __nsdefaultfiles_forceall[] = {
 	{ NSSRC_FILES,	NS_SUCCESS | NS_FORCEALL },
-	{ 0 },
+	{ 0, 0 },
 };
 
 const ns_src __nsdefaultnis[] = {
 	{ NSSRC_NIS,	NS_SUCCESS },
-	{ 0 }
+	{ 0, 0 }
 };
 
 const ns_src __nsdefaultnis_forceall[] = {
 	{ NSSRC_NIS,	NS_SUCCESS | NS_FORCEALL },
-	{ 0 }
+	{ 0, 0 }
 };
 
 

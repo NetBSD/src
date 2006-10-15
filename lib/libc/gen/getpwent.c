@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.72 2006/06/29 21:16:04 ginsbach Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.73 2006/10/15 16:14:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.72 2006/06/29 21:16:04 ginsbach Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.73 2006/10/15 16:14:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1796,7 +1796,7 @@ _passwdcompat_setpassent(int stayopen)
 		NS_DNS_CB(_dns_setpassent, NULL)
 		NS_NIS_CB(_nis_setpassent, NULL)
 		NS_COMPAT_CB(_passwdcompat_bad, "compat")
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	int	rv, result;
@@ -1818,7 +1818,7 @@ _passwdcompat_endpwent(void)
 		NS_DNS_CB(_dns_endpwent, NULL)
 		NS_NIS_CB(_nis_endpwent, NULL)
 		NS_COMPAT_CB(_passwdcompat_bad, "compat")
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	return nsdispatch(NULL, dtab, NSDB_PASSWD_COMPAT, "endpwent",
@@ -1841,21 +1841,21 @@ _passwdcompat_pwscan(struct passwd *pw, char *buffer, size_t buflen,
 		NS_DNS_CB(_dns_getpwent_r, NULL)
 		NS_NIS_CB(_nis_getpwent_r, NULL)
 		NS_COMPAT_CB(_passwdcompat_bad, "compat")
-		{ 0 }
+		NS_NULL_CB
 	};
 	static const ns_dtab compatuiddtab[] = {
 		NS_FILES_CB(_passwdcompat_bad, "files")
 		NS_DNS_CB(_dns_getpwuid_r, NULL)
 		NS_NIS_CB(_nis_getpwuid_r, NULL)
 		NS_COMPAT_CB(_passwdcompat_bad, "compat")
-		{ 0 }
+		NS_NULL_CB
 	};
 	static const ns_dtab compatnamdtab[] = {
 		NS_FILES_CB(_passwdcompat_bad, "files")
 		NS_DNS_CB(_dns_getpwnam_r, NULL)
 		NS_NIS_CB(_nis_getpwnam_r, NULL)
 		NS_COMPAT_CB(_passwdcompat_bad, "compat")
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	int		rv, crv;
@@ -2345,7 +2345,7 @@ getpwent(void)
 		NS_DNS_CB(_dns_getpwent, NULL)
 		NS_NIS_CB(_nis_getpwent, NULL)
 		NS_COMPAT_CB(_compat_getpwent, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	mutex_lock(&_pwmutex);
@@ -2366,7 +2366,7 @@ getpwent_r(struct passwd *pwd, char *buffer, size_t buflen,
 		NS_DNS_CB(_dns_getpwent_r, NULL)
 		NS_NIS_CB(_nis_getpwent_r, NULL)
 		NS_COMPAT_CB(_compat_getpwent_r, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	_DIAGASSERT(pwd != NULL);
@@ -2400,7 +2400,7 @@ getpwnam(const char *name)
 		NS_DNS_CB(_dns_getpwnam, NULL)
 		NS_NIS_CB(_nis_getpwnam, NULL)
 		NS_COMPAT_CB(_compat_getpwnam, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	mutex_lock(&_pwmutex);
@@ -2421,7 +2421,7 @@ getpwnam_r(const char *name, struct passwd *pwd, char *buffer, size_t buflen,
 		NS_DNS_CB(_dns_getpwnam_r, NULL)
 		NS_NIS_CB(_nis_getpwnam_r, NULL)
 		NS_COMPAT_CB(_compat_getpwnam_r, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	_DIAGASSERT(name != NULL);
@@ -2455,7 +2455,7 @@ getpwuid(uid_t uid)
 		NS_DNS_CB(_dns_getpwuid, NULL)
 		NS_NIS_CB(_nis_getpwuid, NULL)
 		NS_COMPAT_CB(_compat_getpwuid, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	mutex_lock(&_pwmutex);
@@ -2476,7 +2476,7 @@ getpwuid_r(uid_t uid, struct passwd *pwd, char *buffer, size_t buflen,
 		NS_DNS_CB(_dns_getpwuid_r, NULL)
 		NS_NIS_CB(_nis_getpwuid_r, NULL)
 		NS_COMPAT_CB(_compat_getpwuid_r, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	_DIAGASSERT(pwd != NULL);
@@ -2506,7 +2506,7 @@ endpwent(void)
 		NS_DNS_CB(_dns_endpwent, NULL)
 		NS_NIS_CB(_nis_endpwent, NULL)
 		NS_COMPAT_CB(_compat_endpwent, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	mutex_lock(&_pwmutex);
@@ -2525,7 +2525,7 @@ setpassent(int stayopen)
 		NS_DNS_CB(_dns_setpassent, NULL)
 		NS_NIS_CB(_nis_setpassent, NULL)
 		NS_COMPAT_CB(_compat_setpassent, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 	int	rv, retval;
 
@@ -2545,7 +2545,7 @@ setpwent(void)
 		NS_DNS_CB(_dns_setpwent, NULL)
 		NS_NIS_CB(_nis_setpwent, NULL)
 		NS_COMPAT_CB(_compat_setpwent, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	mutex_lock(&_pwmutex);

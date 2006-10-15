@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_stdio.c,v 1.16 2004/01/03 23:50:47 martin Exp $	*/
+/*	$NetBSD: xdr_stdio.c,v 1.17 2006/10/15 16:14:46 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_stdio.c 1.16 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_stdio.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_stdio.c,v 1.16 2004/01/03 23:50:47 martin Exp $");
+__RCSID("$NetBSD: xdr_stdio.c,v 1.17 2006/10/15 16:14:46 christos Exp $");
 #endif
 #endif
 
@@ -80,7 +80,8 @@ static const struct xdr_ops	xdrstdio_ops = {
 	xdrstdio_getpos,	/* get offset in the stream */
 	xdrstdio_setpos,	/* set offset in the stream */
 	xdrstdio_inline,	/* prime stream for inline macros */
-	xdrstdio_destroy	/* destroy stream */
+	xdrstdio_destroy,	/* destroy stream */
+	NULL,			/* xdrstdio_control */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.59 2006/03/19 03:08:11 christos Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.60 2006/10/15 16:14:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.59 2006/03/19 03:08:11 christos Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.60 2006/10/15 16:14:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1347,21 +1347,21 @@ __grscan_compat(int *retval, struct group *grp, char *buffer, size_t buflen,
 		NS_DNS_CB(_dns_getgrent_r, NULL)
 		NS_NIS_CB(_nis_getgrent_r, NULL)
 		NS_COMPAT_CB(__grbad_compat, "compat")
-		{ 0 }
+		NS_NULL_CB
 	};
 	static const ns_dtab compatgiddtab[] = {
 		NS_FILES_CB(__grbad_compat, "files")
 		NS_DNS_CB(_dns_getgrgid_r, NULL)
 		NS_NIS_CB(_nis_getgrgid_r, NULL)
 		NS_COMPAT_CB(__grbad_compat, "compat")
-		{ 0 }
+		NS_NULL_CB
 	};
 	static const ns_dtab compatnamdtab[] = {
 		NS_FILES_CB(__grbad_compat, "files")
 		NS_DNS_CB(_dns_getgrnam_r, NULL)
 		NS_NIS_CB(_nis_getgrnam_r, NULL)
 		NS_COMPAT_CB(__grbad_compat, "compat")
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	_DIAGASSERT(retval != NULL);
@@ -1506,7 +1506,7 @@ _compat_setgrent(void *nsrv, void *nscb, va_list ap)
 		NS_DNS_CB(_dns_setgrent, NULL)
 		NS_NIS_CB(_nis_setgrent, NULL)
 		NS_COMPAT_CB(__grbad_compat, "compat")
-		{ 0 }
+		NS_NULL_CB
 	};
 
 					/* force group_compat setgrent() */
@@ -1532,7 +1532,7 @@ _compat_setgroupent(void *nsrv, void *nscb, va_list ap)
 		NS_DNS_CB(_dns_setgroupent, NULL)
 		NS_NIS_CB(_nis_setgroupent, NULL)
 		NS_COMPAT_CB(__grbad_compat, "compat")
-		{ 0 }
+		NS_NULL_CB
 	};
 
 					/* force group_compat setgroupent() */
@@ -1554,7 +1554,7 @@ _compat_endgrent(void *nsrv, void *nscb, va_list ap)
 		NS_DNS_CB(_dns_endgrent, NULL)
 		NS_NIS_CB(_nis_endgrent, NULL)
 		NS_COMPAT_CB(__grbad_compat, "compat")
-		{ 0 }
+		NS_NULL_CB
 	};
 
 					/* force group_compat endgrent() */
@@ -1737,7 +1737,7 @@ getgrent(void)
 		NS_DNS_CB(_dns_getgrent, NULL)
 		NS_NIS_CB(_nis_getgrent, NULL)
 		NS_COMPAT_CB(_compat_getgrent, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	mutex_lock(&__grmutex);
@@ -1758,7 +1758,7 @@ getgrent_r(struct group *grp, char *buffer, size_t buflen,
 		NS_DNS_CB(_dns_getgrent_r, NULL)
 		NS_NIS_CB(_nis_getgrent_r, NULL)
 		NS_COMPAT_CB(_compat_getgrent_r, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	mutex_lock(&__grmutex);
@@ -1786,7 +1786,7 @@ getgrgid(gid_t gid)
 		NS_DNS_CB(_dns_getgrgid, NULL)
 		NS_NIS_CB(_nis_getgrgid, NULL)
 		NS_COMPAT_CB(_compat_getgrgid, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	mutex_lock(&__grmutex);
@@ -1807,7 +1807,7 @@ getgrgid_r(gid_t gid, struct group *grp, char *buffer, size_t buflen,
 		NS_DNS_CB(_dns_getgrgid_r, NULL)
 		NS_NIS_CB(_nis_getgrgid_r, NULL)
 		NS_COMPAT_CB(_compat_getgrgid_r, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	_DIAGASSERT(grp != NULL);
@@ -1840,7 +1840,7 @@ getgrnam(const char *name)
 		NS_DNS_CB(_dns_getgrnam, NULL)
 		NS_NIS_CB(_nis_getgrnam, NULL)
 		NS_COMPAT_CB(_compat_getgrnam, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	mutex_lock(&__grmutex);
@@ -1861,7 +1861,7 @@ getgrnam_r(const char *name, struct group *grp, char *buffer, size_t buflen,
 		NS_DNS_CB(_dns_getgrnam_r, NULL)
 		NS_NIS_CB(_nis_getgrnam_r, NULL)
 		NS_COMPAT_CB(_compat_getgrnam_r, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	_DIAGASSERT(name != NULL);
@@ -1892,7 +1892,7 @@ endgrent(void)
 		NS_DNS_CB(_dns_endgrent, NULL)
 		NS_NIS_CB(_nis_endgrent, NULL)
 		NS_COMPAT_CB(_compat_endgrent, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	mutex_lock(&__grmutex);
@@ -1910,7 +1910,7 @@ setgroupent(int stayopen)
 		NS_DNS_CB(_dns_setgroupent, NULL)
 		NS_NIS_CB(_nis_setgroupent, NULL)
 		NS_COMPAT_CB(_compat_setgroupent, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 	int	rv, retval;
 
@@ -1930,7 +1930,7 @@ setgrent(void)
 		NS_DNS_CB(_dns_setgrent, NULL)
 		NS_NIS_CB(_nis_setgrent, NULL)
 		NS_COMPAT_CB(_compat_setgrent, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	mutex_lock(&__grmutex);
