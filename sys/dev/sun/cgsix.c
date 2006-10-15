@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.31 2006/04/15 17:48:24 jmmv Exp $ */
+/*	$NetBSD: cgsix.c,v 1.32 2006/10/15 19:32:37 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.31 2006/04/15 17:48:24 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.32 2006/10/15 19:32:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ dev_type_mmap(cgsixmmap);
 
 const struct cdevsw cgsix_cdevsw = {
 	cgsixopen, cgsixclose, noread, nowrite, cgsixioctl,
-	nostop, notty, nopoll, cgsixmmap, nokqfilter,
+	nostop, notty, nopoll, cgsixmmap, nokqfilter, D_OTHER
 };
 
 /* frame buffer generic driver */
@@ -157,7 +157,8 @@ struct wsscreen_descr cgsix_defaultscreen = {
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global */
 	NULL,		/* textops */
 	8, 16,	/* font width/height */
-	WSSCREEN_WSCOLORS	/* capabilities */
+	WSSCREEN_WSCOLORS,	/* capabilities */
+	NULL	/* modecookie */
 };
 
 static int 	cgsix_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
