@@ -1,4 +1,4 @@
-.\"	$NetBSD: event.3,v 1.9 2005/04/17 08:51:19 wiz Exp $
+.\"	$NetBSD: event.3,v 1.10 2006/10/15 01:53:41 uebayasi Exp $
 .\"	$OpenBSD: event.3,v 1.4 2002/07/12 18:50:48 provos Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
@@ -454,7 +454,7 @@ This file descriptor is not allowed to be a
 The next three parameters are callbacks.
 The read and write callback have the following form
 .Ft void
-.Fn "(*cb)" "struct bufferevent *bufev" "void *arg"
+.Fn "(*cb)" "struct bufferevent *bufev" "void *arg" .
 The argument is specified by the fourth parameter
 .Fa cbarg .
 .Pp
