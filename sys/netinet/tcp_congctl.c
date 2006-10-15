@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.6 2006/10/15 17:45:06 rpaulo Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.7 2006/10/15 17:53:30 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.6 2006/10/15 17:45:06 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.7 2006/10/15 17:53:30 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -396,6 +396,10 @@ tcp_reno_congestion_exp(struct tcpcb *tp)
 	tp->snd_recover = tp->snd_max;
 	tp->snd_cwnd = tp->snd_ssthresh;
 
+	/*
+	 * When using TCP ECN, notify the peer that
+	 * we reduced the cwnd.
+	 */
 	if (TCP_ECN_ALLOWED(tp))
 		tp->t_flags |= TF_ECN_SND_CWR;
 }
@@ -405,6 +409,26 @@ tcp_reno_congestion_exp(struct tcpcb *tp)
 static int
 tcp_reno_fast_retransmit(struct tcpcb *tp, struct tcphdr *th)
 {
+	/*
+	 * We know we're losing at the current
+	 * window size so do congestion avoidance
+	 * (set ssthresh to half the current window
+	 * and pull our congestion window back to
+	 * the new ssthresh).
+	 *
+	 * Dup acks mean that packets have left the
+	 * network (they're now cached at the receiver)
+	 * so bump cwnd by the amount in the receiver
+	 * to keep a constant cwnd packets in the
+	 * network.
+	 *
+	 * If we are using TCP/SACK, then enter
+	 * Fast Recovery if the receiver SACKs
+	 * data that is tcprexmtthresh * MSS
+	 * bytes past the last ACKed segment,
+	 * irrespective of the number of DupAcks.
+	 */
+	
 	tcp_seq onxt;
 	
 	onxt = tp->snd_nxt;
