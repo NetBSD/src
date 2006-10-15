@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.941 2006/10/09 16:51:51 gdamore Exp $
+# $NetBSD: mi,v 1.942 2006/10/15 22:42:03 christos Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1883,6 +1883,7 @@
 ./usr/share/man/cat8/gettable.0			man-obsolete		obsolete
 ./usr/share/man/cat8/getty.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/gpioctl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/gpt.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/greconfig.0		man-obsolete		obsolete
 ./usr/share/man/cat8/grfconfig.0		man-obsolete		obsolete
 ./usr/share/man/cat8/group.0			man-sysutil-catman	.cat
@@ -4269,6 +4270,7 @@
 ./usr/share/man/man8/gettable.8			man-obsolete		obsolete
 ./usr/share/man/man8/getty.8			man-sysutil-man		.man
 ./usr/share/man/man8/gpioctl.8			man-sysutil-man		.man
+./usr/share/man/man8/gpt.8			man-sysutil-man		.man
 ./usr/share/man/man8/greconfig.8		man-obsolete		obsolete
 ./usr/share/man/man8/grfconfig.8		man-obsolete		obsolete
 ./usr/share/man/man8/group.8			man-sysutil-man		.man

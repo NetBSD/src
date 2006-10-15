@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.947 2006/10/15 20:44:21 dbj Exp $
+#	$NetBSD: mi,v 1.948 2006/10/15 22:42:03 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2227,6 +2227,7 @@
 ./usr/libdata/debug/sbin/fsck_msdos.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsdb.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsirand.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/gpt.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/ifconfig.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/init.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/ipf.debug		comp-ipf-debug		ipfilter,debug
