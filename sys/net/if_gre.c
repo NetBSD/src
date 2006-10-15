@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.68 2006/10/15 06:28:53 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.69 2006/10/15 06:36:54 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.68 2006/10/15 06:28:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.69 2006/10/15 06:36:54 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -311,7 +311,7 @@ gre_socreate1(struct gre_softc *sc, struct lwp *l, struct gre_soparm *sp,
 	}
 
 	if (sc->g_srcport == 0) {
-		if (gre_getsockname(so, m, l) != 0) {
+		if ((rc = gre_getsockname(so, m, l)) != 0) {
 			GRE_DPRINTF(sc, "%s: gre_getsockname failed\n",
 			    __func__);
 			goto out;
@@ -386,7 +386,7 @@ gre_thread1(struct gre_softc *sc, struct lwp *l)
 			break;
 		}
 		/* XXX optimize */ 
-		if (memcmp(&sp, &sc->sc_soparm, sizeof(sp)) != 0) {
+		if (so == NULL || memcmp(&sp, &sc->sc_soparm, sizeof(sp)) != 0){
 			GRE_DPRINTF(sc, "%s: parameters changed\n", __func__);
 
 			if (sp.sp_fp != NULL) {
