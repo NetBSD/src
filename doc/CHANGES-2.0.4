@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.49 2006/10/15 15:43:47 bouyer Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.50 2006/10/15 15:56:06 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -396,4 +396,12 @@ crypto/dist/ssh/sshd_config			1.25 via patch
 	need for it.
 	Suggested by perry@ and ghen@. Ok'ed security-officer@ and christos@
 	[adrianp, ticket #10719]
+
+usr.sbin/user/user.c				1.112
+
+	in userinfo, initialize buf (the buffer which will hold group names)
+	to be a null-terminated string. Otherwise, if the user is not a member
+	of any secondary groups, buf is completely uninitialized and userinfo
+	adds garbage to the list of groups printed.
+	[pavel, ticket #10718]
 
