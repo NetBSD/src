@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.24 2006/10/14 18:53:11 christos Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.25 2006/10/15 19:33:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.24 2006/10/14 18:53:11 christos Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.25 2006/10/15 19:33:03 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -435,8 +435,8 @@ gsetrl(login_cap_t *lc, int what, const char *name, int type)
 
 	_DIAGASSERT(name != NULL);
 
-	sprintf(name_cur, "%s-cur", name);
-	sprintf(name_max, "%s-max", name);
+	(void)snprintf(name_cur, sizeof(name_cur), "%s-cur", name);
+	(void)snprintf(name_max, sizeof(name_max), "%s-max", name);
 
 	if (getrlimit(what, &r)) {
 		syslog(LOG_ERR, "getting resource limit: %m");
@@ -466,6 +466,8 @@ gsetrl(login_cap_t *lc, int what, const char *name, int type)
 		rl.rlim_max = login_getcapnum(lc, name_max, RMAX, RMAX);
 		break;
 	default:
+		syslog(LOG_ERR, "%s: invalid type %d setting resource limit %s",
+		    lc->lc_class, type, name);
 		return (-1);
 	}
 
@@ -573,9 +575,8 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 
 	if (flags & LOGIN_SETRESOURCES)
 		for (i = 0; r_list[i].name; ++i) 
-			if (gsetrl(lc, r_list[i].what, r_list[i].name,
-			    r_list[i].type))
-				/* XXX - call syslog()? */;
+			(void)gsetrl(lc, r_list[i].what, r_list[i].name,
+			    r_list[i].type);
 
 	if (flags & LOGIN_SETPRIORITY) {
 		p = login_getcapnum(lc, "priority", (quad_t)0, (quad_t)0);
