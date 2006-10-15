@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.18 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: ams.c,v 1.19 2006/10/15 21:15:21 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.18 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.19 2006/10/15 21:15:21 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,6 +60,7 @@ static int	amsmatch __P((struct device *, struct cfdata *, void *));
 static void	amsattach __P((struct device *, struct device *, void *));
 static void	ems_init __P((struct ams_softc *));
 static void	ms_processevent __P((adb_event_t *event, struct ams_softc *));
+static void	init_trackpad(struct ams_softc *);
 
 /* Driver definition. */
 CFATTACH_DECL(ams, sizeof(struct ams_softc),
@@ -68,6 +69,14 @@ CFATTACH_DECL(ams, sizeof(struct ams_softc),
 int ams_enable __P((void *));
 int ams_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
 void ams_disable __P((void *));
+
+/*
+ * handle tapping the trackpad
+ * different pads report different button counts and use slightly different
+ * protocols
+ */
+static void ams_mangle_2(struct ams_softc *, int);
+static void ams_mangle_4(struct ams_softc *, int);
 
 const struct wsmouse_accessops ams_accessops = {
 	ams_enable,
@@ -168,6 +177,7 @@ amsattach(parent, self, aux)
 				break;
 			case MSCLASS_TRACKPAD:
 				printf("trackpad");
+				init_trackpad(sc);
 				break;
 			default:
 				printf("unknown device");
@@ -307,6 +317,11 @@ ems_init(sc)
 #endif
 			} else if (buffer[0] == 8) {
 				/* we have a true EMP device */
+#ifdef ADB_PRINT_EMP
+				printf("EMP: %02x %02x %02x %02x %02x %02x %02x %02x\n",
+				    buffer[1], buffer[2], buffer[3], buffer[4],
+				    buffer[5], buffer[6], buffer[7], buffer[8]);
+#endif
 				sc->sc_class = buffer[7];
 				sc->sc_buttons = buffer[8];
 				sc->sc_res = (int)*(short *)&buffer[5];
@@ -461,7 +476,7 @@ ms_processevent(event, sc)
 	struct ams_softc *sc;
 {
 	adb_event_t new_event;
-	int i, button_bit, max_byte, mask, buttons;
+	int i, button_bit, max_byte, mask, buttons, dx, dy;
 
 	new_event = *event;
 	buttons = 0;
@@ -488,7 +503,7 @@ ms_processevent(event, sc)
 		else
 			buttons = (event->bytes[0] & 0x80) ? 0 : 1;
 		break;
-	default:
+	default:	
 		/* Classic Mouse Protocol (up to 2 buttons) */
 		for (i = 0; i < 2; i++, button_bit <<= 1)
 			/* 0 when button down */
@@ -506,14 +521,37 @@ ms_processevent(event, sc)
 				buttons &= ~button_bit;
 			mask = ((mask >> 4) & 0xf)
 				| ((mask & 0xf) << 4);
-		}
+		}				
 		break;
 	}
-	new_event.u.m.buttons = sc->sc_mb | buttons;
-	new_event.u.m.dx = ((signed int) (event->bytes[1] & 0x3f)) -
+
+	dx = ((int)(event->bytes[1] & 0x3f)) -
 				((event->bytes[1] & 0x40) ? 64 : 0);
-	new_event.u.m.dy = ((signed int) (event->bytes[0] & 0x3f)) -
+	dy = ((int) (event->bytes[0] & 0x3f)) -
 				((event->bytes[0] & 0x40) ? 64 : 0);
+
+	if (sc->sc_class == MSCLASS_TRACKPAD) {
+
+		if (sc->sc_down) {
+			/* finger is down - collect motion data */
+			sc->sc_x += dx;
+			sc->sc_y += dy;
+		}
+		switch (sc->sc_buttons) {
+			case 2:
+				ams_mangle_2(sc, buttons);
+				break;
+			case 4:
+				ams_mangle_4(sc, buttons);
+				break;
+		}
+		/* filter the pseudo-buttons out */
+		buttons &= 1;
+	}
+
+	new_event.u.m.buttons = sc->sc_mb | buttons;
+	new_event.u.m.dx = dx;
+	new_event.u.m.dy = dy;
 
 	if (sc->sc_wsmousedev)
 		wsmouse_input(sc->sc_wsmousedev, new_event.u.m.buttons,
@@ -522,6 +560,70 @@ ms_processevent(event, sc)
 #if NAED > 0
 	aed_input(&new_event);
 #endif
+}
+
+static void
+ams_mangle_2(struct ams_softc *sc, int buttons)
+{
+
+	if (buttons & 4) {
+		/* finger down on pad */
+		if (sc->sc_down == 0) {
+			sc->sc_down = 1;
+			sc->sc_x = 0;
+			sc->sc_y = 0;
+		}
+	}
+	if (buttons & 8) {
+		/* finger up */
+		if (sc->sc_down) {
+			if (((sc->sc_x * sc->sc_x + 
+			    sc->sc_y * sc->sc_y) < 20) && 
+			    (sc->sc_wsmousedev)) {
+				/* 
+				 * if there wasn't much movement between
+				 * finger down and up again we assume
+				 * someone tapped the pad and we just
+				 * send a mouse button event
+				 */
+				wsmouse_input(sc->sc_wsmousedev,
+				    1, 0, 0, 0, WSMOUSE_INPUT_DELTA);
+			}
+			sc->sc_down = 0;
+		}
+	}
+}
+
+static void
+ams_mangle_4(struct ams_softc *sc, int buttons)
+{
+
+	if (buttons & 0x20) {
+		/* finger down on pad */
+		if (sc->sc_down == 0) {
+			sc->sc_down = 1;
+			sc->sc_x = 0;
+			sc->sc_y = 0;
+		}
+	}
+	if ((buttons & 0x20) == 0) {
+		/* finger up */
+		if (sc->sc_down) {
+			if (((sc->sc_x * sc->sc_x + 
+			    sc->sc_y * sc->sc_y) < 20) && 
+			    (sc->sc_wsmousedev)) {
+				/* 
+				 * if there wasn't much movement between
+				 * finger down and up again we assume
+				 * someone tapped the pad and we just
+				 * send a mouse button event
+				 */
+				wsmouse_input(sc->sc_wsmousedev,
+				    1, 0, 0, 0, WSMOUSE_INPUT_DELTA);
+			}
+			sc->sc_down = 0;
+		}
+	}
 }
 
 int
@@ -547,3 +649,36 @@ ams_disable(v)
 	void *v;
 {
 }
+
+static void
+init_trackpad(struct ams_softc *sc)
+{
+	int cmd, res;
+	u_char buffer[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+	u_char b2[10];
+	u_char b3[9] = {8, 0x99, 0x94, 0x19, 0xff, 0xb2, 0x8a, 0x1b, 0x50};
+	
+	cmd = ADBTALK(sc->adbaddr, 1);
+	res = adb_op_sync((Ptr)buffer, NULL, (Ptr)0, cmd);
+
+	if (buffer[0] != 8)
+		return;
+
+	/* now whack the pad */
+	cmd = ADBLISTEN(sc->adbaddr, 1);
+	memcpy(b2, buffer, 10);
+	b2[7] = 0x0d;
+	adb_op_sync((Ptr)b2, NULL, (Ptr)0, cmd);
+
+	cmd = ADBLISTEN(sc->adbaddr, 2);
+	adb_op_sync((Ptr)b3, NULL, (Ptr)0, cmd);
+
+	cmd = ADBLISTEN(sc->adbaddr, 1);
+	b2[7] = 0x03;
+	adb_op_sync((Ptr)b2, NULL, (Ptr)0, cmd);
+
+	buffer[0] = 0;
+	cmd = ADBFLUSH(sc->adbaddr);
+	adb_op_sync((Ptr)buffer, NULL, (Ptr)0, cmd);
+}
+
