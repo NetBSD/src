@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.116 2006/10/15 08:38:22 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.117 2006/10/15 18:08:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.116 2006/10/15 08:38:22 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.117 2006/10/15 18:08:14 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.116 2006/10/15 08:38:22 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.117 2006/10/15 18:08:14 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2751,8 +2751,11 @@ ParseFinishLine(void)
 void
 Parse_File(const char *name, FILE *stream)
 {
-    char	  *cp,		/* pointer into the line */
-                  *line;	/* the line we're working on */
+    char	  *cp;		/* pointer into the line */
+    char          *line;	/* the line we're working on */
+#ifndef POSIX
+    Boolean	nonSpace;
+#endif
 
     inLine = FALSE;
     fatals = 0;
@@ -2764,7 +2767,7 @@ Parse_File(const char *name, FILE *stream)
     ParseSetParseFile(curFile.fname);
 
     do {
-	while ((line = ParseReadLine()) != NULL) {
+	for (; (line = ParseReadLine()) != NULL; free(line)) {
 	    if (*line == '.') {
 		/*
 		 * Lines that begin with the special character are either
@@ -2777,8 +2780,9 @@ Parse_File(const char *name, FILE *stream)
 	    	    ((cp[0] == 's' || cp[0] == '-') &&
 		    strncmp(&cp[1], "include", 7) == 0)) {
 		    ParseDoInclude(cp);
-		    goto nextLine;
-		} else if (strncmp(cp, "undef", 5) == 0) {
+		    continue;
+		}
+		if (strncmp(cp, "undef", 5) == 0) {
 		    char *cp2;
 		    for (cp += 5; isspace((unsigned char) *cp); cp++) {
 			continue;
@@ -2792,12 +2796,12 @@ Parse_File(const char *name, FILE *stream)
 		    *cp2 = '\0';
 
 		    Var_Delete(cp, VAR_GLOBAL);
-		    goto nextLine;
+		    continue;
 		}
 	    }
 	    if (*line == '#') {
 		/* If we're this far, the line must be a comment. */
-		goto nextLine;
+		continue;
 	    }
 
 	    if (*line == '\t') {
@@ -2812,106 +2816,104 @@ Parse_File(const char *name, FILE *stream)
 		    continue;
 		}
 		if (*cp) {
-		    if (inLine) {
-			/*
-			 * So long as it's not a blank line and we're actually
-			 * in a dependency spec, add the command to the list of
-			 * commands of all targets in the dependency spec
-			 */
-			Lst_ForEach(targets, ParseAddCmd, cp);
-#ifdef CLEANUP
-			Lst_AtEnd(targCmds, (ClientData) line);
-#endif
-			continue;
-		    } else {
+		    if (!inLine)
 			Parse_Error(PARSE_FATAL,
 				     "Unassociated shell command \"%s\"",
 				     cp);
-		    }
+		    /*
+		     * So long as it's not a blank line and we're actually
+		     * in a dependency spec, add the command to the list of
+		     * commands of all targets in the dependency spec
+		     */
+		    Lst_ForEach(targets, ParseAddCmd, cp);
+#ifdef CLEANUP
+		    Lst_AtEnd(targCmds, (ClientData) line);
+#endif
+		    line = 0;
 		}
+		continue;
+	    }
+
 #ifdef SYSVINCLUDE
-	    } else if (((strncmp(line, "include", 7) == 0 &&
-	        isspace((unsigned char) line[7])) ||
-	        ((line[0] == 's' || line[0] == '-') &&
-	        strncmp(&line[1], "include", 7) == 0 &&
-	        isspace((unsigned char) line[8]))) &&
-	        strchr(line, ':') == NULL) {
+	    if (((strncmp(line, "include", 7) == 0 &&
+		    isspace((unsigned char) line[7])) ||
+			((line[0] == 's' || line[0] == '-') &&
+			    strncmp(&line[1], "include", 7) == 0 &&
+			    isspace((unsigned char) line[8]))) &&
+		    strchr(line, ':') == NULL) {
 		/*
 		 * It's an S3/S5-style "include".
 		 */
 		ParseTraditionalInclude(line);
-		goto nextLine;
+		continue;
+	    }
 #endif
-	    } else if (Parse_IsVar(line)) {
+	    if (Parse_IsVar(line)) {
 		ParseFinishLine();
 		Parse_DoVar(line, VAR_GLOBAL);
-	    } else {
-		/*
-		 * We now know it's a dependency line so it needs to have all
-		 * variables expanded before being parsed. Tell the variable
-		 * module to complain if some variable is undefined...
-		 * To make life easier on novices, if the line is indented we
-		 * first make sure the line has a dependency operator in it.
-		 * If it doesn't have an operator and we're in a dependency
-		 * line's script, we assume it's actually a shell command
-		 * and add it to the current list of targets.
-		 */
+		continue;
+	    }
+
+	    /*
+	     * We now know it's a dependency line so it needs to have all
+	     * variables expanded before being parsed. Tell the variable
+	     * module to complain if some variable is undefined...
+	     * To make life easier on novices, if the line is indented we
+	     * first make sure the line has a dependency operator in it.
+	     * If it doesn't have an operator and we're in a dependency
+	     * line's script, we assume it's actually a shell command
+	     * and add it to the current list of targets.
+	     */
 #ifndef POSIX
-		Boolean	nonSpace = FALSE;
+	    nonSpace = FALSE;
 #endif
 
-		cp = line;
-		if (isspace((unsigned char) line[0])) {
-		    while ((*cp != '\0') && isspace((unsigned char) *cp)) {
-			cp++;
-		    }
-		    if (*cp == '\0') {
-			goto nextLine;
-		    }
-#ifndef POSIX
-		    while (*cp && (ParseIsEscaped(line, cp) ||
-			(*cp != ':') && (*cp != '!'))) {
-			nonSpace = TRUE;
-			cp++;
-		    }
-#endif
+	    cp = line;
+	    if (isspace((unsigned char) line[0])) {
+		while ((*cp != '\0') && isspace((unsigned char) *cp)) {
+		    cp++;
 		}
-
-#ifndef POSIX
 		if (*cp == '\0') {
-		    if (inLine) {
-			Parse_Error(PARSE_WARNING,
-				     "Shell command needs a leading tab");
-			goto shellCommand;
-		    } else if (nonSpace) {
-			Parse_Error(PARSE_FATAL, "Missing operator");
-		    }
-		} else {
-#endif
-		    ParseFinishLine();
-
-		    cp = Var_Subst(NULL, line, VAR_CMD, TRUE);
-		    free(line);
-		    line = cp;
-
-		    /*
-		     * Need a non-circular list for the target nodes
-		     */
-		    if (targets)
-			Lst_Destroy(targets, NOFREE);
-
-		    targets = Lst_Init(FALSE);
-		    inLine = TRUE;
-
-		    ParseDoDependency(line);
+		    /* Ignore blank line in commands */
+		    continue;
+		}
 #ifndef POSIX
+		while (*cp && (ParseIsEscaped(line, cp) ||
+			(*cp != ':') && (*cp != '!'))) {
+		    nonSpace = TRUE;
+		    cp++;
 		}
 #endif
 	    }
 
-	    nextLine:
+#ifndef POSIX
+	    if (*cp == '\0') {
+		if (inLine) {
+		    Parse_Error(PARSE_WARNING,
+				 "Shell command needs a leading tab");
+		    goto shellCommand;
+		} else if (nonSpace) {
+		    Parse_Error(PARSE_FATAL, "Missing operator");
+		}
+		continue;
+	    }
+#endif
+	    ParseFinishLine();
 
+	    cp = Var_Subst(NULL, line, VAR_CMD, TRUE);
 	    free(line);
+	    line = cp;
+
+	    /*
+	     * Need a non-circular list for the target nodes
+	     */
+	    if (targets)
+		Lst_Destroy(targets, NOFREE);
+
+	    targets = Lst_Init(FALSE);
+	    inLine = TRUE;
+
+	    ParseDoDependency(line);
 	}
 	/*
 	 * Reached EOF, but it may be just EOF of an include file...
