@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.57 2006/09/23 04:37:04 jmcneill Exp $
+# $NetBSD: INSTALL,v 1.58 2006/10/15 14:41:49 xtraeme Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.57 $"
+#ident 		"INSTALL-$Revision: 1.58 $"
 
 maxusers	32		# estimated number of users
 
@@ -334,23 +334,26 @@ icpsp*	at icp? unit ?			# SCSI pass-through
 # The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
-pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
-acardide* at pci? dev ? function ?	# Acard IDE controllers
-aceride* at pci? dev ? function ?	# Acer Lab IDE controllers
-artsata* at pci? dev ? function ?	# Intel i31244 SATA controller
-cmdide* at pci? dev ? function ?	# CMD tech IDE controllers
-cypide* at pci? dev ? function ?	# Cypress IDE controllers
-hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
-iteide*	at pci? dev ? function ?	# IT Express IDE controllers
-optiide* at pci? dev ? function ?	# Opti IDE controllers
-piixide* at pci? dev ? function ?	# Intel IDE controllers
-pdcide* at pci? dev ? function ?	# Promise IDE controllers
-pdcsata* at pci? dev ? function ?	# Promise SATA150 controllers
-satalink* at pci? dev ? function ?	# SiI SATALink controllers
-siside* at pci? dev ? function ?	# SiS IDE controllers
-slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
-svwsata* at pci? dev ? function ?	# ServerWorks SATA controllers
-viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
+pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+acardide* 	at pci? dev ? function ?	# Acard IDE controllers
+aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
+artsata* 	at pci? dev ? function ?	# Intel i31244 SATA controller
+cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
+cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
+hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
+ixpide* 	at pci? dev ? function ?	# ATI IXP IDE controllers
+optiide* 	at pci? dev ? function ?	# Opti IDE controllers
+piixide* 	at pci? dev ? function ?	# Intel IDE controllers
+pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+pdcsata* 	at pci? dev ? function ?	# Promise SATA150 controllers
+rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
+satalink* 	at pci? dev ? function ?	# SiI SATALink controllers
+siside* 	at pci? dev ? function ?	# SiS IDE controllers
+slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
+svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
+stpcide* 	at pci? dev ? function ?	# STMicro STPC IDE controllers
+viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 # PCMCIA IDE controllers
 #wdc*	at pcmcia? function ?
