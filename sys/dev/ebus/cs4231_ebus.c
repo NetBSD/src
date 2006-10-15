@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.21 2006/05/14 21:42:27 elad Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.22 2006/10/15 19:43:45 martin Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.21 2006/05/14 21:42:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.22 2006/10/15 19:43:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,7 @@ const struct audio_hw_if audiocs_ebus_hw_if = {
 	cs4231_ebus_trigger_output,
 	cs4231_ebus_trigger_input,
 	NULL,			/* dev_ioctl */
+	NULL,			/* powerstate */
 };
 
 #ifdef AUDIO_DEBUG
