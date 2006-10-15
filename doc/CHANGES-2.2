@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.82 2006/10/09 21:44:35 bouyer Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.83 2006/10/15 13:10:33 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -906,3 +906,10 @@ sys/arch/acorn32/podulebus/simide.c		1.24 via patch
 	WDC_NREG, not DRIVE_REGISTERS_SPACE.  The latter is much bigger and
 	causes a buffer overrun and panic.  Patch supplied by Mike Pumford.
 	[bjh21, ticket #10703]
+
+sys/arch/acorn26/acorn26/vm_machdep.c		1.12
+
+	When forking a new LWP, if a new user stack pointer is provided,
+	use it.  Necessary to make regress/lib/libc/clone pass.
+	[bjh21, ticket #10715]
+
