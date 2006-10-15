@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.c,v 1.7 2006/02/14 16:41:21 bjh21 Exp $	*/
+/*	$NetBSD: cpuswitch.c,v 1.8 2006/10/15 12:45:32 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.7 2006/02/14 16:41:21 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.8 2006/10/15 12:45:32 bjh21 Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -131,9 +131,9 @@ cpu_switch(struct lwp *l1, struct lwp *newl)
 		struct trapframe *tf = l2->l_addr->u_pcb.pcb_tf;
 		caddr_t pc;
 
-		pc = ras_lookup(p2, (caddr_t) tf->tf_pc);
+		pc = ras_lookup(p2, (caddr_t)(tf->tf_r15 & R15_PC));
 		if (pc != (caddr_t) -1)
-			tf->tf_pc = (register_t) pc;
+			tf->tf_r15 = (tf->tf_r15 & ~R15_PC) | (register_t) pc;
 	}
 
 	cpu_loswitch(l1 ? &l1->l_addr->u_pcb.pcb_sf : &dummy,
