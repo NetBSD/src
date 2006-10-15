@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.62 2006/10/09 20:46:33 apb Exp $	*/
+/*	$NetBSD: compat.c,v 1.63 2006/10/15 08:38:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.62 2006/10/09 20:46:33 apb Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.63 2006/10/15 08:38:21 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.62 2006/10/09 20:46:33 apb Exp $");
+__RCSID("$NetBSD: compat.c,v 1.63 2006/10/15 08:38:21 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -394,21 +394,21 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 		status = WEXITSTATUS(reason);		/* exited */
 		if (status != 0) {
 		    if (DEBUG(ERROR)) {
-		        printf("\n*** Failed target:  %s\n*** Failed command: ",
+		        fprintf(debug_file, "\n*** Failed target:  %s\n*** Failed command: ",
 			    gn->name);
 		        for (cp = cmd; *cp; ) {
     			    if (isspace((unsigned char)*cp)) {
-			        putchar(' ');
+				fprintf(debug_file, " ");
 			        while (isspace((unsigned char)*cp))
 				    cp++;
 			    } else {
-			        putchar(*cp);
+				fprintf(debug_file, "%c", *cp);
 			        cp++;
 			    }
 		        }
-			printf("\n");
+			fprintf(debug_file, "\n");
 		    }
-		    printf("*** Error code %d", status);
+		    fprintf(debug_file, "*** Error code %d", status);
 		}
 	    } else {
 		status = WTERMSIG(reason);		/* signaled */
@@ -505,16 +505,16 @@ Compat_Make(ClientData gnp, ClientData pgnp)
 	 * Make_OODate function.
 	 */
 	if (DEBUG(MAKE)) {
-	    printf("Examining %s...", gn->name);
+	    fprintf(debug_file, "Examining %s...", gn->name);
 	}
 	if (! Make_OODate(gn)) {
 	    gn->made = UPTODATE;
 	    if (DEBUG(MAKE)) {
-		printf("up-to-date.\n");
+		fprintf(debug_file, "up-to-date.\n");
 	    }
 	    goto cohorts;
 	} else if (DEBUG(MAKE)) {
-	    printf("out-of-date.\n");
+	    fprintf(debug_file, "out-of-date.\n");
 	}
 
 	/*

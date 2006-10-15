@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.132 2006/10/11 07:01:44 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.133 2006/10/15 08:38:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.132 2006/10/11 07:01:44 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.133 2006/10/15 08:38:21 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.132 2006/10/11 07:01:44 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.133 2006/10/15 08:38:21 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -187,6 +187,100 @@ Boolean forceJobs = FALSE;
 
 extern Lst parseIncPath;
 
+static void
+parse_debug_options(const char *argvalue)
+{
+	const char *modules;
+
+	for (modules = argvalue; *modules; ++modules) {
+		switch (*modules) {
+		case 'A':
+			debug = ~0;
+			break;
+		case 'a':
+			debug |= DEBUG_ARCH;
+			break;
+		case 'c':
+			debug |= DEBUG_COND;
+			break;
+		case 'd':
+			debug |= DEBUG_DIR;
+			break;
+		case 'e':
+			debug |= DEBUG_ERROR;
+			break;
+		case 'f':
+			debug |= DEBUG_FOR;
+			break;
+		case 'g':
+			if (modules[1] == '1') {
+				debug |= DEBUG_GRAPH1;
+				++modules;
+			}
+			else if (modules[1] == '2') {
+				debug |= DEBUG_GRAPH2;
+				++modules;
+			}
+			else if (modules[1] == '3') {
+				debug |= DEBUG_GRAPH3;
+				++modules;
+			}
+			break;
+		case 'j':
+			debug |= DEBUG_JOB;
+			break;
+		case 'm':
+			debug |= DEBUG_MAKE;
+			break;
+		case 'n':
+			debug |= DEBUG_SCRIPT;
+			break;
+		case 'p':
+			debug |= DEBUG_PARSE;
+			break;
+		case 's':
+			debug |= DEBUG_SUFF;
+			break;
+		case 't':
+			debug |= DEBUG_TARG;
+			break;
+		case 'v':
+			debug |= DEBUG_VAR;
+			break;
+		case 'x':
+			debug |= DEBUG_SHELL;
+			break;
+		case 'F':
+			if (debug_file != stdout && debug_file != stderr)
+				fclose(debug_file);
+			if (*++modules == '+')
+				debug_file = fopen(++modules, "a");
+			else {
+				if (!strcmp(modules, "stdout"))
+					debug_file = stdout;
+				else if (!strcmp(modules, "stderr"))
+					debug_file = stderr;
+				else
+					debug_file = fopen(modules, "w");
+			}
+			if (!debug_file) {
+				fprintf(stderr, "Cannot open debug file %s",
+				    modules);
+				usage();
+			}
+			/* Have this non-buffered */
+			if (debug_file != stdout && debug_file != stderr)
+				setbuf(debug_file, NULL);
+			return;
+		default:
+			(void)fprintf(stderr,
+			    "%s: illegal argument to d option -- %c\n",
+			    progname, *modules);
+			usage();
+		}
+	}
+}
+
 /*-
  * MainParseArgs --
  *	Parse a given argument vector. Called from main() and from
@@ -207,7 +301,7 @@ MainParseArgs(int argc, char **argv)
 	char *p;
 	int c = '?';
 	int arginc;
-	char *argvalue, *modules;
+	char *argvalue;
 	const char *getopt_def;
 	char *optscan;
 	Boolean inOption, dashDash = FALSE;
@@ -330,76 +424,17 @@ rearg:
 			varNoExportEnv = TRUE;
 			Var_Append(MAKEFLAGS, "-X", VAR_GLOBAL);
 			break;
-		case 'd': {
+		case 'd':
 			if (argvalue == NULL) goto noarg;
-			for (modules = argvalue; *modules; ++modules)
-				switch (*modules) {
-				case 'A':
-					debug = ~0;
-					break;
-				case 'a':
-					debug |= DEBUG_ARCH;
-					break;
-				case 'c':
-					debug |= DEBUG_COND;
-					break;
-				case 'd':
-					debug |= DEBUG_DIR;
-					break;
-				case 'e':
-					debug |= DEBUG_ERROR;
-					break;
-				case 'f':
-					debug |= DEBUG_FOR;
-					break;
-				case 'g':
-					if (modules[1] == '1') {
-						debug |= DEBUG_GRAPH1;
-						++modules;
-					}
-					else if (modules[1] == '2') {
-						debug |= DEBUG_GRAPH2;
-						++modules;
-					}
-					else if (modules[1] == '3') {
-						debug |= DEBUG_GRAPH3;
-						++modules;
-					}
-					break;
-				case 'j':
-					debug |= DEBUG_JOB;
-					break;
-				case 'm':
-					debug |= DEBUG_MAKE;
-					break;
-				case 'n':
-					debug |= DEBUG_SCRIPT;
-					break;
-				case 'p':
-					debug |= DEBUG_PARSE;
-					break;
-				case 's':
-					debug |= DEBUG_SUFF;
-					break;
-				case 't':
-					debug |= DEBUG_TARG;
-					break;
-				case 'v':
-					debug |= DEBUG_VAR;
-					break;
-				case 'x':
-					debug |= DEBUG_SHELL;
-					break;
-				default:
-					(void)fprintf(stderr,
-				"%s: illegal argument to d option -- %c\n",
-					    progname, *modules);
-					usage();
-				}
-			Var_Append(MAKEFLAGS, "-d", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+			/* If '-d-opts' don't pass to children */
+			if (argvalue[0] == '-')
+			    argvalue++;
+			else {
+			    Var_Append(MAKEFLAGS, "-d", VAR_GLOBAL);
+			    Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+			}
+			parse_debug_options(argvalue);
 			break;
-		}
 		case 'e':
 			checkEnvFirst = TRUE;
 			Var_Append(MAKEFLAGS, "-e", VAR_GLOBAL);
@@ -637,6 +672,9 @@ main(int argc, char **argv)
 #ifdef MAKE_NATIVE
 	struct utsname utsname;
 #endif
+
+	/* default to writing debug to stdout */
+	debug_file = stdout;
 
 	/*
 	 * Set the seed to produce a different random sequences
@@ -936,7 +974,7 @@ main(int argc, char **argv)
 	if (!compatMake)
 	    Job_ServerStart(maxJobTokens, jp_0, jp_1);
 	if (DEBUG(JOB))
-	    printf("job_pipe %d %d, maxjobs %d, tokens %d, compat %d\n",
+	    fprintf(debug_file, "job_pipe %d %d, maxjobs %d, tokens %d, compat %d\n",
 		jp_0, jp_1, maxJobs, maxJobTokens, compatMake);
 
 	Main_ExportMAKEFLAGS(TRUE);	/* initial export */

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.62 2006/10/09 14:36:41 dsl Exp $	*/
+/*	$NetBSD: make.h,v 1.63 2006/10/15 08:38:22 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -415,6 +415,7 @@ extern char	*progname;	/* The program name */
  *	There is one bit per module.  It is up to the module what debug
  *	information to print.
  */
+FILE *debug_file;		/* Output written here - default stdout */
 extern int debug;
 #define	DEBUG_ARCH	0x0001
 #define	DEBUG_COND	0x0002
