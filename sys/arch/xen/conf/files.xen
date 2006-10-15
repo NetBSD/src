@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.49 2006/10/01 21:36:11 bouyer Exp $
+#	$NetBSD: files.xen,v 1.50 2006/10/15 14:34:56 xtraeme Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -307,6 +307,9 @@ include	"compat/pecoff/files.pecoff"
 
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"
+
+# Bluetooth
+include "dev/bluetooth/files.bluetooth"
 
 #
 # CARDBUS
