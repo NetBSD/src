@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.117 2006/10/15 18:08:14 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.118 2006/10/15 21:17:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.117 2006/10/15 18:08:14 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.118 2006/10/15 21:17:27 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.117 2006/10/15 18:08:14 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.118 2006/10/15 21:17:27 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -286,7 +286,7 @@ static struct {
 typedef struct {
     int		op;
     char	*src;
-    Lst		allsrc;
+    Lst		curSrcs;
 } SpecialSrc;
 
 static int ParseIsEscaped(const char *, const char *);
@@ -681,10 +681,14 @@ ParseDoSpecialSrc(ClientData tp, ClientData sp)
      * If the target is a suffix rule, leave it alone.
      */
     if (Suff_IsTransform(tn->name)) {
-	ParseDoSrc(ss->op, ss->src, ss->allsrc, FALSE); /* don't come back */
+	ParseDoSrc(ss->op, ss->src, ss->curSrcs, FALSE); /* don't come back */
 	return 0;
     }
+
+    /* Expand the variables that depend on the current target just in case */
     Var_Set(TARGET, tn->name, tn, 0);
+
+    /* Get the filename part of the target name, excluding all suffixes */
     if ((pref = strrchr(tn->name, '/')))
 	pref++;
     else
@@ -696,12 +700,16 @@ ParseDoSpecialSrc(ClientData tp, ClientData sp)
 	free(cp);
     } else
 	Var_Set(PREFIX, pref, tn, 0);   
+
+    /* Now we can expant the name itself */
     cp = Var_Subst(NULL, ss->src, tn, FALSE);
+    /* XXX, better not need to have $ in a filesname! */
     if (strchr(cp, '$')) {
 	Parse_Error(PARSE_WARNING, "Cannot resolve '%s' here", ss->src);
-	ParseDoSrc(ss->op, ss->src, ss->allsrc, FALSE); /* don't come back */
+	ParseDoSrc(ss->op, ss->src, ss->curSrcs, FALSE); /* don't come back */
 	return 1;			/* stop list traversal */
     } 
+
     /*
      * We don't want to make every target dependent on sources for
      * other targets.  This is the bit of ParseDoSrc which is relevant.
@@ -717,10 +725,9 @@ ParseDoSpecialSrc(ClientData tp, ClientData sp)
 	fprintf(debug_file, "ParseDoSpecialSrc: set %p(%s):%d (was %d)\n",
 		gn, gn->name, waiting, gn->order);
     gn->order = waiting;
-    (void)Lst_AtEnd(ss->allsrc, (ClientData)gn);
-    if (waiting) {
-	Lst_ForEach(ss->allsrc, ParseAddDep, (ClientData)gn);
-    }
+    (void)Lst_AtEnd(ss->curSrcs, (ClientData)gn);
+    if (waiting)
+	Lst_ForEach(ss->curSrcs, ParseAddDep, (ClientData)gn);
     return 0;
 }
 
@@ -737,7 +744,7 @@ ParseDoSpecialSrc(ClientData tp, ClientData sp)
  * Input:
  *	tOp		operator (if any) from special targets
  *	src		name of the source to handle
- *	allsrc		List of all sources to wait for
+ *	curSrcs		List of all sources to wait for
  *	resolve		boolean - should we try and resolve .TARGET refs.
  *
  * Results:
@@ -749,7 +756,7 @@ ParseDoSpecialSrc(ClientData tp, ClientData sp)
  *---------------------------------------------------------------------
  */
 static void
-ParseDoSrc(int tOp, char *src, Lst allsrc, Boolean resolve)
+ParseDoSrc(int tOp, char *src, Lst curSrcs, Boolean resolve)
 {
     GNode	*gn = NULL;
 
@@ -780,7 +787,7 @@ ParseDoSrc(int tOp, char *src, Lst allsrc, Boolean resolve)
 	 */
 	(void)Lst_AtEnd(create, (ClientData)estrdup(src));
 	/*
-	 * Add the name to the .TARGETS variable as well, so the user cna
+	 * Add the name to the .TARGETS variable as well, so the user can
 	 * employ that, if desired.
 	 */
 	Var_Append(".TARGETS", src, VAR_GLOBAL);
@@ -821,11 +828,20 @@ ParseDoSrc(int tOp, char *src, Lst allsrc, Boolean resolve)
 	 * to all the targets.
 	 */
 	if (resolve && strchr(src, '$')) {
+	    /*
+	     * If the 'src' needs expanding, and we have a .WAIT in the
+	     * list of sources, then we expand 'src' with respect to each
+	     * of the targets and add the modified nodes separately to
+	     * their own target.
+	     * This only makes a difference if the 'src' has a dynamic
+	     * dependency against .TARGET (etc), and even then it is probably
+	     * not a very useful optimisation.
+	     */
 	    SpecialSrc ss;
 
 	    ss.op = tOp;
 	    ss.src = src;
-	    ss.allsrc = allsrc;
+	    ss.curSrcs = curSrcs;
 
 	    /*
 	     * If src cannot be fully resolved, we'll be called again
@@ -834,6 +850,8 @@ ParseDoSrc(int tOp, char *src, Lst allsrc, Boolean resolve)
 	    Lst_ForEach(targets, ParseDoSpecialSrc, (ClientData)&ss);
 	    return;
 	}
+
+	/* Find/create the 'src' node and attach to all targets */
 	gn = Targ_FindNode(src, TARG_CREATE);
 	if (tOp) {
 	    gn->type |= tOp;
@@ -847,10 +865,17 @@ ParseDoSrc(int tOp, char *src, Lst allsrc, Boolean resolve)
 	fprintf(debug_file, "ParseDoSrc: set %p(%s):%d (was %d)\n",
 		gn, gn->name, waiting, gn->order);
     gn->order = waiting;
-    (void)Lst_AtEnd(allsrc, (ClientData)gn);
-    if (waiting) {
-	Lst_ForEach(allsrc, ParseAddDep, (ClientData)gn);
-    }
+
+    /* Keep a list of the 'src' on this dependence line for .WAIT below */
+    (void)Lst_AtEnd(curSrcs, (ClientData)gn);
+
+    /*
+     * If we have passed a .WAIT, then make this 'src' depend on all the
+     * earlier 'src' of the current dependency line that preceed the last
+     * .WAIT directive.
+     */
+    if (waiting)
+	Lst_ForEach(curSrcs, ParseAddDep, (ClientData)gn);
 }
 
 /*-
@@ -1051,6 +1076,7 @@ ParseDoDependency(char *line)
 	    goto out;
 	}
 	*cp = '\0';
+
 	/*
 	 * Have a word in line. See if it's a special target and set
 	 * specType to match it.
@@ -1426,7 +1452,7 @@ ParseDoDependency(char *line)
 	     * specifications (i.e. things with left parentheses in them)
 	     * and handle them accordingly.
 	     */
-	    while (*cp && !isspace ((unsigned char)*cp)) {
+	    for (; *cp && !isspace ((unsigned char)*cp); cp++) {
 		if ((*cp == LPAREN) && (cp > line) && (cp[-1] != '$')) {
 		    /*
 		     * Only stop for a left parenthesis if it isn't at the
@@ -1435,8 +1461,6 @@ ParseDoDependency(char *line)
 		     * source).
 		     */
 		    break;
-		} else {
-		    cp++;
 		}
 	    }
 
