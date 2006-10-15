@@ -1,4 +1,4 @@
-/* $NetBSD: misc.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
+/* $NetBSD: misc.c,v 1.3 2006/10/15 16:11:04 christos Exp $ */
 
 /****************************************************************
 
@@ -379,7 +379,7 @@ pow5mult
 {
 	Bigint *b1, *p5, *p51;
 	int i;
-	CONST static int p05[3] = { 5, 25, 125 };
+	static CONST int p05[3] = { 5, 25, 125 };
 
 	if ( (i = k & 3) !=0)
 		b = multadd(b, p05[i-1], 0);
