@@ -1,4 +1,4 @@
-/*	$NetBSD: asctime.c,v 1.11 2000/09/13 22:32:28 msaitoh Exp $	*/
+/*	$NetBSD: asctime.c,v 1.12 2006/10/15 15:32:42 perry Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)asctime.c	7.9";
 #else
-__RCSID("$NetBSD: asctime.c,v 1.11 2000/09/13 22:32:28 msaitoh Exp $");
+__RCSID("$NetBSD: asctime.c,v 1.12 2006/10/15 15:32:42 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -42,10 +42,10 @@ asctime_r(timeptr, buf)
 register const struct tm *	timeptr;
 char *				buf;
 {
-	static const char	wday_name[][3] = {
+	static const char	*wday_name[7] = {
 		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 	};
-	static const char	mon_name[][3] = {
+	static const char	*mon_name[12] = {
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
