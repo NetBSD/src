@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.20 2002/09/16 19:25:33 tron Exp $	*/
+/*	$NetBSD: ethers.c,v 1.21 2006/10/15 10:55:01 martin Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -9,7 +9,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ethers.c,v 1.20 2002/09/16 19:25:33 tron Exp $");
+__RCSID("$NetBSD: ethers.c,v 1.21 2006/10/15 10:55:01 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -206,7 +206,7 @@ ether_line(l, e, hostname)
 
 #define S2(arg) #arg
 #define S1(arg) S2(arg)
-	const static char fmt[] = " %x:%x:%x:%x:%x:%x"
+	static const char fmt[] = " %x:%x:%x:%x:%x:%x"
 	    " %" S1(MAXHOSTNAMELEN) "s\n";
 #undef S2
 #undef S1
