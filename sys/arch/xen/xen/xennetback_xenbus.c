@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.11 2006/07/12 15:03:08 yamt Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.12 2006/10/15 13:34:17 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -313,7 +313,7 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	ifp->if_flags =
 	    IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 	ifp->if_snd.ifq_maxlen =
-	    max(ifqmaxlen, /*NETIF_RX_RING_SIZE XXX*/0 * 2);
+	    max(ifqmaxlen, NET_TX_RING_SIZE * 2);
 	ifp->if_capabilities = IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx;
 	ifp->if_ioctl = xennetback_ifioctl;
 	ifp->if_start = xennetback_ifstart;
@@ -729,9 +729,11 @@ xennetback_evthandler(void *arg)
 a lot of work is needed in the tcp stack to handle read-only ext storage
 so always copy for now.
 		if (((req_cons + 1) & (NET_TX_RING_SIZE - 1)) ==
-		    (xneti->xni_txring.rsp_prod_pvt & (NET_TX_RING_SIZE - 1))) {
+		    (xneti->xni_txring.rsp_prod_pvt & (NET_TX_RING_SIZE - 1)))
+#else
+		if (1)
 #endif /* notyet */
-		if (1) {
+		{
 			/*
 			 * This is the last TX buffer. Copy the data and
 			 * ack it. Delaying it until the mbuf is
