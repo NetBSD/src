@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2006/10/12 04:46:56 thorpej Exp $
+#	$NetBSD: Makefile,v 1.9 2006/10/15 19:07:38 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ PROPLIBDIR=${NETBSDSRCDIR}/common/lib/libprop
 CPPFLAGS+=-D_LIBPROP
 CPPFLAGS+=-D_REENTRANT -I${NETBSDSRCDIR}/lib/libc/include
 
+LINTFLAGS+=-w
 LIB=	prop
 
 MAN=	prop_array.3 prop_bool.3 prop_data.3 prop_dictionary.3 \
