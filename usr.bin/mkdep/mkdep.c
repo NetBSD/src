@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.28 2006/03/20 23:13:51 christos Exp $ */
+/* $NetBSD: mkdep.c,v 1.29 2006/10/15 18:50:47 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: mkdep.c,v 1.28 2006/03/20 23:13:51 christos Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.29 2006/10/15 18:50:47 christos Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -107,7 +107,7 @@ static int
 run_cc(int argc, char **argv, const char **fname)
 {
 	const char *CC, *tmpdir;
-	char *pathname;
+	char * volatile pathname;
 	static char tmpfilename[MAXPATHLEN];
 	char **args;
 	int tmpfd;
@@ -358,10 +358,13 @@ main(int argc, char **argv)
 			if (suff_list != NULL) {
 				/* Find the .o: */
 				/* First allow for any whitespace */
-				for (suf = colon; ; suf--) {
+				for (suf = colon; suf > buf; suf--) {
 					if (!isspace((unsigned char)suf[-1]))
 						break;
 				}
+				if (suf == buf)
+					errx(EXIT_FAILURE,
+					    "Corrupted file `%s'", fname);
 				/* Then look for any valid suffix */
 				for (sl = suff_list; sl->len != 0; sl++) {
 					if (!memcmp(suf - sl->len, sl->suff,
