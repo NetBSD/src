@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.22 2005/08/09 21:36:42 christos Exp $	*/
+/*	$NetBSD: for.c,v 1.23 2006/10/15 08:38:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.22 2005/08/09 21:36:42 christos Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.23 2006/10/15 08:38:21 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.22 2005/08/09 21:36:42 christos Exp $");
+__RCSID("$NetBSD: for.c,v 1.23 2006/10/15 08:38:21 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -245,9 +245,9 @@ For_Eval(char *line)
 	if (DEBUG(FOR)) {
 	    int i;
 	    for (i = 0; i < accumFor.nvars; i++) {
-		(void)fprintf(stderr, "For: variable %s\n", accumFor.vars[i]);
+		(void)fprintf(debug_file, "For: variable %s\n", accumFor.vars[i]);
 	    }
-	    (void)fprintf(stderr, "For: list %s\n", sub);
+	    (void)fprintf(debug_file, "For: list %s\n", sub);
 	}
 	if (ptr - wrd > 0)
 	    ADDWORD();
@@ -267,7 +267,7 @@ For_Eval(char *line)
 	if (strncmp(ptr, "endfor", 6) == 0 &&
 	    (isspace((unsigned char) ptr[6]) || !ptr[6])) {
 	    if (DEBUG(FOR))
-		(void)fprintf(stderr, "For: end for %d\n", forLevel);
+		(void)fprintf(debug_file, "For: end for %d\n", forLevel);
 	    if (--forLevel < 0) {
 		Parse_Error(level, "for-less endfor");
 		return 0;
@@ -277,7 +277,7 @@ For_Eval(char *line)
 		 isspace((unsigned char) ptr[3])) {
 	    forLevel++;
 	    if (DEBUG(FOR))
-		(void)fprintf(stderr, "For: new loop %d\n", forLevel);
+		(void)fprintf(debug_file, "For: new loop %d\n", forLevel);
 	}
     }
 
@@ -351,7 +351,7 @@ For_Run(int lineno)
 	for (i = 0; i < arg.nvars; i++) {
 	    Var_Set(arg.vars[i], values[i], VAR_GLOBAL, 0);
 	    if (DEBUG(FOR))
-		(void)fprintf(stderr, "--- %s = %s\n", arg.vars[i], 
+		(void)fprintf(debug_file, "--- %s = %s\n", arg.vars[i], 
 		    values[i]);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.65 2006/10/11 07:01:44 dsl Exp $	*/
+/*	$NetBSD: make.c,v 1.66 2006/10/15 08:38:22 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.65 2006/10/11 07:01:44 dsl Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.66 2006/10/15 08:38:22 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.65 2006/10/11 07:01:44 dsl Exp $");
+__RCSID("$NetBSD: make.c,v 1.66 2006/10/15 08:38:22 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -211,9 +211,9 @@ Make_OODate(GNode *gn)
 	(void)Dir_MTime(gn);
 	if (DEBUG(MAKE)) {
 	    if (gn->mtime != 0) {
-		printf("modified %s...", Targ_FmtTime(gn->mtime));
+		fprintf(debug_file, "modified %s...", Targ_FmtTime(gn->mtime));
 	    } else {
-		printf("non-existent...");
+		fprintf(debug_file, "non-existent...");
 	    }
 	}
     }
@@ -238,13 +238,13 @@ Make_OODate(GNode *gn)
 	 * no matter *what*.
 	 */
 	if (DEBUG(MAKE)) {
-	    printf(".USE node...");
+	    fprintf(debug_file, ".USE node...");
 	}
 	oodate = FALSE;
     } else if ((gn->type & OP_LIB) &&
 	       ((gn->mtime==0) || Arch_IsLib(gn))) {
 	if (DEBUG(MAKE)) {
-	    printf("library...");
+	    fprintf(debug_file, "library...");
 	}
 
 	/*
@@ -259,10 +259,10 @@ Make_OODate(GNode *gn)
 	 * out-of-date if any of its children was out-of-date.
 	 */
 	if (DEBUG(MAKE)) {
-	    printf(".JOIN node...");
+	    fprintf(debug_file, ".JOIN node...");
 	}
 	if (DEBUG(MAKE)) {
-	    printf("source %smade...", gn->flags & CHILDMADE ? "" : "not ");
+	    fprintf(debug_file, "source %smade...", gn->flags & CHILDMADE ? "" : "not ");
 	}
 	oodate = (gn->flags & CHILDMADE) ? TRUE : FALSE;
     } else if (gn->type & (OP_FORCE|OP_EXEC|OP_PHONY)) {
@@ -272,11 +272,11 @@ Make_OODate(GNode *gn)
 	 */
 	if (DEBUG(MAKE)) {
 	    if (gn->type & OP_FORCE) {
-		printf("! operator...");
+		fprintf(debug_file, "! operator...");
 	    } else if (gn->type & OP_PHONY) {
-		printf(".PHONY node...");
+		fprintf(debug_file, ".PHONY node...");
 	    } else {
-		printf(".EXEC node...");
+		fprintf(debug_file, ".EXEC node...");
 	    }
 	}
 	oodate = TRUE;
@@ -294,11 +294,11 @@ Make_OODate(GNode *gn)
 	 */
 	if (DEBUG(MAKE)) {
 	    if (gn->mtime < gn->cmtime) {
-		printf("modified before source...");
+		fprintf(debug_file, "modified before source...");
 	    } else if (gn->mtime == 0) {
-		printf("non-existent and no sources...");
+		fprintf(debug_file, "non-existent and no sources...");
 	    } else {
-		printf(":: operator and no sources...");
+		fprintf(debug_file, ":: operator and no sources...");
 	    }
 	}
 	oodate = TRUE;
@@ -312,7 +312,7 @@ Make_OODate(GNode *gn)
 	 */
 	if (DEBUG(MAKE)) {
 	    if (gn->flags & FORCE)
-		printf("non existing child...");
+		fprintf(debug_file, "non existing child...");
 	}
 	oodate = (gn->flags & FORCE) ? TRUE : FALSE;
     }
@@ -422,7 +422,7 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 
 #ifdef DEBUG_SRC
     if ((cgn->type & (OP_USE|OP_USEBEFORE|OP_TRANSFORM)) == 0) {
-	printf("Make_HandleUse: called for plain node %s\n", cgn->name);
+	fprintf(debug_file, "Make_HandleUse: called for plain node %s\n", cgn->name);
 	return;
     }
 #endif
@@ -608,14 +608,14 @@ Make_Recheck(GNode *gn)
     if (NoExecute(gn) ||
 	(gn->type & OP_SAVE_CMDS) || mtime == 0) {
 	if (DEBUG(MAKE)) {
-	    printf(" recheck(%s): update time to now: %s\n",
+	    fprintf(debug_file, " recheck(%s): update time to now: %s\n",
 		   gn->name, Targ_FmtTime(gn->mtime));
 	}
 	gn->mtime = now;
     }
     else {
 	if (DEBUG(MAKE)) {
-	    printf(" recheck(%s): current update time: %s\n",
+	    fprintf(debug_file, " recheck(%s): current update time: %s\n",
 		   gn->name, Targ_FmtTime(gn->mtime));
 	}
     }
@@ -727,7 +727,7 @@ Make_Update(GNode *cgn)
 		 * be dealt with in MakeStartJobs.
 		 */
 		if (DEBUG(MAKE)) {
-		    printf("# %s made, schedule %s\n", cgn->name, pgn->name);
+		    fprintf(debug_file, "# %s made, schedule %s\n", cgn->name, pgn->name);
 		    Targ_PrintNode(pgn, 0);
 		}
 		(void)Lst_EnQueue(toBeMade, (ClientData)pgn);
@@ -945,7 +945,7 @@ MakeStartJobs(void)
 
 	gn = (GNode *)Lst_DeQueue(toBeMade);
 	if (DEBUG(MAKE)) {
-	    printf("Examining %s...", gn->name);
+	    fprintf(debug_file, "Examining %s...", gn->name);
 	}
 	/*
 	 * Make sure any and all predecessors that are going to be made,
@@ -960,7 +960,7 @@ MakeStartJobs(void)
 		if ((pgn->flags & REMAKE) &&
 		    (pgn->made == UNMADE || pgn->unmade_cohorts != 0)) {
 		    if (DEBUG(MAKE)) {
-			printf("predecessor %s not made yet.\n", pgn->name);
+			fprintf(debug_file, "predecessor %s not made yet.\n", pgn->name);
 		    }
 		    break;
 		}
@@ -979,7 +979,7 @@ MakeStartJobs(void)
 	numNodes--;
 	if (Make_OODate(gn)) {
 	    if (DEBUG(MAKE)) {
-		printf("out-of-date\n");
+		fprintf(debug_file, "out-of-date\n");
 	    }
 	    if (queryFlag) {
 		return (TRUE);
@@ -989,7 +989,7 @@ MakeStartJobs(void)
 	    have_token = 0;
 	} else {
 	    if (DEBUG(MAKE)) {
-		printf("up-to-date\n");
+		fprintf(debug_file, "up-to-date\n");
 	    }
 	    gn->made = UPTODATE;
 	    if (gn->type & OP_JOIN) {
@@ -1196,7 +1196,7 @@ Make_Run(Lst targs)
 
     toBeMade = Make_ExpandUse(targs);
     if (DEBUG(MAKE)) {
-	 printf("#***# toBeMade\n");
+	 fprintf(debug_file, "#***# toBeMade\n");
 	 Lst_ForEach(toBeMade, Targ_PrintNode, 0);
     }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.49 2006/04/22 18:47:10 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.50 2006/10/15 08:38:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.49 2006/04/22 18:47:10 christos Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.50 2006/10/15 08:38:21 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.49 2006/04/22 18:47:10 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.50 2006/10/15 08:38:21 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -726,7 +726,7 @@ DirExpandInt(const char *word, Lst path, Lst expansions)
 static int
 DirPrintWord(ClientData word, ClientData dummy)
 {
-    printf("%s ", (char *)word);
+    fprintf(debug_file, "%s ", (char *)word);
 
     return(dummy ? 0 : 0);
 }
@@ -757,7 +757,7 @@ Dir_Expand(const char *word, Lst path, Lst expansions)
     const char    	  *cp;
 
     if (DEBUG(DIR)) {
-	printf("Expanding \"%s\"... ", word);
+	fprintf(debug_file, "Expanding \"%s\"... ", word);
     }
 
     cp = strchr(word, '{');
@@ -842,7 +842,7 @@ Dir_Expand(const char *word, Lst path, Lst expansions)
     }
     if (DEBUG(DIR)) {
 	Lst_ForEach(expansions, DirPrintWord, (ClientData) 0);
-	fputc('\n', stdout);
+	fprintf(debug_file, "\n");
     }
 }
 
@@ -866,7 +866,7 @@ DirLookup(Path *p, const char *name __unused, const char *cp,
     char *file;		/* the current filename to check */
 
     if (DEBUG(DIR)) {
-	printf("   %s ...\n", p->name);
+	fprintf(debug_file, "   %s ...\n", p->name);
     }
 
     if (Hash_FindEntry(&p->files, cp) == NULL)
@@ -874,7 +874,7 @@ DirLookup(Path *p, const char *name __unused, const char *cp,
 
     file = str_concat(p->name, cp, STR_ADDSLASH);
     if (DEBUG(DIR)) {
-	printf("   returning %s\n", file);
+	fprintf(debug_file, "   returning %s\n", file);
     }
     p->hits += 1;
     hits += 1;
@@ -913,7 +913,7 @@ DirLookupSubdir(Path *p, const char *name)
     }
 
     if (DEBUG(DIR)) {
-	printf("checking %s ...\n", file);
+	fprintf(debug_file, "checking %s ...\n", file);
     }
 
     if (stat(file, &stb) == 0) {
@@ -922,7 +922,7 @@ DirLookupSubdir(Path *p, const char *name)
 	 * to fetch it again.
 	 */
 	if (DEBUG(DIR)) {
-	    printf("   Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
+	    fprintf(debug_file, "   Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
 		    file);
 	}
 	entry = Hash_CreateEntry(&mtimes, (char *)file, NULL);
@@ -956,7 +956,7 @@ DirLookupAbs(Path *p, const char *name, const char *cp)
 	const char *p2;		/* pointer into name */
 
 	if (DEBUG(DIR)) {
-		printf("   %s ...\n", p->name);
+		fprintf(debug_file, "   %s ...\n", p->name);
 	}
 
 	/*
@@ -974,7 +974,7 @@ DirLookupAbs(Path *p, const char *name, const char *cp)
 
 	if (Hash_FindEntry(&p->files, cp) == NULL) {
 		if (DEBUG(DIR)) {
-			printf("   must be here but isn't -- returning\n");
+			fprintf(debug_file, "   must be here but isn't -- returning\n");
 		}
 		/* Return empty string: terminates search */
 		return estrdup("");
@@ -983,7 +983,7 @@ DirLookupAbs(Path *p, const char *name, const char *cp)
 	p->hits += 1;
 	hits += 1;
 	if (DEBUG(DIR)) {
-		printf("   returning %s\n", name);
+		fprintf(debug_file, "   returning %s\n", name);
 	}
 	return (estrdup(name));
 }
@@ -1007,7 +1007,7 @@ DirFindDot(Boolean hasSlash __unused, const char *name, const char *cp)
 
 	if (Hash_FindEntry(&dot->files, cp) != NULL) {
 	    if (DEBUG(DIR)) {
-		printf("   in '.'\n");
+		fprintf(debug_file, "   in '.'\n");
 	    }
 	    hits += 1;
 	    dot->hits += 1;
@@ -1016,7 +1016,7 @@ DirFindDot(Boolean hasSlash __unused, const char *name, const char *cp)
 	if (cur &&
 	    Hash_FindEntry(&cur->files, cp) != NULL) {
 	    if (DEBUG(DIR)) {
-		printf("   in ${.CURDIR} = %s\n", cur->name);
+		fprintf(debug_file, "   in ${.CURDIR} = %s\n", cur->name);
 	    }
 	    hits += 1;
 	    cur->hits += 1;
@@ -1074,12 +1074,12 @@ Dir_FindFile(const char *name, Lst path)
     }
 
     if (DEBUG(DIR)) {
-	printf("Searching for %s ...", name);
+	fprintf(debug_file, "Searching for %s ...", name);
     }
 
     if (Lst_Open(path) == FAILURE) {
 	if (DEBUG(DIR)) {
-	    printf("couldn't open path, file not found\n");
+	    fprintf(debug_file, "couldn't open path, file not found\n");
 	}
 	misses += 1;
 	return (NULL);
@@ -1090,11 +1090,11 @@ Dir_FindFile(const char *name, Lst path)
 	if (p == dotLast) {
 	    hasLastDot = TRUE;
             if (DEBUG(DIR))
-		printf("[dot last]...");
+		fprintf(debug_file, "[dot last]...");
 	}
     }
     if (DEBUG(DIR)) {
-	printf("\n");
+	fprintf(debug_file, "\n");
     }
 
     /*
@@ -1157,7 +1157,7 @@ Dir_FindFile(const char *name, Lst path)
      */
     if (!hasSlash) {
 	if (DEBUG(DIR)) {
-	    printf("   failed.\n");
+	    fprintf(debug_file, "   failed.\n");
 	}
 	misses += 1;
 	return (NULL);
@@ -1167,7 +1167,7 @@ Dir_FindFile(const char *name, Lst path)
 	Boolean	checkedDot = FALSE;
 
 	if (DEBUG(DIR)) {
-	    printf("   Trying subdirectories...\n");
+	    fprintf(debug_file, "   Trying subdirectories...\n");
 	}
 
 	if (!hasLastDot) {
@@ -1213,7 +1213,7 @@ Dir_FindFile(const char *name, Lst path)
 	     * so no point in proceeding...
 	     */
 	    if (DEBUG(DIR)) {
-		printf("   Checked . already, returning NULL\n");
+		fprintf(debug_file, "   Checked . already, returning NULL\n");
 	    }
 	    return(NULL);
 	}
@@ -1230,7 +1230,7 @@ Dir_FindFile(const char *name, Lst path)
 	 * returning an empty string.
 	 */
 	if (DEBUG(DIR)) {
-	    printf("   Trying exact path matches...\n");
+	    fprintf(debug_file, "   Trying exact path matches...\n");
 	}
 
 	if (!hasLastDot && cur && (file = DirLookupAbs(cur, name, cp)) != NULL)
@@ -1289,27 +1289,27 @@ Dir_FindFile(const char *name, Lst path)
     }
 #else /* !notdef */
     if (DEBUG(DIR)) {
-	printf("   Looking for \"%s\" ...\n", name);
+	fprintf(debug_file, "   Looking for \"%s\" ...\n", name);
     }
 
     bigmisses += 1;
     entry = Hash_FindEntry(&mtimes, name);
     if (entry != NULL) {
 	if (DEBUG(DIR)) {
-	    printf("   got it (in mtime cache)\n");
+	    fprintf(debug_file, "   got it (in mtime cache)\n");
 	}
 	return(estrdup(name));
     } else if (stat(name, &stb) == 0) {
 	entry = Hash_CreateEntry(&mtimes, name, NULL);
 	if (DEBUG(DIR)) {
-	    printf("   Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
+	    fprintf(debug_file, "   Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
 		    name);
 	}
 	Hash_SetValue(entry, (long)stb.st_mtime);
 	return (estrdup(name));
     } else {
 	if (DEBUG(DIR)) {
-	    printf("   failed. Returning NULL\n");
+	    fprintf(debug_file, "   failed. Returning NULL\n");
 	}
 	return (NULL);
     }
@@ -1446,7 +1446,7 @@ Dir_MTime(GNode *gn)
 	 * to the file system.
 	 */
 	if (DEBUG(DIR)) {
-	    printf("Using cached time %s for %s\n",
+	    fprintf(debug_file, "Using cached time %s for %s\n",
 		    Targ_FmtTime((time_t)(long)Hash_GetValue(entry)), fullName);
 	}
 	stb.st_mtime = (time_t)(long)Hash_GetValue(entry);
@@ -1516,8 +1516,7 @@ Dir_AddDir(Lst path, const char *name)
 	}
     } else {
 	if (DEBUG(DIR)) {
-	    printf("Caching %s ...", name);
-	    fflush(stdout);
+	    fprintf(debug_file, "Caching %s ...", name);
 	}
 
 	if ((d = opendir(name)) != NULL) {
@@ -1546,7 +1545,7 @@ Dir_AddDir(Lst path, const char *name)
 		(void)Lst_AtEnd(path, (ClientData)p);
 	}
 	if (DEBUG(DIR)) {
-	    printf("done\n");
+	    fprintf(debug_file, "done\n");
 	}
     }
     return p;
@@ -1723,16 +1722,16 @@ Dir_PrintDirectories(void)
     LstNode	ln;
     Path	*p;
 
-    printf("#*** Directory Cache:\n");
-    printf("# Stats: %d hits %d misses %d near misses %d losers (%d%%)\n",
+    fprintf(debug_file, "#*** Directory Cache:\n");
+    fprintf(debug_file, "# Stats: %d hits %d misses %d near misses %d losers (%d%%)\n",
 	      hits, misses, nearmisses, bigmisses,
 	      (hits+bigmisses+nearmisses ?
 	       hits * 100 / (hits + bigmisses + nearmisses) : 0));
-    printf("# %-20s referenced\thits\n", "directory");
+    fprintf(debug_file, "# %-20s referenced\thits\n", "directory");
     if (Lst_Open(openDirectories) == SUCCESS) {
 	while ((ln = Lst_Next(openDirectories)) != NILLNODE) {
 	    p = (Path *)Lst_Datum(ln);
-	    printf("# %-20s %10d\t%4d\n", p->name, p->refCount, p->hits);
+	    fprintf(debug_file, "# %-20s %10d\t%4d\n", p->name, p->refCount, p->hits);
 	}
 	Lst_Close(openDirectories);
     }
@@ -1741,7 +1740,7 @@ Dir_PrintDirectories(void)
 static int
 DirPrintDir(ClientData p, ClientData dummy)
 {
-    printf("%s ", ((Path *)p)->name);
+    fprintf(debug_file, "%s ", ((Path *)p)->name);
     return (dummy ? 0 : 0);
 }
 

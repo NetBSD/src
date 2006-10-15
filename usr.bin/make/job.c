@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.122 2006/10/11 07:01:44 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.123 2006/10/15 08:38:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.122 2006/10/11 07:01:44 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.123 2006/10/15 08:38:21 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.122 2006/10/11 07:01:44 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.123 2006/10/15 08:38:21 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -348,9 +348,9 @@ job_table_dump(const char *where)
 {
     Job *job;
 
-    fprintf(stdout, "job table @ %s\n", where);
+    fprintf(debug_file, "job table @ %s\n", where);
     for (job = job_table; job < job_table_end; job++) {
-	fprintf(stdout, "job %d, status %d, flags %d, pid %d\n",
+	fprintf(debug_file, "job %d, status %d, flags %d, pid %d\n",
 	    (int)(job - job_table), job->job_state, job->flags, job->pid);
     }
 }
@@ -424,18 +424,16 @@ JobCondPassSig(int signo)
     Job *job;
 
     if (DEBUG(JOB)) {
-	(void)fprintf(stdout, "JobCondPassSig(%d) called.\n", signo);
-	(void)fflush(stdout);
+	(void)fprintf(debug_file, "JobCondPassSig(%d) called.\n", signo);
     }
 
     for (job = job_table; job < job_table_end; job++) {
 	if (job->job_state != JOB_ST_RUNNING)
 	    continue;
 	if (DEBUG(JOB)) {
-	    (void)fprintf(stdout,
+	    (void)fprintf(debug_file,
 			   "JobCondPassSig passing signal %d to child %d.\n",
 			   signo, job->pid);
-	    (void)fflush(stdout);
 	}
 	KILLPG(job->pid, signo);
     }
@@ -549,9 +547,8 @@ JobPassSig_suspend(int signo)
     (void)sigaction(signo, &act, NULL);
 
     if (DEBUG(JOB)) {
-	(void)fprintf(stdout,
+	(void)fprintf(debug_file,
 		       "JobPassSig passing signal %d to self.\n", signo);
-	(void)fflush(stdout);
     }
 
     (void)kill(getpid(), signo);
@@ -676,8 +673,7 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
     }
 
 #define DBPRINTF(fmt, arg) if (DEBUG(JOB)) {	\
-	(void)fprintf(stdout, fmt, arg); 	\
-	(void)fflush(stdout); 			\
+	(void)fprintf(debug_file, fmt, arg); 	\
     }						\
    (void)fprintf(job->cmdFILE, fmt, arg);	\
    (void)fflush(job->cmdFILE);
@@ -944,9 +940,8 @@ JobFinish(Job *job, int status)
     Boolean 	 done, return_job_token;
 
     if (DEBUG(JOB)) {
-	fprintf(stdout, "Jobfinish: %d [%s], status %d\n",
+	fprintf(debug_file, "Jobfinish: %d [%s], status %d\n",
 				job->pid, job->node->name, status);
-	fflush(stdout);
     }
 
     if ((WIFEXITED(status) &&
@@ -993,9 +988,8 @@ JobFinish(Job *job, int status)
     if (done) {
 	if (WIFEXITED(status)) {
 	    if (DEBUG(JOB)) {
-		(void)fprintf(stdout, "Process %d [%s] exited.\n",
+		(void)fprintf(debug_file, "Process %d [%s] exited.\n",
 				job->pid, job->node->name);
-		(void)fflush(stdout);
 	    }
 	    if (WEXITSTATUS(status) != 0) {
 		if (job->node != lastNode) {
@@ -1254,13 +1248,12 @@ JobExec(Job *job, char **argv)
     if (DEBUG(JOB)) {
 	int 	  i;
 
-	(void)fprintf(stdout, "Running %s %sly\n", job->node->name, "local");
-	(void)fprintf(stdout, "\tCommand: ");
+	(void)fprintf(debug_file, "Running %s %sly\n", job->node->name, "local");
+	(void)fprintf(debug_file, "\tCommand: ");
 	for (i = 0; argv[i] != NULL; i++) {
-	    (void)fprintf(stdout, "%s ", argv[i]);
+	    (void)fprintf(debug_file, "%s ", argv[i]);
 	}
- 	(void)fprintf(stdout, "\n");
- 	(void)fflush(stdout);
+ 	(void)fprintf(debug_file, "\n");
     }
 
     /*
@@ -1376,7 +1369,7 @@ JobExec(Job *job, char **argv)
      * Now the job is actually running, add it to the table.
      */
     if (DEBUG(JOB)) {
-	printf("JobExec(%s): pid %d added to jobs table\n",
+	fprintf(debug_file, "JobExec(%s): pid %d added to jobs table\n",
 		job->node->name, job->pid);
 	job_table_dump("job started");
     }
@@ -1913,9 +1906,8 @@ Job_CatchChildren(void)
 
     while ((pid = waitpid((pid_t) -1, &status, WNOHANG | WUNTRACED)) > 0) {
 	if (DEBUG(JOB)) {
-	    (void)fprintf(stdout, "Process %d exited/stopped status %x.\n", pid,
+	    (void)fprintf(debug_file, "Process %d exited/stopped status %x.\n", pid,
 	      status);
-	    (void)fflush(stdout);
 	}
 
 	job = JobFindPid(pid, JOB_ST_RUNNING);
@@ -1926,9 +1918,8 @@ Job_CatchChildren(void)
 	}
 	if (WIFSTOPPED(status)) {
 	    if (DEBUG(JOB)) {
-		(void)fprintf(stdout, "Process %d (%s) stopped.\n",
+		(void)fprintf(debug_file, "Process %d (%s) stopped.\n",
 				job->pid, job->node->name);
-		(void)fflush(stdout);
 	    }
 	    if (!make_suspended) {
 		    switch (WSTOPSIG(status)) {
@@ -2457,10 +2448,9 @@ JobInterrupt(int runINTERRUPT, int signo)
 	}
 	if (job->pid) {
 	    if (DEBUG(JOB)) {
-		(void)fprintf(stdout,
+		(void)fprintf(debug_file,
 			   "JobInterrupt passing signal %d to child %d.\n",
 			   signo, job->pid);
-		(void)fflush(stdout);
 	    }
 	    KILLPG(job->pid, signo);
 	}
@@ -2616,9 +2606,8 @@ JobRestartJobs(void)
 	if (job->job_state == JOB_ST_RUNNING &&
 		(make_suspended || job->job_suspended)) {
 	    if (DEBUG(JOB)) {
-		(void)fprintf(stdout, "Restarting stopped job pid %d.\n",
+		(void)fprintf(debug_file, "Restarting stopped job pid %d.\n",
 			job->pid);
-		(void)fflush(stdout);
 	    }
 	    if (job->job_suspended) {
 		    (void)printf("*** [%s] Continued\n", job->node->name);
@@ -2626,8 +2615,7 @@ JobRestartJobs(void)
 	    }
 	    job->job_suspended = 0;
 	    if (KILLPG(job->pid, SIGCONT) != 0 && DEBUG(JOB)) {
-		fprintf(stdout, "Failed to send SIGCONT to %d\n", job->pid);
-		(void)fflush(stdout);
+		fprintf(debug_file, "Failed to send SIGCONT to %d\n", job->pid);
 	    }
 	}
 	if (job->job_state == JOB_ST_FINISHED)
@@ -2699,7 +2687,7 @@ JobTokenAdd(void)
 	continue;
 
     if (DEBUG(JOB))
-	printf("(%d) aborting %d, deposit token %c\n",
+	fprintf(debug_file, "(%d) aborting %d, deposit token %c\n",
 	    getpid(), aborting, JOB_TOKENS[aborting]);
     write(tokenWaitJob.outPipe, &tok, 1);
 }
@@ -2788,7 +2776,7 @@ Job_TokenWithdraw(void)
 
     wantToken = 0;
     if (DEBUG(JOB))
-	printf("Job_TokenWithdraw(%d): aborting %d, running %d\n",
+	fprintf(debug_file, "Job_TokenWithdraw(%d): aborting %d, running %d\n",
 		getpid(), aborting, jobTokensRunning);
 
     if (aborting || (jobTokensRunning >= maxJobs))
@@ -2802,7 +2790,7 @@ Job_TokenWithdraw(void)
 	    Fatal("job pipe read: %s", strerror(errno));
 	}
 	if (DEBUG(JOB))
-	    printf("(%d) blocked for token\n", getpid());
+	    fprintf(debug_file, "(%d) blocked for token\n", getpid());
 	wantToken = 1;
 	return FALSE;
     }
@@ -2810,7 +2798,7 @@ Job_TokenWithdraw(void)
     if (count == 1 && tok != '+') {
 	/* make being abvorted - remove any other job tokens */
 	if (DEBUG(JOB))
-	    printf("(%d) aborted by token %c\n", getpid(), tok);
+	    fprintf(debug_file, "(%d) aborted by token %c\n", getpid(), tok);
 	while (read(tokenWaitJob.inPipe, &tok1, 1) == 1)
 	    continue;
 	/* And put the stopper back */
@@ -2824,7 +2812,7 @@ Job_TokenWithdraw(void)
 
     jobTokensRunning++;
     if (DEBUG(JOB))
-	printf("(%d) withdrew token\n", getpid());
+	fprintf(debug_file, "(%d) withdrew token\n", getpid());
     return TRUE;
 }
 

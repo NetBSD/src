@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.115 2006/08/26 18:17:42 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.116 2006/10/15 08:38:22 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.115 2006/08/26 18:17:42 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.116 2006/10/15 08:38:22 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.115 2006/08/26 18:17:42 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.116 2006/10/15 08:38:22 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -516,7 +516,7 @@ ParseLinkSrc(ClientData pgnp, ClientData cgnp)
 	    (void)Lst_AtEnd(cgn->parents, (ClientData)pgn);
     pgn->unmade += 1;
     if (DEBUG(PARSE)) {
-	printf("# ParseLinkSrc: added child %s - %s\n", pgn->name, cgn->name);
+	fprintf(debug_file, "# ParseLinkSrc: added child %s - %s\n", pgn->name, cgn->name);
 	Targ_PrintNode(pgn, 0);
 	Targ_PrintNode(cgn, 0);
     }
@@ -625,7 +625,7 @@ ParseAddDep(ClientData pp, ClientData sp)
     GNode *s = (GNode *)sp;
 
     if (DEBUG(PARSE))
-	printf("ParseAddDep: %p(%s):%d %p(%s):%d\n",
+	fprintf(debug_file, "ParseAddDep: %p(%s):%d %p(%s):%d\n",
 		p, p->name, p->order, s, s->name, s->order);
     if (p->order >= s->order)
 	return 1;
@@ -639,7 +639,7 @@ ParseAddDep(ClientData pp, ClientData sp)
     (void)Lst_AtEnd(s->preds, (ClientData)p);
     (void)Lst_AtEnd(s->recpreds, (ClientData)p);
     if (DEBUG(PARSE)) {
-	printf("# ParseAddDep: added .WAIT dependency %s - %s\n",
+	fprintf(debug_file, "# ParseAddDep: added .WAIT dependency %s - %s\n",
 		p->name, s->name);
 	Targ_PrintNode(p, 0);
 	Targ_PrintNode(s, 0);
@@ -714,7 +714,7 @@ ParseDoSpecialSrc(ClientData tp, ClientData sp)
 	ParseLinkSrc((ClientData)tn, (ClientData)gn);
     }
     if (DEBUG(PARSE))
-	printf("ParseDoSpecialSrc: set %p(%s):%d (was %d)\n",
+	fprintf(debug_file, "ParseDoSpecialSrc: set %p(%s):%d (was %d)\n",
 		gn, gn->name, waiting, gn->order);
     gn->order = waiting;
     (void)Lst_AtEnd(ss->allsrc, (ClientData)gn);
@@ -796,7 +796,7 @@ ParseDoSrc(int tOp, char *src, Lst allsrc, Boolean resolve)
 	    (void)Lst_AtEnd(predecessor->successors, (ClientData)gn);
 	    (void)Lst_AtEnd(gn->preds, (ClientData)predecessor);
 	    if (DEBUG(PARSE)) {
-		printf("# ParseDoSrc: added Order dependency %s - %s\n",
+		fprintf(debug_file, "# ParseDoSrc: added Order dependency %s - %s\n",
 			predecessor->name, gn->name);
 		Targ_PrintNode(predecessor, 0);
 		Targ_PrintNode(gn, 0);
@@ -844,7 +844,7 @@ ParseDoSrc(int tOp, char *src, Lst allsrc, Boolean resolve)
     }
 
     if (DEBUG(PARSE))
-	printf("ParseDoSrc: set %p(%s):%d (was %d)\n",
+	fprintf(debug_file, "ParseDoSrc: set %p(%s):%d (was %d)\n",
 		gn, gn->name, waiting, gn->order);
     gn->order = waiting;
     (void)Lst_AtEnd(allsrc, (ClientData)gn);
@@ -2104,7 +2104,7 @@ Parse_FromString(char *str, int lineno)
     IFile         *oldFile;	/* state associated with this file */
 
     if (DEBUG(FOR))
-	(void)fprintf(stderr, "%s\n---- at line %d\n", str, lineno);
+	(void)fprintf(debug_file, "%s\n---- at line %d\n", str, lineno);
 
     oldFile = emalloc(sizeof(IFile));
     memcpy(oldFile, &curFile, sizeof(IFile));
@@ -2153,7 +2153,7 @@ ParseTraditionalInclude(char *line)
     clineno = curFile.lineno;
 
     if (DEBUG(PARSE)) {
-	    printf("ParseTraditionalInclude: %s\n", file);
+	    fprintf(debug_file, "ParseTraditionalInclude: %s\n", file);
     }
 
     /*
