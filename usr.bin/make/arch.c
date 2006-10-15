@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.51 2006/06/29 22:02:06 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.52 2006/10/15 08:38:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.51 2006/06/29 22:02:06 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.52 2006/10/15 08:38:21 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.51 2006/06/29 22:02:06 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.52 2006/10/15 08:38:21 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -680,7 +680,7 @@ ArchStatMember(char *archive, char *member, Boolean hash)
 		memName[elen] = '\0';
 		fseek(arch, -elen, SEEK_CUR);
 		if (DEBUG(ARCH) || DEBUG(MAKE)) {
-		    printf("ArchStat: Extended format entry for %s\n", memName);
+		    fprintf(debug_file, "ArchStat: Extended format entry for %s\n", memName);
 		}
 	    }
 #endif
@@ -751,7 +751,7 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
 
 	if (ar->fnametab != NULL) {
 	    if (DEBUG(ARCH)) {
-		printf("Attempted to redefine an SVR4 name table\n");
+		fprintf(debug_file, "Attempted to redefine an SVR4 name table\n");
 	    }
 	    return -1;
 	}
@@ -765,7 +765,7 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
 
 	if (fread(ar->fnametab, size, 1, arch) != 1) {
 	    if (DEBUG(ARCH)) {
-		printf("Reading an SVR4 name table failed\n");
+		fprintf(debug_file, "Reading an SVR4 name table failed\n");
 	    }
 	    return -1;
 	}
@@ -784,7 +784,7 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
 		break;
 	    }
 	if (DEBUG(ARCH)) {
-	    printf("Found svr4 archive name table with %lu entries\n",
+	    fprintf(debug_file, "Found svr4 archive name table with %lu entries\n",
 	            (u_long)entry);
 	}
 	return 0;
@@ -796,20 +796,20 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
     entry = (size_t)strtol(&name[1], &eptr, 0);
     if ((*eptr != ' ' && *eptr != '\0') || eptr == &name[1]) {
 	if (DEBUG(ARCH)) {
-	    printf("Could not parse SVR4 name %s\n", name);
+	    fprintf(debug_file, "Could not parse SVR4 name %s\n", name);
 	}
 	return 2;
     }
     if (entry >= ar->fnamesize) {
 	if (DEBUG(ARCH)) {
-	    printf("SVR4 entry offset %s is greater than %lu\n",
+	    fprintf(debug_file, "SVR4 entry offset %s is greater than %lu\n",
 		   name, (u_long)ar->fnamesize);
 	}
 	return 2;
     }
 
     if (DEBUG(ARCH)) {
-	printf("Replaced %s with %s\n", name, &ar->fnametab[entry]);
+	fprintf(debug_file, "Replaced %s with %s\n", name, &ar->fnametab[entry]);
     }
 
     (void)strncpy(name, &ar->fnametab[entry], MAXPATHLEN);
@@ -935,7 +935,7 @@ ArchFindMember(char *archive, char *member, struct ar_hdr *arhPtr,
 		}
 		ename[elen] = '\0';
 		if (DEBUG(ARCH) || DEBUG(MAKE)) {
-		    printf("ArchFind: Extended format entry for %s\n", ename);
+		    fprintf(debug_file, "ArchFind: Extended format entry for %s\n", ename);
 		}
 		if (strncmp(ename, member, len) == 0) {
 			/* Found as extended name */
@@ -1259,7 +1259,7 @@ Arch_LibOODate(GNode *gn)
 	    modTimeTOC = (int)strtol(arhPtr->ar_date, NULL, 10);
 
 	    if (DEBUG(ARCH) || DEBUG(MAKE)) {
-		printf("%s modified %s...", RANLIBMAG, Targ_FmtTime(modTimeTOC));
+		fprintf(debug_file, "%s modified %s...", RANLIBMAG, Targ_FmtTime(modTimeTOC));
 	    }
 	    oodate = (gn->cmtime > modTimeTOC);
 	} else {
@@ -1267,7 +1267,7 @@ Arch_LibOODate(GNode *gn)
 	     * A library w/o a table of contents is out-of-date
 	     */
 	    if (DEBUG(ARCH) || DEBUG(MAKE)) {
-		printf("No t.o.c....");
+		fprintf(debug_file, "No t.o.c....");
 	    }
 	    oodate = TRUE;
 	}

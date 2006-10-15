@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.113 2006/08/26 18:17:42 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.114 2006/10/15 08:38:22 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.113 2006/08/26 18:17:42 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.114 2006/10/15 08:38:22 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.113 2006/08/26 18:17:42 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.114 2006/10/15 08:38:22 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -478,7 +478,7 @@ VarAdd(const char *name, const char *val, GNode *ctxt)
     Hash_SetValue(h, v);
     v->name = h->name;
     if (DEBUG(VAR)) {
-	printf("%s:%s = %s\n", ctxt->name, name, val);
+	fprintf(debug_file, "%s:%s = %s\n", ctxt->name, name, val);
     }
 }
 
@@ -501,7 +501,7 @@ Var_Delete(const char *name, GNode *ctxt)
     Hash_Entry 	  *ln;
 
     if (DEBUG(VAR)) {
-	printf("%s:delete %s\n", ctxt->name, name);
+	fprintf(debug_file, "%s:delete %s\n", ctxt->name, name);
     }
     ln = Hash_FindEntry(&ctxt->context, name);
     if (ln != NULL) {
@@ -565,7 +565,7 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 	Buf_AddBytes(v->val, strlen(val), (const Byte *)val);
 
 	if (DEBUG(VAR)) {
-	    printf("%s:%s = %s\n", ctxt->name, name, val);
+	    fprintf(debug_file, "%s:%s = %s\n", ctxt->name, name, val);
 	}
     }
     /*
@@ -639,7 +639,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	Buf_AddBytes(v->val, strlen(val), (const Byte *)val);
 
 	if (DEBUG(VAR)) {
-	    printf("%s:%s = %s\n", ctxt->name, name,
+	    fprintf(debug_file, "%s:%s = %s\n", ctxt->name, name,
 		   (char *)Buf_GetAll(v->val, NULL));
 	}
 
@@ -2011,7 +2011,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    rval = Var_Parse(tstr, ctxt, errnum, &rlen, &freeIt);
 
 	    if (DEBUG(VAR)) {
-		printf("Got '%s' from '%.*s'%.*s\n",
+		fprintf(debug_file, "Got '%s' from '%.*s'%.*s\n",
 		       rval, rlen, tstr, rlen, tstr + rlen);
 	    }
 
@@ -2038,7 +2038,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    continue;
 	}
 	if (DEBUG(VAR)) {
-	    printf("Applying :%c to \"%s\"\n", *tstr, nstr);
+	    fprintf(debug_file, "Applying :%c to \"%s\"\n", *tstr, nstr);
 	}
 	newStr = var_Error;
 	switch ((modifier = *tstr)) {
@@ -2938,7 +2938,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    }
 	}
 	if (DEBUG(VAR)) {
-	    printf("Result of :%c is \"%s\"\n", modifier, newStr);
+	    fprintf(debug_file, "Result of :%c is \"%s\"\n", modifier, newStr);
 	}
 
 	if (newStr != nstr) {
@@ -3606,7 +3606,7 @@ static void
 VarPrintVar(ClientData vp)
 {
     Var    *v = (Var *)vp;
-    printf("%-16s = %s\n", v->name, (char *)Buf_GetAll(v->val, NULL));
+    fprintf(debug_file, "%-16s = %s\n", v->name, (char *)Buf_GetAll(v->val, NULL));
 }
 
 /*-

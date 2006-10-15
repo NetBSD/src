@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.33 2006/07/28 17:07:33 sjg Exp $	*/
+/*	$NetBSD: cond.c,v 1.34 2006/10/15 08:38:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.33 2006/07/28 17:07:33 sjg Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.34 2006/10/15 08:38:21 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.33 2006/07/28 17:07:33 sjg Exp $");
+__RCSID("$NetBSD: cond.c,v 1.34 2006/10/15 08:38:21 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -421,7 +421,7 @@ CondDoExists(int argLen, char *arg)
     }
     arg[argLen] = savec;
     if (DEBUG(COND)) {
-	printf("exists(%s) result is \"%s\"\n",
+	fprintf(debug_file, "exists(%s) result is \"%s\"\n",
 	       arg, path ? path : "");
     }    
     return (result);
@@ -789,7 +789,7 @@ do_string_compare:
 		    }
 
 		    if (DEBUG(COND)) {
-			printf("lhs = \"%s\", rhs = \"%s\", op = %.2s\n",
+			fprintf(debug_file, "lhs = \"%s\", rhs = \"%s\", op = %.2s\n",
 			       lhs, rhs, op);
 		    }
 		    /*
@@ -816,7 +816,7 @@ do_string_compare:
 			goto do_string_compare;
 
 		    if (DEBUG(COND)) {
-			printf("left = %f, right = %f, op = %.2s\n", left,
+			fprintf(debug_file, "left = %f, right = %f, op = %.2s\n", left,
 			       right, op);
 		    }
 		    switch(op[0]) {
