@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.15 2006/10/14 19:53:51 tsutsui Exp $ */
+/* $NetBSD: if_vge.c,v 1.16 2006/10/15 10:33:25 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.15 2006/10/14 19:53:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.16 2006/10/15 10:33:25 tsutsui Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -246,6 +246,7 @@ vge_read_eeprom(struct vge_softc *sc, int addr)
 
 	/* Wait for the done bit to be set. */
 	for (i = 0; i < VGE_TIMEOUT; i++) {
+		DELAY(5);
 		if (CSR_READ_1(sc, VGE_EECMD) & VGE_EECMD_EDONE)
 			break;
 	}
@@ -596,6 +597,12 @@ vge_reset(struct vge_softc *sc)
 		printf("%s: EEPROM reload timed out\n", sc->sc_dev.dv_xname);
 		return;
 	}
+
+	/*
+	 * On some machine, the first read data from EEPROM could be
+	 * messed up, so read one dummy data here to avoid the mess.
+	 */
+	(void)vge_read_eeprom(sc, 0);
 
 	CSR_CLRBIT_1(sc, VGE_CHIPCFG0, VGE_CHIPCFG0_PACPI);
 }
