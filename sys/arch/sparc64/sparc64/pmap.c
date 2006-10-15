@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.176 2006/10/03 23:39:03 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.177 2006/10/15 21:07:45 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.176 2006/10/03 23:39:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.177 2006/10/15 21:07:45 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -655,11 +655,12 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		("We should have the memory at %lx, let's map it in\n",
 			phys_msgbuf));
 	if (prom_map_phys(phys_msgbuf, msgbufsiz, (vaddr_t)msgbufp,
-			  -1/* sunos does this */) == -1)
+			  -1/* sunos does this */) == -1) {
 		prom_printf("Failed to map msgbuf\n");
-	else
+	} else {
 		BDPRINTF(PDB_BOOT, ("msgbuf mapped at %p\n",
 			(void *)msgbufp));
+	}
 	msgbufmapped = 1;	/* enable message buffer */
 	initmsgbuf((caddr_t)msgbufp, msgbufsiz);
 
@@ -1478,8 +1479,9 @@ pmap_kenter_pa(va, pa, prot)
 	 */
 
 	ENTER_STAT(unmanaged);
-	if (pa & (PMAP_NVC|PMAP_NC))
+	if (pa & (PMAP_NVC|PMAP_NC)) {
 		ENTER_STAT(ci);
+	}
 
 	tte.data = TSB_DATA(0, PGSZ_8K, pa, 1 /* Privileged */,
 			    (VM_PROT_WRITE & prot),
@@ -1697,8 +1699,9 @@ pmap_enter(pm, va, pa, prot, flags)
 	if (pa & PMAP_NVC)
 #endif
 		uncached = 1;
-	if (uncached)
+	if (uncached) {
 		ENTER_STAT(ci);
+	}
 	tte.data = TSB_DATA(0, size, pa, pm == pmap_kernel(),
 		flags & VM_PROT_WRITE, !(pa & PMAP_NC),
 		uncached, 1, pa & PMAP_LITTLE);
@@ -3022,8 +3025,9 @@ pmap_enter_pv(struct pmap *pmap, vaddr_t va, paddr_t pa, struct vm_page *pg,
 		npv->pv_next = pvh->pv_next;
 		pvh->pv_next = npv;
 
-		if (!npv->pv_next)
+		if (!npv->pv_next) {
 			ENTER_STAT(secondpv);
+		}
 	}
 }
 
