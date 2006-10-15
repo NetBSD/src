@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_rb.c,v 1.3 2006/10/12 04:43:20 thorpej Exp $	*/
+/*	$NetBSD: prop_rb.c,v 1.4 2006/10/15 19:04:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ static const struct rb_node sentinel_node = {
 	.rb_nodes = { RBUNCONST(&sentinel_node),
 		      RBUNCONST(&sentinel_node),
 		      NULL },
-	.rb_sentinel = 1,
+	.rb_u.u_s = { .s_sentinel = 1, }
 };
 #endif /* __lint__ */
 
