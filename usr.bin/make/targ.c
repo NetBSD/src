@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.42 2006/02/26 22:45:46 apb Exp $	*/
+/*	$NetBSD: targ.c,v 1.43 2006/10/15 08:38:22 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.42 2006/02/26 22:45:46 apb Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.43 2006/10/15 08:38:22 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.42 2006/02/26 22:45:46 apb Exp $");
+__RCSID("$NetBSD: targ.c,v 1.43 2006/10/15 08:38:22 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -521,18 +521,18 @@ TargPrintName(ClientData gnp, ClientData pflags)
     GNode *gn = (GNode *)gnp;
 
     if (pflags == PrintWait && gn->order > last_order)
-	printf(".WAIT ");
+	fprintf(debug_file, ".WAIT ");
     last_order = gn->order;
 
-    printf("%s ", gn->name);
+    fprintf(debug_file, "%s ", gn->name);
 
 #ifdef notdef
     if (pflags == PrintPath) {
 	if (gn->path) {
-	    printf("[%s]  ", gn->path);
+	    fprintf(debug_file, "[%s]  ", gn->path);
 	}
 	if (gn == mainTarg) {
-	    printf("(MAIN NAME)  ");
+	    fprintf(debug_file, "(MAIN NAME)  ");
 	}
     }
 #endif /* notdef */
@@ -544,7 +544,7 @@ TargPrintName(ClientData gnp, ClientData pflags)
 int
 Targ_PrintCmd(ClientData cmd, ClientData dummy)
 {
-    printf("\t%s\n", (char *)cmd);
+    fprintf(debug_file, "\t%s\n", (char *)cmd);
     return (dummy ? 0 : 0);
 }
 
@@ -590,8 +590,8 @@ Targ_PrintType(int type)
 {
     int    tbit;
 
-#define PRINTBIT(attr)	case CONCAT(OP_,attr): printf("." #attr " "); break
-#define PRINTDBIT(attr) case CONCAT(OP_,attr): if (DEBUG(TARG))printf("." #attr " "); break
+#define PRINTBIT(attr)	case CONCAT(OP_,attr): fprintf(debug_file, "." #attr " "); break
+#define PRINTDBIT(attr) case CONCAT(OP_,attr): if (DEBUG(TARG))fprintf(debug_file, "." #attr " "); break
 
     type &= ~OP_OPMASK;
 
@@ -612,7 +612,7 @@ Targ_PrintType(int type)
 	    PRINTBIT(NOTMAIN);
 	    PRINTDBIT(LIB);
 	    /*XXX: MEMBER is defined, so CONCAT(OP_,MEMBER) gives OP_"%" */
-	    case OP_MEMBER: if (DEBUG(TARG))printf(".MEMBER "); break;
+	    case OP_MEMBER: if (DEBUG(TARG))fprintf(debug_file, ".MEMBER "); break;
 	    PRINTDBIT(ARCHV);
 	    PRINTDBIT(MADE);
 	    PRINTDBIT(PHONY);
@@ -632,83 +632,83 @@ Targ_PrintNode(ClientData gnp, ClientData passp)
     GNode         *gn = (GNode *)gnp;
     int	    	  pass = passp ? *(int *)passp : 0;
     if (!OP_NOP(gn->type)) {
-	printf("#\n");
+	fprintf(debug_file, "#\n");
 	if (gn == mainTarg) {
-	    printf("# *** MAIN TARGET ***\n");
+	    fprintf(debug_file, "# *** MAIN TARGET ***\n");
 	}
 	if (pass == 2) {
 	    if (gn->unmade) {
-		printf("# %d unmade children\n", gn->unmade);
+		fprintf(debug_file, "# %d unmade children\n", gn->unmade);
 	    } else {
-		printf("# No unmade children\n");
+		fprintf(debug_file, "# No unmade children\n");
 	    }
 	    if (! (gn->type & (OP_JOIN|OP_USE|OP_USEBEFORE|OP_EXEC))) {
 		if (gn->mtime != 0) {
-		    printf("# last modified %s: %s\n",
+		    fprintf(debug_file, "# last modified %s: %s\n",
 			      Targ_FmtTime(gn->mtime),
 			      (gn->made == UNMADE ? "unmade" :
 			       (gn->made == MADE ? "made" :
 				(gn->made == UPTODATE ? "up-to-date" :
 				 "error when made"))));
 		} else if (gn->made != UNMADE) {
-		    printf("# non-existent (maybe): %s\n",
+		    fprintf(debug_file, "# non-existent (maybe): %s\n",
 			      (gn->made == MADE ? "made" :
 			       (gn->made == UPTODATE ? "up-to-date" :
 				(gn->made == ERROR ? "error when made" :
 				 "aborted"))));
 		} else {
-		    printf("# unmade\n");
+		    fprintf(debug_file, "# unmade\n");
 		}
 	    }
 	    if (!Lst_IsEmpty (gn->iParents)) {
-		printf("# implicit parents: ");
+		fprintf(debug_file, "# implicit parents: ");
 		Lst_ForEach(gn->iParents, TargPrintName, (ClientData)0);
-		fputc('\n', stdout);
+		fprintf(debug_file, "\n");
 	    }
 	} else {
 	    if (gn->unmade)
-		printf("# %d unmade children\n", gn->unmade);
+		fprintf(debug_file, "# %d unmade children\n", gn->unmade);
 	}
 	if (!Lst_IsEmpty (gn->parents)) {
-	    printf("# parents: ");
+	    fprintf(debug_file, "# parents: ");
 	    Lst_ForEach(gn->parents, TargPrintName, (ClientData)0);
-	    fputc('\n', stdout);
+	    fprintf(debug_file, "\n");
 	}
 	if (!Lst_IsEmpty (gn->children)) {
-	    printf("# children: ");
+	    fprintf(debug_file, "# children: ");
 	    Lst_ForEach(gn->children, TargPrintName, (ClientData)0);
-	    fputc('\n', stdout);
+	    fprintf(debug_file, "\n");
 	}
 	if (!Lst_IsEmpty (gn->preds)) {
-	    printf("# preds: ");
+	    fprintf(debug_file, "# preds: ");
 	    Lst_ForEach(gn->preds, TargPrintName, (ClientData)0);
-	    fputc('\n', stdout);
+	    fprintf(debug_file, "\n");
 	}
 	if (!Lst_IsEmpty (gn->recpreds)) {
-	    printf("# recpreds: ");
+	    fprintf(debug_file, "# recpreds: ");
 	    Lst_ForEach(gn->recpreds, TargPrintName, (ClientData)0);
-	    fputc('\n', stdout);
+	    fprintf(debug_file, "\n");
 	}
 	if (!Lst_IsEmpty (gn->successors)) {
-	    printf("# successors: ");
+	    fprintf(debug_file, "# successors: ");
 	    Lst_ForEach(gn->successors, TargPrintName, (ClientData)0);
-	    fputc('\n', stdout);
+	    fprintf(debug_file, "\n");
 	}
 
-	printf("%-16s", gn->name);
+	fprintf(debug_file, "%-16s", gn->name);
 	switch (gn->type & OP_OPMASK) {
 	    case OP_DEPENDS:
-		printf(": "); break;
+		fprintf(debug_file, ": "); break;
 	    case OP_FORCE:
-		printf("! "); break;
+		fprintf(debug_file, "! "); break;
 	    case OP_DOUBLEDEP:
-		printf(":: "); break;
+		fprintf(debug_file, ":: "); break;
 	}
 	Targ_PrintType(gn->type);
 	Lst_ForEach(gn->children, TargPrintName, PrintWait);
-	fputc('\n', stdout);
+	fprintf(debug_file, "\n");
 	Lst_ForEach(gn->commands, Targ_PrintCmd, (ClientData)0);
-	printf("\n\n");
+	fprintf(debug_file, "\n\n");
 	if (gn->type & OP_DOUBLEDEP) {
 	    Lst_ForEach(gn->cohorts, Targ_PrintNode, (ClientData)&pass);
 	}
@@ -734,7 +734,7 @@ TargPrintOnlySrc(ClientData gnp, ClientData dummy)
 {
     GNode   	  *gn = (GNode *)gnp;
     if (OP_NOP(gn->type))
-	printf("#\t%s [%s]\n", gn->name, gn->path ? gn->path : gn->name);
+	fprintf(debug_file, "#\t%s [%s]\n", gn->name, gn->path ? gn->path : gn->name);
 
     return (dummy ? 0 : 0);
 }
@@ -758,18 +758,18 @@ TargPrintOnlySrc(ClientData gnp, ClientData dummy)
 void
 Targ_PrintGraph(int pass)
 {
-    printf("#*** Input graph:\n");
+    fprintf(debug_file, "#*** Input graph:\n");
     Lst_ForEach(allTargets, Targ_PrintNode, (ClientData)&pass);
-    printf("\n\n");
-    printf("#\n#   Files that are only sources:\n");
+    fprintf(debug_file, "\n\n");
+    fprintf(debug_file, "#\n#   Files that are only sources:\n");
     Lst_ForEach(allTargets, TargPrintOnlySrc, (ClientData) 0);
-    printf("#*** Global Variables:\n");
+    fprintf(debug_file, "#*** Global Variables:\n");
     Var_Dump(VAR_GLOBAL);
-    printf("#*** Command-line Variables:\n");
+    fprintf(debug_file, "#*** Command-line Variables:\n");
     Var_Dump(VAR_CMD);
-    printf("\n");
+    fprintf(debug_file, "\n");
     Dir_PrintDirectories();
-    printf("\n");
+    fprintf(debug_file, "\n");
     Suff_PrintAll();
 }
 
@@ -942,7 +942,7 @@ TargPropagateRecpredChild(ClientData succgnp, ClientData predgnp)
     /* Ignore if succgn == predgn */
     if (succgn == predgn) {
 	if (DEBUG(TARG) && debugmore) {
-	    printf("# TargPropagateRecpredChild: not propagating %s - %s (identical)\n",
+	    fprintf(debug_file, "# TargPropagateRecpredChild: not propagating %s - %s (identical)\n",
 		    predgn->name, succgn->name);
 	}
 	return (0);
@@ -951,7 +951,7 @@ TargPropagateRecpredChild(ClientData succgnp, ClientData predgnp)
      * in the opposite direction takes precedence. */
     if (Lst_Member(succgn->successors, predgn) != NILLNODE) {
 	if (DEBUG(TARG) && debugmore) {
-	    printf("# TargPropagateRecpredChild: not propagating %s - %s (opposite)\n",
+	    fprintf(debug_file, "# TargPropagateRecpredChild: not propagating %s - %s (opposite)\n",
 		    predgn->name, succgn->name);
 	}
 	return (0);
@@ -960,14 +960,14 @@ TargPropagateRecpredChild(ClientData succgnp, ClientData predgnp)
      * direction takes precedence. */
     if (TargHasAncestor(succgn, predgn)) {
 	if (DEBUG(TARG) && debugmore) {
-	    printf("# TargPropagateRecpredChild: not propagating %s - %s (ancestor)\n",
+	    fprintf(debug_file, "# TargPropagateRecpredChild: not propagating %s - %s (ancestor)\n",
 		    predgn->name, succgn->name);
 	}
 	return (0);
     }
     /* Note the new pred/successor relationship. */
     if (DEBUG(TARG)) {
-	printf("# TargPropagateRecpredChild: propagating %s - %s\n",
+	fprintf(debug_file, "# TargPropagateRecpredChild: propagating %s - %s\n",
 		predgn->name, succgn->name);
     }
     if (Lst_Member(succgn->preds, predgn) == NILLNODE) {
