@@ -1,4 +1,4 @@
-/*	$NetBSD: uuid_is_nil.c,v 1.2 2005/02/09 21:35:47 kleink Exp $	*/
+/*	$NetBSD: uuid_is_nil.c,v 1.3 2006/10/15 16:14:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: uuid_is_nil.c,v 1.2 2005/02/09 21:35:47 kleink Exp $");
+__RCSID("$NetBSD: uuid_is_nil.c,v 1.3 2006/10/15 16:14:46 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -51,7 +51,7 @@ __weak_alias(uuid_is_nil,_uuid_is_nil)
 int32_t
 uuid_is_nil(uuid_t *u, uint32_t *status)
 {
-	static const uuid_t nil = { 0 };
+	static const uuid_t nil = { .time_low = 0 };
 
 	if (status)
 		*status = uuid_s_ok;

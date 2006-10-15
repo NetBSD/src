@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.86 2006/10/14 21:45:29 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.87 2006/10/15 16:14:46 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.86 2006/10/14 21:45:29 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.87 2006/10/15 16:14:46 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -171,7 +171,7 @@ static const struct explore explore[] = {
 static const ns_src default_dns_files[] = {
 	{ NSSRC_FILES, 	NS_SUCCESS },
 	{ NSSRC_DNS, 	NS_SUCCESS },
-	{ 0 }
+	{ 0, 0 }
 };
 
 #define MAXPACKET	(64*1024)
@@ -550,7 +550,7 @@ explore_fqdn(const struct addrinfo *pai, const char *hostname,
 		NS_FILES_CB(_files_getaddrinfo, NULL)
 		{ NSSRC_DNS, _dns_getaddrinfo, NULL },	/* force -DHESIOD */
 		NS_NIS_CB(_yp_getaddrinfo, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	_DIAGASSERT(pai != NULL);

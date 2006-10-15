@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.26 2006/01/19 16:40:44 christos Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.27 2006/10/15 16:14:46 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_rec.c,v 1.26 2006/01/19 16:40:44 christos Exp $");
+__RCSID("$NetBSD: xdr_rec.c,v 1.27 2006/10/15 16:14:46 christos Exp $");
 #endif
 #endif
 
@@ -101,7 +101,8 @@ static const struct  xdr_ops xdrrec_ops = {
 	xdrrec_getpos,
 	xdrrec_setpos,
 	xdrrec_inline,
-	xdrrec_destroy
+	xdrrec_destroy,
+	NULL, /* xdrrec_control */
 };
 
 /*

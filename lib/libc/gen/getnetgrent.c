@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.36 2006/08/03 17:38:26 tron Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.37 2006/10/15 16:14:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.36 2006/08/03 17:38:26 tron Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.37 2006/10/15 16:14:46 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -92,7 +92,7 @@ static const ns_src default_files_nis[] = {
 #ifdef YP
 	{ NSSRC_NIS,	NS_SUCCESS },
 #endif
-	{ 0 }
+	{ 0, 0 },
 };
 #endif
 
@@ -319,7 +319,7 @@ lookup(char *name, char	**line, int bywhat)
 	static const ns_dtab dtab[] = {
 		NS_FILES_CB(_local_lookup, NULL)
 		NS_NIS_CB(_nis_lookup, NULL)
-		{ 0 }
+		NS_NULL_CB
 	};
 
 	_DIAGASSERT(name != NULL);
