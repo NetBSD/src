@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.12 2006/08/19 16:06:39 dsl Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.13 2006/10/15 13:35:15 bouyer Exp $	*/
 /*	NetBSD: cpufunc.h,v 1.28 2004/01/14 11:31:55 yamt Exp 	*/
 
 /*-
@@ -76,6 +76,16 @@ x86_sfence(void)
 	 * nothing to do at the CPU level, just put a barrier for compiler
 	 */
 	__insn_barrier();
+}
+
+static __inline void
+x86_mfence(void)
+{
+
+	/*
+	 * XXX it's better to use real mfence insn if available.
+	 */
+	__asm volatile("lock; addl $0, 0(%%esp)" : : : "memory");
 }
 
 #ifdef _KERNEL
