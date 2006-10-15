@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.14 2006/10/14 13:22:34 xtraeme Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.15 2006/10/15 13:18:24 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.14 2006/10/14 13:22:34 xtraeme Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.15 2006/10/15 13:18:24 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -488,7 +488,7 @@ main(int argc, char **argv)
 		if (!eflag)
 			end = (uint64_t)stp.st_size;
 
-		fd = open(fpath, O_RDONLY);
+		fd = open(fpath, O_RDONLY | O_DIRECT);
 	} else {
 		if (argc != 1)
 			usage();
