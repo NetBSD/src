@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.94 2006/10/12 01:32:51 christos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.95 2006/10/15 12:23:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.94 2006/10/12 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.95 2006/10/15 12:23:56 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -139,7 +139,6 @@ ffs_alloc(struct inode *ip, daddr_t lbn __unused, daddr_t bpref, int size,
 			pg = uvm_pagelookup(uobj, off);
 			KASSERT(pg != NULL);
 			KASSERT(pg->owner == curproc->p_pid);
-			KASSERT((pg->flags & PG_CLEAN) == 0);
 			off += PAGE_SIZE;
 		}
 		simple_unlock(&uobj->vmobjlock);
