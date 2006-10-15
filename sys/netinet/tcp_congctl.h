@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.h,v 1.1 2006/10/09 16:27:07 rpaulo Exp $	*/
+/*	$NetBSD: tcp_congctl.h,v 1.2 2006/10/15 17:45:06 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@ struct tcp_congctl {
 	void (*slow_retransmit)(struct tcpcb *);
 	void (*fast_retransmit_newack)(struct tcpcb *, struct tcphdr *);
 	void (*newack)(struct tcpcb *, struct tcphdr *);
+	void (*cong_exp)(struct tcpcb *);
 	
 	uint32_t refcnt;
 };
@@ -71,7 +72,5 @@ int    tcp_congctl_unregister(const char *);
 int    tcp_congctl_select(struct tcpcb *, const char *);
 const char *
        tcp_congctl_bystruct(const struct tcp_congctl *);
-
-inline void tcp_reno_congestion_exp(struct tcpcb *);
 
 #endif /* _NETINET_TCP_CONGCTL_H */

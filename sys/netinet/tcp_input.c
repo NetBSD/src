@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.250 2006/10/12 11:46:30 rpaulo Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.251 2006/10/15 17:45:06 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.250 2006/10/12 11:46:30 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.251 2006/10/15 17:45:06 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1633,7 +1633,7 @@ after_listen:
 		 * Ignore if we are already trying to recover.
 		 */
 		if ((tiflags & TH_ECE) && SEQ_GEQ(tp->snd_una, tp->snd_recover))
-			tcp_reno_congestion_exp(tp);
+			tp->t_congctl->cong_exp(tp);
 	}
 
 	if (opti.ts_present && opti.ts_ecr) {
