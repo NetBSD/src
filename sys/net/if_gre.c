@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.67 2006/10/12 01:32:28 christos Exp $ */
+/*	$NetBSD: if_gre.c,v 1.68 2006/10/15 06:28:53 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.67 2006/10/12 01:32:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.68 2006/10/15 06:28:53 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -322,9 +322,7 @@ gre_socreate1(struct gre_softc *sc, struct lwp *l, struct gre_soparm *sp,
 	sin->sin_addr = sc->g_dst;
 	sin->sin_port = sc->g_dstport;
 
-	rc = soconnect(so, m, l);
-
-	if (rc != 0) {
+	if ((rc = soconnect(so, m, l)) != 0) {
 		GRE_DPRINTF(sc, "%s: soconnect failed\n", __func__);
 		goto out;
 	}
