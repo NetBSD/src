@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.5 2005/08/27 17:28:26 elad Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.6 2006/10/15 19:34:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.5 2005/08/27 17:28:26 elad Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.6 2006/10/15 19:34:51 christos Exp $");
 #endif
 
 /*
@@ -92,7 +92,7 @@ snprintb(buf, buflen, bitfmt, val)
 		return len;
 	}
 
-#define PUTC(c) if (++len < buflen) *bp++ = (c); else
+#define PUTC(c) if (++len < buflen) *bp++ = (c)
 #define PUTS(s) while ((ch = *(s)++) != 0) PUTC(ch)
 
 	/*
