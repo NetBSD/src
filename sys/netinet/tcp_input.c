@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.251 2006/10/15 17:45:06 rpaulo Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.252 2006/10/15 17:53:30 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.251 2006/10/15 17:45:06 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.252 2006/10/15 17:53:30 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2224,27 +2224,6 @@ after_listen:
 				 * Kludge snd_nxt & the congestion
 				 * window so we send only this one
 				 * packet.
-				 *
-				 * We know we're losing at the current
-				 * window size so do congestion avoidance
-				 * (set ssthresh to half the current window
-				 * and pull our congestion window back to
-				 * the new ssthresh).
-				 *
-				 * Dup acks mean that packets have left the
-				 * network (they're now cached at the receiver)
-				 * so bump cwnd by the amount in the receiver
-				 * to keep a constant cwnd packets in the
-				 * network.
-				 *
-				 * When using TCP ECN, notify the peer that
-				 * we reduced the cwnd.
-				 *
-				 * If we are using TCP/SACK, then enter
-				 * Fast Recovery if the receiver SACKs
-				 * data that is tcprexmtthresh * MSS
-				 * bytes past the last ACKed segment,
-				 * irrespective of the number of DupAcks.
 				 */
 				if (TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0 ||
 				    th->th_ack != tp->snd_una)
