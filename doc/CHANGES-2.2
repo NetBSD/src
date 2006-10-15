@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.83 2006/10/15 13:10:33 bouyer Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.84 2006/10/15 15:45:48 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -912,4 +912,13 @@ sys/arch/acorn26/acorn26/vm_machdep.c		1.12
 	When forking a new LWP, if a new user stack pointer is provided,
 	use it.  Necessary to make regress/lib/libc/clone pass.
 	[bjh21, ticket #10715]
+
+crypto/dist/ssh/sshd_config			1.25 via patch
+
+	Change the default sshd configuration file so that only protocol
+	version 2 is enabled by default.  Users can manually add back support
+	for protocol version 1 in their sshd_config if they have a specific
+	need for it.
+	Suggested by perry@ and ghen@. Ok'ed security-officer@ and christos@
+	[adrianp, ticket #10719]
 
