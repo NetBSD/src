@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.19 2006/10/14 21:08:50 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.20 2006/10/15 15:08:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.19 2006/10/14 21:08:50 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.20 2006/10/15 15:08:20 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -164,9 +164,10 @@ popi2(void)
 	istk_t	*istk;
 	sym_t	*m;
 
-	DPRINTF(("popi2(%s): brace=%d count=%d\n", tyname(buf, sizeof(buf),
+	DPRINTF(("popi2(%s): brace=%d count=%d namedmem %d\n",
+	    tyname(buf, sizeof(buf),
 	    initstk->i_type ? initstk->i_type : initstk->i_subt),
-	    initstk->i_brace, initstk->i_cnt));
+	    initstk->i_brace, initstk->i_cnt, initstk->i_namedmem));
 	initstk = (istk = initstk)->i_nxt;
 	if (initstk == NULL)
 		LERROR("popi2()");
@@ -288,10 +289,15 @@ again:
 	switch (istk->i_type->t_tspec) {
 	case ARRAY:
 		if (namedmem) {
-			DPRINTF(("pushinit ARRAY %s\n", namedmem->n_name));
+			DPRINTF(("pushinit ARRAY %s brace=%d\n",
+			    namedmem->n_name, istk->i_brace));
 			goto pop;
-		} else
-			initstk->i_brace = 1;
+		} else if (istk->i_nxt->i_namedmem) {
+			DPRINTF(("pushinit ARRAY brace=%d, namedmem=%d\n",
+			    istk->i_brace, istk->i_nxt->i_namedmem));
+			istk->i_brace = 1;
+		}
+
 		if (incompl(istk->i_type) && istk->i_nxt->i_nxt != NULL) {
 			/* initialisation of an incomplete type */
 			error(175);
