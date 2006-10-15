@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.2 2006/10/15 22:36:29 christos Exp $");
+__RCSID("$NetBSD: label.c,v 1.3 2006/10/15 22:43:30 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -173,7 +173,7 @@ name_from_file(const char *fn)
 		fclose(f);
 	name[len] = '\0';
 	/* Only keep the first line, excluding the newline character. */
-	p = strchr(name, '\n');
+	p = strchr((const char *)name, '\n');
 	if (p != NULL)
 		*p = '\0';
 }
@@ -214,7 +214,7 @@ cmd_label(int argc, char *argv[])
 		case 'l':
 			if (name != NULL)
 				usage_label();
-			name = strdup(optarg);
+			name = (uint8_t *)strdup(optarg);
 			break;
 		case 's':
 			if (size > 0)
