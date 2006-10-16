@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem.h,v 1.3 2006/10/16 13:09:06 yamt Exp $	*/
+/*	$NetBSD: vmem.h,v 1.4 2006/10/16 13:09:42 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -52,6 +52,9 @@ vmem_t *vmem_create(const char *, vmem_addr_t, vmem_size_t, vmem_size_t,
 void vmem_destroy(vmem_t *);
 vmem_addr_t vmem_alloc(vmem_t *, vmem_size_t, vm_flag_t);
 void vmem_free(vmem_t *, vmem_addr_t, vmem_size_t);
+vmem_addr_t vmem_xalloc(vmem_t *, vmem_size_t, vmem_size_t, vmem_size_t,
+    vmem_size_t, vmem_addr_t, vmem_addr_t, vm_flag_t);
+void vmem_xfree(vmem_t *, vmem_addr_t, vmem_size_t);
 vmem_addr_t vmem_add(vmem_t *, vmem_addr_t, vmem_size_t, vm_flag_t);
 vmem_size_t vmem_roundup_size(vmem_t *, vmem_size_t);
 boolean_t vmem_reap(vmem_t *);
