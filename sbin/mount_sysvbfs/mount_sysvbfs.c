@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_sysvbfs.c,v 1.2 2006/03/21 21:11:42 christos Exp $	*/
+/*	$NetBSD: mount_sysvbfs.c,v 1.3 2006/10/16 03:37:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mount_sysvbfs.c,v 1.2 2006/03/21 21:11:42 christos Exp $");
+__RCSID("$NetBSD: mount_sysvbfs.c,v 1.3 2006/10/16 03:37:43 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,7 +60,7 @@ static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_UPDATE,
 	MOPT_GETARGS,
-	{ NULL }
+	MOPT_NULL,
 };
 
 #ifndef MOUNT_NOMAIN
