@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.8 2006/10/15 19:08:48 christos Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.9 2006/10/16 03:21:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ _prop_object_init(struct _prop_object *po, const struct _prop_object_type *pot)
  */
 /*ARGSUSED*/
 void
-_prop_object_fini(struct _prop_object *po __unused)
+_prop_object_fini(struct _prop_object *po _PROP_ARG_UNUSED)
 {
 	/* Nothing to do, currently. */
 }

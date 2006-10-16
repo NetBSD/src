@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_bool.c,v 1.8 2006/10/15 19:08:48 christos Exp $	*/
+/*	$NetBSD: prop_bool.c,v 1.9 2006/10/16 03:21:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ static const struct _prop_object_type _prop_object_type_bool = {
 
 static void
 /*ARGSUSED*/
-_prop_bool_free(void *v __unused)
+_prop_bool_free(void *v _PROP_ARG_UNUSED)
 {
 
 	/*
