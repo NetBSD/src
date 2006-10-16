@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi.h,v 1.4 2005/12/10 23:51:50 elad Exp $	*/
+/*	$NetBSD: i4b_capi.h,v 1.5 2006/10/16 13:03:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -106,8 +106,6 @@ typedef struct capi_softc {
     int (*rel_appl)(struct capi_softc *, int);
     int (*send)(struct capi_softc *, struct mbuf *);
 } capi_softc_t;
-
-extern int ncapi;
 
 #define CARD_TYPEC_CAPI_UNK	0
 #define CARD_TYPEC_AVM_T1_PCI	1
