@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.9 2006/09/05 19:44:44 riz Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.10 2006/10/16 03:15:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.9 2006/09/05 19:44:44 riz Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.10 2006/10/16 03:15:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ ufs_daddr_t ifibc; /* How many indirect blocks */
 #endif
 
 static struct lfs lfs_default =  {
-	{ /* lfs_dlfs */
+	.lfs_dlfs = { /* lfs_dlfs */
 		/* dlfs_magic */	LFS_MAGIC,
 		/* dlfs_version */	LFS_VERSION,
 		/* dlfs_size */		0,
@@ -184,18 +184,6 @@ static struct lfs lfs_default =  {
 		/* dlfs_pad */ 		{ 0 },
 		/* dlfs_cksum */	0
 	},
-	/* lfs_sp */		NULL,
-	/* lfs_ivnode */	NULL,
-	/* lfs_seglock */	0,
-	/* lfs_lockpid */	0,
-	/* lfs_iocount */	0,
-	/* lfs_writer */	0,
-	/* lfs_dirops */	0,
-	/* lfs_doifile */	0,
-	/* lfs_nactive */	0,
-	/* lfs_fmod */		0,
-	/* lfs_ronly */		0,
-	/* lfs_flags */		0
 };
 
 #define	UMASK	0755
