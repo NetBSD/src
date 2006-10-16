@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.61 2006/08/18 11:17:25 martin Exp $	*/
+/*	$NetBSD: zs.c,v 1.62 2006/10/16 20:31:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.61 2006/08/18 11:17:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.62 2006/10/16 20:31:45 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -144,12 +144,9 @@ static void zscnputc(dev_t, int);
 static void zscnpollc(dev_t, int);
 
 struct consdev zs_consdev = {
-	NULL,
-	NULL,
-	zscngetc,
-	zscnputc,
-	zscnpollc,
-	NULL,
+	.cn_getc = zscngetc,
+	.cn_putc = zscnputc,
+	.cn_pollc = zscnpollc,
 };
 
 
