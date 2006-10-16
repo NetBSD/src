@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2006/09/18 22:05:47 gdamore Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2006/10/16 18:14:36 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2006/09/18 22:05:47 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2006/10/16 18:14:36 kiyohara Exp $");
 
 #include "opt_explora.h"
 #include "ksyms.h"
@@ -134,26 +134,6 @@ static struct {
 #endif /* DDB */
 };
 
-static void
-set_tlb(int idx, u_int addr, u_int flags)
-{
-	u_int lo, hi;
-
-	addr &= ~(TLB_PG_SIZE-1);
-
-	lo = addr | TLB_EX | TLB_WR | flags;
-#ifdef PPC_4XX_NOCACHE
-	lo |= TLB_I;
-#endif
-	hi = addr | TLB_VALID | TLB_PG_16M;
-
-	__asm volatile(
-	    "	tlbwe %1,%0,1	\n"
-	    "	tlbwe %2,%0,0	\n"
-	    "	sync		\n"
-	    : : "r" (idx), "r" (lo), "r" (hi) );
-}
-
 /*
  * Install a trap vector. We cannot use memcpy because the
  * destination may be zero.
@@ -174,10 +154,8 @@ void
 bootstrap(u_int startkernel, u_int endkernel)
 {
 	u_int i, j, t, br[4];
-	u_int ntlb, maddr, msize, size;
+	u_int maddr, msize, size;
 	struct cpu_info * const ci = &cpu_info[0];
-
-	consinit();
 
 	br[0] = mfdcr(DCR_BR4);
 	br[1] = mfdcr(DCR_BR5);
@@ -198,14 +176,6 @@ bootstrap(u_int startkernel, u_int endkernel)
 			size = maddr+msize;
 	}
 
-#ifdef COM_IS_CONSOLE
-	ntlb = TLB_NRESERVED-1;
-#else
-	ntlb = TLB_NRESERVED-2;
-#endif
-	if (size > ntlb*TLB_PG_SIZE)
-		size = ntlb*TLB_PG_SIZE;
-
 	phys_mem[0].start = 0;
 	phys_mem[0].size = size & ~PGOFSET;
 	avail_mem[0].start = startkernel;
@@ -214,7 +184,7 @@ bootstrap(u_int startkernel, u_int endkernel)
 	__asm volatile(
 	    "	mtpid %0	\n"
 	    "	sync		\n"
-	    : : "r" (1) );
+	    : : "r" (KERNEL_PID) );
 
 	/*
 	 * Setup initial tlbs.
@@ -224,14 +194,17 @@ bootstrap(u_int startkernel, u_int endkernel)
 
 	t = 0;
 	for (maddr = 0; maddr < phys_mem[0].size; maddr += TLB_PG_SIZE)
-		set_tlb(t++, maddr, 0);
+		ppc4xx_tlb_reserve(maddr, maddr, TLB_PG_SIZE, TLB_EX);
 
-#ifdef COM_IS_CONSOLE
-	set_tlb(t++, BASE_COM, TLB_I | TLB_G);
-#else
-	set_tlb(t++, BASE_FB, TLB_I | TLB_G);
-	set_tlb(t++, BASE_FB2, TLB_I | TLB_G);
+	/* Map PCKBC, PCKBC2, COM, LPT. */
+	ppc4xx_tlb_reserve(0x74000000, 0x74000000, TLB_PG_SIZE, TLB_I | TLB_G);
+
+#ifndef COM_IS_CONSOLE
+	ppc4xx_tlb_reserve(BASE_FB,  BASE_FB,  TLB_PG_SIZE, TLB_I | TLB_G);
+	ppc4xx_tlb_reserve(BASE_FB2, BASE_FB2, TLB_PG_SIZE, TLB_I | TLB_G);
 #endif
+
+	consinit();
 
 	/* Disable all external interrupts */
 	mtdcr(DCR_EXIER, 0);
