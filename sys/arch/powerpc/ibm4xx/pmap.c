@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42 2006/08/31 22:13:51 freza Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43 2006/10/16 18:14:38 kiyohara Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42 2006/08/31 22:13:51 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 2006/10/16 18:14:38 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -266,10 +266,6 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	struct mem_region *mp, *mp1;
 	int cnt, i;
 	u_int s, e, sz;
-
-	/* XXXfreza: compat, we used to statically reserve 4 entries. */
-	if (tlb_nreserved == 0)
-		tlb_nreserved = TLB_NRESERVED;
 
 	tlbnext = tlb_nreserved;
 
@@ -1454,7 +1450,7 @@ ppc4xx_tlb_reserve(paddr_t pa, vaddr_t va, size_t size, int flags)
 	va &= ~(rsize - 1); 	/* EPN */
 
 	lo = pa | TLB_WR | flags;
-	hi = va | TLB_VALID | szmask | KERNEL_PID;
+	hi = va | TLB_VALID | szmask;
 
 #ifdef PPC_4XX_NOCACHE
 	lo |= TLB_I;
