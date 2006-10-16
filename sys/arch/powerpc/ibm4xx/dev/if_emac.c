@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.26 2006/05/05 18:04:42 thorpej Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.27 2006/10/16 18:14:35 kiyohara Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.26 2006/05/05 18:04:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.27 2006/10/16 18:14:35 kiyohara Exp $");
 
 #include "bpfilter.h"
 
@@ -307,8 +307,8 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	const uint8_t *enaddr;
 	prop_data_t ea;
 
+	bus_space_map(oaa->opb_bt, oaa->opb_addr, EMAC_NREG, 0, &sc->sc_sh);
 	sc->sc_st = oaa->opb_bt;
-	sc->sc_sh = oaa->opb_addr;
 	sc->sc_dmat = oaa->opb_dmat;
 
 	printf(": 405GP EMAC\n");
@@ -811,6 +811,11 @@ emac_init(struct ifnet *ifp)
 	EMAC_WRITE(sc, EMAC_RMR, RMR_IAE | RMR_RRP | RMR_SP |
 	    (ifp->if_flags & IFF_PROMISC ? RMR_PME : 0) |
 	    (ifp->if_flags & IFF_BROADCAST ? RMR_BAE : 0));
+
+	/*
+	 * Set multicast filter.
+	 */
+	emac_set_filter(sc);
 
 	/*
 	 * Set low- and urgent-priority request thresholds.

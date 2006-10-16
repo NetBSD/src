@@ -1,4 +1,4 @@
-/*	$NetBSD: emacreg.h,v 1.1 2002/08/13 04:57:48 simonb Exp $	*/
+/*	$NetBSD: emacreg.h,v 1.2 2006/10/16 18:14:35 kiyohara Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -37,6 +37,9 @@
 
 #ifndef _IBM4XX_EMACREG_H_
 #define	_IBM4XX_EMACREG_H_
+
+/* Number of Ethernet MAC Registers */
+#define	EMAC_NREG		0x70
 
 /* Ethernet MAC Registers */
 #define	EMAC_MR0		0x00	/* Mode Register 0 */
