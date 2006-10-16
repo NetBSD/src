@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_net.c,v 1.12 2005/12/11 12:20:26 christos Exp $	 */
+/*	$NetBSD: svr4_32_net.c,v 1.13 2006/10/16 20:18:55 martin Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_net.c,v 1.12 2005/12/11 12:20:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_net.c,v 1.13 2006/10/16 20:18:55 martin Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -104,7 +104,7 @@ int svr4_ptm_alloc __P((struct proc *));
 
 static const struct fileops svr4_32_netops = {
 	soo_read, soo_write, soo_ioctl, soo_fcntl, soo_poll,
-	soo_stat, svr4_soo_close
+	soo_stat, svr4_soo_close, D_OTHER
 };
 
 
