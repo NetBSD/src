@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.48 2006/04/21 15:00:49 skrll Exp $	*/
+/*	$NetBSD: dir.c,v 1.49 2006/10/16 03:09:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.48 2006/04/21 15:00:49 skrll Exp $");
+__RCSID("$NetBSD: dir.c,v 1.49 2006/10/16 03:09:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,14 +57,31 @@ __RCSID("$NetBSD: dir.c,v 1.48 2006/04/21 15:00:49 skrll Exp $");
 const char	*lfname = "lost+found";
 int	lfmode = 01700;
 ino_t	lfdir;
-struct	dirtemplate emptydir = { 0, DIRBLKSIZ };
+struct	dirtemplate emptydir = {
+	.dot_ino = 0,
+	.dot_reclen = DIRBLKSIZ,
+};
 struct	dirtemplate dirhead = {
-	0, 12, DT_DIR, 1, ".",
-	0, DIRBLKSIZ - 12, DT_DIR, 2, ".."
+	.dot_ino = 0,
+	.dot_reclen = 12,
+	.dot_type = DT_DIR,
+	.dot_namlen = 1,
+	.dot_name = ".",
+	.dotdot_ino = 0,
+	.dotdot_reclen = DIRBLKSIZ - 12,
+	.dotdot_type = DT_DIR,
+	.dotdot_namlen = 2,
+	.dotdot_name = "..",
 };
 struct	odirtemplate odirhead = {
-	0, 12, 1, ".",
-	0, DIRBLKSIZ - 12, 2, ".."
+	.dot_ino = 0,
+	.dot_reclen = 12,
+	.dot_namlen = 1,
+	.dot_name = ".",
+	.dotdot_ino = 0,
+	.dotdot_reclen = DIRBLKSIZ - 12,
+	.dotdot_namlen = 2,
+	.dotdot_name = "..",
 };
 
 static int chgino(struct  inodesc *);
