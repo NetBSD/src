@@ -27,7 +27,7 @@
  *	i4b_ctl.c - i4b system control port driver
  *	------------------------------------------
  *
- *	$Id: i4b_ctl.c,v 1.14 2005/12/11 12:25:06 christos Exp $
+ *	$Id: i4b_ctl.c,v 1.15 2006/10/16 12:23:00 pooka Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.14 2005/12/11 12:25:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.15 2006/10/16 12:23:00 pooka Exp $");
 
 #include "isdnctl.h"
 
@@ -156,7 +156,7 @@ int isdnctlioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp 
 #ifdef __NetBSD__
 const struct cdevsw isdnctl_cdevsw = {
 	isdnctlopen, isdnctlclose, noread, nowrite, isdnctlioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 #endif /* __NetBSD__ */
 
@@ -237,7 +237,8 @@ isdnctlattach()
  *	i4bctlopen - device driver open routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnctlopen(dev_t dev, int flag, int fmt, struct lwp *l)
+isdnctlopen(dev_t dev, int flag __unused, int fmt __unused,
+	struct lwp *l __unused)
 {
 	if(minor(dev))
 		return (ENXIO);
@@ -254,7 +255,8 @@ isdnctlopen(dev_t dev, int flag, int fmt, struct lwp *l)
  *	i4bctlclose - device driver close routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnctlclose(dev_t dev, int flag, int fmt, struct lwp *l)
+isdnctlclose(dev_t dev __unused, int flag __unused, int fmt __unused,
+	struct lwp *l __unused)
 {
 	openflag = 0;
 	return (0);
@@ -264,7 +266,8 @@ isdnctlclose(dev_t dev, int flag, int fmt, struct lwp *l)
  *	i4bctlioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+isdnctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
+	struct lwp *l __unused)
 {
 #if DO_I4B_DEBUG
 	ctl_debug_t *cdbg;
