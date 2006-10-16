@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi_l4if.c,v 1.7 2006/10/16 12:23:00 pooka Exp $	*/
+/*	$NetBSD: i4b_capi_l4if.c,v 1.8 2006/10/16 13:03:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_capi_l4if.c,v 1.7 2006/10/16 12:23:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_capi_l4if.c,v 1.8 2006/10/16 13:03:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -57,7 +57,7 @@ static void n_alert_request(call_desc_t *);
 static void n_mgmt_command(struct isdn_l3_driver *, int cmd, void *parm);
 static int  n_download(void *, int, struct isdn_dr_prot *);
 
-int ncapi = 0;
+static int ncapi = 0;
 
 /*
 //  i4b_capi_{ret,set}_linktab
