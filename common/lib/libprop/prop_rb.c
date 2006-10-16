@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_rb.c,v 1.5 2006/10/15 19:08:48 christos Exp $	*/
+/*	$NetBSD: prop_rb.c,v 1.6 2006/10/16 03:21:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -111,8 +111,8 @@ _prop_rb_tree_init(struct rb_tree *rbt, const struct rb_tree_ops *ops)
  */
 /*ARGSUSED*/
 static void
-rb_tree_reparent_nodes(struct rb_tree *rbt __unused, struct rb_node *old_father,
-    unsigned int which)
+rb_tree_reparent_nodes(struct rb_tree *rbt _PROP_ARG_UNUSED,
+    struct rb_node *old_father, unsigned int which)
 {
 	const unsigned int other = which ^ RB_NODE_OTHER;
 	struct rb_node * const grandpa = old_father->rb_parent;
@@ -535,7 +535,7 @@ rb_tree_swap_prune_and_rebalance(struct rb_tree *rbt, struct rb_node *self,
  */
 /*ARGSUSED*/
 static void
-rb_tree_prune_blackred_branch(struct rb_tree *rbt __unused,
+rb_tree_prune_blackred_branch(struct rb_tree *rbt _PROP_ARG_UNUSED,
     struct rb_node *self, unsigned int which)
 {
 	struct rb_node *parent = self->rb_parent;
