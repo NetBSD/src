@@ -1,4 +1,4 @@
-/* $NetBSD: ifpci2.c,v 1.7 2005/12/11 12:22:50 christos Exp $	*/
+/* $NetBSD: ifpci2.c,v 1.8 2006/10/16 13:00:36 pooka Exp $	*/
 /*
  *   Copyright (c) 1999 Gary Jennejohn. All rights reserved.
  *
@@ -36,14 +36,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci2.c,v 1.7 2005/12/11 12:22:50 christos Exp $
+ *	$Id: ifpci2.c,v 1.8 2006/10/16 13:00:36 pooka Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci2.c,v 1.7 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci2.c,v 1.8 2006/10/16 13:00:36 pooka Exp $");
 
 
 #include <sys/param.h>
@@ -232,7 +232,8 @@ CFATTACH_DECL(ifritz, sizeof(struct ifpci_softc),
 #define HSCX_AVMA1PP_ACTIVE	0x1000
 
 static int
-ifpci2_match(struct device *parent, struct cfdata *match, void *aux)
+ifpci2_match(struct device *parent __unused,
+	struct cfdata *match __unused, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -243,7 +244,7 @@ ifpci2_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-ifpci2_attach(struct device *parent, struct device *self, void *aux)
+ifpci2_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct ifpci_softc *psc = (void*)self;
 	struct pci_attach_args *pa = aux;
@@ -356,9 +357,7 @@ ifpci2_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-ifpci2_detach(self, flags)
-	struct device *self;
-	int flags;
+ifpci2_detach(struct device *self, int flags __unused)
 {
 	struct ifpci_softc *psc = (struct ifpci_softc *)self;
 
@@ -370,9 +369,7 @@ ifpci2_detach(self, flags)
 }
 
 int
-ifpci2_activate(self, act)
-	struct device *self;
-	enum devact act;
+ifpci2_activate(struct device *self, enum devact act)
 {
 	struct ifpci_softc *psc = (struct ifpci_softc *)self;
 	int error = 0, s;

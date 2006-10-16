@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.29 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.30 2006/10/16 13:00:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -179,10 +179,8 @@ find_matching_card(pa)
  * Match card
  */
 static int
-isic_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+isic_pcmcia_match(struct device *parent __unused,
+	struct cfdata *match __unused, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -196,9 +194,8 @@ isic_pcmcia_match(parent, match, aux)
  * Attach the card
  */
 static void
-isic_pcmcia_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+isic_pcmcia_attach(struct device *parent __unused,
+	struct device *self, void *aux)
 {
 	struct pcmcia_isic_softc *psc = (void*) self;
 	struct isic_softc *sc = &psc->sc_isic;
@@ -246,9 +243,7 @@ fail:
 }
 
 static int
-isic_pcmcia_detach(self, flags)
-	struct device *self;
-	int flags;
+isic_pcmcia_detach(struct device *self, int flags __unused)
 {
 	struct pcmcia_isic_softc *psc = (struct pcmcia_isic_softc *)self;
 
@@ -262,9 +257,7 @@ isic_pcmcia_detach(self, flags)
 }
 
 int
-isic_pcmcia_activate(self, act)
-	struct device *self;
-	enum devact act;
+isic_pcmcia_activate(struct device *self, enum devact act)
 {
 	struct pcmcia_isic_softc *psc = (struct pcmcia_isic_softc *)self;
 	int error = 0, s;
