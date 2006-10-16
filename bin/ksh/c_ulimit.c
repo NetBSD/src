@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ulimit.c,v 1.7 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: c_ulimit.c,v 1.8 2006/10/16 00:07:32 christos Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
@@ -20,7 +20,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ulimit.c,v 1.7 2004/07/07 19:20:09 mycroft Exp $");
+__RCSID("$NetBSD: c_ulimit.c,v 1.8 2006/10/16 00:07:32 christos Exp $");
 #endif
 
 
@@ -122,7 +122,7 @@ c_ulimit(wp)
 #ifdef RLIMIT_SBSIZE
 		{ "sbsize(bytes)", RLIMIT, RLIMIT_SBSIZE, RLIMIT_SBSIZE, 1, 'b' },
 #endif
-		{ (char *) 0 }
+		{ .name = NULL }
 	    };
 	static char	options[3 + NELEM(limits)];
 	rlim_t		UNINITIALIZED(val);

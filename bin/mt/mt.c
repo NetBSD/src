@@ -1,4 +1,4 @@
-/* $NetBSD: mt.c,v 1.42 2006/03/22 01:45:08 christos Exp $ */
+/* $NetBSD: mt.c,v 1.43 2006/10/16 00:09:20 christos Exp $ */
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.42 2006/03/22 01:45:08 christos Exp $");
+__RCSID("$NetBSD: mt.c,v 1.43 2006/10/16 00:09:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ const struct commands com[] = {
 	{ CMD("status"),	MTIOCGET,     MTNOP,      1,  0 },
 	{ CMD("weof"),		MTIOCTOP,     MTWEOF,     0,  1 },
 	{ CMD("eew"),		MTIOCTOP,     MTEWARN,    1,  0 },
-	{ NULL }
+	{ .c_name = NULL }
 };
 
 void printreg(const char *, u_int, const char *);
@@ -249,7 +249,7 @@ const struct tape_desc {
 #endif
 #define SCSI_DS_BITS	"\20\5WriteProtect\2Mounted"
 	{ 0x7,		"SCSI",		SCSI_DS_BITS,	"76543210" },
-	{ 0 }
+	{ .t_type = 0 }
 };
 
 
