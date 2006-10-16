@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.151 2006/09/27 12:35:08 yamt Exp $ */
+/* $NetBSD: vmstat.c,v 1.152 2006/10/16 16:44:20 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.151 2006/09/27 12:35:08 yamt Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.152 2006/10/16 16:44:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -231,6 +231,7 @@ struct nlist histnl[] =
 };
 
 
+#define KILO	1024	
 
 struct	uvmexp uvmexp, ouvmexp;
 int	ndrives;
@@ -1135,9 +1136,9 @@ domem(void)
 		    sizeof(memname), "malloc type name");
 		(void)printf("%14s%6ld%6ldK%7ldK%6ldK%10ld%5u%6u",
 		    memname,
-		    ks.ks_inuse, (ks.ks_memuse + 1023) / 1024,
-		    (ks.ks_maxused + 1023) / 1024,
-		    (ks.ks_limit + 1023) / 1024, ks.ks_calls,
+		    ks.ks_inuse, howmany(ks.ks_memuse, KILO),
+		    howmany(ks.ks_maxused, KILO),
+		    howmany(ks.ks_limit, KILO), ks.ks_calls,
 		    ks.ks_limblocks, ks.ks_mapblocks);
 		first = 1;
 		for (j =  1 << MINBUCKET; j < 1 << (MINBUCKET + 16); j <<= 1) {
@@ -1155,7 +1156,7 @@ domem(void)
 	}
 	(void)printf("\nMemory totals:  In Use    Free    Requests\n");
 	(void)printf("              %7ldK %6ldK    %8ld\n\n",
-	    (totuse + 1023) / 1024, (totfree + 1023) / 1024, totreq);
+	    howmany(totuse, KILO), howmany(totfree, KILO), totreq);
 }
 
 void
@@ -1258,8 +1259,8 @@ dopool(int verbose, int wide)
 		dopoolcache(pp, verbose);
 	}
 
-	inuse /= 1024;
-	total /= 1024;
+	inuse /= KILO;
+	total /= KILO;
 	printf("\nIn use %ldK, total allocated %ldK; utilization %.1f%%\n",
 	    inuse, total, (100.0 * inuse) / total);
 }
