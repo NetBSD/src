@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.19 2004/08/28 17:53:00 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.19.10.1 2006/10/16 21:28:20 ghen Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.19 2004/08/28 17:53:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.19.10.1 2006/10/16 21:28:20 ghen Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -243,8 +243,7 @@ trap(frame)
 		    type, frame->tf_err, (u_long)frame->tf_rip, frame->tf_cs,
 		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel, frame->tf_rsp);
 
-		/* panic("trap"); */
-		cpu_reboot(RB_HALT, NULL);
+		panic("trap");
 		/*NOTREACHED*/
 
 	case T_PROTFLT:
