@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.44 2006/09/24 08:33:30 xtraeme Exp $	*/
+/*	$NetBSD: atactl.c,v 1.45 2006/10/16 00:45:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.44 2006/09/24 08:33:30 xtraeme Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.45 2006/10/16 00:45:19 christos Exp $");
 #endif
 
 
@@ -240,51 +240,51 @@ static const struct {
 	const char	*name;
 	void (*special)(struct ata_smart_attr *, uint64_t);
 } smart_attrs[] = {
-	{   1,		"Raw read error rate" },
-	{   2,		"Throughput performance" },
-	{   3,		"Spin-up time" },
-	{   4,		"Start/stop count" },
-	{   5,		"Reallocated sector count" },
-	{   6,		"Read channel margin" },
-	{   7,		"Seek error rate" },
-	{   8,		"Seek time performance" },
-	{   9,		"Power-on hours count" },
-	{  10,		"Spin retry count" },
-	{  11,		"Calibration retry count" },
-	{  12,		"Device power cycle count" },
-	{ 191,		"Gsense error rate" },
-	{ 192,		"Power-off retract count" },
-	{ 193,		"Load cycle count" },
+	{   1,		"Raw read error rate", NULL },
+	{   2,		"Throughput performance", NULL },
+	{   3,		"Spin-up time", NULL },
+	{   4,		"Start/stop count", NULL },
+	{   5,		"Reallocated sector count", NULL },
+	{   6,		"Read channel margin", NULL },
+	{   7,		"Seek error rate", NULL },
+	{   8,		"Seek time performance", NULL },
+	{   9,		"Power-on hours count", NULL },
+	{  10,		"Spin retry count", NULL },
+	{  11,		"Calibration retry count", NULL },
+	{  12,		"Device power cycle count", NULL },
+	{ 191,		"Gsense error rate", NULL },
+	{ 192,		"Power-off retract count", NULL },
+	{ 193,		"Load cycle count", NULL },
 	{ 194,		"Temperature",			device_smart_temp},
-	{ 195,		"Hardware ECC Recovered" },
-	{ 196,		"Reallocated event count" },
-	{ 197,		"Current pending sector" },
-	{ 198,		"Offline uncorrectable" },
-	{ 199,		"Ultra DMA CRC error count" },
-	{ 200,		"Write error rate" },
-	{ 201,		"Soft read error rate" },
-	{ 202,		"Data address mark errors" },
-	{ 203,		"Run out cancel" },
-	{ 204,		"Soft ECC correction" },
-	{ 205,		"Thermal asperity check" },
-	{ 206,		"Flying height" },
-	{ 207,		"Spin high current" },
-	{ 208,		"Spin buzz" },
-	{ 209,		"Offline seek performance" },
-	{ 220,		"Disk shift" },
-	{ 221,		"G-Sense error rate" },
-	{ 222,		"Loaded hours" },
-	{ 223,		"Load/unload retry count" },
-	{ 224,		"Load friction" },
-	{ 225,		"Load/unload cycle count" },
-	{ 226,		"Load-in time" },
-	{ 227,		"Torque amplification count" },
-	{ 228,		"Power-off retract count" },
-	{ 230,		"GMR head amplitude" },
+	{ 195,		"Hardware ECC Recovered", NULL },
+	{ 196,		"Reallocated event count", NULL },
+	{ 197,		"Current pending sector", NULL },
+	{ 198,		"Offline uncorrectable", NULL },
+	{ 199,		"Ultra DMA CRC error count", NULL },
+	{ 200,		"Write error rate", NULL },
+	{ 201,		"Soft read error rate", NULL },
+	{ 202,		"Data address mark errors", NULL },
+	{ 203,		"Run out cancel", NULL },
+	{ 204,		"Soft ECC correction", NULL },
+	{ 205,		"Thermal asperity check", NULL },
+	{ 206,		"Flying height", NULL },
+	{ 207,		"Spin high current", NULL },
+	{ 208,		"Spin buzz", NULL },
+	{ 209,		"Offline seek performance", NULL },
+	{ 220,		"Disk shift", NULL },
+	{ 221,		"G-Sense error rate", NULL },
+	{ 222,		"Loaded hours", NULL },
+	{ 223,		"Load/unload retry count", NULL },
+	{ 224,		"Load friction", NULL },
+	{ 225,		"Load/unload cycle count", NULL },
+	{ 226,		"Load-in time", NULL },
+	{ 227,		"Torque amplification count", NULL },
+	{ 228,		"Power-off retract count", NULL },
+	{ 230,		"GMR head amplitude", NULL },
 	{ 231,		"Temperature",			device_smart_temp },
-	{ 240,		"Head flying hours" },
-	{ 250,		"Read error retry rate" },
-	{   0,		"Unknown" },
+	{ 240,		"Head flying hours", NULL },
+	{ 250,		"Read error retry rate", NULL },
+	{   0,		"Unknown", NULL },
 };
 
 struct bitinfo ata_sec_st[] = {
