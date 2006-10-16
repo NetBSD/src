@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem.h,v 1.2 2006/08/20 09:45:59 yamt Exp $	*/
+/*	$NetBSD: vmem.h,v 1.3 2006/10/16 13:09:06 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -30,6 +30,12 @@
 #define	_SYS_VMEM_H_
 
 #include <sys/types.h>
+
+#if !defined(_KERNEL)
+typedef int boolean_t;
+#define	TRUE	1
+#define	FALSE	0
+#endif /* !defined(_KERNEL) */
 
 typedef struct vmem vmem_t;
 
