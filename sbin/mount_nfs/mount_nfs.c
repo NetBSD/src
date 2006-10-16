@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.51 2006/05/20 08:06:48 yamt Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.52 2006/10/16 03:37:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.51 2006/05/20 08:06:48 yamt Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.52 2006/10/16 03:37:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ static const struct mntopt mopts[] = {
 	{ "readahead", 0, ALTF_READAHEAD, 1 },
 	{ "deadthresh", 0, ALTF_DEADTHRESH, 1 },
 	{ "timeo", 0, ALTF_TIMEO, 1 },
-	{ NULL }
+	MOPT_NULL,
 
 };
 
