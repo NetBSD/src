@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mbuf.c,v 1.6 2003/08/13 01:13:42 christos Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.7 2006/10/16 03:38:08 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
@@ -196,8 +196,7 @@ m_getm(struct mbuf *top, size_t len, struct mbuf **mpp)
 #define	MB_PUT(t)	int error; t *p; \
 			if ((error = mb_fit(mbp, sizeof(t), \
 			    (void **)(void *)&p)) != 0) \
-				return error; \
-			else
+				return error
 
 /*
  * Check if object of size 'size' fit to the current position and
