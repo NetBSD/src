@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: siglist.sh,v 1.3 2006/06/27 12:27:27 christos Exp $
+#	$NetBSD: siglist.sh,v 1.4 2006/10/16 00:07:32 christos Exp $
 #
 # Script to generate a sorted, complete list of signals, suitable
 # for inclusion in trap.c as array initializer.
@@ -20,7 +20,7 @@ CPP="${1-cc -E}"
  echo '#include "sh.h"';
  echo '	{ QwErTy SIGNALS , "DUMMY" , "hook for number of signals" },';
  sed -e '/^[	 ]*#/d' -e 's/^[	 ]*\([^ 	][^ 	]*\)[	 ][	 ]*\(.*[^ 	]\)[ 	]*$/#ifdef SIG\1\
-	{ QwErTy SIG\1 , "\1", "\2" },\
+	{ QwErTy .signal = SIG\1 , .name = "\1", .mess = "\2" },\
 #endif/') > $in
 $CPP $in  > $out
 sed -n 's/{ QwErTy/{/p' < $out | awk '{print NR, $0}' | sort -k3n -k1n |
@@ -31,7 +31,7 @@ sed -n 's/{ QwErTy/{/p' < $out | awk '{print NR, $0}' | sort -k3n -k1n |
 		n = $2;
 		if (n > 0 && n != last) {
 		    while (++last < n) {
-			printf "\t{ %d , (char *) 0, `Signal %d` } ,\n", last, last;
+			printf "\t{ .signal = %d , .name = NULL, .mess = `Signal %d` } ,\n", last, last;
 		    }
 		    print;
 		}
