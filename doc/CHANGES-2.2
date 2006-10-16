@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.86 2006/10/15 16:01:29 bouyer Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.87 2006/10/16 17:58:16 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -936,4 +936,10 @@ sys/arch/acorn26/acorn26/cpuswitch.c		1.8
 	of R15, leaving the PSR bits alone.  Necessary to make
 	regress/sys/kern/ras/ras1 pass.
 	[bjh21, ticket #10717]
+
+sys/kern/sys_process.c				1.111 via patch
+
+	Don't allow ptrace to copyout arbitrary sized data. Reported by the
+	Suresec vulnerability research team.
+	[christos, ticket #10720]
 
