@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.25 2006/03/29 04:16:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.26 2006/10/16 12:58:54 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -80,16 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.25 2006/03/29 04:16:50 thorpej Exp $"
 
 extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
-#if defined(__OpenBSD__)
-#define __BROKEN_INDIRECT_CONFIG
-#endif
-
 /* local functions */
-#ifdef __BROKEN_INDIRECT_CONFIG
-static int isic_isa_probe(struct device *, void *, void *);
-#else
 static int isic_isa_probe(struct device *, struct cfdata *, void *);
-#endif
 
 static void isic_isa_attach(struct device *, struct device *, void *);
 static int setup_io_map(int flags, bus_space_tag_t iot,
@@ -109,22 +101,8 @@ CFATTACH_DECL(isic_isa, sizeof(struct isic_softc),
  * Probe card
  */
 static int
-#ifdef __BROKEN_INDIRECT_CONFIG
-isic_isa_probe(parent, match, aux)
-#else
-isic_isa_probe(parent, cf, aux)
-#endif
-	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
-	struct cfdata *cf;
-#endif
-	void *aux;
+isic_isa_probe(struct device *parent __unused, struct cfdata *cf, void *aux)
 {
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *cf = ((struct device*)match)->dv_cfdata;
-#endif
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t memt = ia->ia_memt, iot = ia->ia_iot;
 	int flags = cf->cf_flags;
@@ -805,9 +783,7 @@ isicattach(int flags, struct isic_softc *sc)
  * Attach the card
  */
 static void
-isic_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+isic_isa_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct isic_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -966,15 +942,6 @@ isic_isa_attach(parent, self, aux)
 			break;
 	}
 
-#if defined(__OpenBSD__)
-	isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-		IPL_NET, isicintr, sc, sc->sc_dev.dv_xname);
-
-	/* MI initialization of card */
-	isicattach(flags, sc);
-
-#else
-
 	/* MI initialization of card */
 	isicattach(flags, sc);
 
@@ -1001,7 +968,6 @@ isic_isa_attach(parent, self, aux)
 			isicintr(sc);
 		}
 	}
-#endif
 }
 
 /*
@@ -1109,7 +1075,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			maps[1].t = iot;
 			maps[1].offset = 0;
 			maps[1].size = 0x40;	/* XXX - ??? */
-			if ((iobase - 0xd80 + 0x980) < 0 || (iobase - 0xd80 + 0x980) > 0x0ffff)
+			if ((iobase - 0xd80 + 0x980) > 0x0ffff)
 				return 1;
 			if (bus_space_map(maps[1].t, iobase - 0xd80 + 0x980,
 				maps[1].size, 0, &maps[1].h)) {
@@ -1119,7 +1085,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			maps[2].t = iot;
 			maps[2].offset = 0;
 			maps[2].size = 0x40;	/* XXX - ??? */
-			if ((iobase - 0xd80 + 0x180) < 0 || (iobase - 0xd80 + 0x180) > 0x0ffff)
+			if ((iobase - 0xd80 + 0x180) > 0x0ffff)
 				return 1;
 			if (bus_space_map(maps[2].t, iobase - 0xd80 + 0x180,
 				maps[2].size, 0, &maps[2].h)) {
@@ -1129,7 +1095,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			maps[3].t = iot;
 			maps[3].offset = 0;
 			maps[3].size = 0x40;	/* XXX - ??? */
-			if ((iobase - 0xd80 + 0x580) < 0 || (iobase - 0xd80 + 0x580) > 0x0ffff)
+			if ((iobase - 0xd80 + 0x580) > 0x0ffff)
 				return 1;
 			if (bus_space_map(maps[3].t, iobase - 0xd80 + 0x580,
 				maps[3].size, 0, &maps[3].h)) {
@@ -1156,7 +1122,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			maps[0].t = iot;	/* config */
 			maps[0].offset = 0;
 			maps[0].size = 8;
-			if ((iobase + 0x1800) < 0 || (iobase + 0x1800) > 0x0ffff)
+			if ((iobase + 0x1800) > 0x0ffff)
 				return 1;
 			if (bus_space_map(maps[0].t, iobase + 0x1800, maps[0].size, 0, &maps[0].h))
 				return 1;
@@ -1164,7 +1130,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			maps[1].t = iot;	/* isac */
 			maps[1].offset = 0;
 			maps[1].size = 0x80;	/* XXX - ??? */
-			if ((iobase + 0x1400 - 0x20) < 0 || (iobase + 0x1400 - 0x20) > 0x0ffff)
+			if ((iobase + 0x1400 - 0x20) > 0x0ffff)
 				return 1;
 			if (bus_space_map(maps[1].t, iobase + 0x1400 - 0x20, maps[1].size, 0, &maps[1].h))
 				return 1;
@@ -1172,7 +1138,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			maps[2].t = iot;	/* hscx 0 */
 			maps[2].offset = 0;
 			maps[2].size = 0x40;	/* XXX - ??? */
-			if ((iobase + 0x400 - 0x20) < 0 || (iobase + 0x400 - 0x20) > 0x0ffff)
+			if ((iobase + 0x400 - 0x20) > 0x0ffff)
 				return 1;
 			if (bus_space_map(maps[2].t, iobase + 0x400 - 0x20, maps[2].size, 0, &maps[2].h))
 				return 1;
@@ -1180,7 +1146,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			maps[3].t = iot;	/* hscx 1 */
 			maps[3].offset = 0;
 			maps[3].size = 0x40;	/* XXX - ??? */
-			if ((iobase + 0xc00 - 0x20) < 0 || (iobase + 0xc00 - 0x20) > 0x0ffff)
+			if ((iobase + 0xc00 - 0x20) > 0x0ffff)
 				return 1;
 			if (bus_space_map(maps[3].t, iobase + 0xc00 - 0x20, maps[3].size, 0, &maps[3].h))
 				return 1;
@@ -1188,7 +1154,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			maps[4].t = iot;	/* isac-fifo */
 			maps[4].offset = 0;
 			maps[4].size = 1;
-			if ((iobase + 0x1400 - 0x20 -0x3e0) < 0 || (iobase + 0x1400 - 0x20 -0x3e0) > 0x0ffff)
+			if ((iobase + 0x1400 - 0x20 -0x3e0) > 0x0ffff)
 				return 1;
 			if (bus_space_map(maps[4].t, iobase + 0x1400 - 0x20 -0x3e0, maps[4].size, 0, &maps[4].h))
 				return 1;
@@ -1196,7 +1162,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			maps[5].t = iot;	/* hscx 0 fifo */
 			maps[5].offset = 0;
 			maps[5].size = 1;
-			if ((iobase + 0x400 - 0x20 -0x3e0) < 0 || (iobase + 0x400 - 0x20 -0x3e0) > 0x0ffff)
+			if ((iobase + 0x400 - 0x20 -0x3e0) > 0x0ffff)
 				return 1;
 			if (bus_space_map(maps[5].t, iobase + 0x400 - 0x20 -0x3e0, maps[5].size, 0, &maps[5].h))
 				return 1;
@@ -1204,7 +1170,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			maps[6].t = iot;	/* hscx 1 fifo */
 			maps[6].offset = 0;
 			maps[6].size = 1;
-			if ((iobase + 0xc00 - 0x20 -0x3e0) < 0 || (iobase + 0xc00 - 0x20 -0x3e0) > 0x0ffff)
+			if ((iobase + 0xc00 - 0x20 -0x3e0) > 0x0ffff)
 				return 1;
 			if (bus_space_map(maps[6].t, iobase + 0xc00 - 0x20 -0x3e0, maps[6].size, 0, &maps[6].h))
 				return 1;
@@ -1234,7 +1200,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 				maps[0].size = 1;
 				maps[0].t = iot;
 				maps[0].offset = 0;
-				if (base < 0 || base > 0x0ffff)
+				if (base > 0x0ffff)
 					return 1;
 				if (bus_space_map(iot, base, 1, 0, &maps[0].h)) {
 					return 1;
@@ -1247,7 +1213,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 					maps[num].size = 8;
 					maps[num].offset = 0;
 					maps[num].t = iot;
-					if (base+i*1024 < 0 || base+i*1024+8 > 0x0ffff)
+					if (base+i*1024+8 > 0x0ffff)
 						return 1;
 					if (bus_space_map(iot, base+i*1024, 8, 0, &maps[num].h)) {
 						return 1;
@@ -1260,7 +1226,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 					maps[num].size = 8;
 					maps[num].offset = 0;
 					maps[num].t = iot;
-					if (base+i*1024 < 0 || base+i*1024+8 > 0x0ffff)
+					if (base+i*1024+8 > 0x0ffff)
 						return 1;
 					if (bus_space_map(iot, base+i*1024, 8, 0, &maps[num].h)) {
 						return 1;
@@ -1273,7 +1239,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 					maps[num].size = 8;
 					maps[num].offset = 0;
 					maps[num].t = iot;
-					if (base+i*1024 < 0 || base+i*1024+8 > 0x0ffff)
+					if (base+i*1024+8 > 0x0ffff)
 						return 1;
 					if (bus_space_map(iot, base+i*1024, 8, 0, &maps[num].h)) {
 						return 1;
