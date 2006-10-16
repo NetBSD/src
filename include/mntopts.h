@@ -1,4 +1,4 @@
-/*	$NetBSD: mntopts.h,v 1.7 2006/02/12 01:32:06 chs Exp $	*/
+/*	$NetBSD: mntopts.h,v 1.8 2006/10/16 03:31:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -69,6 +69,7 @@ struct mntopt {
 
 /* This is parsed by mount(8), but is ignored by specific mount_*(8)s. */
 #define MOPT_AUTO		{ "auto",	0, 0, 0 }
+#define MOPT_NULL		{ NULL,		0, 0, 0 }
 
 #define MOPT_FSTAB_COMPAT						\
 	MOPT_RO,							\
