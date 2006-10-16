@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.28 2005/12/11 12:25:06 christos Exp $
+ *	$Id: i4b_i4bdrv.c,v 1.29 2006/10/16 12:23:00 pooka Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.28 2005/12/11 12:25:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.29 2006/10/16 12:23:00 pooka Exp $");
 
 #include "isdn.h"
 
@@ -197,7 +197,7 @@ SYSINIT(i4bdev,SI_SUB_DRIVERS,SI_ORDER_MIDDLE+CDEV_MAJOR,i4b_drvinit,NULL)
 #ifdef __NetBSD__
 const struct cdevsw isdn_cdevsw = {
 	isdnopen, isdnclose, isdnread, nowrite, isdnioctl,
-	nostop, notty, isdnpoll, nommap, isdnkqfilter,
+	nostop, notty, isdnpoll, nommap, isdnkqfilter, D_OTHER
 };
 #endif /* __NetBSD__ */
 
@@ -262,7 +262,7 @@ isdnattach()
  *	i4bopen - device driver open routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnopen(dev_t dev, int flag, int fmt, struct lwp *l)
+isdnopen(dev_t dev, int flag __unused, int fmt __unused, struct lwp *l __unused)
 {
 	int x;
 
@@ -284,7 +284,8 @@ isdnopen(dev_t dev, int flag, int fmt, struct lwp *l)
  *	i4bclose - device driver close routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnclose(dev_t dev, int flag, int fmt, struct lwp *l)
+isdnclose(dev_t dev __unused, int flag __unused, int fmt __unused,
+	struct lwp *l __unused)
 {
 	int x = splnet();
 	openflag = 0;
@@ -298,7 +299,7 @@ isdnclose(dev_t dev, int flag, int fmt, struct lwp *l)
  *	i4bread - device driver read routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnread(dev_t dev, struct uio *uio, int ioflag)
+isdnread(dev_t dev, struct uio *uio, int ioflag __unused)
 {
 	struct mbuf *m;
 	int x;
@@ -337,7 +338,8 @@ isdnread(dev_t dev, struct uio *uio, int ioflag)
  *	i4bioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
+	struct lwp *l __unused)
 {
 	struct isdn_l3_driver *d;
 	call_desc_t *cd;
@@ -965,7 +967,7 @@ filt_i4brdetach(struct knote *kn)
 }
 
 static int
-filt_i4bread(struct knote *kn, long hint)
+filt_i4bread(struct knote *kn, long hint __unused)
 {
 	struct mbuf *m;
 
@@ -985,7 +987,7 @@ static const struct filterops i4b_seltrue_filtops =
 	{ 1, NULL, filt_i4brdetach, filt_seltrue };
 
 int
-isdnkqfilter(dev_t dev, struct knote *kn)
+isdnkqfilter(dev_t dev __unused, struct knote *kn)
 {
 	struct klist *klist;
 	int s;

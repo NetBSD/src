@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.30 2005/12/11 12:25:06 christos Exp $
+ *	$Id: i4b_l4.c,v 1.31 2006/10/16 12:23:00 pooka Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.30 2005/12/11 12:25:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.31 2006/10/16 12:23:00 pooka Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -269,10 +269,11 @@ int isdn_l4_driver_attach(const char *name, int units, const struct isdn_l4_driv
 int isdn_l4_driver_detatch(const char *name)
 {
 	/* XXX - not yet implemented */
+	(void)name;
 	return 0;
 }
 
-const struct isdn_l4_driver_functions *isdn_l4_find_driver(const char *name, int unit)
+const struct isdn_l4_driver_functions *isdn_l4_find_driver(const char *name, int unit __unused)
 {
 	struct l4_driver_desc * d;
 	SLIST_FOREACH(d, &l4_driver_registry, l4drvq)
@@ -292,7 +293,7 @@ int isdn_l4_find_driverid(const char *name)
 	return -1;
 }
 
-const struct isdn_l4_driver_functions *isdn_l4_get_driver(int driver_id, int unit)
+const struct isdn_l4_driver_functions *isdn_l4_get_driver(int driver_id, int unit __unused)
 {
 	struct l4_driver_desc * d;
 	SLIST_FOREACH(d, &l4_driver_registry, l4drvq)
@@ -330,7 +331,7 @@ i4b_l4_pdeact(struct isdn_l3_driver *d, int numactive)
 			}
 
 			if ((cd->channelid >= 0)
-			     && (cd->channelid < d->nbch));
+			     && (cd->channelid < d->nbch))
 				d->bch_state[cd->channelid] = BCH_ST_FREE;
 
 			cd->cdid = CDID_UNUSED;
@@ -378,7 +379,7 @@ i4b_l4_l12stat(struct isdn_l3_driver *d, int layer, int state)
  *	send MSG_TEIASG_IND message to userland
  *---------------------------------------------------------------------------*/
 void
-i4b_l4_teiasg(struct isdn_l3_driver *d, int tei)
+i4b_l4_teiasg(struct isdn_l3_driver *d, int tei __unused)
 {
 	struct mbuf *m;
 
@@ -719,7 +720,7 @@ i4b_l4_charging_ind(call_desc_t *cd)
  *	send MSG_STATUS_IND message to userland
  *---------------------------------------------------------------------------*/
 void
-i4b_l4_status_ind(call_desc_t *cd)
+i4b_l4_status_ind(call_desc_t *cd __unused)
 {
 }
 
@@ -746,7 +747,7 @@ i4b_l4_alert_ind(call_desc_t *cd)
  *	send MSG_INFO_IND message to userland
  *---------------------------------------------------------------------------*/
 void
-i4b_l4_info_ind(call_desc_t *cd)
+i4b_l4_info_ind(call_desc_t *cd __unused)
 {
 }
 
