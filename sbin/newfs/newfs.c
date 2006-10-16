@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.94 2006/08/27 18:49:08 christos Exp $	*/
+/*	$NetBSD: newfs.c,v 1.95 2006/10/16 03:04:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.94 2006/08/27 18:49:08 christos Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.95 2006/10/16 03:04:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,8 +115,8 @@ __RCSID("$NetBSD: newfs.c,v 1.94 2006/08/27 18:49:08 christos Exp $");
 #include <syslog.h>
 #include <unistd.h>
 #include <util.h>
+#include <mntopts.h>
 
-#include "mntopts.h"
 #include "dkcksum.h"
 #include "extern.h"
 #include "partutil.h"
@@ -127,7 +127,7 @@ struct mntopt mopts[] = {
 	MOPT_UPDATE,
 	MOPT_GETARGS,
 	MOPT_NOATIME,
-	{ NULL },
+	{ .m_option = NULL },
 };
 
 static gid_t mfs_group(const char *);

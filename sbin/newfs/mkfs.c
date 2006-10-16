@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.101 2006/08/26 22:03:47 christos Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.102 2006/10/16 03:04:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.101 2006/08/26 22:03:47 christos Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.102 2006/10/16 03:04:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1454,7 +1454,7 @@ zap_old_sblock(int sblkoff)
 		{0, 0x70162, ~0u},		/* LFS_MAGIC */
 		{14, 0xef53, 0xffff},		/* EXT2FS (little) */
 		{14, 0xef530000, 0xffff0000},	/* EXT2FS (big) */
-		{~0u},
+		{.offset = ~0u},
 	};
 	const struct fsm *fsm;
 
