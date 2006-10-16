@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.58 2006/10/02 23:22:52 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.59 2006/10/16 22:21:52 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -338,9 +338,6 @@ int	rwindow_save(struct lwp *);
 int	cnrom(void);
 /* zs.c */
 void zsconsole(struct tty *, int, int, void (**)(struct tty *, int));
-#ifdef KGDB
-void zs_kgdb_init(void);
-#endif
 /* fb.c */
 void	fb_unblank(void);
 /* kgdb_stub.c */
