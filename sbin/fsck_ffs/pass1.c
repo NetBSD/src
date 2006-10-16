@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.41 2006/04/21 15:00:49 skrll Exp $	*/
+/*	$NetBSD: pass1.c,v 1.42 2006/10/16 03:09:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.41 2006/04/21 15:00:49 skrll Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.42 2006/10/16 03:09:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,8 +137,10 @@ pass1(void)
 				}
 				break;
 			}
+#ifdef notdef
 			if (inosused < 0)
 				inosused = 0;
+#endif
 		}
 		/*
 		 * Allocate inoinfo structures for the allocated inodes.
