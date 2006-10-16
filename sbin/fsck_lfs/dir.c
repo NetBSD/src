@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.20 2006/09/01 19:52:48 perseant Exp $	 */
+/* $NetBSD: dir.c,v 1.21 2006/10/16 03:21:05 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -55,14 +55,31 @@
 
 const char *lfname = "lost+found";
 int lfmode = 01700;
-struct dirtemplate emptydir = {0, DIRBLKSIZ};
+struct dirtemplate emptydir = {
+	.dot_ino = 0,
+	.dot_reclen = DIRBLKSIZ,
+};
 struct dirtemplate dirhead = {
-	0, 12, DT_DIR, 1, ".",
-	0, DIRBLKSIZ - 12, DT_DIR, 2, ".."
+	.dot_ino = 0,
+	.dot_reclen = 12,
+	.dot_type = DT_DIR,
+	.dot_namlen = 1,
+	.dot_name = ".",
+	.dotdot_ino = 0,
+	.dotdot_reclen = DIRBLKSIZ - 12,
+	.dotdot_type = DT_DIR,
+	.dotdot_namlen = 2,
+	.dotdot_name = ".."
 };
 struct odirtemplate odirhead = {
-	0, 12, 1, ".",
-	0, DIRBLKSIZ - 12, 2, ".."
+	.dot_ino = 0,
+	.dot_reclen = 12,
+	.dot_namlen = 1,
+	.dot_name = ".",
+	.dotdot_ino = 0,
+	.dotdot_reclen = DIRBLKSIZ - 12,
+	.dotdot_namlen = 2,
+	.dotdot_name = ".."
 };
 
 static int expanddir(struct uvnode *, struct ufs1_dinode *, char *);
