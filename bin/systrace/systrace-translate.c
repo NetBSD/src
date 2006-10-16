@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace-translate.c,v 1.16 2005/06/25 18:47:42 elad Exp $	*/
+/*	$NetBSD: systrace-translate.c,v 1.17 2006/10/16 00:43:00 christos Exp $	*/
 /*	$OpenBSD: systrace-translate.c,v 1.10 2002/08/01 20:50:17 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -532,73 +532,87 @@ print_argv(char *buf, size_t buflen, struct intercept_translate *tl)
 }
 
 struct intercept_translate ic_trargv = {
-	"argv",
-	get_argv, print_argv,
+	.name = "argv",
+	.translate = get_argv,
+	.print = print_argv,
 };
 
 struct intercept_translate ic_oflags = {
-	"oflags",
-	NULL, print_oflags,
+	.name = "oflags",
+	.translate = NULL,
+	.print = print_oflags,
 };
 
 #ifdef HAVE_LINUX_FCNTL_H
 struct intercept_translate ic_linux_oflags = {
-	"oflags",
-	NULL, linux_print_oflags,
+	.name = "oflags",
+	.translate = NULL,
+	.print = linux_print_oflags,
 };
 #endif
 
 struct intercept_translate ic_modeflags = {
-	"mode",
-	NULL, print_modeflags,
+	.name = "mode",
+	.translate = NULL,
+	.print = print_modeflags,
 };
 
 struct intercept_translate ic_uidt = {
-	"uid",
-	NULL, print_number,
+	.name = "uid",
+	.translate = NULL,
+	.print = print_number,
 };
 
 struct intercept_translate ic_uname = {
-	"uname",
-	NULL, print_uname,
+	.name = "uname",
+	.translate = NULL,
+	.print = print_uname,
 };
 
 struct intercept_translate ic_gidt = {
-	"gid",
-	NULL, print_number,
+	.name = "gid",
+	.translate = NULL,
+	.print = print_number,
 };
 
 struct intercept_translate ic_fdt = {
-	"fd",
-	NULL, print_number,
+	.name = "fd",
+	.translate = NULL,
+	.print = print_number,
 };
 
 struct intercept_translate ic_sockdom = {
-	"sockdom",
-	NULL, print_sockdom,
+	.name = "sockdom",
+	.translate = NULL,
+	.print = print_sockdom,
 };
 
 struct intercept_translate ic_socktype = {
-	"socktype",
-	NULL, print_socktype,
+	.name = "socktype",
+	.translate = NULL,
+	.print = print_socktype,
 };
 
 struct intercept_translate ic_pidname = {
-	"pidname",
-	NULL, print_pidname,
+	.name = "pidname",
+	.translate = NULL,
+	.print = print_pidname,
 };
 
 struct intercept_translate ic_signame = {
-	"signame",
-	NULL, print_signame,
+	.name = "signame",
+	.translate = NULL,
+	.print = print_signame,
 };
 
 struct intercept_translate ic_fcntlcmd = {
-	"cmd",
-	NULL, print_fcntlcmd,
+	.name = "cmd",
+	.translate = NULL,
+	.print = print_fcntlcmd,
 };
 
 struct intercept_translate ic_memprot = {
-	"prot",
-	NULL, print_memprot,
+	.name = "prot",
+	.translate = NULL,
+	.print = print_memprot,
 };
