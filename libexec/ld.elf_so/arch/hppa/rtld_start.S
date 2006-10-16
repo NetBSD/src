@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.3 2004/05/17 13:16:02 skrll Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.4 2006/10/16 13:52:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 	.import _GLOBAL_OFFSET_TABLE_
 
-ENTRY($rtld_start,32)
+ENTRY($rtld_start,HPPA_FRAME_SIZE)
 
 	/* Start stack calling convention. */
 	copy	%r3, %r1 
@@ -160,7 +160,7 @@ EXIT(__rtld_hppa_setup_pltgot)
  * _rtld_bind_start is very closely tied to the shared-library
  * call stub and the PLT stub, both inserted by the linker.  
  */
-ENTRY(_rtld_bind_start,32)
+ENTRY(_rtld_bind_start,HPPA_FRAME_SIZE)
 
 	/* Start stack calling convention.  */
 	copy	%r3, %r1 
