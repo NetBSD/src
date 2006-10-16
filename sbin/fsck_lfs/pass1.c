@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.26 2006/09/01 19:52:48 perseant Exp $	 */
+/* $NetBSD: pass1.c,v 1.27 2006/10/16 03:21:34 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -211,7 +211,8 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 		return;
 	}
 	lastino = inumber;
-	if (dp->di_size < 0 || dp->di_size + fs->lfs_bsize - 1 < dp->di_size) {
+	if (/* dp->di_size < 0 || */
+	    dp->di_size + fs->lfs_bsize - 1 < dp->di_size) {
 		if (debug)
 			printf("bad size %llu:",
 			    (unsigned long long) dp->di_size);

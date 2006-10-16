@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.30 2006/09/01 19:52:48 perseant Exp $ */
+/* $NetBSD: setup.c,v 1.31 2006/10/16 03:21:34 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -352,7 +352,7 @@ setup(const char *dev)
 	else
 		maxfsblock = fs->lfs_size;
 	maxfilesize = calcmaxfilesize(fs->lfs_bshift);
-	if ((fs->lfs_minfree < 0 || fs->lfs_minfree > 99)) {
+	if (/* fs->lfs_minfree < 0 || */ fs->lfs_minfree > 99) {
 		pfatal("IMPOSSIBLE MINFREE=%d IN SUPERBLOCK",
 		    fs->lfs_minfree);
 		if (reply("SET TO DEFAULT") == 1) {
