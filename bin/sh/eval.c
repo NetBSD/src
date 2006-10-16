@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.87 2006/05/13 19:47:22 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.88 2006/10/16 00:36:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.87 2006/05/13 19:47:22 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.88 2006/10/16 00:36:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -664,37 +664,31 @@ int vforked = 0;
  */
 
 STATIC void
-evalcommand(union node *cmd, int flags, struct backcmd *backcmd)
+evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 {
 	struct stackmark smark;
 	union node *argp;
 	struct arglist arglist;
 	struct arglist varlist;
-	char **argv;
-	int argc;
+	volatile int flags = flgs;
+	char ** volatile argv;
+	volatile int argc;
 	char **envp;
 	int varflag;
 	struct strlist *sp;
-	int mode;
+	volatile int mode;
 	int pip[2];
 	struct cmdentry cmdentry;
-	struct job *jp;
+	struct job * volatile jp;
 	struct jmploc jmploc;
 	struct jmploc *volatile savehandler = NULL;
 	char *volatile savecmdname;
 	volatile struct shparam saveparam;
 	struct localvar *volatile savelocalvars;
 	volatile int e;
-	char *lastarg;
-	const char *path = pathval();
+	char * volatile lastarg;
+	const char * volatile path = pathval();
 	volatile int temp_path;
-#if __GNUC__
-	/* Avoid longjmp clobbering */
-	(void) &argv;
-	(void) &argc;
-	(void) &lastarg;
-	(void) &flags;
-#endif
 
 	vforked = 0;
 	/* First expand the arguments. */
