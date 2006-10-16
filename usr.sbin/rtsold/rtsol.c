@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsol.c,v 1.12 2006/05/11 08:37:24 mrg Exp $	*/
+/*	$NetBSD: rtsol.c,v 1.13 2006/10/16 03:39:42 christos Exp $	*/
 /*	$KAME: rtsol.c,v 1.15 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -67,7 +67,10 @@ static struct sockaddr_in6 from;
 
 int rssock;
 
-static struct sockaddr_in6 sin6_allrouters = {sizeof(sin6_allrouters), AF_INET6};
+static struct sockaddr_in6 sin6_allrouters = {
+	.sin6_len = sizeof(sin6_allrouters),
+	.sin6_family = AF_INET6
+};
 
 int
 sockopen(void)
