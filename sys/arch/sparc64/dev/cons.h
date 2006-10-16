@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.7 2006/02/13 21:47:11 cdi Exp $	*/
+/*	$NetBSD: cons.h,v 1.8 2006/10/16 22:07:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -56,11 +56,6 @@ extern void nullcnprobe(struct consdev *);
 
 extern int  zs_getc(void *arg);
 extern void zs_putc(void *arg, int c);
-
-#ifdef	KGDB
-void zs_kgdb_init(void);
-void zskgdb(struct zs_chanstate *);
-#endif
 
 /*
  * PROM I/O nodes and arguments are prepared by consinit().
