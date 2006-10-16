@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.3 2006/09/27 06:39:38 macallan Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.4 2006/10/16 22:36:30 macallan Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.3 2006/09/27 06:39:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.4 2006/10/16 22:36:30 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,6 +160,8 @@ static void	chipsfb_showpal(struct chipsfb_softc *);
 static void	chipsfb_restore_palette(struct chipsfb_softc *);
 
 static void	chipsfb_wait_idle(struct chipsfb_softc *);
+
+static uint32_t chipsfb_probe_vram(struct chipsfb_softc *);
 
 struct wsscreen_descr chipsfb_defaultscreen = {
 	"default",
@@ -315,6 +317,7 @@ chipsfb_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 	}
 
+	sc->memsize = chipsfb_probe_vram(sc);
 	chipsfb_init(sc);
 	
 	/* we should read these from the chip instead of depending on OF */
@@ -387,9 +390,9 @@ chipsfb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bg = ri->ri_devcmap[bg];
 	chipsfb_clearscreen(sc);
 
-	printf("%s: %d MB aperture at 0x%08x\n",
-	    sc->sc_dev.dv_xname, (u_int)(sc->sc_fbsize >> 20),
-	    (u_int)sc->sc_fb);
+	printf("%s: %d MB aperture, %d MB VRAM at 0x%08x\n",
+	    sc->sc_dev.dv_xname, (u_int)(sc->sc_fbsize >> 20), 
+	    sc->memsize >> 20, (u_int)sc->sc_fb);
 #ifdef chipsfb_DEBUG
 	printf("fb: %08lx\n", (ulong)ri->ri_bits);
 #endif
@@ -900,7 +903,7 @@ chipsfb_mmap(void *v, void *vs, off_t offset, int prot)
 	paddr_t pa;
 		
 	/* 'regular' framebuffer mmap()ing */
-	if (offset < sc->sc_fbsize) {
+	if (offset < sc->memsize) {
 		pa = bus_space_mmap(sc->sc_fbt, offset, 0, prot, 
 		    BUS_SPACE_MAP_LINEAR);	
 		return pa;
@@ -1002,4 +1005,27 @@ chipsfb_init(struct chipsfb_softc *sc)
 	    ENABLE_LINEAR);
 
 	/* setup the blitter */
+}
+
+static uint32_t
+chipsfb_probe_vram(struct chipsfb_softc *sc)
+{
+	uint32_t ofs = 0x00080000;	/* 512kB */
+	
+	/*
+	 * advance in 0.5MB steps, see if we can read back what we wrote and
+	 * if what we wrote to 0 is left untouched. Max. fb size is 4MB so
+	 * we voluntarily stop there.
+	 */
+	chipsfb_write32(sc, 0, 0xf0f0f0f0);
+	chipsfb_write32(sc, ofs, 0x0f0f0f0f);
+	while ((chipsfb_read32(sc, 0) == 0xf0f0f0f0) && 
+	    (chipsfb_read32(sc, ofs) == 0x0f0f0f0f) &&
+	    (ofs < 0x00400000)) {
+		
+		ofs += 0x00080000;
+		chipsfb_write32(sc, ofs, 0x0f0f0f0f);
+	}
+	
+	return ofs;
 }
