@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.19 2006/05/10 21:53:15 mrg Exp $	*/
+/*	$NetBSD: dir.c,v 1.20 2006/10/16 03:02:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.19 2006/05/10 21:53:15 mrg Exp $");
+__RCSID("$NetBSD: dir.c,v 1.20 2006/10/16 03:02:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,10 +87,21 @@ __RCSID("$NetBSD: dir.c,v 1.19 2006/05/10 21:53:15 mrg Exp $");
 
 const char	*lfname = "lost+found";
 int	lfmode = 01777;
-struct	ext2fs_dirtemplate emptydir = { 0, DIRBLKSIZ }; 
+struct	ext2fs_dirtemplate emptydir = {
+	.dot_ino = 0,
+	.dot_reclen = DIRBLKSIZ,
+}; 
 struct	ext2fs_dirtemplate dirhead = {
-	0, 12, 1, EXT2_FT_DIR, ".",
-	0, DIRBLKSIZ - 12, 2, EXT2_FT_DIR, ".."
+	.dot_ino = 0,
+	.dot_reclen = 12,
+	.dot_namlen = 1,
+	.dot_type = EXT2_FT_DIR,
+	.dot_name = ".",
+	.dotdot_ino = 0,
+	.dotdot_reclen = DIRBLKSIZ - 12,
+	.dotdot_namlen = 2,
+	.dotdot_type = EXT2_FT_DIR,
+	.dotdot_name = "..",
 };
 #undef DIRBLKSIZ
 
