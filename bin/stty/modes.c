@@ -1,4 +1,4 @@
-/* $NetBSD: modes.c,v 1.16 2003/08/07 09:05:41 agc Exp $ */
+/* $NetBSD: modes.c,v 1.17 2006/10/16 00:37:55 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)modes.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: modes.c,v 1.16 2003/08/07 09:05:41 agc Exp $");
+__RCSID("$NetBSD: modes.c,v 1.17 2006/10/16 00:37:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ const struct modes cmodes[] = {
 	{ "-mdmbuf",	0, MDMBUF },
 	{ "cdtrcts",	CDTRCTS, 0 },
 	{ "-cdtrcts",	0, CDTRCTS },
-	{ NULL },
+	{ .name = NULL },
 };
 
 const struct modes imodes[] = {
@@ -125,7 +125,7 @@ const struct modes imodes[] = {
 	{ "-decctlq",	IXANY, 0 },
 	{ "imaxbel",	IMAXBEL, 0 },
 	{ "-imaxbel",	0, IMAXBEL },
-	{ NULL },
+	{ .name = NULL },
 };
 
 const struct modes lmodes[] = {
@@ -177,7 +177,7 @@ const struct modes lmodes[] = {
 	{ "-nokerninfo",0, NOKERNINFO },
 	{ "kerninfo",	0, NOKERNINFO },
 	{ "-kerninfo",	NOKERNINFO, 0 },
-	{ NULL },
+	{ .name = NULL },
 };
 
 const struct modes omodes[] = {
@@ -197,7 +197,7 @@ const struct modes omodes[] = {
 	{ "-onocr",	0, ONOCR },
 	{ "onlret",	ONLRET, 0 },
 	{ "-onlret",	0, ONLRET },
-	{ NULL },
+	{ .name = NULL },
 };
 
 #define	CHK(s)	(!strcmp(name, s))

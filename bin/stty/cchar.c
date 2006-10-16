@@ -1,4 +1,4 @@
-/* $NetBSD: cchar.c,v 1.15 2003/08/07 09:05:41 agc Exp $ */
+/* $NetBSD: cchar.c,v 1.16 2006/10/16 00:37:55 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cchar.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cchar.c,v 1.15 2003/08/07 09:05:41 agc Exp $");
+__RCSID("$NetBSD: cchar.c,v 1.16 2006/10/16 00:37:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,14 +75,14 @@ const struct cchar cchars1[] = {
 	{ "susp",	VSUSP,		CSUSP },
 	{ "time",	VTIME,		CTIME },
 	{ "werase",	VWERASE,	CWERASE },
-	{ NULL },
+	{ .name = NULL },
 };
 
 const struct cchar cchars2[] = {
 	{ "brk",	VEOL,		CEOL },
 	{ "flush",	VDISCARD, 	CDISCARD },
 	{ "rprnt",	VREPRINT, 	CREPRINT },
-	{ NULL },
+	{ .name = NULL },
 };
 
 static int c_cchar(const void *, const void *);
