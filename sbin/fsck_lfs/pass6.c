@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.16 2006/09/01 19:52:48 perseant Exp $	 */
+/* $NetBSD: pass6.c,v 1.17 2006/10/16 03:21:34 christos Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -674,9 +674,12 @@ pass6(void)
 				    dp->di_u.inumber == fs->lfs_ifile)
 					continue;
 				/* Basic sanity checks */
-				if (dp->di_nlink < 0 ||
-				    dp->di_u.inumber < 0 ||
-				    dp->di_size < 0) {
+				if (dp->di_nlink < 0 
+#if 0
+				    || dp->di_u.inumber < 0
+				    || dp->di_size < 0
+#endif
+				) {
 					pwarn("BAD INODE AT 0x%" PRIx32 "\n",
 						ibdaddr);
 					brelse(bp);
