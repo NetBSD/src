@@ -1,4 +1,4 @@
-/*	$NetBSD: syn.c,v 1.8 2006/03/22 16:12:19 christos Exp $	*/
+/*	$NetBSD: syn.c,v 1.9 2006/10/16 00:07:32 christos Exp $	*/
 
 /*
  * shell parser (C version)
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: syn.c,v 1.8 2006/03/22 16:12:19 christos Exp $");
+__RCSID("$NetBSD: syn.c,v 1.9 2006/10/16 00:07:32 christos Exp $");
 #endif
 
 
@@ -683,7 +683,7 @@ const	struct tokeninfo {
 #endif /* KSH */
 	/* and some special cases... */
 	{ "newline",	'\n',	FALSE },
-	{ 0 }
+	{ .name = NULL }
 };
 
 void
@@ -899,7 +899,7 @@ dbtestp_isa(te, meta)
 		ACCEPT;
 		if (meta != TM_END) {
 			if (!save) {
-				assert(meta >= 0 &&
+				assert(/* meta >= 0 && */
 				    meta < sizeof(dbtest_tokens) /
 				    sizeof(dbtest_tokens[0]));
 				save = wdcopy(dbtest_tokens[(int) meta], ATEMP);
