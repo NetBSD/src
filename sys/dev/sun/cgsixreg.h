@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixreg.h,v 1.7 2005/12/11 12:23:56 christos Exp $ */
+/*	$NetBSD: cgsixreg.h,v 1.8 2006/10/16 22:27:16 macallan Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -163,7 +163,7 @@ struct cg6_tec_xxx {
  */
 struct cg6_fbc {
 	u_int32_t fbc_pad1[1];
-	u_int32_t fbc_mode;		/* mode setting */
+	volatile u_int32_t fbc_mode;		/* mode setting */
 	u_int32_t fbc_clip;		/* function unknown */
 	u_int32_t fbc_pad2[1];
 	u_int32_t fbc_s;		/* global status */
@@ -203,6 +203,54 @@ struct cg6_fbc {
 	u_int32_t fbc_arecty;		/* rectangle drawing, y coord */
 	/* actually much more, but nothing more we need */
 };
+
+/* FBC mode definitions (from XFree86) */
+#define CG6_FBC_BLIT_IGNORE		0x00000000
+#define CG6_FBC_BLIT_NOSRC		0x00100000
+#define CG6_FBC_BLIT_SRC		0x00200000
+#define CG6_FBC_BLIT_ILLEGAL		0x00300000
+#define CG6_FBC_BLIT_MASK		0x00300000
+
+#define CG6_FBC_VBLANK			0x00080000
+
+#define CG6_FBC_MODE_IGNORE		0x00000000
+#define CG6_FBC_MODE_COLOR8		0x00020000
+#define CG6_FBC_MODE_COLOR1		0x00040000
+#define CG6_FBC_MODE_HRMONO		0x00060000
+#define CG6_FBC_MODE_MASK		0x00060000
+
+#define CG6_FBC_DRAW_IGNORE		0x00000000
+#define CG6_FBC_DRAW_RENDER		0x00008000
+#define CG6_FBC_DRAW_PICK		0x00010000
+#define CG6_FBC_DRAW_ILLEGAL		0x00018000
+#define CG6_FBC_DRAW_MASK		0x00018000
+
+#define CG6_FBC_BWRITE0_IGNORE		0x00000000
+#define CG6_FBC_BWRITE0_ENABLE		0x00002000
+#define CG6_FBC_BWRITE0_DISABLE		0x00004000
+#define CG6_FBC_BWRITE0_ILLEGAL		0x00006000
+#define CG6_FBC_BWRITE0_MASK		0x00006000
+
+#define CG6_FBC_BWRITE1_IGNORE		0x00000000
+#define CG6_FBC_BWRITE1_ENABLE		0x00000800
+#define CG6_FBC_BWRITE1_DISABLE		0x00001000
+#define CG6_FBC_BWRITE1_ILLEGAL		0x00001800
+#define CG6_FBC_BWRITE1_MASK		0x00001800
+
+#define CG6_FBC_BREAD_IGNORE		0x00000000
+#define CG6_FBC_BREAD_0			0x00000200
+#define CG6_FBC_BREAD_1			0x00000400
+#define CG6_FBC_BREAD_ILLEGAL		0x00000600
+#define CG6_FBC_BREAD_MASK		0x00000600
+
+#define CG6_FBC_BDISP_IGNORE		0x00000000
+#define CG6_FBC_BDISP_0			0x00000080
+#define CG6_FBC_BDISP_1			0x00000100
+#define CG6_FBC_BDISP_ILLEGAL		0x00000180
+#define CG6_FBC_BDISP_MASK		0x00000180
+
+#define CG6_FBC_INDEX_MOD		0x00000040
+#define CG6_FBC_INDEX_MASK		0x00000030
 
 #if _CG6_LAYOUT_NOT_USED_ANYMORE
 /*
