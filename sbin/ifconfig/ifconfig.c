@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.176 2006/08/26 18:14:28 christos Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.177 2006/10/16 02:52:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.176 2006/08/26 18:14:28 christos Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.177 2006/10/16 02:52:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -195,7 +195,6 @@ const struct cmd {
 	int	c_parameter;	/* NEXTARG means next argv */
 	int	c_action;	/* defered action */
 	void	(*c_func)(const char *, int);
-	void	(*c_func2)(const char *, const char *);
 } cmds[] = {
 	{ "up",		IFF_UP,		0,		setifflags } ,
 	{ "down",	-IFF_UP,	0,		setifflags },
@@ -261,7 +260,7 @@ const struct cmd {
 	{ "snpaoffset",	NEXTARG,	0,		setsnpaoffset },
 	{ "nsellength",	NEXTARG,	0,		setnsellength },
 #endif	/* INET_ONLY */
-	{ "tunnel",	NEXTARG2,	0,		NULL,
+	{ "tunnel",	NEXTARG2,	0,	(void (*)(const char *, int))
 							settunnel } ,
 	{ "deletetunnel", 0,		0,		deletetunnel },
 	{ "vlan",	NEXTARG,	0,		setvlan } ,
@@ -364,7 +363,7 @@ const struct afswtch afs[] = {
 	     SIOCDIFADDR_ISO, SIOCAIFADDR_ISO, SIOCGIFADDR_ISO,
 	     &iso_ridreq, &iso_addreq },
 #endif	/* INET_ONLY */
-	{ 0,	0,	    0,		0 }
+	{ 0,	0,	    0,		0, 0, 0, 0, 0, 0, 0 }
 };
 
 const struct afswtch *afp;	/*the address family being set or asked about*/
@@ -558,7 +557,7 @@ main(int argc, char *argv[])
 			}
 			p++;	/* got src, do dst */
 		}
-		if (p->c_func != NULL || p->c_func2 != NULL) {
+		if (p->c_func != NULL) {
 			if (p->c_parameter == NEXTARG) {
 				if (argc < 2)
 					errx(EXIT_FAILURE,
@@ -571,7 +570,8 @@ main(int argc, char *argv[])
 					errx(EXIT_FAILURE,
 					    "'%s' requires 2 arguments",
 					    p->c_name);
-				(*p->c_func2)(argv[1], argv[2]);
+				((void (*)(const char *, const char *))
+				    *p->c_func)(argv[1], argv[2]);
 				argc -= 2, argv += 2;
 			} else
 				(*p->c_func)(argv[0], p->c_parameter);
