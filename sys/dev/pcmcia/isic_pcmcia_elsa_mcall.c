@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_mcall.c,v 1.10 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_mcall.c,v 1.11 2006/10/16 13:00:36 pooka Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_ELSA_MCALL
@@ -104,7 +104,8 @@ elsa_mcall_read_fifo(void *buf, const void *base, size_t len)
 }
 #else
 static void
-elsa_mcall_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
+elsa_mcall_read_fifo(struct isic_softc *sc __unused, int what __unused,
+	void *buf __unused, size_t size __unused)
 {
 	/*
 	bus_space_tag_t t = sc->sc_maps[0].t;
@@ -123,7 +124,8 @@ elsa_mcall_write_fifo(void *base, const void *buf, size_t len)
 }
 #else
 static void
-elsa_mcall_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
+elsa_mcall_write_fifo(struct isic_softc *sc __unused, int what __unused,
+	const void *buf __unused, size_t size __unused)
 {
 	/*
 	bus_space_tag_t t = sc->sc_maps[0].t;
@@ -142,7 +144,8 @@ elsa_mcall_write_reg(u_char *base, u_int offset, u_int v)
 }
 #else
 static void
-elsa_mcall_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
+elsa_mcall_write_reg(struct isic_softc *sc __unused, int what __unused,
+	bus_size_t offs __unused, u_int8_t data __unused)
 {
 	/*
 	bus_space_tag_t t = sc->sc_maps[0].t;
@@ -162,7 +165,8 @@ elsa_mcall_read_reg(u_char *base, u_int offset)
 }
 #else
 static u_int8_t
-elsa_mcall_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
+elsa_mcall_read_reg(struct isic_softc *sc __unused, int what __unused,
+	bus_size_t offs __unused)
 {
 	/*
 	bus_space_tag_t t = sc->sc_maps[0].t;
