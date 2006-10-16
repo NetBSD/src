@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.24 2004/08/22 18:55:44 dsl Exp $	*/
+/*	$NetBSD: nlist.c,v 1.25 2006/10/16 00:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.24 2004/08/22 18:55:44 dsl Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.25 2006/10/16 00:31:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,15 +93,15 @@ __RCSID("$NetBSD: nlist.c,v 1.24 2004/08/22 18:55:44 dsl Exp $");
 #include "ps.h"
 
 struct	nlist psnl[] = {
-	{ "_fscale" },
+	{ .n_name = "_fscale" },
 #define	X_FSCALE	0
-	{ "_ccpu" },
+	{ .n_name = "_ccpu" },
 #define	X_CCPU		1
-	{ "_physmem" },
+	{ .n_name = "_physmem" },
 #define	X_PHYSMEM	2
-	{ "_maxslp" },
+	{ .n_name = "_maxslp" },
 #define	X_MAXSLP	3
-	{ NULL }
+	{ .n_name = NULL }
 };
 
 double	ccpu;				/* kernel _ccpu variable */
