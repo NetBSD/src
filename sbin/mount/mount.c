@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.81 2006/05/04 19:38:50 christos Exp $	*/
+/*	$NetBSD: mount.c,v 1.82 2006/10/16 02:54:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.81 2006/05/04 19:38:50 christos Exp $");
+__RCSID("$NetBSD: mount.c,v 1.82 2006/10/16 02:54:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ static struct statvfs *
 		getmntpt(const char *);
 static int 	getmntargs(struct statvfs *, char *, size_t);
 static int	hasopt(const char *, const char *);
-static void	mangle(char *, int *, const char ***, int *);
+static void	mangle(char *, int *, const char ** volatile *, int *);
 static int	mountfs(const char *, const char *, const char *,
 		    int, const char *, const char *, int, char *, size_t);
 static void	prmount(struct statvfs *);
@@ -352,20 +352,14 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 		_PATH_USRSBIN,
 		NULL
 	};
-	const char **argv, **edir;
+	const char ** volatile argv, **edir;
 	struct statvfs *sfp, sf;
 	pid_t pid;
 	int pfd[2];
 	int argc, numfs, i, status, maxargc;
 	char *optbuf, execname[MAXPATHLEN + 1], execbase[MAXPATHLEN],
 	    mntpath[MAXPATHLEN];
-	int getargs;
-
-#ifdef __GNUC__
-	(void) &name;
-	(void) &optbuf;
-	(void) &vfstype;
-#endif
+	volatile int getargs;
 
 	if (realpath(name, mntpath) == NULL) {
 		warn("realpath %s", name);
@@ -644,7 +638,7 @@ catopt(char **sp, const char *o)
 }
 
 static void
-mangle(char *options, int *argcp, const char ***argvp, int *maxargcp)
+mangle(char *options, int *argcp, const char ** volatile *argvp, int *maxargcp)
 {
 	char *p, *s;
 	int argc, maxargc;
