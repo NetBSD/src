@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strpbrk.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strpbrk.3,v 1.8 2003/08/07 16:43:52 agc Exp $
+.\"	$NetBSD: strpbrk.3,v 1.9 2006/10/16 08:48:45 wiz Exp $
 .\"
 .Dd June 4, 1993
 .Dt STRPBRK 3
@@ -48,7 +48,7 @@
 The
 .Fn strpbrk
 function
-locates in the null-terminated string
+locates in the nul-terminated string
 .Fa s
 the first occurrence of any character in the string
 .Fa charset
@@ -58,7 +58,8 @@ If no characters from
 occur anywhere in
 .Fa s
 .Fn strpbrk
-returns NULL.
+returns
+.Dv NULL .
 .Sh SEE ALSO
 .Xr index 3 ,
 .Xr memchr 3 ,

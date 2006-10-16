@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strmode.3	8.3 (Berkeley) 7/28/94
-.\"	$NetBSD: strmode.3,v 1.16 2003/08/07 16:43:51 agc Exp $
+.\"	$NetBSD: strmode.3,v 1.17 2006/10/16 08:48:45 wiz Exp $
 .\"
 .Dd July 28, 1994
 .Dt STRMODE 3
@@ -50,8 +50,7 @@ converts a file
 .Xr stat 2 )
 into a symbolic string which is stored in the location referenced by
 .Fa bp .
-This stored string is eleven characters in length plus a trailing
-.Dv NULL .
+This stored string is eleven characters in length plus a trailing nul byte.
 .Pp
 The first character is the inode type, and will be one of the following:
 .Pp

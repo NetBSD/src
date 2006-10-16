@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)memchr.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: memchr.3,v 1.8 2003/08/07 16:43:48 agc Exp $
+.\"	$NetBSD: memchr.3,v 1.9 2006/10/16 08:48:45 wiz Exp $
 .\"
 .Dd June 4, 1993
 .Dt MEMCHR 3
@@ -57,8 +57,9 @@ in string
 The
 .Fn memchr
 function
-returns a pointer to the byte located,
-or NULL if no such byte exists within
+returns a pointer to the byte located, or
+.Dv NULL
+if no such byte exists within
 .Fa len
 bytes.
 .Sh SEE ALSO

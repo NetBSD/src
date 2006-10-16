@@ -1,4 +1,4 @@
-.\" $NetBSD: wcstok.3,v 1.4 2004/01/24 16:59:30 wiz Exp $
+.\" $NetBSD: wcstok.3,v 1.5 2006/10/16 08:48:45 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Softweyr LLC.  All rights reserved.
 .\"
@@ -68,7 +68,7 @@
 The
 .Fn wcstok
 function
-is used to isolate sequential tokens in a null-terminated wide character
+is used to isolate sequential tokens in a nul-terminated wide character
 string,
 .Fa str .
 These tokens are separated in the string by at least one of the
@@ -97,7 +97,7 @@ The
 .Fn wcstok
 function
 returns a pointer to the beginning of each subsequent token in the string,
-after replacing the token itself with a null wide character (L'\e0').
+after replacing the token itself with a nul wide character (L'\e0').
 When no more tokens remain, a null pointer is returned.
 .Sh EXAMPLES
 The following code fragment splits a wide character string on

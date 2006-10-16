@@ -1,4 +1,4 @@
-.\" $NetBSD: wcswidth.3,v 1.1 2006/06/03 04:36:45 tnozaki Exp $
+.\" $NetBSD: wcswidth.3,v 1.2 2006/10/16 08:48:45 wiz Exp $
 .\" FreeBSD: src/lib/libc/string/wcswidth.3,v 1.2 2002/12/09 14:04:05 ru Exp
 .\"
 .\" Copyright (c) 2002 Tim J. Robbins
@@ -45,7 +45,7 @@ function determines the number of column positions required for the first
 .Fa n
 characters of
 .Fa pwcs ,
-or until a null wide character (L'\e0') is encountered.
+or until a nul wide character (L'\e0') is encountered.
 .Sh RETURN VALUES
 The
 .Fn wcswidth
