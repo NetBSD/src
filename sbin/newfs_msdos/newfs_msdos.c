@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.22 2006/09/27 18:52:11 christos Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.23 2006/10/16 03:25:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.22 2006/09/27 18:52:11 christos Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.23 2006/10/16 03:25:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,20 +176,23 @@ struct bpb {
     u_int bkbs; 		/* backup boot sector */
 };
 
+#define INIT(a, b, c, d, e, f, g, h, i, j) \
+    { .bps = a, .spc = b, .res = c, .nft = d, .rde = e, \
+      .sec = f, .mid = g, .spf = h, .spt = i, .hds = j, }
 static struct {
     const char *name;
     struct bpb bpb;
 } stdfmt[] = {
-    {"160",  {512, 1, 1, 2,  64,  320, 0xfe, 1,  8, 1}},
-    {"180",  {512, 1, 1, 2,  64,  360, 0xfc, 2,  9, 1}},
-    {"320",  {512, 2, 1, 2, 112,  640, 0xff, 1,  8, 2}},
-    {"360",  {512, 2, 1, 2, 112,  720, 0xfd, 2,  9, 2}},
-    {"640",  {512, 2, 1, 2, 112, 1280, 0xfb, 2,  8, 2}},    
-    {"720",  {512, 2, 1, 2, 112, 1440, 0xf9, 3,  9, 2}},
-    {"1200", {512, 1, 1, 2, 224, 2400, 0xf9, 7, 15, 2}},
-    {"1232", {1024,1, 1, 2, 192, 1232, 0xfe, 2,  8, 2}},    
-    {"1440", {512, 1, 1, 2, 224, 2880, 0xf0, 9, 18, 2}},
-    {"2880", {512, 2, 1, 2, 240, 5760, 0xf0, 9, 36, 2}}
+    {"160",  INIT(512, 1, 1, 2,  64,  320, 0xfe, 1,  8, 1)},
+    {"180",  INIT(512, 1, 1, 2,  64,  360, 0xfc, 2,  9, 1)},
+    {"320",  INIT(512, 2, 1, 2, 112,  640, 0xff, 1,  8, 2)},
+    {"360",  INIT(512, 2, 1, 2, 112,  720, 0xfd, 2,  9, 2)},
+    {"640",  INIT(512, 2, 1, 2, 112, 1280, 0xfb, 2,  8, 2)},    
+    {"720",  INIT(512, 2, 1, 2, 112, 1440, 0xf9, 3,  9, 2)},
+    {"1200", INIT(512, 1, 1, 2, 224, 2400, 0xf9, 7, 15, 2)},
+    {"1232", INIT(1024,1, 1, 2, 192, 1232, 0xfe, 2,  8, 2)},    
+    {"1440", INIT(512, 1, 1, 2, 224, 2880, 0xf0, 9, 18, 2)},
+    {"2880", INIT(512, 2, 1, 2, 240, 5760, 0xf0, 9, 36, 2)}
 };
 
 static u_int8_t bootcode[] = {
