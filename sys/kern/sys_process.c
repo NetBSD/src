@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.86 2004/03/13 18:43:18 matt Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.86.2.1 2006/10/16 17:56:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.86 2004/03/13 18:43:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.86.2.1 2006/10/16 17:56:59 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ sys_ptrace(l, v, retval)
 	struct iovec iov;
 	struct ptrace_io_desc piod;
 	struct ptrace_lwpinfo pl;
-	int s, error, write, tmp, size;
+	int s, error, write, tmp;
 
 	/* "A foolish consistency..." XXX */
 	if (SCARG(uap, req) == PT_TRACE_ME)
@@ -458,10 +458,9 @@ sys_ptrace(l, v, retval)
 		goto sendsig;
 
 	case PT_LWPINFO:
-		size = SCARG(uap, data);
-		if (size < sizeof(lwpid_t))
+		if (SCARG(uap, data) != sizeof(pl))
 			return (EINVAL);
-		error = copyin(SCARG(uap, addr), &pl, sizeof(lwpid_t));
+		error = copyin(SCARG(uap, addr), &pl, sizeof(pl));
 		if (error)
 			return (error);
 		tmp = pl.pl_lwpid;
@@ -469,8 +468,8 @@ sys_ptrace(l, v, retval)
 			lt = LIST_FIRST(&t->p_lwps);
 		else {
 			LIST_FOREACH(lt, &t->p_lwps, l_sibling)
-			    if (lt->l_lid == tmp)
-				    break;
+				if (lt->l_lid == tmp)
+					break;
 			if (lt == NULL)
 				return (ESRCH);
 			lt = LIST_NEXT(lt, l_sibling);
@@ -483,9 +482,7 @@ sys_ptrace(l, v, retval)
 				pl.pl_event = PL_EVENT_SIGNAL;
 		}
 
-		error = copyout(&pl, SCARG(uap, addr), SCARG(uap, data));
-
-		return (0);
+		return copyout(&pl, SCARG(uap, addr), sizeof(pl));
 
 #ifdef PT_SETREGS
 	case  PT_SETREGS:
