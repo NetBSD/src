@@ -1,4 +1,4 @@
-/* $NetBSD: mount_udf.c,v 1.5 2006/03/21 21:11:42 christos Exp $ */
+/* $NetBSD: mount_udf.c,v 1.6 2006/10/16 03:37:43 christos Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_udf.c,v 1.5 2006/03/21 21:11:42 christos Exp $");
+__RCSID("$NetBSD: mount_udf.c,v 1.6 2006/10/16 03:37:43 christos Exp $");
 #endif /* not lint */
 
 
@@ -73,7 +73,7 @@ static const struct mntopt mopts[] = {
 	MOPT_ASYNC,		/* default		*/
 	MOPT_UPDATE,		/* not yet supported	*/
 	MOPT_GETARGS,		/* printing		*/
-	{ NULL }
+	MOPT_NULL,
 };
 
 
