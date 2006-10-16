@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_machdep.c,v 1.3 2006/03/29 17:50:33 shige Exp $	*/
+/*	$NetBSD: obs200_machdep.c,v 1.4 2006/10/16 18:14:35 kiyohara Exp $	*/
 /*	Original: machdep.c,v 1.3 2005/01/17 17:24:09 shige Exp	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.3 2006/03/29 17:50:33 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.4 2006/10/16 18:14:35 kiyohara Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -97,6 +97,9 @@ __KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.3 2006/03/29 17:50:33 shige Exp
 
 #include "ksyms.h"
 
+
+#define	TLB_PG_SIZE 	(16*1024*1024)
+
 /*
  * Global variables used here and there
  */
@@ -117,6 +120,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 {
 	u_int32_t pllmode;
 	u_int32_t psr;
+	vaddr_t va;
 	u_int memsize;
 
 	/* Disable all external interrupts */
@@ -128,14 +132,16 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	bios_board_init(info_block, startkernel);
 	memsize = bios_board_memsize_get();
 
+	/* Linear map whole physmem. */
+	for (va = 0; va < memsize; va += TLB_PG_SIZE)
+		ppc4xx_tlb_reserve(va, va, TLB_PG_SIZE, TLB_EX);
+
+	/* Map console right after RAM. */
+	ppc4xx_tlb_reserve(OBS405_CONADDR, va, TLB_PG_SIZE, TLB_I | TLB_G);
+
 	/* Initialize IBM405GPr CPU */
 	ibm40x_memsize_init(memsize, startkernel);
 	ibm4xx_init((void (*)(void))ext_intr);
-
-	/*
-	 * Initialize console.
-	 */
-	consinit();
 
 	/*
 	 * Set the page size.
