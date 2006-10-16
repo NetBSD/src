@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc.c,v 1.4 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: iavc.c,v 1.5 2006/10/16 13:00:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc.c,v 1.4 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc.c,v 1.5 2006/10/16 13:00:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -634,7 +634,7 @@ static int iavc_receive_init(iavc_softc_t *sc, u_int8_t *dmabuf)
     return 0;
 }
 
-static int iavc_receive_start(iavc_softc_t *sc, u_int8_t *dmabuf)
+static int iavc_receive_start(iavc_softc_t *sc)
 {
     struct mbuf *m = i4b_Dgetmbuf(3);
     u_int8_t *p;
@@ -672,7 +672,7 @@ static int iavc_receive_start(iavc_softc_t *sc, u_int8_t *dmabuf)
     return 0;
 }
 
-static int iavc_receive_stop(iavc_softc_t *sc, u_int8_t *dmabuf)
+static int iavc_receive_stop(iavc_softc_t *sc)
 {
     printf("%s: receive_stop\n", sc->sc_dev.dv_xname);
     sc->sc_blocked = 1;
@@ -920,11 +920,11 @@ static void iavc_handle_rx(iavc_softc_t *sc)
 	break;
 
     case RECEIVE_START:
-	iavc_receive_start(sc, dmabuf);
+	iavc_receive_start(sc);
 	break;
 
     case RECEIVE_STOP:
-	iavc_receive_stop(sc, dmabuf);
+	iavc_receive_stop(sc);
 	break;
 
     case RECEIVE_INIT:
