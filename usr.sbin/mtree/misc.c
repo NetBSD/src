@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.28 2006/10/14 21:14:02 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.29 2006/10/16 00:11:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: misc.c,v 1.28 2006/10/14 21:14:02 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.29 2006/10/16 00:11:57 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -91,16 +91,16 @@ static KEY keylist[] = {
 };
 
 static KEY typelist[] = {
-	{"block",	F_BLOCK,	},
-	{"char",	F_CHAR,		},
-	{"dir",		F_DIR,		},
+	{"block",	F_BLOCK,	0},
+	{"char",	F_CHAR,		0},
+	{"dir",		F_DIR,		0},
 #ifdef S_IFDOOR
-	{"door",	F_DOOR,		},
+	{"door",	F_DOOR,		0},
 #endif
-	{"fifo",	F_FIFO,		},
-	{"file",	F_FILE,		},
-	{"link",	F_LINK,		},
-	{"socket",	F_SOCK,		},
+	{"fifo",	F_FIFO,		0},
+	{"file",	F_FILE,		0},
+	{"link",	F_LINK,		0},
+	{"socket",	F_SOCK,		0},
 };
 
 slist_t	excludetags, includetags;
