@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.38 2006/09/17 08:41:31 yamt Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.39 2006/10/16 20:18:55 martin Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.38 2006/09/17 08:41:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.39 2006/10/16 20:18:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -955,7 +955,7 @@ svr4_32_sys_ulimit(l, v, retval)
 			if (r == -1)
 				r = 0x7fffffff;
 			r += (long) vm->vm_daddr;
-			if (r < 0)
+			if (r > 0x7fffffff)
 				r = 0x7fffffff;
 			*retval = r;
 			return 0;
