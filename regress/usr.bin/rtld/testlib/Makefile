@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2003/09/03 20:53:16 drochner Exp $
+# $NetBSD: Makefile,v 1.8 2006/10/16 09:21:55 skrll Exp $
 
 NOPROFILE=	yes
 
@@ -11,7 +11,7 @@ CLEANFILES+=	${TESTLIB}
 SHLIB_MAJOR=	1
 SHLIB_MINOR=	0
 #CXXFLAGS+= -fno-rtti
-LDADD+=	-lstdc++
+LDADD+=	-lstdc++ -lm -lgcc_s
 
 .if (${MACHINE_ARCH} == "i386")
 all realall:	${TESTLIB}
