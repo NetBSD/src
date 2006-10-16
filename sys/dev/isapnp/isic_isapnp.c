@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.22 2006/03/29 06:51:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.23 2006/10/16 13:00:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -82,11 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.22 2006/03/29 06:51:47 thorpej Exp
 
 extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-static int isic_isapnp_probe(struct device *, void *, void *);
-#else
 static int isic_isapnp_probe(struct device *, struct cfdata *, void *);
-#endif
 static void isic_isapnp_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(isic_isapnp, sizeof(struct isic_softc),
@@ -167,18 +163,8 @@ isic_isapnp_descriptions[] =
  * Probe card
  */
 static int
-#ifdef __BROKEN_INDIRECT_CONFIG
-isic_isapnp_probe(parent, match, aux)
-#else
-isic_isapnp_probe(parent, cf, aux)
-#endif
-	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
-	struct cfdata *cf;
-#endif
-	void *aux;
+isic_isapnp_probe(struct device *parent __unused,
+	struct cfdata *cf __unused, void *aux)
 {
 	struct isapnp_attach_args *ipa = aux;
 	const struct isic_isapnp_card_desc *desc = isic_isapnp_descriptions;
@@ -208,9 +194,8 @@ isic_isapnp_probe(parent, cf, aux)
 #endif
 
 static void
-isic_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+isic_isapnp_attach(struct device *parent __unused,
+	struct device *self, void *aux)
 {
   	static const char *ISACversion[] = {
   		"2085 Version A1/A2 or 2086/2186 Version 1.1",

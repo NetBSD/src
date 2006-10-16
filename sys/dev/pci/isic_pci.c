@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci.c,v 1.25 2005/12/11 12:22:50 christos Exp $ */
+/* $NetBSD: isic_pci.c,v 1.26 2006/10/16 13:00:36 pooka Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.25 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.26 2006/10/16 13:00:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -100,7 +100,7 @@ static const struct isic_pci_product {
 	  isic_attach_Eqs1pp,	/* card specific initialization */
 	  isic_pci_isdn_attach	/* generic setup for ISAC/HSCX or IPAC boards */
 	 },
-	{ 0, 0, 0, NULL, NULL },
+	{ 0, 0, 0, NULL, NULL, NULL },
 };
 
 static const struct isic_pci_product * find_matching_card(pa)
@@ -120,10 +120,8 @@ static const struct isic_pci_product * find_matching_card(pa)
  * Match card
  */
 static int
-isic_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+isic_pci_match(struct device *parent __unused,
+	struct cfdata *match __unused, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -137,9 +135,7 @@ isic_pci_match(parent, match, aux)
  * Attach the card
  */
 static void
-isic_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+isic_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pci_isic_softc *psc = (void*) self;
 	struct isic_softc *sc = &psc->sc_isic;
@@ -314,9 +310,7 @@ isic_pci_isdn_attach(psc, pa, cardname)
 
 
 static int
-isic_pci_detach(self, flags)
-	struct device *self;
-	int flags;
+isic_pci_detach(struct device *self, int flags __unused)
 {
 	struct pci_isic_softc *psc = (struct pci_isic_softc *)self;
 
@@ -328,9 +322,7 @@ isic_pci_detach(self, flags)
 }
 
 static int
-isic_pci_activate(self, act)
-	struct device *self;
-	enum devact act;
+isic_pci_activate(struct device *self, enum devact act)
 {
 	struct pci_isic_softc *psc = (struct pci_isic_softc *)self;
 	int error = 0, s;
