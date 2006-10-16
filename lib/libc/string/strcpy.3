@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strcpy.3,v 1.16 2003/09/08 17:54:33 wiz Exp $
+.\"	$NetBSD: strcpy.3,v 1.17 2006/10/16 08:48:45 wiz Exp $
 .\"
 .Dd May 6, 2002
 .Dt STRCPY 3
@@ -105,12 +105,12 @@ to
 .Dq Li abcdef
 and does
 .Em not
-null terminate
+nul-terminate
 .Va chararray
 because the source string is \*[Gt]= the length parameter.
 .Fn strncpy
 .Em only
-null terminates the destination string when the length of the source
+nul-terminates the destination string when the length of the source
 string is less than the length parameter.
 .Bd -literal -offset indent
 (void)strncpy(chararray, "abcdefgh", 6);
@@ -120,12 +120,12 @@ The following copies as many characters from
 .Va input
 to
 .Va buf
-as will fit and null terminates the result.
+as will fit and nul-terminates the result.
 Because
 .Fn strncpy
 does
 .Em not
-guarantee to null terminate the string itself, we must do this by hand.
+guarantee to nul-terminate the string itself, we must do this by hand.
 .Bd -literal -offset indent
 char buf[BUFSIZ];
 
