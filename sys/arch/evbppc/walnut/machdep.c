@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2006/07/13 07:36:04 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 2006/10/16 18:14:37 kiyohara Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2006/07/13 07:36:04 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2006/10/16 18:14:37 kiyohara Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -114,6 +114,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2006/07/13 07:36:04 simonb Exp $");
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
+
+
+#define TLB_PG_SIZE 	(16*1024*1024)
 
 /*
  * Global variables used here and there
@@ -171,6 +174,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 #ifdef IPKDB
 	extern int ipkdblow, ipkdbsize;
 #endif
+	vaddr_t va;
 	int exc, dbcr0;
 	struct cpu_info * const ci = curcpu();
 
@@ -190,6 +194,13 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	/* Lower memory reserved by eval board BIOS */
 	availmemr[0].start = startkernel; 
 	availmemr[0].size = board_data.mem_size - availmemr[0].start;
+
+	/* Linear map whole physmem */
+	for (va = 0; va < board_data.mem_size; va += TLB_PG_SIZE)
+		ppc4xx_tlb_reserve(va, va, TLB_PG_SIZE, TLB_EX);
+
+	/* Map console just after RAM */
+	ppc4xx_tlb_reserve(0xef000000, va, TLB_PG_SIZE, TLB_I | TLB_G);
 
 	/*
 	 * Initialize lwp0 and current pcb and pmap pointers.
