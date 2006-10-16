@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.35 2006/05/19 14:50:32 christos Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.36 2006/10/16 03:10:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.35 2006/05/19 14:50:32 christos Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.36 2006/10/16 03:10:59 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -222,7 +222,7 @@ static struct cmdtable cmds[] = {
 	{"quit", "Exit", 1, 1, quit},
 	{"q", "Exit", 1, 1, quit},
 	{"exit", "Exit", 1, 1, quit},
-	{NULL, 0, 0, 0},
+	{ .cmd = NULL},
 };
 
 static int
