@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.2,v 1.1.2.26 2006/10/12 09:50:19 ghen Exp $
+#	$NetBSD: CHANGES-3.0.2,v 1.1.2.27 2006/10/16 22:06:21 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0.1 release to the NetBSD 3.0.2
 release:
@@ -226,4 +226,43 @@ usr.sbin/makefs/ffs/ufs_inode.h			patch
 
 	Fix cross-building NetBSD 3.x binutils with GCC 4.x.
 	[skrll, ticket #1529]
+
+sys/kern/kern_systrace.c			1.59
+sys/sys/systrace.h				1.21
+
+	Fix an exploitable integer overflow found by Chris Evans of Google
+	Security: the systrace replace policy struct fields that were supplied
+	by the user were not checked properly and could access memory that was
+	not intended, for example they could be negative or much larger than
+	allowed.
+	[christos, ticket #1544]
+
+distrib/notes/mac68k/prep			1.15
+distrib/utils/sysinst/arch/mac68k/md.c		1.49
+
+	Fix sysinst on mac68k: make it newfs and mount the target filesystem.
+	[pavel, ticket #1548]
+
+sys/arch/amd64/amd64/trap.c			1.22
+
+	Use panic() instead of cpu_reboot() for unhandled kernel traps, to make
+	sure that NetBSD/amd64 actually reboots after certain panics instead of
+	halting and waiting for someone to press a key.
+	[tron, ticket #1550]
+
+usr.sbin/user/user.c				1.112
+
+	In userinfo, initialize buf (the buffer which will hold group names) to
+	be a null-terminated string.  Otherwise, if the user is not a member of
+	any secondary groups, buf is completely uninitialized and userinfo adds
+	garbage to the list of groups printed.
+	[pavel, ticket #1554]
+
+crypto/dist/ssh/sshd_config			1.25
+
+	Change the default sshd configuration file so that only protocol
+	version 2 is enabled by default.  Users can manually add back support
+	for protocol version 1 in their sshd_config if they have a specific
+	need for it.
+	[adrianp, ticket #1555]
 
