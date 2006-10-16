@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.48 2006/10/02 18:43:13 apb Exp $	*/
+/*	$NetBSD: keyword.c,v 1.49 2006/10/16 00:31:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.48 2006/10/02 18:43:13 apb Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.49 2006/10/16 00:31:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,20 +72,32 @@ static int  vcmp(const void *, const void *);
 #define	LOFF(x)	offsetof(struct kinfo_lwp, x)
 
 #define	UIDFMT	"u"
-#define	UID(n1, n2, off) \
-	{ n1, n2, 0, pvar, POFF(off), UINT32, UIDFMT }
+#define	UID(n1, n2, of) \
+	{ .name = n1, .header = n2, .flag = 0, .oproc = pvar, \
+	  .off = POFF(of), .type = UINT32, .fmt = UIDFMT }
 #define	GID(n1, n2, off)	UID(n1, n2, off)
 
 #define	PIDFMT	"d"
-#define	PID(n1, n2, off) \
-	{ n1, n2, 0, pvar, POFF(off), INT32, PIDFMT }
+#define	PID(n1, n2, of) \
+	{ .name = n1, .header = n2, .flag = 0, .oproc = pvar, \
+	  .off = POFF(of), .type = INT32, .fmt = PIDFMT }
 
-#define	LVAR(n1, n2, fl, off, type, fmt) \
-	{ n1, n2, (fl) | LWP, pvar, LOFF(off), type, fmt }
-#define	PVAR(n1, n2, fl, off, type, fmt) \
-	{ n1, n2, (fl) | 0, pvar, POFF(off), type, fmt }
-#define	PUVAR(n1, n2, fl, off, type, fmt) \
-	{ n1, n2, (fl) | UAREA, pvar, POFF(off), type, fmt }
+#define	LVAR(n1, n2, fl, of, ty, fm) \
+	{ .name = n1, .header = n2, .flag = (fl) | LWP, .oproc = pvar, \
+	  .off = LOFF(of), .type = ty, .fmt = fm }
+#define	PVAR(n1, n2, fl, of, ty, fm) \
+	{ .name = n1, .header = n2, .flag = (fl) | 0, .oproc = pvar, \
+	  .off = POFF(of), .type = ty, .fmt = fm }
+#define	PUVAR(n1, n2, fl, of, ty, fm) \
+	{ .name = n1, .header = n2, .flag = (fl) | UAREA, .oproc = pvar, \
+	  .off = POFF(of), .type = ty, .fmt = fm }
+#define VAR3(n1, n2, fl) \
+	{ .name = n1, .header = n2, .flag = fl }
+#define VAR4(n1, n2, fl, op) \
+	{ .name = n1, .header = n2, .flag = fl, .oproc = op, }
+#define VAR6(n1, n2, fl, op, of, ty) \
+	{ .name = n1, .header = n2, .flag = fl, .oproc = op, \
+	  .off = of, .type = ty }
 
 /* NB: table must be sorted, in vi use:
  *	:/^VAR/,/end_sort/! sort -t\" +1
@@ -96,78 +108,78 @@ static int  vcmp(const void *, const void *);
  * standard says the header should be "TT", but we have "TTY".
  */
 VAR var[] = {
-	{"%cpu", "%CPU", 0, pcpu, 0, PCPU},
-	{"%mem", "%MEM", 0, pmem, POFF(p_vm_rssize), INT32},
+	VAR6("%cpu", "%CPU", 0, pcpu, 0, PCPU),
+	VAR6("%mem", "%MEM", 0, pmem, POFF(p_vm_rssize), INT32),
 	PVAR("acflag", "ACFLG", 0, p_acflag, USHORT, "x"),
-	{"acflg", "acflag", ALIAS},
-	{"args", "command", ALIAS},
-	{"blocked", "sigmask", ALIAS},
-	{"caught", "sigcatch", ALIAS},
-	{"comm", "COMMAND", COMM|ARGV0|LJUST, command},
-	{"command", "COMMAND", COMM|LJUST, command},
+	VAR3("acflg", "acflag", ALIAS),
+	VAR3("args", "command", ALIAS),
+	VAR3("blocked", "sigmask", ALIAS),
+	VAR3("caught", "sigcatch", ALIAS),
+	VAR4("comm", "COMMAND", COMM|ARGV0|LJUST, command),
+	VAR4("command", "COMMAND", COMM|LJUST, command),
 	PVAR("cpu", "CPU", 0, p_estcpu, UINT, "u"),
-	{"cputime", "time", ALIAS},
-	{"ctime", "CTIME", 0, putimeval, POFF(p_uctime_sec), TIMEVAL},
+	VAR3("cputime", "time", ALIAS),
+	VAR6("ctime", "CTIME", 0, putimeval, POFF(p_uctime_sec), TIMEVAL),
 	GID("egid", "EGID", p_gid),
-	{"egroup", "EGROUP", LJUST, gname},
-	{"etime", "ELAPSED", 0, elapsed, POFF(p_ustart_sec), TIMEVAL},
+	VAR4("egroup", "EGROUP", LJUST, gname),
+	VAR6("etime", "ELAPSED", 0, elapsed, POFF(p_ustart_sec), TIMEVAL),
 	UID("euid", "EUID", p_uid),
-	{"euser", "EUSER", LJUST, uname},
+	VAR4("euser", "EUSER", LJUST, uname),
 	PVAR("f", "F", 0, p_flag, INT, "x"),
-	{"flags", "f", ALIAS},
+	VAR3("flags", "f", ALIAS),
 	GID("gid", "GID", p_gid),
-	{"group", "GROUP", LJUST, gname},
-	{"groupnames", "GROUPNAMES", LJUST, groupnames},
-	{"groups", "GROUPS", LJUST, groups},
+	VAR4("group", "GROUP", LJUST, gname),
+	VAR4("groupnames", "GROUPNAMES", LJUST, groupnames),
+	VAR4("groups", "GROUPS", LJUST, groups),
 	LVAR("holdcnt", "HOLDCNT", 0, l_holdcnt, INT, "d"),
-	{"ignored", "sigignore", ALIAS},
+	VAR3("ignored", "sigignore", ALIAS),
 	PUVAR("inblk", "INBLK", 0, p_uru_inblock, UINT64, PRIu64),
-	{"inblock", "inblk", ALIAS},
+	VAR3("inblock", "inblk", ALIAS),
 	PVAR("jobc", "JOBC", 0, p_jobc, SHORT, "d"),
 	PVAR("ktrace", "KTRACE", 0, p_traceflag, INT, "x"),
 /*XXX*/	PVAR("ktracep", "KTRACEP", 0, p_tracep, KPTR, PRIx64),
 	LVAR("laddr", "LADDR", 0, l_laddr, KPTR, PRIx64),
 	LVAR("lid", "LID", 0, l_lid, INT32, "d"),
-	{"lim", "LIM", 0, maxrss},
-	{"login", "LOGIN", LJUST, logname},
-	{"logname", "login", ALIAS},
-	{"lstart", "STARTED", LJUST, lstarted, POFF(p_ustart_sec), UINT32},
-	{"lstate", "STAT", LJUST|LWP, lstate},
+	VAR4("lim", "LIM", 0, maxrss),
+	VAR4("login", "LOGIN", LJUST, logname),
+	VAR3("logname", "login", ALIAS),
+	VAR6("lstart", "STARTED", LJUST, lstarted, POFF(p_ustart_sec), UINT32),
+	VAR4("lstate", "STAT", LJUST|LWP, lstate),
 	PUVAR("majflt", "MAJFLT", 0, p_uru_majflt, UINT64, PRIu64),
 	PUVAR("minflt", "MINFLT", 0, p_uru_minflt, UINT64, PRIu64),
 	PUVAR("msgrcv", "MSGRCV", 0, p_uru_msgrcv, UINT64, PRIu64),
 	PUVAR("msgsnd", "MSGSND", 0, p_uru_msgsnd, UINT64, PRIu64),
-	{"ni", "nice", ALIAS},
-	{"nice", "NI", 0, pnice, POFF(p_nice), UCHAR},
+	VAR3("ni", "nice", ALIAS),
+	VAR6("nice", "NI", 0, pnice, POFF(p_nice), UCHAR),
 	PUVAR("nivcsw", "NIVCSW", 0, p_uru_nivcsw, UINT64, PRIu64),
 	PVAR("nlwp", "NLWP", 0, p_nlwps, UINT64, PRId64),
-	{"nsignals", "nsigs", ALIAS},
+	VAR3("nsignals", "nsigs", ALIAS),
 	PUVAR("nsigs", "NSIGS", 0, p_uru_nsignals, UINT64, PRIu64),
 	PUVAR("nswap", "NSWAP", 0, p_uru_nswap, UINT64, PRIu64),
 	PUVAR("nvcsw", "NVCSW", 0, p_uru_nvcsw, UINT64, PRIu64),
 /*XXX*/	LVAR("nwchan", "WCHAN", 0, l_wchan, KPTR, PRIx64),
 	PUVAR("oublk", "OUBLK", 0, p_uru_oublock, UINT64, PRIu64),
-	{"oublock", "oublk", ALIAS},
+	VAR3("oublock", "oublk", ALIAS),
 /*XXX*/	PVAR("p_ru", "P_RU", 0, p_ru, KPTR, PRIx64),
 /*XXX*/	PVAR("paddr", "PADDR", 0, p_paddr, KPTR, PRIx64),
 	PUVAR("pagein", "PAGEIN", 0, p_uru_majflt, UINT64, PRIu64),
-	{"pcpu", "%cpu", ALIAS},
-	{"pending", "sig", ALIAS},
+	VAR3("pcpu", "%cpu", ALIAS),
+	VAR3("pending", "sig", ALIAS),
 	PID("pgid", "PGID", p__pgid),
 	PID("pid", "PID", p_pid),
-	{"pmem", "%mem", ALIAS},
+	VAR3("pmem", "%mem", ALIAS),
 	PID("ppid", "PPID", p_ppid),
-	{"pri", "PRI", LWP, pri},
+	VAR4("pri", "PRI", LWP, pri),
 	LVAR("re", "RE", INF127, l_swtime, UINT, "u"),
 	GID("rgid", "RGID", p_rgid),
-	{"rgroup", "RGROUP", LJUST, rgname},
+	VAR4("rgroup", "RGROUP", LJUST, rgname),
 /*XXX*/	LVAR("rlink", "RLINK", 0, l_back, KPTR, PRIx64),
 	PVAR("rlwp", "RLWP", 0, p_nrlwps, UINT64, PRId64),
-	{"rss", "RSS", 0, p_rssize, POFF(p_vm_rssize), INT32},
-	{"rssize", "rsz", ALIAS},
-	{"rsz", "RSZ", 0, rssize, POFF(p_vm_rssize), INT32},
+	VAR6("rss", "RSS", 0, p_rssize, POFF(p_vm_rssize), INT32),
+	VAR3("rssize", "rsz", ALIAS),
+	VAR6("rsz", "RSZ", 0, rssize, POFF(p_vm_rssize), INT32),
 	UID("ruid", "RUID", p_ruid),
-	{"ruser", "RUSER", LJUST, runame},
+	VAR4("ruser", "RUSER", LJUST, runame),
 	PVAR("sess", "SESS", 0, p_sess, KPTR24, PRIx64),
 	PID("sid", "SID", p_sid),
 	PVAR("sig", "PENDING", 0, p_siglist, SIGLIST, "s"),
@@ -175,35 +187,35 @@ VAR var[] = {
 	PVAR("sigignore", "IGNORED", 0, p_sigignore, SIGLIST, "s"),
 	PVAR("sigmask", "BLOCKED", 0, p_sigmask, SIGLIST, "s"),
 	LVAR("sl", "SL", INF127, l_slptime, UINT, "u"),
-	{"start", "STARTED", 0, started, POFF(p_ustart_sec), UINT32},
-	{"stat", "state", ALIAS},
-	{"state", "STAT", LJUST, state},
-	{"stime", "STIME", 0, putimeval, POFF(p_ustime_sec), TIMEVAL},
+	VAR6("start", "STARTED", 0, started, POFF(p_ustart_sec), UINT32),
+	VAR3("stat", "state", ALIAS),
+	VAR4("state", "STAT", LJUST, state),
+	VAR6("stime", "STIME", 0, putimeval, POFF(p_ustime_sec), TIMEVAL),
 	GID("svgid", "SVGID", p_svgid),
-	{"svgroup", "SVGROUP", LJUST, svgname},
+	VAR4("svgroup", "SVGROUP", LJUST, svgname),
 	UID("svuid", "SVUID", p_svuid),
-	{"svuser", "SVUSER", LJUST, svuname},
+	VAR4("svuser", "SVUSER", LJUST, svuname),
 	/* "tdev" is UINT32, but we do this for sorting purposes */
-	{"tdev", "TDEV", 0, tdev, POFF(p_tdev), INT32},
-	{"time", "TIME", 0, cputime, 0, CPUTIME},
+	VAR6("tdev", "TDEV", 0, tdev, POFF(p_tdev), INT32),
+	VAR6("time", "TIME", 0, cputime, 0, CPUTIME),
 	PID("tpgid", "TPGID", p_tpgid),
 	PVAR("tsess", "TSESS", 0, p_tsess, KPTR, PRIx64),
-	{"tsiz", "TSIZ", 0, tsize, POFF(p_vm_tsize), INT32},
-	{"tt", "TTY", LJUST, tname, POFF(p_tdev), INT32},
-	{"tty", "TTY", LJUST, longtname, POFF(p_tdev), INT32},
+	VAR6("tsiz", "TSIZ", 0, tsize, POFF(p_vm_tsize), INT32),
+	VAR6("tt", "TTY", LJUST, tname, POFF(p_tdev), INT32),
+	VAR6("tty", "TTY", LJUST, longtname, POFF(p_tdev), INT32),
 	LVAR("uaddr", "UADDR", 0, l_addr, KPTR, PRIx64),
-	{"ucomm", "UCOMM", LJUST, ucomm},
+	VAR4("ucomm", "UCOMM", LJUST, ucomm),
 	UID("uid", "UID", p_uid),
 	LVAR("upr", "UPR", 0, l_usrpri, UCHAR, "u"),
-	{"user", "USER", LJUST, uname},
-	{"usrpri", "upr", ALIAS},
-	{"utime", "UTIME", 0, putimeval, POFF(p_uutime_sec), TIMEVAL},
-	{"vsize", "vsz", ALIAS},
-	{"vsz", "VSZ", 0, vsize, 0, VSIZE},
-	{"wchan", "WCHAN", LJUST|LWP, wchan},
+	VAR4("user", "USER", LJUST, uname),
+	VAR3("usrpri", "upr", ALIAS),
+	VAR6("utime", "UTIME", 0, putimeval, POFF(p_uutime_sec), TIMEVAL),
+	VAR3("vsize", "vsz", ALIAS),
+	VAR6("vsz", "VSZ", 0, vsize, 0, VSIZE),
+	VAR4("wchan", "WCHAN", LJUST|LWP, wchan),
 	PVAR("xstat", "XSTAT", 0, p_xstat, USHORT, "x"),
 /* "zzzz" end_sort */
-	{""},
+	{ .name = "" },
 };
 
 void
