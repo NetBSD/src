@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.45 2006/03/20 22:44:25 christos Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.46 2006/10/16 02:42:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.45 2006/03/20 22:44:25 christos Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.46 2006/10/16 02:42:42 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -86,13 +86,13 @@ struct	flagval {
 };
 
 static	struct nlist nl[] = {
-	{ "_ccd_softc" },
+	{ .n_name = "_ccd_softc" },
 #define SYM_CCDSOFTC		0
-	{ "_numccd" },
+	{ .n_name = "_numccd" },
 #define SYM_NUMCCD		1
-	{ "_ccd_softc_elemsize" },
+	{ .n_name = "_ccd_softc_elemsize" },
 #define SYM_CCDSOFTCELEMSIZE	2
-	{ NULL },
+	{ .n_name = NULL },
 };
 
 #define CCD_CONFIG		0	/* configure a device */
