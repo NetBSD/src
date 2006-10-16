@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.16 2006/07/19 21:11:46 ad Exp $ */
+/*	$NetBSD: syscall.c,v 1.17 2006/10/16 20:21:46 martin Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.16 2006/07/19 21:11:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.17 2006/10/16 20:21:46 martin Exp $");
 
 #define NEW_FPSTATE
 
@@ -201,11 +201,15 @@ getargs(struct proc *p, struct trapframe64 *tf, register_t *code,
 #ifdef __arch64__
 		if ((p->p_flag & P_32) != 0) {
 			printf("syscall(): 64-bit stack but P_32 set\n");
+#ifdef DDB
 			Debugger();
+#endif
 		}
 #else
 		printf("syscall(): 64-bit stack on a 32-bit kernel????\n");
+#ifdef DDB
 		Debugger();
+#endif
 #endif
 #endif
 		i = (*callp)->sy_narg;
