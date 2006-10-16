@@ -1,4 +1,4 @@
-.\" $NetBSD: mbsrtowcs.3,v 1.9 2006/10/14 07:51:01 wiz Exp $
+.\" $NetBSD: mbsrtowcs.3,v 1.10 2006/10/16 08:42:16 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -72,21 +72,16 @@ is continuously called.
 After conversion,
 if
 .Fa pwcs
-is not a
-.Dv NULL
-pointer,
+is not a null pointer,
 the pointer object pointed to by
 .Fa s
-is a
-.Dv NULL
-pointer (if the conversion is stopped due to reaching a nul byte)
-or the first byte of the character just after the last character converted.
+is a null pointer (if the conversion is stopped due to reaching a
+nul byte) or the first byte of the character just after the last
+character converted.
 .Pp
 If
 .Fa pwcs
-is not a
-.Dv NULL
-pointer and the conversion is stopped due to reaching
+is not a null pointer and the conversion is stopped due to reaching
 a nul byte, the
 .Fn mbsrtowcs
 places the state object pointed to by
@@ -138,7 +133,7 @@ except for a terminating nul wide character (if any).
 If
 .Fa pwcs
 is not
-NULL
+.Dv NULL
 and the value returned is equal to
 .Fa n ,
 the wide character string pointed to by
@@ -146,9 +141,7 @@ the wide character string pointed to by
 is not nul terminated.
 If
 .Fa pwcs
-is a
-.Dv NULL
-pointer, the value returned is the number of elements to contain
+is a null pointer, the value returned is the number of elements to contain
 the whole string converted, except for a terminating nul wide character.
 .It (size_t)-1
 The array indirectly pointed to by

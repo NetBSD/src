@@ -1,4 +1,4 @@
-.\" $NetBSD: mbsinit.3,v 1.5 2004/01/24 16:58:54 wiz Exp $
+.\" $NetBSD: mbsinit.3,v 1.6 2006/10/16 08:42:16 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -47,9 +47,7 @@ determines whether the state object pointed to by
 is the initial conversion state, or not.
 .Pp
 .Fa ps
-may be a
-.Dv NULL
-pointer.
+may be a null pointer.
 In this case,
 .Fn mbsinit
 will always return non-zero.
@@ -63,9 +61,7 @@ The current state is not the initial state.
 .It non-zero
 The current state is the initial state or
 .Fa ps
-is a
-.Dv NULL
-pointer.
+is a null pointer.
 .El
 .\" ----------------------------------------------------------------------
 .Sh ERRORS
