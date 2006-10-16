@@ -1,0 +1,26 @@
+#	$NetBSD: files.gumstix,v 1.1 2006/10/16 16:40:14 kiyohara Exp $
+#
+# Genetec corp. G4255EB evaluation board configuration info
+#
+
+file	arch/evbarm/gumstix/gumstix_machdep.c
+
+# CPU support and integrated peripherals
+include "arch/arm/xscale/files.pxa2x0"
+
+# gumstix devices
+device	gxio {[addr = -1], [gpirq = -1]}
+attach	gxio at pxaip
+file	arch/evbarm/gumstix/gxio.c			gxio
+
+# SMSC LAN91C111
+attach	sm at gxio with sm_gxio
+file	arch/evbarm/gumstix/if_sm_gxio.c		sm_gxio
+
+# PCMCIA
+include	"dev/pcmcia/files.pcmcia"
+
+device	gxpcic: pcmciabus
+attach	gxpcic at gxio
+file	arch/arm/sa11x0/sa11xx_pcic.c			gxpcic
+file	arch/evbarm/gumstix/gxpcic.c			gxpcic
