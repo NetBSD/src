@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_kernfs.c,v 1.18 2006/03/21 21:11:41 christos Exp $	*/
+/*	$NetBSD: mount_kernfs.c,v 1.19 2006/10/16 03:37:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_kernfs.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_kernfs.c,v 1.18 2006/03/21 21:11:41 christos Exp $");
+__RCSID("$NetBSD: mount_kernfs.c,v 1.19 2006/10/16 03:37:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ __RCSID("$NetBSD: mount_kernfs.c,v 1.18 2006/03/21 21:11:41 christos Exp $");
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_GETARGS,
-	{ NULL }
+	MOPT_NULL,
 };
 
 int	mount_kernfs(int argc, char **argv);
