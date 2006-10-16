@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.68 2006/07/09 06:45:09 kardel Exp $	*/
+/*	$NetBSD: savecore.c,v 1.69 2006/10/16 02:56:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.68 2006/07/09 06:45:09 kardel Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.69 2006/10/16 02:56:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,46 +72,46 @@ extern FILE *zopen(const char *fname, const char *mode);
 
 struct nlist current_nl[] = {	/* Namelist for currently running system. */
 #define	X_DUMPDEV	0
-	{ "_dumpdev" },
+	{ .n_name = "_dumpdev" },
 #define	X_DUMPLO	1
-	{ "_dumplo" },
+	{ .n_name = "_dumplo" },
 #define	X_TIME_SECOND	2
-	{ "_time_second" },
+	{ .n_name = "_time_second" },
 #define X_TIME		3
-	{ "_time" },
+	{ .n_name = "_time" },
 #define	X_DUMPSIZE	4
-	{ "_dumpsize" },
+	{ .n_name = "_dumpsize" },
 #define	X_VERSION	5
-	{ "_version" },
+	{ .n_name = "_version" },
 #define	X_DUMPMAG	6
-	{ "_dumpmag" },
+	{ .n_name = "_dumpmag" },
 #define	X_PANICSTR	7
-	{ "_panicstr" },
+	{ .n_name = "_panicstr" },
 #define	X_PANICSTART	8
-	{ "_panicstart" },
+	{ .n_name = "_panicstart" },
 #define	X_PANICEND	9
-	{ "_panicend" },
+	{ .n_name = "_panicend" },
 #define	X_MSGBUF	10
-	{ "_msgbufp" },
-	{ NULL },
+	{ .n_name = "_msgbufp" },
+	{ .n_name = NULL },
 };
 int cursyms[] = { X_DUMPDEV, X_DUMPLO, X_VERSION, X_DUMPMAG, -1 };
 int dumpsyms[] = { X_TIME_SECOND, X_TIME, X_DUMPSIZE, X_VERSION, X_PANICSTR, X_DUMPMAG,
     -1 };
 
 struct nlist dump_nl[] = {	/* Name list for dumped system. */
-	{ "_dumpdev" },		/* Entries MUST be the same as */
-	{ "_dumplo" },		/*	those in current_nl[].  */
-	{ "_time_second" },
-	{ "_time" },
-	{ "_dumpsize" },
-	{ "_version" },
-	{ "_dumpmag" },
-	{ "_panicstr" },
-	{ "_panicstart" },
-	{ "_panicend" },
-	{ "_msgbufp" },
-	{ NULL },
+	{ .n_name = "_dumpdev" },	/* Entries MUST be the same as */
+	{ .n_name = "_dumplo" },	/*	those in current_nl[].  */
+	{ .n_name = "_time_second" },
+	{ .n_name = "_time" },
+	{ .n_name = "_dumpsize" },
+	{ .n_name = "_version" },
+	{ .n_name = "_dumpmag" },
+	{ .n_name = "_panicstr" },
+	{ .n_name = "_panicstart" },
+	{ .n_name = "_panicend" },
+	{ .n_name = "_msgbufp" },
+	{ .n_name = NULL },
 };
 
 /* Types match kernel declarations. */
