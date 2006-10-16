@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.55 2005/09/25 04:16:22 elad Exp $	*/
+/*	$NetBSD: tape.c,v 1.56 2006/10/16 03:12:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.55 2005/09/25 04:16:22 elad Exp $");
+__RCSID("$NetBSD: tape.c,v 1.56 2006/10/16 03:12:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ const struct digest_desc digest_descs[] = {
 	  (void (*)(void *))RMD160Init,
 	  (void (*)(void *, const u_char *, u_int))RMD160Update,
 	  (char *(*)(void *, void *))RMD160End, },
-	{ NULL },
+	{ .dd_name = NULL },
 };
 
 static union digest_context {
