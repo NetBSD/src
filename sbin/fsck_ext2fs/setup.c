@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.19 2005/06/26 23:01:39 christos Exp $	*/
+/*	$NetBSD: setup.c,v 1.20 2006/10/16 03:01:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.19 2005/06/26 23:01:39 christos Exp $");
+__RCSID("$NetBSD: setup.c,v 1.20 2006/10/16 03:01:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,7 +193,7 @@ setup(const char *dev)
 	/*
 	 * Check and potentially fix certain fields in the super block.
 	 */
-	if ((sblock.e2fs.e2fs_rbcount < 0) ||
+	if (/* (sblock.e2fs.e2fs_rbcount < 0) || */
 			(sblock.e2fs.e2fs_rbcount > sblock.e2fs.e2fs_bcount)) {
 		pfatal("IMPOSSIBLE RESERVED BLOCK COUNT=%d IN SUPERBLOCK",
 			sblock.e2fs.e2fs_rbcount);
