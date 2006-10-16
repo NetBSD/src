@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.21 2006/09/01 19:52:48 perseant Exp $	 */
+/* $NetBSD: pass5.c,v 1.22 2006/10/16 03:21:34 christos Exp $	 */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -183,11 +183,11 @@ pass5(void)
 	if (fs->lfs_bfree > fs->lfs_dsize - bb - labelskew ||
 	    fs->lfs_bfree < fs->lfs_dsize - ubb - labelskew) {
 		pwarn("BFREE GIVEN AS %d, SHOULD BE BETWEEN %ld AND %ld\n",
-		    fs->lfs_bfree, MAX(0, fs->lfs_dsize - ubb - labelskew),
+		    fs->lfs_bfree, (fs->lfs_dsize - ubb - labelskew),
 		    fs->lfs_dsize - bb - labelskew);
 		if (preen || reply("FIX")) {
 			fs->lfs_bfree =
-				(MAX(0, fs->lfs_dsize - labelskew - ubb) +
+				((fs->lfs_dsize - labelskew - ubb) +
 				 fs->lfs_dsize - labelskew - bb) / 2;
 			sbdirty();
 		}
