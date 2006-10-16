@@ -1,4 +1,4 @@
-#	$NetBSD: LAST_MINUTE,v 1.2.4.2 2005/12/18 14:00:30 tron Exp $
+#	$NetBSD: LAST_MINUTE,v 1.2.4.3 2006/10/16 20:28:41 ghen Exp $
 
 This file contains important information on the NetBSD 3.0 release that
 did not make it into the main documentation.
@@ -21,6 +21,9 @@ did not make it into the main documentation.
 
 	options KERNBASE_LOCORE="0x80000000"
 	makeoptions TEXTADDR="0x80100000"
+
+	Be sure you "make clean" in your kernel build directory after
+	adding these lines!
 
 	This will increase the kernel virtual space to 2 GB, but this
 	has the drawback that the application virtual space is
