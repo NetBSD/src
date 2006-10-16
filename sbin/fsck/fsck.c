@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.43 2006/08/26 18:14:28 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.44 2006/10/16 02:44:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.43 2006/08/26 18:14:28 christos Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.44 2006/10/16 02:44:46 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -85,7 +85,7 @@ static const char *getoptions(const char *);
 static void addentry(struct fstypelist *, const char *, const char *);
 static void maketypelist(char *);
 static void catopt(char **, const char *);
-static void mangle(char *, int *, const char ***, int *);
+static void mangle(char *, int *, const char ** volatile *, int *);
 static const char *getfslab(const char *);
 static void usage(void);
 static void *isok(struct fstab *);
@@ -248,7 +248,7 @@ checkfs(const char *vfstype, const char *spec, const char *mntpt, void *auxarg,
 		_PATH_USRSBIN,
 		NULL
 	};
-	const char **argv, **edir;
+	const char ** volatile argv, **edir;
 	pid_t pid;
 	int argc, i, status, maxargc;
 	char *optbuf, execname[MAXPATHLEN + 1], execbase[MAXPATHLEN];
@@ -472,7 +472,7 @@ catopt(char **sp, const char *o)
 
 
 static void
-mangle(char *opts, int *argcp, const char ***argvp, int *maxargcp)
+mangle(char *opts, int *argcp, const char ** volatile *argvp, int *maxargcp)
 {
 	char *p, *s;
 	int argc, maxargc;
@@ -508,7 +508,7 @@ mangle(char *opts, int *argcp, const char ***argvp, int *maxargcp)
 	*maxargcp = maxargc;
 }
 
-const static char *
+static const char *
 getfslab(const char *str)
 {
 	static struct dkwedge_info dkw;
