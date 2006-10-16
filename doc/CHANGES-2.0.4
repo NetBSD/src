@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.50 2006/10/15 15:56:06 bouyer Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.51 2006/10/16 17:58:45 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -404,4 +404,10 @@ usr.sbin/user/user.c				1.112
 	of any secondary groups, buf is completely uninitialized and userinfo
 	adds garbage to the list of groups printed.
 	[pavel, ticket #10718]
+
+sys/kern/sys_process.c				1.111 via patch
+
+	Don't allow ptrace to copyout arbitrary sized data. Reported by the
+	Suresec vulnerability research team.
+	[christos, ticket #10720]
 
