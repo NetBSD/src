@@ -27,7 +27,7 @@
  *	i4b_l3fsm.c - layer 3 FSM
  *	-------------------------
  *
- *	$Id: i4b_l3fsm.c,v 1.12 2005/12/11 12:25:06 christos Exp $
+ *	$Id: i4b_l3fsm.c,v 1.13 2006/10/16 12:23:00 pooka Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l3fsm.c,v 1.12 2005/12/11 12:25:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l3fsm.c,v 1.13 2006/10/16 12:23:00 pooka Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -806,7 +806,7 @@ static void F_19W(call_desc_t *cd)
 /*---------------------------------------------------------------------------*
  *	L3 FSM routine no change no action
  *---------------------------------------------------------------------------*/
-static void F_NCNA(call_desc_t *cd)
+static void F_NCNA(call_desc_t *cd __unused)
 {
 }
 
@@ -930,13 +930,14 @@ static void F_SIGN(call_desc_t *cd)
 {
 	NDBGL3(L3_F_ERR, "FSM function F_SIGN executing");
 
+	(void)cd;
 /* XXX */ /* freecd_by_cd(cd); ?????????? XXX */
 }
 
 /*---------------------------------------------------------------------------*
  *	L3 FSM relevant states event DL ESTABLISH IND from L2
  *---------------------------------------------------------------------------*/
-static void F_DLEI(call_desc_t *cd)
+static void F_DLEI(call_desc_t *cd __unused)
 {
 	NDBGL3(L3_F_MSG, "FSM function F_DLEI executing");
 
@@ -948,7 +949,7 @@ static void F_DLEI(call_desc_t *cd)
 /*---------------------------------------------------------------------------*
  *	L3 FSM any state event illegal event occurred
  *---------------------------------------------------------------------------*/
-static void F_ILL(call_desc_t *cd)
+static void F_ILL(call_desc_t *cd __unused)
 {
 	NDBGL3(L3_F_MSG, "FSM function F_ILL executing");
 }
@@ -972,7 +973,7 @@ static void F_309TO(call_desc_t *cd)
 /*---------------------------------------------------------------------------*
  *	L3 FSM any state event FACILITY message received
  *---------------------------------------------------------------------------*/
-static void F_FCTY(call_desc_t *cd)
+static void F_FCTY(call_desc_t *cd __unused)
 {
 	NDBGL3(L3_F_MSG, "FSM function F_FCTY executing");
 	/* ST_SUSE, no change in state ! */

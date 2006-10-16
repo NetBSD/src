@@ -27,7 +27,7 @@
  *	i4b_util.c - layer 2 utility routines
  *	-------------------------------------
  *
- *	$Id: i4b_util.c,v 1.9 2005/12/11 12:25:06 christos Exp $
+ *	$Id: i4b_util.c,v 1.10 2006/10/16 12:23:00 pooka Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_util.c,v 1.9 2005/12/11 12:25:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_util.c,v 1.10 2006/10/16 12:23:00 pooka Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -263,7 +263,7 @@ i4b_print_l2var(l2_softc_t *l2sc)
  *	got s or i frame, check if valid ack for last sent frame
  *---------------------------------------------------------------------------*/
 void
-i4b_rxd_ack(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int nr)
+i4b_rxd_ack(l2_softc_t *l2sc, struct isdn_l3_driver *drv __unused, int nr)
 {
 
 #ifdef NOTDEF
