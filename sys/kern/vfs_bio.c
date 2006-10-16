@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.164 2006/10/12 01:32:19 christos Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.165 2006/10/16 16:50:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.164 2006/10/12 01:32:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.165 2006/10/16 16:50:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -403,7 +403,10 @@ bufinit(void)
 		struct pool *pp = &bmempools[i];
 		u_int size = 1 << (i + MEMPOOL_INDEX_OFFSET);
 		char *name = malloc(8, M_TEMP, M_WAITOK);
-		snprintf(name, 8, "buf%dk", 1 << i);
+		if (__predict_true(size >= 1024))
+			(void)snprintf(name, 8, "buf%dk", size / 1024);
+		else
+			(void)snprintf(name, 8, "buf%db", size);
 		pa = (size <= PAGE_SIZE && use_std)
 			? &pool_allocator_nointr
 			: &bufmempool_allocator;
