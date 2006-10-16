@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.17 2006/10/16 20:21:46 martin Exp $ */
+/*	$NetBSD: syscall.c,v 1.18 2006/10/16 20:23:24 martin Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.17 2006/10/16 20:21:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18 2006/10/16 20:23:24 martin Exp $");
 
 #define NEW_FPSTATE
 
@@ -189,7 +189,7 @@ getargs(struct proc *p, struct trapframe64 *tf, register_t *code,
 		break;
 	}
 
-	if (*code < 0 || *code >= p->p_emul->e_nsysent)
+	if (*code >= p->p_emul->e_nsysent)
 		return ENOSYS;
 
 	*callp += *code;
