@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.4 2006/10/16 13:52:47 skrll Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.5 2006/10/16 13:53:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -209,10 +209,10 @@ ENTRY(_rtld_bind_start,HPPA_FRAME_SIZE)
 	copy	%r21, %r19
 
 	/*
-	 * Our hppa version of _rtld_bind
-	 * returns to us the address of the PLT entry that
-	 * it fixed up.  Load the function address and
-	 * shared linkage for the newly bound function.
+	 * Our hppa version of _rtld_bind returns to us the
+	 * address of the PLT entry that it fixed up.  Load
+	 * the function address and shared linkage for the
+	 * newly bound function.
 	 */
 	ldw	0(%ret0), %r21
 	ldw	4(%ret0), %r19
