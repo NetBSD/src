@@ -1,4 +1,4 @@
-# $NetBSD: files.sun,v 1.11 2006/05/28 08:57:53 martin Exp $
+# $NetBSD: files.sun,v 1.12 2006/10/16 22:27:16 macallan Exp $
 #
 # Configuration file for devices found on Sun machines.
 #
@@ -77,5 +77,5 @@ file	dev/sun/bwtwo.c			bwtwo needs-flag
 device cgthree: bt_dac, fb, rasops8
 file	dev/sun/cgthree.c		cgthree needs-flag
 
-device cgsix: bt_dac, fb, rasops8, pfour, wsemuldisplaydev
+device cgsix: bt_dac, fb, rasops8, pfour, wsemuldisplaydev, vcons
 file	dev/sun/cgsix.c			cgsix needs-flag

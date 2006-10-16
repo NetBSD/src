@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.32 2006/10/15 19:32:37 martin Exp $ */
+/*	$NetBSD: cgsix.c,v 1.33 2006/10/16 22:27:16 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.32 2006/10/15 19:32:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.33 2006/10/16 22:27:16 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.32 2006/10/15 19:32:37 martin Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
+#include <dev/wscons/wsdisplay_vconsvar.h>
 
 #include "opt_wsemul.h"
 #include "rasops_glue.h"
@@ -124,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.32 2006/10/15 19:32:37 martin Exp $");
 #include <dev/sun/cgsixvar.h>
 
 static void	cg6_unblank(struct device *);
+static void	cg6_blank(struct cgsix_softc *, int);
 
 extern struct cfdriver cgsix_cd;
 
@@ -150,6 +152,10 @@ static void cg6_setcursor (struct cgsix_softc *);/* set position */
 static void cg6_loadcursor (struct cgsix_softc *);/* set shape */
 
 #if NWSDISPLAY > 0
+#ifdef RASTERCONSOLE
+#error RASTERCONSOLE and wsdisplay are mutually exclusive
+#endif
+
 static void cg6_setup_palette(struct cgsix_softc *);
 
 struct wsscreen_descr cgsix_defaultscreen = {
@@ -163,17 +169,10 @@ struct wsscreen_descr cgsix_defaultscreen = {
 
 static int 	cgsix_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
 static paddr_t	cgsix_mmap(void *, void *, off_t, int);
-void		cgsix_init_screen(struct cgsix_softc *, struct cg6_screen *, 
-			int, long *);
+static void	cgsix_init_screen(void *, struct vcons_screen *, int, long *);
 
-static int 	cgsix_alloc_screen(void *, const struct wsscreen_descr *,
-				void **, int *, int *, long *);
-static void 	cgsix_free_screen(void *, void *);
-static int 	cgsix_show_screen(void *, void *, int,
-				void (*) (void *, int, int), void *);
-void	cgsix_switch_screen(struct cgsix_softc *);
-void	cgsix_restore_screen(struct cg6_screen *, const struct wsscreen_descr *, 		u_int16_t *);
-void	cgsix_clearscreen(struct cgsix_softc *);
+static void	cgsix_clearscreen(struct cgsix_softc *);
+
 void 	cgsix_setup_mono(struct cgsix_softc *, int, int, int, int, uint32_t, 
 		uint32_t);
 void 	cgsix_feed_line(struct cgsix_softc *, int, uint8_t *);
@@ -184,13 +183,12 @@ int	cgsix_getcmap(struct cgsix_softc *, struct wsdisplay_cmap *);
 void	cgsix_putchar(void *, int, int, u_int, long);
 void	cgsix_cursor(void *, int, int, int);
 
-
 struct wsdisplay_accessops cgsix_accessops = {
 	cgsix_ioctl,
 	cgsix_mmap,
-	cgsix_alloc_screen,
-	cgsix_free_screen,
-	cgsix_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL, 	/* load_font */
 	NULL,	/* pollc */
 	NULL	/* scroll */
@@ -214,7 +212,7 @@ extern const u_char rasops_cmap[768];
 void	cg6_invert(struct cgsix_softc *, int, int, int, int);
 
 /* need this for both cases because ri_hw points to it */
-static struct cg6_screen cg6_console_screen;
+static struct vcons_screen cg6_console_screen;
 #endif
 
 #ifdef RASTERCONSOLE
@@ -343,249 +341,185 @@ cg6_ras_init(struct cgsix_softc *sc)
 static void
 cg6_ras_copyrows(void *cookie, int src, int dst, int n)
 {
-	struct rasops_info *ri=cookie;
-	struct cg6_screen *scr=ri->ri_hw;
-	struct cgsix_softc *sc=scr->sc;
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct cgsix_softc *sc = scr->scr_cookie;
+	volatile struct cg6_fbc *fbc = sc->sc_fbc;
 
-#if NWSDISPLAY > 0	
-	int from, to, len;
-	
-	from = ri->ri_cols * src;
-	to = ri->ri_cols * dst;
-	len = ri->ri_cols * n;
-
-	memmove(&scr->attrs[to], &scr->attrs[from], len * sizeof(long));
-	memmove(&scr->chars[to], &scr->chars[from], len * sizeof(uint16_t));
-	
-	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-#endif
-		volatile struct cg6_fbc *fbc = sc->sc_fbc;
-
-		if (dst == src)
-			return;
-		if (src < 0) {
-			n += src;
-			src = 0;
-		}
-		if (src+n > ri->ri_rows)
-			n = ri->ri_rows - src;
-		if (dst < 0) {
-			n += dst;
-			dst = 0;
-		}
-		if (dst+n > ri->ri_rows)
-			n = ri->ri_rows - dst;
-		if (n <= 0)
-			return;
-		n *= ri->ri_font->fontheight;
-		src *= ri->ri_font->fontheight;
-		dst *= ri->ri_font->fontheight;
-		fbc->fbc_clip = 0;
-		fbc->fbc_s = 0;
-		fbc->fbc_offx = 0;
-		fbc->fbc_offy = 0;
-		fbc->fbc_clipminx = 0;
-		fbc->fbc_clipminy = 0;
-		fbc->fbc_clipmaxx = ri->ri_width - 1;
-		fbc->fbc_clipmaxy = ri->ri_height - 1;
-		fbc->fbc_alu = CG6_ALU_COPY;
-		fbc->fbc_x0 = ri->ri_xorigin;
-		fbc->fbc_y0 = ri->ri_yorigin + src;
-		fbc->fbc_x1 = ri->ri_xorigin + ri->ri_emuwidth - 1;
-		fbc->fbc_y1 = ri->ri_yorigin + src + n - 1;
-		fbc->fbc_x2 = ri->ri_xorigin;
-		fbc->fbc_y2 = ri->ri_yorigin + dst;
-		fbc->fbc_x3 = ri->ri_xorigin + ri->ri_emuwidth - 1;
-		fbc->fbc_y3 = ri->ri_yorigin + dst + n - 1;
-		CG6_BLIT_WAIT(fbc);
-		CG6_DRAIN(fbc);
-#if NWSDISPLAY > 0
+	if (dst == src)
+		return;
+	if (src < 0) {
+		n += src;
+		src = 0;
 	}
-#endif
+	if (src+n > ri->ri_rows)
+		n = ri->ri_rows - src;
+	if (dst < 0) {
+		n += dst;
+		dst = 0;
+	}
+	if (dst+n > ri->ri_rows)
+		n = ri->ri_rows - dst;
+	if (n <= 0)
+		return;
+	n *= ri->ri_font->fontheight;
+	src *= ri->ri_font->fontheight;
+	dst *= ri->ri_font->fontheight;
+	fbc->fbc_clip = 0;
+	fbc->fbc_s = 0;
+	fbc->fbc_offx = 0;
+	fbc->fbc_offy = 0;
+	fbc->fbc_clipminx = 0;
+	fbc->fbc_clipminy = 0;
+	fbc->fbc_clipmaxx = ri->ri_width - 1;
+	fbc->fbc_clipmaxy = ri->ri_height - 1;
+	fbc->fbc_alu = CG6_ALU_COPY;
+	fbc->fbc_x0 = ri->ri_xorigin;
+	fbc->fbc_y0 = ri->ri_yorigin + src;
+	fbc->fbc_x1 = ri->ri_xorigin + ri->ri_emuwidth - 1;
+	fbc->fbc_y1 = ri->ri_yorigin + src + n - 1;
+	fbc->fbc_x2 = ri->ri_xorigin;
+	fbc->fbc_y2 = ri->ri_yorigin + dst;
+	fbc->fbc_x3 = ri->ri_xorigin + ri->ri_emuwidth - 1;
+	fbc->fbc_y3 = ri->ri_yorigin + dst + n - 1;
+	CG6_BLIT_WAIT(fbc);
+	CG6_DRAIN(fbc);
 }
 
 static void
 cg6_ras_copycols(void *cookie, int row, int src, int dst, int n)
 {
-	struct rasops_info *ri=cookie;
-	struct cg6_screen *scr=ri->ri_hw;
-	struct cgsix_softc *sc=scr->sc;
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct cgsix_softc *sc = scr->scr_cookie;
+	volatile struct cg6_fbc *fbc = sc->sc_fbc;
 
-#if NWSDISPLAY > 0
-	int from, to;
-	
-	from = src + row * ri->ri_cols;
-	to = dst + row * ri->ri_cols;
-	
-	memmove(&scr->attrs[to], &scr->attrs[from], n * sizeof(long));
-	memmove(&scr->chars[to], &scr->chars[from], n * sizeof(uint16_t));
-
-	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {	
-#endif
-		volatile struct cg6_fbc *fbc = sc->sc_fbc;
-
-		if (dst == src)
-			return;
-		if ((row < 0) || (row >= ri->ri_rows))
-			return;
-		if (src < 0) {
-			n += src;
-			src = 0;
-		}
-		if (src+n > ri->ri_cols)
-			n = ri->ri_cols - src;
-		if (dst < 0) {
-			n += dst;
-			dst = 0;
-		}
-		if (dst+n > ri->ri_cols)
-			n = ri->ri_cols - dst;
-		if (n <= 0)
-			return;
-		n *= ri->ri_font->fontwidth;
-		src *= ri->ri_font->fontwidth;
-		dst *= ri->ri_font->fontwidth;
-		row *= ri->ri_font->fontheight;
-		fbc->fbc_clip = 0;
-		fbc->fbc_s = 0;
-		fbc->fbc_offx = 0;
-		fbc->fbc_offy = 0;
-		fbc->fbc_clipminx = 0;
-		fbc->fbc_clipminy = 0;
-		fbc->fbc_clipmaxx = ri->ri_width - 1;
-		fbc->fbc_clipmaxy = ri->ri_height - 1;
-		fbc->fbc_alu = CG6_ALU_COPY;
-		fbc->fbc_x0 = ri->ri_xorigin + src;
-		fbc->fbc_y0 = ri->ri_yorigin + row;
-		fbc->fbc_x1 = ri->ri_xorigin + src + n - 1;
-		fbc->fbc_y1 = ri->ri_yorigin + row + 
-		    ri->ri_font->fontheight - 1;
-		fbc->fbc_x2 = ri->ri_xorigin + dst;
-		fbc->fbc_y2 = ri->ri_yorigin + row;
-		fbc->fbc_x3 = ri->ri_xorigin + dst + n - 1;
-		fbc->fbc_y3 = ri->ri_yorigin + row + 
-		    ri->ri_font->fontheight - 1;
-		CG6_BLIT_WAIT(fbc);
-		CG6_DRAIN(fbc);
-#if NWSDISPLAY > 0
+	if (dst == src)
+		return;
+	if ((row < 0) || (row >= ri->ri_rows))
+		return;
+	if (src < 0) {
+		n += src;
+		src = 0;
 	}
-#endif
+	if (src+n > ri->ri_cols)
+		n = ri->ri_cols - src;
+	if (dst < 0) {
+		n += dst;
+		dst = 0;
+	}
+	if (dst+n > ri->ri_cols)
+		n = ri->ri_cols - dst;
+	if (n <= 0)
+		return;
+	n *= ri->ri_font->fontwidth;
+	src *= ri->ri_font->fontwidth;
+	dst *= ri->ri_font->fontwidth;
+	row *= ri->ri_font->fontheight;
+	fbc->fbc_clip = 0;
+	fbc->fbc_s = 0;
+	fbc->fbc_offx = 0;
+	fbc->fbc_offy = 0;
+	fbc->fbc_clipminx = 0;
+	fbc->fbc_clipminy = 0;
+	fbc->fbc_clipmaxx = ri->ri_width - 1;
+	fbc->fbc_clipmaxy = ri->ri_height - 1;
+	fbc->fbc_alu = CG6_ALU_COPY;
+	fbc->fbc_x0 = ri->ri_xorigin + src;
+	fbc->fbc_y0 = ri->ri_yorigin + row;
+	fbc->fbc_x1 = ri->ri_xorigin + src + n - 1;
+	fbc->fbc_y1 = ri->ri_yorigin + row + 
+	    ri->ri_font->fontheight - 1;
+	fbc->fbc_x2 = ri->ri_xorigin + dst;
+	fbc->fbc_y2 = ri->ri_yorigin + row;
+	fbc->fbc_x3 = ri->ri_xorigin + dst + n - 1;
+	fbc->fbc_y3 = ri->ri_yorigin + row + 
+	    ri->ri_font->fontheight - 1;
+	CG6_BLIT_WAIT(fbc);
+	CG6_DRAIN(fbc);
 }
 
 static void
 cg6_ras_erasecols(void *cookie, int row, int col, int n, long int attr)
 {
-	struct rasops_info *ri=cookie;
-	struct cg6_screen *scr=ri->ri_hw;
-	struct cgsix_softc *sc=scr->sc;
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct cgsix_softc *sc = scr->scr_cookie;
+	volatile struct cg6_fbc *fbc = sc->sc_fbc;
 
-#if NWSDISPLAY > 0
-	int start, end, i;
-	
-	start = col + row * ri->ri_cols;
-	end = start + n;
-
-	for (i = start; i < end; i++) {
-		scr->attrs[i] = attr;
-		scr->chars[i] = 0x20;
+	if ((row < 0) || (row >= ri->ri_rows))
+		return;
+	if (col < 0) {
+		n += col;
+		col = 0;
 	}
-	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-#endif
-		volatile struct cg6_fbc *fbc = sc->sc_fbc;
-
-		if ((row < 0) || (row >= ri->ri_rows))
-			return;
-		if (col < 0) {
-			n += col;
-			col = 0;
-		}
-		if (col+n > ri->ri_cols)
-			n = ri->ri_cols - col;
-		if (n <= 0)
-			return;
-		n *= ri->ri_font->fontwidth;
-		col *= ri->ri_font->fontwidth;
-		row *= ri->ri_font->fontheight;
-		fbc->fbc_clip = 0;
-		fbc->fbc_s = 0;
-		fbc->fbc_offx = 0;
-		fbc->fbc_offy = 0;
-		fbc->fbc_clipminx = 0;
-		fbc->fbc_clipminy = 0;
-		fbc->fbc_clipmaxx = ri->ri_width - 1;
-		fbc->fbc_clipmaxy = ri->ri_height - 1;
-		fbc->fbc_alu = CG6_ALU_FILL;
-		fbc->fbc_fg = ri->ri_devcmap[(attr >> 16) & 0xff];
-		fbc->fbc_arecty = ri->ri_yorigin + row;
-		fbc->fbc_arectx = ri->ri_xorigin + col;
-		fbc->fbc_arecty = ri->ri_yorigin + row + 
-		    ri->ri_font->fontheight - 1;
-		fbc->fbc_arectx = ri->ri_xorigin + col + n - 1;
-		CG6_DRAW_WAIT(fbc);
-		CG6_DRAIN(fbc);
-#if NWSDISPLAY > 0
-	}
-#endif
+	if (col+n > ri->ri_cols)
+		n = ri->ri_cols - col;
+	if (n <= 0)
+		return;
+	n *= ri->ri_font->fontwidth;
+	col *= ri->ri_font->fontwidth;
+	row *= ri->ri_font->fontheight;
+	fbc->fbc_clip = 0;
+	fbc->fbc_s = 0;
+	fbc->fbc_offx = 0;
+	fbc->fbc_offy = 0;
+	fbc->fbc_clipminx = 0;
+	fbc->fbc_clipminy = 0;
+	fbc->fbc_clipmaxx = ri->ri_width - 1;
+	fbc->fbc_clipmaxy = ri->ri_height - 1;
+	fbc->fbc_alu = CG6_ALU_FILL;
+	fbc->fbc_fg = ri->ri_devcmap[(attr >> 16) & 0xff];
+	fbc->fbc_arecty = ri->ri_yorigin + row;
+	fbc->fbc_arectx = ri->ri_xorigin + col;
+	fbc->fbc_arecty = ri->ri_yorigin + row + 
+	    ri->ri_font->fontheight - 1;
+	fbc->fbc_arectx = ri->ri_xorigin + col + n - 1;
+	CG6_DRAW_WAIT(fbc);
+	CG6_DRAIN(fbc);
 }
 
 static void
 cg6_ras_eraserows(void *cookie, int row, int n, long int attr)
 {
-	struct rasops_info *ri=cookie;
-	struct cg6_screen *scr=ri->ri_hw;
-	struct cgsix_softc *sc=scr->sc;
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct cgsix_softc *sc = scr->scr_cookie;
+	volatile struct cg6_fbc *fbc = sc->sc_fbc;
 
-#if NWSDISPLAY > 0
-	int start, end, i;
-	
-	start = ri->ri_cols*row;
-	end = ri->ri_cols * (row + n);
-
-	for (i = start; i < end; i++) {
-		scr->attrs[i] = attr;
-		scr->chars[i] = 0x20;
+	if (row < 0) {
+		n += row;
+		row = 0;
 	}
-
-	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-#endif
-		volatile struct cg6_fbc *fbc = sc->sc_fbc;
-
-		if (row < 0) {
-			n += row;
-			row = 0;
-		}
-		if (row+n > ri->ri_rows)
-			n = ri->ri_rows - row;
-		if (n <= 0)
-			return;
-		fbc->fbc_clip = 0;
-		fbc->fbc_s = 0;
-		fbc->fbc_offx = 0;
-		fbc->fbc_offy = 0;
-		fbc->fbc_clipminx = 0;
-		fbc->fbc_clipminy = 0;
-		fbc->fbc_clipmaxx = ri->ri_width - 1;
-		fbc->fbc_clipmaxy = ri->ri_height - 1;
-		fbc->fbc_alu = CG6_ALU_FILL;
-		fbc->fbc_fg = ri->ri_devcmap[(attr >> 16) & 0xff];
-		if ((n == ri->ri_rows) && (ri->ri_flg & RI_FULLCLEAR)) {
-			fbc->fbc_arecty = 0;
-			fbc->fbc_arectx = 0;
-			fbc->fbc_arecty = ri->ri_height - 1;
-			fbc->fbc_arectx = ri->ri_width - 1;
-		} else {
-			row *= ri->ri_font->fontheight;
-			fbc->fbc_arecty = ri->ri_yorigin + row;
-			fbc->fbc_arectx = ri->ri_xorigin;
-			fbc->fbc_arecty = ri->ri_yorigin + row + 
-			    (n * ri->ri_font->fontheight) - 1;
-			fbc->fbc_arectx = ri->ri_xorigin + ri->ri_emuwidth - 1;
-		}
-		CG6_DRAW_WAIT(fbc);
-		CG6_DRAIN(fbc);
-#if NWSDISPLAY > 0
+	if (row+n > ri->ri_rows)
+		n = ri->ri_rows - row;
+	if (n <= 0)
+		return;
+	fbc->fbc_clip = 0;
+	fbc->fbc_s = 0;
+	fbc->fbc_offx = 0;
+	fbc->fbc_offy = 0;
+	fbc->fbc_clipminx = 0;
+	fbc->fbc_clipminy = 0;
+	fbc->fbc_clipmaxx = ri->ri_width - 1;
+	fbc->fbc_clipmaxy = ri->ri_height - 1;
+	fbc->fbc_alu = CG6_ALU_FILL;
+	fbc->fbc_fg = ri->ri_devcmap[(attr >> 16) & 0xff];
+	if ((n == ri->ri_rows) && (ri->ri_flg & RI_FULLCLEAR)) {
+		fbc->fbc_arecty = 0;
+		fbc->fbc_arectx = 0;
+		fbc->fbc_arecty = ri->ri_height - 1;
+		fbc->fbc_arectx = ri->ri_width - 1;
+	} else {
+		row *= ri->ri_font->fontheight;
+		fbc->fbc_arecty = ri->ri_yorigin + row;
+		fbc->fbc_arectx = ri->ri_xorigin;
+		fbc->fbc_arecty = ri->ri_yorigin + row + 
+		    (n * ri->ri_font->fontheight) - 1;
+		fbc->fbc_arectx = ri->ri_xorigin + ri->ri_emuwidth - 1;
 	}
-#endif
+	CG6_DRAW_WAIT(fbc);
+	CG6_DRAIN(fbc);
 }
 
 #if defined(RASTERCONSOLE) && defined(CG6_BLIT_CURSOR)
@@ -598,8 +532,8 @@ cg6_ras_eraserows(void *cookie, int row, int n, long int attr)
 static void
 cg6_ras_do_cursor(struct rasops_info *ri)
 {
-	struct cg6_screen *scr = ri->ri_hw;
-	struct cgsix_softc *sc = scr->sc;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct cgsix_softc *sc = scr->cookie;
 	int row, col;
 	
 	row = ri->ri_crow * ri->ri_font->fontheight;
@@ -617,10 +551,11 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 	struct fbdevice *fb = &sc->sc_fb;
 #if NWSDISPLAY > 0
 	struct wsemuldisplaydev_attach_args aa;
-	struct rasops_info *ri = &cg6_console_screen.ri;
+	struct rasops_info *ri = &cg6_console_screen.scr_ri;
 	unsigned long defattr;
 #endif
-
+	volatile struct cg6_fbc *fbc = sc->sc_fbc;
+	
 	fb->fb_driver = &cg6_fbdriver;
 
 	/* Don't have to map the pfour register on the cgsix. */
@@ -655,7 +590,7 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 			 * we don't use the screen struct but keep it here to 
 			 * avoid ugliness in the cg6_ras_* functions
 			 */
-			cg6_console_screen.sc = sc;
+			cg6_console_screen.scr_cookie = sc;
 			sc->sc_fb.fb_rinfo.ri_hw = &cg6_console_screen;
 			sc->sc_fb.fb_rinfo.ri_ops.copyrows = cg6_ras_copyrows;
 			sc->sc_fb.fb_rinfo.ri_ops.copycols = cg6_ras_copycols;
@@ -677,6 +612,7 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 
 	printf("%s: framebuffer size: %d MB\n", sc->sc_dev.dv_xname, 
 	    sc->sc_ramsize >> 20);
+	printf("%s: FBC: %08x\n", sc->sc_dev.dv_xname, fbc->fbc_mode);
 
 #if NWSDISPLAY
 	/* setup rasops and so on for wsdisplay */
@@ -685,20 +621,21 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 	sc->sc_bg = WS_DEFAULT_BG;
 	
-	LIST_INIT(&sc->screens);
-	sc->active = NULL;
-	sc->currenttype = &cgsix_defaultscreen;
-	callout_init(&sc->switch_callout);	
+	vcons_init(&sc->vd, sc, &cgsix_defaultscreen, &cgsix_accessops);
+	sc->vd.init_screen = cgsix_init_screen;
 
 	if(isconsole) {
 		/* we mess with cg6_console_screen only once */
-		cgsix_init_screen(sc, &cg6_console_screen, 1, &defattr);
+		vcons_init_screen(&sc->vd, &cg6_console_screen, 1,
+		    &defattr);
+		cg6_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
+		
 		cgsix_defaultscreen.textops = &ri->ri_ops;
 		cgsix_defaultscreen.capabilities = ri->ri_caps;
 		cgsix_defaultscreen.nrows = ri->ri_rows;
 		cgsix_defaultscreen.ncols = ri->ri_cols;
-		cg6_console_screen.active = 1;
-		sc->active = &cg6_console_screen;
+		SCREEN_VISIBLE(&cg6_console_screen);
+		sc->vd.active = &cg6_console_screen;
 		wsdisplay_cnattach(&cgsix_defaultscreen, ri, 0, 0, defattr);	
 	} else {
 		/* 
@@ -719,23 +656,21 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 			cgsix_defaultscreen.nrows = ri->ri_rows;
 			cgsix_defaultscreen.ncols = ri->ri_cols;
 		}
-		sc->active = NULL;
-		cgsix_clearscreen(sc);
 	}
 
 	cg6_setup_palette(sc);
+	cgsix_clearscreen(sc);
 	
 	aa.scrdata = &cgsix_screenlist;
 	aa.console = isconsole;
 	aa.accessops = &cgsix_accessops;
-	aa.accesscookie = sc;
+	aa.accesscookie = &sc->vd;
 	config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
 #else
 	bt_initcmap(&sc->sc_cmap, 256);	
 	cg6_loadcmap(sc, 0, 256);
 	
 #endif
-
 }
 
 
@@ -820,12 +755,7 @@ cgsixioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 		break;
 
 	case FBIOSVIDEO:
-		if (*(int *)data)
-			cg6_unblank(&sc->sc_dev);
-		else if (!sc->sc_blanked) {
-			sc->sc_blanked = 1;
-			sc->sc_thc->thc_misc &= ~THC_MISC_VIDEN;
-		}
+		cg6_blank(sc, !(*(int *)data));
 		break;
 
 /* these are for both FBIOSCURSOR and FBIOGCURSOR */
@@ -1069,15 +999,32 @@ cg6_loadomap(struct cgsix_softc *sc)
 	bt->bt_omap = i << 8;		/* B */
 }
 
+/* blank or unblank the screen */
+static void
+cg6_blank(struct cgsix_softc *sc, int flag)
+{
+
+	if (sc->sc_blanked != flag) {
+		sc->sc_blanked = flag;
+		if (flag) {
+			sc->sc_thc->thc_misc &= ~THC_MISC_VIDEN;
+		} else {
+			sc->sc_thc->thc_misc |= THC_MISC_VIDEN;
+		}
+	}
+}
+
+/* 
+ * this is called on panic or ddb entry - force the console to the front, reset 
+ * the colour map and enable drawing so we actually see the message even when X
+ * is running
+ */
 static void
 cg6_unblank(struct device *dev)
 {
 	struct cgsix_softc *sc = (struct cgsix_softc *)dev;
 
-	if (sc->sc_blanked) {
-		sc->sc_blanked = 0;
-		sc->sc_thc->thc_misc |= THC_MISC_VIDEN;
-	}
+	cg6_blank(sc, 0);
 }
 
 /* XXX the following should be moved to a "user interface" header */
@@ -1185,10 +1132,11 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
 	struct lwp *l)
 {
 	/* we'll probably need to add more stuff here */
-	struct cgsix_softc *sc = v;
+	struct vcons_data *vd = v;
+	struct cgsix_softc *sc = vd->cookie;
 	struct wsdisplay_fbinfo *wdf;
 	struct rasops_info *ri = &sc->sc_fb.fb_rinfo;
-	struct cg6_screen *ms = sc->active;
+	struct vcons_screen *ms = sc->vd.active;
 #ifdef CGSIX_DEBUG
 	printf("cgsix_ioctl(%ld)\n",cmd);
 #endif
@@ -1221,17 +1169,8 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
 					{
 						cg6_reset(sc);
 						cg6_ras_init(sc);
-						/* restore the screen content */
-						cgsix_restore_screen(ms, 
-						    ms->type, ms->chars);
-						/* 
-						 * because X likes to bork up 
-						 * our colour map
-						 */
-						cg6_setup_palette(sc);									/* and draw the cursor */
-						cgsix_cursor(ms, ms->cursoron, 
-						    ms->cursorrow, 
-						    ms->cursorcol);
+						cg6_setup_palette(sc);
+						vcons_redraw_screen(ms);
 					}
 				}
 			}
@@ -1242,7 +1181,9 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
 paddr_t
 cgsix_mmap(void *v, void *vs, off_t offset, int prot)
 {
-	struct cgsix_softc *sc = v;
+	struct vcons_data *vd = v;
+	struct cgsix_softc *sc = vd->cookie;
+
 	if(offset<sc->sc_ramsize) {
 		return bus_space_mmap(sc->sc_bustag, sc->sc_paddr,
 		    CGSIX_RAM_OFFSET+offset, prot, BUS_SPACE_MAP_LINEAR);
@@ -1311,17 +1252,12 @@ cgsix_getcmap(struct cgsix_softc *sc, struct wsdisplay_cmap *cm)
 }
 
 void
-cgsix_init_screen(struct cgsix_softc *sc, struct cg6_screen *scr,
+cgsix_init_screen(void *cookie, struct vcons_screen *scr,
     int existing, long *defattr)
 {
-	struct rasops_info *ri = &scr->ri;
-	int cnt;
-	scr->sc = sc;
-	/*scr->type = type;*/
-	scr->cursorcol = 0;
-	scr->cursorrow = 0;
-	scr->cursordrawn = 0;
-	   
+	struct cgsix_softc *sc = cookie;
+	struct rasops_info *ri = &scr->scr_ri;
+
 	ri->ri_depth = 8;
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
@@ -1331,19 +1267,9 @@ cgsix_init_screen(struct cgsix_softc *sc, struct cg6_screen *scr,
 	ri->ri_bits = sc->sc_fb.fb_pixels;
 	
 	rasops_init(ri, sc->sc_height/8, sc->sc_width/8);
-	ri->ri_caps=WSSCREEN_WSCOLORS;
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
-	ri->ri_ops.allocattr(ri, 0, 0, 0, defattr);
-
-	cnt = ri->ri_rows * ri->ri_cols;
-	/* 
-	 * we allocate both chars and attributes in one chunk, attributes first 
-	 * because they have the (potentially) bigger alignment 
-	 */
-	scr->attrs = (long *)malloc(cnt * (sizeof(long) + sizeof(uint16_t)),
-	    M_DEVBUF, M_WAITOK);
-	scr->chars = (uint16_t *)&scr->attrs[cnt];
 
 	/* enable acceleration */
 	ri->ri_hw = scr;
@@ -1353,148 +1279,6 @@ cgsix_init_screen(struct cgsix_softc *sc, struct cg6_screen *scr,
 	ri->ri_ops.erasecols = cg6_ras_erasecols;
 	ri->ri_ops.cursor = cgsix_cursor;
 	ri->ri_ops.putchar = cgsix_putchar;
-	if (existing) {
-		scr->active = 1;
-	} else {
-		scr->active = 0;
-	}
-
-	cg6_ras_eraserows(&scr->ri, 0, ri->ri_rows, *defattr);
-
-	LIST_INSERT_HEAD(&sc->screens, scr, next);
-}
-
-int
-cgsix_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *curxp, int *curyp, long *defattrp)
-{
-	struct cgsix_softc *sc = v;
-	struct cg6_screen *scr;
-
-	scr = malloc(sizeof(struct cg6_screen), M_DEVBUF, M_WAITOK|M_ZERO);
-	cgsix_init_screen(sc, scr, 0, defattrp);
-
-	if (sc->active == NULL) {
-		scr->active = 1;
-		sc->active = scr;
-		sc->currenttype = type;
-	}
-
-	*cookiep = scr;
-	*curxp = scr->cursorcol;
-	*curyp = scr->cursorrow;
-	return 0;
-}
-
-void
-cgsix_free_screen(void *v, void *cookie)
-{
-	struct cgsix_softc *sc = v;
-	struct cg6_screen *scr = cookie;
-
-	LIST_REMOVE(scr, next);
-	if (scr != &cg6_console_screen) {
-		free(scr->attrs, M_DEVBUF);
-		free(scr, M_DEVBUF);
-	} else
-		panic("cgsix_free_screen: console");
-
-	if (sc->active == scr)
-		sc->active = 0;
-}
-
-int
-cgsix_show_screen(void *v, void *cookie, int waitok,
-    void (*cb)(void *, int, int), void *cbarg)
-{
-	struct cgsix_softc *sc = v;
-	struct cg6_screen *scr, *oldscr;
-
-	scr = cookie;
-	oldscr = sc->active;
-	if (scr == oldscr)
-		return 0;
-
-	sc->wanted = scr;
-	sc->switchcb = cb;
-	sc->switchcbarg = cbarg;
-	if (cb) {
-		callout_reset(&sc->switch_callout, 0,
-		    (void(*)(void *))cgsix_switch_screen, sc);
-		return EAGAIN;
-	}
-
-	cgsix_switch_screen(sc);
-	return 0;
-}
-
-void
-cgsix_switch_screen(struct cgsix_softc *sc)
-{
-	struct cg6_screen *scr, *oldscr;
-
-	scr = sc->wanted;
-	if (!scr) {
-		printf("cgsix_switch_screen: disappeared\n");
-		(*sc->switchcb)(sc->switchcbarg, EIO, 0);
-		return;
-	}
-	oldscr = sc->active; /* can be NULL! */
-#ifdef DIAGNOSTIC
-	if (oldscr) {
-		if (!oldscr->active)
-			panic("cgsix_switch_screen: not active");
-	}
-#endif
-	if (scr == oldscr)
-		return;
-
-#ifdef DIAGNOSTIC
-	if (scr->active)
-		panic("cgsix_switch_screen: active");
-#endif
-
-	if (oldscr)
-		oldscr->active = 0;
-#ifdef notyet
-	if (sc->currenttype != type) {
-		cgsix_set_screentype(sc, type);
-		sc->currenttype = type;
-	}
-#endif
-
-	/* Clear the entire screen. */		
-
-	scr->active = 1;
-	cgsix_restore_screen(scr, &cgsix_defaultscreen, scr->chars);
-
-	sc->active = scr;
-	
-	scr->ri.ri_ops.cursor(scr, scr->cursoron, scr->cursorrow, 
-	    scr->cursorcol);
-
-	sc->wanted = 0;
-	if (sc->switchcb)
-		(*sc->switchcb)(sc->switchcbarg, 0, 0);
-}
-
-void
-cgsix_restore_screen(struct cg6_screen *scr,
-    const struct wsscreen_descr *type, u_int16_t *mem)
-{
-	int i, j, offset = 0;
-	uint16_t *charptr = scr->chars;
-	long *attrptr = scr->attrs;
-	
-	cgsix_clearscreen(scr->sc);
-	for (i = 0; i < scr->ri.ri_rows; i++) {
-		for (j = 0; j < scr->ri.ri_cols; j++) {
-			cgsix_putchar(scr, i, j, charptr[offset], 
-			    attrptr[offset]);
-			offset++;
-		}
-	}
-	scr->cursordrawn = 0;
 }
 
 void 
@@ -1564,19 +1348,16 @@ cgsix_feed_line(struct cgsix_softc *sc, int count, uint8_t *data)
 void
 cgsix_putchar(void *cookie, int row, int col, u_int c, long attr)
 {
-	struct rasops_info *ri=cookie;
-	struct cg6_screen *scr=ri->ri_hw;
-	struct cgsix_softc *sc=scr->sc;
-	int pos;
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct cgsix_softc *sc = scr->scr_cookie;
+	int inv;
 	
 	if ((row >= 0) && (row < ri->ri_rows) && (col >= 0) && 
 	    (col < ri->ri_cols)) {
-		pos = col + row * ri->ri_cols;
-		scr->attrs[pos] = attr;
-		scr->chars[pos] = c;
 
-		if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-			/*cgsix_sync(sc);*/
+		if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+
 			int fg, bg, uc, i;
 			uint8_t *data;
 			int x, y, wi, he;
@@ -1587,10 +1368,22 @@ cgsix_putchar(void *cookie, int row, int col, u_int c, long attr)
 			
 			if (!CHAR_IN_FONT(c, ri->ri_font))
 				return;
-			bg = (u_char)ri->ri_devcmap[(attr >> 16) & 0xff];
-			fg = (u_char)ri->ri_devcmap[(attr >> 24) & 0xff];
+			inv = ((attr >> 8) & WSATTR_REVERSE);
+			if (inv) {
+				fg = (u_char)ri->ri_devcmap[(attr >> 16) & 
+				    0xff];
+				bg = (u_char)ri->ri_devcmap[(attr >> 24) &
+				    0xff];
+			} else {
+				bg = (u_char)ri->ri_devcmap[(attr >> 16) &
+				    0xff];
+				fg = (u_char)ri->ri_devcmap[(attr >> 24) &
+				    0xff];
+			}
+
 			x = ri->ri_xorigin + col * wi;
 			y = ri->ri_yorigin + row * he;
+
 			if (c == 0x20) {
 				cgsix_rectfill(sc, x, y, wi, he, bg);
 			} else {
@@ -1608,8 +1401,8 @@ cgsix_putchar(void *cookie, int row, int col, u_int c, long attr)
 				fbc->fbc_incy = 0;
 				/* nosrc, color8 */
 				fbc->fbc_mode = 0x00120000;	
-				fbc->fbc_mode &= ~CG6_MODE_MASK;
-				fbc->fbc_mode |= CG6_MODE;
+				/*fbc->fbc_mode &= ~CG6_MODE_MASK;
+				fbc->fbc_mode |= CG6_MODE;*/
 			}
 		}
 	}
@@ -1618,42 +1411,42 @@ cgsix_putchar(void *cookie, int row, int col, u_int c, long attr)
 void
 cgsix_cursor(void *cookie, int on, int row, int col)
 {
-	struct rasops_info *ri=cookie;
-	struct cg6_screen *scr=ri->ri_hw;
-	struct cgsix_softc *sc=scr->sc;
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct cgsix_softc *sc = scr->scr_cookie;
 	int x, y, wi, he;
 	
 	wi = ri->ri_font->fontwidth;
 	he = ri->ri_font->fontheight;
 	
-	if((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		x = scr->cursorcol * wi + ri->ri_xorigin;
-		y = scr->cursorrow * he + ri->ri_yorigin;
-		if(scr->cursordrawn) {
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+		x = ri->ri_ccol * wi + ri->ri_xorigin;
+		y = ri->ri_crow * he + ri->ri_yorigin;
+		if (ri->ri_flg & RI_CURSOR) {
 			cg6_invert(sc, x, y, wi, he);
-			scr->cursordrawn = 0;
+			ri->ri_flg &= ~RI_CURSOR;
 		}
-		scr->cursorrow = row;
-		scr->cursorcol = col;
-		if((scr->cursoron = on) != 0)
+		ri->ri_crow = row;
+		ri->ri_ccol = col;
+		if (on)
 		{
-			x = scr->cursorcol * wi + ri->ri_xorigin;
-			y = scr->cursorrow * he + ri->ri_yorigin;
+			x = ri->ri_ccol * wi + ri->ri_xorigin;
+			y = ri->ri_crow * he + ri->ri_yorigin;
 			cg6_invert(sc, x, y, wi, he);
-			scr->cursordrawn = 1;
+			ri->ri_flg |= RI_CURSOR;
 		}
-	} else {
-		scr->cursoron = on;
-		scr->cursorrow = row;
-		scr->cursorcol = col;
-		scr->cursordrawn = 0;
+	} else
+	{
+		ri->ri_crow = row;
+		ri->ri_ccol = col;
+		ri->ri_flg &= ~RI_CURSOR;
 	}
 }
 
 void
 cgsix_clearscreen(struct cgsix_softc *sc)
 {
-	struct rasops_info *ri=&cg6_console_screen.ri;
+	struct rasops_info *ri = &cg6_console_screen.scr_ri;
 	
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		volatile struct cg6_fbc *fbc = sc->sc_fbc;
@@ -1684,7 +1477,7 @@ void
 cg6_invert(struct cgsix_softc *sc, int x, int y, int wi, int he)
 {
 	volatile struct cg6_fbc *fbc = sc->sc_fbc;
-	struct rasops_info *ri = &cg6_console_screen.ri;
+	struct rasops_info *ri = &cg6_console_screen.scr_ri;
 	
 	CG6_DRAIN(fbc);
 	fbc->fbc_clip = 0;
@@ -1704,3 +1497,4 @@ cg6_invert(struct cgsix_softc *sc, int x, int y, int wi, int he)
 }
 
 #endif
+
