@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.77.2.3 2005/06/29 12:18:49 tron Exp $ */
+/* $NetBSD: user.c,v 1.77.2.3.2.1 2006/10/16 21:46:06 ghen Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.77.2.3 2005/06/29 12:18:49 tron Exp $");
+__RCSID("$NetBSD: user.c,v 1.77.2.3.2.1 2006/10/16 21:46:06 ghen Exp $");
 #endif
 
 #include <sys/types.h>
@@ -2098,6 +2098,7 @@ userinfo(int argc, char **argv)
 	int		i;
 
 	exists = 0;
+	buf[0] = '\0';
 	while ((i = getopt(argc, argv, "ev")) != -1) {
 		switch(i) {
 		case 'e':
