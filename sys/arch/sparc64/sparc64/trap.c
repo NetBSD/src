@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.137 2006/09/25 05:52:34 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.138 2006/10/16 20:27:40 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137 2006/09/25 05:52:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.138 2006/10/16 20:27:40 martin Exp $");
 
 #define NEW_FPSTATE
 
@@ -177,6 +177,7 @@ int	trapdebug = 0/*|TDB_SYSCALL|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT|TDB_FOLLOW*/
  */
 __asm(".align 64");
 struct	fpstate64 initfpstate = {
+	.fs_regs =
 	{ ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
 	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
 	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
