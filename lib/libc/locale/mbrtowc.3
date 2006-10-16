@@ -1,4 +1,4 @@
-.\" $NetBSD: mbrtowc.3,v 1.7 2006/10/14 07:51:01 wiz Exp $
+.\" $NetBSD: mbrtowc.3,v 1.8 2006/10/16 09:10:29 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -51,7 +51,9 @@ to the wchar_t object pointed to by
 .Fa pwc
 if
 .Fa pwc
-is non-NULL and
+is
+.Pf non- Dv NULL
+and
 .Fa s
 points to a valid character.
 The conversion happens in accordance with, and changes the conversion
