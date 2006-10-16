@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.24 2005/09/05 20:56:41 dsl Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.25 2006/10/16 02:43:19 christos Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.24 2005/09/05 20:56:41 dsl Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.25 2006/10/16 02:43:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,8 @@ __RCSID("$NetBSD: dmesg.c,v 1.24 2005/09/05 20:56:41 dsl Exp $");
 #ifndef SMALL
 struct nlist nl[] = {
 #define	X_MSGBUF	0
-	{ "_msgbufp" },
-	{ NULL },
+	{ .n_name = "_msgbufp" },
+	{ .n_name = NULL },
 };
 
 void	usage(void);
