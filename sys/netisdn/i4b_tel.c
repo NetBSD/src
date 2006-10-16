@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.16 2005/12/11 12:25:06 christos Exp $
+ *	$Id: i4b_tel.c,v 1.17 2006/10/16 12:23:00 pooka Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.16 2005/12/11 12:25:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.17 2006/10/16 12:23:00 pooka Exp $");
 
 #include "isdntel.h"
 
@@ -198,7 +198,7 @@ int isdntelsel __P((dev_t dev, int rw, struct lwp *l));
 #ifdef __NetBSD__
 const struct cdevsw isdntel_cdevsw = {
 	isdntelopen, isdntelclose, isdntelread, isdntelwrite, isdntelioctl,
-	nostop, notty, isdntelpoll, nommap, isdntelkqfilter,
+	nostop, notty, isdntelpoll, nommap, isdntelkqfilter, D_OTHER
 };
 #endif /* __NetBSD__ */
 
@@ -388,7 +388,8 @@ isdntelattach()
  *	open tel device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdntelopen(dev_t dev, int flag, int fmt, struct lwp *l)
+isdntelopen(dev_t dev, int flag __unused, int fmt __unused,
+	struct lwp *l __unused)
 {
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
@@ -417,7 +418,8 @@ isdntelopen(dev_t dev, int flag, int fmt, struct lwp *l)
  *	close tel device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdntelclose(dev_t dev, int flag, int fmt, struct lwp *l)
+isdntelclose(dev_t dev, int flag __unused, int fmt __unused,
+	struct lwp *l __unused)
 {
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
@@ -459,7 +461,8 @@ isdntelclose(dev_t dev, int flag, int fmt, struct lwp *l)
  *	i4btelioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdntelioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+isdntelioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
+	struct lwp *l __unused)
 {
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
@@ -581,7 +584,7 @@ isdntelioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
  *	read from tel device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdntelread(dev_t dev, struct uio *uio, int ioflag)
+isdntelread(dev_t dev, struct uio *uio, int ioflag __unused)
 {
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
@@ -701,7 +704,7 @@ isdntelread(dev_t dev, struct uio *uio, int ioflag)
  *	write to tel device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdntelwrite(dev_t dev, struct uio * uio, int ioflag)
+isdntelwrite(dev_t dev, struct uio * uio, int ioflag __unused)
 {
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
@@ -957,7 +960,7 @@ filt_i4btel_detach(struct knote *kn)
 }
 
 static int
-filt_i4btel_telread(struct knote *kn, long hint)
+filt_i4btel_telread(struct knote *kn, long hint __unused)
 {
 	tel_sc_t *sc = kn->kn_hook;
 
@@ -976,7 +979,7 @@ static const struct filterops i4btel_telread_filtops =
 	{ 1, NULL, filt_i4btel_detach, filt_i4btel_telread };
 
 static int
-filt_i4btel_telwrite(struct knote *kn, long hint)
+filt_i4btel_telwrite(struct knote *kn, long hint __unused)
 {
 	tel_sc_t *sc = kn->kn_hook;
 
@@ -995,7 +998,7 @@ static const struct filterops i4btel_telwrite_filtops =
 	{ 1, NULL, filt_i4btel_detach, filt_i4btel_telwrite };
 
 static int
-filt_i4btel_dialread(struct knote *kn, long hint)
+filt_i4btel_dialread(struct knote *kn, long hint __unused)
 {
 	tel_sc_t *sc = kn->kn_hook;
 
@@ -1174,7 +1177,7 @@ tel_connect(void *softc, void *cdp)
  *	this routine is called from L4 handler at disconnect time
  *---------------------------------------------------------------------------*/
 static void
-tel_disconnect(void *softc, void *cdp)
+tel_disconnect(void *softc, void *cdp __unused)
 {
 	tel_sc_t *sc = softc;
 
@@ -1243,7 +1246,7 @@ tel_dialresponse(void *softc, int status, cause_t cause)
  *	interface up/down
  *---------------------------------------------------------------------------*/
 static void
-tel_updown(void *softc, int updown)
+tel_updown(void *softc __unused, int updown __unused)
 {
 }
 
@@ -1292,7 +1295,7 @@ tel_tx_queue_empty(void *softc)
  *	each time a packet is received or transmitted.
  *---------------------------------------------------------------------------*/
 static void
-tel_activity(void *softc, int rxtx)
+tel_activity(void *softc, int rxtx __unused)
 {
 	struct tel_softc *sc = softc;
 

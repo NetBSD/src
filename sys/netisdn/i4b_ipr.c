@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.21 2006/07/23 22:06:14 ad Exp $
+ *	$Id: i4b_ipr.c,v 1.22 2006/10/16 12:23:00 pooka Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.21 2006/07/23 22:06:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.22 2006/10/16 12:23:00 pooka Exp $");
 
 #include "irip.h"
 #include "opt_irip.h"
@@ -415,7 +415,7 @@ iripattach()
  *---------------------------------------------------------------------------*/
 static int
 iripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
-	 struct rtentry *rtp)
+	 struct rtentry *rtp __unused)
 {
 	struct ipr_softc *sc;
 	int s, rv;
@@ -889,7 +889,7 @@ ipr_disconnect(void *softc, void *cdp)
  *	in case of dial problems
  *---------------------------------------------------------------------------*/
 static void
-ipr_dialresponse(void *softc, int status, cause_t cause)
+ipr_dialresponse(void *softc, int status, cause_t cause __unused)
 {
 	struct ipr_softc *sc = softc;
 	sc->sc_dialresp = status;
@@ -1197,7 +1197,7 @@ ipr_tx_queue_empty(void *softc)
  *	be used to implement an activity timeout mechanism.
  *---------------------------------------------------------------------------*/
 static void
-ipr_activity(void *softc, int rxtx)
+ipr_activity(void *softc, int rxtx __unused)
 {
 	struct ipr_softc *sc = softc;
 	sc->sc_cdp->last_active_time = SECOND;
