@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.91 2006/10/15 19:50:53 martin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.92 2006/10/16 21:57:10 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.91 2006/10/15 19:50:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.92 2006/10/16 21:57:10 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -1280,7 +1280,7 @@ const struct db_command db_machine_command_table[] = {
 	{ "watch",	db_watch,	0,	0 },
 	{ "window",	db_dump_window,	0,	0 },
 	{ "cpu",	db_cpu_cmd,	0,	0 },
-	{ NULL, }
+	{ .name = NULL, }
 };
 
 #endif	/* DDB */
