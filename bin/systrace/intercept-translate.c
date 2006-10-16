@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept-translate.c,v 1.9 2006/04/16 05:19:02 provos Exp $	*/
+/*	$NetBSD: intercept-translate.c,v 1.10 2006/10/16 00:43:00 christos Exp $	*/
 /*	$OpenBSD: intercept-translate.c,v 1.9 2002/08/01 20:16:45 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept-translate.c,v 1.9 2006/04/16 05:19:02 provos Exp $");
+__RCSID("$NetBSD: intercept-translate.c,v 1.10 2006/10/16 00:43:00 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -341,32 +341,38 @@ ic_print_msghdr(char *buf, size_t buflen, struct intercept_translate *tl)
 }
 
 struct intercept_translate ic_translate_string = {
-	"string",
-	ic_get_string, ic_print_filename,
+	.name = "string",
+	.translate = ic_get_string,
+	.print = ic_print_filename,
 };
 
 struct intercept_translate ic_translate_filename = {
-	"filename",
-	ic_get_filename, ic_print_filename,
+	.name = "filename",
+	.translate = ic_get_filename,
+	.print = ic_print_filename,
 };
 
 struct intercept_translate ic_translate_linkname = {
-	"filename",
-	ic_get_linkname, ic_print_filename,
+	.name = "filename",
+	.translate = ic_get_linkname,
+	.print = ic_print_filename,
 };
 
 struct intercept_translate ic_translate_unlinkname = {
-	"filename",
-	ic_get_unlinkname, ic_print_filename,
+	.name = "filename",
+	.translate = ic_get_unlinkname,
+	.print = ic_print_filename,
 };
 
 struct intercept_translate ic_translate_connect = {
-	"sockaddr",
-	ic_get_sockaddr, ic_print_sockaddr,
-	/* XXX - Special handling */ 1,
+	.name = "sockaddr",
+	.translate = ic_get_sockaddr, 
+	.print = ic_print_sockaddr,
+	.off2 = /* XXX - Special handling */ 1,
 };
 
 struct intercept_translate ic_translate_sendmsg = {
-	"sockaddr",
-	ic_get_msghdr, ic_print_msghdr,
+	.name = "sockaddr",
+	.translate = ic_get_msghdr,
+	.print = ic_print_msghdr,
 };
