@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.125 2006/10/13 15:39:19 elad Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.126 2006/10/16 18:13:56 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,12 +102,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.125 2006/10/13 15:39:19 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.126 2006/10/16 18:13:56 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_tcp_debug.h"
 #include "opt_mbuftrace.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1729,6 +1730,16 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       SYSCTL_DESCR("Number of TCP debug sockets messages"),
 		       NULL, 0, &tcp_debx, sizeof(tcp_debx),
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_DEBX,
+		       CTL_EOL);
+#endif
+#if NRND > 0
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "iss_hash",
+		       SYSCTL_DESCR("Enable RFC 1948 ISS by cryptographic "
+				    "hash computation"),
+		       NULL, 0, &tcp_do_rfc1948, sizeof(tcp_do_rfc1948),
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE,
 		       CTL_EOL);
 #endif
 
