@@ -1,3 +1,4 @@
+/*	$NetBSD: gxio.c,v 1.2 2006/10/17 17:06:22 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -30,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.1 2006/10/16 16:40:14 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.2 2006/10/17 17:06:22 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

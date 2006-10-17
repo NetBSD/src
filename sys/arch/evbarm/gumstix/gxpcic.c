@@ -1,3 +1,4 @@
+/*	$NetBSD: gxpcic.c,v 1.2 2006/10/17 17:06:22 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
