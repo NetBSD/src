@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.24 2006/10/17 08:28:06 skrll Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.25 2006/10/17 08:33:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.24 2006/10/17 08:28:06 skrll Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.25 2006/10/17 08:33:36 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -130,6 +130,9 @@ static int hppa_plabel_pre_next = 0;
 
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 int _rtld_relocate_plt_objects(const Obj_Entry *);
+static inline int _rtld_relocate_plt_object(const Obj_Entry *,
+    const Elf_Rela *, Elf_Addr *);
+
 /*
  * This bootstraps the dynamic linker by relocating its GOT.
  * On the hppa, unlike on other architectures, static strings
@@ -546,29 +549,32 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 	return 0;
 }
 
-caddr_t
-_rtld_bind(const Obj_Entry *obj, Elf_Addr reloff)
+static inline int
+_rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *tp)
 {
-	const Elf_Rela *rela = (const Elf_Rela *)((caddr_t)obj->pltrela + reloff);
 	Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 	Elf_Addr	func_pc, func_sl;
 
 	assert(ELF_R_TYPE(rela->r_info) == R_TYPE(IPLT));
-	assert(ELF_R_SYM(rela->r_info) != 0);
 
-	def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, true);
-	if (def == NULL)
-		_rtld_die();
+	if (ELF_R_SYM(rela->r_info) == 0) {
+		func_pc = (Elf_Addr)(obj->relocbase + rela->r_addend);
+		func_sl = (Elf_Addr)(obj->pltgot);
+	} else {
+		def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, true);
+		if (def == NULL)
+			return -1;
 
-	func_pc = (Elf_Addr)(defobj->relocbase + def->st_value + rela->r_addend);
-	func_sl = (Elf_Addr)(defobj->pltgot);
+		func_pc = (Elf_Addr)(defobj->relocbase + def->st_value + rela->r_addend);
+		func_sl = (Elf_Addr)(defobj->pltgot);
 
-	rdbg(("bind now/fixup in %s --> old=(%p,%p) new=(%p,%p)",
-	    defobj->strtab + def->st_name,
-	    (void *)where[0], (void *)where[1], 
-	    (void *)func_pc, (void *)func_sl));
+		rdbg(("bind now/fixup in %s --> old=(%p,%p) new=(%p,%p)",
+		    defobj->strtab + def->st_name,
+		    (void *)where[0], (void *)where[1], 
+		    (void *)func_pc, (void *)func_sl));
+	}
 	/*
 	 * Fill this PLT entry and return.
 	 */
@@ -577,46 +583,36 @@ _rtld_bind(const Obj_Entry *obj, Elf_Addr reloff)
 	if (where[1] != func_sl)
 		where[1] = func_sl;
 
-	return (caddr_t)where;
+	if (tp)
+		*tp = (Elf_Addr)where;
+
+	return 0;
+}
+
+caddr_t
+_rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
+{
+	const Elf_Rela *rela = (const Elf_Rela *)((caddr_t)obj->pltrela + reloff);
+	Elf_Addr new_value;
+	int err;
+
+	assert(ELF_R_SYM(rela->r_info) != 0);
+
+	err = _rtld_relocate_plt_object(obj, rela, &new_value); 
+	if (err)
+		_rtld_die();
+
+	return (caddr_t)new_value;
 }
 
 int
 _rtld_relocate_plt_objects(const Obj_Entry *obj)
 {
-	const Elf_Rela *rela;
+	const Elf_Rela *rela = obj->pltrela;
 	
-	for (rela = obj->pltrela; rela < obj->pltrelalim; rela++) {
-		Elf_Addr	*where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
-		const Elf_Sym	*def;
-		const Obj_Entry	*defobj;
-		Elf_Addr	func_pc, func_sl;
-
-		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(IPLT));
-
-		if (ELF_R_SYM(rela->r_info) == 0) {
-			func_pc = (Elf_Addr)(obj->relocbase + rela->r_addend);
-			func_sl = (Elf_Addr)(obj->pltgot);
-		} else {
-			def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj,
-			    true);
-			if (def == NULL)
-				return -1;
-			func_pc = (Elf_Addr)(defobj->relocbase + def->st_value +
-			    rela->r_addend);
-			func_sl = (Elf_Addr)(defobj->pltgot);
-			rdbg(("bind now/fixup in %s --> old=(%p,%p) new=(%p,%p)",
-			    defobj->strtab + def->st_name,
-			    (void *)where[0], (void *)where[1], 
-			    (void *)func_pc, (void *)func_sl));
-		}
-	
-		/*
-		 * Fill this PLT entry and return.
-		 */
-		if (where[0] != func_pc)
-			where[0] = func_pc;
-		if (where[1] != func_sl)
-			where[1] = func_sl;
+	for (; rela < obj->pltrelalim; rela++) {
+		if (_rtld_relocate_plt_object(obj, rela, NULL) < 0)
+			return -1;
 	}
 	return 0;
 }
