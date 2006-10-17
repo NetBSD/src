@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.96 2006/10/13 16:53:35 dogcow Exp $ */
+/* $NetBSD: wskbd.c,v 1.97 2006/10/17 18:21:29 dogcow Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.96 2006/10/13 16:53:35 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.97 2006/10/17 18:21:29 dogcow Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1233,8 +1233,6 @@ wskbd_set_console_display(struct device *displaydv, struct wsevsrc *me)
 	sc->sc_base.me_dispdv = displaydv;
 #if NWSMUX > 0
 	(void)wsmux_attach_sc((struct wsmux_softc *)me, &sc->sc_base);
-#else
-	do { if (&me) {} } while (/* CONSTCOND */ 0); /* shut up -Wunused */
 #endif
 	return (&sc->sc_base);
 }
