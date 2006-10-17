@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.30 2006/10/17 09:19:57 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.31 2006/10/17 14:03:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -638,8 +638,8 @@ re_attach(struct rtk_softc *sc)
 
 	/* Allocate DMA'able memory for the TX ring */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, RTK_TX_LIST_SZ(sc),
-		    RTK_ETHER_ALIGN, 0, &sc->rtk_ldata.rtk_tx_listseg,
-		    1, &sc->rtk_ldata.rtk_tx_listnseg, BUS_DMA_NOWAIT)) != 0) {
+		    RTK_RING_ALIGN, 0, &sc->rtk_ldata.rtk_tx_listseg, 1,
+		    &sc->rtk_ldata.rtk_tx_listnseg, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: can't allocate tx listseg, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_0;
