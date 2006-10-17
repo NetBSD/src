@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.14 2006/09/24 18:14:44 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.15 2006/10/17 19:57:24 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.14 2006/09/24 18:14:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.15 2006/10/17 19:57:24 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -77,7 +77,7 @@ privcmd_ioctl(void *v)
 			"movl 16(%%eax),%%esi ;"
 			"movl 20(%%eax),%%edi ;"
 			"movl   (%%eax),%%eax ;"
-#if defined(XEN3) && !defined(XEN_NO_HYPERCALLPAGE)
+#if defined(XEN3) && !defined(XEN_COMPAT_030001)
 			"shll $5,%%eax ;"
 			"addl $hypercall_page,%%eax ;"
 			"call *%%eax ;"
