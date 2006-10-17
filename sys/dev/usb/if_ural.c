@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.13 2006/10/12 01:31:59 christos Exp $ */
+/*	$NetBSD: if_ural.c,v 1.14 2006/10/17 23:42:18 wiz Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.13 2006/10/12 01:31:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.14 2006/10/17 23:42:18 wiz Exp $");
 
 #include "bpfilter.h"
 
@@ -92,6 +92,7 @@ static const struct usb_devno ural_devs[] = {
 	{ USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_WUSB54GP },
 	{ USB_VENDOR_CONCEPTRONIC,	USB_PRODUCT_CONCEPTRONIC_C54RU },
 	{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DWLG122 },
+	{ USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_DWLG122C1 },
 	{ USB_VENDOR_GIGABYTE,		USB_PRODUCT_GIGABYTE_GNWBKG },
 	{ USB_VENDOR_GUILLEMOT,		USB_PRODUCT_GUILLEMOT_HWGUSB254 },
 	{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_KG54 },
