@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.45 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.46 2006/10/17 14:52:21 christos Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -286,10 +286,10 @@ struct	in6_aliasreq {
  * however, this structure should not be used directly.
  */
 struct prf_ra {
-	u_char onlink : 1;
-	u_char autonomous : 1;
-	u_char router : 1;
-	u_char reserved : 5;
+	u_int32_t onlink : 1;
+	u_int32_t autonomous : 1;
+	u_int32_t router : 1;
+	u_int32_t reserved : 5;
 };
 
 struct in6_prflags {
@@ -298,9 +298,9 @@ struct in6_prflags {
 	u_short prf_reserved2;
 	/* want to put this on 4byte offset */
 	struct prf_rr {
-		u_char decrvalid : 1;
-		u_char decrprefd : 1;
-		u_char reserved : 6;
+		u_int32_t decrvalid : 1;
+		u_int32_t decrprefd : 1;
+		u_int32_t reserved : 6;
 	} prf_rr;
 	u_char prf_reserved3;
 	u_short prf_reserved4;
@@ -338,9 +338,9 @@ struct	in6_rrenumreq {
 	u_char	irr_u_uselen;	/* uselen for adding prefix */
 	u_char	irr_u_keeplen;	/* keeplen from matching prefix */
 	struct irr_raflagmask {
-		u_char onlink : 1;
-		u_char autonomous : 1;
-		u_char reserved : 6;
+		u_int32_t onlink : 1;
+		u_int32_t autonomous : 1;
+		u_int32_t reserved : 6;
 	} irr_raflagmask;
 	u_int32_t irr_vltime;
 	u_int32_t irr_pltime;
