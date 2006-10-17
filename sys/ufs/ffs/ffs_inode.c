@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.84 2006/10/14 09:17:26 yamt Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.85 2006/10/17 11:39:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.84 2006/10/14 09:17:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.85 2006/10/17 11:39:18 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -172,7 +172,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 	daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
 	daddr_t blks[NDADDR + NIADDR];
 	struct fs *fs;
-	int offset, size, level;
+	int offset, pgoffset, level;
 	int64_t count, blocksreleased = 0;
 	int i, aflag, nblocks;
 	int error, allerror = 0;
@@ -267,16 +267,23 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 	 */
 
 	offset = blkoff(fs, length);
-	if (ovp->v_type == VREG && offset != 0 && osize > length) {
+	pgoffset = length & PAGE_MASK;
+	if (ovp->v_type == VREG && (pgoffset != 0 || offset != 0) &&
+	    osize > length) {
 		daddr_t lbn;
 		voff_t eoz;
+		int size;
 
-		error = ufs_balloc_range(ovp, length - 1, 1, cred, aflag);
-		if (error)
-			return error;
+		if (offset != 0) {
+			error = ufs_balloc_range(ovp, length - 1, 1, cred,
+			    aflag);
+			if (error)
+				return error;
+		}
 		lbn = lblkno(fs, length);
 		size = blksize(fs, oip, lbn);
-		eoz = MIN(lblktosize(fs, lbn) + size, osize);
+		eoz = MIN(MAX(lblktosize(fs, lbn) + size, round_page(pgoffset)),
+		    osize);
 		uvm_vnp_zerorange(ovp, length, eoz - length);
 		if (round_page(eoz) > round_page(length)) {
 			simple_lock(&ovp->v_interlock);
