@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.18 2006/10/15 11:52:36 tsutsui Exp $ */
+/* $NetBSD: if_vge.c,v 1.19 2006/10/17 09:55:12 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.18 2006/10/15 11:52:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.19 2006/10/17 09:55:12 tsutsui Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -489,7 +489,7 @@ vge_cam_set(struct vge_softc *sc, uint8_t *addr)
 /*
  * Program the multicast filter. We use the 64-entry CAM filter
  * for perfect filtering. If there's more than 64 multicast addresses,
- * we use the hash filter insted.
+ * we use the hash filter instead.
  */
 static void
 vge_setmulti(struct vge_softc *sc)
