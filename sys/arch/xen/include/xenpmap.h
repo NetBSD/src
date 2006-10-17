@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.14 2006/03/06 19:57:31 bouyer Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.15 2006/10/17 18:53:04 bouyer Exp $	*/
 
 /*
  *
@@ -216,8 +216,10 @@ paddr_t *xpmap_phys_to_machine_mapping;
  * (0xc0100000). On Xen-3 for domain0 it starts at KERNBASE (0xc0000000).
  * So the offset between physical and virtual address is different on
  * Xen-2 and Xen-3 for domain0.
+ * starting with xen-3.0.2, we can add notes so that virual memory starts
+ * at KERNBASE for domU as well.
  */  
-#if defined(XEN3) && defined(DOM0OPS)
+#if defined(XEN3) && (defined(DOM0OPS) || !defined(XEN_COMPAT_030001))
 #define XPMAP_OFFSET	0
 #else
 #define	XPMAP_OFFSET	(KERNTEXTOFF - KERNBASE)

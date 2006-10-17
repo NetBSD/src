@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.19 2006/10/01 21:36:11 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.20 2006/10/17 18:53:04 bouyer Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -190,9 +190,16 @@
 .section __xen_guest
 #ifdef XEN3
 	.ascii	"GUEST_OS=netbsd,GUEST_VER=3.0,XEN_VER=xen-3.0"
+#if defined(DOM0OPS) || !defined(XEN_COMPAT_030001)
+	.ascii  ",VIRT_BASE=0xc0000000" /* KERNBASE */
+	.ascii  ",ELF_PADDR_OFFSET=0xc0000000" /* KERNBASE */
+#else
 	.ascii  ",VIRT_BASE=0xc0100000" /* KERNTEXTOFF */
+	.ascii  ",ELF_PADDR_OFFSET=0xc0100000" /* KERNTEXTOFF */
+#endif
+	.ascii  ",VIRT_ENTRY=0xc0100000" /* KERNTEXTOFF */
 #ifndef XEN_NO_HYPERCALLPAGE
-#ifdef DOM0OPS
+#if defined(DOM0OPS) || !defined(XEN_COMPAT_030001)
 	.ascii  ",HYPERCALL_PAGE=0x00000101"
 #else
 	.ascii  ",HYPERCALL_PAGE=0x00000001"

@@ -1,9 +1,11 @@
-# $NetBSD: INSTALL_XEN3_DOMU,v 1.4 2006/10/02 03:28:30 chs Exp $
+# $NetBSD: INSTALL_XEN3_DOMU,v 1.5 2006/10/17 18:53:03 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
 options 	XEN
 options 	XEN3
+#options 	XEN_NO_HYPERCALLPAGE # use old hypercall method
+options  	XEN_COMPAT_030001  #compatible with Xen3 before 3.0.2
 options 	MAXPHYS=32768
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
