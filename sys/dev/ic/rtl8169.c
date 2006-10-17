@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.29 2006/10/13 11:06:15 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.30 2006/10/17 09:19:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -422,8 +422,8 @@ re_diag(struct rtk_softc *sc)
 	u_int16_t		status;
 	u_int32_t		rxstat;
 	int			total_len, i, s, error = 0;
-	u_int8_t		dst[] = { 0x00, 'h', 'e', 'l', 'l', 'o' };
-	u_int8_t		src[] = { 0x00, 'w', 'o', 'r', 'l', 'd' };
+	static const u_int8_t	dst[] = { 0x00, 'h', 'e', 'l', 'l', 'o' };
+	static const u_int8_t	src[] = { 0x00, 'w', 'o', 'r', 'l', 'd' };
 
 	/* Allocate a single mbuf */
 
