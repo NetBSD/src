@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.229 2006/10/04 05:00:39 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.230 2006/10/17 22:26:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -393,15 +393,6 @@ _C_LABEL(data_start):					! Start of data segment
 _C_LABEL(__idle_u):
 	.space	USPACE
 
-/*
- * Process 0's u.
- *
- * This must be aligned on an 8 byte boundary.
- */
-	.globl	_C_LABEL(u0)
-_C_LABEL(u0):	POINTER	0
-estack0:	POINTER	0
-
 #ifdef KGDB
 /*
  * Another item that must be aligned, easiest to put it here.
@@ -412,7 +403,7 @@ _C_LABEL(kgdb_stack):
 	.space	KGDB_STACK_SIZE		! hope this is enough
 #endif
 
-#ifdef DEBUG
+#ifdef NOTDEF_DEBUG
 /*
  * This stack is used when we detect kernel stack corruption.
  */
@@ -2369,13 +2360,9 @@ winfixspill:
 	wrpr	%g0, 0, %otherwin
 	or	%lo(2f), %o0, %o0
 	wrpr	%g0, WSTATE_KERN, %wstate
-#ifdef DEBUG
-	set	panicstack-CC64FSZ-STKB, %sp		! Use panic stack.
-#else
-	set	estack0, %sp
-	LDPTR	[%sp], %sp
-	add	%sp, -CC64FSZ-STKB, %sp			! Overwrite proc 0's stack.
-#endif
+	sethi	%hi(PANICSTACK), %sp
+	LDPTR	[%sp + %lo(PANICSTACK)], %sp
+	add	%sp, -CC64FSZ-STKB, %sp
 	ta	1; nop					! This helps out traptrace.
 	call	_C_LABEL(panic)				! This needs to be fixed properly but we should panic here
 	 mov	%g1, %o1
@@ -3120,13 +3107,9 @@ slowtrap:
 	cmp	%g7, WSTATE_KERN
 	bnz,pt	%icc, 1f		! User stack -- we'll blow it away
 	 nop
-#ifdef DEBUG
-	set	panicstack, %sp		! Kernel stack corrupt -- use panicstack
-#else
-	set	estack0, %sp
-	LDPTR	[%sp], %sp
-	add	%sp, -CC64FSZ-STKB, %sp	! Overwrite proc 0's stack.
-#endif
+	sethi	%hi(PANICSTACK), %sp
+	LDPTR	[%sp + %lo(PANICSTACK)], %sp
+	add	%sp, -CC64FSZ-STKB, %sp	
 1:
 #endif
 	rdpr	%tt, %g4
@@ -4929,21 +4912,12 @@ dostart:
 #endif
 0:
 
-
 	call	_C_LABEL(bootstrap)
 	 clr	%g4				! Clear data segment pointer
 
-	/*
-	 * pmap_bootstrap should have allocated a stack for proc 0 and
-	 * stored the start and end in u0 and estack0.  Switch to that
-	 * stack now.
-	 */
-
 /*
- * Initialize a CPU.  This is used both for bootstrapping the first CPU
- * and spinning up each subsequent CPU.  Basically:
+ * Initialize a CPU.  Basically:
  *
- *	Establish the 4MB locked mappings for kernel data and text.
  *	Locate the cpu_info structure for this CPU.
  *	Establish a locked mapping for interrupt stack.
  *	Switch to the initial stack.
@@ -4953,20 +4927,7 @@ dostart:
 
 _C_LABEL(cpu_initialize):
 	/*
-	 * Step 5: install the permanent 4MB kernel mapping in both the
-	 * immu and dmmu.  We will clear out other mappings later.
-	 *
-	 * Register usage in this section:
-	 *
-	 *	%l0 = ktext (also KERNBASE)
-	 *	%l1 = ektext
-	 *	%l2 = ktextp/TTE Data for text w/o low bits
-	 *	%l3 = kdata (also DATA_START)
-	 *	%l4 = ekdata
-	 *	%l5 = kdatap/TTE Data for data w/o low bits
-	 *	%l6 = 4MB
-	 *	%l7 = 4MB-1
-	 *	%o0-%o5 = tmp
+	 * Step 5: is not more.
 	 */
 	
 	/*
@@ -5019,6 +4980,16 @@ _C_LABEL(cpu_initialize):
 	membar	#Sync				! We may need more membar #Sync in here
 	flush	%o5
 1:
+	!!
+	!! Map in idle u area and kernel stack
+	!!
+	sethi	%hi(KSTACK_VA), %l0
+	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
+	membar	#Sync
+	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
+	membar	#Sync
+	flush	%o5
+
 !!! Make sure our stack's OK.
 	flushw
 	sethi	%hi(CPUINFO_VA+CI_INITSTACK), %l0
@@ -5167,7 +5138,7 @@ ENTRY(cpu_mp_startup)
 #endif
 
 	!!
-	!!  Now, map in the interrupt stack as context==0
+	!!  Now, map in the interrupt stack & cpu_info as context==0
 	!!
 	set	TLB_TAG_ACCESS, %l5
 	set	1f, %o5
@@ -5180,9 +5151,9 @@ ENTRY(cpu_mp_startup)
 	flush	%l0
 1:
 	!!
-	!! Map in cpu_info structure at CPUINFO_VA.
+	!! Map in idle u area and kernel stack
 	!!
-	set	CPUINFO_VA, %l0
+	set	KSTACK_VA, %l0
 	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
 	membar	#Sync
 	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
@@ -5198,8 +5169,12 @@ ENTRY(cpu_mp_startup)
 	flush	%o5
 
 !!! Make sure our stack's OK. 
-	LDPTR	[%g2 + %lo(CBA_INITSTACK)], %l0
- 	add	%l0, -CC64FSZ-80-BIAS, %l0
+	LDPTR	[%g2 + CBA_INITSTACK], %l0
+ 	add	%l0, - CC64FSZ - 80, %l0
+#ifdef _LP64
+	andn	%l0, 0x0f, %l0			! Needs to be 16-byte aligned
+	sub	%l0, BIAS, %l0			! and biased
+#endif
 	mov	%l0, %sp
 	set	1, %fp
 	clr	%i7
@@ -6726,8 +6701,7 @@ ENTRY(cpu_exit)
 	flushw					! DEBUG
 	sethi	%hi(IDLE_U), %l6
 	LDPTR	[%l6 + %lo(IDLE_U)], %l6
-!	set	_C_LABEL(idle_u), %l6
-	SET_SP_REDZONE(%l6, %l5)
+	SET_SP_REDZONE(%l6, %o0)
 #endif
 
 	wrpr	%g0, PSTATE_INTR, %pstate	! and then enable traps
@@ -10855,7 +10829,7 @@ _C_LABEL(ssym):
 	! XXX should it called lwp0paddr
 	.globl	_C_LABEL(proc0paddr)
 _C_LABEL(proc0paddr):
-	POINTER	_C_LABEL(u0)		! KVA of proc0 uarea
+	POINTER	0
 
 #if !defined(MULTIPROCESSOR)
 	.comm	_C_LABEL(curlwp), PTRSZ
