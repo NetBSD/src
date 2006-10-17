@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.21 2006/06/18 21:29:48 christos Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.22 2006/10/17 14:16:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -40,7 +40,7 @@
 #include <sys/rnd.h>
 #endif
 
-#if defined(__i386__) || defined(__x86_64__)
+#ifdef __NO_STRICT_ALIGNMENT
 #define	RTK_ETHER_ALIGN	0
 #else
 #define RTK_ETHER_ALIGN	2
