@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.34 2006/06/17 17:05:20 jmcneill Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.35 2006/10/17 13:45:05 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -79,6 +79,7 @@ struct pciide_softc {
 	pci_chipset_tag_t	sc_pc;		/* PCI registers info */
 	pcitag_t		sc_tag;
 	void			*sc_pci_ih;	/* PCI interrupt handle */
+#if NATA_DMA
 	int			sc_dma_ok;	/* bus-master DMA info */
 	/*
 	 * sc_dma_ioh may only be used to allocate the dma_iohs
@@ -115,6 +116,7 @@ struct pciide_softc {
 	bus_space_tag_t sc_ba5_st;
 	bus_space_handle_t sc_ba5_sh;
 	int sc_ba5_en;
+#endif	/* NATA_DMA */
 
 	/* Vendor info (for interpreting Chip description) */
 	pcireg_t sc_pci_id;
@@ -129,6 +131,7 @@ struct pciide_softc {
 		int		compat;	/* is it compat? */
 		void		*ih;	/* compat or pci handle */
 		bus_space_handle_t ctl_baseioh; /* ctrl regs blk, native mode */
+#if NATA_DMA
 		/* DMA tables and DMA map for xfer, for each drive */
 		struct pciide_dma_maps {
 			bus_dmamap_t    dmamap_table;
@@ -144,6 +147,7 @@ struct pciide_softc {
 		 * required.
 		 */
 		uint8_t		idedma_cmd;
+#endif	/* NATA_DMA */
 	} pciide_channels[PCIIDE_MAX_CHANNELS];
 
 	/* Power management */
