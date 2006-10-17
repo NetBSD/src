@@ -1,4 +1,4 @@
-/*	$NetBSD: drvstats.c,v 1.3 2006/06/07 20:58:23 kardel Exp $	*/
+/*	$NetBSD: drvstats.c,v 1.4 2006/10/17 15:13:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -51,18 +51,18 @@
 
 static struct nlist namelist[] = {
 #define	X_TK_NIN	0
-	{ "_tk_nin" },		/* tty characters in */
+	{ .n_name = "_tk_nin" },		/* tty characters in */
 #define	X_TK_NOUT	1
-	{ "_tk_nout" },		/* tty characters out */
+	{ .n_name = "_tk_nout" },		/* tty characters out */
 #define	X_HZ		2
-	{ "_hz" },		/* ticks per second */
+	{ .n_name = "_hz" },		/* ticks per second */
 #define	X_STATHZ	3
-	{ "_stathz" },
+	{ .n_name = "_stathz" },
 #define	X_DRIVE_COUNT	4
-	{ "_iostat_count" },	/* number of drives */
+	{ .n_name = "_iostat_count" },	/* number of drives */
 #define	X_DRIVELIST	5
-	{ "_iostatlist" },	/* TAILQ of drives */
-	{ NULL },
+	{ .n_name = "_iostatlist" },	/* TAILQ of drives */
+	{ .n_name = NULL },
 };
 
 /* Structures to hold the statistics. */
@@ -80,7 +80,7 @@ static struct io_stats	*iostathead = NULL;
 static struct io_sysctl	*drives = NULL;
 
 /* Backward compatibility references. */
-int		ndrive = 0;
+size_t		ndrive = 0;
 int		*drv_select;
 char		**dr_name;
 
@@ -241,12 +241,12 @@ drvreadstats(void)
 	 * XXX case.
 	 */
 	size = sizeof(cur.cp_time);
-	memset(cur.cp_time, 0, size);
+	(void)memset(cur.cp_time, 0, size);
 	if (memf == NULL) {
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_CP_TIME;
 		if (sysctl(mib, 2, cur.cp_time, &size, NULL, 0) < 0)
-			memset(cur.cp_time, 0, sizeof(cur.cp_time));
+			(void)memset(cur.cp_time, 0, sizeof(cur.cp_time));
 	}
 }
 
@@ -294,12 +294,12 @@ cpureadstats(void)
 	 * XXX case.
 	 */
 	size = sizeof(cur.cp_time);
-	memset(cur.cp_time, 0, size);
+	(void)memset(cur.cp_time, 0, size);
 	if (memf == NULL) {
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_CP_TIME;
 		if (sysctl(mib, 2, cur.cp_time, &size, NULL, 0) < 0)
-			memset(cur.cp_time, 0, sizeof(cur.cp_time));
+			(void)memset(cur.cp_time, 0, sizeof(cur.cp_time));
 	}
 }
 
@@ -352,6 +352,7 @@ drvinit(int selected)
 				errx(1, "Memory allocation failure.");
 		}
 	} else {
+		int drive_count;
 		/* Open the kernel. */
 		if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY,
 		    errbuf)) == NULL)
@@ -362,11 +363,11 @@ drvinit(int selected)
 			KVM_ERROR("kvm_nlist failed to read symbols.");
 
 		/* Get the number of attached drives. */
-		deref_nl(X_DRIVE_COUNT, &ndrive, sizeof(ndrive));
+		deref_nl(X_DRIVE_COUNT, &drive_count, sizeof(drive_count));
 
-		if (ndrive < 0)
-			errx(1, "invalid _drive_count %d.", ndrive);
-		else if (ndrive == 0) {
+		if (drive_count < 0)
+			errx(1, "invalid _drive_count %d.", drive_count);
+		else if (drive_count == 0) {
 			warnx("No drives attached.");
 		} else {
 			/* Get a pointer to the first drive. */
@@ -374,6 +375,7 @@ drvinit(int selected)
 				 sizeof(iostat_head));
 			iostathead = iostat_head.tqh_first;
 		}
+		ndrive = drive_count;
 
 		/* Get ticks per second. */
 		deref_nl(X_STATHZ, &hz, sizeof(hz));
@@ -452,8 +454,8 @@ deref_kptr(void *kptr, void *ptr, size_t len)
 	char buf[128];
 
 	if (kvm_read(kd, (u_long)kptr, (char *)ptr, len) != len) {
-		memset(buf, 0, sizeof(buf));
-		snprintf(buf, sizeof buf, "can't dereference kptr 0x%lx",
+		(void)memset(buf, 0, sizeof(buf));
+		(void)snprintf(buf, sizeof buf, "can't dereference kptr 0x%lx",
 		    (u_long)kptr);
 		KVM_ERROR(buf);
 	}
