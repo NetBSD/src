@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.315 2006/10/17 20:07:34 mjf Exp $
+.\"	$NetBSD: main,v 1.316 2006/10/17 20:26:50 dogcow Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1406,6 +1406,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Jeff Smith Ta Mt jeffs@NetBSD.org
 .It Ta Noriyuki Soda Ta Mt soda@NetBSD.org
 .It Ta Wolfgang Solfrank Ta Mt ws@NetBSD.org
+.It Ta T K Spindler Ta Mt dogcow@NetBSD.org
 .It Ta SOMEYA Yoshihiko Ta Mt someya@NetBSD.org
 .It Ta Bill Sommerfeld Ta Mt sommerfeld@NetBSD.org
 .It Ta J\(:org Sonnenberger Ta Mt joerg@NetBSD.org
