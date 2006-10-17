@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.229 2006/10/13 16:53:36 dogcow Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.230 2006/10/17 18:21:29 dogcow Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.229 2006/10/13 16:53:36 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.230 2006/10/17 18:21:29 dogcow Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -1365,8 +1365,6 @@ exec_init(int init_boot)
 #ifdef DIAGNOSTIC
 	if (!init_boot)
 		panic("exec_init(): called with init_boot == 0");
-#else /* shut up -Wunused */
-	do { if (&init_boot) {} } while (/* CONSTCOND */ 0);
 #endif
 
 	/* do one-time initializations */

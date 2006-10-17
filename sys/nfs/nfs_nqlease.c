@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.72 2006/10/13 20:53:59 christos Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.73 2006/10/17 18:21:29 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.72 2006/10/13 20:53:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.73 2006/10/17 18:21:29 dogcow Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1138,8 +1138,6 @@ nqnfs_clientd(
 			np = CIRCLEQ_FIRST(&nmp->nm_timerhead);
 		}
 	    }
-#else
-	    do { if (&cred) {} } while (/* CONSTCOND */ 0); /* for -Wunused */
 #endif /* !NFS_V2_ONLY */
 
 	    /*

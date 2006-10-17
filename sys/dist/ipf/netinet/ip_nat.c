@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.17 2006/10/13 16:53:36 dogcow Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.18 2006/10/17 18:21:29 dogcow Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -4579,9 +4579,6 @@ u_int type;
 	types[0] = 0;
 
 	(void) ipllog(IPL_LOGNAT, NULL, items, sizes, types, 1);
-#else /* shut up -Wunused */
-	do { if (&nat) {} } while (/* CONSTCOND */ 0);
-	do { if (&type) {} } while (/* CONSTCOND */ 0);
 #endif
 }
 
