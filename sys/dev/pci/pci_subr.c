@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.68 2006/10/13 20:53:59 christos Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.69 2006/10/17 18:21:29 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.68 2006/10/13 20:53:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.69 2006/10/17 18:21:29 dogcow Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -321,8 +321,6 @@ pci_findvendor(pcireg_t id_reg __unused)
 	for (n = 0; n < pci_nvendors; n++)
 		if (pci_vendors[n].vendor == vendor)
 			return (pci_vendors[n].vendorname);
-#else
-	do { if (&id_reg) {} } while (/* CONSTCOND */ 0);
 #endif
 	return (NULL);
 }
@@ -339,8 +337,6 @@ pci_findproduct(pcireg_t id_reg __unused)
 		if (pci_products[n].vendor == vendor &&
 		    pci_products[n].product == product)
 			return (pci_products[n].productname);
-#else
-	do { if (&id_reg) {} } while (/* CONSTCOND */ 0);
 #endif
 	return (NULL);
 }

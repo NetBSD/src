@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.148 2006/10/13 16:53:36 dogcow Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.149 2006/10/17 18:21:29 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.148 2006/10/13 16:53:36 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.149 2006/10/17 18:21:29 dogcow Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1364,11 +1364,6 @@ trace_enter(struct lwp *l, register_t code,
 {
 	struct proc *p = l->l_proc;
 
-	do { if (&code) {} } while (/* CONSTCOND */ 0);
-	do { if (&realcode) {} } while (/* CONSTCOND */ 0);
-	do { if (&callp) {} } while (/* CONSTCOND */ 0);
-	do { if (&args) {} } while (/* CONSTCOND */ 0);
-	do { if (&p) {} } while (/* CONSTCOND */ 0);
 
 #if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
 #ifdef SYSCALL_DEBUG
@@ -1405,10 +1400,6 @@ trace_exit(struct lwp *l, register_t code, void *args __unused,
     register_t rval[], int error)
 {
 	struct proc *p = l->l_proc;
-	do { if (&code) {} } while (/* CONSTCOND */ 0);
-	do { if (&rval) {} } while (/* CONSTCOND */ 0);
-	do { if (&error) {} } while (/* CONSTCOND */ 0);
-	do { if (&p) {} } while (/* CONSTCOND */ 0);
 
 #if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
 #ifdef SYSCALL_DEBUG
@@ -1435,10 +1426,5 @@ trace_exit(struct lwp *l, register_t code, void *args __unused,
 		KERNEL_PROC_UNLOCK(l);
 	}
 #endif
-#else
-	do { if (&code) {} } while (/* CONSTCOND */ 0);
-	do { if (&realcode) {} } while (/* CONSTCOND */ 0);
-	do { if (&callp) {} } while (/* CONSTCOND */ 0);
-	do { if (&args) {} } while (/* CONSTCOND */ 0);
 #endif /* SYSCALL_DEBUG || {K,P,SYS}TRACE */
 }
