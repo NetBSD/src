@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.32 2006/10/12 01:31:33 christos Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.33 2006/10/17 13:45:05 itohy Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.32 2006/10/12 01:31:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.33 2006/10/17 13:45:05 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -95,8 +95,10 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.32 2006/10/12 01:31:33 christos 
 int atadebug_pciide_mask = 0;
 #endif
 
+#if NATA_DMA
 static const char dmaerrfmt[] =
     "%s:%d: unable to %s table DMA map for drive %d, error=%d\n";
+#endif
 
 /* Default product description for devices not known from this controller */
 const struct pciide_product_desc default_product_desc = {
@@ -128,7 +130,9 @@ pciide_common_attach(sc, pa, pp)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
+#if NATA_DMA
 	pcireg_t csr;
+#endif
 	char devinfo[256];
 	const char *displaydev;
 
@@ -155,9 +159,11 @@ pciide_common_attach(sc, pa, pp)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 
+#if NATA_DMA
 	/* Set up DMA defaults; these might be adjusted by chip_map. */
 	sc->sc_dma_maxsegsz = IDEDMA_BYTE_COUNT_MAX;
 	sc->sc_dma_boundary = IDEDMA_BYTE_COUNT_ALIGN;
+#endif
 
 #ifdef ATADEBUG
 	if (atadebug_pciide_mask & DEBUG_PROBE)
@@ -165,11 +171,13 @@ pciide_common_attach(sc, pa, pp)
 #endif
 	sc->sc_pp->chip_map(sc, pa);
 
+#if NATA_DMA
 	if (sc->sc_dma_ok) {
 		csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 		csr |= PCI_COMMAND_MASTER_ENABLE;
 		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 	}
+#endif
 	ATADEBUG_PRINT(("pciide: command/status register=%x\n",
 	    pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG)), DEBUG_PROBE);
 }
@@ -338,6 +346,7 @@ bad:
 	return;
 }
 
+#if NATA_DMA
 void
 pciide_mapreg_dma(sc, pa)
 	struct pciide_softc *sc;
@@ -440,6 +449,7 @@ pciide_mapreg_dma(sc, pa)
 		}
 	}
 }
+#endif	/* NATA_DMA */
 
 int
 pciide_compat_intr(arg)
@@ -487,6 +497,7 @@ pciide_pci_intr(arg)
 	return (rv);
 }
 
+#if NATA_DMA
 void
 pciide_channel_dma_setup(cp)
 	struct pciide_channel *cp;
@@ -768,6 +779,7 @@ pciide_irqack(chp)
 	bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0,
 	    bus_space_read_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0));
 }
+#endif	/* NATA_DMA */
 
 /* some common code used by several chip_map */
 int
@@ -855,8 +867,11 @@ default_chip_map(sc, pa)
 	struct pciide_channel *cp;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	pcireg_t csr;
-	int channel, drive;
+	int channel;
+#if NATA_DMA
+	int drive;
 	u_int8_t idedma_ctl;
+#endif
 	bus_size_t cmdsize, ctlsize;
 	const char *failreason;
 	struct wdc_regs *wdr;
@@ -865,6 +880,7 @@ default_chip_map(sc, pa)
 		return;
 
 	if (interface & PCIIDE_INTERFACE_BUS_MASTER_DMA) {
+#if NATA_DMA
 		aprint_normal("%s: bus-master DMA support present",
 		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		if (sc->sc_pp == &default_product_desc &&
@@ -878,18 +894,28 @@ default_chip_map(sc, pa)
 				aprint_normal(", used without full driver "
 				    "support");
 		}
+#else
+		aprint_normal("%s: bus-master DMA support present, but unused (no driver support)",
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+#endif	/* NATA_DMA */
 	} else {
 		aprint_normal("%s: hardware does not support DMA",
 		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+#if NATA_DMA
 		sc->sc_dma_ok = 0;
+#endif
 	}
 	aprint_normal("\n");
+#if NATA_DMA
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
+#endif
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
+#if NATA_DMA
 	sc->sc_wdcdev.sc_atac.atac_dma_cap = 0;
+#endif
 
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
@@ -959,6 +985,7 @@ next:
 		}
 	}
 
+#if NATA_DMA
 	if (sc->sc_dma_ok == 0)
 		return;
 
@@ -992,12 +1019,14 @@ next:
 			    cp->dma_iohs[IDEDMA_CTL], 0, idedma_ctl);
 		}
 	}
+#endif	/* NATA_DMA */
 }
 
 void
 sata_setup_channel(chp)
 	struct ata_channel *chp;
 {
+#if NATA_DMA
 	struct ata_drive_datas *drvp;
 	int drive, s;
 	u_int32_t idedma_ctl;
@@ -1014,13 +1043,16 @@ sata_setup_channel(chp)
 		/* If no drive, skip */
 		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
+#if NATA_UDMA
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
 			s = splbio();
 			drvp->drive_flags &= ~DRIVE_DMA;
 			splx(s);
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-		} else if (drvp->drive_flags & DRIVE_DMA) {
+		} else
+#endif	/* NATA_UDMA */
+		if (drvp->drive_flags & DRIVE_DMA) {
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		}
 	}
@@ -1035,4 +1067,5 @@ sata_setup_channel(chp)
 		bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0,
 		    idedma_ctl);
 	}
+#endif	/* NATA_DMA */
 }
