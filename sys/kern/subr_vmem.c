@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.11 2006/10/16 16:05:34 dogcow Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.12 2006/10/17 08:54:03 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.11 2006/10/16 16:05:34 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.12 2006/10/17 08:54:03 yamt Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -769,10 +769,9 @@ vmem_roundup_size(vmem_t *vm, vmem_size_t size)
 vmem_addr_t
 vmem_alloc(vmem_t *vm, vmem_size_t size0, vm_flag_t flags)
 {
-	const vmem_size_t size = vmem_roundup_size(vm, size0);
-	const vm_flag_t strat = flags & VM_FITMASK;
+	const vmem_size_t size __unused = vmem_roundup_size(vm, size0);
+	const vm_flag_t strat __unused = flags & VM_FITMASK;
 
-	do { if (&strat) {} } while (/* CONSTCOND */ 0);
 	KASSERT((flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 	KASSERT((~flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 	VMEM_ASSERT_UNLOCKED(vm);
