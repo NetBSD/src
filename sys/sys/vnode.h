@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.156 2006/10/05 14:48:33 chs Exp $	*/
+/*	$NetBSD: vnode.h,v 1.157 2006/10/17 14:51:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -176,18 +176,6 @@ struct vnode {
 #define	VSIZENOTSET	((voff_t)-1)
 
 /*
- * Use a global lock for all v_numoutput updates.
- * Define a convenience macro to increment by one.
- * Note: the only place where v_numoutput is decremented is in vwakeup().
- */
-extern struct simplelock global_v_numoutput_slock;
-#define V_INCR_NUMOUTPUT(vp) do {			\
-	simple_lock(&global_v_numoutput_slock);		\
-	(vp)->v_numoutput++;				\
-	simple_unlock(&global_v_numoutput_slock);	\
-} while (/*CONSTCOND*/ 0)
-
-/*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
  * is unavailable (getattr) or which is not to be changed (setattr).
  */
@@ -221,6 +209,18 @@ struct vattr {
 #define	VA_EXCLUSIVE	0x02		/* exclusive create request */
 
 #ifdef _KERNEL
+
+/*
+ * Use a global lock for all v_numoutput updates.
+ * Define a convenience macro to increment by one.
+ * Note: the only place where v_numoutput is decremented is in vwakeup().
+ */
+extern struct simplelock global_v_numoutput_slock;
+#define V_INCR_NUMOUTPUT(vp) do {			\
+	simple_lock(&global_v_numoutput_slock);		\
+	(vp)->v_numoutput++;				\
+	simple_unlock(&global_v_numoutput_slock);	\
+} while (/*CONSTCOND*/ 0)
 
 /*
  * Flags for ioflag.
