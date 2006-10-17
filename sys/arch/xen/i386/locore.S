@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.21 2006/10/17 19:57:24 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.22 2006/10/17 22:16:20 bouyer Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -207,7 +207,7 @@
 #endif /* XEN3 */
 	.ascii	",LOADER=generic"
 #if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
-	.ascii	",BSD_SYMTAB"
+	.ascii	",BSD_SYMTAB=yes"
 #endif
 	.byte	0
 
