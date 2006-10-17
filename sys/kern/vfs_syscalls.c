@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.271 2006/10/12 01:32:19 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.272 2006/10/17 15:06:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.271 2006/10/12 01:32:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.272 2006/10/17 15:06:18 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -719,7 +719,7 @@ sys_quotactl(struct lwp *l, void *v, register_t *retval __unused)
 		syscallarg(const char *) path;
 		syscallarg(int) cmd;
 		syscallarg(int) uid;
-		syscallarg(caddr_t) arg;
+		syscallarg(void *) arg;
 	} */ *uap = v;
 	struct mount *mp;
 	int error;
