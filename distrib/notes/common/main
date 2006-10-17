@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.313 2006/08/30 14:19:24 obache Exp $
+.\"	$NetBSD: main,v 1.314 2006/10/17 07:54:06 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1202,6 +1202,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Jon Buller Ta Mt jonb@NetBSD.org
 .It Ta Simon Burge Ta Mt simonb@NetBSD.org
 .It Ta Robert Byrnes Ta Mt byrnes@NetBSD.org
+.It Ta Pavel Cahyna Ta Mt pavel@NetBSD.org
 .It Ta D'Arcy J.M. Cain Ta Mt darcy@NetBSD.org
 .It Ta Dave Carrel Ta Mt carrel@NetBSD.org
 .It Ta Daniel Carosone Ta Mt dan@NetBSD.org
