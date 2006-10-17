@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.51 2006/10/16 17:58:45 bouyer Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.52 2006/10/17 18:26:11 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -410,4 +410,15 @@ sys/kern/sys_process.c				1.111 via patch
 	Don't allow ptrace to copyout arbitrary sized data. Reported by the
 	Suresec vulnerability research team.
 	[christos, ticket #10720]
+
+sys/arch/acorn26/acorn26/except.c		1.17
+
+	Correctly calculate fault addresses for instructions like:
+        	ldr     rX, [rY, rZ, ror #16]
+	and even:
+        	ldr     rX, [rY, rZ, rrx]
+	Why anyone would want such an instruction is beyond me,
+	but it's nice not to panic if they do.  Also this makes
+	regress/sys/arch/arm/abort-fixup pass.
+	[bjh21, ticket #10716]
 
