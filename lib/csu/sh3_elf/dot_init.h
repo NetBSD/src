@@ -1,4 +1,4 @@
-/*	$NetBSD: dot_init.h,v 1.3 2005/12/24 22:02:10 perry Exp $	*/
+/*	$NetBSD: dot_init.h,v 1.4 2006/10/17 01:10:26 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,55 +35,59 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
+
 /*
- * These must be extern to avoid warnings ("declared static but never defined")
- * However, only the declaration is extern, the actually __asm() defines them
- * as static.
+ * Don't use C versions of _init/_fini, they have become just a
+ * rudimentary indirection to the entry points we would supply with
+ * MD_SECTION_PROLOGUE.
  */
-#define INIT_FALLTHRU_DECL void init_fallthru(void)
-#define FINI_FALLTHRU_DECL void fini_fallthru(void)
+#define	MD_DO_NOT_NEED_FALLTHRU
 
-#define INIT_FALLTHRU()	init_fallthru()
-#define FINI_FALLTHRU()	fini_fallthru()
-
-#define MD_SECTION_PROLOGUE(sect, entry_pt)		    \
-		__asm (					    \
-		".section "#sect",\"ax\",@progbits	\n" \
-		#entry_pt":				\n" \
-		"	sts.l	pr, @-r15		\n" \
-		"	.align	2			\n" \
-		"	/* fall thru */			\n" \
-		".previous")
-
-#define MD_SECTION_EPILOGUE(sect)			    \
-		__asm (					    \
-		".section "#sect",\"ax\",@progbits	\n" \
-		"	lds.l	@r15+, pr		\n" \
-		"	rts				\n" \
-		"	nop				\n" \
-		".previous")
-
-#ifdef __LEADING_UNDERSCORE
-#define MD_INIT_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.init, _init_fallthru)
-#define MD_FINI_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.fini, _fini_fallthru)
-#else
-#define MD_INIT_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.init, init_fallthru)
-#define MD_FINI_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.fini, fini_fallthru)
-#endif
+#define MD_INIT_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.init, _init)
+#define MD_FINI_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.fini, _fini)
 
 #define MD_INIT_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.init)
 #define MD_FINI_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.fini)
 
+
+#define MD_ASM_IN_SECTION(section, content)				\
+	__asm(								\
+		".section " #section ",\"ax\",@progbits\n"		\
+			content "\n"					\
+		".previous")
+
 /*
- * We need to put the function pointer in our own constant
- * pool (otherwise it might be too far away to reference).
+ * Declare the entry point global because of MD_DO_NOT_NEED_FALLTHRU.
  */
-#define MD_CALL_STATIC_FUNCTION(section, func) \
-__asm(".section " #section "\n"		\
-"    mov.l 1f, r1	\n"		\
-"    mova 2f, r0	\n"		\
-"    braf r1		\n"		\
-"     lds r0, pr	\n"		\
-"0:  .p2align 2		\n"		\
-"1:  .long " #func " - 0b \n"		\
-"2:  .previous");
+#define MD_SECTION_PROLOGUE(section, entry_pt)				\
+	MD_ASM_IN_SECTION(section,					\
+		"	.global "_C_LABEL_STRING(#entry_pt)"	\n"	\
+		"	.type "_C_LABEL_STRING(#entry_pt)",@function\n" \
+		_C_LABEL_STRING(#entry_pt)":			\n"	\
+		"	mov.l	r14, @-sp			\n"	\
+		"	sts.l	pr, @-sp			\n"	\
+		"	mov	sp, r14				\n"	\
+		"	.p2align 2")
+
+/*
+ * NOTE 1: Supply the semicolon here because crtbegin.c doesn't.
+ * NOTE 2: We don't use our crtbegin.c for gcc3 and later,
+ *         we use gcc crtstuff.c via src/gnu/lib/crtstuff*
+ */
+#define MD_CALL_STATIC_FUNCTION(section, func)				\
+	MD_ASM_IN_SECTION(section,					\
+		"	mov.l	1f, r1				\n"	\
+		"	mova	2f, r0				\n"	\
+		"0:	braf	r1				\n"	\
+		"	 lds	r0, pr				\n"	\
+									\
+		"	.p2align 2				\n"	\
+		"1:	.long "_C_LABEL_STRING(#func)" - (0b+4)	\n"	\
+		"2:	");
+
+#define MD_SECTION_EPILOGUE(section)					\
+	MD_ASM_IN_SECTION(section,					\
+		"	mov	r14, sp				\n"	\
+		"	lds.l	@sp+, pr			\n"	\
+		"	rts					\n"	\
+		"	 mov.l	@sp+, r14")
