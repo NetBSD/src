@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.54 2006/10/03 21:05:22 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.55 2006/10/17 22:26:06 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.54 2006/10/03 21:05:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.55 2006/10/17 22:26:06 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ alloc_cpuinfo(u_int cpu_node)
 {
 	paddr_t pa0, pa;
 	vaddr_t va, va0;
-	vsize_t sz = 8 * PAGE_SIZE;
+	vsize_t sz = 16 * PAGE_SIZE;
 	int portid;
 	struct cpu_info *cpi, *ci;
 	extern paddr_t cpu0paddr;
@@ -123,7 +123,7 @@ alloc_cpuinfo(u_int cpu_node)
 			return cpi;
 
 	/* Allocate the aligned VA and determine the size. */
-	va = uvm_km_alloc(kernel_map, sz, sz, UVM_KMF_VAONLY);
+	va = uvm_km_alloc(kernel_map, sz, 8 * PAGE_SIZE, UVM_KMF_VAONLY);
 	if (!va)
 		panic("alloc_cpuinfo: no virtual space");
 	va0 = va;
@@ -152,10 +152,9 @@ alloc_cpuinfo(u_int cpu_node)
 	cpi->ci_upaid = portid;
 	cpi->ci_fplwp = NULL;
 	cpi->ci_spinup = NULL;						/* XXX */
-	cpi->ci_eintstack = (void *)EINTSTACK; 				/* XXX */
-	cpi->ci_idle_u = (struct pcb *)(CPUINFO_VA + 2 * PAGE_SIZE); 	/* XXX */
-	cpi->ci_cpcb = cpi->ci_idle_u;					/* XXX */
-	cpi->ci_initstack = (void *)((vaddr_t)cpi->ci_idle_u + 2 * PAGE_SIZE); /* XXX */
+	cpi->ci_idle_u = (struct pcb *)IDLE_U_VA;
+	cpi->ci_cpcb = cpi->ci_idle_u;
+	cpi->ci_initstack = (void *)INITSTACK_VA;
 	cpi->ci_paddr = pa0;
 	cpi->ci_self = cpi;
 	cpi->ci_node = cpu_node;
