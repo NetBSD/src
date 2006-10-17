@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.37 2006/07/12 20:03:48 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.38 2006/10/17 23:53:30 he Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.37 2006/07/12 20:03:48 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.38 2006/10/17 23:53:30 he Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1743,17 +1743,17 @@ yyerror(char *msg)
 	return (0);
 }
 
-static inline int uq_gt(uint64_t, uint64_t);
-static inline int q_gt(int64_t, int64_t);
+static __inline int uq_gt(uint64_t, uint64_t);
+static __inline int q_gt(int64_t, int64_t);
 
-static inline int
+static __inline int
 uq_gt(uint64_t a, uint64_t b)
 {
 
 	return (a > b);
 }
 
-static inline int
+static __inline int
 q_gt(int64_t a, int64_t b)
 {
 
