@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.22 2006/09/24 18:14:44 bouyer Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.23 2006/10/17 19:57:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -143,7 +143,7 @@ void hypervisor_set_ipending(u_int32_t, int, int);
  * Assembler stubs for hyper-calls.
  */
 
-#if defined(XEN3) && !defined(XEN_NO_HYPERCALLPAGE)
+#if defined(XEN3) && !defined(XEN_COMPAT_030001)
 /* hypercall via the hypercall call page */
 #define __str(x) #x
 #define _str(x) __str(x)

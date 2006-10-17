@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.20 2006/10/17 18:53:04 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.21 2006/10/17 19:57:24 bouyer Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -198,14 +198,10 @@
 	.ascii  ",ELF_PADDR_OFFSET=0xc0100000" /* KERNTEXTOFF */
 #endif
 	.ascii  ",VIRT_ENTRY=0xc0100000" /* KERNTEXTOFF */
-#ifndef XEN_NO_HYPERCALLPAGE
-#if defined(DOM0OPS) || !defined(XEN_COMPAT_030001)
+#if !defined(XEN_COMPAT_030001)
 	.ascii  ",HYPERCALL_PAGE=0x00000101"
-#else
-	.ascii  ",HYPERCALL_PAGE=0x00000001"
 		/* (???+HYPERCALL_PAGE_OFFSET)/PAGE_SIZE) */
-#endif 
-#endif /* XEN_NO_HYPERCALLPAGE */
+#endif
 #else /* !XEN3 */
 	.ascii	"GUEST_OS=netbsd,GUEST_VER=2.0,XEN_VER=2.0"
 #endif /* XEN3 */
@@ -524,7 +520,7 @@ start:
 
 	call 	_C_LABEL(main)
 
-#if defined(XEN3) && !defined(XEN_NO_HYPERCALLPAGE)
+#if defined(XEN3) && !defined(XEN_COMPAT_030001)
 /* space for the hypercall call page */
 #define HYPERCALL_PAGE_OFFSET 0x1000
 .org HYPERCALL_PAGE_OFFSET
@@ -791,7 +787,7 @@ idle_loop:
 	addl	$4,%esp
 	jmp	idle_start
 4:
-#if defined(XEN3) && !defined(XEN_NO_HYPERCALLPAGE)
+#if defined(XEN3) && !defined(XEN_COMPAT_030001)
 	movl    $SCHEDOP_yield,%ebx
 	call	(hypercall_page + (HYPERVISOR_sched_op * 32))
 #else
