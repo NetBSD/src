@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.1 2006/10/16 16:40:14 kiyohara Exp $
+#	$NetBSD: GUMSTIX,v 1.2 2006/10/17 16:57:55 kiyohara Exp $
 #
 #	GUMSTIX -- Gumstix, Inc. gumstix platforms kernel
 #
@@ -223,29 +223,29 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 # USB Controller and Devices
 
 # ISA USB controllers
-slhci* at pcmcia? function ?		# ScanLogic SL811HS
+#slhci* at pcmcia? function ?		# ScanLogic SL811HS
 
 # USB bus support
-usb*	at slhci?
+#usb*	at slhci?
 
 # USB Hubs
-uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+#uhub*	at usb?
+#uhub*	at uhub? port ? configuration ? interface ?
 
 # USB HID device
-uhidev*	at uhub? port ? configuration ? interface ?
+#uhidev*	at uhub? port ? configuration ? interface ?
 
 # USB Mice
-ums*	at uhidev? reportid ?
-wsmouse* at ums? mux 0
+#ums*	at uhidev? reportid ?
+#wsmouse* at ums? mux 0
 
 # USB eGalax touch-panel
 #uep*	at uhub? port ?
 #wsmouse* at uep? mux 0
 
 # USB Keyboards
-ukbd*	at uhidev? reportid ?
-wskbd*	at ukbd? console ? mux 1
+#ukbd*	at uhidev? reportid ?
+#wskbd*	at ukbd? console ? mux 1
 
 # USB serial adpater
 #ucycom*	at uhidev? reportid ?
@@ -290,7 +290,7 @@ wskbd*	at ukbd? console ? mux 1
 
 # USB 802.11b adapters
 #atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
-ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+#ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 
 # Prolific PL2301/PL2302 host-to-host adapter
 #upl*	at uhub? port ?
