@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.149 2006/10/09 16:27:07 rpaulo Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.150 2006/10/17 11:11:40 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.149 2006/10/09 16:27:07 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.150 2006/10/17 11:11:40 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -809,7 +809,7 @@ again:
 	}
 
 	if (sack_rxmit == 0) {
-		if (sack_bytes_rxmt != 0) {
+		if (TCP_SACK_ENABLED(tp) && tp->t_partialacks >= 0) {
 			long cwin;
 
 			/*
