@@ -1,3 +1,5 @@
+.\" $NetBSD: gpt.8,v 1.2 2006/10/17 09:32:34 wiz Exp $
+.\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
 .\"
@@ -29,7 +31,7 @@
 .Dt GPT 8
 .Sh NAME
 .Nm gpt
-.Nd "GUID partition table maintenance utility"
+.Nd GUID partition table maintenance utility
 .Sh SYNOPSIS
 .Nm
 .Op Ar general_options
@@ -130,7 +132,7 @@ option allows the user to specify the partition type.
 The type is given as an UUID, but
 .Nm
 accepts
-.Cm efi , swap , ufs , hfs , linux
+.Cm efi , swap , ufs , hfs , linux ,
 and
 .Cm windows
 as aliases for the most commonly used partition types.
