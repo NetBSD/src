@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.57 2006/10/17 14:53:54 christos Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.58 2006/10/17 14:55:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -228,10 +228,10 @@ struct nfs_iod {
 	struct proc *nid_want;
 	struct nfsmount *nid_mount;
 };
-extern struct nfs_iod nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
 
 #ifdef _KERNEL
 
+extern struct nfs_iod nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
 extern u_long nfsdirhashmask;
 
 /*
