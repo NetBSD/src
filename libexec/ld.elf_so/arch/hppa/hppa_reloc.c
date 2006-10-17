@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.23 2005/08/20 19:01:17 skrll Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.24 2006/10/17 08:28:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -38,13 +38,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.23 2005/08/20 19:01:17 skrll Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.24 2006/10/17 08:28:06 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/queue.h>
+
+#include <string.h>
 
 #include "rtld.h"
 #include "debug.h"
@@ -58,6 +60,35 @@ __RCSID("$NetBSD: hppa_reloc.c,v 1.23 2005/08/20 19:01:17 skrll Exp $");
 caddr_t _rtld_bind(const Obj_Entry *, const Elf_Addr);
 void _rtld_bind_start(void);
 void __rtld_setup_hppa_pltgot(const Obj_Entry *, Elf_Addr *);
+
+/*
+ * It is possible for the compiler to emit relocations for unaligned data.
+ * We handle this situation with these inlines.
+ */
+#define	RELOC_ALIGNED_P(x) \
+	(((uintptr_t)(x) & (sizeof(void *) - 1)) == 0)
+
+static inline Elf_Addr
+load_ptr(void *where)
+{
+	if (__predict_true(RELOC_ALIGNED_P(where)))
+		return *(Elf_Addr *)where;
+	else {
+		Elf_Addr res;
+
+		(void)memcpy(&res, where, sizeof(res));
+		return res;
+	}
+}
+
+static inline void
+store_ptr(void *where, Elf_Addr val)
+{
+	if (__predict_true(RELOC_ALIGNED_P(where)))
+		*(Elf_Addr *)where = val;
+	else
+		(void)memcpy(where, &val, sizeof(val));
+}
 
 /*
  * In the runtime architecture (ABI), PLABEL function 
@@ -117,7 +148,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 {
 	const Elf_Rela	*relafirst, *rela, *relalim;
 	Elf_Addr        relasz;
-	Elf_Addr	where;
+	void		*where;
 	Elf_Addr	*pltgot;
 	const Elf_Rela	*plabel_relocs[HPPA_PLABEL_PRE];
 	int		nplabel_relocs = 0;
@@ -160,16 +191,17 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 
 	for (rela = relafirst; rela < relalim; rela++) {
 		symnum = ELF_R_SYM(rela->r_info);
-		where = (Elf_Addr)(relocbase + rela->r_offset);
+		where = (void *)(relocbase + rela->r_offset);
 
 		switch (ELF_R_TYPE(rela->r_info)) {
 		case R_TYPE(DIR32):
 			if (symnum == 0)
-				*((Elf_Addr *)where) = relocbase + rela->r_addend;
+				store_ptr(where, 
+				    relocbase + rela->r_addend);
 			else {
 				sym = symtab + symnum;
-				*((Elf_Addr *)where) = 
-				    relocbase + rela->r_addend + sym->st_value;
+				store_ptr(where, 
+				    relocbase + rela->r_addend + sym->st_value);
 			}
 			break;
 
@@ -200,7 +232,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 	assert(nplabel_relocs < HPPA_PLABEL_PRE);
 	for (i = 0; i < nplabel_relocs; i++) {
 		rela = plabel_relocs[i];
-		where = (Elf_Addr)(relocbase + rela->r_offset);
+		where = (void *)(relocbase + rela->r_offset);
 		sym = symtab + ELF_R_SYM(rela->r_info);
 		
 		plabel = &hppa_plabel_pre[hppa_plabel_pre_next++];
@@ -215,7 +247,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 	
 #if defined(RTLD_DEBUG_HPPA)
 	for (rela = relafirst; rela < relalim; rela++) {
-		where = (Elf_Addr)(relocbase + rela->r_offset);
+		where = (void *)(relocbase + rela->r_offset);
 
 		switch (ELF_R_TYPE(rela->r_info)) {
 		case R_TYPE(DIR32):
@@ -370,19 +402,19 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 				tmp = (Elf_Addr)(defobj->relocbase +
 				    def->st_value + rela->r_addend);
 
-				if (*where != tmp)
-					*where = tmp;
+				if (load_ptr(where) != tmp)
+					store_ptr(where, tmp);
 				rdbg(("DIR32 %s in %s --> %p in %s",
 				    obj->strtab + obj->symtab[symnum].st_name,
-				    obj->path, (void *)*where, defobj->path));
+				    obj->path, (void *)load_ptr(where), defobj->path));
 			} else {
 				tmp = (Elf_Addr)(obj->relocbase +
 				    rela->r_addend);
 
-				if (*where != tmp)
-					*where = tmp;
+				if (load_ptr(where) != tmp)
+					store_ptr(where, tmp);
 				rdbg(("DIR32 in %s --> %p", obj->path,
-					    (void *)*where));
+					    (void *)load_ptr(where)));
 			}
 			break;
 
@@ -452,7 +484,7 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 			    "addend = %p, contents = %p, symbol = %s",
 			    symnum, (u_long)ELF_R_TYPE(rela->r_info),
 			    (void *)rela->r_offset, (void *)rela->r_addend,
-			    (void *)*where,
+			    (void *)load_ptr(where),
 			    obj->strtab + obj->symtab[symnum].st_name));
 			_rtld_error("%s: Unsupported relocation type %ld "
 			    "in non-PLT relocations\n",
