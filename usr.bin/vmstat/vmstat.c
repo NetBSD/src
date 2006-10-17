@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.152 2006/10/16 16:44:20 christos Exp $ */
+/* $NetBSD: vmstat.c,v 1.153 2006/10/17 15:13:08 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.152 2006/10/16 16:44:20 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.153 2006/10/17 15:13:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,29 +140,29 @@ __RCSID("$NetBSD: vmstat.c,v 1.152 2006/10/16 16:44:20 christos Exp $");
 struct nlist namelist[] =
 {
 #define	X_BOOTTIME	0
-	{ "_boottime" },
+	{ .n_name = "_boottime" },
 #define	X_HZ		1
-	{ "_hz" },
+	{ .n_name = "_hz" },
 #define	X_STATHZ	2
-	{ "_stathz" },
+	{ .n_name = "_stathz" },
 #define	X_NCHSTATS	3
-	{ "_nchstats" },
+	{ .n_name = "_nchstats" },
 #define	X_KMEMSTAT	4
-	{ "_kmemstatistics" },
+	{ .n_name = "_kmemstatistics" },
 #define	X_KMEMBUCKETS	5
-	{ "_kmembuckets" },
+	{ .n_name = "_kmembuckets" },
 #define	X_ALLEVENTS	6
-	{ "_allevents" },
+	{ .n_name = "_allevents" },
 #define	X_POOLHEAD	7
-	{ "_pool_head" },
+	{ .n_name = "_pool_head" },
 #define	X_UVMEXP	8
-	{ "_uvmexp" },
+	{ .n_name = "_uvmexp" },
 #define	X_TIME_SECOND	9
-	{ "_time_second" },
+	{ .n_name = "_time_second" },
 #define X_TIME		10
-	{ "_time" },
+	{ .n_name = "_time" },
 #define	X_NL_SIZE	11
-	{ NULL },
+	{ .n_name = NULL },
 };
 
 /*
@@ -171,15 +171,15 @@ struct nlist namelist[] =
 struct nlist intrnl[] =
 {
 #define	X_INTRNAMES	0
-	{ "_intrnames" },
+	{ .n_name = "_intrnames" },
 #define	X_EINTRNAMES	1
-	{ "_eintrnames" },
+	{ .n_name = "_eintrnames" },
 #define	X_INTRCNT	2
-	{ "_intrcnt" },
+	{ .n_name = "_intrcnt" },
 #define	X_EINTRCNT	3
-	{ "_eintrcnt" },
+	{ .n_name = "_eintrcnt" },
 #define	X_INTRNL_SIZE	4
-	{ NULL },
+	{ .n_name = NULL },
 };
 
 
@@ -189,35 +189,35 @@ struct nlist intrnl[] =
 struct nlist hashnl[] =
 {
 #define	X_NFSNODE	0
-	{ "_nfsnodehash" },
+	{ .n_name = "_nfsnodehash" },
 #define	X_NFSNODETBL	1
-	{ "_nfsnodehashtbl" },
+	{ .n_name = "_nfsnodehashtbl" },
 #define	X_IHASH		2
-	{ "_ihash" },
+	{ .n_name = "_ihash" },
 #define	X_IHASHTBL	3
-	{ "_ihashtbl" },
+	{ .n_name = "_ihashtbl" },
 #define	X_BUFHASH	4
-	{ "_bufhash" },
+	{ .n_name = "_bufhash" },
 #define	X_BUFHASHTBL	5
-	{ "_bufhashtbl" },
+	{ .n_name = "_bufhashtbl" },
 #define	X_UIHASH	6
-	{ "_uihash" },
+	{ .n_name = "_uihash" },
 #define	X_UIHASHTBL	7
-	{ "_uihashtbl" },
+	{ .n_name = "_uihashtbl" },
 #define	X_IFADDRHASH	8
-	{ "_in_ifaddrhash" },
+	{ .n_name = "_in_ifaddrhash" },
 #define	X_IFADDRHASHTBL	9
-	{ "_in_ifaddrhashtbl" },
+	{ .n_name = "_in_ifaddrhashtbl" },
 #define	X_NCHASH	10
-	{ "_nchash" },
+	{ .n_name = "_nchash" },
 #define	X_NCHASHTBL	11
-	{ "_nchashtbl" },
+	{ .n_name = "_nchashtbl" },
 #define	X_NCVHASH	12
-	{ "_ncvhash" },
+	{ .n_name = "_ncvhash" },
 #define	X_NCVHASHTBL	13
-	{ "_ncvhashtbl" },
+	{ .n_name = "_ncvhashtbl" },
 #define X_HASHNL_SIZE	14	/* must be last */
-	{ NULL },
+	{ .n_name = NULL },
 };
 
 /*
@@ -225,9 +225,9 @@ struct nlist hashnl[] =
  */
 struct nlist histnl[] =
 {
-	{ "_uvm_histories" },
+	{ .n_name = "_uvm_histories" },
 #define	X_UVM_HISTORIES		0
-	{ NULL },
+	{ .n_name = NULL },
 };
 
 
@@ -413,7 +413,8 @@ main(int argc, char *argv[])
 			    c != X_TIME) {
 				if (doexit++ == 0)
 					(void)fprintf(stderr, "vmstat: undefined symbols:");
-				fprintf(stderr, " %s", namelist[c].n_name);
+				(void)fprintf(stderr, " %s",
+				    namelist[c].n_name);
 			}
 		if (doexit) {
 			(void)fputc('\n', stderr);
@@ -430,7 +431,7 @@ main(int argc, char *argv[])
 	if (todo & VMSTAT) {
 		struct winsize winsize;
 
-		drvinit(0);	/* Initialize disk stats, no disks selected. */
+		(void)drvinit(0);/* Initialize disk stats, no disks selected. */
 
 		(void)setgid(getgid()); /* don't need privs anymore */
 
@@ -470,28 +471,28 @@ main(int argc, char *argv[])
 					errx(1, "you may list or dump,"
 					    " but not both!");
 				hist_traverse(todo, histname);
-				putchar('\n');
+				(void)putchar('\n');
 			}
 			if (todo & FORKSTAT) {
 				doforkst();
-				putchar('\n');
+				(void)putchar('\n');
 			}
 			if (todo & MEMSTAT) {
 				domem();
 				dopool(verbose, wide);
-				putchar('\n');
+				(void)putchar('\n');
 			}
 			if (todo & SUMSTAT) {
 				dosum();
-				putchar('\n');
+				(void)putchar('\n');
 			}
 			if (todo & INTRSTAT) {
 				dointr(verbose);
-				putchar('\n');
+				(void)putchar('\n');
 			}
 			if (todo & EVCNTSTAT) {
 				doevcnt(verbose);
-				putchar('\n');
+				(void)putchar('\n');
 			}
 			if (todo & (HASHLIST|HASHSTAT)) {
 				if ((todo & (HASHLIST|HASHSTAT)) ==
@@ -499,12 +500,12 @@ main(int argc, char *argv[])
 					errx(1, "you may list or display,"
 					    " but not both!");
 				dohashstat(verbose, todo, hashname);
-				putchar('\n');
+				(void)putchar('\n');
 			}
 
 			if (reps >= 0 && --reps <=0)
 				break;
-			nanosleep(&interval, NULL);
+			(void)nanosleep(&interval, NULL);
 		}
 	} else {
 		if ((todo & (VMSTAT|VMTOTAL)) == (VMSTAT|VMTOTAL)) {
@@ -515,7 +516,7 @@ main(int argc, char *argv[])
 		if (todo & VMTOTAL)
 			dovmtotal(&interval, reps);
 	}
-	exit(0);
+	return 0;
 }
 
 char **
@@ -604,40 +605,41 @@ dovmtotal(struct timespec *interval, int reps)
 		if (!--hdrcnt)
 			print_total_hdr();
 		if (memf != NULL) {
-			printf("Unable to get vmtotals from crash dump.\n");
-			memset(&total, 0, sizeof(total));
+			(void)printf(
+			    "Unable to get vmtotals from crash dump.\n");
+			(void)memset(&total, 0, sizeof(total));
 		} else {
 			size = sizeof(total);
 			mib[0] = CTL_VM;
 			mib[1] = VM_METER;
 			if (sysctl(mib, 2, &total, &size, NULL, 0) < 0) {
-				printf("Can't get vmtotals: %s\n",
+				(void)printf("Can't get vmtotals: %s\n",
 				    strerror(errno));
-				memset(&total, 0, sizeof(total));
+				(void)memset(&total, 0, sizeof(total));
 			}
 		}
-		printf("%2d ", total.t_rq);
-		printf("%2d ", total.t_dw);
-		printf("%2d ", total.t_pw);
-		printf("%2d ", total.t_sl);
-		printf("%2d ", total.t_sw);
+		(void)printf("%2d ", total.t_rq);
+		(void)printf("%2d ", total.t_dw);
+		(void)printf("%2d ", total.t_pw);
+		(void)printf("%2d ", total.t_sl);
+		(void)printf("%2d ", total.t_sw);
 
-		printf("%9d ", total.t_vm);
-		printf("%9d ", total.t_avm);
-		printf("%9d ", total.t_arm);
-		printf("%5d ", total.t_vmshr);
-		printf("%6d ", total.t_avmshr);
-		printf("%5d ", total.t_rmshr);
-		printf("%6d ", total.t_armshr);
-		printf("%5d",  total.t_free);
+		(void)printf("%9d ", total.t_vm);
+		(void)printf("%9d ", total.t_avm);
+		(void)printf("%9d ", total.t_arm);
+		(void)printf("%5d ", total.t_vmshr);
+		(void)printf("%6d ", total.t_avmshr);
+		(void)printf("%5d ", total.t_rmshr);
+		(void)printf("%6d ", total.t_armshr);
+		(void)printf("%5d",  total.t_free);
 
-		putchar('\n');
+		(void)putchar('\n');
 
 		(void)fflush(stdout);
 		if (reps >= 0 && --reps <= 0)
 			break;
 
-		nanosleep(interval, NULL);
+		(void)nanosleep(interval, NULL);
 	}
 }
 
@@ -673,23 +675,24 @@ dovmstat(struct timespec *interval, int reps)
 			 * XXX Can't do this if we're reading a crash
 			 * XXX dump because they're lazily-calculated.
 			 */
-			printf("Unable to get vmtotals from crash dump.\n");
-			memset(&total, 0, sizeof(total));
+			(void)printf(
+			    "Unable to get vmtotals from crash dump.\n");
+			(void)memset(&total, 0, sizeof(total));
 		} else {
 			size = sizeof(total);
 			mib[0] = CTL_VM;
 			mib[1] = VM_METER;
 			if (sysctl(mib, 2, &total, &size, NULL, 0) < 0) {
-				printf("Can't get vmtotals: %s\n",
+				(void)printf("Can't get vmtotals: %s\n",
 				    strerror(errno));
-				memset(&total, 0, sizeof(total));
+				(void)memset(&total, 0, sizeof(total));
 			}
 		}
 		ovflw = 0;
 		PRWORD(ovflw, " %*d", 2, 1, total.t_rq - 1);
 		PRWORD(ovflw, " %*d", 2, 1, total.t_dw + total.t_pw);
 		PRWORD(ovflw, " %*d", 2, 1, total.t_sw);
-#define	pgtok(a) (long)((a) * (pagesize >> 10))
+#define	pgtok(a) (long)((a) * ((uint32_t)pagesize >> 10))
 #define	rate(x)	(u_long)(((x) + halfuptime) / uptime)	/* round */
 		PRWORD(ovflw, " %*ld", 7, 1, pgtok(total.t_avm));
 		PRWORD(ovflw, " %*ld", 7, 1, pgtok(total.t_free));
@@ -713,7 +716,7 @@ dovmstat(struct timespec *interval, int reps)
 		PRWORD(ovflw, " %*ld", 4, 1,
 		    rate(uvmexp.swtch - ouvmexp.swtch));
 		cpustats(&ovflw);
-		putchar('\n');
+		(void)putchar('\n');
 		(void)fflush(stdout);
 		if (reps >= 0 && --reps <= 0)
 			break;
@@ -724,7 +727,7 @@ dovmstat(struct timespec *interval, int reps)
 		 * (i.e., >= 1 per interval but < 1 per second).
 		 */
 		halfuptime = uptime == 1 ? 0 : (uptime + 1) / 2;
-		nanosleep(interval, NULL);
+		(void)nanosleep(interval, NULL);
 	}
 }
 
@@ -755,6 +758,7 @@ printhdr(void)
  * Force a header to be prepended to the next output.
  */
 void
+/*ARGSUSED*/
 needhdr(int dummy)
 {
 
@@ -768,7 +772,7 @@ pct(long top, long bot)
 
 	if (bot == 0)
 		return (0);
-	ans = (quad_t)top * 100 / bot;
+	ans = (long)((quad_t)top * 100 / bot);
 	return (ans);
 }
 
@@ -998,10 +1002,10 @@ dointr(int verbose)
 		if (evcnt.ev_count == 0 && !verbose)
 			continue;
 
-		deref_kptr(evcnt.ev_group, evgroup, evcnt.ev_grouplen + 1,
-		    "event chain trashed");
-		deref_kptr(evcnt.ev_name, evname, evcnt.ev_namelen + 1,
-		    "event chain trashed");
+		deref_kptr(evcnt.ev_group, evgroup,
+		    (size_t)evcnt.ev_grouplen + 1, "event chain trashed");
+		deref_kptr(evcnt.ev_name, evname,
+		    (size_t)evcnt.ev_namelen + 1, "event chain trashed");
 
 		(void)printf("%s %s%*s %16llu %8llu\n", evgroup, evname,
 		    34 - (evcnt.ev_grouplen + 1 + evcnt.ev_namelen), "",
@@ -1036,10 +1040,10 @@ doevcnt(int verbose)
 		if (evcnt.ev_count == 0 && !verbose)
 			continue;
 
-		deref_kptr(evcnt.ev_group, evgroup, evcnt.ev_grouplen + 1,
-		    "event chain trashed");
-		deref_kptr(evcnt.ev_name, evname, evcnt.ev_namelen + 1,
-		    "event chain trashed");
+		deref_kptr(evcnt.ev_group, evgroup,
+		    (size_t)evcnt.ev_grouplen + 1, "event chain trashed");
+		deref_kptr(evcnt.ev_name, evname,
+		    (size_t)evcnt.ev_namelen + 1, "event chain trashed");
 
 		(void)printf("%s %s%*s %16llu %8llu %s\n", evgroup, evname,
 		    34 - (evcnt.ev_grouplen + 1 + evcnt.ev_namelen), "",
@@ -1109,18 +1113,18 @@ domem(void)
 			    sizeof(memname), "malloc type name");
 			len += 2 + strlen(memname);
 			if (first)
-				printf("%8d  %s", j, memname);
+				(void)printf("%8d  %s", j, memname);
 			else
-				printf(",");
+				(void)printf(",");
 			if (len >= 80) {
-				printf("\n\t ");
+				(void)printf("\n\t ");
 				len = 10 + strlen(memname);
 			}
 			if (!first)
-				printf(" %s", memname);
+				(void)printf(" %s", memname);
 			first = 0;
 		}
-		putchar('\n');
+		(void)putchar('\n');
 	}
 
 	(void)printf(
@@ -1145,12 +1149,12 @@ domem(void)
 			if ((ks.ks_size & j) == 0)
 				continue;
 			if (first)
-				printf("  %d", j);
+				(void)printf("  %d", j);
 			else
-				printf(",%d", j);
+				(void)printf(",%d", j);
 			first = 0;
 		}
-		printf("\n");
+		(void)printf("\n");
 		totuse += ks.ks_memuse;
 		totreq += ks.ks_calls;
 	}
@@ -1209,9 +1213,10 @@ dopool(int verbose, int wide)
 		if (pp->pr_nget == 0 && !verbose)
 			continue;
 		if (pp->pr_maxpages == UINT_MAX)
-			snprintf(maxp, sizeof(maxp), "inf");
+			(void)snprintf(maxp, sizeof(maxp), "inf");
 		else
-			snprintf(maxp, sizeof(maxp), "%u", pp->pr_maxpages);
+			(void)snprintf(maxp, sizeof(maxp), "%u",
+			    pp->pr_maxpages);
 		ovflw = 0;
 		PRWORD(ovflw, "%-*s", wide ? 16 : 11, 0, name);
 		PRWORD(ovflw, " %*u", wide ? 6 : 5, 1, pp->pr_size);
@@ -1250,18 +1255,19 @@ dopool(int verbose, int wide)
 		}
 		if (wide) {
 			if (this_total == 0)
-				printf("   ---");
+				(void)printf("   ---");
 			else
-				printf(" %5.1f%%",
+				(void)printf(" %5.1f%%",
 				    (100.0 * this_inuse) / this_total);
 		}
-		printf("\n");
+		(void)printf("\n");
 		dopoolcache(pp, verbose);
 	}
 
 	inuse /= KILO;
 	total /= KILO;
-	printf("\nIn use %ldK, total allocated %ldK; utilization %.1f%%\n",
+	(void)printf(
+	    "\nIn use %ldK, total allocated %ldK; utilization %.1f%%\n",
 	    inuse, total, (100.0 * inuse) / total);
 }
 
@@ -1279,17 +1285,17 @@ dopoolcache(struct pool *pp, int verbose)
 #define PR_GROUPLIST							\
 	deref_kptr(pcg_addr, pcg, sizeof(*pcg),				\
 	    "pool cache group trashed");				\
-	printf("\t\tgroup %p: avail %d\n", pcg_addr,			\
+	(void)printf("\t\tgroup %p: avail %d\n", pcg_addr,		\
 	    pcg->pcg_avail);						\
 	for (i = 0; i < PCG_NOBJECTS; i++) {				\
 		if (pcg->pcg_objects[i].pcgo_pa !=			\
 		    POOL_PADDR_INVALID) {				\
-			printf("\t\t\t%p, 0x%llx\n",			\
+			(void)printf("\t\t\t%p, 0x%llx\n",		\
 			    pcg->pcg_objects[i].pcgo_va,		\
 			    (unsigned long long)			\
 			    pcg->pcg_objects[i].pcgo_pa);		\
 		} else {						\
-			printf("\t\t\t%p\n",				\
+			(void)printf("\t\t\t%p\n",			\
 			    pcg->pcg_objects[i].pcgo_va);		\
 		}							\
 	}
@@ -1297,21 +1303,22 @@ dopoolcache(struct pool *pp, int verbose)
 	for (addr = LIST_FIRST(&pp->pr_cachelist); addr != NULL;
 	    addr = LIST_NEXT(pc, pc_poollist)) {
 		deref_kptr(addr, pc, sizeof(*pc), "pool cache trashed");
-		printf("\t    hits %lu misses %lu ngroups %lu nitems %lu\n",
+		(void)printf(
+		    "\t    hits %lu misses %lu ngroups %lu nitems %lu\n",
 		    pc->pc_hits, pc->pc_misses, pc->pc_ngroups, pc->pc_nitems);
 		if (verbose < 2)
 			continue;
-		printf("\t    full groups:\n");
+		(void)printf("\t    full groups:\n");
 		for (pcg_addr = LIST_FIRST(&pc->pc_fullgroups);
 		    pcg_addr != NULL; pcg_addr = LIST_NEXT(pcg, pcg_list)) {
 			PR_GROUPLIST;
 		}
-		printf("\t    partial groups:\n");
+		(void)printf("\t    partial groups:\n");
 		for (pcg_addr = LIST_FIRST(&pc->pc_partgroups);
 		    pcg_addr != NULL; pcg_addr = LIST_NEXT(pcg, pcg_list)) {
 			PR_GROUPLIST;
 		}
-		printf("\t    empty groups:\n");
+		(void)printf("\t    empty groups:\n");
 		for (pcg_addr = LIST_FIRST(&pc->pc_emptygroups);
 		    pcg_addr != NULL; pcg_addr = LIST_NEXT(pcg, pcg_list)) {
 			PR_GROUPLIST;
@@ -1389,12 +1396,12 @@ dohashstat(int verbose, int todo, const char *hashname)
 	hashbufsize = 0;
 
 	if (todo & HASHLIST) {
-		printf("Supported hashes:\n");
+		(void)printf("Supported hashes:\n");
 		for (curhash = khashes; curhash->description; curhash++) {
 			if (hashnl[curhash->hashsize].n_value == 0 ||
 			    hashnl[curhash->hashtbl].n_value == 0)
 				continue;
-			printf("\t%-16s%s\n",
+			(void)printf("\t%-16s%s\n",
 			    hashnl[curhash->hashsize].n_name + 1,
 			    curhash->description);
 		}
@@ -1415,7 +1422,7 @@ dohashstat(int verbose, int todo, const char *hashname)
 		}
 	}
 
-	printf(
+	(void)printf(
 	    "%-16s %8s %8s %8s %8s %8s %8s\n"
 	    "%-16s %8s %8s %8s %8s %8s %8s\n",
 	    "", "total", "used", "util", "num", "average", "maximum",
@@ -1439,7 +1446,8 @@ dohashstat(int verbose, int todo, const char *hashname)
 		    &hashaddr, sizeof(hashaddr),
 		    hashnl[curhash->hashtbl].n_name);
 		if (verbose)
-			printf("%s %lu, %s %p, offset %ld, elemsize %llu\n",
+			(void)printf(
+			    "%s %lu, %s %p, offset %ld, elemsize %llu\n",
 			    hashnl[curhash->hashsize].n_name + 1, hashsize,
 			    hashnl[curhash->hashtbl].n_name + 1, hashaddr,
 			    (long)curhash->offset,
@@ -1471,7 +1479,7 @@ dohashstat(int verbose, int todo, const char *hashname)
 			if (nextaddr == NULL)
 				continue;
 			if (verbose)
-				printf("%5d: %p\n", i, nextaddr);
+				(void)printf("%5d: %p\n", i, nextaddr);
 			used++;
 			chain = 0;
 			do {
@@ -1480,16 +1488,16 @@ dohashstat(int verbose, int todo, const char *hashname)
 				    &nextaddr, sizeof(void *),
 				    "hash chain corrupted");
 				if (verbose > 1)
-					printf("got nextaddr as %p\n",
+					(void)printf("got nextaddr as %p\n",
 					    nextaddr);
 			} while (nextaddr != NULL);
 			items += chain;
 			if (verbose && chain > 1)
-				printf("\tchain = %d\n", chain);
+				(void)printf("\tchain = %d\n", chain);
 			if (chain > maxchain)
 				maxchain = chain;
 		}
-		printf("%-16s %8ld %8d %8.2f %8d %8.2f %8d\n",
+		(void)printf("%-16s %8ld %8d %8.2f %8d %8.2f %8d\n",
 		    hashnl[curhash->hashsize].n_name + 1,
 		    hashsize, used, used * 100.0 / hashsize,
 		    items, used ? (double)items / used : 0.0, maxchain);
@@ -1571,7 +1579,7 @@ hist_traverse(int todo, const char *histname)
 	}
 
 	if (todo & HISTLIST)
-		printf("Active UVM histories:");
+		(void)printf("Active UVM histories:");
 
 	for (histkva = LIST_FIRST(&histhead); histkva != NULL;
 	    histkva = LIST_NEXT(&hist, list)) {
@@ -1587,7 +1595,7 @@ hist_traverse(int todo, const char *histname)
 		deref_kptr(hist.name, name, namelen, "history name");
 		name[namelen] = '\0';
 		if (todo & HISTLIST)
-			printf(" %s", name);
+			(void)printf(" %s", name);
 		else {
 			/*
 			 * If we're dumping all histories, do it, else
@@ -1595,14 +1603,15 @@ hist_traverse(int todo, const char *histname)
 			 */
 			if (histname == NULL || strcmp(histname, name) == 0) {
 				if (histname == NULL)
-					printf("\nUVM history `%s':\n", name);
+					(void)printf(
+					    "\nUVM history `%s':\n", name);
 				hist_dodump(&hist);
 			}
 		}
 	}
 
 	if (todo & HISTLIST)
-		putchar('\n');
+		(void)putchar('\n');
 
 	if (name != NULL)
 		free(name);
@@ -1625,7 +1634,7 @@ hist_dodump(struct uvm_history *histp)
 	if ((histents = malloc(histsize)) == NULL)
 		err(1, "malloc history entries");
 
-	memset(histents, 0, histsize);
+	(void)memset(histents, 0, histsize);
 
 	deref_kptr(histp->e, histents, histsize, "history entries");
 	i = histp->f;
@@ -1653,11 +1662,11 @@ hist_dodump(struct uvm_history *histp)
 			deref_kptr(e->fn, fn, fnlen, "function name");
 			fn[fnlen] = '\0';
 
-			printf("%06ld.%06ld ", (long int)e->tv.tv_sec,
+			(void)printf("%06ld.%06ld ", (long int)e->tv.tv_sec,
 			    (long int)e->tv.tv_usec);
-			printf("%s#%ld: ", fn, e->call);
-			printf(fmt, e->v[0], e->v[1], e->v[2], e->v[3]);
-			putchar('\n');
+			(void)printf("%s#%ld: ", fn, e->call);
+			(void)printf(fmt, e->v[0], e->v[1], e->v[2], e->v[3]);
+			(void)putchar('\n');
 		}
 		i = (i + 1) % histp->n;
 	} while (i != histp->f);

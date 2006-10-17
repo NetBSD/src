@@ -1,4 +1,4 @@
-/*	$NetBSD: drvstats.h,v 1.2 2006/06/07 20:58:23 kardel Exp $	*/
+/*	$NetBSD: drvstats.h,v 1.3 2006/10/17 15:13:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -55,7 +55,8 @@ struct _drive {
 
 extern struct _drive	cur;
 extern char		**dr_name;
-extern int		*drv_select, ndrive;
+extern int		*drv_select;
+extern size_t		ndrive;
 
 int	drvinit(int);
 void	cpureadstats(void);
