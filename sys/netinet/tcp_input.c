@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.252 2006/10/15 17:53:30 rpaulo Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.253 2006/10/17 09:31:17 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.252 2006/10/15 17:53:30 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.253 2006/10/17 09:31:17 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2229,7 +2229,8 @@ after_listen:
 				    th->th_ack != tp->snd_una)
 					tp->t_dupacks = 0;
 				else if (tp->t_partialacks < 0 &&
-					 (++tp->t_dupacks == tcprexmtthresh ||
+					 ((!TCP_SACK_ENABLED(tp) &&
+					 ++tp->t_dupacks == tcprexmtthresh) ||
 					 TCP_FACK_FASTRECOV(tp))) {
 					/*
 					 * Do the fast retransmit, and adjust
