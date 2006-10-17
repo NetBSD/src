@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.108 2006/10/13 16:53:36 dogcow Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.109 2006/10/17 18:21:29 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.108 2006/10/13 16:53:36 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.109 2006/10/17 18:21:29 dogcow Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -1327,8 +1327,6 @@ sys_utrace(struct lwp *l, void *v, register_t *retval __unused)
 
 	return (0);
 #else /* !KTRACE */
-	do { if (&l) {} } while (/* CONSTCOND */ 0); /* quiet -Wunused */
-	do { if (&v) {} } while (/* CONSTCOND */ 0);
 	return ENOSYS;
 #endif /* KTRACE */
 }
