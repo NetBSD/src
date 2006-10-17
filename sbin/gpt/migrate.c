@@ -29,10 +29,11 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.2 2006/10/15 22:36:29 christos Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.3 2006/10/17 09:20:09 he Exp $");
 #endif
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/disklabel.h>
 
 #include <err.h>
