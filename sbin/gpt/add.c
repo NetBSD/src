@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.2 2006/10/15 22:36:29 christos Exp $");
+__RCSID("$NetBSD: add.c,v 1.3 2006/10/17 21:14:03 he Exp $");
 #endif
 
 #include <sys/types.h>
@@ -70,6 +70,7 @@ add(int fd)
 	unsigned int i;
 
 	gpt = map_find(MAP_TYPE_PRI_GPT_HDR);
+	ent = NULL;
 	if (gpt == NULL) {
 		warnx("%s: error: no primary GPT header; run create or recover",
 		    device_name);
