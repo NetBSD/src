@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.33 2006/10/17 13:45:05 itohy Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.34 2006/10/17 15:16:30 itohy Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.33 2006/10/17 13:45:05 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.34 2006/10/17 15:16:30 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -1028,7 +1028,10 @@ sata_setup_channel(chp)
 {
 #if NATA_DMA
 	struct ata_drive_datas *drvp;
-	int drive, s;
+	int drive;
+#if NATA_UDMA
+	int s;
+#endif
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
