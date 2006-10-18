@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.9 2006/10/16 03:21:07 thorpej Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.10 2006/10/18 14:49:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@ _prop_object_externalize_append_encoded_cstring(
 	return (TRUE);
 }
 
-#define	BUF_EXPAND		256
+#define	BUF_EXPAND		((size_t)256)
 
 /*
  * _prop_object_externalize_append_char --

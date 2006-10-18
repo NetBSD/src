@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.9 2006/10/16 03:21:07 thorpej Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.10 2006/10/18 14:49:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -284,7 +284,7 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_ASSERT(x)		/*LINTED*/assert(x)
 
 #define	_PROP_MALLOC(s, t)	malloc((s))
-#define	_PROP_CALLOC(s, t)	calloc(1, (s))
+#define	_PROP_CALLOC(s, t)	calloc((size_t)1, (s))
 #define	_PROP_REALLOC(v, s, t)	realloc((v), (s))
 #define	_PROP_FREE(v, t)	free((v))
 
