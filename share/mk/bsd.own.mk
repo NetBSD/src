@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.481 2006/10/18 23:22:24 bjh21 Exp $
+#	$NetBSD: bsd.own.mk,v 1.482 2006/10/18 23:31:50 bjh21 Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -58,7 +58,7 @@ HAVE_GCC?=	4
 # Transitional for toolchain upgrade to GDB6
 #
 .if \
-    ${MACHINE_ARCH} == "arm" || \
+    ${MACHINE_CPU} == "arm" || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc64"
