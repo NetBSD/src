@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2005/12/11 12:17:28 christos Exp $
+#	$NetBSD: Makefile,v 1.21 2006/10/18 02:18:27 uwe Exp $
 #
 
 .include <bsd.sys.mk>		# for HOST_SH
@@ -51,11 +51,12 @@ clean:
 	rm -f hpcboot/opt_spec_platform.h
 # evc3 temporary files
 	rm -f hpc_stand.vcb hpc_stand.vcw hpc_stand.vco
+	rm -f hpcboot/HPCBOOT.vcb hpcboot/HPCBOOT.VCW hpcboot/HPCBOOT.VCO
 	find . -name "*.vcp" -print | xargs rm -f
-	rm -f hpcboot/hpcboot.vcl hpcboot/HPCBOOT.VCO hpcboot/HPCBOOT.VCW
-	rm -f hpcboot/HPCBOOT.vcb
+	find . -name "*.vcl" -print | xargs rm -f
+	find . -name "*.vcn" -print | xargs rm -f
+	find . -name "*.dep" -print | xargs rm -f
 	rm -f hpcboot/res/hpcmenu.aps
-	rm -f libsa/libsa.vcl libz/libz.vcl
 # vc6 temporary files
 	find . -name "*.dsp" -print | xargs rm -f
 	rm -f hpc_stand.dsw hpc_stand.ncb hpc_stand.opt
