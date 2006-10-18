@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.948 2006/10/15 22:42:03 christos Exp $
+#	$NetBSD: mi,v 1.949 2006/10/18 17:54:54 tnozaki Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1999,6 +1999,7 @@
 ./usr/lib/i18n/libEUCTW.a			comp-i18n-lib
 ./usr/lib/i18n/libGBK2K.a			comp-i18n-lib
 ./usr/lib/i18n/libISO2022.a			comp-i18n-lib
+./usr/lib/i18n/libJOHAB.a			comp-i18n-lib
 ./usr/lib/i18n/libMSKanji.a			comp-i18n-lib
 ./usr/lib/i18n/libUTF1632.a			comp-i18n-lib
 ./usr/lib/i18n/libUTF7.a			comp-i18n-lib

@@ -1,4 +1,4 @@
-# $NetBSD: esdb.alias.MISC.src,v 1.8 2006/08/19 10:58:41 tnozaki Exp $
+# $NetBSD: esdb.alias.MISC.src,v 1.9 2006/10/18 17:54:55 tnozaki Exp $
 
 shift_jis			Shift_JIS
 sjis				Shift_JIS
@@ -11,3 +11,4 @@ CP154				PTCP154
 Cyrillic-Asian			PTCP154
 PT-154				PTCP154
 paratype-154			PTCP154
+CP1361				JOHAB
