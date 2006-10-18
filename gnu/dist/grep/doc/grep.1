@@ -1,4 +1,4 @@
-.\"	$NetBSD: grep.1,v 1.12 2006/02/13 21:18:35 wiz Exp $
+.\"	$NetBSD: grep.1,v 1.13 2006/10/18 20:46:30 pavel Exp $
 .\"
 .\" grep man page
 .if !\n(.g \{\
@@ -14,7 +14,7 @@
 .de Id
 .ds Dt \\$4
 ..
-.Id Id: grep.1,v 1.23 2002/01/22 13:20:04 bero Exp
+.Id Id: grep.1,v 1.24 2003/06/16 08:34:16 kasal Exp
 .TH GREP 1 \*(Dt "GNU Project"
 .SH NAME
 grep, egrep, fgrep \- print lines matching a pattern
@@ -246,7 +246,7 @@ This is especially useful for tools like zgrep, e.g.
 .B "gzip -cd foo.gz |grep --label=foo something"
 .TP
 .BR \-\^\-line-buffered
-Use line buffering, it can be a performance penality.
+Use line buffering, it can be a performance penalty.
 .TP
 .BI \-m " NUM" "\fR,\fP \-\^\-max-count=" NUM
 Stop reading a file after
