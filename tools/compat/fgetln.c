@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetln.c,v 1.7 2006/08/26 16:24:29 christos Exp $	*/
+/*	$NetBSD: fgetln.c,v 1.8 2006/10/18 15:17:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -32,11 +32,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
+#endif
 
 #if !HAVE_FGETLN
 #include <stdlib.h>
-#ifdef notdef
+#ifndef HAVE_NBTOOL_CONFIG_H
 /* These headers are required, but included from nbtool_config.h */
 #include <stdio.h>
 #include <unistd.h>
@@ -75,10 +77,13 @@ fgetln(FILE *fp, size_t *len)
 		} else
 			buf = nbuf;
 
-		*len = bufsiz;
-		if (fgets(&buf[bufsiz], BUFSIZ, fp) == NULL)
+		if (fgets(&buf[bufsiz], BUFSIZ, fp) == NULL) {
+			buf[bufsiz] = '\0';
+			*len = strlen(buf);
 			return buf;
+		}
 
+		*len = bufsiz;
 		bufsiz = nbufsiz;
 	}
 
@@ -86,4 +91,19 @@ fgetln(FILE *fp, size_t *len)
 	return buf;
 }
 
+#endif
+
+#ifdef TEST
+int
+main(int argc, char *argv[])
+{
+	char *p;
+	size_t len;
+
+	while ((p = fgetln(stdin, &len)) != NULL) {
+		(void)printf("%zu %s", len, p);
+		free(p);
+	}
+	return 0;
+}
 #endif
