@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.230 2006/10/17 22:26:06 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.231 2006/10/18 01:41:38 rjs Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -6988,9 +6988,9 @@ Lsw_scan:
 	 EMPTY
 
 Lcpu_ok:
-	LDPTR	[%l3], %o0		! tmp0 = p->p_forw;
+	LDPTR	[%l3 + L_FORW], %o0	! tmp0 = l->l_forw;
 	STPTR	%o0, [%o5]		! q->ph_link = tmp0;
-	STPTR	%o5, [%o0 + PTRSZ]	! tmp0->p_back = q;
+	STPTR	%o5, [%o0 + L_BACK]	! tmp0->l_back = q;
 	cmp	%o0, %o5		! if (tmp0 == q)
 	bne	1f
 	 EMPTY
@@ -7007,8 +7007,8 @@ cpu_loadproc:
 	 *	%l3 = l
 	 *	%l4 = lastlwp(proc)
 	 *	%l5 = cpcb
-	 *	%l6 = %hi(_cpcb)
-	 *	%l7 = %hi(_curlwp)
+	 *	%l6 = %hi(CPCB)
+	 *	%l7 = %hi(CURLWP)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
@@ -10107,8 +10107,8 @@ ENTRY(sparc64_ipi_save_fpstate)
 	mov	%o3, %g4
 	mov	%o4, %g5
 	mov	%o5, %g6
-	set	CPUINFO_VA + CI_FPLWP, %o0
-	ldx	[%o0], %o0
+	sethi	%hi(CPUINFO_VA + CI_FPLWP), %o0
+	ldx	[%o0 + %lo(CPUINFO_VA + CI_FPLWP)], %o0
 	call	savefpstate
 	 ldx	[%o0 + L_FPSTATE], %l1
 	stx	%g0, [%o0]		! fplwp = NULL
@@ -10127,8 +10127,8 @@ ENTRY(sparc64_ipi_drop_fpstate)
 	wr	%g0, FPRS_FEF, %fprs
 	or	%o1, PSTATE_PEF, %o1
 	wrpr	%o1, 0, %pstate
-	set	CPUINFO_VA + CI_FPLWP, %o0
-	stx	%g0, [%o0]		! fplwp = NULL
+	sethi	%hi(CPUINFO_VA + CI_FPLWP), %o0
+	stx	%g0, [%o0 + %lo(CPUINFO_VA + CI_FPLWP)]	! fplwp = NULL
 	mov	%g2, %o1		! restore saved registers
 	ba	ret_from_intr_vector
 	 mov	%g1, %o0
