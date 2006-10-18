@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.13 2006/10/03 15:45:04 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.14 2006/10/18 14:49:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ struct _prop_dictionary_keysym {
 #define	PDK_SIZE_32		(sizeof(struct _prop_dictionary_keysym) + 32)
 #define	PDK_SIZE_128		(sizeof(struct _prop_dictionary_keysym) + 128)
 
-#define	PDK_MAXKEY		128
+#define	PDK_MAXKEY		((size_t)128)
 
 _PROP_POOL_INIT(_prop_dictionary_keysym16_pool, PDK_SIZE_16, "pdict16")
 _PROP_POOL_INIT(_prop_dictionary_keysym32_pool, PDK_SIZE_32, "pdict32")
