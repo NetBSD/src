@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 2006/09/15 06:11:40 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 2006/10/18 14:00:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2006/09/15 06:11:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2006/10/18 14:00:31 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -832,9 +832,9 @@ do {									\
 #endif /* KGDB */
 #if NKSYMS || defined(DDB) || defined(LKM)
 	{
-		extern int end[];
+		extern int end;
 
-		ksyms_init(1, end, (int*)esym);
+		ksyms_init(esym - (int)&end, &end, (int*)esym);
 	}
 #endif
 
