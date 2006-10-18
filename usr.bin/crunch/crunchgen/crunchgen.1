@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.25 2004/09/25 21:47:53 wiz Exp $
+.\"	$NetBSD: crunchgen.1,v 1.26 2006/10/18 21:20:44 freza Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -207,6 +207,10 @@ Don't hide the specified symbols for
 .Ar progname .
 Normally all externally visible symbols for
 a program is hidden to avoid interference.
+Multiple
+.Em keepsymbols
+lines can be specified for given
+.Ar progname .
 .It Nm special Ar progname Nm srcdir Ar pathname
 Set the source directory for
 .Ar progname .
@@ -235,6 +239,10 @@ Set the list of object files for program
 This is normally calculated by constructing a temporary makefile that includes
 .Dq Nm srcdir / Pa Makefile
 and outputs the value of $(OBJS).
+Multiple
+.Em objs
+lines can be specified for given
+.Ar progname .
 .It Nm special Ar progname Nm objpaths Ar full-pathname-to-object-file ...
 Sets the pathnames of the object files for program
 .Ar progname .
@@ -243,6 +251,10 @@ This is normally calculated by prepending the
 pathname to each file in the
 .Nm objs
 list.
+Multiple
+.Em objpaths
+lines can be specified for given
+.Ar progname .
 .El
 .Pp
 Only the

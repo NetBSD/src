@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.72 2006/08/26 18:17:42 christos Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.73 2006/10/18 21:20:44 freza Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.72 2006/08/26 18:17:42 christos Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.73 2006/10/18 21:20:44 freza Exp $");
 #endif
 
 #include <stdlib.h>
@@ -490,7 +490,6 @@ add_special(int argc, char **argv)
 
     if (!strcmp(argv[2], "objs")) {
 	oneobj = 0;
-	p->objs = NULL;
 	for (i = 3; i < argc; i++)
 	    add_string(&p->objs, argv[i]);
 	return;
@@ -498,14 +497,12 @@ add_special(int argc, char **argv)
 
     if (!strcmp(argv[2], "objpaths")) {
 	oneobj = 0;
-	p->objpaths = NULL;
 	for (i = 3; i < argc; i++)
 	    add_string(&p->objpaths, argv[i]);
 	return;
     }
 
     if (!strcmp(argv[2], "keepsymbols")) {
-	p->keepsymbols = NULL;
 	for (i = 3; i < argc; i++)
 	    add_string(&p->keepsymbols, argv[i]);
 	return;
