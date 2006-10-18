@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_string.c,v 1.4 2006/08/22 21:21:23 thorpej Exp $	*/
+/*	$NetBSD: prop_string.c,v 1.5 2006/10/18 14:49:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -428,7 +428,7 @@ _prop_string_internalize(struct _prop_object_internalize_context *ctx)
 		return (NULL);
 
 	/* Compute the length of the result. */
-	if (_prop_object_internalize_decode_string(ctx, NULL, 0, &len,
+	if (_prop_object_internalize_decode_string(ctx, NULL, (size_t)0, &len,
 						   NULL) == FALSE)
 		return (NULL);
 	
