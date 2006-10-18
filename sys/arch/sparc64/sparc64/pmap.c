@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.178 2006/10/17 22:26:06 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179 2006/10/18 09:18:22 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.178 2006/10/17 22:26:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179 2006/10/18 09:18:22 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -300,13 +300,13 @@ static void pmap_free_page(paddr_t pa);
  */
 struct page_size_map page_size_map[] = {
 #ifdef DEBUG
-	{ 0, PGSZ_8K & 0 },	/* Disable large pages */
+	{ 0, PGSZ_8K & 0, 0 },	/* Disable large pages */
 #endif
-	{ (4 * 1024 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_4M },
-	{ (512 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_512K  },
-	{ (64 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_64K  },
-	{ (8 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_8K  },
-	{ 0, 0  }
+	{ (4 * 1024 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_4M, 0 },
+	{ (512 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_512K, 0  },
+	{ (64 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_64K, 0  },
+	{ (8 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_8K, 0  },
+	{ 0, 0, 0  }
 };
 
 /*
