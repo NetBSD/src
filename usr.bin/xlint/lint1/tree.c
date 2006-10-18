@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.43 2006/10/18 00:01:19 he Exp $	*/
+/*	$NetBSD: tree.c,v 1.44 2006/10/18 21:34:39 he Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.43 2006/10/18 00:01:19 he Exp $");
+__RCSID("$NetBSD: tree.c,v 1.44 2006/10/18 21:34:39 he Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1723,7 +1723,6 @@ ptconv(int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 {
 	tnode_t	*ptn;
 	char buf[64];
-	val_t val;
 
 	if (!isatyp(nt) || !isatyp(ot))
 		return;
@@ -1746,20 +1745,9 @@ ptconv(int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 
 	if (isftyp(nt) != isftyp(ot) || psize(nt) != psize(ot)) {
 		/* representation and/or width change */
-		if (!isityp(ot)) {
+		if (!isityp(ot) || psize(ot) > psize(INT)) {
 			/* conversion to '%s' due to prototype, arg #%d */
 			warning(259, tyname(buf, sizeof(buf), tp), arg);
-		} else if (psize(ot) > psize(INT)) {
-			if (ptn->tn_op == CON) {
-				/* check that conversion of constant fits */
-				cvtcon(FARG, arg, tp, &val, ptn->tn_val);
-			} else {
-				/*
-				 * conversion to '%s' due to prototype, arg #%d
-				 */
-				warning(259,
-					tyname(buf, sizeof(buf), tp), arg);
-			}
 		}
 	} else if (hflag) {
 		/*
