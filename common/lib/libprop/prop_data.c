@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_data.c,v 1.4 2006/08/22 21:21:23 thorpej Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.5 2006/10/18 14:41:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -414,7 +414,7 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 				if (tarindex >= targsize)
 					return (FALSE);
 				target[tarindex] =
-				    (pos - _prop_data_base64) << 2;
+				    (uint8_t)((pos - _prop_data_base64) << 2);
 			}
 			state = 1;
 			break;
@@ -426,7 +426,8 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 				target[tarindex] |=
 				    (uint32_t)(pos - _prop_data_base64) >> 4;
 				target[tarindex + 1] =
-				    ((pos - _prop_data_base64) & 0xf) << 4;
+				    (uint8_t)(((pos - _prop_data_base64) & 0xf)
+				        << 4);
 			}
 			tarindex++;
 			state = 2;
@@ -439,7 +440,8 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 				target[tarindex] |=
 				    (uint32_t)(pos - _prop_data_base64) >> 2;
 				target[tarindex + 1] =
-				    ((pos - _prop_data_base64) & 0x3) << 6;
+				    (uint8_t)(((pos - _prop_data_base64)
+				        & 0x3) << 6);
 			}
 			tarindex++;
 			state = 3;
@@ -449,7 +451,8 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 			if (target) {
 				if (tarindex >= targsize)
 					return (FALSE);
-				target[tarindex] |= (pos - _prop_data_base64);
+				target[tarindex] |= (uint8_t)
+				    (pos - _prop_data_base64);
 			}
 			tarindex++;
 			state = 0;
