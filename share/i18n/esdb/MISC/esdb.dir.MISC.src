@@ -1,7 +1,8 @@
-# $NetBSD: esdb.dir.MISC.src,v 1.8 2006/08/19 10:58:41 tnozaki Exp $
+# $NetBSD: esdb.dir.MISC.src,v 1.9 2006/10/18 17:54:55 tnozaki Exp $
 
 Shift_JIS			MISC/Shift_JIS.esdb
 GB18030				MISC/GB18030.esdb
 GBK				MISC/GBK.esdb
 CTEXT				MISC/CTEXT.esdb
 PTCP154				MISC/PTCP154.esdb
+JOHAB				MISC/JOHAB.esdb

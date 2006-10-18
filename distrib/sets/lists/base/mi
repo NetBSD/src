@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.660 2006/10/15 22:42:03 christos Exp $
+# $NetBSD: mi,v 1.661 2006/10/18 17:54:54 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1800,8 +1800,14 @@
 ./usr/share/i18n/csmapper/KOI/UCS%KOI8-U.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/KOI/UCS%KOI8.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/KS			base-sysutil-share
-./usr/share/i18n/csmapper/KS/KSC5601%UCS.mps	base-sysutil-share	nls
-./usr/share/i18n/csmapper/KS/UCS%KSC5601.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/KS/JOHAB%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/KS/KSC5601%UCS.mps	base-obsolete		obsolete
+./usr/share/i18n/csmapper/KS/KSC5601HANGUL%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/KS/KSC5601HANJA%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/KS/UCS%JOHAB.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/KS/UCS%KSC5601.mps	base-obsolete		obsolete
+./usr/share/i18n/csmapper/KS/UCS%KSC5601HANGUL.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/KS/UCS%KSC5601HANJA.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC			base-sysutil-share
 ./usr/share/i18n/csmapper/MISC/Big5%UCS.mps	base-obsolete		obsolete
 ./usr/share/i18n/csmapper/MISC/KOI8-R%UCS.mps	base-obsolete		obsolete
@@ -1997,6 +2003,7 @@
 ./usr/share/i18n/esdb/MISC/CTEXT.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/GB18030.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/GBK.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/MISC/JOHAB.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/KOI8-R.esdb		base-obsolete		obsolete
 ./usr/share/i18n/esdb/MISC/KOI8-U.esdb		base-obsolete		obsolete
 ./usr/share/i18n/esdb/MISC/PTCP154.esdb		base-sysutil-share	nls
