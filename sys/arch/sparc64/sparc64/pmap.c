@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179 2006/10/18 09:18:22 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.180 2006/10/18 15:28:39 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179 2006/10/18 09:18:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.180 2006/10/18 15:28:39 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -298,15 +298,16 @@ static void pmap_free_page(paddr_t pa);
  * page bits.  That is: these are the bits between 8K pages and
  * larger page sizes that cause aliasing.
  */
+#define PSMAP_ENTRY(MASK, CODE)	{ .mask = MASK, .code = CODE }
 struct page_size_map page_size_map[] = {
 #ifdef DEBUG
-	{ 0, PGSZ_8K & 0, 0 },	/* Disable large pages */
+	PSMAP_ENTRY(0, PGSZ_8K & 0),	/* Disable large pages */
 #endif
-	{ (4 * 1024 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_4M, 0 },
-	{ (512 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_512K, 0  },
-	{ (64 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_64K, 0  },
-	{ (8 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_8K, 0  },
-	{ 0, 0, 0  }
+	PSMAP_ENTRY((4 * 1024 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_4M),
+	PSMAP_ENTRY((512 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_512K),
+	PSMAP_ENTRY((64 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_64K),
+	PSMAP_ENTRY((8 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_8K),
+	PSMAP_ENTRY(0, 0),
 };
 
 /*
