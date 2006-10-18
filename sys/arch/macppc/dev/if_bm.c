@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.28 2006/09/07 02:40:31 dogcow Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.29 2006/10/18 21:37:48 jklos Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.28 2006/09/07 02:40:31 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.29 2006/10/18 21:37:48 jklos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -536,6 +536,8 @@ next:
 		cmd->d_resid = 0;
 		sc->sc_rxlast = i + 1;
 	}
+	bmac_mediachange(ifp);
+
 	dbdma_continue(sc->sc_rxdma);
 
 	return 1;
