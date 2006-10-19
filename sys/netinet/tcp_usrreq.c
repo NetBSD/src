@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.127 2006/10/19 11:40:51 yamt Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.128 2006/10/19 14:14:34 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.127 2006/10/19 11:40:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.128 2006/10/19 14:14:34 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1426,9 +1426,10 @@ static void
 sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 			   const char *tcpname)
 {
-	int ecn_node, congctl_node;
-	const struct sysctlnode *sack_node, *node;
+	const struct sysctlnode *sack_node;
 	const struct sysctlnode *abc_node;
+	const struct sysctlnode *ecn_node;
+	const struct sysctlnode *congctl_node;
 #ifdef TCP_DEBUG
 	extern struct tcp_debug tcp_debug[TCP_NDEBUG];
 	extern int tcp_debx;
@@ -1519,33 +1520,24 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       SYSCTL_DESCR("RFC2018 Selective ACKnowledgement tunables"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SACK, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, &node,
-	    	       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "ecn",
-	    	       SYSCTL_DESCR("RFC3168 Explicit Congestion Notification"),
-	    	       NULL, 0, NULL, 0,
-		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
-	ecn_node = node->sysctl_num;
-	sysctl_createv(clog, 0, NULL, &node,
+
+	/* Congctl subtree */
+	sysctl_createv(clog, 0, NULL, &congctl_node,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "congctl",
 		       SYSCTL_DESCR("TCP Congestion Control"),
-		       NULL, 0, NULL, 0,
+	    	       NULL, 0, NULL, 0,
 		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
-	congctl_node = node->sysctl_num;
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, &congctl_node, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "available",
 		       SYSCTL_DESCR("Available Congestion Control Mechanisms"),
-		       NULL, 0, &tcp_congctl_avail, 0,
-		       CTL_NET, pf, IPPROTO_TCP, congctl_node,
-		       CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+		       NULL, 0, &tcp_congctl_avail, 0, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &congctl_node, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "selected",
 		       SYSCTL_DESCR("Selected Congestion Control Mechanism"),
 		       sysctl_tcp_congctl, 0, NULL, TCPCC_MAXLEN,
-		       CTL_NET, pf, IPPROTO_TCP, congctl_node,
 		       CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -1667,23 +1659,26 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE,
 		       CTL_EOL);
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	/* ECN subtree */
+	sysctl_createv(clog, 0, NULL, &ecn_node,
+	    	       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ecn",
+	    	       SYSCTL_DESCR("RFC3168 Explicit Congestion Notification"),
+	    	       NULL, 0, NULL, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &ecn_node, NULL,
 	    	       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "enable",
 		       SYSCTL_DESCR("Enable TCP Explicit Congestion "
 			   "Notification"),
-	    	       NULL, 0, &tcp_do_ecn, 0,
-	    	       CTL_NET, pf, IPPROTO_TCP, ecn_node,
-		       CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	    	       NULL, 0, &tcp_do_ecn, 0, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &ecn_node, NULL,
 	    	       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxretries",
 		       SYSCTL_DESCR("Number of times to retry ECN setup "
 			       "before disabling ECN on the connection"),
-	    	       NULL, 0, &tcp_ecn_maxretries, 0,
-	    	       CTL_NET, pf, IPPROTO_TCP, ecn_node,
-		       CTL_CREATE, CTL_EOL);
-
+	    	       NULL, 0, &tcp_ecn_maxretries, 0, CTL_CREATE, CTL_EOL);
+	
 	/* SACK gets it's own little subtree. */
 	sysctl_createv(clog, 0, NULL, &sack_node,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
