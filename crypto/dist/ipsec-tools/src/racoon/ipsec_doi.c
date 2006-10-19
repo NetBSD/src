@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.21 2006/10/06 12:02:27 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.22 2006/10/19 09:35:44 vanhu Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -3298,6 +3298,161 @@ doi2ipproto(proto)
 		return IPPROTO_IPCOMP;
 	}
 	return -1;	/* XXX */
+}
+
+/*
+ * Check and Compare two IDs
+ * - specify 0 for exact if wildcards are allowed
+ * Return value
+ * =  0 for match
+ * =  1 for misatch
+ * = -1 for integrity error
+ */
+
+int
+ipsecdoi_chkcmpids( idt, ids, exact )
+	const vchar_t *idt; /* id cmp target */
+	const vchar_t *ids; /* id cmp source */
+	int exact;
+{
+	struct ipsecdoi_id_b *id_bt;
+	struct ipsecdoi_id_b *id_bs;
+	vchar_t ident_t;
+	vchar_t ident_s;
+	int result;
+
+	/* handle wildcard IDs */
+
+	if (idt == NULL || ids == NULL)
+	{
+		if( !exact )
+		{
+			plog(LLV_DEBUG, LOCATION, NULL,
+				"check and compare ids : values matched (ANONYMOUS)\n" );
+			return 0;
+		}
+		else
+		{
+			plog(LLV_DEBUG, LOCATION, NULL,
+				"check and compare ids : value mismatch (ANONYMOUS)\n" );
+			return -1;
+		}
+	}
+
+	/* make sure the ids are of the same type */
+
+	id_bt = (struct ipsecdoi_id_b *) idt->v;
+	id_bs = (struct ipsecdoi_id_b *) ids->v;
+	if (id_bs->type != id_bt->type)
+	{
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"check and compare ids : id type mismatch %s != %s\n",
+			s_ipsecdoi_ident(id_bs->type),
+			s_ipsecdoi_ident(id_bt->type));
+		return 1;
+	}
+
+	/* compare the ID data. */
+
+	ident_t.v = idt->v + sizeof(*id_bt);
+	ident_t.l = idt->l - sizeof(*id_bt);
+	ident_s.v = ids->v + sizeof(*id_bs);
+	ident_s.l = ids->l - sizeof(*id_bs);
+
+	switch (id_bt->type) {
+	        case IPSECDOI_ID_DER_ASN1_DN:
+        	case IPSECDOI_ID_DER_ASN1_GN:
+			/* compare asn1 ids */
+			result = eay_cmp_asn1dn(&ident_t, &ident_s);
+			goto cmpid_result;
+
+		case IPSECDOI_ID_IPV4_ADDR:
+			/* validate lengths */
+			if ((ident_t.l != sizeof(struct in_addr))||
+			    (ident_s.l != sizeof(struct in_addr)))
+				goto cmpid_invalid;
+			break;
+
+		case IPSECDOI_ID_IPV4_ADDR_SUBNET:
+		case IPSECDOI_ID_IPV4_ADDR_RANGE:
+			/* validate lengths */
+			if ((ident_t.l != (sizeof(struct in_addr)*2))||
+			    (ident_s.l != (sizeof(struct in_addr)*2)))
+				goto cmpid_invalid;
+			break;
+
+#ifdef INET6
+		case IPSECDOI_ID_IPV6_ADDR:
+			/* validate lengths */
+			if ((ident_t.l != sizeof(struct in6_addr))||
+			    (ident_s.l != sizeof(struct in6_addr)))
+				goto cmpid_invalid;
+			break;
+
+		case IPSECDOI_ID_IPV6_ADDR_SUBNET:
+		case IPSECDOI_ID_IPV6_ADDR_RANGE:
+			/* validate lengths */
+			if ((ident_t.l != (sizeof(struct in6_addr)*2))||
+			    (ident_s.l != (sizeof(struct in6_addr)*2)))
+				goto cmpid_invalid;
+			break;
+#endif
+		case IPSECDOI_ID_FQDN:
+		case IPSECDOI_ID_USER_FQDN:
+		case IPSECDOI_ID_KEY_ID:
+			break;
+
+		default:
+			plog(LLV_ERROR, LOCATION, NULL,
+				"Unhandled id type %i specified for comparison\n",
+				id_bt->type);
+			return -1;
+	}
+
+	/* validate matching data and length */
+	if (ident_t.l == ident_s.l)
+		result = memcmp(ident_t.v,ident_s.v,ident_t.l);
+	else
+		result = 1;
+
+cmpid_result:
+
+	/* debug level output */
+	if(loglevel >= LLV_DEBUG) {
+		char *idstrt = ipsecdoi_id2str(idt);
+		char *idstrs = ipsecdoi_id2str(ids);
+
+		if (!result)
+	 		plog(LLV_DEBUG, LOCATION, NULL,
+				"check and compare ids : values matched (%s)\n",
+				 s_ipsecdoi_ident(id_bs->type) );
+		else
+ 			plog(LLV_DEBUG, LOCATION, NULL,
+				"check and compare ids : value mismatch (%s)\n",
+				 s_ipsecdoi_ident(id_bs->type));
+
+		plog(LLV_DEBUG, LOCATION, NULL, "cmpid target: \'%s\'\n", idstrt );
+		plog(LLV_DEBUG, LOCATION, NULL, "cmpid source: \'%s\'\n", idstrs );
+
+		racoon_free(idstrs);
+		racoon_free(idstrt);
+	}
+
+	/* return result */
+	if( !result )
+		return 0;
+	else
+		return 1;
+
+cmpid_invalid:
+
+	/* id integrity error */
+	plog(LLV_DEBUG, LOCATION, NULL, "check and compare ids : %s integrity error\n",
+		s_ipsecdoi_ident(id_bs->type));
+	plog(LLV_DEBUG, LOCATION, NULL, "cmpid target: length = \'%i\'\n", ident_t.l );
+	plog(LLV_DEBUG, LOCATION, NULL, "cmpid source: length = \'%i\'\n", ident_s.l );
+
+	return -1;
 }
 
 /*
