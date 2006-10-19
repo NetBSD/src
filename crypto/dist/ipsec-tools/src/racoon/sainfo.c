@@ -1,4 +1,4 @@
-/*	$NetBSD: sainfo.c,v 1.5 2006/10/03 08:02:51 vanhu Exp $	*/
+/*	$NetBSD: sainfo.c,v 1.6 2006/10/19 09:35:51 vanhu Exp $	*/
 
 /*	$KAME: sainfo.c,v 1.16 2003/06/27 07:32:39 sakane Exp $	*/
 
@@ -77,12 +77,11 @@ static LIST_HEAD(_sitree, sainfo) sitree, sitree_save, sitree_tmp;
  * return matching entry.
  * no matching entry found and if there is anonymous entry, return it.
  * else return NULL.
- * XXX by each data type, should be changed to compare the buffer.
  * First pass is for sainfo from a specified peer, second for others.
  */
 struct sainfo *
-getsainfo(src, dst, peer, remoteid)
-	const vchar_t *src, *dst, *peer;
+getsainfo(loc, rmt, peer, remoteid)
+	const vchar_t *loc, *rmt, *peer;
 	int remoteid;
 {
 	struct sainfo *s = NULL;
@@ -94,17 +93,17 @@ getsainfo(src, dst, peer, remoteid)
 
 	/* debug level output */
 	if(loglevel >= LLV_DEBUG) {
-		char *dsrc, *ddst, *dpeer, *dclient;
+		char *dloc, *drmt, *dpeer, *dclient;
  
-		if (src == NULL)
-			dsrc = strdup("ANONYMOUS");
+		if (loc == NULL)
+			dloc = strdup("ANONYMOUS");
 		else
-			dsrc = ipsecdoi_id2str(src);
+			dloc = ipsecdoi_id2str(loc);
  
-		if (dst == NULL)
-			ddst = strdup("ANONYMOUS");
+		if (rmt == NULL)
+			drmt = strdup("ANONYMOUS");
 		else
-			ddst = ipsecdoi_id2str(dst);
+			drmt = ipsecdoi_id2str(rmt);
  
 		if (peer == NULL)
 			dpeer = strdup("NULL");
@@ -112,11 +111,11 @@ getsainfo(src, dst, peer, remoteid)
 			dpeer = ipsecdoi_id2str(peer);
  
 		plog(LLV_DEBUG, LOCATION, NULL,
-			"getsainfo params: src=\'%s\', dst=\'%s\', peer=\'%s\'\n",
-			dsrc, ddst, dpeer );
+			"getsainfo params: loc=\'%s\', rmt=\'%s\', peer=\'%s\'\n",
+			dloc, drmt, dpeer );
  
-                racoon_free(dsrc);
-                racoon_free(ddst);
+                racoon_free(dloc);
+                racoon_free(drmt);
                 racoon_free(dpeer);
 	}
 
@@ -135,7 +134,7 @@ getsainfo(src, dst, peer, remoteid)
 		if (s->id_i != NULL) {
 			if (pass == 2)
 				continue;
-			if (memcmp(peer->v, s->id_i->v, s->id_i->l) != 0)
+			if (ipsecdoi_chkcmpids(peer, s->id_i, 0))
 				continue;
 		} else if (pass == 1)
 			continue;
@@ -145,25 +144,20 @@ getsainfo(src, dst, peer, remoteid)
 		}
 
 		/* anonymous ? */
-		if (src == NULL) {
+		if (loc == NULL) {
 			if (anonymous != NULL)
 				break;
 			continue;
 		}
 
-		if ((s->idsrc == NULL || src == NULL ||
-			 memcmp(src->v, s->idsrc->v, s->idsrc->l) == 0) &&
-			(s->iddst == NULL || dst == NULL ||
-			 memcmp(dst->v, s->iddst->v, s->iddst->l) == 0)){
+		/* compare the ids */
+		if (!ipsecdoi_chkcmpids(loc, s->idsrc, 0) &&
+		    !ipsecdoi_chkcmpids(rmt, s->iddst, 0))
 			return s;
-		}
 	}
 
-	if (anonymous) {
-		plog(LLV_DEBUG, LOCATION, NULL,
-			"anonymous sainfo selected.\n");
-	} else if (pass == 1) {
-		pass = 2;
+	if ((anonymous != NULL) && (pass == 1)) {
+		pass++;
 		goto again;
 	}
 
@@ -284,27 +278,27 @@ sainfo2str(si)
 {
         static char buf[256];
 
-        char *idsrc = NULL, *iddst = NULL, *id_i;
+        char *idloc = NULL, *idrmt = NULL, *id_i;
  
         if (si->idsrc == NULL)
-                idsrc = strdup("ANONYMOUS");
+                idloc = strdup("ANONYMOUS");
         else
-                idsrc = ipsecdoi_id2str(si->idsrc);
+                idloc = ipsecdoi_id2str(si->idsrc);
  
         if (si->iddst == NULL)
-                iddst = strdup("ANONYMOUS");
+                idrmt = strdup("ANONYMOUS");
         else
-                iddst = ipsecdoi_id2str(si->iddst);
+                idrmt = ipsecdoi_id2str(si->iddst);
  
         if (si->id_i == NULL)
                 id_i = strdup("ANY");
         else
                 id_i = ipsecdoi_id2str(si->id_i);
  
-        snprintf(buf, 255, "src=\'%s\', dst=\'%s\', peer=\'%s\'", idsrc, iddst, id_i);
+        snprintf(buf, 255, "loc=\'%s\', rmt=\'%s\', peer=\'%s\'", idloc, idrmt, id_i);
  
-        racoon_free(idsrc);
-        racoon_free(iddst);
+        racoon_free(idloc);
+        racoon_free(idrmt);
         racoon_free(id_i);
  
         return buf;
