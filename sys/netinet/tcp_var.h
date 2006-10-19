@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.139 2006/10/16 18:13:56 rpaulo Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.140 2006/10/19 11:40:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -290,6 +290,9 @@ struct tcpcb {
 	u_int32_t ts_recent_age;	/* when last updated */
 	u_int32_t ts_timebase;		/* our timebase */
 	tcp_seq	last_ack_sent;
+
+/* RFC 3465 variables */
+	u_long	t_bytes_acked;		/* ABC "bytes_acked" parameter */
 
 /* SACK stuff */
 #define TCP_SACK_MAX 3
@@ -758,6 +761,8 @@ extern	int tcp_do_rfc1948;	/* ISS by cryptographic hash */
 extern int tcp_sack_tp_maxholes;	/* Max holes per connection. */
 extern int tcp_sack_globalmaxholes;	/* Max holes per system. */
 extern int tcp_sack_globalholes;	/* Number of holes present. */
+extern int tcp_do_abc;			/* RFC3465 ABC enabled/disabled? */
+extern int tcp_abc_aggressive;		/* 1: L=2*SMSS  0: L=1*SMSS */
 
 extern	int tcp_rst_ppslim;
 extern	int tcp_ackdrop_ppslim;

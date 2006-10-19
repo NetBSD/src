@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.206 2006/10/17 18:21:29 dogcow Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.207 2006/10/19 11:40:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.206 2006/10/17 18:21:29 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.207 2006/10/19 11:40:51 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -202,6 +202,8 @@ int	tcp_compat_42 = 0;
 int	tcp_rst_ppslim = 100;	/* 100pps */
 int	tcp_ackdrop_ppslim = 100;	/* 100pps */
 int	tcp_do_loopback_cksum = 0;
+int	tcp_do_abc = 1;		/* RFC3465 Appropriate byte counting. */
+int	tcp_abc_aggressive = 1;	/* 1: L=2*SMSS  0: L=1*SMSS */
 int	tcp_sack_tp_maxholes = 32;
 int	tcp_sack_globalmaxholes = 1024;
 int	tcp_sack_globalholes = 0;
@@ -935,6 +937,7 @@ static struct tcpcb tcpcb_template = {
 	.snd_numholes = 0,
 
 	.t_partialacks = -1,
+	.t_bytes_acked = 0,
 };
 
 /*
@@ -1647,8 +1650,10 @@ tcp_quench(struct inpcb *inp, int errno __unused)
 {
 	struct tcpcb *tp = intotcpcb(inp);
 
-	if (tp)
+	if (tp) {
 		tp->snd_cwnd = tp->t_segsz;
+		tp->t_bytes_acked = 0;
+	}
 }
 #endif
 
@@ -1658,8 +1663,10 @@ tcp6_quench(struct in6pcb *in6p, int errno __unused)
 {
 	struct tcpcb *tp = in6totcpcb(in6p);
 
-	if (tp)
+	if (tp) {
 		tp->snd_cwnd = tp->t_segsz;
+		tp->t_bytes_acked = 0;
+	}
 }
 #endif
 
