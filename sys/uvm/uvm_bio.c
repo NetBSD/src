@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.52 2006/10/12 10:14:20 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.53 2006/10/19 09:34:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.52 2006/10/12 10:14:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.53 2006/10/19 09:34:00 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -247,6 +247,7 @@ ubc_fault(struct uvm_faultinfo *ufi, vaddr_t ign1 __unused,
 	ubc_offset = va - (vaddr_t)ubc_object.kva;
 	umap = &ubc_object.umap[ubc_offset >> ubc_winshift];
 	KASSERT(umap->refcount != 0);
+	KASSERT((umap->flags & UMAP_PAGES_LOCKED) == 0);
 	slot_offset = ubc_offset & (ubc_winsize - 1);
 
 	/*
