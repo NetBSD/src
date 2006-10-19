@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.7 2006/10/15 17:53:30 rpaulo Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.8 2006/10/19 11:40:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.7 2006/10/15 17:53:30 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.8 2006/10/19 11:40:51 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -491,6 +491,7 @@ tcp_reno_slow_retransmit(struct tcpcb *tp)
 	tp->snd_ssthresh = win * tp->t_segsz;
 	tp->t_partialacks = -1;
 	tp->t_dupacks = 0;
+	tp->t_bytes_acked = 0;
 }
 
 static void
@@ -511,6 +512,7 @@ tcp_reno_fast_retransmit_newack(struct tcpcb *tp, struct tcphdr *th __unused)
 			tp->snd_cwnd = tp->snd_ssthresh;
 		tp->t_partialacks = -1;
 		tp->t_dupacks = 0;
+		tp->t_bytes_acked = 0;
 	}
 }
 
@@ -519,17 +521,53 @@ tcp_reno_newack(struct tcpcb *tp, struct tcphdr *th __unused)
 {
 	/*
 	 * When new data is acked, open the congestion window.
-	 * If the window gives us less than ssthresh packets
-	 * in flight, open exponentially (segsz per packet).
-	 * Otherwise open linearly: segsz per window
-	 * (segsz^2 / cwnd per packet).
 	 */
 
 	u_int cw = tp->snd_cwnd;
 	u_int incr = tp->t_segsz;
 
-	if (cw >= tp->snd_ssthresh)
-		incr = incr * incr / cw;
+	if (tcp_do_abc) {
+
+		/*
+		 * RFC 3465 Appropriate Byte Counting (ABC)
+		 */
+
+		int acked = th->th_ack - tp->snd_una;
+
+		if (cw >= tp->snd_ssthresh) {
+			tp->t_bytes_acked += acked;
+			if (tp->t_bytes_acked >= cw) {
+				/* Time to increase the window. */
+				tp->t_bytes_acked -= cw;
+			} else {
+				/* No need to increase yet. */
+				incr = 0;
+			}
+		} else {
+			/*
+			 * use 2*SMSS or 1*SMSS for the "L" param,
+			 * depending on sysctl setting.
+			 *
+			 * (See RFC 3465 2.3 Choosing the Limit)
+			 */
+			u_int abc_lim;
+
+			abc_lim = (tcp_abc_aggressive == 0) ? incr : incr * 2;
+			incr = min(acked, abc_lim);
+		}
+	} else {
+
+		/*
+		 * If the window gives us less than ssthresh packets
+		 * in flight, open exponentially (segsz per packet).
+		 * Otherwise open linearly: segsz per window
+		 * (segsz^2 / cwnd per packet).
+		 */
+
+		if (cw >= tp->snd_ssthresh) {
+			incr = incr * incr / cw;
+		}
+	}
 
 	tp->snd_cwnd = min(cw + incr, TCP_MAXWIN << tp->snd_scale);
 }
@@ -628,6 +666,7 @@ tcp_newreno_fast_retransmit_newack(struct tcpcb *tp, struct tcphdr *th)
 			tp->snd_cwnd = tp->snd_ssthresh;
 		tp->t_partialacks = -1;
 		tp->t_dupacks = 0;
+		tp->t_bytes_acked = 0;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.126 2006/10/16 18:13:56 rpaulo Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.127 2006/10/19 11:40:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.126 2006/10/16 18:13:56 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.127 2006/10/19 11:40:51 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1428,6 +1428,7 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 {
 	int ecn_node, congctl_node;
 	const struct sysctlnode *sack_node, *node;
+	const struct sysctlnode *abc_node;
 #ifdef TCP_DEBUG
 	extern struct tcp_debug tcp_debug[TCP_NDEBUG];
 	extern int tcp_debx;
@@ -1743,6 +1744,23 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTL_EOL);
 #endif
 
+	/* ABC subtree */
+
+	sysctl_createv(clog, 0, NULL, &abc_node,
+		       CTLFLAG_PERMANENT, CTLTYPE_NODE, "abc",
+		       SYSCTL_DESCR("RFC3465 Appropriate Byte Counting (ABC)"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &abc_node, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "enable",
+		       SYSCTL_DESCR("Enable RFC3465 Appropriate Byte Counting"),
+		       NULL, 0, &tcp_do_abc, 0, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &abc_node, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "aggressive",
+		       SYSCTL_DESCR("1: L=2*SMSS 0: L=1*SMSS"),
+		       NULL, 0, &tcp_abc_aggressive, 0, CTL_CREATE, CTL_EOL);
 }
 
 /*
