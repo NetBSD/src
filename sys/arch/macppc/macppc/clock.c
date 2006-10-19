@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.32 2006/10/13 14:17:37 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.33 2006/10/19 14:25:29 tsutsui Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.32 2006/10/13 14:17:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33 2006/10/19 14:25:29 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -70,6 +70,7 @@ void
 cpu_initclocks(void)
 {
 	struct cpu_info * const ci = curcpu();
+	uint32_t msr;
 
 	ticks_per_intr = ticks_per_sec / hz;
 	cpu_timebase = ticks_per_sec;
@@ -80,6 +81,12 @@ cpu_initclocks(void)
 		__asm volatile ("mftb %0" : "=r"(ci->ci_lasttb));
 	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 	init_macppc_tc();
+
+	/*
+	 * Now allow all hardware interrupts including hardclock(9).
+	 */
+	__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
+	    : "=r"(msr) : "K"(PSL_EE|PSL_RI));
 }
 
 /*
@@ -104,12 +111,6 @@ decr_intr(struct clockframe *frame)
 	long ticks;
 	int nticks;
 
-	/*
-	 * Check whether we are initialized.
-	 */
-	if (cold)
-		return;
-		
 	/*
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
