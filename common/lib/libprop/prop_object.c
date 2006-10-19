@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.11 2006/10/18 19:15:46 martin Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.12 2006/10/19 10:10:35 he Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -828,7 +828,7 @@ _prop_object_internalize_map_file(const char *fname)
 {
 	struct stat sb;
 	struct _prop_object_internalize_mapped_file *mf;
-	size_t pgsize = sysconf(_SC_PAGESIZE);
+	size_t pgsize = (size_t)sysconf(_SC_PAGESIZE);
 	size_t pgmask = pgsize - 1;
 	boolean_t need_guard = FALSE;
 	int fd;
