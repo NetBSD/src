@@ -1,11 +1,17 @@
-# $NetBSD: Makefile.inc,v 1.8 2006/06/19 17:28:25 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.9 2006/10/19 14:45:02 tnozaki Exp $
 
 .PATH: ${.CURDIR}/MISC
 
 SRCS_mapper.dir+=	mapper.dir.MISC
 SRCS_charset.pivot+=	charset.pivot.MISC
 CLEANFILES+=		mapper.dir.MISC charset.pivot.MISC
-MAPS_MISC=		PTCP154%UCS.mps \
+MAPS_MISC=		ATARIST%UCS.mps \
+			HP-ROMAN8%UCS.mps \
+			NEXTSTEP%UCS.mps \
+			PTCP154%UCS.mps \
+			UCS%ATARIST.mps \
+			UCS%HP-ROMAN8.mps \
+			UCS%NEXTSTEP.mps \
 			UCS%PTCP154.mps
 
 mapper.dir.MISC: ${.CURDIR}/MISC/mapper.dir.MISC.src

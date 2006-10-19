@@ -1,4 +1,10 @@
-# $NetBSD: charset.pivot.MISC.src,v 1.6 2006/06/19 17:28:25 tnozaki Exp $
+# $NetBSD: charset.pivot.MISC.src,v 1.7 2006/10/19 14:45:02 tnozaki Exp $
 
+ATARIST			UCS			1
+HP-ROMAN8		UCS			1
+NEXTSTEP		UCS			1
 PTCP154			UCS			1
+UCS			ATARIST			1
+UCS			HP-ROMAN8		1
+UCS			NEXTSTEP		1
 UCS			PTCP154			1
