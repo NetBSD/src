@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.5 2005/12/11 12:17:37 christos Exp $	*/
+/*	$NetBSD: limits.h,v 1.6 2006/10/19 20:20:43 he Exp $	*/
 
 /*	$OpenBSD: limits.h,v 1.2 2000/07/31 20:06:02 millert Exp $	*/
 
@@ -72,24 +72,24 @@
  * These numbers work for pcc as well.  The UINT_MAX and ULONG_MAX values
  * are written as hex so that GCC will be quiet about large integer constants.
  */
-#define	SCHAR_MAX	127		/* min value for a signed char */
-#define	SCHAR_MIN	(-128)		/* max value for a signed char */
+#define	SCHAR_MAX	0x7f		/* min value for a signed char */
+#define	SCHAR_MIN	(-0x7f-1)	/* max value for a signed char */
 
-#define	UCHAR_MAX	255		/* max value for an unsigned char */
-#define	CHAR_MAX	127		/* max value for a char */
-#define	CHAR_MIN	(-128)		/* min value for a char */
+#define	UCHAR_MAX	0xffU		/* max value for an unsigned char */
+#define	CHAR_MAX	0x7f		/* max value for a char */
+#define	CHAR_MIN	(-0x7f-1)	/* min value for a char */
 
-#define	USHRT_MAX	65535		/* max value for an unsigned short */
-#define	SHRT_MAX	32767		/* max value for a short */
-#define	SHRT_MIN	(-32768)	/* min value for a short */
+#define	USHRT_MAX	0xffffU		/* max value for an unsigned short */
+#define	SHRT_MAX	0x7fff		/* max value for a short */
+#define	SHRT_MIN	(-0x7fff-1)	/* min value for a short */
 
-#define	UINT_MAX	0xffffffff	/* max value for an unsigned int */
-#define	INT_MAX		2147483647	/* max value for an int */
-#define	INT_MIN		(-2147483647-1)	/* min value for an int */
+#define	UINT_MAX	0xffffffffU	/* max value for an unsigned int */
+#define	INT_MAX		0x7fffffff	/* max value for an int */
+#define	INT_MIN		(-0x7fffffff-1)	/* min value for an int */
 
 #define	ULONG_MAX	0xffffffffUL	/* max value for an unsigned long */
-#define	LONG_MAX	2147483647L	/* max value for a long */
-#define	LONG_MIN	(-2147483647-1)	/* min value for a long */
+#define	LONG_MAX	0x7fffffffL	/* max value for a long */
+#define	LONG_MIN	(-0x7fffffffL-1)	/* min value for a long */
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
