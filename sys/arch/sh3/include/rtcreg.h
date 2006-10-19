@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcreg.h,v 1.10 2006/09/03 12:38:34 uwe Exp $	*/
+/*	$NetBSD: rtcreg.h,v 1.11 2006/10/19 03:26:10 uwe Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -77,9 +77,17 @@
 #define	  SH_RCR2_PES1			  0x20 /* -//- */
 #define	  SH_RCR2_PES0			  0x10 /* -//- */
 #define	  SH_RCR2_ENABLE		  0x08
-#define	  SH_RCR2_ADJ			  0x04 /* second adjustment */
+#define	  SH_RCR2_ADJ			  0x04 /* 30 second adjustment */
 #define	  SH_RCR2_RESET			  0x02
 #define	  SH_RCR2_START			  0x01
+
+#define SH_RCR2_BITS "\177\20"						 \
+	"b\7PEF\0"							 \
+	"f\4\3PES\0"							 \
+		":\0(none)\0" ":\1(1/256)\0" ":\2(1/64)\0" ":\3(1/16)\0" \
+		":\4(1/4)\0" ":\5(1/2)\0" ":\6(1)\0" ":\7(2)\0"		 \
+	"b\3ENABLE\0" "b\2ADJ\n" "b\1RESET\0" "b\0START\0"
+
 
 #ifndef _LOCORE
 #if defined(SH3) && defined(SH4)
