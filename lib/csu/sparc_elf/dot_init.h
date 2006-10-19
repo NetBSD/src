@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.3 2003/10/13 14:22:20 agc Exp $ */
+/* $NetBSD: dot_init.h,v 1.4 2006/10/19 08:37:46 martin Exp $ */
 
 /*-
  * Copyright (c) 2001 Matthew Green
@@ -64,17 +64,6 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-/*
- * These must be extern to avoid warnings ("declared static but never defined")
- * However, only the declaration is extern, the actually __asm() defines them
- * as static.
- */
-#define	INIT_FALLTHRU_DECL void init_fallthru(void)
-#define	FINI_FALLTHRU_DECL void fini_fallthru(void)
-
-#define	INIT_FALLTHRU()	init_fallthru()
-#define	FINI_FALLTHRU()	fini_fallthru()
-
 #ifdef __sparc64__
 #define SAVE	"	save    %sp, -176, %sp		\n"
 #else
@@ -85,6 +74,7 @@
 		__asm (					\
 		".section "#sect",\"ax\",@progbits	\n"\
 		"	.align 4			\n"\
+		".global "#entry_pt"			\n"\
 		#entry_pt":				\n"\
 		SAVE					\
 		"	/* fall thru */			\n"\
@@ -98,8 +88,10 @@
 		"	 restore			\n"\
 		".previous")
 
-#define	MD_INIT_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.init, init_fallthru)
-#define	MD_FINI_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.fini, fini_fallthru)
+#define	MD_INIT_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.init, _init)
+#define	MD_FINI_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.fini, _fini)
 
 #define	MD_INIT_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.init)
 #define	MD_FINI_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.fini)
+
+#define	MD_DO_NOT_NEED_FALLTHRU
