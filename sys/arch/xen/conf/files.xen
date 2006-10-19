@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.52 2006/10/17 19:57:24 bouyer Exp $
+#	$NetBSD: files.xen,v 1.53 2006/10/19 16:55:37 drochner Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -263,7 +263,7 @@ file	arch/i386/i386/kvm86.c			kvm86
 file	arch/i386/i386/kvm86call.S		kvm86
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
-file	arch/i386/i386/compat_13_machdep.c	compat_13 | compat_aout
+file	arch/i386/i386/compat_13_machdep.c	compat_13
 file	arch/i386/i386/compat_16_machdep.c	compat_16 | compat_ibcs2
 
 # SVR4 binary compatibility (COMPAT_SVR4)

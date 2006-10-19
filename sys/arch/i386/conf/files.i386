@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.293 2006/10/01 18:37:54 bouyer Exp $
+#	$NetBSD: files.i386,v 1.294 2006/10/19 16:55:37 drochner Exp $
 #
 # new style config file for i386 architecture
 #
@@ -353,7 +353,7 @@ file	arch/i386/i386/kvm86.c			kvm86
 file	arch/i386/i386/kvm86call.S		kvm86
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
-file	arch/i386/i386/compat_13_machdep.c	compat_13 | compat_aout
+file	arch/i386/i386/compat_13_machdep.c	compat_13
 file	arch/i386/i386/compat_16_machdep.c	compat_16 | compat_ibcs2
 
 # SVR4 binary compatibility (COMPAT_SVR4)
