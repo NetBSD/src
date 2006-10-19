@@ -1,3 +1,9 @@
+2006-10-19  Yvan Vanhullebus  <vanhu@netasq.com>
+	From Matthew Grooms:
+	* src/racoon/ipsec_doi.[ch]: Added ipsecdoi_chkcmpids() function
+	* src/racoon/sainfo.c: uses ipsecdoi_chkcmpids() and changed
+	src/dst to loc/rmt in getsainfo().
+	
 2006-10-09  Emmanuel Dreyfus  <manu@netbsd.org>
 	* src/racoon/isakmp_unity.c: correctly check read() return (Coverity)
 	* src/racoon/proposal.c: Fix memory leak (Coverity)
