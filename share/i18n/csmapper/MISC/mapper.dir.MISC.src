@@ -1,4 +1,10 @@
-# $NetBSD: mapper.dir.MISC.src,v 1.6 2006/06/19 17:28:25 tnozaki Exp $
+# $NetBSD: mapper.dir.MISC.src,v 1.7 2006/10/19 14:45:02 tnozaki Exp $
 
+ATARIST/UCS			mapper_std	MISC/ATARIST%UCS.mps
+HP-ROMAN8/UCS			mapper_std	MISC/HP-ROMAN8%UCS.mps
+NEXTSTEP/UCS			mapper_std	MISC/NEXTSTEP%UCS.mps
 PTCP154/UCS			mapper_std	MISC/PTCP154%UCS.mps
+UCS/ATARIST			mapper_std	MISC/UCS%ATARIST.mps
+UCS/HP-ROMAN8			mapper_std	MISC/UCS%HP-ROMAN8.mps
+UCS/NEXTSTEP			mapper_std	MISC/UCS%NEXTSTEP.mps
 UCS/PTCP154			mapper_std	MISC/UCS%PTCP154.mps

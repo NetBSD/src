@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.661 2006/10/18 17:54:54 tnozaki Exp $
+# $NetBSD: mi,v 1.662 2006/10/19 14:45:02 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1809,13 +1809,19 @@
 ./usr/share/i18n/csmapper/KS/UCS%KSC5601HANGUL.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/KS/UCS%KSC5601HANJA.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC			base-sysutil-share
+./usr/share/i18n/csmapper/MISC/ATARIST%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/Big5%UCS.mps	base-obsolete		obsolete
+./usr/share/i18n/csmapper/MISC/HP-ROMAN8%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/KOI8-R%UCS.mps	base-obsolete		obsolete
 ./usr/share/i18n/csmapper/MISC/KOI8-U%UCS.mps	base-obsolete		obsolete
+./usr/share/i18n/csmapper/MISC/NEXTSTEP%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/PTCP154%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/MISC/UCS%ATARIST.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/UCS%Big5.mps	base-obsolete		obsolete
+./usr/share/i18n/csmapper/MISC/UCS%HP-ROMAN8.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/UCS%KOI8-R.mps	base-obsolete		obsolete
 ./usr/share/i18n/csmapper/MISC/UCS%KOI8-U.mps	base-obsolete		obsolete
+./usr/share/i18n/csmapper/MISC/UCS%NEXTSTEP.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/UCS%PTCP154.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/charset.pivot		base-sysutil-share	nls
 ./usr/share/i18n/csmapper/charset.pivot.pvdb	base-sysutil-share	nls
@@ -1999,13 +2005,16 @@
 ./usr/share/i18n/esdb/KOI/KOI8-U.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/KOI/KOI8.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC			base-sysutil-share
+./usr/share/i18n/esdb/MISC/ATARIST.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/Big5.esdb		base-obsolete		obsolete
 ./usr/share/i18n/esdb/MISC/CTEXT.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/GB18030.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/GBK.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/MISC/HP-ROMAN8.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/JOHAB.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/KOI8-R.esdb		base-obsolete		obsolete
 ./usr/share/i18n/esdb/MISC/KOI8-U.esdb		base-obsolete		obsolete
+./usr/share/i18n/esdb/MISC/NEXTSTEP.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/PTCP154.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/Shift_JIS.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/UTF			base-sysutil-share
