@@ -1,14 +1,14 @@
-# $NetBSD: esdb.alias.MISC.src,v 1.9 2006/10/18 17:54:55 tnozaki Exp $
+# $NetBSD: esdb.alias.MISC.src,v 1.10 2006/10/19 14:45:02 tnozaki Exp $
 
-shift_jis			Shift_JIS
-sjis				Shift_JIS
+ctext				CTEXT
 gb18030				GB18030
 gbk				GBK
-ctext				CTEXT
+CP1361				JOHAB
 csPTCP154			PTCP154
 PT154				PTCP154
 CP154				PTCP154
 Cyrillic-Asian			PTCP154
 PT-154				PTCP154
 paratype-154			PTCP154
-CP1361				JOHAB
+shift_jis			Shift_JIS
+sjis				Shift_JIS
