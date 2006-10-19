@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.8 2006/10/19 11:40:51 yamt Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.9 2006/10/19 11:42:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.8 2006/10/19 11:40:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.9 2006/10/19 11:42:02 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -552,7 +552,8 @@ tcp_reno_newack(struct tcpcb *tp, struct tcphdr *th __unused)
 			 */
 			u_int abc_lim;
 
-			abc_lim = (tcp_abc_aggressive == 0) ? incr : incr * 2;
+			abc_lim = (tcp_abc_aggressive == 0 ||
+			    tp->snd_nxt != tp->snd_max) ? incr : incr * 2;
 			incr = min(acked, abc_lim);
 		}
 	} else {
