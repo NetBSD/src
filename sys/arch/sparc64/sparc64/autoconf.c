@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.132 2006/10/15 19:22:59 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.133 2006/10/19 21:09:46 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.132 2006/10/15 19:22:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.133 2006/10/19 21:09:46 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -130,7 +130,6 @@ struct evcnt intr_evcnts[] = {
 void *bootinfo = 0;
 
 #ifdef KGDB
-extern	int kgdb_debug_panic;
 int kgdb_break_at_attach;
 #endif
 
@@ -933,15 +932,4 @@ device_register(struct device *dev, void *aux)
 		dev_path_drive_match(dev, ofnode, adev->adev_channel*2+
 		    adev->adev_drv_data->drive, 0);
 	}
-
-#ifdef KGDB
-#ifndef	KGDB_DEVNAME
-#error you need to add options KGDB_DEVNAME
-#endif
-	if (kgdb_break_at_attach &&
-	    strcmp(device_xname(dev), KGDB_DEVNAME) == 0) {
-		kgdb_debug_panic = 1;
-		kgdb_connect(1);
-	}
-#endif
 }
