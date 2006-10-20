@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.1 2006/09/10 23:42:41 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.2 2006/10/20 19:28:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -43,20 +43,6 @@
 
 #ifdef __MUTEX_PRIVATE
 #define	MUTEX_THREAD		0xfffffff0UL
-
-static inline void
-MUTEX_SPIN_RELEASE(kmutex_t *mtx)
-{
-	__asm volatile ("movb $0,%%al; xchgb %%al,%0" :
-			: "m" (mtx->mtx_lock) : "memory", "%eax");
-}
-
-static inline void
-MUTEX_RELEASE(kmutex_t *mtx)
-{
-	__asm volatile ("xorl %%eax,%%eax; xchgl %%eax,%0" :
-			: "m" (mtx->mtx_owner) : "memory", "%eax");
-}
 #endif	/* __MUTEX_PRIVATE */
 
 #endif	/* _I386_MUTEX_H_ */

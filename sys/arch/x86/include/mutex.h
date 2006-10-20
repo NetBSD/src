@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.1 2006/09/10 23:42:41 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.2 2006/10/20 19:28:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ struct kmutex {
 			uint8_t			mtxs_oldspl;
 		} s;
 	} u;
+	uint32_t	mtx_id;
 };
 
 #ifdef __MUTEX_PRIVATE
@@ -83,16 +84,17 @@ do {					\
 #define	mtx_minspl 	u.s.mtxs_minspl
 #define	mtx_oldspl 	u.s.mtxs_oldspl
 
-#if !defined(LOCKDEBUG)
 #define __HAVE_MUTEX_ENTER		1
 #define __HAVE_MUTEX_EXIT		1
-#endif
 
 #define	MUTEX_BIT_WAITERS		0x01
 #define	MUTEX_BIT_SPIN			0x02
 
 #define	MUTEX_ADAPTIVE_P(mtx)		((mtx)->mtx_allone != 0xff)
 #define	MUTEX_SPIN_P(mtx)		((mtx)->mtx_allone == 0xff)
+
+#define	MUTEX_SETID(mtx, id)		((mtx)->mtx_id = id)
+#define	MUTEX_GETID(mtx)		((mtx)->mtx_id)
 
 /*
  * Spin mutex methods.
@@ -112,6 +114,13 @@ MUTEX_SPIN_ACQUIRE(kmutex_t *mtx)
 	return rv;
 }
 
+static inline void
+MUTEX_SPIN_RELEASE(kmutex_t *mtx)
+{
+	__insn_barrier();
+	mtx->mtx_lock = 0;
+}
+
 /*
  * Adaptive mutex methods.
  */        
@@ -124,6 +133,13 @@ MUTEX_SPIN_ACQUIRE(kmutex_t *mtx)
 	     MUTEX_THREAD | MUTEX_BIT_SPIN, MUTEX_BIT_WAITERS)
 #define	MUTEX_ACQUIRE(mtx, ct)						\
 	_lock_cas(&(mtx)->mtx_owner, 0UL, (ct))
+
+static inline void
+MUTEX_RELEASE(kmutex_t *mtx)
+{
+	__insn_barrier();
+	mtx->mtx_owner = 0;
+}
 
 #ifdef _KERNEL
 int	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
