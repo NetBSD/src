@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.99.2.1 2006/09/11 00:04:40 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.99.2.2 2006/10/20 20:02:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99.2.1 2006/09/11 00:04:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99.2.2 2006/10/20 20:02:34 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1346,7 +1346,7 @@ void
 simple_lock_switchcheck(void)
 {
 
-	simple_lock_only_held(&sched_lock, "switching");
+	simple_lock_only_held(NULL, "switching");
 }
 
 /*
@@ -1457,15 +1457,13 @@ _kernel_lock(int flag)
 {
 	struct cpu_info *ci = curcpu();
 
-	SCHED_ASSERT_UNLOCKED();
-
 	if (ci->ci_data.cpu_biglock_count > 0) {
 		LOCK_ASSERT(mutex_owned(&kernel_mutex));
 		ci->ci_data.cpu_biglock_count++;
 	} else {
 		mutex_enter(&kernel_mutex);
 		ci->ci_data.cpu_biglock_count++;
-		splx(kernel_mutex.mtx_oldspl);
+		splx(mutex_getspl(&kernel_mutex));
 	}
 }
 
@@ -1479,7 +1477,7 @@ _kernel_unlock(void)
 
 	s = splraiseipl(kernel_mutex.mtx_minspl);
 	if ((--ci->ci_data.cpu_biglock_count) == 0) {
-		kernel_mutex.mtx_oldspl = s;
+		mutex_setspl(&kernel_mutex, s);
 		mutex_exit(&kernel_mutex);
 	} else
 		splx(s);
@@ -1493,7 +1491,6 @@ void
 _kernel_proc_lock(struct lwp *l)
 {
 
-	SCHED_ASSERT_UNLOCKED();
 	_kernel_lock(0);
 }
 
@@ -1513,7 +1510,7 @@ _kernel_lock_release_all()
 	hold_count = ci->ci_data.cpu_biglock_count;
 
 	if (hold_count) {
-		kernel_mutex.mtx_oldspl = splraiseipl(kernel_mutex.mtx_minspl);
+		mutex_setspl(&kernel_mutex, splraiseipl(kernel_mutex.mtx_minspl));
 		ci->ci_data.cpu_biglock_count = 0;
 		mutex_exit(&kernel_mutex);
 	}
@@ -1532,7 +1529,7 @@ _kernel_lock_acquire_count(int hold_count)
 
 		mutex_enter(&kernel_mutex);
 		ci->ci_data.cpu_biglock_count = hold_count;
-		splx(kernel_mutex.mtx_oldspl);
+		splx(mutex_getspl(&kernel_mutex));
 	}
 }
 #if defined(DEBUG)
