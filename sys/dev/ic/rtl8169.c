@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.31 2006/10/17 14:03:26 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.32 2006/10/20 11:30:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -488,9 +488,6 @@ re_diag(struct rtk_softc *sc)
 	 * entry in the RX DMA ring. Grab it from there.
 	 */
 
-	dmamap = sc->rtk_ldata.rtk_rx_list_map;
-	bus_dmamap_sync(sc->sc_dmat,
-	    dmamap, 0, dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 	dmamap = sc->rtk_ldata.rtk_rx_dmamap[0];
 	bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
@@ -501,9 +498,10 @@ re_diag(struct rtk_softc *sc)
 	sc->rtk_ldata.rtk_rx_mbuf[0] = NULL;
 	eh = mtod(m0, struct ether_header *);
 
+	RTK_RXDESCSYNC(sc, 0, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	cur_rx = &sc->rtk_ldata.rtk_rx_list[0];
-	total_len = RTK_RXBYTES(cur_rx);
 	rxstat = le32toh(cur_rx->rtk_cmdstat);
+	total_len = rxstat & sc->rtk_rxlenmask;
 
 	if (total_len != ETHER_MIN_LEN) {
 		aprint_error("%s: diagnostic failed, received short packet\n",
@@ -1053,18 +1051,23 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 		goto out;
 
 	d = &sc->rtk_ldata.rtk_rx_list[idx];
-	if (le32toh(d->rtk_cmdstat) & RTK_RDESC_STAT_OWN)
+	RTK_RXDESCSYNC(sc, idx, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	if (le32toh(d->rtk_cmdstat) & RTK_RDESC_STAT_OWN) {
+		printf("%s: tried to map busy RX descriptor\n",
+		    sc->sc_dev.dv_xname);
+		RTK_RXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD);
 		goto out;
+	}
 
 	cmdstat = map->dm_segs[0].ds_len;
 	d->rtk_bufaddr_lo = htole32(RTK_ADDR_LO(map->dm_segs[0].ds_addr));
 	d->rtk_bufaddr_hi = htole32(RTK_ADDR_HI(map->dm_segs[0].ds_addr));
 	if (idx == (RTK_RX_DESC_CNT - 1))
 		cmdstat |= RTK_RDESC_CMD_EOR;
+	cmdstat |= RTK_RDESC_CMD_OWN;
 	d->rtk_cmdstat = htole32(cmdstat);
+	RTK_RXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-	sc->rtk_ldata.rtk_rx_list[idx].rtk_cmdstat |=
-	    htole32(RTK_RDESC_CMD_OWN);
 	sc->rtk_ldata.rtk_rx_mbuf[idx] = m;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->rtk_ldata.rtk_rx_dmamap[idx], 0,
@@ -1090,7 +1093,8 @@ re_tx_list_init(struct rtk_softc *sc)
 
 	bus_dmamap_sync(sc->sc_dmat,
 	    sc->rtk_ldata.rtk_tx_list_map, 0,
-	    sc->rtk_ldata.rtk_tx_list_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	    sc->rtk_ldata.rtk_tx_list_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	sc->rtk_ldata.rtk_txq_prodidx = 0;
 	sc->rtk_ldata.rtk_txq_considx = 0;
 	sc->rtk_ldata.rtk_tx_free = RTK_TX_DESC_CNT(sc);
@@ -1112,13 +1116,6 @@ re_rx_list_init(struct rtk_softc *sc)
 		if (re_newbuf(sc, i, NULL) == ENOBUFS)
 			return ENOBUFS;
 	}
-
-	/* Flush the RX descriptors */
-
-	bus_dmamap_sync(sc->sc_dmat,
-	    sc->rtk_ldata.rtk_rx_list_map,
-	    0, sc->rtk_ldata.rtk_rx_list_map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	sc->rtk_ldata.rtk_rx_prodidx = 0;
 	sc->rtk_head = sc->rtk_tail = NULL;
@@ -1143,19 +1140,17 @@ re_rxeof(struct rtk_softc *sc)
 	ifp = &sc->ethercom.ec_if;
 	i = sc->rtk_ldata.rtk_rx_prodidx;
 
-	/* Invalidate the descriptor memory */
-
-	bus_dmamap_sync(sc->sc_dmat,
-	    sc->rtk_ldata.rtk_rx_list_map,
-	    0, sc->rtk_ldata.rtk_rx_list_map->dm_mapsize,
-	    BUS_DMASYNC_POSTREAD);
-
-	while (!RTK_OWN(&sc->rtk_ldata.rtk_rx_list[i])) {
-
+	for (;;) {
 		cur_rx = &sc->rtk_ldata.rtk_rx_list[i];
-		m = sc->rtk_ldata.rtk_rx_mbuf[i];
-		total_len = RTK_RXBYTES(cur_rx);
+		RTK_RXDESCSYNC(sc, i,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		rxstat = le32toh(cur_rx->rtk_cmdstat);
+		if ((rxstat & RTK_RDESC_STAT_OWN) != 0) {
+			RTK_RXDESCSYNC(sc, i, BUS_DMASYNC_PREREAD);
+			break;
+		}
+		total_len = rxstat & sc->rtk_rxlenmask;
+		m = sc->rtk_ldata.rtk_rx_mbuf[i];
 		rxvlan = le32toh(cur_rx->rtk_vlanctl);
 
 		/* Invalidate the RX mbuf and unload its map */
@@ -1299,13 +1294,6 @@ re_rxeof(struct rtk_softc *sc)
 		(*ifp->if_input)(ifp, m);
 	}
 
-	/* Flush the RX DMA ring */
-
-	bus_dmamap_sync(sc->sc_dmat,
-	    sc->rtk_ldata.rtk_rx_list_map,
-	    0, sc->rtk_ldata.rtk_rx_list_map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-
 	sc->rtk_ldata.rtk_rx_prodidx = i;
 
 	return;
@@ -1321,13 +1309,6 @@ re_txeof(struct rtk_softc *sc)
 	ifp = &sc->ethercom.ec_if;
 	idx = sc->rtk_ldata.rtk_txq_considx;
 
-	/* Invalidate the TX descriptor list */
-
-	bus_dmamap_sync(sc->sc_dmat,
-	    sc->rtk_ldata.rtk_tx_list_map,
-	    0, sc->rtk_ldata.rtk_tx_list_map->dm_mapsize,
-	    BUS_DMASYNC_POSTREAD);
-
 	while (/* CONSTCOND */ 1) {
 		struct rtk_txq *txq = &sc->rtk_ldata.rtk_txq[idx];
 		int descidx;
@@ -1339,14 +1320,20 @@ re_txeof(struct rtk_softc *sc)
 		}
 
 		descidx = txq->txq_descidx;
+		RTK_TXDESCSYNC(sc, descidx,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		txstat =
 		    le32toh(sc->rtk_ldata.rtk_tx_list[descidx].rtk_cmdstat);
 		KASSERT((txstat & RTK_TDESC_CMD_EOF) != 0);
-		if (txstat & RTK_TDESC_CMD_OWN)
+		if (txstat & RTK_TDESC_CMD_OWN) {
+			RTK_TXDESCSYNC(sc, descidx, BUS_DMASYNC_PREREAD);
 			break;
+		}
 
 		sc->rtk_ldata.rtk_tx_free += txq->txq_dmamap->dm_nsegs;
 		KASSERT(sc->rtk_ldata.rtk_tx_free <= RTK_TX_DESC_CNT(sc));
+		bus_dmamap_sync(sc->sc_dmat, txq->txq_dmamap,
+		    0, txq->txq_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, txq->txq_dmamap);
 		m_freem(txq->txq_mbuf);
 		txq->txq_mbuf = NULL;
@@ -1530,7 +1517,7 @@ static int
 re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 {
 	bus_dmamap_t		map;
-	int			error, i, startidx, curidx;
+	int			error, i, uidx, startidx, curidx;
 #ifdef RE_VLAN
 	struct m_tag		*mtag;
 #endif
@@ -1615,11 +1602,18 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 	curidx = startidx = sc->rtk_ldata.rtk_tx_nextfree;
 	while (1) {
 		d = &sc->rtk_ldata.rtk_tx_list[curidx];
+		RTK_TXDESCSYNC(sc, curidx,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		if (le32toh(d->rtk_cmdstat) & RTK_TDESC_STAT_OWN) {
+			printf("%s: tried to map busy TX descriptor\n",
+			    sc->sc_dev.dv_xname);
+			RTK_TXDESCSYNC(sc, curidx, BUS_DMASYNC_PREREAD);
 			while (i > 0) {
-				sc->rtk_ldata.rtk_tx_list[
-				    (curidx + RTK_TX_DESC_CNT(sc) - i) %
-				    RTK_TX_DESC_CNT(sc)].rtk_cmdstat = 0;
+				uidx = (curidx + RTK_TX_DESC_CNT(sc) - i) %
+				    RTK_TX_DESC_CNT(sc);
+				sc->rtk_ldata.rtk_tx_list[uidx].rtk_cmdstat = 0;
+				RTK_TXDESCSYNC(sc, uidx,
+				    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 				i--;
 			}
 			error = ENOBUFS;
@@ -1638,6 +1632,8 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 		if (curidx == (RTK_TX_DESC_CNT(sc) - 1))
 			cmdstat |= RTK_TDESC_CMD_EOR;
 		d->rtk_cmdstat = htole32(cmdstat | rtk_flags);
+		RTK_TXDESCSYNC(sc, curidx,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		i++;
 		if (i == map->dm_nsegs)
 			break;
@@ -1660,6 +1656,8 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 		sc->rtk_ldata.rtk_tx_list[startidx].rtk_vlanctl =
 		    htole32(htons(VLAN_TAG_VALUE(mtag)) |
 		    RTK_TDESC_VLANCTL_TAG);
+		RTK_TXDESCSYNC(sc, startidx,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
 #endif
 
@@ -1667,9 +1665,13 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 
 	sc->rtk_ldata.rtk_tx_list[curidx].rtk_cmdstat |=
 	    htole32(RTK_TDESC_CMD_OWN);
-	if (startidx != curidx)
+	RTK_TXDESCSYNC(sc, curidx, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	if (startidx != curidx) {
 		sc->rtk_ldata.rtk_tx_list[startidx].rtk_cmdstat |=
 		    htole32(RTK_TDESC_CMD_OWN);
+		RTK_TXDESCSYNC(sc, startidx,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	}
 
 	txq->txq_descidx = curidx;
 	RTK_TX_DESC_INC(sc, curidx);
@@ -1743,13 +1745,6 @@ re_start(struct ifnet *ifp)
 		return;
 	}
 	sc->rtk_ldata.rtk_txq_prodidx = idx;
-
-	/* Flush the TX descriptors */
-
-	bus_dmamap_sync(sc->sc_dmat,
-	    sc->rtk_ldata.rtk_tx_list_map,
-	    0, sc->rtk_ldata.rtk_tx_list_map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	/*
 	 * RealTek put the TX poll request register in a different
