@@ -1,4 +1,4 @@
-/*	$NetBSD: targparam.h,v 1.3 2003/05/29 18:12:16 christos Exp $	*/
+/*	$NetBSD: targparam.h,v 1.4 2006/10/20 12:51:12 he Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -45,11 +45,11 @@
 #ifdef __ELF__
 #define	PTRDIFF_IS_LONG		1
 #define	SIZEOF_IS_ULONG		1
-#define	INTPTR_IS_ULONG		1
+#define	INTPTR_IS_LONG		1
 #else
 #define	PTRDIFF_IS_LONG		0
 #define	SIZEOF_IS_ULONG		0
-#define	INTPTR_IS_ULONG		0
+#define	INTPTR_IS_LONG		0
 #endif
 
 #define	FLOAT_SIZE		(4 * CHAR_BIT)
