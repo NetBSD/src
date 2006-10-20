@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isa.c,v 1.16 2006/10/12 01:31:16 christos Exp $	*/
+/*	$NetBSD: ess_isa.c,v 1.17 2006/10/20 18:14:59 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.16 2006/10/12 01:31:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.17 2006/10/20 18:14:59 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.16 2006/10/12 01:31:16 christos Exp $"
 #ifdef ESS_ISA_DEBUG
 #define DPRINTF(x)	printf x
 #else
-#define DPRINTF(x)
+#define DPRINTF(x)	{}
 #endif
 
 int ess_isa_probe(struct device *, struct cfdata *, void *);
