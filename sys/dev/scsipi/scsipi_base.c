@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.139 2006/10/12 01:31:57 christos Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.140 2006/10/20 07:11:50 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.139 2006/10/12 01:31:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.140 2006/10/20 07:11:50 scw Exp $");
 
 #include "opt_scsi.h"
 
@@ -1021,12 +1021,45 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 }
 
 /*
+ * scsipi_validate_secsize:
+ *
+ *	Validate the sector size reported by READ_CAPACITY_1[06].
+ *	Use the supplied default if the reported size looks wrong.
+ */
+static int
+scsipi_validate_secsize(struct scsipi_periph *periph, const char *opcode,
+    int raw_len, int def_len)
+{
+
+	switch (raw_len) {
+	case 256:
+	case 512:
+	case 1024:
+	case 2048:
+	case 4096:
+		break;
+
+	default:
+		scsipi_printaddr(periph);
+		printf("%s returned %s sector size: 0x%x. Defaulting to %d "
+		    "bytes.\n", opcode, (raw_len ^ (1 << (ffs(raw_len) - 1))) ?
+		    "preposterous" : "unsupported", raw_len, def_len);
+		/*FALLTHROUGH*/
+	case 0:
+		raw_len = def_len;
+		break;
+	}
+
+	return (raw_len);
+}
+
+/*
  * scsipi_size:
  *
  *	Find out from the device what its capacity is.
  */
 u_int64_t
-scsipi_size(struct scsipi_periph *periph, int *secsize, int flags)
+scsipi_size(struct scsipi_periph *periph, int *secsize, int defsize, int flags)
 {
 	union {
 		struct scsipi_read_capacity_10 cmd;
@@ -1050,8 +1083,11 @@ scsipi_size(struct scsipi_periph *periph, int *secsize, int flags)
 		return (0);
 
 	if (_4btol(data.data.addr) != 0xffffffff) {
-		if (secsize)
-			*secsize = _4btol(data.data.length);
+		if (secsize) {
+			*secsize = scsipi_validate_secsize(periph,
+			    "READ_CAPACITY_10", _4btol(data.data.length),
+			    defsize);
+		}
 		return (_4btol(data.data.addr) + 1);
 	}
 
@@ -1071,8 +1107,10 @@ scsipi_size(struct scsipi_periph *periph, int *secsize, int flags)
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
 		return (0);
 
-	if (secsize)
-		*secsize = _4btol(data.data16.length);
+	if (secsize) {
+		*secsize = scsipi_validate_secsize(periph, "READ_CAPACITY_16",
+		    _4btol(data.data16.length), defsize);
+	}
 	return (_8btol(data.data16.addr) + 1);
 }
 
