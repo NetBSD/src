@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.271 2006/10/12 01:32:19 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.272 2006/10/20 18:58:12 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.271 2006/10/12 01:32:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.272 2006/10/20 18:58:12 reinoud Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -361,7 +361,7 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
 	simple_lock_init(&mp->mnt_slock);
 	(void)vfs_busy(mp, LK_NOWAIT, 0);
-	LIST_INIT(&mp->mnt_vnodelist);
+	TAILQ_INIT(&mp->mnt_vnodelist);
 	mp->mnt_op = vfsp;
 	mp->mnt_flag = MNT_RDONLY;
 	mp->mnt_vnodecovered = NULLVP;
@@ -652,12 +652,17 @@ insmntque(struct vnode *vp, struct mount *mp)
 	 * Delete from old mount point vnode list, if on one.
 	 */
 	if (vp->v_mount != NULL)
-		LIST_REMOVE(vp, v_mntvnodes);
+		TAILQ_REMOVE(&vp->v_mount->mnt_vnodelist, vp, v_mntvnodes);
 	/*
 	 * Insert into list of vnodes for the new mount point, if available.
 	 */
-	if ((vp->v_mount = mp) != NULL)
-		LIST_INSERT_HEAD(&mp->mnt_vnodelist, vp, v_mntvnodes);
+	if ((vp->v_mount = mp) != NULL) {
+		if (TAILQ_EMPTY(&mp->mnt_vnodelist)) {
+			TAILQ_INSERT_HEAD(&mp->mnt_vnodelist, vp, v_mntvnodes);
+		} else {
+			TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
+		}
+	}
 	simple_unlock(&mntvnode_slock);
 }
 
@@ -948,8 +953,8 @@ brelvp(struct buf *bp)
 
 	if (TAILQ_EMPTY(&vp->v_uobj.memq) && (vp->v_flag & VONWORKLST) &&
 	    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
-		vp->v_flag &= ~(VWRITEMAPDIRTY|VONWORKLST);
-		LIST_REMOVE(vp, v_synclist);
+		vp->v_flag &= ~VWRITEMAPDIRTY;
+		vn_syncer_remove_from_worklist(vp);
 	}
 
 	bp->b_vp = NULL;
@@ -984,8 +989,8 @@ reassignbuf(struct buf *bp, struct vnode *newvp)
 		if (TAILQ_EMPTY(&newvp->v_uobj.memq) &&
 		    (newvp->v_flag & VONWORKLST) &&
 		    LIST_FIRST(&newvp->v_dirtyblkhd) == NULL) {
-			newvp->v_flag &= ~(VWRITEMAPDIRTY|VONWORKLST);
-			LIST_REMOVE(newvp, v_synclist);
+			newvp->v_flag &= ~VWRITEMAPDIRTY;
+			vn_syncer_remove_from_worklist(newvp);
 		}
 	} else {
 		listheadp = &newvp->v_dirtyblkhd;
@@ -1406,15 +1411,14 @@ int
 vflush(struct mount *mp, struct vnode *skipvp, int flags)
 {
 	struct lwp *l = curlwp;		/* XXX */
-	struct vnode *vp, *nvp;
+	struct vnode *vp;
 	int busy = 0;
 
 	simple_lock(&mntvnode_slock);
 loop:
-	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
+	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		if (vp->v_mount != mp)
 			goto loop;
-		nvp = LIST_NEXT(vp, v_mntvnodes);
 		/*
 		 * Skip over a selected vnode.
 		 */
@@ -1880,7 +1884,7 @@ printlockedvnodes(void)
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
-		LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 			if (VOP_ISLOCKED(vp))
 				vprint(NULL, vp);
 		}
@@ -1995,7 +1999,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 	char *where = oldp;
 	size_t *sizep = oldlenp;
 	struct mount *mp, *nmp;
-	struct vnode *nvp, *vp;
+	struct vnode *vp;
 	char *bp = where, *savebp;
 	char *ewhere;
 	int error;
@@ -2023,9 +2027,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 		savebp = bp;
 again:
 		simple_lock(&mntvnode_slock);
-		for (vp = LIST_FIRST(&mp->mnt_vnodelist);
-		     vp != NULL;
-		     vp = nvp) {
+		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 			/*
 			 * Check that the vp is still associated with
 			 * this filesystem.  RACE: could have been
@@ -2038,7 +2040,6 @@ again:
 				bp = savebp;
 				goto again;
 			}
-			nvp = LIST_NEXT(vp, v_mntvnodes);
 			if (bp + VPTRSZ + VNODESZ > ewhere) {
 				simple_unlock(&mntvnode_slock);
 				*sizep = bp - where;
@@ -2731,7 +2732,7 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 		struct vnode *vp;
 		(*pr)("locked vnodes =");
 		/* XXX would take mountlist lock, except ddb may not have context */
-		LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 			if (VOP_ISLOCKED(vp)) {
 				if ((++cnt % 6) == 0) {
 					(*pr)(" %p,\n\t", vp);
@@ -2748,8 +2749,8 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 		struct vnode *vp;
 		(*pr)("all vnodes =");
 		/* XXX would take mountlist lock, except ddb may not have context */
-		LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
-			if (!LIST_NEXT(vp, v_mntvnodes)) {
+		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+			if (!TAILQ_NEXT(vp, v_mntvnodes)) {
 				(*pr)(" %p", vp);
 			} else if ((++cnt % 6) == 0) {
 				(*pr)(" %p,\n\t", vp);

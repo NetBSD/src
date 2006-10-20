@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.165 2006/10/12 01:32:47 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.166 2006/10/20 18:58:12 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.165 2006/10/12 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.166 2006/10/20 18:58:12 reinoud Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -966,7 +966,7 @@ nfs_sync(mp, waitfor, cred, l)
 	 * Force stale buffer cache information to be flushed.
 	 */
 loop:
-	LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.

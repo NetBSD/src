@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.157 2006/10/17 14:51:51 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.158 2006/10/20 18:58:12 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -105,10 +105,11 @@ struct vnode {
 	struct mount	*v_mount;		/* ptr to vfs we are in */
 	int		(**v_op)(void *);	/* vnode operations vector */
 	TAILQ_ENTRY(vnode) v_freelist;		/* vnode freelist */
-	LIST_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
+	TAILQ_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
 	struct buflists	v_cleanblkhd;		/* clean blocklist head */
 	struct buflists	v_dirtyblkhd;		/* dirty blocklist head */
-	LIST_ENTRY(vnode) v_synclist;		/* vnodes with dirty buffers */
+	int		v_synclist_slot;	/* synclist slot index */
+	TAILQ_ENTRY(vnode) v_synclist;		/* vnodes with dirty buffers */
 	LIST_HEAD(, namecache) v_dnclist;	/* namecaches for children */
 	LIST_HEAD(, namecache) v_nclist;	/* namecaches for our parent */
 	union {
