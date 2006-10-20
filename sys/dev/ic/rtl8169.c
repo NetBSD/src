@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.35 2006/10/20 14:00:49 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.36 2006/10/20 14:28:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -450,8 +450,8 @@ re_diag(struct rtk_softc *sc)
 	/* Put some data in the mbuf */
 
 	eh = mtod(m0, struct ether_header *);
-	bcopy((char *)&dst, eh->ether_dhost, ETHER_ADDR_LEN);
-	bcopy((char *)&src, eh->ether_shost, ETHER_ADDR_LEN);
+	memcpy(eh->ether_dhost, (char *)&dst, ETHER_ADDR_LEN);
+	memcpy(eh->ether_shost, (char *)&src, ETHER_ADDR_LEN);
 	eh->ether_type = htons(ETHERTYPE_IP);
 	m0->m_pkthdr.len = m0->m_len = ETHER_MIN_LEN - ETHER_CRC_LEN;
 
@@ -512,8 +512,8 @@ re_diag(struct rtk_softc *sc)
 
 	/* Test that the received packet data matches what we sent. */
 
-	if (bcmp((char *)&eh->ether_dhost, (char *)&dst, ETHER_ADDR_LEN) ||
-	    bcmp((char *)&eh->ether_shost, (char *)&src, ETHER_ADDR_LEN) ||
+	if (memcmp((char *)&eh->ether_dhost, (char *)&dst, ETHER_ADDR_LEN) ||
+	    memcmp((char *)&eh->ether_shost, (char *)&src, ETHER_ADDR_LEN) ||
 	    ntohs(eh->ether_type) != ETHERTYPE_IP) {
 		aprint_error("%s: WARNING, DMA FAILURE!\n",
 		    sc->sc_dev.dv_xname);
