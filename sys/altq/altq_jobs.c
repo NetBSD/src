@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_jobs.c,v 1.2 2006/10/12 19:59:08 peter Exp $	*/
+/*	$NetBSD: altq_jobs.c,v 1.3 2006/10/20 22:04:13 elad Exp $	*/
 /*	$KAME: altq_jobs.c,v 1.11 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (c) 2001, the Rector and Board of Visitors of the
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.2 2006/10/12 19:59:08 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.3 2006/10/20 22:04:13 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -1861,8 +1861,9 @@ jobsioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = kauth_authorize_generic(p->p_cred,
-		    KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_network(p->p_cred,
+		    KAUTH_NETWORK_ALTQ, KAUTH_REQ_NETWORK_ALTQ_JOBS, NULL,
+		    NULL, NULL)) != 0)
 			return (error);
 #endif
 		break;
