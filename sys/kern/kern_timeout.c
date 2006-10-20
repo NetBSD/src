@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.17.20.1 2006/09/19 23:04:44 ad Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.17.20.2 2006/10/20 19:24:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.17.20.1 2006/09/19 23:04:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.17.20.2 2006/10/20 19:24:29 ad Exp $");
 
 /*
  * Adapted from OpenBSD: kern_timeout.c,v 1.15 2002/12/08 04:21:07 art Exp,
@@ -192,7 +192,7 @@ static inline void
 callout_barrier(struct callout *c)
 {
 #ifdef MULTIPROCESSOR
-	volatile void *oncpu;
+	void *oncpu;
 
 	LOCK_ASSERT(mutex_owned(&callout_mutex));
 
