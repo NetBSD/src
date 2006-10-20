@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5.14.1 2006/09/10 23:42:41 ad Exp $
+#	$NetBSD: genassym.cf,v 1.5.14.2 2006/10/20 19:46:53 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,6 +91,8 @@ include <sys/user.h>
 include <sys/mbuf.h>
 include <sys/mutex.h>
 include <sys/rwlock.h>
+include <sys/cpu_data.h>
+
 include <netinet/in.h>
 include <netinet/in_systm.h>
 include <netinet/ip.h>
@@ -129,7 +131,6 @@ include <machine/i82093reg.h>
 include <machine/i82093var.h>
 endif
 
-
 define	LSRUN			LSRUN
 define	LSONPROC		LSONPROC
 
@@ -142,27 +143,28 @@ define	VM_MIN_KERNEL_ADDRESS	(unsigned long long)VM_MIN_KERNEL_ADDRESS
 
 define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
-define		L_ADDR			offsetof(struct lwp, l_addr)
-define		L_BACK			offsetof(struct lwp, l_back)
-define		L_FORW			offsetof(struct lwp, l_forw)
-define		L_PRIORITY		offsetof(struct lwp, l_priority)
-define		L_STAT			offsetof(struct lwp, l_stat)
-define		L_WCHAN			offsetof(struct lwp, l_wchan)
-define		L_PROC			offsetof(struct lwp, l_proc)
-define		L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
-define		L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
-define		L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
-define		L_CPU			offsetof(struct lwp, l_cpu)
+define	L_ADDR			offsetof(struct lwp, l_addr)
+define	L_BACK			offsetof(struct lwp, l_back)
+define	L_FORW			offsetof(struct lwp, l_forw)
+define	L_PRIORITY		offsetof(struct lwp, l_priority)
+define	L_STAT			offsetof(struct lwp, l_stat)
+define	L_WCHAN			offsetof(struct lwp, l_wchan)
+define	L_PROC			offsetof(struct lwp, l_proc)
+define	L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
+define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
+define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
+define	L_CPU			offsetof(struct lwp, l_cpu)
+define	L_MUTEX			offsetof(struct lwp, l_mutex)
+define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 
-define		PAGE_SIZE		PAGE_SIZE
+define	PAGE_SIZE		PAGE_SIZE
 
-define		MDP_IRET		MDP_IRET
+define	MDP_IRET		MDP_IRET
 
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
-define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)
 
 define	P_SYSTEM		P_SYSTEM
 define	P_32			P_32
@@ -224,6 +226,7 @@ define  CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define  CPU_INFO_IDLE_PCB	offsetof(struct cpu_info, ci_idle_pcb)
 define  CPU_INFO_IDLE_TSS_SEL	offsetof(struct cpu_info, ci_idle_tss_sel)
 define  CPU_INFO_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
+define	CPU_INFO_SCHED_MUTEX	offsetof(struct cpu_info, ci_sched_mutex)
 
 define  CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
 define  CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)

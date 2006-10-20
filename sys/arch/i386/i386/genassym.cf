@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.45.4.1 2006/09/10 23:42:41 ad Exp $
+#	$NetBSD: genassym.cf,v 1.45.4.2 2006/10/20 19:46:53 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -193,10 +193,11 @@ define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_CPU			offsetof(struct lwp, l_cpu)
+define	L_MUTEX			offsetof(struct lwp, l_mutex)
+define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
-define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)
 
 define	P_SYSTEM		P_SYSTEM
 
@@ -293,6 +294,7 @@ define	CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define	CPU_INFO_IDLE_PCB	offsetof(struct cpu_info, ci_idle_pcb)
 define  CPU_INFO_IDLE_TSS_SEL	offsetof(struct cpu_info, ci_idle_tss_sel)
 define	CPU_INFO_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
+define	CPU_INFO_SCHED_MUTEX	offsetof(struct cpu_info, ci_sched_mutex)
 
 define	CPU_INFO_LEVEL		offsetof(struct cpu_info, ci_cpuid_level)
 define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
