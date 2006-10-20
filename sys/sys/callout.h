@@ -1,4 +1,4 @@
-/*	$NetBSD: callout.h,v 1.22.20.1 2006/09/19 23:04:44 ad Exp $	*/
+/*	$NetBSD: callout.h,v 1.22.20.2 2006/10/20 19:24:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003, 2006 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ struct callout {
 	void	*c_arg;				/* function argument */
 	int	c_time;				/* when callout fires */
 	int	c_flags;			/* state of this entry */
-	volatile void	*c_oncpu;		/* MP: running on CPU */
+	void	* volatile c_oncpu;		/* MP: running on CPU */
 };
 
 #define	CALLOUT_PENDING		0x0002	/* callout is on the queue */
