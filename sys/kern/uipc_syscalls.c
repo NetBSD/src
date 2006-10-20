@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.102 2006/08/22 13:39:48 seanb Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.102.2.1 2006/10/20 21:33:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.102 2006/08/22 13:39:48 seanb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.102.2.1 2006/10/20 21:33:55 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -537,8 +537,11 @@ sendit(struct lwp *l, int s, struct msghdr *mp, int flags, register_t *retsize)
 		if (auio.uio_resid != len && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
-		if (error == EPIPE && (flags & MSG_NOSIGNAL) == 0)
+		if (error == EPIPE && (flags & MSG_NOSIGNAL) == 0) {
+			rw_enter(&proclist_lock, RW_READER);
 			psignal(p, SIGPIPE);
+			rw_exit(&proclist_lock);
+		}
 	}
 	if (error == 0)
 		*retsize = len - auio.uio_resid;
