@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.6 2006/10/12 01:32:38 christos Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.7 2006/10/20 19:13:02 liamjfoy Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -1842,12 +1842,10 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	struct carpreq carpr;
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
-	struct ifaliasreq *ifra;
 	struct ifnet *cdev = NULL;
 	int error = 0;
 
 	ifa = (struct ifaddr *)addr;
-	ifra = (struct ifaliasreq *)addr;
 	ifr = (struct ifreq *)addr;
 
 	switch (cmd) {
@@ -1865,28 +1863,6 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		case AF_INET6:
 			sc->sc_if.if_flags|= IFF_UP;
 			error = carp_set_addr6(sc, satosin6(ifa->ifa_addr));
-			break;
-#endif /* INET6 */
-		default:
-			error = EAFNOSUPPORT;
-			break;
-		}
-		break;
-
-	case SIOCAIFADDR:
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			sc->sc_if.if_flags |= IFF_UP;
-			bcopy(ifa->ifa_addr, ifa->ifa_dstaddr,
-			    sizeof(struct sockaddr));
-			error = carp_set_addr(sc, satosin(&ifra->ifra_addr));
-			break;
-#endif /* INET */
-#ifdef INET6
-		case AF_INET6:
-			sc->sc_if.if_flags |= IFF_UP;
-			error = carp_set_addr6(sc, satosin6(&ifra->ifra_addr));
 			break;
 #endif /* INET6 */
 		default:
