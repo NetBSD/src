@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.41 2006/10/20 16:46:47 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.42 2006/10/20 17:11:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1021,13 +1021,13 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 		MGETHDR(n, M_DONTWAIT, MT_DATA);
 		if (n == NULL)
 			return ENOBUFS;
-		m = n;
 
-		MCLGET(m, M_DONTWAIT);
-		if ((m->m_flags & M_EXT) == 0) {
-			m_freem(m);
+		MCLGET(n, M_DONTWAIT);
+		if ((n->m_flags & M_EXT) == 0) {
+			m_freem(n);
 			return ENOBUFS;
 		}
+		m = n;
 	} else
 		m->m_data = m->m_ext.ext_buf;
 
@@ -1036,8 +1036,8 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 	 * alignment so that the frame payload is
 	 * longword aligned.
 	 */
-	m->m_len = m->m_pkthdr.len = MCLBYTES;
-	m_adj(m, RTK_ETHER_ALIGN);
+	m->m_len = m->m_pkthdr.len = MCLBYTES - RTK_ETHER_ALIGN;
+	m->m_data += RTK_ETHER_ALIGN;
 
 	map = sc->rtk_ldata.rtk_rx_dmamap[idx];
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
@@ -1071,7 +1071,7 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 	sc->rtk_ldata.rtk_rx_mbuf[idx] = m;
 
 	return 0;
-out:
+ out:
 	if (n != NULL)
 		m_freem(n);
 	return ENOMEM;
