@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.16 2006/10/13 09:57:28 peter Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.17 2006/10/20 21:55:56 elad Exp $	*/
 /*	$KAME: altq_priq.c,v 1.13 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (C) 2000-2003
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.16 2006/10/13 09:57:28 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.17 2006/10/20 21:55:56 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -722,8 +722,9 @@ priqioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		if ((error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_ALTQ, KAUTH_REQ_NETWORK_ALTQ_PRIQ, NULL,
+		    NULL, NULL)) != 0)
 			return (error);
 #endif
 		break;
