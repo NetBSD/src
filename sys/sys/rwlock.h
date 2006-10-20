@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.1.36.1 2006/09/10 23:42:41 ad Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.36.2 2006/10/20 19:45:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -103,11 +103,6 @@
 
 #include <sys/queue.h>
 
-typedef struct krwlock_debug {
-	vaddr_t		rw_locked;	/* PC where lock was locked */
-	vaddr_t		rw_unlocked;	/* PC where lock was unlocked */
-} krwlock_debug_t;
-
 typedef enum krw_t {
 	RW_READER = 0,
 	RW_WRITER = 1,
@@ -136,11 +131,15 @@ typedef struct krwlock krwlock_t;
 
 #include <machine/rwlock.h>
 
+#if defined(__RWLOCK_PRIVATE) && defined(LOCKDEBUG)
+#undef	__HAVE_RW_ENTER
+#undef	__HAVE_RW_EXIT
+#endif
+
 #ifdef _KERNEL
 
 void	rw_init(krwlock_t *);
 void	rw_destroy(krwlock_t *);
-void	rw_dump(krwlock_t *);
 
 void	rw_enter(krwlock_t *, krw_t);
 void	rw_exit(krwlock_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.36.2 2006/09/11 01:31:39 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.36.3 2006/10/20 19:45:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -44,54 +44,44 @@
  *	    Richard McDougall.
  */
 
-#include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.2 2006/09/11 01:31:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.3 2006/10/20 19:45:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/mutex.h>
 #include <sys/sched.h>
-#include <sys/turnstile.h>
+#include <sys/sleepq.h>
 #include <sys/systm.h>
+#include <sys/lockdebug.h>
 
 #include <dev/lockstat.h>
 
 #include <machine/intr.h>
 
+#define	MUTEX_LOCKED(mtx)					\
+    LOCKDEBUG_LOCKED(MUTEX_GETID(mtx),				\
+        (uintptr_t)__builtin_return_address(0), 0)
+#define	MUTEX_UNLOCKED(mtx)					\
+    LOCKDEBUG_UNLOCKED(MUTEX_GETID(mtx),			\
+        (uintptr_t)__builtin_return_address(0), 0)
 #define	MUTEX_ABORT(mtx, msg)					\
-    mutex_abort((mtx), __FUNCTION__, msg)
+    LOCKDEBUG_ABORT(MUTEX_GETID(mtx), mtx, &mutex_lockops, __FUNCTION__, msg)
 
 #if defined(LOCKDEBUG)
-
-#undef __HAVE_MUTEX_ENTER
-#undef __HAVE_MUTEX_EXIT
-#undef __HAVE_MUTEX_EXIT_LINKED
-
-#ifdef notyet
-#define	MUTEX_LOCKED(mtx)					\
-	(mtx)->mtx_debug.mtx_locked = (vaddr_t) __builtin_return_address(0)
-#define	MUTEX_UNLOCKED(mtx)					\
-	(mtx)->mtx_debug.mtx_unlocked = (vaddr_t) __builtin_return_address(0)
-#else	/* notyet */
-#define	MUTEX_LOCKED(mtx)		/* nothing */
-#define	MUTEX_UNLOCKED(mtx)		/* nothing */
-#endif	/* notyet */
 
 #define	MUTEX_DASSERT(mtx, cond)				\
 do {								\
 	if (!(cond))						\
 		MUTEX_ABORT(mtx, "assertion failed: " #cond);	\
 } while (/* CONSTCOND */ 0);
-	
-#else
 
-#define	MUTEX_LOCKED(mtx)		/* nothing */
-#define	MUTEX_UNLOCKED(mtx)		/* nothing */
+#else	/* LOCKDEBUG */
+
 #define	MUTEX_DASSERT(mtx, cond)	/* nothing */
 
 #endif /* LOCKDEBUG */
@@ -104,49 +94,32 @@ do {								\
 		MUTEX_ABORT(mtx, "assertion failed: " #cond);	\
 } while (/* CONSTCOND */ 0)
 
-#else
+#else	/* DIAGNOSTIC */
 
 #define	MUTEX_ASSERT(mtx, cond)	/* nothing */
 
 #endif	/* DIAGNOSTIC */
 
-void	mutex_dump(kmutex_t *);
+int	mutex_dump(void *, char *, size_t);
 
-/*
- * mutex_abort:
- *
- *	Dump the contents of a mutex structure and call panic().
- */
-static void
-mutex_abort(kmutex_t *mtx, const char *func, const char *msg)
-{
-
-	printf("%s: %s\n", func, msg);
-	mutex_dump(mtx);
-	panic("mutex_abort");
-}
+lockops_t mutex_lockops = {
+	"Mutex",
+	mutex_dump
+};
 
 /*
  * mutex_dump:
  *
  *	Dump the contents of a mutex structure.
  */
-void
-mutex_dump(kmutex_t *mtx)
+int
+mutex_dump(void *cookie, char *buf, size_t l)
 {
+	kmutex_t *mtx = cookie;
 
-#ifdef notyet
-#if defined(LOCKDEBUG)
-	printf("last locked  : 0x%16lx unlocked : 0x%16lx\n",
-	    (long)mtx->mtx_debug.mtx_locked,
-	    (long)mtx->mtx_debug.mtx_unlocked);
-#endif
-#endif
-	printf("curlwp       : 0x%16lx lockaddr : 0x%16lx\n"
-	    "owner field  : 0x%16lx wait/spin: %d/%d\n"
-	    "minspl       : 0x%16x oldspl   : 0x%16x\n",
-	    (long)curlwp, (long)mtx, (long)MUTEX_OWNER(mtx),
-	    MUTEX_HAS_WAITERS(mtx), MUTEX_SPIN_P(mtx),
+	return snprintf(buf, l, "owner field  : %#018lx wait/spin: %16d/%d\n"
+	    "minspl       : %#018x oldspl   : %#018x\n",
+	    (long)MUTEX_OWNER(mtx), MUTEX_HAS_WAITERS(mtx), MUTEX_SPIN_P(mtx),
 	    (int)mtx->mtx_minspl, (int)mtx->mtx_oldspl);
 }
 
@@ -158,6 +131,7 @@ mutex_dump(kmutex_t *mtx)
 void
 mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 {
+	u_int id;
 
 	memset(mtx, 0, sizeof(*mtx));
 
@@ -169,15 +143,19 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 	case MUTEX_DEFAULT:
 		KASSERT(ipl == IPL_NONE);
 		MUTEX_INITIALIZE_ADAPTIVE(mtx);
+		id = LOCKDEBUG_ALLOC(mtx, &mutex_lockops, 1);
 		break;
 	case MUTEX_SPIN:
 		KASSERT(ipl != IPL_NONE);
 		MUTEX_INITIALIZE_SPIN(mtx, ipl);
+		id = LOCKDEBUG_ALLOC(mtx, &mutex_lockops, 0);
 		break;
 	default:
 		panic("mutex_init: impossible type");
 		break;
 	}
+
+	MUTEX_SETID(mtx, id);
 }
 
 /*
@@ -190,9 +168,12 @@ mutex_destroy(kmutex_t *mtx)
 {
 
 	if (MUTEX_ADAPTIVE_P(mtx))
-		KASSERT(MUTEX_OWNER(mtx) == 0 && !MUTEX_HAS_WAITERS(mtx));
+		MUTEX_ASSERT(mtx, MUTEX_OWNER(mtx) == 0 && !MUTEX_HAS_WAITERS(mtx));
 	else
-		KASSERT(!MUTEX_SPIN_HELD(mtx));
+		MUTEX_ASSERT(mtx, !MUTEX_SPIN_HELD(mtx));
+
+	LOCKDEBUG_FREE(mtx, MUTEX_GETID(mtx));
+	MUTEX_SETID(mtx, -1);
 }
 
 /*
@@ -206,7 +187,7 @@ void
 mutex_vector_enter(kmutex_t *mtx, int s)
 {
 	uintptr_t owner, curthread;
-	struct turnstile *ts;
+	turnstile_t *ts;
 	int count, minspl;
 
 	LOCKSTAT_COUNTER(spincnt);
@@ -224,8 +205,15 @@ mutex_vector_enter(kmutex_t *mtx, int s)
 
 		for (count = 0; !MUTEX_SPIN_ACQUIRE(mtx);) {
 			splx(s);
-			SPINLOCK_BACKOFF(count);
+#ifdef LOCKDEBUG
+			if ((unsigned)++count > 0x0fffffff)
+				MUTEX_ABORT(mtx, "spinout");
+#else
+			SPINLOCK_BACKOFF(count); 
+#endif
 			s = splraiseipl(minspl);
+			if (panicstr != NULL)
+				break;
 		}
 
 		if (count != 0) {
@@ -235,7 +223,6 @@ mutex_vector_enter(kmutex_t *mtx, int s)
 		}
 
 		mtx->mtx_oldspl = s;
-		MUTEX_LOCKED(mtx);
 		return;
 	}
 
@@ -319,8 +306,7 @@ mutex_vector_enter(kmutex_t *mtx, int s)
 
 		LOCKSTAT_START_TIMER(slptime);
 
-		turnstile_block(ts, TS_WRITER_Q, sched_kpri(curlwp), mtx,
-		    "mutex");
+		turnstile_block(ts, TS_WRITER_Q, sched_kpri(curlwp), mtx);
 
 		LOCKSTAT_STOP_TIMER(slptime);
 		LOCKSTAT_COUNT(slpcnt, 1);
@@ -329,8 +315,7 @@ mutex_vector_enter(kmutex_t *mtx, int s)
 	LOCKSTAT_EVENT(mtx, LB_ADAPTIVE_MUTEX | LB_SLEEP, slpcnt, slptime);
 	LOCKSTAT_EVENT(mtx, LB_ADAPTIVE_MUTEX | LB_SPIN, spincnt, spintime);
 
-	MUTEX_LOCKED(mtx);
-	LOCK_ASSERT(MUTEX_OWNER(mtx) == curthread);
+	MUTEX_DASSERT(mtx, MUTEX_OWNER(mtx) == curthread);
 }
 
 /*
@@ -342,8 +327,11 @@ mutex_vector_enter(kmutex_t *mtx, int s)
 void
 mutex_vector_exit(kmutex_t *mtx)
 {
-	struct turnstile *ts;
+	turnstile_t *ts;
 	uintptr_t curthread;
+
+	if (panicstr != NULL)
+		return;
 
 	curthread = (uintptr_t)curlwp;
 
@@ -353,7 +341,6 @@ mutex_vector_exit(kmutex_t *mtx)
 	MUTEX_DASSERT(mtx, MUTEX_ADAPTIVE_P(mtx));
 	MUTEX_DASSERT(mtx, curthread != 0);
 	MUTEX_ASSERT(mtx, MUTEX_OWNER(mtx) == curthread);
-	MUTEX_UNLOCKED(mtx);
 
 	/*
 	 * Get this lock's turnstile.  This gets the interlock on
@@ -368,8 +355,8 @@ mutex_vector_exit(kmutex_t *mtx)
 	if (ts == NULL)
 		turnstile_exit(mtx);
 	else
-		turnstile_wakeup(ts, TS_WRITER_Q,
-		    TS_WAITERS(ts, TS_WRITER_Q), NULL);
+		turnstile_wakeup(ts, TS_WRITER_Q, TS_WAITERS(ts, TS_WRITER_Q),
+		    NULL);
 }
 
 /*
@@ -455,6 +442,7 @@ mutex_enter(kmutex_t *mtx)
 	if (MUTEX_SPIN_P(mtx))
 		s = splraiseipl(mtx->mtx_minspl);
 	mutex_vector_enter(mtx, s);
+	MUTEX_LOCKED(mtx);
 }
 #endif
 
@@ -467,14 +455,14 @@ mutex_exit(kmutex_t *mtx)
 	if (MUTEX_SPIN_P(mtx)) {
 		if (!MUTEX_SPIN_HELD(mtx))
 			mutex_vector_exit(mtx);
-		s = mtx->mtx_oldspl;
 		MUTEX_UNLOCKED(mtx);
+		s = mtx->mtx_oldspl;
 		MUTEX_SPIN_RELEASE(mtx);
 		splx(s);
-		return;
+	} else {
+		MUTEX_UNLOCKED(mtx);
+		mutex_vector_exit(mtx);
 	}
-
-	mutex_vector_exit(mtx);
 }
 #endif
 
@@ -482,11 +470,17 @@ mutex_exit(kmutex_t *mtx)
 void
 mutex_exit_linked(kmutex_t *from, kmutex_t *to)
 {
-	to->mtx_oldspl = from->mtx_oldspl;
-	if (!MUTEX_SPIN_P(from) || !MUTEX_SPIN_HELD(from))
+
+	if (MUTEX_SPIN_P(from)) {
+		if (!MUTEX_SPIN_HELD(from))
+			mutex_vector_exit(from);
+		MUTEX_UNLOCKED(from);
+		to->mtx_oldspl = from->mtx_oldspl;
+		MUTEX_SPIN_RELEASE(from);
+	} else {
+		MUTEX_UNLOCKED(from);
 		mutex_vector_exit(from);
-	MUTEX_UNLOCKED(from);
-	MUTEX_SPIN_RELEASE(from);
+	}
 }
 #endif
 
@@ -520,8 +514,12 @@ mutex_exit(kmutex_t *mtx)
 void
 mutex_exit_linked(kmutex_t *from, kmutex_t *to)
 {
-	to->mtx_oldspl = from->mtx_oldspl;
+	if (MUTEX_SPIN_P(from)) {
+		to->mtx_oldspl = from->mtx_oldspl;
+		return;
+	}
+	mutex_vector_exit(mtx);
 }
 #endif
 
-#endif	/* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */
+#endif	/* defined(MULTIPROCESSOR)||defined(DIAGNOSTIC)||defined(LOCKDEBUG)*/

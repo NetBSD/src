@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.36.1 2006/09/10 23:42:41 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.36.2 2006/10/20 19:45:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -114,6 +114,10 @@
  * See kern_mutex.c for the MI stubs.
  */
 
+#if defined(_KERNEL_OPT)
+#include "opt_lockdebug.h"
+#endif
+
 typedef enum kmutex_type_t {
 	MUTEX_SPIN = 0,
 	MUTEX_ADAPTIVE = 1,
@@ -121,12 +125,15 @@ typedef enum kmutex_type_t {
 	MUTEX_DRIVER = 3
 } kmutex_type_t;
 
-typedef struct mutex_debug {
-	vaddr_t		mtx_locked;	/* PC where mutex was locked */
-	vaddr_t		mtx_unlocked;	/* PC where mutex was unlocked */
-} mutex_debug_t;
-
 typedef struct kmutex kmutex_t;
+
+#include <machine/mutex.h>
+
+#if defined(__MUTEX_PRIVATE) && defined(LOCKDEBUG)
+#undef	__HAVE_MUTEX_ENTER
+#undef	__HAVE_MUTEX_EXIT
+#undef	__HAVE_MUTEX_EXIT_LINKED
+#endif
 
 #ifdef _KERNEL
 
@@ -141,6 +148,17 @@ void	mutex_exit(kmutex_t *);
 void	mutex_vector_enter(kmutex_t *, int);
 void	mutex_vector_exit(kmutex_t *);
 
+static inline int
+mutex_getspl(kmutex_t *mtx)
+{
+	return mtx->mtx_oldspl;
+}
+
+static inline void
+mutex_setspl(kmutex_t *mtx, int s)
+{
+	mtx->mtx_oldspl = s;
+}
 #endif	/* __MUTEX_PRIVATE */
 
 void	mutex_enter(kmutex_t *);
@@ -152,7 +170,5 @@ struct lwp *mutex_owner(kmutex_t *);
 int	mutex_owned(kmutex_t *);
 
 #endif /* _KERNEL */
-
-#include <machine/mutex.h>
 
 #endif /* _SYS_MUTEX_H_ */

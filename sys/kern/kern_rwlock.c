@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.1.36.2 2006/09/11 01:31:39 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.1.36.3 2006/10/20 19:45:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -44,11 +44,10 @@
  *	    Richard McDougall.
  */
 
-#include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.36.2 2006/09/11 01:31:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.36.3 2006/10/20 19:45:13 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -56,46 +55,32 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.36.2 2006/09/11 01:31:39 ad Exp 
 #include <sys/proc.h>
 #include <sys/rwlock.h>
 #include <sys/sched.h>
-#include <sys/turnstile.h>
+#include <sys/sleepq.h>
 #include <sys/systm.h>
+#include <sys/lockdebug.h>
 
 #include <dev/lockstat.h>
 
-#define	RW_ABORT(rw, msg)						\
-    rw_abort((rw), __FUNCTION__, msg)
+#define RW_ABORT(rw, msg)						\
+    LOCKDEBUG_ABORT(RW_GETID(rw), rw, &rwlock_lockops, __FUNCTION__, msg)
 
 /*
  * LOCKDEBUG
  */
- 
+
 #if defined(LOCKDEBUG)
 
-#undef __HAVE_RW_ENTER
-#undef __HAVE_RW_EXIT
-
-struct simplelock rw_list_lock = SIMPLELOCK_INITIALIZER;
-LIST_HEAD(, rwlock_debug_info) rw_list_writers;
-
-#ifdef notyet
 #define	RW_LOCKED(rw, op)						\
 do {									\
-	if ((op) != RW_WRITER)						\
-		break;							\
-	(rw)->rw_debug.rw_locked =					\
-	    (vaddr_t) __builtin_return_address(0);			\
-	LIST_INSERT_HEAD(&rw_list_writers, &rw->rw_debug, rw_chain);	\
+	LOCKDEBUG_LOCKED(RW_GETID(rw),					\
+	    (uintptr_t)__builtin_return_address(0), op == RW_READER);	\
 } while (/* CONSTCOND */ 0)
 
-#define	RW_UNLOCKED(rw)							\
+#define	RW_UNLOCKED(rw, op)						\
 do {									\
-	(rw)->rw_debug.rw_unlocked =					\
-	    (vaddr_t) __builtin_return_address(0);			\
-	LIST_REMOVE(&rw->rw_debug, rw_chain);				\
+	LOCKDEBUG_UNLOCKED(RW_GETID(rw),				\
+	    (uintptr_t)__builtin_return_address(0), op == RW_READER);	\
 } while (/* CONSTCOND */ 0)
-#else	/* notyet */
-#define	RW_LOCKED(rw, op)	/* nothing */
-#define	RW_UNLOCKED(rw)		/* nothing */
-#endif	/* notyet */
 
 #define	RW_DASSERT(rw, cond)						\
 do {									\
@@ -106,7 +91,7 @@ do {									\
 #else	/* LOCKDEBUG */
 
 #define	RW_LOCKED(rw, op)	/* nothing */
-#define	RW_UNLOCKED(rw)		/* nothing */
+#define	RW_UNLOCKED(rw, op)	/* nothing */
 #define	RW_DASSERT(rw, cond)	/* nothing */
 
 #endif	/* LOCKDEBUG */
@@ -129,40 +114,25 @@ do {									\
 
 #endif	/* DIAGNOSTIC */
 
-/*
- * rw_abort:
- *
- *	Dump the contents of a RW lock and call panic().
- */
-static void
-rw_abort(krwlock_t *rw, const char *func, const char *msg)
-{
+int	rw_dump(void *, char *, size_t);
 
-	printf("%s: %s\n", func, msg);
-	rw_dump(rw);
-	panic("rw_abort");
-}
+lockops_t rwlock_lockops = {
+	"Reader / writer lock",
+	rw_dump
+};
 
 /*
  * rw_dump:
  *
- *	Dump the contents of a mutex structure.
+ *	Dump the contents of a rwlock structure.
  */
-void
-rw_dump(krwlock_t *rw)
+int
+rw_dump(void *cookie, char *buf, size_t l)
 {
+	krwlock_t *rw = cookie;
 
-#ifdef notyet
-#if defined(LOCKDEBUG)
-	printf("last locked: 0x%16lx unlocked: 0x%16lx\n",
-	    (long)rw->rw_debug.rw_locked,
-	    (long)rw->rw_debug.rw_unlocked);
-#endif
-#endif
-	printf("curlwp     : 0x%16lx lockaddr: 0x%16lx\n"
-	    "owner/count: 0x%16lx flags   : 0x%16x\n",
-	    (long)curlwp, (long)rw, (long)RW_OWNER(rw),
-	    (int)RW_FLAGS(rw));
+	return snprintf(buf, l, "owner/count: 0x%16lx flags   : 0x%16x\n",
+	    (long)RW_OWNER(rw), (int)RW_FLAGS(rw));
 }
 
 /*
@@ -173,8 +143,12 @@ rw_dump(krwlock_t *rw)
 void
 rw_init(krwlock_t *rw)
 {
+	u_int id;
 
 	memset(rw, 0, sizeof(*rw));
+
+	id = LOCKDEBUG_ALLOC(rw, &rwlock_lockops, 1);
+	RW_SETID(rw, id);
 }
 
 /*
@@ -186,7 +160,8 @@ void
 rw_destroy(krwlock_t *rw)
 {
 
-	RW_DASSERT(rw, rw->rw_owner == 0);
+	LOCKDEBUG_FREE(rw, RW_GETID(rw));
+	RW_ASSERT(rw, rw->rw_owner == 0);
 }
 
 /*
@@ -198,7 +173,8 @@ void
 rw_vector_enter(krwlock_t *rw, krw_t op)
 {
 	uintptr_t owner, incr, need_wait, set_wait, curthread;
-	struct turnstile *ts;
+	turnstile_t *ts;
+	int queue;
 	LOCKSTAT_TIMER(slptime);
 
 	curthread = (uintptr_t)curlwp;
@@ -222,11 +198,13 @@ rw_vector_enter(krwlock_t *rw, krw_t op)
 		incr = RW_READ_INCR;
 		set_wait = RW_HAS_WAITERS;
 		need_wait = RW_WRITE_LOCKED | RW_WRITE_WANTED;
+		queue = TS_READER_Q;
 	} else {
 		RW_DASSERT(rw, op == RW_WRITER);
 		incr = curthread | RW_WRITE_LOCKED;
 		set_wait = RW_HAS_WAITERS | RW_WRITE_WANTED;
 		need_wait = RW_WRITE_LOCKED | RW_THREAD;
+		queue = TS_WRITER_Q;
 	}
 
 	for (;;) {
@@ -270,9 +248,7 @@ rw_vector_enter(krwlock_t *rw, krw_t op)
 
 		LOCKSTAT_START_TIMER(slptime);
 
-		turnstile_block(ts,
-		    (op == RW_READER ? TS_READER_Q : TS_WRITER_Q),
-		    sched_kpri(curlwp), rw, "rwlock");
+		turnstile_block(ts, queue, sched_kpri(curlwp), rw);
 
 		LOCKSTAT_STOP_TIMER(slptime);
 		LOCKSTAT_EVENT(rw, LB_ADAPTIVE_RWLOCK | LB_SLEEP, 1, slptime);
@@ -282,7 +258,6 @@ rw_vector_enter(krwlock_t *rw, krw_t op)
 		break;
 	}
 
-	RW_LOCKED(rw, op);
 	RW_DASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
 	    (op == RW_READER && RW_COUNT(rw) != 0));
 }
@@ -296,7 +271,7 @@ void
 rw_vector_exit(krwlock_t *rw, krw_t op)
 {
 	uintptr_t curthread, owner, decr, new;
-	struct turnstile *ts;
+	turnstile_t *ts;
 	int rcnt, wcnt, dcnt;
 	struct lwp *l;
 
@@ -327,14 +302,12 @@ rw_vector_exit(krwlock_t *rw, krw_t op)
 	case RW_WRITER:
 		RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) != 0);
 		RW_ASSERT(rw, RW_OWNER(rw) == curthread);
-		RW_UNLOCKED(rw);
 		dcnt = 0;
 		decr = curthread | RW_WRITE_LOCKED;
 		break;
 	case __RW_DOWNGRADE:
 		RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) != 0);
 		RW_ASSERT(rw, RW_OWNER(rw) == curthread);
-		RW_UNLOCKED(rw);
 		dcnt = 1;
 		decr = (curthread | RW_WRITE_LOCKED) - RW_READ_INCR;
 		break;
@@ -488,7 +461,7 @@ rw_downgrade(krwlock_t *rw)
 	RW_ASSERT(rw, curthread != 0);
 	RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) != 0);
 	RW_ASSERT(rw, RW_OWNER(rw) == curthread);
-	RW_UNLOCKED(rw);
+	RW_UNLOCKED(rw, RW_WRITER);
 
 	for (;;) {
 		owner = rw->rw_owner;
@@ -557,6 +530,9 @@ rw_read_held(krwlock_t *rw)
 {
 	uintptr_t owner;
 
+	if (panicstr != NULL)
+		return 1;
+
 	owner = rw->rw_owner;
 	return (owner & RW_WRITE_LOCKED) == 0 && (owner & RW_THREAD) != 0;
 }
@@ -572,6 +548,9 @@ int
 rw_write_held(krwlock_t *rw)
 {
 
+	if (panicstr != NULL)
+		return 1;
+
 	return (rw->rw_owner & RW_WRITE_LOCKED) != 0;
 }
 
@@ -583,6 +562,7 @@ void
 rw_enter(krwlock_t *rw, krw_t op)
 {
 	rw_vector_enter(rw, op);
+	RW_LOCKED(rw, op);
 }
 #endif
 
@@ -592,6 +572,7 @@ rw_exit(krwlock_t *rw)
 {
 	krw_t op;
 	op = ((rw->rw_owner & RW_WRITE_LOCKED) ? RW_WRITER : RW_READER);
+	RW_UNLOCKED(rw, op);
 	rw_vector_exit(rw, op);
 }
 #endif
