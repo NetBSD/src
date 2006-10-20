@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.56 2006/08/26 20:26:56 christos Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.57 2006/10/20 15:48:37 tsutsui Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.56 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.57 $"
 
 maxusers	32
 
@@ -219,6 +219,7 @@ mtd*    at pci? dev ? function ?        # Myson MTD803 3-in-1 Ethernet
 ne*     at pci? dev ? function ?        # NE2000-compatible Ethernet
 ntwoc*  at pci? dev ? function ?        # Riscom/N2 PCI Sync Serial
 pcn*    at pci? dev ? function ?        # AMD PCnet-PCI Ethernet
+re*     at pci? dev ? function ?        # Realtek 8139C+/8169/8169S/8110S
 rtk*    at pci? dev ? function ?        # Realtek 8129/8139
 sf*     at pci? dev ? function ?        # Adaptec AIC-6915 Ethernet
 sip*    at pci? dev ? function ?        # SiS 900/DP83815 Ethernet
@@ -252,6 +253,7 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?                 # NS83843 PHYs
 pnaphy* at mii? phy ?                   # generic HomePNA PHYs
 qsphy*  at mii? phy ?                   # Quality Semiconductor QS6612 PHYs
+rgephy* at mii? phy ?                   # Realtek 8169S/8110S internal PHYs
 sqphy*  at mii? phy ?                   # Seeq 80220/80221/80223 PHYs
 tlphy*  at mii? phy ?                   # ThunderLAN PHYs
 tqphy*  at mii? phy ?                   # TDK Semiconductor PHYs
