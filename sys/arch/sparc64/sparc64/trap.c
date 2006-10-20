@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.138 2006/10/16 20:27:40 martin Exp $ */
+/*	$NetBSD: trap.c,v 1.139 2006/10/20 18:26:26 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.138 2006/10/16 20:27:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.139 2006/10/20 18:26:26 martin Exp $");
 
 #define NEW_FPSTATE
 
@@ -1026,8 +1026,10 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 			(long)(curproc?curproc->p_pid:-1), tf, type,
 			(void *)addr, (void *)pc,
 			sfva, sfsr, (int)curpcb->pcb_nsaved);
+#ifdef DDB
 		if ((trapdebug & TDB_NSAVED && curpcb->pcb_nsaved))
 			Debugger();
+#endif
 	}
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
@@ -1378,8 +1380,9 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 		if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW | TDB_STOPCPIO)) {
 			printf("data_access_error: kern fault -- "
 			       "skipping instr\n");
-			if (trapdebug & TDB_STOPCPIO)
+			if (trapdebug & TDB_STOPCPIO) {
 				DEBUGGER(type, tf);
+			}
 		}
 #endif
 		tf->tf_pc = onfault;
