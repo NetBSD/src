@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.15 2006/10/12 01:32:47 christos Exp $ */
+/*	$NetBSD: crypto.c,v 1.16 2006/10/20 21:50:41 mrg Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.15 2006/10/12 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.16 2006/10/20 21:50:41 mrg Exp $");
 
 /* XXX FIXME: should be defopt'ed */
 #define CRYPTO_TIMING			/* enable cryptop timing stuff */
@@ -867,7 +867,7 @@ crypto_invoke(struct cryptop *crp, int hint)
 
 	if (process == NULL) {
 		struct cryptodesc *crd;
-		u_int64_t nid;
+		u_int64_t nid = 0;
 
 		/*
 		 * Driver has unregistered; migrate the session and return
