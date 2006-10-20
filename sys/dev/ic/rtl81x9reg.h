@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.15 2006/06/18 21:32:24 christos Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.16 2006/10/20 11:30:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -456,10 +456,10 @@
  */
 
 struct rtk_desc {
-	u_int32_t		rtk_cmdstat;
-	u_int32_t		rtk_vlanctl;
-	u_int32_t		rtk_bufaddr_lo;
-	u_int32_t		rtk_bufaddr_hi;
+	volatile u_int32_t	rtk_cmdstat;
+	volatile u_int32_t	rtk_vlanctl;
+	volatile u_int32_t	rtk_bufaddr_lo;
+	volatile u_int32_t	rtk_bufaddr_hi;
 };
 
 #define RTK_TDESC_CMD_FRAGLEN	0x0000FFFF
@@ -560,8 +560,6 @@ struct rtk_stats {
 #define RTK_RX_LIST_SZ		(RTK_RX_DESC_CNT * sizeof(struct rtk_desc))
 #define RTK_RING_ALIGN		256
 #define RTK_IFQ_MAXLEN		512
-#define RTK_OWN(x)		(le32toh((x)->rtk_cmdstat) & RTK_RDESC_STAT_OWN)
-#define RTK_RXBYTES(x)		(le32toh((x)->rtk_cmdstat) & sc->rtk_rxlenmask)
 #define RTK_PKTSZ(x)		((x)/* >> 3*/)
 
 #define RTK_ADDR_LO(y)	((u_int64_t) (y) & 0xFFFFFFFF)
