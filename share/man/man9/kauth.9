@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.20 2006/10/13 15:39:18 elad Exp $
+.\" $NetBSD: kauth.9,v 1.21 2006/10/20 22:02:54 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 13, 2006
+.Dd October 20, 2006
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -369,6 +369,7 @@ indicates the ALTQ subsystem in question, and can be one of the following:
 .It Dv KAUTH_REQ_NETWORK_ALTQ_CONF
 .It Dv KAUTH_REQ_NETWORK_ALTQ_FIFOQ
 .It Dv KAUTH_REQ_NETWORK_ALTQ_HFSC
+.It Dv KAUTH_REQ_NETWORK_ALTQ_JOBS
 .It Dv KAUTH_REQ_NETWORK_ALTQ_PRIQ
 .It Dv KAUTH_REQ_NETWORK_ALTQ_RED
 .It Dv KAUTH_REQ_NETWORK_ALTQ_RIO

@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.12 2006/10/13 15:39:18 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.13 2006/10/20 22:02:54 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -159,6 +159,7 @@ enum kauth_network_req {
 	KAUTH_REQ_NETWORK_ALTQ_CONF,
 	KAUTH_REQ_NETWORK_ALTQ_FIFOQ,
 	KAUTH_REQ_NETWORK_ALTQ_HFSC,
+	KAUTH_REQ_NETWORK_ALTQ_JOBS,
 	KAUTH_REQ_NETWORK_ALTQ_PRIQ,
 	KAUTH_REQ_NETWORK_ALTQ_RED,
 	KAUTH_REQ_NETWORK_ALTQ_RIO,
