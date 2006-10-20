@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.21 2006/10/20 22:02:54 elad Exp $
+.\" $NetBSD: kauth.9,v 1.22 2006/10/20 23:10:34 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 20, 2006
+.Dd October 21, 2006
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -398,6 +398,21 @@ indicates the sub-action, and can be one of the following:
 Modification of packet filtering rules.
 .It Dv KAUTH_REQ_NETWORK_FIREWALL_NAT
 Modification of NAT rules.
+.El
+.It Dv KAUTH_NETWORK_INTERFACE
+Checks if network interface-related operations are allowed.
+.Pp
+.Ar req
+indicates the sub-action, and can be one of the following:
+.Bl -tag
+.It Dv KAUTH_REQ_NETWORK_INTERFACE_GET
+Check if retrieving information from the device is allowed.
+.It Dv KAUTH_REQ_NETWORK_INTERFACE_GETPRIV
+Check if retrieving privileged information from the device is allowed.
+.It Dv KAUTH_REQ_NETWORK_INTERFACE_SET
+Check if setting parameters on the device is allowed.
+.It Dv KAUTH_REQ_NETWORK_INTERFACE_SETPRIV
+Check if setting privileged parameters on the device is allowed.
 .El
 .It Dv KAUTH_NETWORK_FORWSRCRT
 Checks whether status of forwarding of source-routed packets can be modified
