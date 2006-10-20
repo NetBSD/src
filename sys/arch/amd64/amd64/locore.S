@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.18 2006/05/14 21:55:09 elad Exp $	*/
+/*	$NetBSD: locore.S,v 1.18.8.1 2006/10/20 19:42:24 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -749,7 +749,7 @@ NENTRY(switch_error3)
  * int cpu_switch(struct lwp *)
  * Find a runnable lwp and switch to it.  Wait if necessary.  If the new
  * lwp is the same as the old one, we short-circuit the context save and
- * restore.
+ * restore.  On MP, must be entered with the sched_mutex held.
  */
 ENTRY(cpu_switch)
 	pushq	%rbx
@@ -849,8 +849,9 @@ ENTRY(cpu_switch)
 	xorq	%r13,%r13
 	sti
 idle_unlock:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)       
-	call	_C_LABEL(sched_unlock_idle)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	leaq	_C_LABEL(sched_mutex)(%rip), %rdi
+	call	_C_LABEL(mutex_exit)
 #endif
 	/* Interrupts are okay again. */
 	movl	$IPL_NONE,%edi
@@ -875,11 +876,14 @@ idle_start:
 	cmpl	$0,_C_LABEL(sched_whichqs)(%rip)
 	jz	idle_loop
 idle_exit:
-	movl	$IPL_HIGH,CPUVAR(ILEVEL)
-	sti
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)       
-	call	_C_LABEL(sched_lock_idle)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	leaq	_C_LABEL(sched_mutex)(%rip), %rdi
+	call	_C_LABEL(mutex_enter)
+#else
+	movl	$IPL_SCHED,CPUVAR(ILEVEL)
 #endif
+	sti
+	movq	$0,CPUVAR(CURLWP)
 	movl	_C_LABEL(sched_whichqs)(%rip),%ecx
 	bsfl	%ecx,%r8d
 	jz	idle_unlock
@@ -909,23 +913,37 @@ switch_dequeue:
 	btrl	%r8d,%ecx		# yes, clear to indicate empty
 	movl	%ecx,_C_LABEL(sched_whichqs)(%rip) # update q status
 
-3:	/* We just did it. */
-	xorq	%rax,%rax
-	movl	%eax,CPUVAR(RESCHED)
+3:
 switch_resume:
+
+	/* Isolate lwp. */
+	xorq	%rax,%rax
+	movq	%rax,L_BACK(%r12)
+
+	/* Record it as being picked by this CPU. */
+	SET_CURLWP(%r12,%rcx)
+
+	/* We just did it. */
+	movl	%eax,CPUVAR(RESCHED)
+
 #ifdef DIAGNOSTIC
 	cmpq	%rax,L_WCHAN(%r12)
 	jne	_C_LABEL(switch_error2)
 	cmpb	$LSRUN,L_STAT(%r12)
 	jne	_C_LABEL(switch_error3)
 #endif
-
-	/* Isolate lwp.  XXX Is this necessary? */
-	movq	%rax,L_BACK(%r12)
-
 	/* Record new lwp. */
 	movb	$LSONPROC,L_STAT(%r12)	# l->l_stat = SONPROC
-	SET_CURLWP(%r12,%rcx)
+
+	/* Donate the current CPU's sched mutex to the LWP */
+	movq	CPUVAR(SELF),%rdi
+	addq	$CPU_INFO_SCHED_MUTEX,%rdi
+	movq	%rdi,L_MUTEX(%r12)
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	leaq	_C_LABEL(sched_mutex)(%rip), %rdi
+	call	_C_LABEL(mutex_exit)
+#endif 
 
 	/* Skip context switch if same lwp. */
 	xorl	%ebx,%ebx
@@ -1029,13 +1047,9 @@ switch_restored:
 	movl	$1,%ebx
 
 switch_return:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)     
-	call	_C_LABEL(sched_unlock_idle)
-#endif
-
 	movl	$IPL_NONE,%edi
 	call	_C_LABEL(Xspllower)
-	movl	$IPL_HIGH,CPUVAR(ILEVEL)
+	movl	$IPL_SCHED,CPUVAR(ILEVEL)
 
 	movl	%ebx,%eax
 
@@ -1059,8 +1073,9 @@ ENTRY(cpu_switchto)
 	movq	%rsi,%r12
 
 	movq	$0,CPUVAR(CURLWP)
-
 	xorq	%rax,%rax
+	movq	%rax,L_BACK(%r12)
+	movl	%eax,CPUVAR(RESCHED)
 	jmp	switch_resume
 
 
@@ -1186,10 +1201,10 @@ IDTVEC(syscall)
 	call	*P_MD_SYSCALL(%r15)
 1:	/* Check for ASTs on exit to user mode. */
 	cli
-	CHECK_ASTPENDING(%r11)
+	CHECK_ASTPENDING(%r14)
 	je	2f
 	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING(%r11)
+	CLEAR_ASTPENDING(%r14)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
@@ -1294,10 +1309,11 @@ osyscall1:
 _C_LABEL(osyscall_return):
 2:	/* Check for ASTs on exit to user mode. */
 	cli
-	CHECK_ASTPENDING(%r11)
+	movq	CPUVAR(CURLWP),%rdx
+	CHECK_ASTPENDING(%rdx)
 	je	1f
 	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING(%r11)
+	CLEAR_ASTPENDING(%rdx)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
