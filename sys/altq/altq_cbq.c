@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.20 2006/10/13 09:57:28 peter Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.21 2006/10/20 21:55:56 elad Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.20 2006/10/13 09:57:28 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.21 2006/10/20 21:55:56 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -1010,8 +1010,8 @@ cbqioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
 #if (__FreeBSD_version > 400000)
 		error = suser(p);
 #else
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_ALTQ,
+		    KAUTH_REQ_NETWORK_ALTQ_CBQ, NULL, NULL, NULL);
 #endif
 		if (error)
 			return (error);

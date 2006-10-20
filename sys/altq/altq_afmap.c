@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_afmap.c,v 1.15 2006/10/12 19:59:08 peter Exp $	*/
+/*	$NetBSD: altq_afmap.c,v 1.16 2006/10/20 21:55:56 elad Exp $	*/
 /*	$KAME: altq_afmap.c,v 1.12 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.15 2006/10/12 19:59:08 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.16 2006/10/20 21:55:56 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -359,8 +359,8 @@ afmioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
 #if (__FreeBSD_version > 400000)
 		error = suser(p);
 #else
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_ALTQ,
+		    KAUTH_REQ_NETWORK_ALTQ_AFMAP, NULL, NULL, NULL);
 #endif
 		if (error)
 			return (error);
