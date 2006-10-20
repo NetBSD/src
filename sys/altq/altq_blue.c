@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_blue.c,v 1.19 2006/10/12 19:59:08 peter Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.20 2006/10/20 21:55:56 elad Exp $	*/
 /*	$KAME: altq_blue.c,v 1.15 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.19 2006/10/12 19:59:08 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.20 2006/10/20 21:55:56 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -166,8 +166,9 @@ blueioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		if ((error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_ALTQ, KAUTH_REQ_NETWORK_ALTQ_BLUE, NULL,
+		    NULL, NULL)) != 0)
 			return (error);
 #endif
 		break;
