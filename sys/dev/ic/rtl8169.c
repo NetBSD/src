@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.38 2006/10/20 15:19:01 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.39 2006/10/20 15:44:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -647,7 +647,7 @@ re_attach(struct rtk_softc *sc)
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->rtk_ldata.rtk_tx_listseg,
 		    sc->rtk_ldata.rtk_tx_listnseg, RTK_TX_LIST_SZ(sc),
 		    (caddr_t *)&sc->rtk_ldata.rtk_tx_list,
-		    BUS_DMA_NOWAIT)) != 0) {
+		    BUS_DMA_COHERENT | BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: can't map tx list, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 	  	goto fail_1;
@@ -697,7 +697,7 @@ re_attach(struct rtk_softc *sc)
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->rtk_ldata.rtk_rx_listseg,
 		    sc->rtk_ldata.rtk_rx_listnseg, RTK_RX_LIST_SZ,
 		    (caddr_t *)&sc->rtk_ldata.rtk_rx_list,
-		    BUS_DMA_NOWAIT)) != 0) {
+		    BUS_DMA_COHERENT | BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: can't map rx list, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_5;
