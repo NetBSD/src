@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.11 2006/07/23 22:06:10 ad Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.11.4.1 2006/10/20 20:10:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.11 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.11.4.1 2006/10/20 20:10:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,8 +155,7 @@ smbfs_kqpoll(void *arg)
 			/* save v_size, smbfs_getattr() updates it */
 			osize = ke->vp->v_size;
 
-			l = proc_representative_lwp(p);
-			error = VOP_GETATTR(ke->vp, &attr, p->p_cred, l);
+			error = VOP_GETATTR(ke->vp, &attr, l->l_cred, l);
 			if (error) {
 				/* relock and proceed with next */
 				simple_lock(&smbkq_lock);
