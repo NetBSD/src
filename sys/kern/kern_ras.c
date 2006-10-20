@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.12 2005/11/25 11:29:48 hannken Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.12.20.1 2006/10/20 20:03:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.12 2005/11/25 11:29:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.12.20.1 2006/10/20 20:03:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -81,18 +81,18 @@ ras_lookup(struct proc *p, caddr_t addr)
 		return ((caddr_t)-1);
 #endif
 
-	simple_lock(&p->p_lock);
+	mutex_enter(&p->p_rasmutex);
 	LIST_FOREACH(rp, &p->p_raslist, ras_list) {
 		if (addr > rp->ras_startaddr && addr < rp->ras_endaddr) {
 			rp->ras_hits++;
-			simple_unlock(&p->p_lock);
+			mutex_exit(&p->p_rasmutex);
 #ifdef DIAGNOSTIC
 			DPRINTF(("RAS hit: p=%p %p\n", p, addr));
 #endif
 			return (rp->ras_startaddr);
 		}
 	}
-	simple_unlock(&p->p_lock);
+	mutex_exit(&p->p_rasmutex);
 
 	return ((caddr_t)-1);
 }
@@ -120,13 +120,15 @@ again:
 	 */
 
 	nras = 0;
-	simple_lock(&p1->p_lock);
+	mutex_enter(&p1->p_rasmutex);
 	LIST_FOREACH(rp, &p1->p_raslist, ras_list)
 		nras++;
-	simple_unlock(&p1->p_lock);
+	mutex_exit(&p1->p_rasmutex);
 
 	/*
 	 * allocate entries.
+	 *
+	 * XXXAD may change if we sleep. WTF?
 	 */
 
 	for ( ; nras > 0; nras--) {
@@ -139,7 +141,7 @@ again:
 	 * copy entries.
 	 */
 
-	simple_lock(&p1->p_lock);
+	mutex_enter(&p1->p_rasmutex);
 	nrp = LIST_FIRST(&p2->p_raslist);
 	LIST_FOREACH(rp, &p1->p_raslist, ras_list) {
 		if (nrp == NULL)
@@ -148,7 +150,7 @@ again:
 		nrp->ras_endaddr = rp->ras_endaddr;
 		nrp = LIST_NEXT(nrp, ras_list);
 	}
-	simple_unlock(&p1->p_lock);
+	mutex_exit(&p1->p_rasmutex);
 
 	/*
 	 * if we lose a race, retry.
@@ -172,7 +174,7 @@ ras_purgeall(struct proc *p)
 {
 	struct ras *rp;
 
-	simple_lock(&p->p_lock);
+	mutex_enter(&p->p_rasmutex);
 	while (!LIST_EMPTY(&p->p_raslist)) {
 		rp = LIST_FIRST(&p->p_raslist);
                 DPRINTF(("RAS %p-%p, hits %d\n", rp->ras_startaddr,
@@ -180,7 +182,7 @@ ras_purgeall(struct proc *p)
 		LIST_REMOVE(rp, ras_list);
 		pool_put(&ras_pool, rp);
 	}
-	simple_unlock(&p->p_lock);
+	mutex_exit(&p->p_rasmutex);
 
 	return (0);
 }
@@ -208,16 +210,16 @@ ras_install(struct proc *p, caddr_t addr, size_t len)
 
 	newrp = NULL;
 again:
-	simple_lock(&p->p_lock);
+	mutex_enter(&p->p_rasmutex);
 	LIST_FOREACH(rp, &p->p_raslist, ras_list) {
 		if (++nras >= ras_per_proc ||
 		    (addr < rp->ras_endaddr && endaddr > rp->ras_startaddr)) {
-			simple_unlock(&p->p_lock);
+			mutex_exit(&p->p_rasmutex);
 			return (EINVAL);
 		}
 	}
 	if (newrp == NULL) {
-		simple_unlock(&p->p_lock);
+		mutex_exit(&p->p_rasmutex);
 		newrp = pool_get(&ras_pool, PR_WAITOK);
 		goto again;
 	}
@@ -225,7 +227,7 @@ again:
 	newrp->ras_endaddr = endaddr;
 	newrp->ras_hits = 0;
 	LIST_INSERT_HEAD(&p->p_raslist, newrp, ras_list);
-	simple_unlock(&p->p_lock);
+	mutex_exit(&p->p_rasmutex);
 
 	return (0);
 }
@@ -241,7 +243,7 @@ ras_purge(struct proc *p, caddr_t addr, size_t len)
 	caddr_t endaddr = addr + len;
 	int error = ESRCH;
 
-	simple_lock(&p->p_lock);
+	mutex_enter(&p->p_rasmutex);
 	LIST_FOREACH(rp, &p->p_raslist, ras_list) {
 		if (addr == rp->ras_startaddr && endaddr == rp->ras_endaddr) {
 			LIST_REMOVE(rp, ras_list);
@@ -250,7 +252,7 @@ ras_purge(struct proc *p, caddr_t addr, size_t len)
 			break;
 		}
 	}
-	simple_unlock(&p->p_lock);
+	mutex_exit(&p->p_rasmutex);
 
 	return (error);
 }
