@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.577 2006/07/31 20:59:07 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.577.4.1 2006/10/20 21:26:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577 2006/07/31 20:59:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577.4.1 2006/10/20 21:26:44 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -689,14 +689,13 @@ void *
 getframe(struct lwp *l, int sig, int *onstack)
 {
 	struct proc *p = l->l_proc;
-	struct sigctx *ctx = &p->p_sigctx;
 	struct trapframe *tf = l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
-	*onstack = (ctx->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
+	*onstack = (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 	if (*onstack)
-		return (char *)ctx->ps_sigstk.ss_sp + ctx->ps_sigstk.ss_size;
+		return (char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size;
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM)
 		return (void *)(tf->tf_esp + (tf->tf_ss << 4));
@@ -764,7 +763,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_flags = _UC_SIGMASK|_UC_VM;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_link = NULL;
-	frame.sf_uc.uc_flags |= (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
@@ -785,7 +784,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 void
@@ -2374,9 +2373,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 #endif
 	}
 	if (flags & _UC_SETSTACK)
-		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	return (0);
 }
 
@@ -2387,21 +2386,44 @@ cpu_initclocks()
 	(*initclock_func)();
 }
 
-#ifdef MULTIPROCESSOR
 void
-need_resched(struct cpu_info *ci)
+cpu_need_resched(struct cpu_info *ci)
 {
 
 	if (ci->ci_want_resched)
 		return;
-
 	ci->ci_want_resched = 1;
+
 	if ((ci)->ci_curlwp != NULL)
-		aston((ci)->ci_curlwp->l_proc);
+		aston((ci)->ci_curlwp);
+#ifdef MULTIPROCESSOR
 	else if (ci != curcpu())
 		x86_send_ipi(ci, 0);
-}
 #endif
+}
+
+void
+cpu_signotify(struct lwp *l)
+{
+
+	aston(l);
+#ifdef MULTIPROCESSOR
+	if (l->l_cpu != NULL && l->l_cpu != curcpu())
+		x86_send_ipi(l->l_cpu, 0);
+#endif
+}
+
+void
+cpu_need_proftick(struct lwp *l)
+{
+
+	l->l_flag |= L_OWEUPC;
+	aston(l);
+#ifdef MULTIPROCESSOR
+	if (l->l_cpu != NULL && l->l_cpu != curcpu())
+		x86_send_ipi(l->l_cpu, 0);
+#endif
+}
 
 /*
  * Allocate an IDT vector slot within the given range.
