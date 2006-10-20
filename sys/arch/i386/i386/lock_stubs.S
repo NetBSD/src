@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.3 2006/09/11 18:54:52 ad Exp $	*/
+
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -109,8 +109,7 @@ NENTRY(_lock_set_waiters)
 	movl	4(%esp), %edx
 	movl	12(%esp), %ecx
 
-1:	movl	(%edx), %eax
-	testl	8(%esp), %eax
+1:	testl	8(%esp), %eax
 	jz	2f
 	orl	%eax, %ecx
 	lock
@@ -175,7 +174,6 @@ NENTRY(mutex_exit)
 	movzbl	MTX_OLDSPL(%edx), %ecx		/* for SPLLOWER */
 #if defined(FULL)
 	movl	$0x0001, %eax			/* expected+new value */
-	lock
 	cmpxchgb %ah, MTX_LOCK(%edx)
 	jnz	_C_LABEL(mutex_vector_exit)
 #endif
@@ -218,8 +216,8 @@ NENTRY(rw_enter)
 	movl	%eax, %ecx
 	jnz	_C_LABEL(rw_vector_enter)
 	addl	CPUVAR(CURLWP), %ecx
+	leal	RW_WRITE_LOCKED(%ecx), %ecx     
 	jz	_C_LABEL(rw_vector_enter)
-	orb	$RW_WRITE_LOCKED, %cl
 	lock
 	cmpxchgl %ecx, (%edx)
 	jnz	_C_LABEL(rw_vector_enter)
@@ -402,7 +400,7 @@ NENTRY(_80386_rw_enter)
 
 	/*
 	 * Reader
-	 *
+	 */
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	jnz	3f
 	addl	$RW_READ_INCR, %eax
