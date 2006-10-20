@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.6 2006/09/07 00:20:28 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.6.2.1 2006/10/20 19:44:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 
 struct lwp;
 #include <sys/sched.h>	/* for schedstate_percpu */
+#include <sys/mutex.h>
 
 /*
  * MI per-cpu data
@@ -61,23 +62,29 @@ struct lwp;
  */
 
 struct cpu_data {
-	struct	schedstate_percpu cpu_schedstate; /* scheduler state */
+	struct schedstate_percpu cpu_schedstate; /* scheduler state */
 
 #if defined(MULTIPROCESSOR)
-	int	cpu_biglock_count;
+	int		cpu_biglock_count;
 #endif /* defined(MULTIPROCESSOR) */
 
 	/* For LOCKDEBUG. */
-	u_long	cpu_spin_locks;		/* # of spin locks held */
-	u_long	cpu_simple_locks;	/* # of simple locks held */
-
-	void	*cpu_lockstat;		/* lockstat private tables */
+	u_long		cpu_spin_locks;		/* # of spinlockmgr locks */
+	u_long		cpu_simple_locks;	/* # of simple locks held */
+	void		*cpu_lockstat;		/* lockstat private tables */
+	kmutex_t	cpu_sched_mutex;	/* per-CPU sched mutex */
+	int		cpu_spin_locks2;	/* # of spin locks held XXX */
 };
 
 /* compat definitions */
-#define	ci_schedstate	ci_data.cpu_schedstate
-#define	ci_spin_locks	ci_data.cpu_spin_locks
-#define	ci_simple_locks	ci_data.cpu_simple_locks
-#define	ci_lockstat	ci_data.cpu_lockstat
+#define	ci_schedstate		ci_data.cpu_schedstate
+#define	ci_biglock_count	ci_data.cpu_biglock_count
+#define	ci_spin_locks		ci_data.cpu_spin_locks
+#define	ci_simple_locks		ci_data.cpu_simple_locks
+#define	ci_lockstat		ci_data.cpu_lockstat
+#define	ci_sched_mutex		ci_data.cpu_sched_mutex
+#define	ci_spin_locks2		ci_data.cpu_spin_locks2
+
+void	mi_cpu_init(struct cpu_info *ci);
 
 #endif /* _SYS_CPU_DATA_H_ */
