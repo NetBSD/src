@@ -1,11 +1,11 @@
-/*	$NetBSD: lock.h,v 1.11 2005/12/28 19:09:30 perry Exp $	*/
+/*	$NetBSD: lock.h,v 1.11.20.1 2006/10/20 19:30:31 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Jason R. Thorpe and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -114,5 +114,23 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 #ifdef _KERNEL
 #define	SPINLOCK_SPIN_HOOK	x86_pause()
 #endif
+
+static inline void
+mb_read(void)
+{
+	__insn_barrier();
+}
+
+static inline void
+mb_write(void)
+{
+	__insn_barrier();
+}
+
+static inline void
+mb_memory(void)
+{
+	__insn_barrier();
+}
 
 #endif /* _X86_LOCK_H_ */
