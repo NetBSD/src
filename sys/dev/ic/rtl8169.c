@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.39 2006/10/20 15:44:00 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.40 2006/10/20 16:31:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -188,7 +188,7 @@ static int
 re_gmii_readreg(struct device *self, int phy, int reg)
 {
 	struct rtk_softc	*sc = (void *)self;
-	u_int32_t		rval;
+	uint32_t		rval;
 	int			i;
 
 	if (phy != 7)
@@ -223,7 +223,7 @@ static void
 re_gmii_writereg(struct device *dev, int phy __unused, int reg, int data)
 {
 	struct rtk_softc	*sc = (void *)dev;
-	u_int32_t		rval;
+	uint32_t		rval;
 	int			i;
 
 	CSR_WRITE_4(sc, RTK_PHYAR, (reg << 16) |
@@ -250,8 +250,8 @@ static int
 re_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct rtk_softc	*sc = (void *)dev;
-	u_int16_t		rval = 0;
-	u_int16_t		re8139_reg = 0;
+	uint16_t		rval = 0;
+	uint16_t		re8139_reg = 0;
 	int			s;
 
 	s = splnet();
@@ -311,7 +311,7 @@ static void
 re_miibus_writereg(struct device *dev, int phy, int reg, int data)
 {
 	struct rtk_softc	*sc = (void *)dev;
-	u_int16_t		re8139_reg = 0;
+	uint16_t		re8139_reg = 0;
 	int			s;
 
 	s = splnet();
@@ -419,11 +419,11 @@ re_diag(struct rtk_softc *sc)
 	struct ether_header	*eh;
 	struct rtk_desc		*cur_rx;
 	bus_dmamap_t		dmamap;
-	u_int16_t		status;
-	u_int32_t		rxstat;
+	uint16_t		status;
+	uint32_t		rxstat;
 	int			total_len, i, s, error = 0;
-	static const u_int8_t	dst[] = { 0x00, 'h', 'e', 'l', 'l', 'o' };
-	static const u_int8_t	src[] = { 0x00, 'w', 'o', 'r', 'l', 'd' };
+	static const uint8_t	dst[] = { 0x00, 'h', 'e', 'l', 'l', 'o' };
+	static const uint8_t	src[] = { 0x00, 'w', 'o', 'r', 'l', 'd' };
 
 	/* Allocate a single mbuf */
 
@@ -555,7 +555,7 @@ void
 re_attach(struct rtk_softc *sc)
 {
 	u_char			eaddr[ETHER_ADDR_LEN];
-	u_int16_t		val;
+	uint16_t		val;
 	struct ifnet		*ifp;
 	int			error = 0, i, addr_len;
 
@@ -1017,7 +1017,7 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 	struct mbuf		*n = NULL;
 	bus_dmamap_t		map;
 	struct rtk_desc		*d;
-	u_int32_t		cmdstat;
+	uint32_t		cmdstat;
 	int			error;
 
 	if (m == NULL) {
@@ -1134,7 +1134,7 @@ re_rxeof(struct rtk_softc *sc)
 	struct ifnet		*ifp;
 	int			i, total_len;
 	struct rtk_desc		*cur_rx;
-	u_int32_t		rxstat, rxvlan;
+	uint32_t		rxstat, rxvlan;
 
 	ifp = &sc->ethercom.ec_if;
 
@@ -1305,7 +1305,7 @@ re_txeof(struct rtk_softc *sc)
 	for (;;) {
 		struct rtk_txq *txq = &sc->rtk_ldata.rtk_txq[idx];
 		int descidx;
-		u_int32_t txstat;
+		uint32_t txstat;
 
 		if (txq->txq_mbuf == NULL) {
 			KASSERT(idx == sc->rtk_ldata.rtk_txq_prodidx);
@@ -1415,7 +1415,7 @@ re_poll(struct ifnet *ifp, enum poll_cmd cmd, int count)
 		(*ifp->if_start)(ifp);
 
 	if (cmd == POLL_AND_CHECK_STATUS) { /* also check status register */
-		u_int16_t       status;
+		uint16_t       status;
 
 		status = CSR_READ_2(sc, RTK_ISR);
 		if (status == 0xffff)
@@ -1442,7 +1442,7 @@ re_intr(void *arg)
 {
 	struct rtk_softc	*sc = arg;
 	struct ifnet		*ifp;
-	u_int16_t		status;
+	uint16_t		status;
 	int			handled = 0;
 
 	ifp = &sc->ethercom.ec_if;
@@ -1515,7 +1515,7 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 	struct m_tag		*mtag;
 #endif
 	struct rtk_desc		*d;
-	u_int32_t		cmdstat, rtk_flags;
+	uint32_t		cmdstat, rtk_flags;
 	struct rtk_txq		*txq;
 
 	if (sc->rtk_ldata.rtk_tx_free <= 4) {
@@ -1530,7 +1530,7 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 	 */
 
 	if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0) {
-		u_int32_t segsz = m->m_pkthdr.segsz;
+		uint32_t segsz = m->m_pkthdr.segsz;
 
 		rtk_flags = RTK_TDESC_CMD_LGSEND |
 		    (segsz << RTK_TDESC_CMD_MSSVAL_SHIFT);
@@ -1764,8 +1764,8 @@ static int
 re_init(struct ifnet *ifp)
 {
 	struct rtk_softc	*sc = ifp->if_softc;
-	u_int32_t		rxcfg = 0;
-	u_int32_t		reg;
+	uint32_t		rxcfg = 0;
+	uint32_t		reg;
 	int error;
 
 	if ((error = re_enable(sc)) != 0)
