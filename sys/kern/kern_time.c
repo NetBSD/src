@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.108 2006/10/12 01:32:17 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.109 2006/10/20 22:22:48 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.108 2006/10/12 01:32:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.109 2006/10/20 22:22:48 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -174,7 +174,7 @@ settime(struct proc *p, struct timespec *ts)
 		return (EPERM);
 	}
 #ifdef notyet
-	if ((delta.tv_sec < 86400) && securelevel > 0) {
+	if ((delta.tv_sec < 86400) && securelevel > 0) { /* XXX elad - notyet */
 		splx(s);
 		return (EPERM);
 	}
