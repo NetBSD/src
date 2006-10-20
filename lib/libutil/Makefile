@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2006/08/26 18:11:12 christos Exp $
+#	$NetBSD: Makefile,v 1.51 2006/10/20 17:40:39 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -61,6 +61,7 @@ MLINKS+=efun.3 estrlcpy.3
 MLINKS+=efun.3 estrlcat.3
 MLINKS+=efun.3 estrdup.3
 MLINKS+=efun.3 emalloc.3
+MLINKS+=efun.3 ecalloc.3
 MLINKS+=efun.3 erealloc.3
 MLINKS+=efun.3 efopen.3
 MLINKS+=efun.3 evasprintf.3
