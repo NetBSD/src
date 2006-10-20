@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27 2006/07/23 22:06:04 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.27.4.1 2006/10/20 20:00:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27 2006/07/23 22:06:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27.4.1 2006/10/20 20:00:20 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -325,6 +325,7 @@ copyfault:
 		frame_dump(frame);
 #endif
 		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_lid = l->l_lid;
 		ksi.ksi_signo = SIGBUS;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)rcr2();
@@ -353,6 +354,7 @@ copyfault:
 		frame_dump(frame);
 #endif
 		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_lid = l->l_lid;
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)rcr2();
@@ -369,8 +371,8 @@ copyfault:
 		goto trapsignal;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
-		uvmexp.softs++;
-		if (p->p_flag & P_OWEUPC) {
+		uvmexp.softs++;			/* XXXSMP */
+		if (p->p_flag & P_OWEUPC) {	/* XXXSMP */
 			p->p_flag &= ~P_OWEUPC;
 			KERNEL_PROC_LOCK(l);
 			ADDUPROF(p);
@@ -386,6 +388,7 @@ copyfault:
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
 		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_lid = l->l_lid;
 		ksi.ksi_signo = SIGKILL;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)frame->tf_rip;
@@ -397,6 +400,7 @@ copyfault:
 	case T_OFLOW|T_USER:
 	case T_DIVIDE|T_USER:
 		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_lid = l->l_lid;
 		ksi.ksi_signo = SIGFPE;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)frame->tf_rip;
@@ -421,10 +425,6 @@ copyfault:
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
 		if (l == NULL)
 			goto we_re_toast;
-#ifdef LOCKDEBUG
-		if (simple_lock_held(&sched_lock))
-			goto we_re_toast;
-#endif
 		/*
 		 * fusuintrfailure is used by [fs]uswintr() to prevent
 		 * page faulting from inside the profiling interrupt.
@@ -501,6 +501,7 @@ faultcommon:
 			goto out;
 		}
 		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_lid = l->l_lid;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)rcr2();
 		if (error == EACCES) {
@@ -562,6 +563,7 @@ faultcommon:
 		if (LIST_EMPTY(&p->p_raslist) ||
 		    (ras_lookup(p, (caddr_t)frame->tf_rip) == (caddr_t)-1)) {
 			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_lid = l->l_lid;
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_trap = type & ~T_USER;
 			if (type == (T_BPTFLT|T_USER))
