@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.43 2006/07/25 00:23:38 mrg Exp $	*/
+/*	$NetBSD: locore.S,v 1.43.4.1 2006/10/20 19:42:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -886,7 +886,9 @@ ENTRY(cpu_switch)
 	sti
 idle_unlock:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	call	_C_LABEL(sched_unlock_idle)
+	pushl	$_C_LABEL(sched_mutex)
+	call	_C_LABEL(mutex_exit)
+	addl	$4,%esp
 #endif
 	/* Interrupts are okay again. */
 	pushl	$IPL_NONE		# spl0()
@@ -915,7 +917,9 @@ idle_exit:
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)		# splhigh
 	sti
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	call	_C_LABEL(sched_lock_idle)
+	pushl	$_C_LABEL(sched_mutex)
+	call	_C_LABEL(mutex_enter)
+	addl	$4,%esp
 #endif
 	movl	_C_LABEL(sched_whichqs),%ecx
 	bsfl	%ecx,%ebx
@@ -1068,8 +1072,15 @@ switch_restored:
 	movl	$1,%ebx
 
 switch_return:
+	/* Donate the current CPU's sched mutex to the LWP */
+	movl	CPUVAR(SELF),%eax
+	addl	$CPU_INFO_SCHED_MUTEX,%eax
+	movl	%eax,L_MUTEX(%edi)
+
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	call    _C_LABEL(sched_unlock_idle)
+	pushl	$_C_LABEL(sched_mutex)
+	call    _C_LABEL(mutex_exit)
+	addl	$4,%esp
 #endif
 	cmpl	$0,CPUVAR(IPENDING)
 	jz	3f
