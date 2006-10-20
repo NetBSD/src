@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.12 2006/07/24 10:57:13 drochner Exp $ */
+/* $NetBSD: cpu.c,v 1.12.4.1 2006/10/20 19:25:41 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12 2006/07/24 10:57:13 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12.4.1 2006/10/20 19:25:41 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -379,6 +379,8 @@ cpu_attach(parent, self, aux)
 		    sc->sc_dev.dv_xname, pcb, pcb->pcb_rsp);
 	}
 #endif
+
+	mi_cpu_init(ci);
 }
 
 /*
