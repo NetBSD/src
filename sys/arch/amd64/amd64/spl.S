@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.5 2006/09/05 19:00:42 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.5.2.1 2006/10/20 19:26:48 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -168,7 +168,8 @@ IDTVEC(doreti)
 	jmp	*IS_RESUME(%rax)
 2:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
-5:	CHECK_ASTPENDING(%r11)
+5:	movq	CPUVAR(CURLWP),%r11
+	CHECK_ASTPENDING(%r11)
 	je	3f
 	testb   $SEL_RPL,TF_CS(%rsp)
 	jz	3f

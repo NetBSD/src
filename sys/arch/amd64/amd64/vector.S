@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.8 2005/12/11 12:16:21 christos Exp $	*/
+/*	$NetBSD: vector.S,v 1.8.20.1 2006/10/20 19:26:48 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -228,6 +228,7 @@ calltrap:
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 2:	/* Check for ASTs on exit to user mode. */
+	movq	CPUVAR(CURLWP),%r11
 	cli
 	CHECK_ASTPENDING(%r11)
 	je	1f
