@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.34 2006/10/20 13:44:31 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.35 2006/10/20 14:00:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -655,7 +655,7 @@ re_attach(struct rtk_softc *sc)
 	memset(sc->rtk_ldata.rtk_tx_list, 0, RTK_TX_LIST_SZ(sc));
 
 	if ((error = bus_dmamap_create(sc->sc_dmat, RTK_TX_LIST_SZ(sc), 1,
-		    RTK_TX_LIST_SZ(sc), 0, BUS_DMA_ALLOCNOW,
+		    RTK_TX_LIST_SZ(sc), 0, 0,
 		    &sc->rtk_ldata.rtk_tx_list_map)) != 0) {
 		aprint_error("%s: can't create tx list map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -675,8 +675,7 @@ re_attach(struct rtk_softc *sc)
 	for (i = 0; i < RTK_TX_QLEN; i++) {
 		error = bus_dmamap_create(sc->sc_dmat,
 		    round_page(IP_MAXPACKET),
-		    RTK_TX_DESC_CNT(sc) - 4, RTK_TDESC_CMD_FRAGLEN,
-		    0, BUS_DMA_ALLOCNOW,
+		    RTK_TX_DESC_CNT(sc) - 4, RTK_TDESC_CMD_FRAGLEN, 0, 0,
 		    &sc->rtk_ldata.rtk_txq[i].txq_dmamap);
 		if (error) {
 			aprint_error("%s: can't create DMA map for TX\n",
@@ -706,7 +705,7 @@ re_attach(struct rtk_softc *sc)
 	memset(sc->rtk_ldata.rtk_rx_list, 0, RTK_RX_LIST_SZ);
 
 	if ((error = bus_dmamap_create(sc->sc_dmat, RTK_RX_LIST_SZ, 1,
-		    RTK_RX_LIST_SZ, 0, BUS_DMA_ALLOCNOW,
+		    RTK_RX_LIST_SZ, 0, 0,
 		    &sc->rtk_ldata.rtk_rx_list_map)) != 0) {
 		aprint_error("%s: can't create rx list map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -724,7 +723,7 @@ re_attach(struct rtk_softc *sc)
 	/* Create DMA maps for RX buffers */
 	for (i = 0; i < RTK_RX_DESC_CNT; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
-		    0, BUS_DMA_ALLOCNOW, &sc->rtk_ldata.rtk_rx_dmamap[i]);
+		    0, 0, &sc->rtk_ldata.rtk_rx_dmamap[i]);
 		if (error) {
 			aprint_error("%s: can't create DMA map for RX\n",
 			    sc->sc_dev.dv_xname);
