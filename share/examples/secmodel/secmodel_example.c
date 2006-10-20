@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_example.c,v 1.2 2006/10/13 15:39:18 elad Exp $ */
+/* $NetBSD: secmodel_example.c,v 1.3 2006/10/20 22:02:54 elad Exp $ */
 
 /*
  * This file is placed in the public domain.
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.2 2006/10/13 15:39:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.3 2006/10/20 22:02:54 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -296,6 +296,7 @@ secmodel_example_network_cb(kauth_cred_t cred, kauth_action_t action,
                 case KAUTH_REQ_NETWORK_ALTQ_CONF:
                 case KAUTH_REQ_NETWORK_ALTQ_FIFOQ:
                 case KAUTH_REQ_NETWORK_ALTQ_HFSC:
+		case KAUTH_REQ_NETWORK_ALTQ_JOBS:
                 case KAUTH_REQ_NETWORK_ALTQ_PRIQ:
                 case KAUTH_REQ_NETWORK_ALTQ_RED:
                 case KAUTH_REQ_NETWORK_ALTQ_RIO:
