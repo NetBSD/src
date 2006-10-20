@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.28.8.1 2006/09/11 16:19:01 ad Exp $ */
+/* $NetBSD: sched.h,v 1.28.8.2 2006/10/20 19:46:01 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -196,8 +196,6 @@ int	sched_kpri(struct lwp *);
 
 void scheduler_fork_hook(struct proc *, struct proc *);
 void scheduler_wait_hook(struct proc *, struct proc *);
-
-void	awaken(struct lwp *);
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 #include <sys/lock.h>
