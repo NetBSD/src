@@ -1,4 +1,4 @@
-/* $NetBSD: arspi.c,v 1.1 2006/10/07 07:18:02 gdamore Exp $ */
+/* $NetBSD: arspi.c,v 1.2 2006/10/20 06:41:46 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.1 2006/10/07 07:18:02 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.2 2006/10/20 06:41:46 gdamore Exp $");
 
 #include "locators.h"
 
@@ -541,12 +541,6 @@ arspi_make_job(struct spi_transfer *st)
 		job->job_addr |= byte;
 	}
 
-	for (i = 0; i < job->job_txcnt; i++) {
-		if ((rv = arspi_get_byte(&chunk, &byte)) != 0)
-			return rv;
-		job->job_data <<= 8;
-		job->job_data |= byte;
-	}
 
 	if (job->job_opcode == SPIFLASH_CMD_READFAST) {
 		/* eat the dummy timing byte */
@@ -578,6 +572,15 @@ arspi_make_job(struct spi_transfer *st)
 	return 0;
 }
 
+/*
+ * NB: The Atheros SPI controller runs in little endian mode. So all
+ * data accesses must be swapped appropriately.
+ *
+ * The controller auto-swaps read accesses done through the mapped memory
+ * region, but when using SPI directly, we have to do the right thing to
+ * swap to or from little endian.
+ */
+
 void
 arspi_update_job(struct spi_transfer *st)
 {
@@ -600,8 +603,7 @@ arspi_update_job(struct spi_transfer *st)
 
 	for (i = 0; i < job->job_txcnt; i++) {
 		arspi_get_byte(&job->job_chunk, &byte);
-		job->job_data <<= 8;
-		job->job_data |= byte;
+		job->job_data |= (byte << (i * 8));
 	}
 
 	if ((!job->job_wresid) && (!job->job_rresid)) {

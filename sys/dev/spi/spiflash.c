@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.1 2006/10/07 07:21:13 gdamore Exp $ */
+/* $NetBSD: spiflash.c,v 1.2 2006/10/20 06:41:47 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.1 2006/10/07 07:21:13 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.2 2006/10/20 06:41:47 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -86,7 +86,9 @@ struct spiflash_softc {
 	int			sc_read_size;
 	int			sc_device_blks;
 
-	struct bufq_state	*sc_bufq;
+	struct bufq_state	*sc_waitq;
+	struct bufq_state	*sc_workq;
+	struct bufq_state	*sc_doneq;
 	struct proc		*sc_thread;
 };
 
@@ -113,12 +115,23 @@ STATIC int spiflash_common_erase(spiflash_handle_t, size_t, size_t);
 STATIC int spiflash_common_write(spiflash_handle_t, size_t, size_t,
     const uint8_t *);
 STATIC int spiflash_common_read(spiflash_handle_t, size_t, size_t, uint8_t *);
-STATIC void spiflash_process(spiflash_handle_t, struct buf *);
+STATIC void spiflash_process_done(spiflash_handle_t, int);
+STATIC void spiflash_process_read(spiflash_handle_t);
+STATIC void spiflash_process_write(spiflash_handle_t);
 STATIC void spiflash_thread(void *);
 STATIC void spiflash_thread_create(void *);
+STATIC int spiflash_nsectors(spiflash_handle_t, struct buf *);
+STATIC int spiflash_nsectors(spiflash_handle_t, struct buf *);
+STATIC int spiflash_sector(spiflash_handle_t, struct buf *);
 
 CFATTACH_DECL(spiflash, sizeof(struct spiflash_softc),
 	      spiflash_match, spiflash_attach, NULL, NULL);
+
+#ifdef	SPIFLASH_DEBUG
+#define	DPRINTF(x)	do { printf x; } while (0/*CONSTCOND*/)
+#else
+#define	DPRINTF(x)	do {  } while (0/*CONSTCOND*/)
+#endif
 
 extern struct cfdriver spiflash_cd;
 
@@ -215,7 +228,9 @@ spiflash_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_erase_size / 1024);
 
 	/* first-come first-served strategy works best for us */
-	bufq_alloc(&sc->sc_bufq, "fcfs", BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&sc->sc_waitq, "fcfs", BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&sc->sc_workq, "fcfs", BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&sc->sc_doneq, "fcfs", BUFQ_SORT_RAWBLOCK);
 
 	/* arrange to allocate the kthread */
 	kthread_create(spiflash_thread_create, sc);
@@ -289,7 +304,6 @@ void
 spiflash_strategy(struct buf *bp)
 {
 	spiflash_handle_t sc;
-	int	sz;
 	int	s;
 
 	sc = device_lookup(&spiflash_cd, DISKUNIT(bp->b_dev));
@@ -300,7 +314,7 @@ spiflash_strategy(struct buf *bp)
 		return;
 	}
 
-	if ((bp->b_bcount % sc->sc_write_size) ||
+	if (((bp->b_bcount % sc->sc_write_size) != 0) ||
 	    (bp->b_blkno < 0)) {
 		bp->b_error = EINVAL;
 		bp->b_flags |= B_ERROR;
@@ -314,61 +328,182 @@ spiflash_strategy(struct buf *bp)
 		return;
 	}
 
-	sz = bp->b_bcount / DEV_BSIZE;
-
-	if ((bp->b_blkno + sz) > sc->sc_device_blks) {
-		sz = sc->sc_device_blks - bp->b_blkno;
-		/* exactly at end of media?  return EOF */
-		if (sz == 0) {
-			biodone(bp);
-			return;
-		}
-		if (sz < 0) {
-			/* past end of disk */
-			bp->b_error = EINVAL;
-			bp->b_flags |= B_ERROR;
-			biodone(bp);
-		}
-		/* otherwise truncate it */
-		bp->b_bcount = sz << DEV_BSHIFT;
+	if (bounds_check_with_mediasize(bp, DEV_BSIZE,
+		sc->sc_device_blks) <= 0) {
+		biodone(bp);
+		return;
 	}
 
 	bp->b_resid = bp->b_bcount;
 
 	/* all ready, hand off to thread for async processing */
 	s = splbio();
-	BUFQ_PUT(sc->sc_bufq, bp);
+	BUFQ_PUT(sc->sc_waitq, bp);
 	wakeup(&sc->sc_thread);
 	splx(s);
 }
 
 void
-spiflash_process(spiflash_handle_t sc, struct buf *bp)
+spiflash_process_done(spiflash_handle_t sc, int err)
 {
-	int	cnt;
-	size_t	addr;
-	uint8_t	*data;
+	struct buf	*bp;
+	int		cnt = 0;
+	int		flag = 0;
 
-	addr = bp->b_blkno * DEV_BSIZE;
-	data = bp->b_data;
-
-	while (bp->b_resid > 0) {
-		cnt = max(sc->sc_write_size, DEV_BSIZE);
-		if (bp->b_flags & B_READ) {
-			bp->b_error = sc->sc_read(sc, addr, cnt, data);
-		} else {
-			bp->b_error = sc->sc_write(sc, addr, cnt, data);
-		}
-		if (bp->b_error) {
+	while ((bp = BUFQ_GET(sc->sc_doneq)) != NULL) {
+		flag = bp->b_flags & B_READ;
+		if ((bp->b_error = err) != 0)
 			bp->b_flags |= B_ERROR;
-			biodone(bp);
-			return;
+		else
+			bp->b_resid = 0;
+		cnt += bp->b_bcount - bp->b_resid;
+		biodone(bp);
+	}
+	disk_unbusy(&sc->sc_dk, cnt, flag);
+}
+
+void
+spiflash_process_read(spiflash_handle_t sc)
+{
+	struct buf	*bp;
+	int		err = 0;
+
+	disk_busy(&sc->sc_dk);
+	while ((bp = BUFQ_GET(sc->sc_workq)) != NULL) {
+		size_t addr = bp->b_blkno * DEV_BSIZE;
+		uint8_t *data = bp->b_data;
+		int cnt = bp->b_resid;
+
+		BUFQ_PUT(sc->sc_doneq, bp);
+
+		DPRINTF(("read from addr %x, cnt %d\n", (unsigned)addr, cnt));
+
+		if ((err = sc->sc_read(sc, addr, cnt, data)) != 0) {
+			/* error occurred, fail all pending workq bufs */
+			bufq_move(sc->sc_doneq, sc->sc_workq);
+			break;
 		}
+		
 		bp->b_resid -= cnt;
 		data += cnt;
 		addr += cnt;
 	}
-	biodone(bp);
+	spiflash_process_done(sc, err);
+}
+
+void
+spiflash_process_write(spiflash_handle_t sc)
+{
+	int	len;
+	size_t	base;
+	daddr_t	blkno;
+	uint8_t	*save;
+	int	err = 0, neederase = 0;
+	struct buf *bp;
+
+	/*
+	 * due to other considerations, we are guaranteed that
+	 * we will only have multiple buffers if they are all in
+	 * the same erase sector.  Therefore we never need to look
+	 * beyond the first block to determine how much data we need
+	 * to save.
+	 */
+
+	bp = BUFQ_PEEK(sc->sc_workq);
+	len = spiflash_nsectors(sc, bp)  * sc->sc_erase_size;
+	blkno = bp->b_blkno;
+	base = (blkno * DEV_BSIZE) & ~ (sc->sc_erase_size - 1);
+
+	/* get ourself a scratch buffer */
+	save = malloc(len, M_DEVBUF, M_WAITOK);
+
+	disk_busy(&sc->sc_dk);
+	/* read in as much of the data as we need */
+	DPRINTF(("reading in %d bytes\n", len));
+	if ((err = sc->sc_read(sc, base, len, save)) != 0) {
+		bufq_move(sc->sc_doneq, sc->sc_workq);	
+		spiflash_process_done(sc, err);
+		return;
+	}
+
+	/*
+	 * now coalesce the writes into the save area, but also
+	 * check to see if we need to do an erase
+	 */
+	while ((bp = BUFQ_GET(sc->sc_workq)) != NULL) {
+		uint8_t	*data, *dst;
+		int resid = bp->b_resid;
+
+		DPRINTF(("coalesce write, blkno %x, count %d, resid %d\n",
+			    (unsigned)bp->b_blkno, bp->b_bcount, resid));
+
+		data = bp->b_data;
+		dst = save + (bp->b_blkno - blkno) * DEV_BSIZE;
+
+		/*
+		 * NOR flash bits.  We can clear a bit, but we cannot
+		 * set a bit, without erasing.  This should help reduce
+		 * unnecessary erases.
+		 */
+		while (resid) {
+			if ((*data) & ~(*dst))
+				neederase = 1;
+			*dst++ = *data++;
+			resid--;
+		}
+
+		BUFQ_PUT(sc->sc_doneq, bp);
+	}
+	
+	/*
+	 * do the erase, if we need to.
+	 */
+	if (neederase) {
+		DPRINTF(("erasing from %x - %x\n", base, base + len));
+		if ((err = sc->sc_erase(sc, base, len)) != 0) {
+			spiflash_process_done(sc, err);
+			return;
+		}
+	}
+
+	/*
+	 * now write our save area, and finish up.
+	 */
+	DPRINTF(("flashing %d bytes to %x from %x\n", len,
+		    base, (unsigned)save));
+	err = sc->sc_write(sc, base, len, save);
+	spiflash_process_done(sc, err);
+}
+
+
+int
+spiflash_nsectors(spiflash_handle_t sc, struct buf *bp)
+{
+	unsigned	addr, sector;
+
+	addr = bp->b_blkno * DEV_BSIZE;
+	sector = addr / sc->sc_erase_size;
+
+	addr += bp->b_bcount;
+	addr--;
+	return (((addr / sc->sc_erase_size)  - sector) + 1);
+}
+
+int
+spiflash_sector(spiflash_handle_t sc, struct buf *bp)
+{
+	unsigned	addr, sector;
+
+	addr = bp->b_blkno * DEV_BSIZE;
+	sector = addr / sc->sc_erase_size;
+
+	/* if it spans multiple blocks, error it */
+	addr += bp->b_bcount;
+	addr--;
+	if (sector != (addr / sc->sc_erase_size))
+		return -1;
+
+	return sector;
 }
 
 void
@@ -377,15 +512,55 @@ spiflash_thread(void *arg)
 	spiflash_handle_t sc = arg;
 	struct buf	*bp;
 	int		s;
+	int		sector;
 
 	s = splbio();
 	for (;;) {
-		if ((bp = BUFQ_GET(sc->sc_bufq)) == NULL) {
+		if ((bp = BUFQ_GET(sc->sc_waitq)) == NULL) {
 			tsleep(&sc->sc_thread, PRIBIO, "spiflash_thread", 0);
 			continue;
 		}
 
-		spiflash_process(sc, bp);
+		BUFQ_PUT(sc->sc_workq, bp);
+
+		if (bp->b_flags & B_READ) {
+			/* just do the read */
+			spiflash_process_read(sc);
+			continue;
+		}
+
+		/*
+		 * Because writing a flash filesystem is particularly
+		 * painful, involving erase, modify, write, we prefer
+		 * to coalesce writes to the same sector together.
+		 */
+
+		sector = spiflash_sector(sc, bp);
+
+		/*
+		 * if the write spans multiple sectors, skip
+		 * coalescing.  (It would be nice if we could break
+		 * these up.  minphys is honored for read/write, but
+		 * not necessarily for bread.)
+		 */
+		if (sector < 0)
+			goto dowrite;
+
+		while ((bp = BUFQ_PEEK(sc->sc_waitq)) != NULL) {
+			/* can't deal with read requests! */
+			if (bp->b_flags & B_READ)
+				break;
+
+			/* is it for the same sector? */
+			if (spiflash_sector(sc, bp) != sector)
+				break;
+
+			bp = BUFQ_GET(sc->sc_waitq);
+			BUFQ_PUT(sc->sc_workq, bp);
+		}
+
+	dowrite:
+		spiflash_process_write(sc);
 	}
 }
 
@@ -464,11 +639,6 @@ spiflash_common_write(spiflash_handle_t sc, size_t start, size_t size,
 	if ((start % sc->sc_write_size) || (size % sc->sc_write_size))
 		return EINVAL;
 
-	/* the second test is to test against wrap */ 
-	if ((start > sc->sc_device_size) ||
-	    ((start + size) > sc->sc_device_size))
-		return EINVAL;
-
 	while (size) {
 		int cnt;
 
@@ -496,6 +666,7 @@ spiflash_common_write(spiflash_handle_t sc, size_t start, size_t size,
 		if ((rv = spiflash_wait(sc, 0)) != 0)
 			return rv;
 
+		data += cnt;
 		start += cnt;
 		size -= cnt;
 	}
@@ -508,27 +679,9 @@ spiflash_common_read(spiflash_handle_t sc, size_t start, size_t size,
     uint8_t *data)
 {
 	int		rv;
-	int		align;
-
-	align = sc->sc_write_size;
-	if (sc->sc_read_size > 0)
-		align = sc->sc_read_size;
-
-	if ((start % align) || (size % align))
-		return EINVAL;
-
-	/* the second test is to test against wrap */ 
-	if ((start > sc->sc_device_size) ||
-	    ((start + size) > sc->sc_device_size))
-		return EINVAL;
 
 	while (size) {
 		int cnt;
-
-		if ((rv = spiflash_write_enable(sc)) != 0) {
-			spiflash_write_disable(sc);
-			return rv;
-		}
 
 		if (sc->sc_read_size > 0)
 			cnt = min(size, sc->sc_read_size);
@@ -537,7 +690,6 @@ spiflash_common_read(spiflash_handle_t sc, size_t start, size_t size,
 
 		if ((rv = spiflash_cmd(sc, SPIFLASH_CMD_READ, 3, start,
 			 cnt, NULL, data)) != 0) {
-			spiflash_write_disable(sc);
 			return rv;
 		}
 
@@ -586,7 +738,8 @@ spiflash_cmd(spiflash_handle_t sc, uint8_t cmd,
 		return EINVAL;
 
 	for (i = addrlen; i > 0; i--) {
-		buf[i] = (addr >> ((i - 1) * 8)) & 0xff;
+		buf[i] = addr & 0xff;
+		addr >>= 8;
 	}
 	spi_transfer_init(&trans);
 	spi_chunk_init(&chunk1, addrlen + 1, buf, NULL);
