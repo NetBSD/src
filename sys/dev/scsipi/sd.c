@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.252 2006/10/12 01:31:57 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.253 2006/10/20 07:11:50 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.252 2006/10/12 01:31:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.253 2006/10/20 07:11:50 scw Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -1661,7 +1661,7 @@ sd_get_simplifiedparms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 	 * XXX probably differs for removable media
 	 */
 	dp->blksize = 512;
-	if ((sectors = scsipi_size(sd->sc_periph, &blksize, flags)) == 0)
+	if ((sectors = scsipi_size(sd->sc_periph, &blksize, 512, flags)) == 0)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 
 	error = scsipi_mode_sense(sd->sc_periph, SMS_DBD, 6,
@@ -1673,7 +1673,7 @@ sd_get_simplifiedparms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 
 	dp->blksize = _2btol(scsipi_sense.lbs);
 	if (dp->blksize == 0)
-		dp->blksize = blksize ? blksize : 512;
+		dp->blksize = blksize;
 
 	/*
 	 * Create a pseudo-geometry.
@@ -1707,7 +1707,8 @@ sd_get_capacity(struct sd_softc *sd, struct disk_parms *dp, int flags)
 	u_int8_t *p;
 #endif
 
-	dp->disksize = sectors = scsipi_size(sd->sc_periph, &blksize, flags);
+	dp->disksize = sectors = scsipi_size(sd->sc_periph, &blksize, 512,
+	    flags);
 	if (sectors == 0) {
 		struct scsipi_read_format_capacities cmd;
 		struct {
@@ -1762,7 +1763,7 @@ printf("rfc result:"); for (i = sizeof(struct scsipi_capacity_list_header) + dat
 		memset(&scsipi_sense, 0, sizeof(scsipi_sense));
 		error = sd_mode_sense(sd, 0, &scsipi_sense,
 		    sizeof(scsipi_sense.blk_desc), 0, flags | XS_CTL_SILENT, &big);
-		dp->blksize = blksize ? blksize : 512;
+		dp->blksize = blksize;
 		if (!error) {
 			if (big) {
 				bdesc = (void *)(&scsipi_sense.header.big + 1);
@@ -1781,7 +1782,7 @@ printf("page 0 ok\n");
 			if (bsize >= 8) {
 				dp->blksize = _3btol(bdesc->blklen);
 				if (dp->blksize == 0)
-					dp->blksize = blksize ? blksize : 512;
+					dp->blksize = blksize;
 			}
 		}
 	}
