@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcp.4,v 1.20 2006/09/05 00:29:36 rpaulo Exp $
+.\"	$NetBSD: tcp.4,v 1.21 2006/10/20 09:39:55 yamt Exp $
 .\"	$FreeBSD: tcp.4,v 1.11.2.16 2004/02/16 22:21:47 bms Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tcp.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd September 5, 2006
+.Dd October 20, 2006
 .Dt TCP 4
 .Os
 .Sh NAME
@@ -226,6 +226,9 @@ RST packet rate limits
 SACK (Selective Acknowledgment)
 .It
 ECN (Explicit Congestion Notification)
+.It
+Congestion window increase methods; the traditional packet counting or
+RFC 3465 Appropriate Byte Counting
 .El
 .Sh DIAGNOSTICS
 A socket operation may fail with one of the following errors returned:
