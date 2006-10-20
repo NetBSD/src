@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.22 2006/10/17 14:16:06 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.23 2006/10/20 11:30:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -174,6 +174,19 @@ struct rtk_softc {
 	((x) = ((x) + 1) % RTK_TX_DESC_CNT(sc))
 #define	RTK_RX_DESC_INC(sc, x)	\
 	((x) = ((x) + 1) % RTK_RX_DESC_CNT)
+
+#define	RTK_TXDESCSYNC(sc, idx, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat,					\
+	    (sc)->rtk_ldata.rtk_tx_list_map,				\
+	    sizeof(struct rtk_desc) * (idx),				\
+	    sizeof(struct rtk_desc),					\
+	    (ops))
+#define	RTK_RXDESCSYNC(sc, idx, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat,					\
+	    (sc)->rtk_ldata.rtk_rx_list_map,				\
+	    sizeof(struct rtk_desc) * (idx),				\
+	    sizeof(struct rtk_desc),					\
+	    (ops))
 
 #define RTK_ATTACHED 0x00000001 /* attach has succeeded */
 #define RTK_ENABLED  0x00000002 /* chip is enabled	*/
