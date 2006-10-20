@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.1.2.1 2006/09/10 23:42:41 ad Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.2.2 2006/10/20 19:28:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -41,14 +41,13 @@
 
 struct krwlock {
 	volatile uintptr_t	rw_owner;
+	uint32_t		rw_id;
 };
 
 #ifdef __RWLOCK_PRIVATE
 
-#ifndef LOCKDEBUG
 #define	__HAVE_RW_ENTER			1
 #define	__HAVE_RW_EXIT			1
-#endif	/* LOCKDEBUG */
 
 #define	RW_ACQUIRE(rw, old, new)					\
 	_lock_cas((uintptr_t *)(rw), (old), (new))
@@ -57,7 +56,10 @@ struct krwlock {
 #define	RW_SET_WAITERS(rw, need_wait, set_wait)				\
 	_lock_set_waiters((uintptr_t *)(rw), (need_wait), (set_wait))
 #define	RW_RECEIVE(rw)							\
-	x86_mfence();
+	__insn_barrier()
+
+#define	RW_SETID(rw, id)		((rw)->rw_id = id)
+#define	RW_GETID(rw)			((rw)->rw_id)
 
 #ifdef _KERNEL
 int	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);

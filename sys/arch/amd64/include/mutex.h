@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.1 2006/09/10 23:42:41 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.2 2006/10/20 19:28:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -43,20 +43,6 @@
 
 #ifdef __MUTEX_PRIVATE
 #define	MUTEX_THREAD		0xfffffffffffffff0UL
-
-static inline void
-MUTEX_SPIN_RELEASE(kmutex_t *mtx)
-{
-	x86_mfence();
-	mtx->mtx_lock = 0;
-}
-
-static inline void
-MUTEX_RELEASE(kmutex_t *mtx)
-{
-	x86_mfence();
-	mtx->mtx_owner = 0;
-}
 #endif	/* __MUTEX_PRIVATE */
 
 #endif	/* _AMD64_MUTEX_H_ */
