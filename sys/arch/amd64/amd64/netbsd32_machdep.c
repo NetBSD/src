@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.25 2006/08/30 14:01:57 cube Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.25.2.1 2006/10/20 19:32:18 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.25 2006/08/30 14:01:57 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.25.2.1 2006/10/20 19:32:18 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -405,7 +405,7 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, void *v, register_t *retval)
 		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &context.sc_mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &context.sc_mask, 0);
 
 	return (EJUSTRETURN);
 }
