@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.103.4.1 2006/09/11 18:07:25 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.103.4.2 2006/10/20 21:32:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.1 2006/09/11 18:07:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.2 2006/10/20 21:32:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,7 +218,7 @@ int
 donice(struct lwp *l, struct proc *chgp, int n)
 {
 	kauth_cred_t cred = l->l_cred;
-	int s;
+	int onice;
 
 	LOCK_ASSERT(mutex_owned(&chgp->p_crmutex));
 
@@ -231,13 +231,19 @@ donice(struct lwp *l, struct proc *chgp, int n)
 	if (n < PRIO_MIN)
 		n = PRIO_MIN;
 	n += NZERO;
-	if (n < chgp->p_nice && kauth_authorize_generic(cred,
+
+  again:
+	if (n < (onice = chgp->p_nice) && kauth_authorize_generic(cred,
 	    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
 		return (EACCES);
+	mutex_enter(&chgp->p_smutex);
+	if (onice != chgp->p_nice) {
+		mutex_exit(&chgp->p_smutex);
+		goto again;
+	}
 	chgp->p_nice = n;
-	SCHED_LOCK(s);
 	(void)resetprocpriority(chgp);
-	SCHED_UNLOCK(s);
+	mutex_exit(&chgp->p_smutex);
 	return (0);
 }
 
@@ -396,7 +402,7 @@ sys_getrlimit(struct lwp *l, void *v, register_t *retval)
  */
 void
 calcru(struct proc *p, struct timeval *up, struct timeval *sp,
-    struct timeval *ip)
+    struct timeval *ip, struct timeval *rp)
 {
 	u_quad_t u, st, ut, it, tot;
 	unsigned long sec;
@@ -411,9 +417,13 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 	it = p->p_iticks;
 	splx(s);
 
-	sec = p->p_rtime.tv_sec;
-	usec = p->p_rtime.tv_usec;
+	sec = 0;
+	usec = 0;
+	mutex_enter(&p->p_smutex);
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		lwp_lock(l);
+		sec += l->l_rtime.tv_sec;
+		usec += l->l_rtime.tv_usec;
 		if (l->l_stat == LSONPROC) {
 			struct schedstate_percpu *spc;
 
@@ -431,7 +441,9 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 			sec += tv.tv_sec - spc->spc_runtime.tv_sec;
 			usec += tv.tv_usec - spc->spc_runtime.tv_usec;
 		}
+		lwp_unlock(l);
 	}
+	mutex_exit(&p->p_smutex);
 
 	tot = st + ut + it;
 	u = sec * 1000000ull + usec;
@@ -443,15 +455,33 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 		st = (u * st) / tot;
 		ut = (u * ut) / tot;
 	}
-	sp->tv_sec = st / 1000000;
-	sp->tv_usec = st % 1000000;
-	up->tv_sec = ut / 1000000;
-	up->tv_usec = ut % 1000000;
+	if (sp != NULL) {
+		if (tot == 0) {
+			/* No ticks, so can't use to share time out, split 50-50 */
+			st = u / 2;
+		} else
+			st = (u * st) / tot;
+		sp->tv_sec = st / 1000000;
+		sp->tv_usec = st % 1000000;
+	}
+	if (up != NULL) {
+		if (tot == 0) {
+			/* No ticks, so can't use to share time out, split 50-50 */
+			ut = u / 2;
+		} else
+			ut = (u * ut) / tot;
+		up->tv_sec = ut / 1000000;
+		up->tv_usec = ut % 1000000;
+	}
 	if (ip != NULL) {
 		if (it != 0)
 			it = (u * it) / tot;
 		ip->tv_sec = it / 1000000;
 		ip->tv_usec = it % 1000000;
+	}
+	if (rp != NULL) {
+		rp->tv_sec = sec;
+		rp->tv_usec = usec;
 	}
 }
 
@@ -470,7 +500,7 @@ sys_getrusage(struct lwp *l, void *v, register_t *retval)
 
 	case RUSAGE_SELF:
 		rup = &p->p_stats->p_ru;
-		calcru(p, &rup->ru_utime, &rup->ru_stime, NULL);
+		calcru(p, &rup->ru_utime, &rup->ru_stime, NULL, NULL);
 		break;
 
 	case RUSAGE_CHILDREN:

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.33 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.33.20.1 2006/10/20 21:32:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.33 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.33.20.1 2006/10/20 21:32:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,13 +270,15 @@ sys_profil(struct lwp *l, void *v, register_t *retval)
  * inaccurate.
  */
 void
-addupc_intr(struct proc *p, u_long pc)
+addupc_intr(struct lwp *l, u_long pc)
 {
 	struct uprof *prof;
+	struct proc *p;
 	caddr_t addr;
 	u_int i;
 	int v;
 
+	p = l->l_proc;
 	prof = &p->p_stats->p_prof;
 	if (pc < prof->pr_off ||
 	    (i = PC_TO_INDEX(pc, prof)) >= prof->pr_size)
@@ -286,7 +288,7 @@ addupc_intr(struct proc *p, u_long pc)
 	if ((v = fuswintr(addr)) == -1 || suswintr(addr, v + 1) == -1) {
 		prof->pr_addr = pc;
 		prof->pr_ticks++;
-		need_proftick(p);
+		cpu_need_proftick(l);
 	}
 }
 
@@ -295,12 +297,15 @@ addupc_intr(struct proc *p, u_long pc)
  * update fails, we simply turn off profiling.
  */
 void
-addupc_task(struct proc *p, u_long pc, u_int ticks)
+addupc_task(struct lwp *l, u_long pc, u_int ticks)
 {
 	struct uprof *prof;
+	struct proc *p;
 	caddr_t addr;
 	u_int i;
 	u_short v;
+
+	p = l->l_proc;
 
 	/* Testing P_PROFIL may be unnecessary, but is certainly safe. */
 	if ((p->p_flag & P_PROFIL) == 0 || ticks == 0)
