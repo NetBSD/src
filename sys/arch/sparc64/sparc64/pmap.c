@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.180 2006/10/18 15:28:39 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.181 2006/10/20 22:12:57 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.180 2006/10/18 15:28:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.181 2006/10/20 22:12:57 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -594,7 +594,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	int64_t data;
 	vaddr_t va, intstk;
 	uint64_t phys_msgbuf;
-	paddr_t newp;
+	paddr_t newp = 0;
 
 	void *prom_memlist;
 	int prom_memlist_size;
