@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.24 2006/10/12 01:32:27 christos Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.25 2006/10/20 18:58:12 reinoud Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.24 2006/10/12 01:32:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.25 2006/10/20 18:58:12 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ vn_initialize_syncerd()
 	    M_VNODE, M_WAITOK);
 
 	for (i = 0; i < syncer_last; i++)
-		LIST_INIT(&syncer_workitem_pending[i]);
+		TAILQ_INIT(&syncer_workitem_pending[i]);
 
 	lockinit(&syncer_lock, PVFS, "synclk", 0, 0);
 }
@@ -118,19 +118,22 @@ vn_syncer_add_to_worklist(vp, delayx)
 	struct vnode *vp;
 	int delayx;
 {
-	int s, slot;
+	struct synclist *slp;
+	int s;
 
 	s = splbio();
 
 	if (vp->v_flag & VONWORKLST) {
-		LIST_REMOVE(vp, v_synclist);
+		slp = &syncer_workitem_pending[vp->v_synclist_slot];
+		TAILQ_REMOVE(slp, vp, v_synclist);
 	}
 
 	if (delayx > syncer_maxdelay - 2)
 		delayx = syncer_maxdelay - 2;
-	slot = (syncer_delayno + delayx) % syncer_last;
+	vp->v_synclist_slot = (syncer_delayno + delayx) % syncer_last;
 
-	LIST_INSERT_HEAD(&syncer_workitem_pending[slot], vp, v_synclist);
+	slp = &syncer_workitem_pending[vp->v_synclist_slot];
+	TAILQ_INSERT_TAIL(slp, vp, v_synclist);
 	vp->v_flag |= VONWORKLST;
 	splx(s);
 }
@@ -142,13 +145,15 @@ void
 vn_syncer_remove_from_worklist(vp)
 	struct vnode *vp;
 {
+	struct synclist *slp;
 	int s;
 
 	s = splbio();
 
 	if (vp->v_flag & VONWORKLST) {
 		vp->v_flag &= ~VONWORKLST;
-		LIST_REMOVE(vp, v_synclist);
+		slp = &syncer_workitem_pending[vp->v_synclist_slot];
+		TAILQ_REMOVE(slp, vp, v_synclist);
 	}
 
 	splx(s);
@@ -184,7 +189,7 @@ sched_sync(void *v __unused)
 
 		lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
 
-		while ((vp = LIST_FIRST(slp)) != NULL) {
+		while ((vp = TAILQ_FIRST(slp)) != NULL) {
 			if (vn_start_write(vp, &mp, V_NOWAIT) == 0) {
 				if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT)
 				    == 0) {
@@ -195,7 +200,7 @@ sched_sync(void *v __unused)
 				vn_finished_write(mp, 0);
 			}
 			s = splbio();
-			if (LIST_FIRST(slp) == vp) {
+			if (TAILQ_FIRST(slp) == vp) {
 
 				/*
 				 * Put us back on the worklist.  The worklist

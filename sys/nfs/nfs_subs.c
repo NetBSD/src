@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.175 2006/10/17 18:21:29 dogcow Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.176 2006/10/20 18:58:12 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.175 2006/10/17 18:21:29 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.176 2006/10/20 18:58:12 reinoud Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2700,7 +2700,7 @@ nfs_clearcommit(mp)
 
 	lockmgr(&nmp->nm_writeverflock, LK_EXCLUSIVE, NULL);
 
-	LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		KASSERT(vp->v_mount == mp);
 		if (vp->v_type != VREG)
 			continue;

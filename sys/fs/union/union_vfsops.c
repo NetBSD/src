@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.38 2006/10/12 01:32:14 christos Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.39 2006/10/20 18:58:12 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.38 2006/10/12 01:32:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.39 2006/10/20 18:58:12 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,9 +350,8 @@ union_unmount(struct mount *mp, int mntflags, struct lwp *l __unused)
 		int n;
 
 		/* count #vnodes held on mount list */
-		for (n = 0, vp = mp->mnt_vnodelist.lh_first;
-				vp != NULLVP;
-				vp = vp->v_mntvnodes.le_next)
+		n = 0;
+		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes)
 			n++;
 
 		/* if this is unchanged then stop */
