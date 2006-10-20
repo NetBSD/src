@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.1.2.1 2006/10/20 19:38:44 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.1.2.2 2006/10/20 20:41:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.1 2006/10/20 19:38:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.2 2006/10/20 20:41:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -275,7 +275,9 @@ sleepq_block(sleepq_t *sq, int timo)
 			 * already, the unlock the LWP directly.
 			 */
 			if (l->l_wchan != NULL) {
+				mutex_enter(&sched_mutex);
 				(void)sleepq_remove(sq, l);
+				mutex_exit(&sched_mutex);
 				mutex_exit(sq->sq_mutex);
 			} else
 				lwp_unlock(l);			
