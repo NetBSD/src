@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.36 2006/10/20 14:28:55 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.37 2006/10/20 14:51:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1301,7 +1301,7 @@ re_txeof(struct rtk_softc *sc)
 	ifp = &sc->ethercom.ec_if;
 	idx = sc->rtk_ldata.rtk_txq_considx;
 
-	while (/* CONSTCOND */ 1) {
+	for (;;) {
 		struct rtk_txq *txq = &sc->rtk_ldata.rtk_txq[idx];
 		int descidx;
 		u_int32_t txstat;
@@ -1592,7 +1592,7 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 	 */
 	i = 0;
 	curidx = startidx = sc->rtk_ldata.rtk_tx_nextfree;
-	while (1) {
+	for (;;) {
 		d = &sc->rtk_ldata.rtk_tx_list[curidx];
 		RTK_TXDESCSYNC(sc, curidx,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -1692,7 +1692,7 @@ re_start(struct ifnet *ifp)
 	sc = ifp->if_softc;
 
 	idx = sc->rtk_ldata.rtk_txq_prodidx;
-	while (/* CONSTCOND */ 1) {
+	for (;;) {
 		struct mbuf *m;
 		int error;
 
