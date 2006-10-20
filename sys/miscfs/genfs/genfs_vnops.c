@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.136 2006/10/14 09:16:28 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.137 2006/10/20 18:58:12 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.136 2006/10/14 09:16:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.137 2006/10/20 18:58:12 reinoud Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -1090,10 +1090,8 @@ genfs_putpages(void *v)
 		s = splbio();
 		if (vp->v_flag & VONWORKLST) {
 			vp->v_flag &= ~VWRITEMAPDIRTY;
-			if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
-				vp->v_flag &= ~VONWORKLST;
-				LIST_REMOVE(vp, v_synclist);
-			}
+			if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
+				vn_syncer_remove_from_worklist(vp);
 		}
 		splx(s);
 		simple_unlock(slock);
@@ -1435,10 +1433,8 @@ genfs_putpages(void *v)
 	if (cleanall && wasclean && gp->g_dirtygen == dirtygen &&
 	    (vp->v_flag & VONWORKLST) != 0) {
 		vp->v_flag &= ~VWRITEMAPDIRTY;
-		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
-			vp->v_flag &= ~VONWORKLST;
-			LIST_REMOVE(vp, v_synclist);
-		}
+		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
+			vn_syncer_remove_from_worklist(vp);
 	}
 	splx(s);
 

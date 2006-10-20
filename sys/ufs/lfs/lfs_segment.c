@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.193 2006/10/12 01:32:51 christos Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.194 2006/10/20 18:58:12 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.193 2006/10/12 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.194 2006/10/20 18:58:12 reinoud Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -489,31 +489,19 @@ int
 lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 {
 	struct inode *ip;
-	struct vnode *vp, *nvp;
+	struct vnode *vp;
 	int inodes_written = 0, only_cleaning;
 	int error = 0;
 
 	ASSERT_SEGLOCK(fs);
-#ifndef LFS_NO_BACKVP_HACK
-	/* BEGIN HACK */
-#define	VN_OFFSET	\
-	(((caddr_t)&LIST_NEXT(vp, v_mntvnodes)) - (caddr_t)vp)
-#define	BACK_VP(VP)	\
-	((struct vnode *)(((caddr_t)(VP)->v_mntvnodes.le_prev) - VN_OFFSET))
-#define	BEG_OF_VLIST	\
-	((struct vnode *)(((caddr_t)&LIST_FIRST(&mp->mnt_vnodelist)) \
-	- VN_OFFSET))
-
-	/* Find last vnode. */
- loop:	for (vp = LIST_FIRST(&mp->mnt_vnodelist);
-	     vp && LIST_NEXT(vp, v_mntvnodes) != NULL;
-	     vp = LIST_NEXT(vp, v_mntvnodes));
-	for (; vp && vp != BEG_OF_VLIST; vp = nvp) {
-		nvp = BACK_VP(vp);
+#if 0
+	/* start at last (newest) vnode. */
+ loop:
+	TAILQ_FOREACH_REVERSE(vp, &mp->mnt_vnodelist, vnodelst, v_mntvnodes) {
 #else
-	loop:
-	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
-		nvp = LIST_NEXT(vp, v_mntvnodes);
+	/* start at oldest accessed vnode */
+ loop:
+	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 #endif
 		/*
 		 * If the vnode that we are about to sync is no longer

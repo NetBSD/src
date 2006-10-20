@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.41 2006/07/23 22:06:15 ad Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.42 2006/10/20 18:58:13 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.41 2006/07/23 22:06:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.42 2006/10/20 18:58:13 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -384,8 +384,10 @@ quotaon(struct lwp *l, struct mount *mp, int type, caddr_t fname)
 	 * NB: only need to add dquot's for inodes being modified.
 	 */
 again:
-	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp != NULL; vp = nextvp) {
-		nextvp = LIST_NEXT(vp, v_mntvnodes);
+	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+		nextvp = TAILQ_NEXT(vp, v_mntvnodes);
+		if (vp->v_mount != mp)
+			goto again;
 		if (vp->v_type == VNON ||vp->v_writecount == 0)
 			continue;
 		if (vget(vp, LK_EXCLUSIVE))
@@ -395,7 +397,8 @@ again:
 			break;
 		}
 		vput(vp);
-		if (LIST_NEXT(vp, v_mntvnodes) != nextvp || vp->v_mount != mp)
+		/* if the list changed, start again */
+		if (TAILQ_NEXT(vp, v_mntvnodes) != nextvp)
 			goto again;
 	}
 	ump->um_qflags[type] &= ~QTF_OPENING;
@@ -425,8 +428,10 @@ quotaoff(struct lwp *l, struct mount *mp, int type)
 	 * deleting any references to quota file being closed.
 	 */
 again:
-	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp != NULL; vp = nextvp) {
-		nextvp = LIST_NEXT(vp, v_mntvnodes);
+	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+		nextvp = TAILQ_NEXT(vp, v_mntvnodes);
+		if (vp->v_mount != mp)
+			goto again;
 		if (vp->v_type == VNON)
 			continue;
 		if (vget(vp, LK_EXCLUSIVE))
@@ -436,7 +441,8 @@ again:
 		ip->i_dquot[type] = NODQUOT;
 		dqrele(vp, dq);
 		vput(vp);
-		if (LIST_NEXT(vp, v_mntvnodes) != nextvp || vp->v_mount != mp)
+		/* if the list changed, start again */
+		if (TAILQ_NEXT(vp, v_mntvnodes) != nextvp)
 			goto again;
 	}
 	dqflush(qvp);
@@ -595,10 +601,10 @@ qsync(struct mount *mp)
 	 */
 	simple_lock(&mntvnode_slock);
 again:
-	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp != NULL; vp = nextvp) {
+	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+		nextvp = TAILQ_NEXT(vp, v_mntvnodes);
 		if (vp->v_mount != mp)
 			goto again;
-		nextvp = LIST_NEXT(vp, v_mntvnodes);
 		if (vp->v_type == VNON)
 			continue;
 		simple_lock(&vp->v_interlock);
@@ -617,7 +623,8 @@ again:
 		}
 		vput(vp);
 		simple_lock(&mntvnode_slock);
-		if (LIST_NEXT(vp, v_mntvnodes) != nextvp)
+		/* if the list changed, start again */
+		if (TAILQ_NEXT(vp, v_mntvnodes) != nextvp)
 			goto again;
 	}
 	simple_unlock(&mntvnode_slock);

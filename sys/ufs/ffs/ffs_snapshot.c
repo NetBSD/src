@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.33 2006/10/12 01:32:51 christos Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.34 2006/10/20 18:58:12 reinoud Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.33 2006/10/12 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.34 2006/10/20 18:58:12 reinoud Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -158,7 +158,7 @@ ffs_snapshot(struct mount *mp __unused, struct vnode *vp __unused,
 	struct inode *ip, *xp;
 	struct buf *bp, *ibp, *nbp;
 	struct vattr vat;
-	struct vnode *xvp, *nvp, *devvp;
+	struct vnode *xvp, *devvp;
 
 	ns = UFS_FSNEEDSWAP(fs);
 	/*
@@ -363,14 +363,13 @@ ffs_snapshot(struct mount *mp __unused, struct vnode *vp __unused,
 	    FSMAXSNAP + 1 /* superblock */ + 1 /* last block */ + 1 /* size */;
 	MNT_ILOCK(mp);
 loop:
-	for (xvp = LIST_FIRST(&mp->mnt_vnodelist); xvp; xvp = nvp) {
+	TAILQ_FOREACH(xvp, &mp->mnt_vnodelist, v_mntvnodes) {
 		/*
 		 * Make sure this vnode wasn't reclaimed in getnewvnode().
 		 * Start over if it has (it won't be on the list anymore).
 		 */
 		if (xvp->v_mount != mp)
 			goto loop;
-		nvp = LIST_NEXT(xvp, v_mntvnodes);
 		VI_LOCK(xvp);
 		MNT_IUNLOCK(mp);
 		if ((xvp->v_flag & VXLOCK) ||

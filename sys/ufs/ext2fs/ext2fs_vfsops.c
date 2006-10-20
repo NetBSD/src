@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.102 2006/10/12 01:32:51 christos Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.103 2006/10/20 18:58:12 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.102 2006/10/12 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.103 2006/10/20 18:58:12 reinoud Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -463,7 +463,7 @@ fail:
 int
 ext2fs_reload(struct mount *mountp, kauth_cred_t cred, struct lwp *l)
 {
-	struct vnode *vp, *nvp, *devvp;
+	struct vnode *vp, *devvp;
 	struct inode *ip;
 	struct buf *bp;
 	struct m_ext2fs *fs;
@@ -541,12 +541,11 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred, struct lwp *l)
 
 loop:
 	simple_lock(&mntvnode_slock);
-	for (vp = mountp->mnt_vnodelist.lh_first; vp != NULL; vp = nvp) {
+	TAILQ_FOREACH(vp, &mountp->mnt_vnodelist, v_mntvnodes) {
 		if (vp->v_mount != mountp) {
 			simple_unlock(&mntvnode_slock);
 			goto loop;
 		}
-		nvp = vp->v_mntvnodes.le_next;
 		/*
 		 * Step 4: invalidate all inactive vnodes.
 		 */
@@ -830,7 +829,7 @@ ext2fs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l __unused)
 int
 ext2fs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 {
-	struct vnode *vp, *nvp;
+	struct vnode *vp;
 	struct inode *ip;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct m_ext2fs *fs;
@@ -846,7 +845,7 @@ ext2fs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 	 */
 	simple_lock(&mntvnode_slock);
 loop:
-	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp != NULL; vp = nvp) {
+	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
@@ -854,7 +853,6 @@ loop:
 		if (vp->v_mount != mp)
 			goto loop;
 		simple_lock(&vp->v_interlock);
-		nvp = LIST_NEXT(vp, v_mntvnodes);
 		ip = VTOI(vp);
 		if (vp->v_type == VNON ||
 		    ((ip->i_flag &

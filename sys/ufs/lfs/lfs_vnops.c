@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.191 2006/10/12 01:32:52 christos Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.192 2006/10/20 18:58:13 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.191 2006/10/12 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.192 2006/10/20 18:58:13 reinoud Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1907,10 +1907,8 @@ lfs_putpages(void *v)
 	if (vp->v_uobj.uo_npages == 0) {
 		s = splbio();
 		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
-		    (vp->v_flag & VONWORKLST)) {
-			vp->v_flag &= ~VONWORKLST;
-			LIST_REMOVE(vp, v_synclist);
-		}
+		    (vp->v_flag & VONWORKLST))
+			vn_syncer_remove_from_worklist(vp);
 		splx(s);
 		simple_unlock(&vp->v_interlock);
 		

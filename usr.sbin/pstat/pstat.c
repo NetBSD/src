@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.95 2006/05/25 01:49:30 christos Exp $	*/
+/*	$NetBSD: pstat.c,v 1.96 2006/10/20 18:58:13 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.95 2006/05/25 01:49:30 christos Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.96 2006/10/20 18:58:13 reinoud Exp $");
 #endif
 #endif /* not lint */
 
@@ -740,8 +740,7 @@ kinfo_vnodes(int *avnodes)
 	for (mp = mountlist.cqh_first;;
 	    mp = mount.mnt_list.cqe_next) {
 		KGET2(mp, &mount, sizeof(mount), "mount entry");
-		for (vp = mount.mnt_vnodelist.lh_first;
-		    vp != NULL; vp = vnode.v_mntvnodes.le_next) {
+		TAILQ_FOREACH(vp, &mount.mnt_vnodelist, v_mntvnodes) {
 			KGET2(vp, &vnode, sizeof(vnode), "vnode");
 			if (bp + VPTRSZ + VNODESZ > ep)
 				/* XXX - should realloc */

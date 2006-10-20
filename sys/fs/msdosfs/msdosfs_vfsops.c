@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.36 2006/10/12 01:32:11 christos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.37 2006/10/20 18:58:12 reinoud Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.36 2006/10/12 01:32:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.37 2006/10/20 18:58:12 reinoud Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -883,7 +883,7 @@ msdosfs_sync(mp, waitfor, cred, l)
 	kauth_cred_t cred;
 	struct lwp *l;
 {
-	struct vnode *vp, *nvp;
+	struct vnode *vp;
 	struct denode *dep;
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	int error, allerror = 0;
@@ -904,7 +904,7 @@ msdosfs_sync(mp, waitfor, cred, l)
 	 */
 	simple_lock(&mntvnode_slock);
 loop:
-	for (vp = mp->mnt_vnodelist.lh_first; vp != NULL; vp = nvp) {
+	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * assoicated with this mount point, start over.
@@ -912,7 +912,6 @@ loop:
 		if (vp->v_mount != mp)
 			goto loop;
 		simple_lock(&vp->v_interlock);
-		nvp = vp->v_mntvnodes.le_next;
 		dep = VTODE(vp);
 		if (waitfor == MNT_LAZY || vp->v_type == VNON ||
 		    (((dep->de_flag &
