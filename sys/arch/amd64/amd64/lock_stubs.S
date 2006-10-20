@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.3 2006/09/11 18:54:52 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.4 2006/10/20 19:41:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -77,8 +77,8 @@ NENTRY(_lock_cas)
  * Note: 'need' must be non-zero.
  */
 NENTRY(_lock_set_waiters)
-1:	movq	(%rdi), %rax
-	testq	%rsi, %rax
+	movq	(%rdi), %rax
+1:	testq	%rsi, %rax
 	jz	2f
 	orq	%rax, %rdx
 	lock
@@ -90,7 +90,7 @@ NENTRY(_lock_set_waiters)
 2:	xorq	%rax, %rax
 	ret
 
-#if !defined(LOCKDEBUG)
+#ifndef LOCKDEBUG
 
 /*
  * void mutex_enter(kmutex_t *mtx);
@@ -132,7 +132,6 @@ NENTRY(mutex_exit)
 	movzbl	MTX_OLDSPL(%rdi), %ecx		/* for SPLLOWER */
 #if defined(FULL)
 	movl	$0x0001, %eax			/* new + expected value */
-	lock
 	cmpxchgb %ah, MTX_LOCK(%rdi)		/* unlock */
 	jnz	_C_LABEL(mutex_vector_exit)	/* hard case if problems */
 #endif
