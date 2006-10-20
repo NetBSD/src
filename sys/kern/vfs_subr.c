@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.272 2006/10/20 18:58:12 reinoud Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.273 2006/10/20 20:29:52 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.272 2006/10/20 18:58:12 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.273 2006/10/20 20:29:52 reinoud Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1411,14 +1411,19 @@ int
 vflush(struct mount *mp, struct vnode *skipvp, int flags)
 {
 	struct lwp *l = curlwp;		/* XXX */
-	struct vnode *vp;
+	struct vnode *vp, *nvp;
 	int busy = 0;
 
 	simple_lock(&mntvnode_slock);
 loop:
-	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+	/*
+	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
+	 * and vclean() are called
+	 */
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
 		if (vp->v_mount != mp)
 			goto loop;
+		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		/*
 		 * Skip over a selected vnode.
 		 */
