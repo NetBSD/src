@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.731 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.732 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -123,3 +123,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	vge(4): Make this driver work on big endian machines
 		(at least on macppc). [tsutsui 20061014]
 	gpt(8): Added from FreeBSD [christos 20061015]
+	tcp(4): Added RFC 3465 Appropriate Byte Counting (ABC) [yamt 20061019]
