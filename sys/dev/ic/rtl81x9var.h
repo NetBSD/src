@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.23 2006/10/20 11:30:54 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.24 2006/10/20 16:31:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -48,8 +48,8 @@
 #define RTK_RXSTAT_LEN	4
 
 struct rtk_type {
-	u_int16_t		rtk_vid;
-	u_int16_t		rtk_did;
+	uint16_t		rtk_vid;
+	uint16_t		rtk_did;
 	int			rtk_basetype;
 	const char		*rtk_name;
 };
@@ -61,12 +61,12 @@ struct rtk_hwrev {
 };
 
 struct rtk_mii_frame {
-	u_int8_t		mii_stdelim;
-	u_int8_t		mii_opcode;
-	u_int8_t		mii_phyaddr;
-	u_int8_t		mii_regaddr;
-	u_int8_t		mii_turnaround;
-	u_int16_t		mii_data;
+	uint8_t			mii_stdelim;
+	uint8_t			mii_opcode;
+	uint8_t			mii_phyaddr;
+	uint8_t			mii_regaddr;
+	uint8_t			mii_turnaround;
+	uint16_t		mii_data;
 };
 
 /*
@@ -147,7 +147,7 @@ struct rtk_softc {
 	struct rtk_list_data	rtk_ldata;
 	struct mbuf		*rtk_head;
 	struct mbuf		*rtk_tail;
-	u_int32_t		rtk_rxlenmask;
+	uint32_t		rtk_rxlenmask;
 	int			rtk_testmode;
 
 	int			sc_flags;	/* misc flags */
@@ -236,7 +236,7 @@ struct rtk_softc {
 #define RTK_PME_STATUS		0x8000
 
 #ifdef _KERNEL
-u_int16_t rtk_read_eeprom(struct rtk_softc *, int, int);
+uint16_t rtk_read_eeprom(struct rtk_softc *, int, int);
 void	rtk_setmulti(struct rtk_softc *);
 void	rtk_attach(struct rtk_softc *);
 int	rtk_detach(struct rtk_softc *);
