@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.272 2006/10/17 15:06:18 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.273 2006/10/20 18:58:12 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.272 2006/10/17 15:06:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.273 2006/10/20 18:58:12 reinoud Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -645,7 +645,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		vrele(coveredvp);
 	}
 	mp->mnt_op->vfs_refcount--;
-	if (LIST_FIRST(&mp->mnt_vnodelist) != NULL)
+	if (TAILQ_FIRST(&mp->mnt_vnodelist) != NULL)
 		panic("unmount: dangling vnode");
 	mp->mnt_iflag |= IMNT_GONE;
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock);

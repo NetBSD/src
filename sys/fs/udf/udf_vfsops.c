@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.16 2006/10/12 01:32:14 christos Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.17 2006/10/20 18:58:12 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.16 2006/10/12 01:32:14 christos Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.17 2006/10/20 18:58:12 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -382,7 +382,7 @@ udf_unmount_sanity_check(struct mount *mp)
 	struct vnode *vp;
 
 	printf("On unmount, i found the following nodes:\n");
-	LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		vprint("", vp);
 		if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) {
 			printf("  is locked\n");

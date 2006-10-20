@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.148 2006/08/04 16:29:51 yamt Exp $	*/
+/*	$NetBSD: mount.h,v 1.149 2006/10/20 18:58:12 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -89,7 +89,7 @@
  * array of operations and an instance record.  The file systems are
  * put on a doubly linked list.
  */
-LIST_HEAD(vnodelst, vnode);
+TAILQ_HEAD(vnodelst, vnode);
 
 struct mount {
 	CIRCLEQ_ENTRY(mount) mnt_list;		/* mount list */
