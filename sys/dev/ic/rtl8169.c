@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.32 2006/10/20 11:30:54 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.33 2006/10/20 13:39:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1050,6 +1050,9 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 	if (error)
 		goto out;
 
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD);
+
 	d = &sc->rtk_ldata.rtk_rx_list[idx];
 	RTK_RXDESCSYNC(sc, idx, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	if (le32toh(d->rtk_cmdstat) & RTK_RDESC_STAT_OWN) {
@@ -1069,10 +1072,6 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 	RTK_RXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	sc->rtk_ldata.rtk_rx_mbuf[idx] = m;
-
-	bus_dmamap_sync(sc->sc_dmat, sc->rtk_ldata.rtk_rx_dmamap[idx], 0,
-	    sc->rtk_ldata.rtk_rx_dmamap[idx]->dm_mapsize,
-	    BUS_DMASYNC_PREREAD);
 
 	return 0;
 out:
