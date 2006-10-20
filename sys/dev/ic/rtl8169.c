@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.33 2006/10/20 13:39:47 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.34 2006/10/20 13:44:31 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1137,9 +1137,8 @@ re_rxeof(struct rtk_softc *sc)
 	u_int32_t		rxstat, rxvlan;
 
 	ifp = &sc->ethercom.ec_if;
-	i = sc->rtk_ldata.rtk_rx_prodidx;
 
-	for (;;) {
+	for (i = sc->rtk_ldata.rtk_rx_prodidx;; RTK_RX_DESC_INC(sc, i)) {
 		cur_rx = &sc->rtk_ldata.rtk_rx_list[i];
 		RTK_RXDESCSYNC(sc, i,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -1171,7 +1170,6 @@ re_rxeof(struct rtk_softc *sc)
 				sc->rtk_tail = m;
 			}
 			re_newbuf(sc, i, NULL);
-			RTK_RX_DESC_INC(sc, i);
 			continue;
 		}
 
@@ -1205,7 +1203,6 @@ re_rxeof(struct rtk_softc *sc)
 				sc->rtk_head = sc->rtk_tail = NULL;
 			}
 			re_newbuf(sc, i, m);
-			RTK_RX_DESC_INC(sc, i);
 			continue;
 		}
 
@@ -1221,11 +1218,8 @@ re_rxeof(struct rtk_softc *sc)
 				sc->rtk_head = sc->rtk_tail = NULL;
 			}
 			re_newbuf(sc, i, m);
-			RTK_RX_DESC_INC(sc, i);
 			continue;
 		}
-
-		RTK_RX_DESC_INC(sc, i);
 
 		if (sc->rtk_head != NULL) {
 			m->m_len = total_len % (MCLBYTES - RTK_ETHER_ALIGN);
