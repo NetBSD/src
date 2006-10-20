@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_example.c,v 1.3 2006/10/20 22:02:54 elad Exp $ */
+/* $NetBSD: secmodel_example.c,v 1.4 2006/10/20 23:10:33 elad Exp $ */
 
 /*
  * This file is placed in the public domain.
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.3 2006/10/20 22:02:54 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.4 2006/10/20 23:10:33 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -327,6 +327,24 @@ secmodel_example_network_cb(kauth_cred_t cred, kauth_action_t action,
                 }
                 break;
 
+        case KAUTH_NETWORK_FORWSRCRT:
+		break;
+
+	case KAUTH_NETWORK_INTERFACE:
+		switch ((u_long)arg0) {
+		case KAUTH_REQ_NETWORK_INTERFACE_GET:
+		case KAUTH_REQ_NETWORK_INTERFACE_SET:
+		case KAUTH_REQ_NETWORK_INTERFACE_GETPRIV:
+		case KAUTH_REQ_NETWORK_INTERFACE_SETPRIV:
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
+
+        case KAUTH_NETWORK_ROUTE:
+		break;
+
         case KAUTH_NETWORK_SOCKET:
                 switch((u_long)arg0) {
                 case KAUTH_REQ_NETWORK_SOCKET_ATTACH:
@@ -338,8 +356,6 @@ secmodel_example_network_cb(kauth_cred_t cred, kauth_action_t action,
                 }
                 break;
 
-        case KAUTH_NETWORK_FORWSRCRT:
-        case KAUTH_NETWORK_ROUTE:
         default:
                 result = KAUTH_RESULT_DEFER;
                 break;

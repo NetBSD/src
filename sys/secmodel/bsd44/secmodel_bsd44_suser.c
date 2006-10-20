@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.10 2006/10/20 22:02:54 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.11 2006/10/20 23:10:34 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.10 2006/10/20 22:02:54 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.11 2006/10/20 23:10:34 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -303,6 +303,50 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 
 		break;
 
+	case KAUTH_NETWORK_BIND:
+		switch (req) {
+		case KAUTH_REQ_NETWORK_BIND_PRIVPORT:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+		default:
+			result = KAUTH_RESULT_ALLOW;
+			break;
+		}
+		break;
+
+	case KAUTH_NETWORK_INTERFACE:
+		switch (req) {
+		case KAUTH_REQ_NETWORK_INTERFACE_GET:
+		case KAUTH_REQ_NETWORK_INTERFACE_SET:
+			result = KAUTH_RESULT_ALLOW;
+			break;
+
+		case KAUTH_REQ_NETWORK_INTERFACE_GETPRIV:
+		case KAUTH_REQ_NETWORK_INTERFACE_SETPRIV:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
+
+	case KAUTH_NETWORK_ROUTE:
+		switch (((struct rt_msghdr *)arg1)->rtm_type) {
+		case RTM_GET:
+			result = KAUTH_RESULT_ALLOW;
+			break;
+
+		default:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+		}
+		break;
+
 	case KAUTH_NETWORK_SOCKET:
 		switch (req) {
 		case KAUTH_REQ_NETWORK_SOCKET_RAWSOCK:
@@ -328,31 +372,6 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 			break;
 		}
 
-		break;
-
-	case KAUTH_NETWORK_BIND:
-		switch (req) {
-		case KAUTH_REQ_NETWORK_BIND_PRIVPORT:
-			if (isroot)
-				result = KAUTH_RESULT_ALLOW;
-			break;
-		default:
-			result = KAUTH_RESULT_ALLOW;
-			break;
-		}
-		break;
-
-	case KAUTH_NETWORK_ROUTE:
-		switch (((struct rt_msghdr *)arg1)->rtm_type) {
-		case RTM_GET:
-			result = KAUTH_RESULT_ALLOW;
-			break;
-
-		default:
-			if (isroot)
-				result = KAUTH_RESULT_ALLOW;
-			break;
-		}
 		break;
 
 	default:
