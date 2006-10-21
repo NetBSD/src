@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.28 2006/08/19 22:38:42 bjh21 Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.29 2006/10/21 17:08:22 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.28 2006/08/19 22:38:42 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.29 2006/10/21 17:08:22 bjh21 Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -496,7 +496,7 @@ vidcvideo_setmode(struct vidc_mode *mode)
 	/* XXX VIDC20 data sheet say to subtract 2 */
 	vidcvideo_write(VIDC_VCR, vm->vtotal - 1);
 
-	IOMD_WRITE_WORD(IOMD_FSIZE, vm->vdisplay - 1);
+	IOMD_WRITE_WORD(IOMD_FSIZE, vm->vtotal - vm->vdisplay - 1);
 
 	if (dispsize <= 1024*1024)
 		vidcvideo_write(VIDC_DCTL, vm->hdisplay>>2 | 1<<16 | 1<<12);
