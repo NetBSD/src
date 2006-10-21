@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.82 2006/09/16 17:05:32 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.83 2006/10/21 09:42:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.82 2006/09/16 17:05:32 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.83 2006/10/21 09:42:26 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -880,11 +880,17 @@ matches_spec(const char *name, const char *spec,
     char *(*check)(const char *, const char *))
 {
 	const char *s;
+	const char *cursor;
 	char prev, next;
 
-	if ((s = (*check)(spec, name)) != NULL) {
+	if (strchr(name, ',')) /* sanity */
+		return (0);
+
+	cursor = spec;
+	while ((s = (*check)(cursor, name)) != NULL) {
 		prev = s == spec ? ',' : *(s - 1);
-		next = *(s + strlen(name));
+		cursor = s + strlen(name);
+		next = *cursor;
 
 		if (prev == ',' && (next == '\0' || next == ','))
 			return (1);
