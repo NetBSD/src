@@ -1,3 +1,67 @@
+2006-10-15  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
+
+	PR target/29300
+	* inclhack.def (hpux_pthread_initializers): New hack.
+	* tests/base/sys/pthread.h: New file.
+
+	* fixincl.x: Regenerate.
+
+2006-10-03  Uros Bizjak <uros@kss-loka.si>
+
+	* inclhack.def (glibc_mutex_init): Also fix
+	PTHREAD_MUTEX_(RECURSIVE|ERRORCHECK|ADAPTIVE)_NP and
+	PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP initializers.
+	* tests/base/pthread.h: Update.
+
+	* fixincl.x: Regenerate.
+
+2006-10-01  Uros Bizjak <uros@kss-loka.si>
+
+	* inclhack.def (glibc_mutex_init): New fix.
+	* tests/base/pthread.h: Update.
+
+	* fixincl.x: Regenerate.
+
+2006-09-29  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* inclhack.def (solaris_mutex_init_2): Update for Solaris9.
+	Prevent it from running on solaris10 or later.
+	(solaris_once_init_2): Fix comment.
+	* tests/base/pthread.h: Update.
+
+	* fixincl.x: Regenerate.
+
+2006-09-27  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* inclhack.def (solaris_once_init_2): New fix.
+	* tests/base/pthread.h: Update.
+
+	* fixincl.x: Regenerate.
+
+2006-09-27  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* inclhack.def (solaris_mutex_init_2): Remove test for
+	PTHREAD_RWLOCK_INITIALIZER.
+	(solaris_rwlock_init_1): New.
+	* tests/base/pthread.h: Update.
+
+	* inclhack.def (solaris_once_init_1): New.
+	* tests/base/pthread.h: Adjust for new fix.
+	
+	* fixincl.x: Regenerate.
+
+2006-07-24  Roger Sayle  <roger@eyesopen.com>
+
+	Backport from mainline.
+	* tests/base/errno.h: New file.
+	* tests/base/ia64/sys/getppdp.h: Likewise.
+
+2006-07-10  Steve Ellcey  <sje@cup.hp.com>
+
+	PR target/28084
+	* inclhack.def (hpux_extern_errno): New.
+	* fixincl.x: Regenerate.
+
 2006-05-24  Release Manager
 
 	* GCC 4.1.1 released.
