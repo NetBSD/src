@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.30 2006/09/19 20:31:49 christos Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.31 2006/10/21 21:37:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,12 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.30 2006/09/19 20:31:49 christos Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.31 2006/10/21 21:37:20 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
+#include <util.h>
 #include "extern.h"
+#include "mime.h"
 
 /*
  * Mail -- a mail program
@@ -77,7 +79,7 @@ shell(void *v)
  */
 /*ARGSUSED*/
 int
-dosh(void *v)
+dosh(void *v __unused)
 {
 	sig_t sigint = signal(SIGINT, SIG_IGN);
 	const char *shellcmd;
@@ -150,7 +152,7 @@ overf:
 
 int
 /*ARGSUSED*/
-help(void *v)
+help(void *v __unused)
 {
 	int c;
 	FILE *f;
@@ -207,13 +209,17 @@ set_smopts(struct message *mp)
 	    (cp = skin(hfield("to", mp))) != NULL &&
 	    extract(cp, GTO)->n_flink == NULL) {  /* check for one recipient */
 		char *p, *q;
-		int len = strlen(cp);
-		for (p = q = reply_as_recipient ; *p ; p = q) {
-			while (*q != '\0' && *q != ',' && *q != ' ' && *q != '\t')
+		size_t len = strlen(cp);
+		/*
+		 * XXX - perhaps we always want to ignore
+		 *       "undisclosed-recipients:;" ?
+		 */
+		for (p = q = reply_as_recipient; *p; p = q) {
+			while (*q != '\0' && *q != ',' && !isblank((unsigned char)*q))
 				q++;
-			if (p + len == q && strncmp(cp, p, len) == 0)
+			if (p + len == q && strncasecmp(cp, p, len) == 0)
 				return np;
-			while (*q == ',' || *q == ' ' || *q == '\t')
+			while (*q == ',' || isblank((unsigned char)*q))
 				q++;
 		}
 		np = extract(__UNCONST("-f"), GSMOPTS);
@@ -282,6 +288,9 @@ _respond(int *msgvec)
 		head.h_cc = NULL;
 	head.h_bcc = NULL;
 	head.h_smopts = set_smopts(mp);
+#ifdef MIME_SUPPORT
+	head.h_attach = NULL;
+#endif
 	mail1(&head, 1);
 	return(0);
 }
@@ -324,7 +333,7 @@ preserve(void *v)
 	}
 	for (ip = msgvec; *ip != 0; ip++) {
 		mesg = *ip;
-		mp = &message[mesg-1];
+		mp = &message[mesg - 1];
 		mp->m_flag |= MPRESERVE;
 		mp->m_flag &= ~MBOX;
 		dot = mp;
@@ -342,7 +351,7 @@ unread(void *v)
 	int *ip;
 
 	for (ip = msgvec; *ip != 0; ip++) {
-		dot = &message[*ip-1];
+		dot = &message[*ip - 1];
 		dot->m_flag &= ~(MREAD|MTOUCH);
 		dot->m_flag |= MSTATUS;
 	}
@@ -361,9 +370,8 @@ messize(void *v)
 
 	for (ip = msgvec; *ip != 0; ip++) {
 		mesg = *ip;
-		mp = &message[mesg-1];
+		mp = &message[mesg - 1];
 		(void)printf("%d: %ld/%llu\n", mesg, mp->m_blines,
-		    /*LINTED*/
 		    (unsigned long long)mp->m_size);
 	}
 	return(0);
@@ -375,7 +383,7 @@ messize(void *v)
  */
 int
 /*ARGSUSED*/
-rexit(void *v)
+rexit(void *v __unused)
 {
 	if (sourcing)
 		return(1);
@@ -542,7 +550,7 @@ group(void *v)
 	gname = *argv;
 	h = hash(gname);
 	if ((gh = findgroup(gname)) == NULL) {
-		gh = (struct grouphead *) calloc(1, sizeof *gh);
+		gh = (struct grouphead *) ecalloc(1, sizeof *gh);
 		gh->g_name = vcopy(gname);
 		gh->g_list = NULL;
 		gh->g_link = groups[h];
@@ -555,8 +563,8 @@ group(void *v)
 	 * later anyway.
 	 */
 
-	for (ap = argv+1; *ap != NULL; ap++) {
-		gp = (struct group *) calloc(1, sizeof *gp);
+	for (ap = argv + 1; *ap != NULL; ap++) {
+		gp = (struct group *) ecalloc(1, sizeof *gp);
 		gp->ge_name = vcopy(*ap);
 		gp->ge_link = gh->g_list;
 		gh->g_list = gp;
@@ -641,7 +649,7 @@ diction(const void *a, const void *b)
 
 /*ARGSUSED*/
 int
-null(void *v)
+null(void *v __unused)
 {
 	return 0;
 }
@@ -728,6 +736,9 @@ _Respond(int msgvec[])
 	head.h_cc = NULL;
 	head.h_bcc = NULL;
 	head.h_smopts = set_smopts(mp);
+#ifdef MIME_SUPPORT
+	head.h_attach = NULL;
+#endif
 	mail1(&head, 1);
 	return 0;
 }
@@ -770,7 +781,7 @@ ifcmd(void *v)
  */
 int
 /*ARGSUSED*/
-elsecmd(void *v)
+elsecmd(void *v __unused)
 {
 
 	switch (cond) {
@@ -799,7 +810,7 @@ elsecmd(void *v)
  */
 int
 /*ARGSUSED*/
-endifcmd(void *v)
+endifcmd(void *v __unused)
 {
 
 	if (cond == CANY) {
@@ -831,9 +842,9 @@ alternates(void *v)
 	}
 	if (altnames != 0)
 		free(altnames);
-	altnames = (char **) calloc((unsigned) c, sizeof (char *));
+	altnames = (char **) ecalloc((unsigned) c, sizeof (char *));
 	for (ap = namelist, ap2 = altnames; *ap; ap++, ap2++) {
-		cp = calloc((unsigned) strlen(*ap) + 1, sizeof (char));
+		cp = ecalloc((unsigned) strlen(*ap) + 1, sizeof (char));
 		(void)strcpy(cp, *ap);
 		*ap2 = cp;
 	}

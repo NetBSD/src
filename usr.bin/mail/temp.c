@@ -1,4 +1,4 @@
-/*	$NetBSD: temp.c,v 1.18 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: temp.c,v 1.19 2006/10/21 21:37:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: temp.c,v 1.18 2005/07/19 23:07:10 christos Exp $");
+__RCSID("$NetBSD: temp.c,v 1.19 2006/10/21 21:37:21 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
+#include <util.h>
 #include "extern.h"
 
 /*
@@ -58,8 +59,7 @@ tinit(void)
 	if ((cp = getenv("TMPDIR")) == NULL || *cp == '\0')
 		cp = _PATH_TMP;
 
-	if ((tmpdir = strdup(cp)) == NULL)
-		errx(1, "Out of memory");
+	tmpdir = estrdup(cp);
 
 	/* Remove trailing slashes. */
 	p = tmpdir + strlen(tmpdir) - 1;

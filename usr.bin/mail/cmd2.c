@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.19 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.20 2006/10/21 21:37:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd2.c,v 1.19 2005/07/19 23:07:10 christos Exp $");
+__RCSID("$NetBSD: cmd2.c,v 1.20 2006/10/21 21:37:20 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
+#include <util.h>
 #include "extern.h"
 
 /*
@@ -110,7 +111,7 @@ next(void *v)
 	 * wraparound.
 	 */
 
-	for (mp = dot+1; mp < &message[msgCount]; mp++)
+	for (mp = dot + 1; mp < &message[msgCount]; mp++)
 		if ((mp->m_flag & (MDELETED|MSAVED)) == 0)
 			break;
 	if (mp >= &message[msgCount]) {
@@ -145,6 +146,7 @@ save(void *v)
  * so we can discard when the user quits.  Save all fields
  * overriding saveignore and saveretain.
  */
+#if 0
 int
 Save(v)
 	void *v;
@@ -153,6 +155,7 @@ Save(v)
 
 	return save1(str, 1, "Save", NULL);
 }
+#endif
 
 /*
  * Copy a message to a file without affected its saved-ness
@@ -207,7 +210,11 @@ save1(char str[], int markmsg, const char *cmd, struct ignoretab *ignoretabs)
 	for (ip = msgvec; *ip && ip-msgvec < msgCount; ip++) {
 		mp = &message[*ip - 1];
 		touch(mp);
+#ifdef MIME_SUPPORT
+		if (sendmessage(mp, obuf, ignoretabs, NULL, NULL) < 0) {
+#else
 		if (sendmessage(mp, obuf, ignoretabs, NULL) < 0) {
+#endif
 			warn("%s", fn);
 			(void)Fclose(obuf);
 			return(1);
@@ -333,10 +340,10 @@ delm(int *msgvec)
 		last = *ip;
 	}
 	if (last != 0) {
-		dot = &message[last-1];
+		dot = &message[last - 1];
 		last = first(0, MDELETED);
 		if (last != 0) {
-			dot = &message[last-1];
+			dot = &message[last - 1];
 			return(0);
 		}
 		else {
@@ -376,7 +383,7 @@ undeletecmd(void *v)
  */
 int
 /*ARGSUSED*/
-core(void *v)
+core(void *v __unused)
 {
 	int pid;
 
@@ -486,8 +493,8 @@ ignore1(char *list[], struct ignoretab *tab, const char *which)
 		if (member(field, tab))
 			continue;
 		h = hash(field);
-		igp = (struct ignore *) calloc(1, sizeof (struct ignore));
-		igp->i_field = calloc((unsigned) strlen(field) + 1,
+		igp = (struct ignore *) ecalloc(1, sizeof (struct ignore));
+		igp->i_field = ecalloc((unsigned) strlen(field) + 1,
 			sizeof (char));
 		(void)strcpy(igp->i_field, field);
 		igp->i_link = tab->i_head[h];

@@ -1,4 +1,4 @@
-/*	$NetBSD: vars.c,v 1.14 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: vars.c,v 1.15 2006/10/21 21:37:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: vars.c,v 1.14 2005/07/19 23:07:10 christos Exp $");
+__RCSID("$NetBSD: vars.c,v 1.15 2006/10/21 21:37:21 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
+#include <util.h>
+
 #include "extern.h"
 
 /*
@@ -59,9 +61,7 @@ assign(const char name[], const char values[])
 	h = hash(name);
 	vp = lookup(name);
 	if (vp == NULL) {
-		vp = (struct var *) calloc(1, sizeof *vp);
-		if (vp == NULL)
-			errx(1, "Out of memory");
+		vp = (struct var *) ecalloc(1, sizeof *vp);
 		vp->v_name = vcopy(name);
 		vp->v_link = variables[h];
 		variables[h] = vp;
@@ -95,10 +95,9 @@ vcopy(const char str[])
 	size_t len;
 
 	if (*str == '\0')
-		return strdup("");
+		return estrdup("");
 	len = strlen(str) + 1;
-	if ((new = malloc(len)) == NULL)
-		errx(1, "Out of memory");
+	new = emalloc(len);
 	(void)memmove(new, str, len);
 	return new;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.h,v 1.2 2006/10/21 21:37:20 christos Exp $	*/
+/*	$NetBSD: mime_decode.h,v 1.1 2006/10/21 21:37:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,33 +37,22 @@
  */
 
 
-#ifndef _COMPLETE_H_
-#define _COMPLETE_H_
+#ifdef MIME_SUPPORT
 
-#include <histedit.h>
-
-typedef struct {
-	EditLine	*el;			/* editline(3) editline structure */
-	History		*hist;			/* editline(3) history structure */
-} el_mode_t;
-
-struct el_modes_s {
-	el_mode_t command;
-	el_mode_t string;
-	el_mode_t filec;
-	el_mode_t mime_enc;
-};
-
-extern struct el_modes_s elm;
-
-char * my_gets(el_mode_t *, const char *, char *);
-void init_editline(void);
+#ifndef __MIME_DECODE_H__
+#define __MIME_DECODE_H__
 
 /*
- * User knobs: environment names used by this module.
+ * All routines declared here are exported via mime.h
  */
-#define ENAME_EL_COMPLETION_KEYS	"el-completion-keys"
-#define ENAME_EL_EDITOR			"el-editor"
-#define ENAME_EL_HISTORY_SIZE		"el-history-size"
 
-#endif /* _COMPLETE_H_ */
+FILE	*mime_decode_body(struct mime_info *);
+void	 mime_decode_close(struct mime_info *);
+FILE	*mime_decode_header(struct mime_info *);
+char	*mime_decode_hfield(char *, size_t, char *);
+struct mime_info *mime_decode_open(struct message *);
+int	mime_sendmessage(struct message *, FILE *, struct ignoretab *,
+    const char *, struct mime_info *);
+
+#endif /* __MIME_DECODE_H__ */
+#endif /* MIME_SUPPORT */

@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.15 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: list.c,v 1.16 2006/10/21 21:37:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: list.c,v 1.15 2005/07/19 23:07:10 christos Exp $");
+__RCSID("$NetBSD: list.c,v 1.16 2006/10/21 21:37:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -239,7 +239,7 @@ number:
 	if (star) {
 		for (i = 0; i < msgCount; i++)
 			if ((message[i].m_flag & MDELETED) == f) {
-				mark(i+1);
+				mark(i + 1);
 				mc++;
 			}
 		if (mc == 0) {
@@ -257,7 +257,7 @@ number:
 
 	if ((np > namelist || colmod != 0) && mc == 0)
 		for (i = 1; i <= msgCount; i++)
-			if ((message[i-1].m_flag & MDELETED) == f)
+			if ((message[i - 1].m_flag & MDELETED) == f)
 				mark(i);
 
 	/*
@@ -290,7 +290,7 @@ number:
 
 		mc = 0;
 		for (i = 1; i <= msgCount; i++)
-			if (message[i-1].m_flag & MMARK) {
+			if (message[i - 1].m_flag & MMARK) {
 				mc++;
 				break;
 			}
@@ -369,7 +369,7 @@ check(int mesg, int f)
 		(void)printf("%d: Invalid message number\n", mesg);
 		return(-1);
 	}
-	mp = &message[mesg-1];
+	mp = &message[mesg - 1];
 	if (f != MDELETED && (mp->m_flag & MDELETED) != 0) {
 		(void)printf("%d: Inappropriate message\n", mesg);
 		return(-1);
@@ -579,7 +579,7 @@ scan(char **sp)
 		}
 		if (quotec == 0 && (c == ' ' || c == '\t'))
 			break;
-		if (cp2 - lexstring < STRINGLEN-1)
+		if (cp2 - lexstring < STRINGLEN - 1)
 			*cp2++ = c;
 		c = *cp++;
 	}
@@ -601,7 +601,7 @@ regret(int token)
 	if (++regretp >= REGDEP)
 		errx(1, "Too many regrets");
 	regretstack[regretp] = token;
-	lexstring[STRINGLEN-1] = '\0';
+	lexstring[STRINGLEN - 1] = '\0';
 	string_stack[regretp] = savestr(lexstring);
 	numberstack[regretp] = lexnumber;
 }
@@ -631,7 +631,7 @@ first(int f, int m)
 	for (mp = dot; mp < &message[msgCount]; mp++)
 		if ((mp->m_flag & m) == f)
 			return mp - message + 1;
-	for (mp = dot-1; mp >= &message[0]; mp--)
+	for (mp = dot - 1; mp >= &message[0]; mp--)
 		if ((mp->m_flag & m) == f)
 			return mp - message + 1;
 	return 0;
@@ -680,7 +680,7 @@ matchto(char *str, int mesg)
 	if (*str == 0)	/* null string matches nothing instead of everything */
 		return(0);
 
-	mp = &message[mesg-1];
+	mp = &message[mesg - 1];
 
 	for (to = to_fields; *to; to++) {
 		cp = str;
@@ -722,9 +722,9 @@ matchsubj(char *str, int mesg)
 		str = lastscan;
 	else {
 		(void)strncpy(lastscan, str, STRINGLEN - 1);
-		lastscan[STRINGLEN - 1] = '\0' ;
+		lastscan[STRINGLEN - 1] = '\0';
 	}
-	mp = &message[mesg-1];
+	mp = &message[mesg - 1];
 	
 	/*
 	 * Now look, ignoring case, for the word in the string.
@@ -768,7 +768,7 @@ mark(int mesg)
 	i = mesg;
 	if (i < 1 || i > msgCount)
 		errx(1, "Bad message number to mark");
-	message[i-1].m_flag |= MMARK;
+	message[i - 1].m_flag |= MMARK;
 }
 
 /*
@@ -782,7 +782,7 @@ unmark(int mesg)
 	i = mesg;
 	if (i < 1 || i > msgCount)
 		errx(1, "Bad message number to unmark");
-	message[i-1].m_flag &= ~MMARK;
+	message[i - 1].m_flag &= ~MMARK;
 }
 
 /*
@@ -810,7 +810,7 @@ metamess(int meta, int f)
 		/*
 		 * Last 'good message left.
 		 */
-		for (mp = &message[msgCount-1]; mp >= &message[0]; mp--)
+		for (mp = &message[msgCount - 1]; mp >= &message[0]; mp--)
 			if ((mp->m_flag & MDELETED) == f)
 				return(mp - &message[0] + 1);
 		(void)printf("No applicable messages\n");

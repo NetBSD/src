@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.h,v 1.2 2006/10/21 21:37:20 christos Exp $	*/
+/*	$NetBSD: mime_attach.h,v 1.1 2006/10/21 21:37:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,33 +37,27 @@
  */
 
 
-#ifndef _COMPLETE_H_
-#define _COMPLETE_H_
+#ifdef MIME_SUPPORT
 
-#include <histedit.h>
-
-typedef struct {
-	EditLine	*el;			/* editline(3) editline structure */
-	History		*hist;			/* editline(3) history structure */
-} el_mode_t;
-
-struct el_modes_s {
-	el_mode_t command;
-	el_mode_t string;
-	el_mode_t filec;
-	el_mode_t mime_enc;
-};
-
-extern struct el_modes_s elm;
-
-char * my_gets(el_mode_t *, const char *, char *);
-void init_editline(void);
+#ifndef __MIME_ATTACH_H__
+#define __MIME_ATTACH_H__
 
 /*
- * User knobs: environment names used by this module.
+ * All routines declared here are exported via mime.h
  */
-#define ENAME_EL_COMPLETION_KEYS	"el-completion-keys"
-#define ENAME_EL_EDITOR			"el-editor"
-#define ENAME_EL_HISTORY_SIZE		"el-history-size"
 
-#endif /* _COMPLETE_H_ */
+void	mime_attach_content(struct attachment *);
+struct attachment *mime_attach_files(struct attachment *, char *, int);
+# define ATTACH_FILE_ONLY	0
+# define ATTACH_FILE_CONTENT	1
+FILE	*mime_encode(FILE *, struct header *);
+void	mime_putheader(FILE *, struct header *);
+
+/*
+ * XXX - Debugging routines stuck in mime_attach.c ... these should go away!
+ */
+void	show_attach(const char *, struct attachment *);	/* for debugging only */
+void	show_header(struct header *);			/* for debugging only */
+
+#endif /* __MIME_ATTACH_H__ */
+#endif /* MIME_SUPPORT */

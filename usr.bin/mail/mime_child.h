@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.h,v 1.2 2006/10/21 21:37:20 christos Exp $	*/
+/*	$NetBSD: mime_child.h,v 1.1 2006/10/21 21:37:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,33 +37,17 @@
  */
 
 
-#ifndef _COMPLETE_H_
-#define _COMPLETE_H_
+#ifdef MIME_SUPPORT
 
-#include <histedit.h>
+#ifndef __MIME_CHILD_H__
+#define __MIME_CHILD_H__
 
-typedef struct {
-	EditLine	*el;			/* editline(3) editline structure */
-	History		*hist;			/* editline(3) history structure */
-} el_mode_t;
+void	     mime_run_function(void (*)(FILE *, FILE *, void *), FILE *, void *);
+int	     mime_run_command(const char *, FILE *);
 
-struct el_modes_s {
-	el_mode_t command;
-	el_mode_t string;
-	el_mode_t filec;
-	el_mode_t mime_enc;
-};
+#define CMD_FLAG_SHELLCMD	0x01
+#define CMD_FLAG_ALTERNATIVE	0x02
+#define CMD_FLAG_NO_DECODE	0x04
 
-extern struct el_modes_s elm;
-
-char * my_gets(el_mode_t *, const char *, char *);
-void init_editline(void);
-
-/*
- * User knobs: environment names used by this module.
- */
-#define ENAME_EL_COMPLETION_KEYS	"el-completion-keys"
-#define ENAME_EL_EDITOR			"el-editor"
-#define ENAME_EL_HISTORY_SIZE		"el-history-size"
-
-#endif /* _COMPLETE_H_ */
+#endif /* __MIME_CHILD_H__ */
+#endif /* MIME_SUPPORT */

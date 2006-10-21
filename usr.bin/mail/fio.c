@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.25 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: fio.c,v 1.26 2006/10/21 21:37:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.25 2005/07/19 23:07:10 christos Exp $");
+__RCSID("$NetBSD: fio.c,v 1.26 2006/10/21 21:37:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,7 +201,7 @@ putline(FILE *obuf, const char *linebuf, int outlf)
  * include the newline at the end.
  */
 int
-readline(FILE *ibuf, char *linebuf, int linesize)
+mail_readline(FILE *ibuf, char *linebuf, int linesize)
 {
 	int n;
 
@@ -437,7 +437,7 @@ getfold(char *name)
 		return (-1);
 	if (*folder == '/') {
 		(void)strncpy(name, folder, PATHSIZE - 1);
-		name[PATHSIZE - 1] = '\0' ;
+		name[PATHSIZE - 1] = '\0';
 	}
 	else
 		(void)snprintf(name, PATHSIZE, "%s/%s", homedir, folder);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.25 2006/09/29 14:59:31 christos Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.26 2006/10/21 21:37:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,12 +34,15 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd1.c,v 1.25 2006/09/29 14:59:31 christos Exp $");
+__RCSID("$NetBSD: cmd1.c,v 1.26 2006/10/21 21:37:20 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
 #include "extern.h"
+#ifdef MIME_SUPPORT
+#include "mime.h"
+#endif
 
 /*
  * Mail -- a mail program
@@ -75,7 +78,7 @@ headers(void *v)
 		mp = &message[0];
 	flag = 0;
 	mesg = mp - &message[0];
-	if (dot != &message[n-1])
+	if (dot != &message[n - 1])
 		dot = mp;
 	for (; mp < &message[msgCount]; mp++) {
 		mesg++;
@@ -176,10 +179,11 @@ printhead(int mesg)
 	int subjlen;
 	char *name;
 
-	mp = &message[mesg-1];
-	(void)readline(setinput(mp), headline, LINESIZE);
+	mp = &message[mesg - 1];
+	(void)mail_readline(setinput(mp), headline, LINESIZE);
 	if ((subjline = hfield("subject", mp)) == NULL)
 		subjline = hfield("subj", mp);
+
 	/*
 	 * Bletch!
 	 */
@@ -197,7 +201,6 @@ printhead(int mesg)
 		dispc = 'M';
 	parse(headline, &hl, pbuf);
 	(void)snprintf(wcount, LINESIZE, "%3ld/%-5llu", mp->m_blines,
-	    /*LINTED*/
 	    (unsigned long long)mp->m_size);
 	subjlen = screenwidth - 50 - strlen(wcount);
 	name = value("show-rcpt") != NULL ?
@@ -216,7 +219,7 @@ printhead(int mesg)
  */
 int
 /*ARGSUSED*/
-pdot(void *v)
+pdot(void *v __unused)
 {
 	(void)printf("%d\n", (int)(dot - &message[0] + 1));
 	return(0);
@@ -227,7 +230,7 @@ pdot(void *v)
  */
 int
 /*ARGSUSED*/
-pcmdlist(void *v)
+pcmdlist(void *v __unused)
 {
 	const struct cmd *cp;
 	int cc;
@@ -239,13 +242,40 @@ pcmdlist(void *v)
 			(void)printf("\n");
 			cc = strlen(cp->c_name) + 2;
 		}
-		if ((cp+1)->c_name != NULL)
+		if ((cp + 1)->c_name != NULL)
 			(void)printf("%s, ", cp->c_name);
 		else
 			(void)printf("%s\n", cp->c_name);
 	}
 	return(0);
 }
+
+#ifdef MIME_SUPPORT
+static int
+de_mime(const char *name)
+{
+	const char *p;
+	const char *list;
+
+#define DELIM	" \t,"	/* list of string delimiters */
+
+	list = value(ENAME_MIME_DECODE_MSG);
+	if (list == NULL)
+		return 0;
+
+	if (list[0] == '\0')
+		return 1;
+
+	p = strcasestr(list, name);
+	if (p == NULL)
+		return 0;
+
+	return strchr(DELIM, p[strlen(name)]) && (
+		p == list || strchr(DELIM, p[-1]));
+
+#undef DELIM
+}
+#endif /* MIME_SUPPORT */
 
 /*
  * Paginate messages, honor ignored fields.
@@ -254,7 +284,12 @@ int
 more(void *v)
 {
 	int *msgvec = v;
-	return (type1(msgvec, 1, 1));
+#ifdef MIME_SUPPORT
+	return type1(msgvec, 1, 1, de_mime("more"));
+#else
+	return(type1(msgvec, 1, 1));
+#endif
+
 }
 
 /*
@@ -265,7 +300,11 @@ More(void *v)
 {
 	int *msgvec = v;
 
-	return (type1(msgvec, 0, 1));
+#ifdef MIME_SUPPORT
+	return type1(msgvec, 0, 1, de_mime("more"));
+#else
+	return(type1(msgvec, 0, 1));
+#endif
 }
 
 /*
@@ -276,7 +315,11 @@ type(void *v)
 {
 	int *msgvec = v;
 
+#ifdef MIME_SUPPORT
+	return type1(msgvec, 1, 0, de_mime("type"));
+#else
 	return(type1(msgvec, 1, 0));
+#endif
 }
 
 /*
@@ -287,33 +330,135 @@ Type(void *v)
 {
 	int *msgvec = v;
 
+#ifdef MIME_SUPPORT
+	return type1(msgvec, 0, 0, de_mime("type"));
+#else
 	return(type1(msgvec, 0, 0));
+#endif
 }
+
+
+#ifdef MIME_SUPPORT
+/*
+ * Paginate messages, honor ignored fields.
+ */
+int
+page(void *v)
+{
+	int *msgvec = v;
+#ifdef MIME_SUPPORT
+	return type1(msgvec, 1, 1, de_mime("page"));
+#else
+	return(type1(msgvec, 1, 1));
+#endif
+
+}
+
+/*
+ * Paginate messages, even printing ignored fields.
+ */
+int
+Page(void *v)
+{
+	int *msgvec = v;
+
+#ifdef MIME_SUPPORT
+	return type1(msgvec, 0, 1, de_mime("page"));
+#else
+	return(type1(msgvec, 0, 1));
+#endif
+}
+
+/*
+ * Type out messages, honor ignored fields.
+ */
+int
+print(void *v)
+{
+	int *msgvec = v;
+
+#ifdef MIME_SUPPORT
+	return type1(msgvec, 1, 0, de_mime("print"));
+#else
+	return(type1(msgvec, 1, 0));
+#endif
+}
+
+/*
+ * Type out messages, even printing ignored fields.
+ */
+int
+Print(void *v)
+{
+	int *msgvec = v;
+
+#ifdef MIME_SUPPORT
+	return type1(msgvec, 0, 0, de_mime("print"));
+#else
+	return(type1(msgvec, 0, 0));
+#endif
+}
+
+/*
+ * Identical to type(), but with opposite mime behavior.
+ */
+int
+view(void *v)
+{
+	int *msgvec = v;
+	return type1(msgvec, 1, 0, !de_mime("print"));
+}
+
+/*
+ * Identical to Type(), but with opposite mime behavior.
+ */
+int
+View(void *v)
+{
+	int *msgvec = v;
+
+	return type1(msgvec, 0, 0, !de_mime("print"));
+}
+#endif /* MIME_SUPPORT */
 
 /*
  * Type out the messages requested.
  */
 jmp_buf	pipestop;
 int
-type1(int *msgvec, int doign, int page)
+#ifdef MIME_SUPPORT
+type1(int *msgvec, int doign, int dopage, int mime_decode)
+#else
+type1(int *msgvec, int doign, int dopage)
+#endif
 {
 	int *ip;
 	struct message *mp;
 	const char *cp;
 	int nlines;
-	volatile FILE *obuf;	/* avoid longjmp clobbering */
 
+	/* Some volatile variables so longjmp will get the current not
+	 * starting values.  Note it is the variable that is volatile,
+	 * not what it is pointing at! */
+#ifdef MIME_SUPPORT
+	struct mime_info *volatile mip; /* avoid longjmp clobbering */
+#endif
+	FILE *volatile obuf;		/* avoid longjmp clobbering */
+
+#ifdef MIME_SUPPORT
+	mip = NULL;
+#endif
 	obuf = stdout;
 	if (setjmp(pipestop))
 		goto close_pipe;
 	if (value("interactive") != NULL &&
-	    (page || (cp = value("crt")) != NULL)) {
+	    (dopage || (cp = value("crt")) != NULL)) {
 		nlines = 0;
-		if (!page) {
+		if (!dopage) {
 			for (ip = msgvec; *ip && ip-msgvec < msgCount; ip++)
 				nlines += message[*ip - 1].m_blines;
 		}
-		if (page || nlines > (*cp ? atoi(cp) : realscreenheight)) {
+		if (dopage || nlines > (*cp ? atoi(cp) : realscreenheight)) {
 			cp = value("PAGER");
 			if (cp == NULL || *cp == '\0')
 				cp = _PATH_MORE;
@@ -330,18 +475,39 @@ type1(int *msgvec, int doign, int page)
 		touch(mp);
 		dot = mp;
 		if (value("quiet") == NULL)
-			(void)fprintf(__UNVOLATILE(obuf), "Message %d:\n", *ip);
-		(void)sendmessage(mp, __UNVOLATILE(obuf), doign ? ignore : 0, NULL);
+			(void)fprintf(obuf, "Message %d:\n", *ip);
+#ifdef MIME_SUPPORT
+		if (mime_decode)
+			mip = mime_decode_open(mp);
+		(void)mime_sendmessage(mp, obuf, doign ? ignore : 0, NULL, mip);
+		mime_decode_close(mip);
+#else
+		(void)sendmessage(mp, obuf, doign ? ignore : 0, NULL);
+#endif
 	}
 close_pipe:
+#ifdef MIME_SUPPORT
+	if (mip != NULL || obuf != stdout) {
+		/*
+		 * Ignore SIGPIPE so it can't cause a duplicate close.
+		 */
+		(void)signal(SIGPIPE, SIG_IGN);
+		mime_decode_close(mip);
+		if (obuf != stdout)
+			(void)Pclose(obuf);
+		(void)signal(SIGPIPE, SIG_DFL);
+
+	}
+#else
 	if (obuf != stdout) {
 		/*
 		 * Ignore SIGPIPE so it can't cause a duplicate close.
 		 */
 		(void)signal(SIGPIPE, SIG_IGN);
-		(void)Pclose(__UNVOLATILE(obuf));
+		(void)Pclose(obuf);
 		(void)signal(SIGPIPE, SIG_DFL);
 	}
+#endif
 	return(0);
 }
 
@@ -351,7 +517,7 @@ close_pipe:
  */
 void
 /*ARGSUSED*/
-brokpipe(int signo)
+brokpipe(int signo __unused)
 {
 	longjmp(pipestop, 1);
 }
@@ -363,8 +529,8 @@ int
 pipecmd(void *v)
 {
 	char *cmd = v;
-	volatile FILE *obuf;	/* avoid longjmp clobbering */
-
+	FILE *volatile obuf;	/* void longjmp clobbering - we want
+				   the current value not start value */
 	if (dot == NULL) {
 		warn("pipcmd: no current message");
 		return 1;
@@ -381,7 +547,11 @@ pipecmd(void *v)
 	} else
 		(void)signal(SIGPIPE, brokpipe);
 
-	(void)sendmessage(dot, __UNVOLATILE(obuf), ignoreall, NULL);
+#ifdef MIME_SUPPORT
+	(void)sendmessage(dot, obuf, ignoreall, NULL, NULL);
+#else
+	(void)sendmessage(dot, obuf, ignoreall, NULL);
+#endif
 
  close_pipe:
 	if (obuf != stdout) {
@@ -389,7 +559,7 @@ pipecmd(void *v)
 		 * Ignore SIGPIPE so it can't cause a duplicate close.
 		 */
 		(void)signal(SIGPIPE, SIG_IGN);
-		(void)Pclose(__UNVOLATILE(obuf));
+		(void)Pclose(obuf);
 		(void)signal(SIGPIPE, SIG_DFL);
 	}
 	return 0;
@@ -429,7 +599,7 @@ top(void *v)
 		if (!lineb)
 			(void)printf("\n");
 		for (lines = 0; lines < c && lines <= topl; lines++) {
-			if (readline(ibuf, linebuf, LINESIZE) < 0)
+			if (mail_readline(ibuf, linebuf, LINESIZE) < 0)
 				break;
 			(void)puts(linebuf);
 			lineb = blankline(linebuf);
@@ -449,7 +619,7 @@ stouch(void *v)
 	int *ip;
 
 	for (ip = msgvec; *ip != 0; ip++) {
-		dot = &message[*ip-1];
+		dot = &message[*ip - 1];
 		dot->m_flag |= MTOUCH;
 		dot->m_flag &= ~MPRESERVE;
 	}
@@ -466,7 +636,7 @@ mboxit(void *v)
 	int *ip;
 
 	for (ip = msgvec; *ip != 0; ip++) {
-		dot = &message[*ip-1];
+		dot = &message[*ip - 1];
 		dot->m_flag |= MTOUCH|MBOX;
 		dot->m_flag &= ~MPRESERVE;
 	}
@@ -478,7 +648,7 @@ mboxit(void *v)
  */
 int
 /*ARGSUSED*/
-folders(void *v)
+folders(void *v __unused)
 {
 	char dirname[PATHSIZE];
 	const char *cmd;
@@ -499,7 +669,7 @@ folders(void *v)
  */
 int
 /*ARGSUSED*/
-inc(void *v)
+inc(void *v __unused)
 {
 	int nmsg, mdot;
 

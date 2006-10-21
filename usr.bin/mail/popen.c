@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.19 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.20 2006/10/21 21:37:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,15 +34,17 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: popen.c,v 1.19 2005/07/19 23:07:10 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.20 2006/10/21 21:37:21 christos Exp $");
 #endif
 #endif /* not lint */
 
-#include "rcv.h"
-#include <sys/wait.h>
-#include <fcntl.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdarg.h>
+#include <util.h>
+#include <sys/wait.h>
+
+#include "rcv.h"
 #include "extern.h"
 
 #define READ 0
@@ -77,7 +79,7 @@ Fopen(const char *fn, const char *mode)
 
 	if ((fp = fopen(fn, mode)) != NULL) {
 		register_file(fp, 0, 0);
-		(void)fcntl(fileno(fp), F_SETFD, 1);
+		(void)fcntl(fileno(fp), F_SETFD, FD_CLOEXEC);
 	}
 	return fp;
 }
@@ -89,7 +91,7 @@ Fdopen(int fd, const char *mode)
 
 	if ((fp = fdopen(fd, mode)) != NULL) {
 		register_file(fp, 0, 0);
-		(void)fcntl(fileno(fp), F_SETFD, 1);
+		(void)fcntl(fileno(fp), F_SETFD, FD_CLOEXEC);
 	}
 	return fp;
 }
@@ -110,11 +112,12 @@ Popen(const char *cmd, const char *mode)
 	pid_t pid;
 	sigset_t nset;
 	FILE *fp;
+	char *shellcmd;
 
 	if (pipe(p) < 0)
 		return NULL;
-	(void)fcntl(p[READ], F_SETFD, 1);
-	(void)fcntl(p[WRITE], F_SETFD, 1);
+	(void)fcntl(p[READ], F_SETFD, FD_CLOEXEC);
+	(void)fcntl(p[WRITE], F_SETFD, FD_CLOEXEC);
 	if (*mode == 'r') {
 		myside = p[READ];
 		hisside = fd0 = fd1 = p[WRITE];
@@ -124,7 +127,9 @@ Popen(const char *cmd, const char *mode)
 		fd1 = -1;
 	}
 	(void)sigemptyset(&nset);
-	pid = start_command(value("SHELL"), &nset, fd0, fd1, "-c", cmd, NULL);
+	if ((shellcmd = value("SHELL")) == NULL)
+		shellcmd = __UNCONST(_PATH_CSHELL);
+	pid = start_command(shellcmd, &nset, fd0, fd1, "-c", cmd, NULL);
 	if (pid < 0) {
 		(void)close(p[READ]);
 		(void)close(p[WRITE]);
@@ -157,7 +162,6 @@ Pclose(FILE *ptr)
 void
 close_all_files(void)
 {
-
 	while (fp_head)
 		if (fp_head->pipe)
 			(void)Pclose(fp_head->fp);
@@ -165,13 +169,76 @@ close_all_files(void)
 			(void)Fclose(fp_head->fp);
 }
 
+#ifdef MIME_SUPPORT
+#if 0	/* XXX - debugging stuff.  This should go away eventually! */ 
+static void
+show_one_file(FILE *fo, struct fp *fpp)
+{
+	(void)fprintf(fo, ">>> fp: %p,  pipe: %d,  pid: %d,  link: %p\n",
+	    fpp->fp, fpp->pipe, fpp->pid, fpp->link);
+}
+
+void show_all_files(FILE *fo);
+__unused
+void
+show_all_files(FILE *fo)
+{
+	struct fp *fpp;
+	
+	(void)fprintf(fo, ">> FILES\n");
+	for (fpp = fp_head; fpp; fpp = fpp->link)
+		show_one_file(fo, fpp);
+	(void)fprintf(fo, ">> -------\n");
+	(void)fflush(fo);
+}
+#endif
+
+FILE *
+last_registered_file(int last_pipe)
+{
+	struct fp *fpp;
+	
+	if (last_pipe == 0)
+		return fp_head ? fp_head->fp : NULL;
+
+	for (fpp = fp_head; fpp; fpp = fpp->link)
+		if (fpp->pipe)
+			return fpp->fp;
+	return NULL;
+}
+
+void
+close_top_files(FILE *fp_stop)
+{
+	while (fp_head && fp_head->fp != fp_stop)
+		if (fp_head->pipe)
+			(void)Pclose(fp_head->fp);
+		else
+			(void)Fclose(fp_head->fp);
+}
+
+void
+flush_files(FILE *fo, int only_pipes)
+{
+	struct fp *fpp;
+	
+	if (fo)
+		(void)fflush(fo);
+
+	for (fpp = fp_head; fpp; fpp = fpp->link)
+		if (!only_pipes || fpp->pipe)
+			(void)fflush(fpp->fp);
+
+	(void)fflush(stdout);
+}
+#endif /* ENABLE_MIME */
+
 void
 register_file(FILE *fp, int pipefd, pid_t pid)
 {
 	struct fp *fpp;
 
-	if ((fpp = (struct fp *)malloc(sizeof(*fpp))) == NULL)
-		errx(1, "Out of memory");
+	fpp = (struct fp *)emalloc(sizeof(*fpp));
 	fpp->fp = fp;
 	fpp->pipe = pipefd;
 	fpp->pid = pid;
@@ -314,18 +381,16 @@ findchild(pid_t pid, int dont_alloc)
 
 	for (cpp = &child; *cpp != NULL && (*cpp)->pid != pid;
 	     cpp = &(*cpp)->link)
-			;
+			continue;
 	if (*cpp == NULL) {
 		if (dont_alloc)
 			return NULL;
 		if (child_freelist) {
 			*cpp = child_freelist;
 			child_freelist = (*cpp)->link;
-		} else {
-			*cpp = (struct child *)malloc(sizeof(struct child));
-			if (*cpp == NULL)
-				errx(1, "Out of memory");
-		}
+		} else
+			*cpp = (struct child *)emalloc(sizeof(struct child));
+
 		(*cpp)->pid = pid;
 		(*cpp)->done = (*cpp)->free = 0;
 		(*cpp)->link = NULL;
@@ -339,7 +404,7 @@ delchild(struct child *cp)
 	struct child **cpp;
 
 	for (cpp = &child; *cpp != cp; cpp = &(*cpp)->link)
-		;
+		continue;
 	*cpp = cp->link;
 	cp->link = child_freelist;
 	child_freelist = cp;
@@ -347,7 +412,7 @@ delchild(struct child *cp)
 
 void
 /*ARGSUSED*/
-sigchild(int signo)
+sigchild(int signo __unused)
 {
 	pid_t pid;
 	int status;

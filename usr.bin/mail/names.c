@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.21 2006/09/18 19:46:21 christos Exp $	*/
+/*	$NetBSD: names.c,v 1.22 2006/10/21 21:37:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.21 2006/09/18 19:46:21 christos Exp $");
+__RCSID("$NetBSD: names.c,v 1.22 2006/10/21 21:37:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -273,9 +273,13 @@ outof(struct name *names, FILE *fo, struct header *hp)
 				(void)Fclose(fout);
 				goto cant;
 			}
-			(void)fcntl(image, F_SETFD, 1);
+			(void)fcntl(image, F_SETFD, FD_CLOEXEC);
 			(void)fprintf(fout, "From %s %s", myname, date);
+#ifdef MIME_SUPPORT
+			(void)puthead(hp, fout, GTO|GSUBJECT|GCC|GMIME|GNL);
+#else
 			(void)puthead(hp, fout, GTO|GSUBJECT|GCC|GNL);
+#endif
 			while ((c = getc(fo)) != EOF)
 				(void)putc(c, fout);
 			rewind(fo);

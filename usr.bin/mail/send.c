@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.25 2006/09/18 19:46:21 christos Exp $	*/
+/*	$NetBSD: send.c,v 1.26 2006/10/21 21:37:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,12 +34,16 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.25 2006/09/18 19:46:21 christos Exp $");
+__RCSID("$NetBSD: send.c,v 1.26 2006/10/21 21:37:21 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
 #include "extern.h"
+#ifdef MIME_SUPPORT
+#include "mime.h"
+#endif
+
 
 /*
  * Mail -- a mail program
@@ -55,8 +59,13 @@ __RCSID("$NetBSD: send.c,v 1.25 2006/09/18 19:46:21 christos Exp $");
  * prefix is a string to prepend to each output line.
  */
 int
+#ifdef MIME_SUPPORT
+sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
+    const char *prefix, struct mime_info *mip)
+#else
 sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
     const char *prefix)
+#endif /* MIME_SUPPORT */
 {
 	off_t len;
 	FILE *ibuf;
@@ -86,6 +95,10 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 	/*
 	 * Process headers first
 	 */
+#ifdef MIME_SUPPORT
+	if (mip)
+		obuf = mime_decode_header(mip);
+#endif
 	while (len > 0 && isheadflag) {
 		if (fgets(line, LINESIZE, ibuf) == NULL)
 			break;
@@ -97,6 +110,11 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 			 */
 			firstline = 0;
 			ignoring = doign == ignoreall;
+#ifdef MIME_SUPPORT
+			/* XXX - ignore multipart boundary lines! */
+			if (line[0] == '-' && line[1] == '-')
+				ignoring = 1;
+#endif
 		} else if (line[0] == '\n') {
 			/*
 			 * If line is blank, we've reached end of
@@ -187,6 +205,13 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 	/*
 	 * Copy out message body
 	 */
+#ifdef MIME_SUPPORT
+	if (mip) {
+		obuf = mime_decode_body(mip);
+		if (obuf == NULL) /* XXX - early out */
+			return 0;
+	}
+#endif
 	if (doign == ignoreall)
 		len--;		/* skip final blank line */
 	if (prefix != NULL)
@@ -221,7 +246,7 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 	if (doign == ignoreall && c > 0 && line[c - 1] != '\n')
 		/* no final blank line */
 		if ((c = getc(ibuf)) != EOF && putc(c, obuf) == EOF)
-			return -1;
+				return -1;
 	return 0;
 }
 
@@ -248,9 +273,15 @@ statusput(struct message *mp, FILE *obuf, const char *prefix)
  * Interface between the argument list and the mail1 routine
  * which does all the dirty work.
  */
+#ifdef MIME_SUPPORT
+int
+mail(struct name *to, struct name *cc, struct name *bcc,
+     struct name *smopts, char *subject, struct attachment *attach)
+#else
 int
 mail(struct name *to, struct name *cc, struct name *bcc,
      struct name *smopts, char *subject)
+#endif
 {
 	struct header head;
 
@@ -259,6 +290,9 @@ mail(struct name *to, struct name *cc, struct name *bcc,
 	head.h_cc = cc;
 	head.h_bcc = bcc;
 	head.h_smopts = smopts;
+#ifdef MIME_SUPPORT
+	head.h_attach = attach;
+#endif
 	mail1(&head, 0);
 	return(0);
 }
@@ -279,6 +313,9 @@ sendmail(void *v)
 	head.h_cc = NULL;
 	head.h_bcc = NULL;
 	head.h_smopts = NULL;
+#ifdef MIME_SUPPORT
+	head.h_attach = NULL;
+#endif
 	mail1(&head, 0);
 	return(0);
 }
@@ -332,6 +369,14 @@ mail1(struct header *hp, int printheaders)
 		(void)printf("No recipients specified\n");
 		senderr++;
 	}
+#ifdef MIME_SUPPORT
+	/*
+	 * If there are attachments, repackage the mail as a
+	 * multi-part MIME message.
+	 */
+	if (hp->h_attach || value(ENAME_MIME_ENCODE_MSG))
+		mtf = mime_encode(mtf, hp);
+#endif
 	/*
 	 * Look through the recipient list for names with /'s
 	 * in them which we write to as files directly.
@@ -450,7 +495,12 @@ infix(struct header *hp, FILE *fi)
 		return(fi);
 	}
 	(void)rm(tempname);
+#ifdef MIME_SUPPORT
+	(void)puthead(hp, nfo, GTO|GSUBJECT|GCC|GBCC|GMIME|GNL|GCOMMA);
+#else
 	(void)puthead(hp, nfo, GTO|GSUBJECT|GCC|GBCC|GNL|GCOMMA);
+#endif
+
 	c = getc(fi);
 	while (c != EOF) {
 		(void)putc(c, nfo);
@@ -496,6 +546,10 @@ puthead(struct header *hp, FILE *fo, int w)
 		fmt("Cc:", hp->h_cc, fo, w&GCOMMA), gotcha++;
 	if (hp->h_bcc != NULL && w & GBCC)
 		fmt("Bcc:", hp->h_bcc, fo, w&GCOMMA), gotcha++;
+#ifdef MIME_SUPPORT
+	if (w & GMIME && (hp->h_attach || value(ENAME_MIME_ENCODE_MSG)))
+		mime_putheader(fo, hp), gotcha++;
+#endif
 	if (gotcha && w & GNL)
 		(void)putc('\n', fo);
 	return(0);

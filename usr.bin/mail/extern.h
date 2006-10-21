@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.24 2006/09/18 19:46:21 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.25 2006/10/21 21:37:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.24 2006/09/18 19:46:21 christos Exp $
+ *	$NetBSD: extern.h,v 1.25 2006/10/21 21:37:20 christos Exp $
  */
 
 struct name;
@@ -52,6 +52,7 @@ FILE	*Popen(const char *, const char *);
 FILE	*collect(struct header *, int);
 char	*copy(char *, char *);
 char	*copyin(const char *, char **);
+void	*csalloc(size_t, size_t);
 char	*detract(struct name *, int);
 const char *expand(const char *);
 const char *getdeadletter(void);
@@ -135,7 +136,6 @@ void	 free_child(int);
 int	 from(void *);
 off_t	 fsize(FILE *);
 int	 getfold(char *);
-int	 gethfield(FILE *, char [], int, char **);
 int	 getmsglist(char *, int *, int);
 int	 getrawlist(const char [], char **, int);
 int	 getuserid(char []);
@@ -168,8 +168,14 @@ const struct cmd *
 void	 load(const char *);
 struct var *
 	 lookup(const char []);
+#ifdef MIME_SUPPORT
+int	 mail(struct name *,
+	      struct name *, struct name *, struct name *, char *,
+	      struct attachment *);
+#else
 int	 mail(struct name *,
 	      struct name *, struct name *, struct name *, char *);
+#endif
 void	 mail1(struct header *, int);
 void	 makemessage(FILE *, int);
 void	 mark(int);
@@ -202,7 +208,7 @@ int	 pversion(void *);
 void	 quit(void);
 int	 quitcmd(void *);
 int	 upcase(int);
-int	 readline(FILE *, char *, int);
+int	 mail_readline(FILE *, char *, int);
 void	 register_file(FILE *, int, int);
 void	 regret(int);
 void	 relsesigs(void);
@@ -212,7 +218,7 @@ int	 rexit(void *);
 int	 rm(char *);
 int	 run_command(const char *, sigset_t *, int, int, ...);
 int	 save(void *);
-int	 Save(void *);
+// int	 Save(void *);
 int	 save1(char [], int, const char *, struct ignoretab *);
 void	 savedeadletter(FILE *);
 int	 saveigfield(void *);
@@ -223,8 +229,13 @@ void	 scaninit(void);
 int	 schdir(void *);
 int	 screensize(void);
 int	 scroll(void *);
+#ifdef MIME_SUPPORT
+int	 sendmessage(struct message *, FILE *, struct ignoretab *,
+    const char *, struct mime_info *);
+#else
 int	 sendmessage(struct message *, FILE *, struct ignoretab *,
     const char *);
+#endif
 int	 sendmail(void *);
 int	 set(void *);
 int	 setfile(const char *);
@@ -249,7 +260,17 @@ void	 touch(struct message *);
 void	 ttyint(int);
 void	 ttystop(int);
 int	 type(void *);
+#ifdef MIME_SUPPORT
+int	 view(void *);
+int	 View(void *);
+int	 page(void *);
+int	 Page(void *);
+int	 print(void *);
+int	 Print(void *);
+int	 type1(int *, int, int, int);
+#else
 int	 type1(int *, int, int);
+#endif
 int	 undeletecmd(void *);
 void	 unmark(int);
 const char **unpack(struct name *);
@@ -262,6 +283,12 @@ int	 visual(void *);
 int	 wait_child(int);
 int	 wait_command(int);
 int	 writeback(FILE *);
+
+#ifdef MIME_SUPPORT
+FILE	*last_registered_file(int);
+void	close_top_files(FILE *);
+void	flush_files(FILE *, int);
+#endif
 
 extern const char *version;
 extern char *tmpdir;

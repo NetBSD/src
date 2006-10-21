@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.h,v 1.2 2006/10/21 21:37:20 christos Exp $	*/
+/*	$NetBSD: mime.h,v 1.1 2006/10/21 21:37:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,34 +36,47 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef MIME_SUPPORT
 
-#ifndef _COMPLETE_H_
-#define _COMPLETE_H_
-
-#include <histedit.h>
-
-typedef struct {
-	EditLine	*el;			/* editline(3) editline structure */
-	History		*hist;			/* editline(3) history structure */
-} el_mode_t;
-
-struct el_modes_s {
-	el_mode_t command;
-	el_mode_t string;
-	el_mode_t filec;
-	el_mode_t mime_enc;
-};
-
-extern struct el_modes_s elm;
-
-char * my_gets(el_mode_t *, const char *, char *);
-void init_editline(void);
+#ifndef __MIME_H__
+#define __MIME_H__
 
 /*
- * User knobs: environment names used by this module.
+ * This is the public interface of the mime module visible to the rest
+ * of the world.  It is the only header file that should be include in
+ * a non-mime module.
  */
-#define ENAME_EL_COMPLETION_KEYS	"el-completion-keys"
-#define ENAME_EL_EDITOR			"el-editor"
-#define ENAME_EL_HISTORY_SIZE		"el-history-size"
 
-#endif /* _COMPLETE_H_ */
+#define PUBLIC		/* make it easy to find the entry points */
+
+#include "mime_attach.h"
+#include "mime_decode.h"
+
+/* a single export from mime_codecs.c */
+const char  *mime_next_encoding_name(const void **);
+
+/*
+ * User knobs: environment variable names used by this module.
+ * See man mail(1) for a description of most of these.
+ * Grep the source for the rest.
+ */
+#define ENAME_MIME_ENCODE_MSG		"mime-encode-message"
+
+#define ENAME_MIME_DECODE_MSG		"mime-decode-message"
+#define ENAME_MIME_DECODE_HDR		"mime-decode-header"
+#define ENAME_MIME_DECODE_QUOTE		"mime-decode-quote"
+#define ENAME_MIME_DECODE_INSERT	"mime-decode-insert"
+
+#define ENAME_MIME_B64_LINE_MAX		"mime-max-base64-line-length"
+#define ENAME_MIME_QP_LINE_MAX		"mime-max-quoted-line-length"
+#define ENAME_MIME_UNENC_LINE_MAX	"mime-max-unencoded-line-length"
+
+#define ENAME_MIME_CHARSET		"mime-charset"
+#define ENAME_MIME_CHARSET_VERBOSE	"mime-charset-verbose"
+
+#define ENAME_MIME_FILE_COMMAND		"mime-file-command"
+#define MIME_FILE_COMMAND		_PATH_FILE " --mime --brief"
+
+
+#endif /* __MIME_H__ */
+#endif /* MIME_SUPPORT */

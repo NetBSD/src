@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.h,v 1.2 2006/10/21 21:37:20 christos Exp $	*/
+/*	$NetBSD: mime_codecs.h,v 1.1 2006/10/21 21:37:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,33 +37,39 @@
  */
 
 
-#ifndef _COMPLETE_H_
-#define _COMPLETE_H_
+#ifdef MIME_SUPPORT
 
-#include <histedit.h>
+#ifndef __MIME_CODECS_H__
+#define __MIME_CODECS_H__
 
-typedef struct {
-	EditLine	*el;			/* editline(3) editline structure */
-	History		*hist;			/* editline(3) history structure */
-} el_mode_t;
+#include <iconv.h>
 
-struct el_modes_s {
-	el_mode_t command;
-	el_mode_t string;
-	el_mode_t filec;
-	el_mode_t mime_enc;
-};
+size_t mime_iconv(iconv_t, const char **, size_t *, char **, size_t *);
+void   mime_ficonv(FILE *, FILE *, void *);
 
-extern struct el_modes_s elm;
+ssize_t mime_b64tobin(char *, const char *, size_t);
+void    mime_bintob64(char *, const char *, size_t);
 
-char * my_gets(el_mode_t *, const char *, char *);
-void init_editline(void);
+typedef void(*mime_codec_t)(FILE *, FILE *, void *);
+
+mime_codec_t mime_fio_encoder(const char *);
+mime_codec_t mime_fio_decoder(const char *);
+
+void mime_fio_copy(FILE *, FILE *, void *);
+
+#include "mime.h"
+
+/* This is also declared in mime.h for export to complete.c. */
+const char *mime_next_encoding_name(const void **);
 
 /*
- * User knobs: environment names used by this module.
+ * valid transfer encoding names
  */
-#define ENAME_EL_COMPLETION_KEYS	"el-completion-keys"
-#define ENAME_EL_EDITOR			"el-editor"
-#define ENAME_EL_HISTORY_SIZE		"el-history-size"
+#define MIME_TRANSFER_7BIT	"7bit"
+#define MIME_TRANSFER_8BIT	"8bit"
+#define MIME_TRANSFER_BINARY	"binary"
+#define MIME_TRANSFER_QUOTED	"quoted-printable"
+#define MIME_TRANSFER_BASE64	"base64"
 
-#endif /* _COMPLETE_H_ */
+#endif /* __MIME_CODECS_H__ */
+#endif /* MIME_SUPPORT */

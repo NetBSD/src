@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.27 2006/09/29 14:59:31 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.28 2006/10/21 21:37:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,14 +34,15 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.27 2006/09/29 14:59:31 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.28 2006/10/21 21:37:20 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
+#include <util.h>
 #include "extern.h"
 
-#ifdef USE_READLINE
+#ifdef USE_EDITLINE
 #include "complete.h"
 #endif
 
@@ -139,10 +140,10 @@ setfile(const char *name)
 	if ((fd = mkstemp(tempname)) == -1 ||
 	    (otf = fdopen(fd, "w")) == NULL)
 		err(1, "%s", tempname);
-	(void)fcntl(fileno(otf), F_SETFD, 1);
+	(void)fcntl(fileno(otf), F_SETFD, FD_CLOEXEC);
 	if ((itf = fopen(tempname, "r")) == NULL)
 		err(1, "%s", tempname);
-	(void)fcntl(fileno(itf), F_SETFD, 1);
+	(void)fcntl(fileno(itf), F_SETFD, FD_CLOEXEC);
 	(void)rm(tempname);
 	setptr(ibuf, (off_t)0);
 	setmsize(msgCount);
@@ -205,7 +206,7 @@ commands(void)
 {
 	int n;
 	char linebuf[LINESIZE];
-	volatile int eofloop = 0;	/* avoid longjmp clobbering */
+	int eofloop;
 
 	if (!sourcing) {
 		if (signal(SIGINT, SIG_IGN) != SIG_IGN)
@@ -217,6 +218,7 @@ commands(void)
 		(void)signal(SIGTTIN, stop);
 	}
 	setexit();	/* defined as (void)setjmp(srbuf) in def.h */
+	eofloop = 0;	/* initialize this after a possible longjmp */
 	for (;;) {
 		/*
 		 * Print the prompt, if needed.  Clear out
@@ -226,7 +228,7 @@ commands(void)
 			if ((value("autoinc") != NULL) && (incfile() > 0))
 				(void)printf("New mail has arrived.\n");
 			reset_on_stop = 1;
-#ifndef USE_READLINE
+#ifndef USE_EDITLINE
 			(void)printf("%s", prompt);
 #endif
 		}
@@ -238,31 +240,31 @@ commands(void)
 		 */
 		n = 0;
 		for (;;) {
-#ifdef USE_READLINE
+#ifdef USE_EDITLINE
 			if (!sourcing) {
 				char *line;
 
-				if ((line = rl_gets(prompt)) == NULL) {
+				if ((line = my_gets(&elm.command, prompt, NULL)) == NULL) {
 					if (n == 0)
 						n = -1;
 					break;
 				}
-				strncpy(linebuf, line, LINESIZE);
+				(void)strncpy(linebuf, line, LINESIZE);
 			}
 			else {
-				if (readline(input, &linebuf[n], LINESIZE - n) < 0) {
+				if (mail_readline(input, &linebuf[n], LINESIZE - n) < 0) {
 					if (n == 0)
 						n = -1;
 					break;
 				}
 			}
-#else /* USE_READLINE */
-			if (readline(input, &linebuf[n], LINESIZE - n) < 0) {
+#else /* USE_EDITLINE */
+			if (mail_readline(input, &linebuf[n], LINESIZE - n) < 0) {
 				if (n == 0)
 					n = -1;
 				break;
 			}
-#endif /* USE_READLINE */
+#endif /* USE_EDITLINE */
 
 			if (sourcing) {  /* allow comments in source files */
 				char *ptr = strchr(linebuf, '#');
@@ -285,12 +287,12 @@ commands(void)
 				(void)unstack();
 				continue;
 			}
-#ifdef USE_READLINE
+#ifdef USE_EDITLINE
 			{
 				char *p;
 				if (value("interactive") != NULL &&
-				    (p=value("ignoreeof")) != NULL &&
-				    ++eofloop < (*p==0 ? 25 : atoi(p))) {
+				    (p = value("ignoreeof")) != NULL &&
+				    ++eofloop < (*p == '\0' ? 25 : atoi(p))) {
 					(void)printf("Use \"quit\" to quit.\n");
 					continue;
 				}
@@ -345,7 +347,7 @@ execute(char linebuf[], int contxt)
 			(void)printf("Can't \"!\" while sourcing\n");
 			goto out;
 		}
-		(void)shell(cp+1);
+		(void)shell(cp + 1);
 		return(0);
 	}
 	cp2 = word;
@@ -520,8 +522,8 @@ setmsize(int sz)
 {
 
 	if (msgvec != 0)
-		free( msgvec);
-	msgvec = calloc((size_t) (sz + 1), sizeof *msgvec);
+		free(msgvec);
+	msgvec = ecalloc((size_t) (sz + 1), sizeof *msgvec);
 }
 
 /*
@@ -570,7 +572,7 @@ int	inithdr;			/* am printing startup headers */
 
 /*ARGSUSED*/
 void
-intr(int s)
+intr(int s __unused)
 {
 
 	noreset = 0;
@@ -616,7 +618,7 @@ stop(int s)
  */
 /*ARGSUSED*/
 void
-hangup(int s)
+hangup(int s __unused)
 {
 
 	/* nothing to do? */
@@ -713,7 +715,7 @@ newfileinfo(int omsgCount)
 
 /*ARGSUSED*/
 int
-pversion(void *v)
+pversion(void *v __unused)
 {
 	(void)printf("Version %s\n", version);
 	return(0);
