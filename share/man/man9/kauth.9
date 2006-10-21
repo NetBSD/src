@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.22 2006/10/20 23:10:34 elad Exp $
+.\" $NetBSD: kauth.9,v 1.23 2006/10/21 00:07:40 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -402,6 +402,12 @@ Modification of NAT rules.
 .It Dv KAUTH_NETWORK_INTERFACE
 Checks if network interface-related operations are allowed.
 .Pp
+.Ar arg1
+is the
+.Ft struct ifnet *
+associated with the interface.
+.Ar arg2
+is the interface-specific operation.
 .Ar req
 indicates the sub-action, and can be one of the following:
 .Bl -tag
