@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.196 2006/06/09 21:29:39 aymeric Exp $	*/
+/*	$NetBSD: machdep.c,v 1.197 2006/10/21 05:54:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.196 2006/06/09 21:29:39 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197 2006/10/21 05:54:31 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -620,8 +620,11 @@ cpu_dumpconf()
 		m->ram_segs[1].size  = memlist->m_seg[i].ms_size;
 		break;
 	}
-	if ((bdev = bdevsw_lookup(dumpdev)) != NULL &&
-	    bdev->d_psize != NULL) {
+	if ((bdev = bdevsw_lookup(dumpdev) == NULL) {
+		dumpdev = NODEV;
+		return;
+	}
+	if (bdev->d_psize != NULL) {
 		nblks = (*bdev->d_psize)(dumpdev);
 		if (dumpsize > btoc(dbtob(nblks - dumplo)))
 			dumpsize = btoc(dbtob(nblks - dumplo));
