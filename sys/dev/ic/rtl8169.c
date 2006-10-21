@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.43 2006/10/21 03:44:47 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.44 2006/10/21 16:13:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1054,7 +1054,7 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 	cmdstat = le32toh(d->rtk_cmdstat);
 	RTK_RXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD);
 	if (cmdstat & RTK_RDESC_STAT_OWN) {
-		printf("%s: tried to map busy RX descriptor\n",
+		aprint_error("%s: tried to map busy RX descriptor\n",
 		    sc->sc_dev.dv_xname);
 		goto out;
 	}
@@ -1593,7 +1593,7 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 		cmdstat = le32toh(d->rtk_cmdstat);
 		RTK_TXDESCSYNC(sc, curidx, BUS_DMASYNC_PREREAD);
 		if (cmdstat & RTK_TDESC_STAT_OWN) {
-			printf("%s: tried to map busy TX descriptor\n",
+			aprint_error("%s: tried to map busy TX descriptor\n",
 			    sc->sc_dev.dv_xname);
 			while (i > 0) {
 				uidx = (curidx + RTK_TX_DESC_CNT(sc) - i) %
