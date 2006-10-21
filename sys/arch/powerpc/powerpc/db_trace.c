@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.39 2006/09/06 23:58:20 ad Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.39.2.1 2006/10/21 14:31:10 ad Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.39 2006/09/06 23:58:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.39.2.1 2006/10/21 14:31:10 ad Exp $");
 
 #include "opt_ppcarch.h"
 
@@ -136,7 +136,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 				(*pr)("not found\n");
 				return;
 			}	
-			l = proc_representative_lwp(p); /* XXX NJWLWP */
+			l = proc_representative_lwp(p, NULL, 0); /* XXX NJWLWP */
 			if ((l->l_flag & L_INMEM) == 0) {
 				(*pr)("swapped out\n");
 				return;
