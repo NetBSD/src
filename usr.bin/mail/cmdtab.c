@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.13 2006/09/19 18:01:00 christos Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.14 2006/10/21 21:37:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,14 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.13 2006/09/19 18:01:00 christos Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.14 2006/10/21 21:37:20 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "def.h"
 #include "extern.h"
 
-#ifdef USE_READLINE
+#ifdef USE_EDITLINE
 # define CMP(x)	#x,
 # define CMP0	0,
 #else
@@ -59,10 +59,15 @@ __RCSID("$NetBSD: cmdtab.c,v 1.13 2006/09/19 18:01:00 christos Exp $");
 const struct cmd cmdtab[] = {
 	{ "next",	next,		CMP(n)	NDMLIST,	0,		MMNDEL },
 	{ "alias",	group,		CMP(a)	M|RAWLIST,	0,		1000 },
+#ifdef MIME_SUPPORT
+	{ "print",	print,		CMP(n)	MSGLIST,	0,		MMNDEL },
+	{ "Print",	Print,		CMP(n)	MSGLIST,	0,		MMNDEL },
+#else
 	{ "print",	type,		CMP(n)	MSGLIST,	0,		MMNDEL },
+	{ "Print",	Type,		CMP(n)	MSGLIST,	0,		MMNDEL },
+#endif
 	{ "type",	type,		CMP(n)	MSGLIST,	0,		MMNDEL },
 	{ "Type",	Type,		CMP(n)	MSGLIST,	0,		MMNDEL },
-	{ "Print",	Type,		CMP(n)	MSGLIST,	0,		MMNDEL },
 	{ "visual",	visual,		CMP(n)	I|MSGLIST,	0,		MMNORM },
 	{ "top",	top,		CMP(n)	MSGLIST,	0,		MMNDEL },
 	{ "touch",	stouch,		CMP(n)	W|MSGLIST,	0,		MMNDEL },
@@ -75,8 +80,14 @@ const struct cmd cmdtab[] = {
 	{ "mail",	sendmail,	CMP(A)	R|M|I|STRLIST,	0,		0 },
 	{ "mbox",	mboxit,		CMP(n)	W|MSGLIST,	0,		0 },
 	{ "more",	more,		CMP(n)	MSGLIST,	0,		MMNDEL },
-	{ "page",	more,		CMP(n)	MSGLIST,	0,		MMNDEL },
 	{ "More",	More,		CMP(n)	MSGLIST,	0,		MMNDEL },
+#ifdef MIME_SUPPORT
+	{ "page",	page,		CMP(n)	MSGLIST,	0,		MMNDEL },
+	{ "Page",	Page,		CMP(n)	MSGLIST,	0,		MMNDEL },
+	{ "view",	view,		CMP(n)	MSGLIST,	0,		MMNDEL },
+	{ "View",	View,		CMP(n)	MSGLIST,	0,		MMNDEL },
+#endif
+	{ "page",	more,		CMP(n)	MSGLIST,	0,		MMNDEL },
 	{ "Page",	More,		CMP(n)	MSGLIST,	0,		MMNDEL },
 	{ "unalias",	unalias,	CMP(a)	M|RAWLIST,	1,		1000 },
 	{ "unread",	unread,		CMP(n)	MSGLIST,	0,		MMNDEL },

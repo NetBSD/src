@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.19 2006/09/18 19:46:21 christos Exp $	*/
+/*	$NetBSD: def.h,v 1.20 2006/10/21 21:37:20 christos Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$NetBSD: def.h,v 1.19 2006/09/18 19:46:21 christos Exp $
+ *	$NetBSD: def.h,v 1.20 2006/10/21 21:37:20 christos Exp $
  */
 
 /*
@@ -73,6 +73,8 @@
 
 #define	equal(a, b)	(strcmp(a,b)==0)/* A nice function to string compare */
 
+#define readline mail_readline
+
 struct message {
 	short	m_flag;			/* flags, see below */
 	short	m_offset;		/* offset in block of message */
@@ -81,6 +83,7 @@ struct message {
 	off_t	m_size;			/* Bytes in the message */
 	long	m_blines;		/* Body (non-header) lines */
 };
+typedef struct mime_info mime_info_t;	/* phantom structure only to attach.c */
 
 /*
  * flag bits.
@@ -113,7 +116,7 @@ struct message {
 struct cmd {
 	const char *c_name;		/* Name of command */
 	int	(*c_func)(void *);	/* Implementor of the command */
-#ifdef USE_READLINE
+#ifdef USE_EDITLINE
 	const char *c_complete;		/* String describing completion */
 #endif
 	short	c_argtype;		/* Type of arglist (see below) */
@@ -167,12 +170,71 @@ struct headline {
 #define	GCC	 0x004		/* And the Cc: line */
 #define	GBCC	 0x008		/* And also the Bcc: line */
 #define GSMOPTS  0x010		/* Grab the sendmail options */
+#ifdef MIME_SUPPORT
+#define GMIME    0x020		/* mime flag */
+#endif
 #define	GMASK	(GTO|GSUBJECT|GCC|GBCC|GSMOPTS)
 				/* Mask of places from whence */
 
 #define	GNL	 0x100		/* Print blank line after */
 #define	GDEL	 0x200		/* Entity removed from list */
 #define	GCOMMA	 0x400		/* detract puts in commas */
+
+#ifdef MIME_SUPPORT
+/*
+ * Structure of MIME content.
+ */
+struct Content {
+	const char *C_type;		/* content type */
+	const char *C_encoding;		/* content transfer encoding */
+	const char *C_disposition;	/* content disposition */
+	const char *C_description;	/* content description */
+	const char *C_id;		/* content id */
+};
+/* Header strings corresponding to the above Content fields. */
+#define MIME_HDR_TYPE		"Content-Type"
+#define MIME_HDR_ENCODING	"Content-Transfer-Encoding"
+#define MIME_HDR_DISPOSITION	"Content-Disposition"
+#define MIME_HDR_ID		"Content-ID"
+#define MIME_HDR_DESCRIPTION	"Content-Description"
+#define MIME_HDR_VERSION	"MIME-Version"
+/* the value of the MIME-Version field */
+#define MIME_VERSION		"1.0"
+
+typedef enum {
+	ATTACH_INVALID = 0,	/* do not use! */
+	ATTACH_FNAME = 1,
+	ATTACH_MSG = 2,
+	ATTACH_FILENO = 3
+} attach_t;
+
+/*
+ * Structure of a MIME attachment.
+ */
+struct attachment {
+	struct attachment *a_flink;	/* Forward link in list. */
+	struct attachment *a_blink;	/* Backward list link */
+
+	attach_t a_type;		/* attachment type */
+#if 1
+	union {
+		char *u_name;		/* file name */
+		struct message *u_msg;	/* message */
+		int u_fileno;		/* file number */
+	} a_u;
+
+	#define a_name		a_u.u_name
+	#define a_msg		a_u.u_msg
+	#define a_fileno	a_u.u_fileno
+#else
+	char *a_name;			/* file name */
+	struct message *a_msg;		/* message */
+	int a_fileno;			/* file number */
+#endif
+
+	struct Content a_Content;	/* MIME content strings */
+};
+#endif /* MIME_SUPPORT */
 
 /*
  * Structure used to pass about the current
@@ -185,6 +247,11 @@ struct header {
 	struct name *h_cc;		/* Carbon copies string */
 	struct name *h_bcc;		/* Blind carbon copies */
 	struct name *h_smopts;		/* Sendmail options */
+#ifdef MIME_SUPPORT
+	char *h_mime_boundary;		/* MIME multipart boundary string */
+	struct Content h_Content;	/* MIME content for message */
+	struct attachment *h_attach;	/* MIME attachments */
+#endif
 };
 
 /*
@@ -279,4 +346,15 @@ struct ignoretab {
 #define trunc(stream) {							\
 	(void)fflush(stream); 						\
 	(void)ftruncate(fileno(stream), (off_t)ftell(stream));		\
+}
+
+/*
+ * Make this static inline available everywhere.
+ */
+static inline char*
+skip_white(char *cp)
+{
+	while (isblank((unsigned char)*cp))
+		cp++;
+	return cp;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.14 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: support.c,v 1.15 2006/10/21 21:37:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,12 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.14 2005/07/19 23:07:10 christos Exp $");
+__RCSID("$NetBSD: support.c,v 1.15 2006/10/21 21:37:21 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
 #include "extern.h"
+#include "mime.h"
 
 /*
  * Mail -- a mail program
@@ -47,7 +48,8 @@ __RCSID("$NetBSD: support.c,v 1.14 2005/07/19 23:07:10 christos Exp $");
  * Auxiliary functions.
  */
 static char *save2str(char *, char *);
-
+static int gethfield(FILE *, char [], int, char **); /* don't call this outside hfield()
+							or decoding will not get done */
 /*
  * Return a pointer to a dynamic copy of the argument.
  */
@@ -135,17 +137,32 @@ hfield(const char field[], const struct message *mp)
 	int lc;
 	char *headerfield;
 	char *colon, *oldhfield = NULL;
+#ifdef MIME_SUPPORT
+	int decode;
+
+	decode = value(ENAME_MIME_DECODE_MSG) &&
+	    value(ENAME_MIME_DECODE_HDR);
+#endif
 
 	ibuf = setinput(mp);
 	if ((lc = mp->m_lines - 1) < 0)
 		return NULL;
-	if (readline(ibuf, linebuf, LINESIZE) < 0)
+	if (mail_readline(ibuf, linebuf, LINESIZE) < 0)
 		return NULL;
 	while (lc > 0) {
 		if ((lc = gethfield(ibuf, linebuf, lc, &colon)) < 0)
 			return oldhfield;
+#ifdef MIME_SUPPORT
+		if ((headerfield = ishfield(linebuf, colon, field)) != NULL) {
+			char linebuf2[LINESIZE];
+			if (decode && colon)
+				headerfield = mime_decode_hfield(linebuf2, sizeof(linebuf2), headerfield);
+			oldhfield = save2str(headerfield, oldhfield);
+		}
+#else
 		if ((headerfield = ishfield(linebuf, colon, field)) != NULL)
 			oldhfield = save2str(headerfield, oldhfield);
+#endif
 	}
 	return oldhfield;
 }
@@ -156,7 +173,7 @@ hfield(const char field[], const struct message *mp)
  * "colon" is set to point to the colon in the header.
  * Must deal with \ continuations & other such fraud.
  */
-int
+static int
 gethfield(FILE *f, char linebuf[], int rem, char **colon)
 {
 	char line2[LINESIZE];
@@ -166,7 +183,7 @@ gethfield(FILE *f, char linebuf[], int rem, char **colon)
 	for (;;) {
 		if (--rem < 0)
 			return -1;
-		if ((c = readline(f, linebuf, LINESIZE)) <= 0)
+		if ((c = mail_readline(f, linebuf, LINESIZE)) <= 0)
 			return -1;
 		for (cp = linebuf; isprint((unsigned char)*cp) && *cp != ' ' && *cp != ':';
 		     cp++)
@@ -188,7 +205,7 @@ gethfield(FILE *f, char linebuf[], int rem, char **colon)
 			(void)ungetc(c = getc(f), f);
 			if (c != ' ' && c != '\t')
 				break;
-			if ((c = readline(f, line2, LINESIZE)) < 0)
+			if ((c = mail_readline(f, line2, LINESIZE)) < 0)
 				break;
 			rem--;
 			for (cp2 = line2; *cp2 == ' ' || *cp2 == '\t'; cp2++)
@@ -412,7 +429,7 @@ skin(char *name)
 	gotlt = 0;
 	lastsp = 0;
 	bufend = nbuf;
-	for (cp = name, cp2 = bufend; (c = *cp++) != '\0'; ) {
+	for (cp = name, cp2 = bufend; (c = *cp++) != '\0'; /* EMPTY */) {
 		switch (c) {
 		case '(':
 			cp = skip_comment(cp);
@@ -517,7 +534,7 @@ name1(struct message *mp, int reptype)
 		return cp;
 	ibuf = setinput(mp);
 	namebuf[0] = '\0';
-	if (readline(ibuf, linebuf, LINESIZE) < 0)
+	if (mail_readline(ibuf, linebuf, LINESIZE) < 0)
 		return(savestr(namebuf));
 newname:
 	for (cp = linebuf; *cp && *cp != ' '; cp++)
@@ -528,7 +545,7 @@ newname:
 	     *cp && *cp != ' ' && *cp != '\t' && cp2 < namebuf + LINESIZE - 1;)
 		*cp2++ = *cp++;
 	*cp2 = '\0';
-	if (readline(ibuf, linebuf, LINESIZE) < 0)
+	if (mail_readline(ibuf, linebuf, LINESIZE) < 0)
 		return(savestr(namebuf));
 	if ((cp = strchr(linebuf, 'F')) == NULL)
 		return(savestr(namebuf));
@@ -564,7 +581,7 @@ newname:
 }
 
 /*
- * Count the occurances of c in str
+ * Count the occurrences of c in str
  */
 int
 charcount(char *str, int c)
