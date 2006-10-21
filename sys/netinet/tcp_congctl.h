@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.h,v 1.2 2006/10/15 17:45:06 rpaulo Exp $	*/
+/*	$NetBSD: tcp_congctl.h,v 1.3 2006/10/21 10:24:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -43,10 +43,10 @@
  * Congestion control function table.
  */
 struct tcp_congctl {
-	int  (*fast_retransmit)(struct tcpcb *, struct tcphdr *);
+	int  (*fast_retransmit)(struct tcpcb *, const struct tcphdr *);
 	void (*slow_retransmit)(struct tcpcb *);
-	void (*fast_retransmit_newack)(struct tcpcb *, struct tcphdr *);
-	void (*newack)(struct tcpcb *, struct tcphdr *);
+	void (*fast_retransmit_newack)(struct tcpcb *, const struct tcphdr *);
+	void (*newack)(struct tcpcb *, const struct tcphdr *);
 	void (*cong_exp)(struct tcpcb *);
 	
 	uint32_t refcnt;
