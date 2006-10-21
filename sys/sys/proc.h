@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.225.4.1 2006/09/11 18:19:09 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.225.4.2 2006/10/21 15:20:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -112,7 +112,7 @@ struct emul {
 					/* Signal sending function */
 	void		(*e_sendsig)(const struct ksiginfo *,
 					  const sigset_t *);
-	void		(*e_trapsignal)(struct lwp *, const struct ksiginfo *);
+	void		(*e_trapsignal)(struct lwp *, struct ksiginfo *);
 	int		(*e_tracesig)(struct proc *, int);
 	char		*e_sigcode;	/* Start of sigcode */
 	char		*e_esigcode;	/* End of sigcode */
@@ -168,14 +168,17 @@ struct emul {
  * m:	proclist_mutex
  * c:	p_crmutex - credentials mutex
  * l:	proclist_lock
- * p:	p->p_lock
+ * p:	p_smutex
  * s:	sched_lock
  */
 struct proc {
 	LIST_ENTRY(proc) p_list;	/* l, (a): List of all processes */
 
 	/* Substructures: */
-	kmutex_t	p_crmutex;	/* credentials mutex */
+	kmutex_t	p_crmutex;	/* :: credentials mutex */
+	kmutex_t	p_rasmutex;	/* :: RAS mutex */
+	kmutex_t	p_mutex;	/* :: general mutex */
+
 	struct kauth_cred *p_cred;	/* c: Master copy of credentials */
 	struct filedesc	*p_fd;		/* Ptr to open files structure */
 	struct cwdinfo	*p_cwdi;	/* cdir/rdir/cmask info */
@@ -198,7 +201,7 @@ struct proc {
 	LIST_ENTRY(proc) p_sibling;	/* l: List of sibling processes. */
 	LIST_HEAD(, proc) p_children;	/* l: Pointer to list of children. */
 
-	struct simplelock p_lock;	/* Lock on proc state (p:) */
+	kmutex_t	p_smutex;	/* :: Mutex on scheduling state (p:) */
 
 	/* XXX dsl: locking of LWP info is suspect in schedcpu and kpsignal2 */
 	LIST_HEAD(, lwp) p_lwps;	/* p: Pointer to list of LWPs. */
@@ -209,10 +212,10 @@ struct proc {
 #define	p_startzero	p_nlwps
 
 	int 		p_nlwps;	/* p: Number of LWPs */
-	int 		p_nrlwps;	/* s: Number of running LWPs */
 	int 		p_nzlwps;	/* p: Number of zombie LWPs */
+	int		p_nrlwps;	/* p: Number running/sleeping LWPs */
+	int		p_nlwpwait;	/* p: Number of LWPs in lwp_wait1() */
 	int 		p_nlwpid;	/* p: Next LWP ID */
-
 	u_int		p_nstopchild;	/* l: Count of stopped/dead children */
 
 	struct sadata 	*p_sa;		/* Scheduler activation information */
@@ -226,7 +229,6 @@ struct proc {
 
 	struct proc	*p_opptr;	/* Save parent during ptrace. */
 	struct ptimers	*p_timers;	/* Timers: real, virtual, profiling */
-	struct timeval 	p_rtime;	/* Real time */
 	u_quad_t 	p_uticks;	/* Statclock hits in user mode */
 	u_quad_t 	p_sticks;	/* Statclock hits in system mode */
 	u_quad_t 	p_iticks;	/* Statclock hits processing intr */
@@ -249,6 +251,10 @@ struct proc {
 	const struct execsw *p_execsw;	/* Exec package information */
 	struct klist	p_klist;	/* Knotes attached to this process */
 
+	LIST_HEAD(, lwp) p_sigwaiters;	/* p: LWPs waiting for signals */
+
+	sigpend_t	p_sigpend;	/* p: list of pending signals */
+
 /*
  * End area that is zeroed on creation
  */
@@ -257,9 +263,9 @@ struct proc {
 /*
  * The following fields are all copied upon creation in fork.
  */
-#define	p_startcopy	p_sigctx.ps_startcopy
+#define	p_startcopy	p_sigctx
 
-	struct sigctx 	p_sigctx;	/* Signal state */
+	struct sigctx 	p_sigctx;	/* Shared signal state */
 
 	u_char		p_nice;		/* Process "nice" value */
 	char		p_comm[MAXCOMLEN+1];	/* basename of last exec file */
@@ -308,13 +314,13 @@ struct proc {
 #define	P_SELECT     /* 0x00000040 */	L_SELECT
 #define	P_SINTR	     /* 0x00000080 */	L_SINTR
 #define	P_SUGID		0x00000100 /* Had set id privileges since last exec */
-#define	P_SYSTEM	0x00000200 /* System proc: no sigs, stats or swapping */
+#define	P_SYSTEM     /*	0x00000200 */   L_SYSTEM
 #define	P_SA	     /* 0x00000400 */	L_SA
 #define	P_TRACED	0x00000800 /* Debugged process being traced */
 #define	P_WAITED	0x00001000 /* Debugging process has waited for child */
 #define	P_WEXIT		0x00002000 /* Working on exiting */
 #define	P_EXEC		0x00004000 /* Process called exec */
-#define	P_OWEUPC	0x00008000 /* Owe process an addupc() at next ast */
+#define	P_UNUSED1	0x00008000 /* Unused */
 #define	P_FSTRACE	0x00010000 /* Debugger process being traced by procfs */
 #define	P_NOCLDWAIT	0x00020000 /* No zombies if child dies */
 #define	P_32		0x00040000 /* 32-bit process (used on 64-bit kernels) */
@@ -328,11 +334,11 @@ struct proc {
 #define	P_SYSCALL	0x04000000 /* process has PT_SYSCALL enabled */
 #define	P_PAXMPROTECT  	0x08000000 /* Explicitly enable PaX MPROTECT */
 #define	P_PAXNOMPROTECT	0x10000000 /* Explicitly disable PaX MPROTECT */
-#define	P_UNUSED2	0x20000000
-#define	P_UNUSED1	0x40000000
+#define	P_ORPHANPG	0x20000000 /* Member of an orphaned pgrp */
+#define	P_UNUSED2	0x40000000 /* Unused */
 #define	P_MARKER	0x80000000 /* Is a dummy marker process */
 
-#define	P_SHARED	(L_INMEM|L_SELECT|L_SINTR|L_SA)
+#define	P_SHARED	(L_INMEM|L_SELECT|L_SINTR|L_SYSTEM|L_SA)
 
 /*
  * Macro to compute the exit signal to be delivered.
@@ -401,6 +407,7 @@ do {									\
 #define	FORK_SHARESIGS	0x10		/* Share signal actions */
 #define	FORK_NOWAIT	0x20		/* Make init the parent of the child */
 #define	FORK_CLEANFILES	0x40		/* Start with a clean descriptor set */
+#define	FORK_SYSTEM	0x80		/* Fork a kernel thread */
 
 /*
  * Allow machine-dependent code to override curproc in <machine/cpu.h> for
@@ -475,11 +482,11 @@ void	pgdelete(struct pgrp *);
 void	procinit(void);
 void	resetprocpriority(struct proc *);
 void	suspendsched(void);
-int	ltsleep(volatile const void *, int, const char *, int,
+int	ltsleep(wchan_t, int, const char *, int,
 	    volatile struct simplelock *);
-int	mtsleep(volatile const void *, int, const char *, int, kmutex_t *);
-void	wakeup(volatile const void *);
-void	wakeup_one(volatile const void *);
+int	mtsleep(wchan_t, int, const char *, int, kmutex_t *);
+void	wakeup(wchan_t);
+void	wakeup_one(wchan_t);
 void	exit1(struct lwp *, int);
 int	find_stopped_child(struct proc *, pid_t, int, struct proc **);
 struct proc *proc_alloc(void);

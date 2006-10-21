@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.17 2006/03/15 09:09:47 cube Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.17.10.1 2006/10/21 15:20:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.17 2006/03/15 09:09:47 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.17.10.1 2006/10/21 15:20:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ netbsd32_sigaction(l, v, retval)
 		nsa.sa_mask = sa32.netbsd32_sa_mask;
 		nsa.sa_flags = sa32.netbsd32_sa_flags;
 	}
-	error = sigaction1(l->l_proc, SCARG(uap, signum),
+	error = sigaction1(l, SCARG(uap, signum),
 			   SCARG(uap, nsa) ? &nsa : 0,
 			   SCARG(uap, osa) ? &osa : 0,
 			   NULL, 0);
@@ -167,7 +167,7 @@ netbsd32___sigaction14(l, v, retval)
 		nsa.sa_mask = sa32.netbsd32_sa_mask;
 		nsa.sa_flags = sa32.netbsd32_sa_flags;
 	}
-	error = sigaction1(l->l_proc, SCARG(uap, signum),
+	error = sigaction1(l, SCARG(uap, signum),
 	    SCARG(uap, nsa) ? &nsa : 0, SCARG(uap, osa) ? &osa : 0,
 	    NULL, 0);
 	if (error)
@@ -198,7 +198,6 @@ netbsd32___sigaction_sigtramp(l, v, retval)
 		syscallarg(netbsd32_voidp) tramp;
 		syscallarg(int) vers;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct netbsd32_sigaction sa32;
 	struct sigaction nsa, osa;
 	int error;
@@ -212,7 +211,7 @@ netbsd32___sigaction_sigtramp(l, v, retval)
 		nsa.sa_mask = sa32.netbsd32_sa_mask;
 		nsa.sa_flags = sa32.netbsd32_sa_flags;
 	}
-	error = sigaction1(p, SCARG(uap, signum),
+	error = sigaction1(l, SCARG(uap, signum),
 	    SCARG(uap, nsa) ? &nsa : 0, SCARG(uap, osa) ? &osa : 0,
 	    NETBSD32PTR64(SCARG(uap, tramp)), SCARG(uap, vers));
 	if (error)
@@ -320,14 +319,14 @@ netbsd32_si_to_si32(siginfo32_t *si32, const siginfo_t *si)
 void
 getucontext32(struct lwp *l, ucontext32_t *ucp)
 {
-	struct proc	*p;
+	struct proc *p;
 
 	p = l->l_proc;
 
 	ucp->uc_flags = 0;
 	ucp->uc_link = (uint32_t)(intptr_t)l->l_ctxlink;
 
-	(void)sigprocmask1(p, 0, NULL, &ucp->uc_sigmask);
+	(void)sigprocmask1(l, 0, NULL, &ucp->uc_sigmask);
 	ucp->uc_flags |= _UC_SIGMASK;
 
 	/*
@@ -369,10 +368,8 @@ netbsd32_getcontext(struct lwp *l, void *v, register_t *retval)
 int
 setucontext32(struct lwp *l, const ucontext32_t *ucp)
 {
-	struct proc	*p;
 	int		error;
 
-	p = l->l_proc;
 	if ((error = cpu_setmcontext32(l, &ucp->uc_mcontext,
 	     ucp->uc_flags)) != 0)
 		return (error);
@@ -382,7 +379,7 @@ setucontext32(struct lwp *l, const ucontext32_t *ucp)
 	 * don't; see the comment in getucontext().
 	 */
 	if ((ucp->uc_flags & _UC_SIGMASK) != 0)
-		sigprocmask1(p, SIG_SETMASK, &ucp->uc_sigmask, NULL);
+		sigprocmask1(l, SIG_SETMASK, &ucp->uc_sigmask, NULL);
 
 	return 0;
 }

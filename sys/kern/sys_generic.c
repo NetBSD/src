@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.92.2.1 2006/09/11 18:43:43 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.92.2.2 2006/10/21 15:20:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.92.2.1 2006/09/11 18:43:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.92.2.2 2006/10/21 15:20:47 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -382,8 +382,11 @@ dofilewrite(struct lwp *l, int fd, struct file *fp, const void *buf,
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
-		if (error == EPIPE)
+		if (error == EPIPE) {
+			rw_enter(&proclist_lock, RW_READER);
 			psignal(p, SIGPIPE);
+			rw_exit(&proclist_lock);
+		}
 	}
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
@@ -508,8 +511,11 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
-		if (error == EPIPE)
+		if (error == EPIPE) {
+			rw_enter(&proclist_lock, RW_READER);
 			psignal(p, SIGPIPE);
+			rw_exit(&proclist_lock);
+		}
 	}
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
@@ -814,7 +820,7 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 	}
 
 	if (mask)
-		(void)sigprocmask1(p, SIG_SETMASK, mask, &oldmask);
+		(void)sigprocmask1(l, SIG_SETMASK, mask, &oldmask);
 
  retry:
 	ncoll = nselcoll;
@@ -837,7 +843,7 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 		goto retry;
  done:
 	if (mask)
-		(void)sigprocmask1(p, SIG_SETMASK, &oldmask, NULL);
+		(void)sigprocmask1(l, SIG_SETMASK, &oldmask, NULL);
 	l->l_flag &= ~L_SELECT;
 	/* select is not restarted after signals... */
 	if (error == ERESTART)
@@ -993,7 +999,7 @@ pollcommon(struct lwp *l, register_t *retval,
 	}
 
 	if (mask != NULL)
-		(void)sigprocmask1(p, SIG_SETMASK, mask, &oldmask);
+		(void)sigprocmask1(l, SIG_SETMASK, mask, &oldmask);
 
  retry:
 	ncoll = nselcoll;
@@ -1015,7 +1021,7 @@ pollcommon(struct lwp *l, register_t *retval,
 		goto retry;
  done:
 	if (mask != NULL)
-		(void)sigprocmask1(p, SIG_SETMASK, &oldmask, NULL);
+		(void)sigprocmask1(l, SIG_SETMASK, &oldmask, NULL);
 	l->l_flag &= ~L_SELECT;
 	/* poll is not restarted after signals... */
 	if (error == ERESTART)
@@ -1088,13 +1094,20 @@ selrecord(struct lwp *selector, struct selinfo *sip)
 	mypid = selector->l_proc->p_pid;
 	if (sip->sel_pid == mypid)
 		return;
-	if (sip->sel_pid && (p = pfind(sip->sel_pid))) {
+	if (sip->sel_pid && (p = p_find(sip->sel_pid, PFIND_UNLOCK_FAIL))) {
+		mutex_enter(&p->p_smutex);
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			if (l->l_wchan == (caddr_t)&selwait) {
+			lwp_lock(l);
+			if (l->l_wchan == (caddr_t)&selwait &&
+			    l->l_stat == LSSLEEP) {
 				sip->sel_collision = 1;
+				lwp_unlock(l);
+				mutex_exit(&p->p_smutex);
 				return;
 			}
+			lwp_unlock(l);
 		}
+		mutex_exit(&p->p_smutex);
 	}
 
 	sip->sel_pid = mypid;
@@ -1109,7 +1122,6 @@ selwakeup(sip)
 {
 	struct lwp *l;
 	struct proc *p;
-	int s;
 
 	if (sip->sel_pid == 0)
 		return;
@@ -1128,19 +1140,23 @@ selwakeup(sip)
 	mutex_enter(&proclist_mutex);
 	p = p_find(sip->sel_pid, PFIND_LOCKED);
 	sip->sel_pid = 0;
-	if (p != NULL) {
-		/* XXXSMP transfer to p->p_smutex */
-		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			SCHED_LOCK(s);
-			if (l->l_wchan == (caddr_t)&selwait) {
-				if (l->l_stat == LSSLEEP)
-					setrunnable(l);
-				else
-					unsleep(l);
-			} else if (l->l_flag & L_SELECT)
+	if (p == NULL) {
+		mutex_exit(&proclist_mutex);
+		return;
+	}
+
+	mutex_enter(&p->p_smutex);
+	mutex_exit_linked(&proclist_mutex, &p->p_smutex);
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		lwp_lock(l);
+		if (l->l_wchan == (wchan_t)&selwait && l->l_stat == LSSLEEP) {
+			/* setrunnable() will release the lock. */
+			setrunnable(l);
+		} else {
+			if (l->l_flag & L_SELECT)
 				l->l_flag &= ~L_SELECT;
-			SCHED_UNLOCK(s);
+			lwp_unlock(l);
 		}
 	}
-	mutex_exit(&proclist_mutex);
+	mutex_exit(&p->p_smutex);
 }

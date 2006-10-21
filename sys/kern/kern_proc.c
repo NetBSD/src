@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.94.4.2 2006/09/11 18:43:43 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.94.4.3 2006/10/21 15:20:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.2 2006/09/11 18:43:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.3 2006/10/21 15:20:46 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.2 2006/09/11 18:43:43 ad Exp $"
 #include <sys/savar.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
-#include <sys/turnstile.h>
+#include <sys/sleepq.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
@@ -138,6 +138,17 @@ struct proclist zombproc;	/* resources have been freed */
  *	x		x				proc::p_list
  *					x		alllwp
  *					x		lwp::l_list
+ *
+ * The lock order for processes and LWPs is apporoximately as following:
+ *
+ * kernel_mutex
+ * -> proclist_lock
+ *    -> proclist_mutex
+ *	-> proc::p_crmutex
+ *         -> proc::p_smutex
+ *	      -> alllwp_mutex
+ * 	         -> lwp::l_mutex
+ *	            -> sched_mutex
  */
 krwlock_t	proclist_lock;
 kmutex_t	proclist_mutex;
@@ -181,7 +192,7 @@ static pid_t pid_max = PID_MAX;		/* largest value we allocate */
 struct session session0;
 struct pgrp pgrp0;
 struct proc proc0;
-struct lwp lwp0;
+struct lwp lwp0 __aligned(16);
 kauth_cred_t cred0;
 struct filedesc0 filedesc0;
 struct cwdinfo cwdi0;
@@ -201,7 +212,7 @@ int cmask = CMASK;
 
 POOL_INIT(proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
     &pool_allocator_nointr);
-POOL_INIT(lwp_pool, sizeof(struct lwp), 0, 0, 0, "lwppl",
+POOL_INIT(lwp_pool, sizeof(struct lwp), 16, 0, 0, "lwppl",
     &pool_allocator_nointr);
 POOL_INIT(lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
     &pool_allocator_nointr);
@@ -252,6 +263,7 @@ procinit(void)
 	rw_init(&proclist_lock);
 	mutex_init(&proclist_mutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&alllwp_mutex, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&lwp_mutex, MUTEX_SPIN, IPL_SCHED);
 
 	pid_table = malloc(INITIAL_PID_TABLE_SIZE * sizeof *pid_table,
 			    M_PROC, M_WAITOK);
@@ -294,13 +306,15 @@ proc0_init(void)
 	sess = &session0;
 	l = &lwp0;
 
-	simple_lock_init(&p->p_lock);
+	mutex_init(&p->p_smutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&p->p_crmutex, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&p->p_rasmutex, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&p->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&p->p_lwps);
+	LIST_INIT(&p->p_sigwaiters);
 	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
 	p->p_nlwps = 1;
-	simple_lock_init(&p->p_sigctx.ps_silock);
-	CIRCLEQ_INIT(&p->p_sigctx.ps_siginfo);
+	p->p_nrlwps = 1;
 
 	pid_table[0].pt_proc = p;
 	LIST_INSERT_HEAD(&allproc, p, p_list);
@@ -330,10 +344,10 @@ proc0_init(void)
 #endif
 	strncpy(p->p_comm, "swapper", MAXCOMLEN);
 
-	l->l_flag = L_INMEM;
+	l->l_mutex = &lwp_mutex;
+	l->l_flag = L_INMEM | L_SYSTEM;
 	l->l_stat = LSONPROC;
 	l->l_ts = &turnstile0;
-	p->p_nrlwps = 1;
 
 	callout_init(&l->l_tsleep_ch);
 
@@ -393,6 +407,7 @@ proc0_init(void)
 
 	/* Initialize signal state for proc0. */
 	p->p_sigacts = &sigacts0;
+	mutex_init(&p->p_sigacts->sa_mutex, MUTEX_DEFAULT, IPL_NONE);
 	siginit(p);
 }
 
@@ -1007,9 +1022,10 @@ fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 	 */
 	hispgrp = p->p_pptr->p_pgrp;
 	if (hispgrp != pgrp && hispgrp->pg_session == mysession) {
-		if (entering)
+		if (entering) {
+			p->p_flag &= ~P_ORPHANPG;
 			pgrp->pg_jobc++;
-		else if (--pgrp->pg_jobc == 0)
+		} else if (--pgrp->pg_jobc == 0)
 			orphanpg(pgrp);
 	}
 
@@ -1022,9 +1038,10 @@ fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 		hispgrp = child->p_pgrp;
 		if (hispgrp != pgrp && hispgrp->pg_session == mysession &&
 		    !P_ZOMBIE(child)) {
-			if (entering)
+			if (entering) {
+				p->p_flag &= ~P_ORPHANPG;
 				hispgrp->pg_jobc++;
-			else if (--hispgrp->pg_jobc == 0)
+			} else if (--hispgrp->pg_jobc == 0)
 				orphanpg(hispgrp);
 		}
 	}
@@ -1041,14 +1058,23 @@ static void
 orphanpg(struct pgrp *pg)
 {
 	struct proc *p;
+	int doit;
+
+	doit = 0;
 
 	LIST_FOREACH(p, &pg->pg_members, p_pglist) {
+		mutex_enter(&p->p_smutex);
 		if (p->p_stat == SSTOP) {
-			LIST_FOREACH(p, &pg->pg_members, p_pglist) {
-				psignal(p, SIGHUP);
-				psignal(p, SIGCONT);
-			}
-			return;
+			doit = 1;
+			p->p_flag |= P_ORPHANPG;
+		}
+		mutex_exit(&p->p_smutex);
+	}
+
+	if (doit) {
+		LIST_FOREACH(p, &pg->pg_members, p_pglist) {
+			psignal(p, SIGHUP);
+			psignal(p, SIGCONT);
 		}
 	}
 }
@@ -1264,15 +1290,18 @@ proc_crmod_enter(struct proc *p)
 }
 
 /*
- * Block out readers, set in a new process credential, and drop the write
- * lock.  The credential must have a reference already.  Optionally, free a
- * no-longer required credential.
+ * Set in a new process credential, and drop the write lock.  The credential
+ * must have a reference already.  Optionally, free a no-longer required
+ * credential.  The scheduler also needs to inspect p_cred, so we also
+ * briefly acquire the sched state mutex.
  */
 void
 proc_crmod_leave(struct proc *p, kauth_cred_t scred, kauth_cred_t fcred)
 {
 
+	mutex_enter(&p->p_smutex);
 	p->p_cred = scred;
+	mutex_exit(&p->p_smutex);
 	mutex_exit(&p->p_crmutex);
 	if (fcred != NULL)
 		kauth_cred_free(fcred);

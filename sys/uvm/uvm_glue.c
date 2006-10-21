@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.96.2.1 2006/09/11 18:19:09 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.96.2.2 2006/10/21 15:20:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.96.2.1 2006/09/11 18:19:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.96.2.2 2006/10/21 15:20:47 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -426,7 +426,7 @@ void
 uvm_swapin(struct lwp *l)
 {
 	vaddr_t addr;
-	int s, error;
+	int error;
 
 	addr = USER_TO_UAREA(l->l_addr);
 	/* make L_INMEM true */
@@ -441,12 +441,12 @@ uvm_swapin(struct lwp *l)
 	 * moved to new physical page(s) (e.g.  see mips/mips/vm_machdep.c).
 	 */
 	cpu_swapin(l);
-	SCHED_LOCK(s);
+	lwp_lock(l);		/* XXXAD locking */
 	if (l->l_stat == LSRUN)
 		setrunqueue(l);
 	l->l_flag |= L_INMEM;
-	SCHED_UNLOCK(s);
 	l->l_swtime = 0;
+	lwp_unlock(l);
 	++uvmexp.swapins;
 }
 
@@ -542,7 +542,7 @@ loop:
 
 #define	swappable(l)							\
 	(((l)->l_flag & (L_INMEM)) &&					\
-	 ((((l)->l_proc->p_flag) & (P_SYSTEM | P_WEXIT)) == 0) &&	\
+	 ((((l)->l_flag) & (L_SYSTEM | L_WEXIT)) == 0) &&		\
 	 (l)->l_holdcnt == 0)
 
 /*
@@ -637,7 +637,6 @@ static void
 uvm_swapout(struct lwp *l)
 {
 	vaddr_t addr;
-	int s;
 	struct proc *p = l->l_proc;
 
 #ifdef DEBUG
@@ -650,18 +649,20 @@ uvm_swapout(struct lwp *l)
 	/*
 	 * Mark it as (potentially) swapped out.
 	 */
-	SCHED_LOCK(s);
+	lwp_lock(l);
 	if (l->l_stat == LSONPROC) {
 		KDASSERT(l->l_cpu != curcpu());
-		SCHED_UNLOCK(s);
+		lwp_unlock(l);
 		return;
 	}
 	l->l_flag &= ~L_INMEM;
-	if (l->l_stat == LSRUN)
-		remrunqueue(l);
-	SCHED_UNLOCK(s);
 	l->l_swtime = 0;
-	p->p_stats->p_ru.ru_nswap++;
+	if (l->l_stat == LSRUN) {
+		remrunqueue(l);
+		lwp_swaplock(l, &lwp_mutex);
+	} else
+		lwp_unlock(l);
+	p->p_stats->p_ru.ru_nswap++;	/* XXXAD */
 	++uvmexp.swapouts;
 
 	/*

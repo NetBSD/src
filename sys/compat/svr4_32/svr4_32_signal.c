@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.c,v 1.15 2005/12/24 20:45:09 perry Exp $	 */
+/*	$NetBSD: svr4_32_signal.c,v 1.15.20.1 2006/10/21 15:20:48 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.15 2005/12/24 20:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.15.20.1 2006/10/21 15:20:48 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_svr4.h"
@@ -462,12 +462,12 @@ svr4_32_sys_signal(l, v, retval)
 	sighold:
 		sigemptyset(&ss);
 		sigaddset(&ss, signum);
-		return (sigprocmask1(p, SIG_BLOCK, &ss, 0));
+		return (sigprocmask1(l, SIG_BLOCK, &ss, 0));
 
 	case SVR4_SIGRELSE_MASK:
 		sigemptyset(&ss);
 		sigaddset(&ss, signum);
-		return (sigprocmask1(p, SIG_UNBLOCK, &ss, 0));
+		return (sigprocmask1(l, SIG_UNBLOCK, &ss, 0));
 
 	case SVR4_SIGIGNORE_MASK:
 		nbsa.sa_handler = SIG_IGN;
@@ -478,7 +478,7 @@ svr4_32_sys_signal(l, v, retval)
 	case SVR4_SIGPAUSE_MASK:
 		ss = p->p_sigctx.ps_sigmask;
 		sigdelset(&ss, signum);
-		return (sigsuspend1(p, &ss));
+		return (sigsuspend1(l, &ss));
 
 	default:
 		return (ENOSYS);

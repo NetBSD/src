@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.110.2.1 2006/09/11 18:07:25 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.110.2.2 2006/10/21 15:20:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.110.2.1 2006/09/11 18:07:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.110.2.2 2006/10/21 15:20:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,14 +128,14 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) data;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct lwp *lt, *lr;
+	struct lwp *lt;
 	struct proc *t;				/* target process */
 	struct uio uio;
 	struct iovec iov;
 	struct ptrace_io_desc piod;
 	struct ptrace_lwpinfo pl;
 	struct vmspace *vm;
-	int s, error, write, tmp, size;
+	int error, write, tmp, size;
 #ifdef COREDUMP
 	char *path;
 #endif
@@ -291,7 +291,11 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	 * be weird.
 	 */
 
-	lt = proc_representative_lwp(t);
+	/* XXXSMP locking */
+	mutex_enter(&p->p_smutex);	/* XXXAD */
+	lt = proc_representative_lwp(t, NULL, 1);
+	lwp_unlock(lt);
+	mutex_exit(&p->p_smutex);	/* XXXAD */
 
 	/* Now do the operation. */
 	write = 0;
@@ -466,22 +470,23 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 
 	sendsig:
 		/* Finally, deliver the requested signal (or none). */
+		mutex_enter(&t->p_smutex);
 		if (t->p_stat == SSTOP) {
-			t->p_xstat = SCARG(uap, data);
-			SCHED_LOCK(s);
-			lr = proc_unstop(t);
 			/*
-			 * If the target needs to take a signal, there
-			 * is no running LWP that will see it, and
-			 * there is a LWP sleeping interruptably, then
-			 * get it moving.
+			 * Unstop the process.  If it needs to take a
+			 * signal, make all efforts to ensure that at
+			 * an LWP runs to see it.
 			 */
-			if (lr && (t->p_xstat != 0))
-			    setrunnable(lr);
-			SCHED_UNLOCK(s);
+			t->p_xstat = SCARG(uap, data);
+			proc_unstop(t, t->p_xstat != 0);
+			mutex_exit(&t->p_smutex);
 		} else {
-			if (SCARG(uap, data) != 0)
+			mutex_exit(&t->p_smutex);
+			if (SCARG(uap, data) != 0) {
+				rw_enter(&proclist_lock, RW_READER);
 				psignal(t, SCARG(uap, data));
+				rw_exit(&proclist_lock);
+			}
 		}
 		return (0);
 
@@ -561,7 +566,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			if (lt == NULL)
 				return (ESRCH);
 		}
-		if (!process_validregs(proc_representative_lwp(t)))
+		if (!process_validregs(lt))
 			return (EINVAL);
 		else {
 			error = proc_vmspace_getref(l->l_proc, &vm);
@@ -599,7 +604,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			if (lt == NULL)
 				return (ESRCH);
 		}
-		if (!process_validfpregs(proc_representative_lwp(t)))
+		if (!process_validfpregs(lt))
 			return (EINVAL);
 		else {
 			error = proc_vmspace_getref(l->l_proc, &vm);
@@ -686,7 +691,7 @@ process_validregs(struct lwp *l)
 {
 
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
-	return ((l->l_proc->p_flag & P_SYSTEM) == 0);
+	return ((l->l_flag & L_SYSTEM) == 0);
 #else
 	return (0);
 #endif
@@ -744,7 +749,7 @@ process_validfpregs(struct lwp *l)
 {
 
 #if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
-	return ((l->l_proc->p_flag & P_SYSTEM) == 0);
+	return ((l->l_flag & L_SYSTEM) == 0);
 #else
 	return (0);
 #endif
@@ -781,7 +786,7 @@ process_domem(struct lwp *curl /*tracer*/,
 	vm = p->p_vmspace;
 
 	simple_lock(&vm->vm_map.ref_lock);
-	if ((p->p_flag & P_WEXIT) || vm->vm_refcnt < 1)
+	if ((l->l_flag & L_WEXIT) || vm->vm_refcnt < 1)
 		error = EFAULT;
 	if (error == 0)
 		p->p_vmspace->vm_refcnt++;  /* XXX */
@@ -850,26 +855,23 @@ process_checkioperm(struct lwp *l, struct proc *t)
 void
 process_stoptrace(struct lwp *l)
 {
-	int s = 0, dolock = (l->l_flag & L_SINTR) == 0;
-	struct proc *p = l->l_proc, *pp = p->p_pptr;
+	struct proc *p = l->l_proc, *pp;
 
+	rw_enter(&proclist_lock, RW_READER);
+	pp = p->p_pptr;
 	if (pp->p_pid == 1) {
 		CLR(p->p_flag, P_SYSCALL);
+		rw_exit(&proclist_lock);
 		return;
 	}
-
 	p->p_xstat = SIGTRAP;
-	child_psignal(pp, dolock);
+	child_psignal(pp, 0);
+	rw_exit(&proclist_lock);
 
-	if (dolock)
-		SCHED_LOCK(s);
-
+	/* Acquire the sched-state mutex.  proc_stop will release it. */
+	mutex_enter(&p->p_smutex);
 	proc_stop(p, 1);
-
+	lwp_lock(l);
 	mi_switch(l, NULL);
-	SCHED_ASSERT_UNLOCKED();
-
-	if (dolock)
-		splx(s);
 }
 #endif /* KTRACE || PTRACE */

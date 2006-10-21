@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.53 2005/12/24 20:45:08 perry Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.53.20.1 2006/10/21 15:20:48 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.53 2005/12/24 20:45:08 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.53.20.1 2006/10/21 15:20:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,12 +323,12 @@ svr4_sys_signal(l, v, retval)
 	sighold:
 		sigemptyset(&ss);
 		sigaddset(&ss, signum);
-		return (sigprocmask1(p, SIG_BLOCK, &ss, 0));
+		return (sigprocmask1(l, SIG_BLOCK, &ss, 0));
 
 	case SVR4_SIGRELSE_MASK:
 		sigemptyset(&ss);
 		sigaddset(&ss, signum);
-		return (sigprocmask1(p, SIG_UNBLOCK, &ss, 0));
+		return (sigprocmask1(l, SIG_UNBLOCK, &ss, 0));
 
 	case SVR4_SIGIGNORE_MASK:
 		nbsa.sa_handler = SIG_IGN;
@@ -339,7 +339,7 @@ svr4_sys_signal(l, v, retval)
 	case SVR4_SIGPAUSE_MASK:
 		ss = p->p_sigctx.ps_sigmask;
 		sigdelset(&ss, signum);
-		return (sigsuspend1(p, &ss));
+		return (sigsuspend1(l, &ss));
 
 	default:
 		return (ENOSYS);
@@ -390,7 +390,7 @@ svr4_sys_sigprocmask(l, v, retval)
 			return error;
 		svr4_to_native_sigset(&nsss, &nbss);
 	}
-	error = sigprocmask1(l->l_proc, how,
+	error = sigprocmask1(l, how,
 	    SCARG(uap, set) ? &nbss : NULL, SCARG(uap, oset) ? &obss : NULL);
 	if (error)
 		return error;
@@ -508,7 +508,7 @@ svr4_getcontext(l, uc)
 		uc->uc_stack.ss_flags = p->p_sigctx.ps_sigstk.ss_flags;
 	}
 
-	(void)sigprocmask1(p, 0, NULL, &mask);
+	(void)sigprocmask1(l, 0, NULL, &mask);
 	native_to_svr4_sigset(&mask, &uc->uc_sigmask);
 
 	uc->uc_flags |= _UC_SIGMASK | _UC_STACK;
@@ -521,11 +521,10 @@ svr4_setcontext(l, uc)
 	struct svr4_ucontext *uc;
 {
 	sigset_t mask;
-	struct proc *p = l->l_proc;
 
 	if (uc->uc_flags & _UC_SIGMASK) {
 		svr4_to_native_sigset(&uc->uc_sigmask, &mask);
-		sigprocmask1(p, SIG_SETMASK, &mask, NULL);
+		sigprocmask1(l, SIG_SETMASK, &mask, NULL);
 	}
 
 	/* Ignore the stack; see comment in svr4_getcontext. */
