@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.84.8.1 2006/09/11 16:19:01 ad Exp $
+#	$NetBSD: Makefile,v 1.84.8.2 2006/10/21 14:26:59 ad Exp $
 
 INCSDIR= /usr/include/sys
 
 INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	bootblock.h bswap.h buf.h \
 	callout.h cdefs.h cdefs_aout.h \
-	cdefs_elf.h cdio.h chio.h clockctl.h conf.h core.h \
+	cdefs_elf.h cdio.h chio.h clockctl.h condvar.h conf.h core.h \
 	device.h dir.h dirent.h disk.h disklabel.h disklabel_acorn.h \
 	dkbad.h dkio.h dkstat.h domain.h drvctlio.h dvdio.h \
 	endian.h envsys.h errno.h evcnt.h event.h exec.h exec_aout.h \
@@ -23,12 +23,12 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	protosw.h ptrace.h queue.h \
 	ras.h reboot.h radioio.h resource.h resourcevar.h rnd.h rwlock.h \
 	sa.h scanio.h sched.h scsiio.h select.h selinfo.h sem.h sha1.h shm.h \
-	siginfo.h signal.h signalvar.h sigtypes.h socket.h \
+	siginfo.h signal.h signalvar.h sigtypes.h sleepq.h socket.h \
 	socketvar.h sockio.h stat.h statvfs.h syscall.h syscallargs.h \
 	sysctl.h stdint.h swap.h syslimits.h syslog.h \
 	tape.h termios.h time.h timeb.h timepps.h times.h \
 	timex.h trace.h tree.h tty.h ttychars.h ttycom.h \
-	ttydefaults.h ttydev.h turnstile.h types.h \
+	ttydefaults.h ttydev.h types.h \
 	ucontext.h ucred.h uio.h un.h unistd.h unpcb.h user.h utsname.h uuid.h \
 	vadvise.h verified_exec.h vmmeter.h vnode.h vnode_if.h \
 	wait.h wdog.h

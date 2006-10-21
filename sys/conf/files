@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.810.2.1 2006/09/11 18:56:28 ad Exp $
+#	$NetBSD: files,v 1.810.2.2 2006/10/21 14:27:00 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1265,6 +1265,8 @@ file	kern/init_sysent.c
 file	kern/kern_acct.c
 file	kern/kern_auth.c
 file	kern/kern_clock.c
+file	kern/kern_condvar.c
+file	kern/kern_core.c
 file	kern/kern_descrip.c
 file	kern/kern_event.c
 file	kern/kern_exec.c
@@ -1292,8 +1294,9 @@ file	kern/kern_rwlock.c
 file	kern/kern_sa.c
 file	kern/kern_securelevel.c
 file	kern/kern_sig.c
-file	kern/kern_systrace.c		systrace
+file	kern/kern_sleepq.c
 file	kern/kern_subr.c
+file	kern/kern_systrace.c		systrace
 file	kern/kern_synch.c
 file	kern/kern_sysctl.c
 file	kern/kern_tc.c
@@ -1314,6 +1317,7 @@ file	kern/subr_iostat.c
 file	kern/subr_evcnt.c
 file	kern/subr_extent.c
 file	kern/subr_kmem.c
+file	kern/subr_lockdebug.c
 file	kern/subr_log.c
 file	kern/subr_pool.c
 file	kern/subr_prf.c
@@ -1325,9 +1329,11 @@ file	kern/subr_vmem.c
 file	kern/subr_workqueue.c
 file	kern/subr_xxx.c
 file	kern/sys_generic.c
+file	kern/sys_lwp.c
 file	kern/sys_pipe.c			!pipe_socketpair
 file	kern/sys_pmc.c
 file	kern/sys_process.c		ptrace | ktrace
+file	kern/sys_sig.c
 file	kern/sys_socket.c
 file	kern/syscalls.c			syscall_debug
 file	kern/sysv_ipc.c			sysvshm | sysvsem | sysvmsg
