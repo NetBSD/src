@@ -753,6 +753,14 @@ copy_bb (inline_data *id, basic_block bb, int frequency_scale, int count_scale)
       if (stmt)
 	{
 	  tree call, decl;
+
+	  /* With return slot optimization we can end up with
+	     non-gimple (foo *)&this->m, fix that here.  */
+	  if (TREE_CODE (stmt) == MODIFY_EXPR
+	      && TREE_CODE (TREE_OPERAND (stmt, 1)) == NOP_EXPR
+	      && !is_gimple_val (TREE_OPERAND (TREE_OPERAND (stmt, 1), 0)))
+	    gimplify_stmt (&stmt);
+
           bsi_insert_after (&copy_bsi, stmt, BSI_NEW_STMT);
 	  call = get_call_expr_in (stmt);
 	  /* We're duplicating a CALL_EXPR.  Find any corresponding
@@ -1156,6 +1164,8 @@ setup_one_parameter (inline_data *id, tree p, tree value, tree fn,
       if (rhs == error_mark_node)
 	return;
 
+      STRIP_USELESS_TYPE_CONVERSION (rhs);
+
       /* We want to use MODIFY_EXPR, not INIT_EXPR here so that we
 	 keep our trees in gimple form.  */
       init_stmt = build (MODIFY_EXPR, TREE_TYPE (var), var, rhs);
@@ -1344,6 +1354,8 @@ declare_return_variable (inline_data *id, tree return_slot_addr,
   use = var;
   if (!lang_hooks.types_compatible_p (TREE_TYPE (var), caller_type))
     use = fold_convert (caller_type, var);
+    
+  STRIP_USELESS_TYPE_CONVERSION (use);
 
  done:
   /* Register the VAR_DECL as the equivalent for the RESULT_DECL; that
