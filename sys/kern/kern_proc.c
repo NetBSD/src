@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.98 2006/10/11 04:51:06 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.99 2006/10/21 17:01:56 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.98 2006/10/11 04:51:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.99 2006/10/21 17:01:56 pooka Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -723,7 +723,7 @@ enterpgrp(struct proc *p, pid_t pgid, int mksess)
 		new_pgrp = NULL;
 	}
 	if (mksess)
-		sess = pool_get(&session_pool, M_WAITOK);
+		sess = pool_get(&session_pool, PR_WAITOK);
 	else
 		sess = NULL;
 
