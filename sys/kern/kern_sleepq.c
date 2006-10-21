@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.1.2.2 2006/10/20 20:41:26 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.1.2.3 2006/10/21 14:03:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.2 2006/10/20 20:41:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.3 2006/10/21 14:03:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -469,19 +469,18 @@ sleepq_timeout(void *arg)
 int
 sleepq_sigtoerror(struct lwp *l, int sig)
 {
-	struct proc *p;
+	struct proc *p = l->l_proc;
 	int error;
+
+	LOCK_ASSERT(mutex_owned(&p->p_smutex));
 
 	/*
 	 * If this sleep was canceled, don't let the syscall restart.
 	 */
-	p = l->l_proc;
-	mutex_enter(&p->p_smutex);
 	if ((SIGACTION(p, sig).sa_flags & SA_RESTART) == 0)
 		error = EINTR;
 	else
 		error = ERESTART;
-	mutex_exit(&p->p_smutex);
 
 	return error;
 }
