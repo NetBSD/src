@@ -792,8 +792,8 @@ friend_accessible_p (tree scope, tree decl, tree binfo)
     if (protected_accessible_p (decl, TREE_VALUE (t), binfo))
       return 1;
 
-  /* Nested classes are implicitly friends of their enclosing types, as
-     per core issue 45 (this is a change from the standard).  */
+  /* Nested classes have the same access as their enclosing types, as
+     per DR 45 (this is a change from the standard).  */
   if (TYPE_P (scope))
     for (t = TYPE_CONTEXT (scope); t && TYPE_P (t); t = TYPE_CONTEXT (t))
       if (protected_accessible_p (decl, t, binfo))
@@ -1209,7 +1209,8 @@ lookup_member (tree xbasetype, tree name, int protect, bool want_type)
     }
   else
     {
-      gcc_assert (IS_AGGR_TYPE_CODE (TREE_CODE (xbasetype)));
+      if (!IS_AGGR_TYPE_CODE (TREE_CODE (xbasetype)))
+	return NULL_TREE;
       type = xbasetype;
       xbasetype = NULL_TREE;
     }
@@ -1480,13 +1481,12 @@ adjust_result_of_qualified_name_lookup (tree decl,
 					tree context_class)
 {
   if (context_class && context_class != error_mark_node
+      && CLASS_TYPE_P (context_class)
       && CLASS_TYPE_P (qualifying_scope)
       && DERIVED_FROM_P (qualifying_scope, context_class)
       && BASELINK_P (decl))
     {
       tree base;
-
-      gcc_assert (CLASS_TYPE_P (context_class));
 
       /* Look for the QUALIFYING_SCOPE as a base of the CONTEXT_CLASS.
 	 Because we do not yet know which function will be chosen by

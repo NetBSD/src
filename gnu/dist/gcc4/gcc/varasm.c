@@ -3935,14 +3935,17 @@ output_constant (tree exp, unsigned HOST_WIDE_INT size, unsigned int align)
       if (type_size > op_size
 	  && TREE_CODE (exp) != VIEW_CONVERT_EXPR
 	  && TREE_CODE (TREE_TYPE (exp)) != UNION_TYPE)
-	internal_error ("no-op convert from %wd to %wd bytes in initializer",
-			op_size, type_size);
-
-      exp = TREE_OPERAND (exp, 0);
+	/* Keep the conversion. */
+	break;
+      else
+	exp = TREE_OPERAND (exp, 0);
     }
 
   code = TREE_CODE (TREE_TYPE (exp));
   thissize = int_size_in_bytes (TREE_TYPE (exp));
+
+  /* Give the front end another chance to expand constants.  */
+  exp = lang_hooks.expand_constant (exp);
 
   /* Allow a constructor with no elements for any data type.
      This means to fill the space with zeros.  */
@@ -4022,8 +4025,12 @@ output_constant (tree exp, unsigned HOST_WIDE_INT size, unsigned int align)
 	    
 	    link = TREE_VECTOR_CST_ELTS (exp);
 	    output_constant (TREE_VALUE (link), elt_size, align);
+	    thissize = elt_size;
 	    while ((link = TREE_CHAIN (link)) != NULL)
-	      output_constant (TREE_VALUE (link), elt_size, nalign);
+	      {
+		output_constant (TREE_VALUE (link), elt_size, nalign);
+		thissize += elt_size;
+	      }
 	    break;
 	  }
 	default:

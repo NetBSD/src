@@ -3463,6 +3463,11 @@ to build despite this, running into an internal error of the native
 its maximum of 262144 bytes.  If you have root access, you can use the
 @command{systune} command to do this.
 
+@code{wchar_t} support in @samp{libstdc++} is not available for old
+IRIX 6.5.x releases, @math{x < 19}.  The problem cannot be autodetected
+and in order to build GCC for such targets you need to configure with
+@option{--disable-wchar_t}.
+
 See @uref{http://freeware.sgi.com/} for more
 information about using GCC on IRIX platforms.
 
@@ -3725,9 +3730,9 @@ ld: warning: relocation error: R_SPARC_UA32: @dots{}
 To work around this problem, compile with @option{-gstabs+} instead of
 plain @option{-g}.
 
-When configuring the GNU Multiple Precision Library (GMP) on a Solaris 7
-or later system, the canonical target triplet must be specified as the
-@command{build} parameter on the configure line:
+When configuring the GNU Multiple Precision Library (GMP) version 4.1.x
+on a Solaris 7 or later system, the canonical target triplet must be
+specified as the @command{build} parameter on the configure line:
 
 @smallexample
 ./configure --build=sparc-sun-solaris2.7 --prefix=xxx --enable-mpfr
