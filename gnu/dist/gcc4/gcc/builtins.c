@@ -276,16 +276,44 @@ get_pointer_alignment (tree exp, unsigned int max_align)
 	  /* See what we are pointing at and look at its alignment.  */
 	  exp = TREE_OPERAND (exp, 0);
 	  inner = max_align;
-	  while (handled_component_p (exp))
+	  if (handled_component_p (exp))
 	    {
-	      /* Fields in a structure can be packed, honour DECL_ALIGN
-		 of the FIELD_DECL.  For all other references the conservative 
-		 alignment is the element type alignment.  */
-	      if (TREE_CODE (exp) == COMPONENT_REF)
-		inner = MIN (inner, DECL_ALIGN (TREE_OPERAND (exp, 1)));
-	      else
-		inner = MIN (inner, TYPE_ALIGN (TREE_TYPE (exp)));
-	      exp = TREE_OPERAND (exp, 0);
+	      HOST_WIDE_INT bitsize, bitpos;
+	      tree offset;
+	      enum machine_mode mode; 
+	      int unsignedp, volatilep;
+
+	      exp = get_inner_reference (exp, &bitsize, &bitpos, &offset,
+					 &mode, &unsignedp, &volatilep, true);
+	      if (bitpos)
+		inner = MIN (inner, (unsigned) (bitpos & -bitpos));
+	      if (offset && TREE_CODE (offset) == PLUS_EXPR
+		  && host_integerp (TREE_OPERAND (offset, 1), 1))
+	        {
+		  /* Any overflow in calculating offset_bits won't change
+		     the alignment.  */
+		  unsigned offset_bits
+		    = ((unsigned) tree_low_cst (TREE_OPERAND (offset, 1), 1)
+		       * BITS_PER_UNIT);
+
+		  if (offset_bits)
+		    inner = MIN (inner, (offset_bits & -offset_bits));
+		  offset = TREE_OPERAND (offset, 0);
+		}
+	      if (offset && TREE_CODE (offset) == MULT_EXPR
+		  && host_integerp (TREE_OPERAND (offset, 1), 1))
+	        {
+		  /* Any overflow in calculating offset_factor won't change
+		     the alignment.  */
+		  unsigned offset_factor
+		    = ((unsigned) tree_low_cst (TREE_OPERAND (offset, 1), 1)
+		       * BITS_PER_UNIT);
+
+		  if (offset_factor)
+		    inner = MIN (inner, (offset_factor & -offset_factor));
+		}
+	      else if (offset)
+		inner = MIN (inner, BITS_PER_UNIT);
 	    }
 	  if (TREE_CODE (exp) == FUNCTION_DECL)
 	    align = FUNCTION_BOUNDARY;
@@ -295,6 +323,9 @@ get_pointer_alignment (tree exp, unsigned int max_align)
 	  else if (CONSTANT_CLASS_P (exp))
 	    align = MIN (inner, (unsigned)CONSTANT_ALIGNMENT (exp, align));
 #endif
+	  else if (TREE_CODE (exp) == VIEW_CONVERT_EXPR
+		   || TREE_CODE (exp) == INDIRECT_REF)
+	    align = MIN (TYPE_ALIGN (TREE_TYPE (exp)), inner);
 	  else
 	    align = MIN (align, inner);
 	  return MIN (align, max_align);
@@ -647,7 +678,12 @@ expand_builtin_setjmp_receiver (rtx receiver_label ATTRIBUTE_UNUSED)
 #ifdef HAVE_nonlocal_goto
   if (! HAVE_nonlocal_goto)
 #endif
-    emit_move_insn (virtual_stack_vars_rtx, hard_frame_pointer_rtx);
+    {
+      emit_move_insn (virtual_stack_vars_rtx, hard_frame_pointer_rtx);
+      /* This might change the hard frame pointer in ways that aren't
+	 apparent to early optimization passes, so force a clobber.  */
+      emit_insn (gen_rtx_CLOBBER (VOIDmode, hard_frame_pointer_rtx));
+    }
 
 #if ARG_POINTER_REGNUM != HARD_FRAME_POINTER_REGNUM
   if (fixed_regs[ARG_POINTER_REGNUM])
@@ -728,6 +764,12 @@ expand_builtin_setjmp (tree arglist, rtx target)
 
   emit_label (next_lab);
 
+  /* Because setjmp and longjmp are not represented in the CFG, a cfgcleanup
+     may find that the basic block starting with NEXT_LAB is unreachable.
+     The whole block, along with NEXT_LAB, would be removed (see PR26983).
+     Make sure that never happens.  */
+  LABEL_PRESERVE_P (next_lab) = 1;
+     
   expand_builtin_setjmp_receiver (next_lab);
 
   /* Set TARGET to one.  */
@@ -5507,6 +5549,8 @@ expand_builtin_sync_operation (enum machine_mode mode, tree arglist,
 
   arglist = TREE_CHAIN (arglist);
   val = expand_expr (TREE_VALUE (arglist), NULL, mode, EXPAND_NORMAL);
+  /* If VAL is promoted to a wider mode, convert it back to MODE.  */
+  val = convert_to_mode (mode, val, 1);
 
   if (ignore)
     return expand_sync_operation (mem, val, code);
@@ -5530,9 +5574,13 @@ expand_builtin_compare_and_swap (enum machine_mode mode, tree arglist,
 
   arglist = TREE_CHAIN (arglist);
   old_val = expand_expr (TREE_VALUE (arglist), NULL, mode, EXPAND_NORMAL);
+  /* If OLD_VAL is promoted to a wider mode, convert it back to MODE.  */
+  old_val = convert_to_mode (mode, old_val, 1);
 
   arglist = TREE_CHAIN (arglist);
   new_val = expand_expr (TREE_VALUE (arglist), NULL, mode, EXPAND_NORMAL);
+  /* If NEW_VAL is promoted to a wider mode, convert it back to MODE.  */
+  new_val = convert_to_mode (mode, new_val, 1);
 
   if (is_bool)
     return expand_bool_compare_and_swap (mem, old_val, new_val, target);
@@ -5557,6 +5605,8 @@ expand_builtin_lock_test_and_set (enum machine_mode mode, tree arglist,
 
   arglist = TREE_CHAIN (arglist);
   val = expand_expr (TREE_VALUE (arglist), NULL, mode, EXPAND_NORMAL);
+  /* If VAL is promoted to a wider mode, convert it back to MODE.  */
+  val = convert_to_mode (mode, val, 1);
 
   return expand_sync_lock_test_and_set (mem, val, target);
 }
@@ -6885,6 +6935,50 @@ fold_fixed_mathfn (tree fndecl, tree arglist)
 	  return build_function_call_expr (decl, arglist);
 	}
     }
+
+  /* Canonicalize llround (x) to lround (x) on LP64 targets where
+     sizeof (long long) == sizeof (long).  */
+  if (TYPE_PRECISION (long_long_integer_type_node)
+      == TYPE_PRECISION (long_integer_type_node))
+    {
+      tree newfn = NULL_TREE;
+      switch (fcode)
+	{
+	case BUILT_IN_LLCEIL:
+	case BUILT_IN_LLCEILF:
+	case BUILT_IN_LLCEILL:
+	  newfn = mathfn_built_in (TREE_TYPE (arg), BUILT_IN_LCEIL);
+	  break;
+
+	case BUILT_IN_LLFLOOR:
+	case BUILT_IN_LLFLOORF:
+	case BUILT_IN_LLFLOORL:
+	  newfn = mathfn_built_in (TREE_TYPE (arg), BUILT_IN_LFLOOR);
+	  break;
+
+	case BUILT_IN_LLROUND:
+	case BUILT_IN_LLROUNDF:
+	case BUILT_IN_LLROUNDL:
+	  newfn = mathfn_built_in (TREE_TYPE (arg), BUILT_IN_LROUND);
+	  break;
+
+	case BUILT_IN_LLRINT:
+	case BUILT_IN_LLRINTF:
+	case BUILT_IN_LLRINTL:
+	  newfn = mathfn_built_in (TREE_TYPE (arg), BUILT_IN_LRINT);
+	  break;
+
+	default:
+	  break;
+	}
+
+      if (newfn)
+	{
+	  tree newcall = build_function_call_expr (newfn, arglist);
+	  return fold_convert (TREE_TYPE (TREE_TYPE (fndecl)), newcall);
+	}
+    }
+
   return 0;
 }
 
