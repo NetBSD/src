@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.732 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.733 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -124,3 +124,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		(at least on macppc). [tsutsui 20061014]
 	gpt(8): Added from FreeBSD [christos 20061015]
 	tcp(4): Added RFC 3465 Appropriate Byte Counting (ABC) [yamt 20061019]
+	wm(4): Added support for the Intel 80003 gigabit ethernet controller.
+		[bouyer 20061021]
