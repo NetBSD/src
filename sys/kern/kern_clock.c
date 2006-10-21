@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.102 2006/09/02 06:21:32 christos Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.102.2.1 2006/10/21 14:03:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.102 2006/09/02 06:21:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.102.2.1 2006/10/21 14:03:42 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -1113,12 +1113,14 @@ proftick(struct clockframe *frame)
         struct gmonparam *g;
         intptr_t i;
 #endif
+	struct lwp *l;
 	struct proc *p;
 
-	p = curproc;
+	l = curlwp;
+	p = (l ? l->l_proc : NULL);
 	if (CLKF_USERMODE(frame)) {
 		if (p->p_flag & P_PROFIL)
-			addupc_intr(p, CLKF_PC(frame));
+			addupc_intr(l, CLKF_PC(frame));
 	} else {
 #ifdef GPROF
 		g = &_gmonparam;
@@ -1131,8 +1133,8 @@ proftick(struct clockframe *frame)
 		}
 #endif
 #ifdef PROC_PC
-                if (p && (p->p_flag & P_PROFIL))
-                        addupc_intr(p, PROC_PC(p));
+                if (l && (p->p_flag & P_PROFIL))
+                        addupc_intr(l, PROC_PC(p));
 #endif
 	}
 }
@@ -1168,12 +1170,13 @@ statclock(struct clockframe *frame)
 		}
 	}
 	l = curlwp;
-	p = (l ? l->l_proc : NULL);
+	if ((p = (l ? l->l_proc : NULL)) != NULL)
+		mutex_enter(&p->p_smutex);
 	if (CLKF_USERMODE(frame)) {
 		KASSERT(p != NULL);
 
 		if ((p->p_flag & P_PROFIL) && profsrc == PROFSRC_CLOCK)
-			addupc_intr(p, CLKF_PC(frame));
+			addupc_intr(l, CLKF_PC(frame));
 		if (--spc->spc_pscnt > 0)
 			return;
 		/*
@@ -1201,7 +1204,7 @@ statclock(struct clockframe *frame)
 #endif
 #ifdef LWP_PC
 		if (p && profsrc == PROFSRC_CLOCK && (p->p_flag & P_PROFIL))
-			addupc_intr(p, LWP_PC(l));
+			addupc_intr(l, LWP_PC(l));
 #endif
 		if (--spc->spc_pscnt > 0)
 			return;
@@ -1240,6 +1243,8 @@ statclock(struct clockframe *frame)
 				schedclock(l);
 				ci->ci_schedstate.spc_schedticks = statscheddiv;
 			}
+
+		mutex_exit(&p->p_smutex);
 	}
 }
 
