@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.276.4.1 2006/09/11 16:19:01 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.276.4.2 2006/10/21 14:31:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.1 2006/09/11 16:19:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.2 2006/10/21 14:31:56 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -115,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.1 2006/09/11 16:19:01 ad Exp $
 #include <sys/sysctl.h>
 #include <sys/event.h>
 #include <sys/mbuf.h>
-#include <sys/turnstile.h>
+#include <sys/sleepq.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -145,6 +145,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.1 2006/09/11 16:19:01 ad Exp $
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
 #endif /* NVERIEXEC > 0 */
+#include <sys/lockdebug.h>
 #include <sys/kauth.h>
 #include <net80211/ieee80211_netbsd.h>
 
@@ -223,6 +224,10 @@ main(void)
 	l->l_proc = &proc0;
 	l->l_lid = 1;
 
+#ifdef LOCKDEBUG
+	lockdebug_init();
+#endif
+
 	/*
 	 * Attempt to find console and initialize
 	 * in case of early panic or other messages.
@@ -280,10 +285,10 @@ main(void)
 	 */
 	(void)chgproccnt(0, 1);
 
+	/* Initialize the run queues, turnstiles and sleep queues. */
 	rqinit();
-
-	/* Initiaize turnstiles. */
 	turnstile_init();
+	sleeptab_init();
 
 	/* Initialize the sysctl subsystem. */
 	sysctl_init();
@@ -466,27 +471,29 @@ main(void)
 
 	/*
 	 * Now can look at time, having had a chance to verify the time
-	 * from the file system.  Reset p->p_rtime as it may have been
+	 * from the file system.  Reset l->l_rtime as it may have been
 	 * munched in mi_switch() after the time got set.
 	 */
-	rw_enter(&proclist_lock, RW_READER);
-	SCHED_LOCK(s);
 #ifdef __HAVE_TIMECOUNTER
 	getmicrotime(&time);
 #else
 	mono_time = time;
 #endif
 	boottime = time;
+	rw_enter(&proclist_lock, RW_READER);
 	LIST_FOREACH(p, &allproc, p_list) {
 		KASSERT((p->p_flag & P_MARKER) == 0);
+		mutex_enter(&p->p_smutex);
 		p->p_stats->p_start = time;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+			lwp_lock(l);
 			if (l->l_cpu != NULL)
 				l->l_cpu->ci_schedstate.spc_runtime = time;
+			l->l_rtime.tv_sec = l->l_rtime.tv_usec = 0;
+			lwp_unlock(l);
 		}
-		p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
+		mutex_exit(&p->p_smutex);
 	}
-	SCHED_UNLOCK(s);
 	rw_exit(&proclist_lock);
 
 	/* Create the pageout daemon kernel thread. */
@@ -709,4 +716,14 @@ start_init(void *arg)
 	}
 	printf("init: not found\n");
 	panic("no init");
+}
+
+/*
+ * Machine-independent per-CPU initialization.
+ */
+void
+mi_cpu_init(struct cpu_info *ci)
+{
+
+	mutex_init(&ci->ci_sched_mutex, MUTEX_SPIN, IPL_SCHED);
 }
