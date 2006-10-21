@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.9 2006/10/21 07:22:48 skrll Exp $	*/
 
 /*	$OpenBSD: bus.h,v 1.13 2001/07/30 14:15:59 art Exp $	*/
 
@@ -191,7 +191,7 @@ extern const struct hppa_bus_space_tag hppa_bustag;
 #define	bus_space_subregion(t,h,o,c,hp) \
 	(((t)->hbt_subregion)((t)->hbt_cookie,(h),(o),(c),(hp)))
 #define	bus_space_alloc(t,b,e,c,al,bn,ca,ap,hp) \
-	(((t)->hbt_alloc)((t)->hbt_alloc,(b),(e),(c),(al),(bn),(ca),(ap),(hp)))
+	(((t)->hbt_alloc)((t)->hbt_cookie,(b),(e),(c),(al),(bn),(ca),(ap),(hp)))
 #define	bus_space_free(t,h,c) \
 	(((t)->hbt_free)((t)->hbt_cookie,(h),(c)))
 #define	bus_space_barrier(t,h,o,l,op) \
