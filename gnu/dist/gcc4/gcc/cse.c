@@ -528,6 +528,10 @@ struct table_elt
 
 static struct table_elt *table[HASH_SIZE];
 
+/* Number of elements in the hash table.  */
+
+static unsigned int table_size;
+
 /* Chain of `struct table_elt's made so far for this function
    but currently removed from the table.  */
 
@@ -962,6 +966,8 @@ new_basic_block (void)
 	}
     }
 
+  table_size = 0;
+
 #ifdef HAVE_cc0
   prev_insn = 0;
   prev_insn_cc0 = 0;
@@ -1372,6 +1378,8 @@ remove_from_table (struct table_elt *elt, unsigned int hash)
   /* Now add it to the free element chain.  */
   elt->next_same_hash = free_element_chain;
   free_element_chain = elt;
+
+  table_size--;
 }
 
 /* Look up X in the hash table and return its table element,
@@ -1648,6 +1656,8 @@ insert (rtx x, struct table_elt *classp, unsigned int hash, enum machine_mode mo
 	  subelt_prev->related_value = elt;
 	}
     }
+
+  table_size++;
 
   return elt;
 }
@@ -3441,10 +3451,10 @@ fold_rtx_subreg (rtx x, rtx insn)
   return x;
 }
 
-/* Fold MEM.  */
+/* Fold MEM.  Not to be called directly, see fold_rtx_mem instead.  */
 
 static rtx
-fold_rtx_mem (rtx x, rtx insn)
+fold_rtx_mem_1 (rtx x, rtx insn)
 {
   enum machine_mode mode = GET_MODE (x);
   rtx new;
@@ -3605,6 +3615,51 @@ fold_rtx_mem (rtx x, rtx insn)
 
     return x;
   }
+}
+
+/* Fold MEM.  */
+
+static rtx
+fold_rtx_mem (rtx x, rtx insn)
+{
+  /* To avoid infinite oscillations between fold_rtx and fold_rtx_mem,
+     refuse to allow recursion of the latter past n levels.  This can
+     happen because fold_rtx_mem will try to fold the address of the
+     memory reference it is passed, i.e. conceptually throwing away
+     the MEM and reinjecting the bare address into fold_rtx.  As a
+     result, patterns like
+
+       set (reg1)
+	   (plus (reg)
+		 (mem (plus (reg2) (const_int))))
+
+       set (reg2)
+	   (plus (reg)
+		 (mem (plus (reg1) (const_int))))
+
+     will defeat any "first-order" short-circuit put in either
+     function to prevent these infinite oscillations.
+
+     The heuristics for determining n is as follows: since each time
+     it is invoked fold_rtx_mem throws away a MEM, and since MEMs
+     are generically not nested, we assume that each invocation of
+     fold_rtx_mem corresponds to a new "top-level" operand, i.e.
+     the source or the destination of a SET.  So fold_rtx_mem is
+     bound to stop or cycle before n recursions, n being the number
+     of expressions recorded in the hash table.  We also leave some
+     play to account for the initial steps.  */
+
+  static unsigned int depth;
+  rtx ret;
+
+  if (depth > 3 + table_size)
+    return x;
+
+  depth++;
+  ret = fold_rtx_mem_1 (x, insn);
+  depth--;
+
+  return ret;
 }
 
 /* If X is a nontrivial arithmetic operation on an argument
@@ -4220,21 +4275,23 @@ fold_rtx (rtx x, rtx insn)
 	    {
 	      int is_shift
 		= (code == ASHIFT || code == ASHIFTRT || code == LSHIFTRT);
-	      rtx y = lookup_as_function (folded_arg0, code);
-	      rtx inner_const;
+	      rtx y, inner_const, new_const;
 	      enum rtx_code associate_code;
-	      rtx new_const;
 
-	      if (y == 0
-		  || 0 == (inner_const
-			   = equiv_constant (fold_rtx (XEXP (y, 1), 0)))
-		  || GET_CODE (inner_const) != CONST_INT
-		  /* If we have compiled a statement like
-		     "if (x == (x & mask1))", and now are looking at
-		     "x & mask2", we will have a case where the first operand
-		     of Y is the same as our first operand.  Unless we detect
-		     this case, an infinite loop will result.  */
-		  || XEXP (y, 0) == folded_arg0)
+	      y = lookup_as_function (folded_arg0, code);
+	      if (y == 0)
+		break;
+
+	      /* If we have compiled a statement like
+		 "if (x == (x & mask1))", and now are looking at
+		 "x & mask2", we will have a case where the first operand
+		 of Y is the same as our first operand.  Unless we detect
+		 this case, an infinite loop will result.  */
+	      if (XEXP (y, 0) == folded_arg0)
+		break;
+
+	      inner_const = equiv_constant (fold_rtx (XEXP (y, 1), 0));
+	      if (!inner_const || GET_CODE (inner_const) != CONST_INT)
 		break;
 
 	      /* Don't associate these operations if they are a PLUS with the
@@ -4697,6 +4754,8 @@ struct set
   unsigned src_const_hash;
   /* Table entry for constant equivalent for SET_SRC, if any.  */
   struct table_elt *src_const_elt;
+  /* Table entry for the destination address.  */
+  struct table_elt *dest_addr_elt;
 };
 
 static void
@@ -5936,6 +5995,40 @@ cse_insn (rtx insn, rtx libcall_insn)
 	 so that the destination goes into that class.  */
       sets[i].src_elt = src_eqv_elt;
 
+  /* Record destination addresses in the hash table.  This allows us to
+     check if they are invalidated by other sets.  */
+  for (i = 0; i < n_sets; i++)
+    {
+      if (sets[i].rtl)
+	{
+	  rtx x = sets[i].inner_dest;
+	  struct table_elt *elt;
+	  enum machine_mode mode;
+	  unsigned hash;
+
+	  if (MEM_P (x))
+	    {
+	      x = XEXP (x, 0);
+	      mode = GET_MODE (x);
+	      hash = HASH (x, mode);
+	      elt = lookup (x, hash, mode);
+	      if (!elt)
+		{
+		  if (insert_regs (x, NULL, 0))
+		    {
+		      rehash_using_reg (x);
+		      hash = HASH (x, mode);
+		    }
+		  elt = insert (x, NULL, hash, mode);
+		}
+
+	      sets[i].dest_addr_elt = elt;
+	    }
+	  else
+	    sets[i].dest_addr_elt = NULL;
+	}
+    }
+
   invalidate_from_clobbers (x);
 
   /* Some registers are invalidated by subroutine calls.  Memory is
@@ -6028,12 +6121,20 @@ cse_insn (rtx insn, rtx libcall_insn)
     }
 
   /* We may have just removed some of the src_elt's from the hash table.
-     So replace each one with the current head of the same class.  */
+     So replace each one with the current head of the same class.
+     Also check if destination addresses have been removed.  */
 
   for (i = 0; i < n_sets; i++)
     if (sets[i].rtl)
       {
-	if (sets[i].src_elt && sets[i].src_elt->first_same_value == 0)
+	if (sets[i].dest_addr_elt
+	    && sets[i].dest_addr_elt->first_same_value == 0)
+	  {
+	    /* The elt was removed, which means this destination s not
+	       valid after this instruction.  */
+	    sets[i].rtl = NULL_RTX;
+	  }
+	else if (sets[i].src_elt && sets[i].src_elt->first_same_value == 0)
 	  /* If elt was removed, find current head of same class,
 	     or 0 if nothing remains of that class.  */
 	  {
