@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.44 2006/10/21 16:13:21 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.45 2006/10/21 21:29:14 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1503,7 +1503,7 @@ static int
 re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 {
 	bus_dmamap_t		map;
-	int			error, i, uidx, startidx, curidx;
+	int			error, i, uidx, startidx, curidx, lastidx;
 #ifdef RE_VLAN
 	struct m_tag		*mtag;
 #endif
@@ -1584,9 +1584,9 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 	 * set this descriptor later when it start transmission or
 	 * reception.)
 	 */
-	i = 0;
 	curidx = startidx = sc->rtk_ldata.rtk_tx_nextfree;
-	for (;;) {
+	lastidx = -1;
+	for (i = 0; i < map->dm_nsegs; i++, RTK_TX_DESC_INC(sc, curidx)) {
 		d = &sc->rtk_ldata.rtk_tx_list[curidx];
 		RTK_TXDESCSYNC(sc, curidx,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -1595,13 +1595,12 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 		if (cmdstat & RTK_TDESC_STAT_OWN) {
 			aprint_error("%s: tried to map busy TX descriptor\n",
 			    sc->sc_dev.dv_xname);
-			while (i > 0) {
+			for (; i > 0; i--) {
 				uidx = (curidx + RTK_TX_DESC_CNT(sc) - i) %
 				    RTK_TX_DESC_CNT(sc);
 				sc->rtk_ldata.rtk_tx_list[uidx].rtk_cmdstat = 0;
 				RTK_TXDESCSYNC(sc, uidx,
 				    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-				i--;
 			}
 			error = ENOBUFS;
 			goto fail_unload;
@@ -1612,8 +1611,10 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 			cmdstat |= RTK_TDESC_CMD_SOF;
 		else
 			cmdstat |= RTK_TDESC_CMD_OWN;
-		if (i == map->dm_nsegs - 1)
+		if (i == map->dm_nsegs - 1) {
 			cmdstat |= RTK_TDESC_CMD_EOF;
+			lastidx = curidx;
+		}
 		if (curidx == (RTK_TX_DESC_CNT(sc) - 1))
 			cmdstat |= RTK_TDESC_CMD_EOR;
 		d->rtk_cmdstat = htole32(cmdstat | rtk_flags);
@@ -1623,14 +1624,8 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 		    htole32(RTK_ADDR_HI(map->dm_segs[i].ds_addr));
 		RTK_TXDESCSYNC(sc, curidx,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-		i++;
-		if (i == map->dm_nsegs)
-			break;
-		RTK_TX_DESC_INC(sc, curidx);
 	}
-
-	txq->txq_mbuf = m;
-	sc->rtk_ldata.rtk_tx_free -= map->dm_nsegs;
+	KASSERT(lastidx != -1);
 
 	/*
 	 * Set up hardware VLAN tagging. Note: vlan tag info must
@@ -1652,9 +1647,13 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 	    htole32(RTK_TDESC_CMD_OWN);
 	RTK_TXDESCSYNC(sc, startidx, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-	txq->txq_descidx = curidx;
-	RTK_TX_DESC_INC(sc, curidx);
+	/* update info of TX queue and descriptors */
+	txq->txq_mbuf = m;
+	txq->txq_descidx = lastidx;
+
+	sc->rtk_ldata.rtk_tx_free -= map->dm_nsegs;
 	sc->rtk_ldata.rtk_tx_nextfree = curidx;
+
 	*idx = (*idx + 1) % RTK_TX_QLEN;
 
 	return 0;
