@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.582 2006/10/21 05:54:32 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.583 2006/10/21 08:11:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.582 2006/10/21 05:54:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.583 2006/10/21 08:11:49 skrll Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1038,7 +1038,7 @@ cpu_dumpconf()
 	bdev = bdevsw_lookup(dumpdev);
 	if (bdev == NULL) {
 		dumpdev = NODEV;
-		goto out;
+		goto bad;
 	}
 	if (bdev->d_psize == NULL)
 		goto bad;
