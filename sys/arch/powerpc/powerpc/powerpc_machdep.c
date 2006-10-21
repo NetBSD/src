@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.31 2006/08/05 21:26:49 sanjayl Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.32 2006/10/21 05:54:32 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.31 2006/08/05 21:26:49 sanjayl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.32 2006/10/21 05:54:32 mrg Exp $");
 
 #include "opt_altivec.h"
 
@@ -204,8 +204,10 @@ cpu_dumpconf(void)
 	if (dumpdev == NODEV)
 		return;
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdev == NULL) {
+		dumpdev = NODEV;
+		return;
+	}
 	if (bdev->d_psize == NULL)
 		return;
 	nblks = (*bdev->d_psize)(dumpdev);

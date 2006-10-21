@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 2006/10/05 15:10:31 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 2006/10/21 05:54:31 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2006/10/05 15:10:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2006/10/21 05:54:31 mrg Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -710,8 +710,10 @@ cpu_dumpconf(void)
 	if (dumpdev == NODEV)
 		goto bad;
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdev == NULL) {
+		dumpdev = NODEV;
+		goto bad;
+	}
 	if (bdev->d_psize == NULL)
 		goto bad;
 	nblks = (*bdev->d_psize)(dumpdev);
