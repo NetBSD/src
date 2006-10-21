@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.19 2006/10/12 01:31:25 christos Exp $	*/
+/*	$NetBSD: makphy.c,v 1.20 2006/10/21 13:55:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.19 2006/10/12 01:31:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.20 2006/10/21 13:55:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,6 +199,15 @@ makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			break;
 
 		mii_phy_setmedia(sc);
+		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
+			/*
+			 * when not in auto mode, we need to restart nego
+			 * anyway, or a switch from a fixed mode to another
+			 * fixed mode may not be seen by the switch.
+			 */
+			PHY_WRITE(sc, MII_BMCR,
+			    PHY_READ(sc, MII_BMCR) | BMCR_STARTNEG);
+		}
 		break;
 
 	case MII_TICK:
