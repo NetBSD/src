@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.108 2006/10/12 04:35:40 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.109 2006/10/21 05:54:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.108 2006/10/12 04:35:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.109 2006/10/21 05:54:34 mrg Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -565,7 +565,10 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 			error = ENOTBLK;
 			break;
 		}
-		dumpdev = vp->v_rdev;
+		if (bdevsw_lookup(vp->v_rdev))
+			dumpdev = vp->v_rdev;
+		else
+			dumpdev = NODEV;
 		cpu_dumpconf();
 		break;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.288 2005/12/11 12:16:10 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.289 2006/10/21 05:54:31 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.288 2005/12/11 12:16:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.289 2006/10/21 05:54:31 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1177,8 +1177,10 @@ cpu_dumpconf()
 	if (dumpdev == NODEV)
 		goto bad;
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdev == NULL) {
+		dumpdev = NODEV;
+		goto bad;
+	}
 	if (bdev->d_psize == NULL)
 		goto bad;
 	nblks = (*bdev->d_psize)(dumpdev);

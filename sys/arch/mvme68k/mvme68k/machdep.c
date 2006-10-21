@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.115 2006/08/04 01:58:49 mhitch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.116 2006/10/21 05:54:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115 2006/08/04 01:58:49 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116 2006/10/21 05:54:32 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -933,8 +933,10 @@ cpu_dumpconf()
 	if (dumpdev == NODEV)
 		goto bad;
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdev == NULL) {
+		dumpdev = NODEV;
+		goto bad;
+	}
 	if (bdev->d_psize == NULL)
 		goto bad;
 	nblks = (*bdev->d_psize)(dumpdev);

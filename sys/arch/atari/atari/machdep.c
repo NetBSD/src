@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.139 2005/12/24 22:45:34 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.140 2006/10/21 05:54:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 2005/12/24 22:45:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140 2006/10/21 05:54:31 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -492,7 +492,11 @@ cpu_dumpconf()
 
 	if (dumpdev != NODEV) {
 		bdev = bdevsw_lookup(dumpdev);
-		if (bdev != NULL && bdev->d_psize != NULL) {
+		if (bdev == NULL) {
+			dumpdev = NODEV;
+			return;
+		}
+		if (bdev->d_psize != NULL) {
 			nblks = (*bdev->d_psize)(dumpdev);
 			if (dumpsize > btoc(dbtob(nblks - dumplo)))
 				dumpsize = btoc(dbtob(nblks - dumplo));
