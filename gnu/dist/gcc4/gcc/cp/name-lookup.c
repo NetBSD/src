@@ -602,9 +602,6 @@ pushdecl_maybe_friend (tree x, bool is_friend)
     {
       int different_binding_level = 0;
 
-      if (TREE_CODE (x) == FUNCTION_DECL || DECL_FUNCTION_TEMPLATE_P (x))
-       check_default_args (x);
-
       if (TREE_CODE (name) == TEMPLATE_ID_EXPR)
 	name = TREE_OPERAND (name, 0);
 
@@ -669,14 +666,28 @@ pushdecl_maybe_friend (tree x, bool is_friend)
 	      if (decls_match (x, t))
 		/* The standard only says that the local extern
 		   inherits linkage from the previous decl; in
-		   particular, default args are not shared.  We must
-		   also tell cgraph to treat these decls as the same,
-		   or we may neglect to emit an "unused" static - we
-		   do this by making the DECL_UIDs equal, which should
-		   be viewed as a kludge.  FIXME.  */
+		   particular, default args are not shared.  Add
+		   the decl into a hash table to make sure only
+		   the previous decl in this case is seen by the
+		   middle end.  */
 		{
+		  struct cxx_int_tree_map *h;
+		  void **loc;
+
 		  TREE_PUBLIC (x) = TREE_PUBLIC (t);
-		  DECL_UID (x) = DECL_UID (t);
+
+		  if (cp_function_chain->extern_decl_map == NULL)
+		    cp_function_chain->extern_decl_map
+		      = htab_create_ggc (20, cxx_int_tree_map_hash,
+					 cxx_int_tree_map_eq, NULL);
+
+		  h = GGC_NEW (struct cxx_int_tree_map);
+		  h->uid = DECL_UID (x);
+		  h->to = t;
+		  loc = htab_find_slot_with_hash
+			  (cp_function_chain->extern_decl_map, h,
+			   h->uid, INSERT);
+		  *(struct cxx_int_tree_map **) loc = h;
 		}
 	    }
 	  else if (TREE_CODE (t) == PARM_DECL)
@@ -732,6 +743,9 @@ pushdecl_maybe_friend (tree x, bool is_friend)
 		}
 	    }
 	}
+
+      if (TREE_CODE (x) == FUNCTION_DECL || DECL_FUNCTION_TEMPLATE_P (x))
+	check_default_args (x);
 
       check_template_shadow (x);
 
@@ -2584,6 +2598,9 @@ push_class_level_binding (tree name, tree x)
   if (!class_binding_level)
     POP_TIMEVAR_AND_RETURN (TV_NAME_LOOKUP, true);
 
+  if (name == error_mark_node)
+    POP_TIMEVAR_AND_RETURN (TV_NAME_LOOKUP, false);
+
   /* Check for invalid member names.  */
   gcc_assert (TYPE_BEING_DEFINED (current_class_type));
   /* We could have been passed a tree list if this is an ambiguous
@@ -2738,6 +2755,9 @@ do_class_using_decl (tree scope, tree name)
   tree base_binfo;
   int i;
 
+  if (name == error_mark_node)
+    return NULL_TREE;
+
   if (!scope || !TYPE_P (scope))
     {
       error ("using-declaration for non-member at class scope");
@@ -2790,18 +2810,19 @@ do_class_using_decl (tree scope, tree name)
      class type.  However, if all of the base classes are
      non-dependent, then we can avoid delaying the check until
      instantiation.  */
-  if (!scope_dependent_p && !bases_dependent_p)
+  if (!scope_dependent_p)
     {
       base_kind b_kind;
-      tree binfo;
       binfo = lookup_base (current_class_type, scope, ba_any, &b_kind);
       if (b_kind < bk_proper_base)
 	{
-	  error_not_base_type (scope, current_class_type);
-	  return NULL_TREE;
+	  if (!bases_dependent_p)
+	    {
+	      error_not_base_type (scope, current_class_type);
+	      return NULL_TREE;
+	    }
 	}
-
-      if (!name_dependent_p)
+      else if (!name_dependent_p)
 	{
 	  decl = lookup_member (binfo, name, 0, false);
 	  if (!decl)
@@ -3671,10 +3692,8 @@ unqualified_namespace_lookup (tree name, int flags)
 
       if (b)
 	{
-	  if (b->value && hidden_name_p (b->value))
-	    /* Ignore anticipated built-in functions and friends.  */
-	    ;
-	  else
+	  if (b->value
+	      && ((flags & LOOKUP_HIDDEN) || !hidden_name_p (b->value)))
 	    binding.value = b->value;
 	  binding.type = b->type;
 	}
@@ -3977,18 +3996,18 @@ lookup_name_real (tree name, int prefer_type, int nonclass, bool block_p,
 	  continue;
 
 	/* If this is the kind of thing we're looking for, we're done.  */
-	if (qualify_lookup (iter->value, flags)
-	    && !hidden_name_p (iter->value))
+	if (qualify_lookup (iter->value, flags))
 	  binding = iter->value;
 	else if ((flags & LOOKUP_PREFER_TYPES)
-		 && qualify_lookup (iter->type, flags)
-		 && !hidden_name_p (iter->type))
+		 && qualify_lookup (iter->type, flags))
 	  binding = iter->type;
 	else
 	  binding = NULL_TREE;
 
 	if (binding)
 	  {
+	    /* Only namespace-scope bindings can be hidden.  */
+	    gcc_assert (!hidden_name_p (binding));
 	    val = binding;
 	    break;
 	  }
@@ -4873,7 +4892,11 @@ pushtag (tree name, tree type, tag_scope scope)
 	    pushdecl_class_level (decl);
 	}
       else if (b->kind != sk_template_parms)
-	decl = pushdecl_with_scope (decl, b, /*is_friend=*/false);
+	{
+	  decl = pushdecl_with_scope (decl, b, /*is_friend=*/false);
+	  if (decl == error_mark_node)
+	    POP_TIMEVAR_AND_RETURN (TV_NAME_LOOKUP, decl);
+	}
 
       TYPE_CONTEXT (type) = DECL_CONTEXT (decl);
 

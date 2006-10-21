@@ -1233,38 +1233,44 @@ compparms (tree parms1, tree parms2)
 tree
 cxx_sizeof_or_alignof_type (tree type, enum tree_code op, bool complain)
 {
-  enum tree_code type_code;
   tree value;
-  const char *op_name;
+  bool dependent_p;
 
   gcc_assert (op == SIZEOF_EXPR || op == ALIGNOF_EXPR);
   if (type == error_mark_node)
     return error_mark_node;
 
-  if (dependent_type_p (type))
+  type = non_reference (type);
+  if (TREE_CODE (type) == METHOD_TYPE)
+    {
+      if (complain && (pedantic || warn_pointer_arith))
+	pedwarn ("invalid application of %qs to a member function", 
+		 operator_name_info[(int) op].name);
+      value = size_one_node;
+    }
+
+  dependent_p = dependent_type_p (type);
+  if (!dependent_p)
+    complete_type (type);
+  if (dependent_p
+      /* VLA types will have a non-constant size.  In the body of an
+	 uninstantiated template, we don't need to try to compute the
+	 value, because the sizeof expression is not an integral
+	 constant expression in that case.  And, if we do try to
+	 compute the value, we'll likely end up with SAVE_EXPRs, which
+	 the template substitution machinery does not expect to see.  */
+      || (processing_template_decl 
+	  && COMPLETE_TYPE_P (type)
+	  && TREE_CODE (TYPE_SIZE (type)) != INTEGER_CST))
     {
       value = build_min (op, size_type_node, type);
       TREE_READONLY (value) = 1;
       return value;
     }
 
-  op_name = operator_name_info[(int) op].name;
-
-  type = non_reference (type);
-  type_code = TREE_CODE (type);
-
-  if (type_code == METHOD_TYPE)
-    {
-      if (complain && (pedantic || warn_pointer_arith))
-	pedwarn ("invalid application of %qs to a member function", op_name);
-      value = size_one_node;
-    }
-  else
-    value = c_sizeof_or_alignof_type (complete_type (type),
-				      op == SIZEOF_EXPR,
-				      complain);
-
-  return value;
+  return c_sizeof_or_alignof_type (complete_type (type),
+				   op == SIZEOF_EXPR,
+				   complain);
 }
 
 /* Process a sizeof or alignof expression where the operand is an
@@ -2922,16 +2928,6 @@ build_binary_op (enum tree_code code, tree orig_op0, tree orig_op1,
 
   switch (code)
     {
-    case PLUS_EXPR:
-      /* Handle the pointer + int case.  */
-      if (code0 == POINTER_TYPE && code1 == INTEGER_TYPE)
-	return cp_pointer_int_sum (PLUS_EXPR, op0, op1);
-      else if (code1 == POINTER_TYPE && code0 == INTEGER_TYPE)
-	return cp_pointer_int_sum (PLUS_EXPR, op1, op0);
-      else
-	common = 1;
-      break;
-
     case MINUS_EXPR:
       /* Subtraction of two similar pointers.
 	 We must subtract them as integers, then divide by object size.  */
@@ -2939,11 +2935,33 @@ build_binary_op (enum tree_code code, tree orig_op0, tree orig_op1,
 	  && same_type_ignoring_top_level_qualifiers_p (TREE_TYPE (type0),
 							TREE_TYPE (type1)))
 	return pointer_diff (op0, op1, common_type (type0, type1));
-      /* Handle pointer minus int.  Just like pointer plus int.  */
-      else if (code0 == POINTER_TYPE && code1 == INTEGER_TYPE)
-	return cp_pointer_int_sum (MINUS_EXPR, op0, op1);
-      else
-	common = 1;
+      /* In all other cases except pointer - int, the usual arithmetic
+	 rules aply.  */
+      else if (!(code0 == POINTER_TYPE && code1 == INTEGER_TYPE))
+	{
+	  common = 1;
+	  break;
+	}
+      /* The pointer - int case is just like pointer + int; fall
+	 through.  */
+    case PLUS_EXPR:
+      if ((code0 == POINTER_TYPE || code1 == POINTER_TYPE)
+	  && (code0 == INTEGER_TYPE || code1 == INTEGER_TYPE))
+	{
+	  tree ptr_operand;
+	  tree int_operand;
+	  ptr_operand = ((code0 == POINTER_TYPE) ? op0 : op1);
+	  int_operand = ((code0 == INTEGER_TYPE) ? op0 : op1);
+	  if (processing_template_decl)
+	    {
+	      result_type = TREE_TYPE (ptr_operand);
+	      break;
+	    }
+	  return cp_pointer_int_sum (code,
+				     ptr_operand, 
+				     int_operand);
+	}
+      common = 1;
       break;
 
     case MULT_EXPR:
@@ -3853,7 +3871,7 @@ build_unary_op (enum tree_code code, tree xarg, int noconvert)
       else if (!(arg = build_expr_type_conversion (WANT_INT | WANT_ENUM,
 						   arg, true)))
 	errstring = "wrong type argument to bit-complement";
-      else if (!noconvert)
+      else if (!noconvert && CP_INTEGRAL_TYPE_P (TREE_TYPE (arg)))
 	arg = perform_integral_promotions (arg);
       break;
 
@@ -6221,6 +6239,10 @@ maybe_warn_about_returning_address_of_local (tree retval)
 	  return;
 	}
     }
+
+  while (TREE_CODE (whats_returned) == COMPONENT_REF
+	 || TREE_CODE (whats_returned) == ARRAY_REF)
+    whats_returned = TREE_OPERAND (whats_returned, 0);
 
   if (DECL_P (whats_returned)
       && DECL_NAME (whats_returned)

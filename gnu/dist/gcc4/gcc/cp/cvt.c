@@ -863,14 +863,17 @@ convert_to_void (tree expr, const char *implicit)
 	int is_volatile = TYPE_VOLATILE (type);
 	int is_complete = COMPLETE_TYPE_P (complete_type (type));
 
+	/* Can't load the value if we don't know the type.  */
 	if (is_volatile && !is_complete)
 	  warning (0, "object of incomplete type %qT will not be accessed in %s",
 		   type, implicit ? implicit : "void context");
-	else if (is_reference && is_volatile)
+	/* Don't load the value if this is an implicit dereference, or if
+	   the type needs to be handled by ctors/dtors.  */
+	else if (is_volatile && (is_reference || TREE_ADDRESSABLE (type)))
 	  warning (0, "object of type %qT will not be accessed in %s",
 		   TREE_TYPE (TREE_OPERAND (expr, 0)),
 		   implicit ? implicit : "void context");
-	if (is_reference || !is_volatile || !is_complete)
+	if (is_reference || !is_volatile || !is_complete || TREE_ADDRESSABLE (type))
 	  expr = TREE_OPERAND (expr, 0);
 
 	break;
@@ -904,9 +907,13 @@ convert_to_void (tree expr, const char *implicit)
 	expr = void_zero_node;
       }
     else if (implicit && probe == expr && is_overloaded_fn (probe))
-      /* Only warn when there is no &.  */
-      warning (0, "%s is a reference, not call, to function %qE",
-		  implicit, expr);
+      {
+	/* Only warn when there is no &.  */
+	warning (0, "%s is a reference, not call, to function %qE",
+		 implicit, expr);
+	if (TREE_CODE (expr) == COMPONENT_REF)
+	  expr = TREE_OPERAND (expr, 0);
+      }
   }
 
   if (expr != error_mark_node && !VOID_TYPE_P (TREE_TYPE (expr)))
@@ -956,6 +963,8 @@ convert_to_void (tree expr, const char *implicit)
 	}
       expr = build1 (CONVERT_EXPR, void_type_node, expr);
     }
+  if (! TREE_SIDE_EFFECTS (expr))
+    expr = void_zero_node;
   return expr;
 }
 

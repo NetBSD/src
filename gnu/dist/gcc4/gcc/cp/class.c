@@ -2800,6 +2800,7 @@ check_field_decls (tree t, tree *access_decls,
   tree *next;
   bool has_pointers;
   int any_default_members;
+  int cant_pack = 0;
 
   /* Assume there are no access declarations.  */
   *access_decls = NULL_TREE;
@@ -2815,40 +2816,6 @@ check_field_decls (tree t, tree *access_decls,
       tree type = TREE_TYPE (x);
 
       next = &TREE_CHAIN (x);
-
-      if (TREE_CODE (x) == FIELD_DECL)
-	{
-	  if (TYPE_PACKED (t))
-	    {
-	      if (!pod_type_p (TREE_TYPE (x)) && !TYPE_PACKED (TREE_TYPE (x)))
-		warning
-		  (0,
-		   "ignoring packed attribute on unpacked non-POD field %q+#D",
-		   x);
-	      else if (TYPE_ALIGN (TREE_TYPE (x)) > BITS_PER_UNIT)
-		DECL_PACKED (x) = 1;
-	    }
-
-	  if (DECL_C_BIT_FIELD (x) && integer_zerop (DECL_INITIAL (x)))
-	    /* We don't treat zero-width bitfields as making a class
-	       non-empty.  */
-	    ;
-	  else
-	    {
-	      tree element_type;
-
-	      /* The class is non-empty.  */
-	      CLASSTYPE_EMPTY_P (t) = 0;
-	      /* The class is not even nearly empty.  */
-	      CLASSTYPE_NEARLY_EMPTY_P (t) = 0;
-	      /* If one of the data members contains an empty class,
-		 so does T.  */
-	      element_type = strip_array_types (type);
-	      if (CLASS_TYPE_P (element_type)
-		  && CLASSTYPE_CONTAINS_EMPTY_CLASS_P (element_type))
-		CLASSTYPE_CONTAINS_EMPTY_CLASS_P (t) = 1;
-	    }
-	}
 
       if (TREE_CODE (x) == USING_DECL)
 	{
@@ -2946,6 +2913,37 @@ check_field_decls (tree t, tree *access_decls,
 
       type = strip_array_types (type);
 
+      if (TYPE_PACKED (t))
+	{
+	  if (!pod_type_p (type) && !TYPE_PACKED (type))
+	    {
+	      warning
+		(0,
+		 "ignoring packed attribute because of unpacked non-POD field %q+#D",
+		 x);
+	      cant_pack = 1;
+	    }
+	  else if (TYPE_ALIGN (TREE_TYPE (x)) > BITS_PER_UNIT)
+	    DECL_PACKED (x) = 1;
+	}
+
+      if (DECL_C_BIT_FIELD (x) && integer_zerop (DECL_INITIAL (x)))
+	/* We don't treat zero-width bitfields as making a class
+	   non-empty.  */
+	;
+      else
+	{
+	  /* The class is non-empty.  */
+	  CLASSTYPE_EMPTY_P (t) = 0;
+	  /* The class is not even nearly empty.  */
+	  CLASSTYPE_NEARLY_EMPTY_P (t) = 0;
+	  /* If one of the data members contains an empty class,
+	     so does T.  */
+	  if (CLASS_TYPE_P (type)
+	      && CLASSTYPE_CONTAINS_EMPTY_CLASS_P (type))
+	    CLASSTYPE_CONTAINS_EMPTY_CLASS_P (t) = 1;
+	}
+
       /* This is used by -Weffc++ (see below). Warn only for pointers
 	 to members which might hold dynamic memory. So do not warn
 	 for pointers to functions or pointers to members.  */
@@ -3030,11 +3028,11 @@ check_field_decls (tree t, tree *access_decls,
 	is needed to free dynamic memory.
 
      This seems enough for practical purposes.  */
-    if (warn_ecpp
-	&& has_pointers
-	&& TYPE_HAS_CONSTRUCTOR (t)
-	&& TYPE_HAS_NONTRIVIAL_DESTRUCTOR (t)
-	&& !(TYPE_HAS_INIT_REF (t) && TYPE_HAS_ASSIGN_REF (t)))
+  if (warn_ecpp
+      && has_pointers
+      && TYPE_HAS_CONSTRUCTOR (t)
+      && TYPE_HAS_NONTRIVIAL_DESTRUCTOR (t)
+      && !(TYPE_HAS_INIT_REF (t) && TYPE_HAS_ASSIGN_REF (t)))
     {
       warning (0, "%q#T has pointer data members", t);
 
@@ -3048,6 +3046,9 @@ check_field_decls (tree t, tree *access_decls,
 	warning (0, "  but does not override %<operator=(const %T&)%>", t);
     }
 
+  /* If any of the fields couldn't be packed, unset TYPE_PACKED.  */
+  if (cant_pack)
+    TYPE_PACKED (t) = 0;
 
   /* Check anonymous struct/anonymous union fields.  */
   finish_struct_anon (t);
