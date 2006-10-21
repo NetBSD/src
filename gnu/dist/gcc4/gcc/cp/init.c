@@ -179,7 +179,8 @@ build_zero_init (tree type, tree nelts, bool static_storage_p)
        items with static storage duration that are not otherwise
        initialized are initialized to zero.  */
     ;
-  else if (SCALAR_TYPE_P (type))
+  else if (SCALAR_TYPE_P (type)
+	   || TREE_CODE (type) == COMPLEX_TYPE)
     init = convert (type, integer_zero_node);
   else if (CLASS_TYPE_P (type))
     {
@@ -223,6 +224,11 @@ build_zero_init (tree type, tree nelts, bool static_storage_p)
 				 nelts, integer_one_node);
       else
 	max_index = array_type_nelts (type);
+
+      /* If we have an error_mark here, we should just return error mark
+	 as we don't know the size of the array yet.  */
+      if (max_index == error_mark_node)
+	return error_mark_node;
       gcc_assert (TREE_CODE (max_index) == INTEGER_CST);
 
       /* A zero-sized array, which is accepted as an extension, will
@@ -249,6 +255,8 @@ build_zero_init (tree type, tree nelts, bool static_storage_p)
       /* Build a constructor to contain the initializations.  */
       init = build_constructor (type, v);
     }
+  else if (TREE_CODE (type) == VECTOR_TYPE)
+    init = fold_convert (type, integer_zero_node);
   else
     gcc_assert (TREE_CODE (type) == REFERENCE_TYPE);
 
@@ -1669,7 +1677,7 @@ build_new (tree placement, tree type, tree nelts, tree init,
 {
   tree rval;
 
-  if (type == error_mark_node)
+  if (placement == error_mark_node || type == error_mark_node)
     return error_mark_node;
 
   if (processing_template_decl)
@@ -1847,10 +1855,14 @@ build_new_1 (tree exp)
 	 function context.  Methinks that's not it's purvey.  So we'll do
 	 our own VLA layout later.  */
       vla_p = true;
-      full_type = build_cplus_array_type (type, NULL_TREE);
       index = convert (sizetype, nelts);
       index = size_binop (MINUS_EXPR, index, size_one_node);
-      TYPE_DOMAIN (full_type) = build_index_type (index);
+      index = build_index_type (index);
+      full_type = build_cplus_array_type (type, NULL_TREE);
+      /* We need a copy of the type as build_array_type will return a shared copy
+         of the incomplete array type.  */
+      full_type = build_distinct_type_copy (full_type);
+      TYPE_DOMAIN (full_type) = index;
     }
   else
     {
