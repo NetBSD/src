@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: genassym.sh,v 1.1 2005/06/05 18:19:54 thorpej Exp $
+#	$NetBSD: genassym.sh,v 1.2 2006/10/21 04:48:29 itohy Exp $
 #
 # Copyright (c) 1997 Matthias Pfaller.
 # All rights reserved.
@@ -164,7 +164,7 @@ $0 ~ /^endif/ {
 		printf("printf(\"#define " $2 " %%ld\\n\", (%s)" value ");\n", type);
 	else if (fcode) {
 		if (doing_member)
-			printf("__asm(\"XYZZY : %s d\# %%%s0 + ;\" : : \"%s\" (%s));\n", $2, asmprint, asmtype, value);
+			printf("__asm(\"XYZZY : %s d# %%%s0 + ;\" : : \"%s\" (%s));\n", $2, asmprint, asmtype, value);
 		else
 			printf("__asm(\"XYZZY d# %%%s0 constant %s\" : : \"%s\" (%s));\n", asmprint, $2, asmtype, value);
 	} else
