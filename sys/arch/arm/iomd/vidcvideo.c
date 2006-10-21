@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.28 2006/08/19 13:34:15 bjh21 Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.29 2006/10/21 14:24:46 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.28 2006/08/19 13:34:15 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.29 2006/10/21 14:24:46 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,6 @@ struct hwcursor32 {
 	struct wsdisplay_curpos cc_pos;
 	struct wsdisplay_curpos cc_hot;
 	struct wsdisplay_curpos cc_size;
-	struct wsdisplay_curpos cc_magic;
 	u_int8_t cc_color[6];		/* how many? */
 	u_int32_t cc_image[(CURSOR_MAX_WIDTH/4) * CURSOR_MAX_HEIGHT];
 	u_int32_t cc_mask[(CURSOR_MAX_WIDTH/4) * CURSOR_MAX_HEIGHT];
@@ -125,16 +124,6 @@ struct vidcvideo_softc {
 	struct fb_devconfig *sc_dc;	/* device configuration		*/
 	int nscreens;			/* number of screens configured */
 };
-
-
-/* XXX has to go XXX */
-#define	CX_MAGIC_X	220
-#define	CX_MAGIC_Y 	35
-#define	CX_FB_OFFSET	0x000000
-#define	CX_FB_SIZE	0x100000
-#define	CX_BT459_OFFSET	0x200000
-#define	CX_OFFSET_IREQ	0x300000	/* Interrupt req. control */
-/* XXX till here XXX */
 
 
 /* Function prototypes for glue */
@@ -382,10 +371,6 @@ vidcvideo_attach(struct device *parent, struct device *self, void *aux)
 		cm->b[index] = p[2];
 	}
 
-	/* what does these do ? */
-	dc->dc_cursor.cc_magic.x = CX_MAGIC_X;
-	dc->dc_cursor.cc_magic.y = CX_MAGIC_Y;
-
 	/* set up interrupt flags */
 	dc->dc_changed |= WSDISPLAY_CMAP_DOLUT;
 
@@ -626,80 +611,6 @@ vidcvideointr(void *arg)
 		vidcvideo_enablecursor(dc->dc_curenb);
 		cleared |= WSDISPLAY_CURSOR_DOCUR;
 	}
-
-
-#if 0	/* XXX snip XXX */
-	/* XXX kept here as an archive for now XXX */
-
-	vdac = vidcvideobase + CX_BT459_OFFSET;
-	v = sc->sc_changed;
-	if (v & WSDISPLAY_CURSOR_DOCUR) {
-		SELECT(vdac, BT459_IREG_CCR);
-		REG(vdac, bt_reg) = (sc->sc_curenb) ? 0xc0 : 0x00;
-	}
-	if (v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOHOT)) {
-		int x, y;
-
-		x = sc->sc_cursor.cc_pos.x - sc->sc_cursor.cc_hot.x;
-		y = sc->sc_cursor.cc_pos.y - sc->sc_cursor.cc_hot.y;
-
-		x += sc->sc_cursor.cc_magic.x;
-		y += sc->sc_cursor.cc_magic.y;
-
-		SELECT(vdac, BT459_IREG_CURSOR_X_LOW);
-		REG(vdac, bt_reg) = x;		tc_wmb();
-		REG(vdac, bt_reg) = x >> 8;	tc_wmb();
-		REG(vdac, bt_reg) = y;		tc_wmb();
-		REG(vdac, bt_reg) = y >> 8;	tc_wmb();
-	}
-	if (v & WSDISPLAY_CURSOR_DOCMAP) {
-		u_int8_t *cp = sc->sc_cursor.cc_color;
-
-		SELECT(vdac, BT459_IREG_CCOLOR_2);
-		REG(vdac, bt_reg) = cp[1];	tc_wmb();
-		REG(vdac, bt_reg) = cp[3];	tc_wmb();
-		REG(vdac, bt_reg) = cp[5];	tc_wmb();
-
-		REG(vdac, bt_reg) = cp[0];	tc_wmb();
-		REG(vdac, bt_reg) = cp[2];	tc_wmb();
-		REG(vdac, bt_reg) = cp[4];	tc_wmb();
-	}
-	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
-		u_int8_t *ip, *mp, img, msk;
-		u_int8_t u;
-		int bcnt;
-
-		ip = (u_int8_t *)sc->sc_cursor.cc_image;
-		mp = (u_int8_t *)(sc->sc_cursor.cc_image + CURSOR_MAX_HEIGHT);
-
-		bcnt = 0;
-		SELECT(vdac, BT459_IREG_CRAM_BASE+0);
-		/* 64 pixel scan line is consisted with 16 byte cursor ram */
-		while (bcnt < sc->sc_cursor.cc_size.y * 16) {
-			/* pad right half 32 pixel when smaller than 33 */
-			if ((bcnt & 0x8) && sc->sc_cursor.cc_size.x < 33) {
-				REG(vdac, bt_reg) = 0; tc_wmb();
-				REG(vdac, bt_reg) = 0; tc_wmb();
-			}
-			else {
-				img = *ip++;
-				msk = *mp++;
-				img &= msk;	/* cookie off image */
-				u = (msk & 0x0f) << 4 | (img & 0x0f);
-				REG(vdac, bt_reg) = shuffle[u];	tc_wmb();
-				u = (msk & 0xf0) | (img & 0xf0) >> 4;
-				REG(vdac, bt_reg) = shuffle[u];	tc_wmb();
-			}
-			bcnt += 2;
-		}
-		/* pad unoccupied scan lines */
-		while (bcnt < CURSOR_MAX_HEIGHT * 16) {
-			REG(vdac, bt_reg) = 0; tc_wmb();
-			REG(vdac, bt_reg) = 0; tc_wmb();
-			bcnt += 2;
-		}
-	}
-#endif /* XXX snip XXX */
 
 	dc->dc_changed ^= cleared;
 
