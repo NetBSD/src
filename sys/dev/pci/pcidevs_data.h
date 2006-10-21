@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.838 2006/10/09 20:31:57 cube Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.839 2006/10/21 17:18:49 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.839 2006/10/09 20:31:03 cube Exp
+ *	NetBSD: pcidevs,v 1.840 2006/10/21 14:10:33 bouyer Exp
  */
 
 /*
@@ -6588,8 +6588,24 @@ static const struct pci_product pci_products[] = {
 	    "PRO/10GbE LR Server Adapter",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_M_AMT,
+	    "i82801H (M_AMT) LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_AMT,
+	    "i82801H (AMT) LAN Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_LAN,
 	    "i82801H LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IFE_LAN,
+	    "i82801H (IFE) LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_M_LAN,
+	    "i82801H (M) LAN Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_6,
@@ -6688,16 +6704,44 @@ static const struct pci_product pci_products[] = {
 	    "PRO/100 VE Network Controller with 82562G PHY",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_CPR_DPT,
+	    "i80003 dual 1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_FIB_DPT,
+	    "i80003 dual 1000baseX Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_SDS_DPT,
+	    "i80003 dual Gigabit Ethernet (SERDES)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER,
+	    "i82546GB quad-port Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573L,
 	    "i82573L Gigabit Ethernet",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER,
-	    "PRO/1000MT QP (82546GB)",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_QUAD_COPPER,
+	    "i82571EB quad-1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER_KSP3,
+	    "i82546GB quad-port Gigabit Ethernet (KSP3)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI,
-	    "PRO/1000PT (82572EI)",
+	    "i82572EI 1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_CPR_SPT,
+	    "i80003 1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_SDS_SPT,
+	    "i80003 Gigabit Ethernet (SERDES)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
@@ -12376,4 +12420,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2500;
+const int pci_nproducts = 2511;
