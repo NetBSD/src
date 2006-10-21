@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.14 2006/10/12 01:32:17 christos Exp $ */
+/* $NetBSD: kern_tc.c,v 1.15 2006/10/21 07:16:54 kardel Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.14 2006/10/12 01:32:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.15 2006/10/21 07:16:54 kardel Exp $");
 
 #include "opt_ntp.h"
 
@@ -592,10 +592,6 @@ tc_windup(void)
 		th->th_counter = timecounter;
 		th->th_offset_count = ncount;
 		s_update = 1;
-
-		printf("timecounter: selected timecounter \"%s\" frequency %ju Hz quality %d\n",
-		    timecounter->tc_name, (uintmax_t)timecounter->tc_frequency,
-		    timecounter->tc_quality);
 	}
 
 	/*-
