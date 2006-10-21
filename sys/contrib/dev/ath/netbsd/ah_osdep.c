@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: ah_osdep.c,v 1.8 2006/10/12 01:30:50 christos Exp $
+ * $Id: ah_osdep.c,v 1.9 2006/10/21 00:13:57 elad Exp $
  */
 #include "opt_athhal.h"
 #include "athhal_options.h"
@@ -227,8 +227,9 @@ ath_hal_setlogging(int enable)
 	int error;
 
 	if (enable) {
-		error = kauth_authorize_generic(curlwp->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &curlwp->l_acflag);
+		error = kauth_authorize_network(curlwp->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, NULL, NULL, NULL);
 		if (error == 0) {
 			error = alq_open(&ath_hal_alq, ath_hal_logfile,
 				curproc->p_ucred,
