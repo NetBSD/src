@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.21 2006/10/21 10:08:54 yamt Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.22 2006/10/21 10:26:21 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,12 +109,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.21 2006/10/21 10:08:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.22 2006/10/21 10:26:21 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_inet_csum.h"
 #include "opt_tcp_debug.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -577,3 +578,23 @@ tcp_sack_numblks(const struct tcpcb *tp)
 
 	return numblks;
 }
+
+#if defined(DDB)
+void sack_dump(const struct tcpcb *);
+
+void
+sack_dump(const struct tcpcb *tp)
+{
+	const struct sackhole *cur;
+
+	printf("snd_una=%" PRIu32 ", snd_max=%" PRIu32 "\n",
+	    tp->snd_una, tp->snd_max);
+	printf("rcv_lastsack=%" PRIu32 ", snd_fack=%" PRIu32 "\n",
+	    tp->rcv_lastsack, tp->snd_fack);
+	printf("numholes=%d\n", tp->snd_numholes);
+	TAILQ_FOREACH(cur, &tp->snd_holes, sackhole_q) {
+		printf("\t%" PRIu32 "-%" PRIu32 ", rxmit=%" PRIu32 "\n",
+		    cur->start, cur->end, cur->rxmit);
+	}
+}
+#endif /* defined(DDB) */
