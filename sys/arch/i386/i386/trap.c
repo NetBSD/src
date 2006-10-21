@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.213 2006/07/23 22:06:05 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.213.4.1 2006/10/21 13:43:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.213 2006/07/23 22:06:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.213.4.1 2006/10/21 13:43:51 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -501,10 +501,10 @@ copyfault:
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		uvmexp.softs++;
-		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
+		if (l->l_flag & L_OWEUPC) {
+			l->l_flag &= ~L_OWEUPC;
 			KERNEL_PROC_LOCK(l);
-			ADDUPROF(p);
+			ADDUPROF(l);
 			KERNEL_PROC_UNLOCK(l);
 		}
 		/* Allow a forced task switch. */
@@ -561,11 +561,7 @@ copyfault:
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
 		if (l == 0)
 			goto we_re_toast;
-#ifdef LOCKDEBUG
-		/* If we page-fault while in scheduler, we're doomed. */
-		if (simple_lock_held(&sched_lock))
-			goto we_re_toast;
-#endif
+
 		/*
 		 * fusubail is used by [fs]uswintr() to prevent page faulting
 		 * from inside the profiling interrupt.
