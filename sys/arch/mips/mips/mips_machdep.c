@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.188 2006/10/21 05:54:32 mrg Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.189 2006/10/21 08:09:58 mrg Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.188 2006/10/21 05:54:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.189 2006/10/21 08:09:58 mrg Exp $");
 
 #include "opt_cputype.h"
 
@@ -1319,7 +1319,7 @@ cpu_dumpconf(void)
 	bdev = bdevsw_lookup(dumpdev);
 	if (bdev == NULL) {
 		dumpdev = NODEV;
-		return;
+		goto bad;
 	}
 	if (bdev->d_psize == NULL)
 		goto bad;
