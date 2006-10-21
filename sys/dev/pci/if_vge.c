@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.19 2006/10/17 09:55:12 tsutsui Exp $ */
+/* $NetBSD: if_vge.c,v 1.20 2006/10/21 16:26:35 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.19 2006/10/17 09:55:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.20 2006/10/21 16:26:35 tsutsui Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -1223,9 +1223,16 @@ vge_rxeof(struct vge_softc *sc)
 				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
 		}
 
-		if (rxstat & VGE_RDSTS_VTAG)
+		if (rxstat & VGE_RDSTS_VTAG) {
+			/*
+			 * We use bswap16() here because:
+			 * On LE machines, tag is stored in BE as stream data.
+			 * On BE machines, tag is stored in BE as stream data
+			 *  but it was already swapped by le32toh() above.
+			 */
 			VLAN_INPUT_TAG(ifp, m,
-			    ntohs((rxctl & VGE_RDCTL_VLANID)), continue);
+			    bswap16(rxctl & VGE_RDCTL_VLANID), continue);
+		}
 
 #if NBPFILTER > 0
 		/*
@@ -1581,9 +1588,14 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 	 */
 
 	mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m_head);
-	if (mtag != NULL)
-		d->vge_ctl |=
-		    htole32(htons(VLAN_TAG_VALUE(mtag)) | VGE_TDCTL_VTAG);
+	if (mtag != NULL) {
+		/* 
+		 * No need htons() here since vge(4) chip assumes
+		 * that tags are written in little endian and
+		 * we already use htole32() here.
+		 */
+		d->vge_ctl |= htole32(VLAN_TAG_VALUE(mtag) | VGE_TDCTL_VTAG);
+	}
 
 	d->vge_sts |= htole32(VGE_TDSTS_OWN);
 
