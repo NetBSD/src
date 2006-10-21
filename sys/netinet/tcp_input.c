@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.253 2006/10/17 09:31:17 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.254 2006/10/21 10:08:54 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.253 2006/10/17 09:31:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.254 2006/10/21 10:08:54 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -374,6 +374,9 @@ extern struct evcnt tcp_reass_fragdup;
 
 #endif /* TCP_REASS_COUNTERS */
 
+static int tcp_dooptions(struct tcpcb *, const u_char *, int,
+    const struct tcphdr *, struct mbuf *, int, struct tcp_opt_info *);
+
 #ifdef INET
 static void tcp4_log_refused(const struct ip *, const struct tcphdr *);
 #endif
@@ -383,7 +386,8 @@ static void tcp6_log_refused(const struct ip6_hdr *, const struct tcphdr *);
 
 #define	TRAVERSE(x) while ((x)->m_next) (x) = (x)->m_next
 
-POOL_INIT(tcpipqent_pool, sizeof(struct ipqent), 0, 0, 0, "tcpipqepl", NULL);
+static POOL_INIT(tcpipqent_pool, sizeof(struct ipqent), 0, 0, 0, "tcpipqepl",
+    NULL);
 
 struct ipqent *
 tcpipqent_alloc()
@@ -2841,8 +2845,9 @@ tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
 }
 #endif
 
-int
-tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
+static int
+tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
+    const struct tcphdr *th,
     struct mbuf *m __unused, int toff __unused, struct tcp_opt_info *oi)
 {
 	u_int16_t mss;

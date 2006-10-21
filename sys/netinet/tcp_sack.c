@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.20 2006/10/20 13:11:09 reinoud Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.21 2006/10/21 10:08:54 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.20 2006/10/20 13:11:09 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.21 2006/10/21 10:08:54 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -236,14 +236,15 @@ tcp_new_dsack(struct tcpcb *tp, tcp_seq seq, u_int32_t len)
 }
 
 void
-tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
+tcp_sack_option(struct tcpcb *tp, const struct tcphdr *th, const u_char *cp,
+    int optlen)
 {
 	struct sackblk
 	    t_sack_block[(MAX_TCPOPTLEN - 2) / (sizeof(u_int32_t) * 2)];
 	struct sackblk *sack = NULL;
 	struct sackhole *cur = NULL;
 	struct sackhole *tmp = NULL;
-	char *lp = cp + 2;
+	const char *lp = cp + 2;
 	int i, j, num_sack_blks;
 	tcp_seq left, right, acked;
 
@@ -393,7 +394,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 }
 
 void
-tcp_del_sackholes(struct tcpcb *tp, struct tcphdr *th)
+tcp_del_sackholes(struct tcpcb *tp, const struct tcphdr *th)
 {
 	/* Max because this could be an older ack that just arrived. */
 	tcp_seq lastack = SEQ_GT(th->th_ack, tp->snd_una) ?
@@ -430,7 +431,7 @@ tcp_free_sackholes(struct tcpcb *tp)
  * in fast recovery.
  */
 void
-tcp_sack_newack(struct tcpcb *tp, struct tcphdr *th)
+tcp_sack_newack(struct tcpcb *tp, const struct tcphdr *th)
 {
 	if (tp->t_partialacks < 0) {
 		/*
