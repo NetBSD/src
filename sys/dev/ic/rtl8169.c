@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.42 2006/10/20 17:11:36 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.43 2006/10/21 03:44:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1733,7 +1733,7 @@ re_start(struct ifnet *ifp)
 	if (sc->rtk_type == RTK_8169)
 		CSR_WRITE_2(sc, RTK_GTXSTART, RTK_TXSTART_START);
 	else
-		CSR_WRITE_2(sc, RTK_TXSTART, RTK_TXSTART_START);
+		CSR_WRITE_1(sc, RTK_TXSTART, RTK_TXSTART_START);
 
 	/*
 	 * Use the countdown timer for interrupt moderation.
