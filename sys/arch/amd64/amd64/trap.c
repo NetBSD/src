@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27.4.2 2006/10/20 20:53:08 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.27.4.3 2006/10/21 13:43:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27.4.2 2006/10/20 20:53:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27.4.3 2006/10/21 13:43:51 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -369,11 +369,11 @@ copyfault:
 		goto trapsignal;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
-		uvmexp.softs++;			/* XXXSMP */
-		if (p->p_flag & P_OWEUPC) {	/* XXXSMP */
-			p->p_flag &= ~P_OWEUPC;
+		uvmexp.softs++;
+		if (l->l_flag & L_OWEUPC) {
+			p->p_flag &= ~L_OWEUPC;
 			KERNEL_PROC_LOCK(l);
-			ADDUPROF(p);
+			ADDUPROF(l);
 			KERNEL_PROC_UNLOCK(l);
 		}
 		/* Allow a forced task switch. */
