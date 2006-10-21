@@ -1268,6 +1268,69 @@ fix = {
 };
 
 
+/*  glibc-2.3.5 defines pthread mutex initializers incorrectly,
+ *  so we replace them with versions that correspond to the
+ *  definition.
+ */
+fix = {
+    hackname = glibc_mutex_init;
+    files    = pthread.h;
+    select   = '\{ *\{ *0, *\} *\}';
+    sed      = "/define[ \t]\\+PTHREAD_MUTEX_INITIALIZER[ \t]*\\\\/,+1"
+               "s/{ { 0, } }/{ { 0, 0, 0, 0, 0, 0 } }/";
+    sed      = "s/{ \\(0, 0, 0, 0, PTHREAD_MUTEX_\\(RECURSIVE\\|ERRORCHECK\\|ADAPTIVE\\)_NP\\) }/{ \\1, 0 }/";
+    sed      = "s/{ \\(0, 0, 0, PTHREAD_MUTEX_\\(RECURSIVE\\|ERRORCHECK\\|ADAPTIVE\\)_NP\\) }/{ \\1, 0, 0 }/";
+    sed      = "/define[ \t]\\+PTHREAD_RWLOCK_INITIALIZER[ \t]*\\\\/"
+               "N;s/^[ \t]*#[ \t]*"
+               "\\(define[ \t]\\+PTHREAD_RWLOCK_INITIALIZER[ \t]*\\\\\\)\\n"
+               "[ \t]*{ { 0, } }/# if __WORDSIZE == 64\\n"
+               "#  \\1\\n"
+               "  { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } }\\n"
+               "# else\\n"
+               "#  \\1\\n"
+               "  { { 0, 0, 0, 0, 0, 0, 0, 0 } }\\n"
+               "# endif/";
+    sed      = "s/{ \\(0, 0, 0, 0, 0, 0, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP\\) }/{ \\1, 0 }/";
+    sed      = "/define[ \t]\\+PTHREAD_COND_INITIALIZER/"
+               "s/{ { 0, } }/{ { 0, 0, 0, 0, 0, (void *) 0, 0, 0 } }/";
+
+    test_text = <<- _EOText_
+#define PTHREAD_MUTEX_INITIALIZER \\
+  { { 0, } }
+#ifdef __USE_GNU
+# if __WORDSIZE == 64
+#  define PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP \\
+  { { 0, 0, 0, 0, PTHREAD_MUTEX_RECURSIVE_NP } }
+#  define PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP \\
+  { { 0, 0, 0, 0, PTHREAD_MUTEX_ERRORCHECK_NP } }
+#  define PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP \\
+  { { 0, 0, 0, 0, PTHREAD_MUTEX_ADAPTIVE_NP } }
+# else
+#  define PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP \\
+  { { 0, 0, 0, PTHREAD_MUTEX_RECURSIVE_NP } }
+#  define PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP \\
+  { { 0, 0, 0, PTHREAD_MUTEX_ERRORCHECK_NP } }
+#  define PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP \\
+  { { 0, 0, 0, PTHREAD_MUTEX_ADAPTIVE_NP } }
+# endif
+#endif
+# define PTHREAD_RWLOCK_INITIALIZER \\
+  { { 0, } }
+# ifdef __USE_GNU
+#  if __WORDSIZE == 64
+#   define PTHREAD_RWLOCK_WRITER_NONRECURSIVE_INITIALIZER_NP \\
+  { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,					      \\
+      PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP } }
+#  else
+#   define PTHREAD_RWLOCK_WRITER_NONRECURSIVE_INITIALIZER_NP \\
+  { { 0, 0, 0, 0, 0, 0, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP } }
+#  endif
+# endif
+#define PTHREAD_COND_INITIALIZER { { 0, } }
+_EOText_;
+};
+
+
 /*
  * Fix these files to use the types we think they should for
  * ptrdiff_t, size_t, and wchar_t.
@@ -1696,6 +1759,58 @@ fix = {
     test_text = "extern union mpinfou spu_info[];";
 };
 
+fix = {
+    hackname  = hpux_extern_errno;
+    mach      = "*-hp-hpux10.*";
+    mach      = "*-hp-hpux11.[0-2]*";
+    files     = errno.h;
+    select    = "^[ \t]*extern int errno;$";
+    c_fix     = format;
+    c_fix_arg = "#ifdef __cplusplus\nextern \"C\" {\n#endif\n%0\n#ifdef __cplusplus\n}\n#endif";
+    test_text = "   extern int errno;\n";
+};
+
+/*
+ *  Add missing braces to pthread initializer defines.
+ */
+fix = {
+    hackname  = hpux_pthread_initializers;
+    mach      = "*-hp-hpux11.[0-3]*";
+    files     = sys/pthread.h;
+    sed       = "s@^[ \t]*1, 1, 1, 1,[ \t]*\\\\"
+		 "@\t{ 1, 1, 1, 1 },\t\t\t\t\t\t\t\\\\@";
+    sed       = "s@^[ \t]*1,[ \t]*\\\\"
+		 "@\t{ 1, 0 }@";
+    sed       = "/^[ \t]*0$/d";
+    sed       = "s@__PTHREAD_MUTEX_VALID, 0"
+		 "@{ __PTHREAD_MUTEX_VALID, 0 }@";
+    sed       = "s@^[ \t]*0, 0, -1, 0,[ \t]*\\\\"
+		 "@\t{ 0, 0, -1, 0 },\t\t\t\t\t\t\\\\@";
+    sed       = "s@0, __LWP_MTX_VALID, 0, 1, 1, 1, 1,[ \t]*\\\\"
+		 "@{ 0, __LWP_MTX_VALID }, { 0, 1, 1, 1, 1 },\t\t\t\\\\@";
+    sed       = "s@^[ \t]*__LWP_MTX_VALID, 0, 1, 1, 1, 1,[ \t]*\\\\"
+		 "@\t{ 0, __LWP_MTX_VALID }, { 0, 1, 1, 1, 1 },\t\t\t\\\\@";
+    sed       = "s@^[ \t]*0, 0[ \t]*\\\\"
+		 "@\t{ 0, 0 }\t\t\t\t\t\t\t\\\\@";
+    sed       = "s@__PTHREAD_COND_VALID, 0"
+		 "@{ __PTHREAD_COND_VALID, 0 }@";
+    sed       = "s@__LWP_COND_VALID, 0,[ \t]*\\\\"
+		 "@{ __LWP_COND_VALID, 0 },\t\t\t\t\t\\\\@";
+    sed       = "s@__PTHREAD_RWLOCK_VALID, 0"
+		 "@{ __PTHREAD_RWLOCK_VALID, 0 }@";
+    sed       = "s@__LWP_RWLOCK_VALID, 0,[ \t]*\\\\"
+		 "@{ __LWP_RWLOCK_VALID, 0 },\t\t\t\t\t\\\\@";
+    sed       = "s@^[ \t]*0, 0, 0, 0, 0, 0, 0[ \t]*\\\\"
+		 "@\t{ 0, 0, 0, 0, 0 }, { 0, 0}\t\t\t\t\t\\\\@";
+    test_text = "#define PTHREAD_MUTEX_INITIALIZER  {\t\t\t\t\t\\\\\n"
+		"\t__PTHREAD_MUTEX_VALID, 0,\t\t\t\t\t\\\\\n"
+		"\t(PTHREAD_MUTEX_DEFAULT | PTHREAD_PROCESS_PRIVATE),\t\t\\\\\n"
+		"\t__SPNLCK_INITIALIZER,\t\t\t\t\t\t\\\\\n"
+		"\t0, 0, -1, 0,\t\t\t\t\t\t\t\\\\\n"
+		"\t0, __LWP_MTX_VALID, 0, 1, 1, 1, 1,\t\t\t\t\\\\\n"
+		"\t0, 0\t\t\t\t\t\t\t\t\\\\\n"
+		"}\n";
+};
 
 /*
  *  Fix glibc definition of HUGE_VAL in terms of hex floating point constant
@@ -2941,20 +3056,110 @@ fix = {
     hackname = solaris_mutex_init_2;
     select = '@\(#\)pthread.h' "[ \t]+1.[0-9]+[ \t]+[0-9/]+ SMI";
     files = pthread.h;
+    /*
+     * On Solaris 10, this fix is unnecessary because upad64_t is
+     * always defined correctly regardless of the definition of the
+     * __STDC__ macro.  The first "mach" pattern matches up to
+     * solaris9.  The second "mach" pattern will not match any two (or
+     * more) digit solaris version, but it will match e.g. 2.5.1.
+     */
+    mach = '*-*-solaris2.[0-9]', '*-*-solaris2.[0-9][!0-9]*';
     c_fix = format;
     c_fix_arg = "#if __STDC__ - 0 == 0 && !defined(_NO_LONGLONG)\n"
                 "%0\n"
                 "#else\n"
-                "%1, {0}}%3\n"
+                "%1, {0}}%4\n"
                 "#endif";
-    c_fix_arg = "(^#define[ \t]+PTHREAD_(MUTEX|COND)_INITIALIZER[ \t]+\\{.*)"
+    c_fix_arg = "(^#define[ \t]+PTHREAD_(MUTEX|COND)_INITIALIZER[ \t]+"
+                "(|/\*.*\*/[ \t]*\\\\\n[ \t]*)\\{.*)"
                 ",[ \t]*0\\}" "(|[ \t].*)$";
     test_text =
     '#ident "@(#)pthread.h  1.26  98/04/12 SMI"'"\n"
     "#define PTHREAD_MUTEX_INITIALIZER\t{{{0},0}, {{{0}}}, 0}\n"
     "#define PTHREAD_COND_INITIALIZER\t{{{0}, 0}, 0}\t/* DEFAULTCV */\n"
-    "#define PTHREAD_RWLOCK_INITIALIZER\t"
-             "{0, 0, 0, {0, 0, 0}, {0, 0}, {0, 0}}";
+    "#define	PTHREAD_MUTEX_INITIALIZER		/* = DEFAULTMUTEX */	\\\\\n"
+    "	{{0, 0, 0, DEFAULT_TYPE, _MUTEX_MAGIC}, {{{0}}}, 0}\n"
+    "#define	PTHREAD_COND_INITIALIZER		/* = DEFAULTCV */	\\\\\n"
+    "	{{{0, 0, 0, 0}, DEFAULT_TYPE, _COND_MAGIC}, 0}";
+};
+
+
+/*
+ * Sun Solaris defines PTHREAD_RWLOCK_INITIALIZER with a "0" for some
+ *  fields of the pthread_rwlock_t structure, which are of type
+ *  upad64_t, which itself is typedef'd to int64_t, but with __STDC__
+ *  defined (e.g. by -ansi) it is a union. So change the initializer
+ *  to "{0}" instead.
+ */
+fix = {
+    hackname = solaris_rwlock_init_1;
+    select = '@\(#\)pthread.h' "[ \t]+1.[0-9]+[ \t]+[0-9/]+ SMI";
+    files = pthread.h;
+    mach = '*-*-solaris*';
+    c_fix = format;
+    c_fix_arg = "#if __STDC__ - 0 == 0 && !defined(_NO_LONGLONG)\n"
+                "%0\n"
+                "#else\n"
+                "%1{0, 0, 0, {{0}, {0}, {0}}, {{0}, {0}}, {{0}, {0}}}\n"
+                "#endif";
+    c_fix_arg = "(^#define[ \t]+PTHREAD_RWLOCK_INITIALIZER[ \t]+)"
+                "\\{0, 0, 0, \\{0, 0, 0\\}, \\{0, 0\\}, \\{0, 0\\}\\}[ \t]*$";
+
+    test_text =
+    '#ident "@(#)pthread.h  1.26  98/04/12 SMI"'"\n"
+    "#define PTHREAD_RWLOCK_INITIALIZER\t{0, 0, 0, {0, 0, 0}, {0, 0}, {0, 0}}";
+};
+
+
+/*
+ * Sun Solaris defines PTHREAD_ONCE_INIT as an array containing a
+ * structure.  As such, it need two levels of brackets, but only
+ * contains one.  Wrap the macro definition in an extra layer.
+ */
+fix = {
+    hackname = solaris_once_init_1;
+    select = '@\(#\)pthread.h' "[ \t]+1.[0-9]+[ \t]+[0-9/]+ SMI";
+    files = pthread.h;
+    mach = '*-*-solaris*';
+    c_fix = format;
+    c_fix_arg = "%1{%2}%3";
+    c_fix_arg = "(^#define[ \t]+PTHREAD_ONCE_INIT[ \t]+\\{)([^}]+)(\\})[ \t]*$";
+    test_text =
+    '#pragma ident	"@(#)pthread.h	1.37	04/09/28 SMI"'"\n"
+    "#define PTHREAD_ONCE_INIT\t{0, 0, 0, PTHREAD_ONCE_NOTDONE}";
+};
+
+
+/*
+ * Sun Solaris defines PTHREAD_ONCE_INIT with a "0" for some
+ *  fields of the pthread_once_t structure, which are of type
+ *  upad64_t, which itself is typedef'd to int64_t, but with __STDC__
+ *  defined (e.g. by -ansi) it is a union. So change the initializer
+ *  to "{0}" instead.  This test relies on solaris_once_init_1.
+ */
+fix = {
+    hackname = solaris_once_init_2;
+    select = '@\(#\)pthread.h' "[ \t]+1.[0-9]+[ \t]+[0-9/]+ SMI";
+    files = pthread.h;
+    /*
+     * On Solaris 10, this fix is unnecessary because upad64_t is
+     * always defined correctly regardless of the definition of the
+     * __STDC__ macro.  The first "mach" pattern matches up to
+     * solaris9.  The second "mach" pattern will not match any two (or
+     * more) digit solaris version, but it will match e.g. 2.5.1.
+     */
+    mach = '*-*-solaris2.[0-9]', '*-*-solaris2.[0-9][!0-9]*';
+    c_fix = format;
+    c_fix_arg = "#if __STDC__ - 0 == 0 && !defined(_NO_LONGLONG)\n"
+                "%0\n"
+                "#else\n"
+                "%1{0}, {0}, {0}, {%3}%4\n"
+                "#endif";
+    c_fix_arg = "(^#define[ \t]+PTHREAD_ONCE_INIT[ \t]+\\{\\{)"
+                "(0, 0, 0, )(PTHREAD_[A-Z_]+)(\\}\\})[ \t]*$";
+    test_text =
+    '#ident "@(#)pthread.h  1.26  98/04/12 SMI"'"\n"
+    "#define PTHREAD_ONCE_INIT\t{{0, 0, 0, PTHREAD_ONCE_NOTDONE}}\n";
 };
 
 
