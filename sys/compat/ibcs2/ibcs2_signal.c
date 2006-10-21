@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.22 2005/12/11 12:20:03 christos Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.22.20.1 2006/10/21 15:20:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.22 2005/12/11 12:20:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.22.20.1 2006/10/21 15:20:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,23 +289,23 @@ ibcs2_sys_sigsys(l, v, retval)
 	sighold:
 		sigemptyset(&ss);
 		sigaddset(&ss, signum);
-		return (sigprocmask1(p, SIG_BLOCK, &ss, 0));
+		return (sigprocmask1(l, SIG_BLOCK, &ss, 0));
 
 	case IBCS2_SIGRELSE_MASK:
 		sigemptyset(&ss);
 		sigaddset(&ss, signum);
-		return (sigprocmask1(p, SIG_UNBLOCK, &ss, 0));
+		return (sigprocmask1(l, SIG_UNBLOCK, &ss, 0));
 
 	case IBCS2_SIGIGNORE_MASK:
 		nbsa.sa_handler = SIG_IGN;
 		sigemptyset(&nbsa.sa_mask);
 		nbsa.sa_flags = 0;
-		return (sigaction1(p, signum, &nbsa, 0, NULL, 0));
+		return (sigaction1(l, signum, &nbsa, 0, NULL, 0));
 
 	case IBCS2_SIGPAUSE_MASK:
 		ss = p->p_sigctx.ps_sigmask;
 		sigdelset(&ss, signum);
-		return (sigsuspend1(p, &ss));
+		return (sigsuspend1(l, &ss));
 
 	default:
 		return (ENOSYS);
@@ -323,7 +323,6 @@ ibcs2_sys_sigprocmask(l, v, retval)
 		syscallarg(const ibcs2_sigset_t *) set;
 		syscallarg(ibcs2_sigset_t *) oset;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	ibcs2_sigset_t niss, oiss;
 	sigset_t nbss, obss;
 	int how;
@@ -349,7 +348,7 @@ ibcs2_sys_sigprocmask(l, v, retval)
 			return (error);
 		ibcs2_to_native_sigset(&niss, &nbss);
 	}
-	error = sigprocmask1(p, how,
+	error = sigprocmask1(l, how,
 	    SCARG(uap, set) ? &nbss : 0, SCARG(uap, oset) ? &obss : 0);
 	if (error)
 		return (error);

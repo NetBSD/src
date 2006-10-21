@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.36 2005/12/11 12:20:20 christos Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.36.20.1 2006/10/21 15:20:48 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.36 2005/12/11 12:20:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.36.20.1 2006/10/21 15:20:48 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -418,9 +418,13 @@ mach_thread_suspend(args)
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	struct lwp *tl = args->tl;
+	struct proc *p = tl->l_proc;
 	int error;
 
+	mutex_enter(&p->p_mutex);
+	lwp_lock(tl);
 	error = lwp_suspend(l, tl);
+	mutex_exit(&p->p_mutex);
 
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
@@ -438,8 +442,12 @@ mach_thread_resume(args)
 	mach_thread_resume_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *tl = args->tl;
+	struct proc *p = tl->l_proc;
 
+	mutex_enter(&p->p_mutex);
+	lwp_lock(tl);
 	lwp_continue(tl);
+	mutex_exit(&p->p_mutex);
 
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);

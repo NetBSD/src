@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.126.4.1 2006/09/11 18:07:25 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.126.4.2 2006/10/21 15:20:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.126.4.1 2006/09/11 18:07:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.126.4.2 2006/10/21 15:20:46 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -213,7 +213,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	struct proc	*p1, *p2, *parent;
 	uid_t		uid;
 	struct lwp	*l2;
-	int		count, s;
+	int		count;
 	vaddr_t		uaddr;
 	boolean_t	inmem;
 
@@ -286,10 +286,10 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	memcpy(&p2->p_startcopy, &p1->p_startcopy,
 	    (unsigned) ((caddr_t)&p2->p_endcopy - (caddr_t)&p2->p_startcopy));
 
-	simple_lock_init(&p2->p_sigctx.ps_silock);
-	CIRCLEQ_INIT(&p2->p_sigctx.ps_siginfo);
-	simple_lock_init(&p2->p_lock);
+	CIRCLEQ_INIT(&p2->p_sigpend.sp_info);
+
 	LIST_INIT(&p2->p_lwps);
+	LIST_INIT(&p2->p_sigwaiters);
 
 	/*
 	 * Duplicate sub-structures as needed.
@@ -304,10 +304,21 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_emul = p1->p_emul;
 	p2->p_execsw = p1->p_execsw;
 
+	if (flags & FORK_SYSTEM) {
+		/*
+		 * Mark it as a system process.  Set P_NOCLDWAIT so that
+		 * children are reparented to init(8) when they exit. 
+		 * init(8) can easily wait them out for us.
+		 */
+		p2->p_flag |= (P_SYSTEM | P_NOCLDWAIT);
+	}
 	if (p1->p_flag & P_PROFIL)
 		startprofclock(p2);
 
+	mutex_init(&p2->p_smutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&p2->p_crmutex, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&p2->p_rasmutex, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&p2->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 	mutex_enter(&p1->p_crmutex);
 	kauth_cred_hold(p1->p_cred);
 	p2->p_cred = p1->p_cred;
@@ -382,7 +393,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Create signal actions for the child process.
 	 */
+	mutex_enter(&p1->p_mutex);
 	sigactsinit(p2, p1, flags & FORK_SHARESIGS);
+	mutex_exit(&p1->p_mutex);
 
 	/*
 	 * p_stats.
@@ -440,21 +453,27 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Make child runnable, set start time, and add to run queue
 	 * except if the parent requested the child to start in SSTOP state.
 	 */
-	SCHED_LOCK(s);
+	mutex_enter(&p2->p_smutex);
 	getmicrotime(&p2->p_stats->p_start);
 	p2->p_acflag = AFORK;
 	if (p1->p_flag & P_STOPFORK) {
 		p2->p_nrlwps = 0;
 		p1->p_nstopchild++;
 		p2->p_stat = SSTOP;
+		lwp_lock(l2);
 		l2->l_stat = LSSTOP;
+		lwp_unlock(l2);
 	} else {
 		p2->p_nrlwps = 1;
 		p2->p_stat = SACTIVE;
+		lwp_lock(l2);
 		l2->l_stat = LSRUN;
+		mutex_enter(&sched_mutex);
+		lwp_swaplock_linked(l2, &sched_mutex);
 		setrunqueue(l2);
+		lwp_unlock(l2);
 	}
-	SCHED_UNLOCK(s);
+	mutex_exit(&p2->p_smutex);
 
 	/*
 	 * Now can be swapped.
@@ -519,7 +538,6 @@ proc_trampoline_mp(void)
 
 	l = curlwp;
 
-	SCHED_ASSERT_UNLOCKED();
 	KERNEL_PROC_LOCK(l);
 }
 #endif

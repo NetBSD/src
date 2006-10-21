@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.34 2005/12/11 12:20:12 christos Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.34.20.1 2006/10/21 15:20:48 ad Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.34 2005/12/11 12:20:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.34.20.1 2006/10/21 15:20:48 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -635,7 +635,7 @@ irix_get_ucontext(ucp, l)
 	if (ucp->iuc_flags & IRIX_UC_SIGMASK) {
 		/* Restore signal mask. */
 		irix_to_native_sigset(&ucp->iuc_sigmask, &mask);
-		(void)sigprocmask1(p, SIG_SETMASK, &mask, 0);
+		(void)sigprocmask1(l, SIG_SETMASK, &mask, 0);
 	}
 
 	return;
@@ -684,7 +684,7 @@ irix_get_sigcontext(scp, l)
 
 	/* Restore signal mask. */
 	irix_to_native_sigset(&scp->isc_sigset, &mask);
-	(void)sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void)sigprocmask1(l, SIG_SETMASK, &mask, 0);
 
 	return;
 }

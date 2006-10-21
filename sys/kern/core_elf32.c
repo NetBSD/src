@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.26.4.1 2006/09/11 18:07:25 ad Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.26.4.2 2006/10/21 15:20:46 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.26.4.1 2006/09/11 18:07:25 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.26.4.2 2006/10/21 15:20:46 ad Exp $");
 
 /* If not included by core_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -315,6 +315,7 @@ ELFNAMEEND(coredump_notes)(struct proc *p, struct lwp *l,
 	size_t size, notesize;
 	int error;
 	struct lwp *l0;
+	sigset_t ss1, ss2;
 
 	size = 0;
 
@@ -328,10 +329,17 @@ ELFNAMEEND(coredump_notes)(struct proc *p, struct lwp *l,
 		cpi.cpi_sigcode = p->p_sigctx.ps_code;
 		cpi.cpi_siglwp = p->p_sigctx.ps_lwp;
 
-		memcpy(&cpi.cpi_sigpend, &p->p_sigctx.ps_siglist,
-		    sizeof(cpi.cpi_sigpend));
-		memcpy(&cpi.cpi_sigmask, &p->p_sigctx.ps_sigmask,
-		    sizeof(cpi.cpi_sigmask));
+		/*
+		 * XXX This should be per-LWP.
+		 */
+		ss1 = p->p_sigpend.sp_set;
+		sigemptyset(&ss2);
+		LIST_FOREACH(l0, &p->p_lwps, l_sibling) {
+			sigplusset(&l0->l_sigpend.sp_set, &ss1);
+			sigplusset(&l0->l_sigmask, &ss2);
+		}
+		memcpy(&cpi.cpi_sigpend, &ss1, sizeof(cpi.cpi_sigpend));
+		memcpy(&cpi.cpi_sigmask, &ss2, sizeof(cpi.cpi_sigmask));
 		memcpy(&cpi.cpi_sigignore, &p->p_sigctx.ps_sigignore,
 		    sizeof(cpi.cpi_sigignore));
 		memcpy(&cpi.cpi_sigcatch, &p->p_sigctx.ps_sigcatch,
@@ -381,7 +389,8 @@ ELFNAMEEND(coredump_notes)(struct proc *p, struct lwp *l,
 
 	/*
 	 * Now, for each LWP, write the register info and any other
-	 * per-LWP notes.
+	 * per-LWP notes.  Since we're dumping core, we don't bother
+	 * locking.
 	 */
 	LIST_FOREACH(l0, &p->p_lwps, l_sibling) {
 		if (l0 == l)		/* we've taken care of this thread */

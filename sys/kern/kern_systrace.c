@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.58.2.2 2006/09/11 18:07:25 ad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.58.2.3 2006/10/21 15:20:47 ad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.58.2.2 2006/09/11 18:07:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.58.2.3 2006/10/21 15:20:47 ad Exp $");
 
 #include "opt_systrace.h"
 
@@ -506,7 +506,9 @@ systracef_close(struct file *fp, struct lwp *l)
 		struct proc *q = strp->proc;
 
 		systrace_detach(strp);
+		rw_enter(&proclist_lock, RW_READER);	/* XXXSMP */
 		psignal(q, SIGKILL);
+		rw_exit(&proclist_lock);		/* XXXSMP */
 	}
 
 	/* Clean up fork and exit messages */
@@ -669,7 +671,9 @@ systrace_sys_fork(struct proc *oldproc, struct proc *p)
 
 	if (systrace_insert_process(fst, p, &strp)) {
 		/* We need to kill the child */
+		rw_enter(&proclist_lock, RW_READER);	/* XXXSMP */
 		psignal(p, SIGKILL);
+		rw_exit(&proclist_lock);		/* XXXSMP */
 		goto out;
 	}
 
@@ -1216,7 +1220,15 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 	uio.uio_vmspace = l->l_proc->p_vmspace;
 
 #ifdef __NetBSD__
-	error = process_domem(l, proc_representative_lwp(t), &uio);
+	{
+		/* XXXAD I/O while locked */
+		struct lwp *tl;
+		mutex_enter(&p->p_smutex);	/* XXXAD */
+		tl = proc_representative_lwp(t, NULL, 1);
+		error = process_domem(l, tl, &uio);
+		lwp_unlock(tl);
+		mutex_exit(&p->p_smutex);	/* XXXAD */
+	}
 #else
 	error = procfs_domem(p, t, NULL, &uio);
 #endif

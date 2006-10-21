@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.73.2.1 2006/09/11 00:20:01 ad Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.73.2.2 2006/10/21 15:20:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.73.2.1 2006/09/11 00:20:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.73.2.2 2006/10/21 15:20:47 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -359,6 +359,7 @@ mfs_start(struct mount *mp, int flags, struct lwp *l)
 {
 	struct vnode *vp = VFSTOUFS(mp)->um_devvp;
 	struct mfsnode *mfsp = VTOMFS(vp);
+	struct proc *p;
 	struct buf *bp;
 	caddr_t base;
 	int sleepreturn = 0;
@@ -384,8 +385,12 @@ mfs_start(struct mount *mp, int flags, struct lwp *l)
 			mutex_enter(&syncer_mutex);
 			if (vfs_busy(mp, LK_NOWAIT, 0) != 0)
 				mutex_exit(&syncer_mutex);
-			else if (dounmount(mp, 0, l) != 0)
-				CLRSIG(l);
+			else if (dounmount(mp, 0, l) != 0) {
+				p = l->l_proc;
+				mutex_enter(&p->p_smutex);
+				sigclearall(p, NULL);
+				mutex_exit(&p->p_smutex);
+			}
 			sleepreturn = 0;
 			continue;
 		}

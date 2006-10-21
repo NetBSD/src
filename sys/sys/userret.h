@@ -1,11 +1,11 @@
-/* $NetBSD: userret.h,v 1.9 2006/03/11 13:53:41 simonb Exp $ */
+/* $NetBSD: userret.h,v 1.9.10.1 2006/10/21 15:20:48 ad Exp $ */
 
 /*-
- * Copyright (c) 1998, 2000, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2003, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum, and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -72,6 +72,10 @@
 #ifndef _SYS_USERRET_H_
 #define	_SYS_USERRET_H_
 
+#include "opt_multiprocessor.h"
+
+#include <sys/lockdebug.h>
+
 /*
  * Define the MI code needed before returning to user mode, for
  * trap and syscall.
@@ -81,24 +85,34 @@
 static __inline void
 mi_userret(struct lwp *l)
 {
-	struct proc *p = l->l_proc;
-	int sig;
 
 	/* Generate UNBLOCKED upcall. */
 	if (l->l_flag & L_SA_BLOCKING)
 		sa_unblock_userret(l);
 
-	/* Take pending signals. */
-	while ((sig = CURSIG(l)) != 0)
-		postsig(sig);
+#ifdef MULTIPROCESSOR
+	lwp_lock(l);
+#endif
 
-	/* Invoke per-process kernel-exit handling, if any. */
-	if (p->p_userret)
-		(p->p_userret)(l, p->p_userret_arg);
+	/*
+	 * Handle "exceptional" events: pending signals, stop/exit actions,
+	 * etc.
+	 */
+	if ((l->l_flag & L_USERRET) != 0)
+		lwp_userret(l);
+
+	l->l_priority = l->l_usrpri;
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
+
+#ifdef MULTIPROCESSOR
+	lwp_unlock(l);
+#endif
 
 	/* Invoke any pending upcalls. */
 	if (l->l_flag & L_SA_UPCALL)
 		sa_upcall_userret(l);
+
+	LOCKDEBUG_BARRIER(NULL, 0);
 }
 
 #endif	/* !_SYS_USERRET_H_ */

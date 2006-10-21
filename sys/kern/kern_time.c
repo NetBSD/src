@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.105.4.1 2006/09/11 18:07:25 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.105.4.2 2006/10/21 15:20:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.105.4.1 2006/09/11 18:07:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.105.4.2 2006/10/21 15:20:47 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1452,7 +1452,6 @@ itimerfire(struct ptimer *pt)
 {
 	struct proc *p = pt->pt_proc;
 	struct sadata_vp *vp;
-	int s;
 	unsigned int i;
 
 	if (pt->pt_ev.sigev_notify == SIGEV_SIGNAL) {
@@ -1461,9 +1460,12 @@ itimerfire(struct ptimer *pt)
 		 * just post the signal number and throw away the
 		 * value.
 		 */
-		if (sigismember(&p->p_sigctx.ps_siglist, pt->pt_ev.sigev_signo))
+		if (sigismember(&p->p_sigpend.sp_set, pt->pt_ev.sigev_signo)) {
+			/*
+			 * XXXAD Timers need to become per-LWP.
+			 */
 			pt->pt_overruns++;
-		else {
+		} else {
 			ksiginfo_t ksi;
 			(void)memset(&ksi, 0, sizeof(ksi));
 			ksi.ksi_signo = pt->pt_ev.sigev_signo;
@@ -1471,7 +1473,9 @@ itimerfire(struct ptimer *pt)
 			ksi.ksi_sigval = pt->pt_ev.sigev_value;
 			pt->pt_poverruns = pt->pt_overruns;
 			pt->pt_overruns = 0;
+			mutex_enter(&proclist_mutex);
 			kpsignal(p, &ksi, NULL);
+			mutex_exit(&proclist_mutex);
 		}
 	} else if (pt->pt_ev.sigev_notify == SIGEV_SA && (p->p_flag & P_SA)) {
 		/* Cause the process to generate an upcall when it returns. */
@@ -1490,15 +1494,16 @@ itimerfire(struct ptimer *pt)
 			p->p_userret = timerupcall;
 			p->p_userret_arg = p->p_timers;
 
-			SCHED_LOCK(s);
+			mutex_enter(&p->p_smutex);	/* XXXAD locking */
 			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
 				if (vp->savp_lwp->l_flag & L_SA_IDLE) {
 					vp->savp_lwp->l_flag &= ~L_SA_IDLE;
-					sched_wakeup(vp->savp_lwp);
+					/* XXXAD */
+					wakeup(vp->savp_lwp);
 					break;
 				}
 			}
-			SCHED_UNLOCK(s);
+			mutex_exit(&p->p_smutex);	/* XXXAD locking */
 		} else if (p->p_userret == timerupcall) {
 			i = 1 << pt->pt_entry;
 			if ((p->p_timers->pts_fired & i) == 0) {

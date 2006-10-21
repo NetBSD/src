@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.227.4.1 2006/09/11 18:07:25 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.227.4.2 2006/10/21 15:20:46 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.4.1 2006/09/11 18:07:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.4.2 2006/10/21 15:20:46 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -601,10 +601,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		goto bad;
 	}
 
-	/* Get rid of other LWPs/ */
-	p->p_flag |= P_WEXIT; /* XXX hack. lwp-exit stuff wants to see it. */
+	/* Get rid of other LWPs. */
 	exit_lwps(l);
-	p->p_flag &= ~P_WEXIT;
 	KDASSERT(p->p_nlwps == 1);
 
 	/* This is now LWP 1 */
@@ -835,10 +833,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		kauth_cred_t ocred;
 
 		kauth_cred_hold(l->l_cred);
-		simple_lock(&p->p_lock);
+		mutex_enter(&p->p_crmutex);
 		ocred = p->p_cred;
 		p->p_cred = l->l_cred;
-		simple_unlock(&p->p_lock);
+		mutex_exit(&p->p_crmutex);
 		kauth_cred_free(ocred);
 	}
 
@@ -869,8 +867,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		goto exec_abort;
 	}
 
+	rw_enter(&proclist_lock, RW_READER);
 	if ((p->p_flag & (P_TRACED|P_SYSCALL)) == P_TRACED)
 		psignal(p, SIGTRAP);
+	rw_exit(&proclist_lock);
 
 	free(pack.ep_hdr, M_EXEC);
 
@@ -915,17 +915,20 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	p->p_flag &= ~P_INEXEC;
 
 	if (p->p_flag & P_STOPEXEC) {
-		int s;
+		rw_enter(&proclist_lock, RW_WRITER);
 
-		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
-		SCHED_LOCK(s);
-		p->p_pptr->p_nstopchild++;
+		mutex_enter(&p->p_smutex);
+		sigclearall(p, &contsigmask);
 		p->p_stat = SSTOP;
+		p->p_pptr->p_nstopchild++;
+		lwp_lock(l);
 		l->l_stat = LSSTOP;
 		p->p_nrlwps--;
+		mutex_exit_linked(&p->p_smutex, l->l_mutex);
+
+		rw_exit(&proclist_lock);
+
 		mi_switch(l, NULL);
-		SCHED_ASSERT_UNLOCKED();
-		splx(s);
 	}
 
 #ifdef SYSTRACE
@@ -967,7 +970,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	return error;
 
  exec_abort:
-	p->p_flag &= ~P_INEXEC;
 #ifdef LKM
 	rw_exit(&exec_lock);
 #endif
@@ -984,6 +986,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
 	free(pack.ep_hdr, M_EXEC);
+
+	/* Acquire the sched-state mutex.  exit1() will release it. */
+	mutex_enter(&p->p_smutex);
+	p->p_flag &= ~P_INEXEC;
 	exit1(l, W_EXITCODE(error, SIGABRT));
 
 	/* NOTREACHED */
