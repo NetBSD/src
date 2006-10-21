@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.140 2006/10/19 11:40:51 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.141 2006/10/21 10:08:54 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -837,8 +837,6 @@ struct secasvar *tcp_signature_getsav(struct mbuf *, struct tcphdr *);
 int	 tcp_signature(struct mbuf *, struct tcphdr *, int, struct secasvar *,
 	    char *);
 #endif
-int	 tcp_dooptions(struct tcpcb *, u_char *, int, struct tcphdr *,
-	    struct mbuf *, int, struct tcp_opt_info *);
 void	 tcp_drain(void);
 void	 tcp_established(struct tcpcb *);
 void	 tcp_init(void);
@@ -892,12 +890,13 @@ tcp_seq  tcp_new_iss1(void *, void *, u_int16_t, u_int16_t, size_t,
 	    tcp_seq);
 
 void	 tcp_new_dsack(struct tcpcb *, tcp_seq, u_int32_t);
-void	 tcp_sack_option(struct tcpcb *, struct tcphdr *, u_char *, int);
-void	 tcp_del_sackholes(struct tcpcb *, struct tcphdr *);
+void	 tcp_sack_option(struct tcpcb *, const struct tcphdr *,
+	    const u_char *, int);
+void	 tcp_del_sackholes(struct tcpcb *, const struct tcphdr *);
 void	 tcp_free_sackholes(struct tcpcb *);
 void	 tcp_sack_adjust(struct tcpcb *tp);
 struct sackhole *tcp_sack_output(struct tcpcb *tp, int *sack_bytes_rexmt);
-void	 tcp_sack_newack(struct tcpcb *, struct tcphdr *);
+void	 tcp_sack_newack(struct tcpcb *, const struct tcphdr *);
 int	 tcp_sack_numblks(const struct tcpcb *);
 #define	TCP_SACK_OPTLEN(nblks)	((nblks) * 8 + 2 + 2)
 
