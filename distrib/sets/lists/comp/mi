@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.949 2006/10/18 17:54:54 tnozaki Exp $
+#	$NetBSD: mi,v 1.950 2006/10/21 09:36:39 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4270,6 +4270,7 @@
 ./usr/share/man/cat3/dupwin.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dynamic_field_info.0	comp-c-catman		.cat
 ./usr/share/man/cat3/easprintf.0		comp-c-catman		.cat
+./usr/share/man/cat3/ecalloc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/echo.0			comp-c-catman		.cat
 ./usr/share/man/cat3/echochar.0			comp-c-catman		.cat
 ./usr/share/man/cat3/edata.0			comp-c-catman		.cat
@@ -8481,6 +8482,7 @@
 ./usr/share/man/man3/dupwin.3			comp-c-man		.man
 ./usr/share/man/man3/dynamic_field_info.3	comp-c-man		.man
 ./usr/share/man/man3/easprintf.3		comp-c-man		.man
+./usr/share/man/man3/ecalloc.3			comp-c-man		.man
 ./usr/share/man/man3/echo.3			comp-c-man		.man
 ./usr/share/man/man3/echochar.3			comp-c-man		.man
 ./usr/share/man/man3/edata.3			comp-c-man		.man
