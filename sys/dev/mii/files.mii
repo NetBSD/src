@@ -1,4 +1,4 @@
-#	$NetBSD: files.mii,v 1.38 2006/01/04 21:52:17 xtraeme Exp $
+#	$NetBSD: files.mii,v 1.39 2006/10/21 14:10:33 bouyer Exp $
 
 defflag	opt_mii.h	MIIVERBOSE
 
@@ -85,6 +85,10 @@ file	dev/mii/icsphy.c			icsphy
 device	igphy: mii_phy
 attach	igphy at mii
 file	dev/mii/igphy.c				igphy
+
+device	ikphy: mii_phy
+attach	ikphy at mii
+file	dev/mii/ikphy.c				ikphy
 
 device	sqphy: mii_phy
 attach	sqphy at mii
