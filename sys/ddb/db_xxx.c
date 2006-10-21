@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.38 2006/05/14 21:25:49 elad Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.38.8.1 2006/10/21 14:31:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.38 2006/05/14 21:25:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.38.8.1 2006/10/21 14:31:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 				db_printf("%10s %8s %4d", p->p_comm,
 				    p->p_emul->e_name,
 				    (l != NULL) ? l->l_priority : -1);
-				calcru(p, &tv[0], &tv[1], NULL);
+				calcru(p, &tv[0], &tv[1], NULL, NULL);
 				for (i = 0; i < 2; ++i) {
 					db_printf("%4ld.%1ld",
 					    (long)tv[i].tv_sec,
