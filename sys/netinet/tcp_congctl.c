@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.10 2006/10/19 11:42:32 yamt Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.11 2006/10/21 10:24:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.10 2006/10/19 11:42:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.11 2006/10/21 10:24:47 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -201,16 +201,17 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.10 2006/10/19 11:42:32 yamt Exp $"
  *   consider separating the actual implementations in another file.
  */
 
-static int  tcp_reno_fast_retransmit(struct tcpcb *, struct tcphdr *);
+static int  tcp_reno_fast_retransmit(struct tcpcb *, const struct tcphdr *);
 static void tcp_reno_slow_retransmit(struct tcpcb *);
-static void tcp_reno_fast_retransmit_newack(struct tcpcb *, struct tcphdr *);
-static void tcp_reno_newack(struct tcpcb *, struct tcphdr *);
+static void tcp_reno_fast_retransmit_newack(struct tcpcb *,
+    const struct tcphdr *);
+static void tcp_reno_newack(struct tcpcb *, const struct tcphdr *);
 static void tcp_reno_congestion_exp(struct tcpcb *tp);
 
-static int  tcp_newreno_fast_retransmit(struct tcpcb *, struct tcphdr *);
+static int  tcp_newreno_fast_retransmit(struct tcpcb *, const struct tcphdr *);
 static void tcp_newreno_fast_retransmit_newack(struct tcpcb *,
-	struct tcphdr *);
-static void tcp_newreno_newack(struct tcpcb *, struct tcphdr *);
+	const struct tcphdr *);
+static void tcp_newreno_newack(struct tcpcb *, const struct tcphdr *);
 
 
 static void tcp_congctl_fillnames(void);
@@ -407,7 +408,7 @@ tcp_reno_congestion_exp(struct tcpcb *tp)
 
 
 static int
-tcp_reno_fast_retransmit(struct tcpcb *tp, struct tcphdr *th)
+tcp_reno_fast_retransmit(struct tcpcb *tp, const struct tcphdr *th)
 {
 	/*
 	 * We know we're losing at the current
@@ -495,7 +496,8 @@ tcp_reno_slow_retransmit(struct tcpcb *tp)
 }
 
 static void
-tcp_reno_fast_retransmit_newack(struct tcpcb *tp, struct tcphdr *th __unused)
+tcp_reno_fast_retransmit_newack(struct tcpcb *tp,
+    const struct tcphdr *th __unused)
 {
 	if (tp->t_partialacks < 0) {
 		/*
@@ -517,7 +519,7 @@ tcp_reno_fast_retransmit_newack(struct tcpcb *tp, struct tcphdr *th __unused)
 }
 
 static void
-tcp_reno_newack(struct tcpcb *tp, struct tcphdr *th)
+tcp_reno_newack(struct tcpcb *tp, const struct tcphdr *th)
 {
 	/*
 	 * When new data is acked, open the congestion window.
@@ -585,7 +587,7 @@ struct tcp_congctl tcp_reno_ctl = {
  * TCP/NewReno Congestion control.
  */
 static int
-tcp_newreno_fast_retransmit(struct tcpcb *tp, struct tcphdr *th)
+tcp_newreno_fast_retransmit(struct tcpcb *tp, const struct tcphdr *th)
 {
 	if (SEQ_LT(th->th_ack, tp->snd_high)) {
 		/*
@@ -609,7 +611,7 @@ tcp_newreno_fast_retransmit(struct tcpcb *tp, struct tcphdr *th)
  * fast recovery.
  */
 static void
-tcp_newreno_fast_retransmit_newack(struct tcpcb *tp, struct tcphdr *th)
+tcp_newreno_fast_retransmit_newack(struct tcpcb *tp, const struct tcphdr *th)
 {
 	if (tp->t_partialacks < 0) {
 		/*
@@ -672,7 +674,7 @@ tcp_newreno_fast_retransmit_newack(struct tcpcb *tp, struct tcphdr *th)
 }
 
 static void
-tcp_newreno_newack(struct tcpcb *tp, struct tcphdr *th)
+tcp_newreno_newack(struct tcpcb *tp, const struct tcphdr *th)
 {
 	/*
 	 * If we are still in fast recovery (meaning we are using
