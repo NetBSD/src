@@ -1,3 +1,72 @@
+2006-10-16  Jakub Jelinek  <jakub@redhat.com>
+
+	* include/bits/basic_string.tcc (_Rep::_S_create): Call
+	_M_set_sharable() for backwards compatibility.
+
+2006-10-09  Benjamin Kosnik  <bkoz@redhat.com>
+
+        PR libstdc++/29095
+        * libsupc++/cxxabi.h (__cxa_cdtor_type): Explicit "C" linkage.
+        * config/cpu/arm/cxxabi_tweaks.h: Same.
+        * config/cpu/generic/cxxabi_tweaks.h: Same.
+
+2006-10-06  Paolo Carlini  <pcarlini@suse.de>
+
+	PR libstdc++/29368
+	* include/bits/basic_string.h: Adjust rfind documentation.
+	* include/ext/vstring.h: Likewise.
+
+2006-10-06  Paolo Carlini  <pcarlini@suse.de>
+
+	PR libstdc++/29354
+	* include/bits/sstream.tcc (basic_stringbuf<>::seekpos(pos_type,
+	ios_base::openmode)): Allow for seek to pos_type(off_type(0))
+	when the stream is empty.
+	* testsuite/27_io/basic_stringbuf/seekpos/char/29354.cc: New.
+	* testsuite/27_io/basic_stringbuf/seekpos/wchar_t/29354.cc: New.
+
+2006-09-29  Joseph S. Myers  <joseph@codesourcery.com>
+
+	* acinclude.m4 (enable_symvers): Default to no if unable to link.
+	* configure: Regenerate.
+
+2006-09-25  Howard Hinnant  <hhinnant@apple.com>
+
+	PR libstdc++/29224
+	* include/tr1/functional_iterate.h: Avoid -Wshadow warnings.
+
+2006-09-25  Paolo Carlini  <pcarlini@suse.de>
+
+	PR libstdc++/29179
+	* include/ext/mt_allocator.h (__pool_base): Adjust/extend
+	documentation in comments.
+
+2006-08-18  Paolo Carlini  <pcarlini@suse.de>
+
+	PR libstdc++/28765
+	* include/ext/rc_string_base.h (_M_clear): New.
+	* include/ext/sso_string_base.h (_M_clear): Likewise.
+	* include/ext/vstring.h (clear): Use it.
+
+2006-07-03  Paolo Carlini  <pcarlini@suse.de>
+
+	* include/ext/rc_string_base.h (__rc_string_base::_S_max_size):
+	Adjust, take into account rounding in _M_create.
+	(__rc_string_base::_M_create): Add early _S_max_size check.
+
+2006-07-03  Ian Lance Taylor  <ian@airs.com>
+	    Paolo Carlini  <pcarlini@suse.de>
+
+	* include/ext/rc_string_base.h (__rc_string_base::_S_max_size):
+	Increase by a factor of two.
+	* include/ext/sso_string_base.h (__sso_string_base::_S_max_size):
+	Likewise.
+
+2006-07-03  Paolo Carlini  <pcarlini@suse.de>
+
+	* include/ext/sso_string_base.h (__sso_string_base::_M_create): Never
+	allocate a string bigger than _S_max_size.
+
 2006-05-26  Paolo Carlini  <pcarlini@suse.de>
 
 	* include/tr1/hashtable: Minor cosmetic changes.
