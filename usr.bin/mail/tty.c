@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.24 2006/09/29 14:59:31 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.25 2006/10/21 21:37:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.24 2006/09/29 14:59:31 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.25 2006/10/21 21:37:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,13 +46,17 @@ __RCSID("$NetBSD: tty.c,v 1.24 2006/09/29 14:59:31 christos Exp $");
 
 #include "rcv.h"
 #include "extern.h"
-#ifdef USE_READLINE
+#ifdef USE_EDITLINE
 #include "complete.h"
 #endif
 
+#if !defined(USE_EDITLINE) || !defined(TIOCSTI)
 static	cc_t	c_erase;		/* Current erase char */
 static	cc_t	c_kill;			/* Current kill char */
+#endif
+#ifndef USE_EDITLINE
 static	jmp_buf	rewrite;		/* Place to go when continued */
+#endif
 static	jmp_buf	intjmp;			/* Place to go when interrupted */
 #ifndef TIOCSTI
 static	int	ttyset;			/* We must now do erase/kill */
@@ -68,24 +72,23 @@ grabh(struct header *hp, int gflags)
 {
 	struct termios ttybuf;
 
-	/* The following are declared volatile to avoid longjmp clobbering. */
-	volatile sig_t saveint;
-	volatile sig_t savetstp;
-	volatile sig_t savettou;
-	volatile sig_t savettin;
-	volatile int errs;
+	/* The following are declared volatile to avoid longjmp
+	 * clobbering, though they seem safe without it! */
+	sig_t volatile saveint;
+	sig_t volatile savetstp;
+	sig_t volatile savettou;
+	sig_t volatile savettin;
 #ifndef TIOCSTI
-	volatile sig_t savequit;
+	sig_t volatile savequit;
 #else
 # ifdef TIOCEXT
-	volatile int extproc, flag;
+	int volatile extproc;
 # endif /* TIOCEXT */
 #endif /* TIOCSTI */
 
 	savetstp = signal(SIGTSTP, SIG_DFL);
 	savettou = signal(SIGTTOU, SIG_DFL);
 	savettin = signal(SIGTTIN, SIG_DFL);
-	errs = 0;
 #ifndef TIOCSTI
 	ttyset = 0;
 #endif
@@ -93,8 +96,10 @@ grabh(struct header *hp, int gflags)
 		warn("tcgetattr");
 		return(-1);
 	}
+#if !defined(USE_EDITLINE) || !defined(TIOCSTI)
 	c_erase = ttybuf.c_cc[VERASE];
 	c_kill = ttybuf.c_cc[VKILL];
+#endif
 #ifndef TIOCSTI
 	ttybuf.c_cc[VERASE] = _POSIX_VDISABLE;
 	ttybuf.c_cc[VKILL] = _POSIX_VDISABLE;
@@ -106,16 +111,17 @@ grabh(struct header *hp, int gflags)
 # ifdef		TIOCEXT
 	extproc = ((ttybuf.c_lflag & EXTPROC) ? 1 : 0);
 	if (extproc) {
+		int flag;
 		flag = 0;
 		if (ioctl(fileno(stdin), TIOCEXT, &flag) < 0)
 			warn("TIOCEXT: off");
 	}
 # endif	/* TIOCEXT */
+	saveint = signal(SIGINT, ttyint); /* must precede setjmp to be saved */
 	if (setjmp(intjmp)) {
 		(void)fputc('\n', stdout);
 		goto out;
 	}
-	saveint = signal(SIGINT, ttyint);
 #endif
 	if (gflags & GTO) {
 #ifndef TIOCSTI
@@ -150,10 +156,6 @@ grabh(struct header *hp, int gflags)
 	}
 	if (gflags & GSMOPTS) {
 		char *smopts;
-		char *argv[MAXARGC];
-		int argc, i;
-		struct name *np, *t;
-
 #ifndef TIOCSTI
 		if (!ttyset && hp->h_smopts != NULL)
 			ttyset++, tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf);
@@ -165,9 +167,13 @@ grabh(struct header *hp, int gflags)
 		 */
 		hp->h_smopts = NULL;
 		if (smopts) {
+			struct name *np, *t;
+			char *argv[MAXARGC];
+			int argc, i;
+
 			np = NULL;
 			argc = getrawlist(smopts, argv, sizeof(argv)/sizeof(*argv));
-			for (i = 0 ; i < argc ; i++) {
+			for (i = 0; i < argc; i++) {
 				t = nalloc(argv[i], GSMOPTS);
 				if (hp->h_smopts == NULL)
 			hp->h_smopts = t;
@@ -177,8 +183,20 @@ grabh(struct header *hp, int gflags)
 				np = t;
 			}
 		}
+#ifdef MIME_SUPPORT
+		if (hp->h_attach) {
+			struct attachment *ap;
+			int i;
+			i = 0;
+			for (ap = hp->h_attach; ap; ap = ap->a_flink)
+				i++;
+			(void)printf("Attachment%s: %d\n", i > 1 ? "s" : "", i);
+		}
+#endif
 	}
+#ifdef TIOCSTI
 out:
+#endif
 	(void)signal(SIGTSTP, savetstp);
 	(void)signal(SIGTTOU, savettou);
 	(void)signal(SIGTTIN, savettin);
@@ -191,6 +209,7 @@ out:
 #else
 # ifdef		TIOCEXT
 	if (extproc) {
+		int flag;
 		flag = 1;
 		if (ioctl(fileno(stdin), TIOCEXT, &flag) < 0)
 			warn("TIOCEXT: on");
@@ -198,7 +217,7 @@ out:
 # endif	/* TIOCEXT */
 #endif
 	(void)signal(SIGINT, saveint);
-	return(errs);
+	return 0;
 }
 
 /*
@@ -208,24 +227,37 @@ out:
  *
  */
 
-#ifdef USE_READLINE
+#ifdef USE_EDITLINE
 char *
 readtty(const char pr[], char src[])
 {
-  return savestr(rl_getline(pr, src));
-}
+	char *line;
+	line = my_gets(&elm.string, pr, src);
+#if 0
+	return line ? savestr(line) : __UNCONST("");
 #else
+	if (line)
+		return savestr(line);
+	else
+		return __UNCONST("");
+#endif
+}
+
+#else /* USE_EDITLINE */
+
 char *
 readtty(const char pr[], char src[])
 {
 	/* XXX - watch for potential setjmp/longjmp clobbering!
 	 * Currently there appear to be none.
 	 */
-	char ch, canonb[BUFSIZ];
+	char canonb[BUFSIZ];
 	int c;
 	char *cp, *cp2;
+#ifdef TIOCSTI
+	char ch;
 	static char empty[] = "";
-
+#endif
 	(void)fputs(pr, stdout);
 	(void)fflush(stdout);
 	if (src != NULL && strlen(src) > BUFSIZ - 2) {
@@ -315,7 +347,6 @@ redo:
 		return(NULL);
 	return(savestr(canonb));
 }
-#endif
 
 /*
  * Receipt continuation.
@@ -334,10 +365,11 @@ ttystop(int s)
 	(void)signal(s, old_action);
 	longjmp(rewrite, 1);
 }
+#endif /* USE_EDITLINE */
 
 /*ARGSUSED*/
 void
-ttyint(int s)
+ttyint(int s __unused)
 {
 	longjmp(intjmp, 1);
 }

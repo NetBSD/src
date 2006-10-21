@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2006/09/18 19:46:21 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2006/10/21 21:37:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,18 +39,22 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.22 2006/09/18 19:46:21 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.23 2006/10/21 21:37:21 christos Exp $");
 #endif
 #endif /* not lint */
 
 #define EXTERN
 #include "rcv.h"
 #undef EXTERN
+#include <util.h>
 
 #include "extern.h"
 
-#ifdef USE_READLINE
+#ifdef USE_EDITLINE
 #include "complete.h"
+#endif
+#ifdef MIME_SUPPORT
+#include "mime.h"
 #endif
 
 int	main(int, char **);
@@ -76,17 +80,14 @@ lexpand(char *str, int ntype)
 	struct name *np = NULL;
 	char *word, *p;
 
-	list = strdup(str);
-	if (list == NULL)
-		err(EXIT_FAILURE, "strdup failed: %s", str);
-
+	list = estrdup(str);
 	word = list;
-	for (word = list ; *word ; word = p) {
-		while (*word == ' ' || *word == '\t')
+	for (word = list; *word; word = p) {
+		while (isblank((unsigned char)*word))
 			continue;
 		for (p = word;
-		     *p && *p != ' ' && *p != '\t' && *p != ',';
-		      p++ )
+		     *p && !isblank((unsigned char)*p) && *p != ',';
+		     p++)
 			continue;
 		if (*p)
 			*p++ = '\0';
@@ -102,6 +103,9 @@ main(int argc, char *argv[])
 {
 	int i;
 	struct name *to, *cc, *bcc, *smopts;
+#ifdef MIME_SUPPORT
+	struct attachment *attach;
+#endif
 	char *subject;
 	const char *ef;
 	char nosrc = 0;
@@ -131,7 +135,12 @@ main(int argc, char *argv[])
 	smopts = NULL;
 	subject = NULL;
 	Bflag = 0;
+#ifdef MIME_SUPPORT
+	attach = NULL;
+	while ((i = getopt(argc, argv, "~BEINT:a:b:c:dfins:u:v")) != -1)
+#else
 	while ((i = getopt(argc, argv, "~BEINT:b:c:dfins:u:v")) != -1)
+#endif
 	{
 		switch (i) {
 		case 'T':
@@ -146,6 +155,11 @@ main(int argc, char *argv[])
 			}
 			(void)close(i);
 			break;
+#ifdef MIME_SUPPORT
+		case 'a':
+			attach = mime_attach_files(attach, optarg, ATTACH_FILE_ONLY);
+			break;
+#endif
 		case 'u':
 			/*
 			 * Next argument is person to pretend to be.
@@ -237,12 +251,22 @@ main(int argc, char *argv[])
 			assign("dontsendempty", "");
 			break;
 		case '?':
+#ifdef MIME_SUPPORT
+			(void)fputs("\
+Usage: mail [-EiInv] [-s subject] [-a file] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
+            [- sendmail-options ...]\n\
+       mail [-EiInNv] -f [name]\n\
+       mail [-EiInNv] [-u user]\n",
+				stderr);
+#else /* MIME_SUPPORT */
 			(void)fputs("\
 Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
             [- sendmail-options ...]\n\
        mail [-EiInNv] -f [name]\n\
        mail [-EiInNv] [-u user]\n",
 				stderr);
+#endif /* MIME_SUPPORT */
+
 			exit(1);
 		}
 	}
@@ -258,6 +282,10 @@ Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 	if (ef != NULL && to != NULL) {
 		errx(1, "Cannot give -f and people to send to.");
 	}
+#ifdef MIME_SUPPORT
+	if (attach != NULL && to == NULL)
+		errx(1, "Cannot give -a without people to send to.");
+#endif
 	tinit();
 	setscreensize();
 	input = stdin;
@@ -273,13 +301,18 @@ Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 		rc = "~/.mailrc";
 	load(expand(rc));
 
-#ifdef USE_READLINE
+#ifdef USE_EDITLINE
 	/* this is after loading the MAILRC so we can use value() */
-	init_readline();
+	init_editline();
 #endif
 
 	if (!rcvmode) {
+#ifdef MIME_SUPPORT
+		mime_attach_content(attach);
+		(void)mail(to, cc, bcc, smopts, subject, attach);
+#else
 		(void)mail(to, cc, bcc, smopts, subject);
+#endif
 		/*
 		 * why wait?
 		 */
@@ -317,7 +350,7 @@ Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
  */
 void
 /*ARGSUSED*/
-hdrstop(int signo)
+hdrstop(int signo __unused)
 {
 
 	(void)fflush(stdout);
