@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.27 2006/05/14 21:31:53 elad Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.27.8.1 2006/10/21 14:37:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.27 2006/05/14 21:31:53 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.27.8.1 2006/10/21 14:37:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ procfs_dostatus(curl, l, pfs, uio)
 	{
 		struct timeval ut, st;
 
-		calcru(p, &ut, &st, (void *) 0);
+		calcru(p, &ut, &st, (void *) 0, NULL);
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf),
 		    " %ld,%ld %ld,%ld", ut.tv_sec, ut.tv_usec, st.tv_sec,
 		    st.tv_usec);

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.34 2006/09/03 04:56:33 christos Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.34.2.1 2006/10/21 14:37:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.34 2006/09/03 04:56:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.34.2.1 2006/10/21 14:37:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,9 @@ static const vfs_namemap_t signames[] = {
 
 int procfs_control(struct lwp *, struct lwp *, int, int);
 
+/*
+ * XXXAD needs locking.
+ */ 
 int
 procfs_control(curl, l, op, sig)
 	struct lwp *curl;
@@ -136,7 +139,7 @@ procfs_control(curl, l, op, sig)
 {
 	struct proc *curp = curl->l_proc;
 	struct proc *p = l->l_proc;
-	int s, error;
+	int error;
 
 	/*
 	 * You cannot do anything to the process if it is currently exec'ing
@@ -298,9 +301,7 @@ procfs_control(curl, l, op, sig)
 		/* Finally, deliver the requested signal (or none). */
 		if (l->l_stat == LSSTOP) {
 			p->p_xstat = sig;
-			SCHED_LOCK(s);
 			setrunnable(l);
-			SCHED_UNLOCK(s);
 		} else {
 			if (sig != 0)
 				psignal(p, sig);

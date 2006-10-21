@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.133.6.1 2006/09/11 00:20:01 ad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.133.6.2 2006/10/21 14:37:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.133.6.1 2006/09/11 00:20:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.133.6.2 2006/10/21 14:37:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -692,7 +692,7 @@ procfs_getattr(v)
 				vap->va_bytes = vap->va_size = 0;
 				break;
 			}
-			FILE_UNUSE(fp, proc_representative_lwp(pown));
+			FILE_UNUSE(fp, curlwp);
 			break;
 		}
 		/*FALLTHROUGH*/
@@ -955,18 +955,16 @@ procfs_lookup(v)
 		p = PFIND(pfs->pfs_pid);
 		if (p == NULL)
 			break;
-		l = proc_representative_lwp(p);
 
 		for (pt = proc_targets, i = 0; i < nproc_targets; pt++, i++) {
 			if (cnp->cn_namelen == pt->pt_namlen &&
 			    memcmp(pt->pt_name, pname, cnp->cn_namelen) == 0 &&
 			    (pt->pt_valid == NULL ||
 			     (*pt->pt_valid)(cnp->cn_lwp, dvp->v_mount)))
-				goto found;
+				break;
 		}
-		break;
-
-	found:
+		if (i == nproc_targets)
+			break;
 		if (pt->pt_pfstype == PFSfile) {
 			fvp = p->p_textvp;
 			/* We already checked that it exists. */
@@ -1155,6 +1153,7 @@ procfs_readdir(v)
 	struct vnode *vp;
 	const struct proc_target *pt;
 	struct procfs_root_readdir_ctx ctx;
+	struct lwp *l;
 
 	vp = ap->a_vp;
 	pfs = VTOPFS(vp);
@@ -1195,9 +1194,15 @@ procfs_readdir(v)
 
 		for (pt = &proc_targets[i];
 		     uio->uio_resid >= UIO_MX && i < nproc_targets; pt++, i++) {
-			if (pt->pt_valid &&
-			    (*pt->pt_valid)(proc_representative_lwp(p), vp->v_mount) == 0)
-				continue;
+			if (pt->pt_valid) {
+				/* XXXSMP locking */
+				mutex_enter(&p->p_smutex);
+				l = proc_representative_lwp(p, NULL);
+				lwp_unlock(l);
+				mutex_exit(&p->p_smutex);
+				if ((*pt->pt_valid)(l, vp->v_mount) == 0)
+					continue;
+			}
 
 			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid,
 			    pt->pt_pfstype, -1);
@@ -1450,12 +1455,12 @@ procfs_readlink(v)
 		case DTYPE_VNODE:
 			vxp = (struct vnode *)fp->f_data;
 			if (vxp->v_type != VDIR) {
-				FILE_UNUSE(fp, proc_representative_lwp(pown));
+				FILE_UNUSE(fp, curlwp);
 				return EINVAL;
 			}
 			if ((path = malloc(MAXPATHLEN, M_TEMP, M_WAITOK))
 			    == NULL) {
-				FILE_UNUSE(fp, proc_representative_lwp(pown));
+				FILE_UNUSE(fp, curlwp);
 				return ENOMEM;
 			}
 			bp = path + MAXPATHLEN;
@@ -1465,7 +1470,7 @@ procfs_readlink(v)
 				vp = rootvnode;
 			error = getcwd_common(vxp, vp, &bp, path,
 			    MAXPATHLEN / 2, 0, curlwp);
-			FILE_UNUSE(fp, proc_representative_lwp(pown));
+			FILE_UNUSE(fp, curlwp);
 			if (error) {
 				free(path, M_TEMP);
 				return error;
