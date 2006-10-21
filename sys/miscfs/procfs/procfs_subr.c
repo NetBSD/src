@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.68 2006/03/01 12:38:32 yamt Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.68.14.1 2006/10/21 14:37:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.68 2006/03/01 12:38:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.68.14.1 2006/10/21 14:37:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,10 +218,10 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 				break;
 			default:
 				error = EOPNOTSUPP;
-				FILE_UNUSE(fp, proc_representative_lwp(pown));
+				FILE_UNUSE(fp, curlwp);
 				goto bad;
 			}
-			FILE_UNUSE(fp, proc_representative_lwp(pown));
+			FILE_UNUSE(fp, curlwp);
 		}
 		break;
 
@@ -321,7 +321,11 @@ procfs_rw(v)
 	 * a process with multiple LWPs. For the moment, we'll
 	 * just kluge this and fail on others.
 	 */
-	l = proc_representative_lwp(p);
+	/* XXXSMP locking */
+	mutex_enter(&p->p_smutex);
+	l = proc_representative_lwp(p, NULL);
+	lwp_unlock(l);
+	mutex_exit(&p->p_smutex);
 
 	switch (pfs->pfs_type) {
 	case PFSnote:

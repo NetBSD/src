@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.25 2006/06/24 16:34:02 christos Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.25.4.1 2006/10/21 14:37:18 ad Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.25 2006/06/24 16:34:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.25.4.1 2006/10/21 14:37:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 	struct vm_map *map = &p->p_vmspace->vm_map;
 	struct vm_map_entry *entry;
 	unsigned long stext = 0, etext = 0, sstack = 0;
+	struct timeval rt;
 
 	if (map != &curproc->p_vmspace->vm_map)
 		vm_map_lock_read(map);
@@ -148,6 +149,8 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 
 	if (map != &curproc->p_vmspace->vm_map)
 		vm_map_unlock_read(map);
+
+	calcru(p, NULL, NULL, NULL, &rt);
 
 	len = snprintf(bf, sizeof(bf),
 	    "%d (%s) %c %d %d %d %d %d "
@@ -185,7 +188,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 	    p->p_nice,
 	    0,
 
-	    p->p_rtime.tv_sec,
+	    rt.tv_sec,
 	    p->p_stats->p_start.tv_sec,
 	    ru->ru_ixrss + ru->ru_idrss + ru->ru_isrss,
 	    ru->ru_maxrss,
@@ -196,8 +199,8 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 	    sstack,					/* mm start stack */
 	    0,						/* XXX: pc */
 	    0,						/* XXX: sp */
-	    p->p_sigctx.ps_siglist.__bits[0],		/* pending */
-	    p->p_sigctx.ps_sigmask.__bits[0],		/* blocked */
+	    p->p_sigpend.sp_set.__bits[0],		/* XXX: pending */
+	    0,						/* XXX: held */
 	    p->p_sigctx.ps_sigignore.__bits[0],		/* ignored */
 	    p->p_sigctx.ps_sigcatch.__bits[0],		/* caught */
 

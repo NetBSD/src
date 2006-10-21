@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_fd.c,v 1.8 2006/07/23 22:06:12 ad Exp $	*/
+/*	$NetBSD: procfs_fd.c,v 1.8.4.1 2006/10/21 14:37:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.8 2006/07/23 22:06:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.8.4.1 2006/10/21 14:37:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ procfs_dofd(curl, p, pfs, uio)
 		panic("bad uio op");
 	}
 
-	FILE_UNUSE(fp, proc_representative_lwp(pown));
+	FILE_UNUSE(fp, curl);
 
 	return (error);
 }
