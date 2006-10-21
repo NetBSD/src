@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.733 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.734 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -126,3 +126,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	tcp(4): Added RFC 3465 Appropriate Byte Counting (ABC) [yamt 20061019]
 	wm(4): Added support for the Intel 80003 gigabit ethernet controller.
 		[bouyer 20061021]
+	mail(1): Mime and multi-character set handling; command line editing
+		and completion. Thanks to Anon Ymous [christos 20061021]
