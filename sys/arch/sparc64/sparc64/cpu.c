@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.55 2006/10/17 22:26:06 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.56 2006/10/21 23:49:29 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.55 2006/10/17 22:26:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56 2006/10/21 23:49:29 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.55 2006/10/17 22:26:06 mrg Exp $");
 
 #include <sparc64/sparc64/cache.h>
 
-/* This is declared here so that you must include a CPU for the cache code. */
-struct cacheinfo cacheinfo;
+int ecache_min_line_size;
 
 /* Linked list of all CPUs in system. */
 int sparc_ncpus = 0;
@@ -90,17 +89,14 @@ char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[100];			/* machine model (primary CPU) */
 extern char machine_model[];
 
+static void cpu_reset_fpustate(void);
+
 /* The CPU configuration driver. */
 void cpu_attach(struct device *, struct device *, void *);
 int cpu_match(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(cpu, sizeof(struct device),
     cpu_match, cpu_attach, NULL, NULL);
-
-extern struct cfdriver cpu_cd;
-
-#define	IU_IMPL(v)	((((uint64_t)(v)) & VER_IMPL) >> VER_IMPL_SHIFT)
-#define	IU_VERS(v)	((((uint64_t)(v)) & VER_MASK) >> VER_MASK_SHIFT)
 
 struct cpu_info *
 alloc_cpuinfo(u_int cpu_node)
@@ -133,6 +129,7 @@ alloc_cpuinfo(u_int cpu_node)
 
 	for (pa = pa0; pa < cpu0paddr; pa += PAGE_SIZE, va += PAGE_SIZE)
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+
 	pmap_update(pmap_kernel());
 
 	cpi = (struct cpu_info *)(va0 + CPUINFO_VA - INTSTACK);
@@ -143,7 +140,7 @@ alloc_cpuinfo(u_int cpu_node)
 	 * Initialize cpuinfo structure.
 	 *
 	 * Arrange pcb, idle stack and interrupt stack in the same
-	 * way as is done for the boot CPU in locore.
+	 * way as is done for the boot CPU in pmap.c.
 	 */
 	cpi->ci_next = NULL;
 	cpi->ci_curlwp = NULL;
@@ -176,26 +173,11 @@ cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
-/*
- * Attach the CPU.
- * Discover interesting goop about the virtual address cache
- * (slightly funny place to do it, but this is where it is to be found).
- */
-void
-cpu_attach(struct device *parent, struct device *dev, void *aux)
+static void
+cpu_reset_fpustate(void)
 {
-	int node;
-	long clk;
-	int impl, vers, fver;
-	struct mainbus_attach_args *ma = aux;
-	struct cpu_info *ci;
 	struct fpstate64 *fpstate;
 	struct fpstate64 fps[2];
-	const char *sep;
-	register int i, l;
-	uint64_t ver;
-	int bigcache, cachesize;
-	char buf[100];
 
 	/* This needs to be 64-bit aligned */
 	fpstate = ALIGNFPSTATE(&fps[1]);
@@ -206,20 +188,47 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	 * will panic in the first loadfpstate(), due to a sequence error,
 	 * so we need to dump the whole state anyway.
 	 */
-
 	fpstate->fs_fsr = 7 << FSR_VER_SHIFT;	/* 7 is reserved for "none" */
 	savefpstate(fpstate);
-	fver = (fpstate->fs_fsr >> FSR_VER_SHIFT) & (FSR_VER >> FSR_VER_SHIFT);
-	ver = getver();
-	impl = IU_IMPL(ver);
-	vers = IU_VERS(ver);
+}
+
+/*
+ * Attach the CPU.
+ * Discover interesting goop about the virtual address cache
+ * (slightly funny place to do it, but this is where it is to be found).
+ */
+void
+cpu_attach(struct device *parent, struct device *dev, void *aux)
+{
+	int node;
+	long clk;
+	struct mainbus_attach_args *ma = aux;
+	struct cpu_info *ci;
+	const char *sep;
+	register int i, l;
+	int bigcache, cachesize;
+	char buf[100];
+	int 	totalsize = 0;
+	int 	linesize;
 
 	/* tell them what we have */
 	node = ma->ma_node;
 
+	/*
+	 * Allocate cpu_info structure if needed.
+	 */
+	ci = alloc_cpuinfo((u_int)node);
+
+	/*
+	 * Only do this on the boot cpu.  Other cpu's call
+	 * cpu_reset_fpustate() from cpu_hatch() before they
+	 * call into the idle loop.
+	 */
+	if (ci->ci_number == 0)
+		cpu_reset_fpustate();
+
 	clk = prom_getpropint(node, "clock-frequency", 0);
 	if (clk == 0) {
-
 		/*
 		 * Try to find it in the OpenPROM root...
 		 */
@@ -229,93 +238,97 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		cpu_clockrate[0] = clk; /* Tell OS what frequency we run on */
 		cpu_clockrate[1] = clk / 1000000;
 	}
-	snprintf(buf, sizeof buf, "%s @ %s MHz, version %d FPU",
-		prom_getpropstring(node, "name"),
-		clockfreq(clk), fver);
-	printf(": %s\n", buf);
+
+	snprintf(buf, sizeof buf, "%s @ %s MHz",
+		prom_getpropstring(node, "name"), clockfreq(clk));
 	snprintf(cpu_model, sizeof cpu_model, "%s (%s)", machine_model, buf);
+
+	printf(": %s, UPA id %d\n", buf, ci->ci_upaid);
+	printf("%s:", dev->dv_xname);
 
 	bigcache = 0;
 
-	cacheinfo.ic_linesize = l =
+	linesize = l =
 		prom_getpropint(node, "icache-line-size", 0);
 	for (i = 0; (1 << i) < l && l; i++)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad icache line size %d", l);
-	cacheinfo.ic_l2linesize = i;
-	cacheinfo.ic_totalsize =
+	totalsize =
 		prom_getpropint(node, "icache-size", 0) *
 		prom_getpropint(node, "icache-associativity", 1);
-	if (cacheinfo.ic_totalsize == 0)
-		cacheinfo.ic_totalsize = l *
+	if (totalsize == 0)
+		totalsize = l *
 			prom_getpropint(node, "icache-nlines", 64) *
 			prom_getpropint(node, "icache-associativity", 1);
 
-	cachesize = cacheinfo.ic_totalsize /
+	cachesize = totalsize /
 	    prom_getpropint(node, "icache-associativity", 1);
 	bigcache = cachesize;
 
-	cacheinfo.dc_linesize = l =
+	sep = " ";
+	if (totalsize > 0) {
+		printf("%s%ldK instruction (%ld b/l)", sep,
+		       (long)totalsize/1024,
+		       (long)linesize);
+		sep = ", ";
+	}
+
+	linesize = l =
 		prom_getpropint(node, "dcache-line-size",0);
 	for (i = 0; (1 << i) < l && l; i++)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad dcache line size %d", l);
-	cacheinfo.dc_l2linesize = i;
-	cacheinfo.dc_totalsize =
+	totalsize =
 		prom_getpropint(node, "dcache-size", 0) *
 		prom_getpropint(node, "dcache-associativity", 1);
-	if (cacheinfo.dc_totalsize == 0)
-		cacheinfo.dc_totalsize = l *
+	if (totalsize == 0)
+		totalsize = l *
 			prom_getpropint(node, "dcache-nlines", 128) *
 			prom_getpropint(node, "dcache-associativity", 1);
 
-	cachesize = cacheinfo.dc_totalsize /
+	cachesize = totalsize /
 	    prom_getpropint(node, "dcache-associativity", 1);
 	if (cachesize > bigcache)
 		bigcache = cachesize;
 
-	cacheinfo.ec_linesize = l =
+	if (totalsize > 0) {
+		printf("%s%ldK data (%ld b/l)", sep,
+		       (long)totalsize/1024,
+		       (long)linesize);
+		sep = ", ";
+	}
+
+	linesize = l =
 		prom_getpropint(node, "ecache-line-size", 0);
 	for (i = 0; (1 << i) < l && l; i++)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad ecache line size %d", l);
-	cacheinfo.ec_l2linesize = i;
-	cacheinfo.ec_totalsize = 
+	totalsize = 
 		prom_getpropint(node, "ecache-size", 0) *
 		prom_getpropint(node, "ecache-associativity", 1);
-	if (cacheinfo.ec_totalsize == 0)
-		cacheinfo.ec_totalsize = l *
+	if (totalsize == 0)
+		totalsize = l *
 			prom_getpropint(node, "ecache-nlines", 32768) *
 			prom_getpropint(node, "ecache-associativity", 1);
 
-	cachesize = cacheinfo.ec_totalsize /
+	cachesize = totalsize /
 	     prom_getpropint(node, "ecache-associativity", 1);
 	if (cachesize > bigcache)
 		bigcache = cachesize;
 
-	sep = " ";
-	printf("%s:", dev->dv_xname);
-	if (cacheinfo.ic_totalsize > 0) {
-		printf("%s%ldK instruction (%ld b/l)", sep,
-		       (long)cacheinfo.ic_totalsize/1024,
-		       (long)cacheinfo.ic_linesize);
-		sep = ", ";
-	}
-	if (cacheinfo.dc_totalsize > 0) {
-		printf("%s%ldK data (%ld b/l)", sep,
-		       (long)cacheinfo.dc_totalsize/1024,
-		       (long)cacheinfo.dc_linesize);
-		sep = ", ";
-	}
-	if (cacheinfo.ec_totalsize > 0) {
+	if (totalsize > 0) {
 		printf("%s%ldK external (%ld b/l)", sep,
-		       (long)cacheinfo.ec_totalsize/1024,
-		       (long)cacheinfo.ec_linesize);
+		       (long)totalsize/1024,
+		       (long)linesize);
 	}
 	printf("\n");
+
+	if (ecache_min_line_size == 0 ||
+	    linesize < ecache_min_line_size)
+		ecache_min_line_size = linesize;
 
 	/*
 	 * Now that we know the size of the largest cache on this CPU,
@@ -323,12 +336,6 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	 */
 	uvm_page_recolor(atop(bigcache)); /* XXX */
 
-	/*
-	 * Allocate cpu_info structure if needed and save cache information
-	 * in there.
-	 */
-	ci = alloc_cpuinfo((u_int)node);
-	printf("%s: upa id %d\n", dev->dv_xname, ci->ci_upaid);
 }
 
 #if defined(MULTIPROCESSOR)
@@ -346,18 +353,22 @@ cpu_boot_secondary_processors()
 	sparc64_ipi_init();
 
 	printf("cpu0: booting secondary processors:\n");
+#ifdef DEBUG
+	printf("mp_tramp: %p\n", (void*)cpu_spinup_trampoline);
+#endif
 
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
 		if (ci->ci_upaid == CPU_UPAID)
 			continue;
 
 		cpu_args->cb_node = ci->ci_node;
-		cpu_args->cb_cpuinfo =  ci->ci_paddr;
+		cpu_args->cb_cpuinfo = ci->ci_paddr;
 		cpu_args->cb_initstack = ci->ci_initstack;
 		membar_sync();
 
 #ifdef DEBUG
-		printf("node %x, cpuinfo %llx, initstack %p\n",
+		printf("cpu%d bootargs: node %x, cpuinfo %llx, initstack %p\n",
+		       ci->ci_number,
 		       cpu_args->cb_node,
 		       (unsigned long long)cpu_args->cb_cpuinfo,
 		       cpu_args->cb_initstack);
@@ -367,7 +378,6 @@ cpu_boot_secondary_processors()
 		pstate = getpstate();
 		setpstate(PSTATE_KERN);
 
-		printf("mp_tramp: %p\n", (void*)cpu_spinup_trampoline);
 		prom_startcpu(ci->ci_node, (void *)cpu_spinup_trampoline, 0);
 
 		for (i = 0; i < 2000; i++) {
@@ -391,8 +401,8 @@ cpu_boot_secondary_processors()
 void
 cpu_hatch()
 {
-	int i;
 	char *v = (char*)CPUINFO_VA;
+	int i;
 
 	for (i = 0; i < 4*PAGE_SIZE; i += sizeof(long))
 		flush(v + i);
@@ -401,6 +411,7 @@ cpu_hatch()
 	CPUSET_ADD(cpus_active, cpu_number());
 	for (i = 0; i < 5000000; i++)
 		;
+	cpu_reset_fpustate();
 	printf("cpu%d enters idle loop.\n", cpu_number());
 	membar_sync();
 	spl0();

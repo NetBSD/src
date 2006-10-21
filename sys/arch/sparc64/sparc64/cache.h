@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.9 2006/02/11 17:57:32 cdi Exp $ */
+/*	$NetBSD: cache.h,v 1.10 2006/10/21 23:49:29 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -81,21 +81,5 @@ void 	blast_icache(void);		/* Clear entire I$ */
 /* The following flush a range from the D$ and I$ but not E$. */
 void	cache_flush_phys(paddr_t, psize_t, int);
 
-/*
- * Cache control information.
- */
-struct cacheinfo {
-	int 	ic_totalsize;		/* instruction cache */
-	int 	ic_enabled;
-	int 	ic_linesize;
-	int 	ic_l2linesize;
-	int 	dc_totalsize;		/* data cache */
-	int 	dc_enabled;
-	int 	dc_linesize;
-	int 	dc_l2linesize;
-	int	ec_totalsize;		/* external cache info */
-	int 	ec_enabled;
-	int	ec_linesize;
-	int	ec_l2linesize;
-};
-extern struct cacheinfo cacheinfo;
+/* Smallest E$ line size. */
+extern	int	ecache_min_line_size;
