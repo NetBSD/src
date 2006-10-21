@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.34 2006/09/29 14:59:31 christos Exp $	*/
+/*	$NetBSD: collect.c,v 1.35 2006/10/21 21:37:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.34 2006/09/29 14:59:31 christos Exp $");
+__RCSID("$NetBSD: collect.c,v 1.35 2006/10/21 21:37:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,6 +47,9 @@ __RCSID("$NetBSD: collect.c,v 1.34 2006/09/29 14:59:31 christos Exp $");
 
 #include "rcv.h"
 #include "extern.h"
+#ifdef MIME_SUPPORT
+#include "mime.h"
+#endif
 
 
 /*
@@ -72,28 +75,6 @@ static	jmp_buf	colljmp;		/* To get back to work */
 static	int	colljmp_p;		/* whether to long jump */
 static	jmp_buf	collabort;		/* To end collection with error */
 
-#if 0
-static void show_name(const char *prefix, struct name *np)
-{
-	int i = 0;
-
-	for (/* EMPTY */; np ; np = np->n_flink) {
-		printf("%s[%d]: %s\n", prefix, i, np->n_name);
-		i++;
-	}
-}
-
-void show_header(struct header *hp);
-void show_header(struct header *hp)
-{
-	show_name("TO", hp->h_to);
-	printf("SUBJECT: %s\n", hp->h_subject);
-	show_name("CC", hp->h_cc);
-	show_name("BCC", hp->h_bcc);
-	show_name("SMOPTS", hp->h_smopts);
-}
-#endif
-
 
 FILE *
 collect(struct header *hp, int printheaders)
@@ -107,14 +88,13 @@ collect(struct header *hp, int printheaders)
 	char mailtempname[PATHSIZE];
 	int lastlong, rc;	/* So we don't make 2 or more lines
 					   out of a long input line. */
+	int eofcount;
+	int longline;
+	sigset_t  nset;
 
 	/* The following are declared volatile to avoid longjmp clobbering. */
-	volatile char getsub;
-	volatile int escape;
-	volatile sigset_t nset;
-	volatile int eofcount;
-	volatile int longline;
-
+	char volatile getsub;
+	int volatile escape;
 
 	(void)memset(mailtempname, 0, sizeof(mailtempname));
 	collf = NULL;
@@ -122,10 +102,10 @@ collect(struct header *hp, int printheaders)
 	 * Start catching signals from here, but we're still die on interrupts
 	 * until we're in the main loop.
 	 */
-	(void)sigemptyset(__UNVOLATILE(&nset));
-	(void)sigaddset(__UNVOLATILE(&nset), SIGINT);
-	(void)sigaddset(__UNVOLATILE(&nset), SIGHUP);
-	(void)sigprocmask(SIG_BLOCK, __UNVOLATILE(&nset), NULL);
+	(void)sigemptyset(&nset);
+	(void)sigaddset(&nset, SIGINT);
+	(void)sigaddset(&nset, SIGHUP);
+	(void)sigprocmask(SIG_BLOCK, &nset, NULL);
 	if ((saveint = signal(SIGINT, SIG_IGN)) != SIG_IGN)
 		(void)signal(SIGINT, collint);
 	if ((savehup = signal(SIGHUP, SIG_IGN)) != SIG_IGN)
@@ -137,7 +117,7 @@ collect(struct header *hp, int printheaders)
 		(void)rm(mailtempname);
 		goto err;
 	}
-	(void)sigprocmask(SIG_UNBLOCK, __UNVOLATILE(&nset), NULL);
+	(void)sigprocmask(SIG_UNBLOCK, &nset, NULL);
 
 	noreset++;
 	(void)snprintf(mailtempname, sizeof(mailtempname),
@@ -169,11 +149,7 @@ collect(struct header *hp, int printheaders)
 		escape = *cp;
 	else
 		escape = ESCAPE;
-	eofcount = 0;
-	hadintr = 0;
-	lastlong = 0;
-	longline = 0;
-
+	hadintr = 0;	/* static - no longjmp problem */
 	if (!setjmp(colljmp)) {
 		if (getsub)
 			(void)grabh(hp, GSUBJECT);
@@ -193,11 +169,13 @@ cont:
 			(void)fflush(stdout);
 		}
 	}
+	eofcount = 0;	/* reset after possible longjmp */
+	longline = 0;	/* reset after possible longjmp */
 	for (;;) {
 		colljmp_p = 1;
-		c = readline(stdin, linebuf, LINESIZE);
+		c = mail_readline(stdin, linebuf, LINESIZE);
 		colljmp_p = 0;
-#ifdef USE_READLINE
+#ifdef USE_EDITLINE
 		if (c < 0) {
 			char *p;
 			if (value("interactive") != NULL &&
@@ -247,6 +225,12 @@ cont:
 			}
 			(void)printf("Unknown tilde escape.\n");
 			break;
+#ifdef MIME_SUPPORT
+		case '@':
+			hp->h_attach = mime_attach_files(hp->h_attach,
+			    &linebuf[2], ATTACH_FILE_CONTENT);
+			break;
+#endif
 		case 'C':
 			/*
 			 * Dump core.
@@ -396,7 +380,7 @@ cont:
 				if ((shellcmd = value("SHELL")) == NULL)
 					shellcmd = _PATH_CSHELL;
 
-				rc2 = run_command(shellcmd, 0, nullfd, fileno(fbuf), "-c", cp+1, NULL);
+				rc2 = run_command(shellcmd, 0, nullfd, fileno(fbuf), "-c", cp + 1, NULL);
 
 				(void)close(nullfd);
 
@@ -406,7 +390,7 @@ cont:
 				}
 
 				if (fsize(fbuf) == 0) {
-					(void)fprintf(stderr, "No bytes from command \"%s\"\n", cp+1);
+					(void)fprintf(stderr, "No bytes from command \"%s\"\n", cp + 1);
 					(void)Fclose(fbuf);
 					break;
 				}
@@ -425,7 +409,7 @@ cont:
 			(void)fflush(stdout);
 			lc = 0;
 			cc = 0;
-			while ((rc = readline(fbuf, linebuf, LINESIZE)) >= 0) {
+			while ((rc = mail_readline(fbuf, linebuf, LINESIZE)) >= 0) {
 				if (rc != LINESIZE-1) lc++;
 				if ((t = putline(collf, linebuf,
 						 rc != LINESIZE-1)) < 0) {
@@ -516,13 +500,13 @@ out:
 	if (collf != NULL)
 		rewind(collf);
 	noreset--;
-	(void)sigprocmask(SIG_BLOCK, __UNVOLATILE(&nset), NULL);
+	(void)sigprocmask(SIG_BLOCK, &nset, NULL);
 	(void)signal(SIGINT, saveint);
 	(void)signal(SIGHUP, savehup);
 	(void)signal(SIGTSTP, savetstp);
 	(void)signal(SIGTTOU, savettou);
 	(void)signal(SIGTTIN, savettin);
-	(void)sigprocmask(SIG_UNBLOCK, __UNVOLATILE(&nset), NULL);
+	(void)sigprocmask(SIG_UNBLOCK, &nset, NULL);
 	return collf;
 }
 
@@ -654,8 +638,12 @@ forward(char ms[], FILE *fp, char *fn, int f)
 	int *msgvec;
 	struct ignoretab *ig;
 	const char *tabst;
+#ifdef MIME_SUPPORT
+	struct mime_info *mip;
+	int retval;
+#endif
 
-	msgvec = salloc((msgCount+1) * sizeof *msgvec);
+	msgvec = salloc((msgCount + 1) * sizeof *msgvec);
 	if (msgvec == NULL)
 		return(0);
 	if (getmsglist(ms, msgvec, 0) < 0)
@@ -679,7 +667,20 @@ forward(char ms[], FILE *fp, char *fn, int f)
 
 		touch(mp);
 		(void)printf(" %d", *msgvec);
+#ifdef MIME_SUPPORT
+		(void)fflush(stdout);	/* flush stdout and the above */
+		mip = NULL;
+		if (value(ENAME_MIME_DECODE_MSG)) {
+			if ((tabst == NULL && value(ENAME_MIME_DECODE_INSERT)) ||
+			    (tabst != NULL && value(ENAME_MIME_DECODE_QUOTE)))
+				mip = mime_decode_open(mp);
+		}
+		retval = mime_sendmessage(mp, fp, ig, tabst, mip);
+		mime_decode_close(mip);
+		if (retval < 0) {
+#else
 		if (sendmessage(mp, fp, ig, tabst) < 0) {
+#endif
 			warn("%s", fn);
 			return(-1);
 		}
@@ -717,7 +718,7 @@ collstop(int s)
  */
 /*ARGSUSED*/
 void
-collint(int s)
+collint(int s __unused)
 {
 	/*
 	 * the control flow is subtle, because we can be called from ~q.
@@ -740,7 +741,7 @@ collint(int s)
 
 /*ARGSUSED*/
 void
-collhup(int s)
+collhup(int s __unused)
 {
 	rewind(collf);
 	savedeadletter(collf);

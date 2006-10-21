@@ -1,4 +1,4 @@
-/*	$NetBSD: quit.c,v 1.23 2006/05/24 15:53:21 christos Exp $	*/
+/*	$NetBSD: quit.c,v 1.24 2006/10/21 21:37:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quit.c,v 1.23 2006/05/24 15:53:21 christos Exp $");
+__RCSID("$NetBSD: quit.c,v 1.24 2006/10/21 21:37:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: quit.c,v 1.23 2006/05/24 15:53:21 christos Exp $");
  */
 int
 /*ARGSUSED*/
-quitcmd(void *v)
+quitcmd(void *v __unused)
 {
 	/*
 	 * If we are sourcing, then return 1 so execute() can handle it.
@@ -282,7 +282,11 @@ nolock:
 	}
 	for (mp = &message[0]; mp < &message[msgCount]; mp++)
 		if (mp->m_flag & MBOX)
+#ifdef MIME_SUPPORT
+			if (sendmessage(mp, obuf, saveignore, NULL, NULL) < 0) {
+#else
 			if (sendmessage(mp, obuf, saveignore, NULL) < 0) {
+#endif
 				warn("%s", mbox);
 				(void)Fclose(ibuf);
 				(void)Fclose(obuf);
@@ -410,7 +414,11 @@ writeback(FILE *res)
 	for (mp = &message[0]; mp < &message[msgCount]; mp++)
 		if ((mp->m_flag&MPRESERVE)||(mp->m_flag&MTOUCH)==0) {
 			p++;
+#ifdef MIME_SUPPORT
+			if (sendmessage(mp, obuf, NULL, NULL, NULL) < 0) {
+#else
 			if (sendmessage(mp, obuf, NULL, NULL) < 0) {
+#endif
 				warn("%s", mailname);
 				(void)Fclose(obuf);
 				return(-1);
@@ -533,7 +541,11 @@ edstop(void)
 		if ((mp->m_flag & MDELETED) != 0)
 			continue;
 		c++;
+#ifdef MIME_SUPPORT
+		if (sendmessage(mp, obuf, NULL, NULL, NULL) < 0) {
+#else
 		if (sendmessage(mp, obuf, NULL, NULL) < 0) {
+#endif
 			warn("%s", mailname);
 			relsesigs();
 			reset(0);

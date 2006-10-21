@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.c,v 1.12 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: strings.c,v 1.13 2006/10/21 21:37:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)strings.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: strings.c,v 1.12 2005/07/19 23:07:10 christos Exp $");
+__RCSID("$NetBSD: strings.c,v 1.13 2006/10/21 21:37:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,20 @@ salloc(size_t size)
 	sp->s_nextFree += s;
 	return(t);
 }
+
+#ifdef MIME_SUPPORT
+/*
+ * Allocate zeroed space for 'number' elments of size 'size'.
+ */
+void *
+csalloc(size_t number, size_t size)
+{
+	void *p;
+	p = salloc(number * size);
+	(void)memset(p, 0, number * size);
+	return p;
+}
+#endif /* MIME_SUPPORT */
 
 /*
  * Reset the string area to be empty.
