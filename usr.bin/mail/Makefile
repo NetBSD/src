@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2006/10/21 21:37:20 christos Exp $
+#	$NetBSD: Makefile,v 1.26 2006/10/21 21:51:47 christos Exp $
 #	@(#)Makefile	8.3 (Berkeley) 4/20/95
 
 .include <bsd.own.mk>
@@ -17,14 +17,14 @@ MLINKS=	mail.1 Mail.1 mail.1 mailx.1
 LDADD+=		-lutil
 DPADD+=		${LIBUTIL}
 
-.if defined(USE_EDITLINE)
+.if ${USE_EDITLINE:Uno} == "yes"
 SRCS+=	complete.c
 
 CPPFLAGS+=	-DUSE_EDITLINE
 LDADD+=		-ledit -ltermcap
 DPADD+=		${LIBEDIT} ${LIBTERMCAP}
 
-.if defined(MIME_SUPPORT)
+.if ${MIME_SUPPORT:Uno} == "yes"
 SRCS+=	mime_attach.c
 SRCS+=	mime_child.c
 SRCS+=	mime_codecs.c
@@ -32,7 +32,7 @@ SRCS+=	mime_decode.c
 SRCS+=	mime_header.c
 
 CPPFLAGS+=	-DMIME_SUPPORT
-.if defined(CHARSET_SUPPORT)
+.if ${CHARSET_SUPPORT:Uno} == "yes"
 CPPFLAGS+=	-DCHARSET_SUPPORT
 .endif
 
