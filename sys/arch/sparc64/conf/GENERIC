@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.71 2006/10/19 22:01:18 martin Exp $
+# $NetBSD: GENERIC,v 1.72 2006/10/21 14:10:33 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.71 $"
+#ident 		"GENERIC-$Revision: 1.72 $"
 
 maxusers	64
 
@@ -511,6 +511,7 @@ acphy*	at mii? phy ?			# Altima AC101 and AMD Am79c874 PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
+ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 igphy*	at mii? phy ?			# Intel IGP01E1000
