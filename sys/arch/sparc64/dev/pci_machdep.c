@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.52 2006/10/15 21:04:14 martin Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.53 2006/10/21 23:49:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.52 2006/10/15 21:04:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.53 2006/10/21 23:49:29 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -280,9 +280,9 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 	 * Make sure the cache line size is at least as big as the
 	 * ecache line and the streaming cache (64 byte).
 	 */
-	cacheline = max(cacheinfo.ec_linesize, 64);
+	cacheline = max(ecache_min_line_size, 64);
 	KASSERT((cacheline/64)*64 == cacheline &&
-	    (cacheline/cacheinfo.ec_linesize)*cacheinfo.ec_linesize == cacheline &&
+	    (cacheline/ecache_min_line_size)*ecache_min_line_size == cacheline &&
 	    (cacheline/4)*4 == cacheline);
 
 	/* Turn on parity for the bus. */
