@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.92 2006/10/16 21:57:10 martin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.93 2006/10/21 03:16:05 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.92 2006/10/16 21:57:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.93 2006/10/21 03:16:05 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -291,6 +291,7 @@ void db_traptrace(db_expr_t, int, db_expr_t, const char *);
 void db_watch(db_expr_t, int, db_expr_t, const char *);
 void db_pm_extract(db_expr_t, int, db_expr_t, const char *);
 void db_cpu_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_sir_cmd(db_expr_t, int, db_expr_t, const char *);
 
 #ifdef DDB
 static void db_dump_pmap(struct pmap *);
@@ -1230,6 +1231,13 @@ db_cpu_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 #endif
 }
 
+void
+db_sir_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+{
+
+	__asm("sir; nop");
+}
+
 #include <uvm/uvm.h>
 
 void db_uvmhistdump(db_expr_t, int, db_expr_t, const char *);
@@ -1280,6 +1288,7 @@ const struct db_command db_machine_command_table[] = {
 	{ "watch",	db_watch,	0,	0 },
 	{ "window",	db_dump_window,	0,	0 },
 	{ "cpu",	db_cpu_cmd,	0,	0 },
+	{ "sir",	db_sir_cmd,	0,	0 },
 	{ .name = NULL, }
 };
 
