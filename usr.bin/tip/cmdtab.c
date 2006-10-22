@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.7 2006/04/03 02:06:44 tls Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.8 2006/10/22 16:47:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmdtab.c,v 1.7 2006/04/03 02:06:44 tls Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.8 2006/10/22 16:47:50 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -57,5 +57,5 @@ esctable_t etable[] = {
 	{ 's',	NORM,	"set variable",			 variable },
 	{ '?',	NORM,	"get this summary",		 help },
 	{ '#',	NORM,	"send break",			 genbrk },
-	{ 0, 0, 0 }
+	{ .e_char = '\0' }
 };
