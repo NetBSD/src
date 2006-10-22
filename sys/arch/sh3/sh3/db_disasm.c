@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.13 2006/01/21 02:09:06 uwe Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.14 2006/10/22 03:37:04 uwe Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.13 2006/01/21 02:09:06 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.14 2006/10/22 03:37:04 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,17 +157,17 @@ get_ascii(unsigned char *cp, char *str)
 }
 
 static void
-get_opcode(uint16_t *sp, char *buf)
+get_opcode(uint16_t *code, char *buf)
 {
 	int	n0, n3;
 
 	strcpy(buf, "????");
 
-	n0 = (*sp & 0xf000) >> 12;
-	n3 = (*sp & 0x000f);
+	n0 = (*code & 0xf000) >> 12;
+	n3 = (*code & 0x000f);
 
 	if (f[n0][n3] != NULL) {
-		(*f[n0][n3])(sp, buf);
+		(*f[n0][n3])(code, buf);
 	}
 }
 
