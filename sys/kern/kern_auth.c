@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.28 2006/10/22 10:37:19 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.29 2006/10/22 13:07:15 pooka Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.28 2006/10/22 10:37:19 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.29 2006/10/22 13:07:15 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -406,14 +406,14 @@ kauth_cred_getrefcnt(kauth_cred_t cred)
 
 /*
  * Convert userland credentials (struct uucred) to kauth_cred_t.
- * XXX: For NFS code.
+ * XXX: For NFS & puffs
  */
-void
-kauth_cred_uucvt(kauth_cred_t cred, const struct uucred *uuc)
-{
+void    
+kauth_uucred_to_cred(kauth_cred_t cred, const struct uucred *uuc)
+{       
 	KASSERT(cred != NULL);
 	KASSERT(uuc != NULL);
-
+ 
 	cred->cr_refcnt = 1;
 	cred->cr_uid = uuc->cr_uid;
 	cred->cr_euid = uuc->cr_uid;
@@ -424,6 +424,24 @@ kauth_cred_uucvt(kauth_cred_t cred, const struct uucred *uuc)
 	cred->cr_ngroups = min(uuc->cr_ngroups, NGROUPS);
 	kauth_cred_setgroups(cred, __UNCONST(uuc->cr_groups),
 	    cred->cr_ngroups, -1);
+}
+
+/*
+ * Convert kauth_cred_t to userland credentials (struct uucred).
+ * XXX: For NFS & puffs
+ */
+void    
+kauth_cred_to_uucred(struct uucred *uuc, const kauth_cred_t cred)
+{       
+	KASSERT(cred != NULL);
+	KASSERT(uuc != NULL);
+	int ng;
+
+	ng = min(cred->cr_ngroups, NGROUPS);
+	uuc->cr_uid = cred->cr_euid;  
+	uuc->cr_gid = cred->cr_egid;  
+	uuc->cr_ngroups = ng;
+	kauth_cred_getgroups(cred, uuc->cr_groups, ng);
 }
 
 /*
