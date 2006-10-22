@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.172 2006/10/22 18:24:02 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.173 2006/10/22 19:21:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.172 2006/10/22 18:24:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.173 2006/10/22 19:21:26 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -1610,7 +1610,8 @@ ifconf(u_long cmd __unused, caddr_t data)
 		sign = 1;
 	}
 	IFNET_FOREACH(ifp) {
-		(void)strlcpy(ifr.ifr_name, ifp->if_xname, sizeof(ifr_if_name));
+		(void)strlcpy(ifr.ifr_name, ifp->if_xname,
+		    sizeof(ifr.ifr_name));
 		if ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) == 0) {
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			if (ifrp != NULL && space >= sz) {
