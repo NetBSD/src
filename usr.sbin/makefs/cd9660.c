@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.15 2006/10/10 01:55:45 dbj Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.16 2006/10/22 21:11:56 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.15 2006/10/10 01:55:45 dbj Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.16 2006/10/22 21:11:56 christos Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -305,7 +305,7 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 		  "Turns on verbose output" },
 		{ "v", &diskStructure.verbose_level, 0 , 2,
 		  "Turns on verbose output"},
-		{ NULL }
+		{ .name = NULL }
 	};
 
 	if (cd9660_defaults_set == 0)
