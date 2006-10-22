@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.43 2006/09/23 21:11:14 dyoung Exp $ */
+/*	$NetBSD: arp.c,v 1.44 2006/10/22 20:54:38 christos Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.43 2006/09/23 21:11:14 dyoung Exp $");
+__RCSID("$NetBSD: arp.c,v 1.44 2006/10/22 20:54:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,24 +81,46 @@ __RCSID("$NetBSD: arp.c,v 1.43 2006/09/23 21:11:14 dyoung Exp $");
 #include <ifaddrs.h>
 
 static int is_llinfo(const struct sockaddr_dl *, int);
-int	delete(const char *, const char *);
-void	dump(u_long);
-void	delete_all(void);
-void	sdl_print(const struct sockaddr_dl *);
-int	getifname(u_int16_t, char *, size_t);
-int	atosdl(const char *s, struct sockaddr_dl *sdl);
-int	file(char *);
-void	get(const char *);
-int	getinetaddr(const char *, struct in_addr *);
-void	getsocket(void);
-int	rtmsg(int);
-int	set(int, char **);
-void	usage(void);
+static int delete(const char *, const char *);
+static void dump(uint32_t);
+static void delete_all(void);
+static void sdl_print(const struct sockaddr_dl *);
+static int getifname(u_int16_t, char *, size_t);
+static int atosdl(const char *s, struct sockaddr_dl *sdl);
+static int file(const char *);
+static void get(const char *);
+static int getinetaddr(const char *, struct in_addr *);
+static void getsocket(void);
+static int rtmsg(int);
+static int set(int, char **);
+static void usage(void) __attribute__((__noreturn__));
 
-static int pid;
+static pid_t pid;
 static int aflag, nflag, vflag;
 static int s = -1;
 static struct ifaddrs* ifaddrs = NULL;
+static struct sockaddr_in so_mask = { 
+	.sin_len = 8,
+	.sin_addr = {
+		.s_addr = 0xffffffff
+	}
+};
+static struct sockaddr_inarp blank_sin = {
+	.sin_len = sizeof(blank_sin),
+	.sin_family = AF_INET
+};
+static struct sockaddr_inarp sin_m;
+static struct sockaddr_dl blank_sdl = {
+	.sdl_len = sizeof(blank_sdl),
+	.sdl_family = AF_LINK
+};
+static struct sockaddr_dl sdl_m;
+
+static int expire_time, flags, export_only, doing_proxy, found_entry;
+static struct {
+	struct	rt_msghdr m_rtm;
+	char	m_space[512];
+} m_rtmsg;
 
 int
 main(int argc, char **argv)
@@ -170,37 +192,39 @@ main(int argc, char **argv)
 /*
  * Process a file to set standard arp entries
  */
-int
-file(char *name)
+static int
+file(const char *name)
 {
-	char line[100], arg[5][50], *args[5];
+	char *line, *argv[5];
 	int i, retval;
 	FILE *fp;
 
 	if ((fp = fopen(name, "r")) == NULL)
 		err(1, "cannot open %s", name);
-	args[0] = &arg[0][0];
-	args[1] = &arg[1][0];
-	args[2] = &arg[2][0];
-	args[3] = &arg[3][0];
-	args[4] = &arg[4][0];
 	retval = 0;
-	while (fgets(line, 100, fp) != NULL) {
-		i = sscanf(line, "%49s %49s %49s %49s %49s",
-		    arg[0], arg[1], arg[2], arg[3], arg[4]);
+	for (; (line = fparseln(fp, NULL, NULL, NULL, 0)) != NULL; free(line)) {
+		char **ap, *inputstring;
+
+		inputstring = line;
+		for (ap = argv; ap < &argv[sizeof(argv) / sizeof(argv[0])] &&
+		    (*ap = stresep(&inputstring, " \t", '\\')) != NULL;) {
+		       if (**ap != '\0')
+				ap++;
+		}
+		i = ap - argv;
 		if (i < 2) {
 			warnx("bad line: %s", line);
 			retval = 1;
 			continue;
 		}
-		if (set(i, args))
+		if (set(i, argv))
 			retval = 1;
 	}
-	fclose(fp);
-	return (retval);
+	(void)fclose(fp);
+	return retval;
 }
 
-void
+static void
 getsocket(void)
 {
 	if (s >= 0)
@@ -210,19 +234,10 @@ getsocket(void)
 		err(1, "socket");
 }
 
-struct	sockaddr_in so_mask = {8, 0, 0, { 0xffffffff}};
-struct	sockaddr_inarp blank_sin = {sizeof(blank_sin), AF_INET }, sin_m;
-struct	sockaddr_dl blank_sdl = {sizeof(blank_sdl), AF_LINK }, sdl_m;
-int	expire_time, flags, export_only, doing_proxy, found_entry;
-struct	{
-	struct	rt_msghdr m_rtm;
-	char	m_space[512];
-}	m_rtmsg;
-
 /*
  * Set an individual arp entry 
  */
-int
+static int
 set(int argc, char **argv)
 {
 	struct sockaddr_inarp *sina;
@@ -255,9 +270,8 @@ set(int argc, char **argv)
 			flags |= RTF_ANNOUNCE;
 			doing_proxy = SIN_PROXY;
 		} else if (strncmp(argv[0], "trail", 5) == 0) {
-			(void)printf(
-			    "%s: Sending trailers is no longer supported\n",
-			     host);
+			warnx("%s: Sending trailers is no longer supported",
+			    host);
 		}
 		argv++;
 	}
@@ -266,18 +280,18 @@ tryagain:
 		warn("%s", host);
 		return (1);
 	}
-	sina = (struct sockaddr_inarp *)(rtm + 1);
-	sdl = (struct sockaddr_dl *)(ROUNDUP(sina->sin_len) + (char *)sina);
+	sina = (struct sockaddr_inarp *)(void *)(rtm + 1);
+	sdl = (struct sockaddr_dl *)(void *)(ROUNDUP(sina->sin_len) +
+	    (char *)(void *)sina);
 	if (sina->sin_addr.s_addr == sin_m.sin_addr.s_addr) {
 		if (is_llinfo(sdl, rtm->rtm_flags))
 			goto overwrite;
 		if (doing_proxy == 0) {
-			(void)printf("set: can only proxy for %s\n", host);
+			warnx("set: can only proxy for %s", host);
 			return (1);
 		}
 		if (sin_m.sin_other & SIN_PROXY) {
-			(void)printf(
-			    "set: proxy entry exists for non 802 device\n");
+			warnx("set: proxy entry exists for non 802 device");
 			return (1);
 		}
 		sin_m.sin_other = SIN_PROXY;
@@ -286,7 +300,7 @@ tryagain:
 	}
 overwrite:
 	if (sdl->sdl_family != AF_LINK) {
-		(void)printf("cannot intuit interface index and type for %s\n",
+		warnx("cannot intuit interface index and type for %s",
 		    host);
 		return (1);
 	}
@@ -301,7 +315,7 @@ overwrite:
 /*
  * Display an individual arp entry
  */
-void
+static void
 get(const char *host)
 {
 	struct sockaddr_inarp *sina;
@@ -311,11 +325,8 @@ get(const char *host)
 	if (getinetaddr(host, &sina->sin_addr) == -1)
 		exit(1);
 	dump(sina->sin_addr.s_addr);
-	if (found_entry == 0) {
-		(void)printf("%s (%s) -- no entry\n", host,
-		    inet_ntoa(sina->sin_addr));
-		exit(1);
-	}
+	if (found_entry == 0)
+		errx(1, "%s (%s) -- no entry", host, inet_ntoa(sina->sin_addr));
 }
 
 
@@ -363,8 +374,9 @@ tryagain:
 		warn("%s", host);
 		return (1);
 	}
-	sina = (struct sockaddr_inarp *)(rtm + 1);
-	sdl = (struct sockaddr_dl *)(ROUNDUP(sina->sin_len) + (char *)sina);
+	sina = (struct sockaddr_inarp *)(void *)(rtm + 1);
+	sdl = (struct sockaddr_dl *)(void *)(ROUNDUP(sina->sin_len) +
+	    (char *)(void *)sina);
 	if (sina->sin_addr.s_addr == sin_m.sin_addr.s_addr &&
 	    is_llinfo(sdl, rtm->rtm_flags))
 		goto delete;
@@ -377,7 +389,7 @@ tryagain:
 	}
 delete:
 	if (sdl->sdl_family != AF_LINK) {
-		(void)printf("cannot locate %s\n", host);
+		(void)warnx("cannot locate %s", host);
 		return (1);
 	}
 	if (rtmsg(RTM_DELETE)) 
@@ -392,7 +404,7 @@ delete:
  * Dump the entire arp table
  */
 void
-dump(u_long addr)
+dump(uint32_t addr)
 {
 	int mib[6];
 	size_t needed;
@@ -420,17 +432,18 @@ dump(u_long addr)
 		err(1, "actual retrieval of routing table");
 	lim = buf + needed;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
-		rtm = (struct rt_msghdr *)next;
-		sina = (struct sockaddr_inarp *)(rtm + 1);
-		sdl = (struct sockaddr_dl *)
-		    (ROUNDUP(sina->sin_len) + (char *)sina);
+		rtm = (struct rt_msghdr *)(void *)next;
+		sina = (struct sockaddr_inarp *)(void *)(rtm + 1);
+		sdl = (struct sockaddr_dl *)(void *)
+		    (ROUNDUP(sina->sin_len) + (char *)(void *)sina);
 		if (addr) {
 			if (addr != sina->sin_addr.s_addr)
 				continue;
 			found_entry = 1;
 		}
 		if (nflag == 0)
-			hp = gethostbyaddr((caddr_t)&(sina->sin_addr),
+			hp = gethostbyaddr((const char *)(void *)
+			    &(sina->sin_addr),
 			    sizeof sina->sin_addr, AF_INET);
 		else
 			hp = NULL;
@@ -445,7 +458,7 @@ dump(u_long addr)
 
 		if (sdl->sdl_index) {
 			if (getifname(sdl->sdl_index, ifname, sizeof(ifname)) == 0)
-				printf(" on %s", ifname);
+				(void)printf(" on %s", ifname);
 		}
 
 		if (rtm->rtm_rmx.rmx_expire == 0)
@@ -453,8 +466,8 @@ dump(u_long addr)
 		if (sina->sin_other & SIN_PROXY)
 			(void)printf(" published (proxy only)");
 		if (rtm->rtm_addrs & RTA_NETMASK) {
-			sina = (struct sockaddr_inarp *)
-				(ROUNDUP(sdl->sdl_len) + (char *)sdl);
+			sina = (struct sockaddr_inarp *)(void *)
+				(ROUNDUP(sdl->sdl_len) + (char *)(void *)sdl);
 			if (sina->sin_addr.s_addr == 0xffffffff)
 				(void)printf(" published");
 			if (sina->sin_len != 8)
@@ -477,7 +490,6 @@ delete_all(void)
 	char *lim, *buf, *next;
 	struct rt_msghdr *rtm;
 	struct sockaddr_inarp *sina;
-	struct sockaddr_dl *sdl;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -495,12 +507,11 @@ delete_all(void)
 		err(1, "actual retrieval of routing table");
 	lim = buf + needed;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
-		rtm = (struct rt_msghdr *)next;
-		sina = (struct sockaddr_inarp *)(rtm + 1);
-		sdl = (struct sockaddr_dl *)
-		    (ROUNDUP(sina->sin_len) + (char *)sina);
-		snprintf(addr, sizeof(addr), "%s", inet_ntoa(sina->sin_addr));
-		delete(addr, NULL);
+		rtm = (struct rt_msghdr *)(void *)next;
+		sina = (struct sockaddr_inarp *)(void *)(rtm + 1);
+		(void)snprintf(addr, sizeof(addr), "%s",
+		    inet_ntoa(sina->sin_addr));
+		(void)delete(addr, NULL);
 	}
 	free(buf);
 }
@@ -510,37 +521,38 @@ sdl_print(const struct sockaddr_dl *sdl)
 {
 	char hbuf[NI_MAXHOST];
 
-	if (getnameinfo((const struct sockaddr *)sdl, sdl->sdl_len,
+	if (getnameinfo((const struct sockaddr *)(const void *)sdl,
+	    (socklen_t)sdl->sdl_len,
 	    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
-		printf("<invalid>");
+		(void)printf("<invalid>");
 	else
-		printf("%s", hbuf);
+		(void)printf("%s", hbuf);
 }
 
-int
+static int
 atosdl(const char *ss, struct sockaddr_dl *sdl)
 {
 	int i;
-	long b;
-	caddr_t endp;
-	caddr_t p; 
+	unsigned long b;
+	char *endp;
+	char *p; 
 	char *t, *r;
 
 	p = LLADDR(sdl);
-	endp = ((caddr_t)sdl) + sdl->sdl_len;
+	endp = ((char *)(void *)sdl) + sdl->sdl_len;
 	i = 0;
 	
-	b = strtol(ss, &t, 16);
-	if (t == ss)
+	b = strtoul(ss, &t, 16);
+	if (b > 255 || t == ss)
 		return 1;
 
-	*p++ = b;
+	*p++ = (char)b;
 	++i;
 	while ((p < endp) && (*t++ == ':')) {
-		b = strtol(t, &r, 16);
-		if (r == t)
+		b = strtoul(t, &r, 16);
+		if (b > 255 || r == t)
 			break;
-		*p++ = b;
+		*p++ = (char)b;
 		++i;
 		t = r;
 	}
@@ -549,26 +561,26 @@ atosdl(const char *ss, struct sockaddr_dl *sdl)
 	return 0;
 }
 
-void
+static void
 usage(void)
 {
 	const char *progname;
 
 	progname = getprogname();
-	(void)fprintf(stderr, "usage: %s [-n] hostname\n", progname);
-	(void)fprintf(stderr, "usage: %s [-nv] -a\n", progname);
-	(void)fprintf(stderr, "usage: %s [-v] -d [-a|hostname [pub]]\n", progname);
-	(void)fprintf(stderr,
-	    "usage: %s -s hostname ether_addr [temp] [pub]\n", progname);
-	(void)fprintf(stderr, "usage: %s -f filename\n", progname);
+	(void)fprintf(stderr, "Usage: %s [-n] hostname\n", progname);
+	(void)fprintf(stderr, "	      %s [-nv] -a\n", progname);
+	(void)fprintf(stderr, "	      %s [-v] -d [-a|hostname [pub]]\n",
+	    progname);
+	(void)fprintf(stderr, "       %s -s hostname ether_addr [temp] [pub]\n",
+	    progname);
+	(void)fprintf(stderr, "       %s -f filename\n", progname);
 	exit(1);
 }
 
-int
+static int
 rtmsg(int cmd)
 {
 	static int seq;
-	int rlen;
 	struct rt_msghdr *rtm;
 	char *cp;
 	int l;
@@ -608,34 +620,35 @@ rtmsg(int cmd)
 
 #define NEXTADDR(w, s) \
 	if (rtm->rtm_addrs & (w)) { \
-		(void)memcpy(cp, &s, ((struct sockaddr *)&s)->sa_len); \
-		cp += ROUNDUP(((struct sockaddr *)&s)->sa_len); \
+		(void)memcpy(cp, &s, \
+		(size_t)((struct sockaddr *)(void *)&s)->sa_len); \
+		cp += ROUNDUP(((struct sockaddr *)(void *)&s)->sa_len); \
 	}
 
 	NEXTADDR(RTA_DST, sin_m);
 	NEXTADDR(RTA_GATEWAY, sdl_m);
 	NEXTADDR(RTA_NETMASK, so_mask);
 
-	rtm->rtm_msglen = cp - (char *)&m_rtmsg;
+	rtm->rtm_msglen = cp - (char *)(void *)&m_rtmsg;
 doit:
 	l = rtm->rtm_msglen;
 	rtm->rtm_seq = ++seq;
 	rtm->rtm_type = cmd;
-	if ((rlen = write(s, (char *)&m_rtmsg, l)) < 0) {
+	if (write(s, &m_rtmsg, (size_t)l) < 0) {
 		if (errno != ESRCH || cmd != RTM_DELETE) {
 			warn("writing to routing socket");
 			return (-1);
 		}
 	}
 	do {
-		l = read(s, (char *)&m_rtmsg, sizeof(m_rtmsg));
+		l = read(s, &m_rtmsg, sizeof(m_rtmsg));
 	} while (l > 0 && (rtm->rtm_seq != seq || rtm->rtm_pid != pid));
 	if (l < 0)
 		warn("read from routing socket");
 	return (0);
 }
 
-int
+static int
 getinetaddr(const char *host, struct in_addr *inap)
 {
 	struct hostent *hp;
@@ -650,7 +663,7 @@ getinetaddr(const char *host, struct in_addr *inap)
 	return (0);
 }
 
-int
+static int
 getifname(u_int16_t ifindex, char *ifname, size_t l)
 {
 	int i;
@@ -668,7 +681,7 @@ getifname(u_int16_t ifindex, char *ifname, size_t l)
 		    addr->ifa_addr->sa_family != AF_LINK)
 			continue;
 
-		sdl = (const struct sockaddr_dl *) addr->ifa_addr;
+		sdl = (const struct sockaddr_dl *)(void *)addr->ifa_addr;
 		if (sdl && sdl->sdl_index == ifindex) {
 			(void) strlcpy(ifname, addr->ifa_name, l);
 			return 0;
