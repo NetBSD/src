@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.230 2006/10/12 01:32:17 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.231 2006/10/22 20:48:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.230 2006/10/12 01:32:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.231 2006/10/22 20:48:45 mrg Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ktrace.h"
@@ -90,8 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.230 2006/10/12 01:32:17 christos Exp 
 static int	build_corename(struct proc *, char *, const char *, size_t);
 #endif
 static void	ksiginfo_exithook(struct proc *, void *);
-static void	ksiginfo_put(struct proc *, const ksiginfo_t *);
-static ksiginfo_t *ksiginfo_get(struct proc *, int);
+static void	ksiginfo_queue(struct proc *, const ksiginfo_t *, ksiginfo_t **);
+static ksiginfo_t *ksiginfo_dequeue(struct proc *, int);
 static void	kpsignal2(struct proc *, const ksiginfo_t *, int);
 
 sigset_t	contsigmask, stopsigmask, sigcantmask;
@@ -132,7 +132,7 @@ POOL_INIT(ksiginfo_pool, sizeof(ksiginfo_t), 0, 0, 0, "ksiginfo", NULL);
  * signal, or return NULL if one not found.
  */
 static ksiginfo_t *
-ksiginfo_get(struct proc *p, int signo)
+ksiginfo_dequeue(struct proc *p, int signo)
 {
 	ksiginfo_t *ksi;
 	int s;
@@ -159,7 +159,7 @@ out:
  * or for non RT signals with non-existing entries.
  */
 static void
-ksiginfo_put(struct proc *p, const ksiginfo_t *ksi)
+ksiginfo_queue(struct proc *p, const ksiginfo_t *ksi, ksiginfo_t **newkp)
 {
 	ksiginfo_t *kp;
 	struct sigaction *sa = &SIGACTION_PS(p->p_sigacts, ksi->ksi_signo);
@@ -167,6 +167,7 @@ ksiginfo_put(struct proc *p, const ksiginfo_t *ksi)
 
 	if ((sa->sa_flags & SA_SIGINFO) == 0)
 		return;
+
 	/*
 	 * If there's no info, don't save it.
 	 */
@@ -186,13 +187,18 @@ ksiginfo_put(struct proc *p, const ksiginfo_t *ksi)
 			}
 		}
 	}
-	kp = pool_get(&ksiginfo_pool, PR_NOWAIT);
-	if (kp == NULL) {
+	if (newkp && *newkp) {
+		kp = *newkp;
+		*newkp = NULL;
+	} else {
+		kp = pool_get(&ksiginfo_pool, PR_NOWAIT);
+		if (kp == NULL) {
 #ifdef DIAGNOSTIC
-		printf("Out of memory allocating siginfo for pid %d\n",
-		    p->p_pid);
+			printf("Out of memory allocating siginfo for pid %d\n",
+			    p->p_pid);
 #endif
-		goto out;
+			goto out;
+		}
 	}
 	*kp = *ksi;
 	CIRCLEQ_INSERT_TAIL(&p->p_sigctx.ps_siginfo, kp, ksi_list);
@@ -1024,6 +1030,7 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 {
 	struct lwp *l, *suspended = NULL;
 	struct sadata_vp *vp;
+	ksiginfo_t *newkp;
 	int	s = 0, prop, allsusp;
 	sig_t	action;
 	int	signum = ksi->ksi_signo;
@@ -1058,7 +1065,7 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 		 * caught, make sure to save any ksiginfo.
 		 */
 		if (sigismember(&p->p_sigctx.ps_sigcatch, signum))
-			ksiginfo_put(p, ksi);
+			ksiginfo_queue(p, ksi, NULL);
 	} else {
 		/*
 		 * If the signal was the result of a trap, reset it
@@ -1141,9 +1148,22 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 	 */
 	if (action == SIG_HOLD &&
 	    ((prop & SA_CONT) == 0 || p->p_stat != SSTOP)) {
-		ksiginfo_put(p, ksi);
+		ksiginfo_queue(p, ksi, NULL);
 		return;
 	}
+
+	/*
+	 * Allocate a ksiginfo_t incase we need to insert it with
+	 * the scheduler lock held.
+	 */
+	newkp = pool_get(&ksiginfo_pool, PR_NOWAIT);
+	if (newkp == NULL) {
+#ifdef DIAGNOSTIC
+		printf("kpsignal2: couldn't allocated from ksiginfo_pool\n");
+#endif
+		return;
+	}
+
 	/* XXXSMP: works, but icky */
 	if (dolock)
 		SCHED_LOCK(s);
@@ -1355,7 +1375,7 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 
  runfast:
 	if (action == SIG_CATCH) {
-		ksiginfo_put(p, ksi);
+		ksiginfo_queue(p, ksi, &newkp);
 		action = SIG_HOLD;
 	}
 	/*
@@ -1365,18 +1385,21 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 		l->l_priority = PUSER;
  run:
 	if (action == SIG_CATCH) {
-		ksiginfo_put(p, ksi);
+		ksiginfo_queue(p, ksi, &newkp);
 		action = SIG_HOLD;
 	}
 
 	setrunnable(l);		/* XXXSMP: recurse? */
  out:
 	if (action == SIG_CATCH)
-		ksiginfo_put(p, ksi);
+		ksiginfo_queue(p, ksi, &newkp);
  done:
 	/* XXXSMP: works, but icky */
 	if (dolock)
 		SCHED_UNLOCK(s);
+
+	if (newkp)
+		pool_put(&ksiginfo_pool, newkp);
 }
 
 siginfo_t *
@@ -1902,7 +1925,7 @@ postsig(int signum)
 		} else
 			returnmask = &p->p_sigctx.ps_sigmask;
 		p->p_stats->p_ru.ru_nsignals++;
-		ksi = ksiginfo_get(p, signum);
+		ksi = ksiginfo_dequeue(p, signum);
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG))
 			ktrpsig(l, signum, action,
@@ -2419,7 +2442,7 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval __unused,
 	if ((signum = firstsig(&twaitset))) {
 		/* found pending signal */
 		sigdelset(&p->p_sigctx.ps_siglist, signum);
-		ksi = ksiginfo_get(p, signum);
+		ksi = ksiginfo_dequeue(p, signum);
 		if (!ksi) {
 			/* No queued siginfo, manufacture one */
 			ksi = pool_get(&ksiginfo_pool, PR_WAITOK);
