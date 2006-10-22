@@ -1,4 +1,4 @@
-/* $NetBSD: ecma167-udf.h,v 1.4 2006/08/31 21:38:14 reinoud Exp $ */
+/* $NetBSD: ecma167-udf.h,v 1.5 2006/10/22 00:06:48 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004, 2005, 2006 Reinoud Zandijk <reinoud@netbsd.org>
@@ -682,6 +682,7 @@ struct filetimes_extattr_entry {
 	uint32_t		existence;	/* bitmask */
 	struct timestamp	times[1];	/* in order of assending bits */
 } __packed;
+#define UDF_FILETIMES_ATTR_NO	5
 
 
 /* Device Specification Extended Attribute [4/4.10.7] */
@@ -692,6 +693,7 @@ struct device_extattr_entry {
 	uint32_t		minor;
 	uint8_t			data[1];	/* UDF: if nonzero length, contain developer ID regid */
 } __packed;
+#define UDF_DEVICESPEC_ATTR_NO	12
 
 
 /* VAT LV extension Extended Attribute [UDF 3.3.4.5.1.3] 1.50 errata */
