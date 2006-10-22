@@ -1,4 +1,4 @@
-# $NetBSD: QEMU,v 1.1 2006/10/22 18:49:24 jmmv Exp $
+# $NetBSD: QEMU,v 1.2 2006/10/22 21:08:48 jmmv Exp $
 #
 # QEMU machine description file
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"QEMU-$Revision: 1.1 $"
+#ident 		"QEMU-$Revision: 1.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -204,18 +204,8 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-#options 	ACPIVERBOSE	# verbose ACPI device autoconfig messages
-#options 	EISAVERBOSE	# verbose EISA device autoconfig messages
-#options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
-#options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
-#options 	SCSIVERBOSE	# human readable SCSI error messages
-options 	USBVERBOSE	# verbose USB device autoconfig messages
-#options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
-#options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
-#options 	I2OVERBOSE	# verbose I2O driver messages
-#options 	MCAVERBOSE	# verbose MCA device autoconfig messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
