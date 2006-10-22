@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.12 2005/02/26 22:12:33 dsl Exp $	*/
+/*	$NetBSD: ip.c,v 1.13 2006/10/22 16:43:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip.c,v 1.12 2005/02/26 22:12:33 dsl Exp $");
+__RCSID("$NetBSD: ip.c,v 1.13 2006/10/22 16:43:24 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,9 +69,9 @@ static struct mystat oldstat;
 static struct mystat newstat;
 
 static struct nlist namelist[] = {
-	{ "_ipstat" },
-	{ "_udpstat" },
-	{ "" }
+	{ .n_name = "_ipstat" },
+	{ .n_name = "_udpstat" },
+	{ .n_name = NULL }
 };
 
 WINDOW *

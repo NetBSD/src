@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.c,v 1.11 2005/02/26 22:12:33 dsl Exp $	*/
+/*	$NetBSD: ip6.c,v 1.12 2006/10/22 16:43:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip6.c,v 1.11 2005/02/26 22:12:33 dsl Exp $");
+__RCSID("$NetBSD: ip6.c,v 1.12 2006/10/22 16:43:24 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,8 +62,8 @@ static struct ip6stat newstat;
 static struct ip6stat oldstat;
 
 static struct nlist namelist[] = {
-	{ "_ip6stat" },
-	{ "" }
+	{ .n_name = "_ip6stat" },
+	{ .n_name = NULL }
 };
 
 WINDOW *
