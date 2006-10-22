@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp_timer.c,v 1.4 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp_timer.c,v 1.5 2006/10/22 03:39:43 uebayasi Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_timer.c,v 1.4 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_timer.c,v 1.5 2006/10/22 03:39:43 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_timer.c,v 1.4 2005/12/11 12:24:54 ch
 
 typedef void (*lacp_timer_func_t)(struct lacp_port *);
 
-const static lacp_timer_func_t lacp_timer_funcs[LACP_NTIMER] = {
+static const lacp_timer_func_t lacp_timer_funcs[LACP_NTIMER] = {
 	[LACP_TIMER_CURRENT_WHILE] = lacp_sm_rx_timer,
 	[LACP_TIMER_PERIODIC] = lacp_sm_ptx_timer,
 	[LACP_TIMER_WAIT_WHILE] = lacp_sm_mux_timer,
