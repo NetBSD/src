@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.68 2006/05/21 20:22:34 dsl Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.69 2006/10/22 16:43:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.68 2006/05/21 20:22:34 dsl Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.69 2006/10/22 16:43:24 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -107,18 +107,18 @@ closevmstat(WINDOW *w)
 
 static struct nlist namelist[] = {
 #define	X_NCHSTATS	0
-	{ "_nchstats" },
+	{ .n_name = "_nchstats" },
 #define	X_INTRNAMES	1
-	{ "_intrnames" },
+	{ .n_name = "_intrnames" },
 #define	X_EINTRNAMES	2
-	{ "_eintrnames" },
+	{ .n_name = "_eintrnames" },
 #define	X_INTRCNT	3
-	{ "_intrcnt" },
+	{ .n_name = "_intrcnt" },
 #define	X_EINTRCNT	4
-	{ "_eintrcnt" },
+	{ .n_name = "_eintrcnt" },
 #define	X_ALLEVENTS	5
-	{ "_allevents" },
-	{ NULL }
+	{ .n_name = "_allevents" },
+	{ .n_name = NULL }
 };
 
 /*

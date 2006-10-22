@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp.c,v 1.8 2005/02/26 22:12:33 dsl Exp $	*/
+/*	$NetBSD: icmp.c,v 1.9 2006/10/22 16:43:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: icmp.c,v 1.8 2005/02/26 22:12:33 dsl Exp $");
+__RCSID("$NetBSD: icmp.c,v 1.9 2006/10/22 16:43:24 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -65,8 +65,8 @@ static struct icmpstat newstat;
 static struct icmpstat oldstat;
 
 static struct nlist namelist[] = {
-	{ "_icmpstat" },
-	{ "" }
+	{ .n_name = "_icmpstat" },
+	{ .n_name = NULL }
 };
 
 WINDOW *
