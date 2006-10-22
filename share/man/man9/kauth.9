@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.24 2006/10/22 13:42:17 pooka Exp $
+.\" $NetBSD: kauth.9,v 1.25 2006/10/22 14:00:00 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -688,45 +688,12 @@ initializes its lock, and sets its reference count to one.
 .Ss Conversion Routines
 Sometimes it might be necessary to convert a
 .Ft kauth_cred_t
-to a predecessing type, such as
-.Ft struct pcred
-or
-.Ft struct ucred ,
-or convert credentials passed from userland as a
-.Ft struct uucred
-to a
-.Ft kauth_cred_t .
+to userland's view of credentials, a
+.Ft struct uucred ,
+or vice versa.
 .Pp
 The following routines are available for these cases:
 .Bl -tag
-.It Ft void Fn kauth_cred_topcred "kauth_cred_t cred" "struct pcred *pcred"
-Convert a
-.Ft kauth_cred_t
-to a
-.Ft struct pcred .
-.Pp
-This includes real and saved user- and group-ids and reference count, copied
-from
-.Ar cred .
-The
-.Ar pc_ucred
-field in the destination is set to
-.Dv NULL .
-.It Ft void Fn kauth_cred_toucred "kauth_cred_t cred" "struct ucred *ucred"
-Convert a
-.Ft kauth_cred_t
-to a
-.Ft struct ucred .
-.Pp
-This includes effective user- and group-ids, number of groups, and the group
-list from
-.Ar cred .
-.Pp
-Note that
-.Nm
-will try to copy as many groups as
-.Ar ucred
-can hold.
 .It Ft void Fn kauth_uucred_to_cred "kauth_cred_t cred" "const struct uucred *uucred"
 Convert userland's view of credentials to a
 .Ft kauth_cred_t .
@@ -739,17 +706,18 @@ Note that
 .Nm
 will try to copy as many groups as can be held inside a
 .Ft kauth_cred_t .
-The addition of groups will also guarantee order and no duplicates.
 .It Ft void Fn kauth_cred_to_uucred "struct uucred *uucred" "const kauth_cred_t cred"
 Convert
 .Ft kauth_cred_t
-to userland credentials.
+to userland's view of credentials.
 .Pp
-This fills
-.Ar uucred
-with the effective uid (euid) and gid (egid) and the supplementary groups
-from
-.Ar cred .
+This includes effective user- and group-ids, a number of groups, and a group
+list.
+.Pp
+Note that
+.Nm
+will try to copy as many groups as can be held inside a
+.Ft struct uucred .
 .It Ft int Fn kauth_cred_uucmp "kauth_cred_t cred" "struct uucred *uucred"
 Compares
 .Ar cred
