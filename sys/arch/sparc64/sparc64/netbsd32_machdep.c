@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.62 2006/07/17 11:36:50 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.63 2006/10/22 10:50:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.62 2006/07/17 11:36:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.63 2006/10/22 10:50:44 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1208,7 +1208,7 @@ int
 cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_tf;
-	__greg32_t *gr = mcp->__gregs;
+	const __greg32_t *gr = mcp->__gregs;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
