@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.273 2006/10/20 20:29:52 reinoud Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.274 2006/10/22 00:48:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.273 2006/10/20 20:29:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.274 2006/10/22 00:48:14 mrg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1799,6 +1799,8 @@ vdevgone(int maj, int minl, int minh, enum vtype type)
 {
 	struct vnode *vp;
 	int mn;
+
+	vp = NULL;	/* XXX gcc */
 
 	for (mn = minl; mn <= minh; mn++)
 		if (vfinddev(makedev(maj, mn), type, &vp))
