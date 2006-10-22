@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.16 2006/10/21 21:37:20 christos Exp $	*/
+/*	$NetBSD: head.c,v 1.17 2006/10/22 08:22:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.16 2006/10/21 21:37:20 christos Exp $");
+__RCSID("$NetBSD: head.c,v 1.17 2006/10/22 08:22:34 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ ishead(const char linebuf[])
 void
 fail(const char linebuf[], const char reason[])
 {
-#if 1
+#ifndef FMT_PROG
 	if (value("debug") == NULL)
 		return;
 	(void)fprintf(stderr, "\"%s\"\nnot a header because %s\n", linebuf,
