@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.26 2006/04/22 19:57:04 christos Exp $	*/
+/*	$NetBSD: installboot.c,v 1.27 2006/10/22 21:06:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.26 2006/04/22 19:57:04 christos Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.27 2006/10/22 21:06:19 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/ioctl.h>
@@ -83,18 +83,18 @@ const struct option {
 	}		type;
 	int		offset;		/* of field in ib_params */
 } options[] = {
-	{ "alphasum",	IB_ALPHASUM,	OPT_BOOL },
-	{ "append",	IB_APPEND,	OPT_BOOL },
+	{ "alphasum",	IB_ALPHASUM,	OPT_BOOL,	0 },
+	{ "append",	IB_APPEND,	OPT_BOOL,	0 },
 	{ "command",	IB_COMMAND,	OPT_STRING,	OFFSET(command) },
 	{ "console",	IB_CONSOLE,	OPT_WORD,	OFFSET(console) },
 	{ "ioaddr",	IB_CONSADDR,	OPT_INT,	OFFSET(consaddr) },
 	{ "keymap",	IB_KEYMAP,	OPT_WORD,	OFFSET(keymap) },
 	{ "password",	IB_PASSWORD,	OPT_WORD,	OFFSET(password) },
-	{ "resetvideo",	IB_RESETVIDEO,	OPT_BOOL },
+	{ "resetvideo",	IB_RESETVIDEO,	OPT_BOOL,	0 },
 	{ "speed",	IB_CONSPEED,	OPT_INT,	OFFSET(conspeed) },
-	{ "sunsum",	IB_SUNSUM,	OPT_BOOL },
+	{ "sunsum",	IB_SUNSUM,	OPT_BOOL,	0 },
 	{ "timeout",	IB_TIMEOUT,	OPT_INT,	OFFSET(timeout) },
-	{ NULL },
+	{ .name = NULL },
 };
 #undef OFFSET
 #define OPTION(params, type, opt) (*(type *)((char *)(params) + (opt)->offset))
