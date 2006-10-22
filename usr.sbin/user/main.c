@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.4 2005/11/25 08:00:18 agc Exp $ */
+/* $NetBSD: main.c,v 1.5 2006/10/22 21:16:58 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -68,7 +68,7 @@ static cmd_t	cmds[] = {
 	{	1,	{ "groupinfo",	NULL },		groupinfo	},
 	{	2,	{ "group",	"info" },	groupinfo	},
 #endif
-	{	0	}
+	{	.c_wc = 0	}
 };
 
 int

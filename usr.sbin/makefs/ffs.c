@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.40 2006/10/10 01:55:45 dbj Exp $	*/
+/*	$NetBSD: ffs.c,v 1.41 2006/10/22 21:11:56 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.40 2006/10/10 01:55:45 dbj Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.41 2006/10/22 21:11:56 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -208,7 +208,7 @@ ffs_parse_opts(const char *option, fsinfo_t *fsopts)
 					"max # of blocks per group" },
 		{ "version",	&ffs_opts->version,	1,	2,
 					"UFS version" },
-		{ NULL }
+		{ .name = NULL }
 	};
 
 	char	*var, *val;
