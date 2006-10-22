@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.70 2006/08/30 01:24:40 christos Exp $	*/
+/*	$NetBSD: ess.c,v 1.70.4.1 2006/10/22 06:06:03 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.70 2006/08/30 01:24:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.70.4.1 2006/10/22 06:06:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -808,7 +808,7 @@ ess_identify(struct ess_softc *sc)
 
 
 int
-ess_setup_sc(struct ess_softc *sc, int doinit)
+ess_setup_sc(struct ess_softc *sc, int doinit __unused)
 {
 
 	callout_init(&sc->sc_poll1_ch);
@@ -911,7 +911,7 @@ irq_not1888:
  * pseudo-device driver.
  */
 void
-essattach(struct ess_softc *sc, int enablejoy)
+essattach(struct ess_softc *sc, int enablejoy __unused)
 {
 	struct audio_attach_args arg;
 	int i;
@@ -1076,7 +1076,7 @@ essattach(struct ess_softc *sc, int enablejoy)
  */
 
 int
-ess_open(void *addr, int flags)
+ess_open(void *addr __unused, int flags __unused)
 {
 	return 0;
 }
@@ -1126,7 +1126,7 @@ ess_speaker_ctl(void *addr, int newstate)
 }
 
 int
-ess_getdev(void *addr, struct audio_device *retp)
+ess_getdev(void *addr __unused, struct audio_device *retp)
 {
 
 	*retp = ess_device;
@@ -1134,7 +1134,7 @@ ess_getdev(void *addr, struct audio_device *retp)
 }
 
 int
-ess_query_encoding(void *addr, struct audio_encoding *fp)
+ess_query_encoding(void *addr __unused, struct audio_encoding *fp)
 {
 	/*struct ess_softc *sc = addr;*/
 
@@ -1635,7 +1635,8 @@ ess_audio2_poll(void *addr)
 }
 
 int
-ess_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
+ess_round_blocksize(void *addr __unused, int blk, int mode __unused,
+    const audio_params_t *param __unused)
 {
 
 	return blk & -8;	/* round for max DMA size */
@@ -2148,7 +2149,7 @@ ess_malloc(void *addr, int direction, size_t size,
 }
 
 void
-ess_free(void *addr, void *ptr, struct malloc_type *pool)
+ess_free(void *addr __unused, void *ptr, struct malloc_type *pool)
 {
 
 	isa_free(ptr, pool);
@@ -2172,21 +2173,21 @@ ess_round_buffersize(void *addr, int direction, size_t size)
 }
 
 paddr_t
-ess_mappage(void *addr, void *mem, off_t off, int prot)
+ess_mappage(void *addr __unused, void *mem, off_t off, int prot)
 {
 
 	return isa_mappage(mem, off, prot);
 }
 
 int
-ess_1788_get_props(void *addr)
+ess_1788_get_props(void *addr __unused)
 {
 
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT;
 }
 
 int
-ess_1888_get_props(void *addr)
+ess_1888_get_props(void *addr __unused)
 {
 
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
@@ -2546,8 +2547,9 @@ ess_read_x_reg(struct ess_softc *sc, u_char reg)
 
 	if ((error = ess_wdsp(sc, 0xC0)) == 0)
 		error = ess_wdsp(sc, reg);
-	if (error)
+	if (error) {
 		DPRINTF(("Error reading extended register 0x%02x\n", reg));
+	}
 /* REVISIT: what if an error is returned above? */
 	val = ess_rdsp(sc);
 	DPRINTFN(2,("ess_read_x_reg: %02x=%02x\n", reg, val));
@@ -2557,17 +2559,19 @@ ess_read_x_reg(struct ess_softc *sc, u_char reg)
 void
 ess_clear_xreg_bits(struct ess_softc *sc, u_char reg, u_char mask)
 {
-	if (ess_write_x_reg(sc, reg, ess_read_x_reg(sc, reg) & ~mask) == -1)
+	if (ess_write_x_reg(sc, reg, ess_read_x_reg(sc, reg) & ~mask) == -1) {
 		DPRINTF(("Error clearing bits in extended register 0x%02x\n",
 			 reg));
+	}
 }
 
 void
 ess_set_xreg_bits(struct ess_softc *sc, u_char reg, u_char mask)
 {
-	if (ess_write_x_reg(sc, reg, ess_read_x_reg(sc, reg) | mask) == -1)
+	if (ess_write_x_reg(sc, reg, ess_read_x_reg(sc, reg) | mask) == -1) {
 		DPRINTF(("Error setting bits in extended register 0x%02x\n",
 			 reg));
+	}
 }
 
 

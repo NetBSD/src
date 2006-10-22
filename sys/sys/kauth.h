@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.6 2006/09/08 20:58:58 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.6.4.1 2006/10/22 06:07:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -42,6 +42,7 @@ struct uucred;
 struct ucred;
 struct pcred;
 struct proc;
+struct tty;
 
 /* Types. */
 typedef struct kauth_scope     *kauth_scope_t;
@@ -65,6 +66,7 @@ typedef int (*kauth_scope_callback_t)(kauth_cred_t, kauth_action_t,
 #define	KAUTH_SCOPE_PROCESS	"org.netbsd.kauth.process"
 #define	KAUTH_SCOPE_NETWORK	"org.netbsd.kauth.network"
 #define	KAUTH_SCOPE_MACHDEP	"org.netbsd.kauth.machdep"
+#define	KAUTH_SCOPE_DEVICE	"org.netbsd.kauth.device"
 
 /*
  * Generic scope - actions.
@@ -141,6 +143,7 @@ enum {
 	KAUTH_NETWORK_ALTQ=1,
 	KAUTH_NETWORK_BIND,
 	KAUTH_NETWORK_FIREWALL,
+	KAUTH_NETWORK_INTERFACE,
 	KAUTH_NETWORK_FORWSRCRT,
 	KAUTH_NETWORK_ROUTE,
 	KAUTH_NETWORK_SOCKET
@@ -157,6 +160,7 @@ enum kauth_network_req {
 	KAUTH_REQ_NETWORK_ALTQ_CONF,
 	KAUTH_REQ_NETWORK_ALTQ_FIFOQ,
 	KAUTH_REQ_NETWORK_ALTQ_HFSC,
+	KAUTH_REQ_NETWORK_ALTQ_JOBS,
 	KAUTH_REQ_NETWORK_ALTQ_PRIQ,
 	KAUTH_REQ_NETWORK_ALTQ_RED,
 	KAUTH_REQ_NETWORK_ALTQ_RIO,
@@ -165,8 +169,13 @@ enum kauth_network_req {
 	KAUTH_REQ_NETWORK_BIND_PRIVPORT,
 	KAUTH_REQ_NETWORK_FIREWALL_FW,
 	KAUTH_REQ_NETWORK_FIREWALL_NAT,
+	KAUTH_REQ_NETWORK_INTERFACE_GET,
+	KAUTH_REQ_NETWORK_INTERFACE_GETPRIV,
+	KAUTH_REQ_NETWORK_INTERFACE_SET,
+	KAUTH_REQ_NETWORK_INTERFACE_SETPRIV,
 	KAUTH_REQ_NETWORK_SOCKET_ATTACH,
-	KAUTH_REQ_NETWORK_SOCKET_RAWSOCK
+	KAUTH_REQ_NETWORK_SOCKET_RAWSOCK,
+	KAUTH_REQ_NETWORK_SOCKET_CANSEE
 };
 
 /*
@@ -187,6 +196,14 @@ enum kauth_machdep_req {
 	KAUTH_REQ_MACHDEP_X86_MTRR_SET
 };
 
+/*
+ * Device scope - actions.
+ */
+enum {
+	KAUTH_DEVICE_TTY_OPEN=1,
+	KAUTH_DEVICE_TTY_PRIVSET
+};
+
 #define NOCRED ((kauth_cred_t)-1)	/* no credential available */
 #define FSCRED ((kauth_cred_t)-2)	/* filesystem credential */
 
@@ -199,13 +216,7 @@ void kauth_deregister_scope(kauth_scope_t);
 kauth_listener_t kauth_listen_scope(const char *, kauth_scope_callback_t, void *);
 void kauth_unlisten_scope(kauth_listener_t);
 int kauth_authorize_action(kauth_scope_t, kauth_cred_t, kauth_action_t, void *,
-			   void *, void *, void *);
-
-/* Default callbacks for built-in scopes. */
-int kauth_authorize_cb_generic(kauth_cred_t, kauth_action_t, void *,
-			       void *, void *, void *, void *);
-int kauth_authorize_cb_process(kauth_cred_t, kauth_action_t, void *,
-			       void *, void *, void *, void *);
+    void *, void *, void *);
 
 /* Authorization wrappers. */
 int kauth_authorize_generic(kauth_cred_t, kauth_action_t, void *);
@@ -214,9 +225,10 @@ int kauth_authorize_system(kauth_cred_t, kauth_action_t, enum kauth_system_req,
 int kauth_authorize_process(kauth_cred_t, kauth_action_t, struct proc *,
     void *, void *, void *);
 int kauth_authorize_network(kauth_cred_t, kauth_action_t,
-    void *, void *, void *, void *);
+    enum kauth_network_req, void *, void *, void *);
 int kauth_authorize_machdep(kauth_cred_t, kauth_action_t,
-    void *, void *, void *, void *);
+    enum kauth_machdep_req, void *, void *, void *);
+int kauth_authorize_device_tty(kauth_cred_t, kauth_action_t, struct tty *);
 
 /* Kauth credentials management routines. */
 kauth_cred_t kauth_cred_alloc(void);

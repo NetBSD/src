@@ -32,13 +32,9 @@
  * $FreeBSD: src/sys/dev/vge/if_vgevar.h,v 1.2 2005/01/06 01:43:31 imp Exp $
  */
 
-#ifndef __NO_STRICT_ALIGNMENT 
-#define VGE_FIXUP_RX
-#endif
+#define VGE_JUMBO_MTU		9000
 
-#define VGE_JUMBO_MTU	9000
-
-#define VGE_IFQ_MAXLEN 64
+#define VGE_IFQ_MAXLEN		64
 
 #define VGE_TX_DESC_CNT		256
 #define VGE_RX_DESC_CNT		256	/* Must be a multiple of 4!! */
@@ -47,35 +43,18 @@
 #define VGE_TX_LIST_SZ		(VGE_TX_DESC_CNT * sizeof(struct vge_tx_desc))
 #define VGE_TX_DESC_INC(x)	(x = (x + 1) % VGE_TX_DESC_CNT)
 #define VGE_RX_DESC_INC(x)	(x = (x + 1) % VGE_RX_DESC_CNT)
-#define VGE_ADDR_LO(y)		((u_int64_t) (y) & 0xFFFFFFFF)
-#define VGE_ADDR_HI(y)		((u_int64_t) (y) >> 32)
+#define VGE_ADDR_LO(y)		((uint64_t)(y) & 0xFFFFFFFF)
+#define VGE_ADDR_HI(y)		((uint64_t)(y) >> 32)
 #define VGE_BUFLEN(y)		((y) & 0x7FFF)
-#define VGE_OWN(x)		(le32toh((x)->vge_sts) & VGE_RDSTS_OWN)
-#define VGE_RXBYTES(x)		((le32toh((x)->vge_sts) & \
-				 VGE_RDSTS_BUFSIZ) >> 16)
 #define VGE_MIN_FRAMELEN	60
 
-#ifdef VGE_FIXUP_RX
+#ifdef __NO_STRICT_ALIGNMENT 
 #define VGE_ETHER_ALIGN		sizeof(uint32_t)
 #else
 #define VGE_ETHER_ALIGN		0
 #endif
 
-struct vge_type {
-	uint16_t		vge_vid;
-	uint16_t		vge_did;
-	char			*vge_name;
-};
-
 struct vge_softc;
-
-struct vge_dmaload_arg {
-	struct vge_softc	*sc;
-	int			vge_idx;
-	int			vge_maxsegs;
-	struct mbuf		*vge_m0;
-	u_int32_t		vge_flags;
-};
 
 struct vge_list_data {
 	struct mbuf		*vge_tx_mbuf[VGE_TX_DESC_CNT];
@@ -88,16 +67,14 @@ struct vge_list_data {
 	bus_dmamap_t		vge_rx_dmamap[VGE_RX_DESC_CNT];
 	bus_dmamap_t		vge_rx_list_map;
 	struct vge_rx_desc	*vge_rx_list;
-	bus_addr_t		vge_rx_list_addr;
 	bus_dmamap_t		vge_tx_list_map;
 	struct vge_tx_desc	*vge_tx_list;
-	bus_addr_t		vge_tx_list_addr;
 };
 
 struct vge_softc {
 	struct device		sc_dev;
 	struct ethercom		sc_ethercom;	/* interface info */
-	u_int8_t		vge_eaddr[ETHER_ADDR_LEN];
+	uint8_t			vge_eaddr[ETHER_ADDR_LEN];
 
 	bus_space_handle_t	vge_bhandle;	/* bus space handle */
 	bus_space_tag_t		vge_btag;	/* bus space tag */
@@ -106,7 +83,7 @@ struct vge_softc {
 	void			*vge_intrhand;
 	struct mii_data		sc_mii;
 	bus_dma_tag_t		vge_dmat;
-	u_int8_t		vge_type;
+	uint8_t			vge_type;
 	int			vge_if_flags;
 	int			vge_rx_consumed;
 	int			vge_link;
@@ -126,12 +103,32 @@ struct vge_softc {
 	int			rxcycles;
 #endif
 
-	u_int32_t		saved_maps[5];	/* pci data */
-	u_int32_t		saved_biosaddr;
-	u_int8_t		saved_intline;
-	u_int8_t		saved_cachelnsz;
-	u_int8_t		saved_lattimer;
+	uint32_t		saved_maps[5];	/* pci data */
+	uint32_t		saved_biosaddr;
+	uint8_t			saved_intline;
+	uint8_t			saved_cachelnsz;
+	uint8_t			saved_lattimer;
 };
+
+#define VGE_TXDESCSYNC(sc, idx, ops)					\
+	bus_dmamap_sync((sc)->vge_dmat,					\
+	    (sc)->vge_ldata.vge_tx_list_map,				\
+	    sizeof(struct vge_tx_desc) * (idx),				\
+	    offsetof(struct vge_tx_desc, vge_frag[0]),			\
+	    (ops))
+#define VGE_TXFRAGSYNC(sc, idx, nsegs, ops)				\
+	bus_dmamap_sync((sc)->vge_dmat,					\
+	    (sc)->vge_ldata.vge_tx_list_map,				\
+	    sizeof(struct vge_tx_desc) * (idx) +			\
+	    offsetof(struct vge_tx_desc, vge_frag[0]),			\
+	    sizeof(struct vge_tx_frag) * (nsegs),			\
+	    (ops))
+#define VGE_RXDESCSYNC(sc, idx, ops)					\
+	bus_dmamap_sync((sc)->vge_dmat,					\
+	    (sc)->vge_ldata.vge_rx_list_map,				\
+	    sizeof(struct vge_rx_desc) * (idx),				\
+	    sizeof(struct vge_rx_desc),					\
+	    (ops))
 
 #ifdef __FreeBSD__
 #define	VGE_LOCK(_sc)		mtx_lock(&(_sc)->vge_mtx)
@@ -149,17 +146,13 @@ struct vge_softc {
  * receive so the upper layers get the IP header properly aligned
  * past the 14-byte Ethernet header.
  */
-#ifndef ETHER_ALIGN
-#  define	ETHER_ALIGN	2
-#endif
+#define	ETHER_ALIGN	2
 
 #define	VGE_POWER_MANAGEMENT	0	/* disabled for now */
 
 /*
  * register space access macros
  */
-#define CSR_WRITE_STREAM_4(sc, reg, val)	\
-	bus_space_write_stream_4(sc->vge_btag, sc->vge_bhandle, reg, val)
 #define CSR_WRITE_4(sc, reg, val)	\
 	bus_space_write_4(sc->vge_btag, sc->vge_bhandle, reg, val)
 #define CSR_WRITE_2(sc, reg, val)	\
@@ -189,4 +182,3 @@ struct vge_softc {
 	CSR_WRITE_4(sc, reg, CSR_READ_4(sc, reg) & ~(x))
 
 #define VGE_TIMEOUT		10000
-

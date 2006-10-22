@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.118 2006/09/15 15:51:13 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.118.2.1 2006/10/22 06:07:52 yamt Exp $	*/
 
 /*
  *
@@ -581,8 +581,8 @@ __dead void		uvm_scheduler(void) __attribute__((noreturn));
 void			uvm_swapin(struct lwp *);
 boolean_t		uvm_uarea_alloc(vaddr_t *);
 void			uvm_uarea_drain(boolean_t);
-int			uvm_vslock(struct proc *, caddr_t, size_t, vm_prot_t);
-void			uvm_vsunlock(struct proc *, caddr_t, size_t);
+int			uvm_vslock(struct vmspace *, void *, size_t, vm_prot_t);
+void			uvm_vsunlock(struct vmspace *, void *, size_t);
 
 
 /* uvm_init.c */
@@ -653,6 +653,12 @@ int			uvm_mremap(struct vm_map *, vaddr_t, vsize_t,
 			    struct proc *, int);
 #define	UVM_MREMAP_FIXED	1
 
+/* uvm_object.c */
+int			uobj_wirepages(struct uvm_object *uobj, off_t start,
+			    off_t end);
+void			uobj_unwirepages(struct uvm_object *uobj, off_t start,
+			    off_t end);
+
 /* uvm_page.c */
 struct vm_page		*uvm_pagealloc_strat(struct uvm_object *,
 			    voff_t, struct vm_anon *, int, int, int);
@@ -699,6 +705,9 @@ struct uvm_object	*uvn_attach(void *, vm_prot_t);
 int			uvn_findpages(struct uvm_object *, voff_t,
 			    int *, struct vm_page **, int);
 void			uvm_vnp_zerorange(struct vnode *, off_t, size_t);
+boolean_t		uvn_text_p(struct uvm_object *);
+boolean_t		uvn_clean_p(struct uvm_object *);
+boolean_t		uvn_needs_writefault_p(struct uvm_object *);
 
 /* kern_malloc.c */
 void			kmeminit_nkmempages(void);

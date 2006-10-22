@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.6.20.2 2006/09/21 12:01:43 yamt Exp $ */
+/* $NetBSD: intr.h,v 1.6.20.3 2006/10/22 06:04:31 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -53,9 +53,9 @@
 #define IPL_AUDIO	7
 #define IPL_SERIAL	8
 #define IPL_CLOCK	9
-#define IPL_STATCLOCK	10
-#define IPL_SCHED	11
-#define IPL_HIGH	12
+#define IPL_HIGH	10
+#define IPL_STATCLOCK	IPL_HIGH
+#define IPL_SCHED	IPL_HIGH
 #define	IPL_LOCK	IPL_HIGH
 #define NIPL		IPL_HIGH + 1
 
@@ -73,10 +73,9 @@
 #define	splaudio()	raisespl(IPL_AUDIO)
 #define splserial()	raisespl(IPL_SERIAL)
 #define splclock()	raisespl(IPL_CLOCK)
-#define splstatclock()	raisespl(IPL_STATCLOCK)
-#define splsched()	raisespl(IPL_SCHED)
 
-/* #define	splsched()	splhigh() */
+#define splstatclock()	splhigh()
+#define	splsched()	splhigh()
 #define spllock()	splhigh()
 
 #define spl0()			lowerspl(IPL_NONE)
@@ -123,13 +122,14 @@ splraiseipl(ipl_cookie_t icookie)
  * Soft Interrupts
  */
 
-/* Old-fashioned soft interrupts */
-extern void setsoftnet(void);
-
 /* New-fangled generic soft interrupts */
 extern void *softintr_establish(int, void (*)(void *), void *);
 extern void softintr_disestablish(void *);
 extern void softintr_schedule(void *);
+
+/* Old-fashioned soft interrupts */
+extern void *sh_softnet;
+#define setsoftnet() softintr_schedule(sh_softnet)
 
 /* Machine-dependent soft-interrupt servicing routines */
 extern void softintr_init(void);

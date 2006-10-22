@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.106 2006/09/08 20:58:58 elad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.106.2.1 2006/10/22 06:07:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.106 2006/09/08 20:58:58 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.106.2.1 2006/10/22 06:07:54 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -565,7 +565,10 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 			error = ENOTBLK;
 			break;
 		}
-		dumpdev = vp->v_rdev;
+		if (bdevsw_lookup(vp->v_rdev))
+			dumpdev = vp->v_rdev;
+		else
+			dumpdev = NODEV;
 		cpu_dumpconf();
 		break;
 
@@ -727,6 +730,9 @@ uvm_swap_stats_locked(int cmd, struct swapent *sep, int sec, register_t *retval)
 			    sizeof(struct oswapent));
 
 			/* now copy out the path if necessary */
+#if !defined(COMPAT_13)
+			(void) cmd;
+#endif
 #if defined(COMPAT_13)
 			if (cmd == SWAP_STATS)
 #endif
@@ -1137,7 +1143,7 @@ swstrategy(struct buf *bp)
  */
 /*ARGSUSED*/
 static int
-swread(dev_t dev, struct uio *uio, int ioflag)
+swread(dev_t dev, struct uio *uio, int ioflag __unused)
 {
 	UVMHIST_FUNC("swread"); UVMHIST_CALLED(pdhist);
 
@@ -1150,7 +1156,7 @@ swread(dev_t dev, struct uio *uio, int ioflag)
  */
 /*ARGSUSED*/
 static int
-swwrite(dev_t dev, struct uio *uio, int ioflag)
+swwrite(dev_t dev, struct uio *uio, int ioflag __unused)
 {
 	UVMHIST_FUNC("swwrite"); UVMHIST_CALLED(pdhist);
 

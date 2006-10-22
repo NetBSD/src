@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.5 2006/09/11 22:12:39 plunky Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.5.2.1 2006/10/22 06:07:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.5 2006/09/11 22:12:39 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.5.2.1 2006/10/22 06:07:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -218,9 +218,10 @@ hci_acl_timeout(void *arg)
 		err = hci_send_cmd(link->hl_unit, HCI_CMD_DISCONNECT,
 					&cp, sizeof(cp));
 
-		if (err)
+		if (err) {
 			DPRINTF("error %d sending HCI_CMD_DISCONNECT\n",
-					err);
+			    err);
+		}
 
 		break;
 
@@ -690,7 +691,7 @@ bad:
 }
 
 void
-hci_sco_start(struct hci_link *link)
+hci_sco_start(struct hci_link *link __unused)
 {
 }
 

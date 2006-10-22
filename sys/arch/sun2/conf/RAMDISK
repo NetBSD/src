@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.32 2006/08/26 20:27:08 christos Exp $
+# $NetBSD: RAMDISK,v 1.32.4.1 2006/10/22 06:05:15 yamt Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -210,6 +210,8 @@ ie1	at vme0 addr 0xe88000,0xe00000 len -1,0x40000 irq 3 vect 0x75
 ## 3Com Ethernet (Multibus only)
 ec0	at mbmem0 addr 0xe0000 ipl 3
 ec1	at mbmem0 addr 0xe2000 ipl 3
+# limit NFS R/W size for poor ec(4) interfaces
+options 	NFS_RSIZE=1024,NFS_WSIZE=1024
 
 ## Frame buffers.
 
@@ -231,8 +233,7 @@ pseudo-device	sl			# CSLIP
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
-# rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty		4	# pseudo-terminals
 #pseudo-device	vnd			# paging to files

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.99 2006/09/07 02:06:47 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.99.4.1 2006/10/22 06:07:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99 2006/09/07 02:06:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99.4.1 2006/10/22 06:07:10 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -214,7 +214,7 @@ do {									\
  */
 static int
 acquire(volatile struct lock **lkpp, int *s, int extflags,
-    int drain, int wanted, uintptr_t ra)
+    int drain, int wanted, uintptr_t ra __unused)
 {
 	int error;
 	volatile struct lock *lkp = *lkpp;
@@ -1456,7 +1456,7 @@ _kernel_lock_init(void)
  * and the lower half of the kernel.
  */
 void
-_kernel_lock(int flag)
+_kernel_lock(int flag __unused)
 {
 	struct cpu_info *ci = curcpu();
 
@@ -1498,7 +1498,7 @@ _kernel_unlock(void)
  * use in the top half of the kernel.
  */
 void
-_kernel_proc_lock(struct lwp *l)
+_kernel_proc_lock(struct lwp *l __unused)
 {
 
 	SCHED_ASSERT_UNLOCKED();
@@ -1506,7 +1506,7 @@ _kernel_proc_lock(struct lwp *l)
 }
 
 void
-_kernel_proc_unlock(struct lwp *l)
+_kernel_proc_unlock(struct lwp *l __unused)
 {
 
 	_kernel_unlock();
@@ -1556,7 +1556,17 @@ _kernel_lock_acquire_count(int hold_count)
 void
 _kernel_lock_assert_locked()
 {
+
+	KDASSERT(curcpu()->ci_data.cpu_biglock_count > 0);
 	simple_lock_assert_locked(&kernel_lock, "kernel_lock");
+}
+
+void
+_kernel_lock_assert_unlocked()
+{
+
+	KDASSERT(curcpu()->ci_data.cpu_biglock_count == 0);
+	simple_lock_assert_unlocked(&kernel_lock, "kernel_lock");
 }
 #endif
 
@@ -1576,7 +1586,7 @@ lock_owner_onproc(uintptr_t owner)
 #else	/* MULTIPROCESSOR */
 
 int
-lock_owner_onproc(uintptr_t owner)
+lock_owner_onproc(uintptr_t owner __unused)
 {
 
 	return 0;

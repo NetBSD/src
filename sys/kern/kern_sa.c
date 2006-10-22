@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.83 2006/06/26 10:21:59 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.83.6.1 2006/10/22 06:07:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.83 2006/06/26 10:21:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.83.6.1 2006/10/22 06:07:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ sa_newsavp(struct sadata *sa)
 }
 
 int
-sys_sa_register(struct lwp *l, void *v, register_t *retval)
+sys_sa_register(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_sa_register_args /* {
 		syscallarg(sa_upcall_t) new;
@@ -462,7 +462,7 @@ sa_stacks1(struct lwp *l, register_t *retval, int num, stack_t *stacks,
 
 
 int
-sys_sa_enable(struct lwp *l, void *v, register_t *retval)
+sys_sa_enable(struct lwp *l, void *v __unused, register_t *retval __unused)
 {
 	struct proc *p = l->l_proc;
 	struct sadata *sa = p->p_sa;
@@ -648,7 +648,7 @@ sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_sa_yield(struct lwp *l, void *v, register_t *retval)
+sys_sa_yield(struct lwp *l, void *v __unused, register_t *retval __unused)
 {
 	struct proc *p = l->l_proc;
 
@@ -740,7 +740,8 @@ sa_yield(struct lwp *l)
 
 
 int
-sys_sa_preempt(struct lwp *l, void *v, register_t *retval)
+sys_sa_preempt(struct lwp *l __unused, void *v __unused,
+    register_t *retval __unused)
 {
 
 	/* XXX Implement me. */
@@ -1109,6 +1110,8 @@ sa_switchcall(void *arg)
 			SCHED_LOCK(s);
 			sa_putcachelwp(p, l2); /* sets L_SA */
 			vp->savp_lwp = l;
+			l->l_flag &= ~L_SA_BLOCKING;
+			p->p_nrlwps--;
 			mi_switch(l2, NULL);
 			/* mostly NOTREACHED */
 			SCHED_ASSERT_UNLOCKED();
@@ -1257,6 +1260,7 @@ sa_unblock_userret(struct lwp *l)
 			lwp_exit(l);
 		}
 
+		KDASSERT(l2 != NULL);
 		PHOLD(l2);
 
 		KDASSERT(sast != NULL);

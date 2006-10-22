@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.17 2006/07/23 22:06:13 ad Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.17.6.1 2006/10/22 06:07:28 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.17 2006/07/23 22:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.17.6.1 2006/10/22 06:07:28 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -68,8 +68,8 @@ u_long ddp_sendspace = DDP_MAXSZ;	/* Max ddp size + 1 (ddp_type) */
 u_long ddp_recvspace = 25 * (587 + sizeof(struct sockaddr_at));
 
 #ifdef MBUFTRACE
-struct mowner atalk_rx_mowner = { "atalk", "rx" };
-struct mowner atalk_tx_mowner = { "atalk", "tx" };
+struct mowner atalk_rx_mowner = MOWNER_INIT("atalk", "rx");
+struct mowner atalk_tx_mowner = MOWNER_INIT("atalk", "tx");
 #endif
 
 /* ARGSUSED */
@@ -508,10 +508,10 @@ at_pcbdetach(so, ddp)
  * sockets (pcbs).
  */
 struct ddpcb   *
-ddp_search(from, to, aa)
-	struct sockaddr_at *from;
-	struct sockaddr_at *to;
-	struct at_ifaddr *aa;
+ddp_search(
+    struct sockaddr_at *from __unused,
+    struct sockaddr_at *to,
+    struct at_ifaddr *aa)
 {
 	struct ddpcb   *ddp;
 

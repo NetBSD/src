@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.19 2005/12/26 18:41:36 perry Exp $	*/
+/*	$NetBSD: rnd.h,v 1.19.22.1 2006/10/22 06:07:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ void		rnd_add_uint32(rndsource_element_t *, uint32_t);
 void		rnd_add_data(rndsource_element_t *, void *, uint32_t,
 		    uint32_t);
 uint32_t	rnd_extract_data(void *, uint32_t, uint32_t);
-void		rnd_attach_source(rndsource_element_t *, char *,
+void		rnd_attach_source(rndsource_element_t *, const char *,
 		    uint32_t, uint32_t);
 void		rnd_detach_source(rndsource_element_t *);
 

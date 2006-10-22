@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_locore.S,v 1.3 2006/06/30 17:54:50 freza Exp $	*/
+/*	$NetBSD: obs200_locore.S,v 1.3.6.1 2006/10/22 06:04:39 yamt Exp $	*/
 /*	Original Tag: locore.S,v 1.1 2003/09/23 15:21:58 shige Exp	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
@@ -190,58 +190,10 @@ __start_cpu0:
 	stw	%r8,0(%r7)
 #endif
 
-	/*
-	 * Set up TLB entry to cover kernel addresses.
-	 *
-	 * XXX: Skip TLB 0 for now, due to unresolved TLB 0 replacement
-	 *	and hard hangs
-	 */
-	li	%r0,1
+	/* Set kernel MMU context. */
+	li	%r0,KERNEL_PID
 	mtpid	%r0
 	sync
-
-	li	%r0,0
-#ifdef PPC_4XX_NOCACHE
-	li	%r4,TLB_EX|TLB_WR|TLB_I /* |TLB_W */
-#else
-	li	%r4,TLB_EX|TLB_WR /* |TLB_W */
-#endif
-        li	%r3,TLB_VALID|TLB_PG_16M
-        tlbwe	%r4,%r0,1		/* Load the data(Low) portion of the entry */
-        tlbwe	%r3,%r0,0		/* Load the tag(High) portion of the entry */
-
-#if 1
-	/* Damn. Have to be able to access all real memory.... Hardcode for 32M for now. */
-	li	%r0,1
-	lis	%r4,0x01000000@h
-	ori	%r3,%r4,0
-#ifdef PPC_4XX_NOCACHE
-	addi	%r4,%r4,TLB_EX|TLB_WR|TLB_I /* |TLB_W */
-#else
-	addi	%r4,%r4,TLB_EX|TLB_WR /* |TLB_W */
-#endif
-	addi	%r3,%r3,TLB_VALID|TLB_PG_16M
-	tlbwe	%r4,%r0,1		/* Load the data(Low) portion of the entry */
-	tlbwe	%r3,%r0,0		/* Load the tag(High) portion of the entry */
-#endif
-
-	/* set up a TLB mapping to cover uart0 */
-	lis	%r3,0xef000000@h	/* Load the virtual address */
-	ori	%r4,%r3,0		/* Load the physical address */
-
-	clrrwi	%r4,%r4,10		/* Mask off the real page number */
-	/* write, execute, cache inhibit, guarded */
-	ori	%r4,%r4,(TLB_WR|TLB_EX|TLB_I|TLB_G)
-
-	clrrwi	%r3,%r3,10		/* Mask off the effective page number */
-	ori	%r3,%r3,(TLB_VALID|TLB_PG_16M)
-
-	li	%r0,2
-
-	tlbwe	%r4,%r0,1		/* Load the data portion of the entry */
-	tlbwe	%r3,%r0,0		/* Load the tag portion of the entry */
-
-	/* END of TLB setup */
 
 	INIT_CPUINFO(8,1,9,0)
 	mr	%r4,%r8

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.68 2006/03/01 12:38:32 yamt Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.68.16.1 2006/10/22 06:07:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.68 2006/03/01 12:38:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.68.16.1 2006/10/22 06:07:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,6 +246,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 	case PFSstat:	/* /proc/N/stat = -r--r--r-- */
 	case PFScmdline:	/* /proc/N/cmdline = -r--r--r-- */
 	case PFSmeminfo:	/* /proc/meminfo = -r--r--r-- */
+	case PFSdevices:	/* /proc/devices = -r--r--r-- */
 	case PFScpuinfo:	/* /proc/cpuinfo = -r--r--r-- */
 	case PFSuptime:	/* /proc/uptime = -r--r--r-- */
 	case PFSmounts:	/* /proc/mounts = -r--r--r-- */
@@ -357,6 +358,9 @@ procfs_rw(v)
 
 	case PFSmeminfo:
 		return (procfs_domeminfo(curl, p, pfs, uio));
+
+	case PFSdevices:
+		return (procfs_dodevices(curl, p, pfs, uio));
 
 	case PFScpuinfo:
 		return (procfs_docpuinfo(curl, p, pfs, uio));

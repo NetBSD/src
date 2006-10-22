@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102.22.1 2006/10/06 13:27:05 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102.22.2 2006/10/22 06:05:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.22.1 2006/10/06 13:27:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.22.2 2006/10/22 06:05:15 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -562,8 +562,10 @@ cpu_dumpconf(void)
 		return;
 
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdev == NULL) {
+		dumpdev = NODEV;
+		return;
+	}
 	getsize = bdev->d_psize;
 	if (getsize == NULL)
 		return;

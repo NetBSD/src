@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.21 2006/06/18 21:29:48 christos Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.21.6.1 2006/10/22 06:05:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -40,7 +40,7 @@
 #include <sys/rnd.h>
 #endif
 
-#if defined(__i386__) || defined(__x86_64__)
+#ifdef __NO_STRICT_ALIGNMENT
 #define	RTK_ETHER_ALIGN	0
 #else
 #define RTK_ETHER_ALIGN	2
@@ -48,8 +48,8 @@
 #define RTK_RXSTAT_LEN	4
 
 struct rtk_type {
-	u_int16_t		rtk_vid;
-	u_int16_t		rtk_did;
+	uint16_t		rtk_vid;
+	uint16_t		rtk_did;
 	int			rtk_basetype;
 	const char		*rtk_name;
 };
@@ -61,12 +61,12 @@ struct rtk_hwrev {
 };
 
 struct rtk_mii_frame {
-	u_int8_t		mii_stdelim;
-	u_int8_t		mii_opcode;
-	u_int8_t		mii_phyaddr;
-	u_int8_t		mii_regaddr;
-	u_int8_t		mii_turnaround;
-	u_int16_t		mii_data;
+	uint8_t			mii_stdelim;
+	uint8_t			mii_opcode;
+	uint8_t			mii_phyaddr;
+	uint8_t			mii_regaddr;
+	uint8_t			mii_turnaround;
+	uint16_t		mii_data;
 };
 
 /*
@@ -147,7 +147,7 @@ struct rtk_softc {
 	struct rtk_list_data	rtk_ldata;
 	struct mbuf		*rtk_head;
 	struct mbuf		*rtk_tail;
-	u_int32_t		rtk_rxlenmask;
+	uint32_t		rtk_rxlenmask;
 	int			rtk_testmode;
 
 	int			sc_flags;	/* misc flags */
@@ -170,10 +170,25 @@ struct rtk_softc {
 	((sc)->rtk_ldata.rtk_tx_desc_cnt)
 #define	RTK_TX_LIST_SZ(sc)	\
 	(RTK_TX_DESC_CNT(sc) * sizeof(struct rtk_desc))
-#define	RTK_TX_DESC_INC(sc, x)	\
-	((x) = ((x) + 1) % RTK_TX_DESC_CNT(sc))
-#define	RTK_RX_DESC_INC(sc, x)	\
-	((x) = ((x) + 1) % RTK_RX_DESC_CNT)
+#define	RTK_NEXT_TX_DESC(sc, x)	\
+	(((x) + 1) % RTK_TX_DESC_CNT(sc))
+#define	RTK_NEXT_RX_DESC(sc, x)	\
+	(((x) + 1) % RTK_RX_DESC_CNT)
+#define	RTK_NEXT_TXQ(sc, x)	\
+	(((x) + 1) % RTK_TX_QLEN)
+
+#define	RTK_TXDESCSYNC(sc, idx, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat,					\
+	    (sc)->rtk_ldata.rtk_tx_list_map,				\
+	    sizeof(struct rtk_desc) * (idx),				\
+	    sizeof(struct rtk_desc),					\
+	    (ops))
+#define	RTK_RXDESCSYNC(sc, idx, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat,					\
+	    (sc)->rtk_ldata.rtk_rx_list_map,				\
+	    sizeof(struct rtk_desc) * (idx),				\
+	    sizeof(struct rtk_desc),					\
+	    (ops))
 
 #define RTK_ATTACHED 0x00000001 /* attach has succeeded */
 #define RTK_ENABLED  0x00000002 /* chip is enabled	*/
@@ -223,7 +238,7 @@ struct rtk_softc {
 #define RTK_PME_STATUS		0x8000
 
 #ifdef _KERNEL
-u_int16_t rtk_read_eeprom(struct rtk_softc *, int, int);
+uint16_t rtk_read_eeprom(struct rtk_softc *, int, int);
 void	rtk_setmulti(struct rtk_softc *);
 void	rtk_attach(struct rtk_softc *);
 int	rtk_detach(struct rtk_softc *);

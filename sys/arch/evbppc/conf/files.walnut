@@ -1,4 +1,4 @@
-#	$NetBSD: files.walnut,v 1.10 2006/06/30 17:54:50 freza Exp $
+#	$NetBSD: files.walnut,v 1.10.6.1 2006/10/22 06:04:39 yamt Exp $
 #
 # walnut-specific configuration info
 
@@ -47,13 +47,7 @@ device	pbus {[addr=-1], [irq=-1]}
 attach	pbus at plb
 file	arch/evbppc/walnut/dev/pbus.c		pbus
 
-define	todservice {}
-
-device	todclock
-attach	todclock at todservice
-file	arch/evbppc/walnut/dev/todclock.c	todclock	needs-count
-
-device	ds1743rtc: todservice
+device	ds1743rtc
 attach	ds1743rtc at pbus
 file	arch/evbppc/walnut/dev/ds1743.c		ds1743rtc
 

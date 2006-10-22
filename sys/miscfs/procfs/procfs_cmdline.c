@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.21 2006/03/01 12:38:32 yamt Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.21.16.1 2006/10/22 06:07:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.21 2006/03/01 12:38:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.21.16.1 2006/10/22 06:07:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,11 +55,12 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.21 2006/03/01 12:38:32 yamt Exp
  * code for returning process's command line arguments
  */
 int
-procfs_docmdline(curl, p, pfs, uio)
-	struct lwp *curl;
-	struct proc *p;
-	struct pfsnode *pfs;
-	struct uio *uio;
+procfs_docmdline(
+    struct lwp *curl __unused,
+    struct proc *p,
+    struct pfsnode *pfs __unused,
+    struct uio *uio
+)
 {
 	struct ps_strings pss;
 	int count, error;

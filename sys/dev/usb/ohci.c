@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.175 2006/09/03 07:06:39 christos Exp $	*/
+/*	$NetBSD: ohci.c,v 1.175.4.1 2006/10/22 06:06:52 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.175 2006/09/03 07:06:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.175.4.1 2006/10/22 06:06:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -904,7 +904,8 @@ ohci_init(ohci_softc_t *sc)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	sc->sc_control = sc->sc_intre = 0;
-	sc->sc_powerhook = powerhook_establish(ohci_power, sc);
+	sc->sc_powerhook = powerhook_establish(USBDEVNAME(sc->sc_bus.bdev),
+	    ohci_power, sc);
 	sc->sc_shutdownhook = shutdownhook_establish(ohci_shutdown, sc);
 #endif
 
@@ -1480,7 +1481,7 @@ ohci_softintr(void *v)
 }
 
 void
-ohci_device_ctrl_done(usbd_xfer_handle xfer)
+ohci_device_ctrl_done(usbd_xfer_handle xfer __unused)
 {
 	DPRINTFN(10,("ohci_device_ctrl_done: xfer=%p\n", xfer));
 
@@ -1534,7 +1535,7 @@ ohci_device_intr_done(usbd_xfer_handle xfer)
 }
 
 void
-ohci_device_bulk_done(usbd_xfer_handle xfer)
+ohci_device_bulk_done(usbd_xfer_handle xfer __unused)
 {
 	DPRINTFN(10,("ohci_device_bulk_done: xfer=%p, actlen=%d\n",
 		     xfer, xfer->actlen));
@@ -1575,12 +1576,12 @@ ohci_rhsc(ohci_softc_t *sc, usbd_xfer_handle xfer)
 }
 
 void
-ohci_root_intr_done(usbd_xfer_handle xfer)
+ohci_root_intr_done(usbd_xfer_handle xfer __unused)
 {
 }
 
 void
-ohci_root_ctrl_done(usbd_xfer_handle xfer)
+ohci_root_ctrl_done(usbd_xfer_handle xfer __unused)
 {
 }
 
@@ -1828,7 +1829,7 @@ ohci_hash_add_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 
 /* Called at splusb() */
 void
-ohci_hash_rem_td(ohci_softc_t *sc, ohci_soft_td_t *std)
+ohci_hash_rem_td(ohci_softc_t *sc __unused, ohci_soft_td_t *std)
 {
 	SPLUSBCHECK;
 
@@ -1865,7 +1866,7 @@ ohci_hash_add_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 
 /* Called at splusb() */
 void
-ohci_hash_rem_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
+ohci_hash_rem_itd(ohci_softc_t *sc __unused, ohci_soft_itd_t *sitd)
 {
 	SPLUSBCHECK;
 
@@ -2699,14 +2700,14 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 
 /* Abort a root control request. */
 Static void
-ohci_root_ctrl_abort(usbd_xfer_handle xfer)
+ohci_root_ctrl_abort(usbd_xfer_handle xfer __unused)
 {
 	/* Nothing to do, all transfers are synchronous. */
 }
 
 /* Close the root pipe. */
 Static void
-ohci_root_ctrl_close(usbd_pipe_handle pipe)
+ohci_root_ctrl_close(usbd_pipe_handle pipe __unused)
 {
 	DPRINTF(("ohci_root_ctrl_close\n"));
 	/* Nothing to do. */
@@ -2841,7 +2842,7 @@ ohci_device_clear_toggle(usbd_pipe_handle pipe)
 }
 
 Static void
-ohci_noop(usbd_pipe_handle pipe)
+ohci_noop(usbd_pipe_handle pipe __unused)
 {
 }
 
@@ -3413,7 +3414,7 @@ ohci_device_isoc_abort(usbd_xfer_handle xfer)
 }
 
 void
-ohci_device_isoc_done(usbd_xfer_handle xfer)
+ohci_device_isoc_done(usbd_xfer_handle xfer __unused)
 {
 	DPRINTFN(1,("ohci_device_isoc_done: xfer=%p\n", xfer));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.30 2006/03/16 15:55:20 christos Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.30.12.1 2006/10/22 06:07:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.30 2006/03/16 15:55:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.30.12.1 2006/10/22 06:07:43 yamt Exp $");
 
 #include "opt_nfs_boot.h"
 
@@ -299,10 +299,7 @@ static int bootpset __P((struct mbuf*, void*, int));
 static int bootpcheck __P((struct mbuf*, void*));
 
 static int
-bootpset(m, context, waited)
-	struct mbuf *m;
-	void *context;
-	int waited;
+bootpset(struct mbuf *m, void *context __unused, int waited)
 {
 	struct bootp *bootp;
 

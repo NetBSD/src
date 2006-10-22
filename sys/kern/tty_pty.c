@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.93 2006/08/03 22:06:55 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.93.6.1 2006/10/22 06:07:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.93 2006/08/03 22:06:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.93.6.1 2006/10/22 06:07:11 yamt Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.93 2006/08/03 22:06:55 christos Exp $"
 #include <sys/tty.h>
 #include <sys/stat.h>
 #include <sys/file.h>
-#include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
@@ -307,10 +306,7 @@ ptyattach(n)
 
 /*ARGSUSED*/
 int
-ptsopen(dev, flag, devtype, l)
-	dev_t dev;
-	int flag, devtype;
-	struct lwp *l;
+ptsopen(dev_t dev, int flag, int devtype __unused, struct lwp *l)
 {
 	struct pt_softc *pti;
 	struct tty *tp;
@@ -361,10 +357,7 @@ ptsopen(dev, flag, devtype, l)
 }
 
 int
-ptsclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+ptsclose(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -555,10 +548,8 @@ ptcwakeup(tp, flag)
 
 /*ARGSUSED*/
 int
-ptcopen(dev, flag, devtype, l)
-	dev_t dev;
-	int flag, devtype;
-	struct lwp *l;
+ptcopen(dev_t dev, int flag __unused, int devtype __unused,
+    struct lwp *l __unused)
 {
 	struct pt_softc *pti;
 	struct tty *tp;
@@ -592,10 +583,8 @@ ptcopen(dev, flag, devtype, l)
 
 /*ARGSUSED*/
 int
-ptcclose(dev, flag, devtype, l)
-	dev_t dev;
-	int flag, devtype;
-	struct lwp *l;
+ptcclose(dev_t dev, int flag __unused, int devtype __unused,
+    struct lwp *l __unused)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -901,7 +890,7 @@ filt_ptcrdetach(struct knote *kn)
 }
 
 static int
-filt_ptcread(struct knote *kn, long hint)
+filt_ptcread(struct knote *kn, long hint __unused)
 {
 	struct pt_softc *pti;
 	struct tty	*tp;
@@ -943,7 +932,7 @@ filt_ptcwdetach(struct knote *kn)
 }
 
 static int
-filt_ptcwrite(struct knote *kn, long hint)
+filt_ptcwrite(struct knote *kn, long hint __unused)
 {
 	struct pt_softc *pti;
 	struct tty	*tp;

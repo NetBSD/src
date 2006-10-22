@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.6 2006/09/03 07:00:48 christos Exp $ */
+/* $NetBSD: tsc.c,v 1.6.6.1 2006/10/22 06:05:16 yamt Exp $ */
 
 
 /*-
@@ -83,12 +83,16 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.6 2006/09/03 07:00:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.6.6.1 2006/10/22 06:05:16 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #ifdef i386
 #include "opt_enhanced_speedstep.h"
 #endif
+#ifdef i386
+#include "opt_powernow_k7.h"
+#endif
+#include "opt_powernow_k8.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +124,7 @@ static struct timecounter tsc_timecounter = {
  	~0u,			/* counter_mask */
 	0,			/* frequency */
 	 "TSC",			/* name */
-#if defined(ENHANCED_SPEEDSTEP)
+#if (defined(ENHANCED_SPEEDSTEP) || defined(POWERNOW_K7) || defined(POWERNOW_K8))
 	-100,			/* don't pick TSC automatically */
 				/* if frequency changes might affect TSC */
 #else
@@ -172,7 +176,7 @@ init_TSC_tc(void)
  * pick up tick count scaled to reference tick count
  */
 static u_int
-tsc_get_timecount(struct timecounter *tc)
+tsc_get_timecount(struct timecounter *tc __unused)
 {
 	struct cpu_info *ci = curcpu();
 	int64_t rcc, cc;
@@ -220,7 +224,7 @@ tsc_get_timecount(struct timecounter *tc)
  * other cpus are called via a broadcast IPI
  */
 static void
-tsc_calibrate(struct timecounter *tc)
+tsc_calibrate(struct timecounter *tc __unused)
 {
 	struct cpu_info *ci = curcpu();
 	

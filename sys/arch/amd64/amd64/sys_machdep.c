@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.8 2006/09/08 20:58:57 elad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.8.2.1 2006/10/22 06:04:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.8 2006/09/08 20:58:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.8.2.1 2006/10/22 06:04:31 yamt Exp $");
 
 #if 0
 #include "opt_user_ldt.h"
@@ -393,7 +393,7 @@ x86_64_iopl(l, args, retval)
 	struct x86_64_iopl_args ua;
 
 	if (kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
-	    (void *)KAUTH_REQ_MACHDEP_X86_IOPL, NULL, NULL, NULL))
+	    KAUTH_REQ_MACHDEP_X86_IOPL, NULL, NULL, NULL))
 		return EPERM;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
@@ -436,7 +436,7 @@ x86_64_set_ioperm(p, args, retval)
 	struct x86_64_set_ioperm_args ua;
 
 	if (kauth_authorize_machdep(p->p_cred, KAUTH_MACHDEP_X86,
-	    (void *)KAUTH_REQ_MACHDEP_X86_IOPERM, NULL, NULL, NULL))
+	    KAUTH_REQ_MACHDEP_X86_IOPERM, NULL, NULL, NULL))
 		return EPERM;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
@@ -483,7 +483,7 @@ x86_64_set_mtrr(struct lwp *l, void *args, register_t *retval)
 		return ENOSYS;
 
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
-	    (void *)KAUTH_REQ_MACHDEP_X86_MTRR_SET, NULL, NULL, NULL);
+	    KAUTH_REQ_MACHDEP_X86_MTRR_SET, NULL, NULL, NULL);
 	if (error != 0)
 		return error;
 

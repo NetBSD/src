@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.94 2006/07/30 21:58:11 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.94.6.1 2006/10/22 06:07:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94 2006/07/30 21:58:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.6.1 2006/10/22 06:07:10 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -185,10 +185,6 @@ int cmask = CMASK;
 
 POOL_INIT(proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
     &pool_allocator_nointr);
-POOL_INIT(lwp_pool, sizeof(struct lwp), 0, 0, 0, "lwppl",
-    &pool_allocator_nointr);
-POOL_INIT(lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
-    &pool_allocator_nointr);
 POOL_INIT(pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
     &pool_allocator_nointr);
 POOL_INIT(plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
@@ -196,8 +192,6 @@ POOL_INIT(plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
 POOL_INIT(pstats_pool, sizeof(struct pstats), 0, 0, 0, "pstatspl",
     &pool_allocator_nointr);
 POOL_INIT(rusage_pool, sizeof(struct rusage), 0, 0, 0, "rusgepl",
-    &pool_allocator_nointr);
-POOL_INIT(ras_pool, sizeof(struct ras), 0, 0, 0, "raspl",
     &pool_allocator_nointr);
 POOL_INIT(session_pool, sizeof(struct session), 0, 0, 0, "sessionpl",
     &pool_allocator_nointr);
@@ -219,6 +213,8 @@ const struct proclist_desc proclists[] = {
 
 static void orphanpg(struct pgrp *);
 static void pg_delete(pid_t);
+
+static specificdata_domain_t proc_specificdata_domain;
 
 /*
  * Initialize global process hashing structures.
@@ -256,6 +252,9 @@ procinit(void)
 
 	uihashtbl =
 	    hashinit(maxproc / 16, HASH_LIST, M_PROC, M_WAITOK, &uihash);
+
+	proc_specificdata_domain = specificdata_domain_create();
+	KASSERT(proc_specificdata_domain != NULL);
 }
 
 /*
@@ -378,6 +377,9 @@ proc0_init(void)
 	/* Initialize signal state for proc0. */
 	p->p_sigacts = &sigacts0;
 	siginit(p);
+
+	proc_initspecific(p);
+	lwp_initspecific(l);
 }
 
 /*
@@ -609,14 +611,14 @@ struct proc *
 proc_alloc(void)
 {
 	struct proc *p;
-	int s;
-	int nxt;
+	int s, nxt;
 	pid_t pid;
 	struct pid_table *pt;
 
 	p = pool_get(&proc_pool, PR_WAITOK);
 	p->p_stat = SIDL;			/* protect against others */
 
+	proc_initspecific(p);
 	/* allocate next free pid */
 
 	for (;;expand_pid_table()) {
@@ -721,7 +723,7 @@ enterpgrp(struct proc *p, pid_t pgid, int mksess)
 		new_pgrp = NULL;
 	}
 	if (mksess)
-		sess = pool_get(&session_pool, M_WAITOK);
+		sess = pool_get(&session_pool, PR_WAITOK);
 	else
 		sess = NULL;
 
@@ -1281,4 +1283,74 @@ proc_crmod_leave(struct proc *p, kauth_cred_t scred, kauth_cred_t fcred)
 	wakeup(&p->p_cred);
 	if (fcred != NULL)
 		kauth_cred_free(fcred);
+}
+
+/*
+ * proc_specific_key_create --
+ *	Create a key for subsystem proc-specific data.
+ */
+int
+proc_specific_key_create(specificdata_key_t *keyp, specificdata_dtor_t dtor)
+{
+
+	return (specificdata_key_create(proc_specificdata_domain, keyp, dtor));
+}
+
+/*
+ * proc_specific_key_delete --
+ *	Delete a key for subsystem proc-specific data.
+ */
+void
+proc_specific_key_delete(specificdata_key_t key)
+{
+
+	specificdata_key_delete(proc_specificdata_domain, key);
+}
+
+/*
+ * proc_initspecific --
+ *	Initialize a proc's specificdata container.
+ */
+void
+proc_initspecific(struct proc *p)
+{
+	int error;
+
+	error = specificdata_init(proc_specificdata_domain, &p->p_specdataref);
+	KASSERT(error == 0);
+}
+
+/*
+ * proc_finispecific --
+ *	Finalize a proc's specificdata container.
+ */
+void
+proc_finispecific(struct proc *p)
+{
+
+	specificdata_fini(proc_specificdata_domain, &p->p_specdataref);
+}
+
+/*
+ * proc_getspecific --
+ *	Return proc-specific data corresponding to the specified key.
+ */
+void *
+proc_getspecific(struct proc *p, specificdata_key_t key)
+{
+
+	return (specificdata_getspecific(proc_specificdata_domain,
+					 &p->p_specdataref, key));
+}
+
+/*
+ * proc_setspecific --
+ *	Set proc-specific data corresponding to the specified key.
+ */
+void
+proc_setspecific(struct proc *p, specificdata_key_t key, void *data)
+{
+
+	specificdata_setspecific(proc_specificdata_domain,
+				 &p->p_specdataref, key, data);
 }

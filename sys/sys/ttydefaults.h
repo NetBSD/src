@@ -1,4 +1,4 @@
-/*	$NetBSD: ttydefaults.h,v 1.14 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: ttydefaults.h,v 1.14.22.1 2006/10/22 06:07:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -86,13 +86,13 @@
  */
 #ifdef _KERNEL
 #ifdef TTYDEFCHARS
-cc_t	ttydefchars[NCCS] = {
+const cc_t ttydefchars[NCCS] = {
 	CEOF,	CEOL,	CEOL,	CERASE, CWERASE, CKILL, CREPRINT,
 	_POSIX_VDISABLE, CINTR,	CQUIT,	CSUSP,	CDSUSP,	CSTART,	CSTOP,	CLNEXT,
 	CDISCARD, CMIN,	CTIME,  CSTATUS, _POSIX_VDISABLE
 };
 #undef TTYDEFCHARS
 #else
-extern cc_t ttydefchars[NCCS];
+extern const cc_t ttydefchars[NCCS];
 #endif
 #endif /* _KERNEL */

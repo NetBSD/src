@@ -1,9 +1,9 @@
-#	$NetBSD: files.footbridge,v 1.11 2003/01/03 01:06:40 thorpej Exp $
+#	$NetBSD: files.footbridge,v 1.11.50.1 2006/10/22 06:04:34 yamt Exp $
 #
 # Shared footbridge files information
 
 # DC21285 "Footbridge" specific files
-device	footbridge {}: pcibus, bus_space_generic, todservice
+device	footbridge {}: pcibus, bus_space_generic
 attach	footbridge at mainbus
 file	arch/arm/footbridge/footbridge.c		footbridge
 file	arch/arm/footbridge/footbridge_machdep.c	footbridge

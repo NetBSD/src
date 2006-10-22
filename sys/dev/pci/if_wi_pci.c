@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.38 2005/12/11 12:22:50 christos Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.38.22.1 2006/10/22 06:06:17 yamt Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.38 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.38.22.1 2006/10/22 06:06:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,8 @@ wi_pci_lookup(struct pci_attach_args *pa)
 }
 
 static int
-wi_pci_match(struct device *parent, struct cfdata *match, void *aux)
+wi_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -222,7 +223,7 @@ wi_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-wi_pci_attach(struct device *parent, struct device *self, void *aux)
+wi_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct wi_pci_softc *psc = (struct wi_pci_softc *)self;
 	struct wi_softc *sc = &psc->psc_wi;
@@ -383,7 +384,8 @@ wi_pci_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_reset = wi_pci_reset;
 
 	/* Add a suspend hook to restore PCI config state */
-	psc->sc_powerhook = powerhook_establish(wi_pci_powerhook, psc);
+	psc->sc_powerhook = powerhook_establish(self->dv_xname,
+	    wi_pci_powerhook, psc);
 	if (psc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish pci power hook\n",
 		    self->dv_xname);

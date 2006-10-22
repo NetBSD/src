@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.22 2006/03/29 04:16:48 thorpej Exp $ */
+/*	$NetBSD: ms.c,v 1.22.10.1 2006/10/22 06:05:16 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.22 2006/03/29 04:16:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.22.10.1 2006/10/22 06:05:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -423,7 +423,7 @@ ms_input(struct ms_softc *ms, int c)
 		d = to_one[d - 1];		/* from 1..7 to {1,2,4} */
 		fe->id = to_id[d - 1];		/* from {1,2,4} to ID */
 		fe->value = mb & d ? VKEY_DOWN : VKEY_UP;
-		fe->time = time;
+		getmicrotime(&fe->time);
 		ADVANCE;
 		ub ^= d;
 		any++;
@@ -432,7 +432,7 @@ ms_input(struct ms_softc *ms, int c)
 		NEXT;
 		fe->id = LOC_X_DELTA;
 		fe->value = ms->ms_dx;
-		fe->time = time;
+		getmicrotime(&fe->time);
 		ADVANCE;
 		ms->ms_dx = 0;
 		any++;
@@ -441,7 +441,7 @@ ms_input(struct ms_softc *ms, int c)
 		NEXT;
 		fe->id = LOC_Y_DELTA;
 		fe->value = -ms->ms_dy;	/* XXX? */
-		fe->time = time;
+		getmicrotime(&fe->time);
 		ADVANCE;
 		ms->ms_dy = 0;
 		any++;

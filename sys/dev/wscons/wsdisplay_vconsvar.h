@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.4 2006/04/15 17:48:24 jmmv Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.4.16.1 2006/10/22 06:07:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -105,9 +105,7 @@ struct vcons_data {
 	LIST_HEAD(, vcons_screen) screens;
 	struct vcons_screen *active, *wanted;
 	const struct wsscreen_descr *currenttype;
-#ifdef DIAGNOSTIC
 	int switch_poll_count;
-#endif
 };
 
 int	vcons_init(struct vcons_data *, void *cookie, struct wsscreen_descr *,

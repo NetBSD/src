@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.8 2006/09/08 20:58:57 elad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.8.2.1 2006/10/22 06:05:20 yamt Exp $	*/
 /*	NetBSD: sys_machdep.c,v 1.70 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.8 2006/09/08 20:58:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.8.2.1 2006/10/22 06:05:20 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -360,7 +360,7 @@ i386_iopl(l, args, retval)
 		return EPERM;
 
 	if (kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
-	    (void *)KAUTH_REQ_MACHDEP_X86_IOPL, NULL, NULL, NULL))
+	    KAUTH_REQ_MACHDEP_X86_IOPL, NULL, NULL, NULL))
 		return EPERM;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
@@ -420,7 +420,7 @@ i386_set_ioperm(l, args, retval)
 	struct i386_set_ioperm_args ua;
 
 	if (kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
-	    (void *)KAUTH_REQ_MACHDEP_X86_IOPERM, NULL, NULL, NULL))
+	    KAUTH_REQ_MACHDEP_X86_IOPERM, NULL, NULL, NULL))
 		return EPERM;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
@@ -464,7 +464,7 @@ i386_set_mtrr(struct lwp *l, void *args, register_t *retval)
 		return ENOSYS;
 
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
-	    (void *)KAUTH_REQ_MACHDEP_X86_MTRR_SET, NULL, NULL, NULL);
+	    KAUTH_REQ_MACHDEP_X86_MTRR_SET, NULL, NULL, NULL);
 	if (error != 0)
 		return error;
 

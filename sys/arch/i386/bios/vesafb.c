@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.16 2006/09/03 21:05:01 christos Exp $ */
+/* $NetBSD: vesafb.c,v 1.16.6.1 2006/10/22 06:04:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.16 2006/09/03 21:05:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.16.6.1 2006/10/22 06:04:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,10 +117,8 @@ CFATTACH_DECL(vesafb, sizeof(struct vesafb_softc),
     vesafb_match, vesafb_attach, NULL, NULL);
 
 static int
-vesafb_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+vesafb_match(struct device *parent __unused, struct cfdata *match __unused,
+	void *aux)
 {
 	struct vesabiosdev_attach_args *vaa = aux;
 
@@ -131,9 +129,7 @@ vesafb_match(parent, match, aux)
 }
 
 static void
-vesafb_attach(parent, dev, aux)
-	struct device *parent, *dev;
-	void *aux;
+vesafb_attach(struct device *parent __unused, struct device *dev, void *aux)
 {
 	struct vesafb_softc *sc = (struct vesafb_softc *)dev;
 	struct vesabiosdev_attach_args *vaa = aux;
@@ -308,7 +304,8 @@ vesafb_attach(parent, dev, aux)
 
 	sc->sc_isconsole = 1;
 
-	sc->sc_powerhook = powerhook_establish(vesafb_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    vesafb_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: unable to establish powerhook\n",
 		    sc->sc_dev.dv_xname);
@@ -320,8 +317,8 @@ out:
 }
 
 static int
-vesafb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
-	struct lwp *l)
+vesafb_ioctl(void *v, void *vs __unused, u_long cmd, caddr_t data,
+    int flag __unused, struct lwp *l __unused)
 {
 	struct vcons_data *vd;
 	struct vesafb_softc *sc;
@@ -405,7 +402,7 @@ vesafb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
 }
 
 static paddr_t
-vesafb_mmap(void *v, void *vs, off_t offset, int prot)
+vesafb_mmap(void *v, void *vs __unused, off_t offset, int prot)
 {
 	struct vcons_data *vd;
 	struct vesafb_softc *sc;
@@ -426,8 +423,8 @@ vesafb_mmap(void *v, void *vs, off_t offset, int prot)
 }
 
 static void
-vesafb_init_screen(void *c, struct vcons_screen *scr, int existing,
-    long *defattr)
+vesafb_init_screen(void *c, struct vcons_screen *scr, int existing __unused,
+    long *defattr __unused)
 {
 	struct vesafb_softc *sc;
 	struct rasops_info *ri;
@@ -553,7 +550,7 @@ vesafb_init(struct vesafb_softc *sc)
 }
 
 static void
-vesafb_powerhook(int why, void *opaque)
+vesafb_powerhook(int why __unused, void *opaque __unused)
 {
 #if notyet
 	struct vesafb_softc *sc;

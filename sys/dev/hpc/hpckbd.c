@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.17 2006/03/29 06:37:35 thorpej Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.17.10.1 2006/10/22 06:05:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.17 2006/03/29 06:37:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.17.10.1 2006/10/22 06:05:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ int	hpckbd_putevent(struct hpckbd_core *, u_int, int);
 void	hpckbd_keymap_lookup(struct hpckbd_core*);
 void	hpckbd_keymap_setup(struct hpckbd_core *, const keysym_t *, int);
 int	__hpckbd_input(void *, int, int);
-void	__hpckbd_input_hook(void*);
+void	__hpckbd_input_hook(void *);
 
 CFATTACH_DECL(hpckbd, sizeof(struct hpckbd_softc),
     hpckbd_match, hpckbd_attach, NULL, NULL);
@@ -134,6 +134,7 @@ const struct wskbd_accessops hpckbd_accessops = {
 const struct wskbd_consops hpckbd_consops = {
 	hpckbd_cngetc,
 	hpckbd_cnpollc,
+	NULL,
 };
 
 struct wskbd_mapdata hpckbd_keymapdata = {
@@ -146,13 +147,14 @@ struct wskbd_mapdata hpckbd_keymapdata = {
 };
 
 int
-hpckbd_match(struct device *parent, struct cfdata *cf, void *aux)
+hpckbd_match(struct device *parent __unused,
+	     struct cfdata *cf __unused, void *aux __unused)
 {
 	return (1);
 }
 
 void
-hpckbd_attach(struct device *parent, struct device *self, void *aux)
+hpckbd_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct hpckbd_attach_args *haa = aux;
 	struct hpckbd_softc *sc = device_private(self);
@@ -191,7 +193,7 @@ hpckbd_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-hpckbd_print(void *aux, const char *pnp)
+hpckbd_print(void *aux __unused, const char *pnp)
 {
 	return (pnp ? QUIET : UNCONF);
 }
@@ -262,7 +264,8 @@ hpckbd_getevent(struct hpckbd_core* hc, u_int *type, int *data)
 }
 
 void
-hpckbd_keymap_setup(struct hpckbd_core *hc, const keysym_t *map, int mapsize)
+hpckbd_keymap_setup(struct hpckbd_core *hc __unused,
+		    const keysym_t *map, int mapsize)
 {
 	int i;
 	struct wscons_keydesc *desc;
@@ -325,7 +328,7 @@ hpckbd_keymap_lookup(struct hpckbd_core *hc)
 }
 
 void
-__hpckbd_input_hook(void *arg)
+__hpckbd_input_hook(void *arg __unused)
 {
 #if 0
 	struct hpckbd_core *hc = arg;
@@ -367,9 +370,8 @@ __hpckbd_input(void *arg, int flag, int scancode)
 			return (0);
 
 		if (scancode == hc->hc_special[KEY_SPECIAL_OFF]) {
-#ifdef DEBUG
-			printf("off button\n"); // XXX notyet -uch
-#endif
+			config_hook_call(CONFIG_HOOK_BUTTONEVENT,
+			    CONFIG_HOOK_BUTTONEVENT_POWER, NULL);
 		} else if (scancode == hc->hc_special[KEY_SPECIAL_LIGHT]) {
 			static int onoff; /* XXX -uch */
 			config_hook_call(CONFIG_HOOK_BUTTONEVENT,
@@ -460,13 +462,14 @@ hpckbd_enable(void *arg, int on)
 }
 
 void
-hpckbd_set_leds(void *arg, int leds)
+hpckbd_set_leds(void *arg __unused, int leds __unused)
 {
 	/* Can you find any LED which tells you about keyboard? */
 }
 
 int
-hpckbd_ioctl(void *arg, u_long cmd, caddr_t data, int flag, struct lwp *l)
+hpckbd_ioctl(void *arg, u_long cmd, caddr_t data, int flag __unused,
+	     struct lwp *l __unused)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	struct hpckbd_core *hc = arg;

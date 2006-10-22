@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93var.h,v 1.1 2006/08/26 22:06:37 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93var.h,v 1.1.10.1 2006/10/22 06:05:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -88,7 +88,6 @@ struct wd33c93_linfo {
 	time_t	last_used;
 	int	lun;
 	int	used;			/* # slots in use */
-	int	avail;			/* where to start scanning */
 	u_char	state;
 #define L_STATE_IDLE	0
 #define L_STATE_BUSY	1
@@ -109,9 +108,9 @@ struct wd33c93_tinfo {
 #define T_NOSYNC	0x10		/* Force ASYNC mode */
 #define T_NODISC	0x20		/* Don't allow disconnect */
 #define T_TAG		0x40		/* Turn on TAG QUEUEs */
+#define T_WANTSYNC	0x80		/* Negotiatious should aim for sync */
 	u_char	period;			/* Period suggestion */
 	u_char	offset;			/* Offset suggestion */
-	u_char	nextag;			/* Next available tag */
 	struct wd33c93_linfo *lun[SBIC_NLUN]; /* LUN list for this target */
 } tinfo_t;
 
@@ -162,15 +161,18 @@ struct wd33c93_softc {
 	u_char	sc_imsglen;
 	u_char	sc_omsglen;
 
-	/* Static hardware attributes */
+	/* Static hardware attributes supplied by attachment */
 	int	sc_id;			/* SCSI ID for controller */
 	int	sc_clkfreq;		/* wd33c93 clk freq * 10 MHz */
+	uint8_t	sc_dmamode;		/* One of SBIC_CTL_*DMA */
+
+	/* Static hardware attributes derived by wd33c93_attach() */
 	int	sc_chip;		/* Chip variation */
 	int	sc_rev;			/* Chip revision */
 	int	sc_cfflags;		/* Copy of config flags */
 	int	sc_maxxfer;		/* Maximum transfer size */
-	int	sc_minsync;		/* Minimum sync period (4ns units) */
-	int	sc_maxoffset;		/* Maximum sync ofset (bytes) */
+	uint8_t	sc_maxoffset;		/* Maximum sync ofset (bytes) */
+	uint8_t	sc_syncperiods[7];	/* Sync transfer periods (4ns units) */
 
 	int  (*sc_dmasetup) (struct wd33c93_softc *, caddr_t *,
 					    size_t *, int, size_t *);
@@ -254,7 +256,6 @@ extern int wd33c93_debug_flags;
 struct buf;
 struct scsipi_xfer;
 
-void wd33c93_minphys (struct buf *);
 void wd33c93_scsi_request (struct scsipi_channel *,
 				scsipi_adapter_req_t, void *);
 void wd33c93_attach (struct wd33c93_softc *);

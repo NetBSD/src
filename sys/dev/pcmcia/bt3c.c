@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.3.6.1 2006/09/18 10:04:16 yamt Exp $ */
+/* $NetBSD: bt3c.c,v 1.3.6.2 2006/10/22 06:06:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.3.6.1 2006/09/18 10:04:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.3.6.2 2006/10/22 06:06:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -823,7 +823,8 @@ bt3c_disable(struct hci_unit *unit)
  */
 
 static int
-bt3c_match(struct device *parent, struct cfdata *match, void *aux)
+bt3c_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -835,7 +836,7 @@ bt3c_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-bt3c_attach(struct device *parent, struct device *self, void *aux)
+bt3c_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct bt3c_softc *sc = (struct bt3c_softc *)self;
 	struct pcmcia_attach_args *pa = aux;
@@ -883,7 +884,8 @@ bt3c_attach(struct device *parent, struct device *self, void *aux)
 	hci_attach(&sc->sc_unit);
 
 	/* establish a power change hook */
-	sc->sc_powerhook = powerhook_establish(bt3c_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    bt3c_power, sc);
 	return;
 
 iomap_failed:
@@ -895,7 +897,7 @@ no_config_entry:
 }
 
 static int
-bt3c_detach(struct device *self, int flags)
+bt3c_detach(struct device *self, int flags __unused)
 {
 	struct bt3c_softc *sc = (struct bt3c_softc *)self;
 	int err = 0;
@@ -919,7 +921,7 @@ bt3c_detach(struct device *self, int flags)
 }
 
 static int
-bt3c_activate(struct device *self, enum devact act)
+bt3c_activate(struct device *self __unused, enum devact act)
 {
 	// struct bt3c_softc *sc = (struct bt3c_softc *)self;
 	int err = 0;

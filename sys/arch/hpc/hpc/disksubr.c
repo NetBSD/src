@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.12 2006/03/05 02:14:41 uwe Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.12.16.1 2006/10/22 06:04:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.12 2006/03/05 02:14:41 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.12.16.1 2006/10/22 06:04:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,7 +314,7 @@ done:
  */
 int
 setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
-    struct cpu_disklabel *osdep)
+	     struct cpu_disklabel *osdep __unused)
 {
 	int i;
 	struct partition *opp, *npp;

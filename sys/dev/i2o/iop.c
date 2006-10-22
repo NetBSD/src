@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.57 2006/08/30 17:07:33 christos Exp $	*/
+/*	$NetBSD: iop.c,v 1.57.4.1 2006/10/22 06:05:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.57 2006/08/30 17:07:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.57.4.1 2006/10/22 06:05:43 yamt Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -753,8 +753,9 @@ iop_reconfigure(struct iop_softc *sc, u_int chgind)
 	 */
 	iop_configure_devices(sc, IC_CONFIGURE | IC_PRIORITY,
 	    IC_CONFIGURE | IC_PRIORITY);
-	if ((rv = iop_lct_get(sc)) != 0)
+	if ((rv = iop_lct_get(sc)) != 0) {
 		DPRINTF(("iop_reconfigure: unable to re-read LCT\n"));
+	}
 	iop_configure_devices(sc, IC_CONFIGURE | IC_PRIORITY,
 	    IC_CONFIGURE);
 
@@ -903,7 +904,7 @@ iop_print(void *aux, const char *pnp)
  * Shut down all configured IOPs.
  */
 static void
-iop_shutdown(void *junk)
+iop_shutdown(void *junk __unused)
 {
 	struct iop_softc *sc;
 	int i;
@@ -1821,7 +1822,7 @@ iop_intr(void *arg)
  * Handle an event signalled by the executive.
  */
 static void
-iop_intr_event(struct device *dv, struct iop_msg *im, void *reply)
+iop_intr_event(struct device *dv, struct iop_msg *im __unused, void *reply)
 {
 	struct i2o_util_event_register_reply *rb;
 	u_int event;
@@ -2255,7 +2256,7 @@ iop_msg_poll(struct iop_softc *sc, struct iop_msg *im, int timo)
  * Sleep until the specified message is replied to.
  */
 static void
-iop_msg_wait(struct iop_softc *sc, struct iop_msg *im, int timo)
+iop_msg_wait(struct iop_softc *sc __unused, struct iop_msg *im, int timo)
 {
 	int s, rv;
 
@@ -2486,7 +2487,7 @@ int iop_util_eventreg(struct iop_softc *sc, struct iop_initiator *ii, int mask)
 }
 
 int
-iopopen(dev_t dev, int flag, int mode, struct lwp *l)
+iopopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
 {
 	struct iop_softc *sc;
 
@@ -2502,7 +2503,8 @@ iopopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-iopclose(dev_t dev, int flag, int mode, struct lwp *l)
+iopclose(dev_t dev, int flag __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	struct iop_softc *sc;
 
@@ -2513,7 +2515,7 @@ iopclose(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused, struct lwp *l)
 {
 	struct iop_softc *sc;
 	struct iovec *iov;

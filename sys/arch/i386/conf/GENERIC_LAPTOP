@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.205 2006/09/10 15:45:56 plunky Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.205.2.1 2006/10/22 06:04:43 yamt Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.205 $"
+#ident 		"GENERIC-$Revision: 1.205.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -31,7 +31,7 @@ options 	ENHANCED_SPEEDSTEP
 options 	POWERNOW_K7
 
 # AMD PowerNow! and Cool`n'Quiet technology
-options         POWERNOW_K8
+options 	POWERNOW_K8
 
 options 	MTRR		# memory-type range register syscall support
 #options 	PERFCTRS	# performance-monitoring counters support
@@ -270,13 +270,13 @@ acpi0 		at mainbus0
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 
 # ACPI devices
-#apm*		at acpi?		# ACPI apm emulation
-#acpiacad* 	at acpi?		# ACPI AC Adapter
-#acpibat* 	at acpi?		# ACPI Battery
-#acpibut* 	at acpi?		# ACPI Button
-#acpiec* 	at acpi?		# ACPI Embedded Controller
-#acpilid* 	at acpi?		# ACPI Lid Switch
-#acpitz* 	at acpi?		# ACPI Thermal Zone
+apm*		at acpi?		# ACPI apm emulation
+acpiacad* 	at acpi?		# ACPI AC Adapter
+acpibat* 	at acpi?		# ACPI Battery
+acpibut* 	at acpi?		# ACPI Button
+acpiec* 	at acpi?		# ACPI Embedded Controller
+acpilid* 	at acpi?		# ACPI Lid Switch
+acpitz* 	at acpi?		# ACPI Thermal Zone
 
 # Mainboard devices
 #attimer*	at acpi?		# AT Timer
@@ -547,7 +547,7 @@ wdc*	at isapnp?
 wdc*	at pcmcia? function ?
 
 # CardBus IDE controllers
-njata*  at cardbus? function ? flags 0		# Workbit NinjaATA-32
+njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
 
 # ISA ST506, ESDI, and IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
@@ -647,6 +647,7 @@ dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
 igphy*	at mii? phy ?			# Intel IGP01E1000
+ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy* at mii? phy ?			# Level One LXT-970 PHYs

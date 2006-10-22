@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.100 2006/07/21 16:48:53 ad Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.100.6.1 2006/10/22 06:07:00 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.100 2006/07/21 16:48:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.100.6.1 2006/10/22 06:07:00 yamt Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -499,7 +499,8 @@ wsdisplay_delscreen(struct wsdisplay_softc *sc, int idx, int flags)
  * Autoconfiguration functions.
  */
 int
-wsdisplay_emul_match(struct device *parent, struct cfdata *match, void *aux)
+wsdisplay_emul_match(struct device *parent __unused, struct cfdata *match,
+    void *aux)
 {
 	struct wsemuldisplaydev_attach_args *ap = aux;
 
@@ -521,7 +522,8 @@ wsdisplay_emul_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-wsdisplay_emul_attach(struct device *parent, struct device *self, void *aux)
+wsdisplay_emul_attach(struct device *parent __unused, struct device *self,
+    void *aux)
 {
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)self;
 	struct wsemuldisplaydev_attach_args *ap = aux;
@@ -547,7 +549,7 @@ wsdisplay_emul_attach(struct device *parent, struct device *self, void *aux)
 
 /* Print function (for parent devices). */
 int
-wsemuldisplaydevprint(void *aux, const char *pnp)
+wsemuldisplaydevprint(void *aux __unused, const char *pnp)
 {
 #if 0 /* -Wunused */
 	struct wsemuldisplaydev_attach_args *ap = aux;
@@ -563,7 +565,8 @@ wsemuldisplaydevprint(void *aux, const char *pnp)
 }
 
 int
-wsdisplay_noemul_match(struct device *parent, struct cfdata *match, void *aux)
+wsdisplay_noemul_match(struct device *parent __unused,
+    struct cfdata *match __unused, void *aux __unused)
 {
 #if 0 /* -Wunused */
 	struct wsdisplaydev_attach_args *ap = aux;
@@ -574,7 +577,8 @@ wsdisplay_noemul_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-wsdisplay_noemul_attach(struct device *parent, struct device *self, void *aux)
+wsdisplay_noemul_attach(struct device *parent __unused, struct device *self,
+    void *aux)
 {
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)self;
 	struct wsdisplaydev_attach_args *ap = aux;
@@ -586,7 +590,7 @@ wsdisplay_noemul_attach(struct device *parent, struct device *self, void *aux)
 
 /* Print function (for parent devices). */
 int
-wsdisplaydevprint(void *aux, const char *pnp)
+wsdisplaydevprint(void *aux __unused, const char *pnp)
 {
 #if 0 /* -Wunused */
 	struct wsdisplaydev_attach_args *ap = aux;
@@ -717,7 +721,7 @@ wsdisplay_cnattach(const struct wsscreen_descr *type, void *cookie,
  * Tty and cdevsw functions.
  */
 int
-wsdisplayopen(dev_t dev, int flag, int mode, struct lwp *l)
+wsdisplayopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l)
 {
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
@@ -747,6 +751,11 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct lwp *l)
 		tp->t_param = wsdisplayparam;
 		tp->t_dev = dev;
 		newopen = (tp->t_state & TS_ISOPEN) == 0;
+
+		if (kauth_authorize_device_tty(l->l_cred,
+			KAUTH_DEVICE_TTY_OPEN, tp))
+			return (EBUSY);
+
 		if (newopen) {
 			ttychars(tp);
 			tp->t_iflag = TTYDEF_IFLAG;
@@ -756,10 +765,7 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct lwp *l)
 			tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 			wsdisplayparam(tp, &tp->t_termios);
 			ttsetwater(tp);
-		} else if ((tp->t_state & TS_XCLUDE) != 0 &&
-		    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag) != 0)
-			return EBUSY;
+		}
 		tp->t_state |= TS_CARR_ON;
 
 		error = ((*tp->t_linesw->l_open)(dev, tp));
@@ -781,7 +787,7 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-wsdisplayclose(dev_t dev, int flag, int mode, struct lwp *l)
+wsdisplayclose(dev_t dev, int flag, int mode __unused, struct lwp *l)
 {
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
@@ -1170,7 +1176,7 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 
 int
 wsdisplay_stat_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
-	int flag, struct lwp *l)
+	int flag __unused, struct lwp *l __unused)
 {
 	switch (cmd) {
 	case WSDISPLAYIO_GETACTIVESCREEN:
@@ -1424,7 +1430,7 @@ wsdisplaystart(struct tty *tp)
 }
 
 void
-wsdisplaystop(struct tty *tp, int flag)
+wsdisplaystop(struct tty *tp, int flag __unused)
 {
 	int s;
 
@@ -1825,7 +1831,7 @@ wsscreen_lookup_sync(struct wsscreen *scr,
  * Interface to virtual screen stuff
  */
 int
-wsdisplay_maxscreenidx(struct wsdisplay_softc *sc)
+wsdisplay_maxscreenidx(struct wsdisplay_softc *sc __unused)
 {
 	return (WSDISPLAY_MAXSCREEN - 1);
 }
@@ -1922,7 +1928,7 @@ wsdisplay_set_console_kbd(struct wsevsrc *src)
  * Console interface.
  */
 void
-wsdisplay_cnputc(dev_t dev, int i)
+wsdisplay_cnputc(dev_t dev __unused, int i)
 {
 	struct wsscreen_internal *dc;
 	u_char c = i;
@@ -1940,14 +1946,14 @@ wsdisplay_cnputc(dev_t dev, int i)
 }
 
 static int
-wsdisplay_getc_dummy(dev_t dev)
+wsdisplay_getc_dummy(dev_t dev __unused)
 {
 	/* panic? */
 	return (0);
 }
 
 static void
-wsdisplay_pollc(dev_t dev, int on)
+wsdisplay_pollc(dev_t dev __unused, int on)
 {
 
 	wsdisplay_cons_pollmode = on;
@@ -2003,7 +2009,7 @@ wsdisplay_switchtoconsole(void)
  * Switch the console at shutdown.
  */
 static void
-wsdisplay_shutdownhook(void *arg)
+wsdisplay_shutdownhook(void *arg __unused)
 {
 
 	wsdisplay_switchtoconsole();

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.33 2006/03/28 17:38:29 thorpej Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.33.10.1 2006/10/22 06:05:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.33 2006/03/28 17:38:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.33.10.1 2006/10/22 06:05:23 yamt Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -694,9 +694,7 @@ darwin_wscons_to_iohidsystem(wsevt, hidevt)
 }
 
 static void
-mach_notify_iohidsystem(l, mr)
-	struct lwp *l;
-	struct mach_right *mr;
+mach_notify_iohidsystem(struct lwp *l __unused, struct mach_right *mr)
 {
 	struct mach_port *mp;
 	mach_notify_iohidsystem_request_t *req;

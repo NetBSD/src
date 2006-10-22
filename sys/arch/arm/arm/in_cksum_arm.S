@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum_arm.S,v 1.4 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: in_cksum_arm.S,v 1.4.22.1 2006/10/22 06:04:34 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -42,6 +42,8 @@
 #include "opt_inet.h"
 
 #include <machine/asm.h>
+RCSID("$NetBSD: in_cksum_arm.S,v 1.4.22.1 2006/10/22 06:04:34 yamt Exp $")
+	
 #include "assym.h"
 
 
@@ -243,6 +245,9 @@ ENTRY(in4_cksum)
  */
 /* LINTSTUB: Ignore */
 ASENTRY_NP(L_cksumdata)
+#ifdef __PROG26
+	str	lr, [sp, #-4]!		/* for SVC26 mode */
+#endif
 #ifdef __XSCALE__
 	pld	[r0]			/* Pre-fetch the start of the buffer */
 #endif
@@ -273,7 +278,11 @@ ASENTRY_NP(L_cksumdata)
 	orrne	r2, r2, r6, lsl #24
 #endif
 	subs	r1, r1, r7		/* Update length */
+#ifdef __PROG26
+	ldreq	pc, [sp], #4		/* All done? */
+#else
 	moveq	pc, lr			/* All done? */
+#endif
 
 	/* Buffer is now word aligned */
 .Lcksumdata_wordaligned:
@@ -365,7 +374,11 @@ ASENTRY_NP(L_cksumdata)
 #endif
 
 	adds	r1, r1, #0x40
+#ifdef __PROG26
+	ldreq	pc, [sp], #4
+#else
 	moveq	pc, lr
+#endif
 	cmp	r1, #0x20
 
 #ifdef __XSCALE__
@@ -398,7 +411,11 @@ ASENTRY_NP(L_cksumdata)
 #endif
 	adc	r2, r2, #0x00
 	subs	r1, r1, #0x20
+#ifdef __PROG26
+	ldreq	pc, [sp], #4
+#else
 	moveq	pc, lr
+#endif
 
 .Lcksumdata_less_than_32:
 	/* There are less than 32 bytes left */
@@ -441,7 +458,11 @@ ASENTRY_NP(L_cksumdata)
 	/* Deal with < 4 bytes remaining */
 .Lcksumdata_lessthan4:
 	adds	r1, r1, #0x04
+#ifdef __PROG26
+	ldreq	pc, [sp], #4
+#else
 	moveq	pc, lr
+#endif
 
 	/* Deal with 1 to 3 remaining bytes, possibly misaligned */
 .Lcksumdata_endgame:
@@ -466,4 +487,8 @@ ASENTRY_NP(L_cksumdata)
 #endif
 	adds	r2, r2, r3
 	adc	r2, r2, #0x00
+#ifdef __PROG26
+	ldr	pc, [sp], #4
+#else
 	mov	pc, lr
+#endif

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.70 2006/08/26 20:26:45 christos Exp $
+# $NetBSD: GENERIC,v 1.70.4.1 2006/10/22 06:04:42 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -217,6 +217,7 @@ wskbd*		at btnmgr0 mux 1
 
 cpu*		at mainbus?
 shb*		at mainbus?
+rtc*		at shb?
 adc*		at shb?			# analog->digital converter
 pfckbd*		at mainbus?
 

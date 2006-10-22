@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.97 2006/02/20 16:50:37 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.97.16.1 2006/10/22 06:05:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.97 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.97.16.1 2006/10/22 06:05:44 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -450,7 +450,8 @@ fxp_attach(struct fxp_softc *sc)
 	/*
   	 * Add suspend hook, for similar reasons..
 	 */
-	sc->sc_powerhook = powerhook_establish(fxp_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    fxp_power, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
@@ -2002,7 +2003,7 @@ fxp_mii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 
 int
-fxp_80c24_mediachange(struct ifnet *ifp)
+fxp_80c24_mediachange(struct ifnet *ifp __unused)
 {
 
 	/* Nothing to do here. */
@@ -2088,7 +2089,7 @@ fxp_mdi_read(struct device *self, int phy, int reg)
 }
 
 void
-fxp_statchg(struct device *self)
+fxp_statchg(struct device *self __unused)
 {
 
 	/* Nothing to do. */

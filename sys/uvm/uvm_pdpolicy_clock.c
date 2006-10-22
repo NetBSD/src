@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.2 2006/09/15 15:51:13 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.2.2.1 2006/10/22 06:07:54 yamt Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,13 +74,12 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.2 2006/09/15 15:51:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.2.2.1 2006/10/22 06:07:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/vnode.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
@@ -341,7 +340,7 @@ uvmpdpol_pageenqueue(struct vm_page *pg)
 }
 
 void
-uvmpdpol_anfree(struct vm_anon *an)
+uvmpdpol_anfree(struct vm_anon *an __unused)
 {
 }
 
