@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.473 2006/10/22 21:26:54 tls Exp $
+#	$NetBSD: 3RDPARTY,v 1.474 2006/10/22 21:34:42 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -297,7 +297,7 @@ Responsible:	thorpej, mrg
 License:	GPLv2, LGPLv2
 Notes:
 When updating GDB, it is imperative to test that:
-	- Debugging of kernel cores ("target kcore") works correctly
+	- Debugging of kernel cores ("target kvm") works correctly
 	- Support for our kernel's remote serial debugging protocol
 	  ("options KGDB") works correctly.
 
