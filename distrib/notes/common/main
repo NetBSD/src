@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.316 2006/10/17 20:26:50 dogcow Exp $
+.\"	$NetBSD: main,v 1.317 2006/10/22 21:08:27 hauke Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1236,6 +1236,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Bernd Ernesti Ta Mt veego@NetBSD.org
 .It Ta Erik Fair Ta Mt fair@NetBSD.org
 .It Ta Gavan Fantom Ta Mt gavan@NetBSD.org
+.It Ta Hauke Fath Ta Mt hauke@NetBSD.org
 .It Ta Hubert Feyrer Ta Mt hubertf@NetBSD.org
 .It Ta Jason R. Fink Ta Mt jrf@NetBSD.org
 .It Ta Matt J. Fleming Ta Mt mjf@NetBSD.org
