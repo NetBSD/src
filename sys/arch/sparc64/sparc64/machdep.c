@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.191 2006/10/05 14:48:32 chs Exp $ */
+/*	$NetBSD: machdep.c,v 1.192 2006/10/22 13:59:14 pooka Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.191 2006/10/05 14:48:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192 2006/10/22 13:59:14 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1882,7 +1882,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
-	__greg_t *gr = mcp->__gregs;
+	const __greg_t *gr = mcp->__gregs;
 	struct trapframe64 *tf = l->l_md.md_tf;
 
 	/* First ensure consistent stack state (see sendsig). */
