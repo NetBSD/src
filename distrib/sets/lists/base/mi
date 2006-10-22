@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.662 2006/10/19 14:45:02 tnozaki Exp $
+# $NetBSD: mi,v 1.663 2006/10/22 22:57:36 pooka Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -761,6 +761,7 @@
 ./usr/include/dev/wscons			base-c-usr
 ./usr/include/filecorefs			base-c-usr
 ./usr/include/fs				base-c-usr
+./usr/include/fs/puffs				base-c-usr
 ./usr/include/fs/smbfs				base-c-usr
 ./usr/include/fs/sysvbfs			base-c-usr
 ./usr/include/fs/udf				base-c-usr

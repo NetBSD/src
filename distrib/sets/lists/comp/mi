@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.952 2006/10/22 11:20:01 yamt Exp $
+#	$NetBSD: mi,v 1.953 2006/10/22 22:57:36 pooka Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -534,6 +534,7 @@
 ./usr/include/fnmatch.h				comp-c-include
 ./usr/include/form.h				comp-c-include
 ./usr/include/frame.h				comp-obsolete		obsolete
+./usr/include/fs/puffs/puffs_msgif.h		comp-c-include
 ./usr/include/fs/sysvbfs/bfs.h			comp-c-include
 ./usr/include/fs/udf/ecma167-udf.h		comp-c-include
 ./usr/include/fs/udf/udf_mount.h		comp-c-include
@@ -1620,6 +1621,8 @@
 ./usr/include/pthread_dbg.h			comp-c-include
 ./usr/include/pthread_queue.h			comp-c-include
 ./usr/include/pthread_types.h			comp-c-include
+./usr/include/puffs.h				comp-c-include
+./usr/include/puffsdump.h			comp-c-include
 ./usr/include/pwd.h				comp-c-include
 ./usr/include/radlib.h				comp-c-include
 ./usr/include/radlib_vs.h			comp-c-include
@@ -2125,6 +2128,8 @@
 ./usr/lib/libpthread_dbg.a			comp-c-lib
 ./usr/lib/libpthread_dbg_p.a			comp-c-proflib		profile
 ./usr/lib/libpthread_p.a			comp-c-proflib		profile
+./usr/lib/libpuffs.a				comp-c-lib
+./usr/lib/libpuffs_p.a				comp-c-proflib		profile
 ./usr/lib/libradius.a				comp-c-lib
 ./usr/lib/libradius_p.a				comp-c-proflib		profile
 ./usr/lib/libresolv.a				comp-c-lib
