@@ -39,7 +39,7 @@
 
 	.file	"crtsavres.asm"
 	.section ".text"
-	#include "rs6000/ppc-asm.h"
+	#include "ppc-asm.h"
 
 /* On PowerPC64 Linux, these functions are provided by the linker.  */
 #ifndef __powerpc64__

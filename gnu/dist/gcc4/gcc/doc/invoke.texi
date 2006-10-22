@@ -923,7 +923,6 @@ objective-c  objective-c-header  objective-c-cpp-output
 objective-c++ objective-c++-header objective-c++-cpp-output
 assembler  assembler-with-cpp
 ada
-f77  f77-cpp-input
 f95  f95-cpp-input
 java
 treelang
@@ -2630,7 +2629,7 @@ To suppress this warning use the @samp{unused} attribute
 @item -Wunused-variable
 @opindex Wunused-variable
 Warn whenever a local variable or non-constant static variable is unused
-aside from its declaration
+aside from its declaration.
 This warning is enabled by @option{-Wall}.
 
 To suppress this warning use the @samp{unused} attribute
@@ -4553,14 +4552,14 @@ The @option{-finline-limit=@var{n}} option sets some of these parameters
 as follows:
 
 @table @gcctabopt
- @item max-inline-insns-single
-  is set to @var{n}/2.
- @item max-inline-insns-auto
-  is set to @var{n}/2.
- @item min-inline-insns
-  is set to 130 or @var{n}/4, whichever is smaller.
- @item max-inline-insns-rtl
-  is set to @var{n}.
+@item max-inline-insns-single
+ is set to @var{n}/2.
+@item max-inline-insns-auto
+ is set to @var{n}/2.
+@item min-inline-insns
+ is set to 130 or @var{n}/4, whichever is smaller.
+@item max-inline-insns-rtl
+ is set to @var{n}.
 @end table
 
 See below for a documentation of the individual
@@ -5850,7 +5849,7 @@ Specifies maximum number of instructions out-of-line copy of self recursive inli
 function can grow into by performing recursive inlining.
 
 For functions declared inline @option{--param max-inline-insns-recursive} is
-taken into acount.  For function not declared inline, recursive inlining
+taken into account.  For function not declared inline, recursive inlining
 happens only when @option{-finline-functions} (included in @option{-O3}) is
 enabled and @option{--param max-inline-insns-recursive-auto} is used.  The
 default value is 450.
@@ -5860,7 +5859,7 @@ default value is 450.
 Specifies maximum recursion depth used by the recursive inlining.
 
 For functions declared inline @option{--param max-inline-recursive-depth} is
-taken into acount.  For function not declared inline, recursive inlining
+taken into account.  For function not declared inline, recursive inlining
 happens only when @option{-finline-functions} (included in @option{-O3}) is
 enabled and @option{--param max-inline-recursive-depth-auto} is used.  The
 default value is 450.
@@ -6063,7 +6062,7 @@ compile time increase with probably slightly better performance.  The default
 value is 100.
 
 @item max-cselib-memory-location
-The maximum number of memory locations cselib should take into acount.
+The maximum number of memory locations cselib should take into account.
 Increasing values mean more aggressive optimization, making the compile time
 increase with probably slightly better performance.  The default value is 500.
 
@@ -9183,6 +9182,8 @@ boundary.  Aligning @code{double} variables on a two word boundary will
 produce code that runs somewhat faster on a @samp{Pentium} at the
 expense of more memory.
 
+On x86-64, @option{-malign-double} is enabled by default.
+
 @strong{Warning:} if you use the @option{-malign-double} switch,
 structures containing the above types will be aligned differently than
 the published application binary interface specifications for the 386
@@ -9284,15 +9285,13 @@ the system libraries and startup modules.
 @opindex mpreferred-stack-boundary
 Attempt to keep the stack boundary aligned to a 2 raised to @var{num}
 byte boundary.  If @option{-mpreferred-stack-boundary} is not specified,
-the default is 4 (16 bytes or 128 bits), except when optimizing for code
-size (@option{-Os}), in which case the default is the minimum correct
-alignment (4 bytes for x86, and 8 bytes for x86-64).
+the default is 4 (16 bytes or 128 bits).
 
 On Pentium and PentiumPro, @code{double} and @code{long double} values
 should be aligned to an 8 byte boundary (see @option{-malign-double}) or
 suffer significant run time performance penalties.  On Pentium III, the
-Streaming SIMD Extension (SSE) data type @code{__m128} suffers similar
-penalties if it is not 16 byte aligned.
+Streaming SIMD Extension (SSE) data type @code{__m128} may not work
+properly if it is not 16 byte aligned.
 
 To ensure proper alignment of this values on the stack, the stack boundary
 must be as aligned as that required by any value stored on the stack.
@@ -10953,7 +10952,7 @@ Supported values for @var{cpu_type} are @samp{401}, @samp{403},
 @samp{7450}, @samp{750}, @samp{801}, @samp{821}, @samp{823},
 @samp{860}, @samp{970}, @samp{8540}, @samp{ec603e}, @samp{G3},
 @samp{G4}, @samp{G5}, @samp{power}, @samp{power2}, @samp{power3},
-@samp{power4}, @samp{power5}, @samp{power5+},
+@samp{power4}, @samp{power5}, @samp{power5+}, @samp{power6},
 @samp{common}, @samp{powerpc}, @samp{powerpc64},
 @samp{rios}, @samp{rios1}, @samp{rios2}, @samp{rsc}, and @samp{rs64}.
 
@@ -12722,7 +12721,7 @@ it.
 @opindex fbounds-check
 For front-ends that support it, generate additional code to check that
 indices used to access arrays are within the declared range.  This is
-currently only supported by the Java and Fortran 77 front-ends, where
+currently only supported by the Java and Fortran front-ends, where
 this option defaults to true and false respectively.
 
 @item -ftrapv
