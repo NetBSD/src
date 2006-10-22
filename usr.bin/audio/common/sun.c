@@ -1,4 +1,4 @@
-/*	$NetBSD: sun.c,v 1.4 2006/05/11 01:19:10 mrg Exp $	*/
+/*	$NetBSD: sun.c,v 1.5 2006/10/22 16:11:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Matthew R. Green
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: sun.c,v 1.4 2006/05/11 01:19:10 mrg Exp $");
+__RCSID("$NetBSD: sun.c,v 1.5 2006/10/22 16:11:34 christos Exp $");
 #endif
 
 
@@ -78,7 +78,7 @@ struct {
 	{ AUDIO_FILE_ENCODING_ADPCM_G723_5,	AUDIO_ENCODING_ULAW,	5 },
 #endif
 	{ AUDIO_FILE_ENCODING_ALAW_8,		AUDIO_ENCODING_ALAW,	8 },
-	{ -1, -1 }
+	{ -1, -1, -1 }
 };
 
 int
