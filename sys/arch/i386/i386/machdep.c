@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.583 2006/10/21 08:11:49 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.584 2006/10/22 13:29:13 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.583 2006/10/21 08:11:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.584 2006/10/22 13:29:13 pooka Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -2287,7 +2287,7 @@ int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
-	__greg_t *gr = mcp->__gregs;
+	const __greg_t *gr = mcp->__gregs;
 
 	/* Restore register context, if any. */
 	if ((flags & _UC_CPU) != 0) {
