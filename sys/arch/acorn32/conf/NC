@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.44 2006/08/26 20:26:43 christos Exp $
+#	$NetBSD: NC,v 1.45 2006/10/22 14:15:51 bjh21 Exp $
 #
 #	NC - with wscons
 #
@@ -222,8 +222,8 @@ audio*		at vidcaudio0
 # Podule bus device
 podulebus0	at root
 
-#asc*	at podulebus?			# Acorn SCSI card
-#scsibus* at asc?
+#sec*	at podulebus?			# Acorn SCSI card
+#scsibus* at sec?
 
 #cosc*	at podulebus?			# MCS Connect32 SCSI II card
 #scsibus* at cosc?
@@ -259,7 +259,7 @@ podulebus0	at root
 #amps*	at podulebus?			# Atomwide Multi-Port Serial card
 #com*	at amps?
 
-#ie*	at podulebus?			# Ether1 podules
+#ei*	at podulebus?			# Ether1 podules
 #ea*	at podulebus?			# Ether3 podules
 #eb0	at podulebus?			# EtherB network slot cards
 ne*	at podulebus?			# NE2000 clone cards
