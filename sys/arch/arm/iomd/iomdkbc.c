@@ -1,4 +1,4 @@
-/* $NetBSD: iomdkbc.c,v 1.1 2004/03/13 17:52:02 bjh21 Exp $ */
+/* $NetBSD: iomdkbc.c,v 1.1.24.1 2006/10/22 16:36:12 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomdkbc.c,v 1.1 2004/03/13 17:52:02 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomdkbc.c,v 1.1.24.1 2006/10/22 16:36:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -252,9 +252,9 @@ iomdkbc_set_poll(void *cookie, pckbport_slot_t slot, int on)
 	struct iomdkbc_internal *t = cookie;
 
 	if (on)
-		enable_irq(t->t_rxirq[slot]);
-	else
 		disable_irq(t->t_rxirq[slot]);
+	else
+		enable_irq(t->t_rxirq[slot]);
 }
 
 static int
