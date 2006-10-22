@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.27 2006/09/29 14:42:59 christos Exp $	*/
+/*	$NetBSD: tftp.c,v 1.28 2006/10/22 16:45:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.27 2006/09/29 14:42:59 christos Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.28 2006/10/22 16:45:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -231,7 +231,7 @@ sendfile(fd, name, mode)
 	volatile unsigned long amount;
 	struct sockaddr_storage from;
 	struct stat sbuf;
-	off_t filesize=0;
+	volatile off_t filesize = 0;
 	socklen_t fromlen;
 	FILE *file;
 	struct sockaddr_storage peer;
@@ -377,13 +377,14 @@ recvfile(fd, name, mode)
 {
 	struct tftphdr *ap;
 	struct tftphdr *dp;
-	int j, n, oack=0;
+	int j, n;
+	volatile int oack = 0;
 	volatile unsigned int block;
 	volatile int size, firsttrip;
 	volatile unsigned long amount;
 	struct sockaddr_storage from;
 	socklen_t fromlen;
-	size_t readlen;
+	volatile size_t readlen;
 	FILE *file;
 	volatile int convert;		/* true if converting crlf -> lf */
 	struct sockaddr_storage peer;
