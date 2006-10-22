@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.104 2006/09/08 20:58:58 elad Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.104.2.1 2006/10/22 06:07:28 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.104 2006/09/08 20:58:58 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.104.2.1 2006/10/22 06:07:28 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -185,7 +185,9 @@ in_pcballoc(struct socket *so, void *v)
 	int error;
 #endif
 
+	s = splnet();
 	inp = pool_get(&inpcb_pool, PR_NOWAIT);
+	splx(s);
 	if (inp == NULL)
 		return (ENOBUFS);
 	bzero((caddr_t)inp, sizeof(*inp));
@@ -196,7 +198,9 @@ in_pcballoc(struct socket *so, void *v)
 #if defined(IPSEC) || defined(FAST_IPSEC)
 	error = ipsec_init_pcbpolicy(so, &inp->inp_sp);
 	if (error != 0) {
+		s = splnet();
 		pool_put(&inpcb_pool, inp);
+		splx(s);
 		return error;
 	}
 #endif
@@ -269,7 +273,7 @@ in_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 		if (ntohs(lport) < IPPORT_RESERVED &&
 		    (l == 0 || kauth_authorize_network(l->l_cred,
 		    KAUTH_NETWORK_BIND,
-		    (void *)KAUTH_REQ_NETWORK_BIND_PRIVPORT, so, sin,
+		    KAUTH_REQ_NETWORK_BIND_PRIVPORT, so, sin,
 		    NULL)))
 			return (EACCES);
 #endif
@@ -313,7 +317,7 @@ noname:
 #ifndef IPNOPRIVPORTS
 			if (l == 0 || kauth_authorize_network(l->l_cred,
 			    KAUTH_NETWORK_BIND,
-			    (void *)KAUTH_REQ_NETWORK_BIND_PRIVPORT, so,
+			    KAUTH_REQ_NETWORK_BIND_PRIVPORT, so,
 			    sin, NULL))
 				return (EACCES);
 #endif
@@ -499,8 +503,8 @@ in_pcbdetach(void *v)
 	LIST_REMOVE(&inp->inp_head, inph_lhash);
 	CIRCLEQ_REMOVE(&inp->inp_table->inpt_queue, &inp->inp_head,
 	    inph_queue);
-	splx(s);
 	pool_put(&inpcb_pool, inp);
+	splx(s);
 }
 
 void
@@ -695,7 +699,7 @@ in_losing(struct inpcb *inp)
  * and allocate a (hopefully) better one.
  */
 void
-in_rtchange(struct inpcb *inp, int errno)
+in_rtchange(struct inpcb *inp, int errno __unused)
 {
 
 	if (inp->inp_af != AF_INET)

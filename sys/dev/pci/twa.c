@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.12 2006/09/03 07:02:54 christos Exp $ */
+/*	$NetBSD: twa.c,v 1.12.6.1 2006/10/22 06:06:19 yamt Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.12 2006/09/03 07:02:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.12.6.1 2006/10/22 06:06:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,11 @@ __KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.12 2006/09/03 07:02:54 christos Exp $");
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/disk.h>
+#include <sys/sysctl.h>
 #include <sys/syslog.h>
+#if 1
+#include <sys/ktrace.h>
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -151,6 +155,9 @@ extern uint8_t	twa_fw_img[];
 
 CFATTACH_DECL(twa, sizeof(struct twa_softc),
     twa_match, twa_attach, NULL, NULL);
+
+/* FreeBSD driver revision for sysctl expected by the 3ware cli */
+const char twaver[] = "1.50.01.002";
 
 /* AEN messages. */
 static const struct twa_message	twa_aen_table[] = {
@@ -432,7 +439,8 @@ twa_request_wait_handler(struct twa_request *tr)
 }
 
 static int
-twa_match(struct device *parent, struct cfdata *cfdata, void *aux)
+twa_match(struct device *parent __unused, struct cfdata *cfdata __unused,
+    void *aux)
 {
 	int i;
 	struct pci_attach_args *pa = aux;
@@ -1519,7 +1527,7 @@ twa_setup(struct twa_softc *sc)
 void *twa_sdh;
 
 static void
-twa_attach(struct device *parent, struct device *self, void *aux)
+twa_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct twa_softc *sc;
@@ -1527,6 +1535,9 @@ twa_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t csr;
 	pci_intr_handle_t ih;
 	const char *intrstr;
+	struct ctlname ctlnames[] = CTL_NAMES;
+	const struct sysctlnode *node; 
+	int i;
 
 	sc = (struct twa_softc *)self;
 
@@ -1590,11 +1601,42 @@ twa_attach(struct device *parent, struct device *self, void *aux)
 	if (twa_sdh == NULL)
 		twa_sdh = shutdownhook_establish(twa_shutdown, NULL);
 
+	/* sysctl set-up for 3ware cli */
+	if (sysctl_createv(NULL, 0, NULL, NULL,
+				CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
+				NULL, NULL, 0, NULL, 0,
+				CTL_HW, CTL_EOL) != 0) {
+		printf("%s: could not create %s sysctl node\n",
+			sc->twa_dv.dv_xname, ctlnames[CTL_HW].ctl_name);
+		return;
+	}
+	if (sysctl_createv(NULL, 0, NULL, &node,
+        			0, CTLTYPE_NODE, sc->twa_dv.dv_xname,
+        			SYSCTL_DESCR("twa driver information"),
+        			NULL, 0, NULL, 0,
+				CTL_HW, CTL_CREATE, CTL_EOL) != 0) {
+                printf("%s: could not create %s.%s sysctl node\n",
+			sc->twa_dv.dv_xname, ctlnames[CTL_HW].ctl_name,
+			sc->twa_dv.dv_xname);
+		return;
+	}
+	if ((i = sysctl_createv(NULL, 0, NULL, NULL,
+        			0, CTLTYPE_STRING, "driver_version",
+        			SYSCTL_DESCR("twa driver version"),
+        			NULL, 0, &twaver, 0,
+				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
+				!= 0) {
+                printf("%s: could not create %s.%s.driver_version sysctl\n",
+			sc->twa_dv.dv_xname, ctlnames[CTL_HW].ctl_name,
+			sc->twa_dv.dv_xname);
+		return;
+	}
+
 	return;
 }
 
 static void
-twa_shutdown(void *arg)
+twa_shutdown(void *arg __unused)
 {
 	extern struct cfdriver twa_cd;
 	struct twa_softc *sc;
@@ -1896,7 +1938,7 @@ twa_flash_firmware(struct twa_softc *sc)
 
 		remaining_img_size -= this_chunk_size;
 
-		memset(tr->tr_data, fw_img_chunk_size, 0);
+		memset(tr->tr_data, 0, fw_img_chunk_size);
 
 		memcpy(tr->tr_data, twa_fw_img + (i * fw_img_chunk_size),
 			this_chunk_size);
@@ -2073,14 +2115,12 @@ bail:
  * Accept an open operation on the control device.
  */
 static int
-twaopen(dev_t dev, int flag, int mode, struct lwp *l)
+twaopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
 {
 	struct twa_softc *twa;
 
 	if ((twa = device_lookup(&twa_cd, minor(dev))) == NULL)
 		return (ENXIO);
-	if ((twa->twa_sc_flags & TWA_STATE_OPEN) != 0)
-		return (EBUSY);
 
 	twa->twa_sc_flags |= TWA_STATE_OPEN;
 
@@ -2091,7 +2131,8 @@ twaopen(dev_t dev, int flag, int mode, struct lwp *l)
  * Accept the last close on the control device.
  */
 static int
-twaclose(dev_t dev, int flag, int mode, struct lwp *l)
+twaclose(dev_t dev, int flag __unused, int mode __unused,
+    struct lwp *l __unused)
 {
 	struct twa_softc *twa;
 
@@ -2114,7 +2155,8 @@ twaclose(dev_t dev, int flag, int mode, struct lwp *l)
  *			non-zero-- failure
  */
 static int
-twaioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+twaioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
+    struct lwp *l __unused)
 {
 	struct twa_softc *sc;
 	struct twa_ioctl_9k	*user_buf = (struct twa_ioctl_9k *)data;
@@ -2646,7 +2688,7 @@ static int
 twa_init_connection(struct twa_softc *sc, uint16_t message_credits,
     uint32_t set_features, uint16_t current_fw_srl,
     uint16_t current_fw_arch_id, uint16_t current_fw_branch,
-    uint16_t current_fw_build, uint16_t *fw_on_ctlr_srl,
+    uint16_t current_fw_build __unused, uint16_t *fw_on_ctlr_srl,
     uint16_t *fw_on_ctlr_arch_id, uint16_t *fw_on_ctlr_branch,
     uint16_t *fw_on_ctlr_build, uint32_t *init_connect_result)
 {

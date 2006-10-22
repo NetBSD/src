@@ -1,8 +1,8 @@
-/*	$NetBSD: altq_fifoq.h,v 1.6 2005/12/11 12:16:03 christos Exp $	*/
-/*	$KAME: altq_fifoq.h,v 1.6 2000/12/14 08:12:45 thorpej Exp $	*/
+/*	$NetBSD: altq_fifoq.h,v 1.6.22.1 2006/10/22 06:04:30 yamt Exp $	*/
+/*	$KAME: altq_fifoq.h,v 1.8 2002/11/29 04:36:23 kjc Exp $	*/
 
 /*
- * Copyright (C) 1997-2000
+ * Copyright (C) 1997-2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

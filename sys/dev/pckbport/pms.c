@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.12 2006/09/13 00:55:57 christos Exp $ */
+/* $NetBSD: pms.c,v 1.12.2.1 2006/10/22 06:06:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -28,7 +28,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.12 2006/09/13 00:55:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.12.2.1 2006/10/22 06:06:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,8 @@ pms_protocol(pckbport_tag_t tag, pckbport_slot_t slot)
 }
 
 int
-pmsprobe(struct device *parent, struct cfdata *match, void *aux)
+pmsprobe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pckbport_attach_args *pa = aux;
 	u_char cmd[1], resp[2];
@@ -168,7 +169,7 @@ pmsprobe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-pmsattach(struct device *parent, struct device *self, void *aux)
+pmsattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pms_softc *sc = device_private(self);
 	struct pckbport_attach_args *pa = aux;
@@ -228,7 +229,7 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 	kthread_create(pms_spawn_reset_thread, sc);
 
 #ifndef PMS_DISABLE_POWERHOOK
-	sc->sc_powerhook = powerhook_establish(pms_power, sc);
+	sc->sc_powerhook = powerhook_establish(self->dv_xname, pms_power, sc);
 	sc->sc_suspended = 0;
 #endif /* !PMS_DISABLE_POWERHOOK */
 }
@@ -371,7 +372,8 @@ pms_power(int why, void *v)
 #endif /* !PMS_DISABLE_POWERHOOK */
 
 int
-pms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+pms_ioctl(void *v, u_long cmd, caddr_t data, int flag __unused,
+    struct lwp *l __unused)
 {
 	struct pms_softc *sc = v;
 	u_char kbcmd[2];

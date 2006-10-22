@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.76 2006/06/17 23:34:27 christos Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.76.6.1 2006/10/22 06:06:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.76 2006/06/17 23:34:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.76.6.1 2006/10/22 06:06:17 yamt Exp $");
 
 #include "rnd.h"
 
@@ -1419,7 +1419,8 @@ vr_lookup(struct pci_attach_args *pa)
 }
 
 static int
-vr_probe(struct device *parent, struct cfdata *match, void *aux)
+vr_probe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -1446,7 +1447,7 @@ vr_shutdown(void *arg)
  * setup and ethernet/BPF attach.
  */
 static void
-vr_attach(struct device *parent, struct device *self, void *aux)
+vr_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct vr_softc *sc = (struct vr_softc *) self;
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
@@ -1454,7 +1455,7 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	struct vr_type *vrt;
 	u_int32_t reg;
 	struct ifnet *ifp;
-	u_char eaddr[ETHER_ADDR_LEN];
+	u_char eaddr[ETHER_ADDR_LEN], mac;
 	int i, rseg, error;
 
 #define	PCI_CONF_WRITE(r, v)	pci_conf_write(sc->vr_pc, sc->vr_tag, (r), (v))
@@ -1581,14 +1582,20 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	 *         (and the lack of anyone else noticing the problems this
 	 *         causes) I'm going to retain the old behaviour for the
 	 *         other parts.
+	 *         In some cases, the chip really does startup without having
+	 *         read the EEPROM (kern/34812). To handle this case, we force
+	 *         a reload if we see an all-zeroes MAC address.
 	 */
-	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_VIATECH_VT6105 &&
-	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_VIATECH_VT6102) {
+	for (mac = 0, i = 0; i < ETHER_ADDR_LEN; i++)
+		mac |= (eaddr[i] = CSR_READ_1(sc, VR_PAR0 + i));
+
+	if (mac == 0 || (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_VIATECH_VT6105 &&
+	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_VIATECH_VT6102)) {
 		VR_SETBIT(sc, VR_EECSR, VR_EECSR_LOAD);
 		DELAY(200);
+		for (i = 0; i < ETHER_ADDR_LEN; i++)
+			eaddr[i] = CSR_READ_1(sc, VR_PAR0 + i);
 	}
-	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		eaddr[i] = CSR_READ_1(sc, VR_PAR0 + i);
 
 	/*
 	 * A Rhine chip was detected. Inform the world.

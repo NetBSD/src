@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbstats.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbstats.c,v 1.1.22.1 2006/10/22 06:07:00 yamt Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -355,9 +355,9 @@ AcpiDbEnumerateObject (
 static ACPI_STATUS
 AcpiDbClassifyOneObject (
     ACPI_HANDLE             ObjHandle,
-    UINT32                  NestingLevel,
-    void                    *Context,
-    void                    **ReturnValue)
+    UINT32                  NestingLevel __unused,
+    void                    *Context __unused,
+    void                    **ReturnValue __unused)
 {
     ACPI_NAMESPACE_NODE     *Node;
     ACPI_OPERAND_OBJECT     *ObjDesc;

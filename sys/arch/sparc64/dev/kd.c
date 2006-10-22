@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.40 2006/07/26 08:09:21 martin Exp $	*/
+/*	$NetBSD: kd.c,v 1.40.6.1 2006/10/22 06:05:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.40 2006/07/26 08:09:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.40.6.1 2006/10/22 06:05:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -177,13 +177,8 @@ static	int firstopen = 1;
 	tp = kd->kd_tty;
 
 	/* It's simpler to do this up here. */
-	if (((tp->t_state & (TS_ISOPEN | TS_XCLUDE))
-	     ==             (TS_ISOPEN | TS_XCLUDE))
-	    && (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0) )
-	{
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
-	}
 
 	s = spltty();
 
@@ -460,12 +455,11 @@ static void kdcnpollc(dev_t, int);
 /* The keyboard driver uses cn_hw to access the real console driver */
 extern struct consdev consdev_prom;
 struct consdev consdev_kd = {
-	kdcnprobe,
-	kdcninit,
-	kdcngetc,
-	kdcnputc,
-	kdcnpollc,
-	NULL,
+	.cn_probe = kdcnprobe,
+	.cn_init = kdcninit,
+	.cn_getc = kdcngetc,
+	.cn_putc = kdcnputc,
+	.cn_pollc = kdcnpollc,
 };
 struct consdev *cn_hw = &consdev_kd;
 

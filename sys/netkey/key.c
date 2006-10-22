@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.142 2006/09/02 06:39:27 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.142.4.1 2006/10/22 06:07:42 yamt Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.142 2006/09/02 06:39:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.142.4.1 2006/10/22 06:07:42 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -747,11 +747,15 @@ key_do_allocsa_policy(sah, state)
  * sport and dport are used for NAT-T. network order is always used.
  */
 struct secasvar *
-key_allocsa(family, src, dst, proto, spi, sport, dport)
-	u_int family, proto;
-	caddr_t src, dst;
-	u_int32_t spi;
-	u_int16_t sport, dport;
+key_allocsa(
+    u_int family,
+    caddr_t src,
+    caddr_t dst,
+    u_int proto,
+    u_int32_t spi,
+    u_int16_t sport __unused,
+    u_int16_t dport __unused
+)
 {
 	struct secasvar *sav, *match;
 	u_int stateidx, state, tmpidx, matchidx;
@@ -4648,8 +4652,7 @@ key_bbcmp(p1, p2, bits)
  * XXX: year 2038 problem may remain.
  */
 void
-key_timehandler(arg)
-	void *arg;
+key_timehandler(void *arg __unused)
 {
 	u_int dir;
 	int s;
@@ -8100,11 +8103,8 @@ key_init()
  * xxx more checks to be provided
  */
 int
-key_checktunnelsanity(sav, family, src, dst)
-	struct secasvar *sav;
-	u_int family;
-	caddr_t src;
-	caddr_t dst;
+key_checktunnelsanity(struct secasvar *sav, u_int family __unused,
+    caddr_t src __unused, caddr_t dst __unused)
 {
 	/* sanity check */
 	if (sav->sah == NULL)

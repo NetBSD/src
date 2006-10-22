@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.11 2006/06/18 02:25:18 christos Exp $ */
+/* $NetBSD: pckbd.c,v 1.11.6.1 2006/10/22 06:06:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.11 2006/06/18 02:25:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.11.6.1 2006/10/22 06:06:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,7 +304,7 @@ pckbd_powerhook(int why, void *opaque)
  * these are both bad jokes
  */
 int
-pckbdprobe(struct device *parent, struct cfdata *cf, void *aux)
+pckbdprobe(struct device *parent __unused, struct cfdata *cf, void *aux)
 {
 	struct pckbport_attach_args *pa = aux;
 	int res;
@@ -356,7 +356,7 @@ pckbdprobe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-pckbdattach(struct device *parent, struct device *self, void *aux)
+pckbdattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pckbd_softc *sc = device_private(self);
 	struct pckbport_attach_args *pa = aux;
@@ -403,7 +403,8 @@ pckbdattach(struct device *parent, struct device *self, void *aux)
 	a.accessops = &pckbd_accessops;
 	a.accesscookie = sc;
 
-	sc->sc_powerhook = powerhook_establish(pckbd_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    pckbd_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: unable to install powerhook\n",
 		    sc->sc_dev.dv_xname);
@@ -595,7 +596,8 @@ pckbd_input(void *vsc, int data)
 }
 
 int
-pckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+pckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag __unused,
+    struct lwp *l __unused)
 {
 	struct pckbd_softc *sc = v;
 
@@ -705,7 +707,7 @@ pckbd_cnpollc(void *v, int on)
 }
 
 void
-pckbd_cnbell(void *v, u_int pitch, u_int period, u_int volume)
+pckbd_cnbell(void *v __unused, u_int pitch, u_int period, u_int volume)
 {
 
 	pckbd_bell(pitch, period, volume, 1);

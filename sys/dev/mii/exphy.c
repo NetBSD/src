@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.41 2006/03/29 07:05:24 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.41.10.1 2006/10/22 06:06:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.41 2006/03/29 07:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.41.10.1 2006/10/22 06:06:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ static const struct mii_phy_funcs exphy_funcs = {
 };
 
 static int
-exphymatch(struct device *parent, struct cfdata *match, void *aux)
+exphymatch(struct device *parent, struct cfdata *match __unused, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -121,7 +121,7 @@ exphymatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-exphyattach(struct device *parent, struct device *self, void *aux)
+exphyattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;

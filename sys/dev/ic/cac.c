@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.34 2006/01/29 21:42:42 dsl Exp $	*/
+/*	$NetBSD: cac.c,v 1.34.20.1 2006/10/22 06:05:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.34 2006/01/29 21:42:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.34.20.1 2006/10/22 06:05:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
  * Shut down all `cac' controllers.
  */
 static void
-cac_shutdown(void *cookie)
+cac_shutdown(void *cookie __unused)
 {
 	extern struct cfdriver cac_cd;
 	struct cac_softc *sc;

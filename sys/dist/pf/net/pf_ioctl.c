@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.23 2006/09/08 20:58:57 elad Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.23.2.1 2006/10/22 06:07:05 yamt Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.139 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
@@ -38,7 +38,6 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
-#include "opt_altq.h"
 #include "opt_pfil_hooks.h"
 #endif
 
@@ -173,7 +172,7 @@ extern struct pfil_head if_pfil;
 #endif
 
 void
-pfattach(int num)
+pfattach(int num __unused)
 {
 	u_int32_t *timeout = pf_default_rule.timeout;
 
@@ -325,7 +324,7 @@ pfdetach(void)
 #endif
 
 int
-pfopen(dev_t dev, int flags, int fmt, struct lwp *l)
+pfopen(dev_t dev, int flags __unused, int fmt __unused, struct lwp *l __unused)
 {
 	if (minor(dev) >= 1)
 		return (ENXIO);
@@ -333,7 +332,7 @@ pfopen(dev_t dev, int flags, int fmt, struct lwp *l)
 }
 
 int
-pfclose(dev_t dev, int flags, int fmt, struct lwp *l)
+pfclose(dev_t dev, int flags __unused, int fmt __unused, struct lwp *l __unused)
 {
 	if (minor(dev) >= 1)
 		return (ENXIO);
@@ -850,7 +849,7 @@ pf_tag_unref(u_int16_t tag)
 }
 
 int
-pf_rtlabel_add(struct pf_addr_wrap *a)
+pf_rtlabel_add(struct pf_addr_wrap *a __unused)
 {
 #ifdef __OpenBSD__
 	if (a->type == PF_ADDR_RTLABEL &&
@@ -861,7 +860,7 @@ pf_rtlabel_add(struct pf_addr_wrap *a)
 }
 
 void
-pf_rtlabel_remove(struct pf_addr_wrap *a)
+pf_rtlabel_remove(struct pf_addr_wrap *a __unused)
 {
 #ifdef __OpenBSD__
 	if (a->type == PF_ADDR_RTLABEL)
@@ -870,7 +869,7 @@ pf_rtlabel_remove(struct pf_addr_wrap *a)
 }
 
 void
-pf_rtlabel_copyout(struct pf_addr_wrap *a)
+pf_rtlabel_copyout(struct pf_addr_wrap *a __unused)
 {
 #ifdef __OpenBSD__
 	const char	*name;
@@ -1021,7 +1020,11 @@ pf_enable_altq(struct pf_altq *altq)
 	if (error == 0 && ifp != NULL && ALTQ_IS_ENABLED(&ifp->if_snd)) {
 		tb.rate = altq->ifbandwidth;
 		tb.depth = altq->tbrsize;
+#ifdef __OpenBSD__
 		s = splimp();
+#else
+		s = splnet();
+#endif
 		error = tbr_set(&ifp->if_snd, &tb);
 		splx(s);
 	}
@@ -1051,7 +1054,11 @@ pf_disable_altq(struct pf_altq *altq)
 	if (error == 0) {
 		/* clear tokenbucket regulator */
 		tb.rate = 0;
+#ifdef __OpenBSD__
 		s = splimp();
+#else
+		s = splnet();
+#endif
 		error = tbr_set(&ifp->if_snd, &tb);
 		splx(s);
 	}
@@ -1131,7 +1138,7 @@ pf_commit_rules(u_int32_t ticket, int rs_num, char *anchor)
 }
 
 int
-pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct lwp *l)
+pfioctl(dev_t dev __unused, u_long cmd, caddr_t addr, int flags, struct lwp *l)
 {
 	struct pf_pooladdr	*pa = NULL;
 	struct pf_pool		*pool = NULL;
@@ -1140,7 +1147,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct lwp *l)
 
 	/* XXX keep in sync with switch() below */
 	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_FIREWALL,
-	    (void *)KAUTH_REQ_NETWORK_FIREWALL_FW, NULL, NULL, NULL)) 
+	    KAUTH_REQ_NETWORK_FIREWALL_FW, NULL, NULL, NULL)) 
 		switch (cmd) {
 		case DIOCGETRULES:
 		case DIOCGETRULE:
@@ -2958,7 +2965,7 @@ fail:
 #ifdef __NetBSD__
 #ifdef INET
 int
-pfil4_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+pfil4_wrapper(void *arg __unused, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
 	int error;
 
@@ -3009,7 +3016,7 @@ pfil4_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 
 #ifdef INET6
 int
-pfil6_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+pfil6_wrapper(void *arg __unused, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
 	int error;
 
@@ -3049,7 +3056,8 @@ pfil6_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 #endif
 
 int
-pfil_ifnet_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+pfil_ifnet_wrapper(void *arg __unused, struct mbuf **mp, struct ifnet *ifp,
+    int dir __unused)
 {
 	u_long cmd = (u_long)mp;
 
@@ -3066,7 +3074,8 @@ pfil_ifnet_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 }
 
 int
-pfil_ifaddr_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+pfil_ifaddr_wrapper(void *arg __unused, struct mbuf **mp, struct ifnet *ifp,
+    int dir __unused)
 {
 	extern void pfi_kifaddr_update_if(struct ifnet *);
 

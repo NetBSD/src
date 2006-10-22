@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.68 2006/05/14 21:33:39 elad Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.68.10.1 2006/10/22 06:07:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.68 2006/05/14 21:33:39 elad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.68.10.1 2006/10/22 06:07:51 yamt Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -78,13 +78,14 @@ READ(void *v)
 	daddr_t lbn, nextlbn;
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
-	int error, flags;
+	int error, flags, ioflag;
 	boolean_t usepc = FALSE;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	ump = ip->i_ump;
 	uio = ap->a_uio;
+	ioflag = ap->a_ioflag;
 	error = 0;
 
 #ifdef DIAGNOSTIC
@@ -115,6 +116,9 @@ READ(void *v)
 		const int advice = IO_ADV_DECODE(ap->a_ioflag);
 
 		while (uio->uio_resid > 0) {
+			if (ioflag & IO_DIRECT) {
+				genfs_directio(vp, uio, ioflag);
+			}
 			bytelen = MIN(ip->i_size - uio->uio_offset,
 			    uio->uio_resid);
 			if (bytelen == 0)
@@ -197,7 +201,6 @@ WRITE(void *v)
 	struct vnode *vp;
 	struct uio *uio;
 	struct inode *ip;
-	struct genfs_node *gp;
 	FS *fs;
 	struct buf *bp;
 	struct lwp *l;
@@ -222,7 +225,6 @@ WRITE(void *v)
 	uio = ap->a_uio;
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	gp = VTOG(vp);
 	ump = ip->i_ump;
 
 	KASSERT(vp->v_size == ip->i_size);
@@ -319,9 +321,16 @@ WRITE(void *v)
 		boolean_t extending; /* if we're extending a whole block */
 		off_t newoff;
 
+		if (ioflag & IO_DIRECT) {
+			genfs_directio(vp, uio, ioflag);
+		}
+
 		oldoff = uio->uio_offset;
 		blkoffset = blkoff(fs, uio->uio_offset);
 		bytelen = MIN(fs->fs_bsize - blkoffset, uio->uio_resid);
+		if (bytelen == 0) {
+			break;
+		}
 
 		/*
 		 * if we're filling in a hole, allocate the blocks now and
@@ -340,10 +349,10 @@ WRITE(void *v)
 				break;
 			ubc_alloc_flags &= ~UBC_FAULTBUSY;
 		} else {
-			lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
+			genfs_node_wrlock(vp);
 			error = GOP_ALLOC(vp, uio->uio_offset, bytelen,
 			    aflag, cred);
-			lockmgr(&gp->g_glock, LK_RELEASE, NULL);
+			genfs_node_unlock(vp);
 			if (error)
 				break;
 			ubc_alloc_flags |= UBC_FAULTBUSY;
@@ -389,6 +398,7 @@ WRITE(void *v)
 		 * XXXUBC simplistic async flushing.
 		 */
 
+#ifndef LFS_READWRITE
 		if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
 			simple_lock(&vp->v_interlock);
 			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
@@ -396,6 +406,7 @@ WRITE(void *v)
 			if (error)
 				break;
 		}
+#endif
 	}
 	if (error == 0 && ioflag & IO_SYNC) {
 		simple_lock(&vp->v_interlock);

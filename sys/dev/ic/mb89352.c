@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.42 2006/09/02 09:26:47 xtraeme Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.42.4.1 2006/10/22 06:05:44 yamt Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.42 2006/09/02 09:26:47 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.42.4.1 2006/10/22 06:05:44 yamt Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -457,7 +457,7 @@ spc_init(struct spc_softc *sc, int bus_reset)
 }
 
 void
-spc_free_acb(struct spc_softc *sc, struct spc_acb *acb, int flags)
+spc_free_acb(struct spc_softc *sc, struct spc_acb *acb, int flags __unused)
 {
 	int s;
 
@@ -650,7 +650,7 @@ spc_sched_msgout(struct spc_softc *sc, u_char m)
  * Set synchronous transfer offset and period.
  */
 integrate void
-spc_setsync(struct spc_softc *sc, struct spc_tinfo *ti)
+spc_setsync(struct spc_softc *sc __unused, struct spc_tinfo *ti __unused)
 {
 #if SPC_USE_SYNCHRONOUS
 	bus_space_tag_t iot = sc->sc_iot;
@@ -812,9 +812,10 @@ spc_sched(struct spc_softc *sc)
 			sc->sc_nexus = acb;
 			spc_select(sc, acb);
 			return;
-		} else
+		} else {
 			SPC_MISC(("%d:%d busy\n",
 			    periph->periph_target, periph->periph_lun));
+		}
 	}
 	SPC_MISC(("idle  "));
 	/* Nothing to start; just enable reselections and wait. */

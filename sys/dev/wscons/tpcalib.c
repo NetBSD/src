@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalib.c,v 1.6 2005/12/11 12:24:12 christos Exp $	*/
+/*	$NetBSD: tpcalib.c,v 1.6.22.1 2006/10/22 06:07:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -13,10 +13,10 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -28,7 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.6 2005/12/11 12:24:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.6.22.1 2006/10/22 06:07:00 yamt Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_tpcalib.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.6 2005/12/11 12:24:12 christos Exp $")
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/tpcalibvar.h>
 
-#define TPCALIBDEBUG
 #ifdef TPCALIBDEBUG
 int	tpcalib_debug = 0;
 #define	DPRINTF(arg) if (tpcalib_debug) printf arg;
@@ -86,8 +89,8 @@ tpcalib_trans(struct tpcalib_softc *sc, int rawx, int rawy, int *x, int *y)
 }
 
 int
-tpcalib_ioctl(struct tpcalib_softc *sc, u_long cmd, caddr_t data, int flag,
-    struct lwp *l)
+tpcalib_ioctl(struct tpcalib_softc *sc, u_long cmd, caddr_t data,
+    int flag __unused, struct lwp *l __unused)
 {
 	const struct wsmouse_calibcoords *d;
 	int s;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.178 2006/07/23 22:06:05 ad Exp $	*/
+/*	$NetBSD: pccons.c,v 1.178.6.1 2006/10/22 06:04:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.178 2006/07/23 22:06:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.178.6.1 2006/10/22 06:04:48 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -568,7 +568,8 @@ void update_leds()
  * these are both bad jokes
  */
 int
-pcprobe(struct device *parent, struct cfdata *match, void *aux)
+pcprobe(struct device *parent __unused, struct cfdata *match __unused,
+	void *aux)
 {
 	struct isa_attach_args *ia = aux;
 #if (NPCCONSKBD == 0)
@@ -740,7 +741,7 @@ lose:
 }
 
 void
-pcattach(struct device *parent, struct device *self, void *aux)
+pcattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pc_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -817,7 +818,7 @@ pcconskbd_cnattach(pckbport_tag_t tag, pckbport_slot_t slot)
 #endif
 
 int
-pcopen(dev_t dev, int flag, int mode, struct lwp *l)
+pcopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l)
 {
 	struct pc_softc *sc;
 	int unit = PCUNIT(dev);
@@ -838,6 +839,10 @@ pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_oproc = pcstart;
 	tp->t_param = pcparam;
 	tp->t_dev = dev;
+
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
+
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -847,17 +852,14 @@ pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		pcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state&TS_XCLUDE &&
-		   kauth_authorize_generic(l->l_cred,
-		   KAUTH_GENERIC_ISSUSER, &l->l_acflag) != 0)
-		return (EBUSY);
+	}
 	tp->t_state |= TS_CARR_ON;
 
 	return ((*tp->t_linesw->l_open)(dev, tp));
 }
 
 int
-pcclose(dev_t dev, int flag, int mode, struct lwp *l)
+pcclose(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -1074,7 +1076,7 @@ out:
 }
 
 void
-pcstop(struct tty *tp, int flag)
+pcstop(struct tty *tp __unused, int flag __unused)
 {
 
 	lock_state |= SCROLL;
@@ -1098,7 +1100,7 @@ pccnattach(void)
 
 /* ARGSUSED */
 void
-pccnputc(dev_t dev, int c)
+pccnputc(dev_t dev __unused, int c)
 {
 	u_char oldkernel = kernel;
 	char help = c;
@@ -1118,7 +1120,7 @@ pccnputc(dev_t dev, int c)
  */
 /* ARGSUSED */
 int
-pccngetc(dev_t dev)
+pccngetc(dev_t dev __unused)
 {
 	register char *cp;
 
@@ -2662,7 +2664,7 @@ strans(u_char dt)
 }
 
 paddr_t
-pcmmap(dev_t dev, off_t offset, int nprot)
+pcmmap(dev_t dev __unused, off_t offset, int nprot __unused)
 {
 
 	if (offset > 0x20000)

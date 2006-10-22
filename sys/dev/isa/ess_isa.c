@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isa.c,v 1.15 2006/03/29 04:16:49 thorpej Exp $	*/
+/*	$NetBSD: ess_isa.c,v 1.15.10.1 2006/10/22 06:06:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.15 2006/03/29 04:16:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.15.10.1 2006/10/22 06:06:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.15 2006/03/29 04:16:49 thorpej Exp $")
 #ifdef ESS_ISA_DEBUG
 #define DPRINTF(x)	printf x
 #else
-#define DPRINTF(x)
+#define DPRINTF(x)	{}
 #endif
 
 int ess_isa_probe(struct device *, struct cfdata *, void *);
@@ -66,7 +66,8 @@ CFATTACH_DECL(ess_isa, sizeof(struct ess_softc),
     ess_isa_probe, ess_isa_attach, NULL, NULL);
 
 int
-ess_isa_probe(struct device *parent, struct cfdata *match, void *aux)
+ess_isa_probe(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	int ret;
 	struct isa_attach_args *ia;
@@ -127,7 +128,7 @@ ess_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-ess_isa_attach(struct device *parent, struct device *self, void *aux)
+ess_isa_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct ess_softc *sc;
 	struct isa_attach_args *ia;

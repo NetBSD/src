@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.12 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.12.22.1 2006/10/22 06:04:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.12 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.12.22.1 2006/10/22 06:04:50 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -115,7 +115,8 @@ wi_obio_attach(parent, self, aux)
 	}
 
 	sc->sc_sdhook = shutdownhook_establish(wi_obio_shutdown, sc);
-	sc->sc_powerhook = powerhook_establish(wi_obio_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(self->dv_xname,
+	    wi_obio_powerhook, sc);
 
 	/* Disable the card. */
 	wisc->sc_enabled = 0;

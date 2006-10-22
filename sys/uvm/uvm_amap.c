@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.74 2006/06/25 08:03:46 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.74.6.1 2006/10/22 06:07:52 yamt Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.74 2006/06/25 08:03:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.74.6.1 2006/10/22 06:07:52 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -913,7 +913,7 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
  */
 
 void
-amap_cow_now(struct vm_map *map, struct vm_map_entry *entry)
+amap_cow_now(struct vm_map *map __unused, struct vm_map_entry *entry)
 {
 	struct vm_amap *amap = entry->aref.ar_amap;
 	int lcv, slot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.4 2005/12/11 12:16:03 christos Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.4.22.1 2006/10/22 06:04:30 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.4 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.4.22.1 2006/10/22 06:04:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,11 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.4 2005/12/11 12:16:03 christos Exp 
 
 
 void
-db_show_panic_cmd(addr, have_addr, count, modif)
-	db_expr_t       addr;
-	int             have_addr;
-	db_expr_t       count;
-	const char      *modif;
+db_show_panic_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+    const char *modif)
 {
 	int s;
 	
@@ -63,11 +60,8 @@ db_show_panic_cmd(addr, have_addr, count, modif)
 
 
 void
-db_show_frame_cmd(addr, have_addr, count, modif)
-	db_expr_t       addr;
-	int             have_addr;
-	db_expr_t       count;
-	const char      *modif;
+db_show_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+    const char *modif)
 {
 	struct trapframe *frame;
 
@@ -91,14 +85,11 @@ db_show_frame_cmd(addr, have_addr, count, modif)
 
 
 void
-db_bus_write_cmd(addr, have_addr, count, modif)
-	db_expr_t       addr;
-	int             have_addr;
-	db_expr_t       count;
-	const char      *modif;
+db_bus_write_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+    const char *modif)
 {
 	db_expr_t datum;
-	bus_space_tag_t iot = 2; /* XXX */
+	bus_space_tag_t iot = &iobus_bs_tag; /* XXX */
 	bus_space_handle_t ioh;
 
 	if (!have_addr)
@@ -109,11 +100,11 @@ db_bus_write_cmd(addr, have_addr, count, modif)
 	while (db_expression(&datum)) {
 		switch (*modif) {
 		case 'b':
-			bus_space_write_1(2, ioh, 0, datum);
+			bus_space_write_1(iot, ioh, 0, datum);
 			break;
 		case '\0':
 		case 'h':
-			bus_space_write_2(2, ioh, 0, datum);
+			bus_space_write_2(iot, ioh, 0, datum);
 			break;
 		default:
 			db_error("bad modifier");
@@ -124,11 +115,8 @@ db_bus_write_cmd(addr, have_addr, count, modif)
 }
 
 void
-db_irqstat_cmd(addr, have_addr, count, modif)
-	db_expr_t       addr;
-	int             have_addr;
-	db_expr_t       count;
-	const char      *modif;
+db_irqstat_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+    const char *modif)
 {
 
 	irq_stat(db_printf);

@@ -1,4 +1,4 @@
-/* $NetBSD: ansi.h,v 1.18 2005/12/11 12:16:16 christos Exp $ */
+/* $NetBSD: ansi.h,v 1.18.22.1 2006/10/22 06:04:31 yamt Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -95,8 +95,8 @@ typedef struct {
  * stream conversions.  The content must not be referenced by user programs.
  */
 typedef union {
-	char __mbstate8[128];
 	__int64_t __mbstateL;	/* for alignment */
+	char __mbstate8[128];
 } __mbstate_t;
 #define	_BSD_MBSTATE_T_	__mbstate_t		/* mbstate_t */
 

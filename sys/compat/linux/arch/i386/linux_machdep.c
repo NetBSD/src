@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.115 2006/09/13 00:49:07 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.115.2.1 2006/10/22 06:05:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.115 2006/09/13 00:49:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.115.2.1 2006/10/22 06:05:24 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -494,10 +494,8 @@ linux_sys_sigreturn(l, v, retval)
 }
 
 static int
-linux_restore_sigcontext(l, scp, retval)
-	struct lwp *l;
-	struct linux_sigcontext *scp;
-	register_t *retval;
+linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
+    register_t *retval __unused)
 {
 	struct proc *p = l->l_proc;
 	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
@@ -702,10 +700,8 @@ linux_write_ldt(l, uap, retval)
 #endif /* USER_LDT */
 
 int
-linux_sys_modify_ldt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_modify_ldt(struct lwp *l __unused, void *v,
+    register_t *retval __unused)
 {
 	struct linux_sys_modify_ldt_args /* {
 		syscallarg(int) func;
@@ -847,9 +843,7 @@ const u_short * const linux_keytabs[] = {
 #endif
 
 static struct biosdisk_info *
-fd2biosinfo(p, fp)
-	struct proc *p;
-	struct file *fp;
+fd2biosinfo(struct proc *p __unused, struct file *fp)
 {
 	struct vnode *vp;
 	const char *blkname;
@@ -1129,10 +1123,7 @@ out:
  * to rely on I/O permission maps, which are not implemented.
  */
 int
-linux_sys_iopl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_iopl(struct lwp *l, void *v __unused, register_t *retval)
 {
 #if 0
 	struct linux_sys_iopl_args /* {
@@ -1176,7 +1167,8 @@ linux_sys_ioperm(l, v, retval)
 }
 
 int
-linux_usertrap(struct lwp *l, vaddr_t trapaddr, void *arg)
+linux_usertrap(struct lwp *l __unused, vaddr_t trapaddr __unused,
+    void *arg __unused)
 {
 	return 0;
 }

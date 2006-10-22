@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.24 2006/08/28 21:37:37 christos Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.24.4.1 2006/10/22 06:07:00 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.24 2006/08/28 21:37:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.24.4.1 2006/10/22 06:07:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -541,7 +541,7 @@ static const char *sun_fkeys[] = {
 };
 
 int
-wsemul_sun_translate(void *cookie, keysym_t in, const char **out)
+wsemul_sun_translate(void *cookie __unused, keysym_t in, const char **out)
 {
 	static char c;
 

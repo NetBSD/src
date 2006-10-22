@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.2 2006/09/08 21:57:38 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.2.4.1 2006/10/22 06:07:47 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.2 2006/09/08 21:57:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.2.4.1 2006/10/22 06:07:47 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,9 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.2 2006/09/08 21:57:38 ela
 #include <sys/acct.h>
 #include <sys/ktrace.h>
 #include <sys/mount.h>
-#include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/sysctl.h>
-
+#include <sys/tty.h>
 #include <net/route.h>
 
 #include <secmodel/bsd44/suser.h>
@@ -72,6 +72,8 @@ secmodel_bsd44_suser_start(void)
 	    secmodel_bsd44_suser_network_cb, NULL);
 	kauth_listen_scope(KAUTH_SCOPE_MACHDEP,
 	    secmodel_bsd44_suser_machdep_cb, NULL);
+	kauth_listen_scope(KAUTH_SCOPE_DEVICE,
+	    secmodel_bsd44_suser_device_cb, NULL);
 }
 
 /*
@@ -83,7 +85,8 @@ secmodel_bsd44_suser_start(void)
  */
 int
 secmodel_bsd44_suser_generic_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
+    void *cookie __unused, void *arg0 __unused, void *arg1 __unused,
+    void *arg2 __unused, void *arg3 __unused)
 {
 	boolean_t isroot;
 	int result;
@@ -122,18 +125,31 @@ secmodel_bsd44_suser_generic_cb(kauth_cred_t cred, kauth_action_t action,
  */
 int
 secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
+    void *cookie __unused, void *arg0 __unused, void *arg1 __unused,
+    void *arg2 __unused, void *arg3 __unused)
 {
 	boolean_t isroot;
 	int result;
+	enum kauth_system_req req;
 
 	isroot = (kauth_cred_geteuid(cred) == 0);
 	result = KAUTH_RESULT_DENY;
+	req = (enum kauth_system_req)arg0;
 
 	switch (action) {
 	case KAUTH_SYSTEM_TIME:
-		if (isroot)
-			result = KAUTH_RESULT_ALLOW;
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_TIME_ADJTIME:
+		case KAUTH_REQ_SYSTEM_TIME_NTPADJTIME:
+		case KAUTH_REQ_SYSTEM_TIME_SYSTEM:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
 		break;
 
 	case KAUTH_SYSTEM_SYSCTL:
@@ -168,7 +184,7 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
  */
 int
 secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
+    void *cookie __unused, void *arg0, void *arg1, void *arg2, void *arg3)
 {
 	struct proc *p;
 	boolean_t isroot;
@@ -250,32 +266,20 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
  */
 int
 secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
+    void *cookie __unused, void *arg0, void *arg1, void *arg2 __unused,
+    void *arg3 __unused)
 {
 	boolean_t isroot;
 	int result;
+	enum kauth_network_req req;
 
 	isroot = (kauth_cred_geteuid(cred) == 0);
 	result = KAUTH_RESULT_DENY;
+	req = (enum kauth_network_req)arg0;
 
 	switch (action) {
-	case KAUTH_NETWORK_FIREWALL:
-		switch ((u_long)arg0) {
-		case KAUTH_REQ_NETWORK_FIREWALL_FW:
-		case KAUTH_REQ_NETWORK_FIREWALL_NAT:
-			if (isroot)
-				result = KAUTH_RESULT_ALLOW;
-			break;
-
-		default:
-			result = KAUTH_RESULT_DEFER;
-			break;
-		}
-
-		break;
-
 	case KAUTH_NETWORK_ALTQ:
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_NETWORK_ALTQ_AFMAP:
 		case KAUTH_REQ_NETWORK_ALTQ_BLUE:
 		case KAUTH_REQ_NETWORK_ALTQ_CBQ:
@@ -283,6 +287,7 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 		case KAUTH_REQ_NETWORK_ALTQ_CONF:
 		case KAUTH_REQ_NETWORK_ALTQ_FIFOQ:
 		case KAUTH_REQ_NETWORK_ALTQ_HFSC:
+		case KAUTH_REQ_NETWORK_ALTQ_JOBS:
 		case KAUTH_REQ_NETWORK_ALTQ_PRIQ:
 		case KAUTH_REQ_NETWORK_ALTQ_RED:
 		case KAUTH_REQ_NETWORK_ALTQ_RIO:
@@ -298,22 +303,8 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 
 		break;
 
-	case KAUTH_NETWORK_SOCKET:
-		switch ((u_long)arg0) {
-		case KAUTH_REQ_NETWORK_SOCKET_RAWSOCK:
-			if (isroot)
-				result = KAUTH_RESULT_ALLOW;
-			break;
-
-		default:
-			result = KAUTH_RESULT_ALLOW;
-			break;
-		}
-
-		break;
-
 	case KAUTH_NETWORK_BIND:
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_NETWORK_BIND_PRIVPORT:
 			if (isroot)
 				result = KAUTH_RESULT_ALLOW;
@@ -324,8 +315,27 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 		break;
 
+	case KAUTH_NETWORK_INTERFACE:
+		switch (req) {
+		case KAUTH_REQ_NETWORK_INTERFACE_GET:
+		case KAUTH_REQ_NETWORK_INTERFACE_SET:
+			result = KAUTH_RESULT_ALLOW;
+			break;
+
+		case KAUTH_REQ_NETWORK_INTERFACE_GETPRIV:
+		case KAUTH_REQ_NETWORK_INTERFACE_SETPRIV:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
+
 	case KAUTH_NETWORK_ROUTE:
-		switch (((struct rt_msghdr *)arg0)->rtm_type) {
+		switch (((struct rt_msghdr *)arg1)->rtm_type) {
 		case RTM_GET:
 			result = KAUTH_RESULT_ALLOW;
 			break;
@@ -335,6 +345,33 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 				result = KAUTH_RESULT_ALLOW;
 			break;
 		}
+		break;
+
+	case KAUTH_NETWORK_SOCKET:
+		switch (req) {
+		case KAUTH_REQ_NETWORK_SOCKET_RAWSOCK:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+
+		case KAUTH_REQ_NETWORK_SOCKET_CANSEE:
+			if (secmodel_bsd44_curtain) {
+				uid_t so_uid;
+
+				so_uid =
+				    ((struct socket *)arg1)->so_uidinfo->ui_uid;
+				if (isroot ||
+				    kauth_cred_geteuid(cred) == so_uid)
+					result = KAUTH_RESULT_ALLOW;
+			} else
+				result = KAUTH_RESULT_ALLOW;
+			break;
+
+		default:
+			result = KAUTH_RESULT_ALLOW;
+			break;
+		}
+
 		break;
 
 	default:
@@ -354,17 +391,20 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
  */
 int
 secmodel_bsd44_suser_machdep_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
+    void *cookie __unused, void *arg0, void *arg1 __unused, void *arg2 __unused,
+    void *arg3 __unused)
 {
         boolean_t isroot;
         int result;
+	enum kauth_machdep_req req;
 
         isroot = (kauth_cred_geteuid(cred) == 0);
         result = KAUTH_RESULT_DENY;
+	req = (enum kauth_machdep_req)arg0;
 
         switch (action) {
 	case KAUTH_MACHDEP_X86:
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_MACHDEP_X86_IOPL:
 		case KAUTH_REQ_MACHDEP_X86_IOPERM:
 		case KAUTH_REQ_MACHDEP_X86_MTRR_SET:
@@ -379,7 +419,7 @@ secmodel_bsd44_suser_machdep_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_MACHDEP_X86_64:
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_MACHDEP_X86_64_MTRR_GET:
 			if (isroot)
 				result = KAUTH_RESULT_ALLOW;
@@ -389,6 +429,53 @@ secmodel_bsd44_suser_machdep_cb(kauth_cred_t cred, kauth_action_t action,
 			result = KAUTH_RESULT_DEFER;
 			break;
 		}
+		break;
+
+	default:
+		result = KAUTH_RESULT_DEFER;
+		break;
+	}
+
+	return (result);
+}
+
+/*
+ * kauth(9) listener
+ *
+ * Security model: Traditional NetBSD
+ * Scope: Device
+ * Responsibility: Superuser access
+ */
+int
+secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
+    void *cookie __unused, void *arg0, void *arg1 __unused, void *arg2 __unused,
+    void *arg3 __unused)
+{
+	struct tty *tty;
+        boolean_t isroot;
+        int result;
+
+        isroot = (kauth_cred_geteuid(cred) == 0);
+        result = KAUTH_RESULT_DENY;
+
+	switch (action) {
+	case KAUTH_DEVICE_TTY_OPEN:
+		tty = arg0;
+
+		if (!(tty->t_state & TS_ISOPEN))
+			result = KAUTH_RESULT_ALLOW;
+		else if (tty->t_state & TS_XCLUDE) {
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+		} else
+			result = KAUTH_RESULT_ALLOW;
+
+		break;
+
+	case KAUTH_DEVICE_TTY_PRIVSET:
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
+
 		break;
 
 	default:

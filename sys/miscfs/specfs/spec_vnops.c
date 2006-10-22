@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.89 2006/09/08 20:58:57 elad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.89.2.1 2006/10/22 06:07:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.89 2006/09/08 20:58:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.89.2.1 2006/10/22 06:07:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -262,6 +262,9 @@ spec_open(v)
 		 */
 		if (ap->a_cred != FSCRED) {
 			u_long rw;
+
+			if ((error = vfs_mountedon(vp)) != 0)
+				return (error);
 
 			rw = M2K(ap->a_mode);
 
@@ -557,12 +560,28 @@ spec_poll(v)
 		struct lwp *a_l;
 	} */ *ap = v;
 	const struct cdevsw *cdev;
+	struct vnode *vp;
 	dev_t dev;
 
-	switch (ap->a_vp->v_type) {
+	/*
+	 * Extract all the info we need from the vnode, taking care to
+	 * avoid a race with VOP_REVOKE().
+	 */
+
+	vp = ap->a_vp;
+	dev = NODEV;
+	simple_lock(&vp->v_interlock);
+	if ((vp->v_flag & VXLOCK) == 0 && vp->v_specinfo) {
+		dev = vp->v_rdev;
+	}
+	simple_unlock(&vp->v_interlock);
+	if (dev == NODEV) {
+		return POLLERR;
+	}
+
+	switch (vp->v_type) {
 
 	case VCHR:
-		dev = ap->a_vp->v_rdev;
 		cdev = cdevsw_lookup(dev);
 		if (cdev == NULL)
 			return (POLLERR);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.31 2006/07/23 22:06:15 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.31.6.1 2006/10/22 06:07:50 yamt Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.31 2006/07/23 22:06:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.31.6.1 2006/10/22 06:07:50 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -132,7 +132,8 @@ static int snapdebug = 0;
  * Vnode is locked on entry and return.
  */
 int
-ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
+ffs_snapshot(struct mount *mp __unused, struct vnode *vp __unused,
+    struct timespec *ctime __unused)
 {
 #if defined(FFS_NO_SNAPSHOT)
 	return EOPNOTSUPP;
@@ -157,7 +158,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	struct inode *ip, *xp;
 	struct buf *bp, *ibp, *nbp;
 	struct vattr vat;
-	struct vnode *xvp, *nvp, *devvp;
+	struct vnode *xvp, *devvp;
 
 	ns = UFS_FSNEEDSWAP(fs);
 	/*
@@ -362,14 +363,13 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	    FSMAXSNAP + 1 /* superblock */ + 1 /* last block */ + 1 /* size */;
 	MNT_ILOCK(mp);
 loop:
-	for (xvp = LIST_FIRST(&mp->mnt_vnodelist); xvp; xvp = nvp) {
+	TAILQ_FOREACH(xvp, &mp->mnt_vnodelist, v_mntvnodes) {
 		/*
 		 * Make sure this vnode wasn't reclaimed in getnewvnode().
 		 * Start over if it has (it won't be on the list anymore).
 		 */
 		if (xvp->v_mount != mp)
 			goto loop;
-		nvp = LIST_NEXT(xvp, v_mntvnodes);
 		VI_LOCK(xvp);
 		MNT_IUNLOCK(mp);
 		if ((xvp->v_flag & VXLOCK) ||
@@ -957,7 +957,7 @@ fullacct_ufs1(struct vnode *vp, ufs1_daddr_t *oldblkp, ufs1_daddr_t *lastblkp,
  */
 static int
 snapacct_ufs1(struct vnode *vp, ufs1_daddr_t *oldblkp, ufs1_daddr_t *lastblkp,
-    struct fs *fs, ufs_lbn_t lblkno,
+    struct fs *fs, ufs_lbn_t lblkno __unused,
     int expungetype /* BLK_SNAP or BLK_NOCOPY */)
 {
 	struct inode *ip = VTOI(vp);
@@ -1225,7 +1225,7 @@ fullacct_ufs2(struct vnode *vp, ufs2_daddr_t *oldblkp, ufs2_daddr_t *lastblkp,
  */
 static int
 snapacct_ufs2(struct vnode *vp, ufs2_daddr_t *oldblkp, ufs2_daddr_t *lastblkp,
-    struct fs *fs, ufs_lbn_t lblkno,
+    struct fs *fs, ufs_lbn_t lblkno __unused,
     int expungetype /* BLK_SNAP or BLK_NOCOPY */)
 {
 	struct inode *ip = VTOI(vp);
@@ -1462,7 +1462,7 @@ ffs_snapremove(struct vnode *vp)
  */
 int
 ffs_snapblkfree(struct fs *fs, struct vnode *devvp, ufs2_daddr_t bno,
-    long size, ino_t inum)
+    long size, ino_t inum __unused)
 {
 	struct ufsmount *ump = VFSTOUFS(devvp->v_specmountpoint);
 	struct buf *ibp;
@@ -1520,8 +1520,10 @@ retry:
 			    lockmgr(vp->v_vnlock,
 			      LK_INTERLOCK | LK_EXCLUSIVE | LK_NOWAIT,
 			      VI_MTX(devvp)) != 0) {
+#if 0 /* CID-2949: dead code */
 				if (lbn >= NDADDR)
 					brelse(ibp);
+#endif 
 				vn_lock(vp, LK_EXCLUSIVE | LK_SLEEPFAIL);
 				goto retry;
 			}

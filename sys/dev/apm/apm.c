@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.5 2006/07/17 13:23:46 christos Exp $ */
+/*	$NetBSD: apm.c,v 1.5.6.1 2006/10/22 06:05:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.5 2006/07/17 13:23:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.5.6.1 2006/10/22 06:05:32 yamt Exp $");
 
 #include "opt_apm.h"
 
@@ -131,7 +131,7 @@ dev_type_kqfilter(apmkqfilter);
 
 const struct cdevsw apm_cdevsw = {
 	apmopen, apmclose, noread, nowrite, apmioctl,
-	nostop, notty, apmpoll, nommap, apmkqfilter,
+	nostop, notty, apmpoll, nommap, apmkqfilter, D_OTHER,
 };
 
 /* configurable variables */
@@ -359,7 +359,7 @@ apm_standby(struct apm_softc *sc)
 }
 
 static void
-apm_resume(struct apm_softc *sc, u_int event_type, u_int event_info)
+apm_resume(struct apm_softc *sc, u_int event_type, u_int event_info __unused)
 {
 
 	if (sc->sc_power_state == PWR_RESUME) {
@@ -733,7 +733,7 @@ apm_thread(void *arg)
 }
 
 int
-apmopen(dev_t dev, int flag, int mode, struct lwp *l)
+apmopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
 {
 	int unit = APMUNIT(dev);
 	int ctl = APM(dev);
@@ -782,7 +782,8 @@ apmopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-apmclose(dev_t dev, int flag, int mode, struct lwp *l)
+apmclose(dev_t dev, int flag __unused, int mode __unused,
+	struct lwp *l __unused)
 {
 	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
 	int ctl = APM(dev);
@@ -808,7 +809,8 @@ apmclose(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+	struct lwp *l __unused)
 {
 	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
 	struct apm_power_info *powerp;
@@ -935,7 +937,7 @@ filt_apmrdetach(struct knote *kn)
 }
 
 static int
-filt_apmread(struct knote *kn, long hint)
+filt_apmread(struct knote *kn, long hint __unused)
 {
 	struct apm_softc *sc = kn->kn_hook;
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.235 2006/08/26 20:26:55 christos Exp $
+# $NetBSD: GENERIC,v 1.235.4.1 2006/10/22 06:04:49 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.235 $"
+#ident 		"GENERIC-$Revision: 1.235.4.1 $"
 
 maxusers	32
 
@@ -75,6 +75,7 @@ options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12	# NetBSD 1.2,
 options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
@@ -223,7 +224,7 @@ lpt*	at puc? port ?			# || ports on > "universal" comm boards
 
 # PCI Network devices
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
-#ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
+ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bge*	at pci? dev ? function ?	# Broadcom 570x Gigabit Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
@@ -251,6 +252,7 @@ stge*	at pci? dev ? function ?	# Sundance/Tamarack TC9021 Gigabit
 #ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+vge*	at pci? dev ? function ?	# VIA VT612x Gigabit Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 wm*	at pci? dev ? function ?	# Intel 82543/82544 gigabit
@@ -295,11 +297,13 @@ acphy*	at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
 amhphy*	at mii? phy ?			# AMD 79c901 Ethernet PHYs
 bmtphy*	at mii? phy ?			# Broadcom BCM5201/BCM5202 PHYs
 brgphy*	at mii? phy ?			# Broadcom BCM5400 PHYs
+ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
 dmphy*	at mii? phy ?                   # Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
+ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
@@ -366,6 +370,7 @@ mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
 ex*	at cardbus? function ?	# 3Com 3C575TX
 tlp*	at cardbus? function ?	# DECchip 21143
@@ -567,3 +572,5 @@ pseudo-device	nsmb			# SMB requester
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
+
+#options PAX_MPROTECT=0			# PaX mprotect(2) restrictions

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.15 2006/09/05 22:30:52 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.15.6.1 2006/10/22 06:07:09 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.15 2006/09/05 22:30:52 reinoud Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.15.6.1 2006/10/22 06:07:09 yamt Exp $");
 #endif /* not lint */
 
 
@@ -304,7 +304,7 @@ udf_tagsize(union dscrptr *dscr, uint32_t udf_sector_size)
 
 
 static int
-udf_fidsize(struct fileid_desc *fid, uint32_t udf_sector_size)
+udf_fidsize(struct fileid_desc *fid, uint32_t udf_sector_size __unused)
 {
 	uint32_t size;
 
@@ -751,8 +751,10 @@ udf_process_vds_descriptor(struct udf_mount *ump, union dscrptr *dscr)
 
 		/* check partnr boundaries */
 		partnr = udf_rw16(dscr->pd.part_num);
-		if (partnr >= UDF_PARTITIONS)
+		if (partnr >= UDF_PARTITIONS) {
+			free(dscr, M_UDFVOLD);
 			return EINVAL;
+		}
 
 		UDF_UPDATE_DSCR(ump->partitions[partnr], &dscr->pd);
 		break;
@@ -793,8 +795,10 @@ udf_read_vds_extent(struct udf_mount *ump, uint32_t loc, uint32_t len)
 			return 0;
 
 		/* TERM descriptor is a terminator */
-		if (udf_rw16(dscr->tag.id) == TAGID_TERM)
+		if (udf_rw16(dscr->tag.id) == TAGID_TERM) {
+			free(dscr, M_UDFVOLD);
 			return 0;
+		}
 
 		/* process all others */
 		dscr_size = udf_tagsize(dscr, sector_size);
@@ -942,7 +946,8 @@ udf_retrieve_lvint(struct udf_mount *ump, struct logvol_int_desc **lvintp)
  */
 
 int
-udf_process_vds(struct udf_mount *ump, struct udf_args *args) {
+udf_process_vds(struct udf_mount *ump, struct udf_args *args __unused)
+{
 	union udf_pmap *mapping;
 	struct logvol_int_desc *lvint;
 	struct udf_logvol_info *lvinfo;
@@ -1178,7 +1183,7 @@ udf_check_for_vat(struct udf_node *vat_node)
 
 	/* try to allocate the space */
 	ump->vat_table_alloc_length = alloc_length;
-	ump->vat_table = malloc(alloc_length, M_UDFMNT, M_CANFAIL | M_WAITOK);
+	ump->vat_table = malloc(alloc_length, M_UDFVOLD, M_CANFAIL | M_WAITOK);
 	if (!ump->vat_table)
 		return ENOMEM;		/* impossible to allocate */
 	DPRINTF(VOLUMES, ("\talloced fine\n"));
@@ -1189,7 +1194,7 @@ udf_check_for_vat(struct udf_node *vat_node)
 	if (error) {
 		DPRINTF(VOLUMES, ("\tread failed : %d\n", error));
 		/* not completely readable... :( bomb out */
-		free(ump->vat_table, M_UDFMNT);
+		free(ump->vat_table, M_UDFVOLD);
 		ump->vat_table = NULL;
 		return error;
 	}
@@ -1214,7 +1219,7 @@ udf_check_for_vat(struct udf_node *vat_node)
 		error = strncmp(regid_name, "*UDF Virtual Alloc Tbl", 22);
 		if (error) {
 			DPRINTF(VOLUMES, ("VAT format 1.50 rejected\n"));
-			free(ump->vat_table, M_UDFMNT);
+			free(ump->vat_table, M_UDFVOLD);
 			ump->vat_table = NULL;
 			return ENOENT;
 		}
@@ -1334,7 +1339,7 @@ udf_read_sparables(struct udf_mount *ump, union udf_pmap *mapping)
 /* --------------------------------------------------------------------- */
 
 int
-udf_read_vds_tables(struct udf_mount *ump, struct udf_args *args)
+udf_read_vds_tables(struct udf_mount *ump, struct udf_args *args __unused)
 {
 	union udf_pmap *mapping;
 	uint32_t n_pm, mt_l;
@@ -1363,10 +1368,12 @@ udf_read_vds_tables(struct udf_mount *ump, struct udf_args *args)
 		case UDF_VTOP_TYPE_SPARABLE :
 			/* load one of the sparable tables */
 			error = udf_read_sparables(ump, mapping);
+			if (error)
+				return ENOENT;
 			break;
 		case UDF_VTOP_TYPE_META :
 			/* TODO load metafile and metabitmapfile FE/EFEs */
-			break;
+			return ENOENT;
 		default:
 			break;
 		}
@@ -1380,7 +1387,7 @@ udf_read_vds_tables(struct udf_mount *ump, struct udf_args *args)
 /* --------------------------------------------------------------------- */
 
 int
-udf_read_rootdirs(struct udf_mount *ump, struct udf_args *args)
+udf_read_rootdirs(struct udf_mount *ump, struct udf_args *args __unused)
 {
 	struct udf_node *rootdir_node, *streamdir_node;
 	union dscrptr *dscr;
@@ -1731,15 +1738,15 @@ udf_dispose_node(struct udf_node *node)
  */
 
 static int
-udf_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
-    kauth_cred_t cred)
+udf_gop_alloc(struct vnode *vp __unused, off_t off __unused,
+    off_t len __unused, int flags __unused, kauth_cred_t cred __unused)
 {
 	return 0;
 }
 
 
 static void
-udf_gop_markupdate(struct vnode *vp, int flags)
+udf_gop_markupdate(struct vnode *vp, int flags __unused)
 {
 	struct udf_node *udf_node = VTOI(vp);
 	u_long mask;
@@ -2334,24 +2341,33 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 	fid = malloc(lb_size, M_TEMP, M_WAITOK);
 
 	found = 0;
-	diroffset = 0;
-	while (!found && (diroffset < file_size)) {
+	diroffset = dir_node->last_diroffset;
+	while (!found) {
+		/* if not found in this track, turn trough zero */
+		if (diroffset >= file_size)
+			diroffset = 0;
+
 		/* transfer a new fid/dirent */
 		error = udf_read_fid_stream(vp, &diroffset, fid, &dirent);
 		if (error)
 			break;
 
 		/* skip deleted entries */
-		if (fid->file_char & UDF_FILE_CHAR_DEL)
-			continue;
+		if ((fid->file_char & UDF_FILE_CHAR_DEL) == 0) {
+			if ((strlen(dirent.d_name) == namelen) &&
+			    (strncmp(dirent.d_name, name, namelen) == 0)) {
+				found = 1;
+				*icb_loc = fid->icb;
+			}
+		}
 
-		if ((strlen(dirent.d_name) == namelen) &&
-		    (strncmp(dirent.d_name, name, namelen) == 0)) {
-			found = 1;
-			*icb_loc = fid->icb;
+		if (diroffset == dir_node->last_diroffset) {
+			/* we have cycled */
+			break;
 		}
 	}
 	free(fid, M_TEMP);
+	dir_node->last_diroffset = diroffset;
 
 	return found;
 }
@@ -2823,6 +2839,7 @@ udf_translate_file_extent(struct udf_node *node,
 				translen = overlap;
 				while (overlap && pages && translen) {
 					*map++ = transsec;
+					lb_num++;
 					overlap--; pages--; translen--;
 				}
 				break;
@@ -2836,7 +2853,7 @@ udf_translate_file_extent(struct udf_node *node,
 					return error;
 				while (overlap && pages && translen) {
 					*map++ = transsec;
-					transsec++;
+					lb_num++; transsec++;
 					overlap--; pages--; translen--;
 				}
 				break;

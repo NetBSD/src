@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.56 2006/05/14 21:32:21 elad Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.56.10.1 2006/10/22 06:07:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,6 @@ struct sillyrename {
  * the cookies are stored.
  */
 
-extern u_long nfsdirhashmask;
 
 LIST_HEAD(nfsdirhashhead, nfsdircache);
 TAILQ_HEAD(nfsdirchainhead, nfsdircache);
@@ -229,9 +228,12 @@ struct nfs_iod {
 	struct proc *nid_want;
 	struct nfsmount *nid_mount;
 };
-extern struct nfs_iod nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
 
 #ifdef _KERNEL
+
+extern struct nfs_iod nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
+extern u_long nfsdirhashmask;
+
 /*
  * Prototypes for NFS vnode operations
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.22 2006/03/29 06:37:35 thorpej Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.22.10.1 2006/10/22 06:05:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,11 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.22 2006/03/29 06:37:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.22.10.1 2006/10/22 06:05:35 yamt Exp $");
 
-#define FBDEBUG
-static const char _copyright[] __attribute__ ((unused)) =
-    "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
+#ifdef _KERNEL_OPT
+#include "opt_hpcfb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,11 @@ static const char _copyright[] __attribute__ ((unused)) =
 #include <dev/hpc/bivideovar.h>
 #include <dev/hpc/hpccmapvar.h>
 
-#define VPRINTF(arg)	do { if (bootverbose) printf arg; } while(0);
+#ifdef FBDEBUG
+#define VPRINTF(arg)	do { if (bootverbose) printf arg; } while (0)
+#else
+#define VPRINTF(arg)	/* nothing */
+#endif
 
 /*
  *  global variables
@@ -174,7 +178,8 @@ bivideoattach(struct device *parent, struct device *self, void *aux)
 
 	/* Add a suspend hook to power saving */
 	sc->sc_powerstate = 0;
-	sc->sc_powerhook = powerhook_establish(bivideo_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    bivideo_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 			sc->sc_dev.dv_xname);
@@ -514,7 +519,9 @@ bivideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			    sc->sc_max_contrast < dispparam->curval)
 				return (EINVAL);
 			if (sc->sc_max_contrast > 0) {
+#ifdef FBDEBUG
 				int org = sc->sc_contrast;
+#endif
 				bivideo_set_contrast(sc, dispparam->curval);
 				VPRINTF(("bivideo_ioctl: SET:CONTRAST org=%d, current=%d\n", org, sc->sc_contrast));
 				return 0;
@@ -530,7 +537,9 @@ bivideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			    sc->sc_max_brightness < dispparam->curval)
 				return (EINVAL);
 			if (sc->sc_max_brightness > 0) {
+#ifdef FBDEBUG
 				int org = sc->sc_brightness;
+#endif
 				bivideo_set_brightness(sc, dispparam->curval);
 				VPRINTF(("bivideo_ioctl: SET:BRIGHTNESS org=%d, current=%d\n", org, sc->sc_brightness));
 				return 0;

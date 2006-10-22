@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.105 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.105.6.1 2006/10/22 06:07:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.6.1 2006/10/22 06:07:10 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -768,6 +768,34 @@ ktrsaupcall(struct lwp *l, int type, int nevent, int nint, void *sas,
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
 
+void
+ktrmib(l, name, namelen)
+	struct lwp *l;
+	const int *name;
+	u_int namelen;
+{
+	struct proc *p = l->l_proc;
+	struct ktrace_entry *kte;
+	struct ktr_header *kth;
+	int *namep;
+	size_t size;
+
+	p->p_traceflag |= KTRFAC_ACTIVE;
+	kte = pool_get(&kte_pool, PR_WAITOK);
+	kth = &kte->kte_kth;
+	ktrinitheader(kth, l, KTR_MIB);
+
+	size = namelen * sizeof(*name);
+	namep = malloc(size, M_KTRACE, M_WAITOK);
+	(void)memcpy(namep, name, namelen * sizeof(*name));
+
+	kth->ktr_len = size;
+	kte->kte_buf = namep;
+
+	ktraddentry(l, kte, KTA_WAITOK);
+	p->p_traceflag &= ~KTRFAC_ACTIVE;
+}
+
 /* Interface and common routines */
 
 int
@@ -919,7 +947,7 @@ done:
  */
 /* ARGSUSED */
 int
-sys_fktrace(struct lwp *l, void *v, register_t *retval)
+sys_fktrace(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_fktrace_args /* {
 		syscallarg(int) fd;
@@ -953,7 +981,7 @@ sys_fktrace(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_ktrace(struct lwp *l, void *v, register_t *retval)
+sys_ktrace(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys_ktrace_args /* {
 		syscallarg(const char *) fname;
@@ -1279,7 +1307,7 @@ ktrcanset(struct lwp *calll, struct proc *targetp)
  * Put user defined entry to ktrace records.
  */
 int
-sys_utrace(struct lwp *l, void *v, register_t *retval)
+sys_utrace(struct lwp *l, void *v, register_t *retval __unused)
 {
 #ifdef KTRACE
 	struct sys_utrace_args /* {

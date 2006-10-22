@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.42 2006/09/09 03:32:17 dogcow Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.42.2.1 2006/10/22 06:04:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.42 2006/09/09 03:32:17 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.42.2.1 2006/10/22 06:04:43 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -340,8 +340,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Unknown K7 (Athlon)"	/* Default */
 			},
 			NULL,
-			NULL,
-			NULL,
+			amd_family6_probe,
+			amd_cpu_cacheinfo,
 		} }
 	},
 	{
@@ -567,7 +567,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
  * because some CPUs got the implementation wrong.
  */
 static void
-disable_tsc(struct cpu_info *ci)
+disable_tsc(struct cpu_info *ci __unused)
 {
 	if (cpu_feature & CPUID_TSC) {
 		cpu_feature &= ~CPUID_TSC;
@@ -637,8 +637,7 @@ cyrix6x86_cpu_setup(ci)
 }
 
 void
-winchip_cpu_setup(ci)
-	struct cpu_info *ci;
+winchip_cpu_setup(struct cpu_info *ci __unused)
 {
 #if defined(I586_CPU)
 	switch (CPUID2MODEL(ci->ci_signature)) { /* model */
@@ -956,7 +955,7 @@ p3_get_bus_clock(struct cpu_info *ci)
 			bus_clock = 13333;
 			break;
 		default:
-			aprint_normal("%s: unknown Pentium M FSB_FREQ "
+			aprint_debug("%s: unknown Pentium M FSB_FREQ "
 			    "value %d", cpuname, bus);
 			goto print_msr;
 		}
@@ -979,7 +978,7 @@ p3_get_bus_clock(struct cpu_info *ci)
 			bus_clock = 33333;
 			break;
 		default:
-			aprint_normal("%s: unknown Core FSB_FREQ value %d",
+			aprint_debug("%s: unknown Core FSB_FREQ value %d",
 			    cpuname, bus);
 			goto print_msr;
 		}
@@ -1005,20 +1004,20 @@ p3_get_bus_clock(struct cpu_info *ci)
 			bus_clock = 10000;
 			break;
 		default:
-			aprint_normal("%s: unknown i686 EBL_CR_POWERON "
+			aprint_debug("%s: unknown i686 EBL_CR_POWERON "
 			    "value %d ", cpuname, bus);
 			goto print_msr;
 		}
 		break;
 	default:
-		aprint_normal("%s: unknown i686 model %d, can't get bus clock",
+		aprint_debug("%s: unknown i686 model %d, can't get bus clock",
 		    cpuname, model);
 print_msr:
 		/*
 		 * Show the EBL_CR_POWERON MSR, so we'll at least have
 		 * some extra information, such as clock ratio, etc.
 		 */
-		aprint_normal(" (0x%llx)\n", rdmsr(MSR_EBL_CR_POWERON));
+		aprint_debug(" (0x%llx)\n", rdmsr(MSR_EBL_CR_POWERON));
 		break;
 	}
 }
@@ -1042,7 +1041,7 @@ p4_get_bus_clock(struct cpu_info *ci)
 			bus_clock = 13333;
 			break;
 		default:
-			aprint_normal("%s: unknown Pentium 4 (model %d) "
+			aprint_debug("%s: unknown Pentium 4 (model %d) "
 			    "EBC_FREQUENCY_ID value %d\n",
 			    cpuname, model, bus);
 			break;
@@ -1063,7 +1062,7 @@ p4_get_bus_clock(struct cpu_info *ci)
 			bus_clock = 16666;
 			break;
 		default:
-			aprint_normal("%s: unknown Pentium 4 (model %d) "
+			aprint_debug("%s: unknown Pentium 4 (model %d) "
 			    "EBC_FREQUENCY_ID value %d\n",
 			    cpuname, model, bus);
 			break;
@@ -1256,7 +1255,7 @@ transmeta_cpu_info(struct cpu_info *ci)
 }
 
 void
-transmeta_cpu_setup(struct cpu_info *ci)
+transmeta_cpu_setup(struct cpu_info *ci __unused)
 {
 	u_int nreg = 0, dummy;
 
@@ -1461,7 +1460,7 @@ identifycpu(struct cpu_info *ci)
 
 	x86_print_cacheinfo(ci);
 
-	if (cpu_feature & CPUID_TM) {
+	if (vendor != CPUVENDOR_AMD && (cpu_feature & CPUID_TM)) {
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 3)) {
 			if ((cpu_feature2 & CPUID2_TM2) &&
 			    (rdmsr(MSR_THERM2_CTL) & (1 << 16)))
@@ -1603,26 +1602,20 @@ identifycpu(struct cpu_info *ci)
 #endif /* ENHANCED_SPEEDSTEP */
 
 #if defined(POWERNOW_K7) || defined(POWERNOW_K8)
-	if (vendor == CPUVENDOR_AMD) {
-		uint32_t rval;
-		uint8_t featflag;
-
-		rval = powernow_probe(ci, 0x600);
-		if (rval) {
-			featflag = powernow_extflags(ci, rval);
+	if (vendor == CPUVENDOR_AMD && powernow_probe(ci)) {
+		switch (CPUID2FAMILY(ci->ci_signature)) {
 #ifdef POWERNOW_K7
-			if (featflag)
-				k7_powernow_init();
+		case 6:
+			k7_powernow_init();
+			break;
 #endif
-		}
-
-		rval = powernow_probe(ci, 0xf00);
-		if (rval) {
-			featflag = powernow_extflags(ci, rval);
 #ifdef POWERNOW_K8
-			if (featflag)
-				k8_powernow_init();
+		case 15:
+			k8_powernow_init();
+			break;
 #endif
+		default:
+			break;
 		}
 	}
 #endif /* POWERNOW_K7 || POWERNOW_K8 */

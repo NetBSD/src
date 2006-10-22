@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.46 2006/07/23 22:06:07 ad Exp $	*/
+/*	$NetBSD: kd.c,v 1.46.6.1 2006/10/22 06:05:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.46 2006/07/23 22:06:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.46.6.1 2006/10/22 06:05:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.46 2006/07/23 22:06:07 ad Exp $");
 #include <sys/kauth.h>
 
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
 #include <machine/mon.h>
 #include <machine/psl.h>
 
@@ -69,8 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.46 2006/07/23 22:06:07 ad Exp $");
 #include <sun3/dev/zs_cons.h>
 
 #include "fb.h"
-
-extern void fb_unblank(void); /* XXX */
 
 #define PUT_WSIZE	64
 
@@ -154,13 +153,8 @@ static	int firstopen = 1;
 	tp = kd->kd_tty;
 
 	/* It's simpler to do this up here. */
-	if (((tp->t_state & (TS_ISOPEN | TS_XCLUDE))
-	     ==             (TS_ISOPEN | TS_XCLUDE))
-	    && (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0) )
-	{
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
-	}
 
 	s = spltty();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.17 2006/05/22 13:44:53 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.17.8.1 2006/10/22 06:05:20 yamt Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -182,18 +182,32 @@
 #include <machine/i82489reg.h>
 #endif
 
+#include <machine/xen.h>
+
 /*
  * Xen guest identifier and loader selection
  */
 .section __xen_guest
 #ifdef XEN3
 	.ascii	"GUEST_OS=netbsd,GUEST_VER=3.0,XEN_VER=xen-3.0"
+#if defined(DOM0OPS) || !defined(XEN_COMPAT_030001)
+	.ascii  ",VIRT_BASE=0xc0000000" /* KERNBASE */
+	.ascii  ",ELF_PADDR_OFFSET=0xc0000000" /* KERNBASE */
 #else
-	.ascii	"GUEST_OS=netbsd,GUEST_VER=2.0,XEN_VER=2.0"
+	.ascii  ",VIRT_BASE=0xc0100000" /* KERNTEXTOFF */
+	.ascii  ",ELF_PADDR_OFFSET=0xc0100000" /* KERNTEXTOFF */
 #endif
+	.ascii  ",VIRT_ENTRY=0xc0100000" /* KERNTEXTOFF */
+#if !defined(XEN_COMPAT_030001)
+	.ascii  ",HYPERCALL_PAGE=0x00000101"
+		/* (???+HYPERCALL_PAGE_OFFSET)/PAGE_SIZE) */
+#endif
+#else /* !XEN3 */
+	.ascii	"GUEST_OS=netbsd,GUEST_VER=2.0,XEN_VER=2.0"
+#endif /* XEN3 */
 	.ascii	",LOADER=generic"
 #if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
-	.ascii	",BSD_SYMTAB"
+	.ascii	",BSD_SYMTAB=yes"
 #endif
 	.byte	0
 
@@ -256,8 +270,6 @@ _C_LABEL(biosextmem):	.long	0	# extended memory reported by BIOS
 #else
 _C_LABEL(biosextmem):	.long	REALEXTMEM
 #endif
-
-#include <machine/xen.h>
 
 	.space 512
 tmpstk:
@@ -425,7 +437,17 @@ start:
 	orl	$(PG_V|PG_RW), %eax;
 	movl	%eax, (%ebx)
 	addl	$4,%ebx
+	jmp	2f
 1:
+#endif
+#if defined(XEN3) || defined (DOM0OPS)
+	/* map ISA hole */
+	movl    $(IOM_BEGIN|PG_V|PG_KW/*|PG_N*/),%eax   # having these bits set
+	movl    $(IOM_SIZE>>PGSHIFT),%ecx               # for this many pte s,
+	fillkpt
+#endif
+#ifdef XEN3
+2:
 #endif
 
 /*
@@ -497,6 +519,14 @@ start:
 #endif /* SAFARI_FIFO_HACK */
 
 	call 	_C_LABEL(main)
+
+#if defined(XEN3) && !defined(XEN_COMPAT_030001)
+/* space for the hypercall call page */
+#define HYPERCALL_PAGE_OFFSET 0x1000
+.org HYPERCALL_PAGE_OFFSET
+ENTRY(hypercall_page)
+.skip 0x1000
+#endif
 
 /*
  * void proc_trampoline(void);
@@ -757,9 +787,14 @@ idle_loop:
 	addl	$4,%esp
 	jmp	idle_start
 4:
+#if defined(XEN3) && !defined(XEN_COMPAT_030001)
+	movl    $SCHEDOP_yield,%ebx
+	call	(hypercall_page + (HYPERVISOR_sched_op * 32))
+#else
 	movl	$HYPERVISOR_sched_op,%eax
 	movl	$SCHEDOP_yield,%ebx
 	TRAP_INSTR
+#endif
 NENTRY(mpidle)
 idle_start:
 	CLI(%eax)

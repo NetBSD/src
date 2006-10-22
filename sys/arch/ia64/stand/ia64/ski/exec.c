@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.2 2006/04/22 07:58:53 cherry Exp $ */
+/* $NetBSD: exec.c,v 1.2.18.1 2006/10/22 06:04:49 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ struct ia64_pte {
 	u_int64_t	pte_ig	:11;	/* bits 53..63 */
 };
 
-static struct bootinfo bootinfo;
+struct bootinfo bootinfo;
 
 void
 enter_kernel(const char* filename, u_int64_t start, struct bootinfo *bi)

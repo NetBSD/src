@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.11 2005/12/11 12:19:48 christos Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.11.22.1 2006/10/22 06:05:20 yamt Exp $	*/
 
 /*
  *
@@ -56,6 +56,7 @@ struct pintrhand {
 	void *arg;
 };
 
-struct pintrhand *pirq_establish(int, int, int (*)(void *), void *, int);
+struct pintrhand *pirq_establish(int, int, int (*)(void *), void *, int,
+     const char *);
 
 #endif /*  _XEN_EVENTS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.148 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.148.6.1 2006/10/22 06:07:29 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.148 2006/07/23 22:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.148.6.1 2006/10/22 06:07:29 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -177,9 +177,9 @@ static	void udp_notify (struct inpcb *, int);
 int	udbhashsize = UDBHASHSIZE;
 
 #ifdef MBUFTRACE
-struct mowner udp_mowner = { "udp" };
-struct mowner udp_rx_mowner = { "udp", "rx" };
-struct mowner udp_tx_mowner = { "udp", "tx" };
+struct mowner udp_mowner = MOWNER_INIT("udp", "");
+struct mowner udp_rx_mowner = MOWNER_INIT("udp", "rx");
+struct mowner udp_tx_mowner = MOWNER_INIT("udp", "tx");
 #endif
 
 #ifdef UDP_CSUM_COUNTERS
@@ -511,7 +511,7 @@ bad:
 }
 
 int
-udp6_input(struct mbuf **mp, int *offp, int proto)
+udp6_input(struct mbuf **mp, int *offp, int proto __unused)
 {
 	struct mbuf *m = *mp;
 	int off = *offp;
@@ -1186,14 +1186,16 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		return (in_control(so, (long)m, (caddr_t)nam,
 		    (struct ifnet *)control, l));
 
+	s = splsoftnet();
+
 	if (req == PRU_PURGEIF) {
 		in_pcbpurgeif0(&udbtable, (struct ifnet *)control);
 		in_purgeif((struct ifnet *)control);
 		in_pcbpurgeif(&udbtable, (struct ifnet *)control);
+		splx(s);
 		return (0);
 	}
 
-	s = splsoftnet();
 	inp = sotoinpcb(so);
 #ifdef DIAGNOSTIC
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)
@@ -1419,11 +1421,8 @@ SYSCTL_SETUP(sysctl_net_inet_udp_setup, "sysctl net.inet.udp subtree setup")
  * -1 if an error occurent and m was freed
  */
 static int
-udp4_espinudp(mp, off, src, so)
-	struct mbuf **mp;
-	int off;
-	struct sockaddr *src;
-	struct socket *so;
+udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src __unused,
+    struct socket *so)
 {
 	size_t len;
 	caddr_t data;

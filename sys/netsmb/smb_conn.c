@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.20 2006/05/14 21:20:13 elad Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.20.10.1 2006/10/22 06:07:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.20 2006/05/14 21:20:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.20.10.1 2006/10/22 06:07:42 yamt Exp $");
 
 /*
  * Connection engine.
@@ -300,7 +300,7 @@ smb_co_rele(struct smb_connobj *cp, struct smb_cred *scred)
 }
 
 int
-smb_co_get(struct smb_connobj *cp, int flags, struct smb_cred *scred)
+smb_co_get(struct smb_connobj *cp, int flags, struct smb_cred *scred __unused)
 {
 	int error;
 
@@ -503,7 +503,7 @@ smb_vc_free(struct smb_connobj *cp)
  * VC should be locked on enter with LK_DRAIN.
  */
 static void
-smb_vc_gone(struct smb_connobj *cp, struct smb_cred *scred)
+smb_vc_gone(struct smb_connobj *cp, struct smb_cred *scred __unused)
 {
 	struct smb_vc *vcp = CPTOVC(cp);
 
@@ -622,7 +622,7 @@ smb_vc_lookupshare(struct smb_vc *vcp, struct smb_sharespec *dp,
 }
 
 int
-smb_vc_connect(struct smb_vc *vcp, struct smb_cred *scred)
+smb_vc_connect(struct smb_vc *vcp, struct smb_cred *scred __unused)
 {
 
 	return smb_iod_request(vcp->vc_iod, SMBIOD_EV_CONNECT | SMBIOD_EV_SYNC, NULL);
