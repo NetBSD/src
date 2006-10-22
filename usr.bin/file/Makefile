@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.52 2006/10/08 17:52:28 peter Exp $
+#	$NetBSD: Makefile,v 1.53 2006/10/22 22:22:39 christos Exp $
 
 .include <bsd.own.mk>
+.include <bsd.sys.mk>
 
 DIST=		${NETBSDSRCDIR}/dist/file
 .PATH:		${DIST}/src ${DIST}/doc
