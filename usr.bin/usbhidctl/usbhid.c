@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.31 2006/10/22 05:09:14 dsainty Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.32 2006/10/22 06:16:37 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhid.c,v 1.31 2006/10/22 05:09:14 dsainty Exp $");
+__RCSID("$NetBSD: usbhid.c,v 1.32 2006/10/22 06:16:37 dsainty Exp $");
 #endif
 
 #include <sys/types.h>
@@ -108,6 +108,7 @@ struct Sreport {
 	struct usb_ctl_report *buffer;
 
 	enum {srs_uninit, srs_clean, srs_dirty} status;
+	int use_getreport; /* Non-zero if we expect USB_GET_REPORT to work */
 	int report_id;
 	size_t size;
 };
@@ -472,10 +473,15 @@ getreport(struct Sreport *report, int hidfd, report_desc_t rd, int repindex)
 			return;
 
 		report->buffer->ucr_report = reptoparam[repindex].uhid_report;
-		if (ioctl(hidfd, USB_GET_REPORT, report->buffer) < 0)
-			err(1, "USB_GET_REPORT(%s) [probably not supported by "
-			    "device]",
-			    reptoparam[repindex].name);
+
+		if (report->use_getreport) {
+			if (ioctl(hidfd, USB_GET_REPORT, report->buffer) < 0)
+				err(1, "USB_GET_REPORT(%s) [probably not "
+				    "supported by device]",
+				    reptoparam[repindex].name);
+		} else {
+			memset(report->buffer->ucr_data, '\0', report->size);
+		}
 	}
 }
 
@@ -697,7 +703,7 @@ devloop(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize)
 
 static void
 devshow(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize,
-	int kindset)
+	int zeromode, int kindset)
 {
 	struct hid_data *hdata;
 	size_t collind, repind, vlind;
@@ -710,6 +716,7 @@ devshow(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize,
 	     repind++) {
 		reports[repind].status = srs_uninit;
 		reports[repind].buffer = NULL;
+		reports[repind].use_getreport = !zeromode;
 	}
 
 	collind = 0;
@@ -822,16 +829,16 @@ main(int argc, char **argv)
 	char const *dev;
 	char const *table;
 	size_t varnum;
-	int aflag, lflag, nflag, rflag, wflag;
+	int aflag, lflag, nflag, rflag, wflag, zflag;
 	int ch, hidfd;
 	report_desc_t repdesc;
 	char devnamebuf[PATH_MAX];
 	struct Susbvar variables[128];
 
-	wflag = aflag = nflag = verbose = rflag = lflag = 0;
+	aflag = lflag = nflag = rflag = verbose = wflag = zflag = 0;
 	dev = NULL;
 	table = NULL;
-	while ((ch = getopt(argc, argv, "?af:lnrt:vw")) != -1) {
+	while ((ch = getopt(argc, argv, "?af:lnrt:vwz")) != -1) {
 		switch (ch) {
 		case 'a':
 			aflag = 1;
@@ -856,6 +863,9 @@ main(int argc, char **argv)
 			break;
 		case 'w':
 			wflag = 1;
+			break;
+		case 'z':
+			zflag = 1;
 			break;
 		case '?':
 		default:
@@ -1024,7 +1034,7 @@ main(int argc, char **argv)
 		/* Report mode header */
 		printf("Report descriptor:\n");
 
-	devshow(hidfd, repdesc, variables, varnum,
+	devshow(hidfd, repdesc, variables, varnum, zflag,
 		1 << hid_input |
 		1 << hid_output |
 		1 << hid_feature);
