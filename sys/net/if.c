@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.170 2006/10/13 10:29:41 hannken Exp $	*/
+/*	$NetBSD: if.c,v 1.171 2006/10/22 13:25:54 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.170 2006/10/13 10:29:41 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.171 2006/10/22 13:25:54 pooka Exp $");
 
 #include "opt_inet.h"
 
@@ -971,7 +971,7 @@ ifa_ifwithnet(const struct sockaddr *addr)
 	const struct sockaddr_dl *sdl;
 	struct ifaddr *ifa_maybe = 0;
 	u_int af = addr->sa_family;
-	char *addr_data = addr->sa_data, *cplim;
+	const char *addr_data = addr->sa_data, *cplim;
 
 	if (af == AF_LINK) {
 		sdl = (const struct sockaddr_dl *)addr;
@@ -1008,7 +1008,7 @@ ifa_ifwithnet(const struct sockaddr *addr)
 			continue;
 		for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
 		     ifa = TAILQ_NEXT(ifa, ifa_list)) {
-			char *cp, *cp2, *cp3;
+			const char *cp, *cp2, *cp3;
 
 			if (ifa->ifa_addr->sa_family != af ||
 			    ifa->ifa_netmask == 0)
@@ -1016,7 +1016,7 @@ ifa_ifwithnet(const struct sockaddr *addr)
 			cp = addr_data;
 			cp2 = ifa->ifa_addr->sa_data;
 			cp3 = ifa->ifa_netmask->sa_data;
-			cplim = (char *)ifa->ifa_netmask +
+			cplim = (const char *)ifa->ifa_netmask +
 			    ifa->ifa_netmask->sa_len;
 			while (cp3 < cplim) {
 				if ((*cp++ ^ *cp2++) & *cp3++) {
