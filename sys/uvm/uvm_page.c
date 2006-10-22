@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.113.2.1 2006/10/22 06:07:53 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.113.2.2 2006/10/22 08:07:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.113.2.1 2006/10/22 06:07:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.113.2.2 2006/10/22 08:07:53 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -413,7 +413,6 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 */
 
 	simple_lock_init(&uvm.pagedaemon_lock);
-	simple_lock_init(&uvm.aiodoned_lock);
 
 	/*
 	 * init various thresholds.
