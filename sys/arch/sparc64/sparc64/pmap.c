@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.181 2006/10/20 22:12:57 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.182 2006/10/22 00:24:23 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.181 2006/10/20 22:12:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.182 2006/10/22 00:24:23 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1018,7 +1018,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		u0va = vmmap;
 
 		BDPRINTF(PDB_BOOT1,
-			("Inserting stack 0 into pmap_kernel() at %p\n",
+			("Inserting proc0 USPACE into pmap_kernel() at %p\n",
 				vmmap));
 
 		while (vmmap < u0va + 2*USPACE) {
