@@ -1,4 +1,4 @@
-/*	$NetBSD: hayes.c,v 1.13 2006/04/03 04:53:59 christos Exp $	*/
+/*	$NetBSD: hayes.c,v 1.14 2006/10/22 16:48:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)hayes.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: hayes.c,v 1.13 2006/04/03 04:53:59 christos Exp $");
+__RCSID("$NetBSD: hayes.c,v 1.14 2006/10/22 16:48:34 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -155,11 +155,8 @@ gobble(const char *match)
 {
 	char c;
 	sig_t f;
-	int i, status = 0;
-
-#if __GNUC__	/* XXX pacify gcc */
-	(void)&status;
-#endif
+	int i;
+	volatile int status = 0;
 
 	f = signal(SIGALRM, sigALRM);
 	timeout = 0;
