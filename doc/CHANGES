@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.734 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.735 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -128,3 +128,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[bouyer 20061021]
 	mail(1): Mime and multi-character set handling; command line editing
 		and completion. Thanks to Anon Ymous [christos 20061021]
+	acorn32: Standard kernels now use the machine-independent sec(4)
+		and ei(4) drivers for Acorn SCSI Expansion Cards and
+		Ethernet 1 cards respectively, in place of asc(4) and ie(4).
+		[bjh21 20061022]
