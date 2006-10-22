@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.33 2006/09/22 18:20:53 xtraeme Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.34 2006/10/22 16:13:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.33 2006/09/22 18:20:53 xtraeme Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.34 2006/10/22 16:13:23 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1400,7 +1400,6 @@ toc2msf(u_int i, u_int *m, u_int *s, u_int *f)
 {
 	struct cd_toc_entry *ctep;
 
-	assert(i >= 0);
 	assert(i <= CD_MAX_TRACK);
 
 	ctep = &toc_buffer[i];
