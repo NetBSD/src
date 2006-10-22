@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.45 2006/10/21 21:29:14 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.46 2006/10/22 01:23:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1503,7 +1503,7 @@ static int
 re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 {
 	bus_dmamap_t		map;
-	int			error, i, uidx, startidx, curidx, lastidx;
+	int			error, seg, uidx, startidx, curidx, lastidx;
 #ifdef RE_VLAN
 	struct m_tag		*mtag;
 #endif
@@ -1586,7 +1586,7 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 	 */
 	curidx = startidx = sc->rtk_ldata.rtk_tx_nextfree;
 	lastidx = -1;
-	for (i = 0; i < map->dm_nsegs; i++, RTK_TX_DESC_INC(sc, curidx)) {
+	for (seg = 0; seg < map->dm_nsegs; seg++, RTK_TX_DESC_INC(sc, curidx)) {
 		d = &sc->rtk_ldata.rtk_tx_list[curidx];
 		RTK_TXDESCSYNC(sc, curidx,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -1595,8 +1595,8 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 		if (cmdstat & RTK_TDESC_STAT_OWN) {
 			aprint_error("%s: tried to map busy TX descriptor\n",
 			    sc->sc_dev.dv_xname);
-			for (; i > 0; i--) {
-				uidx = (curidx + RTK_TX_DESC_CNT(sc) - i) %
+			for (; seg > 0; seg--) {
+				uidx = (curidx + RTK_TX_DESC_CNT(sc) - seg) %
 				    RTK_TX_DESC_CNT(sc);
 				sc->rtk_ldata.rtk_tx_list[uidx].rtk_cmdstat = 0;
 				RTK_TXDESCSYNC(sc, uidx,
@@ -1606,12 +1606,12 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 			goto fail_unload;
 		}
 
-		cmdstat = map->dm_segs[i].ds_len;
-		if (i == 0)
+		cmdstat = map->dm_segs[seg].ds_len;
+		if (seg == 0)
 			cmdstat |= RTK_TDESC_CMD_SOF;
 		else
 			cmdstat |= RTK_TDESC_CMD_OWN;
-		if (i == map->dm_nsegs - 1) {
+		if (seg == map->dm_nsegs - 1) {
 			cmdstat |= RTK_TDESC_CMD_EOF;
 			lastidx = curidx;
 		}
@@ -1619,9 +1619,9 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 			cmdstat |= RTK_TDESC_CMD_EOR;
 		d->rtk_cmdstat = htole32(cmdstat | rtk_flags);
 		d->rtk_bufaddr_lo =
-		    htole32(RTK_ADDR_LO(map->dm_segs[i].ds_addr));
+		    htole32(RTK_ADDR_LO(map->dm_segs[seg].ds_addr));
 		d->rtk_bufaddr_hi =
-		    htole32(RTK_ADDR_HI(map->dm_segs[i].ds_addr));
+		    htole32(RTK_ADDR_HI(map->dm_segs[seg].ds_addr));
 		RTK_TXDESCSYNC(sc, curidx,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
