@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.14 2006/04/09 18:57:10 christos Exp $	*/
+/*	$NetBSD: pmc.c,v 1.15 2006/10/22 16:25:19 christos Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pmc.c,v 1.14 2006/04/09 18:57:10 christos Exp $");
+__RCSID("$NetBSD: pmc.c,v 1.15 2006/10/22 16:25:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -120,7 +120,7 @@ static const struct pmc_name2val i686_names[] = {
 	{ "l2cache-reqs",		PMC6_L2_RQSTS,			0 },
 	{ "l2cache-addr-strobes",	PMC6_L2_ADS,			0 },
 	{ "l2cache-data-busy",		PMC6_L2_DBUS_BUSY,		0 },
-	{ "l2cache-data-busy-read",	PMC6_L2_DBUS_BUSY_RD },
+	{ "l2cache-data-busy-read",	PMC6_L2_DBUS_BUSY_RD,		0 },
 	{ "bus-drdy-clocks-self",	PMC6_BUS_DRDY_CLOCKS,		0x00 },
 	{ "bus-drdy-clocks-any",	PMC6_BUS_DRDY_CLOCKS,		0x20 },
 	{ "bus-lock-clocks-self",	PMC6_BUS_LOCK_CLOCKS,		0x00 },
@@ -384,7 +384,7 @@ int
 main(int argc, char **argv)
 {
 	int c, status, ret0, ret1, errn0, errn1;
-	const char *event = "unknown";
+	const char * volatile event = "unknown";
 	const struct pmc_name2val_cpus *pncp;
 	const struct pmc_name2val *pnp;
 	struct i386_pmc_info_args pi;
