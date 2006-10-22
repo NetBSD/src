@@ -3,6 +3,7 @@ The following ~ escapes are defined:
 ~?		Print this message
 ~~		Quote a single tilde
 ~.		Same as .
+~@ [file ...]	Add or edit attachments
 ~h		Prompt for subject and to, cc, bcc, and smopts lists
 ~b users	Add users to "blind" cc list
 ~c users	Add users to cc list
