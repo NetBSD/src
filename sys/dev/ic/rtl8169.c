@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.46 2006/10/22 01:23:39 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.47 2006/10/22 01:47:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1135,7 +1135,7 @@ re_rxeof(struct rtk_softc *sc)
 
 	ifp = &sc->ethercom.ec_if;
 
-	for (i = sc->rtk_ldata.rtk_rx_prodidx;; RTK_RX_DESC_INC(sc, i)) {
+	for (i = sc->rtk_ldata.rtk_rx_prodidx;; i = RTK_NEXT_RX_DESC(sc, i)) {
 		cur_rx = &sc->rtk_ldata.rtk_rx_list[i];
 		RTK_RXDESCSYNC(sc, i,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -1333,7 +1333,7 @@ re_txeof(struct rtk_softc *sc)
 		else
 			ifp->if_opackets++;
 
-		idx = (idx + 1) % RTK_TX_QLEN;
+		idx = RTK_NEXT_TXQ(sc, idx);
 		done = TRUE;
 	}
 
@@ -1586,7 +1586,8 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 	 */
 	curidx = startidx = sc->rtk_ldata.rtk_tx_nextfree;
 	lastidx = -1;
-	for (seg = 0; seg < map->dm_nsegs; seg++, RTK_TX_DESC_INC(sc, curidx)) {
+	for (seg = 0; seg < map->dm_nsegs;
+	    seg++, curidx = RTK_NEXT_TX_DESC(sc, curidx)) {
 		d = &sc->rtk_ldata.rtk_tx_list[curidx];
 		RTK_TXDESCSYNC(sc, curidx,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -1654,7 +1655,7 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 	sc->rtk_ldata.rtk_tx_free -= map->dm_nsegs;
 	sc->rtk_ldata.rtk_tx_nextfree = curidx;
 
-	*idx = (*idx + 1) % RTK_TX_QLEN;
+	*idx = RTK_NEXT_TXQ(sc, *idx);
 
 	return 0;
 
