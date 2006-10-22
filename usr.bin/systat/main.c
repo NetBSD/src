@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.39 2005/02/26 22:12:33 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.40 2006/10/22 16:43:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.39 2005/02/26 22:12:33 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.40 2006/10/22 16:43:24 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -59,12 +59,12 @@ __RCSID("$NetBSD: main.c,v 1.39 2005/02/26 22:12:33 dsl Exp $");
 static struct nlist namelist[] = {
 #define X_FIRST		0
 #define	X_HZ		0
-	{ "_hz" },
+	{ .n_name = "_hz" },
 #define	X_STATHZ		1
-	{ "_stathz" },
+	{ .n_name = "_stathz" },
 #define	X_MAXSLP		2
-	{ "_maxslp" },
-	{ "" }
+	{ .n_name = "_maxslp" },
+	{ .n_name = NULL }
 };
 static int     dellave;
 
