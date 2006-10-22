@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.56 2006/10/20 18:58:12 reinoud Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.57 2006/10/22 00:03:33 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.56 2006/10/20 18:58:12 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.57 2006/10/22 00:03:33 reinoud Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -426,7 +426,7 @@ smbfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 int
 smbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 {
-	struct vnode *vp;
+	struct vnode *vp, *nvp;
 	struct smbnode *np;
 	int error, allerror = 0;
 	/*
@@ -434,13 +434,18 @@ smbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 	 */
 	simple_lock(&mntvnode_slock);
 loop:
-	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+	/*
+	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
+	 * and vclean() can be called indirectly
+	 */
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
+		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		simple_lock(&vp->v_interlock);
 		np = VTOSMB(vp);
 		if ((vp->v_type == VNON || (np->n_flag & NMODIFIED) == 0) &&
